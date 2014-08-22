@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.42 2014/08/14 16:26:21 riastradh Exp $
+# $NetBSD: md.amd64,v 1.43 2014/08/22 10:51:38 apb Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -234,12 +234,12 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/coretemp/coretemp.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/crypto				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/crypto/crypto.kmod		base-kernel-modules	kmod,compatmodules
-./stand/amd64-xen/@OSRELEASE@/modules/cyclic				base-kernel-modules	kmod,dtrace,compatmodules
-./stand/amd64-xen/@OSRELEASE@/modules/cyclic/cyclic.kmod		base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/cx24227				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/cx24227/cx24227.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/cxdtv				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/cxdtv/cxdtv.kmod			base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/cyclic				base-kernel-modules	kmod,dtrace,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/cyclic/cyclic.kmod		base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dbcool				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dbcool/dbcool.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/des				base-kernel-modules	kmod,compatmodules
@@ -248,10 +248,10 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/dk_subr/dk_subr.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dm				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dm/dm.kmod			base-kernel-modules	kmod,compatmodules
-./stand/amd64-xen/@OSRELEASE@/modules/dtrace				base-kernel-modules	kmod,dtrace,compatmodules
-./stand/amd64-xen/@OSRELEASE@/modules/dtrace/dtrace.kmod		base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/drm				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/drm/drm.kmod			base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/dtrace				base-kernel-modules	kmod,dtrace,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/dtrace/dtrace.kmod		base-kernel-modules	kmod,dtrace,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dtv				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dtv/dtv.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dtv_math				base-kernel-modules	kmod,compatmodules

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.712 2014/08/10 08:07:50 spz Exp $
+# $NetBSD: shl.mi,v 1.713 2014/08/22 10:51:38 apb Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -317,8 +317,8 @@
 ./usr/lib/libisccc.so.8.0			base-bind-shlib
 ./usr/lib/libisccfg.so				base-bind-shlib
 ./usr/lib/libisccfg.so.8			base-bind-shlib
-./usr/lib/libisccfg.so.8.1			base-bind-shlib
 ./usr/lib/libisccfg.so.8.0			base-bind-shlib		obsolete
+./usr/lib/libisccfg.so.8.1			base-bind-shlib
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi
 ./usr/lib/libiscsi.so.2				base-iscsi-shlib	iscsi
 ./usr/lib/libiscsi.so.2.0			base-iscsi-shlib	iscsi

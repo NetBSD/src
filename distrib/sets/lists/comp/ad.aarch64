@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.3 2014/08/12 20:57:59 matt Exp $
+# $NetBSD: ad.aarch64,v 1.4 2014/08/22 10:51:38 apb Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -314,12 +314,12 @@
 ./usr/lib/eabi/libgnumalloc_p.a			comp-c-proflib		compat,profile
 ./usr/lib/eabi/libgnumalloc_pic.a		comp-c-piclib		compat,pic,picinstall
 ./usr/lib/eabi/libgomp.a			comp-c-lib		compat,gcc=45,notyet
-./usr/lib/eabi/libgomp.so			base-sys-shlib		compat,pic,gcc=45,notyet
-./usr/lib/eabi/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45,notyet
-./usr/lib/eabi/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,notyet,picinstall
 ./usr/lib/eabi/libgomp.a			comp-c-lib		compat,gcc=48,notyet
+./usr/lib/eabi/libgomp.so			base-sys-shlib		compat,pic,gcc=45,notyet
 ./usr/lib/eabi/libgomp.so			base-sys-shlib		compat,pic,gcc=48,notyet
+./usr/lib/eabi/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45,notyet
 ./usr/lib/eabi/libgomp_p.a			comp-c-proflib		compat,profile,gcc=48,notyet
+./usr/lib/eabi/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,notyet,picinstall
 ./usr/lib/eabi/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=48,notyet,picinstall
 ./usr/lib/eabi/libgssapi.a			comp-c-lib		compat,kerberos
 ./usr/lib/eabi/libgssapi.so			base-sys-shlib		compat,pic,kerberos
@@ -829,12 +829,12 @@
 #./usr/lib/eabihf/libgnumalloc_p.a			comp-c-proflib		compat,profile
 #./usr/lib/eabihf/libgnumalloc_pic.a		comp-c-piclib		compat,pic,picinstall
 #./usr/lib/eabihf/libgomp.a			comp-c-lib		compat,gcc=45,notyet
-#./usr/lib/eabihf/libgomp.so			base-sys-shlib		compat,pic,gcc=45,notyet
-#./usr/lib/eabihf/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45,notyet
-#./usr/lib/eabihf/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,notyet,picinstall
 #./usr/lib/eabihf/libgomp.a			comp-c-lib		compat,gcc=48,notyet
+#./usr/lib/eabihf/libgomp.so			base-sys-shlib		compat,pic,gcc=45,notyet
 #./usr/lib/eabihf/libgomp.so			base-sys-shlib		compat,pic,gcc=48,notyet
+#./usr/lib/eabihf/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45,notyet
 #./usr/lib/eabihf/libgomp_p.a			comp-c-proflib		compat,profile,gcc=48,notyet
+#./usr/lib/eabihf/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,notyet,picinstall
 #./usr/lib/eabihf/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=48,notyet,picinstall
 #./usr/lib/eabihf/libgssapi.a			comp-c-lib		compat,kerberos
 #./usr/lib/eabihf/libgssapi.so			base-sys-shlib		compat,pic,kerberos
@@ -1344,12 +1344,12 @@
 ./usr/lib/oabi/libgnumalloc_p.a			comp-c-proflib		compat,profile
 ./usr/lib/oabi/libgnumalloc_pic.a		comp-c-piclib		compat,pic,picinstall
 ./usr/lib/oabi/libgomp.a			comp-c-lib		compat,gcc=45,notyet
-./usr/lib/oabi/libgomp.so			base-sys-shlib		compat,pic,gcc=45,notyet
-./usr/lib/oabi/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45,notyet
-./usr/lib/oabi/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,notyet,picinstall
 ./usr/lib/oabi/libgomp.a			comp-c-lib		compat,gcc=48,notyet
+./usr/lib/oabi/libgomp.so			base-sys-shlib		compat,pic,gcc=45,notyet
 ./usr/lib/oabi/libgomp.so			base-sys-shlib		compat,pic,gcc=48,notyet
+./usr/lib/oabi/libgomp_p.a			comp-c-proflib		compat,profile,gcc=45,notyet
 ./usr/lib/oabi/libgomp_p.a			comp-c-proflib		compat,profile,gcc=48,notyet
+./usr/lib/oabi/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=45,notyet,picinstall
 ./usr/lib/oabi/libgomp_pic.a			comp-c-piclib		compat,pic,gcc=48,notyet,picinstall
 ./usr/lib/oabi/libgssapi.a			comp-c-lib		compat,kerberos
 ./usr/lib/oabi/libgssapi.so			base-sys-shlib		compat,pic,kerberos
