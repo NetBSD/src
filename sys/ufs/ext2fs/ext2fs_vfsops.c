@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.183 2014/07/09 08:43:54 maxv Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.183.2.1 2014/08/22 19:20:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.183 2014/07/09 08:43:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.183.2.1 2014/08/22 19:20:15 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1024,7 +1024,7 @@ ext2fs_loadvnode(struct mount *mp, struct vnode *vp,
 		if (++ext2gennumber < (u_long)time_second)
 			ext2gennumber = time_second;
 		ip->i_e2fs_gen = ext2gennumber;
-		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
+		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			ip->i_flag |= IN_MODIFIED;
 	}
 	uvm_vnp_setsize(vp, ext2fs_size(ip));
