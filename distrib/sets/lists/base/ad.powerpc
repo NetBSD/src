@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.17 2014/08/10 08:07:50 spz Exp $
+# $NetBSD: ad.powerpc,v 1.18 2014/08/22 10:51:38 apb Exp $
 ./lib/powerpc					base-npf-shlib		compat,arch64
 ./lib/powerpc/npf				base-npf-shlib		compat,arch64
 ./lib/powerpc/npf/ext_log.so			base-npf-shlib		compat,arch64,pic
@@ -153,8 +153,8 @@
 ./usr/lib/powerpc/libisccc.so.8			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libisccc.so.8.0		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libisccfg.so.8		base-compat-shlib	compat,arch64,pic
-./usr/lib/powerpc/libisccfg.so.8.1		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libisccfg.so.8.0		base-compat-shlib	obsolete
+./usr/lib/powerpc/libisccfg.so.8.1		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libiscsi.so.2			base-compat-shlib	compat,arch64,pic,iscsi
 ./usr/lib/powerpc/libiscsi.so.2.0		base-compat-shlib	compat,arch64,pic,iscsi
 ./usr/lib/powerpc/libisns.so.0			base-compat-shlib	compat,arch64,pic

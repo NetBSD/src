@@ -1,5 +1,4 @@
-# $NetBSD: md.i386,v 1.45 2014/05/15 16:32:28 apb Exp $
-#./usr/libdata/lint/llib-lIntelXvMC.ln			-unknown-	lint,xorg
+# $NetBSD: md.i386,v 1.46 2014/08/22 10:51:39 apb Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0			-unknown-	.cat,x11
@@ -89,6 +88,7 @@
 ./usr/X11R7/lib/libdrm_intel_pic.a			-unknown-	xorg,picinstall
 ./usr/X11R7/lib/pkgconfig/libdrm_intel.pc		-unknown-	xorg
 ./usr/libdata/lint/llib-lI810XvMC.ln			-unknown-	lint,xorg
+#./usr/libdata/lint/llib-lIntelXvMC.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lchromeXvMC.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lchromeXvMCPro.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-ldrm_intel.ln			-unknown-	lint,xorg

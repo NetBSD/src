@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.42 2014/08/10 08:07:50 spz Exp $
+# $NetBSD: ad.arm,v 1.43 2014/08/22 10:51:38 apb Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -106,6 +106,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libhx509.so.5.0.debug	comp-krb5-debug	kerberos,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libintl.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libipsec.so.3.0.debug	comp-net-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libirs.so.8.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisc.so.6.0.debug		comp-bind-debug	debug,compat,obsolete
 ./usr/libdata/debug/usr/lib/oabi/libisc.so.8.0.debug		comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisccc.so.6.0.debug	comp-bind-debug	debug,compat,obsolete
@@ -113,7 +114,6 @@
 ./usr/libdata/debug/usr/lib/oabi/libisccfg.so.6.0.debug	comp-bind-debug	debug,compat,obsolete
 ./usr/libdata/debug/usr/lib/oabi/libisccfg.so.8.0.debug	comp-bind-debug	debug,compat,obsolete
 ./usr/libdata/debug/usr/lib/oabi/libisccfg.so.8.1.debug	comp-bind-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libirs.so.8.0.debug	comp-bind-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libiscsi.so.2.0.debug	comp-iscsi-debug	iscsi,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libisns.so.0.0.debug	comp-isns-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libkadm5clnt.so.12.0.debug	 comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
