@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.82 2013/10/19 01:09:16 christos Exp $	*/
+/*	$NetBSD: ping6.c,v 1.83 2014/08/22 20:54:29 matt Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.82 2013/10/19 01:09:16 christos Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.83 2014/08/22 20:54:29 matt Exp $");
 #endif
 #endif
 
@@ -125,6 +125,7 @@ __RCSID("$NetBSD: ping6.c,v 1.82 2013/10/19 01:09:16 christos Exp $");
 #include <fcntl.h>
 #include <math.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1844,6 +1845,7 @@ pr_suptypes(struct icmp6_nodeinfo *ni /* ni->qtype must be SUPTYPES */,
 	}
 
 	while (cp < end) {
+		size_t skip = 0;
 		clen = (size_t)(end - cp);
 		if ((ni->ni_flags & NI_SUPTYPE_FLAG_COMPRESS) == 0) {
 			if (clen == 0 || clen > MAXQTYPES / 8 ||
@@ -1860,8 +1862,8 @@ pr_suptypes(struct icmp6_nodeinfo *ni /* ni->qtype must be SUPTYPES */,
 				return;
 			cp += sizeof(cbit);
 			clen = ntohs(cbit.words) * sizeof(v);
-			if (cur + clen * 8 + (u_long)ntohs(cbit.skip) * 32 >
-			    MAXQTYPES)
+			skip = (size_t)ntohs(cbit.skip) * 32;
+			if (cur + clen * 8 + skip > MAXQTYPES)
 				return;
 		}
 
@@ -1874,9 +1876,7 @@ pr_suptypes(struct icmp6_nodeinfo *ni /* ni->qtype must be SUPTYPES */,
 		b = pr_bitrange(0, (int)(cur + off * 8), b);
 
 		cp += clen;
-		cur += clen * 8;
-		if ((ni->ni_flags & NI_SUPTYPE_FLAG_COMPRESS) != 0)
-			cur += ntohs(cbit.skip) * 32;
+		cur += clen * 8 + skip;
 	}
 }
 
