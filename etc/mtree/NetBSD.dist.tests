@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.108 2014/06/30 21:32:59 alnsn Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.109 2014/08/22 16:45:32 apb Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -358,6 +358,7 @@
 ./usr/tests/usr.bin/jot
 ./usr/tests/usr.bin/m4
 ./usr/tests/usr.bin/make
+./usr/tests/usr.bin/make/unit-tests
 ./usr/tests/usr.bin/mkdep
 ./usr/tests/usr.bin/nbperf
 ./usr/tests/usr.bin/pr
