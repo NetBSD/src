@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.11 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: ex_tag.c,v 1.12 2014/08/22 21:28:20 aymeric Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 static const char sccsid[] = "Id: ex_tag.c,v 10.50 2004/03/16 14:09:11 skimo Exp  (Berkeley) Date: 2004/03/16 14:09:11 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ex_tag.c,v 1.11 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: ex_tag.c,v 1.12 2014/08/22 21:28:20 aymeric Exp $");
 #endif
 
 #include <sys/param.h>
@@ -606,6 +606,7 @@ ex_tag_copy(SCR *orig, SCR *sp)
 			TAILQ_INSERT_TAIL(&tqp->tagq, tp, q);
 		}
 		TAILQ_INSERT_TAIL(&nexp->tq, tqp, q);
+		F_SET(tqp, TAG_IS_LINKED);
 	}
 
 	/* Copy list of tag files. */
@@ -740,7 +741,7 @@ tagq_free(SCR *sp, TAGQ *tqp)
 	 * If allocated and then the user failed to switch files, the TAGQ
 	 * structure was never attached to any list.
 	 */
-	if (TAILQ_NEXT(tqp, q) != NULL)
+	if (F_ISSET(tqp, TAG_IS_LINKED))
 		TAILQ_REMOVE(&exp->tq, tqp, q);
 	free(tqp);
 	return (0);
@@ -810,6 +811,7 @@ tagq_push(SCR *sp, TAGQ *tqp, int new_screen, int force)
 	 */
 	if (TAILQ_EMPTY(&exp->tq)) {
 		TAILQ_INSERT_HEAD(&exp->tq, rtqp, q);
+		F_SET(rtqp, TAG_IS_LINKED);
 	} else {
 		free(rtqp);
 		rtqp = TAILQ_FIRST(&exp->tq);
@@ -817,6 +819,7 @@ tagq_push(SCR *sp, TAGQ *tqp, int new_screen, int force)
 
 	/* Link the new TAGQ structure into place. */
 	TAILQ_INSERT_HEAD(&exp->tq, tqp, q);
+	F_SET(tqp, TAG_IS_LINKED);
 
 	(void)ctag_search(sp,
 	    tqp->current->search, tqp->current->slen, tqp->tag);
