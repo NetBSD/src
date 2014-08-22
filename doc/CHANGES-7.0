@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.19 2014/08/22 10:42:39 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.20 2014/08/22 19:21:53 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -338,3 +338,10 @@ sys/external/bsd/common/include/linux/list.h	1.5
 sys/dev/ic/mfi.c				1.54-1.55
 	Fix mfi(4) panic on boot on some mfi(4) chips.
 	[msaitoh, ticket #48]
+
+sys/ufs/ext2fs/ext2fs_vfsops.c			1.184
+	Use mount from argument "mp", "vp->v_mount" is not valid here.
+	PR kern/49142 (panic in ext2fs_loadvnode mounting an ext2fs
+	filesystem)
+	[hannken, ticket #49]
+
