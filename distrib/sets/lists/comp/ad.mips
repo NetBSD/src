@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.50 2014/07/23 18:19:43 alnsn Exp $
+# $NetBSD: ad.mips,v 1.51 2014/08/22 10:51:38 apb Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/g++/bits/mips32			comp-c-include		arch64
@@ -62,8 +62,8 @@
 ./usr/include/mips/rwlock.h			comp-c-include
 ./usr/include/mips/setjmp.h			comp-c-include
 ./usr/include/mips/signal.h			comp-c-include
-./usr/include/mips/sljitarch.h			comp-obsolete		obsolete
 ./usr/include/mips/sljit_machdep.h		comp-c-include
+./usr/include/mips/sljitarch.h			comp-obsolete		obsolete
 ./usr/include/mips/stdarg.h			comp-obsolete		obsolete
 ./usr/include/mips/sysarch.h			comp-c-include
 ./usr/include/mips/trap.h			comp-c-include

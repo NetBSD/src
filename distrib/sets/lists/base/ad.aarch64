@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.3 2014/08/11 13:40:34 joerg Exp $
+# $NetBSD: ad.aarch64,v 1.4 2014/08/22 10:51:38 apb Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-npf-shlib		compat
 ./lib/eabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -85,10 +85,10 @@
 ./usr/lib/eabi/i18n/libmapper_zone.so.5.0		base-i18n-shlib		compat,pic
 ./usr/lib/eabi/libamu.so.4			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libamu.so.4.0			base-compat-shlib	compat,pic
-./usr/lib/eabi/libarm.so.0			base-compat-shlib	compat,pic
-./usr/lib/eabi/libarm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libarchive.so.3			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libarchive.so.3.1		base-compat-shlib	compat,pic
+./usr/lib/eabi/libarm.so.0			base-compat-shlib	compat,pic
+./usr/lib/eabi/libarm.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libasn1.so.9			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/eabi/libasn1.so.9.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/eabi/libatf-c++.so.1			base-compat-shlib	compat,pic,atf
@@ -154,8 +154,8 @@
 ./usr/lib/eabi/libgnumalloc.so.1			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libgnumalloc.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/eabi/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45,notyet
-./usr/lib/eabi/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45,notyet
 ./usr/lib/eabi/libgomp.so.1			base-compat-shlib	compat,pic,gcc=48,notyet
+./usr/lib/eabi/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45,notyet
 ./usr/lib/eabi/libgomp.so.1.1			base-compat-shlib	compat,pic,gcc=48,notyet
 ./usr/lib/eabi/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/eabi/libgssapi.so.10.0			base-compat-shlib	compat,pic,kerberos
@@ -227,9 +227,9 @@
 ./usr/lib/eabi/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/eabi/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,gcc=4
 ./usr/lib/eabi/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,gcc=45
-./usr/lib/eabi/libobjc.so.4			base-compat-shlib	compat,pic,gcccmds,gcc=48
 ./usr/lib/eabi/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,gcc=4
 ./usr/lib/eabi/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,gcc=45
+./usr/lib/eabi/libobjc.so.4			base-compat-shlib	compat,pic,gcccmds,gcc=48
 ./usr/lib/eabi/libobjc.so.4.0			base-compat-shlib	compat,pic,gcccmds,gcc=48
 ./usr/lib/eabi/libopcodes.so.6			base-compat-shlib	compat,pic,binutils
 ./usr/lib/eabi/libopcodes.so.6.0			base-compat-shlib	compat,pic,binutils
@@ -399,10 +399,10 @@
 #./usr/lib/eabihf/i18n/libmapper_zone.so.5.0		base-i18n-shlib		compat,pic
 #./usr/lib/eabihf/libamu.so.4			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/libamu.so.4.0			base-compat-shlib	compat,pic
-#./usr/lib/eabihf/libarm.so.0			base-compat-shlib	compat,pic
-#./usr/lib/eabihf/libarm.so.0.0			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/libarchive.so.3			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/libarchive.so.3.1			base-compat-shlib	compat,pic
+#./usr/lib/eabihf/libarm.so.0			base-compat-shlib	compat,pic
+#./usr/lib/eabihf/libarm.so.0.0			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/libasn1.so.9			base-compat-shlib	compat,pic,kerberos
 #./usr/lib/eabihf/libasn1.so.9.0			base-compat-shlib	compat,pic,kerberos
 #./usr/lib/eabihf/libatf-c++.so.1			base-compat-shlib	compat,pic,atf
@@ -468,8 +468,8 @@
 #./usr/lib/eabihf/libgnumalloc.so.1			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/libgnumalloc.so.1.0		base-compat-shlib	compat,pic
 #./usr/lib/eabihf/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45,notyet
-#./usr/lib/eabihf/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45,notyet
 #./usr/lib/eabihf/libgomp.so.1			base-compat-shlib	compat,pic,gcc=48,notyet
+#./usr/lib/eabihf/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45,notyet
 #./usr/lib/eabihf/libgomp.so.1.1			base-compat-shlib	compat,pic,gcc=48,notyet
 #./usr/lib/eabihf/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos
 #./usr/lib/eabihf/libgssapi.so.10.0			base-compat-shlib	compat,pic,kerberos
@@ -541,9 +541,9 @@
 #./usr/lib/eabihf/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
 #./usr/lib/eabihf/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,gcc=4
 #./usr/lib/eabihf/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,gcc=45
-#./usr/lib/eabihf/libobjc.so.4			base-compat-shlib	compat,pic,gcccmds,gcc=48
 #./usr/lib/eabihf/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,gcc=4
 #./usr/lib/eabihf/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,gcc=45
+#./usr/lib/eabihf/libobjc.so.4			base-compat-shlib	compat,pic,gcccmds,gcc=48
 #./usr/lib/eabihf/libobjc.so.4.0			base-compat-shlib	compat,pic,gcccmds,gcc=48
 #./usr/lib/eabihf/libopcodes.so.6			base-compat-shlib	compat,pic,binutils
 #./usr/lib/eabihf/libopcodes.so.6.0			base-compat-shlib	compat,pic,binutils
@@ -780,8 +780,8 @@
 ./usr/lib/oabi/libgnumalloc.so.1		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libgnumalloc.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libgomp.so.1			base-compat-shlib	compat,pic,gcc=45
-./usr/lib/oabi/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45
 ./usr/lib/oabi/libgomp.so.1			base-compat-shlib	compat,pic,gcc=48
+./usr/lib/oabi/libgomp.so.1.0			base-compat-shlib	compat,pic,gcc=45
 ./usr/lib/oabi/libgomp.so.1.1			base-compat-shlib	compat,pic,gcc=48
 ./usr/lib/oabi/libgssapi.so.10			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libgssapi.so.10.0		base-compat-shlib	compat,pic,kerberos
@@ -853,9 +853,9 @@
 ./usr/lib/oabi/libnpf.so.0.0			base-compat-shlib	compat,pic,npf
 ./usr/lib/oabi/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,gcc=4
 ./usr/lib/oabi/libobjc.so.3			base-compat-shlib	compat,pic,gcccmds,gcc=45
-./usr/lib/oabi/libobjc.so.4			base-compat-shlib	compat,pic,gcccmds,gcc=48
 ./usr/lib/oabi/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,gcc=4
 ./usr/lib/oabi/libobjc.so.3.0			base-compat-shlib	compat,pic,gcccmds,gcc=45
+./usr/lib/oabi/libobjc.so.4			base-compat-shlib	compat,pic,gcccmds,gcc=48
 ./usr/lib/oabi/libobjc.so.4.0			base-compat-shlib	compat,pic,gcccmds,gcc=48
 ./usr/lib/oabi/libopcodes.so.6			base-compat-shlib	compat,pic,binutils
 ./usr/lib/oabi/libopcodes.so.6.0		base-compat-shlib	compat,pic,binutils

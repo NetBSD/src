@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.224 2014/08/10 17:32:54 joerg Exp $
+# $NetBSD: md.amd64,v 1.225 2014/08/22 10:51:38 apb Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -58,8 +58,8 @@
 ./usr/include/amd64/segments.h			comp-c-include
 ./usr/include/amd64/setjmp.h			comp-c-include
 ./usr/include/amd64/signal.h			comp-c-include
-./usr/include/amd64/sljitarch.h			comp-obsolete		obsolete
 ./usr/include/amd64/sljit_machdep.h		comp-c-include
+./usr/include/amd64/sljitarch.h			comp-obsolete		obsolete
 ./usr/include/amd64/specialreg.h		comp-c-include
 ./usr/include/amd64/stdarg.h			comp-obsolete		obsolete
 ./usr/include/amd64/sysarch.h			comp-c-include
@@ -304,8 +304,8 @@
 ./usr/include/i386/segments.h			comp-c-include
 ./usr/include/i386/setjmp.h			comp-c-include
 ./usr/include/i386/signal.h			comp-c-include
-./usr/include/i386/sljitarch.h			comp-obsolete		obsolete
 ./usr/include/i386/sljit_machdep.h		comp-c-include
+./usr/include/i386/sljitarch.h			comp-obsolete		obsolete
 ./usr/include/i386/specialreg.h			comp-c-include
 ./usr/include/i386/spkr.h			comp-c-include
 ./usr/include/i386/stdarg.h			comp-obsolete		obsolete

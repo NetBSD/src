@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1087 2014/08/10 17:32:54 joerg Exp $
+# $NetBSD: mi,v 1.1088 2014/08/22 10:51:38 apb Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1681,8 +1681,8 @@
 ./usr/sbin/supscan				base-sup-bin
 ./usr/sbin/sushi				base-obsolete		obsolete
 ./usr/sbin/sysconfd				base-obsolete		obsolete
-./usr/sbin/sysinst				base-sysutil-bin
 ./usr/sbin/sysctl				base-obsolete		obsolete
+./usr/sbin/sysinst				base-sysutil-bin
 ./usr/sbin/syslogd				base-sysutil-bin
 ./usr/sbin/tbrconfig				base-obsolete		obsolete
 ./usr/sbin/tcpdchk				base-netutil-bin
@@ -1824,10 +1824,10 @@
 ./usr/share/doc/reference/ref1/mail		base-usd-share
 ./usr/share/doc/reference/ref1/make		base-psd-share
 ./usr/share/doc/reference/ref1/roff		base-usd-share
-./usr/share/doc/reference/ref1/roff/msmacros	base-usd-share
-./usr/share/doc/reference/ref1/roff/msdiffs	base-usd-share
 ./usr/share/doc/reference/ref1/roff/memacros	base-usd-share
 ./usr/share/doc/reference/ref1/roff/meref	base-usd-share
+./usr/share/doc/reference/ref1/roff/msdiffs	base-usd-share
+./usr/share/doc/reference/ref1/roff/msmacros	base-usd-share
 ./usr/share/doc/reference/ref1/sh		base-usd-share
 ./usr/share/doc/reference/ref1/vi		base-usd-share
 ./usr/share/doc/reference/ref2			base-sys-share
