@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.52 2014/07/06 18:22:03 dholland Exp $
+# $NetBSD: mi,v 1.53 2014/08/22 10:51:38 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -101,10 +101,10 @@
 ./usr/share/doc/reference/ref6/trek/trek.html		games-usd-doc		doc,html,groffhtmldoc
 ./usr/share/doc/reference/ref6/trek/trek.ps.gz		games-usd-doc		doc
 ./usr/share/doc/reference/ref6/trek/trek.txt		games-usd-doc		doc
-./usr/share/doc/usd/31.trek/trek.me		games-obsolete		obsolete
 ./usr/share/doc/usd/30.rogue/Makefile		games-obsolete		obsolete
 ./usr/share/doc/usd/30.rogue/rogue.me		games-obsolete		obsolete
 ./usr/share/doc/usd/31.trek/Makefile		games-obsolete		obsolete
+./usr/share/doc/usd/31.trek/trek.me		games-obsolete		obsolete
 ./usr/share/doc/usd/31.trek/trek.me		games-obsolete		obsolete
 ./usr/share/games/atc/ATC_scores		games-obsolete		obsolete
 ./usr/share/games/atc/Atlantis			games-games-share	share

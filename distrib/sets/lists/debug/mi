@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.82 2014/08/14 16:25:20 riastradh Exp $
+# $NetBSD: mi,v 1.83 2014/08/22 10:51:38 apb Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -75,9 +75,9 @@
 ./usr/lib/libheimntlm_g.a			comp-c-debuglib		debuglib,kerberos
 ./usr/lib/libhx509_g.a				comp-c-debuglib		debuglib,kerberos
 ./usr/lib/libiberty_g.a				comp-c-debuglib		debuglib,binutils
-./usr/lib/libirs_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libintl_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libipsec_g.a				comp-c-debuglib		debuglib
+./usr/lib/libirs_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libisc_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libisccc_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libisccfg_g.a				comp-c-debuglib		debuglib
@@ -480,8 +480,8 @@
 ./usr/libdata/debug/usr/bin/cvs.debug		comp-cvs-debug		cvs,debug
 ./usr/libdata/debug/usr/bin/db.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/dc.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/deroff.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/delv.debug		comp-bind-bin		debug
+./usr/libdata/debug/usr/bin/deroff.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/diff.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/diff3.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/dig.debug		comp-netutil-debug	debug
@@ -1788,8 +1788,8 @@
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_put.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_set.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libbpfjit/t_bpfjit.debug		tests-lib-debug		debug,atf,sljit
-./usr/libdata/debug/usr/tests/lib/libbpfjit/t_extmem.debug		tests-lib-debug		debug,atf,sljit
 ./usr/libdata/debug/usr/tests/lib/libbpfjit/t_cop.debug			tests-lib-debug		debug,atf,sljit
+./usr/libdata/debug/usr/tests/lib/libbpfjit/t_extmem.debug		tests-lib-debug		debug,atf,sljit
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_faccessat.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_fchmodat.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/c063/t_fchownat.debug		tests-lib-debug		debug,atf
@@ -2060,8 +2060,8 @@
 ./usr/libdata/debug/usr/tests/lib/libm/t_infinity.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_ldexp.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_libm.debug			tests-obsolete		obsolete
-./usr/libdata/debug/usr/tests/lib/libm/t_modf.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_log.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libm/t_modf.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_pow.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_precision.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_round.debug			tests-lib-debug		debug,atf
