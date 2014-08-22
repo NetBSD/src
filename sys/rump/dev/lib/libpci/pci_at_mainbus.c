@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_at_mainbus.c,v 1.4 2014/07/31 15:55:08 pooka Exp $	*/
+/*	$NetBSD: pci_at_mainbus.c,v 1.5 2014/08/22 14:28:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.4 2014/07/31 15:55:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_at_mainbus.c,v 1.5 2014/08/22 14:28:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -80,7 +80,7 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV_AFTERMAINBUS)
 #endif
 	pba.pba_flags = PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;;
-#if 0
+#ifdef RUMP_PCI_IOSPACE
 	pba.pba_flags |= PCI_FLAGS_IO_OKAY;
 #endif
 
