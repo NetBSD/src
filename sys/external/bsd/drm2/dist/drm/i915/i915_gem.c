@@ -1842,6 +1842,9 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 
 	intel_runtime_pm_get(dev_priv);
 
+	/* Thanks, uvm, but we don't need this lock.  */
+	mutex_exit(uobj->vmobjlock);
+
 	ret = i915_mutex_lock_interruptible(dev);
 	if (ret)
 		goto out;
@@ -1880,6 +1883,7 @@ unpin:
 unlock:
 	mutex_unlock(&dev->struct_mutex);
 out:
+	mutex_enter(uobj->vmobjlock);
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 	if (ret == -ERESTART)
 		uvm_wait("i915flt");
