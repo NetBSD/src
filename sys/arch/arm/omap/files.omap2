@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.28 2014/07/16 18:31:17 bouyer Exp $
+#	$NetBSD: files.omap2,v 1.29 2014/08/22 19:44:04 jakllsch Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -158,7 +158,7 @@ attach	omapfb at obio
 file	arch/arm/omap/omapfb.c			omapfb
 
 # TI AM335x framebuffer
-device	tifb: rasops16, rasops8, wsemuldisplaydev, vcons, edid
+device	tifb: rasops32, rasops24, rasops16, rasops8, wsemuldisplaydev, vcons, edid
 attach	tifb at obio
 file	arch/arm/omap/tifb.c			tifb
 
