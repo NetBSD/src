@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.5 2014/07/26 18:13:44 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.5.2.1 2014/08/22 10:32:19 martin Exp $
 
 define	intelfbbus	{ }
 device	i915drmkms: drmkms, drmkms_pci, intelfbbus
@@ -60,8 +60,7 @@ file	external/bsd/drm2/dist/drm/i915/intel_hdmi.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_i2c.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_lvds.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_modes.c	i915drmkms
-# XXX Restore once I figure out what this does...
-#file	external/bsd/drm2/dist/drm/i915/intel_opregion.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/intel_opregion.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_overlay.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_panel.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_pm.c	i915drmkms
