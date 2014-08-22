@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.18 2014/08/21 15:21:16 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.19 2014/08/22 10:42:39 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -298,3 +298,43 @@ sys/miscfs/umapfs/umap_vfsops.c			1.94
 	Both triggerable from root only.
 	[maxv, ticket #43]
 
+sys/altq/altq_jobs.c				1.7
+	Fix error branches to avoid leaks, noted by maxv@.
+sys/dev/ic/oosiop.c				1.14
+	Fix leaks in oosiop_alloc_cb error branches, noted by maxv@.
+	While here, avoid a sketchy pointer cast that probably falls afoul
+	of strict aliasing rules.
+sys/dev/qbus/if_qe.c				1.73
+	Avoid leak in error branch, noted by maxv@, compile-tested for vax.
+sys/dev/rasops/rasops.c				1.72
+	Don't leak f on failure.  Noted by maxv@.
+sys/dev/vme/if_ie_vme.c				1.31
+	Sizeof struct ievme, not sizeof size_t.
+	Noted by maxv@, compile-tested for sparc.
+sys/net/if_gre.c				1.160
+	Don't leak in gre_clone_create error branch.
+	Noted by maxv@, compile-tested for amd64.
+	[riastradh, ticket #44]
+
+sys/external/bsd/drm2/dist/drm/i915/i915_drv.h	1.8
+sys/external/bsd/drm2/i915drm/files.i915drmkms	1.6
+	Restore Intel opregion stuff.
+	[riastradh, ticket #45]
+
+sys/external/bsd/drm2/dist/drm/i915/i915_gem.c	1.15
+sys/external/bsd/drm2/ttm/ttm_bo_vm.c		1.4
+	Do not take the {ttm,gem} vmobjlock in the fault handler.
+	 - We don't need this lock.
+	 - uvm does nothing between taking it and calling the fault handler.
+	 - Now that the uvm_aobj shares vmobjlock with the {ttm,gem} uvm
+	   object, we must not hold the lock when we call uvm_obj_wirepages on
+	   the uvm_aobj.
+	[riastradh, ticket #46]
+
+sys/external/bsd/common/include/linux/list.h	1.5
+	Add some Linux list routines.
+	[riastradh, ticket #47]
+
+sys/dev/ic/mfi.c				1.54-1.55
+	Fix mfi(4) panic on boot on some mfi(4) chips.
+	[msaitoh, ticket #48]
