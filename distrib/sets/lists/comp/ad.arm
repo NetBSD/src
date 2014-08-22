@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.59 2014/08/10 17:32:54 joerg Exp $
+# $NetBSD: ad.arm,v 1.60 2014/08/22 10:51:38 apb Exp $
 ./usr/include/acorn26				comp-c-include
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
 ./usr/include/acorn26/aout_machdep.h		comp-obsolete		obsolete
@@ -172,8 +172,8 @@
 ./usr/include/arm/rwlock.h			comp-c-include
 ./usr/include/arm/setjmp.h			comp-c-include
 ./usr/include/arm/signal.h			comp-c-include
-./usr/include/arm/sljitarch.h			comp-obsolete		obsolete
 ./usr/include/arm/sljit_machdep.h		comp-c-include
+./usr/include/arm/sljitarch.h			comp-obsolete		obsolete
 ./usr/include/arm/stdarg.h			comp-obsolete		obsolete
 ./usr/include/arm/swi.h				comp-c-include
 ./usr/include/arm/sysarch.h			comp-c-include
@@ -381,8 +381,8 @@
 ./usr/include/evbarm/rwlock.h			comp-obsolete		obsolete
 ./usr/include/evbarm/setjmp.h			comp-obsolete		obsolete
 ./usr/include/evbarm/signal.h			comp-obsolete		obsolete
-./usr/include/evbarm/sljitarch.h		comp-obsolete		obsolete
 ./usr/include/evbarm/sljit_machdep.h		comp-c-include
+./usr/include/evbarm/sljitarch.h		comp-obsolete		obsolete
 ./usr/include/evbarm/stdarg.h			comp-obsolete		obsolete
 ./usr/include/evbarm/sysarch.h			comp-obsolete		obsolete
 ./usr/include/evbarm/trap.h			comp-obsolete		obsolete
@@ -440,8 +440,8 @@
 ./usr/include/hpcarm/rwlock.h			comp-obsolete		obsolete
 ./usr/include/hpcarm/setjmp.h			comp-obsolete		obsolete
 ./usr/include/hpcarm/signal.h			comp-obsolete		obsolete
-./usr/include/hpcarm/sljitarch.h		comp-obsolete		obsolete
 ./usr/include/hpcarm/sljit_machdep.h		comp-c-include
+./usr/include/hpcarm/sljitarch.h		comp-obsolete		obsolete
 ./usr/include/hpcarm/stdarg.h			comp-obsolete		obsolete
 ./usr/include/hpcarm/sysarch.h			comp-obsolete		obsolete
 ./usr/include/hpcarm/trap.h			comp-obsolete		obsolete
@@ -493,8 +493,8 @@
 ./usr/include/iyonix/rwlock.h			comp-obsolete		obsolete
 ./usr/include/iyonix/setjmp.h			comp-obsolete		obsolete
 ./usr/include/iyonix/signal.h			comp-obsolete		obsolete
-./usr/include/iyonix/sljitarch.h		comp-obsolete		obsolete
 ./usr/include/iyonix/sljit_machdep.h		comp-c-include
+./usr/include/iyonix/sljitarch.h		comp-obsolete		obsolete
 ./usr/include/iyonix/stdarg.h			comp-obsolete		obsolete
 ./usr/include/iyonix/sysarch.h			comp-obsolete		obsolete
 ./usr/include/iyonix/trap.h			comp-obsolete		obsolete
@@ -645,8 +645,8 @@
 ./usr/include/zaurus/rwlock.h			comp-obsolete		obsolete
 ./usr/include/zaurus/setjmp.h			comp-obsolete		obsolete
 ./usr/include/zaurus/signal.h			comp-obsolete		obsolete
-./usr/include/zaurus/sljitarch.h		comp-obsolete		obsolete
 ./usr/include/zaurus/sljit_machdep.h		comp-c-include
+./usr/include/zaurus/sljitarch.h		comp-obsolete		obsolete
 ./usr/include/zaurus/stdarg.h			comp-obsolete		obsolete
 ./usr/include/zaurus/sysarch.h			comp-obsolete		obsolete
 ./usr/include/zaurus/trap.h			comp-obsolete		obsolete

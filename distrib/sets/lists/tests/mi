@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.584 2014/08/09 07:04:03 gson Exp $
+# $NetBSD: mi,v 1.585 2014/08/22 10:51:38 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -831,16 +831,6 @@
 ./usr/tests/bin/sh				tests-bin-tests
 ./usr/tests/bin/sh/Atffile			tests-bin-tests		atf
 ./usr/tests/bin/sh/Kyuafile			tests-bin-tests		atf,kyua
-./usr/tests/bin/sh/t_compexit			tests-bin-tests		atf
-./usr/tests/bin/sh/t_evaltested			tests-bin-tests		atf
-./usr/tests/bin/sh/t_exit			tests-bin-tests		atf
-./usr/tests/bin/sh/t_expand			tests-bin-tests		atf
-./usr/tests/bin/sh/t_fsplit			tests-bin-tests		atf
-./usr/tests/bin/sh/t_here			tests-bin-tests		atf
-./usr/tests/bin/sh/t_set_e			tests-bin-tests		atf
-./usr/tests/bin/sh/t_ulimit			tests-bin-tests		atf
-./usr/tests/bin/sh/t_varquote			tests-bin-tests		atf
-./usr/tests/bin/sh/t_wait			tests-bin-tests		atf
 ./usr/tests/bin/sh/dotcmd			tests-bin-tests
 ./usr/tests/bin/sh/dotcmd/Atffile	tests-bin-tests	atf
 ./usr/tests/bin/sh/dotcmd/Kyuafile	tests-bin-tests	atf,kyua
@@ -1254,6 +1244,16 @@
 ./usr/tests/bin/sh/dotcmd/while_return_subshell	tests-bin-tests	atf
 ./usr/tests/bin/sh/dotcmd/while_return_until	tests-bin-tests	atf
 ./usr/tests/bin/sh/dotcmd/while_return_while	tests-bin-tests	atf
+./usr/tests/bin/sh/t_compexit			tests-bin-tests		atf
+./usr/tests/bin/sh/t_evaltested			tests-bin-tests		atf
+./usr/tests/bin/sh/t_exit			tests-bin-tests		atf
+./usr/tests/bin/sh/t_expand			tests-bin-tests		atf
+./usr/tests/bin/sh/t_fsplit			tests-bin-tests		atf
+./usr/tests/bin/sh/t_here			tests-bin-tests		atf
+./usr/tests/bin/sh/t_set_e			tests-bin-tests		atf
+./usr/tests/bin/sh/t_ulimit			tests-bin-tests		atf
+./usr/tests/bin/sh/t_varquote			tests-bin-tests		atf
+./usr/tests/bin/sh/t_wait			tests-bin-tests		atf
 ./usr/tests/bin/sleep				tests-bin-tests
 ./usr/tests/bin/sleep/Atffile			tests-bin-tests		atf
 ./usr/tests/bin/sleep/Kyuafile			tests-bin-tests		atf,kyua
@@ -2320,8 +2320,8 @@
 ./usr/tests/lib/libbpfjit/Atffile		tests-lib-tests		atf,sljit
 ./usr/tests/lib/libbpfjit/Kyuafile		tests-lib-tests		atf,sljit,kyua
 ./usr/tests/lib/libbpfjit/t_bpfjit		tests-lib-tests		atf,sljit
-./usr/tests/lib/libbpfjit/t_extmem		tests-lib-tests		atf,sljit
 ./usr/tests/lib/libbpfjit/t_cop			tests-lib-tests		atf,sljit
+./usr/tests/lib/libbpfjit/t_extmem		tests-lib-tests		atf,sljit
 ./usr/tests/lib/libc				tests-lib-tests
 ./usr/tests/lib/libc/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/libc/Kyuafile			tests-lib-tests		atf,kyua
