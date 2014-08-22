@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.97 2014/08/05 15:45:49 apb Exp $
+#	$NetBSD: Makefile,v 1.98 2014/08/22 10:51:18 apb Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -304,15 +304,26 @@ makesyspkgsums: .PHONY check_RELEASEDIR
 makedeps: .PHONY
 	${SETSCMD} ./syspkgdeps all >${.CURDIR}/deps
 
-# Sort the lists files
+# Sort the lists files.
+#
+# The tricky stuff with awk and sort -k options is to ensure that the
+# heading remains undisturbed, and on non-heading lines anything before
+# the first "." is ignored, so that "./dir/file" and "#./dir/file" are
+# sorted together.
+#
 sortlists: .PHONY
 	find ${.CURDIR}/lists \! \( -name CVS -prune \) \! -name .#\* \
 	    -type f -print \
 	| while read f ; do \
 	    ${_MKSHMSG} "sorting $${f#${.CURDIR}/}" ; \
-	    { grep '^#' "$$f" ; \
-	      grep -v '^#' "$$f" | sort ; \
-	    } | cat -s >"$$f".tmp; \
+	    awk 'BEGIN { inheader = 1 } \
+		 /^#*\.\// { inheader = 0 } \
+		 // { tag = (inheader ? NR : 999999); \
+		      print tag "." $$0 }' \
+		<"$$f" \
+	    | sort -t . -k 1n,2 -k 3 \
+	    | cut -d . -f 2- \
+	    | cat -s >"$$f".tmp; \
 	    if cmp "$$f" "$$f".tmp >/dev/null; then \
 	      : "$$f is unchanged" ; \
 	      rm "$$f".tmp ; \
