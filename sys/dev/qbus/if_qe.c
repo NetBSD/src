@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.72 2013/10/25 15:42:50 martin Exp $ */
+/*      $NetBSD: if_qe.c,v 1.72.4.1 2014/08/22 10:15:22 martin Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.72 2013/10/25 15:42:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.72.4.1 2014/08/22 10:15:22 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -142,7 +142,7 @@ qematch(device_t parent, cfdata_t cf, void *aux)
 #define	PROBESIZE	4096
 	struct qe_ring *ring;
 	struct	qe_ring *rp;
-	int error;
+	int error, match;
 
 	ring = malloc(PROBESIZE, M_TEMP, M_WAITOK|M_ZERO);
 	memset(sc, 0, sizeof(*sc));
@@ -161,8 +161,10 @@ qematch(device_t parent, cfdata_t cf, void *aux)
 	 */
 	ui.ui_size = PROBESIZE;
 	ui.ui_vaddr = (void *)&ring[0];
-	if ((error = uballoc(uh, &ui, UBA_CANTWAIT)))
-		return 0;
+	if ((error = uballoc(uh, &ui, UBA_CANTWAIT))) {
+		match = 0;
+		goto out0;
+	}
 
 	/*
 	 * Init a simple "fake" receive and transmit descriptor that
@@ -192,12 +194,14 @@ qematch(device_t parent, cfdata_t cf, void *aux)
 	QE_WCSR(QE_CSR_XMTH, HIWORD(rp));
 	DELAY(10000);
 
+	match = 1;
+
 	/*
 	 * All done with the bus resources.
 	 */
 	ubfree(uh, &ui);
-	free(ring, M_TEMP);
-	return 1;
+out0:	free(ring, M_TEMP);
+	return match;
 }
 
 /*
