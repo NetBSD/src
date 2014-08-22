@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.53 2014/07/25 08:10:37 dholland Exp $ */
+/* $NetBSD: mfi.c,v 1.53.2.1 2014/08/22 10:41:18 martin Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.53 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.53.2.1 2014/08/22 10:41:18 martin Exp $");
 
 #include "bio.h"
 
@@ -380,15 +380,18 @@ mfi_init_ccb(struct mfi_softc *sc)
 
 	sc->sc_ccb = malloc(sizeof(struct mfi_ccb) * sc->sc_max_cmds,
 	    M_DEVBUF, M_WAITOK|M_ZERO);
-	io_req_base = (uint8_t *)MFIMEM_KVA(sc->sc_tbolt_reqmsgpool);
-	io_req_base_phys = MFIMEM_DVA(sc->sc_tbolt_reqmsgpool);
 	if (sc->sc_ioptype == MFI_IOP_TBOLT) {
 		/*
 		 * The first 256 bytes (SMID 0) is not used.
 		 * Don't add to the cmd list.
 		 */
-		io_req_base += MEGASAS_THUNDERBOLT_NEW_MSG_SIZE;
-		io_req_base_phys += MEGASAS_THUNDERBOLT_NEW_MSG_SIZE;
+		io_req_base = (uint8_t *)MFIMEM_KVA(sc->sc_tbolt_reqmsgpool) +
+		    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE;
+		io_req_base_phys = MFIMEM_DVA(sc->sc_tbolt_reqmsgpool) +
+		    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE;
+	} else {
+		io_req_base = NULL;	/* XXX: gcc */
+		io_req_base_phys = 0;	/* XXX: gcc */
 	}
 
 	for (i = 0; i < sc->sc_max_cmds; i++) {
