@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.2 2014/08/10 23:26:48 matt Exp $
+# $NetBSD: ad.aarch64,v 1.3 2014/08/22 10:51:38 apb Exp $
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetmask.debug
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetround.debug
 ./usr/lib/eabi/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib
@@ -66,6 +66,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libc++.so.1.0.debug	comp-sys-debug	debug,compat,libcxx
 ./usr/libdata/debug/usr/lib/eabi/libc.so.12.193.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/eabi/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
@@ -73,7 +74,6 @@
 ./usr/libdata/debug/usr/lib/eabi/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libcurses.so.7.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libc++.so.1.0.debug	comp-sys-debug	debug,compat,libcxx
 ./usr/libdata/debug/usr/lib/eabi/libdes.so.8.2.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libdm.so.0.0.debug 		comp-sys-debug	debug,compat
@@ -218,6 +218,7 @@
 #./usr/libdata/debug/usr/lib/eabihf/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
+#./usr/libdata/debug/usr/lib/eabihf/libc++.so.1.0.debug	comp-sys-debug	debug,compat,libcxx
 #./usr/libdata/debug/usr/lib/eabihf/libc.so.12.193.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 #./usr/libdata/debug/usr/lib/eabihf/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
@@ -225,7 +226,6 @@
 #./usr/libdata/debug/usr/lib/eabihf/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libcurses.so.7.0.debug	comp-sys-debug	debug,compat
-#./usr/libdata/debug/usr/lib/eabihf/libc++.so.1.0.debug	comp-sys-debug	debug,compat,libcxx
 #./usr/libdata/debug/usr/lib/eabihf/libdes.so.8.2.debug		comp-crypto-debug	crypto,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libdm.so.0.0.debug 		comp-sys-debug	debug,compat
@@ -370,6 +370,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libc++.so.1.0.debug		comp-sys-debug	debug,compat,libcxx
 ./usr/libdata/debug/usr/lib/oabi/libc.so.12.193.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/oabi/libcrypt.so.1.0.debug		comp-sys-debug	debug,compat
@@ -377,7 +378,6 @@
 ./usr/libdata/debug/usr/lib/oabi/libcrypto_rc5.so.7.0.debug	comp-crypto-debug	crypto,crypto_rc5,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libctf.so.2.0.debug		comp-sys-debug	dtrace,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libcurses.so.7.0.debug		comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libc++.so.1.0.debug		comp-sys-debug	debug,compat,libcxx
 ./usr/libdata/debug/usr/lib/oabi/libdes.so.8.2.debug		comp-crypto-debug	crypto,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdevmapper.so.1.0.debug	comp-lvm-debug	lvm,debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libdm.so.0.0.debug 		comp-sys-debug	debug,compat
