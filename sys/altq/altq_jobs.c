@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_jobs.c,v 1.6 2010/04/09 19:32:45 plunky Exp $	*/
+/*	$NetBSD: altq_jobs.c,v 1.6.34.1 2014/08/22 10:15:22 martin Exp $	*/
 /*	$KAME: altq_jobs.c,v 1.11 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (c) 2001, the Rector and Board of Visitors of the
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.6 2010/04/09 19:32:45 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.6.34.1 2014/08/22 10:15:22 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -1158,7 +1158,7 @@ adjust_rates_rdc(struct jobs_if *jif)
 
 	error = update_error(jif);
 	if (!error)
-		return (NULL);
+		goto fail;
 
 	prop_control = (upper_bound*upper_bound*min_share)
 	    /(max_prod*(max_avg_pkt_size << 2));
@@ -1252,6 +1252,9 @@ adjust_rates_rdc(struct jobs_if *jif)
 		}
 	}
 	return result;
+
+fail:	free(result, M_DEVBUF);
+	return NULL;
 }
 
 /*
@@ -1284,19 +1287,19 @@ assign_rate_drops_adc(struct jobs_if *jif)
 
 	result = malloc((jif->jif_maxpri+1)*sizeof(int64_t), M_DEVBUF, M_WAITOK);
 	if (result == NULL)
-		return NULL;
+		goto fail0;
 	c = malloc((jif->jif_maxpri+1)*sizeof(u_int64_t), M_DEVBUF, M_WAITOK);
 	if (c == NULL)
-		return NULL;
+		goto fail1;
 	n = malloc((jif->jif_maxpri+1)*sizeof(u_int64_t), M_DEVBUF, M_WAITOK);
 	if (n == NULL)
-		return NULL;
+		goto fail2;
 	k = malloc((jif->jif_maxpri+1)*sizeof(u_int64_t), M_DEVBUF, M_WAITOK);
 	if (k == NULL)
-		return NULL;
+		goto fail3;
 	available = malloc((jif->jif_maxpri+1)*sizeof(int64_t), M_DEVBUF, M_WAITOK);
 	if (available == NULL)
-		return NULL;
+		goto fail4;
 
 	for (i = 0; i <= jif->jif_maxpri; i++)
 		result[i] = 0;
@@ -1525,6 +1528,14 @@ assign_rate_drops_adc(struct jobs_if *jif)
 	free(available, M_DEVBUF);
 
 	return (result);
+
+fail5: __unused
+	free(available, M_DEVBUF);
+fail4:	free(k, M_DEVBUF);
+fail3:	free(n, M_DEVBUF);
+fail2:	free(c, M_DEVBUF);
+fail1:	free(result, M_DEVBUF);
+fail0:	return NULL;
 }
 
 /*
