@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.93 2014/04/23 17:05:18 pooka Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.94 2014/08/22 11:28:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.93 2014/04/23 17:05:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.94 2014/08/22 11:28:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -82,7 +82,7 @@ static struct domain domain_dummy;
 __link_set_add_rodata(domains,domain_dummy);
 
 void
-domaininit(bool addroute)
+domaininit(bool attach)
 {
 	__link_set_decl(domains, struct domain);
 	struct domain * const * dpp;
@@ -94,16 +94,18 @@ domaininit(bool addroute)
 	 * Add all of the domains.  Make sure the PF_ROUTE
 	 * domain is added last.
 	 */
-	__link_set_foreach(dpp, domains) {
-		if (*dpp == &domain_dummy)
-			continue;
-		if ((*dpp)->dom_family == PF_ROUTE)
-			rt_domain = *dpp;
-		else
-			domain_attach(*dpp);
+	if (attach) {
+		__link_set_foreach(dpp, domains) {
+			if (*dpp == &domain_dummy)
+				continue;
+			if ((*dpp)->dom_family == PF_ROUTE)
+				rt_domain = *dpp;
+			else
+				domain_attach(*dpp);
+		}
+		if (rt_domain)
+			domain_attach(rt_domain);
 	}
-	if (rt_domain && addroute)
-		domain_attach(rt_domain);
 
 	callout_init(&pffasttimo_ch, CALLOUT_MPSAFE);
 	callout_init(&pfslowtimo_ch, CALLOUT_MPSAFE);
