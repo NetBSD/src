@@ -30,4 +30,9 @@ int gm100_identify(struct nouveau_device *);
 
 struct nouveau_device *nouveau_device_find(u64 name);
 
+#ifdef __NetBSD__
+void	nouveau_devices_init(void);
+void	nouveau_devices_fini(void);
+#endif
+
 #endif
