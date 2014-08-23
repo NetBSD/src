@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.47 2013/06/30 21:38:55 rmind Exp $
+# $NetBSD: FOURMEG,v 1.48 2014/08/23 20:26:56 dholland Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -75,7 +75,7 @@ options 	INET6		# IPV6
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43	# 4.3BSD compatibility.
-options 	COMPAT_16	# NetBSD 1.6 compatibility.
+options 	COMPAT_16	# NetBSD 1.6 binary compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Binary compatibility with previous versions of NetBSD.

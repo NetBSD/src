@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC64_IP2x,v 1.3 2011/04/26 16:36:41 joerg Exp $
+#	$NetBSD: GENERIC64_IP2x,v 1.4 2014/08/23 20:26:59 dholland Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ include		"arch/sgimips/conf/std.sgimips64"
 no makeoptions	TEXTADDR			# entry point
 makeoptions	TEXTADDR=0xffffffff88069000	# entry point
 
-#ident		"GENERIC64-IP2x-$Revision: 1.3 $"
+#ident		"GENERIC64-IP2x-$Revision: 1.4 $"
 
 no makeoptions	WANT_ECOFF
 makeoptions	WANT_ECOFF="no"		# Create an ECOFF kernel in addition
@@ -38,11 +38,11 @@ makeoptions	WANT_ECOFF="no"		# Create an ECOFF kernel in addition
 					# Indigo2 (IP22) machines
 
 # Compatibility options
-#options 	COMPAT_15	# NetBSD 1.5
-#options 	COMPAT_16	# NetBSD 1.6
-#options 	COMPAT_20	# NetBSD 2.0
-#options 	COMPAT_30	# NetBSD 3.0
-#options 	COMPAT_40	# NetBSD 4.0 compatibility.
+#options 	COMPAT_15	# NetBSD 1.5,
+#options 	COMPAT_16	# NetBSD 1.6,
+#options 	COMPAT_20	# NetBSD 2.0,
+#options 	COMPAT_30	# NetBSD 3.0, and
+#options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 #options 	COMPAT_LINUX	# binary compatibility with Linux

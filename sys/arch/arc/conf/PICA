@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.79 2014/07/20 10:06:10 alnsn Exp $
+#	$NetBSD: PICA,v 1.80 2014/08/23 20:26:56 dholland Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -49,8 +49,8 @@ options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_43	# and 4.3BSD
+options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
+options 	COMPAT_43	# 4.3BSD bianry compatibility.
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 # mipsel specific

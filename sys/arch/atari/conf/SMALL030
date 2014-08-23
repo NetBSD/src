@@ -1,5 +1,5 @@
 #
-# $NetBSD: SMALL030,v 1.18 2014/08/16 17:56:31 apb Exp $
+# $NetBSD: SMALL030,v 1.19 2014/08/23 20:26:56 dholland Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -20,13 +20,13 @@ file-system MSDOSFS # MSDOS filesystem
 file-system CD9660 # ISO 9660 filesystem with Rock Ridge
 options WAPBL # File system journaling support
 options PANICWAIT # Require keystroke to dump/reboot
-options COMPAT_16 # Compatibility with NetBSD 1.6
-options COMPAT_20 # Compatibility with NetBSD 2.0
-options COMPAT_30 # NetBSD 3.0 compatibility.
-options COMPAT_40 # NetBSD 4.0 compatibility.
-options COMPAT_50 # NetBSD 5.0 compatibility.
-options COMPAT_60 # NetBSD 6.0 compatibility.
-options COMPAT_70 # NetBSD 7.0 compatibility.
+options COMPAT_16 # NetBSD 1.6,
+options COMPAT_20 # NetBSD 2.0,
+options COMPAT_30 # NetBSD 3.0,
+options COMPAT_40 # NetBSD 4.0,
+options COMPAT_50 # NetBSD 5.0,
+options COMPAT_60 # NetBSD 6.0, and
+options COMPAT_70 # NetBSD 7.0 binary compatibility.
 options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.
 options PIPE_SOCKETPAIR # smaller, but slower pipe(2)
 options ST_POOL_SIZE=24 # smallest that allows TT-HIGH
