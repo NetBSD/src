@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_perfmon_base.c,v 1.1.1.1 2014/08/06 12:36:27 riastradh Exp $	*/
+/*	$NetBSD: nouveau_engine_perfmon_base.c,v 1.2 2014/08/23 08:03:34 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_perfmon_base.c,v 1.1.1.1 2014/08/06 12:36:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_perfmon_base.c,v 1.2 2014/08/23 08:03:34 riastradh Exp $");
 
 #include <core/option.h>
 #include <core/class.h>
@@ -60,7 +60,7 @@ nouveau_perfsig_find_(struct nouveau_perfdom *dom, const char *name, u32 size)
 	return NULL;
 }
 
-struct nouveau_perfsig *
+static struct nouveau_perfsig *
 nouveau_perfsig_find(struct nouveau_perfmon *ppm, const char *name, u32 size,
 		     struct nouveau_perfdom **pdom)
 {

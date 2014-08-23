@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_gem.c,v 1.2 2014/08/06 15:01:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_gem.c,v 1.3 2014/08/23 08:03:33 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2008 Ben Skeggs.
@@ -27,9 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.2 2014/08/06 15:01:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.3 2014/08/23 08:03:33 riastradh Exp $");
 
 #include <subdev/fb.h>
+
+#include <linux/err.h>		/* XXX */
 
 #include "nouveau_drm.h"
 #include "nouveau_dma.h"
@@ -45,8 +47,10 @@ nouveau_gem_object_del(struct drm_gem_object *gem)
 	struct nouveau_bo *nvbo = nouveau_gem_object(gem);
 	struct ttm_buffer_object *bo = &nvbo->bo;
 
+#ifndef __NetBSD__		/* XXX drm prime */
 	if (gem->import_attach)
 		drm_prime_gem_destroy(gem, nvbo->bo.sg);
+#endif
 
 	drm_gem_object_release(gem);
 
@@ -458,6 +462,10 @@ validate_sync(struct nouveau_channel *chan, struct nouveau_bo *nvbo)
 
 	return ret;
 }
+
+#ifdef __NetBSD__		/* XXX yargleblargh */
+#  define	__force
+#endif
 
 static int
 validate_list(struct nouveau_channel *chan, struct nouveau_cli *cli,
