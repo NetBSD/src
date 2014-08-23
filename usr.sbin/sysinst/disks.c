@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.4 2014/08/08 20:24:27 riz Exp $ */
+/*	$NetBSD: disks.c,v 1.4.4.1 2014/08/23 03:44:02 riz Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1383,7 +1383,7 @@ get_dkwedges(struct dkwedge_info **dkw, const char *diskdev)
 		}
 	}
 
-	if (dkwl.dkwl_nwedges > 0)
+	if (dkwl.dkwl_nwedges > 0 && *dkw != NULL)
 		qsort(*dkw, dkwl.dkwl_nwedges, sizeof(**dkw), get_dkwedges_sort);
 
 	close(fd);
