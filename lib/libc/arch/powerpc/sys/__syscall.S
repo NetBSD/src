@@ -1,9 +1,9 @@
-/*	$NetBSD: __syscall.S,v 1.2 2014/02/01 20:26:21 matt Exp $	*/
+/*	$NetBSD: __syscall.S,v 1.3 2014/08/23 02:24:22 matt Exp $	*/
 
-#include <powerpc/asm.h>
+#include "SYS.h"
 
 	.text
-	.align	2
+	.p2align 2
 ENTRY(__syscall)
 	mr	%r0,%r3		/* syscall number */
 	mr	%r3,%r4
@@ -13,10 +13,10 @@ ENTRY(__syscall)
 	mr	%r7,%r8
 	mr	%r8,%r9
 	mr	%r9,%r10
-	lwz	%r10,8(%r1)	/* final argument is on the stack */
+	ldreg	%r10,(2*__SIZEOF_POINTER__)(%r1) /* final argument is on the stack */
 	sc
 	bnslr
-	b	_C_LABEL(__cerror)
+	BRANCH_TO_CERROR()
 END(__syscall)
 
 STRONG_ALIAS(syscall, __syscall)
