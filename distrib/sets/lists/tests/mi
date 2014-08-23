@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.586 2014/08/22 16:45:32 apb Exp $
+# $NetBSD: mi,v 1.587 2014/08/23 15:59:03 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3487,6 +3487,8 @@
 ./usr/tests/usr.bin/make/unit-tests/forsubst.mk	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/hash.exp	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/hash.mk	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/unit-tests/impsrc.exp	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/unit-tests/impsrc.mk	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/misc.exp	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/misc.mk	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/moderrs.exp	tests-usr.bin-tests	atf
@@ -3507,8 +3509,12 @@
 ./usr/tests/usr.bin/make/unit-tests/phony-end.mk	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/posix.exp	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/posix.mk	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/unit-tests/posix1.exp	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/unit-tests/posix1.mk	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/qequals.exp	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/qequals.mk	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/unit-tests/suffixes.exp	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/unit-tests/suffixes.mk	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/sunshcmd.exp	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/sunshcmd.mk	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/sysv.exp	tests-usr.bin-tests	atf
