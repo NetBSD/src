@@ -85,6 +85,8 @@ extern int dot_symbols;
 #define INVALID_64BIT "-m%s not supported in this configuration"
 #define INVALID_32BIT INVALID_64BIT
 
+#define ELFv2_ABI_CHECK (rs6000_elf_abi != 1)                   
+
 #undef	SUBSUBTARGET_OVERRIDE_OPTIONS
 #define	SUBSUBTARGET_OVERRIDE_OPTIONS				\
   do								\
@@ -99,6 +101,12 @@ extern int dot_symbols;
 	      error (INVALID_64BIT, "call");			\
 	    }							\
 	  dot_symbols = !strcmp (rs6000_abi_name, "aixdesc");	\
+	  if (ELFv2_ABI_CHECK)					\
+	    {							\
+	      rs6000_current_abi = ABI_ELFv2;			\
+	      if (dot_symbols)					\
+		error ("-mcall-aixdesc incompatible with -mabi=elfv2"); \
+	    }							\
 	  if (rs6000_isa_flags & OPTION_MASK_RELOCATABLE)	\
 	    {							\
 	      rs6000_isa_flags &= ~OPTION_MASK_RELOCATABLE;	\
