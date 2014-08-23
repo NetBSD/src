@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.44 2014/08/21 22:00:30 apb Exp $
+# $NetBSD: Makefile,v 1.45 2014/08/23 15:02:04 christos Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -32,6 +32,7 @@ TESTNAMES= \
 	forloop \
 	forsubst \
 	hash \
+	impsrc \
 	misc \
 	moderrs \
 	modmatch \
@@ -43,6 +44,7 @@ TESTNAMES= \
 	phony-end \
 	posix \
 	qequals \
+	suffixes \
 	sunshcmd \
 	sysv \
 	ternary \
