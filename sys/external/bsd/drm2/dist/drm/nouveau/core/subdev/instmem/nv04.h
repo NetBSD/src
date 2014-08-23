@@ -12,7 +12,13 @@ extern struct nouveau_instobj_impl nv04_instobj_oclass;
 struct nv04_instmem_priv {
 	struct nouveau_instmem base;
 
+#ifdef __NetBSD__
+	bus_space_tag_t iomemt;
+	bus_space_handle_t iomemh;
+	bus_size_t iomemsz;
+#else
 	void __iomem *iomem;
+#endif
 	struct nouveau_mm heap;
 
 	struct nouveau_gpuobj *vbios;
