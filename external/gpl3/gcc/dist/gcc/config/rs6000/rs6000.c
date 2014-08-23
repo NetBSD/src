@@ -3492,7 +3492,8 @@ rs6000_option_override_internal (bool global_init_p)
 	rs6000_long_double_type_size = RS6000_DEFAULT_LONG_DOUBLE_SIZE;
     }
 
-#if !defined (POWERPC_LINUX) && !defined (POWERPC_FREEBSD)
+#if !defined (POWERPC_LINUX) && !defined (POWERPC_FREEBSD) \
+    && !defined (POWERPC_NETBSD)
   if (!global_options_set.x_rs6000_ieeequad)
     rs6000_ieeequad = 1;
 #endif
@@ -22500,7 +22501,8 @@ rs6000_savres_routine_name (rs6000_stack_t *info, int regno, int sel)
     }
   else if (DEFAULT_ABI == ABI_AIX || DEFAULT_ABI == ABI_ELFv2)
     {
-#if !defined (POWERPC_LINUX) && !defined (POWERPC_FREEBSD)
+#if !defined (POWERPC_LINUX) && !defined (POWERPC_FREEBSD) \
+    && !defined(POWERPC_NETBSD)
       /* No out-of-line save/restore routines for GPRs on AIX.  */
       gcc_assert (!TARGET_AIX || (sel & SAVRES_REG) != SAVRES_GPR);
 #endif
@@ -22512,7 +22514,8 @@ rs6000_savres_routine_name (rs6000_stack_t *info, int regno, int sel)
 		  : ((sel & SAVRES_LR) ? "_restgpr0_" : "_restgpr1_"));
       else if ((sel & SAVRES_REG) == SAVRES_FPR)
 	{
-#if defined (POWERPC_LINUX) || defined (POWERPC_FREEBSD)
+#if defined (POWERPC_LINUX) || defined (POWERPC_FREEBSD) \
+    || defined (POWERPC_NETBSD)
 	  if ((sel & SAVRES_LR))
 	    prefix = ((sel & SAVRES_SAVE) ? "_savefpr_" : "_restfpr_");
 	  else
@@ -29135,7 +29138,8 @@ rs6000_elf_file_end (void)
 		 aix_struct_return ? 2 : 1);
     }
 #endif
-#if defined (POWERPC_LINUX) || defined (POWERPC_FREEBSD)
+#if defined (POWERPC_LINUX) || defined (POWERPC_FREEBSD) \
+    || defined (POWERPC_NETBSD)
   if (TARGET_32BIT || DEFAULT_ABI == ABI_ELFv2)
     file_end_indicate_exec_stack ();
 #endif
