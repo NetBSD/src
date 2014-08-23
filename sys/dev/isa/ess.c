@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.80 2011/11/24 03:35:57 mrg Exp $	*/
+/*	$NetBSD: ess.c,v 1.80.24.1 2014/08/23 03:46:55 riz Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.80 2011/11/24 03:35:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.80.24.1 2014/08/23 03:46:55 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ int	ess_reset(struct ess_softc *);
 void	ess_set_gain(struct ess_softc *, int, int);
 int	ess_set_in_port(struct ess_softc *, int);
 int	ess_set_in_ports(struct ess_softc *, int);
-u_int	ess_srtotc(u_int);
+u_int	ess_srtotc(struct ess_softc *, u_int);
 u_int	ess_srtofc(u_int);
 u_char	ess_get_dsp_status(struct ess_softc *);
 u_char	ess_dsp_read_ready(struct ess_softc *);
@@ -920,7 +920,7 @@ essattach(struct ess_softc *sc, int enablejoy)
 		return;
 	}
 
-	aprint_normal(": ESS Technology ES%s [version 0x%04x]\n",
+	aprint_normal("ESS Technology ES%s [version 0x%04x]\n",
 	    essmodel[sc->sc_model], sc->sc_version);
 
 	callout_init(&sc->sc_poll1_ch, CALLOUT_MPSAFE);
@@ -994,7 +994,17 @@ essattach(struct ess_softc *sc, int enablejoy)
 	if (ESS_USE_AUDIO1(sc->sc_model)) {
 		ess_write_mix_reg(sc, ESS_MREG_ADC_SOURCE, ESS_SOURCE_MIC);
 		sc->in_port = ESS_SOURCE_MIC;
-		sc->ndevs = ESS_1788_NDEVS;
+		if (ESS_IS_ES18X9(sc->sc_model)) {
+			sc->ndevs = ESS_18X9_NDEVS;
+			sc->sc_spatializer = 0;
+			ess_set_mreg_bits(sc, ESS_MREG_MODE,
+			    ESS_MODE_ASYNC_MODE | ESS_MODE_NEWREG);
+			ess_set_mreg_bits(sc, ESS_MREG_SPATIAL_CTRL,
+			    ESS_SPATIAL_CTRL_RESET);
+			ess_clear_mreg_bits(sc, ESS_MREG_SPATIAL_CTRL,
+			    ESS_SPATIAL_CTRL_ENABLE | ESS_SPATIAL_CTRL_MONO);
+		} else
+			sc->ndevs = ESS_1788_NDEVS;
 	} else {
 		/*
 		 * Set hardware record source to use output of the record
@@ -1015,6 +1025,14 @@ essattach(struct ess_softc *sc, int enablejoy)
 	 * are set to 50% volume.
 	 */
 	for (i = 0; i < sc->ndevs; i++) {
+		if (ESS_IS_ES18X9(sc->sc_model)) {
+			switch (i) {
+			case ESS_SPATIALIZER:
+			case ESS_SPATIALIZER_ENABLE:
+				v = 0;
+				goto skip;
+			}
+		}
 		switch (i) {
 		case ESS_MIC_PLAY_VOL:
 		case ESS_LINE_PLAY_VOL:
@@ -1031,6 +1049,7 @@ essattach(struct ess_softc *sc, int enablejoy)
 			v = ESS_4BIT_GAIN(AUDIO_MAX_GAIN / 2);
 			break;
 		}
+skip:
 		sc->gain[i][ESS_LEFT] = sc->gain[i][ESS_RIGHT] = v;
 		ess_set_gain(sc, i, 1);
 	}
@@ -1262,11 +1281,12 @@ ess_set_params(
 	else
 		rate = play->sample_rate;
 
-	ess_write_x_reg(sc, ESS_XCMD_SAMPLE_RATE, ess_srtotc(rate));
+	ess_write_x_reg(sc, ESS_XCMD_SAMPLE_RATE, ess_srtotc(sc, rate));
 	ess_write_x_reg(sc, ESS_XCMD_FILTER_CLOCK, ess_srtofc(rate));
 
 	if (!ESS_USE_AUDIO1(sc->sc_model)) {
-		ess_write_mix_reg(sc, ESS_MREG_SAMPLE_RATE, ess_srtotc(rate));
+		ess_write_mix_reg(sc, ESS_MREG_SAMPLE_RATE,
+		    ess_srtotc(sc, rate));
 		ess_write_mix_reg(sc, ESS_MREG_FILTER_CLOCK, ess_srtofc(rate));
 	}
 
@@ -1781,6 +1801,35 @@ ess_set_port(void *addr, mixer_ctrl_t *cp)
 		return 0;
 	}
 
+	if (ESS_IS_ES18X9(sc->sc_model)) {
+
+		switch (cp->dev) {
+		case ESS_SPATIALIZER:
+			if (cp->type != AUDIO_MIXER_VALUE ||
+			    cp->un.value.num_channels != 1)
+				return EINVAL;
+
+			sc->gain[cp->dev][ESS_LEFT] =
+				sc->gain[cp->dev][ESS_RIGHT] = ESS_6BIT_GAIN(
+				    cp->un.value.level[AUDIO_MIXER_LEVEL_MONO]);
+			ess_set_gain(sc, cp->dev, 1);
+			return 0;
+
+		case ESS_SPATIALIZER_ENABLE:
+			if (cp->type != AUDIO_MIXER_ENUM)
+				return EINVAL;
+
+			sc->sc_spatializer = (cp->un.ord != 0);
+			if (sc->sc_spatializer)
+				ess_set_mreg_bits(sc, ESS_MREG_SPATIAL_CTRL,
+				    ESS_SPATIAL_CTRL_ENABLE);
+			else
+				ess_clear_mreg_bits(sc, ESS_MREG_SPATIAL_CTRL,
+				    ESS_SPATIAL_CTRL_ENABLE);
+			return 0;
+		}
+	}
+
 	if (ESS_USE_AUDIO1(sc->sc_model))
 		return EINVAL;
 
@@ -1884,6 +1933,23 @@ ess_get_port(void *addr, mixer_ctrl_t *cp)
 		cp->un.ord = (ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL) &
 			      ESS_AUDIO_CTRL_MONITOR) ? 1 : 0;
 		return 0;
+	}
+
+	if (ESS_IS_ES18X9(sc->sc_model)) {
+
+		switch (cp->dev) {
+		case ESS_SPATIALIZER:
+			if (cp->un.value.num_channels != 1)
+				return EINVAL;
+
+			cp->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
+				sc->gain[cp->dev][ESS_LEFT];
+			return 0;
+
+		case ESS_SPATIALIZER_ENABLE:
+			cp->un.ord = sc->sc_spatializer;
+			return 0;
+		}
 	}
 
 	if (ESS_USE_AUDIO1(sc->sc_model))
@@ -2108,6 +2174,34 @@ ess_query_devinfo(void *addr, mixer_devinfo_t *dip)
 		return 0;
 	}
 
+	if (ESS_IS_ES18X9(sc->sc_model)) {
+
+		switch (dip->index) {
+		case ESS_SPATIALIZER:
+			dip->mixer_class = ESS_OUTPUT_CLASS;
+			dip->prev = AUDIO_MIXER_LAST;
+			dip->next = ESS_SPATIALIZER_ENABLE;
+			strcpy(dip->label.name, AudioNspatial);
+			dip->type = AUDIO_MIXER_VALUE;
+			dip->un.v.num_channels = 1;
+			strcpy(dip->un.v.units.name, "level");
+			return 0;
+
+		case ESS_SPATIALIZER_ENABLE:
+			dip->mixer_class = ESS_OUTPUT_CLASS;
+			dip->prev = ESS_SPATIALIZER;
+			dip->next = AUDIO_MIXER_LAST;
+			strcpy(dip->label.name, "enable");
+			dip->type = AUDIO_MIXER_ENUM;
+			dip->un.e.num_mem = 2;
+			strcpy(dip->un.e.member[0].label.name, AudioNoff);
+			dip->un.e.member[0].ord = 0;
+			strcpy(dip->un.e.member[1].label.name, AudioNon);
+			dip->un.e.member[1].ord = 1;
+			return 0;
+		}
+	}
+
 	if (ESS_USE_AUDIO1(sc->sc_model))
 		return ENXIO;
 
@@ -2301,6 +2395,16 @@ ess_set_gain(struct ess_softc *sc, int port, int on)
 	mix = 1;
 	stereo = 1;
 
+	if (ESS_IS_ES18X9(sc->sc_model)) {
+		switch (port) {
+		case ESS_SPATIALIZER:
+			src = ESS_MREG_SPATIAL_LEVEL;
+			stereo = -1;
+			goto skip;
+		case ESS_SPATIALIZER_ENABLE:
+			return;
+		}
+	}
 	switch (port) {
 	case ESS_MASTER_VOL:
 		src = ESS_MREG_VOLUME_MASTER;
@@ -2355,6 +2459,7 @@ ess_set_gain(struct ess_softc *sc, int port, int on)
 	default:
 		return;
 	}
+skip:
 
 	/* 1788 doesn't have a separate recording mixer */
 	if (ESS_USE_AUDIO1(sc->sc_model) && mix && src > 0x62)
@@ -2367,7 +2472,9 @@ ess_set_gain(struct ess_softc *sc, int port, int on)
 		left = right = 0;
 	}
 
-	if (stereo)
+	if (stereo == -1)
+		gain = ESS_SPATIAL_GAIN(left);
+	else if (stereo)
 		gain = ESS_STEREO_GAIN(left, right);
 	else
 		gain = ESS_MONO_GAIN(left);
@@ -2468,15 +2575,22 @@ ess_speaker_off(struct ess_softc *sc)
  * Calculate the time constant for the requested sampling rate.
  */
 u_int
-ess_srtotc(u_int rate)
+ess_srtotc(struct ess_softc *sc, u_int rate)
 {
 	u_int tc;
 
 	/* The following formulae are from the ESS data sheet. */
-	if (rate <= 22050)
-		tc = 128 - 397700L / rate;
-	else
-		tc = 256 - 795500L / rate;
+	if (ESS_IS_ES18X9(sc->sc_model)) {
+		if ((rate % 8000) != 0)
+			tc = 128 - 793800L / rate;
+		else
+			tc = 256 - 768000L / rate;
+	} else {
+		if (rate <= 22050)
+			tc = 128 - 397700L / rate;
+		else
+			tc = 256 - 795500L / rate;
+	}
 
 	return tc;
 }
