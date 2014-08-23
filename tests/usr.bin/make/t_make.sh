@@ -1,4 +1,4 @@
-# $NetBSD: t_make.sh,v 1.5 2014/08/23 15:10:18 christos Exp $
+# $NetBSD: t_make.sh,v 1.6 2014/08/23 16:26:13 apb Exp $
 #
 # Copyright (c) 2008, 2010, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,8 +63,6 @@ atf_init_test_cases()
 {
 	local filename basename atfname descr
 
-	#exec >/tmp/apb 2>&1
-	#set -x
 	for filename in "$(atf_get_srcdir)"/unit-tests/*.mk ; do
 	    basename="${filename##*/}"
 	    basename="${basename%.mk}"
@@ -73,5 +71,4 @@ atf_init_test_cases()
             test_case "${atfname}" "${basename}" "${descr}"
 	    atf_add_test_case "${atfname}"
 	done
-	#set +x
 }
