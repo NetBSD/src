@@ -301,6 +301,8 @@ extern int dot_symbols;
   do							\
     {							\
       NETBSD_OS_CPP_BUILTINS_ELF();			\
+      if (TARGET_ISEL)					\
+	builtin_define ("__PPC_ISEL__");		\
       if (TARGET_64BIT)					\
 	{						\
 	  builtin_define ("__PPC__");			\
@@ -386,9 +388,7 @@ extern int dot_symbols;
 #define	PTRDIFF_TYPE (TARGET_64BIT ? "long int" : "int")
 
 #undef	WCHAR_TYPE
-#define	WCHAR_TYPE (TARGET_64BIT ? "int" : "long int")
-#undef  WCHAR_TYPE_SIZE
-#define WCHAR_TYPE_SIZE 32
+#define	WCHAR_TYPE "int"
 
 /* Override rs6000.h definition.  */
 #undef  ASM_APP_ON
