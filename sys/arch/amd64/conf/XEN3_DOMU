@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.56 2014/08/18 06:31:24 christos Exp $
+# $NetBSD: XEN3_DOMU,v 1.57 2014/08/23 20:26:56 dholland Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -54,16 +54,16 @@ makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
 options DDB_COMMANDONENTER="trace;show registers"
 
 # Compatibility options
-options 	COMPAT_15	# compatibility with NetBSD 1.5,
+options 	COMPAT_43	# 4.3BSD binary compatibility.
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_43	# and 4.3BSD
-#options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+options 	COMPAT_40	# NetBSD 4.0,
 options 	COMPAT_50	# NetBSD 5.0,
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-options 	COMPAT_70	# NetBSD 7.0 compatibility.
+options 	COMPAT_60	# NetBSD 6.0, and
+options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
+#options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 options 	COMPAT_OSSAUDIO
 options 	COMPAT_NETBSD32

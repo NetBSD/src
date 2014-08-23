@@ -1,10 +1,10 @@
-#	$NetBSD: WGT624V3,v 1.23 2014/08/17 21:17:43 joerg Exp $
+#	$NetBSD: WGT624V3,v 1.24 2014/08/23 20:26:57 dholland Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"WGT624V3-$Revision: 1.23 $"
+#ident 		"WGT624V3-$Revision: 1.24 $"
 
 maxusers	32
 
@@ -50,17 +50,17 @@ makeoptions	COPY_SYMTAB=1	# size for embedded symbol table
 
 # Compatibility options
 #options 	COMPAT_43	# compatibility with 4.3BSD binaries
-#options 	COMPAT_09	# NetBSD 0.9 binary compatibility
-#options 	COMPAT_10	# NetBSD 1.0 binary compatibility
-#options 	COMPAT_11	# NetBSD 1.1 binary compatibility
-#options 	COMPAT_12	# NetBSD 1.2 binary compatibility
-#options 	COMPAT_13	# NetBSD 1.3 binary compatibility
-#options 	COMPAT_14	# NetBSD 1.4 binary compatibility
-#options 	COMPAT_15	# NetBSD 1.5 binary compatibility
-#options 	COMPAT_16	# NetBSD 1.6 binary compatibility
-#options 	COMPAT_20	# NetBSD 2.0 binary compatibility
-#options 	COMPAT_30	# NetBSD 3.0 compatibility.
-#options 	COMPAT_40	# NetBSD 4.0 compatibility.
+#options 	COMPAT_09	# NetBSD 0.9,
+#options 	COMPAT_10	# NetBSD 1.0,
+#options 	COMPAT_11	# NetBSD 1.1,
+#options 	COMPAT_12	# NetBSD 1.2,
+#options 	COMPAT_13	# NetBSD 1.3,
+#options 	COMPAT_14	# NetBSD 1.4,
+#options 	COMPAT_15	# NetBSD 1.5,
+#options 	COMPAT_16	# NetBSD 1.6,
+#options 	COMPAT_20	# NetBSD 2.0,
+#options 	COMPAT_30	# NetBSD 3.0, and
+#options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 #options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

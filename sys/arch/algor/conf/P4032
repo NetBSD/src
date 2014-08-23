@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.71 2014/08/17 21:17:43 joerg Exp $
+#	$NetBSD: P4032,v 1.72 2014/08/23 20:26:56 dholland Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.71 $"
+#ident 		"P4032-$Revision: 1.72 $"
 
 maxusers 32
 
@@ -64,17 +64,17 @@ options 	IPSEC		# IP security
 options 	COMPAT_43
 
 # Binary compatibility with previous versions of NetBSD.
-#options 	COMPAT_09
-options 	COMPAT_10
-options 	COMPAT_11
-options 	COMPAT_12
-options 	COMPAT_13
-options 	COMPAT_14
-options 	COMPAT_15
-options 	COMPAT_16
-options 	COMPAT_20
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
+#options 	COMPAT_09	# NetBSD 0.9,
+options 	COMPAT_10	# NetBSD 1.0,
+options 	COMPAT_11	# NetBSD 1.1,
+options 	COMPAT_12	# NetBSD 1.2,
+options 	COMPAT_13	# NetBSD 1.3,
+options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
+options 	COMPAT_16	# NetBSD 1.6,
+options 	COMPAT_20	# NetBSD 2.0,
+options 	COMPAT_30	# NetBSD 3.0, and
+options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # System V-like message queues
