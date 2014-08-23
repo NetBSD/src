@@ -9,6 +9,8 @@
 
 #include <engine/dmaobj.h>
 
+#include <linux/workqueue.h>	/* XXX */
+
 #include "dport.h"
 #include "priv.h"
 

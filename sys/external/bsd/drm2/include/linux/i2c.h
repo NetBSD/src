@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.h,v 1.5 2014/08/06 15:01:33 riastradh Exp $	*/
+/*	$NetBSD: i2c.h,v 1.6 2014/08/23 08:03:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -51,6 +51,10 @@ struct i2c_board_info {
 	uint16_t		addr;
 	void			*platform_data;
 };
+
+#define	I2C_BOARD_INFO(board_type, board_addr)		\
+	.type = (board_type),				\
+	.addr = (board_addr)
 
 static inline void
 i2c_new_device(const struct i2c_adapter *adapter __unused,
