@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc64.c,v 1.5 2014/01/27 21:00:01 matt Exp $	*/
+/*	$NetBSD: kvm_powerpc64.c,v 1.6 2014/08/23 02:25:23 matt Exp $	*/
 
 /*
  * Copyright (c) 2005 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/pte.h>
 
-__RCSID("$NetBSD: kvm_powerpc64.c,v 1.5 2014/01/27 21:00:01 matt Exp $");
+__RCSID("$NetBSD: kvm_powerpc64.c,v 1.6 2014/08/23 02:25:23 matt Exp $");
 
 void
 _kvm_freevtop(kvm_t *kd)
@@ -117,17 +117,16 @@ _kvm_initvtop(kvm_t *kd)
 int
 _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 {
-	cpu_kcore_hdr_t	*cpu_kh;
-	uint32_t	pvr;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
 		return 0;
 	}
 
-	cpu_kh = kd->cpu_data;
-
-	pvr = (cpu_kh->pvr >> 16);
+#if 0
+	cpu_kcore_hdr_t	*cpu_kh = kd->cpu_data;
+	uint32_t pvr = (cpu_kh->pvr >> 16);
+#endif
 
 
 	/* No hit -- no translation */
