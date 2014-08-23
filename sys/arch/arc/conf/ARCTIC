@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.66 2014/07/20 10:06:10 alnsn Exp $
+#	$NetBSD: ARCTIC,v 1.67 2014/08/23 20:26:56 dholland Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -54,9 +54,9 @@ options 	COMPAT_14	# NetBSD 1.4,
 options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_43	# and 4.3BSD
+options 	COMPAT_30	# NetBSD 3.0, and
+options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
+options 	COMPAT_43	# 4.3BSD binary compatibility.
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 # mipsel specific

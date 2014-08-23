@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.67 2014/07/20 10:06:10 alnsn Exp $
+#	$NetBSD: MIMORI,v 1.68 2014/08/23 20:26:56 dholland Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -50,8 +50,8 @@ options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0,
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_43	# and 4.3BSD
+options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
+options 	COMPAT_43	# 4.3BSD binary compatibility.
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 # mipsel specific
