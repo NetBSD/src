@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.25 2014/08/23 20:26:58 dholland Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.26 2014/08/23 21:10:20 dholland Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -88,8 +88,11 @@ options 	DDB		# in-kernel debugger
 #options 	COMPAT_15	# NetBSD 1.5,
 #options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0, and
-options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
+options 	COMPAT_30	# NetBSD 3.0,
+options 	COMPAT_40	# NetBSD 4.0,
+options 	COMPAT_50	# NetBSD 5.0,
+options 	COMPAT_60	# NetBSD 6.0, and
+options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 #options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
