@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.65 2012/08/30 21:17:05 sjg Exp $	*/
+/*	$NetBSD: nonints.h,v 1.66 2014/08/23 15:05:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -142,17 +142,17 @@ void Str_SYSVSubst(Buffer *, char *, char *, int);
 
 /* suff.c */
 void Suff_ClearSuffixes(void);
-Boolean Suff_IsTransform(char *);
-GNode *Suff_AddTransform(char *);
+Boolean Suff_IsTransform(char *, void **, void **);
+GNode *Suff_AddTransform(char *, void **, void **);
 int Suff_EndTransform(void *, void *);
-void Suff_AddSuffix(char *, GNode **);
+void Suff_AddSuffix(char *);
 Lst Suff_GetPath(char *);
 void Suff_DoPaths(void);
 void Suff_AddInclude(char *);
 void Suff_AddLib(char *);
 void Suff_FindDeps(GNode *);
 Lst Suff_FindPath(GNode *);
-void Suff_SetNull(char *);
+void Suff_SetNull(char* name);
 void Suff_Init(void);
 void Suff_End(void);
 void Suff_PrintAll(void);

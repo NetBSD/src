@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.232 2014/08/23 15:03:22 wiz Exp $
+.\"	$NetBSD: make.1,v 1.233 2014/08/23 15:05:40 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -388,14 +388,21 @@ whitespace on the following line are compressed into a single space.
 On command lines the backslash and the newline are left intact and
 if the following line begins with tab(s), the first one is removed.
 .Sh FILE DEPENDENCY SPECIFICATIONS
-Dependency lines consist of one or more targets, an operator, and zero
-or more sources.
+Dependency lines consist of one or more targets, an operator, zero
+or more sources, and an optional semicolon followed by a command.
 This creates a relationship where the targets
 .Dq depend
 on the sources
 and are usually created from them.
+.Bd -literal -offset indent
+target [target...]: [source...] [;command]
+.Ed
+.Pp
 The exact relationship between the target and the source is determined
-by the operator that separates them.
+by the operator, presented by a colon in the example, that separates
+them.
+A target may only appear on the left hand side of one type of operator
+in a single makefile.
 The three operators are as follows:
 .Bl -tag -width flag
 .It Ic \&:
@@ -406,6 +413,7 @@ is used.
 The target is removed if
 .Nm
 is interrupted.
+This is the only operator available in POSIX compatible makefiles.
 .It Ic \&!
 Targets are always re-created, but not until all sources have been
 examined and re-created as necessary.
@@ -419,11 +427,21 @@ If no sources are specified, the target is always re-created.
 Otherwise, a target is considered out-of-date if any of its sources has
 been modified more recently than the target.
 Sources for a target do not accumulate over dependency lines when this
-operator is used.
+operator is used, only the depencies in the first rule encountered are
+used.
+The commands from the rules do accumulate and are executed in the order
+the rules were defined if the target needs to be updated.
 The target will not be removed if
 .Nm
 is interrupted.
 .El
+.Pp
+The optional semicolon separated command in the dependency line is
+strongly discouraged except to specify an empty rule to nullify
+an existing suffix transformation rule (see
+.Ic .SUFFIXES ) .
+More information on commands is in the section
+.Sx SHELL COMMANDS .
 .Pp
 Targets and sources may contain the shell wildcard values
 .Ql \&? ,
@@ -443,16 +461,124 @@ The value
 .Ql {}
 need not necessarily be used to describe existing files.
 Expansion is in directory order, not alphabetically as done in the shell.
+.Ss Suffix transformation rules
+Suffix transformation rules allow
+.Nm
+to infer the commands used to bring targets up to date based on their
+suffixes.
+These are also known as inference rules or just suffix rules.
+A suffix transformation rule is a rule whose dependency line has either
+of these forms:
+.Bd -literal -compact -offset indent
+\&.s1.s2: [source...]
+\&.s1: [source...]
+.Ed
+Additionally, both
+.Pa .s1
+and
+.Pa .s2
+need to be defined as dependencies on the special target
+.Ic .SUFFIXES .
+.Pp
+A suffix transformation rule tells
+.Nm
+that any file named
+.Pa file.s2 Pq the first form
+or
+.Pa file Pq the second form
+can be made with the provided rules from a file named
+.Pa file.s1 .
+Suffix transformation rules are only tried when there is no explicit
+rule to make a target.
+Single suffix rules (ther second form) are only tried if the target has
+no known suffix.
+Suffixes are tried in the order they have been specified to the
+.Ic .SUFFIXES
+special target.
+An explicit dependency line with no commands can be used to add more
+dependencies, while still allowing for the use of the inferred commands.
+.Pp
+In POSIX compatible makefiles there are no sources listed in
+a suffix transformation rule definition and only a single transformation
+step is tried.
+This implementation allows dependencies to be listed and handles them
+as additional dependencies on any file that gets created with the suffix
+transformation.
+This can be combined with
+.Em dynamic sources .
+Transformations can also be chained: if
+.Pa file.s1
+could be made from
+.Pa file.s2
+but it does not exist,
+.Nm
+will try the suffix transformation rules which could make it from any
+.Pa file.s3
+and so forth.
+The shortest path from an existing file or an explicit rule will be
+chosen.
+.Pp
+Usable commands for these rules cannot be written without knowing what
+the actual sources and targets are.
+This information is provided with the local variables listed in the
+section
+.Dq Variable classes .
+.Ss Archive member targets
+A target or a source of the form
+.Pa archive(member)
+refers to file
+.Pa member
+in an
+.Ic ar
+library archive named
+.Pa archive .
+The modification time stored for the member in the archive is used in
+up-to-dateness checks.
+In POSIX compatible makefiles the member file must be an object file and
+have the suffix
+.Pa .o .
+.Pp
+Library members can also be inferred.
+The POSIX compatible way is to define a suffix transformation rule with
+the name
+.Pa .s1.a ,
+as
+.Pa .a
+is the traditional suffix of such archives.
+This rule is used to update
+.Pa member.o
+from the file
+.Pa member.s1
+in any archive file,
+regardless of any suffix the archive file may or may not have.
+.Pp
+As an extension, if the POSIX compatible behavior does not yield commands,
+.Nm
+looks if it could make the member if it were a regular file.
+If it can, then it tries to find a transformation rule from that file
+to the suffix of the archive for adding the file in to the archive.
 .Sh SHELL COMMANDS
-Each target may have associated with it a series of shell commands, normally
-used to create the target.
-Each of the commands in this script
+Each target may have associated with it a series of shell commands, which
+immediately follow the dependency line.
+These commands are normally used to create a file corresponding to
+the target name.
+The first command line (or only line, if there is only one) may be on
+the same line with the dependency information, separated by a semicolon.
+Every command line in this script following the dependency line
 .Em must
 be preceded by a tab.
-While any target may appear on a dependency line, only one of these
-dependencies may be followed by a creation script, unless the
+Placing commands on the dependency line is not a good practice.
+
+A target name may appear on the left hand side of the dependency
+operator in any number of dependency lines.
+Only one of these dependency specifications may be followed by a creation
+script, unless the
 .Ql Ic \&::
 operator is used.
+If more than one rule with commands is encountered, the last one is used.
+Overriding rules has its use cases, but sometimes it can happen by accident.
+A notice of each overridden rule is included in the parsing debugging
+category.
 .Pp
 If the first characters of the command line are any combination of
 .Ql Ic @ ,
@@ -530,7 +656,7 @@ The standard shell,
 removes them both elsewhere than in single quotes, effectively catenating
 the two lines.
 The following examples demonstrate escaped newlines in command lines.
-.Bl -column -offset indent "    echo \*qfoo" "|      cd dir \\"
+.Bl -column -offset indent "    echo \*qfoo\\xxxx" "|      cd dir \\xxxx"
 .It "echo-foobar:"      Ta "|  syntax-error:"
 .It "    echo \*qfoo\\" Ta "|      for i in a b\\"
 .It "    bar\*q"        Ta "|      do\\"
@@ -671,15 +797,23 @@ The name of the archive file; also known as
 .Ql Va \&! .
 This variable is a non-POSIX extension.
 .It Va .IMPSRC
-In suffix-transformation rules, the name/path of the source from which the
+In suffix-transformation rules it is the name of the source from which the
 target is to be transformed (the
 .Dq implied
-source); also known as
+source).
+In explicit rules it is the name of the first dependency from the dependency
+line of the explicit rule or in the absence of such a prerequisite, the first
+dependency otherwise encountered.
+If the source was actually found via path search, it is the resulting path
+name.
+Also known as
 .Ql Va \&\*[Lt] .
-It is not defined in explicit rules.
 .It Va .MEMBER
 The name of the archive member; also known as
 .Ql Va % .
+It is only defined for
+.Pa archive(member)
+targets or in inference rules used to make such targets.
 .It Va .OODATE
 The list of sources for this target that were deemed out-of-date; also
 known as
@@ -688,6 +822,7 @@ known as
 The file prefix of the target, containing only the file portion, no suffix
 or preceding directory components; also known as
 .Ql Va * .
+For an archive member rule it is the prefix of the member.
 .Pp
 POSIX only requires this variable to be availabe for suffix transformation
 rules, but this implementation makes it available for all targets.
@@ -698,6 +833,12 @@ it is equivalent to
 .It Va .TARGET
 The name of the target; also known as
 .Ql Va @ .
+In an explicit rule for
+.Pa archive(member.o)
+or in a POSIX style
+.Pa .s1.a
+suffix transformation rule this is equal to
+.Ql Va .ARCHIVE .
 .El
 .Pp
 To increase readability, the shorter forms
@@ -738,6 +879,9 @@ These variables are
 .Ql Va .ARCHIVE ,
 and
 .Ql Va .MEMBER .
+Dependencies based on these variables are called
+.Em dynamic sources
+and they are not POSIX compatible.
 .El
 .Ss Additional built-in variables
 In addition,
@@ -1790,7 +1934,8 @@ expression is applied.
 Similarly, if the form is
 .Ql Ic .ifmake
 or
-.Ql Ic .ifnmake , the
+.Ql Ic .ifnmake ,
+the
 .Dq make
 expression is applied.
 .Pp
@@ -1865,6 +2010,9 @@ or
 options were specified.
 Normally used to mark recursive
 .Nm Ns s .
+Single lines from rule's commands may be marked for similar treatment
+by prepending them with
+.Sq + .
 .It Ic .META
 Create a meta file for the target, even if it is flagged as
 .Ic .PHONY ,
@@ -1924,6 +2072,20 @@ option.
 Suffix-transformation rules are not applied to
 .Ic .PHONY
 targets.
+.Pp
+As a note of historical interest, a dependency on a target called
+.Dq FORCE
+or
+.Dq FRC
+has been used to force
+.Nm
+always run the commands of a target, instead of the in all ways superior
+.Ic .PHONY .
+This dependency will then itself defined without dependencies or
+commands.
+As long as a file by that name does not exist, the target will always be
+considered to be out of date and force targets depending on it to be
+re-made.
 .It Ic .PRECIOUS
 When
 .Nm
@@ -2054,6 +2216,68 @@ Disable parallel mode.
 Synonym for
 .Ic .NOTPARALLEL ,
 for compatibility with other pmake variants.
+.It Ic .NULL
+.Sy This special target is deprecated!
+It will go away as soon as pattern rules are implemented.
+.Pp
+The source of this target is a suffix listed in
+.Ic .SUFFIXES .
+It tells
+.Nm
+to pretend that targets which have no other known suffix have that suffix.
+This is relevant when suffix transformation rules are tried, and has
+the following two aspects (.s1 is the null suffix):
+.Bl -inset -offset indent
+.It Em "remove a suffix" :
+if the target
+.Sq foo
+is needed, the transformation rule
+.Sq .s2.s1
+can be used to make it from
+.Sq foo.s2 .
+The
+.Va .TARGET
+and
+.Va .PREFIX
+local variables are set to
+.Sq foo .
+.It Em "add a suffix" :
+if the target
+.Sq foo.s2
+is needed, the transformation rule
+.Sq .s1.s2
+can be used to make it from
+.Sq foo .
+The
+.Va .IMPSRC
+local variable is set to
+.Sq foo .
+.El
+.Pp
+This feature might be easier to understand, if you think of
+.Sq .s1
+as a way of explicitly writing
+.Sq "" .
+.Pp
+Looking closely you will notice that the first, suffix removal aspect
+is a limited version of single suffix transformation rules.
+It abuses double suffix rules and only works with one source
+.Sq suffix .
+New makefiles should use single suffix rules and old ones should
+migrate to them.
+Using both at the same time won't crash
+.Nm ,
+but you're aiming a gun at your own foot.
+To protect your foot, the rules followed in that case are not laid out
+here, you need to read the source code.
+.Pp
+This special target is only currently retained because of the second,
+suffix adding aspect, even if that too abuses double suffix rules.
+There is no substitute before pattern rules are implemented.
+To use this feature in this case, it is strongly suggested to use
+a verbose suffix that is not a real or imaginable one in your project,
+for example
+.Sq .NOSUFFIX .
 .It Ic .ORDER
 The named targets are made in sequence.
 This ordering does not add targets to the list of targets to be made.
@@ -2163,17 +2387,37 @@ This target gets run when a dependency file contains stale entries, having
 .Va .ALLSRC
 set to the name of that dependency file.
 .It Ic .SUFFIXES
-Each source specifies a suffix to
+Each source specifies a known suffix to
 .Nm .
-If no sources are specified, any previously specified suffixes are deleted.
-It allows the creation of suffix-transformation rules.
+It allows the creation of suffix transformation rules.
+A rule that looks like a transformation rule is a regular rule
+if it is not composed of known suffixes.
+If no sources are specified, all known suffixes are forgotten.
+.Pp
+There is a built-in list of suffixes and related transformation rules in
+.Nm .
+Clearing the suffix list does not remove the corresponding rules and they
+become active again if the related suffixes are made known again.
+In fact, there is no way other than the
+.Fl r
+command line option to completely remove the built-in rules.
+It is possible to nullify it with an explicit no-op rule (it will run, but
+won't do anything) or redefine it.
 .Pp
 Example:
 .Bd -literal
-\&.SUFFIXES: .o
-\&.c.o:
+\&.SUFFIXES:        # Forget all suffixes
+\&.SUFFIXES: .c .o  # Re-activate .c and .o
+\&.c: ;             # Nullify (the semicolon is mandatory)
+\&.c.o:             # Replace
 	cc \-o ${.TARGET} \-c ${.IMPSRC}
 .Ed
+.Pp
+POSIX compatible suffixes start with a period and contain no slashes or other
+periods.
+In this implementation the amount and the location of periods is not
+restricted: there may be none or more than one period, anywhere in
+the suffix.
 .El
 .Sh ENVIRONMENT
 .Nm
@@ -2239,13 +2483,6 @@ for Sprite at Berkeley.
 It was designed to be a parallel distributed make running jobs on different
 machines using a daemon called
 .Dq customs .
-.Pp
-Historically the target/dependency
-.Dq FRC
-has been used to FoRCe rebuilding (since the target/dependency
-does not exist... unless someone creates an
-.Dq FRC
-file).
 .Sh BUGS
 The
 .Nm

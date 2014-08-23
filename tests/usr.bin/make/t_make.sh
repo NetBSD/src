@@ -1,4 +1,4 @@
-# $NetBSD: t_make.sh,v 1.3 2014/08/23 14:50:24 christos Exp $
+# $NetBSD: t_make.sh,v 1.4 2014/08/23 15:05:41 christos Exp $
 #
 # Copyright (c) 2008, 2010, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,7 +43,7 @@ run_and_check()
 		# the test shouldn't use anything not provided for by in
 		# the POSIX standard.
 		args="INPUTFILE='${in}'"
-		atf_expect_fail 'PR/49086 [$(<)], PR/49092 [output order]'
+		atf_expect_fail 'PR/49092 [output order]'
 		atf_check -o file:"${out}" -x \
 		    "make -kf'${in}' ${args} 2>&1 | sed -e 's,${srcdir}/d_,,'"
 	else

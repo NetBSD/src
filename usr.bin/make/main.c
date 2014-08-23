@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.228 2014/08/20 08:37:25 apb Exp $	*/
+/*	$NetBSD: main.c,v 1.229 2014/08/23 15:05:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.228 2014/08/20 08:37:25 apb Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.229 2014/08/23 15:05:40 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.228 2014/08/20 08:37:25 apb Exp $");
+__RCSID("$NetBSD: main.c,v 1.229 2014/08/23 15:05:40 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -182,6 +182,7 @@ static const char *	tracefile;
 static void		MainParseArgs(int, char **);
 static int		ReadMakefile(const void *, const void *);
 static void		usage(void) MAKE_ATTR_DEAD;
+static int		MarkSysMkTargets(void *, void *);
 
 static Boolean		ignorePWD;	/* if we use -C, PWD is meaningless */
 static char objdir[MAXPATHLEN + 1];	/* where we chdir'ed to */
@@ -1204,6 +1205,14 @@ main(int argc, char **argv)
 			Fatal("%s: cannot open %s.", progname,
 			    (char *)Lst_Datum(ln));
 	}
+	/*
+	 * Rules from system makefiles are somewhat special.  For instance,
+	 * they're not eligible to become main targets.  A sensible sys.mk
+	 * only contains suffix transformations and variables, but clearing
+	 * the suffix list makes suffix transformations into regular rules,
+	 * which could otherwise become main targets.
+	 */
+	Lst_ForEach(Targ_List(), MarkSysMkTargets, NULL);
 
 	if (!Lst_IsEmpty(makefiles)) {
 		LstNode ln;
@@ -1375,8 +1384,8 @@ main(int argc, char **argv)
 	if (enterFlag)
 		printf("%s: Leaving directory `%s'\n", progname, curdir);
 
-	Suff_End();
         Targ_End();
+	Suff_End(); /* targets refer to suffixes, clean after Targ */
 	Arch_End();
 	Var_End();
 	Parse_End();
@@ -1817,6 +1826,25 @@ usage(void)
             [-I directory] [-J private] [-j max_jobs] [-m directory] [-T file]\n\
             [-V variable] [variable=value] [target ...]\n", progname);
 	exit(2);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * MarkSysMkTargets -- set OP_FROM_SYS_MK on a target node in Lst_ForEach().
+ *
+ * Input:
+ *	target	node to set the attribute on (GNode *)
+ *
+ * Results:
+ *	Always 0 to not abort Lst_ForEach() prematurely.
+ *-----------------------------------------------------------------------
+ */
+static int
+MarkSysMkTargets(void *target, void *unused)
+{
+    (void)unused;
+    ((GNode *)target)->type |= OP_FROM_SYS_MK;
+    return 0;
 }
 
 
