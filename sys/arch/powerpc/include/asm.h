@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.46 2014/03/06 19:05:24 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.47 2014/08/23 02:21:44 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -356,12 +356,12 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 # define cmpptri	cmpwi
 # define cmplongi	cmpwi
 # define cmpregi	cmpwi
-# define cmpptrl	cmpwl
-# define cmplongl	cmpwl
-# define cmpregl	cmpwl
-# define cmpptrli	cmpwli
-# define cmplongli	cmpwli
-# define cmpregli	cmpwli
+# define cmpptrl	cmplw
+# define cmplongl	cmplw
+# define cmpregl	cmplw
+# define cmpptrli	cmplwi
+# define cmplongli	cmplwi
+# define cmpregli	cmplwi
 
 #else /* __LP64__ */
 
@@ -401,12 +401,12 @@ y:	.quad	.##y,.TOC.@tocbase,0;	\
 # define cmpptri	cmpdi
 # define cmplongi	cmpdi
 # define cmpregi	cmpdi
-# define cmpptrl	cmpdl
-# define cmplongl	cmpdl
-# define cmpregl	cmpdl
-# define cmpptrli	cmpdli
-# define cmplongli	cmpdli
-# define cmpregli	cmpdli
+# define cmpptrl	cmpld
+# define cmplongl	cmpld
+# define cmpregl	cmpld
+# define cmpptrli	cmpldi
+# define cmplongli	cmpldi
+# define cmpregli	cmpldi
 
 #endif /* __LP64__ */
 
