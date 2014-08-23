@@ -182,4 +182,5 @@ cc -c -o 'obj3.o' 'obj3.c'
 ar -rcv 'lib.a' 'obj3.o'
 a - obj3.o
 rm -f 'obj3.o'
+ar -s 'lib.a'
 exit status 0
