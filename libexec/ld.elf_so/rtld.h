@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.118 2014/08/10 23:35:26 matt Exp $	 */
+/*	$NetBSD: rtld.h,v 1.119 2014/08/23 18:05:33 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -326,7 +326,7 @@ extern Elf_Sym _rtld_sym_zero;
 
 /* Flags to be passed into _rtld_symlook_ family of functions. */
 #define SYMLOOK_IN_PLT	0x01	/* Lookup for PLT symbol */
-#define SYMLOOK_DLSYM	0x02	/* Return newes versioned symbol.
+#define SYMLOOK_DLSYM	0x02	/* Return newest versioned symbol.
 				   Used by dlsym. */
 
 /* Flags for _rtld_load_object() and friends. */
