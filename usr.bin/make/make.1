@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.230 2014/02/15 18:55:30 sjg Exp $
+.\"	$NetBSD: make.1,v 1.231 2014/08/23 14:50:24 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -382,8 +382,11 @@ conditional directives, for loops, and comments.
 In general, lines may be continued from one line to the next by ending
 them with a backslash
 .Pq Ql \e .
-The trailing newline character and initial whitespace on the following
-line are compressed into a single space.
+For any line that is not a shell command line (i.e. it does not begin
+with a tab), the backslash, the following newline character, and initial
+whitespace on the following line are compressed into a single space.
+On command lines the backslash and the newline are left intact and
+if the following line begins with tab(s), the first one is removed.
 .Sh FILE DEPENDENCY SPECIFICATIONS
 Dependency lines consist of one or more targets, an operator, and zero
 or more sources.
@@ -500,19 +503,51 @@ operation does not change their behavior.
 For example, any command which needs to use
 .Dq cd
 or
-.Dq chdir ,
-without side-effect should be put in parenthesis:
+.Dq chdir
+without side-effects should be put in parenthesis so they are executed
+in a subshell:
 .Bd -literal -offset indent
 
 avoid-chdir-side-effects:
 	@echo Building $@ in `pwd`
-	@(cd ${.CURDIR} && ${.MAKE} $@)
+	@(cd ${.CURDIR} && ${MAKE} $@)
 	@echo Back in `pwd`
 
 ensure-one-shell-regardless-of-mode:
 	@echo Building $@ in `pwd`; \\
-	(cd ${.CURDIR} && ${.MAKE} $@); \\
+	(cd ${.CURDIR} && ${MAKE} $@); \\
 	echo Back in `pwd`
+.Ed
+.Pp
+The backslash and the following newline are retained in the input to
+the shell, but if the next line starts with tab(s), the first one of
+those is removed.
+This allows you to align the commands in the rule without introducing
+unwanted whitespace into the command line itself.
+What happens to the backslash-newline pair is up to the shell.
+The standard shell,
+.Xr sh 1 ,
+removes them both elsewhere than in single quotes, effectively catenating
+the two lines.
+The following examples demonstrate escaped newlines in command lines.
+.Bl -column -offset indent "    echo \*qfoo" "|      cd dir \\"
+.It "echo-foobar:"      Ta "|  syntax-error:"
+.It "    echo \*qfoo\\" Ta "|      for i in a b\\"
+.It "    bar\*q"        Ta "|      do\\"
+.It                     Ta "|        echo $i\\"
+.It                     Ta "|      done"
+.El
+.Pp
+The first one is an unnecessarily contrived way of doing
+.Bd -compact -offset indent
+.Ic "echo \*qfoobar\*q"
+.Ed
+The second one demonstrates why the semicolon is required in many places
+where in a similar looking regular shell script it wouldn't be.
+After the shell has removed the backslash newline pairs, the result
+would be the syntactically incorrect command
+.Bd -compact -offset indent
+.Ic "for i in a bdo  echo $idone"
 .Ed
 .Sh VARIABLE ASSIGNMENTS
 Variables in make are much like variables in the shell, and, by tradition,
@@ -623,14 +658,18 @@ Variables defined in the makefile or in included makefiles.
 .It Command line variables
 Variables defined as part of the command line.
 .It Local variables
-Variables that are defined specific to a certain target.
-The seven local variables are as follows:
+There are seven variables that are defined specific to a certain target.
+Five of these are defined in POSIX but only in their short form.
+The variables are as follows:
 .Bl -tag -width ".ARCHIVE"
 .It Va .ALLSRC
 The list of all sources for this target; also known as
 .Ql Va \&\*[Gt] .
+This variable is a non-POSIX extension.
 .It Va .ARCHIVE
-The name of the archive file.
+The name of the archive file; also known as
+.Ql Va \&! .
+This variable is a non-POSIX extension.
 .It Va .IMPSRC
 In suffix-transformation rules, the name/path of the source from which the
 target is to be transformed (the
@@ -639,7 +678,8 @@ source); also known as
 .Ql Va \&\*[Lt] .
 It is not defined in explicit rules.
 .It Va .MEMBER
-The name of the archive member.
+The name of the archive member; also known as
+.Ql Va % .
 .It Va .OODATE
 The list of sources for this target that were deemed out-of-date; also
 known as
@@ -648,31 +688,47 @@ known as
 The file prefix of the target, containing only the file portion, no suffix
 or preceding directory components; also known as
 .Ql Va * .
+.Pp
+POSIX only requires this variable to be availabe for suffix transformation
+rules, but this implementation makes it available for all targets.
+If the target does not have a known suffix (see
+.Ic .SUFFIXES ) ,
+it is equivalent to
+.Ql Va .TARGET .
 .It Va .TARGET
 The name of the target; also known as
 .Ql Va @ .
 .El
 .Pp
-The shorter forms
-.Ql Va @ ,
+To increase readability, the shorter forms
+.Ql ( Va @ ,
+.Ql Va \&! ,
+.Ql Va % ,
 .Ql Va \&? ,
-.Ql Va \&\*[Lt] ,
-.Ql Va \&\*[Gt] ,
+.Ql Va \*[Lt] ,
+.Ql Va \*[Gt] ,
 and
-.Ql Va *
-are permitted for backward
-compatibility with historical makefiles and are not recommended.
-The six variables
-.Ql Va "@F" ,
-.Ql Va "@D" ,
-.Ql Va "\*[Lt]F" ,
-.Ql Va "\*[Lt]D" ,
-.Ql Va "*F" ,
+.Ql Va * )
+should only be used when compatibility with POSIX or other implementations
+is desired.
+For compatibility with POSIX, all of the short forms may also be written
+with an appended uppercase
+.Ql D
+or
+.Ql F ,
+e.g.\&
+.Ql @D
+or
+.Ql *F .
+These modified versions replace each word in the expansion with their
+.Em directory part ( Ql D )
+or
+.Em filename part ( Ql F ) ,
+and are exactly equivalent to the
+.Cm \&:H
 and
-.Ql Va "*D"
-are permitted for compatibility with
-.At V
-makefiles and are not recommended.
+.Cm \&:T
+variable modifiers, respectively.
 .Pp
 Four of the local variables may be used in sources on dependency lines
 because they expand to the proper value for each target on the line.
@@ -1052,12 +1108,26 @@ If any of the modifiers in the modifier_variable contain a dollar sign
 .Pq Ql $ ,
 these must be doubled to avoid early expansion.
 .Pp
+Variable modifiers are not POSIX compatible except for
+.Ql Cm :old_string=new_string ,
+.Ql Cm \&:H
+and
+.Ql Cm \&:T .
+Even these have notable caveats, see their individual descriptions.
+.Pp
 The supported modifiers are:
 .Bl -tag -width EEE
 .It Cm \&:E
 Replaces each word in the variable with its suffix.
 .It Cm \&:H
-Replaces each word in the variable with everything but the last component.
+Replaces each word in the variable with everything but the last component
+.Ql ( "head only" ) .
+In POSIX compatible makefiles this modification is only available for local
+variables and with different syntax.
+It is achieved by writing the variable with an appended
+.Ql D ,
+e.g.\&
+.Ql Va @D .
 .It Cm \&:M Ns Ar pattern
 Select only those words that match
 .Ar pattern .
@@ -1260,7 +1330,14 @@ and
 are subjected to variable expansion before being parsed as
 regular expressions.
 .It Cm \&:T
-Replaces each word in the variable with its last component.
+Replaces each word in the variable with its last component
+.Ql ( "tail only" ) .
+In POSIX compatible makefiles this modification is only available for local
+variables and with different syntax.
+It is achieved by writing the variable with an appended
+.Ql F ,
+e.g.\&
+.Ql Va @F .
 .It Cm \&:u
 Remove adjacent duplicate words (like
 .Xr uniq 1 ) .
@@ -1283,7 +1360,7 @@ to determine is any words match "42" you need to use something like:
 .It Ar :old_string=new_string
 This is the
 .At V
-style variable substitution.
+style variable substitution, later standardized in POSIX.
 It must be the last modifier specified.
 If
 .Ar old_string
@@ -1300,6 +1377,9 @@ is the substring of
 .Ar old_string
 to be replaced in
 .Ar new_string .
+The special meaning of
+.Ar %
+is not POSIX compatible.
 .Pp
 Variable expansion occurs in the normal fashion inside both
 .Ar old_string
@@ -1749,7 +1829,20 @@ of three.
 Comments begin with a hash
 .Pq Ql \&#
 character, anywhere but in a shell
-command line, and continue to the end of an unescaped new line.
+command line, and continue to the end of an
+.Em unescaped
+new line.
+This can be used to a great effect to comment out continued sections of
+a makefile but it can also lead to very subtle, and possibly difficult
+to spot, errors for that same reason.
+Please observe some actually encountered problems:
+.Bl -column -offset indent "|  target: source" "|  target: source" \
+    "|  target: source"
+.It "#OLD_NAME =\\" Ta "|  VAR =\\"   Ta "|  #VAR2 =\\"
+.It "NEW_NAME =\\"  Ta "|      foo\\" Ta "|  #   foo\\"
+.It "foo\\"         Ta "|  #   bar\\" Ta "|  #   bar\\"
+.It "bar"           Ta "|      baz"   Ta "|  target: source"
+.El
 .Sh SPECIAL SOURCES (ATTRIBUTES)
 .Bl -tag -width .IGNOREx
 .It Ic .EXEC
