@@ -6,13 +6,9 @@ LIB2FUNCS_EXTRA = $(srcdir)/config/rs6000/tramp.asm \
 
 TARGET_LIBGCC2_CFLAGS += -mno-minimal-toc
 
-MULTILIB_OPTIONS        = m64/m32 msoft-float
-MULTILIB_DIRNAMES       = 64 32 soft-float
-MULTILIB_EXTRA_OPTS     = fPIC mstrict-align
-MULTILIB_EXCEPTIONS     = m64/msoft-float
-MULTILIB_EXCLUSIONS     = m64/!m32/msoft-float
-# XXX this is wrong
-MULTILIB_OSDIRNAMES	= ../lib ../lib32 soft-float
+MULTILIB_OPTIONS        = m64/m32
+MULTILIB_DIRNAMES       = 64 32
+MULTILIB_OSDIRNAMES	= . ../lib/powerpc
 
 MULTILIB_MATCHES        = $(MULTILIB_MATCHES_FLOAT)
 

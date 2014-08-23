@@ -31,6 +31,8 @@
         builtin_define ("_SECURE_PLT");		\
       if (TARGET_SOFT_FLOAT)			\
         builtin_define ("_SOFT_FLOAT");		\
+      if (TARGET_ISEL)				\
+        builtin_define ("__PPC_ISEL__");	\
     }						\
   while (0)
 
