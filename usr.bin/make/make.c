@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.88 2012/11/09 18:53:05 sjg Exp $	*/
+/*	$NetBSD: make.c,v 1.89 2014/08/23 15:05:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.88 2012/11/09 18:53:05 sjg Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.89 2014/08/23 15:05:40 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.88 2012/11/09 18:53:05 sjg Exp $");
+__RCSID("$NetBSD: make.c,v 1.89 2014/08/23 15:05:40 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -471,26 +471,40 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 
     if (Lst_Open(cgn->children) == SUCCESS) {
 	while ((ln = Lst_Next(cgn->children)) != NULL) {
-	    GNode *tgn, *gn = (GNode *)Lst_Datum(ln);
+	    GNode *gn = (GNode *)Lst_Datum(ln);
 
 	    /*
-	     * Expand variables in the .USE node's name
-	     * and save the unexpanded form.
-	     * We don't need to do this for commands.
-	     * They get expanded properly when we execute.
+	     * Don't expand variables for transformation nodes, because
+	     * only Suff module knows when the variables have been
+	     * properly set for expansion.
 	     */
-	    if (gn->uname == NULL) {
-		gn->uname = gn->name;
-	    } else {
-		if (gn->name)
-		    free(gn->name);
-	    }
-	    gn->name = Var_Subst(NULL, gn->uname, pgn, FALSE);
-	    if (gn->name && gn->uname && strcmp(gn->name, gn->uname) != 0) {
-		/* See if we have a target for this node. */
-		tgn = Targ_FindNode(gn->name, TARG_NOCREATE);
-		if (tgn != NULL)
-		    gn = tgn;
+	    if (!(cgn->type & OP_TRANSFORM)) {
+		/*
+		 * XXX: Thread safety?  Can more than one thread be
+		 * expanding and using the child nodes at the same time?
+		 */
+		GNode *tgn;
+		/*
+		 * Expand variables in the .USE node's name
+		 * and save the unexpanded form.
+		 * We don't need to do this for commands.
+		 * They get expanded properly when we execute.
+		 */
+		if (gn->uname == NULL) {
+		    gn->uname = gn->name;
+		} else {
+		    if (gn->name)
+			free(gn->name);
+		}
+		gn->name = Var_Subst(NULL, gn->uname, pgn, FALSE);
+		if (gn->name && gn->uname
+		    && strcmp(gn->name, gn->uname) != 0)
+		{
+		    /* See if we have a target for this node. */
+		    tgn = Targ_FindNode(gn->name, TARG_NOCREATE);
+		    if (tgn != NULL)
+			gn = tgn;
+		}
 	    }
 
 	    (void)Lst_AtEnd(pgn->children, gn);
@@ -500,7 +514,8 @@ Make_HandleUse(GNode *cgn, GNode *pgn)
 	Lst_Close(cgn->children);
     }
 
-    pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_USEBEFORE|OP_TRANSFORM);
+    pgn->type |= cgn->type
+	& ~(OP_OPMASK|OP_USE|OP_USEBEFORE|OP_TRANSFORM|OP_FROM_SYS_MK);
 }
 
 /*-
@@ -644,6 +659,47 @@ Make_Recheck(GNode *gn)
     }
 #endif
     return mtime;
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * Make_SetImpsrcLocalVar -- set .IMPSRC on parent.
+ *
+ * The value of the .IMPSRC variable is, in order of precedence,
+ * the .TARGET of
+ *  1) the implied source of a transformation rule,
+ *  2) the first prerequisite from the dependency line of an explicit rule, or
+ *  3) the first prerequisite of an explicit rule.
+ *
+ * The second and third matter for cases like:
+ *   foo: bar
+ *   foo: baz; command
+ *   bar: xyzzy
+ *   bar: ; command
+ * For foo $(<) is baz, for bar it is xyzzy.
+ *
+ * Input:
+ *	child	the node being checked
+ *	parent	node for whom the check is being made
+ *-----------------------------------------------------------------------
+ */
+void
+Make_SetImpsrcLocalVar(GNode *child, GNode *parent)
+{
+    int implied = Lst_Member(child->iParents, parent) != NULL;
+    int first_local = (GNode *)Lst_Datum(parent->first_local_child) == child;
+    /* first other is never allowed if first local is to be expected */
+    int first_other = parent->first_local_child == NULL &&
+        (GNode *)Lst_Datum(Lst_First(parent->children)) == child;
+
+    if (implied
+            || ((first_local || first_other) && !Var_Exists(IMPSRC, parent)))
+    {
+	char *tmp = NULL;
+	Var_Set(IMPSRC, Var_Value(TARGET, child, &tmp), parent, 0);
+	if (tmp != NULL)
+	    free(tmp);
+    }
 }
 
 /*-
@@ -841,6 +897,12 @@ Make_Update(GNode *cgn)
 	if (p1)
 	    free(p1);
 	Lst_Close(cgn->iParents);
+    }
+    /* Set .IMPSRC for parents whose first dependency this is. */
+    if (Lst_Open(cgn->parents) == SUCCESS) {
+	while ((ln = Lst_Next(cgn->parents)) != NULL)
+	    Make_SetImpsrcLocalVar(cgn, (GNode *)Lst_Datum(ln));
+	Lst_Close(cgn->parents);
     }
 }
 
