@@ -33,7 +33,11 @@ struct nouveau_mem {
 
 	struct nouveau_mm_node *tag;
 	struct list_head regions;
+#ifdef __NetBSD__
+	bus_dmamap_t pages;
+#else
 	dma_addr_t *pages;
+#endif
 	u32 memtype;
 	u64 offset;
 	u64 size;

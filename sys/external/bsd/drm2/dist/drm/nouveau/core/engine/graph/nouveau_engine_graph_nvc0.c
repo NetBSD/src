@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_graph_nvc0.c,v 1.1.1.1 2014/08/06 12:36:26 riastradh Exp $	*/
+/*	$NetBSD: nouveau_engine_graph_nvc0.c,v 1.2 2014/08/23 08:03:33 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_graph_nvc0.c,v 1.1.1.1 2014/08/06 12:36:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_graph_nvc0.c,v 1.2 2014/08/23 08:03:33 riastradh Exp $");
+
+#include <linux/string.h>	/* XXX */
 
 #include "nvc0.h"
 #include "ctxnvc0.h"
@@ -832,7 +834,7 @@ nvc0_graph_intr(struct nouveau_subdev *subdev)
 		handle = nouveau_handle_get_class(engctx, class);
 		if (!handle || nv_call(handle->object, mthd, data)) {
 			nv_error(priv,
-				 "ILLEGAL_MTHD ch %d [0x%010llx %s] subc %d class 0x%04x mthd 0x%04x data 0x%08x\n",
+				 "ILLEGAL_MTHD ch %d [0x%010"PRIx64" %s] subc %d class 0x%04x mthd 0x%04x data 0x%08x\n",
 				 chid, inst << 12, nouveau_client_name(engctx),
 				 subc, class, mthd, data);
 		}
@@ -843,7 +845,7 @@ nvc0_graph_intr(struct nouveau_subdev *subdev)
 
 	if (stat & 0x00000020) {
 		nv_error(priv,
-			 "ILLEGAL_CLASS ch %d [0x%010llx %s] subc %d class 0x%04x mthd 0x%04x data 0x%08x\n",
+			 "ILLEGAL_CLASS ch %d [0x%010"PRIx64" %s] subc %d class 0x%04x mthd 0x%04x data 0x%08x\n",
 			 chid, inst << 12, nouveau_client_name(engctx), subc,
 			 class, mthd, data);
 		nv_wr32(priv, 0x400100, 0x00000020);
@@ -853,7 +855,7 @@ nvc0_graph_intr(struct nouveau_subdev *subdev)
 	if (stat & 0x00100000) {
 		nv_error(priv, "DATA_ERROR [");
 		nouveau_enum_print(nv50_data_error_names, code);
-		pr_cont("] ch %d [0x%010llx %s] subc %d class 0x%04x mthd 0x%04x data 0x%08x\n",
+		pr_cont("] ch %d [0x%010"PRIx64" %s] subc %d class 0x%04x mthd 0x%04x data 0x%08x\n",
 			chid, inst << 12, nouveau_client_name(engctx), subc,
 			class, mthd, data);
 		nv_wr32(priv, 0x400100, 0x00100000);
@@ -861,7 +863,7 @@ nvc0_graph_intr(struct nouveau_subdev *subdev)
 	}
 
 	if (stat & 0x00200000) {
-		nv_error(priv, "TRAP ch %d [0x%010llx %s]\n", chid, inst << 12,
+		nv_error(priv, "TRAP ch %d [0x%010"PRIx64" %s]\n", chid, inst << 12,
 			 nouveau_client_name(engctx));
 		nvc0_graph_trap_intr(priv);
 		nv_wr32(priv, 0x400100, 0x00200000);
@@ -883,7 +885,7 @@ nvc0_graph_intr(struct nouveau_subdev *subdev)
 	nouveau_engctx_put(engctx);
 }
 
-void
+static void
 nvc0_graph_init_fw(struct nvc0_graph_priv *priv, u32 fuc_base,
 		   struct nvc0_graph_fuc *code, struct nvc0_graph_fuc *data)
 {
@@ -1212,7 +1214,7 @@ nvc0_graph_dtor_fw(struct nvc0_graph_fuc *fuc)
 	fuc->data = NULL;
 }
 
-int
+static int
 nvc0_graph_ctor_fw(struct nvc0_graph_priv *priv, const char *fwname,
 		   struct nvc0_graph_fuc *fuc)
 {

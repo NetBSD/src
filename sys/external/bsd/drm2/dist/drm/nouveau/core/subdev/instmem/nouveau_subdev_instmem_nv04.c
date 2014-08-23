@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_instmem_nv04.c,v 1.1.1.1 2014/08/06 12:36:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_subdev_instmem_nv04.c,v 1.2 2014/08/23 08:03:34 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_instmem_nv04.c,v 1.1.1.1 2014/08/06 12:36:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_instmem_nv04.c,v 1.2 2014/08/23 08:03:34 riastradh Exp $");
 
 #include "nv04.h"
 
@@ -121,8 +121,13 @@ nv04_instmem_dtor(struct nouveau_object *object)
 	nouveau_ramht_ref(NULL, &priv->ramht);
 	nouveau_gpuobj_ref(NULL, &priv->vbios);
 	nouveau_mm_fini(&priv->heap);
+#ifdef __NetBSD__
+	if (priv->iomemsz)
+		bus_space_unmap(priv->iomemt, priv->iomemh, priv->iomemsz);
+#else
 	if (priv->iomem)
 		iounmap(priv->iomem);
+#endif
 	nouveau_instmem_destroy(&priv->base);
 }
 

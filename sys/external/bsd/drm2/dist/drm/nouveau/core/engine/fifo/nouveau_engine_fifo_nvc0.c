@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_fifo_nvc0.c,v 1.1.1.1 2014/08/06 12:36:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_engine_fifo_nvc0.c,v 1.2 2014/08/23 08:03:33 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_nvc0.c,v 1.1.1.1 2014/08/06 12:36:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_nvc0.c,v 1.2 2014/08/23 08:03:33 riastradh Exp $");
 
 #include <core/client.h>
 #include <core/handle.h>
@@ -44,6 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_nvc0.c,v 1.1.1.1 2014/08/06 12:3
 #include <engine/dmaobj.h>
 #include <engine/fifo.h>
 
+#include <drm/drmP.h>		/* XXX */
+#include <linux/workqueue.h>	/* XXX */
+
 struct nvc0_fifo_priv {
 	struct nouveau_fifo base;
 
@@ -53,7 +56,12 @@ struct nvc0_fifo_priv {
 	struct {
 		struct nouveau_gpuobj *mem[2];
 		int active;
+#ifdef __NetBSD__
+		spinlock_t lock;
+		drm_waitqueue_t wait;
+#else
 		wait_queue_head_t wait;
+#endif
 	} runlist;
 
 	struct {
@@ -106,10 +114,24 @@ nvc0_fifo_runlist_update(struct nvc0_fifo_priv *priv)
 	nv_wr32(priv, 0x002270, cur->addr >> 12);
 	nv_wr32(priv, 0x002274, 0x01f00000 | (p >> 3));
 
+#ifdef __NetBSD__
+    {
+	int ret;
+
+	spin_lock(&priv->runlist.lock);
+	DRM_SPIN_TIMED_WAIT_UNTIL(ret, &priv->runlist.wait,
+	    &priv->runlist.lock, msecs_to_jiffies(2000),
+	    !(nv_rd32(priv, 0x00227c) & 0x00100000));
+	if (ret == -ETIMEDOUT)
+		nv_error(priv, "runlist update timeout\n");
+	spin_unlock(&priv->runlist.lock);
+    }
+#else
 	if (wait_event_timeout(priv->runlist.wait,
 			       !(nv_rd32(priv, 0x00227c) & 0x00100000),
 			       msecs_to_jiffies(2000)) == 0)
 		nv_error(priv, "runlist update timeout\n");
+#endif
 	mutex_unlock(&nv_subdev(priv)->mutex);
 }
 
@@ -649,8 +671,8 @@ nvc0_fifo_intr_fault(struct nvc0_fifo_priv *priv, int unit)
 	if (!ec)
 		snprintf(ecunk, sizeof(ecunk), "UNK%02x", client);
 
-	nv_error(priv, "%s fault at 0x%010llx [%s] from %s/%s%s%s%s on "
-		       "channel 0x%010llx [%s]\n", write ? "write" : "read",
+	nv_error(priv, "%s fault at 0x%010"PRIx64" [%s] from %s/%s%s%s%s on "
+		       "channel 0x%010"PRIx64" [%s]\n", write ? "write" : "read",
 		 (u64)vahi << 32 | valo, er ? er->name : erunk,
 		 eu ? eu->name : euunk, hub ? "" : "GPC", gpcid, hub ? "" : "/",
 		 ec ? ec->name : ecunk, (u64)inst << 12,
@@ -714,7 +736,13 @@ nvc0_fifo_intr_runlist(struct nvc0_fifo_priv *priv)
 	u32 intr = nv_rd32(priv, 0x002a00);
 
 	if (intr & 0x10000000) {
+#ifdef __NetBSD__
+		spin_lock(&priv->runlist.lock);
+		DRM_SPIN_WAKEUP_ONE(&priv->runlist.wait, &priv->runlist.lock);
+		spin_unlock(&priv->runlist.lock);
+#else
 		wake_up(&priv->runlist.wait);
+#endif
 		nv_wr32(priv, 0x002a00, 0x10000000);
 		intr &= ~0x10000000;
 	}
@@ -860,6 +888,11 @@ nvc0_fifo_ctor(struct nouveau_object *parent, struct nouveau_object *engine,
 
 	INIT_WORK(&priv->fault, nvc0_fifo_recover_work);
 
+#ifdef __NetBSD__
+	spin_lock_init(&priv->runlist.lock);
+	DRM_INIT_WAITQUEUE(&priv->runlist.wait, "nvfifo");
+#endif
+
 	ret = nouveau_gpuobj_new(nv_object(priv), NULL, 0x1000, 0x1000, 0,
 				&priv->runlist.mem[0]);
 	if (ret)
@@ -870,7 +903,9 @@ nvc0_fifo_ctor(struct nouveau_object *parent, struct nouveau_object *engine,
 	if (ret)
 		return ret;
 
+#ifndef __NetBSD__
 	init_waitqueue_head(&priv->runlist.wait);
+#endif
 
 	ret = nouveau_gpuobj_new(nv_object(priv), NULL, 128 * 0x1000, 0x1000, 0,
 				&priv->user.mem);
@@ -902,6 +937,11 @@ nvc0_fifo_dtor(struct nouveau_object *object)
 	nouveau_gpuobj_ref(NULL, &priv->user.mem);
 	nouveau_gpuobj_ref(NULL, &priv->runlist.mem[0]);
 	nouveau_gpuobj_ref(NULL, &priv->runlist.mem[1]);
+
+#ifdef __NetBSD__
+	DRM_DESTROY_WAITQUEUE(&priv->runlist.wait);
+	spin_lock_destroy(&priv->runlist.lock);
+#endif
 
 	nouveau_fifo_destroy(&priv->base);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: spinlock.h,v 1.3 2014/08/06 13:53:12 riastradh Exp $	*/
+/*	$NetBSD: spinlock.h,v 1.4 2014/08/23 08:03:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,9 @@
 
 #include <sys/cdefs.h>
 #include <sys/mutex.h>
+
+#define	__acquires(lock)	/* XXX lockdep stuff */
+#define	__releases(lock)	/* XXX lockdep stuff */
 
 typedef struct spinlock {
 	kmutex_t sl_lock;
