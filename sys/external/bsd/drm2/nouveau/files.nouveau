@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.2 2014/08/06 15:01:34 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.3 2014/08/23 08:03:34 riastradh Exp $
 
 device	nouveau: drmkms, drmkms_pci, drmkms_ttm, genfb, wsemuldisplaydev
 attach	nouveau at pci
@@ -29,6 +29,90 @@ makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_bsp_nve0.c"+="-Wno-missing-field-
 makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_copy_nva3.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_copy_nvc0.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_copy_nve0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_crypt_nv84.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_crypt_nv98.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_device_base.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_device_ctrl.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_disp_gm107.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_disp_nv04.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_disp_nv50.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_disp_nv84.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_disp_nv94.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_disp_nva0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_disp_nva3.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_disp_nvd0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_disp_nve0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_disp_nvf0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_dmaobj_base.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_dmaobj_nv04.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_dmaobj_nv50.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_dmaobj_nvc0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_dmaobj_nvd0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_fifo_nv04.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_fifo_nv10.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_fifo_nv108.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_fifo_nv17.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_fifo_nv40.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_fifo_nv50.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_fifo_nv84.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_fifo_nvc0.c"+="-Wno-missing-field-initializers -Wno-shadow"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_fifo_nve0.c"+="-Wno-missing-field-initializers -Wno-shadow"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_ctxgm107.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_ctxnv108.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_ctxnvc0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_ctxnvc1.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_ctxnvc4.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_ctxnvc8.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_ctxnvd7.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_ctxnvd9.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_ctxnve4.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_ctxnvf0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_gm107.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nv04.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nv10.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nv108.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nv20.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nv25.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nv2a.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nv30.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nv34.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nv35.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nv40.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nv50.c"+="-Wno-missing-field-initializers -Wno-shadow"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nvc0.c"+="-Wno-missing-field-initializers -Wno-shadow"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nvc1.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nvc4.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nvc8.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nvd7.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nvd9.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nve4.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_graph_nvf0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_mpeg_nv31.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_mpeg_nv40.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_mpeg_nv44.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_mpeg_nv50.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_mpeg_nv84.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_perfmon_base.c"+="-Wno-missing-field-initializers -Wno-type-limits"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_perfmon_daemon.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_perfmon_nv40.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_perfmon_nv50.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_perfmon_nv84.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_perfmon_nva3.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_perfmon_nvc0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_perfmon_nve0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_perfmon_nvf0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_ppp_nvc0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_ppp_nv98.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_software_nv04.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_software_nv10.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_software_nv50.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_software_nvc0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_vp_nv84.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_vp_nv98.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_vp_nvc0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_vp_nve0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_bar_base.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_bar_nvc0.c"+="-Wno-missing-field-initializers"
 
 file	external/bsd/drm2/nouveau/nouveau_module.c	nouveau
 
@@ -347,21 +431,21 @@ file	external/bsd/drm2/dist/drm/nouveau/nouveau_display.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_dma.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_dp.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_drm.c	nouveau
-file	external/bsd/drm2/dist/drm/nouveau/nouveau_fbcon.c	nouveau
+#file	external/bsd/drm2/dist/drm/nouveau/nouveau_fbcon.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_fence.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_gem.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_hwmon.c	nouveau
-file	external/bsd/drm2/dist/drm/nouveau/nouveau_nv04_fbcon.c	nouveau
+#file	external/bsd/drm2/dist/drm/nouveau/nouveau_nv04_fbcon.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_nv04_fence.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_nv10_fence.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_nv17_fence.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_nv50_display.c	nouveau
-file	external/bsd/drm2/dist/drm/nouveau/nouveau_nv50_fbcon.c	nouveau
+#file	external/bsd/drm2/dist/drm/nouveau/nouveau_nv50_fbcon.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_nv50_fence.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_nv84_fence.c	nouveau
-file	external/bsd/drm2/dist/drm/nouveau/nouveau_nvc0_fbcon.c	nouveau
+#file	external/bsd/drm2/dist/drm/nouveau/nouveau_nvc0_fbcon.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_nvc0_fence.c	nouveau
-file	external/bsd/drm2/dist/drm/nouveau/nouveau_prime.c	nouveau
+#file	external/bsd/drm2/dist/drm/nouveau/nouveau_prime.c	nouveau	# XXX drm prime
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_sgdma.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_sysfs.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_ttm.c	nouveau

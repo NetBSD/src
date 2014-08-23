@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.7 2014/08/06 13:50:38 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.8 2014/08/23 08:03:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,6 +41,12 @@
 #include <machine/limits.h>
 
 #include <lib/libkern/libkern.h>
+
+static inline unsigned long
+__ffs(unsigned long x)
+{
+	return ffs64(x);
+}
 
 static inline unsigned long
 __ffs64(uint64_t x)

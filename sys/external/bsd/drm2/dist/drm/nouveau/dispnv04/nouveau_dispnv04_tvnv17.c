@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv04_tvnv17.c,v 1.2 2014/08/06 15:01:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv04_tvnv17.c,v 1.3 2014/08/23 08:03:34 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2009 Francisco Jerez.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_tvnv17.c,v 1.2 2014/08/06 15:01:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_tvnv17.c,v 1.3 2014/08/23 08:03:34 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
@@ -324,7 +324,7 @@ static int nv17_tv_mode_valid(struct drm_encoder *encoder,
 	const struct nv17_tv_norm_params *tv_norm = get_tv_norm(encoder);
 
 	if (tv_norm->kind == CTV_ENC_MODE) {
-		struct drm_display_mode *output_mode =
+		const struct drm_display_mode *output_mode =
 						&tv_norm->ctv_enc_mode.mode;
 
 		if (mode->clock > 400000)
@@ -534,7 +534,7 @@ static void nv17_tv_mode_set(struct drm_encoder *encoder,
 			tv_regs->tv_enc[i] = tv_norm->tv_enc_mode.tv_enc[i];
 
 	} else {
-		struct drm_display_mode *output_mode =
+		const struct drm_display_mode *output_mode =
 						&tv_norm->ctv_enc_mode.mode;
 
 		/* The registers in PRAMDAC+0xc00 control some timings and CSC
