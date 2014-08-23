@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.186 2014/06/20 06:13:45 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.187 2014/08/23 14:50:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.186 2014/06/20 06:13:45 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.187 2014/08/23 14:50:24 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.186 2014/06/20 06:13:45 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.187 2014/08/23 14:50:24 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3603,6 +3603,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
     char	  name[2];
 
     *freePtr = NULL;
+    nstr = NULL;
     dynamic = FALSE;
     start = str;
     parsestate.oneBigWord = FALSE;
@@ -3734,7 +3735,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	 */
 	if ((v == NULL) && (ctxt != VAR_CMD) && (ctxt != VAR_GLOBAL) &&
 		(vlen == 2) && (str[1] == 'F' || str[1] == 'D') &&
-		strchr("@%*!<>", str[0]) != NULL) {
+		strchr("@%?*!<>", str[0]) != NULL) {
 	    /*
 	     * Well, it's local -- go look for it.
 	     */
@@ -3746,7 +3747,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 		/*
 		 * No need for nested expansion or anything, as we're
 		 * the only one who sets these things and we sure don't
-		 * but nested invocations in them...
+		 * put nested invocations in them...
 		 */
 		nstr = Buf_GetAll(&v->val, NULL);
 
@@ -3759,13 +3760,10 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 		}
 		/*
 		 * Resulting string is dynamically allocated, so
-		 * tell caller to free it.
+		 * tell caller to free it.  Can't return yet, there
+		 * might be modifiers.
 		 */
 		*freePtr = nstr;
-		*lengthPtr = tstr-start+1;
-		Buf_Destroy(&buf, TRUE);
-		VarFreeEnv(v, TRUE);
-		return nstr;
 	    }
 	}
 
@@ -3837,28 +3835,34 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	    Buf_Destroy(&buf, TRUE);
     }
 
-    if (v->flags & VAR_IN_USE) {
-	Fatal("Variable %s is recursive.", v->name);
-	/*NOTREACHED*/
-    } else {
-	v->flags |= VAR_IN_USE;
-    }
-    /*
-     * Before doing any modification, we have to make sure the value
-     * has been fully expanded. If it looks like recursion might be
-     * necessary (there's a dollar sign somewhere in the variable's value)
-     * we just call Var_Subst to do any other substitutions that are
-     * necessary. Note that the value returned by Var_Subst will have
-     * been dynamically-allocated, so it will need freeing when we
-     * return.
-     */
-    nstr = Buf_GetAll(&v->val, NULL);
-    if (strchr(nstr, '$') != NULL) {
-	nstr = Var_Subst(NULL, nstr, ctxt, errnum);
-	*freePtr = nstr;
-    }
+    if (nstr == NULL) {
+	/*
+	 * D and F modified versions of the short forms of local variables
+	 * are already expanded.  Expand others.
+	 */
+	if (v->flags & VAR_IN_USE) {
+	    Fatal("Variable %s is recursive.", v->name);
+	    /*NOTREACHED*/
+	} else {
+	    v->flags |= VAR_IN_USE;
+	}
+	/*
+	 * Before doing any modification, we have to make sure the value
+	 * has been fully expanded. If it looks like recursion might be
+	 * necessary (there's a dollar sign somewhere in the variable's value)
+	 * we just call Var_Subst to do any other substitutions that are
+	 * necessary. Note that the value returned by Var_Subst will have
+	 * been dynamically-allocated, so it will need freeing when we
+	 * return.
+	 */
+	nstr = Buf_GetAll(&v->val, NULL);
+	if (strchr(nstr, '$') != NULL) {
+	    nstr = Var_Subst(NULL, nstr, ctxt, errnum);
+	    *freePtr = nstr;
+	}
 
-    v->flags &= ~VAR_IN_USE;
+	v->flags &= ~VAR_IN_USE;
+    }
 
     if ((nstr != NULL) && haveModifier) {
 	int used;
