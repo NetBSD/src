@@ -1,4 +1,4 @@
-# $NetBSD: HAWK,v 1.4 2014/08/17 21:17:43 joerg Exp $
+# $NetBSD: HAWK,v 1.5 2014/08/23 20:26:57 dholland Exp $
 #
 #	HAWK -- TI OMAPL138 based Board Kernel
 #
@@ -67,8 +67,8 @@ options 	NFS_BOOT_RWSIZE=1024
 
 options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_30	# NetBSD 3.0, and
+options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
 
 # Shared memory options
 

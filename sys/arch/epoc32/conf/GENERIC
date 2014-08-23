@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.4 2014/08/17 21:17:43 joerg Exp $
+#	$NetBSD: GENERIC,v 1.5 2014/08/23 20:26:57 dholland Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/epoc32/conf/std.epoc32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 maxusers	32			# estimated number of users
 
@@ -77,8 +77,8 @@ options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_20	# NetBSD 2.0,
 #options 	COMPAT_30	# NetBSD 3.0,
 #options 	COMPAT_40	# NetBSD 4.0,
-#options 	COMPAT_50	# NetBSD 5.0 compatibility.
-#options 	COMPAT_43	# and 4.3BSD
+#options 	COMPAT_50	# NetBSD 5.0 binary compatibility.
+#options 	COMPAT_43	# 4.3BSD binary compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 #options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
