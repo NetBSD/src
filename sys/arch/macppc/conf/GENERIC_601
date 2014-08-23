@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_601,v 1.3 2014/08/18 06:31:24 christos Exp $
+# $NetBSD: GENERIC_601,v 1.4 2014/08/23 20:26:58 dholland Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include		"arch/macppc/conf/std.macppc.601"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"GENERIC-$Revision: 1.3 $"
+ident 		"GENERIC-$Revision: 1.4 $"
 
 maxusers	32
 
@@ -67,9 +67,9 @@ options		DDB_COMMANDONENTER="bt"
 #makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
-options 	COMPAT_50	# NetBSD 5.0 compatibility.
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-options 	COMPAT_70	# NetBSD 7.0 compatibility.
+options 	COMPAT_50	# NetBSD 5.0,
+options 	COMPAT_60	# NetBSD 6.0, and
+options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 #
-#	$NetBSD: TX3912,v 1.85 2014/07/20 10:06:11 alnsn Exp $
+#	$NetBSD: TX3912,v 1.86 2014/08/23 20:26:58 dholland Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -45,11 +45,11 @@ options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
-options 	COMPAT_43
-options 	COMPAT_16
-options 	COMPAT_20
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_43	# 4.3BSD binary compatibility.
+options 	COMPAT_16	# NetBSD 1.6,
+options 	COMPAT_20	# NetBSD 2.0,
+options 	COMPAT_30	# NetBSD 3.0, and
+options 	COMPAT_40	# NetBSD 4.0 binary compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	SCSIVERBOSE	# human readable SCSI error messages

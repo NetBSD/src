@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.382 2014/08/18 06:31:24 christos Exp $
+# $NetBSD: ALL,v 1.383 2014/08/23 20:26:58 dholland Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.382 $"
+#ident 		"ALL-$Revision: 1.383 $"
 
 maxusers	64		# estimated number of users
 
@@ -129,20 +129,20 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 
 # Compatibility options
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
-options 	COMPAT_09	# NetBSD 0.9
-options 	COMPAT_10	# NetBSD 1.0
-options 	COMPAT_11	# NetBSD 1.1
-options 	COMPAT_12	# NetBSD 1.2, 386BSD, and BSDI
-options 	COMPAT_13	# NetBSD 1.3, 386BSD, and BSDI
-options 	COMPAT_14	# NetBSD 1.4
-options 	COMPAT_15	# NetBSD 1.5
-options 	COMPAT_16	# NetBSD 1.6
-options 	COMPAT_20	# NetBSD 2.0
-options 	COMPAT_30	# NetBSD 3.0
-options 	COMPAT_40	# NetBSD 4.0
-options 	COMPAT_50	# NetBSD 5.0
-options 	COMPAT_60	# NetBSD 6.0 compatibility.
-options 	COMPAT_70	# NetBSD 7.0 compatibility.
+options 	COMPAT_09	# NetBSD 0.9,
+options 	COMPAT_10	# NetBSD 1.0,
+options 	COMPAT_11	# NetBSD 1.1,
+options 	COMPAT_12	# NetBSD 1.2 (and 386BSD and BSDI),
+options 	COMPAT_13	# NetBSD 1.3 (and 386BSD and BSDI),
+options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
+options 	COMPAT_16	# NetBSD 1.6,
+options 	COMPAT_20	# NetBSD 2.0,
+options 	COMPAT_30	# NetBSD 3.0,
+options 	COMPAT_40	# NetBSD 4.0,
+options 	COMPAT_50	# NetBSD 5.0,
+options 	COMPAT_60	# NetBSD 6.0, and
+options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
