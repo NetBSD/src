@@ -1,0 +1,91 @@
+$(VAR) = "foo  bar baz"
+a
+b
+c
+foo baR baz,  bar baz, foo bar baz, fooadd baradd bazadd
+mkdir -p 'dir'
+touch 'dir/obj_1.h'
+mkdir -p 'dir'
+printf '#include "obj_1.h"\nconst char* obj_1 = "dir/obj_1.c";' \
+    >'dir/obj_1.c'
+Local variables
+ $(@)="dir/obj_1.o" $(<)="dir/obj_1.c"
+ $(*)="dir/obj_1" $(?)="dir/obj_1.h dir/obj_1.c"
+ $(%)=""
+
+Directory and filename parts of local variables
+ $(@D)="dir" $(@F)="obj_1.o"
+ $(<D)="dir" $(<F)="obj_1.c"
+ $(*D)="dir" $(*F)="obj_1"
+ $(?D)="dir dir" $(?F)="obj_1.h obj_1.c"
+ $(%D)="" $(%F)=""
+
+Local variable substitutions
+ $(@:.o=)="dir/obj_1" $(<:.c=.C)="dir/obj_1.C"
+ $(*:=.h)="dir/obj_1.h" $(?:.h=.H)="dir/obj_1.H dir/obj_1.c"
+ $(%:=)=""
+
+Target with suffix transformations
+ $(@D:=append)="dirappend"
+ $(@F:.o=.O)="obj_1.O"
+ 
+ Implied source with suffix transformations
+ $(<D:r=rr)="dirr"
+ $(<F:.c=.C)="obj_1.C"
+ 
+ Suffixless target with suffix transformations
+ $(*D:.=dot)="dir"
+ $(*F:.a=)="obj_1"
+ 
+ Out-of-date dependencies with suffix transformations
+ $(?D:ir=)="d d"
+ $(?F:.h=.H)="obj_1.H obj_1.c"
+ 
+ Member with suffix transformations
+ $(%D:.=)=""
+ $(%F:$(VAR2)=$(VAR))=""
+
+cc -c -o 'dir/obj_1.o' 'dir/obj_1.c'
+mkdir -p '.'
+printf '#include "obj_2.h"\nconst char* obj_2 = "obj_2.c";' \
+    >'obj_2.c'
+mkdir -p '.'
+touch 'obj_2.h'
+Local variables
+ $(@)="obj2.o" $(<)=""
+ $(*)="obj2" $(?)="obj_2.c obj_2.h dir/obj_1.h"
+ $(%)=""
+
+Directory and filename parts of local variables
+ $(@D)="." $(@F)="obj2.o"
+ $(<D)="" $(<F)=""
+ $(*D)="." $(*F)="obj2"
+ $(?D)=". . dir" $(?F)="obj_2.c obj_2.h obj_1.h"
+ $(%D)="" $(%F)=""
+
+Local variable substitutions
+ $(@:.o=)="obj2" $(<:.c=.C)=""
+ $(*:=.h)="obj2.h" $(?:.h=.H)="obj_2.c obj_2.H dir/obj_1.H"
+ $(%:=)=""
+
+Target with suffix transformations
+ $(@D:=append)=".append"
+ $(@F:.o=.O)="obj2.O"
+ 
+ Implied source with suffix transformations
+ $(<D:r=rr)=""
+ $(<F:.c=.C)=""
+ 
+ Suffixless target with suffix transformations
+ $(*D:.=dot)="dot"
+ $(*F:.a=)="obj2"
+ 
+ Out-of-date dependencies with suffix transformations
+ $(?D:ir=)=". . d"
+ $(?F:.h=.H)="obj_2.c obj_2.H obj_1.H"
+ 
+ Member with suffix transformations
+ $(%D:.=)=""
+ $(%F:$(VAR2)=$(VAR))=""
+
+cc -c -o 'obj2.o' 'obj_2.c'

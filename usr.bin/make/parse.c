@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.198 2014/07/16 19:31:11 justin Exp $	*/
+/*	$NetBSD: parse.c,v 1.199 2014/08/23 14:50:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.198 2014/07/16 19:31:11 justin Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.199 2014/08/23 14:50:24 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.198 2014/07/16 19:31:11 justin Exp $");
+__RCSID("$NetBSD: parse.c,v 1.199 2014/08/23 14:50:24 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1193,8 +1193,14 @@ ParseDoDependency(char *line)
 
     curTargs = Lst_Init(FALSE);
 
+    /*
+     * Get targets.  After each iteration 'line' is reset to point
+     * past the word that was just read so that it points at the start of
+     * the next one (i.e. first non-space) or any of the preceding blanks.
+     */
+    cp = line;
     do {
-	for (cp = line; *cp && (ParseIsEscaped(lstart, cp) ||
+	for ( ; *cp && (ParseIsEscaped(lstart, cp) ||
 		     !(isspace((unsigned char)*cp) ||
 			 *cp == '!' || *cp == ':' || *cp == LPAREN));
 		 cp++) {
@@ -1205,6 +1211,8 @@ ParseDoDependency(char *line)
 		 * so we can safely advance beyond it...There should be
 		 * no errors in this, as they would have been discovered
 		 * in the initial Var_Subst and we wouldn't be here.
+		 * [XXX] Shouldn't this be an error?  I thought dynamic
+		 * source stuff is only allowed on the source side.
 		 */
 		int 	length;
 		void    *freeIt;
@@ -1218,22 +1226,18 @@ ParseDoDependency(char *line)
 
 	if (!ParseIsEscaped(lstart, cp) && *cp == LPAREN) {
 	    /*
-	     * Archives must be handled specially to make sure the OP_ARCHV
-	     * flag is set in their 'type' field, for one thing, and because
-	     * things like "archive(file1.o file2.o file3.o)" are permissible.
-	     * Arch_ParseArchive will set 'line' to be the first non-blank
-	     * after the archive-spec. It creates/finds nodes for the members
-	     * and places them on the given list, returning SUCCESS if all
-	     * went well and FAILURE if there was an error in the
-	     * specification. On error, line should remain untouched.
+	     * Archive member spec.  On SUCCESS relevant archive member
+	     * nodes are added to targets and cp has been advanced to
+	     * the first non-blank after the spec.  On FAILURE cp is not
+	     * changed, targets might not be so lucky.
 	     */
-	    if (Arch_ParseArchive(&line, targets, VAR_CMD) != SUCCESS) {
+	    cp = line;
+	    if (Arch_ParseArchive(&cp, targets, VAR_CMD) != SUCCESS) {
 		Parse_Error(PARSE_FATAL,
-			     "Error in archive specification: \"%s\"", line);
+			     "Error in archive specification: \"%s\"", cp);
 		goto out;
-	    } else {
+	    } else
 		continue;
-	    }
 	}
 	savec = *cp;
 
@@ -1436,9 +1440,9 @@ ParseDoDependency(char *line)
 		cp++;
 	    }
 	}
-	line = cp;
-    } while (*line && (ParseIsEscaped(lstart, line) ||
-	((*line != '!') && (*line != ':'))));
+	/* Inline assignment in case of continue statements. */
+    } while (*(line = cp) != '\0' && (ParseIsEscaped(lstart, cp) ||
+	((*cp != '!') && (*cp != ':'))));
 
     /*
      * Don't need the list of target names anymore...
@@ -2772,10 +2776,22 @@ ParseGetLine(int flags, int *length)
 	    continue;
 	}
 
-	/* Escaped '\n' replace following whitespace with a single ' ' */
-	while (ptr[0] == ' ' || ptr[0] == '\t')
-	    ptr++;
-	ch = ' ';
+	/*
+	 * Escaped '\n'.  On regular lines it is replaced with a space
+	 * along with all the leading whitespace on the next line.
+	 * On command-lines, backslash and newline must preserved for
+	 * the shell but if there is a leading tab on the next line
+	 * it is removed.  Weird, but this is all from POSIX.
+	 */
+	if (line[0] != '\t') {
+	    while (ptr[0] == ' ' || ptr[0] == '\t')
+		ptr++;
+	    ch = ' ';
+	} else {
+	    *tp++ = '\\';
+	    if (ptr[0] == '\t')
+		ptr++;
+	}
     }
 
     /* Delete any trailing spaces - eg from empty continuations */

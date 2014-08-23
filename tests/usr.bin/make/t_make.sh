@@ -1,4 +1,4 @@
-# $NetBSD: t_make.sh,v 1.2 2014/08/22 16:45:32 apb Exp $
+# $NetBSD: t_make.sh,v 1.3 2014/08/23 14:50:24 christos Exp $
 #
 # Copyright (c) 2008, 2010, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,12 +32,28 @@ run_and_check()
 	local makename="${1}"; shift
 
 	local srcdir="$(atf_get_srcdir)"
-	local testdir="$(atf_get_srcdir)/unit-tests"
+	local in="${srcdir}/d_${name}.mk"
+	local out="${srcdir}/d_${name}.out"
 
-	atf_check -s exit:0 -o ignore -e ignore \
-	    make -f "${testdir}/Makefile" "${makename}.out"
-	atf_check -o file:"${testdir}/${makename}.exp" \
-	    cat "${makename}.out"
+	if [ "x${name}" = "xposix" ]; then
+		# Include $(INPUTFILE) for d_posix.mk, so it can re-run make
+		# on the same makefile.  Make sets $(MAKEFILE), but it is
+		# not in POSIX, so it can't be used as such.  It can't be
+		# set explicitly because make always sets it itself and
+		# the test shouldn't use anything not provided for by in
+		# the POSIX standard.
+		args="INPUTFILE='${in}'"
+		atf_expect_fail 'PR/49086 [$(<)], PR/49092 [output order]'
+		atf_check -o file:"${out}" -x \
+		    "make -kf'${in}' ${args} 2>&1 | sed -e 's,${srcdir}/d_,,'"
+	else
+		local testdir="$(atf_get_srcdir)/unit-tests"
+
+		atf_check -s exit:0 -o ignore -e ignore \
+		make -f "${testdir}/Makefile" "${makename}.out"
+		atf_check -o file:"${testdir}/${makename}.exp" \
+		    cat "${makename}.out"
+	fi
 }
 
 # Defines a test case for make(1), parsing a given file and comparing the
