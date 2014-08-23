@@ -1,4 +1,4 @@
-/*	$NetBSD: essvar.h,v 1.26 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: essvar.h,v 1.26.24.1 2014/08/23 03:46:55 riz Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.26 $ (SHARK) $Date: 2011/11/23 23:07:32 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.26.24.1 $ (SHARK) $Date: 2014/08/23 03:46:55 $
 **
 **++
 **
@@ -85,6 +85,11 @@
 #define ESS_RECORD_CLASS	14
 
 #define ESS_1788_NDEVS		15
+
+#define ESS_SPATIALIZER		15
+#define ESS_SPATIALIZER_ENABLE	16
+
+#define ESS_18X9_NDEVS		17
 
 #define ESS_DAC_REC_VOL		15
 #define ESS_MIC_REC_VOL		16
@@ -165,6 +170,8 @@ struct ess_softc
 #define ESS_1888	10
 
 	u_int	sc_version;		/* Legacy ES688/ES1688 ID */
+
+	u_int	sc_spatializer;		/* spatializer enable */
 
 	/* game port on es1888 */
 	bus_space_tag_t sc_joy_iot;
