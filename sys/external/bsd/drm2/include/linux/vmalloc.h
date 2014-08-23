@@ -1,4 +1,4 @@
-/*	$NetBSD: vmalloc.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: vmalloc.h,v 1.4 2014/08/23 08:03:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,6 +37,19 @@
 #include <uvm/uvm_extern.h>
 
 #include <linux/mm_types.h>
+
+static inline bool
+is_vmalloc_addr(void *addr)
+{
+	/* XXX Assumes vmalloc and kmalloc both use malloc(9).  */
+	return true;
+}
+
+static inline void *
+vmalloc(unsigned long size)
+{
+	return malloc(size, M_TEMP, M_WAITOK);
+}
 
 static inline void *
 vmalloc_user(unsigned long size)
