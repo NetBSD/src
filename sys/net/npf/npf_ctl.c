@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.39 2014/08/11 23:48:01 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.40 2014/08/24 20:36:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.39 2014/08/11 23:48:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.40 2014/08/24 20:36:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -459,7 +459,7 @@ npf_mk_connlist(prop_array_t conlist, npf_ruleset_t *natlist,
 	prop_dictionary_t condict;
 	prop_object_iterator_t it;
 	npf_conndb_t *cd;
-	int error;
+	int error = 0;
 
 	/* Connection list - array */
 	if (prop_object_type(conlist) != PROP_TYPE_ARRAY) {
@@ -469,8 +469,6 @@ npf_mk_connlist(prop_array_t conlist, npf_ruleset_t *natlist,
 
 	/* Create a connection database. */
 	cd = npf_conndb_create();
-
-	error = 0;
 	it = prop_array_iterator(conlist);
 	while ((condict = prop_object_iterator_next(it)) != NULL) {
 		/* Connection - dictionary. */
@@ -479,7 +477,7 @@ npf_mk_connlist(prop_array_t conlist, npf_ruleset_t *natlist,
 			error = EINVAL;
 			break;
 		}
-		/* Construct and insert real connection structure. */
+		/* Construct and insert the connection. */
 		error = npf_conn_import(cd, condict, natlist);
 		if (error) {
 			NPF_ERR_DEBUG(errdict);

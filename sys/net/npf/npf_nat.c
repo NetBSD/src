@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.33 2014/08/11 23:48:01 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.34 2014/08/24 20:36:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.33 2014/08/11 23:48:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.34 2014/08/24 20:36:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -812,6 +812,7 @@ npf_nat_destroy(npf_nat_t *nt)
 
 	mutex_enter(&np->n_lock);
 	LIST_REMOVE(nt, nt_entry);
+	KASSERT(np->n_refcnt > 0);
 	atomic_dec_uint(&np->n_refcnt);
 	mutex_exit(&np->n_lock);
 
@@ -873,9 +874,14 @@ npf_nat_import(prop_dictionary_t natdict, npf_ruleset_t *natlist,
 		return NULL;
 	}
 
-	LIST_INSERT_HEAD(&np->n_nat_list, nt, nt_entry);
+	/*
+	 * Associate, take a reference and insert.  Unlocked since
+	 * the policy is not yet visible.
+	 */
 	nt->nt_natpolicy = np;
 	nt->nt_conn = con;
+	np->n_refcnt++;
+	LIST_INSERT_HEAD(&np->n_nat_list, nt, nt_entry);
 	return nt;
 }
 

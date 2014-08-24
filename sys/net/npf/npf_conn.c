@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.11 2014/08/11 23:48:01 rmind Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.12 2014/08/24 20:36:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.11 2014/08/11 23:48:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.12 2014/08/24 20:36:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -899,6 +899,7 @@ npf_conn_import(npf_conndb_t *cd, prop_dictionary_t cdict,
 	con = pool_cache_get(conn_cache, PR_WAITOK);
 	memset(con, 0, sizeof(npf_conn_t));
 	mutex_init(&con->c_lock, MUTEX_DEFAULT, IPL_SOFTNET);
+	npf_stats_inc(NPF_STAT_CONN_CREATE);
 
 	prop_dictionary_get_uint32(cdict, "proto", &con->c_proto);
 	prop_dictionary_get_uint32(cdict, "flags", &con->c_flags);
@@ -952,6 +953,8 @@ npf_conn_import(npf_conndb_t *cd, prop_dictionary_t cdict,
 		npf_conndb_remove(cd, fw);
 		goto err;
 	}
+
+	NPF_PRINTF(("NPF: imported conn %p\n", con));
 	npf_conndb_enqueue(cd, con);
 	return 0;
 err:
