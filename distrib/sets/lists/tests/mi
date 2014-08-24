@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.588 2014/08/24 11:50:00 apb Exp $
+# $NetBSD: mi,v 1.589 2014/08/24 11:52:45 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3508,6 +3508,8 @@
 ./usr/tests/usr.bin/make/unit-tests/dotwait.mk	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/error.exp	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/error.mk	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/unit-tests/escape.exp	tests-usr.bin-tests	atf
+./usr/tests/usr.bin/make/unit-tests/escape.mk	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/export-all.exp	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/export-all.mk	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/export-env.exp	tests-usr.bin-tests	atf

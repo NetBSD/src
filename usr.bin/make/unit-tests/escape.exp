@@ -1,0 +1,72 @@
+var-1bs
+VAR1BS=:111\111:
+VAR1BSa=:111\aaa:
+VAR1BSA=:111\aaa:
+VAR1BSda=:111\${a}:
+VAR1BSdA=:111\${A}:
+var-2bs
+VAR2BS=:222\\222:
+VAR2BSa=:222\\aaa:
+VAR2BSA=:222\\aaa:
+VAR2BSda=:222\\${a}:
+VAR2BSdA=:222\\${A}:
+var-1bsnl
+VAR1BSNL=:111 111:
+VAR1BSNLa=:111 aaa:
+VAR1BSNLA=:111 aaa:
+VAR1BSNLda=:111 ${a}:
+VAR1BSNLdA=:111 ${A}:
+VAR1BSNLc=:111 # this should not be a comment, it should be part of the value:
+var-2bsnl
+VAR2BSNL=:222\ #222:
+VAR2BSNLa=:222\ #aaa:
+VAR2BSNLA=:222\ #aaa:
+VAR2BSNLda=:222\ #${a}:
+VAR2BSNLdA=:222\ #${A}:
+VAR2BSNLc=:222\ # this should not be a comment, it should be part of the value:
+var-3bsnl
+VAR3BSNL=:333\\ #333:
+VAR3BSNLa=:333\\ #aaa:
+VAR3BSNLA=:333\\ #aaa:
+VAR3BSNLda=:333\\ #${a}:
+VAR3BSNLdA=:333\\ #${A}:
+VAR3BSNLc=:333\ # this should not be a comment, it should be part of the value:
+var-1bsnl-space
+VAR1BSNL00=:first line:
+VAR1BSNL0=:first line no space on second line:
+VAR1BSNLs=:first line one space on second line:
+VAR1BSNLss=:first line two spaces on second line:
+VAR1BSNLt=:first line one tab on second line:
+VAR1BSNLtt=:first line two tabs on second line:
+VAR1BSNLxx=:first line many spaces and tabs [  	 ] on second line:
+cmd-1bsnl
+:first line\
+#second line without space\
+third line:
+:first line\
+     second line spaces should be retained:
+:first line\
+second line tab should be elided:
+:first line\
+	only one tab should be elided, second tab remains
+cmd-2bsnl
+:first line\\
+#second line without space\\
+third line:
+:first line\\
+     second line spaces should be retained:
+:first line\\
+second line tab should be elided:
+:first line\\
+	only one tab should be elided, second tab remains
+cmd-3bsnl
+:first line\\\
+#second line without space\\\
+third line:
+:first line\\\
+     second line spaces should be retained:
+:first line\\\
+second line tab should be elided:
+:first line\\\
+	only one tab should be elided, second tab remains
+exit status 0
