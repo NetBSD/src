@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.315 2014/08/23 20:26:58 dholland Exp $
+# $NetBSD: GENERIC,v 1.316 2014/08/24 07:59:23 jnemeth Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.315 $"
+#ident 		"GENERIC-$Revision: 1.316 $"
 
 maxusers	32
 
@@ -40,6 +40,7 @@ options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 
 options 	MODULAR		# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

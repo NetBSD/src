@@ -1,4 +1,4 @@
-#	$NetBSD: std.odroid,v 1.3 2014/08/14 12:48:52 reinoud Exp $
+#	$NetBSD: std.odroid,v 1.4 2014/08/24 07:59:22 jnemeth Exp $
 #
 # standard NetBSD/evbarm for ODROID options
 
@@ -12,6 +12,7 @@ include 	"arch/evbarm/conf/files.odroid"
 
 # To support easy transit to ../arch/arm/arm32
 options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
 options 	ARM_HAS_VBAR
 options 	CORTEX_PMC
 options 	__HAVE_CPU_COUNTER

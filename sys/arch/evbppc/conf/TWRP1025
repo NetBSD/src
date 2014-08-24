@@ -1,4 +1,4 @@
-#	$NetBSD: TWRP1025,v 1.17 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: TWRP1025,v 1.18 2014/08/24 07:59:22 jnemeth Exp $
 #
 #	TWRP1025 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"TWRP1025-$Revision: 1.17 $"
+ident 		"TWRP1025-$Revision: 1.18 $"
 
 maxusers	32
 
@@ -25,6 +25,7 @@ options 	SYS_CLK=66666667
 #options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
 options 	MODULAR		# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
