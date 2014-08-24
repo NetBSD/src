@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.47 2014/08/24 11:52:45 apb Exp $
+# $NetBSD: Makefile,v 1.48 2014/08/24 17:17:24 apb Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -64,8 +64,16 @@ OUTFILES= ${TESTNAMES:S/$/.out/}
 
 all: ${OUTFILES}
 
+CLEANFILES += *.rawout *.out *.status *.tmp *.core *.tmp
+CLEANFILES += obj*.[och] lib*.a		# posix1.mk
+CLEANFILES += issue*			# suffixes.mk
+CLEANRECURSIVE += dir dummy		# posix1.mk
+
 clean:
-	rm -f *.rawout *.out *.status *.tmp *.core *.tmp
+	rm -f ${CLEANFILES}
+.if !empty(CLEANRECURSIVE)
+	rm -rf ${CLEANRECURSIVE}
+.endif
 
 TEST_MAKE?= ${.MAKE}
 TOOL_SED?= sed
