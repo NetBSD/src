@@ -1,4 +1,4 @@
-# $Id: escape.mk,v 1.3 2014/08/24 13:11:49 apb Exp $
+# $Id: escape.mk,v 1.4 2014/08/24 14:04:35 apb Exp $
 #
 # Test backslash escaping.
 
@@ -87,7 +87,7 @@ $${a}
 VAR1BSNLdA = 111\
 $${A}
 VAR1BSNLc = 111\
-# this should not be a comment, it should be part of the value
+# this should be processed as a comment
 
 all: var-1bsnl
 var-1bsnl:	.PHONY
@@ -103,22 +103,22 @@ var-1bsnl:	.PHONY
 # First one should be taken literally, and last should escape the newline.
 # XXX: Is the expected behaviour well defined?
 #
-# The second lines below start with '#' so they should not generate
-# syntax errors regardless of whether or not they are treated as
-# part of the value.
+# The second lines below each end with '=' so that they will not
+# generate syntax errors regardless of whether or not they are
+# treated as part of the value.
 #
 VAR2BSNL = 222\\
-#222
+222=
 VAR2BSNLa = 222\\
-#${a}
+${a}=
 VAR2BSNLA = 222\\
-#${A}
+${A}=
 VAR2BSNLda = 222\\
-#$${a}
+$${a}=
 VAR2BSNLdA = 222\\
-#$${A}
+$${A}=
 VAR2BSNLc = 222\\
-# this should not be a comment, it should be part of the value
+# this should be processed as a comment
 
 all: var-2bsnl
 var-2bsnl:	.PHONY
@@ -134,22 +134,22 @@ var-2bsnl:	.PHONY
 # First two should be taken literally, and last should escape the newline.
 # XXX: Is the expected behaviour well defined?
 #
-# The second lines below start with '#' so they should not generate
-# syntax errors regardless of whether or not they ar treated as
-# part of the value.
+# The second lines below each end with '=' so that they will not
+# generate syntax errors regardless of whether or not they are
+# treated as part of the value.
 #
 VAR3BSNL = 333\\\
-#333
+333=
 VAR3BSNLa = 333\\\
-#${a}
+${a}=
 VAR3BSNLA = 333\\\
-#${A}
+${A}=
 VAR3BSNLda = 333\\\
-#$${a}
+$${a}=
 VAR3BSNLdA = 333\\\
-#$${A}
+$${A}=
 VAR3BSNLc = 333\\\
-# this should not be a comment, it should be part of the value
+# this should be processed as a comment
 
 all: var-3bsnl
 var-3bsnl:	.PHONY
@@ -157,8 +157,8 @@ var-3bsnl:	.PHONY
 	@echo VAR3BSNL=:${VAR3BSNL:Q}:
 	@echo VAR3BSNLa=:${VAR3BSNLa:Q}:
 	@echo VAR3BSNLA=:${VAR3BSNLA:Q}:
-	@echo VAR3BSNLda=:${VAR3BSNLa:Q}:
-	@echo VAR3BSNLdA=:${VAR3BSNLA:Q}:
+	@echo VAR3BSNLda=:${VAR3BSNLda:Q}:
+	@echo VAR3BSNLdA=:${VAR3BSNLdA:Q}:
 	@echo VAR3BSNLc=:${VAR3BSNLc:Q}:
 
 # Backslash-newline in a variable setting, plus any amount of white space
