@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.19 2011/03/20 20:42:06 mrg Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.20 2014/08/24 19:09:43 palle Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -109,6 +109,11 @@ struct iommu_strbuf {
 #define IOMMUCR_64KPG		0x000000000000000004LL	/* 64K iommu page size */
 #define IOMMUCR_DE		0x000000000000000002LL	/* Diag enable */
 #define IOMMUCR_EN		0x000000000000000001LL	/* Enable IOMMU */
+
+#define IOMMUCR_FIRE_SE		0x000000000000000400LL	/* Snoop enable */
+#define IOMMUCR_FIRE_CM_EN	0x000000000000000300LL  /* Cache mode enable */
+#define IOMMUCR_FIRE_BE		0x000000000000000002LL	/* Bypass enable */
+#define IOMMUCR_FIRE_TE		0x000000000000000001LL	/* Translation enabled */
 
 /*
  * IOMMU stuff
