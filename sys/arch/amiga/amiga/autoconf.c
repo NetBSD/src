@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.116 2013/12/26 20:38:11 rkujawa Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.117 2014/08/24 12:18:21 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.116 2013/12/26 20:38:11 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.117 2014/08/24 12:18:21 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,11 +481,11 @@ findroot(void)
 			maj = bdevsw_lookup_major(bdp);
 
 			/* Open disk; forces read of disklabel. */
-			if ((*bdp->d_open)(MAKEDISKDEV(maj,
-			    unit, 0), FREAD|FNONBLOCK, 0, &lwp0))
+			if ((*bdp->d_open)(MAKEDISKDEV(maj, unit, RAW_PART),
+				FREAD|FNONBLOCK, 0, &lwp0))
 				continue;
-			(void)(*bdp->d_close)(MAKEDISKDEV(maj,
-			    unit, 0), FREAD|FNONBLOCK, 0, &lwp0);
+			(void)(*bdp->d_close)(MAKEDISKDEV(maj, unit, RAW_PART),
+				FREAD|FNONBLOCK, 0, &lwp0);
 
 			pp = &dkp->dk_label->d_partitions[0];
 			if (pp->p_size != 0 && pp->p_fstype == FS_BSDFFS) {
