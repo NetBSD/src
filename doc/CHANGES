@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1971 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1972 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -31,4 +31,6 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	module(7): Create MODULAR_DEFAULT_AUTOLOAD config flag to control
 		whether module autoloading is on by default.
 		[jnemeth 20140824]
-
+	kernel: Option SYMTAB_SPACE has been replaced with COPY_SYMTAB.
+		The related changes to src/sys/conf require a rebuild of config(1).
+		[joerg 20140824]
