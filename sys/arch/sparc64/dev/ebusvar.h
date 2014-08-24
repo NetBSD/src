@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusvar.h,v 1.11 2011/07/01 18:48:36 dyoung Exp $	*/
+/*	$NetBSD: ebusvar.h,v 1.12 2014/08/24 19:06:14 palle Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -61,12 +61,6 @@ struct ebus_softc {
 
 	int				sc_nrange;	/* counters */
 	int				sc_nintmap;
-
-	int				sc_ign;
-
-	bus_space_tag_t			sc_bust;
-	bus_addr_t			sc_csr;
-	bus_space_handle_t		sc_csrh;
 };
 
 int	ebus_setup_attach_args(struct ebus_softc *, int,
