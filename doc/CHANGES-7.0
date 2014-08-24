@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.22 2014/08/24 08:45:09 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.23 2014/08/24 09:38:36 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -381,4 +381,12 @@ usr.sbin/perfused/msg.c				1.22
 	Implement FUSE direct I/O.
 	Remove useless code and warnings
 	[manu, ticket #52]
+
+sys/arch/sparc/dev/fd.c				1.155
+sys/arch/sparc64/dev/fdc.c			1.42
+sys/arch/sun3/dev/fd.c				1.78
+
+	Fix panic() on opening fd(4), caused by a wrong pointer passed
+	to memset().
+	[tsutsui, ticket #53]
 
