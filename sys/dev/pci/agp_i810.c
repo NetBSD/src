@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.113 2014/08/22 15:26:28 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.114 2014/08/24 22:56:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.113 2014/08/22 15:26:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.114 2014/08/24 22:56:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,7 +425,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 		apbase = AGP_I810_GMADR;
 		mmadr_bar = AGP_I810_MMADR;
 		if (pci_mapreg_info(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
-			AGP_I965_MMADR, mmadr_type, NULL, &isc->size, NULL))
+			AGP_I810_MMADR, mmadr_type, NULL, &isc->size, NULL))
 			isc->size = 512*1024; /* XXX */
 		gtt_bar = 0;
 		gtt_off = AGP_I810_GTT;
