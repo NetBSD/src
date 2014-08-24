@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1100 2014/08/24 08:17:44 tsutsui Exp $
+#	$NetBSD: files,v 1.1101 2014/08/24 16:42:46 matt Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1551,6 +1551,7 @@ file	kern/kern_kthread.c
 file	kern/kern_ktrace.c		ktrace
 file	kern/kern_ktrace_vfs.c		ktrace
 file	kern/kern_ksyms.c		ksyms | ddb | modular needs-flag
+file	kern/kern_ksyms_buf.c		ksyms | ddb | modular needs-flag
 file	kern/kern_lock.c
 file	kern/kern_lwp.c
 file	kern/kern_malloc.c
