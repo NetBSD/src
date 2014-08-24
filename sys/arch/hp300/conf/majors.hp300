@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp300,v 1.25 2011/06/30 20:09:30 wiz Exp $
+#	$NetBSD: majors.hp300,v 1.26 2014/08/24 08:17:44 tsutsui Exp $
 #
 # Device majors for hp300
 #
@@ -48,6 +48,7 @@ device-major	ch		char 48			ch
 device-major	ss		char 49			ss
 device-major	uk		char 50			uk
 device-major	ses		char 51			ses
+device-major	audio		char 52			audio
 
 device-major	nsmb		char 98			nsmb
 
