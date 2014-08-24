@@ -1,4 +1,4 @@
-# $Id: escape.mk,v 1.4 2014/08/24 14:04:35 apb Exp $
+# $Id: escape.mk,v 1.5 2014/08/24 14:38:38 apb Exp $
 #
 # Test backslash escaping.
 
@@ -40,6 +40,10 @@ A = ${a}
 should continue the comment. \
 # This is also tested in comment.mk.
 
+__printvars: .USE .MADE
+	@echo ${.TARGET}
+	@${.ALLSRC:@v@ printf "%s=:%s:\n" ${v:Q} ${${v}:Q}; @}
+
 # Embedded backslash in variable should be taken literally.
 #
 VAR1BS = 111\111
@@ -49,13 +53,7 @@ VAR1BSda = 111\$${a}
 VAR1BSdA = 111\$${A}
 
 all: var-1bs
-var-1bs:	.PHONY
-	@echo ${.TARGET}
-	@echo VAR1BS=:${VAR1BS:Q}:
-	@echo VAR1BSa=:${VAR1BSa:Q}:
-	@echo VAR1BSA=:${VAR1BSA:Q}:
-	@echo VAR1BSda=:${VAR1BSda:Q}:
-	@echo VAR1BSdA=:${VAR1BSdA:Q}:
+var-1bs: .PHONY __printvars VAR1BS VAR1BSa VAR1BSA VAR1BSda VAR1BSdA
 
 # Double backslash in variable should be taken as two literal backslashes.
 #
@@ -66,13 +64,7 @@ VAR2BSda = 222\\$${a}
 VAR2BSdA = 222\\$${A}
 
 all: var-2bs
-var-2bs:	.PHONY
-	@echo ${.TARGET}
-	@echo VAR2BS=:${VAR2BS:Q}:
-	@echo VAR2BSa=:${VAR2BSa:Q}:
-	@echo VAR2BSA=:${VAR2BSA:Q}:
-	@echo VAR2BSda=:${VAR2BSda:Q}:
-	@echo VAR2BSdA=:${VAR2BSdA:Q}:
+var-2bs: .PHONY __printvars VAR2BS VAR2BSa VAR2BSA VAR2BSda VAR2BSdA
 
 # Backslash-newline in a variable setting is replaced by a single space.
 #
@@ -91,13 +83,8 @@ VAR1BSNLc = 111\
 
 all: var-1bsnl
 var-1bsnl:	.PHONY
-	@echo ${.TARGET}
-	@echo VAR1BSNL=:${VAR1BSNL:Q}:
-	@echo VAR1BSNLa=:${VAR1BSNLa:Q}:
-	@echo VAR1BSNLA=:${VAR1BSNLA:Q}:
-	@echo VAR1BSNLda=:${VAR1BSNLda:Q}:
-	@echo VAR1BSNLdA=:${VAR1BSNLdA:Q}:
-	@echo VAR1BSNLc=:${VAR1BSNLc:Q}:
+var-1bsnl: .PHONY __printvars \
+	VAR1BSNL VAR1BSNLa VAR1BSNLA VAR1BSNLda VAR1BSNLdA VAR1BSNLc
 
 # Double-backslash-newline in a variable setting.
 # First one should be taken literally, and last should escape the newline.
@@ -121,14 +108,8 @@ VAR2BSNLc = 222\\
 # this should be processed as a comment
 
 all: var-2bsnl
-var-2bsnl:	.PHONY
-	@echo ${.TARGET}
-	@echo VAR2BSNL=:${VAR2BSNL:Q}:
-	@echo VAR2BSNLa=:${VAR2BSNLa:Q}:
-	@echo VAR2BSNLA=:${VAR2BSNLA:Q}:
-	@echo VAR2BSNLda=:${VAR2BSNLda:Q}:
-	@echo VAR2BSNLdA=:${VAR2BSNLAd:Q}:
-	@echo VAR2BSNLc=:${VAR2BSNLc:Q}:
+var-2bsnl: .PHONY __printvars \
+	VAR2BSNL VAR2BSNLa VAR2BSNLA VAR2BSNLda VAR2BSNLdA VAR2BSNLc
 
 # Triple-backslash-newline in a variable setting.
 # First two should be taken literally, and last should escape the newline.
@@ -152,14 +133,8 @@ VAR3BSNLc = 333\\\
 # this should be processed as a comment
 
 all: var-3bsnl
-var-3bsnl:	.PHONY
-	@echo ${.TARGET}
-	@echo VAR3BSNL=:${VAR3BSNL:Q}:
-	@echo VAR3BSNLa=:${VAR3BSNLa:Q}:
-	@echo VAR3BSNLA=:${VAR3BSNLA:Q}:
-	@echo VAR3BSNLda=:${VAR3BSNLda:Q}:
-	@echo VAR3BSNLdA=:${VAR3BSNLdA:Q}:
-	@echo VAR3BSNLc=:${VAR3BSNLc:Q}:
+var-3bsnl: .PHONY __printvars \
+	VAR3BSNL VAR3BSNLa VAR3BSNLA VAR3BSNLda VAR3BSNLdA VAR3BSNLc
 
 # Backslash-newline in a variable setting, plus any amount of white space
 # on the next line, is replaced by a single space.
@@ -181,15 +156,9 @@ VAR1BSNLxx= first line\
   	 	 	 many spaces and tabs [  	 ] on second line
 
 all: var-1bsnl-space
-var-1bsnl-space:	.PHONY
-	@echo ${.TARGET}
-	@echo VAR1BSNL00=:${VAR1BSNL00:Q}:
-	@echo VAR1BSNL0=:${VAR1BSNL0:Q}:
-	@echo VAR1BSNLs=:${VAR1BSNLs:Q}:
-	@echo VAR1BSNLss=:${VAR1BSNLss:Q}:
-	@echo VAR1BSNLt=:${VAR1BSNLt:Q}:
-	@echo VAR1BSNLtt=:${VAR1BSNLtt:Q}:
-	@echo VAR1BSNLxx=:${VAR1BSNLxx:Q}:
+var-1bsnl-space: .PHONY __printvars \
+	VAR1BSNL00 VAR1BSNL0 VAR1BSNLs VAR1BSNLss VAR1BSNLt VAR1BSNLtt \
+	VAR1BSNLxx
 
 # Backslash-newline in a command is retained.
 #
