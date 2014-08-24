@@ -1,4 +1,4 @@
-# $Id: escape.mk,v 1.5 2014/08/24 14:38:38 apb Exp $
+# $Id: escape.mk,v 1.6 2014/08/24 15:10:13 apb Exp $
 #
 # Test backslash escaping.
 
@@ -27,6 +27,10 @@
 # <backslash><anything other than newline> is not mentioned.  I think
 # this implies that <backslash> should be taken literally everywhere
 # except before <newline>.
+#
+# Our practice, despite what POSIX might say, is that "\#"
+# in a variable assignment stores "#" as part of the value.
+# The "\" is not taken literally, and the "#" does not begin a comment.
 
 all: .PHONY
 # We will add dependencies like "all: yet-another-test" later.
@@ -51,9 +55,12 @@ VAR1BSa = 111\${a}
 VAR1BSA = 111\${A}
 VAR1BSda = 111\$${a}
 VAR1BSdA = 111\$${A}
+VAR1BSc = 111\# backslash escapes comment char, so this is part of the value
+VAR1BSsc = 111\ # This is a comment.  Value ends with <backslash><space>
 
 all: var-1bs
-var-1bs: .PHONY __printvars VAR1BS VAR1BSa VAR1BSA VAR1BSda VAR1BSdA
+var-1bs: .PHONY __printvars VAR1BS VAR1BSa VAR1BSA VAR1BSda VAR1BSdA \
+	VAR1BSc VAR1BSsc
 
 # Double backslash in variable should be taken as two literal backslashes.
 #
@@ -62,9 +69,12 @@ VAR2BSa = 222\\${a}
 VAR2BSA = 222\\${A}
 VAR2BSda = 222\\$${a}
 VAR2BSdA = 222\\$${A}
+VAR2BSc = 222\\# backslash does not escape comment char, so this is a comment
+VAR2BSsc = 222\\ # This is a comment.  Value ends with <backslash><backslash>
 
 all: var-2bs
-var-2bs: .PHONY __printvars VAR2BS VAR2BSa VAR2BSA VAR2BSda VAR2BSdA
+var-2bs: .PHONY __printvars VAR2BS VAR2BSa VAR2BSA VAR2BSda VAR2BSdA \
+	VAR2BSc VAR2BSsc
 
 # Backslash-newline in a variable setting is replaced by a single space.
 #
@@ -80,11 +90,14 @@ VAR1BSNLdA = 111\
 $${A}
 VAR1BSNLc = 111\
 # this should be processed as a comment
+VAR1BSNLsc = 111\
+ # this should be processed as a comment
 
 all: var-1bsnl
 var-1bsnl:	.PHONY
 var-1bsnl: .PHONY __printvars \
-	VAR1BSNL VAR1BSNLa VAR1BSNLA VAR1BSNLda VAR1BSNLdA VAR1BSNLc
+	VAR1BSNL VAR1BSNLa VAR1BSNLA VAR1BSNLda VAR1BSNLdA \
+	VAR1BSNLc VAR1BSNLsc
 
 # Double-backslash-newline in a variable setting.
 # First one should be taken literally, and last should escape the newline.
@@ -106,10 +119,13 @@ VAR2BSNLdA = 222\\
 $${A}=
 VAR2BSNLc = 222\\
 # this should be processed as a comment
+VAR2BSNLsc = 222\\
+ # this should be processed as a comment
 
 all: var-2bsnl
 var-2bsnl: .PHONY __printvars \
-	VAR2BSNL VAR2BSNLa VAR2BSNLA VAR2BSNLda VAR2BSNLdA VAR2BSNLc
+	VAR2BSNL VAR2BSNLa VAR2BSNLA VAR2BSNLda VAR2BSNLdA \
+	VAR2BSNLc VARR2BSNLsc
 
 # Triple-backslash-newline in a variable setting.
 # First two should be taken literally, and last should escape the newline.
@@ -131,10 +147,13 @@ VAR3BSNLdA = 333\\\
 $${A}=
 VAR3BSNLc = 333\\\
 # this should be processed as a comment
+VAR3BSNLsc = 333\\\
+ # this should be processed as a comment
 
 all: var-3bsnl
 var-3bsnl: .PHONY __printvars \
-	VAR3BSNL VAR3BSNLa VAR3BSNLA VAR3BSNLda VAR3BSNLdA VAR3BSNLc
+	VAR3BSNL VAR3BSNLa VAR3BSNLA VAR3BSNLda VAR3BSNLdA \
+	VAR3BSNLc VAR3BSNLsc
 
 # Backslash-newline in a variable setting, plus any amount of white space
 # on the next line, is replaced by a single space.

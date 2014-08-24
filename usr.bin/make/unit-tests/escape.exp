@@ -4,12 +4,16 @@ VAR1BSa=:111\aaa:
 VAR1BSA=:111\aaa:
 VAR1BSda=:111\${a}:
 VAR1BSdA=:111\${A}:
+VAR1BSc=:111# backslash escapes comment char, so this is part of the value:
+VAR1BSsc=:111\ :
 var-2bs
 VAR2BS=:222\\222:
 VAR2BSa=:222\\aaa:
 VAR2BSA=:222\\aaa:
 VAR2BSda=:222\\${a}:
 VAR2BSdA=:222\\${A}:
+VAR2BSc=:222\\:
+VAR2BSsc=:222\\:
 var-1bsnl
 VAR1BSNL=:111 111:
 VAR1BSNLa=:111 aaa:
@@ -17,13 +21,15 @@ VAR1BSNLA=:111 aaa:
 VAR1BSNLda=:111 ${a}:
 VAR1BSNLdA=:111 ${A}:
 VAR1BSNLc=:111:
+VAR1BSNLsc=:111:
 var-2bsnl
 VAR2BSNL=:222\ 222=:
 VAR2BSNLa=:222\ aaa=:
 VAR2BSNLA=:222\ aaa=:
 VAR2BSNLda=:222\ ${a}=:
 VAR2BSNLdA=:222\ ${A}=:
-VAR2BSNLc=:222\=:
+VAR2BSNLc=:222\:
+VAR2BSNLsc=:222\:
 var-3bsnl
 VAR3BSNL=:333\\ 333=:
 VAR3BSNLa=:333\\ aaa=:
@@ -31,6 +37,7 @@ VAR3BSNLA=:333\\ aaa=:
 VAR3BSNLda=:333\\ ${a}=:
 VAR3BSNLdA=:333\\ ${A}=:
 VAR3BSNLc=:333\\:
+VAR3BSNLsc=:333\\:
 var-1bsnl-space
 VAR1BSNL00=:first line:
 VAR1BSNL0=:first line no space on second line:
