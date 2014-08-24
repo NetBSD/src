@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.21 2014/08/23 03:47:10 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.22 2014/08/24 08:45:09 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -363,4 +363,22 @@ sys/dev/isa/essvar.h				1.27
 	Add support for Spatializer, 3D audio effects embedded in ES1869
 	and ES1879 to ess(4).
 	[nakayama, ticket #50]
+
+sys/netinet6/ip6_output.c			1.158
+sys/rump/librump/rumpvfs/rumpfs.c		1.130
+
+	Fix memory leaks in error cases.
+	[maxv, ticket #51]
+
+lib/libperfuse/ops.c				1.67-1.69
+lib/libperfuse/perfuse.c			1.32-1.33
+lib/libperfuse/perfuse_priv.h			1.33-1.34
+lib/libpuffs/dispatcher.c			1.47
+lib/libpuffs/puffs.h				1.125
+lib/libpuffs/puffs_ops.3			1.37-1.38
+usr.sbin/perfused/msg.c				1.22
+
+	Implement FUSE direct I/O.
+	Remove useless code and warnings
+	[manu, ticket #52]
 
