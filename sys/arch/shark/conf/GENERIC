@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.118 2014/08/23 20:26:59 dholland Exp $
+#	$NetBSD: GENERIC,v 1.119 2014/08/24 07:59:23 jnemeth Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.118 $"
+#ident		"GENERIC-$Revision: 1.119 $"
 
 # estimated number of users
 maxusers	32
@@ -147,6 +147,7 @@ options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MODULAR		# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
 
 # Development and Debugging options
 

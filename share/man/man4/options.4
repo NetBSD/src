@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.441 2014/08/21 07:51:32 apb Exp $
+.\"	$NetBSD: options.4,v 1.442 2014/08/24 07:59:22 jnemeth Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd August 16, 2014
+.Dd August 23, 2014
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1231,6 +1231,12 @@ Possible values include
 .It Cd options MODULAR
 Enables the framework for kernel modules (see
 .Xr module 7 ) .
+.It Cd options MODULAR_DEFAULT_AUTOLOAD
+Enables the autoloading of kernel modules by default.
+This sets the default value of the
+.Em kern.module.autoload
+.Xr sysctl 3
+variable which may be changed at run time.
 .It Cd options VND_COMPRESSION
 Enables the
 .Xr vnd 4

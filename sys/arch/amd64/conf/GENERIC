@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.395 2014/08/23 20:26:56 dholland Exp $
+# $NetBSD: GENERIC,v 1.396 2014/08/24 07:59:22 jnemeth Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.395 $"
+#ident 		"GENERIC-$Revision: 1.396 $"
 
 maxusers	64		# estimated number of users
 
@@ -68,6 +68,7 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 
 options 	MODULAR		# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
