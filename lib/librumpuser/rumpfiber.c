@@ -1,3 +1,5 @@
+/*	$NetBSD: rumpfiber.c,v 1.4 2014/08/24 14:37:31 pooka Exp $	*/
+
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
  * Copyright (c) 2014 Justin Cormack.  All Rights Reserved.
@@ -66,7 +68,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpfiber.c,v 1.3 2014/07/25 14:00:31 justin Exp $");
+__RCSID("$NetBSD: rumpfiber.c,v 1.4 2014/08/24 14:37:31 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>

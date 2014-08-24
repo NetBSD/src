@@ -1,3 +1,5 @@
+/*	$NetBSD: rumpfiber.h,v 1.2 2014/08/24 14:37:31 pooka Exp $	*/
+
 /*
  * Copyright (c) 2014 Justin Cormack.  All Rights Reserved.
  *
