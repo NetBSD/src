@@ -30,9 +30,11 @@
 #include "locators.h"
 #include "gpio.h"
 
+#include "opt_arm_debug.h"
+
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.8 2014/02/20 21:48:38 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.9 2014/08/24 12:42:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
