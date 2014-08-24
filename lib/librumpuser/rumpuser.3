@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumpuser.3,v 1.18 2014/02/20 00:43:26 pooka Exp $
+.\"     $NetBSD: rumpuser.3,v 1.19 2014/08/24 14:35:27 pooka Exp $
 .\"
 .\" Copyright (c) 2013 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 19, 2014
+.Dd August 24, 2014
 .Dt RUMPUSER 3
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@ A hypervisor implementation must implement the routines described in
 this document to allow a rump kernel to run on the host.
 The implementation included in
 .Nx
-is for POSIX hosts.
+is for POSIX-like hosts (*BSD, Linux, etc.).
 This document is divided into sections based on the functionality
 group of each hypercall.
 .Pp
@@ -770,6 +770,11 @@ Routines which do not return an integer may never fail.
 .%T Flexible Operating System Internals: The Design and Implementation of the Anykernel and Rump Kernels
 .%O Section 2.3.2: The Hypercall Interface
 .Re
+.Pp
+For a list of all known implementations of the
+.Nm
+interface, see
+.Lk http://wiki.rumpkernel.org/Platforms .
 .Sh HISTORY
 The rump kernel hypercall API was first introduced in
 .Nx 5.0 .
