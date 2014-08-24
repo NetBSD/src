@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.587 2014/08/23 15:59:03 christos Exp $
+# $NetBSD: mi,v 1.588 2014/08/24 11:50:00 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3463,6 +3463,39 @@
 ./usr/tests/usr.bin/make			tests-usr.bin-tests
 ./usr/tests/usr.bin/make/Atffile		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/Kyuafile		tests-usr.bin-tests	atf,kyua
+./usr/tests/usr.bin/make/d_comment.mk		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_comment.out		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_cond1.mk		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_cond1.out		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_dotwait.mk		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_dotwait.out		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_export.mk		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_export.out		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_export_all.mk	tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_export_all.out	tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_moderrs.mk		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_moderrs.out		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_modmatch.mk		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_modmatch.out		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_modmisc.mk		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_modmisc.out		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_modorder.mk		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_modorder.out		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_modts.mk		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_modts.out		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_modword.mk		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_modword.out		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_posix.mk		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_posix.out		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_qequals.mk		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_qequals.out		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_ternary.mk		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_ternary.out		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_unmatchedvarparen.mk	tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_unmatchedvarparen.out	tests-obsolete obsolete,atf
+./usr/tests/usr.bin/make/d_varcmd.mk		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/d_varcmd.out		tests-obsolete	obsolete,atf
+./usr/tests/usr.bin/make/t_make			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests		tests-usr.bin-tests
 ./usr/tests/usr.bin/make/unit-tests/Makefile	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/comment.exp	tests-usr.bin-tests	atf
@@ -3531,39 +3564,6 @@
 ./usr/tests/usr.bin/make/unit-tests/varmisc.mk	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/varshell.exp	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/make/unit-tests/varshell.mk	tests-usr.bin-tests	atf
-./usr/tests/usr.bin/make/d_comment.mk		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_comment.out		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_cond1.mk		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_cond1.out		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_dotwait.mk		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_dotwait.out		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_export.mk		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_export.out		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_export_all.mk	tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_export_all.out	tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_moderrs.mk		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_moderrs.out		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_modmatch.mk		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_modmatch.out		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_modmisc.mk		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_modmisc.out		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_modorder.mk		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_modorder.out		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_modts.mk		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_modts.out		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_modword.mk		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_modword.out		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_posix.mk		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_posix.out		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_qequals.mk		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_qequals.out		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_ternary.mk		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_ternary.out		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_unmatchedvarparen.mk	tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_unmatchedvarparen.out	tests-obsolete obsolete,atf
-./usr/tests/usr.bin/make/d_varcmd.mk		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/d_varcmd.out		tests-obsolete	obsolete,atf
-./usr/tests/usr.bin/make/t_make			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/mkdep			tests-usr.bin-tests
 ./usr/tests/usr.bin/mkdep/Atffile		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/mkdep/Kyuafile		tests-usr.bin-tests	atf,kyua
