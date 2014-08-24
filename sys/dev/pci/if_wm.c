@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.289 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.290 2014/08/24 21:15:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.289 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.290 2014/08/24 21:15:35 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1718,7 +1718,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		    &sc->sc_flasht, &sc->sc_flashh, NULL, NULL)) {
 			aprint_error_dev(sc->sc_dev,
 			    "can't map FLASH registers\n");
-			return;
+			goto fail_5;
 		}
 		reg = ICH8_FLASH_READ32(sc, ICH_FLASH_GFPREG);
 		sc->sc_ich8_flash_base = (reg & ICH_GFPREG_BASE_MASK) *
@@ -1838,7 +1838,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		if (wm_read_mac_addr(sc, enaddr) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to read Ethernet address\n");
-			return;
+			goto fail_5;
 		}
 	}
 
@@ -1856,7 +1856,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	} else {
 		if (wm_nvm_read(sc, EEPROM_OFF_CFG1, 1, &cfg1)) {
 			aprint_error_dev(sc->sc_dev, "unable to read CFG1\n");
-			return;
+			goto fail_5;
 		}
 	}
 
@@ -1867,7 +1867,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	} else {
 		if (wm_nvm_read(sc, EEPROM_OFF_CFG2, 1, &cfg2)) {
 			aprint_error_dev(sc->sc_dev, "unable to read CFG2\n");
-			return;
+			goto fail_5;
 		}
 	}
 
@@ -1937,7 +1937,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 			if (wm_nvm_read(sc, EEPROM_OFF_SWDPIN, 1, &swdpin)) {
 				aprint_error_dev(sc->sc_dev,
 				    "unable to read SWDPIN\n");
-				return;
+				goto fail_5;
 			}
 		}
 	}
@@ -2253,6 +2253,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
+	sc->sc_flags |= WM_F_ATTACHED;
 	return;
 
 	/*
@@ -2292,7 +2293,12 @@ wm_detach(device_t self, int flags __unused)
 	int i;
 #ifndef WM_MPSAFE
 	int s;
+#endif
 
+	if ((sc->sc_flags & WM_F_ATTACHED) == 0)
+		return 0;
+
+#ifndef WM_MPSAFE
 	s = splnet();
 #endif
 	/* Stop the interface. Callouts are stopped in it. */
