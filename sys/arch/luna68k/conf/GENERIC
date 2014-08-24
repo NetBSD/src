@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.116 2014/08/23 20:26:58 dholland Exp $
+# $NetBSD: GENERIC,v 1.117 2014/08/24 07:59:22 jnemeth Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.116 $"
+#ident 		"GENERIC-$Revision: 1.117 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -42,6 +42,7 @@ options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
 
 options 	MODULAR			# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
 
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
