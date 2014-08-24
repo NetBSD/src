@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.66 2014/08/10 03:22:33 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.66.2.1 2014/08/24 08:42:06 martin Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1338,6 +1338,13 @@ int
 perfuse_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 	const struct puffs_cred *pcr)
 {
+	return perfuse_node_open2(pu, opc, mode, pcr, NULL);
+}
+
+int
+perfuse_node_open2(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
+	const struct puffs_cred *pcr, int *oflags)
+{
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
 	perfuse_msg_t *pm;
@@ -1438,6 +1445,12 @@ perfuse_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 	 * so that we can reuse it later
 	 */
 	perfuse_new_fh(opc, foo->fh, mode);
+
+	/*
+	 * Set direct I/O if the filesystems forces it
+	 */
+	if ((foo->open_flags & FUSE_FOPEN_DIRECT_IO) && (oflags != NULL))
+		*oflags |= PUFFS_OPEN_IO_DIRECT;
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & (PDF_FH|PDF_FILENAME))
@@ -1947,17 +1960,6 @@ out:
 	return error;
 }
 
-/* ARGSUSED0 */
-int
-perfuse_node_mmap(struct puffs_usermount *pu, puffs_cookie_t opc, int flags,
-	const struct puffs_cred *pcr)
-{
-	/* 
-	 * Not implemented anymore in libfuse
-	 */
-	return ENOSYS;
-}
-
 /* ARGSUSED2 */
 int
 perfuse_node_fsync(struct puffs_usermount *pu, puffs_cookie_t opc,
@@ -2070,14 +2072,6 @@ out:
 
 	node_rele(opc);
 	return error;
-}
-
-/* ARGSUSED0 */
-int
-perfuse_node_seek(struct puffs_usermount *pu, puffs_cookie_t opc,
-	off_t oldoff, off_t newoff, const struct puffs_cred *pcr)
-{
-	return 0;
 }
 
 int
@@ -3031,11 +3025,6 @@ perfuse_node_read(struct puffs_usermount *pu, puffs_cookie_t opc, uint8_t *buf,
 	if (vap->va_type == VDIR)
 		return EISDIR;
 
-	if ((u_quad_t)offset + *resid > vap->va_size)
-		DWARNX("%s %p read %lld@%zu beyond EOF %" PRIu64 "\n",
-		       __func__, (void *)opc, (long long)offset,
-		       *resid, vap->va_size);
-
 	do {
 		size_t max_read;
 
@@ -3150,8 +3139,6 @@ perfuse_node_write2(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 * we get the latest value.
 	 */
 	if (ioflag & PUFFS_IO_APPEND) {
-		DWARNX("%s: PUFFS_IO_APPEND set, untested code", __func__);
-
 		if ((error = perfuse_node_getattr(pu, opc, vap, pcr)) != 0)
 			goto out;
 
