@@ -57,15 +57,9 @@ second line tab should be elided:
 :first line\
 	only one tab should be elided, second tab remains
 cmd-2bsnl
-:first line\\
-#second line without space\\
-third line:
-:first line\\
-     second line spaces should be retained:
-:first line\\
-second line tab should be elided:
-:first line\\
-	only one tab should be elided, second tab remains
+take one\
+take two\
+take three\
 cmd-3bsnl
 :first line\\\
 #second line without space\\\

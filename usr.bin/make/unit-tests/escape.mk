@@ -1,4 +1,4 @@
-# $Id: escape.mk,v 1.7 2014/08/24 16:08:14 apb Exp $
+# $Id: escape.mk,v 1.8 2014/08/24 16:47:12 apb Exp $
 #
 # Test backslash escaping.
 
@@ -32,10 +32,12 @@
 # in a variable assignment stores "#" as part of the value.
 # The "\" is not taken literally, and the "#" does not begin a comment.
 #
-# Also, our practice is that an even number of backslashes before a newline
-# in a variable assignment simply stores the backslashes as part of the
-# value, and treats the newline as though it was not escaped.  This
-# is compatible with GNU make.
+# Also, our practice is that an even number of backslashes before a
+# newline in a variable assignment simply stores the backslashes as part
+# of the value, and treats the newline as though it was not escaped.
+# Similarly, ann even number of backslashes before a newline in a
+# command simply uses the backslashes as part of the command test, but
+# does not escape the newline.  This is compatible with GNU make.
 
 all: .PHONY
 # We will add dependencies like "all: yet-another-test" later.
@@ -202,20 +204,20 @@ third line':
 	@echo :'first line\
 		only one tab should be elided, second tab remains'
 
-# Double-backslash-newline in a command is retained.
+# Double-backslash-newline in a command.
+# Both backslashes are retained, but the newline is not escaped.
+# XXX: This may differ from POSIX, but matches gmake.
+#
+# When make passes two backslashes to the shell, the shell will pass one
+# backslash to the echo commant.
 #
 all: cmd-2bsnl
 cmd-2bsnl: .PHONY
 	@echo ${.TARGET}
-	@echo :'first line\\
-#second line without space\\
-third line':
-	@echo :'first line\\
-     second line spaces should be retained':
-	@echo :'first line\\
-	second line tab should be elided':
-	@echo :'first line\\
-		only one tab should be elided, second tab remains'
+	@echo take one\\
+# this should be a comment
+	@echo take two\\
+	@echo take three\\
 
 # Triple-backslash-newline in a command is retained.
 #
