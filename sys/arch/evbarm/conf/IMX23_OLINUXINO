@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.8 2014/08/23 20:26:57 dholland Exp $
+# $Id: IMX23_OLINUXINO,v 1.9 2014/08/24 07:59:22 jnemeth Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -97,6 +97,7 @@ options		SYSVSEM		# System V-like semaphores
 options		SYSVSHM		# System V-like memory sharing
 
 #options		MODULAR
+#options		MODULAR_DEFAULT_AUTOLOAD
 options		KTRACE
 #options		DEBUG
 #options		DIAGNOSTIC

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.186 2014/08/23 20:26:58 dholland Exp $
+# $NetBSD: GENERIC,v 1.187 2014/08/24 07:59:22 jnemeth Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.186 $"
+#ident 		"GENERIC-$Revision: 1.187 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -60,6 +60,7 @@ options 	SYSVMSG		# System V-style message queues
 options 	SYSVSEM		# System V-style semaphores
 
 options 	MODULAR		# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
 
 # Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.5 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: GENERIC,v 1.6 2014/08/24 07:59:22 jnemeth Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/epoc32/conf/std.epoc32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.6 $"
 
 maxusers	32			# estimated number of users
 
@@ -91,6 +91,7 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Loadable kernel module support
 #options 	MODULAR		# new style module(7) framework
+#options 	MODULAR_DEFAULT_AUTOLOAD
 
 #
 # wscons options
