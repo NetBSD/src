@@ -1,4 +1,4 @@
-# $Id: escape.mk,v 1.6 2014/08/24 15:10:13 apb Exp $
+# $Id: escape.mk,v 1.7 2014/08/24 16:08:14 apb Exp $
 #
 # Test backslash escaping.
 
@@ -31,6 +31,11 @@
 # Our practice, despite what POSIX might say, is that "\#"
 # in a variable assignment stores "#" as part of the value.
 # The "\" is not taken literally, and the "#" does not begin a comment.
+#
+# Also, our practice is that an even number of backslashes before a newline
+# in a variable assignment simply stores the backslashes as part of the
+# value, and treats the newline as though it was not escaped.  This
+# is compatible with GNU make.
 
 all: .PHONY
 # We will add dependencies like "all: yet-another-test" later.
@@ -100,8 +105,7 @@ var-1bsnl: .PHONY __printvars \
 	VAR1BSNLc VAR1BSNLsc
 
 # Double-backslash-newline in a variable setting.
-# First one should be taken literally, and last should escape the newline.
-# XXX: Is the expected behaviour well defined?
+# Both backslashes should be taken literally, and the newline is NOT escaped.
 #
 # The second lines below each end with '=' so that they will not
 # generate syntax errors regardless of whether or not they are
@@ -125,11 +129,10 @@ VAR2BSNLsc = 222\\
 all: var-2bsnl
 var-2bsnl: .PHONY __printvars \
 	VAR2BSNL VAR2BSNLa VAR2BSNLA VAR2BSNLda VAR2BSNLdA \
-	VAR2BSNLc VARR2BSNLsc
+	VAR2BSNLc VAR2BSNLsc
 
 # Triple-backslash-newline in a variable setting.
 # First two should be taken literally, and last should escape the newline.
-# XXX: Is the expected behaviour well defined?
 #
 # The second lines below each end with '=' so that they will not
 # generate syntax errors regardless of whether or not they are
