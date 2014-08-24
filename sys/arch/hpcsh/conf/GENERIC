@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.103 2014/08/23 20:26:58 dholland Exp $
+# $NetBSD: GENERIC,v 1.104 2014/08/24 07:59:22 jnemeth Exp $
 #
 # GENERIC machine description file
 #
@@ -73,6 +73,7 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 
 #options 	MODULAR		# new style module(7) framework
+#options 	MODULAR_DEFAULT_AUTOLOAD
 
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

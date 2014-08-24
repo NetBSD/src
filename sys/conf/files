@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1098 2014/08/17 21:17:44 joerg Exp $
+#	$NetBSD: files,v 1.1099 2014/08/24 07:59:23 jnemeth Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -23,7 +23,8 @@ defflag				KTRACE
 defflag				MBUFTRACE
 defflag				PTRACE
 defflag				COREDUMP
-defflag				MODULAR
+defflag	opt_modular.h		MODULAR
+defflag	opt_modular.h		MODULAR_DEFAULT_AUTOLOAD
 defflag				KEYLOCK
 
 defparam			DEFCORENAME

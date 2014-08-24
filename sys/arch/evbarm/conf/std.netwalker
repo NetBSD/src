@@ -1,4 +1,4 @@
-#	$NetBSD: std.netwalker,v 1.9 2014/04/09 04:00:50 hkenken Exp $
+#	$NetBSD: std.netwalker,v 1.10 2014/08/24 07:59:22 jnemeth Exp $
 #
 # standard NetBSD/evbarm options for Sharp NetWalker
 
@@ -9,6 +9,7 @@ include 	"arch/evbarm/conf/std.evbarm"
 include	  	"arch/evbarm/conf/files.netwalker"
 
 options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_CPU_COUNTER
 options         __HAVE_MM_MD_DIRECT_MAPPED_PHYS

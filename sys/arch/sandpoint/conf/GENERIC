@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.84 2014/08/23 20:26:59 dholland Exp $
+# $NetBSD: GENERIC,v 1.85 2014/08/24 07:59:23 jnemeth Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.84 $"
+#ident 		"GENERIC-$Revision: 1.85 $"
 
 maxusers	32
 
@@ -39,6 +39,7 @@ options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 
 #options 	MODULAR		# module(7) support
+#options 	MODULAR_DEFAULT_AUTOLOAD
 #options 	USERCONF	# userconf(4) support
 
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

@@ -1,4 +1,4 @@
-#	$NetBSD: std.cubie,v 1.3 2014/02/27 16:00:32 reinoud Exp $
+#	$NetBSD: std.cubie,v 1.4 2014/08/24 07:59:22 jnemeth Exp $
 #
 # standard NetBSD/evbarm for CUBIEBOARD options
 
@@ -10,6 +10,7 @@ include		"arch/evbarm/conf/files.cubie"
 
 # To support easy transit to ../arch/arm/arm32
 options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
 options 	__HAVE_CPU_COUNTER
 options 	CORTEX_PMC
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h

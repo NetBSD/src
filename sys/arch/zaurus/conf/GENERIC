@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.61 2014/08/23 20:27:00 dholland Exp $
+#	$NetBSD: GENERIC,v 1.62 2014/08/24 07:59:23 jnemeth Exp $
 #
 # GENERIC machine description file
 #
@@ -121,6 +121,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 # Loadable kernel module support
 #options 	MODULAR		# new style module(7) framework
+#options 	MODULAR_DEFAULT_AUTOLOAD
 
 # Device options
 

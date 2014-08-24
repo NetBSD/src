@@ -1,4 +1,4 @@
-#	$NetBSD: std.rpi,v 1.14 2014/04/06 12:43:18 skrll Exp $
+#	$NetBSD: std.rpi,v 1.15 2014/08/24 07:59:22 jnemeth Exp $
 #
 # standard NetBSD/evbarm for Raspberry Pi options
 
@@ -9,6 +9,7 @@ include 	"arch/evbarm/conf/std.evbarm"
 include		"arch/evbarm/conf/files.rpi"
 
 options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
 options 	ARM11_COMPAT_MMU
 options 	__HAVE_CPU_COUNTER
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h

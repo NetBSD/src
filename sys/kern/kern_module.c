@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.97 2014/08/11 03:43:25 jnemeth Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.98 2014/08/24 07:59:23 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.97 2014/08/11 03:43:25 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.98 2014/08/24 07:59:23 jnemeth Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -67,7 +67,11 @@ static struct modlist module_bootlist = TAILQ_HEAD_INITIALIZER(module_bootlist);
 
 static module_t	*module_active;
 static bool	module_verbose_on;
+#ifdef MODULE_DEFAULT_AUTOLOAD
 static bool	module_autoload_on = true;
+#else
+static bool	module_autoload_on = false;
+#endif
 u_int		module_count;
 u_int		module_builtinlist;
 u_int		module_autotime = 10;

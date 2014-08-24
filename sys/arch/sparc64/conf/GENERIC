@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.173 2014/08/23 20:27:00 dholland Exp $
+# $NetBSD: GENERIC,v 1.174 2014/08/24 07:59:23 jnemeth Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.173 $"
+#ident 		"GENERIC-$Revision: 1.174 $"
 
 maxusers	64
 
@@ -62,6 +62,7 @@ options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 
 options		MODULAR		# new style module(7) framework
+options		MODULAR_DEFAULT_AUTOLOAD
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
