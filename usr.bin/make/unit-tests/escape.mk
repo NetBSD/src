@@ -1,4 +1,4 @@
-# $Id: escape.mk,v 1.2 2014/08/24 13:07:25 apb Exp $
+# $Id: escape.mk,v 1.3 2014/08/24 13:11:49 apb Exp $
 #
 # Test backslash escaping.
 
@@ -95,8 +95,8 @@ var-1bsnl:	.PHONY
 	@echo VAR1BSNL=:${VAR1BSNL:Q}:
 	@echo VAR1BSNLa=:${VAR1BSNLa:Q}:
 	@echo VAR1BSNLA=:${VAR1BSNLA:Q}:
-	@echo VAR1BSNLda=:${VAR1BSNLa:Q}:
-	@echo VAR1BSNLdA=:${VAR1BSNLA:Q}:
+	@echo VAR1BSNLda=:${VAR1BSNLda:Q}:
+	@echo VAR1BSNLdA=:${VAR1BSNLdA:Q}:
 	@echo VAR1BSNLc=:${VAR1BSNLc:Q}:
 
 # Double-backslash-newline in a variable setting.
@@ -126,8 +126,8 @@ var-2bsnl:	.PHONY
 	@echo VAR2BSNL=:${VAR2BSNL:Q}:
 	@echo VAR2BSNLa=:${VAR2BSNLa:Q}:
 	@echo VAR2BSNLA=:${VAR2BSNLA:Q}:
-	@echo VAR2BSNLda=:${VAR2BSNLa:Q}:
-	@echo VAR2BSNLdA=:${VAR2BSNLA:Q}:
+	@echo VAR2BSNLda=:${VAR2BSNLda:Q}:
+	@echo VAR2BSNLdA=:${VAR2BSNLAd:Q}:
 	@echo VAR2BSNLc=:${VAR2BSNLc:Q}:
 
 # Triple-backslash-newline in a variable setting.
