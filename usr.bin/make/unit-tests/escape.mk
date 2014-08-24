@@ -1,4 +1,4 @@
-# $Id: escape.mk,v 1.1 2014/08/24 11:52:45 apb Exp $
+# $Id: escape.mk,v 1.2 2014/08/24 13:07:25 apb Exp $
 #
 # Test backslash escaping.
 
@@ -24,7 +24,7 @@
 #     unspecified.
 #
 # Notice that the behaviour of <backslash><backslash> or
-# <backslash><anything other then newline> is not mentioned.  I think
+# <backslash><anything other than newline> is not mentioned.  I think
 # this implies that <backslash> should be taken literally everywhere
 # except before <newline>.
 
@@ -54,8 +54,8 @@ var-1bs:	.PHONY
 	@echo VAR1BS=:${VAR1BS:Q}:
 	@echo VAR1BSa=:${VAR1BSa:Q}:
 	@echo VAR1BSA=:${VAR1BSA:Q}:
-	@echo VAR1BSda=:${VAR1BSa:Q}:
-	@echo VAR1BSdA=:${VAR1BSA:Q}:
+	@echo VAR1BSda=:${VAR1BSda:Q}:
+	@echo VAR1BSdA=:${VAR1BSdA:Q}:
 
 # Double backslash in variable should be taken as two literal backslashes.
 #
@@ -71,8 +71,8 @@ var-2bs:	.PHONY
 	@echo VAR2BS=:${VAR2BS:Q}:
 	@echo VAR2BSa=:${VAR2BSa:Q}:
 	@echo VAR2BSA=:${VAR2BSA:Q}:
-	@echo VAR2BSda=:${VAR2BSa:Q}:
-	@echo VAR2BSdA=:${VAR2BSA:Q}:
+	@echo VAR2BSda=:${VAR2BSda:Q}:
+	@echo VAR2BSdA=:${VAR2BSdA:Q}:
 
 # Backslash-newline in a variable setting is replaced by a single space.
 #
