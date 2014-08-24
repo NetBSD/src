@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.31 2012/09/10 13:56:18 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.31.10.1 2014/08/24 08:42:06 martin Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -471,11 +471,7 @@ perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 	PUFFSOP_SET(pops, perfuse, node, getattr);
 	PUFFSOP_SET(pops, perfuse, node, setattr);
 	PUFFSOP_SET(pops, perfuse, node, poll);
-#if 0 
-	PUFFSOP_SET(pops, perfuse, node, mmap);
-#endif
 	PUFFSOP_SET(pops, perfuse, node, fsync);
-	PUFFSOP_SET(pops, perfuse, node, seek);
 	PUFFSOP_SET(pops, perfuse, node, remove);
 	PUFFSOP_SET(pops, perfuse, node, link);
 	PUFFSOP_SET(pops, perfuse, node, rename);
@@ -503,6 +499,9 @@ perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 #ifdef PUFFS_SETATTR_FAF
 	PUFFSOP_SET(pops, perfuse, node, write2);
 #endif /* PUFFS_SETATTR_FAF */
+#ifdef PUFFS_OPEN_IO_DIRECT 
+	PUFFSOP_SET(pops, perfuse, node, open2);
+#endif /* PUFFS_OPEN_IO_DIRECT */
 
 	/*
 	 * PUFFS_KFLAG_NOCACHE_NAME is required so that we can see changes

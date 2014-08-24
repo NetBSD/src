@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.46 2013/11/06 19:56:38 christos Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.46.4.1 2014/08/24 08:42:06 martin Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.46 2013/11/06 19:56:38 christos Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.46.4.1 2014/08/24 08:42:06 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -411,6 +411,14 @@ dispatch(struct puffs_cc *pcc)
 		{
 			struct puffs_vnmsg_open *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
+
+			if (pops->puffs_node_open2 != NULL) {
+				error = pops->puffs_node_open2(pu,
+				    opcookie, auxt->pvnr_mode, pcr, 
+				    &auxt->pvnr_oflags);
+
+				break;
+			}
 
 			if (pops->puffs_node_open == NULL) {
 				error = 0;
