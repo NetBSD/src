@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.28 2014/08/25 16:49:43 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.29 2014/08/25 16:56:14 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.28 2014/08/25 16:49:43 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.29 2014/08/25 16:56:14 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -618,7 +618,8 @@ odroid_exynos5_gpio_ncs(device_t self, prop_dictionary_t dict) {
 	prop_dictionary_set_uint32(dict, "nc-GPY5", 0xff - 0b00000000);
 	prop_dictionary_set_uint32(dict, "nc-GPY6", 0xff - 0b00000000);
 	prop_dictionary_set_uint32(dict, "nc-ETC0", 0x3f - 0b00000000);
-	prop_dictionary_set_uint32(dict, "nc-ETC6", 0x7f - 0b00000000);
+	/* standard Xuhost bits at pin 5,6 */
+	prop_dictionary_set_uint32(dict, "nc-ETC6", 0x7f - 0b01100000);
 	prop_dictionary_set_uint32(dict, "nc-ETC7", 0x1f - 0b00000000);
 	prop_dictionary_set_uint32(dict, "nc-GPC4", 0x3f - 0b00000000);
 	/* usb hub communication at bit 6,7 : */
