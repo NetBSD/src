@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.27 2014/08/19 16:18:15 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.28 2014/08/25 16:49:43 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.27 2014/08/19 16:18:15 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.28 2014/08/25 16:49:43 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -846,14 +846,14 @@ exynos_usb_powercycle_lan9730(device_t self)
 	error = iic_exec(i2c, I2C_OP_WRITE_WITH_STOP, chipid, &reg, 1,
 			&wdata, sizeof(wdata), 0);
 	KASSERT(!error);
-	DELAY(10000);
+	DELAY(20000);
 
 	/* set power level back to 3.3v */
 	wdata = 0x33;
 	error = iic_exec(i2c, I2C_OP_WRITE_WITH_STOP, chipid, &reg, 1,
 			&wdata, sizeof(wdata), 0);
 	KASSERT(!error);
-	DELAY(10000);
+	DELAY(20000);
 
 	/* enable the bucket explicitly */
 	reg = buck_ctlreg;
@@ -864,7 +864,7 @@ exynos_usb_powercycle_lan9730(device_t self)
 	error = iic_exec(i2c, I2C_OP_WRITE_WITH_STOP, chipid, &reg, 1,
 			&rdata, sizeof(rdata), 0);
 	KASSERT(!error);
-	DELAY(20000);
+	DELAY(30000);
 
 	iic_release_bus(i2c, 0);
 
@@ -877,9 +877,9 @@ exynos_usb_powercycle_lan9730(device_t self)
 				"can't reserve GPIO pin %s\n", pin_enable);
 		} else {
 			exynos_gpio_pindata_write(&enable_pin, 0);
-			DELAY(20000);
+			DELAY(30000);
 			exynos_gpio_pindata_write(&enable_pin, 1);
-			DELAY(10000);
+			DELAY(30000);
 		}
 	} else {
 		aprint_error_dev(self, "failed to lookup lan_power GPIO pin");
