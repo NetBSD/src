@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1909 2014/08/22 10:51:38 apb Exp $
+#	$NetBSD: mi,v 1.1910 2014/08/25 10:52:10 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4018,6 +4018,7 @@
 ./usr/libdata/lint/llib-lheimbase.ln		comp-krb5-lintlib	lint,kerberos
 ./usr/libdata/lint/llib-lintl.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lipsec.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lirs.ln			comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lisc.ln			comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lisccc.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lisccfg.ln		comp-bind-lintlib	lint
