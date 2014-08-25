@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1485 2014/08/09 11:33:53 apb Exp $
+# $NetBSD: mi,v 1.1486 2014/08/25 12:49:22 tsutsui Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -826,6 +826,7 @@
 ./usr/share/man/cat4/aps.0			man-sys-catman		.cat
 ./usr/share/man/cat4/arc/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/arcmsr.0			man-sys-catman		.cat
+./usr/share/man/cat4/arcofi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aria.0			man-sys-catman		.cat
 ./usr/share/man/cat4/arm26/arckbd.0		man-obsolete		obsolete
 ./usr/share/man/cat4/arm26/arcwskbd.0		man-obsolete		obsolete
@@ -3911,6 +3912,7 @@
 ./usr/share/man/html4/aps.html			man-sys-htmlman		html
 ./usr/share/man/html4/arc/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/arcmsr.html		man-sys-htmlman		html
+./usr/share/man/html4/arcofi.html		man-sys-htmlman		html
 ./usr/share/man/html4/aria.html			man-sys-htmlman		html
 ./usr/share/man/html4/arp.html			man-sys-htmlman		html
 ./usr/share/man/html4/artsata.html		man-sys-htmlman		html
@@ -6691,6 +6693,7 @@
 ./usr/share/man/man4/aps.4			man-sys-man		.man
 ./usr/share/man/man4/arc/intro.4		man-sys-man		.man
 ./usr/share/man/man4/arcmsr.4			man-sys-man		.man
+./usr/share/man/man4/arcofi.4			man-sys-man		.man
 ./usr/share/man/man4/aria.4			man-sys-man		.man
 ./usr/share/man/man4/arm26/arckbd.4		man-obsolete		obsolete
 ./usr/share/man/man4/arm26/arcwskbd.4		man-obsolete		obsolete
