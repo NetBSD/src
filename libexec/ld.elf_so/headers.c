@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.54 2014/03/07 01:27:14 matt Exp $	 */
+/*	$NetBSD: headers.c,v 1.55 2014/08/25 20:40:52 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.54 2014/03/07 01:27:14 matt Exp $");
+__RCSID("$NetBSD: headers.c,v 1.55 2014/08/25 20:40:52 joerg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -232,8 +232,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 
 #ifdef HAVE_INITFINI_ARRAY
 		case DT_INIT_ARRAY:
-			obj->init_array =
-			    (fptr_t *)(obj->relocbase + dynp->d_un.d_ptr);
+			obj->init_array = (Elf_Addr *)obj->relocbase + dynp->d_un.d_ptr;
 			dbg(("headers: DT_INIT_ARRAY at %p",
 			    obj->init_array));
 			break;
@@ -252,7 +251,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 #ifdef HAVE_INITFINI_ARRAY
 		case DT_FINI_ARRAY:
 			obj->fini_array =
-			    (fptr_t *)(obj->relocbase + dynp->d_un.d_ptr);
+			    (Elf_Addr *)(obj->relocbase + dynp->d_un.d_ptr);
 			dbg(("headers: DT_FINI_ARRAY at %p",
 			    obj->fini_array));
 			break;
@@ -345,21 +344,10 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			obj->relalim = obj->pltrela;
 	}
 
-#if defined(RTLD_LOADER) && defined(__HAVE_FUNCTION_DESCRIPTORS)
 	if (init != 0)
-		obj->init = (void (*)(void))
-		    _rtld_function_descriptor_alloc(obj, NULL, init);
+		obj->init = (Elf_Addr)obj->relocbase + init;
 	if (fini != 0)
-		obj->fini = (void (*)(void))
-		    _rtld_function_descriptor_alloc(obj, NULL, fini);
-#else
-	if (init != 0)
-		obj->init = (void (*)(void))
-		    (obj->relocbase + init);
-	if (fini != 0)
-		obj->fini = (void (*)(void))
-		    (obj->relocbase + fini);
-#endif
+		obj->fini = (Elf_Addr)obj->relocbase + fini;
 
 	if (dyn_rpath != NULL) {
 		_rtld_add_paths(execname, &obj->rpaths, obj->strtab +
