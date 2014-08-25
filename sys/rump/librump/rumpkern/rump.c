@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.311 2014/08/25 14:58:48 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.312 2014/08/25 18:44:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.311 2014/08/25 14:58:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.312 2014/08/25 18:44:02 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -924,17 +924,4 @@ rump_boot_etfs_register(struct rump_boot_etfs *eb)
 	eb->_eb_next = ebstart;
 	eb->eb_status = -1;
 	ebstart = eb;
-}
-
-/*
- * Temporary notification that rumpkern_time is obsolete.  This is to
- * be removed along with obsoleting rumpkern_time in a few months.
- */
-#define RUMPKERN_TIME_WARN "rumpkern_time is obsolete, functionality in librump"
-__warn_references(rumpkern_time_is_obsolete,RUMPKERN_TIME_WARN)
-void rumpkern_time_is_obsolete(void);
-void
-rumpkern_time_is_obsolete(void)
-{
-	printf("WARNING: %s\n", RUMPKERN_TIME_WARN);
 }
