@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.589 2014/08/24 11:52:45 apb Exp $
+# $NetBSD: mi,v 1.590 2014/08/25 20:40:52 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3068,6 +3068,7 @@
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso0	tests-libexec-tests	atf
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1	tests-libexec-tests	atf
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2	tests-libexec-tests	atf
+./usr/tests/libexec/ld.elf_so/h_ifunc		tests-libexec-tests	atf,pic
 ./usr/tests/libexec/ld.elf_so/h_locking		tests-libexec-tests	atf,pic
 ./usr/tests/libexec/ld.elf_so/t_df_1_noopen	tests-libexec-tests	atf,pic
 ./usr/tests/libexec/ld.elf_so/t_dl_symver	tests-libexec-tests	atf,pic
@@ -3075,6 +3076,7 @@
 ./usr/tests/libexec/ld.elf_so/t_dlerror-false	tests-libexec-tests	atf,pic
 ./usr/tests/libexec/ld.elf_so/t_dlinfo		tests-libexec-tests	atf,pic
 ./usr/tests/libexec/ld.elf_so/t_dlvsym		tests-libexec-tests	atf,pic
+./usr/tests/libexec/ld.elf_so/t_ifunc		tests-libexec-tests	atf,pic
 ./usr/tests/modules				tests-sys-tests
 ./usr/tests/net					tests-net-tests
 ./usr/tests/net/Atffile				tests-net-tests		atf

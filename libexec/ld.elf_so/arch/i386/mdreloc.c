@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.35 2012/11/07 07:24:46 apb Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.36 2014/08/25 20:40:52 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.35 2012/11/07 07:24:46 apb Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.36 2014/08/25 20:40:52 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -229,6 +229,14 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rel *rel,
 		return -1;
 	if (__predict_false(def == &_rtld_sym_zero))
 		return 0;
+
+	if (ELF_ST_TYPE(def->st_info) == STT_GNU_IFUNC) {
+		if (tp == NULL)
+			return 0;
+		target = _rtld_resolve_ifunc(defobj, def);
+	} else {
+		target = (Elf_Addr)(defobj->relocbase + def->st_value);
+	}
 
 	target = (Elf_Addr)(defobj->relocbase + def->st_value);
 	rdbg(("bind now/fixup in %s --> old=%p new=%p",

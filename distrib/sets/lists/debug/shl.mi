@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.72 2014/08/25 18:44:03 pooka Exp $
+# $NetBSD: shl.mi,v 1.73 2014/08/25 20:40:52 joerg Exp $
 ./usr/libdata/debug/lib/libc.so.12.193.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.3.debug		comp-sys-debug	debug
@@ -287,3 +287,4 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso.so.1.debug	tests-libexec-debug	debug,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_dso1.so.1.debug	tests-libexec-debug	debug,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_dso2.so.1.debug	tests-libexec-debug	debug,atf
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso.so.1.debug	tests-libexec-debug	debug,atf

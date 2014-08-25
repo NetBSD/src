@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.8 2013/08/11 22:29:03 joerg Exp $
+# $NetBSD: shl.mi,v 1.9 2014/08/25 20:40:52 joerg Exp $
 #
 ./usr/tests/lib/csu/h_initfini3_dso.so		tests-lib-tests		atf
 ./usr/tests/lib/csu/h_initfini3_dso.so.1	tests-lib-tests		atf
@@ -16,9 +16,11 @@
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso.so.1	tests-libexec-tests	atf
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso.so	tests-libexec-tests	atf
 ./usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso.so.1	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/libh_helper_dso1.so	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/libh_helper_dso1.so.1	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/libh_helper_dso2.so	tests-libexec-tests	atf
-./usr/tests/libexec/ld.elf_so/libh_helper_dso2.so.1	tests-libexec-tests	atf
+./usr/tests/libexec/ld.elf_so/libh_helper_dso1.so				tests-libexec-tests	atf
+./usr/tests/libexec/ld.elf_so/libh_helper_dso1.so.1				tests-libexec-tests	atf
+./usr/tests/libexec/ld.elf_so/libh_helper_dso2.so				tests-libexec-tests	atf
+./usr/tests/libexec/ld.elf_so/libh_helper_dso2.so.1				tests-libexec-tests	atf
+./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso.so				tests-libexec-tests	atf
+./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso.so.1			tests-libexec-tests	atf
 ./usr/tests/util/id/libfake.so.0		tests-obsolete		obsolete
 ./usr/tests/util/id/libfake.so.0.0		tests-obsolete		obsolete
