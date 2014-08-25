@@ -1705,12 +1705,14 @@ obj_elf_type (int ignore ATTRIBUTE_UNUSED)
       const struct elf_backend_data *bed;
 
       bed = get_elf_backend_data (stdoutput);
+#if 0
       if (!(bed->elf_osabi == ELFOSABI_GNU
 	    || bed->elf_osabi == ELFOSABI_FREEBSD
 	    /* GNU is still using the default value 0.  */
 	    || bed->elf_osabi == ELFOSABI_NONE))
 	as_bad (_("symbol type \"%s\" is supported only by GNU and FreeBSD targets"),
 		type_name);
+#endif
       type = BSF_FUNCTION | BSF_GNU_INDIRECT_FUNCTION;
     }
   else if (strcmp (type_name, "gnu_unique_object") == 0)
