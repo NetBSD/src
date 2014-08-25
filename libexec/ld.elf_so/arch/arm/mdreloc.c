@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.37 2011/11/18 16:10:03 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.38 2014/08/25 20:40:52 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.37 2011/11/18 16:10:03 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.38 2014/08/25 20:40:52 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -286,7 +286,13 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rel *rel,
 	if (__predict_false(def == &_rtld_sym_zero))
 		return 0;
 
-	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
+	if (ELF_ST_TYPE(def->st_info) == STT_GNU_IFUNC) {
+		if (tp == NULL)
+			return 0;
+		new_value = _rtld_resolve_ifunc(defobj, def);
+	} else {
+		new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
+	}
 	/* Set the Thumb bit, if needed.  */
 	if (ELF_ST_TYPE(def->st_info) == STT_ARM_TFUNC)
 		new_value |= 1;
