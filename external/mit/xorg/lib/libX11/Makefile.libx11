@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libx11,v 1.13 2014/06/14 20:49:37 mrg Exp $
+#	$NetBSD: Makefile.libx11,v 1.14 2014/08/25 11:48:01 christos Exp $
 
 LIB=	X11
 .PATH:	${X11SRCDIR.${LIB}}/src
@@ -461,7 +461,7 @@ COPTS.lcUTF8.c+=	-Wno-error
 COPTS.Font.c+=		-Wno-error	# XXX xf86bigfstr.h
 COPTS.OpenDis.c+=	-Wno-error	# XXX xf86bigfstr.h
 COPTS.XlibInt.c+=	-Wno-error	# XXX xcmiscstr.h
-COPTS.XKBBind.c+=	-Wno-error	# uses XKeycodeToKeysym
+COPTS.XKBBind.c+=	-Wno-deprecated-declarations	# uses XKeycodeToKeysym
 
 CWARNFLAGS.clang+=	-Wno-string-plus-int
 
