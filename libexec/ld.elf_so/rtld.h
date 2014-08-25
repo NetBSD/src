@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.119 2014/08/23 18:05:33 joerg Exp $	 */
+/*	$NetBSD: rtld.h,v 1.120 2014/08/25 20:40:52 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -193,8 +193,8 @@ typedef struct Struct_Obj_Entry {
 	Search_Path    *rpaths;		/* Search path specified in object */
 	Needed_Entry   *needed;		/* Shared objects needed by this (%) */
 
-	fptr_t		init;		/* Initialization function to call */
-	fptr_t		fini;		/* Termination function to call */
+	Elf_Addr	init;		/* Initialization function to call */
+	Elf_Addr	fini;		/* Termination function to call */
 
 	/*
 	 * BACKWARDS COMPAT Entry points for dlopen() and friends.
@@ -288,9 +288,9 @@ typedef struct Struct_Obj_Entry {
 	int		vertabnum;	/* Number of entries in vertab */
 
 	/* init_array/fini_array */
-	fptr_t		*init_array;	/* start of init array */
+	Elf_Addr	*init_array;	/* start of init array */
 	size_t		init_arraysz;	/* # of entries in it */
-	fptr_t		*fini_array;	/* start of fini array */
+	Elf_Addr	*fini_array;	/* start of fini array */
 	size_t		fini_arraysz;	/* # of entries in it */
 #ifdef __ARM_EABI__
 	void		*exidx_start;
@@ -404,6 +404,7 @@ int _rtld_relocate_nonplt_objects(Obj_Entry *);
 int _rtld_relocate_plt_lazy(const Obj_Entry *);
 int _rtld_relocate_plt_objects(const Obj_Entry *);
 void _rtld_setup_pltgot(const Obj_Entry *);
+Elf_Addr _rtld_resolve_ifunc(const Obj_Entry *, const Elf_Sym *);
 
 /* search.c */
 Obj_Entry *_rtld_load_library(const char *, const Obj_Entry *, int);
@@ -479,6 +480,20 @@ Obj_Entry *_rtld_obj_new(void);
 Elf_Addr _rtld_function_descriptor_alloc(const Obj_Entry *,
     const Elf_Sym *, Elf_Addr);
 const void *_rtld_function_descriptor_function(const void *);
+
+void _rtld_call_function_void(const Obj_Entry *, Elf_Addr);
+Elf_Addr _rtld_call_function_addr(const Obj_Entry *, Elf_Addr);
+#else
+static inline void
+_rtld_call_function_void(const Obj_Entry *obj, Elf_Addr addr)
+{
+	((void (*)(void))addr)();
+}
+static inline Elf_Addr
+_rtld_call_function_addr(const Obj_Entry *obj, Elf_Addr addr)
+{
+	return ((Elf_Addr(*)(void))addr)();
+}
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */
 
 #endif /* _RTLD_SOURCE */
