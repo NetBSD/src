@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.66 2014/06/14 11:52:42 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.67 2014/08/25 14:58:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.66 2014/06/14 11:52:42 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.67 2014/08/25 14:58:48 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -957,7 +957,6 @@ schedulework(struct spclient *spc, enum sbatype sba_type)
 struct spservarg {
 	int sps_sock;
 	connecthook_fn sps_connhook;
-	struct lwp *sps_l;
 };
 
 static void
@@ -983,8 +982,11 @@ handlereq(struct spclient *spc)
 			/* XXX make sure it contains sensible chars? */
 			comm[commlen] = '\0';
 
+			/* make sure we fork off of proc1 */
+			_DIAGASSERT(lwproc_curlwp() == NULL);
+
 			if ((error = lwproc_rfork(spc,
-			    RUMP_RFFDG, comm)) != 0) {
+			    RUMP_RFFD_CLEAR, comm)) != 0) {
 				shutdown(spc->spc_fd, SHUT_RDWR);
 			}
 
@@ -1049,7 +1051,8 @@ handlereq(struct spclient *spc)
 			 * the wrong spc pointer.  (yea, optimize
 			 * interfaces some day if anyone cares)
 			 */
-			if ((error = lwproc_rfork(spc, 0, NULL)) != 0) {
+			if ((error = lwproc_rfork(spc,
+			    RUMP_RFFD_SHARE, NULL)) != 0) {
 				send_error_resp(spc, reqno,
 				    RUMPSP_ERR_RFORK_FAILED);
 				shutdown(spc->spc_fd, SHUT_RDWR);
@@ -1109,7 +1112,7 @@ handlereq(struct spclient *spc)
 		 * above) so we can safely use it here.
 		 */
 		lwproc_switch(spc->spc_mainlwp);
-		if ((error = lwproc_rfork(spc, RUMP_RFFDG, NULL)) != 0) {
+		if ((error = lwproc_rfork(spc, RUMP_RFFD_COPY, NULL)) != 0) {
 			DPRINTF(("rump_sp: fork failed: %d (%p)\n",error, spc));
 			send_error_resp(spc, reqno, RUMPSP_ERR_RFORK_FAILED);
 			lwproc_switch(NULL);
@@ -1193,8 +1196,6 @@ spserver(void *arg)
 	int seen;
 	int rv;
 	unsigned int nfds, maxidx;
-
-	lwproc_switch(sarg->sps_l);
 
 	for (idx = 0; idx < MAXCLI; idx++) {
 		pfdlist[idx].fd = -1;
@@ -1320,7 +1321,6 @@ rumpuser_sp_init(const char *url,
 	pthread_t pt;
 	struct spservarg *sarg;
 	struct sockaddr *sap;
-	struct lwp *calllwp;
 	char *p;
 	unsigned idx = 0; /* XXXgcc */
 	int error, s;
@@ -1371,22 +1371,6 @@ rumpuser_sp_init(const char *url,
 		goto out;
 	}
 
-	/*
-	 * Create a context that the client threads run off of.
-	 * We fork a dedicated context so as to ensure that all
-	 * client threads get the same set of fd's.  We fork off
-	 * of whatever context the caller is running in (most likely
-	 * an implicit thread, i.e. proc 1) and do not
-	 * close fd's.  The assumption is that people who
-	 * write servers (i.e. "kernels") know what they're doing.
-	 */
-	calllwp = lwproc_curlwp();
-	if ((error = lwproc_rfork(NULL, RUMP_RFFDG, "spserver")) != 0) {
-		fprintf(stderr, "rump_sp: rfork failed");
-		goto out;
-	}
-	sarg->sps_l = lwproc_curlwp();
-	lwproc_switch(calllwp);
 	if ((error = pthread_create(&pt, NULL, spserver, sarg)) != 0) {
 		fprintf(stderr, "rump_sp: cannot create wrkr thread\n");
 		goto out;

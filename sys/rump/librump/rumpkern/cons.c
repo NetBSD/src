@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.3 2013/09/08 04:37:17 pooka Exp $	*/
+/*	$NetBSD: cons.c,v 1.4 2014/08/25 14:58:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.3 2013/09/08 04:37:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.4 2014/08/25 14:58:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -75,13 +75,10 @@ rump_consdev_init(void)
 	struct file *fp;
 	int fd, error;
 
-	/*
-	 * We want to open the descriptors for the implicit proc
-	 * so that they get inherited by default to all processes.
-	 */
-	KASSERT(curproc->p_pid == 1);
 	KASSERT(fd_getfile(0) == NULL);
-
+	KASSERT(fd_getfile(1) == NULL);
+	KASSERT(fd_getfile(2) == NULL);
+	
 	/* then, map a file descriptor to the device */
 	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		panic("cons fd_allocfile failed: %d", error);

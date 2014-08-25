@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.310 2014/08/14 16:28:49 riastradh Exp $	*/
+/*	$NetBSD: rump.c,v 1.311 2014/08/25 14:58:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.310 2014/08/14 16:28:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.311 2014/08/25 14:58:48 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -656,16 +656,34 @@ rump_hyp_rfork(void *priv, int flags, const char *comm)
 {
 	struct vmspace *newspace;
 	struct proc *p;
+	struct lwp *l;
 	int error;
+	bool initfds;
+
+	/*
+	 * If we are forking off of pid 1, initialize file descriptors.
+	 */
+	l = curlwp;
+	if (l->l_proc->p_pid == 1) {
+		KASSERT(flags == RUMP_RFFD_CLEAR);
+		initfds = true;
+	} else {
+		initfds = false;
+	}
 
 	if ((error = rump_lwproc_rfork(flags)) != 0)
 		return error;
 
 	/*
+	 * We forked in this routine, so cannot use curlwp (const)
+	 */
+	l = rump_lwproc_curlwp();
+	p = l->l_proc;
+
+	/*
 	 * Since it's a proxy proc, adjust the vmspace.
 	 * Refcount will eternally be 1.
 	 */
-	p = curproc;
 	newspace = kmem_zalloc(sizeof(*newspace), KM_SLEEP);
 	newspace->vm_refcnt = 1;
 	newspace->vm_map.pmap = priv;
@@ -673,6 +691,8 @@ rump_hyp_rfork(void *priv, int flags, const char *comm)
 	p->p_vmspace = newspace;
 	if (comm)
 		strlcpy(p->p_comm, comm, sizeof(p->p_comm));
+	if (initfds)
+		rump_consdev_init();
 
 	return 0;
 }
