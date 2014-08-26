@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.23 2014/08/24 09:38:36 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.24 2014/08/26 23:15:39 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -376,6 +376,9 @@ lib/libperfuse/perfuse_priv.h			1.33-1.34
 lib/libpuffs/dispatcher.c			1.47
 lib/libpuffs/puffs.h				1.125
 lib/libpuffs/puffs_ops.3			1.37-1.38
+sys/fs/puffs/puffs_msgif.h			1.81
+sys/fs/puffs/puffs_sys.h			1.85
+sys/fs/puffs/puffs_vnops.c			1.183
 usr.sbin/perfused/msg.c				1.22
 
 	Implement FUSE direct I/O.
