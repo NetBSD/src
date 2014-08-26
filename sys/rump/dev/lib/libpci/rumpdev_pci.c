@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpdev_pci.c,v 1.3 2014/04/15 13:47:06 pooka Exp $	*/
+/*      $NetBSD: rumpdev_pci.c,v 1.4 2014/08/26 10:58:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpdev_pci.c,v 1.3 2014/04/15 13:47:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpdev_pci.c,v 1.4 2014/08/26 10:58:13 pooka Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -145,6 +145,19 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 {
 
 	return rumpcomp_pci_irq_establish(ih, func, arg);
+}
+
+int
+pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
+	int attr, uint64_t data)
+{
+
+	switch (attr) {
+	case PCI_INTR_MPSAFE:
+		return 0;
+	default:
+		return ENODEV;
+	}
 }
 
 void
