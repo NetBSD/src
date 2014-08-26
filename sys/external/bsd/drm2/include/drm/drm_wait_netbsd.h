@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.5 2014/08/26 00:48:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -177,6 +177,7 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 	KASSERT(!cpu_intr_p());						\
 	KASSERT(!cpu_softintr_p());					\
 	KASSERT(!cold);							\
+	(RET) = 0;							\
 	while (!(CONDITION)) {						\
 		/* XXX errno NetBSD->Linux */				\
 		(RET) = -WAIT((Q), &(INTERLOCK)->sl_lock);		\
