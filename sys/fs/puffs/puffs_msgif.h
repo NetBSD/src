@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.80 2012/08/10 16:49:35 manu Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.80.14.1 2014/08/26 23:15:12 riz Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -339,6 +339,9 @@ struct puffs_vfsmsg_suspend {
 
 #define PUFFS_EXTATTRCTL_HASNODE	0x01
 #define PUFFS_EXTATTRCTL_HASATTRNAME	0x02
+
+#define	PUFFS_OPEN_IO_DIRECT	0x01
+
 struct puffs_vfsmsg_extattrctl {
 	struct puffs_req	pvfsr_pr;
 
@@ -399,6 +402,7 @@ struct puffs_vnmsg_open {
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
 	int			pvnr_mode;		/* OUT	*/
+	int			pvnr_oflags;		/* IN	*/
 };
 
 struct puffs_vnmsg_close {
