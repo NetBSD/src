@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.29 2014/08/25 16:56:14 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.30 2014/08/26 20:33:35 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.29 2014/08/25 16:56:14 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.30 2014/08/26 20:33:35 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -825,7 +825,7 @@ exynos_usb_powercycle_lan9730(device_t self)
 	struct i2c_controller *i2c;
 	const char *pin_enable;
 	uint8_t rdata, wdata, reg;
-	int error;
+	int error __diagused;
 	bool ok;
 
 	/*
