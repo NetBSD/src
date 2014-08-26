@@ -38,13 +38,26 @@
 struct _drm_via_descriptor;
 
 typedef struct _drm_via_sg_info {
+#ifdef __NetBSD__
+	bus_dmamap_t dmamap;
+#else
 	struct page **pages;
+#endif
 	unsigned long num_pages;
+#ifdef __NetBSD__
+	bus_dma_segment_t *desc_segs;
+	int num_desc_segs;
+	void *desc_kva;
+	bus_dmamap_t desc_dmamap;
+#endif
 	struct _drm_via_descriptor **desc_pages;
 	int num_desc_pages;
 	int num_desc;
+#ifdef __NetBSD__
+	enum { DMA_FROM_DEVICE, DMA_TO_DEVICE } direction;
+#else
 	enum dma_data_direction direction;
-	unsigned char *bounce_buffer;
+#endif
 	dma_addr_t chain_start;
 	uint32_t free_on_sequence;
 	unsigned int descriptors_per_page;
@@ -72,8 +85,13 @@ typedef struct _drm_via_blitq {
 	int is_active;
 	drm_via_sg_info_t *blits[VIA_NUM_BLIT_SLOTS];
 	spinlock_t blit_lock;
+#ifdef __NetBSD__
+	drm_waitqueue_t blit_queue[VIA_NUM_BLIT_SLOTS];
+	drm_waitqueue_t busy_queue;
+#else
 	wait_queue_head_t blit_queue[VIA_NUM_BLIT_SLOTS];
 	wait_queue_head_t busy_queue;
+#endif
 	struct work_struct wq;
 	struct timer_list poll_timer;
 } drm_via_blitq_t;
