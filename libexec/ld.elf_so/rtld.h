@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.121 2014/08/26 07:54:27 christos Exp $	 */
+/*	$NetBSD: rtld.h,v 1.122 2014/08/26 19:49:33 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -484,6 +484,7 @@ Obj_Entry *_rtld_obj_new(void);
 #define RTLD_ELF32_CAST 
 #endif
 
+#ifdef RTLD_LOADER
 /* function descriptors */
 #ifdef __HAVE_FUNCTION_DESCRIPTORS
 Elf_Addr _rtld_function_descriptor_alloc(const Obj_Entry *,
@@ -496,14 +497,15 @@ Elf_Addr _rtld_call_function_addr(const Obj_Entry *, Elf_Addr);
 static inline void
 _rtld_call_function_void(const Obj_Entry *obj, Elf_Addr addr)
 {
-	((void (*)(void)) RTLD_ELF32_CAST addr)();
+	((void (*)(void))addr)();
 }
 static inline Elf_Addr
 _rtld_call_function_addr(const Obj_Entry *obj, Elf_Addr addr)
 {
-	return ((Elf_Addr(*)(void)) RTLD_ELF32_CAST addr)();
+	return ((Elf_Addr(*)(void))addr)();
 }
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */
+#endif /* RTLD_LOADER */
 
 #endif /* _RTLD_SOURCE */
 
