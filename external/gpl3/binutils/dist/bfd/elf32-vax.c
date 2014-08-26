@@ -946,6 +946,7 @@ elf_vax_adjust_dynamic_symbol (info, h)
   /* Make sure we know what is going on here.  */
   BFD_ASSERT (dynobj != NULL
 	      && (h->needs_plt
+		  || h->type == STT_GNU_IFUNC
 		  || h->u.weakdef != NULL
 		  || (h->def_dynamic
 		      && h->ref_regular
@@ -954,7 +955,7 @@ elf_vax_adjust_dynamic_symbol (info, h)
   /* If this is a function, put it in the procedure linkage table.  We
      will fill in the contents of the procedure linkage table later,
      when we know the address of the .got section.  */
-  if (h->type == STT_FUNC
+  if ((h->type == STT_FUNC || h->type == STT_GNU_IFUNC)
       || h->needs_plt)
     {
       if (h->plt.refcount <= 0
