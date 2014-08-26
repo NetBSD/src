@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.164 2014/08/11 08:20:57 mrg Exp $
+#  $NetBSD: Makefile,v 1.165 2014/08/26 11:48:20 christos Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -66,17 +66,14 @@ COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
 COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 .elif (${LIBC_MACHINE_CPU} == "arm")
-.PATH: ${.CURDIR}/arch/arm
+.PATH.c: ${.CURDIR}/arch/arm
 COMMON_SRCS+= fenv.c s_nexttowardf.c \
 	s_nearbyint.c s_rintl.c
 COPTS.e_sqrtl.c += -DHAVE_FENV_H
 COPTS.fenv.c+=	-mfpu=vfp
 .if (${MKSOFTFLOAT} == "no")
+.PATH.S: ${.CURDIR}/arch/arm
 ARCH_SRCS = e_sqrt.S e_sqrtf.S lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
-.else
-.for i in e_sqrt.o e_sqrtf.o lrint.o lrintf.o s_fabsf.o s_fma.o s_fmaf.o
-${i} ${i:.o=.po} ${i:.o=.pico} ${i:.o=.go} ${i:.o=.ln}: ${i:.o=.c}
-.endfor
 .endif
 .elif (${LIBC_MACHINE_ARCH} == "sparc")
 .PATH: ${.CURDIR}/arch/sparc
