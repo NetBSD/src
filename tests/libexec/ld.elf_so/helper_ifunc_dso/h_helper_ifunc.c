@@ -49,4 +49,15 @@ int (*resolve_ifunc(void))(void)
 	return e && strcmp(e, "1") == 0 ? ifunc2 : ifunc1;
 }
 
+#ifdef __HAVE_IFUNC
+// XXX: m68k, vax, mips, sh3 (and others) binutils don't support this.
+// Needs to be staged in for archs that support it.
 __ifunc(ifunc, resolve_ifunc);
+#else
+int ifunc(void);
+int
+ifunc(void) {
+	const char *e = getenv("USE_IFUNC2");
+	return e && strcmp(e, "1") == 0 ? ifunc2() : ifunc1();
+}
+#endif
