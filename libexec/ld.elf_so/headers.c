@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.58 2014/08/26 15:06:50 christos Exp $	 */
+/*	$NetBSD: headers.c,v 1.59 2014/08/26 21:20:05 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.58 2014/08/26 15:06:50 christos Exp $");
+__RCSID("$NetBSD: headers.c,v 1.59 2014/08/26 21:20:05 joerg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -236,7 +236,8 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 
 #ifdef HAVE_INITFINI_ARRAY
 		case DT_INIT_ARRAY:
-			obj->init_array = (Elf_Addr *)obj->relocbase + dynp->d_un.d_ptr;
+			obj->init_array =
+			    (Elf_Addr *)(obj->relocbase + dynp->d_un.d_ptr);
 			dbg(("headers: DT_INIT_ARRAY at %p",
 			    obj->init_array));
 			break;
