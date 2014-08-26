@@ -41,6 +41,7 @@
 
 #include <linux/pagemap.h>
 #include <linux/slab.h>
+#include <linux/timer.h>
 
 #define VIA_PGDN(x)	     (((unsigned long)(x)) & PAGE_MASK)
 #define VIA_PGOFF(x)	    (((unsigned long)(x)) & ~PAGE_MASK)
@@ -61,8 +62,12 @@ typedef struct _drm_via_descriptor {
 
 
 static void
-via_unmap_blit_from_device(struct pci_dev *pdev, drm_via_sg_info_t *vsg)
+via_unmap_blit_from_device(struct drm_device *dev, struct pci_dev *pdev,
+    drm_via_sg_info_t *vsg)
 {
+#ifdef __NetBSD__
+	bus_dmamap_unload(dev->dmat, vsg->dmamap);
+#else
 	int num_desc = vsg->num_desc;
 	unsigned cur_descriptor_page = num_desc / vsg->descriptors_per_page;
 	unsigned descriptor_this_page = num_desc % vsg->descriptors_per_page;
@@ -82,6 +87,7 @@ via_unmap_blit_from_device(struct pci_dev *pdev, drm_via_sg_info_t *vsg)
 		next = (dma_addr_t) desc_ptr->next;
 		desc_ptr--;
 	}
+#endif
 }
 
 /*
@@ -101,7 +107,9 @@ via_map_blit_for_device(struct pci_dev *pdev,
 	unsigned num_descriptors_this_page = 0;
 	unsigned char *mem_addr = xfer->mem_addr;
 	unsigned char *cur_mem;
+#ifndef __NetBSD__
 	unsigned char *first_addr = (unsigned char *)VIA_PGDN(mem_addr);
+#endif
 	uint32_t fb_addr = xfer->fb_addr;
 	uint32_t cur_fb;
 	unsigned long line_len;
@@ -126,18 +134,31 @@ via_map_blit_for_device(struct pci_dev *pdev,
 			line_len -= remaining_len;
 
 			if (mode == 1) {
+#ifdef __NetBSD__
+				const bus_dma_segment_t *const seg =
+				    &vsg->dmamap->dm_segs[atop(cur_mem)];
+				desc_ptr->mem_addr =
+				    seg->ds_addr + trunc_page((vaddr_t)cur_mem);
+#else
 				desc_ptr->mem_addr =
 					dma_map_page(&pdev->dev,
 						     vsg->pages[VIA_PFN(cur_mem) -
 								VIA_PFN(first_addr)],
 						     VIA_PGOFF(cur_mem), remaining_len,
 						     vsg->direction);
+#endif
 				desc_ptr->dev_addr = cur_fb;
 
 				desc_ptr->size = remaining_len;
 				desc_ptr->next = (uint32_t) next;
+#ifdef __NetBSD__
+				next = vsg->desc_dmamap
+				    ->dm_segs[cur_descriptor_page].ds_addr
+				    + num_descriptors_this_page;
+#else
 				next = dma_map_single(&pdev->dev, desc_ptr, sizeof(*desc_ptr),
 						      DMA_TO_DEVICE);
+#endif
 				desc_ptr++;
 				if (++num_descriptors_this_page >= vsg->descriptors_per_page) {
 					num_descriptors_this_page = 0;
@@ -169,21 +190,40 @@ via_map_blit_for_device(struct pci_dev *pdev,
 
 
 static void
-via_free_sg_info(struct pci_dev *pdev, drm_via_sg_info_t *vsg)
+via_free_sg_info(struct drm_device *dev, struct pci_dev *pdev,
+    drm_via_sg_info_t *vsg)
 {
+#ifndef __NetBSD__
 	struct page *page;
 	int i;
+#endif
 
 	switch (vsg->state) {
 	case dr_via_device_mapped:
-		via_unmap_blit_from_device(pdev, vsg);
+		via_unmap_blit_from_device(dev, pdev, vsg);
 	case dr_via_desc_pages_alloc:
+#ifdef __NetBSD__
+		bus_dmamap_unload(dev->dmat, vsg->desc_dmamap);
+		bus_dmamap_destroy(dev->dmat, vsg->desc_dmamap);
+		bus_dmamem_unmap(dev->dmat, vsg->desc_kva,
+		    vsg->num_desc_pages << PAGE_SHIFT);
+		bus_dmamem_free(dev->dmat, vsg->desc_segs, vsg->num_desc_segs);
+		kfree(vsg->desc_segs);
+#else
 		for (i = 0; i < vsg->num_desc_pages; ++i) {
 			if (vsg->desc_pages[i] != NULL)
 				free_page((unsigned long)vsg->desc_pages[i]);
 		}
+#endif
 		kfree(vsg->desc_pages);
 	case dr_via_pages_locked:
+#ifdef __NetBSD__
+		/* Make sure any completed transfer is synced.  */
+		bus_dmamap_sync(dev->dmat, vsg->dmamap, 0,
+		    vsg->num_pages << PAGE_SHIFT,
+		    (vsg->direction == DMA_FROM_DEVICE?
+			BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
+#else
 		for (i = 0; i < vsg->num_pages; ++i) {
 			if (NULL != (page = vsg->pages[i])) {
 				if (!PageReserved(page) && (DMA_FROM_DEVICE == vsg->direction))
@@ -191,13 +231,16 @@ via_free_sg_info(struct pci_dev *pdev, drm_via_sg_info_t *vsg)
 				page_cache_release(page);
 			}
 		}
+#endif
 	case dr_via_pages_alloc:
+#ifdef __NetBSD__
+		bus_dmamap_destroy(dev->dmat, vsg->dmamap);
+#else
 		vfree(vsg->pages);
+#endif
 	default:
 		vsg->state = dr_via_sg_init;
 	}
-	vfree(vsg->bounce_buffer);
-	vsg->bounce_buffer = NULL;
 	vsg->free_on_sequence = 0;
 }
 
@@ -228,9 +271,47 @@ via_fire_dmablit(struct drm_device *dev, drm_via_sg_info_t *vsg, int engine)
  */
 
 static int
-via_lock_all_dma_pages(drm_via_sg_info_t *vsg,  drm_via_dmablit_t *xfer)
+via_lock_all_dma_pages(struct drm_device *dev, drm_via_sg_info_t *vsg,
+    drm_via_dmablit_t *xfer)
 {
 	int ret;
+#ifdef __NetBSD__
+	const bus_size_t nbytes = roundup2(xfer->num_lines * xfer->mem_stride,
+	    PAGE_SIZE);
+	const bus_size_t npages = nbytes >> PAGE_SHIFT;
+	struct iovec iov = {
+		.iov_base	= xfer->mem_addr,
+		.iov_len	= nbytes,
+	};
+	struct uio uio = {
+		.uio_iov	= &iov,
+		.uio_iovcnt	= 1,
+		.uio_offset	= 0,
+		.uio_resid	= nbytes,
+		.uio_rw		= xfer->to_fb ? UIO_WRITE : UIO_READ,
+		.uio_vmspace	= curproc->p_vmspace,
+	};
+
+	/*
+	 * XXX Lock out anyone else from doing this?  Add a
+	 * dr_via_pages_loading state?  Just rely on the giant lock?
+	 */
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_create(dev->dmat, nbytes, npages, nbytes, PAGE_SIZE,
+	    BUS_DMA_WAITOK, &vsg->dmamap);
+	if (ret) {
+		DRM_ERROR("bus_dmamap_create failed: %d\n", ret);
+		return ret;
+	}
+	ret = -bus_dmamap_load_uio(dev->dmat, vsg->dmamap, &uio,
+	    BUS_DMA_WAITOK | (xfer->to_fb? BUS_DMA_WRITE : BUS_DMA_READ));
+	if (ret) {
+		DRM_ERROR("bus_dmamap_load failed: %d\n", ret);
+		bus_dmamap_destroy(dev->dmat, vsg->dmamap);
+		return ret;
+	}
+	vsg->num_pages = npages;
+#else
 	unsigned long first_pfn = VIA_PFN(xfer->mem_addr);
 	vsg->num_pages = VIA_PFN(xfer->mem_addr + (xfer->num_lines * xfer->mem_stride - 1)) -
 		first_pfn + 1;
@@ -252,6 +333,7 @@ via_lock_all_dma_pages(drm_via_sg_info_t *vsg,  drm_via_dmablit_t *xfer)
 		vsg->state = dr_via_pages_locked;
 		return -EINVAL;
 	}
+#endif
 	vsg->state = dr_via_pages_locked;
 	DRM_DEBUG("DMA pages locked\n");
 	return 0;
@@ -264,9 +346,12 @@ via_lock_all_dma_pages(drm_via_sg_info_t *vsg,  drm_via_dmablit_t *xfer)
  */
 
 static int
-via_alloc_desc_pages(drm_via_sg_info_t *vsg)
+via_alloc_desc_pages(struct drm_device *dev, drm_via_sg_info_t *vsg)
 {
 	int i;
+#ifdef __NetBSD__
+	int ret;
+#endif
 
 	vsg->descriptors_per_page = PAGE_SIZE / sizeof(drm_via_descriptor_t);
 	vsg->num_desc_pages = (vsg->num_desc + vsg->descriptors_per_page - 1) /
@@ -275,12 +360,67 @@ via_alloc_desc_pages(drm_via_sg_info_t *vsg)
 	if (NULL ==  (vsg->desc_pages = kcalloc(vsg->num_desc_pages, sizeof(void *), GFP_KERNEL)))
 		return -ENOMEM;
 
+#ifdef __NetBSD__
+	vsg->desc_segs = kcalloc(vsg->num_desc_pages, sizeof(*vsg->desc_segs),
+	    GFP_KERNEL);
+	if (vsg->desc_segs == NULL) {
+		kfree(vsg->desc_pages);
+		return -ENOMEM;
+	}
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamem_alloc(dev->dmat, vsg->num_desc_pages << PAGE_SHIFT,
+	    PAGE_SIZE, 0, vsg->desc_segs, vsg->num_pages, &vsg->num_desc_segs,
+	    BUS_DMA_WAITOK);
+	if (ret) {
+		kfree(vsg->desc_segs);
+		kfree(vsg->desc_pages);
+		return -ENOMEM;
+	}
+	/* XXX No nice way to scatter/gather map bus_dmamem.  */
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamem_map(dev->dmat, vsg->desc_segs, vsg->num_desc_segs,
+	    vsg->num_desc_pages << PAGE_SHIFT, &vsg->desc_kva, BUS_DMA_WAITOK);
+	if (ret) {
+		bus_dmamem_free(dev->dmat, vsg->desc_segs, vsg->num_desc_segs);
+		kfree(vsg->desc_segs);
+		kfree(vsg->desc_pages);
+		return -ENOMEM;
+	}
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_create(dev->dmat, vsg->num_desc_pages << PAGE_SHIFT,
+	    vsg->num_desc_pages, PAGE_SIZE, 0, BUS_DMA_WAITOK,
+	    &vsg->desc_dmamap);
+	if (ret) {
+		bus_dmamem_unmap(dev->dmat, vsg->desc_kva,
+		    vsg->num_desc_pages << PAGE_SHIFT);
+		bus_dmamem_free(dev->dmat, vsg->desc_segs, vsg->num_desc_segs);
+		kfree(vsg->desc_segs);
+		kfree(vsg->desc_pages);
+		return -ENOMEM;
+	}
+	ret = -bus_dmamap_load(dev->dmat, vsg->desc_dmamap, vsg->desc_kva,
+	    vsg->num_desc_pages << PAGE_SHIFT, NULL, BUS_DMA_WAITOK);
+	if (ret) {
+		bus_dmamap_destroy(dev->dmat, vsg->desc_dmamap);
+		bus_dmamem_unmap(dev->dmat, vsg->desc_kva,
+		    vsg->num_desc_pages << PAGE_SHIFT);
+		bus_dmamem_free(dev->dmat, vsg->desc_segs, vsg->num_desc_segs);
+		kfree(vsg->desc_segs);
+		kfree(vsg->desc_pages);
+		return -ENOMEM;
+	}
+	for (i = 0; i < vsg->num_desc_pages; i++)
+		vsg->desc_pages[i] = (void *)
+		    ((char *)vsg->desc_kva + (i * PAGE_SIZE));
+	vsg->state = dr_via_desc_pages_alloc;
+#else
 	vsg->state = dr_via_desc_pages_alloc;
 	for (i = 0; i < vsg->num_desc_pages; ++i) {
 		if (NULL == (vsg->desc_pages[i] =
 			     (drm_via_descriptor_t *) __get_free_page(GFP_KERNEL)))
 			return -ENOMEM;
 	}
+#endif
 	DRM_DEBUG("Allocated %d pages for %d descriptors.\n", vsg->num_desc_pages,
 		  vsg->num_desc);
 	return 0;
@@ -338,7 +478,12 @@ via_dmablit_handler(struct drm_device *dev, int engine, int from_irq)
 
 		blitq->blits[cur]->aborted = blitq->aborting;
 		blitq->done_blit_handle++;
+#ifdef __NetBSD__
+		DRM_SPIN_WAKEUP_ALL(&blitq->blit_queue[cur],
+		    &blitq->blit_lock);
+#else
 		wake_up(blitq->blit_queue + cur);
+#endif
 
 		cur++;
 		if (cur >= VIA_NUM_BLIT_SLOTS)
@@ -363,7 +508,7 @@ via_dmablit_handler(struct drm_device *dev, int engine, int from_irq)
 
 		via_abort_dmablit(dev, engine);
 		blitq->aborting = 1;
-		blitq->end = jiffies + HZ;
+		blitq->end = jiffies + DRM_HZ;
 	}
 
 	if (!blitq->is_active) {
@@ -372,7 +517,7 @@ via_dmablit_handler(struct drm_device *dev, int engine, int from_irq)
 			blitq->is_active = 1;
 			blitq->cur = cur;
 			blitq->num_outstanding--;
-			blitq->end = jiffies + HZ;
+			blitq->end = jiffies + DRM_HZ;
 			if (!timer_pending(&blitq->poll_timer))
 				mod_timer(&blitq->poll_timer, jiffies + 1);
 		} else {
@@ -395,13 +540,21 @@ via_dmablit_handler(struct drm_device *dev, int engine, int from_irq)
  */
 
 static int
+#ifdef __NetBSD__
+via_dmablit_active(drm_via_blitq_t *blitq, int engine, uint32_t handle, drm_waitqueue_t **queue)
+#else
 via_dmablit_active(drm_via_blitq_t *blitq, int engine, uint32_t handle, wait_queue_head_t **queue)
+#endif
 {
+#ifndef __NetBSD__
 	unsigned long irqsave;
+#endif
 	uint32_t slot;
 	int active;
 
+#ifndef __NetBSD__
 	spin_lock_irqsave(&blitq->blit_lock, irqsave);
+#endif
 
 	/*
 	 * Allow for handle wraparounds.
@@ -417,7 +570,9 @@ via_dmablit_active(drm_via_blitq_t *blitq, int engine, uint32_t handle, wait_que
 		*queue = blitq->blit_queue + slot;
 	}
 
+#ifndef __NetBSD__
 	spin_unlock_irqrestore(&blitq->blit_lock, irqsave);
+#endif
 
 	return active;
 }
@@ -432,13 +587,27 @@ via_dmablit_sync(struct drm_device *dev, uint32_t handle, int engine)
 
 	drm_via_private_t *dev_priv = (drm_via_private_t *)dev->dev_private;
 	drm_via_blitq_t *blitq = dev_priv->blit_queues + engine;
+#ifdef __NetBSD__
+	drm_waitqueue_t *queue;
+#else
 	wait_queue_head_t *queue;
+#endif
 	int ret = 0;
 
+#ifdef __NetBSD__
+	spin_lock(&blitq->blit_lock);
+	if (via_dmablit_active(blitq, engine, handle, &queue)) {
+		DRM_SPIN_TIMED_WAIT_UNTIL(ret, queue, &blitq->blit_lock,
+		    3*DRM_HZ,
+		    !via_dmablit_active(blitq, engine, handle, NULL));
+	}
+	spin_unlock(&blitq->blit_lock);
+#else
 	if (via_dmablit_active(blitq, engine, handle, &queue)) {
 		DRM_WAIT_ON(ret, *queue, 3 * HZ,
 			    !via_dmablit_active(blitq, engine, handle, NULL));
 	}
+#endif
 	DRM_DEBUG("DMA blit sync handle 0x%x engine %d returned %d\n",
 		  handle, engine, ret);
 
@@ -519,11 +688,25 @@ via_dmablit_workqueue(struct work_struct *work)
 		cur_sg = blitq->blits[cur_released];
 		blitq->num_free++;
 
+#ifdef __NetBSD__
+		DRM_SPIN_WAKEUP_ONE(&blitq->busy_queue, &blitq->blit_lock);
+#endif
+
 		spin_unlock_irqrestore(&blitq->blit_lock, irqsave);
 
+#ifndef __NetBSD__
 		wake_up(&blitq->busy_queue);
+#endif
 
-		via_free_sg_info(dev->pdev, cur_sg);
+#ifdef __NetBSD__
+		/* Transfer completed.  Sync it.  */
+		bus_dmamap_sync(dev->dmat, cur_sg->dmamap, 0,
+		    cur_sg->num_pages << PAGE_SHIFT,
+		    (cur_sg->direction == DMA_FROM_DEVICE
+			? BUS_DMASYNC_POSTREAD
+			: BUS_DMASYNC_POSTWRITE));
+#endif
+		via_free_sg_info(dev, dev->pdev, cur_sg);
 		kfree(cur_sg);
 
 		spin_lock_irqsave(&blitq->blit_lock, irqsave);
@@ -560,9 +743,15 @@ via_init_dmablit(struct drm_device *dev)
 		blitq->is_active = 0;
 		blitq->aborting = 0;
 		spin_lock_init(&blitq->blit_lock);
+#ifdef __NetBSD__
+		for (j = 0; j < VIA_NUM_BLIT_SLOTS; ++j)
+			DRM_INIT_WAITQUEUE(blitq->blit_queue + j, "viablt");
+		DRM_INIT_WAITQUEUE(&blitq->busy_queue, "viabusy");
+#else
 		for (j = 0; j < VIA_NUM_BLIT_SLOTS; ++j)
 			init_waitqueue_head(blitq->blit_queue + j);
 		init_waitqueue_head(&blitq->busy_queue);
+#endif
 		INIT_WORK(&blitq->wq, via_dmablit_workqueue);
 		setup_timer(&blitq->poll_timer, via_dmablit_timer,
 				(unsigned long)blitq);
@@ -581,7 +770,6 @@ via_build_sg_info(struct drm_device *dev, drm_via_sg_info_t *vsg, drm_via_dmabli
 	int ret = 0;
 
 	vsg->direction = (draw) ? DMA_TO_DEVICE : DMA_FROM_DEVICE;
-	vsg->bounce_buffer = NULL;
 
 	vsg->state = dr_via_sg_init;
 
@@ -654,16 +842,16 @@ via_build_sg_info(struct drm_device *dev, drm_via_sg_info_t *vsg, drm_via_dmabli
 	}
 #endif
 
-	if (0 != (ret = via_lock_all_dma_pages(vsg, xfer))) {
+	if (0 != (ret = via_lock_all_dma_pages(dev, vsg, xfer))) {
 		DRM_ERROR("Could not lock DMA pages.\n");
-		via_free_sg_info(dev->pdev, vsg);
+		via_free_sg_info(dev, dev->pdev, vsg);
 		return ret;
 	}
 
 	via_map_blit_for_device(dev->pdev, xfer, vsg, 0);
-	if (0 != (ret = via_alloc_desc_pages(vsg))) {
+	if (0 != (ret = via_alloc_desc_pages(dev, vsg))) {
 		DRM_ERROR("Could not allocate DMA descriptor pages.\n");
-		via_free_sg_info(dev->pdev, vsg);
+		via_free_sg_info(dev, dev->pdev, vsg);
 		return ret;
 	}
 	via_map_blit_for_device(dev->pdev, xfer, vsg, 1);
@@ -686,6 +874,16 @@ via_dmablit_grab_slot(drm_via_blitq_t *blitq, int engine)
 	DRM_DEBUG("Num free is %d\n", blitq->num_free);
 	spin_lock_irqsave(&blitq->blit_lock, irqsave);
 	while (blitq->num_free == 0) {
+#ifdef __NetBSD__
+		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &blitq->busy_queue,
+		    &blitq->blit_lock, DRM_HZ,
+		    blitq->num_free > 0);
+		if (ret) {
+			if (ret == -EINTR)
+				ret = -EAGAIN;
+			return ret;
+		}
+#else
 		spin_unlock_irqrestore(&blitq->blit_lock, irqsave);
 
 		DRM_WAIT_ON(ret, blitq->busy_queue, HZ, blitq->num_free > 0);
@@ -693,6 +891,7 @@ via_dmablit_grab_slot(drm_via_blitq_t *blitq, int engine)
 			return (-EINTR == ret) ? -EAGAIN : ret;
 
 		spin_lock_irqsave(&blitq->blit_lock, irqsave);
+#endif
 	}
 
 	blitq->num_free--;
@@ -712,8 +911,13 @@ via_dmablit_release_slot(drm_via_blitq_t *blitq)
 
 	spin_lock_irqsave(&blitq->blit_lock, irqsave);
 	blitq->num_free++;
+#ifdef __NetBSD__
+	DRM_SPIN_WAKEUP_ONE(&blitq->busy_queue, &blitq->blit_lock);
+#endif
 	spin_unlock_irqrestore(&blitq->blit_lock, irqsave);
+#ifndef __NetBSD__
 	wake_up(&blitq->busy_queue);
+#endif
 }
 
 /*
@@ -749,6 +953,14 @@ via_dmablit(struct drm_device *dev, drm_via_dmablit_t *xfer)
 		kfree(vsg);
 		return ret;
 	}
+#ifdef __NetBSD__
+	/* Prepare to begin a DMA transfer.  */
+	bus_dmamap_sync(dev->dmat, vsg->dmamap, 0,
+	    vsg->num_pages << PAGE_SHIFT,
+	    (vsg->direction == DMA_FROM_DEVICE
+		? BUS_DMASYNC_PREREAD
+		: BUS_DMASYNC_PREWRITE));
+#endif
 	spin_lock_irqsave(&blitq->blit_lock, irqsave);
 
 	blitq->blits[blitq->head++] = vsg;
