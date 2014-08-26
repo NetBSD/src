@@ -32,7 +32,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.7 2014/08/14 15:42:31 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.8 2014/08/26 11:49:39 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -326,8 +326,10 @@ CFATTACH_DECL_NEW(exynos_gpio, sizeof(struct exynos_gpio_softc),
 static int
 exynos_gpio_match(device_t parent, cfdata_t cf, void *aux)
 {
+#ifdef DIAGNOSTIC
 	struct exyo_attach_args * const exyoaa = aux;
 	struct exyo_locators *loc = &exyoaa->exyo_loc;
+#endif
 
 	/* no locators expected */
 	KASSERT(loc->loc_offset == 0);
