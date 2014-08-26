@@ -49,9 +49,4 @@ int (*resolve_ifunc(void))(void)
 	return e && strcmp(e, "1") == 0 ? ifunc2 : ifunc1;
 }
 
-int ifunc(void);
-int
-ifunc(void) {
-	const char *e = getenv("USE_IFUNC2");
-	return e && strcmp(e, "1") == 0 ? ifunc2() : ifunc1();
-}
+__ifunc(ifunc, resolve_ifunc);
