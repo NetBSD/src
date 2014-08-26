@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.12 2012/12/01 11:41:50 mbalmer Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.13 2014/08/26 09:38:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,10 +39,11 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.12 2012/12/01 11:41:50 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.13 2014/08/26 09:38:54 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/lwp.h>
 #include <sys/kmem.h>
