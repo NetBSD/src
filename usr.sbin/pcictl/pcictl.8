@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcictl.8,v 1.10 2011/02/25 21:40:48 jmcneill Exp $
+.\"	$NetBSD: pcictl.8,v 1.11 2014/08/26 16:21:15 wiz Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -54,7 +54,7 @@ on a PCI bus.
 .Pp
 The following commands are available:
 .Pp
-.Nm list
+.Cm list
 .Op Fl n
 .Op Fl b Ar bus
 .Op Fl d Ar device
@@ -69,7 +69,7 @@ Any locator not specified defaults
 to a wildcard, or may be explicitly wildcarded by specifying
 .Dq any .
 .Pp
-.Nm dump
+.Cm dump
 .Op Fl b Ar bus
 .Fl d Ar device
 .Op Fl f Ar function
