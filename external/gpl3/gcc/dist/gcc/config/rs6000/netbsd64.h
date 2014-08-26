@@ -85,7 +85,7 @@ extern int dot_symbols;
 #define INVALID_64BIT "-m%s not supported in this configuration"
 #define INVALID_32BIT INVALID_64BIT
 
-#define ELFv2_ABI_CHECK (rs6000_elf_abi != 1)                   
+#define ELFv2_ABI_CHECK (rs6000_elf_abi == 2)                   
 
 #undef	SUBSUBTARGET_OVERRIDE_OPTIONS
 #define	SUBSUBTARGET_OVERRIDE_OPTIONS				\
