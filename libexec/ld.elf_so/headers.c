@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.55 2014/08/25 20:40:52 joerg Exp $	 */
+/*	$NetBSD: headers.c,v 1.56 2014/08/26 07:54:27 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.55 2014/08/25 20:40:52 joerg Exp $");
+__RCSID("$NetBSD: headers.c,v 1.56 2014/08/26 07:54:27 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -345,9 +345,9 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 	}
 
 	if (init != 0)
-		obj->init = (Elf_Addr)obj->relocbase + init;
+		obj->init = (Elf_Addr) RTLD_ELF32_CAST obj->relocbase + init;
 	if (fini != 0)
-		obj->fini = (Elf_Addr)obj->relocbase + fini;
+		obj->fini = (Elf_Addr) RTLD_ELF32_CAST obj->relocbase + fini;
 
 	if (dyn_rpath != NULL) {
 		_rtld_add_paths(execname, &obj->rpaths, obj->strtab +

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.120 2014/08/25 20:40:52 joerg Exp $	 */
+/*	$NetBSD: rtld.h,v 1.121 2014/08/26 07:54:27 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -475,6 +475,15 @@ Obj_Entry *_rtld_map_object(const char *, int, const struct stat *);
 void _rtld_obj_free(Obj_Entry *);
 Obj_Entry *_rtld_obj_new(void);
 
+/*
+ * The following uintptr_t cast is for Elf32 emulation on _LP64 systems
+ */
+#if defined(_LP64) && ELFSIZE == 32 
+#define RTLD_ELF32_CAST (uintptr_t)
+#else
+#define RTLD_ELF32_CAST 
+#endif
+
 /* function descriptors */
 #ifdef __HAVE_FUNCTION_DESCRIPTORS
 Elf_Addr _rtld_function_descriptor_alloc(const Obj_Entry *,
@@ -487,12 +496,12 @@ Elf_Addr _rtld_call_function_addr(const Obj_Entry *, Elf_Addr);
 static inline void
 _rtld_call_function_void(const Obj_Entry *obj, Elf_Addr addr)
 {
-	((void (*)(void))addr)();
+	((void (*)(void)) RTLD_ELF32_CAST addr)();
 }
 static inline Elf_Addr
 _rtld_call_function_addr(const Obj_Entry *obj, Elf_Addr addr)
 {
-	return ((Elf_Addr(*)(void))addr)();
+	return ((Elf_Addr(*)(void)) RTLD_ELF32_CAST addr)();
 }
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */
 
