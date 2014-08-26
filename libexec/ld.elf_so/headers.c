@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.57 2014/08/26 12:14:14 joerg Exp $	 */
+/*	$NetBSD: headers.c,v 1.58 2014/08/26 15:06:50 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.57 2014/08/26 12:14:14 joerg Exp $");
+__RCSID("$NetBSD: headers.c,v 1.58 2014/08/26 15:06:50 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -74,7 +74,9 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 	bool		use_pltrela = false;
 	Elf_Addr        relsz = 0, relasz = 0;
 	Elf_Addr	pltrel = 0, pltrelsz = 0;
+#ifdef RTLD_LOADER
 	Elf_Addr	init = 0, fini = 0;
+#endif
 
 	dbg(("headers: digesting PT_DYNAMIC at %p", obj->dynamic));
 	for (dynp = obj->dynamic; dynp->d_tag != DT_NULL; ++dynp) {
@@ -227,7 +229,9 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			break;
 
 		case DT_INIT:
+#ifdef RTLD_LOADER
 			init = dynp->d_un.d_ptr;
+#endif
 			break;
 
 #ifdef HAVE_INITFINI_ARRAY
@@ -245,7 +249,9 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 #endif
 
 		case DT_FINI:
+#ifdef RTLD_LOADER
 			fini = dynp->d_un.d_ptr;
+#endif
 			break;
 
 #ifdef HAVE_INITFINI_ARRAY
