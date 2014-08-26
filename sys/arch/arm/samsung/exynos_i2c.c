@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.1 2014/05/21 12:19:59 reinoud Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.2 2014/08/26 11:45:49 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "exynos_iic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.1 2014/05/21 12:19:59 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.2 2014/08/26 11:45:49 reinoud Exp $");
 
 
 #include <sys/param.h>
@@ -108,8 +108,10 @@ CFATTACH_DECL_NEW(exynos_iic, sizeof(struct exynos_iic_softc),
 static int
 exynos_iic_match(device_t self, cfdata_t cf, void *aux)
 {
+#ifdef DIAGNOSTIC
 	struct exyo_attach_args *exyoaa = aux;
 	struct exyo_locators *loc = &exyoaa->exyo_loc;
+#endif
 	int i;
 
 	/* no locators expected */
