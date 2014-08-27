@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.71 2014/08/23 15:05:40 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.72 2014/08/27 08:50:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.71 2014/08/23 15:05:40 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.72 2014/08/27 08:50:38 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.71 2014/08/23 15:05:40 christos Exp $");
+__RCSID("$NetBSD: suff.c,v 1.72 2014/08/27 08:50:38 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1712,7 +1712,7 @@ static Src *
 SuffFindThem(Lst possible, Lst cleanup)
 {
     Src	*i, *result, *parent;
-    char *temp;
+    char *tf;
 
     result = NULL;
     /*
@@ -1734,6 +1734,7 @@ SuffFindThem(Lst possible, Lst cleanup)
      * possibilities are exhausted.
      */
     while ((i = (Src *)Lst_DeQueue(possible)) != NULL) {
+	GNode *n;
 	if (parent != i->parent) {
 	    SuffDebugChain(i->parent);
 	    parent = i->parent;
@@ -1744,20 +1745,22 @@ SuffFindThem(Lst possible, Lst cleanup)
 	 * XXX: should only targets with commands be accepted?  The node
 	 * exists even if it only has had extra dependencies added.
 	 */
-	if (Targ_FindNode(i->file, TARG_NOCREATE) != NULL) {
+	if ((n = Targ_FindNode(i->file, TARG_NOCREATE)) != NULL) {
 #ifdef DEBUG_SRC
 	    fprintf(debug_file, "remove %x from %x\n", i, possible);
 #endif
-	    result = i;
-	    break;
-	}
-
-	if ((temp = Dir_FindFile(i->file, i->suff->searchPath)) != NULL) {
+	    SuffDebug(": Node %s %x: ", i->file, n->type);
+	    if ((n->type & OP_INVISIBLE) == 0) {
+		result = i;
+		break;
+	    }
+	} else if ((tf = Dir_FindFile(i->file, i->suff->searchPath)) != NULL) {
 	    result = i;
 #ifdef DEBUG_SRC
 	    fprintf(debug_file, "remove %x from %x\n", i, possible);
 #endif
-	    free(temp);
+	    SuffDebug(": File %s %s: ", i->file, tf);
+	    free(tf);
 	    break;
 	}
 
