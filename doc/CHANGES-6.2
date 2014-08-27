@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.130 2014/08/16 00:56:58 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.131 2014/08/27 15:09:57 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -3685,3 +3685,29 @@ share/zoneinfo/zone1970.tab				patch
 	and zone1970.dat).
 	[apb, ticket #1107]
 
+sbin/ccdconfig/ccdconfig.c			1.54 via patch
+sys/dev/ccd.c					1.152 via patch
+sys/dev/ccdvar.h				1.34 via patch
+
+	Switch size_t to uint64_t in appropriate places to ensure that ccd(4)
+	works with component and total sizes of > 2TB.
+	Make kernel print device information when a ccd configured.
+	Fix some typos in comments.
+	[sborrill, ticket #1113]
+
+sys/netinet6/ip6_output.c			1.158 via patch
+
+	Fix a memory leak in calling setsockopt() on an INET6 socket.
+	[maxv in ticket #1114]
+
+sys/fs/ptyfs/ptyfs_vfsops.c			1.52
+sys/miscfs/umapfs/umap_vfsops.c			1.94
+
+	Fix two overflows and a memory corruption bug in ptyfs and umapfs.
+	[maxv, ticket #1115]
+
+sys/compat/osf1/osf1_file.c			1.42
+
+	Fix a bug that a local user could crash the system by making the
+	kernel perform a zero-sized memory allocation in osf1.
+	[maxv, ticket #1141]
