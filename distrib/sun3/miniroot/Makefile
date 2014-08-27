@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2010/02/11 09:06:51 roy Exp $
+#	$NetBSD: Makefile,v 1.45 2014/08/27 04:30:25 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -53,6 +53,8 @@ install.sub: ${DISTRIBDIR}/miniroot/install.sub
 	${TOOL_SED} -e "/^VERSION=/s/=.*/=${DISTRIBREV}/" < $? > $@
 
 CLEANFILES+= install.sub
+
+fstab: .PHONY
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 .include "${DISTRIBDIR}/common/Makefile.makedev"
