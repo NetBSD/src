@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.5,v 1.1.2.17 2014/08/27 13:35:45 msaitoh Exp $
+# $NetBSD: CHANGES-5.1.5,v 1.1.2.18 2014/08/27 13:46:54 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.1.4 release to the NetBSD 5.1.5
 release:
@@ -262,3 +262,8 @@ crypto/dist/openssl/ssl/t1_lib.c		patch
 	- OpenSSL TLS protocol downgrade attack (CVE-2014-3511) 
 	Backported from the recent 1.0.1i OpenSSL release.
 	[spz, ticket #1918]
+
+sys/netinet6/ip6_output.c			1.158 via patch
+
+	Fix a memory leak in calling setsockopt() on an INET6 socket.
+	[maxv ticket #1920]
