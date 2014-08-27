@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.24 2014/08/26 23:15:39 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.25 2014/08/27 15:30:45 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -393,3 +393,8 @@ sys/arch/sun3/dev/fd.c				1.78
 	to memset().
 	[tsutsui, ticket #53]
 
+sys/compat/osf1/osf1_file.c			1.42
+
+	Fix a bug that a local user could crash the system by making the
+	kernel perform a zero-sized memory allocation in osf1.
+	[maxv, ticket #54]
