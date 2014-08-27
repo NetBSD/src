@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.16.6.3 2009/09/15 06:48:49 snj Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.16.6.3.6.1 2014/08/27 06:17:06 msaitoh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.16.6.3 2009/09/15 06:48:49 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.16.6.3.6.1 2014/08/27 06:17:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -83,7 +83,7 @@ pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case PCI_IOC_BDF_CFGREAD:
 	case PCI_IOC_BDF_CFGWRITE:
 		if (bdfr->bus > 255 || bdfr->device >= sc->sc_maxndevs ||
-		    bdfr->function > 7)
+		    bdfr->function > 7 || ISSET(bdfr->cfgreg.reg, 3))
 			return (EINVAL);
 		tag = pci_make_tag(sc->sc_pc, bdfr->bus, bdfr->device,
 		    bdfr->function);
