@@ -549,6 +549,17 @@ dtls1_retrieve_buffered_fragment(SSL *s, long max, int *ok)
 	}
 
 
+/* dtls1_max_handshake_message_len returns the maximum number of bytes
+ * permitted in a DTLS handshake message for |s|. The minimum is 16KB, but may
+ * be greater if the maximum certificate list size requires it. */
+static unsigned long dtls1_max_handshake_message_len(const SSL *s)
+	{
+	unsigned long max_len = DTLS1_HM_HEADER_LENGTH + SSL3_RT_MAX_ENCRYPTED_LENGTH;
+	if (max_len < (unsigned long)s->max_cert_list)
+		return s->max_cert_list;
+	return max_len;
+	}
+
 static int
 dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 {
@@ -558,7 +569,8 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	unsigned char seq64be[8];
 	unsigned long frag_len = msg_hdr->frag_len;
 
-	if ((msg_hdr->frag_off+frag_len) > msg_hdr->msg_len)
+	if ((msg_hdr->frag_off+frag_len) > msg_hdr->msg_len ||
+	     msg_hdr->msg_len > dtls1_max_handshake_message_len(s))
 		goto err;
 
 	/* Try to find item in queue, to prevent duplicate entries */
@@ -585,6 +597,8 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 			i = s->method->ssl_read_bytes(s,SSL3_RT_HANDSHAKE,
 				devnull,
 				frag_len>sizeof(devnull)?sizeof(devnull):frag_len,0);
+			if ((unsigned long)i!=frag_len)
+				i = -1;
 			if (i<=0) goto err;
 			frag_len -= i;
 			}
@@ -592,6 +606,9 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 
 	if (frag_len)
 	{
+		if (frag_len > dtls1_max_handshake_message_len(s))
+			goto err;
+
 		frag = dtls1_hm_fragment_new(frag_len);
 		if ( frag == NULL)
 			goto err;
@@ -604,6 +621,9 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 		if (i<=0 || (unsigned long)i!=frag_len)
 			goto err;
 
+		if (frag_len == 0)
+			return DTLS1_HM_FRAGMENT_RETRY;
+
 		memset(seq64be,0,sizeof(seq64be));
 		seq64be[6] = (unsigned char)(msg_hdr->seq>>8);
 		seq64be[7] = (unsigned char)(msg_hdr->seq);
@@ -612,14 +632,18 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 		if ( item == NULL)
 			goto err;
 
-		pqueue_insert(s->d1->buffered_messages, item);
+		item = pqueue_insert(s->d1->buffered_messages, item);
+		/* pqueue_insert fails if a duplicate item is inserted.
+		* However, |item| cannot be a duplicate. If it were,
+		* |pqueue_find|, above, would have returned it and control
+		* would never have reached this branch. */
+		OPENSSL_assert(item != NULL);
 	}
 
 	return DTLS1_HM_FRAGMENT_RETRY;
 
 err:
-	if ( frag != NULL) dtls1_hm_fragment_free(frag);
-	if ( item != NULL) OPENSSL_free(item);
+	if ( frag != NULL && item == NULL ) dtls1_hm_fragment_free(frag);
 	*ok = 0;
 	return i;
 	}
@@ -704,6 +728,8 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 		i=s->method->ssl_read_bytes(s,SSL3_RT_HANDSHAKE,
 			&p[frag_off],frag_len,0);
 		/* XDTLS:  fix this--message fragments cannot span multiple packets */
+		if ((unsigned long)i!=frag_len)
+			i=-1;
 		if (i <= 0)
 			{
 			s->rwstate=SSL_READING;
