@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.42.18.1.4.1 2014/04/21 10:17:48 bouyer Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.42.18.1.4.2 2014/08/27 14:59:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.42.18.1.4.1 2014/04/21 10:17:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.42.18.1.4.2 2014/08/27 14:59:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,8 +220,10 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	if (args == NULL)
 		return EINVAL;
-	if (*data_len != sizeof *args && *data_len != OSIZE)
-		return EINVAL;
+	if (*data_len != sizeof *args) {
+		if (*data_len != OSIZE || args->version >= PTYFS_ARGSVERSION)
+			return EINVAL;
+	}
 
 	if (UIO_MX & (UIO_MX - 1)) {
 		log(LOG_ERR, "ptyfs: invalid directory entry size");
