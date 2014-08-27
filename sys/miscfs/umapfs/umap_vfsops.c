@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.86.20.1 2014/04/21 10:17:48 bouyer Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.86.20.2 2014/08/27 14:59:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.86.20.1 2014/04/21 10:17:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.86.20.2 2014/08/27 14:59:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,9 +155,10 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/*
 	 * Now copy in the number of entries and maps for umap mapping.
 	 */
-	if (args->nentries > MAPFILEENTRIES || args->gnentries > GMAPFILEENTRIES) {
+	if (args->nentries < 0 || args->nentries > MAPFILEENTRIES ||
+	    args->gnentries < 0 || args->gnentries > GMAPFILEENTRIES) {
 		vput(lowerrootvp);
-		return (error);
+		return (EINVAL);
 	}
 
 	amp->info_nentries = args->nentries;
