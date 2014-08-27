@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kmap.c,v 1.9 2014/08/27 16:19:54 riastradh Exp $	*/
+/*	$NetBSD: linux_kmap.c,v 1.10 2014/08/27 16:41:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,12 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.9 2014/08/27 16:19:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.10 2014/08/27 16:41:50 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/rbtree.h>
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#include <dev/mm.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -46,12 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.9 2014/08/27 16:19:54 riastradh Exp
  * required not to fail.  To accomodate this, we reserve one page of
  * kva at boot (or load) and limit the system to at most kmap_atomic in
  * use at a time.
- */
-
-/*
- * XXX Use direct-mapped physical pages where available, e.g. amd64.
- *
- * XXX ...or add an abstraction to uvm for this.  (uvm_emap?)
  */
 
 static kmutex_t linux_kmap_atomic_lock;
@@ -146,6 +144,11 @@ kmap_atomic(struct page *page)
 	const paddr_t paddr = uvm_vm_page_to_phys(&page->p_vmp);
 	vaddr_t vaddr;
 
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	if (mm_md_direct_mapped_phys(paddr, &vaddr))
+		return (void *)vaddr;
+#endif
+
 	mutex_spin_enter(&linux_kmap_atomic_lock);
 	KASSERT(linux_kmap_atomic_vaddr != 0);
 	KASSERT(!pmap_extract(pmap_kernel(), linux_kmap_atomic_vaddr, NULL));
@@ -160,6 +163,19 @@ void
 kunmap_atomic(void *addr)
 {
 	const vaddr_t vaddr = (vaddr_t)addr;
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+    {
+	paddr_t paddr;
+	vaddr_t vaddr1;
+	bool ok __diagused;
+
+	ok = pmap_extract(pmap_kernel(), vaddr, &paddr);
+	KASSERT(ok);
+	if (mm_md_direct_mapped_phys(paddr, &vaddr1) && vaddr1 == vaddr)
+		return;
+    }
+#endif
 
 	KASSERT(mutex_owned(&linux_kmap_atomic_lock));
 	KASSERT(linux_kmap_atomic_vaddr == vaddr);
@@ -178,6 +194,11 @@ kmap(struct page *page)
 	vaddr_t vaddr;
 
 	ASSERT_SLEEPABLE();
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	if (mm_md_direct_mapped_phys(paddr, &vaddr))
+		return (void *)vaddr;
+#endif
 
 	vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 	    (UVM_KMF_VAONLY | UVM_KMF_WAITVA));
@@ -207,6 +228,15 @@ kunmap(struct page *page)
 	const paddr_t paddr = VM_PAGE_TO_PHYS(&page->p_vmp);
 
 	ASSERT_SLEEPABLE();
+
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+    {
+	vaddr_t vaddr1;
+
+	if (mm_md_direct_mapped_phys(paddr, &vaddr1))
+		return;
+    }
+#endif
 
 	mutex_enter(&linux_kmap_lock);
 	struct linux_kmap_entry *const lke =
