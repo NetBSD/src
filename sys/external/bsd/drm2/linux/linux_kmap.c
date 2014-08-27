@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kmap.c,v 1.5 2014/08/27 16:05:38 riastradh Exp $	*/
+/*	$NetBSD: linux_kmap.c,v 1.6 2014/08/27 16:06:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.5 2014/08/27 16:05:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.6 2014/08/27 16:06:38 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -125,9 +125,8 @@ void
 linux_kmap_fini(void)
 {
 
-	KASSERT(rb_tree_iterate(&linux_kmap_entries, NULL, RB_DIR_RIGHT) ==
-	    NULL);
-#if 0				/* XXX no rb_tree_destroy*/
+	KASSERT(RB_TREE_MIN(&linux_kmap_entries) == NULL);
+#if 0				/* XXX no rb_tree_destroy */
 	rb_tree_destroy(&linux_kmap_entries);
 #endif
 	mutex_destroy(&linux_kmap_lock);
