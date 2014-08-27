@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kmap.c,v 1.4 2014/03/28 23:22:27 riastradh Exp $	*/
+/*	$NetBSD: linux_kmap.c,v 1.5 2014/08/27 16:05:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.4 2014/03/28 23:22:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.5 2014/08/27 16:05:38 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -106,7 +106,7 @@ int
 linux_kmap_init(void)
 {
 
-	/* IPL_VM is needed to block pmap_kenter_pa.  */
+	/* IPL_VM since interrupt handlers use kmap_atomic.  */
 	mutex_init(&linux_kmap_atomic_lock, MUTEX_DEFAULT, IPL_VM);
 
 	linux_kmap_atomic_vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
@@ -115,7 +115,7 @@ linux_kmap_init(void)
 	KASSERT(linux_kmap_atomic_vaddr != 0);
 	KASSERT(!pmap_extract(pmap_kernel(), linux_kmap_atomic_vaddr, NULL));
 
-	mutex_init(&linux_kmap_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&linux_kmap_lock, MUTEX_DEFAULT, IPL_NONE);
 	rb_tree_init(&linux_kmap_entries, &linux_kmap_entry_ops);
 
 	return 0;
@@ -188,11 +188,11 @@ kmap(struct page *page)
 	lke->lke_paddr = paddr;
 	lke->lke_vaddr = vaddr;
 
-	mutex_spin_enter(&linux_kmap_lock);
+	mutex_enter(&linux_kmap_lock);
 	struct linux_kmap_entry *const collision __unused =
 	    rb_tree_insert_node(&linux_kmap_entries, lke);
 	KASSERT(collision == lke);
-	mutex_spin_exit(&linux_kmap_lock);
+	mutex_exit(&linux_kmap_lock);
 
 	KASSERT(!pmap_extract(pmap_kernel(), vaddr, NULL));
 	const int prot = (VM_PROT_READ | VM_PROT_WRITE);
@@ -208,12 +208,12 @@ kunmap(struct page *page)
 {
 	const paddr_t paddr = VM_PAGE_TO_PHYS(&page->p_vmp);
 
-	mutex_spin_enter(&linux_kmap_lock);
+	mutex_enter(&linux_kmap_lock);
 	struct linux_kmap_entry *const lke =
 	    rb_tree_find_node(&linux_kmap_entries, &paddr);
 	KASSERT(lke != NULL);
 	rb_tree_remove_node(&linux_kmap_entries, lke);
-	mutex_spin_exit(&linux_kmap_lock);
+	mutex_exit(&linux_kmap_lock);
 
 	const vaddr_t vaddr = lke->lke_vaddr;
 	kmem_free(lke, sizeof(*lke));
