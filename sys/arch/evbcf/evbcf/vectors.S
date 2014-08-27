@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.2 2014/03/18 18:20:41 riastradh Exp $
+|	$NetBSD: vectors.S,v 1.1 2014/08/27 00:18:25 matt Exp $
 
 | Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 | Copyright (c) 1988 University of Utah
@@ -36,6 +36,9 @@
 |	@(#)vectors.s	8.2 (Berkeley) 1/21/94
 |
 
+#include <machine/asm.h>
+RCSID("$NetBSD: vectors.S,v 1.1 2014/08/27 00:18:25 matt Exp $")
+
 #define	BADTRAP16	\
 	VECTOR(badtrap) ; VECTOR(badtrap) ; \
 	VECTOR(badtrap) ; VECTOR(badtrap) ; \
@@ -55,12 +58,12 @@
 GLOBAL(vectab)
 	VECTOR_UNUSED		/* 0: (unused reset SSP) */
 	VECTOR_UNUSED		/* 1: NOT USED (reset PC) */
-	VECTOR_UNUSED		/* 2: bus error */
-	VECTOR_UNUSED		/* 3: address error */
+	VECTOR(accesserror)	/* 2: bus error */
+	VECTOR(addresserror)	/* 3: address error */
 	VECTOR(illinst)		/* 4: illegal instruction */
 	VECTOR(zerodiv)		/* 5: zero divide */
 	VECTOR_UNUSED		/* 6: CHK instruction */
-	VECTOR_UNUSED	/* 7: TRAPV instruction */
+	VECTOR_UNUSED		/* 7: TRAPV instruction */
 	VECTOR(privinst)	/* 8: privilege violation */
 	VECTOR(trace)		/* 9: trace */
 	VECTOR(illinst)		/* 10: line 1010 emulator */
