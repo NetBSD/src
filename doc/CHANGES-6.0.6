@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.6,v 1.1.2.22 2014/08/16 00:59:29 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.6,v 1.1.2.23 2014/08/27 15:11:19 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0.5 release to the NetBSD 6.0.6
 release:
@@ -1280,3 +1280,19 @@ share/zoneinfo/zone1970.tab				patch
 	and zone1970.dat).
 	[apb, ticket #1107]
 
+sys/netinet6/ip6_output.c			1.158 via patch
+
+	Fix a memory leak in calling setsockopt() on an INET6 socket.
+	[maxv in ticket #1114]
+
+sys/fs/ptyfs/ptyfs_vfsops.c			1.52
+sys/miscfs/umapfs/umap_vfsops.c			1.94
+
+	Fix two overflows and a memory corruption bug in ptyfs and umapfs.
+	[maxv, ticket #1115]
+
+sys/compat/osf1/osf1_file.c			1.42
+
+	Fix a bug that a local user could crash the system by making the
+	kernel perform a zero-sized memory allocation in osf1.
+	[maxv, ticket #1141]
