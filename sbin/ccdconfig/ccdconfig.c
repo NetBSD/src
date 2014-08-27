@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.51 2011/08/27 16:29:51 joerg Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.51.4.1 2014/08/27 14:39:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996, 1997\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.51 2011/08/27 16:29:51 joerg Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.51.4.1 2014/08/27 14:39:19 msaitoh Exp $");
 #endif
 
 #include <sys/param.h>
@@ -310,7 +310,7 @@ do_single(int argc, char **argv, int action)
 			    ui == 0 ? '(' : ' ', cp2,
 			    ui == ccio.ccio_ndisks - 1 ? ')' : ',');
 		}
-		printf(", %ld blocks ", (long)ccio.ccio_size);
+		printf(", %ju blocks ", (uintmax_t)ccio.ccio_size);
 		if (ccio.ccio_ileave != 0)
 			printf("interleaved at %d blocks\n", ccio.ccio_ileave);
 		else
