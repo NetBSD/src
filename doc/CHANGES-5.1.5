@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.5,v 1.1.2.14 2014/08/15 23:03:35 riz Exp $
+# $NetBSD: CHANGES-5.1.5,v 1.1.2.15 2014/08/27 06:58:38 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.1.4 release to the NetBSD 5.1.5
 release:
@@ -225,3 +225,20 @@ share/zoneinfo/zone1970.tab				patch
 	and zone1970.dat).
 	[apb, ticket #1917]
 
+etc/namedb/root.cache					patch
+doc/3RDPARTY						patch
+
+	Sync root.cache with the latest -current (rev. 1.18).
+	[taca, ticket #1912]
+
+sys/miscfs/umapfs/umap_vfsops.c			1.94
+
+	Fix a overflow and a memory corruption bug in umapfs.
+	[maxv, ticket #1921]
+
+sys/dev/pci/pci_usrreq.c			1.26 via patch
+
+	Fix to make pci(4) reject unaligned configuration register reads and
+	writes before feeding them to a kassert in pci_conf_read/write or to a
+	trap in the hardware itself.
+	[riastradh, ticket #1922]
