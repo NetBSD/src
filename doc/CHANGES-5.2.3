@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.3,v 1.1.2.17 2014/08/27 07:39:22 msaitoh Exp $
+# $NetBSD: CHANGES-5.2.3,v 1.1.2.18 2014/08/27 13:35:30 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2.2 release to the NetBSD 5.2.3
 release:
@@ -242,3 +242,23 @@ sys/dev/pci/pci_usrreq.c			1.26 via patch
 	writes before feeding them to a kassert in pci_conf_read/write or to a
 	trap in the hardware itself.
 	[riastradh, ticket #1922]
+
+crypto/dist/openssl/crypto/asn1/a_object.c	patch
+crypto/dist/openssl/crypto/asn1/asn1.h		patch
+crypto/dist/openssl/crypto/asn1/asn1_err.c	patch
+crypto/dist/openssl/crypto/objects/obj_dat.c	patch
+crypto/dist/openssl/ssl/d1_both.c		patch
+crypto/dist/openssl/ssl/s23_srvr.c		patch
+crypto/dist/openssl/ssl/s3_clnt.c		patch
+crypto/dist/openssl/ssl/t1_lib.c		patch
+
+	Patches for the following vulnerabilities:
+	- Information leak in pretty printing functions (CVE-2014-3508)
+	- Double Free when processing DTLS packets (CVE-2014-3505)
+	- DTLS memory exhaustion (CVE-2014-3506)
+	- DTLS memory leak from zero-length fragments (CVE-2014-3507)
+	- OpenSSL DTLS anonymous EC(DH) denial of service (CVE-2014-3510)
+	- Race condition in ssl_parse_serverhello_tlsext (CVE-2014-3509)
+	- OpenSSL TLS protocol downgrade attack (CVE-2014-3511) 
+	Backported from the recent 1.0.1i OpenSSL release.
+	[spz, ticket #1918]
