@@ -95,7 +95,7 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 	if (num == 0)
 		return(0);
 	else if (num == -1)
-		num=strlen(buf);
+		num=(int)strlen(buf);
 
 	p=buf;
 	c= *(p++);
@@ -239,7 +239,7 @@ int i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a)
 
 	if ((a == NULL) || (a->data == NULL))
 		return(BIO_write(bp,"NULL",4));
-	i=i2t_ASN1_OBJECT(buf,sizeof buf,a);
+	i=i2t_ASN1_OBJECT(buf,(int)sizeof buf,a);
 	if (i > (int)(sizeof(buf) - 1))
 		{
 		p = OPENSSL_malloc(i + 1);
@@ -289,7 +289,21 @@ ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 	ASN1_OBJECT *ret=NULL;
 	const unsigned char *p;
 	unsigned char *data;
-	int i;
+	int i, length;
+
+	/* Sanity check OID encoding.
+	 * Need at least one content octet.
+	 * MSB must be clear in the last octet.
+	 * can't have leading 0x80 in subidentifiers, see: X.690 8.19.2
+	 */
+	if (len <= 0 || len > INT_MAX || pp == NULL || (p = *pp) == NULL ||
+	    p[len - 1] & 0x80)
+		{
+		ASN1err(ASN1_F_C2I_ASN1_OBJECT,ASN1_R_INVALID_OBJECT_ENCODING);
+		return NULL;
+		}
+	/* Now 0 < len <= INT_MAX, so the cast is safe. */
+	length = (int)len;
 
 	/* only the ASN1_OBJECTs from the 'table' will have values
 	 * for ->sn or ->ln */
@@ -300,28 +314,27 @@ ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 		}
 	else	ret=(*a);
 
-	p= *pp;
 	/* detach data from object */
 	data = (unsigned char *)ret->data;
 	ret->data = NULL;
 	/* once detached we can change it */
-	if ((data == NULL) || (ret->length < len))
+	if ((data == NULL) || (ret->length < length))
 		{
 		ret->length=0;
 		if (data != NULL) OPENSSL_free(data);
-		data=(unsigned char *)OPENSSL_malloc(len ? (int)len : 1);
+		data=(unsigned char *)OPENSSL_malloc(length);
 		if (data == NULL)
 			{ i=ERR_R_MALLOC_FAILURE; goto err; }
 		ret->flags|=ASN1_OBJECT_FLAG_DYNAMIC_DATA;
 		}
-	memcpy(data,p,(int)len);
+	memcpy(data,p,length);
 	/* reattach data to object, after which it remains const */
 	ret->data  =data;
-	ret->length=(int)len;
+	ret->length=length;
 	ret->sn=NULL;
 	ret->ln=NULL;
 	/* ret->flags=ASN1_OBJECT_FLAG_DYNAMIC; we know it is dynamic */
-	p+=len;
+	p+=length;
 
 	if (a != NULL) (*a)=ret;
 	*pp=p;
