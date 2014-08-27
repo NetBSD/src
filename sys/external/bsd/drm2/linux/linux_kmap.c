@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kmap.c,v 1.6 2014/08/27 16:06:38 riastradh Exp $	*/
+/*	$NetBSD: linux_kmap.c,v 1.7 2014/08/27 16:09:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.6 2014/08/27 16:06:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.7 2014/08/27 16:09:16 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -178,6 +178,9 @@ void *
 kmap(struct page *page)
 {
 	const paddr_t paddr = VM_PAGE_TO_PHYS(&page->p_vmp);
+
+	ASSERT_SLEEPABLE();
+
 	const vaddr_t vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 	    (UVM_KMF_VAONLY | UVM_KMF_WAITVA));
 	KASSERT(vaddr != 0);
@@ -206,6 +209,8 @@ void
 kunmap(struct page *page)
 {
 	const paddr_t paddr = VM_PAGE_TO_PHYS(&page->p_vmp);
+
+	ASSERT_SLEEPABLE();
 
 	mutex_enter(&linux_kmap_lock);
 	struct linux_kmap_entry *const lke =
