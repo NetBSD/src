@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.122 2014/08/26 19:49:33 joerg Exp $	 */
+/*	$NetBSD: rtld.h,v 1.123 2014/08/27 04:07:04 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -474,15 +474,6 @@ struct stat;
 Obj_Entry *_rtld_map_object(const char *, int, const struct stat *);
 void _rtld_obj_free(Obj_Entry *);
 Obj_Entry *_rtld_obj_new(void);
-
-/*
- * The following uintptr_t cast is for Elf32 emulation on _LP64 systems
- */
-#if defined(_LP64) && ELFSIZE == 32 
-#define RTLD_ELF32_CAST (uintptr_t)
-#else
-#define RTLD_ELF32_CAST 
-#endif
 
 #ifdef RTLD_LOADER
 /* function descriptors */
