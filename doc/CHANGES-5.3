@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.66 2014/08/15 22:55:21 riz Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.67 2014/08/27 06:57:36 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -967,3 +967,30 @@ share/zoneinfo/zone1970.tab				patch
 	and zone1970.dat).
 	[apb, ticket #1917]
 
+etc/namedb/root.cache					patch
+doc/3RDPARTY						patch
+
+	Sync root.cache with the latest -current (rev. 1.18).
+	[taca, ticket #1912]
+
+sbin/ccdconfig/ccdconfig.c			1.54 via patch
+sys/dev/ccd.c					1.152 via patch
+sys/dev/ccdvar.h				1.34 via patch
+
+	Switch size_t to uint64_t in appropriate places to ensure that ccd(4)
+	works with component and total sizes of > 2TB.
+	Make kernel print device information when a ccd configured.
+	Fix some typos in comments.
+	[sborrill, ticket #1919]
+
+sys/miscfs/umapfs/umap_vfsops.c			1.94
+
+	Fix a overflow and a memory corruption bug in umapfs.
+	[maxv, ticket #1921]
+
+sys/dev/pci/pci_usrreq.c			1.26 via patch
+
+	Fix to make pci(4) reject unaligned configuration register reads and
+	writes before feeding them to a kassert in pci_conf_read/write or to a
+	trap in the hardware itself.
+	[riastradh, ticket #1922]
