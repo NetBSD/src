@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.13 2014/08/24 19:06:14 palle Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.14 2014/08/27 19:02:17 palle Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.13 2014/08/24 19:06:14 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.14 2014/08/27 19:02:17 palle Exp $");
 
 #ifdef DEBUG
 #define	EDB_PROM	0x01
@@ -56,7 +56,7 @@ extern int ebus_debug;
 #include <dev/ebus/ebusvar.h>
 #include <sparc64/dev/ebusvar.h>
 
-extern struct cfdriver pyro_cd;
+#include "ioconf.h"
 
 int	ebus_mainbus_match(device_t, cfdata_t, void *);
 void	ebus_mainbus_attach(device_t, device_t, void *);
@@ -146,7 +146,7 @@ ebus_mainbus_attach(device_t parent, device_t self, void *aux)
 	 */
 	for (i = 0; i < sc->sc_nintmap; i++) {
 		for (j = 0; j < pyro_cd.cd_ndevs; j++) {
-			device_t dt = pyro_cd.cd_devs[j];
+			device_t dt = device_lookup(&pyro_cd, j);
 			psc = device_private(dt);
 			if (psc && psc->sc_node == sc->sc_intmap[i].cnode) {
 				sc->sc_intmap[i].cintr |= psc->sc_ign;
@@ -337,7 +337,7 @@ XXX
 	int i;
 
 	for (i = 0; i < pyro_cd.cd_ndevs; i++) {
-		device_t dt = pyro_cd.cd_devs[i];
+		device_t dt = device_lookup(&pyro_cd, i);
 		psc = device_private(dt);
 		if (psc && psc->sc_ign == INTIGN(ihandle)) {
 			break;
