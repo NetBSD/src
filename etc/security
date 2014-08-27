@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.115 2013/11/06 19:37:05 spz Exp $
+#	$NetBSD: security,v 1.116 2014/08/27 13:56:02 apb Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -339,7 +339,8 @@ if checkyesno check_group; then
 	awk -F: '{ print $1 }' $GRP | sort | uniq -d > $OUTPUT
 	dupgroups=""
 	for group in $(cat $OUTPUT) ; do
-		gcount=$(awk -F: "/$group/ { print \$1,\$3 }" $GRP | sort -u | wc -l)
+		gcount=$(awk -F: "/$group/ { print \$1,\$3 }" $GRP |
+			sort -u | wc -l)
 		if [ $gcount -gt 1 ]; then
 			dupgroups="$dupgroups $group"
 		fi
@@ -901,42 +902,52 @@ if checkyesno check_disklabels; then
 		migrate_file "$file" "$work_dir/${file##*/}"
 	done
 
-		# generate list of old disklabels, fdisks & wedges and remove them
-	ls -1d $work_dir/disklabel.* $work_dir/fdisk.* $work_dir/wedges.* 2>/dev/null |
+		# generate list of old disklabels, fdisks & wedges,
+		# and remove them
+	ls -1d $work_dir/disklabel.* $work_dir/fdisk.* $work_dir/wedges.* \
+	    2>/dev/null |
 	    egrep -v '\.(backup|current)(,v)?$' > $LABELS
 	xargs rm < $LABELS
 
 		# generate disklabels of all disks excluding:	cd dk fd md st
-	disks=$(iostat -x | awk 'NR > 1 && $1 !~ /^[cfm]d|dk|st|nfs/ { print $1; }')
+	disks=$(iostat -x | awk \
+		'NR > 1 && $1 !~ /^[cfm]d|dk|st|nfs/ { print $1; }')
 	for i in $disks; do
 		disklabel $i > "$work_dir/disklabel.$i" 2>/dev/null
 	done
 
 		# if fdisk is available, generate fdisks for:	ed ld sd wd
 	if [ -x /sbin/fdisk ]; then
-		disks=$(iostat -x | awk 'NR > 1 && $1 ~ /^[elsw]d/ { print $1; }')
+		disks=$(iostat -x | awk \
+			'NR > 1 && $1 ~ /^[elsw]d/ { print $1; }')
 		for i in $disks; do
 			/sbin/fdisk $i > "$work_dir/fdisk.$i" 2>/dev/null
 		done
 	fi
 
-		# if dkctl is available, generate dkctl listwedges for:	ed ld sd wd cgd ofdisk ra rl raid
+		# if dkctl is available, generate dkctl listwedges
+		# for:	ed ld sd wd cgd ofdisk ra rl raid
 	if [ -x /sbin/dkctl ]; then
-		disks=$(iostat -x | awk 'NR > 1 && $1 ~ /^[elsw]d|cgd|ofdisk|r[al]|raid/ { print $1; }')
+		disks=$(iostat -x | awk \
+			'NR > 1 && $1 ~ /^[elsw]d|cgd|ofdisk|r[al]|raid/
+			{ print $1; }')
 		for i in $disks; do
-			/sbin/dkctl $i listwedges > "$work_dir/wedges.$i" 2>/dev/null
+			/sbin/dkctl $i listwedges \
+			    > "$work_dir/wedges.$i" 2>/dev/null
 		done
 	fi
 
 		# append list of new disklabels, fdisks and wedges
-	ls -1d $work_dir/disklabel.* $work_dir/fdisk.* $work_dir/wedges.* 2>/dev/null |
+	ls -1d $work_dir/disklabel.* $work_dir/fdisk.* $work_dir/wedges.* \
+	    2>/dev/null |
 	    egrep -v '\.(backup|current)(,v)?$' >> $LABELS
 	CHANGELIST="$LABELS $CHANGELIST"
 fi
 
 if checkyesno check_lvm; then
     
-    # generate list of existing LVM elements Physical Volumes, Volume Groups and Logical Volumes.
+    # generate list of existing LVM elements Physical Volumes, Volume Groups
+    # and Logical Volumes.
 if [ -x /sbin/lvm ]; then
     lvm pvdisplay -m >"$work_dir/lvm.pv" 2>/dev/null
     lvm vgdisplay -m >"$work_dir/lvm.vg" 2>/dev/null
