@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kmap.c,v 1.8 2014/08/27 16:11:24 riastradh Exp $	*/
+/*	$NetBSD: linux_kmap.c,v 1.9 2014/08/27 16:19:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.8 2014/08/27 16:11:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.9 2014/08/27 16:19:54 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -144,16 +144,13 @@ void *
 kmap_atomic(struct page *page)
 {
 	const paddr_t paddr = uvm_vm_page_to_phys(&page->p_vmp);
+	vaddr_t vaddr;
 
 	mutex_spin_enter(&linux_kmap_atomic_lock);
-
 	KASSERT(linux_kmap_atomic_vaddr != 0);
 	KASSERT(!pmap_extract(pmap_kernel(), linux_kmap_atomic_vaddr, NULL));
-
-	const vaddr_t vaddr = linux_kmap_atomic_vaddr;
-	const int prot = (VM_PROT_READ | VM_PROT_WRITE);
-	const int flags = 0;
-	pmap_kenter_pa(vaddr, paddr, prot, flags);
+	vaddr = linux_kmap_atomic_vaddr;
+	pmap_kenter_pa(vaddr, paddr, (VM_PROT_READ | VM_PROT_WRITE), 0);
 	pmap_update(pmap_kernel());
 
 	return (void *)vaddr;
@@ -178,10 +175,11 @@ void *
 kmap(struct page *page)
 {
 	const paddr_t paddr = VM_PAGE_TO_PHYS(&page->p_vmp);
+	vaddr_t vaddr;
 
 	ASSERT_SLEEPABLE();
 
-	const vaddr_t vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 	    (UVM_KMF_VAONLY | UVM_KMF_WAITVA));
 	KASSERT(vaddr != 0);
 
@@ -197,9 +195,7 @@ kmap(struct page *page)
 	mutex_exit(&linux_kmap_lock);
 
 	KASSERT(!pmap_extract(pmap_kernel(), vaddr, NULL));
-	const int prot = (VM_PROT_READ | VM_PROT_WRITE);
-	const int flags = 0;
-	pmap_kenter_pa(vaddr, paddr, prot, flags);
+	pmap_kenter_pa(vaddr, paddr, (VM_PROT_READ | VM_PROT_WRITE), 0);
 	pmap_update(pmap_kernel());
 
 	return (void *)vaddr;
