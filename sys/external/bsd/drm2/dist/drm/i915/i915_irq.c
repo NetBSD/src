@@ -2138,11 +2138,10 @@ static void i915_error_wake_up(struct drm_i915_private *dev_priv,
 	 * a gpu reset pending so that i915_error_work_func can acquire them).
 	 */
 
+	assert_spin_locked(&dev_priv->irq_lock);
 #ifdef __NetBSD__
-	spin_lock(&dev_priv->irq_lock);
 	for_each_ring(ring, dev_priv, i)
 		DRM_SPIN_WAKEUP_ALL(&ring->irq_queue, &dev_priv->irq_lock);
-	spin_unlock(&dev_priv->irq_lock);
 
 	spin_lock(&dev_priv->pending_flip_lock);
 	DRM_SPIN_WAKEUP_ALL(&dev_priv->pending_flip_queue,
@@ -2849,8 +2848,11 @@ static void i915_hangcheck_elapsed(unsigned long data)
 		}
 	}
 
-	if (rings_hung)
-		return i915_handle_error(dev, true, "Ring hung");
+	if (rings_hung) {
+		i915_handle_error(dev, true, "Ring hung");
+		spin_unlock(&dev_priv->irq_lock);
+		return;
+	}
 
 	spin_unlock(&dev_priv->irq_lock);
 
