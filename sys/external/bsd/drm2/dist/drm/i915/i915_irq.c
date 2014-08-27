@@ -2249,7 +2249,9 @@ static void i915_error_work_func(struct work_struct *work)
 		 * Note: The wake_up also serves as a memory barrier so that
 		 * waiters see the update value of the reset counter atomic_t.
 		 */
+		spin_lock(&dev_priv->irq_lock);
 		i915_error_wake_up(dev_priv, true);
+		spin_unlock(&dev_priv->irq_lock);
 	}
 }
 
