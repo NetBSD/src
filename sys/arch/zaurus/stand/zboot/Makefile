@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2014/01/12 15:26:31 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.17 2014/08/27 03:17:21 matt Exp $
 
 PROG=		zboot
 
@@ -61,7 +61,7 @@ LIBSA=		${SALIB}
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${VERSIONFILE}
 	${_MKTARGET_LINK}
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
-	    ${VERSIONFILE} ${MACHINE} ${NEWVERSWHAT}
+	    ${VERSIONFILE} zaurus ${NEWVERSWHAT}
 	${CC} ${CFLAGS} ${CPPFLAGS} -c vers.c
 	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
 
