@@ -212,6 +212,10 @@ void radeon_dp_aux_init(struct radeon_connector *radeon_connector)
 	radeon_connector->ddc_bus->rec.hpd = radeon_connector->hpd.hpd;
 	radeon_connector->ddc_bus->aux.dev = radeon_connector->base.kdev;
 	radeon_connector->ddc_bus->aux.transfer = radeon_dp_aux_transfer;
+#ifdef __NetBSD__
+	/* XXX dervied from sysfs/i2c on linux. */
+	radeon_connector->ddc_bus->aux.name = "radeon_dp_aux";
+#endif
 	ret = drm_dp_aux_register_i2c_bus(&radeon_connector->ddc_bus->aux);
 	if (!ret)
 		radeon_connector->ddc_bus->has_aux = true;
