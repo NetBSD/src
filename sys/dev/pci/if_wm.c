@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.291 2014/08/26 14:44:00 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.292 2014/08/28 16:22:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  * TODO (in order of importance):
  *
  *	- Check XXX'ed comments
- *	- Internal SERDES mode newer than or equal to 82575.
+ *	- Read SFP ROM and set media type correctly on 82575 and newer devices
  *	- EEE (Energy Efficiency Ethernet)
  *	- MSI/MSI-X
  *	- Virtual Function
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.291 2014/08/26 14:44:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.292 2014/08/28 16:22:59 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,10 +273,10 @@ struct wm_softc {
 	int sc_bus_speed;		/* PCI/PCIX bus speed */
 	int sc_pcixe_capoff;		/* PCI[Xe] capability reg offset */
 
-	const struct wm_product *sc_wmp; /* Pointer to the wm_product entry */
 	wm_chip_type sc_type;		/* MAC type */
 	int sc_rev;			/* MAC revision */
 	wm_phy_type sc_phytype;		/* PHY type */
+	uint32_t sc_mediatype;		/* Media type (Copper, Fiber, SERDES)*/
 	int sc_funcid;			/* unit number of the chip (0 to 3) */
 	int sc_flags;			/* flags; see below */
 	int sc_if_flags;		/* last if_flags */
@@ -585,7 +585,7 @@ static int	wm_intr(void *);
 
 /*
  * Media related.
- * GMII, SGMII, TBI (and SERDES)
+ * GMII, SGMII, TBI, SERDES and SFP.
  */
 /* GMII related */
 static void	wm_gmii_reset(struct wm_softc *);
@@ -622,6 +622,8 @@ static void	wm_tbi_mediastatus(struct ifnet *, struct ifmediareq *);
 static int	wm_tbi_mediachange(struct ifnet *);
 static void	wm_tbi_set_linkled(struct wm_softc *);
 static void	wm_tbi_check_link(struct wm_softc *);
+/* SFP related */
+static uint32_t	wm_get_sfp_media_type(struct wm_softc *);
 
 /*
  * NVM related.
@@ -718,10 +720,12 @@ static const struct wm_product {
 	pci_product_id_t	wmp_product;
 	const char		*wmp_name;
 	wm_chip_type		wmp_type;
-	int			wmp_flags;
+	uint32_t		wmp_flags;
+#define	WMP_F_UNKNOWN		0x00
 #define	WMP_F_FIBER		0x01
 #define	WMP_F_COPPER		0x02
-#define	WMP_F_SERDES		0x04
+#define	WMP_F_SERDES		0x03 /* Internal SERDES */
+#define WMP_MEDIATYPE(x)	((x) & 0x03)
 } wm_products[] = {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82542,
 	  "Intel i82542 1000BASE-X Ethernet",
@@ -1036,15 +1040,9 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82575EB_COPPER,
 	  "82575EB dual-1000baseT Ethernet",
 	  WM_T_82575,		WMP_F_COPPER },
-#if 0
-	/*
-	 * not sure if WMP_F_FIBER or WMP_F_SERDES - we do not have it - so
-	 * disabled for now ...
-	 */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82575EB_FIBER_SERDES,
 	  "82575EB dual-1000baseX Ethernet (SERDES)",
 	  WM_T_82575,		WMP_F_SERDES },
-#endif
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82575GB_QUAD_COPPER,
 	  "82575GB quad-1000baseT Ethernet",
 	  WM_T_82575,		WMP_F_COPPER },
@@ -1112,11 +1110,11 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_SERDES,
 	  "I350 Gigabit Backplane Connection",
 	  WM_T_I350,		WMP_F_SERDES },
-#if 0
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_SGMII,
 	  "I350 Gigabit Connection",
 	  WM_T_I350,		WMP_F_COPPER },
-#endif
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_C2000_SGMII,
 	  "I354 Gigabit Connection",
 	  WM_T_I354,		WMP_F_COPPER },
@@ -1136,11 +1134,11 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_SERDES,
 	  "I210 Gigabit Ethernet (SERDES)",
 	  WM_T_I210,		WMP_F_SERDES },
-#if 0
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_SGMII,
 	  "I210 Gigabit Ethernet (SGMII)",
-	  WM_T_I210,		WMP_F_SERDES },
-#endif
+	  WM_T_I210,		WMP_F_COPPER },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I211_COPPER,
 	  "I211 Ethernet (COPPER)",
 	  WM_T_I211,		WMP_F_COPPER },
@@ -1278,6 +1276,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	pcireg_t preg, memtype;
 	uint16_t eeprom_data, apme_mask;
 	bool force_clear_smbi;
+	uint32_t link_mode;
 	uint32_t reg;
 	char intrbuf[PCI_INTRSTR_LEN];
 
@@ -1285,11 +1284,14 @@ wm_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_tick_ch, CALLOUT_FLAGS);
 	sc->sc_stopping = false;
 
-	sc->sc_wmp = wmp = wm_lookup(pa);
+	wmp = wm_lookup(pa);
+#ifdef DIAGNOSTIC
 	if (wmp == NULL) {
 		printf("\n");
 		panic("wm_attach: impossible");
 	}
+#endif
+	sc->sc_mediatype = WMP_MEDIATYPE(wmp->wmp_flags);
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -2018,9 +2020,11 @@ wm_attach(device_t parent, device_t self, void *aux)
 		wm_gmii_mediainit(sc, wmp->wmp_product);
 	} else if (sc->sc_type < WM_T_82543 ||
 	    (CSR_READ(sc, WMREG_STATUS) & STATUS_TBIMODE) != 0) {
-		if (wmp->wmp_flags & WMP_F_COPPER)
+		if (sc->sc_mediatype & WMP_F_COPPER) {
 			aprint_error_dev(sc->sc_dev,
 			    "WARNING: TBIMODE set on 1000BASE-T product!\n");
+			sc->sc_mediatype = WMP_F_FIBER;
+		}
 		wm_tbi_mediainit(sc);
 	} else {
 		switch (sc->sc_type) {
@@ -2033,42 +2037,79 @@ wm_attach(device_t parent, device_t self, void *aux)
 		case WM_T_I210:
 		case WM_T_I211:
 			reg = CSR_READ(sc, WMREG_CTRL_EXT);
-			switch (reg & CTRL_EXT_LINK_MODE_MASK) {
+			link_mode = reg & CTRL_EXT_LINK_MODE_MASK;
+			switch (link_mode) {
 			case CTRL_EXT_LINK_MODE_1000KX:
 				aprint_verbose_dev(sc->sc_dev, "1000KX\n");
-				CSR_WRITE(sc, WMREG_CTRL_EXT,
-				    reg | CTRL_EXT_I2C_ENA);
-				panic("not supported yet\n");
+				sc->sc_mediatype = WMP_F_SERDES;
 				break;
 			case CTRL_EXT_LINK_MODE_SGMII:
 				if (wm_sgmii_uses_mdio(sc)) {
 					aprint_verbose_dev(sc->sc_dev,
 					    "SGMII(MDIO)\n");
 					sc->sc_flags |= WM_F_SGMII;
-					wm_gmii_mediainit(sc,
-					    wmp->wmp_product);
+					sc->sc_mediatype = WMP_F_COPPER;
 					break;
 				}
 				aprint_verbose_dev(sc->sc_dev, "SGMII(I2C)\n");
 				/*FALLTHROUGH*/
 			case CTRL_EXT_LINK_MODE_PCIE_SERDES:
-				aprint_verbose_dev(sc->sc_dev, "SERDES\n");
-				CSR_WRITE(sc, WMREG_CTRL_EXT,
-				    reg | CTRL_EXT_I2C_ENA);
-				panic("not supported yet\n");
+				sc->sc_mediatype = wm_get_sfp_media_type(sc);
+				if (sc->sc_mediatype == WMP_F_UNKNOWN) {
+					if (link_mode
+					    == CTRL_EXT_LINK_MODE_SGMII) {
+						sc->sc_mediatype
+						    = WMP_F_COPPER;
+						sc->sc_flags |= WM_F_SGMII;
+					} else {
+						sc->sc_mediatype
+						    = WMP_F_SERDES;
+						aprint_verbose_dev(sc->sc_dev,
+						    "SERDES\n");
+					}
+					break;
+				}
+				if (sc->sc_mediatype == WMP_F_SERDES)
+					aprint_verbose_dev(sc->sc_dev,
+					    "SERDES\n");
+
+				/* Change current link mode setting */
+				reg &= ~CTRL_EXT_LINK_MODE_MASK;
+				switch (sc->sc_mediatype) {
+				case WMP_F_COPPER:
+					reg |= CTRL_EXT_LINK_MODE_SGMII;
+					break;
+				case WMP_F_SERDES:
+					reg |= CTRL_EXT_LINK_MODE_PCIE_SERDES;
+					break;
+				default:
+					break;
+				}
+				CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
 				break;
 			case CTRL_EXT_LINK_MODE_GMII:
 			default:
-				CSR_WRITE(sc, WMREG_CTRL_EXT,
-				    reg & ~CTRL_EXT_I2C_ENA);
-				wm_gmii_mediainit(sc, wmp->wmp_product);
+				sc->sc_mediatype = WMP_F_COPPER;
 				break;
 			}
+
+			reg &= ~CTRL_EXT_I2C_ENA;
+			if ((sc->sc_flags & WM_F_SGMII) != 0)
+				reg |= CTRL_EXT_I2C_ENA;
+			else
+				reg &= ~CTRL_EXT_I2C_ENA;
+			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+
+			if (sc->sc_mediatype == WMP_F_COPPER)
+				wm_gmii_mediainit(sc, wmp->wmp_product);
+			else
+				wm_tbi_mediainit(sc);
 			break;
 		default:
-			if (wmp->wmp_flags & WMP_F_FIBER)
+			if (sc->sc_mediatype & WMP_F_FIBER)
 				aprint_error_dev(sc->sc_dev,
 				    "WARNING: TBIMODE clear on 1000BASE-X product!\n");
+			sc->sc_mediatype = WMP_F_COPPER;
 			wm_gmii_mediainit(sc, wmp->wmp_product);
 		}
 	}
@@ -6081,7 +6122,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	struct mii_data *mii = &sc->sc_mii;
 	uint32_t reg;
 
-	/* We have MII. */
+	/* We have GMII. */
 	sc->sc_flags |= WM_F_HAS_MII;
 
 	if (sc->sc_type == WM_T_80003)
@@ -7151,7 +7192,7 @@ wm_check_for_link(struct wm_softc *sc)
 	uint32_t status;
 	uint32_t sig;
 
-	if (sc->sc_wmp->wmp_flags & WMP_F_SERDES) {
+	if (sc->sc_mediatype & WMP_F_SERDES) {
 		sc->sc_tbi_linkup = 1;
 		return 0;
 	}
@@ -7250,7 +7291,7 @@ wm_tbi_mediainit(struct wm_softc *sc)
 	 */
 	sc->sc_ctrl |= CTRL_SWDPIO(0);
 	sc->sc_ctrl &= ~CTRL_SWDPIO(1);
-	if (sc->sc_wmp->wmp_flags & WMP_F_SERDES)
+	if (sc->sc_mediatype & WMP_F_SERDES)
 		sc->sc_ctrl &= ~CTRL_LRST;
 
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
@@ -7330,7 +7371,7 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	uint32_t status;
 	int i;
 
-	if (sc->sc_wmp->wmp_flags & WMP_F_SERDES)
+	if (sc->sc_mediatype & WMP_F_SERDES)
 		return 0;
 
 	if ((sc->sc_type == WM_T_82571) || (sc->sc_type == WM_T_82572)
@@ -7460,7 +7501,7 @@ wm_tbi_check_link(struct wm_softc *sc)
 
 	KASSERT(WM_TX_LOCKED(sc));
 
-	if (sc->sc_wmp->wmp_flags & WMP_F_SERDES) {
+	if (sc->sc_mediatype & WMP_F_SERDES) {
 		sc->sc_tbi_linkup = 1;
 		return;
 	}
@@ -7515,6 +7556,14 @@ wm_tbi_check_link(struct wm_softc *sc)
 	wm_tbi_set_linkled(sc);
 }
 
+/* SFP related */
+static uint32_t
+wm_get_sfp_media_type(struct wm_softc *sc)
+{
+
+	/* XXX */
+	return WMP_F_SERDES;
+}
 /*
  * NVM related.
  * Microwire, SPI (w/wo EERD) and Flash.
@@ -8954,8 +9003,8 @@ wm_enable_wakeup(struct wm_softc *sc)
 	}
 
 	/* Keep the laser running on fiber adapters */
-	if (((sc->sc_wmp->wmp_flags & WMP_F_FIBER) != 0)
-	    || (sc->sc_wmp->wmp_flags & WMP_F_SERDES) != 0) {
+	if (((sc->sc_mediatype & WMP_F_FIBER) != 0)
+	    || (sc->sc_mediatype & WMP_F_SERDES) != 0) {
 		reg = CSR_READ(sc, WMREG_CTRL_EXT);
 		reg |= CTRL_EXT_SWDPIN(3);
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
