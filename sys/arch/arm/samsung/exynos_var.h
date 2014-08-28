@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_var.h,v 1.12 2014/06/11 14:54:32 reinoud Exp $ */
+/* $NetBSD: exynos_var.h,v 1.13 2014/08/28 18:02:36 reinoud Exp $ */
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -117,6 +117,10 @@ extern bus_space_handle_t exynos_core_bsh;
 extern void exynos_bootstrap(vaddr_t, vaddr_t);
 extern void exynos_dma_bootstrap(psize_t memsize);
 extern void exynos_gpio_bootstrap(void);
+
+extern void exynos_clocks_bootstrap(void);
+extern void exynos_sysctl_cpufreq_init(void);
+extern uint64_t exynos_get_cpufreq(void);
 
 extern void exynos_device_register(device_t self, void *aux);
 extern void exynos_device_register_post_config(device_t self, void *aux);
