@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.15 2014/08/26 11:55:54 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.16 2014/08/28 18:02:36 reinoud Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.15 2014/08/26 11:55:54 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.16 2014/08/28 18:02:36 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,6 +67,63 @@ bus_space_handle_t exynos_audiocore_bsh;
 /* these variables are retrieved in start.S and stored in .data */
 uint32_t  exynos_soc_id = 0;
 uint32_t  exynos_pop_id = 0;
+
+
+/* cpu frequencies */
+struct cpu_freq {
+	uint64_t freq;
+	int	 P;
+	int	 M;
+	int	 S; 
+};
+
+
+#ifdef EXYNOS4
+const struct cpu_freq cpu_freq_settings_exynos4[] = {
+	{ 200, 3, 100, 2},
+	{ 300, 4, 200, 2},
+	{ 400, 3, 100, 1},
+	{ 500, 3, 125, 1},
+	{ 600, 4, 200, 1},
+	{ 700, 3, 175, 1},
+	{ 800, 3, 100, 0},
+	{ 900, 4, 150, 0},
+	{1000, 3, 125, 0},
+	{1100, 6, 275, 0},
+	{1200, 4, 200, 0},
+	{1300, 6, 325, 0},
+	{1400, 3, 175, 0},
+	{1600, 3, 200, 0},
+};
+#endif
+
+
+#ifdef EXYNOS5
+const struct cpu_freq cpu_freq_settings_exynos5[] = {
+	{ 200,  3, 100, 2},
+	{ 333,  4, 222, 2},
+	{ 400,  3, 100, 1},
+	{ 533, 12, 533, 1},
+	{ 600,  4, 200, 1},
+	{ 667,  7, 389, 1},
+	{ 800,  3, 100, 0},
+	{1000,  3, 125, 0},
+	{1066, 12, 533, 0},
+	{1200,  3, 150, 0},
+	{1400,  3, 175, 0},
+	{1600,  3, 200, 0},
+};
+#endif
+
+static struct cpu_freq const *cpu_freq_settings = NULL;
+static int ncpu_freq_settings = 0;
+
+static int cpu_freq_target = 0;
+#define NFRQS 15
+static char sysctl_cpu_freqs_txt[NFRQS*5];
+
+static int sysctl_cpufreq_target(SYSCTLFN_ARGS);
+static int sysctl_cpufreq_current(SYSCTLFN_ARGS);
 
 
 /*
@@ -205,6 +262,204 @@ exynos_l2cc_init(void)
 	return 0;
 }
 #endif /* ARM_TRUSTZONE_FIRMWARE */
+
+
+void
+exynos_sysctl_cpufreq_init(void)
+{
+	const struct sysctlnode *node, *cpunode, *freqnode;
+	char *cpos;
+	int i, val;
+	int error;
+
+	memset(sysctl_cpu_freqs_txt, (int) ' ', sizeof(sysctl_cpu_freqs_txt));
+	cpos = sysctl_cpu_freqs_txt;
+	for (i = 0; i < ncpu_freq_settings; i++) {
+		val = cpu_freq_settings[i].freq;
+		snprintf(cpos, 6, "%d ", val);
+		cpos += (val < 1000) ? 4 : 5;
+	}
+	*cpos = 0;
+
+	error = sysctl_createv(NULL, 0, NULL, &node,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
+	if (error)
+		printf("couldn't create `machdep' node\n");
+
+	error = sysctl_createv(NULL, 0, &node, &cpunode,
+	    0, CTLTYPE_NODE, "cpu", NULL,
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		printf("couldn't create `cpu' node\n");
+
+	error = sysctl_createv(NULL, 0, &cpunode, &freqnode,
+	    0, CTLTYPE_NODE, "frequency", NULL,
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+	if (error)
+		printf("couldn't create `frequency' node\n");
+
+	error = sysctl_createv(NULL, 0, &freqnode, &node,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "target", NULL,
+	    sysctl_cpufreq_target, 0, &cpu_freq_target, 0,
+	    CTL_CREATE, CTL_EOL);
+	if (error)
+		printf("couldn't create `target' node\n");
+
+	error = sysctl_createv(NULL, 0, &freqnode, &node,
+	    0, CTLTYPE_INT, "current", NULL,
+	    sysctl_cpufreq_current, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+	if (error)
+		printf("couldn't create `current' node\n");
+
+	error = sysctl_createv(NULL, 0, &freqnode, &node,
+	    CTLFLAG_READONLY, CTLTYPE_STRING, "available", NULL,
+	    NULL, 0, sysctl_cpu_freqs_txt, 0,
+	    CTL_CREATE, CTL_EOL);
+	if (error)
+		printf("couldn't create `available' node\b");
+}
+
+
+uint64_t
+exynos_get_cpufreq(void)
+{
+	uint32_t reg = 0;
+	uint32_t regval;
+	uint32_t freq;
+
+#ifdef EXYNOS4
+	if (IS_EXYNOS4_P())
+		reg = EXYNOS4_CMU_APLL + PLL_CON0_OFFSET;
+#endif
+#ifdef EXYNOS5
+	if (IS_EXYNOS5_P()) 
+		reg = EXYNOS5_CMU_APLL + PLL_CON0_OFFSET;
+#endif
+	KASSERT(reg);
+
+	regval = bus_space_read_4(&exynos_bs_tag, exynos_core_bsh, reg);
+	freq   = PLL_FREQ(EXYNOS_F_IN_FREQ, regval);
+
+	return freq;
+}
+
+
+static void
+exynos_set_cpufreq(const struct cpu_freq *freqreq)
+{
+	uint32_t reg = 0;
+	uint32_t regval;
+	int M, P, S;
+
+	M = freqreq->M;
+	P = freqreq->P;
+	S = freqreq->S;
+
+	regval = __SHIFTIN(M, PLL_CON0_M) |
+		 __SHIFTIN(P, PLL_CON0_P) |
+		 __SHIFTIN(S, PLL_CON0_S);
+
+#ifdef EXYNOS4
+	if (IS_EXYNOS4_P())
+		reg = EXYNOS4_CMU_APLL + PLL_CON0_OFFSET;
+#endif
+#ifdef EXYNOS5
+	if (IS_EXYNOS5_P())
+		reg = EXYNOS5_CMU_APLL + PLL_CON0_OFFSET;
+#endif
+	KASSERT(reg);
+
+	/* enable PPL and write config */
+	regval |= PLL_CON0_ENABLE;
+	bus_space_write_4(&exynos_bs_tag, exynos_core_bsh, reg, regval);
+}
+
+
+static int
+sysctl_cpufreq_target(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	uint32_t t, curfreq, minfreq, maxfreq;
+	int i, best_i, diff;
+	int error;
+
+	curfreq = exynos_get_cpufreq() / (1000*1000);
+	t = *(int *)rnode->sysctl_data;
+	if (t == 0)
+		t = curfreq;
+
+	node = *rnode;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	minfreq = cpu_freq_settings[0].freq;
+	maxfreq = cpu_freq_settings[ncpu_freq_settings-1].freq;
+
+	if ((t < minfreq) || (t > maxfreq))
+		return EINVAL;
+
+	if (t == curfreq) {
+		*(int *)rnode->sysctl_data = t;
+		return 0;
+	}
+
+	diff = maxfreq;
+	best_i = -1;
+	for (i = 0; i < ncpu_freq_settings; i++) {
+		if (abs(t - cpu_freq_settings[i].freq) <= diff) {
+			diff = labs(t - cpu_freq_settings[i].freq);
+			best_i = i;
+		}
+	}
+	if (best_i < 0)
+		return EINVAL;
+
+	exynos_set_cpufreq(&cpu_freq_settings[best_i]);
+
+	*(int *)rnode->sysctl_data = t;
+	return 0;
+}
+
+
+static int
+sysctl_cpufreq_current(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	uint32_t freq;
+
+	freq = exynos_get_cpufreq() / (1000*1000);
+	node.sysctl_data = &freq;
+
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+
+void
+exynos_clocks_bootstrap(void)
+{
+#ifdef EXYNOS4
+	if (IS_EXYNOS4_P()) {
+		cpu_freq_settings = cpu_freq_settings_exynos4;
+		ncpu_freq_settings = __arraycount(cpu_freq_settings_exynos4);
+	}
+#endif
+#ifdef EXYNOS5
+	if (IS_EXYNOS5_P()) {
+		cpu_freq_settings = cpu_freq_settings_exynos5;
+		ncpu_freq_settings = __arraycount(cpu_freq_settings_exynos5);
+	}
+#endif
+	KASSERT(ncpu_freq_settings != 0);
+	KASSERT(ncpu_freq_settings < NFRQS);
+
+	/* set max cpufreq */
+	exynos_set_cpufreq(&cpu_freq_settings[ncpu_freq_settings-1]);
+	curcpu()->ci_data.cpu_cc_freq = exynos_get_cpufreq();
+}
 
 
 void
