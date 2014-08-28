@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2014/03/02 03:55:19 matt Exp $
+#	$NetBSD: Makefile,v 1.8 2014/08/28 12:23:29 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,8 @@ RTLD_FUNCS	= \
 	_rtld_map_object \
 	_rtld_obj_free \
 	_rtld_obj_new \
+	_rtld_object_add_name \
+	_rtld_object_match_name \
 	_rtld_add_paths \
 	_rtld_process_hints \
 	_rtld_sysctl \
