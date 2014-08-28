@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.183 2014/08/16 16:19:41 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.184 2014/08/28 08:29:50 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.183 2014/08/16 16:19:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.184 2014/08/28 08:29:50 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -668,11 +668,6 @@ puffs_vnop_lookup(void *v)
 	 * match the userland cookie anymore: is the node known?
 	 */
 	if (vp == NULL) {
-		error = puffs_cookie2vnode(pmp, lookup_msg->pvnr_newnode,
-					   1, 1, &vp);
-	}
-
-	if (error == PUFFS_NOSUCHCOOKIE) {
 		error = puffs_getvnode(dvp->v_mount,
 		    lookup_msg->pvnr_newnode, lookup_msg->pvnr_vtype,
 		    lookup_msg->pvnr_size, lookup_msg->pvnr_rdev, &vp);
@@ -684,10 +679,6 @@ puffs_vnop_lookup(void *v)
 		}
 
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	} else if (error) {
-		puffs_abortbutton(pmp, PUFFS_ABORT_LOOKUP, VPTOPNC(dvp),
-		    lookup_msg->pvnr_newnode, ap->a_cnp);
-		goto out;
 	}
 
 	/*
@@ -1401,7 +1392,6 @@ puffs_vnop_reclaim(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
-	struct puffs_node *pnode = vp->v_data;
 	bool notifyserver = true;
 
 	/*
@@ -1424,7 +1414,6 @@ puffs_vnop_reclaim(void *v)
 	 * that and someone might race us into node creation
 	 */
 	mutex_enter(&pmp->pmp_lock);
-	LIST_REMOVE(pnode, pn_hashent);
 	if (PUFFS_USE_NAMECACHE(pmp))
 		cache_purge(vp);
 	mutex_exit(&pmp->pmp_lock);
@@ -1443,7 +1432,6 @@ puffs_vnop_reclaim(void *v)
 	}
 
 	puffs_putvnode(vp);
-	vp->v_data = NULL;
 
 	return 0;
 }
