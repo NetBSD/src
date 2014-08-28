@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.16 2014/08/28 18:02:36 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.17 2014/08/28 20:29:05 snj Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.16 2014/08/28 18:02:36 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.17 2014/08/28 20:29:05 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -195,7 +195,7 @@ exynos_cpu_boot(int cpu)
 
 
 /*
- * The latency values used below are `magic' and probably chosen empiricaly.
+ * The latency values used below are `magic' and probably chosen empirically.
  * For the 4210 variant the data latency is lower, a 0x110. This is currently
  * not enforced.
  *
@@ -523,7 +523,7 @@ exynos_device_register(device_t self, void *aux)
 		/*
 		 * XXX KLUDGE ALERT XXX
 		 * The iot mainbus supplies is completely wrong since it scales
-		 * addresses by 2.  The simpliest remedy is to replace with our
+		 * addresses by 2.  The simplest remedy is to replace with our
 		 * bus space used for the armcore regisers (which armperiph uses).
 		 */
 		struct mainbus_attach_args * const mb = aux;
