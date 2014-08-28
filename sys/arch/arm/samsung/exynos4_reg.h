@@ -115,8 +115,12 @@
 
 #define EXYNOS4_SYSREG_OFFSET			0x00010000
 #define EXYNOS4_PMU_OFFSET			0x00020000	/* Power Management Unit */
-#define EXYNOS4_CMU_TOP_PART_OFFSET		0x00030000	/* XXX unknown XXX */
-#define EXYNOS4_CMU_CORE_ISP_PART_OFFSET	0x00040000	/* XXX unknown XXX */
+#define EXYNOS4_CMU_TOP_PART_OFFSET		0x00030000	/* Clock(s) management unit */
+#define   EXYNOS4_CMU_EPPL			0x0003C010
+#define   EXYNOS4_CMU_VPPL			0x0003C020
+#define EXYNOS4_CMU_CORE_ISP_PART_OFFSET	0x00040000	/* Clock(s) management unit */
+#define   EXYNOS4_CMU_MPLL			0x00040008
+#define   EXYNOS4_CMU_APLL			0x00044000
 #define EXYNOS4_MCT_OFFSET			0x00050000	/* Multi Core Timer */
 #define EXYNOS4_WDT_OFFSET			0x00060000	/* Watch Dog Timer */
 #define EXYNOS4_RTC_OFFSET			0x00070000	/* Real Time Clock */
