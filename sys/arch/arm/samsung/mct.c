@@ -1,4 +1,4 @@
-/*	$NetBSD: mct.c,v 1.4 2014/08/28 12:00:58 reinoud Exp $	*/
+/*	$NetBSD: mct.c,v 1.5 2014/08/28 20:29:05 snj Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.4 2014/08/28 12:00:58 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.5 2014/08/28 20:29:05 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -247,7 +247,7 @@ clockhandler(void *arg)
 	hardclock(cf);
 
 	if (sc->sc_has_blink_led) {
-		/* we could substract `periods' here */
+		/* we could subtract `periods' here */
 		sc->sc_led_timer = sc->sc_led_timer - 1;
 		if (sc->sc_led_timer <= 0) {
 			sc->sc_led_state = !sc->sc_led_state;
