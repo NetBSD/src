@@ -112,6 +112,25 @@
 #define EXYNOS_USB_FREQ			EXYNOS_F_IN_FREQ/* 24 Mhz */
 
 
+/* PLLs */
+#define PLL_LOCK_OFFSET			0x000
+#define PLL_CON0_OFFSET			0x100
+#define PLL_CON1_OFFSET			0x104
+
+#define PLL_CON0_ENABLE			__BIT(31)
+#define PLL_CON0_LOCKED			__BIT(29)	/* has the PLL locked on */
+#define PLL_CON0_M			__BITS(16,25)	/* PLL M divide value */
+#define PLL_CON0_P			__BITS( 8,13)	/* PLL P divide value */
+#define PLL_CON0_S			__BITS( 0, 2)	/* PLL S divide value */
+
+#define PLL_PMS2FREQ(F, M, P, S) (((M)*(F))/((P)*(1<<(S))))
+#define PLL_FREQ(f, v) PLL_PMS2FREQ( \
+	(f),\
+	__SHIFTOUT((v), PLL_CON0_M),\
+	__SHIFTOUT((v), PLL_CON0_P),\
+	__SHIFTOUT((v), PLL_CON0_S))
+
+
 /* Watchdog register definitions */
 #define EXYNOS_WDT_WTCON		0x0000
 #define  WTCON_PRESCALER		__BITS(15,8)
