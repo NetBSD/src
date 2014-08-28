@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.30 2014/08/26 20:33:35 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.31 2014/08/28 18:02:37 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.30 2014/08/26 20:33:35 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.31 2014/08/28 18:02:37 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -332,9 +332,11 @@ initarm(void *arg)
 	printf("initarm: cbar=%#x\n", armreg_cbar_read());
 #endif
 
-	/* init clocks */
-	/* determine cpu clock source */
-curcpu()->ci_data.cpu_cc_freq = 1*1000*1000*1000;	/* XXX hack XXX */
+	/* determine cpu0 clock rate */
+	exynos_clocks_bootstrap();
+#ifdef VERBOSE_INIT_ARM
+	printf("CPU0 now running on %"PRIu64" Mhz\n", exynos_get_cpufreq()/(1000*1000));
+#endif
 
 #if NARML2CC > 0
 	if (CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid)) {
