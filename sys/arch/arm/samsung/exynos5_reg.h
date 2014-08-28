@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos5_reg.h,v 1.12 2014/08/21 14:06:39 reinoud Exp $	*/
+/*	$NetBSD: exynos5_reg.h,v 1.13 2014/08/28 17:59:46 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -56,8 +56,15 @@
 #define EXYNOS5_SDRAM_PBASE			0x40000000
 
 #define EXYNOS5_CMU_COREPART_OFFSET		0x00010000
+#define   EXYNOS5_CMU_APLL			0x00010000	/* ARM core clock */
+#define   EXYNOS5_CMU_MPLL			0x00014000	/* MEM cntr. clock */
 #define EXYNOS5_CMU_TOPPART_OFFSET		0x00020000
+#define   EXYNOS5_CMU_CPLL			0x00020020	/* Video hardware codec clock */
+#define   EXYNOS5_CMU_EPLL			0x00020030	/* Audio and ext. interf. clock */
+#define   EXYNOS5_CMU_VPLL			0x00020040	/* Dither PLL (EMI reduction) clock */
+#define   EXYNOS5_CMU_GPLL			0x00020050	/* Graphic 3D proc. clock */
 #define EXYNOS5_CMU_MEMPART_OFFSET		0x00030000
+#define   EXYNOS5_CMU_BPLL			0x00030010
 #define EXYNOS5_ALIVE_OFFSET			0x00040000
 #define EXYNOS5_SYSREG_OFFSET			0x00050000
 #define EXYNOS5_TMU_OFFSET			0x00060000
