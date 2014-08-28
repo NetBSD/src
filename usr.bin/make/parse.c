@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.200 2014/08/23 15:05:40 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.201 2014/08/28 14:39:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.200 2014/08/23 15:05:40 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.201 2014/08/28 14:39:13 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.200 2014/08/23 15:05:40 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.201 2014/08/28 14:39:13 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2876,7 +2876,10 @@ ParseGetLine(int flags, int *length)
 		ptr++;
 	    ch = ' ';
 	} else {
-	    *tp++ = '\\';
+	    // Don't add a trailign backslash at theend of a command
+	    // This is what gmake does, but what does POSIX have to say?
+	    if (ptr[0] != '\n' && ptr[0] != '\0')
+		*tp++ = '\\';
 	    if (ptr[0] == '\t')
 		ptr++;
 	}
