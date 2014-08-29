@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.92 2014/08/29 09:26:39 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.93 2014/08/29 09:35:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.92 2014/08/29 09:26:39 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.93 2014/08/29 09:35:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -839,7 +839,7 @@ xxreadtoken(void)
 			pungetc();
 			continue;
 		case '\\':
-			switch (c = pgetc()) {
+			switch (pgetc()) {
 			case '\n':
 				startlinno = ++plinno;
 				if (doprompt)
