@@ -1,4 +1,4 @@
-# $NetBSD: suffixes.mk,v 1.1 2014/08/23 15:05:40 christos Exp $
+# $NetBSD: suffixes.mk,v 1.2 2014/08/29 15:55:44 sjg Exp $
 
 # Issues from PR 49086
 
@@ -45,6 +45,11 @@ all: issue10.e
 # the dynamic sources were expanded before $(.PREFIX) and $(.TARGET) were
 # available, so they would have expanded to a null string.
 all: issue11.j
+
+# we need to clean for repeatable results
+.BEGIN: clean
+clean:
+	@rm -f issue* .[ab]*
 
 .SUFFIXES: .a .b .c
 
