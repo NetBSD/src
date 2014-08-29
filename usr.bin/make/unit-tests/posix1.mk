@@ -1,9 +1,14 @@
-# $NetBSD: posix1.mk,v 1.1 2014/08/23 15:02:04 christos Exp $
+# $NetBSD: posix1.mk,v 1.2 2014/08/29 15:55:44 sjg Exp $
 
 # Keep the default suffixes from interfering, just in case.
 .SUFFIXES:
 
 all:	line-continuations suffix-substitution localvars
+
+# we need to clean for repeatable results
+.BEGIN: clean
+clean:
+	@rm -f lib.a dir/* dummy obj*
 
 #
 # Line continuations
@@ -171,7 +176,7 @@ obj2.o: obj_2.c obj_2.h dir/obj_1.h
 # as a bait for a regression into the forced dependencies discussed earlier.
 obj1.c dir/obj_1.c obj2.c obj_2.c obj3.c:
 	mkdir -p '$(@D)'
-	printf '#include "$(@F:.c=.h)"\nconst char* $(@F:.c=) = "$(@)";' \
+	printf '#include "$(@F:.c=.h)"\nconst char* $(@F:.c=) = "$(@)";\n' \
 	    >'$(@)'
 
 dir/obj_1.h obj_2.h obj3.h dummy dir/dummy:
