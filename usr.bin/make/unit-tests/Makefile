@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.48 2014/08/24 17:17:24 apb Exp $
+# $NetBSD: Makefile,v 1.49 2014/08/29 15:55:44 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -66,7 +66,7 @@ all: ${OUTFILES}
 
 CLEANFILES += *.rawout *.out *.status *.tmp *.core *.tmp
 CLEANFILES += obj*.[och] lib*.a		# posix1.mk
-CLEANFILES += issue*			# suffixes.mk
+CLEANFILES += issue* .[ab]*		# suffixes.mk
 CLEANRECURSIVE += dir dummy		# posix1.mk
 
 clean:
