@@ -6,7 +6,7 @@ foo baR baz,  bar baz, foo bar baz, fooadd baradd bazadd
 mkdir -p 'dir'
 touch 'dir/obj_1.h'
 mkdir -p 'dir'
-printf '#include "obj_1.h"\nconst char* obj_1 = "dir/obj_1.c";' \
+printf '#include "obj_1.h"\nconst char* obj_1 = "dir/obj_1.c";\n' \
     >'dir/obj_1.c'
 Local variables
  $(@)="dir/obj_1.o" $(<)="dir/obj_1.c"
@@ -90,7 +90,7 @@ ar -rcv 'lib.a' 'obj1.o'
 a - obj1.o
 rm -f 'obj1.o'
 mkdir -p '.'
-printf '#include "obj_2.h"\nconst char* obj_2 = "obj_2.c";' \
+printf '#include "obj_2.h"\nconst char* obj_2 = "obj_2.c";\n' \
     >'obj_2.c'
 mkdir -p '.'
 touch 'obj_2.h'
@@ -139,7 +139,7 @@ touch 'obj3.h'
 mkdir -p 'dir'
 touch 'dir/dummy'
 mkdir -p '.'
-printf '#include "obj3.h"\nconst char* obj3 = "obj3.c";' \
+printf '#include "obj3.h"\nconst char* obj3 = "obj3.c";\n' \
     >'obj3.c'
 Local variables
  $(@)="lib.a" $(<)="obj3.c"
