@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.84.4.1 2014/08/26 23:15:12 riz Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.84.4.2 2014/08/29 11:55:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -144,15 +144,6 @@ struct puffs_mount {
 
 	struct puffs_wq			pmp_msg_replywait;
 
-	struct puffs_node_hashlist	*pmp_pnodehash;
-	int				pmp_npnodehash;
-
-	/*
-	 * a list of cookies which is going to be puffs_getvnode'd.
-	 * this is merely a loose attempt to prevent races.
-	 */
-	LIST_HEAD(, puffs_newcookie)	pmp_newcookie;
-
 	struct mount			*pmp_mp;
 
 	struct vnode			*pmp_root;
@@ -237,8 +228,6 @@ struct puffs_node {
 	int		pn_va_timeout;	/* attribute cache */
 	struct vattr *	pn_va_cache;	/* attribute cache */
 	struct vnode *  pn_parent;	/* parent cache */
-
-	LIST_ENTRY(puffs_node) pn_hashent;
 };
 
 typedef void (*parkdone_fn)(struct puffs_mount *, struct puffs_req *, void *);
@@ -274,7 +263,7 @@ void	puffs_releasenode(struct puffs_node *);
 void	puffs_referencenode(struct puffs_node *);
 
 #define PUFFS_NOSUCHCOOKIE (-1)
-int	puffs_cookie2vnode(struct puffs_mount *, puffs_cookie_t, int, int,
+int	puffs_cookie2vnode(struct puffs_mount *, puffs_cookie_t,
 			   struct vnode **);
 void	puffs_makecn(struct puffs_kcn *, struct puffs_kcred *,
 		     const struct componentname *, int);
