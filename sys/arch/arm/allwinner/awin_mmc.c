@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.3 2014/02/26 02:01:02 jmcneill Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.3.10.1 2014/08/29 11:17:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.3 2014/02/26 02:01:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.3.10.1 2014/08/29 11:17:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -87,7 +87,7 @@ struct awin_mmc_softc {
 	int sc_mmc_present;
 
 	device_t sc_sdmmc_dev;
-	unsigned int sc_pll5_freq;
+	unsigned int sc_pll_freq;
 	unsigned int sc_mod_clk;
 
 	bool sc_has_gpio_detect;
@@ -129,7 +129,7 @@ awin_mmc_probe_clocks(struct awin_mmc_softc *sc, struct awinio_attach_args *aio)
 	int n, k, p, div;
 
 	val = bus_space_read_4(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_PLL5_CFG_REG);
+	    AWIN_PLL6_CFG_REG);
 
 	n = (val >> 8) & 0x1f;
 	k = ((val >> 4) & 3) + 1;
@@ -137,20 +137,16 @@ awin_mmc_probe_clocks(struct awin_mmc_softc *sc, struct awinio_attach_args *aio)
 
 	freq = 24000000 * n * k / p;
 
-	sc->sc_pll5_freq = freq;
-	if (sc->sc_pll5_freq > 400000000) {
-		div = 4;
-	} else {
-		div = 3;
-	}
-	sc->sc_mod_clk = sc->sc_pll5_freq / (div + 1);
+	sc->sc_pll_freq = freq;
+	div = ((sc->sc_pll_freq + 99999999) / 100000000) - 1;
+	sc->sc_mod_clk = sc->sc_pll_freq / (div + 1);
 
-	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+	bus_space_write_4(aio->aio_core_bst, aio->aio_ccm_bsh,
 	    AWIN_SD0_CLK_REG + (sc->sc_mmc_number * 8),
-	    AWIN_PLL_CFG_ENABLE | AWIN_PLL_CFG_EXG_MODE | div, 0);
+	    AWIN_PLL_CFG_ENABLE | AWIN_PLL_CFG_PLL6 | div);
 
 #ifdef AWIN_MMC_DEBUG
-	aprint_normal_dev(sc->sc_dev, "PLL5 @ %u Hz\n", freq);
+	aprint_normal_dev(sc->sc_dev, "PLL6 @ %u Hz\n", freq);
 #endif
 }
 
