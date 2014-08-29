@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.60 2014/07/31 03:50:09 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.61 2014/08/29 12:14:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -898,73 +898,82 @@ struct livengood_tcpip_ctxdesc {
 #define	SPI_SR_BP1	0x08
 #define	SPI_SR_WPEN	0x80
 
-#define	EEPROM_OFF_MACADDR	0x00	/* MAC address offset */
-#define	EEPROM_OFF_CFG1		0x0a	/* config word 1 */
-#define	EEPROM_OFF_CFG2		0x0f	/* config word 2 */
-#define	EEPROM_OFF_CFG3_PORTB	0x14	/* config word 3 */
-#define	EEPROM_INIT_3GIO_3	0x1a	/* PCIe Initial Configuration Word 3 */
-#define	EEPROM_OFF_K1_CONFIG	0x1b	/* NVM K1 Config */
-#define	EEPROM_OFF_SWDPIN	0x20	/* SWD Pins (Cordova) */
-#define	EEPROM_OFF_CFG3_PORTA	0x24	/* config word 3 */
-#define EEPROM_ALT_MAC_ADDR_PTR	0x37	/* to the alternative MAC addresses */
+#define NVM_CHECKSUM		0xBABA
+#define NVM_SIZE		0x0040
 
-#define	EEPROM_CFG1_LVDID	(1U << 0)
-#define	EEPROM_CFG1_LSSID	(1U << 1)
-#define	EEPROM_CFG1_PME_CLOCK	(1U << 2)
-#define	EEPROM_CFG1_PM		(1U << 3)
-#define	EEPROM_CFG1_ILOS	(1U << 4)
-#define	EEPROM_CFG1_SWDPIO_SHIFT 5
-#define	EEPROM_CFG1_SWDPIO_MASK	(0xf << EEPROM_CFG1_SWDPIO_SHIFT)
-#define	EEPROM_CFG1_IPS1	(1U << 8)
-#define	EEPROM_CFG1_LRST	(1U << 9)
-#define	EEPROM_CFG1_FD		(1U << 10)
-#define	EEPROM_CFG1_FRCSPD	(1U << 11)
-#define	EEPROM_CFG1_IPS0	(1U << 12)
-#define	EEPROM_CFG1_64_32_BAR	(1U << 13)
+#define	NVM_OFF_MACADDR		0x0000	/* MAC address offset */
+#define NVM_OFF_COMPAT		0x0003
+#define	NVM_OFF_CFG1		0x000a	/* config word 1 */
+#define	NVM_OFF_CFG2		0x000f	/* config word 2 */
+#define	NVM_OFF_CFG3_PORTB	0x0014	/* config word 3 */
+#define NVM_OFF_FUTURE_INIT_WORD1 0x0019
+#define	NVM_OFF_INIT_3GIO_3	0x001a	/* PCIe Initial Configuration Word 3 */
+#define	NVM_OFF_K1_CONFIG	0x001b	/* NVM K1 Config */
+#define	NVM_OFF_SWDPIN		0x0020	/* SWD Pins (Cordova) */
+#define	NVM_OFF_CFG3_PORTA	0x0024	/* config word 3 */
+#define NVM_OFF_ALT_MAC_ADDR_PTR 0x0037	/* to the alternative MAC addresses */
 
-#define	EEPROM_CFG2_CSR_RD_SPLIT (1U << 1)
-#define	EEPROM_CFG2_82544_APM_EN (1U << 2)
-#define	EEPROM_CFG2_64_BIT	(1U << 3)
-#define	EEPROM_CFG2_MAX_READ	(1U << 4)
-#define	EEPROM_CFG2_DMCR_MAP	(1U << 5)
-#define	EEPROM_CFG2_133_CAP	(1U << 6)
-#define	EEPROM_CFG2_MSI_DIS	(1U << 7)
-#define	EEPROM_CFG2_FLASH_DIS	(1U << 8)
-#define	EEPROM_CFG2_FLASH_SIZE(x) (((x) & 3) >> 9)
-#define	EEPROM_CFG2_APM_EN (1U << 10)
-#define	EEPROM_CFG2_ANE		(1U << 11)
-#define	EEPROM_CFG2_PAUSE(x)	(((x) & 3) >> 12)
-#define	EEPROM_CFG2_ASDE	(1U << 14)
-#define	EEPROM_CFG2_APM_PME	(1U << 15)
-#define	EEPROM_CFG2_SWDPIO_SHIFT 4
-#define	EEPROM_CFG2_SWDPIO_MASK	(0xf << EEPROM_CFG2_SWDPIO_SHIFT)
-#define	EEPROM_CFG2_MNGM_SHIFT	13	/* Manageability Operation mode */
-#define	EEPROM_CFG2_MNGM_MASK	(3U << EEPROM_CFG2_MNGM_SHIFT)
-#define	EEPROM_CFG2_MNGM_DIS	0
-#define	EEPROM_CFG2_MNGM_NCSI	1
-#define	EEPROM_CFG2_MNGM_PT	2
+#define NVM_COMPAT_VALID_CHECKSUM	0x0001
 
-#define	EEPROM_K1_CONFIG_ENABLE	0x01
+#define	NVM_CFG1_LVDID		(1U << 0)
+#define	NVM_CFG1_LSSID		(1U << 1)
+#define	NVM_CFG1_PME_CLOCK	(1U << 2)
+#define	NVM_CFG1_PM		(1U << 3)
+#define	NVM_CFG1_ILOS		(1U << 4)
+#define	NVM_CFG1_SWDPIO_SHIFT	5
+#define	NVM_CFG1_SWDPIO_MASK	(0xf << NVM_CFG1_SWDPIO_SHIFT)
+#define	NVM_CFG1_IPS1		(1U << 8)
+#define	NVM_CFG1_LRST		(1U << 9)
+#define	NVM_CFG1_FD		(1U << 10)
+#define	NVM_CFG1_FRCSPD		(1U << 11)
+#define	NVM_CFG1_IPS0		(1U << 12)
+#define	NVM_CFG1_64_32_BAR	(1U << 13)
 
-#define	EEPROM_SWDPIN_MASK	0xdf
-#define	EEPROM_SWDPIN_SWDPIN_SHIFT 0
-#define	EEPROM_SWDPIN_SWDPIO_SHIFT 8
+#define	NVM_CFG2_CSR_RD_SPLIT	(1U << 1)
+#define	NVM_CFG2_82544_APM_EN	(1U << 2)
+#define	NVM_CFG2_64_BIT		(1U << 3)
+#define	NVM_CFG2_MAX_READ	(1U << 4)
+#define	NVM_CFG2_DMCR_MAP	(1U << 5)
+#define	NVM_CFG2_133_CAP	(1U << 6)
+#define	NVM_CFG2_MSI_DIS	(1U << 7)
+#define	NVM_CFG2_FLASH_DIS	(1U << 8)
+#define	NVM_CFG2_FLASH_SIZE(x)	(((x) & 3) >> 9)
+#define	NVM_CFG2_APM_EN		(1U << 10)
+#define	NVM_CFG2_ANE		(1U << 11)
+#define	NVM_CFG2_PAUSE(x)	(((x) & 3) >> 12)
+#define	NVM_CFG2_ASDE		(1U << 14)
+#define	NVM_CFG2_APM_PME	(1U << 15)
+#define	NVM_CFG2_SWDPIO_SHIFT	4
+#define	NVM_CFG2_SWDPIO_MASK	(0xf << NVM_CFG2_SWDPIO_SHIFT)
+#define	NVM_CFG2_MNGM_SHIFT	13	/* Manageability Operation mode */
+#define	NVM_CFG2_MNGM_MASK	(3U << NVM_CFG2_MNGM_SHIFT)
+#define	NVM_CFG2_MNGM_DIS	0
+#define	NVM_CFG2_MNGM_NCSI	1
+#define	NVM_CFG2_MNGM_PT	2
 
-#define EEPROM_3GIO_3_ASPM_MASK	(0x3 << 2)	/* Active State PM Support */
+#define NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM	0x0040
 
-#define EEPROM_CFG3_APME	(1U << 10)	
+#define	NVM_K1_CONFIG_ENABLE	0x01
 
-#define	EEPROM_OFF_MACADDR_LAN1	3	/* macaddr offset from PTR (port 1) */
-#define	EEPROM_OFF_MACADDR_LAN2	6	/* macaddr offset from PTR (port 2) */
-#define	EEPROM_OFF_MACADDR_LAN3	9	/* macaddr offset from PTR (port 3) */
+#define	NVM_SWDPIN_MASK		0xdf
+#define	NVM_SWDPIN_SWDPIN_SHIFT 0
+#define	NVM_SWDPIN_SWDPIO_SHIFT 8
+
+#define NVM_3GIO_3_ASPM_MASK	(0x3 << 2)	/* Active State PM Support */
+
+#define NVM_CFG3_APME		(1U << 10)	
+
+#define	NVM_OFF_MACADDR_LAN1	3	/* macaddr offset from PTR (port 1) */
+#define	NVM_OFF_MACADDR_LAN2	6	/* macaddr offset from PTR (port 2) */
+#define	NVM_OFF_MACADDR_LAN3	9	/* macaddr offset from PTR (port 3) */
 
 /*
  * EEPROM Partitioning. See Table 6-1, "EEPROM Top Level Partitioning"
  * in 82580's datasheet.
  */
-#define EEPROM_OFF_LAN1	0x0080	/* Offset for LAN1 (82580)*/
-#define EEPROM_OFF_LAN2	0x00c0	/* Offset for LAN2 (82580)*/
-#define EEPROM_OFF_LAN3	0x0100	/* Offset for LAN3 (82580)*/
+#define NVM_OFF_LAN1	0x0080	/* Offset for LAN1 (82580)*/
+#define NVM_OFF_LAN2	0x00c0	/* Offset for LAN2 (82580)*/
+#define NVM_OFF_LAN3	0x0100	/* Offset for LAN3 (82580)*/
 
 /* ich8 flash control */
 #define ICH_FLASH_COMMAND_TIMEOUT            5000    /* 5000 uSecs - adjusted */
