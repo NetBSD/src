@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.32 2014/08/10 19:09:43 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.32.2.1 2014/08/29 11:14:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.32 2014/08/10 19:09:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.32.2.1 2014/08/29 11:14:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -199,9 +199,10 @@ npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *rset)
 
 	np = kmem_zalloc(sizeof(npf_natpolicy_t), KM_SLEEP);
 
-	/* Translation type and flags. */
+	/* The translation type, flags and policy ID. */
 	prop_dictionary_get_int32(natdict, "type", &np->n_type);
 	prop_dictionary_get_uint32(natdict, "flags", &np->n_flags);
+	prop_dictionary_get_uint64(natdict, "nat-policy", &np->n_id);
 
 	/* Should be exclusively either inbound or outbound NAT. */
 	if (((np->n_type == NPF_NATIN) ^ (np->n_type == NPF_NATOUT)) == 0) {
@@ -811,6 +812,7 @@ npf_nat_destroy(npf_nat_t *nt)
 
 	mutex_enter(&np->n_lock);
 	LIST_REMOVE(nt, nt_entry);
+	KASSERT(np->n_refcnt > 0);
 	atomic_dec_uint(&np->n_refcnt);
 	mutex_exit(&np->n_lock);
 
@@ -872,9 +874,14 @@ npf_nat_import(prop_dictionary_t natdict, npf_ruleset_t *natlist,
 		return NULL;
 	}
 
-	LIST_INSERT_HEAD(&np->n_nat_list, nt, nt_entry);
+	/*
+	 * Associate, take a reference and insert.  Unlocked since
+	 * the policy is not yet visible.
+	 */
 	nt->nt_natpolicy = np;
 	nt->nt_conn = con;
+	np->n_refcnt++;
+	LIST_INSERT_HEAD(&np->n_nat_list, nt, nt_entry);
 	return nt;
 }
 

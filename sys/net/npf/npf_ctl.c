@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.38 2014/08/11 01:54:12 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.38.2.1 2014/08/29 11:14:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.38 2014/08/11 01:54:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.38.2.1 2014/08/29 11:14:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -84,7 +84,9 @@ npf_mk_table_entries(npf_table_t *t, prop_array_t entries)
 	prop_dictionary_t ent;
 	int error = 0;
 
-	/* Fill all the entries. */
+	if (prop_object_type(entries) != PROP_TYPE_ARRAY) {
+		return EINVAL;
+	}
 	eit = prop_array_iterator(entries);
 	while ((ent = prop_object_iterator_next(eit)) != NULL) {
 		const npf_addr_t *addr;
@@ -148,12 +150,7 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
 		}
 
 		/* Get the entries or binary data. */
-		prop_array_t entries = prop_dictionary_get(tbldict, "entries");
-		if (prop_object_type(entries) != PROP_TYPE_ARRAY) {
-			NPF_ERR_DEBUG(errdict);
-			error = EINVAL;
-			break;
-		}
+		prop_array_t ents = prop_dictionary_get(tbldict, "entries");
 		prop_object_t obj = prop_dictionary_get(tbldict, "data");
 		void *blob = prop_data_data(obj);
 		size_t size = prop_data_size(obj);
@@ -177,7 +174,7 @@ npf_mk_tables(npf_tableset_t *tblset, prop_array_t tables,
 		error = npf_tableset_insert(tblset, t);
 		KASSERT(error == 0);
 
-		if ((error = npf_mk_table_entries(t, entries)) != 0) {
+		if (ents && (error = npf_mk_table_entries(t, ents)) != 0) {
 			NPF_ERR_DEBUG(errdict);
 			break;
 		}
@@ -462,7 +459,7 @@ npf_mk_connlist(prop_array_t conlist, npf_ruleset_t *natlist,
 	prop_dictionary_t condict;
 	prop_object_iterator_t it;
 	npf_conndb_t *cd;
-	int error;
+	int error = 0;
 
 	/* Connection list - array */
 	if (prop_object_type(conlist) != PROP_TYPE_ARRAY) {
@@ -472,8 +469,6 @@ npf_mk_connlist(prop_array_t conlist, npf_ruleset_t *natlist,
 
 	/* Create a connection database. */
 	cd = npf_conndb_create();
-
-	error = 0;
 	it = prop_array_iterator(conlist);
 	while ((condict = prop_object_iterator_next(it)) != NULL) {
 		/* Connection - dictionary. */
@@ -482,7 +477,7 @@ npf_mk_connlist(prop_array_t conlist, npf_ruleset_t *natlist,
 			error = EINVAL;
 			break;
 		}
-		/* Construct and insert real connection structure. */
+		/* Construct and insert the connection. */
 		error = npf_conn_import(cd, condict, natlist);
 		if (error) {
 			NPF_ERR_DEBUG(errdict);
@@ -546,6 +541,7 @@ npfctl_load(u_long cmd, void *data)
 	/* NAT policies. */
 	natlist = prop_dictionary_get(npf_dict, "nat");
 	if ((nitems = prop_array_count(natlist)) > NPF_MAX_RULES) {
+		error = E2BIG;
 		goto fail;
 	}
 
@@ -558,6 +554,7 @@ npfctl_load(u_long cmd, void *data)
 	/* Tables. */
 	tables = prop_dictionary_get(npf_dict, "tables");
 	if ((nitems = prop_array_count(tables)) > NPF_MAX_TABLES) {
+		error = E2BIG;
 		goto fail;
 	}
 	tblset = npf_tableset_create(nitems);
@@ -569,6 +566,7 @@ npfctl_load(u_long cmd, void *data)
 	/* Rule procedures. */
 	rprocs = prop_dictionary_get(npf_dict, "rprocs");
 	if ((nitems = prop_array_count(rprocs)) > NPF_MAX_RPROCS) {
+		error = E2BIG;
 		goto fail;
 	}
 	rpset = npf_rprocset_create();
@@ -580,6 +578,7 @@ npfctl_load(u_long cmd, void *data)
 	/* Rules. */
 	rules = prop_dictionary_get(npf_dict, "rules");
 	if ((nitems = prop_array_count(rules)) > NPF_MAX_RULES) {
+		error = E2BIG;
 		goto fail;
 	}
 
@@ -682,8 +681,11 @@ npfctl_save(u_long cmd, void *data)
 	if (error) {
 		goto out;
 	}
+	prop_array_t alglist = npf_alg_export();
+
 	npf_dict = prop_dictionary_create();
 	prop_dictionary_set_uint32(npf_dict, "version", NPF_VERSION);
+	prop_dictionary_set_and_rel(npf_dict, "algs", alglist);
 	prop_dictionary_set_and_rel(npf_dict, "rules", rulelist);
 	prop_dictionary_set_and_rel(npf_dict, "nat", natlist);
 	prop_dictionary_set_and_rel(npf_dict, "tables", tables);
