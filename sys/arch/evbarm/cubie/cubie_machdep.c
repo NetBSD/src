@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.20 2014/08/28 06:36:48 skrll Exp $ */
+/*	$NetBSD: cubie_machdep.c,v 1.21 2014/08/29 07:29:07 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.20 2014/08/28 06:36:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.21 2014/08/29 07:29:07 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -329,7 +329,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
-	printf("\nNetBSD/evbarm (cubie) booting ...\n");
+	printf("\nNetBSD/evbarm (" __STRING(BOARDTYPE) ") booting ...\n");
 #endif
 
 	const uint8_t *uboot_bootinfo = (void*)uboot_args[0];
