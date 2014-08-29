@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.49 2014/08/29 15:55:44 sjg Exp $
+# $NetBSD: Makefile,v 1.50 2014/08/29 20:03:27 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -126,5 +126,9 @@ accept:
 	  || { echo "Replacing $${test}.exp" ; \
 	       cp $${test}.out ${UNIT_TESTS}/$${test}.exp ; } \
 	done
+
+.if exists(${TEST_MAKE})
+${TESTNAMES:S/$/.rawout/}: ${TEST_MAKE}
+.endif
 
 .-include <bsd.obj.mk>
