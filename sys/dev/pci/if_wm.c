@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.292 2014/08/28 16:22:59 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.293 2014/08/29 12:14:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.292 2014/08/28 16:22:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.293 2014/08/29 12:14:29 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1856,7 +1856,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
 		cfg1 = (uint16_t) prop_number_integer_value(pn);
 	} else {
-		if (wm_nvm_read(sc, EEPROM_OFF_CFG1, 1, &cfg1)) {
+		if (wm_nvm_read(sc, NVM_OFF_CFG1, 1, &cfg1)) {
 			aprint_error_dev(sc->sc_dev, "unable to read CFG1\n");
 			goto fail_5;
 		}
@@ -1867,7 +1867,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
 		cfg2 = (uint16_t) prop_number_integer_value(pn);
 	} else {
-		if (wm_nvm_read(sc, EEPROM_OFF_CFG2, 1, &cfg2)) {
+		if (wm_nvm_read(sc, NVM_OFF_CFG2, 1, &cfg2)) {
 			aprint_error_dev(sc->sc_dev, "unable to read CFG2\n");
 			goto fail_5;
 		}
@@ -1880,10 +1880,10 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82543:
 		/* dummy? */
 		eeprom_data = 0;
-		apme_mask = EEPROM_CFG3_APME;
+		apme_mask = NVM_CFG3_APME;
 		break;
 	case WM_T_82544:
-		apme_mask = EEPROM_CFG2_82544_APM_EN;
+		apme_mask = NVM_CFG2_82544_APM_EN;
 		eeprom_data = cfg2;
 		break;
 	case WM_T_82546:
@@ -1895,9 +1895,9 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82583:
 	case WM_T_80003:
 	default:
-		apme_mask = EEPROM_CFG3_APME;
-		wm_nvm_read(sc, (sc->sc_funcid == 1) ? EEPROM_OFF_CFG3_PORTB
-		    : EEPROM_OFF_CFG3_PORTA, 1, &eeprom_data);
+		apme_mask = NVM_CFG3_APME;
+		wm_nvm_read(sc, (sc->sc_funcid == 1) ? NVM_OFF_CFG3_PORTB
+		    : NVM_OFF_CFG3_PORTA, 1, &eeprom_data);
 		break;
 	case WM_T_82575:
 	case WM_T_82576:
@@ -1936,7 +1936,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 			KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
 			swdpin = (uint16_t) prop_number_integer_value(pn);
 		} else {
-			if (wm_nvm_read(sc, EEPROM_OFF_SWDPIN, 1, &swdpin)) {
+			if (wm_nvm_read(sc, NVM_OFF_SWDPIN, 1, &swdpin)) {
 				aprint_error_dev(sc->sc_dev,
 				    "unable to read SWDPIN\n");
 				goto fail_5;
@@ -1944,36 +1944,36 @@ wm_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	if (cfg1 & EEPROM_CFG1_ILOS)
+	if (cfg1 & NVM_CFG1_ILOS)
 		sc->sc_ctrl |= CTRL_ILOS;
 	if (sc->sc_type >= WM_T_82544) {
 		sc->sc_ctrl |=
-		    ((swdpin >> EEPROM_SWDPIN_SWDPIO_SHIFT) & 0xf) <<
+		    ((swdpin >> NVM_SWDPIN_SWDPIO_SHIFT) & 0xf) <<
 		    CTRL_SWDPIO_SHIFT;
 		sc->sc_ctrl |=
-		    ((swdpin >> EEPROM_SWDPIN_SWDPIN_SHIFT) & 0xf) <<
+		    ((swdpin >> NVM_SWDPIN_SWDPIN_SHIFT) & 0xf) <<
 		    CTRL_SWDPINS_SHIFT;
 	} else {
 		sc->sc_ctrl |=
-		    ((cfg1 >> EEPROM_CFG1_SWDPIO_SHIFT) & 0xf) <<
+		    ((cfg1 >> NVM_CFG1_SWDPIO_SHIFT) & 0xf) <<
 		    CTRL_SWDPIO_SHIFT;
 	}
 
 #if 0
 	if (sc->sc_type >= WM_T_82544) {
-		if (cfg1 & EEPROM_CFG1_IPS0)
+		if (cfg1 & NVM_CFG1_IPS0)
 			sc->sc_ctrl_ext |= CTRL_EXT_IPS;
-		if (cfg1 & EEPROM_CFG1_IPS1)
+		if (cfg1 & NVM_CFG1_IPS1)
 			sc->sc_ctrl_ext |= CTRL_EXT_IPS1;
 		sc->sc_ctrl_ext |=
-		    ((swdpin >> (EEPROM_SWDPIN_SWDPIO_SHIFT + 4)) & 0xd) <<
+		    ((swdpin >> (NVM_SWDPIN_SWDPIO_SHIFT + 4)) & 0xd) <<
 		    CTRL_EXT_SWDPIO_SHIFT;
 		sc->sc_ctrl_ext |=
-		    ((swdpin >> (EEPROM_SWDPIN_SWDPIN_SHIFT + 4)) & 0xd) <<
+		    ((swdpin >> (NVM_SWDPIN_SWDPIN_SHIFT + 4)) & 0xd) <<
 		    CTRL_EXT_SWDPINS_SHIFT;
 	} else {
 		sc->sc_ctrl_ext |=
-		    ((cfg2 >> EEPROM_CFG2_SWDPIO_SHIFT) & 0xf) <<
+		    ((cfg2 >> NVM_CFG2_SWDPIO_SHIFT) & 0xf) <<
 		    CTRL_EXT_SWDPIO_SHIFT;
 	}
 #endif
@@ -1999,9 +1999,9 @@ wm_attach(device_t parent, device_t self, void *aux)
 		uint16_t val;
 
 		/* Save the NVM K1 bit setting */
-		wm_nvm_read(sc, EEPROM_OFF_K1_CONFIG, 1, &val);
+		wm_nvm_read(sc, NVM_OFF_K1_CONFIG, 1, &val);
 
-		if ((val & EEPROM_K1_CONFIG_ENABLE) != 0)
+		if ((val & NVM_K1_CONFIG_ENABLE) != 0)
 			sc->sc_nvm_k1_enabled = 1;
 		else
 			sc->sc_nvm_k1_enabled = 0;
@@ -2134,8 +2134,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	switch (sc->sc_type) {
 	case WM_T_82573:
 		/* XXX limited to 9234 if ASPM is disabled */
-		wm_nvm_read(sc, EEPROM_INIT_3GIO_3, 1, &io3);
-		if ((io3 & EEPROM_3GIO_3_ASPM_MASK) != 0)
+		wm_nvm_read(sc, NVM_OFF_INIT_3GIO_3, 1, &io3);
+		if ((io3 & NVM_3GIO_3_ASPM_MASK) != 0)
 			sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 		break;
 	case WM_T_82571:
@@ -2674,10 +2674,10 @@ static int
 wm_check_alt_mac_addr(struct wm_softc *sc)
 {
 	uint16_t myea[ETHER_ADDR_LEN / 2];
-	uint16_t offset = EEPROM_OFF_MACADDR;
+	uint16_t offset = NVM_OFF_MACADDR;
 
 	/* Try to read alternative MAC address pointer */
-	if (wm_nvm_read(sc, EEPROM_ALT_MAC_ADDR_PTR, 1, &offset) != 0)
+	if (wm_nvm_read(sc, NVM_OFF_ALT_MAC_ADDR_PTR, 1, &offset) != 0)
 		return -1;
 
 	/* Check pointer */
@@ -2703,7 +2703,7 @@ static int
 wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 {
 	uint16_t myea[ETHER_ADDR_LEN / 2];
-	uint16_t offset = EEPROM_OFF_MACADDR;
+	uint16_t offset = NVM_OFF_MACADDR;
 	int do_invert = 0;
 
 	switch (sc->sc_type) {
@@ -2713,16 +2713,16 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 	case WM_T_I354:
 		switch (sc->sc_funcid) {
 		case 0:
-			/* default value (== EEPROM_OFF_MACADDR) */
+			/* default value (== NVM_OFF_MACADDR) */
 			break;
 		case 1:
-			offset = EEPROM_OFF_LAN1;
+			offset = NVM_OFF_LAN1;
 			break;
 		case 2:
-			offset = EEPROM_OFF_LAN2;
+			offset = NVM_OFF_LAN2;
 			break;
 		case 3:
-			offset = EEPROM_OFF_LAN3;
+			offset = NVM_OFF_LAN3;
 			break;
 		default:
 			goto bad;
@@ -2738,7 +2738,7 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 	case WM_T_I211:
 		if (wm_check_alt_mac_addr(sc) != 0) {
 			/* reset the offset to LAN0 */
-			offset = EEPROM_OFF_MACADDR;
+			offset = NVM_OFF_MACADDR;
 			if ((sc->sc_funcid & 0x01) == 1)
 				do_invert = 1;
 			goto do_read;
@@ -2746,18 +2746,18 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 		switch (sc->sc_funcid) {
 		case 0:
 			/*
-			 * The offset is the value in EEPROM_ALT_MAC_ADDR_PTR
+			 * The offset is the value in NVM_OFF_ALT_MAC_ADDR_PTR
 			 * itself.
 			 */
 			break;
 		case 1:
-			offset += EEPROM_OFF_MACADDR_LAN1;
+			offset += NVM_OFF_MACADDR_LAN1;
 			break;
 		case 2:
-			offset += EEPROM_OFF_MACADDR_LAN2;
+			offset += NVM_OFF_MACADDR_LAN2;
 			break;
 		case 3:
-			offset += EEPROM_OFF_MACADDR_LAN3;
+			offset += NVM_OFF_MACADDR_LAN3;
 			break;
 		default:
 			goto bad;
@@ -8260,13 +8260,6 @@ wm_nvm_is_onboard_eeprom(struct wm_softc *sc)
 	return 1;
 }
 
-#define NVM_CHECKSUM			0xBABA
-#define EEPROM_SIZE			0x0040
-#define NVM_COMPAT			0x0003
-#define NVM_COMPAT_VALID_CHECKSUM	0x0001
-#define NVM_FUTURE_INIT_WORD1			0x0019
-#define NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM	0x0040
-
 /*
  * wm_nvm_validate_checksum
  *
@@ -8290,10 +8283,10 @@ wm_nvm_validate_checksum(struct wm_softc *sc)
 
 #ifdef WM_DEBUG
 	if (sc->sc_type == WM_T_PCH_LPT) {
-		csum_wordaddr = NVM_COMPAT;
+		csum_wordaddr = NVM_OFF_COMPAT;
 		valid_checksum = NVM_COMPAT_VALID_CHECKSUM;
 	} else {
-		csum_wordaddr = NVM_FUTURE_INIT_WORD1;
+		csum_wordaddr = NVM_OFF_FUTURE_INIT_WORD1;
 		valid_checksum = NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM;
 	}
 
@@ -8312,7 +8305,7 @@ wm_nvm_validate_checksum(struct wm_softc *sc)
 
 	if ((wm_debug & WM_DEBUG_NVM) != 0) {
 		printf("%s: NVM dump:\n", device_xname(sc->sc_dev));
-		for (i = 0; i < EEPROM_SIZE; i++) {
+		for (i = 0; i < NVM_SIZE; i++) {
 			if (wm_nvm_read(sc, i, 1, &eeprom_data))
 				printf("XX ");
 			else
@@ -8324,7 +8317,7 @@ wm_nvm_validate_checksum(struct wm_softc *sc)
 
 #endif /* WM_DEBUG */
 
-	for (i = 0; i < EEPROM_SIZE; i++) {
+	for (i = 0; i < NVM_SIZE; i++) {
 		if (wm_nvm_read(sc, i, 1, &eeprom_data))
 			return 1;
 		checksum += eeprom_data;
@@ -8609,9 +8602,9 @@ wm_check_mng_mode_82574(struct wm_softc *sc)
 {
 	uint16_t data;
 
-	wm_nvm_read(sc, EEPROM_OFF_CFG2, 1, &data);
+	wm_nvm_read(sc, NVM_OFF_CFG2, 1, &data);
 
-	if ((data & EEPROM_CFG2_MNGM_MASK) != 0)
+	if ((data & NVM_CFG2_MNGM_MASK) != 0)
 		return 1;
 
 	return 0;
@@ -8656,12 +8649,12 @@ wm_enable_mng_pass_thru(struct wm_softc *sc)
 		uint16_t data;
 
 		factps = CSR_READ(sc, WMREG_FACTPS);
-		wm_nvm_read(sc, EEPROM_OFF_CFG2, 1, &data);
+		wm_nvm_read(sc, NVM_OFF_CFG2, 1, &data);
 		DPRINTF(WM_DEBUG_MANAGE, ("%s: FACTPS = %08x, CFG2=%04x\n",
 			device_xname(sc->sc_dev), factps, data));
 		if (((factps & FACTPS_MNGCG) == 0)
-		    && ((data & EEPROM_CFG2_MNGM_MASK)
-			== (EEPROM_CFG2_MNGM_PT << EEPROM_CFG2_MNGM_SHIFT)))
+		    && ((data & NVM_CFG2_MNGM_MASK)
+			== (NVM_CFG2_MNGM_PT << NVM_CFG2_MNGM_SHIFT)))
 			return 1;
 	} else if (((manc & MANC_SMBUS_EN) != 0)
 	    && ((manc & MANC_ASF_EN) == 0))
