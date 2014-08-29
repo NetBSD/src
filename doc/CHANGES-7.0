@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.25 2014/08/27 15:30:45 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.26 2014/08/29 11:58:30 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -398,3 +398,125 @@ sys/compat/osf1/osf1_file.c			1.42
 	Fix a bug that a local user could crash the system by making the
 	kernel perform a zero-sized memory allocation in osf1.
 	[maxv, ticket #54]
+
+sys/dev/dm/dm_target_stripe.c			1.20-1.21
+
+	Avoid a memory leak - from maxv.
+	Cleanup properly on error.
+	[christos, ticket #55]
+
+lib/libnpf/npf.c				1.33-1.34
+sys/net/npf/npf_alg.c				1.15
+sys/net/npf/npf_conn.c				1.11-1.12
+sys/net/npf/npf_ctl.c				1.39-1.40
+sys/net/npf/npf_impl.h				1.59
+sys/net/npf/npf_nat.c				1.33
+sys/net/npf/npf_nat.c				1.34
+usr.sbin/npf/npfctl/npfctl.c			1.43
+
+	Add and use npf_alg_export().
+	npf_conn_import: handle NAT metadata correctly.
+	npf_nat_newpolicy: restore the policy ID.
+	npfctl_load: fix error code handling for the limit cases.
+	npf_config_import: fix the inverted logic.
+	npfctl_load: improve error handling.
+	npf_conn_import: add a missing stat counter increment.
+	npf_nat_import: add a missing reference and make a comment.
+	npf_config_submit: finally, include the saved connections.
+	[rmind, ticket #56]
+
+sys/arch/arm/allwinner/awin_mmc.c		1.4
+sys/arch/arm/allwinner/awin_reg.h		1.15
+
+	Correct the mmc clock.  Banana Pi can now find an SD card.
+	[skrll, ticket #57]
+
+common/lib/libc/gen/rb.c			1.12-1.13
+
+	Fix failure case in rb_tree_find_node_leq/geq.
+	Return NULL, not `NULL - offset'.
+	Remove enclosing parens on return.
+	[riastradh, ticket #59]
+
+external/mit/xorg/server/drivers/xf86-video-openchrome/Makefile 1.6
+
+	Fix the sources list to match the upstream Makefile.am.
+	Fixes problems reported by jdbaker.
+	[mrg, ticket #60]
+
+sys/dev/pci/if_wm.c				1.290
+sys/dev/pci/if_wmvar.h				1.20
+
+	Set the WM_F_ATTACHED flag if wm_attach() finished succesfully and check
+	the flag in wm_detach(). It will avoid to panic in wm_detach().
+	Fixes PR#49102.
+	[msaitoh, ticket #61]
+
+distrib/sets/lists/man/mi			1.1486
+share/man/man4/Makefile				1.617
+share/man/man4/arcofi.4				1.1-1.2
+sys/arch/hp300/conf/GENERIC			1.188
+sys/arch/hp300/conf/files.hp300			1.89
+sys/arch/hp300/conf/majors.hp300		1.26
+sys/arch/hp300/dev/arcofi_dio.c			1.1
+sys/arch/hp300/hp300/intr.c			1.41
+sys/arch/hp300/hp300/locore.s			1.171
+sys/conf/files					1.1100
+sys/dev/ic/arcofi.c				1.1
+sys/dev/ic/arcofivar.h				1.1
+
+	Add new arcofi(4) audio driver for NetBSD/hp300, ported from OpenBSD.
+
+	The arcofi(4) is a driver for the HP "Audio1" device
+	(Siemens PSB 2160 "ARCOFI" phone quality audio chip)
+	found on the HP9000/425e and HP9000/{705,710,745,747} models
+	(but only hp300 attachment is ported for now).
+	The chip supports 8-bit mono 8kHz U-law, A-law and
+	16-bit mono slinear_be formats.
+
+	The old HP9000/425e playing tunes with this new arcofi(4) audio driver
+	was also demonstrated at Open Source Conference 2014 Shimane.
+
+	Add a man page for arcofi(4) driver.  From OpenBSD.
+	Fix date.
+	[tsutsui, ticket #62]
+
+tests/lib/libpthread/t_swapcontext.c		1.2
+
+	Go back to the initial context (as tests/lib/libc/sys/t_swapcontext.c
+	does) after checking pthread_self() didn't change. Otherwise the
+	process exits outside of atf context.
+	Should fix "Test case exited normally but failed to create the results
+	file: Results file is empty" reports from atf-run.
+	[bouyer, ticket #63]
+
+usr.bin/ldd/elf64/Makefile			1.8
+
+	Fix ldd on LP64 platforms by splitting the symbol versioning stuff for
+	elf64 as well.
+	[joerg, ticket #64]
+
+sys/dev/dkwedge/dk.c				1.73
+
+	Make dk(4) discard from partition start, not from disk start.
+
+	Otherwise, anything mounted with `-o discard' will pretty quickly
+	munch itself up and barf up an unrecoverably corrupted file system!
+	[riastradh, ticket #65]
+
+sys/external/bsd/drm2/dist/drm/radeon/atombios_dp.c 1.3
+
+	Hack around an evergreen attach crash for now: provide a hard coded
+	name for the i2c.
+	[mrg, ticket #66]
+
+sys/fs/puffs/puffs_msgif.c			1.95
+sys/fs/puffs/puffs_node.c			1.32
+sys/fs/puffs/puffs_sys.h			1.86
+sys/fs/puffs/puffs_vfsops.c			1.114
+sys/fs/puffs/puffs_vnops.c			1.184
+
+	Change puffs from hashlist to vcache.
+	Field "pa_nhashbuckets" of struct "puffs_kargs" becomes a no-op
+	and should be removed on the next protocol version bump.
+	[hannken, ticket #67]
