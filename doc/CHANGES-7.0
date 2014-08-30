@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.27 2014/08/30 14:16:12 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.28 2014/08/30 19:34:04 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -541,3 +541,8 @@ external/gpl3/gdb/dist/gdb/sparc-nat.c		1.7
 	OS-specific native code, and the general code should remain sane.
 	[christos, ticket #70]
 
+lib/libperfuse/ops.c				1.70
+
+	We used to remove the trailing zeros in FUSE readlink replies, but
+	it seems it does not always happen. Just remove them if present.
+	[manu, ticket #71]
