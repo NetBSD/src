@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.12 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.13 2014/08/30 13:40:18 kiyohara Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -21,14 +21,21 @@ options 	L2CACHE_ENABLE
 #options 	AURORA_IO_CACHE_COHERENCY
 options 	AURORA_L2_PT_WALK
 options 	ARM_HAS_VBAR
-#options 	FPU_VFP
-#makeoptions	CPUFLAGS="-march=armv7-a -mfpu=neon"
-makeoptions	CPUFLAGS="-march=armv7-a -msoft-float"
+options 	FPU_VFP
+makeoptions	CPUFLAGS="-march=armv7-a -mfpu=neon"
 
 # Architecture options
 options 	ARMADAXP
 
 options 	PIC_MAXSOURCES=128
+
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#options 	MULTIPROCESSOR
+options 	TPIDRPRW_IS_CURCPU
+
+no options 	KERNEL_BASE_EXT
+options 	KERNEL_BASE_EXT=0x80000000
+makeoptions 	KERNEL_BASE_VIRT="0x80008000"
 
 # Standard system options
 
