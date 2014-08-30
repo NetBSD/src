@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.297 2014/08/13 15:06:28 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.298 2014/08/30 13:02:01 kiyohara Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.297 2014/08/13 15:06:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.298 2014/08/30 13:02:01 kiyohara Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -1312,7 +1312,7 @@ pmap_alloc_l1(pmap_t pm)
 	KASSERTMSG(kernel_map != NULL, "pm %p", pm);
 	vaddr_t va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 	    UVM_KMF_WIRED|UVM_KMF_ZERO);
-	KASSERT(!va);
+	KASSERT(va);
 	pmap_extract(pmap_kernel(), va, &pm->pm_l1_pa);
 #endif
 	pm->pm_l1 = (pd_entry_t *)va;
