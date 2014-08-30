@@ -1,5 +1,5 @@
 #
-#	$NetBSD: N900,v 1.20 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: N900,v 1.21 2014/08/30 15:21:17 kiyohara Exp $
 #
 #	N900 -- Nokia N900 Kernel
 #
@@ -171,7 +171,7 @@ L3i0		at mainbus?
 
 # OBIO
 obio0		at mainbus? base 0x48000000 size 0x1000000	# L4 CORE
-obio1		at mainbus? base 0x48300000 size 0x0040000	# L4 WAKEUP
+obio1		at mainbus? base 0x48300000 size 0x0100000	# L4 WAKEUP
 obio2		at mainbus? base 0x49000000 size 0x0100000	# L4 PERIPHERAL
 #obio3		at mainbus? base 0x54000000 size 0x0800000	# L4 EMUL
 
