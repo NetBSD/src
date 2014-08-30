@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.26 2014/08/30 13:09:27 christos Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.27 2014/08/30 14:24:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -79,22 +79,30 @@ const char hexdigits[16] = "0123456789abcdef";
 #define ZEROPAD		0x40
 #define NEGATIVE	0x80
 #define KPRINTN(base)	kprintn(put, ul, base, lflag, width)
-#define LADJUSTPAD(c)						\
+#define RADJUSTZEROPAD()					\
+do {								\
+	if ((lflag & (ZEROPAD|LADJUST)) == ZEROPAD) {		\
+		while (width-- > 0)				\
+			put('0');				\
+	}							\
+} while (/*CONSTCOND*/0)
+#define LADJUSTPAD()						\
 do {								\
 	if (lflag & LADJUST) {					\
 		while (width-- > 0)				\
-			put(c);					\
+			put(' ');				\
 	}							\
 } while (/*CONSTCOND*/0)
-#define RADJUSTPAD(c)						\
+#define RADJUSTPAD()						\
 do {								\
 	if ((lflag & (ZEROPAD|LADJUST)) == 0) {			\
 		while (width-- > 0)				\
-			put(c);					\
+			put(' ');				\
 	}							\
 } while (/*CONSTCOND*/0)
 #else	/* LIBSA_PRINTF_WIDTH_SUPPORT */
 #define KPRINTN(base)	kprintn(put, ul, base)
+#define RADJUSTZEROPAD()	/**/
 #define LADJUSTPAD()		/**/
 #define RADJUSTPAD()		/**/
 #endif	/* LIBSA_PRINTF_WIDTH_SUPPORT */
@@ -227,9 +235,9 @@ reswitch:
 #ifdef LIBSA_PRINTF_WIDTH_SUPPORT
 			--width;
 #endif
-			RADJUSTPAD(' ');
+			RADJUSTPAD();
 			put(ch & 0xFF);
-			LADJUSTPAD(' ');
+			LADJUSTPAD();
 			break;
 		case 's':
 			p = va_arg(ap, char *);
@@ -238,10 +246,10 @@ reswitch:
 				continue;
 			width -= q - p;
 #endif
-			RADJUSTPAD(' ');
+			RADJUSTPAD();
 			while ((ch = (unsigned char)*p++))
 				put(ch);
-			LADJUSTPAD(' ');
+			LADJUSTPAD();
 			break;
 		case 'd':
 			ul =
@@ -324,10 +332,10 @@ kprintn(void (*put)(int), UINTMAX_T ul, int base)
 			put(*--p);
 	}
 #endif
-	RADJUSTPAD(' ');
-	RADJUSTPAD('0');
+	RADJUSTPAD();
+	RADJUSTZEROPAD();
 	do {
 		put(*--p);
 	} while (p > buf);
-	LADJUSTPAD(' ');
+	LADJUSTPAD();
 }
