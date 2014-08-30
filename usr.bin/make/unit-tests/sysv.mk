@@ -1,7 +1,7 @@
-# $Id: sysv.mk,v 1.1 2014/08/21 13:44:52 apb Exp $
+# $Id: sysv.mk,v 1.2 2014/08/30 22:21:08 sjg Exp $
 
 FOO ?=
-FOOBAR = $(FOO:=bar)
+FOOBAR = ${FOO:=bar}
 
 _this := ${.PARSEDIR}/${.PARSEFILE}
 
@@ -14,7 +14,7 @@ SUN = the Sun
 all: foo fun
 
 foo:
-	@echo FOOBAR = $(FOOBAR)
+	@echo FOOBAR = ${FOOBAR}
 .if empty(FOO)
 	@FOO="foo fu" ${.MAKE} -f ${_this} foo
 .endif
