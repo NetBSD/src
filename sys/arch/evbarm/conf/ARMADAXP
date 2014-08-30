@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ARMADAXP,v 1.14 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: ARMADAXP,v 1.15 2014/08/30 13:45:56 kiyohara Exp $
 #
 #	ARMADA XP DEV BOARD
 #
@@ -24,6 +24,7 @@ options 	L2CACHE_ENABLE
 #options 	AURORA_IO_CACHE_COHERENCY
 options 	AURORA_L2_PT_WALK
 
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #options 	VERBOSE_INIT_ARM
 #options 	MVSOC_CONSOLE_EARLY
 
