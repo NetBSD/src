@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PANDABOARD,v 1.16 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: PANDABOARD,v 1.17 2014/08/30 15:21:17 kiyohara Exp $
 #
 #	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
 #
@@ -180,7 +180,7 @@ L3i0		at mainbus?
 
 # OBIO
 obio0		at mainbus? base 0x4a000000 size 0x1000000	# L4 CORE (CFG)
-obio1		at mainbus? base 0x4a300000 size 0x0040000	# L4 WAKEUP
+obio1		at mainbus? base 0x4a300000 size 0x0100000	# L4 WAKEUP
 obio2		at mainbus? base 0x48000000 size 0x1000000	# L4 PERIPHERAL
 obio3		at mainbus? base 0x49000000 size 0x1000000	# L4 ABE
 
