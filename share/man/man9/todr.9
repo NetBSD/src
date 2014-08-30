@@ -1,4 +1,4 @@
-.\" $NetBSD: todr.9,v 1.16 2010/03/22 18:58:33 joerg Exp $
+.\" $NetBSD: todr.9,v 1.17 2014/08/30 14:48:10 martin Exp $
 .\"
 .\" Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@
 .Ft int
 .Fn todr_settime "todr_chip_handle_t" "struct timeval *"
 .Ft void
-.Fn clock_secs_to_ymdhms "int" "struct clock_ymdhms *"
+.Fn clock_secs_to_ymdhms "time_t" "struct clock_ymdhms *"
 .Ft time_t
 .Fn clock_ymdhms_to_secs "struct clock_ymdhms *"
 .Sh DESCRIPTION
