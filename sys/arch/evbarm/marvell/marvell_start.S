@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_start.S,v 1.6 2014/04/14 20:53:28 matt Exp $ */
+/*	$NetBSD: marvell_start.S,v 1.7 2014/08/30 13:24:44 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -66,7 +66,7 @@
 #include <evbarm/marvell/marvellreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: marvell_start.S,v 1.6 2014/04/14 20:53:28 matt Exp $")
+RCSID("$NetBSD: marvell_start.S,v 1.7 2014/08/30 13:24:44 kiyohara Exp $")
 
 #ifndef SDRAM_START
 #define SDRAM_START	0x00000000
@@ -127,10 +127,10 @@ sheeva_l2_disable:
 
 #ifdef SHEEVA_L2_CACHE_WT
 	/* L2 WT Mode */
-	ldr	r2, =0xf1020128		/* CPU L2 Configuration Register */
-	ldr	r3, [r2]
-	bic	r3, r3, #0x10		/* Force Write Through */
-	str	r3, [r2]
+	ldr	r5, =0xf1020128		/* CPU L2 Configuration Register */
+	ldr	r6, [r5]
+	bic	r6, r6, #0x10		/* Force Write Through */
+	str	r6, [r5]
 #endif
 
 1:
@@ -149,16 +149,16 @@ sheeva_l2_disable:
 	adr	r6, marvell_interregs_pbase
 	ldr	r7, [r6]
 	add	r7, r7, #0x40000
-	ldr	r8, [r7]
-	bic	r8, r8, 0xff000000
-	bic	r8, r8, 0x00ff0000
+	ldr	r6, [r7]
+	bic	r6, r6, 0xff000000
+	bic	r6, r6, 0x00ff0000
 	/*
 	 * Some SoC returns ugly DeviceID.  Fixup it.
 	 */
 	adr	r5, devid
 	ldr	r5, [r5]
-	orr	r8, r8, r5, lsl #16
-	str	r8, [r7]
+	orr	r6, r6, r5, lsl #16
+	str	r6, [r7]
 	b	1f
 devid:
 	.word	MVSOC_FIXUP_DEVID
