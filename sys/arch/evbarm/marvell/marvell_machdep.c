@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.28 2014/03/15 13:48:44 kiyohara Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.29 2014/08/30 13:15:52 kiyohara Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.28 2014/03/15 13:48:44 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.29 2014/08/30 13:15:52 kiyohara Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -171,15 +171,11 @@ armadaxp_system_reset(void)
 #endif
 
 
-static inline
-pd_entry_t *
+static inline pd_entry_t *
 read_ttb(void)
 {
-	long ttb;
 
-	__asm volatile("mrc	p15, 0, %0, c2, c0, 0" : "=r" (ttb));
-
-	return (pd_entry_t *)(ttb & ~((1<<14)-1));
+	return (pd_entry_t *)(armreg_ttbr_read() & ~((1<<14)-1));
 }
 
 /*
