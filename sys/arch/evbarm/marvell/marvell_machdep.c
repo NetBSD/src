@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.29 2014/08/30 13:15:52 kiyohara Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.30 2014/08/30 13:19:52 kiyohara Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.29 2014/08/30 13:15:52 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.30 2014/08/30 13:19:52 kiyohara Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -78,14 +78,15 @@ __KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.29 2014/08/30 13:15:52 kiyohar
 #include "ksyms.h"
 
 
-/* Kernel text starts 2MB in from the bottom of the kernel address space. */
-#define KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00000000)
-#define KERNEL_VM_BASE		(KERNEL_BASE + 0x02000000)
-
 /*
  * The range 0xc2000000 - 0xdfffffff is available for kernel VM space
  * Core-logic registers and I/O mappings occupy 0xfe000000 - 0xffffffff
  */
+#if (KERNEL_BASE & 0xf0000000) == 0x80000000
+#define KERNEL_VM_BASE		(KERNEL_BASE + 0x42000000)
+#else
+#define KERNEL_VM_BASE		(KERNEL_BASE + 0x02000000)
+#endif
 #define KERNEL_VM_SIZE		0x1e000000
 
 BootConfig bootconfig;		/* Boot config storage */
@@ -100,10 +101,6 @@ extern char _end[];
  * kernel address space.  *Not* for general use.
  */
 #define KERNEL_BASE_PHYS	physical_start
-#define KERN_VTOPHYS(va) \
-	((paddr_t)((vaddr_t)va - KERNEL_BASE + KERNEL_BASE_PHYS))
-#define KERN_PHYSTOV(pa) \
-	((vaddr_t)((paddr_t)pa - KERNEL_BASE_PHYS + KERNEL_BASE))
 
 
 #include "com.h"
@@ -474,9 +471,15 @@ initarm(void *arg)
 		bootconfig.dramblocks++;
 	}
 
+#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	const bool mapallmem_p = true;
+#else
+	const bool mapallmem_p = false;
+#endif
+
 	arm32_bootmem_init(0, segment_end, (uintptr_t) KERNEL_BASE_phys);
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0,
-	    marvell_devmap, false);
+	    marvell_devmap, mapallmem_p);
 
 	/* we've a specific device_register routine */
 	evbarm_device_register = marvell_device_register;
