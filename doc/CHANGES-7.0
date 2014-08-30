@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.26 2014/08/29 11:58:30 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.27 2014/08/30 14:16:12 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -520,3 +520,24 @@ sys/fs/puffs/puffs_vnops.c			1.184
 	Field "pa_nhashbuckets" of struct "puffs_kargs" becomes a no-op
 	and should be removed on the next protocol version bump.
 	[hannken, ticket #67]
+
+usr.bin/flock/flock.1				1.10
+usr.bin/flock/flock.c				1.9-1.11
+
+	Annotate functions using format strings.
+	Improve Linux compatibility, by making exclusive lock the default.
+	Also check for file descriptor value being sane.
+	[manu, ticket #68]
+
+sys/kern/subr_tftproot.c			1.13
+
+	Fix build with TFTPROOT option enabled.
+	[manu, ticket #69]
+
+external/gpl3/gdb/dist/gdb/sparc-nat.c		1.7
+
+	Cleanup the confusion with getting the pid of a sparc debugged process.
+	If the comments were correct, then this should be factored out to the
+	OS-specific native code, and the general code should remain sane.
+	[christos, ticket #70]
+
