@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_start.S,v 1.7 2014/08/30 13:24:44 kiyohara Exp $ */
+/*	$NetBSD: marvell_start.S,v 1.8 2014/08/30 13:28:07 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -66,7 +66,7 @@
 #include <evbarm/marvell/marvellreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: marvell_start.S,v 1.7 2014/08/30 13:24:44 kiyohara Exp $")
+RCSID("$NetBSD: marvell_start.S,v 1.8 2014/08/30 13:28:07 kiyohara Exp $")
 
 #ifndef SDRAM_START
 #define SDRAM_START	0x00000000
@@ -185,8 +185,13 @@ marvell_interregs_pbase:
 
 	mcr	p15, 0, r0, c2, c0, 0	/* Set TTB */
 	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
-	mov	r0, #0
 	cmp	r8, #PJ4B
+	mcreq	p15, 0, r0, c2, c0, 1	/* Set TTB1 */
+	moveq	r1, #TTBCR_S_N_1
+	mcreq	p15, 0, r1, c2, c0, 2	/* Set TTBCR */
+	mov	r0, #0
+	mcreq	p15, 0, r0, c8, c7, 0	/* Flush TLB */
+
 	mcreq	p15, 0, r0, c13, c0, 1	/* Set ASID to 0 */
 	mcr	p15, 0, r0, c7, c6, 0	/* Invalidate D cache */
 	mcr	p15, 0, r0, c7, c10, 4	/* Drain write-buffer */
@@ -251,8 +256,8 @@ mmu_init_table:
 	MMU_INIT(SDRAM_START, SDRAM_START,
 	    128, L1_TYPE_S | L1_S_C | L1_S_AP_KRW)
 
-	/* map VA 0xc0000000..0xc7ffffff to PA 0x00000000..0x07ffffff */
-	MMU_INIT(0xc0000000, SDRAM_START,
+	/* map VA KERNEL_BASE_EXT..KERNEL_BASE_EXT+7ffffff to PA 0x00000000..0x07ffffff */
+	MMU_INIT(KERNEL_BASE_EXT, SDRAM_START,
 	    128, L1_TYPE_S | L1_S_C | L1_S_AP_KRW)
 
 	.word	0			/* end of table */
