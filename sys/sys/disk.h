@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.60 2014/04/03 15:24:20 christos Exp $	*/
+/*	$NetBSD: disk.h,v 1.61 2014/08/30 09:23:29 apb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -246,6 +246,17 @@ __link_set_add_data(dkwedge_methods, name ## _ddm)
 #define	DKW_PTYPE_NILFS		"nilfs"
 #define	DKW_PTYPE_CGD		"cgd"
 #define	DKW_PTYPE_MINIXFS3	"minixfs3"
+
+/*
+ * Ensure each symbol used in FSTYPE_DEFN in <sys/disklabel.h>
+ * has a corresponding DKW_PTYPE_* definition.
+ */
+#define	DKW_PTYPE_MSDOS		DKW_PTYPE_FAT
+#define	DKW_PTYPE_BSDFFS	DKW_PTYPE_FFS
+#define	DKW_PTYPE_BSDLFS	DKW_PTYPE_LFS
+#define	DKW_PTYPE_ADOS		DKW_PTYPE_AMIGADOS
+#define	DKW_PTYPE_EX2FS		DKW_PTYPE_EXT2FS
+#define	DKW_PTYPE_RAID		DKW_PTYPE_RAIDFRAME
 
 /*
  * Disk geometry dictionary.
