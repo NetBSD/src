@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.18 2011/08/30 20:08:38 joerg Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.19 2014/08/31 09:16:54 mrg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -73,13 +73,14 @@ static const	char *dvname;
 static char	dvname_store[MAXPATHLEN];
 static const	char *cmdname;
 static int	print_numbers = 0;
+static int	print_names = 0;
 
 static void	cmd_list(int, char *[]);
 static void	cmd_dump(int, char *[]);
 
 static const struct command commands[] = {
 	{ "list",
-	  "[-n] [-b bus] [-d device] [-f function]",
+	  "[-nN] [-b bus] [-d device] [-f function]",
 	  cmd_list,
 	  O_RDONLY },
 
@@ -162,7 +163,7 @@ cmd_list(int argc, char *argv[])
 	bus = -1;
 	dev = func = -1;
 
-	while ((ch = getopt(argc, argv, "nb:d:f:")) != -1) {
+	while ((ch = getopt(argc, argv, "nNb:d:f:")) != -1) {
 		switch (ch) {
 		case 'b':
 			bus = parse_bdf(optarg);
@@ -175,6 +176,9 @@ cmd_list(int argc, char *argv[])
 			break;
 		case 'n':
 			print_numbers = 1;
+			break;
+		case 'N':
+			print_names = 1;
 			break;
 		default:
 			usage();
@@ -318,11 +322,17 @@ scan_pci_list(u_int bus, u_int dev, u_int func)
 
 	printf("%03u:%02u:%01u: ", bus, dev, func);
 	if (print_numbers) {
-		printf("0x%08x (0x%08x)\n", id, class);
+		printf("0x%08x (0x%08x)", id, class);
 	} else {
 		pci_devinfo(id, class, 1, devinfo, sizeof(devinfo));
-		printf("%s\n", devinfo);
+		printf("%s", devinfo);
 	}
+	if (print_names) {
+		char drvname[16];
+		if (pci_drvname(pcifd, dev, func, drvname, sizeof drvname) == 0)
+			printf(" [%s]", drvname);
+	}
+	printf("\n");
 }
 
 static void
