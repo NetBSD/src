@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.370 2014/08/14 04:14:33 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.371 2014/08/31 18:49:42 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -140,28 +140,22 @@
 	
 	.endm
 
-
-	.macro	NORMAL_GLOBALS scratch
 #ifdef SUN4V
-	sethi	%hi(cputyp), \scratch
-	ld	[\scratch + %lo(cputyp)], \scratch
-	cmp	\scratch, CPU_SUN4V
-	bne,pt	%icc, 2f
-	 nop
-	/* sun4v */
-	ba	3f
-	 wrpr	%g0, 0, %gl
-2:		
-#endif	
-	/* sun4u */
-	rdpr	 %pstate, \scratch
-	and	\scratch, ~PSTATE_AG, \scratch	! Alternate Globals (AG) bit set to zero
-	wrpr	%g0, \scratch, %pstate
-3:
+	.macro	NORMAL_GLOBALS_SUN4V
+	 wrpr	%g0, 0, %gl				! Set globals to level 0
 	.endm
-
-	.macro	ALTERNATE_GLOBALS
-	 wrpr    %g0, PSTATE_KERN|PSTATE_AG, %pstate	! sun4u only for now...
+#endif
+	.macro	NORMAL_GLOBALS_SUN4U
+	wrpr	%g0, PSTATE_KERN, %pstate		! Alternate Globals (AG) bit set to zero
+	.endm
+		
+#ifdef SUN4V
+	.macro	ALTERNATE_GLOBALS_SUN4V
+	 wrpr	%g0, 1, %gl				! Set globals to level 1
+	.endm
+#endif	
+	.macro	ALTERNATE_GLOBALS_SUN4U
+	 wrpr    %g0, PSTATE_KERN|PSTATE_AG, %pstate	! Alternate Globals (AG) bit set to one
 	.endm
 	
 	.macro	ENABLE_INTERRUPTS scratch
@@ -3650,8 +3644,22 @@ ENTRY_NOPROFILE(sparc_interrupt)
 1:
 #endif
 	INTR_SETUP(-CC64FSZ-TF_SIZE)
+	
 	! Switch to normal globals so we can save them
-	NORMAL_GLOBALS %g5
+#ifdef SUN4V
+	sethi	%hi(cputyp), %g5
+	ld	[%g5 + %lo(cputyp)], %g5
+	cmp	%g5, CPU_SUN4V
+	bne,pt	%icc, 1f
+	 nop
+	NORMAL_GLOBALS_SUN4V
+	ba	2f
+	 nop
+1:		
+#endif
+	NORMAL_GLOBALS_SUN4U
+2:
+	! Save the normal globals
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + ( 1*8)]
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + ( 2*8)]
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + ( 3*8)]
@@ -3923,10 +3931,17 @@ return_from_trap:
 	ENABLE_INTERRUPTS %g5
 	wrpr	%g0, %g0, %pil				! Lower IPL
 1:
-	!! Make sure we have normal globals & no IRQs
+	!! Make sure we have no IRQs
 	DISABLE_INTERRUPTS %g5
-	NORMAL_GLOBALS %g5
 
+#ifdef SUN4V
+	sethi	%hi(cputyp), %g5
+	ld	[%g5 + %lo(cputyp)], %g5
+	cmp	%g5, CPU_SUN4V
+	bne,pt	%icc, 1f
+	 nop
+	!! Make sure we have normal globals
+	NORMAL_GLOBALS_SUN4V
 	/* Restore normal globals */
 	ldx	[%sp + CC64FSZ + STKB + TF_G + (1*8)], %g1
 	ldx	[%sp + CC64FSZ + STKB + TF_G + (2*8)], %g2
@@ -3935,12 +3950,31 @@ return_from_trap:
 	ldx	[%sp + CC64FSZ + STKB + TF_G + (5*8)], %g5
 	ldx	[%sp + CC64FSZ + STKB + TF_G + (6*8)], %g6
 	ldx	[%sp + CC64FSZ + STKB + TF_G + (7*8)], %g7
-	/* Switch to alternate globals and load outs */
+	/* Switch to alternate globals */
+	ALTERNATE_GLOBALS_SUN4V
+	ba	2f
+	 nop
+1:		
+#endif
+	!! Make sure we have normal globals
+	NORMAL_GLOBALS_SUN4U
+	/* Restore normal globals */
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (1*8)], %g1
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (2*8)], %g2
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (3*8)], %g3
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (4*8)], %g4
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (5*8)], %g5
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (6*8)], %g6
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (7*8)], %g7
+	/* Switch to alternate globals */
 #ifdef TRAPS_USE_IG
 	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
 #else
-	ALTERNATE_GLOBALS
+	ALTERNATE_GLOBALS_SUN4U
 #endif
+2:		
+	
+	/* Load outs */
 	ldx	[%sp + CC64FSZ + STKB + TF_O + (0*8)], %i0
 	ldx	[%sp + CC64FSZ + STKB + TF_O + (1*8)], %i1
 	ldx	[%sp + CC64FSZ + STKB + TF_O + (2*8)], %i2
