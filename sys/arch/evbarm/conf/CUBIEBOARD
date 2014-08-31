@@ -1,10 +1,10 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.16 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: CUBIEBOARD,v 1.17 2014/08/31 19:13:01 matt Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
 
-include	"arch/evbarm/conf/std.cubie"
+include	"arch/evbarm/conf/std.awin"
 
 # estimated number of users
 
@@ -17,6 +17,8 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # CPU options
 
+no makeoptions	BOARDTYPE
+makeoptions	BOARDTYPE="cubieboard"
 #options 	UVMHIST,UVMHIST_PRINT
 options 	CPU_CORTEXA8
 options 	CPU_CORTEXA7
@@ -166,7 +168,7 @@ config		netbsd		root on ? type ?
 mainbus0	at root
 
 # The boot cpu
-cpu0		at mainbus?
+cpu*		at mainbus?
 
 # Specify the memory size in megabytes (optional).
 #options 	MEMSIZE=256
