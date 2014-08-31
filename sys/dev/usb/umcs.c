@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.7 2014/05/05 20:56:15 joerg Exp $ */
+/* $NetBSD: umcs.c,v 1.7.6.1 2014/08/31 17:18:15 riz Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.7 2014/05/05 20:56:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.7.6.1 2014/08/31 17:18:15 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,7 +420,8 @@ umcs7840_set_UART_reg(struct umcs7840_softc *sc, uint8_t portno, uint8_t reg, ui
 }
 
 static int
-umcs7840_set_baudrate(struct umcs7840_softc *sc, uint8_t portno, uint32_t rate)
+umcs7840_set_baudrate(struct umcs7840_softc *sc, uint8_t portno,
+	uint32_t rate)
 {
 	int err;
 	uint16_t divisor;
@@ -434,7 +435,8 @@ umcs7840_set_baudrate(struct umcs7840_softc *sc, uint8_t portno, uint32_t rate)
 		return (-1);
 	}
 	if (divisor == 0 || (clk & MCS7840_DEV_SPx_CLOCK_MASK) != clk) {
-		DPRINTF(("Port %d bad speed calculation: %d\n", portno, rate));
+		DPRINTF(("Port %d bad speed calculation: %d\n", portno,
+		    rate));
 		return (-1);
 	}
 	DPRINTF(("Port %d set speed: %d (%02x / %d)\n", portno, rate, clk, divisor));
@@ -585,20 +587,19 @@ static void
 umcs7840_set(void *self, int portno, int reg, int onoff)
 {
 	struct umcs7840_softc *sc = self;
-	int pn = sc->sc_ports[portno].sc_port_phys;
 
 	if (sc->sc_dying)
 		return;
 
 	switch (reg) {
 	case UCOM_SET_DTR:
-		umcs7840_dtr(sc, pn, onoff);
+		umcs7840_dtr(sc, portno, onoff);
 		break;
 	case UCOM_SET_RTS:
-		umcs7840_rts(sc, pn, onoff);
+		umcs7840_rts(sc, portno, onoff);
 		break;
 	case UCOM_SET_BREAK:
-		umcs7840_break(sc, pn, onoff);
+		umcs7840_break(sc, portno, onoff);
 		break;
 	default:
 		break;
@@ -665,7 +666,7 @@ umcs7840_param(void *self, int portno, struct termios *t)
 	umcs7840_set_UART_reg(sc, pn, MCS7840_UART_REG_MCR,
 	    sc->sc_ports[pn].sc_port_mcr);
 
-	if (umcs7840_set_baudrate(sc, pn, t->c_ospeed))
+	if (umcs7840_set_baudrate(sc, portno, t->c_ospeed))
 		return EIO;
 
 	return 0;
@@ -804,7 +805,7 @@ umcs7840_port_open(void *self, int portno)
 		return EIO;
 
 	/* Set speed 9600 */
-	if (umcs7840_set_baudrate(sc, pn, 9600))
+	if (umcs7840_set_baudrate(sc, portno, 9600))
 		return EIO;
 
 
