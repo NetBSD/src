@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcictl.8,v 1.11 2014/08/26 16:21:15 wiz Exp $
+.\"	$NetBSD: pcictl.8,v 1.12 2014/08/31 09:16:54 mrg Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 25, 2011
+.Dd August 31, 2014
 .Dt PCICTL 8
 .Os
 .Sh NAME
@@ -56,6 +56,7 @@ The following commands are available:
 .Pp
 .Cm list
 .Op Fl n
+.Op Fl N
 .Op Fl b Ar bus
 .Op Fl d Ar device
 .Op Fl f Ar function
@@ -68,6 +69,10 @@ numbers may be specified by flags.
 Any locator not specified defaults
 to a wildcard, or may be explicitly wildcarded by specifying
 .Dq any .
+If
+.Fl N
+is given, the driver name for this PCI device will be listed
+if any driver is attached.
 .Pp
 .Cm dump
 .Op Fl b Ar bus
