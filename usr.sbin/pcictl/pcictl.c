@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.19 2014/08/31 09:16:54 mrg Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.20 2014/08/31 09:59:08 wiz Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@ static void	cmd_dump(int, char *[]);
 
 static const struct command commands[] = {
 	{ "list",
-	  "[-nN] [-b bus] [-d device] [-f function]",
+	  "[-Nn] [-b bus] [-d device] [-f function]",
 	  cmd_list,
 	  O_RDONLY },
 
@@ -163,7 +163,7 @@ cmd_list(int argc, char *argv[])
 	bus = -1;
 	dev = func = -1;
 
-	while ((ch = getopt(argc, argv, "nNb:d:f:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:d:f:Nn")) != -1) {
 		switch (ch) {
 		case 'b':
 			bus = parse_bdf(optarg);
