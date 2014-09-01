@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.17 2014/08/28 20:29:05 snj Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.18 2014/09/01 14:19:27 reinoud Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.17 2014/08/28 20:29:05 snj Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.18 2014/09/01 14:19:27 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -349,9 +349,11 @@ exynos_get_cpufreq(void)
 static void
 exynos_set_cpufreq(const struct cpu_freq *freqreq)
 {
+	struct cpu_info *ci;
 	uint32_t reg = 0;
 	uint32_t regval;
 	int M, P, S;
+	int cii;
 
 	M = freqreq->M;
 	P = freqreq->P;
@@ -374,6 +376,11 @@ exynos_set_cpufreq(const struct cpu_freq *freqreq)
 	/* enable PPL and write config */
 	regval |= PLL_CON0_ENABLE;
 	bus_space_write_4(&exynos_bs_tag, exynos_core_bsh, reg, regval);
+
+	/* update our cycle counter i.e. our CPU frequency for all CPUs */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		ci->ci_data.cpu_cc_freq = exynos_get_cpufreq();
+	}
 }
 
 
@@ -458,7 +465,6 @@ exynos_clocks_bootstrap(void)
 
 	/* set max cpufreq */
 	exynos_set_cpufreq(&cpu_freq_settings[ncpu_freq_settings-1]);
-	curcpu()->ci_data.cpu_cc_freq = exynos_get_cpufreq();
 }
 
 
