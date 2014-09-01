@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.116 2014/07/25 18:29:45 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.117 2014/09/01 19:01:55 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.116 2014/07/25 18:29:45 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.117 2014/09/01 19:01:55 palle Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -545,7 +545,7 @@ cpu_boot_secondary_processors(void)
 	}
 
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-		if (ci->ci_cpuid == CPU_UPAID)
+		if (ci->ci_cpuid == cpu_myid())
 			continue;
 
 		cpu_pmap_prepare(ci, false);
