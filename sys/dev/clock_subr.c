@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.18 2014/09/01 07:49:43 martin Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.19 2014/09/01 11:21:29 apb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.18 2014/09/01 07:49:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.19 2014/09/01 11:21:29 apb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ clock_ymdhms_to_secs(struct clock_ymdhms *dt)
 	    * 60 + dt->dt_min)
 	    * 60 + dt->dt_sec;
 
-	if ((time_t)secs < 0 || (uint64_t)(time_t)secs != secs)
+	if ((time_t)secs < 0 || secs > __type_max(time_t))
 		return -1;
 	return secs;
 }
