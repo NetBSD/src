@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1192 2014/07/30 12:35:11 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1193 2014/09/01 03:14:50 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1199 2014/07/30 12:34:12 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1200 2014/09/01 03:14:16 msaitoh Exp
  */
 
 /*
@@ -5012,6 +5012,9 @@
 
 /* SafeNet products */
 #define	PCI_PRODUCT_SAFENET_SAFEXCEL	0x1141		/* SafeXcel */
+
+/* Samsung Electronics products */
+#define	PCI_PRODUCT_SAMSUNGELEC3_XP941	0xa800		/* XP941 M.2 SSD */
 
 /* Samsung Semiconductor products */
 #define	PCI_PRODUCT_SAMSUNGSEMI_KS8920	0x8920		/* KS8920 10/100 Ethernet */
