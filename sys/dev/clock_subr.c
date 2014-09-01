@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.19 2014/09/01 11:21:29 apb Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.20 2014/09/01 12:25:52 apb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,16 +44,20 @@
  * Derived from arch/hp300/hp300/clock.c
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif /* HAVE_NBTOOL_CONFIG_H */
+
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.19 2014/09/01 11:21:29 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.20 2014/09/01 12:25:52 apb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#else
+#else /* ! _KERNEL */
 #include <string.h>
 #include <time.h>
-#endif
+#endif /* ! _KERNEL */
 
 #include <dev/clock_subr.h>
 
