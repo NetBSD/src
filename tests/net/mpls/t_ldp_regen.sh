@@ -1,4 +1,4 @@
-# $NetBSD: t_ldp_regen.sh,v 1.3 2014/01/03 13:14:50 pooka Exp $
+# $NetBSD: t_ldp_regen.sh,v 1.4 2014/09/01 06:38:35 gson Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -158,6 +158,10 @@ docleanup() {
 
 ldp_regen_body() {
 
+        if sysctl machdep.cpu_brand | grep QEMU >/dev/null 2>&1
+	then
+	    atf_skip "unreliable under qemu, skip until PR kern/43997 fixed"
+	fi
 	create_servers
 	wait_ldp_ok
 	newaddr_and_ping
