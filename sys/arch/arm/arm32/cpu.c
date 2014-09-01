@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.104 2014/03/28 21:39:09 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.105 2014/09/01 13:43:31 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.104 2014/03/28 21:39:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.105 2014/09/01 13:43:31 reinoud Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -651,7 +651,7 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 	}
 
 	if (ci->ci_data.cpu_cc_freq != 0) {
-		char freqbuf[8];
+		char freqbuf[10];
 		humanize_number(freqbuf, sizeof(freqbuf), ci->ci_data.cpu_cc_freq,
 		    "Hz", 1000);
 
