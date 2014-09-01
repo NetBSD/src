@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcictl.8,v 1.13 2014/08/31 09:59:08 wiz Exp $
+.\"	$NetBSD: pcictl.8,v 1.14 2014/09/01 07:11:19 manu Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -80,6 +80,31 @@ if any driver is attached.
 .Pp
 Dump the PCI configuration space for the specified device located
 at the specified bus, device, and function.
+If the bus is not specified, it defaults to the bus number of the
+PCI bus specified on the command line.
+If the function is not specified, it defaults to 0.
+.Pp
+.Nm read
+.Op Fl b Ar bus
+.Fl d Ar device
+.Op Fl f Ar function
+.Ar reg
+.Pp
+Read the specified 32-bit aligned PCI configuration register and print
+it in hexadecimal to standard output.
+If the bus is not specified, it defaults to the bus number of the
+PCI bus specified on the command line.
+If the function is not specified, it defaults to 0.
+.Pp
+.Nm write
+.Op Fl b Ar bus
+.Fl d Ar device
+.Op Fl f Ar function
+.Ar reg
+.Ar value
+.Pp
+Write the specified value to the specified 32-bit aligned PCI
+configuration register.
 If the bus is not specified, it defaults to the bus number of the
 PCI bus specified on the command line.
 If the function is not specified, it defaults to 0.
