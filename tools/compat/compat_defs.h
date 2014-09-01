@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.97 2014/06/06 01:40:40 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.98 2014/09/01 11:20:06 apb Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -101,7 +101,7 @@ struct group;
 #define __END_DECLS
 #endif
 
-/* Some things usually in BSD <sys/cdefs.h>. */
+/* Some things in NetBSD <sys/cdefs.h>. */
 
 #ifndef __CONCAT
 #define	__CONCAT(x,y)	x ## y
@@ -137,6 +137,20 @@ struct group;
 #define	__arraycount(__x)	(sizeof(__x) / sizeof(__x[0]))
 #undef __USE
 #define __USE(a) ((void)(a))
+#undef __type_min_s
+#define __type_min_s(t) ((t)((1ULL << (sizeof(t) * NBBY - 1))))
+#undef __type_max_s
+#define __type_max_s(t) ((t)~((1ULL << (sizeof(t) * NBBY - 1))))
+#undef __type_min_u
+#define __type_min_u(t) ((t)0ULL)
+#undef __type_max_u
+#define __type_max_u(t) ((t)~0ULL)
+#undef __type_is_signed
+#define __type_is_signed(t) (/*LINTED*/__type_min_s(t) + (t)1 < (t)1)
+#undef __type_min
+#define __type_min(t) (__type_is_signed(t) ? __type_min_s(t) : __type_min_u(t))
+#undef __type_max
+#define __type_max(t) (__type_is_signed(t) ? __type_max_s(t) : __type_max_u(t))
 
 /* Dirent support. */
 
