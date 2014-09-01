@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.19 2012/10/27 17:18:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.20 2014/09/01 19:46:55 he Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24:36 wpaul Exp $");
 #endif
@@ -357,11 +357,6 @@ void ndis_attach_pci(device_t parent, device_t self, void *aux)
 	sc->ndis_irq = (void *)sc->ndis_intrhand;
 	
 	printf("pci interrupt: %s\n", pci_intr_string(pa->pa_pc, ih));
-	
-	if(rl == NULL) {
-		sc->error = ENOMEM;
-		return;
-	}
 	
 	/* save resource list in the softc */
 	sc->ndis_rl = rl;
