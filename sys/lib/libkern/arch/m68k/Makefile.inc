@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.33 2014/08/27 08:51:37 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.34 2014/09/01 07:32:35 matt Exp $
 
 SRCS+=	bswap16.S bswap32.S bswap64.S
 SRCS+=	memcmp.S memcpy.S memmove.S memset.S
@@ -10,5 +10,7 @@ SRCS+=	ffs.S
 
 .if defined(MACHINE_ARCH) && (${MACHINE_ARCH} == "m68000")
 SRCS+=	mulsi3.S divsi3.S udivsi3.S modsi3.S umodsi3.S
+.endif
+.if defined(MACHINE_ARCH) && (${MACHINE_ARCH} != "m68k")
 random.S: .INVISIBLE
 .endif
