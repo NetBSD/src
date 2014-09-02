@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.18 2014/09/01 14:19:27 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.19 2014/09/02 14:07:50 reinoud Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.18 2014/09/01 14:19:27 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.19 2014/09/02 14:07:50 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -445,6 +445,46 @@ sysctl_cpufreq_current(SYSCTLFN_ARGS)
 }
 
 
+#ifdef VERBOSE_INIT_ARM
+#define DUMP_PLL(v, var) \
+	reg = EXYNOS##v##_CMU_##var + PLL_CON0_OFFSET;\
+	regval = bus_space_read_4(&exynos_bs_tag, exynos_core_bsh, reg); \
+	freq   = PLL_FREQ(EXYNOS_F_IN_FREQ, regval); \
+	printf("%8s at %d Mhz\n", #var, freq/(1000*1000));
+
+
+static void
+exynos_dump_clocks(void)
+{
+	uint32_t reg = 0;
+	uint32_t regval;
+	uint32_t freq;
+
+	printf("Initial PLL settings\n");
+#ifdef EXYNOS4
+	if (IS_EXYNOS4_P()) {
+		DUMP_PLL(4, APLL);
+		DUMP_PLL(4, MPLL);
+		DUMP_PLL(4, EPLL);
+		DUMP_PLL(4, VPLL);
+	}
+#endif
+#ifdef EXYNOS5
+	if (IS_EXYNOS5_P()) {
+		DUMP_PLL(5, APLL);
+		DUMP_PLL(5, MPLL);
+		DUMP_PLL(5, EPLL);
+		DUMP_PLL(5, VPLL);
+		DUMP_PLL(5, CPLL);
+		DUMP_PLL(5, GPLL);
+		DUMP_PLL(5, BPLL);
+	}
+#endif
+}
+#undef DUMP_PLL
+#endif
+
+
 void
 exynos_clocks_bootstrap(void)
 {
@@ -462,6 +502,10 @@ exynos_clocks_bootstrap(void)
 #endif
 	KASSERT(ncpu_freq_settings != 0);
 	KASSERT(ncpu_freq_settings < NFRQS);
+
+#ifdef VERBOSE_INIT_ARM
+	exynos_dump_clocks();
+#endif
 
 	/* set max cpufreq */
 	exynos_set_cpufreq(&cpu_freq_settings[ncpu_freq_settings-1]);
