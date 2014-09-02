@@ -1,4 +1,4 @@
-/* $NetBSD: dwctwo_plb.c,v 1.2 2013/11/21 13:52:27 kiyohara Exp $ */
+/* $NetBSD: dwctwo_plb.c,v 1.3 2014/09/02 14:55:56 skrll Exp $ */
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwctwo_plb.c,v 1.2 2013/11/21 13:52:27 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwctwo_plb.c,v 1.3 2014/09/02 14:55:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -112,7 +112,7 @@ dwctwo_plb_attach(device_t parent, device_t self, void *aux)
 	bus_space_map(sc->sc_iot, paa->plb_addr, DWCTWO_SIZE, 0, &sc->sc_ioh);
 	sc->sc_bus.dmatag = paa->plb_dmat;
 
-	intr_establish(paa->plb_irq, IST_LEVEL, IPL_USB, dwc2_intr, sc);
+	intr_establish(paa->plb_irq, IST_LEVEL, IPL_SCHED, dwc2_intr, sc);
 
 	/* Enable the USB interface. */
 	mtsdr(DCR_SDR0_PFC1, mfsdr(DCR_SDR0_PFC1) | SDR0_PFC1_USBEN);
