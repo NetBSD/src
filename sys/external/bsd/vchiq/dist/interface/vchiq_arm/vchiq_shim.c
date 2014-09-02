@@ -725,7 +725,6 @@ int32_t vchi_service_destroy(const VCHI_SERVICE_HANDLE_T handle)
 }
 EXPORT_SYMBOL(vchi_service_destroy);
 
-#ifdef notyet
 int32_t vchi_get_peer_version( const VCHI_SERVICE_HANDLE_T handle, short *peer_version )
 {
    int32_t ret = -1;
@@ -739,6 +738,7 @@ int32_t vchi_get_peer_version( const VCHI_SERVICE_HANDLE_T handle, short *peer_v
 }
 EXPORT_SYMBOL(vchi_get_peer_version);
 
+#if notyet
 /* ----------------------------------------------------------------------
  * read a uint32_t from buffer.
  * network format is defined to be little endian
