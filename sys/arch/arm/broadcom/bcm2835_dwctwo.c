@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_dwctwo.c,v 1.1 2013/09/05 20:49:25 skrll Exp $	*/
+/*	$NetBSD: bcm2835_dwctwo.c,v 1.2 2014/09/02 14:55:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dwctwo.c,v 1.1 2013/09/05 20:49:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dwctwo.c,v 1.2 2014/09/02 14:55:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ bcmdwc2_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": USB controller\n");
 	aprint_normal(": USB controller\n");
 
-	sc->sc_ih = bcm2835_intr_establish(aaa->aaa_intr, IPL_USB,
+	sc->sc_ih = bcm2835_intr_establish(aaa->aaa_intr, IPL_SCHED,
 	   dwc2_intr, &sc->sc_dwc2);
 
 	if (sc->sc_ih == NULL) {

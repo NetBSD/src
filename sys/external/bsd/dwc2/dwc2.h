@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.h,v 1.2 2013/11/01 15:03:39 skrll Exp $	*/
+/*	$NetBSD: dwc2.h,v 1.3 2014/09/02 14:55:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ enum usb_otg_state {
 #define usleep_range(l, u)	do { DELAY(u); } while (0)
 
 #define spinlock_t		kmutex_t
-#define spin_lock_init(lock)	mutex_init(lock, MUTEX_DEFAULT, IPL_VM)
+#define spin_lock_init(lock)	mutex_init(lock, MUTEX_DEFAULT, IPL_SCHED)
 #define	spin_lock(l)		do { mutex_spin_enter(l); } while (0)
 #define	spin_unlock(l)		do { mutex_spin_exit(l); } while (0)
 
