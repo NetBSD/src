@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_var.h,v 1.13 2014/08/28 18:02:36 reinoud Exp $ */
+/* $NetBSD: exynos_var.h,v 1.14 2014/09/02 15:49:59 reinoud Exp $ */
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,6 +63,7 @@ extern uint32_t exynos_pop_id;
 #define IS_EXYNOS4_P()	(EXYNOS_PRODUCT_FAMILY(exynos_soc_id) == EXYNOS4_PRODUCT_FAMILY)
 
 #define IS_EXYNOS5410_P()	(EXYNOS_PRODUCT_ID(exynos_soc_id) == 0xe5410)
+#define IS_EXYNOS5422_P()	(EXYNOS_PRODUCT_ID(exynos_soc_id) == 0xe5422)
 #define IS_EXYNOS5440_P()	(EXYNOS_PRODUCT_ID(exynos_soc_id) == 0xe5440)
 
 #define IS_EXYNOS5_P()	(EXYNOS_PRODUCT_FAMILY(exynos_soc_id) == EXYNOS5_PRODUCT_FAMILY)
