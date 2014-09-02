@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.4 2014/09/02 09:58:02 jmcneill Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.5 2014/09/02 10:40:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.4 2014/09/02 09:58:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.5 2014/09/02 10:40:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -356,16 +356,25 @@ vcaudio_service_callback(void *priv, const VCHI_CALLBACK_REASON_T reason,
 		intr = msg.u.complete.callback;
 		intrarg = msg.u.complete.cookie;
 		if (intr && intrarg) {
+			int count = msg.u.complete.count & 0xffff;
+			int perr = (msg.u.complete.count & 0x40000000) != 0;
+			bool sched = false;
 			mutex_enter(&sc->sc_intr_lock);
-			if (msg.u.complete.count > 0 && msg.u.complete.count <= sc->sc_pblksize) {
-				sc->sc_pbytes += msg.u.complete.count;
-			} else {
-				if (sc->sc_started) {
-					device_printf(sc->sc_dev, "WARNING: count = %d\n", msg.u.complete.count);
-				}
+			if (count > 0) {
+				sc->sc_pbytes += count;
+			}
+			if (perr && sc->sc_started) {
+#ifdef VCAUDIO_DEBUG
+				device_printf(sc->sc_dev, "underrun\n");
+#endif
+				sched = true;
 			}
 			if (sc->sc_pbytes >= sc->sc_pblksize) {
 				sc->sc_pbytes -= sc->sc_pblksize;
+				sched = true;
+			}
+
+			if (sched) {
 				intr(intrarg);
 				workqueue_enqueue(sc->sc_wq, (struct work *)&sc->sc_work, NULL);
 			}
@@ -415,23 +424,8 @@ vcaudio_worker(struct work *wk, void *priv)
 		sc->sc_started = true;
 		sc->sc_pbytes = 0;
 		sc->sc_ppos = 0;
-		sc->sc_pblksize = sc->sc_pblksize;
-		count = (uintptr_t)sc->sc_pend - (uintptr_t)sc->sc_pstart;
 
-		/* initial silence */
-		memset(&msg, 0, sizeof(msg));
-		msg.type = VC_AUDIO_MSG_TYPE_WRITE;
-		msg.u.write.count = PAGE_SIZE * 3;
-		msg.u.write.callback = NULL;
-		msg.u.write.cookie = NULL;
-		msg.u.write.silence = 1;
-		msg.u.write.max_packet = 0;
-		error = vchi_msg_queue(sc->sc_service, &msg, sizeof(msg),
-		    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
-		if (error) {
-			printf("%s: failed to write (%d)\n", __func__, error);
-			goto done;
-		}
+		count = sc->sc_pblksize * 2;
 	} else {
 		count = sc->sc_pblksize;
 	}
