@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.31 2014/08/05 10:33:46 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.31 2014/08/05 10:33:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $");
 
 #include "opt_usb.h"
 
@@ -667,6 +667,8 @@ Static const struct dwc2_config_desc dwc2_confd = {
 };
 
 #define	HSETW(ptr, val) ptr = { (uint8_t)(val), (uint8_t)((val) >> 8) }
+#if 0
+/* appears to be unused */
 Static const usb_hub_descriptor_t dwc2_hubd = {
 	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
 	.bDescriptorType = UDESC_HUB,
@@ -676,6 +678,7 @@ Static const usb_hub_descriptor_t dwc2_hubd = {
 	.bHubContrCurrent = 0,
 	.DeviceRemovable = {0},		/* port is removable */
 };
+#endif
 
 Static usbd_status
 dwc2_root_ctrl_transfer(usbd_xfer_handle xfer)
