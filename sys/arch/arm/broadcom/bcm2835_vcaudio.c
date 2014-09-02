@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.3 2014/05/05 08:13:31 skrll Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.4 2014/09/02 09:58:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.3 2014/05/05 08:13:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.4 2014/09/02 09:58:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -242,7 +242,7 @@ vcaudio_init(struct vcaudio_softc *sc)
 	sc->sc_format.channels = 2;
 	sc->sc_format.channel_mask = AUFMT_STEREO;
 	sc->sc_format.frequency_type = 0;
-	sc->sc_format.frequency[0] = 8000;
+	sc->sc_format.frequency[0] = 48000;
 	sc->sc_format.frequency[1] = 48000;
 
 	error = auconv_create_encodings(&sc->sc_format, 1, &sc->sc_encodings);
@@ -294,6 +294,17 @@ vcaudio_init(struct vcaudio_softc *sc)
 	    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
 	if (error) {
 		device_printf(sc->sc_dev, "couldn't send OPEN message (%d)\n",
+		    error);
+	}
+
+	memset(&msg, 0, sizeof(msg));
+	msg.type = VC_AUDIO_MSG_TYPE_CONFIG;
+	msg.u.config.channels = 2;
+	msg.u.config.samplerate = 48000;
+	msg.u.config.bps = 16;
+	error = vcaudio_msg_sync(sc, &msg, sizeof(msg));
+	if (error) {
+		device_printf(sc->sc_dev, "couldn't send CONFIG message (%d)\n",
 		    error);
 	}
 
@@ -391,17 +402,6 @@ vcaudio_worker(struct work *wk, void *priv)
 #ifdef VCAUDIO_DEBUG
 		device_printf(sc->sc_dev, "starting output\n");
 #endif
-
-		memset(&msg, 0, sizeof(msg));
-		msg.type = VC_AUDIO_MSG_TYPE_CONFIG;
-		msg.u.config.channels = sc->sc_pparam.channels;
-		msg.u.config.samplerate = sc->sc_pparam.sample_rate;
-		msg.u.config.bps = sc->sc_pparam.precision;
-		error = vcaudio_msg_sync(sc, &msg, sizeof(msg));
-		if (error) {
-			printf("%s: failed to config (%d)\n", __func__, error);
-			goto done;
-		}
 
 		memset(&msg, 0, sizeof(msg));
 		msg.type = VC_AUDIO_MSG_TYPE_START;
