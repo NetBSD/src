@@ -123,7 +123,7 @@ typedef kmutex_t spinlock_t;
  */
 #define DEFINE_SPINLOCK(name)	kmutex_t name
 
-#define spin_lock_init(lock)	mutex_init(lock, MUTEX_DEFAULT, IPL_VM)
+#define spin_lock_init(lock)	mutex_init(lock, MUTEX_DEFAULT, IPL_SCHED)
 #define spin_lock_destroy(lock)	mutex_destroy(lock)
 #define spin_lock(lock)		mutex_spin_enter(lock)
 #define spin_unlock(lock)	mutex_spin_exit(lock)
@@ -148,7 +148,7 @@ typedef kmutex_t rwlock_t;
 
 #define DEFINE_RWLOCK(name)	kmutex_t name
 
-#define rwlock_init(rwlock)	mutex_init(rwlock, MUTEX_DEFAULT, IPL_VM)
+#define rwlock_init(rwlock)	mutex_init(rwlock, MUTEX_DEFAULT, IPL_SCHED)
 #define read_lock(rwlock)	mutex_spin_enter(rwlock)
 #define read_unlock(rwlock)	mutex_spin_exit(rwlock)
 
