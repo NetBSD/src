@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.37 2013/12/16 15:45:29 mrg Exp $ */
+/* $NetBSD: crmfb.c,v 1.38 2014/09/02 15:44:44 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.37 2013/12/16 15:45:29 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.38 2014/09/02 15:44:44 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,10 +153,13 @@ struct crmfb_softc {
 	int			sc_mte_direction;
 	int			sc_mte_x_shift;
 	uint32_t		sc_mte_mode;
+	uint32_t		sc_de_mode;
 	uint8_t			*sc_scratch;
 	paddr_t			sc_linear;
-	int			sc_wsmode;
-	struct edid_info sc_edid_info;
+	uint32_t		sc_vtflags;
+	int			sc_wsmode, sc_video_on;
+	uint8_t			sc_edid_data[128];
+	struct edid_info 	sc_edid_info;
 
 	/* cursor stuff */
 	int			sc_cur_x;
@@ -283,6 +286,10 @@ crmfb_attach(device_t parent, device_t self, void *opaque)
 		sc->sc_depth = 32;
 
 	if (sc->sc_width == 0 || sc->sc_height == 0) {
+		/*
+		 * XXX
+		 * actually, these days we probably could
+		 */
 		aprint_error_dev(sc->sc_dev,
 		    "device unusable if not setup by firmware\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 0 /* XXX */);
@@ -367,6 +374,7 @@ crmfb_attach(device_t parent, device_t self, void *opaque)
 	crmfb_setup_video(sc, sc->sc_console_depth);
 	ri = &crmfb_console_screen.scr_ri;
 	memset(ri, 0, sizeof(struct rasops_info));
+	sc->sc_video_on = 1;
 
 	vcons_init(&sc->sc_vd, sc, &crmfb_defaultscreen, &crmfb_accessops);
 	sc->sc_vd.init_screen = crmfb_init_screen;
@@ -428,7 +436,7 @@ crmfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		/* not really, but who cares? */
-		/* wsfb does */
+		/* xf86-video-crime does */
 		*(u_int *)data = WSDISPLAY_TYPE_CRIME;
 		return 0;
 	case WSDISPLAYIO_GINFO:
@@ -468,8 +476,27 @@ crmfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 		return 0;
 	case WSDISPLAYIO_SVIDEO:
+		{
+			int d = *(int *)data;
+			if (d == sc->sc_video_on)
+				return 0;
+			sc->sc_video_on = d;
+			if (d == WSDISPLAYIO_VIDEO_ON) {
+				crmfb_write_reg(sc,
+				    CRMFB_VT_FLAGS, sc->sc_vtflags);
+			} else {
+				/* turn all SYNCs off */
+				crmfb_write_reg(sc, CRMFB_VT_FLAGS,
+				    sc->sc_vtflags | CRMFB_VT_FLAGS_VDRV_LOW |
+				     CRMFB_VT_FLAGS_HDRV_LOW |
+				     CRMFB_VT_FLAGS_SYNC_LOW);
+			}
+		}
+		return 0;
+					
 	case WSDISPLAYIO_GVIDEO:
-		return ENODEV;	/* not supported yet */
+		*(int *)data = sc->sc_video_on;
+		return 0;
 
 	case WSDISPLAYIO_GCURPOS:
 		{
@@ -511,6 +538,16 @@ crmfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 			cu = (struct wsdisplay_cursor *)data;
 			return crmfb_scursor(sc, cu);
 		}
+	case WSDISPLAYIO_GET_EDID: {
+		struct wsdisplayio_edid_info *d = data;
+
+		d->data_size = 128;
+		if (d->buffer_size < 128)
+			return EAGAIN;
+		if (sc->sc_edid_data[1] == 0)
+			return ENODATA;
+		return copyout(sc->sc_edid_data, d->edid_data, 128);
+	}
 	}
 	return EPASSTHROUGH;
 }
@@ -567,8 +604,11 @@ crmfb_init_screen(void *c, struct vcons_screen *scr, int existing,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = ri->ri_width * (ri->ri_depth / 8);
-#if 1
+
 	switch (ri->ri_depth) {
+	case 8:
+		ri->ri_flg |= RI_8BIT_IS_RGB;
+		break;
 	case 16:
 		ri->ri_rnum = ri->ri_gnum = ri->ri_bnum = 5;
 		ri->ri_rpos = 11;
@@ -582,7 +622,7 @@ crmfb_init_screen(void *c, struct vcons_screen *scr, int existing,
 		ri->ri_bpos = 24;
 		break;
 	}
-#endif
+
 	ri->ri_bits = KERNADDR(sc->sc_dma);
 
 	if (existing)
@@ -814,7 +854,7 @@ static int
 crmfb_setup_video(struct crmfb_softc *sc, int depth)
 {
 	uint64_t reg;
-	uint32_t d, h, mode, page;
+	uint32_t d, h, page;
 	int i, bail, tile_width, tlbptr, lptr, j, tx, shift, overhang;
 	const char *wantsync;
 	uint16_t v;
@@ -862,7 +902,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	/* setup colour mode */
 	switch (depth) {
 	case 8:
-		h = CRMFB_MODE_TYP_I8;
+		h = CRMFB_MODE_TYP_RG3B2;
 		tile_width = 512;
 		break;
 	case 16:
@@ -943,9 +983,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 
 	wantsync = arcbios_GetEnvironmentVariable("SyncOnGreen");
 	if ( (wantsync != NULL) && (wantsync[0] == 'n') ) {
-		d = ( 1 << CRMFB_VT_FLAGS_SYNC_LOW_LSB) & 
-		    CRMFB_REG_MASK(CRMFB_VT_FLAGS_SYNC_LOW_MSB, 
-		    CRMFB_VT_FLAGS_SYNC_LOW_LSB);
+		sc->sc_vtflags |= CRMFB_VT_FLAGS_SYNC_LOW;
 		crmfb_write_reg(sc, CRMFB_VT_FLAGS, d);
 	}
 
@@ -1013,7 +1051,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	
 	switch (depth) {
 		case 8:
-			mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_8 |
+			sc->sc_de_mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_8 |
 			    DE_MODE_TYPE_CI | DE_MODE_PIXDEPTH_8;
 			sc->sc_mte_mode = MTE_MODE_DST_ECC |
 			    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
@@ -1022,7 +1060,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 			sc->sc_mte_x_shift = 0;
 			break;
 		case 16:
-			mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_16 |
+			sc->sc_de_mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_16 |
 			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_16;
 			sc->sc_mte_mode = MTE_MODE_DST_ECC |
 			    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
@@ -1031,7 +1069,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 			sc->sc_mte_x_shift = 1;
 			break;
 		case 32:
-			mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
+			sc->sc_de_mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
 			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32;
 			break;
 			sc->sc_mte_mode = MTE_MODE_DST_ECC |
@@ -1043,8 +1081,10 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 			panic("%s: unsuported colour depth %d\n", __func__,
 			    depth);
 	}
-	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_MODE_DST, mode);
-	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_MODE_SRC, mode);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_MODE_DST,
+	    sc->sc_de_mode);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_MODE_SRC,
+	    sc->sc_de_mode);
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_XFER_STEP_X, 1);
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_XFER_STEP_Y, 1);
 
@@ -1123,6 +1163,8 @@ crmfb_bitblt(struct crmfb_softc *sc, int xs, int ys, int xd, int yd,
 	uint32_t prim = DE_PRIM_RECTANGLE;
 	int rxa, rya, rxe, rye, rxs, rys;
 	crmfb_wait_idle(sc);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_MODE_SRC,
+	    sc->sc_de_mode);
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_DRAWMODE,
 	    DE_DRAWMODE_PLANEMASK | DE_DRAWMODE_BYTEMASK | DE_DRAWMODE_ROP |
 	    DE_DRAWMODE_XFER_EN);
@@ -1384,9 +1426,8 @@ static void
 crmfb_setup_ddc(struct crmfb_softc *sc)
 {
 	int i;
-	char edid_data[128];
 
-	memset(edid_data, 0, 128);
+	memset(sc->sc_edid_data, 0, 128);
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_acquire_bus = crmfb_i2c_acquire_bus;
 	sc->sc_i2c.ic_release_bus = crmfb_i2c_release_bus;
@@ -1397,13 +1438,13 @@ crmfb_setup_ddc(struct crmfb_softc *sc)
 	sc->sc_i2c.ic_write_byte = crmfb_i2c_write_byte;
 	sc->sc_i2c.ic_exec = NULL;
 	i = 0;
-	while (edid_data[1] == 0 && i++ < 10)
-		ddc_read_edid(&sc->sc_i2c, edid_data, 128);
+	while (sc->sc_edid_data[1] == 0 && i++ < 10)
+		ddc_read_edid(&sc->sc_i2c, sc->sc_edid_data, 128);
 	if (i > 1)
 		aprint_debug_dev(sc->sc_dev,
 		    "had to try %d times to get EDID data\n", i);
 	if (i < 11) {
-		edid_parse(edid_data, &sc->sc_edid_info);
+		edid_parse(sc->sc_edid_data, &sc->sc_edid_info);
 		edid_print(&sc->sc_edid_info);
 	}
 }
@@ -1610,6 +1651,7 @@ crmfb_set_mode(struct crmfb_softc *sc, const struct videomode *mode)
 	if (mode->flags & VID_NHSYNC) d |= CRMFB_VT_FLAGS_HDRV_INVERT;
 	if (mode->flags & VID_NVSYNC) d |= CRMFB_VT_FLAGS_VDRV_INVERT;
 	crmfb_write_reg(sc, CRMFB_VT_FLAGS, d);
+	sc->sc_vtflags = d;
 
 	diff = -abs(mode->vtotal - mode->vdisplay - 1);
 	d = ((uint32_t)diff << 12) & 0x00fff000;
