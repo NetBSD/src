@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.5 2014/09/02 10:40:51 jmcneill Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.6 2014/09/02 21:46:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.5 2014/09/02 10:40:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.6 2014/09/02 21:46:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -101,6 +101,8 @@ struct vcaudio_softc {
 	VCHI_INSTANCE_T			sc_instance;
 	VCHI_CONNECTION_T		sc_connection;
 	VCHI_SERVICE_HANDLE_T		sc_service;
+
+	short				sc_peer_version;
 
 	struct workqueue		*sc_wq;
 	struct vcaudio_work		sc_work;
@@ -197,11 +199,6 @@ vcaudio_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": AUDS\n");
 
-	if (vcaudio_init(sc) != 0) {
-		aprint_error_dev(self, "not configured\n");
-		return;
-	}
-
 	vcaudio_rescan(self, NULL, NULL);
 }
 
@@ -209,8 +206,13 @@ static int
 vcaudio_rescan(device_t self, const char *ifattr, const int *locs)
 {
 	struct vcaudio_softc *sc = device_private(self);
+	int error;
 
 	if (ifattr_match(ifattr, "audiobus") && sc->sc_audiodev == NULL) {
+		error = vcaudio_init(sc);
+		if (error)
+			return error;
+
 		sc->sc_audiodev = audio_attach_mi(&vcaudio_hw_if,
 		    sc, sc->sc_dev);
 	}
@@ -285,9 +287,16 @@ vcaudio_init(struct vcaudio_softc *sc)
 		    error);
 		return EIO;
 	}
-	vchi_service_release(sc->sc_service);
 
-	vchi_service_use(sc->sc_service);
+	vchi_get_peer_version(sc->sc_service, &sc->sc_peer_version);
+
+	if (sc->sc_peer_version < 2) {
+		aprint_error_dev(sc->sc_dev,
+		    "peer version (%d) is less than the required version (2)\n",
+		    sc->sc_peer_version);
+		return EINVAL;
+	}
+
 	memset(&msg, 0, sizeof(msg));
 	msg.type = VC_AUDIO_MSG_TYPE_OPEN;
 	error = vchi_msg_queue(sc->sc_service, &msg, sizeof(msg),
@@ -656,9 +665,13 @@ vcaudio_query_devinfo(void *priv, mixer_devinfo_t *di)
 static int
 vcaudio_getdev(void *priv, struct audio_device *audiodev)
 {
+	struct vcaudio_softc *sc = priv;
+
 	snprintf(audiodev->name, sizeof(audiodev->name), "VCHIQ AUDS");
-	snprintf(audiodev->version, sizeof(audiodev->version), "");
+	snprintf(audiodev->version, sizeof(audiodev->version),
+	    "%d", sc->sc_peer_version);
 	snprintf(audiodev->config, sizeof(audiodev->config), "vcaudio");
+
 	return 0;
 }
 
