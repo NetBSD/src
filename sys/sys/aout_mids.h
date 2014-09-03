@@ -1,4 +1,4 @@
-/* $NetBSD: aout_mids.h,v 1.3 2014/08/10 05:57:31 matt Exp $ */
+/* $NetBSD: aout_mids.h,v 1.4 2014/09/03 19:26:31 matt Exp $ */
 
 /*
  * Copyright (c) 2009, The NetBSD Foundation, Inc.
@@ -61,7 +61,9 @@
 #define	MID_X86_64	157	/* AMD x86-64 */
 #define	MID_SH5_32	158	/* ILP32 SH5 */
 #define	MID_IA64	159	/* Itanium */
-#define MID_AARCH64	183	/* ARM AARCH64 */
+#define	MID_AARCH64	183	/* ARM AARCH64 */
+#define	MID_OR1K	184	/* OpenRISC 1000 */
+#define	MID_RISCV	185	/* Risc-V */
 #define	MID_HP200	200	/* hp200 (68010) BSD binary */
 #define	MID_HP300	300	/* hp300 (68020+68881) BSD binary */
 #define	MID_HPUX	0x20C	/* hp200/300 HP-UX binary */
