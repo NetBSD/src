@@ -459,13 +459,11 @@ TARGET_LIBOPCODES_CFILES = \
 	mt-ibld.c \
 	mt-opc.c \
 	ns32k-dis.c \
-	openrisc-asm.c \
-	openrisc-desc.c \
-	openrisc-dis.c \
-	openrisc-ibld.c \
-	openrisc-opc.c \
-	or32-dis.c \
-	or32-opc.c \
+	or1k-asm.c \
+	or1k-desc.c \
+	or1k-dis.c \
+	or1k-ibld.c \
+	or1k-opc.c \
 	pdp11-dis.c \
 	pdp11-opc.c \
 	pj-dis.c \
@@ -572,7 +570,7 @@ POTFILES = $(HFILES) $(CFILES)
 CLEANFILES = \
 	stamp-epiphany stamp-fr30 stamp-frv stamp-ip2k stamp-iq2000 stamp-lm32 \
 	stamp-m32c stamp-m32r stamp-mep stamp-mt \
-	stamp-openrisc stamp-xc16x stamp-xstormy16 \
+	stamp-or1k stamp-xc16x stamp-xstormy16 \
 	libopcodes.a stamp-lib
 
 CGENDIR = @cgendir@
@@ -586,7 +584,7 @@ CGENDEPS = \
 	$(CGENDIR)/opc-opinst.scm \
 	cgen-asm.in cgen-dis.in cgen-ibld.in
 
-CGEN_CPUS = epiphany fr30 frv ip2k iq2000 lm32 m32c m32r mep mt openrisc xc16x xstormy16
+CGEN_CPUS = epiphany fr30 frv ip2k iq2000 lm32 m32c m32r mep mt or1k xc16x xstormy16
 @CGEN_MAINT_FALSE@EPIPHANY_DEPS = 
 @CGEN_MAINT_TRUE@EPIPHANY_DEPS = stamp-epiphany
 @CGEN_MAINT_FALSE@FR30_DEPS = 
@@ -607,8 +605,8 @@ CGEN_CPUS = epiphany fr30 frv ip2k iq2000 lm32 m32c m32r mep mt openrisc xc16x x
 @CGEN_MAINT_TRUE@MEP_DEPS = stamp-mep
 @CGEN_MAINT_FALSE@MT_DEPS = 
 @CGEN_MAINT_TRUE@MT_DEPS = stamp-mt
-@CGEN_MAINT_FALSE@OPENRISC_DEPS = 
-@CGEN_MAINT_TRUE@OPENRISC_DEPS = stamp-openrisc
+@CGEN_MAINT_FALSE@OR1K_DEPS = 
+@CGEN_MAINT_TRUE@OR1K_DEPS = stamp-or1k
 @CGEN_MAINT_FALSE@XC16X_DEPS = 
 @CGEN_MAINT_TRUE@XC16X_DEPS = stamp-xc16x
 @CGEN_MAINT_FALSE@XSTORMY16_DEPS = 
@@ -855,13 +853,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mt-ibld.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mt-opc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ns32k-dis.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/openrisc-asm.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/openrisc-desc.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/openrisc-dis.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/openrisc-ibld.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/openrisc-opc.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/or32-dis.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/or32-opc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/or1k-asm.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/or1k-desc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/or1k-dis.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/or1k-ibld.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/or1k-opc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/or1k-opinst.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pdp11-dis.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pdp11-opc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pj-dis.Plo@am__quote@
@@ -1340,11 +1337,11 @@ stamp-mt: $(CGENDEPS) $(CPUDIR)/mt.cpu $(CPUDIR)/mt.opc
 		archfile=$(CPUDIR)/mt.cpu \
 		opcfile=$(CPUDIR)/mt.opc extrafiles=
 
-$(srcdir)/openrisc-desc.h $(srcdir)/openrisc-desc.c $(srcdir)/openrisc-opc.h $(srcdir)/openrisc-opc.c $(srcdir)/openrisc-ibld.c $(srcdir)/openrisc-asm.c $(srcdir)/openrisc-dis.c: $(OPENRISC_DEPS)
+$(srcdir)/or1k-desc.h $(srcdir)/or1k-desc.c $(srcdir)/or1k-opc.h $(srcdir)/or1k-opc.c $(srcdir)/or1k-ibld.c $(srcdir)/or1k-opinst.c $(srcdir)/or1k-asm.c $(srcdir)/or1k-dis.c: $(OR1K_DEPS)
 	@true
-stamp-openrisc: $(CGENDEPS) $(CPUDIR)/openrisc.cpu $(CPUDIR)/openrisc.opc
-	$(MAKE) run-cgen arch=openrisc prefix=openrisc options= \
-		archfile=$(CPUDIR)/openrisc.cpu opcfile=$(CPUDIR)/openrisc.opc extrafiles=
+stamp-or1k: $(CGENDEPS) $(CPUDIR)/or1k.cpu $(CPUDIR)/or1k.opc $(CPUDIR)/or1kcommon.cpu $(CPUDIR)/or1korbis.cpu $(CPUDIR)/or1korfpx.cpu
+	$(MAKE) run-cgen arch=or1k prefix=or1k options=opinst \
+		archfile=$(CPUDIR)/or1k.cpu opcfile=$(CPUDIR)/or1k.opc extrafiles=opinst
 
 $(srcdir)/xc16x-desc.h $(srcdir)/xc16x-desc.c $(srcdir)/xc16x-opc.h $(srcdir)/xc16x-opc.c $(srcdir)/xc16x-ibld.c $(srcdir)/xc16x-asm.c $(srcdir)/xc16x-dis.c: $(XC16X_DEPS)
 	@true

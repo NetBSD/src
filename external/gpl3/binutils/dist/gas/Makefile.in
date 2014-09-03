@@ -415,8 +415,7 @@ TARGET_CPU_CFILES = \
 	config/tc-msp430.c \
 	config/tc-mt.c \
 	config/tc-ns32k.c \
-	config/tc-openrisc.c \
-	config/tc-or32.c \
+	config/tc-or1k.c \
 	config/tc-pdp11.c \
 	config/tc-pj.c \
 	config/tc-ppc.c \
@@ -484,8 +483,7 @@ TARGET_CPU_HFILES = \
 	config/tc-msp430.h \
 	config/tc-mt.h \
 	config/tc-ns32k.h \
-	config/tc-openrisc.h \
-	config/tc-or32.h \
+	config/tc-or1k.h \
 	config/tc-pdp11.h \
 	config/tc-pj.h \
 	config/tc-ppc.h \
@@ -835,8 +833,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-msp430.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-mt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-ns32k.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-openrisc.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-or32.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-or1k.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-pdp11.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-pj.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tc-ppc.Po@am__quote@
@@ -1447,33 +1444,19 @@ tc-ns32k.obj: config/tc-ns32k.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-ns32k.obj `if test -f 'config/tc-ns32k.c'; then $(CYGPATH_W) 'config/tc-ns32k.c'; else $(CYGPATH_W) '$(srcdir)/config/tc-ns32k.c'; fi`
 
-tc-openrisc.o: config/tc-openrisc.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-openrisc.o -MD -MP -MF $(DEPDIR)/tc-openrisc.Tpo -c -o tc-openrisc.o `test -f 'config/tc-openrisc.c' || echo '$(srcdir)/'`config/tc-openrisc.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tc-openrisc.Tpo $(DEPDIR)/tc-openrisc.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='config/tc-openrisc.c' object='tc-openrisc.o' libtool=no @AMDEPBACKSLASH@
+tc-or1k.o: config/tc-or1k.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-or1k.o -MD -MP -MF $(DEPDIR)/tc-or1k.Tpo -c -o tc-or1k.o `test -f 'config/tc-or1k.c' || echo '$(srcdir)/'`config/tc-or1k.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tc-or1k.Tpo $(DEPDIR)/tc-or1k.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='config/tc-or1k.c' object='tc-or1k.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-openrisc.o `test -f 'config/tc-openrisc.c' || echo '$(srcdir)/'`config/tc-openrisc.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-or1k.o `test -f 'config/tc-or1k.c' || echo '$(srcdir)/'`config/tc-or1k.c
 
-tc-openrisc.obj: config/tc-openrisc.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-openrisc.obj -MD -MP -MF $(DEPDIR)/tc-openrisc.Tpo -c -o tc-openrisc.obj `if test -f 'config/tc-openrisc.c'; then $(CYGPATH_W) 'config/tc-openrisc.c'; else $(CYGPATH_W) '$(srcdir)/config/tc-openrisc.c'; fi`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tc-openrisc.Tpo $(DEPDIR)/tc-openrisc.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='config/tc-openrisc.c' object='tc-openrisc.obj' libtool=no @AMDEPBACKSLASH@
+tc-or1k.obj: config/tc-or1k.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-or1k.obj -MD -MP -MF $(DEPDIR)/tc-or1k.Tpo -c -o tc-or1k.obj `if test -f 'config/tc-or1k.c'; then $(CYGPATH_W) 'config/tc-or1k.c'; else $(CYGPATH_W) '$(srcdir)/config/tc-or1k.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tc-or1k.Tpo $(DEPDIR)/tc-or1k.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='config/tc-or1k.c' object='tc-or1k.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-openrisc.obj `if test -f 'config/tc-openrisc.c'; then $(CYGPATH_W) 'config/tc-openrisc.c'; else $(CYGPATH_W) '$(srcdir)/config/tc-openrisc.c'; fi`
-
-tc-or32.o: config/tc-or32.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-or32.o -MD -MP -MF $(DEPDIR)/tc-or32.Tpo -c -o tc-or32.o `test -f 'config/tc-or32.c' || echo '$(srcdir)/'`config/tc-or32.c
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tc-or32.Tpo $(DEPDIR)/tc-or32.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='config/tc-or32.c' object='tc-or32.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-or32.o `test -f 'config/tc-or32.c' || echo '$(srcdir)/'`config/tc-or32.c
-
-tc-or32.obj: config/tc-or32.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-or32.obj -MD -MP -MF $(DEPDIR)/tc-or32.Tpo -c -o tc-or32.obj `if test -f 'config/tc-or32.c'; then $(CYGPATH_W) 'config/tc-or32.c'; else $(CYGPATH_W) '$(srcdir)/config/tc-or32.c'; fi`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/tc-or32.Tpo $(DEPDIR)/tc-or32.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='config/tc-or32.c' object='tc-or32.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-or32.obj `if test -f 'config/tc-or32.c'; then $(CYGPATH_W) 'config/tc-or32.c'; else $(CYGPATH_W) '$(srcdir)/config/tc-or32.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o tc-or1k.obj `if test -f 'config/tc-or1k.c'; then $(CYGPATH_W) 'config/tc-or1k.c'; else $(CYGPATH_W) '$(srcdir)/config/tc-or1k.c'; fi`
 
 tc-pdp11.o: config/tc-pdp11.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT tc-pdp11.o -MD -MP -MF $(DEPDIR)/tc-pdp11.Tpo -c -o tc-pdp11.o `test -f 'config/tc-pdp11.c' || echo '$(srcdir)/'`config/tc-pdp11.c
