@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.70 2014/08/27 13:46:20 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.71 2014/09/03 02:16:50 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -1019,3 +1019,15 @@ sys/netinet6/ip6_output.c			1.158 via patch
 
 	Fix a memory leak in calling setsockopt() on an INET6 socket.
 	[maxv ticket #1920]
+
+share/mk/bsd.README				1.265
+share/mk/bsd.lib.mk				1.304 via patch
+
+	 Change shared object file extension from .so to .pico, to avoid
+	conflicts with shared libaries names libXX.so.
+	[tls, ticket #1338]
+
+UPDATING					1.209 via patch
+
+	Note shared objects extension change, and stalled files.
+	[tls, ticket #1339]
