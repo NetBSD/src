@@ -1,4 +1,4 @@
-/* $NetBSD: awin_intr.h,v 1.3 2013/09/07 00:35:52 matt Exp $ */
+/* $NetBSD: awin_intr.h,v 1.4 2014/09/03 21:42:46 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -72,7 +72,7 @@
 #define AWIN_IRQ_DMA		59
 #define AWIN_IRQ_PIO		60
 #define AWIN_IRQ_TP		61
-#define AWIN_IRQ_ADDC		62
+#define AWIN_IRQ_AC		62
 #define AWIN_IRQ_LRADC		63
 #define AWIN_IRQ_SDMMC0		64
 #define AWIN_IRQ_SDMMC1		65
