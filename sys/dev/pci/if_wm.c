@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.294 2014/09/01 16:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.295 2014/09/03 14:30:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.294 2014/09/01 16:42:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.295 2014/09/03 14:30:04 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,7 +624,8 @@ static int	wm_tbi_mediachange(struct ifnet *);
 static void	wm_tbi_set_linkled(struct wm_softc *);
 static void	wm_tbi_check_link(struct wm_softc *);
 /* SFP related */
-static uint32_t	wm_get_sfp_media_type(struct wm_softc *);
+static int	wm_sfp_read_data_byte(struct wm_softc *, uint16_t, uint8_t *);
+static uint32_t	wm_sfp_get_media_type(struct wm_softc *);
 
 /*
  * NVM related.
@@ -2075,7 +2076,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 				aprint_verbose_dev(sc->sc_dev, "SGMII(I2C)\n");
 				/*FALLTHROUGH*/
 			case CTRL_EXT_LINK_MODE_PCIE_SERDES:
-				sc->sc_mediatype = wm_get_sfp_media_type(sc);
+				sc->sc_mediatype = wm_sfp_get_media_type(sc);
 				if (sc->sc_mediatype == WMP_F_UNKNOWN) {
 					if (link_mode
 					    == CTRL_EXT_LINK_MODE_SGMII) {
@@ -2110,6 +2111,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 				break;
 			case CTRL_EXT_LINK_MODE_GMII:
 			default:
+				aprint_verbose_dev(sc->sc_dev, "Copper\n");
 				sc->sc_mediatype = WMP_F_COPPER;
 				break;
 			}
@@ -7578,12 +7580,91 @@ wm_tbi_check_link(struct wm_softc *sc)
 }
 
 /* SFP related */
-static uint32_t
-wm_get_sfp_media_type(struct wm_softc *sc)
-{
 
-	/* XXX */
-	return WMP_F_SERDES;
+static int
+wm_sfp_read_data_byte(struct wm_softc *sc, uint16_t offset, uint8_t *data)
+{
+	uint32_t i2ccmd;
+	int i;
+
+	i2ccmd = (offset << I2CCMD_REG_ADDR_SHIFT) | I2CCMD_OPCODE_READ;
+	CSR_WRITE(sc, WMREG_I2CCMD, i2ccmd);
+
+	/* Poll the ready bit */
+	for (i = 0; i < I2CCMD_PHY_TIMEOUT; i++) {
+		delay(50);
+		i2ccmd = CSR_READ(sc, WMREG_I2CCMD);
+		if (i2ccmd & I2CCMD_READY)
+			break;
+	}
+	if ((i2ccmd & I2CCMD_READY) == 0)
+		return -1;
+	if ((i2ccmd & I2CCMD_ERROR) != 0)
+		return -1;
+
+	*data = i2ccmd & 0x00ff;
+
+	return 0;
+}
+
+static uint32_t
+wm_sfp_get_media_type(struct wm_softc *sc)
+{
+	uint32_t ctrl_ext;
+	uint8_t val = 0;
+	int timeout = 3;
+	uint32_t mediatype = WMP_F_UNKNOWN;
+	int rv = -1;
+
+	ctrl_ext = CSR_READ(sc, WMREG_CTRL_EXT);
+	ctrl_ext &= ~CTRL_EXT_SWDPIN(3);
+	CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext | CTRL_EXT_I2C_ENA);
+	CSR_WRITE_FLUSH(sc);
+
+	/* Read SFP module data */
+	while (timeout) {
+		rv = wm_sfp_read_data_byte(sc, SFF_SFP_ID_OFF, &val);
+		if (rv == 0)
+			break;
+		delay(100*1000); /* XXX too big */
+		timeout--;
+	}
+	if (rv != 0)
+		goto out;
+	switch (val) {
+	case SFF_SFP_ID_SFF:
+		aprint_normal_dev(sc->sc_dev,
+		    "Module/Connector soldered to board\n");
+		break;
+	case SFF_SFP_ID_SFP:
+		aprint_normal_dev(sc->sc_dev, "SFP\n");
+		break;
+	case SFF_SFP_ID_UNKNOWN:
+		goto out;
+	default:
+		break;
+	}
+
+	rv = wm_sfp_read_data_byte(sc, SFF_SFP_ETH_FLAGS_OFF, &val);
+	if (rv != 0) {
+		goto out;
+	}
+
+	if ((val & (SFF_SFP_ETH_FLAGS_1000SX | SFF_SFP_ETH_FLAGS_1000LX)) != 0)
+		mediatype = WMP_F_SERDES;
+	else if ((val & SFF_SFP_ETH_FLAGS_1000T) != 0){
+		sc->sc_flags |= WM_F_SGMII;
+		mediatype = WMP_F_COPPER;
+	} else if ((val & SFF_SFP_ETH_FLAGS_100FX) != 0){
+		sc->sc_flags |= WM_F_SGMII;
+		mediatype = WMP_F_SERDES;
+	}
+
+out:
+	/* Restore I2C interface setting */
+	CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext);
+
+	return mediatype;
 }
 /*
  * NVM related.
