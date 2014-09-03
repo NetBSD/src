@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.70 2014/08/29 04:58:40 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.71 2014/09/03 16:01:45 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -269,7 +269,7 @@ sticky_access(puffs_cookie_t opc, struct puffs_node *targ,
 	      const struct puffs_cred *pcr)
 {
 	uid_t uid;
-	int sticky, owner;
+	int sticky, owner, parent_owner;
 
 	/*
 	 * This covers the case where the kernel requests a DELETE
@@ -288,9 +288,10 @@ sticky_access(puffs_cookie_t opc, struct puffs_node *targ,
 
 	sticky = puffs_pn_getvap(opc)->va_mode & S_ISTXT;
 	owner = puffs_pn_getvap(targ)->va_uid == uid;
+	parent_owner = puffs_pn_getvap(opc)->va_uid == uid;
 
-	if (sticky && !owner)
-		return EACCES;
+	if (sticky && !owner && !parent_owner)
+		return EPERM;
 
 	return 0;
 }
@@ -1305,7 +1306,7 @@ perfuse_node_mknod(struct puffs_usermount *pu, puffs_cookie_t opc,
 		break;
 	default:	/* VNON, VBLK, VCHR, VBAD */
 		if (!puffs_cred_isjuggernaut(pcn->pcn_cred)) {
-			error = EACCES;
+			error = EPERM;
 			goto out;
 		}
 		break;
@@ -1696,7 +1697,7 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	     (vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL)) &&
 	    (puffs_access_times(old_va->va_uid, old_va->va_gid,
 				old_va->va_mode, 0, pcr) != 0))
-		return EACCES;
+		return EPERM;
 
 	/*
 	 * Check for permission to change owner and group
@@ -1705,7 +1706,15 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	     (vap->va_gid != (gid_t)PUFFS_VNOVAL)) &&
 	    (puffs_access_chown(old_va->va_uid, old_va->va_gid,
 				vap->va_uid, vap->va_gid, pcr)) != 0)
-		return EACCES;
+		return EPERM;
+
+	/*
+	 * Check for sticky bit on non-directory by non root user
+	 */
+	if ((vap->va_mode != (mode_t)PUFFS_VNOVAL) &&
+	    (vap->va_mode & S_ISTXT) && (old_va->va_type != VDIR) &&
+	    !puffs_cred_isjuggernaut(pcr))
+		return EFTYPE;
 
 	/*
 	 * Check for permission to change permissions
@@ -1713,7 +1722,7 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	if ((vap->va_mode != (mode_t)PUFFS_VNOVAL) &&
 	    (puffs_access_chmod(old_va->va_uid, old_va->va_gid,
 				old_va->va_type, vap->va_mode, pcr)) != 0)
-		return EACCES;
+		return EPERM;
 	
 	node_ref(opc);
 	
@@ -2877,13 +2886,68 @@ perfuse_node_print(struct puffs_usermount *pu, puffs_cookie_t opc)
 	return 0;
 }
 
-/* ARGSUSED0 */
 int
 perfuse_node_pathconf(struct puffs_usermount *pu, puffs_cookie_t opc,
 	int name, int *retval)
 {
-	DERRX(EX_SOFTWARE, "%s: UNIMPLEMENTED (FATAL)", __func__);
-	return 0;
+	perfuse_msg_t *pm;
+	struct perfuse_state *ps;
+	struct fuse_statfs_out *fso;
+	int error = 0;
+
+	/*
+	 * Static values copied from UFS 
+	 * in src/sys/ufs/ufs/ufs_vnops.c
+	 */
+	switch (name) {
+	case _PC_LINK_MAX:
+		*retval = LINK_MAX;
+		break;
+	case _PC_PATH_MAX:
+		*retval = PATH_MAX;
+		break;
+	case _PC_PIPE_BUF:
+		*retval = PIPE_BUF;
+		break;
+	case _PC_CHOWN_RESTRICTED:
+		*retval = 1;
+		break;
+	case _PC_NO_TRUNC:
+		*retval = 1;
+		break;
+	case _PC_SYNC_IO:
+		*retval = 1;
+		break;
+	case _PC_FILESIZEBITS:
+		*retval = 42;
+		break;
+	case _PC_SYMLINK_MAX:
+		*retval = MAXPATHLEN;
+		break;
+	case _PC_2_SYMLINKS:
+		*retval = 1;
+		break;
+	case _PC_NAME_MAX:
+		ps = puffs_getspecific(pu);
+		pm = ps->ps_new_msg(pu, opc, FUSE_STATFS, 0, NULL);
+
+		error = xchg_msg(pu, opc, pm, sizeof(*fso), wait_reply);
+		if (error != 0)
+			return error;
+
+		fso = GET_OUTPAYLOAD(ps, pm, fuse_statfs_out);
+		*retval = fso->st.namelen;
+
+		ps->ps_destroy_msg(pm);
+	
+		break;
+	default:
+		DWARN("Unimplemented pathconf for name = %d", name);
+		error = ENOSYS;
+		break;
+	}
+
+	return error;
 }
 
 int
