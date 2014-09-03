@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.62 2014/09/01 16:42:27 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.63 2014/09/03 14:30:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1034,6 +1034,20 @@ struct livengood_tcpip_ctxdesc {
 
 /* for PCI express Capability registers */
 #define	WM_PCIE_DCSR2_16MS	0x00000005
+
+/* SFF SFP ROM data */
+#define SFF_SFP_ID_OFF		0x00
+#define SFF_SFP_ID_UNKNOWN	0x00	/* Unknown */
+#define SFF_SFP_ID_SFF		0x02	/* Module soldered to motherboard */
+#define SFF_SFP_ID_SFP		0x03	/* SFP transceiver */
+
+#define SFF_SFP_ETH_FLAGS_OFF	0x06
+#define SFF_SFP_ETH_FLAGS_1000SX	0x01
+#define SFF_SFP_ETH_FLAGS_1000LX	0x02
+#define SFF_SFP_ETH_FLAGS_1000CX	0x04
+#define SFF_SFP_ETH_FLAGS_1000T		0x08
+#define SFF_SFP_ETH_FLAGS_100FX		0x10
+
 
 /* advanced TX descriptor for 82575 and newer */
 typedef union nq_txdesc {
