@@ -137,6 +137,9 @@ mips*-*-*)
 	cpu_type=mips
 	tmake_file=mips/t-mips
 	;;
+or1k-*-* | or1knd-*-*)
+	cpu_type=or1k
+	;;
 powerpc*-*-*)
 	cpu_type=rs6000
 	;;
@@ -819,6 +822,17 @@ moxie-*-rtems*)
 	tmake_file="$tmake_file moxie/t-moxie t-softfp-sfdf t-softfp-excl t-softfp"
 	# Don't use default.
 	extra_parts=
+	;;
+or1k*-*-linux* | or1k*-*-uclinux*)
+	tmake_file="$tmake_file or1k/t-or1k or1k/t-linux or1k/t-crtstuff t-softfp-sfdf t-softfp"
+	md_unwind_header=or1k/linux-unwind.h
+	;;
+or1k*-*-netbsd*)
+	tmake_file="$tmake_file or1k/t-or1k"
+	;;
+or1k*-*-*)
+	tmake_file="$tmake_file or1k/t-or1k or1k/t-linux or1k/t-crtstuff t-softfp-sfdf t-softfp"
+	extra_parts="crtbegin.o crtbeginS.o crtbeginT.o crtend.o crtendS.o crti.o crtn.o"
 	;;
 pdp11-*-*)
 	tmake_file="pdp11/t-pdp11 t-fdpbit"
