@@ -67,8 +67,7 @@
 #define ARCH_mt
 #define ARCH_msp430
 #define ARCH_ns32k
-#define ARCH_openrisc
-#define ARCH_or32
+#define ARCH_or1k
 #define ARCH_pdp11
 #define ARCH_pj
 #define ARCH_powerpc
@@ -332,17 +331,9 @@ disassembler (abfd)
       disassemble = print_insn_mn10300;
       break;
 #endif
-#ifdef ARCH_openrisc
-    case bfd_arch_openrisc:
-      disassemble = print_insn_openrisc;
-      break;
-#endif
-#ifdef ARCH_or32
-    case bfd_arch_or32:
-      if (bfd_big_endian (abfd))
-	disassemble = print_insn_big_or32;
-      else
-	disassemble = print_insn_little_or32;
+#ifdef ARCH_or1k
+    case bfd_arch_or1k:
+      disassemble = print_insn_or1k;
       break;
 #endif
 #ifdef ARCH_pdp11
