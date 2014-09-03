@@ -245,7 +245,9 @@ ALL_EMULATION_SOURCES = \
 	eelf32mipswindiss.c \
 	eelf32moxie.c \
 	eelf32mt.c \
-	eelf32openrisc.c \
+	eelf32or1k.c \
+	eelf32or1k_linux.c \
+	eelf32or1k_nbsd.c \
 	eelf32ppc.c \
 	eelf32ppc_fbsd.c \
 	eelf32ppc_nbsd.c \
@@ -407,8 +409,6 @@ ALL_EMULATION_SOURCES = \
 	emsp430xW427.c \
 	enews.c \
 	ens32knbsd.c \
-	eor32.c \
-	eor32elf.c \
 	epc532macha.c \
 	epdp11.c \
 	epjelf.c \
@@ -1162,9 +1162,17 @@ eelf32moxie.c: $(srcdir)/emulparams/elf32moxie.sh \
 eelf32mt.c: $(srcdir)/emulparams/elf32mt.sh \
   $(ELF_GEN_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
 	${GENSCRIPTS} elf32mt "$(tdir_mt)"
-eelf32openrisc.c: $(srcdir)/emulparams/elf32openrisc.sh \
+eelf32or1k.c: $(srcdir)/emulparams/elf32or1k.sh \
   $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
-	${GENSCRIPTS} elf32openrisc "$(tdir_openrisc)"
+	${GENSCRIPTS} elf32or1k "$(tdir_or1k)"
+eelf32or1k_linux.c: $(srcdir)/emulparams/elf32or1k_linux.sh \
+  $(srcdir)/emulparams/elf32or1k.sh \
+  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf32or1k_linux "$(tdir_or1k_linux)"
+eelf32or1k_nbsd.c: $(srcdir)/emulparams/elf32or1k_nbsd.sh \
+  $(srcdir)/emulparams/elf32or1k.sh \
+  $(ELF_DEPS) $(srcdir)/scripttempl/elf.sc ${GEN_DEPENDS}
+	${GENSCRIPTS} elf32or1k_nbsd "$(tdir_or1k_nbsd)"
 eelf32ppc.c: $(srcdir)/emulparams/elf32ppc.sh \
   $(srcdir)/emulparams/elf32ppccommon.sh $(srcdir)/emultempl/ppc32elf.em \
   ldemul-list.h \
