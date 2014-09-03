@@ -1,7 +1,6 @@
-/* tc-openrisc.c -- Assembler for the OpenRISC family.
-   Copyright 2001, 2002, 2003, 2005, 2006, 2007, 2009
-   Free Software Foundation.
-   Contributed by Johan Rydberg, jrydberg@opencores.org
+/* tc-or1k.c -- Assembler for the OpenRISC family.
+   Copyright 2001-2014 Free Software Foundation.
+   Contributed for OR32 by Johan Rydberg, jrydberg@opencores.org
 
    This file is part of GAS, the GNU Assembler.
 
@@ -16,26 +15,25 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 51 Franklin Street - Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
-
+   along with this program; if not, see <http://www.gnu.org/licenses/> */
 #include "as.h"
+#include "safe-ctype.h"
 #include "subsegs.h"
 #include "symcat.h"
-#include "opcodes/openrisc-desc.h"
-#include "opcodes/openrisc-opc.h"
+#include "opcodes/or1k-desc.h"
+#include "opcodes/or1k-opc.h"
 #include "cgen.h"
+#include "elf/or1k.h"
+#include "dw2gencfi.h"
 
 /* Structure to hold all of the different components describing
    an individual instruction.  */
-typedef struct openrisc_insn openrisc_insn;
 
-struct openrisc_insn
+typedef struct
 {
-  const CGEN_INSN *	insn;
-  const CGEN_INSN *	orig_insn;
-  CGEN_FIELDS		fields;
+  const CGEN_INSN *     insn;
+  const CGEN_INSN *     orig_insn;
+  CGEN_FIELDS           fields;
 #if CGEN_INT_INSN_P
   CGEN_INSN_INT         buffer [1];
 #define INSN_VALUE(buf) (*(buf))
@@ -43,13 +41,13 @@ struct openrisc_insn
   unsigned char         buffer [CGEN_MAX_INSN_SIZE];
 #define INSN_VALUE(buf) (buf)
 #endif
-  char *		addr;
-  fragS *		frag;
+  char *                addr;
+  fragS *               frag;
   int                   num_fixups;
   fixS *                fixups [GAS_CGEN_MAX_FIXUPS];
   int                   indices [MAX_OPERAND_INSTANCES];
-};
-
+}
+or1k_insn;
 
 const char comment_chars[]        = "#";
 const char line_comment_chars[]   = "#";
@@ -57,9 +55,8 @@ const char line_separator_chars[] = ";";
 const char EXP_CHARS[]            = "eE";
 const char FLT_CHARS[]            = "dD";
 
-
-#define OPENRISC_SHORTOPTS "m:"
-const char * md_shortopts = OPENRISC_SHORTOPTS;
+#define OR1K_SHORTOPTS "m:"
+const char * md_shortopts = OR1K_SHORTOPTS;
 
 struct option md_longopts[] =
 {
@@ -67,7 +64,7 @@ struct option md_longopts[] =
 };
 size_t md_longopts_size = sizeof (md_longopts);
 
-unsigned long openrisc_machine = 0; /* default */
+unsigned long or1k_machine = 0; /* default */
 
 int
 md_parse_option (int c ATTRIBUTE_UNUSED, char * arg ATTRIBUTE_UNUSED)
@@ -86,30 +83,38 @@ ignore_pseudo (int val ATTRIBUTE_UNUSED)
   discard_rest_of_line ();
 }
 
-const char openrisc_comment_chars [] = ";#";
+static bfd_boolean nodelay = FALSE;
+static void
+s_nodelay (int val ATTRIBUTE_UNUSED)
+{
+  nodelay = TRUE;
+}
+
+const char or1k_comment_chars [] = ";#";
 
 /* The target specific pseudo-ops which we support.  */
 const pseudo_typeS md_pseudo_table[] =
 {
+  { "align",    s_align_bytes,  0 },
   { "word",     cons,           4 },
   { "proc",     ignore_pseudo,  0 },
   { "endproc",  ignore_pseudo,  0 },
-  { NULL, 	NULL, 		0 }
+  { "nodelay",  s_nodelay,      0 },
+  { NULL,       NULL,           0 }
 };
 
 
-
 void
 md_begin (void)
 {
   /* Initialize the `cgen' interface.  */
 
   /* Set the machine number and endian.  */
-  gas_cgen_cpu_desc = openrisc_cgen_cpu_open (CGEN_CPU_OPEN_MACHS, 0,
+  gas_cgen_cpu_desc = or1k_cgen_cpu_open (CGEN_CPU_OPEN_MACHS, 0,
                                               CGEN_CPU_OPEN_ENDIAN,
                                               CGEN_ENDIAN_BIG,
                                               CGEN_CPU_OPEN_END);
-  openrisc_cgen_init_asm (gas_cgen_cpu_desc);
+  or1k_cgen_init_asm (gas_cgen_cpu_desc);
 
   /* This is a callback from cgen to gas to parse operands.  */
   cgen_set_parse_operand_fn (gas_cgen_cpu_desc, gas_cgen_parse_operand);
@@ -119,13 +124,13 @@ void
 md_assemble (char * str)
 {
   static int last_insn_had_delay_slot = 0;
-  openrisc_insn insn;
+  or1k_insn insn;
   char *    errmsg;
 
   /* Initialize GAS's cgen interface for a new instruction.  */
   gas_cgen_init_parse ();
 
-  insn.insn = openrisc_cgen_assemble_insn
+  insn.insn = or1k_cgen_assemble_insn
     (gas_cgen_cpu_desc, str, & insn.fields, insn.buffer, & errmsg);
 
   if (!insn.insn)
@@ -136,10 +141,11 @@ md_assemble (char * str)
 
   /* Doesn't really matter what we pass for RELAX_P here.  */
   gas_cgen_finish_insn (insn.insn, insn.buffer,
-			CGEN_FIELDS_BITSIZE (& insn.fields), 1, NULL);
+                        CGEN_FIELDS_BITSIZE (& insn.fields), 1, NULL);
 
   last_insn_had_delay_slot
     = CGEN_INSN_ATTR_VALUE (insn.insn, CGEN_INSN_DELAY_SLOT);
+  (void) last_insn_had_delay_slot;
 }
 
 
@@ -169,10 +175,8 @@ md_undefined_symbol (char * name ATTRIBUTE_UNUSED)
   return 0;
 }
 
-
-/* Interface to relax_segment.  */
 
-/* FIXME: Look through this.  */
+/* Interface to relax_segment.  */
 
 const relax_typeS md_relax_table[] =
 {
@@ -186,71 +190,14 @@ const relax_typeS md_relax_table[] =
      each list.  */
   {1, 1, 0, 0},
 
-  /* The displacement used by GAS is from the end of the 2 byte insn,
-     so we subtract 2 from the following.  */
-  /* 16 bit insn, 8 bit disp -> 10 bit range.
-     This doesn't handle a branch in the right slot at the border:
-     the "& -4" isn't taken into account.  It's not important enough to
-     complicate things over it, so we subtract an extra 2 (or + 2 in -ve
-     case).  */
-  {511 - 2 - 2, -512 - 2 + 2, 0, 2 },
-  /* 32 bit insn, 24 bit disp -> 26 bit range.  */
-  {0x2000000 - 1 - 2, -0x2000000 - 2, 2, 0 },
-  /* Same thing, but with leading nop for alignment.  */
-  {0x2000000 - 1 - 2, -0x2000000 - 2, 4, 0 }
+  /* The displacement used by GAS is from the end of the 4 byte insn,
+     so we subtract 4 from the following.  */
+  {(((1 << 25) - 1) << 2) - 4, -(1 << 25) - 4, 0, 0},
 };
 
-/* Return an initial guess of the length by which a fragment must grow to
-   hold a branch to reach its destination.
-   Also updates fr_type/fr_subtype as necessary.
-
-   Called just before doing relaxation.
-   Any symbol that is now undefined will not become defined.
-   The guess for fr_var is ACTUALLY the growth beyond fr_fix.
-   Whatever we do to grow fr_fix or fr_var contributes to our returned value.
-   Although it may not be explicit in the frag, pretend fr_var starts with a
-   0 value.  */
-
 int
-md_estimate_size_before_relax (fragS * fragP, segT segment)
+md_estimate_size_before_relax (fragS * fragP, segT segment ATTRIBUTE_UNUSED)
 {
-  /* The only thing we have to handle here are symbols outside of the
-     current segment.  They may be undefined or in a different segment in
-     which case linker scripts may place them anywhere.
-     However, we can't finish the fragment here and emit the reloc as insn
-     alignment requirements may move the insn about.  */
-
-  if (S_GET_SEGMENT (fragP->fr_symbol) != segment)
-    {
-      /* The symbol is undefined in this segment.
-	 Change the relaxation subtype to the max allowable and leave
-	 all further handling to md_convert_frag.  */
-      fragP->fr_subtype = 2;
-
-      {
-	const CGEN_INSN * insn;
-	int               i;
-
-	/* Update the recorded insn.
-	   Fortunately we don't have to look very far.
-	   FIXME: Change this to record in the instruction the next higher
-	   relaxable insn to use.  */
-	for (i = 0, insn = fragP->fr_cgen.insn; i < 4; i++, insn++)
-	  {
-	    if ((strcmp (CGEN_INSN_MNEMONIC (insn),
-			 CGEN_INSN_MNEMONIC (fragP->fr_cgen.insn))
-		 == 0)
-		&& CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_RELAXED))
-	      break;
-	  }
-	if (i == 4)
-	  abort ();
-
-	fragP->fr_cgen.insn = insn;
-	return 2;
-      }
-    }
-
   return md_relax_table[fragP->fr_subtype].rlx_length;
 }
 
@@ -263,13 +210,13 @@ md_estimate_size_before_relax (fragS * fragP, segT segment)
 
 void
 md_convert_frag (bfd *   abfd ATTRIBUTE_UNUSED,
-		 segT    sec  ATTRIBUTE_UNUSED,
-		 fragS * fragP ATTRIBUTE_UNUSED)
+                 segT    sec  ATTRIBUTE_UNUSED,
+                 fragS * fragP ATTRIBUTE_UNUSED)
 {
   /* FIXME */
 }
 
-
+
 /* Functions concerning relocs.  */
 
 /* The location from which a PC relative jump should be calculated,
@@ -280,12 +227,16 @@ md_pcrel_from_section (fixS * fixP, segT sec)
 {
   if (fixP->fx_addsy != (symbolS *) NULL
       && (! S_IS_DEFINED (fixP->fx_addsy)
-	  || S_GET_SEGMENT (fixP->fx_addsy) != sec))
-    /* The symbol is undefined (or is defined but not in this section).
-       Let the linker figure it out.  */
-    return 0;
+          || (S_GET_SEGMENT (fixP->fx_addsy) != sec)
+          || S_IS_EXTERNAL (fixP->fx_addsy)
+          || S_IS_WEAK (fixP->fx_addsy)))
+    {
+        /* The symbol is undefined (or is defined but not in this section).
+         Let the linker figure it out.  */
+      return 0;
+    }
 
-  return (fixP->fx_frag->fr_address + fixP->fx_where) & ~1;
+  return fixP->fx_frag->fr_address + fixP->fx_where;
 }
 
 
@@ -295,40 +246,23 @@ md_pcrel_from_section (fixS * fixP, segT sec)
 
 bfd_reloc_code_real_type
 md_cgen_lookup_reloc (const CGEN_INSN *    insn ATTRIBUTE_UNUSED,
-		      const CGEN_OPERAND * operand,
-		      fixS *               fixP)
+                      const CGEN_OPERAND * operand,
+                      fixS *               fixP)
 {
-  bfd_reloc_code_real_type type;
+  if (fixP->fx_cgen.opinfo)
+    return fixP->fx_cgen.opinfo;
 
   switch (operand->type)
     {
-    case OPENRISC_OPERAND_ABS_26:
-      fixP->fx_pcrel = 0;
-      type = BFD_RELOC_OPENRISC_ABS_26;
-      goto emit;
-    case OPENRISC_OPERAND_DISP_26:
+    case OR1K_OPERAND_DISP26:
       fixP->fx_pcrel = 1;
-      type = BFD_RELOC_OPENRISC_REL_26;
-      goto emit;
+      return BFD_RELOC_OR1K_REL_26;
 
-    case OPENRISC_OPERAND_HI16:
-      type = BFD_RELOC_HI16;
-      goto emit;
-
-    case OPENRISC_OPERAND_LO16:
-      type = BFD_RELOC_LO16;
-      goto emit;
-
-    emit:
-      return type;
-
-    default : /* avoid -Wall warning */
-      break;
+    default: /* avoid -Wall warning */
+      return BFD_RELOC_NONE;
     }
-
-  return BFD_RELOC_NONE;
 }
-
+
 /* Write a value out to the object file, using the appropriate endianness.  */
 
 void
@@ -339,10 +273,9 @@ md_number_to_chars (char * buf, valueT val, int n)
 
 /* Turn a string in input_line_pointer into a floating point constant of type
    type, and store the appropriate bytes in *litP.  The number of LITTLENUMS
-   emitted is stored in *sizeP .  An error message is returned, or NULL on OK.
-*/
+   emitted is stored in *sizeP .  An error message is returned, or NULL on OK.  */
 
-/* Equal to MAX_PRECISION in atof-ieee.c */
+/* Equal to MAX_PRECISION in atof-ieee.c.  */
 #define MAX_LITTLENUMS 6
 
 char *
@@ -352,12 +285,78 @@ md_atof (int type, char * litP, int *  sizeP)
 }
 
 bfd_boolean
-openrisc_fix_adjustable (fixS * fixP)
+or1k_fix_adjustable (fixS * fixP)
 {
   /* We need the symbol name for the VTABLE entries.  */
   if (fixP->fx_r_type == BFD_RELOC_VTABLE_INHERIT
       || fixP->fx_r_type == BFD_RELOC_VTABLE_ENTRY)
-    return 0;
+    return FALSE;
 
-  return 1;
+  return TRUE;
 }
+
+#define GOT_NAME "_GLOBAL_OFFSET_TABLE_"
+
+arelent *
+tc_gen_reloc (asection *sec, fixS *fx)
+{
+  bfd_reloc_code_real_type code = fx->fx_r_type;
+
+  if (fx->fx_addsy != NULL
+      && strcmp (S_GET_NAME (fx->fx_addsy), GOT_NAME) == 0
+      && (code == BFD_RELOC_OR1K_GOTPC_HI16
+          || code == BFD_RELOC_OR1K_GOTPC_LO16))
+    {
+      arelent * reloc;
+
+      reloc = xmalloc (sizeof (* reloc));
+      reloc->sym_ptr_ptr = xmalloc (sizeof (asymbol *));
+      *reloc->sym_ptr_ptr = symbol_get_bfdsym (fx->fx_addsy);
+      reloc->address = fx->fx_frag->fr_address + fx->fx_where;
+      reloc->howto = bfd_reloc_type_lookup (stdoutput, fx->fx_r_type);
+      reloc->addend = fx->fx_offset;
+      return reloc;
+    }
+
+  return gas_cgen_tc_gen_reloc (sec, fx);
+}
+
+void
+or1k_apply_fix (struct fix *f, valueT *t, segT s)
+{
+  gas_cgen_md_apply_fix (f, t, s);
+
+  switch (f->fx_r_type)
+    {
+    case BFD_RELOC_OR1K_TLS_GD_HI16:
+    case BFD_RELOC_OR1K_TLS_GD_LO16:
+    case BFD_RELOC_OR1K_TLS_LDM_HI16:
+    case BFD_RELOC_OR1K_TLS_LDM_LO16:
+    case BFD_RELOC_OR1K_TLS_LDO_HI16:
+    case BFD_RELOC_OR1K_TLS_LDO_LO16:
+    case BFD_RELOC_OR1K_TLS_IE_HI16:
+    case BFD_RELOC_OR1K_TLS_IE_LO16:
+    case BFD_RELOC_OR1K_TLS_LE_HI16:
+    case BFD_RELOC_OR1K_TLS_LE_LO16:
+      S_SET_THREAD_LOCAL (f->fx_addsy);
+      break;
+    default:
+      break;
+    }
+}
+
+void
+or1k_elf_final_processing (void)
+{
+  if (nodelay)
+    elf_elfheader (stdoutput)->e_flags |= EF_OR1K_NODELAY;
+}
+
+/* Standard calling conventions leave the CFA at SP on entry.  */
+
+void
+or1k_cfi_frame_initial_instructions (void)
+{
+    cfi_add_CFA_def_cfa_register (1);
+}
+

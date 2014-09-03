@@ -1,10 +1,9 @@
-/* Instruction building/extraction support for openrisc. -*- C -*-
+/* Instruction building/extraction support for or1k. -*- C -*-
 
    THIS FILE IS MACHINE GENERATED WITH CGEN: Cpu tools GENerator.
    - the resultant file is machine generated, cgen-ibld.in isn't
 
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2005, 2006, 2007,
-   2008, 2010  Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -31,8 +30,8 @@
 #include "dis-asm.h"
 #include "bfd.h"
 #include "symcat.h"
-#include "openrisc-desc.h"
-#include "openrisc-opc.h"
+#include "or1k-desc.h"
+#include "or1k-opc.h"
 #include "cgen/basic-modes.h"
 #include "opintl.h"
 #include "safe-ctype.h"
@@ -537,7 +536,7 @@ extract_insn_normal (CGEN_CPU_DESC cd,
 
 /* Machine generated code added here.  */
 
-const char * openrisc_cgen_insert_operand
+const char * or1k_cgen_insert_operand
   (CGEN_CPU_DESC, int, CGEN_FIELDS *, CGEN_INSN_BYTES_PTR, bfd_vma);
 
 /* Main entry point for operand insertion.
@@ -555,7 +554,7 @@ const char * openrisc_cgen_insert_operand
    resolved during parsing.  */
 
 const char *
-openrisc_cgen_insert_operand (CGEN_CPU_DESC cd,
+or1k_cgen_insert_operand (CGEN_CPU_DESC cd,
 			     int opindex,
 			     CGEN_FIELDS * fields,
 			     CGEN_INSN_BYTES_PTR buffer,
@@ -566,63 +565,76 @@ openrisc_cgen_insert_operand (CGEN_CPU_DESC cd,
 
   switch (opindex)
     {
-    case OPENRISC_OPERAND_ABS_26 :
-      {
-        long value = fields->f_abs26;
-        value = ((SI) (pc) >> (2));
-        errmsg = insert_normal (cd, value, 0|(1<<CGEN_IFLD_SIGNED)|(1<<CGEN_IFLD_ABS_ADDR), 0, 25, 26, 32, total_length, buffer);
-      }
-      break;
-    case OPENRISC_OPERAND_DISP_26 :
+    case OR1K_OPERAND_DISP26 :
       {
         long value = fields->f_disp26;
         value = ((SI) (((value) - (pc))) >> (2));
         errmsg = insert_normal (cd, value, 0|(1<<CGEN_IFLD_SIGNED)|(1<<CGEN_IFLD_PCREL_ADDR), 0, 25, 26, 32, total_length, buffer);
       }
       break;
-    case OPENRISC_OPERAND_HI16 :
-      errmsg = insert_normal (cd, fields->f_simm16, 0|(1<<CGEN_IFLD_SIGNED), 0, 15, 16, 32, total_length, buffer);
-      break;
-    case OPENRISC_OPERAND_LO16 :
-      errmsg = insert_normal (cd, fields->f_lo16, 0|(1<<CGEN_IFLD_SIGNED), 0, 15, 16, 32, total_length, buffer);
-      break;
-    case OPENRISC_OPERAND_OP_F_23 :
-      errmsg = insert_normal (cd, fields->f_op4, 0, 0, 23, 3, 32, total_length, buffer);
-      break;
-    case OPENRISC_OPERAND_OP_F_3 :
-      errmsg = insert_normal (cd, fields->f_op5, 0, 0, 25, 5, 32, total_length, buffer);
-      break;
-    case OPENRISC_OPERAND_RA :
+    case OR1K_OPERAND_RA :
       errmsg = insert_normal (cd, fields->f_r2, 0, 0, 20, 5, 32, total_length, buffer);
       break;
-    case OPENRISC_OPERAND_RB :
-      errmsg = insert_normal (cd, fields->f_r3, 0, 0, 15, 5, 32, total_length, buffer);
-      break;
-    case OPENRISC_OPERAND_RD :
+    case OR1K_OPERAND_RADF :
       errmsg = insert_normal (cd, fields->f_r1, 0, 0, 25, 5, 32, total_length, buffer);
       break;
-    case OPENRISC_OPERAND_SIMM_16 :
-      errmsg = insert_normal (cd, fields->f_simm16, 0|(1<<CGEN_IFLD_SIGNED), 0, 15, 16, 32, total_length, buffer);
+    case OR1K_OPERAND_RASF :
+      errmsg = insert_normal (cd, fields->f_r2, 0, 0, 20, 5, 32, total_length, buffer);
       break;
-    case OPENRISC_OPERAND_UI16NC :
+    case OR1K_OPERAND_RB :
+      errmsg = insert_normal (cd, fields->f_r3, 0, 0, 15, 5, 32, total_length, buffer);
+      break;
+    case OR1K_OPERAND_RBDF :
+      errmsg = insert_normal (cd, fields->f_r1, 0, 0, 25, 5, 32, total_length, buffer);
+      break;
+    case OR1K_OPERAND_RBSF :
+      errmsg = insert_normal (cd, fields->f_r3, 0, 0, 15, 5, 32, total_length, buffer);
+      break;
+    case OR1K_OPERAND_RD :
+      errmsg = insert_normal (cd, fields->f_r1, 0, 0, 25, 5, 32, total_length, buffer);
+      break;
+    case OR1K_OPERAND_RDDF :
+      errmsg = insert_normal (cd, fields->f_r1, 0, 0, 25, 5, 32, total_length, buffer);
+      break;
+    case OR1K_OPERAND_RDSF :
+      errmsg = insert_normal (cd, fields->f_r1, 0, 0, 25, 5, 32, total_length, buffer);
+      break;
+    case OR1K_OPERAND_SIMM16 :
+      errmsg = insert_normal (cd, fields->f_simm16, 0|(1<<CGEN_IFLD_SIGNED)|(1<<CGEN_IFLD_SIGN_OPT), 0, 15, 16, 32, total_length, buffer);
+      break;
+    case OR1K_OPERAND_SIMM16_SPLIT :
       {
 {
-  FLD (f_i16_2) = ((((HI) (FLD (f_i16nc)) >> (11))) & (31));
-  FLD (f_i16_1) = ((FLD (f_i16nc)) & (2047));
+  FLD (f_imm16_25_5) = ((((INT) (FLD (f_simm16_split)) >> (11))) & (31));
+  FLD (f_imm16_10_11) = ((FLD (f_simm16_split)) & (2047));
 }
-        errmsg = insert_normal (cd, fields->f_i16_1, 0, 0, 10, 11, 32, total_length, buffer);
+        errmsg = insert_normal (cd, fields->f_imm16_25_5, 0, 0, 25, 5, 32, total_length, buffer);
         if (errmsg)
           break;
-        errmsg = insert_normal (cd, fields->f_i16_2, 0, 0, 25, 5, 32, total_length, buffer);
+        errmsg = insert_normal (cd, fields->f_imm16_10_11, 0, 0, 10, 11, 32, total_length, buffer);
         if (errmsg)
           break;
       }
       break;
-    case OPENRISC_OPERAND_UIMM_16 :
+    case OR1K_OPERAND_UIMM16 :
       errmsg = insert_normal (cd, fields->f_uimm16, 0, 0, 15, 16, 32, total_length, buffer);
       break;
-    case OPENRISC_OPERAND_UIMM_5 :
-      errmsg = insert_normal (cd, fields->f_uimm5, 0, 0, 4, 5, 32, total_length, buffer);
+    case OR1K_OPERAND_UIMM16_SPLIT :
+      {
+{
+  FLD (f_imm16_25_5) = ((((UINT) (FLD (f_uimm16_split)) >> (11))) & (31));
+  FLD (f_imm16_10_11) = ((FLD (f_uimm16_split)) & (2047));
+}
+        errmsg = insert_normal (cd, fields->f_imm16_25_5, 0, 0, 25, 5, 32, total_length, buffer);
+        if (errmsg)
+          break;
+        errmsg = insert_normal (cd, fields->f_imm16_10_11, 0, 0, 10, 11, 32, total_length, buffer);
+        if (errmsg)
+          break;
+      }
+      break;
+    case OR1K_OPERAND_UIMM6 :
+      errmsg = insert_normal (cd, fields->f_uimm6, 0, 0, 5, 6, 32, total_length, buffer);
       break;
 
     default :
@@ -635,7 +647,7 @@ openrisc_cgen_insert_operand (CGEN_CPU_DESC cd,
   return errmsg;
 }
 
-int openrisc_cgen_extract_operand
+int or1k_cgen_extract_operand
   (CGEN_CPU_DESC, int, CGEN_EXTRACT_INFO *, CGEN_INSN_INT, CGEN_FIELDS *, bfd_vma);
 
 /* Main entry point for operand extraction.
@@ -654,7 +666,7 @@ int openrisc_cgen_extract_operand
    the handlers.  */
 
 int
-openrisc_cgen_extract_operand (CGEN_CPU_DESC cd,
+or1k_cgen_extract_operand (CGEN_CPU_DESC cd,
 			     int opindex,
 			     CGEN_EXTRACT_INFO *ex_info,
 			     CGEN_INSN_INT insn_value,
@@ -667,15 +679,7 @@ openrisc_cgen_extract_operand (CGEN_CPU_DESC cd,
 
   switch (opindex)
     {
-    case OPENRISC_OPERAND_ABS_26 :
-      {
-        long value;
-        length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED)|(1<<CGEN_IFLD_ABS_ADDR), 0, 25, 26, 32, total_length, pc, & value);
-        value = ((value) << (2));
-        fields->f_abs26 = value;
-      }
-      break;
-    case OPENRISC_OPERAND_DISP_26 :
+    case OR1K_OPERAND_DISP26 :
       {
         long value;
         length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED)|(1<<CGEN_IFLD_PCREL_ADDR), 0, 25, 26, 32, total_length, pc, & value);
@@ -683,46 +687,59 @@ openrisc_cgen_extract_operand (CGEN_CPU_DESC cd,
         fields->f_disp26 = value;
       }
       break;
-    case OPENRISC_OPERAND_HI16 :
-      length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 15, 16, 32, total_length, pc, & fields->f_simm16);
-      break;
-    case OPENRISC_OPERAND_LO16 :
-      length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 15, 16, 32, total_length, pc, & fields->f_lo16);
-      break;
-    case OPENRISC_OPERAND_OP_F_23 :
-      length = extract_normal (cd, ex_info, insn_value, 0, 0, 23, 3, 32, total_length, pc, & fields->f_op4);
-      break;
-    case OPENRISC_OPERAND_OP_F_3 :
-      length = extract_normal (cd, ex_info, insn_value, 0, 0, 25, 5, 32, total_length, pc, & fields->f_op5);
-      break;
-    case OPENRISC_OPERAND_RA :
+    case OR1K_OPERAND_RA :
       length = extract_normal (cd, ex_info, insn_value, 0, 0, 20, 5, 32, total_length, pc, & fields->f_r2);
       break;
-    case OPENRISC_OPERAND_RB :
-      length = extract_normal (cd, ex_info, insn_value, 0, 0, 15, 5, 32, total_length, pc, & fields->f_r3);
-      break;
-    case OPENRISC_OPERAND_RD :
+    case OR1K_OPERAND_RADF :
       length = extract_normal (cd, ex_info, insn_value, 0, 0, 25, 5, 32, total_length, pc, & fields->f_r1);
       break;
-    case OPENRISC_OPERAND_SIMM_16 :
-      length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED), 0, 15, 16, 32, total_length, pc, & fields->f_simm16);
+    case OR1K_OPERAND_RASF :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 20, 5, 32, total_length, pc, & fields->f_r2);
       break;
-    case OPENRISC_OPERAND_UI16NC :
+    case OR1K_OPERAND_RB :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 15, 5, 32, total_length, pc, & fields->f_r3);
+      break;
+    case OR1K_OPERAND_RBDF :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 25, 5, 32, total_length, pc, & fields->f_r1);
+      break;
+    case OR1K_OPERAND_RBSF :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 15, 5, 32, total_length, pc, & fields->f_r3);
+      break;
+    case OR1K_OPERAND_RD :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 25, 5, 32, total_length, pc, & fields->f_r1);
+      break;
+    case OR1K_OPERAND_RDDF :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 25, 5, 32, total_length, pc, & fields->f_r1);
+      break;
+    case OR1K_OPERAND_RDSF :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 25, 5, 32, total_length, pc, & fields->f_r1);
+      break;
+    case OR1K_OPERAND_SIMM16 :
+      length = extract_normal (cd, ex_info, insn_value, 0|(1<<CGEN_IFLD_SIGNED)|(1<<CGEN_IFLD_SIGN_OPT), 0, 15, 16, 32, total_length, pc, & fields->f_simm16);
+      break;
+    case OR1K_OPERAND_SIMM16_SPLIT :
       {
-        length = extract_normal (cd, ex_info, insn_value, 0, 0, 10, 11, 32, total_length, pc, & fields->f_i16_1);
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 25, 5, 32, total_length, pc, & fields->f_imm16_25_5);
         if (length <= 0) break;
-        length = extract_normal (cd, ex_info, insn_value, 0, 0, 25, 5, 32, total_length, pc, & fields->f_i16_2);
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 10, 11, 32, total_length, pc, & fields->f_imm16_10_11);
         if (length <= 0) break;
-{
-  FLD (f_i16nc) = openrisc_sign_extend_16bit (((((FLD (f_i16_2)) << (11))) | (FLD (f_i16_1))));
-}
+  FLD (f_simm16_split) = ((HI) (UINT) (((((FLD (f_imm16_25_5)) << (11))) | (FLD (f_imm16_10_11)))));
       }
       break;
-    case OPENRISC_OPERAND_UIMM_16 :
+    case OR1K_OPERAND_UIMM16 :
       length = extract_normal (cd, ex_info, insn_value, 0, 0, 15, 16, 32, total_length, pc, & fields->f_uimm16);
       break;
-    case OPENRISC_OPERAND_UIMM_5 :
-      length = extract_normal (cd, ex_info, insn_value, 0, 0, 4, 5, 32, total_length, pc, & fields->f_uimm5);
+    case OR1K_OPERAND_UIMM16_SPLIT :
+      {
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 25, 5, 32, total_length, pc, & fields->f_imm16_25_5);
+        if (length <= 0) break;
+        length = extract_normal (cd, ex_info, insn_value, 0, 0, 10, 11, 32, total_length, pc, & fields->f_imm16_10_11);
+        if (length <= 0) break;
+  FLD (f_uimm16_split) = ((UHI) (UINT) (((((FLD (f_imm16_25_5)) << (11))) | (FLD (f_imm16_10_11)))));
+      }
+      break;
+    case OR1K_OPERAND_UIMM6 :
+      length = extract_normal (cd, ex_info, insn_value, 0, 0, 5, 6, 32, total_length, pc, & fields->f_uimm6);
       break;
 
     default :
@@ -735,18 +752,18 @@ openrisc_cgen_extract_operand (CGEN_CPU_DESC cd,
   return length;
 }
 
-cgen_insert_fn * const openrisc_cgen_insert_handlers[] = 
+cgen_insert_fn * const or1k_cgen_insert_handlers[] = 
 {
   insert_insn_normal,
 };
 
-cgen_extract_fn * const openrisc_cgen_extract_handlers[] = 
+cgen_extract_fn * const or1k_cgen_extract_handlers[] = 
 {
   extract_insn_normal,
 };
 
-int openrisc_cgen_get_int_operand     (CGEN_CPU_DESC, int, const CGEN_FIELDS *);
-bfd_vma openrisc_cgen_get_vma_operand (CGEN_CPU_DESC, int, const CGEN_FIELDS *);
+int or1k_cgen_get_int_operand     (CGEN_CPU_DESC, int, const CGEN_FIELDS *);
+bfd_vma or1k_cgen_get_vma_operand (CGEN_CPU_DESC, int, const CGEN_FIELDS *);
 
 /* Getting values from cgen_fields is handled by a collection of functions.
    They are distinguished by the type of the VALUE argument they return.
@@ -754,7 +771,7 @@ bfd_vma openrisc_cgen_get_vma_operand (CGEN_CPU_DESC, int, const CGEN_FIELDS *);
    not appropriate.  */
 
 int
-openrisc_cgen_get_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
+or1k_cgen_get_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 			     int opindex,
 			     const CGEN_FIELDS * fields)
 {
@@ -762,44 +779,50 @@ openrisc_cgen_get_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 
   switch (opindex)
     {
-    case OPENRISC_OPERAND_ABS_26 :
-      value = fields->f_abs26;
-      break;
-    case OPENRISC_OPERAND_DISP_26 :
+    case OR1K_OPERAND_DISP26 :
       value = fields->f_disp26;
       break;
-    case OPENRISC_OPERAND_HI16 :
-      value = fields->f_simm16;
-      break;
-    case OPENRISC_OPERAND_LO16 :
-      value = fields->f_lo16;
-      break;
-    case OPENRISC_OPERAND_OP_F_23 :
-      value = fields->f_op4;
-      break;
-    case OPENRISC_OPERAND_OP_F_3 :
-      value = fields->f_op5;
-      break;
-    case OPENRISC_OPERAND_RA :
+    case OR1K_OPERAND_RA :
       value = fields->f_r2;
       break;
-    case OPENRISC_OPERAND_RB :
-      value = fields->f_r3;
-      break;
-    case OPENRISC_OPERAND_RD :
+    case OR1K_OPERAND_RADF :
       value = fields->f_r1;
       break;
-    case OPENRISC_OPERAND_SIMM_16 :
+    case OR1K_OPERAND_RASF :
+      value = fields->f_r2;
+      break;
+    case OR1K_OPERAND_RB :
+      value = fields->f_r3;
+      break;
+    case OR1K_OPERAND_RBDF :
+      value = fields->f_r1;
+      break;
+    case OR1K_OPERAND_RBSF :
+      value = fields->f_r3;
+      break;
+    case OR1K_OPERAND_RD :
+      value = fields->f_r1;
+      break;
+    case OR1K_OPERAND_RDDF :
+      value = fields->f_r1;
+      break;
+    case OR1K_OPERAND_RDSF :
+      value = fields->f_r1;
+      break;
+    case OR1K_OPERAND_SIMM16 :
       value = fields->f_simm16;
       break;
-    case OPENRISC_OPERAND_UI16NC :
-      value = fields->f_i16nc;
+    case OR1K_OPERAND_SIMM16_SPLIT :
+      value = fields->f_simm16_split;
       break;
-    case OPENRISC_OPERAND_UIMM_16 :
+    case OR1K_OPERAND_UIMM16 :
       value = fields->f_uimm16;
       break;
-    case OPENRISC_OPERAND_UIMM_5 :
-      value = fields->f_uimm5;
+    case OR1K_OPERAND_UIMM16_SPLIT :
+      value = fields->f_uimm16_split;
+      break;
+    case OR1K_OPERAND_UIMM6 :
+      value = fields->f_uimm6;
       break;
 
     default :
@@ -813,7 +836,7 @@ openrisc_cgen_get_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 }
 
 bfd_vma
-openrisc_cgen_get_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
+or1k_cgen_get_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 			     int opindex,
 			     const CGEN_FIELDS * fields)
 {
@@ -821,44 +844,50 @@ openrisc_cgen_get_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 
   switch (opindex)
     {
-    case OPENRISC_OPERAND_ABS_26 :
-      value = fields->f_abs26;
-      break;
-    case OPENRISC_OPERAND_DISP_26 :
+    case OR1K_OPERAND_DISP26 :
       value = fields->f_disp26;
       break;
-    case OPENRISC_OPERAND_HI16 :
-      value = fields->f_simm16;
-      break;
-    case OPENRISC_OPERAND_LO16 :
-      value = fields->f_lo16;
-      break;
-    case OPENRISC_OPERAND_OP_F_23 :
-      value = fields->f_op4;
-      break;
-    case OPENRISC_OPERAND_OP_F_3 :
-      value = fields->f_op5;
-      break;
-    case OPENRISC_OPERAND_RA :
+    case OR1K_OPERAND_RA :
       value = fields->f_r2;
       break;
-    case OPENRISC_OPERAND_RB :
-      value = fields->f_r3;
-      break;
-    case OPENRISC_OPERAND_RD :
+    case OR1K_OPERAND_RADF :
       value = fields->f_r1;
       break;
-    case OPENRISC_OPERAND_SIMM_16 :
+    case OR1K_OPERAND_RASF :
+      value = fields->f_r2;
+      break;
+    case OR1K_OPERAND_RB :
+      value = fields->f_r3;
+      break;
+    case OR1K_OPERAND_RBDF :
+      value = fields->f_r1;
+      break;
+    case OR1K_OPERAND_RBSF :
+      value = fields->f_r3;
+      break;
+    case OR1K_OPERAND_RD :
+      value = fields->f_r1;
+      break;
+    case OR1K_OPERAND_RDDF :
+      value = fields->f_r1;
+      break;
+    case OR1K_OPERAND_RDSF :
+      value = fields->f_r1;
+      break;
+    case OR1K_OPERAND_SIMM16 :
       value = fields->f_simm16;
       break;
-    case OPENRISC_OPERAND_UI16NC :
-      value = fields->f_i16nc;
+    case OR1K_OPERAND_SIMM16_SPLIT :
+      value = fields->f_simm16_split;
       break;
-    case OPENRISC_OPERAND_UIMM_16 :
+    case OR1K_OPERAND_UIMM16 :
       value = fields->f_uimm16;
       break;
-    case OPENRISC_OPERAND_UIMM_5 :
-      value = fields->f_uimm5;
+    case OR1K_OPERAND_UIMM16_SPLIT :
+      value = fields->f_uimm16_split;
+      break;
+    case OR1K_OPERAND_UIMM6 :
+      value = fields->f_uimm6;
       break;
 
     default :
@@ -871,8 +900,8 @@ openrisc_cgen_get_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
   return value;
 }
 
-void openrisc_cgen_set_int_operand  (CGEN_CPU_DESC, int, CGEN_FIELDS *, int);
-void openrisc_cgen_set_vma_operand  (CGEN_CPU_DESC, int, CGEN_FIELDS *, bfd_vma);
+void or1k_cgen_set_int_operand  (CGEN_CPU_DESC, int, CGEN_FIELDS *, int);
+void or1k_cgen_set_vma_operand  (CGEN_CPU_DESC, int, CGEN_FIELDS *, bfd_vma);
 
 /* Stuffing values in cgen_fields is handled by a collection of functions.
    They are distinguished by the type of the VALUE argument they accept.
@@ -880,51 +909,57 @@ void openrisc_cgen_set_vma_operand  (CGEN_CPU_DESC, int, CGEN_FIELDS *, bfd_vma)
    not appropriate.  */
 
 void
-openrisc_cgen_set_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
+or1k_cgen_set_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 			     int opindex,
 			     CGEN_FIELDS * fields,
 			     int value)
 {
   switch (opindex)
     {
-    case OPENRISC_OPERAND_ABS_26 :
-      fields->f_abs26 = value;
-      break;
-    case OPENRISC_OPERAND_DISP_26 :
+    case OR1K_OPERAND_DISP26 :
       fields->f_disp26 = value;
       break;
-    case OPENRISC_OPERAND_HI16 :
-      fields->f_simm16 = value;
-      break;
-    case OPENRISC_OPERAND_LO16 :
-      fields->f_lo16 = value;
-      break;
-    case OPENRISC_OPERAND_OP_F_23 :
-      fields->f_op4 = value;
-      break;
-    case OPENRISC_OPERAND_OP_F_3 :
-      fields->f_op5 = value;
-      break;
-    case OPENRISC_OPERAND_RA :
+    case OR1K_OPERAND_RA :
       fields->f_r2 = value;
       break;
-    case OPENRISC_OPERAND_RB :
-      fields->f_r3 = value;
-      break;
-    case OPENRISC_OPERAND_RD :
+    case OR1K_OPERAND_RADF :
       fields->f_r1 = value;
       break;
-    case OPENRISC_OPERAND_SIMM_16 :
+    case OR1K_OPERAND_RASF :
+      fields->f_r2 = value;
+      break;
+    case OR1K_OPERAND_RB :
+      fields->f_r3 = value;
+      break;
+    case OR1K_OPERAND_RBDF :
+      fields->f_r1 = value;
+      break;
+    case OR1K_OPERAND_RBSF :
+      fields->f_r3 = value;
+      break;
+    case OR1K_OPERAND_RD :
+      fields->f_r1 = value;
+      break;
+    case OR1K_OPERAND_RDDF :
+      fields->f_r1 = value;
+      break;
+    case OR1K_OPERAND_RDSF :
+      fields->f_r1 = value;
+      break;
+    case OR1K_OPERAND_SIMM16 :
       fields->f_simm16 = value;
       break;
-    case OPENRISC_OPERAND_UI16NC :
-      fields->f_i16nc = value;
+    case OR1K_OPERAND_SIMM16_SPLIT :
+      fields->f_simm16_split = value;
       break;
-    case OPENRISC_OPERAND_UIMM_16 :
+    case OR1K_OPERAND_UIMM16 :
       fields->f_uimm16 = value;
       break;
-    case OPENRISC_OPERAND_UIMM_5 :
-      fields->f_uimm5 = value;
+    case OR1K_OPERAND_UIMM16_SPLIT :
+      fields->f_uimm16_split = value;
+      break;
+    case OR1K_OPERAND_UIMM6 :
+      fields->f_uimm6 = value;
       break;
 
     default :
@@ -936,51 +971,57 @@ openrisc_cgen_set_int_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 }
 
 void
-openrisc_cgen_set_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
+or1k_cgen_set_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 			     int opindex,
 			     CGEN_FIELDS * fields,
 			     bfd_vma value)
 {
   switch (opindex)
     {
-    case OPENRISC_OPERAND_ABS_26 :
-      fields->f_abs26 = value;
-      break;
-    case OPENRISC_OPERAND_DISP_26 :
+    case OR1K_OPERAND_DISP26 :
       fields->f_disp26 = value;
       break;
-    case OPENRISC_OPERAND_HI16 :
-      fields->f_simm16 = value;
-      break;
-    case OPENRISC_OPERAND_LO16 :
-      fields->f_lo16 = value;
-      break;
-    case OPENRISC_OPERAND_OP_F_23 :
-      fields->f_op4 = value;
-      break;
-    case OPENRISC_OPERAND_OP_F_3 :
-      fields->f_op5 = value;
-      break;
-    case OPENRISC_OPERAND_RA :
+    case OR1K_OPERAND_RA :
       fields->f_r2 = value;
       break;
-    case OPENRISC_OPERAND_RB :
-      fields->f_r3 = value;
-      break;
-    case OPENRISC_OPERAND_RD :
+    case OR1K_OPERAND_RADF :
       fields->f_r1 = value;
       break;
-    case OPENRISC_OPERAND_SIMM_16 :
+    case OR1K_OPERAND_RASF :
+      fields->f_r2 = value;
+      break;
+    case OR1K_OPERAND_RB :
+      fields->f_r3 = value;
+      break;
+    case OR1K_OPERAND_RBDF :
+      fields->f_r1 = value;
+      break;
+    case OR1K_OPERAND_RBSF :
+      fields->f_r3 = value;
+      break;
+    case OR1K_OPERAND_RD :
+      fields->f_r1 = value;
+      break;
+    case OR1K_OPERAND_RDDF :
+      fields->f_r1 = value;
+      break;
+    case OR1K_OPERAND_RDSF :
+      fields->f_r1 = value;
+      break;
+    case OR1K_OPERAND_SIMM16 :
       fields->f_simm16 = value;
       break;
-    case OPENRISC_OPERAND_UI16NC :
-      fields->f_i16nc = value;
+    case OR1K_OPERAND_SIMM16_SPLIT :
+      fields->f_simm16_split = value;
       break;
-    case OPENRISC_OPERAND_UIMM_16 :
+    case OR1K_OPERAND_UIMM16 :
       fields->f_uimm16 = value;
       break;
-    case OPENRISC_OPERAND_UIMM_5 :
-      fields->f_uimm5 = value;
+    case OR1K_OPERAND_UIMM16_SPLIT :
+      fields->f_uimm16_split = value;
+      break;
+    case OR1K_OPERAND_UIMM6 :
+      fields->f_uimm6 = value;
       break;
 
     default :
@@ -994,16 +1035,16 @@ openrisc_cgen_set_vma_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
 /* Function to call before using the instruction builder tables.  */
 
 void
-openrisc_cgen_init_ibld_table (CGEN_CPU_DESC cd)
+or1k_cgen_init_ibld_table (CGEN_CPU_DESC cd)
 {
-  cd->insert_handlers = & openrisc_cgen_insert_handlers[0];
-  cd->extract_handlers = & openrisc_cgen_extract_handlers[0];
+  cd->insert_handlers = & or1k_cgen_insert_handlers[0];
+  cd->extract_handlers = & or1k_cgen_extract_handlers[0];
 
-  cd->insert_operand = openrisc_cgen_insert_operand;
-  cd->extract_operand = openrisc_cgen_extract_operand;
+  cd->insert_operand = or1k_cgen_insert_operand;
+  cd->extract_operand = or1k_cgen_extract_operand;
 
-  cd->get_int_operand = openrisc_cgen_get_int_operand;
-  cd->set_int_operand = openrisc_cgen_set_int_operand;
-  cd->get_vma_operand = openrisc_cgen_get_vma_operand;
-  cd->set_vma_operand = openrisc_cgen_set_vma_operand;
+  cd->get_int_operand = or1k_cgen_get_int_operand;
+  cd->set_int_operand = or1k_cgen_set_int_operand;
+  cd->get_vma_operand = or1k_cgen_get_vma_operand;
+  cd->set_vma_operand = or1k_cgen_set_vma_operand;
 }

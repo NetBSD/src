@@ -123,7 +123,7 @@ DESCRIPTION
 .#define bfd_mach_i960_jx	 7
 .#define bfd_mach_i960_hx        8
 .
-.  bfd_arch_or32,      {* OpenRISC 32 *}
+.  bfd_arch_or1k,      {* OpenRISC 32 *}
 .
 .  bfd_arch_sparc,     {* SPARC *}
 .#define bfd_mach_sparc			1
@@ -556,7 +556,7 @@ extern const bfd_arch_info_type bfd_msp430_arch;
 extern const bfd_arch_info_type bfd_mt_arch;
 extern const bfd_arch_info_type bfd_ns32k_arch;
 extern const bfd_arch_info_type bfd_openrisc_arch;
-extern const bfd_arch_info_type bfd_or32_arch;
+extern const bfd_arch_info_type bfd_or1k_arch;
 extern const bfd_arch_info_type bfd_pdp11_arch;
 extern const bfd_arch_info_type bfd_pj_arch;
 extern const bfd_arch_info_type bfd_plugin_arch;
@@ -642,7 +642,7 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
     &bfd_mt_arch,
     &bfd_ns32k_arch,
     &bfd_openrisc_arch,
-    &bfd_or32_arch,
+    &bfd_or1k_arch,
     &bfd_pdp11_arch,
     &bfd_powerpc_arch,
     &bfd_rs6000_arch,
