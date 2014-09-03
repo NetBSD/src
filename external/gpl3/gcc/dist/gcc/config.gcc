@@ -426,6 +426,12 @@ mips*-*-*)
 	extra_headers="loongson.h"
 	extra_options="${extra_options} g.opt mips/mips-tables.opt"
 	;;
+or1k-*-*)
+        cpu_type=or1k
+        ;;
+or1knd-*-*)
+        cpu_type=or1k
+        ;;
 picochip-*-*)
         cpu_type=picochip
         ;;
@@ -2065,6 +2071,40 @@ mn10300-*-*)
 	use_collect2=no
 	use_gcc_stdint=wrap
 	;;
+or1k-*-elf*)
+       tm_file="${tm_file} dbxelf.h elfos.h newlib-stdint.h ${cpu_type}/elf.h"
+       extra_parts="crti.o crtbegin.o crtend.o crtn.o"
+       tmake_file=or1k/t-or1k
+       tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_ON"
+       ;;
+or1k-*-linux-*)
+       tm_file="${tm_file} dbxelf.h elfos.h or1k/elf.h gnu-user.h linux.h or1k/linux-gas.h or1k/linux-elf.h uclibc-stdint.h"
+       tmake_file="or1k/t-or1k or1k/t-linux ${tmake_file}"
+       tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_ON"
+       ;;
+or1k-*-netbsd*)
+       tm_file="${tm_file} dbxelf.h elfos.h netbsd.h netbsd-elf.h netbsd-stdint.h or1k/netbsd.h"
+       #tmake_file="or1k/t-or1k ${tmake_file}"
+       extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
+       tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_ON"
+       ;;
+or1knd-*-elf*)
+       tm_file="${tm_file} dbxelf.h elfos.h newlib-stdint.h ${cpu_type}/elf.h"
+       extra_parts="crti.o crtbegin.o crtend.o crtn.o"
+       tmake_file=or1k/t-or1knd
+       tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_OFF"
+       ;;
+or1knd-*-linux-*)
+       tm_file="${tm_file} dbxelf.h elfos.h or1k/elf.h linux.h or1k/linux-gas.h or1k/linux-elf.h uclibc-stdint.h"
+       tmake_file="or1k/t-or1knd or1k/t-linux ${tmake_file}"
+       tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_OFF"
+       ;;
+or1knd-*-netbsd*)
+       tm_file="${tm_file} dbxelf.h elfos.h netbsd.h netbsd-elf.h netbsd-stdint.h or1k/netbsd.h"
+       #tmake_file="or1k/t-or1k ${tmake_file}"
+       extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
+       tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_OFF"
+       ;;
 pdp11-*-*)
 	tm_file="${tm_file} newlib-stdint.h"
 	use_gcc_stdint=wrap

@@ -1,0 +1,12 @@
+MULTILIB_DIRNAMES =
+EXTRA_MULTILIB_PARTS = crti.o crtbegin.o crtend.o crtn.o
+
+# hack:
+# the non-shared uclibc-0.9.31/libc/misc/internals/__uClibc_main.c
+# already defines __dso_handle.  To avoid a duplicate definition,
+# we rename the crtbegin one.
+# JPB 18-Nov-10: Commented out, since uClibc no longer defines.
+# amend gcc Makefile CLFAGS variable
+# $(T)crtbegin.o: CRTSTUFF_CFLAGS += '-D__dso_handle=__dso_handle_dummy'
+# amend libgcc Makefile CLFAGS variable
+# crtbegin$(objext): CRTSTUFF_T_CFLAGS += '-D__dso_handle=__dso_handle_dummy'
