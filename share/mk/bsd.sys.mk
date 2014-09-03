@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.244 2014/08/14 18:39:38 joerg Exp $
+#	$NetBSD: bsd.sys.mk,v 1.245 2014/09/03 19:22:53 matt Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -116,7 +116,8 @@ COPTS+=	-fstack-protector -Wstack-protector
 .if "${ACTIVE_CC}" == "gcc" && "${HAVE_GCC}" == "48" && \
 	( ${MACHINE_CPU} == "sh3" || \
 	  ${MACHINE_ARCH} == "vax" || \
-	  ${MACHINE_CPU} == "m68k" )
+	  ${MACHINE_CPU} == "m68k" || \
+	  ${MACHINE_CPU} == "or1k" )
 COPTS+=	-Wno-error=stack-protector 
 .endif
 

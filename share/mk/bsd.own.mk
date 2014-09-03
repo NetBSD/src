@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.833 2014/08/23 02:26:36 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.834 2014/09/03 19:22:53 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -14,7 +14,7 @@ MAKECONF?=	/etc/mk.conf
 #
 # CPU model, derived from MACHINE_ARCH
 #
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/coldfire/m68k/:S/m68000/m68k/:C/arm.*/arm/:C/earm.*/arm/:S/earm/arm/:S/powerpc64/powerpc/:S/aarch64eb/aarch64/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/coldfire/m68k/:S/m68000/m68k/:C/arm.*/arm/:C/earm.*/arm/:S/earm/arm/:S/powerpc64/powerpc/:S/aarch64eb/aarch64/:S/or1knd/or1k/}
 
 #
 # Subdirectory used below ${RELEASEDIR} when building a release
@@ -711,6 +711,13 @@ MKGCC:= no
 
 # No GDB support for aarch64
 MKGDB.aarch64=	no
+MKGDB.or1k=	no
+
+# No kernel modules for or1k (yet)
+MKKMOD.or1k=	no
+
+# No profiling for or1k (yet)
+MKPROFILE.or1k=	no
 
 #
 # The m68000 port is incomplete.
@@ -901,10 +908,11 @@ MKCOMPATMODULES:=	no
 # arm is always softfloat unless it isn't
 # emips is always softfloat.
 # coldfire is always softfloat
+# or1k is always softfloat
 #
 .if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el" || \
     (${MACHINE_CPU} == "arm" && ${MACHINE_ARCH:M*hf*} == "") || \
-    ${MACHINE_ARCH} == "coldfire" || \
+    ${MACHINE_ARCH} == "coldfire" || ${MACHINE_CPU} == "or1k" || \
     ${MACHINE} == "emips"
 MKSOFTFLOAT?=	yes
 .endif
