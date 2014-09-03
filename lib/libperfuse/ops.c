@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.71 2014/09/03 16:01:45 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.72 2014/09/03 23:59:58 enami Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -2888,7 +2888,7 @@ perfuse_node_print(struct puffs_usermount *pu, puffs_cookie_t opc)
 
 int
 perfuse_node_pathconf(struct puffs_usermount *pu, puffs_cookie_t opc,
-	int name, int *retval)
+	int name, register_t *retval)
 {
 	perfuse_msg_t *pm;
 	struct perfuse_state *ps;

@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.34 2014/08/16 16:31:15 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.35 2014/09/03 23:59:58 enami Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -249,7 +249,7 @@ int perfuse_node_reclaim(struct puffs_usermount *, puffs_cookie_t);
 int perfuse_node_inactive(struct puffs_usermount *, puffs_cookie_t);
 int perfuse_node_print(struct puffs_usermount *, puffs_cookie_t);
 int perfuse_node_pathconf(struct puffs_usermount *,
-    puffs_cookie_t, int, int *);
+    puffs_cookie_t, int, register_t *);
 int perfuse_node_advlock(struct puffs_usermount *,
     puffs_cookie_t, void *, int, struct flock *, int);
 int perfuse_node_read(struct puffs_usermount *, puffs_cookie_t,
