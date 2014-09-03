@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.289.2.4 2011/01/06 05:20:25 riz Exp $
+#	$NetBSD: bsd.lib.mk,v 1.289.2.5 2014/09/03 02:09:24 msaitoh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -68,7 +68,7 @@ DPADD+=		${LIBDO.${_lib}}/lib${_lib}.so
 .endif									# }
 
 ##### Build and install rules
-MKDEP_SUFFIXES?=	.o .po .so .go .ln
+MKDEP_SUFFIXES?=	.o .po .pico .go .ln
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
 CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++}
 
@@ -127,8 +127,8 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 
 # add additional suffixes not exported.
 # .po is used for profiling object files.
-# .so is used for PIC object files.
-.SUFFIXES: .out .a .ln .so .po .go .o .s .S .c .cc .cpp .cxx .C .m .F .f .r .y .l .cl .p .h
+# .pico is used for PIC object files.
+.SUFFIXES: .out .a .ln .pico .po .go .o .s .S .c .cc .cpp .cxx .C .m .F .f .r .y .l .cl .p .h
 .SUFFIXES: .sh .m4 .m
 
 
@@ -146,14 +146,14 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 #			with ELF, also set shared-lib version for ld.so.
 # SHLIB_LDSTARTFILE:	support .o file, call C++ file-level constructors
 # SHLIB_LDENDFILE:	support .o file, call C++ file-level destructors
-# FPICFLAGS:		flags for ${FC} to compile .[fF] files to .so objects.
+# FPICFLAGS:		flags for ${FC} to compile .[fF] files to .pico objects.
 # CPPPICFLAGS:		flags for ${CPP} to preprocess .[sS] files for ${AS}
 # CPICFLAGS:		flags for ${CC} to compile .[cC] files to pic objects.
-# CSHLIBFLAGS:		flags for ${CC} to compile .[cC] files to .so objects.
+# CSHLIBFLAGS:		flags for ${CC} to compile .[cC] files to .pico objects.
 #			(usually includes ${CPICFLAGS})
 # CAPICFLAGS:		flags for ${CC} to compiling .[Ss] files
 #		 	(usually just ${CPPPICFLAGS} ${CPICFLAGS})
-# APICFLAGS:		flags for ${AS} to assemble .[sS] to .so objects.
+# APICFLAGS:		flags for ${AS} to assemble .[sS] to .pico objects.
 
 .if ${MACHINE_ARCH} == "alpha"						# {
 
@@ -229,7 +229,7 @@ FFLAGS+=	${FOPTS}
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${DEBUGFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -g ${.IMPSRC} -o ${.TARGET}
 
-.c.so:
+.c.pico:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
 .if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
@@ -254,7 +254,7 @@ FFLAGS+=	${FOPTS}
 	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${DEBUGFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -g ${.IMPSRC} -o ${.TARGET}
 
-.cc.so .cpp.so .cxx.so .C.so:
+.cc.pico .cpp.pico .cxx.pico .C.pico:
 	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
 .if !defined(CFLAGS) || empty(CFLAGS:M*-g*)
@@ -279,7 +279,7 @@ FFLAGS+=	${FOPTS}
 	${_MKTARGET_COMPILE}
 	${COMPILE.f} ${DEBUGFLAGS} -g ${.IMPSRC} -o ${.TARGET}
 
-.f.so:
+.f.pico:
 	${_MKTARGET_COMPILE}
 	${COMPILE.f} ${FPICFLAGS} ${.IMPSRC} -o ${.TARGET}
 .if !defined(FOPTS) || empty(FOPTS:M*-g*)
@@ -311,7 +311,7 @@ FFLAGS+=	${FOPTS}
 	${OBJCOPY} -X ${.TARGET}
 .endif
 
-.m.so:
+.m.pico:
 	${_MKTARGET_COMPILE}
 	${COMPILE.m} ${CSHLIBFLAGS} ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if !defined(OBJCFLAGS) || empty(OBJCFLAGS:M*-g*)
@@ -346,12 +346,12 @@ FFLAGS+=	${FOPTS}
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${DEBUGFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 
-.s.so:
+.s.pico:
 	${_MKTARGET_COMPILE}
 	${COMPILE.s} ${CAPICFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 	${OBJCOPY} -x ${.TARGET}
 
-.S.so:
+.S.pico:
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${CAPICFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 	${OBJCOPY} -x ${.TARGET}
@@ -394,14 +394,14 @@ PROFFLAGS?=-DGPROF -DPROF
 # since it's needed for making shared lib.
 # but don't install it.
 SOLIB=lib${LIB}_pic.a
-SOBJS+=${OBJS:.o=.so}
+SOBJS+=${OBJS:.o=.pico}
 .else
 SOLIB=lib${LIB}.a
 .endif
 .else
 SOLIB=lib${LIB}_pic.a
 _LIBS+=${SOLIB}
-SOBJS+=${OBJS:.o=.so}
+SOBJS+=${OBJS:.o=.pico}
 .endif
 .if defined(SHLIB_FULLVERSION)
 _LIBS+=lib${LIB}.so.${SHLIB_FULLVERSION}
