@@ -93,7 +93,7 @@ m68*)		 targ_archs=bfd_m68k_arch ;;
 m88*)		 targ_archs=bfd_m88k_arch ;;
 microblaze*)	 targ_archs=bfd_microblaze_arch ;;
 mips*)		 targ_archs=bfd_mips_arch ;;
-or32*)		 targ_archs=bfd_or32_arch ;;
+or1k*)		 targ_archs=bfd_or1k_arch ;;
 pdp11*)		 targ_archs=bfd_pdp11_arch ;;
 pj*)		 targ_archs="bfd_pj_arch bfd_i386_arch";;
 powerpc*)	 targ_archs="bfd_rs6000_arch bfd_powerpc_arch" ;;
@@ -1123,17 +1123,16 @@ case "${targ}" in
     targ_underscore=yes
     ;;
 
-  openrisc-*-elf)
-    targ_defvec=bfd_elf32_openrisc_vec
+  or1k*-*-elf)
+    targ_defvec=bfd_elf32_or1k_big_vec
     ;;
 
-  or32-*-coff)
-    targ_defvec=or32coff_big_vec
-    targ_underscore=yes
+  or1k*-*-linux*)
+    targ_defvec=bfd_elf32_or1k_big_vec
     ;;
 
-  or32-*-elf)
-    targ_defvec=bfd_elf32_or32_big_vec
+  or1k*-*-netbsd*)
+    targ_defvec=bfd_elf32_or1k_big_vec
     ;;
 
   pdp11-*-*)
