@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_by_cas32.c,v 1.3 2014/03/09 16:19:14 riastradh Exp $	*/
+/*	$NetBSD: atomic_cas_by_cas32.c,v 1.4 2014/09/03 19:30:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 #include <sys/types.h>
 #include <sys/inttypes.h>
 
+#include "atomic_op_namespace.h"
+
 uint32_t _atomic_cas_32(volatile uint32_t *addr, uint32_t old, uint32_t new);
 uint16_t _atomic_cas_16(volatile uint16_t *addr, uint16_t old, uint16_t new);
 uint8_t _atomic_cas_8(volatile uint8_t *addr, uint8_t old, uint8_t new);
@@ -62,6 +64,8 @@ _atomic_cas_16(volatile uint16_t *addr, uint16_t old, uint16_t new)
 	return old;
 }
 
+crt_alias(__sync_val_compare_and_swap_2,_atomic_cas_16)
+
 uint8_t
 _atomic_cas_8(volatile uint8_t *addr, uint8_t old, uint8_t new)
 {
@@ -83,3 +87,5 @@ _atomic_cas_8(volatile uint8_t *addr, uint8_t old, uint8_t new)
 
 	return old;
 }
+
+crt_alias(__sync_val_compare_and_swap_1,_atomic_cas_8)
