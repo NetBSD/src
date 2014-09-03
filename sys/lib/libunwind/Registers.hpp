@@ -1024,6 +1024,73 @@ private:
   uint64_t fpreg[32];
 };
 
+enum {
+  DWARF_OR1K_R0 = 0,
+  DWARF_OR1K_SP = 1,
+  DWARF_OR1K_LR = 9,
+  DWARF_OR1K_R31 = 31,
+  DWARF_OR1K_FPCSR = 32,
+
+  REGNO_OR1K_R0 = 0,
+  REGNO_OR1K_SP = 1,
+  REGNO_OR1K_LR = 9,
+  REGNO_OR1K_R31 = 31,
+  REGNO_OR1K_FPCSR = 32,
+};
+
+class Registers_or1k {
+public:
+  enum {
+    LAST_REGISTER = REGNO_OR1K_FPCSR,
+    LAST_RESTORE_REG = REGNO_OR1K_FPCSR,
+    RETURN_OFFSET = 0,
+  };
+
+  __dso_hidden Registers_or1k();
+
+  static int dwarf2regno(int num) {
+    if (num >= DWARF_OR1K_R0 && num <= DWARF_OR1K_R31)
+      return REGNO_OR1K_R0 + (num - DWARF_OR1K_R0);
+    if (num == DWARF_OR1K_FPCSR)
+      return REGNO_OR1K_FPCSR;
+    return LAST_REGISTER + 1;
+  }
+
+  bool validRegister(int num) const {
+    return num >= 0 && num <= LAST_RESTORE_REG;
+  }
+
+  uint64_t getRegister(int num) const {
+    assert(validRegister(num));
+    return reg[num];
+  }
+
+  void setRegister(int num, uint64_t value) {
+    assert(validRegister(num));
+    reg[num] = value;
+  }
+
+  uint64_t getIP() const { return reg[REGNO_OR1K_LR]; }
+
+  void setIP(uint64_t value) { reg[REGNO_OR1K_LR] = value; }
+
+  uint64_t getSP() const { return reg[REGNO_OR1K_SP]; }
+
+  void setSP(uint64_t value) { reg[REGNO_OR1K_SP] = value; }
+
+  bool validFloatVectorRegister(int num) const {
+    return false;
+  }
+
+  void copyFloatVectorRegister(int num, uint64_t addr_) {
+  }
+
+  __dso_hidden void jumpto() const __dead;
+
+private:
+  uint32_t reg[REGNO_OR1K_FPCSR + 1];
+};
+
 #if __i386__
 typedef Registers_x86 NativeUnwindRegisters;
 #elif __x86_64__
@@ -1052,6 +1119,8 @@ typedef Registers_SPARC NativeUnwindRegisters;
 typedef Registers_Alpha NativeUnwindRegisters;
 #elif __hppa__
 typedef Registers_HPPA NativeUnwindRegisters;
+#elif __or1k__
+typedef Registers_or1k NativeUnwindRegisters;
 #endif
 } // namespace _Unwind
 
