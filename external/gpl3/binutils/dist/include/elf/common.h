@@ -194,7 +194,7 @@
 #define EM_MN10300	 89	/* Matsushita MN10300 */
 #define EM_MN10200	 90	/* Matsushita MN10200 */
 #define EM_PJ		 91	/* picoJava */
-#define EM_OPENRISC	 92	/* OpenRISC 32-bit embedded processor */
+#define EM_OR1K		 92	/* OpenRISC 1000 32-bit embedded processor */
 #define EM_ARC_A5	 93	/* ARC Cores Tangent-A5 */
 #define EM_XTENSA	 94	/* Tensilica Xtensa Architecture */
 #define EM_VIDEOCORE	 95	/* Alphamosaic VideoCore processor */
@@ -356,9 +356,6 @@
 
 /* Ubicom IP2xxx;   Written in the absense of an ABI.  */
 #define EM_IP2K_OLD		0x8217
-
-/* (Deprecated) Temporary number for the OpenRISC processor.  */
-#define EM_OR32			0x8472
 
 /* Cygnus PowerPC ELF backend.  Written in the absence of an ABI.  */
 #define EM_CYGNUS_POWERPC	0x9025

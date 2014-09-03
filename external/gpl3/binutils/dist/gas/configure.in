@@ -314,7 +314,7 @@ changequote([,])dnl
         fi
         ;;
 
-      epiphany | fr30 | ip2k | iq2000 | lm32 | m32r | openrisc)
+      epiphany | fr30 | ip2k | iq2000 | lm32 | m32r | or1k | or1knd)
 	using_cgen=yes
 	;;
 
@@ -504,6 +504,8 @@ esac
 cgen_cpu_prefix=""
 if test $using_cgen = yes ; then
   case ${target_cpu} in
+    or1knd)
+       cgen_cpu_prefix=or1k ;;
     *) cgen_cpu_prefix=${target_cpu} ;;
   esac
   AC_SUBST(cgen_cpu_prefix)

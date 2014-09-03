@@ -4,8 +4,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-dis.in isn't
 
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2007,
-   2008, 2010  Free Software Foundation, Inc.
+   Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -33,8 +32,8 @@
 #include "bfd.h"
 #include "symcat.h"
 #include "libiberty.h"
-#include "openrisc-desc.h"
-#include "openrisc-opc.h"
+#include "or1k-desc.h"
+#include "or1k-opc.h"
 #include "opintl.h"
 
 /* Default text to print if an instruction isn't recognized.  */
@@ -59,7 +58,7 @@ static int read_insn
 /* -- disassembler routines inserted here.  */
 
 
-void openrisc_cgen_print_operand
+void or1k_cgen_print_operand
   (CGEN_CPU_DESC, int, PTR, CGEN_FIELDS *, void const *, bfd_vma, int);
 
 /* Main entry point for printing operands.
@@ -78,7 +77,7 @@ void openrisc_cgen_print_operand
    the handlers.  */
 
 void
-openrisc_cgen_print_operand (CGEN_CPU_DESC cd,
+or1k_cgen_print_operand (CGEN_CPU_DESC cd,
 			   int opindex,
 			   void * xinfo,
 			   CGEN_FIELDS *fields,
@@ -90,44 +89,50 @@ openrisc_cgen_print_operand (CGEN_CPU_DESC cd,
 
   switch (opindex)
     {
-    case OPENRISC_OPERAND_ABS_26 :
-      print_address (cd, info, fields->f_abs26, 0|(1<<CGEN_OPERAND_ABS_ADDR), pc, length);
-      break;
-    case OPENRISC_OPERAND_DISP_26 :
+    case OR1K_OPERAND_DISP26 :
       print_address (cd, info, fields->f_disp26, 0|(1<<CGEN_OPERAND_PCREL_ADDR), pc, length);
       break;
-    case OPENRISC_OPERAND_HI16 :
+    case OR1K_OPERAND_RA :
+      print_keyword (cd, info, & or1k_cgen_opval_h_gpr, fields->f_r2, 0);
+      break;
+    case OR1K_OPERAND_RADF :
+      print_keyword (cd, info, & or1k_cgen_opval_h_fdr, fields->f_r1, 0);
+      break;
+    case OR1K_OPERAND_RASF :
+      print_keyword (cd, info, & or1k_cgen_opval_h_fsr, fields->f_r2, 0);
+      break;
+    case OR1K_OPERAND_RB :
+      print_keyword (cd, info, & or1k_cgen_opval_h_gpr, fields->f_r3, 0);
+      break;
+    case OR1K_OPERAND_RBDF :
+      print_keyword (cd, info, & or1k_cgen_opval_h_fdr, fields->f_r1, 0);
+      break;
+    case OR1K_OPERAND_RBSF :
+      print_keyword (cd, info, & or1k_cgen_opval_h_fsr, fields->f_r3, 0);
+      break;
+    case OR1K_OPERAND_RD :
+      print_keyword (cd, info, & or1k_cgen_opval_h_gpr, fields->f_r1, 0);
+      break;
+    case OR1K_OPERAND_RDDF :
+      print_keyword (cd, info, & or1k_cgen_opval_h_fdr, fields->f_r1, 0);
+      break;
+    case OR1K_OPERAND_RDSF :
+      print_keyword (cd, info, & or1k_cgen_opval_h_fsr, fields->f_r1, 0);
+      break;
+    case OR1K_OPERAND_SIMM16 :
       print_normal (cd, info, fields->f_simm16, 0|(1<<CGEN_OPERAND_SIGNED)|(1<<CGEN_OPERAND_SIGN_OPT), pc, length);
       break;
-    case OPENRISC_OPERAND_LO16 :
-      print_normal (cd, info, fields->f_lo16, 0|(1<<CGEN_OPERAND_SIGNED)|(1<<CGEN_OPERAND_SIGN_OPT), pc, length);
+    case OR1K_OPERAND_SIMM16_SPLIT :
+      print_normal (cd, info, fields->f_simm16_split, 0|(1<<CGEN_OPERAND_SIGNED)|(1<<CGEN_OPERAND_SIGN_OPT)|(1<<CGEN_OPERAND_VIRTUAL), pc, length);
       break;
-    case OPENRISC_OPERAND_OP_F_23 :
-      print_normal (cd, info, fields->f_op4, 0, pc, length);
-      break;
-    case OPENRISC_OPERAND_OP_F_3 :
-      print_normal (cd, info, fields->f_op5, 0, pc, length);
-      break;
-    case OPENRISC_OPERAND_RA :
-      print_keyword (cd, info, & openrisc_cgen_opval_h_gr, fields->f_r2, 0);
-      break;
-    case OPENRISC_OPERAND_RB :
-      print_keyword (cd, info, & openrisc_cgen_opval_h_gr, fields->f_r3, 0);
-      break;
-    case OPENRISC_OPERAND_RD :
-      print_keyword (cd, info, & openrisc_cgen_opval_h_gr, fields->f_r1, 0);
-      break;
-    case OPENRISC_OPERAND_SIMM_16 :
-      print_normal (cd, info, fields->f_simm16, 0|(1<<CGEN_OPERAND_SIGNED), pc, length);
-      break;
-    case OPENRISC_OPERAND_UI16NC :
-      print_normal (cd, info, fields->f_i16nc, 0|(1<<CGEN_OPERAND_SIGNED)|(1<<CGEN_OPERAND_SIGN_OPT)|(1<<CGEN_OPERAND_VIRTUAL), pc, length);
-      break;
-    case OPENRISC_OPERAND_UIMM_16 :
+    case OR1K_OPERAND_UIMM16 :
       print_normal (cd, info, fields->f_uimm16, 0, pc, length);
       break;
-    case OPENRISC_OPERAND_UIMM_5 :
-      print_normal (cd, info, fields->f_uimm5, 0, pc, length);
+    case OR1K_OPERAND_UIMM16_SPLIT :
+      print_normal (cd, info, fields->f_uimm16_split, 0|(1<<CGEN_OPERAND_VIRTUAL), pc, length);
+      break;
+    case OR1K_OPERAND_UIMM6 :
+      print_normal (cd, info, fields->f_uimm6, 0, pc, length);
       break;
 
     default :
@@ -138,19 +143,19 @@ openrisc_cgen_print_operand (CGEN_CPU_DESC cd,
   }
 }
 
-cgen_print_fn * const openrisc_cgen_print_handlers[] = 
+cgen_print_fn * const or1k_cgen_print_handlers[] = 
 {
   print_insn_normal,
 };
 
 
 void
-openrisc_cgen_init_dis (CGEN_CPU_DESC cd)
+or1k_cgen_init_dis (CGEN_CPU_DESC cd)
 {
-  openrisc_cgen_init_opcode_table (cd);
-  openrisc_cgen_init_ibld_table (cd);
-  cd->print_handlers = & openrisc_cgen_print_handlers[0];
-  cd->print_operand = openrisc_cgen_print_operand;
+  or1k_cgen_init_opcode_table (cd);
+  or1k_cgen_init_ibld_table (cd);
+  cd->print_handlers = & or1k_cgen_print_handlers[0];
+  cd->print_operand = or1k_cgen_print_operand;
 }
 
 
@@ -252,7 +257,7 @@ print_insn_normal (CGEN_CPU_DESC cd,
 	}
 
       /* We have an operand.  */
-      openrisc_cgen_print_operand (cd, CGEN_SYNTAX_FIELD (*syn), info,
+      or1k_cgen_print_operand (cd, CGEN_SYNTAX_FIELD (*syn), info,
 				 fields, CGEN_INSN_ATTRS (insn), pc, length);
     }
 }
@@ -331,7 +336,7 @@ print_insn (CGEN_CPU_DESC cd,
 #ifdef CGEN_VALIDATE_INSN_SUPPORTED 
       /* Not needed as insn shouldn't be in hash lists if not supported.  */
       /* Supported by this cpu?  */
-      if (! openrisc_cgen_insn_supported (cd, insn))
+      if (! or1k_cgen_insn_supported (cd, insn))
         {
           insn_list = CGEN_DIS_NEXT_INSN (insn_list);
 	  continue;
@@ -442,7 +447,7 @@ typedef struct cpu_desc_list
 } cpu_desc_list;
 
 int
-print_insn_openrisc (bfd_vma pc, disassemble_info *info)
+print_insn_or1k (bfd_vma pc, disassemble_info *info)
 {
   static cpu_desc_list *cd_list = 0;
   cpu_desc_list *cl = 0;
@@ -460,7 +465,7 @@ print_insn_openrisc (bfd_vma pc, disassemble_info *info)
 
   /* ??? gdb will set mach but leave the architecture as "unknown" */
 #ifndef CGEN_BFD_ARCH
-#define CGEN_BFD_ARCH bfd_arch_openrisc
+#define CGEN_BFD_ARCH bfd_arch_or1k
 #endif
   arch = info->arch;
   if (arch == bfd_arch_unknown)
@@ -521,7 +526,7 @@ print_insn_openrisc (bfd_vma pc, disassemble_info *info)
       prev_isa = cgen_bitset_copy (isa);
       prev_mach = mach;
       prev_endian = endian;
-      cd = openrisc_cgen_cpu_open (CGEN_CPU_OPEN_ISAS, prev_isa,
+      cd = or1k_cgen_cpu_open (CGEN_CPU_OPEN_ISAS, prev_isa,
 				 CGEN_CPU_OPEN_BFDMACH, mach_name,
 				 CGEN_CPU_OPEN_ENDIAN, prev_endian,
 				 CGEN_CPU_OPEN_END);
@@ -537,7 +542,7 @@ print_insn_openrisc (bfd_vma pc, disassemble_info *info)
       cl->next = cd_list;
       cd_list = cl;
 
-      openrisc_cgen_init_dis (cd);
+      or1k_cgen_init_dis (cd);
     }
 
   /* We try to have as much common code as possible.
