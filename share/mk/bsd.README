@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.236.2.8 2009/06/06 22:10:12 bouyer Exp $
+#	$NetBSD: bsd.README,v 1.236.2.9 2014/09/03 02:09:24 msaitoh Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -56,7 +56,7 @@ the tree where the file gets installed.
 
 The profiled libraries are no longer built in a different directory than
 the regular libraries.  A new suffix, ".po", is used to denote a profiled
-object, and ".so" denotes a shared (position-independent) object.
+object, and ".pico" denotes a shared (position-independent) object.
 
 There are various make variables used during the build.
 
