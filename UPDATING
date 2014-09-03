@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.178.2.3 2010/06/12 01:55:43 riz Exp $
+$NetBSD: UPDATING,v 1.178.2.4 2014/09/03 02:15:10 msaitoh Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20100222:
+	The shared objects file extension has been changed from .so to
+	.pico, in order to avoid conflicts with shared libraries names
+	libXX.so.  All now stale regular .so files can be removed from
+	your object directories.
 
 20090616:
 	Native Xorg was upgraded.  Builds will need a clean objdir for
