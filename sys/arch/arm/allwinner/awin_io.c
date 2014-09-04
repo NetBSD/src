@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.8 2014/02/26 00:19:01 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.9 2014/09/04 02:38:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -123,6 +123,7 @@ static const struct awin_locators awin_locators[] = {
 	{ "awe", OFFANDSIZE(EMAC), NOPORT, AWIN_IRQ_EMAC, AANY },
 	{ "awge", AWIN_GMAC_OFFSET, AWIN_GMAC_SIZE, NOPORT, AWIN_IRQ_GMAC, A20 },
 	{ "awincrypto", OFFANDSIZE(SS), NOPORT, AWIN_IRQ_SS, AANY },
+	{ "awinac", OFFANDSIZE(AC), NOPORT, AWIN_IRQ_AC, AANY },
 };
 
 static int

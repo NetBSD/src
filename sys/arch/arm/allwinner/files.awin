@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.8 2014/02/25 02:51:52 matt Exp $
+#	$NetBSD: files.awin,v 1.9 2014/09/04 02:38:18 jmcneill Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -101,3 +101,8 @@ file	arch/arm/allwinner/awin_wdc.c		awin_wdc
 # A20 AHCI Controller (SATA)
 attach	ahcisata at awinio with awin_ahcisata
 file	arch/arm/allwinner/awin_ahcisata.c	awin_ahcisata
+
+# A10/A20 Audio Codec (AC)
+device	awinac: audiobus, auconv, mulaw, aurateconv
+attach	awinac at awinio with awin_ac
+file	arch/arm/allwinner/awin_ac.c		awin_ac
