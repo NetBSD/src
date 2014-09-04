@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.295 2014/09/03 14:30:04 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.296 2014/09/04 02:34:32 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -73,7 +73,6 @@
  * TODO (in order of importance):
  *
  *	- Check XXX'ed comments
- *	- Read SFP ROM and set media type correctly on 82575 and newer devices
  *	- EEE (Energy Efficiency Ethernet)
  *	- MSI/MSI-X
  *	- Virtual Function
@@ -82,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.295 2014/09/03 14:30:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.296 2014/09/04 02:34:32 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
