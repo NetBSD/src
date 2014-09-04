@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.122 2014/09/04 13:28:54 christos Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.123 2014/09/04 13:29:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.122 2014/09/04 13:28:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.123 2014/09/04 13:29:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,7 +295,6 @@ bad:
 good:
 	KASSERT(ix != -1);
 	error = vcache_get(dvp->v_mount, &ix, sizeof(ix), vpp);
-printf("%s, %d: %d %d %p\n", __FILE__, __LINE__, error, ix, vpp);
 	return error;
 }
 
@@ -355,7 +354,6 @@ fdesc_attr(int fd, struct vattr *vap, kauth_cred_t cred)
 			 */
 			vap->va_mode &= ~(S_IXUSR|S_IXGRP|S_IXOTH);
 		}
-printf("%s, %d: %d %d\n", __FILE__, __LINE__, error, vap->va_type);
 		break;
 
 	default:
@@ -392,7 +390,6 @@ printf("%s, %d: %d %d\n", __FILE__, __LINE__, error, vap->va_type);
 		vap->va_flags = stb.st_flags;
 		vap->va_rdev = stb.st_rdev;
 		vap->va_bytes = stb.st_blocks * stb.st_blksize;
-printf("%s, %d: %d %lld\n", __FILE__, __LINE__, error, (long long)vap->va_rdev);
 		break;
 	}
 
@@ -767,12 +764,10 @@ fdesc_ioctl(void *v)
 	} */ *ap = v;
 	int error = EOPNOTSUPP;
 
-printf("%s, %d: ioctl %d\n", __FILE__, __LINE__, VTOFDESC(ap->a_vp)->fd_type);
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
 		error = cdev_ioctl(devctty, ap->a_command, ap->a_data,
 		    ap->a_fflag, curlwp);
-printf("%s, %d: ioctl error %d\n", __FILE__, __LINE__, error);
 		break;
 
 	default:
