@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.1 2014/08/31 19:13:01 matt Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.2 2014/09/04 02:34:30 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.1 2014/08/31 19:13:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.2 2014/09/04 02:34:30 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -622,6 +622,7 @@ awin_device_register(device_t self, void *aux)
 			prop_dictionary_set_cstring(dict, "emacpwren", ">PH19");
 		}
 		prop_dictionary_set_cstring(dict, "mmc0detect", "<PH1");
+		prop_dictionary_set_cstring(dict, "audiopactrl", ">PH15");
 
 		/*
 		 * These pins have no connections.
@@ -657,6 +658,11 @@ awin_device_register(device_t self, void *aux)
 			prop_dictionary_set_cstring(dict,
 			    "led-gpio", "status-led2");
 		}
+		return;
+	}
+
+	if (device_is_a(self, "awinac")) {
+		prop_dictionary_set_cstring(dict, "pactrl-gpio", "audiopactrl");
 		return;
 	}
 
