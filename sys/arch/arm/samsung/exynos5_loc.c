@@ -220,6 +220,7 @@ static const struct exyo_locators exynos5_locators[] = {
 	{ "sscom", OFFANDSIZE(,UART1), 1, IRQ_UART1, 0 },
 	{ "sscom", OFFANDSIZE(,UART2), 2, IRQ_UART2, 0 },
 	{ "sscom", OFFANDSIZE(,UART3), 3, IRQ_UART3, 0 },
+	{ "exyousb", OFFANDSIZE(,USB2HOST), NOPORT, IRQ_USB_HOST20, 0 },
 };
 
 const struct exyo_locinfo exynos5_locinfo = {
