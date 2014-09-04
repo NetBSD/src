@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.15 2014/08/24 12:42:03 jmcneill Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.16 2014/09/04 02:36:08 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.15 2014/08/24 12:42:03 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.16 2014/09/04 02:36:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -274,4 +274,28 @@ awin_pll6_enable(void)
 	    __SHIFTOUT(ncfg, AWIN_PLL_CFG_FACTOR_K),
 	    __SHIFTOUT(ncfg, AWIN_PLL_CFG_FACTOR_M));
 #endif
+}
+
+void
+awin_pll2_enable(void)
+{
+	bus_space_tag_t bst = &awin_bs_tag;
+	bus_space_handle_t bsh = awin_core_bsh;
+
+	/*
+  	 * AC (at 48kHz) needs PLL2 to be 24576000 Hz
+  	 */
+	const uint32_t ocfg = bus_space_read_4(bst, bsh,
+	    AWIN_CCM_OFFSET + AWIN_PLL2_CFG_REG);
+
+	uint32_t ncfg = ocfg;
+	ncfg &= ~(AWIN_PLL2_CFG_PREVDIV|AWIN_PLL2_CFG_FACTOR_N|AWIN_PLL2_CFG_POSTDIV);
+	ncfg |= __SHIFTIN(21, AWIN_PLL2_CFG_PREVDIV);
+	ncfg |= __SHIFTIN(86, AWIN_PLL2_CFG_FACTOR_N);
+	ncfg |= __SHIFTIN(4, AWIN_PLL2_CFG_POSTDIV);
+	ncfg |= AWIN_PLL_CFG_ENABLE;
+	if (ncfg != ocfg) {
+		bus_space_write_4(bst, bsh,
+		    AWIN_CCM_OFFSET + AWIN_PLL2_CFG_REG, ncfg);
+	}
 }
