@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.10 2014/06/05 03:48:32 matt Exp $ */
+/* $NetBSD: awin_var.h,v 1.11 2014/09/04 02:36:08 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -81,6 +81,7 @@ extern struct arm32_bus_dma_tag awin_coherent_dma_tag;
 psize_t awin_memprobe(void);
 void	awin_bootstrap(vaddr_t, vaddr_t); 
 void	awin_dma_bootstrap(psize_t);
+void	awin_pll2_enable(void);
 void	awin_pll6_enable(void);
 void	awin_cpu_hatch(struct cpu_info *);
 
