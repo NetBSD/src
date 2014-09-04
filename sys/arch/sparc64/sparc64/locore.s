@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.371 2014/08/31 18:49:42 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.372 2014/09/04 18:48:29 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -4521,6 +4521,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	 nop
 
 	/* sun4v */
+	LDPTR	[%l7 + CI_TSB_DESC], %o0
 	call	_C_LABEL(pmap_setup_tsb_sun4v)
 	 nop
 	ba	1f
