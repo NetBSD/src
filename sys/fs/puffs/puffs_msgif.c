@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.95 2014/08/28 08:29:50 hannken Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.96 2014/09/05 05:39:52 matt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.95 2014/08/28 08:29:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.96 2014/09/05 05:39:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -290,11 +290,11 @@ puffs_msg_setdelta(struct puffs_msgpark *park, size_t delta)
 }
 
 void
-puffs_msg_setinfo(struct puffs_msgpark *park, int class, int type,
+puffs_msg_setinfo(struct puffs_msgpark *park, int opclass, int type,
 	puffs_cookie_t ck)
 {
 
-	park->park_preq->preq_opclass = PUFFSOP_OPCLASS(class);
+	park->park_preq->preq_opclass = PUFFSOP_OPCLASS(opclass);
 	park->park_preq->preq_optype = type;
 	park->park_preq->preq_cookie = ck;
 }
@@ -605,10 +605,10 @@ puffs_msg_sendresp(struct puffs_mount *pmp, struct puffs_req *origpreq, int rv)
  * should block while waiting for input.  Handles all locking internally.
  */
 int
-puffs_msgif_getout(void *this, size_t maxsize, int nonblock,
+puffs_msgif_getout(void *ctx, size_t maxsize, int nonblock,
 	uint8_t **data, size_t *dlen, void **parkptr)
 {
-	struct puffs_mount *pmp = this;
+	struct puffs_mount *pmp = ctx;
 	struct puffs_msgpark *park = NULL;
 	struct puffs_req *preq = NULL;
 	int error;
@@ -712,9 +712,9 @@ puffs_msgif_getout(void *this, size_t maxsize, int nonblock,
  * or the death chamber.
  */
 void
-puffs_msgif_releaseout(void *this, void *parkptr, int status)
+puffs_msgif_releaseout(void *ctx, void *parkptr, int status)
 {
-	struct puffs_mount *pmp = this;
+	struct puffs_mount *pmp = ctx;
 	struct puffs_msgpark *park = parkptr;
 
 	DPRINTF(("puffs_releaseout: returning park %p, errno %d: " ,
@@ -742,9 +742,9 @@ puffs_msgif_releaseout(void *this, void *parkptr, int status)
 }
 
 size_t
-puffs_msgif_waitcount(void *this)
+puffs_msgif_waitcount(void *ctx)
 {
-	struct puffs_mount *pmp = this;
+	struct puffs_mount *pmp = ctx;
 	size_t rv;
 
 	mutex_enter(&pmp->pmp_lock);
@@ -758,9 +758,9 @@ puffs_msgif_waitcount(void *this)
  * XXX: locking with this one?
  */
 static void
-puffsop_msg(void *this, struct puffs_req *preq)
+puffsop_msg(void *ctx, struct puffs_req *preq)
 {
-	struct puffs_mount *pmp = this;
+	struct puffs_mount *pmp = ctx;
 	struct putter_hdr *pth = &preq->preq_pth;
 	struct puffs_msgpark *park;
 	int wgone;
@@ -950,9 +950,9 @@ puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 }
 
 int
-puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
+puffs_msgif_dispatch(void *ctx, struct putter_hdr *pth)
 {
-	struct puffs_mount *pmp = this;
+	struct puffs_mount *pmp = ctx;
 	struct puffs_req *preq = (struct puffs_req *)pth;
 	struct puffs_sopreq *psopr;
 
@@ -1024,7 +1024,7 @@ puffs_msgif_dispatch(void *this, struct putter_hdr *pth)
 	}
 
 	default:
-		DPRINTF(("dispatch: invalid class 0x%x\n", preq->preq_opclass));
+		DPRINTF(("dispatch: invalid opclass 0x%x\n", preq->preq_opclass));
 		puffs_msg_sendresp(pmp, preq, EOPNOTSUPP);
 		break;
 	}
@@ -1147,9 +1147,9 @@ puffs_sop_thread(void *arg)
 }
 
 int
-puffs_msgif_close(void *this)
+puffs_msgif_close(void *ctx)
 {
-	struct puffs_mount *pmp = this;
+	struct puffs_mount *pmp = ctx;
 	struct mount *mp = PMPTOMP(pmp);
 
 	mutex_enter(&pmp->pmp_lock);
