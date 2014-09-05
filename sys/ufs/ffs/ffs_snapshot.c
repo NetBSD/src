@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.136 2014/07/10 06:02:40 dholland Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.137 2014/09/05 06:10:07 matt Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.136 2014/07/10 06:02:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.137 2014/09/05 06:10:07 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -77,11 +77,13 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.136 2014/07/10 06:02:40 dholland 
 
 #include <uvm/uvm.h>
 
+TAILQ_HEAD(inodelst, inode);			/* List of active snapshots */
+
 struct snap_info {
 	kmutex_t si_lock;			/* Lock this snapinfo */
 	kmutex_t si_snaplock;			/* Snapshot vnode common lock */
 	lwp_t *si_owner;			/* Sanplock owner */
-	TAILQ_HEAD(inodelst, inode) si_snapshots; /* List of active snapshots */
+	struct inodelst si_snapshots;		/* List of active snapshots */
 	daddr_t *si_snapblklist;		/* Snapshot block hints list */
 	uint32_t si_gen;			/* Incremented on change */
 };
