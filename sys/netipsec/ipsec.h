@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.35 2014/05/30 01:39:03 christos Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.36 2014/09/05 09:26:44 matt Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -274,8 +274,8 @@ ipsec4_getpolicybysock(
 
 static __inline int
 ipsec_copy_pcbpolicy(
-    struct inpcbpolicy *old,
-    struct inpcbpolicy *new
+    struct inpcbpolicy *oldp,
+    struct inpcbpolicy *newp
 )
 {
   /*XXX do nothing */
