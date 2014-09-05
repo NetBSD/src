@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.261 2014/05/22 16:31:19 dholland Exp $	*/
+/*	$NetBSD: tty.c,v 1.262 2014/09/05 05:33:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.261 2014/05/22 16:31:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.262 2014/09/05 05:33:39 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -2669,7 +2669,7 @@ out:
  * Must be called with the tty lock held.
  */
 int
-ttysleep(struct tty *tp, kcondvar_t *cv, bool catch, int timo)
+ttysleep(struct tty *tp, kcondvar_t *cv, bool catch_p, int timo)
 {
 	int	error;
 	short	gen;
@@ -2678,8 +2678,8 @@ ttysleep(struct tty *tp, kcondvar_t *cv, bool catch, int timo)
 
 	gen = tp->t_gen;
 	if (cv == NULL)
-		error = kpause("ttypause", catch, timo, &tty_lock);
-	else if (catch)
+		error = kpause("ttypause", catch_p, timo, &tty_lock);
+	else if (catch_p)
 		error = cv_timedwait_sig(cv, &tty_lock, timo);
 	else
 		error = cv_timedwait(cv, &tty_lock, timo);
@@ -2917,7 +2917,7 @@ ttysigintr(void *cookie)
 	mutex_spin_enter(&tty_lock);
 	while ((tp = TAILQ_FIRST(&tty_sigqueue)) != NULL) {
 		KASSERT(tp->t_sigcount > 0);
-		for (st = 0; st < TTYSIG_COUNT; st++) {
+		for (st = TTYSIG_PG1; st < TTYSIG_COUNT; st++) {
 			if ((sig = firstsig(&tp->t_sigs[st])) != 0)
 				break;
 		}
