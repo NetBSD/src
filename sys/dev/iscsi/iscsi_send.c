@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.8 2012/12/29 11:05:30 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.9 2014/09/05 09:27:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 STATIC int
 my_soo_write(connection_t *conn, struct uio *u)
 {
-	struct socket *so = (struct socket *) conn->sock->f_data;
+	struct socket *so = conn->sock->f_socket;
 	size_t resid = u->uio_resid;
 	int ret;
 
@@ -369,9 +369,9 @@ iscsi_send_thread(void *par)
 		 * thread to wake up
 		 */
 		DEBC(conn, 1, ("Closing Socket %p\n", conn->sock));
-		solock((struct socket *) fp->f_data);
-		soshutdown((struct socket *) fp->f_data, SHUT_RDWR);
-		sounlock((struct socket *) fp->f_data);
+		solock(fp->f_socket);
+		soshutdown(fp->f_socket, SHUT_RDWR);
+		sounlock(fp->f_socket);
 
 		/* wake up any non-reassignable waiting CCBs */
 		TAILQ_FOREACH_SAFE(ccb, &conn->ccbs_waiting, chain, nccb) {
