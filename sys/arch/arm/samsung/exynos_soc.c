@@ -1,4 +1,5 @@
-/*	$NetBSD: exynos_soc.c,v 1.19 2014/09/02 14:07:50 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.20 2014/09/05 08:01:05 skrll Exp $	*/
+
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +34,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.19 2014/09/02 14:07:50 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.20 2014/09/05 08:01:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
