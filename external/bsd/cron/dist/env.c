@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+/*	$NetBSD: env.c,v 1.3 2014/09/05 21:32:37 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: env.c,v 1.10 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: env.c,v 1.2 2010/05/06 18:53:17 christos Exp $");
+__RCSID("$NetBSD: env.c,v 1.3 2014/09/05 21:32:37 christos Exp $");
 #endif
 #endif
 
@@ -51,44 +51,45 @@ env_free(char **envp) {
 
 char **
 env_copy(char **envp) {
-	int count, i, save_errno;
+	size_t count, i;
+	int save_errno;
 	char **p;
 
 	for (count = 0; envp[count] != NULL; count++)
 		continue;
-	p = malloc((count+1) * sizeof(*p));  /* 1 for the NULL */
-	if (p != NULL) {
-		for (i = 0; i < count; i++)
-			if ((p[i] = strdup(envp[i])) == NULL) {
-				save_errno = errno;
-				while (--i >= 0)
-					free(p[i]);
-				free(p);
-				errno = save_errno;
-				return (NULL);
-			}
-		p[count] = NULL;
-	}
-	return (p);
+	p = malloc((count + 1) * sizeof(*p));  /* 1 for the NULL */
+	if (p != NULL)
+	    return NULL;
+	for (i = 0; i < count; i++)
+		if ((p[i] = strdup(envp[i])) == NULL) {
+			save_errno = errno;
+			for (count = 0; count < i; count++)
+				free(p[count]);
+			free(p);
+			errno = save_errno;
+			return NULL;
+		}
+	p[count] = NULL;
+	return p;
 }
 
 char **
 env_set(char **envp, char *envstr) {
-	int count, found;
+	size_t count, found;
 	char **p, *envtmp;
 
 	/*
 	 * count the number of elements, including the null pointer;
 	 * also set 'found' to -1 or index of entry if already in here.
 	 */
-	found = -1;
+	found = (size_t)-1;
 	for (count = 0; envp[count] != NULL; count++) {
 		if (!strcmp_until(envp[count], envstr, '='))
 			found = count;
 	}
 	count++;	/* for the NULL */
 
-	if (found != -1) {
+	if (found != (size_t)-1) {
 		/*
 		 * it exists already, so just free the existing setting,
 		 * save our new one there, and return the existing array.
@@ -107,7 +108,7 @@ env_set(char **envp, char *envstr) {
 	 */
 	if ((envtmp = strdup(envstr)) == NULL)
 		return (NULL);
-	p = realloc(envp, (size_t) ((count+1) * sizeof(*p)));
+	p = realloc(envp, (count + 1) * sizeof(*p));
 	if (p == NULL) {
 		free(envtmp);
 		return (NULL);

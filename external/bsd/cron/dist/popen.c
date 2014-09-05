@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.3 2011/07/17 01:16:46 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.4 2014/09/05 21:32:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -44,7 +44,7 @@
 static sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 static char rcsid[] = "Id: popen.c,v 1.6 2003/02/16 04:40:01 vixie Exp";
 #else
-__RCSID("$NetBSD: popen.c,v 1.3 2011/07/17 01:16:46 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.4 2014/09/05 21:32:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,6 @@ __RCSID("$NetBSD: popen.c,v 1.3 2011/07/17 01:16:46 christos Exp $");
  * command.
  */
 static PID_T *pids;
-static long fds;
 
 FILE *
 cron_popen(char *program, const char *type, struct passwd *pw) {
@@ -74,9 +73,10 @@ cron_popen(char *program, const char *type, struct passwd *pw) {
 
 	if (!pids) {
 		size_t len;
+		long fds;
 		if ((fds = sysconf(_SC_OPEN_MAX)) <= 0)
 			return (NULL);
-		len = fds * sizeof(*pids);
+		len = (size_t)fds * sizeof(*pids);
 		if ((pids = malloc(len)) == NULL)
 			return (NULL);
 		(void)memset(pids, 0, len);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.7 2010/10/02 12:22:20 tron Exp $	*/
+/*	$NetBSD: cron.c,v 1.8 2014/09/05 21:32:37 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: cron.c,v 1.12 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: cron.c,v 1.7 2010/10/02 12:22:20 tron Exp $");
+__RCSID("$NetBSD: cron.c,v 1.8 2014/09/05 21:32:37 christos Exp $");
 #endif
 #endif
 
@@ -39,7 +39,7 @@ static	void	usage(void),
 		run_reboot_jobs(cron_db *),
 		find_jobs(time_t, cron_db *, int, int),
 		set_time(int),
-		cron_sleep(int),
+		cron_sleep(time_t),
 		sigchld_handler(int),
 		sighup_handler(int),
 		sigchld_reaper(void),
@@ -131,7 +131,7 @@ main(int argc, char *argv[]) {
 	 * clockTime: is the time when set_time was last called.
 	 */
 	for (;;) {
-		int timeDiff;
+		time_t timeDiff;
 		enum timejump wakeupKind;
 
 		/* ... wait for the time (in minutes) to change ... */
@@ -169,8 +169,8 @@ main(int argc, char *argv[]) {
 				 * (wokeup late) run jobs for each virtual
 				 * minute until caught up.
 				 */
-				Debug(DSCH, ("[%ld], normal case %d minutes to go\n",
-				    (long)getpid(), timeDiff));
+				Debug(DSCH, ("[%jd], normal case %jd minutes to go\n",
+				    (intmax_t)getpid(), (intmax_t)timeDiff));
 				do {
 					if (job_runqueue())
 						(void)sleep(10);
@@ -192,8 +192,8 @@ main(int argc, char *argv[]) {
 				 * have a chance to run, and we do our
 				 * housekeeping.
 				 */
-				Debug(DSCH, ("[%ld], DST begins %d minutes to go\n",
-				    (long)getpid(), timeDiff));
+				Debug(DSCH, ("[%jd], DST begins %jd minutes to go\n",
+				    (intmax_t)getpid(), (intmax_t)timeDiff));
 				/* run wildcard jobs for current minute */
 				find_jobs(timeRunning, &database, TRUE, FALSE);
 	
@@ -218,8 +218,8 @@ main(int argc, char *argv[]) {
 				 * not be repeated.  Virtual time does not
 				 * change until we are caught up.
 				 */
-				Debug(DSCH, ("[%ld], DST ends %d minutes to go\n",
-				    (long)getpid(), timeDiff));
+				Debug(DSCH, ("[%jd], DST ends %jd minutes to go\n",
+				    (intmax_t)getpid(), (intmax_t)timeDiff));
 				find_jobs(timeRunning, &database, TRUE, FALSE);
 				break;
 			default:
@@ -458,7 +458,7 @@ set_time(int initialize) {
  * Try to just hit the next minute.
  */
 static void
-cron_sleep(int target) {
+cron_sleep(time_t target) {
 	time_t t1, t2;
 	int seconds_to_wait;
 
