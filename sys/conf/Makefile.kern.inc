@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.172 2014/08/21 07:57:25 skrll Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.173 2014/09/05 06:52:12 matt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -75,6 +75,7 @@ CWARNFLAGS+=	-Wold-style-definition
 CWARNFLAGS+=	-Wswitch -Wshadow
 CWARNFLAGS+=	-Wcast-qual -Wwrite-strings
 CWARNFLAGS+=	-Wno-unreachable-code
+#CWARNFLAGS+=	-Wc++-compat -Wno-error=c++-compat
 CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
 .  if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
 	${MACHINE_ARCH} == "sparc64" || ${MACHINE} == "prep"
