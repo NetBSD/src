@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrtt.h,v 1.9 2006/12/28 00:39:03 yamt Exp $	*/
+/*	$NetBSD: nfsrtt.h,v 1.10 2014/09/05 05:34:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,19 +52,21 @@
  * list goes from nfsrtt.rttl[pos] --> nfsrtt.rttl[pos - 1] in
  * chronological order of completion.
  */
+struct rttl {
+	u_int32_t	proc;			/* NFS procedure number */
+	int		rtt;			/* Measured round trip time */
+	int		rto;			/* Round Trip Timeout */
+	int		sent;			/* # rpcs in progress */
+	int		cwnd;			/* Send window */
+	int		srtt;			/* Ave Round Trip Time */
+	int		sdrtt;			/* Ave mean deviation of RTT */
+	fsid_t		fsid;			/* Fsid for mount point */
+	struct timeval	tstamp;			/* Timestamp of log entry */
+};
+
 struct nfsrtt {
 	int pos;			/* Position in array for next entry */
-	struct rttl {
-		u_int32_t	proc;		/* NFS procedure number */
-		int		rtt;		/* Measured round trip time */
-		int		rto;		/* Round Trip Timeout */
-		int		sent;		/* # rpcs in progress */
-		int		cwnd;		/* Send window */
-		int		srtt;		/* Ave Round Trip Time */
-		int		sdrtt;		/* Ave mean deviation of RTT */
-		fsid_t		fsid;		/* Fsid for mount point */
-		struct timeval	tstamp;	/* Timestamp of log entry */
-	} rttl[NFSRTTLOGSIZ];
+	struct rttl rttl[NFSRTTLOGSIZ];
 };
 
 /*
