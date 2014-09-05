@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.155 2014/05/17 23:27:59 rmind Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.156 2014/09/05 05:48:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -379,7 +379,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define MT_OOBDATA	7	/* expedited data  */
 
 #ifdef MBUFTYPES
-static const char *mbuftypes[] = {
+static const char * const mbuftypes[] = {
 	"mbfree",
 	"mbdata",
 	"mbheader",
@@ -482,7 +482,7 @@ do {									\
 
 #define	_MCLGET(m, pool_cache, size, how)				\
 do {									\
-	(m)->m_ext_storage.ext_buf =					\
+	(m)->m_ext_storage.ext_buf = (char *)				\
 	    pool_cache_get_paddr((pool_cache),				\
 		(how) == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : 0,		\
 		&(m)->m_ext_storage.ext_paddr);				\
@@ -507,7 +507,7 @@ do {									\
 
 #define	MEXTMALLOC(m, size, how)					\
 do {									\
-	(m)->m_ext_storage.ext_buf =					\
+	(m)->m_ext_storage.ext_buf = (char *)				\
 	    malloc((size), mbtypes[(m)->m_type], (how));		\
 	if ((m)->m_ext_storage.ext_buf != NULL) {			\
 		MCLINITREFERENCE(m);					\
@@ -525,7 +525,7 @@ do {									\
 #define	MEXTADD(m, buf, size, type, free, arg)				\
 do {									\
 	MCLINITREFERENCE(m);						\
-	(m)->m_data = (m)->m_ext.ext_buf = (void *)(buf);		\
+	(m)->m_data = (m)->m_ext.ext_buf = (char *)(buf);		\
 	(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) | M_EXT;	\
 	(m)->m_ext.ext_flags = 0;					\
 	(m)->m_ext.ext_size = (size);					\
