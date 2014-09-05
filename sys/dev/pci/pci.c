@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.144 2013/09/15 09:19:52 martin Exp $	*/
+/*	$NetBSD: pci.c,v 1.145 2014/09/05 05:29:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.144 2013/09/15 09:19:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.145 2014/09/05 05:29:16 matt Exp $");
 
 #include "opt_pci.h"
 
@@ -274,7 +274,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
 	struct pci_attach_args pa;
-	pcireg_t id, /* csr, */ class, intr, bhlcr, bar, endbar;
+	pcireg_t id, /* csr, */ pciclass, intr, bhlcr, bar, endbar;
 	int ret, pin, bus, device, function, i, width;
 	int locs[PCICF_NLOCS];
 
@@ -290,7 +290,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
 	/* csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG); */
-	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+	pciclass = pci_conf_read(pc, tag, PCI_CLASS_REG);
 
 	/* Invalid vendor ID value? */
 	if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
@@ -364,7 +364,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	pa.pa_function = function;
 	pa.pa_tag = tag;
 	pa.pa_id = id;
-	pa.pa_class = class;
+	pa.pa_class = pciclass;
 
 	/*
 	 * Set up memory, I/O enable, and PCI command flags
