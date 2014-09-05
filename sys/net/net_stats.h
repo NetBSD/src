@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stats.h,v 1.3 2008/05/04 07:22:14 thorpej Exp $	*/
+/*	$NetBSD: net_stats.h,v 1.4 2014/09/05 06:01:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #ifdef _KERNEL
 #include <sys/percpu.h>
 
-#define	_NET_STAT_GETREF(stat)	percpu_getref((stat))
+#define	_NET_STAT_GETREF(stat)	((uint64_t *)percpu_getref((stat)))
 #define	_NET_STAT_PUTREF(stat)	percpu_putref((stat))
 
 #define	_NET_STATINC(stat, x)						\
