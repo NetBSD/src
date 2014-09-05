@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.174 2014/07/01 23:01:54 justin Exp $	*/
+/*	$NetBSD: in6.c,v 1.175 2014/09/05 06:08:15 matt Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.174 2014/07/01 23:01:54 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.175 2014/09/05 06:08:15 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -643,7 +643,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	case SIOCAIFADDR_IN6:
 	{
 		int i;
-		struct nd_prefixctl pr0;
+		struct nd_prefixctl prc0;
 		struct nd_prefix *pr;
 
 		/* reject read-only flags */
@@ -679,17 +679,17 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		 * convert mask to prefix length (prefixmask has already
 		 * been validated in in6_update_ifa().
 		 */
-		memset(&pr0, 0, sizeof(pr0));
-		pr0.ndpr_ifp = ifp;
-		pr0.ndpr_plen = in6_mask2len(&ifra->ifra_prefixmask.sin6_addr,
+		memset(&prc0, 0, sizeof(prc0));
+		prc0.ndprc_ifp = ifp;
+		prc0.ndprc_plen = in6_mask2len(&ifra->ifra_prefixmask.sin6_addr,
 		    NULL);
-		if (pr0.ndpr_plen == 128) {
+		if (prc0.ndprc_plen == 128) {
 			break;	/* we don't need to install a host route. */
 		}
-		pr0.ndpr_prefix = ifra->ifra_addr;
+		prc0.ndprc_prefix = ifra->ifra_addr;
 		/* apply the mask for safety. */
 		for (i = 0; i < 4; i++) {
-			pr0.ndpr_prefix.sin6_addr.s6_addr32[i] &=
+			prc0.ndprc_prefix.sin6_addr.s6_addr32[i] &=
 			    ifra->ifra_prefixmask.sin6_addr.s6_addr32[i];
 		}
 		/*
@@ -699,19 +699,19 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		 * later advertised RAs (when accept_rtadv is non 0), which is
 		 * an intended behavior.
 		 */
-		pr0.ndpr_raf_onlink = 1; /* should be configurable? */
-		pr0.ndpr_raf_auto =
+		prc0.ndprc_raf_onlink = 1; /* should be configurable? */
+		prc0.ndprc_raf_auto =
 		    ((ifra->ifra_flags & IN6_IFF_AUTOCONF) != 0);
-		pr0.ndpr_vltime = ifra->ifra_lifetime.ia6t_vltime;
-		pr0.ndpr_pltime = ifra->ifra_lifetime.ia6t_pltime;
+		prc0.ndprc_vltime = ifra->ifra_lifetime.ia6t_vltime;
+		prc0.ndprc_pltime = ifra->ifra_lifetime.ia6t_pltime;
 
 		/* add the prefix if not yet. */
-		if ((pr = nd6_prefix_lookup(&pr0)) == NULL) {
+		if ((pr = nd6_prefix_lookup(&prc0)) == NULL) {
 			/*
 			 * nd6_prelist_add will install the corresponding
 			 * interface route.
 			 */
-			if ((error = nd6_prelist_add(&pr0, NULL, &pr)) != 0)
+			if ((error = nd6_prelist_add(&prc0, NULL, &pr)) != 0)
 				return error;
 			if (pr == NULL) {
 				log(LOG_ERR, "nd6_prelist_add succeeded but "

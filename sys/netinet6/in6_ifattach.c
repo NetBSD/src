@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.91 2014/06/05 16:06:49 roy Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.92 2014/09/05 06:08:15 matt Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.91 2014/06/05 16:06:49 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.92 2014/09/05 06:08:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -529,7 +529,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 {
 	struct in6_ifaddr *ia __diagused;
 	struct in6_aliasreq ifra;
-	struct nd_prefixctl pr0;
+	struct nd_prefixctl prc0;
 	int i, error;
 
 	/*
@@ -597,24 +597,24 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 	 * and add it to the prefix list as a never-expire prefix.
 	 * XXX: this change might affect some existing code base...
 	 */
-	memset(&pr0, 0, sizeof(pr0));
-	pr0.ndpr_ifp = ifp;
+	memset(&prc0, 0, sizeof(prc0));
+	prc0.ndprc_ifp = ifp;
 	/* this should be 64 at this moment. */
-	pr0.ndpr_plen = in6_mask2len(&ifra.ifra_prefixmask.sin6_addr, NULL);
-	pr0.ndpr_prefix = ifra.ifra_addr;
+	prc0.ndprc_plen = in6_mask2len(&ifra.ifra_prefixmask.sin6_addr, NULL);
+	prc0.ndprc_prefix = ifra.ifra_addr;
 	/* apply the mask for safety. (nd6_prelist_add will apply it again) */
 	for (i = 0; i < 4; i++) {
-		pr0.ndpr_prefix.sin6_addr.s6_addr32[i] &=
+		prc0.ndprc_prefix.sin6_addr.s6_addr32[i] &=
 		    in6mask64.s6_addr32[i];
 	}
 	/*
 	 * Initialize parameters.  The link-local prefix must always be
 	 * on-link, and its lifetimes never expire.
 	 */
-	pr0.ndpr_raf_onlink = 1;
-	pr0.ndpr_raf_auto = 1;	/* probably meaningless */
-	pr0.ndpr_vltime = ND6_INFINITE_LIFETIME;
-	pr0.ndpr_pltime = ND6_INFINITE_LIFETIME;
+	prc0.ndprc_raf_onlink = 1;
+	prc0.ndprc_raf_auto = 1;	/* probably meaningless */
+	prc0.ndprc_vltime = ND6_INFINITE_LIFETIME;
+	prc0.ndprc_pltime = ND6_INFINITE_LIFETIME;
 	/*
 	 * Since there is no other link-local addresses, nd6_prefix_lookup()
 	 * probably returns NULL.  However, we cannot always expect the result.
@@ -622,8 +622,8 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 	 * address, and then reconfigure another one, the prefix is still
 	 * valid with referring to the old link-local address.
 	 */
-	if (nd6_prefix_lookup(&pr0) == NULL) {
-		if ((error = nd6_prelist_add(&pr0, NULL, NULL)) != 0)
+	if (nd6_prefix_lookup(&prc0) == NULL) {
+		if ((error = nd6_prelist_add(&prc0, NULL, NULL)) != 0)
 			return error;
 	}
 
