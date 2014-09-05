@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.21 2014/08/10 16:44:35 tls Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.22 2014/09/05 09:23:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.21 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.22 2014/09/05 09:23:14 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -360,7 +360,7 @@ rnd_read(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	if (uio->uio_resid == 0)
 		return 0;
 
-	struct rnd_ctx *const ctx = fp->f_data;
+	struct rnd_ctx *const ctx = fp->f_rndctx;
 	uint8_t *const buf = pool_cache_get(rnd_temp_buffer_cache, PR_WAITOK);
 
 	/*
@@ -817,7 +817,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 static int
 rnd_poll(struct file *fp, int events)
 {
-	struct rnd_ctx *const ctx = fp->f_data;
+	struct rnd_ctx *const ctx = fp->f_rndctx;
 	int revents;
 
 	/*
@@ -846,7 +846,7 @@ rnd_poll(struct file *fp, int events)
 static int
 rnd_stat(struct file *fp, struct stat *st)
 {
-	struct rnd_ctx *const ctx = fp->f_data;
+	struct rnd_ctx *const ctx = fp->f_rndctx;
 
 	/* XXX lock, if cprng allocated?  why? */
 	memset(st, 0, sizeof(*st));
@@ -863,11 +863,11 @@ rnd_stat(struct file *fp, struct stat *st)
 static int
 rnd_close(struct file *fp)
 {
-	struct rnd_ctx *const ctx = fp->f_data;
+	struct rnd_ctx *const ctx = fp->f_rndctx;
 
 	if (ctx->rc_cprng != NULL)
 		cprng_strong_destroy(ctx->rc_cprng);
-	fp->f_data = NULL;
+	fp->f_rndctx = NULL;
 	pool_cache_put(rnd_ctx_cache, ctx);
 
 	return 0;
@@ -876,7 +876,7 @@ rnd_close(struct file *fp)
 static int
 rnd_kqfilter(struct file *fp, struct knote *kn)
 {
-	struct rnd_ctx *const ctx = fp->f_data;
+	struct rnd_ctx *const ctx = fp->f_rndctx;
 
 	return cprng_strong_kqfilter(rnd_ctx_cprng(ctx), kn);
 }
