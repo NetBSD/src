@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.163 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.164 2014/09/05 06:00:05 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.163 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.164 2014/09/05 06:00:05 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1379,7 +1379,6 @@ sysctl_rtable(SYSCTLFN_ARGS)
 {
 	void 	*where = oldp;
 	size_t	*given = oldlenp;
-	const void *new = newp;
 	int	i, s, error = EINVAL;
 	u_char  af;
 	struct	rt_walkarg w;
@@ -1387,7 +1386,7 @@ sysctl_rtable(SYSCTLFN_ARGS)
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return sysctl_query(SYSCTLFN_CALL(rnode));
 
-	if (new)
+	if (newp)
 		return EPERM;
 	if (namelen != 3)
 		return EINVAL;
