@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.5 2013/10/20 21:11:15 christos Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.6 2014/09/05 09:27:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 STATIC int
 my_soo_read(connection_t *conn, struct uio *u, int flags)
 {
-	struct socket *so = (struct socket *) conn->sock->f_data;
+	struct socket *so = conn->sock->f_socket;
 	int ret;
 #ifdef ISCSI_DEBUG
 	size_t resid = u->uio_resid;
