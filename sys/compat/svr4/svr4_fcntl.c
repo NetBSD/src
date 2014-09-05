@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.72 2014/09/05 09:21:55 matt Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.73 2014/09/05 10:47:32 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.72 2014/09/05 09:21:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.73 2014/09/05 10:47:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 	vnode_t *vp;
 	int error;
 
-	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
+	if ((error = fd_getvnode(fd, &fp)) != 0)
 		return error;
 
 	vp = fp->f_vnode;
