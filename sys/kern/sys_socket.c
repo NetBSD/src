@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.72 2014/07/06 03:33:33 rtr Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.73 2014/09/05 09:20:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.72 2014/07/06 03:33:33 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.73 2014/09/05 09:20:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ int
 soo_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	 int flags)
 {
-	struct socket *so = fp->f_data;
+	struct socket *so = fp->f_socket;
 	int error;
 
 	error = (*so->so_receive)(so, NULL, uio, NULL, NULL, NULL);
@@ -112,7 +112,7 @@ int
 soo_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	  int flags)
 {
-	struct socket *so = fp->f_data;
+	struct socket *so = fp->f_socket;
 	int error;
 
 	error = (*so->so_send)(so, NULL, uio, NULL, NULL, 0, curlwp);
@@ -123,7 +123,7 @@ soo_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 int
 soo_ioctl(file_t *fp, u_long cmd, void *data)
 {
-	struct socket *so = fp->f_data;
+	struct socket *so = fp->f_socket;
 	int error = 0;
 
 	switch (cmd) {
@@ -226,13 +226,13 @@ int
 soo_poll(file_t *fp, int events)
 {
 
-	return sopoll(fp->f_data, events);
+	return sopoll(fp->f_socket, events);
 }
 
 int
 soo_stat(file_t *fp, struct stat *ub)
 {
-	struct socket *so = fp->f_data;
+	struct socket *so = fp->f_socket;
 	int error;
 
 	memset(ub, 0, sizeof(*ub));
@@ -251,9 +251,9 @@ soo_close(file_t *fp)
 {
 	int error = 0;
 
-	if (fp->f_data)
-		error = soclose(fp->f_data);
-	fp->f_data = 0;
+	if (fp->f_socket)
+		error = soclose(fp->f_socket);
+	fp->f_socket = NULL;
 
 	return error;
 }
@@ -262,5 +262,5 @@ void
 soo_restart(file_t *fp)
 {
 
-	sorestart(fp->f_data);
+	sorestart(fp->f_socket);
 }
