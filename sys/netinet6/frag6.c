@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.55 2013/08/30 07:42:08 christos Exp $	*/
+/*	$NetBSD: frag6.c,v 1.56 2014/09/05 05:33:06 matt Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.55 2013/08/30 07:42:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.56 2014/09/05 05:33:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,15 +568,15 @@ frag6_deq(struct ip6asfrag *af6)
 }
 
 void
-frag6_insque(struct ip6q *new, struct ip6q *old)
+frag6_insque(struct ip6q *newq, struct ip6q *oldq)
 {
 
 	KASSERT(mutex_owned(&frag6_lock));
 
-	new->ip6q_prev = old;
-	new->ip6q_next = old->ip6q_next;
-	old->ip6q_next->ip6q_prev= new;
-	old->ip6q_next = new;
+	newq->ip6q_prev = oldq;
+	newq->ip6q_next = oldq->ip6q_next;
+	oldq->ip6q_next->ip6q_prev= newq;
+	oldq->ip6q_next = newq;
 }
 
 void
