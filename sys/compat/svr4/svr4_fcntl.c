@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.71 2011/10/14 09:23:29 hannken Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.72 2014/09/05 09:21:55 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.71 2011/10/14 09:23:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.72 2014/09/05 09:21:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,22 +220,16 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 	vnode_t *vp;
 	int error;
 
-	if ((fp = fd_getfile(fd)) == NULL)
-		return EBADF;
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
+		return error;
 
-	if (fp->f_type != DTYPE_VNODE) {
-		fd_putfile(fd);
-		return EINVAL;
-	}
-
-	vp = (vnode_t *) fp->f_data;
+	vp = fp->f_vnode;
 	if (vp->v_type != VCHR && vp->v_type != VBLK) {
 		error = EINVAL;
-		goto out;
+	} else {
+		error = dorevoke(vp, l->l_cred);
 	}
 
-	error = dorevoke(vp, l->l_cred);
-out:
 	vrele(vp);
 	fd_putfile(fd);
 	return error;
@@ -258,7 +252,7 @@ fd_truncate(struct lwp *l, int fd, struct flock *flp, register_t *retval)
 	if ((fp = fd_getfile(fd)) == NULL)
 		return EBADF;
 
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
 		fd_putfile(fd);
 		return ESPIPE;

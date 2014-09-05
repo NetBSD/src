@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.154 2013/11/27 22:10:47 christos Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.155 2014/09/05 09:22:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.154 2013/11/27 22:10:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.155 2014/09/05 09:22:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ nfssvc_addsock(file_t *fp, struct mbuf *mynam)
 	int error;
 	int val;
 
-	so = (struct socket *)fp->f_data;
+	so = fp->f_socket;
 	tslp = (struct nfssvc_sock *)0;
 	/*
 	 * Add it to the list, as required.
@@ -800,7 +800,7 @@ nfsrv_slpderef(struct nfssvc_sock *slp)
 		if (fp != NULL) {
 			slp->ns_fp = NULL;
 			KASSERT(fp != NULL);
-			KASSERT(fp->f_data == slp->ns_so);
+			KASSERT(fp->f_socket == slp->ns_so);
 			KASSERT(fp->f_count > 0);
 			closef(fp);
 			slp->ns_so = NULL;
