@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.191 2014/07/27 16:47:26 hannken Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.192 2014/09/05 09:26:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.191 2014/07/27 16:47:26 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.192 2014/09/05 09:26:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -821,7 +821,7 @@ procfs_getattr(void *v)
 			switch (fp->f_type) {
 			case DTYPE_VNODE:
 				vap->va_bytes = vap->va_size =
-				    ((struct vnode *)fp->f_data)->v_size;
+				    fp->f_vnode->v_size;
 				break;
 			default:
 				vap->va_bytes = vap->va_size = 0;
@@ -1146,7 +1146,7 @@ procfs_lookup(void *v)
 			procfs_proc_unlock(p);
 			return ENOENT;
 		}
-		fvp = fp->f_data;
+		fvp = fp->f_vnode;
 
 		/* Don't show directories */
 		if (fp->f_type == DTYPE_VNODE && fvp->v_type != VDIR) {
@@ -1648,7 +1648,7 @@ procfs_readlink(void *v)
 
 		switch (fp->f_type) {
 		case DTYPE_VNODE:
-			vxp = (struct vnode *)fp->f_data;
+			vxp = fp->f_vnode;
 			if (vxp->v_type != VDIR) {
 				error = EINVAL;
 				break;
