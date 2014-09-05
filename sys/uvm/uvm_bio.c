@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.81 2014/07/07 20:14:43 riastradh Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.82 2014/09/05 09:24:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.81 2014/07/07 20:14:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.82 2014/09/05 09:24:21 matt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -93,6 +93,7 @@ struct ubc_map {
 	LIST_ENTRY(ubc_map)	list;		/* per-object list */
 };
 
+TAILQ_HEAD(ubc_inactive_head, ubc_map);
 static struct ubc_object {
 	struct uvm_object uobj;		/* glue for uvm_map() */
 	char *kva;			/* where ubc_object is mapped */
@@ -101,7 +102,7 @@ static struct ubc_object {
 	LIST_HEAD(, ubc_map) *hash;	/* hashtable for cached ubc_map's */
 	u_long hashmask;		/* mask for hashtable */
 
-	TAILQ_HEAD(ubc_inactive_head, ubc_map) *inactive;
+	struct ubc_inactive_head *inactive;
 					/* inactive queues for ubc_map's */
 } ubc_object;
 
