@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.192 2014/08/05 07:55:32 rtr Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.193 2014/09/05 05:34:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.192 2014/08/05 07:55:32 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.193 2014/09/05 05:34:57 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -889,12 +889,12 @@ nfs_rcvlock(struct nfsmount *nmp, struct nfsreq *rep)
 {
 	int *flagp = &nmp->nm_iflag;
 	int slptimeo = 0;
-	bool catch;
+	bool catch_p;
 	int error = 0;
 
 	KASSERT(nmp == rep->r_nmp);
 
-	catch = (nmp->nm_flag & NFSMNT_INT) != 0;
+	catch_p = (nmp->nm_flag & NFSMNT_INT) != 0;
 	mutex_enter(&nmp->nm_lock);
 	while (/* CONSTCOND */ true) {
 		if (*flagp & NFSMNT_DISMNT) {
@@ -921,15 +921,15 @@ nfs_rcvlock(struct nfsmount *nmp, struct nfsreq *rep)
 			*flagp |= NFSMNT_RCVLOCK;
 			break;
 		}
-		if (catch) {
+		if (catch_p) {
 			cv_timedwait_sig(&nmp->nm_rcvcv, &nmp->nm_lock,
 			    slptimeo);
 		} else {
 			cv_timedwait(&nmp->nm_rcvcv, &nmp->nm_lock,
 			    slptimeo);
 		}
-		if (catch) {
-			catch = false;
+		if (catch_p) {
+			catch_p = false;
 			slptimeo = 2 * hz;
 		}
 	}
