@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.80 2014/08/04 14:17:18 skrll Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.81 2014/09/05 09:23:40 matt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.80 2014/08/04 14:17:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.81 2014/09/05 09:23:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ cryptof_write(file_t *fp, off_t *poff,
 int
 cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 {
-	struct fcrypt *fcr = fp->f_data;
+	struct fcrypt *fcr = fp->f_fcrypt;
 	struct csession *cse;
 	struct session_op *sop;
 	struct session_n_op *snop;
@@ -942,7 +942,7 @@ fail:
 static int
 cryptof_close(struct file *fp)
 {
-	struct fcrypt *fcr = fp->f_data;
+	struct fcrypt *fcr = fp->f_fcrypt;
 	struct csession *cse;
 
 	mutex_enter(&crypto_mtx);
@@ -953,7 +953,7 @@ cryptof_close(struct file *fp)
 		mutex_enter(&crypto_mtx);
 	}
 	seldestroy(&fcr->sinfo);
-	fp->f_data = NULL;
+	fp->f_fcrypt = NULL;
 	crypto_refcount--;
 	mutex_exit(&crypto_mtx);
 
@@ -2037,7 +2037,7 @@ fail:
 static int      
 cryptof_stat(struct file *fp, struct stat *st)
 {
-	struct fcrypt *fcr = fp->f_data;
+	struct fcrypt *fcr = fp->f_fcrypt;
 
 	(void)memset(st, 0, sizeof(*st));
 
@@ -2056,7 +2056,7 @@ cryptof_stat(struct file *fp, struct stat *st)
 static int      
 cryptof_poll(struct file *fp, int events)
 {
-	struct fcrypt *fcr = (struct fcrypt *)fp->f_data;
+	struct fcrypt *fcr = fp->f_fcrypt;
 	int revents = 0;
 
 	if (!(events & (POLLIN | POLLRDNORM))) {
