@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.29 2008/05/29 14:51:26 mrg Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.30 2014/09/05 09:21:55 matt Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.29 2008/05/29 14:51:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.30 2014/09/05 09:21:55 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"
@@ -435,15 +435,15 @@ sunos32_do_ioctl(int fd, int cmd, void *arg, struct lwp *l)
 	struct vnode *vp;
 	int error;
 
-	if ((fp = fd_getfile(fd)) == NULL)
-		return EBADF;
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
+		return error;
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0) {
 		fd_putfile(fd);
 		return EBADF;
 	}
 	error = fp->f_ops->fo_ioctl(fp, cmd, arg);
 	if (error == EIO && cmd == TIOCGPGRP) {
-		vp = (struct vnode *)fp->f_data;
+		vp = fp->f_vnode;
 		if (vp != NULL && vp->v_type == VCHR && major(vp->v_rdev) == 21)
 			error = ENOTTY;
 	}

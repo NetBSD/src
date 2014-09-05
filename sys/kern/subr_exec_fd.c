@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_exec_fd.c,v 1.6 2011/06/01 21:25:01 alnsn Exp $	*/
+/*	$NetBSD: subr_exec_fd.c,v 1.7 2014/09/05 09:20:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.6 2011/06/01 21:25:01 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.7 2014/09/05 09:20:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -112,10 +112,10 @@ fd_checkstd(void)
 			fd_abort(p, fp, fd);
 			return (error);
 		}
-		fp->f_data = nd.ni_vp;
+		fp->f_type = DTYPE_VNODE;
+		fp->f_vnode = nd.ni_vp;
 		fp->f_flag = flags;
 		fp->f_ops = &vnops;
-		fp->f_type = DTYPE_VNODE;
 		VOP_UNLOCK(nd.ni_vp);
 		fd_affix(p, fp, fd);
 		pathbuf_destroy(pb);

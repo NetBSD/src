@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.7 2014/07/01 05:49:18 rtr Exp $	*/
+/*	$NetBSD: if_43.c,v 1.8 2014/09/05 09:21:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.7 2014/07/01 05:49:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.8 2014/09/05 09:21:54 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -216,7 +216,7 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
     struct lwp *l)
 {
 	int error;
-	struct ifreq *ifr = data;
+	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifnet *ifp = ifunit(ifr->ifr_name);
 	struct sockaddr *sa;
 

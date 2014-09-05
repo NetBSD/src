@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.80 2014/07/09 04:54:03 rtr Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.81 2014/09/05 09:21:55 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.80 2014/07/09 04:54:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.81 2014/09/05 09:21:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -413,7 +413,7 @@ static void
 getparm(file_t *fp, struct svr4_si_sockparms *pa)
 {
 	struct svr4_strm *st = svr4_stream_get(fp);
-	struct socket *so = (struct socket *) fp->f_data;
+	struct socket *so = fp->f_socket;
 
 	if (st == NULL)
 		return;

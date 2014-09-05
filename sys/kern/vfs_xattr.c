@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.32 2014/09/05 05:57:21 matt Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.33 2014/09/05 09:20:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.32 2014/09/05 05:57:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.33 2014/09/05 09:20:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,7 +428,7 @@ sys_extattr_set_fd(struct lwp *l, const struct sys_extattr_set_fd_args *uap, reg
 	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
-	vp = (struct vnode *) fp->f_data;
+	vp = fp->f_vnode;
 
 	error = extattr_set_vp(vp, SCARG(uap, attrnamespace), attrname,
 	    SCARG(uap, data), SCARG(uap, nbytes), l, retval, 0);
@@ -522,7 +522,7 @@ sys_extattr_get_fd(struct lwp *l, const struct sys_extattr_get_fd_args *uap, reg
 	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
-	vp = (struct vnode *) fp->f_data;
+	vp = fp->f_vnode;
 
 	error = extattr_get_vp(vp, SCARG(uap, attrnamespace), attrname,
 	    SCARG(uap, data), SCARG(uap, nbytes), l, retval);
@@ -614,7 +614,7 @@ sys_extattr_delete_fd(struct lwp *l, const struct sys_extattr_delete_fd_args *ua
 	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
-	vp = (struct vnode *) fp->f_data;
+	vp = fp->f_vnode;
 
 	error = extattr_delete_vp(vp, SCARG(uap, attrnamespace), attrname, l);
 
@@ -694,7 +694,7 @@ sys_extattr_list_fd(struct lwp *l, const struct sys_extattr_list_fd_args *uap, r
 	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
-	vp = (struct vnode *) fp->f_data;
+	vp = fp->f_vnode;
 
 	error = extattr_list_vp(vp, SCARG(uap, attrnamespace),
 	    SCARG(uap, data), SCARG(uap, nbytes),
@@ -878,7 +878,7 @@ sys_fsetxattr(struct lwp *l, const struct sys_fsetxattr_args *uap, register_t *r
 	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
 		goto out;
-	vp = (struct vnode *) fp->f_data;
+	vp = fp->f_vnode;
 
 	attrnamespace = xattr_native(attrname);
 
@@ -981,7 +981,7 @@ sys_fgetxattr(struct lwp *l, const struct sys_fgetxattr_args *uap, register_t *r
 	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
-	vp = (struct vnode *) fp->f_data;
+	vp = fp->f_vnode;
 
 	attrnamespace = xattr_native(attrname);
 
@@ -1114,7 +1114,7 @@ sys_flistxattr(struct lwp *l, const struct sys_flistxattr_args *uap, register_t 
 	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
-	vp = (struct vnode *) fp->f_data;
+	vp = fp->f_vnode;
 
 	list = SCARG(uap, list);
 	size = SCARG(uap, size);
@@ -1231,7 +1231,7 @@ sys_fremovexattr(struct lwp *l, const struct sys_fremovexattr_args *uap, registe
 	error = fd_getvnode(SCARG(uap, fd), &fp);
 	if (error)
 		return (error);
-	vp = (struct vnode *) fp->f_data;
+	vp = fp->f_vnode;
 
 	attrnamespace = xattr_native(attrname);
 

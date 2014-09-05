@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.61 2008/11/19 18:36:05 ad Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.62 2014/09/05 09:21:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.61 2008/11/19 18:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.62 2014/09/05 09:21:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -513,11 +513,12 @@ sunos_sys_ioctl(struct lwp *l, const struct sunos_sys_ioctl_args *uap, register_
 		 * is on a pty.
 		 */
 		int pgrp;
-		struct vnode *vp;
+		struct vnode *vp = NULL;
 
 		error = (*ctl)(fp, TIOCGPGRP, &pgrp);
 		if (error) {
-			vp = (struct vnode *)fp->f_data;
+			if (fp->f_type == DTYPE_VNODE)
+				vp = fp->f_vnode;
 			if ((error == EIO || (error == 0 && pgrp == 0)) &&
 			    vp != NULL &&
 			    vp->v_type == VCHR &&

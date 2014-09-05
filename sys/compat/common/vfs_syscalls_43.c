@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.56 2014/01/28 01:29:04 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.57 2014/09/05 09:21:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.56 2014/01/28 01:29:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.57 2014/09/05 09:21:54 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -300,7 +300,7 @@ compat_43_sys_lseek(struct lwp *l, const struct compat_43_sys_lseek_args *uap, r
 	SCARG(&nuap, fd) = SCARG(uap, fd);
 	SCARG(&nuap, offset) = SCARG(uap, offset);
 	SCARG(&nuap, whence) = SCARG(uap, whence);
-	error = sys_lseek(l, &nuap, (void *)&qret);
+	error = sys_lseek(l, &nuap, (register_t *)&qret);
 	*(long *)retval = qret;
 	return (error);
 }
@@ -351,7 +351,8 @@ compat_43_sys_getdirentries(struct lwp *l, const struct compat_43_sys_getdirentr
 	} */
 	struct dirent *bdp;
 	struct vnode *vp;
-	char *inp, *tbuf;		/* Current-format */
+	void *tbuf;			/* Current-format */
+	char *inp;			/* Current-format */
 	int len, reclen;		/* Current-format */
 	char *outp;			/* Dirent12-format */
 	int resid, old_reclen = 0;	/* Dirent12-format */
@@ -375,7 +376,7 @@ compat_43_sys_getdirentries(struct lwp *l, const struct compat_43_sys_getdirentr
 		goto out1;
 	}
 
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_vnode;
 	if (vp->v_type != VDIR) {
 		error = ENOTDIR;
 		goto out1;
@@ -414,7 +415,7 @@ again:
 	if (error)
 		goto out;
 
-	inp = tbuf;
+	inp = (char *)tbuf;
 	outp = SCARG(uap, buf);
 	resid = nbytes;
 	if ((len = buflen - auio.uio_resid) == 0)

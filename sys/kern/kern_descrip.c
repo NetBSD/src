@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.226 2014/09/05 05:57:21 matt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.227 2014/09/05 09:20:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.226 2014/09/05 05:57:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.227 2014/09/05 09:20:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -492,7 +492,7 @@ fd_getvnode(unsigned fd, file_t **fpp)
 		fd_putfile(fd);
 		return EINVAL;
 	}
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (__predict_false(vp->v_type == VBAD)) {
 		/* XXX Is this case really necessary? */
 		fd_putfile(fd);
@@ -517,7 +517,7 @@ fd_getsock1(unsigned fd, struct socket **sop, file_t **fp)
 		fd_putfile(fd);
 		return ENOTSOCK;
 	}
-	*sop = (*fp)->f_data;
+	*sop = (*fp)->f_socket;
 	return 0;
 }
 
@@ -704,7 +704,7 @@ fd_close(unsigned fd)
 		lf.l_len = 0;
 		lf.l_type = F_UNLCK;
 		mutex_exit(&fdp->fd_lock);
-		(void)VOP_ADVLOCK(fp->f_data, p, F_UNLCK, &lf, F_POSIX);
+		(void)VOP_ADVLOCK(fp->f_vnode, p, F_UNLCK, &lf, F_POSIX);
 		mutex_enter(&fdp->fd_lock);
 	}
 
@@ -825,7 +825,7 @@ closef(file_t *fp)
 		lf.l_start = 0;
 		lf.l_len = 0;
 		lf.l_type = F_UNLCK;
-		(void)VOP_ADVLOCK(fp->f_data, fp, F_UNLCK, &lf, F_FLOCK);
+		(void)VOP_ADVLOCK(fp->f_vnode, fp, F_UNLCK, &lf, F_FLOCK);
 	}
 	if (fp->f_ops != NULL) {
 		error = (*fp->f_ops->fo_close)(fp);
@@ -2301,7 +2301,7 @@ fill_file(struct kinfo_file *kp, const file_t *fp, const fdfile_t *ff,
 
 	/* vnode information to glue this file to something */
 	if (fp->f_type == DTYPE_VNODE) {
-		struct vnode *vp = (struct vnode *)fp->f_data;
+		struct vnode *vp = fp->f_vnode;
 
 		kp->ki_vun =	PTRTOUINT64(vp->v_un.vu_socket);
 		kp->ki_vsize =	vp->v_size;

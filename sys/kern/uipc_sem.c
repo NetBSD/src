@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.41 2014/09/05 05:57:21 matt Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.42 2014/09/05 09:20:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.41 2014/09/05 05:57:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.42 2014/09/05 09:20:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -260,7 +260,7 @@ ksem_get(int fd, ksem_t **ksret)
 		fd_putfile(fd);
 		return EINVAL;
 	}
-	ks = fp->f_data;
+	ks = fp->f_ksem;
 	mutex_enter(&ks->ks_lock);
 
 	*ksret = ks;
@@ -380,7 +380,7 @@ do_ksem_init(lwp_t *l, u_int val, intptr_t *idp, copyout_t docopyout)
 		fd_abort(p, fp, fd);
 		return error;
 	}
-	fp->f_data = ks;
+	fp->f_ksem = ks;
 	fd_affix(p, fp, fd);
 	return error;
 }
@@ -496,7 +496,7 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 		ksnew = NULL;
 	}
 	KASSERT(ks != NULL);
-	fp->f_data = ks;
+	fp->f_ksem = ks;
 	fd_affix(p, fp, fd);
 err:
 	if (error) {
@@ -529,7 +529,7 @@ ksem_read_fop(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 {
 	size_t len;
 	char *name;
-	ksem_t *ks = fp->f_data;
+	ksem_t *ks = fp->f_ksem;
 
 	mutex_enter(&ks->ks_lock);
 	len = ks->ks_namelen;
@@ -543,7 +543,7 @@ ksem_read_fop(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 static int
 ksem_stat_fop(file_t *fp, struct stat *ub)
 {
-	ksem_t *ks = fp->f_data;
+	ksem_t *ks = fp->f_ksem;
 
 	mutex_enter(&ks->ks_lock);
 
@@ -573,7 +573,7 @@ ksem_stat_fop(file_t *fp, struct stat *ub)
 static int
 ksem_close_fop(file_t *fp)
 {
-	ksem_t *ks = fp->f_data;
+	ksem_t *ks = fp->f_ksem;
 	bool destroy = false;
 
 	mutex_enter(&ks->ks_lock);

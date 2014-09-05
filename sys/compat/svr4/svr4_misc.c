@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.155 2011/09/27 00:52:55 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.156 2014/09/05 09:21:55 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.155 2011/09/27 00:52:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.156 2014/09/05 09:21:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ svr4_sys_getdents64(struct lwp *l, const struct svr4_sys_getdents64_args *uap, r
 		goto out1;
 	}
 
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_vnode;
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto out1;
@@ -351,7 +351,7 @@ svr4_sys_getdents(struct lwp *l, const struct svr4_sys_getdents_args *uap, regis
 		goto out1;
 	}
 
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_vnode;
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto out1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.160 2014/08/18 04:28:55 riastradh Exp $ */
+/*	$NetBSD: if_gre.c,v 1.161 2014/09/05 09:22:22 matt Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.160 2014/08/18 04:28:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.161 2014/09/05 09:22:22 matt Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -1102,7 +1102,7 @@ gre_ssock(struct ifnet *ifp, struct gre_soparm *sp, int fd)
 
 	GRE_DPRINTF(sc, "\n");
 
-	so = (struct socket *)fp->f_data;
+	so = fp->f_socket;
 	pr = so->so_proto;
 
 	GRE_DPRINTF(sc, "type %d, proto %d\n", pr->pr_type, pr->pr_protocol);

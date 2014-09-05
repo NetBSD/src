@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.172 2014/08/09 05:33:00 rtr Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.173 2014/09/05 09:20:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.172 2014/08/09 05:33:00 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.173 2014/09/05 09:20:59 matt Exp $");
 
 #include "opt_pipe.h"
 
@@ -185,7 +185,7 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name,
 	}
 	nam = m_get(M_WAIT, MT_SONAME);
 	*new_sock = fd;
-	so = fp->f_data;
+	so = fp->f_socket;
 	solock(so);
 
 	if (__predict_false(mask))
@@ -233,7 +233,7 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name,
 	    ((flags & SOCK_NONBLOCK) ? FNONBLOCK : 0)|
 	    ((flags & SOCK_NOSIGPIPE) ? FNOSIGPIPE : 0);
 	fp2->f_ops = &socketops;
-	fp2->f_data = so2;
+	fp2->f_socket = so2;
 	if (fp2->f_flag & FNONBLOCK)
 		so2->so_state |= SS_NBIO;
 	else
@@ -431,7 +431,7 @@ makesocket(struct lwp *l, file_t **fp, int *fd, int flags, int type,
 	    ((flags & SOCK_NOSIGPIPE) ? FNOSIGPIPE : 0);
 	(*fp)->f_type = DTYPE_SOCKET;
 	(*fp)->f_ops = &socketops;
-	(*fp)->f_data = so;
+	(*fp)->f_socket = so;
 	return 0;
 }
 
@@ -457,13 +457,13 @@ sys_socketpair(struct lwp *l, const struct sys_socketpair_args *uap,
 	error = makesocket(l, &fp1, &fd, flags, type, domain, proto, NULL);
 	if (error)
 		return error;
-	so1 = fp1->f_data;
+	so1 = fp1->f_socket;
 	sv[0] = fd;
 
 	error = makesocket(l, &fp2, &fd, flags, type, domain, proto, so1);
 	if (error)
 		goto out;
-	so2 = fp2->f_data;
+	so2 = fp2->f_socket;
 	sv[1] = fd;
 
 	solock(so1);
@@ -1267,13 +1267,13 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 	rf->f_flag = FREAD | flags;
 	rf->f_type = DTYPE_SOCKET;
 	rf->f_ops = &socketops;
-	rf->f_data = rso;
+	rf->f_socket = rso;
 	if ((error = fd_allocfile(&wf, &fd)) != 0)
 		goto free3;
 	wf->f_flag = FWRITE | flags;
 	wf->f_type = DTYPE_SOCKET;
 	wf->f_ops = &socketops;
-	wf->f_data = wso;
+	wf->f_socket = wso;
 	retval[1] = fd;
 	solock(wso);
 	error = unp_connect2(wso, rso);

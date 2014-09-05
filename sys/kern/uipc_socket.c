@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.234 2014/08/09 05:33:00 rtr Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.235 2014/09/05 09:20:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.234 2014/08/09 05:33:00 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.235 2014/09/05 09:20:59 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -600,7 +600,7 @@ fsocreate(int domain, struct socket **sop, int type, int proto, int *fdout)
 	if (flags & SOCK_NONBLOCK) {
 		so->so_state |= SS_NBIO;
 	}
-	fp->f_data = so;
+	fp->f_socket = so;
 	fd_affix(curproc, fp, fd);
 
 	if (sop != NULL) {
@@ -2173,7 +2173,7 @@ filt_sordetach(struct knote *kn)
 {
 	struct socket	*so;
 
-	so = ((file_t *)kn->kn_obj)->f_data;
+	so = ((file_t *)kn->kn_obj)->f_socket;
 	solock(so);
 	SLIST_REMOVE(&so->so_rcv.sb_sel.sel_klist, kn, knote, kn_selnext);
 	if (SLIST_EMPTY(&so->so_rcv.sb_sel.sel_klist))
@@ -2188,7 +2188,7 @@ filt_soread(struct knote *kn, long hint)
 	struct socket	*so;
 	int rv;
 
-	so = ((file_t *)kn->kn_obj)->f_data;
+	so = ((file_t *)kn->kn_obj)->f_socket;
 	if (hint != NOTE_SUBMIT)
 		solock(so);
 	kn->kn_data = so->so_rcv.sb_cc;
@@ -2212,7 +2212,7 @@ filt_sowdetach(struct knote *kn)
 {
 	struct socket	*so;
 
-	so = ((file_t *)kn->kn_obj)->f_data;
+	so = ((file_t *)kn->kn_obj)->f_socket;
 	solock(so);
 	SLIST_REMOVE(&so->so_snd.sb_sel.sel_klist, kn, knote, kn_selnext);
 	if (SLIST_EMPTY(&so->so_snd.sb_sel.sel_klist))
@@ -2227,7 +2227,7 @@ filt_sowrite(struct knote *kn, long hint)
 	struct socket	*so;
 	int rv;
 
-	so = ((file_t *)kn->kn_obj)->f_data;
+	so = ((file_t *)kn->kn_obj)->f_socket;
 	if (hint != NOTE_SUBMIT)
 		solock(so);
 	kn->kn_data = sbspace(&so->so_snd);
@@ -2256,7 +2256,7 @@ filt_solisten(struct knote *kn, long hint)
 	struct socket	*so;
 	int rv;
 
-	so = ((file_t *)kn->kn_obj)->f_data;
+	so = ((file_t *)kn->kn_obj)->f_socket;
 
 	/*
 	 * Set kn_data to number of incoming connections, not
@@ -2284,7 +2284,7 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 	struct socket	*so;
 	struct sockbuf	*sb;
 
-	so = ((file_t *)kn->kn_obj)->f_data;
+	so = ((file_t *)kn->kn_obj)->f_socket;
 	solock(so);
 	switch (kn->kn_filter) {
 	case EVFILT_READ:

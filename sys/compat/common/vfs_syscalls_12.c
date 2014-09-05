@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.30 2014/01/24 22:11:46 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.31 2014/09/05 09:21:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.30 2014/01/24 22:11:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.31 2014/09/05 09:21:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ compat_12_sys_getdirentries(struct lwp *l, const struct compat_12_sys_getdirentr
 		goto out1;
 	}
 
-	vp = (struct vnode *)fp->f_data;
+	vp = (struct vnode *)fp->f_vnode;
 	if (vp->v_type != VDIR) {
 		error = ENOTDIR;
 		goto out1;

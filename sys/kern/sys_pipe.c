@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.139 2014/09/05 05:57:21 matt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.140 2014/09/05 09:20:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.139 2014/09/05 05:57:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.140 2014/09/05 09:20:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,13 +275,13 @@ pipe1(struct lwp *l, register_t *retval, int flags)
 
 	rf->f_flag = FREAD | flags;
 	rf->f_type = DTYPE_PIPE;
-	rf->f_data = (void *)rpipe;
+	rf->f_pipe = rpipe;
 	rf->f_ops = &pipeops;
 	fd_set_exclose(l, (int)retval[0], (flags & O_CLOEXEC) != 0);
 
 	wf->f_flag = FWRITE | flags;
 	wf->f_type = DTYPE_PIPE;
-	wf->f_data = (void *)wpipe;
+	wf->f_pipe = wpipe;
 	wf->f_ops = &pipeops;
 	fd_set_exclose(l, (int)retval[1], (flags & O_CLOEXEC) != 0);
 
@@ -447,7 +447,7 @@ static int
 pipe_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
-	struct pipe *rpipe = (struct pipe *) fp->f_data;
+	struct pipe *rpipe = fp->f_pipe;
 	struct pipebuf *bp = &rpipe->pipe_buffer;
 	kmutex_t *lock = rpipe->pipe_lock;
 	int error;
@@ -839,7 +839,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	unsigned int wakeup_state = 0;
 
 	/* We want to write to our peer */
-	rpipe = (struct pipe *) fp->f_data;
+	rpipe = fp->f_pipe;
 	lock = rpipe->pipe_lock;
 	error = 0;
 
@@ -1076,7 +1076,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 int
 pipe_ioctl(file_t *fp, u_long cmd, void *data)
 {
-	struct pipe *pipe = fp->f_data;
+	struct pipe *pipe = fp->f_pipe;
 	kmutex_t *lock = pipe->pipe_lock;
 
 	switch (cmd) {
@@ -1152,7 +1152,7 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 int
 pipe_poll(file_t *fp, int events)
 {
-	struct pipe *rpipe = fp->f_data;
+	struct pipe *rpipe = fp->f_pipe;
 	struct pipe *wpipe;
 	int eof = 0;
 	int revents = 0;
@@ -1202,7 +1202,7 @@ pipe_poll(file_t *fp, int events)
 static int
 pipe_stat(file_t *fp, struct stat *ub)
 {
-	struct pipe *pipe = fp->f_data;
+	struct pipe *pipe = fp->f_pipe;
 
 	mutex_enter(pipe->pipe_lock);
 	memset(ub, 0, sizeof(*ub));
@@ -1229,9 +1229,9 @@ pipe_stat(file_t *fp, struct stat *ub)
 static int
 pipe_close(file_t *fp)
 {
-	struct pipe *pipe = fp->f_data;
+	struct pipe *pipe = fp->f_pipe;
 
-	fp->f_data = NULL;
+	fp->f_pipe = NULL;
 	pipeclose(pipe);
 	return (0);
 }
@@ -1239,7 +1239,7 @@ pipe_close(file_t *fp)
 static void
 pipe_restart(file_t *fp)
 {
-	struct pipe *pipe = fp->f_data;
+	struct pipe *pipe = fp->f_pipe;
 
 	/*
 	 * Unblock blocked reads/writes in order to allow close() to complete.
@@ -1360,7 +1360,7 @@ filt_pipedetach(struct knote *kn)
 	struct pipe *pipe;
 	kmutex_t *lock;
 
-	pipe = ((file_t *)kn->kn_obj)->f_data;
+	pipe = ((file_t *)kn->kn_obj)->f_pipe;
 	lock = pipe->pipe_lock;
 
 	mutex_enter(lock);
@@ -1390,7 +1390,7 @@ filt_pipedetach(struct knote *kn)
 static int
 filt_piperead(struct knote *kn, long hint)
 {
-	struct pipe *rpipe = ((file_t *)kn->kn_obj)->f_data;
+	struct pipe *rpipe = ((file_t *)kn->kn_obj)->f_pipe;
 	struct pipe *wpipe;
 
 	if ((hint & NOTE_SUBMIT) == 0) {
@@ -1420,7 +1420,7 @@ filt_piperead(struct knote *kn, long hint)
 static int
 filt_pipewrite(struct knote *kn, long hint)
 {
-	struct pipe *rpipe = ((file_t *)kn->kn_obj)->f_data;
+	struct pipe *rpipe = ((file_t *)kn->kn_obj)->f_pipe;
 	struct pipe *wpipe;
 
 	if ((hint & NOTE_SUBMIT) == 0) {
@@ -1457,7 +1457,7 @@ pipe_kqfilter(file_t *fp, struct knote *kn)
 	struct pipe *pipe;
 	kmutex_t *lock;
 
-	pipe = ((file_t *)kn->kn_obj)->f_data;
+	pipe = ((file_t *)kn->kn_obj)->f_pipe;
 	lock = pipe->pipe_lock;
 
 	mutex_enter(lock);

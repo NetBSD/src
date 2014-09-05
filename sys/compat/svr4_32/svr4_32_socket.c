@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_socket.c,v 1.12 2008/04/28 20:23:46 martin Exp $	*/
+/*	$NetBSD: svr4_32_socket.c,v 1.13 2014/09/05 09:21:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_socket.c,v 1.12 2008/04/28 20:23:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_socket.c,v 1.13 2014/09/05 09:21:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -82,7 +82,7 @@ struct sockaddr_un *
 svr4_32_find_socket(struct proc *p, struct file *fp, dev_t dev, svr4_ino_t ino)
 {
 	struct svr4_sockcache_entry *e;
-	void *cookie = ((struct socket *) fp->f_data)->so_internal;
+	void *cookie = fp->f_socekt->so_internal;
 
 	if (!initialized) {
 		DPRINTF(("svr4_32_find_socket: uninitialized [%p,%d,%d]\n",
@@ -115,7 +115,7 @@ void
 svr4_32_delete_socket(struct proc *p, struct file *fp)
 {
 	struct svr4_sockcache_entry *e;
-	void *cookie = ((struct socket *) fp->f_data)->so_internal;
+	void *cookie = fp->f_socket->so_internal;
 
 	if (!initialized) {
 		TAILQ_INIT(&svr4_head);

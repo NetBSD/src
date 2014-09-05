@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace_vfs.c,v 1.1 2013/12/09 16:45:23 pooka Exp $	*/
+/*	$NetBSD: kern_ktrace_vfs.c,v 1.2 2014/09/05 09:20:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace_vfs.c,v 1.1 2013/12/09 16:45:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace_vfs.c,v 1.2 2014/09/05 09:20:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ sys_ktrace(struct lwp *l, const struct sys_ktrace_args *uap, register_t *retval)
 		fp->f_flag = FWRITE;
 		fp->f_type = DTYPE_VNODE;
 		fp->f_ops = &vnops;
-		fp->f_data = (void *)vp;
+		fp->f_vnode = vp;
 		vp = NULL;
 	}
 	error = ktrace_common(l, SCARG(uap, ops), SCARG(uap, facs),
