@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.26 2014/09/05 05:26:26 matt Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.27 2014/09/05 09:21:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.26 2014/09/05 05:26:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.27 2014/09/05 09:21:54 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -296,7 +296,7 @@ compat_50_netbsd32_futimes(struct lwp *l,
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return error;
 
-	error = do_sys_utimes(l, fp->f_data, NULL, 0, tvp, UIO_SYSSPACE);
+	error = do_sys_utimes(l, fp->f_vnode, NULL, 0, tvp, UIO_SYSSPACE);
 
 	fd_putfile(SCARG(uap, fd));
 	return error;

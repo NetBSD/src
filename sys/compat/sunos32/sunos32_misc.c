@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.74 2012/02/12 16:34:11 matt Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.75 2014/09/05 09:21:55 matt Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.74 2012/02/12 16:34:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.75 2014/09/05 09:21:55 matt Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -622,7 +622,7 @@ sunos32_sys_getdents(struct lwp *l, const struct sunos32_sys_getdents_args *uap,
 		goto out1;
 	}
 
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto out1;
@@ -1116,7 +1116,7 @@ sunos32_sys_fstatfs(struct lwp *l, const struct sunos32_sys_fstatfs_args *uap, r
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	mp = ((struct vnode *)fp->f_data)->v_mount;
+	mp = fp->f_vnode->v_mount;
 	sp = &mp->mnt_stat;
 	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		goto out;

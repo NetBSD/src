@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.33 2014/01/24 23:20:33 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.34 2014/09/05 09:21:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.33 2014/01/24 23:20:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.34 2014/09/05 09:21:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ compat_20_netbsd32_fstatfs(struct lwp *l, const struct compat_20_netbsd32_fstatf
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	mp = ((struct vnode *)fp->f_data)->v_mount;
+	mp = fp->f_vnode->v_mount;
 	sb = &mp->mnt_stat;
 	if ((error = dostatvfs(mp, sb, l, 0, 0)) != 0)
 		goto out;
