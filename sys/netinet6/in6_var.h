@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.70 2014/07/01 05:49:19 rtr Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.71 2014/09/05 06:06:31 matt Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -98,6 +98,7 @@ struct in6_ifextra {
 	int ndefrouters;
 };
 
+LIST_HEAD(in6_multihead, in6_multi);
 struct	in6_ifaddr {
 	struct	ifaddr ia_ifa;		/* protocol-independent info */
 #define	ia_ifp		ia_ifa.ifa_ifp
@@ -108,7 +109,7 @@ struct	in6_ifaddr {
 	struct	sockaddr_in6 ia_prefixmask; /* prefix mask */
 	u_int32_t ia_plen;		/* prefix length */
 	struct	in6_ifaddr *ia_next;	/* next in6 list of IP6 addresses */
-	LIST_HEAD(in6_multihead, in6_multi) ia6_multiaddrs;
+	struct	in6_multihead ia6_multiaddrs;
 					/* list of multicast addresses */
 	int	ia6_flags;
 
