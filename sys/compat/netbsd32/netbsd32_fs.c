@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.70 2014/04/30 17:23:45 njoly Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.71 2014/09/05 09:21:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.70 2014/04/30 17:23:45 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.71 2014/09/05 09:21:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -491,7 +491,7 @@ netbsd32___futimes50(struct lwp *l, const struct netbsd32___futimes50_args *uap,
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
-	error = do_sys_utimes(l, fp->f_data, NULL, 0, tvp, UIO_SYSSPACE);
+	error = do_sys_utimes(l, fp->f_vnode, NULL, 0, tvp, UIO_SYSSPACE);
 
 	fd_putfile(SCARG(uap, fd));
 	return (error);
@@ -649,7 +649,7 @@ netbsd32_preadv(struct lwp *l, const struct netbsd32_preadv_args *uap, register_
 		return (EBADF);
 	}
 
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
 		error = ESPIPE;
 		goto out;
@@ -695,7 +695,7 @@ netbsd32_pwritev(struct lwp *l, const struct netbsd32_pwritev_args *uap, registe
 		return (EBADF);
 	}
 
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
 		error = ESPIPE;
 		goto out;
@@ -1301,7 +1301,7 @@ netbsd32_futimens(struct lwp *l, const struct netbsd32_futimens_args *uap,
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	error = do_sys_utimensat(l, AT_FDCWD, fp->f_data, NULL, 0,
+	error = do_sys_utimensat(l, AT_FDCWD, fp->f_vnode, NULL, 0,
 	    tsp, UIO_SYSSPACE);
 	fd_putfile(SCARG(uap, fd));
 	return (error);

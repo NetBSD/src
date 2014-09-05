@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.81 2014/09/05 05:57:21 matt Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.82 2014/09/05 09:20:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.81 2014/09/05 05:57:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.82 2014/09/05 09:20:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,7 +415,7 @@ filt_kqdetach(struct knote *kn)
 {
 	struct kqueue *kq;
 
-	kq = ((file_t *)kn->kn_obj)->f_data;
+	kq = ((file_t *)kn->kn_obj)->f_kqueue;
 
 	mutex_spin_enter(&kq->kq_lock);
 	SLIST_REMOVE(&kq->kq_sel.sel_klist, kn, knote, kn_selnext);
@@ -432,7 +432,7 @@ filt_kqueue(struct knote *kn, long hint)
 	struct kqueue *kq;
 	int rv;
 
-	kq = ((file_t *)kn->kn_obj)->f_data;
+	kq = ((file_t *)kn->kn_obj)->f_kqueue;
 
 	if (hint != NOTE_SUBMIT)
 		mutex_spin_enter(&kq->kq_lock);
@@ -744,7 +744,7 @@ kqueue1(struct lwp *l, int flags, register_t *retval)
 	cv_init(&kq->kq_cv, "kqueue");
 	selinit(&kq->kq_sel);
 	TAILQ_INIT(&kq->kq_head);
-	fp->f_data = kq;
+	fp->f_kqueue = kq;
 	*retval = fd;
 	kq->kq_fdp = curlwp->l_fd;
 	fd_set_exclose(l, fd, (flags & O_CLOEXEC) != 0);
@@ -847,7 +847,7 @@ kevent1(register_t *retval, int fd,
 		timeout = &ts;
 	}
 
-	kq = (struct kqueue *)fp->f_data;
+	kq = fp->f_kqueue;
 	nerrors = 0;
 	ichange = 0;
 
@@ -1152,7 +1152,7 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 	filedesc_t	*fdp;
 
 	fdp = curlwp->l_fd;
-	kq = fp->f_data;
+	kq = fp->f_kqueue;
 	count = maxevents;
 	nkev = nevents = error = 0;
 	if (count == 0) {
@@ -1374,7 +1374,7 @@ kqueue_poll(file_t *fp, int events)
 	struct kqueue	*kq;
 	int		revents;
 
-	kq = fp->f_data;
+	kq = fp->f_kqueue;
 
 	revents = 0;
 	if (events & (POLLIN | POLLRDNORM)) {
@@ -1400,7 +1400,7 @@ kqueue_stat(file_t *fp, struct stat *st)
 {
 	struct kqueue *kq;
 
-	kq = fp->f_data;
+	kq = fp->f_kqueue;
 
 	memset(st, 0, sizeof(*st));
 	st->st_size = kq->kq_count;
@@ -1443,8 +1443,8 @@ kqueue_close(file_t *fp)
 	fdfile_t *ff;
 	int i;
 
-	kq = fp->f_data;
-	fp->f_data = NULL;
+	kq = fp->f_kqueue;
+	fp->f_kqueue = NULL;
 	fp->f_type = 0;
 	fdp = curlwp->l_fd;
 
@@ -1479,7 +1479,7 @@ kqueue_kqfilter(file_t *fp, struct knote *kn)
 {
 	struct kqueue *kq;
 
-	kq = ((file_t *)kn->kn_obj)->f_data;
+	kq = ((file_t *)kn->kn_obj)->f_kqueue;
 
 	KASSERT(fp == kn->kn_obj);
 

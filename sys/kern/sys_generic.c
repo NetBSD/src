@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.129 2013/04/04 12:51:39 martin Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.130 2014/09/05 09:20:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.129 2013/04/04 12:51:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.130 2014/09/05 09:20:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,7 @@ do_filereadv(int fd, const struct iovec *iovp, int iovcnt,
 	if (offset == NULL)
 		offset = &fp->f_offset;
 	else {
-		struct vnode *vp = fp->f_data;
+		struct vnode *vp = fp->f_vnode;
 		if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
 			error = ESPIPE;
 			goto out;
@@ -413,7 +413,7 @@ do_filewritev(int fd, const struct iovec *iovp, int iovcnt,
 	if (offset == NULL)
 		offset = &fp->f_offset;
 	else {
-		struct vnode *vp = fp->f_data;
+		struct vnode *vp = fp->f_vnode;
 		if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
 			error = ESPIPE;
 			goto out;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.112 2012/10/02 01:44:27 christos Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.113 2014/09/05 09:21:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.112 2012/10/02 01:44:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.113 2014/09/05 09:21:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,7 +393,7 @@ ibcs2_sys_getdents(struct lwp *l, const struct ibcs2_sys_getdents_args *uap, reg
 		error = EBADF;
 		goto out1;
 	}
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto out1;
@@ -531,7 +531,7 @@ ibcs2_sys_read(struct lwp *l, const struct ibcs2_sys_read_args *uap, register_t 
 		error = EBADF;
 		goto out1;
 	}
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (vp->v_type != VDIR) {
 		fd_putfile(SCARG(uap, fd));
 		return sys_read(l, (const void *)uap, retval);

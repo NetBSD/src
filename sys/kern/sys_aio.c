@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.39 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.40 2014/09/05 09:20:59 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.39 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.40 2014/09/05 09:20:59 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -438,7 +438,7 @@ aio_process(struct aio_job *a_job)
 			goto done;
 		}
 
-		vp = (struct vnode *)fp->f_data;
+		vp = fp->f_vnode;
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		if (a_job->aio_op & AIO_DSYNC) {
 			error = VOP_FSYNC(vp, fp->f_cred,
