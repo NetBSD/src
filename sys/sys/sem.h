@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.29 2009/01/19 19:39:41 christos Exp $	*/
+/*	$NetBSD: sem.h,v 1.30 2014/09/05 05:54:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,15 +102,17 @@ struct sembuf {
 /*
  * Undo structure (one per process)
  */
+struct sem_undo_entry {
+	short	un_adjval;	/* adjust on exit values */
+	short	un_num;		/* semaphore # */
+	int	un_id;		/* semid */
+};
+
 struct sem_undo {
 	struct	sem_undo *un_next;	/* ptr to next active undo structure */
 	struct	proc *un_proc;		/* owner of this structure */
 	short	un_cnt;			/* # of active entries */
-	struct undo {
-		short	un_adjval;	/* adjust on exit values */
-		short	un_num;		/* semaphore # */
-		int	un_id;		/* semid */
-	} un_ent[1];			/* undo entries */
+	struct	sem_undo_entry un_ent[1];/* undo entries */
 };
 #endif /* _KERNEL */
 
@@ -183,7 +185,7 @@ struct sem_sysctl_info {
 #endif
 
 /* actual size of an undo structure */
-#define SEMUSZ	(sizeof(struct sem_undo)+sizeof(struct undo)*SEMUME)
+#define SEMUSZ	(sizeof(struct sem_undo)+sizeof(struct sem_undo_entry)*SEMUME)
 
 /*
  * Structures allocated in machdep.c
