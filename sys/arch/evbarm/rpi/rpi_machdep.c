@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.44 2014/08/22 09:49:13 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.45 2014/09/05 21:22:35 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.44 2014/08/22 09:49:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.45 2014/09/05 21:22:35 macallan Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.44 2014/08/22 09:49:13 skrll Exp $
 #if NGENFB > 0
 #include <dev/videomode/videomode.h>
 #include <dev/videomode/edidvar.h>
+#include <dev/wscons/wsconsio.h>
 #endif
 
 #if NUKBD > 0
@@ -367,8 +368,14 @@ static struct __aligned(16) {
 	},
 };
 
+int rpi_fb_set_video(int);
+int rpi_video_on = WSDISPLAYIO_VIDEO_ON;
+
 extern void bcmgenfb_set_console_dev(device_t dev);
+void bcmgenfb_set_ioctl(int(*)(void *, void *, u_long, void *, int, struct lwp *));
 extern void bcmgenfb_ddb_trap_callback(int where);
+static int	rpi_ioctl(void *, void *, u_long, void *, int, lwp_t *);
+
 #endif
 
 static void
@@ -802,6 +809,71 @@ rpi_fb_init(prop_dictionary_t dict)
 
 	return true;
 }
+
+int
+rpi_fb_set_video(int b)
+{
+	int error;
+	uint32_t res;
+
+	/*
+	 * might as well put it here since we need to re-init it every time
+	 * and it's not like this is going to be called very often anyway
+	 */
+	struct __aligned(16) {
+		struct vcprop_buffer_hdr	vb_hdr;
+		struct vcprop_tag_blankscreen	vbt_blank;
+		struct vcprop_tag end;
+	} vb_setblank =
+	{
+		.vb_hdr = {
+			.vpb_len = sizeof(vb_setblank),
+			.vpb_rcode = VCPROP_PROCESS_REQUEST,
+		},
+		.vbt_blank = {
+			.tag = {
+				.vpt_tag = VCPROPTAG_BLANK_SCREEN,
+				.vpt_len = VCPROPTAG_LEN(vb_setblank.vbt_blank),
+				.vpt_rcode = VCPROPTAG_REQUEST,
+			},
+			.state = (b != 0) ? VCPROP_BLANK_OFF : VCPROP_BLANK_ON,
+		},
+		.end = {
+			.vpt_tag = VCPROPTAG_NULL,
+		},
+	};
+
+	error = bcmmbox_request(BCMMBOX_CHANARM2VC, &vb_setblank,
+	    sizeof(vb_setblank), &res);
+#ifdef RPI_IOCTL_DEBUG
+	printf("%s: %d %d %d %08x %08x\n", __func__, b,
+	    vb_setblank.vbt_blank.state, error, res, vb_setblank.vbt_blank.tag.vpt_rcode);
+#endif
+	return (error == 0);
+}
+
+static int
+rpi_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
+{
+
+	switch (cmd) {
+	case WSDISPLAYIO_SVIDEO:
+		{
+			int d = *(int *)data;
+			if (d == rpi_video_on)
+				return 0;
+			rpi_video_on = d;
+			rpi_fb_set_video(d);
+		}
+		return 0;
+	case WSDISPLAYIO_GVIDEO:
+		*(int *)data = rpi_video_on;
+		return 0;
+	default:
+		return EPASSTHROUGH;
+	}
+}
+
 #endif
 
 static void
@@ -849,6 +921,7 @@ rpi_device_register(device_t dev, void *aux)
 		char *ptr;
 
 		bcmgenfb_set_console_dev(dev);
+		bcmgenfb_set_ioctl(&rpi_ioctl);
 #ifdef DDB
 		db_trap_callback = bcmgenfb_ddb_trap_callback;
 #endif
