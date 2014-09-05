@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.69 2013/01/06 03:34:52 christos Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.70 2014/09/05 09:27:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.69 2013/01/06 03:34:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.70 2014/09/05 09:27:24 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -157,7 +157,7 @@ db_show_files_cmd(db_expr_t addr, bool haddr,
 	filedesc_t *fdp;
 	fdfile_t *ff;
 	file_t *fp;
-	struct vnode *vn;
+	struct vnode *vp;
 	bool full = false;
 	fdtab_t *dt;
 
@@ -175,18 +175,16 @@ db_show_files_cmd(db_expr_t addr, bool haddr,
 		fp = ff->ff_file;
 
 		/* Only look at vnodes... */
-		if ((fp != NULL) && (fp->f_type == DTYPE_VNODE)) {
-			if (fp->f_data != NULL) {
-				vn = (struct vnode *) fp->f_data;
-				vfs_vnode_print(vn, full, db_printf);
+		if (fp != NULL && fp->f_type == DTYPE_VNODE
+		    && fp->f_vnode != NULL) {
+			vp = fp->f_vnode;
+			vfs_vnode_print(vp, full, db_printf);
 
 #ifdef LOCKDEBUG
-				db_printf("\nv_uobj.vmobjlock lock details:\n");
-				lockdebug_lock_print(vn->v_uobj.vmobjlock,
-					     db_printf);
-				db_printf("\n");
+			db_printf("\nv_uobj.vmobjlock lock details:\n");
+			lockdebug_lock_print(vp->v_uobj.vmobjlock, db_printf);
+			db_printf("\n");
 #endif
-			}
 		}
 	}
 #endif
