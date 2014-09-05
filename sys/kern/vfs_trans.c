@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.30 2014/04/15 09:50:45 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.31 2014/09/05 05:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.30 2014/04/15 09:50:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.31 2014/09/05 05:57:21 matt Exp $");
 
 /*
  * File system transaction operations.
@@ -160,19 +160,19 @@ int
 fstrans_mount(struct mount *mp)
 {
 	int error;
-	struct fstrans_mount_info *new;
+	struct fstrans_mount_info *newfmi;
 
 	error = vfs_busy(mp, NULL);
 	if (error)
 		return error;
-	if ((new = kmem_alloc(sizeof(*new), KM_SLEEP)) == NULL)
+	if ((newfmi = kmem_alloc(sizeof(*newfmi), KM_SLEEP)) == NULL)
 		return ENOMEM;
-	new->fmi_state = FSTRANS_NORMAL;
-	new->fmi_ref_cnt = 1;
-	LIST_INIT(&new->fmi_cow_handler);
-	new->fmi_cow_change = false;
+	newfmi->fmi_state = FSTRANS_NORMAL;
+	newfmi->fmi_ref_cnt = 1;
+	LIST_INIT(&newfmi->fmi_cow_handler);
+	newfmi->fmi_cow_change = false;
 
-	mp->mnt_transinfo = new;
+	mp->mnt_transinfo = newfmi;
 	mp->mnt_iflag |= IMNT_HAS_TRANS;
 
 	vfs_unbusy(mp, true, NULL);
@@ -596,7 +596,7 @@ fscow_establish(struct mount *mp, int (*func)(void *, struct buf *, bool),
     void *arg)
 {
 	struct fstrans_mount_info *fmi;
-	struct fscow_handler *new;
+	struct fscow_handler *newch;
 
 	if ((mp->mnt_iflag & IMNT_HAS_TRANS) == 0)
 		return EINVAL;
@@ -604,13 +604,13 @@ fscow_establish(struct mount *mp, int (*func)(void *, struct buf *, bool),
 	fmi = mp->mnt_transinfo;
 	KASSERT(fmi != NULL);
 
-	if ((new = kmem_alloc(sizeof(*new), KM_SLEEP)) == NULL)
+	if ((newch = kmem_alloc(sizeof(*newch), KM_SLEEP)) == NULL)
 		return ENOMEM;
-	new->ch_func = func;
-	new->ch_arg = arg;
+	newch->ch_func = func;
+	newch->ch_arg = arg;
 
 	cow_change_enter(mp);
-	LIST_INSERT_HEAD(&fmi->fmi_cow_handler, new, ch_list);
+	LIST_INSERT_HEAD(&fmi->fmi_cow_handler, newch, ch_list);
 	cow_change_done(mp);
 
 	return 0;

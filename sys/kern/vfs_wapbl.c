@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.59 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.60 2014/09/05 05:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.59 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.60 2014/09/05 05:57:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -107,6 +107,7 @@ static inline size_t wapbl_space_free(size_t, off_t, off_t);
  *		u = unlocked access ok
  *		b = bufcache_lock held
  */
+LIST_HEAD(wapbl_ino_head, wapbl_ino);
 struct wapbl {
 	struct vnode *wl_logvp;	/* r:	log here */
 	struct vnode *wl_devvp;	/* r:	log on this device */
@@ -180,7 +181,7 @@ struct wapbl {
 
 	/* hashtable of inode numbers for allocated but unlinked inodes */
 	/* synch ??? */
-	LIST_HEAD(wapbl_ino_head, wapbl_ino) *wl_inohash;
+	struct wapbl_ino_head *wl_inohash;
 	u_long wl_inohashmask;
 	int wl_inohashcnt;
 
@@ -1127,31 +1128,31 @@ wapbl_space_used(size_t avail, off_t head, off_t tail)
 #ifdef _KERNEL
 /* This is used to advance the pointer at old to new value at old+delta */
 static inline off_t
-wapbl_advance(size_t size, size_t off, off_t old, size_t delta)
+wapbl_advance(size_t size, size_t off, off_t oldoff, size_t delta)
 {
-	off_t new;
+	off_t newoff;
 
 	/* Define acceptable ranges for inputs. */
 	KASSERT(delta <= (size_t)size);
-	KASSERT((old == 0) || ((size_t)old >= off));
-	KASSERT(old < (off_t)(size + off));
+	KASSERT((oldoff == 0) || ((size_t)oldoff >= off));
+	KASSERT(oldoff < (off_t)(size + off));
 
-	if ((old == 0) && (delta != 0))
-		new = off + delta;
-	else if ((old + delta) < (size + off))
-		new = old + delta;
+	if ((oldoff == 0) && (delta != 0))
+		newoff = off + delta;
+	else if ((oldoff + delta) < (size + off))
+		newoff = oldoff + delta;
 	else
-		new = (old + delta) - size;
+		newoff = (oldoff + delta) - size;
 
 	/* Note some interesting axioms */
-	KASSERT((delta != 0) || (new == old));
-	KASSERT((delta == 0) || (new != 0));
-	KASSERT((delta != (size)) || (new == old));
+	KASSERT((delta != 0) || (newoff == oldoff));
+	KASSERT((delta == 0) || (newoff != 0));
+	KASSERT((delta != (size)) || (newoff == oldoff));
 
 	/* Define acceptable ranges for output. */
-	KASSERT((new == 0) || ((size_t)new >= off));
-	KASSERT((size_t)new < (size + off));
-	return new;
+	KASSERT((newoff == 0) || ((size_t)newoff >= off));
+	KASSERT((size_t)newoff < (size + off));
+	return newoff;
 }
 
 static inline size_t

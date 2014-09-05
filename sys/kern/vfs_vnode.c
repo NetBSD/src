@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.37 2014/07/05 09:33:15 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.38 2014/09/05 05:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.37 2014/07/05 09:33:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.38 2014/09/05 05:57:21 matt Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -181,10 +181,11 @@ static lwp_t *		vrele_lwp		__cacheline_aligned;
 static int		vrele_pending		__cacheline_aligned;
 static int		vrele_gen		__cacheline_aligned;
 
+SLIST_HEAD(hashhead, vcache_node);
 static struct {
 	kmutex_t	lock;
 	u_long		hashmask;
-	SLIST_HEAD(hashhead, vcache_node)	*hashtab;
+	struct hashhead	*hashtab;
 	pool_cache_t	pool;
 }			vcache			__cacheline_aligned;
 

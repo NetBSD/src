@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.444 2014/05/24 16:34:04 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.445 2014/09/05 05:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.444 2014/05/24 16:34:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.445 2014/09/05 05:57:21 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -142,7 +142,7 @@ vntblinit(void)
  */
 int
 vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
-	  bool catch, int slptimeo)
+	  bool catch_p, int slptimeo)
 {
 	struct buf *bp, *nbp;
 	int error;
@@ -168,7 +168,7 @@ restart:
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		KASSERT(bp->b_vp == vp);
 		nbp = LIST_NEXT(bp, b_vnbufs);
-		error = bbusy(bp, catch, slptimeo, NULL);
+		error = bbusy(bp, catch_p, slptimeo, NULL);
 		if (error != 0) {
 			if (error == EPASSTHROUGH)
 				goto restart;
@@ -181,7 +181,7 @@ restart:
 	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
 		KASSERT(bp->b_vp == vp);
 		nbp = LIST_NEXT(bp, b_vnbufs);
-		error = bbusy(bp, catch, slptimeo, NULL);
+		error = bbusy(bp, catch_p, slptimeo, NULL);
 		if (error != 0) {
 			if (error == EPASSTHROUGH)
 				goto restart;
@@ -222,7 +222,7 @@ restart:
  * buffers from being queued.
  */
 int
-vtruncbuf(struct vnode *vp, daddr_t lbn, bool catch, int slptimeo)
+vtruncbuf(struct vnode *vp, daddr_t lbn, bool catch_p, int slptimeo)
 {
 	struct buf *bp, *nbp;
 	int error;
@@ -242,7 +242,7 @@ restart:
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
-		error = bbusy(bp, catch, slptimeo, NULL);
+		error = bbusy(bp, catch_p, slptimeo, NULL);
 		if (error != 0) {
 			if (error == EPASSTHROUGH)
 				goto restart;
@@ -257,7 +257,7 @@ restart:
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
-		error = bbusy(bp, catch, slptimeo, NULL);
+		error = bbusy(bp, catch_p, slptimeo, NULL);
 		if (error != 0) {
 			if (error == EPASSTHROUGH)
 				goto restart;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.58 2013/10/19 21:01:39 mrg Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.59 2014/09/05 05:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.58 2013/10/19 21:01:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.59 2014/09/05 05:57:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -179,22 +179,22 @@ do {									\
 #define	MUTEX_DEBUG_P(mtx)	(((mtx)->mtx_owner & MUTEX_BIT_NODEBUG) == 0)
 #if defined(LOCKDEBUG)
 #define	MUTEX_OWNED(owner)		(((owner) & ~MUTEX_BIT_NODEBUG) != 0)
-#define	MUTEX_INHERITDEBUG(new, old)	(new) |= (old) & MUTEX_BIT_NODEBUG
+#define	MUTEX_INHERITDEBUG(n, o)	(n) |= (o) & MUTEX_BIT_NODEBUG
 #else /* defined(LOCKDEBUG) */
 #define	MUTEX_OWNED(owner)		((owner) != 0)
-#define	MUTEX_INHERITDEBUG(new, old)	/* nothing */
+#define	MUTEX_INHERITDEBUG(n, o)	/* nothing */
 #endif /* defined(LOCKDEBUG) */
 
 static inline int
 MUTEX_ACQUIRE(kmutex_t *mtx, uintptr_t curthread)
 {
 	int rv;
-	uintptr_t old = 0;
-	uintptr_t new = curthread;
+	uintptr_t oldown = 0;
+	uintptr_t newown = curthread;
 
-	MUTEX_INHERITDEBUG(old, mtx->mtx_owner);
-	MUTEX_INHERITDEBUG(new, old);
-	rv = MUTEX_CAS(&mtx->mtx_owner, old, new);
+	MUTEX_INHERITDEBUG(oldown, mtx->mtx_owner);
+	MUTEX_INHERITDEBUG(newown, oldown);
+	rv = MUTEX_CAS(&mtx->mtx_owner, oldown, newown);
 	MUTEX_RECEIVE(mtx);
 	return rv;
 }
@@ -211,12 +211,12 @@ MUTEX_SET_WAITERS(kmutex_t *mtx, uintptr_t owner)
 static inline void
 MUTEX_RELEASE(kmutex_t *mtx)
 {
-	uintptr_t new;
+	uintptr_t newown;
 
 	MUTEX_GIVE(mtx);
-	new = 0;
-	MUTEX_INHERITDEBUG(new, mtx->mtx_owner);
-	mtx->mtx_owner = new;
+	newown = 0;
+	MUTEX_INHERITDEBUG(newown, mtx->mtx_owner);
+	mtx->mtx_owner = newown;
 }
 #endif	/* __HAVE_SIMPLE_MUTEXES */
 

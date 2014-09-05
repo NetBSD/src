@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.120 2014/07/31 03:39:35 rtr Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.121 2014/09/05 05:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.120 2014/07/31 03:39:35 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.121 2014/09/05 05:57:21 matt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -1481,16 +1481,16 @@ sbunlock(struct sockbuf *sb)
 }
 
 int
-sowait(struct socket *so, bool catch, int timo)
+sowait(struct socket *so, bool catch_p, int timo)
 {
 	kmutex_t *lock;
 	int error;
 
 	KASSERT(solocked(so));
-	KASSERT(catch || timo != 0);
+	KASSERT(catch_p || timo != 0);
 
 	lock = so->so_lock;
-	if (catch)
+	if (catch_p)
 		error = cv_timedwait_sig(&so->so_cv, lock, timo);
 	else
 		error = cv_timedwait(&so->so_cv, lock, timo);

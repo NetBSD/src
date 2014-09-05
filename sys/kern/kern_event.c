@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.80 2014/06/24 14:42:43 maxv Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.81 2014/09/05 05:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.80 2014/06/24 14:42:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.81 2014/09/05 05:57:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -775,7 +775,7 @@ sys_kqueue1(struct lwp *l, const struct sys_kqueue1_args *uap,
  * kevent(2) system call.
  */
 int
-kevent_fetch_changes(void *private, const struct kevent *changelist,
+kevent_fetch_changes(void *ctx, const struct kevent *changelist,
     struct kevent *changes, size_t index, int n)
 {
 
@@ -783,7 +783,7 @@ kevent_fetch_changes(void *private, const struct kevent *changelist,
 }
 
 int
-kevent_put_events(void *private, struct kevent *events,
+kevent_put_events(void *ctx, struct kevent *events,
     struct kevent *eventlist, size_t index, int n)
 {
 

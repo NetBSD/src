@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.177 2013/11/25 16:29:25 christos Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.178 2014/09/05 05:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.177 2013/11/25 16:29:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.178 2014/09/05 05:57:21 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -981,11 +981,11 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
  * previous LWP, at splsched.
  */
 void
-lwp_startup(struct lwp *prev, struct lwp *new)
+lwp_startup(struct lwp *prev, struct lwp *new_lwp)
 {
-	KASSERTMSG(new == curlwp, "l %p curlwp %p prevlwp %p", new, curlwp, prev);
+	KASSERTMSG(new_lwp == curlwp, "l %p curlwp %p prevlwp %p", new_lwp, curlwp, prev);
 
-	SDT_PROBE(proc,,,lwp_start, new, 0,0,0,0);
+	SDT_PROBE(proc,,,lwp_start, new_lwp, 0,0,0,0);
 
 	KASSERT(kpreempt_disabled());
 	if (prev != NULL) {
@@ -998,18 +998,18 @@ lwp_startup(struct lwp *prev, struct lwp *new)
 		membar_exit();
 		prev->l_ctxswtch = 0;
 	}
-	KPREEMPT_DISABLE(new);
+	KPREEMPT_DISABLE(new_lwp);
 	spl0();
-	if (__predict_true(new->l_proc->p_vmspace))
-		pmap_activate(new);
+	if (__predict_true(new_lwp->l_proc->p_vmspace))
+		pmap_activate(new_lwp);
 
 	/* Note trip through cpu_switchto(). */
 	pserialize_switchpoint();
 
 	LOCKDEBUG_BARRIER(NULL, 0);
-	KPREEMPT_ENABLE(new);
-	if ((new->l_pflag & LP_MPSAFE) == 0) {
-		KERNEL_LOCK(1, new);
+	KPREEMPT_ENABLE(new_lwp);
+	if ((new_lwp->l_pflag & LP_MPSAFE) == 0) {
+		KERNEL_LOCK(1, new_lwp);
 	}
 }
 
@@ -1446,13 +1446,13 @@ lwp_locked(struct lwp *l, kmutex_t *mtx)
  * Lend a new mutex to an LWP.  The old mutex must be held.
  */
 void
-lwp_setlock(struct lwp *l, kmutex_t *new)
+lwp_setlock(struct lwp *l, kmutex_t *mtx)
 {
 
 	KASSERT(mutex_owned(l->l_mutex));
 
 	membar_exit();
-	l->l_mutex = new;
+	l->l_mutex = mtx;
 }
 
 /*
@@ -1460,7 +1460,7 @@ lwp_setlock(struct lwp *l, kmutex_t *new)
  * must be held.
  */
 void
-lwp_unlock_to(struct lwp *l, kmutex_t *new)
+lwp_unlock_to(struct lwp *l, kmutex_t *mtx)
 {
 	kmutex_t *old;
 
@@ -1468,7 +1468,7 @@ lwp_unlock_to(struct lwp *l, kmutex_t *new)
 
 	old = l->l_mutex;
 	membar_exit();
-	l->l_mutex = new;
+	l->l_mutex = mtx;
 	mutex_spin_exit(old);
 }
 
