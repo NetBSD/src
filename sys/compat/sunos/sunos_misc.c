@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.168 2010/06/24 13:03:07 hannken Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.169 2014/09/05 09:21:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.168 2010/06/24 13:03:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.169 2014/09/05 09:21:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,7 +377,7 @@ sunos_sys_getdents(struct lwp *l, const struct sunos_sys_getdents_args *uap, reg
 		goto out1;
 	}
 
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto out1;
@@ -814,7 +814,7 @@ sunos_sys_fstatfs(struct lwp *l, const struct sunos_sys_fstatfs_args *uap, regis
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	mp = ((struct vnode *)fp->f_data)->v_mount;
+	mp = fp->f_vnode->v_mount;
 	sp = &mp->mnt_stat;
 	if ((error = VFS_STATVFS(mp, sp)) != 0)
 		goto out;

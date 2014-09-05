@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.170 2014/09/05 05:57:21 matt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.171 2014/09/05 09:20:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.170 2014/09/05 05:57:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.171 2014/09/05 09:20:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1408,7 +1408,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 		 * to access.
 		 */
 		if (p->p_cwdi->cwdi_rdir != NULL && fp->f_type == DTYPE_VNODE) {
-			vnode_t *vp = (vnode_t *)fp->f_data;
+			vnode_t *vp = fp->f_vnode;
 			if ((vp->v_type == VDIR) &&
 			    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, l)) {
 				error = EPERM;
@@ -1717,7 +1717,7 @@ unp_gc(file_t *dp)
 			atomic_or_uint(&fp->f_flag, FMARK);
 
 			if (fp->f_type != DTYPE_SOCKET ||
-			    (so = fp->f_data) == NULL ||
+			    (so = fp->f_socket) == NULL ||
 			    so->so_proto->pr_domain != &unixdomain ||
 			    (so->so_proto->pr_flags & PR_RIGHTS) == 0) {
 				mutex_exit(&fp->f_lock);
@@ -1798,7 +1798,7 @@ unp_gc(file_t *dp)
 		 * This will cause files referenced only by the
 		 * socket to be queued for close.
 		 */
-		so = fp->f_data;
+		so = fp->f_socket;
 		solock(so);
 		sorflush(so);
 		sounlock(so);

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_net.c,v 1.21 2009/12/20 09:36:05 dsl Exp $	 */
+/*	$NetBSD: svr4_32_net.c,v 1.22 2014/09/05 09:21:55 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.21 2009/12/20 09:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.22 2014/09/05 09:21:55 matt Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -124,7 +124,7 @@ svr4_32_stream_get(file_t *fp)
 	if (fp == NULL || fp->f_type != DTYPE_SOCKET)
 		return NULL;
 
-	so = (struct socket *) fp->f_data;
+	so = fp->f_socket;
 
 	if (so->so_internal)
 		return so->so_internal;
