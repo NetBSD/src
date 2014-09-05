@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clntsocket.c,v 1.1 2010/03/02 23:19:09 pooka Exp $	*/
+/*	$NetBSD: nfs_clntsocket.c,v 1.2 2014/09/05 05:34:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_clntsocket.c,v 1.1 2010/03/02 23:19:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_clntsocket.c,v 1.2 2014/09/05 05:34:57 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -964,13 +964,13 @@ nfs_sndlock(struct nfsmount *nmp, struct nfsreq *rep)
 {
 	struct lwp *l;
 	int timeo = 0;
-	bool catch = false;
+	bool catch_p = false;
 	int error = 0;
 
 	if (rep) {
 		l = rep->r_lwp;
 		if (rep->r_nmp->nm_flag & NFSMNT_INT)
-			catch = true;
+			catch_p = true;
 	} else
 		l = NULL;
 	mutex_enter(&nmp->nm_lock);
@@ -979,13 +979,13 @@ nfs_sndlock(struct nfsmount *nmp, struct nfsreq *rep)
 			error = EINTR;
 			goto quit;
 		}
-		if (catch) {
+		if (catch_p) {
 			cv_timedwait_sig(&nmp->nm_sndcv, &nmp->nm_lock, timeo);
 		} else {
 			cv_timedwait(&nmp->nm_sndcv, &nmp->nm_lock, timeo);
 		}
-		if (catch) {
-			catch = false;
+		if (catch_p) {
+			catch_p = false;
 			timeo = 2 * hz;
 		}
 	}
