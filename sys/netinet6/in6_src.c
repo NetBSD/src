@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.54 2014/05/17 21:26:20 rmind Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.55 2014/09/05 06:08:15 matt Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.54 2014/05/17 21:26:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.55 2014/09/05 06:08:15 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -970,11 +970,10 @@ init_policy_queue(void)
 static int
 add_addrsel_policyent(struct in6_addrpolicy *newpolicy)
 {
-	struct addrsel_policyent *new, *pol;
+	struct addrsel_policyent *newpol, *pol;
 
 	/* duplication check */
-	for (pol = TAILQ_FIRST(&addrsel_policytab); pol;
-	     pol = TAILQ_NEXT(pol, ape_entry)) {
+	TAILQ_FOREACH(pol, &addrsel_policytab, ape_entry) {
 		if (IN6_ARE_ADDR_EQUAL(&newpolicy->addr.sin6_addr,
 		    &pol->ape_policy.addr.sin6_addr) &&
 		    IN6_ARE_ADDR_EQUAL(&newpolicy->addrmask.sin6_addr,
@@ -983,12 +982,12 @@ add_addrsel_policyent(struct in6_addrpolicy *newpolicy)
 		}
 	}
 
-	new = malloc(sizeof(*new), M_IFADDR, M_WAITOK|M_ZERO);
+	newpol = malloc(sizeof(*newpol), M_IFADDR, M_WAITOK|M_ZERO);
 
 	/* XXX: should validate entry */
-	new->ape_policy = *newpolicy;
+	newpol->ape_policy = *newpolicy;
 
-	TAILQ_INSERT_TAIL(&addrsel_policytab, new, ape_entry);
+	TAILQ_INSERT_TAIL(&addrsel_policytab, newpol, ape_entry);
 
 	return (0);
 }
