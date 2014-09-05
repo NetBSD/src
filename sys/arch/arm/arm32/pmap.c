@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.298 2014/08/30 13:02:01 kiyohara Exp $	*/
+/*	$NetBSD: pmap.c,v 1.299 2014/09/05 05:25:28 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.298 2014/08/30 13:02:01 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.299 2014/09/05 05:25:28 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -620,17 +620,19 @@ static SLIST_HEAD(, l1_ttable) l1_list;
  * Reference counts are maintained for L2 descriptors so they can be
  * freed when empty.
  */
+struct l2_bucket {
+	pt_entry_t *l2b_kva;		/* KVA of L2 Descriptor Table */
+	paddr_t l2b_pa;			/* Physical address of same */
+	u_short l2b_l1slot;		/* This L2 table's L1 index */
+	u_short l2b_occupancy;		/* How many active descriptors */
+};
+
 struct l2_dtable {
 	/* The number of L2 page descriptors allocated to this l2_dtable */
 	u_int l2_occupancy;
 
 	/* List of L2 page descriptors */
-	struct l2_bucket {
-		pt_entry_t *l2b_kva;	/* KVA of L2 Descriptor Table */
-		paddr_t l2b_pa;		/* Physical address of same */
-		u_short l2b_l1slot;	/* This L2 table's L1 index */
-		u_short l2b_occupancy;	/* How many active descriptors */
-	} l2_bucket[L2_BUCKET_SIZE];
+	struct l2_bucket l2_bucket[L2_BUCKET_SIZE];
 };
 
 /*
