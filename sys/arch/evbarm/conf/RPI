@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.49 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: RPI,v 1.50 2014/09/05 11:27:57 skrll Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -221,7 +221,31 @@ usb* 		at dwctwo?
 # USB device drivers
 include "dev/usb/usbdevices.config"
 
-ukphy*		at mii? phy ?
+# MII/PHY support
+exphy* 		at mii? phy ?		# 3Com internal PHYs
+gentbi* 	at mii? phy ?		# Generic Ten-Bit 1000BASE-[CLS]X PHYs
+glxtphy*	at mii? phy ?		# Level One LXT-1000 PHYs
+gphyter* 	at mii? phy ?		# NS83861 Gig-E PHY
+icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS189x
+igphy*		at mii? phy ?		# Intel IGP01E1000
+ihphy*		at mii? phy ?		# Intel 82577 PHYs
+ikphy*		at mii? phy ?		# Intel 82563 PHYs
+inphy*		at mii? phy ?		# Intel 82555 PHYs
+iophy*		at mii? phy ?		# Intel 82553 PHYs
+lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs
+makphy*		at mii? phy ?		# Marvell Semiconductor 88E1000 PHYs
+nsphy*		at mii? phy ?		# NS83840 PHYs
+nsphyter*	at mii? phy ? 		# NS83843 PHYs
+pnaphy*		at mii? phy ?		# generic HomePNA PHYs
+qsphy*		at mii? phy ?		# Quality Semiconductor QS6612 PHYs
+rdcphy*		at mii? phy ?		# RDC R6040 10/100 PHY
+rgephy*		at mii? phy ?		# Realtek 8169S/8110S internal PHYs
+rlphy*		at mii? phy ?		# Realtek 8139/8201L PHYs
+sqphy*		at mii? phy ?		# Seeq 80220/80221/80223 PHYs
+tlphy*		at mii? phy ?		# ThunderLAN PHYs
+tqphy*		at mii? phy ?		# TDK Semiconductor PHYs
+urlphy*		at mii? phy ?		# Realtek RTL8150L internal PHYs
+ukphy*		at mii? phy ?		# generic unknown PHYs
 
 # Broadcom Serial Control (I2C)
 bsciic* at obio?
