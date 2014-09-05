@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.76 2014/09/05 05:42:50 matt Exp $	*/
+/*	$NetBSD: file.h,v 1.77 2014/09/05 09:17:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -101,11 +101,25 @@ struct fileops {
  * This structure is exported via the KERN_FILE and KERN_FILE2 sysctl
  * calls.  Only add members to the end, do not delete them.
  */
+union file_data {
+	struct vnode *fd_vp;		// DTYPE_VNODE
+	struct socket *fd_so;		// DTYPE_SOCKET
+	struct pipe *fd_pipe;		// DTYPE_PIPE
+	struct kqueue *fd_kq;		// DTYPE_KQUEUE
+	void *fd_data;			// DTYPE_MISC
+	struct rnd_ctx *fd_rndctx;	// DTYPE_MISC (rnd)
+	int fd_devunit;			// DTYPE_MISC (tap)
+	struct bpf_d *fd_bpf;		// DTYPE_MISC (bpf)
+	struct fcrypt *fd_fcrypt;	// DTYPE_CRYPTO is not used
+	struct mqueue *fd_mq;		// DTYPE_MQUEUE
+	struct ksem *fd_ks;		// DTYPE_SEM
+};
+
 struct file {
 	off_t		f_offset;	/* first, is 64-bit */
 	kauth_cred_t 	f_cred;		/* creds associated with descriptor */
 	const struct fileops *f_ops;
-	void		*f_data;	/* descriptor data, e.g. vnode/socket */
+	union file_data	f_undata;	/* descriptor data, e.g. vnode/socket */
 	LIST_ENTRY(file) f_list;	/* list of active files */
 	kmutex_t	f_lock;		/* lock on structure */
 	int		f_flag;		/* see fcntl.h */
@@ -118,6 +132,18 @@ struct file {
 	SLIST_ENTRY(file) f_unplist;	/* deferred close: see uipc_usrreq.c */
 };
 
+#define f_vnode		f_undata.fd_vp
+#define f_socket	f_undata.fd_so
+#define f_pipe		f_undata.fd_pipe
+#define f_kqueue	f_undata.fd_kq
+#define f_data		f_undata.fd_data
+#define f_mqueue	f_undata.fd_mq
+#define f_ksem		f_undata.fd_ks
+
+#define f_rndctx	f_undata.fd_rndctx
+#define f_devunit	f_undata.fd_devunit
+#define f_bpf		f_undata.fd_bpf
+#define f_fcrypt	f_undata.fd_fcrypt
 #endif
 
 /*
