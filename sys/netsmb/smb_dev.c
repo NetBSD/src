@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.42 2014/07/25 08:10:40 dholland Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.43 2014/09/05 09:26:16 matt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.42 2014/07/25 08:10:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.43 2014/09/05 09:26:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -417,7 +417,7 @@ smb_dev2share(int fd, int mode, struct smb_cred *scred,
 	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
 
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (fp->f_type != DTYPE_VNODE
 	    || (fp->f_flag & (FREAD|FWRITE)) == 0
 	    || vp->v_type != VCHR
