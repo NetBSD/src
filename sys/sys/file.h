@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.75 2013/01/02 19:35:43 dsl Exp $	*/
+/*	$NetBSD: file.h,v 1.76 2014/09/05 05:42:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -78,6 +78,22 @@ struct iovec;
 struct stat;
 struct knote;
 
+struct fileops {
+	int	(*fo_read)	(struct file *, off_t *, struct uio *,
+				    kauth_cred_t, int);
+	int	(*fo_write)	(struct file *, off_t *, struct uio *,
+				    kauth_cred_t, int);
+	int	(*fo_ioctl)	(struct file *, u_long, void *);
+	int	(*fo_fcntl)	(struct file *, u_int, void *);
+	int	(*fo_poll)	(struct file *, int);
+	int	(*fo_stat)	(struct file *, struct stat *);
+	int	(*fo_close)	(struct file *);
+	int	(*fo_kqfilter)	(struct file *, struct knote *);
+	void	(*fo_restart)	(struct file *);
+	void	(*fo_spare1)	(void);
+	void	(*fo_spare2)	(void);
+};
+
 /*
  * Kernel file descriptor.  One entry for each open kernel vnode and
  * socket.
@@ -88,21 +104,7 @@ struct knote;
 struct file {
 	off_t		f_offset;	/* first, is 64-bit */
 	kauth_cred_t 	f_cred;		/* creds associated with descriptor */
-	const struct fileops {
-		int	(*fo_read)	(struct file *, off_t *, struct uio *,
-					    kauth_cred_t, int);
-		int	(*fo_write)	(struct file *, off_t *, struct uio *,
-					    kauth_cred_t, int);
-		int	(*fo_ioctl)	(struct file *, u_long, void *);
-		int	(*fo_fcntl)	(struct file *, u_int, void *);
-		int	(*fo_poll)	(struct file *, int);
-		int	(*fo_stat)	(struct file *, struct stat *);
-		int	(*fo_close)	(struct file *);
-		int	(*fo_kqfilter)	(struct file *, struct knote *);
-		void	(*fo_restart)	(struct file *);
-		void	(*fo_spare1)	(void);
-		void	(*fo_spare2)	(void);
-	} *f_ops;
+	const struct fileops *f_ops;
 	void		*f_data;	/* descriptor data, e.g. vnode/socket */
 	LIST_ENTRY(file) f_list;	/* list of active files */
 	kmutex_t	f_lock;		/* lock on structure */

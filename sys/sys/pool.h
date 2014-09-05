@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.76 2014/06/13 19:09:07 joerg Exp $	*/
+/*	$NetBSD: pool.h,v 1.77 2014/09/05 05:42:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@ struct pool_allocator {
 };
 
 LIST_HEAD(pool_pagelist,pool_item_header);
+SPLAY_HEAD(phtree, pool_item_header);
 
 struct pool {
 	TAILQ_ENTRY(pool)
@@ -158,7 +159,7 @@ struct pool {
 	kcondvar_t	pr_cv;
 	int		pr_ipl;
 
-	SPLAY_HEAD(phtree, pool_item_header) pr_phtree;
+	struct phtree	pr_phtree;
 
 	int		pr_maxcolor;	/* Cache colouring */
 	int		pr_curcolor;

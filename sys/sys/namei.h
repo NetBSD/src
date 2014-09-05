@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.89 2014/06/03 21:16:37 joerg Exp $	*/
+/*	$NetBSD: namei.h,v 1.90 2014/09/05 05:42:50 matt Exp $	*/
 
 
 /*
@@ -85,6 +85,26 @@ void pathbuf_stringcopy_put(struct pathbuf *, const char *);
 int pathbuf_maybe_copyin(const char *userpath, enum uio_seg seg, struct pathbuf **ret);
 
 /*
+ * Lookup parameters: this structure describes the subset of
+ * information from the nameidata structure that is passed
+ * through the VOP interface.
+ */
+struct componentname {
+	/*
+	 * Arguments to lookup.
+	 */
+	uint32_t	cn_nameiop;	/* namei operation */
+	uint32_t	cn_flags;	/* flags to namei */
+	kauth_cred_t 	cn_cred;	/* credentials */
+	/*
+	 * Shared between lookup and commit routines.
+	 */
+	const char 	*cn_nameptr;	/* pointer to looked up name */
+	size_t		cn_namelen;	/* length of looked up comp */
+	size_t		cn_consume;	/* chars to consume in lookup */
+};
+
+/*
  * Encapsulation of namei parameters.
  */
 struct nameidata {
@@ -115,20 +135,7 @@ struct nameidata {
 	 * information from the nameidata structure that is passed
 	 * through the VOP interface.
 	 */
-	struct componentname {
-		/*
-		 * Arguments to lookup.
-		 */
-		uint32_t	cn_nameiop;	/* namei operation */
-		uint32_t	cn_flags;	/* flags to namei */
-		kauth_cred_t 	cn_cred;	/* credentials */
-		/*
-		 * Shared between lookup and commit routines.
-		 */
-		const char 	*cn_nameptr;	/* pointer to looked up name */
-		size_t		cn_namelen;	/* length of looked up comp */
-		size_t		cn_consume;	/* chars to consume in lookup */
-	} ni_cnd;
+	struct componentname ni_cnd;
 };
 
 /*
@@ -229,8 +236,8 @@ struct cpu_info;
 
 extern pool_cache_t pnbuf_cache;	/* pathname buffer cache */
 
-#define	PNBUF_GET()	pool_cache_get(pnbuf_cache, PR_WAITOK)
-#define	PNBUF_PUT(pnb)	pool_cache_put(pnbuf_cache, (pnb))
+#define	PNBUF_GET()	((char *)pool_cache_get(pnbuf_cache, PR_WAITOK))
+#define	PNBUF_PUT(pnb)	pool_cache_put(pnbuf_cache, (void *)(pnb))
 
 /*
  * Typesafe flags for namei_simple/nameiat_simple.
