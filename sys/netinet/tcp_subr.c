@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.255 2014/03/16 05:20:30 dholland Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.256 2014/09/05 06:04:43 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.255 2014/03/16 05:20:30 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.256 2014/09/05 06:04:43 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -635,7 +635,7 @@ tcp_template(struct tcpcb *tp)
  * segment are as specified by the parameters.
  */
 int
-tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
+tcp_respond(struct tcpcb *tp, struct mbuf *mtemplate, struct mbuf *m,
     struct tcphdr *th0, tcp_seq ack, tcp_seq seq, int flags)
 {
 #ifdef INET6
@@ -673,11 +673,11 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 	ip6 = NULL;
 #endif
 	if (m == 0) {
-		if (!template)
+		if (!mtemplate)
 			return EINVAL;
 
 		/* get family information from template */
-		switch (mtod(template, struct ip *)->ip_v) {
+		switch (mtod(mtemplate, struct ip *)->ip_v) {
 		case 4:
 			family = AF_INET;
 			hlen = sizeof(struct ip);
@@ -710,8 +710,8 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 			tlen = 0;
 
 		m->m_data += max_linkhdr;
-		bcopy(mtod(template, void *), mtod(m, void *),
-			template->m_len);
+		bcopy(mtod(mtemplate, void *), mtod(m, void *),
+			mtemplate->m_len);
 		switch (family) {
 		case AF_INET:
 			ip = mtod(m, struct ip *);
