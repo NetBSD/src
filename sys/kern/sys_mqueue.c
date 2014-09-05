@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.36 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.37 2014/09/05 09:20:59 matt Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.36 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.37 2014/09/05 09:20:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -303,7 +303,7 @@ mqueue_get(mqd_t mqd, int fflag, mqueue_t **mqret)
 		fd_putfile(fd);
 		return EBADF;
 	}
-	mq = fp->f_data;
+	mq = fp->f_mqueue;
 	mutex_enter(&mq->mq_mtx);
 
 	*mqret = mq;
@@ -334,7 +334,7 @@ mqueue_linear_insert(struct mqueue *mq, struct mq_msg *msg)
 static int
 mq_stat_fop(file_t *fp, struct stat *st)
 {
-	struct mqueue *mq = fp->f_data;
+	struct mqueue *mq = fp->f_mqueue;
 
 	memset(st, 0, sizeof(*st));
 
@@ -355,7 +355,7 @@ mq_stat_fop(file_t *fp, struct stat *st)
 static int
 mq_poll_fop(file_t *fp, int events)
 {
-	struct mqueue *mq = fp->f_data;
+	struct mqueue *mq = fp->f_mqueue;
 	struct mq_attr *mqattr;
 	int revents = 0;
 
@@ -384,7 +384,7 @@ static int
 mq_close_fop(file_t *fp)
 {
 	proc_t *p = curproc;
-	mqueue_t *mq = fp->f_data;
+	mqueue_t *mq = fp->f_mqueue;
 	bool destroy = false;
 
 	mutex_enter(&mq->mq_mtx);
@@ -596,7 +596,7 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 		name = NULL;
 	}
 	KASSERT(mq != NULL);
-	fp->f_data = mq;
+	fp->f_mqueue = mq;
 	fd_affix(p, fp, mqd);
 	*retval = mqd;
 err:

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.187 2014/08/07 03:40:21 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.188 2014/09/05 09:22:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.187 2014/08/07 03:40:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.188 2014/09/05 09:22:22 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -472,7 +472,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 static int
 bpf_close(struct file *fp)
 {
-	struct bpf_d *d = fp->f_data;
+	struct bpf_d *d = fp->f_bpf;
 	int s;
 
 	KERNEL_LOCK(1, NULL);
@@ -497,7 +497,7 @@ bpf_close(struct file *fp)
 	seldestroy(&d->bd_sel);
 	softint_disestablish(d->bd_sih);
 	free(d, M_DEVBUF);
-	fp->f_data = NULL;
+	fp->f_bpf = NULL;
 
 	KERNEL_UNLOCK_ONE(NULL);
 
@@ -522,7 +522,7 @@ static int
 bpf_read(struct file *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
 {
-	struct bpf_d *d = fp->f_data;
+	struct bpf_d *d = fp->f_bpf;
 	int timed_out;
 	int error;
 	int s;
@@ -663,7 +663,7 @@ static int
 bpf_write(struct file *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
 {
-	struct bpf_d *d = fp->f_data;
+	struct bpf_d *d = fp->f_bpf;
 	struct ifnet *ifp;
 	struct mbuf *m, *mc;
 	int error, s;
@@ -772,7 +772,7 @@ reset_d(struct bpf_d *d)
 static int
 bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 {
-	struct bpf_d *d = fp->f_data;
+	struct bpf_d *d = fp->f_bpf;
 	int s, error = 0;
 
 	/*
@@ -1228,7 +1228,7 @@ bpf_ifname(struct ifnet *ifp, struct ifreq *ifr)
 static int
 bpf_stat(struct file *fp, struct stat *st)
 {
-	struct bpf_d *d = fp->f_data;
+	struct bpf_d *d = fp->f_bpf;
 
 	(void)memset(st, 0, sizeof(*st));
 	KERNEL_LOCK(1, NULL);
@@ -1254,7 +1254,7 @@ bpf_stat(struct file *fp, struct stat *st)
 static int
 bpf_poll(struct file *fp, int events)
 {
-	struct bpf_d *d = fp->f_data;
+	struct bpf_d *d = fp->f_bpf;
 	int s = splnet();
 	int revents;
 
@@ -1323,7 +1323,7 @@ static const struct filterops bpfread_filtops =
 static int
 bpf_kqfilter(struct file *fp, struct knote *kn)
 {
-	struct bpf_d *d = fp->f_data;
+	struct bpf_d *d = fp->f_bpf;
 	struct klist *klist;
 	int s;
 

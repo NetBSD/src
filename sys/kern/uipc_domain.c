@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.94 2014/08/22 11:28:03 pooka Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.95 2014/09/05 09:20:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.94 2014/08/22 11:28:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.95 2014/09/05 09:20:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -517,9 +517,9 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 	mutex_enter(&filelist_lock);
 	LIST_FOREACH(fp, &filehead, f_list) {
 		if (fp->f_count == 0 || fp->f_type != DTYPE_SOCKET ||
-		    fp->f_data == NULL)
+		    fp->f_socket == NULL)
 			continue;
-		so = (struct socket *)fp->f_data;
+		so = fp->f_socket;
 		if (so->so_type != type)
 			continue;
 		if (so->so_proto->pr_domain->dom_family != pf)

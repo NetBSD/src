@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.33 2014/07/25 08:10:40 dholland Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.34 2014/09/05 09:20:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.33 2014/07/25 08:10:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.34 2014/09/05 09:20:59 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ptm.h"
@@ -213,7 +213,7 @@ retry:
 	fp->f_flag = FREAD|FWRITE;
 	fp->f_type = DTYPE_VNODE;
 	fp->f_ops = &vnops;
-	fp->f_data = vp;
+	fp->f_vnode = vp;
 	VOP_UNLOCK(vp);
 	fd_affix(curproc, fp, *fd);
 	return 0;
@@ -290,7 +290,7 @@ pty_alloc_slave(struct lwp *l, int *fd, dev_t dev, struct mount *mp)
 	fp->f_flag = FREAD|FWRITE;
 	fp->f_type = DTYPE_VNODE;
 	fp->f_ops = &vnops;
-	fp->f_data = vp;
+	fp->f_vnode = vp;
 	VOP_UNLOCK(vp);
 	fd_affix(curproc, fp, *fd);
 	return 0;

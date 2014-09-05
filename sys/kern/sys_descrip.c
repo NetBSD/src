@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.29 2014/09/05 05:57:21 matt Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.30 2014/09/05 09:20:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.29 2014/09/05 05:57:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.30 2014/09/05 09:20:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,7 @@ do_fcntl_lock(int fd, int cmd, struct flock *fl)
 		fd_putfile(fd);
 		return EINVAL;
 	}
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	if (fl->l_whence == SEEK_CUR)
 		fl->l_start += fp->f_offset;
 
@@ -567,7 +567,7 @@ sys_fpathconf(struct lwp *l, const struct sys_fpathconf_args *uap,
 		break;
 
 	case DTYPE_VNODE:
-		error = VOP_PATHCONF(fp->f_data, SCARG(uap, name), retval);
+		error = VOP_PATHCONF(fp->f_vnode, SCARG(uap, name), retval);
 		break;
 
 	case DTYPE_KQUEUE:
@@ -614,7 +614,7 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 		return EOPNOTSUPP;
 	}
 
-	vp = fp->f_data;
+	vp = fp->f_vnode;
 	lf.l_whence = SEEK_SET;
 	lf.l_start = 0;
 	lf.l_len = 0;
@@ -682,7 +682,7 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 	switch (advice) {
 	case POSIX_FADV_WILLNEED:
 	case POSIX_FADV_DONTNEED:
-		vp = fp->f_data;
+		vp = fp->f_vnode;
 		if (vp->v_type != VREG && vp->v_type != VBLK) {
 			fd_putfile(fd);
 			return 0;
@@ -705,12 +705,12 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 		break;
 
 	case POSIX_FADV_WILLNEED:
-		vp = fp->f_data;
+		vp = fp->f_vnode;
 		error = uvm_readahead(&vp->v_uobj, offset, endoffset - offset);
 		break;
 
 	case POSIX_FADV_DONTNEED:
-		vp = fp->f_data;
+		vp = fp->f_vnode;
 		/*
 		 * Align the region to page boundaries as VOP_PUTPAGES expects
 		 * by shrinking it.  We shrink instead of expand because we

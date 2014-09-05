@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.60 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.61 2014/09/05 09:21:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.60 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.61 2014/09/05 09:21:55 matt Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -218,7 +218,7 @@ svr4_netopen(dev_t dev, int flag, int mode, struct lwp *l)
 int
 svr4_soo_close(file_t *fp)
 {
-	struct socket *so = fp->f_data;
+	struct socket *so = fp->f_socket;
 
 	svr4_delete_socket(curproc, fp);
 	free(so->so_internal, M_NETADDR);
@@ -235,7 +235,7 @@ svr4_stream_get(file_t *fp)
 	if (fp == NULL || fp->f_type != DTYPE_SOCKET)
 		return NULL;
 
-	so = fp->f_data;
+	so = fp->f_socket;
 
 	if (so->so_internal)
 		return so->so_internal;
