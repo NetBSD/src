@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.308 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: sd.c,v 1.309 2014/09/05 05:30:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.308 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.309 2014/09/05 05:30:42 matt Exp $");
 
 #include "opt_scsi.h"
 
@@ -1272,8 +1272,8 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case DIOCSSTRATEGY:
 	    {
 		struct disk_strategy *dks = addr;
-		struct bufq_state *new;
-		struct bufq_state *old;
+		struct bufq_state *new_bufq;
+		struct bufq_state *old_bufq;
 
 		if ((flag & FWRITE) == 0) {
 			return EBADF;
@@ -1283,17 +1283,17 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			return EINVAL;
 		}
 		dks->dks_name[sizeof(dks->dks_name) - 1] = 0; /* ensure term */
-		error = bufq_alloc(&new, dks->dks_name,
+		error = bufq_alloc(&new_bufq, dks->dks_name,
 		    BUFQ_EXACT|BUFQ_SORT_RAWBLOCK);
 		if (error) {
 			return error;
 		}
 		s = splbio();
-		old = sd->buf_queue;
-		bufq_move(new, old);
-		sd->buf_queue = new;
+		old_bufq = sd->buf_queue;
+		bufq_move(new_bufq, old_bufq);
+		sd->buf_queue = new_bufq;
 		splx(s);
-		bufq_free(old);
+		bufq_free(old_bufq);
 		
 		return 0;
 	    }
