@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.189 2013/08/12 17:46:38 hannken Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.190 2014/09/05 05:34:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.189 2013/08/12 17:46:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.190 2014/09/05 05:34:57 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -615,15 +615,15 @@ nfs_vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred,
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	int error = 0, allerror = 0, slptimeo;
-	bool catch;
+	bool catch_p;
 
 	if ((nmp->nm_flag & NFSMNT_INT) == 0)
 		intrflg = 0;
 	if (intrflg) {
-		catch = true;
+		catch_p = true;
 		slptimeo = 2 * hz;
 	} else {
-		catch = false;
+		catch_p = false;
 		slptimeo = 0;
 	}
 	/*
@@ -645,7 +645,7 @@ nfs_vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred,
 	 */
 	np->n_flag |= NFLUSHINPROG;
 	mutex_exit(vp->v_interlock);
-	error = vinvalbuf(vp, flags, cred, l, catch, 0);
+	error = vinvalbuf(vp, flags, cred, l, catch_p, 0);
 	while (error) {
 		if (allerror == 0)
 			allerror = error;
@@ -737,7 +737,7 @@ nfs_asyncio(struct buf *bp)
 	struct nfs_iod *iod;
 	struct nfsmount *nmp;
 	int slptimeo = 0, error;
-	bool catch = false;
+	bool catch_p = false;
 
 	if (nfs_numasync == 0)
 		return (EIO);
@@ -745,7 +745,7 @@ nfs_asyncio(struct buf *bp)
 	nmp = VFSTONFS(bp->b_vp->v_mount);
 again:
 	if (nmp->nm_flag & NFSMNT_INT)
-		catch = true;
+		catch_p = true;
 
 	/*
 	 * Find a free iod to process this request.
@@ -796,7 +796,7 @@ again:
 		if (curlwp == uvm.pagedaemon_lwp) {
 	  		/* Enque for later, to avoid free-page deadlock */
 		} else while (nmp->nm_bufqlen >= 2 * nmp->nm_bufqiods) {
-			if (catch) {
+			if (catch_p) {
 				error = cv_timedwait_sig(&nmp->nm_aiocv,
 				    &nmp->nm_lock, slptimeo);
 			} else {
@@ -808,8 +808,8 @@ again:
 					mutex_exit(&nmp->nm_lock);
 					return (EINTR);
 				}
-				if (catch) {
-					catch = false;
+				if (catch_p) {
+					catch_p = false;
 					slptimeo = 2 * hz;
 				}
 			}
