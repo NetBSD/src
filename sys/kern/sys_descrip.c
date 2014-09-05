@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.28 2013/04/08 21:12:33 skrll Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.29 2014/09/05 05:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.28 2013/04/08 21:12:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.29 2014/09/05 05:57:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,17 +105,17 @@ sys_dup(struct lwp *l, const struct sys_dup_args *uap, register_t *retval)
 	/* {
 		syscallarg(int)	fd;
 	} */
-	int new, error, old;
+	int error, newfd, oldfd;
 	file_t *fp;
 
-	old = SCARG(uap, fd);
+	oldfd = SCARG(uap, fd);
 
-	if ((fp = fd_getfile(old)) == NULL) {
+	if ((fp = fd_getfile(oldfd)) == NULL) {
 		return EBADF;
 	}
-	error = fd_dup(fp, 0, &new, false);
-	fd_putfile(old);
-	*retval = new;
+	error = fd_dup(fp, 0, &newfd, false);
+	fd_putfile(oldfd);
+	*retval = newfd;
 	return error;
 }
 

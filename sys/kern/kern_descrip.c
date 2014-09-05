@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.225 2014/07/25 08:10:40 dholland Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.226 2014/09/05 05:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.225 2014/07/25 08:10:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.226 2014/09/05 05:57:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -741,7 +741,7 @@ fd_dup(file_t *fp, int minfd, int *newp, bool exclose)
  * dup2 operation.
  */
 int
-fd_dup2(file_t *fp, unsigned new, int flags)
+fd_dup2(file_t *fp, unsigned newfd, int flags)
 {
 	filedesc_t *fdp = curlwp->l_fd;
 	fdfile_t *ff;
@@ -753,7 +753,7 @@ fd_dup2(file_t *fp, unsigned new, int flags)
 	 * Ensure there are enough slots in the descriptor table,
 	 * and allocate an fdfile_t up front in case we need it.
 	 */
-	while (new >= fdp->fd_dt->dt_nfiles) {
+	while (newfd >= fdp->fd_dt->dt_nfiles) {
 		fd_tryexpand(curproc);
 	}
 	ff = pool_cache_get(fdfile_cache, PR_WAITOK);
@@ -764,10 +764,10 @@ fd_dup2(file_t *fp, unsigned new, int flags)
 	 * XXX Potential for deadlock here?
 	 */
 	mutex_enter(&fdp->fd_lock);
-	while (fd_isused(fdp, new)) {
+	while (fd_isused(fdp, newfd)) {
 		mutex_exit(&fdp->fd_lock);
-		if (fd_getfile(new) != NULL) {
-			(void)fd_close(new);
+		if (fd_getfile(newfd) != NULL) {
+			(void)fd_close(newfd);
 		} else {
 			/*
 			 * Crummy, but unlikely to happen.
@@ -779,18 +779,18 @@ fd_dup2(file_t *fp, unsigned new, int flags)
 		mutex_enter(&fdp->fd_lock);
 	}
 	dt = fdp->fd_dt;
-	if (dt->dt_ff[new] == NULL) {
-		KASSERT(new >= NDFDFILE);
-		dt->dt_ff[new] = ff;
+	if (dt->dt_ff[newfd] == NULL) {
+		KASSERT(newfd >= NDFDFILE);
+		dt->dt_ff[newfd] = ff;
 		ff = NULL;
 	}
-	fd_used(fdp, new);
+	fd_used(fdp, newfd);
 	mutex_exit(&fdp->fd_lock);
 
-	dt->dt_ff[new]->ff_exclose = (flags & O_CLOEXEC) != 0;
+	dt->dt_ff[newfd]->ff_exclose = (flags & O_CLOEXEC) != 0;
 	fp->f_flag |= flags & FNONBLOCK;
 	/* Slot is now allocated.  Insert copy of the file. */
-	fd_affix(curproc, fp, new);
+	fd_affix(curproc, fp, newfd);
 	if (ff != NULL) {
 		pool_cache_put(fdfile_cache, ff);
 	}
@@ -846,8 +846,8 @@ int
 fd_alloc(proc_t *p, int want, int *result)
 {
 	filedesc_t *fdp = p->p_fd;
-	int i, lim, last, error;
-	u_int off, new;
+	int i, lim, last, error, hi;
+	u_int off;
 	fdtab_t *dt;
 
 	KASSERT(p == curproc || p == &proc0);
@@ -866,21 +866,21 @@ fd_alloc(proc_t *p, int want, int *result)
 		if ((i = want) < fdp->fd_freefile)
 			i = fdp->fd_freefile;
 		off = i >> NDENTRYSHIFT;
-		new = fd_next_zero(fdp, fdp->fd_himap, off,
+		hi = fd_next_zero(fdp, fdp->fd_himap, off,
 		    (last + NDENTRIES - 1) >> NDENTRYSHIFT);
-		if (new == -1)
+		if (hi == -1)
 			break;
-		i = fd_next_zero(fdp, &fdp->fd_lomap[new],
-		    new > off ? 0 : i & NDENTRYMASK, NDENTRIES);
+		i = fd_next_zero(fdp, &fdp->fd_lomap[hi],
+		    hi > off ? 0 : i & NDENTRYMASK, NDENTRIES);
 		if (i == -1) {
 			/*
 			 * Free file descriptor in this block was
 			 * below want, try again with higher want.
 			 */
-			want = (new + 1) << NDENTRYSHIFT;
+			want = (hi + 1) << NDENTRYSHIFT;
 			continue;
 		}
-		i += (new << NDENTRYSHIFT);
+		i += (hi << NDENTRYSHIFT);
 		if (i >= last) {
 			break;
 		}
@@ -1644,7 +1644,7 @@ filedescopen(dev_t dev, int mode, int type, lwp_t *l)
  * Duplicate the specified descriptor to a free descriptor.
  */
 int
-fd_dupopen(int old, int *new, int mode, int error)
+fd_dupopen(int old, int *newp, int mode, int error)
 {
 	filedesc_t *fdp;
 	fdfile_t *ff;
@@ -1682,12 +1682,12 @@ fd_dupopen(int old, int *new, int mode, int error)
 		}
 
 		/* Copy it. */
-		error = fd_dup(fp, 0, new, ff->ff_exclose);
+		error = fd_dup(fp, 0, newp, ff->ff_exclose);
 		break;
 
 	case EMOVEFD:
 		/* Copy it. */
-		error = fd_dup(fp, 0, new, ff->ff_exclose);
+		error = fd_dup(fp, 0, newp, ff->ff_exclose);
 		if (error != 0) {
 			break;
 		}

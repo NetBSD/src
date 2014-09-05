@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.138 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.139 2014/09/05 05:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.138 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.139 2014/09/05 05:57:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ static u_int	amountpipekva = 0;
 static void	pipeclose(struct pipe *);
 static void	pipe_free_kmem(struct pipe *);
 static int	pipe_create(struct pipe **, pool_cache_t);
-static int	pipelock(struct pipe *, int);
+static int	pipelock(struct pipe *, bool);
 static inline void pipeunlock(struct pipe *);
 static void	pipeselwakeup(struct pipe *, struct pipe *, int);
 #ifndef PIPE_NODIRECT
@@ -368,7 +368,7 @@ pipe_create(struct pipe **pipep, pool_cache_t cache)
  * Called with pipe spin lock held.
  */
 static int
-pipelock(struct pipe *pipe, int catch)
+pipelock(struct pipe *pipe, bool catch_p)
 {
 	int error;
 
@@ -376,7 +376,7 @@ pipelock(struct pipe *pipe, int catch)
 
 	while (pipe->pipe_state & PIPE_LOCKFL) {
 		pipe->pipe_state |= PIPE_LWANT;
-		if (catch) {
+		if (catch_p) {
 			error = cv_wait_sig(&pipe->pipe_lkcv, pipe->pipe_lock);
 			if (error != 0)
 				return error;
@@ -461,7 +461,7 @@ pipe_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	ocnt = bp->cnt;
 
 again:
-	error = pipelock(rpipe, 1);
+	error = pipelock(rpipe, true);
 	if (error)
 		goto unlocked_error;
 
@@ -785,7 +785,7 @@ pipe_direct_write(file_t *fp, struct pipe *wpipe, struct uio *uio)
 	wpipe->pipe_state &= ~(PIPE_DIRECTW | PIPE_DIRECTR);
 
 	/* Acquire the pipe lock and cleanup */
-	(void)pipelock(wpipe, 0);
+	(void)pipelock(wpipe, false);
 	mutex_exit(lock);
 
 	if (pgs != NULL) {
@@ -856,7 +856,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	++wpipe->pipe_busy;
 
 	/* Aquire the long-term pipe lock */
-	if ((error = pipelock(wpipe, 1)) != 0) {
+	if ((error = pipelock(wpipe, true)) != 0) {
 		--wpipe->pipe_busy;
 		if (wpipe->pipe_busy == 0) {
 			wpipe->pipe_state &= ~PIPE_RESTART;
@@ -898,7 +898,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			cv_broadcast(&wpipe->pipe_rcv);
 			pipeunlock(wpipe);
 			error = cv_wait_sig(&wpipe->pipe_wcv, lock);
-			(void)pipelock(wpipe, 0);
+			(void)pipelock(wpipe, false);
 			if (wpipe->pipe_state & PIPE_EOF)
 				error = EPIPE;
 		}
@@ -1019,7 +1019,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 
 			pipeunlock(wpipe);
 			error = cv_wait_sig(&wpipe->pipe_wcv, lock);
-			(void)pipelock(wpipe, 0);
+			(void)pipelock(wpipe, false);
 			if (error != 0)
 				break;
 			/*

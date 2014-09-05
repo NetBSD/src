@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.40 2013/03/29 01:08:17 christos Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.41 2014/09/05 05:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.40 2013/03/29 01:08:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.41 2014/09/05 05:57:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -673,7 +673,7 @@ out:
 }
 
 int
-do_ksem_wait(lwp_t *l, intptr_t id, bool try, struct timespec *abstime)
+do_ksem_wait(lwp_t *l, intptr_t id, bool try_p, struct timespec *abstime)
 {
 	int fd = (int)id, error, timeo;
 	ksem_t *ks;
@@ -685,7 +685,7 @@ do_ksem_wait(lwp_t *l, intptr_t id, bool try, struct timespec *abstime)
 	KASSERT(mutex_owned(&ks->ks_lock));
 	while (ks->ks_value == 0) {
 		ks->ks_waiters++;
-		if (!try && abstime != NULL) {
+		if (!try_p && abstime != NULL) {
 			error = ts2timo(CLOCK_REALTIME, TIMER_ABSTIME, abstime,
 			    &timeo, NULL);
 			if (error != 0)
@@ -693,7 +693,7 @@ do_ksem_wait(lwp_t *l, intptr_t id, bool try, struct timespec *abstime)
 		} else {
 			timeo = 0;
 		}
-		error = try ? EAGAIN : cv_timedwait_sig(&ks->ks_cv,
+		error = try_p ? EAGAIN : cv_timedwait_sig(&ks->ks_cv,
 		    &ks->ks_lock, timeo);
 		ks->ks_waiters--;
 		if (error)
