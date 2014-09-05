@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.65 2014/05/19 05:48:14 riastradh Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.66 2014/09/05 05:36:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.65 2014/05/19 05:48:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.66 2014/09/05 05:36:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ static int
 uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
     paddr_t alignment, paddr_t boundary, struct pglist *rlist)
 {
-	signed int try, limit, tryidx, end, idx, skip;
+	signed int candidate, limit, candidateidx, end, idx, skip;
 	struct vm_page *pgs;
 	int pagemask;
 	bool second_pass;
@@ -147,7 +147,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	 * We start our search at the just after where the last allocation
 	 * succeeded.
 	 */
-	try = roundup2(max(low, ps->avail_start + ps->start_hint), alignment);
+	candidate = roundup2(max(low, ps->avail_start + ps->start_hint), alignment);
 	limit = min(high, ps->avail_end);
 	pagemask = ~((boundary >> PAGE_SHIFT) - 1);
 	skip = 0;
@@ -158,7 +158,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		bool ok = true;
 		signed int cnt;
 
-		if (try + num > limit) {
+		if (candidate + num > limit) {
 			if (ps->start_hint == 0 || second_pass) {
 				/*
 				 * We've run past the allowable range.
@@ -171,19 +171,19 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 			 * is were we started.
 			 */
 			second_pass = true;
-			try = roundup2(max(low, ps->avail_start), alignment);
+			candidate = roundup2(max(low, ps->avail_start), alignment);
 			limit = min(limit, ps->avail_start + ps->start_hint);
 			skip = 0;
 			continue;
 		}
 		if (boundary != 0 &&
-		    ((try ^ (try + num - 1)) & pagemask) != 0) {
+		    ((candidate ^ (candidate + num - 1)) & pagemask) != 0) {
 			/*
 			 * Region crosses boundary. Jump to the boundary
 			 * just crossed and ensure alignment.
 			 */
-			try = (try + num - 1) & pagemask;
-			try = roundup2(try, alignment);
+			candidate = (candidate + num - 1) & pagemask;
+			candidate = roundup2(candidate, alignment);
 			skip = 0;
 			continue;
 		}
@@ -192,24 +192,24 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		 * Make sure this is a managed physical page.
 		 */
 
-		if (vm_physseg_find(try, &cidx) != ps - vm_physmem)
+		if (vm_physseg_find(candidate, &cidx) != ps - vm_physmem)
 			panic("pgalloc contig: botch1");
-		if (cidx != try - ps->start)
+		if (cidx != candidate - ps->start)
 			panic("pgalloc contig: botch2");
-		if (vm_physseg_find(try + num - 1, &cidx) != ps - vm_physmem)
+		if (vm_physseg_find(candidate + num - 1, &cidx) != ps - vm_physmem)
 			panic("pgalloc contig: botch3");
-		if (cidx != try - ps->start + num - 1)
+		if (cidx != candidate - ps->start + num - 1)
 			panic("pgalloc contig: botch4");
 #endif
-		tryidx = try - ps->start;
-		end = tryidx + num;
+		candidateidx = candidate - ps->start;
+		end = candidateidx + num;
 
 		/*
 		 * Found a suitable starting page.  See if the range is free.
 		 */
 #ifdef PGALLOC_VERBOSE
-		printf("%s: ps=%p try=%#x end=%#x skip=%#x, align=%#"PRIxPADDR,
-		    __func__, ps, tryidx, end, skip, alignment);
+		printf("%s: ps=%p candidate=%#x end=%#x skip=%#x, align=%#"PRIxPADDR,
+		    __func__, ps, candidateidx, end, skip, alignment);
 #endif
 		/*
 		 * We start at the end and work backwards since if we find a
@@ -219,14 +219,14 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		 * pages.  If this iteration fails, we may be able to skip
 		 * testing most of those pages again in the next pass.
 		 */
-		for (idx = end - 1; idx >= tryidx + skip; idx--) {
+		for (idx = end - 1; idx >= candidateidx + skip; idx--) {
 			if (VM_PAGE_IS_FREE(&pgs[idx]) == 0) {
 				ok = false;
 				break;
 			}
 
 #ifdef DEBUG
-			if (idx > tryidx) {
+			if (idx > candidateidx) {
 				idxpa = VM_PAGE_TO_PHYS(&pgs[idx]);
 				lastidxpa = VM_PAGE_TO_PHYS(&pgs[idx - 1]);
 				if ((lastidxpa + PAGE_SIZE) != idxpa) {
@@ -249,7 +249,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 
 		if (ok) {
 			while (skip-- > 0) {
-				KDASSERT(VM_PAGE_IS_FREE(&pgs[tryidx + skip]));
+				KDASSERT(VM_PAGE_IS_FREE(&pgs[candidateidx + skip]));
 			}
 #ifdef PGALLOC_VERBOSE
 			printf(": ok\n");
@@ -258,13 +258,13 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		}
 
 #ifdef PGALLOC_VERBOSE
-		printf(": non-free at %#x\n", idx - tryidx);
+		printf(": non-free at %#x\n", idx - candidateidx);
 #endif
 		/*
 		 * count the number of pages we can advance
 		 * since we know they aren't all free.
 		 */
-		cnt = idx + 1 - tryidx;
+		cnt = idx + 1 - candidateidx;
 		/*
 		 * now round up that to the needed alignment.
 		 */
@@ -274,23 +274,23 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		 * (might be 0 if cnt > num).
 		 */
 		skip = max(num - cnt, 0);
-		try += cnt;
+		candidate += cnt;
 	}
 
 	/*
 	 * we have a chunk of memory that conforms to the requested constraints.
 	 */
-	for (idx = tryidx, pgs += idx; idx < end; idx++, pgs++)
+	for (idx = candidateidx, pgs += idx; idx < end; idx++, pgs++)
 		uvm_pglist_add(pgs, rlist);
 
 	/*
 	 * the next time we need to search this segment, start after this
 	 * chunk of pages we just allocated.
 	 */
-	ps->start_hint = try + num - ps->avail_start;
+	ps->start_hint = candidate + num - ps->avail_start;
 	KASSERTMSG(ps->start_hint <= ps->avail_end - ps->avail_start,
 	    "%x %u (%#x) <= %#"PRIxPADDR" - %#"PRIxPADDR" (%#"PRIxPADDR")",
-	    try + num,
+	    candidate + num,
 	    ps->start_hint, ps->start_hint, ps->avail_end, ps->avail_start,
 	    ps->avail_end - ps->avail_start);
 
@@ -361,7 +361,7 @@ static int
 uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
     struct pglist *rlist)
 {
-	int todo, limit, try;
+	int todo, limit, candidate;
 	struct vm_page *pg;
 	bool second_pass;
 #ifdef PGALLOC_VERBOSE
@@ -377,9 +377,9 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	low = atop(low);
 	high = atop(high);
 	todo = num;
-	try = max(low, ps->avail_start + ps->start_hint);
+	candidate = max(low, ps->avail_start + ps->start_hint);
 	limit = min(high, ps->avail_end);
-	pg = &ps->pgs[try - ps->start];
+	pg = &ps->pgs[candidate - ps->start];
 	second_pass = false;
 
 	/*
@@ -389,28 +389,28 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		return 0;
 
 again:
-	for (;; try++, pg++) {
-		if (try >= limit) {
+	for (;; candidate++, pg++) {
+		if (candidate >= limit) {
 			if (ps->start_hint == 0 || second_pass) {
-				try = limit - 1;
+				candidate = limit - 1;
 				break;
 			}
 			second_pass = true;
-			try = max(low, ps->avail_start);
+			candidate = max(low, ps->avail_start);
 			limit = min(limit, ps->avail_start + ps->start_hint);
-			pg = &ps->pgs[try - ps->start];
+			pg = &ps->pgs[candidate - ps->start];
 			goto again;
 		}
 #if defined(DEBUG)
 		{
 			int cidx = 0;
-			const int bank = vm_physseg_find(try, &cidx);
+			const int bank = vm_physseg_find(candidate, &cidx);
 			KDASSERTMSG(bank == ps - vm_physmem,
 			    "vm_physseg_find(%#x) (%d) != ps %zd",
-			     try, bank, ps - vm_physmem);
-			KDASSERTMSG(cidx == try - ps->start,
+			     candidate, bank, ps - vm_physmem);
+			KDASSERTMSG(cidx == candidate - ps->start,
 			    "vm_physseg_find(%#x): %#x != off %"PRIxPADDR,
-			     try, cidx, try - ps->start);
+			     candidate, cidx, candidate - ps->start);
 		}
 #endif
 		if (VM_PAGE_IS_FREE(pg) == 0)
@@ -426,10 +426,10 @@ again:
 	 * The next time we need to search this segment,
 	 * start just after the pages we just allocated.
 	 */
-	ps->start_hint = try + 1 - ps->avail_start;
+	ps->start_hint = candidate + 1 - ps->avail_start;
 	KASSERTMSG(ps->start_hint <= ps->avail_end - ps->avail_start,
 	    "%#x %u (%#x) <= %#"PRIxPADDR" - %#"PRIxPADDR" (%#"PRIxPADDR")",
-	    try + 1,
+	    candidate + 1,
 	    ps->start_hint, ps->start_hint, ps->avail_end, ps->avail_start,
 	    ps->avail_end - ps->avail_start);
 
