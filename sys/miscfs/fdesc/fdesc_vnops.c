@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.124 2014/09/05 09:26:16 matt Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.125 2014/09/05 10:43:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.124 2014/09/05 09:26:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.125 2014/09/05 10:43:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,6 +295,8 @@ bad:
 good:
 	KASSERT(ix != -1);
 	error = vcache_get(dvp->v_mount, &ix, sizeof(ix), vpp);
+	if (error == 0 && ix == FD_CTTY)
+		(*vpp)->v_type = VCHR;
 	return error;
 }
 
@@ -838,7 +840,6 @@ fdesc_inactive(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-#if 0
 	struct fdescnode *fd = VTOFDESC(vp);
 
 	/*
@@ -847,7 +848,6 @@ fdesc_inactive(void *v)
 	 */
 	if (fd->fd_type == Fctty || fd->fd_type == Fdesc)
 		vp->v_type = VNON;
-#endif
 	VOP_UNLOCK(vp);
 	return (0);
 }
