@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.158 2014/06/03 01:24:32 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.159 2014/09/05 06:02:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.158 2014/06/03 01:24:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.159 2014/09/05 06:02:11 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -153,7 +153,7 @@ static	struct llinfo_arp *arplookup(struct mbuf *, const struct in_addr *,
 static	void in_arpinput(struct mbuf *);
 static	void arp_drainstub(void);
 
-LIST_HEAD(, llinfo_arp) llinfo_arp;
+LIST_HEAD(llinfo_arpq, llinfo_arp) llinfo_arp;
 struct	ifqueue arpintrq = {
 	.ifq_head = NULL,
 	.ifq_tail = NULL,
