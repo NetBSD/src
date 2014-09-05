@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.116 2013/11/05 00:36:02 msaitoh Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.117 2014/09/05 05:47:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -98,6 +98,24 @@
 #define	DISKMAGIC	((uint32_t)0x82564557)	/* The disk magic number */
 
 #ifndef _LOCORE
+struct	partition {		/* the partition table */
+	uint32_t p_size;	/* number of sectors in partition */
+	uint32_t p_offset;	/* starting sector */
+	union {
+		uint32_t fsize; /* FFS, ADOS: filesystem basic fragment size */
+		uint32_t cdsession; /* ISO9660: session offset */
+	} __partition_u2;
+#define	p_fsize		__partition_u2.fsize
+#define	p_cdsession	__partition_u2.cdsession
+	uint8_t p_fstype;	/* filesystem type, see below */
+	uint8_t p_frag;	/* filesystem fragments per block */
+	union {
+		uint16_t cpg;	/* UFS: FS cylinders per group */
+		uint16_t sgs;	/* LFS: FS segment shift */
+	} __partition_u1;
+#define	p_cpg	__partition_u1.cpg
+#define	p_sgs	__partition_u1.sgs
+};
 struct disklabel {
 	uint32_t d_magic;		/* the magic number */
 	uint16_t d_type;		/* drive type */
@@ -181,25 +199,8 @@ struct disklabel {
 	uint16_t d_npartitions;	/* number of partitions in following */
 	uint32_t d_bbsize;		/* size of boot area at sn0, bytes */
 	uint32_t d_sbsize;		/* max size of fs superblock, bytes */
-	struct	partition {		/* the partition table */
-		uint32_t p_size;	/* number of sectors in partition */
-		uint32_t p_offset;	/* starting sector */
-		union {
-			uint32_t fsize; /* FFS, ADOS:
-					    filesystem basic fragment size */
-			uint32_t cdsession; /* ISO9660: session offset */
-		} __partition_u2;
-#define	p_fsize		__partition_u2.fsize
-#define	p_cdsession	__partition_u2.cdsession
-		uint8_t p_fstype;	/* filesystem type, see below */
-		uint8_t p_frag;	/* filesystem fragments per block */
-		union {
-			uint16_t cpg;	/* UFS: FS cylinders per group */
-			uint16_t sgs;	/* LFS: FS segment shift */
-		} __partition_u1;
-#define	p_cpg	__partition_u1.cpg
-#define	p_sgs	__partition_u1.sgs
-	} d_partitions[MAXPARTITIONS];	/* actually may be more */
+	struct	partition  d_partitions[MAXPARTITIONS];
+			/* the partition table, actually may be more */
 };
 
 #if defined(__HAVE_OLD_DISKLABEL) && !HAVE_NBTOOL_CONFIG_H
