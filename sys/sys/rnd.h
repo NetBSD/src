@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.41 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.42 2014/09/05 05:52:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -154,7 +154,8 @@ typedef struct krndsource {
 } krndsource_t;
 
 static inline void
-rndsource_setcb(struct krndsource *const rs, void *const cb, void *const arg)
+rndsource_setcb(struct krndsource *const rs, void (*const cb)(size_t, void *),
+    void *const arg)
 {
 	rs->get = cb;
 	rs->getarg = arg;
