@@ -1,4 +1,5 @@
-/* $NetBSD */
+/*	$NetBSD: exynos_reg.h,v 1.10 2014/09/05 08:01:05 skrll Exp $	*/
+
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
