@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.124 2014/06/09 11:08:05 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.125 2014/09/05 05:29:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.124 2014/06/09 11:08:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.125 2014/09/05 05:29:16 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -603,7 +603,7 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 {
 	pci_vendor_id_t vendor;
 	pci_product_id_t product;
-	pci_class_t class;
+	pci_class_t pciclass;
 	pci_subclass_t subclass;
 	pci_interface_t interface;
 	pci_revision_t revision;
@@ -617,7 +617,7 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 	vendor = PCI_VENDOR(id_reg);
 	product = PCI_PRODUCT(id_reg);
 
-	class = PCI_CLASS(class_reg);
+	pciclass = PCI_CLASS(class_reg);
 	subclass = PCI_SUBCLASS(class_reg);
 	interface = PCI_INTERFACE(class_reg);
 	revision = PCI_REVISION(class_reg);
@@ -627,7 +627,7 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 
 	classp = pci_class;
 	while (classp->name != NULL) {
-		if (class == classp->val)
+		if (pciclass == classp->val)
 			break;
 		classp++;
 	}
@@ -660,7 +660,7 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 		cp += snprintf(cp, ep - cp, " (");
 		if (classp->name == NULL)
 			cp += snprintf(cp, ep - cp,
-			    "class 0x%02x, subclass 0x%02x", class, subclass);
+			    "class 0x%02x, subclass 0x%02x", pciclass, subclass);
 		else {
 			if (subclassp == NULL || subclassp->name == NULL)
 				cp += snprintf(cp, ep - cp,
@@ -2375,13 +2375,13 @@ pci_conf_print(
 {
 	pcireg_t regs[o2i(256)];
 	int off, capoff, endoff, hdrtype;
-	const char *typename;
+	const char *type_name;
 #ifdef _KERNEL
-	void (*typeprintfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *,
+	void (*type_printfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *,
 	    int);
 	int sizebars;
 #else
-	void (*typeprintfn)(const pcireg_t *);
+	void (*type_printfn)(const pcireg_t *);
 #endif
 
 	printf("PCI configuration registers:\n");
@@ -2420,43 +2420,43 @@ pci_conf_print(
 	switch (hdrtype) {		/* XXX make a table, eventually */
 	case 0:
 		/* Standard device header */
-		typename = "\"normal\" device";
-		typeprintfn = &pci_conf_print_type0;
+		type_name = "\"normal\" device";
+		type_printfn = &pci_conf_print_type0;
 		capoff = PCI_CAPLISTPTR_REG;
 		endoff = 64;
 		break;
 	case 1:
 		/* PCI-PCI bridge header */
-		typename = "PCI-PCI bridge";
-		typeprintfn = &pci_conf_print_type1;
+		type_name = "PCI-PCI bridge";
+		type_printfn = &pci_conf_print_type1;
 		capoff = PCI_CAPLISTPTR_REG;
 		endoff = 64;
 		break;
 	case 2:
 		/* PCI-CardBus bridge header */
-		typename = "PCI-CardBus bridge";
-		typeprintfn = &pci_conf_print_type2;
+		type_name = "PCI-CardBus bridge";
+		type_printfn = &pci_conf_print_type2;
 		capoff = PCI_CARDBUS_CAPLISTPTR_REG;
 		endoff = 72;
 		break;
 	default:
-		typename = NULL;
-		typeprintfn = 0;
+		type_name = NULL;
+		type_printfn = 0;
 		capoff = -1;
 		endoff = 64;
 		break;
 	}
 	printf("  Type %d ", hdrtype);
-	if (typename != NULL)
-		printf("(%s) ", typename);
+	if (type_name != NULL)
+		printf("(%s) ", type_name);
 	printf("header:\n");
 	pci_conf_print_regs(regs, 16, endoff);
 	printf("\n");
-	if (typeprintfn) {
+	if (type_printfn) {
 #ifdef _KERNEL
-		(*typeprintfn)(pc, tag, regs, sizebars);
+		(*type_printfn)(pc, tag, regs, sizebars);
 #else
-		(*typeprintfn)(regs);
+		(*type_printfn)(regs);
 #endif
 	} else
 		printf("    Don't know how to pretty-print type %d header.\n",
