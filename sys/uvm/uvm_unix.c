@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.44 2011/02/02 20:07:25 chuck Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.45 2014/09/05 05:36:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.44 2011/02/02 20:07:25 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_unix.c,v 1.45 2014/09/05 05:36:49 matt Exp $");
 
 #include "opt_pax.h"
 
@@ -75,21 +75,22 @@ sys_obreak(struct lwp *l, const struct sys_obreak_args *uap, register_t *retval)
 	} */
 	struct proc *p = l->l_proc;
 	struct vmspace *vm = p->p_vmspace;
-	vaddr_t new, old;
+	vaddr_t nbreak, obreak;
 	int error;
 
 	mutex_enter(&p->p_auxlock);
-	old = (vaddr_t)vm->vm_daddr;
-	new = round_page((vaddr_t)SCARG(uap, nsize));
-	if (new == 0 ||
-	    ((new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur && new > old)) {
+	obreak = (vaddr_t)vm->vm_daddr;
+	nbreak = round_page((vaddr_t)SCARG(uap, nsize));
+	if (nbreak == 0
+	    || ((nbreak - obreak) > p->p_rlimit[RLIMIT_DATA].rlim_cur
+		&& nbreak > obreak)) {
 		mutex_exit(&p->p_auxlock);
 		return (ENOMEM);
 	}
 
-	old = round_page(old + ptoa(vm->vm_dsize));
+	obreak = round_page(obreak + ptoa(vm->vm_dsize));
 
-	if (new == old) {
+	if (nbreak == obreak) {
 		mutex_exit(&p->p_auxlock);
 		return (0);
 	}
@@ -98,7 +99,7 @@ sys_obreak(struct lwp *l, const struct sys_obreak_args *uap, register_t *retval)
 	 * grow or shrink?
 	 */
 
-	if (new > old) {
+	if (nbreak > obreak) {
 		vm_prot_t prot = UVM_PROT_READ | UVM_PROT_WRITE;
 		vm_prot_t maxprot = UVM_PROT_ALL;
 
@@ -106,7 +107,7 @@ sys_obreak(struct lwp *l, const struct sys_obreak_args *uap, register_t *retval)
 		pax_mprotect(l, &prot, &maxprot);
 #endif /* PAX_MPROTECT */
 
-		error = uvm_map(&vm->vm_map, &old, new - old, NULL,
+		error = uvm_map(&vm->vm_map, &obreak, nbreak - obreak, NULL,
 		    UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(prot, maxprot,
 				UVM_INH_COPY,
@@ -115,15 +116,15 @@ sys_obreak(struct lwp *l, const struct sys_obreak_args *uap, register_t *retval)
 		if (error) {
 #ifdef DEBUG
 			uprintf("sbrk: grow %#"PRIxVADDR" failed, error = %d\n",
-			    new - old, error);
+			    nbreak - obreak, error);
 #endif
 			mutex_exit(&p->p_auxlock);
 			return (error);
 		}
-		vm->vm_dsize += atop(new - old);
+		vm->vm_dsize += atop(nbreak - obreak);
 	} else {
-		uvm_deallocate(&vm->vm_map, new, old - new);
-		vm->vm_dsize -= atop(old - new);
+		uvm_deallocate(&vm->vm_map, nbreak, obreak - nbreak);
+		vm->vm_dsize -= atop(obreak - nbreak);
 	}
 	mutex_exit(&p->p_auxlock);
 
