@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.124 2014/07/25 08:10:39 dholland Exp $	*/
+/*	$NetBSD: ugen.c,v 1.125 2014/09/05 05:31:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.124 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.125 2014/09/05 05:31:15 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -81,6 +81,13 @@ int	ugendebug = 0;
 #define UGEN_BULK_RA_WB_BUFSIZE	16384		/* default buffer size */
 #define UGEN_BULK_RA_WB_BUFMAX	(1 << 20)	/* maximum allowed buffer */
 
+struct isoreq {
+	struct ugen_endpoint *sce;
+	usbd_xfer_handle xfer;
+	void *dmabuf;
+	u_int16_t sizes[UGEN_NISORFRMS];
+};
+
 struct ugen_endpoint {
 	struct ugen_softc *sc;
 	usb_endpoint_descriptor_t *edesc;
@@ -103,12 +110,7 @@ struct ugen_endpoint {
 	u_int32_t ra_wb_used;	 /* how much is in buffer */
 	u_int32_t ra_wb_xferlen; /* current xfer length for RA/WB */
 	usbd_xfer_handle ra_wb_xfer;
-	struct isoreq {
-		struct ugen_endpoint *sce;
-		usbd_xfer_handle xfer;
-		void *dmabuf;
-		u_int16_t sizes[UGEN_NISORFRMS];
-	} isoreqs[UGEN_NISOREQS];
+	struct isoreq isoreqs[UGEN_NISOREQS];
 	/* Keep these last; we don't overwrite them in ugen_set_config() */
 #define UGEN_ENDPOINT_NONZERO_CRUFT	offsetof(struct ugen_endpoint, rsel)
 	struct selinfo rsel;
