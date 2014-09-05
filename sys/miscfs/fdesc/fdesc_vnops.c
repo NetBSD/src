@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.123 2014/09/04 13:29:50 christos Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.124 2014/09/05 09:26:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.123 2014/09/04 13:29:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.124 2014/09/05 09:26:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,9 +344,9 @@ fdesc_attr(int fd, struct vattr *vap, kauth_cred_t cred)
 
 	switch (fp->f_type) {
 	case DTYPE_VNODE:
-		vn_lock((struct vnode *) fp->f_data, LK_SHARED | LK_RETRY);
-		error = VOP_GETATTR((struct vnode *) fp->f_data, vap, cred);
-		VOP_UNLOCK((struct vnode *) fp->f_data);
+		vn_lock(fp->f_vnode, LK_SHARED | LK_RETRY);
+		error = VOP_GETATTR(fp->f_vnode, vap, cred);
+		VOP_UNLOCK(fp->f_vnode);
 		if (error == 0 && vap->va_type == VDIR) {
 			/*
 			 * directories can cause loops in the namespace,
