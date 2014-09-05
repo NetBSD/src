@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.121 2014/08/08 19:43:49 joerg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.122 2014/09/05 05:44:50 matt Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -415,7 +415,7 @@
 #error "No function renaming possible"
 #endif /* __GNUC__ */
 #else /* _STANDALONE || _KERNEL */
-#define	__RENAME(x)	no renaming in kernel or standalone environment
+#define	__RENAME(x)	no renaming in kernel/standalone environment
 #endif
 
 /*
