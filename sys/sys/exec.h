@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.145 2014/03/06 09:30:37 matt Exp $	*/
+/*	$NetBSD: exec.h,v 1.146 2014/09/05 05:42:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -181,6 +181,10 @@ struct exec_vmcmd_set {
 };
 
 #define	EXEC_DEFAULT_VMCMD_SETSIZE	9	/* # of cmds in set to start */
+struct exec_fakearg {
+	char *fa_arg;
+	size_t fa_len;
+};
 
 struct exec_package {
 	const char *ep_name;		/* file's name */
@@ -205,10 +209,7 @@ struct exec_package {
 	vaddr_t	ep_vm_maxaddr;		/* top of process address space */
 	u_int	ep_flags;		/* flags; see below. */
 	size_t	ep_fa_len;		/* byte size of ep_fa */
-	struct exec_fakearg {
-		char *fa_arg;
-		size_t fa_len;
-	} *ep_fa;			/* a fake args vector for scripts */
+	struct exec_fakearg *ep_fa;	/* a fake args vector for scripts */
 	int	ep_fd;			/* a file descriptor we're holding */
 	void	*ep_emul_arg;		/* emulation argument */
 	const struct	execsw *ep_esch;/* execsw entry */
