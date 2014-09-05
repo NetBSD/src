@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.169 2014/08/09 05:33:00 rtr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.170 2014/09/05 05:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.169 2014/08/09 05:33:00 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.170 2014/09/05 05:57:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1645,7 +1645,7 @@ unp_gc(file_t *dp)
 	extern	struct domain unixdomain;
 	file_t *fp, *np;
 	struct socket *so, *so1;
-	u_int i, old, new;
+	u_int i, oflags, rflags;
 	bool didwork;
 
 	KASSERT(curlwp == unp_thread_lwp);
@@ -1679,10 +1679,10 @@ unp_gc(file_t *dp)
 	 */
 	unp_defer = 0;
 	LIST_FOREACH(fp, &filehead, f_list) {
-		for (old = fp->f_flag;; old = new) {
-			new = atomic_cas_uint(&fp->f_flag, old,
-			    (old | FSCAN) & ~(FMARK|FDEFER));
-			if (__predict_true(old == new)) {
+		for (oflags = fp->f_flag;; oflags = rflags) {
+			rflags = atomic_cas_uint(&fp->f_flag, oflags,
+			    (oflags | FSCAN) & ~(FMARK|FDEFER));
+			if (__predict_true(oflags == rflags)) {
 				break;
 			}
 		}
