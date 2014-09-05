@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.31 2012/05/01 07:48:25 manu Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.32 2014/09/05 05:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.31 2012/05/01 07:48:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.32 2014/09/05 05:57:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -789,7 +789,7 @@ sys_setxattr(struct lwp *l, const struct sys_setxattr_args *uap, register_t *ret
 	} */
 	struct vnode *vp;
 	char attrname[XATTR_NAME_MAX];
-	int namespace;
+	int attrnamespace;
 	register_t attrlen;
 	int error;
 
@@ -803,9 +803,9 @@ sys_setxattr(struct lwp *l, const struct sys_setxattr_args *uap, register_t *ret
 	if (error)
 		goto out;
 
-	namespace = xattr_native(attrname);
+	attrnamespace = xattr_native(attrname);
 
-	error = extattr_set_vp(vp, namespace,
+	error = extattr_set_vp(vp, attrnamespace,
 	    attrname, SCARG(uap, value), SCARG(uap, size), l, 
 	    &attrlen, SCARG(uap, flags));
 
@@ -827,7 +827,7 @@ sys_lsetxattr(struct lwp *l, const struct sys_lsetxattr_args *uap, register_t *r
 	} */
 	struct vnode *vp;
 	char attrname[XATTR_NAME_MAX];
-	int namespace;
+	int attrnamespace;
 	register_t attrlen;
 	int error;
 
@@ -841,9 +841,9 @@ sys_lsetxattr(struct lwp *l, const struct sys_lsetxattr_args *uap, register_t *r
 	if (error)
 		goto out;
 
-	namespace = xattr_native(attrname);
+	attrnamespace = xattr_native(attrname);
 
-	error = extattr_set_vp(vp, namespace,
+	error = extattr_set_vp(vp, attrnamespace,
 	    attrname, SCARG(uap, value), SCARG(uap, size), l,
 	    &attrlen, SCARG(uap, flags));
 
@@ -866,7 +866,7 @@ sys_fsetxattr(struct lwp *l, const struct sys_fsetxattr_args *uap, register_t *r
 	struct file *fp;
 	struct vnode *vp;
 	char attrname[XATTR_NAME_MAX];
-	int namespace;
+	int attrnamespace;
 	register_t attrlen;
 	int error;
 
@@ -880,9 +880,9 @@ sys_fsetxattr(struct lwp *l, const struct sys_fsetxattr_args *uap, register_t *r
 		goto out;
 	vp = (struct vnode *) fp->f_data;
 
-	namespace = xattr_native(attrname);
+	attrnamespace = xattr_native(attrname);
 
-	error = extattr_set_vp(vp, namespace,
+	error = extattr_set_vp(vp, attrnamespace,
 	    attrname, SCARG(uap, value), SCARG(uap, size), l,
 	    &attrlen, SCARG(uap, flags));
 
@@ -903,7 +903,7 @@ sys_getxattr(struct lwp *l, const struct sys_getxattr_args *uap, register_t *ret
 	} */
 	struct vnode *vp;
 	char attrname[XATTR_NAME_MAX];
-	int namespace;
+	int attrnamespace;
 	int error;
 
 	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
@@ -916,9 +916,9 @@ sys_getxattr(struct lwp *l, const struct sys_getxattr_args *uap, register_t *ret
 	if (error)
 		return (error);
 
-	namespace = xattr_native(attrname);
+	attrnamespace = xattr_native(attrname);
 
-	error = extattr_get_vp(vp, namespace,
+	error = extattr_get_vp(vp, attrnamespace,
 	    attrname, SCARG(uap, value), SCARG(uap, size), l, retval);
 
 	vrele(vp);
@@ -936,7 +936,7 @@ sys_lgetxattr(struct lwp *l, const struct sys_lgetxattr_args *uap, register_t *r
 	} */
 	struct vnode *vp;
 	char attrname[XATTR_NAME_MAX];
-	int namespace;
+	int attrnamespace;
 	int error;
 
 	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
@@ -949,9 +949,9 @@ sys_lgetxattr(struct lwp *l, const struct sys_lgetxattr_args *uap, register_t *r
 	if (error)
 		return (error);
 
-	namespace = xattr_native(attrname);
+	attrnamespace = xattr_native(attrname);
 
-	error = extattr_get_vp(vp, namespace,
+	error = extattr_get_vp(vp, attrnamespace,
 	    attrname, SCARG(uap, value), SCARG(uap, size), l, retval);
 
 	vrele(vp);
@@ -970,7 +970,7 @@ sys_fgetxattr(struct lwp *l, const struct sys_fgetxattr_args *uap, register_t *r
 	struct file *fp;
 	struct vnode *vp;
 	char attrname[XATTR_NAME_MAX];
-	int namespace;
+	int attrnamespace;
 	int error;
 
 	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
@@ -983,9 +983,9 @@ sys_fgetxattr(struct lwp *l, const struct sys_fgetxattr_args *uap, register_t *r
 		return (error);
 	vp = (struct vnode *) fp->f_data;
 
-	namespace = xattr_native(attrname);
+	attrnamespace = xattr_native(attrname);
 
-	error = extattr_get_vp(vp, namespace,
+	error = extattr_get_vp(vp, attrnamespace,
 	    attrname, SCARG(uap, value), SCARG(uap, size), l, retval);
 
 	fd_putfile(SCARG(uap, fd));
@@ -1159,7 +1159,7 @@ sys_removexattr(struct lwp *l, const struct sys_removexattr_args *uap, register_
 	} */
 	struct vnode *vp;
 	char attrname[XATTR_NAME_MAX];
-	int namespace;
+	int attrnamespace;
 	int error;
 
 	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
@@ -1172,9 +1172,9 @@ sys_removexattr(struct lwp *l, const struct sys_removexattr_args *uap, register_
 	if (error)
 		return (error);
 
-	namespace = xattr_native(attrname);
+	attrnamespace = xattr_native(attrname);
 
-	error = extattr_delete_vp(vp, namespace, attrname, l);
+	error = extattr_delete_vp(vp, attrnamespace, attrname, l);
 
 	vrele(vp);
 	return (XATTR_ERRNO(error));
@@ -1189,7 +1189,7 @@ sys_lremovexattr(struct lwp *l, const struct sys_lremovexattr_args *uap, registe
 	} */
 	struct vnode *vp;
 	char attrname[XATTR_NAME_MAX];
-	int namespace;
+	int attrnamespace;
 	int error;
 
 	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
@@ -1202,9 +1202,9 @@ sys_lremovexattr(struct lwp *l, const struct sys_lremovexattr_args *uap, registe
 	if (error)
 		return (error);
 
-	namespace = xattr_native(attrname);
+	attrnamespace = xattr_native(attrname);
 
-	error = extattr_delete_vp(vp, namespace, attrname, l);
+	error = extattr_delete_vp(vp, attrnamespace, attrname, l);
 
 	vrele(vp);
 	return (XATTR_ERRNO(error));
@@ -1220,7 +1220,7 @@ sys_fremovexattr(struct lwp *l, const struct sys_fremovexattr_args *uap, registe
 	struct file *fp;
 	struct vnode *vp;
 	char attrname[XATTR_NAME_MAX];
-	int namespace;
+	int attrnamespace;
 	int error;
 
 	error = copyinstr(SCARG(uap, name), attrname, sizeof(attrname),
@@ -1233,9 +1233,9 @@ sys_fremovexattr(struct lwp *l, const struct sys_fremovexattr_args *uap, registe
 		return (error);
 	vp = (struct vnode *) fp->f_data;
 
-	namespace = xattr_native(attrname);
+	attrnamespace = xattr_native(attrname);
 
-	error = extattr_delete_vp(vp, namespace, attrname, l);
+	error = extattr_delete_vp(vp, attrnamespace, attrname, l);
 
 	fd_putfile(SCARG(uap, fd));
 	return (XATTR_ERRNO(error));

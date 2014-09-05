@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.250 2014/05/25 16:31:51 pooka Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.251 2014/09/05 05:57:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.250 2014/05/25 16:31:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.251 2014/09/05 05:57:21 matt Exp $");
 
 #include "opt_bufcache.h"
 
@@ -532,7 +532,7 @@ bufinit2(void)
 static int
 buf_lotsfree(void)
 {
-	int try, thresh;
+	int guess, thresh;
 
 	/* Always allocate if less than the low water mark. */
 	if (bufmem < bufmem_lowater)
@@ -551,13 +551,13 @@ buf_lotsfree(void)
 	 * proportional to the current size of the cache, using
 	 * a granularity of 16 steps.
 	 */
-	try = random() & 0x0000000fL;
+	guess = random() & 0x0000000fL;
 
 	/* Don't use "16 * bufmem" here to avoid a 32-bit overflow. */
 	thresh = (bufmem - bufmem_lowater) /
 	    ((bufmem_hiwater - bufmem_lowater) / 16);
 
-	if (try >= thresh)
+	if (guess >= thresh)
 		return 1;
 
 	/* Otherwise don't allocate. */
