@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.134 2014/07/09 04:54:04 rtr Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.135 2014/09/05 05:37:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -121,6 +121,12 @@ struct sockbuf {
  * handle on protocol and pointer to protocol
  * private data and error information.
  */
+struct so_accf {
+	struct accept_filter	*so_accept_filter;
+	void	*so_accept_filter_arg;	/* saved filter args */
+	char	*so_accept_filter_str;	/* saved user args */
+};
+
 struct socket {
 	kmutex_t * volatile so_lock;	/* pointer to lock on structure */
 	kcondvar_t	so_cv;		/* notifier */
@@ -172,11 +178,7 @@ struct socket {
 	struct uidinfo	*so_uidinfo;	/* who opened the socket */
 	gid_t		so_egid;	/* creator effective gid */
 	pid_t		so_cpid;	/* creator pid */
-	struct so_accf {
-		struct accept_filter	*so_accept_filter;
-		void	*so_accept_filter_arg;	/* saved filter args */
-		char	*so_accept_filter_str;	/* saved user args */
-	} *so_accf;
+	struct so_accf	*so_accf;
 	kauth_cred_t	so_cred;	/* socket credentials */
 };
 
