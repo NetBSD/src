@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.5 2014/01/01 16:06:01 pgoyette Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.6 2014/09/05 09:23:40 matt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.5 2014/01/01 16:06:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.6 2014/09/05 09:23:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ static int	ocryptodev_msession(struct fcrypt *, struct osession_n_op *, int);
 int
 ocryptof_ioctl(struct file *fp, u_long cmd, void *data)
 {
-	struct fcrypt *fcr = fp->f_data;
+	struct fcrypt *fcr = fp->f_fcrypt;
 	struct csession *cse;
 	struct osession_op *osop;
 	struct osession_n_op *osnop;
