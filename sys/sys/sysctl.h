@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.213 2014/07/12 09:57:25 njoly Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.214 2014/09/05 05:42:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -415,34 +415,36 @@ struct ki_ucred {
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 
+struct	eproc {
+	struct	proc *e_paddr;		/* address of proc */
+	struct	session *e_sess;	/* session pointer */
+	struct	ki_pcred e_pcred;	/* process credentials */
+	struct	ki_ucred e_ucred;	/* current credentials */
+	struct	vmspace e_vm;		/* address space */
+	pid_t	e_ppid;			/* parent process id */
+	pid_t	e_pgid;			/* process group id */
+	short	e_jobc;			/* job control counter */
+	uint32_t e_tdev;		/* XXX: controlling tty dev */
+	pid_t	e_tpgid;		/* tty process group id */
+	struct	session *e_tsess;	/* tty session pointer */
+#define	WMESGLEN	8
+	char	e_wmesg[WMESGLEN];	/* wchan message */
+	segsz_t e_xsize;		/* text size */
+	short	e_xrssize;		/* text rss */
+	short	e_xccount;		/* text references */
+	short	e_xswrss;
+	long	e_flag;			/* see p_eflag  below */
+	char	e_login[MAXLOGNAME];	/* setlogin() name */
+	pid_t	e_sid;			/* session id */
+	long	e_spare[3];
+};
+
 /*
  * KERN_PROC subtype ops return arrays of augmented proc structures:
  */
 struct kinfo_proc {
 	struct	proc kp_proc;			/* proc structure */
-	struct	eproc {
-		struct	proc *e_paddr;		/* address of proc */
-		struct	session *e_sess;	/* session pointer */
-		struct	ki_pcred e_pcred;	/* process credentials */
-		struct	ki_ucred e_ucred;	/* current credentials */
-		struct	vmspace e_vm;		/* address space */
-		pid_t	e_ppid;			/* parent process id */
-		pid_t	e_pgid;			/* process group id */
-		short	e_jobc;			/* job control counter */
-		uint32_t e_tdev;		/* XXX: controlling tty dev */
-		pid_t	e_tpgid;		/* tty process group id */
-		struct	session *e_tsess;	/* tty session pointer */
-#define	WMESGLEN	8
-		char	e_wmesg[WMESGLEN];	/* wchan message */
-		segsz_t e_xsize;		/* text size */
-		short	e_xrssize;		/* text rss */
-		short	e_xccount;		/* text references */
-		short	e_xswrss;
-		long	e_flag;			/* see p_eflag  below */
-		char	e_login[MAXLOGNAME];	/* setlogin() name */
-		pid_t	e_sid;			/* session id */
-		long	e_spare[3];
-	} kp_eproc;
+	struct	eproc kp_eproc;			/* eproc structure */
 };
 #endif /* defined(_KERNEL) || defined(_KMEMUSER) */
 
