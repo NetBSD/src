@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.90 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.91 2014/09/05 05:54:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.90 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.91 2014/09/05 05:54:48 matt Exp $");
 
 #define SYSVSEM
 
@@ -344,7 +344,7 @@ semundo_adjust(struct proc *p, struct sem_undo **supptr, int semid, int semnum,
     int adjval)
 {
 	struct sem_undo *suptr;
-	struct undo *sunptr;
+	struct sem_undo_entry *sunptr;
 	int i;
 
 	KASSERT(mutex_owned(&semlock));
@@ -402,7 +402,7 @@ void
 semundo_clear(int semid, int semnum)
 {
 	struct sem_undo *suptr;
-	struct undo *sunptr, *sunend;
+	struct sem_undo_entry *sunptr, *sunend;
 
 	KASSERT(mutex_owned(&semlock));
 
