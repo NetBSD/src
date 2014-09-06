@@ -546,6 +546,10 @@ static int evergreen_cs_track_validate_htile(struct radeon_cs_parser *p,
 	size = roundup(nbx * nby * 4, track->npipes * (2 << 10));
 	size += track->htile_offset;
 
+	if (!track->htile_bo) {
+		dev_warn(p->dev, "%s:%d htile_bo not set", __func__, __LINE__);
+		return -EINVAL;
+	}
 	if (size > radeon_bo_size(track->htile_bo)) {
 		dev_warn(p->dev, "%s:%d htile surface too small %ld for %ld (%d %d)\n",
 				__func__, __LINE__, radeon_bo_size(track->htile_bo),
@@ -613,6 +617,10 @@ static int evergreen_cs_track_validate_stencil(struct radeon_cs_parser *p)
 		return -EINVAL;
 	}
 	offset += surf.layer_size * mslice;
+	if (!track->db_s_read_bo) {
+		dev_warn(p->dev, "%s:%d db_s_read_bo not set", __func__, __LINE__);
+		return -EINVAL;
+	}
 	if (offset > radeon_bo_size(track->db_s_read_bo)) {
 		dev_warn(p->dev, "%s:%d stencil read bo too small (layer size %d, "
 			 "offset %ld, max layer %d, bo size %ld)\n",
@@ -632,6 +640,10 @@ static int evergreen_cs_track_validate_stencil(struct radeon_cs_parser *p)
 		return -EINVAL;
 	}
 	offset += surf.layer_size * mslice;
+	if (!track->db_s_write_bo) {
+		dev_warn(p->dev, "%s:%d db_s_write_bo not set", __func__, __LINE__);
+		return -EINVAL;
+	}
 	if (offset > radeon_bo_size(track->db_s_write_bo)) {
 		dev_warn(p->dev, "%s:%d stencil write bo too small (layer size %d, "
 			 "offset %ld, max layer %d, bo size %ld)\n",
@@ -711,6 +723,10 @@ static int evergreen_cs_track_validate_depth(struct radeon_cs_parser *p)
 		return -EINVAL;
 	}
 	offset += surf.layer_size * mslice;
+	if (!track->db_z_read_bo) {
+		dev_warn(p->dev, "%s:%d db_z_read_bo not set", __func__, __LINE__);
+		return -EINVAL;
+	}
 	if (offset > radeon_bo_size(track->db_z_read_bo)) {
 		dev_warn(p->dev, "%s:%d depth read bo too small (layer size %d, "
 			 "offset %ld, max layer %d, bo size %ld)\n",
@@ -727,6 +743,10 @@ static int evergreen_cs_track_validate_depth(struct radeon_cs_parser *p)
 		return -EINVAL;
 	}
 	offset += surf.layer_size * mslice;
+	if (!track->db_z_write_bo) {
+		dev_warn(p->dev, "%s:%d db_z_write_bo not set", __func__, __LINE__);
+		return -EINVAL;
+	}
 	if (offset > radeon_bo_size(track->db_z_write_bo)) {
 		dev_warn(p->dev, "%s:%d depth write bo too small (layer size %d, "
 			 "offset %ld, max layer %d, bo size %ld)\n",
