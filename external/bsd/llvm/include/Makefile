@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2014/08/10 17:34:21 joerg Exp $
+#	$NetBSD: Makefile,v 1.33 2014/09/06 01:02:21 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -38,7 +38,7 @@ INCS=	__wmmintrin_aes.h \
 	x86intrin.h \
 	xmmintrin.h \
 	xopintrin.h
-.elif ${MACHINE_ARCH} == "powerpc"
+.elif ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "powerpc64"
 INCS=	altivec.h
 .elif ${MACHINE_CPU} == "arm"
 INCS=	arm_acle.h
