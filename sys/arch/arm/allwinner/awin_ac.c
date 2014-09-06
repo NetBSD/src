@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ac.c,v 1.5 2014/09/06 13:00:33 jmcneill Exp $ */
+/* $NetBSD: awin_ac.c,v 1.6 2014/09/06 14:53:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,14 +30,14 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.5 2014/09/06 13:00:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.6 2014/09/06 14:53:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/systm.h>
-#include <uvm/uvm_extern.h>
+#include <sys/kmem.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -122,12 +122,24 @@ __KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.5 2014/09/06 13:00:33 jmcneill Exp $")
 #define AC_DAC_CAL		0x38
 #define AC_MIC_PHONE_CAL	0x3c
 
+struct awinac_dma {
+	LIST_ENTRY(awinac_dma)	dma_list;
+	bus_dmamap_t		dma_map;
+	void			*dma_addr;
+	size_t			dma_size;
+	bus_dma_segment_t	dma_segs[1];
+	int			dma_nsegs;
+};
+
 struct awinac_softc {
 	device_t		sc_dev;
 	device_t		sc_audiodev;
 
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
+	bus_dma_tag_t		sc_dmat;
+
+	LIST_HEAD(, awinac_dma)	sc_dmalist;
 
 	kmutex_t		sc_lock;
 	kmutex_t		sc_intr_lock;
@@ -142,9 +154,9 @@ struct awinac_softc {
 	struct awin_dma_channel *sc_pdma;
 	void			(*sc_pint)(void *);
 	void			*sc_pintarg;
-	uint8_t			*sc_pstart;
-	uint8_t			*sc_pend;
-	uint8_t			*sc_pcur;
+	bus_addr_t		sc_pstart;
+	bus_addr_t		sc_pend;
+	bus_addr_t		sc_pcur;
 	int			sc_pblksize;
 
 	struct awin_gpio_pindata sc_pactrl_gpio;
@@ -157,6 +169,9 @@ static int	awinac_rescan(device_t, const char *, const int *);
 static void	awinac_childdet(device_t, device_t);
 
 static void	awinac_init(struct awinac_softc *);
+static int	awinac_allocdma(struct awinac_softc *, size_t, size_t,
+				struct awinac_dma *);
+static void	awinac_freedma(struct awinac_softc *, struct awinac_dma *);
 
 static void	awinac_pint(void *);
 static int	awinac_play(struct awinac_softc *);
@@ -180,6 +195,8 @@ static int	awinac_halt_input(void *);
 static int	awinac_set_port(void *, mixer_ctrl_t *);
 static int	awinac_get_port(void *, mixer_ctrl_t *);
 static int	awinac_query_devinfo(void *, mixer_devinfo_t *);
+static void *	awinac_allocm(void *, int, size_t);
+static void	awinac_freem(void *, void *, size_t);
 static int	awinac_getdev(void *, struct audio_device *);
 static int	awinac_get_props(void *);
 static int	awinac_round_blocksize(void *, int, int,
@@ -202,6 +219,8 @@ static const struct audio_hw_if awinac_hw_if = {
 	.commit_settings = awinac_commit_settings,
 	.halt_output = awinac_halt_output,
 	.halt_input = awinac_halt_input,
+	.allocm = awinac_allocm,
+	.freem = awinac_freem,
 	.getdev = awinac_getdev,
 	.set_port = awinac_set_port,
 	.get_port = awinac_get_port,
@@ -259,6 +278,8 @@ awinac_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bst = aio->aio_core_bst;
+	sc->sc_dmat = aio->aio_coherent_dmat;
+	LIST_INIT(&sc->sc_dmalist);
 	bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -361,6 +382,54 @@ awinac_init(struct awinac_softc *sc)
 	AC_WRITE(sc, AC_DAC_FIFOS, AC_READ(sc, AC_DAC_FIFOS));
 }
 
+static int
+awinac_allocdma(struct awinac_softc *sc, size_t size, size_t align,
+    struct awinac_dma *dma)
+{
+	int error;
+
+	dma->dma_size = size;
+	error = bus_dmamem_alloc(sc->sc_dmat, dma->dma_size, align, 0,
+	    dma->dma_segs, 1, &dma->dma_nsegs, BUS_DMA_WAITOK);
+	if (error)
+		return error;
+
+	error = bus_dmamem_map(sc->sc_dmat, dma->dma_segs, dma->dma_nsegs,
+	    dma->dma_size, &dma->dma_addr, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
+	if (error)
+		goto free;
+
+	error = bus_dmamap_create(sc->sc_dmat, dma->dma_size, dma->dma_nsegs,
+	    dma->dma_size, 0, BUS_DMA_WAITOK, &dma->dma_map);
+	if (error)
+		goto unmap;
+
+	error = bus_dmamap_load(sc->sc_dmat, dma->dma_map, dma->dma_addr,
+	    dma->dma_size, NULL, BUS_DMA_WAITOK);
+	if (error)
+		goto destroy;
+
+	return 0;
+
+destroy:
+	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
+unmap:
+	bus_dmamem_unmap(sc->sc_dmat, dma->dma_addr, dma->dma_size);
+free:
+	bus_dmamem_free(sc->sc_dmat, dma->dma_segs, dma->dma_nsegs);
+
+	return error;
+}
+
+static void
+awinac_freedma(struct awinac_softc *sc, struct awinac_dma *dma)
+{
+	bus_dmamap_unload(sc->sc_dmat, dma->dma_map);
+	bus_dmamap_destroy(sc->sc_dmat, dma->dma_map);
+	bus_dmamem_unmap(sc->sc_dmat, dma->dma_addr, dma->dma_size);
+	bus_dmamem_free(sc->sc_dmat, dma->dma_segs, dma->dma_nsegs);
+}
+
 static void
 awinac_pint(void *priv)
 {
@@ -380,17 +449,10 @@ awinac_pint(void *priv)
 static int
 awinac_play(struct awinac_softc *sc)
 {
-	paddr_t physsrc;
 	int error;
 
-	if (!pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_pcur, &physsrc)) {
-		device_printf(sc->sc_dev, "pmap_extract failed for %p\n",
-		    sc->sc_pcur);
-		return ENXIO;
-	}
-
 	error = awin_dma_transfer(sc->sc_pdma,
-	    physsrc, AWIN_CORE_PBASE + AWIN_AC_OFFSET + AC_DAC_TXDATA,
+	    sc->sc_pcur, AWIN_CORE_PBASE + AWIN_AC_OFFSET + AC_DAC_TXDATA,
 	    sc->sc_pblksize);
 	if (error) {
 		device_printf(sc->sc_dev, "failed to transfer DMA; error %d\n",
@@ -603,6 +665,46 @@ awinac_query_devinfo(void *priv, mixer_devinfo_t *di)
 	return ENXIO;
 }
 
+static void *
+awinac_allocm(void *priv, int dir, size_t size)
+{
+	struct awinac_softc *sc = priv;
+	struct awinac_dma *dma;
+	int error;
+
+	dma = kmem_alloc(sizeof(*dma), KM_SLEEP);
+	if (dma == NULL)
+		return NULL;
+
+	error = awinac_allocdma(sc, size, 16, dma);
+	if (error) {
+		kmem_free(dma, sizeof(*dma));
+		device_printf(sc->sc_dev, "couldn't allocate DMA memory (%d)\n",
+		    error);
+		return NULL;
+	}
+
+	LIST_INSERT_HEAD(&sc->sc_dmalist, dma, dma_list);
+
+	return dma->dma_addr;
+}
+
+static void
+awinac_freem(void *priv, void *addr, size_t size)
+{
+	struct awinac_softc *sc = priv;
+	struct awinac_dma *dma;
+
+	LIST_FOREACH(dma, &sc->sc_dmalist, dma_list) {
+		if (dma->dma_addr == addr) {
+			awinac_freedma(sc, dma);
+			LIST_REMOVE(dma, dma_list);
+			kmem_free(dma, sizeof(*dma));
+			break;
+		}
+	}
+}
+
 static int
 awinac_getdev(void *priv, struct audio_device *audiodev)
 {
@@ -636,8 +738,25 @@ awinac_trigger_output(void *priv, void *start, void *end, int blksize,
     void (*intr)(void *), void *intrarg, const audio_params_t *params)
 {
 	struct awinac_softc *sc = priv;
+	struct awinac_dma *dma;
+	bus_addr_t pstart;
+	bus_size_t psize;
 	uint32_t val, dmacfg;
 	int error;
+
+	pstart = 0;
+	psize = (uintptr_t)end - (uintptr_t)start;
+
+	LIST_FOREACH(dma, &sc->sc_dmalist, dma_list) {
+		if (dma->dma_addr == start) {
+			pstart = dma->dma_map->dm_segs[0].ds_addr;
+			break;
+		}
+	}
+	if (pstart == 0) {
+		device_printf(sc->sc_dev, "bad addr %p\n", start);
+		return EINVAL;
+	}
 
 	val = AC_READ(sc, AC_DAC_FIFOC);
 	val |= DAC_FIFOC_FIFO_FLUSH;
@@ -651,8 +770,8 @@ awinac_trigger_output(void *priv, void *start, void *end, int blksize,
 
 	sc->sc_pint = intr;
 	sc->sc_pintarg = intrarg;
-	sc->sc_pstart = sc->sc_pcur = start;
-	sc->sc_pend = end;
+	sc->sc_pstart = sc->sc_pcur = pstart;
+	sc->sc_pend = sc->sc_pstart + psize;
 	sc->sc_pblksize = blksize;
 
 	if (sc->sc_has_pactrl_gpio)
