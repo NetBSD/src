@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ac.c,v 1.4 2014/09/06 12:49:31 jmcneill Exp $ */
+/* $NetBSD: awin_ac.c,v 1.5 2014/09/06 13:00:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,9 +27,10 @@
  */
 
 #include "locators.h"
+#include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.4 2014/09/06 12:49:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.5 2014/09/06 13:00:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -159,6 +160,10 @@ static void	awinac_init(struct awinac_softc *);
 
 static void	awinac_pint(void *);
 static int	awinac_play(struct awinac_softc *);
+
+#if defined(DDB)
+void		awinac_dump_regs(void);
+#endif
 
 static int	awinac_open(void *, int);
 static void	awinac_close(void *);
@@ -696,3 +701,32 @@ awinac_get_locks(void *priv, kmutex_t **intr, kmutex_t **thread)
 	*intr = &sc->sc_intr_lock;
 	*thread = &sc->sc_lock;
 }
+
+#if defined(DDB)
+void
+awinac_dump_regs(void)
+{
+	struct awinac_softc *sc;
+	device_t dev;
+
+	dev = device_find_by_driver_unit("awinac", 0);
+	if (dev == NULL)
+		return;
+	sc = device_private(dev);
+
+	printf("DAC_DPC:       %08X\n", AC_READ(sc, AC_DAC_DPC));
+	printf("DAC_FIFOC:     %08X\n", AC_READ(sc, AC_DAC_FIFOC));
+	printf("DAC_FIFOS:     %08X\n", AC_READ(sc, AC_DAC_FIFOS));
+	printf("DAC_TXDATA:    ...\n");
+	printf("DAC_ACTL:      %08X\n", AC_READ(sc, AC_DAC_ACTL));
+	printf("DAC_TUNE:      %08X\n", AC_READ(sc, AC_DAC_TUNE));
+	printf("ADC_FIFOC:     %08X\n", AC_READ(sc, AC_ADC_FIFOC));
+	printf("ADC_FIFOS:     %08X\n", AC_READ(sc, AC_ADC_FIFOS));
+	printf("ADC_RXDATA:    ...\n");
+	printf("ADC_ACTL:      %08X\n", AC_READ(sc, AC_ADC_ACTL));
+	printf("DAC_CNT:       %08X\n", AC_READ(sc, AC_DAC_CNT));
+	printf("ADC_CNT:       %08X\n", AC_READ(sc, AC_ADC_CNT));
+	printf("DAC_CAL:       %08X\n", AC_READ(sc, AC_DAC_CAL));
+	printf("MIC_PHONE_CAL: %08X\n", AC_READ(sc, AC_MIC_PHONE_CAL));
+}
+#endif
