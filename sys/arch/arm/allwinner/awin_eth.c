@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.5 2014/08/10 16:44:33 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.6 2014/09/06 18:19:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -172,6 +172,7 @@ awin_eth_attach(device_t parent, device_t self, void *aux)
 	char enaddr[ETHER_ADDR_LEN];
 
 	sc->sc_dev = self;
+	sc->sc_ec.ec_mii = mii;
 
 	awin_gpio_pinset_acquire(pinset);
 	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
