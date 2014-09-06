@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ac.c,v 1.3 2014/09/06 10:36:53 jmcneill Exp $ */
+/* $NetBSD: awin_ac.c,v 1.4 2014/09/06 12:49:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.3 2014/09/06 10:36:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.4 2014/09/06 12:49:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.3 2014/09/06 10:36:53 jmcneill Exp $")
 #include <arm/allwinner/awin_reg.h>
 #include <arm/allwinner/awin_var.h>
 
-#define AWINAC_TX_TRIG_LEVEL	64
-#define AWINAC_TX_MAX_LEVEL	128
+#define AWINAC_TX_TRIG_LEVEL	0xf
+#define AWINAC_DRQ_CLR_CNT	0x3
 #define AWINAC_INIT_VOL		0x3b
 
 #define AC_DAC_DPC		0x00
@@ -465,12 +465,14 @@ awinac_commit_settings(void *priv)
 		return EINVAL;
 
 	val = AC_READ(sc, AC_DAC_FIFOC);
-	val |= DAC_FIFOC_FIR_VER;
+	val &= ~DAC_FIFOC_FIR_VER;
 	val &= ~DAC_FIFOC_FS;
 	val |= __SHIFTIN(DAC_FS_48KHZ, DAC_FIFOC_FS);
 	val &= ~DAC_FIFOC_SEND_LASAT;
 	val &= ~DAC_FIFOC_FIFO_MODE;
 	val |= __SHIFTIN(FIFO_MODE_16_15_0, DAC_FIFOC_FIFO_MODE);
+	val &= ~DAC_FIFOC_DRQ_CLR_CNT;
+	val |= __SHIFTIN(AWINAC_DRQ_CLR_CNT, DAC_FIFOC_DRQ_CLR_CNT);
 	val &= ~DAC_FIFOC_TX_TRIG_LEVEL;
 	val |= __SHIFTIN(AWINAC_TX_TRIG_LEVEL, DAC_FIFOC_TX_TRIG_LEVEL);
 	val &= ~DAC_FIFOC_ADDA_LOOP_EN;
@@ -615,7 +617,7 @@ static int
 awinac_round_blocksize(void *priv, int bs, int mode,
     const audio_params_t *params)
 {
-	return (bs + AWINAC_TX_MAX_LEVEL) & ~(AWINAC_TX_MAX_LEVEL-1);
+	return bs & ~3;
 }
 
 static size_t
@@ -668,6 +670,8 @@ awinac_trigger_output(void *priv, void *start, void *end, int blksize,
 	dmacfg |= AWIN_NDMA_CTL_DST_ADDR_NOINCR;
 	dmacfg |= __SHIFTIN(AWIN_NDMA_CTL_DRQ_CODEC,
 			    AWIN_DMA_CTL_DST_DRQ_TYPE);
+	dmacfg |= __SHIFTIN(AWIN_NDMA_CTL_DRQ_SDRAM,
+			    AWIN_DMA_CTL_SRC_DRQ_TYPE);
 	awin_dma_set_config(sc->sc_pdma, dmacfg);
 
 	error = awinac_play(sc);
