@@ -1,4 +1,4 @@
-/* $NetBSD: awin_dma.c,v 1.3 2014/09/06 12:48:22 jmcneill Exp $ */
+/* $NetBSD: awin_dma.c,v 1.4 2014/09/06 17:10:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_dma.c,v 1.3 2014/09/06 12:48:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_dma.c,v 1.4 2014/09/06 17:10:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -280,6 +280,20 @@ awin_dma_transfer(struct awin_dma_channel *ch, paddr_t src, paddr_t dst,
 	}
 
 	return 0;
+}
+
+void
+awin_dma_halt(struct awin_dma_channel *ch)
+{
+	uint32_t cfg;
+
+	cfg = awin_dma_get_config(ch);
+	if (ch->ch_type == AWIN_DMA_TYPE_NDMA) {
+		cfg &= ~AWIN_NDMA_CTL_DMA_LOADING;
+	} else {
+		cfg &= ~AWIN_DDMA_CTL_DMA_LOADING;
+	}
+	awin_dma_set_config(ch, cfg);
 }
 
 #if defined(DDB)
