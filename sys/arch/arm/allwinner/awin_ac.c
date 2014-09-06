@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ac.c,v 1.8 2014/09/06 16:54:00 jmcneill Exp $ */
+/* $NetBSD: awin_ac.c,v 1.9 2014/09/06 17:10:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.8 2014/09/06 16:54:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.9 2014/09/06 17:10:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -565,7 +565,7 @@ awinac_halt_output(void *priv)
 	struct awinac_softc *sc = priv;
 	uint32_t val;
 
-	awin_dma_set_config(sc->sc_pdma, 0);
+	awin_dma_halt(sc->sc_pdma);
 
 	if (sc->sc_has_pactrl_gpio)
 		awin_gpio_pindata_write(&sc->sc_pactrl_gpio, 0);

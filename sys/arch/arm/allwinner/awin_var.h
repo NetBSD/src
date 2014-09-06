@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.12 2014/09/06 00:15:34 jmcneill Exp $ */
+/* $NetBSD: awin_var.h,v 1.13 2014/09/06 17:10:17 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -104,6 +104,7 @@ void	awin_dma_free(struct awin_dma_channel *);
 uint32_t awin_dma_get_config(struct awin_dma_channel *);
 void	awin_dma_set_config(struct awin_dma_channel *, uint32_t);
 int	awin_dma_transfer(struct awin_dma_channel *, paddr_t, paddr_t, size_t);
+void	awin_dma_halt(struct awin_dma_channel *);
 
 void	awin_wdog_reset(void);
 void	awin_tmr_cpu_init(struct cpu_info *);
