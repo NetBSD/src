@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ac.c,v 1.11 2014/09/06 22:48:19 jmcneill Exp $ */
+/* $NetBSD: awin_ac.c,v 1.12 2014/09/06 23:04:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.11 2014/09/06 22:48:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.12 2014/09/06 23:04:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -951,10 +951,6 @@ awinac_trigger_output(void *priv, void *start, void *end, int blksize,
 	sc->sc_pend = sc->sc_pstart + psize;
 	sc->sc_pblksize = blksize;
 
-	val = AC_READ(sc, AC_DAC_FIFOC);
-	val |= DAC_FIFOC_DRQ_EN;
-	AC_WRITE(sc, AC_DAC_FIFOC, val);
-
 	dmacfg = 0;
 	dmacfg |= __SHIFTIN(AWIN_DMA_CTL_DATA_WIDTH_16,
 			    AWIN_DMA_CTL_DST_DATA_WIDTH);
@@ -971,6 +967,10 @@ awinac_trigger_output(void *priv, void *start, void *end, int blksize,
 	dmacfg |= __SHIFTIN(AWIN_NDMA_CTL_DRQ_SDRAM,
 			    AWIN_DMA_CTL_SRC_DRQ_TYPE);
 	awin_dma_set_config(sc->sc_pdma, dmacfg);
+
+	val = AC_READ(sc, AC_DAC_FIFOC);
+	val |= DAC_FIFOC_DRQ_EN;
+	AC_WRITE(sc, AC_DAC_FIFOC, val);
 
 	error = awinac_play(sc);
 	if (error)
@@ -1019,10 +1019,6 @@ awinac_trigger_input(void *priv, void *start, void *end, int blksize,
 	sc->sc_rend = sc->sc_rstart + rsize;
 	sc->sc_rblksize = blksize;
 
-	val = AC_READ(sc, AC_ADC_FIFOC);
-	val |= ADC_FIFOC_DRQ_EN;
-	AC_WRITE(sc, AC_ADC_FIFOC, val);
-
 	dmacfg = 0;
 	dmacfg |= __SHIFTIN(AWIN_DMA_CTL_DATA_WIDTH_16,
 			    AWIN_DMA_CTL_DST_DATA_WIDTH);
@@ -1038,7 +1034,11 @@ awinac_trigger_input(void *priv, void *start, void *end, int blksize,
 			    AWIN_DMA_CTL_DST_DRQ_TYPE);
 	dmacfg |= __SHIFTIN(AWIN_NDMA_CTL_DRQ_CODEC,
 			    AWIN_DMA_CTL_SRC_DRQ_TYPE);
-	awin_dma_set_config(sc->sc_pdma, dmacfg);
+	awin_dma_set_config(sc->sc_rdma, dmacfg);
+
+	val = AC_READ(sc, AC_ADC_FIFOC);
+	val |= ADC_FIFOC_DRQ_EN;
+	AC_WRITE(sc, AC_ADC_FIFOC, val);
 
 	error = awinac_rec(sc);
 	if (error)
