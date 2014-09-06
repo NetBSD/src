@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ac.c,v 1.10 2014/09/06 20:54:53 jmcneill Exp $ */
+/* $NetBSD: awin_ac.c,v 1.11 2014/09/06 22:48:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.10 2014/09/06 20:54:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.11 2014/09/06 22:48:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.10 2014/09/06 20:54:53 jmcneill Exp $"
 #include <arm/allwinner/awin_var.h>
 
 #define AWINAC_TX_TRIG_LEVEL	0xf
+#define AWINAC_RX_TRIG_LEVEL	0x7
 #define AWINAC_DRQ_CLR_CNT	0x3
 #define AWINAC_INIT_VOL		0x3b
 
@@ -114,10 +115,46 @@ __KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.10 2014/09/06 20:54:53 jmcneill Exp $"
 #define  DAC_ACTL_PAVOL		__BITS(5,0)
 #define AC_DAC_TUNE		0x14
 #define AC_ADC_FIFOC		0x1c
+#define  ADC_FIFOC_FS		__BITS(31,29)
+#define   ADC_FS_48KHZ		0
+#define   ADC_FS_32KHZ		1
+#define   ADC_FS_24KHZ		2
+#define   ADC_FS_16KHZ		3
+#define   ADC_FS_12KHZ		4
+#define   DAC_FS_8KHZ		5
+#define  ADC_FIFOC_EN_AD	__BIT(28)
+#define  ADC_FIFOC_RX_FIFO_MODE	__BIT(24)
+#define  ADC_FIFOC_RX_TRIG_LEVEL __BITS(12,8)
+#define  ADC_FIFOC_MONO_EN	__BIT(7)
+#define  ADC_FIFOC_RX_SAMPLE_BITS __BIT(6)
+#define  ADC_FIFOC_DRQ_EN	__BIT(4)
+#define  ADC_FIFOC_IRQ_EN	__BIT(3)
+#define  ADC_FIFOC_OVERRUN_IRQ_EN __BIT(2)
+#define  ADC_FIFOC_FIFO_FLUSH	__BIT(1)
 #define AC_ADC_FIFOS		0x20
+#define  ADC_FIFOS_RXA		__BIT(23)
+#define  ADC_FIFOS_RXA_CNT	__BITS(13,8)
+#define  ADC_FIFOS_RXA_INT	__BIT(3)
+#define  ADC_FIFOS_RXO_INT	__BIT(1)
 #define AC_ADC_RXDATA		0x24
 #define AC_ADC_ACTL		0x28
+#define  ADC_ACTL_ADCREN	__BIT(31)
+#define  ADC_ACTL_ADCLEN	__BIT(30)
+#define  ADC_ACTL_PREG1EN	__BIT(29)
+#define  ADC_ACTL_PREG2EN	__BIT(28)
+#define  ADC_ACTL_VMICEN	__BIT(27)
+#define  ADC_ACTL_ADCG		__BITS(22,20)
+#define  ADC_ACTL_ADCIS		__BITS(19,17)
+#define  ADC_ACTL_LNRDF		__BIT(16)
+#define  ADC_ACTL_LNPREG	__BIT(15)
+#define  ADC_ACTL_LHPOUTN	__BIT(11)
+#define  ADC_ACTL_RHPOUTN	__BIT(10)
+#define  ADC_ACTL_DITHER	__BIT(8)
+#define  ADC_ACTL_DITHER_CLK_SELECT __BITS(7,6)
 #define  ADC_ACTL_PA_EN		__BIT(4)
+#define  ADC_ACTL_DDE		__BIT(3)
+#define  ADC_ACTL_COMPTEN	__BIT(2)
+#define  ADC_ACTL_PTDBS		__BITS(1,0)
 #define AC_DAC_CNT		0x30
 #define AC_ADC_CNT		0x34
 #define AC_DAC_CAL		0x38
@@ -149,9 +186,6 @@ struct awinac_softc {
 	struct audio_encoding_set *sc_encodings;
 
 	audio_params_t		sc_pparam;
-
-	void *			sc_ih;
-
 	struct awin_dma_channel *sc_pdma;
 	void			(*sc_pint)(void *);
 	void			*sc_pintarg;
@@ -159,6 +193,15 @@ struct awinac_softc {
 	bus_addr_t		sc_pend;
 	bus_addr_t		sc_pcur;
 	int			sc_pblksize;
+
+	audio_params_t		sc_rparam;
+	struct awin_dma_channel *sc_rdma;
+	void			(*sc_rint)(void *);
+	void			*sc_rintarg;
+	bus_addr_t		sc_rstart;
+	bus_addr_t		sc_rend;
+	bus_addr_t		sc_rcur;
+	int			sc_rblksize;
 
 	struct awin_gpio_pindata sc_pactrl_gpio;
 	bool			sc_has_pactrl_gpio;
@@ -176,6 +219,8 @@ static void	awinac_freedma(struct awinac_softc *, struct awinac_dma *);
 
 static void	awinac_pint(void *);
 static int	awinac_play(struct awinac_softc *);
+static void	awinac_rint(void *);
+static int	awinac_rec(struct awinac_softc *);
 
 #if defined(DDB)
 void		awinac_dump_regs(void);
@@ -313,7 +358,12 @@ awinac_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_pdma = awin_dma_alloc(AWIN_DMA_TYPE_NDMA, awinac_pint, sc);
 	if (sc->sc_pdma == NULL) {
-		aprint_error_dev(self, "couldn't allocate DMA channel\n");
+		aprint_error_dev(self, "couldn't allocate play DMA channel\n");
+		return;
+	}
+	sc->sc_rdma = awin_dma_alloc(AWIN_DMA_TYPE_NDMA, awinac_rint, sc);
+	if (sc->sc_rdma == NULL) {
+		aprint_error_dev(self, "couldn't allocate rec DMA channel\n");
 		return;
 	}
 
@@ -386,7 +436,14 @@ awinac_init(struct awinac_softc *sc)
 	val &= ~DAC_FIFOC_FIFO_OVERRUN_IRQ_EN;
 	AC_WRITE(sc, AC_DAC_FIFOC, val);
 
+	val = AC_READ(sc, AC_ADC_FIFOC);
+	val &= ~ADC_FIFOC_DRQ_EN;
+	val &= ~ADC_FIFOC_IRQ_EN;
+	val &= ~ADC_FIFOC_OVERRUN_IRQ_EN;
+	AC_WRITE(sc, AC_ADC_FIFOC, val);
+
 	AC_WRITE(sc, AC_DAC_FIFOS, AC_READ(sc, AC_DAC_FIFOS));
+	AC_WRITE(sc, AC_ADC_FIFOS, AC_READ(sc, AC_ADC_FIFOS));
 }
 
 static int
@@ -474,15 +531,61 @@ awinac_play(struct awinac_softc *sc)
 	return 0;
 }
 
+static void
+awinac_rint(void *priv)
+{
+	struct awinac_softc *sc = priv;
+
+	mutex_enter(&sc->sc_intr_lock);
+	if (sc->sc_rint == NULL) {
+		mutex_exit(&sc->sc_intr_lock);
+		return;
+	}
+	sc->sc_rint(sc->sc_rintarg);
+	mutex_exit(&sc->sc_intr_lock);
+
+	awinac_rec(sc);
+}
+
+static int
+awinac_rec(struct awinac_softc *sc)
+{
+	int error;
+
+	error = awin_dma_transfer(sc->sc_rdma,
+	    AWIN_CORE_PBASE + AWIN_AC_OFFSET + AC_ADC_RXDATA, sc->sc_rcur,
+	    sc->sc_rblksize);
+	if (error) {
+		device_printf(sc->sc_dev, "failed to transfer DMA; error %d\n",
+		    error);
+		return error;
+	}
+
+	sc->sc_rcur += sc->sc_rblksize;
+	if (sc->sc_rcur >= sc->sc_rend)
+		sc->sc_rcur = sc->sc_rstart;
+
+	return 0;
+}
+
 static int
 awinac_open(void *priv, int flags)
 {
+	struct awinac_softc *sc = priv;
+
+	if (sc->sc_has_pactrl_gpio)
+		awin_gpio_pindata_write(&sc->sc_pactrl_gpio, 1);
+
 	return 0;
 }
 
 static void
 awinac_close(void *priv)
 {
+	struct awinac_softc *sc = priv;
+
+	if (sc->sc_has_pactrl_gpio)
+		awin_gpio_pindata_write(&sc->sc_pactrl_gpio, 0);
 }
 
 static int
@@ -494,6 +597,10 @@ awinac_drain(void *priv)
 	val = AC_READ(sc, AC_DAC_FIFOC);
 	val |= DAC_FIFOC_FIFO_FLUSH;
 	AC_WRITE(sc, AC_DAC_FIFOC, val);
+
+	val = AC_READ(sc, AC_ADC_FIFOC);
+	val |= ADC_FIFOC_FIFO_FLUSH;
+	AC_WRITE(sc, AC_ADC_FIFOC, val);
 
 	return 0;
 }
@@ -523,6 +630,15 @@ awinac_set_params(void *priv, int setmode, int usemode,
 		    pfil->filters[0].param :
 		    *play;
 	}
+	if (rec && (setmode & AUMODE_RECORD)) {
+		index = auconv_set_converter(&sc->sc_format, 1,
+		    AUMODE_RECORD, rec, true, rfil);
+		if (index < 0)
+			return EINVAL;
+		sc->sc_rparam = rfil->req_size > 0 ?
+		    rfil->filters[0].param :
+		    *rec;
+	}
 
 	return 0;
 }
@@ -536,6 +652,10 @@ awinac_commit_settings(void *priv)
 	if (sc->sc_pparam.sample_rate != 48000)
 		return EINVAL;
 	if (sc->sc_pparam.validbits != 16 && sc->sc_pparam.validbits != 24)
+		return EINVAL;
+	if (sc->sc_rparam.sample_rate != 48000)
+		return EINVAL;
+	if (sc->sc_rparam.validbits != 16 && sc->sc_rparam.validbits != 24)
 		return EINVAL;
 
 	val = AC_READ(sc, AC_DAC_FIFOC);
@@ -558,6 +678,21 @@ awinac_commit_settings(void *priv)
 	}
 	AC_WRITE(sc, AC_DAC_FIFOC, val);
 
+	val = AC_READ(sc, AC_ADC_FIFOC);
+	val |= ADC_FIFOC_EN_AD;
+	val |= ADC_FIFOC_RX_FIFO_MODE;
+	val &= ~ADC_FIFOC_FS;
+	val |= __SHIFTIN(ADC_FS_48KHZ, ADC_FIFOC_FS);
+	val &= ~ADC_FIFOC_RX_TRIG_LEVEL;
+	val |= __SHIFTIN(AWINAC_RX_TRIG_LEVEL, ADC_FIFOC_RX_TRIG_LEVEL);
+	val &= ~ADC_FIFOC_MONO_EN;
+	if (sc->sc_rparam.validbits == 16) {
+		val &= ~ADC_FIFOC_RX_SAMPLE_BITS;
+	} else {
+		val |= ADC_FIFOC_RX_SAMPLE_BITS;
+	}
+	AC_WRITE(sc, AC_ADC_FIFOC, val);
+
 	return 0;
 }
 
@@ -568,9 +703,6 @@ awinac_halt_output(void *priv)
 	uint32_t val;
 
 	awin_dma_halt(sc->sc_pdma);
-
-	if (sc->sc_has_pactrl_gpio)
-		awin_gpio_pindata_write(&sc->sc_pactrl_gpio, 0);
 
 	val = AC_READ(sc, AC_DAC_ACTL);
 	val &= ~DAC_ACTL_DACAREN;
@@ -591,7 +723,24 @@ awinac_halt_output(void *priv)
 static int
 awinac_halt_input(void *priv)
 {
-	return EINVAL;
+	struct awinac_softc *sc = priv;
+	uint32_t val;
+
+	awin_dma_halt(sc->sc_rdma);
+
+	val = AC_READ(sc, AC_ADC_ACTL);
+	val &= ~ADC_ACTL_ADCREN;
+	val &= ~ADC_ACTL_ADCLEN;
+	AC_WRITE(sc, AC_ADC_ACTL, val);
+
+	val = AC_READ(sc, AC_ADC_FIFOC);
+	val &= ~ADC_FIFOC_DRQ_EN;
+	AC_WRITE(sc, AC_ADC_FIFOC, val);
+
+	sc->sc_rint = NULL;
+	sc->sc_rintarg = NULL;
+	
+	return 0;
 }
 
 static int
@@ -744,7 +893,8 @@ static int
 awinac_get_props(void *priv)
 {
 	return AUDIO_PROP_PLAYBACK|AUDIO_PROP_CAPTURE|
-	       AUDIO_PROP_INDEPENDENT|AUDIO_PROP_MMAP;
+	       AUDIO_PROP_INDEPENDENT|AUDIO_PROP_MMAP|
+	       AUDIO_PROP_FULLDUPLEX;
 }
 
 static int
@@ -801,9 +951,6 @@ awinac_trigger_output(void *priv, void *start, void *end, int blksize,
 	sc->sc_pend = sc->sc_pstart + psize;
 	sc->sc_pblksize = blksize;
 
-	if (sc->sc_has_pactrl_gpio)
-		awin_gpio_pindata_write(&sc->sc_pactrl_gpio, 1);
-
 	val = AC_READ(sc, AC_DAC_FIFOC);
 	val |= DAC_FIFOC_DRQ_EN;
 	AC_WRITE(sc, AC_DAC_FIFOC, val);
@@ -836,7 +983,68 @@ static int
 awinac_trigger_input(void *priv, void *start, void *end, int blksize,
     void (*intr)(void *), void *intrarg, const audio_params_t *params)
 {
-	return EINVAL;
+	struct awinac_softc *sc = priv;
+	struct awinac_dma *dma;
+	bus_addr_t rstart;
+	bus_size_t rsize;
+	uint32_t val, dmacfg;
+	int error;
+
+	rstart = 0;
+	rsize = (uintptr_t)end - (uintptr_t)start;
+
+	LIST_FOREACH(dma, &sc->sc_dmalist, dma_list) {
+		if (dma->dma_addr == start) {
+			rstart = dma->dma_map->dm_segs[0].ds_addr;
+			break;
+		}
+	}
+	if (rstart == 0) {
+		device_printf(sc->sc_dev, "bad addr %p\n", start);
+		return EINVAL;
+	}
+
+	val = AC_READ(sc, AC_ADC_FIFOC);
+	val |= ADC_FIFOC_FIFO_FLUSH;
+	AC_WRITE(sc, AC_ADC_FIFOC, val);
+
+	val = AC_READ(sc, AC_ADC_ACTL);
+	val |= ADC_ACTL_ADCREN;
+	val |= ADC_ACTL_ADCLEN;
+	AC_WRITE(sc, AC_ADC_ACTL, val);
+
+	sc->sc_rint = intr;
+	sc->sc_rintarg = intrarg;
+	sc->sc_rstart = sc->sc_rcur = rstart;
+	sc->sc_rend = sc->sc_rstart + rsize;
+	sc->sc_rblksize = blksize;
+
+	val = AC_READ(sc, AC_ADC_FIFOC);
+	val |= ADC_FIFOC_DRQ_EN;
+	AC_WRITE(sc, AC_ADC_FIFOC, val);
+
+	dmacfg = 0;
+	dmacfg |= __SHIFTIN(AWIN_DMA_CTL_DATA_WIDTH_16,
+			    AWIN_DMA_CTL_DST_DATA_WIDTH);
+	dmacfg |= __SHIFTIN(AWIN_DMA_CTL_BURST_LEN_4,
+			    AWIN_DMA_CTL_DST_BURST_LEN);
+	dmacfg |= __SHIFTIN(AWIN_DMA_CTL_DATA_WIDTH_16,
+			    AWIN_DMA_CTL_SRC_DATA_WIDTH);
+	dmacfg |= __SHIFTIN(AWIN_DMA_CTL_BURST_LEN_4,
+			    AWIN_DMA_CTL_SRC_BURST_LEN);
+	dmacfg |= AWIN_DMA_CTL_BC_REMAINING;
+	dmacfg |= AWIN_NDMA_CTL_SRC_ADDR_NOINCR;
+	dmacfg |= __SHIFTIN(AWIN_NDMA_CTL_DRQ_SDRAM,
+			    AWIN_DMA_CTL_DST_DRQ_TYPE);
+	dmacfg |= __SHIFTIN(AWIN_NDMA_CTL_DRQ_CODEC,
+			    AWIN_DMA_CTL_SRC_DRQ_TYPE);
+	awin_dma_set_config(sc->sc_pdma, dmacfg);
+
+	error = awinac_rec(sc);
+	if (error)
+		awinac_halt_input(sc);
+
+	return error;
 }
 
 static void
