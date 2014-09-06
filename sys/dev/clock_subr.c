@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.20 2014/09/01 12:25:52 apb Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.21 2014/09/06 18:04:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.20 2014/09/01 12:25:52 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.21 2014/09/06 18:04:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,19 @@ static inline int leapyear(int year);
 #define FEBRUARY	2
 #define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
 #define	days_in_month(a) 	(month_days[(a) - 1])
+
+/* for easier alignment:
+ * time from the epoch to 2000 (there were 7 leap years): */
+#define	DAYSTO2000	(365*30+7)
+
+/* 4 year intervals include 1 leap year */
+#define	DAYS4YEARS	(365*4+1)
+
+/* 100 year intervals include 24 leap years */
+#define	DAYS100YEARS	(365*100+24)
+
+/* 400 year intervals include 97 leap years */
+#define	DAYS400YEARS	(365*400+97)
 
 static const int month_days[12] = {
 	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
@@ -109,10 +122,34 @@ clock_ymdhms_to_secs(struct clock_ymdhms *dt)
 	if (year < POSIX_BASE_YEAR)
 		return -1;
 	days = 0;
-	for (i = POSIX_BASE_YEAR; i < year; i++)
-		days += days_in_year(i);
 	if (leapyear(year) && dt->dt_mon > FEBRUARY)
 		days++;
+
+	if (year < 2000) {
+		/* simple way for early years */
+		for (i = POSIX_BASE_YEAR; i < year; i++)
+			days += days_in_year(i);
+	} else {
+		/* years are properly aligned */
+		days += DAYSTO2000;
+		year -= 2000;
+
+		i = year / 400;
+		days += i * DAYS400YEARS;
+		year -= i * 400;
+
+		i = year / 100;
+		days += i * DAYS100YEARS;
+		year -= i * 100;
+
+		i = year / 4;
+		days += i * DAYS4YEARS;
+		year -= i * 4;
+
+		for (i = dt->dt_year-year; i < dt->dt_year; i++)
+			days += days_in_year(i);
+	}
+
 
 	/* Months */
 	for (i = 1; i < dt->dt_mon; i++)
@@ -133,18 +170,9 @@ clock_ymdhms_to_secs(struct clock_ymdhms *dt)
 void
 clock_secs_to_ymdhms(time_t secs, struct clock_ymdhms *dt)
 {
-	int mthdays[12];
-	int i;
+	int i, leap;
 	time_t days;
 	time_t rsec;	/* remainder seconds */
-
-	/*
-	 * This function uses a local copy of month_days[]
-	 * so the copy can be modified (and thread-safe).
-	 * See the definition of days_in_month() above.
-	 */
-	memcpy(mthdays, month_days, sizeof(mthdays));
-#define month_days mthdays
 
 	days = secs / SECDAY;
 	rsec = secs % SECDAY;
@@ -152,16 +180,40 @@ clock_secs_to_ymdhms(time_t secs, struct clock_ymdhms *dt)
 	/* Day of week (Note: 1/1/1970 was a Thursday) */
 	dt->dt_wday = (days + 4) % 7;
 
-	/* Subtract out whole years, counting them in i. */
-	for (i = POSIX_BASE_YEAR; days >= days_in_year(i); i++)
-		days -= days_in_year(i);
-	dt->dt_year = i;
+	if (days >= DAYSTO2000) {
+		days -= DAYSTO2000;
+		dt->dt_year = 2000;
+
+		i = days / DAYS400YEARS;
+		days -= i*DAYS400YEARS;
+		dt->dt_year += i*400;
+
+		i = days / DAYS100YEARS;
+		days -= i*DAYS100YEARS;
+		dt->dt_year += i*100;
+
+		i = days / DAYS4YEARS;
+		days -= i*DAYS4YEARS;
+		dt->dt_year += i*4;
+
+		for (i = dt->dt_year; days >= days_in_year(i); i++)
+			days -= days_in_year(i);
+		dt->dt_year = i;
+	} else {
+		/* Subtract out whole years, counting them in i. */
+		for (i = POSIX_BASE_YEAR; days >= days_in_year(i); i++)
+			days -= days_in_year(i);
+		dt->dt_year = i;
+	}
 
 	/* Subtract out whole months, counting them in i. */
-	if (leapyear(i))
-		days_in_month(FEBRUARY) = 29;
-	for (i = 1; days >= days_in_month(i); i++)
-		days -= days_in_month(i);
+	for (leap = 0, i = 1; days >= days_in_month(i)+leap; i++) {
+		days -= days_in_month(i)+leap;
+		if (i == 1 && leapyear(dt->dt_year))
+			leap = 1;
+		else
+			leap = 0;
+	}
 	dt->dt_mon = i;
 
 	/* Days are what is left over (+1) from all that. */
@@ -173,5 +225,4 @@ clock_secs_to_ymdhms(time_t secs, struct clock_ymdhms *dt)
 	dt->dt_min  = rsec / 60;
 	rsec = rsec % 60;
 	dt->dt_sec  = rsec;
-#undef month_days
 }
