@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1975 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1976 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -39,3 +39,7 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	wm(4): Add internal SERDES support for 82575 and newer controllers.
 		[msaitoh 20140903]
 	or1k: Add new port.  [matt 20140903]
+	awindma(4): Add support for AllWinner A10/A20 DMA controller.
+		[jmcneill 20140906]
+	awinac(4): Add support for AllWinner A10/A20 audio codec.
+		[jmcneill 20140906]
