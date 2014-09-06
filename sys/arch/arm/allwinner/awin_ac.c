@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ac.c,v 1.1 2014/09/04 02:38:18 jmcneill Exp $ */
+/* $NetBSD: awin_ac.c,v 1.2 2014/09/06 01:08:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,13 +29,14 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.1 2014/09/04 02:38:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.2 2014/09/06 01:08:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/systm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -136,15 +137,14 @@ struct awinac_softc {
 	audio_params_t		sc_pparam;
 
 	void *			sc_ih;
-	void *			sc_sih;
-	int			sc_psamples;
+
+	struct awin_dma_channel *sc_pdma;
 	void			(*sc_pint)(void *);
 	void			*sc_pintarg;
-	int16_t			*sc_pstart;
-	int16_t			*sc_pend;
-	int16_t			*sc_pcur;
+	uint8_t			*sc_pstart;
+	uint8_t			*sc_pend;
+	uint8_t			*sc_pcur;
 	int			sc_pblksize;
-	int			sc_pbytes;
 
 	struct awin_gpio_pindata sc_pactrl_gpio;
 	bool			sc_has_pactrl_gpio;
@@ -157,8 +157,8 @@ static void	awinac_childdet(device_t, device_t);
 
 static void	awinac_init(struct awinac_softc *);
 
-static int	awinac_intr(void *);
-static void	awinac_softintr(void *);
+static void	awinac_pint(void *);
+static int	awinac_play(struct awinac_softc *);
 
 static int	awinac_open(void *, int);
 static void	awinac_close(void *);
@@ -282,11 +282,9 @@ awinac_attach(device_t parent, device_t self, void *aux)
 
 	awinac_init(sc);
 
-	sc->sc_ih = intr_establish(loc->loc_intr, IPL_SCHED, IST_LEVEL,
-	    awinac_intr, sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt %d\n",
-		    loc->loc_intr);
+	sc->sc_pdma = awin_dma_alloc(AWIN_DMA_TYPE_NDMA, awinac_pint, sc);
+	if (sc->sc_pdma == NULL) {
+		aprint_error_dev(self, "couldn't allocate DMA channel\n");
 		return;
 	}
 
@@ -358,50 +356,48 @@ awinac_init(struct awinac_softc *sc)
 	AC_WRITE(sc, AC_DAC_FIFOS, AC_READ(sc, AC_DAC_FIFOS));
 }
 
-static int
-awinac_intr(void *priv)
+static void
+awinac_pint(void *priv)
 {
 	struct awinac_softc *sc = priv;
-	uint32_t val;
 
-	val = AC_READ(sc, AC_DAC_FIFOS);
-	if ((val & DAC_FIFOS_INT_MASK) == 0)
-		return 0;
-	AC_WRITE(sc, AC_DAC_FIFOS, val);
-
-	if (sc->sc_sih == NULL)
-		return 0;
-
-	if (val & DAC_FIFOS_TXE_INT) {
-		sc->sc_psamples = 0;
-	} else if (val & DAC_FIFOS_TXU_INT) {
-		sc->sc_psamples = __SHIFTOUT(val, DAC_FIFOS_TXE_CNT);
+	mutex_enter(&sc->sc_intr_lock);
+	if (sc->sc_pint == NULL) {
+		mutex_exit(&sc->sc_intr_lock);
+		return;
 	}
+	sc->sc_pint(sc->sc_pintarg);
+	mutex_exit(&sc->sc_intr_lock);
 
-	if (sc->sc_psamples < AWINAC_TX_TRIG_LEVEL) {
-		softint_schedule(sc->sc_sih);
-	}
-
-	return 1;
+	awinac_play(sc);
 }
 
-static void
-awinac_softintr(void *priv)
+static int
+awinac_play(struct awinac_softc *sc)
 {
-	struct awinac_softc *sc = priv;
+	paddr_t physsrc;
+	int error;
 
-	while (sc->sc_psamples < AWINAC_TX_MAX_LEVEL) {
-		AC_WRITE(sc, AC_DAC_TXDATA, *sc->sc_pcur);
-		sc->sc_pcur++;
-		if (sc->sc_pcur == sc->sc_pend)
-			sc->sc_pcur = sc->sc_pstart;
-		sc->sc_psamples++;
-		sc->sc_pbytes += 2;
-		if (sc->sc_pbytes == sc->sc_pblksize) {
-			sc->sc_pint(sc->sc_pintarg);
-			sc->sc_pbytes = 0;
-		}
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_pcur, &physsrc)) {
+		device_printf(sc->sc_dev, "pmap_extract failed for %p\n",
+		    sc->sc_pcur);
+		return ENXIO;
 	}
+
+	error = awin_dma_transfer(sc->sc_pdma,
+	    physsrc, AWIN_CORE_PBASE + AWIN_DMA_OFFSET,
+	    sc->sc_pblksize);
+	if (error) {
+		device_printf(sc->sc_dev, "failed to transfer DMA; error %d\n",
+		    error);
+		return error;
+	}
+
+	sc->sc_pcur += sc->sc_pblksize;
+	if (sc->sc_pcur >= sc->sc_pend)
+		sc->sc_pcur = sc->sc_pstart;
+
+	return 0;
 }
 
 static int
@@ -495,6 +491,8 @@ awinac_halt_output(void *priv)
 	struct awinac_softc *sc = priv;
 	uint32_t val;
 
+	awin_dma_set_config(sc->sc_pdma, 0);
+
 	if (sc->sc_has_pactrl_gpio)
 		awin_gpio_pindata_write(&sc->sc_pactrl_gpio, 0);
 
@@ -505,12 +503,9 @@ awinac_halt_output(void *priv)
 	AC_WRITE(sc, AC_DAC_ACTL, val);
 
 	val = AC_READ(sc, AC_DAC_FIFOC);
-	val &= ~DAC_FIFOC_IRQ_EN;
-	val &= ~DAC_FIFOC_FIFO_UNDERRUN_IRQ_EN;
+	val &= ~DAC_FIFOC_DRQ_EN;
 	AC_WRITE(sc, AC_DAC_FIFOC, val);
 
-	softint_disestablish(sc->sc_sih);
-	sc->sc_sih = NULL;
 	sc->sc_pint = NULL;
 	sc->sc_pintarg = NULL;
 
@@ -634,7 +629,8 @@ awinac_trigger_output(void *priv, void *start, void *end, int blksize,
     void (*intr)(void *), void *intrarg, const audio_params_t *params)
 {
 	struct awinac_softc *sc = priv;
-	uint32_t val;
+	uint32_t val, dmacfg;
+	int error;
 
 	val = AC_READ(sc, AC_DAC_FIFOC);
 	val |= DAC_FIFOC_FIFO_FLUSH;
@@ -648,29 +644,37 @@ awinac_trigger_output(void *priv, void *start, void *end, int blksize,
 
 	sc->sc_pint = intr;
 	sc->sc_pintarg = intrarg;
-	sc->sc_psamples = 0;
 	sc->sc_pstart = sc->sc_pcur = start;
 	sc->sc_pend = end;
 	sc->sc_pblksize = blksize;
-	sc->sc_pbytes = 0;
 
 	if (sc->sc_has_pactrl_gpio)
 		awin_gpio_pindata_write(&sc->sc_pactrl_gpio, 1);
 
 	val = AC_READ(sc, AC_DAC_FIFOC);
-	val |= DAC_FIFOC_IRQ_EN;
-	val |= DAC_FIFOC_FIFO_UNDERRUN_IRQ_EN;
+	val |= DAC_FIFOC_DRQ_EN;
 	AC_WRITE(sc, AC_DAC_FIFOC, val);
 
-	sc->sc_sih = softint_establish(SOFTINT_BIO|SOFTINT_MPSAFE,
-	    awinac_softintr, sc);
-	if (sc->sc_sih == NULL) {
-		device_printf(sc->sc_dev, "couldn't establish softint\n");
-		return ENXIO;
-	}
-	softint_schedule(sc->sc_sih);
+	dmacfg = 0;
+	dmacfg |= __SHIFTIN(AWIN_DMA_CTL_DATA_WIDTH_16,
+			    AWIN_DMA_CTL_DST_DATA_WIDTH);
+	dmacfg |= __SHIFTIN(AWIN_DMA_CTL_BURST_LEN_4,
+			    AWIN_DMA_CTL_DST_BURST_LEN);
+	dmacfg |= __SHIFTIN(AWIN_DMA_CTL_DATA_WIDTH_16,
+			    AWIN_DMA_CTL_SRC_DATA_WIDTH);
+	dmacfg |= __SHIFTIN(AWIN_DMA_CTL_BURST_LEN_4,
+			    AWIN_DMA_CTL_SRC_BURST_LEN);
+	dmacfg |= AWIN_DMA_CTL_BC_REMAINING;
+	dmacfg |= AWIN_NDMA_CTL_DST_ADDR_NOINCR;
+	dmacfg |= __SHIFTIN(AWIN_NDMA_CTL_DRQ_CODEC,
+			    AWIN_DMA_CTL_DST_DRQ_TYPE);
+	awin_dma_set_config(sc->sc_pdma, dmacfg);
 
-	return 0;
+	error = awinac_play(sc);
+	if (error)
+		awinac_halt_output(sc);
+
+	return error;
 }
 
 static int
