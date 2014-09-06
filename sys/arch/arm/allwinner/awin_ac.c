@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ac.c,v 1.9 2014/09/06 17:10:17 jmcneill Exp $ */
+/* $NetBSD: awin_ac.c,v 1.10 2014/09/06 20:54:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.9 2014/09/06 17:10:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.10 2014/09/06 20:54:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -198,6 +198,7 @@ static int	awinac_get_port(void *, mixer_ctrl_t *);
 static int	awinac_query_devinfo(void *, mixer_devinfo_t *);
 static void *	awinac_allocm(void *, int, size_t);
 static void	awinac_freem(void *, void *, size_t);
+static paddr_t	awinac_mappage(void *, void *, off_t, int);
 static int	awinac_getdev(void *, struct audio_device *);
 static int	awinac_get_props(void *);
 static int	awinac_round_blocksize(void *, int, int,
@@ -222,6 +223,7 @@ static const struct audio_hw_if awinac_hw_if = {
 	.halt_input = awinac_halt_input,
 	.allocm = awinac_allocm,
 	.freem = awinac_freem,
+	.mappage = awinac_mappage,
 	.getdev = awinac_getdev,
 	.set_port = awinac_set_port,
 	.get_port = awinac_get_port,
@@ -710,6 +712,25 @@ awinac_freem(void *priv, void *addr, size_t size)
 	}
 }
 
+static paddr_t
+awinac_mappage(void *priv, void *addr, off_t off, int prot)
+{
+	struct awinac_softc *sc = priv;
+	struct awinac_dma *dma;
+
+	if (off < 0)
+		return -1;
+
+	LIST_FOREACH(dma, &sc->sc_dmalist, dma_list) {
+		if (dma->dma_addr == addr) {
+			return bus_dmamem_mmap(sc->sc_dmat, dma->dma_segs,
+			    dma->dma_nsegs, off, prot, BUS_DMA_WAITOK);
+		}
+	}
+
+	return -1;
+}
+
 static int
 awinac_getdev(void *priv, struct audio_device *audiodev)
 {
@@ -722,7 +743,8 @@ awinac_getdev(void *priv, struct audio_device *audiodev)
 static int
 awinac_get_props(void *priv)
 {
-	return AUDIO_PROP_PLAYBACK|AUDIO_PROP_CAPTURE|AUDIO_PROP_INDEPENDENT;
+	return AUDIO_PROP_PLAYBACK|AUDIO_PROP_CAPTURE|
+	       AUDIO_PROP_INDEPENDENT|AUDIO_PROP_MMAP;
 }
 
 static int
