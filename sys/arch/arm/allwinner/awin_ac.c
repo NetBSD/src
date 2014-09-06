@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ac.c,v 1.6 2014/09/06 14:53:41 jmcneill Exp $ */
+/* $NetBSD: awin_ac.c,v 1.7 2014/09/06 16:47:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.6 2014/09/06 14:53:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.7 2014/09/06 16:47:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -117,6 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.6 2014/09/06 14:53:41 jmcneill Exp $")
 #define AC_ADC_FIFOS		0x20
 #define AC_ADC_RXDATA		0x24
 #define AC_ADC_ACTL		0x28
+#define  ADC_ACTL_PA_EN		__BIT(4)
 #define AC_DAC_CNT		0x30
 #define AC_ADC_CNT		0x34
 #define AC_DAC_CAL		0x38
@@ -371,6 +372,10 @@ awinac_init(struct awinac_softc *sc)
 	val &= ~DAC_ACTL_PAVOL;
 	val |= __SHIFTIN(AWINAC_INIT_VOL, DAC_ACTL_PAVOL);
 	AC_WRITE(sc, AC_DAC_ACTL, val);
+
+	val = AC_READ(sc, AC_ADC_ACTL);
+	val |= ADC_ACTL_PA_EN;
+	AC_WRITE(sc, AC_ADC_ACTL, val);
 
 	val = AC_READ(sc, AC_DAC_FIFOC);
 	val &= ~DAC_FIFOC_IRQ_EN;
