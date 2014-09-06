@@ -1,4 +1,4 @@
-/* $NetBSD: awin_dma.c,v 1.1 2014/09/06 00:15:34 jmcneill Exp $ */
+/* $NetBSD: awin_dma.c,v 1.2 2014/09/06 12:39:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_ddb.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_dma.c,v 1.1 2014/09/06 00:15:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_dma.c,v 1.2 2014/09/06 12:39:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,6 +77,10 @@ static int	awin_dma_match(device_t, cfdata_t, void *);
 static void	awin_dma_attach(device_t, device_t, void *);
 
 static int	awin_dma_intr(void *);
+
+#if defined(DDB)
+void		awin_dma_dump_regs(void);
+#endif
 
 CFATTACH_DECL_NEW(awin_dma, sizeof(struct awin_dma_softc),
 	awin_dma_match, awin_dma_attach, NULL, NULL);
@@ -136,6 +142,7 @@ awin_dma_attach(device_t parent, device_t self, void *aux)
 		    loc->loc_intr);
 		return;
 	}
+	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
 }
 
 static int
@@ -274,3 +281,37 @@ awin_dma_transfer(struct awin_dma_channel *ch, paddr_t src, paddr_t dst,
 
 	return 0;
 }
+
+#if defined(DDB)
+void
+awin_dma_dump_regs(void)
+{
+	int i;
+
+	printf("IRQ_EN:          %08X\n", DMA_READ(AWIN_DMA_IRQ_EN_REG));
+	printf("PEND_STA:        %08X\n",
+	    DMA_READ(AWIN_DMA_IRQ_PEND_STA_REG));
+	for (i = 0; i < NDMA_CHANNELS; i++) {
+		printf("NDMA%d CTL:       %08X\n", i,
+		    DMA_READ(AWIN_NDMA_REG(i) + AWIN_NDMA_CTL_REG));
+		printf("NDMA%d SRC_ADDR:  %08X\n", i,
+		    DMA_READ(AWIN_NDMA_REG(i) + AWIN_NDMA_SRC_ADDR_REG));
+		printf("NDMA%d DEST_ADDR: %08X\n", i,
+		    DMA_READ(AWIN_NDMA_REG(i) + AWIN_NDMA_DEST_ADDR_REG));
+		printf("NDMA%d BC:        %08X\n", i,
+		    DMA_READ(AWIN_NDMA_REG(i) + AWIN_NDMA_BC_REG));
+	}
+	for (i = 0; i < DDMA_CHANNELS; i++) {
+		printf("DDMA%d CTL:       %08X\n", i,
+		    DMA_READ(AWIN_DDMA_REG(i) + AWIN_DDMA_CTL_REG));
+		printf("DDMA%d SRC_ADDR:  %08X\n", i,
+		    DMA_READ(AWIN_DDMA_REG(i) + AWIN_DDMA_SRC_START_ADDR_REG));
+		printf("DDMA%d DEST_ADDR: %08X\n", i,
+		    DMA_READ(AWIN_DDMA_REG(i) + AWIN_DDMA_DEST_START_ADDR_REG));
+		printf("DDMA%d BC:        %08X\n", i,
+		    DMA_READ(AWIN_DDMA_REG(i) + AWIN_DDMA_BC_REG));
+		printf("DDMA%d PARA:      %08X\n", i,
+		    DMA_READ(AWIN_DDMA_REG(i) + AWIN_DDMA_PARA_REG));
+	}
+}
+#endif
