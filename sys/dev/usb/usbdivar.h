@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.108 2014/08/12 13:36:40 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109 2014/09/06 10:54:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  *	allocx			-
  *	freex			-
  *	get_lock 		-	Called at attach time
- *	new_device		
+ *	new_device
  *
  *	PIPE METHOD		LOCK  NOTES
  *	----------------------- -------	-------------------------
@@ -61,7 +61,7 @@
  *
  * The above semantics are likely to change.  Little performance
  * evaluation has been done on this code and the locking strategy.
- * 
+ *
  * USB functions known to expect the lock taken include (this list is
  * probably not exhaustive):
  *    usb_transfer_complete()
