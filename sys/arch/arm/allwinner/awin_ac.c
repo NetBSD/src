@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ac.c,v 1.7 2014/09/06 16:47:03 jmcneill Exp $ */
+/* $NetBSD: awin_ac.c,v 1.8 2014/09/06 16:54:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.7 2014/09/06 16:47:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.8 2014/09/06 16:54:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -279,7 +279,7 @@ awinac_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bst = aio->aio_core_bst;
-	sc->sc_dmat = aio->aio_coherent_dmat;
+	sc->sc_dmat = aio->aio_dmat;
 	LIST_INIT(&sc->sc_dmalist);
 	bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
