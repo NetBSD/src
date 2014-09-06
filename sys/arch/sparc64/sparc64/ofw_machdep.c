@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.42 2014/05/04 09:05:39 martin Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.43 2014/09/06 20:56:39 palle Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.42 2014/05/04 09:05:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.43 2014/09/06 20:56:39 palle Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -536,7 +536,7 @@ prom_get_msgbuf(int len, int align)
 
 #ifdef MULTIPROCESSOR
 /*
- * Start secondary cpu, arrange 'func' as the entry.
+ * Start secondary cpu identified by node, arrange 'func' as the entry.
  */
 void
 prom_startcpu(u_int cpu, void *func, u_long arg)
@@ -558,6 +558,37 @@ prom_startcpu(u_int cpu, void *func, u_long arg)
         args.arg = (cell_t)arg;
 
         openfirmware(&args);
+}
+
+/*
+ * Start secondary cpu identified by cpuid, arrange 'func' as the entry.
+ * Returns -1 in case the openfirmware method is not available.
+ * Otherwise the result value from the openfirmware call is returned.
+ */
+int
+prom_startcpu_by_cpuid(u_int cpu, void *func, u_long arg)
+{
+	static struct {
+		cell_t  name;
+		cell_t  nargs;
+		cell_t  nreturns;
+		cell_t  cpu;
+		cell_t  func;
+		cell_t  arg;
+		cell_t	status;
+	} args;
+
+	if (OF_test("SUNW,start-cpu-by-cpuid") != 0)
+		return -1;
+	
+	args.name = ADR2CELL("SUNW,start-cpu-by-cpuid");
+	args.nargs = 3;
+	args.nreturns = 1;
+	args.cpu = cpu;
+	args.func = ADR2CELL(func);
+	args.arg = arg;
+
+	return openfirmware(&args);
 }
 
 /*
