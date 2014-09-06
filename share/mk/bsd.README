@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.335 2014/08/05 15:25:20 apb Exp $
+#	$NetBSD: bsd.README,v 1.336 2014/09/06 12:12:32 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1969,6 +1969,7 @@ WARNS		Crank up compiler warning options; the distinct levels are:
 			WARNS=3
 			WARNS=4
 			WARNS=5
+			WARNS=6
 
 =-=-=-=-=   bsd.host.mk  =-=-=-=-=
 
