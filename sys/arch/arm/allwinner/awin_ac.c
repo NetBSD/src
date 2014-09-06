@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ac.c,v 1.2 2014/09/06 01:08:26 jmcneill Exp $ */
+/* $NetBSD: awin_ac.c,v 1.3 2014/09/06 10:36:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.2 2014/09/06 01:08:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.3 2014/09/06 10:36:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -385,7 +385,7 @@ awinac_play(struct awinac_softc *sc)
 	}
 
 	error = awin_dma_transfer(sc->sc_pdma,
-	    physsrc, AWIN_CORE_PBASE + AWIN_DMA_OFFSET,
+	    physsrc, AWIN_CORE_PBASE + AWIN_AC_OFFSET + AC_DAC_TXDATA,
 	    sc->sc_pblksize);
 	if (error) {
 		device_printf(sc->sc_dev, "failed to transfer DMA; error %d\n",
