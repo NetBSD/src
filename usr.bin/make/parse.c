@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.202 2014/08/29 09:27:43 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.203 2014/09/07 20:55:34 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.202 2014/08/29 09:27:43 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.203 2014/09/07 20:55:34 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.202 2014/08/29 09:27:43 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.203 2014/09/07 20:55:34 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -237,15 +237,6 @@ static GNode *mainNode;
 
 /* targets we're working on */
 static Lst targets;
-/*
- * Type bits from special sources that were defined on the same line that
- * defined the targets we are working on.  If any of the targets turns out
- * to be a redefinition, we know what attributes need to be preserved on it.
- * We can track this globally, because there's no difference even if
- * there are multiple targets on the line.
- */
-static int typeFromCurrent = 0;
-
 
 #ifdef CLEANUP
 /* command lines for targets */
@@ -354,6 +345,8 @@ static const struct {
 // local functions
 
 static int ParseIsEscaped(const char *, const char *);
+static void ParseErrorInternal(const char *, size_t, int, const char *, ...)
+    MAKE_ATTR_PRINTFLIKE(4,5);
 static void ParseVErrorInternal(FILE *, const char *, size_t, int, const char *, va_list)
     MAKE_ATTR_PRINTFLIKE(5, 0);
 static int ParseFindKeyword(const char *);
@@ -706,6 +699,35 @@ ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno, int type,
 }
 
 /*-
+ * ParseErrorInternal  --
+ *	Error function
+ *
+ * Results:
+ *	None
+ *
+ * Side Effects:
+ *	None
+ */
+/* VARARGS */
+static void
+ParseErrorInternal(const char *cfname, size_t clineno, int type,
+    const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	(void)fflush(stdout);
+	ParseVErrorInternal(stderr, cfname, clineno, type, fmt, ap);
+	va_end(ap);
+
+	if (debug_file != stderr && debug_file != stdout) {
+		va_start(ap, fmt);
+		ParseVErrorInternal(debug_file, cfname, clineno, type, fmt, ap);
+		va_end(ap);
+	}
+}
+
+/*-
  * Parse_Error  --
  *	External interface to ParseErrorInternal; uses the default filename
  *	Line number.
@@ -820,9 +842,6 @@ ParseLinkSrc(void *pgnp, void *cgnp)
     if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (pgn->cohorts))
 	pgn = (GNode *)Lst_Datum(Lst_Last(pgn->cohorts));
     (void)Lst_AtEnd(pgn->children, cgn);
-    pgn->last_local_child_tmp = Lst_Last(pgn->children);
-    if (pgn->first_local_child_tmp == NULL)
-	pgn->first_local_child_tmp = pgn->last_local_child_tmp;
     if (specType == Not)
 	    (void)Lst_AtEnd(cgn->parents, pgn);
     pgn->unmade += 1;
@@ -911,7 +930,6 @@ ParseDoOp(void *gnp, void *opp)
 	 * just OR the new operator into the old
 	 */
 	gn->type |= op;
-	typeFromCurrent |= op;
     }
 
     return (0);
@@ -950,11 +968,6 @@ ParseDoSrc(int tOp, const char *src)
 	if (keywd != -1) {
 	    int op = parseKeywords[keywd].op;
 	    if (op != 0) {
-		/*
-		 * XXX: what should be done if targets contain special
-		 * targets? (Default, Stale, Begin, End, dotError, and
-		 * Interrupt)
-		 */
 		Lst_ForEach(targets, ParseDoOp, &op);
 		return;
 	    }
@@ -1040,7 +1053,6 @@ ParseDoSrc(int tOp, const char *src)
 	    ParseMark(gn);
 	if (tOp) {
 	    gn->type |= tOp;
-	    gn->gType |= tOp;
 	} else {
 	    Lst_ForEach(targets, ParseLinkSrc, gn);
 	}
@@ -1120,36 +1132,6 @@ ParseClearPath(void *path, void *dummy)
 }
 
 /*-
- *-----------------------------------------------------------------------
- * ParseTargetsFound -- prepare targets for receiving dependencies.
- *
- * Resets the local children tracking and applies the dependency operator
- * after all targets on a dependency line are found (the operator is read)
- * but before any sources are read.  Called for each target by
- * ParseDoDependency() with Lst_ForEach().
- *
- * Input:
- *	t	target (GNode *)
- *	o	operator type (int *)
- *
- * Results:
- *	Always 0 to prevent Lst_ForEach() from aborting prematurely.
- *-----------------------------------------------------------------------
- */
-static int
-ParseTargetsFound(void *t, void *o)
-{
-    GNode *target = (GNode *)t;
-    int *op = (int *)o;
-
-    target->first_local_child_tmp = NULL;
-    target->last_local_child_tmp = NULL;
-    ParseDoOp(target, op);
-
-    return 0;
-}
-
-/*-
  *---------------------------------------------------------------------
  * ParseDoDependency  --
  *	Parse the dependency line in line.
@@ -1211,14 +1193,8 @@ ParseDoDependency(char *line)
 
     curTargs = Lst_Init(FALSE);
 
-    /*
-     * Get targets.  After each iteration 'line' is reset to point
-     * past the word that was just read so that it points at the start of
-     * the next one (i.e. first non-space) or any of the preceding blanks.
-     */
-    cp = line;
     do {
-	for ( ; *cp && (ParseIsEscaped(lstart, cp) ||
+	for (cp = line; *cp && (ParseIsEscaped(lstart, cp) ||
 		     !(isspace((unsigned char)*cp) ||
 			 *cp == '!' || *cp == ':' || *cp == LPAREN));
 		 cp++) {
@@ -1229,8 +1205,6 @@ ParseDoDependency(char *line)
 		 * so we can safely advance beyond it...There should be
 		 * no errors in this, as they would have been discovered
 		 * in the initial Var_Subst and we wouldn't be here.
-		 * [XXX] Shouldn't this be an error?  I thought dynamic
-		 * source stuff is only allowed on the source side.
 		 */
 		int 	length;
 		void    *freeIt;
@@ -1244,18 +1218,22 @@ ParseDoDependency(char *line)
 
 	if (!ParseIsEscaped(lstart, cp) && *cp == LPAREN) {
 	    /*
-	     * Archive member spec.  On SUCCESS relevant archive member
-	     * nodes are added to targets and cp has been advanced to
-	     * the first non-blank after the spec.  On FAILURE cp is not
-	     * changed, targets might not be so lucky.
+	     * Archives must be handled specially to make sure the OP_ARCHV
+	     * flag is set in their 'type' field, for one thing, and because
+	     * things like "archive(file1.o file2.o file3.o)" are permissible.
+	     * Arch_ParseArchive will set 'line' to be the first non-blank
+	     * after the archive-spec. It creates/finds nodes for the members
+	     * and places them on the given list, returning SUCCESS if all
+	     * went well and FAILURE if there was an error in the
+	     * specification. On error, line should remain untouched.
 	     */
-	    cp = line;
-	    if (Arch_ParseArchive(&cp, targets, VAR_CMD) != SUCCESS) {
+	    if (Arch_ParseArchive(&line, targets, VAR_CMD) != SUCCESS) {
 		Parse_Error(PARSE_FATAL,
-			     "Error in archive specification: \"%s\"", cp);
+			     "Error in archive specification: \"%s\"", line);
 		goto out;
-	    } else
+	    } else {
 		continue;
+	    }
 	}
 	savec = *cp;
 
@@ -1418,13 +1396,12 @@ ParseDoDependency(char *line)
 	    }
 
 	    while(!Lst_IsEmpty(curTargs)) {
-		void *from, *to;
 		char	*targName = (char *)Lst_DeQueue(curTargs);
 
-		if (!Suff_IsTransform (targName, &from, &to)) {
+		if (!Suff_IsTransform (targName)) {
 		    gn = Targ_FindNode(targName, TARG_CREATE);
 		} else {
-		    gn = Suff_AddTransform(targName, &from, &to);
+		    gn = Suff_AddTransform(targName);
 		}
 		if (doing_depend)
 		    ParseMark(gn);
@@ -1459,9 +1436,9 @@ ParseDoDependency(char *line)
 		cp++;
 	    }
 	}
-	/* Inline assignment in case of continue statements. */
-    } while (*(line = cp) != '\0' && (ParseIsEscaped(lstart, cp) ||
-	((*cp != '!') && (*cp != ':'))));
+	line = cp;
+    } while (*line && (ParseIsEscaped(lstart, line) ||
+	((*line != '!') && (*line != ':'))));
 
     /*
      * Don't need the list of target names anymore...
@@ -1513,7 +1490,7 @@ ParseDoDependency(char *line)
 
     cp++;			/* Advance beyond operator */
 
-    Lst_ForEach(targets, ParseTargetsFound, &op);
+    Lst_ForEach(targets, ParseDoOp, &op);
 
     /*
      * Get to the first source
@@ -1536,9 +1513,6 @@ ParseDoDependency(char *line)
 	switch (specType) {
 	    case Suffixes:
 		Suff_ClearSuffixes();
-		/* An earlier target might be eligible for main target. */
-		mainNode = NULL;
-		Lst_ForEach(Targ_List(), ParseFindMain, NULL);
 		break;
 	    case Precious:
 		allPrecious = TRUE;
@@ -1586,7 +1560,7 @@ ParseDoDependency(char *line)
 	(specType == Includes) || (specType == Libs) ||
 	(specType == Null) || (specType == ExObjdir))
     {
-	for (line = cp; *line != '\0'; line = cp) {
+	while (*line) {
 	    /*
 	     * If the target was one that doesn't take files as its sources
 	     * but takes something like suffixes, we take each
@@ -1595,8 +1569,7 @@ ParseDoDependency(char *line)
 	     *
 	     * If the target was .SUFFIXES, we take each source as a
 	     * suffix and add it to the list of suffixes maintained by the
-	     * Suff module.  If any suffix was not known, its addition
-	     * might have made the current main target invalid.
+	     * Suff module.
 	     *
 	     * If the target was a .PATH, we add the source as a directory
 	     * to search on the search path.
@@ -1615,14 +1588,14 @@ ParseDoDependency(char *line)
 	     * If it was .OBJDIR, the source is a new definition for .OBJDIR,
 	     * and will cause make to do a new chdir to that path.
 	     */
-	    while (*cp != '\0' && !isspace((unsigned char)*cp))
+	    while (*cp && !isspace ((unsigned char)*cp)) {
 		cp++;
-
+	    }
 	    savec = *cp;
 	    *cp = '\0';
 	    switch (specType) {
 		case Suffixes:
-		    Suff_AddSuffix(line);
+		    Suff_AddSuffix(line, &mainNode);
 		    break;
 		case ExPath:
 		    Lst_ForEach(paths, ParseAddDir, line);
@@ -1634,9 +1607,6 @@ ParseDoDependency(char *line)
 		    Suff_AddLib(line);
 		    break;
 		case Null:
-		    Parse_Error(PARSE_WARNING,
-			".NULL special target will be removed in the future, "
-			"look at the manual page for details.");
 		    Suff_SetNull(line);
 		    break;
 		case ExObjdir:
@@ -1646,15 +1616,13 @@ ParseDoDependency(char *line)
 		    break;
 	    }
 	    *cp = savec;
-
-	    while (*cp != '\0' && isspace((unsigned char)*cp))
+	    if (savec != '\0') {
 		cp++;
-	}
-
-	if (mainNode != NULL && (mainNode->type & OP_TRANSFORM)) {
-	    /* New suffix invalidated prevous main target, find a new one. */
-	    mainNode = NULL;
-	    Lst_ForEach(Targ_List(), ParseFindMain, NULL);
+	    }
+	    while (*cp && isspace ((unsigned char)*cp)) {
+		cp++;
+	    }
+	    line = cp;
 	}
 	if (paths) {
 	    Lst_Destroy(paths, NULL);
@@ -1983,50 +1951,14 @@ Parse_DoVar(char *line, GNode *ctxt)
 	free(cp);
 }
 
-/*-
- *-----------------------------------------------------------------------
- * ParseUnlinkLocalChildren -- remove local children from target's sources.
- *
- * Local children are the dependencies that were added by a rule with
- * commands.
- *
- * Input:
- *	parent	node whose children are to be culled
- *-----------------------------------------------------------------------
- */
-static void
-ParseUnlinkLocalChildren(GNode *parent)
-{
-    GNode *child;
-    LstNode i, next;
 
-    if (parent->first_local_child != NULL)
-    {
-	next = parent->first_local_child;
-	do {
-	    i = next;
-	    next = Lst_Succ(i);
-	    child = (GNode *)Lst_Datum(i);
-
-	    Lst_Remove(child->parents, Lst_Member(child->parents, parent));
-	    Lst_Remove(parent->children, i);
-	    --parent->unmade;
-	} while (i != parent->last_local_child);
-    }
-
-    parent->first_local_child = NULL;
-    parent->last_local_child = NULL;
-}
-
-/*-
- *-----------------------------------------------------------------------
+/*
  * ParseMaybeSubMake --
  * 	Scan the command string to see if it a possible submake node
  * Input:
  *	cmd		the command to scan
  * Results:
  *	TRUE if the command is possibly a submake, FALSE if not.
- *-----------------------------------------------------------------------
  */
 static Boolean
 ParseMaybeSubMake(const char *cmd)
@@ -2055,7 +1987,6 @@ ParseMaybeSubMake(const char *cmd)
 }
 
 /*-
- *-----------------------------------------------------------------------
  * ParseAddCmd  --
  *	Lst_ForEach function to add a command line to all targets
  *
@@ -2070,7 +2001,6 @@ ParseMaybeSubMake(const char *cmd)
  *	A new element is added to the commands list of the node,
  *	and the node can be marked as a submake node if the command is
  *	determined to be that.
- *-----------------------------------------------------------------------
  */
 static int
 ParseAddCmd(void *gnp, void *cmd)
@@ -2081,52 +2011,30 @@ ParseAddCmd(void *gnp, void *cmd)
     if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (gn->cohorts))
 	gn = (GNode *)Lst_Datum(Lst_Last(gn->cohorts));
 
-    /*
-     * POSIX:	"If a rule is defined more than once, the value of the rule
-     *		shall be that of the last one specified."
-     * Overriding targets is a valid use case but unintentional overriding
-     * is a common enough mistake, so issue a debug message.
-     *
-     * When a rule is redefined, all attributes and children added
-     * by the previous declaration should be cleared.  Things are
-     * complicated by the fact that some of them might have been added
-     * globally for the target too.  gn->gType contains the globally set
-     * attributes and for children we rely on the fact that the children
-     * list contains duplicates in case the dependency has been added
-     * multiple times.
-     */
-    if (gn->type & OP_HAS_COMMANDS) {
-	gn->type &= ~(OP_HAS_COMMANDS | OP_ATTRIBUTE_MASK) | gn->gType
-	    | typeFromCurrent;
-
-	ParseUnlinkLocalChildren(gn);
-
-	Lst_Destroy(gn->commands, NULL);
-
-	if (DEBUG(PARSE)) {
-	    fprintf(debug_file,
-		 "Overriding rule for target \"%s\"; "
-		 "previous rule defined in %s:%d ignored\n",
-		 gn->name, gn->fname, gn->lineno);
-	}
-	gn->commands = Lst_Init(FALSE);
+    /* if target already supplied, ignore commands */
+    if (!(gn->type & OP_HAS_COMMANDS)) {
+	(void)Lst_AtEnd(gn->commands, cmd);
+	if (ParseMaybeSubMake(cmd))
+	    gn->type |= OP_SUBMAKE;
+	ParseMark(gn);
+    } else {
+#ifdef notyet
+	/* XXX: We cannot do this until we fix the tree */
+	(void)Lst_AtEnd(gn->commands, cmd);
+	Parse_Error(PARSE_WARNING,
+		     "overriding commands for target \"%s\"; "
+		     "previous commands defined at %s: %d ignored",
+		     gn->name, gn->fname, gn->lineno);
+#else
+	Parse_Error(PARSE_WARNING,
+		     "duplicate script for target \"%s\" ignored",
+		     gn->name);
+	ParseErrorInternal(gn->fname, gn->lineno, PARSE_WARNING,
+			    "using previous script for \"%s\" defined here",
+			    gn->name);
+#endif
     }
-
-    /*
-     * This function only gets called when commands are found, so we won't
-     * be setting these when only depencies are being added.
-     */
-    if (gn->first_local_child == NULL) {
-	gn->first_local_child = gn->first_local_child_tmp;
-	gn->last_local_child = gn->last_local_child_tmp;
-    }
-
-    (void)Lst_AtEnd(gn->commands, cmd);
-    if (ParseMaybeSubMake(cmd))
-        gn->type |= OP_SUBMAKE;
-    ParseMark(gn);
-
-    return 0;
+    return(0);
 }
 
 /*-
@@ -2864,22 +2772,10 @@ ParseGetLine(int flags, int *length)
 	    continue;
 	}
 
-	/*
-	 * Escaped '\n'.  On regular lines it is replaced with a space
-	 * along with all the leading whitespace on the next line.
-	 * On command-lines, backslash and newline must preserved for
-	 * the shell but if there is a leading tab on the next line
-	 * it is removed.  Weird, but this is all from POSIX.
-	 */
-	if (line[0] != '\t') {
-	    while (ptr[0] == ' ' || ptr[0] == '\t')
-		ptr++;
-	    ch = ' ';
-	} else {
-	    *tp++ = '\\';
-	    if (ptr[0] == '\t')
-		ptr++;
-	}
+	/* Escaped '\n' replace following whitespace with a single ' ' */
+	while (ptr[0] == ' ' || ptr[0] == '\t')
+	    ptr++;
+	ch = ' ';
     }
 
     /* Delete any trailing spaces - eg from empty continuations */
@@ -3211,7 +3107,6 @@ Parse_File(const char *name, int fd)
 		Lst_Destroy(targets, NULL);
 
 	    targets = Lst_Init(FALSE);
-	    typeFromCurrent = 0;
 	    inLine = TRUE;
 
 	    ParseDoDependency(line);

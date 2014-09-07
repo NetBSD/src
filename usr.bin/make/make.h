@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.94 2014/08/23 15:05:40 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.95 2014/09/07 20:55:34 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -167,11 +167,7 @@ typedef struct GNode {
     char            *uname;    	/* The unexpanded name of a .USE node */
     char    	    *path;     	/* The full pathname of the file */
     int             type;      	/* Its type (see the OP flags, below) */
-    int		    gType;	/* Bits in type set by special targets (global)
-				 * instead of special sources (local).
-				 * These are preserved if the target is
-				 * redefined.
-				 */
+
     int             flags;
 #define REMAKE		0x1    	/* this target needs to be (re)made */
 #define	CHILDMADE	0x2	/* children of this target were made */
@@ -209,32 +205,6 @@ typedef struct GNode {
     Lst	    	    cohorts;  	/* Other nodes for the :: operator */
     Lst             parents;   	/* Nodes that depend on this one */
     Lst             children;  	/* Nodes on which this one depends */
-
-    /*
-     * Support for clearing dependencies from an overridden rule.
-     * Items in children from first_local_child to last_local_child
-     * (inclusive) were added by a rule with commands.  We must store
-     * the position instead of the value as the value might be in the list
-     * multiple times.  It is this fact which allows us to clear the locally
-     * defined dependencies in the first place, as the extras are still
-     * left in the list.
-     *
-     * We can differentiate between extra dependency rules and full
-     * rules only when the first command line is read and the new
-     * dependencies are already added.  Because we need to store
-     * the position, not the value, the future values for these fields
-     * must be tracked individually for each node, not globally by the Parse
-     * module like the type bits can be.  The _tmp fields are used for this
-     * purpose.  They are cleared for each target on a dependency line when
-     * the dependency operator is found and updated when new sources are
-     * added.  If a command section follows, the values are copied to
-     * the actual fields.
-     */
-    LstNode	    first_local_child;
-    LstNode	    first_local_child_tmp;
-    LstNode	    last_local_child;
-    LstNode	    last_local_child_tmp;
-
     Lst             order_pred;	/* .ORDER nodes we need made */
     Lst             order_succ;	/* .ORDER nodes who need us */
 
@@ -305,7 +275,6 @@ typedef struct GNode {
 #define OP_NOMETA_CMP	0x00200000  /* Do not compare commands in .meta file */
 #define OP_SUBMAKE	0x00400000  /* Possibly a submake node */
 /* Attributes applied by PMake */
-#define OP_FROM_SYS_MK  0x00800000  /* The node was defined in sys.mk */
 #define OP_TRANSFORM	0x80000000  /* The node is a transformation rule */
 #define OP_MEMBER 	0x40000000  /* Target is a member of an archive */
 #define OP_LIB	  	0x20000000  /* Target is a library */
@@ -324,14 +293,8 @@ typedef struct GNode {
  */
 #define OP_NOP(t)	(((t) & OP_OPMASK) == 0x00000000)
 
-#define OP_NOTARGET (OP_NOTMAIN|OP_USE|OP_EXEC|OP_TRANSFORM|OP_FROM_SYS_MK)
+#define OP_NOTARGET (OP_NOTMAIN|OP_USE|OP_EXEC|OP_TRANSFORM)
 
-/* All OP_* bits set by special sources or targets. */
-#define OP_ATTRIBUTE_MASK \
-  ( OP_OPTIONAL  | OP_USE  | OP_EXEC   | OP_IGNORE  | OP_PRECIOUS |   \
-    OP_SILENT    | OP_MAKE | OP_JOIN   | OP_MADE    | OP_SPECIAL |    \
-    OP_USEBEFORE | OP_INVISIBLE        | OP_NOTMAIN | OP_PHONY |      \
-    OP_NOPATH    | OP_WAIT | OP_NOMETA | OP_META    | OP_NOMETA_CMP )
 /*
  * The TARG_ constants are used when calling the Targ_FindNode and
  * Targ_FindList functions in targ.c. They simply tell the functions what to
@@ -511,7 +474,6 @@ Boolean Make_OODate(GNode *);
 void Make_ExpandUse(Lst);
 time_t Make_Recheck(GNode *);
 void Make_HandleUse(GNode *, GNode *);
-void Make_SetImpsrcLocalVar(GNode *, GNode *);
 void Make_Update(GNode *);
 void Make_DoAllVar(GNode *);
 Boolean Make_Run(Lst);

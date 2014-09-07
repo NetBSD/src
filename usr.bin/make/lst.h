@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.19 2014/08/23 15:05:40 christos Exp $	*/
+/*	$NetBSD: lst.h,v 1.20 2014/09/07 20:55:34 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -94,7 +94,6 @@ typedef	struct ListNode	*LstNode;
 
 typedef void		*DuplicateProc(void *);
 typedef void		FreeProc(void *);
-typedef void		FreeProc2(void *, void *);
 
 #define LST_CONCNEW	0   /* create new LstNode's when using Lst_Concat */
 #define LST_CONCLINK	1   /* relink LstNode's when using Lst_Concat */
@@ -114,7 +113,6 @@ Boolean		Lst_IsEmpty(Lst);
 /*
  * Functions to modify a list
  */
-/* NB!  SUCCESS is 0, FAILURE is 1! */
 /* Insert an element before another */
 ReturnStatus	Lst_InsertBefore(Lst, LstNode, void *);
 /* Insert an element after another */
@@ -125,10 +123,6 @@ ReturnStatus	Lst_AtFront(Lst, void *);
 ReturnStatus	Lst_AtEnd(Lst, void *);
 /* Remove an element */
 ReturnStatus	Lst_Remove(Lst, LstNode);
-#if 0
-/* Remove multiple successive elements. */
-ReturnStatus	Lst_RemoveSlice(Lst, LstNode, LstNode, FreeProc2 *, void *);
-#endif
 /* Replace a node with a new value */
 ReturnStatus	Lst_Replace(LstNode, void *);
 /* Concatenate two lists */
@@ -150,10 +144,6 @@ void		*Lst_Datum(LstNode);
 
 /*
  * Functions for entire lists
- */
-/*
- * NB!  The predicate function logic is inverted!  You have to return 0
- * if the item you're looking for has been found, and non-zero if it hasn't.
  */
 /* Find an element in a list */
 LstNode		Lst_Find(Lst, const void *, int (*)(const void *, const void *));
@@ -178,19 +168,12 @@ int		Lst_ForEachFrom(Lst, LstNode, int (*)(void *, void *),
  * these functions are for dealing with a list as a table, of sorts.
  * An idea of the "current element" is kept and used by all the functions
  * between Lst_Open() and Lst_Close().
- * Usage:
- *	LstNode ln;
- *	Lst_Open(lst);
- *	while (ln = Lst_Next(lst) && !Lst_IsAtEnd(lst)) {
- *		...
- *	}
- *	Lst_Close(lst);
  */
 /* Open the list */
 ReturnStatus	Lst_Open(Lst);
 /* Next element please */
 LstNode		Lst_Next(Lst);
-/* Done yet, i.e. is the result of the latest Lst_Next() a valid node? */
+/* Done yet? */
 Boolean		Lst_IsAtEnd(Lst);
 /* Finish table access */
 void		Lst_Close(Lst);

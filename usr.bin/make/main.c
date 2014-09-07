@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.229 2014/08/23 15:05:40 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.230 2014/09/07 20:55:34 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.229 2014/08/23 15:05:40 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.230 2014/09/07 20:55:34 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.229 2014/08/23 15:05:40 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.230 2014/09/07 20:55:34 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -182,7 +182,6 @@ static const char *	tracefile;
 static void		MainParseArgs(int, char **);
 static int		ReadMakefile(const void *, const void *);
 static void		usage(void) MAKE_ATTR_DEAD;
-static int		MarkSysMkTargets(void *, void *);
 
 static Boolean		ignorePWD;	/* if we use -C, PWD is meaningless */
 static char objdir[MAXPATHLEN + 1];	/* where we chdir'ed to */
@@ -1205,14 +1204,6 @@ main(int argc, char **argv)
 			Fatal("%s: cannot open %s.", progname,
 			    (char *)Lst_Datum(ln));
 	}
-	/*
-	 * Rules from system makefiles are somewhat special.  For instance,
-	 * they're not eligible to become main targets.  A sensible sys.mk
-	 * only contains suffix transformations and variables, but clearing
-	 * the suffix list makes suffix transformations into regular rules,
-	 * which could otherwise become main targets.
-	 */
-	Lst_ForEach(Targ_List(), MarkSysMkTargets, NULL);
 
 	if (!Lst_IsEmpty(makefiles)) {
 		LstNode ln;
@@ -1384,8 +1375,8 @@ main(int argc, char **argv)
 	if (enterFlag)
 		printf("%s: Leaving directory `%s'\n", progname, curdir);
 
+	Suff_End();
         Targ_End();
-	Suff_End(); /* targets refer to suffixes, clean after Targ */
 	Arch_End();
 	Var_End();
 	Parse_End();
@@ -1497,12 +1488,10 @@ Cmd_Exec(const char *cmd, const char **errnum)
     int		status;		/* command exit status */
     Buffer	buf;		/* buffer to store the result */
     char	*cp;
-    int		cc;		/* bytes read, or -1 */
-    int		savederr;	/* saved errno */
+    int		cc;
 
 
     *errnum = NULL;
-    savederr = 0;
 
     if (!shellName)
 	Shell_Init();
@@ -1565,8 +1554,6 @@ Cmd_Exec(const char *cmd, const char **errnum)
 		Buf_AddBytes(&buf, cc, result);
 	}
 	while (cc > 0 || (cc == -1 && errno == EINTR));
-	if (cc == -1)
-	    savederr = errno;
 
 	/*
 	 * Close the input side of the pipe.
@@ -1583,7 +1570,7 @@ Cmd_Exec(const char *cmd, const char **errnum)
 	cc = Buf_Size(&buf);
 	res = Buf_Destroy(&buf, FALSE);
 
-	if (savederr != 0)
+	if (cc == 0)
 	    *errnum = "Couldn't read shell's output for \"%s\"";
 
 	if (WIFSIGNALED(status))
@@ -1826,25 +1813,6 @@ usage(void)
             [-I directory] [-J private] [-j max_jobs] [-m directory] [-T file]\n\
             [-V variable] [variable=value] [target ...]\n", progname);
 	exit(2);
-}
-
-/*-
- *-----------------------------------------------------------------------
- * MarkSysMkTargets -- set OP_FROM_SYS_MK on a target node in Lst_ForEach().
- *
- * Input:
- *	target	node to set the attribute on (GNode *)
- *
- * Results:
- *	Always 0 to not abort Lst_ForEach() prematurely.
- *-----------------------------------------------------------------------
- */
-static int
-MarkSysMkTargets(void *target, void *unused)
-{
-    (void)unused;
-    ((GNode *)target)->type |= OP_FROM_SYS_MK;
-    return 0;
 }
 
 

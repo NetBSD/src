@@ -1,4 +1,4 @@
-/*	$NetBSD: lstInt.h,v 1.21 2014/08/23 15:05:40 christos Exp $	*/
+/*	$NetBSD: lstInt.h,v 1.22 2014/09/07 20:55:34 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -59,11 +59,7 @@ typedef struct ListNode {
 #define LN_DELETED  	0x0001      /* List node should be removed when done */
 
 typedef enum {
-    Head,	/* list is just opened and its empty */
-    Middle,	/* not empty and not at end */
-    Tail,	/* end has been reached, the result of previous Lst_Next()
-		 * is bogus */
-    Unknown	/* list is just opened and its not empty */
+    Head, Middle, Tail, Unknown
 } Where;
 
 typedef struct	List {
