@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.16 2014/09/04 02:36:08 jmcneill Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.17 2014/09/07 22:21:36 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.16 2014/09/04 02:36:08 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.17 2014/09/07 22:21:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -238,6 +238,42 @@ awin_memprobe(void)
 	    (u_int)(memsize >> 20));
 #endif
 	return memsize;
+}
+
+uint16_t
+awin_chip_id(void)
+{
+	static uint16_t chip_id = 0;
+	uint32_t ver;
+
+	if (!chip_id) {
+		ver = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
+		    AWIN_SRAM_OFFSET + AWIN_SRAM_VER_REG);
+		ver |= AWIN_SRAM_VER_R_EN;
+		bus_space_write_4(&awin_bs_tag, awin_core_bsh,
+		    AWIN_SRAM_OFFSET + AWIN_SRAM_VER_REG, ver);
+		ver = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
+		    AWIN_SRAM_OFFSET + AWIN_SRAM_VER_REG);
+
+		chip_id = __SHIFTOUT(ver, AWIN_SRAM_VER_KEY_FIELD);
+	}
+
+	return chip_id;
+}
+
+const char *
+awin_chip_name(void)
+{
+	uint16_t chip_id = awin_chip_id();
+
+	switch (chip_id) {
+	case AWIN_CHIP_ID_A10: return "A10";
+	case AWIN_CHIP_ID_A13: return "A13";
+	case AWIN_CHIP_ID_A20: return "A20";
+	case AWIN_CHIP_ID_A23: return "A23";
+	case AWIN_CHIP_ID_A31: return "A31";
+	default: return "unknown chip";
+	}
 }
 
 void
