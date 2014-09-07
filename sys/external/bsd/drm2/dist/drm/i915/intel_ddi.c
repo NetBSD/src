@@ -803,7 +803,7 @@ bool intel_ddi_pll_select(struct intel_crtc *intel_crtc)
 	struct drm_i915_private *dev_priv = crtc->dev->dev_private;
 	struct intel_ddi_plls *plls = &dev_priv->ddi_plls;
 	int type = intel_encoder->type;
-	enum pipe pipe = intel_crtc->pipe;
+	enum i915_pipe pipe = intel_crtc->pipe;
 	int clock = intel_crtc->config.port_clock;
 
 	intel_ddi_put_crtc_pll(crtc);
@@ -1005,7 +1005,7 @@ void intel_ddi_enable_transcoder_func(struct drm_crtc *crtc)
 	struct drm_encoder *encoder = &intel_encoder->base;
 	struct drm_device *dev = crtc->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum pipe pipe = intel_crtc->pipe;
+	enum i915_pipe pipe = intel_crtc->pipe;
 	enum transcoder cpu_transcoder = intel_crtc->config.cpu_transcoder;
 	enum port port = intel_ddi_get_encoder_port(intel_encoder);
 	int type = intel_encoder->type;
@@ -1106,7 +1106,7 @@ bool intel_ddi_connector_get_hw_state(struct intel_connector *intel_connector)
 	struct intel_encoder *intel_encoder = intel_connector->encoder;
 	int type = intel_connector->base.connector_type;
 	enum port port = intel_ddi_get_encoder_port(intel_encoder);
-	enum pipe pipe = 0;
+	enum i915_pipe pipe = 0;
 	enum transcoder cpu_transcoder;
 	enum intel_display_power_domain power_domain;
 	uint32_t tmp;
@@ -1145,7 +1145,7 @@ bool intel_ddi_connector_get_hw_state(struct intel_connector *intel_connector)
 }
 
 bool intel_ddi_get_hw_state(struct intel_encoder *encoder,
-			    enum pipe *pipe)
+			    enum i915_pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -1198,7 +1198,7 @@ bool intel_ddi_get_hw_state(struct intel_encoder *encoder,
 }
 
 static uint32_t intel_ddi_get_crtc_pll(struct drm_i915_private *dev_priv,
-				       enum pipe pipe)
+				       enum i915_pipe pipe)
 {
 	uint32_t temp, ret;
 	enum port port = I915_MAX_PORTS;
@@ -1234,7 +1234,7 @@ static uint32_t intel_ddi_get_crtc_pll(struct drm_i915_private *dev_priv,
 void intel_ddi_setup_hw_pll_state(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 	struct intel_crtc *intel_crtc;
 
 	dev_priv->ddi_plls.spll_refcount = 0;
