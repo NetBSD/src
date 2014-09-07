@@ -719,6 +719,20 @@
 #define AWIN_MMC_IDST_RECEIVE_INT	__BIT(1)
 #define AWIN_MMC_IDST_TRANSMIT_INT	__BIT(0)
 
+struct awin_mmc_idma_descriptor {
+	uint32_t	dma_config;
+#define AWIN_MMC_IDMA_CONFIG_DIC	__BIT(1)
+#define AWIN_MMC_IDMA_CONFIG_LD		__BIT(2)
+#define AWIN_MMC_IDMA_CONFIG_FD		__BIT(3)
+#define AWIN_MMC_IDMA_CONFIG_CH		__BIT(4)
+#define AWIN_MMC_IDMA_CONFIG_ER		__BIT(5)
+#define AWIN_MMC_IDMA_CONFIG_CES	__BIT(30)
+#define AWIN_MMC_IDMA_CONFIG_OWN	__BIT(31)
+	uint32_t	dma_buf_size;
+	uint32_t	dma_buf_addr;
+	uint32_t	dma_next;
+} __packed;
+
 #define AWIN_CPUCFG_CPU0_RST_CTRL_REG	0x0040
 #define AWIN_CPUCFG_CPU0_CTRL_REG	0x0044
 #define AWIN_CPUCFG_CPU0_STATUS_REG	0x0048
