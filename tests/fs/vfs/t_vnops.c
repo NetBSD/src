@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.41 2014/08/12 12:13:09 gson Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.42 2014/09/07 09:10:09 gson Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -551,16 +551,55 @@ rename_nametoolong(const atf_tc_t *tc, const char *mp)
 	rump_sys_chdir("/");
 }
 
+/*
+ * Test creating a symlink whose length is "len" bytes, not including
+ * the terminating NUL.
+ */
 static void
-symlink_zerolen(const atf_tc_t *tc, const char *mp)
+symlink_len(const atf_tc_t *tc, const char *mp, size_t len)
 {
+	char *buf;
+	int r;
 
 	USES_SYMLINKS;
 
 	RL(rump_sys_chdir(mp));
 
-	RL(rump_sys_symlink("", "afile"));
+	buf = malloc(len + 1);
+	ATF_REQUIRE(buf);
+	memset(buf, 'a', len);
+	buf[len] = '\0';
+	r = rump_sys_symlink(buf, "afile");
+	if (r == -1) {
+		ATF_REQUIRE_ERRNO(ENAMETOOLONG, r);
+	} else {
+		RL(rump_sys_unlink("afile"));
+	}
+	free(buf);
+
 	RL(rump_sys_chdir("/"));
+}
+
+static void
+symlink_zerolen(const atf_tc_t *tc, const char *mp)
+{
+	symlink_len(tc, mp, 0);
+}
+
+static void
+symlink_long(const atf_tc_t *tc, const char *mp)
+{
+	/*
+	 * Test lengths close to powers of two, as those are likely
+	 * to be edge cases.
+	 */
+	size_t len;
+	int fuzz;
+	for (len = 2; len <= 65536; len *= 2) {
+		for (fuzz = -1; fuzz <= 1; fuzz++) {
+			symlink_len(tc, mp, len + fuzz);
+		}
+	}
 }
 
 static void
@@ -920,7 +959,8 @@ ATF_TC_FSAPPLY(rename_reg_nodir, "rename regular files, no subdirectories");
 ATF_TC_FSAPPLY(create_nametoolong, "create file with name too long");
 ATF_TC_FSAPPLY(create_exist, "create with O_EXCL");
 ATF_TC_FSAPPLY(rename_nametoolong, "rename to file with name too long");
-ATF_TC_FSAPPLY(symlink_zerolen, "symlink with 0-len target");
+ATF_TC_FSAPPLY(symlink_zerolen, "symlink with target of length 0");
+ATF_TC_FSAPPLY(symlink_long, "symlink with target of length > 0");
 ATF_TC_FSAPPLY(symlink_root, "symlink to root directory");
 ATF_TC_FSAPPLY(attrs, "check setting attributes works");
 ATF_TC_FSAPPLY(fcntl_lock, "check fcntl F_SETLK");
@@ -944,6 +984,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(create_exist);
 	ATF_TP_FSAPPLY(rename_nametoolong);
 	ATF_TP_FSAPPLY(symlink_zerolen);
+	ATF_TP_FSAPPLY(symlink_long);
 	ATF_TP_FSAPPLY(symlink_root);
 	ATF_TP_FSAPPLY(attrs);
 	ATF_TP_FSAPPLY(fcntl_lock);
