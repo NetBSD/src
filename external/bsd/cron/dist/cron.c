@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.8 2014/09/05 21:32:37 christos Exp $	*/
+/*	$NetBSD: cron.c,v 1.9 2014/09/07 13:34:12 joerg Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: cron.c,v 1.12 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: cron.c,v 1.8 2014/09/05 21:32:37 christos Exp $");
+__RCSID("$NetBSD: cron.c,v 1.9 2014/09/07 13:34:12 joerg Exp $");
 #endif
 #endif
 
@@ -35,7 +35,7 @@ __RCSID("$NetBSD: cron.c,v 1.8 2014/09/05 21:32:37 christos Exp $");
 
 enum timejump { negative, small, medium, large };
 
-static	void	usage(void),
+static	void	usage(void) __dead,
 		run_reboot_jobs(cron_db *),
 		find_jobs(time_t, cron_db *, int, int),
 		set_time(int),
@@ -43,7 +43,7 @@ static	void	usage(void),
 		sigchld_handler(int),
 		sighup_handler(int),
 		sigchld_reaper(void),
-		quit(int),
+		quit(int) __dead,
 		parse_args(int c, char *v[]);
 
 static	volatile sig_atomic_t	got_sighup, got_sigchld;
