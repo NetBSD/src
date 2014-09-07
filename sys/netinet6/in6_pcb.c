@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.128 2014/08/05 05:24:27 rtr Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.129 2014/09/07 00:50:56 rmind Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.128 2014/08/05 05:24:27 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.129 2014/09/07 00:50:56 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -617,9 +617,9 @@ in6_pcbdetach(struct in6pcb *in6p)
 		free(in6p->in6p_outputopts, M_IP6OPT);
 	}
 	rtcache_free(&in6p->in6p_route);
+	ip6_freemoptions(in6p->in6p_moptions);
 	sofree(so);				/* drops the socket's lock */
 
-	ip6_freemoptions(in6p->in6p_moptions);
 	pool_put(&in6pcb_pool, in6p);
 	mutex_enter(softnet_lock);		/* reacquire it */
 }
