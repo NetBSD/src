@@ -68,7 +68,7 @@ static struct intel_lvds_connector *to_lvds_connector(struct drm_connector *conn
 }
 
 static bool intel_lvds_get_hw_state(struct intel_encoder *encoder,
-				    enum pipe *pipe)
+				    enum i915_pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;

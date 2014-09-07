@@ -54,7 +54,7 @@ static void print_stat(struct intel_dsi *intel_dsi)
 	struct drm_device *dev = encoder->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
-	enum pipe pipe = intel_crtc->pipe;
+	enum i915_pipe pipe = intel_crtc->pipe;
 	u32 val;
 
 	val = I915_READ(MIPI_INTR_STAT(pipe));
@@ -110,7 +110,7 @@ void dsi_hs_mode_enable(struct intel_dsi *intel_dsi, bool enable)
 	struct drm_device *dev = encoder->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
-	enum pipe pipe = intel_crtc->pipe;
+	enum i915_pipe pipe = intel_crtc->pipe;
 	u32 temp;
 	u32 mask = DBI_FIFO_EMPTY;
 
@@ -131,7 +131,7 @@ static int dsi_vc_send_short(struct intel_dsi *intel_dsi, int channel,
 	struct drm_device *dev = encoder->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
-	enum pipe pipe = intel_crtc->pipe;
+	enum i915_pipe pipe = intel_crtc->pipe;
 	u32 ctrl_reg;
 	u32 ctrl;
 	u32 mask;
@@ -173,7 +173,7 @@ static int dsi_vc_send_long(struct intel_dsi *intel_dsi, int channel,
 	struct drm_device *dev = encoder->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
-	enum pipe pipe = intel_crtc->pipe;
+	enum i915_pipe pipe = intel_crtc->pipe;
 	u32 data_reg;
 	int i, j, n;
 	u32 mask;
@@ -292,7 +292,7 @@ static int dsi_read_data_return(struct intel_dsi *intel_dsi,
 	struct drm_device *dev = encoder->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
-	enum pipe pipe = intel_crtc->pipe;
+	enum i915_pipe pipe = intel_crtc->pipe;
 	int i, len = 0;
 	u32 data_reg, val;
 
@@ -318,7 +318,7 @@ int dsi_vc_dcs_read(struct intel_dsi *intel_dsi, int channel, u8 dcs_cmd,
 	struct drm_device *dev = encoder->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
-	enum pipe pipe = intel_crtc->pipe;
+	enum i915_pipe pipe = intel_crtc->pipe;
 	u32 mask;
 	int ret;
 
@@ -354,7 +354,7 @@ int dsi_vc_generic_read(struct intel_dsi *intel_dsi, int channel,
 	struct drm_device *dev = encoder->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
-	enum pipe pipe = intel_crtc->pipe;
+	enum i915_pipe pipe = intel_crtc->pipe;
 	u32 mask;
 	int ret;
 
@@ -395,7 +395,7 @@ int dpi_send_cmd(struct intel_dsi *intel_dsi, u32 cmd)
 	struct drm_device *dev = encoder->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->crtc);
-	enum pipe pipe = intel_crtc->pipe;
+	enum i915_pipe pipe = intel_crtc->pipe;
 	u32 mask;
 
 	/* XXX: pipe, hs */

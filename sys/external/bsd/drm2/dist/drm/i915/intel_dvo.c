@@ -118,7 +118,7 @@ static bool intel_dvo_connector_get_hw_state(struct intel_connector *connector)
 }
 
 static bool intel_dvo_get_hw_state(struct intel_encoder *encoder,
-				   enum pipe *pipe)
+				   enum i915_pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;

@@ -274,7 +274,7 @@ intel_dp_init_panel_power_sequencer_registers(struct drm_device *dev,
 					      struct intel_dp *intel_dp,
 					      struct edp_power_seq *out);
 
-static enum pipe
+static enum i915_pipe
 vlv_power_sequencer_pipe(struct intel_dp *intel_dp)
 {
 	struct intel_digital_port *intel_dig_port = dp_to_dig_port(intel_dp);
@@ -282,7 +282,7 @@ vlv_power_sequencer_pipe(struct intel_dp *intel_dp)
 	struct drm_device *dev = intel_dig_port->base.base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	enum port port = intel_dig_port->port;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	/* modeset should have pipe */
 	if (crtc)
@@ -1441,7 +1441,7 @@ void intel_dp_sink_dpms(struct intel_dp *intel_dp, int mode)
 }
 
 static bool intel_dp_get_hw_state(struct intel_encoder *encoder,
-				  enum pipe *pipe)
+				  enum i915_pipe *pipe)
 {
 	struct intel_dp *intel_dp = enc_to_intel_dp(&encoder->base);
 	enum port port = dp_to_dig_port(intel_dp)->port;
@@ -3530,7 +3530,7 @@ intel_dp_init_panel_power_sequencer(struct drm_device *dev,
 		pp_off_reg = PCH_PP_OFF_DELAYS;
 		pp_div_reg = PCH_PP_DIVISOR;
 	} else {
-		enum pipe pipe = vlv_power_sequencer_pipe(intel_dp);
+		enum i915_pipe pipe = vlv_power_sequencer_pipe(intel_dp);
 
 		pp_ctrl_reg = VLV_PIPE_PP_CONTROL(pipe);
 		pp_on_reg = VLV_PIPE_PP_ON_DELAYS(pipe);
@@ -3629,7 +3629,7 @@ intel_dp_init_panel_power_sequencer_registers(struct drm_device *dev,
 		pp_off_reg = PCH_PP_OFF_DELAYS;
 		pp_div_reg = PCH_PP_DIVISOR;
 	} else {
-		enum pipe pipe = vlv_power_sequencer_pipe(intel_dp);
+		enum i915_pipe pipe = vlv_power_sequencer_pipe(intel_dp);
 
 		pp_on_reg = VLV_PIPE_PP_ON_DELAYS(pipe);
 		pp_off_reg = VLV_PIPE_PP_OFF_DELAYS(pipe);

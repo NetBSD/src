@@ -1071,7 +1071,7 @@ static uint32_t vlv_plane_formats[] = {
 };
 
 int
-intel_plane_init(struct drm_device *dev, enum pipe pipe, int plane)
+intel_plane_init(struct drm_device *dev, enum i915_pipe pipe, int plane)
 {
 	struct intel_plane *intel_plane;
 	unsigned long possible_crtcs;

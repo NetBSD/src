@@ -383,7 +383,7 @@ static u32 i9xx_get_backlight(struct intel_connector *connector)
 	return val;
 }
 
-static u32 _vlv_get_backlight(struct drm_device *dev, enum pipe pipe)
+static u32 _vlv_get_backlight(struct drm_device *dev, enum i915_pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -393,7 +393,7 @@ static u32 _vlv_get_backlight(struct drm_device *dev, enum pipe pipe)
 static u32 vlv_get_backlight(struct intel_connector *connector)
 {
 	struct drm_device *dev = connector->base.dev;
-	enum pipe pipe = intel_get_pipe_from_connector(connector);
+	enum i915_pipe pipe = intel_get_pipe_from_connector(connector);
 
 	return _vlv_get_backlight(dev, pipe);
 }
@@ -468,7 +468,7 @@ static void vlv_set_backlight(struct intel_connector *connector, u32 level)
 {
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum pipe pipe = intel_get_pipe_from_connector(connector);
+	enum i915_pipe pipe = intel_get_pipe_from_connector(connector);
 	u32 tmp;
 
 	tmp = I915_READ(VLV_BLC_PWM_CTL(pipe)) & ~BACKLIGHT_DUTY_CYCLE_MASK;
@@ -494,7 +494,7 @@ void intel_panel_set_backlight(struct intel_connector *connector, u32 level,
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_panel *panel = &connector->panel;
-	enum pipe pipe = intel_get_pipe_from_connector(connector);
+	enum i915_pipe pipe = intel_get_pipe_from_connector(connector);
 	u32 freq;
 	unsigned long flags;
 	u64 n;
@@ -560,7 +560,7 @@ static void vlv_disable_backlight(struct intel_connector *connector)
 {
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum pipe pipe = intel_get_pipe_from_connector(connector);
+	enum i915_pipe pipe = intel_get_pipe_from_connector(connector);
 	u32 tmp;
 
 	intel_panel_actually_set_backlight(connector, 0);
@@ -574,7 +574,7 @@ void intel_panel_disable_backlight(struct intel_connector *connector)
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_panel *panel = &connector->panel;
-	enum pipe pipe = intel_get_pipe_from_connector(connector);
+	enum i915_pipe pipe = intel_get_pipe_from_connector(connector);
 	unsigned long flags;
 
 	if (!panel->backlight.present || pipe == INVALID_PIPE)
@@ -636,7 +636,7 @@ static void pch_enable_backlight(struct intel_connector *connector)
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_panel *panel = &connector->panel;
-	enum pipe pipe = intel_get_pipe_from_connector(connector);
+	enum i915_pipe pipe = intel_get_pipe_from_connector(connector);
 	enum transcoder cpu_transcoder =
 		intel_pipe_to_cpu_transcoder(dev_priv, pipe);
 	u32 cpu_ctl2, pch_ctl1, pch_ctl2;
@@ -713,7 +713,7 @@ static void i965_enable_backlight(struct intel_connector *connector)
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_panel *panel = &connector->panel;
-	enum pipe pipe = intel_get_pipe_from_connector(connector);
+	enum i915_pipe pipe = intel_get_pipe_from_connector(connector);
 	u32 ctl, ctl2, freq;
 
 	ctl2 = I915_READ(BLC_PWM_CTL2);
@@ -748,7 +748,7 @@ static void vlv_enable_backlight(struct intel_connector *connector)
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_panel *panel = &connector->panel;
-	enum pipe pipe = intel_get_pipe_from_connector(connector);
+	enum i915_pipe pipe = intel_get_pipe_from_connector(connector);
 	u32 ctl, ctl2;
 
 	ctl2 = I915_READ(VLV_BLC_PWM_CTL2(pipe));
@@ -777,7 +777,7 @@ void intel_panel_enable_backlight(struct intel_connector *connector)
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_panel *panel = &connector->panel;
-	enum pipe pipe = intel_get_pipe_from_connector(connector);
+	enum i915_pipe pipe = intel_get_pipe_from_connector(connector);
 	unsigned long flags;
 
 	if (!panel->backlight.present || pipe == INVALID_PIPE)
@@ -1044,7 +1044,7 @@ static int vlv_setup_backlight(struct intel_connector *connector)
 	struct drm_device *dev = connector->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_panel *panel = &connector->panel;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 	u32 ctl, ctl2, val;
 
 	for_each_pipe(pipe) {
