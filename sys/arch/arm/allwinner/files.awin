@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.10 2014/09/06 00:15:34 jmcneill Exp $
+#	$NetBSD: files.awin,v 1.11 2014/09/07 17:49:39 jmcneill Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -41,6 +41,11 @@ file	arch/arm/allwinner/awin_icu.c		awin_icu
 device	awinwdt : sysmon_wdog
 attach	awinwdt at awinio with awin_wdt
 file	arch/arm/allwinner/awin_wdt.c		awin_wdt | awin_io needs-flag
+
+# A10/A20 RTC
+device	awinrtc
+attach	awinrtc at awinio with awin_rtc
+file	arch/arm/allwinner/awin_rtc.c		awin_rtc
 
 # A10 Timers
 device	awintmr
