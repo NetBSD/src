@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.3 2013/01/08 12:15:42 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.4 2014/09/07 15:28:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.3 2013/01/08 12:15:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.4 2014/09/07 15:28:05 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -95,10 +95,10 @@ static const char * const bcm2835_sources[BCM2835_NIRQ] = {
 	"(unused  4)",	"(unused  5)",	"(unused  6)",	"jpeg",
 	"(unused  8)",	"usb",		"(unused 10)",	"(unused 11)",
 	"(unused 12)",	"(unused 13)",	"(unused 14)",	"(unused 15)",
-	"(unused 16)",	"(unused 17)",	"dma2",		"dma3",
-	"(unused 20)",	"(unused 21)",	"(unused 22)",	"(unused 23)",
-	"(unused 24)",	"(unused 25)",	"(unused 26)",	"(unused 27)",
-	"(unused 28)",	"aux",		"(unused 30)",	"(unused 31)",
+	"dma0",		"dma1",		"dma2",		"dma3",
+	"dma4",		"dma5",		"dma6",		"dma7",
+	"dma8",		"dma9",		"dma10",	"dma11",
+	"dma12",	"aux",		"(unused 30)",	"(unused 31)",
 	"(unused 32)",	"(unused 33)",	"(unused 34)",	"(unused 35)",
 	"(unused 36)",	"(unused 37)",	"(unused 38)",	"(unused 39)",
 	"(unused 40)",	"(unused 41)",	"(unused 42)",	"i2c spl slv",
@@ -171,7 +171,6 @@ bcm2835_irq_handler(void *frame)
 	if ((ipl_mask & ~oldipl_mask) > oldipl_mask)
 		pic_do_pending_ints(I32_bit, oldipl, frame);
 }
-
 
 static void
 bcm2835_pic_unblock_irqs(struct pic_softc *pic, size_t irqbase,
