@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.21 2014/09/06 18:04:28 martin Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.22 2014/09/07 11:50:23 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,18 +50,20 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.21 2014/09/06 18:04:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.22 2014/09/07 11:50:23 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/errno.h>
 #else /* ! _KERNEL */
 #include <string.h>
 #include <time.h>
+#include <errno.h>
 #endif /* ! _KERNEL */
 
 #include <dev/clock_subr.h>
 
-static inline int leapyear(int year);
+static inline int leapyear(uint64_t year);
 #define FEBRUARY	2
 #define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
 #define	days_in_month(a) 	(month_days[(a) - 1])
@@ -92,9 +94,12 @@ static const int month_days[12] = {
  * It is otherwise equivalent.
  */
 static inline int
-leapyear(int year)
+leapyear(uint64_t year)
 {
 	int rv = 0;
+
+	if (year < 1969)
+		return EINVAL;
 
 	if ((year & 3) == 0) {
 		rv = 1;
@@ -110,8 +115,7 @@ leapyear(int year)
 time_t
 clock_ymdhms_to_secs(struct clock_ymdhms *dt)
 {
-	uint64_t secs;
-	int i, year, days;
+	uint64_t secs, i, year, days;
 
 	year = dt->dt_year;
 
@@ -167,12 +171,16 @@ clock_ymdhms_to_secs(struct clock_ymdhms *dt)
 	return secs;
 }
 
-void
+int
 clock_secs_to_ymdhms(time_t secs, struct clock_ymdhms *dt)
 {
-	int i, leap;
+	int leap;
+	uint64_t i;
 	time_t days;
 	time_t rsec;	/* remainder seconds */
+
+	if (secs < 0)
+		return EINVAL;
 
 	days = secs / SECDAY;
 	rsec = secs % SECDAY;
@@ -225,4 +233,6 @@ clock_secs_to_ymdhms(time_t secs, struct clock_ymdhms *dt)
 	dt->dt_min  = rsec / 60;
 	rsec = rsec % 60;
 	dt->dt_sec  = rsec;
+
+	return 0;
 }
