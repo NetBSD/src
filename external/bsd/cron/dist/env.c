@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.3 2014/09/05 21:32:37 christos Exp $	*/
+/*	$NetBSD: env.c,v 1.4 2014/09/07 13:35:27 tron Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: env.c,v 1.10 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: env.c,v 1.3 2014/09/05 21:32:37 christos Exp $");
+__RCSID("$NetBSD: env.c,v 1.4 2014/09/07 13:35:27 tron Exp $");
 #endif
 #endif
 
@@ -58,9 +58,9 @@ env_copy(char **envp) {
 	for (count = 0; envp[count] != NULL; count++)
 		continue;
 	p = malloc((count + 1) * sizeof(*p));  /* 1 for the NULL */
-	if (p != NULL)
-	    return NULL;
-	for (i = 0; i < count; i++)
+	if (p == NULL)
+		return NULL;
+	for (i = 0; i < count; i++) {
 		if ((p[i] = strdup(envp[i])) == NULL) {
 			save_errno = errno;
 			for (count = 0; count < i; count++)
@@ -69,6 +69,7 @@ env_copy(char **envp) {
 			errno = save_errno;
 			return NULL;
 		}
+	}
 	p[count] = NULL;
 	return p;
 }
