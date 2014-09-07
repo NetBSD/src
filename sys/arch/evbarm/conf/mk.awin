@@ -1,4 +1,4 @@
-#	$NetBSD: mk.awin,v 1.1 2014/08/31 19:13:01 matt Exp $
+#	$NetBSD: mk.awin,v 1.2 2014/09/07 06:14:13 skrll Exp $
 CPPFLAGS+= -mcpu=cortex-a8 -mfpu=neon
 
 .if !empty(MACHINE_ARCH:M*eb)
@@ -8,7 +8,8 @@ EXTRA_LINKFLAGS+=	--be8
 SYSTEM_FIRST_OBJ=	awin_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/awin/awin_start.S
 
-COPTS.win_machdep.c+=	-DBOARDTYPE=${BOARDTYPE}
+CPPFLAGS.awin_machdep.c+=	-DBOARDTYPE=${BOARDTYPE}
+CPPFLAGS.awin_machdep.c+=	-DAWIN_board=AWIN_${BOARDTYPE}
 
 GENASSYM_EXTRAS+=	${THISARM}/awin/genassym.cf
 

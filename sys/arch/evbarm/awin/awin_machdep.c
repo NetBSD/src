@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.2 2014/09/04 02:34:30 jmcneill Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.3 2014/09/07 06:14:13 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.2 2014/09/04 02:34:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.3 2014/09/07 06:14:13 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -187,8 +187,6 @@ __KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.2 2014/09/04 02:34:30 jmcneill Ex
 
 #include <dev/usb/ukbdvar.h>
 #include <net/if_ether.h>
-
-#define	AWIN_board	__CONCAT(AWIN_, BOARDTYPE)
 
 BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
