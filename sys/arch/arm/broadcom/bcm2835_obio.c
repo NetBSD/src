@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.20 2014/04/22 18:51:35 kardel Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.21 2014/09/07 14:16:44 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.20 2014/04/22 18:51:35 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.21 2014/09/07 14:16:44 jmcneill Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -102,6 +102,13 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_name = "bcmpm",
 		.ad_addr = BCM2835_PM_BASE,
 		.ad_size = BCM2835_PM_SIZE,
+		.ad_intr = -1,
+	},
+	{
+		/* DMA Controller */
+		.ad_name = "bcmdmac",
+		.ad_addr = BCM2835_DMA0_BASE,
+		.ad_size = BCM2835_DMA0_SIZE,
 		.ad_intr = -1,
 	},
 	{
