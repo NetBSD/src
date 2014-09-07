@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.4 2014/08/24 21:42:06 skrll Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.5 2014/09/07 15:38:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.4 2014/08/24 21:42:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.5 2014/09/07 15:38:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -236,7 +236,7 @@ awin_mmc_host_reset(sdmmc_chipset_handle_t sch)
 #endif
 
 	MMC_WRITE(sc, AWIN_MMC_GCTRL,
-	    MMC_READ(sc, AWIN_MMC_GCTRL) | __BITS(2,0));
+	    MMC_READ(sc, AWIN_MMC_GCTRL) | AWIN_MMC_GCTRL_RESET);
 
 	return 0;
 }
@@ -298,11 +298,13 @@ awin_mmc_update_clock(struct awin_mmc_softc *sc)
 	uint32_t cmd;
 	int retry;
 
-	cmd = __BIT(31) | __BIT(21) | __BIT(13);
+	cmd = AWIN_MMC_CMD_START |
+	      AWIN_MMC_CMD_UPCLK_ONLY |
+	      AWIN_MMC_CMD_WAIT_PRE_OVER;
 	MMC_WRITE(sc, AWIN_MMC_CMD, cmd);
 	retry = 0xfffff;
 	while (--retry > 0) {
-		if (!(MMC_READ(sc, AWIN_MMC_CMD) & __BIT(31)))
+		if (!(MMC_READ(sc, AWIN_MMC_CMD) & AWIN_MMC_CMD_START))
 			break;
 		delay(10);
 	}
@@ -326,7 +328,7 @@ awin_mmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 #endif
 
 	clkcr = MMC_READ(sc, AWIN_MMC_CLKCR);
-	clkcr &= ~__BIT(16);
+	clkcr &= ~AWIN_MMC_CLKCR_CARDCLKON;
 	MMC_WRITE(sc, AWIN_MMC_CLKCR, clkcr);
 	if (awin_mmc_update_clock(sc) != 0)
 		return 1;
@@ -335,13 +337,13 @@ awin_mmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 		freq_hz = freq * 1000;
 		div = (sc->sc_mod_clk + (freq_hz >> 1)) / freq_hz / 2;
 
-		clkcr &= ~__BITS(15,0);
+		clkcr &= ~AWIN_MMC_CLKCR_DIV;
 		clkcr |= div;
 		MMC_WRITE(sc, AWIN_MMC_CLKCR, clkcr);
 		if (awin_mmc_update_clock(sc) != 0)
 			return 1;
 
-		clkcr |= __BIT(16);
+		clkcr |= AWIN_MMC_CLKCR_CARDCLKON;
 		MMC_WRITE(sc, AWIN_MMC_CLKCR, clkcr);
 		if (awin_mmc_update_clock(sc) != 0)
 			return 1;
@@ -361,13 +363,13 @@ awin_mmc_bus_width(sdmmc_chipset_handle_t sch, int width)
 
 	switch (width) {
 	case 1:
-		MMC_WRITE(sc, AWIN_MMC_WIDTH, 0);
+		MMC_WRITE(sc, AWIN_MMC_WIDTH, AWIN_MMC_WIDTH_1);
 		break;
 	case 4:
-		MMC_WRITE(sc, AWIN_MMC_WIDTH, 1);
+		MMC_WRITE(sc, AWIN_MMC_WIDTH, AWIN_MMC_WIDTH_4);
 		break;
 	case 8:
-		MMC_WRITE(sc, AWIN_MMC_WIDTH, 2);
+		MMC_WRITE(sc, AWIN_MMC_WIDTH, AWIN_MMC_WIDTH_8);
 		break;
 	default:
 		return 1;
@@ -388,7 +390,8 @@ static int
 awin_mmc_xfer_wait(struct awin_mmc_softc *sc, struct sdmmc_command *cmd)
 {
 	int retry = 0xfffff;
-	uint32_t bit = (cmd->c_flags & SCF_CMD_READ) ? __BIT(2) : __BIT(3);
+	uint32_t bit = (cmd->c_flags & SCF_CMD_READ) ?
+	    AWIN_MMC_STATUS_FIFO_EMPTY : AWIN_MMC_STATUS_FIFO_FULL;
 
 	while (--retry > 0) {
 		uint32_t status = MMC_READ(sc, AWIN_MMC_STATUS);
@@ -423,7 +426,7 @@ static void
 awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 {
 	struct awin_mmc_softc *sc = sch;
-	uint32_t cmdval = __BIT(31);
+	uint32_t cmdval = AWIN_MMC_CMD_START;
 	uint32_t status;
 	int retry;
 
@@ -434,20 +437,20 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 #endif
 
 	if (cmd->c_opcode == 0)
-		cmdval |= __BIT(15);
+		cmdval |= AWIN_MMC_CMD_SEND_INIT_SEQ;
 	if (cmd->c_flags & SCF_RSP_PRESENT)
-		cmdval |= __BIT(6);
+		cmdval |= AWIN_MMC_CMD_RSP_EXP;
 	if (cmd->c_flags & SCF_RSP_136)
-		cmdval |= __BIT(7);
+		cmdval |= AWIN_MMC_CMD_LONG_RSP;
 	if (cmd->c_flags & SCF_RSP_CRC)
-		cmdval |= __BIT(8);
+		cmdval |= AWIN_MMC_CMD_CHECK_RSP_CRC;
 
 	if (cmd->c_datalen > 0) {
 		unsigned int nblks;
 
-		cmdval |= __BIT(9) | __BIT(13);
+		cmdval |= AWIN_MMC_CMD_DATA_EXP | AWIN_MMC_CMD_WAIT_PRE_OVER;
 		if (!ISSET(cmd->c_flags, SCF_CMD_READ)) {
-			cmdval |= __BIT(10);
+			cmdval |= AWIN_MMC_CMD_WRITE;
 		}
 
 		nblks = cmd->c_datalen / cmd->c_blklen;
@@ -455,7 +458,7 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			++nblks;
 
 		if (nblks > 1) {
-			cmdval |= __BIT(12);
+			cmdval |= AWIN_MMC_CMD_SEND_AUTO_STOP;
 		}
 
 		MMC_WRITE(sc, AWIN_MMC_BLKSZ, cmd->c_blklen);
@@ -471,7 +474,7 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		MMC_WRITE(sc, AWIN_MMC_CMD, cmdval | cmd->c_opcode);
 	} else {
 		MMC_WRITE(sc, AWIN_MMC_GCTRL,
-		    MMC_READ(sc, AWIN_MMC_GCTRL) | __BIT(31));
+		    MMC_READ(sc, AWIN_MMC_GCTRL) | AWIN_MMC_GCTRL_ACCESS_BY_AHB);
 		MMC_WRITE(sc, AWIN_MMC_CMD, cmdval | cmd->c_opcode);
 		cmd->c_resid = cmd->c_datalen;
 		cmd->c_buf = cmd->c_data;
@@ -513,14 +516,14 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		while (--retry > 0) {
 			uint32_t done;
 			status = MMC_READ(sc, AWIN_MMC_RINT);
-			if (status & 0xbfc2) {
+			if (status & AWIN_MMC_INT_ERROR) {
 				retry = 0;
 				break;
 			}
 			if (cmd->c_blklen < cmd->c_datalen)
-				done = status & __BIT(14);
+				done = status & AWIN_MMC_INT_AUTO_CMD_DONE;
 			else
-				done = status & __BIT(3);
+				done = status & AWIN_MMC_INT_DATA_OVER;
 			if (done)
 				break;
 			delay(10);
@@ -539,7 +542,7 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		retry = 0xfffff;
 		while (--retry > 0) {
 			status = MMC_READ(sc, AWIN_MMC_STATUS);
-			if (status & __BIT(9))
+			if (status & AWIN_MMC_STATUS_CARD_DATA_BUSY)
 				break;
 		}
 		if (retry == 0) {
@@ -576,11 +579,12 @@ done:
 	cmd->c_flags |= SCF_ITSDONE;
 
 	if (cmd->c_error) {
-		MMC_WRITE(sc, AWIN_MMC_GCTRL, __BITS(2,0));
+		MMC_WRITE(sc, AWIN_MMC_GCTRL, AWIN_MMC_GCTRL_RESET);
 		awin_mmc_update_clock(sc);
 	}
-	MMC_WRITE(sc, AWIN_MMC_RINT, __BITS(31,0));
-	MMC_WRITE(sc, AWIN_MMC_GCTRL, MMC_READ(sc, AWIN_MMC_GCTRL) | __BIT(1));
+	MMC_WRITE(sc, AWIN_MMC_RINT, 0xffffffff);
+	MMC_WRITE(sc, AWIN_MMC_GCTRL,
+	    MMC_READ(sc, AWIN_MMC_GCTRL) | AWIN_MMC_GCTRL_FIFORESET);
 }
 
 static void
