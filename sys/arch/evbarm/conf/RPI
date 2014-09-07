@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.50 2014/09/05 11:27:57 skrll Exp $
+#	$NetBSD: RPI,v 1.51 2014/09/07 14:17:23 jmcneill Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -179,6 +179,9 @@ bcmicu0		at obio?
 # VC Mailbox
 bcmmbox0	at obio?
 vcmbox0 	at bcmmbox0
+
+# DMA Controller
+#bcmdmac0	at obio?
 
 # VCHIQ
 vchiq0		at obio?
