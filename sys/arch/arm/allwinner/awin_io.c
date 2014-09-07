@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.11 2014/09/07 17:49:39 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.12 2014/09/07 22:22:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -146,8 +146,10 @@ static void
 awinio_attach(device_t parent, device_t self, void *aux)
 {
 	struct awinio_softc * const sc = &awinio_sc;
-	const bool a10_p = CPU_ID_CORTEX_A8_P(curcpu()->ci_arm_cpuid);
-	const bool a20_p = CPU_ID_CORTEX_A7_P(curcpu()->ci_arm_cpuid);
+	uint16_t chip_id = awin_chip_id();
+	const char *chip_name = awin_chip_name();
+	const bool a10_p = chip_id == AWIN_CHIP_ID_A10;
+	const bool a20_p = chip_id == AWIN_CHIP_ID_A20;
 	prop_dictionary_t dict = device_properties(self);
 
 	sc->sc_dev = self;
@@ -162,7 +164,7 @@ awinio_attach(device_t parent, device_t self, void *aux)
 	    &sc->sc_ccm_bsh);
 
 	aprint_naive("\n");
-	aprint_normal("\n");
+	aprint_normal(": %s (0x%04x)\n", chip_name, chip_id);
 
 	const struct awin_locators * const eloc =
 	    awin_locators + __arraycount(awin_locators);
