@@ -156,9 +156,15 @@
 /* A10/A20 SRAM Controller */
 #define AWIN_SRAM_CTL0_REG		0x0000
 #define AWIN_SRAM_CTL1_REG		0x0004
+#define AWIN_SRAM_VER_REG		0x0024
 
 #define AWIN_SRAM_CTL1_A3_A4		__BITS(5,4)
 #define AWIN_SRAM_CTL1_A3_A4_EMAC	1
+
+#define AWIN_SRAM_VER_KEY_FIELD		__BITS(31,16)
+#define AWIN_SRAM_VER_R_EN		__BIT(15)
+#define AWIN_SRAM_VER_BOOT_SEL_PAD_STA	__BIT(8)
+#define AWIN_SRAM_VER_BITS		__BITS(7,0)
 
 /* A10/A20 DRAM Controller */
 #define AWIN_DRAM_CCR_REG		0x0000
@@ -719,6 +725,7 @@
 #define AWIN_MMC_IDST_RECEIVE_INT	__BIT(1)
 #define AWIN_MMC_IDST_TRANSMIT_INT	__BIT(0)
 
+#if !defined(_LOCORE)
 struct awin_mmc_idma_descriptor {
 	uint32_t	dma_config;
 #define AWIN_MMC_IDMA_CONFIG_DIC	__BIT(1)
@@ -732,6 +739,7 @@ struct awin_mmc_idma_descriptor {
 	uint32_t	dma_buf_addr;
 	uint32_t	dma_next;
 } __packed;
+#endif
 
 #define AWIN_CPUCFG_CPU0_RST_CTRL_REG	0x0040
 #define AWIN_CPUCFG_CPU0_CTRL_REG	0x0044
