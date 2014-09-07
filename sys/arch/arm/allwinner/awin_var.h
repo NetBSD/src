@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.13 2014/09/06 17:10:17 jmcneill Exp $ */
+/* $NetBSD: awin_var.h,v 1.14 2014/09/07 22:21:36 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -91,6 +91,14 @@ void	awin_dma_bootstrap(psize_t);
 void	awin_pll2_enable(void);
 void	awin_pll6_enable(void);
 void	awin_cpu_hatch(struct cpu_info *);
+
+#define AWIN_CHIP_ID_A10	0x1623
+#define AWIN_CHIP_ID_A13	0x1625
+#define AWIN_CHIP_ID_A31	0x1633
+#define AWIN_CHIP_ID_A23	0x1650
+#define AWIN_CHIP_ID_A20	0x1651
+uint16_t awin_chip_id(void);
+const char *awin_chip_name(void);
 
 void	awin_gpio_init(void);
 bool	awin_gpio_pinset_available(const struct awin_gpio_pinset *);
