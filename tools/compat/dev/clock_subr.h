@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.1 2014/09/01 07:48:16 martin Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.2 2014/09/07 11:50:23 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * "POSIX time" to/from "YY/MM/DD/hh/mm/ss"
  */
 struct clock_ymdhms {
-	u_short dt_year;
+	uint64_t dt_year;
 	u_char dt_mon;
 	u_char dt_day;
 	u_char dt_wday;	/* Day of week */
@@ -50,7 +50,7 @@ struct clock_ymdhms {
 };
 
 time_t	clock_ymdhms_to_secs(struct clock_ymdhms *);
-void	clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
+int	clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
 
 /* Some handy constants. */
 #define SECDAY		(24 * 60 * 60)
