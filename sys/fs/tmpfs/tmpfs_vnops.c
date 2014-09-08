@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.120 2014/07/25 08:20:52 dholland Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.121 2014/09/08 14:49:46 gson Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.120 2014/07/25 08:20:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.121 2014/09/08 14:49:46 gson Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1036,7 +1036,7 @@ tmpfs_readlink(void *v)
 	/* Note: readlink(2) returns the path without NUL terminator. */
 	if (node->tn_size > 0) {
 		error = uiomove(node->tn_spec.tn_lnk.tn_link,
-		    MIN(node->tn_size - 1, uio->uio_resid), uio);
+		    MIN(node->tn_size, uio->uio_resid), uio);
 	} else {
 		error = 0;
 	}
