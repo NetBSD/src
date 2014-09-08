@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_gc.c,v 1.6 2014/09/01 16:46:56 he Exp $	*/
+/*	$NetBSD: chfs_gc.c,v 1.7 2014/09/08 17:41:11 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -32,6 +32,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cprng.h>
 #include "chfs.h"
 
 void chfs_gc_release_inode(struct chfs_mount *,
@@ -351,10 +352,7 @@ find_gc_block(struct chfs_mount *chmp)
 	KASSERT(mutex_owned(&chmp->chm_lock_mountfields));
 
 	/* Get a random number. */
-	struct timespec now;
-	vfs_timestamp(&now);
-
-	int n = now.tv_nsec % 128;
+	uint32_t n = cprng_fast32() % 128;
 
 again:
 	/* Find an eraseblock queue. */
