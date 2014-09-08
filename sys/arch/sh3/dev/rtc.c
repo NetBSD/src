@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.8 2010/05/22 15:51:32 tsutsui Exp $ */
+/*	$NetBSD: rtc.c,v 1.9 2014/09/08 10:00:18 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.8 2010/05/22 15:51:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.9 2014/09/08 10:00:18 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -208,8 +208,8 @@ rtc_gettime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 
 #ifdef RTC_DEBUG
 	aprint_debug_dev(sc->sc_dev,
-			 "gettime: %04d-%02d-%02d %02d:%02d:%02d\n",
-			 dt->dt_year, dt->dt_mon, dt->dt_day,
+			 "gettime: %04lu-%02d-%02d %02d:%02d:%02d\n",
+			 (unsigned long)dt->dt_year, dt->dt_mon, dt->dt_day,
 			 dt->dt_hour, dt->dt_min, dt->dt_sec);
 
 	if (!sc->sc_valid)
@@ -262,8 +262,8 @@ rtc_settime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 
 #ifdef RTC_DEBUG
 	aprint_debug_dev(sc->sc_dev,
-			 "settime: %04d-%02d-%02d %02d:%02d:%02d\n",
-			 dt->dt_year, dt->dt_mon, dt->dt_day,
+			 "settime: %04lu-%02d-%02d %02d:%02d:%02d\n",
+			 (unsigned long)dt->dt_year, dt->dt_mon, dt->dt_day,
 			 dt->dt_hour, dt->dt_min, dt->dt_sec);
 #endif
 
