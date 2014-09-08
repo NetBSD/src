@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.251 2014/09/05 05:57:21 matt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.252 2014/09/08 22:01:24 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.251 2014/09/05 05:57:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.252 2014/09/08 22:01:24 joerg Exp $");
 
 #include "opt_bufcache.h"
 
@@ -143,6 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.251 2014/09/05 05:57:21 matt Exp $");
 #include <sys/cpu.h>
 #include <sys/wapbl.h>
 #include <sys/bitops.h>
+#include <sys/cprng.h>
 
 #include <uvm/uvm.h>	/* extern struct uvm uvm */
 
@@ -532,7 +533,7 @@ bufinit2(void)
 static int
 buf_lotsfree(void)
 {
-	int guess, thresh;
+	u_long guess;
 
 	/* Always allocate if less than the low water mark. */
 	if (bufmem < bufmem_lowater)
@@ -548,16 +549,14 @@ buf_lotsfree(void)
 
 	/*
 	 * The probabily of getting a new allocation is inversely
-	 * proportional to the current size of the cache, using
-	 * a granularity of 16 steps.
+	 * proportional  to the current size of the cache above
+	 * the low water mark.  Divide the total first to avoid overflows
+	 * in the product.
 	 */
-	guess = random() & 0x0000000fL;
+	guess = cprng_fast32() % 16;
 
-	/* Don't use "16 * bufmem" here to avoid a 32-bit overflow. */
-	thresh = (bufmem - bufmem_lowater) /
-	    ((bufmem_hiwater - bufmem_lowater) / 16);
-
-	if (guess >= thresh)
+	if ((bufmem_hiwater - bufmem_lowater) / 16 * guess >=
+	    (bufmem - bufmem_lowater))
 		return 1;
 
 	/* Otherwise don't allocate. */
