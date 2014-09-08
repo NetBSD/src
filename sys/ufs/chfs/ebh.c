@@ -1,4 +1,4 @@
-/*	$NetBSD: ebh.c,v 1.3 2012/08/10 09:26:58 ttoth Exp $	*/
+/*	$NetBSD: ebh.c,v 1.3.14.1 2014/09/08 18:57:58 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -828,8 +828,10 @@ add_peb_to_free(struct chfs_ebh *ebh, int pebnr, int ec)
 	peb->erase_cnt = ec;
 	peb->pebnr = pebnr;
 	result = RB_INSERT(peb_free_rbtree, &ebh->free, peb);
-	if (result)
+	if (result) {
+		kmem_free(peb, sizeof(struct chfs_peb));
 		return 1;
+	}
 
 	return 0;
 }
@@ -856,8 +858,10 @@ add_peb_to_in_use(struct chfs_ebh *ebh, int pebnr, int ec)
 	peb->erase_cnt = ec;
 	peb->pebnr = pebnr;
 	result = RB_INSERT(peb_in_use_rbtree, &ebh->in_use, peb);
-	if (result)
+	if (result) {
+		kmem_free(peb, sizeof(struct chfs_peb));
 		return 1;
+	}
 
 	return 0;
 }
