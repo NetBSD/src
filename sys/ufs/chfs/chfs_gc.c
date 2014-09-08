@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_gc.c,v 1.5 2013/10/20 17:18:38 christos Exp $	*/
+/*	$NetBSD: chfs_gc.c,v 1.5.4.1 2014/09/08 18:57:58 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -726,23 +726,26 @@ chfs_gcollect_pristine(struct chfs_mount *chmp, struct chfs_eraseblock *cheb,
 	ret = chfs_read_leb(chmp, nref->nref_lnr, data, ofs, totlen, &retlen);
 	if (ret) {
 		dbg_gc("reading error\n");
-		return ret;
+		goto err_out;
 	}
 	if (retlen != totlen) {
 		dbg_gc("read size error\n");
-		return EIO;
+		ret = EIO;
+		goto err_out;
 	}
 	nhdr = (struct chfs_flash_node_hdr *)data;
 
 	/* Check the header. */
 	if (le16toh(nhdr->magic) != CHFS_FS_MAGIC_BITMASK) {
 		dbg_gc("node header magic number error\n");
-		return EBADF;
+		ret = EBADF;
+		goto err_out;
 	}
 	crc = crc32(0, (uint8_t *)nhdr, CHFS_NODE_HDR_SIZE - 4);
 	if (crc != le32toh(nhdr->hdr_crc)) {
 		dbg_gc("node header crc error\n");
-		return EBADF;
+		ret = EBADF;
+		goto err_out;
 	}
 
 	/* Read the remaining parts. */
@@ -753,7 +756,8 @@ chfs_gcollect_pristine(struct chfs_mount *chmp, struct chfs_eraseblock *cheb,
 	        crc = crc32(0, (uint8_t *)fvnode, sizeof(struct chfs_flash_vnode) - 4);
 	        if (crc != le32toh(fvnode->node_crc)) {
 				dbg_gc("vnode crc error\n");
-				return EBADF;
+				ret = EBADF;
+				goto err_out;
 			}
 			break;
         case CHFS_NODETYPE_DIRENT:
@@ -762,12 +766,14 @@ chfs_gcollect_pristine(struct chfs_mount *chmp, struct chfs_eraseblock *cheb,
 	        crc = crc32(0, (uint8_t *)fdirent, sizeof(struct chfs_flash_dirent_node) - 4);
 	        if (crc != le32toh(fdirent->node_crc)) {
 				dbg_gc("dirent crc error\n");
-				return EBADF;
+				ret = EBADF;
+				goto err_out;
 			}
 	        crc = crc32(0, fdirent->name, fdirent->nsize);
 	        if (crc != le32toh(fdirent->name_crc)) {
 				dbg_gc("dirent name crc error\n");
-				return EBADF;
+				ret = EBADF;
+				goto err_out;
 			}
 			break;
         case CHFS_NODETYPE_DATA:
@@ -776,25 +782,29 @@ chfs_gcollect_pristine(struct chfs_mount *chmp, struct chfs_eraseblock *cheb,
 	        crc = crc32(0, (uint8_t *)fdata, sizeof(struct chfs_flash_data_node) - 4);
 	        if (crc != le32toh(fdata->node_crc)) {
 				dbg_gc("data node crc error\n");
-				return EBADF;
+				ret = EBADF;
+				goto err_out;
 			}
 			break;
         default:
 		/* unknown node */
 			if (chvc) {
 				dbg_gc("unknown node have vnode cache\n");
-				return EBADF;
+				ret = EBADF;
+				goto err_out;
 			}
 	}
 	/* CRC's OK, write node to its new place */
 retry:
 	ret = chfs_reserve_space_gc(chmp, totlen);
 	if (ret)
-		return ret;
+		goto err_out;
 
 	newnref = chfs_alloc_node_ref(chmp->chm_nextblock);
-	if (!newnref)
-		return ENOMEM;
+	if (!newnref) {
+		ret = ENOMEM;
+		goto err_out;
+	}
 
 	ofs = chmp->chm_ebh->eb_size - chmp->chm_nextblock->free_size;
 	newnref->nref_offset = ofs;
@@ -814,7 +824,8 @@ retry:
 		chfs_change_size_dirty(chmp, chmp->chm_nextblock, totlen);
 		if (retries) {
 			mutex_exit(&chmp->chm_lock_sizes);
-			return EIO;
+			ret = EIO;
+			goto err_out;
 		}
 
 		/* try again */
@@ -829,7 +840,11 @@ retry:
 	mutex_enter(&chmp->chm_lock_vnocache);
 	chfs_add_vnode_ref_to_vc(chmp, chvc, newnref);
 	mutex_exit(&chmp->chm_lock_vnocache);
-	return 0;
+	ret = 0;
+	/* FALLTHROUGH */
+err_out:
+	kmem_free(data, totlen);
+	return ret;
 }
 
 
