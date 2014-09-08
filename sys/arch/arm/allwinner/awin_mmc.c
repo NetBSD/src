@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.6 2014/09/08 11:06:03 jmcneill Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.7 2014/09/08 23:51:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.6 2014/09/08 11:06:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.7 2014/09/08 23:51:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.6 2014/09/08 11:06:03 jmcneill Exp $"
 
 static int	awin_mmc_match(device_t, cfdata_t, void *);
 static void	awin_mmc_attach(device_t, device_t, void *);
+static void	awin_mmc_attach_i(device_t);
 
 static int	awin_mmc_intr(void *);
 
@@ -91,6 +92,7 @@ struct awin_mmc_softc {
 	void *sc_ih;
 	kmutex_t sc_intr_lock;
 	kcondvar_t sc_intr_cv;
+	kcondvar_t sc_idst_cv;
 
 	int sc_mmc_number;
 	int sc_mmc_width;
@@ -108,6 +110,8 @@ struct awin_mmc_softc {
 	int sc_idma_ndesc;
 	void *sc_idma_desc;
 
+	uint32_t sc_intr_rint;
+	uint32_t sc_intr_mint;
 	uint32_t sc_idma_idst;
 
 	bool sc_has_gpio_detect;
@@ -219,7 +223,6 @@ awin_mmc_attach(device_t parent, device_t self, void *aux)
 	struct awin_mmc_softc * const sc = device_private(self);
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
-	struct sdmmcbus_attach_args saa;
 	prop_dictionary_t cfg = device_properties(self);
 	const char *pin_name;
 
@@ -228,7 +231,8 @@ awin_mmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = aio->aio_dmat;
 	sc->sc_mmc_number = loc->loc_port;
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_BIO);
-	cv_init(&sc->sc_intr_cv, "awinmmcio");
+	cv_init(&sc->sc_intr_cv, "awinmmcirq");
+	cv_init(&sc->sc_idst_cv, "awinmmcdma");
 	bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 
@@ -276,6 +280,15 @@ awin_mmc_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting at irq %d\n", loc->loc_intr);
 
+	config_interrupts(self, awin_mmc_attach_i);
+}
+
+static void
+awin_mmc_attach_i(device_t self)
+{
+	struct awin_mmc_softc *sc = device_private(self);
+	struct sdmmcbus_attach_args saa;
+
 	awin_mmc_host_reset(sc);
 	awin_mmc_bus_width(sc, 1);
 
@@ -304,22 +317,57 @@ static int
 awin_mmc_intr(void *priv)
 {
 	struct awin_mmc_softc *sc = priv;
-	uint32_t idst;
+	uint32_t idst, rint, mint;
 
 	mutex_enter(&sc->sc_intr_lock);
 	idst = MMC_READ(sc, AWIN_MMC_IDST);
-	if (!idst) {
+	rint = MMC_READ(sc, AWIN_MMC_RINT);
+	mint = MMC_READ(sc, AWIN_MMC_MINT);
+	if (!idst && !rint && !mint) {
 		mutex_exit(&sc->sc_intr_lock);
 		return 0;
 	}
 	MMC_WRITE(sc, AWIN_MMC_IDST, idst);
+	MMC_WRITE(sc, AWIN_MMC_RINT, rint);
+	MMC_WRITE(sc, AWIN_MMC_MINT, mint);
 
-	sc->sc_idma_idst |= idst;
-	cv_broadcast(&sc->sc_intr_cv);
+	if (idst) {
+		sc->sc_idma_idst |= idst;
+		cv_broadcast(&sc->sc_idst_cv);
+	}
+
+	if (rint) {
+		sc->sc_intr_rint |= rint;
+		cv_broadcast(&sc->sc_intr_cv);
+	}
 
 	mutex_exit(&sc->sc_intr_lock);
 
 	return 1;
+}
+
+static int
+awin_mmc_wait_rint(struct awin_mmc_softc *sc, uint32_t mask, int timeout)
+{
+	int retry = timeout;
+	int error;
+
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
+
+	if (sc->sc_intr_rint & mask)
+		return 0;
+
+	while (retry > 0) {
+		error = cv_timedwait(&sc->sc_intr_cv,
+		    &sc->sc_intr_lock, hz);
+		if (error && error != EWOULDBLOCK)
+			return error;
+		if (sc->sc_intr_rint & mask)
+			return 0;
+		--retry;
+	}
+
+	return ETIMEDOUT;
 }
 
 static void
@@ -341,6 +389,14 @@ awin_mmc_host_reset(sdmmc_chipset_handle_t sch)
 
 	MMC_WRITE(sc, AWIN_MMC_GCTRL,
 	    MMC_READ(sc, AWIN_MMC_GCTRL) | AWIN_MMC_GCTRL_RESET);
+
+	MMC_WRITE(sc, AWIN_MMC_IMASK,
+	    AWIN_MMC_INT_CMD_DONE | AWIN_MMC_INT_ERROR |
+	    AWIN_MMC_INT_DATA_OVER | AWIN_MMC_INT_AUTO_CMD_DONE);
+
+	MMC_WRITE(sc, AWIN_MMC_GCTRL,
+	    MMC_READ(sc, AWIN_MMC_GCTRL) | AWIN_MMC_GCTRL_INTEN);
+
 
 	return 0;
 }
@@ -418,11 +474,12 @@ awin_mmc_update_clock(struct awin_mmc_softc *sc)
 			break;
 		delay(10);
 	}
+
 	if (retry == 0) {
-		aprint_error_dev(sc->sc_dev, "timeout updating clk\n");
+		aprint_error_dev(sc->sc_dev, "timeout updating clock\n");
 		return ETIMEDOUT;
 	}
-	MMC_WRITE(sc, AWIN_MMC_RINT, MMC_READ(sc, AWIN_MMC_RINT));
+
 	return 0;
 }
 
@@ -578,8 +635,6 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 {
 	struct awin_mmc_softc *sc = sch;
 	uint32_t cmdval = AWIN_MMC_CMD_START;
-	uint32_t status;
-	int retry;
 
 #ifdef AWIN_MMC_DEBUG
 	aprint_normal_dev(sc->sc_dev,
@@ -587,6 +642,8 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	    cmd->c_opcode, cmd->c_flags, cmd->c_data, cmd->c_datalen,
 	    cmd->c_blklen);
 #endif
+
+	mutex_enter(&sc->sc_intr_lock);
 
 	if (cmd->c_opcode == 0)
 		cmdval |= AWIN_MMC_CMD_SEND_INIT_SEQ;
@@ -617,21 +674,23 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		MMC_WRITE(sc, AWIN_MMC_BYTECNT, nblks * cmd->c_blklen);
 	}
 
+	sc->sc_intr_rint = 0;
+
 	MMC_WRITE(sc, AWIN_MMC_ARG, cmd->c_arg);
 
 #ifdef AWIN_MMC_DEBUG
 	aprint_normal_dev(sc->sc_dev, "cmdval = %08x\n", cmdval);
 #endif
+
 	if (cmd->c_datalen == 0) {
 		MMC_WRITE(sc, AWIN_MMC_CMD, cmdval | cmd->c_opcode);
 	} else {
-		mutex_enter(&sc->sc_intr_lock);
 		cmd->c_resid = cmd->c_datalen;
 		cmd->c_error = awin_mmc_dma_prepare(sc, cmd);
 		awin_mmc_led(sc, 0);
 		MMC_WRITE(sc, AWIN_MMC_CMD, cmdval | cmd->c_opcode);
 		if (cmd->c_error == 0) {
-			cmd->c_error = cv_timedwait(&sc->sc_intr_cv,
+			cmd->c_error = cv_timedwait(&sc->sc_idst_cv,
 			    &sc->sc_intr_lock, hz*10);
 		}
 		if (sc->sc_idma_idst & AWIN_MMC_IDST_ERROR) {
@@ -640,66 +699,49 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			cmd->c_error = ETIMEDOUT;
 		}
 		awin_mmc_led(sc, 1);
-		mutex_exit(&sc->sc_intr_lock);
 		if (cmd->c_error) {
+#ifdef AWIN_MMC_DEBUG
 			aprint_error_dev(sc->sc_dev,
 			    "xfer failed, error %d\n", cmd->c_error);
+#endif
 			goto done;
 		}
 	}
 
-	retry = 0xfffff;
-	while (--retry > 0) {
-		status = MMC_READ(sc, AWIN_MMC_RINT);
-		if (status & AWIN_MMC_INT_ERROR) {
-			retry = 0;
-			break;
-		}
-		if (status & AWIN_MMC_INT_CMD_DONE)
-			break;
-		delay(10);
-	}
-	if (retry == 0) {
+	cmd->c_error = awin_mmc_wait_rint(sc,
+	    AWIN_MMC_INT_ERROR|AWIN_MMC_INT_CMD_DONE, hz * 10);
+	if (cmd->c_error == 0 && (sc->sc_intr_rint & AWIN_MMC_INT_ERROR))
+		cmd->c_error = EIO;
+	if (cmd->c_error) {
 #ifdef AWIN_MMC_DEBUG
 		aprint_error_dev(sc->sc_dev,
-		    "RINT (1) timeout, status = %08x\n", status);
+		    "cmd failed, error %d\n", cmd->c_error);
 #endif
-		cmd->c_error = ETIMEDOUT;
 		goto done;
 	}
-#ifdef AWIN_MMC_DEBUG
-	aprint_normal_dev(sc->sc_dev, "status = %08x\n", status);
-#endif
-
+		
 	if (cmd->c_datalen > 0) {
-		retry = 0xffff;
-		while (--retry > 0) {
-			uint32_t done;
-			status = MMC_READ(sc, AWIN_MMC_RINT);
-			if (status & AWIN_MMC_INT_ERROR) {
-				retry = 0;
-				break;
-			}
-			if (cmd->c_blklen < cmd->c_datalen)
-				done = status & AWIN_MMC_INT_AUTO_CMD_DONE;
-			else
-				done = status & AWIN_MMC_INT_DATA_OVER;
-			if (done)
-				break;
-			delay(10);
+		cmd->c_error = awin_mmc_wait_rint(sc,
+		    AWIN_MMC_INT_ERROR|
+		    AWIN_MMC_INT_AUTO_CMD_DONE|
+		    AWIN_MMC_INT_DATA_OVER,
+		    hz*10);
+		if (cmd->c_error == 0 &&
+		    (sc->sc_intr_rint & AWIN_MMC_INT_ERROR)) {
+			cmd->c_error = ETIMEDOUT;
 		}
-		if (retry == 0) {
+		if (cmd->c_error) {
 #ifdef AWIN_MMC_DEBUG
 			aprint_error_dev(sc->sc_dev,
-			    "RINT (2) timeout, status = %08x\n", status);
+			    "data timeout, rint = %08x\n",
+			    sc->sc_intr_rint);
 #endif
 			cmd->c_error = ETIMEDOUT;
 			goto done;
 		}
-	}
-
-	if (cmd->c_flags & SCF_RSP_BSY) {
-		retry = 0xfffff;
+	} else if (cmd->c_flags & SCF_RSP_BSY) {
+		uint32_t status;
+		int retry = 0xfffff;
 		while (--retry > 0) {
 			status = MMC_READ(sc, AWIN_MMC_STATUS);
 			if (status & AWIN_MMC_STATUS_CARD_DATA_BUSY)
@@ -708,7 +750,7 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		if (retry == 0) {
 #ifdef AWIN_MMC_DEBUG
 			aprint_error_dev(sc->sc_dev,
-			    "RINT (3) timeout, status = %08x\n", status);
+			    "BSY timeout, status = %08x\n", status);
 #endif
 			cmd->c_error = ETIMEDOUT;
 			goto done;
@@ -737,15 +779,15 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 done:
 	cmd->c_flags |= SCF_ITSDONE;
+	mutex_exit(&sc->sc_intr_lock);
 
 	if (cmd->c_error) {
+#ifdef AWIN_MMC_DEBUG
 		aprint_error_dev(sc->sc_dev, "i/o error %d\n", cmd->c_error);
-		MMC_WRITE(sc, AWIN_MMC_GCTRL, AWIN_MMC_GCTRL_RESET);
+#endif
+		awin_mmc_host_reset(sc);
 		awin_mmc_update_clock(sc);
 	}
-	MMC_WRITE(sc, AWIN_MMC_RINT, 0xffffffff);
-	MMC_WRITE(sc, AWIN_MMC_GCTRL,
-	    MMC_READ(sc, AWIN_MMC_GCTRL) | AWIN_MMC_GCTRL_FIFORESET);
 }
 
 static void
