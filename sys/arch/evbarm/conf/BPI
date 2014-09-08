@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BPI,v 1.1 2014/09/07 06:26:08 skrll Exp $
+#	$NetBSD: BPI,v 1.2 2014/09/08 07:57:36 skrll Exp $
 #
 #	BPI -- Banana Pi - an Allwinner A20 Eval Board Kernel
 #
@@ -234,6 +234,9 @@ awintmr0	at awinio?
 
 # Watchdog timers
 awinwdt*	at awinio?
+
+# RTC
+awinrtc*	at awinio?
 
 # onboard audio codec
 awinac0		at awinio0
