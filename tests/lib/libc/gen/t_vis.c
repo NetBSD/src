@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vis.c,v 1.6 2013/02/13 04:51:56 christos Exp $	*/
+/*	$NetBSD: t_vis.c,v 1.7 2014/09/08 19:01:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -89,6 +89,32 @@ ATF_TC_BODY(strvis_basic, tc)
 	free(visbuf);
 }
 
+ATF_TC(strvis_null);
+ATF_TC_HEAD(strvis_null, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test strvis(3) NULL");
+}
+
+ATF_TC_BODY(strvis_null, tc)
+{
+	char dst[] = "fail";
+	strvis(dst, NULL, VIS_SAFE);
+	ATF_REQUIRE(dst[0] == '\0' && dst[1] == 'a');
+}
+
+ATF_TC(strvis_empty);
+ATF_TC_HEAD(strvis_empty, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test strvis(3) empty");
+}
+
+ATF_TC_BODY(strvis_empty, tc)
+{
+	char dst[] = "fail";
+	strvis(dst, "", VIS_SAFE);
+	ATF_REQUIRE(dst[0] == '\0' && dst[1] == 'a');
+}
+
 ATF_TC(strunvis_hex);
 ATF_TC_HEAD(strunvis_hex, tc)
 {
@@ -121,6 +147,8 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, strvis_basic);
+	ATF_TP_ADD_TC(tp, strvis_null);
+	ATF_TP_ADD_TC(tp, strvis_empty);
 	ATF_TP_ADD_TC(tp, strunvis_hex);
 
 	return atf_no_error();
