@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.151 2014/08/05 05:24:26 rtr Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.151.2.1 2014/09/08 19:12:04 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.151 2014/08/05 05:24:26 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.151.2.1 2014/09/08 19:12:04 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -606,9 +606,9 @@ in_pcbdetach(void *v)
 		m_free(inp->inp_options);
 	}
 	rtcache_free(&inp->inp_route);
+	ip_freemoptions(inp->inp_moptions);
 	sofree(so);			/* drops the socket's lock */
 
-	ip_freemoptions(inp->inp_moptions);
 	pool_put(&inpcb_pool, inp);
 	mutex_enter(softnet_lock);	/* reacquire the softnet_lock */
 }
