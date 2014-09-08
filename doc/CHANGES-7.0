@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.30 2014/08/31 17:27:11 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.31 2014/09/08 19:17:59 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -565,3 +565,42 @@ usr.bin/cksum/cksum.c				1.47
 	Add -q flag to cksum. PR#49134
 	[christos, ticket #73]
 
+sys/ufs/chfs/chfs_gc.c				1.6
+sys/ufs/chfs/chfs_readinode.c			1.9
+sys/ufs/chfs/chfs_scan.c			1.5
+sys/ufs/chfs/chfs_vnode.c			1.11
+sys/ufs/chfs/ebh.c				1.4
+
+	Plug memory leaks in CHFS.
+	[he, ticket #74]
+
+sys/external/bsd/dwc2/dist/dwc2_hcd.c		1.14
+sys/external/bsd/dwc2/dist/dwc2_hcd.h		1.9
+sys/external/bsd/dwc2/dist/dwc2_hcdintr.c	1.10
+sys/external/bsd/dwc2/dist/dwc2_hcdqueue.c	1.11
+
+	Adapt the NAK holdoff scheme for FS/LS devices from the Raspberry Pi
+	Foundation driver.
+	Should fix PR/49019 - RPI: interrupt storm when url0 is up.
+	[skrll, ticket #75]
+
+sys/arch/evbarm/conf/RPI			1.50
+
+	Copy the list of PHYs to support them.
+	[skrll, ticket #76]
+
+lib/libperfuse/ops.c				1.73
+
+	rmdir dir/.. must return an error. Use ENOTEMPTY like FFS does.
+	[manu, ticket #78]
+
+sys/netinet/in_pcb.c				1.152
+sys/netinet6/in6_pcb.c				1.129
+
+	Fixes panics in IP multicast code. PR#49137.
+	[rmind, ticket #80]
+
+external/bsd/cron/dist/crontab.c		1.8
+
+	Fix a bug that crontab(1) doesn't check new crontabs at all.
+	[tron, ticket #81]
