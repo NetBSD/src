@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.h,v 1.8 2014/04/03 06:34:58 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.h,v 1.8.8.1 2014/09/08 19:03:37 msaitoh Exp $	*/
 
 /*
  * hcd.h - DesignWare HS OTG Controller host-mode declarations
@@ -243,6 +243,7 @@ enum dwc2_transaction_type {
  * @interval:           Interval between transfers in (micro)frames
  * @sched_frame:        (Micro)frame to initialize a periodic transfer.
  *                      The transfer executes in the following (micro)frame.
+ * @nak_frame:          Internal variable used by the NAK holdoff code
  * @frame_usecs:        Internal variable used by the microframe scheduler
  * @start_split_frame:  (Micro)frame at which last start split was initialized
  * @ntd:                Actual number of transfer descriptors in a list
@@ -277,6 +278,7 @@ struct dwc2_qh {
 	u16 usecs;
 	u16 interval;
 	u16 sched_frame;
+	u16 nak_frame;
 	u16 frame_usecs[8];
 	u16 start_split_frame;
 	u16 ntd;

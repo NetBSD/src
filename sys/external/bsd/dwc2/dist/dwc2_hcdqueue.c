@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdqueue.c,v 1.10 2014/07/03 07:18:42 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdqueue.c,v 1.10.2.1 2014/09/08 19:03:37 msaitoh Exp $	*/
 
 /*
  * hcd_queue.c - DesignWare HS OTG Controller host queuing routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.10 2014/07/03 07:18:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.10.2.1 2014/09/08 19:03:37 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -94,6 +94,7 @@ static void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 	dev_speed = dwc2_host_get_speed(hsotg, urb->priv);
 
 	dwc2_host_hub_info(hsotg, urb->priv, &hub_addr, &hub_port);
+	qh->nak_frame = 0xffff;
 
 	if ((dev_speed == USB_SPEED_LOW || dev_speed == USB_SPEED_FULL) &&
 	    hub_addr != 0 && hub_addr != 1) {
