@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.22 2014/09/07 17:50:01 jmcneill Exp $
+#	$NetBSD: CUBIEBOARD,v 1.23 2014/09/08 19:24:16 rjs Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -285,6 +285,7 @@ awge0		at awinio0 port ?
 include "dev/usb/usbdevices.config"
 
 rlphy*		at mii? phy ?
+rgephy* 	at mii? phy ?
 ukphy*		at mii? phy ?
 
 # Pseudo-Devices
