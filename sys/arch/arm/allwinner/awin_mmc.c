@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.5 2014/09/07 15:38:06 jmcneill Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.6 2014/09/08 11:06:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,13 +29,14 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.5 2014/09/07 15:38:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.6 2014/09/08 11:06:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 
 #include <dev/sdmmc/sdmmcvar.h>
 #include <dev/sdmmc/sdmmcchip.h>
@@ -44,8 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.5 2014/09/07 15:38:06 jmcneill Exp $"
 #include <arm/allwinner/awin_reg.h>
 #include <arm/allwinner/awin_var.h>
 
+#define AWIN_MMC_NDESC		16
+#define AWIN_MMC_WATERMARK	0x20070008
+
 static int	awin_mmc_match(device_t, cfdata_t, void *);
 static void	awin_mmc_attach(device_t, device_t, void *);
+
+static int	awin_mmc_intr(void *);
 
 static int	awin_mmc_host_reset(sdmmc_chipset_handle_t);
 static uint32_t	awin_mmc_host_ocr(sdmmc_chipset_handle_t);
@@ -82,6 +88,10 @@ struct awin_mmc_softc {
 	bus_space_handle_t sc_bsh;
 	bus_dma_tag_t sc_dmat;
 
+	void *sc_ih;
+	kmutex_t sc_intr_lock;
+	kcondvar_t sc_intr_cv;
+
 	int sc_mmc_number;
 	int sc_mmc_width;
 	int sc_mmc_present;
@@ -89,6 +99,16 @@ struct awin_mmc_softc {
 	device_t sc_sdmmc_dev;
 	unsigned int sc_pll_freq;
 	unsigned int sc_mod_clk;
+
+	uint32_t sc_idma_xferlen;
+	bus_dma_segment_t sc_idma_segs[1];
+	int sc_idma_nsegs;
+	bus_size_t sc_idma_size;
+	bus_dmamap_t sc_idma_map;
+	int sc_idma_ndesc;
+	void *sc_idma_desc;
+
+	uint32_t sc_idma_idst;
 
 	bool sc_has_gpio_detect;
 	struct awin_gpio_pindata sc_gpio_detect;	/* card detect */
@@ -150,6 +170,49 @@ awin_mmc_probe_clocks(struct awin_mmc_softc *sc, struct awinio_attach_args *aio)
 #endif
 }
 
+static int
+awin_mmc_idma_setup(struct awin_mmc_softc *sc)
+{
+	int error;
+
+	if (awin_chip_id() == AWIN_CHIP_ID_A10) {
+		sc->sc_idma_xferlen = 0x2000;
+	} else {
+		sc->sc_idma_xferlen = 0x10000;
+	}
+
+	sc->sc_idma_ndesc = AWIN_MMC_NDESC;
+	sc->sc_idma_size = sizeof(struct awin_mmc_idma_descriptor) *
+	    sc->sc_idma_ndesc;
+	error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_idma_size, 0,
+	    sc->sc_idma_size, sc->sc_idma_segs, 1,
+	    &sc->sc_idma_nsegs, BUS_DMA_WAITOK);
+	if (error)
+		return error;
+	error = bus_dmamem_map(sc->sc_dmat, sc->sc_idma_segs,
+	    sc->sc_idma_nsegs, sc->sc_idma_size,
+	    &sc->sc_idma_desc, BUS_DMA_WAITOK);
+	if (error)
+		goto free;
+	error = bus_dmamap_create(sc->sc_dmat, sc->sc_idma_size, 1,
+	    sc->sc_idma_size, 0, BUS_DMA_WAITOK, &sc->sc_idma_map);
+	if (error)
+		goto unmap;
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_idma_map,
+	    sc->sc_idma_desc, sc->sc_idma_size, NULL, BUS_DMA_WAITOK);
+	if (error)
+		goto destroy;
+	return 0;
+
+destroy:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_idma_map);
+unmap:
+	bus_dmamem_unmap(sc->sc_dmat, sc->sc_idma_desc, sc->sc_idma_size);
+free:
+	bus_dmamem_free(sc->sc_dmat, sc->sc_idma_segs, sc->sc_idma_nsegs);
+	return error;
+}
+
 static void
 awin_mmc_attach(device_t parent, device_t self, void *aux)
 {
@@ -164,6 +227,8 @@ awin_mmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = aio->aio_core_bst;
 	sc->sc_dmat = aio->aio_dmat;
 	sc->sc_mmc_number = loc->loc_port;
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_BIO);
+	cv_init(&sc->sc_intr_cv, "awinmmcio");
 	bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 
@@ -197,6 +262,20 @@ awin_mmc_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
+	if (awin_mmc_idma_setup(sc) != 0) {
+		aprint_error_dev(self, "failed to setup DMA\n");
+		return;
+	}
+
+	sc->sc_ih = intr_establish(loc->loc_intr, IPL_BIO, IST_LEVEL,
+	    awin_mmc_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt %d\n",
+		    loc->loc_intr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting at irq %d\n", loc->loc_intr);
+
 	awin_mmc_host_reset(sc);
 	awin_mmc_bus_width(sc, 1);
 
@@ -204,18 +283,43 @@ awin_mmc_attach(device_t parent, device_t self, void *aux)
 	saa.saa_busname = "sdmmc";
 	saa.saa_sct = &awin_mmc_chip_functions;
 	saa.saa_sch = sc;
+	saa.saa_dmat = sc->sc_dmat;
 	saa.saa_clkmin = 400;
-	saa.saa_clkmax = 52000;
+	saa.saa_clkmax = 50000;
 	saa.saa_caps = SMC_CAPS_4BIT_MODE|
 		       SMC_CAPS_8BIT_MODE|
 		       SMC_CAPS_SD_HIGHSPEED|
 		       SMC_CAPS_MMC_HIGHSPEED|
-		       SMC_CAPS_AUTO_STOP;
+		       SMC_CAPS_AUTO_STOP|
+		       SMC_CAPS_DMA|
+		       SMC_CAPS_MULTI_SEG_DMA;
 	if (sc->sc_has_gpio_detect) {
 		saa.saa_caps |= SMC_CAPS_POLL_CARD_DET;
 	}
 
 	sc->sc_sdmmc_dev = config_found(self, &saa, NULL);
+}
+
+static int
+awin_mmc_intr(void *priv)
+{
+	struct awin_mmc_softc *sc = priv;
+	uint32_t idst;
+
+	mutex_enter(&sc->sc_intr_lock);
+	idst = MMC_READ(sc, AWIN_MMC_IDST);
+	if (!idst) {
+		mutex_exit(&sc->sc_intr_lock);
+		return 0;
+	}
+	MMC_WRITE(sc, AWIN_MMC_IDST, idst);
+
+	sc->sc_idma_idst |= idst;
+	cv_broadcast(&sc->sc_intr_cv);
+
+	mutex_exit(&sc->sc_intr_lock);
+
+	return 1;
 }
 
 static void
@@ -250,7 +354,9 @@ awin_mmc_host_ocr(sdmmc_chipset_handle_t sch)
 static int
 awin_mmc_host_maxblklen(sdmmc_chipset_handle_t sch)
 {
-	return 4096;
+	struct awin_mmc_softc *sc = sch;
+
+	return sc->sc_idma_xferlen;
 }
 
 static int
@@ -297,6 +403,10 @@ awin_mmc_update_clock(struct awin_mmc_softc *sc)
 {
 	uint32_t cmd;
 	int retry;
+
+#ifdef AWIN_MMC_DEBUG
+	aprint_normal_dev(sc->sc_dev, "update clock\n");
+#endif
 
 	cmd = AWIN_MMC_CMD_START |
 	      AWIN_MMC_CMD_UPCLK_ONLY |
@@ -387,37 +497,78 @@ awin_mmc_bus_rod(sdmmc_chipset_handle_t sch, int on)
 }
 
 static int
-awin_mmc_xfer_wait(struct awin_mmc_softc *sc, struct sdmmc_command *cmd)
+awin_mmc_dma_prepare(struct awin_mmc_softc *sc, struct sdmmc_command *cmd)
 {
-	int retry = 0xfffff;
-	uint32_t bit = (cmd->c_flags & SCF_CMD_READ) ?
-	    AWIN_MMC_STATUS_FIFO_EMPTY : AWIN_MMC_STATUS_FIFO_FULL;
+	struct awin_mmc_idma_descriptor *dma = sc->sc_idma_desc;
+	bus_addr_t desc_paddr = sc->sc_idma_map->dm_segs[0].ds_addr;
+	bus_size_t off;
+	int desc, resid, seg;
+	uint32_t val;
 
-	while (--retry > 0) {
-		uint32_t status = MMC_READ(sc, AWIN_MMC_STATUS);
-		if (!(status & bit))
-			return 0;
-		delay(10);
-	}
-
-	return ETIMEDOUT;
-}
-
-static int
-awin_mmc_xfer_data(struct awin_mmc_softc *sc, struct sdmmc_command *cmd)
-{
-	uint32_t *datap = (uint32_t *)cmd->c_buf;
-	int i;
-
-	for (i = 0; i < (cmd->c_resid >> 2); i++) {
-		if (awin_mmc_xfer_wait(sc, cmd))
-			return ETIMEDOUT;
-		if (cmd->c_flags & SCF_CMD_READ) {
-			datap[i] = MMC_READ(sc, AWIN_MMC_FIFO);
-		} else {
-			MMC_WRITE(sc, AWIN_MMC_FIFO, datap[i]);
+	desc = 0;
+	for (seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
+		bus_addr_t paddr = cmd->c_dmamap->dm_segs[seg].ds_addr;
+		bus_size_t len = cmd->c_dmamap->dm_segs[seg].ds_len;
+		resid = min(len, cmd->c_resid);
+		off = 0;
+		while (resid > 0) {
+			if (desc == sc->sc_idma_ndesc)
+				break;
+			len = min(sc->sc_idma_xferlen, resid);
+			dma[desc].dma_buf_size = len;
+			dma[desc].dma_buf_addr = paddr + off;
+			dma[desc].dma_config = AWIN_MMC_IDMA_CONFIG_CH |
+					       AWIN_MMC_IDMA_CONFIG_OWN;
+			cmd->c_resid -= len;
+			resid -= len;
+			off += len;
+			if (desc == 0) {
+				dma[desc].dma_config |= AWIN_MMC_IDMA_CONFIG_FD;
+			}
+			if (cmd->c_resid == 0) {
+				dma[desc].dma_config |= AWIN_MMC_IDMA_CONFIG_LD;
+				dma[desc].dma_config |= AWIN_MMC_IDMA_CONFIG_ER;
+				dma[desc].dma_next = 0;
+			} else {
+				dma[desc].dma_config |=
+				    AWIN_MMC_IDMA_CONFIG_DIC;
+				dma[desc].dma_next =
+				    desc_paddr + ((desc+1) *
+				    sizeof(struct awin_mmc_idma_descriptor));
+			}
+			++desc;
 		}
 	}
+	if (desc == sc->sc_idma_ndesc) {
+		aprint_error_dev(sc->sc_dev,
+		    "not enough descriptors for %d byte transfer!\n",
+		    cmd->c_datalen);
+		return EIO;
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_idma_map, 0,
+	    sc->sc_idma_size, BUS_DMASYNC_PREWRITE);
+
+	sc->sc_idma_idst = 0;
+
+	val = MMC_READ(sc, AWIN_MMC_GCTRL);
+	val |= AWIN_MMC_GCTRL_DMAEN;
+	val |= AWIN_MMC_GCTRL_INTEN;
+	MMC_WRITE(sc, AWIN_MMC_GCTRL, val);
+	val |= AWIN_MMC_GCTRL_DMARESET;
+	MMC_WRITE(sc, AWIN_MMC_GCTRL, val);
+	MMC_WRITE(sc, AWIN_MMC_DMAC, AWIN_MMC_DMAC_SOFTRESET);
+	MMC_WRITE(sc, AWIN_MMC_DMAC,
+	    AWIN_MMC_DMAC_IDMA_ON|AWIN_MMC_DMAC_FIX_BURST);
+	val = MMC_READ(sc, AWIN_MMC_IDIE);
+	val &= ~(AWIN_MMC_IDST_RECEIVE_INT|AWIN_MMC_IDST_TRANSMIT_INT);
+	if (cmd->c_flags & SCF_CMD_READ)
+		val |= AWIN_MMC_IDST_RECEIVE_INT;
+	else
+		val |= AWIN_MMC_IDST_TRANSMIT_INT;
+	MMC_WRITE(sc, AWIN_MMC_IDIE, val);
+	MMC_WRITE(sc, AWIN_MMC_DLBA, desc_paddr);
+	MMC_WRITE(sc, AWIN_MMC_FTRGLEVEL, AWIN_MMC_WATERMARK);
 
 	return 0;
 }
@@ -432,8 +583,9 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 #ifdef AWIN_MMC_DEBUG
 	aprint_normal_dev(sc->sc_dev,
-	    "opcode %d flags 0x%x data %p datalen %d\n",
-	    cmd->c_opcode, cmd->c_flags, cmd->c_data, cmd->c_datalen);
+	    "opcode %d flags 0x%x data %p datalen %d blklen %d\n",
+	    cmd->c_opcode, cmd->c_flags, cmd->c_data, cmd->c_datalen,
+	    cmd->c_blklen);
 #endif
 
 	if (cmd->c_opcode == 0)
@@ -473,17 +625,25 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	if (cmd->c_datalen == 0) {
 		MMC_WRITE(sc, AWIN_MMC_CMD, cmdval | cmd->c_opcode);
 	} else {
-		MMC_WRITE(sc, AWIN_MMC_GCTRL,
-		    MMC_READ(sc, AWIN_MMC_GCTRL) | AWIN_MMC_GCTRL_ACCESS_BY_AHB);
-		MMC_WRITE(sc, AWIN_MMC_CMD, cmdval | cmd->c_opcode);
+		mutex_enter(&sc->sc_intr_lock);
 		cmd->c_resid = cmd->c_datalen;
-		cmd->c_buf = cmd->c_data;
+		cmd->c_error = awin_mmc_dma_prepare(sc, cmd);
 		awin_mmc_led(sc, 0);
-		cmd->c_error = awin_mmc_xfer_data(sc, cmd);
+		MMC_WRITE(sc, AWIN_MMC_CMD, cmdval | cmd->c_opcode);
+		if (cmd->c_error == 0) {
+			cmd->c_error = cv_timedwait(&sc->sc_intr_cv,
+			    &sc->sc_intr_lock, hz*10);
+		}
+		if (sc->sc_idma_idst & AWIN_MMC_IDST_ERROR) {
+			cmd->c_error = EIO;
+		} else if (!(sc->sc_idma_idst & AWIN_MMC_IDST_COMPLETE)) {
+			cmd->c_error = ETIMEDOUT;
+		}
 		awin_mmc_led(sc, 1);
+		mutex_exit(&sc->sc_intr_lock);
 		if (cmd->c_error) {
 			aprint_error_dev(sc->sc_dev,
-			    "xfer data timeout\n");
+			    "xfer failed, error %d\n", cmd->c_error);
 			goto done;
 		}
 	}
@@ -491,11 +651,11 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	retry = 0xfffff;
 	while (--retry > 0) {
 		status = MMC_READ(sc, AWIN_MMC_RINT);
-		if (status & 0xbfc2) {
+		if (status & AWIN_MMC_INT_ERROR) {
 			retry = 0;
 			break;
 		}
-		if (status & 0x4)
+		if (status & AWIN_MMC_INT_CMD_DONE)
 			break;
 		delay(10);
 	}
@@ -579,6 +739,7 @@ done:
 	cmd->c_flags |= SCF_ITSDONE;
 
 	if (cmd->c_error) {
+		aprint_error_dev(sc->sc_dev, "i/o error %d\n", cmd->c_error);
 		MMC_WRITE(sc, AWIN_MMC_GCTRL, AWIN_MMC_GCTRL_RESET);
 		awin_mmc_update_clock(sc);
 	}
