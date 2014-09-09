@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.132 2014/06/06 01:27:32 rmind Exp $	*/
+/*	$NetBSD: route.c,v 1.133 2014/09/09 20:16:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.132 2014/06/06 01:27:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.133 2014/09/09 20:16:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -236,15 +236,15 @@ rt_replace_ifa(struct rtentry *rt, struct ifaddr *ifa)
 		}
 	}
 
-	IFAREF(ifa);
-	IFAFREE(rt->rt_ifa);
+	ifaref(ifa);
+	ifafree(rt->rt_ifa);
 	rt_set_ifa1(rt, ifa);
 }
 
 static void
 rt_set_ifa(struct rtentry *rt, struct ifaddr *ifa)
 {
-	IFAREF(ifa);
+	ifaref(ifa);
 	rt_set_ifa1(rt, ifa);
 }
 
@@ -386,27 +386,11 @@ rtfree(struct rtentry *rt)
 		rt_timer_remove_all(rt, 0);
 		ifa = rt->rt_ifa;
 		rt->rt_ifa = NULL;
-		IFAFREE(ifa);
+		ifafree(ifa);
 		rt->rt_ifp = NULL;
 		rt_destroy(rt);
 		pool_put(&rtentry_pool, rt);
 	}
-}
-
-void
-ifafree(struct ifaddr *ifa)
-{
-
-#ifdef DIAGNOSTIC
-	if (ifa == NULL)
-		panic("ifafree: null ifa");
-	if (ifa->ifa_refcnt != 0)
-		panic("ifafree: ifa_refcnt != 0 (%d)", ifa->ifa_refcnt);
-#endif
-#ifdef IFAREF_DEBUG
-	printf("ifafree: freeing ifaddr %p\n", ifa);
-#endif
-	free(ifa, M_IFADDR);
 }
 
 /*
@@ -797,7 +781,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		}
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (rc != 0) {
-			IFAFREE(ifa);
+			ifafree(ifa);
 			if ((rt->rt_flags & RTF_CLONED) != 0 && rt->rt_parent)
 				rtfree(rt->rt_parent);
 			if (rt->rt_gwroute)

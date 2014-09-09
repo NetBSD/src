@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.175 2014/09/05 06:08:15 matt Exp $	*/
+/*	$NetBSD: in6.c,v 1.176 2014/09/09 20:16:12 rmind Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.175 2014/09/05 06:08:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.176 2014/09/09 20:16:12 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -999,7 +999,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		} else
 			in6_ifaddr = ia;
 		/* gain a refcnt for the link from in6_ifaddr */
-		IFAREF(&ia->ia_ifa);
+		ifaref(&ia->ia_ifa);
 
 		ifa_insert(ifp, &ia->ia_ifa);
 	}
@@ -1469,7 +1469,7 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 	 * release another refcnt for the link from in6_ifaddr.
 	 * Note that we should decrement the refcnt at least once for all *BSD.
 	 */
-	IFAFREE(&oia->ia_ifa);
+	ifafree(&oia->ia_ifa);
 
 	splx(s);
 }

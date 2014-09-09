@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.147 2014/07/01 05:49:18 rtr Exp $	*/
+/*	$NetBSD: in.c,v 1.148 2014/09/09 20:16:12 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.147 2014/07/01 05:49:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.148 2014/09/09 20:16:12 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -416,7 +416,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			if (ia == NULL)
 				return (ENOBUFS);
 			TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
-			IFAREF(&ia->ia_ifa);
+			ifaref(&ia->ia_ifa);
 			ifa_insert(ifp, &ia->ia_ifa);
 			ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
 			ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
@@ -606,7 +606,7 @@ in_purgeaddr(struct ifaddr *ifa)
 	TAILQ_REMOVE(&in_ifaddrhead, ia, ia_list);
 	if (ia->ia_allhosts != NULL)
 		in_delmulti(ia->ia_allhosts);
-	IFAFREE(&ia->ia_ifa);
+	ifafree(&ia->ia_ifa);
 	in_setmaxmtu();
 }
 

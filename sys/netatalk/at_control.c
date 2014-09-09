@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.35 2014/07/01 05:49:18 rtr Exp $	 */
+/*	$NetBSD: at_control.c,v 1.36 2014/09/09 20:16:12 rmind Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.35 2014/07/01 05:49:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.36 2014/09/09 20:16:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ at_control(u_long cmd, void *data, struct ifnet *ifp)
 			} else {
 				TAILQ_INSERT_TAIL(&at_ifaddr, aa, aa_list);
 			}
-			IFAREF(&aa->aa_ifa);
+			ifaref(&aa->aa_ifa);
 
 			/*
 		         * Find the end of the interface's addresses
@@ -336,7 +336,7 @@ at_purgeaddr(struct ifaddr *ifa)
 	 */
 	ifa_remove(ifp, &aa->aa_ifa);
 	TAILQ_REMOVE(&at_ifaddr, aa, aa_list);
-	IFAFREE(&aa->aa_ifa);
+	ifafree(&aa->aa_ifa);
 }
 
 void
