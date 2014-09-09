@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.58 2014/07/25 14:18:49 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.59 2014/09/09 15:14:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.58 2014/07/25 14:18:49 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.59 2014/09/09 15:14:39 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -353,15 +353,19 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 					 "Ivy Bridge",
 				[0x3c] = "4th gen Core, Xeon E3-12xx v3 "
 					 "(Haswell)",
-				[0x3d] = "Core M based on Broadwell",
-				[0x3e] = "Xeon E5/E7, Ivy Bridge-EP",
-				[0x3f] = "Next gen Xeon based on Haswell",
+				[0x3d] = "Core M-5xxx (Broadwell)",
+				[0x3e] = "Xeon E5/E7 v2 (Ivy Bridge-E), "
+					 "Core i7-49xx Extreme",
+				[0x3f] = "Xeon E5-2600/1600 v3 (Haswell-E), "
+					 "Core i7-59xx Extreme",
 				[0x45] = "4th gen Core, Xeon E3-12xx v3 "
 					 "(Haswell)",
 				[0x46] = "4th gen Core, Xeon E3-12xx v3 "
 					 "(Haswell)",
 				[0x4a] = "Future Atom E3000, Z3000",
 				[0x4d] = "Atom C2000",
+				[0x4e] = "Future Core",
+				[0x56] = "Future Xeon",
 				[0x5a] = "Future Atom E3000, Z3000",
 				[0x5d] = "Future Atom E3000, Z3000",
 			},
