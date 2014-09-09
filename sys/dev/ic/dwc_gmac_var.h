@@ -84,7 +84,8 @@ struct dwc_gmac_softc {
 	bus_dma_segment_t sc_dma_ring_seg;	/* and TX ring */
 	struct dwc_gmac_rx_ring sc_rxq;
 	struct dwc_gmac_tx_ring sc_txq;
+	uint16_t sc_mii_clk;
 };
 
-void dwc_gmac_attach(struct dwc_gmac_softc*, uint8_t*);
+void dwc_gmac_attach(struct dwc_gmac_softc*, uint8_t*, uint32_t);
 int dwc_gmac_intr(struct dwc_gmac_softc*);

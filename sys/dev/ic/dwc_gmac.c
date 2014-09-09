@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.2 2014/09/09 07:18:35 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.3 2014/09/09 10:04:19 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -92,7 +92,7 @@ static int dwc_gmac_ioctl(struct ifnet *, u_long, void *);
 #define RX_DESC_OFFSET(N)	((N)*sizeof(struct dwc_gmac_dev_dmadesc))
 
 void
-dwc_gmac_attach(struct dwc_gmac_softc *sc, uint8_t *ep)
+dwc_gmac_attach(struct dwc_gmac_softc *sc, uint8_t *ep, uint32_t mii_clk)
 {
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	uint32_t maclo, machi;
@@ -100,6 +100,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint8_t *ep)
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 
 	mutex_init(&sc->sc_mdio_lock, MUTEX_DEFAULT, IPL_NET);
+	sc->sc_mii_clk = mii_clk & 7;
 
 	/*
 	 * If the frontend did not pass in a pre-configured ethernet mac
@@ -241,13 +242,14 @@ dwc_gmac_miibus_read_reg(device_t self, int phy, int reg)
 		| ((reg << GMAC_MII_REG_SHIFT) & GMAC_MII_REG_MASK);
 
 	mutex_enter(&sc->sc_mdio_lock);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_MIIADDR, miiaddr
-	    | GMAC_MII_CLK_150_250M | GMAC_MII_BUSY);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_MIIADDR,
+	    miiaddr | GMAC_MII_BUSY | (sc->sc_mii_clk << 2));
 
 	for (cnt = 0; cnt < 1000; cnt++) {
-		if (!(bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_MIIADDR)
-		    & GMAC_MII_BUSY)) {
-			rv = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_MIIDATA);
+		if (!(bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+		    AWIN_GMAC_MAC_MIIADDR) & GMAC_MII_BUSY)) {
+			rv = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+			    AWIN_GMAC_MAC_MIIDATA);
 			break;
 		}
 		delay(10);
@@ -267,15 +269,16 @@ dwc_gmac_miibus_write_reg(device_t self, int phy, int reg, int val)
 
 	miiaddr = ((phy << GMAC_MII_PHY_SHIFT) & GMAC_MII_PHY_MASK)
 		| ((reg << GMAC_MII_REG_SHIFT) & GMAC_MII_REG_MASK)
-		| GMAC_MII_BUSY | GMAC_MII_WRITE;
+		| GMAC_MII_BUSY | GMAC_MII_WRITE | (sc->sc_mii_clk << 2);
 
 	mutex_enter(&sc->sc_mdio_lock);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_MIIDATA, val);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_MIIADDR, miiaddr);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_MIIADDR,
+	    miiaddr);
 
 	for (cnt = 0; cnt < 1000; cnt++) {
-		if (!(bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_MIIADDR)
-		    & GMAC_MII_BUSY))
+		if (!(bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+		    AWIN_GMAC_MAC_MIIADDR) & GMAC_MII_BUSY))
 			break;
 		delay(10);
 	}
