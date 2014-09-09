@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.32 2014/09/03 15:24:52 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.33 2014/09/09 21:21:22 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.32 2014/09/03 15:24:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.33 2014/09/09 21:21:22 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -450,7 +450,7 @@ consinit(void)
 	bus_space_handle_t bsh = EXYNOS_IOPHYSTOVIRT(iobase);
 	u_int i;
 	/*	
-	 * No need to guess at the UART frequency since we can caclulate it.
+	 * No need to guess at the UART frequency since we can calculate it.
 	 */
 	uint32_t freq = conspeed
 	   * (16 * (bus_space_read_4(bst, bsh, SSCOM_UBRDIV) + 1)
@@ -564,8 +564,8 @@ odroid_exynos4_gpio_ncs(device_t self, prop_dictionary_t dict) {
 	prop_dictionary_set_uint32(dict, "nc-GPY5", 0xff - 0b00000000);
 	prop_dictionary_set_uint32(dict, "nc-GPY6", 0xff - 0b00000000);
 	prop_dictionary_set_uint32(dict, "nc-ETC0", 0x3f - 0b00000000);
-	/* standard Xuhost bits at pin 5,6 */
-	prop_dictionary_set_uint32(dict, "nc-ETC6", 0x7f - 0b01100000);
+	/* standard Xuhost bits at pin 6,7 */
+	prop_dictionary_set_uint32(dict, "nc-ETC6", 0xff - 0b11000000);
 	prop_dictionary_set_uint32(dict, "nc-GPM0", 0xff - 0b00000000);
 	prop_dictionary_set_uint32(dict, "nc-GPM1", 0x7f - 0b00000000);
 	prop_dictionary_set_uint32(dict, "nc-GPM2", 0x1f - 0b00000000);
