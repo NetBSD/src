@@ -1,4 +1,4 @@
-/* $NetBSD: gttwsireg.h,v 1.1 2013/09/06 00:56:12 matt Exp $ */
+/* $NetBSD: gttwsireg.h,v 1.2 2014/09/09 22:44:32 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
@@ -27,8 +27,19 @@
 #ifndef _GTTWSIREG_H_
 #define _GTTWSIREG_H_
 
+#include "opt_gttwsi.h"
+
 #define GTTWSI_SIZE		0x100
 
+#if defined(GTTWSI_ALLWINNER)
+#define TWSI_SLAVEADDR		0x00
+#define TWSI_EXTEND_SLAVEADDR	0x04
+#define TWSI_DATA		0x08
+#define TWSI_CONTROL		0x0c
+#define TWSI_STATUS		0x10
+#define TWSI_BAUDRATE		0x14
+#define TWSI_SOFTRESET		0x1c
+#else
 #define	TWSI_SLAVEADDR		0x00
 #define	TWSI_EXTEND_SLAVEADDR	0x10
 #define	TWSI_DATA		0x04
@@ -36,6 +47,7 @@
 #define	TWSI_STATUS		0x0c	/* for read */
 #define	TWSI_BAUDRATE		0x0c	/* for write */
 #define	TWSI_SOFTRESET		0x1c
+#endif
 
 #define	SLAVEADDR_GCE_MASK	0x01
 #define	SLAVEADDR_SADDR_MASK	0xfe
