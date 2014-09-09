@@ -1,4 +1,4 @@
-# $Id: escape.mk,v 1.9 2014/09/09 10:11:20 apb Exp $
+# $Id: escape.mk,v 1.10 2014/09/09 10:22:27 apb Exp $
 #
 # Test backslash escaping.
 
@@ -203,6 +203,17 @@ third line':
 	second line tab should be elided':
 	echo :'first line\
 		only one tab should be elided, second tab remains'
+
+# When backslash-newline appears at the end of a command script,
+# both the backslash and the newline should be passed to the shell.
+# The shell should elide the backslash-newline.
+#
+all: cmd-1bsnl-eof
+cmd-1bsnl-eof:
+	@echo ${.TARGET}
+	echo :'command ending with backslash-newline'; \
+
+# above line must be blank
 
 # Double-backslash-newline in a command.
 # Both backslashes are retained, but the newline is not escaped.

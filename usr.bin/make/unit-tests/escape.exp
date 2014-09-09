@@ -71,6 +71,10 @@ echo :'first line\
 	only one tab should be elided, second tab remains'
 :first line\
 	only one tab should be elided, second tab remains
+cmd-1bsnl-eof
+echo :'command ending with backslash-newline'; \
+
+:command ending with backslash-newline
 cmd-2bsnl
 echo take one\\
 take one\
