@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.5,v 1.1.2.23 2014/08/27 15:10:59 msaitoh Exp $
+# $NetBSD: CHANGES-6.1.5,v 1.1.2.24 2014/09/09 08:49:43 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1.4 release to the NetBSD 6.1.5
 release:
@@ -1296,3 +1296,11 @@ sys/compat/osf1/osf1_file.c			1.42
 	Fix a bug that a local user could crash the system by making the
 	kernel perform a zero-sized memory allocation in osf1.
 	[maxv, ticket #1141]
+
+sys/arch/next68k/next68k/pmap_bootstrap.c	1.43
+
+	Move physmem calculations before nptpage initialization.
+	Should fix next68k specific part of PR port-m68k/45915
+	(panic: pmap_enter_ptpage: can't get KPT page), and
+	this is the last possible m68k MD part of this PR.
+	[tsutsui, ticket #1008]
