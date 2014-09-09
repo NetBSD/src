@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.5 2014/09/08 14:26:16 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.6 2014/09/09 10:03:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -129,7 +129,20 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on irq %d\n",
 	     loc->loc_intr);
 
-	dwc_gmac_attach(&sc->sc_core, ep);
+	/*
+	 * Enable GMAC clock
+	 */
+	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+	    AWIN_AHB_GATING1_REG, AWIN_AHB_GATING1_GMAC, 0);
+	/*
+	 * We use RGMII phy mode, set up clock accordingly
+	 */
+	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+	    AWIN_GMAC_CLK_REG, 4, 3);
+	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+	    AWIN_GMAC_CLK_REG, 2, 0);
+
+	dwc_gmac_attach(&sc->sc_core, ep, 2);
 }
 
 
