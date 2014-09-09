@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.92 2014/09/05 06:08:15 matt Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.93 2014/09/09 20:16:12 rmind Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.92 2014/09/05 06:08:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.93 2014/09/09 20:16:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -906,7 +906,7 @@ in6_ifdetach(struct ifnet *ifp)
 			}
 		}
 
-		IFAFREE(&oia->ia_ifa);
+		ifafree(&oia->ia_ifa);
 	}
 
 	/* cleanup multicast address kludge table, if there is any */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.174 2014/07/31 06:35:47 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.175 2014/09/09 20:16:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -718,44 +718,6 @@ struct if_addrprefreq {
 #endif /* _NETBSD_SOURCE */
 
 #ifdef _KERNEL
-#ifdef IFAREF_DEBUG
-#define	IFAREF(ifa)							\
-do {									\
-	printf("IFAREF: %s:%d %p -> %d\n", __FILE__, __LINE__,		\
-	    (ifa), ++(ifa)->ifa_refcnt);				\
-} while (/*CONSTCOND*/ 0)
-
-#define	IFAFREE(ifa)							\
-do {									\
-	if ((ifa)->ifa_refcnt <= 0)					\
-		panic("%s:%d: %p ifa_refcnt <= 0", __FILE__,		\
-		    __LINE__, (ifa));					\
-	printf("IFAFREE: %s:%d %p -> %d\n", __FILE__, __LINE__,		\
-	    (ifa), --(ifa)->ifa_refcnt);				\
-	if ((ifa)->ifa_refcnt == 0)					\
-		ifafree(ifa);						\
-} while (/*CONSTCOND*/ 0)
-#else
-#define	IFAREF(ifa)	(ifa)->ifa_refcnt++
-
-#ifdef DIAGNOSTIC
-#define	IFAFREE(ifa)							\
-do {									\
-	if ((ifa)->ifa_refcnt <= 0)					\
-		panic("%s:%d: %p ifa_refcnt <= 0", __FILE__,		\
-		    __LINE__, (ifa));					\
-	if (--(ifa)->ifa_refcnt == 0)					\
-		ifafree(ifa);						\
-} while (/*CONSTCOND*/ 0)
-#else
-#define	IFAFREE(ifa)							\
-do {									\
-	if (--(ifa)->ifa_refcnt == 0)					\
-		ifafree(ifa);						\
-} while (/*CONSTCOND*/ 0)
-#endif /* DIAGNOSTIC */
-#endif /* IFAREF_DEBUG */
-
 #ifdef ALTQ
 #define	ALTQ_DECL(x)		x
 #define ALTQ_COMMA		,
@@ -921,6 +883,9 @@ int	if_flags_set(struct ifnet *, const short);
 
 void ifa_insert(struct ifnet *, struct ifaddr *);
 void ifa_remove(struct ifnet *, struct ifaddr *);
+
+void	ifaref(struct ifaddr *);
+void	ifafree(struct ifaddr *);
 
 struct	ifaddr *ifa_ifwithaddr(const struct sockaddr *);
 struct	ifaddr *ifa_ifwithaf(int);
