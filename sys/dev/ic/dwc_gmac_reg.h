@@ -62,7 +62,6 @@
 
 #define	GMAC_MII_BUSY			1
 #define	GMAC_MII_WRITE			2
-#define	GMAC_MII_CLK_150_250M		0x10
 
 #define	GMAC_BUSMODE_RESET		1
 
