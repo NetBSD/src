@@ -1,4 +1,4 @@
-/* $NetBSD: axp20x.c,v 1.1 2014/09/09 22:47:33 jmcneill Exp $ */
+/* $NetBSD: axp20x.c,v 1.2 2014/09/09 23:39:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.1 2014/09/09 22:47:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.2 2014/09/09 23:39:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor_temp.units = ENVSYS_STEMP;
 	sc->sc_sensor_temp.state = ENVSYS_SINVALID;
 	sc->sc_sensor_temp.flags = ENVSYS_FHAS_ENTROPY;
-	snprintf(sc->sc_sensor_temp.desc, sizeof(sc->sc_sensor_temp),
+	snprintf(sc->sc_sensor_temp.desc, sizeof(sc->sc_sensor_temp.desc),
 	    "internal temperature");
 	sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor_temp);
 
