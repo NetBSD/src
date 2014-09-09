@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.3 2014/09/09 10:04:19 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.4 2014/09/09 10:06:47 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -602,8 +602,6 @@ dwc_gmac_miibus_statchg(struct ifnet *ifp)
 {
 	struct dwc_gmac_softc * const sc = ifp->if_softc;
 	struct mii_data * const mii = &sc->sc_mii;
-
-printf("dwc_gmac_miibus_statchg called\n");
 
 	/*
 	 * Set MII or GMII interface based on the speed
