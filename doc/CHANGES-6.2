@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.131 2014/08/27 15:09:57 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.132 2014/09/09 08:49:13 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -3711,3 +3711,30 @@ sys/compat/osf1/osf1_file.c			1.42
 	Fix a bug that a local user could crash the system by making the
 	kernel perform a zero-sized memory allocation in osf1.
 	[maxv, ticket #1141]
+
+usr.sbin/ypbind/ypbind.8			1.19-1.20
+usr.sbin/ypbind/ypbind.c			1.91-1.98
+
+	State handling fixes and cleanups in ypbind; it no longer churns the
+	disk, spams syslogd when the server goes down, or gets confused about
+	its binding state. PRs 15355, 32519.
+	[dholland, ticket #1083]
+
+external/gpl2/xcvs/dist/src/server.c		1.6
+
+	Relax arbitrary limit of 10,000 changed files per commit idiotically
+	introduced in CVS 1.11.17.
+	[tls, ticket #1108]
+
+external/gpl2/xcvs/dist/src/server.c		1.7
+
+	Move the arbitrary limit on number of files per commit into
+	#define MAXARGS.  The limit used to be 10000, but was changed to
+	1000000 earlier today.
+	[tls, ticket #1109]
+
+sys/arch/sparc/sparc/autoconf.c			1.258
+
+	Add device name mapping for "qfe" (quad hme) cards.
+	Fix PR port-sparc/49103 from MOCHIDA Shuji.
+	[martin, ticket #1110]
