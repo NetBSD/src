@@ -1130,7 +1130,7 @@ serve_max_dotdot (char *arg)
     if (proxy_log) return;
 #endif /* PROXY_SUPPORT */
 
-    if (lim < 0 || lim > 10000)
+    if (lim < 0 || lim > 1000000)
 	return;
     p = xmalloc (strlen (server_temp_dir) + 2 * lim + 10);
     if (p == NULL)
@@ -2989,7 +2989,7 @@ serve_argument (char *arg)
 
     if (error_pending()) return;
 
-    if (argument_count >= 10000)
+    if (argument_count >= 1000000)
     {
 	if (alloc_pending (80))
 	    sprintf (pending_error_text, 
