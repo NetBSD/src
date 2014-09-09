@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.100 2014/07/01 07:51:29 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.101 2014/09/09 20:16:12 rmind Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.100 2014/07/01 07:51:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.101 2014/09/09 20:16:12 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1162,7 +1162,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 	 * (re)initialization.
 	 */
 	dp->dad_ifa = ifa;
-	IFAREF(ifa);	/* just for safety */
+	ifaref(ifa);	/* just for safety */
 	dp->dad_count = ip6_dad_count;
 	dp->dad_ns_icount = dp->dad_na_icount = 0;
 	dp->dad_ns_ocount = dp->dad_ns_tcount = 0;
@@ -1195,7 +1195,7 @@ nd6_dad_stop(struct ifaddr *ifa)
 	TAILQ_REMOVE(&dadq, dp, dad_list);
 	free(dp, M_IP6NDP);
 	dp = NULL;
-	IFAFREE(ifa);
+	ifafree(ifa);
 }
 
 static void
@@ -1240,7 +1240,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 		TAILQ_REMOVE(&dadq, dp, dad_list);
 		free(dp, M_IP6NDP);
 		dp = NULL;
-		IFAFREE(ifa);
+		ifafree(ifa);
 		goto done;
 	}
 
@@ -1294,7 +1294,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 			TAILQ_REMOVE(&dadq, dp, dad_list);
 			free(dp, M_IP6NDP);
 			dp = NULL;
-			IFAFREE(ifa);
+			ifafree(ifa);
 		}
 	}
 
@@ -1373,7 +1373,7 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 	TAILQ_REMOVE(&dadq, dp, dad_list);
 	free(dp, M_IP6NDP);
 	dp = NULL;
-	IFAFREE(ifa);
+	ifafree(ifa);
 }
 
 static void
