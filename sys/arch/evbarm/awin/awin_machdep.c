@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.4 2014/09/07 06:26:08 skrll Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.5 2014/09/09 02:43:19 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.4 2014/09/07 06:26:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.5 2014/09/09 02:43:19 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -585,7 +585,7 @@ awin_device_register(device_t self, void *aux)
 
 	if (device_is_a(self, "awinio")) {
 #if AWIN_board == AWIN_cubieboard || AWIN_board == AWIN_cubietruck
-		if (cubietruck_p) {
+		if (awin_chip_id() == AWIN_CHIP_ID_A20) {
 			prop_dictionary_set_bool(dict, "no-awe", true);
 		} else {
 			prop_dictionary_set_bool(dict, "no-awge", true);
