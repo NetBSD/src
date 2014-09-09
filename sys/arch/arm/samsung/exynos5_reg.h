@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos5_reg.h,v 1.14 2014/09/04 13:06:49 reinoud Exp $	*/
+/*	$NetBSD: exynos5_reg.h,v 1.15 2014/09/09 21:22:48 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -424,6 +424,5 @@
 #define   OTG_SYS_PHY0_SWRST		__BIT(12)
 #define   OTG_SYS_LINK_SWRST_UOTG	__BIT(13)
 #define   OTG_SYS_PHYLINK_SWRST		__BIT(14)
-
 
 #endif /* _ARM_SAMSUNG_EXYNOS5_REG_H_ */
