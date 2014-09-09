@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.8 2014/09/09 19:23:46 jmcneill Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.9 2014/09/09 20:39:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.8 2014/09/09 19:23:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.9 2014/09/09 20:39:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -88,6 +88,8 @@ struct awin_mmc_softc {
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
 	bus_dma_tag_t sc_dmat;
+
+	bool sc_use_dma;
 
 	void *sc_ih;
 	kmutex_t sc_intr_lock;
@@ -236,8 +238,11 @@ awin_mmc_attach(device_t parent, device_t self, void *aux)
 	bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 
+	sc->sc_use_dma = true;
+	prop_dictionary_get_bool(cfg, "dma", &sc->sc_use_dma);
+
 	aprint_naive("\n");
-	aprint_normal(": SD/MMC interface\n");
+	aprint_normal(": SD3.0 (%s)\n", sc->sc_use_dma ? "DMA" : "PIO");
 
 	awin_mmc_probe_clocks(sc, aio);
 
@@ -266,9 +271,11 @@ awin_mmc_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	if (awin_mmc_idma_setup(sc) != 0) {
-		aprint_error_dev(self, "failed to setup DMA\n");
-		return;
+	if (sc->sc_use_dma) {
+		if (awin_mmc_idma_setup(sc) != 0) {
+			aprint_error_dev(self, "failed to setup DMA\n");
+			return;
+		}
 	}
 
 	sc->sc_ih = intr_establish(loc->loc_intr, IPL_BIO, IST_LEVEL,
@@ -296,16 +303,18 @@ awin_mmc_attach_i(device_t self)
 	saa.saa_busname = "sdmmc";
 	saa.saa_sct = &awin_mmc_chip_functions;
 	saa.saa_sch = sc;
-	saa.saa_dmat = sc->sc_dmat;
 	saa.saa_clkmin = 400;
 	saa.saa_clkmax = 50000;
 	saa.saa_caps = SMC_CAPS_4BIT_MODE|
 		       SMC_CAPS_8BIT_MODE|
 		       SMC_CAPS_SD_HIGHSPEED|
 		       SMC_CAPS_MMC_HIGHSPEED|
-		       SMC_CAPS_AUTO_STOP|
-		       SMC_CAPS_DMA|
-		       SMC_CAPS_MULTI_SEG_DMA;
+		       SMC_CAPS_AUTO_STOP;
+	if (sc->sc_use_dma) {
+		saa.saa_dmat = sc->sc_dmat;
+		saa.saa_caps |= SMC_CAPS_DMA|
+				SMC_CAPS_MULTI_SEG_DMA;
+	}
 	if (sc->sc_has_gpio_detect) {
 		saa.saa_caps |= SMC_CAPS_POLL_CARD_DET;
 	}
@@ -410,9 +419,7 @@ awin_mmc_host_ocr(sdmmc_chipset_handle_t sch)
 static int
 awin_mmc_host_maxblklen(sdmmc_chipset_handle_t sch)
 {
-	struct awin_mmc_softc *sc = sch;
-
-	return sc->sc_idma_xferlen;
+	return 8192;
 }
 
 static int
@@ -551,6 +558,43 @@ static int
 awin_mmc_bus_rod(sdmmc_chipset_handle_t sch, int on)
 {
 	return -1;
+}
+
+
+static int
+awin_mmc_pio_wait(struct awin_mmc_softc *sc, struct sdmmc_command *cmd)
+{
+	int retry = 0xfffff;
+	uint32_t bit = (cmd->c_flags & SCF_CMD_READ) ?
+	    AWIN_MMC_STATUS_FIFO_EMPTY : AWIN_MMC_STATUS_FIFO_FULL;
+
+	while (--retry > 0) {
+		uint32_t status = MMC_READ(sc, AWIN_MMC_STATUS);
+		if (!(status & bit))
+			return 0;
+		delay(10);
+	}
+
+	return ETIMEDOUT;
+}
+
+static int
+awin_mmc_pio_transfer(struct awin_mmc_softc *sc, struct sdmmc_command *cmd)
+{
+	uint32_t *datap = (uint32_t *)cmd->c_data;
+	int i;
+
+	for (i = 0; i < (cmd->c_resid >> 2); i++) {
+		if (awin_mmc_pio_wait(sc, cmd))
+			return ETIMEDOUT;
+		if (cmd->c_flags & SCF_CMD_READ) {
+			datap[i] = MMC_READ(sc, AWIN_MMC_FIFO);
+		} else {
+			MMC_WRITE(sc, AWIN_MMC_FIFO, datap[i]);
+		}
+	}
+
+	return 0;
 }
 
 static int
@@ -693,18 +737,25 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		MMC_WRITE(sc, AWIN_MMC_CMD, cmdval | cmd->c_opcode);
 	} else {
 		cmd->c_resid = cmd->c_datalen;
-		cmd->c_error = awin_mmc_dma_prepare(sc, cmd);
 		awin_mmc_led(sc, 0);
-		MMC_WRITE(sc, AWIN_MMC_CMD, cmdval | cmd->c_opcode);
-		if (cmd->c_error == 0) {
-			cmd->c_error = cv_timedwait(&sc->sc_idst_cv,
-			    &sc->sc_intr_lock, hz*10);
-		}
-		awin_mmc_dma_complete(sc);
-		if (sc->sc_idma_idst & AWIN_MMC_IDST_ERROR) {
-			cmd->c_error = EIO;
-		} else if (!(sc->sc_idma_idst & AWIN_MMC_IDST_COMPLETE)) {
-			cmd->c_error = ETIMEDOUT;
+		if (sc->sc_use_dma) {
+			cmd->c_error = awin_mmc_dma_prepare(sc, cmd);
+			MMC_WRITE(sc, AWIN_MMC_CMD, cmdval | cmd->c_opcode);
+			if (cmd->c_error == 0) {
+				cmd->c_error = cv_timedwait(&sc->sc_idst_cv,
+				    &sc->sc_intr_lock, hz*10);
+			}
+			awin_mmc_dma_complete(sc);
+			if (sc->sc_idma_idst & AWIN_MMC_IDST_ERROR) {
+				cmd->c_error = EIO;
+			} else if (!(sc->sc_idma_idst & AWIN_MMC_IDST_COMPLETE)) {
+				cmd->c_error = ETIMEDOUT;
+			}
+		} else {
+			mutex_exit(&sc->sc_intr_lock);
+			MMC_WRITE(sc, AWIN_MMC_CMD, cmdval | cmd->c_opcode);
+			cmd->c_error = awin_mmc_pio_transfer(sc, cmd);
+			mutex_enter(&sc->sc_intr_lock);
 		}
 		awin_mmc_led(sc, 1);
 		if (cmd->c_error) {
@@ -795,6 +846,11 @@ done:
 #endif
 		awin_mmc_host_reset(sc);
 		awin_mmc_update_clock(sc);
+	}
+
+	if (!sc->sc_use_dma) {
+		MMC_WRITE(sc, AWIN_MMC_GCTRL,
+		    MMC_READ(sc, AWIN_MMC_GCTRL) | AWIN_MMC_GCTRL_FIFORESET);
 	}
 }
 
