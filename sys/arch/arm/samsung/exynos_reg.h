@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_reg.h,v 1.10 2014/09/05 08:01:05 skrll Exp $	*/
+/*	$NetBSD: exynos_reg.h,v 1.11 2014/09/09 21:24:10 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -179,12 +179,13 @@
 #define EXYNOS_PMU_USB_HSIC_1_PHY_CTRL	0x708
 #define EXYNOS_PMU_USB_HSIC_2_PHY_CTRL	0x70C
 
-#define PMU_PHY_ENABLE			(1<< 0)
+#define PMU_PHY_ENABLE			(1 << 0)
 #define PMU_PHY_DISABLE			(0)
 
 
 /* used SYSREG registers */
 #define EXYNOS5_SYSREG_USB20_PHY_TYPE	0x230
+#define   USB20_PHY_HOST_LINK_EN	(1 << 0)
 
 
 /* Generic USB registers/constants */
