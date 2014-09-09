@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.1 2014/09/08 14:24:32 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.2 2014/09/09 07:18:35 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -162,6 +162,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint8_t *ep)
 	/*
 	 * Attach MII subdevices
 	 */
+	sc->sc_ec.ec_mii = &sc->sc_mii;
 	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
         mii->mii_ifp = ifp;
         mii->mii_readreg = dwc_gmac_miibus_read_reg;
@@ -793,9 +794,11 @@ dwc_gmac_intr(struct dwc_gmac_softc *sc)
 	uint32_t status, dma_status;
 
 	status = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_INTR);
-	if (status & AWIN_GMAC_MII_IRQ)
+	if (status & AWIN_GMAC_MII_IRQ) {
 		(void)bus_space_read_4(sc->sc_bst, sc->sc_bsh,
 		    AWIN_GMAC_MII_STATUS);
+		mii_pollstat(&sc->sc_mii);
+	}
 
 	dma_status = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
 	    AWIN_GMAC_DMA_STATUS);
