@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.290 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: if.c,v 1.291 2014/09/09 20:16:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.290 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.291 2014/09/09 20:16:12 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -362,7 +362,7 @@ if_set_sadl(struct ifnet *ifp, const void *lla, u_char addrlen, bool factory)
 	(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, lla, ifp->if_addrlen);
 	if (factory) {
 		ifp->if_hwdl = ifp->if_dl;
-		IFAREF(ifp->if_hwdl);
+		ifaref(ifp->if_hwdl);
 	}
 	/* TBD routing socket */
 }
@@ -402,9 +402,9 @@ if_sadl_setrefs(struct ifnet *ifp, struct ifaddr *ifa)
 {
 	const struct sockaddr_dl *sdl;
 	ifnet_addrs[ifp->if_index] = ifa;
-	IFAREF(ifa);
+	ifaref(ifa);
 	ifp->if_dl = ifa;
-	IFAREF(ifa);
+	ifaref(ifa);
 	sdl = satosdl(ifa->ifa_addr);
 	ifp->if_sadl = sdl;
 }
@@ -447,9 +447,9 @@ if_deactivate_sadl(struct ifnet *ifp)
 	ifp->if_sadl = NULL;
 
 	ifnet_addrs[ifp->if_index] = NULL;
-	IFAFREE(ifa);
+	ifafree(ifa);
 	ifp->if_dl = NULL;
-	IFAFREE(ifa);
+	ifafree(ifa);
 }
 
 void
@@ -494,7 +494,7 @@ if_free_sadl(struct ifnet *ifp)
 	ifa_remove(ifp, ifa);
 	if_deactivate_sadl(ifp);
 	if (ifp->if_hwdl == ifa) {
-		IFAFREE(ifa);
+		ifafree(ifa);
 		ifp->if_hwdl = NULL;
 	}
 	splx(s);
@@ -1101,11 +1101,28 @@ if_clone_list(struct if_clonereq *ifcr)
 }
 
 void
+ifaref(struct ifaddr *ifa)
+{
+	ifa->ifa_refcnt++;
+}
+
+void
+ifafree(struct ifaddr *ifa)
+{
+	KASSERT(ifa != NULL);
+	KASSERT(ifa->ifa_refcnt > 0);
+
+	if (--ifa->ifa_refcnt == 0) {
+		free(ifa, M_IFADDR);
+	}
+}
+
+void
 ifa_insert(struct ifnet *ifp, struct ifaddr *ifa)
 {
 	ifa->ifa_ifp = ifp;
 	TAILQ_INSERT_TAIL(&ifp->if_addrlist, ifa, ifa_list);
-	IFAREF(ifa);
+	ifaref(ifa);
 }
 
 void
@@ -1113,7 +1130,7 @@ ifa_remove(struct ifnet *ifp, struct ifaddr *ifa)
 {
 	KASSERT(ifa->ifa_ifp == ifp);
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
-	IFAFREE(ifa);
+	ifafree(ifa);
 }
 
 static inline int
