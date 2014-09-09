@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.5 2014/09/09 02:43:19 jmcneill Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.6 2014/09/09 21:04:05 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.5 2014/09/09 02:43:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.6 2014/09/09 21:04:05 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -660,6 +660,8 @@ awin_device_register(device_t self, void *aux)
 			prop_dictionary_set_cstring(dict,
 			    "led-gpio", "status-led2");
 		}
+		if (cubietruck_p)
+			prop_dictionary_set_bool(dict, "dma", false);
 		return;
 	}
 
