@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.12 2014/09/07 22:22:35 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.13 2014/09/09 13:56:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -88,6 +88,7 @@ awinio_print(void *aux, const char *pnp)
 #define	AANY	0
 #define	A10	AWINIO_ONLY_A10
 #define	A20	AWINIO_ONLY_A20
+#define	A31	AWINIO_ONLY_A31
 #define	REQ	AWINIO_REQUIRED
 
 static const struct awin_locators awin_locators[] = {
@@ -123,7 +124,7 @@ static const struct awin_locators awin_locators[] = {
 	{ "spi", OFFANDSIZE(SPI2), 1, AWIN_IRQ_SPI2, AANY },
 	{ "spi", OFFANDSIZE(SPI3), 3, AWIN_IRQ_SPI3, AANY },
 	{ "awe", OFFANDSIZE(EMAC), NOPORT, AWIN_IRQ_EMAC, AANY },
-	{ "awge", AWIN_GMAC_OFFSET, AWIN_GMAC_SIZE, NOPORT, AWIN_IRQ_GMAC, A20 },
+	{ "awge", OFFANDSIZE(GMAC), NOPORT, AWIN_IRQ_GMAC, A20|A31 },
 	{ "awincrypto", OFFANDSIZE(SS), NOPORT, AWIN_IRQ_SS, AANY },
 	{ "awinac", OFFANDSIZE(AC), NOPORT, AWIN_IRQ_AC, AANY },
 };
@@ -150,6 +151,7 @@ awinio_attach(device_t parent, device_t self, void *aux)
 	const char *chip_name = awin_chip_name();
 	const bool a10_p = chip_id == AWIN_CHIP_ID_A10;
 	const bool a20_p = chip_id == AWIN_CHIP_ID_A20;
+	const bool a31_p = chip_id == AWIN_CHIP_ID_A31;
 	prop_dictionary_t dict = device_properties(self);
 
 	sc->sc_dev = self;
@@ -185,6 +187,8 @@ awinio_attach(device_t parent, device_t self, void *aux)
 			if (a10_p && !(loc->loc_flags & AWINIO_ONLY_A10))
 				continue;
 			if (a20_p && !(loc->loc_flags & AWINIO_ONLY_A20))
+				continue;
+			if (a31_p && !(loc->loc_flags & AWINIO_ONLY_A31))
 				continue;
 		}
 
