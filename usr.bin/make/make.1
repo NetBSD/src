@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.237 2014/09/09 06:39:59 dholland Exp $
+.\"	$NetBSD: make.1,v 1.238 2014/09/09 06:41:56 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd February 14, 2014
+.Dd September 9, 2014
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -209,8 +209,6 @@ Force the
 option to print raw values of variables.
 .It Ar v
 Print debugging information about variable assignment.
-.It Ar w
-Print entering and leaving directory messages, pre and post processing.
 .It Ar x
 Run shell commands with
 .Fl x
@@ -352,6 +350,8 @@ contains a
 then the value will be expanded before printing.
 .It Fl W
 Treat any warnings during makefile parsing as errors.
+.It Fl w
+Print entering and leaving directory messages, pre and post processing.
 .It Fl X
 Don't export variables passed on the command line to the environment
 individually.
