@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.14 2014/09/07 22:21:36 jmcneill Exp $ */
+/* $NetBSD: awin_var.h,v 1.15 2014/09/09 13:56:30 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,6 +47,7 @@ struct awin_locators {
 	int loc_flags;
 #define	AWINIO_REQUIRED		__BIT(8)
 #define	AWINIO_ONLY		__BITS(7,0)
+#define	AWINIO_ONLY_A31		__BIT(2)
 #define	AWINIO_ONLY_A20		__BIT(1)
 #define	AWINIO_ONLY_A10		__BIT(0)
 };
