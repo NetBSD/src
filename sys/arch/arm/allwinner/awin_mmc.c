@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.7 2014/09/08 23:51:48 jmcneill Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.8 2014/09/09 19:23:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.7 2014/09/08 23:51:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.8 2014/09/09 19:23:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -631,6 +631,13 @@ awin_mmc_dma_prepare(struct awin_mmc_softc *sc, struct sdmmc_command *cmd)
 }
 
 static void
+awin_mmc_dma_complete(struct awin_mmc_softc *sc)
+{
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_idma_map, 0,
+	    sc->sc_idma_size, BUS_DMASYNC_POSTWRITE);
+}
+
+static void
 awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 {
 	struct awin_mmc_softc *sc = sch;
@@ -693,6 +700,7 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			cmd->c_error = cv_timedwait(&sc->sc_idst_cv,
 			    &sc->sc_intr_lock, hz*10);
 		}
+		awin_mmc_dma_complete(sc);
 		if (sc->sc_idma_idst & AWIN_MMC_IDST_ERROR) {
 			cmd->c_error = EIO;
 		} else if (!(sc->sc_idma_idst & AWIN_MMC_IDST_COMPLETE)) {
