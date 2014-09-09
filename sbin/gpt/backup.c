@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: backup.c,v 1.1 2013/12/19 06:46:51 jnemeth Exp $");
+__RCSID("$NetBSD: backup.c,v 1.2 2014/09/09 06:30:09 jnemeth Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -82,6 +82,10 @@ backup(void)
 
 	props = prop_dictionary_create();
 	PROP_ERR(props);
+	propnum = prop_number_create_integer(secsz);
+	PROP_ERR(propnum);
+	rc = prop_dictionary_set(props, "sector_size", propnum);
+	PROP_ERR(rc);
 	m = map_first();
 	while (m != NULL) {
 		switch (m->map_type) {
@@ -137,6 +141,11 @@ backup(void)
 					    "end_head", propnum);
 					PROP_ERR(rc);
 					propnum = prop_number_create_unsigned_integer(mbr->mbr_part[i].part_esect);
+					PROP_ERR(propnum);
+					rc = prop_dictionary_set(mbr_dict,
+					    "end_sector", propnum);
+					PROP_ERR(rc);
+					propnum = prop_number_create_unsigned_integer(mbr->mbr_part[i].part_ecyl);
 					PROP_ERR(propnum);
 					rc = prop_dictionary_set(mbr_dict,
 					    "end_cylinder", propnum);
