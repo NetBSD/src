@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.242.8.2 2012/08/08 15:51:11 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.242.8.3 2014/09/09 08:35:50 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.242.8.2 2012/08/08 15:51:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.242.8.3 2014/09/09 08:35:50 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1545,6 +1545,7 @@ static struct {
 	{ "SUNW,fdtwo",	"fdc" },
 	{ "network",	"hme" }, /* Krups */
 	{ "SUNW,hme",   "hme" },
+	{ "SUNW,qfe",   "hme" },
 };
 
 static const char *
