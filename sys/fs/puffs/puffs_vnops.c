@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.182.2.2 2014/08/29 11:55:34 martin Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.182.2.3 2014/09/10 08:42:28 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.182.2.2 2014/08/29 11:55:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.182.2.3 2014/09/10 08:42:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1805,6 +1805,8 @@ puffs_vnop_remove(void *v)
 
 	PUFFS_MSG_RELEASE(remove);
 
+	puffs_updatenode(VPTOPP(dvp), PUFFS_UPDATECTIME|PUFFS_UPDATEMTIME, 0);
+
 	RELEPN_AND_VP(dvp, dpn);
 	RELEPN_AND_VP(vp, pn);
 
@@ -1922,6 +1924,8 @@ puffs_vnop_rmdir(void *v)
 
 	PUFFS_MSG_RELEASE(rmdir);
 
+	puffs_updatenode(VPTOPP(dvp), PUFFS_UPDATECTIME|PUFFS_UPDATEMTIME, 0);
+
 	/* XXX: some call cache_purge() *for both vnodes* here, investigate */
 	RELEPN_AND_VP(dvp, dpn);
 	RELEPN_AND_VP(vp, pn);
@@ -1967,8 +1971,11 @@ puffs_vnop_link(void *v)
 	 * XXX: stay in touch with the cache.  I don't like this, but
 	 * don't have a better solution either.  See also puffs_rename().
 	 */
-	if (error == 0)
+	if (error == 0) {
 		puffs_updatenode(pn, PUFFS_UPDATECTIME, 0);
+		puffs_updatenode(VPTOPP(dvp),
+				 PUFFS_UPDATECTIME|PUFFS_UPDATEMTIME, 0);
+	}
 
 	RELEPN_AND_VP(dvp, dpn);
 	puffs_releasenode(pn);
@@ -2133,6 +2140,12 @@ puffs_vnop_rename(void *v)
 	 */
 	if (error == 0) {
 		puffs_updatenode(fpn, PUFFS_UPDATECTIME, 0);
+		puffs_updatenode(VPTOPP(fdvp),
+				 PUFFS_UPDATECTIME|PUFFS_UPDATEMTIME, 0);
+		if (fdvp != tdvp)
+			puffs_updatenode(VPTOPP(tdvp),
+					 PUFFS_UPDATECTIME|PUFFS_UPDATEMTIME,
+					 0);
 
 		if (PUFFS_USE_DOTDOTCACHE(pmp) &&
 		    (VPTOPP(fvp)->pn_parent != tdvp))
