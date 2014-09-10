@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.9 2013/09/05 07:06:37 skrll Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.10 2014/09/10 13:45:52 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.9 2013/09/05 07:06:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.10 2014/09/10 13:45:52 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.9 2013/09/05 07:06:37 skrll Exp $
 
 struct bcmemmc_softc {
 	struct sdhc_softc	sc;
-	device_t		sc_sdmmc;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
