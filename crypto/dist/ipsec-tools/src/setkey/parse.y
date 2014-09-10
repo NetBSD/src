@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.16 2013/10/20 21:17:28 christos Exp $	*/
+/*	$NetBSD: parse.y,v 1.17 2014/09/10 21:04:08 christos Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -141,7 +141,7 @@ static int setkeymsg_add __P((unsigned int, unsigned int,
 %type <num> PR_ESP PR_AH PR_IPCOMP PR_ESPUDP PR_TCP
 %type <num> EXTENSION MODE
 %type <ulnum> DECSTRING
-%type <val> PL_REQUESTS portstr key_string
+%type <val> PL_REQUESTS portstr portstr_notempty key_string
 %type <val> policy_requests
 %type <val> QUOTEDSTRING HEXSTRING STRING
 %type <val> F_AIFLAGS
@@ -772,7 +772,7 @@ ipandport
 				return -1;
 			}
 		}
-	|	STRING portstr
+	|	STRING portstr_notempty
 		{
 			$$ = parse_addr($1.buf, $2.buf);
 			if ($$ == NULL) {
@@ -797,7 +797,11 @@ portstr
 			}
 			$$.len = strlen($$.buf);
 		}
-	|	BLCL ANY ELCL
+	| portstr_notempty
+	;
+
+portstr_notempty
+	: 	BLCL ANY ELCL
 		{
 			$$.buf = strdup("0");
 			if (!$$.buf) {
