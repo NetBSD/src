@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.55 2014/07/24 21:35:13 riastradh Exp $ */
+/*	$NetBSD: genfb.c,v 1.56 2014/09/10 07:40:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.55 2014/07/24 21:35:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.56 2014/09/10 07:40:52 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,7 +354,7 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct wsdisplay_fbinfo *wdf;
 	struct vcons_screen *ms = vd->active;
 	struct wsdisplay_param *param;
-	int new_mode, error, val;
+	int new_mode, error, val, ret;
 
 	switch (cmd) {
 		case WSDISPLAYIO_GINFO:
@@ -459,9 +459,22 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				return sc->sc_backlight->gpc_set_parameter(
 				    sc->sc_backlight->gpc_cookie, val);
 			}
-			return EPASSTHROUGH;
-		
+			return EPASSTHROUGH;		
+	}
+	ret = EPASSTHROUGH;
+	if (sc->sc_ops.genfb_ioctl)
+		ret = sc->sc_ops.genfb_ioctl(sc, vs, cmd, data, flag, l);
+	if (ret != EPASSTHROUGH)
+		return ret;
+	/*
+	 * XXX
+	 * handle these only if there either is no ioctl() handler or it didn't
+	 * know how to deal with them. This allows bus frontends to override
+	 * them but still provides fallback implementations
+	 */
+	switch (cmd) {
 		case WSDISPLAYIO_GET_EDID: {
+			
 			struct wsdisplayio_edid_info *d = data;
 			return wsdisplayio_get_edid(sc->sc_dev, d);
 		}
@@ -470,11 +483,6 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			struct wsdisplayio_fbinfo *fbi = data;
 			return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 		}
-		
-		default:
-			if (sc->sc_ops.genfb_ioctl)
-				return sc->sc_ops.genfb_ioctl(sc, vs, cmd,
-				    data, flag, l);
 	}
 	return EPASSTHROUGH;
 }
