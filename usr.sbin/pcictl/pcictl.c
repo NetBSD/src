@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.18 2011/08/30 20:08:38 joerg Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.18.20.1 2014/09/10 08:38:31 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,6 +76,8 @@ static int	print_numbers = 0;
 
 static void	cmd_list(int, char *[]);
 static void	cmd_dump(int, char *[]);
+static void	cmd_read(int, char *[]);
+static void	cmd_write(int, char *[]);
 
 static const struct command commands[] = {
 	{ "list",
@@ -88,10 +90,21 @@ static const struct command commands[] = {
 	  cmd_dump,
 	  O_RDONLY },
 
+	{ "read",
+	  "[-b bus] -d device [-f function] reg",
+	  cmd_read,
+	  O_RDONLY },
+
+	{ "write",
+	  "[-b bus] -d device [-f function] reg value",
+	  cmd_write,
+	  O_WRONLY },
+
 	{ 0, 0, 0, 0 },
 };
 
 static int	parse_bdf(const char *);
+static u_int	parse_reg(const char *);
 
 static void	scan_pci(int, int, int, void (*)(u_int, u_int, u_int));
 
@@ -230,6 +243,87 @@ cmd_dump(int argc, char *argv[])
 	scan_pci(bus, dev, func, scan_pci_dump);
 }
 
+static void
+cmd_read(int argc, char *argv[])
+{
+	int bus, dev, func;
+	u_int reg;
+	pcireg_t value;
+	int ch;
+
+	bus = pci_businfo.busno;
+	func = 0;
+	dev = -1;
+
+	while ((ch = getopt(argc, argv, "b:d:f:")) != -1) {
+		switch (ch) {
+		case 'b':
+			bus = parse_bdf(optarg);
+			break;
+		case 'd':
+			dev = parse_bdf(optarg);
+			break;
+		case 'f':
+			func = parse_bdf(optarg);
+			break;
+		default:
+			usage();
+		}
+	}
+	argv += optind;
+	argc -= optind;
+
+	if (argc != 1)
+		usage();
+	reg = parse_reg(argv[0]);
+	if (pcibus_conf_read(pcifd, bus, dev, func, reg, &value) == -1)
+		err(EXIT_FAILURE, "pcibus_conf_read"
+		    "(bus %d dev %d func %d reg %u)", bus, dev, func, reg);
+	if (printf("%08x\n", value) < 0)
+		err(EXIT_FAILURE, "printf");
+}
+
+static void
+cmd_write(int argc, char *argv[])
+{
+	int bus, dev, func;
+	u_int reg;
+	pcireg_t value;
+	int ch;
+
+	bus = pci_businfo.busno;
+	func = 0;
+	dev = -1;
+
+	while ((ch = getopt(argc, argv, "b:d:f:")) != -1) {
+		switch (ch) {
+		case 'b':
+			bus = parse_bdf(optarg);
+			break;
+		case 'd':
+			dev = parse_bdf(optarg);
+			break;
+		case 'f':
+			func = parse_bdf(optarg);
+			break;
+		default:
+			usage();
+		}
+	}
+	argv += optind;
+	argc -= optind;
+
+	if (argc != 2)
+		usage();
+	reg = parse_reg(argv[0]);
+	__CTASSERT(sizeof(value) == sizeof(u_int));
+	value = parse_reg(argv[1]);
+	if (pcibus_conf_write(pcifd, bus, dev, func, reg, value) == -1)
+		err(EXIT_FAILURE, "pcibus_conf_write"
+		    "(bus %d dev %d func %d reg %u value 0x%x)",
+		    bus, dev, func, reg, value);
+}
+
 static int
 parse_bdf(const char *str)
 {
@@ -240,9 +334,32 @@ parse_bdf(const char *str)
 	    strcmp(str, "any") == 0)
 		return (-1);
 
+	errno = 0;
 	value = strtol(str, &end, 0);
-	if (*end != '\0') 
+	if ((str[0] == '\0') || (*end != '\0'))
 		errx(EXIT_FAILURE, "\"%s\" is not a number", str);
+	if ((errno == ERANGE) && ((value == LONG_MIN) || (value == LONG_MAX)))
+		errx(EXIT_FAILURE, "out of range: %s", str);
+	if ((value < INT_MIN) || (INT_MAX < value))
+		errx(EXIT_FAILURE, "out of range: %lu", value);
+
+	return value;
+}
+
+static u_int
+parse_reg(const char *str)
+{
+	unsigned long value;
+	char *end;
+
+	errno = 0;
+	value = strtoul(str, &end, 0);
+	if (*end != '\0')
+		errx(EXIT_FAILURE, "\"%s\" is not a number", str);
+	if ((errno == ERANGE) && (value == ULONG_MAX))
+		errx(EXIT_FAILURE, "out of range: %s", str);
+	if (UINT_MAX < value)
+		errx(EXIT_FAILURE, "out of range: %lu", value);
 
 	return value;
 }
