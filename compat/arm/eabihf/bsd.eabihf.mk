@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.eabihf.mk,v 1.1 2014/08/10 23:26:25 matt Exp $
+#	$NetBSD: bsd.eabihf.mk,v 1.2 2014/09/10 22:43:36 matt Exp $
 
 .if !defined(MLIBDIR)
 
@@ -9,22 +9,22 @@ EARM_COMPAT_FLAGS+=	-mabi=aapcs-linux
 MKSOFTFLOAT=no
 
 .if ${MACHINE_ARCH} == "aarch64eb"
-EARM_COMPAT_FLAGS+=	-target armeb--netbsdelf-gnueabi
+EARM_COMPAT_FLAGS+=	-target armeb--netbsdelf-eabihf
 EARM_COMPAT_FLAGS+=	-mcpu=cortex-a53
 ARM_MACHINE_ARCH=	earmv7hfeb
 LDFLAGS+=		-Wl,--be8
 ARM_LD=			-m armelfb_nbsd_eabihf --be8
 .elif ${MACHINE_ARCH} == "aarch64"
-EARM_COMPAT_FLAGS+=	-target arm--netbsdelf-gnueabi
+EARM_COMPAT_FLAGS+=	-target arm--netbsdelf-eabihf
 EARM_COMPAT_FLAGS+=	-mcpu=cortex-a53
 ARM_MACHINE_ARCH=	earmv7hf
 ARM_LD=			-m armelf_nbsd_eabihf
 .elif !empty(MACHINE_ARCH:M*eb)
-EARM_COMPAT_FLAGS+=	-target armeb--netbsdelf-gnueabi
+EARM_COMPAT_FLAGS+=	-target armeb--netbsdelf-eabihf
 ARM_MACHINE_ARCH=	earmhfeb
 ARM_LD=			-m armelfb_nbsd_eabihf
 .else
-EARM_COMPAT_FLAGS+=	-target arm--netbsdelf-gnueabi
+EARM_COMPAT_FLAGS+=	-target arm--netbsdelf-eabihf
 ARM_MACHINE_ARCH=	earmhf
 ARM_LD=			-m armelf_nbsd_eabihf
 .endif
