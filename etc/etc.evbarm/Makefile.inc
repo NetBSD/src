@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.64 2014/09/07 20:17:57 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.65 2014/09/10 05:03:50 matt Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -25,6 +25,8 @@ EVBARM_BOARDS.armv7+=		BPI
 EVBARM_BOARDS.armv7hf+=		BPI
 EVBARM_BOARDS.armv7+=		CUBIEBOARD
 EVBARM_BOARDS.armv7hf+=		CUBIEBOARD
+EVBARM_BOARDS.armv7+=		CUBIETRUCK
+EVBARM_BOARDS.armv7hf+=		CUBIETRUCK
 .else
 # little endian boards
 #EVBARM_BOARDS.armv4+=		ARMADILLO210
@@ -84,6 +86,8 @@ EVBARM_BOARDS.armv7+=		BPI
 EVBARM_BOARDS.armv7hf+= 	BPI
 EVBARM_BOARDS.armv7+=		CUBIEBOARD
 EVBARM_BOARDS.armv7hf+= 	CUBIEBOARD
+EVBARM_BOARDS.armv7+=		CUBIETRUCK
+EVBARM_BOARDS.armv7hf+= 	CUBIETRUCK
 #EVBARM_BOARDS.armv7+=		IGEPV2
 EVBARM_BOARDS.armv7+=		MIRABOX
 EVBARM_BOARDS.armv7hf+=		MIRABOX
