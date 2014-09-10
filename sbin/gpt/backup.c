@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: backup.c,v 1.2 2014/09/09 06:30:09 jnemeth Exp $");
+__RCSID("$NetBSD: backup.c,v 1.3 2014/09/10 10:49:44 jnemeth Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -216,12 +216,11 @@ backup(void)
 			type_dict = prop_dictionary_create();
 			PROP_ERR(type_dict);
 			ent = m->map_data;
-			gpt_array = NULL;
+			gpt_array = prop_array_create();
+			PROP_ERR(gpt_array);
 			for (i = 1, ent = m->map_data;
 			    (char *)ent < (char *)(m->map_data) +
 			    m->map_size * secsz; i++, ent++) {
-				if (uuid_is_nil((uuid_t *)&ent->ent_type, NULL))
-					continue;
 				gpt_dict = prop_dictionary_create();
 				PROP_ERR(gpt_dict);
 				propnum = prop_number_create_integer(i);
@@ -267,19 +266,13 @@ backup(void)
 					    "name", propstr);
 					PROP_ERR(rc);
 				}
-				if (gpt_array == NULL) {
-					gpt_array = prop_array_create();
-					PROP_ERR(gpt_array);
-				}
 				rc = prop_array_add(gpt_array, gpt_dict);
 				PROP_ERR(rc);
 			}
-			if (gpt_array != NULL) {
-				rc = prop_dictionary_set(type_dict,
-				    "gpt_array", gpt_array);
-				PROP_ERR(rc);
-				prop_object_release(gpt_array);
-			}
+			rc = prop_dictionary_set(type_dict,
+			    "gpt_array", gpt_array);
+			PROP_ERR(rc);
+			prop_object_release(gpt_array);
 			rc = prop_dictionary_set(props, "GPT_TBL", type_dict);
 			PROP_ERR(rc);
 			prop_object_release(type_dict);
@@ -291,6 +284,7 @@ backup(void)
 	PROP_ERR(propext);
 	prop_object_release(props);
 	fputs(propext, stdout);
+	free(propext);
 }
 
 int
