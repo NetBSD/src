@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.91 2013/04/03 17:15:07 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.92 2014/09/10 07:04:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -108,9 +108,9 @@ struct ataparams;
 
 /* Datas common to drives and controller drivers */
 struct ata_drive_datas {
-	u_int8_t drive;		/* drive number */
+	uint8_t drive;		/* drive number */
 	int8_t ata_vers;	/* ATA version supported */
-	u_int16_t drive_flags;	/* bitmask for drives present/absent and cap */
+	uint16_t drive_flags;	/* bitmask for drives present/absent and cap */
 #define	ATA_DRIVE_CAP32		0x0001
 #define	ATA_DRIVE_DMA		0x0002
 #define	ATA_DRIVE_UDMA		0x0004
@@ -132,20 +132,20 @@ struct ata_drive_datas {
 	 * Is initialised by the disks drivers at attach time, and may be
 	 * changed later by the controller's code if needed
 	 */
-	u_int8_t PIO_mode;	/* Current setting of drive's PIO mode */
+	uint8_t PIO_mode;	/* Current setting of drive's PIO mode */
 #if NATA_DMA
-	u_int8_t DMA_mode;	/* Current setting of drive's DMA mode */
+	uint8_t DMA_mode;	/* Current setting of drive's DMA mode */
 #if NATA_UDMA
-	u_int8_t UDMA_mode;	/* Current setting of drive's UDMA mode */
+	uint8_t UDMA_mode;	/* Current setting of drive's UDMA mode */
 #endif
 #endif
 
 	/* Supported modes for this drive */
-	u_int8_t PIO_cap;	/* supported drive's PIO mode */
+	uint8_t PIO_cap;	/* supported drive's PIO mode */
 #if NATA_DMA
-	u_int8_t DMA_cap;	/* supported drive's DMA mode */
+	uint8_t DMA_cap;	/* supported drive's DMA mode */
 #if NATA_UDMA
-	u_int8_t UDMA_cap;	/* supported drive's UDMA mode */
+	uint8_t UDMA_cap;	/* supported drive's UDMA mode */
 #endif
 #endif
 
@@ -153,15 +153,15 @@ struct ata_drive_datas {
 	 * Drive state.
 	 * This is reset to 0 after a channel reset.
 	 */
-	u_int8_t state;
+	uint8_t state;
 
 #define RESET          0
 #define READY          1
 
 #if NATA_DMA
 	/* numbers of xfers and DMA errs. Used by ata_dmaerr() */
-	u_int8_t n_dmaerrs;
-	u_int32_t n_xfers;
+	uint8_t n_dmaerrs;
+	uint32_t n_xfers;
 
 	/* Downgrade after NERRS_MAX errors in at most NXFER xfers */
 #define NERRS_MAX 4
@@ -192,7 +192,7 @@ struct ata_drive_datas {
  * Parameters/state needed by the controller to perform an ATA bio.
  */
 struct ata_bio {
-	volatile u_int16_t flags;/* cmd flags */
+	volatile uint16_t flags;/* cmd flags */
 /* 			0x0001	free, was ATA_NOSLEEP */
 #define	ATA_POLL	0x0002	/* poll for completion */
 #define	ATA_ITSDONE	0x0004	/* the transfer is as done as it gets */
@@ -217,7 +217,7 @@ struct ata_bio {
 #define	TIMEOUT		4	/* device timed out */
 #define	ERR_NODEV	5	/* device has been gone */
 #define ERR_RESET	6	/* command was terminated by channel reset */
-	u_int8_t	r_error;/* copy of error register */
+	uint8_t		r_error;/* copy of error register */
 	daddr_t		badsect[127];/* 126 plus trailing -1 marker */
 };
 
@@ -296,7 +296,7 @@ struct ata_bustype {
 #define	ATACMD_QUEUED		0x02
 #define	ATACMD_TRY_AGAIN	0x03
 
-	int	(*ata_get_params)(struct ata_drive_datas *, u_int8_t,
+	int	(*ata_get_params)(struct ata_drive_datas *, uint8_t,
 				  struct ataparams *);
 	int	(*ata_addref)(struct ata_drive_datas *);
 	void	(*ata_delref)(struct ata_drive_datas *);
@@ -337,8 +337,8 @@ struct ata_channel {
 #define ATACH_TH_RUN   0x100	/* the kernel thread is working */
 #define ATACH_TH_RESET 0x200	/* someone ask the thread to reset */
 #define ATACH_TH_RESCAN 0x400	/* rescan requested */
-	u_int8_t ch_status;	/* copy of status register */
-	u_int8_t ch_error;	/* copy of error register */
+	uint8_t ch_status;	/* copy of status register */
+	uint8_t ch_error;	/* copy of error register */
 
 	/* for the reset callback */
 	int ch_reset_flags;
@@ -435,8 +435,8 @@ int	atabus_alloc_drives(struct ata_channel *, int);
 void	atabus_free_drives(struct ata_channel *);
 
 struct ataparams;
-int	ata_get_params(struct ata_drive_datas *, u_int8_t, struct ataparams *);
-int	ata_set_mode(struct ata_drive_datas *, u_int8_t, u_int8_t);
+int	ata_get_params(struct ata_drive_datas *, uint8_t, struct ataparams *);
+int	ata_set_mode(struct ata_drive_datas *, uint8_t, uint8_t);
 /* return code for these cmds */
 #define CMD_OK    0
 #define CMD_ERR   1
