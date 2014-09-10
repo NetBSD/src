@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.7 2014/09/10 06:50:13 matt Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.8 2014/09/10 07:39:17 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.7 2014/09/10 06:50:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.8 2014/09/10 07:39:17 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -192,7 +192,6 @@ BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[MAX_BOOT_STRING];
 char *boot_args = NULL;
 char *boot_file = NULL;
-static uint8_t uboot_enaddr[ETHER_ADDR_LEN];
 
 #if AWIN_board == AWIN_cubieboard
 bool cubietruck_p;
@@ -339,8 +338,6 @@ initarm(void *arg)
 	printf("\nNetBSD/evbarm (" __STRING(BOARDTYPE) ") booting ...\n");
 #endif
 
-	const uint8_t *uboot_bootinfo = (void*)uboot_args[0];
-
 #ifdef BOOT_ARGS
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
@@ -419,15 +416,7 @@ initarm(void *arg)
 			     (uboot_args[3] + KERNEL_BASE_VOFFSET);
 			strlcpy(bootargs, args, sizeof(bootargs));
 		}
-		if (uboot_args[0]
-		   && uboot_args[0] - AWIN_SDRAM_PBASE < ram_size) {
-			uboot_bootinfo =
-			    (void*)(uboot_args[0] + KERNEL_BASE_VOFFSET);
-		}
 	}
-
-	/* copy u-boot bootinfo ethernet address */
-	memcpy(uboot_enaddr, uboot_bootinfo + 0x250, sizeof(uboot_enaddr));
 
 	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
@@ -634,12 +623,6 @@ awin_device_register(device_t self, void *aux)
 		prop_dictionary_set_uint32(dict, "nc-h", 0x03c53f04);
 		prop_dictionary_set_uint32(dict, "nc-i", 0x003fc03f);
 		return;
-	}
-	if (device_is_a(self, "awge") || device_is_a(self, "awe")) {
-		prop_data_t blob =
-		    prop_data_create_data(uboot_enaddr, ETHER_ADDR_LEN);
-		prop_dictionary_set(dict, "mac-address", blob);
-		prop_object_release(blob);
 	}
 
 	if (device_is_a(self, "ehci")) {
