@@ -1,0 +1,12 @@
+#	$NetBSD: files.awin,v 1.1.2.2 2014/09/10 09:37:51 martin Exp $
+#
+# Allwinner AXX evaluation board configuration info
+#
+
+file	arch/evbarm/awin/awin_machdep.c
+
+# Kernel boot arguments
+defparam opt_machdep.h				BOOT_ARGS
+
+# CPU support and integrated peripherals
+include "arch/arm/allwinner/files.awin"

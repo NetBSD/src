@@ -1,14 +1,17 @@
-#	$NetBSD: mk.cubie,v 1.3 2014/01/30 00:07:35 matt Exp $
+#	$NetBSD: mk.awin,v 1.2.2.2 2014/09/10 09:37:51 martin Exp $
 CPPFLAGS+= -mcpu=cortex-a8 -mfpu=neon
 
 .if !empty(MACHINE_ARCH:M*eb)
 EXTRA_LINKFLAGS+=	--be8
 .endif
 
-SYSTEM_FIRST_OBJ=	cubie_start.o
-SYSTEM_FIRST_SFILE=	${THISARM}/cubie/cubie_start.S
+SYSTEM_FIRST_OBJ=	awin_start.o
+SYSTEM_FIRST_SFILE=	${THISARM}/awin/awin_start.S
 
-GENASSYM_EXTRAS+=	${THISARM}/cubie/genassym.cf
+CPPFLAGS.awin_machdep.c+=	-DBOARDTYPE=${BOARDTYPE}
+CPPFLAGS.awin_machdep.c+=	-DAWIN_board=AWIN_${BOARDTYPE}
+
+GENASSYM_EXTRAS+=	${THISARM}/awin/genassym.cf
 
 _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 

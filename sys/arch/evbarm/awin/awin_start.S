@@ -32,15 +32,16 @@
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_multiprocessor.h"
+#include "opt_arm_debug.h"
 
 #include <arm/asm.h>
 #include <arm/armreg.h>
 #include "assym.h"
 
 #include <arm/allwinner/awin_reg.h>
-#include <evbarm/cubie/platform.h>  
+#include <evbarm/awin/platform.h>  
 
-RCSID("$NetBSD: cubie_start.S,v 1.9 2014/04/18 06:53:13 matt Exp $")
+RCSID("$NetBSD: awin_start.S,v 1.1.2.2 2014/09/10 09:37:51 martin Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -75,8 +76,8 @@ RCSID("$NetBSD: cubie_start.S,v 1.9 2014/04/18 06:53:13 matt Exp $")
 	.section .start,"ax",%progbits
 #endif
 
-	.global	_C_LABEL(cubie_start)
-_C_LABEL(cubie_start):
+	.global	_C_LABEL(awin_start)
+_C_LABEL(awin_start):
 #ifdef __ARMEB__
 	setend	be			/* force big endian */
 #endif
@@ -276,4 +277,4 @@ ASEND(a20_mpinit)
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)
 
-END(_C_LABEL(cubie_start))
+END(_C_LABEL(awin_start))

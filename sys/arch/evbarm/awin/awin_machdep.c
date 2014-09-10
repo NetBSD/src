@@ -1,4 +1,4 @@
-/*	$NetBSD: cubie_machdep.c,v 1.19 2014/05/15 17:05:15 matt Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.8.2.2 2014/09/10 09:37:51 martin Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.19 2014/05/15 17:05:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.8.2.2 2014/09/10 09:37:51 martin Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -134,6 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.19 2014/05/15 17:05:15 matt Exp 
 #include "opt_md.h"
 #include "opt_com.h"
 #include "opt_allwinner.h"
+#include "opt_arm_debug.h"
 
 #include "com.h"
 #include "ukbd.h"
@@ -179,7 +180,7 @@ __KERNEL_RCSID(0, "$NetBSD: cubie_machdep.c,v 1.19 2014/05/15 17:05:15 matt Exp 
 #include <arm/allwinner/awin_var.h>
 
 #include <evbarm/include/autoconf.h>
-#include <evbarm/cubie/platform.h>
+#include <evbarm/awin/platform.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/ddcreg.h>
@@ -193,9 +194,16 @@ char *boot_args = NULL;
 char *boot_file = NULL;
 static uint8_t uboot_enaddr[ETHER_ADDR_LEN];
 
+#if AWIN_board == AWIN_cubieboard
 bool cubietruck_p;
+#elif AWIN_board == AWIN_cubietruck
+#define cubietruck_p	true
+#else
+#define cubietruck_p	false
+#endif
+
 /*
- * uboot_args are filled in by cubie_start.S and must be in .data
+ * uboot_args are filled in by awin_start.S and must be in .data
  * and not .bss since .bss is cleared after uboot_args are filled in.
  */
 uintptr_t uboot_args[4] = { 0 };
@@ -227,7 +235,7 @@ void consinit(void);
 static void kgdb_port_init(void);
 #endif
 
-static void cubie_device_register(device_t, void *);
+static void awin_device_register(device_t, void *);
 
 #if NCOM > 0
 #include <dev/ic/comreg.h>
@@ -328,7 +336,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
-	printf("\nNetBSD/evbarm (cubie) booting ...\n");
+	printf("\nNetBSD/evbarm (" __STRING(BOARDTYPE) ") booting ...\n");
 #endif
 
 	const uint8_t *uboot_bootinfo = (void*)uboot_args[0];
@@ -354,8 +362,10 @@ initarm(void *arg)
 	 */
 	psize_t ram_size = awin_memprobe();
 
+#if AWIN_board == AWIN_cubieboard
 	/* the cubietruck has 2GB whereas the cubieboards only has 1GB */
 	cubietruck_p = (ram_size == 0x80000000);
+#endif
 
 	/*
 	 * If MEMSIZE specified less than what we really have, limit ourselves
@@ -423,7 +433,7 @@ initarm(void *arg)
 	parse_mi_bootargs(boot_args);
 
 	/* we've a specific device_register routine */
-	evbarm_device_register = cubie_device_register;
+	evbarm_device_register = awin_device_register;
 
 #if NAWIN_FB > 0
 	char *ptr;
@@ -545,7 +555,7 @@ static kgdb_port_init(void)
 #endif
 
 void
-cubie_device_register(device_t self, void *aux)
+awin_device_register(device_t self, void *aux)
 {
 	prop_dictionary_t dict = device_properties(self);
 
@@ -574,11 +584,15 @@ cubie_device_register(device_t self, void *aux)
 #endif
 
 	if (device_is_a(self, "awinio")) {
+#if AWIN_board == AWIN_cubieboard || AWIN_board == AWIN_cubietruck
 		if (cubietruck_p) {
 			prop_dictionary_set_bool(dict, "no-awe", true);
 		} else {
 			prop_dictionary_set_bool(dict, "no-awge", true);
 		}
+#elif AWIN_board == AWIN_bpi
+		prop_dictionary_set_bool(dict, "no-awe", true);
+#endif
 		return;
 	}
 
