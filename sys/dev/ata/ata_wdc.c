@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.103 2013/02/03 20:13:27 jakllsch Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.104 2014/09/10 07:04:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.103 2013/02/03 20:13:27 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.104 2014/09/10 07:04:48 matt Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -335,8 +335,8 @@ _wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	struct ata_bio *ata_bio = xfer->c_cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	int wait_flags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
-	u_int16_t cyl;
-	u_int8_t head, sect, cmd = 0;
+	uint16_t cyl;
+	uint8_t head, sect, cmd = 0;
 	int nblks;
 #if NATA_DMA || NATA_PIOBM
 	int error, dma_flags = 0;
