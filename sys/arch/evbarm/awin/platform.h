@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.2 2014/03/03 03:06:13 matt Exp $	*/
+/*	$NetBSD: platform.h,v 1.1.2.2 2014/09/10 09:37:51 martin Exp $	*/
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -28,8 +28,12 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _EVBARM_CUBIE_PLATFORM_H
-#define _EVBARM_CUBIE_PLATFORM_H
+#ifndef _EVBARM_AWIN_PLATFORM_H
+#define _EVBARM_AWIN_PLATFORM_H
+
+#define AWIN_cubieboard		1
+#define AWIN_cubietruck		2
+#define AWIN_bpi		3
 
 #include <arm/allwinner/awin_reg.h>
 
@@ -51,4 +55,4 @@
 #ifndef _LOCORE
 CTASSERT(AWIN_KERNEL_IO_VEND <= VM_MAX_KERNEL_ADDRESS);
 #endif
-#endif /* _EVBARM_CUBIE_PLATFORM_H */
+#endif /* _EVBARM_AWIN_PLATFORM_H */

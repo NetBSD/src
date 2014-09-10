@@ -1,7 +1,7 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.12.2.1 2014/09/10 09:37:51 martin Exp $
+#	$NetBSD: BPI,v 1.2.2.2 2014/09/10 09:37:51 martin Exp $
 #
-#	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
+#	BPI -- Banana Pi - an Allwinner A20 Eval Board Kernel
 #
 
 include	"arch/evbarm/conf/std.awin"
@@ -18,7 +18,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # CPU options
 
 no makeoptions	BOARDTYPE
-makeoptions	BOARDTYPE="cubieboard"
+makeoptions	BOARDTYPE="bpi"
 #options 	UVMHIST,UVMHIST_PRINT
 options 	CPU_CORTEXA8
 options 	CPU_CORTEXA7
@@ -87,6 +87,7 @@ options		NFS_BOOT_RWSIZE=1024
 
 options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_70	# NetBSD 7.0 compatibility.
 options 	COMPAT_60	# NetBSD 6.0 compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
@@ -117,8 +118,9 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	MINIROOTSIZE=1000	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
-options 	DKWEDGE_AUTODISCOVER
-options 	DKWEDGE_METHOD_GPT
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
@@ -142,7 +144,10 @@ options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=820000
+makeoptions	COPY_SYMTAB=1
+#options 	AWIN_MMC_DEBUG
+#options 	SDHC_DEBUG
+#options 	SDMMC_DEBUG
 
 ## USB Debugging options
 options USB_DEBUG
@@ -186,23 +191,28 @@ sdmmc*		at awinmmc?
 ld*		at sdmmc?
 
 # NAND controller
-awinnand0	at awinio0
+#awinnand0	at awinio0
 
 # NAND layer
-nand0		at nandbus?
+#nand0		at nandbus?
 
 # use the bad block table
-options NAND_BBT
+#options 	NAND_BBT
 
 # Define flash partitions for board
-flash0		at nand0 offset 0x000000 size 0x080000 readonly 1 # X-Loader
-flash1		at nand0 offset 0x080000 size 0x1e0000 readonly 1 # U-Boot
-flash2		at nand0 offset 0x260000 size 0x020000 readonly 1 # UB Env
-flash3		at nand0 offset 0x280000 size 0x400000		# kernel
-flash4		at nand0 offset 0x680000 size 0			# filesystem
+#flash0		at nand0 offset 0x000000 size 0x080000 readonly 1 # X-Loader
+#flash1		at nand0 offset 0x080000 size 0x1e0000 readonly 1 # U-Boot
+#flash2		at nand0 offset 0x260000 size 0x020000 readonly 1 # UB Env
+#flash3		at nand0 offset 0x280000 size 0x400000		# kernel
+#flash4		at nand0 offset 0x680000 size 0			# filesystem
 
 # Interrupt Controller
 awinicu0	at awinio0 
+
+# DMA Controller
+awindma0	at awinio0
+
+# GPIO Controller
 awingpio0	at awinio0
 
 gpio*		at awingpio?
@@ -225,8 +235,9 @@ awintmr0	at awinio?
 # Watchdog timers
 awinwdt*	at awinio?
 
-# onboard DMA
-#awindma0	at obio0 addr 0x48056000 size 0x1000
+# onboard audio codec
+awinac0		at awinio0
+audio0		at awinac0
 
 # onboard video
 #awinfb* 	at obio0 addr 0x48050000 size 0x10000

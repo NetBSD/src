@@ -1,15 +1,16 @@
-#	$NetBSD: std.cubie,v 1.3 2014/02/27 16:00:32 reinoud Exp $
+#	$NetBSD: std.awin,v 1.1.2.2 2014/09/10 09:37:51 martin Exp $
 #
-# standard NetBSD/evbarm for CUBIEBOARD options
+# standard NetBSD/evbarm for Allwinner based options
 
 machine	evbarm arm
 include 	"arch/evbarm/conf/std.evbarm"
 
 # Pull in CUBIEBOARD config definitions.
-include		"arch/evbarm/conf/files.cubie"
+include		"arch/evbarm/conf/files.awin"
 
 # To support easy transit to ../arch/arm/arm32
 options 	MODULAR
+options 	MODULAR_DEFAULT_AUTOLOAD
 options 	__HAVE_CPU_COUNTER
 options 	CORTEX_PMC
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
@@ -21,8 +22,8 @@ options 	FPU_VFP
 
 makeoptions	KERNEL_BASE_PHYS="0x40007800"
 makeoptions	KERNEL_BASE_VIRT="0x80007800"
-makeoptions	BOARDTYPE="cubie"
-makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.cubie"
+makeoptions	BOARDTYPE="awin"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.awin"
 
 options 	ARM_INTR_IMPL="<arch/arm/allwinner/awin_intr.h>"
 options		ARM_GENERIC_TODR

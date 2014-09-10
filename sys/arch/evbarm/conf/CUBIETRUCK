@@ -1,4 +1,4 @@
-#	$NetBSD: CUBIETRUCK,v 1.2 2014/08/03 08:53:56 martin Exp $
+#	$NetBSD: CUBIETRUCK,v 1.2.4.1 2014/09/10 09:37:51 martin Exp $
 #
 #	CUBIETRUCK - Cubieboard3 (mostly cubieboard2 with 2GB)
 #
@@ -10,8 +10,10 @@ include "arch/evbarm/conf/CUBIEBOARD"
 #
 no makeoptions	KERNEL_BASE_PHYS
 no makeoptions	KERNEL_BASE_VIRT
+no makeoptions	BOARDTYPE
 makeoptions	KERNEL_BASE_PHYS="0x80000000"
 makeoptions	KERNEL_BASE_VIRT="0x80000000"
+makeoptions	BOARDTYPE="cubietruck"
 
 #
 # We need this too.
