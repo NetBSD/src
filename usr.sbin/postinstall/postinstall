@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.179 2014/08/12 09:12:18 apb Exp $
+# $NetBSD: postinstall,v 1.180 2014/09/11 13:10:04 roy Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1332,7 +1332,7 @@ do_rc()
 		quota \
 		racoon rpcbind raidframe raidframeparity random_seed rarpd \
 		rbootd rndctl root route6d routed rtadvd rtclocaltime \
-		rtsold rwho \
+		rwho \
 		savecore screenblank securelevel sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
