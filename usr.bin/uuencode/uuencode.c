@@ -1,4 +1,4 @@
-/*	$NetBSD: uuencode.c,v 1.15 2011/09/16 15:39:30 joerg Exp $	*/
+/*	$NetBSD: uuencode.c,v 1.15.20.1 2014/09/11 12:22:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)uuencode.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: uuencode.c,v 1.15 2011/09/16 15:39:30 joerg Exp $");
+__RCSID("$NetBSD: uuencode.c,v 1.15.20.1 2014/09/11 12:22:27 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -195,7 +195,8 @@ encode(void)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-m] [inputfile] outputname\n",
+	(void)fprintf(stderr,
+		      "usage: %s [-m] [inputfile] headername > encodedfile\n",
 		      getprogname());
 	exit(1);
 }
