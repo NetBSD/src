@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.12 2014/09/08 14:26:16 martin Exp $
+#	$NetBSD: files.awin,v 1.13 2014/09/11 02:21:19 jmcneill Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -115,3 +115,8 @@ file	arch/arm/allwinner/awin_ahcisata.c	awin_ahcisata
 device	awinac: audiobus, auconv, mulaw, aurateconv
 attach	awinac at awinio with awin_ac
 file	arch/arm/allwinner/awin_ac.c		awin_ac
+
+# A10/A20 HDMI
+device	awinhdmi: edid, ddc_read_edid
+attach	awinhdmi at awinio with awin_hdmi
+file	arch/arm/allwinner/awin_hdmi.c		awin_hdmi
