@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.9 2014/09/09 20:39:52 jmcneill Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.10 2014/09/11 08:20:52 matt Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.9 2014/09/09 20:39:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.10 2014/09/11 08:20:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -616,26 +616,26 @@ awin_mmc_dma_prepare(struct awin_mmc_softc *sc, struct sdmmc_command *cmd)
 			if (desc == sc->sc_idma_ndesc)
 				break;
 			len = min(sc->sc_idma_xferlen, resid);
-			dma[desc].dma_buf_size = len;
-			dma[desc].dma_buf_addr = paddr + off;
-			dma[desc].dma_config = AWIN_MMC_IDMA_CONFIG_CH |
-					       AWIN_MMC_IDMA_CONFIG_OWN;
+			dma[desc].dma_buf_size = htole32(len);
+			dma[desc].dma_buf_addr = htole32(paddr + off);
+			dma[desc].dma_config = htole32(AWIN_MMC_IDMA_CONFIG_CH |
+					       AWIN_MMC_IDMA_CONFIG_OWN);
 			cmd->c_resid -= len;
 			resid -= len;
 			off += len;
 			if (desc == 0) {
-				dma[desc].dma_config |= AWIN_MMC_IDMA_CONFIG_FD;
+				dma[desc].dma_config |= htole32(AWIN_MMC_IDMA_CONFIG_FD);
 			}
 			if (cmd->c_resid == 0) {
-				dma[desc].dma_config |= AWIN_MMC_IDMA_CONFIG_LD;
-				dma[desc].dma_config |= AWIN_MMC_IDMA_CONFIG_ER;
+				dma[desc].dma_config |= htole32(AWIN_MMC_IDMA_CONFIG_LD);
+				dma[desc].dma_config |= htole32(AWIN_MMC_IDMA_CONFIG_ER);
 				dma[desc].dma_next = 0;
 			} else {
 				dma[desc].dma_config |=
-				    AWIN_MMC_IDMA_CONFIG_DIC;
-				dma[desc].dma_next =
+				    htole32(AWIN_MMC_IDMA_CONFIG_DIC);
+				dma[desc].dma_next = htole32(
 				    desc_paddr + ((desc+1) *
-				    sizeof(struct awin_mmc_idma_descriptor));
+				    sizeof(struct awin_mmc_idma_descriptor)));
 			}
 			++desc;
 		}
