@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.4 2014/09/09 10:06:47 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.5 2014/09/11 06:56:05 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -92,22 +92,33 @@ static int dwc_gmac_ioctl(struct ifnet *, u_long, void *);
 #define RX_DESC_OFFSET(N)	((N)*sizeof(struct dwc_gmac_dev_dmadesc))
 
 void
-dwc_gmac_attach(struct dwc_gmac_softc *sc, uint8_t *ep, uint32_t mii_clk)
+dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 {
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	uint32_t maclo, machi;
 	struct mii_data * const mii = &sc->sc_mii;
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
+	prop_dictionary_t dict;
 
 	mutex_init(&sc->sc_mdio_lock, MUTEX_DEFAULT, IPL_NET);
 	sc->sc_mii_clk = mii_clk & 7;
 
-	/*
-	 * If the frontend did not pass in a pre-configured ethernet mac
-	 * address, try to read on from the current filter setup,
-	 * before resetting the chip.
-	 */
-	if (ep == NULL) {
+	dict = device_properties(sc->sc_dev);
+	prop_data_t ea = dict ? prop_dictionary_get(dict, "mac-address") : NULL;
+	if (ea != NULL) {
+		/*
+		 * If the MAC address is overriden by a device property,
+		 * use that.
+		 */
+		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
+		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
+		memcpy(enaddr, prop_data_data_nocopy(ea), ETHER_ADDR_LEN);
+	} else {
+		/*
+		 * If we did not get an externaly configure address,
+		 * try to read one from the current filter setup,
+		 * before resetting the chip.
+		 */
 		maclo = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0LO);
 		machi = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0HI);
 		enaddr[0] = maclo & 0x0ff;
@@ -116,7 +127,6 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint8_t *ep, uint32_t mii_clk)
 		enaddr[3] = (maclo >> 24) & 0x0ff;
 		enaddr[4] = machi & 0x0ff;
 		enaddr[5] = (machi >> 8) & 0x0ff;
-		ep = enaddr;
 	}
 
 	/*
@@ -124,7 +134,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint8_t *ep, uint32_t mii_clk)
 	 */
 	if (dwc_gmac_reset(sc) != 0)
 		return;	/* not much to cleanup, haven't attached yet */
-	dwc_gmac_write_hwaddr(sc, ep);
+	dwc_gmac_write_hwaddr(sc, enaddr);
 	aprint_normal_dev(sc->sc_dev, "Ethernet address: %s\n",
 	    ether_sprintf(enaddr));
 

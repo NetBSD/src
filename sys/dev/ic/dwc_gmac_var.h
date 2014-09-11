@@ -87,5 +87,5 @@ struct dwc_gmac_softc {
 	uint16_t sc_mii_clk;
 };
 
-void dwc_gmac_attach(struct dwc_gmac_softc*, uint8_t*, uint32_t);
+void dwc_gmac_attach(struct dwc_gmac_softc*, uint32_t /*mii_clk*/);
 int dwc_gmac_intr(struct dwc_gmac_softc*);
