@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.18 2014/09/11 02:16:15 jmcneill Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.19 2014/09/11 08:01:31 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.18 2014/09/11 02:16:15 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.19 2014/09/11 08:01:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -231,8 +231,9 @@ awin_memprobe(void)
 	const uint32_t dcr = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
 	    AWIN_DRAM_OFFSET + AWIN_DRAM_DCR_REG);
 
-	psize_t memsize = __SHIFTOUT(dcr, AWIN_DRAM_DCR_IO_WIDTH);
-	memsize <<= __SHIFTOUT(dcr, AWIN_DRAM_DCR_CHIP_DENSITY) + 28 - 3;
+	psize_t memsize = (__SHIFTOUT(dcr, AWIN_DRAM_DCR_BUS_WIDTH) + 1)
+	   / __SHIFTOUT(dcr, AWIN_DRAM_DCR_IO_WIDTH);
+	memsize *= 1 << (__SHIFTOUT(dcr, AWIN_DRAM_DCR_CHIP_DENSITY) + 28 - 3);
 #ifdef VERBOSE_INIT_ARM
 	printf("sdram_config = %#x, memsize = %uMB\n", dcr,
 	    (u_int)(memsize >> 20));
