@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.23 2014/05/17 12:38:42 nat Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.23.2.1 2014/09/11 13:58:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -66,7 +66,6 @@
 #define	 AFMT_S24_BE			0x00001000
 #define	 AFMT_S32_LE			0x00002000
 #define	 AFMT_S32_BE			0x00004000
-#define	 AFMT_S32_NE			0x00008000
 #define SNDCTL_DSP_SAMPLESIZE		SNDCTL_DSP_SETFMT
 #define	SOUND_PCM_READ_BITS		_IOR ('P', 5, int)
 #define	SNDCTL_DSP_CHANNELS		_IOWR('P', 6, int)
@@ -113,8 +112,18 @@
 #include <machine/endian_machdep.h>
 #if _BYTE_ORDER == _LITTLE_ENDIAN
 #define  AFMT_S16_NE AFMT_S16_LE
+#define  AFMT_S16_OE AFMT_S16_BE
+#define  AFMT_S24_NE AFMT_S24_LE
+#define  AFMT_S24_OE AFMT_S24_BE
+#define  AFMT_S32_NE AFMT_S32_LE
+#define  AFMT_S32_OE AFMT_S32_BE
 #else
 #define  AFMT_S16_NE AFMT_S16_BE
+#define  AFMT_S16_OE AFMT_S16_LE
+#define  AFMT_S24_NE AFMT_S24_BE
+#define  AFMT_S24_OE AFMT_S24_LE
+#define  AFMT_S32_NE AFMT_S32_BE
+#define  AFMT_S32_OE AFMT_S32_LE
 #endif
 
 /* Aliases */
