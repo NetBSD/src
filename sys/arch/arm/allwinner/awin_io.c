@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.14 2014/09/09 13:57:03 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.15 2014/09/11 02:21:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -106,6 +106,7 @@ static const struct awin_locators awin_locators[] = {
 	{ "com", OFFANDSIZE(UART7), 7, AWIN_IRQ_UART7, AANY },
 	{ "awinwdt", OFFANDSIZE(TMR), NOPORT, NOINTR, AANY },
 	{ "awinrtc", OFFANDSIZE(TMR), NOPORT, NOINTR, AANY },
+	{ "awinhdmi", OFFANDSIZE(HDMI), NOPORT, AWIN_IRQ_HDMI0, A20 },
 	{ "awinusb", OFFANDSIZE(USB1), 0, NOINTR, AANY },
 	{ "awinusb", OFFANDSIZE(USB2), 1, NOINTR, AANY },
 	{ "motg", OFFANDSIZE(USB0), NOPORT, AWIN_IRQ_USB0, AANY },
