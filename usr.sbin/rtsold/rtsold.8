@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtsold.8,v 1.33 2013/05/26 17:25:53 wiz Exp $
+.\"	$NetBSD: rtsold.8,v 1.34 2014/09/11 13:10:04 roy Exp $
 .\"	$KAME: rtsold.8,v 1.17 2001/07/09 22:30:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 24, 2013
+.Dd September 9, 2014
 .Dt RTSOLD 8
 .Os
 .\"
@@ -36,184 +36,9 @@
 .Nm rtsold
 .Nd router solicitation daemon
 .\"
-.Sh SYNOPSIS
-.Nm rtsold
-.Op Fl 1Ddfm
-.Ar interface ...
-.Nm rtsold
-.Op Fl 1Ddfm
-.Fl a
-.Nm rtsol
-.Op Fl Dd
-.Ar interface ...
-.Nm rtsol
-.Op Fl Dd
-.Fl a
-.\"
 .Sh DESCRIPTION
 .Nm
-is the daemon program to send ICMPv6 Router Solicitation messages
-on the specified interfaces.
-If a node (re)attaches to a link,
-.Nm
-sends some Router Solicitations on the link destined to the link-local scope
-all-routers multicast address to discover new routers
-and to get non link-local addresses.
-.Pp
-.Nm
-should be used on IPv6 hosts
-.Pq non-router nodes
-only.
-.Pp
-If you invoke the program as
-.Nm rtsol ,
-it will transmit probes from the specified
-.Ar interface ,
-without becoming a daemon.
-In other words,
+and
 .Nm rtsol
-behaves as
-.Dq rtsold -f1 interface ... .
-.Pp
-Specifically,
-.Nm
-sends at most 3 Router Solicitations on an interface
-after one of the following events:
-.Bl -bullet
-.It
-Just after invocation of the
-.Nm
-daemon.
-.It
-The interface is up after a temporary interface failure.
-.Nm
-detects such failures by periodically probing to see if the status
-of the interface is active or not.
-Note that some network cards and drivers do not allow the extraction
-of link state.
-In such cases,
-.Nm
-cannot detect the change of the interface status.
-.It
-Every 60 seconds if the
-.Fl m
-option is specified and the
-.Nm
-daemon cannot get the interface status.
-This feature does not conform to the IPv6 neighbor discovery
-specification, but is provided for mobile stations.
-The default interval for router advertisements,
-which is approximately 10 minutes,
-is slightly long for mobile stations.
-This feature is provided
-for such stations so that they can find new routers as soon as possible
-when they attach to another link.
-.El
-.Pp
-Once
-.Nm
-has sent a Router Solicitation, and has received a valid Router Advertisement,
-it refrains from sending additional solicitations on that interface, until
-the next time one of the above events occurs.
-.Pp
-When sending a Router Solicitation on an interface,
-.Nm
-includes a Source Link-layer address option if the interface
-has a link-layer address.
-.Pp
-Upon receipt of signal
-.Dv SIGUSR1 ,
-.Nm
-will dump the current internal state into
-.Pa /var/run/rtsold.dump .
-Also note that
-.Nm
-will not be able to update the kernel routing tables unless
-.Xr sysctl 8
-reports that
-net.inet6.ip6.accept_rtadv=1.
-.\"
-.Pp
-The options are as follows:
-.Bl -tag -width indent
-.It Fl 1
-Perform only one probe.
-Transmit Router Solicitation packets until at least one valid Router
-Advertisement packet has arrived on each
-.Ar interface ,
-then exit.
-.It Fl a
-Autoprobe outgoing interfaces.
-.Nm
-will try to find a non-loopback, non-point-to-point, IPv6-capable interfaces,
-and send router solicitation messages on all of them.
-.It Fl D
-Enable more debugging (than that offered by the
-.Fl d
-option) including the printing of internal timer information.
-.It Fl d
-Enable debugging.
-.It Fl f
-This option prevents
-.Nm
-from becoming a daemon (foreground mode).
-Warning messages are generated to standard error
-instead of
-.Xr syslog 3 .
-.It Fl m
-Enable mobility support.
-If this option is specified,
-.Nm
-sends probing packets to default routers that have advertised Router
-Advertisements
-when the node (re)attaches to an interface.
-Moreover, if the option is specified,
-.Nm
-periodically sends Router Solicitation on an interface that does not support
-the
-.Dv SIOCGIFMEDIA
-ioctl.
-.El
-.\"
-.Sh EXIT STATUS
-.Ex -std rtsold
-.\"
-.Sh FILES
-.Bl -tag -width /var/run/rtsold.dumpXX -compact
-.It Pa /var/run/rtsold.pid
-The PID of the currently running
-.Nm rtsold .
-.It Pa /var/run/rtsold.dump
-Internal state dump file.
-.El
-.\"
-.Sh SEE ALSO
-.Xr rtadvd 8 ,
-.Xr sysctl 8
-.\"
-.Sh HISTORY
-The
-.Nm
-command is based on the
-.Nm rtsol
-command, which first appeared in the WIDE/KAME IPv6 protocol stack kit.
-.Nm rtsol
-is now integrated into
-.Nm .
-.\"
-.Sh BUGS
-In some operating systems, when a PCMCIA network card is removed
-and reinserted, the corresponding interface index is changed.
-However,
-.Nm
-assumes such changes will not occur, and always uses the index that
-it got at invocation.
-As a result,
-.Nm
-may not work if you reinsert a network card.
-In such a case,
-.Nm
-should be killed and restarted.
-.Pp
-You may see kernel error messages if you try to autoconfigure a host with
-multiple interfaces.
+have been removed from NetBSD as their functionality is now included in
+.Xr dhcpcd 8 .

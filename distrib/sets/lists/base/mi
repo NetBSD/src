@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1088 2014/08/22 10:51:38 apb Exp $
+# $NetBSD: mi,v 1.1089 2014/09/11 13:10:03 roy Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -359,7 +359,7 @@
 ./sbin/route					base-netutil-root
 ./sbin/routed					base-router-root
 ./sbin/rrestore					base-netutil-root
-./sbin/rtsol					base-netutil-root	use_inet6
+./sbin/rtsol					base-obsolete		obsolete
 ./sbin/rump.cgdconfig				base-sysutil-root	crypto,rump
 ./sbin/rump.ifconfig				base-netutil-root	rump
 ./sbin/rump.modload				base-sysutil-root	rump
@@ -1631,7 +1631,7 @@
 ./usr/sbin/rpcbind				base-rpcbind-bin
 ./usr/sbin/rtadvd				base-router-bin		use_inet6
 ./usr/sbin/rtquery				base-netutil-bin
-./usr/sbin/rtsold				base-netutil-bin	inet6
+./usr/sbin/rtsold				base-obsolete		obsolete
 ./usr/sbin/rump.envstat				base-sysutil-bin	rump
 ./usr/sbin/rump.powerd				base-sysutil-bin	rump
 ./usr/sbin/rump.traceroute			base-netutil-bin	rump
