@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.296 2014/09/04 02:34:32 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.297 2014/09/11 17:09:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.296 2014/09/04 02:34:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.297 2014/09/11 17:09:04 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -8269,8 +8269,8 @@ wm_nvm_read_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 	 */
 	error = wm_nvm_valid_bank_detect_ich8lan(sc, &flash_bank);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to detect NVM bank\n",
-		    __func__);
+		DPRINTF(WM_DEBUG_NVM, ("%s: failed to detect NVM bank\n",
+			device_xname(sc->sc_dev)));
 		flash_bank = 0;
 	}
 
