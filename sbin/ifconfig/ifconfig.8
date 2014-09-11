@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.106 2014/01/07 20:25:24 degroote Exp $
+.\"	$NetBSD: ifconfig.8,v 1.107 2014/09/11 13:10:04 roy Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,6 +58,9 @@
 .Nm
 .Fl s
 .Ar interface
+.Nm
+.Fl w
+.Ar secs
 .Nm
 .Fl C
 .Sh DESCRIPTION
@@ -858,6 +861,17 @@ flag is identical to the
 .Fl v
 flag except that it zeros the interface input and output statistics
 after printing them.
+.Pp
+The
+.Fl w
+flag may be used to wait
+.Ar seconds
+seconds for the
+.Cm tentative
+flag to be removed from all addresses.
+0 seconds means to wait indefinitely until all addresses no longer have the
+.Cm tentative
+flag.
 .Pp
 The
 .Fl N
