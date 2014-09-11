@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.31 2014/09/08 19:17:59 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.32 2014/09/11 14:04:02 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -604,3 +604,117 @@ external/bsd/cron/dist/crontab.c		1.8
 
 	Fix a bug that crontab(1) doesn't check new crontabs at all.
 	[tron, ticket #81]
+
+usr.sbin/pcictl/pcictl.8			1.14
+usr.sbin/pcictl/pcictl.c			1.21
+
+	Read and write commands for pcictl, from riastradh@ and wiz@,
+	as discussed on tech-kern.
+	[manu, ticket #77]
+
+sys/fs/puffs/puffs_node.c			1.33
+sys/fs/puffs/puffs_vnops.c			1.185
+
+	When changing a directory content, update the ctime/mtime in kernel
+	cache, otherwise the updated ctime/mtime appears after the cached
+	entry expire.
+	[manu, ticket #79]
+
+sys/arch/evbarm/awin/awin_machdep.c		1.1,1.3-1.4
+sys/arch/evbarm/awin/awin_start.S		1.1
+sys/arch/evbarm/awin/genassym.cf		1.1
+sys/arch/evbarm/awin/platform.h			1.1
+sys/arch/evbarm/conf/BPI			1.1
+sys/arch/evbarm/conf/CUBIEBOARD			1.17
+sys/arch/evbarm/conf/CUBIETRUCK			1.3
+sys/arch/evbarm/conf/files.awin			1.1
+sys/arch/evbarm/conf/files.cubie		delete
+sys/arch/evbarm/conf/mk.awin			1.1-1.2
+sys/arch/evbarm/conf/mk.cubie			delete
+sys/arch/evbarm/conf/std.awin			1.1
+sys/arch/evbarm/conf/std.cubie			delete
+sys/arch/evbarm/cubie/cubie_machdep.c		delete
+sys/arch/evbarm/cubie/cubie_start.S		delete
+sys/arch/evbarm/cubie/genassym.cf		delete
+sys/arch/evbarm/cubie/platform.h		delete
+
+	Move away from "cubie" to generic "awin" and introduce a BOARDTYPE
+	variable. This allows other boards to use the cubie code.
+
+	Add a Banana Pi kernel config and fixup mmc0detect assignment for BPI.
+	[skrll, ticket #82]
+
+sys/arch/arm/broadcom/bcm2835_dmac.c		1.1-1.2
+sys/arch/arm/broadcom/bcm2835_dmac.h		1.1
+sys/arch/arm/broadcom/bcm2835_intr.c		1.4
+sys/arch/arm/broadcom/bcm2835_obio.c		1.21
+sys/arch/arm/broadcom/bcm2835reg.h		1.11
+sys/arch/arm/broadcom/files.bcm2835		1.22
+sys/arch/evbarm/conf/RPI			1.51
+sys/arch/evbarm/rpi/rpi_machdep.c		1.46
+
+	Add bcm2835 dma controller driver.
+	[skrll, ticket #83]
+
+sys/arch/amiga/dev/gayle_pcmcia.c		1.30
+
+	Add support for newer A1200 models.
+	[phx, ticket #85]
+
+lib/libperfuse/ops.c				1.71
+lib/libperfuse/perfuse.c			1.34
+
+	Improve POSIX compliance of FUSE filesystems through PERDUSE
+	- access denied is EPERM and not EACCES
+	- access to file owned by someone else in a sticy-bit directory should
+	  be allowed for the sticy-bit directory owner
+	- setting sticky-bit on a non directory should produce EFTYPE
+	- implement PATHCONF method as much as we can.
+	[manu, ticket #86]
+
+usr.bin/uuencode/uuencode.1			1.23-1.26
+usr.bin/uuencode/uuencode.c			1.16
+
+	Clarify usage message and improve documentation; pursuant to PR 49177.
+	[dholland, ticket #87]
+
+sys/arch/i386/pci/pci_intr_fixup.c		1.50
+
+	Make kernels with and without the PCIBIOSVERBOSE option compilable.
+	[apb, ticket #88]
+
+lib/libperfuse/ops.c				1.74
+
+	Avoid a file resize serialization deadlock when writing with
+	PUFFS_IO_APPEND flag. The symptom was a hang when appending to
+	a file with a null size.
+	[manu, ticket #89]
+
+sys/arch/arm/broadcom/bcm2835_bsc.c		1.3
+
+	Initialise bsciichist only once, otherwise the kern_histories list
+	never ends.
+	[skrll, ticket #90]
+
+doc/CHANGES.prev (doc/CHANGES)			1.121
+
+	Note initial ossaudio(3) support.
+	[nat, ticket #91]
+
+lib/libossaudio/ossaudio.c			1.30
+lib/libossaudio/soundcard.h			1.24
+
+	Add missing defines for 16, 24 and 32 bit NE and OE formats.
+	Add the ability to set 24 and 32 bit precision.
+	[nat, ticket #92]
+
+sys/fs/puffs/puffs_vnops.c			1.186
+
+	PUFFS fixes for size update ater write plus read/write sanity checks
+	- Always update kernel metadata cache for size when writing
+	  This fixes situation where size update after appending to a file
+	  lagged
+	- Make read/write nilpotent when called with null size, as FFS does
+	- Return EFBIG instead of EINVAL for negative offsets, as FFS does
+	[manu, ticket #93]
+
