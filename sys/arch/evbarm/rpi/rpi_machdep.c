@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.43 2014/07/25 11:39:34 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.43.2.1 2014/09/11 14:20:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43 2014/07/25 11:39:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43.2.1 2014/09/11 14:20:11 martin Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -178,6 +178,7 @@ static struct __aligned(16) {
 	struct vcprop_tag_macaddr	vbt_macaddr;
 	struct vcprop_tag_memory	vbt_memory;
 	struct vcprop_tag_boardserial	vbt_serial;
+	struct vcprop_tag_dmachan	vbt_dmachan;
 	struct vcprop_tag_cmdline	vbt_cmdline;
 	struct vcprop_tag_clockrate	vbt_emmcclockrate;
 	struct vcprop_tag_clockrate	vbt_armclockrate;
@@ -227,6 +228,13 @@ static struct __aligned(16) {
 		.tag = {
 			.vpt_tag = VCPROPTAG_GET_BOARDSERIAL,
 			.vpt_len = VCPROPTAG_LEN(vb.vbt_serial),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+	},
+	.vbt_dmachan = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_DMACHAN,
+			.vpt_len = VCPROPTAG_LEN(vb.vbt_dmachan),
 			.vpt_rcode = VCPROPTAG_REQUEST
 		},
 	},
@@ -452,6 +460,9 @@ rpi_bootparams(void)
 	if (vcprop_tag_success_p(&vb.vbt_serial.tag))
 		printf("%s: board serial %llx\n", __func__,
 		    vb.vbt_serial.sn);
+	if (vcprop_tag_success_p(&vb.vbt_dmachan.tag))
+		printf("%s: DMA channel mask 0x%08x\n", __func__,
+		    vb.vbt_dmachan.mask);
 
 	if (vcprop_tag_success_p(&vb.vbt_cmdline.tag))
 		printf("%s: cmdline      %s\n", __func__,
