@@ -1,4 +1,4 @@
-/*	$NetBSD: vfontedpr.c,v 1.15 2014/07/15 13:17:15 christos Exp $	*/
+/*	$NetBSD: vfontedpr.c,v 1.16 2014/09/11 08:22:03 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vfontedpr.c,v 1.15 2014/07/15 13:17:15 christos Exp $");
+__RCSID("$NetBSD: vfontedpr.c,v 1.16 2014/09/11 08:22:03 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -163,7 +163,7 @@ main(int argc, char *argv[])
 
 	    /* act as a filter like eqn */
 	    if (!strcmp(argv[0], "-f")) {
-		filter++;
+		filter=true;
 		argv[0] = argv[argc-1];
 		argv[argc-1] = minus;
 		continue;
@@ -177,13 +177,13 @@ main(int argc, char *argv[])
 
 	    /* build an index */
 	    if (!strcmp(argv[0], "-x")) {
-		idx++;
+		idx=true;
 		argv[0] = minusn;
 	    }
 
 	    /* indicate no keywords */
 	    if (!strcmp(argv[0], "-n")) {
-		nokeyw++;
+		nokeyw=true;
 		argc--, argv++;
 		continue;
 	    }
