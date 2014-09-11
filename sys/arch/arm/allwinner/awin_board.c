@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.17 2014/09/07 22:21:36 jmcneill Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.18 2014/09/11 02:16:15 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.17 2014/09/07 22:21:36 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.18 2014/09/11 02:16:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -333,5 +333,27 @@ awin_pll2_enable(void)
 	if (ncfg != ocfg) {
 		bus_space_write_4(bst, bsh,
 		    AWIN_CCM_OFFSET + AWIN_PLL2_CFG_REG, ncfg);
+	}
+}
+
+void
+awin_pll7_enable(void)
+{
+	bus_space_tag_t bst = &awin_bs_tag;
+	bus_space_handle_t bsh = awin_core_bsh;
+
+	/*
+	 * HDMI needs PLL7 to be 29700000 Hz
+	 */
+	const uint32_t ocfg = bus_space_read_4(bst, bsh,
+	    AWIN_CCM_OFFSET + AWIN_PLL7_CFG_REG);
+
+	uint32_t ncfg = ocfg;
+	ncfg &= ~(AWIN_PLL7_MODE_SEL|AWIN_PLL7_FRAC_SET|AWIN_PLL7_FACTOR_M);
+	ncfg |= AWIN_PLL7_FRAC_SET;
+	ncfg |= AWIN_PLL_CFG_ENABLE;
+	if (ncfg != ocfg) {
+		bus_space_write_4(bst, bsh,
+		    AWIN_CCM_OFFSET + AWIN_PLL7_CFG_REG, ncfg);
 	}
 }

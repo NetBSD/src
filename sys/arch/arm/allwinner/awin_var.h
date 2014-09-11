@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.15 2014/09/09 13:56:30 jmcneill Exp $ */
+/* $NetBSD: awin_var.h,v 1.16 2014/09/11 02:16:15 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -91,6 +91,7 @@ void	awin_bootstrap(vaddr_t, vaddr_t);
 void	awin_dma_bootstrap(psize_t);
 void	awin_pll2_enable(void);
 void	awin_pll6_enable(void);
+void	awin_pll7_enable(void);
 void	awin_cpu_hatch(struct cpu_info *);
 
 #define AWIN_CHIP_ID_A10	0x1623
