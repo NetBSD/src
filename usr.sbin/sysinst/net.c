@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.8 2014/09/12 21:02:06 roy Exp $	*/
+/*	$NetBSD: net.c,v 1.9 2014/09/12 21:12:42 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -107,8 +107,6 @@ static int config_dhcp(char *);
 
 #ifdef INET6
 static int is_v6kernel (void);
-static void init_v6kernel (int);
-static int get_v6wait (void);
 #endif
 
 /*
@@ -433,41 +431,6 @@ is_v6kernel(void)
 		return 0;
 	close(s);
 	return 1;
-}
-
-/*
- * initialize as v6 client.
- * we are sure that we will never become router with boot floppy :-)
- * (include and use sysctl(8) if you are willing to)
- */
-static void
-init_v6kernel(int autoconf)
-{
-	int v;
-	int mib[4] = {CTL_NET, PF_INET6, IPPROTO_IPV6, 0};
-
-	mib[3] = IPV6CTL_FORWARDING;
-	v = 0;
-	(void)sysctl(mib, 4, NULL, NULL, (void *)&v, sizeof(v));
-
-	mib[3] = IPV6CTL_ACCEPT_RTADV;
-	v = autoconf ? 1 : 0;
-	(void)sysctl(mib, 4, NULL, NULL, (void *)&v, sizeof(v));
-}
-
-static int
-get_v6wait(void)
-{
-	size_t len = sizeof(int);
-	int v;
-	int mib[4] = {CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_DAD_COUNT};
-
-	len = sizeof(v);
-	if (sysctl(mib, 4, (void *)&v, &len, NULL, 0) < 0) {
-		/* warn("sysctl(net.inet6.ip6.dadcount)"); */
-		return 1;	/* guess */
-	}
-	return v;
 }
 #endif
 
@@ -849,16 +812,6 @@ done:
 		fclose(f);
 	}
 
-#ifdef INET6
-	if (v6config && !nfs_root) {
-		init_v6kernel(1);
-		run_program(0, "/sbin/ifconfig %s up", net_dev);
-		sleep(get_v6wait() + 1);
-		run_program(RUN_DISPLAY, "/sbin/rtsol -D %s", net_dev);
-		sleep(get_v6wait() + 1);
-	}
-#endif
-
 	if (net_ip[0] != '\0') {
 		if (slip) {
 			/* XXX: needs 'ifconfig sl0 create' much earlier */
@@ -1216,19 +1169,6 @@ mnt_net_config(void)
 		add_rc_conf("dhcpcd=YES\n");
 		add_rc_conf("dhcpcd_flags=\"-qM %s\"\n", net_dev);
         }
-
-#ifdef INET6
-	if ((net_ip6conf & IP6CONF_AUTOHOST) != 0) {
-		if (del_rc_conf("ip6mode") == 0)
-			add_rc_conf("ip6mode=autohost\n");
-		if (ifconf != NULL) {
-			scripting_fprintf(NULL, "cat <<EOF >>%s%s\n",
-			    target_prefix(), ifconfig_fn);
-			scripting_fprintf(ifconf, "!rtsol $int\n");
-			scripting_fprintf(NULL, "EOF\n");
-		}
-	}
-#endif
 
 	if (ifconf)
 		fclose(ifconf);
