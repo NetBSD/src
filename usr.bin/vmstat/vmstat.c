@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.203 2014/07/12 20:04:31 nakayama Exp $ */
+/* $NetBSD: vmstat.c,v 1.204 2014/09/12 16:25:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.203 2014/07/12 20:04:31 nakayama Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.204 2014/09/12 16:25:29 skrll Exp $");
 #endif
 #endif /* not lint */
 
@@ -2118,7 +2118,7 @@ hist_dodump(struct kern_history *histp)
 
 			(void)printf("%06ld.%06ld ", (long int)e->tv.tv_sec,
 			    (long int)e->tv.tv_usec);
-			(void)printf("%s#%ld: ", fn, e->call);
+			(void)printf("%s#%ld@%d: ", fn, e->call, e->cpunum);
 			(void)printf(fmt, e->v[0], e->v[1], e->v[2], e->v[3]);
 			(void)putchar('\n');
 		}
