@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.6 2014/09/12 20:42:13 roy Exp $	*/
+/*	$NetBSD: net.c,v 1.7 2014/09/12 20:48:55 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -799,6 +799,15 @@ done:
 	if (!yesno)
 		goto again;
 
+	run_program(0, "/sbin/ifconfig lo0 127.0.0.1");
+
+	/* dhcpcd will have configured it all for us */
+	if (dhcp_config) {
+		fflush(NULL);
+		network_up = 1;
+		return network_up;
+	}
+
 	/*
 	 * we may want to perform checks against inconsistent configuration,
 	 * like IPv4 DNS server without IPv4 configuration.
@@ -835,8 +844,6 @@ done:
 		fflush(NULL);
 		fclose(f);
 	}
-
-	run_program(0, "/sbin/ifconfig lo0 127.0.0.1");
 
 #ifdef INET6
 	if (v6config && !nfs_root) {
