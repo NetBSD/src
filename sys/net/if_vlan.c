@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.71 2014/09/12 03:44:27 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.72 2014/09/12 04:10:24 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.71 2014/09/12 03:44:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.72 2014/09/12 04:10:24 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -895,6 +895,6 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 
 	bpf_mtap(&ifv->ifv_if, m);
 
-	/* Pass it back through the parent's input routine. */
-	(*ifp->if_input)(&ifv->ifv_if, m);
+	m->m_flags &= ~M_PROMISC;
+	ifv->ifv_if.if_input(&ifv->ifv_if, m);
 }
