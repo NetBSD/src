@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.40 2014/01/28 13:43:33 martin Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.41 2014/09/12 16:40:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,10 +42,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.40 2014/01/28 13:43:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41 2014/09/12 16:40:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_uvideo.h"
+#include "opt_usb.h"
 #endif
 
 #ifdef _MODULE
