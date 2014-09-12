@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.232 2014/09/11 13:10:04 roy Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.233 2014/09/12 08:54:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.232 2014/09/11 13:10:04 roy Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.233 2014/09/12 08:54:26 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -522,7 +522,7 @@ wait_dad_exec(prop_dictionary_t env, prop_dictionary_t oenv)
 	int s;
 	const struct timespec ts = { .tv_sec = 0, .tv_nsec = WAIT_DAD };
 	const struct timespec add = { .tv_sec = wflag_secs, .tv_nsec = 0};
-	struct timespec now, end;
+	struct timespec now, end = { .tv_sec = wflag_secs, .tv_nsec = 0};
 
 	if (wflag_secs) {
 		if (clock_gettime(CLOCK_MONOTONIC, &now) == -1)
