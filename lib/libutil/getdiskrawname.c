@@ -1,4 +1,4 @@
-/*	$NetBSD: getdiskrawname.c,v 1.3 2014/09/12 07:59:36 mlelstv Exp $	*/
+/*	$NetBSD: getdiskrawname.c,v 1.4 2014/09/12 11:38:23 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getdiskrawname.c,v 1.3 2014/09/12 07:59:36 mlelstv Exp $");
+__RCSID("$NetBSD: getdiskrawname.c,v 1.4 2014/09/12 11:38:23 mlelstv Exp $");
 
 #include <sys/stat.h>
 
@@ -44,7 +44,8 @@ static const char *
 resolve_link(char *buf, size_t bufsiz, const char *name)
 {
 	const char *dp;
-	ssize_t nlen, dlen;
+	size_t nlen;
+	ssize_t dlen;
 
 	dlen = readlink(name, buf, bufsiz-1);
 	if (dlen == -1)
@@ -56,9 +57,9 @@ resolve_link(char *buf, size_t bufsiz, const char *name)
 		dp = strrchr(name, '/');
 		if (dp != NULL) {
 			nlen = dp - name + 1;
-			if (nlen + 1 > PATH_MAX)
+			if (nlen + 1 > bufsiz)
 				return NULL;
-			if (nlen + dlen + 1 > PATH_MAX)
+			if (nlen + dlen + 1 > bufsiz)
 				return NULL;
 
 			memmove(buf+nlen, buf, dlen+1);
