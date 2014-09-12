@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.204 2014/09/12 16:25:29 skrll Exp $ */
+/* $NetBSD: vmstat.c,v 1.205 2014/09/12 16:25:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.204 2014/09/12 16:25:29 skrll Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.205 2014/09/12 16:25:55 skrll Exp $");
 #endif
 #endif /* not lint */
 
@@ -237,7 +237,7 @@ struct nlist histnl[] =
 };
 
 
-#define KILO	1024	
+#define KILO	1024
 
 struct cpu_counter {
 	uint64_t nintr;
