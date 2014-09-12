@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.48 2013/01/05 14:54:06 christos Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.49 2014/09/12 16:40:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,10 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.48 2013/01/05 14:54:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.49 2014/09/12 16:40:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_umass.h"
+#include "opt_usb.h"
 #endif
 
 #include "atapibus.h"
