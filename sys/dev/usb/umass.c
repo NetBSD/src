@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.148 2013/12/22 18:30:21 mlelstv Exp $	*/
+/*	$NetBSD: umass.c,v 1.149 2014/09/12 16:40:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,10 +124,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.148 2013/12/22 18:30:21 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149 2014/09/12 16:40:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_umass.h"
+#include "opt_usb.h"
 #endif
 
 #include "atapibus.h"
@@ -141,11 +141,13 @@ __KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.148 2013/12/22 18:30:21 mlelstv Exp $");
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/sysctl.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
+#include <dev/usb/usbhist.h>
 
 #include <dev/usb/umassvar.h>
 #include <dev/usb/umass_quirks.h>
@@ -155,9 +157,35 @@ __KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.148 2013/12/22 18:30:21 mlelstv Exp $");
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 
-
-#ifdef UMASS_DEBUG
+#ifdef USB_DEBUG
 int umassdebug = 0;
+
+SYSCTL_SETUP(sysctl_hw_umass_setup, "sysctl hw.umass setup")
+{
+	int err;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	err = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "umass",
+	    SYSCTL_DESCR("umass global controls"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+
+	if (err)
+		goto fail;
+
+	/* control debugging printfs */
+	err = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Enable debugging output"),
+	    NULL, 0, &umassdebug, sizeof(umassdebug), CTL_CREATE, CTL_EOL);
+	if (err)
+		goto fail;
+
+	return;
+fail:
+	aprint_error("%s: sysctl_createv failed (err = %d)\n", __func__, err);
+}
 
 const char *states[TSTATE_STATES+1] = {
 	/* should be kept in sync with the list at transfer_state */
@@ -786,6 +814,8 @@ umass_setup_transfer(struct umass_softc *sc, usbd_pipe_handle pipe,
 {
 	usbd_status err;
 
+	USBHIST_FUNC(); USBHIST_CALLED(umassdebug);
+
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
 
@@ -793,6 +823,8 @@ umass_setup_transfer(struct umass_softc *sc, usbd_pipe_handle pipe,
 
 	usbd_setup_xfer(xfer, pipe, (void *)sc, buffer, buflen,
 	    flags, sc->timeout, sc->sc_methods->wire_state);
+
+	USBHIST_LOG(umassdebug, "xfer %p, flags %d", xfer, flags, 0, 0);
 
 	err = usbd_transfer(xfer);
 	DPRINTF(UDMASS_XFER,("%s: start xfer buffer=%p buflen=%d flags=0x%x "
@@ -1037,6 +1069,8 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	usbd_xfer_handle next_xfer;
 	int residue;
 
+	USBHIST_FUNC(); USBHIST_CALLED(umassdebug);
+
 	KASSERTMSG(sc->sc_wire & UMASS_WPROTO_BBB,
 		   "sc->sc_wire == 0x%02x wrong for umass_bbb_state\n",
 		   sc->sc_wire);
@@ -1058,6 +1092,9 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 	DPRINTF(UDMASS_BBB, ("%s: Handling BBB state %d (%s), xfer=%p, %s\n",
 		device_xname(sc->sc_dev), sc->transfer_state,
 		states[sc->transfer_state], xfer, usbd_errstr(err)));
+
+	USBHIST_LOG(umassdebug, "xfer %p, transfer_state %d dir %d", xfer,
+	    sc->transfer_state, sc->transfer_dir, 0);
 
 	switch (sc->transfer_state) {
 
