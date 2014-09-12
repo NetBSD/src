@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_dmac.c,v 1.4 2014/09/12 15:41:02 jmcneill Exp $ */
+/* $NetBSD: bcm2835_dmac.c,v 1.5 2014/09/12 16:06:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.4 2014/09/12 15:41:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.5 2014/09/12 16:06:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.4 2014/09/12 15:41:02 jmcneill Ex
 
 #include <arm/broadcom/bcm2835_dmac.h>
 
-#define BCM_DMAC_CHANNELMASK	0x00000ff2
+#define BCM_DMAC_CHANNELMASK	0x00000fff
 
 struct bcm_dmac_softc;
 
