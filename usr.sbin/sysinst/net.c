@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.7 2014/09/12 20:48:55 roy Exp $	*/
+/*	$NetBSD: net.c,v 1.8 2014/09/12 21:02:06 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -716,9 +716,13 @@ again:
 		}
 	}
 
-	msg_prompt_add(MSG_net_domain, net_domain, net_domain,
-	    sizeof net_domain);
-	msg_prompt_add(MSG_net_host, net_host, net_host, sizeof net_host);
+	if (!(net_dhcpconf & DHCPCONF_HOST))
+		msg_prompt_add(MSG_net_host, net_host, net_host,
+		    sizeof net_host);
+
+	if (!(net_dhcpconf & DHCPCONF_DOMAIN))
+		msg_prompt_add(MSG_net_domain, net_domain, net_domain,
+		    sizeof net_domain);
 
 	if (!dhcp_config) {
 		/* Manually configure IPv4 */
