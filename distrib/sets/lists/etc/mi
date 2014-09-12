@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.232 2013/08/11 22:29:03 joerg Exp $
+# $NetBSD: mi,v 1.233 2014/09/12 10:03:32 martin Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -270,7 +270,7 @@
 ./etc/rc.d/rpcbind				etc-rpcbind-rc
 ./etc/rc.d/rtadvd				etc-net-rc
 ./etc/rc.d/rtclocaltime				etc-sys-rc
-./etc/rc.d/rtsold				etc-net-rc
+./etc/rc.d/rtsold				etc-obsolete		obsolete
 ./etc/rc.d/rwho					etc-net-rc
 ./etc/rc.d/savecore				etc-sys-rc
 ./etc/rc.d/screenblank				etc-sys-rc
