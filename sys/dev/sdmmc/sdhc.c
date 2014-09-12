@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.44 2014/05/24 12:10:32 hkenken Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.45 2014/09/12 19:45:16 jakllsch Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.44 2014/05/24 12:10:32 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.45 2014/09/12 19:45:16 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1196,7 +1196,8 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		/* XXX only for memory commands? */
 		mode |= SDHC_AUTO_CMD12_ENABLE;
 	}
-	if (cmd->c_dmamap != NULL && cmd->c_datalen > 0) {
+	if (cmd->c_dmamap != NULL && cmd->c_datalen > 0 &&
+	    !ISSET(sc->sc_flags, SDHC_FLAG_EXTERNAL_DMA)) {
 		mode |= SDHC_DMA_ENABLE;
 	}
 
@@ -1284,7 +1285,10 @@ sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	}
 #endif
 
-	if (cmd->c_dmamap != NULL)
+	if (hp->sc->sc_vendor_transfer_data_dma != NULL &&
+	    cmd->c_dmamap != NULL)
+		error = hp->sc->sc_vendor_transfer_data_dma(hp, cmd);
+	else if (cmd->c_dmamap != NULL)
 		error = sdhc_transfer_data_dma(hp, cmd);
 	else
 		error = sdhc_transfer_data_pio(hp, cmd);
