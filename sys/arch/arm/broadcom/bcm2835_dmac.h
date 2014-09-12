@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_dmac.h,v 1.1 2014/09/07 14:16:44 jmcneill Exp $ */
+/* $NetBSD: bcm2835_dmac.h,v 1.2 2014/09/12 17:40:53 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -46,6 +46,12 @@
 #define  DMAC_CS_ACTIVE		__BIT(0)
 #define  DMAC_CS_INTMASK	(DMAC_CS_INT|DMAC_CS_END)
 #define DMAC_CONBLK_AD(n)	(0x04 + (0x100 * (n)))
+#define DMAC_TI(n)		(0x08 + (0x100 * (n)))
+#define DMAC_SOURCE_AD(n)	(0x0c + (0x100 * (n)))
+#define DMAC_DEST_AD(n)		(0x10 + (0x100 * (n)))
+#define DMAC_TXFR_LEN(n)	(0x14 + (0x100 * (n)))
+#define DMAC_STRIDE(n)		(0x18 + (0x100 * (n)))
+#define DMAC_NEXTCONBK(n)	(0x1c + (0x100 * (n)))
 #define DMAC_DEBUG(n)		(0x20 + (0x100 * (n)))
 #define  DMAC_DEBUG_LITE	__BIT(28)
 #define  DMAC_DEBUG_VERSION	__BITS(27,25)
