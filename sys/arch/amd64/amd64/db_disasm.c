@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.16 2011/07/17 20:54:36 joerg Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.17 2014/09/12 12:30:20 msaitoh Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.16 2011/07/17 20:54:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.17 2014/09/12 12:30:20 msaitoh Exp $");
 
 #ifndef _KERNEL
 #include <sys/types.h>
@@ -108,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.16 2011/07/17 20:54:36 joerg Exp $")
 #define	Iq	36			/* word immediate, maybe 64bits */
 
 struct inst {
-	const char *i_name;			/* name */
+	const char *i_name;		/* name */
 	short	i_has_modrm;		/* has regmodrm byte */
 	short	i_size;			/* operand size */
 	int	i_mode;			/* addressing modes */
@@ -962,7 +962,8 @@ db_addr_t db_disasm_esc(db_addr_t, int, u_int, int, int, const char *);
  * Read address at location and return updated location.
  */
 db_addr_t
-db_read_address(db_addr_t loc, u_int rex, int short_addr, int regmodrm, struct i_addr *addrp)
+db_read_address(db_addr_t loc, u_int rex, int short_addr, int regmodrm,
+    struct i_addr *addrp)
 	/* addrp:		 out */
 {
 	int		mod, rm, sib, index, disp, ext;
@@ -992,7 +993,7 @@ db_read_address(db_addr_t loc, u_int rex, int short_addr, int regmodrm, struct i
 
 		ext = ((rex & REX_b) != 0);
 		switch (mod) {
-		    case 0:
+		case 0:
 			if (rm == 5) {
 				get_value_inc(addrp->disp, loc, 4, false);
 				addrp->base = 0;
@@ -1001,12 +1002,12 @@ db_read_address(db_addr_t loc, u_int rex, int short_addr, int regmodrm, struct i
 				addrp->base = db_reg[ext][LONG][rm];
 			}
 			break;
-		    case 1:
+		case 1:
 			get_value_inc(disp, loc, 1, true);
 			addrp->disp = disp;
 			addrp->base = db_reg[ext][LONG][rm];
 			break;
-		    case 2:
+		case 2:
 			get_value_inc(disp, loc, 4, false);
 			addrp->disp = disp;
 			addrp->base = db_reg[ext][LONG][rm];
@@ -1027,7 +1028,7 @@ db_read_address(db_addr_t loc, u_int rex, int short_addr, int regmodrm, struct i
 
 		ext = ((rex & REX_b) != 0);
 		switch (mod) {
-		    case 0:
+		case 0:
 			if (rm == 5) {
 				/* x86_64 RIP-relative addressing */
 				get_value_inc(addrp->disp, loc, 4, false);
@@ -1037,12 +1038,12 @@ db_read_address(db_addr_t loc, u_int rex, int short_addr, int regmodrm, struct i
 				addrp->base = db_reg[ext][QUAD][rm];
 			}
 			break;
-		    case 1:
+		case 1:
 			get_value_inc(disp, loc, 1, true);
 			addrp->disp = disp;
 			addrp->base = db_reg[ext][QUAD][rm];
 			break;
-		    case 2:
+		case 2:
 			get_value_inc(disp, loc, 4, false);
 			addrp->disp = disp;
 			addrp->base = db_reg[ext][QUAD][rm];
@@ -1081,7 +1082,8 @@ db_print_address(const char * seg, u_int rex, int size, struct i_addr *addrp)
  * and return updated location.
  */
 db_addr_t
-db_disasm_esc(db_addr_t loc, int inst, u_int rex, int short_addr, int size, const char * seg)
+db_disasm_esc(db_addr_t loc, int inst, u_int rex, int short_addr, int size,
+    const char * seg)
 {
 	int		regmodrm;
 	const struct finst	*fp;
@@ -1094,59 +1096,59 @@ db_disasm_esc(db_addr_t loc, int inst, u_int rex, int short_addr, int size, cons
 	mod = f_mod(regmodrm);
 	if (mod != 3) {
 		/*
-		* Normal address modes.
-		*/
+		 * Normal address modes.
+		 */
 		loc = db_read_address(loc, rex, short_addr, regmodrm, &address);
 		db_printf("%s", fp->f_name);
-		switch(fp->f_size) {
-		    case SNGL:
+		switch (fp->f_size) {
+		case SNGL:
 			db_printf("s");
 			break;
-		    case DBLR:
+		case DBLR:
 			db_printf("l");
 			break;
-		    case EXTR:
+		case EXTR:
 			db_printf("t");
 			break;
-		    case WORD:
+		case WORD:
 			db_printf("s");
 			break;
-		    case LONG:
+		case LONG:
 			db_printf("l");
 			break;
-		    case QUAD:
+		case QUAD:
 			db_printf("q");
 			break;
-		    default:
+		default:
 			break;
 		}
 		db_printf("\t");
 		db_print_address(seg, rex, BYTE, &address);
 	} else {
 		/*
-		* 'reg-reg' - special formats
-		*/
+		 * 'reg-reg' - special formats
+		 */
 		switch (fp->f_rrmode) {
-		    case op2(ST,STI):
+		case op2(ST,STI):
 			name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-			db_printf("%s\t%%st,%%st(%d)",name,f_rm(regmodrm));
+			db_printf("%s\t%%st,%%st(%d)", name, f_rm(regmodrm));
 			break;
-		    case op2(STI,ST):
+		case op2(STI,ST):
 			name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-			db_printf("%s\t%%st(%d),%%st",name, f_rm(regmodrm));
+			db_printf("%s\t%%st(%d),%%st", name, f_rm(regmodrm));
 			break;
-		    case op1(STI):
+		case op1(STI):
 			name = (fp->f_rrname) ? fp->f_rrname : fp->f_name;
-			db_printf("%s\t%%st(%d)",name, f_rm(regmodrm));
+			db_printf("%s\t%%st(%d)", name, f_rm(regmodrm));
 			break;
-		    case op1(X):
-                        db_printf("%s", ((const char * const *)fp->f_rrname)[f_rm(regmodrm)]);
+		case op1(X):
+			db_printf("%s", ((const char * const *)fp->f_rrname)[f_rm(regmodrm)]);
 			break;
-		    case op1(XA):
+		case op1(XA):
 			db_printf("%s\t%%ax",
-				  ((const char * const *)fp->f_rrname)[f_rm(regmodrm)]);
+			    ((const char * const *)fp->f_rrname)[f_rm(regmodrm)]);
 			break;
-		    default:
+		default:
 			db_printf("<bad instruction>");
 			break;
 		}
@@ -1166,9 +1168,9 @@ db_disasm(db_addr_t loc, bool altfmt)
 	int	inst;
 	int	size;
 	int	short_addr;
-	const char *	seg;
-	const struct inst *	ip;
-	const char *	i_name;
+	const char *seg;
+	const struct inst *ip;
+	const char *i_name;
 	int	i_size;
 	int	i_mode;
 	int	regmodrm = 0;
@@ -1187,11 +1189,11 @@ db_disasm(db_addr_t loc, bool altfmt)
 
 #ifdef _KERNEL
 	/*
-	* Don't try to disassemble the location if the mapping is invalid.
-	* If we do, we'll fault, and end up debugging the debugger!
-	* in the case of largepages, "pte" is really the pde and "pde" is
-	* really the entry for the pdp itself.
-	*/
+	 * Don't try to disassemble the location if the mapping is invalid.
+	 * If we do, we'll fault, and end up debugging the debugger!
+	 * in the case of largepages, "pte" is really the pde and "pde" is
+	 * really the entry for the pdp itself.
+	 */
 	if ((vaddr_t)loc >= VM_MIN_KERNEL_ADDRESS)
 		pte = kvtopte((vaddr_t)loc);
 	else
@@ -1209,48 +1211,48 @@ db_disasm(db_addr_t loc, bool altfmt)
 	seg = 0;
 
 	/*
-	* Get prefixes
-	*/
+	 * Get prefixes
+	 */
 	prefix = true;
 	do {
 		if ((inst & 0xf0) == 0x40) { 
 			rex |= inst;
 		} else
 		switch (inst) {
-		    case 0x66:		/* data16 */
+		case 0x66:		/* data16 */
 			size = WORD;
 			break;
-		    case 0x67:
+		case 0x67:
 			short_addr = true;
 			break;
-		    case 0x26:
+		case 0x26:
 			seg = "%es";
 			break;
-		    case 0x36:
+		case 0x36:
 			seg = "%ss";
 			break;
-		    case 0x2e:
+		case 0x2e:
 			seg = "%cs";
 			break;
-		    case 0x3e:
+		case 0x3e:
 			seg = "%ds";
 			break;
-		    case 0x64:
+		case 0x64:
 			seg = "%fs";
 			break;
-		    case 0x65:
+		case 0x65:
 			seg = "%gs";
 			break;
-		    case 0xf0:
+		case 0xf0:
 			db_printf("lock ");
 			break;
-		    case 0xf2:
+		case 0xf2:
 			db_printf("repne ");
 			break;
-		    case 0xf3:
+		case 0xf3:
 			db_printf("repe ");	/* XXX repe VS rep */
 			break;
-		    default:
+		default:
 			prefix = false;
 			break;
 		}
@@ -1354,114 +1356,114 @@ db_disasm(db_addr_t loc, bool altfmt)
 			db_printf(",");
 
 		switch (i_mode & 0xFF) {
-		    case E:
+		case E:
 			db_print_address(seg, rex, size, &address);
 			break;
-		    case Eind:
+		case Eind:
 			db_printf("*");
 			db_print_address(seg, rex, size, &address);
 			break;
-		    case Ed:
+		case Ed:
 			db_print_address(seg, rex, LONG, &address);
 			break;
-		    case Ew:
+		case Ew:
 			db_print_address(seg, rex, WORD, &address);
 			break;
-		    case Eb:
+		case Eb:
 			db_print_address(seg, rex, BYTE, &address);
 			break;
-		    case R: {
+		case R: {
 			int ext = ((rex & REX_r) != 0);
 			db_printf("%s", db_reg[ext][size][f_reg(regmodrm)]);
 			break;
 		    }
-		    case Rw: {
+		case Rw: {
 			int ext = ((rex & REX_r) != 0);
 			db_printf("%s", db_reg[ext][WORD][f_reg(regmodrm)]);
 			break;
 		    }
-		    case Ri: {
+		case Ri: {
 			int ext = ((rex & REX_b) != 0);
 			db_printf("%s", db_reg[ext][size][f_rm(inst)]);
 			break;
 		    }
-		    case S:
+		case S:
 			db_printf("%s", db_seg_reg[f_reg(regmodrm)]);
 			break;
-		    case Si:
+		case Si:
 			db_printf("%s", db_seg_reg[f_reg(inst)]);
 			break;
-		    case A:
+		case A:
 			db_printf("%s", db_reg[0][size][0]);	/* acc */
 			break;
-		    case BX:
+		case BX:
 			if (seg)
 				db_printf("%s:", seg);
 			db_printf("(%s)", short_addr ? "%ebx" : "%rbx");
 			break;
-		    case CL:
+		case CL:
 			db_printf("%%cl");
 			break;
-		    case DX:
+		case DX:
 			db_printf("%%dx");
 			break;
-		    case SI:
+		case SI:
 			if (seg)
 				db_printf("%s:", seg);
 			db_printf("(%s)", short_addr ? "%esi" : "%rsi");
 			break;
-		    case DI:
+		case DI:
 			db_printf("%%es:(%s)", short_addr ? "%edi" : "%rdi");
 			break;
-		    case CR:
+		case CR:
 			db_printf("%%cr%d", f_reg(regmodrm));
 			break;
-		    case DR:
+		case DR:
 			db_printf("%%dr%d", f_reg(regmodrm));
 			break;
-		    case TR:
+		case TR:
 			db_printf("%%tr%d", f_reg(regmodrm));
 			break;
-		    case Iq:
+		case Iq:
 			if (size == QUAD) {
 				get_value_inc(imm64, loc, 8, false);
 				db_format_radix(tbuf, 24, imm64, true);
 				db_printf("$%s", tbuf);
 				break;
 			}
-		    case I:
+		case I:
 			len = db_lengths[size];
 			get_value_inc(imm, loc, len, false);/* unsigned */
 			db_format_radix(tbuf, 24, (unsigned int)imm, true);
 			db_printf("$%s", tbuf);
 			break;
-		    case Is:
+		case Is:
 			len = db_lengths[size];
 			get_value_inc(imm, loc, len, true);	/* signed */
 			db_format_radix(tbuf, 24, imm, true);
 			db_printf("$%s", tbuf);
 			break;
-		    case Ib:
+		case Ib:
 			get_value_inc(imm, loc, 1, false);	/* unsigned */
 			db_format_radix(tbuf, 24, (unsigned int)imm, true);
 			db_printf("$%s", tbuf);
 			break;
-		    case Ibs:
+		case Ibs:
 			get_value_inc(imm, loc, 1, true);	/* signed */
 			db_format_radix(tbuf, 24, imm, true);
 			db_printf("$%s", tbuf);
 			break;
-		    case Iw:
+		case Iw:
 			get_value_inc(imm, loc, 2, false);	/* unsigned */
 			db_format_radix(tbuf, 24, (unsigned int)imm, true);
 			db_printf("$%s", tbuf);
 			break;
-		    case Il:
+		case Il:
 			get_value_inc(imm, loc, 4, false);
 			db_format_radix(tbuf, 24, (unsigned int)imm, true);
 			db_printf("$%s", tbuf);
 			break;
-		    case O:   /* Only move %eax to/from absolute address */
+		case O:   /* Only move %eax to/from absolute address */
 			if (short_addr)
 				get_value_inc(imm64, loc, 2, true);
 			else
@@ -1473,23 +1475,23 @@ db_disasm(db_addr_t loc, bool altfmt)
 				db_printsym((db_addr_t)imm64, DB_STGY_ANY,
 				    db_printf);
 			break;
-		    case Db:
+		case Db:
 			get_value_inc(displ, loc, 1, true);
 			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN,
 			    db_printf);
 			break;
-		    case Dl:
+		case Dl:
 			get_value_inc(displ, loc, 4, true);
 			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN,
 			    db_printf);
 			break;
-		    case o1:
+		case o1:
 			db_printf("$1");
 			break;
-		    case o3:
+		case o3:
 			db_printf("$3");
 			break;
-		    case OS:
+		case OS:
 			get_value_inc(imm, loc, 4, false);	/* offset */
 			db_format_radix(tbuf, 24, (unsigned int)imm, true);
 			db_printf("$%s", tbuf);
