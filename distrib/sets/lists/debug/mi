@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.85 2014/08/25 20:40:52 joerg Exp $
+# $NetBSD: mi,v 1.86 2014/09/12 14:46:33 roy Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -381,7 +381,7 @@
 ./usr/libdata/debug/sbin/rndctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/route.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/routed.debug		comp-router-debug	debug
-./usr/libdata/debug/sbin/rtsol.debug		comp-netutil-debug	use_inet6,debug
+./usr/libdata/debug/sbin/rtsol.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/sbin/rump.cgdconfig.debug	comp-sysutil-debug	crypto,debug,rump
 ./usr/libdata/debug/sbin/rump.ifconfig.debug		comp-netutil-debug	debug,rump
 ./usr/libdata/debug/sbin/rump.modload.debug		comp-sysutil-debug	debug,rump
@@ -1188,7 +1188,7 @@
 ./usr/libdata/debug/usr/sbin/rpcbind.debug	comp-rpcbind-debug	debug
 ./usr/libdata/debug/usr/sbin/rtadvd.debug	comp-router-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/rtquery.debug	comp-netutil-debug	debug
-./usr/libdata/debug/usr/sbin/rtsold.debug	comp-netutil-debug	inet6,debug
+./usr/libdata/debug/usr/sbin/rtsold.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/rump.envstat.debug	comp-sysutil-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump.powerd.debug	comp-sysutil-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump.traceroute.debug	comp-netutil-debug	debug,rump
