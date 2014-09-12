@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.510 2014/03/31 11:25:47 martin Exp $
+.\"	$NetBSD: main,v 1.511 2014/09/12 14:46:33 roy Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -491,8 +491,6 @@ The following features are to be removed from
 in the future:
 .(bullet
 .Xr dhclient 8
-and
-.Xr rtsol 8
 in favor of
 .Xr dhcpcd 8 .
 .It
