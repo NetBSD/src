@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_dmac.c,v 1.2 2014/09/07 15:21:27 jmcneill Exp $ */
+/* $NetBSD: bcm2835_dmac.c,v 1.3 2014/09/12 15:29:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.2 2014/09/07 15:21:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.3 2014/09/12 15:29:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -109,6 +109,7 @@ static void
 bcm_dmac_attach(device_t parent, device_t self, void *aux)
 {
 	struct bcm_dmac_softc *sc = device_private(self);
+	const prop_dictionary_t *cfg = device_properties(self);
 	struct bcm_dmac_channel *ch;
 	struct amba_attach_args *aaa = aux;
 	uint32_t val;
@@ -123,12 +124,12 @@ bcm_dmac_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_channelmask = BCM_DMAC_CHANNELMASK;
-	sc->sc_nchannels = 31 - __builtin_clz(sc->sc_channelmask);
+	prop_dictionary_get_uint32(cfg, "chanmask", &sc->sc_channelmask);
+	sc->sc_channelmask &= BCM_DMAC_CHANNELMASK;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SCHED);
 
-	sc->sc_nchannels = 31 - __builtin_clz(BCM_DMAC_CHANNELMASK);
+	sc->sc_nchannels = 31 - __builtin_clz(sc->sc_channelmask);
 	sc->sc_channels = kmem_alloc(
 	    sizeof(*sc->sc_channels) * sc->sc_nchannels, KM_SLEEP);
 	if (sc->sc_channels == NULL) {

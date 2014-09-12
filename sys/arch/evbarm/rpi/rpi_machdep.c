@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.46 2014/09/07 15:28:24 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.47 2014/09/12 15:29:30 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.46 2014/09/07 15:28:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.47 2014/09/12 15:29:30 jmcneill Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -892,6 +892,11 @@ rpi_device_register(device_t dev, void *aux)
 {
 	prop_dictionary_t dict = device_properties(dev);
 
+	if (device_is_a(dev, "bcmdmac") &&
+	    vcprop_tag_success_p(&vb.vbt_dmachan.tag)) {
+		prop_dictionary_set_uint32(dict,
+		    "chanmask", vb.vbt_dmachan.mask);
+	}
 #if NSDHC > 0
 	if (device_is_a(dev, "sdhc") &&
 	    vcprop_tag_success_p(&vb.vbt_emmcclockrate.tag) &&
