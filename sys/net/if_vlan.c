@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.70 2014/05/13 19:36:16 bouyer Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.71 2014/09/12 03:44:27 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.70 2014/05/13 19:36:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.71 2014/09/12 03:44:27 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -384,6 +384,8 @@ vlan_unconfig(struct ifnet *ifp)
 		}
 
 		ether_ifdetach(ifp);
+		/* Restore vlan_ioctl overwritten by ether_ifdetach */
+		ifp->if_ioctl = vlan_ioctl;
 		vlan_reset_linkname(ifp);
 		break;
 	    }
