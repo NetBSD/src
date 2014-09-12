@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.4 2014/08/19 13:01:48 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.5 2014/09/12 20:20:25 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1104,7 +1104,6 @@ void
 mnt_net_config(void)
 {
 	char ifconfig_fn[STRSIZE];
-	char ifconfig_str[STRSIZE];
 	FILE *ifconf = NULL;
 
 	if (!network_up)
@@ -1181,11 +1180,12 @@ mnt_net_config(void)
 		if (del_rc_conf("defaultroute") == 0)
 			add_rc_conf("defaultroute=\"%s\"\n", net_defroute);
 	} else {
-		if (snprintf(ifconfig_str, sizeof ifconfig_str,
-		    "ifconfig_%s", net_dev) > 0 &&
-		    del_rc_conf(ifconfig_str) == 0) {
-			add_rc_conf("ifconfig_%s=dhcp\n", net_dev);
-		}
+		/*
+		 * Start dhcpcd quietly and in master mode, but restrict
+		 * it to our interface
+		 */
+		add_rc_conf("dhcpcd=YES\n");
+		add_rc_conf("dhcpcd_flags=\"-qM %s\"\n", net_dev);
         }
 
 #ifdef INET6
