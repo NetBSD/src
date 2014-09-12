@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.11 2014/09/12 20:18:42 jakllsch Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.12 2014/09/12 20:55:48 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.11 2014/09/12 20:18:42 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.12 2014/09/12 20:55:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,8 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.11 2014/09/12 20:18:42 jakllsch E
 #include <dev/sdmmc/sdmmcvar.h>
 
 enum bcmemmc_dma_state {
-	EMMC_DMA_STATE_IDLE = 27,
-	EMMC_DMA_STATE_BUSY = 42,
+	EMMC_DMA_STATE_IDLE,
+	EMMC_DMA_STATE_BUSY,
 };
 
 struct bcmemmc_softc {
