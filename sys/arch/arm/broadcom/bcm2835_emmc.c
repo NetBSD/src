@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.12 2014/09/12 20:55:48 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.13 2014/09/12 21:00:11 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.12 2014/09/12 20:55:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.13 2014/09/12 21:00:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.12 2014/09/12 20:55:48 jmcneill E
 #include <sys/bus.h>
 #include <sys/condvar.h>
 #include <sys/mutex.h>
+#include <sys/kernel.h>
 
 #include <arm/broadcom/bcm2835reg.h>
 #include <arm/broadcom/bcm_amba.h>
@@ -233,6 +234,7 @@ bcmemmc_xfer_data_dma(struct sdhc_host *hp, struct sdmmc_command *cmd)
 {
 	struct bcmemmc_softc * const sc = *(void **)hp;	/* XXX XXX XXX */
 	size_t seg;
+	int error;
 
 	for (seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
 		sc->sc_cblk[seg].cb_ti =
@@ -275,20 +277,30 @@ bcmemmc_xfer_data_dma(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	bus_dmamap_sync(sc->sc.sc_dmat, sc->sc_dmamap, 0,
 	    sc->sc_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
+	error = 0;
+
 	mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_state == EMMC_DMA_STATE_IDLE);
 	sc->sc_state = EMMC_DMA_STATE_BUSY;
 	bcm_dmac_set_conblk_addr(sc->sc_dmac,
 	    sc->sc_dmamap->dm_segs[0].ds_addr);
 	bcm_dmac_transfer(sc->sc_dmac);
-	while (sc->sc_state == EMMC_DMA_STATE_BUSY)
-		cv_wait(&sc->sc_cv, &sc->sc_lock);
+	while (sc->sc_state == EMMC_DMA_STATE_BUSY) {
+		error = cv_timedwait(&sc->sc_cv, &sc->sc_lock, hz * 10);
+		if (error == EWOULDBLOCK) {
+			device_printf(sc->sc.sc_dev, "transfer timeout!\n");
+			bcm_dmac_halt(sc->sc_dmac);
+			sc->sc_state = EMMC_DMA_STATE_IDLE;
+			error = ETIMEDOUT;
+			break;
+		}
+	}
 	mutex_exit(&sc->sc_lock);
 
 	bus_dmamap_sync(sc->sc.sc_dmat, sc->sc_dmamap, 0,
 	    sc->sc_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
-	return 0;
+	return error;
 }
 
 static void
