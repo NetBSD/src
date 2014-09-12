@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_dmac.c,v 1.6 2014/09/12 19:33:45 jakllsch Exp $ */
+/* $NetBSD: bcm2835_dmac.c,v 1.7 2014/09/12 20:52:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.6 2014/09/12 19:33:45 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.7 2014/09/12 20:52:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -208,12 +208,17 @@ bcm_dmac_alloc(enum bcm_dmac_type type, int ipl, void (*cb)(void *),
 	}
 	mutex_exit(&sc->sc_lock);
 
+	if (ch == NULL)
+		return NULL;
+
+	KASSERT(ch->ch_ih == NULL);
 	ch->ch_ih = bcm2835_intr_establish(BCM2835_INT_DMA0 + ch->ch_index,
 	    ipl, bcm_dmac_intr, ch);
 	if (ch->ch_ih == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "failed to establish interrupt for DMA%d\n", ch->ch_index);
-		sc->sc_channelmask &= ~__BIT(index);
+		ch->ch_callback = NULL;
+		ch->ch_callbackarg = NULL;
 	}
 
 	return ch;
@@ -234,6 +239,8 @@ bcm_dmac_free(struct bcm_dmac_channel *ch)
 	DMAC_WRITE(sc, DMAC_CS(ch->ch_index), val);
 
 	mutex_enter(&sc->sc_lock);
+	intr_disestablish(ch->ch_ih);
+	ch->ch_ih = NULL;
 	ch->ch_callback = NULL;
 	ch->ch_callbackarg = NULL;
 	mutex_exit(&sc->sc_lock);
