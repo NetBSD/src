@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.5 2014/09/12 20:20:25 roy Exp $	*/
+/*	$NetBSD: net.c,v 1.6 2014/09/12 20:42:13 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -104,7 +104,6 @@ static void write_etc_hosts(FILE *f);
 #define DHCPCD "/sbin/dhcpcd"
 #include <signal.h>
 static int config_dhcp(char *);
-static void get_dhcp_value(char *, size_t, const char *);
 
 #ifdef INET6
 static int is_v6kernel (void);
@@ -533,7 +532,6 @@ config_network(void)
 	int selected_net;
 
 	int i;
-	char dhcp_host[STRSIZE];
 #ifdef INET6
 	int v6config = 1;
 #endif
@@ -645,6 +643,8 @@ again:
 		/* try a dhcp configuration */
 		dhcp_config = config_dhcp(net_dev);
 		if (dhcp_config) {
+			char *nl;
+
 			/* Get newly configured data off interface. */
 			get_ifinterface_info();
 			get_if6interface_info();
@@ -657,44 +657,62 @@ again:
 			 * 'route -n show'
 			 */
 			if (collect(T_OUTPUT, &textbuf,
-				    "/sbin/route -n show | "
-				    "while read dest gateway flags;"
-				    " do [ \"$dest\" = default ] && {"
-					" echo $gateway; break; };"
-				    " done" ) > 0)
+			    "/sbin/route -n show | "
+			    "while read dest gateway flags;"
+			    " do [ \"$dest\" = default ] && {"
+			    " echo \"$gateway\"; break; };"
+			    " done" ) > 0)
 				strlcpy(net_defroute, textbuf,
 				    sizeof net_defroute);
 			free(textbuf);
+			if ((nl = strchr(net_namesvr, '\n')))
+				*nl = '\0';
 
 			/* pull nameserver info out of /etc/resolv.conf */
 			if (collect(T_OUTPUT, &textbuf,
-				    "cat /etc/resolv.conf 2>/dev/null |"
-				    " while read keyword address rest;"
-				    " do [ \"$keyword\" = nameserver "
-					" -a \"${address#*:}\" = "
-					"\"${address}\" ] && {"
-					    " echo $address; break; };"
-				    " done" ) > 0)
+			    "cat /etc/resolv.conf 2>/dev/null |"
+			    " while read keyword address rest;"
+			    " do [ \"$keyword\" = nameserver ] &&"
+			    " { echo \"$address\"; break; };"
+			    " done" ) > 0)
 				strlcpy(net_namesvr, textbuf,
 				    sizeof net_namesvr);
 			free(textbuf);
+			if ((nl = strchr(net_namesvr, '\n')))
+				*nl = '\0';
 			if (net_namesvr[0] != '\0')
 				net_dhcpconf |= DHCPCONF_NAMESVR;
 
-			/* pull domainname out of leases file */
-			get_dhcp_value(net_domain, sizeof(net_domain),
-			    "domain-name");
+			/* pull domain info out of /etc/resolv.conf */
+			if (collect(T_OUTPUT, &textbuf,
+			    "cat /etc/resolv.conf 2>/dev/null |"
+			    " while read keyword domain rest;"
+			    " do [ \"$keyword\" = domain ] &&"
+			    " { echo \"$domain\"; break; };"
+			    " done" ) > 0)
+				strlcpy(net_domain, textbuf,
+				    sizeof net_domain);
+			free(textbuf);
+			if (net_domain[0] == '\0') {
+				/* pull domain info out of /etc/resolv.conf */
+				if (collect(T_OUTPUT, &textbuf,
+				    "cat /etc/resolv.conf 2>/dev/null |"
+				    " while read keyword search rest;"
+				    " do [ \"$keyword\" = search ] &&"
+				    " { echo \"$search\"; break; };"
+				    " done" ) > 0)
+					strlcpy(net_domain, textbuf,
+					    sizeof net_domain);
+				free(textbuf);
+			}
+			if ((nl = strchr(net_domain, '\n')))
+				*nl = '\0';
 			if (net_domain[0] != '\0')
 				net_dhcpconf |= DHCPCONF_DOMAIN;
 
-			/* pull hostname out of leases file */
-			dhcp_host[0] = 0;
-			get_dhcp_value(dhcp_host, sizeof(dhcp_host),
-			    "host-name");
-			if (dhcp_host[0] != '\0') {
+			if (gethostname(net_host, sizeof(net_host)) == 0 &&
+			    net_host[0] != 0)
 				net_dhcpconf |= DHCPCONF_HOST;
-				strlcpy(net_host, dhcp_host, sizeof net_host);
-			}
 		}
 	}
 
@@ -1228,38 +1246,4 @@ config_dhcp(char *inter)
 		return dhcpautoconf ? 0 : 1;
 	}
 	return 0;
-}
-
-static void
-get_dhcp_value(char *targ, size_t l, const char *var)
-{
-	static const char *lease_data = "/tmp/dhcpcd-lease";
-	FILE *fp;
-	char *line;
-	size_t len, var_len;
-
-	if ((fp = fopen(lease_data, "r")) == NULL) {
-		warn("Could not open %s", lease_data);
-		*targ = '\0';
-		return;
-	}
-
-	var_len = strlen(var);
-
-	while ((line = fgetln(fp, &len)) != NULL) {
-		if (line[len - 1] == '\n')
-			--len;
-		if (len <= var_len)
-			continue;
-		if (memcmp(line, var, var_len))
-			continue;
-		if (line[var_len] != '=')
-			continue;
-		line += var_len + 1;
-		len -= var_len + 1;
-		strlcpy(targ, line, l > len ? len + 1: l);
-		break;
-	}
-
-	fclose(fp);
 }
