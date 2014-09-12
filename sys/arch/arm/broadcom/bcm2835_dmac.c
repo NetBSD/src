@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_dmac.c,v 1.5 2014/09/12 16:06:29 jmcneill Exp $ */
+/* $NetBSD: bcm2835_dmac.c,v 1.6 2014/09/12 19:33:45 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.5 2014/09/12 16:06:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.6 2014/09/12 19:33:45 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -154,13 +154,6 @@ bcm_dmac_attach(device_t parent, device_t self, void *aux)
 		val = DMAC_READ(sc, DMAC_CS(index));
 		val |= DMAC_CS_RESET;
 		DMAC_WRITE(sc, DMAC_CS(index), val);
-
-		ch->ch_ih = bcm2835_intr_establish(BCM2835_INT_DMA0 + index,
-		    IPL_SCHED, bcm_dmac_intr, ch);
-		if (ch->ch_ih == NULL) {
-			aprint_error("(err)");
-			sc->sc_channelmask &= ~__BIT(index);
-		}
 	}
 	aprint_normal("\n");
 	aprint_naive("\n");
@@ -186,7 +179,8 @@ bcm_dmac_intr(void *priv)
 }
 
 struct bcm_dmac_channel *
-bcm_dmac_alloc(enum bcm_dmac_type type, void (*cb)(void *), void *cbarg)
+bcm_dmac_alloc(enum bcm_dmac_type type, int ipl, void (*cb)(void *),
+    void *cbarg)
 {
 	struct bcm_dmac_softc *sc;
 	struct bcm_dmac_channel *ch = NULL;
@@ -213,6 +207,14 @@ bcm_dmac_alloc(enum bcm_dmac_type type, void (*cb)(void *), void *cbarg)
 		break;
 	}
 	mutex_exit(&sc->sc_lock);
+
+	ch->ch_ih = bcm2835_intr_establish(BCM2835_INT_DMA0 + ch->ch_index,
+	    ipl, bcm_dmac_intr, ch);
+	if (ch->ch_ih == NULL) {
+		aprint_error_dev(sc->sc_dev,
+		    "failed to establish interrupt for DMA%d\n", ch->ch_index);
+		sc->sc_channelmask &= ~__BIT(index);
+	}
 
 	return ch;
 }

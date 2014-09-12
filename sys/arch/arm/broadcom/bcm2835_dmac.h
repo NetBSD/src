@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_dmac.h,v 1.2 2014/09/12 17:40:53 jakllsch Exp $ */
+/* $NetBSD: bcm2835_dmac.h,v 1.3 2014/09/12 19:33:45 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -101,7 +101,7 @@ enum bcm_dmac_type {
 
 struct bcm_dmac_channel;
 
-struct bcm_dmac_channel *bcm_dmac_alloc(enum bcm_dmac_type,
+struct bcm_dmac_channel *bcm_dmac_alloc(enum bcm_dmac_type, int,
 					void (*)(void *), void *);
 void bcm_dmac_free(struct bcm_dmac_channel *);
 void bcm_dmac_set_conblk_addr(struct bcm_dmac_channel *, bus_addr_t);
