@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_dmac.c,v 1.7 2014/09/12 20:52:52 jmcneill Exp $ */
+/* $NetBSD: bcm2835_dmac.c,v 1.8 2014/09/12 21:22:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.7 2014/09/12 20:52:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.8 2014/09/12 21:22:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -144,6 +144,7 @@ bcm_dmac_attach(device_t parent, device_t self, void *aux)
 		ch->ch_index = index;
 		ch->ch_callback = NULL;
 		ch->ch_callbackarg = NULL;
+		ch->ch_ih = NULL;
 		if ((__BIT(index) & sc->sc_channelmask) == 0)
 			continue;
 
