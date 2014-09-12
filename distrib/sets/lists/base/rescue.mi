@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.36 2014/08/09 18:32:34 apb Exp $
+# $NetBSD: rescue.mi,v 1.37 2014/09/12 10:03:32 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -127,7 +127,7 @@
 ./rescue/route					base-rescue-root
 ./rescue/routed					base-rescue-root
 ./rescue/rrestore				base-rescue-root
-./rescue/rtsol					base-rescue-root	use_inet6
+./rescue/rtsol					base-obsolete		obsolete
 ./rescue/savecore				base-rescue-root
 ./rescue/scan_ffs				base-rescue-root
 ./rescue/scp					base-rescue-root	crypto
