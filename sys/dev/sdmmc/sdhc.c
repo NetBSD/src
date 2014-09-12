@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.45 2014/09/12 19:45:16 jakllsch Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.46 2014/09/12 19:47:40 jakllsch Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.45 2014/09/12 19:45:16 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.46 2014/09/12 19:47:40 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1725,7 +1725,9 @@ sdhc_intr(void *arg)
 		 * Wake up the sdmmc event thread to scan for cards.
 		 */
 		if (ISSET(status, SDHC_CARD_REMOVAL|SDHC_CARD_INSERTION)) {
-			sdmmc_needs_discover(hp->sdmmc);
+			if (hp->sdmmc != NULL) {
+				sdmmc_needs_discover(hp->sdmmc);
+			}
 			if (ISSET(sc->sc_flags, SDHC_FLAG_ENHANCED)) {
 				HCLR4(hp, SDHC_NINTR_STATUS_EN,
 				    status & (SDHC_CARD_REMOVAL|SDHC_CARD_INSERTION));
