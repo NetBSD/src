@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.6,v 1.1.2.24 2014/09/09 08:50:06 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.6,v 1.1.2.25 2014/09/13 17:55:10 snj Exp $
 
 A complete list of changes from the NetBSD 6.0.5 release to the NetBSD 6.0.6
 release:
@@ -1304,3 +1304,10 @@ sys/arch/next68k/next68k/pmap_bootstrap.c	1.43
 	(panic: pmap_enter_ptpage: can't get KPT page), and
 	this is the last possible m68k MD part of this PR.
 	[tsutsui, ticket #1008]
+
+sys/dev/pci/pci_usrreq.c			1.26
+
+	Reject unaligned PCI config register ioctl requests before we
+	kassert.
+	[riastradh, ticket #1124]
+
