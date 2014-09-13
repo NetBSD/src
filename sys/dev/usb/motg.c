@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.9 2014/09/13 14:46:50 jmcneill Exp $	*/
+/*	$NetBSD: motg.c,v 1.10 2014/09/13 17:42:48 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -39,8 +39,10 @@
  * NOTE: The current implementation only supports Device Side Mode!
  */
 
+#include "opt_motg.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.9 2014/09/13 14:46:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.10 2014/09/13 17:42:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +64,12 @@ __KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.9 2014/09/13 14:46:50 jmcneill Exp $");
 #include <dev/usb/usb_mem.h>
 #include <dev/usb/usb_quirks.h>
 
+#ifdef MOTG_ALLWINNER
+#include <arch/arm/allwinner/awin_otgreg.h>
+#else
 #include <dev/usb/motgreg.h>
+#endif
+
 #include <dev/usb/motgvar.h>
 #include <dev/usb/usbroothub_subr.h>
 
@@ -261,9 +268,11 @@ motg_init(struct motg_softc *sc)
 
 	musbotg_pull_common(sc, 0);
 
+#ifdef MUSB2_REG_RXDBDIS
 	/* disable double packet buffering XXX what's this ? */
 	UWRITE2(sc, MUSB2_REG_RXDBDIS, 0xFFFF);
 	UWRITE2(sc, MUSB2_REG_TXDBDIS, 0xFFFF);
+#endif
 
 	/* enable HighSpeed and ISO Update flags */
 
@@ -288,9 +297,11 @@ motg_init(struct motg_softc *sc)
 
 	UWRITE1(sc, MUSB2_REG_TESTMODE, 0);
 
+#ifdef MUSB2_REG_MISC
 	/* set default value */
 
 	UWRITE1(sc, MUSB2_REG_MISC, 0);
+#endif
 
 	/* select endpoint index 0 */
 
@@ -647,7 +658,7 @@ motg_softintr(void *v)
 	tx_status |= UREAD2(sc, MUSB2_REG_INTTX);
 
 	if (rx_status & 0x01)
-		panic("ctrl_rx");
+		panic("ctrl_rx %08x", rx_status);
 	if (tx_status & 0x01)
 		motg_device_ctrl_intr_tx(sc);
 	for (i = 1; i <= sc->sc_ep_max; i++) {
