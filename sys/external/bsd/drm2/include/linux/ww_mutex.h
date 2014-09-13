@@ -1,4 +1,4 @@
-/*	$NetBSD: ww_mutex.h,v 1.5 2014/09/13 00:32:36 riastradh Exp $	*/
+/*	$NetBSD: ww_mutex.h,v 1.6 2014/09/13 00:33:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -27,17 +27,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * Notes on porting:
- *
- * - We require a context for all locks, so ww_mutex_lock(m, NULL) is
- *   not kosher.  Locking without a context is too painful to
- *   contemplate.
- *
- * - We require passing the context to trylock and unlock.  Unlocking
- *   the wrong lock is too serious an error to pass up detection.
  */
 
 #ifndef _ASM_WW_MUTEX_H_
