@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.3 2014/08/15 22:58:11 jmcneill Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.4 2014/09/13 01:11:58 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -529,11 +529,8 @@ message net_srv_ip
 message net_mask
 {IPv4 Netmask}
 
-message net_namesrv6
-{IPv6 name server}
-
 message net_namesrv
-{IPv4 name server}
+{Your name server}
 
 message net_defroute
 {IPv4 gateway}
@@ -546,12 +543,12 @@ message netok
 
 DNS Domain:		%s 
 Host Name:		%s 
+Nameserver:		%s 
 Primary Interface:	%s 
+Media type:		%s 
 Host IP:		%s 
 Netmask:		%s 
-IPv4 Nameserver:	%s 
 IPv4 Gateway:		%s 
-Media type:		%s 
 }
 
 message netok_slip
@@ -559,18 +556,17 @@ message netok_slip
 
 DNS Domain:		%s 
 Host Name:		%s 
+Nameserver:		%s 
 Primary Interface:	%s 
+Media type:		%s 
 Host IP:		%s 
 Server IP:		%s 
 Netmask:		%s 
-IPv4 Nameserver:	%s 
 IPv4 Gateway:		%s 
-Media type:		%s 
 }
 
 message netokv6
 {IPv6 autoconf:		%s 
-IPv6 Nameserver:	%s 
 }
 
 message netok_ok
@@ -949,8 +945,7 @@ message Device {Device}
 message File_system {File system}
 message Select_IPv6_DNS_server {  Select IPv6 DNS server}
 message other {other }
-message Perform_IPv6_autoconfiguration {Perform IPv6 autoconfiguration?}
-message Perform_DHCP_autoconfiguration {Perform DHCP autoconfiguration?}
+message Perform_autoconfiguration {Perform autoconfiguration?}
 message Root_shell {Root shell}
 message User_shell {User shell}
 message Color_scheme {Color scheme}
