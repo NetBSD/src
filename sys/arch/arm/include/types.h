@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.28 2014/08/05 06:24:56 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.29 2014/09/13 17:41:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,9 +46,6 @@ typedef struct label_t {	/* Used by setjmp & longjmp */
          
 /* NB: This should probably be if defined(_KERNEL) */
 #if defined(_NETBSD_SOURCE)
-typedef	unsigned long	vm_offset_t;	/* depreciated */
-typedef	unsigned long	vm_size_t;	/* depreciated */
-
 typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
 typedef unsigned long	vaddr_t;

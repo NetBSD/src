@@ -333,11 +333,11 @@ void	pj4b_context_switch(u_int);
 void	pj4b_tlb_flushID(void);
 void	pj4b_tlb_flushID_SE(vaddr_t);
 
-void	pj4b_icache_sync_range(vm_offset_t, vm_size_t);
-void	pj4b_idcache_wbinv_range(vm_offset_t, vm_size_t);
-void	pj4b_dcache_wbinv_range(vm_offset_t, vm_size_t);
-void	pj4b_dcache_inv_range(vm_offset_t, vm_size_t);
-void	pj4b_dcache_wb_range(vm_offset_t, vm_size_t);
+void	pj4b_icache_sync_range(vaddr_t, vsize_t);
+void	pj4b_idcache_wbinv_range(vaddr_t, vsize_t);
+void	pj4b_dcache_wbinv_range(vaddr_t, vsize_t);
+void	pj4b_dcache_inv_range(vaddr_t, vsize_t);
+void	pj4b_dcache_wb_range(vaddr_t, vsize_t);
 
 void	pj4b_drain_writebuf(void);
 void	pj4b_drain_readbuf(void);
