@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.103 2014/03/02 13:27:38 joerg Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.104 2014/09/13 18:09:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.103 2014/03/02 13:27:38 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.104 2014/09/13 18:09:50 matt Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_kloader.h"
@@ -92,7 +92,7 @@ int max_processes = 64;			/* Default number */
 char *boot_args = NULL;
 char boot_file[16];
 
-vaddr_t msgbufphys;
+paddr_t msgbufphys;
 
 /* Prototypes */
 void dumpsys(void);
