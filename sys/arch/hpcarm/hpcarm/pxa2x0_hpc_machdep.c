@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.21 2014/03/11 04:17:36 ozaki-r Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.22 2014/09/13 18:09:50 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.21 2014/03/11 04:17:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.22 2014/09/13 18:09:50 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -113,7 +113,7 @@ extern paddr_t physical_freestart;
 extern paddr_t physical_freeend;
 extern paddr_t physical_end;
 
-extern vaddr_t msgbufphys;
+extern paddr_t msgbufphys;
 
 extern int end;
 
