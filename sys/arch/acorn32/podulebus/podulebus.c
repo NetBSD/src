@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.27 2014/03/21 16:43:00 christos Exp $ */
+/* $NetBSD: podulebus.c,v 1.28 2014/09/13 18:08:38 matt Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.27 2014/03/21 16:43:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.28 2014/09/13 18:08:38 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -429,7 +429,7 @@ podulebusattach(device_t parent, device_t self, void *aux)
 	 * are built during initarm
 	 */
 	/* Map the FAST and SYNC simple podules */
-	pmap_map_section((vm_offset_t)pmap_kernel()->pm_pdir,
+	pmap_map_section((vaddr_t)pmap_kernel()->pm_pdir,
 	    SYNC_PODULE_BASE & 0xfff00000, SYNC_PODULE_HW_BASE & 0xfff00000,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	cpu_tlb_flushD();
@@ -440,7 +440,7 @@ podulebusattach(device_t parent, device_t self, void *aux)
         
 		for (loop1 = loop * EASI_SIZE; loop1 < ((loop + 1) * EASI_SIZE);
 		    loop1 += L1_S_SIZE)
-		pmap_map_section((vm_offset_t)pmap_kernel()->pm_pdir,
+		pmap_map_section((vaddr_t)pmap_kernel()->pm_pdir,
 		    EASI_BASE + loop1, EASI_HW_BASE + loop1,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	}

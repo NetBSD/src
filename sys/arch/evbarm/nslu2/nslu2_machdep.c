@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.24 2013/08/19 22:26:09 matt Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.25 2014/09/13 18:08:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.24 2013/08/19 22:26:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.25 2014/09/13 18:08:39 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -155,16 +155,16 @@ BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
 char *boot_file = NULL;
 
-vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
-vm_offset_t physical_end;
+vaddr_t physical_start;
+vaddr_t physical_freestart;
+vaddr_t physical_freeend;
+vaddr_t physical_end;
 u_int free_pages;
 
 /* Physical and virtual addresses for some global pages */
 pv_addr_t minidataclean;
 
-vm_offset_t msgbufphys;
+paddr_t msgbufphys;
 
 extern int end;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.82 2014/09/13 17:42:07 matt Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.83 2014/09/13 18:08:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.82 2014/09/13 17:42:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.83 2014/09/13 18:08:39 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -122,19 +122,19 @@ static char bootargs[MAX_BOOT_STRING + 1];
 char *boot_args = NULL;
 char *boot_file = NULL;
 
-vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
-vm_offset_t physical_end;
+vaddr_t physical_start;
+vaddr_t physical_freestart;
+vaddr_t physical_freeend;
+vaddr_t physical_end;
 u_int free_pages;
-vm_offset_t pagetables_start;
+vaddr_t pagetables_start;
 
 /*int debug_flags;*/
 #ifndef PMAP_STATIC_L1S
 int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
-vm_offset_t msgbufphys;
+paddr_t msgbufphys;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;

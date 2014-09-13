@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.84 2013/08/18 15:58:20 matt Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.85 2014/09/13 18:08:39 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.84 2013/08/18 15:58:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.85 2014/09/13 18:08:39 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -130,10 +130,10 @@ BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
 char *boot_file = NULL;
 
-vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
-vm_offset_t physical_end;
+vaddr_t physical_start;
+vaddr_t physical_freestart;
+vaddr_t physical_freeend;
+vaddr_t physical_end;
 u_int free_pages;
 
 /*int debug_flags;*/
@@ -143,7 +143,7 @@ int max_processes = 64;			/* Default number */
 
 pv_addr_t minidataclean;
 
-vm_offset_t msgbufphys;
+paddr_t msgbufphys;
 
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
