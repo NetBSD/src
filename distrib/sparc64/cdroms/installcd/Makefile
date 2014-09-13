@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2014/08/14 16:27:18 riastradh Exp $
+#	$NetBSD: Makefile,v 1.20 2014/09/13 10:18:24 roy Exp $
 CDBASE=		sparc64cd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 
@@ -68,9 +68,6 @@ CDRUNTIME+=	./usr/share/misc/terminfo.cdb
 CDRUNTIME+=	./usr/share/locale
 
 image_md_pre:
-	${RM} -rf cdrom/libexec/dhcpcd-hooks/*
-	${CP} ${.CURDIR}/../../../common/10-resolv.conf cdrom/libexec/dhcpcd-hooks
-	${CP} ${.CURDIR}/../../../common/99-print-sysinst cdrom/libexec/dhcpcd-hooks
 	${MKDIR} cdrom/etc
 	${HOST_LN} -fs /tmp/gettytab cdrom/etc/gettytab
 	${INSTALL} ${COPY} ${.CURDIR}/etc.ttys cdrom/etc/ttys
