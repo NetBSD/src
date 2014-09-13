@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.22 2014/09/07 14:16:44 jmcneill Exp $
+#	$NetBSD: files.bcm2835,v 1.23 2014/09/13 08:08:24 skrll Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -57,7 +57,7 @@ file	arch/arm/broadcom/bcm2835_emmc.c	bcmemmc
 # DMA Controller (BCM2835_DMA0_BASE)
 device	bcmdmac
 attach	bcmdmac at obio with bcmdmac_amba
-file	arch/arm/broadcom/bcm2835_dmac.c	bcmdmac
+file	arch/arm/broadcom/bcm2835_dmac.c	bcmdmac		needs-flag
 
 # USB (BCM2835_USB_BASE)
 attach dwctwo at obio with bcmdwctwo

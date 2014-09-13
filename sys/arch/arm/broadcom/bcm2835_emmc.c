@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.13 2014/09/12 21:00:11 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.14 2014/09/13 08:08:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.13 2014/09/12 21:00:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.14 2014/09/13 08:08:24 skrll Exp $");
+
+#include "bcmdmac.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +81,10 @@ struct bcmemmc_softc {
 static int bcmemmc_match(device_t, struct cfdata *, void *);
 static void bcmemmc_attach(device_t, device_t, void *);
 static void bcmemmc_attach_i(device_t);
+#if BCMDMAC > 0
 static int bcmemmc_xfer_data_dma(struct sdhc_host *, struct sdmmc_command *);
 static void bcmemmc_dma_done(void *);
+#endif
 
 CFATTACH_DECL_NEW(bcmemmc, sizeof(struct bcmemmc_softc),
     bcmemmc_match, bcmemmc_attach, NULL, NULL);
@@ -106,7 +110,6 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	struct amba_attach_args *aaa = aux;
 	prop_number_t frequency;
 	int error;
-	int rseg;
 
 	sc->sc.sc_dev = self;
  	sc->sc.sc_dmat = aaa->aaa_dmat;
@@ -116,14 +119,10 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_flags |= SDHC_FLAG_NO_HS_BIT;
 	sc->sc.sc_caps = SDHC_VOLTAGE_SUPP_3_3V | SDHC_HIGH_SPEED_SUPP |
 	    SDHC_MAX_BLK_LEN_1024;
- 	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
-	sc->sc.sc_flags |= SDHC_FLAG_EXTERNAL_DMA;
-	sc->sc.sc_caps |= SDHC_DMA_SUPPORT;
 
 	sc->sc.sc_host = sc->sc_hosts;
 	sc->sc.sc_clkbase = 50000;	/* Default to 50MHz */
 	sc->sc_iot = aaa->aaa_iot;
-	sc->sc.sc_vendor_transfer_data_dma = bcmemmc_xfer_data_dma;
 
 	/* Fetch the EMMC clock frequency from property if set. */
 	frequency = prop_dictionary_get(dict, "frequency");
@@ -154,15 +153,22 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on intr %d\n", aaa->aaa_intr);
 
+#if BCMDMAC > 0
 	sc->sc_dmac = bcm_dmac_alloc(BCM_DMAC_TYPE_NORMAL, IPL_SDMMC,
 	    bcmemmc_dma_done, sc);
 	if (sc->sc_dmac == NULL)
-		goto fail;
+		goto done;
+
+ 	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
+	sc->sc.sc_flags |= SDHC_FLAG_EXTERNAL_DMA;
+	sc->sc.sc_caps |= SDHC_DMA_SUPPORT;
+	sc->sc.sc_vendor_transfer_data_dma = bcmemmc_xfer_data_dma;
 
 	sc->sc_state = EMMC_DMA_STATE_IDLE;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SDMMC);
 	cv_init(&sc->sc_cv, "bcmemmcdma");
 
+	int rseg;
 	error = bus_dmamem_alloc(sc->sc.sc_dmat, PAGE_SIZE, PAGE_SIZE,
 	     PAGE_SIZE, sc->sc_segs, 1, &rseg, BUS_DMA_WAITOK);
 	if (error) {
@@ -194,6 +200,8 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 
+done:
+#endif
 	config_interrupts(self, bcmemmc_attach_i);
 	return;
 
@@ -229,6 +237,7 @@ fail:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 }
 
+#if BCMDMAC > 0
 static int
 bcmemmc_xfer_data_dma(struct sdhc_host *hp, struct sdmmc_command *cmd)
 {
@@ -315,3 +324,4 @@ bcmemmc_dma_done(void *arg)
 	mutex_exit(&sc->sc_lock);
 
 }
+#endif
