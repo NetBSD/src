@@ -1,9 +1,6 @@
-# $NetBSD: spec.inst,v 1.1 2012/01/22 03:53:29 tsutsui Exp $
+# $NetBSD: spec.inst,v 1.2 2014/09/13 10:18:24 roy Exp $
 ./mnt2			type=dir mode=0755 uname=root gname=wheel
 ./targetroot		type=dir mode=0755 uname=root gname=wheel
-
-./libexec/dhcpcd-hooks/10-resolv.conf	type=file mode=0444 uname=root gname=wheel
-./libexec/dhcpcd-hooks/99-print-sysinst	type=file mode=0444 uname=root gname=wheel
 
 ./install.sh		type=file mode=0755 uname=root gname=wheel
 ./sysinst		type=file mode=0755 uname=root gname=wheel
