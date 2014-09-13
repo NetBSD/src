@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.188 2014/09/05 09:22:22 matt Exp $	*/
+/*	$NetBSD: bpf.c,v 1.189 2014/09/13 17:18:45 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.188 2014/09/05 09:22:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.189 2014/09/13 17:18:45 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1388,25 +1388,24 @@ static inline void
 bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
     void *pkt, u_int pktlen, u_int buflen, const bool rcv)
 {
-	struct timespec ts;
+	const bpf_ctx_t *bc = NULL;
+	uint32_t mem[BPF_MEMWORDS];
 	bpf_args_t args = {
 		.pkt = (const uint8_t *)pkt,
 		.wirelen = pktlen,
 		.buflen = buflen,
-		.mem = NULL,
+		.mem = mem,
 		.arg = NULL
 	};
-	struct bpf_d *d;
-
-	const bpf_ctx_t *bc = NULL;
 	bool gottime = false;
+	struct timespec ts;
 
 	/*
 	 * Note that the IPL does not have to be raised at this point.
 	 * The only problem that could arise here is that if two different
 	 * interfaces shared any data.  This is not the case.
 	 */
-	for (d = bp->bif_dlist; d != NULL; d = d->bd_next) {
+	for (struct bpf_d *d = bp->bif_dlist; d != NULL; d = d->bd_next) {
 		u_int slen;
 
 		if (!d->bd_seesent && !rcv) {
