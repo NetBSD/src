@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.3 2014/08/15 22:58:11 jmcneill Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.4 2014/09/13 01:11:58 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -553,9 +553,6 @@ message net_srv_ip
 message net_mask
 {Votre masque de réseau (IPv4)}
 
-message net_namesrv6
-{Adresse IPv6 de votre serveur de noms (DNS)}
-
 message net_namesrv
 {Adresse IPv4 de votre serveur de noms (DNS)}
 
@@ -568,33 +565,32 @@ message net_media
 message netok
 {Vous avez spécifié les valeurs suivantes :
 
-Nom de domaine (DNS) :		 %s 
-Nom d'ordinateur :		 %s 
-Interface réseau :		 %s
-Adresse IPv4 :			 %s
-Masque de sous-réseau :	 %s
-Adresse IPv4 du serveur de noms : %s
-Adresse IPv4 de la passerelle :  %s
-Type de réseau (média)	 %s 
+Nom de domaine (DNS) :		%s 
+Nom d'ordinateur :		%s 
+Adresse du serveur de noms :	%s
+Interface réseau :		%s
+Type de réseau (média)		%s 
+Adresse IPv4 :			%s
+Masque de sous-réseau :		%s
+Adresse IPv4 de la passerelle : %s
 }
 
 message netok_slip
 {Vous avez spécifié les valeurs suivantes. Êtes-vous d'accord ?
 
-Nom de domaine (DNS) :		 %s
-Nom d'ordinateur :		 %s
-Interface réseau :		 %s
-Adresse IPv4 :			 %s
-Adresse IPv4 du serveur :	 %s
-Masque de sous-réseau :	 %s
-Adresse IPv4 du serveur de noms : %s
-Adresse IPv4 de la passerelle :	 %s
-Type de réseau (média) :	 %s
+Nom de domaine (DNS) :		%s
+Nom d'ordinateur :		%s
+Adresse du serveur de noms :	%s
+Interface réseau :		%s
+Type de réseau (média) :	%s
+Adresse IPv4 :			%s
+Adresse IPv4 du serveur :	%s
+Masque de sous-réseau :		%s
+Adresse IPv4 de la passerelle :	%s
 }
 
 message netokv6
-{Auto-configuration IPv6 :	 %s 
-Adresse du serveur de noms IPv6 : %s 
+{Auto-configuration IPv6 :	%s 
 }
 
 message netok_ok
@@ -1046,8 +1042,7 @@ message Device {Périphérique}
 message File_system {Système de fichiers}
 message Select_IPv6_DNS_server {  Choisissez un serveur de noms IPv6 :}
 message other {autre }
-message Perform_IPv6_autoconfiguration {Configurer automatiquement l'IPv6 ?}
-message Perform_DHCP_autoconfiguration {Configurer automatiquement par DHCP ?}
+message Perform_autoconfiguration {Configurer automatiquement ?}
 message Root_shell {Shell du compte "root"}
 message Color_scheme {Jeu de couleurs}
 message White_on_black {Blanc sur noir}
