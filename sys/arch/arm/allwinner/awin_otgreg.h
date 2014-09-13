@@ -1,4 +1,4 @@
-/* $NetBSD: awin_otgreg.h,v 1.1 2014/09/13 17:42:48 jmcneill Exp $ */
+/* $NetBSD: awin_otgreg.h,v 1.2 2014/09/13 17:48:52 jmcneill Exp $ */
 /* FreeBSD: head/sys/dev/usb/controller/musb_otg.h 267122 2014-06-05 18:23:51Z hselasky */
 /*-
  * Copyright (c) 2008 Hans Petter Selasky. All rights reserved.
@@ -286,5 +286,9 @@
 #define	MUSB2_REG_RXHUBPORT(n) (0x009f + (8*(n)))
 
 #define	MUSB2_EP_MAX 16			/* maximum number of endpoints */
+
+#define MUSB2_REG_AWIN_VEND0 0x0043
+#define MUSB2_REG_AWIN_VEND1 0x007d
+#define MUSB2_REG_AWIN_VEND3 0x007e
 
 #endif					/* _MUSB2_OTG_H_ */
