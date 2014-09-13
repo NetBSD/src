@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.21 2014/03/30 08:00:34 skrll Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.22 2014/09/13 18:08:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -118,7 +118,7 @@ extern db_regs_t *ddb_regp;
 u_int branch_taken(u_int insn, u_int pc, db_regs_t *db_regs);
 int kdb_trap(int, db_regs_t *);
 void db_machine_init(void);
-int db_validate_address(vm_offset_t addr);
+int db_validate_address(vaddr_t addr);
 
 #define DB_ELF_SYMBOLS
 #define DB_ELFSIZE 32
