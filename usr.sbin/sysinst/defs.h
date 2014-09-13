@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3 2014/08/06 10:03:49 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.4 2014/09/13 00:38:36 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -489,7 +489,7 @@ int	get_real_geom(const char *, struct disklabel *);
 
 /* from net.c */
 extern int network_up;
-extern char net_namesvr6[STRSIZE];
+extern char net_namesvr[STRSIZE];
 int	get_via_ftp(const char *);
 int	get_via_nfs(void);
 int	config_network(void);
