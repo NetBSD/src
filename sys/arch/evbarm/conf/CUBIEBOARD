@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.25 2014/09/09 22:49:20 jmcneill Exp $
+#	$NetBSD: CUBIEBOARD,v 1.26 2014/09/13 17:50:27 jmcneill Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -277,6 +277,10 @@ ohci*		at awinusb?
 ehci*		at awinusb?
 usb*		at ohci?
 usb*		at ehci?
+
+# USB OTG
+#motg0		at awinio0
+#usb*		at motg?
 
 # SATA
 ahcisata*	at awinio0
