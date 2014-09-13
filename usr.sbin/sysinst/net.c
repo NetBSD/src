@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.10 2014/09/13 00:38:36 roy Exp $	*/
+/*	$NetBSD: net.c,v 1.11 2014/09/13 01:11:58 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -729,20 +729,22 @@ again:
 
 	/* confirm the setting */
 	if (slip)
-		msg_display(MSG_netok_slip, net_domain, net_host, net_dev,
-			*net_ip == '\0' ? "<none>" : net_ip,
-			*net_srv_ip == '\0' ? "<none>" : net_srv_ip,
-			*net_mask == '\0' ? "<none>" : net_mask,
-			*net_namesvr == '\0' ? "<none>" : net_namesvr,
-			*net_defroute == '\0' ? "<none>" : net_defroute,
-			*net_media == '\0' ? "<default>" : net_media);
+		msg_display(MSG_netok_slip, net_domain, net_host,
+		    *net_namesvr == '\0' ? "<none>" : net_namesvr,
+		    net_dev,
+		    *net_media == '\0' ? "<default>" : net_media,
+		    *net_ip == '\0' ? "<none>" : net_ip,
+		    *net_srv_ip == '\0' ? "<none>" : net_srv_ip,
+		    *net_mask == '\0' ? "<none>" : net_mask,
+		    *net_defroute == '\0' ? "<none>" : net_defroute);
 	else
-		msg_display(MSG_netok, net_domain, net_host, net_dev,
-			*net_ip == '\0' ? "<none>" : net_ip,
-			*net_mask == '\0' ? "<none>" : net_mask,
-			*net_namesvr == '\0' ? "<none>" : net_namesvr,
-			*net_defroute == '\0' ? "<none>" : net_defroute,
-			*net_media == '\0' ? "<default>" : net_media);
+		msg_display(MSG_netok, net_domain, net_host,
+		    *net_namesvr == '\0' ? "<none>" : net_namesvr,
+		    net_dev,
+		    *net_media == '\0' ? "<default>" : net_media,
+		    *net_ip == '\0' ? "<none>" : net_ip,
+		    *net_mask == '\0' ? "<none>" : net_mask,
+		    *net_defroute == '\0' ? "<none>" : net_defroute);
 #ifdef INET6
 	msg_display_add(MSG_netokv6,
 		     !is_v6kernel() ? "<not supported>" :
@@ -1163,7 +1165,7 @@ config_dhcp(char *inter)
 
 	if (!file_mode_match(DHCPCD, S_IFREG))
 		return 0;
-	process_menu(MENU_yesno, deconst(MSG_Perform_DHCP_autoconfiguration));
+	process_menu(MENU_yesno, deconst(MSG_Perform_autoconfiguration));
 	if (yesno) {
 		/* spawn off dhcpcd and wait for parent to exit */
 		dhcpautoconf = run_program(RUN_DISPLAY | RUN_PROGRESS,
