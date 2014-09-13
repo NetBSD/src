@@ -1,4 +1,4 @@
-/* $NetBSD: awin_otg.c,v 1.1 2014/09/13 17:48:52 jmcneill Exp $ */
+/* $NetBSD: awin_otg.c,v 1.2 2014/09/13 18:37:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_otg.c,v 1.1 2014/09/13 17:48:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_otg.c,v 1.2 2014/09/13 18:37:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -124,6 +124,7 @@ awin_otg_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_motg.sc_mode = MOTG_MODE_HOST;
 	sc->sc_motg.sc_ep_max = 5;
+	sc->sc_motg.sc_ep_fifosize = 512;
 
 	sc->sc_ih = intr_establish(loc->loc_intr, IPL_SCHED, IST_LEVEL,
 	    awin_otg_intr, sc);
@@ -201,7 +202,7 @@ awin_otg_intr(void *priv)
 	if (intrx)
 		OTG_WRITE2(sc, MUSB2_REG_INTRX, intrx);
 
-	motg_intr(&sc->sc_motg, inttx, intrx, intusb);
+	motg_intr(&sc->sc_motg, intrx, inttx, intusb);
 
 	mutex_exit(&sc->sc_motg.sc_intr_lock);
 
