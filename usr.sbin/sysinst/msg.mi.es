@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.3 2014/08/15 22:58:11 jmcneill Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.4 2014/09/13 01:11:58 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -542,9 +542,6 @@ message net_srv_ip
 message net_mask
 {Máscara de red IPv4}
 
-message net_namesrv6
-{Servidor de nombres IPv6}
-
 message net_namesrv
 {Servidor de nombres IPv4}
 
@@ -559,12 +556,12 @@ message netok
 
 Dominio DNS: 		%s 
 Nombre de máquina:	%s 
+Serv de nombres:	%s 
 Interfaz primaria:	%s 
+Tipo de medio:		%s 
 IP de la máquina:	%s 
 Máscara de red:		%s 
-Serv de nombres IPv4:	%s 
 Pasarela IPv4:		%s 
-Tipo de medio:		%s 
 }
 
 message netok_slip
@@ -572,18 +569,17 @@ message netok_slip
 
 Dominio DNS: 		%s 
 Nombre de la máquina:	%s 
+Serv de nombres:	%s 
 Interfaz primaria:	%s 
+Tipo de medio:		%s 
 IP de la máquina:	%s 
 IP del servidor:	%s 
 Máscara de red:		%s 
-Serv de nombres IPv4:	%s 
 Pasarela IPv4:		%s 
-Tipo de medio:		%s 
 }
 
 message netokv6
 {IPv6 autoconf:		%s 
-Serv de nombres IPv6:	%s 
 }
 
 message netok_ok
@@ -974,8 +970,7 @@ message Device {Dispositivo}
 message File_system {Sistema de archivos}
 message Select_IPv6_DNS_server {  Seleccione servidor DNS de IPv6}
 message other {otro }
-message Perform_IPv6_autoconfiguration {¿Realizar autoconfiguración IPv6?}
-message Perform_DHCP_autoconfiguration {¿Realizar autoconfiguración DHCP ?}
+message Perform_autoconfiguration {¿Realizar autoconfiguración ?}
 message Root_shell {Shell de root}
 message Color_scheme {Combinación de colores}
 message White_on_black {Blanco sobre negro}
