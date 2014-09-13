@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.11 2014/09/13 01:11:58 roy Exp $	*/
+/*	$NetBSD: net.c,v 1.12 2014/09/13 09:30:30 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -626,7 +626,7 @@ again:
 				strlcpy(net_defroute, textbuf,
 				    sizeof net_defroute);
 			free(textbuf);
-			if ((nl = strchr(net_namesvr, '\n')))
+			if ((nl = strchr(net_defroute, '\n')))
 				*nl = '\0';
 
 			/* pull nameserver info out of /etc/resolv.conf */
