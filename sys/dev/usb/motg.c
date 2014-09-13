@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.8 2014/08/12 08:06:46 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.9 2014/09/13 14:46:50 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.8 2014/08/12 08:06:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.9 2014/09/13 14:46:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,16 +296,20 @@ motg_init(struct motg_softc *sc)
 
 	UWRITE1(sc, MUSB2_REG_EPINDEX, 0);
 
-	/* read out number of endpoints */
-	nrx = (UREAD1(sc, MUSB2_REG_EPINFO) / 16);
+	if (sc->sc_ep_max == 0) {
+		/* read out number of endpoints */
+		nrx = (UREAD1(sc, MUSB2_REG_EPINFO) / 16);
 
-	ntx = (UREAD1(sc, MUSB2_REG_EPINFO) % 16);
+		ntx = (UREAD1(sc, MUSB2_REG_EPINFO) % 16);
 
-	/* these numbers exclude the control endpoint */
+		/* these numbers exclude the control endpoint */
 
-	DPRINTF(("RX/TX endpoints: %u/%u\n", nrx, ntx));
+		DPRINTF(("RX/TX endpoints: %u/%u\n", nrx, ntx));
 
-	sc->sc_ep_max = MAX(nrx, ntx);
+		sc->sc_ep_max = MAX(nrx, ntx);
+	} else {
+		nrx = ntx = sc->sc_ep_max;
+	}
 	if (sc->sc_ep_max == 0) {
 		aprint_error_dev(sc->sc_dev, " no endpoints\n");
 		return USBD_INVAL;
