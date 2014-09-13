@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.10 2014/09/13 17:42:48 jmcneill Exp $	*/
+/*	$NetBSD: motg.c,v 1.11 2014/09/13 18:36:39 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.10 2014/09/13 17:42:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.11 2014/09/13 18:36:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,9 +353,13 @@ motg_init(struct motg_softc *sc)
 		/* select endpoint */
 		UWRITE1(sc, MUSB2_REG_EPINDEX, i);
 
-		val = UREAD1(sc, MUSB2_REG_FSIZE);
-		fiforx_size = (val & MUSB2_MASK_RX_FSIZE) >> 4;
-		fifotx_size = (val & MUSB2_MASK_TX_FSIZE);
+		if (sc->sc_ep_fifosize) {
+			fiforx_size = fifotx_size = sc->sc_ep_fifosize;
+		} else {
+			val = UREAD1(sc, MUSB2_REG_FSIZE);
+			fiforx_size = (val & MUSB2_MASK_RX_FSIZE) >> 4;
+			fifotx_size = (val & MUSB2_MASK_TX_FSIZE);
+		}
 
 		DPRINTF(("Endpoint %u FIFO size: IN=%u, OUT=%u, DYN=%d\n",
 		    i, fifotx_size, fiforx_size, dynfifo));
