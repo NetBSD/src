@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.14 2014/09/13 09:46:12 roy Exp $	*/
+/*	$NetBSD: net.c,v 1.15 2014/09/13 17:22:22 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -602,7 +602,7 @@ again:
 		/* try a dhcp configuration */
 		dhcp_config = config_dhcp(net_dev);
 		if (dhcp_config) {
-			char *nl;
+			char *nline;
 
 			/* Get newly configured data off interface. */
 			get_ifinterface_info();
@@ -624,8 +624,8 @@ again:
 				strlcpy(net_defroute, textbuf,
 				    sizeof net_defroute);
 			free(textbuf);
-			if ((nl = strchr(net_defroute, '\n')))
-				*nl = '\0';
+			if ((nline = strchr(net_defroute, '\n')))
+				*nline = '\0';
 
 			/* pull nameserver info out of /etc/resolv.conf */
 			if (collect(T_OUTPUT, &textbuf,
@@ -637,8 +637,8 @@ again:
 				strlcpy(net_namesvr, textbuf,
 				    sizeof net_namesvr);
 			free(textbuf);
-			if ((nl = strchr(net_namesvr, '\n')))
-				*nl = '\0';
+			if ((nline = strchr(net_namesvr, '\n')))
+				*nline = '\0';
 			if (net_namesvr[0] != '\0')
 				net_dhcpconf |= DHCPCONF_NAMESVR;
 
@@ -664,8 +664,8 @@ again:
 					    sizeof net_domain);
 				free(textbuf);
 			}
-			if ((nl = strchr(net_domain, '\n')))
-				*nl = '\0';
+			if ((nline = strchr(net_domain, '\n')))
+				*nline = '\0';
 			if (net_domain[0] != '\0')
 				net_dhcpconf |= DHCPCONF_DOMAIN;
 
