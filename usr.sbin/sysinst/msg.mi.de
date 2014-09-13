@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.3 2014/08/15 22:58:11 jmcneill Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.4 2014/09/13 01:11:58 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -547,9 +547,6 @@ message net_srv_ip
 message net_mask
 {IPv4-Netzmaske}
 
-message net_namesrv6
-{IPv6-Nameserver}
-
 message net_namesrv
 {IPv4-Nameserver}
 
@@ -564,12 +561,12 @@ message netok
 
 DNS-Domain:		%s 
 Hostname:		%s 
+Nameserver:		%s 
 Netzwerkadapter:	%s 
+Verbindungstyp:		%s 
 IP-Adresse:		%s 
 Netzmaske:		%s 
-IPv4-Nameserver:	%s 
 IPv4-Gateway:		%s 
-Verbindungstyp:		%s 
 }
 
 message netok_slip
@@ -577,19 +574,18 @@ message netok_slip
 
 DNS-Domain:		%s 
 Hostname:		%s 
+Nameserver:		%s 
 Netzwerkadapter:	%s 
+Verbindungstyp:		%s 
 IP-Adresse:		%s 
 IP-Adresse des Servers:	%s 
 Netzmaske:		%s 
-IPv4-Nameserver:	%s 
 IPv4-Gateway:		%s 
-Verbindungstyp:		%s 
 }
 
 message netokv6
 {
 IPv6-Autokonfiguration:	%s 
-IPv6-Nameserver:	%s 
 }
 
 message netok_ok
@@ -1008,8 +1004,7 @@ message Device {Gerät}
 message File_system {Dateisystem}
 message Select_IPv6_DNS_server {  Auswählen eines IPv6 DNS Servers}
 message other {andere }
-message Perform_IPv6_autoconfiguration {IPv6 automatisch konfigurieren?}
-message Perform_DHCP_autoconfiguration {Konfiguration per DHCP ermitteln?}
+message Perform_autoconfiguration {Führen Sie die automatische Konfiguration?}
 message Root_shell {Root-Shell}
 message User_shell {User-Shell}
 message Color_scheme {Farbschema}
