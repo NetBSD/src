@@ -1,4 +1,4 @@
-/*	$NetBSD: ww_mutex.h,v 1.4 2014/07/26 21:36:40 riastradh Exp $	*/
+/*	$NetBSD: ww_mutex.h,v 1.5 2014/09/13 00:32:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -119,7 +119,8 @@ static inline void
 ww_acquire_fini(struct ww_acquire_ctx *ctx)
 {
 
-	KASSERT(ctx->wwx_acquired == 0);
+	KASSERTMSG((ctx->wwx_acquired == 0), "ctx %p still holds %u locks",
+	    ctx, ctx->wwx_acquired);
 	ctx->wwx_acquired = ~0U;	/* Fail if called again. */
 }
 
