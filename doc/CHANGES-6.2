@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.132 2014/09/09 08:49:13 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.133 2014/09/13 17:55:23 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -3738,3 +3738,9 @@ sys/arch/sparc/sparc/autoconf.c			1.258
 	Add device name mapping for "qfe" (quad hme) cards.
 	Fix PR port-sparc/49103 from MOCHIDA Shuji.
 	[martin, ticket #1110]
+
+sys/dev/pci/pci_usrreq.c			1.26
+
+	Reject unaligned PCI config register ioctl requests before we kassert.
+	[riastradh, ticket #1124]
+
