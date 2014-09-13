@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.14 2014/09/13 08:08:24 skrll Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.15 2014/09/13 13:20:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.14 2014/09/13 08:08:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.15 2014/09/13 13:20:38 skrll Exp $");
 
 #include "bcmdmac.h"
 
@@ -81,7 +81,7 @@ struct bcmemmc_softc {
 static int bcmemmc_match(device_t, struct cfdata *, void *);
 static void bcmemmc_attach(device_t, device_t, void *);
 static void bcmemmc_attach_i(device_t);
-#if BCMDMAC > 0
+#if NBCMDMAC > 0
 static int bcmemmc_xfer_data_dma(struct sdhc_host *, struct sdmmc_command *);
 static void bcmemmc_dma_done(void *);
 #endif
@@ -153,7 +153,7 @@ bcmemmc_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on intr %d\n", aaa->aaa_intr);
 
-#if BCMDMAC > 0
+#if NBCMDMAC > 0
 	sc->sc_dmac = bcm_dmac_alloc(BCM_DMAC_TYPE_NORMAL, IPL_SDMMC,
 	    bcmemmc_dma_done, sc);
 	if (sc->sc_dmac == NULL)
@@ -237,7 +237,7 @@ fail:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 }
 
-#if BCMDMAC > 0
+#if NBCMDMAC > 0
 static int
 bcmemmc_xfer_data_dma(struct sdhc_host *hp, struct sdmmc_command *cmd)
 {
