@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.12 2014/09/13 09:30:30 roy Exp $	*/
+/*	$NetBSD: net.c,v 1.13 2014/09/13 09:38:43 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -747,8 +747,7 @@ again:
 		    *net_defroute == '\0' ? "<none>" : net_defroute);
 #ifdef INET6
 	msg_display_add(MSG_netokv6,
-		     !is_v6kernel() ? "<not supported>" :
-			(v6config ? "yes" : "no"));
+		     !is_v6kernel() ? "<not supported>" : net_ip6);
 #endif
 done:
 	process_menu(MENU_yesno, deconst(MSG_netok_ok));
