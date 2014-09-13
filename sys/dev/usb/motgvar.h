@@ -1,4 +1,4 @@
-/*	$NetBSD: motgvar.h,v 1.3 2014/09/13 14:46:50 jmcneill Exp $	*/
+/*	$NetBSD: motgvar.h,v 1.4 2014/09/13 18:36:39 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ struct motg_softc {
 	void (*sc_intr_poll)(void *);
 	void *sc_intr_poll_arg;
 	int sc_ep_max;
+	u_int sc_ep_fifosize;
 
 	uint16_t sc_intr_tx_ep;
 	uint16_t sc_intr_rx_ep;
