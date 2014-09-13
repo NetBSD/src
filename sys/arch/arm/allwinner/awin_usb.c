@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.12 2014/06/24 05:07:31 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.13 2014/09/13 17:48:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -236,33 +236,33 @@ awin_usb_phy_write(struct awinusb_softc *usbsc, u_int bit_addr, u_int bits,
 {
 	bus_space_tag_t bst = usbsc->usbsc_bst;
 	bus_space_handle_t bsh = usbsc->usbsc_usb0_phy_csr_bsh;
-	uint32_t clk = AWIN_USB0_PHY_CSR_CLK0 << usbsc->usbsc_number;
+	uint32_t clk = AWIN_USB0_PHY_CTL_CLK0 << usbsc->usbsc_number;
 
 	uint32_t v = bus_space_read_4(bst, bsh, 0);
 
-	KASSERT((v & AWIN_USB0_PHY_CSR_CLK0) == 0);
-	KASSERT((v & AWIN_USB0_PHY_CSR_CLK1) == 0);
-	KASSERT((v & AWIN_USB0_PHY_CSR_CLK2) == 0);
+	KASSERT((v & AWIN_USB0_PHY_CTL_CLK0) == 0);
+	KASSERT((v & AWIN_USB0_PHY_CTL_CLK1) == 0);
+	KASSERT((v & AWIN_USB0_PHY_CTL_CLK2) == 0);
 
-	v &= ~AWIN_USB0_PHY_CSR_ADDR;
-	v &= ~AWIN_USB0_PHY_CSR_DAT;
+	v &= ~AWIN_USB0_PHY_CTL_ADDR;
+	v &= ~AWIN_USB0_PHY_CTL_DAT;
 
-	v |= __SHIFTIN(bit_addr, AWIN_USB0_PHY_CSR_ADDR);
+	v |= __SHIFTIN(bit_addr, AWIN_USB0_PHY_CTL_ADDR);
 
 	/*
 	 * Bitbang the data to the phy, bit by bit, incrementing bit address
 	 * as we go.
 	 */
 	for (; len > 0; bit_addr++, bits >>= 1, len--) {
-		v |= __SHIFTIN(bits & 1, AWIN_USB0_PHY_CSR_DAT);
+		v |= __SHIFTIN(bits & 1, AWIN_USB0_PHY_CTL_DAT);
 		bus_space_write_4(bst, bsh, 0, v);
 		delay(1);
 		bus_space_write_4(bst, bsh, 0, v | clk);
 		delay(1);
 		bus_space_write_4(bst, bsh, 0, v);
 		delay(1);
-		v += __LOWEST_SET_BIT(AWIN_USB0_PHY_CSR_ADDR);
-		v &= ~AWIN_USB0_PHY_CSR_DAT;
+		v += __LOWEST_SET_BIT(AWIN_USB0_PHY_CTL_ADDR);
+		v &= ~AWIN_USB0_PHY_CTL_DAT;
 	}
 }
 
@@ -335,7 +335,7 @@ awinusb_attach(device_t parent, device_t self, void *aux)
 	    loc->loc_offset + AWIN_OHCI_OFFSET, AWIN_OHCI_SIZE,
 	    &usbsc->usbsc_ohci_bsh);
 	bus_space_subregion(usbsc->usbsc_bst, aio->aio_core_bsh,
-	    AWIN_USB0_OFFSET + AWIN_USB0_PHY_CSR_REG, 4,
+	    AWIN_USB0_OFFSET + AWIN_USB0_PHY_CTL_REG, 4,
 	    &usbsc->usbsc_usb0_phy_csr_bsh);
 
 	aprint_naive("\n");
