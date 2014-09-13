@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.188 2014/09/07 20:55:34 joerg Exp $	*/
+/*	$NetBSD: var.c,v 1.189 2014/09/13 23:10:28 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.188 2014/09/07 20:55:34 joerg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.189 2014/09/13 23:10:28 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.188 2014/09/07 20:55:34 joerg Exp $");
+__RCSID("$NetBSD: var.c,v 1.189 2014/09/13 23:10:28 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3746,7 +3746,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 		/*
 		 * No need for nested expansion or anything, as we're
 		 * the only one who sets these things and we sure don't
-		 * but nested invocations in them...
+		 * put nested invocations in them...
 		 */
 		nstr = Buf_GetAll(&v->val, NULL);
 
