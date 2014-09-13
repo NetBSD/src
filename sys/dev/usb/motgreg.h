@@ -1,4 +1,4 @@
-/* $NetBSD: motgreg.h,v 1.1 2014/07/16 18:22:23 bouyer Exp $ */
+/* $NetBSD: motgreg.h,v 1.2 2014/09/13 14:47:35 jmcneill Exp $ */
 /* FreeBSD: head/sys/dev/usb/controller/musb_otg.h 267122 2014-06-05 18:23:51Z hselasky */
 /*-
  * Copyright (c) 2008 Hans Petter Selasky. All rights reserved.
@@ -32,6 +32,8 @@
 
 #ifndef _MUSB2_OTG_H_
 #define	_MUSB2_OTG_H_
+
+#include "opt_motg.h"
 
 #define	MUSB2_MAX_DEVICES USB_MAX_DEVICES
 
@@ -282,5 +284,56 @@
 #define	MUSB2_REG_RXHUBPORT(n) (0x0087 + (8*(n)))
 
 #define	MUSB2_EP_MAX 16			/* maximum number of endpoints */
+
+#ifdef MOTG_ALLWINNER
+/*
+ * AllWinner SoCs have an MOTG with shuffled registers
+ */ 
+#undef MUSB2_REG_FADDR
+#define MUSB2_REG_FADDR 0x0098
+
+#undef MUSB2_REG_POWER
+#define MUSB2_REG_POWER 0x0040
+
+#undef MUSB2_REG_DEVCTL
+#define MUSB2_REG_DEVCTL 0x0041
+
+#undef MUSB2_REG_EPINDEX
+#define MUSB2_REG_EPINDEX 0x0042
+
+#undef MUSB2_REG_INTTX
+#define MUSB2_REG_INTTX 0x0044
+
+#undef MUSB2_REG_INTRX
+#define MUSB2_REG_INTRX 0x0046
+
+#undef MUSB2_REG_INTTXE
+#define MUSB2_REG_INTTXE 0x0048
+
+#undef MUSB2_REG_INTRXE
+#define MUSB2_REG_INTRXE 0x004a
+
+#undef MUSB2_REG_INTUSB
+#define MUSB2_REG_INTUSB 0x004c
+
+#undef MUSB2_REG_INTUSBE
+#define MUSB2_REG_INTUSBE 0x0050
+
+#undef MUSB2_REG_FRAME
+#define MUSB2_REG_FRAME 0x0054
+
+#undef MUSB2_REG_TXFIFOSZ
+#define MUSB2_REG_TXFIFOSZ 0x0090
+
+#undef MUSB2_REG_RXFIFOSZ
+#define MUSB2_REG_RXFIFOSZ 0x0094
+
+#undef MUSB2_REG_TXFIFOADD
+#define MUSB2_REG_TXFIFOADD 0x0064
+
+#undef MUSB2_REG_RXFIFOADD
+#define MUSB2_REG_RXFIFOADD 0x0066
+
+#endif /* !MOTG_ALLWINNER */
 
 #endif					/* _MUSB2_OTG_H_ */
