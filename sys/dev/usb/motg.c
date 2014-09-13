@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.11 2014/09/13 18:36:39 jmcneill Exp $	*/
+/*	$NetBSD: motg.c,v 1.12 2014/09/13 19:02:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.11 2014/09/13 18:36:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12 2014/09/13 19:02:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,12 +365,16 @@ motg_init(struct motg_softc *sc)
 		    i, fifotx_size, fiforx_size, dynfifo));
 
 		if (dynfifo) {
-			if (i < 3) {
-				fifo_size = 12;       /* 4K */
-			} else if (i < 10) {
-				fifo_size = 10;       /* 1K */
+			if (sc->sc_ep_fifosize) {
+				fifo_size = ffs(sc->sc_ep_fifosize) - 1;
 			} else {
-				fifo_size = 7;        /* 128 bytes */
+				if (i < 3) {
+					fifo_size = 12;       /* 4K */
+				} else if (i < 10) {
+					fifo_size = 10;       /* 1K */
+				} else {
+					fifo_size = 7;        /* 128 bytes */
+				}
 			}
 			if (fiforx_size && (i <= nrx)) {
 				fiforx_size = fifo_size;
