@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_machdep.c,v 1.27 2013/08/18 15:58:20 matt Exp $	*/
+/*	$NetBSD: armadillo9_machdep.c,v 1.28 2014/09/13 18:08:38 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -110,7 +110,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.27 2013/08/18 15:58:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_machdep.c,v 1.28 2014/09/13 18:08:38 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -204,14 +204,14 @@ BootConfig bootconfig;	/* Boot config storage */
 char *boot_args = NULL;
 char *boot_file = NULL;
 
-vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
-vm_offset_t physical_freeend_low;
-vm_offset_t physical_end;
+vaddr_t physical_start;
+vaddr_t physical_freestart;
+vaddr_t physical_freeend;
+vaddr_t physical_freeend_low;
+vaddr_t physical_end;
 u_int free_pages;
 
-vm_offset_t msgbufphys;
+paddr_t msgbufphys;
 
 static struct arm32_dma_range armadillo9_dma_ranges[4];
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.51 2012/10/10 22:00:22 skrll Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.52 2014/09/13 18:08:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.51 2012/10/10 22:00:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.52 2014/09/13 18:08:38 matt Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -114,8 +114,8 @@ struct vidcaudio_softc {
 	int	sc_is16bit;
 
 	size_t	sc_pblksize;
-	vm_offset_t	sc_poffset;
-	vm_offset_t	sc_pbufsize;
+	vaddr_t	sc_poffset;
+	vaddr_t	sc_pbufsize;
 	paddr_t	*sc_ppages;
 	void	(*sc_pintr)(void *);
 	void	*sc_parg;
