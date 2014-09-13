@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.229 2014/09/12 16:40:38 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.230 2014/09/13 08:15:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.229 2014/09/12 16:40:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.230 2014/09/13 08:15:43 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -86,7 +86,11 @@ __KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.229 2014/09/12 16:40:38 skrll Exp $");
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 
-#ifdef EHCI_DEBUG
+
+#ifdef USB_DEBUG
+#ifndef EHCI_DEBUG
+#define ehcidebug 0
+#else
 static int ehcidebug = 0;
 
 SYSCTL_SETUP(sysctl_hw_ehci_setup, "sysctl hw.ehci setup")
@@ -117,6 +121,7 @@ fail:
 }
 
 #endif /* EHCI_DEBUG */
+#endif /* USB_DEBUG */
 
 struct ehci_pipe {
 	struct usbd_pipe pipe;
