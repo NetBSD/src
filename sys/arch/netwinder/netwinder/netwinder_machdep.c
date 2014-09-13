@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.81 2013/08/18 21:42:16 matt Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.82 2014/09/13 17:42:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.81 2013/08/18 21:42:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.82 2014/09/13 17:42:07 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -316,9 +316,9 @@ netwinder_reset(void)
  * time with section mappings.
  */
 struct l1_sec_map {
-	vm_offset_t	va;
-	vm_offset_t	pa;
-	vm_size_t	size;
+	vaddr_t		va;
+	vaddr_t		pa;
+	vsize_t		size;
 	vm_prot_t	prot;
 	int		cache;
 } l1_sec_table[] = {
@@ -646,7 +646,7 @@ initarm(void *arg)
 	 */
 	loop = 0;
 	while (l1_sec_table[loop].size) {
-		vm_size_t sz;
+		vsize_t sz;
 
 #ifdef VERBOSE_INIT_ARM
 		printf("%08lx -> %08lx @ %08lx\n", l1_sec_table[loop].pa,
