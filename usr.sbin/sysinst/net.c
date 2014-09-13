@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.13 2014/09/13 09:38:43 roy Exp $	*/
+/*	$NetBSD: net.c,v 1.14 2014/09/13 09:46:12 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -532,6 +532,7 @@ again:
 	    return 0;
 
 	network_up = 1;
+	dhcp_config = 0;
 
 	strncpy(net_dev, net_devs[selected_net].if_dev, STRSIZE);
 
@@ -544,13 +545,10 @@ again:
 	/* If root is on NFS do not reconfigure the interface. */
 	if (statvfs("/", &sb) == 0 && strcmp(sb.f_fstypename, "nfs") == 0) {
 		nfs_root = 1;
-		dhcp_config = 0;
 		get_ifinterface_info();
 		get_if6interface_info();
 		get_host_info();
-	} else if (slip) {
-		dhcp_config = 0;
-	} else {
+	} else if (!slip) {
 		/* Preload any defaults we can find */
 		get_ifinterface_info();
 		get_if6interface_info();
