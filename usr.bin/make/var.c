@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.189 2014/09/13 23:10:28 dholland Exp $	*/
+/*	$NetBSD: var.c,v 1.190 2014/09/13 23:21:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.189 2014/09/13 23:10:28 dholland Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.190 2014/09/13 23:21:01 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.189 2014/09/13 23:10:28 dholland Exp $");
+__RCSID("$NetBSD: var.c,v 1.190 2014/09/13 23:21:01 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3734,7 +3734,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	 */
 	if ((v == NULL) && (ctxt != VAR_CMD) && (ctxt != VAR_GLOBAL) &&
 		(vlen == 2) && (str[1] == 'F' || str[1] == 'D') &&
-		strchr("@%*!<>", str[0]) != NULL) {
+		strchr("@%?*!<>", str[0]) != NULL) {
 	    /*
 	     * Well, it's local -- go look for it.
 	     */
