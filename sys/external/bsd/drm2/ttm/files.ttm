@@ -1,0 +1,26 @@
+#	$NetBSD: files.ttm,v 1.1 2014/09/14 19:06:01 riastradh Exp $
+
+# TTM, the texture and tiling manager.
+
+define	drmkms_ttm: drmkms
+
+file	external/bsd/drm2/ttm/ttm_agp_backend.c			drmkms_ttm
+file	external/bsd/drm2/dist/drm/ttm/ttm_memory.c		drmkms_ttm
+file	external/bsd/drm2/dist/drm/ttm/ttm_tt.c			drmkms_ttm
+file	external/bsd/drm2/dist/drm/ttm/ttm_bo.c			drmkms_ttm
+file	external/bsd/drm2/dist/drm/ttm/ttm_bo_util.c		drmkms_ttm
+file	external/bsd/drm2/ttm/ttm_bo_vm.c			drmkms_ttm
+# Linux module goo.
+#file	external/bsd/drm2/dist/drm/ttm/ttm_module.c		drmkms_ttm
+# Used only by vmwgfx.  Needs porting for rcu -> pserialize.
+#file	external/bsd/drm2/dist/drm/ttm/ttm_object.c		drmkms_ttm
+# Used only by vmwgfx.  Needs porting.  Does silly things like SIGKILL.
+#file	external/bsd/drm2/dist/drm/ttm/ttm_lock.c		drmkms_ttm
+file	external/bsd/drm2/dist/drm/ttm/ttm_execbuf_util.c	drmkms_ttm
+# Replaced locally by ttm_bus_dma.c.
+#file	external/bsd/drm2/dist/drm/ttm/ttm_page_alloc.c		drmkms_ttm
+file	external/bsd/drm2/dist/drm/ttm/ttm_bo_manager.c		drmkms_ttm
+# Replaced locally by ttm_bus_dma.c.
+#file	external/bsd/drm2/dist/drm/ttm/ttm_page_alloc_dma.c	drmkms_ttm
+
+file	external/bsd/drm2/ttm/ttm_bus_dma.c			drmkms_ttm
