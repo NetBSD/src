@@ -1,4 +1,4 @@
-/* $NetBSD: awin_otgreg.h,v 1.2 2014/09/13 17:48:52 jmcneill Exp $ */
+/* $NetBSD: awin_otgreg.h,v 1.3 2014/09/14 09:32:11 jmcneill Exp $ */
 /* FreeBSD: head/sys/dev/usb/controller/musb_otg.h 267122 2014-06-05 18:23:51Z hselasky */
 /*-
  * Copyright (c) 2008 Hans Petter Selasky. All rights reserved.
@@ -278,12 +278,12 @@
 
 /* Host Mode only registers */
 
-#define	MUSB2_REG_TXFADDR(n) (0x0098 + (8*(n)))
-#define	MUSB2_REG_TXHADDR(n) (0x009a + (8*(n)))
-#define	MUSB2_REG_TXHUBPORT(n) (0x009b + (8*(n)))
-#define	MUSB2_REG_RXFADDR(n) (0x009c + (8*(n)))
-#define	MUSB2_REG_RXHADDR(n) (0x009e + (8*(n)))
-#define	MUSB2_REG_RXHUBPORT(n) (0x009f + (8*(n)))
+#define	MUSB2_REG_TXFADDR(n) 0x0098
+#define	MUSB2_REG_TXHADDR(n) 0x009a
+#define	MUSB2_REG_TXHUBPORT(n) 0x009b
+#define	MUSB2_REG_RXFADDR(n) 0x009c
+#define	MUSB2_REG_RXHADDR(n) 0x009e
+#define	MUSB2_REG_RXHUBPORT(n) 0x009f
 
 #define	MUSB2_EP_MAX 16			/* maximum number of endpoints */
 
