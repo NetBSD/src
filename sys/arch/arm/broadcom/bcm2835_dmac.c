@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_dmac.c,v 1.8 2014/09/12 21:22:13 jmcneill Exp $ */
+/* $NetBSD: bcm2835_dmac.c,v 1.9 2014/09/14 14:29:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.8 2014/09/12 21:22:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.9 2014/09/14 14:29:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -220,6 +220,7 @@ bcm_dmac_alloc(enum bcm_dmac_type type, int ipl, void (*cb)(void *),
 		    "failed to establish interrupt for DMA%d\n", ch->ch_index);
 		ch->ch_callback = NULL;
 		ch->ch_callbackarg = NULL;
+		ch = NULL;
 	}
 
 	return ch;
