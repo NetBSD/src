@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.7 2014/03/28 21:39:09 matt Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.8 2014/09/14 20:35:45 ryo Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -123,7 +123,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.7 2014/03/28 21:39:09 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.8 2014/09/14 20:35:45 ryo Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -408,6 +408,7 @@ cpu_hatch(struct cpu_info *ci, cpuid_t cpuid, void (*md_cpu_init)(struct cpu_inf
 	printf(" done!\n");
 #endif
 	atomic_and_32(&arm_cpu_mbox, ~(1 << cpuid));
+	membar_producer();
 	__asm __volatile("sev; sev; sev");
 }
 #endif /* MULTIPROCESSOR */
