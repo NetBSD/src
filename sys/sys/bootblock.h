@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.56 2014/02/24 07:23:44 skrll Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.57 2014/09/14 17:39:06 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -815,7 +815,7 @@ struct apple_drvr_descriptor {
 	uint32_t	descBlock;	/* first block of driver */
 	uint16_t	descSize;	/* driver size in blocks */
 	uint16_t	descType;	/* system type */
-};
+} __packed;
 
 /*
  *	system types; Apple reserves 0-15
