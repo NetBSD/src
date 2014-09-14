@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.242 2014/09/14 04:32:42 dholland Exp $
+.\"	$NetBSD: make.1,v 1.243 2014/09/14 08:47:19 apb Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -515,8 +515,8 @@ avoid-chdir-side-effects:
 	@echo Back in `pwd`
 
 ensure-one-shell-regardless-of-mode:
-	@echo Building $@ in `pwd`; \\
-	(cd ${.CURDIR} && ${MAKE} $@); \\
+	@echo Building $@ in `pwd`; \e
+	(cd ${.CURDIR} && ${MAKE} $@); \e
 	echo Back in `pwd`
 .Ed
 .Pp
@@ -2193,7 +2193,7 @@ with the notable exception of
 .Ic .PHONY ,
 .Ic .PRECIOUS ,
 and
-.SUFFIXES .
+.Ic .SUFFIXES .
 .It
 Variable modifiers, except for the
 .Dl :old=new
