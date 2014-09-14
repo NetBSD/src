@@ -1,4 +1,4 @@
-/* $NetBSD: awin_otg.c,v 1.2 2014/09/13 18:37:16 jmcneill Exp $ */
+/* $NetBSD: awin_otg.c,v 1.3 2014/09/14 09:34:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_otg.c,v 1.2 2014/09/13 18:37:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_otg.c,v 1.3 2014/09/14 09:34:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -109,8 +109,8 @@ awin_otg_attach(device_t parent, device_t self, void *aux)
 
 	awin_reg_set_clear(aio->aio_core_bst, aio->aio_core_bsh,
 	    AWIN_DRAM_OFFSET + AWIN_SRAM_CTL1_REG,
-	    __SHIFTOUT(AWIN_SRAM_CTL1_SRAMD_MAP_USB0,
-		       AWIN_SRAM_CTL1_SRAMD_MAP),
+	    __SHIFTIN(AWIN_SRAM_CTL1_SRAMD_MAP_USB0,
+		      AWIN_SRAM_CTL1_SRAMD_MAP),
 	    0);
 
 	sc->sc_motg.sc_dev = self;
