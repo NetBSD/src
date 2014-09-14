@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.239 2014/09/14 03:13:49 dholland Exp $
+.\"	$NetBSD: make.1,v 1.240 2014/09/14 03:50:28 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -638,13 +638,19 @@ Variables defined in the makefile or in included makefiles.
 Variables defined as part of the command line.
 .It Local variables
 Variables that are defined specific to a certain target.
+.El
+.Pp
+Local variables are all built in and their values vary magically from
+target to target.
+It is not currently possible to define new local variables.
 The seven local variables are as follows:
-.Bl -tag -width ".ARCHIVE"
+.Bl -tag -width ".ARCHIVE" -offset indent
 .It Va .ALLSRC
 The list of all sources for this target; also known as
 .Ql Va \&\*[Gt] .
 .It Va .ARCHIVE
-The name of the archive file.
+The name of the archive file; also known as
+.Ql Va \&! .
 .It Va .IMPSRC
 In suffix-transformation rules, the name/path of the source from which the
 target is to be transformed (the
@@ -653,7 +659,8 @@ source); also known as
 .Ql Va \&\*[Lt] .
 It is not defined in explicit rules.
 .It Va .MEMBER
-The name of the archive member.
+The name of the archive member; also known as
+.Ql Va % .
 .It Va .OODATE
 The list of sources for this target that were deemed out-of-date; also
 known as
@@ -662,31 +669,41 @@ known as
 The file prefix of the target, containing only the file portion, no suffix
 or preceding directory components; also known as
 .Ql Va * .
+The suffix must be one of the known suffixes declared with
+.Ic .SUFFIXES
+or it will not be recognized.
 .It Va .TARGET
 The name of the target; also known as
 .Ql Va @ .
 .El
 .Pp
 The shorter forms
-.Ql Va @ ,
+.Ql ( Va \*[Gt] ,
+.Ql Va \&! ,
+.Ql Va \*[Lt] ,
+.Ql Va % ,
 .Ql Va \&? ,
-.Ql Va \&\*[Lt] ,
-.Ql Va \&\*[Gt] ,
+.Ql Va * ,
 and
-.Ql Va *
+.Ql Va @ )
 are permitted for backward
-compatibility with historical makefiles and are not recommended.
-The six variables
-.Ql Va "@F" ,
-.Ql Va "@D" ,
-.Ql Va "\*[Lt]F" ,
-.Ql Va "\*[Lt]D" ,
-.Ql Va "*F" ,
+compatibility with historical makefiles and legacy POSIX make and are
+not recommended.
+.Pp
+Variants of these variables with the punctuation followed immediately by
+.Ql D
+or
+.Ql F ,
+e.g.
+.Ql Va $(@D) ,
+are legacy forms equivalent to using the
+.Ql :H
 and
-.Ql Va "*D"
-are permitted for compatibility with
+.Ql :T
+modifiers.
+These forms are accepted for compatibility with
 .At V
-makefiles and are not recommended.
+makefiles and POSIX but are not recommended.
 .Pp
 Four of the local variables may be used in sources on dependency lines
 because they expand to the proper value for each target on the line.
@@ -696,7 +713,6 @@ These variables are
 .Ql Va .ARCHIVE ,
 and
 .Ql Va .MEMBER .
-.El
 .Ss Additional built-in variables
 In addition,
 .Nm
