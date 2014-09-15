@@ -1,4 +1,4 @@
-/*	$NetBSD: ww_mutex.h,v 1.6 2014/09/13 00:33:45 riastradh Exp $	*/
+/*	$NetBSD: ww_mutex.h,v 1.7 2014/09/15 20:24:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@ struct ww_class {
 
 struct ww_acquire_ctx {
 	struct ww_class	*wwx_class __diagused;
+	struct lwp	*wwx_owner __diagused;
 	uint64_t	wwx_ticket;
 	unsigned	wwx_acquired;
 	bool		wwx_acquire_done;
@@ -92,6 +93,7 @@ ww_acquire_init(struct ww_acquire_ctx *ctx, struct ww_class *class)
 {
 
 	ctx->wwx_class = class;
+	ctx->wwx_owner = curlwp;
 	ctx->wwx_ticket = atomic_inc_64_nv(&class->wwc_ticket);
 	ctx->wwx_acquired = 0;
 	ctx->wwx_acquire_done = false;
@@ -101,6 +103,9 @@ static inline void
 ww_acquire_done(struct ww_acquire_ctx *ctx)
 {
 
+	KASSERTMSG((ctx->wwx_owner == curlwp),
+	    "ctx %p owned by %p, not self (%p)", ctx, ctx->wwx_owner, curlwp);
+
 	ctx->wwx_acquire_done = true;
 }
 
@@ -108,18 +113,22 @@ static inline void
 ww_acquire_fini(struct ww_acquire_ctx *ctx)
 {
 
+	KASSERTMSG((ctx->wwx_owner == curlwp),
+	    "ctx %p owned by %p, not self (%p)", ctx, ctx->wwx_owner, curlwp);
 	KASSERTMSG((ctx->wwx_acquired == 0), "ctx %p still holds %u locks",
 	    ctx, ctx->wwx_acquired);
+
 	ctx->wwx_acquired = ~0U;	/* Fail if called again. */
+	ctx->wwx_owner = NULL;
 }
 
 struct ww_mutex {
 	kmutex_t		wwm_lock;
 	enum ww_mutex_state {
-		WW_UNLOCKED,
-		WW_OWNED,
-		WW_CTX,
-		WW_WANTOWN,
+		WW_UNLOCKED,	/* nobody owns it */
+		WW_OWNED,	/* owned by a lwp without a context */
+		WW_CTX,		/* owned by a context */
+		WW_WANTOWN,	/* owned by ctx, waiters w/o ctx waiting */
 	}			wwm_state;
 	union {
 		struct lwp		*owner;
@@ -218,7 +227,9 @@ ww_mutex_lock_wait(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 
 	KASSERT(mutex_owned(&mutex->wwm_lock));
 
-	KASSERT(mutex->wwm_state == WW_CTX);
+	KASSERT((mutex->wwm_state == WW_CTX) ||
+	    (mutex->wwm_state == WW_WANTOWN));
+	KASSERT(mutex->wwm_u.ctx != ctx);
 	KASSERTMSG((ctx->wwx_class == mutex->wwm_u.ctx->wwx_class),
 	    "ww mutex class mismatch: %p != %p",
 	    ctx->wwx_class, mutex->wwm_u.ctx->wwx_class);
@@ -233,7 +244,9 @@ ww_mutex_lock_wait(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 	    ctx->wwx_ticket, ctx, collision->wwx_ticket, collision);
 
 	do cv_wait(&mutex->wwm_cv, &mutex->wwm_lock);
-	while (!((mutex->wwm_state == WW_CTX) && (mutex->wwm_u.ctx == ctx)));
+	while (!(((mutex->wwm_state == WW_CTX) ||
+		    (mutex->wwm_state == WW_WANTOWN)) &&
+		 (mutex->wwm_u.ctx == ctx)));
 
 	rb_tree_remove_node(&mutex->wwm_waiters, ctx);
 }
@@ -246,7 +259,9 @@ ww_mutex_lock_wait_sig(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 
 	KASSERT(mutex_owned(&mutex->wwm_lock));
 
-	KASSERT(mutex->wwm_state == WW_CTX);
+	KASSERT((mutex->wwm_state == WW_CTX) ||
+	    (mutex->wwm_state == WW_WANTOWN));
+	KASSERT(mutex->wwm_u.ctx != ctx);
 	KASSERTMSG((ctx->wwx_class == mutex->wwm_u.ctx->wwx_class),
 	    "ww mutex class mismatch: %p != %p",
 	    ctx->wwx_class, mutex->wwm_u.ctx->wwx_class);
@@ -265,7 +280,9 @@ ww_mutex_lock_wait_sig(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 		ret = -cv_wait_sig(&mutex->wwm_cv, &mutex->wwm_lock);
 		if (ret)
 			goto out;
-	} while (!((mutex->wwm_state == WW_CTX) && (mutex->wwm_u.ctx == ctx)));
+	} while (!(((mutex->wwm_state == WW_CTX) ||
+		    (mutex->wwm_state == WW_WANTOWN)) &&
+		(mutex->wwm_u.ctx == ctx)));
 
 out:	rb_tree_remove_node(&mutex->wwm_waiters, ctx);
 	return ret;
@@ -283,13 +300,16 @@ retry:	switch (mutex->wwm_state) {
 		break;
 	case WW_OWNED:
 		KASSERTMSG((mutex->wwm_u.owner != curlwp),
-		    "locking against myself: %p", curlwp);
+		    "locking %p against myself: %p", mutex, curlwp);
 		ww_mutex_state_wait(mutex, WW_OWNED);
 		goto retry;
 	case WW_CTX:
 		KASSERT(mutex->wwm_u.ctx != NULL);
 		mutex->wwm_state = WW_WANTOWN;
+		/* FALLTHROUGH */
 	case WW_WANTOWN:
+		KASSERTMSG((mutex->wwm_u.ctx->wwx_owner != curlwp),
+		    "locking %p against myself: %p", mutex, curlwp);
 		ww_mutex_state_wait(mutex, WW_WANTOWN);
 		goto retry;
 	default:
@@ -314,7 +334,7 @@ retry:	switch (mutex->wwm_state) {
 		break;
 	case WW_OWNED:
 		KASSERTMSG((mutex->wwm_u.owner != curlwp),
-		    "locking against myself: %p", curlwp);
+		    "locking %p against myself: %p", mutex, curlwp);
 		ret = ww_mutex_state_wait_sig(mutex, WW_OWNED);
 		if (ret)
 			goto out;
@@ -322,7 +342,10 @@ retry:	switch (mutex->wwm_state) {
 	case WW_CTX:
 		KASSERT(mutex->wwm_u.ctx != NULL);
 		mutex->wwm_state = WW_WANTOWN;
+		/* FALLTHROUGH */
 	case WW_WANTOWN:
+		KASSERTMSG((mutex->wwm_u.ctx->wwx_owner != curlwp),
+		    "locking %p against myself: %p", mutex, curlwp);
 		ret = ww_mutex_state_wait_sig(mutex, WW_WANTOWN);
 		if (ret)
 			goto out;
@@ -349,7 +372,15 @@ ww_mutex_lock(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 		return 0;
 	}
 
-	KASSERT(!ctx->wwx_acquire_done);
+	KASSERTMSG((ctx->wwx_owner == curlwp),
+	    "ctx %p owned by %p, not self (%p)", ctx, ctx->wwx_owner, curlwp);
+	KASSERTMSG(!ctx->wwx_acquire_done,
+	    "ctx %p done acquiring locks, can't acquire more", ctx);
+	KASSERTMSG((ctx->wwx_acquired != ~0U),
+	    "ctx %p finished, can't be used any more", ctx);
+	KASSERTMSG((ctx->wwx_class == mutex->wwm_class),
+	    "ctx %p in class %p, mutex %p in class %p",
+	    ctx, ctx->wwx_class, mutex, mutex->wwm_class);
 
 	mutex_enter(&mutex->wwm_lock);
 retry:	switch (mutex->wwm_state) {
@@ -359,7 +390,7 @@ retry:	switch (mutex->wwm_state) {
 		goto locked;
 	case WW_OWNED:
 		KASSERTMSG((mutex->wwm_u.owner != curlwp),
-		    "locking against myself: %p", curlwp);
+		    "locking %p against myself: %p", mutex, curlwp);
 		ww_mutex_state_wait(mutex, WW_OWNED);
 		goto retry;
 	case WW_CTX:
@@ -373,6 +404,8 @@ retry:	switch (mutex->wwm_state) {
 	}
 	KASSERT(mutex->wwm_state == WW_CTX);
 	KASSERT(mutex->wwm_u.ctx != NULL);
+	KASSERT((mutex->wwm_u.ctx == ctx) ||
+	    (mutex->wwm_u.ctx->wwx_owner != curlwp));
 	if (mutex->wwm_u.ctx == ctx) {
 		/*
 		 * We already own it.  Yes, this can happen correctly
@@ -400,7 +433,8 @@ retry:	switch (mutex->wwm_state) {
 		ww_mutex_lock_wait(mutex, ctx);
 	}
 locked:	ctx->wwx_acquired++;
-	KASSERT(mutex->wwm_state == WW_CTX);
+	KASSERT((mutex->wwm_state == WW_CTX) ||
+	    (mutex->wwm_state == WW_WANTOWN));
 	KASSERT(mutex->wwm_u.ctx == ctx);
 	mutex_exit(&mutex->wwm_lock);
 	return 0;
@@ -416,7 +450,15 @@ ww_mutex_lock_interruptible(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 	if (ctx == NULL)
 		return ww_mutex_lock_noctx_sig(mutex);
 
-	KASSERT(!ctx->wwx_acquire_done);
+	KASSERTMSG((ctx->wwx_owner == curlwp),
+	    "ctx %p owned by %p, not self (%p)", ctx, ctx->wwx_owner, curlwp);
+	KASSERTMSG(!ctx->wwx_acquire_done,
+	    "ctx %p done acquiring locks, can't acquire more", ctx);
+	KASSERTMSG((ctx->wwx_acquired != ~0U),
+	    "ctx %p finished, can't be used any more", ctx);
+	KASSERTMSG((ctx->wwx_class == mutex->wwm_class),
+	    "ctx %p in class %p, mutex %p in class %p",
+	    ctx, ctx->wwx_class, mutex, mutex->wwm_class);
 
 	mutex_enter(&mutex->wwm_lock);
 retry:	switch (mutex->wwm_state) {
@@ -426,7 +468,7 @@ retry:	switch (mutex->wwm_state) {
 		goto locked;
 	case WW_OWNED:
 		KASSERTMSG((mutex->wwm_u.owner != curlwp),
-		    "locking against myself: %p", curlwp);
+		    "locking %p against myself: %p", mutex, curlwp);
 		ret = ww_mutex_state_wait_sig(mutex, WW_OWNED);
 		if (ret)
 			goto out;
@@ -444,6 +486,8 @@ retry:	switch (mutex->wwm_state) {
 	}
 	KASSERT(mutex->wwm_state == WW_CTX);
 	KASSERT(mutex->wwm_u.ctx != NULL);
+	KASSERT((mutex->wwm_u.ctx == ctx) ||
+	    (mutex->wwm_u.ctx->wwx_owner != curlwp));
 	if (mutex->wwm_u.ctx == ctx) {
 		/*
 		 * We already own it.  Yes, this can happen correctly
@@ -472,7 +516,8 @@ retry:	switch (mutex->wwm_state) {
 		if (ret)
 			goto out;
 	}
-locked:	KASSERT(mutex->wwm_state == WW_CTX);
+locked:	KASSERT((mutex->wwm_state == WW_CTX) ||
+	    (mutex->wwm_state == WW_WANTOWN));
 	KASSERT(mutex->wwm_u.ctx == ctx);
 	ctx->wwx_acquired++;
 	ret = 0;
@@ -491,7 +536,18 @@ ww_mutex_lock_slow(struct ww_mutex *mutex, struct ww_acquire_ctx *ctx)
 		return;
 	}
 
-	KASSERT(!ctx->wwx_acquire_done);
+	KASSERTMSG((ctx->wwx_owner == curlwp),
+	    "ctx %p owned by %p, not self (%p)", ctx, ctx->wwx_owner, curlwp);
+	KASSERTMSG(!ctx->wwx_acquire_done,
+	    "ctx %p done acquiring locks, can't acquire more", ctx);
+	KASSERTMSG((ctx->wwx_acquired != ~0U),
+	    "ctx %p finished, can't be used any more", ctx);
+	KASSERTMSG((ctx->wwx_acquired == 0),
+	    "ctx %p still holds %u locks, not allowed in slow path",
+	    ctx, ctx->wwx_acquired);
+	KASSERTMSG((ctx->wwx_class == mutex->wwm_class),
+	    "ctx %p in class %p, mutex %p in class %p",
+	    ctx, ctx->wwx_class, mutex, mutex->wwm_class);
 
 	mutex_enter(&mutex->wwm_lock);
 retry:	switch (mutex->wwm_state) {
@@ -501,7 +557,7 @@ retry:	switch (mutex->wwm_state) {
 		goto locked;
 	case WW_OWNED:
 		KASSERTMSG((mutex->wwm_u.owner != curlwp),
-		    "locking against myself: %p", curlwp);
+		    "locking %p against myself: %p", mutex, curlwp);
 		ww_mutex_state_wait(mutex, WW_OWNED);
 		goto retry;
 	case WW_CTX:
@@ -515,12 +571,15 @@ retry:	switch (mutex->wwm_state) {
 	}
 	KASSERT(mutex->wwm_state == WW_CTX);
 	KASSERT(mutex->wwm_u.ctx != NULL);
+	KASSERTMSG((mutex->wwm_u.ctx->wwx_owner != curlwp),
+	    "locking %p against myself: %p", mutex, curlwp);
 	/*
 	 * Owned by another party, of any priority.  Ask that party to
 	 * wake us when it's done.
 	 */
 	ww_mutex_lock_wait(mutex, ctx);
-locked:	KASSERT(mutex->wwm_state == WW_CTX);
+locked:	KASSERT((mutex->wwm_state == WW_CTX) ||
+	    (mutex->wwm_state == WW_WANTOWN));
 	KASSERT(mutex->wwm_u.ctx == ctx);
 	ctx->wwx_acquired++;
 	mutex_exit(&mutex->wwm_lock);
@@ -537,7 +596,18 @@ ww_mutex_lock_slow_interruptible(struct ww_mutex *mutex,
 	if (ctx == NULL)
 		return ww_mutex_lock_noctx_sig(mutex);
 
-	KASSERT(!ctx->wwx_acquire_done);
+	KASSERTMSG((ctx->wwx_owner == curlwp),
+	    "ctx %p owned by %p, not self (%p)", ctx, ctx->wwx_owner, curlwp);
+	KASSERTMSG(!ctx->wwx_acquire_done,
+	    "ctx %p done acquiring locks, can't acquire more", ctx);
+	KASSERTMSG((ctx->wwx_acquired != ~0U),
+	    "ctx %p finished, can't be used any more", ctx);
+	KASSERTMSG((ctx->wwx_acquired == 0),
+	    "ctx %p still holds %u locks, not allowed in slow path",
+	    ctx, ctx->wwx_acquired);
+	KASSERTMSG((ctx->wwx_class == mutex->wwm_class),
+	    "ctx %p in class %p, mutex %p in class %p",
+	    ctx, ctx->wwx_class, mutex, mutex->wwm_class);
 
 	mutex_enter(&mutex->wwm_lock);
 retry:	switch (mutex->wwm_state) {
@@ -547,7 +617,7 @@ retry:	switch (mutex->wwm_state) {
 		goto locked;
 	case WW_OWNED:
 		KASSERTMSG((mutex->wwm_u.owner != curlwp),
-		    "locking against myself: %p", curlwp);
+		    "locking %p against myself: %p", mutex, curlwp);
 		ret = ww_mutex_state_wait_sig(mutex, WW_OWNED);
 		if (ret)
 			goto out;
@@ -565,6 +635,8 @@ retry:	switch (mutex->wwm_state) {
 	}
 	KASSERT(mutex->wwm_state == WW_CTX);
 	KASSERT(mutex->wwm_u.ctx != NULL);
+	KASSERTMSG((mutex->wwm_u.ctx->wwx_owner != curlwp),
+	    "locking %p against myself: %p", mutex, curlwp);
 	/*
 	 * Owned by another party, of any priority.  Ask that party to
 	 * wake us when it's done.
@@ -572,7 +644,8 @@ retry:	switch (mutex->wwm_state) {
 	ret = ww_mutex_lock_wait_sig(mutex, ctx);
 	if (ret)
 		goto out;
-locked:	KASSERT(mutex->wwm_state == WW_CTX);
+locked:	KASSERT((mutex->wwm_state == WW_CTX) ||
+	    (mutex->wwm_state == WW_WANTOWN));
 	KASSERT(mutex->wwm_u.ctx == ctx);
 	ctx->wwx_acquired++;
 	ret = 0;
@@ -591,11 +664,37 @@ ww_mutex_trylock(struct ww_mutex *mutex)
 		mutex->wwm_u.owner = curlwp;
 		ret = 1;
 	} else {
+		KASSERTMSG(((mutex->wwm_state != WW_OWNED) ||
+		    (mutex->wwm_u.owner != curlwp)),
+		    "locking %p against myself: %p", mutex, curlwp);
+		KASSERTMSG(((mutex->wwm_state != WW_CTX) ||
+		    (mutex->wwm_u.ctx->wwx_owner != curlwp)),
+		    "locking %p against myself: %p", mutex, curlwp);
+		KASSERTMSG(((mutex->wwm_state != WW_WANTOWN) ||
+		    (mutex->wwm_u.ctx->wwx_owner != curlwp)),
+		    "locking %p against myself: %p", mutex, curlwp);
 		ret = 0;
 	}
 	mutex_exit(&mutex->wwm_lock);
 
 	return ret;
+}
+
+static inline void
+ww_mutex_unlock_release(struct ww_mutex *mutex)
+{
+
+	KASSERT(mutex_owned(&mutex->wwm_lock));
+	KASSERT((mutex->wwm_state == WW_CTX) ||
+	    (mutex->wwm_state == WW_WANTOWN));
+	KASSERT(mutex->wwm_u.ctx != NULL);
+	KASSERTMSG((mutex->wwm_u.ctx->wwx_owner == curlwp),
+	    "ww_mutex %p ctx %p held by %p, not by self (%p)",
+	    mutex, mutex->wwm_u.ctx, mutex->wwm_u.ctx->wwx_owner,
+	    curlwp);
+	KASSERT(mutex->wwm_u.ctx->wwx_acquired != ~0U);
+	mutex->wwm_u.ctx->wwx_acquired--;
+	mutex->wwm_u.ctx = NULL;
 }
 
 static inline void
@@ -614,9 +713,7 @@ ww_mutex_unlock(struct ww_mutex *mutex)
 		mutex->wwm_state = WW_UNLOCKED;
 		break;
 	case WW_CTX:
-		KASSERT(mutex->wwm_u.ctx != NULL);
-		mutex->wwm_u.ctx->wwx_acquired--;
-		mutex->wwm_u.ctx = NULL;
+		ww_mutex_unlock_release(mutex);
 		/*
 		 * If there are any waiters with contexts, grant the
 		 * lock to the highest-priority one.  Otherwise, just
@@ -630,6 +727,7 @@ ww_mutex_unlock(struct ww_mutex *mutex)
 		}
 		break;
 	case WW_WANTOWN:
+		ww_mutex_unlock_release(mutex);
 		/* Let the non-context lockers fight over it.  */
 		mutex->wwm_state = WW_UNLOCKED;
 		break;
