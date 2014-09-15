@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.18 2014/05/21 01:02:45 ozaki-r Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.19 2014/09/15 00:35:37 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -343,8 +343,8 @@ cortex_init:
 	bxne	r10				// return if set
 #endif
 
-#if defined(CPU_CORTEXA7)
 	mrc	p15, 0, r4, c1, c0, 0		// SCTLR read
+#if defined(CPU_CORTEXA7)
 	//
 	// Before turning on SMP, turn off the caches and the MMU.
 	//
