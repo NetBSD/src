@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.72 2014/09/12 04:10:24 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.73 2014/09/15 05:54:02 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.72 2014/09/12 04:10:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.73 2014/09/15 05:54:02 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -400,6 +400,8 @@ vlan_unconfig(struct ifnet *ifp)
 	ifv->ifv_if.if_mtu = 0;
 	ifv->ifv_flags = 0;
 
+	if ((ifp->if_flags & IFF_PROMISC) != 0)
+		ifpromisc(ifp, 0);
 	if_down(ifp);
 	ifp->if_flags &= ~(IFF_UP|IFF_RUNNING);
 	ifp->if_capabilities = 0;
@@ -484,6 +486,9 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((error = copyin(ifr->ifr_data, &vlr, sizeof(vlr))) != 0)
 			break;
 		if (vlr.vlr_parent[0] == '\0') {
+			if (ifv->ifv_p != NULL &&
+			    (ifp->if_flags & IFF_PROMISC) != 0)
+				error = ifpromisc(ifv->ifv_p, 0);
 			vlan_unconfig(ifp);
 			break;
 		}
