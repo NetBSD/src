@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.20 2014/09/15 11:49:01 ryo Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.21 2014/09/15 19:02:38 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -443,26 +443,29 @@ cortex_init:
 	mcr	p15, 0, r1, c8, c7, 0	// TLBIALL (just this core)
 #endif
 
+#if defined(MULTIPROCESSOR)
+#if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9)
 	//
-	// Step 4b, set ACTLR.SMP=1
+	// Step 4a, set ACTLR.SMP=1
 	//
 	mrc	p15, 0, r0, c1, c0, 1		// ACTLR read
 	orr	r0, r0, #CORTEXA9_AUXCTL_SMP	// enable SMP
-	mcr	p15, 0, r0, c1, c0, 1		// ACTLR write
-	isb
 
-#if defined(MULTIPROCESSOR) && (defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9))
+#if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA9)
 	//
-	// Step 4b (continued on A5/A9), ACTRL.FW=1)
+	// Step 4a (continued on A5/A9), ACTLR.FW=1)
 	//
 	orr	r0, r0, #CORTEXA9_AUXCTL_FW	// enable cache/tlb/coherency
-	mcr	p15, 0, r0, c1, c0, 1		// ACTRL write
+#endif	/* A5 || A9 */
+
+	mcr	p15, 0, r0, c1, c0, 1		// ACTLR write
 	isb
 	dsb
-#endif
+#endif	/* A5 || A7 || A9 */
+#endif	/* MULTIPROCESSOR */
 
 	//
-	// Step 4a, resoter SCTRL (enable the data cache)
+	// Step 4b, restore SCTRL (enable the data cache)
 	//
 	orr	r4, r4, #CPU_CONTROL_IC_ENABLE	// enable icache
 	orr	r4, r4, #CPU_CONTROL_DC_ENABLE	// enable dcache
@@ -509,7 +512,7 @@ cortex_mpstart:
 
 #if 0
 	mrc	p15, 0, r0, c1, c1, 2		// NSACR read
-	// Allow non-secure access to ACTRL[SMP]
+	// Allow non-secure access to ACTLR[SMP]
 	orr	r0, r0, #NSACR_SMP
 #ifdef FPU_VFP
 	// Allow non-secure access to VFP/Neon
