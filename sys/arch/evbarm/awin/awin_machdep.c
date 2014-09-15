@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.10 2014/09/13 02:21:52 jmcneill Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.11 2014/09/15 19:30:16 martin Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.10 2014/09/13 02:21:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.11 2014/09/15 19:30:16 martin Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -335,7 +335,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
-	printf("\nNetBSD/evbarm (" __STRING(BOARDTYPE) ") booting ...\n");
+	printf("\nNetBSD/evbarm (" BOARDTYPE ") booting ...\n");
 #endif
 
 #ifdef BOOT_ARGS
