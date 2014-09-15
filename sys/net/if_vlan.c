@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.73 2014/09/15 05:54:02 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.74 2014/09/15 06:07:37 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.73 2014/09/15 05:54:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.74 2014/09/15 06:07:37 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -102,6 +102,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.73 2014/09/15 05:54:02 ozaki-r Exp $")
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
+#endif
+#ifdef INET6
+#include <netinet6/in6_ifattach.h>
 #endif
 
 struct vlan_mc_entry {
@@ -400,6 +403,10 @@ vlan_unconfig(struct ifnet *ifp)
 	ifv->ifv_if.if_mtu = 0;
 	ifv->ifv_flags = 0;
 
+#ifdef INET6
+	/* To delete v6 link local addresses */
+	in6_ifdetach(ifp);
+#endif
 	if ((ifp->if_flags & IFF_PROMISC) != 0)
 		ifpromisc(ifp, 0);
 	if_down(ifp);
