@@ -1,4 +1,4 @@
-.\"     $NetBSD: getdelim.3,v 1.10 2014/09/15 23:29:16 christos Exp $
+.\"     $NetBSD: getdelim.3,v 1.11 2014/09/15 23:31:17 christos Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,8 +49,8 @@ function reads from the
 .Fa stream
 until it encounters a character matching
 .Fa delimiter 
-or.
-.DV EOF ,
+or
+.Dv EOF ,
 storing the input in
 .Fa *lineptr .
 The buffer is
