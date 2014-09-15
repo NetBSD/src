@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.19 2014/09/15 00:35:37 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.20 2014/09/15 11:49:01 ryo Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -369,9 +369,9 @@ cortex_init:
 #ifdef __ARMEB__
 	setend	le
 #endif
-	ldr	r0, [r3, #SCU_CFG]		// read scu config
-	and	r0, r0, #7			// get cpu max
-	add	r0, r0, #2			// adjust to cpu num shift
+	mrc	p15, 0, r0, c0, c0, 5		// MPIDR get
+	and	r0, r0, #3			// get our cpu numder
+	lsl	r0, r0, #2			// adjust to cpu num shift
 	mov	r1, #0xf			// select all ways
 	lsl	r1, r1, r0			// shift into place
 	str	r1, [r3, #SCU_INV_ALL_REG]	// write scu invalidate all
