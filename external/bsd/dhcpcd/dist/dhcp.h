@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp.h,v 1.1.1.20 2014/07/14 11:45:06 roy Exp $ */
+/* $NetBSD: dhcp.h,v 1.1.1.21 2014/09/16 22:23:21 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -222,7 +222,6 @@ struct dhcp_state {
 	size_t arping_index;
 
 	int raw_fd;
-	int udp_fd;
 	int arp_fd;
 	size_t buffer_size, buffer_len, buffer_pos;
 	unsigned char *buffer;
@@ -243,6 +242,8 @@ struct dhcp_state {
 	((struct dhcp_state *)(ifp)->if_data[IF_DATA_DHCP])
 #define D_CSTATE(ifp)							       \
 	((const struct dhcp_state *)(ifp)->if_data[IF_DATA_DHCP])
+#define D_STATE_RUNNING(ifp)						       \
+	(D_CSTATE((ifp)) && D_CSTATE((ifp))->new && D_CSTATE((ifp))->reason)
 
 #include "dhcpcd.h"
 #include "if-options.h"

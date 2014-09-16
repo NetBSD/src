@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.conf.5.in,v 1.1.1.24 2014/07/30 15:44:11 roy Exp $
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.1.1.25 2014/09/16 22:23:21 roy Exp $
 .\" Copyright (c) 2006-2014 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 14, 2014
+.Dd September 14, 2014
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -72,7 +72,7 @@ Example:
 .D1 static ip_address=192.168.0.10/24
 .It Ic authprotocol Ar protocol Ar algorithm Ar rdm
 Authenticate DHCP messages.
-See the Supported Protocols section.
+See the Supported Authentication Protocols section.
 .It Ic authtoken Ar secretid Ar realm Ar expire Ar key
 Define a shared key for use in authentication.
 .Ar realm can be "" to for use with the
@@ -85,6 +85,18 @@ You can use the keyword
 or
 .Ar 0
 which means the token never expires.
+For the token protocol,
+.Ar secretid
+needs to be 0 and
+.Ar realm
+needs to be "".
+If
+.Nm dhcpcd
+has the error
+.D1 dhcp_auth_encode: Invalid argument
+then it means that
+.Nm dhcpcd
+could not find the correct authentication token in your configuration.
 .It Ic background
 Background immediately.
 This is useful for startup scripts which don't disable link messages for
@@ -128,6 +140,11 @@ to the environment for use in
 For example, you can force the hostname hook to always set the hostname with
 .Ic env
 .Va force_hostname=YES .
+Or set which driver
+.Xr wpa_supplicant 8
+should use with
+.Ic env
+.Va wpa_supplicant_driver=nl80211
 .Pp
 If the hostname is set, will be will set to the FQDN if possible as per
 RFC 4702 section 3.1.
@@ -704,10 +721,10 @@ References an option from the global definition
 .D1 embed uint32 enterprise_number
 .D1 # Options defined for the enterprise number
 .D1 encap 1 ipaddress ipaddress
-.Ss Supported protocols
+.Ss Supported Authentication Protocols
 .Bl -tag -width -indent
 .It Ic token
-Sends and expects the token with the secretid 0 in each message.
+Sends and expects the token with the secretid 0 and realm of "" in each message.
 .It Ic delayedrealm
 Delayed Authentication.
 .Nm dhcpcd
@@ -724,7 +741,7 @@ This token is used to authenicate all other messages.
 .It Ic delayed
 Same as above, but without a realm.
 .El
-.Ss Supported algorithms
+.Ss Supported Authentication Algorithms
 If none specified,
 .Ic hmac-md5
 is the default.

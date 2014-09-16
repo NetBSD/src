@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.1.1.46 2014/07/30 15:44:09 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.1.1.47 2014/09/16 22:23:18 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -212,6 +212,40 @@ handle_exit_timeout(void *arg)
 	eloop_timeout_add_sec(ctx->eloop, timeout, handle_exit_timeout, ctx);
 }
 
+int
+dhcpcd_oneup(struct dhcpcd_ctx *ctx)
+{
+	const struct interface *ifp;
+
+	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+		if (D_STATE_RUNNING(ifp) ||
+		    RS_STATE_RUNNING(ifp) ||
+		    D6_STATE_RUNNING(ifp))
+			return 1;
+	}
+	return 0;
+}
+
+int
+dhcpcd_ipwaited(struct dhcpcd_ctx *ctx)
+{
+
+	if (ctx->options & DHCPCD_WAITIP4 &&
+	    !ipv4_addrexists(ctx, NULL))
+		return 0;
+	if (ctx->options & DHCPCD_WAITIP6 &&
+	    !ipv6nd_addrexists(ctx, NULL) &&
+	    !dhcp6_addrexists(ctx, NULL))
+		return 0;
+	if (ctx->options & DHCPCD_WAITIP &&
+	    !(ctx->options & (DHCPCD_WAITIP4 | DHCPCD_WAITIP6)) &&
+	    !ipv4_addrexists(ctx, NULL) &&
+	    !ipv6nd_addrexists(ctx, NULL) &&
+	    !dhcp6_addrexists(ctx, NULL))
+		return 0;
+	return 1;
+}
+
 /* Returns the pid of the child, otherwise 0. */
 pid_t
 dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
@@ -228,19 +262,7 @@ dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
 	if (ctx->options & DHCPCD_DAEMONISE &&
 	    !(ctx->options & DHCPCD_DAEMONISED))
 	{
-		if (ctx->options & DHCPCD_WAITIP4 &&
-		    !ipv4_addrexists(ctx, NULL))
-			return 0;
-		if (ctx->options & DHCPCD_WAITIP6 &&
-		    !ipv6nd_addrexists(ctx, NULL) &&
-		    !dhcp6_addrexists(ctx, NULL))
-			return 0;
-		if ((ctx->options &
-		    (DHCPCD_WAITIP | DHCPCD_WAITIP4 | DHCPCD_WAITIP6)) ==
-		    (DHCPCD_WAITIP | DHCPCD_WAITIP4 | DHCPCD_WAITIP6) &&
-		    !ipv4_addrexists(ctx, NULL) &&
-		    !ipv6nd_addrexists(ctx, NULL) &&
-		    !dhcp6_addrexists(ctx, NULL))
+		if (!dhcpcd_ipwaited(ctx))
 			return 0;
 	}
 
@@ -469,8 +491,18 @@ int
 dhcpcd_selectprofile(struct interface *ifp, const char *profile)
 {
 	struct if_options *ifo;
+	char pssid[PROFILE_LEN];
 
-	ifo = read_config(ifp->ctx, ifp->name, ifp->ssid, profile);
+	if (ifp->ssid_len) {
+		ssize_t r;
+		r =print_string(pssid, sizeof(pssid), ifp->ssid, ifp->ssid_len);
+		if (r == -1) {
+			syslog(LOG_ERR, "%s: %s: %m", ifp->name, __func__);
+			pssid[0] = '\0';
+		}
+	} else
+		pssid[0] = '\0';
+	ifo = read_config(ifp->ctx, ifp->name, pssid, profile);
 	if (ifo == NULL) {
 		syslog(LOG_DEBUG, "%s: no profile %s", ifp->name, profile);
 		return -1;
@@ -554,7 +586,7 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 			dhcpcd_handleinterface(ctx, 0, ifp->name);
 #endif
 			if (ifp->wireless)
-				if_getssid(ifp->name, ifp->ssid);
+				if_getssid(ifp);
 			configure_interface(ifp, ctx->argc, ctx->argv);
 			script_runreason(ifp, "CARRIER");
 			dhcpcd_startinterface(ifp);
@@ -723,7 +755,7 @@ handle_link(void *arg)
 	ctx = arg;
 	if (if_managelink(ctx) == -1) {
 		syslog(LOG_ERR, "if_managelink: %m");
-		eloop_event_delete(ctx->eloop, ctx->link_fd);
+		eloop_event_delete(ctx->eloop, ctx->link_fd, 0);
 		close(ctx->link_fd);
 		ctx->link_fd = -1;
 	}
@@ -1049,6 +1081,32 @@ signal_init(void (*func)(int, siginfo_t *, void *), sigset_t *oldset)
 }
 #endif
 
+static void
+dhcpcd_getinterfaces(void *arg)
+{
+	struct fd_list *fd = arg;
+	struct interface *ifp;
+	size_t len;
+
+	len = 0;
+	TAILQ_FOREACH(ifp, fd->ctx->ifaces, next) {
+		len++;
+		if (D_STATE_RUNNING(ifp))
+			len++;
+		if (RS_STATE_RUNNING(ifp))
+			len++;
+		if (D6_STATE_RUNNING(ifp))
+			len++;
+	}
+	if (write(fd->fd, &len, sizeof(len)) != sizeof(len))
+		return;
+	eloop_event_delete(fd->ctx->eloop, fd->fd, 1);
+	TAILQ_FOREACH(ifp, fd->ctx->ifaces, next) {
+		if (send_interface(fd, ifp) == -1)
+			syslog(LOG_ERR, "send_interface %d: %m", fd->fd);
+	}
+}
+
 int
 dhcpcd_handleargs(struct dhcpcd_ctx *ctx, struct fd_list *fd,
     int argc, char **argv)
@@ -1057,87 +1115,31 @@ dhcpcd_handleargs(struct dhcpcd_ctx *ctx, struct fd_list *fd,
 	int do_exit = 0, do_release = 0, do_reboot = 0;
 	int opt, oi = 0;
 	size_t len, l;
-	struct iovec iov[2];
 	char *tmp, *p;
 
-	if (fd != NULL) {
-		/* Special commands for our control socket */
-		if (strcmp(*argv, "--version") == 0) {
-			len = strlen(VERSION) + 1;
-			iov[0].iov_base = &len;
-			iov[0].iov_len = sizeof(ssize_t);
-			iov[1].iov_base = UNCONST(VERSION);
-			iov[1].iov_len = len;
-			if (writev(fd->fd, iov, 2) == -1) {
-				syslog(LOG_ERR, "writev: %m");
-				return -1;
-			}
-			return 0;
-		} else if (strcmp(*argv, "--getconfigfile") == 0) {
-			len = strlen(ctx->cffile) + 1;
-			iov[0].iov_base = &len;
-			iov[0].iov_len = sizeof(ssize_t);
-			iov[1].iov_base = UNCONST(ctx->cffile);
-			iov[1].iov_len = len;
-			if (writev(fd->fd, iov, 2) == -1) {
-				syslog(LOG_ERR, "writev: %m");
-				return -1;
-			}
-			return 0;
-		} else if (strcmp(*argv, "--getinterfaces") == 0) {
-			len = 0;
-			if (argc == 1) {
-				TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-					len++;
-					if (D_STATE(ifp))
-						len++;
-					if (D6_STATE_RUNNING(ifp))
-						len++;
-					if (ipv6nd_hasra(ifp))
-						len++;
-				}
-				if (write(fd->fd, &len, sizeof(len)) !=
-				    sizeof(len))
-					return -1;
-				TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-					if (send_interface(fd->fd, ifp) == -1)
-						syslog(LOG_ERR,
-						    "send_interface %d: %m",
-						    fd->fd);
-				}
-				return 0;
-			}
-			opt = 0;
-			while (argv[++opt] != NULL) {
-				TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-					if (strcmp(argv[opt], ifp->name) == 0) {
-						len++;
-						if (D_STATE(ifp))
-							len++;
-						if (D6_STATE_RUNNING(ifp))
-							len++;
-						if (ipv6nd_hasra(ifp))
-							len++;
-					}
-				}
-			}
-			if (write(fd->fd, &len, sizeof(len)) != sizeof(len))
-				return -1;
-			opt = 0;
-			while (argv[++opt] != NULL) {
-				TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-					if (strcmp(argv[opt], ifp->name)== 0 &&
-					    send_interface(fd->fd, ifp) == -1)
-						syslog(LOG_ERR,
-						    "send_interface %d: %m",
-						    fd->fd);
-				}
-			}
-			return 0;
-		} else if (strcmp(*argv, "--listen") == 0) {
-			fd->listener = 1;
-			return 0;
-		}
+	/* Special commands for our control socket
+	 * as the other end should be blocking until it gets the
+	 * expected reply we should be safely able just to change the
+	 * write callback on the fd */
+	if (strcmp(*argv, "--version") == 0) {
+		return control_queue(fd, UNCONST(VERSION),
+		    strlen(VERSION) + 1, 0);
+	} else if (strcmp(*argv, "--getconfigfile") == 0) {
+		return control_queue(fd, UNCONST(fd->ctx->cffile),
+		    strlen(fd->ctx->cffile) + 1, 0);
+	} else if (strcmp(*argv, "--getinterfaces") == 0) {
+		eloop_event_add(fd->ctx->eloop, fd->fd, NULL, NULL,
+		    dhcpcd_getinterfaces, fd);
+		return 0;
+	} else if (strcmp(*argv, "--listen") == 0) {
+		fd->flags |= FD_LISTEN;
+		return 0;
+	}
+
+	/* Only priviledged users can control dhcpcd via the socket. */
+	if (fd->flags & FD_UNPRIV) {
+		errno = EPERM;
+		return -1;
 	}
 
 	/* Log the command */
@@ -1145,10 +1147,8 @@ dhcpcd_handleargs(struct dhcpcd_ctx *ctx, struct fd_list *fd,
 	for (opt = 0; opt < argc; opt++)
 		len += strlen(argv[opt]) + 1;
 	tmp = malloc(len);
-	if (tmp == NULL) {
-		syslog(LOG_ERR, "%s: %m", __func__);
+	if (tmp == NULL)
 		return -1;
-	}
 	p = tmp;
 	for (opt = 0; opt < argc; opt++) {
 		l = strlen(argv[opt]);
@@ -1254,7 +1254,8 @@ main(int argc, char **argv)
 
 	ifo = NULL;
 	ctx.cffile = CONFIG;
-	ctx.pid_fd = ctx.control_fd = ctx.link_fd = -1;
+	ctx.pid_fd = ctx.control_fd = ctx.control_unpriv_fd = ctx.link_fd = -1;
+	TAILQ_INIT(&ctx.control_fds);
 #ifdef PLUGIN_DEV
 	ctx.dev_fd = -1;
 #endif
@@ -1630,7 +1631,8 @@ main(int argc, char **argv)
 	if (ctx.link_fd == -1)
 		syslog(LOG_ERR, "open_link_socket: %m");
 	else
-		eloop_event_add(ctx.eloop, ctx.link_fd, handle_link, &ctx);
+		eloop_event_add(ctx.eloop, ctx.link_fd,
+		    handle_link, &ctx, NULL, NULL);
 
 	/* Start any dev listening plugin which may want to
 	 * change the interface name provided by the kernel */
@@ -1720,7 +1722,7 @@ exit1:
 	}
 	free(ctx.duid);
 	if (ctx.link_fd != -1) {
-		eloop_event_delete(ctx.eloop, ctx.link_fd);
+		eloop_event_delete(ctx.eloop, ctx.link_fd, 0);
 		close(ctx.link_fd);
 	}
 
