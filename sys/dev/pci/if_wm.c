@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.297 2014/09/11 17:09:04 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.298 2014/09/16 07:06:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.297 2014/09/11 17:09:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.298 2014/09/16 07:06:42 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1152,7 +1152,19 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_V,
 	  "I218 V Ethernet Connection",
 	  WM_T_PCH_LPT,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_V2,
+	  "I218 V Ethernet Connection",
+	  WM_T_PCH_LPT,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_V3,
+	  "I218 V Ethernet Connection",
+	  WM_T_PCH_LPT,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_LM,
+	  "I218 LM Ethernet Connection",
+	  WM_T_PCH_LPT,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_LM2,
+	  "I218 LM Ethernet Connection",
+	  WM_T_PCH_LPT,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_LM3,
 	  "I218 LM Ethernet Connection",
 	  WM_T_PCH_LPT,		WMP_F_COPPER },
 	{ 0,			0,
