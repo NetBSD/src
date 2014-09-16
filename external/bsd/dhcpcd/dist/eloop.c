@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: eloop.c,v 1.1.1.9 2014/06/14 20:51:04 roy Exp $");
+ __RCSID("$NetBSD: eloop.c,v 1.1.1.10 2014/09/16 22:23:18 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -38,7 +38,6 @@
 #include <limits.h>
 #include <poll.h>
 #include <signal.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <syslog.h>
 
@@ -55,7 +54,11 @@ eloop_event_setup_fds(struct eloop_ctx *ctx)
 	i = 0;
 	TAILQ_FOREACH(e, &ctx->events, next) {
 		ctx->fds[i].fd = e->fd;
-		ctx->fds[i].events = POLLIN;
+		ctx->fds[i].events = 0;
+		if (e->read_cb)
+			ctx->fds[i].events |= POLLIN;
+		if (e->write_cb)
+			ctx->fds[i].events |= POLLOUT;
 		ctx->fds[i].revents = 0;
 		e->pollfd = &ctx->fds[i];
 		i++;
@@ -63,8 +66,9 @@ eloop_event_setup_fds(struct eloop_ctx *ctx)
 }
 
 int
-eloop_event_add(struct eloop_ctx *ctx,
-    int fd, void (*callback)(void *), void *arg)
+eloop_event_add(struct eloop_ctx *ctx, int fd,
+    void (*read_cb)(void *), void *read_cb_arg,
+    void (*write_cb)(void *), void *write_cb_arg)
 {
 	struct eloop_event *e;
 	struct pollfd *nfds;
@@ -72,8 +76,15 @@ eloop_event_add(struct eloop_ctx *ctx,
 	/* We should only have one callback monitoring the fd */
 	TAILQ_FOREACH(e, &ctx->events, next) {
 		if (e->fd == fd) {
-			e->callback = callback;
-			e->arg = arg;
+			if (read_cb) {
+				e->read_cb = read_cb;
+				e->read_cb_arg = read_cb_arg;
+			}
+			if (write_cb) {
+				e->write_cb = write_cb;
+				e->write_cb_arg = write_cb_arg;
+			}
+			eloop_event_setup_fds(ctx);
 			return 0;
 		}
 	}
@@ -107,8 +118,10 @@ eloop_event_add(struct eloop_ctx *ctx,
 
 	/* Now populate the structure and add it to the list */
 	e->fd = fd;
-	e->callback = callback;
-	e->arg = arg;
+	e->read_cb = read_cb;
+	e->read_cb_arg = read_cb_arg;
+	e->write_cb = write_cb;
+	e->write_cb_arg = write_cb_arg;
 	/* The order of events should not matter.
 	 * However, some PPP servers love to close the link right after
 	 * sending their final message. So to ensure dhcpcd processes this
@@ -121,15 +134,20 @@ eloop_event_add(struct eloop_ctx *ctx,
 }
 
 void
-eloop_event_delete(struct eloop_ctx *ctx, int fd)
+eloop_event_delete(struct eloop_ctx *ctx, int fd, int write_only)
 {
 	struct eloop_event *e;
 
 	TAILQ_FOREACH(e, &ctx->events, next) {
 		if (e->fd == fd) {
-			TAILQ_REMOVE(&ctx->events, e, next);
-			TAILQ_INSERT_TAIL(&ctx->free_events, e, next);
-			ctx->events_len--;
+			if (write_only) {
+				e->write_cb = NULL;
+				e->write_cb_arg = NULL;
+			} else {
+				TAILQ_REMOVE(&ctx->events, e, next);
+				TAILQ_INSERT_TAIL(&ctx->free_events, e, next);
+				ctx->events_len--;
+			}
 			eloop_event_setup_fds(ctx);
 			break;
 		}
@@ -215,46 +233,6 @@ eloop_timeout_add_now(struct eloop_ctx *ctx,
 	ctx->timeout0 = callback;
 	ctx->timeout0_arg = arg;
 	return 0;
-}
-
-/* This deletes all timeouts for the interface EXCEPT for ones with the
- * callbacks given. Handy for deleting everything apart from the expire
- * timeout. */
-static void
-eloop_q_timeouts_delete_v(struct eloop_ctx *ctx, int queue, void *arg,
-    void (*callback)(void *), va_list v)
-{
-	struct eloop_timeout *t, *tt;
-	va_list va;
-	void (*f)(void *);
-
-	TAILQ_FOREACH_SAFE(t, &ctx->timeouts, next, tt) {
-		if ((queue == 0 || t->queue == queue) && t->arg == arg &&
-		    t->callback != callback)
-		{
-			va_copy(va, v);
-			while ((f = va_arg(va, void (*)(void *)))) {
-				if (f == t->callback)
-					break;
-			}
-			va_end(va);
-			if (f == NULL) {
-				TAILQ_REMOVE(&ctx->timeouts, t, next);
-				TAILQ_INSERT_TAIL(&ctx->free_timeouts, t, next);
-			}
-		}
-	}
-}
-
-void
-eloop_q_timeouts_delete(struct eloop_ctx *ctx, int queue,
-    void *arg, void (*callback)(void *), ...)
-{
-	va_list va;
-
-	va_start(va, callback);
-	eloop_q_timeouts_delete_v(ctx, queue, arg, callback, va);
-	va_end(va);
 }
 
 void
@@ -398,8 +376,17 @@ eloop_start(struct dhcpcd_ctx *dctx)
 		/* Process any triggered events. */
 		if (n > 0) {
 			TAILQ_FOREACH(e, &ctx->events, next) {
+				if (e->pollfd->revents & POLLOUT &&
+					e->write_cb)
+				{
+					e->write_cb(e->write_cb_arg);
+					/* We need to break here as the
+					 * callback could destroy the next
+					 * fd to process. */
+					break;
+				}
 				if (e->pollfd->revents) {
-					e->callback(e->arg);
+					e->read_cb(e->read_cb_arg);
 					/* We need to break here as the
 					 * callback could destroy the next
 					 * fd to process. */
