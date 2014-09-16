@@ -1,4 +1,4 @@
-/* $NetBSD: eloop.h,v 1.1.1.9 2014/02/25 13:14:30 roy Exp $ */
+/* $NetBSD: eloop.h,v 1.1.1.10 2014/09/16 22:23:21 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -43,8 +43,10 @@
 struct eloop_event {
 	TAILQ_ENTRY(eloop_event) next;
 	int fd;
-	void (*callback)(void *);
-	void *arg;
+	void (*read_cb)(void *);
+	void *read_cb_arg;
+	void (*write_cb)(void *);
+	void *write_cb_arg;
 	struct pollfd *pollfd;
 };
 
@@ -80,19 +82,17 @@ struct eloop_ctx {
     eloop_q_timeout_add_sec(a, ELOOP_QUEUE, b, c, d)
 #define eloop_timeout_delete(a, b, c) \
     eloop_q_timeout_delete(a, ELOOP_QUEUE, b, c)
-#define eloop_timeouts_delete(a, b, ...) \
-    eloop_q_timeouts_delete(a, ELOOP_QUEUE, b, __VA_ARGS__)
 
-int eloop_event_add(struct eloop_ctx *, int, void (*)(void *), void *);
-void eloop_event_delete(struct eloop_ctx *, int);
+int eloop_event_add(struct eloop_ctx *, int,
+    void (*)(void *), void *,
+    void (*)(void *), void *);
+void eloop_event_delete(struct eloop_ctx *, int, int);
 int eloop_q_timeout_add_sec(struct eloop_ctx *, int queue,
     time_t, void (*)(void *), void *);
 int eloop_q_timeout_add_tv(struct eloop_ctx *, int queue,
     const struct timeval *, void (*)(void *), void *);
 int eloop_timeout_add_now(struct eloop_ctx *, void (*)(void *), void *);
 void eloop_q_timeout_delete(struct eloop_ctx *, int, void (*)(void *), void *);
-void eloop_q_timeouts_delete(struct eloop_ctx *, int, void *,
-    void (*)(void *), ...);
 struct eloop_ctx * eloop_init(void);
 void eloop_free(struct eloop_ctx *);
 void eloop_exit(struct eloop_ctx *, int);

@@ -1,10 +1,10 @@
-# $NetBSD: 50-ypbind,v 1.1.1.7 2014/06/14 20:51:09 roy Exp $
+# $NetBSD: 50-ypbind,v 1.1.1.8 2014/09/16 22:23:21 roy Exp $
 
 # Sample dhcpcd hook for ypbind
 # This script is only suitable for the BSD versions.
 
-: ${ypbind_restart_cmd:=service_command ypbind restart &}
-: ${ypbind_stop_cmd:=service_condcommand ypbind stop &}
+: ${ypbind_restart_cmd:=service_command ypbind restart}
+: ${ypbind_stop_cmd:=service_condcommand ypbind stop}
 ypbind_dir="$state_dir/ypbind"
 : ${ypdomain_dir:=/var/yp}
 : ${ypdomain_suffix:=.ypservers}

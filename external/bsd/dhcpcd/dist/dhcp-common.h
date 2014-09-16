@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp-common.h,v 1.1.1.5 2014/07/14 11:45:06 roy Exp $ */
+/* $NetBSD: dhcp-common.h,v 1.1.1.6 2014/09/16 22:23:21 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -84,11 +84,11 @@ struct dhcp_opt {
 
 struct dhcp_opt *vivso_find(uint32_t, const void *);
 
-size_t dhcp_vendor(char *, size_t);
+ssize_t dhcp_vendor(char *, size_t);
 
 #define add_option_mask(var, val) (var[val >> 3] |= 1 << (val & 7))
 #define del_option_mask(var, val) (var[val >> 3] &= ~(1 << (val & 7)))
-#define has_option_mask(var, val) (var[val >>3] & (1 << (val & 7)))
+#define has_option_mask(var, val) (var[val >> 3] & (1 << (val & 7)))
 int make_option_mask(const struct dhcp_opt *, size_t,
     const struct dhcp_opt *, size_t,
     uint8_t *, const char *, int);

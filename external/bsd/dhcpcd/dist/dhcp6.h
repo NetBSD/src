@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp6.h,v 1.1.1.7 2014/07/14 11:45:06 roy Exp $ */
+/* $NetBSD: dhcp6.h,v 1.1.1.8 2014/09/16 22:23:21 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -209,7 +209,10 @@ struct dhcp6_state {
 	((struct dhcp6_state *)(ifp)->if_data[IF_DATA_DHCP6])
 #define D6_CSTATE(ifp)							       \
 	((const struct dhcp6_state *)(ifp)->if_data[IF_DATA_DHCP6])
-#define D6_STATE_RUNNING(ifp) (D6_STATE((ifp)) && D6_STATE((ifp))->new)
+#define D6_STATE_RUNNING(ifp)						       \
+	(D6_CSTATE((ifp)) && D6_CSTATE((ifp))->new &&			       \
+	D6_CSTATE((ifp))->reason && dhcp6_dadcompleted((ifp)))
+
 #define D6_FIRST_OPTION(m)						       \
     ((struct dhcp6_option *)						       \
         ((uint8_t *)(m) + sizeof(struct dhcp6_message)))
@@ -239,6 +242,7 @@ ssize_t dhcp6_env(char **, const char *, const struct interface *,
 void dhcp6_free(struct interface *);
 void dhcp6_handleifa(struct dhcpcd_ctx *, int, const char *,
     const struct in6_addr *addr, int);
+int dhcp6_dadcompleted(const struct interface *);
 void dhcp6_drop(struct interface *, const char *);
 int dhcp6_dump(struct interface *);
 #else
@@ -248,8 +252,9 @@ int dhcp6_dump(struct interface *);
 #define dhcp6_reboot(a)
 #define dhcp6_env(a, b, c, d, e)
 #define dhcp6_free(a)
+#define dhcp6_dadcompleted(a) (0)
 #define dhcp6_drop(a, b)
-#define dhcp6_dump(a) -1
+#define dhcp6_dump(a) (-1)
 #endif
 
 #endif

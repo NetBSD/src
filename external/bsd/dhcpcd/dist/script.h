@@ -1,4 +1,4 @@
-/* $NetBSD: script.h,v 1.1.1.2 2014/06/14 20:51:09 roy Exp $ */
+/* $NetBSD: script.h,v 1.1.1.3 2014/09/16 22:23:21 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,8 +30,10 @@
 #ifndef SCRIPT_H
 #define SCRIPT_H
 
+#include "control.h"
+
 void if_printoptions(void);
-int send_interface(int, const struct interface *);
+int send_interface(struct fd_list *, const struct interface *);
 int script_runreason(const struct interface *, const char *);
 
 #endif

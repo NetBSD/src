@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.1.1.13 2014/07/30 15:44:10 roy Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.1.1.14 2014/09/16 22:23:19 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -159,11 +159,11 @@ static size_t
 dhcp6_makevendor(struct dhcp6_option *o, const struct interface *ifp)
 {
 	const struct if_options *ifo;
-	size_t len;
+	size_t len, i;
 	uint8_t *p;
 	uint16_t u16;
 	uint32_t u32;
-	size_t vlen, i;
+	ssize_t vlen;
 	const struct vivco *vivco;
 	char vendor[VENDORCLASSID_MAX_LEN];
 
@@ -177,7 +177,10 @@ dhcp6_makevendor(struct dhcp6_option *o, const struct interface *ifp)
 		vlen = 0; /* silence bogus gcc warning */
 	} else {
 		vlen = dhcp_vendor(vendor, sizeof(vendor));
-		len += sizeof(uint16_t) + vlen;
+		if (vlen == -1)
+			vlen = 0;
+		else
+			len += sizeof(uint16_t) + (size_t)vlen;
 	}
 
 	if (len > UINT16_MAX) {
@@ -203,11 +206,11 @@ dhcp6_makevendor(struct dhcp6_option *o, const struct interface *ifp)
 				memcpy(p, vivco->data, vivco->len);
 				p += vivco->len;
 			}
-		} else {
+		} else if (vlen) {
 			u16 = htons(vlen);
 			memcpy(p, &u16, sizeof(u16));
 			p += sizeof(u16);
-			memcpy(p, vendor, vlen);
+			memcpy(p, vendor, (size_t)vlen);
 		}
 	}
 
@@ -645,9 +648,11 @@ dhcp6_makemessage(struct interface *ifp)
 	if (ifo->auth.options & DHCPCD_AUTH_SEND) {
 		auth_len = (size_t)dhcp_auth_encode(&ifo->auth,
 		    state->auth.token, NULL, 0, 6, type, NULL, 0);
-		if ((ssize_t)auth_len == -1)
+		if ((ssize_t)auth_len == -1) {
+			syslog(LOG_ERR, "%s: dhcp_auth_encode: %m",
+			    ifp->name);
 			auth_len = 0;
-		else if (auth_len> 0)
+		} else if (auth_len != 0)
 			len += sizeof(*o) + auth_len;
 	} else
 		auth_len = 0; /* appease GCC */
@@ -851,7 +856,7 @@ dhcp6_makemessage(struct interface *ifp)
 	}
 
 	/* This has to be the last option */
-	if (ifo->auth.options & DHCPCD_AUTH_SEND && auth_len > 0) {
+	if (ifo->auth.options & DHCPCD_AUTH_SEND && auth_len != 0) {
 		o = D6_NEXT_OPTION(o);
 		o->code = htons(D6_OPTION_AUTH);
 		o->len = htons(auth_len);
@@ -1045,7 +1050,8 @@ logsend:
 	    dhcp6_update_auth(ifp, state->send, state->send_len) == -1)
 	{
 		syslog(LOG_ERR, "%s: dhcp6_updateauth: %m", ifp->name);
-		return -1;
+		if (errno != ESRCH)
+			return -1;
 	}
 
 	ctx = ifp->ctx->ipv6;
@@ -1157,6 +1163,21 @@ dhcp6_startrenew(void *arg)
 		syslog(LOG_ERR, "%s: dhcp6_makemessage: %m", ifp->name);
 	else
 		dhcp6_sendrenew(ifp);
+}
+
+int
+dhcp6_dadcompleted(const struct interface *ifp)
+{
+	const struct dhcp6_state *state;
+	const struct ipv6_addr *ap;
+
+	state = D6_CSTATE(ifp);
+	TAILQ_FOREACH(ap, &state->addrs, next) {
+		if (ap->flags & IPV6_AF_ADDED &&
+		    !(ap->flags & IPV6_AF_DADCOMPLETED))
+		    	return 0;
+	}
+	return 1;
 }
 
 static void
@@ -2415,7 +2436,7 @@ dhcp6_handledata(void *arg)
 	if (bytes == -1 || bytes == 0) {
 		syslog(LOG_ERR, "recvmsg: %m");
 		close(ctx->dhcp_fd);
-		eloop_event_delete(dhcpcd_ctx->eloop, ctx->dhcp_fd);
+		eloop_event_delete(dhcpcd_ctx->eloop, ctx->dhcp_fd, 0);
 		ctx->dhcp_fd = -1;
 		return;
 	}
@@ -2927,7 +2948,8 @@ dhcp6_open(struct dhcpcd_ctx *dctx)
 	    &n, sizeof(n)) == -1)
 		goto errexit;
 
-	eloop_event_add(dctx->eloop, ctx->dhcp_fd, dhcp6_handledata, dctx);
+	eloop_event_add(dctx->eloop, ctx->dhcp_fd,
+	    dhcp6_handledata, dctx, NULL, NULL);
 	return 0;
 
 errexit:
@@ -3105,7 +3127,9 @@ dhcp6_freedrop(struct interface *ifp, int drop, const char *reason)
 
 	ifpx = dhcp6_findpfxdlgif(ifp);
 	if (ifpx) {
-		dhcp6_freedrop(ifpx, drop, reason);
+		/* Read the below comment why we need to force
+		 * a drop here */
+		dhcp6_freedrop(ifpx, 1, reason);
 		TAILQ_REMOVE(ifp->ctx->ifaces, ifpx, next);
 		if_free(ifpx);
 	}
@@ -3181,7 +3205,7 @@ dhcp6_freedrop(struct interface *ifp, int drop, const char *reason)
 	}
 	if (ifp == NULL && ctx->ipv6) {
 		if (ctx->ipv6->dhcp_fd != -1) {
-			eloop_event_delete(ctx->eloop, ctx->ipv6->dhcp_fd);
+			eloop_event_delete(ctx->eloop, ctx->ipv6->dhcp_fd, 0);
 			close(ctx->ipv6->dhcp_fd);
 			ctx->ipv6->dhcp_fd = -1;
 		}
