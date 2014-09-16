@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.232 2014/09/13 18:36:45 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.233 2014/09/16 10:27:53 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.232 2014/09/13 18:36:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.233 2014/09/16 10:27:53 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1082,14 +1082,14 @@ ehci_idone(struct ehci_xfer *ex)
 		   EHCI_QTD_GET_CERR(status), EHCI_QTD_GET_PID(status),
 		   status, 0);
 		USBHIST_LOG(ehcidebug,
-		    "ACTIVE =%d HALTED=%d BUFERR=%d BABBLE=%d",
+		    "active =%d halted=%d buferr=%d babble=%d",
 		    status & EHCI_QTD_ACTIVE ? 1 : 0,
 		    status & EHCI_QTD_HALTED ? 1 : 0,
 		    status & EHCI_QTD_BUFERR ? 1 : 0,
 		    status & EHCI_QTD_BABBLE ? 1 : 0);
 
 		USBHIST_LOG(ehcidebug,
-		    "XACTERR=%d MISSED=%d SPLIT =%d PING  =%d",
+		    "xacterr=%d missed=%d split =%d ping  =%d",
 		    status & EHCI_QTD_XACTERR ? 1 : 0,
 		    status & EHCI_QTD_MISSEDMICRO ? 1 : 0,
 		    status & EHCI_QTD_SPLITXSTATE ? 1 : 0,
