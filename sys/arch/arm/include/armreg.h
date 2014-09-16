@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.97 2014/04/14 20:50:47 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.98 2014/09/16 21:59:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -417,16 +417,6 @@
 #define	ARM1176_AUXCTL_FSD	0x40000000 /* force speculative ops disable */
 #define	ARM1176_AUXCTL_FIO	0x80000000 /* low intr latency override */
 
-/* Cortex-A9 Auxiliary Control Register (CP15 register 1, opcode2 1) */   
-#define	CORTEXA9_AUXCTL_PARITY	0x00000200 /* Enable parity */
-#define	CORTEXA9_AUXCTL_1WAY	0x00000100 /* Alloc in one way only */
-#define	CORTEXA9_AUXCTL_EXCL	0x00000080 /* Exclusive cache */
-#define	CORTEXA9_AUXCTL_SMP	0x00000040 /* CPU is in SMP mode */
-#define	CORTEXA9_AUXCTL_WRZERO	0x00000008 /* Write full line of zeroes */
-#define	CORTEXA9_AUXCTL_L1PLD	0x00000004 /* L1 Dside prefetch */
-#define	CORTEXA9_AUXCTL_L2PLD	0x00000002 /* L2 Dside prefetch */
-#define	CORTEXA9_AUXCTL_FW	0x00000001 /* Forward Cache/TLB ops */
-
 /* XScale Auxiliary Control Register (CP15 register 1, opcode2 1) */
 #define	XSCALE_AUXCTL_K		0x00000001 /* dis. write buffer coalescing */
 #define	XSCALE_AUXCTL_P		0x00000002 /* ECC protect page table access */
@@ -448,8 +438,8 @@
 
 /* Cortex-A9 Auxiliary Control Register (CP15 register 1, opcode 1) */
 #define	CORTEXA9_AUXCTL_FW	0x00000001 /* Cache and TLB updates broadcast */
-#define	CORTEXA9_AUXCTL_L2_PLD	0x00000002 /* Prefetch hint enable */
-#define	CORTEXA9_AUXCTL_L1_PLD	0x00000004 /* Data prefetch hint enable */
+#define	CORTEXA9_AUXCTL_L2PE	0x00000002 /* Prefetch hint enable */
+#define	CORTEXA9_AUXCTL_L1PE	0x00000004 /* Data prefetch hint enable */
 #define	CORTEXA9_AUXCTL_WR_ZERO	0x00000008 /* Ena. write full line of 0s mode */
 #define	CORTEXA9_AUXCTL_SMP	0x00000040 /* Coherency is active */
 #define	CORTEXA9_AUXCTL_EXCL	0x00000080 /* Exclusive cache bit */
