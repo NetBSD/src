@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.7 2014/07/14 11:49:48 roy Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.8 2014/09/16 22:27:04 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -140,8 +140,8 @@ if_openlinksocket(void)
 #endif
 }
 
-int
-if_getssid(const char *ifname, char *ssid)
+static int
+if_getssid1(const char *ifname, uint8_t *ssid)
 {
 	int s, retval = -1;
 #if defined(SIOCG80211NWID)
@@ -161,8 +161,13 @@ if_getssid(const char *ifname, char *ssid)
 	memset(&nwid, 0, sizeof(nwid));
 	ifr.ifr_data = (void *)&nwid;
 	if (ioctl(s, SIOCG80211NWID, &ifr) == 0) {
-		retval = nwid.i_len;
-		if (ssid) {
+		if (ssid == NULL)
+			retval = nwid.i_len;
+		else if (nwid.i_len > IF_SSIDSIZE) {
+			errno = ENOBUFS;
+			retval = -1;
+		} else {
+			retval = nwid.i_len;
 			memcpy(ssid, nwid.i_nwid, nwid.i_len);
 			ssid[nwid.i_len] = '\0';
 		}
@@ -175,8 +180,13 @@ if_getssid(const char *ifname, char *ssid)
 	memset(nwid, 0, sizeof(nwid));
 	ireq.i_data = &nwid;
 	if (ioctl(s, SIOCG80211, &ireq) == 0) {
-		retval = ireq.i_len;
-		if (ssid) {
+		if (ssid == NULL)
+			retval = ireq.i_len;
+		else if (ireq.i_len > IF_SSIDSIZE) {
+			errno = ENOBUFS;
+			retval = -1;
+		} else  {
+			retval = ireq.i_len;
 			memcpy(ssid, nwid, ireq.i_len);
 			ssid[ireq.i_len] = '\0';
 		}
@@ -185,6 +195,17 @@ if_getssid(const char *ifname, char *ssid)
 
 	close(s);
 	return retval;
+}
+
+int
+if_getssid(struct interface *ifp)
+{
+	int r;
+
+	r = if_getssid1(ifp->name, ifp->ssid);
+	if (r != -1)
+		ifp->ssid_len = (unsigned int)r;
+	return r;
 }
 
 /*
@@ -211,7 +232,7 @@ if_vimaster(const char *ifname)
 	if (ifmr.ifm_status & IFM_AVALID &&
 	    IFM_TYPE(ifmr.ifm_active) == IFM_IEEE80211)
 	{
-		if (if_getssid(ifname, NULL) == -1)
+		if (if_getssid1(ifname, NULL) == -1)
 			return 1;
 	}
 	return 0;
@@ -293,13 +314,6 @@ if_openrawsocket(struct interface *ifp, int protocol)
 	if (ioctl(fd, BIOCSETF, &pf) == -1)
 		goto eexit;
 
-#ifdef __OpenBSD__
-	/* For some reason OpenBSD fails to open the fd as non blocking */
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1 ||
-	    fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
-		goto eexit;
-#endif
-
 	return fd;
 
 eexit:
@@ -351,9 +365,7 @@ if_readrawpacket(struct interface *ifp, int protocol,
 	else
 		fd = state->raw_fd;
 
-	if (flags != NULL)
-		*flags = 0; /* Not supported on BSD */
-
+	*flags = 0;
 	for (;;) {
 		if (state->buffer_len == 0) {
 			bytes = read(fd, state->buffer, state->buffer_size);
