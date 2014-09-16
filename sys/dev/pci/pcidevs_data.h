@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1192 2014/09/01 03:14:50 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1193 2014/09/16 07:06:14 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1200 2014/09/01 03:14:16 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1201 2014/09/16 07:05:44 msaitoh Exp
  */
 
 /*
@@ -4507,6 +4507,14 @@ static const uint16_t pci_products[] = {
 	    19062, 5501, 18051, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_LM, 
 	    19069, 5501, 18051, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_LM2, 
+	    19069, 5501, 18051, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_V2, 
+	    19062, 5501, 18051, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_LM3, 
+	    19069, 5501, 18051, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I218_V3, 
+	    19062, 5501, 18051, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960_RP, 
 	    19077, 19084, 19091, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RM_2, 
@@ -10432,7 +10440,7 @@ static const char pci_words[] = { "."
 	    "ID\0" /* 1 refs @ 5484 */
 	    "3c985\0" /* 1 refs @ 5487 */
 	    "Gigabit\0" /* 105 refs @ 5493 */
-	    "Ethernet\0" /* 420 refs @ 5501 */
+	    "Ethernet\0" /* 424 refs @ 5501 */
 	    "3c996\0" /* 1 refs @ 5510 */
 	    "10/100/1000\0" /* 48 refs @ 5516 */
 	    "3c556\0" /* 2 refs @ 5528 */
@@ -12191,7 +12199,7 @@ static const char pci_words[] = { "."
 	    "(AMT)\0" /* 3 refs @ 18028 */
 	    "(IFE)\0" /* 1 refs @ 18034 */
 	    "82801EB/ER\0" /* 10 refs @ 18040 */
-	    "Connection\0" /* 21 refs @ 18051 */
+	    "Connection\0" /* 25 refs @ 18051 */
 	    "M\0" /* 1 refs @ 18062 */
 	    "i82571EB\0" /* 4 refs @ 18064 */
 	    "82801FB\0" /* 4 refs @ 18073 */
@@ -12314,8 +12322,8 @@ static const char pci_words[] = { "."
 	    "I217-LM\0" /* 1 refs @ 19040 */
 	    "I217-V\0" /* 1 refs @ 19048 */
 	    "(SFP+)\0" /* 1 refs @ 19055 */
-	    "I218-V\0" /* 1 refs @ 19062 */
-	    "I218-LM\0" /* 1 refs @ 19069 */
+	    "I218-V\0" /* 3 refs @ 19062 */
+	    "I218-LM\0" /* 3 refs @ 19069 */
 	    "ROB-in\0" /* 1 refs @ 19077 */
 	    "i960RP\0" /* 1 refs @ 19084 */
 	    "Microprocessor\0" /* 1 refs @ 19091 */
