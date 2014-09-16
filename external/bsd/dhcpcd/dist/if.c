@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if.c,v 1.1.1.3 2014/07/30 15:44:09 roy Exp $");
+ __RCSID("$NetBSD: if.c,v 1.1.1.4 2014/09/16 22:23:18 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -424,7 +424,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		/* We reserve the 100 range for virtual interfaces, if and when
 		 * we can work them out. */
 		ifp->metric = 200 + ifp->index;
-		if (if_getssid(ifp->name, ifp->ssid) != -1) {
+		if (if_getssid(ifp) != -1) {
 			ifp->wireless = 1;
 			ifp->metric += 100;
 		}
