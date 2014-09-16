@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6nd.h,v 1.1.1.4 2014/06/14 20:51:09 roy Exp $ */
+/* $NetBSD: ipv6nd.h,v 1.1.1.5 2014/09/16 22:23:21 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -71,6 +71,7 @@ struct rs_state {
 };
 
 #define RS_STATE(a) ((struct rs_state *)(ifp)->if_data[IF_DATA_IPV6ND])
+#define RS_STATE_RUNNING(a) (ipv6nd_hasra((a)) && ipv6nd_dadcompleted((a)))
 
 #define MAX_RTR_SOLICITATION_DELAY	1	/* seconds */
 #define MAX_UNICAST_SOLICIT		3	/* 3 transmissions */
@@ -96,6 +97,7 @@ int ipv6nd_hasra(const struct interface *);
 int ipv6nd_hasradhcp(const struct interface *);
 void ipv6nd_handleifa(struct dhcpcd_ctx *, int,
     const char *, const struct in6_addr *, int);
+int ipv6nd_dadcompleted(const struct interface *);
 void ipv6nd_drop(struct interface *);
 
 #ifdef HAVE_RTM_GETNEIGH
@@ -106,6 +108,7 @@ void ipv6nd_neighbour(struct dhcpcd_ctx *, struct in6_addr *, int);
 #define ipv6nd_addrexists(a, b) (0)
 #define ipv6nd_free(a)
 #define ipv6nd_hasra(a) (0)
+#define ipv6nd_dadcompleted(a) (0)
 #define ipv6nd_drop(a)
 #endif
 
