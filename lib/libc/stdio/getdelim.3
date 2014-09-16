@@ -1,4 +1,4 @@
-.\"     $NetBSD: getdelim.3,v 1.12 2014/09/15 23:41:16 christos Exp $
+.\"     $NetBSD: getdelim.3,v 1.13 2014/09/16 08:42:20 apb Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -161,9 +161,9 @@ The
 .Fn getdelim
 and
 .Fn getline
-functions can return strings with length (as returned by
-.Xr strlen 3
-on the returned line) less than the return value of the functions
-if the line happened to contain
+functions can return results that include
 .Dv NUL
-characters.
+characters, which can cause the apparent length reported by
+.Xr strlen 3
+to be less than the true length reported by the
+return values of the functions.
