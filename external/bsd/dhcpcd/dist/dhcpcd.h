@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd.h,v 1.1.1.19 2014/07/14 11:45:06 roy Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.1.1.20 2014/09/16 22:23:21 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -66,7 +66,8 @@ struct interface {
 	unsigned int metric;
 	int carrier;
 	int wireless;
-	char ssid[IF_SSIDSIZE];
+	uint8_t ssid[IF_SSIDSIZE];
+	unsigned int ssid_len;
 
 	char profile[PROFILE_LEN];
 	struct if_options *options;
@@ -97,7 +98,8 @@ struct dhcpcd_ctx {
 	struct eloop_ctx *eloop;
 
 	int control_fd;
-	struct fd_list *control_fds;
+	int control_unpriv_fd;
+	struct fd_list_head control_fds;
 	char control_sock[sizeof(CONTROLSOCKET) + IF_NAMESIZE];
 	gid_t control_group;
 
@@ -142,6 +144,8 @@ struct dhcpcd_ctx {
 extern const int dhcpcd_handlesigs[];
 #endif
 
+int dhcpcd_oneup(struct dhcpcd_ctx *);
+int dhcpcd_ipwaited(struct dhcpcd_ctx *);
 pid_t dhcpcd_daemonise(struct dhcpcd_ctx *);
 
 int dhcpcd_handleargs(struct dhcpcd_ctx *, struct fd_list *, int, char **);
