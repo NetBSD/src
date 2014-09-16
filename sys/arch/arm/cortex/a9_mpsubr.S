@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.21 2014/09/15 19:02:38 skrll Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.22 2014/09/16 22:00:22 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -457,6 +457,12 @@ cortex_init:
 	//
 	orr	r0, r0, #CORTEXA9_AUXCTL_FW	// enable cache/tlb/coherency
 #endif	/* A5 || A9 */
+#if defined(CPU_CORTEXA9)
+	//
+	// Step 4b (continued on A9), ACTLR.L2PE=1)
+	//
+	orr	r0, r0, #CORTEXA9_AUXCTL_L2PE	// enable L2 cache prefetch
+#endif
 
 	mcr	p15, 0, r0, c1, c0, 1		// ACTLR write
 	isb
