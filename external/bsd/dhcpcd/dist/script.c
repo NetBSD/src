@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.7 2014/07/14 11:49:48 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.8 2014/09/16 22:27:04 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -58,6 +58,11 @@
 #include <spawn.h>
 #else
 #include "compat/posix_spawn.h"
+#endif
+
+/* Allow the OS to define another script env var name */
+#ifndef RC_SVCNAME
+#define RC_SVCNAME "RC_SVCNAME"
 #endif
 
 #define DEFAULT_PATH	"PATH=/usr/bin:/usr/sbin:/bin:/sbin"
@@ -283,7 +288,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	if (ifp->ctx->options & DHCPCD_DUMPLEASE)
 		elen = 2;
 	else
-		elen = 11;
+		elen = 13;
 
 #define EMALLOC(i, l) if ((env[(i)] = malloc((l))) == NULL) goto eexit;
 	/* Make our env */
@@ -354,27 +359,46 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	}
 	if (env[9] == NULL || env[10] == NULL)
 		goto eexit;
+	if (dhcpcd_oneup(ifp->ctx))
+		env[11] = strdup("if_oneup=true");
+	else
+		env[11] = strdup("if_oneup=false");
+	if (env[11] == NULL)
+		goto eexit;
+	if (dhcpcd_ipwaited(ifp->ctx))
+		env[12] = strdup("if_ipwaited=true");
+	else
+		env[12] = strdup("if_ipwaited=false");
+	if (env[12] == NULL)
+		goto eexit;
 	if (*ifp->profile) {
 		e = strlen("profile=") + strlen(ifp->profile) + 2;
 		EMALLOC(elen, e);
 		snprintf(env[elen++], e, "profile=%s", ifp->profile);
 	}
 	if (ifp->wireless) {
-		e = strlen("new_ssid=") + strlen(ifp->ssid) + 2;
-		if (strcmp(reason, "CARRIER") == 0) {
-			nenv = realloc(env, sizeof(char *) * (elen + 2));
-			if (nenv == NULL)
-				goto eexit;
-			env = nenv;
-			EMALLOC(elen, e);
-			snprintf(env[elen++], e, "new_ssid=%s", ifp->ssid);
-		} else if (strcmp(reason, "NOCARRIER") == 0) {
-			nenv = realloc(env, sizeof(char *) * (elen + 2));
-			if (nenv == NULL)
-				goto eexit;
-			env = nenv;
-			EMALLOC(elen, e);
-			snprintf(env[elen++], e, "old_ssid=%s", ifp->ssid);
+		const char *pfx;
+
+		if (strcmp(reason, "CARRIER") == 0)
+			pfx = "new_ssid=";
+		else if (strcmp(reason, "NOCARRIER") == 0)
+			pfx = "old_ssid=";
+		else	
+			pfx = NULL;
+		if (pfx) {
+			size_t pfx_len;
+			ssize_t psl;
+
+			pfx_len = strlen(pfx);
+			psl = print_string(NULL, 0,
+			    (const uint8_t *)ifp->ssid, ifp->ssid_len);
+			if (psl != -1) {
+				EMALLOC(elen, pfx_len + (size_t)psl + 1);
+				memcpy(env[elen], pfx, pfx_len);
+				print_string(env[elen] + pfx_len, (size_t)psl,
+				    (const uint8_t *)ifp->ssid, ifp->ssid_len);
+				elen++;
+			}
 		}
 	}
 #ifdef INET
@@ -515,42 +539,40 @@ eexit:
 	return -1;
 }
 
-static ssize_t
-send_interface1(int fd, const struct interface *iface, const char *reason)
+static int
+send_interface1(struct fd_list *fd, const struct interface *iface,
+    const char *reason)
 {
 	char **env, **ep, *s;
 	size_t elen;
-	struct iovec iov[2];
-	ssize_t retval;
+	int retval;
 
 	if (make_env(iface, reason, &env) == -1)
 		return -1;
+	s = NULL;
 	elen = (size_t)arraytostr((const char *const *)env, &s);
-	if ((ssize_t)elen == -1)
+	if ((ssize_t)elen == -1) {
+		free(s);
 		return -1;
-	iov[0].iov_base = &elen;
-	iov[0].iov_len = sizeof(elen);
-	iov[1].iov_base = s;
-	iov[1].iov_len = elen;
-	retval = writev(fd, iov, 2);
+	}
+	retval = control_queue(fd, s, elen, 1);
 	ep = env;
 	while (*ep)
 		free(*ep++);
 	free(env);
-	free(s);
 	return retval;
 }
 
 int
-send_interface(int fd, const struct interface *ifp)
+send_interface(struct fd_list *fd, const struct interface *ifp)
 {
 	const char *reason;
 	int retval = 0;
 #ifdef INET
-	const struct dhcp_state *d = D_CSTATE(ifp);
+	const struct dhcp_state *d;
 #endif
 #ifdef INET6
-	const struct dhcp6_state *d6 = D6_CSTATE(ifp);
+	const struct dhcp6_state *d6;
 #endif
 
 	switch (ifp->carrier) {
@@ -565,19 +587,22 @@ send_interface(int fd, const struct interface *ifp)
 		break;
 	}
 	if (send_interface1(fd, ifp, reason) == -1)
-			retval = -1;
+		retval = -1;
 #ifdef INET
-	if (d && d->reason)
+	if (D_STATE_RUNNING(ifp)) {
+		d = D_CSTATE(ifp);
 		if (send_interface1(fd, ifp, d->reason) == -1)
 			retval = -1;
+	}
 #endif
 
 #ifdef INET6
-	if (ipv6nd_hasra(ifp)) {
+	if (RS_STATE_RUNNING(ifp)) {
 		if (send_interface1(fd, ifp, "ROUTERADVERT") == -1)
 			retval = -1;
 	}
-	if (D6_STATE_RUNNING(ifp) && d6->reason) {
+	if (D6_STATE_RUNNING(ifp)) {
+		d6 = D6_CSTATE(ifp);
 		if (send_interface1(fd, ifp, d6->reason) == -1)
 			retval = -1;
 	}
@@ -591,12 +616,11 @@ script_runreason(const struct interface *ifp, const char *reason)
 {
 	char *argv[2];
 	char **env = NULL, **ep;
-	char *path, *bigenv;
+	char *svcname, *path, *bigenv;
 	size_t e, elen = 0;
 	pid_t pid;
 	int status = 0;
-	const struct fd_list *fd;
-	struct iovec iov[2];
+	struct fd_list *fd;
 
 	if (ifp->options->script &&
 	    (ifp->options->script[0] == '\0' ||
@@ -614,7 +638,9 @@ script_runreason(const struct interface *ifp, const char *reason)
 		syslog(LOG_ERR, "%s: make_env: %m", ifp->name);
 		return -1;
 	}
-	ep = realloc(env, sizeof(char *) * (elen + 2));
+	/* Resize for PATH and RC_SVCNAME */
+	svcname = getenv(RC_SVCNAME);
+	ep = realloc(env, sizeof(char *) * (elen + 2 + (svcname ? 1 : 0)));
 	if (ep == NULL) {
 		elen = 0;
 		goto out;
@@ -636,6 +662,15 @@ script_runreason(const struct interface *ifp, const char *reason)
 			elen = 0;
 			goto out;
 		}
+	}
+	if (svcname) {
+		e = strlen(RC_SVCNAME) + strlen(svcname) + 2;
+		env[++elen] = malloc(e);
+		if (env[elen] == NULL) {
+			elen = 0;
+			goto out;
+		}
+		snprintf(env[elen], e, "%s=%s", RC_SVCNAME, svcname);
 	}
 	env[++elen] = NULL;
 
@@ -663,26 +698,26 @@ script_runreason(const struct interface *ifp, const char *reason)
 
 	/* Send to our listeners */
 	bigenv = NULL;
-	for (fd = ifp->ctx->control_fds; fd != NULL; fd = fd->next) {
-		if (fd->listener) {
-			if (bigenv == NULL) {
-				elen = (size_t)arraytostr((const char *const *)env,
-				    &bigenv);
-				if ((ssize_t)elen == -1) {
-					syslog(LOG_ERR, "%s: arraytostr: %m",
-					    ifp->name);
-					continue;
-				}
-				iov[0].iov_base = &elen;
-				iov[0].iov_len = sizeof(size_t);
-				iov[1].iov_base = bigenv;
-				iov[1].iov_len = elen;
+	status = 0;
+	TAILQ_FOREACH(fd, &ifp->ctx->control_fds, next) {
+		if (!(fd->flags & FD_LISTEN))
+			continue;
+		if (bigenv == NULL) {
+			elen = (size_t)arraytostr((const char *const *)env,
+			    &bigenv);
+			if ((ssize_t)elen == -1) {
+				syslog(LOG_ERR, "%s: arraytostr: %m",
+				    ifp->name);
+				    break;
 			}
-			if (writev(fd->fd, iov, 2) == -1)
-				syslog(LOG_ERR, "%s: writev: %m", __func__);
 		}
+		if (control_queue(fd, bigenv, elen, 1) == -1)
+			syslog(LOG_ERR, "%s: control_queue: %m", __func__);
+		else
+			status = 1;
 	}
-	free(bigenv);
+	if (!status)
+		free(bigenv);
 
 out:
 	/* Cleanup */
