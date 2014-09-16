@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.1.1.29 2014/07/30 15:44:09 roy Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.1.1.30 2014/09/16 22:23:18 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1984,6 +1984,7 @@ read_config(struct dhcpcd_ctx *ctx,
 	FILE *fp;
 	char *line, *buf, *option, *p;
 	size_t buflen;
+	ssize_t vlen;
 	int skip = 0, have_profile = 0;
 #ifndef EMBEDDED_CONFIG
 	const char * const *e;
@@ -2019,9 +2020,9 @@ read_config(struct dhcpcd_ctx *ctx,
 	ifo->auth.options |= DHCPCD_AUTH_REQUIRE;
 	TAILQ_INIT(&ifo->auth.tokens);
 
-	ifo->vendorclassid[0] =
-	    (uint8_t)dhcp_vendor((char *)ifo->vendorclassid + 1,
-	    sizeof(ifo->vendorclassid) - 1);
+	vlen = dhcp_vendor((char *)ifo->vendorclassid + 1,
+	            sizeof(ifo->vendorclassid) - 1);
+	ifo->vendorclassid[0] = vlen == -1 ? 0 : (uint8_t)vlen;
 
 	buf = NULL;
 	buflen = 0;
