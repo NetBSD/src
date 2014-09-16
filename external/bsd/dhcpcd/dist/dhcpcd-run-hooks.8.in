@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd-run-hooks.8.in,v 1.1.1.15 2013/07/29 20:35:33 roy Exp $
+.\"     $NetBSD: dhcpcd-run-hooks.8.in,v 1.1.1.16 2014/09/16 22:23:20 roy Exp $
 .\" Copyright (c) 2006-2013 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 6, 2013
+.Dd September 12, 2014
 .Dt DHCPCD-RUN-HOOKS 8
 .Os
 .Sh NAME
@@ -70,12 +70,15 @@ argument.
 Here's a list of reasons why
 .Nm
 could be invoked:
-.Bl -tag -width ROUTERADVERT
+.Bl -tag -width EXPIREXXXEXPIRE6
 .It Dv PREINIT
 dhcpcd is starting up and any pre-initialisation should be done.
 .It Dv CARRIER
 dhcpcd has detected the carrier is up.
 This is generally just a notification and no action need be taken.
+.It Dv NOCARRIER
+dhcpcd lost the carrier.
+The cable may have been unplugged or association to the wireless point lost.
 .It Dv INFORM | Dv INFORM6
 dhcpcd informed a DHCP server about it's address and obtained other
 configuration details.
@@ -103,18 +106,19 @@ dhcpcd received a NAK from the DHCP server.
 This should be treated as EXPIRE.
 .It Dv RECONFIGURE
 dhcpcd has been instructed to reconfigure an interface.
-.It Dv NOCARRIER
-dhcpcd lost the carrier.
-The cable may have been unplugged or association to the wireless point lost.
+.It Dv ROUTERADVERT
+dhcpcd has received an IPv6 Router Advertisment, or one has expired.
+.It Dv STOP | Dv STOP6
+dhcpcd stopped running on the interface.
+.It Dv STOPPED
+dhcpcd has stopped entirely.
+.It Dv DEPARTED
+The interface has been removed.
 .It Dv FAIL
 dhcpcd failed to operate on the interface.
 This normally happens when dhcpcd does not support the raw interface, which
 means it cannot work as a DHCP or ZeroConf client.
 Static configuration and DHCP INFORM is still allowed.
-.It Dv STOP | Dv STOP6
-dhcpcd stopped running on the interface.
-.It Dv DEPARTED
-The interface has been removed.
 .It Dv DUMP
 dhcpcd has been asked to dump the last lease for the interface.
 .It Dv TEST
@@ -122,8 +126,77 @@ dhcpcd received an OFFER from a DHCP server but will not configure the
 interface.
 This is primarily used to test the variables are filled correctly for the
 script to process them.
-.It Dv ROUTERADVERT
-dhcpcd has received an IPv6 Router Advertisment, or one has expired.
+.El
+.Sh ENVIRONMENT
+.Nm dhcpcd
+will clear the environment variables aside from
+.Ev $PATH
+and
+.Ev $RC_SVCNAME .
+The following variables will then be set, along with any protocol supplied
+ones.
+.Bl -tag -width Xinterface_order
+.It Ev $interface
+the name of the interface.
+.It Ev $reason
+as described above.
+.It Ev $pid
+the pid of
+.Nm dhcpcd .
+.It Ev $ifcarrier
+the link status of
+.Ev $interface :
+.Dv unknown ,
+.Dv up
+or
+.Dv down .
+.It Ev $ifmetric
+.Ev $interface
+preference, lower is better.
+.It Ev $ifwireless
+.Dv 1 if
+.Ev $interface
+is wireless, otherwise
+.Dv 0 .
+.It Ev $ifflags
+.Ev $interface
+flags.
+.It Ev $ifmtu
+.Ev $interface
+MTU.
+.It Ev $interface_order
+A list of interfaces, in order of preference.
+.It Ev $if_up
+.Dv true
+if the
+.Ev interface
+is up, otherwise
+.Dv false .
+.It Ev $if_down
+.Dv true
+if the
+.Ev interface
+is down, otherwise
+.Dv false .
+.It Ev $if_oneup
+.Dv true
+if any interface is up, otherwise false.
+.It Ev $if_ipwaited
+.Dv true
+if any interface has been assigned an IP address which matches any wait
+requirements specified in
+.Xr dhcpcd.conf 5 .
+.It Ev $profile
+the name of the profile selected from
+.Xr dhcpcd.conf 5 .
+.It Ev $new_ssid
+the name of the SSID the
+.Ev interface
+is connected to.
+.It Ev $old_ssid
+the name of the SSID the
+.Ev interface
+was connected to.
 .El
 .Sh FILES
 When
