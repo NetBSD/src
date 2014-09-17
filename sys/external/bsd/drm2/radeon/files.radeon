@@ -1,4 +1,4 @@
-#	$NetBSD: files.radeon,v 1.6 2014/09/17 15:53:15 riastradh Exp $
+#	$NetBSD: files.radeon,v 1.7 2014/09/17 15:59:53 riastradh Exp $
 
 define	radeonfbbus	{ }
 device	radeon: drmkms, drmkms_pci, drmkms_ttm, radeonfbbus, firmload
@@ -18,6 +18,7 @@ makeoptions	radeon	"CWARNFLAGS.btc_dpm.c"+="-Wno-missing-prototypes"
 makeoptions	radeon	"CWARNFLAGS.ci_dpm.c"+="-Wno-missing-field-initializers"
 makeoptions	radeon	"CWARNFLAGS.cik.c"+="-Wno-missing-prototypes -Wno-missing-field-initializers"
 makeoptions	radeon	"CWARNFLAGS.cik_sdma.c"+="-Wno-missing-prototypes"
+makeoptions	radeon	"CWARNFLAGS.cypress_dpm.c"+="-Wno-missing-field-initializers"
 makeoptions	radeon	"CWARNFLAGS.dce6_afmt.c"+="-Wno-missing-prototypes"
 makeoptions	radeon	"CWARNFLAGS.evergreen.c"+="-Wno-missing-prototypes"
 makeoptions	radeon	"CWARNFLAGS.evergreen_cs.c"+="-Wno-missing-prototypes"
@@ -26,7 +27,7 @@ makeoptions	radeon	"CWARNFLAGS.kv_dpm.c"+="-Wno-missing-prototypes"
 makeoptions	radeon	"CWARNFLAGS.kv_dpm.c"+="-Wno-shadow"
 makeoptions	radeon	"CWARNFLAGS.kv_dpm.c"+="-Wno-type-limits"
 makeoptions	radeon	"CWARNFLAGS.ni.c"+="-Wno-missing-prototypes"
-makeoptions	radeon	"CWARNFLAGS.ni_dpm.c"+="-Wno-missing-prototypes"
+makeoptions	radeon	"CWARNFLAGS.ni_dpm.c"+="-Wno-missing-prototypes -Wno-missing-field-initializers"
 makeoptions	radeon	"CWARNFLAGS.r600.c"+="-Wno-missing-prototypes"
 makeoptions	radeon	"CWARNFLAGS.r600_cs.c"+="-Wno-missing-field-initializers"
 makeoptions	radeon	"CWARNFLAGS.r600_cs.c"+="-Wno-missing-prototypes"
@@ -49,7 +50,7 @@ makeoptions	radeon    "CWARNFLAGS.radeon_vce.c"+="-Wno-missing-prototypes"
 makeoptions	radeon    "CWARNFLAGS.rs780_dpm.c"+="-Wno-missing-prototypes"
 makeoptions	radeon    "CWARNFLAGS.rv6xx_dpm.c"+="-Wno-missing-prototypes"
 makeoptions	radeon    "CWARNFLAGS.rv6xx_dpm.c"+="-Wno-shadow"
-makeoptions	radeon    "CWARNFLAGS.rv770.c"+="-Wno-missing-prototypes"
+makeoptions	radeon    "CWARNFLAGS.rv770.c"+="-Wno-missing-prototypes -Wno-missing-field-initializers"
 makeoptions	radeon    "CWARNFLAGS.rv770_dpm.c"+="-Wno-missing-prototypes"
 makeoptions	radeon    "CWARNFLAGS.si.c"+="-Wno-missing-prototypes"
 makeoptions	radeon    "CWARNFLAGS.si_dpm.c"+="-Wno-missing-field-initializers"
