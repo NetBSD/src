@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_chk.c,v 1.4 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: memcpy_chk.c,v 1.5 2014/09/17 00:39:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: memcpy_chk.c,v 1.4 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: memcpy_chk.c,v 1.5 2014/09/17 00:39:28 joerg Exp $");
 
 /*LINTLIBRARY*/
 
@@ -37,6 +37,8 @@ __RCSID("$NetBSD: memcpy_chk.c,v 1.4 2008/04/28 20:23:00 martin Exp $");
 #include <string.h>
 
 #undef memcpy
+
+void *__memcpy_chk(void * __restrict, const void * __restrict, size_t, size_t);
 
 void *
 __memcpy_chk(void * __restrict dst, const void * __restrict src, size_t len,
