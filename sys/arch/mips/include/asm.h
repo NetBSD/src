@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.47 2014/05/30 11:46:48 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.48 2014/09/17 16:49:20 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -259,11 +259,11 @@ _C_LABEL(x):
 
 #define	MSG(msg)			\
 	.rdata;				\
-9:	.asciiz	msg;			\
+9:	.asciz	msg;			\
 	.text
 
 #define	ASMSTR(str)			\
-	.asciiz str;			\
+	.asciz str;			\
 	.align	3
 
 #define	RCSID(name)	.pushsection ".ident"; .asciz name; .popsection
