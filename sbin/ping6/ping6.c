@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.84 2014/09/16 21:29:12 christos Exp $	*/
+/*	$NetBSD: ping6.c,v 1.85 2014/09/17 01:00:41 ozaki-r Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.84 2014/09/16 21:29:12 christos Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.85 2014/09/17 01:00:41 ozaki-r Exp $");
 #endif
 #endif
 
@@ -2057,7 +2057,6 @@ tvsub(struct timeval *out, struct timeval *in)
 /*
  * onsigexit --
  */
-/* ARGSUSED */
 static void
 onsigexit(int sig)
 {
@@ -2068,7 +2067,6 @@ onsigexit(int sig)
 		(void)kill(getpid(), SIGINT);
 	}
 
-	/* NOTREACHED */
 	exit(1);
 }
 
