@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.46 2013/10/18 19:56:55 christos Exp $ */
+/* $NetBSD: udf.h,v 1.47 2014/09/17 19:47:05 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -127,6 +127,8 @@ extern int udf_verbose;
 
 #define UDF_DISC_SLACK		(128)			/* picked, at least 64 kb or 128 */
 #define UDF_ISO_VRS_SIZE	(32*2048)		/* 32 ISO `sectors' */
+
+#define UDF_MAX_INDIRS_FOLLOW	1024			/* picked */
 
 
 /* structure space */
