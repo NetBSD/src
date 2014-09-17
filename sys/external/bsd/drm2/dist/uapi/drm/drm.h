@@ -62,10 +62,10 @@ typedef int32_t  __s32;
 typedef uint32_t __u32;
 typedef int64_t  __s64;
 typedef uint64_t __u64;
+#endif
 #  ifndef __user
 #    define	__user
 #  endif
-#endif
 #endif
 
 #define DRM_NAME	"drm"	  /**< Name in kernel, /dev, and /proc */
