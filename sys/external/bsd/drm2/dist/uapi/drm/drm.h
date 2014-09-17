@@ -53,6 +53,7 @@ typedef unsigned int drm_handle_t;
 #ifdef __NetBSD__
 #include <sys/ioccom.h>
 #include <sys/types.h>
+#ifndef _KERNEL
 typedef int8_t   __s8;
 typedef uint8_t  __u8;
 typedef int16_t  __s16;
@@ -64,6 +65,7 @@ typedef uint64_t __u64;
 #  ifndef __user
 #    define	__user
 #  endif
+#endif
 #endif
 
 #define DRM_NAME	"drm"	  /**< Name in kernel, /dev, and /proc */
