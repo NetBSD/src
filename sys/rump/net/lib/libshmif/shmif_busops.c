@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_busops.c,v 1.11 2013/12/20 10:00:59 pooka Exp $	*/
+/*	$NetBSD: shmif_busops.c,v 1.12 2014/09/17 04:20:58 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -29,10 +29,10 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.11 2013/12/20 10:00:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.12 2014/09/17 04:20:58 ozaki-r Exp $");
 #else
 #include <rump/rumpuser_port.h>
-__RCSID("$NetBSD: shmif_busops.c,v 1.11 2013/12/20 10:00:59 pooka Exp $");
+__RCSID("$NetBSD: shmif_busops.c,v 1.12 2014/09/17 04:20:58 ozaki-r Exp $");
 #endif
 
 #include <sys/param.h>
@@ -111,7 +111,7 @@ shmif_buswrite(struct shmif_mem *busmem, uint32_t off, void *data, size_t len,
 
 	memcpy(busmem->shm_data + off, data, chunk);
 
-	DPRINTF(("buswrite: wrote %d bytes to %d", chunk, off));
+	DPRINTF(("buswrite: wrote %zu bytes to %d", chunk, off));
 
 	if (filledbus) {
 		*wrap = true;
@@ -122,7 +122,7 @@ shmif_buswrite(struct shmif_mem *busmem, uint32_t off, void *data, size_t len,
 		return (off + chunk) % BUSMEM_DATASIZE;
 	}
 
-	DPRINTF((", wrapped bytes %d to 0\n", len));
+	DPRINTF((", wrapped bytes %zu to 0\n", len));
 
 	shmif_advancefirst(busmem, 0, len);
 
