@@ -370,7 +370,8 @@ int i915_parse_cmds(struct intel_ring_buffer *ring,
 {
 	int ret = 0;
 	u32 *cmd, *batch_base, *batch_end;
-	struct drm_i915_cmd_descriptor default_desc = { 0 };
+	static const struct drm_i915_cmd_descriptor zero_default_desc;
+	struct drm_i915_cmd_descriptor default_desc = zero_default_desc;
 	int needs_clflush = 0;
 
 	ret = i915_gem_obj_prepare_shmem_read(batch_obj, &needs_clflush);
