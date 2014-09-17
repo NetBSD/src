@@ -1445,8 +1445,10 @@ static u8 kv_get_vce_boot_level(struct radeon_device *rdev)
 		&rdev->pm.dpm.dyn_state.vce_clock_voltage_dependency_table;
 
 	for (i = 0; i < table->count; i++) {
+#if 0		/* XXX Upstream has changed this to make sense.  */
 		if (table->entries[i].evclk >= 0) /* XXX */
 			break;
+#endif
 	}
 
 	return i;
