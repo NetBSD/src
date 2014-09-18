@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.31 2013/09/05 17:35:11 pooka Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.32 2014/09/18 13:58:20 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.31 2013/09/05 17:35:11 pooka Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.32 2014/09/18 13:58:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -122,8 +122,8 @@ getutxent(void)
 		struct stat st;
 
 		if ((fp = fopen(utfile, "re+")) == NULL)
-			if ((fp = fopen(utfile, "w+")) == NULL) {
-				if ((fp = fopen(utfile, "r")) == NULL)
+			if ((fp = fopen(utfile, "we+")) == NULL) {
+				if ((fp = fopen(utfile, "re")) == NULL)
 					goto fail;
 				else
 					readonly = 1;
@@ -343,10 +343,10 @@ updwtmpx(const char *file, const struct utmpx *utx)
 	_DIAGASSERT(file != NULL);
 	_DIAGASSERT(utx != NULL);
 
-	fd = open(file, O_WRONLY|O_APPEND|O_SHLOCK);
+	fd = open(file, O_WRONLY|O_APPEND|O_SHLOCK|O_CLOEXEC);
 
 	if (fd == -1) {
-		if ((fd = open(file, O_CREAT|O_WRONLY|O_EXLOCK, 0644)) == -1)
+		if ((fd = open(file, O_CREAT|O_WRONLY|O_EXLOCK|O_CLOEXEC, 0644)) == -1)
 			return -1;
 		(void)memset(&ut, 0, sizeof(ut));
 		ut.ut_type = SIGNATURE;
@@ -432,7 +432,7 @@ getlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
 	_DIAGASSERT(fname != NULL);
 	_DIAGASSERT(ll != NULL);
 
-	db = dbopen(fname, O_RDONLY|O_SHLOCK, 0, DB_HASH, NULL);
+	db = dbopen(fname, O_RDONLY|O_SHLOCK|O_CLOEXEC, 0, DB_HASH, NULL);
 
 	if (db == NULL)
 		return NULL;
@@ -471,7 +471,7 @@ updlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
 	_DIAGASSERT(fname != NULL);
 	_DIAGASSERT(ll != NULL);
 
-	db = dbopen(fname, O_RDWR|O_CREAT|O_EXLOCK, 0644, DB_HASH, NULL);
+	db = dbopen(fname, O_RDWR|O_CREAT|O_EXLOCK|O_CLOEXEC, 0644, DB_HASH, NULL);
 
 	if (db == NULL)
 		return -1;

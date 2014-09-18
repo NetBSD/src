@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.53 2014/06/26 20:14:32 christos Exp $	*/
+/*	$NetBSD: getcap.c,v 1.54 2014/09/18 13:58:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.53 2014/06/26 20:14:32 christos Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.54 2014/09/18 13:58:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -322,8 +322,8 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 			size_t clen;
 
 			(void)snprintf(pbuf, sizeof(pbuf), "%s.db", *db_p);
-			if ((capdbp = dbopen(pbuf, O_RDONLY, 0, DB_HASH, 0))
-			     != NULL) {
+			if ((capdbp = dbopen(pbuf, O_RDONLY | O_CLOEXEC, 0,
+			    DB_HASH, 0)) != NULL) {
 				free(record);
 				retval = cdbget(capdbp, &record, name);
 				if (retval < 0) {
@@ -352,7 +352,7 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 			} else
 #endif
 			{
-				fd = open(*db_p, O_RDONLY, 0);
+				fd = open(*db_p, O_RDONLY | O_CLOEXEC, 0);
 				if (fd < 0) {
 					/* No error on unfound file. */
 					continue;
