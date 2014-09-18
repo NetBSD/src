@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.85 2014/08/16 16:22:21 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.86 2014/09/18 13:58:20 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.85 2014/08/16 16:22:21 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.86 2014/09/18 13:58:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,10 +61,10 @@ static time_t const time_t_max =
 */
 
 #ifdef O_BINARY
-#define OPEN_MODE	(O_RDONLY | O_BINARY)
+#define OPEN_MODE	(O_RDONLY | O_BINARY | O_CLOEXEC)
 #endif /* defined O_BINARY */
 #ifndef O_BINARY
-#define OPEN_MODE	O_RDONLY
+#define OPEN_MODE	(O_RDONLY | O_CLOEXEC)
 #endif /* !defined O_BINARY */
 
 #ifndef WILDABBR

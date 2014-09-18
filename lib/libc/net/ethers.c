@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.24 2014/06/19 15:09:07 christos Exp $	*/
+/*	$NetBSD: ethers.c,v 1.25 2014/09/18 13:58:20 christos Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -9,7 +9,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ethers.c,v 1.24 2014/06/19 15:09:07 christos Exp $");
+__RCSID("$NetBSD: ethers.c,v 1.25 2014/09/18 13:58:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -97,7 +97,7 @@ ether_ntohost(char *hostname, const struct ether_addr *e)
 	    e->ether_addr_octet[4], e->ether_addr_octet[5]);
 #endif
 
-	f = fopen(_PATH_ETHERS, "r");
+	f = fopen(_PATH_ETHERS, "re");
 	if (f == NULL)
 		return -1;
 	for (p = NULL;;) {
@@ -150,7 +150,7 @@ ether_hostton(const char *hostname, struct ether_addr *e)
 	_DIAGASSERT(hostname != NULL);
 	_DIAGASSERT(e != NULL);
 
-	f = fopen(_PATH_ETHERS, "r");
+	f = fopen(_PATH_ETHERS, "re");
 	if (f == NULL)
 		return -1;
 
