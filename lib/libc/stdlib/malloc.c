@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.55 2012/12/30 21:23:20 dholland Exp $	*/
+/*	$NetBSD: malloc.c,v 1.56 2014/09/18 13:58:20 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -90,7 +90,7 @@ void utrace(struct ut *, int);
 #include <sys/cdefs.h>
 #include "extern.h"
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.55 2012/12/30 21:23:20 dholland Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.56 2014/09/18 13:58:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 int utrace(const char *, void *, size_t);
 
@@ -107,7 +107,7 @@ static mutex_t thread_lock = MUTEX_INITIALIZER;
     static int fdzero;
 #   define MMAP_FD	fdzero
 #   define INIT_MMAP() \
-	{ if ((fdzero = open(_PATH_DEVZERO, O_RDWR, 0000)) == -1) \
+	{ if ((fdzero = open(_PATH_DEVZERO, O_RDWR | O_CLOEXEC, 0000)) == -1) \
 	    wrterror("open of /dev/zero"); }
 #endif /* __sparc__ */
 
