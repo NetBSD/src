@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1111 2014/08/24 07:59:22 jnemeth Exp $
+# $NetBSD: GENERIC,v 1.1112 2014/09/18 14:58:21 wiz Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1111 $"
+#ident 		"GENERIC-$Revision: 1.1112 $"
 
 maxusers	64		# estimated number of users
 
@@ -123,6 +123,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	SYSCALL_STATS	# per syscall counts
 #options 	SYSCALL_TIMES	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
+#options 	KDTRACE_HOOKS	# kernel DTrace hooks
 
 # Compatibility options
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
