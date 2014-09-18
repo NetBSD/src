@@ -4,7 +4,7 @@
 
 .PATH: ${NETBSDSRCDIR}/external/cddl/osnet/dev/fbt
 
-KMOD=		fbt
+KMOD=		dtrace_fbt
 SRCS=		fbt.c
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys \
