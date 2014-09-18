@@ -4,7 +4,7 @@
 
 .PATH: ${NETBSDSRCDIR}/external/cddl/osnet/dev/sdt
 
-KMOD=		sdt
+KMOD=		dtrace_sdt
 SRCS=		sdt.c
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys \
