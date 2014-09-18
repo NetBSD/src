@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6.h,v 1.1.1.10 2014/07/14 11:45:06 roy Exp $ */
+/* $NetBSD: ipv6.h,v 1.1.1.11 2014/09/18 20:43:58 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -35,7 +35,7 @@
 
 #include <netinet/in.h>
 
-#ifdef __linux__
+#if defined(__linux__) && defined(__GLIBC__)
 #  define _LINUX_IN6_H
 #  include <linux/ipv6.h>
 #endif
