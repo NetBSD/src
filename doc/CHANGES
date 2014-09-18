@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1980 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1981 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -48,4 +48,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	awinmmc(4): Use DMA for MMC transfers. [jmcneill 20140908]
 	rtsol(8): Removed in favour of dhcpcd. [roy 20140911]
 	rtsold(8): Removed in favour of dhcpcd. [roy 20140911]
-	dhcpcd(8): Import dhcpcd-6.4.4. [roy 20140916]
+	dhcpcd(8): Import dhcpcd-6.4.5. [roy 20140918]
