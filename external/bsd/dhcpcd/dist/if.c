@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if.c,v 1.1.1.4 2014/09/16 22:23:18 roy Exp $");
+ __RCSID("$NetBSD: if.c,v 1.1.1.5 2014/09/18 20:43:55 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -481,8 +481,8 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 	return ifs;
 }
 
-struct interface *
-if_find(struct dhcpcd_ctx *ctx, const char *ifname)
+static struct interface *
+if_findindexname(struct dhcpcd_ctx *ctx, unsigned int idx, const char *name)
 {
 	struct interface *ifp;
 
@@ -490,11 +490,26 @@ if_find(struct dhcpcd_ctx *ctx, const char *ifname)
 		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
 			if ((ifp->options == NULL ||
 			    !(ifp->options->options & DHCPCD_PFXDLGONLY)) &&
-			    strcmp(ifp->name, ifname) == 0)
+			    ((name && strcmp(ifp->name, name) == 0) ||
+			    (!name && ifp->index == idx)))
 				return ifp;
 		}
 	}
 	return NULL;
+}
+
+struct interface *
+if_find(struct dhcpcd_ctx *ctx, const char *name)
+{
+
+	return if_findindexname(ctx, 0, name);
+}
+
+struct interface *
+if_findindex(struct dhcpcd_ctx *ctx, unsigned int idx)
+{
+
+	return if_findindexname(ctx, idx, NULL);
 }
 
 int
