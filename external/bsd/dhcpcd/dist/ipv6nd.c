@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6nd.c,v 1.1.1.10 2014/09/16 22:23:19 roy Exp $");
+ __RCSID("$NetBSD: ipv6nd.c,v 1.1.1.11 2014/09/18 20:43:56 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -35,11 +35,6 @@
 #include <netinet/in.h>
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
-
-#ifdef __linux__
-#  define _LINUX_IN6_H
-#  include <linux/ipv6.h>
-#endif
 
 #include <errno.h>
 #include <fcntl.h>
@@ -290,7 +285,7 @@ ipv6nd_sendrsprobe(void *arg)
 
 	state = RS_STATE(ifp);
 	ctx = ifp->ctx->ipv6;
-	ctx->sndhdr.msg_name = (caddr_t)&dst;
+	ctx->sndhdr.msg_name = (void *)&dst;
 	ctx->sndhdr.msg_iov[0].iov_base = state->rs;
 	ctx->sndhdr.msg_iov[0].iov_len = state->rslen;
 
@@ -404,6 +399,9 @@ ipv6nd_addrexists(struct dhcpcd_ctx *ctx, const struct ipv6_addr *addr)
 {
 	struct ra *rap;
 	struct ipv6_addr *ap;
+
+	if (ctx->ipv6 == NULL)
+		return 0;
 
 	TAILQ_FOREACH(rap, ctx->ipv6->ra_routers, next) {
 		TAILQ_FOREACH(ap, &rap->addrs, next) {
