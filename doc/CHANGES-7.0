@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.33 2014/09/12 08:17:20 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.34 2014/09/18 15:21:44 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -719,3 +719,8 @@ sys/fs/puffs/puffs_vnops.c			1.186
 	- Return EFBIG instead of EINVAL for negative offsets, as FFS does
 	[manu, ticket #93]
 
+sys/dev/pci/agp_i810.c				1.113-1.114
+
+	Revert to mapping the whole GTTMMADR region all at once for now and
+	use the right BAR for MMIO register sizing on i810.
+	[riastradh, ticket #94]
