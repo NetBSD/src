@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.1.1.14 2014/09/16 22:23:19 roy Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.1.1.15 2014/09/18 20:43:56 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -34,10 +34,6 @@
 #include <sys/utsname.h>
 
 #include <netinet/in.h>
-#ifdef __linux__
-#  define _LINUX_IN6_H
-#  include <linux/ipv6.h>
-#endif
 
 #include <ctype.h>
 #include <errno.h>
@@ -1056,8 +1052,8 @@ logsend:
 
 	ctx = ifp->ctx->ipv6;
 	dst.sin6_scope_id = ifp->index;
-	ctx->sndhdr.msg_name = (caddr_t)&dst;
-	ctx->sndhdr.msg_iov[0].iov_base = (caddr_t)state->send;
+	ctx->sndhdr.msg_name = (void *)&dst;
+	ctx->sndhdr.msg_iov[0].iov_base = state->send;
 	ctx->sndhdr.msg_iov[0].iov_len = state->send_len;
 
 	/* Set the outbound interface */
