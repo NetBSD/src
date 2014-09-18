@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.34 2014/09/18 15:21:44 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.35 2014/09/18 15:50:49 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -724,3 +724,11 @@ sys/dev/pci/agp_i810.c				1.113-1.114
 	Revert to mapping the whole GTTMMADR region all at once for now and
 	use the right BAR for MMIO register sizing on i810.
 	[riastradh, ticket #94]
+
+external/gpl3/gcc.old/dist/gcc/config/i386/pmm_malloc.h 1.2
+
+	Apply r1.2 from our GCC 4.8 version of the same file:
+
+	Kill the "throw()" on a forward declaration for posix_memalign (it
+	does not match our base declaration and may cause warnings).
+	[joerg, ticket #109]
