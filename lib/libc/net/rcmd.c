@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.69 2014/05/28 14:39:02 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.70 2014/09/18 13:58:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.69 2014/05/28 14:39:02 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.70 2014/09/18 13:58:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -670,7 +670,7 @@ iruserok_sa(const void *raddr, int rlen, int superuser, const char *ruser,
 
 	__rcmd_errstr = NULL;
 
-	hostf = superuser ? NULL : fopen(_PATH_HEQUIV, "r");
+	hostf = superuser ? NULL : fopen(_PATH_HEQUIV, "re");
 
 	if (hostf) {
 		if (__ivaliduser_sa(hostf, sa, (socklen_t)rlen, luser,
@@ -700,7 +700,7 @@ iruserok_sa(const void *raddr, int rlen, int superuser, const char *ruser,
 		(void)setegid(pwd->pw_gid);
 		(void)initgroups(pwd->pw_name, pwd->pw_gid);
 		(void)seteuid(pwd->pw_uid);
-		hostf = fopen(pbuf, "r");
+		hostf = fopen(pbuf, "re");
 
 		if (hostf != NULL) {
 			/*

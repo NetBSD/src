@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.31 2014/08/15 11:04:07 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.32 2014/09/18 13:58:20 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -6,7 +6,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.31 2014/08/15 11:04:07 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.32 2014/09/18 13:58:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -714,7 +714,7 @@ _loc(void)
 			goto no_locale;
 	oldsun = 0;
 	(void) sprintf(filename, "%s/%s/%s", locale_home, name, lc_time);
-	fd = open(filename, O_RDONLY);
+	fd = open(filename, O_RDONLY | O_CLOEXEC);
 	if (fd < 0) {
 		/*
 		** Old Sun systems have a different naming and data convention.
@@ -722,7 +722,7 @@ _loc(void)
 		oldsun = 1;
 		(void) sprintf(filename, "%s/%s/%s", locale_home,
 			lc_time, name);
-		fd = open(filename, O_RDONLY);
+		fd = open(filename, O_RDONLY | O_CLOEXEC);
 		if (fd < 0)
 			goto no_locale;
 	}

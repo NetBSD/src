@@ -1,4 +1,4 @@
-/*	$NetBSD: mdXhl.c,v 1.10 2012/06/25 22:32:44 abs Exp $	*/
+/*	$NetBSD: mdXhl.c,v 1.11 2014/09/18 13:58:20 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -81,7 +81,7 @@ MDNAME(File)(const char *filename, char *buf)
 	/* buf may be NULL */
 
 	MDNAME(Init)(&ctx);
-	f = open(filename, O_RDONLY, 0666);
+	f = open(filename, O_RDONLY | O_CLOEXEC, 0666);
 	if (f < 0)
 		return NULL;
 
