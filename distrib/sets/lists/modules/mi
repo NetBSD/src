@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.69 2014/05/18 18:28:49 jakllsch Exp $
+# $NetBSD: mi,v 1.70 2014/09/18 19:45:24 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -58,6 +58,12 @@
 ./@MODULEDIR@/dm/dm.kmod			base-kernel-modules	lvm,kmod
 ./@MODULEDIR@/dtrace				base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace/dtrace.kmod		base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_fbt				base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_fbt/dtrace_fbt.kmod		base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_profile				base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_profile/dtrace_profile.kmod	base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_sdt				base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_sdt/dtrace_sdt.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtv				base-kernel-modules	kmod
 ./@MODULEDIR@/dtv/dtv.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/dtv_math				base-kernel-modules	kmod
@@ -68,8 +74,8 @@
 ./@MODULEDIR@/exec_script/exec_script.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/ext2fs				base-kernel-modules	kmod
 ./@MODULEDIR@/ext2fs/ext2fs.kmod		base-kernel-modules	kmod
-./@MODULEDIR@/fbt				base-kernel-modules	kmod,dtrace
-./@MODULEDIR@/fbt/fbt.kmod			base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/fbt				base-obsolete		obsolete
+./@MODULEDIR@/fbt/fbt.kmod			base-obsolete		obsolete
 ./@MODULEDIR@/fdesc				base-kernel-modules	kmod
 ./@MODULEDIR@/fdesc/fdesc.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/ffs				base-kernel-modules	kmod
@@ -176,8 +182,8 @@
 ./@MODULEDIR@/ppp_deflate/ppp_deflate.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/procfs				base-kernel-modules	kmod
 ./@MODULEDIR@/procfs/procfs.kmod		base-kernel-modules	kmod
-./@MODULEDIR@/profile				base-kernel-modules	kmod,dtrace
-./@MODULEDIR@/profile/profile.kmod		base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/profile				base-obsolete		obsolete
+./@MODULEDIR@/profile/profile.kmod		base-obsolete		obsolete
 ./@MODULEDIR@/ptyfs				base-kernel-modules	kmod
 ./@MODULEDIR@/ptyfs/ptyfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/puffs				base-kernel-modules	kmod
@@ -186,8 +192,8 @@
 ./@MODULEDIR@/putter/putter.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/scsiverbose			base-kernel-modules	kmod
 ./@MODULEDIR@/scsiverbose/scsiverbose.kmod	base-kernel-modules	kmod
-./@MODULEDIR@/sdt				base-kernel-modules	kmod,dtrace
-./@MODULEDIR@/sdt/sdt.kmod			base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/sdt				base-obsolete		obsolete
+./@MODULEDIR@/sdt/sdt.kmod			base-obsolete		obsolete
 ./@MODULEDIR@/sdtemp				base-kernel-modules	kmod
 ./@MODULEDIR@/sdtemp/sdtemp.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/secmodel_bsd44			base-kernel-modules	kmod
