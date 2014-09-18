@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.112 2014/07/25 23:05:54 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.112.2.1 2014/09/18 10:25:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.112 2014/07/25 23:05:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.112.2.1 2014/09/18 10:25:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,7 +405,9 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 		apbase = AGP_I965_GMADR;
 		mmadr_bar = AGP_I965_MMADR;
 		mmadr_type |= PCI_MAPREG_MEM_TYPE_64BIT;
-		isc->size = 512*1024;
+		if (pci_mapreg_info(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
+			AGP_I965_MMADR, mmadr_type, NULL, &isc->size, NULL))
+			isc->size = 512*1024; /* XXX */
 		gtt_bar = 0;
 		gtt_off = AGP_I965_GTT;
 		break;
@@ -413,14 +415,18 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 		apbase = AGP_I965_GMADR;
 		mmadr_bar = AGP_I965_MMADR;
 		mmadr_type |= PCI_MAPREG_MEM_TYPE_64BIT;
-		isc->size = 512*1024;
+		if (pci_mapreg_info(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
+			AGP_I965_MMADR, mmadr_type, NULL, &isc->size, NULL))
+			isc->size = 512*1024; /* XXX */
 		gtt_bar = 0;
 		gtt_off = AGP_G4X_GTT;
 		break;
 	default:
 		apbase = AGP_I810_GMADR;
 		mmadr_bar = AGP_I810_MMADR;
-		isc->size = 512*1024;
+		if (pci_mapreg_info(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
+			AGP_I810_MMADR, mmadr_type, NULL, &isc->size, NULL))
+			isc->size = 512*1024; /* XXX */
 		gtt_bar = 0;
 		gtt_off = AGP_I810_GTT;
 		break;
