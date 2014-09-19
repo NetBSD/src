@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID,v 1.9 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: ODROID,v 1.10 2014/09/19 14:48:42 reinoud Exp $
 #
 #	ODROID -- ODROID series Exynos Kernel
 #
@@ -33,7 +33,8 @@ options 	EXYNOS5422
 options 	PMAPCOUNTERS
 options 	BUSDMA_COUNTERS
 options 	EXYNOS_CONSOLE_EARLY
-options 	UVMHIST
+#options 	UVMHIST
+options		USBHIST
 #options 	UVMHIST_PRINT,KERNHIST_DELAY=0
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	PMAP_NEED_ALLOC_POOLPAGE
@@ -147,9 +148,10 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
+#options	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
-#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
@@ -173,6 +175,7 @@ options	USBVERBOSE
 #  quiet		Show aprint_naive output
 #  verbose		Show aprint_normal and aprint_verbose output
 #options		BOOT_ARGS="\"\""
+options		BOOT_ARGS="\"verbose\""
 
 config		netbsd		root on ? type ?
 
@@ -214,9 +217,9 @@ gpio*		at exyogpio?
 
 # On-board USB
 exyousb*	at exyo0
-ohci*		at exyousb?
+#ohci*		at exyousb?
 ehci*		at exyousb?
-usb*		at ohci?
+#usb*		at ohci?
 usb*		at ehci?
 
 # Network phy for the LAN9730
