@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.22 2014/07/25 08:10:38 dholland Exp $ */
+/* $NetBSD: hdaudio.c,v 1.23 2014/09/19 17:23:35 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.22 2014/07/25 08:10:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.23 2014/09/19 17:23:35 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.22 2014/07/25 08:10:38 dholland Exp $"
 #include "hdaudiovar.h"
 #include "hdaudioreg.h"
 #include "hdaudioio.h"
+#include "hdaudio_verbose.h"
 
 /* #define	HDAUDIO_DEBUG */
 
@@ -1628,4 +1629,45 @@ hdaudio_modcmd(modcmd_t cmd, void *opaque)
 	default:
 		return ENOTTY;
 	}
+}
+
+void hdaudio_load_verbose(void);
+
+void get_hdaudio_vendor_stub(char *, size_t, hdaudio_vendor_id_t);
+void get_hdaudio_product_stub(char *, size_t, hdaudio_vendor_id_t,
+    hdaudio_product_id_t);
+
+void (*get_hdaudio_vendor)(char *, size_t, hdaudio_vendor_id_t) =
+    get_hdaudio_vendor_stub;
+void (*get_hdaudio_product)(char *, size_t, hdaudio_vendor_id_t,
+    hdaudio_product_id_t) = get_hdaudio_product_stub;
+
+int hdaudio_verbose_loaded = 0;
+
+/*
+ * Load the hdaudioverbose module
+ */
+void hdaudio_load_verbose(void)
+{
+	if (hdaudio_verbose_loaded == 0)
+		module_autoload("hdaudioverbose", MODULE_CLASS_MISC);
+}
+
+void get_hdaudio_vendor_stub(char *v, size_t l, hdaudio_vendor_id_t v_id)
+{
+	hdaudio_load_verbose();
+	if (hdaudio_verbose_loaded)
+		get_hdaudio_vendor(v, l, v_id);
+	else
+		snprintf(v, l, "vendor 0x%.4x", v_id);
+}
+
+void get_hdaudio_product_stub(char *p, size_t l, hdaudio_vendor_id_t v_id,
+    hdaudio_product_id_t p_id)
+{
+	hdaudio_load_verbose();
+	if (hdaudio_verbose_loaded)
+		get_hdaudio_product(p, l, v_id, p_id);
+	else
+		snprintf(p, l, "product 0x%.4x", p_id);
 }

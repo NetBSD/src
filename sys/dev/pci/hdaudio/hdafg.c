@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.21 2014/05/23 13:57:04 msaitoh Exp $ */
+/* $NetBSD: hdafg.c,v 1.22 2014/09/19 17:23:35 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.21 2014/05/23 13:57:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.22 2014/09/19 17:23:35 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,7 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.21 2014/05/23 13:57:04 msaitoh Exp $");
 #include "hdaudioreg.h"
 #include "hdaudio_mixer.h"
 #include "hdaudioio.h"
-#include "hdaudio_ids.h"
+#include "hdaudio_verbose.h"
+#include "hdaudiodevs.h"
 #include "hdafg_dd.h"
 #include "hdmireg.h"
 
@@ -685,7 +686,7 @@ hdafg_widget_getcaps(struct hdaudio_widget *w)
 	w->w_waspin = false;
 
 	switch (sc->sc_vendor) {
-	case HDA_VENDOR_ANALOG_DEVICES:
+	case HDAUDIO_VENDOR_ANALOG:
 		/*
 		 * help the parser by marking the analog
 		 * beeper as a beep generator
@@ -3612,10 +3613,9 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 
 	prop_dictionary_get_uint16(args, "vendor-id", &sc->sc_vendor);
 	prop_dictionary_get_uint16(args, "product-id", &sc->sc_product);
-	hdaudio_id2name(sc->sc_vendor, HDA_PRODUCT_ANY,
-	    vendor, sizeof(vendor));
-	hdaudio_id2name(sc->sc_vendor, sc->sc_product,
-	    product, sizeof(product));
+	get_hdaudio_vendor(vendor, sizeof(vendor), sc->sc_vendor);
+	get_hdaudio_product(product, sizeof(product), sc->sc_vendor,
+	    sc->sc_product);
 	hda_print1(sc, ": %s %s%s\n", vendor, product,
 	    sc->sc_config ? " (custom configuration)" : "");
 
@@ -3965,10 +3965,10 @@ hdafg_getdev(void *opaque, struct audio_device *audiodev)
 	struct hdaudio_audiodev *ad = opaque;
 	struct hdafg_softc *sc = ad->ad_sc;
 
-	hdaudio_id2name(sc->sc_vendor, HDA_PRODUCT_ANY,
-	    audiodev->name, sizeof(audiodev->name));
-	hdaudio_id2name(sc->sc_vendor, sc->sc_product,
-	    audiodev->version, sizeof(audiodev->version));
+	get_hdaudio_vendor(audiodev->name, sizeof(audiodev->name),
+	    sc->sc_vendor);
+	get_hdaudio_product(audiodev->version, sizeof(audiodev->version),
+	    sc->sc_vendor, sc->sc_product);
 	snprintf(audiodev->config, sizeof(audiodev->config) - 1,
 	    "%02Xh", sc->sc_nid);
 
