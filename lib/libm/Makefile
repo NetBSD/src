@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.165 2014/08/26 11:48:20 christos Exp $
+#  $NetBSD: Makefile,v 1.166 2014/09/19 17:42:44 matt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -147,6 +147,19 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 # and emulation code isn't written yet.
 ARCH_SRCS = n_scalbn.S
 WARNS?=5
+.elif (${LIBC_MACHINE_CPU} == "riscv")
+.PATH:	${.CURDIR}/arch/riscv
+
+COMMON_SRCS += fenv.c
+
+.if ${MKSOFTFLOAT} == "no"
+ARCH_SRCS = e_sqrt.S e_sqrtf.S
+ARCH_SRCS += s_copysign.S s_copysignf.S
+ARCH_SRCS += s_fabs.S s_fabsf.S
+ARCH_SRCS += s_fma.S s_fmaf.S
+ARCH_SRCS += s_fmax.S s_fmaxf.S
+ARCH_SRCS += s_fmin.S s_fminf.S
+.endif
 .endif
 
 WARNS?=5
