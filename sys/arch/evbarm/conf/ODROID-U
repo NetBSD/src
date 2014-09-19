@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-U,v 1.13 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: ODROID-U,v 1.14 2014/09/19 14:39:34 reinoud Exp $
 #
 #	ODROID-U -- ODROID-U series Exynos Kernel
 #
@@ -26,8 +26,10 @@ options 	EXYNOS4412P
 options 	PMAPCOUNTERS
 options 	BUSDMA_COUNTERS
 options 	EXYNOS_CONSOLE_EARLY
-options 	UVMHIST
+#options 	UVMHIST
 #options 	UVMHIST_PRINT,KERNHIST_DELAY=0
+#options	KERNHIST
+#options	USBHIST
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	PMAP_NEED_ALLOC_POOLPAGE
 
@@ -143,7 +145,7 @@ options 	DEBUG
 options		LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
-#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
@@ -165,7 +167,7 @@ options	USBVERBOSE
 #  memorydisk=<n>	Set memorydisk size to <n> KB
 #  quiet		Show aprint_naive output
 #  verbose		Show aprint_normal and aprint_verbose output
-#options		BOOT_ARGS="\"\""
+options		BOOT_ARGS="\"verbose\""
 
 config		netbsd		root on ? type ?
 
@@ -192,7 +194,7 @@ sscom0		at exyo0  port 0		# UART0, expansion
 sscom1		at exyo0  port 1		# UART1, console
 
 # Exynos Watchdog Timer
-exyowdt0 	at exyo0 flags 1		# watchdog
+exyowdt0 	at exyo0 flags 0		# watchdog
 
 # GPIO
 exyogpio0	at exyo0
