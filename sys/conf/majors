@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.68 2014/03/18 18:20:41 riastradh Exp $
+# $NetBSD: majors,v 1.69 2014/09/19 17:46:28 matt Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -55,3 +55,7 @@ device-major seeprom   char 206		   seeprom
 device-major dtrace    char 207		   dtrace
 device-major spiflash  char 208 block 208  spiflash
 device-major lua       char 209            lua
+
+# 210-219 reserved for MI ws devices
+# 220-239 reserved for MI usb devices
+# 240-259 reserved for MI "std" devices
