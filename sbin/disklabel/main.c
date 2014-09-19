@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.41 2014/08/10 06:48:51 apb Exp $	*/
+/*	$NetBSD: main.c,v 1.42 2014/09/19 17:45:03 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.41 2014/08/10 06:48:51 apb Exp $");
+__RCSID("$NetBSD: main.c,v 1.42 2014/09/19 17:45:03 matt Exp $");
 #endif
 #endif	/* not lint */
 
@@ -246,7 +246,7 @@ static const struct disklabel_params {
 	{ "sandpoint",	0, 1,   0, 16, 2, 0, BIG_ENDIAN },	/* powerpc */
 	{ "sgimips",	0, 1,   0, 16, 2, 0, BIG_ENDIAN },	/* mips */
 
-	{ "sbmips",	0, 1,   0, 16, 3, 0, 0 },	/* mips */
+	{ "sbmips",	0, 1,   0, 16, 3, 0, 0 },		/* mips */
 
 	{ "cesfic",	0, 2,   0,  8, 2, 0, BIG_ENDIAN },	/* m68k */
 	{ "hp300",	0, 2,   0,  8, 2, 0, BIG_ENDIAN },	/* m68k */
@@ -260,11 +260,13 @@ static const struct disklabel_params {
 
 	{ "dreamcast",	1, 1,   0, 16, 2, 0, LITTLE_ENDIAN },	/* sh3 */
 	{ "evbarm64",	1, 1,   0, 16, 2, 0, 0 },		/* aarch64 */
-	{ "evbsh3",	1, 1,   0, 16, 2, 0, 0 },		/* sh3 */
 	{ "evbcf",	1, 1,   0, 16, 2, 0, BIG_ENDIAN },	/* coldfire */
 	{ "evbppc-mbr",	1, 1,   0, 16, 2, 0, BIG_ENDIAN },	/* powerpc */
+	{ "evbsh3",	1, 1,   0, 16, 2, 0, 0 },		/* sh3 */
 	{ "hpcsh",	1, 1,   0, 16, 2, 0, LITTLE_ENDIAN },	/* sh3 */
 	{ "mmeye",	1, 1,   0, 16, 2, 0, 0 },		/* sh3 */
+	{ "or1k",	1, 1,   0, 16, 2, 0, BIG_ENDIAN },	/* or1k */
+	{ "riscv",	1, 1,   0, 16, 2, 0, LITTLE_ENDIAN },	/* riscv */
 
 	{ "acorn26",	1, 1,   0, 16, 2, 8, LITTLE_ENDIAN },	/* arm */
 	{ "acorn32",	1, 1,   0, 16, 2, 8, LITTLE_ENDIAN },	/* arm */
@@ -312,6 +314,8 @@ static const struct arch_endian {
 	{ LITTLE_ENDIAN, "ia64" },
 	{ LITTLE_ENDIAN, "mipsel" },
 	{ LITTLE_ENDIAN, "mips64el" },
+	{ LITTLE_ENDIAN, "riscv32" },
+	{ LITTLE_ENDIAN, "riscv64" },
 	{ LITTLE_ENDIAN, "sh3el" },
 	{ LITTLE_ENDIAN, "vax" },
 	{ LITTLE_ENDIAN, "x86_64" },
@@ -332,6 +336,7 @@ static const struct arch_endian {
 	{ BIG_ENDIAN, "m68k" },
 	{ BIG_ENDIAN, "mipseb" },
 	{ BIG_ENDIAN, "mips64eb" },
+	{ BIG_ENDIAN, "or1k" },
 	{ BIG_ENDIAN, "powerpc" },
 	{ BIG_ENDIAN, "sh3eb" },
 	{ BIG_ENDIAN, "sparc" },
