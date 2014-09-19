@@ -1,0 +1,7 @@
+# $NetBSD: ttys,v 1.1 2014/09/19 17:36:24 matt Exp $
+#
+#	from: @(#)ttys	5.1 (Berkeley) 4/17/89
+#
+# name	getty				type	status		comments
+#
+console	"/usr/libexec/getty default"	vt100	on secure
