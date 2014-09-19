@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.24 2013/05/20 11:37:02 mbalmer Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.25 2014/09/19 09:01:05 matt Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,17 +63,20 @@ BEGIN {
 		majors[1] = "arch/powerpc/conf/majors.powerpc";
 	else
 		majors[1] = "arch/" machine "/conf/majors." machine;
+	nm = 2;
 
 	# process all files with majors and fill the chr[] and blk[]
 	# arrays, used in template processing
-	for (m in majors) {
+	for (m = 0; m < nm; m++) {
 		file = top majors[m]
 		if (system("test -f '" file "'") != 0) {
 			print "ERROR: can't find majors file '" file "'" > "/dev/stderr"
 			exit 1
 		}
 		while (getline < file) {
-			if ($1 == "device-major") {
+			if ($1 == "include") {
+				majors[nm++] = substr($2, 2, length($2)-2);
+			} else if ($1 == "device-major") {
 				if ($3 == "char") {
 					chr[$2] = $4
 					if ($5 == "block")
@@ -211,7 +214,7 @@ BEGIN {
 	print "# Generated from:"
 
 	# MAKEDEV.awk (this script) RCS Id
-	ARCSID = "$NetBSD: MAKEDEV.awk,v 1.24 2013/05/20 11:37:02 mbalmer Exp $"
+	ARCSID = "$NetBSD: MAKEDEV.awk,v 1.25 2014/09/19 09:01:05 matt Exp $"
 	gsub(/\$/, "", ARCSID)
 	print "#	" ARCSID
 	
