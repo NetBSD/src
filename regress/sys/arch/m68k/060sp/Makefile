@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2008/03/28 22:29:16 apb Exp $
+#	$NetBSD: Makefile,v 1.15 2014/09/19 21:35:42 joerg Exp $
 
 NOMAN=		# defined
 
@@ -9,6 +9,7 @@ SRCS=		dotest.c dotestsubs.S
 AFLAGS+=	-I.
 CPPFLAGS+=	-I.
 SPDIR=		${NETBSDSRCDIR}/sys/arch/m68k/060sp
+DPSRCS+=	itest.S ftest.S
 CLEANFILES+=	itest.S ftest.S
 
 .SUFFIXES: .S .sa
@@ -19,7 +20,7 @@ CLEANFILES+=	itest.S ftest.S
 
 .PATH: ${SPDIR}/dist
 
-realdepend dotestsubs.o: itest.S ftest.S
+dotestsubs.o: itest.S ftest.S
 
 regress: ${PROG}
 	@/sbin/sysctl hw.model | grep -v -q 68060 || \
