@@ -446,6 +446,10 @@ powerpc*-*-*)
 	esac
 	extra_options="${extra_options} g.opt fused-madd.opt rs6000/rs6000-tables.opt"
 	;;
+riscv*-*-*)
+	cpu_type=riscv
+	need_64bit_hwint=yes
+	;;
 rs6000*-*-*)
 	need_64bit_hwint=yes
 	extra_options="${extra_options} g.opt fused-madd.opt rs6000/rs6000-tables.opt"
@@ -2328,6 +2332,31 @@ powerpcle-*-eabi*)
 	extra_options="${extra_options} rs6000/sysv4.opt"
 	use_gcc_stdint=wrap
 	;;
+riscv*-*-linux*)				# Linux RISC-V
+	tm_file="elfos.h gnu-user.h linux.h glibc-stdint.h ${tm_file} riscv/linux.h riscv/linux64.h"
+	tmake_file="${tmake_file} riscv/t-linux64"
+	gnu_ld=yes
+	gas=yes
+	gcc_cv_initfini_array=yes
+	;;
+riscv*-*-elf*)				# Linux RISC-V
+	tm_file="elfos.h newlib-stdint.h ${tm_file} riscv/elf.h"
+	tmake_file="${tmake_file} riscv/t-elf"
+	gnu_ld=yes
+	gas=yes
+	gcc_cv_initfini_array=yes
+	;;
+riscv*-*-netbsd*)				# NetBSD RISC-V
+	tm_file="elfos.h ${tm_file} netbsd.h netbsd-elf.h riscv/netbsd.h"
+	case ${target} in
+	  riscv32*) tm_defines="${tm_defines} TARGET_64BIT_DEFAULT=0" ;;
+	  *) tmake_file="${tmake_file} riscv/t-netbsd64" ;;
+	esac
+	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
+	gnu_ld=yes
+	gas=yes
+	gcc_cv_initfini_array=yes
+	;;
 rs6000-ibm-aix4.[3456789]* | powerpc-ibm-aix4.[3456789]*)
 	tm_file="rs6000/biarch64.h ${tm_file} rs6000/aix.h rs6000/aix43.h rs6000/xcoff.h rs6000/aix-stdint.h"
 	tmake_file="rs6000/t-aix43 t-slibgcc"
@@ -3725,6 +3754,30 @@ case "${target}" in
 			;;
 		*)
 			echo "Unknown ABI used in --with-abi=$with_abi"
+			exit 1
+			;;
+		esac
+		;;
+
+	riscv*-*-*)
+		supported_defaults="abi arch arch_32 arch_64 float tune tune_32 tune_64"
+
+		case ${with_float} in
+		"" | soft | hard)
+			# OK
+			;;
+		*)
+			echo "Unknown floating point type used in --with-float=$with_float" 1>&2
+			exit 1
+			;;
+		esac
+
+		case ${with_abi} in
+		"" | 32 | 64)
+			# OK
+			;;
+		*)
+			echo "Unknown ABI used in --with-abi=$with_abi" 1>&2
 			exit 1
 			;;
 		esac
