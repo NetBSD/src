@@ -66,6 +66,8 @@ case ${cpu} in
   pj*)			cpu_type=pj endian=big ;;
   powerpc*le*)		cpu_type=ppc endian=little ;;
   powerpc*)		cpu_type=ppc endian=big ;;
+  riscv*eb)		cpu_type=riscv endian=big ;;
+  riscv*)		cpu_type=riscv endian=little ;;
   rs6000*)		cpu_type=ppc ;;
   rl78*)		cpu_type=rl78 ;;
   rx)			cpu_type=rx ;;
@@ -359,6 +361,11 @@ case ${generic_target} in
   ppc-*-kaos*)				fmt=elf ;;
   ppc-*-lynxos*)			fmt=elf em=lynx ;;
 
+  riscv*eb-*-linux*)			fmt=elf endian=big em=linux ;;
+  riscv*eb-*-netbsd*)			fmt=elf endian=big em=nbsd ;;
+  riscv*-*-linux*)			fmt=elf endian=little em=linux ;;
+  riscv*-*-netbsd*)			fmt=elf endian=little em=nbsd ;;
+
   s390-*-linux-*)			fmt=elf em=linux ;;
   s390-*-tpf*)				fmt=elf ;;
 
@@ -453,7 +460,7 @@ case ${generic_target} in
 esac
 
 case ${cpu_type} in
-  aarch64 | alpha | arm | i386 | ia64 | microblaze | mips | ns32k | or1k | or1knd | pdp11 | ppc | sparc | z80 | z8k)
+  aarch64 | alpha | arm | i386 | ia64 | microblaze | mips | ns32k | or1k | or1knd | pdp11 | ppc | riscv | sparc | z80 | z8k)
     bfd_gas=yes
     ;;
 esac
