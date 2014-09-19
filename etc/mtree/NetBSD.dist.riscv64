@@ -1,0 +1,15 @@
+# $NetBSD: NetBSD.dist.riscv64,v 1.1 2014/09/19 17:36:24 matt Exp $
+
+./lib/rv32
+./lib/rv32/npf
+./usr/include/g++/bits/riscv32
+./usr/include/g++/bits/riscv64
+./usr/lib/rv32
+./usr/lib/rv32/i18n
+./usr/lib/rv32/lua
+./usr/lib/rv32/lua/5.3
+./usr/lib/rv32/security
+./usr/libdata/debug/lib/rv32
+./usr/libdata/debug/lib/rv32/npf
+./usr/libdata/debug/usr/lib/rv32
+./usr/libdata/debug/usr/lib/rv32/i18n
