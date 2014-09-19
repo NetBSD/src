@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos5_reg.h,v 1.15 2014/09/09 21:22:48 reinoud Exp $	*/
+/*	$NetBSD: exynos5_reg.h,v 1.16 2014/09/19 14:32:20 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -376,7 +376,7 @@
 #define   HOST_CTRL0_REFCLKSEL_XTAL	__SHIFTIN(HOST_CRTL0_REFCLK_MASK, 0)
 #define   HOST_CTRL0_REFCLKSEL_EXTL	__SHIFTIN(HOST_CRTL0_REFCLK_MASK, 1)
 #define   HOST_CTRL0_REFCLKSEL_CLKCORE	__SHIFTIN(HOST_CRTL0_REFCLK_MASK, 2)
-#define   HOST_CTRL0_PHYSWRSTALL	__BIT(31)
+#define   HOST_CTRL0_PHY_SWRST_ALL	__BIT(31)
 
 #define USB_PHY_HSIC_CTRL1		0x10
 #define USB_PHY_HSIC_TUNE1		0x14
