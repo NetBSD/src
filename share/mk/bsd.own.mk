@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.834 2014/09/03 19:22:53 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.835 2014/09/19 17:45:42 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -14,7 +14,7 @@ MAKECONF?=	/etc/mk.conf
 #
 # CPU model, derived from MACHINE_ARCH
 #
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/coldfire/m68k/:S/m68000/m68k/:C/arm.*/arm/:C/earm.*/arm/:S/earm/arm/:S/powerpc64/powerpc/:S/aarch64eb/aarch64/:S/or1knd/or1k/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/coldfire/m68k/:S/m68000/m68k/:C/arm.*/arm/:C/earm.*/arm/:S/earm/arm/:S/powerpc64/powerpc/:S/aarch64eb/aarch64/:S/or1knd/or1k/:C/riscv../riscv/}
 
 #
 # Subdirectory used below ${RELEASEDIR} when building a release
@@ -537,8 +537,10 @@ MACHINES.m68k=		amiga atari cesfic hp300 luna68k mac68k \
 			news68k next68k sun3 x68k
 MACHINES.mips=		arc cobalt algor cobalt emips evbmips ews4800mips \
 			hpcmips mipsco newsmips pmax sbmips sgimips
+MACHINES.or1k=		or1k
 MACHINES.powerpc=	amigappc bebox evbppc ibmnws macppc mvmeppc \
 			ofppc prep rs6000 sandpoint
+MACHINES.riscv=		riscv
 MACHINES.sh3=		dreamcast evbsh3 hpcsh landisk mmeye
 MACHINES.sparc=		sparc sparc64
 MACHINES.sparc64=	sparc64
@@ -712,12 +714,18 @@ MKGCC:= no
 # No GDB support for aarch64
 MKGDB.aarch64=	no
 MKGDB.or1k=	no
+MKGDB.riscv32=	no
+MKGDB.riscv64=	no
 
 # No kernel modules for or1k (yet)
 MKKMOD.or1k=	no
+MKKMOD.riscv32=	no
+MKKMOD.riscv64=	no
 
 # No profiling for or1k (yet)
 MKPROFILE.or1k=	no
+MKPROFILE.riscv32=no
+MKPROFILE.riscv64=no
 
 #
 # The m68000 port is incomplete.
@@ -887,7 +895,8 @@ MK${var}:=	yes
 #
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64" \
     || ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el" \
-    || ${MACHINE_ARCH} == "powerpc64" || ${MACHINE_CPU} == "aarch64"
+    || ${MACHINE_ARCH} == "powerpc64" || ${MACHINE_CPU} == "aarch64" \
+    || ${MACHINE_ARCH} == "riscv64"
 MKCOMPAT?=	yes
 .elif !empty(MACHINE_ARCH:Mearm*)
 MKCOMPAT?=	no
