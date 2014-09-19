@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.172 2013/10/28 18:33:20 mbalmer Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.173 2014/09/19 09:00:23 matt Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -924,6 +924,8 @@ std)
 	mkdev		zero	c %mem_chr% 12	666
 	mkdev		klog	c %log_chr% 0	600
 	mkdev		ksyms	c %ksyms_chr% 0 444
+	mkdev		random	c %rnd_chr% 0	444
+	mkdev		urandom	c %rnd_chr% 1	644
 	if ! $fdesc_mounted; then
 		mkdev	tty	c %ctty_chr% 0		666
 		mkdev	stdin	c %filedesc_chr% 0	666
