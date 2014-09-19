@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.44 2014/09/18 19:45:24 wiz Exp $
+# $NetBSD: md.amd64,v 1.45 2014/09/19 17:33:47 christos Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -79,6 +79,8 @@
 ./@MODULEDIR@/hdafg/hdafg.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/hdaudio				base-kernel-modules	kmod
 ./@MODULEDIR@/hdaudio/hdaudio.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/hdaudioverbose			base-kernel-modules	kmod
+./@MODULEDIR@/hdaudioverbose/hdaudioverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/hpacel				base-kernel-modules	kmod
 ./@MODULEDIR@/hpacel/hpacel.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/hpet				base-kernel-modules	kmod
@@ -308,6 +310,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/hdafg/hdafg.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/hdaudio				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/hdaudio/hdaudio.kmod		base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/hdaudioverbose			base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/hdaudioverbose/hdaudioverbose.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/hpacel				base-kernel-modules	kmod,compatmodules
