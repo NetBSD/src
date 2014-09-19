@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.398 2014/09/19 15:24:24 christos Exp $
+# $NetBSD: GENERIC,v 1.399 2014/09/19 17:30:03 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.398 $"
+#ident 		"GENERIC-$Revision: 1.399 $"
 
 maxusers	64		# estimated number of users
 
@@ -215,6 +215,7 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	HDAUDIOVERBOSE	# verbose HDAUDIO driver messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 

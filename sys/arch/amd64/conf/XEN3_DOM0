@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.107 2014/09/19 15:24:24 christos Exp $
+# $NetBSD: XEN3_DOM0,v 1.108 2014/09/19 17:30:03 christos Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -219,6 +219,7 @@ options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 #options 	PCIVERBOSE		# verbose PCI device autoconfig messages
 #options 	USBVERBOSE		# verbose USB device autoconfig messages
+#options 	HDAUDIOVERBOSE		# verbose HDAUDIO driver messages
 
 ioapic* 	at mainbus? apid ?
 
