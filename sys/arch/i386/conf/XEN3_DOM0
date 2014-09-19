@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.89 2014/09/19 15:24:24 christos Exp $
+#	$NetBSD: XEN3_DOM0,v 1.90 2014/09/19 17:30:03 christos Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -178,6 +178,7 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	HDAUDIOVERBOSE	# verbose HDAUDIO driver messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOT_BOOTSTATIC
