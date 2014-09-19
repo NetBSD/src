@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.154 2014/08/23 20:26:59 dholland Exp $
+# $NetBSD: GENERIC,v 1.155 2014/09/19 15:24:24 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.154 $"
+#ident 		"GENERIC-$Revision: 1.155 $"
 
 maxusers	32
 
@@ -83,8 +83,8 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Wedge support
 options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
 options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
-options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
-options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
+#options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
+#options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
 
 # File systems
