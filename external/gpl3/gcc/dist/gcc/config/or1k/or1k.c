@@ -2424,52 +2424,6 @@ or1k_init_expanders (void)
     }
 }
 
-#if defined(TARGET_ASM_CONSTRUCTOR) || defined(TARGET_ASM_DESTRUCTOR)
-static void
-or1k_elf_asm_cdtor (rtx symbol, int priority, bool is_ctor)
-{
-  section *s;
-
-  /* Put these in the .init_array section, using a special relocation.  */
-  if (priority != DEFAULT_INIT_PRIORITY)
-    {
-      char buf[18];
-      sprintf (buf, "%s.%.5u",
-	       is_ctor ? ".init_array" : ".fini_array",
-	       priority);
-      s = get_section (buf, SECTION_WRITE, NULL_TREE);
-    }
-  else if (is_ctor)
-    s = ctors_section;
-  else
-    s = dtors_section;
-
-  switch_to_section (s);
-  assemble_align (POINTER_SIZE);
-  fputs ("\t.word\t", asm_out_file);
-  output_addr_const (asm_out_file, symbol);
-  fputs ("\n", asm_out_file);
-}
-
-/* Add a function to the list of static constructors.  */
-
-#ifdef TARGET_ASM_CONSTRUCTOR
-static void
-or1k_elf_asm_constructor (rtx symbol, int priority)
-{
-  or1k_elf_asm_cdtor (symbol, priority, /*is_ctor=*/true);
-}
-#endif
-
-#ifdef TARGET_ASM_DESTRUCTOR
-static void
-or1k_elf_asm_destructor (rtx symbol, int priority)
-{
-  or1k_elf_asm_cdtor (symbol, priority, /*is_ctor=*/false);
-}
-#endif
-#endif
-
 #undef  TARGET_FRAME_POINTER_REQUIRED
 #define TARGET_FRAME_POINTER_REQUIRED or1k_frame_pointer_required
 

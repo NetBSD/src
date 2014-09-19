@@ -1158,7 +1158,7 @@
 
 /* Define .init_array/.fini_array sections are available and working. */
 #ifndef USED_FOR_TARGET
-/* #undef HAVE_INITFINI_ARRAY_SUPPORT */
+#define HAVE_INITFINI_ARRAY_SUPPORT 1
 #endif
 
 
