@@ -1,4 +1,4 @@
-.\" $NetBSD: sa.8,v 1.16 2004/02/13 10:17:29 wiz Exp $
+.\" $NetBSD: sa.8,v 1.17 2014/09/19 16:02:59 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -223,14 +223,6 @@ Its date of origin is unknown to the author.
 .Sh AUTHORS
 .An Chris G. Demetriou
 .Aq cgd@postgres.berkeley.edu .
-.Sh BUGS
-The number of options to this program is absurd, especially considering
-that there's not much logic behind their lettering.
-.Pp
-The field labels should be more consistent.
-.Pp
-.Nx Ns 's
-VM system does not record the CPU storage integral.
 .Sh CAVEATS
 While the behavior of the options in this version of
 .Nm
@@ -247,3 +239,11 @@ The formats of the summary files created by this version of
 are very different than the those used by the original version.
 This is not considered a problem, however, because the accounting record
 format has changed as well (since user ids are now 32 bits).
+.Sh BUGS
+The number of options to this program is absurd, especially considering
+that there's not much logic behind their lettering.
+.Pp
+The field labels should be more consistent.
+.Pp
+.Nx Ns 's
+VM system does not record the CPU storage integral.

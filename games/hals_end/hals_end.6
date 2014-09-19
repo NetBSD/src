@@ -1,4 +1,4 @@
-.\"	$NetBSD: hals_end.6,v 1.1 2013/11/12 17:46:21 mbalmer Exp $
+.\"	$NetBSD: hals_end.6,v 1.2 2014/09/19 16:02:58 wiz Exp $
 .\"
 .\" Copyright (c) 2003 - 2013 Marc Balmer <marc@msys.ch>.
 .\" All rights reserved.
@@ -46,11 +46,6 @@ Fast forward.
 Every movie can be played back with fast forward.
 This option will double the speed of the output.
 .El
-.Sh BUGS
-Unlike the real HAL, this program can be repeately run.
-There should be functionality in the program to destroy itself after one run.
-The rationale for not doing this right now is that the movie itself can be
-watched several times as well.
 .Sh HISTORY
 .Nm
 first appeared in the book "Total Interaction" (ISBN 978-3-7643-7076-3) where
@@ -64,3 +59,8 @@ this article.
 .Nm
 was written by
 .An Marc Balmer Aq Mt marc@msys.ch .
+.Sh BUGS
+Unlike the real HAL, this program can be repeately run.
+There should be functionality in the program to destroy itself after one run.
+The rationale for not doing this right now is that the movie itself can be
+watched several times as well.
