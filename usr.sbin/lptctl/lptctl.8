@@ -1,4 +1,4 @@
-.\"	$NetBSD: lptctl.8,v 1.10 2008/04/30 13:11:02 martin Exp $
+.\"	$NetBSD: lptctl.8,v 1.11 2014/09/19 16:02:59 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,9 +89,6 @@ on open of control lpt device.
 .Pp
 Enables or disables (default) automatic LF on CR for data transfers.
 .El
-.Sh EXIT STATUS
-.Nm
-returns 0 on success, \*[Gt]0 on failure.
 .Sh FILES
 .Bl -item
 .It
@@ -101,6 +98,9 @@ returns 0 on success, \*[Gt]0 on failure.
 .Pa /dev/lpt?
 - printer ports
 .El
+.Sh EXIT STATUS
+.Nm
+returns 0 on success, \*[Gt]0 on failure.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr lpt 4 ,

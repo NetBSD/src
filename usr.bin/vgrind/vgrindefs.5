@@ -1,4 +1,4 @@
-.\"	$NetBSD: vgrindefs.5,v 1.11 2012/04/21 12:27:30 roy Exp $
+.\"	$NetBSD: vgrindefs.5,v 1.12 2014/09/19 16:02:58 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,6 +63,11 @@ The following table names and describes each field.
 .It "tl	bool	present means procedures are only defined at the top lexical level"
 .It "oc	bool	present means upper and lower case are equivalent"
 .It "kw	str	a list of keywords separated by spaces"
+.El
+.Sh FILES
+.Bl -tag -width /usr/share/misc/vgrindefs -compact
+.It Pa /usr/share/misc/vgrindefs
+File containing terminal descriptions.
 .El
 .Sh EXAMPLES
 The following entry, which describes the C language, is
@@ -143,11 +148,6 @@ by spaces.
 If the "oc" boolean is specified, indicating that upper
 and lower case are equivalent, then all the keywords should be
 specified in lower case.
-.Sh FILES
-.Bl -tag -width /usr/share/misc/vgrindefs -compact
-.It Pa /usr/share/misc/vgrindefs
-File containing terminal descriptions.
-.El
 .Sh SEE ALSO
 .Xr troff 1 ,
 .Xr vgrind 1

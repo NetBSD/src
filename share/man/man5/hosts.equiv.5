@@ -1,4 +1,4 @@
-.\"	$NetBSD: hosts.equiv.5,v 1.8 2008/04/30 13:10:57 martin Exp $
+.\"	$NetBSD: hosts.equiv.5,v 1.9 2014/09/19 16:02:58 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,6 +78,13 @@ local machine.
 If a
 .Em username
 is not specified, any user may login with the same user name.
+.Sh FILES
+.Bl -tag -width /etc/hosts.equiv -compact
+.It Pa /etc/hosts.equiv
+Global trusted host-user pairs list
+.It Pa ~/.rhosts
+Per-user trusted host-user pairs list
+.El
 .Sh EXAMPLES
 .Li somehost
 .Bd -filled -offset indent -compact
@@ -152,13 +159,6 @@ file is typically only for
 .Xr rsh 1 ,
 as root must still login on the console for an interactive login such as
 .Xr rlogin 1 .
-.Sh FILES
-.Bl -tag -width /etc/hosts.equiv -compact
-.It Pa /etc/hosts.equiv
-Global trusted host-user pairs list
-.It Pa ~/.rhosts
-Per-user trusted host-user pairs list
-.El
 .Sh SEE ALSO
 .Xr rcp 1 ,
 .Xr rlogin 1 ,

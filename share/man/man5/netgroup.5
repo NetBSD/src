@@ -1,4 +1,4 @@
-.\"	$NetBSD: netgroup.5,v 1.8 2003/08/07 10:31:17 agc Exp $
+.\"	$NetBSD: netgroup.5,v 1.9 2014/09/19 16:02:58 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -112,14 +112,14 @@ Lines that begin with a # are treated as comments.
 .It Pa /etc/netgroup.db
 the netgroup database.
 .El
+.Sh COMPATIBILITY
+The file format is compatible with that of various vendors, however it
+appears that not all vendors use an identical format.
 .Sh SEE ALSO
 .Xr getnetgrent 3 ,
 .Xr exports 5 ,
 .Xr nsswitch.conf 5 ,
 .Xr netgroup_mkdb 8
-.Sh COMPATIBILITY
-The file format is compatible with that of various vendors, however it
-appears that not all vendors use an identical format.
 .Sh BUGS
 The interpretation of access restrictions based on the member tuples of a
 netgroup is left up to the various network applications.
