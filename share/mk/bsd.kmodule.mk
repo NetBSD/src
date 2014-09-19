@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.44 2014/08/10 17:44:26 joerg Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.45 2014/09/19 17:45:42 matt Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -34,6 +34,8 @@ CFLAGS+=	-mlong-calls
 CFLAGS+=	${${ACTIVE_CC} == "gcc":? -mlongcall :}
 .elif ${MACHINE_CPU} == "vax"
 CFLAGS+=	-fno-pic
+.elif ${MACHINE_CPU} == "riscv"
+CFLAGS+=	-fPIC -Wa,-fno-pic
 .endif
 
 .if ${MACHINE_CPU} == "sparc64"

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.endian.mk,v 1.21 2014/09/03 19:22:53 matt Exp $
+#	$NetBSD: bsd.endian.mk,v 1.22 2014/09/19 17:45:42 matt Exp $
 
 .if !defined(_BSD_ENDIAN_MK_)
 _BSD_ENDIAN_MK_=1
@@ -12,6 +12,8 @@ _BSD_ENDIAN_MK_=1
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "ia64" || \
     ${MACHINE_ARCH} == "vax" || \
+    ${MACHINE_ARCH} == "riscv32" || \
+    ${MACHINE_ARCH} == "riscv64" || \
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH:C/^.*el$/el/} == "el"
 TARGET_ENDIANNESS=	1234
