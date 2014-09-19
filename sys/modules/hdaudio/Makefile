@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/08/28 15:48:19 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.3 2014/09/19 18:05:24 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -7,7 +7,6 @@
 KMOD=	hdaudio
 IOCONF=	hdaudio.ioconf
 SRCS=	hdaudio.c
-SRCS+=	hdaudio_ids.c
 SRCS+=	hdaudio_pci.c
 
 .include <bsd.kmodule.mk>
