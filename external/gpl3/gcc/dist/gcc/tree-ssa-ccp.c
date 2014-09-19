@@ -2540,7 +2540,8 @@ struct gimple_opt_pass pass_fold_builtins =
  */
 
 #if defined(__alpha__) || defined(__amd64__) || defined(__sparc64__)	\
-     ||	(defined(__arm__) && defined(__ARM_EABI)) || defined(__powerpc__)
+     ||	(defined(__arm__) && defined(__ARM_EABI)) || defined(__powerpc__) \
+     || ((defined(__mips__) || defined(__riscv__)) && defined(_LP64))
 #define	JEMALLOC_TINY_MIN_2POW	3
 #endif
 

@@ -276,6 +276,7 @@ extern int print_insn_ns32k		(bfd_vma, disassemble_info *);
 extern int print_insn_or1k		(bfd_vma, disassemble_info *);
 extern int print_insn_pdp11		(bfd_vma, disassemble_info *);
 extern int print_insn_pj		(bfd_vma, disassemble_info *);
+extern int print_insn_riscv		(bfd_vma, disassemble_info *);
 extern int print_insn_rs6000		(bfd_vma, disassemble_info *);
 extern int print_insn_s390		(bfd_vma, disassemble_info *);
 extern int print_insn_sh		(bfd_vma, disassemble_info *);
