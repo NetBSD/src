@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.46 2014/08/11 05:19:16 jnemeth Exp $
+# $NetBSD: md.i386,v 1.47 2014/09/19 17:33:47 christos Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -83,6 +83,8 @@
 ./@MODULEDIR@/hdafg/hdafg.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/hdaudio				base-kernel-modules	kmod
 ./@MODULEDIR@/hdaudio/hdaudio.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/hdaudioverbose			base-kernel-modules	kmod
+./@MODULEDIR@/hdaudioverbose/hdaudioverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/hpacel				base-kernel-modules	kmod
 ./@MODULEDIR@/hpacel/hpacel.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/hpet				base-kernel-modules	kmod
@@ -326,6 +328,8 @@
 ./stand/i386-xen/@OSRELEASE@/modules/hdafg/hdafg.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/hdaudio				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/hdaudio/hdaudio.kmod		base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/hdaudioverbose			base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/hdaudioverbose/hdaudioverbose.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/hpacel				base-kernel-modules	kmod,compatmodules
@@ -705,6 +709,8 @@
 ./stand/i386pae-xen/@OSRELEASE@/modules/hdafg/hdafg.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/hdaudio				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/hdaudio/hdaudio.kmod		base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/hdaudioverbose			base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/hdaudioverbose/hdaudio.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/hfs				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/hfs/hfs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/hpacel				base-kernel-modules	kmod,compatmodules
