@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.184 2014/08/22 16:49:30 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.185 2014/09/19 23:52:34 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.184 2014/08/22 16:49:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.185 2014/09/19 23:52:34 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -639,7 +639,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	kauth_cred_t cred;
 
 	dev = devvp->v_rdev;
-	cred = l ? l->l_cred : NOCRED;
+	cred = l->l_cred;
 
 	/* Flush out any old buffers remaining from a previous use. */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
