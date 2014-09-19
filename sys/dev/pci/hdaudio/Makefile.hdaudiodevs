@@ -1,0 +1,18 @@
+#	$NetBSD: Makefile.hdaudiodevs,v 1.1 2014/09/19 17:23:35 christos Exp $
+
+#	The header files depend on the correct version of hdaudiodevs.
+#
+#	Thus, the procedure is:
+#	  1) change hdaudiodevs
+#	  2) commit hdaudiodevs
+#	  3) _then_ generate header files
+#	  4) commit them
+
+.include <bsd.own.mk>
+
+UNAME=	uname
+RM=	rm
+
+hdaudiodevs.h hdaudiodevs_data.h: hdaudiodevs devlist2h.awk
+	${RM} -f hdaudiodevs.h hdaudiodevs_data.h
+	${TOOL_AWK} -v os=`${UNAME} -s` -f devlist2h.awk hdaudiodevs
