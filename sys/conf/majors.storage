@@ -1,0 +1,28 @@
+#	$NetBSD: majors.storage,v 1.1 2014/09/19 17:32:34 matt Exp $
+#
+# MI major assignments for storage (and their children) devices
+#
+device-major	ccd		char 300 block 300	ccd
+device-major	vnd		char 301 block 301	vnd
+device-major	md		char 302 block 302	md
+device-major	ld		char 303 block 303	ld
+device-major	raid		char 304 block 304	raid
+device-major	cgd		char 305 block 305	cgd
+
+# scsibus and its children
+device-major	scsibus		char 310		scsibus
+device-major	sd		char 311 block 311	sd
+device-major	st		char 312 block 312	st
+device-major	cd		char 313 block 313	cd
+device-major	ch		char 314		ch
+device-major	ss		char 315		ss
+device-major	uk		char 316		uk
+device-major	ses		char 317		ses
+device-major	se		char 318		se
+
+device-major	fd		char 320 block 320	fdc
+device-major	wd		char 321 block 321	wd
+
+device-major	mlx		char 330		mlx
+device-major	mly		char 331		mly
+device-major	twe		char 332		twe
