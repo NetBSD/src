@@ -1,4 +1,4 @@
-.\"	$NetBSD: ar.5,v 1.7 2003/08/07 10:31:16 agc Exp $
+.\"	$NetBSD: ar.5,v 1.8 2014/09/19 16:02:58 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -104,6 +104,14 @@ Objects in the archive are always an even number of bytes long; files
 which are an odd number of bytes long are padded with a newline
 .Pq Dq \en
 character, although the size in the header does not reflect this.
+.Sh COMPATIBILITY
+The current a.out archive format is not specified by any standard.
+.Pp
+ELF systems use the
+.Nm
+format specified by the
+.At V.4
+ABI, with the same headers but different long file name handling.
 .Sh SEE ALSO
 .Xr ar 1 ,
 .Xr stat 2
@@ -144,14 +152,6 @@ It has been extended for these reasons,
 as described above.
 This format first appeared in
 .Bx 4.4 .
-.Sh COMPATIBILITY
-The current a.out archive format is not specified by any standard.
-.Pp
-ELF systems use the
-.Nm
-format specified by the
-.At V.4
-ABI, with the same headers but different long file name handling.
 .Sh BUGS
 The
 .Tn \*[Lt]ar.h\*[Gt]

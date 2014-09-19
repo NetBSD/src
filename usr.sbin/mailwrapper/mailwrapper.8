@@ -1,4 +1,4 @@
-.\"	$NetBSD: mailwrapper.8,v 1.14 2014/03/18 18:20:47 riastradh Exp $
+.\"	$NetBSD: mailwrapper.8,v 1.15 2014/09/19 16:02:59 wiz Exp $
 .\"
 .\" Copyright (c) 1998
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -130,9 +130,6 @@ based on configuration information placed in
 This permits the administrator to configure which
 .Tn MTA
 is to be invoked on the system at run time.
-.Sh EXIT STATUS
-.Nm
-exits 0 on success, and \*[Gt]0 if an error occurs.
 .Sh FILES
 Configuration for
 .Nm
@@ -142,6 +139,9 @@ is kept in
 is typically set up as a symlink to
 .Nm
 which is not usually invoked on its own.
+.Sh EXIT STATUS
+.Nm
+exits 0 on success, and \*[Gt]0 if an error occurs.
 .Sh DIAGNOSTICS
 .Nm
 will print a diagnostic if its configuration file is missing or malformed,
