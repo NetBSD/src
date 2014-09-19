@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.296 2014/09/03 19:32:18 matt Exp $
+#	$NetBSD: build.sh,v 1.297 2014/09/19 17:59:57 matt Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -696,6 +696,8 @@ MACHINE=playstation2	MACHINE_ARCH=mipsel
 MACHINE=pmax		MACHINE_ARCH=mips64el	ALIAS=pmax64
 MACHINE=pmax		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=prep		MACHINE_ARCH=powerpc
+MACHINE=riscv		MACHINE_ARCH=riscv64	ALIAS=riscv64 DEFAULT
+MACHINE=riscv		MACHINE_ARCH=riscv32	ALIAS=riscv32
 MACHINE=rs6000		MACHINE_ARCH=powerpc
 MACHINE=sandpoint	MACHINE_ARCH=powerpc
 MACHINE=sbmips		MACHINE_ARCH=		NO_DEFAULT
@@ -1868,7 +1870,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.296 2014/09/03 19:32:18 matt Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.297 2014/09/19 17:59:57 matt Exp $
 # with these arguments: ${_args}
 #
 
