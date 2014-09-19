@@ -298,6 +298,7 @@
 #define EM_TILEGX	191	/* Tilera TILE-Gx multicore architecture family */
 #define EM_RL78		197	/* Renesas RL78 family.  */
 #define EM_78K0R	199	/* Renesas 78K0R.  */
+#define EM_RISCV	243	/* RISC-V */
 
 /* If it is necessary to assign new unofficial EM_* values, please pick large
    random numbers (0x8523, 0xa7f2, etc.) to minimize the chances of collision

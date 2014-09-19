@@ -143,6 +143,9 @@ or1k-*-* | or1knd-*-*)
 powerpc*-*-*)
 	cpu_type=rs6000
 	;;
+riscv*-*-*)
+	cpu_type=riscv
+	;;
 rs6000*-*-*)
 	;;
 score*-*-*)
@@ -924,6 +927,17 @@ powerpcle-*-eabisim*)
 powerpcle-*-eabi*)
 	tmake_file="${tmake_file} rs6000/t-ppccomm rs6000/t-crtstuff t-crtstuff-pic t-fdpbit"
 	extra_parts="$extra_parts crtbegin.o crtend.o crtbeginS.o crtendS.o crtbeginT.o ecrti.o ecrtn.o ncrti.o ncrtn.o"
+	;;
+riscv*-*-linux*)
+	tmake_file="${tmake_file} riscv/t-fpbit riscv/t-dpbit riscv/t-tpbit riscv/t-linux"
+	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o crtendS.o crtbeginT.o"
+	;;
+riscv*-*-netbsd*)
+	# nothing needed for NetBSD
+	;;
+riscv*-*-*)
+	tmake_file="${tmake_file} riscv/t-fpbit riscv/t-dpbit riscv/t-elf"
+	extra_parts="$extra_parts crtbegin.o crtend.o crti.o crtn.o"
 	;;
 rs6000-ibm-aix4.[3456789]* | powerpc-ibm-aix4.[3456789]*)
 	md_unwind_header=rs6000/aix-unwind.h

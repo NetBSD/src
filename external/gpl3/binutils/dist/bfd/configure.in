@@ -773,6 +773,7 @@ do
 				tb="$tb elfn32-mips.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf ecofflink.lo"; target_size=64 ;;
     bfd_elf32_openrisc_vec)	tb="$tb elf32-openrisc.lo elf32.lo $elf" ;;
     bfd_elf32_or1k_big_vec)	tb="$tb elf32-or1k.lo elf32.lo $elf" ;;
+    bfd_elf32_riscv_vec)	tb="$tb elf32-riscv.lo elfxx-riscv.lo elf32.lo $elf"; target_size=64 ;;
     bfd_elf32_pj_vec)           tb="$tb elf32-pj.lo elf32.lo $elf";;
     bfd_elf32_pjl_vec)          tb="$tb elf32-pj.lo elf32.lo $elf";;
     bfd_elf32_powerpc_vec)	tb="$tb elf32-ppc.lo elf-vxworks.lo elf32.lo $elf" ;;
@@ -836,6 +837,7 @@ do
     bfd_elf64_bigaarch64_vec)	tb="$tb elf64-aarch64.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_big_generic_vec) 	tb="$tb elf64-gen.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_bigmips_vec) 	tb="$tb elf64-mips.lo elf64.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf ecofflink.lo"; target_size=64 ;;
+    bfd_elf32_m32c_vec)         tb="$tb elf32-m32c.lo elf32.lo $elf" ;;
     bfd_elf64_hppa_linux_vec)	tb="$tb elf64-hppa.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_hppa_vec)		tb="$tb elf64-hppa.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_ia64_big_vec)	tb="$tb elf64-ia64.lo elfxx-ia64.lo elf64.lo $elf"; target_size=64 ;;
@@ -845,10 +847,12 @@ do
     bfd_elf64_littleaarch64_vec)tb="$tb elf64-aarch64.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_little_generic_vec) tb="$tb elf64-gen.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_littlemips_vec) 	tb="$tb elf64-mips.lo elf64.lo elfxx-mips.lo elf-vxworks.lo elf32.lo $elf ecofflink.lo"; target_size=64 ;;
+    bfd_elf32_m32c_vec)         tb="$tb elf32-m32c.lo elf32.lo $elf" ;;
     bfd_elf64_mmix_vec) 	tb="$tb elf64-mmix.lo elf64.lo $elf" target_size=64 ;;
     bfd_elf64_powerpc_vec)	tb="$tb elf64-ppc.lo elf64-gen.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_powerpcle_vec)	tb="$tb elf64-ppc.lo elf64-gen.lo elf64.lo $elf" target_size=64 ;;
     bfd_elf64_powerpc_freebsd_vec) tb="$tb elf64-ppc.lo elf64-gen.lo elf64.lo $elf" target_size=64 ;;
+    bfd_elf64_riscv_vec)	tb="$tb elf64-riscv.lo elf64.lo elfxx-riscv.lo elf32.lo $elf"; target_size=64 ;;
     bfd_elf64_s390_vec)		tb="$tb elf64-s390.lo elf64.lo $elf"; target_size=64 ;;
     bfd_elf64_sh64_vec)		tb="$tb elf64-sh64.lo elf64.lo $elf" target_size=64 ;;
     bfd_elf64_sh64l_vec)	tb="$tb elf64-sh64.lo elf64.lo $elf" target_size=64 ;;

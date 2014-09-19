@@ -245,6 +245,9 @@ DESCRIPTION
 .#define bfd_mach_ppc_e6500     5007
 .#define bfd_mach_ppc_titan     83
 .#define bfd_mach_ppc_vle       84
+.  bfd_arch_riscv,     {* RISC-V *}
+.#define bfd_mach_riscv32	132
+.#define bfd_mach_riscv64	164
 .  bfd_arch_rs6000,    {* IBM RS/6000 *}
 .#define bfd_mach_rs6k		6000
 .#define bfd_mach_rs6k_rs1	6001
@@ -562,6 +565,7 @@ extern const bfd_arch_info_type bfd_pj_arch;
 extern const bfd_arch_info_type bfd_plugin_arch;
 extern const bfd_arch_info_type bfd_powerpc_archs[];
 #define bfd_powerpc_arch bfd_powerpc_archs[0]
+extern const bfd_arch_info_type bfd_riscv_arch;
 extern const bfd_arch_info_type bfd_rs6000_arch;
 extern const bfd_arch_info_type bfd_rl78_arch;
 extern const bfd_arch_info_type bfd_rx_arch;
@@ -645,6 +649,7 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
     &bfd_or1k_arch,
     &bfd_pdp11_arch,
     &bfd_powerpc_arch,
+    &bfd_riscv_arch,
     &bfd_rs6000_arch,
     &bfd_rl78_arch,
     &bfd_rx_arch,
