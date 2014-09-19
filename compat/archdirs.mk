@@ -1,4 +1,4 @@
-#	$NetBSD: archdirs.mk,v 1.7 2014/09/10 22:43:36 matt Exp $
+#	$NetBSD: archdirs.mk,v 1.8 2014/09/19 17:38:46 matt Exp $
 
 # list of subdirs used per-platform
 
@@ -28,6 +28,10 @@ ARCHDIR_SUBDIR=	mips64/64 mips64/o32
 
 .if ${MACHINE_ARCH} == "powerpc64"
 ARCHDIR_SUBDIR= powerpc64/powerpc
+.endif
+
+.if ${MACHINE_ARCH} == "riscv64"
+ARCHDIR_SUBDIR= riscv64/rv32
 .endif
 
 .if (${MACHINE_ARCH} == "aarch64")
