@@ -257,6 +257,7 @@
 >18	leshort		216		Cognitive Smart Memory,
 >18	leshort		217		iCelero CoolEngine,
 >18	leshort		218		Nanoradio Optimized RISC,
+>18	leshort		243		UCB RISC-V
 >18	leshort		0x1057		AVR (unofficial),
 >18	leshort		0x1059		MSP430 (unofficial),
 >18	leshort		0x1223		Adapteva Epiphany (unofficial),
