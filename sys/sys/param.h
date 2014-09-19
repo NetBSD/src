@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.460 2014/08/11 09:10:52 riz Exp $	*/
+/*	$NetBSD: param.h,v 1.461 2014/09/19 17:27:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -130,8 +130,13 @@
 #endif /* (MAXUPRC - 0) < CHILD_MAX */
 #endif /* !defined(MAXUPRC) */
 
+#define	MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
+#define	MAX(a,b)	((/*CONSTCOND*/(a)>(b))?(a):(b))
+
 /* More types and definitions used throughout the kernel. */
 #ifdef _KERNEL
+/* Macros for min/max. */
+
 #include <sys/cdefs.h>
 #include <sys/errno.h>
 #include <sys/time.h>
@@ -372,10 +377,6 @@
 #define	rounddown(x,y)	(((x)/(y))*(y))
 #define	roundup2(x, m)	(((x) + (m) - 1) & ~((m) - 1))
 #define	powerof2(x)	((((x)-1)&(x))==0)
-
-/* Macros for min/max. */
-#define	MIN(a,b)	((/*CONSTCOND*/(a)<(b))?(a):(b))
-#define	MAX(a,b)	((/*CONSTCOND*/(a)>(b))?(a):(b))
 
 /*
  * Constants for setting the parameters of the kernel memory allocator.
