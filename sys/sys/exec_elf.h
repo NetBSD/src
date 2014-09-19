@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.143 2014/08/25 20:40:52 joerg Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.144 2014/09/19 09:04:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -301,6 +301,7 @@ typedef struct {
 #define EM_ARCA		109	/* Arca RISC microprocessor */
 #define EM_UNICORE	110	/* UNICORE from PKU-Unity Ltd. and MPRC Peking University */
 #define EM_AARCH64	183	/* AArch64 64-bit ARM microprocessor */
+#define EM_RISCV	243	/* RISCV */
 
 /* Unofficial machine types follow */
 #define EM_AVR32	6317	/* used by NetBSD/avr32 */
