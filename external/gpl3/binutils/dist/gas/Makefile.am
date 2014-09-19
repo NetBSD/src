@@ -151,6 +151,7 @@ TARGET_CPU_CFILES = \
 	config/tc-pdp11.c \
 	config/tc-pj.c \
 	config/tc-ppc.c \
+	config/tc-riscv.c \
 	config/tc-rl78.c \
 	config/tc-rx.c \
 	config/tc-s390.c \
@@ -219,6 +220,7 @@ TARGET_CPU_HFILES = \
 	config/tc-pdp11.h \
 	config/tc-pj.h \
 	config/tc-ppc.h \
+	config/tc-riscv.h \
 	config/tc-rl78.h \
 	config/tc-rx.h \
 	config/tc-s390.h \

@@ -136,6 +136,7 @@
 #include "elf/pj.h"
 #include "elf/ppc.h"
 #include "elf/ppc64.h"
+#include "elf/riscv.h"
 #include "elf/rl78.h"
 #include "elf/rx.h"
 #include "elf/s390.h"
@@ -603,6 +604,7 @@ guess_is_rela (unsigned int e_machine)
     case EM_NIOS32:
     case EM_PPC64:
     case EM_PPC:
+    case EM_RISCV:
     case EM_RL78:
     case EM_RX:
     case EM_S390:
@@ -1230,6 +1232,10 @@ dump_relocations (FILE * file,
 	case EM_MICROBLAZE:
 	case EM_MICROBLAZE_OLD:
 	  rtype = elf_microblaze_reloc_type (type);
+	  break;
+
+	case EM_RISCV:
+	  rtype = elf_riscv_reloc_type (type);
 	  break;
 
 	case EM_RL78:
