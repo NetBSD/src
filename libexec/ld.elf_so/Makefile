@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.128 2014/09/03 19:31:32 matt Exp $
+#	$NetBSD: Makefile,v 1.129 2014/09/19 17:43:33 matt Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -36,6 +36,7 @@ M=		${.CURDIR}/arch/${ARCHSUBDIR}
      (${MACHINE_CPU} == "mips") ||					\
      (${MACHINE_CPU} == "or1k") ||					\
      (${MACHINE_CPU} == "powerpc") ||					\
+     (${MACHINE_CPU} == "riscv") ||					\
      (${MACHINE_CPU} == "sh3") ||					\
      (${LDELFSO_MACHINE_ARCH} == "sparc") ||				\
      (${LDELFSO_MACHINE_ARCH} == "sparc64") ||				\
