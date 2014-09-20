@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.22 2009/01/12 07:49:57 tsutsui Exp $	*/
+/*	$NetBSD: Locore.c,v 1.23 2014/09/20 23:10:46 phx Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -46,7 +46,7 @@ static void setup(void);
 
 /* this pad gets the rodata laignment right, don't EVER fiddle it */
 char *pad __attribute__((__aligned__ (8))) = "pad";
-int stack[8192/4 + 4] __attribute__((__aligned__ (4), __used__));
+int stack[0x20000/4 + 4] __attribute__((__aligned__ (4), __used__));
 char *heapspace __attribute__((__aligned__ (4)));
 char altheap[0x20000] __attribute__((__aligned__ (4)));
 
