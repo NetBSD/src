@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.148 2014/08/05 07:34:52 dholland Exp $
+#	$NetBSD: special,v 1.149 2014/09/20 15:10:41 roy Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -265,7 +265,6 @@
 ./etc/rc.d/rpcbind		type=file mode=0555
 ./etc/rc.d/rtadvd		type=file mode=0555
 ./etc/rc.d/rtclocaltime		type=file mode=0555
-./etc/rc.d/rtsold		type=file mode=0555
 ./etc/rc.d/rwho			type=file mode=0555
 ./etc/rc.d/savecore		type=file mode=0555
 ./etc/rc.d/screenblank		type=file mode=0555
