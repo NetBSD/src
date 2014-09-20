@@ -29,11 +29,12 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.1 2014/08/10 18:27:15 jnemeth Exp $");
+__RCSID("$NetBSD: restore.c,v 1.2 2014/09/20 22:11:27 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/bootblock.h>
+#include <sys/disklabel_gpt.h>
 
 #include <err.h>
 #include <stddef.h>
@@ -41,12 +42,12 @@ __RCSID("$NetBSD: restore.c,v 1.1 2014/08/10 18:27:15 jnemeth Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <prop/proplib.h>
 
 #include "map.h"
 #include "gpt.h"
 
 static int force;
-static int primary_only;
 
 const char restoremsg[] = "restore [-F] device ...";
 
@@ -59,25 +60,40 @@ usage_restore(void)
 	exit(1);
 }
 
+#define PROP_ERR(x)     if (!(x)) {             \
+                warn("proplib failure");        \
+                return;                         \
+        }
+
 static void
 restore(int fd)
 {
-	uuid_t uuid;
-	off_t blocks, last;
-	map_t *gpt, *tpg;
-	map_t *tbl, *lbt;
+	uuid_t gpt_guid, uuid;
+	off_t firstdata, last, lastdata, gpe_start, gpe_end;
 	map_t *map;
 	struct mbr *mbr;
 	struct gpt_hdr *hdr;
-	struct gpt_ent *ent;
+	struct gpt_ent ent;
 	unsigned int i;
+	prop_dictionary_t props, gpt_dict, mbr_dict, type_dict;
+	prop_object_iterator_t propiter;
+	prop_data_t propdata;
+	prop_array_t mbr_array, gpt_array;
+	prop_number_t propnum;
+	prop_string_t propstr;
+	int entries, gpt_size, rc;
+	const char *s;
+	void *secbuf;
+	uint32_t status;
 
 	last = mediasz / secsz - 1LL;
 
 	if (map_find(MAP_TYPE_PRI_GPT_HDR) != NULL ||
 	    map_find(MAP_TYPE_SEC_GPT_HDR) != NULL) {
-		warnx("%s: error: device already contains a GPT", device_name);
-		return;
+		if (!force) {
+			warnx("%s: error: device contains a GPT", device_name);
+			return;
+		}
 	}
 	map = map_find(MAP_TYPE_MBR);
 	if (map != NULL) {
@@ -90,126 +106,241 @@ restore(int fd)
 		map->map_type = MAP_TYPE_UNUSED;
 	}
 
-	/*
-	 * Create PMBR.
-	 */
-	if (map_find(MAP_TYPE_PMBR) == NULL) {
-		if (map_free(0LL, 1LL) == 0) {
-			warnx("%s: error: no room for the PMBR", device_name);
+	props = prop_dictionary_internalize_from_file("/dev/stdin");
+	PROP_ERR(props);
+
+	propnum = prop_dictionary_get(props, "sector_size");
+	PROP_ERR(propnum);
+	if (!prop_number_equals_integer(propnum, secsz)) {
+		warnx("%s: error: sector size does not match backup",
+		    device_name);
+		prop_object_release(props);
+		return;
+	}
+
+	gpt_dict = prop_dictionary_get(props, "GPT_HDR");
+	PROP_ERR(gpt_dict);
+
+	propnum = prop_dictionary_get(gpt_dict, "revision");
+	PROP_ERR(propnum);
+	if (!prop_number_equals_unsigned_integer(propnum, 0x10000)) {
+		warnx("backup is not revision 1.0");
+		prop_object_release(gpt_dict);
+		prop_object_release(props);
+		return;
+	}
+
+	propnum = prop_dictionary_get(gpt_dict, "entries");
+	PROP_ERR(propnum);
+	entries = prop_number_integer_value(propnum);
+	propstr = prop_dictionary_get(gpt_dict, "guid");
+	PROP_ERR(propstr);
+	s = prop_string_cstring_nocopy(propstr);
+	uuid_from_string(s, &uuid, &status);
+	if (status != uuid_s_ok) {
+		warnx("%s: not able to convert to an UUID\n", s);
+		return;
+	}
+	le_uuid_enc(&gpt_guid, &uuid);
+
+	gpt_size = entries * sizeof(struct gpt_ent) / secsz;
+	firstdata = gpt_size + 2;		/* PMBR and GPT header */
+	lastdata = last - gpt_size - 1;		/* alt. GPT table and header */
+
+	type_dict = prop_dictionary_get(props, "GPT_TBL");
+	PROP_ERR(type_dict);
+	gpt_array = prop_dictionary_get(type_dict, "gpt_array");
+	PROP_ERR(gpt_array);
+	propiter = prop_array_iterator(gpt_array);
+	PROP_ERR(propiter);
+	while ((gpt_dict = prop_object_iterator_next(propiter)) != NULL) {
+		propstr = prop_dictionary_get(gpt_dict, "type");
+		PROP_ERR(propstr);
+		s = prop_string_cstring_nocopy(propstr);
+		uuid_from_string(s, &uuid, &status);
+		if (status != uuid_s_ok) {
+			warnx("%s: not able to convert to an UUID\n", s);
 			return;
 		}
-		mbr = gpt_read(fd, 0LL, 1);
-		bzero(mbr, sizeof(*mbr));
-		mbr->mbr_sig = htole16(MBR_SIG);
-		mbr->mbr_part[0].part_shd = 0x00;
-		mbr->mbr_part[0].part_ssect = 0x02;
-		mbr->mbr_part[0].part_scyl = 0x00;
-		mbr->mbr_part[0].part_typ = MBR_PTYPE_PMBR;
-		mbr->mbr_part[0].part_ehd = 0xfe;
-		mbr->mbr_part[0].part_esect = 0xff;
-		mbr->mbr_part[0].part_ecyl = 0xff;
-		mbr->mbr_part[0].part_start_lo = htole16(1);
-		if (last > 0xffffffff) {
-			mbr->mbr_part[0].part_size_lo = htole16(0xffff);
-			mbr->mbr_part[0].part_size_hi = htole16(0xffff);
-		} else {
-			mbr->mbr_part[0].part_size_lo = htole16(last);
-			mbr->mbr_part[0].part_size_hi = htole16(last >> 16);
+		rc = uuid_is_nil(&uuid, &status);
+		if (status != uuid_s_ok) {
+			warnx("%s: not able to convert to an UUID\n", s);
+			return;
 		}
-		map = map_add(0LL, 1LL, MAP_TYPE_PMBR, mbr);
-		gpt_write(fd, map);
+		if (rc == 1)
+			continue;
+		propnum = prop_dictionary_get(gpt_dict, "start");
+		PROP_ERR(propnum);
+		gpe_start = prop_number_unsigned_integer_value(propnum);
+		propnum = prop_dictionary_get(gpt_dict, "end");
+		PROP_ERR(propnum);
+		gpe_end = prop_number_unsigned_integer_value(propnum);
+		if (gpe_start < firstdata || gpe_end > lastdata) {
+			warnx("%s: error: backup GPT doesn't fit", device_name);
+			return;
+		}
 	}
+	prop_object_iterator_release(propiter);
 
-	/* Get the amount of free space after the MBR */
-	blocks = map_free(1LL, 0LL);
-	if (blocks == 0LL) {
-		warnx("%s: error: no room for the GPT header", device_name);
+	secbuf = calloc(gpt_size + 1, secsz);	/* GPT TABLE + GPT HEADER */
+	if (secbuf == NULL) {
+		warnx("not enough memory to create a sector buffer");
 		return;
 	}
+	lseek(fd, 0LL, SEEK_SET);
+	for (i = 0; i < firstdata; i++)
+		write(fd, secbuf, secsz);
+	lseek(fd, (lastdata + 1) * secsz, SEEK_SET);
+	for (i = lastdata + 1; i <= last; i++)
+		write(fd, secbuf, secsz);
 
-	/* Don't create more than parts entries. */
-	if ((uint64_t)(blocks - 1) * secsz > parts * sizeof(struct gpt_ent)) {
-		blocks = (parts * sizeof(struct gpt_ent)) / secsz;
-		if ((parts * sizeof(struct gpt_ent)) % secsz)
-			blocks++;
-		blocks++;		/* Don't forget the header itself */
+	mbr = (struct mbr *)secbuf;
+	type_dict = prop_dictionary_get(props, "MBR");
+	PROP_ERR(type_dict);
+	propdata = prop_dictionary_get(type_dict, "code");
+	PROP_ERR(propdata);
+	memcpy(mbr->mbr_code, prop_data_data_nocopy(propdata),
+	    sizeof(mbr->mbr_code));
+	mbr_array = prop_dictionary_get(type_dict, "mbr_array");
+	PROP_ERR(mbr_array);
+	propiter = prop_array_iterator(mbr_array);
+	PROP_ERR(propiter);
+	while ((mbr_dict = prop_object_iterator_next(propiter)) != NULL) {
+		propnum = prop_dictionary_get(mbr_dict, "index");
+		PROP_ERR(propnum);
+		i = prop_number_integer_value(propnum);
+		propnum = prop_dictionary_get(mbr_dict, "flag");
+		PROP_ERR(propnum);
+		mbr->mbr_part[i].part_flag =
+		    prop_number_unsigned_integer_value(propnum);
+		propnum = prop_dictionary_get(mbr_dict, "start_head");
+		PROP_ERR(propnum);
+		mbr->mbr_part[i].part_shd =
+		    prop_number_unsigned_integer_value(propnum);
+		propnum = prop_dictionary_get(mbr_dict, "start_sector");
+		PROP_ERR(propnum);
+		mbr->mbr_part[i].part_ssect =
+		    prop_number_unsigned_integer_value(propnum);
+		propnum = prop_dictionary_get(mbr_dict, "start_cylinder");
+		PROP_ERR(propnum);
+		mbr->mbr_part[i].part_scyl =
+		    prop_number_unsigned_integer_value(propnum);
+		propnum = prop_dictionary_get(mbr_dict, "type");
+		PROP_ERR(propnum);
+		mbr->mbr_part[i].part_typ =
+		    prop_number_unsigned_integer_value(propnum);
+		propnum = prop_dictionary_get(mbr_dict, "end_head");
+		PROP_ERR(propnum);
+		mbr->mbr_part[i].part_ehd =
+		    prop_number_unsigned_integer_value(propnum);
+		propnum = prop_dictionary_get(mbr_dict, "end_sector");
+		PROP_ERR(propnum);
+		mbr->mbr_part[i].part_esect =
+		    prop_number_unsigned_integer_value(propnum);
+		propnum = prop_dictionary_get(mbr_dict, "end_cylinder");
+		PROP_ERR(propnum);
+		mbr->mbr_part[i].part_ecyl =
+		    prop_number_unsigned_integer_value(propnum);
+		propnum = prop_dictionary_get(mbr_dict, "lba_start_low");
+		PROP_ERR(propnum);
+		mbr->mbr_part[i].part_start_lo =
+		    htole16(prop_number_unsigned_integer_value(propnum));
+		propnum = prop_dictionary_get(mbr_dict, "lba_start_high");
+		PROP_ERR(propnum);
+		mbr->mbr_part[i].part_start_hi =
+		    htole16(prop_number_unsigned_integer_value(propnum));
+		propnum = prop_dictionary_get(mbr_dict, "lba_size_low");
+		PROP_ERR(propnum);
+		mbr->mbr_part[i].part_size_lo =
+		    htole16(prop_number_unsigned_integer_value(propnum));
+		propnum = prop_dictionary_get(mbr_dict, "lba_size_high");
+		PROP_ERR(propnum);
+		mbr->mbr_part[i].part_size_hi =
+		    htole16(prop_number_unsigned_integer_value(propnum));
 	}
-
-	/* Never cross the median of the device. */
-	if ((blocks + 1LL) > ((last + 1LL) >> 1))
-		blocks = ((last + 1LL) >> 1) - 1LL;
-
-	/*
-	 * Get the amount of free space at the end of the device and
-	 * calculate the size for the GPT structures.
-	 */
-	map = map_last();
-	if (map->map_type != MAP_TYPE_UNUSED) {
-		warnx("%s: error: no room for the backup header", device_name);
-		return;
+	prop_object_iterator_release(propiter);
+	mbr->mbr_sig = htole16(MBR_SIG);
+	lseek(fd, 0LL, SEEK_SET);
+	write(fd, mbr, secsz);
+	
+	propiter = prop_array_iterator(gpt_array);
+	PROP_ERR(propiter);
+	while ((gpt_dict = prop_object_iterator_next(propiter)) != NULL) {
+		memset(&ent, 0, sizeof(ent));
+		propstr = prop_dictionary_get(gpt_dict, "type");
+		PROP_ERR(propstr);
+		s = prop_string_cstring_nocopy(propstr);
+		uuid_from_string(s, &uuid, &status);
+		if (status != uuid_s_ok) {
+			warnx("%s: not able to convert to an UUID\n", s);
+			return;
+		}
+		le_uuid_enc(&ent.ent_type, &uuid);
+		propstr = prop_dictionary_get(gpt_dict, "guid");
+		PROP_ERR(propstr);
+		s = prop_string_cstring_nocopy(propstr);
+		uuid_from_string(s, &uuid, &status);
+		if (status != uuid_s_ok) {
+			warnx("%s: not able to convert to an UUID\n", s);
+			return;
+		}
+		le_uuid_enc(&ent.ent_guid, &uuid);
+		propnum = prop_dictionary_get(gpt_dict, "start");
+		PROP_ERR(propnum);
+		ent.ent_lba_start =
+		    htole64(prop_number_unsigned_integer_value(propnum));
+		propnum = prop_dictionary_get(gpt_dict, "end");
+		PROP_ERR(propnum);
+		ent.ent_lba_end =
+		    htole64(prop_number_unsigned_integer_value(propnum));
+		propnum = prop_dictionary_get(gpt_dict, "attributes");
+		PROP_ERR(propnum);
+		ent.ent_attr =
+		    htole64(prop_number_unsigned_integer_value(propnum));
+		propstr = prop_dictionary_get(gpt_dict, "name");
+		if (propstr != NULL) {
+			s = prop_string_cstring_nocopy(propstr);
+			utf8_to_utf16((const uint8_t *)s, ent.ent_name, 36);
+		}
+		propnum = prop_dictionary_get(gpt_dict, "index");
+		PROP_ERR(propnum);
+		i = prop_number_integer_value(propnum);
+		memcpy((char *)secbuf + secsz + ((i - 1) * sizeof(ent)), &ent,
+		    sizeof(ent));
 	}
+	prop_object_iterator_release(propiter);
+	lseek(fd, 2 * secsz, SEEK_SET);
+	write(fd, (char *)secbuf + 1 * secsz, gpt_size * secsz);
+	lseek(fd, (lastdata + 1) * secsz, SEEK_SET);
+	write(fd, (char *)secbuf + 1 * secsz, gpt_size * secsz);
 
-	if (map->map_size < blocks)
-		blocks = map->map_size;
-	if (blocks == 1LL) {
-		warnx("%s: error: no room for the GPT table", device_name);
-		return;
-	}
-
-	blocks--;		/* Number of blocks in the GPT table. */
-	gpt = map_add(1LL, 1LL, MAP_TYPE_PRI_GPT_HDR, calloc(1, secsz));
-	tbl = map_add(2LL, blocks, MAP_TYPE_PRI_GPT_TBL,
-	    calloc(blocks, secsz));
-	if (gpt == NULL || tbl == NULL)
-		return;
-
-	hdr = gpt->map_data;
+	memset(secbuf, 0, secsz);
+	hdr = (struct gpt_hdr *)secbuf;
 	memcpy(hdr->hdr_sig, GPT_HDR_SIG, sizeof(hdr->hdr_sig));
 	hdr->hdr_revision = htole32(GPT_HDR_REVISION);
-	hdr->hdr_size = htole32(GPT_SIZE);
-	hdr->hdr_lba_self = htole64(gpt->map_start);
+	hdr->hdr_size = htole32(GPT_HDR_SIZE);
+	hdr->hdr_lba_self = htole64(GPT_HDR_BLKNO);
 	hdr->hdr_lba_alt = htole64(last);
-	hdr->hdr_lba_start = htole64(tbl->map_start + blocks);
-	hdr->hdr_lba_end = htole64(last - blocks - 1LL);
-	uuid_create(&uuid, NULL);
-	le_uuid_enc(hdr->hdr_uuid, &uuid);
-	hdr->hdr_lba_table = htole64(tbl->map_start);
-	hdr->hdr_entries = htole32((blocks * secsz) / sizeof(struct gpt_ent));
-	if (le32toh(hdr->hdr_entries) > parts)
-		hdr->hdr_entries = htole32(parts);
+	hdr->hdr_lba_start = htole64(firstdata);
+	hdr->hdr_lba_end = htole64(lastdata);
+	memcpy(hdr->hdr_guid, &gpt_guid, sizeof(hdr->hdr_guid));
+	hdr->hdr_lba_table = htole64(2);
+	hdr->hdr_entries = htole32(entries);
 	hdr->hdr_entsz = htole32(sizeof(struct gpt_ent));
+	hdr->hdr_crc_table =
+	    htole32(crc32((char *)secbuf + 1 * secsz, gpt_size * secsz));
+	hdr->hdr_crc_self = htole32(crc32(hdr, GPT_HDR_SIZE));
+	lseek(fd, 1 * secsz, SEEK_SET);
+	write(fd, hdr, secsz);
+	hdr->hdr_lba_self = htole64(last);
+	hdr->hdr_lba_alt = htole64(GPT_HDR_BLKNO);
+	hdr->hdr_lba_table = htole64(lastdata + 1);
+	hdr->hdr_crc_self = 0;
+	hdr->hdr_crc_self = htole32(crc32(hdr, GPT_HDR_SIZE));
+	lseek(fd, last * secsz, SEEK_SET);
+	write(fd, hdr, secsz);
 
-	ent = tbl->map_data;
-	for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
-		uuid_create(&uuid, NULL);
-		le_uuid_enc(ent[i].ent_uuid, &uuid);
-	}
-
-	hdr->hdr_crc_table = htole32(crc32(ent, le32toh(hdr->hdr_entries) *
-	    le32toh(hdr->hdr_entsz)));
-	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
-
-	gpt_write(fd, gpt);
-	gpt_write(fd, tbl);
-
-	/*
-	 * Create backup GPT if the user didn't suppress it.
-	 */
-	if (!primary_only) {
-		tpg = map_add(last, 1LL, MAP_TYPE_SEC_GPT_HDR,
-		    calloc(1, secsz));
-		lbt = map_add(last - blocks, blocks, MAP_TYPE_SEC_GPT_TBL,
-		    tbl->map_data);
-		memcpy(tpg->map_data, gpt->map_data, secsz);
-		hdr = tpg->map_data;
-		hdr->hdr_lba_self = htole64(tpg->map_start);
-		hdr->hdr_lba_alt = htole64(gpt->map_start);
-		hdr->hdr_lba_table = htole64(lbt->map_start);
-		hdr->hdr_crc_self = 0;		/* Don't ever forget this! */
-		hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
-		gpt_write(fd, lbt);
-		gpt_write(fd, tpg);
-	}
+	return;
 }
 
 int
