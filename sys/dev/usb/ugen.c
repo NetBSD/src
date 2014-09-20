@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.125 2014/09/05 05:31:15 matt Exp $	*/
+/*	$NetBSD: ugen.c,v 1.126 2014/09/20 08:45:23 gson Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.125 2014/09/05 05:31:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126 2014/09/20 08:45:23 gson Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
+#include "opt_usb.h"
 #endif
 
 #include <sys/param.h>
