@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.28 2013/12/19 07:49:50 wiz Exp $
+.\" $NetBSD: gpt.8,v 1.29 2014/09/20 22:36:09 jnemeth Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd December 19, 2013
+.Dd September 20, 2014
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -354,6 +354,24 @@ If the
 .Fl a
 option is specified then the size will be adjusted to be a multiple of
 alignment if possible.
+.\" ==== restore ====
+.It Nm Ic restore Oo Fl F Oc Ar device ...
+The
+.Ic restore
+command restores a partition table that was previously saved using the
+.Ic backup
+command.
+The partition table is read from standard input and is expected to be in
+the format of a plist.
+It assumes an empty disk.
+The
+.Fl F
+option can be used to blank the disk.
+The new disk does not have to be the same size as the old disk as long as all
+the partitions fit, as
+.Ic restore
+will automatically adjust.
+However, the new disk must use the same sector size as the old disk.
 .\" ==== set ====
 .It Nm Ic set Fl a Ar attribute Fl i Ar index Ar device ...
 The
