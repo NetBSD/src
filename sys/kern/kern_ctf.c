@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ctf.c,v 1.3 2010/05/03 09:51:36 darran Exp $	*/
+/*	$NetBSD: kern_ctf.c,v 1.4 2014/09/21 17:17:15 christos Exp $	*/
 /*-
  * Copyright (c) 2008 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -204,7 +204,7 @@ mod_ctf_get(struct module *mod, mod_ctf_t *mc)
 		}
 
 		zs.avail_in = ctfsize - CTF_HDR_SIZE;
-		zs.next_in = ((uint8_t *) ctfaddr) + CTF_HDR_SIZE;
+		zs.next_in = ctfaddr + CTF_HDR_SIZE;
 		zs.avail_out = sz - CTF_HDR_SIZE;
 		zs.next_out = ((uint8_t *) ctftab) + CTF_HDR_SIZE;
 		inflateReset(&zs);

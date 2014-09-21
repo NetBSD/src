@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.227 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.228 2014/09/21 17:17:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.227 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.228 2014/09/21 17:17:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1457,7 +1457,7 @@ fd_copy(void)
 	ffp = fdp->fd_dt->dt_ff;
 	nffp = newdt->dt_ff;
 	newlast = -1;
-	for (i = 0; i <= (int)lastfile; i++, ffp++, nffp++) {
+	for (i = 0; i <= lastfile; i++, ffp++, nffp++) {
 		KASSERT(i >= NDFDFILE ||
 		    *nffp == (fdfile_t *)newfdp->fd_dfdfile[i]);
 		ff = *ffp;

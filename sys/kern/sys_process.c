@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.163 2014/01/04 00:10:03 dsl Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.164 2014/09/21 17:17:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.163 2014/01/04 00:10:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.164 2014/09/21 17:17:15 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -1011,7 +1011,7 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 
 	kv += uio->uio_offset;
 	kl -= uio->uio_offset;
-	if ((size_t)kl > uio->uio_resid)
+	if (kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
 	error = process_read_fpregs(l, &r, &kl);
