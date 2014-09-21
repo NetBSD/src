@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_client.c,v 1.12 2014/03/27 18:22:56 christos Exp $ */
+/* $NetBSD: xenbus_client.c,v 1.13 2014/09/21 12:46:15 bouyer Exp $ */
 /******************************************************************************
  * Client-facing interface for the Xenbus driver.  In other words, the
  * interface between the Xenbus and the device-specific code, be it the
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.12 2014/03/27 18:22:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.13 2014/09/21 12:46:15 bouyer Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -159,7 +159,7 @@ static void
 _dev_error(struct xenbus_device *dev, int err, const char *fmt,
 		va_list ap)
 {
-	int ret;
+	int ret __diagused;
 	unsigned int len;
 	char *printf_buffer = NULL, *path_buffer = NULL;
 
