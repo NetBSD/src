@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.118 2013/12/07 11:17:24 nakayama Exp $	*/
+/*	$NetBSD: psycho.c,v 1.119 2014/09/21 16:39:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.118 2013/12/07 11:17:24 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.119 2014/09/21 16:39:12 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -1272,8 +1272,7 @@ psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	int ino;
 	long vec = INTVEC(ihandle);
 
-	ih = (struct intrhand *)
-		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
+	ih = malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
 		return (NULL);
 
@@ -1342,6 +1341,7 @@ psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	}
 
 	printf("Cannot find interrupt vector %lx\n", vec);
+	free(ih, M_DEVBUF);
 	return (NULL);
 
 found:
