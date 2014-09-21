@@ -1,18 +1,14 @@
-#	$NetBSD: Makefile.hdaudiodevs,v 1.1 2014/09/19 17:23:35 christos Exp $
-
-#	The header files depend on the correct version of hdaudiodevs.
+#	$NetBSD: Makefile.hdaudiodevs,v 1.2 2014/09/21 14:30:22 christos Exp $
 #
-#	Thus, the procedure is:
-#	  1) change hdaudiodevs
-#	  2) commit hdaudiodevs
-#	  3) _then_ generate header files
-#	  4) commit them
+# As per tron@NetBSD.org, the proper procedure is
+#
+# 1.) Change "src/sys/dev/hdaudio/hdaudiodevs".
+# 2.) Commit "src/sys/dev/hdaudio/hdaudiodevs".
+# 3.) Execute "make -f Makefile.hdaudiodevs" in "src/sys/dev/pci/hdaudio".
+# 4.) Commit "src/sys/dev/hdaudio/hdaudiodevs.h" and "src/sys/dev/pci/hdaudio/hdaudiodevs_data.h".
 
 .include <bsd.own.mk>
 
-UNAME=	uname
-RM=	rm
-
-hdaudiodevs.h hdaudiodevs_data.h: hdaudiodevs devlist2h.awk
-	${RM} -f hdaudiodevs.h hdaudiodevs_data.h
-	${TOOL_AWK} -v os=`${UNAME} -s` -f devlist2h.awk hdaudiodevs
+hdaudiodevs.h hdaudiodevs_data.h: ${.CURDIR}/../../devlist2h.awk hdaudiodevs
+	/bin/rm -f hdaudiodevs.h hdaudiodevs_data.h
+	${TOOL_AWK} -f ${.ALLSRC}

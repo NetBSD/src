@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.197 2014/09/12 16:40:38 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198 2014/09/21 14:30:22 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.197 2014/09/12 16:40:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198 2014/09/21 14:30:22 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -109,40 +109,7 @@ Static const char * const usbd_error_strs[] = {
 	"XXX",
 };
 
-void usb_load_verbose(void);
-
-void get_usb_vendor_stub(char *, size_t, usb_vendor_id_t);
-void get_usb_product_stub(char *, size_t, usb_vendor_id_t, usb_product_id_t);
-
-void (*get_usb_vendor)(char *, size_t, usb_vendor_id_t) = get_usb_vendor_stub;
-void (*get_usb_product)(char *, size_t, usb_vendor_id_t, usb_product_id_t) =
-	get_usb_product_stub;
-
-int usb_verbose_loaded = 0;
-
-/*
- * Load the usbverbose module
- */
-void usb_load_verbose(void)
-{
-	if (usb_verbose_loaded == 0)
-		module_autoload("usbverbose", MODULE_CLASS_MISC);
-}
-
-void get_usb_vendor_stub(char *v, size_t l, usb_vendor_id_t v_id)
-{
-	usb_load_verbose();
-	if (usb_verbose_loaded)
-		get_usb_vendor(v, l, v_id);
-}
-
-void get_usb_product_stub(char *p, size_t l, usb_vendor_id_t v_id,
-    usb_product_id_t p_id)
-{
-	usb_load_verbose();
-	if (usb_verbose_loaded)
-		get_usb_product(p, l, v_id, p_id);
-}
+DEV_VERBOSE_DEFINE(usb);
 
 const char *
 usbd_errstr(usbd_status err)
@@ -226,15 +193,10 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, size_t vl, char *p,
 			usbd_trim_spaces(p);
 	}
 	if (v[0] == '\0')
-		get_usb_vendor(v, vl, UGETW(udd->idVendor));
+		usb_findvendor(v, vl, UGETW(udd->idVendor));
 	if (p[0] == '\0')
-		get_usb_product(p, pl, UGETW(udd->idVendor),
+		usb_findproduct(p, pl, UGETW(udd->idVendor),
 		    UGETW(udd->idProduct));
-
-	if (v[0] == '\0')
-		snprintf(v, vl, "vendor 0x%04x", UGETW(udd->idVendor));
-	if (p[0] == '\0')
-		snprintf(p, pl, "product 0x%04x", UGETW(udd->idProduct));
 }
 
 int
