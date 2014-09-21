@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcrom.c,v 1.14 2014/03/28 02:16:47 christos Exp $	*/
+/*	$NetBSD: fwcrom.c,v 1.15 2014/09/21 17:10:00 christos Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwcrom.c,v 1.14 2014/03/28 02:16:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwcrom.c,v 1.15 2014/09/21 17:10:00 christos Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -48,11 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: fwcrom.c,v 1.14 2014/03/28 02:16:47 christos Exp $")
 #include <dev/ieee1394/firewire.h>
 #include <dev/ieee1394/iec13213.h>
 
-#define MAX_ROM (1024 - sizeof(uint32_t) * 5)
+#define MAX_ROM (1024 - sizeof(uint[2]2_t) * 5)
 #define CROM_END(cc) ((char *)(cc)->stack[0].dir + MAX_ROM - 1)
 
 void
-crom_init_context(struct crom_context *cc, uint32_t *p)
+crom_init_context(struct crom_context *cc, uint[2]2_t *p)
 {
 	struct csrhdr *hdr;
 
@@ -139,7 +139,7 @@ crom_search_key(struct crom_context *cc, uint8_t key)
 }
 
 int
-crom_has_specver(uint32_t *p, uint32_t spec, uint32_t ver)
+crom_has_specver(uint[2]2_t *p, uint[2]2_t spec, uint[2]2_t ver)
 {
 	struct csrreg *reg;
 	struct crom_context c, *cc;
@@ -170,7 +170,7 @@ crom_parse_text(struct crom_context *cc, char *buf, int len)
 {
 	struct csrreg *reg;
 	struct csrtext *textleaf;
-	uint32_t *bp;
+	uint[2]2_t *bp;
 	int i, qlen;
 	static char *nullstr = (char *)&"(null)";
 
@@ -198,7 +198,7 @@ crom_parse_text(struct crom_context *cc, char *buf, int len)
 
 	/* XXX should check spec and type */
 
-	bp = (uint32_t *)buf;
+	bp = (uint[2]2_t *)buf;
 	qlen = textleaf->crc_len - 2;
 	if (len < qlen * 4)
 		qlen = len/4;
@@ -212,10 +212,10 @@ crom_parse_text(struct crom_context *cc, char *buf, int len)
 }
 
 uint16_t
-crom_crc(uint32_t *ptr, int len)
+crom_crc(uint[2]2_t *ptr, int len)
 {
 	int i, shift;
-	uint32_t data, sum, crc = 0;
+	uint[2]2_t data, sum, crc = 0;
 
 	for (i = 0; i < len; i++) {
 		data = ptr[i];
@@ -230,7 +230,7 @@ crom_crc(uint32_t *ptr, int len)
 
 #if !defined(_KERNEL) && !defined(_BOOT)
 static void
-crom_desc_specver(uint32_t spec, uint32_t ver, char *buf, int len)
+crom_desc_specver(uint[2]2_t spec, uint[2]2_t ver, char *buf, int len)
 {
 	const char *s = NULL;
 
@@ -308,7 +308,7 @@ crom_desc(struct crom_context *cc, char *buf, size_t len)
 		/* XXX fall through */
 	case CSRTYPE_D:
 		dir = (struct csrdirectory *) (reg + reg->val);
-		crc = crom_crc((uint32_t *)dir->entry, dir->crc_len);
+		crc = crom_crc((uint[2]2_t *)dir->entry, dir->crc_len);
 		l += snprintf(buf + l, len - l, "len=%d crc=0x%04x ",
 		    dir->crc_len, crc);
 
@@ -396,7 +396,7 @@ crom_desc(struct crom_context *cc, char *buf, size_t len)
 #if defined(_KERNEL) || defined(_BOOT) || defined(TEST)
 
 int
-crom_add_quad(struct crom_chunk *chunk, uint32_t entry)
+crom_add_quad(struct crom_chunk *chunk, uint[2]2_t entry)
 {
 	int index;
 
@@ -415,7 +415,7 @@ crom_add_entry(struct crom_chunk *chunk, int key, int val)
 {
 	union {
 		struct csrreg reg;
-		uint32_t i;
+		uint[2]2_t i;
 	} foo;
 
 	foo.reg.key = key;
@@ -450,7 +450,7 @@ crom_add_simple_text(struct crom_src *src, struct crom_chunk *parent,
 		     struct crom_chunk *chunk, const char *buf)
 {
 	struct csrtext *tl;
-	uint32_t *p;
+	uint[2]2_t *p;
 	int len, i;
 	char t[MAX_TEXT];
 
@@ -461,38 +461,38 @@ crom_add_simple_text(struct crom_src *src, struct crom_chunk *parent,
 	}
 
 	tl = (struct csrtext *) &chunk->data;
-	tl->crc_len = howmany(sizeof(struct csrtext) + len, sizeof(uint32_t));
+	tl->crc_len = howmany(sizeof(struct csrtext) + len, sizeof(uint[2]2_t));
 	tl->spec_id = 0;
 	tl->spec_type = 0;
 	tl->lang_id = 0;
-	memset(t, 0, roundup2(len, sizeof(uint32_t)));
+	memset(t, 0, roundup2(len, sizeof(uint[2]2_t)));
 	memcpy(t, buf, len);
-	p = (uint32_t *)t;
-	for (i = 0; i < howmany(len, sizeof(uint32_t)); i++)
+	p = (uint[2]2_t *)t;
+	for (i = 0; i < howmany(len, sizeof(uint[2]2_t)); i++)
 		tl->text[i] = ntohl(*p++);
 	return crom_add_chunk(src, parent, chunk, CROM_TEXTLEAF);
 }
 
 static int
-crom_copy(uint32_t *src, uint32_t *dst, int *offset, int len, int maxlen)
+crom_copy(uint[2]2_t *src, uint[2]2_t *dst, int *offset, int len, int maxlen)
 {
 
 	if (*offset + len > maxlen) {
 		printf("Config. ROM is too large for the buffer\n");
 		return -1;
 	}
-	memcpy((char *)(dst + *offset), src, len * sizeof(uint32_t));
+	memcpy((char *)(dst + *offset), src, len * sizeof(uint[2]2_t));
 	*offset += len;
 	return 0;
 }
 
 int
-crom_load(struct crom_src *src, uint32_t *buf, int maxlen)
+crom_load(struct crom_src *src, uint[2]2_t *buf, int maxlen)
 {
 	struct crom_chunk *chunk, *parent;
 	struct csrhdr *hdr;
 #if defined(_KERNEL) || defined(_BOOT)
-	uint32_t *ptr;
+	uint[2]2_t *ptr;
 	int i;
 #endif
 	int count, offset;
@@ -518,14 +518,14 @@ crom_load(struct crom_src *src, uint32_t *buf, int maxlen)
 	/* Calculate CRC and dump to the buffer */
 	len = 1 + src->hdr.info_len;
 	count = 0;
-	if (crom_copy((uint32_t *)&src->hdr, buf, &count, len, maxlen) < 0)
+	if (crom_copy((uint[2]2_t *)&src->hdr, buf, &count, len, maxlen) < 0)
 		return -1;
 	STAILQ_FOREACH(chunk, &src->chunk_list, link) {
 		chunk->data.crc =
 		    crom_crc(chunk->data.buf, chunk->data.crc_len);
 
 		len = 1 + chunk->data.crc_len;
-		if (crom_copy((uint32_t *)&chunk->data, buf, &count, len,
+		if (crom_copy((uint[2]2_t *)&chunk->data, buf, &count, len,
 								maxlen) < 0)
 			return -1;
 	}
@@ -551,24 +551,15 @@ int
 main(void)
 {
 	struct crom_src src;
-	struct crom_chunk root, unit1, unit2, unit3;
-	struct crom_chunk text1, text2, text3, text4, text5, text6, text7;
-	uint32_t buf[256], *p;
+	struct crom_chunk root, unit[3], text[7];
+	uint[2]2_t buf[256], *p;
 	int i;
 	extern const char ostype[];
 
 	memset(&src, 0, sizeof(src));
 	memset(&root, 0, sizeof(root));
-	memset(&unit1, 0, sizeof(unit1));
-	memset(&unit2, 0, sizeof(unit2));
-	memset(&unit3, 0, sizeof(unit3));
-	memset(&text1, 0, sizeof(text1));
-	memset(&text2, 0, sizeof(text2));
-	memset(&text3, 0, sizeof(text3));
-	memset(&text3, 0, sizeof(text4));
-	memset(&text3, 0, sizeof(text5));
-	memset(&text3, 0, sizeof(text6));
-	memset(&text3, 0, sizeof(text7));
+	memset(unit, 0, sizeof(unit));
+	memset(text, 0, sizeof(text));
 	memset(buf, 0, sizeof(buf));
 
 	/* BUS info sample */
@@ -594,37 +585,37 @@ main(void)
 	/* private company_id */
 	crom_add_entry(&root, CSRKEY_VENDOR, 0xacde48);
 
-	crom_add_simple_text(&src, &root, &text1, ostype);
+	crom_add_simple_text(&src, &root, &text[0], ostype);
 	crom_add_entry(&root, CSRKEY_HW, __NetBSD_Version__);
-	crom_add_simple_text(&src, &root, &text2, OS_VER_STR);
+	crom_add_simple_text(&src, &root, &text[1], OS_VER_STR);
 
 	/* SBP unit directory */
-	crom_add_chunk(&src, &root, &unit1, CROM_UDIR);
-	crom_add_entry(&unit1, CSRKEY_SPEC, CSRVAL_ANSIT10);
-	crom_add_entry(&unit1, CSRKEY_VER, CSRVAL_T10SBP2);
-	crom_add_entry(&unit1, CSRKEY_COM_SPEC, CSRVAL_ANSIT10);
-	crom_add_entry(&unit1, CSRKEY_COM_SET, CSRVAL_SCSI);
+	crom_add_chunk(&src, &root, &unit[0], CROM_UDIR);
+	crom_add_entry(&unit[0], CSRKEY_SPEC, CSRVAL_ANSIT10);
+	crom_add_entry(&unit[0], CSRKEY_VER, CSRVAL_T10SBP2);
+	crom_add_entry(&unit[0], CSRKEY_COM_SPEC, CSRVAL_ANSIT10);
+	crom_add_entry(&unit[0], CSRKEY_COM_SET, CSRVAL_SCSI);
 	/* management_agent */
-	crom_add_entry(&unit1, CROM_MGM, 0x1000);
-	crom_add_entry(&unit1, CSRKEY_UNIT_CH, (10<<8) | 8);
+	crom_add_entry(&unit[0], CROM_MGM, 0x1000);
+	crom_add_entry(&unit[0], CSRKEY_UNIT_CH, (10<<8) | 8);
 	/* Device type and LUN */
-	crom_add_entry(&unit1, CROM_LUN, 0);
-	crom_add_entry(&unit1, CSRKEY_MODEL, 1);
-	crom_add_simple_text(&src, &unit1, &text3, "scsi_target");
+	crom_add_entry(&unit[0], CROM_LUN, 0);
+	crom_add_entry(&unit[0], CSRKEY_MODEL, 1);
+	crom_add_simple_text(&src, &unit[0], &text[2], "scsi_target");
 
 	/* RFC2734 IPv4 over IEEE1394 */
-	crom_add_chunk(&src, &root, &unit2, CROM_UDIR);
-	crom_add_entry(&unit2, CSRKEY_SPEC, CSRVAL_IETF);
-	crom_add_simple_text(&src, &unit2, &text4, "IANA");
-	crom_add_entry(&unit2, CSRKEY_VER, 1);
-	crom_add_simple_text(&src, &unit2, &text5, "IPv4");
+	crom_add_chunk(&src, &root, &unit[1], CROM_UDIR);
+	crom_add_entry(&unit[1], CSRKEY_SPEC, CSRVAL_IETF);
+	crom_add_simple_text(&src, &unit[1], &text[3], "IANA");
+	crom_add_entry(&unit[1], CSRKEY_VER, 1);
+	crom_add_simple_text(&src, &unit[1], &text[4], "IPv4");
 
 	/* RFC3146 IPv6 over IEEE1394 */
-	crom_add_chunk(&src, &root, &unit3, CROM_UDIR);
-	crom_add_entry(&unit3, CSRKEY_SPEC, CSRVAL_IETF);
-	crom_add_simple_text(&src, &unit3, &text6, "IANA");
-	crom_add_entry(&unit3, CSRKEY_VER, 2);
-	crom_add_simple_text(&src, &unit3, &text7, "IPv6");
+	crom_add_chunk(&src, &root, &unit[2], CROM_UDIR);
+	crom_add_entry(&unit[2], CSRKEY_SPEC, CSRVAL_IETF);
+	crom_add_simple_text(&src, &unit[2], &text[5], "IANA");
+	crom_add_entry(&unit[2], CSRKEY_VER, 2);
+	crom_add_simple_text(&src, &unit[2], &text[6], "IPv6");
 
 	crom_load(&src, buf, 256);
 	p = buf;
