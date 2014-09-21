@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.15 2012/06/12 20:25:58 joerg Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.16 2014/09/21 17:02:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.15 2012/06/12 20:25:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16 2014/09/21 17:02:24 christos Exp $");
 
 #include <sys/param.h>
 
@@ -175,7 +175,6 @@ stuirda_fwload(struct uirda_softc *sc) {
 	if (rc) {
 		printf("%s: Cannot load firmware\n",
 			device_xname(sc->sc_dev));
-		return 0;
 		return rc;
 	}
 	fwsize = firmware_get_size(fh);
