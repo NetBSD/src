@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcictl.8,v 1.10.22.1 2014/09/10 08:38:31 martin Exp $
+.\"	$NetBSD: pcictl.8,v 1.10.22.2 2014/09/21 18:38:53 snj Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -80,7 +80,7 @@ If the bus is not specified, it defaults to the bus number of the
 PCI bus specified on the command line.
 If the function is not specified, it defaults to 0.
 .Pp
-.Nm read
+.Cm read
 .Op Fl b Ar bus
 .Fl d Ar device
 .Op Fl f Ar function
@@ -92,7 +92,16 @@ If the bus is not specified, it defaults to the bus number of the
 PCI bus specified on the command line.
 If the function is not specified, it defaults to 0.
 .Pp
-.Nm write
+.Em WARNING:
+.Nm
+.Cm read
+is a dangerous command that can damage hardware and panic the operating
+system, even though it appears to be a harmless read-only operation.
+It is meant as a diagnostic tool for experiments or to debug device
+drivers.
+Do not use it as a substitute for a device driver!
+.Pp
+.Cm write
 .Op Fl b Ar bus
 .Fl d Ar device
 .Op Fl f Ar function
@@ -104,6 +113,15 @@ configuration register.
 If the bus is not specified, it defaults to the bus number of the
 PCI bus specified on the command line.
 If the function is not specified, it defaults to 0.
+.Pp
+.Em WARNING:
+.Nm
+.Cm write
+is a dangerous command that can damage hardware and panic the operating
+system.
+It is meant as a diagnostic tool for experiments or to debug device
+drivers.
+Do not use it as a substitute for a device driver!
 .Sh FILES
 .Pa /dev/pci*
 - PCI bus device nodes
