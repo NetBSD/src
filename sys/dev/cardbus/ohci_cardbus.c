@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.39 2011/08/01 11:20:28 drochner Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.40 2014/09/21 15:07:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.39 2011/08/01 11:20:28 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.40 2014/09/21 15:07:19 christos Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -109,7 +109,6 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	pcireg_t csr;
 	char devinfo[256];
 	usbd_status r;
-	const char *vendor;
 	const char *devname = device_xname(self);
 
 	sc->sc.sc_dev = self;
@@ -149,13 +148,9 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Figure out vendor for root hub descriptor. */
-	vendor = pci_findvendor(ca->ca_id);
 	sc->sc.sc_id_vendor = PCI_VENDOR(ca->ca_id);
-	if (vendor)
-		strlcpy(sc->sc.sc_vendor, vendor, sizeof(sc->sc.sc_vendor));
-	else
-		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
-		    "vendor 0x%04x", PCI_VENDOR(ca->ca_id));
+	pci_findvendor(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
+	    sc->sc.sc_id_vendor);
 
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
