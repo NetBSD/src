@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.57 2014/08/10 16:44:34 tls Exp $ */
+/*	$NetBSD: ipmi.c,v 1.58 2014/09/21 16:40:53 christos Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.57 2014/08/10 16:44:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.58 2014/09/21 16:40:53 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1209,6 +1209,7 @@ get_sdr(struct ipmi_softc *sc, uint16_t recid, uint16_t *nxtrec)
 		    psdr + offset, NULL)) {
 			printf("ipmi: get chunk : %d,%d fails\n",
 			    offset, len);
+			free(psdr, M_DEVBUF);
 			return (-1);
 		}
 	}
