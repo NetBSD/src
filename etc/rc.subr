@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.94 2014/07/27 07:46:46 apb Exp $
+# $NetBSD: rc.subr,v 1.95 2014/09/21 09:47:24 roy Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,10 +42,10 @@ nl='
 
 #
 # checkyesno var
-#	Test $1 variable, and warn if not set to YES or NO.
-#	Return 0 if it's "yes" (et al), nonzero otherwise.
+#	Test $1 variable.
+#	Return 0 if it's "yes" (et al), 1 if it's "no" (et al), 2 otherwise.
 #
-checkyesno()
+checkyesnox()
 {
 	eval _value=\$${1}
 	case $_value in
@@ -60,10 +60,25 @@ checkyesno()
 		return 1
 		;;
 	*)
-		warn "\$${1} is not set properly - see ${rcvar_manpage}."
-		return 1
+		return 2
 		;;
 	esac
+}
+
+#
+# checkyesno var
+#	Test $1 variable, and warn if not set to YES or NO.
+#	Return 0 if it's "yes" (et al), nonzero otherwise.
+#
+checkyesno()
+{
+	local var
+
+	checkyesnox $1
+	var=$?
+	[ $var = 0 -o $var = 1 ] && return $var
+	warn "\$${1} is not set properly - see ${rcvar_manpage}."
+	return 1
 }
 
 #
