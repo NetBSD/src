@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.42 2014/08/10 16:44:35 tls Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.43 2014/09/21 17:00:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.42 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.43 2014/09/21 17:00:35 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -2018,9 +2018,10 @@ gfe_hash_fill(struct gfe_softc *sc)
 
 	error = gfe_hash_entry_op(sc, GE_HASH_ADD, GE_RXPRIO_HI,
 	    CLLADDR(sc->sc_ec.ec_if.if_sadl));
-	if (error)
+	if (error) {
 		GE_FUNC_EXIT(sc, "!");
 		return error;
+	}
 
 	sc->sc_flags &= ~GE_ALLMULTI;
 	if ((sc->sc_ec.ec_if.if_flags & IFF_PROMISC) == 0)
