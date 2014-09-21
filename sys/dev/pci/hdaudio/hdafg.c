@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.22 2014/09/19 17:23:35 christos Exp $ */
+/* $NetBSD: hdafg.c,v 1.23 2014/09/21 10:41:22 nat Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.22 2014/09/19 17:23:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.23 2014/09/21 10:41:22 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -339,6 +339,7 @@ static int	hdafg_widget_info(void *, prop_dictionary_t,
 					prop_dictionary_t);
 static int	hdafg_codec_info(void *, prop_dictionary_t,
 				       prop_dictionary_t);
+static void	hdafg_enable_analog_beep(struct hdafg_softc *);
 
 CFATTACH_DECL2_NEW(
     hdafg,
@@ -3688,6 +3689,9 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 	if (1) hdafg_widget_pin_dump(sc);
 	hdafg_assoc_dump(sc);
 
+	hda_debug(sc, "enabling analog beep\n");
+	hdafg_enable_analog_beep(sc);
+
 	hda_debug(sc, "configuring encodings\n");
 	sc->sc_audiodev.ad_sc = sc;
 	hdafg_configure_encodings(sc);
@@ -4359,5 +4363,63 @@ hdafg_modcmd(modcmd_t cmd, void *opaque)
 		return error;
 	default:
 		return ENOTTY;
+	}
+}
+
+#define HDAFG_GET_ANACTRL 		0xfe0
+#define HDAFG_SET_ANACTRL 		0x7e0
+#define HDAFG_ANALOG_BEEP_EN		__BIT(5)
+
+static void
+hdafg_enable_analog_beep(struct hdafg_softc *sc)
+{
+	int nid;
+	uint32_t response;
+	
+	switch (sc->sc_vendor) {
+	case HDAUDIO_VENDOR_SIGMATEL:
+		switch (sc->sc_product) {
+		case HDAUDIO_PRODUCT_SIGMATEL_STAC9200:
+		case HDAUDIO_PRODUCT_SIGMATEL_STAC9200D:
+		case HDAUDIO_PRODUCT_SIGMATEL_STAC9202:
+		case HDAUDIO_PRODUCT_SIGMATEL_STAC9202D:
+		case HDAUDIO_PRODUCT_SIGMATEL_STAC9204:
+		case HDAUDIO_PRODUCT_SIGMATEL_STAC9204D:
+		case HDAUDIO_PRODUCT_SIGMATEL_STAC9205:
+		case HDAUDIO_PRODUCT_SIGMATEL_STAC9205_1:
+		case HDAUDIO_PRODUCT_SIGMATEL_STAC9205D:
+			nid = 0x01;
+
+			response = hdaudio_command(sc->sc_codec, nid,
+			    HDAFG_GET_ANACTRL, 0x00);
+			hda_delay(100);
+
+			response |= HDAFG_ANALOG_BEEP_EN;
+
+			hdaudio_command(sc->sc_codec, nid, HDAFG_SET_ANACTRL,
+			    response);
+			hda_delay(100);
+			break;
+		default:
+			break;
+		}
+		break;
+	case HDAUDIO_VENDOR_REALTEK:
+		switch (sc->sc_product) {
+		case HDAUDIO_PRODUCT_REALTEK_ALC269:
+			/* The Panasonic Toughbook CF19 - Mk 5 uses a Realtek
+			 * ALC231 that identifies as an ALC269.
+			 * This unmutes the PCBEEP on the speaker.
+			 */
+ 			nid = 0xf;
+			response = hdaudio_command(sc->sc_codec, nid,
+			    CORB_SET_AMPLIFIER_GAIN_MUTE, 0x7100);
+			hda_delay(100);
+			break;
+		default:
+			break;
+		}
+	default:
+		break;
 	}
 }
