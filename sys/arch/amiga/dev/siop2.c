@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.42 2014/01/22 00:25:16 christos Exp $ */
+/*	$NetBSD: siop2.c,v 1.43 2014/09/21 15:44:47 christos Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.42 2014/01/22 00:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.43 2014/09/21 15:44:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1256,9 +1256,6 @@ siopng_checkintr(struct siop_softc *sc, u_char istat, u_char dstat,
 			}
 /*			rp->siop_dcntl |= SIOP_DCNTL_STD;*/
 			return (0);
-#ifdef DDB
-			Debugger();
-#endif
 		}
 #endif
 		*status = -1;
