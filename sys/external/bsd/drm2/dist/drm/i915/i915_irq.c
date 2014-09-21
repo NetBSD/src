@@ -1099,7 +1099,9 @@ static void notify_ring(struct drm_device *dev,
     {
 	unsigned long flags;
 	spin_lock_irqsave(&dev_priv->irq_lock, flags);
-	/* XXX Set a flag under the lock...  */
+	/*
+	 * XXX Set a flag under the lock or push the lock out to callers.
+	 */
 	DRM_SPIN_WAKEUP_ALL(&ring->irq_queue, &dev_priv->irq_lock);
 	spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
     }
@@ -1315,8 +1317,10 @@ static void snb_gt_irq_handler(struct drm_device *dev,
 	if (gt_iir & (GT_BLT_CS_ERROR_INTERRUPT |
 		      GT_BSD_CS_ERROR_INTERRUPT |
 		      GT_RENDER_CS_MASTER_ERROR_INTERRUPT)) {
+		spin_lock(&dev_priv->irq_lock);
 		i915_handle_error(dev, false, "GT error interrupt 0x%08x",
 				  gt_iir);
+		spin_unlock(&dev_priv->irq_lock);
 	}
 
 	if (gt_iir & GT_PARITY_ERROR(dev))
@@ -1589,9 +1593,11 @@ static void gen6_rps_irq_handler(struct drm_i915_private *dev_priv, u32 pm_iir)
 			notify_ring(dev_priv->dev, &dev_priv->ring[VECS]);
 
 		if (pm_iir & PM_VEBOX_CS_ERROR_INTERRUPT) {
+			spin_lock(&dev_priv->irq_lock);
 			i915_handle_error(dev_priv->dev, false,
 					  "VEBOX CS error interrupt 0x%08x",
 					  pm_iir);
+			spin_unlock(&dev_priv->irq_lock);
 		}
 	}
 }
@@ -2357,6 +2363,8 @@ void i915_handle_error(struct drm_device *dev, bool wedged,
 	va_list args;
 	char error_msg[80];
 
+	assert_spin_locked(&dev_priv->irq_lock);
+
 	va_start(args, fmt);
 	vscnprintf(error_msg, sizeof(error_msg), fmt, args);
 	va_end(args);
@@ -2734,6 +2742,8 @@ static void i915_hangcheck_elapsed(unsigned long data)
 	if (!i915.enable_hangcheck)
 		return;
 
+	spin_lock(&dev_priv->irq_lock);
+
 	for_each_ring(ring, dev_priv, i) {
 		u64 acthd;
 		u32 seqno;
@@ -2747,9 +2757,7 @@ static void i915_hangcheck_elapsed(unsigned long data)
 		if (ring->hangcheck.seqno == seqno) {
 			if (ring_idle(ring, seqno)) {
 				ring->hangcheck.action = HANGCHECK_IDLE;
-
 #ifdef __NetBSD__
-				spin_lock(&dev_priv->irq_lock);
 				if (DRM_SPIN_WAITERS_P(&ring->irq_queue,
 					&dev_priv->irq_lock)) {
 					if (!test_and_set_bit(ring->id, &dev_priv->gpu_error.missed_irq_rings)) {
@@ -2765,7 +2773,6 @@ static void i915_hangcheck_elapsed(unsigned long data)
 				} else {
 					busy = false;
 				}
-				spin_unlock(&dev_priv->irq_lock);
 #else
 				if (waitqueue_active(&ring->irq_queue)) {
 					/* Issue a wake-up to catch stuck h/w. */
@@ -2844,6 +2851,8 @@ static void i915_hangcheck_elapsed(unsigned long data)
 
 	if (rings_hung)
 		return i915_handle_error(dev, true, "Ring hung");
+
+	spin_unlock(&dev_priv->irq_lock);
 
 	if (busy_count)
 		/* Reset timer case chip hangs without another request
