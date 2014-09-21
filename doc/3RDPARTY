@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1145 2014/08/10 20:52:33 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1145.2.1 2014/09/21 18:50:41 snj Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1300,8 +1300,8 @@ Notes:
 Added changes from a5 -> a12 manually.
 
 Package:	tz
-Version:	tzcode2014e / tzdata2014f
-Current Vers:	tzcode2014f / tzdata2014f
+Version:	tzcode2014e / tzdata2014g
+Current Vers:	tzcode2014g / tzdata2014g
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
@@ -1316,8 +1316,7 @@ Don't use src/lib/libc/time/tzcode2netbsd to prepare the source tree for import.
 Diffs are now applied by hand, since we have too many diffs (re-entrant tzcode,
 register removal) to apply. The diffs have been submitted upstream but there
 is too much inertia to apply them. Check for .gitignore files.
-For the data files, do use external/public-domain/tz/tzdata2netbsd. You might
-need to download the NEWS file separately if it's missing.
+For the data files, do use external/public-domain/tz/tzdata2netbsd.
 
 Package:	wpa_supplicant/hostapd
 Version:	2.0

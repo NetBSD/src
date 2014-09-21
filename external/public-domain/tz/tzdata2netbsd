@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.2 2014/08/08 09:47:28 apb Exp $
+# $NetBSD: tzdata2netbsd,v 1.2.4.1 2014/09/21 18:50:41 snj Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -13,8 +13,8 @@
 #    redo non-trivial work done by earlier runs.
 #
 
-OLDVER=2014e
-NEWVER=2014f
+OLDVER=2014f
+NEWVER=2014g
 
 # Uppercase variants of OLDVER and NEWVER
 OLDVER_UC="$( echo "${OLDVER}" | tr '[a-z]' '[A-Z]' )"
@@ -33,6 +33,7 @@ NEWSURL="https://github.com/eggert/tz/raw/${GITHUBTAG}/NEWS"
 
 # Directories
 REPODIR="src/external/public-domain/tz/dist" # relative to the NetBSD CVS repo
+TZDISTDIR="$(pwd)/dist" # should be .../external/public-domain/tz/dist
 WORKDIR="$(pwd)/update-work/${NEWVER}"
 EXTRACTDIR="${WORKDIR}/extract"
 
@@ -50,6 +51,7 @@ DOIT()
 	local really_do_it=false
 	local reply
 
+	echo "In directory $(pwd)"
 	echo "ABOUT TO DO:" "$(shell_quote "$@")"
 	read -p "Really do it? [yes/no/quit] " reply
 	case "${reply}" in
@@ -283,9 +285,11 @@ EOF
 }
 
 cvsmerge()
-{
+{(
+
+	cd "${TZDISTDIR}" || exit 1
 	DOIT cvs -d "${CVSROOT}" update -j"${CVSOLDTAG}" -j"${CVSNEWTAG}"
-}
+)}
 
 resolveconflicts()
 {
@@ -299,7 +303,8 @@ EOF
 }
 
 cvscommitmerge()
-{
+{(
+	cd "${TZDISTDIR}" || exit 1
 	if grep -l '^[<=>][<=>][<=>]' *
 	then
 		cat >&2 <<EOF
@@ -309,7 +314,7 @@ EOF
 		return 1
 	fi
 	DOIT cvs -d "${CVSROOT}" commit -m "Merge tzdata${NEWVER}"
-}
+)}
 
 extra()
 {
