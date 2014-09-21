@@ -1,4 +1,4 @@
-/* $NetBSD: gcscehci.c,v 1.10 2014/03/29 19:28:28 christos Exp $ */
+/* $NetBSD: gcscehci.c,v 1.11 2014/09/21 17:59:52 christos Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.10 2014/03/29 19:28:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.11 2014/09/21 17:59:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,6 @@ gcscehci_attach(device_t parent, device_t self, void *aux)
 	pcitag_t tag = pa->pa_tag;
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	const char *vendor;
 	const char *devname = device_xname(self);
 	char devinfo[256];
 	usbd_status r;
@@ -151,13 +150,9 @@ gcscehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_bus.usbrev = USBREV_2_0;
 
 	/* Figure out vendor for root hub descriptor. */
-	vendor = pci_findvendor(pa->pa_id);
 	sc->sc.sc_id_vendor = PCI_VENDOR(pa->pa_id);
-	if (vendor)
-		strlcpy(sc->sc.sc_vendor, vendor, sizeof(sc->sc.sc_vendor));
-	else
-		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
-		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
+	pci_findvendor(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
+	    sc->sc.sc_id_vendor);
 
 	/*
 	 * Find companion controllers.  According to the spec they always
