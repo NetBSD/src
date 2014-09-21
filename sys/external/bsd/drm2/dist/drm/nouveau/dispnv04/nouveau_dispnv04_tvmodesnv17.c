@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv04_tvmodesnv17.c,v 1.2 2014/08/06 15:01:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv04_tvmodesnv17.c,v 1.2.4.1 2014/09/21 17:41:52 snj Exp $	*/
 
 /*
  * Copyright (C) 2009 Francisco Jerez.
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_tvmodesnv17.c,v 1.2 2014/08/06 15:01:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_tvmodesnv17.c,v 1.2.4.1 2014/09/21 17:41:52 snj Exp $");
 
+#include <asm/div64.h>		/* XXX */
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
 #include "nouveau_drm.h"

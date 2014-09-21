@@ -1,4 +1,4 @@
-/*	$NetBSD: pagemap.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: pagemap.h,v 1.2.8.1 2014/09/21 17:41:52 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _LINUX_PAGEMAP_H_
 #define _LINUX_PAGEMAP_H_
+
+#include <sys/types.h>
 
 static inline int
 fault_in_multipages_readable(const char *uaddr __unused, size_t len __unused)

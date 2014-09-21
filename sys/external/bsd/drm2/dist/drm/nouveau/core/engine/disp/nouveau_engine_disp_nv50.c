@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_disp_nv50.c,v 1.1.1.1 2014/08/06 12:36:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_engine_disp_nv50.c,v 1.1.1.1.4.1 2014/09/21 17:41:53 snj Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_disp_nv50.c,v 1.1.1.1 2014/08/06 12:36:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_disp_nv50.c,v 1.1.1.1.4.1 2014/09/21 17:41:53 snj Exp $");
 
 #include <core/object.h>
 #include <core/parent.h>
@@ -41,6 +41,10 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_engine_disp_nv50.c,v 1.1.1.1 2014/08/06 12:3
 #include <subdev/devinit.h>
 #include <subdev/timer.h>
 #include <subdev/fb.h>
+
+#include <asm/div64.h>		/* XXX */
+#include <linux/bitops.h>	/* XXX */
+#include <linux/ktime.h>	/* XXX */
 
 #include "nv50.h"
 
@@ -1355,7 +1359,7 @@ nv50_disp_intr_unk20_2_dp(struct nv50_disp_priv *priv,
 	int TU, VTUi, VTUf, VTUa;
 	u64 link_data_rate, link_ratio, unk;
 	u32 best_diff = 64 * symbol;
-	u32 link_nr, link_bw, bits, r;
+	u32 link_nr, link_bw, bits;
 
 	/* calculate packed data rate for each lane */
 	if      (dpctrl > 0x00030000) link_nr = 4;
@@ -1375,7 +1379,7 @@ nv50_disp_intr_unk20_2_dp(struct nv50_disp_priv *priv,
 
 	/* calculate ratio of packed data rate to link symbol rate */
 	link_ratio = link_data_rate * symbol;
-	r = do_div(link_ratio, link_bw);
+	(void)do_div(link_ratio, link_bw);
 
 	for (TU = 64; TU >= 32; TU--) {
 		/* calculate average number of valid symbols in each TU */
@@ -1436,8 +1440,8 @@ nv50_disp_intr_unk20_2_dp(struct nv50_disp_priv *priv,
 	/* XXX close to vbios numbers, but not right */
 	unk  = (symbol - link_ratio) * bestTU;
 	unk *= link_ratio;
-	r = do_div(unk, symbol);
-	r = do_div(unk, symbol);
+	(void)do_div(unk, symbol);
+	(void)do_div(unk, symbol);
 	unk += 6;
 
 	nv_mask(priv, 0x61c10c + loff, 0x000001fc, bestTU << 2);

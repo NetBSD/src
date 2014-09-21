@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_pwr_base.c,v 1.1.1.1 2014/08/06 12:36:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_subdev_pwr_base.c,v 1.1.1.1.4.1 2014/09/21 17:41:53 snj Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_pwr_base.c,v 1.1.1.1 2014/08/06 12:36:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_pwr_base.c,v 1.1.1.1.4.1 2014/09/21 17:41:53 snj Exp $");
 
 #include <subdev/pwr.h>
 #include <subdev/timer.h>
@@ -110,16 +110,27 @@ nouveau_pwr_recv(struct work_struct *work)
 	nv_wr32(ppwr, 0x10a580, 0x00000000);
 
 	/* wake process if it's waiting on a synchronous reply */
+#ifdef __NetBSD__
+	mutex_lock(&ppwr->recv.lock);
+#endif
 	if (ppwr->recv.process) {
 		if (process == ppwr->recv.process &&
 		    message == ppwr->recv.message) {
 			ppwr->recv.data[0] = data0;
 			ppwr->recv.data[1] = data1;
 			ppwr->recv.process = 0;
+#ifdef __NetBSD__
+			DRM_WAKEUP_ONE(&ppwr->recv.wait, &ppwr->recv.lock);
+			mutex_unlock(&ppwr->recv.lock);
+#else
 			wake_up(&ppwr->recv.wait);
+#endif
 			return;
 		}
 	}
+#ifdef __NetBSD__
+	mutex_unlock(&ppwr->recv.lock);
+#endif
 
 	/* right now there's no other expected responses from the engine,
 	 * so assume that any unexpected message is an error.
@@ -247,6 +258,24 @@ nouveau_pwr_create_(struct nouveau_object *parent,
 		return ret;
 
 	INIT_WORK(&ppwr->recv.work, nouveau_pwr_recv);
+#ifdef __NetBSD__
+	linux_mutex_init(&ppwr->recv.lock);
+	DRM_INIT_WAITQUEUE(&ppwr->recv.wait, "nvppwr");
+#else
 	init_waitqueue_head(&ppwr->recv.wait);
+#endif
 	return 0;
 }
+
+#ifdef __NetBSD__
+int
+_nouveau_pwr_dtor(struct nouveau_object *object)
+{
+	struct nouveau_pwr *ppwr = (void *)object;
+
+	DRM_DESTROY_WAITQUEUE(&ppwr->recv.wait);
+	linux_mutex_destroy(&ppwr->recv.lock);
+
+	_nouveau_subdev_dtor(object);
+}
+#endif

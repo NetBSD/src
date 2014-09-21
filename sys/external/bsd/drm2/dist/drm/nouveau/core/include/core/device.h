@@ -167,11 +167,13 @@ nv_device_resource_start(struct nouveau_device *device, unsigned int bar);
 resource_size_t
 nv_device_resource_len(struct nouveau_device *device, unsigned int bar);
 
+#ifndef __NetBSD__
 dma_addr_t
 nv_device_map_page(struct nouveau_device *device, struct page *page);
 
 void
 nv_device_unmap_page(struct nouveau_device *device, dma_addr_t addr);
+#endif
 
 int
 nv_device_get_irq(struct nouveau_device *device, bool stall);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nv50_display.c,v 1.1.1.1 2014/08/06 12:36:23 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nv50_display.c,v 1.1.1.1.4.1 2014/09/21 17:41:52 snj Exp $	*/
 
 	/*
  * Copyright 2011 Red Hat Inc.
@@ -25,9 +25,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nv50_display.c,v 1.1.1.1 2014/08/06 12:36:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nv50_display.c,v 1.1.1.1.4.1 2014/09/21 17:41:52 snj Exp $");
 
 #include <linux/dma-mapping.h>
+#include <linux/err.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
@@ -132,6 +133,11 @@ nv50_pioc_create(struct nouveau_object *core, u32 bclass, u8 head,
 
 struct nv50_dmac {
 	struct nv50_chan base;
+#ifdef __NetBSD__
+	bus_dma_segment_t dmaseg;
+	bus_dmamap_t dmamap;
+	void *dmakva;
+#endif
 	dma_addr_t handle;
 	u32 *ptr;
 
@@ -145,9 +151,24 @@ static void
 nv50_dmac_destroy(struct nouveau_object *core, struct nv50_dmac *dmac)
 {
 	if (dmac->ptr) {
+#ifdef __NetBSD__
+		const bus_dma_tag_t dmat = nv_device(core)->dmat;
+
+		bus_dmamem_unload(dmat, dmac->dmamap);
+		bus_dmamem_unmap(dmat, dmac->dmakva, PAGE_SIZE);
+		bus_dmamap_destroy(dmat, dmac->dmamap);
+		bus_dmamem_free(dmat, &dmac->dmaseg, 1);
+		dmac->handle = 0;
+		dmac->ptr = NULL;
+#else
 		struct pci_dev *pdev = nv_device(core)->pdev;
 		pci_free_consistent(pdev, PAGE_SIZE, dmac->ptr, dmac->handle);
+#endif
 	}
+
+#ifdef __NetBSD__
+	linux_mutex_destroy(&dmac->lock);
+#endif
 
 	nv50_chan_destroy(core, &dmac->base);
 }
@@ -282,12 +303,56 @@ nv50_dmac_create(struct nouveau_object *core, u32 bclass, u8 head,
 	u32 pushbuf = *(u32 *)data;
 	int ret;
 
+#ifdef __NetBSD__
+	linux_mutex_init(&dmac->lock);
+#else
 	mutex_init(&dmac->lock);
+#endif
 
+#ifdef __NetBSD__
+    {
+	const bus_dma_tag_t dmat = nv_device(core)->dmat;
+	int rsegs;
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamem_alloc(dmat, PAGE_SIZE, PAGE_SIZE, 0, &dmac->dmaseg,
+	    1, &rsegs, BUS_DMA_WAITOK);
+	if (ret)
+		return ret;
+	KASSERT(rsegs == 1);
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_create(dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
+	    BUS_DMA_WAITOK, &dmac->dmamap);
+	if (ret) {
+		bus_dmamem_free(dmat, &dmac->dmaseg, 1);
+		return ret;
+	}
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamem_map(dmat, &dmac->dmaseg, 1, PAGE_SIZE, &dmac->dmakva,
+	    BUS_DMA_WAITOK);
+	if (ret) {
+		bus_dmamap_destroy(dmat, dmac->dmamap);
+		bus_dmamem_free(dmat, &dmac->dmaseg, 1);
+		return ret;
+	}
+	ret = -bus_dmamap_load(dmat, dmac->dmamap, dmac->dmakva, PAGE_SIZE,
+	    BUS_DMA_WAITOK);
+	if (ret) {
+		bus_dmamem_unmap(dmat, dmac->dmakva, PAGE_SIZE);
+		bus_dmamap_destroy(dmat, dmac->dmamap);
+		bus_dmamem_free(dmat, &dmac->dmaseg, 1);
+		return ret;
+	}
+
+	dmac->handle = dmac->dmamap->dm_segs[0].ds_addr;
+	dmac->ptr = dmac->dmakva;
+    }
+#else
 	dmac->ptr = pci_alloc_consistent(nv_device(core)->pdev, PAGE_SIZE,
 					&dmac->handle);
 	if (!dmac->ptr)
 		return -ENOMEM;
+#endif
 
 	ret = nouveau_object_new(client, NVDRM_DEVICE, pushbuf,
 				 NV_DMA_FROM_MEMORY_CLASS,

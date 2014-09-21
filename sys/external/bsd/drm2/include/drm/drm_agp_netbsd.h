@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agp_netbsd.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: drm_agp_netbsd.h,v 1.3.2.1 2014/09/21 17:41:53 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,12 +41,15 @@
 #include <sys/agpio.h>
 
 #include <dev/pci/pcivar.h>	/* XXX include order botch */
+#include <dev/pci/agpreg.h>
 #include <dev/pci/agpvar.h>
 
 #include <linux/kernel.h>
 #include <linux/pci.h>
 
 #define	__OS_HAS_AGP	1
+
+#define	PCI_AGP_COMMAND_FW	AGPCMD_FWEN
 
 __CTASSERT(PAGE_SIZE == AGP_PAGE_SIZE);
 __CTASSERT(PAGE_SHIFT == AGP_PAGE_SHIFT);
