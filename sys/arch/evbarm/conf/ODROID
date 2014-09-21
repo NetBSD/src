@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID,v 1.10 2014/09/19 14:48:42 reinoud Exp $
+#	$NetBSD: ODROID,v 1.11 2014/09/21 15:23:55 reinoud Exp $
 #
 #	ODROID -- ODROID series Exynos Kernel
 #
@@ -217,9 +217,9 @@ gpio*		at exyogpio?
 
 # On-board USB
 exyousb*	at exyo0
-#ohci*		at exyousb?
+ohci*		at exyousb?
 ehci*		at exyousb?
-#usb*		at ohci?
+usb*		at ohci?
 usb*		at ehci?
 
 # Network phy for the LAN9730
