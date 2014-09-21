@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.27 2013/01/13 21:01:05 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.28 2014/09/21 12:46:15 bouyer Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.27 2013/01/13 21:01:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.28 2014/09/21 12:46:15 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ do_hypervisor_callback(struct intrframe *regs)
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
 	struct cpu_info *ci;
 	volatile struct vcpu_info *vci;
-	int level;
+	int level __diagused;
 
 	ci = curcpu();
 	vci = ci->ci_vcpu;
