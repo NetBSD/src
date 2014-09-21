@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.71 2014/06/10 22:01:40 christos Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.72 2014/09/21 16:52:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.71 2014/06/10 22:01:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.72 2014/09/21 16:52:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,7 +423,6 @@ findroot(void)
 		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
 		     dv != NULL;
 		     dv = deviter_next(&di)) {
-				continue;
 
 			if (device_is_a(dv, "fd") &&
 			    device_class(dv) == DV_DISK) {
