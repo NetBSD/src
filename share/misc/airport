@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.57 2014/07/20 19:19:49 mbalmer Exp $
+#	$NetBSD: airport,v 1.58 2014/09/21 08:38:03 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -4081,6 +4081,7 @@ LAH:Labuha, Indonesia
 LAI:Lannion, France
 LAJ:Lages, SC, Brazil
 LAK:Aklavik Airport, NT, Canada
+LAKU:Shaikh Zayed International Airport, Kukes, Albania
 LAL:Lakeland Regional Airport, FL, USA
 LAM:Los Alamos Airport, NM, USA
 LAN:Lansing Capital City, Michigan, USA
