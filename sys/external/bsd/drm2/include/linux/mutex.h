@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.6 2014/08/06 15:01:33 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.6.2.1 2014/09/21 17:41:52 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
 #include <sys/mutex.h>
 
 #include <lib/libkern/libkern.h> /* KASSERT */
+
+#define	__acquires(lock)	/* XXX lockdep stuff */
+#define	__releases(lock)	/* XXX lockdep stuff */
 
 struct mutex {
 	kmutex_t mtx_lock;

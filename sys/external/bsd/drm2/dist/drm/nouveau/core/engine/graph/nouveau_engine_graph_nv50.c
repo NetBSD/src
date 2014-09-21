@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_graph_nv50.c,v 1.1.1.1 2014/08/06 12:36:26 riastradh Exp $	*/
+/*	$NetBSD: nouveau_engine_graph_nv50.c,v 1.1.1.1.4.1 2014/09/21 17:41:53 snj Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_graph_nv50.c,v 1.1.1.1 2014/08/06 12:36:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_graph_nv50.c,v 1.1.1.1.4.1 2014/09/21 17:41:53 snj Exp $");
 
 #include <core/os.h>
 #include <core/class.h>
@@ -621,7 +621,7 @@ nv50_graph_trap_handler(struct nv50_graph_priv *priv, u32 display,
 			nv_error(priv, "TRAP DISPATCH_FAULT\n");
 			if (display && (addr & 0x80000000)) {
 				nv_error(priv,
-					 "ch %d [0x%010llx %s] subc %d class 0x%04x mthd 0x%04x data 0x%08x%08x 400808 0x%08x 400848 0x%08x\n",
+					 "ch %d [0x%010"PRIx64" %s] subc %d class 0x%04x mthd 0x%04x data 0x%08x%08x 400808 0x%08x 400848 0x%08x\n",
 					 chid, inst,
 					 nouveau_client_name(engctx), subc,
 					 class, mthd, datah, datal, addr, r848);
@@ -646,7 +646,7 @@ nv50_graph_trap_handler(struct nv50_graph_priv *priv, u32 display,
 			nv_error(priv, "TRAP DISPATCH_QUERY\n");
 			if (display && (addr & 0x80000000)) {
 				nv_error(priv,
-					 "ch %d [0x%010llx %s] subc %d class 0x%04x mthd 0x%04x data 0x%08x 40084c 0x%08x\n",
+					 "ch %d [0x%010"PRIx64" %s] subc %d class 0x%04x mthd 0x%04x data 0x%08x 40084c 0x%08x\n",
 					 chid, inst,
 					 nouveau_client_name(engctx), subc,
 					 class, mthd, data, addr);
@@ -850,7 +850,7 @@ nv50_graph_intr(struct nouveau_subdev *subdev)
 			pr_cont("\n");
 		}
 		nv_error(priv,
-			 "ch %d [0x%010llx %s] subc %d class 0x%04x mthd 0x%04x data 0x%08x\n",
+			 "ch %d [0x%010"PRIx64" %s] subc %d class 0x%04x mthd 0x%04x data 0x%08x\n",
 			 chid, (u64)inst << 12, nouveau_client_name(engctx),
 			 subc, class, mthd, data);
 	}

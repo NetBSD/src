@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_fifo_base.c,v 1.2 2014/08/06 15:01:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_engine_fifo_base.c,v 1.2.4.1 2014/09/21 17:41:53 snj Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_base.c,v 1.2 2014/08/06 15:01:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_base.c,v 1.2.4.1 2014/09/21 17:41:53 snj Exp $");
 
 #include <core/client.h>
 #include <core/object.h>
@@ -92,10 +92,10 @@ nouveau_fifo_channel_create_(struct nouveau_object *parent,
 
 	/* map fifo control registers */
 #ifdef __NetBSD__
+	chan->bst = nv_device_resource_tag(device, bar);
 	/* XXX errno NetBSD->Linux */
-	chan->bst = nv_device_resource_tag(device, bar)
-	ret = -bus_space_map(chan->bst, nv_device_resource_start(device, bar),
-	    (addr + (chan->chid * size)), 0, size, &chan->bsh);
+	ret = -bus_space_map(chan->bst, nv_device_resource_start(device, bar) +
+	    addr + (chan->chid * size), size, 0, &chan->bsh);
 	if (ret)
 		return ret;
 #else
@@ -143,14 +143,22 @@ u32
 _nouveau_fifo_channel_rd32(struct nouveau_object *object, u64 addr)
 {
 	struct nouveau_fifo_chan *chan = (void *)object;
+#ifdef __NetBSD__
+	return bus_space_read_4(chan->bst, chan->bsh, addr);
+#else
 	return ioread32_native(chan->user + addr);
+#endif
 }
 
 void
 _nouveau_fifo_channel_wr32(struct nouveau_object *object, u64 addr, u32 data)
 {
 	struct nouveau_fifo_chan *chan = (void *)object;
+#ifdef __NetBSD__
+	bus_space_write_4(chan->bst, chan->bsh, addr, data);
+#else
 	iowrite32_native(data, chan->user + addr);
+#endif
 }
 
 static int

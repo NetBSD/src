@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_module.c,v 1.1 2014/08/06 13:36:07 riastradh Exp $	*/
+/*	$NetBSD: nouveau_module.c,v 1.1.4.1 2014/09/21 17:41:53 snj Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_module.c,v 1.1 2014/08/06 13:36:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_module.c,v 1.1.4.1 2014/09/21 17:41:53 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -42,12 +42,15 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_module.c,v 1.1 2014/08/06 13:36:07 riastradh
 #include <drm/drmP.h>
 
 #include <core/object.h>
+#include <engine/device.h>
 
 MODULE(MODULE_CLASS_DRIVER, nouveau, "drmkms,drmkms_pci"); /* XXX drmkms_i2c, drmkms_ttm */
 
 #ifdef _MODULE
 #include "ioconf.c"
 #endif
+
+extern struct drm_driver *const nouveau_drm_driver; /* XXX */
 
 static int
 nouveau_init(void)
@@ -66,9 +69,12 @@ nouveau_init(void)
 	}
 
 	nouveau_objects_init();
+	nouveau_devices_init();
 #if 0				/* XXX nouveau acpi */
 	nouveau_register_dsm_handler();
 #endif
+
+	return 0;
 }
 
 int	nouveau_guarantee_initialized(void); /* XXX */
@@ -91,6 +97,7 @@ nouveau_fini(void)
 #if 0				/* XXX nouveau acpi */
 	nouveau_unregister_dsm_handler();
 #endif
+	nouveau_devices_fini();
 	nouveau_objects_fini();
 	drm_pci_exit(nouveau_drm_driver, NULL);
 }
