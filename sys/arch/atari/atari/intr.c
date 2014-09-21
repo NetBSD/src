@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23 2010/12/20 00:25:30 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.24 2014/09/21 15:49:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23 2010/12/20 00:25:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24 2014/09/21 15:49:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,8 +132,10 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 	 */
 	switch (type & (AUTO_VEC|USER_VEC)) {
 	case AUTO_VEC:
-		if (vector < AVEC_MIN || vector > AVEC_MAX)
+		if (vector < AVEC_MIN || vector > AVEC_MAX) {
+			free(ih, M_DEVBUF);
 			return NULL;
+		}
 		vec_list = &autovec_list[vector-1];
 		hard_vec = &autovects[vector-1];
 		ih->ih_intrcnt = &intrcnt_auto[vector-1];
