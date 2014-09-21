@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.45 2013/11/06 06:23:15 mrg Exp $ */
+/* $NetBSD: privcmd.c,v 1.46 2014/09/21 16:53:38 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.45 2013/11/06 06:23:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.46 2014/09/21 16:53:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,8 +360,11 @@ privcmd_ioctl(void *v)
 			}
 			error  = privcmd_map_obj(vmm, va, maddr,
 			    mentry.npages, mcmd->dom);
-			if (error)
+			if (error) {
+				kmem_free(maddr, 
+				    sizeof(paddr_t) * mentry.npages);
 				return error;
+			}
 		}
 		break;
 	}
