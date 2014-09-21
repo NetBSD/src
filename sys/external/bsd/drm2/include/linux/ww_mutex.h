@@ -1,4 +1,4 @@
-/*	$NetBSD: ww_mutex.h,v 1.4 2014/07/26 21:36:40 riastradh Exp $	*/
+/*	$NetBSD: ww_mutex.h,v 1.4.4.1 2014/09/21 18:31:06 snj Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -27,17 +27,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * Notes on porting:
- *
- * - We require a context for all locks, so ww_mutex_lock(m, NULL) is
- *   not kosher.  Locking without a context is too painful to
- *   contemplate.
- *
- * - We require passing the context to trylock and unlock.  Unlocking
- *   the wrong lock is too serious an error to pass up detection.
  */
 
 #ifndef _ASM_WW_MUTEX_H_
@@ -119,7 +108,8 @@ static inline void
 ww_acquire_fini(struct ww_acquire_ctx *ctx)
 {
 
-	KASSERT(ctx->wwx_acquired == 0);
+	KASSERTMSG((ctx->wwx_acquired == 0), "ctx %p still holds %u locks",
+	    ctx, ctx->wwx_acquired);
 	ctx->wwx_acquired = ~0U;	/* Fail if called again. */
 }
 
