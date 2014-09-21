@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_cardbus.c,v 1.20 2011/08/01 11:20:28 drochner Exp $	*/
+/*	$NetBSD: uhci_cardbus.c,v 1.21 2014/09/21 15:07:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.20 2011/08/01 11:20:28 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.21 2014/09/21 15:07:19 christos Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -98,7 +98,6 @@ uhci_cardbus_attach(device_t parent, device_t self,
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcitag_t tag = ca->ca_tag;
 	pcireg_t csr;
-	const char *vendor;
 	const char *devname = device_xname(self);
 	char devinfo[256];
 	usbd_status r;
@@ -156,13 +155,9 @@ uhci_cardbus_attach(device_t parent, device_t self,
 	}
 
 	/* Figure out vendor for root hub descriptor. */
-	vendor = pci_findvendor(ca->ca_id);
 	sc->sc.sc_id_vendor = PCI_VENDOR(ca->ca_id);
-	if (vendor)
-		strlcpy(sc->sc.sc_vendor, vendor, sizeof(sc->sc.sc_vendor));
-	else
-		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
-		    "vendor 0x%04x", PCI_VENDOR(ca->ca_id));
+	pci_findvendor(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
+	    sc->sc.sc_id_vendor);
 
 	r = uhci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
