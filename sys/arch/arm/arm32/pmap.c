@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.299 2014/09/05 05:25:28 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.300 2014/09/21 15:45:46 christos Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.299 2014/09/05 05:25:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.300 2014/09/21 15:45:46 christos Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -6233,12 +6233,6 @@ pmap_set_pt_cache_mode(pd_entry_t *kl1, vaddr_t va, size_t nptes)
 				rv = 1;
 			}
 			return rv;
-			if (pde & L1_S_V6_SUPER) {
-				va = (va & -L1_SS_SIZE) + L1_SS_SIZE;
-			} else {
-				va = (va & -L1_S_SIZE) + L1_S_SIZE;
-			}
-			continue;
 		}
 		vaddr_t pa = l1pte_pa(pde);
 		pt_entry_t *ptep = (pt_entry_t *)kernel_pt_lookup(pa);

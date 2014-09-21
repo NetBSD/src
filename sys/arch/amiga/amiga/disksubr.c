@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.61 2014/01/22 00:25:16 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.62 2014/09/21 15:43:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.61 2014/01/22 00:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.62 2014/09/21 15:43:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -567,16 +567,6 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, str
 done:
 	brelse(bp, 0);
 	return (error); 
-
-	/*
-	 * get write out partition list iff cpu_label is valid.
-	 */
-	if (clp->valid == 0 ||
-	    (clp->rdblock <= 0 || clp->rdblock >= RDB_MAXBLOCKS))
-		return(EINVAL);
-
-	(void)getrdbmap(dev, strat, lp, clp);
-	return(EINVAL);
 }
 
 u_long
