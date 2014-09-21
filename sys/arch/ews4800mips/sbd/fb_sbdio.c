@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_sbdio.c,v 1.13 2014/01/31 15:41:48 tsutsui Exp $	*/
+/*	$NetBSD: fb_sbdio.c,v 1.14 2014/09/21 15:50:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define WIRED_FB_TLB
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.13 2014/01/31 15:41:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.14 2014/09/21 15:50:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,6 +154,7 @@ fb_sbdio_attach(device_t parent, device_t self, void *aux)
 		ga = malloc(sizeof(struct ga), M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (ga == NULL) {
 			printf(":can't allocate ga memory\n");
+			free(ri, M_DEVBUF);
 			return;
 		}
 		ga->reg_paddr = sa->sa_addr2;
