@@ -1,12 +1,8 @@
-/*      $NetBSD: hdaudio_verbose.h,v 1.1 2014/09/19 17:23:35 christos Exp $ */
+/*      $NetBSD: hdaudio_verbose.h,v 1.2 2014/09/21 14:30:22 christos Exp $ */
 
 /*
- * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,13 +29,8 @@
 #ifndef _DEV_PCI_HDAUDIO_HDAUDIO_VERBOSE_H_
 #define _DEV_PCI_HDAUDIO_HDAUDIO_VERBOSE_H_
 
-typedef u_int16_t hdaudio_vendor_id_t;
-typedef u_int16_t hdaudio_product_id_t;
+#include <dev/dev_verbose.h>
 
-extern void (*get_hdaudio_vendor)(char *, size_t, hdaudio_vendor_id_t);
-extern void (*get_hdaudio_product)(char *, size_t, hdaudio_vendor_id_t,
-    hdaudio_product_id_t);
-
-extern int hdaudio_verbose_loaded;
+DEV_VERBOSE_DECLARE(hdaudio);
 
 #endif /* _DEV_PCI_HDAUDIO_HDAUDIO_VERBOSE_H_ */

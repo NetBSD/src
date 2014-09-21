@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.58 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.59 2014/09/21 14:30:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.58 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.59 2014/09/21 14:30:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,6 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
-	const char *vendor;
 	usbd_status r;
 	int ncomp;
 	struct usb_pci *up;
@@ -204,14 +203,9 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Figure out vendor for root hub descriptor. */
-	vendor = pci_findvendor(pa->pa_id);
 	sc->sc.sc_id_vendor = PCI_VENDOR(pa->pa_id);
-	if (vendor)
-		strlcpy(sc->sc.sc_vendor, vendor, sizeof(sc->sc.sc_vendor));
-	else
-		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
-		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
-
+	pci_findvendor(sc->sc.sc_vendor,
+	    sizeof(sc->sc.sc_vendor), sc->sc.sc_id_vendor);
 	/* Enable workaround for dropped interrupts as required */
 	switch (sc->sc.sc_id_vendor) {
 	case PCI_VENDOR_ATI:

@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.81 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: azalia.c,v 1.82 2014/09/21 14:30:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.81 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.82 2014/09/21 14:30:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -303,8 +303,8 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 	pcireg_t v;
 	pci_intr_handle_t ih;
 	const char *intrrupt_str;
-	const char *name;
-	const char *vendor;
+	char vendor[PCI_VENDORSTR_LEN];
+	char product[PCI_PRODUCTSTR_LEN];
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->dev = self;
@@ -353,16 +353,11 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	sc->pciid = pa->pa_id;
-	vendor = pci_findvendor(pa->pa_id);
-	name = pci_findproduct(pa->pa_id);
-	if (vendor != NULL && name != NULL) {
-		aprint_normal_dev(self, "host: %s %s (rev. %d)",
-		    vendor, name, PCI_REVISION(pa->pa_class));
-	} else {
-		aprint_normal_dev(self, "host: 0x%4.4x/0x%4.4x (rev. %d)",
-		    PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id),
-		    PCI_REVISION(pa->pa_class));
-	}
+	pci_findvendor(vendor, sizeof(vendor), PCI_VENDOR(pa->pa_id));
+	pci_findproduct(product, sizeof(product), PCI_VENDOR(pa->pa_id),
+	    PCI_PRODUCT(pa->pa_id));
+	aprint_normal_dev(self, "host: %s %s (rev. %d)",
+	    vendor, product, PCI_REVISION(pa->pa_class));
 
 	if (azalia_attach(sc)) {
 		aprint_error_dev(self, "initialization failure\n");

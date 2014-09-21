@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.23 2014/09/21 10:41:22 nat Exp $ */
+/* $NetBSD: hdafg.c,v 1.24 2014/09/21 14:30:22 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.23 2014/09/21 10:41:22 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.24 2014/09/21 14:30:22 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3614,8 +3614,8 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 
 	prop_dictionary_get_uint16(args, "vendor-id", &sc->sc_vendor);
 	prop_dictionary_get_uint16(args, "product-id", &sc->sc_product);
-	get_hdaudio_vendor(vendor, sizeof(vendor), sc->sc_vendor);
-	get_hdaudio_product(product, sizeof(product), sc->sc_vendor,
+	hdaudio_findvendor(vendor, sizeof(vendor), sc->sc_vendor);
+	hdaudio_findproduct(product, sizeof(product), sc->sc_vendor,
 	    sc->sc_product);
 	hda_print1(sc, ": %s %s%s\n", vendor, product,
 	    sc->sc_config ? " (custom configuration)" : "");
@@ -3969,9 +3969,9 @@ hdafg_getdev(void *opaque, struct audio_device *audiodev)
 	struct hdaudio_audiodev *ad = opaque;
 	struct hdafg_softc *sc = ad->ad_sc;
 
-	get_hdaudio_vendor(audiodev->name, sizeof(audiodev->name),
+	hdaudio_findvendor(audiodev->name, sizeof(audiodev->name),
 	    sc->sc_vendor);
-	get_hdaudio_product(audiodev->version, sizeof(audiodev->version),
+	hdaudio_findproduct(audiodev->version, sizeof(audiodev->version),
 	    sc->sc_vendor, sc->sc_product);
 	snprintf(audiodev->config, sizeof(audiodev->config) - 1,
 	    "%02Xh", sc->sc_nid);
