@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.31 2013/06/21 20:09:58 nakayama Exp $	*/
+/*	$NetBSD: schizo.c,v 1.32 2014/09/21 16:39:12 christos Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.31 2013/06/21 20:09:58 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.32 2014/09/21 16:39:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -195,6 +195,7 @@ schizo_attach(device_t parent, device_t self, void *aux)
 			  ma->ma_reg[0].ur_len,
 			  BUS_SPACE_MAP_LINEAR, &pbm->sp_intrh)) {
 		aprint_error(": failed to interrupt map registers\n");
+		kmem_free(pbm, sizeof(*pbm));
 		return;
 	}
 
