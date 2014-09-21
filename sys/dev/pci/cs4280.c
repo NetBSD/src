@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.67 2014/09/21 14:30:22 christos Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.68 2014/09/21 15:07:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.67 2014/09/21 14:30:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.68 2014/09/21 15:07:19 christos Exp $");
 
 #include "midi.h"
 
@@ -241,12 +241,11 @@ cs4280_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc;
 	const struct cs4280_card_t *cs_card;
 	char const *intrstr;
-	const char *vendor, *product;
 	pcireg_t reg;
 	uint32_t mem;
 	int error;
-	chae vendor[PCI_VENDORSTR_LEN];
-	chae product[PCI_PRODUCTSTR_LEN];
+	char vendor[PCI_VENDORSTR_LEN];
+	char product[PCI_PRODUCTSTR_LEN];
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
