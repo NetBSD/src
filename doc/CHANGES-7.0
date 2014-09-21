@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.35 2014/09/18 15:50:49 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.36 2014/09/21 19:02:39 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -732,3 +732,155 @@ external/gpl3/gcc.old/dist/gcc/config/i386/pmm_malloc.h 1.2
 	Kill the "throw()" on a forward declaration for posix_memalign (it
 	does not match our base declaration and may cause warnings).
 	[joerg, ticket #109]
+
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/copy/nouveau_engine_copy_nva3.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/crypt/nouveau_engine_crypt_nv84.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/crypt/nouveau_engine_crypt_nv98.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/device/nouveau_engine_device_base.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/disp/nouveau_engine_disp_dacnv50.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/disp/nouveau_engine_disp_nv04.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/disp/nouveau_engine_disp_nv50.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/disp/nouveau_engine_disp_nvd0.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/disp/nv50.h 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_base.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_nvc0.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_nve0.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nve0.h 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/graph/nouveau_engine_graph_ctxnvd7.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/graph/nouveau_engine_graph_gm107.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/graph/nouveau_engine_graph_nv50.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/graph/nouveau_engine_graph_nvc0.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/nouveau_engine_xtensa.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/perfmon/nouveau_engine_perfmon_base.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/include/core/device.h 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/core/include/engine/device.h 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/include/subdev/bar.h 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/core/include/subdev/fb.h 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/include/subdev/pwr.h 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/bar/nouveau_subdev_bar_base.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/instmem/nouveau_subdev_instmem_nv04.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/instmem/nouveau_subdev_instmem_nv40.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/instmem/nv04.h 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/core/subdev/pwr/nouveau_subdev_pwr_base.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/dispnv04/nouveau_dispnv04_tvmodesnv17.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/dispnv04/nouveau_dispnv04_tvnv17.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_bo.c 1.5
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_drm.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_drm.h 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_fence.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_gem.c 1.3
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_nv10_fence.c 1.2
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_nv50_display.c 1.2
+sys/external/bsd/drm2/include/drm/drm_agp_netbsd.h 1.4
+sys/external/bsd/drm2/include/linux/bitops.h	1.8
+sys/external/bsd/drm2/include/linux/i2c.h	1.6
+sys/external/bsd/drm2/include/linux/mutex.h	1.7
+sys/external/bsd/drm2/include/linux/pagemap.h	1.3
+sys/external/bsd/drm2/include/linux/pm_runtime.h 1.3
+sys/external/bsd/drm2/include/linux/spinlock.h	1.4
+sys/external/bsd/drm2/include/linux/vmalloc.h	1.4
+sys/external/bsd/drm2/nouveau/files.nouveau	1.3
+sys/external/bsd/drm2/nouveau/nouveau_module.c	1.2
+
+	Bring nouveau closer to a buildable state.
+	[riastradh, ticket #95]
+
+sys/external/bsd/drm2/include/linux/timer.h	1.5
+
+	Add Linux timer_pending and del_timer.
+	[riastradh, ticket #96]
+
+sys/external/bsd/drm2/dist/drm/via/via_dma.c	1.2
+sys/external/bsd/drm2/dist/drm/via/via_dmablit.c 1.2
+sys/external/bsd/drm2/dist/drm/via/via_dmablit.h 1.2
+sys/external/bsd/drm2/dist/drm/via/via_drv.h	1.2
+sys/external/bsd/drm2/dist/drm/via/via_irq.c	1.2
+sys/external/bsd/drm2/dist/drm/via/via_video.c	1.2
+sys/external/bsd/drm2/via/files.via		1.1
+
+	Partial viadrm2 snapshot.
+	[riastradh, ticket #97]
+
+sys/external/bsd/drm2/include/drm/drm_wait_netbsd.h 1.5
+sys/external/bsd/drm2/include/linux/io-mapping.h 1.3
+sys/external/bsd/drm2/linux/linux_work.c	1.8
+sys/external/bsd/drm2/ttm/ttm_bo_vm.c		1.5
+
+	Miscellaneous drm2-related fixes.
+	[riastradh, ticket #98]
+
+sys/external/bsd/drm2/dist/drm/i915/i915_irq.c	1.7-1.9
+
+	Fix locking in i915 interrupt handlers.
+	[riastradh, ticket #99]
+
+sys/external/bsd/drm2/linux/linux_kmap.c	1.5-1.10
+
+	Improve our implementation of the Linux kmap API for drm2.
+	[riastradh, ticket #101]
+
+sys/external/bsd/drm2/include/linux/ww_mutex.h	1.5-1.6
+
+	Use KASSERTMSG in ww_acquire_fini to show number of locks held.
+	[riastradh, ticket #102]
+
+share/man/man9/uvm_map.9			1.6
+
+	Fix typo: mask, not mark.
+	[riastradh, ticket #103]
+
+external/mit/xorg/server/drivers/xf86-video-intel/Makefile 1.16
+
+	Switch default accelmethod back to UXA until we import a stabler SNA.
+	[riastradh, ticket #104]
+
+usr.sbin/pcictl/pcictl.8			1.15-1.16
+
+	Sternly advise against `pcictl read/write'.  Use .Cm, not .Nm,
+	while here.
+	[riastradh, ticket #105]
+
+sys/net/bpf.c					1.189
+
+	PR/49190: bpf_deliver: set scratch memory store in bpf_args_t.
+	[rmind, ticket #106]
+
+doc/3RDPARTY					patch
+external/public-domain/tz/tzdata2netbsd		patch
+external/public-domain/tz/dist/CONTRIBUTING	patch
+external/public-domain/tz/dist/Makefile		patch
+external/public-domain/tz/dist/NEWS		patch
+external/public-domain/tz/dist/README		patch
+external/public-domain/tz/dist/Theory		patch
+external/public-domain/tz/dist/africa		patch
+external/public-domain/tz/dist/antarctica	patch
+external/public-domain/tz/dist/asia		patch
+external/public-domain/tz/dist/australasia	patch
+external/public-domain/tz/dist/backward		patch
+external/public-domain/tz/dist/backzone		patch
+external/public-domain/tz/dist/checktab.awk	patch
+external/public-domain/tz/dist/europe		patch
+external/public-domain/tz/dist/leapseconds	patch
+external/public-domain/tz/dist/leapseconds.awk	patch
+external/public-domain/tz/dist/northamerica	patch
+external/public-domain/tz/dist/southamerica	patch
+external/public-domain/tz/dist/zone.tab		patch
+external/public-domain/tz/dist/zone1970.tab	patch
+external/public-domain/tz/dist/zoneinfo2tdf.pl	patch
+
+	Update to tzdata2014g.  This includes changes for Turks &
+	Caicos that will take effect on 2014-11-02, changes that
+	affect times in the past, and some re-organisation of the
+	source files.
+	[apb, ticket #107]
+
+usr.bin/indent/args.c				1.11
+usr.bin/indent/indent.1				1.23
+usr.bin/indent/indent.c				1.19
+usr.bin/indent/indent_globs.h			1.10
+usr.bin/indent/io.c				1.15
+
+	port the -ut / -nut options from freebsd.  -ut (default) enables
+	tabs in output, the -nut uses spaces.
+	[mrg, ticket #110]
+
