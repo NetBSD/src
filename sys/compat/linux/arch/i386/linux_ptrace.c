@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.28 2014/04/15 17:53:09 maxv Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.29 2014/09/21 16:58:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.28 2014/04/15 17:53:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.29 2014/09/21 16:58:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -182,7 +182,8 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 	mutex_enter(proc_lock);
 	if ((t = proc_find(SCARG(uap, pid))) == NULL) {
 		mutex_exit(proc_lock);
-		return ESRCH;
+		error = ESRCH;
+		goto out;
 	}
 	mutex_enter(t->p_lock);
 	mutex_exit(proc_lock);
