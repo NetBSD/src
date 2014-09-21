@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.33 2014/09/09 21:21:22 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.34 2014/09/21 20:49:31 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.33 2014/09/09 21:21:22 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.34 2014/09/21 20:49:31 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -752,52 +752,52 @@ exynos_usb_init_usb3503_hub(device_t self)
 	prop_dictionary_get_cstring_nocopy(dict, "nreset", &pin_nreset);
 	prop_dictionary_get_cstring_nocopy(dict, "hubconnect", &pin_hubconnect);
 	prop_dictionary_get_cstring_nocopy(dict, "nint", &pin_nint);
-	if (pin_nreset && pin_hubconnect && pin_nint) {
-		ok1 = exynos_gpio_pin_reserve(pin_nreset, &nreset_pin);
-		ok2 = exynos_gpio_pin_reserve(pin_hubconnect, &hubconnect_pin);
-		ok3 = exynos_gpio_pin_reserve(pin_nint, &nint_pin);
-		if (!ok1)
-			aprint_error_dev(self,
-			    "can't reserve GPIO pin %s\n", pin_nreset);
-		if (!ok2)
-			aprint_error_dev(self,
-			    "can't reserve GPIO pin %s\n", pin_hubconnect);
-		if (!ok3)
-			aprint_error_dev(self,
-			    "can't reserve GPIO pin %s\n", pin_nint);
-		if (!(ok1 && ok2 && ok3))
-			return;
-
-		/* reset pin to zero */
-		exynos_gpio_pindata_write(&nreset_pin, 0);
-		DELAY(10000);
-
-		/* pull intn low */
-		exynos_gpio_pindata_ctl(&nint_pin, GPIO_PIN_PULLDOWN);
-		DELAY(10000);
-
-		/* set hubconnect low */
-		exynos_gpio_pindata_write(&hubconnect_pin, 0);
-		DELAY(10000);
-
-		/* reset pin up again, hub enters RefClk stage */
-		exynos_gpio_pindata_write(&nreset_pin, 1);
-		DELAY(10000);
-
-		/* set hubconnect high */
-		exynos_gpio_pindata_write(&hubconnect_pin, 1);
-		DELAY(10000);
-
-		/* release intn */
-		exynos_gpio_pindata_ctl(&nint_pin, GPIO_PIN_TRISTATE);
-		DELAY(10000);
-
-		/* DONE! */
-	} else {
+	if (!(pin_nreset && pin_hubconnect && pin_nint)) {
 		aprint_error_dev(self,
 			"failed to lookup GPIO pins for usb3503 hub init");
+		return;
 	}
-	/* XXX leaving pins claimed! */
+
+	ok1 = exynos_gpio_pin_reserve(pin_nreset, &nreset_pin);
+	ok2 = exynos_gpio_pin_reserve(pin_hubconnect, &hubconnect_pin);
+	ok3 = exynos_gpio_pin_reserve(pin_nint, &nint_pin);
+	if (!ok1)
+		aprint_error_dev(self,
+		    "can't reserve GPIO pin %s\n", pin_nreset);
+	if (!ok2)
+		aprint_error_dev(self,
+		    "can't reserve GPIO pin %s\n", pin_hubconnect);
+	if (!ok3)
+		aprint_error_dev(self,
+		    "can't reserve GPIO pin %s\n", pin_nint);
+	if (!(ok1 && ok2 && ok3))
+		return;
+
+	/* reset pin to zero */
+	exynos_gpio_pindata_write(&nreset_pin, 0);
+	DELAY(10000);
+
+	/* pull intn low */
+	exynos_gpio_pindata_ctl(&nint_pin, GPIO_PIN_PULLDOWN);
+	DELAY(10000);
+
+	/* set hubconnect low */
+	exynos_gpio_pindata_write(&hubconnect_pin, 0);
+	DELAY(10000);
+
+	/* reset pin up again, hub enters RefClk stage */
+	exynos_gpio_pindata_write(&nreset_pin, 1);
+	DELAY(10000);
+
+	/* set hubconnect high */
+	exynos_gpio_pindata_write(&hubconnect_pin, 1);
+	DELAY(10000);
+
+	/* release intn */
+	exynos_gpio_pindata_ctl(&nint_pin, GPIO_PIN_TRISTATE);
+	DELAY(10000);
+
+	/* DONE! */
 }
 
 
