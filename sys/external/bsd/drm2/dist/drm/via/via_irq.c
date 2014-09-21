@@ -137,8 +137,16 @@ irqreturn_t via_driver_irq_handler(int irq, void *arg)
 
 	for (i = 0; i < dev_priv->num_irqs; ++i) {
 		if (status & cur_irq->pending_mask) {
+#ifdef __NetBSD__
+			spin_lock(&cur_irq->irq_lock);
+			cur_irq->irq_received++;
+			DRM_SPIN_WAKEUP_ONE(&cur_irq->irq_queue,
+			    &cur_irq->irq_lock);
+			spin_unlock(&cur_irq->irq_lock);
+#else
 			atomic_inc(&cur_irq->irq_received);
 			wake_up(&cur_irq->irq_queue);
+#endif
 			handled = 1;
 			if (dev_priv->irq_map[drm_via_irq_dma0_td] == i)
 				via_dmablit_handler(dev, 0, 1);
@@ -238,6 +246,22 @@ via_driver_irq_wait(struct drm_device *dev, unsigned int irq, int force_sequence
 	masks = dev_priv->irq_masks;
 	cur_irq = dev_priv->via_irqs + real_irq;
 
+#ifdef __NetBSD__
+	spin_lock(&cur_irq->irq_lock);
+	if (masks[real_irq][2] && !force_sequence) {
+		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &cur_irq->irq_queue,
+		    &cur_irq->irq_lock, 3 * DRM_HZ,
+		    ((VIA_READ(masks[irq][2]) & masks[irq][3]) ==
+			masks[irq][4]));
+		cur_irq_sequence = cur_irq->irq_received;
+	} else {
+		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &cur_irq->irq_queue,
+		    &cur_irq->irq_lock, 3 * DRM_HZ,
+		    (((cur_irq_sequence = cur_irq->irq_received) -
+			*sequence) <= (1 << 23)));
+	}
+	spin_unlock(&cur_irq->irq_lock);
+#else
 	if (masks[real_irq][2] && !force_sequence) {
 		DRM_WAIT_ON(ret, cur_irq->irq_queue, 3 * HZ,
 			    ((VIA_READ(masks[irq][2]) & masks[irq][3]) ==
@@ -249,6 +273,7 @@ via_driver_irq_wait(struct drm_device *dev, unsigned int irq, int force_sequence
 			       atomic_read(&cur_irq->irq_received)) -
 			      *sequence) <= (1 << 23)));
 	}
+#endif
 	*sequence = cur_irq_sequence;
 	return ret;
 }
@@ -284,10 +309,19 @@ void via_driver_irq_preinstall(struct drm_device *dev)
 		}
 
 		for (i = 0; i < dev_priv->num_irqs; ++i) {
+#ifdef __NetBSD__
+			spin_lock_init(&cur_irq->irq_lock);
+			cur_irq->irq_received = 0;
+#else
 			atomic_set(&cur_irq->irq_received, 0);
+#endif
 			cur_irq->enable_mask = dev_priv->irq_masks[i][0];
 			cur_irq->pending_mask = dev_priv->irq_masks[i][1];
+#ifdef __NetBSD__
+			DRM_INIT_WAITQUEUE(&cur_irq->irq_queue, "viairq");
+#else
 			init_waitqueue_head(&cur_irq->irq_queue);
+#endif
 			dev_priv->irq_enable_mask |= cur_irq->enable_mask;
 			dev_priv->irq_pending_mask |= cur_irq->pending_mask;
 			cur_irq++;
@@ -343,6 +377,17 @@ void via_driver_irq_uninstall(struct drm_device *dev)
 		status = VIA_READ(VIA_REG_INTERRUPT);
 		VIA_WRITE(VIA_REG_INTERRUPT, status &
 			  ~(VIA_IRQ_VBLANK_ENABLE | dev_priv->irq_enable_mask));
+
+#ifdef __NetBSD__
+	    {
+		int i;
+
+		for (i = 0; i < dev_priv->num_irqs; i++) {
+			DRM_DESTROY_WAITQUEUE(&dev_priv->via_irqs[i].irq_queue);
+			spin_lock_destroy(&dev_priv->via_irqs[i].irq_lock);
+		}
+	    }
+#endif
 	}
 }
 
@@ -365,8 +410,12 @@ int via_wait_irq(struct drm_device *dev, void *data, struct drm_file *file_priv)
 
 	switch (irqwait->request.type & ~VIA_IRQ_FLAGS_MASK) {
 	case VIA_IRQ_RELATIVE:
+#ifdef __NetBSD__
+		irqwait->request.sequence += cur_irq->irq_received;
+#else
 		irqwait->request.sequence +=
 			atomic_read(&cur_irq->irq_received);
+#endif
 		irqwait->request.type &= ~_DRM_VBLANK_RELATIVE;
 	case VIA_IRQ_ABSOLUTE:
 		break;

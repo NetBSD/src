@@ -51,10 +51,19 @@ typedef struct drm_via_ring_buffer {
 typedef uint32_t maskarray_t[5];
 
 typedef struct drm_via_irq {
+#ifdef __NetBSD__
+	spinlock_t irq_lock;
+	unsigned irq_received;
+#else
 	atomic_t irq_received;
+#endif
 	uint32_t pending_mask;
 	uint32_t enable_mask;
+#ifdef __NetBSD__
+	drm_waitqueue_t irq_queue;
+#else
 	wait_queue_head_t irq_queue;
+#endif
 } drm_via_irq_t;
 
 typedef struct drm_via_private {
@@ -63,7 +72,12 @@ typedef struct drm_via_private {
 	drm_local_map_t *fb;
 	drm_local_map_t *mmio;
 	unsigned long agpAddr;
+#ifdef __NetBSD__
+	struct mutex decoder_lock[VIA_NR_XVMC_LOCKS];
+	drm_waitqueue_t decoder_queue[VIA_NR_XVMC_LOCKS];
+#else
 	wait_queue_head_t decoder_queue[VIA_NR_XVMC_LOCKS];
+#endif
 	char *dma_ptr;
 	unsigned int dma_low;
 	unsigned int dma_high;
