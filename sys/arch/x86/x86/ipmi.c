@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.58 2014/09/21 16:40:53 christos Exp $ */
+/*	$NetBSD: ipmi.c,v 1.59 2014/09/22 13:30:55 nat Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.58 2014/09/21 16:40:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.59 2014/09/22 13:30:55 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -937,6 +937,14 @@ ipmi_smbios_probe(struct smbios_ipmi *pipmi, struct ipmi_attach_args *ia)
 	}
 	if (pipmi->smipmi_base_flags & SMIPMI_FLAG_ODDOFFSET)
 		ia->iaa_if_iobase++;
+
+	if (strcmp(pmf_get_platform("system-product"),
+            "ProLiant MicroServer") == 0) {
+                ia->iaa_if_iospacing = 1;
+                ia->iaa_if_iobase = pipmi->smipmi_base_address - 7;
+                ia->iaa_if_iotype = 'i';
+                return;
+        }
 
 	if (pipmi->smipmi_base_flags == 0x7f) {
 		/* IBM 325 eServer workaround */
