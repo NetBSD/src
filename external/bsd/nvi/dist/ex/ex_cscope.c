@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cscope.c,v 1.5 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: ex_cscope.c,v 1.5.6.1 2014/09/22 11:04:05 martin Exp $ */
 /*-
  * Copyright (c) 1994, 1996
  *	Rob Mayoff.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: ex_cscope.c,v 10.21 2003/11/05 17:11:54 skimo Exp  (Berkeley) Date: 2003/11/05 17:11:54 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ex_cscope.c,v 1.5 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: ex_cscope.c,v 1.5.6.1 2014/09/22 11:04:05 martin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -542,6 +542,7 @@ cscope_find(SCR *sp, EXCMD *cmdp, const CHAR_T *pattern)
 	 */
 	if (TAILQ_EMPTY(&exp->tq)) {
 		TAILQ_INSERT_HEAD(&exp->tq, rtqp, q);
+		F_SET(rtqp, TAG_IS_LINKED);
 	} else {
 		free(rtqp);
 		rtqp = TAILQ_FIRST(&exp->tq);
@@ -549,6 +550,7 @@ cscope_find(SCR *sp, EXCMD *cmdp, const CHAR_T *pattern)
 
 	/* Link the current TAGQ structure into place. */
 	TAILQ_INSERT_HEAD(&exp->tq, tqp, q);
+	F_SET(tqp, TAG_IS_LINKED);
 
 	(void)cscope_search(sp, tqp, tqp->current);
 
