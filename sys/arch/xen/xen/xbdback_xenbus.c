@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.59 2013/11/06 06:23:15 mrg Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.59.4.1 2014/09/22 11:15:57 martin Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.59 2013/11/06 06:23:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.59.4.1 2014/09/22 11:15:57 martin Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -1623,7 +1623,7 @@ xbdback_iodone(struct buf *bp)
 	while(!SLIST_EMPTY(&xbd_io->xio_rq)) {
 		struct xbdback_fragment *xbd_fr;
 		struct xbdback_request *xbd_req;
-		struct xbdback_instance *rxbdi;
+		struct xbdback_instance *rxbdi __diagused;
 		int error;
 		
 		xbd_fr = SLIST_FIRST(&xbd_io->xio_rq);
