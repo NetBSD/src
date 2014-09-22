@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.36 2014/09/21 19:02:39 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.37 2014/09/22 11:20:39 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -883,4 +883,72 @@ usr.bin/indent/io.c				1.15
 	port the -ut / -nut options from freebsd.  -ut (default) enables
 	tabs in output, the -nut uses spaces.
 	[mrg, ticket #110]
+
+sbin/ifconfig/ifconfig.8			1.108
+sbin/ifconfig/vlan.c				1.14
+sys/net/if_vlan.c				1.71-1.74
+
+	Document -vlanif in ifconfig.8 and in usage measseg (PR 49114).
+	Leave promiscuous mode when detaching a parent (PR 49196) and
+	delete link local addresses (49197).
+	Restore vlan_ioctl overwritten by ether_ifdetach in vlan_unconfig
+	(PR 49112).
+	Call if_input of vlan interface itself, not the parent one.
+	This allows bridging vlan interfaces again.
+	[ozaki-r, ticket #108]
+
+share/man/man4/acpi.4				1.78
+sys/dev/acpi/acpi_pci_link.c			1.22
+sys/dev/acpi/files.acpi				1.95
+
+	Introduce a new option: ACPI__DIS_IS_BROKEN.  this is a hack to
+	avoid calling the "_DIS" method during acpi interrupt link setup,
+	which hangs various nforce4 based motherboards.
+	[mrg, ticket #111]
+
+external/bsd/nvi/dist/ex/ex_cscope.c		1.6,1.7
+external/bsd/nvi/dist/ex/ex_tag.c		1.12
+external/bsd/nvi/dist/ex/tag.h			1.4
+
+	In tagq_free(), fix the test checking whether a TAGQ should be
+	removed from its tailq. This required introducing a new flag in
+	the TAGQ structure to avoid reverting to poking under the hood of
+	the queue.h API.
+	Fix setting TAG_IS_LINKED in a special case in previous.
+	[aymeric, ticket #112]
+
+sys/dev/usb/if_smsc.c				1.22
+
+	If the pkt length in rx header is < ETHER_HDR_LEN, drop it.
+	[jmcneill, ticket #113]
+
+sys/arch/ofppc/stand/ofwboot/Locore.c		1.23
+sys/arch/ofppc/stand/ofwboot/ofwstart.S		1.4
+sys/arch/ofppc/stand/ofwboot/version		1.13
+
+	A stack size of 8K is too small for a block buffer of 65536 bytes.
+	Increased the stack size to 128K. This makes ofwboot work with
+	FirmWorks OpenFirmware systems again (tested with Motorola
+	PowerStack II).
+	[phx, ticket #114]
+
+sys/arch/xen/x86/hypervisor_machdep.c		1.28
+sys/arch/xen/xen/clock.c			1.63
+sys/arch/xen/xen/xbdback_xenbus.c		1.60
+sys/arch/xen/xenbus/xenbus_client.c		1.13
+
+	Make Xen kernels compile without DIAGNOSTIC
+	[bouyer, ticket #115]
+
+lib/libutil/getdiskrawname.c			1.3-1.5
+
+	- use a private buffer to resolve symlinks, the previous code was
+	  broken
+	- factored out symlink handling
+	- handle relative symlinks now
+	- handle device paths that do not contain a '/'.
+	- use the passed parameter instead of PATH_MAX.
+	- change signedness of nlen.
+	- KNF and sign cast.
+	[mlelstv, ticket #117]
 
