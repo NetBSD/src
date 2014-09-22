@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.139 2013/09/27 13:34:48 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.140 2014/09/22 14:25:32 nat Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.139 2013/09/27 13:34:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140 2014/09/22 14:25:32 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3066,7 +3066,7 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 		uaudio_chan_init(&sc->sc_playchan, paltidx, p, 0);
 	}
 	if ((setmode & AUMODE_RECORD)) {
-		p = rfil->req_size > 0 ? &pfil->filters[0].param : rec;
+		p = rfil->req_size > 0 ? &rfil->filters[0].param : rec;
 		/* XXX abort transfer if currently happening? */
 		uaudio_chan_init(&sc->sc_recchan, raltidx, p,
 		    UGETW(sc->sc_alts[raltidx].edesc->wMaxPacketSize));
