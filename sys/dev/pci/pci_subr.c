@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.126 2014/09/21 14:30:22 christos Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.127 2014/09/22 13:01:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.126 2014/09/21 14:30:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.127 2014/09/22 13:01:44 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1338,8 +1338,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		printf("unknown\n");
 		break;
 	}
-	if (check_slot && (reg & PCIE_XCAP_SI) != 0)
-		printf("      Slot implemented\n");
+	onoff("Slot implemented", reg, PCIE_XCAP_SI);
 	printf("      Interrupt Message Number: %x\n",
 	    (unsigned int)((reg & PCIE_XCAP_IRQ) >> 27));
 
