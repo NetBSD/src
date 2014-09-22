@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.20 2014/03/24 19:29:59 christos Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.21 2014/09/22 21:35:15 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.20 2014/03/24 19:29:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.21 2014/09/22 21:35:15 matt Exp $");
 
 #include "opt_modular.h"
 
@@ -566,10 +566,10 @@ booke_sstep(struct trapframe *tf)
 			const int16_t off = insn & ~3;
 			iac2 = ((insn & 2) ? 0 : tf->tf_srr0) + off;
 			dbcr0 |= DBCR0_IAC2;
-		} else if ((insn & 0xfc00ffde) == 0x4c000420) {
+		} else if ((insn & 0xfc00fffe) == 0x4c000420) {
 			iac2 = tf->tf_ctr;
 			dbcr0 |= DBCR0_IAC2;
-		} else if ((insn & 0xfc00ffde) == 0x4c000020) {
+		} else if ((insn & 0xfc00fffe) == 0x4c000020) {
 			iac2 = tf->tf_lr;
 			dbcr0 |= DBCR0_IAC2;
 		}
