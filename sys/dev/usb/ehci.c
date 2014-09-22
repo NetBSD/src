@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.233 2014/09/16 10:27:53 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234 2014/09/22 08:13:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.233 2014/09/16 10:27:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234 2014/09/22 08:13:02 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1038,7 +1038,8 @@ ehci_idone(struct ehci_xfer *ex)
 
 	lsqtd = ex->sqtdend;
 	actlen = 0;
-	for (sqtd = ex->sqtdstart; sqtd != lsqtd->nextqtd; sqtd = sqtd->nextqtd) {
+	for (sqtd = ex->sqtdstart; sqtd != lsqtd->nextqtd;
+	     sqtd = sqtd->nextqtd) {
 		usb_syncmem(&sqtd->dma, sqtd->offs, sizeof(sqtd->qtd),
 		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 		nstatus = le32toh(sqtd->qtd.qtd_status);
