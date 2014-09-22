@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.c,v 1.13 2009/07/28 18:22:33 dyoung Exp $	*/
+/*	$NetBSD: vlan.c,v 1.13.24.1 2014/09/22 10:44:37 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vlan.c,v 1.13 2009/07/28 18:22:33 dyoung Exp $");
+__RCSID("$NetBSD: vlan.c,v 1.13.24.1 2014/09/22 10:44:37 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -175,7 +175,7 @@ vlan_status(prop_dictionary_t env, prop_dictionary_t oenv)
 static void
 vlan_usage(prop_dictionary_t env)
 {
-	fprintf(stderr, "\t[ vlan n vlanif i ]\n");
+	fprintf(stderr, "\t[ vlan n vlanif i ] [ -vlanif i ]\n");
 }
 
 static void

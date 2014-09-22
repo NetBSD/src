@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.106 2014/01/07 20:25:24 degroote Exp $
+.\"	$NetBSD: ifconfig.8,v 1.106.4.1 2014/09/22 10:44:37 martin Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd January 28, 2012
+.Dd September 15, 2014
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -634,6 +634,12 @@ Note that
 and
 .Cm vlan
 must be set at the same time.
+.It Cm -vlanif Ar iface
+Dissociate
+.Ar iface
+from the
+.Xr vlan 4
+interface.
 .It Cm agrport Ar iface
 Add
 .Ar iface
