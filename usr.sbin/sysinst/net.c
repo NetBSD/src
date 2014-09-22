@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.15 2014/09/13 17:22:22 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.16 2014/09/22 18:47:41 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -850,14 +850,9 @@ done:
 	 * ping should be verbose, so users can see the cause
 	 * of a network failure.
 	 */
-
-#ifdef INET6
-	if (v6config && network_up) {
+	if (net_defroute[0] != '\0' && network_up)
 		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
-		    "/sbin/ping6 -v -c 3 -n -I %s ff02::2", net_dev);
-	}
-#endif
-
+		    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_defroute);
 	if (net_namesvr[0] != '\0' && network_up) {
 #ifdef INET6
 		if (strchr(net_namesvr, ':'))
@@ -868,10 +863,6 @@ done:
 			network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
 			    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_namesvr);
 	}
-
-	if (net_defroute[0] != '\0' && network_up)
-		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS,
-		    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_defroute);
 	fflush(NULL);
 
 	return network_up;
