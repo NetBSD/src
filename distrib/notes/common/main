@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.484.2.4.2.9 2014/04/12 20:12:38 snj Exp $
+.\"	$NetBSD: main,v 1.484.2.4.2.10 2014/09/22 00:18:45 snj Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd April 12, 2014
+.Dd September 22, 2014
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -458,42 +458,123 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 6.0.4 and 6.0.5 Releases
+.Ss Changes Between The NetBSD 6.0.5 and 6.0.6 Releases
+.Pp
+.Nx
+\*V
+is the sixth critical/security update of the NetBSD 6.0 release branch.
+It represents a selected subset of fixes deemed critical for security
+or stability reasons.
 .Pp
 The complete list of changes can be found in the
-CHANGES-6.0.5:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.0.5/CHANGES-6.0.5
-file in the top level directory of the NetBSD 6.0.5 release tree.
+CHANGES-6.0.6:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-6.0.6/CHANGES-6.0.6
+file in the top level directory of the NetBSD 6.0.6 release tree.
 An abbreviated list is as follows:
 .Ss2 Security Advisory Fixes
 .(bullet
-NetBSD-SA2014-003:
-.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-003.txt.asc
-posix_spawn unbounded kernel memory allocation
+NetBSD-SA2014-005:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-005.txt.asc
+libXfont multiple vulnerabilities
 .It
-NetBSD-SA2014-004:
-.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-004.txt.asc
-OpenSSL information disclosure ("heartbleed")
+NetBSD-SA2014-006:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-006.txt.asc
+Multiple OpenSSL vulnerabilities
+.It
+NetBSD-SA2014-007:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-007.txt.asc
+bozohttpd basic http authentication bypass
+.It
+NetBSD-SA2014-008:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-008.txt.asc
+Multiple OpenSSL vulnerabilities
+.It
+NetBSD-SA2014-009:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-009.txt.asc
+Multiple vulnerabilities in the execve system call
+.It
+NetBSD-SA2014-010:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-010.txt.asc
+Multiple vulnerabilities in the compatibility layers
+.It
+NetBSD-SA2014-011:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-011.txt.asc
+User-controlled memory allocation in the modctl system call
+.It
+NetBSD-SA2014-012:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-012.txt.asc
+Memory leak in the setsockopt system call
 .bullet)
 .
 .Pp
-Advisories prior to NetBSD-SA2014-003 do not affect
-NetBSD 6.0.5:
-.Lk http://www.NetBSD.org/support/security/patches-6.0.5.html .
+Advisories prior to NetBSD-SA2014-005 do not affect
+NetBSD 6.0.6:
+.Lk http://www.NetBSD.org/support/security/patches-6.0.6.html .
 .Ss2 Other Security Fixes
 .(bullet
-OpenSSL: CVE-2014-0076
+Fix various issues in the mount syscall, which could be used by a local user to panic the system.
+.It
+OpenPAM: Fix incorrect error handling in PAM policy parser.
+CVE-2014-3879.
+.bullet)
+.
+.Ss2 Kernel
+.(bullet
+.Xr wm 4 :
+Bump max TX DMA size to avoid pathological condition with TSO.
+.It
+.Xr tap 4 :
+Fix a race.
+PR kern/47506 and kern/46199.
+.It
+.Xr urndis 4 :
+Fix a panic.
+.It
+.Xr vioif 4 :
+Fix a panic.
+PR kern/49007.
+.It
+Fix a mbuf leak in IPFilter.
+.It
+Fix two overflows and a memory corruption bug in ptyfs and umapfs.
+.It
+Reject unaligned PCI config register ioctl requests before we kassert.
 .bullet)
 .
 .Ss2 Miscellaneous
 .(bullet
-Fix memory leak on bogus ELF binary.
+heimdal: Fix file descriptor leak.
+Fixes PR lib/48718
 .It
-veriexec: Avoid a use-after-free error.
+Update to tzdata2014g.
 .It
-atari: Fix a kernel crash when a user tries to switch to a nonexistent terminal. Fixes
-PR#48599:
-.Lk http://gnats.NetBSD.org/48599 .
+Update bozohttpd to 20140708.
+.It
+Update openssl to 1.0.1i.
+.It
+Fix Xserver crash on exit (causing screen palette settings to not be restored) when using wsfb.
+.It
+.Xr postinstall 8 :
+Don't apply "ptyfsoldnodes" if /dev/pts does not exist.
+.It
+named: Update root.cache to 2014060201.
+.bullet)
+.
+.Ss2 alpha
+.(bullet
+Make sysinst deal correctly with Tru64 disklabels.
+PR port-alpha/48697.
+.bullet)
+.
+.Ss2 sparc64
+.(bullet
+Fix longjmp bug which causes a segmentation fault on sparc64 kernels with 32-bit userland.
+.bullet)
+.
+.Ss2 next68k
+.(bullet
+Move physmem calculations before nptpage initialization.
+PR port-m68k/45915.
 .bullet)
 .
 .Ss "The NetBSD Foundation"
@@ -546,6 +627,8 @@ Changes between the 6.0.2 and 6.0.3 releases.
 Changes between the 6.0.3 and 6.0.4 releases.
 .It Li CHANGES-6.0.5
 Changes between the 6.0.4 and 6.0.5 releases.
+.It Li CHANGES-6.0.6
+Changes between the 6.0.5 and 6.0.6 releases.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
