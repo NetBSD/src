@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.4 2014/09/13 01:11:58 roy Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.5 2014/09/22 19:01:02 roy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -943,7 +943,7 @@ message Abandon {Abandon installation}
 message Abort_fetch {Abort fetch}
 message Device {Device}
 message File_system {File system}
-message Select_IPv6_DNS_server {  Select IPv6 DNS server}
+message Select_DNS_server {  Select DNS server}
 message other {other }
 message Perform_autoconfiguration {Perform autoconfiguration?}
 message Root_shell {Root shell}
