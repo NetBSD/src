@@ -72,6 +72,7 @@ extern int readonly, verbose;
 
 uint32_t crc32(const void *, size_t);
 void	gpt_close(int);
+int	gpt_gpt(int, off_t, int);
 int	gpt_open(const char *);
 void*	gpt_read(int, off_t, size_t);
 int	gpt_write(int, map_t *);
@@ -89,6 +90,7 @@ int	cmd_migrate(int, char *[]);
 int	cmd_recover(int, char *[]);
 int	cmd_remove(int, char *[]);
 int	cmd_resize(int, char *[]);
+int	cmd_resizedisk(int, char *[]);
 int	cmd_restore(int, char *[]);
 int	cmd_set(int, char *[]);
 int	cmd_show(int, char *[]);
