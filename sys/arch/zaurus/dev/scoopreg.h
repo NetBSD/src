@@ -1,4 +1,4 @@
-/*	$NetBSD: scoopreg.h,v 1.5 2012/01/29 10:12:41 tsutsui Exp $	*/
+/*	$NetBSD: scoopreg.h,v 1.6 2014/09/23 14:49:46 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_scoopreg.h,v 1.7 2005/07/01 23:51:55 uwe Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define SCOOP0_MUTE_R			5
 #define SCOOP0_AKIN_PULLUP		6
 #define SCOOP0_CF_POWER_C3000		6
-#define SCOOP0_APM_ON			7
+#define SCOOP0_AMP_ON			7
 #define SCOOP0_LED_ORANGE_C3000		7
 #define SCOOP0_BACKLIGHT_CONT		8
 #define SCOOP0_JK_A_C3000		8

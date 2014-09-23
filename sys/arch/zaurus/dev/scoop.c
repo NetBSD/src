@@ -1,4 +1,4 @@
-/*	$NetBSD: scoop.c,v 1.12 2012/10/27 17:18:14 chs Exp $	*/
+/*	$NetBSD: scoop.c,v 1.13 2014/09/23 14:49:46 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_scoop.c,v 1.12 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.12 2012/10/27 17:18:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.13 2014/09/23 14:49:46 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,16 +245,45 @@ scoop_set_headphone(int on)
 }
 
 /*
+ * Enable or disable the speaker output connection.
+ */
+void
+scoop_set_speaker(int onoff)
+{
+	struct scoop_softc *sc;
+
+	if (!ZAURUS_ISC860)
+		return;
+
+	sc = device_lookup_private(&scoop_cd, 0);
+	if (sc == NULL)
+		return;
+
+	scoop_gpio_pin_ctl(sc, SCOOP0_AMP_ON, GPIO_PIN_OUTPUT);
+	if (onoff) {
+		scoop_gpio_pin_write(sc, SCOOP0_AMP_ON, GPIO_PIN_HIGH);
+	} else {
+		scoop_gpio_pin_write(sc, SCOOP0_AMP_ON, GPIO_PIN_LOW);
+	}
+}
+
+/*
  * Enable or disable the mic bias
  */
 void
 scoop_set_mic_bias(int onoff)
 {
+	struct scoop_softc *sc0;
 	struct scoop_softc *sc1;
 
+	sc0 = device_lookup_private(&scoop_cd, 0);
 	sc1 = device_lookup_private(&scoop_cd, 1);
-	if (sc1 != NULL)
+
+	if (sc1 != NULL) {
 		scoop_gpio_pin_write(sc1, SCOOP1_MIC_BIAS, onoff);
+	} else if (sc0 != NULL) {
+		scoop_gpio_pin_write(sc0, SCOOP0_MIC_BIAS, onoff);
+	}
 }
 
 /*
