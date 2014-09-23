@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.10 2014/09/23 09:18:33 macallan Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.11 2014/09/23 10:52:21 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -87,6 +87,11 @@ struct vcprop_tag {
 #define	VCPROPTAG_GET_FB_PITCH		0x00040008
 
 #define	VCPROPTAG_GET_EDID_BLOCK	0x00030020
+
+#define	VCPROPTAG_ALLOCMEM		0x0003000c
+#define	VCPROPTAG_LOCKMEM		0x0003000d
+#define	VCPROPTAG_UNLOCKMEM		0x0003000e
+#define	VCPROPTAG_RELEASEMEM		0x0003000f
 
 #define	VCPROPTAG_SET_CURSOR_INFO	0x00008011
 #define	VCPROPTAG_SET_CURSOR_STATE	0x00008010
@@ -283,7 +288,7 @@ struct vcprop_tag_cursorinfo {
 	uint32_t width;
 	uint32_t height;
 	uint32_t __pad;		/* unused */
-	uint32_t pixels;
+	uint32_t pixels;	/* bus address in VC memory */
 	uint32_t hotspot_x;
 	uint32_t hotspot_y;
 };
@@ -294,6 +299,31 @@ struct vcprop_tag_cursorstate {
 	uint32_t x;
 	uint32_t y;
 	uint32_t flags;		/* 0 - display coord. 1 - fb coord. */
+};
+
+struct vcprop_tag_allocmem {
+	struct vcprop_tag tag;
+	uint32_t size;	/* handle returned here */
+	uint32_t align;
+	uint32_t flags;
+/*
+ * flag definitions from
+ * https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface
+ */
+#define MEM_FLAG_DISCARDABLE	(1 << 0) /* can be resized to 0 at any time. Use for cached data */
+#define MEM_FLAG_NORMAL		(0 << 2) /* normal allocating alias. Don't use from ARM */
+#define MEM_FLAG_DIRECT		(1 << 2) /* 0xC alias uncached */
+#define MEM_FLAG_COHERENT	(2 << 2) /* 0x8 alias. Non-allocating in L2 but coherent */
+#define MEM_FLAG_L1_NONALLOCATING (MEM_FLAG_DIRECT | MEM_FLAG_COHERENT) /* Allocating in L2 */
+#define MEM_FLAG_ZERO		(1 << 4)  /* initialise buffer to all zeros */
+#define MEM_FLAG_NO_INIT	(1 << 5) /* don't initialise (default is initialise to all ones */
+#define MEM_FLAG_HINT_PERMALOCK	(1 << 6) /* Likely to be locked for long periods of time. */
+};
+
+/* also for unlock and release */
+struct vcprop_tag_lockmem {
+	struct vcprop_tag tag;
+	uint32_t handle;	/* bus address returned here */
 };
 
 struct vcprop_buffer_hdr {
