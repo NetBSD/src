@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.301 2014/09/23 05:45:01 nonaka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.302 2014/09/23 06:31:54 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.301 2014/09/23 05:45:01 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.302 2014/09/23 06:31:54 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -2405,10 +2405,8 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 		const pt_entry_t opte = *ptep;
 		pt_entry_t npte = opte | execbits;
 
-#if defined(DIAGNOSTIC) && (defined(CPU_ARMV6) || defined(CPU_ARMV7))
-		if (CPU_IS_ARMV6_P() || CPU_IS_ARMV7_P()) {
-			KASSERT((opte & L2_XS_nG) == (pm == pmap_kernel() ? 0 : L2_XS_nG));
-		}
+#ifdef ARM_MMU_EXTENDED
+		KASSERT((opte & L2_XS_nG) == (pm == pmap_kernel() ? 0 : L2_XS_nG));
 #endif
 
 		NPDEBUG(PDB_BITS,
