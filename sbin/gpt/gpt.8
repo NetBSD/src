@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.29 2014/09/20 22:36:09 jnemeth Exp $
+.\" $NetBSD: gpt.8,v 1.30 2014/09/23 07:47:54 jnemeth Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd September 20, 2014
+.Dd September 23, 2014
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -354,6 +354,34 @@ If the
 .Fl a
 option is specified then the size will be adjusted to be a multiple of
 alignment if possible.
+.\" ==== resizedisk ====
+.It Nm Ic resizedisk Oo Fl s Ar size Oc Ar device ...
+The
+.Ic resizedisk
+command allows the user to resize a disk.
+With GPTs, a backup copy is stored at the end of the disk.
+If the underlying medium changes size
+.Pq or is going to change size ,
+then the backup copy needs to be moved to the new end of the disk,
+and the last sector available for data storage needs to be adjusted.
+This command does that.
+If the backup copy no longer exists due to the medium shrinking, then
+a new backup copy will be created using the primary copy.
+.Pp
+The
+.Fl s
+option allows the new size to be specified, otherwise the backup copy
+will automatically be placed at the current end of the disk.
+If there is no suffix, or the suffix is
+.Sq s
+or
+.Sq S
+then size is in sectors, otherwise size is in bytes which must be
+a multiple of the device's sector size.
+Using the
+.Fl s
+option allows you to move the backup copy prior to resizing the medium.
+This is primarily useful when shrinking the medium.
 .\" ==== restore ====
 .It Nm Ic restore Oo Fl F Oc Ar device ...
 The
