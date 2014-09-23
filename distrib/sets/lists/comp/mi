@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1911 2014/08/25 18:44:03 pooka Exp $
+#	$NetBSD: mi,v 1.1912 2014/09/23 15:05:25 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6907,6 +6907,7 @@
 ./usr/share/man/cat3/hdestroy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/hdestroy1.0		comp-c-catman		.cat
 ./usr/share/man/cat3/hdestroy1_r.0		comp-c-catman		.cat
+./usr/share/man/cat3/hdestroy_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/heapsort.0			comp-c-catman		.cat
 ./usr/share/man/cat3/herror.0			comp-c-catman		.cat
 ./usr/share/man/cat3/hesiod.0			comp-c-catman		hesiod,.cat
