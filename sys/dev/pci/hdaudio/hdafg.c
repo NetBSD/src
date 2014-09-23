@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.24 2014/09/21 14:30:22 christos Exp $ */
+/* $NetBSD: hdafg.c,v 1.25 2014/09/23 13:29:30 nat Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.24 2014/09/21 14:30:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.25 2014/09/23 13:29:30 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -4369,6 +4369,10 @@ hdafg_modcmd(modcmd_t cmd, void *opaque)
 #define HDAFG_GET_ANACTRL 		0xfe0
 #define HDAFG_SET_ANACTRL 		0x7e0
 #define HDAFG_ANALOG_BEEP_EN		__BIT(5)
+#define HDAFG_ALC231_MONO_OUT_MIXER 	0xf
+#define HDAFG_STAC9200_AFG		0x1
+#define HDAFG_STAC9200_GET_ANACTRL_PAYLOAD	0x0
+#define HDAFG_ALC231_INPUT_BOTH_CHANNELS_UNMUTE	0x7100
 
 static void
 hdafg_enable_analog_beep(struct hdafg_softc *sc)
@@ -4388,10 +4392,11 @@ hdafg_enable_analog_beep(struct hdafg_softc *sc)
 		case HDAUDIO_PRODUCT_SIGMATEL_STAC9205:
 		case HDAUDIO_PRODUCT_SIGMATEL_STAC9205_1:
 		case HDAUDIO_PRODUCT_SIGMATEL_STAC9205D:
-			nid = 0x01;
+			nid = HDAFG_STAC9200_AFG;
 
 			response = hdaudio_command(sc->sc_codec, nid,
-			    HDAFG_GET_ANACTRL, 0x00);
+			    HDAFG_GET_ANACTRL,
+			    HDAFG_STAC9200_GET_ANACTRL_PAYLOAD);
 			hda_delay(100);
 
 			response |= HDAFG_ANALOG_BEEP_EN;
@@ -4411,9 +4416,10 @@ hdafg_enable_analog_beep(struct hdafg_softc *sc)
 			 * ALC231 that identifies as an ALC269.
 			 * This unmutes the PCBEEP on the speaker.
 			 */
- 			nid = 0xf;
+ 			nid = HDAFG_ALC231_MONO_OUT_MIXER;
 			response = hdaudio_command(sc->sc_codec, nid,
-			    CORB_SET_AMPLIFIER_GAIN_MUTE, 0x7100);
+			    CORB_SET_AMPLIFIER_GAIN_MUTE,
+			    HDAFG_ALC231_INPUT_BOTH_CHANNELS_UNMUTE);
 			hda_delay(100);
 			break;
 		default:
