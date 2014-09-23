@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.9 2014/07/25 11:39:34 jmcneill Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.10 2014/09/23 09:18:33 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -88,6 +88,8 @@ struct vcprop_tag {
 
 #define	VCPROPTAG_GET_EDID_BLOCK	0x00030020
 
+#define	VCPROPTAG_SET_CURSOR_INFO	0x00008011
+#define	VCPROPTAG_SET_CURSOR_STATE	0x00008010
 
 	uint32_t vpt_len;
 	uint32_t vpt_rcode;
@@ -274,6 +276,24 @@ struct vcprop_tag_edidblock {
 	uint32_t blockno;
 	uint32_t status;
 	uint8_t data[128];
+};
+
+struct vcprop_tag_cursorinfo {
+	struct vcprop_tag tag;
+	uint32_t width;
+	uint32_t height;
+	uint32_t __pad;		/* unused */
+	uint32_t pixels;
+	uint32_t hotspot_x;
+	uint32_t hotspot_y;
+};
+
+struct vcprop_tag_cursorstate {
+	struct vcprop_tag tag;
+	uint32_t enable;	/* 1 - visible */
+	uint32_t x;
+	uint32_t y;
+	uint32_t flags;		/* 0 - display coord. 1 - fb coord. */
 };
 
 struct vcprop_buffer_hdr {
