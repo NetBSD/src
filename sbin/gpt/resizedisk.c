@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resizedisk.c,v 1.1 2014/09/23 07:47:54 jnemeth Exp $");
+__RCSID("$NetBSD: resizedisk.c,v 1.2 2014/09/23 13:48:04 msaitoh Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -142,8 +142,8 @@ resizedisk(int fd)
 		}
 	}
 	if (sector - gpt_size <= lastdata) {
-		warnx("%s: not enough space at %lu for secondary GPT table",
-		    device_name, sector);
+		warnx("%s: not enough space at %" PRIu64
+		    " for secondary GPT table", device_name, sector);
 		return;
 	}
 	if (last - gpt_size <= lastdata) {
