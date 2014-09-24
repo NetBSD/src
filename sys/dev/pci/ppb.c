@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.53 2014/09/24 09:49:49 msaitoh Exp $	*/
+/*	$NetBSD: ppb.c,v 1.54 2014/09/24 10:57:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.53 2014/09/24 09:49:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.54 2014/09/24 10:57:03 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,10 +110,10 @@ ppb_fix_pcie(device_t self)
 
 	aprint_normal_dev(self, "PCI Express capability version ");
 	switch (reg & PCIE_XCAP_VER_MASK) {
-	case PCIE_XCAP_VER_1_0:
+	case PCIE_XCAP_VER_1:
 		aprint_normal("1");
 		break;
-	case PCIE_XCAP_VER_2_0:
+	case PCIE_XCAP_VER_2:
 		aprint_normal("2");
 		break;
 	default:
