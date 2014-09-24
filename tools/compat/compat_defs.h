@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.98 2014/09/01 11:20:06 apb Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.99 2014/09/24 13:17:35 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -592,6 +592,9 @@ void *setmode(const char *);
 #endif
 #ifndef O_SHLOCK
 #define O_SHLOCK 0
+#endif
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
 #endif
 
 /* <inttypes.h> */
