@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.54 2014/09/18 13:58:20 christos Exp $	*/
+/*	$NetBSD: getcap.c,v 1.55 2014/09/24 07:53:06 he Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.54 2014/09/18 13:58:20 christos Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.55 2014/09/24 07:53:06 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,6 +64,10 @@ __RCSID("$NetBSD: getcap.c,v 1.54 2014/09/18 13:58:20 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifndef O_CLOEXEC /* For tools, as in NetBSD 5.2 or earlier... */
+#define O_CLOEXEC 0
+#endif
 
 #if defined(__weak_alias) && !defined(SMALL)
 __weak_alias(cgetcap,_cgetcap)
