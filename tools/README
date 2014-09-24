@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1 2014/09/01 13:50:15 apb Exp $
+$NetBSD: README,v 1.2 2014/09/24 16:17:39 apb Exp $
 
 Notes for NetBSD src/tools
 
@@ -30,6 +30,10 @@ parts of NetBSD, because they will need to run on the host platform.
 They should restrict themselves to features that are defined in relevant
 standards, and features that are provided by the src/tools/compat
 framework.
+
+It is usually easy to add new definitions to src/tools/compat, and that
+is usually better than adding compatibility definitions to individual
+tools.
 
 
 Compatibility framework
