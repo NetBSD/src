@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.4 2014/09/10 22:50:25 matt Exp $
+# $NetBSD: ad.aarch64,v 1.5 2014/09/24 18:16:37 christos Exp $
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetmask.debug
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetround.debug
 ./usr/lib/eabi/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib
@@ -67,7 +67,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libc++.so.1.0.debug	comp-sys-debug	debug,compat,libcxx
-./usr/libdata/debug/usr/lib/eabi/libc.so.12.193.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libc.so.12.194.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/eabi/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libcrypto.so.8.3.debug	comp-crypto-debug	crypto,debug,compat
@@ -219,7 +219,7 @@
 ./usr/libdata/debug/usr/lib/eabihf/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libc++.so.1.0.debug		comp-sys-debug	debug,compat,libcxx
-./usr/libdata/debug/usr/lib/eabihf/libc.so.12.193.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabihf/libc.so.12.194.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/eabihf/libcrypt.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabihf/libcrypto.so.8.3.debug	comp-crypto-debug	crypto,debug,compat
@@ -371,7 +371,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libc++.so.1.0.debug		comp-sys-debug	debug,compat,libcxx
-./usr/libdata/debug/usr/lib/oabi/libc.so.12.193.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libc.so.12.194.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libcom_err.so.7.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/oabi/libcrypt.so.1.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libcrypto.so.8.3.debug		comp-crypto-debug	crypto,debug,compat
