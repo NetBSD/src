@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.681 2014/09/24 00:11:43 christos Exp $
+$NetBSD: usbdevs,v 1.682 2014/09/24 00:17:13 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1733,7 +1733,9 @@ product HUAWEI K3765		0x1465	Huawei K3765
 product HUAWEI E1820		0x14ac	Huawei E1820
 product HUAWEI E171INIT		0x14fe	Huawei E171 USB CD
 product HUAWEI E171		0x1506	Huawei E171
+product HUAWEI E353		0x1507	Huawei E353
 product HUAWEI K3765INIT	0x1520	Huawei K3765 USB CD
+product HUAWEI E353INIT		0x1f01	Huawei E353 USB CD
 
 /* Huawei-3Com products */
 product HUAWEI3COM RT2573	0x0009	RT2573
