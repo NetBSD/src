@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.95 2014/06/09 11:08:05 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.96 2014/09/24 10:57:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -816,8 +816,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCIE_XCAP_MASK		__BITS(31, 16)
 /* Capability Version */
 #define PCIE_XCAP_VER_MASK	__SHIFTIN(__BITS(3, 0), PCIE_XCAP_MASK)
-#define	 PCIE_XCAP_VER_1_0	__SHIFTIN(1, PCIE_XCAP_VER_MASK)
-#define	 PCIE_XCAP_VER_2_0	__SHIFTIN(2, PCIE_XCAP_VER_MASK)
+#define	 PCIE_XCAP_VER_1	__SHIFTIN(1, PCIE_XCAP_VER_MASK)
+#define	 PCIE_XCAP_VER_2	__SHIFTIN(2, PCIE_XCAP_VER_MASK)
 #define	PCIE_XCAP_TYPE_MASK	__SHIFTIN(__BITS(7, 4), PCIE_XCAP_MASK)
 #define	 PCIE_XCAP_TYPE_PCIE_DEV __SHIFTIN(0x0, PCIE_XCAP_TYPE_MASK)
 #define	 PCIE_XCAP_TYPE_PCI_DEV	__SHIFTIN(0x1, PCIE_XCAP_TYPE_MASK)
