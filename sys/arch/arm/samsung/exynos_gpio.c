@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.10 2014/09/09 21:21:22 reinoud Exp $	*/
+/*	$NetBSD: exynos_gpio.c,v 1.11 2014/09/24 20:35:43 reinoud Exp $	*/
 
 /*-
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.10 2014/09/09 21:21:22 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.11 2014/09/24 20:35:43 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -291,6 +291,17 @@ static struct exynos_gpio_pin_group exynos5_pin_groups[] = {
 	GPIO_GRP(5, RIGHT, 0x00E0, GPH0, 4),
 	GPIO_GRP(5, RIGHT, 0x0100, GPH1, 8),
 	/* EXTINT skipped */
+
+	GPIO_GRP(5, USB,   0x0000, GPJ0, 8),	// unknown num bits
+	GPIO_GRP(5, USB,   0x0020, GPJ1, 8),	// unknown num bits
+	GPIO_GRP(5, USB,   0x0040, GPJ2, 8),	// unknown num bits
+	GPIO_GRP(5, USB,   0x0060, GPJ3, 8),	// unknown num bits
+	GPIO_GRP(5, USB,   0x0080, GPJ4, 8),	// unknown num bits
+	GPIO_GRP(5, USB,   0x00A0, GPK0, 8),	// unknown num bits
+	GPIO_GRP(5, USB,   0x00C0, GPK1, 8),	// unknown num bits
+	GPIO_GRP(5, USB,   0x00E0, GPK2, 8),	// unknown num bits
+	GPIO_GRP(5, USB,   0x0100, GPK3, 8),	// unknown num bits
+	/* unknown bits skipped */
 
 	GPIO_GRP(5, C2C,   0x0000, GPV0, 8),
 	GPIO_GRP(5, C2C,   0x0020, GPV1, 8),
