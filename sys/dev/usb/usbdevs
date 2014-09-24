@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.680 2014/08/04 19:59:37 jdc Exp $
+$NetBSD: usbdevs,v 1.681 2014/09/24 00:11:43 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1725,15 +1725,15 @@ product HTC ANDROID		0x0ffe	Android
 
 /* Huawei Technologies products */
 product HUAWEI MOBILE		0x1001	Huawei Mobile
-product HUAWEI E220  		0x1003	Huawei E220
-product HUAWEI EM770W	  	0x1404	Huawei EM770W
-product HUAWEI E1750	  	0x140c	Huawei E1750
-product HUAWEI E1750INIT  	0x1446	Huawei E1750 USB CD
-product HUAWEI K3765  		0x1465	Huawei K3765
-product HUAWEI E1820  		0x14ac	Huawei E1820
-product HUAWEI E171INIT 	0x14fe	Huawei E171 USB CD
-product HUAWEI E171 		0x1506	Huawei E171
-product HUAWEI K3765INIT 	0x1520	Huawei K3765 USB CD
+product HUAWEI E220		0x1003	Huawei E220
+product HUAWEI EM770W		0x1404	Huawei EM770W
+product HUAWEI E1750		0x140c	Huawei E1750
+product HUAWEI E1750INIT	0x1446	Huawei E1750 USB CD
+product HUAWEI K3765		0x1465	Huawei K3765
+product HUAWEI E1820		0x14ac	Huawei E1820
+product HUAWEI E171INIT		0x14fe	Huawei E171 USB CD
+product HUAWEI E171		0x1506	Huawei E171
+product HUAWEI K3765INIT	0x1520	Huawei K3765 USB CD
 
 /* Huawei-3Com products */
 product HUAWEI3COM RT2573	0x0009	RT2573
