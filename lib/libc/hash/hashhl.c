@@ -1,4 +1,4 @@
-/* $NetBSD: hashhl.c,v 1.6 2014/09/24 07:53:06 he Exp $ */
+/* $NetBSD: hashhl.c,v 1.7 2014/09/24 13:18:52 christos Exp $ */
 
 /*
  * ----------------------------------------------------------------------------
@@ -59,10 +59,6 @@ WA(FNPREFIX(Data),CONCAT(_,FNPREFIX(Data)))
 #ifndef MIN
 #define	MIN(x,y)	((x)<(y)?(x):(y))
 #endif /* !MIN */
-
-#ifndef O_CLOEXEC /* For tools, as in NetBSD 5.2 or earlier... */
-#define O_CLOEXEC 0     
-#endif
 
 char *
 FNPREFIX(End)(HASH_CTX *ctx, char *buf)
