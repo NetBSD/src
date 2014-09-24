@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.673 2014/09/21 14:31:03 christos Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.674 2014/09/24 00:17:42 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.680 2014/08/04 19:59:37 jdc Exp
+ *	NetBSD: usbdevs,v 1.682 2014/09/24 00:17:13 christos Exp
  */
 
 /*
@@ -1740,7 +1740,9 @@
 #define	USB_PRODUCT_HUAWEI_E1820	0x14ac		/* Huawei E1820 */
 #define	USB_PRODUCT_HUAWEI_E171INIT	0x14fe		/* Huawei E171 USB CD */
 #define	USB_PRODUCT_HUAWEI_E171	0x1506		/* Huawei E171 */
+#define	USB_PRODUCT_HUAWEI_E353	0x1507		/* Huawei E353 */
 #define	USB_PRODUCT_HUAWEI_K3765INIT	0x1520		/* Huawei K3765 USB CD */
+#define	USB_PRODUCT_HUAWEI_E353INIT	0x1f01		/* Huawei E353 USB CD */
 
 /* Huawei-3Com products */
 #define	USB_PRODUCT_HUAWEI3COM_RT2573	0x0009		/* RT2573 */
