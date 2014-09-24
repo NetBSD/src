@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv,v 1.1 2014/09/19 17:36:24 matt Exp $
+# $NetBSD: ad.riscv,v 1.2 2014/09/24 18:16:37 christos Exp $
 ./usr/lib/rv32/libcrypto_g.a					comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/rv32/libcrypto_rc5_g.a				comp-c-debuglib		compat,crypto,crypto_rc5,debuglib,arch64
 ./usr/lib/rv32/libdevmapper_g.a					comp-c-debuglib		compat,debuglib,lvm,arch64
@@ -47,7 +47,7 @@
 ./usr/libdata/debug/usr/lib/rv32/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libbz2.so.1.1.debug		comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/rv32/libc.so.12.193.debug		comp-sys-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/rv32/libc.so.12.194.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libcom_err.so.7.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,arch64
 ./usr/libdata/debug/usr/lib/rv32/libcrypt.so.1.0.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libcrypto.so.8.3.debug		comp-crypto-debug	crypto,debug,compat,arch64
