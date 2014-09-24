@@ -1,8 +1,8 @@
-/*	$NetBSD: lua.c,v 1.13 2014/07/25 08:10:40 dholland Exp $ */
+/*	$NetBSD: lua.c,v 1.14 2014/09/24 14:55:48 mbalmer Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
- * Copyright (c) 2011, 2013 by Marc Balmer <mbalmer@NetBSD.org>.
+ * Copyright (c) 2011 - 2014 by Marc Balmer <mbalmer@NetBSD.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -629,7 +629,7 @@ klua_mod_unregister(const char *name)
 
 klua_State *
 klua_newstate(lua_Alloc f, void *ud, const char *name, const char *desc,
-		int ipl)
+    int ipl)
 {
 	klua_State *K;
 	struct lua_state *s;
@@ -694,6 +694,7 @@ klua_close(klua_State *K)
 	struct lua_module *m;
 	int error = 0;
 
+	/* XXX consider registering a handler instead of a fixed name. */
 	lua_getglobal(K->L, "onClose");
 	if (lua_isfunction(K->L, -1))
 		lua_pcall(K->L, -1, 0, 0);
@@ -784,9 +785,11 @@ MODULE(MODULE_CLASS_MISC, lua, NULL);
 static const struct cfiattrdata luabus_iattrdata = {
 	"luabus", 0, { { NULL, NULL, 0 },}
 };
+
 static const struct cfiattrdata *const lua_attrs[] = {
 	&luabus_iattrdata, NULL
 };
+
 CFDRIVER_DECL(lua, DV_DULL, lua_attrs);
 extern struct cfattach lua_ca;
 static int lualoc[] = {
@@ -794,6 +797,7 @@ static int lualoc[] = {
 	-1,
 	-1
 };
+
 static struct cfdata lua_cfdata[] = {
 	{
 		.cf_name = "lua",
