@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.52 2013/04/21 19:59:41 msaitoh Exp $	*/
+/*	$NetBSD: ppb.c,v 1.53 2014/09/24 09:49:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.52 2013/04/21 19:59:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.53 2014/09/24 09:49:49 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,17 +108,17 @@ ppb_fix_pcie(device_t self)
 				&off, &reg))
 		return; /* Not a PCIe device */
 
-	aprint_normal_dev(self, "PCI Express ");
+	aprint_normal_dev(self, "PCI Express capability version ");
 	switch (reg & PCIE_XCAP_VER_MASK) {
 	case PCIE_XCAP_VER_1_0:
-		aprint_normal("1.0");
+		aprint_normal("1");
 		break;
 	case PCIE_XCAP_VER_2_0:
-		aprint_normal("2.0");
+		aprint_normal("2");
 		break;
 	default:
 		aprint_normal_dev(self,
-		    "version unsupported (0x%" PRIxMAX ")\n",
+		    "unsupported (0x%" PRIxMAX ")\n",
 		    __SHIFTOUT(reg, PCIE_XCAP_VER_MASK));
 		return;
 	}
@@ -155,29 +155,31 @@ ppb_fix_pcie(device_t self)
 	case PCIE_XCAP_TYPE_ROOT:
 	case PCIE_XCAP_TYPE_DOWN:
 	case PCIE_XCAP_TYPE_PCI2PCIE:
-		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, off + 0x0c);
-		u_int mlw = (reg >> 4) & 0x1f;
-		u_int mls = (reg >> 0) & 0x0f;
+		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, off + PCIE_LCAP);
+		u_int mlw = __SHIFTOUT(reg, PCIE_LCAP_MAX_WIDTH);
+		u_int mls = __SHIFTOUT(reg, PCIE_LCAP_MAX_SPEED);
+
 		if (mls < __arraycount(pcie_linkspeed_strings)) {
-			aprint_normal("> x%d @ %sGb/s\n",
+			aprint_normal("> x%d @ %sGT/s\n",
 			    mlw, pcie_linkspeed_strings[mls]);
 		} else {
-			aprint_normal("> x%d @ %d.%dGb/s\n",
+			aprint_normal("> x%d @ %d.%dGT/s\n",
 			    mlw, (mls * 25) / 10, (mls * 25) % 10);
 		}
 
-		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, off + 0x10);
-		if (reg & __BIT(29)) {	/* DLLA */
-			u_int lw = (reg >> 20) & 0x1f;
-			u_int ls = (reg >> 16) & 0x0f;
+		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, off + PCIE_LCSR);
+		if (reg & PCIE_LCSR_DLACTIVE) {	/* DLLA */
+			u_int lw = __SHIFTOUT(reg, PCIE_LCSR_NLW);
+			u_int ls = __SHIFTOUT(reg, PCIE_LCSR_LINKSPEED);
+
 			if (lw != mlw || ls != mls) {
 				if (ls < __arraycount(pcie_linkspeed_strings)) {
 					aprint_normal_dev(self,
-					    "link is x%d @ %sGb/s\n",
+					    "link is x%d @ %sGT/s\n",
 					    lw, pcie_linkspeed_strings[ls]);
 				} else {
 					aprint_normal_dev(self,
-					    "link is x%d @ %d.%dGb/s\n",
+					    "link is x%d @ %d.%dGT/s\n",
 					    lw, (ls * 25) / 10, (ls * 25) % 10);
 				}
 			}
