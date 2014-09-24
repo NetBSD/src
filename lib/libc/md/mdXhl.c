@@ -1,4 +1,4 @@
-/*	$NetBSD: mdXhl.c,v 1.12 2014/09/24 07:53:07 he Exp $	*/
+/*	$NetBSD: mdXhl.c,v 1.13 2014/09/24 13:18:52 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -41,11 +41,6 @@ WA(MDNAME(Data),CONCAT(_,MDNAME(Data)))
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-#ifndef O_CLOEXEC /* For tools, as in NetBSD 5.2 or earlier... */
-#define O_CLOEXEC 0
-#endif
-
 
 char *
 MDNAME(End)(MDNAME(_CTX) *ctx, char *buf)
