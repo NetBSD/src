@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.30 2013/09/02 07:39:03 christos Exp $	*/
+/*	$NetBSD: u3g.c,v 1.31 2014/09/24 00:17:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.30 2013/09/02 07:39:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31 2014/09/24 00:17:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,6 +192,7 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_K3765 },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_MOBILE },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E171 },
+	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E353 },
 	/* OEM: Merlin */
 	{ USB_VENDOR_MERLIN, USB_PRODUCT_MERLIN_V620 },
 	/* OEM: Novatel */
@@ -334,6 +335,16 @@ send_bulkmsg(usbd_device_handle dev, void *cmd, size_t cmdlen)
 	return (err == USBD_NORMAL_COMPLETION ? UMATCH_HIGHEST : UMATCH_NONE);
 }
 
+/* Byte 0..3: Command Block Wrapper (CBW) signature */
+static void
+set_cbw(unsigned char *cmd)
+{
+	cmd[0] = 0x55; 
+	cmd[1] = 0x53;
+	cmd[2] = 0x42;
+	cmd[3] = 0x43;
+}
+
 static int
 u3g_bulk_scsi_eject(usbd_device_handle dev)
 {
@@ -341,10 +352,7 @@ u3g_bulk_scsi_eject(usbd_device_handle dev)
 
 	memset(cmd, 0, sizeof(cmd));
 	/* Byte 0..3: Command Block Wrapper (CBW) signature */
-	cmd[0] = 0x55; 
-	cmd[1] = 0x53;
-	cmd[2] = 0x42;
-	cmd[3] = 0x43;
+	set_cbw(cmd);
 	/* 4..7: CBW Tag, has to unique, but only a single transfer used. */
 	cmd[4] = 0x01;
 	/* 8..11: CBW Transfer Length, no data here */
@@ -372,10 +380,7 @@ u3g_bulk_ata_eject(usbd_device_handle dev)
 
 	memset(cmd, 0, sizeof(cmd));
 	/* Byte 0..3: Command Block Wrapper (CBW) signature */
-	cmd[0] = 0x55; 
-	cmd[1] = 0x53;
-	cmd[2] = 0x42;
-	cmd[3] = 0x43;
+	set_cbw(cmd);
 	/* 4..7: CBW Tag, has to unique, but only a single transfer used. */
 	cmd[4] = 0x01;
 	/* 8..11: CBW Transfer Length, no data here */
@@ -455,16 +460,14 @@ u3g_huawei_k3765_reinit(usbd_device_handle dev)
 
 	/* magic string adapted from some webpage */
 	memset(cmd, 0, sizeof(cmd));
-	cmd[0] = 0x55; 
-	cmd[1] = 0x53;
-	cmd[2] = 0x42;
-	cmd[3] = 0x43;
+	/* Byte 0..3: Command Block Wrapper (CBW) signature */
+	set_cbw(cmd);
+
 	cmd[15]= 0x11;
 	cmd[16]= 0x06;
 
 	return send_bulkmsg(dev, cmd, sizeof(cmd));
 }
-
 static int
 u3g_huawei_e171_reinit(usbd_device_handle dev)
 {
@@ -472,14 +475,35 @@ u3g_huawei_e171_reinit(usbd_device_handle dev)
 
 	/* magic string adapted from some webpage */
 	memset(cmd, 0, sizeof(cmd));
-	cmd[0] = 0x55; 
-	cmd[1] = 0x53;
-	cmd[2] = 0x42;
-	cmd[3] = 0x43;
+	/* Byte 0..3: Command Block Wrapper (CBW) signature */
+	set_cbw(cmd);
+
 	cmd[15]= 0x11;
 	cmd[16]= 0x06;
 	cmd[17]= 0x20;
 	cmd[20]= 0x01;
+
+	return send_bulkmsg(dev, cmd, sizeof(cmd));
+}
+
+static int
+u3g_huawei_e353_reinit(usbd_device_handle dev)
+{
+	unsigned char cmd[31];
+
+	/* magic string adapted from some webpage */
+	memset(cmd, 0, sizeof(cmd));
+	/* Byte 0..3: Command Block Wrapper (CBW) signature */
+	set_cbw(cmd);
+
+	cmd[4] = 0x7f;
+	cmd[9] = 0x02;
+	cmd[12] = 0x80;
+	cmd[14] = 0x0a;
+	cmd[15] = 0x11;
+	cmd[16] = 0x06;
+	cmd[17] = 0x20;
+	cmd[23] = 0x01;
 
 	return send_bulkmsg(dev, cmd, sizeof(cmd));
 }
@@ -508,12 +532,25 @@ static int
 u3g_4gsystems_reinit(usbd_device_handle dev)
 {
 	/* magic string adapted from usb_modeswitch database */
-	static unsigned char cmd[31] = {
-		0x55, 0x53, 0x42, 0x43, 0x12, 0x34, 0x56, 0x78, 0x80, 0x00,
-		0x00, 0x00, 0x80, 0x00, 0x06, 0x06, 0xf5, 0x04, 0x02, 0x52,
-		0x70, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00
-	};
+	unsigned char cmd[31];
+
+	memset(cmd, 0, sizeof(cmd));
+	/* Byte 0..3: Command Block Wrapper (CBW) signature */
+	set_cbw(cmd);
+
+	cmd[4] = 0x12;
+	cmd[5] = 0x34;
+	cmd[6] = 0x56;
+	cmd[7] = 0x78;
+	cmd[8] = 0x80;
+	cmd[12] = 0x80;
+	cmd[14] = 0x06;
+	cmd[15] = 0x06;
+	cmd[16] = 0xf5;
+	cmd[17] = 0x04;
+	cmd[18] = 0x02;
+	cmd[19] = 0x52;
+	cmd[20] = 0x70;
 
 	return send_bulkmsg(dev, cmd, sizeof(cmd));
 }
@@ -544,6 +581,9 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 			break;
 		case USB_PRODUCT_HUAWEI_E171INIT:
 			return u3g_huawei_e171_reinit(uaa->device);
+			break;
+		case USB_PRODUCT_HUAWEI_E353INIT:
+			return u3g_huawei_e353_reinit(uaa->device);
 			break;
 		default:
 			return u3g_huawei_reinit(uaa->device);
