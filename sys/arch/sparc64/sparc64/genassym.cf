@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.74 2014/09/04 18:48:29 palle Exp $
+#	$NetBSD: genassym.cf,v 1.75 2014/09/24 18:32:10 palle Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -182,6 +182,7 @@ define	CBA_KDATA	offsetof(struct cpu_bootargs, cb_kdata)
 define	CBA_KDATAP	offsetof(struct cpu_bootargs, cb_kdatap)
 define	CBA_EKDATA	offsetof(struct cpu_bootargs, cb_ekdata)
 define	CBA_CPUINFO	offsetof(struct cpu_bootargs, cb_cpuinfo)
+define	CBA_CPUTYP	offsetof(struct cpu_bootargs, cb_cputyp)
 
 # FPU state
 define	FS_REGS		offsetof(struct fpstate64, fs_regs)

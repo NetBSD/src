@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.372 2014/09/04 18:48:29 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.373 2014/09/24 18:32:10 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -88,6 +88,9 @@
 #include <machine/intr.h>
 #include <machine/asm.h>
 #include <machine/locore.h>
+#ifdef SUN4V
+#include <machine/hypervisor.h>
+#endif	
 #include <sys/syscall.h>
 
 #define BLOCK_SIZE SPARC64_BLOCK_SIZE
@@ -120,7 +123,16 @@
 3:
 	.endm
 
-
+	.macro	SET_MMU_CONTEXTID_SUN4U ctxid,ctx
+	stxa	\ctxid, [\ctx] ASI_DMMU;
+	.endm
+	
+#ifdef SUN4V
+	.macro	SET_MMU_CONTEXTID_SUN4V ctxid,ctx
+	stxa	\ctxid, [\ctx] ASI_MMU;
+	.endm
+#endif	
+		
 	.macro	SET_MMU_CONTEXTID ctxid,ctx,scratch
 #ifdef SUN4V
 	sethi	%hi(cputyp), \scratch
@@ -129,15 +141,14 @@
 	bne,pt	%icc, 2f
 	 nop
 	/* sun4v */
-	stxa	\ctxid, [\ctx] ASI_MMU;
+	SET_MMU_CONTEXTID_SUN4V \ctxid,\ctx
 	ba	3f
 	 nop
 2:		
 #endif	
 	/* sun4u */
-	stxa	\ctxid, [\ctx] ASI_DMMU;
+	SET_MMU_CONTEXTID_SUN4U \ctxid,\ctx
 3:
-	
 	.endm
 
 #ifdef SUN4V
@@ -4412,7 +4423,7 @@ dostart:
 
 ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 
-	/* Cache the cputyp in %l6 for later user below */
+	/* Cache the cputyp in %l6 for later use below */
 	sethi	%hi(cputyp), %l6
 	ld	[%l6 + %lo(cputyp)], %l6
 
@@ -4440,7 +4451,6 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	 */
 	mov	%l1, %l7			! save cpu_info pointer
 	ldx	[%l1 + CI_PADDR], %l1		! Load the interrupt stack's PA
-
 #ifdef SUN4V
 	cmp	%l6, CPU_SUN4V
 	bne,pt	%icc, 3f
@@ -4464,7 +4474,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	andn	%l1, %l4, %l1			! Mask the phys page number
 
 	or	%l2, %l1, %l1			! Now take care of the high bits
-	or	%l1, SUN4U_TTE_DATABITS, %l2		! And low bits:	L=1|CP=1|CV=?|E=0|P=1|W=1|G=0
+	or	%l1, SUN4U_TTE_DATABITS, %l2	! And low bits:	L=1|CP=1|CV=?|E=0|P=1|W=1|G=0
 
 	!!
 	!!  Now, map in the interrupt stack as context==0
@@ -4650,10 +4660,63 @@ ENTRY(cpu_mp_startup)
 	wrpr	%g0, PSTATE_KERN, %pstate
 	flushw
 
+	/* Cache the cputyp in %l6 for later use below */
+	sethi	%hi(cputyp), %l6
+	ld	[%l6 + %lo(cputyp)], %l6
+	
 	/*
 	 * Get pointer to our cpu_info struct
 	 */
 	ldx	[%g2 + CBA_CPUINFO], %l1	! Load the interrupt stack's PA
+	
+
+#ifdef SUN4V
+	cmp	%l6, CPU_SUN4V
+	bne,pt	%icc, 3f
+	 nop
+	
+	/* sun4v */
+	
+	sethi	%hi(0x80000000), %l2		! V=1|NFO=0|SW=0
+	sllx	%l2, 32, %l2			! Shift it into place
+	mov	-1, %l3				! Create a nice mask
+	sllx	%l3, 56, %l4			! Mask off high 8 bits
+	or	%l4, 0x1fff, %l4		! Mask off low 13 bits
+	andn	%l1, %l4, %l1			! Mask the phys page number into RA
+	or	%l2, %l1, %l1			! Now take care of the 8 high bits V|NFO|SW
+	or	%l1, 0x0141, %l2		! And low 13 bits IE=0|E=0|CP=0|CV=0|P=1|
+						!		  X=0|W=1|SW=00|SZ=0001
+			
+	/*
+	 *  Now, map in the interrupt stack & cpu_info as context==0
+	 */
+	
+	set	INTSTACK, %o0			! vaddr
+	clr	%o1				! reserved
+	mov	%l2, %o2			! tte
+	mov	MAP_DTLB, %o3			! flags
+	mov	FT_MMU_MAP_PERM_ADDR, %o5	! hv fast trap function
+	ta	ST_FAST_TRAP
+	cmp	%o0, 0
+	be,pt	%icc, 5f
+	 nop
+	sir					! crash if mapping fails
+5:
+
+	/*
+	 * Set 0 as primary context XXX
+	 */
+	
+	mov	CTX_PRIMARY, %o0
+	SET_MMU_CONTEXTID_SUN4V %g0, %o0
+
+	ba	4f		
+	 nop
+3:
+#endif
+	
+	/* sun4u */
+	
 	sethi	%hi(0xa0000000), %l2		! V=1|SZ=01|NFO=0|IE=0
 	sllx	%l2, 32, %l2			! Shift it into place
 	mov	-1, %l3				! Create a nice mask
@@ -4661,11 +4724,12 @@ ENTRY(cpu_mp_startup)
 	or	%l4, 0xfff, %l4			! We can just load this in 12 (of 13) bits
 	andn	%l1, %l4, %l1			! Mask the phys page number
 	or	%l2, %l1, %l1			! Now take care of the high bits
-	or	%l1, SUN4U_TTE_DATABITS, %l2		! And low bits:	L=1|CP=1|CV=?|E=0|P=1|W=1|G=0
+	or	%l1, SUN4U_TTE_DATABITS, %l2	! And low bits:	L=1|CP=1|CV=?|E=0|P=1|W=1|G=0
 
 	/*
 	 *  Now, map in the interrupt stack & cpu_info as context==0
 	 */
+	
 	set	TLB_TAG_ACCESS, %l5
 	set	INTSTACK, %l0
 	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
@@ -4674,10 +4738,13 @@ ENTRY(cpu_mp_startup)
 	/*
 	 * Set 0 as primary context XXX
 	 */
+	
 	mov	CTX_PRIMARY, %o0
-	stxa	%g0, [%o0] ASI_DMMU
-	membar	#Sync
+	SET_MMU_CONTEXTID_SUN4U %g0, %o0
 
+4:	
+	membar	#Sync
+	
 	/*
 	 * Temporarily use the interrupt stack
 	 */
@@ -4689,9 +4756,39 @@ ENTRY(cpu_mp_startup)
 	set	1, %fp
 	clr	%i7
 
+#ifdef SUN4V
+	cmp	%l6, CPU_SUN4V
+	bne,pt	%icc, 2f
+	 nop
+	
+	/* sun4v */
+	
 	/*
 	 * install our TSB pointers
 	 */
+
+	set	CPUINFO_VA, %o0
+	LDPTR	[%o0 + CI_TSB_DESC], %o0
+	call	_C_LABEL(pmap_setup_tsb_sun4v)
+	 nop
+	
+	/* set trap table */
+
+	set	_C_LABEL(trapbase_sun4v), %l1
+	GET_MMFSA %o1
+	call	_C_LABEL(prom_set_trap_table_sun4v)
+	 mov	%l1, %o0
+	! Now we should be running 100% from our handlers	
+	ba	3f		
+	 nop
+2:
+#endif
+	/* sun4u */
+	
+	/*
+	 * install our TSB pointers
+	 */
+
 	sethi	%hi(CPUINFO_VA+CI_TSB_DMMU), %l0
 	sethi	%hi(CPUINFO_VA+CI_TSB_IMMU), %l1
 	sethi	%hi(_C_LABEL(tsbsize)), %l2
@@ -4717,9 +4814,11 @@ ENTRY(cpu_mp_startup)
 1:
 
 	/* set trap table */
+	
 	set	_C_LABEL(trapbase), %l1
 	call	_C_LABEL(prom_set_trap_table_sun4u)
 	 mov	%l1, %o0
+3:	
 	wrpr	%l1, 0, %tba			! Make sure the PROM didn't
 						! foul up.
 	/*

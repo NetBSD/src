@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.117 2014/09/01 19:01:55 palle Exp $ */
+/*	$NetBSD: cpu.c,v 1.118 2014/09/24 18:32:10 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.117 2014/09/01 19:01:55 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.118 2014/09/24 18:32:10 palle Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -551,13 +551,18 @@ cpu_boot_secondary_processors(void)
 		cpu_pmap_prepare(ci, false);
 		cpu_args->cb_node = ci->ci_node;
 		cpu_args->cb_cpuinfo = ci->ci_paddr;
+		cpu_args->cb_cputyp = cputyp;
 		membar_Sync();
 
 		/* Disable interrupts and start another CPU. */
 		pstate = getpstate();
 		setpstate(PSTATE_KERN);
 
-		prom_startcpu(ci->ci_node, (void *)cpu_spinup_trampoline, 0);
+		int rc = prom_startcpu_by_cpuid(ci->ci_cpuid,
+		    (void *)cpu_spinup_trampoline, 0);
+		if (rc == -1)
+			prom_startcpu(ci->ci_node,
+			    (void *)cpu_spinup_trampoline, 0);
 
 		for (i = 0; i < 2000; i++) {
 			membar_Sync();

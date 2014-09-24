@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.112 2014/09/04 18:48:29 palle Exp $ */
+/*	$NetBSD: cpu.h,v 1.113 2014/09/24 18:32:10 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -223,6 +223,7 @@ struct cpu_bootargs {
 	vaddr_t cb_ekdata;
 
 	paddr_t	cb_cpuinfo;
+	int cb_cputyp;
 };
 
 extern struct cpu_bootargs *cpu_args;

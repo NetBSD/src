@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.4 2014/06/08 17:33:24 palle Exp $ */
+/*	$NetBSD: hypervisor.h,v 1.5 2014/09/24 18:32:10 palle Exp $ */
 /*	$OpenBSD: hypervisor.h,v 1.14 2011/06/26 17:23:46 kettenis Exp $	*/
 
 /*
@@ -23,6 +23,12 @@
 /*
  * UltraSPARC Hypervisor API.
  */
+
+/*
+ * FAST_TRAP function numbers
+ */
+
+#define FT_MMU_MAP_PERM_ADDR 0x25
 
 /*
  * API versioning
