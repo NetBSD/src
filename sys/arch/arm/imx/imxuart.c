@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.14 2014/08/10 16:44:33 tls Exp $ */
+/* $NetBSD: imxuart.c,v 1.15 2014/09/25 05:05:28 ryo Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,10 +96,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.14 2014/08/10 16:44:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.15 2014/09/25 05:05:28 ryo Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
+#include "opt_ddbparam.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -1931,6 +1932,14 @@ imxuintr_read(struct imxuart_softc *sc)
 		    rd & 0xff, imxuart_cnm_state);
 
 		if (!cn_trapped) {
+#if defined(DDB) && defined(DDB_KEYCODE)
+			/*
+			 * Temporary hack so that I can force the kernel into
+			 * the debugger via the serial port
+			 */
+			if ((rd & 0xff) == DDB_KEYCODE)
+				Debugger();
+#endif
 			sc->sc_rbuf_in = IMXUART_RBUF_INC(sc, sc->sc_rbuf_in, 1);
 			cc--;
 		}
