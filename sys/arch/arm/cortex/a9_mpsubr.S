@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.23 2014/09/16 22:29:09 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.24 2014/09/25 04:59:15 ryo Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -445,7 +445,7 @@ cortex_init:
 
 	// For the A7, SMP must be on ldrex/strex to work.
 	//
-#if defined(MULTIPROCESSOR) || defined(CPU_CORTEXA7)
+#if defined(MULTIPROCESSOR) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9)
 #if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9)
 	//
 	// Step 4a, set ACTLR.SMP=1
