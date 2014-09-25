@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.174 2014/06/13 15:45:05 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.175 2014/09/25 15:08:29 manu Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -281,6 +281,7 @@
 #define execv			_execv
 #define execvp			_execvp
 #define explicit_memset		_explicit_memset
+#define fdiscard		_fdiscard
 #define fdopen			_fdopen
 #define fgetln			_fgetln
 #define fgetwln			_fgetwln
@@ -520,6 +521,7 @@
 #define pread			_pread
 #define printf_l		_printf_l
 #define pselect			_pselect
+#define posix_fallocate		_posix_fallocate
 #define psignal			_psignal
 #define pthread_atfork		_pthread_atfork
 #define ptree_init		ptree_init
