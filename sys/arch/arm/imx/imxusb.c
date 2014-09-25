@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusb.c,v 1.6 2014/07/25 07:49:56 hkenken Exp $	*/
+/*	$NetBSD: imxusb.c,v 1.7 2014/09/25 05:05:28 ryo Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi and Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.6 2014/07/25 07:49:56 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.7 2014/09/25 05:05:28 ryo Exp $");
 
 #include "opt_imx.h"
 
@@ -91,7 +91,7 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	usbd_status r;
 	uint32_t id, hwhost, hwdevice;
 	const char *comma;
-	
+
 	sc->sc_hsc.sc_dev = self;
 	iot = sc->sc_iot = sc->sc_hsc.iot = aa->aa_iot;
 	sc->sc_unit = aa->aa_unit;
@@ -99,7 +99,8 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	hsc->sc_bus.hci_private = sc;
 	hsc->sc_flags |= EHCIF_ETTF;
 
-	aprint_normal("\n");
+	aprint_naive("\n");
+	aprint_normal(": i.MX USB Controller\n");
 
 	/* per unit registers */
 	if (bus_space_subregion(iot, aa->aa_ioh, 
@@ -118,7 +119,7 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	hcirev = bus_space_read_2(iot, sc->sc_hsc.ioh, EHCI_HCIVERSION);
 
 	aprint_normal_dev(self,
-	    "i.MX USB Controller id=%d revision=%d HCI revision=0x%x\n", 
+	    "id=%d revision=%d HCI revision=0x%x\n", 
 	    (int)__SHIFTOUT(id, IMXUSB_ID_ID),
 	    (int)__SHIFTOUT(id, IMXUSB_ID_REVISION),
 	    hcirev);
