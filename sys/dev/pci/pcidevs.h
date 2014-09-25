@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1195 2014/09/21 14:31:03 christos Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1196 2014/09/25 03:29:31 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1201 2014/09/16 07:05:44 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1202 2014/09/25 03:28:57 msaitoh Exp
  */
 
 /*
@@ -2769,6 +2769,7 @@
 #define	PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER	0x1099		/* i82546GB Quad Port Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82573L	0x109a		/* i82573L Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82571EB_QUAD_COPPER	0x10a4		/* i82571EB Quad Port Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82571EB_QUAD_FIBER	0x10a5		/* i82571EB Quad Port Gigabit Fiber Ethernet */
 #define	PCI_PRODUCT_INTEL_82575EB_COPPER	0x10a7		/* i82575EB dual-1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82575EB_FIBER_SERDES	0x10a9		/* i82575EB dual-1000baseX Ethernet (SERDES) */
 #define	PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER_KSP3	0x10b5		/* i82546GB Quad Port Gigabit Ethernet (KSP3) */
@@ -2784,12 +2785,16 @@
 #define	PCI_PRODUCT_INTEL_82801H_IFE_GT	0x10c4		/* i82801H IFE (GT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IFE_G	0x10c5		/* i82801H IFE (G) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82576_COPPER	0x10c9		/* 82576 1000BaseT Ethernet */
+#define	PCI_PRODUCT_INTEL_82576_VF	0x10ca		/* 82576 1000BaseT Ethernet Virtual Function */
 #define	PCI_PRODUCT_INTEL_82801H_IGP_M_V	0x10cb		/* i82801H IGP (MV) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801J_R_BM_LM	0x10cc		/* i82567LM-2 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801J_R_BM_LF	0x10cd		/* i82567LF-2 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801J_R_BM_V	0x10ce		/* i82567V-2 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82574L	0x10d3		/* i82574L 1000baseT Ethernet */
+#define	PCI_PRODUCT_INTEL_82571PT_QUAD_COPPER	0x10d5		/* i82571PT quad-1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82575GB_QUAD_COPPER	0x10d6		/* i82575GB quad-1000baseT Ethernet */
+#define	PCI_PRODUCT_INTEL_82571EB_DUAL_SERDES	0x10d9		/* i82571EB dual giabit Ethernet (SERDES) */
+#define	PCI_PRODUCT_INTEL_82571EB_QUAD_SERDES	0x10da		/* i82571EB qual giabit Ethernet (SERDES) */
 #define	PCI_PRODUCT_INTEL_82801J_D_BM_LM	0x10de		/* i82567LM-3 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801J_D_BM_LF	0x10df		/* i82567LF-3 LAN Controller */
 #define	PCI_PRODUCT_INTEL_82575GB_QUAD_COPPER_PM	0x10e2		/* i82575GB Quad-1000baseT Ethernet (PM) */
@@ -2802,6 +2807,7 @@
 #define	PCI_PRODUCT_INTEL_PCH_D_DM	0x10ef		/* PCH LAN (82578DM) Controller */
 #define	PCI_PRODUCT_INTEL_PCH_D_DC	0x10f0		/* PCH LAN (82578DC) Controller */
 #define	PCI_PRODUCT_INTEL_82801I_IGP_M_AMT	0x10f5		/* 82801I Mobile (AMT) LAN Controller */
+#define	PCI_PRODUCT_INTEL_82574LA	0x10f6		/* 82574L 1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82599_KX4	0x10F7		/* 82599 (KX/KX4) 10 GbE Controller */
 #define	PCI_PRODUCT_INTEL_82599_COMBO_BACKPLANE	0x10F8		/* 82599 (combined backplane; KR/KX4/KX) 10 GbE Controller */
 #define	PCI_PRODUCT_INTEL_82599_CX4	0x10F9		/* 82599 (CX4) 10 GbE Controller */
@@ -2857,13 +2863,17 @@
 #define	PCI_PRODUCT_INTEL_82576_NS_SERDES	0x1518		/* 82576 gigabit Ethernet (SERDES) */
 #define	PCI_PRODUCT_INTEL_82580_ER	0x151d		/* 82580 1000BaseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82580_ER_DUAL	0x151e		/* 82580 dual-1000BaseT Ethernet */
+#define	PCI_PRODUCT_INTEL_I350_VF	0x1520		/* I350 Gigabit Network Connection Virtual Function */
 #define	PCI_PRODUCT_INTEL_I350_COPPER	0x1521		/* I350 Gigabit Network Connection */
 #define	PCI_PRODUCT_INTEL_I350_FIBER	0x1522		/* I350 Gigabit Fiber Network Connection */
 #define	PCI_PRODUCT_INTEL_I350_SERDES	0x1523		/* I350 Gigabit Backplane Connection */
 #define	PCI_PRODUCT_INTEL_I350_SGMII	0x1524		/* I350 Gigabit Connection */
 #define	PCI_PRODUCT_INTEL_82801J_D_BM_V	0x1525		/* 82567V LAN Controller */
+#define	PCI_PRODUCT_INTEL_82576_QUAD_COPPER_ET2	0x1526		/* 82576 quad-1000BaseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82580_QUAD_FIBER	0x1527		/* 82580 quad-1000BaseX Ethernet */
 #define	PCI_PRODUCT_INTEL_X540_AT2	0x1528		/* X540-AT2 10Gbase-T Ethernet */
+#define	PCI_PRODUCT_INTEL_82576_VF_HV	0x152d		/* 82576 1000BaseT Ethernet Virtual Function */
+#define	PCI_PRODUCT_INTEL_I350_VF_HV	0x152f		/* I350 Gigabit Network Connection Virtual Function */
 #define	PCI_PRODUCT_INTEL_I210_T1	0x1533		/* I210-T1 Ethernet Server Adapter */
 #define	PCI_PRODUCT_INTEL_I210_COPPER_OEM1	0x1534		/* I210 Ethernet (COPPER OEM) */
 #define	PCI_PRODUCT_INTEL_I210_COPPER_IT	0x1535		/* I210 Ethernet (COPPER IT) */
@@ -2873,9 +2883,12 @@
 #define	PCI_PRODUCT_INTEL_I211_COPPER	0x1539		/* I211 Ethernet (COPPER) */
 #define	PCI_PRODUCT_INTEL_I217_LM	0x153a		/* I217-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I217_V	0x153b		/* I217-V Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I350_DA4	0x1546		/* I350 Quad port Gigabit Connection */
 #define	PCI_PRODUCT_INTEL_82599_SFP_SF2	0x154d		/* 82599 (SFP+) 10 GbE Controller */
 #define	PCI_PRODUCT_INTEL_I218_V	0x1559		/* I218-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I218_LM	0x155a		/* I218-LM Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_I210_COPPER_WOF	0x157b		/* I210 Ethernet (COPPER) */
+#define	PCI_PRODUCT_INTEL_I210_SERDES_WOF	0x157c		/* I210 Ethernet (SERDES) */
 #define	PCI_PRODUCT_INTEL_I218_LM2	0x15a0		/* I218-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I218_V2	0x15a1		/* I218-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I218_LM3	0x15a2		/* I218-LM Ethernet Connection */
