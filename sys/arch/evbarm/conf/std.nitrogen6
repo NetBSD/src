@@ -1,0 +1,37 @@
+#	$NetBSD: std.nitrogen6,v 1.1 2014/09/25 05:05:28 ryo Exp $
+#
+# standard NetBSD/evbarm options for Nitrogen6X
+
+machine	evbarm arm
+include 	"arch/evbarm/conf/std.evbarm"
+
+# Pull in nitrogen6 config definitions.
+include 	"arch/evbarm/conf/files.nitrogen6"
+
+options 	NITROGEN6
+
+options 	ARM_HAS_VBAR
+options 	PMAP_NEED_ALLOC_POOLPAGE
+options 	__HAVE_CPU_COUNTER
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+options 	TPIDRPRW_IS_CURCPU
+
+makeoptions	CPUFLAGS="-mcpu=cortex-a9"
+
+# To support easy transit to ../arch/arm/arm32
+options 	FPU_VFP
+options 	CORTEX_PMC
+options 	CORTEX_PMC_CCNT_HZ=792000000
+
+options 	EVBARM_BOARDTYPE="nitrogen6"
+
+options 	KERNEL_BASE_EXT=0x80000000
+makeoptions 	KERNEL_BASE_PHYS="0x10800000"
+makeoptions 	KERNEL_BASE_VIRT="0x80800000"
+
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.nitrogen6"
+makeoptions	CPPFLAGS+="-I$S/../../../include"
+
+options 	ARM_INTR_IMPL="<arch/arm/imx/imx6_intr.h>"
+options		ARM_GENERIC_TODR

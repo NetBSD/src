@@ -1,4 +1,4 @@
-/*	$NetBSD: imxgpio.c,v 1.4 2014/03/22 05:19:18 hkenken Exp $ */
+/*	$NetBSD: imxgpio.c,v 1.5 2014/09/25 05:05:28 ryo Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.4 2014/03/22 05:19:18 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.5 2014/09/25 05:05:28 ryo Exp $");
 
 #define	_INTR_PRIVATE
 
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.4 2014/03/22 05:19:18 hkenken Exp $");
 #include <dev/gpio/gpiovar.h>
 #endif
 
-#define	MAX_NGROUP	4
+#define	MAX_NGROUP	8
 
 static void gpio_pic_block_irqs(struct pic_softc *, size_t, uint32_t);
 static void gpio_pic_unblock_irqs(struct pic_softc *, size_t, uint32_t);
@@ -352,6 +352,8 @@ imxgpio_attach_common(device_t self, bus_space_tag_t iot,
 {
 	struct gpio_softc * const gpio = device_private(self);
 
+	KASSERT(index < MAX_NGROUP);
+
 	gpio->gpio_dev = self;
 	gpio->gpio_memt = iot;
 	gpio->gpio_memh = ioh;
@@ -381,7 +383,6 @@ imxgpio_attach_common(device_t self, bus_space_tag_t iot,
 #endif
 	}
 	aprint_normal("\n");
-		      
 
 	gpio_handles.iot = iot;
 	gpio_handles.unit[index].softc = gpio;
