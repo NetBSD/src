@@ -41,7 +41,7 @@
 #include <arm/allwinner/awin_reg.h>
 #include <evbarm/awin/platform.h>  
 
-RCSID("$NetBSD: awin_start.S,v 1.1 2014/08/31 19:13:01 matt Exp $")
+RCSID("$NetBSD: awin_start.S,v 1.2 2014/09/25 07:59:29 matt Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -178,6 +178,10 @@ a20_mpinit:
 	movw	r5, #:lower16:(AWIN_CORE_PBASE+AWIN_CPUCFG_OFFSET)
 	movt	r5, #:upper16:(AWIN_CORE_PBASE+AWIN_CPUCFG_OFFSET)
 
+#ifdef __ARMEB__
+	setend	le			// everything here is little-endian
+#endif
+
 	/* Set where the other CPU(s) are going to execute */
 	movw	r1, #:lower16:cortex_mpstart
 	movt	r1, #:upper16:cortex_mpstart
@@ -210,7 +214,7 @@ a20_mpinit:
 
 	/* We need to wait (at least) 10ms */
 	mov	r0, #0x3b000			// 10.06ms
-	bl	_C_LABEL(gtmr_bootdelay)
+	bl	_C_LABEL(gtmr_bootdelay)	// endian-neutral
 
 	/* Clear power-off gating */
 	ldr	r1, [r5, #AWIN_CPUCFG_CPU1_PWROFF_REG] 
@@ -229,6 +233,10 @@ a20_mpinit:
 	orr	r1, r1, #(1 << 1)
 	str	r1, [r5, #AWIN_CPUCFG_DBGCTRL1_REG]
 	dsb
+
+#ifdef __ARMEB__
+	setend	be				// we're done with little endian
+#endif
 
 	//
 	// Wait up a second for CPU1 to hatch. 
