@@ -1,0 +1,80 @@
+/*	$NetBSD: imx6_ocotpreg.h,v 1.1 2014/09/25 05:05:28 ryo Exp $	*/
+
+/*
+ * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef _ARM_IMX_IMX6_OCOTP_H_
+#define _ARM_IMX_IMX6_OCOTP_H_
+
+#define OCOTP_CTRL		0x00000000
+#define OCOTP_CTRL_SET		0x00000004
+#define OCOTP_CTRL_CLR		0x00000008
+#define OCOTP_CTRL_TOG		0x0000000c
+#define OCOTP_TIMING		0x00000010
+#define OCOTP_DATA		0x00000020
+#define OCOTP_READ_CTRL		0x00000030
+#define OCOTP_READ_FUSE_DATA	0x00000040
+#define OCOTP_SW_STICKY		0x00000050
+#define OCOTP_SCS		0x00000060
+#define OCOTP_SCS_SET		0x00000064
+#define OCOTP_SCS_CLR		0x00000068
+#define OCOTP_SCS_TOG		0x0000006c
+#define OCOTP_VERSION		0x00000090
+#define OCOTP_LOCK		0x00000400
+#define OCOTP_CFG0		0x00000410
+#define OCOTP_CFG1		0x00000420
+#define OCOTP_CFG2		0x00000430
+#define OCOTP_CFG3		0x00000440
+#define OCOTP_CFG4		0x00000450
+#define OCOTP_CFG5		0x00000460
+#define OCOTP_CFG6		0x00000470
+#define OCOTP_MEM0		0x00000480
+#define OCOTP_MEM1		0x00000490
+#define OCOTP_MEM2		0x000004a0
+#define OCOTP_MEM3		0x000004b0
+#define OCOTP_MEM4		0x000004c0
+#define OCOTP_ANA0		0x000004d0
+#define OCOTP_ANA1		0x000004e0
+#define OCOTP_ANA2		0x000004f0
+#define OCOTP_SRK0		0x00000580
+#define OCOTP_SRK1		0x00000590
+#define OCOTP_SRK2		0x000005a0
+#define OCOTP_SRK3		0x000005b0
+#define OCOTP_SRK4		0x000005c0
+#define OCOTP_SRK5		0x000005d0
+#define OCOTP_SRK6		0x000005e0
+#define OCOTP_SRK7		0x000005f0
+#define OCOTP_RESP0		0x00000600
+#define OCOTP_HSJC_RESP1	0x00000610
+#define OCOTP_MAC0		0x00000620
+#define OCOTP_MAC1		0x00000630
+#define OCOTP_GP1		0x00000660
+#define OCOTP_GP2		0x00000670
+#define OCOTP_MISC_CONF		0x000006d0
+#define OCOTP_FIELD_RETURN	0x000006e0
+#define OCOTP_SRK_REVOKE	0x000006f0
+
+#endif /* _ARM_IMX_IMX6_OCOTP_H_ */
