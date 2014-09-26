@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.44 2014/09/24 18:16:37 christos Exp $
+# $NetBSD: ad.arm,v 1.45 2014/09/26 19:25:56 christos Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -65,7 +65,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libbz2.so.1.1.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libc++.so.1.0.debug		comp-sys-debug	debug,compat,pic,libcxx
-./usr/libdata/debug/usr/lib/oabi/libc.so.12.194.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libc.so.12.195.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libc_vfp.so.0.0.debug		comp-sys-debug	debug,compat,pic
 ./usr/libdata/debug/usr/lib/oabi/libcom_err.so.6.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/oabi/libcom_err.so.7.0.debug	comp-compat-shlib	 compat,pic,kerberos,debug
