@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.22 2013/02/20 17:04:45 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.23 2014/09/26 01:21:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vis.c,v 1.22 2013/02/20 17:04:45 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.23 2014/09/26 01:21:07 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 	int ch;
 	int rval;
 
-	while ((ch = getopt(argc, argv, "bcde:F:fhlmnostw")) != -1)
+	while ((ch = getopt(argc, argv, "bcde:F:fhlmMnosStw")) != -1)
 		switch((char)ch) {
 		case 'b':
 			eflags |= VIS_NOSLASH;
@@ -107,6 +107,9 @@ main(int argc, char *argv[])
 			if (foldwidth == 80)
 				foldwidth = 76;
 			break;
+		case 'M':
+			eflags |= VIS_META;
+			break;
 		case 'n':
 			none++;
 			break;
@@ -115,6 +118,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			eflags |= VIS_SAFE;
+			break;
+		case 'S':
+			eflags |= VIS_SHELL;
 			break;
 		case 't':
 			eflags |= VIS_TAB;
@@ -125,7 +131,7 @@ main(int argc, char *argv[])
 		case '?':
 		default:
 			(void)fprintf(stderr, 
-			    "Usage: %s [-bcfhlmnostw] [-e extra]" 
+			    "Usage: %s [-bcfhlmMnosStw] [-e extra]" 
 			    " [-F foldwidth] [file ...]\n", getprogname());
 			return 1;
 		}
