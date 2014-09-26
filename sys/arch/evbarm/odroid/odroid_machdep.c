@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.36 2014/09/26 18:59:29 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.37 2014/09/26 19:03:24 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.36 2014/09/26 18:59:29 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.37 2014/09/26 19:03:24 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -110,7 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.36 2014/09/26 18:59:29 reinoud 
 
 extern const int num_exynos_uarts_entries;
 extern const struct sscom_uart_info exynos_uarts[];
-KASSERT(sizeof(struct sscom_uart_info) == 8);
 
 /* sanity checks for serial console */
 #ifndef CONSPEED
