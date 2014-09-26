@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.37 2014/09/26 19:03:24 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.38 2014/09/26 19:27:05 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.37 2014/09/26 19:03:24 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.38 2014/09/26 19:27:05 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -93,6 +93,15 @@ __KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.37 2014/09/26 19:03:24 reinoud 
 
 #include <dev/usb/ukbdvar.h>
 #include <net/if_ether.h>
+
+
+/* sanity checks */
+#ifndef EXYNOS4
+#ifndef EXYNOS5
+#error Please define _either_ an EXYNOS4 or an EXYNOS5 cpu, not mixed
+#endif
+#endif
+
 
 /* serial console stuff */
 #include "sscom.h"
@@ -338,16 +347,14 @@ initarm(void *arg)
 	ram_size = (psize_t) 0xC0000000 - 0x40000000;
 
 #if defined(EXYNOS4)
-	if (IS_EXYNOS4_P()) {
-		switch (exynos_pop_id) {
-		case EXYNOS_PACKAGE_ID_2_GIG:
-			KASSERT(ram_size <= 2UL*1024*1024*1024);
-			break;
-		default:
-			printf("Unknown PoP package id 0x%08x, assuming 1Gb\n",
-				exynos_pop_id);
-			ram_size = (psize_t) 0x10000000;
-		}
+	switch (exynos_pop_id) {
+	case EXYNOS_PACKAGE_ID_2_GIG:
+		KASSERT(ram_size <= 2UL*1024*1024*1024);
+		break;
+	default:
+		printf("Unknown PoP package id 0x%08x, assuming 1Gb\n",
+			exynos_pop_id);
+		ram_size = (psize_t) 0x10000000;
 	}
 #endif
 
@@ -666,7 +673,7 @@ odroid_device_register(device_t self, void *aux)
 	}
 
 #ifdef EXYNOS4
-	if (device_is_a(self, "exyogpio") && (IS_EXYNOS4_P())) {
+	if (device_is_a(self, "exyogpio")) {
 		/* unused bits */
 		odroid_exynos4_gpio_ncs(self, dict);
 
@@ -679,7 +686,7 @@ odroid_device_register(device_t self, void *aux)
 
 		prop_dictionary_set_cstring(dict, "p3v3_en", ">GPA1[3]");
 	}
-	if (device_is_a(self, "exyoiic") && (IS_EXYNOS4_P())) {
+	if (device_is_a(self, "exyoiic")) {
 		prop_dictionary_set_bool(dict, "iic0_enable", true);
 		prop_dictionary_set_bool(dict, "iic1_enable", true);
 		prop_dictionary_set_bool(dict, "iic2_enable", true);
@@ -692,7 +699,7 @@ odroid_device_register(device_t self, void *aux)
 	}
 #endif
 #ifdef EXYNOS5
-	if (device_is_a(self, "exyogpio") && (IS_EXYNOS5_P())) {
+	if (device_is_a(self, "exyogpio")) {
 		/* unused bits */
 		odroid_exynos5_gpio_ncs(self, dict);
 
@@ -704,7 +711,7 @@ odroid_device_register(device_t self, void *aux)
 		/* internal hub IIRC, unknown if this line exists */
 		//prop_dictionary_set_cstring(dict, "p3v3_en", ">GPA1[3]");
 	}
-	if (device_is_a(self, "exyoiic") && (IS_EXYNOS5_P())) {
+	if (device_is_a(self, "exyoiic")) {
 		/* IIC0 not used (NC) */
 		prop_dictionary_set_bool(dict, "iic1_enable", true);
 		prop_dictionary_set_bool(dict, "iic2_enable", true);
