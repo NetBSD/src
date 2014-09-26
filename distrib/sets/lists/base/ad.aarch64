@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.6 2014/09/24 18:16:37 christos Exp $
+# $NetBSD: ad.aarch64,v 1.7 2014/09/26 19:25:56 christos Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-npf-shlib		compat
 ./lib/eabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -108,7 +108,7 @@
 ./usr/lib/eabi/libc++.so.1			base-compat-shlib	compat,pic,libcxx
 ./usr/lib/eabi/libc++.so.1.0			base-compat-shlib	compat,pic,libcxx
 ./usr/lib/eabi/libc.so.12				base-compat-shlib	compat,pic
-./usr/lib/eabi/libc.so.12.194			base-compat-shlib	compat,pic
+./usr/lib/eabi/libc.so.12.195			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libcom_err.so.7			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/eabi/libcom_err.so.7.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/eabi/libcrypt.so.1			base-compat-shlib	compat,pic
@@ -422,7 +422,7 @@
 ./usr/lib/eabihf/libc++.so.1			base-compat-shlib	compat,pic,libcxx
 ./usr/lib/eabihf/libc++.so.1.0			base-compat-shlib	compat,pic,libcxx
 ./usr/lib/eabihf/libc.so.12				base-compat-shlib	compat,pic
-./usr/lib/eabihf/libc.so.12.194			base-compat-shlib	compat,pic
+./usr/lib/eabihf/libc.so.12.195			base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libcom_err.so.7			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/eabihf/libcom_err.so.7.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/eabihf/libcrypt.so.1			base-compat-shlib	compat,pic
@@ -736,7 +736,7 @@
 ./usr/lib/oabi/libc++.so.1			base-compat-shlib	compat,pic,libcxx
 ./usr/lib/oabi/libc++.so.1.0			base-compat-shlib	compat,pic,libcxx
 ./usr/lib/oabi/libc.so.12			base-compat-shlib	compat,pic
-./usr/lib/oabi/libc.so.12.194			base-compat-shlib	compat,pic
+./usr/lib/oabi/libc.so.12.195			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libcom_err.so.7			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libcom_err.so.7.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libcrypt.so.1			base-compat-shlib	compat,pic
