@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.3,v 1.40 2014/09/26 01:21:07 christos Exp $
+.\"	$NetBSD: vis.3,v 1.41 2014/09/26 02:18:57 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)vis.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd February 19, 2013
+.Dd September 26, 2014
 .Dt VIS 3
 .Os
 .Sh NAME
@@ -237,9 +237,9 @@ alter this:
 .Bl -tag -width VIS_WHITEX
 .It Dv VIS_GLOB
 Also encode the magic characters
-.Ql ( * ,
+.Pf ( Ql * ,
 .Ql \&? ,
-.Ql \&[
+.Ql \&[ ,
 and
 .Ql # )
 recognized by
@@ -247,24 +247,23 @@ recognized by
 .It Dv VIS_SHELL
 Also encode the meta characters used by shells (in addition to the glob
 characters):
-.Ql ( ' ,
+.Pf ( Ql ' ,
 .Ql ` ,
-.Ql \*[q] ,
+.Ql \&" ,
 .Ql \&; ,
-.Ql \*[Am] ,
-.Ql \*[Lt] ,
-.Ql \*[Gt] ,
+.Ql & ,
+.Ql < ,
+.Ql > ,
 .Ql \&( ,
 .Ql \&) ,
 .Ql \&| ,
 .Ql \&] ,
-.Ql \&\\ ,
-.\" XXX: How do you print a $
-.Ql \e(Do ,
+.Ql \e ,
+.Ql $ ,
 .Ql \&! ,
-.Ql \&^ 
-and 
-.Ql ~ ).
+.Ql \&^ ,
+and
+.Ql ~ ) .
 .It Dv VIS_SP
 Also encode space.
 .It Dv VIS_TAB
@@ -273,18 +272,10 @@ Also encode tab.
 Also encode newline.
 .It Dv VIS_WHITE
 Synonym for
-.Dv VIS_SP
-\&|
-.Dv VIS_TAB
-\&|
-.Dv VIS_NL .
+.Dv VIS_SP | VIS_TAB | VIS_NL .
 .It Dv VIS_META
 Synonym for
-.Dv VIS_WHITE
-\&|
-.Dv VIS_GLOB
-\&|
-.Dv VIS_SHELL .
+.Dv VIS_WHITE | VIS_GLOB | VIS_SHELL .
 .It Dv VIS_SAFE
 Only encode
 .Dq unsafe
