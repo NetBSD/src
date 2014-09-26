@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.11 2014/07/12 12:11:22 spz Exp $
+# $NetBSD: Makefile.inc,v 1.12 2014/09/26 22:18:48 christos Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -36,15 +36,15 @@ LDADD+=-Wl,-Bstatic
 .endif
 LDADD+= -lirs -lisccfg -ldns -lisc
 LDADD+=-lpthread
-.if defined(PROG) && ${PROG} == "dhclient"
-LDADD+=-Wl,-Bdynamic
-.endif
 .if (${MKCRYPTO} != "no")
 .if (${MKKERBEROS} != "no")
 LDADD+= -lgssapi -lkrb5 -lhx509 -lheimntlm -lheimbase \
 	-lcom_err  -lroken -lasn1 -lwind
 DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBHX509} ${LIBHEIMNTLM} ${LIBHEIMBASE} \
 	${LIBCOM_ERR} ${LIBROKEN} ${LIBASN1} ${LIBWIND}
+.endif
+.if defined(PROG) && ${PROG} == "dhclient"
+LDADD+=-Wl,-Bdynamic
 .endif
 LDADD+= -lcrypto -lipsec -lcrypt
 DPADD+= ${LIBCRYPTO} ${LIBIPSEC} ${LIBCRYPT}
