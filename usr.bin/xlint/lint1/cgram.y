@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.65 2014/04/21 21:52:24 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.66 2014/09/26 01:20:00 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.65 2014/04/21 21:52:24 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.66 2014/09/26 01:20:00 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1552,16 +1552,26 @@ do_while_expr:
 	  }
 	;
 
+for_start:
+	  T_FOR T_LPARN {
+		pushdecl(AUTO);
+		blklev++;
+	  }
+	;
 for_exprs:
-	    T_FOR T_LPARN declspecs deftyp notype_init_decls T_SEMI opt_expr
+	    for_start declspecs deftyp notype_init_decls T_SEMI opt_expr
 	    T_SEMI opt_expr T_RPARN {
 		c99ism(325);
-		for1(NULL, $7, $9);
+		for1(NULL, $6, $8);
 		CLRWFLGS(__FILE__, __LINE__);
+		popdecl();
+		blklev--;
 	    }
-	  | T_FOR T_LPARN opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPARN {
-		for1($3, $5, $7);
+	  | for_start opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPARN {
+		for1($2, $4, $6);
 		CLRWFLGS(__FILE__, __LINE__);
+		popdecl();
+		blklev--;
 	  }
 	;
 
