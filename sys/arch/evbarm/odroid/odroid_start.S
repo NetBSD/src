@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_start.S,v 1.3 2014/08/04 18:14:43 reinoud Exp $	*/
+/*	$NetBSD: odroid_start.S,v 1.4 2014/09/26 18:26:24 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <evbarm/odroid/platform.h>
 
-RCSID("$NetBSD: odroid_start.S,v 1.3 2014/08/04 18:14:43 reinoud Exp $")
+RCSID("$NetBSD: odroid_start.S,v 1.4 2014/09/26 18:26:24 reinoud Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -178,13 +178,20 @@ _C_LABEL(odroid_start):
 	str	r0, [r4]				// save pop_id
 #endif
 
-	/* Pick uart address and initial MMU table for the SoC */
-	mov	r2, #0
-	ubfx	r1, r5, #24, #8
-	cmp	r1, #0xe5
-	movteq	r2, #:upper16:(EXYNOS_CORE_PBASE + EXYNOS5_UART2_OFFSET)
-	cmp	r1, #0xe4
-	movteq	r2, #:upper16:(EXYNOS_CORE_PBASE + EXYNOS4_UART1_OFFSET)
+	/* Pick uart address for the SoC */
+#ifdef EXYNOS4
+	adr	r1, .Lsscom_exynos4_table
+#endif
+#ifdef EXYNO55
+	adr	r1, .Lsscom_exynos5_table
+#endif
+#ifdef SSCOM0CONSOLE
+	ldr	r2, [r1, #0]
+#endif
+#ifdef SSCOM1CONSOLE
+	ldr	r2, [r1, #4]
+#endif
+	add	r2, r2, #EXYNOS_CORE_PBASE
 	mcr	p15, 0, r2, c13, c0, 3		// TPIDRURO set (uart address)
 
 	/*
@@ -236,6 +243,20 @@ _C_LABEL(odroid_start):
 	.popsection				// back to .start
 
 	/* NOTREACHED */
+
+
+.Lsscom_exynos4_table:
+	.word	EXYNOS4_UART0_OFFSET
+	.word	EXYNOS4_UART1_OFFSET
+	.word	EXYNOS4_UART2_OFFSET
+	.word	EXYNOS4_UART3_OFFSET
+
+.Lsscom_exynos5_table:
+	.word	EXYNOS5_UART0_OFFSET
+	.word	EXYNOS5_UART1_OFFSET
+	.word	EXYNOS5_UART2_OFFSET
+	.word	EXYNOS5_UART3_OFFSET
+
 
 #if defined(VERBOSE_INIT_ARM)
 	.align 0
