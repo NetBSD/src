@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.65 2014/09/26 13:48:00 roy Exp $	*/
+/*	$NetBSD: vis.c,v 1.66 2014/09/26 15:58:59 roy Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.65 2014/09/26 13:48:00 roy Exp $");
+__RCSID("$NetBSD: vis.c,v 1.66 2014/09/26 15:58:59 roy Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -229,6 +229,7 @@ do_mbyte(wchar_t *dst, wint_t c, int flags, wint_t nextc, int iswextra)
 		case L'0':
 		case L'M':
 		case L'^':
+		case L'$': /* vis(1) -l */
 			break;
 		default:
 			if (iswgraph(c) && !iswoctal(c)) {
