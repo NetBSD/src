@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1913 2014/09/24 18:16:37 christos Exp $
+#	$NetBSD: mi,v 1.1914 2014/09/26 19:25:56 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6469,9 +6469,11 @@
 ./usr/share/man/cat3/execl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/execle.0			comp-c-catman		.cat
 ./usr/share/man/cat3/execlp.0			comp-c-catman		.cat
+./usr/share/man/cat3/execlpe.0			comp-c-catman		.cat
 ./usr/share/man/cat3/exect.0			comp-c-catman		.cat
 ./usr/share/man/cat3/execv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/execvp.0			comp-c-catman		.cat
+./usr/share/man/cat3/execvpe.0			comp-c-catman		.cat
 ./usr/share/man/cat3/exit.0			comp-c-catman		.cat
 ./usr/share/man/cat3/exp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/exp2.0			comp-c-catman		.cat
@@ -13303,9 +13305,11 @@
 ./usr/share/man/html3/execl.html		comp-c-htmlman		html
 ./usr/share/man/html3/execle.html		comp-c-htmlman		html
 ./usr/share/man/html3/execlp.html		comp-c-htmlman		html
+./usr/share/man/html3/execlpe.html		comp-c-htmlman		html
 ./usr/share/man/html3/exect.html		comp-c-htmlman		html
 ./usr/share/man/html3/execv.html		comp-c-htmlman		html
 ./usr/share/man/html3/execvp.html		comp-c-htmlman		html
+./usr/share/man/html3/execvpe.html		comp-c-htmlman		html
 ./usr/share/man/html3/exit.html			comp-c-htmlman		html
 ./usr/share/man/html3/exp.html			comp-c-htmlman		html
 ./usr/share/man/html3/exp2.html			comp-c-htmlman		html
@@ -20049,9 +20053,11 @@
 ./usr/share/man/man3/execl.3			comp-c-man		.man
 ./usr/share/man/man3/execle.3			comp-c-man		.man
 ./usr/share/man/man3/execlp.3			comp-c-man		.man
+./usr/share/man/man3/execlpe.3			comp-c-man		.man
 ./usr/share/man/man3/exect.3			comp-c-man		.man
 ./usr/share/man/man3/execv.3			comp-c-man		.man
 ./usr/share/man/man3/execvp.3			comp-c-man		.man
+./usr/share/man/man3/execvpe.3			comp-c-man		.man
 ./usr/share/man/man3/exit.3			comp-c-man		.man
 ./usr/share/man/man3/exp.3			comp-c-man		.man
 ./usr/share/man/man3/exp2.3			comp-c-man		.man
