@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.3,v 1.39 2013/02/20 20:05:26 christos Exp $
+.\"	$NetBSD: vis.3,v 1.40 2014/09/26 01:21:07 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -244,6 +244,27 @@ and
 .Ql # )
 recognized by
 .Xr glob 3 .
+.It Dv VIS_SHELL
+Also encode the meta characters used by shells (in addition to the glob
+characters):
+.Ql ( ' ,
+.Ql ` ,
+.Ql \*[q] ,
+.Ql \&; ,
+.Ql \*[Am] ,
+.Ql \*[Lt] ,
+.Ql \*[Gt] ,
+.Ql \&( ,
+.Ql \&) ,
+.Ql \&| ,
+.Ql \&] ,
+.Ql \&\\ ,
+.\" XXX: How do you print a $
+.Ql \e(Do ,
+.Ql \&! ,
+.Ql \&^ 
+and 
+.Ql ~ ).
 .It Dv VIS_SP
 Also encode space.
 .It Dv VIS_TAB
@@ -257,6 +278,13 @@ Synonym for
 .Dv VIS_TAB
 \&|
 .Dv VIS_NL .
+.It Dv VIS_META
+Synonym for
+.Dv VIS_WHITE
+\&|
+.Dv VIS_GLOB
+\&|
+.Dv VIS_SHELL .
 .It Dv VIS_SAFE
 Only encode
 .Dq unsafe
