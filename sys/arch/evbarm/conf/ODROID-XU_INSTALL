@@ -1,10 +1,10 @@
-#	$NetBSD: ODROID_INSTALL,v 1.2 2014/05/01 18:43:45 martin Exp $
+#	$NetBSD: ODROID-XU_INSTALL,v 1.1 2014/09/26 15:33:58 reinoud Exp $
 #
 #	ODROID_INSTALL -- ODROID kernel with installation-sized
 #	ramdisk
 #
 
-include "arch/evbarm/conf/ODROID"
+include "arch/evbarm/conf/ODROID-XU"
 include "arch/evbarm/conf/INSTALL"
 
 options BOOTHOWTO=RB_SINGLE
