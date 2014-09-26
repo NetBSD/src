@@ -1,7 +1,7 @@
 #
-#	$NetBSD: ODROID-XU,v 1.1 2014/09/26 15:33:58 reinoud Exp $
+#	$NetBSD: ODROID-XU,v 1.2 2014/09/26 16:30:32 reinoud Exp $
 #
-#	ODROID -- ODROID series Exynos Kernel
+#	ODROID-XU -- ODROID-XU Exynos5410 based kernel
 #
 
 include	"arch/evbarm/conf/std.odroid"
@@ -16,25 +16,18 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
-#options 	CPU_CORTEX
-#options 	CPU_CORTEXA9
-#options 	CPU_CORTEXA7
-#options 	CPU_CORTEXA15
-#options 	EXYNOS4120
-#options 	EXYNOS4212
-#options 	EXYNOS4412
-#options 	EXYNOS4412P
-options 	EXYNOS5260
+options 	CPU_CORTEX
+options 	CPU_CORTEXA7
+options 	CPU_CORTEXA15
 options 	EXYNOS5410
-options 	EXYNOS5420
-options 	EXYNOS5440
-options 	EXYNOS5422
 #options 	MULTIPROCESSOR
+
 options 	PMAPCOUNTERS
 options 	BUSDMA_COUNTERS
 options 	EXYNOS_CONSOLE_EARLY
 #options 	UVMHIST
-options		USBHIST
+options 	USBHIST
+options 	USBHIST_SIZE=100000
 #options 	UVMHIST_PRINT,KERNHIST_DELAY=0
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	PMAP_NEED_ALLOC_POOLPAGE
@@ -148,7 +141,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DEBUG
-#options	LOCKDEBUG
+options	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 options 	VERBOSE_INIT_ARM # verbose bootstraping messages
@@ -188,21 +181,11 @@ cpu0		at mainbus?
 
 # A9 core devices
 armperiph0	at mainbus?
-ifdef EXYNOS4
-arml2cc0	at armperiph?			# L2 Cache Controller
-endif
 armgic0		at armperiph?			# Interrupt Controller
-#ifdef EXYNOS5
 armgtmr0	at armperiph?			# Generic Timer
-#endif
 
 # Exynos SoC
 exyo0		at mainbus?
-
-# Integrated Samsung devices
-ifdef EXYNOS4
-mct0		at exyo0
-endif
 
 # Integrated Samsung UARTs
 #sscom*		at exyo0  port ?		# UART ?
@@ -231,14 +214,11 @@ iic*		at exyoiic?
 
 # SATA
 #ahcisata*	at exyno0
-#atabus*		at ata?
+#atabus* 	at ata?
 #wd*		at atabus? drive ?
 
 
 # serial console connectivity
-# UARTS
-# sscom0 is default serial UART console, enable for low-level console:
-# sscomX attached to expansion port
 options		SSCOM0CONSOLE, CONSPEED=115200
 
 # include all USB devices
