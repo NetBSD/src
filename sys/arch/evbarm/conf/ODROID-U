@@ -1,7 +1,7 @@
 #
-#	$NetBSD: ODROID-U,v 1.15 2014/09/26 15:33:33 reinoud Exp $
+#	$NetBSD: ODROID-U,v 1.16 2014/09/26 16:30:32 reinoud Exp $
 #
-#	ODROID-U -- ODROID-U series Exynos Kernel
+#	ODROID-U -- ODROID-U{2,3} series Exynos4x12(P) based kernel
 #
 
 include	"arch/evbarm/conf/std.odroid"
@@ -18,19 +18,19 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # CPU options
 options 	CPU_CORTEX
 options 	CPU_CORTEXA9
-options 	EXYNOS4120
 options 	EXYNOS4212
 options 	EXYNOS4412
 options 	EXYNOS4412P
 #options 	MULTIPROCESSOR
+
 options 	PMAPCOUNTERS
 options 	BUSDMA_COUNTERS
 options 	EXYNOS_CONSOLE_EARLY
-#options 	UVMHIST
-#options 	UVMHIST_PRINT,KERNHIST_DELAY=0
-#options	KERNHIST
-#options	USBHIST
-#options	USBHIST_SIZE=100000
+#options  	UVMHIST
+#options  	UVMHIST_PRINT,KERNHIST_DELAY=0
+#options 	KERNHIST
+#options 	USBHIST
+#options 	USBHIST_SIZE=100000
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	PMAP_NEED_ALLOC_POOLPAGE
 
@@ -161,6 +161,7 @@ options OHCI_DEBUG
 options UHUB_DEBUG
 options	USBVERBOSE
 
+
 # Valid options for BOOT_ARGS:
 #  single		Boot to single user only
 #  kdb			Give control to kernel debugger
@@ -181,8 +182,8 @@ cpu0		at mainbus?
 
 # A9 core devices
 armperiph0	at mainbus?
-arml2cc0	at armperiph?			# L2 Cache Controller
 armgic0		at armperiph?			# Interrupt Controller
+arml2cc0	at armperiph?			# L2 Cache Controller
 
 # Exynos SoC
 exyo0		at mainbus?
@@ -215,11 +216,7 @@ ukphy*  at mii? phy ?                   # generic unknown PHYs
 exyoiic0	at exyo0
 iic*		at exyoiic?
 
-
 # serial console connectivity
-# UARTS
-# sscom0 attached to expansion port
-# sscom1 is default serial UART console, enable for low-level console:
 options		SSCOM1CONSOLE, CONSPEED=115200
 
 # include all USB devices
