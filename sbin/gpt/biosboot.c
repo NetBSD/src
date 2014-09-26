@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.7 2013/11/27 01:47:53 jnemeth Exp $ */
+/*	$NetBSD: biosboot.c,v 1.8 2014/09/26 05:34:15 jnemeth Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.7 2013/11/27 01:47:53 jnemeth Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.8 2014/09/26 05:34:15 jnemeth Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -138,7 +138,7 @@ biosboot(int fd)
 	struct mbr *mbr, *bootcode;
 	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
-	int i;
+	unsigned int i, j;
 
 	/*
 	 * Parse and validate partition maps
@@ -212,7 +212,7 @@ biosboot(int fd)
 
 	hdr = gpt->map_data;
 
-	for (uint32_t j = 0; j < le32toh(hdr->hdr_entries); j++) {
+	for (j = 0; j < le32toh(hdr->hdr_entries); j++) {
 		ent = (void*)((char*)tbl->map_data + j * le32toh(hdr->hdr_entsz));
 		ent->ent_attr &= ~GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
 	}
@@ -231,7 +231,7 @@ biosboot(int fd)
 
 	hdr = tpg->map_data;
 
-	for (uint32_t j = 0; j < le32toh(hdr->hdr_entries); j++) {
+	for (j = 0; j < le32toh(hdr->hdr_entries); j++) {
 		ent = (void*)((char*)lbt->map_data + j * le32toh(hdr->hdr_entsz));
 		ent->ent_attr &= ~GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
 	}
