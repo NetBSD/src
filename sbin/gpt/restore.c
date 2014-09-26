@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.2 2014/09/20 22:11:27 jnemeth Exp $");
+__RCSID("$NetBSD: restore.c,v 1.3 2014/09/26 08:56:34 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -101,13 +101,15 @@ restore(int fd)
 			warnx("%s: error: device contains a MBR", device_name);
 			return;
 		}
-
 		/* Nuke the MBR in our internal map. */
 		map->map_type = MAP_TYPE_UNUSED;
 	}
 
 	props = prop_dictionary_internalize_from_file("/dev/stdin");
-	PROP_ERR(props);
+	if (props == NULL) {
+		warnx("error: unable to read/parse backup file");
+		return;
+	}
 
 	propnum = prop_dictionary_get(props, "sector_size");
 	PROP_ERR(propnum);
@@ -133,6 +135,10 @@ restore(int fd)
 	propnum = prop_dictionary_get(gpt_dict, "entries");
 	PROP_ERR(propnum);
 	entries = prop_number_integer_value(propnum);
+	gpt_size = entries * sizeof(struct gpt_ent) / secsz;
+	if (gpt_size * sizeof(struct gpt_ent) % secsz)
+		gpt_size++;
+
 	propstr = prop_dictionary_get(gpt_dict, "guid");
 	PROP_ERR(propstr);
 	s = prop_string_cstring_nocopy(propstr);
@@ -143,7 +149,6 @@ restore(int fd)
 	}
 	le_uuid_enc(&gpt_guid, &uuid);
 
-	gpt_size = entries * sizeof(struct gpt_ent) / secsz;
 	firstdata = gpt_size + 2;		/* PMBR and GPT header */
 	lastdata = last - gpt_size - 1;		/* alt. GPT table and header */
 
@@ -187,12 +192,27 @@ restore(int fd)
 		warnx("not enough memory to create a sector buffer");
 		return;
 	}
-	lseek(fd, 0LL, SEEK_SET);
-	for (i = 0; i < firstdata; i++)
-		write(fd, secbuf, secsz);
-	lseek(fd, (lastdata + 1) * secsz, SEEK_SET);
-	for (i = lastdata + 1; i <= last; i++)
-		write(fd, secbuf, secsz);
+
+	if (lseek(fd, 0LL, SEEK_SET) == -1) {
+		warnx("%s: error: can't seek to beginning", device_name);
+		return;
+	}
+	for (i = 0; i < firstdata; i++) {
+		if (write(fd, secbuf, secsz) == -1) {
+			warnx("%s: error: can't write", device_name);
+			return;
+		}
+	}
+	if (lseek(fd, (lastdata + 1) * secsz, SEEK_SET) == -1) {
+		warnx("%s: error: can't seek to end", device_name);
+		return;
+	}
+	for (i = lastdata + 1; i <= last; i++) {
+		if (write(fd, secbuf, secsz) == -1) {
+			warnx("%s: error: can't write", device_name);
+			return;
+		}
+	}
 
 	mbr = (struct mbr *)secbuf;
 	type_dict = prop_dictionary_get(props, "MBR");
@@ -249,19 +269,35 @@ restore(int fd)
 		PROP_ERR(propnum);
 		mbr->mbr_part[i].part_start_hi =
 		    htole16(prop_number_unsigned_integer_value(propnum));
-		propnum = prop_dictionary_get(mbr_dict, "lba_size_low");
-		PROP_ERR(propnum);
-		mbr->mbr_part[i].part_size_lo =
-		    htole16(prop_number_unsigned_integer_value(propnum));
-		propnum = prop_dictionary_get(mbr_dict, "lba_size_high");
-		PROP_ERR(propnum);
-		mbr->mbr_part[i].part_size_hi =
-		    htole16(prop_number_unsigned_integer_value(propnum));
+		/* adjust PMBR size to size of device */
+                if (mbr->mbr_part[i].part_typ == MBR_PTYPE_PMBR) {
+			if (last > 0xffffffff) {
+				mbr->mbr_part[0].part_size_lo = htole16(0xffff);
+				mbr->mbr_part[0].part_size_hi = htole16(0xffff);
+			} else {
+				mbr->mbr_part[0].part_size_lo = htole16(last);
+				mbr->mbr_part[0].part_size_hi =
+				    htole16(last >> 16);
+			}
+		} else {
+			propnum = prop_dictionary_get(mbr_dict, "lba_size_low");
+			PROP_ERR(propnum);
+			mbr->mbr_part[i].part_size_lo =
+			    htole16(prop_number_unsigned_integer_value(propnum));
+			propnum =
+			    prop_dictionary_get(mbr_dict, "lba_size_high");
+			PROP_ERR(propnum);
+			mbr->mbr_part[i].part_size_hi =
+			    htole16(prop_number_unsigned_integer_value(propnum));
+		}
 	}
 	prop_object_iterator_release(propiter);
 	mbr->mbr_sig = htole16(MBR_SIG);
-	lseek(fd, 0LL, SEEK_SET);
-	write(fd, mbr, secsz);
+	if (lseek(fd, 0LL, SEEK_SET) == -1 ||
+	    write(fd, mbr, secsz) == -1) {
+		warnx("%s: error: unable to write MBR", device_name);
+		return;
+	}
 	
 	propiter = prop_array_iterator(gpt_array);
 	PROP_ERR(propiter);
@@ -309,10 +345,16 @@ restore(int fd)
 		    sizeof(ent));
 	}
 	prop_object_iterator_release(propiter);
-	lseek(fd, 2 * secsz, SEEK_SET);
-	write(fd, (char *)secbuf + 1 * secsz, gpt_size * secsz);
-	lseek(fd, (lastdata + 1) * secsz, SEEK_SET);
-	write(fd, (char *)secbuf + 1 * secsz, gpt_size * secsz);
+	if (lseek(fd, 2 * secsz, SEEK_SET) == -1 ||
+	    write(fd, (char *)secbuf + 1 * secsz, gpt_size * secsz) == -1) {
+		warnx("%s: error: unable to write primary GPT", device_name);
+		return;
+	}
+	if (lseek(fd, (lastdata + 1) * secsz, SEEK_SET) == -1 ||
+	    write(fd, (char *)secbuf + 1 * secsz, gpt_size * secsz) == -1) {
+		warnx("%s: error: unable to write secondary GPT", device_name);
+		return;
+	}
 
 	memset(secbuf, 0, secsz);
 	hdr = (struct gpt_hdr *)secbuf;
@@ -330,16 +372,25 @@ restore(int fd)
 	hdr->hdr_crc_table =
 	    htole32(crc32((char *)secbuf + 1 * secsz, gpt_size * secsz));
 	hdr->hdr_crc_self = htole32(crc32(hdr, GPT_HDR_SIZE));
-	lseek(fd, 1 * secsz, SEEK_SET);
-	write(fd, hdr, secsz);
+	if (lseek(fd, 1 * secsz, SEEK_SET) == -1 ||
+	    write(fd, hdr, secsz) == -1) {
+		warnx("%s: error: unable to write primary header", device_name);
+		return;
+	}
+
 	hdr->hdr_lba_self = htole64(last);
 	hdr->hdr_lba_alt = htole64(GPT_HDR_BLKNO);
 	hdr->hdr_lba_table = htole64(lastdata + 1);
 	hdr->hdr_crc_self = 0;
 	hdr->hdr_crc_self = htole32(crc32(hdr, GPT_HDR_SIZE));
-	lseek(fd, last * secsz, SEEK_SET);
-	write(fd, hdr, secsz);
+	if (lseek(fd, last * secsz, SEEK_SET) == -1 ||
+	    write(fd, hdr, secsz) == -1) {
+		warnx("%s: error: unable to write secondary header",
+		    device_name);
+		return;
+	}
 
+	prop_object_release(props);
 	return;
 }
 
