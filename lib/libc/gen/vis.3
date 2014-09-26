@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.3,v 1.41 2014/09/26 02:18:57 wiz Exp $
+.\"	$NetBSD: vis.3,v 1.42 2014/09/26 02:30:27 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -237,7 +237,7 @@ alter this:
 .Bl -tag -width VIS_WHITEX
 .It Dv VIS_GLOB
 Also encode the magic characters
-.Pf ( Ql * ,
+.Ql ( * ,
 .Ql \&? ,
 .Ql \&[ ,
 and
@@ -247,7 +247,7 @@ recognized by
 .It Dv VIS_SHELL
 Also encode the meta characters used by shells (in addition to the glob
 characters):
-.Pf ( Ql ' ,
+.Ql ( ' ,
 .Ql ` ,
 .Ql \&" ,
 .Ql \&; ,
