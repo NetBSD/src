@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.64 2014/09/26 05:01:44 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.65 2014/09/26 13:48:00 roy Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.64 2014/09/26 05:01:44 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.65 2014/09/26 13:48:00 roy Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -216,8 +216,22 @@ do_mbyte(wchar_t *dst, wint_t c, int flags, wint_t nextc, int iswextra)
 				*dst++ = L'0';
 			}
 			return dst;
+		/* We cannot encode these characters in VIS_CSTYLE
+		 * because they special meaning */
+		case L'n':
+		case L'r':
+		case L'b':
+		case L'a':
+		case L'v':
+		case L't':
+		case L'f':
+		case L's':
+		case L'0':
+		case L'M':
+		case L'^':
+			break;
 		default:
-			if (iswgraph(c)) {
+			if (iswgraph(c) && !iswoctal(c)) {
 				*dst++ = L'\\';
 				*dst++ = c;
 				return dst;
