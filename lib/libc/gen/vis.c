@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.63 2014/09/26 01:21:07 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.64 2014/09/26 05:01:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.63 2014/09/26 01:21:07 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.64 2014/09/26 05:01:44 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -313,6 +313,7 @@ makeextralist(int flags, const char *src)
 {
 	wchar_t *dst, *d;
 	size_t len;
+	const wchar_t *s;
 
 	len = strlen(src);
 	if ((dst = calloc(len + MAXEXTRAS, sizeof(*dst))) == NULL)
@@ -327,11 +328,11 @@ makeextralist(int flags, const char *src)
 		d = dst + wcslen(dst);
 
 	if (flags & VIS_GLOB)
-		for (const wchar_t *s = char_glob; *s; *d++ = *s++)
+		for (s = char_glob; *s; *d++ = *s++)
 			continue;
 
 	if (flags & VIS_SHELL)
-		for (const wchar_t *s = char_shell; *s; *d++ = *s++)
+		for (s = char_shell; *s; *d++ = *s++)
 			continue;
 
 	if (flags & VIS_SP) *d++ = L' ';
