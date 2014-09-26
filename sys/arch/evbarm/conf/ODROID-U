@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-U,v 1.14 2014/09/19 14:39:34 reinoud Exp $
+#	$NetBSD: ODROID-U,v 1.15 2014/09/26 15:33:33 reinoud Exp $
 #
 #	ODROID-U -- ODROID-U series Exynos Kernel
 #
@@ -30,6 +30,7 @@ options 	EXYNOS_CONSOLE_EARLY
 #options 	UVMHIST_PRINT,KERNHIST_DELAY=0
 #options	KERNHIST
 #options	USBHIST
+#options	USBHIST_SIZE=100000
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	PMAP_NEED_ALLOC_POOLPAGE
 
