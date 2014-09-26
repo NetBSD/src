@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.62 2014/09/08 17:35:01 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.63 2014/09/26 01:21:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.62 2014/09/08 17:35:01 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.63 2014/09/26 01:21:07 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -104,7 +104,10 @@ static wchar_t *do_svis(wchar_t *, wint_t, int, wint_t, const wchar_t *);
 #define xtoa(c)		L"0123456789abcdef"[c]
 #define XTOA(c)		L"0123456789ABCDEF"[c]
 
-#define MAXEXTRAS	10
+#define MAXEXTRAS	30
+
+static const wchar_t char_shell[] = L"'`\";&<>()|{}]\\$!^~";
+static const wchar_t char_glob[] = L"*?[#";
 
 #if !HAVE_NBTOOL_CONFIG_H
 #ifndef __NetBSD__
@@ -318,17 +321,18 @@ makeextralist(int flags, const char *src)
 	if (mbstowcs(dst, src, len) == (size_t)-1) {
 		size_t i;
 		for (i = 0; i < len; i++)
-			dst[i] = (wint_t)(u_char)src[i];
+			dst[i] = (wchar_t)(u_char)src[i];
 		d = dst + len;
 	} else
 		d = dst + wcslen(dst);
 
-	if (flags & VIS_GLOB) {
-		*d++ = L'*';
-		*d++ = L'?';
-		*d++ = L'[';
-		*d++ = L'#';
-	}
+	if (flags & VIS_GLOB)
+		for (const wchar_t *s = char_glob; *s; *d++ = *s++)
+			continue;
+
+	if (flags & VIS_SHELL)
+		for (const wchar_t *s = char_shell; *s; *d++ = *s++)
+			continue;
 
 	if (flags & VIS_SP) *d++ = L' ';
 	if (flags & VIS_TAB) *d++ = L'\t';
