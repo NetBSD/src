@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.24 2014/09/21 15:49:21 christos Exp $	*/
+/*	$NetBSD: intr.c,v 1.25 2014/09/26 17:11:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24 2014/09/21 15:49:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25 2014/09/26 17:11:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,14 +141,16 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 		ih->ih_intrcnt = &intrcnt_auto[vector-1];
 		break;
 	case USER_VEC:
-		if (vector < UVEC_MIN || vector > UVEC_MAX)
+		if (vector < UVEC_MIN || vector > UVEC_MAX) {
+			free(ih, M_DEVBUF);
 			return NULL;
+		}
 		vec_list = &uservec_list[vector];
 		hard_vec = &uservects[vector];
 		ih->ih_intrcnt = &intrcnt_user[vector];
 		break;
 	default:
-		printf("intr_establish: bogus vector type\n");
+		printf("%s: bogus vector type\n", __func__);
 		free(ih, M_DEVBUF);
 		return NULL;
 	}
