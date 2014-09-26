@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.42 2014/09/26 12:59:28 roy Exp $	*/
+/*	$NetBSD: unvis.c,v 1.43 2014/09/26 13:03:22 roy Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.42 2014/09/26 12:59:28 roy Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.43 2014/09/26 13:03:22 roy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -304,12 +304,6 @@ unvis(char *cp, int c, int *astate, int flag)
 		case '\n':
 			/*
 			 * hidden newline
-			 */
-			*astate = SS(0, S_GROUND);
-			return UNVIS_NOCHAR;
-		case '$':
-			/*
-			 * hidden marker
 			 */
 			*astate = SS(0, S_GROUND);
 			return UNVIS_NOCHAR;
