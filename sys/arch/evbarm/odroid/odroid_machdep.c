@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.35 2014/09/24 20:38:33 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.36 2014/09/26 18:59:29 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.35 2014/09/24 20:38:33 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.36 2014/09/26 18:59:29 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -108,44 +108,9 @@ __KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.35 2014/09/24 20:38:33 reinoud 
 #include <arm/samsung/sscom_var.h>
 #include <arm/samsung/sscom_reg.h>
 
-static const struct sscom_uart_info exynos_uarts[] = {
-#ifdef EXYNOS5
-	{
-		.unit    = 0,
-		.iobase = EXYNOS5_UART0_OFFSET
-	},
-	{
-		.unit    = 1,
-		.iobase = EXYNOS5_UART1_OFFSET
-	},
-	{
-		.unit    = 2,
-		.iobase = EXYNOS5_UART2_OFFSET
-	},
-	{
-		.unit    = 3,
-		.iobase = EXYNOS5_UART3_OFFSET
-	},
-#endif
-#ifdef EXYNOS4
-	{
-		.unit    = 0,
-		.iobase = EXYNOS4_UART0_OFFSET
-	},
-	{
-		.unit    = 1,
-		.iobase = EXYNOS4_UART1_OFFSET
-	},
-	{
-		.unit    = 2,
-		.iobase = EXYNOS4_UART2_OFFSET
-	},
-	{
-		.unit    = 3,
-		.iobase = EXYNOS4_UART3_OFFSET
-	},
-#endif
-};
+extern const int num_exynos_uarts_entries;
+extern const struct sscom_uart_info exynos_uarts[];
+KASSERT(sizeof(struct sscom_uart_info) == 8);
 
 /* sanity checks for serial console */
 #ifndef CONSPEED
@@ -161,7 +126,7 @@ static const struct sscom_uart_info exynos_uarts[] = {
 //static const bus_addr_t conaddr = CONADDR;
 static const int conspeed = CONSPEED;
 static const int conmode = CONMODE;
-#endif /*defined(KGDB) || defined(SSCOM0CONSOLE) || defined(SSCOM1CONSOLE) */
+#endif /*defined(KGDB) || defined(SSCOM*CONSOLE) */
 
 /*
  * uboot passes 4 arguments to us.
@@ -458,12 +423,13 @@ consinit(void)
 	freq = (freq + conspeed / 2) / 1000;
 	freq *= 1000;
 
-	for (i = 0; i < __arraycount(exynos_uarts); i++) {
+	/* go trough all entries */
+	for (i = 0; i < num_exynos_uarts_entries; i++) {
 		/* attach console */
 		if (exynos_uarts[i].iobase + EXYNOS_CORE_PBASE == iobase)
 			break;
 	}
-	KASSERT(i < __arraycount(exynos_uarts));
+	KASSERT(i < num_exynos_uarts_entries);
 	printf("%s: attaching console @ %#"PRIxPTR" (%u HZ, %u bps)\n",
 	    __func__, iobase, freq, conspeed);
 	if (sscom_cnattach(bst, exynos_core_bsh, &exynos_uarts[i],

@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_start.S,v 1.4 2014/09/26 18:26:24 reinoud Exp $	*/
+/*	$NetBSD: odroid_start.S,v 1.5 2014/09/26 18:59:29 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <evbarm/odroid/platform.h>
 
-RCSID("$NetBSD: odroid_start.S,v 1.4 2014/09/26 18:26:24 reinoud Exp $")
+RCSID("$NetBSD: odroid_start.S,v 1.5 2014/09/26 18:59:29 reinoud Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -186,10 +186,16 @@ _C_LABEL(odroid_start):
 	adr	r1, .Lsscom_exynos5_table
 #endif
 #ifdef SSCOM0CONSOLE
-	ldr	r2, [r1, #0]
+	ldr	r2, [r1, #0*8+4]
 #endif
 #ifdef SSCOM1CONSOLE
-	ldr	r2, [r1, #4]
+	ldr	r2, [r1, #1*8+4]
+#endif
+#ifdef SSCOM2CONSOLE
+	ldr	r2, [r1, #2*8+4]
+#endif
+#ifdef SSCOM3CONSOLE
+	ldr	r2, [r1, #3*8+4]
 #endif
 	add	r2, r2, #EXYNOS_CORE_PBASE
 	mcr	p15, 0, r2, c13, c0, 3		// TPIDRURO set (uart address)
@@ -244,17 +250,30 @@ _C_LABEL(odroid_start):
 
 	/* NOTREACHED */
 
-
+	.align 0
+	.global _C_LABEL(num_exynos_uarts_entries)
+_C_LABEL(num_exynos_uarts_entries):
+	.word	8				// update number of entries!!!
+	.global _C_LABEL(exynos_uarts)
+_C_LABEL(exynos_uarts):
 .Lsscom_exynos4_table:
+	.word	0
 	.word	EXYNOS4_UART0_OFFSET
+	.word	1
 	.word	EXYNOS4_UART1_OFFSET
+	.word	2
 	.word	EXYNOS4_UART2_OFFSET
+	.word	3
 	.word	EXYNOS4_UART3_OFFSET
 
 .Lsscom_exynos5_table:
+	.word	0
 	.word	EXYNOS5_UART0_OFFSET
+	.word	1
 	.word	EXYNOS5_UART1_OFFSET
+	.word	2
 	.word	EXYNOS5_UART2_OFFSET
+	.word	3
 	.word	EXYNOS5_UART3_OFFSET
 
 
