@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.175 2014/09/25 15:08:29 manu Exp $	*/
+/*	$NetBSD: namespace.h,v 1.176 2014/09/26 19:28:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -278,8 +278,10 @@
 #define execl			_execl
 #define execle			_execle
 #define execlp			_execlp
+#define execlpe			_execlpe
 #define execv			_execv
 #define execvp			_execvp
+#define execvpe			_execvpe
 #define explicit_memset		_explicit_memset
 #define fdiscard		_fdiscard
 #define fdopen			_fdopen
