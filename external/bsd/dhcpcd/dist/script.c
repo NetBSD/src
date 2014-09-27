@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.1.1.9 2014/09/16 22:23:18 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.1.1.10 2014/09/27 01:14:50 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -473,7 +473,9 @@ dumplease:
 	}
 #endif
 #ifdef INET6
-	if (dhcp6 && d6_state && d6_state->new) {
+	if (dhcp6 && d6_state &&
+	    (d6_state->new || d6_state->state == DH6S_DELEGATED))
+	{
 		n = dhcp6_env(NULL, NULL, ifp,
 		    d6_state->new, d6_state->new_len);
 		if (n > 0) {

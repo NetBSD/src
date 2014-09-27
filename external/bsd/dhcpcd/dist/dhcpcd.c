@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.1.1.48 2014/09/18 20:43:55 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.1.1.49 2014/09/27 01:14:50 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -457,27 +457,23 @@ configure_interface1(struct interface *ifp)
 	}
 
 #ifdef INET6
-	if (ifo->options & DHCPCD_IPV6) {
-		if (ifo->ia == NULL) {
-			ifo->ia = malloc(sizeof(*ifo->ia));
-			if (ifo->ia == NULL)
-				syslog(LOG_ERR, "%s: %m", __func__);
-			else {
-				ifo->ia_len = 1;
-				ifo->ia->ia_type = D6_OPTION_IA_NA;
+	if (ifo->ia == NULL && ifo->options & DHCPCD_IPV6) {
+		ifo->ia = malloc(sizeof(*ifo->ia));
+		if (ifo->ia == NULL)
+			syslog(LOG_ERR, "%s: %m", __func__);
+		else {
+			ifo->ia_len = 1;
+			ifo->ia->ia_type = D6_OPTION_IA_NA;
+			memcpy(ifo->ia->iaid, ifo->iaid, sizeof(ifo->iaid));
+			memset(&ifo->ia->addr, 0, sizeof(ifo->ia->addr));
+			ifo->ia->sla = NULL;
+			ifo->ia->sla_len = 0;
+		}
+	} else {
+		for (i = 0; i < ifo->ia_len; i++) {
+			if (!ifo->ia[i].iaid_set)
 				memcpy(ifo->ia->iaid, ifo->iaid,
 				    sizeof(ifo->iaid));
-				memset(&ifo->ia->addr, 0,
-				    sizeof(ifo->ia->addr));
-				ifo->ia->sla = NULL;
-				ifo->ia->sla_len = 0;
-			}
-		} else {
-			for (i = 0; i < ifo->ia_len; i++) {
-				if (!ifo->ia[i].iaid_set)
-					memcpy(ifo->ia->iaid, ifo->iaid,
-					    sizeof(ifo->iaid));
-			}
 		}
 	}
 #endif
@@ -1058,7 +1054,7 @@ handle_signal(int sig, siginfo_t *siginfo, __unused void *context)
 }
 
 static int
-signal_init(void (*func)(int, siginfo_t *, void *), sigset_t *oldset)
+signal_init(sigset_t *oldset)
 {
 	unsigned int i;
 	struct sigaction sa;
@@ -1069,7 +1065,7 @@ signal_init(void (*func)(int, siginfo_t *, void *), sigset_t *oldset)
 		return -1;
 
 	memset(&sa, 0, sizeof(sa));
-	sa.sa_sigaction = func;
+	sa.sa_sigaction = handle_signal;
 	sa.sa_flags = SA_SIGINFO;
 	sigemptyset(&sa.sa_mask);
 
@@ -1606,7 +1602,7 @@ main(int argc, char **argv)
 	ctx.options |= DHCPCD_STARTED;
 #ifdef USE_SIGNALS
 	/* Save signal mask, block and redirect signals to our handler */
-	if (signal_init(handle_signal, &ctx.sigset) == -1) {
+	if (signal_init(&ctx.sigset) == -1) {
 		syslog(LOG_ERR, "signal_setup: %m");
 		goto exit_failure;
 	}
