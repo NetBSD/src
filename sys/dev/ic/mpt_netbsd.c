@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.27 2014/09/27 17:40:54 jmcneill Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.28 2014/09/27 18:16:56 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.27 2014/09/27 17:40:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.28 2014/09/27 18:16:56 jmcneill Exp $");
 
 #include "bio.h"
 
@@ -1779,6 +1779,8 @@ mpt_bio_ioctl_vol(mpt_softc_t *mpt, struct bioc_vol *bv)
 	fCONFIG_PAGE_IOC_2_RAID_VOL *ioc2rvol;
 	fCONFIG_PAGE_RAID_VOL_0 *rvol0 = NULL;
 	struct scsipi_periph *periph;
+	struct scsipi_inquiry_data inqbuf;
+	char vendor[9], product[17], revision[5];
 	int address;
 
 	ioc2 = mpt_get_cfg_page_ioc2(mpt);
@@ -1795,14 +1797,32 @@ mpt_bio_ioctl_vol(mpt_softc_t *mpt, struct bioc_vol *bv)
 	if (rvol0 == NULL)
 		goto fail;
 
+	bv->bv_dev[0] = '\0';
+	bv->bv_vendor[0] = '\0';
+
 	periph = scsipi_lookup_periph(&mpt->sc_channel, ioc2rvol->VolumeBus, 0);
-	if (periph != NULL && periph->periph_dev != NULL) {
+	if (periph != NULL) {
+		if (periph->periph_dev != NULL) {
+			snprintf(bv->bv_dev, sizeof(bv->bv_dev), "%s",
+			    device_xname(periph->periph_dev));
+		}
+		memset(&inqbuf, 0, sizeof(inqbuf));
+		if (scsipi_inquire(periph, &inqbuf,
+		    XS_CTL_DISCOVERY | XS_CTL_SILENT) == 0) {
+			scsipi_strvis(vendor, sizeof(vendor),
+			    inqbuf.vendor, sizeof(inqbuf.vendor));
+			scsipi_strvis(product, sizeof(product),
+			    inqbuf.product, sizeof(inqbuf.product));
+			scsipi_strvis(revision, sizeof(revision),
+			    inqbuf.revision, sizeof(inqbuf.revision));
+
+			snprintf(bv->bv_vendor, sizeof(bv->bv_vendor),
+			    "%s %s %s", vendor, product, revision);
+		}
+	
 		snprintf(bv->bv_dev, sizeof(bv->bv_dev), "%s",
 		    device_xname(periph->periph_dev));
-	} else {
-		bv->bv_dev[0] = '\0';
 	}
-	/* TODO: bv->bv_vendor */
 	bv->bv_nodisk = rvol0->NumPhysDisks;
 	bv->bv_size = (uint64_t)rvol0->MaxLBA * 512;
 	bv->bv_stripe_size = rvol0->StripeSize;
@@ -1855,6 +1875,7 @@ mpt_bio_ioctl_disk(mpt_softc_t *mpt, struct bioc_disk *bd)
 	fCONFIG_PAGE_RAID_VOL_0 *rvol0 = NULL;
 	fCONFIG_PAGE_IOC_2_RAID_VOL *ioc2rvol;
 	fCONFIG_PAGE_RAID_PHYS_DISK_0 *phys = NULL;
+	char vendor_id[9], product_id[17], product_rev_level[5];
 	int address;
 
 	ioc2 = mpt_get_cfg_page_ioc2(mpt);
@@ -1880,14 +1901,22 @@ mpt_bio_ioctl_disk(mpt_softc_t *mpt, struct bioc_disk *bd)
 	if (phys == NULL)
 		goto fail;
 
+	scsipi_strvis(vendor_id, sizeof(vendor_id),
+	    phys->InquiryData.VendorID, sizeof(phys->InquiryData.VendorID));
+	scsipi_strvis(product_id, sizeof(product_id),
+	    phys->InquiryData.ProductID, sizeof(phys->InquiryData.ProductID));
+	scsipi_strvis(product_rev_level, sizeof(product_rev_level),
+	    phys->InquiryData.ProductRevLevel,
+	    sizeof(phys->InquiryData.ProductRevLevel));
+
+	snprintf(bd->bd_vendor, sizeof(bd->bd_vendor), "%s %s %s",
+	    vendor_id, product_id, product_rev_level);
+	strlcpy(bd->bd_serial, phys->InquiryData.Info, sizeof(bd->bd_serial));
+	bd->bd_procdev[0] = '\0';
 	bd->bd_channel = phys->PhysDiskBus;
 	bd->bd_target = phys->PhysDiskID;
 	bd->bd_lun = 0;
 	bd->bd_size = (uint64_t)phys->MaxLBA * 512;
-	strlcpy(bd->bd_vendor, phys->InquiryData.VendorID,
-	    min(sizeof(bd->bd_vendor), sizeof(phys->InquiryData.VendorID)));
-	strlcpy(bd->bd_serial, phys->InquiryData.Info, sizeof(bd->bd_serial));
-	bd->bd_procdev[0] = '\0';
 
 	switch (phys->PhysDiskStatus.State) {
 	case MPI_PHYSDISK0_STATUS_ONLINE:
