@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.51 2014/09/21 17:11:07 christos Exp $ */
+/*	$NetBSD: twa.c,v 1.52 2014/09/27 15:44:27 christos Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.51 2014/09/21 17:11:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.52 2014/09/27 15:44:27 christos Exp $");
 
 //#define TWA_DEBUG
 
@@ -2955,7 +2955,7 @@ twa_describe_controller(struct twa_softc *sc)
 	uint32_t		dsize;
 	uint8_t			ports;
 
-	memset(p, 0, sizeof(*p));
+	memset(p, 0, sizeof(p));
 
 	/* Get the port count. */
 	rv |= twa_get_param(sc, TWA_PARAM_CONTROLLER,
