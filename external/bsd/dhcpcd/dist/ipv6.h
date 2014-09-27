@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6.h,v 1.1.1.11 2014/09/18 20:43:58 roy Exp $ */
+/* $NetBSD: ipv6.h,v 1.1.1.12 2014/09/27 01:14:55 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -201,6 +201,7 @@ void ipv6_free_ll_callbacks(struct interface *);
 int ipv6_start(struct interface *);
 void ipv6_free(struct interface *);
 void ipv6_ctxfree(struct dhcpcd_ctx *);
+int ipv6_routedeleted(struct dhcpcd_ctx *, const struct rt6 *);
 int ipv6_removesubnet(struct interface *, struct ipv6_addr *);
 void ipv6_buildroutes(struct dhcpcd_ctx *);
 

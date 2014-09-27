@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.1.1.15 2014/09/18 20:43:56 roy Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.1.1.16 2014/09/27 01:14:55 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1171,7 +1171,7 @@ dhcp6_dadcompleted(const struct interface *ifp)
 	TAILQ_FOREACH(ap, &state->addrs, next) {
 		if (ap->flags & IPV6_AF_ADDED &&
 		    !(ap->flags & IPV6_AF_DADCOMPLETED))
-		    	return 0;
+			return 0;
 	}
 	return 1;
 }
@@ -1494,7 +1494,7 @@ dhcp6_startexpire(void *arg)
 	dhcp6_freedrop_addrs(ifp, 1, NULL);
 	dhcp6_delete_delegates(ifp);
 	script_runreason(ifp, "EXPIRE6");
-	if (ipv6nd_hasradhcp(ifp))
+	if (ipv6nd_hasradhcp(ifp) || dhcp6_hasprefixdelegation(ifp))
 		dhcp6_startdiscover(ifp);
 	else
 		syslog(LOG_WARNING,
@@ -2061,7 +2061,9 @@ dhcp6_readlease(struct interface *ifp)
 	if (fd == -1)
 		goto ex;
 
-	if (state->expire != ND6_INFINITE_LIFETIME) {
+	if (!(ifp->ctx->options & DHCPCD_DUMPLEASE) &&
+	    state->expire != ND6_INFINITE_LIFETIME)
+	{
 		gettimeofday(&now, NULL);
 		if ((time_t)state->expire < now.tv_sec - st.st_mtime) {
 			syslog(LOG_DEBUG,"%s: discarding expired lease",
@@ -2219,6 +2221,39 @@ dhcp6_ifdelegateaddr(struct interface *ifp, struct ipv6_addr *prefix,
 }
 
 static void
+dhcp6_script_try_run(struct interface *ifp)
+{
+	struct dhcp6_state *state;
+	struct ipv6_addr *ap;
+	int completed;
+
+	state = D6_STATE(ifp);
+	if (!TAILQ_FIRST(&state->addrs))
+		return;
+
+	completed = 1;
+	/* If all addresses have completed DAD run the script */
+	TAILQ_FOREACH(ap, &state->addrs, next) {
+		if (ap->flags & IPV6_AF_ONLINK) {
+			if (!(ap->flags & IPV6_AF_DADCOMPLETED) &&
+			    ipv6_findaddr(ap->iface, &ap->addr))
+				ap->flags |= IPV6_AF_DADCOMPLETED;
+			if ((ap->flags & IPV6_AF_DADCOMPLETED) == 0) {
+				completed = 0;
+				break;
+			}
+		}
+	}
+	if (completed) {
+		script_runreason(ifp, state->reason);
+		dhcpcd_daemonise(ifp->ctx);
+	} else
+		syslog(LOG_DEBUG,
+		    "%s: waiting for DHCPv6 DAD to complete",
+		    ifp->name);
+}
+
+static void
 dhcp6_delegate_prefix(struct interface *ifp)
 {
 	struct if_options *ifo;
@@ -2317,6 +2352,7 @@ dhcp6_delegate_prefix(struct interface *ifp)
 		if (k && !carrier_warned) {
 			ifd_state = D6_STATE(ifd);
 			ipv6_addaddrs(&ifd_state->addrs);
+			dhcp6_script_try_run(ifd);
 		}
 	}
 }
@@ -2381,6 +2417,7 @@ dhcp6_find_delegates(struct interface *ifp)
 		state->state = DH6S_DELEGATED;
 		ipv6_addaddrs(&state->addrs);
 		ipv6_buildroutes(ifp->ctx);
+		dhcp6_script_try_run(ifp);
 	}
 	return k;
 }
@@ -2790,13 +2827,13 @@ recv:
 		if (state->renew == 0) {
 			if (state->expire == ND6_INFINITE_LIFETIME)
 				state->renew = ND6_INFINITE_LIFETIME;
-			else
+			else if (state->lowpl != ND6_INFINITE_LIFETIME)
 				state->renew = (uint32_t)(state->lowpl * 0.5);
 		}
 		if (state->rebind == 0) {
 			if (state->expire == ND6_INFINITE_LIFETIME)
 				state->rebind = ND6_INFINITE_LIFETIME;
-			else
+			else if (state->lowpl != ND6_INFINITE_LIFETIME)
 				state->rebind = (uint32_t)(state->lowpl * 0.8);
 		}
 		break;
@@ -2830,7 +2867,7 @@ recv:
 		if (state->rebind && state->rebind != ND6_INFINITE_LIFETIME)
 			eloop_timeout_add_sec(ifp->ctx->eloop,
 			    (time_t)state->rebind, dhcp6_startrebind, ifp);
-		if (state->expire && state->expire != ND6_INFINITE_LIFETIME)
+		if (state->expire != ND6_INFINITE_LIFETIME)
 			eloop_timeout_add_sec(ifp->ctx->eloop,
 			    (time_t)state->expire, dhcp6_startexpire, ifp);
 
@@ -2846,29 +2883,12 @@ recv:
 			    "%s: renew in %"PRIu32" seconds,"
 			    " rebind in %"PRIu32" seconds",
 			    ifp->name, state->renew, state->rebind);
+		else if (state->expire == 0)
+			syslog(has_new ? LOG_INFO : LOG_DEBUG,
+			    "%s: will expire", ifp->name);
 		ipv6_buildroutes(ifp->ctx);
 		dhcp6_writelease(ifp);
-
-		len = 1;
-		/* If all addresses have completed DAD run the script */
-		TAILQ_FOREACH(ap, &state->addrs, next) {
-			if (ap->flags & IPV6_AF_ONLINK) {
-				if (!(ap->flags & IPV6_AF_DADCOMPLETED) &&
-				    ipv6_findaddr(ap->iface, &ap->addr))
-					ap->flags |= IPV6_AF_DADCOMPLETED;
-				if ((ap->flags & IPV6_AF_DADCOMPLETED) == 0) {
-					len = 0;
-					break;
-				}
-			}
-		}
-		if (len) {
-			script_runreason(ifp, state->reason);
-			dhcpcd_daemonise(ifp->ctx);
-		} else
-			syslog(LOG_DEBUG,
-			    "%s: waiting for DHCPv6 DAD to complete",
-			    ifp->name);
+		dhcp6_script_try_run(ifp);
 	}
 
 	if (ifp->ctx->options & DHCPCD_TEST ||
@@ -3253,6 +3273,13 @@ dhcp6_env(char **env, const char *prefix, const struct interface *ifp,
 	char *pfx;
 	uint32_t en;
 	const struct dhcpcd_ctx *ctx;
+	const struct dhcp6_state *state;
+	const struct ipv6_addr *ap;
+	char *v, *val;
+
+	n = 0;
+	if (m == NULL)
+		goto delegated;
 
 	if (len < sizeof(*m)) {
 		/* Should be impossible with guards at packet in
@@ -3261,7 +3288,6 @@ dhcp6_env(char **env, const char *prefix, const struct interface *ifp,
 		return -1;
 	}
 
-	n = 0;
 	ifo = ifp->options;
 	ctx = ifp->ctx;
 
@@ -3343,6 +3369,35 @@ dhcp6_env(char **env, const char *prefix, const struct interface *ifp,
 		}
 	}
 	free(pfx);
+
+delegated:
+        /* Needed for Delegated Prefixes */
+	state = D6_CSTATE(ifp);
+	i = 0;
+	TAILQ_FOREACH(ap, &state->addrs, next) {
+		if (ap->delegating_iface) {
+                       	i += strlen(ap->saddr) + 1;
+		}
+	}
+	if (env && i) {
+		i += strlen(prefix) + strlen("_dhcp6_prefix=");
+                v = val = env[n] = malloc(i);
+		if (v == NULL) {
+			syslog(LOG_ERR, "%s: %m", __func__);
+			return -1;
+		}
+		v += snprintf(val, i, "%s_dhcp6_prefix=", prefix);
+		TAILQ_FOREACH(ap, &state->addrs, next) {
+			if (ap->delegating_iface) {
+				strcpy(v, ap->saddr);
+				v += strlen(ap->saddr);
+				*v++ = ' ';
+			}
+		}
+		*--v = '\0';
+        }
+	if (i)
+		n++;
 
 	return (ssize_t)n;
 }
