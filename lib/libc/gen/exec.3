@@ -1,4 +1,4 @@
-.\"	$NetBSD: exec.3,v 1.25 2014/09/27 08:46:56 wiz Exp $
+.\"	$NetBSD: exec.3,v 1.26 2014/09/27 16:42:07 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -92,7 +92,7 @@ functions can be thought of as
 .Em arg1 ,
 \&...,
 .Em argn .
-Together they describe a list of one or more pointers to null-terminated
+Together they describe a list of one or more pointers to NUL-terminated
 strings that represent the argument list available to the executed program.
 The first argument, by convention, should point to the file name associated
 with the file being executed.
@@ -108,7 +108,7 @@ The
 .Fn execvp ,
 and
 .Fn execvpe
-functions provide an array of pointers to null-terminated strings that
+functions provide an array of pointers to NUL-terminated strings that
 represent the argument list available to the new program.
 The first argument, by convention, should point to the file name associated
 with the file being executed.
@@ -121,14 +121,15 @@ pointer.
 The
 .Fn execle ,
 .Fn execlpe ,
+.Fn exect ,
 and
-.Fn exect
+.Fn execvpe
 functions also specify the environment of the executed process by following
 the
 .Dv NULL
 pointer that terminates the list of arguments in the parameter list
 or the pointer to the argv array with an additional parameter.
-This additional parameter is an array of pointers to null-terminated strings
+This additional parameter is an array of pointers to NUL-terminated strings
 and
 .Em must
 be terminated by a
