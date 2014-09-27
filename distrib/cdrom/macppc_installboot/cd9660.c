@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.3 2008/05/14 13:29:27 tsutsui Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.4 2014/09/27 15:21:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2005 Izumi Tsutsui.  All rights reserved.
@@ -30,11 +30,10 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.3 2008/05/14 13:29:27 tsutsui Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.4 2014/09/27 15:21:40 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
-#include <sys/dirent.h>
 
 #if !HAVE_NBTOOL_CONFIG_H
 #include <sys/mount.h>
@@ -49,6 +48,7 @@ __RCSID("$NetBSD: cd9660.c,v 1.3 2008/05/14 13:29:27 tsutsui Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <dirent.h>
 
 #include <fs/cd9660/iso.h>
 

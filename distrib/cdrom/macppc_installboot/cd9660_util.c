@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.2 2009/03/25 15:26:49 tsutsui Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.3 2014/09/27 15:21:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -42,9 +42,9 @@
 #include "nbtool_config.h"
 #endif
 
-#include <assert.h>
 #include <sys/param.h>
-#include <sys/dirent.h>
+#include <assert.h>
+#include <dirent.h>
 
 #include <fs/cd9660/iso.h>
 #define KASSERT(x)	assert(x)	/* XXX for <fs/unicode.h> */
