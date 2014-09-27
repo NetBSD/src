@@ -35,6 +35,7 @@ public:
     LAST_REGISTER = REGNO_X86_EIP,
     LAST_RESTORE_REG = REGNO_X86_EIP,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_x86();
@@ -100,6 +101,7 @@ public:
     LAST_REGISTER = REGNO_X86_64_RIP,
     LAST_RESTORE_REG = REGNO_X86_64_RIP,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_x86_64();
@@ -168,6 +170,7 @@ public:
     LAST_REGISTER = REGNO_PPC32_V31,
     LAST_RESTORE_REG = REGNO_PPC32_V31,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_ppc32();
@@ -258,6 +261,7 @@ public:
     LAST_RESTORE_REG = REGNO_AARCH64_V31,
     LAST_REGISTER = REGNO_AARCH64_V31,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_aarch64();
@@ -338,6 +342,7 @@ public:
     LAST_REGISTER = REGNO_ARM32_D31,
     LAST_RESTORE_REG = REGNO_ARM32_D31,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_arm32();
@@ -425,6 +430,7 @@ public:
     LAST_REGISTER = REGNO_VAX_PSW,
     LAST_RESTORE_REG = REGNO_VAX_PSW,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_vax();
@@ -496,6 +502,7 @@ public:
     LAST_REGISTER = REGNO_M68K_FP7,
     LAST_RESTORE_REG = REGNO_M68K_FP7,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_M68K();
@@ -572,6 +579,7 @@ public:
     LAST_REGISTER = REGNO_SH3_PR,
     LAST_RESTORE_REG = REGNO_SH3_PR,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_SH3();
@@ -636,6 +644,7 @@ public:
     LAST_REGISTER = REGNO_SPARC64_PC,
     LAST_RESTORE_REG = REGNO_SPARC64_PC,
     RETURN_OFFSET = 8,
+    RETURN_MASK = 0,
   };
   typedef uint64_t reg_t;
 
@@ -699,6 +708,7 @@ public:
     LAST_REGISTER = REGNO_SPARC_PC,
     LAST_RESTORE_REG = REGNO_SPARC_PC,
     RETURN_OFFSET = 8,
+    RETURN_MASK = 0,
   };
   typedef uint32_t reg_t;
 
@@ -764,6 +774,7 @@ public:
     LAST_REGISTER = REGNO_ALPHA_F30,
     LAST_RESTORE_REG = REGNO_ALPHA_F30,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
   typedef uint32_t reg_t;
 
@@ -830,7 +841,8 @@ public:
   enum {
     LAST_REGISTER = REGNO_HPPA_FR31H,
     LAST_RESTORE_REG = REGNO_HPPA_FR31H,
-    RETURN_OFFSET = -3, // strictly speaking, this is a mask
+    RETURN_OFFSET = 0,
+    RETURN_MASK = 3,
   };
 
   __dso_hidden Registers_HPPA();
@@ -902,6 +914,7 @@ public:
     LAST_REGISTER = REGNO_MIPS_F31,
     LAST_RESTORE_REG = REGNO_MIPS_F31,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_MIPS();
@@ -973,6 +986,7 @@ public:
     LAST_REGISTER = REGNO_MIPS64_F31,
     LAST_RESTORE_REG = REGNO_MIPS64_F31,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_MIPS64();
@@ -1044,6 +1058,7 @@ public:
     LAST_REGISTER = REGNO_OR1K_FPCSR,
     LAST_RESTORE_REG = REGNO_OR1K_FPCSR,
     RETURN_OFFSET = 0,
+    RETURN_MASK = 0,
   };
 
   __dso_hidden Registers_or1k();
