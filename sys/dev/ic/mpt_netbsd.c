@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.26 2014/09/27 16:14:16 jmcneill Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.27 2014/09/27 17:40:54 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.26 2014/09/27 16:14:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.27 2014/09/27 17:40:54 jmcneill Exp $");
 
 #include "bio.h"
 
@@ -1778,6 +1778,7 @@ mpt_bio_ioctl_vol(mpt_softc_t *mpt, struct bioc_vol *bv)
 	fCONFIG_PAGE_IOC_2 *ioc2 = NULL;
 	fCONFIG_PAGE_IOC_2_RAID_VOL *ioc2rvol;
 	fCONFIG_PAGE_RAID_VOL_0 *rvol0 = NULL;
+	struct scsipi_periph *periph;
 	int address;
 
 	ioc2 = mpt_get_cfg_page_ioc2(mpt);
@@ -1794,7 +1795,13 @@ mpt_bio_ioctl_vol(mpt_softc_t *mpt, struct bioc_vol *bv)
 	if (rvol0 == NULL)
 		goto fail;
 
-	strlcpy(bv->bv_dev, device_xname(mpt->sc_dev), sizeof(bv->bv_dev));
+	periph = scsipi_lookup_periph(&mpt->sc_channel, ioc2rvol->VolumeBus, 0);
+	if (periph != NULL && periph->periph_dev != NULL) {
+		snprintf(bv->bv_dev, sizeof(bv->bv_dev), "%s",
+		    device_xname(periph->periph_dev));
+	} else {
+		bv->bv_dev[0] = '\0';
+	}
 	/* TODO: bv->bv_vendor */
 	bv->bv_nodisk = rvol0->NumPhysDisks;
 	bv->bv_size = (uint64_t)rvol0->MaxLBA * 512;
