@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.10 2014/09/27 01:17:34 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.11 2014/09/27 11:00:07 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -457,7 +457,7 @@ configure_interface1(struct interface *ifp)
 	}
 
 #ifdef INET6
-	if (ifo->ia == NULL && ifo->options & DHCPCD_IPV6) {
+	if (ifo->ia_len == 0 && ifo->options & DHCPCD_IPV6) {
 		ifo->ia = malloc(sizeof(*ifo->ia));
 		if (ifo->ia == NULL)
 			syslog(LOG_ERR, "%s: %m", __func__);
@@ -471,9 +471,11 @@ configure_interface1(struct interface *ifp)
 		}
 	} else {
 		for (i = 0; i < ifo->ia_len; i++) {
-			if (!ifo->ia[i].iaid_set)
-				memcpy(ifo->ia->iaid, ifo->iaid,
-				    sizeof(ifo->iaid));
+			if (!ifo->ia[i].iaid_set) {
+				memcpy(&ifo->ia[i].iaid, ifo->iaid,
+				    sizeof(ifo->ia[i].iaid));
+				ifo->ia[i].iaid_set = 1;
+			}
 		}
 	}
 #endif
