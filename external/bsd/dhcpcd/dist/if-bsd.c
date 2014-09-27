@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.1.1.28 2014/09/18 20:43:55 roy Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.1.1.29 2014/09/27 01:14:51 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -88,12 +88,12 @@
 #endif
 
 #define COPYOUT(sin, sa)						      \
-	sin.s_addr = ((sa) != NULL) ?					      \
-	    (((struct sockaddr_in *)(void *)sa)->sin_addr).s_addr : 0
+	if ((sa) && (sa)->sa_family == AF_INET)				      \
+		(sin) = ((struct sockaddr_in*)(void *)(sa))->sin_addr
 
 #define COPYOUT6(sin, sa)						      \
-	sin.s6_addr = ((sa) != NULL) ?					      \
-	    (((struct sockaddr_in6 *)(void *)sa)->sin6_addr).s6_addr : 0
+	if ((sa) && (sa)->sa_family == AF_INET6)			      \
+		(sin) = ((struct sockaddr_in6*)(void *)(sa))->sin6_addr
 
 #ifndef CLLADDR
 #  define CLLADDR(s) ((const char *)((s)->sdl_data + (s)->sdl_nlen))
@@ -786,6 +786,7 @@ if_managelink(struct dhcpcd_ctx *ctx)
 	struct rt rt;
 #endif
 #ifdef INET6
+	struct rt6 rt6;
 	struct in6_addr ia6;
 	struct sockaddr_in6 *sin6;
 	int ifa_flags;
@@ -849,18 +850,29 @@ if_managelink(struct dhcpcd_ctx *ctx)
 				break;
 			cp = (char *)(void *)(rtm + 1);
 			sa = (struct sockaddr *)(void *)cp;
-			if (sa->sa_family != AF_INET)
-				break;
-#ifdef INET
 			get_addrs(rtm->rtm_addrs, cp, rti_info);
-			memset(&rt, 0, sizeof(rt));
-			rt.iface = NULL;
-			COPYOUT(rt.dest, rti_info[RTAX_DST]);
-			COPYOUT(rt.net, rti_info[RTAX_NETMASK]);
-			COPYOUT(rt.gate, rti_info[RTAX_GATEWAY]);
-			ipv4_routedeleted(ctx, &rt);
+			switch (sa->sa_family) {
+#ifdef INET
+			case AF_INET:
+				memset(&rt, 0, sizeof(rt));
+				rt.iface = NULL;
+				COPYOUT(rt.dest, rti_info[RTAX_DST]);
+				COPYOUT(rt.net, rti_info[RTAX_NETMASK]);
+				COPYOUT(rt.gate, rti_info[RTAX_GATEWAY]);
+				ipv4_routedeleted(ctx, &rt);
+				break;
 #endif
-			break;
+#ifdef INET6
+			case AF_INET6:
+				memset(&rt6, 0, sizeof(rt6));
+				rt6.iface = NULL;
+				COPYOUT6(rt6.dest, rti_info[RTAX_DST]);
+				COPYOUT6(rt6.net, rti_info[RTAX_NETMASK]);
+				COPYOUT6(rt6.gate, rti_info[RTAX_GATEWAY]);
+				ipv6_routedeleted(ctx, &rt6);
+				break;
+#endif
+			}
 #ifdef RTM_CHGADDR
 		case RTM_CHGADDR:	/* FALLTHROUGH */
 #endif
