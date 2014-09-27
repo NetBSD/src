@@ -1,0 +1,9 @@
+#	$NetBSD: NITROGEN6X_INSTALL,v 1.1 2014/09/27 04:03:24 matt Exp $
+#
+#	NITROGEN6X_INSTALL -- NITROGEN6X kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/NITROGEN6X"
+include "arch/evbarm/conf/INSTALL"
+no makeoptions	DEBUG

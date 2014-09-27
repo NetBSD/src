@@ -1,4 +1,4 @@
-# $NetBSD: NITROGEN6X,v 1.1 2014/09/25 05:05:28 ryo Exp $
+# $NetBSD: NITROGEN6X,v 1.2 2014/09/27 04:03:24 matt Exp $
 #
 # Nitrogen6X
 # - http://boundarydevices.com/products/nitrogen6x-board-imx6-arm-cortex-a9-sbc/
@@ -338,10 +338,6 @@ pseudo-device	raid			# RAIDframe disk driver
 #options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss			# file system snapshot device
 pseudo-device	putter			# for puffs and pud
-
-pseudo-device	md			# memory disk device (ramdisk)
-options 	MEMORY_DISK_HOOKS	# enable root ramdisk
-options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module(7)
 
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
