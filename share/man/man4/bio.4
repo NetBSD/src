@@ -1,4 +1,4 @@
-.\"	$NetBSD: bio.4,v 1.11 2014/03/18 18:20:39 riastradh Exp $
+.\"	$NetBSD: bio.4,v 1.12 2014/09/27 16:16:28 jmcneill Exp $
 .\"	$OpenBSD: bio.4,v 1.19 2006/09/20 22:22:37 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Niklas Hallqvist
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 25, 2008
+.Dd Sep 27, 2014
 .Dt BIO 4
 .Os
 .Sh NAME
@@ -67,6 +67,8 @@ Compaq RAID array controller
 Compaq Smart ARRAY 5/6 SAS/SATA/SCSI RAID controller
 .It Xr mfi 4
 LSI Logic \*[Am] Dell MegaRAID SAS RAID controller
+.It Xr mpt 4
+LSI Fusion-MPT RAID controller
 .El
 .Pp
 The following ioctl calls apply to the
