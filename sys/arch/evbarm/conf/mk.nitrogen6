@@ -1,4 +1,4 @@
-#	$NetBSD: mk.nitrogen6,v 1.1 2014/09/25 05:05:28 ryo Exp $
+#	$NetBSD: mk.nitrogen6,v 1.2 2014/09/27 04:03:24 matt Exp $
 
 SYSTEM_FIRST_OBJ=	nitrogen6_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/nitrogen6/nitrogen6_start.S
@@ -19,5 +19,15 @@ MKUBOOTIMAGEARGS_GZ=	${MKUBOOTIMAGEARGS} -C gz
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
 	${OBJCOPY} -S -O binary $@ $@.bin; \
+	echo ${TOOL_GZIP} -9c $@.bin > $@.bin.gz; \
+	${TOOL_GZIP} -9c $@.bin > $@.bin.gz; \
+	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
+	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
+	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub; \
+	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub; \
+	echo
 
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.ub@}
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin.gz@}
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.gz.ub@}
