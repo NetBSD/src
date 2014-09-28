@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.29 2014/09/27 21:01:51 jmcneill Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.30 2014/09/28 11:20:22 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.29 2014/09/27 21:01:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.30 2014/09/28 11:20:22 jmcneill Exp $");
 
 #include "bio.h"
 
@@ -1964,12 +1964,20 @@ mpt_bio_ioctl_disk_common(mpt_softc_t *mpt, struct bioc_disk *bd,
 static int
 mpt_bio_ioctl_disk_novol(mpt_softc_t *mpt, struct bioc_disk *bd)
 {
+	fCONFIG_PAGE_IOC_2 *ioc2 = NULL;
 	fCONFIG_PAGE_IOC_3 *ioc3 = NULL;
-	int address;
+	fCONFIG_PAGE_RAID_VOL_0 *rvol0 = NULL;
+	fCONFIG_PAGE_IOC_2_RAID_VOL *ioc2rvol;
+	int address, v, d;
 
-	ioc3 = mpt_get_cfg_page_ioc3(mpt);
-	if (ioc3 == NULL)
+	ioc2 = mpt_get_cfg_page_ioc2(mpt);
+	if (ioc2 == NULL)
 		return EIO;
+	ioc3 = mpt_get_cfg_page_ioc3(mpt);
+	if (ioc3 == NULL) {
+		free(ioc2, M_DEVBUF);
+		return EIO;
+	}
 
 	if (bd->bd_diskid < 0 || bd->bd_diskid >= ioc3->NumPhysDisks)
 		goto fail;
@@ -1978,12 +1986,33 @@ mpt_bio_ioctl_disk_novol(mpt_softc_t *mpt, struct bioc_disk *bd)
 
 	mpt_bio_ioctl_disk_common(mpt, bd, address);
 
+	bd->bd_disknovol = true;
+	for (v = 0; bd->bd_disknovol && v < ioc2->NumActiveVolumes; v++) {
+		ioc2rvol = &ioc2->RaidVolume[v];
+		address = ioc2rvol->VolumeID | (ioc2rvol->VolumeBus << 8);
+
+		rvol0 = mpt_get_cfg_page_raid_vol0(mpt, address);
+		if (rvol0 == NULL)
+			continue;
+
+		for (d = 0; d < rvol0->NumPhysDisks; d++) {
+			if (rvol0->PhysDisk[d].PhysDiskNum ==
+			    ioc3->PhysDisk[bd->bd_diskid].PhysDiskNum) {
+				bd->bd_disknovol = false;
+				break;
+			}
+		}
+		free(rvol0, M_DEVBUF);
+	}
+
 	free(ioc3, M_DEVBUF);
+	free(ioc2, M_DEVBUF);
 
 	return 0;
 
 fail:
 	if (ioc3) free(ioc3, M_DEVBUF);
+	if (ioc2) free(ioc2, M_DEVBUF);
 	return EINVAL;
 }
 
