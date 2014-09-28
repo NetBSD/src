@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.30 2014/09/28 11:20:22 jmcneill Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.31 2014/09/28 11:27:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.30 2014/09/28 11:20:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.31 2014/09/28 11:27:00 jmcneill Exp $");
 
 #include "bio.h"
 
@@ -1999,6 +1999,7 @@ mpt_bio_ioctl_disk_novol(mpt_softc_t *mpt, struct bioc_disk *bd)
 			if (rvol0->PhysDisk[d].PhysDiskNum ==
 			    ioc3->PhysDisk[bd->bd_diskid].PhysDiskNum) {
 				bd->bd_disknovol = false;
+				bd->bd_volid = v;
 				break;
 			}
 		}
