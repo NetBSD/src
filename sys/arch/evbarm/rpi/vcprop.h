@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.12 2014/09/28 12:57:22 macallan Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.13 2014/09/28 14:38:29 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -287,7 +287,7 @@ struct vcprop_tag_cursorinfo {
 	struct vcprop_tag tag;
 	uint32_t width;
 	uint32_t height;
-	uint32_t __pad;		/* unused */
+	uint32_t format;
 	uint32_t pixels;	/* bus address in VC memory */
 	uint32_t hotspot_x;
 	uint32_t hotspot_y;
@@ -356,3 +356,13 @@ vcprop_tag_resplen(struct vcprop_tag *vpbt)
 }
 
 #endif	/* _EVBARM_RPI_VCPROP_H_ */
+
+uint32_t rpi_alloc_mem(uint32_t, uint32_t, uint32_t);
+bus_addr_t rpi_lock_mem(uint32_t);
+int rpi_unlock_mem(uint32_t);
+int rpi_release_mem(uint32_t);
+
+int rpi_fb_set_video(int);
+
+int rpi_fb_movecursor(int, int, int);
+int rpi_fb_initcursor(bus_addr_t, int, int);
