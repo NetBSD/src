@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.48 2014/09/28 14:38:29 macallan Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.49 2014/09/28 15:39:36 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.48 2014/09/28 14:38:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.49 2014/09/28 15:39:36 macallan Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -382,13 +382,13 @@ void bcmgenfb_set_ioctl(int(*)(void *, void *, u_long, void *, int, struct lwp *
 extern void bcmgenfb_ddb_trap_callback(int where);
 static int	rpi_ioctl(void *, void *, u_long, void *, int, lwp_t *);
 
-int rpi_video_on = WSDISPLAYIO_VIDEO_ON;
-uint32_t hcursor = 0;
-bus_addr_t pcursor = 0;
-uint32_t *cmem = NULL;
-int cursor_x = 0, cursor_y = 0, hot_x = 0, hot_y = 0, cursor_on = 0;
-uint32_t cursor_cmap[4];
-uint8_t cursor_mask[8 * 64], cursor_bitmap[8 * 64];
+static int rpi_video_on = WSDISPLAYIO_VIDEO_ON;
+static uint32_t hcursor = 0;
+static bus_addr_t pcursor = 0;
+static uint32_t *cmem = NULL;
+static int cursor_x = 0, cursor_y = 0, hot_x = 0, hot_y = 0, cursor_on = 0;
+static uint32_t cursor_cmap[4];
+static uint8_t cursor_mask[8 * 64], cursor_bitmap[8 * 64];
 #endif
 
 
@@ -845,7 +845,7 @@ rpi_fb_init(prop_dictionary_t dict, void *aux)
 		for (j = 0; j < 64; j++) {
 			for (i = 0; i < 64; i++) {
 				cmem[i + k] = 
-				 ((i & 8) ^ (j & 8)) ? 0xa0ff0000 : 0xa00000ff;
+				 ((i & 8) ^ (j & 8)) ? 0xa0ff0000 : 0xa000ff00;
 			}
 			k += 64;
 		}
