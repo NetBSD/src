@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.11 2014/09/23 10:52:21 macallan Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.12 2014/09/28 12:57:22 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -93,8 +93,8 @@ struct vcprop_tag {
 #define	VCPROPTAG_UNLOCKMEM		0x0003000e
 #define	VCPROPTAG_RELEASEMEM		0x0003000f
 
-#define	VCPROPTAG_SET_CURSOR_INFO	0x00008011
-#define	VCPROPTAG_SET_CURSOR_STATE	0x00008010
+#define	VCPROPTAG_SET_CURSOR_INFO	0x00008010
+#define	VCPROPTAG_SET_CURSOR_STATE	0x00008011
 
 	uint32_t vpt_len;
 	uint32_t vpt_rcode;
