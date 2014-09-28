@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.29 2014/09/23 07:47:54 jnemeth Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.30 2014/09/28 08:14:51 jnemeth Exp $");
 #endif
 
 #include <sys/param.h>
@@ -732,6 +732,7 @@ static struct {
 	{ cmd_restore, "restore" },
 	{ cmd_set, "set" },
 	{ cmd_show, "show" },
+	{ cmd_type, "type" },
 	{ cmd_unset, "unset" },
 	{ NULL, "verify" },
 	{ NULL, NULL }
@@ -744,7 +745,8 @@ usage(void)
 	extern const char createmsg[], destroymsg[], labelmsg1[], labelmsg2[];
 	extern const char labelmsg3[], migratemsg[], recovermsg[], removemsg1[];
 	extern const char removemsg2[], resizemsg[], resizediskmsg[];
-	extern const char restoremsg[], setmsg[], showmsg[], unsetmsg[];
+	extern const char restoremsg[], setmsg[], showmsg[], typemsg1[];
+	extern const char typemsg2[], typemsg3[], unsetmsg[];
 
 	fprintf(stderr,
 	    "usage: %s %s\n"
@@ -765,6 +767,9 @@ usage(void)
 	    "       %s %s\n"
 	    "       %s %s\n"
 	    "       %s %s\n"
+	    "       %s %s\n"
+	    "       %s %s\n"
+	    "       %*s %s\n"
 	    "       %s %s\n",
 	    getprogname(), addmsg1,
 	    getprogname(), addmsg2,
@@ -784,6 +789,9 @@ usage(void)
 	    getprogname(), restoremsg,
 	    getprogname(), setmsg,
 	    getprogname(), showmsg,
+	    getprogname(), typemsg1,
+	    getprogname(), typemsg2,
+	    (int)strlen(getprogname()), "", typemsg3,
 	    getprogname(), unsetmsg);
 	exit(1);
 }

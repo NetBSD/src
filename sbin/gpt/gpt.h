@@ -94,6 +94,7 @@ int	cmd_resizedisk(int, char *[]);
 int	cmd_restore(int, char *[]);
 int	cmd_set(int, char *[]);
 int	cmd_show(int, char *[]);
+int	cmd_type(int, char *[]);
 int	cmd_unset(int, char *[]);
 
 #endif /* _GPT_H_ */
