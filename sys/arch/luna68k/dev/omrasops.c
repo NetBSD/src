@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.17 2014/09/28 04:43:01 tsutsui Exp $ */
+/* $NetBSD: omrasops.c,v 1.18 2014/09/28 05:00:56 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.17 2014/09/28 04:43:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.18 2014/09/28 05:00:56 tsutsui Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
@@ -175,6 +175,8 @@ om4_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 	uint8_t *p;
 	int scanspan, startx, height, width, align, y;
 	uint32_t lmask, rmask, glyph, glyphbg, fgpat, bgpat;
+	uint32_t fgmask0, fgmask1, fgmask2, fgmask3;
+	uint32_t bgmask0, bgmask1, bgmask2, bgmask3;
 	int i, fg, bg;
 	uint8_t *fb;
 
@@ -185,6 +187,14 @@ om4_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 	fb = (uint8_t *)ri->ri_font->data +
 	    (uc - ri->ri_font->firstchar) * ri->ri_fontscale;
 	om4_unpack_attr(attr, &fg, &bg, NULL);
+	fgmask0 = (fg & 0x01) ? ALL1BITS : ALL0BITS;
+	fgmask1 = (fg & 0x02) ? ALL1BITS : ALL0BITS;
+	fgmask2 = (fg & 0x04) ? ALL1BITS : ALL0BITS;
+	fgmask3 = (fg & 0x08) ? ALL1BITS : ALL0BITS;
+	bgmask0 = (bg & 0x01) ? ALL1BITS : ALL0BITS;
+	bgmask1 = (bg & 0x02) ? ALL1BITS : ALL0BITS;
+	bgmask2 = (bg & 0x04) ? ALL1BITS : ALL0BITS;
+	bgmask3 = (bg & 0x08) ? ALL1BITS : ALL0BITS;
 
 	p = (uint8_t *)ri->ri_bits + y * scanspan + ((startx / 32) * 4);
 	align = startx & ALIGNMASK;
@@ -200,17 +210,17 @@ om4_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 			glyph <<= (4 - ri->ri_font->stride) * NBBY;
 			glyph = (glyph >> align);
 			glyphbg = glyph ^ ALL1BITS;
-			fgpat = (fg & 0x01) ? glyph : 0;
-			bgpat = (bg & 0x01) ? glyphbg : 0;
+			fgpat = glyph   & fgmask0;
+			bgpat = glyphbg & bgmask0;
 			P0(p) = (P0(p) & ~lmask) | ((fgpat | bgpat) & lmask);
-			fgpat = (fg & 0x02) ? glyph : 0;
-			bgpat = (bg & 0x02) ? glyphbg : 0;
+			fgpat = glyph   & fgmask1;
+			bgpat = glyphbg & bgmask1;
 			P1(p) = (P1(p) & ~lmask) | ((fgpat | bgpat) & lmask);
-			fgpat = (fg & 0x04) ? glyph : 0;
-			bgpat = (bg & 0x04) ? glyphbg : 0;
+			fgpat = glyph   & fgmask2;
+			bgpat = glyphbg & bgmask2;
 			P2(p) = (P2(p) & ~lmask) | ((fgpat | bgpat) & lmask);
-			fgpat = (fg & 0x08) ? glyph : 0;
-			bgpat = (bg & 0x08) ? glyphbg : 0;
+			fgpat = glyph   & fgmask3;
+			bgpat = glyphbg & bgmask3;
 			P3(p) = (P3(p) & ~lmask) | ((fgpat | bgpat) & lmask);
 			p += scanspan;
 			height--;
@@ -227,32 +237,32 @@ om4_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 			glyph <<= (4 - ri->ri_font->stride) * NBBY;
 			lhalf = (glyph >> align);
 			lhalfbg = lhalf ^ ALL1BITS;
-			fgpat = (fg & 0x01) ? lhalf : 0;
-			bgpat = (bg & 0x01) ? lhalfbg : 0;
+			fgpat = lhalf   & fgmask0;
+			bgpat = lhalfbg & bgmask0;
 			P0(p) = (P0(p) & ~lmask) | ((fgpat | bgpat) & lmask);
-			fgpat = (fg & 0x02) ? lhalf : 0;
-			bgpat = (bg & 0x02) ? lhalfbg : 0;
+			fgpat = lhalf   & fgmask1;
+			bgpat = lhalfbg & bgmask1;
 			P1(p) = (P1(p) & ~lmask) | ((fgpat | bgpat) & lmask);
-			fgpat = (fg & 0x04) ? lhalf : 0;
-			bgpat = (bg & 0x04) ? lhalfbg : 0;
+			fgpat = lhalf   & fgmask2;
+			bgpat = lhalfbg & bgmask2;
 			P2(p) = (P2(p) & ~lmask) | ((fgpat | bgpat) & lmask);
-			fgpat = (fg & 0x08) ? lhalf : 0;
-			bgpat = (bg & 0x08) ? lhalfbg : 0;
+			fgpat = lhalf   & fgmask3;
+			bgpat = lhalfbg & bgmask3;
 			P3(p) = (P3(p) & ~lmask) | ((fgpat | bgpat) & lmask);
 			p += BYTESDONE;
 			rhalf = (glyph << (BLITWIDTH - align));
 			rhalfbg = rhalf ^ ALL1BITS;
-			fgpat = (fg & 0x01) ? rhalf : 0;
-			bgpat = (bg & 0x01) ? rhalfbg : 0;
+			fgpat = rhalf   & fgmask0;
+			bgpat = rhalfbg & bgmask0;
 			P0(p) = ((fgpat | bgpat) & rmask) | (P0(p) & ~rmask);
-			fgpat = (fg & 0x02) ? rhalf : 0;
-			bgpat = (bg & 0x02) ? rhalfbg : 0;
+			fgpat = rhalf   & fgmask1;
+			bgpat = rhalfbg & bgmask1;
 			P1(p) = ((fgpat | bgpat) & rmask) | (P1(p) & ~rmask);
-			fgpat = (fg & 0x04) ? rhalf : 0;
-			bgpat = (bg & 0x04) ? rhalfbg : 0;
+			fgpat = rhalf   & fgmask2;
+			bgpat = rhalfbg & bgmask2;
 			P2(p) = ((fgpat | bgpat) & rmask) | (P2(p) & ~rmask);
-			fgpat = (fg & 0x08) ? rhalf : 0;
-			bgpat = (bg & 0x08) ? rhalfbg : 0;
+			fgpat = rhalf   & fgmask3;
+			bgpat = rhalfbg & bgmask3;
 			P3(p) = ((fgpat | bgpat) & rmask) | (P3(p) & ~rmask);
 
 			p = (q += scanspan);
