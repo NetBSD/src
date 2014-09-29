@@ -26,12 +26,16 @@
  * CRC32 code derived from work by Gary S. Brown.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.30 2014/09/28 08:14:51 jnemeth Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.31 2014/09/29 20:28:57 christos Exp $");
 #endif
 
 #include <sys/param.h>

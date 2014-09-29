@@ -24,12 +24,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.14 2013/12/04 20:15:51 jakllsch Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.15 2014/09/29 20:28:57 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -50,12 +54,16 @@ __RCSID("$NetBSD: migrate.c,v 1.14 2013/12/04 20:15:51 jakllsch Exp $");
 /*
  * Allow compilation on platforms that do not have a BSD label.
  * The values are valid for amd64, i386 and ia64 disklabels.
+ * XXX: use disklabel_params from disklabel.c
  */
 #ifndef LABELOFFSET
 #define	LABELOFFSET	0
 #endif
 #ifndef LABELSECTOR
 #define	LABELSECTOR	1
+#endif
+#ifndef RAW_PART
+#define	RAW_PART	3
 #endif
 
 /* FreeBSD filesystem types that don't match corresponding NetBSD types */
