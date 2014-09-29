@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.34 2014/07/22 22:41:58 justin Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.35 2014/09/29 15:54:28 justin Exp $	*/
 
 /*
  * Portability header for non-NetBSD platforms.
@@ -112,8 +112,8 @@ clock_gettime(clockid_t clk, struct timespec *ts)
 #include <sys/types.h>
 #include <sys/param.h>
 
-/* NetBSD is the only(?) platform with getenv_r() */
-#if !defined(__NetBSD__)
+/* NetBSD is almost the only platform with getenv_r() */
+#if !(defined(__NetBSD__) || defined(__minix__))
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
