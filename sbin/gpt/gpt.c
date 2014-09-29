@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.31 2014/09/29 20:28:57 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.32 2014/09/29 21:04:34 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -54,10 +54,14 @@ __RCSID("$NetBSD: gpt.c,v 1.31 2014/09/29 20:28:57 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <util.h>
 #include <ctype.h>
+#ifndef HAVE_NBTOOL_CONFIG_H
+#include <util.h>
 #include <prop/proplib.h>
 #include <sys/drvctlio.h>
+#else
+#include "opendisk.h"
+#endif
 
 #include "map.h"
 #include "gpt.h"
@@ -455,6 +459,7 @@ gpt_mbr(int fd, off_t lba)
 	return (0);
 }
 
+#ifndef HAVE_NBTOOL_CONFIG_H
 static int
 drvctl(const char *name, u_int *sector_size, off_t *media_size)
 {
@@ -537,6 +542,7 @@ out:
 	errno = EINVAL;
 	return -1;
 }
+#endif
 
 int
 gpt_gpt(int fd, off_t lba, int found)
@@ -666,8 +672,10 @@ gpt_open(const char *dev)
 		    ioctl(fd, DIOCGMEDIASIZE, &mediasz) == -1)
 			goto close;
 #endif
+#ifndef HAVE_NBTOOL_CONFIG_H
 		if (drvctl(device_name, &secsz, &mediasz) == -1)
 			goto close;
+#endif
 	} else {
 		secsz = 512;	/* Fixed size for files. */
 		if (sb.st_size % secsz) {
@@ -721,7 +729,9 @@ static struct {
 	const char *name;
 } cmdsw[] = {
 	{ cmd_add, "add" },
+#ifndef HAVE_NBTOOL_CONFIG_H
 	{ cmd_backup, "backup" },
+#endif
 	{ cmd_biosboot, "biosboot" },
 	{ cmd_create, "create" },
 	{ cmd_destroy, "destroy" },
@@ -733,7 +743,9 @@ static struct {
 	{ NULL, "rename" },
 	{ cmd_resize, "resize" },
 	{ cmd_resizedisk, "resizedisk" },
+#ifndef HAVE_NBTOOL_CONFIG_H
 	{ cmd_restore, "restore" },
+#endif
 	{ cmd_set, "set" },
 	{ cmd_show, "show" },
 	{ cmd_type, "type" },
@@ -745,17 +757,23 @@ static struct {
 __dead static void
 usage(void)
 {
-	extern const char addmsg1[], addmsg2[], backupmsg[], biosbootmsg[];
+	extern const char addmsg1[], addmsg2[], biosbootmsg[];
 	extern const char createmsg[], destroymsg[], labelmsg1[], labelmsg2[];
 	extern const char labelmsg3[], migratemsg[], recovermsg[], removemsg1[];
 	extern const char removemsg2[], resizemsg[], resizediskmsg[];
-	extern const char restoremsg[], setmsg[], showmsg[], typemsg1[];
+	extern const char setmsg[], showmsg[], typemsg1[];
 	extern const char typemsg2[], typemsg3[], unsetmsg[];
+#ifndef HAVE_NBTOOL_CONFIG_H
+	extern const char backupmsg[], restoremsg[];
+#endif
+
 
 	fprintf(stderr,
 	    "usage: %s %s\n"
 	    "       %s %s\n"
+#ifndef HAVE_NBTOOL_CONFIG_H
 	    "       %s %s\n"
+#endif
 	    "       %s %s\n"
 	    "       %s %s\n"
 	    "       %s %s\n"
@@ -769,7 +787,9 @@ usage(void)
 	    "       %s %s\n"
 	    "       %s %s\n"
 	    "       %s %s\n"
+#ifndef HAVE_NBTOOL_CONFIG_H
 	    "       %s %s\n"
+#endif
 	    "       %s %s\n"
 	    "       %s %s\n"
 	    "       %s %s\n"
@@ -777,7 +797,9 @@ usage(void)
 	    "       %s %s\n",
 	    getprogname(), addmsg1,
 	    getprogname(), addmsg2,
+#ifndef HAVE_NBTOOL_CONFIG_H
 	    getprogname(), backupmsg,
+#endif
 	    getprogname(), biosbootmsg,
 	    getprogname(), createmsg,
 	    getprogname(), destroymsg,
@@ -790,7 +812,9 @@ usage(void)
 	    getprogname(), removemsg2,
 	    getprogname(), resizemsg,
 	    getprogname(), resizediskmsg,
+#ifndef HAVE_NBTOOL_CONFIG_H
 	    getprogname(), restoremsg,
+#endif
 	    getprogname(), setmsg,
 	    getprogname(), showmsg,
 	    getprogname(), typemsg1,

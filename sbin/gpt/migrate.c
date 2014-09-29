@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.15 2014/09/29 20:28:57 christos Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.16 2014/09/29 21:04:34 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -437,7 +437,7 @@ migrate(int fd)
 	/*
 	 * Turn the MBR into a Protective MBR.
 	 */
-	bzero(mbr->mbr_part, sizeof(mbr->mbr_part));
+	memset(mbr->mbr_part, 0, sizeof(mbr->mbr_part));
 	mbr->mbr_part[0].part_shd = 0x00;
 	mbr->mbr_part[0].part_ssect = 0x02;
 	mbr->mbr_part[0].part_scyl = 0x00;
