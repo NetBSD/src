@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.37 2014/09/22 11:20:39 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.38 2014/09/29 16:21:56 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -952,3 +952,30 @@ lib/libutil/getdiskrawname.c			1.3-1.5
 	- KNF and sign cast.
 	[mlelstv, ticket #117]
 
+common/lib/libc/arch/i386/string/small/strchr.S	1.3
+
+	Look for the character to locate before checking for the NUL character.
+	This fixes strchr(s, '\0'), as used by the FAT first-stage bootloader
+	on x86 (bootxx_msdos). Confirmed working in qemu and on real hardware.
+	Fixes PR#49208.
+	[khorben, ticket #118]
+
+sys/dev/iscsi/iscsi_send.c			1.10
+
+	The "throttling" code in the in-kernel iSCSI initiator is very
+	questionable; it sleeps on a ccb that appears highly unlikely to wake
+	up, since it seems to be waiting to _submit_ that very ccb!  This is
+	doubtless why someone tried to disable it in the default case via
+	several #defines. Unfortunately one of those #defines is later tested
+	backwards.  Fix that. The in-kernel initiator now seems to survive a
+	system build without hanging.
+	[tls, ticket #119]
+
+share/man/man4/bio.4				1.12
+share/man/man4/mpt.4				1.6
+sys/dev/ic/mpt.c				1.17
+sys/dev/ic/mpt.h				1.8
+sys/dev/ic/mpt_netbsd.c				1.26-1.31
+
+	Add support for the bio(4) API to the mpt(4) driver.
+	[jmcneill, ticket #120]
