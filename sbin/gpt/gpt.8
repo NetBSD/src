@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.31 2014/09/28 08:14:51 jnemeth Exp $
+.\" $NetBSD: gpt.8,v 1.32 2014/09/29 05:56:43 jnemeth Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd September 28, 2014
+.Dd September 29, 2014
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -162,7 +162,8 @@ command.
 The format is a plist.
 It should not be modified.
 .\" ==== biosboot ====
-.It Nm Ic biosboot Oo Fl c Ar bootcode Oc Oo Fl i Ar index Oc Ar device ...
+.It Nm Ic biosboot Oo Fl c Ar bootcode Oc Oo Fl i Ar index Oc \
+Oo Fl L Ar label Oc Ar device ...
 The
 .Ic biosboot
 command allows the user to configure the partition that contains the
@@ -182,6 +183,11 @@ The
 option selects the partition that should contain the primary
 bootstrap code, as installed via
 .Xr installboot 8 .
+The
+.Fl L
+option selects the partition by label.
+If there are multiple partitions with the same label, it will use the
+first one found.
 .\" ==== create ====
 .It Nm Ic create Oo Fl fp Oc Ar device ...
 The
@@ -216,7 +222,7 @@ to destroy the table in a way that it can be recovered.
 .\" ==== label ====
 .It Nm Ic label Oo Fl a Oc Ao Fl f Ar file | Fl l Ar label Ac Ar device ...
 .It Nm Ic label Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
-Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc \
+Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc \
 Ao Fl f Ar file | Fl l Ar label Ac Ar device ...
 The
 .Ic label
@@ -235,6 +241,11 @@ option selects the partition that starts at the given block number.
 The
 .Fl i Ar index
 option selects the partition with the given partition number.
+.Pp
+The
+.Fl L Ar label
+option selects all partitions that have the given label.
+This can cause multiple partitions to be relabeled.
 .Pp
 The
 .Fl s Ar sectors
@@ -320,7 +331,7 @@ It is very useful in case the primary label was deleted.
 .\" ==== remove ====
 .It Nm Ic remove Oo Fl a Oc Ar device ...
 .It Nm Ic remove Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
-Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc Ar device ...
+Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc Ar device ...
 The
 .Ic remove
 command allows the user to remove any and all partitions that match the
@@ -460,7 +471,8 @@ The order of precedence for the options are:
 .\" ==== type ====
 .It Nm Ic type Oo Fl a Oc Fl T Ar newtype Ar device ...
 .It Nm Ic type Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
-Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc Fl T Ar newtype Ar device ...
+Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc \
+Fl T Ar newtype Ar device ...
 The
 .Ic type
 command allows the user to change the type of any and all partitions
