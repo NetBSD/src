@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.47.2.1 2013/02/13 20:52:06 riz Exp $ */
+/*	$NetBSD: genfb.c,v 1.47.2.2 2014/09/29 18:46:27 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.47.2.1 2013/02/13 20:52:06 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.47.2.2 2014/09/29 18:46:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ genfb_init(struct genfb_softc *sc)
 
 	dict = device_properties(sc->sc_dev);
 #ifdef GENFB_DEBUG
-	printf(prop_dictionary_externalize(dict));
+	printf("%s", prop_dictionary_externalize(dict));
 #endif
 	prop_dictionary_get_bool(dict, "is_console", &console);
 
