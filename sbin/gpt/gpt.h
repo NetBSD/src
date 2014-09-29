@@ -30,7 +30,11 @@
 #define	_GPT_H_
 
 #include <sys/endian.h>
+#ifndef HAVE_NBTOOL_CONFIG_H
 #include <sys/disklabel_gpt.h>
+#else
+#include <nbinclude/sys/disklabel_gpt.h>
+#endif
 #define GPT_SIZE GPT_HDR_SIZE
 #define hdr_uuid hdr_guid
 #define ent_uuid ent_guid

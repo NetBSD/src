@@ -33,13 +33,18 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.16 2014/09/29 21:04:34 christos Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.17 2014/09/29 22:22:03 christos Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/param.h>
+#ifdef HAVE_NBTOOL_CONFIG_H
+#include <nbinclude/sys/bootblock.h>
+#include <nbinclude/sys/disklabel.h>
+#else
 #include <sys/bootblock.h>
 #include <sys/disklabel.h>
+#endif
 
 #include <err.h>
 #include <stddef.h>

@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.16 2014/09/29 20:28:57 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.17 2014/09/29 22:22:03 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -229,7 +229,7 @@ show_one(void)
 	const char *s1;
 	char *s2;
 #ifdef HN_AUTOSCALE
-	char *human_num[5];
+	char human_num[5];
 #endif
 
 	for (m = map_first(); m != NULL; m = m->map_next)
