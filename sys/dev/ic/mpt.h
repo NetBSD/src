@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.h,v 1.7 2010/04/28 22:45:27 chs Exp $	*/
+/*	$NetBSD: mpt.h,v 1.7.34.1 2014/09/29 16:15:58 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -173,6 +173,7 @@ void mpt_free_request(mpt_softc_t *, request_t *);
 int mpt_intr(void *);
 void mpt_check_doorbell(mpt_softc_t *);
 
+int mpt_read_cfg_header(mpt_softc_t *, int, int, int, fCONFIG_PAGE_HEADER *);
 int mpt_read_cfg_page(mpt_softc_t *, int, fCONFIG_PAGE_HEADER *);
 int mpt_write_cfg_page(mpt_softc_t *, int, fCONFIG_PAGE_HEADER *);
 
@@ -212,6 +213,8 @@ void mpt2host_config_page_fc_port_1(fCONFIG_PAGE_FC_PORT_1 *);
 void host2mpt_config_page_fc_port_1(fCONFIG_PAGE_FC_PORT_1 *);
 void mpt2host_config_page_raid_vol_0(fCONFIG_PAGE_RAID_VOL_0 *);
 void mpt2host_config_page_raid_phys_disk_0(fCONFIG_PAGE_RAID_PHYS_DISK_0 *);
+void mpt2host_config_page_raid_phys_disk_0(fCONFIG_PAGE_RAID_PHYS_DISK_0 *);
+void mpt2host_config_page_ioc_2(fCONFIG_PAGE_IOC_2 *);
 #else
 #define	mpt2host_sge_simple_union(x)		do { ; } while (0)
 #define	mpt2host_iocfacts_reply(x)		do { ; } while (0)
@@ -230,6 +233,7 @@ void mpt2host_config_page_raid_phys_disk_0(fCONFIG_PAGE_RAID_PHYS_DISK_0 *);
 #define	mpt2host_config_page_raid_vol_0(x)	do { ; } while (0)
 #define	mpt2host_config_page_raid_phys_disk_0(x)			\
 	do { ; } while (0)
+#define mpt2host_config_page_ioc_2(x)		do { ; } while (0)
 #endif
 
 #endif /* _KERNEL */
