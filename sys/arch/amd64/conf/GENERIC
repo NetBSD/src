@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.348.2.6 2012/08/15 15:32:59 sborrill Exp $
+# $NetBSD: GENERIC,v 1.348.2.7 2014/09/29 18:40:43 msaitoh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.348.2.6 $"
+#ident 		"GENERIC-$Revision: 1.348.2.7 $"
 
 maxusers	64		# estimated number of users
 
@@ -1175,7 +1175,7 @@ options 	MEMORY_DISK_HOOKS	# enable root ramdisk
 options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module(7)
 
 pseudo-device	vnd			# disk-like interface to files
-#options 	VND_COMPRESSION		# compressed vnd(4)
+options 	VND_COMPRESSION		# compressed vnd(4)
 
 # NPF
 #pseudo-device	npf
