@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1986 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1987 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -55,3 +55,5 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		[jnemeth 20140926]
 	dhcpcd(8): Import dhcpcd-6.4.7. [roy 20140927]
 	mpt(4): added bio(4) support. [jmcneill 20140927]
+	gpt(8): added type subcommand to modify partition type.
+		[jnemeth 20140927]
