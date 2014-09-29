@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.49 2014/09/28 15:39:36 macallan Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.50 2014/09/29 21:45:15 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.49 2014/09/28 15:39:36 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.50 2014/09/29 21:45:15 macallan Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -382,6 +382,8 @@ void bcmgenfb_set_ioctl(int(*)(void *, void *, u_long, void *, int, struct lwp *
 extern void bcmgenfb_ddb_trap_callback(int where);
 static int	rpi_ioctl(void *, void *, u_long, void *, int, lwp_t *);
 
+#define CURSOR_BITMAP_SIZE	(64 * 8)
+#define CURSOR_ARGB_SIZE	(64 * 64 * 4)
 static int rpi_video_on = WSDISPLAYIO_VIDEO_ON;
 static uint32_t hcursor = 0;
 static bus_addr_t pcursor = 0;
@@ -826,7 +828,7 @@ rpi_fb_init(prop_dictionary_t dict, void *aux)
 		prop_dictionary_set_uint32(dict, "wsdisplay_type", integer);
 	}
 
-	hcursor = rpi_alloc_mem(64 * 64 * 4, PAGE_SIZE,
+	hcursor = rpi_alloc_mem(CURSOR_ARGB_SIZE, PAGE_SIZE,
 	    MEM_FLAG_L1_NONALLOCATING | MEM_FLAG_HINT_PERMALOCK);
 	pcursor = rpi_lock_mem(hcursor);
 #ifdef RPI_IOCTL_DEBUG
@@ -834,7 +836,7 @@ rpi_fb_init(prop_dictionary_t dict, void *aux)
 	printf("pcursor: %08x\n", (uint32_t)pcursor);
 	printf("fb: %08x\n", (uint32_t)vb_setfb.vbt_allocbuf.address);
 #endif
-	if (bus_space_map(aaa->aaa_iot, pcursor, 64 * 64 * 4,
+	if (bus_space_map(aaa->aaa_iot, pcursor, CURSOR_ARGB_SIZE,
 	    BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE, &hc) != 0) {
 		printf("couldn't map cursor memory\n");
 	} else {
@@ -849,7 +851,7 @@ rpi_fb_init(prop_dictionary_t dict, void *aux)
 			}
 			k += 64;
 		}
-		cpu_dcache_wb_range(cmem, 64 * 64 * 4);
+		cpu_dcache_wb_range((vaddr_t)cmem, CURSOR_ARGB_SIZE);
 		rpi_fb_initcursor(pcursor, 0, 0);
 	}	
 #ifdef RPI_IOCTL_DEBUG
@@ -900,15 +902,15 @@ rpi_fb_do_cursor(struct wsdisplay_cursor *cur)
 	}
 	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
 
-		copyin(cur->mask, cursor_mask, 64 * 8);
-		copyin(cur->image, cursor_bitmap, 64 * 8);
+		copyin(cur->mask, cursor_mask, CURSOR_BITMAP_SIZE);
+		copyin(cur->image, cursor_bitmap, CURSOR_BITMAP_SIZE);
 		shape = 1;
 	}
 	if (shape) {
 		int i, j, idx;
 		uint8_t mask;
 
-		for (i = 0; i < 64 * 8; i++) {
+		for (i = 0; i < CURSOR_BITMAP_SIZE; i++) {
 			mask = 0x01;
 			for (j = 0; j < 8; j++) {
 				idx = ((cursor_mask[i] & mask) ? 2 : 0) |
@@ -918,7 +920,7 @@ rpi_fb_do_cursor(struct wsdisplay_cursor *cur)
 			}
 		}
 		/* just in case */
-		cpu_dcache_wb_range(cmem, 64 * 64 * 4);
+		cpu_dcache_wb_range((vaddr_t)cmem, CURSOR_ARGB_SIZE);
 		rpi_fb_initcursor(pcursor, hot_x, hot_y);
 	}
 	if (pos) {
