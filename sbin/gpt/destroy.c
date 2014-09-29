@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/destroy.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: destroy.c,v 1.5 2014/09/29 20:28:57 christos Exp $");
+__RCSID("$NetBSD: destroy.c,v 1.6 2014/09/29 21:04:34 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -80,12 +80,12 @@ destroy(int fd)
 	}
 
 	if (pri_hdr != NULL) {
-		bzero(pri_hdr->map_data, secsz);
+		memset(pri_hdr->map_data, 0, secsz);
 		gpt_write(fd, pri_hdr);
 	}
 
 	if (!recoverable && sec_hdr != NULL) {
-		bzero(sec_hdr->map_data, secsz);
+		memset(sec_hdr->map_data, 0, secsz);
 		gpt_write(fd, sec_hdr);
 	}
 }
