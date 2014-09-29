@@ -1,4 +1,4 @@
-.\" $NetBSD: attribute.3,v 1.11 2011/09/18 17:43:20 jym Exp $
+.\" $NetBSD: attribute.3,v 1.11.4.1 2014/09/29 18:39:02 msaitoh Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -286,7 +286,7 @@ Semantically
 .Ic __predict_true
 expects that the integral expression
 .Fa exp
-equals 1.
+yields nonzero.
 .It Ic __predict_false
 The
 .Ic __predict_false
