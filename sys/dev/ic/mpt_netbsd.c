@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.25 2014/07/08 14:18:54 chs Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.25.2.1 2014/09/29 16:15:58 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,10 +77,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.25 2014/07/08 14:18:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.25.2.1 2014/09/29 16:15:58 msaitoh Exp $");
+
+#include "bio.h"
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 #include <sys/scsiio.h>
+
+#if NBIO > 0
+#include <dev/biovar.h>
+#endif
 
 static int	mpt_poll(mpt_softc_t *, struct scsipi_xfer *, int);
 static void	mpt_timeout(void *);
@@ -99,6 +105,16 @@ static void	mpt_scsipi_request(struct scsipi_channel *,
 static void	mpt_minphys(struct buf *);
 static int 	mpt_ioctl(struct scsipi_channel *, u_long, void *, int,
 	struct proc *);
+
+#if NBIO > 0
+static bool	mpt_is_raid(mpt_softc_t *);
+static int	mpt_bio_ioctl(device_t, u_long, void *);
+static int	mpt_bio_ioctl_inq(mpt_softc_t *, struct bioc_inq *);
+static int	mpt_bio_ioctl_vol(mpt_softc_t *, struct bioc_vol *);
+static int	mpt_bio_ioctl_disk(mpt_softc_t *, struct bioc_disk *);
+static int	mpt_bio_ioctl_disk_novol(mpt_softc_t *, struct bioc_disk *);
+static int	mpt_bio_ioctl_setstate(mpt_softc_t *, struct bioc_setstate *);
+#endif
 
 void
 mpt_scsipi_attach(mpt_softc_t *mpt)
@@ -144,6 +160,14 @@ mpt_scsipi_attach(mpt_softc_t *mpt)
 	*/
 	mpt->sc_scsibus_dv = config_found(mpt->sc_dev, &mpt->sc_channel, 
 	scsiprint);
+
+#if NBIO > 0
+	if (mpt_is_raid(mpt)) {
+		if (bio_register(mpt->sc_dev, mpt_bio_ioctl) != 0)
+			panic("%s: controller registration failed",
+			    device_xname(mpt->sc_dev));
+	}
+#endif
 }
 
 int
@@ -1585,3 +1609,457 @@ mpt_ioctl(struct scsipi_channel *chan, u_long cmd, void *arg,
 		return (ENOTTY);
 	}
 }
+
+#if NBIO > 0
+static fCONFIG_PAGE_IOC_2 *
+mpt_get_cfg_page_ioc2(mpt_softc_t *mpt)
+{
+	fCONFIG_PAGE_HEADER hdr;
+	fCONFIG_PAGE_IOC_2 *ioc2;
+	int rv;
+
+	rv = mpt_read_cfg_header(mpt, MPI_CONFIG_PAGETYPE_IOC, 2, 0, &hdr);
+	if (rv)
+		return NULL;
+
+	ioc2 = malloc(hdr.PageLength * 4, M_DEVBUF, M_WAITOK | M_ZERO);
+	if (ioc2 == NULL)
+		return NULL;
+
+	memcpy(ioc2, &hdr, sizeof(hdr));
+
+	rv = mpt_read_cfg_page(mpt, 0, &ioc2->Header);
+	if (rv)
+		goto fail;
+	mpt2host_config_page_ioc_2(ioc2);
+
+	return ioc2;
+
+fail:
+	free(ioc2, M_DEVBUF);
+	return NULL;
+}
+
+static fCONFIG_PAGE_IOC_3 *
+mpt_get_cfg_page_ioc3(mpt_softc_t *mpt)
+{
+	fCONFIG_PAGE_HEADER hdr;
+	fCONFIG_PAGE_IOC_3 *ioc3;
+	int rv;
+
+	rv = mpt_read_cfg_header(mpt, MPI_CONFIG_PAGETYPE_IOC, 3, 0, &hdr);
+	if (rv)
+		return NULL;
+
+	ioc3 = malloc(hdr.PageLength * 4, M_DEVBUF, M_WAITOK | M_ZERO);
+	if (ioc3 == NULL)
+		return NULL;
+
+	memcpy(ioc3, &hdr, sizeof(hdr));
+
+	rv = mpt_read_cfg_page(mpt, 0, &ioc3->Header);
+	if (rv)
+		goto fail;
+
+	return ioc3;
+
+fail:
+	free(ioc3, M_DEVBUF);
+	return NULL;
+}
+
+
+static fCONFIG_PAGE_RAID_VOL_0 *
+mpt_get_cfg_page_raid_vol0(mpt_softc_t *mpt, int address)
+{
+	fCONFIG_PAGE_HEADER hdr;
+	fCONFIG_PAGE_RAID_VOL_0 *rvol0;
+	int rv;
+
+	rv = mpt_read_cfg_header(mpt, MPI_CONFIG_PAGETYPE_RAID_VOLUME, 0,
+	    address, &hdr);
+	if (rv)
+		return NULL;
+
+	rvol0 = malloc(hdr.PageLength * 4, M_DEVBUF, M_WAITOK | M_ZERO);
+	if (rvol0 == NULL)
+		return NULL;
+
+	memcpy(rvol0, &hdr, sizeof(hdr));
+
+	rv = mpt_read_cfg_page(mpt, address, &rvol0->Header);
+	if (rv)
+		goto fail;
+	mpt2host_config_page_raid_vol_0(rvol0);
+
+	return rvol0;
+
+fail:
+	free(rvol0, M_DEVBUF);
+	return NULL;
+}
+
+static fCONFIG_PAGE_RAID_PHYS_DISK_0 *
+mpt_get_cfg_page_raid_phys_disk0(mpt_softc_t *mpt, int address)
+{
+	fCONFIG_PAGE_HEADER hdr;
+	fCONFIG_PAGE_RAID_PHYS_DISK_0 *physdisk0;
+	int rv;
+
+	rv = mpt_read_cfg_header(mpt, MPI_CONFIG_PAGETYPE_RAID_PHYSDISK, 0,
+	    address, &hdr);
+	if (rv)
+		return NULL;
+
+	physdisk0 = malloc(hdr.PageLength * 4, M_DEVBUF, M_WAITOK | M_ZERO);
+	if (physdisk0 == NULL)
+		return NULL;
+
+	memcpy(physdisk0, &hdr, sizeof(hdr));
+
+	rv = mpt_read_cfg_page(mpt, address, &physdisk0->Header);
+	if (rv)
+		goto fail;
+	mpt2host_config_page_raid_phys_disk_0(physdisk0);
+
+	return physdisk0;
+
+fail:
+	free(physdisk0, M_DEVBUF);
+	return NULL;
+}
+
+static bool
+mpt_is_raid(mpt_softc_t *mpt)
+{
+	fCONFIG_PAGE_IOC_2 *ioc2;
+	bool is_raid = false;
+
+	ioc2 = mpt_get_cfg_page_ioc2(mpt);
+	if (ioc2 == NULL)
+		return false;
+
+	if (ioc2->CapabilitiesFlags != 0xdeadbeef) {
+		is_raid = !!(ioc2->CapabilitiesFlags &
+				(MPI_IOCPAGE2_CAP_FLAGS_IS_SUPPORT|
+				 MPI_IOCPAGE2_CAP_FLAGS_IME_SUPPORT|
+				 MPI_IOCPAGE2_CAP_FLAGS_IM_SUPPORT));
+	}
+
+	free(ioc2, M_DEVBUF);
+
+	return is_raid;
+}
+
+static int
+mpt_bio_ioctl(device_t dev, u_long cmd, void *addr)
+{
+	mpt_softc_t *mpt = device_private(dev);
+	int error, s;
+
+	KERNEL_LOCK(1, curlwp);
+	s = splbio();
+
+	switch (cmd) {
+	case BIOCINQ:
+		error = mpt_bio_ioctl_inq(mpt, addr);
+		break;
+	case BIOCVOL:
+		error = mpt_bio_ioctl_vol(mpt, addr);
+		break;
+	case BIOCDISK_NOVOL:
+		error = mpt_bio_ioctl_disk_novol(mpt, addr);
+		break;
+	case BIOCDISK:
+		error = mpt_bio_ioctl_disk(mpt, addr);
+		break;
+	case BIOCSETSTATE:
+		error = mpt_bio_ioctl_setstate(mpt, addr);
+		break;
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	splx(s);
+	KERNEL_UNLOCK_ONE(curlwp);
+
+	return error;
+}
+
+static int
+mpt_bio_ioctl_inq(mpt_softc_t *mpt, struct bioc_inq *bi)
+{	
+	fCONFIG_PAGE_IOC_2 *ioc2;
+	fCONFIG_PAGE_IOC_3 *ioc3;
+
+	ioc2 = mpt_get_cfg_page_ioc2(mpt);
+	if (ioc2 == NULL)
+		return EIO;
+	ioc3 = mpt_get_cfg_page_ioc3(mpt);
+	if (ioc3 == NULL) {
+		free(ioc2, M_DEVBUF);
+		return EIO;
+	}
+
+	strlcpy(bi->bi_dev, device_xname(mpt->sc_dev), sizeof(bi->bi_dev));
+	bi->bi_novol = ioc2->NumActiveVolumes;
+	bi->bi_nodisk = ioc3->NumPhysDisks;
+
+	free(ioc2, M_DEVBUF);
+	free(ioc3, M_DEVBUF);
+
+	return 0;
+}
+
+static int
+mpt_bio_ioctl_vol(mpt_softc_t *mpt, struct bioc_vol *bv)
+{
+	fCONFIG_PAGE_IOC_2 *ioc2 = NULL;
+	fCONFIG_PAGE_IOC_2_RAID_VOL *ioc2rvol;
+	fCONFIG_PAGE_RAID_VOL_0 *rvol0 = NULL;
+	struct scsipi_periph *periph;
+	struct scsipi_inquiry_data inqbuf;
+	char vendor[9], product[17], revision[5];
+	int address;
+
+	ioc2 = mpt_get_cfg_page_ioc2(mpt);
+	if (ioc2 == NULL)
+		return EIO;
+
+	if (bv->bv_volid < 0 || bv->bv_volid >= ioc2->NumActiveVolumes)
+		goto fail;
+
+	ioc2rvol = &ioc2->RaidVolume[bv->bv_volid];
+	address = ioc2rvol->VolumeID | (ioc2rvol->VolumeBus << 8);
+
+	rvol0 = mpt_get_cfg_page_raid_vol0(mpt, address);
+	if (rvol0 == NULL)
+		goto fail;
+
+	bv->bv_dev[0] = '\0';
+	bv->bv_vendor[0] = '\0';
+
+	periph = scsipi_lookup_periph(&mpt->sc_channel, ioc2rvol->VolumeBus, 0);
+	if (periph != NULL) {
+		if (periph->periph_dev != NULL) {
+			snprintf(bv->bv_dev, sizeof(bv->bv_dev), "%s",
+			    device_xname(periph->periph_dev));
+		}
+		memset(&inqbuf, 0, sizeof(inqbuf));
+		if (scsipi_inquire(periph, &inqbuf,
+		    XS_CTL_DISCOVERY | XS_CTL_SILENT) == 0) {
+			scsipi_strvis(vendor, sizeof(vendor),
+			    inqbuf.vendor, sizeof(inqbuf.vendor));
+			scsipi_strvis(product, sizeof(product),
+			    inqbuf.product, sizeof(inqbuf.product));
+			scsipi_strvis(revision, sizeof(revision),
+			    inqbuf.revision, sizeof(inqbuf.revision));
+
+			snprintf(bv->bv_vendor, sizeof(bv->bv_vendor),
+			    "%s %s %s", vendor, product, revision);
+		}
+	
+		snprintf(bv->bv_dev, sizeof(bv->bv_dev), "%s",
+		    device_xname(periph->periph_dev));
+	}
+	bv->bv_nodisk = rvol0->NumPhysDisks;
+	bv->bv_size = (uint64_t)rvol0->MaxLBA * 512;
+	bv->bv_stripe_size = rvol0->StripeSize;
+	bv->bv_percent = -1;
+	bv->bv_seconds = 0;
+
+	switch (rvol0->VolumeStatus.State) {
+	case MPI_RAIDVOL0_STATUS_STATE_OPTIMAL:
+		bv->bv_status = BIOC_SVONLINE;
+		break;
+	case MPI_RAIDVOL0_STATUS_STATE_DEGRADED:
+		bv->bv_status = BIOC_SVDEGRADED;
+		break;
+	case MPI_RAIDVOL0_STATUS_STATE_FAILED:
+		bv->bv_status = BIOC_SVOFFLINE;
+		break;
+	default:
+		bv->bv_status = BIOC_SVINVALID;
+		break;
+	}
+
+	switch (ioc2rvol->VolumeType) {
+	case MPI_RAID_VOL_TYPE_IS:
+		bv->bv_level = 0;
+		break;
+	case MPI_RAID_VOL_TYPE_IME:
+	case MPI_RAID_VOL_TYPE_IM:
+		bv->bv_level = 1;
+		break;
+	default:
+		bv->bv_level = -1;
+		break;
+	}
+
+	free(ioc2, M_DEVBUF);
+	free(rvol0, M_DEVBUF);
+
+	return 0;
+
+fail:
+	if (ioc2) free(ioc2, M_DEVBUF);
+	if (rvol0) free(rvol0, M_DEVBUF);
+	return EINVAL;
+}
+
+static void
+mpt_bio_ioctl_disk_common(mpt_softc_t *mpt, struct bioc_disk *bd,
+    int address)
+{
+	fCONFIG_PAGE_RAID_PHYS_DISK_0 *phys = NULL;
+	char vendor_id[9], product_id[17], product_rev_level[5];
+
+	phys = mpt_get_cfg_page_raid_phys_disk0(mpt, address);
+	if (phys == NULL)
+		return;
+
+	scsipi_strvis(vendor_id, sizeof(vendor_id),
+	    phys->InquiryData.VendorID, sizeof(phys->InquiryData.VendorID));
+	scsipi_strvis(product_id, sizeof(product_id),
+	    phys->InquiryData.ProductID, sizeof(phys->InquiryData.ProductID));
+	scsipi_strvis(product_rev_level, sizeof(product_rev_level),
+	    phys->InquiryData.ProductRevLevel,
+	    sizeof(phys->InquiryData.ProductRevLevel));
+
+	snprintf(bd->bd_vendor, sizeof(bd->bd_vendor), "%s %s %s",
+	    vendor_id, product_id, product_rev_level);
+	strlcpy(bd->bd_serial, phys->InquiryData.Info, sizeof(bd->bd_serial));
+	bd->bd_procdev[0] = '\0';
+	bd->bd_channel = phys->PhysDiskBus;
+	bd->bd_target = phys->PhysDiskID;
+	bd->bd_lun = 0;
+	bd->bd_size = (uint64_t)phys->MaxLBA * 512;
+
+	switch (phys->PhysDiskStatus.State) {
+	case MPI_PHYSDISK0_STATUS_ONLINE:
+		bd->bd_status = BIOC_SDONLINE;
+		break;
+	case MPI_PHYSDISK0_STATUS_MISSING:
+	case MPI_PHYSDISK0_STATUS_FAILED:
+		bd->bd_status = BIOC_SDFAILED;
+		break;
+	case MPI_PHYSDISK0_STATUS_OFFLINE_REQUESTED:
+	case MPI_PHYSDISK0_STATUS_FAILED_REQUESTED:
+	case MPI_PHYSDISK0_STATUS_OTHER_OFFLINE:
+		bd->bd_status = BIOC_SDOFFLINE;
+		break;
+	case MPI_PHYSDISK0_STATUS_INITIALIZING:
+		bd->bd_status = BIOC_SDSCRUB;
+		break;
+	case MPI_PHYSDISK0_STATUS_NOT_COMPATIBLE:
+	default:
+		bd->bd_status = BIOC_SDINVALID;
+		break;
+	}
+
+	free(phys, M_DEVBUF);
+}
+
+static int
+mpt_bio_ioctl_disk_novol(mpt_softc_t *mpt, struct bioc_disk *bd)
+{
+	fCONFIG_PAGE_IOC_2 *ioc2 = NULL;
+	fCONFIG_PAGE_IOC_3 *ioc3 = NULL;
+	fCONFIG_PAGE_RAID_VOL_0 *rvol0 = NULL;
+	fCONFIG_PAGE_IOC_2_RAID_VOL *ioc2rvol;
+	int address, v, d;
+
+	ioc2 = mpt_get_cfg_page_ioc2(mpt);
+	if (ioc2 == NULL)
+		return EIO;
+	ioc3 = mpt_get_cfg_page_ioc3(mpt);
+	if (ioc3 == NULL) {
+		free(ioc2, M_DEVBUF);
+		return EIO;
+	}
+
+	if (bd->bd_diskid < 0 || bd->bd_diskid >= ioc3->NumPhysDisks)
+		goto fail;
+
+	address = ioc3->PhysDisk[bd->bd_diskid].PhysDiskNum;
+
+	mpt_bio_ioctl_disk_common(mpt, bd, address);
+
+	bd->bd_disknovol = true;
+	for (v = 0; bd->bd_disknovol && v < ioc2->NumActiveVolumes; v++) {
+		ioc2rvol = &ioc2->RaidVolume[v];
+		address = ioc2rvol->VolumeID | (ioc2rvol->VolumeBus << 8);
+
+		rvol0 = mpt_get_cfg_page_raid_vol0(mpt, address);
+		if (rvol0 == NULL)
+			continue;
+
+		for (d = 0; d < rvol0->NumPhysDisks; d++) {
+			if (rvol0->PhysDisk[d].PhysDiskNum ==
+			    ioc3->PhysDisk[bd->bd_diskid].PhysDiskNum) {
+				bd->bd_disknovol = false;
+				bd->bd_volid = v;
+				break;
+			}
+		}
+		free(rvol0, M_DEVBUF);
+	}
+
+	free(ioc3, M_DEVBUF);
+	free(ioc2, M_DEVBUF);
+
+	return 0;
+
+fail:
+	if (ioc3) free(ioc3, M_DEVBUF);
+	if (ioc2) free(ioc2, M_DEVBUF);
+	return EINVAL;
+}
+
+
+static int
+mpt_bio_ioctl_disk(mpt_softc_t *mpt, struct bioc_disk *bd)
+{
+	fCONFIG_PAGE_IOC_2 *ioc2 = NULL;
+	fCONFIG_PAGE_RAID_VOL_0 *rvol0 = NULL;
+	fCONFIG_PAGE_IOC_2_RAID_VOL *ioc2rvol;
+	int address;
+
+	ioc2 = mpt_get_cfg_page_ioc2(mpt);
+	if (ioc2 == NULL)
+		return EIO;
+
+	if (bd->bd_volid < 0 || bd->bd_volid >= ioc2->NumActiveVolumes)
+		goto fail;
+
+	ioc2rvol = &ioc2->RaidVolume[bd->bd_volid];
+	address = ioc2rvol->VolumeID | (ioc2rvol->VolumeBus << 8);
+
+	rvol0 = mpt_get_cfg_page_raid_vol0(mpt, address);
+	if (rvol0 == NULL)
+		goto fail;
+
+	if (bd->bd_diskid < 0 || bd->bd_diskid >= rvol0->NumPhysDisks)
+		goto fail;
+
+	address = rvol0->PhysDisk[bd->bd_diskid].PhysDiskNum;
+
+	mpt_bio_ioctl_disk_common(mpt, bd, address);
+
+	free(ioc2, M_DEVBUF);
+
+	return 0;
+
+fail:
+	if (ioc2) free(ioc2, M_DEVBUF);
+	return EINVAL;
+}
+
+static int
+mpt_bio_ioctl_setstate(mpt_softc_t *mpt, struct bioc_setstate *bs)
+{
+	return ENOTTY;
+}
+#endif
+
