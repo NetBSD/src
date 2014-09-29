@@ -1,6 +1,8 @@
-#	$NetBSD: README.files,v 1.4.20.2.2.7 2014/04/16 03:39:47 snj Exp $
+#	$NetBSD: README.files,v 1.4.20.2.2.8 2014/09/29 18:44:42 snj Exp $
 
 What's in this directory:
+
+CHANGES-6.1.6	Changes between the 6.1.5 and 6.1.6 releases.
 
 CHANGES-6.1.5	Changes between the 6.1.4 and 6.1.5 releases.
 
@@ -41,7 +43,7 @@ source/patches/	Post-release source code patches.
 
 In addition to the files and directories listed above, there is one
 directory per architecture, for each of the architectures for which
-NetBSD 6.1.5 has a binary distribution.  The contents of each
+NetBSD 6.1.6 has a binary distribution.  The contents of each
 architecture's directory are described in an "INSTALL" file found in
 that directory.
 
