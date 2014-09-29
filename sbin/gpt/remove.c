@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: remove.c,v 1.12 2013/11/28 01:37:14 jnemeth Exp $");
+__RCSID("$NetBSD: remove.c,v 1.13 2014/09/29 05:56:43 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -48,10 +48,11 @@ static int all;
 static uuid_t type;
 static off_t block, size;
 static unsigned int entry;
+static uint8_t *label;
 
 const char removemsg1[] = "remove -a device ...";
-const char removemsg2[] = "remove [-b blocknr] [-i index] [-s sectors] "
-	"[-t type] device ...";
+const char removemsg2[] = "remove [-b blocknr] [-i index] [-L label] "
+	"[-s sectors] [-t type] device ...";
 
 __dead static void
 usage_remove(void)
@@ -112,6 +113,12 @@ rem(int fd)
 		hdr = gpt->map_data;
 		ent = (void*)((char*)tbl->map_data + i *
 		    le32toh(hdr->hdr_entsz));
+
+		if (label != NULL)
+			if (strcmp((char *)label,
+			    (char *)utf16_to_utf8(ent->ent_name)) != 0)
+				continue;
+
 		le_uuid_dec(ent->ent_type, &uuid);
 		if (!uuid_is_nil(&type, NULL) &&
 		    !uuid_equal(&type, &uuid, NULL))
@@ -156,7 +163,7 @@ cmd_remove(int argc, char *argv[])
 	int64_t human_num;
 
 	/* Get the remove options */
-	while ((ch = getopt(argc, argv, "ab:i:s:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "ab:i:L:s:t:")) != -1) {
 		switch(ch) {
 		case 'a':
 			if (all > 0)
@@ -179,6 +186,11 @@ cmd_remove(int argc, char *argv[])
 			if (*p != 0 || entry < 1)
 				usage_remove();
 			break;
+		case 'L':
+			if (label != NULL)
+				usage_remove();
+			label = (uint8_t *)strdup(optarg);
+			break;
 		case 's':
 			if (size > 0)
 				usage_remove();
@@ -198,7 +210,8 @@ cmd_remove(int argc, char *argv[])
 	}
 
 	if (!all ^
-	    (block > 0 || entry > 0 || size > 0 || !uuid_is_nil(&type, NULL)))
+	    (block > 0 || entry > 0 || label != NULL || size > 0 ||
+	    !uuid_is_nil(&type, NULL)))
 		usage_remove();
 
 	if (argc == optind)
