@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_var.h,v 1.15 2014/09/05 08:01:05 skrll Exp $	*/
+/*	$NetBSD: exynos_var.h,v 1.16 2014/09/29 14:47:52 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@ extern uint32_t exynos_pop_id;
 
 #define IS_EXYNOS5_P()	(EXYNOS_PRODUCT_FAMILY(exynos_soc_id) == EXYNOS5_PRODUCT_FAMILY)
 
+
 struct exyo_locators {
 	const char *loc_name;
 	bus_size_t loc_offset;
@@ -115,6 +116,9 @@ extern struct arm32_bus_dma_tag exynos_bus_dma_tag;
 extern struct arm32_bus_dma_tag exynos_coherent_bus_dma_tag;
 
 extern bus_space_handle_t exynos_core_bsh;
+extern bus_space_handle_t exynos_wdt_bsh;
+extern bus_space_handle_t exynos_pmu_bsh;
+extern bus_space_handle_t exynos_cmu_bsh;
 
 extern void exynos_bootstrap(vaddr_t, vaddr_t);
 extern void exynos_dma_bootstrap(psize_t memsize);

@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.20 2014/09/05 08:01:05 skrll Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.21 2014/09/29 14:47:52 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.20 2014/09/05 08:01:05 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.21 2014/09/29 14:47:52 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,13 +62,10 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.20 2014/09/05 08:01:05 skrll Exp $"
 /* XXXNH */
 #include <evbarm/odroid/platform.h>
 
-bus_space_handle_t exynos_core_bsh;
-bus_space_handle_t exynos_audiocore_bsh;
 
 /* these variables are retrieved in start.S and stored in .data */
 uint32_t  exynos_soc_id = 0;
 uint32_t  exynos_pop_id = 0;
-
 
 /* cpu frequencies */
 struct cpu_freq {
@@ -123,9 +120,17 @@ static int cpu_freq_target = 0;
 #define NFRQS 15
 static char sysctl_cpu_freqs_txt[NFRQS*5];
 
+bus_space_handle_t exynos_core_bsh;
+bus_space_handle_t exynos_audiocore_bsh;
+
+bus_space_handle_t exynos_wdt_bsh;
+bus_space_handle_t exynos_pmu_bsh;
+bus_space_handle_t exynos_cmu_bsh;
+bus_space_handle_t exynos_cmu_apll_bsh;
+
+
 static int sysctl_cpufreq_target(SYSCTLFN_ARGS);
 static int sysctl_cpufreq_current(SYSCTLFN_ARGS);
-
 
 /*
  * the early serial console
@@ -326,21 +331,11 @@ exynos_sysctl_cpufreq_init(void)
 uint64_t
 exynos_get_cpufreq(void)
 {
-	uint32_t reg = 0;
 	uint32_t regval;
 	uint32_t freq;
 
-#ifdef EXYNOS4
-	if (IS_EXYNOS4_P())
-		reg = EXYNOS4_CMU_APLL + PLL_CON0_OFFSET;
-#endif
-#ifdef EXYNOS5
-	if (IS_EXYNOS5_P()) 
-		reg = EXYNOS5_CMU_APLL + PLL_CON0_OFFSET;
-#endif
-	KASSERT(reg);
-
-	regval = bus_space_read_4(&exynos_bs_tag, exynos_core_bsh, reg);
+	regval = bus_space_read_4(&exynos_bs_tag, exynos_cmu_apll_bsh,
+			PLL_CON0_OFFSET);
 	freq   = PLL_FREQ(EXYNOS_F_IN_FREQ, regval);
 
 	return freq;
@@ -351,7 +346,6 @@ static void
 exynos_set_cpufreq(const struct cpu_freq *freqreq)
 {
 	struct cpu_info *ci;
-	uint32_t reg = 0;
 	uint32_t regval;
 	int M, P, S;
 	int cii;
@@ -364,19 +358,10 @@ exynos_set_cpufreq(const struct cpu_freq *freqreq)
 		 __SHIFTIN(P, PLL_CON0_P) |
 		 __SHIFTIN(S, PLL_CON0_S);
 
-#ifdef EXYNOS4
-	if (IS_EXYNOS4_P())
-		reg = EXYNOS4_CMU_APLL + PLL_CON0_OFFSET;
-#endif
-#ifdef EXYNOS5
-	if (IS_EXYNOS5_P())
-		reg = EXYNOS5_CMU_APLL + PLL_CON0_OFFSET;
-#endif
-	KASSERT(reg);
-
 	/* enable PPL and write config */
 	regval |= PLL_CON0_ENABLE;
-	bus_space_write_4(&exynos_bs_tag, exynos_core_bsh, reg, regval);
+	bus_space_write_4(&exynos_bs_tag, exynos_cmu_apll_bsh, PLL_CON0_OFFSET,
+		regval);
 
 	/* update our cycle counter i.e. our CPU frequency for all CPUs */
 	for (CPU_INFO_FOREACH(cii, ci)) {
@@ -449,7 +434,7 @@ sysctl_cpufreq_current(SYSCTLFN_ARGS)
 #ifdef VERBOSE_INIT_ARM
 #define DUMP_PLL(v, var) \
 	reg = EXYNOS##v##_CMU_##var + PLL_CON0_OFFSET;\
-	regval = bus_space_read_4(&exynos_bs_tag, exynos_core_bsh, reg); \
+	regval = bus_space_read_4(&exynos_bs_tag, exynos_cmu_bsh, reg); \
 	freq   = PLL_FREQ(EXYNOS_F_IN_FREQ, regval); \
 	printf("%8s at %d Mhz\n", #var, freq/(1000*1000));
 
@@ -463,44 +448,43 @@ exynos_dump_clocks(void)
 
 	printf("Initial PLL settings\n");
 #ifdef EXYNOS4
-	if (IS_EXYNOS4_P()) {
-		DUMP_PLL(4, APLL);
-		DUMP_PLL(4, MPLL);
-		DUMP_PLL(4, EPLL);
-		DUMP_PLL(4, VPLL);
-	}
+	DUMP_PLL(4, APLL);
+	DUMP_PLL(4, MPLL);
+	DUMP_PLL(4, EPLL);
+	DUMP_PLL(4, VPLL);
 #endif
 #ifdef EXYNOS5
-	if (IS_EXYNOS5_P()) {
-		DUMP_PLL(5, APLL);
-		DUMP_PLL(5, MPLL);
-		DUMP_PLL(5, EPLL);
-		DUMP_PLL(5, VPLL);
-		DUMP_PLL(5, CPLL);
-		DUMP_PLL(5, GPLL);
-		DUMP_PLL(5, BPLL);
-	}
+	DUMP_PLL(5, APLL);
+	DUMP_PLL(5, MPLL);
+	DUMP_PLL(5, EPLL);
+	DUMP_PLL(5, VPLL);
+	DUMP_PLL(5, CPLL);
+	DUMP_PLL(5, GPLL);
+	DUMP_PLL(5, BPLL);
 #endif
 }
 #undef DUMP_PLL
 #endif
 
 
+/* XXX clock stuff needs major work XXX */
+static void
+exynos_init_clkout_for_usb(void)
+{
+#ifdef EXYNOS4
+	bus_space_write_4(&exynos_bs_tag, exynos_pmu_bsh,
+		EXYNOS_PMU_DEBUG_CLKOUT, 0x900);
+#endif
+#ifdef EXYNOS5
+	bus_space_write_4(&exynos_bs_tag, exynos_pmu_bsh,
+		EXYNOS_PMU_DEBUG_CLKOUT, 0x1000);
+#endif
+}
+
+
 void
 exynos_clocks_bootstrap(void)
 {
-#ifdef EXYNOS4
-	if (IS_EXYNOS4_P()) {
-		cpu_freq_settings = cpu_freq_settings_exynos4;
-		ncpu_freq_settings = __arraycount(cpu_freq_settings_exynos4);
-	}
-#endif
-#ifdef EXYNOS5
-	if (IS_EXYNOS5_P()) {
-		cpu_freq_settings = cpu_freq_settings_exynos5;
-		ncpu_freq_settings = __arraycount(cpu_freq_settings_exynos5);
-	}
-#endif
 	KASSERT(ncpu_freq_settings != 0);
 	KASSERT(ncpu_freq_settings < NFRQS);
 
@@ -510,6 +494,9 @@ exynos_clocks_bootstrap(void)
 
 	/* set max cpufreq */
 	exynos_set_cpufreq(&cpu_freq_settings[ncpu_freq_settings-1]);
+
+	/* set external USB frequency to XCLKOUT */
+	exynos_init_clkout_for_usb();
 }
 
 
@@ -518,25 +505,11 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 {
 	int error;
 	size_t core_size, audiocore_size;
-	size_t audiocore_pbase, audiocore_vbase __diagused;
-
-#ifdef EXYNOS4
-	if (IS_EXYNOS4_P()) {
-		core_size = EXYNOS4_CORE_SIZE;
-		audiocore_size = EXYNOS4_AUDIOCORE_SIZE;
-		audiocore_pbase = EXYNOS4_AUDIOCORE_PBASE;
-		audiocore_vbase = EXYNOS4_AUDIOCORE_VBASE;
-	}
-#endif
-
-#ifdef EXYNOS5
-	if (IS_EXYNOS5_P()) {
-		core_size = EXYNOS5_CORE_SIZE;
-		audiocore_size = EXYNOS5_AUDIOCORE_SIZE;
-		audiocore_pbase = EXYNOS5_AUDIOCORE_PBASE;
-		audiocore_vbase = EXYNOS5_AUDIOCORE_VBASE;
-	}
-#endif
+	bus_addr_t audiocore_pbase;
+	bus_addr_t audiocore_vbase __diagused;
+	bus_addr_t exynos_wdt_offset;
+	bus_addr_t exynos_pmu_offset;
+	bus_addr_t exynos_cmu_apll_offset;
 
 	/* set up early console so we can use printf() and friends */
 #ifdef EXYNOS_CONSOLE_EARLY
@@ -544,6 +517,33 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 	cn_tab = &exynos_earlycons;
 	printf("Exynos early console operational\n\n");
 #endif
+
+#ifdef EXYNOS4
+	core_size = EXYNOS4_CORE_SIZE;
+	audiocore_size = EXYNOS4_AUDIOCORE_SIZE;
+	audiocore_pbase = EXYNOS4_AUDIOCORE_PBASE;
+	audiocore_vbase = EXYNOS4_AUDIOCORE_VBASE;
+	exynos_wdt_offset = EXYNOS4_WDT_OFFSET;
+	exynos_pmu_offset = EXYNOS4_PMU_OFFSET;
+	exynos_cmu_apll_offset = EXYNOS4_CMU_APLL;
+
+	cpu_freq_settings = cpu_freq_settings_exynos4;
+	ncpu_freq_settings = __arraycount(cpu_freq_settings_exynos4);
+#endif
+
+#ifdef EXYNOS5
+	core_size = EXYNOS5_CORE_SIZE;
+	audiocore_size = EXYNOS5_AUDIOCORE_SIZE;
+	audiocore_pbase = EXYNOS5_AUDIOCORE_PBASE;
+	audiocore_vbase = EXYNOS5_AUDIOCORE_VBASE;
+	exynos_wdt_offset = EXYNOS5_WDT_OFFSET;
+	exynos_pmu_offset = EXYNOS5_PMU_OFFSET;
+	exynos_cmu_apll_offset = EXYNOS5_CMU_APLL;
+
+	cpu_freq_settings = cpu_freq_settings_exynos5;
+	ncpu_freq_settings = __arraycount(cpu_freq_settings_exynos5);
+#endif
+
 	/* map in the exynos io registers */
 	error = bus_space_map(&exynos_bs_tag, EXYNOS_CORE_PBASE,
 		core_size, 0, &exynos_core_bsh);
@@ -558,6 +558,26 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 		panic("%s: failed to map in Exynos audio SFR registers: %d",
 			__func__, error);
 	KASSERT(exynos_audiocore_bsh == audiocore_vbase);
+
+	/* map in commonly used subregions and common used register banks */
+	error = bus_space_subregion(&exynos_bs_tag, exynos_core_bsh,
+		exynos_wdt_offset, EXYNOS_BLOCK_SIZE, &exynos_wdt_bsh);
+	if (error)
+		panic("%s: failed to subregion wdt registers: %d",
+			__func__, error);
+
+	error = bus_space_subregion(&exynos_bs_tag, exynos_core_bsh,
+		exynos_pmu_offset, EXYNOS_BLOCK_SIZE, &exynos_pmu_bsh);
+	if (error)
+		panic("%s: failed to subregion pmu registers: %d",
+			__func__, error);
+
+	exynos_cmu_bsh = exynos_core_bsh;
+	error = bus_space_subregion(&exynos_bs_tag, exynos_cmu_bsh,
+		exynos_cmu_apll_offset, 0xfff, &exynos_cmu_apll_bsh);
+	if (error)
+		panic("%s: failed to subregion cmu apll registers: %d",
+			__func__, error);
 
 	/* init bus dma tags */
 	exynos_dma_bootstrap(physmem * PAGE_SIZE);
@@ -590,7 +610,7 @@ exynos_device_register(device_t self, void *aux)
 		extern uint32_t exynos_soc_id;
 
 		switch (EXYNOS_PRODUCT_ID(exynos_soc_id)) {
-#if defined(EXYNOS5)
+#ifdef EXYNOS5
 		case 0xe5410:
 			/* offsets not changed on matt's request */
 #if 0
@@ -600,7 +620,7 @@ exynos_device_register(device_t self, void *aux)
 #endif
 			break;
 #endif
-#if defined(EXYNOS4)
+#ifdef EXYNOS4
 		case 0xe4410:
 		case 0xe4412: {
 			struct mpcore_attach_args * const mpcaa = aux;
