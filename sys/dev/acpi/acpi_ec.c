@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.71 2011/07/24 20:15:09 jakllsch Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.71.8.1 2014/09/29 18:28:15 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.71 2011/07/24 20:15:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.71.8.1 2014/09/29 18:28:15 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -265,38 +265,40 @@ acpiec_attach(device_t parent, device_t self, void *aux)
 	if (ec_singleton != NULL) {
 		aprint_naive(": using %s\n", device_xname(ec_singleton));
 		aprint_normal(": using %s\n", device_xname(ec_singleton));
-		if (!pmf_device_register(self, NULL, NULL))
-			aprint_error_dev(self, "couldn't establish power handler\n");
-		return;
+		goto fail0;
 	}
 
 	if (!acpiec_parse_gpe_package(self, aa->aa_node->ad_handle,
 				      &gpe_handle, &gpebit))
-		return;
+		goto fail0;
 
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
 	    &ec_res, &acpi_resource_parse_ops_default);
 	if (rv != AE_OK) {
 		aprint_error_dev(self, "resource parsing failed: %s\n",
 		    AcpiFormatException(rv));
-		return;
+		goto fail0;
 	}
 
 	if ((io0 = acpi_res_io(&ec_res, 0)) == NULL) {
 		aprint_error_dev(self, "no data register resource\n");
-		goto free_res;
+		goto fail1;
 	}
 	if ((io1 = acpi_res_io(&ec_res, 1)) == NULL) {
 		aprint_error_dev(self, "no CSR register resource\n");
-		goto free_res;
+		goto fail1;
 	}
 
 	acpiec_common_attach(parent, self, aa->aa_node->ad_handle,
 	    aa->aa_iot, io1->ar_base, aa->aa_iot, io0->ar_base,
 	    gpe_handle, gpebit);
 
-free_res:
 	acpi_resource_cleanup(&ec_res);
+	return;
+
+fail1:	acpi_resource_cleanup(&ec_res);
+fail0:	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static void
@@ -395,6 +397,8 @@ post_csr_map:
 	bus_space_unmap(sc->sc_csr_st, sc->sc_csr_sh, 1);
 post_data_map:
 	bus_space_unmap(sc->sc_data_st, sc->sc_data_sh, 1);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static bool
