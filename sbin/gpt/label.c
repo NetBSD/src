@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.14 2013/11/28 01:37:14 jnemeth Exp $");
+__RCSID("$NetBSD: label.c,v 1.15 2014/09/29 05:56:43 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -48,10 +48,11 @@ static int all;
 static uuid_t type;
 static off_t block, size;
 static unsigned int entry;
-static uint8_t *name;
+static uint8_t *name, *xlabel;
 
 const char labelmsg1[] = "label -a <-l label | -f file> device ...";
-const char labelmsg2[] = "label [-b blocknr] [-i index] [-s sectors]";
+const char labelmsg2[] = "label [-b blocknr] [-i index] [-L label] "
+	"[-s sectors]";
 const char labelmsg3[] = "      [-t uuid] <-l label | -f file> device ...";
 
 __dead static void
@@ -113,6 +114,12 @@ label(int fd)
 		hdr = gpt->map_data;
 		ent = (void*)((char*)tbl->map_data + i *
 		    le32toh(hdr->hdr_entsz));
+
+		if (xlabel != NULL)
+			if (strcmp((char *)xlabel,
+			    (char *)utf16_to_utf8(ent->ent_name)) != 0)
+				continue;
+
 		le_uuid_dec(ent->ent_type, &uuid);
 		if (!uuid_is_nil(&type, NULL) &&
 		    !uuid_equal(&type, &uuid, NULL))
@@ -184,7 +191,7 @@ cmd_label(int argc, char *argv[])
 	int64_t human_num;
 
 	/* Get the label options */
-	while ((ch = getopt(argc, argv, "ab:f:i:l:s:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "ab:f:i:L:l:s:t:")) != -1) {
 		switch(ch) {
 		case 'a':
 			if (all > 0)
@@ -212,6 +219,11 @@ cmd_label(int argc, char *argv[])
 			if (*p != 0 || entry < 1)
 				usage_label();
 			break;
+		case 'L':
+			if (xlabel != NULL)
+				usage_label();
+			xlabel = (uint8_t *)strdup(optarg);
+			break;
 		case 'l':
 			if (name != NULL)
 				usage_label();
@@ -236,7 +248,8 @@ cmd_label(int argc, char *argv[])
 	}
 
 	if (!all ^
-	    (block > 0 || entry > 0 || size > 0 || !uuid_is_nil(&type, NULL)))
+	    (block > 0 || entry > 0 || xlabel != NULL || size > 0 ||
+	    !uuid_is_nil(&type, NULL)))
 		usage_label();
 
 	if (name == NULL || argc == optind)
