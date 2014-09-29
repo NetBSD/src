@@ -24,12 +24,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: create.c,v 1.7 2013/12/04 20:15:51 jakllsch Exp $");
+__RCSID("$NetBSD: create.c,v 1.8 2014/09/29 20:28:57 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -99,7 +103,7 @@ create(int fd)
 			return;
 		}
 		mbr = gpt_read(fd, 0LL, 1);
-		bzero(mbr, sizeof(*mbr));
+		memset(mbr, 0, sizeof(*mbr));
 		mbr->mbr_sig = htole16(MBR_SIG);
 		mbr->mbr_part[0].part_shd = 0x00;
 		mbr->mbr_part[0].part_ssect = 0x02;
