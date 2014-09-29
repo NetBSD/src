@@ -24,12 +24,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.15 2013/12/18 03:20:09 jnemeth Exp $");
+__RCSID("$NetBSD: show.c,v 1.16 2014/09/29 20:28:57 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -223,7 +227,10 @@ show_one(void)
 	map_t *m;
 	struct gpt_ent *ent;
 	const char *s1;
-	char *s2, human_num[5];
+	char *s2;
+#ifdef HN_AUTOSCALE
+	char *human_num[5];
+#endif
 
 	for (m = map_first(); m != NULL; m = m->map_next)
 		if (entry == m->map_index)
@@ -236,6 +243,7 @@ show_one(void)
 	ent = m->map_data;
 
 	printf("Details for index %d:\n", entry);
+#ifdef HN_AUTOSCALE
 	if (humanize_number(human_num, 5, (int64_t)(m->map_start * secsz),
 	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
 		human_num[0] = '\0';
@@ -243,13 +251,16 @@ show_one(void)
 		printf("Start: %llu (%s)\n", (long long)m->map_start,
 		    human_num);
 	else
+#endif
 		printf("Start: %llu\n", (long long)m->map_start);
+#ifdef HN_AUTOSCALE
 	if (humanize_number(human_num, 5, (int64_t)(m->map_size * secsz),
 	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
 		human_num[0] = '\0';
 	if (human_num[0] != '\0')
 		printf("Size: %llu (%s)\n", (long long)m->map_size, human_num);
 	else
+#endif
 		printf("Size: %llu\n", (long long)m->map_size);
 
 	le_uuid_dec(ent->ent_type, &type);
