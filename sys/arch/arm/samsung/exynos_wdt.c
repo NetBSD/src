@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_wdt.c,v 1.4 2014/04/19 16:43:08 reinoud Exp $	*/
+/*	$NetBSD: exynos_wdt.c,v 1.5 2014/09/29 14:47:52 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "exynos_wdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.4 2014/04/19 16:43:08 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.5 2014/09/29 14:47:52 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.4 2014/04/19 16:43:08 reinoud Exp $
 
 #include <dev/sysmon/sysmonvar.h>
 
+#include <arm/samsung/exynos_io.h>
 #include <arm/samsung/exynos_reg.h>
 #include <arm/samsung/exynos_var.h>
 
@@ -268,24 +269,12 @@ void
 exynos_wdt_reset(void)
 {
 	bus_space_tag_t bst = &exynos_bs_tag;
-	bus_space_handle_t bsh = exynos_core_bsh;
-	bus_addr_t wdt_offset = 0;
-#ifdef EXYNOS4
-	if (IS_EXYNOS4_P()) {
-		wdt_offset = EXYNOS4_WDT_OFFSET;
-	}
-#endif
-#ifdef EXYNOS5
-	if (IS_EXYNOS5_P()) {
-		wdt_offset = EXYNOS5_WDT_OFFSET;
-	}
-#endif
-	KASSERT(wdt_offset);
-	
+	bus_space_handle_t bsh = exynos_wdt_bsh;
+
 	(void) splhigh();
-	bus_space_write_4(bst, bsh, wdt_offset + EXYNOS_WDT_WTCON, 0);
-	bus_space_write_4(bst, bsh, wdt_offset + EXYNOS_WDT_WTCNT, 1);
-	bus_space_write_4(bst, bsh, wdt_offset + EXYNOS_WDT_WTCON,
+	bus_space_write_4(bst, bsh, EXYNOS_WDT_WTCON, 0);
+	bus_space_write_4(bst, bsh, EXYNOS_WDT_WTCNT, 1);
+	bus_space_write_4(bst, bsh, EXYNOS_WDT_WTCON,
 	   WTCON_ENABLE | WTCON_RESET_ENABLE);
 }
 
