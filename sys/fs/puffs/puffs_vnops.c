@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.186 2014/09/11 07:59:14 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.187 2014/09/30 10:15:03 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.186 2014/09/11 07:59:14 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.187 2014/09/30 10:15:03 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1428,7 +1428,7 @@ puffs_vnop_reclaim(void *v)
 		if (__predict_true(VPTOPP(vp)->pn_parent != NULL))
 			vrele(VPTOPP(vp)->pn_parent);
 		else
-			KASSERT(vp->v_vflag & VV_ROOT);
+			KASSERT(vp->v_type == VNON || (vp->v_vflag & VV_ROOT));
 	}
 
 	puffs_putvnode(vp);
