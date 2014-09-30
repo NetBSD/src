@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail5.nr,v 1.5 2003/08/07 11:14:45 agc Exp $
+.\"	$NetBSD: mail5.nr,v 1.6 2014/09/30 20:54:11 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,7 +58,7 @@ consists of a list of message numbers, ranges, and names,
 separated by spaces or tabs.  Message numbers may be either
 decimal numbers, which directly specify messages, or one of the
 special characters
-.q \(ua
+.q \(ha
 .q "."
 or
 .q "$"
