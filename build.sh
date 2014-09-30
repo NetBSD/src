@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.297 2014/09/19 17:59:57 matt Exp $
+#	$NetBSD: build.sh,v 1.298 2014/09/30 14:57:51 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -204,7 +204,7 @@ fi
 if test -n "$errmsg"; then
     if $re_exec_allowed; then
 	for othershell in \
-	    "${HOST_SH}" /usr/xpg4/bin/sh ksh ksh88 mksh pdksh bash dash
+	    "${HOST_SH}" /usr/xpg4/bin/sh ksh ksh88 mksh pdksh dash bash
 	    # NOTE: some shells known not to work are:
 	    # any shell using csh syntax;
 	    # Solaris /bin/sh (missing many modern features);
@@ -1870,7 +1870,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.297 2014/09/19 17:59:57 matt Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.298 2014/09/30 14:57:51 apb Exp $
 # with these arguments: ${_args}
 #
 
