@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.1 2014/09/30 17:59:59 christos Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.2 2014/09/30 22:56:36 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.1 2014/09/30 17:59:59 christos Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.2 2014/09/30 22:56:36 jnemeth Exp $");
 #endif
 
 #include <stdio.h>
@@ -133,6 +133,17 @@ gpt_uuid_symbolic(char *buf, size_t bufsiz, const struct dce_uuid *u)
 	return -1;
 }
 
+static int
+gpt_uuid_descriptive(char *buf, size_t bufsiz, const struct dce_uuid *u)
+{
+	size_t i;
+
+	for (i = 0; i < __arraycount(gpt_nv); i++)
+		if (memcmp(&gpt_nv[i].u, u, sizeof(*u)) == 0)
+			return strlcpy(buf, gpt_nv[i].d, bufsiz);
+	return -1;
+}
+
 int
 gpt_uuid_snprintf(char *buf, size_t bufsiz, const char *fmt,
     const gpt_uuid_t uu)
@@ -143,6 +154,11 @@ gpt_uuid_snprintf(char *buf, size_t bufsiz, const char *fmt,
 	if (fmt[1] == 's') {
 		int r;
 		if ((r = gpt_uuid_symbolic(buf, bufsiz, &u)) != -1)
+			return r;
+	}
+	if (fmt[1] == 'l') {
+		int r;
+		if ((r = gpt_uuid_descriptive(buf, bufsiz, &u)) != -1)
 			return r;
 	}
 	return gpt_uuid_numeric(buf, bufsiz, &u);
