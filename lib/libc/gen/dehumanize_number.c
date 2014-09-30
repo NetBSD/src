@@ -1,4 +1,4 @@
-/*	$NetBSD: dehumanize_number.c,v 1.4 2012/03/13 21:13:34 christos Exp $	*/
+/*	$NetBSD: dehumanize_number.c,v 1.5 2014/09/30 17:59:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -29,9 +29,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef HAVE_NBTOOLS_CONFIG_H
+#include "nbtools_config.h"
+#endif /* HAVE_NBTOOLS_CONFIG_H */
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dehumanize_number.c,v 1.4 2012/03/13 21:13:34 christos Exp $");
+__RCSID("$NetBSD: dehumanize_number.c,v 1.5 2014/09/30 17:59:06 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -111,7 +115,9 @@ dehumanize_number(const char *str, int64_t *size)
 		return -1; /* Out of range. */
 	}
 	tmp *= multiplier;
+#ifdef _DIAGASSERT
 	_DIAGASSERT(__type_fit(int64_t, tmp));
+#endif
 	*size = (int64_t)tmp;
 
 	return 0;
