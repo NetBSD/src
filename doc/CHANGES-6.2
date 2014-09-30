@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.134 2014/09/21 21:29:57 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.135 2014/09/30 00:30:00 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -3763,3 +3763,55 @@ share/zoneinfo/zone1970.tab			patch
 	Update to tzdata2014g.
 	[apb, ticket #1155]
 
+share/man/man9/callout.9			1.27
+
+	callout_ack returns void, not bool.
+	[riastradh, ticket #1119]
+
+sys/dev/pci/radeonfb.c				1.84
+sys/dev/wsfb/genfb.c				1.54
+
+	Use printf("%s", s), not printf(s), in genfb and radeonfb.
+	[riastradh, ticket #1120]
+
+sys/dev/acpi/acpi_ec.c				1.73
+
+	Register a null power handler if acpiec fails to attach.
+	[riastradh, ticket #1122]
+
+sys/dev/pci/ichsmb.c				1.37
+
+	Register a null pmf handler even if we failed to attach.
+	Keeps ichsmb(4) from preventing suspend even if it's broken because
+	of ichlpcib(4) grodiness.
+	[riastradh, ticket #1123]
+
+share/man/man9/uvm_map.9			1.3-1.5
+
+	Split large paragraph about uobj/uoffset into a bulleted list.
+	Mention that uvm_map doesn't add a reference to uobj.  Evidently this
+	information is important, since I just wasted countless hours over
+	the past months investigating kernel memory corruption arising from a
+	failure to notice this fact. Miscellaneous markup, speling and grammar
+	fix, Americanize a spelling.
+	[riastradh, ticket #1125]
+
+share/man/man9/uvm_km.9				1.3
+
+	Fix typo in uvm_km(9): there is no struct vm_map_kernel.
+	[riastradh, ticket #1126]
+
+share/man/man3/attribute.3			1.16
+
+	Fix note on __predict_true: predicts nonzero, not 1 specifically.
+	[riastradh, ticket #1127]
+
+sys/arch/amd64/conf/GENERIC			1.385
+
+	Enable options VND_COMPRESSION in amd64/GENERIC.
+	[riastradh, ticket #1129]
+
+share/man/man9/iic.9				1.10
+
+	Correct return type of iic_release_bus.
+	[riastradh, ticket #1130]
