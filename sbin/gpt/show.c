@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.20 2014/09/30 20:23:23 jnemeth Exp $");
+__RCSID("$NetBSD: show.c,v 1.21 2014/09/30 22:56:36 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -135,8 +135,10 @@ show(void)
 				printf("- %s", buf);
 			} else {
 				char buf[128];
-				gpt_uuid_snprintf(
-				    buf, sizeof(buf), "%s", ent->ent_type);
+				if (show_uuid || gpt_uuid_snprintf(buf,
+				    sizeof(buf), "%ls", ent->ent_type) == -1)
+					gpt_uuid_snprintf(buf, sizeof(buf),
+					    "%d", ent->ent_type);
 				printf("- %s", buf);
 			}
 			break;
