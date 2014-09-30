@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.17 2014/09/29 22:22:03 christos Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.18 2014/09/30 02:12:55 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -126,28 +126,28 @@ migrate_disklabel(int fd, off_t start, struct gpt_ent *ent)
 			continue;
 		case FS_SWAP: {
 			static const uuid_t swap = GPT_ENT_TYPE_FREEBSD_SWAP;
-			le_uuid_enc(ent->ent_type, &swap);
+			uuid_enc_le(ent->ent_type, &swap);
 			utf8_to_utf16((const uint8_t *)"FreeBSD swap partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FS_BSDFFS: {
 			static const uuid_t ufs = GPT_ENT_TYPE_FREEBSD_UFS;
-			le_uuid_enc(ent->ent_type, &ufs);
+			uuid_enc_le(ent->ent_type, &ufs);
 			utf8_to_utf16((const uint8_t *)"FreeBSD UFS partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FREEBSD_FS_VINUM: {
 			static const uuid_t vinum = GPT_ENT_TYPE_FREEBSD_VINUM;
-			le_uuid_enc(ent->ent_type, &vinum);
+			uuid_enc_le(ent->ent_type, &vinum);
 			utf8_to_utf16((const uint8_t *)"FreeBSD vinum partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FREEBSD_FS_ZFS: {
 			static const uuid_t zfs = GPT_ENT_TYPE_FREEBSD_ZFS;
-			le_uuid_enc(ent->ent_type, &zfs);
+			uuid_enc_le(ent->ent_type, &zfs);
 			utf8_to_utf16((const uint8_t *)"FreeBSD ZFS partition",
 			    ent->ent_name, 36);
 			break;
@@ -208,42 +208,42 @@ migrate_netbsd_disklabel(int fd, off_t start, struct gpt_ent *ent)
 			continue;
 		case FS_SWAP: {
 			static const uuid_t swap = GPT_ENT_TYPE_NETBSD_SWAP;
-			le_uuid_enc(ent->ent_type, &swap);
+			uuid_enc_le(ent->ent_type, &swap);
 			utf8_to_utf16((const uint8_t *)"NetBSD swap partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FS_BSDFFS: {
 			static const uuid_t ufs = GPT_ENT_TYPE_NETBSD_FFS;
-			le_uuid_enc(ent->ent_type, &ufs);
+			uuid_enc_le(ent->ent_type, &ufs);
 			utf8_to_utf16((const uint8_t *)"NetBSD FFS partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FS_BSDLFS: {
 			static const uuid_t zfs = GPT_ENT_TYPE_NETBSD_LFS;
-			le_uuid_enc(ent->ent_type, &zfs);
+			uuid_enc_le(ent->ent_type, &zfs);
 			utf8_to_utf16((const uint8_t *)"NetBSD LFS partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FS_RAID: {
 			static const uuid_t zfs = GPT_ENT_TYPE_NETBSD_RAIDFRAME;
-			le_uuid_enc(ent->ent_type, &zfs);
+			uuid_enc_le(ent->ent_type, &zfs);
 			utf8_to_utf16((const uint8_t *)"NetBSD RAIDframe partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FS_CCD: {
 			static const uuid_t zfs = GPT_ENT_TYPE_NETBSD_CCD;
-			le_uuid_enc(ent->ent_type, &zfs);
+			uuid_enc_le(ent->ent_type, &zfs);
 			utf8_to_utf16((const uint8_t *)"NetBSD CCD partition",
 			    ent->ent_name, 36);
 			break;
 		}
 		case FS_CGD: {
 			static const uuid_t zfs = GPT_ENT_TYPE_NETBSD_CGD;
-			le_uuid_enc(ent->ent_type, &zfs);
+			uuid_enc_le(ent->ent_type, &zfs);
 			utf8_to_utf16((const uint8_t *)"NetBSD CGD partition",
 			    ent->ent_name, 36);
 			break;
@@ -351,13 +351,13 @@ migrate(int fd)
 	 * XXX struct gpt_hdr is not a multiple of 8 bytes in size and thus
 	 * contains padding we must not include in the size.
 	 */
-	hdr->hdr_size = htole32(GPT_SIZE);
+	hdr->hdr_size = htole32(GPT_HDR_SIZE);
 	hdr->hdr_lba_self = htole64(gpt->map_start);
 	hdr->hdr_lba_alt = htole64(tpg->map_start);
 	hdr->hdr_lba_start = htole64(tbl->map_start + blocks);
 	hdr->hdr_lba_end = htole64(lbt->map_start - 1LL);
 	uuid_create(&uuid, NULL);
-	le_uuid_enc(hdr->hdr_uuid, &uuid);
+	uuid_enc_le(hdr->hdr_guid, &uuid);
 	hdr->hdr_lba_table = htole64(tbl->map_start);
 	hdr->hdr_entries = htole32((blocks * secsz) / sizeof(struct gpt_ent));
 	if (le32toh(hdr->hdr_entries) > parts)
@@ -367,7 +367,7 @@ migrate(int fd)
 	ent = tbl->map_data;
 	for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
 		uuid_create(&uuid, NULL);
-		le_uuid_enc(ent[i].ent_uuid, &uuid);
+		uuid_enc_le(ent[i].ent_guid, &uuid);
 	}
 
 	/* Mirror partitions. */
@@ -383,7 +383,7 @@ migrate(int fd)
 		case MBR_PTYPE_386BSD: {	/* FreeBSD */
 			if (slice) {
 				static const uuid_t freebsd = GPT_ENT_TYPE_FREEBSD;
-				le_uuid_enc(ent->ent_type, &freebsd);
+				uuid_enc_le(ent->ent_type, &freebsd);
 				ent->ent_lba_start = htole64((uint64_t)start);
 				ent->ent_lba_end = htole64(start + size - 1LL);
 				utf8_to_utf16((const uint8_t *)"FreeBSD disklabel partition",
@@ -398,7 +398,7 @@ migrate(int fd)
 			break;
 		case MBR_PTYPE_EFI: {
 			static const uuid_t efi_slice = GPT_ENT_TYPE_EFI;
-			le_uuid_enc(ent->ent_type, &efi_slice);
+			uuid_enc_le(ent->ent_type, &efi_slice);
 			ent->ent_lba_start = htole64((uint64_t)start);
 			ent->ent_lba_end = htole64(start + size - 1LL);
 			utf8_to_utf16((const uint8_t *)"EFI system partition",

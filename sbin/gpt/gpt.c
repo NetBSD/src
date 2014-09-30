@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.32 2014/09/29 21:04:34 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.33 2014/09/30 02:12:55 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -622,7 +622,7 @@ gpt_gpt(int fd, off_t lba, int found)
 		size = le64toh(ent->ent_lba_end) - le64toh(ent->ent_lba_start) +
 		    1LL;
 		if (verbose > 2) {
-			le_uuid_dec(&ent->ent_type, &type);
+			uuid_dec_le(&ent->ent_type, &type);
 			uuid_to_string(&type, &s, NULL);
 			warnx(
 	"%s: GPT partition: type=%s, start=%llu, size=%llu", device_name, s,

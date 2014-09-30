@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: remove.c,v 1.14 2014/09/29 20:28:57 christos Exp $");
+__RCSID("$NetBSD: remove.c,v 1.15 2014/09/30 02:12:55 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -123,14 +123,14 @@ rem(int fd)
 			    (char *)utf16_to_utf8(ent->ent_name)) != 0)
 				continue;
 
-		le_uuid_dec(ent->ent_type, &uuid);
+		uuid_dec_le(ent->ent_type, &uuid);
 		if (!uuid_is_nil(&type, NULL) &&
 		    !uuid_equal(&type, &uuid, NULL))
 			continue;
 
 		/* Remove the primary entry by clearing the partition type. */
 		uuid_create_nil(&uuid, NULL);
-		le_uuid_enc(ent->ent_type, &uuid);
+		uuid_enc_le(ent->ent_type, &uuid);
 
 		hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
@@ -145,7 +145,7 @@ rem(int fd)
 		    le32toh(hdr->hdr_entsz));
 
 		/* Remove the secondary entry. */
-		le_uuid_enc(ent->ent_type, &uuid);
+		uuid_enc_le(ent->ent_type, &uuid);
 
 		hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
