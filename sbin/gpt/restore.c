@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.5 2014/09/30 02:12:55 christos Exp $");
+__RCSID("$NetBSD: restore.c,v 1.6 2014/09/30 17:59:59 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -72,7 +72,7 @@ usage_restore(void)
 static void
 restore(int fd)
 {
-	uuid_t gpt_guid, uuid;
+	gpt_uuid_t uuid;
 	off_t firstdata, last, lastdata, gpe_start, gpe_end;
 	map_t *map;
 	struct mbr *mbr;
@@ -85,10 +85,9 @@ restore(int fd)
 	prop_array_t mbr_array, gpt_array;
 	prop_number_t propnum;
 	prop_string_t propstr;
-	int entries, gpt_size, rc;
+	int entries, gpt_size;
 	const char *s;
 	void *secbuf;
-	uint32_t status;
 
 	last = mediasz / secsz - 1LL;
 
@@ -146,13 +145,10 @@ restore(int fd)
 	propstr = prop_dictionary_get(gpt_dict, "guid");
 	PROP_ERR(propstr);
 	s = prop_string_cstring_nocopy(propstr);
-	uuid_from_string(s, &uuid, &status);
-	if (status != uuid_s_ok) {
+	if (gpt_uuid_parse(s, uuid) != 0) {
 		warnx("%s: not able to convert to an UUID\n", s);
 		return;
 	}
-	uuid_enc_le(&gpt_guid, &uuid);
-
 	firstdata = gpt_size + 2;		/* PMBR and GPT header */
 	lastdata = last - gpt_size - 1;		/* alt. GPT table and header */
 
@@ -166,17 +162,11 @@ restore(int fd)
 		propstr = prop_dictionary_get(gpt_dict, "type");
 		PROP_ERR(propstr);
 		s = prop_string_cstring_nocopy(propstr);
-		uuid_from_string(s, &uuid, &status);
-		if (status != uuid_s_ok) {
+		if (gpt_uuid_parse(s, uuid) != 0) {
 			warnx("%s: not able to convert to an UUID\n", s);
 			return;
 		}
-		rc = uuid_is_nil(&uuid, &status);
-		if (status != uuid_s_ok) {
-			warnx("%s: not able to convert to an UUID\n", s);
-			return;
-		}
-		if (rc == 1)
+		if (gpt_uuid_is_nil(uuid))
 			continue;
 		propnum = prop_dictionary_get(gpt_dict, "start");
 		PROP_ERR(propnum);
@@ -310,21 +300,17 @@ restore(int fd)
 		propstr = prop_dictionary_get(gpt_dict, "type");
 		PROP_ERR(propstr);
 		s = prop_string_cstring_nocopy(propstr);
-		uuid_from_string(s, &uuid, &status);
-		if (status != uuid_s_ok) {
+		if (gpt_uuid_parse(s, ent.ent_type) != 0) {
 			warnx("%s: not able to convert to an UUID\n", s);
 			return;
 		}
-		uuid_enc_le(&ent.ent_type, &uuid);
 		propstr = prop_dictionary_get(gpt_dict, "guid");
 		PROP_ERR(propstr);
 		s = prop_string_cstring_nocopy(propstr);
-		uuid_from_string(s, &uuid, &status);
-		if (status != uuid_s_ok) {
+		if (gpt_uuid_parse(s, ent.ent_guid) != 0) {
 			warnx("%s: not able to convert to an UUID\n", s);
 			return;
 		}
-		uuid_enc_le(&ent.ent_guid, &uuid);
 		propnum = prop_dictionary_get(gpt_dict, "start");
 		PROP_ERR(propnum);
 		ent.ent_lba_start =
@@ -369,7 +355,7 @@ restore(int fd)
 	hdr->hdr_lba_alt = htole64(last);
 	hdr->hdr_lba_start = htole64(firstdata);
 	hdr->hdr_lba_end = htole64(lastdata);
-	memcpy(hdr->hdr_guid, &gpt_guid, sizeof(hdr->hdr_guid));
+	gpt_uuid_copy(hdr->hdr_guid, uuid);
 	hdr->hdr_lba_table = htole64(2);
 	hdr->hdr_entries = htole32(entries);
 	hdr->hdr_entsz = htole32(sizeof(struct gpt_ent));
