@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.2 2014/09/24 16:17:39 apb Exp $
+$NetBSD: README,v 1.3 2014/09/30 07:34:50 apb Exp $
 
 Notes for NetBSD src/tools
 
@@ -7,9 +7,9 @@ Background
 ==========
 
 Several programs that are part of NetBSD are also built as tools.  Such
-programs are typically built twice, once as a tool and once as part of
-the main build.  Tools are relevant only when USETOOLS=yes, which is the
-default.
+programs are typically built twice: once as a tool and once as part of
+the release build.  Tools are relevant only when the make(1) variable
+USETOOLS=yes, which is the default for most NetBSD builds.
 
 Tools are built on the host platform, using the host compiler,
 and will run on the host platform during the cross-build of the
@@ -27,13 +27,20 @@ Portability
 
 Programs that are built as tools need to be more portable than other
 parts of NetBSD, because they will need to run on the host platform.
-They should restrict themselves to features that are defined in relevant
-standards, and features that are provided by the src/tools/compat
-framework.
 
-It is usually easy to add new definitions to src/tools/compat, and that
-is usually better than adding compatibility definitions to individual
-tools.
+Tools should restrict themselves to C language features that are defined
+in C89 (ISO 9899-1989); they should avoid using C99 features.
+
+Tools may library features defined in C89 and in POSIX (IEEE Std 1003.1)
+(XXX year?), and features that are provided by the src/tools/compat
+framework described below.
+
+If a tool attempts to use a feature that is not available on the host
+platform, then the tools build will fail.  This can be addressed by
+changing the tool to avoid that feature, or by adding the feature to the
+src/tools/compat framework.  It is usually easy to add new macros or
+functions to src/tools/compat, and that is usually better than adding
+compatibility definitions to individual tools.
 
 
 Compatibility framework
@@ -66,48 +73,68 @@ ${TOOLDIR}/share/compat/defs.mk
 Adapting Makefiles for use with tools
 =====================================
 
-Makefiles under src/tools/*/Makefile should define HOSTPROG in the
-make environment.  This is typically done by tools/Makefile.hostprog,
+Makefiles under src/tools/*/Makefile should define the HOSTPROG
+variable.  This is typically done by tools/Makefile.hostprog,
 which is directly or indirectly included by all Makefiles in
 src/tools/*/Makefile.
 
-Makefiles in the non-tools part of the src tree make use tests such as
-".if defined(HOSTPROG)" to test whether or not the associated program
-is being built as a tool, and to modify their behaviour accordingly.
+Makefiles in the non-tools part of the src tree can test whether or not
+the HOSTPROG variable is defined, in order tell the difference between
+building a tool and building part of a NetBSD release, and they may
+alter their behavior accordingly.
+
 For example, the Makefile may conditionally refrain from compiling and
 linking certain files, and the Makefile may conditionally pass macros to
 the compiler via constructs like this:
 
     .if defined(HOSTPROG)
-    CPPFLAGS+= -DWITH_FEATURE_X=0
+    CPPFLAGS+= -DWITH_FEATURE_X=0 # exclude feature X from tools build
     .else
-    CPPFLAGS+= -DWITH_FEATURE_X=1
+    CPPFLAGS+= -DWITH_FEATURE_X=1 # include feature X in release build
     .endif
 
 Adapting Programs for use with tools
 ====================================
 
-The compiler should automatically be invoked with
--DHAVE_NBTOOL_CONFIG_H=1, as a result of settings in
-${TOOLDIR}/share/compat/defs.mk, which should be included from
-src/tools/Makefile.host, which should be included directly or indirectly
-from src/tools/*/Makefile.
+When a tool is being built, the C compiler should automatically be
+invoked with -DHAVE_NBTOOL_CONFIG_H=1.  This is done as a result of
+settings in ${TOOLDIR}/share/compat/defs.mk, which should be included
+from src/tools/Makefile.host, which should be included directly or
+indirectly from src/tools/*/Makefile.
 
-In order to obtain the compatibility macros provided by the tools
-compatibility framework, almost every C source file that is built as
-part of a tool should have lines like this as the first non-comment
-lines:
+A C source file can test whether the HAVE_NBTOOL_CONFIG_H macro is
+defined, in order to tell whether or not it is being compiled as part of
+a tool.
+
+In order to obtain the definitions provided by the tools compatibility
+framework, almost every C source file that is built as part of a tool
+should have lines like these as the first non-comment lines:
 
     #if HAVE_NBTOOL_CONFIG_H
     #include "nbtool_config.h"
-    #endif /* HAVE_NBTOOL_CONFIG_H */
+    #endif
 
-To omit features from the tools version of a program, the program's
-source code should use preprocessor macros that are conditionally passed
-from its Makefile via CPPFLAGS.  For example, it could use something
-like this:
+To omit features from the tools version of a program, the program
+may test the HAVE_NBTOOL_CONFIG_H macro, like this:
+
+    #if HAVE_NBTOOL_CONFIG_H
+       ... code to be used when built as a tool
+    #else
+       ... code to be used when built as part of a release
+    #endif
+
+It is often preferable to use macros whose names refer to the features
+that should be included or omitted.  See the section on "Adapting
+Makefiles for use with tools" for an example in which the Makefile
+passes -DWITH_FEATURE_X=0 or -DWITH_FEATURE_X=1 to the compiler
+according to whether or not the program is being built as a tool.  Then
+the program can use code like this:
 
     #if WITH_FEATURE_X 
-       ...
-    #endif /* WITH_FEATURE_X */
+       ... code to be used when FEATURE X is desired,
+       ... e.g. when being built as part of a release.
+    #else
+       ... code to be used when FEATURE X is not desired,
+       ... e.g. when being built as a tool.
+    #endif
 
