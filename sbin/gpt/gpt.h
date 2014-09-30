@@ -29,16 +29,14 @@
 #ifndef _GPT_H_
 #define	_GPT_H_
 
-#include <sys/endian.h>
 #ifndef HAVE_NBTOOL_CONFIG_H
-#include <sys/disklabel_gpt.h>
+#include <util.h>
 #else
-#include <nbinclude/sys/disklabel_gpt.h>
+#include "opendisk.h"
+#include "namespace.h"
 #endif
 
-#include <uuid.h>
-
-int	parse_uuid(const char *, uuid_t *);
+#include "gpt_uuid.h"
 
 struct mbr_part {
 	uint8_t		part_flag;		/* bootstrap flags */
