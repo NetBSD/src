@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.177 2014/08/10 05:57:31 matt Exp $
+#	$NetBSD: Makefile,v 1.178 2014/09/30 19:38:25 christos Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -113,7 +113,7 @@ SUBDIR += .WAIT texinfo \
 		asn1_compile cksum compile_et db \
 		file lint1 slc \
 		makefs .WAIT menuc mkcsmapper mkesdb mklocale mknod msgc \
-		.WAIT disklabel \
+		.WAIT disklabel gpt \
 		.WAIT paxctl \
 		.WAIT fdisk \
 		.WAIT installboot \
