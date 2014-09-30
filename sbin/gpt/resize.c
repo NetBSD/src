@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.10 2014/09/30 02:12:55 christos Exp $");
+__RCSID("$NetBSD: resize.c,v 1.11 2014/09/30 17:59:59 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -44,7 +44,6 @@ __RCSID("$NetBSD: resize.c,v 1.10 2014/09/30 02:12:55 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <inttypes.h>
 
 #include "map.h"
 #include "gpt.h"
@@ -66,7 +65,6 @@ usage_resize(void)
 static void
 resize(int fd)
 {
-	uuid_t uuid;
 	map_t *gpt, *tpg;
 	map_t *tbl, *lbt;
 	map_t *map;
@@ -108,8 +106,7 @@ resize(int fd)
 	i = entry - 1;
 	ent = (void*)((char*)tbl->map_data + i *
 	    le32toh(hdr->hdr_entsz));
-	uuid_dec_le(ent->ent_type, &uuid);
-	if (uuid_is_nil(&uuid, NULL)) {
+	if (gpt_uuid_is_nil(ent->ent_type)) {
 		warnx("%s: error: entry at index %u is unused",
 		    device_name, entry);
 		return;

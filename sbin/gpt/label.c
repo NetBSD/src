@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.17 2014/09/30 02:12:55 christos Exp $");
+__RCSID("$NetBSD: label.c,v 1.18 2014/09/30 17:59:59 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,9 +47,10 @@ __RCSID("$NetBSD: label.c,v 1.17 2014/09/30 02:12:55 christos Exp $");
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_uuid.h"
 
 static int all;
-static uuid_t type;
+static gpt_uuid_t type;
 static off_t block, size;
 static unsigned int entry;
 static uint8_t *name, *xlabel;
@@ -73,7 +74,6 @@ usage_label(void)
 static void
 label(int fd)
 {
-	uuid_t uuid;
 	map_t *gpt, *tpg;
 	map_t *tbl, *lbt;
 	map_t *m;
@@ -124,9 +124,8 @@ label(int fd)
 			    (char *)utf16_to_utf8(ent->ent_name)) != 0)
 				continue;
 
-		uuid_dec_le(ent->ent_type, &uuid);
-		if (!uuid_is_nil(&type, NULL) &&
-		    !uuid_equal(&type, &uuid, NULL))
+		if (!gpt_uuid_is_nil(type) &&
+		    !gpt_uuid_equal(type, ent->ent_type))
 			continue;
 
 		/* Label the primary entry. */
@@ -241,9 +240,9 @@ cmd_label(int argc, char *argv[])
 				usage_label();
 			break;
 		case 't':
-			if (!uuid_is_nil(&type, NULL))
+			if (!gpt_uuid_is_nil(type))
 				usage_label();
-			if (parse_uuid(optarg, &type) != 0)
+			if (gpt_uuid_parse(optarg, type) != 0)
 				usage_label();
 			break;
 		default:
@@ -253,7 +252,7 @@ cmd_label(int argc, char *argv[])
 
 	if (!all ^
 	    (block > 0 || entry > 0 || xlabel != NULL || size > 0 ||
-	    !uuid_is_nil(&type, NULL)))
+	    !gpt_uuid_is_nil(type)))
 		usage_label();
 
 	if (name == NULL || argc == optind)

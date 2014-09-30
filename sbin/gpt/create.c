@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: create.c,v 1.9 2014/09/30 02:12:55 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.10 2014/09/30 17:59:59 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -66,7 +66,6 @@ usage_create(void)
 static void
 create(int fd)
 {
-	uuid_t uuid;
 	off_t blocks, last;
 	map_t *gpt, *tpg;
 	map_t *tbl, *lbt;
@@ -175,8 +174,7 @@ create(int fd)
 	hdr->hdr_lba_alt = htole64(last);
 	hdr->hdr_lba_start = htole64(tbl->map_start + blocks);
 	hdr->hdr_lba_end = htole64(last - blocks - 1LL);
-	uuid_create(&uuid, NULL);
-	uuid_enc_le(hdr->hdr_guid, &uuid);
+	gpt_uuid_copy(hdr->hdr_guid, gpt_uuid_nil);
 	hdr->hdr_lba_table = htole64(tbl->map_start);
 	hdr->hdr_entries = htole32((blocks * secsz) / sizeof(struct gpt_ent));
 	if (le32toh(hdr->hdr_entries) > parts)
@@ -185,8 +183,7 @@ create(int fd)
 
 	ent = tbl->map_data;
 	for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
-		uuid_create(&uuid, NULL);
-		uuid_enc_le(ent[i].ent_guid, &uuid);
+		gpt_uuid_copy(ent[i].ent_guid, gpt_uuid_nil);
 	}
 
 	hdr->hdr_crc_table = htole32(crc32(ent, le32toh(hdr->hdr_entries) *
