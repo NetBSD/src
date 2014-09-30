@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.17 2014/09/29 22:22:03 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.18 2014/09/30 02:12:55 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -202,12 +202,12 @@ show(void)
 				printf("- \"%s\"",
 				    utf16_to_utf8(ent->ent_name));
 			} else if (show_guid) {
-				le_uuid_dec(ent->ent_guid, &guid);
+				uuid_dec_le(ent->ent_guid, &guid);
 				uuid_to_string(&guid, &s, NULL);
 				printf("- %s", s);
 				free(s);
 			} else {
-				le_uuid_dec(ent->ent_type, &type);
+				uuid_dec_le(ent->ent_type, &type);
 				printf("- %s", friendly(&type));
 			}
 			break;
@@ -263,7 +263,7 @@ show_one(void)
 #endif
 		printf("Size: %llu\n", (long long)m->map_size);
 
-	le_uuid_dec(ent->ent_type, &type);
+	uuid_dec_le(ent->ent_type, &type);
 	s1 = friendly(&type);
 	uuid_to_string(&type, &s2, NULL);
 	if (strcmp(s1, s2) == 0)
@@ -271,7 +271,7 @@ show_one(void)
 	printf("Type: %s (%s)\n", s1, s2);
 	free(s2);
 
-	le_uuid_dec(ent->ent_guid, &guid);
+	uuid_dec_le(ent->ent_guid, &guid);
 	uuid_to_string(&guid, &s2, NULL);
 	printf("GUID: %s\n", s2);
 	free(s2);

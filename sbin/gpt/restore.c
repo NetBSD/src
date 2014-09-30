@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.4 2014/09/29 20:28:57 christos Exp $");
+__RCSID("$NetBSD: restore.c,v 1.5 2014/09/30 02:12:55 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -151,7 +151,7 @@ restore(int fd)
 		warnx("%s: not able to convert to an UUID\n", s);
 		return;
 	}
-	le_uuid_enc(&gpt_guid, &uuid);
+	uuid_enc_le(&gpt_guid, &uuid);
 
 	firstdata = gpt_size + 2;		/* PMBR and GPT header */
 	lastdata = last - gpt_size - 1;		/* alt. GPT table and header */
@@ -315,7 +315,7 @@ restore(int fd)
 			warnx("%s: not able to convert to an UUID\n", s);
 			return;
 		}
-		le_uuid_enc(&ent.ent_type, &uuid);
+		uuid_enc_le(&ent.ent_type, &uuid);
 		propstr = prop_dictionary_get(gpt_dict, "guid");
 		PROP_ERR(propstr);
 		s = prop_string_cstring_nocopy(propstr);
@@ -324,7 +324,7 @@ restore(int fd)
 			warnx("%s: not able to convert to an UUID\n", s);
 			return;
 		}
-		le_uuid_enc(&ent.ent_guid, &uuid);
+		uuid_enc_le(&ent.ent_guid, &uuid);
 		propnum = prop_dictionary_get(gpt_dict, "start");
 		PROP_ERR(propnum);
 		ent.ent_lba_start =

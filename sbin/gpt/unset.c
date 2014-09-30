@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: unset.c,v 1.3 2014/09/29 20:28:57 christos Exp $");
+__RCSID("$NetBSD: unset.c,v 1.4 2014/09/30 02:12:55 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -106,7 +106,7 @@ unset(int fd)
 	i = entry - 1;
 	ent = (void*)((char*)tbl->map_data + i *
 	    le32toh(hdr->hdr_entsz));
-	le_uuid_dec(ent->ent_type, &uuid);
+	uuid_dec_le(ent->ent_type, &uuid);
 	if (uuid_is_nil(&uuid, NULL)) {
 		warnx("%s: error: entry at index %u is unused",
 		    device_name, entry);

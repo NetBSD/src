@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: backup.c,v 1.6 2014/09/29 22:22:03 christos Exp $");
+__RCSID("$NetBSD: backup.c,v 1.7 2014/09/30 02:12:55 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -201,7 +201,7 @@ backup(void)
 			rc = prop_dictionary_set(type_dict, "revision",
 			    propnum);
 			PROP_ERR(rc);
-			le_uuid_dec(hdr->hdr_guid, &u);
+			uuid_dec_le(hdr->hdr_guid, &u);
 			uuid_to_string(&u, &s, NULL);
 			propstr = prop_string_create_cstring(s);
 			free(s);
@@ -232,14 +232,14 @@ backup(void)
 				rc = prop_dictionary_set(gpt_dict, "index",
 				    propnum);
 				PROP_ERR(propnum);
-				le_uuid_dec(ent->ent_type, &u);
+				uuid_dec_le(ent->ent_type, &u);
 				uuid_to_string(&u, &s, NULL);
 				propstr = prop_string_create_cstring(s);
 				free(s);
 				PROP_ERR(propstr);
 				rc = prop_dictionary_set(gpt_dict, "type",
 				    propstr);
-				le_uuid_dec(ent->ent_guid, &u);
+				uuid_dec_le(ent->ent_guid, &u);
 				uuid_to_string(&u, &s, NULL);
 				propstr = prop_string_create_cstring(s);
 				free(s);

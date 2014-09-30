@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.25 2014/09/29 20:28:57 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.26 2014/09/30 02:12:55 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -114,7 +114,7 @@ add(int fd)
 		i = entry - 1;
 		ent = (void*)((char*)tbl->map_data + i *
 		    le32toh(hdr->hdr_entsz));
-		le_uuid_dec(ent->ent_type, &uuid);
+		uuid_dec_le(ent->ent_type, &uuid);
 		if (!uuid_is_nil(&uuid, NULL)) {
 			warnx("%s: error: entry at index %u is not free",
 			    device_name, entry);
@@ -125,7 +125,7 @@ add(int fd)
 		for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
 			ent = (void*)((char*)tbl->map_data + i *
 			    le32toh(hdr->hdr_entsz));
-			le_uuid_dec(ent->ent_type, &uuid);
+			uuid_dec_le(ent->ent_type, &uuid);
 			if (uuid_is_nil(&uuid, NULL))
 				break;
 		}
@@ -153,7 +153,7 @@ add(int fd)
 		}
 	}
 
-	le_uuid_enc(ent->ent_type, &type);
+	uuid_enc_le(ent->ent_type, &type);
 	ent->ent_lba_start = htole64(map->map_start);
 	ent->ent_lba_end = htole64(map->map_start + map->map_size - 1LL);
 	if (name != NULL)
@@ -170,7 +170,7 @@ add(int fd)
 	hdr = tpg->map_data;
 	ent = (void*)((char*)lbt->map_data + i * le32toh(hdr->hdr_entsz));
 
-	le_uuid_enc(ent->ent_type, &type);
+	uuid_enc_le(ent->ent_type, &type);
 	ent->ent_lba_start = htole64(map->map_start);
 	ent->ent_lba_end = htole64(map->map_start + map->map_size - 1LL);
 	if (name != NULL)

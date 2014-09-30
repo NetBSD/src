@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.16 2014/09/29 20:28:57 christos Exp $");
+__RCSID("$NetBSD: label.c,v 1.17 2014/09/30 02:12:55 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -124,7 +124,7 @@ label(int fd)
 			    (char *)utf16_to_utf8(ent->ent_name)) != 0)
 				continue;
 
-		le_uuid_dec(ent->ent_type, &uuid);
+		uuid_dec_le(ent->ent_type, &uuid);
 		if (!uuid_is_nil(&type, NULL) &&
 		    !uuid_equal(&type, &uuid, NULL))
 			continue;
