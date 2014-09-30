@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.38 2014/09/26 19:27:05 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.39 2014/09/30 14:24:26 reinoud Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.38 2014/09/26 19:27:05 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.39 2014/09/30 14:24:26 reinoud Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -318,7 +318,7 @@ initarm(void *arg)
 			EXYNOS_IOPHYSTOVIRT(armreg_cbar_read());
 
 #ifdef ARM_TRUSTZONE_FIRMWARE
-		exynos_l2cc_init();
+		exynos4_l2cc_init();
 #endif
 		arml2cc_init(&exynos_bs_tag, pl310_bh, 0x2000);
 	}
@@ -885,5 +885,28 @@ odroid_device_register_post_config(device_t self, void *aux)
 		exynos_usb_powercycle_lan9730(self);
 		exynos_usb_init_usb3503_hub(self);
 	}
+}
+
+
+/*
+ * Odroid specific tweaks
+ */
+/*
+ * The external USB devices are clocked trough the DEBUG clkout
+ * XXX is this Odroid specific? XXX
+ */
+void
+exynos_init_clkout_for_usb(void)
+{
+#ifdef EXYNOS4
+	/* Select XUSBXTI as source for CLKOUT */
+	bus_space_write_4(&exynos_bs_tag, exynos_pmu_bsh,
+		EXYNOS_PMU_DEBUG_CLKOUT, 0x900);
+#endif
+#ifdef EXYNOS5
+	/* Select XUSBXTI as source for CLKOUT */
+	bus_space_write_4(&exynos_bs_tag, exynos_pmu_bsh,
+		EXYNOS_PMU_DEBUG_CLKOUT, 0x1000);
+#endif
 }
 
