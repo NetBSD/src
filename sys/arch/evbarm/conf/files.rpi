@@ -1,4 +1,4 @@
-#	$NetBSD: files.rpi,v 1.5 2014/07/25 11:39:34 jmcneill Exp $
+#	$NetBSD: files.rpi,v 1.6 2014/09/30 18:13:29 macallan Exp $
 #
 # Raspberry Pi
 #
@@ -8,6 +8,7 @@ file   arch/arm/arm32/arm32_kvminit.c
 file   arch/arm/arm32/arm32_reboot.c
 
 file	arch/evbarm/rpi/rpi_machdep.c
+file	arch/evbarm/rpi/vcprop_subr.c
 
 # Kernel boot arguments
 defparam opt_machdep.h				BOOT_ARGS
