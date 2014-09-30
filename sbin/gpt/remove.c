@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: remove.c,v 1.15 2014/09/30 02:12:55 christos Exp $");
+__RCSID("$NetBSD: remove.c,v 1.16 2014/09/30 17:59:59 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: remove.c,v 1.15 2014/09/30 02:12:55 christos Exp $");
 #include "gpt.h"
 
 static int all;
-static uuid_t type;
+static gpt_uuid_t type;
 static off_t block, size;
 static unsigned int entry;
 static uint8_t *label;
@@ -72,7 +72,6 @@ usage_remove(void)
 static void
 rem(int fd)
 {
-	uuid_t uuid;
 	map_t *gpt, *tpg;
 	map_t *tbl, *lbt;
 	map_t *m;
@@ -123,14 +122,12 @@ rem(int fd)
 			    (char *)utf16_to_utf8(ent->ent_name)) != 0)
 				continue;
 
-		uuid_dec_le(ent->ent_type, &uuid);
-		if (!uuid_is_nil(&type, NULL) &&
-		    !uuid_equal(&type, &uuid, NULL))
+		if (!gpt_uuid_is_nil(type) &&
+		    !gpt_uuid_equal(type, ent->ent_type))
 			continue;
 
 		/* Remove the primary entry by clearing the partition type. */
-		uuid_create_nil(&uuid, NULL);
-		uuid_enc_le(ent->ent_type, &uuid);
+		gpt_uuid_copy(ent->ent_type, gpt_uuid_nil);
 
 		hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
@@ -145,7 +142,7 @@ rem(int fd)
 		    le32toh(hdr->hdr_entsz));
 
 		/* Remove the secondary entry. */
-		uuid_enc_le(ent->ent_type, &uuid);
+		gpt_uuid_copy(ent->ent_type, gpt_uuid_nil);
 
 		hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
@@ -203,9 +200,9 @@ cmd_remove(int argc, char *argv[])
 				usage_remove();
 			break;
 		case 't':
-			if (!uuid_is_nil(&type, NULL))
+			if (!gpt_uuid_is_nil(type))
 				usage_remove();
-			if (parse_uuid(optarg, &type) != 0)
+			if (gpt_uuid_parse(optarg, type) != 0)
 				usage_remove();
 			break;
 		default:
@@ -215,7 +212,7 @@ cmd_remove(int argc, char *argv[])
 
 	if (!all ^
 	    (block > 0 || entry > 0 || label != NULL || size > 0 ||
-	    !uuid_is_nil(&type, NULL)))
+	    !gpt_uuid_is_nil(type)))
 		usage_remove();
 
 	if (argc == optind)

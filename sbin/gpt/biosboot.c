@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.11 2014/09/29 21:04:34 christos Exp $ */
+/*	$NetBSD: biosboot.c,v 1.12 2014/09/30 17:59:59 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.11 2014/09/29 21:04:34 christos Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.12 2014/09/30 17:59:59 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -49,18 +49,12 @@ __RCSID("$NetBSD: biosboot.c,v 1.11 2014/09/29 21:04:34 christos Exp $");
 
 #include <err.h>
 #include <fcntl.h>
-#include <inttypes.h>
 #include <paths.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#ifndef NBTOOL_CONFIG_H
-#include <util.h>
-#else
-#include "opendisk.h"
-#endif
 
 #include "map.h"
 #include "gpt.h"
@@ -274,7 +268,9 @@ biosboot(int fd)
 int
 cmd_biosboot(int argc, char *argv[])
 {
+#ifdef DIOCGWEDGEINFO
 	struct dkwedge_info dkw;
+#endif
 	struct stat sb;
 	char devpath[MAXPATHLEN];
 	char *dev, *p;
