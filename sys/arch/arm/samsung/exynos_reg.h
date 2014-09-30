@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_reg.h,v 1.12 2014/09/29 14:47:52 reinoud Exp $	*/
+/*	$NetBSD: exynos_reg.h,v 1.13 2014/09/30 14:20:55 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -179,8 +179,8 @@
 #define EXYNOS_PMU_USB_HSIC_1_PHY_CTRL	0x708
 #define EXYNOS_PMU_USB_HSIC_2_PHY_CTRL	0x70C
 
-#define PMU_PHY_ENABLE			(1 << 0)
-#define PMU_PHY_DISABLE			(0)
+#define   PMU_PHY_ENABLE		(1 << 0)
+#define   PMU_PHY_DISABLE		(0)
 
 #define EXYNOS_PMU_DEBUG_CLKOUT		0x0A00
 
