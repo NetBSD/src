@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_var.h,v 1.16 2014/09/29 14:47:52 reinoud Exp $	*/
+/*	$NetBSD: exynos_var.h,v 1.17 2014/09/30 12:55:29 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@ extern bus_space_handle_t exynos_core_bsh;
 extern bus_space_handle_t exynos_wdt_bsh;
 extern bus_space_handle_t exynos_pmu_bsh;
 extern bus_space_handle_t exynos_cmu_bsh;
+extern bus_space_handle_t exynos_sysreg_bsh;
 
 extern void exynos_bootstrap(vaddr_t, vaddr_t);
 extern void exynos_dma_bootstrap(psize_t memsize);
