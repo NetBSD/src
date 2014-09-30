@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_usb.c,v 1.11 2014/09/24 20:51:43 reinoud Exp $	*/
+/*	$NetBSD: exynos_usb.c,v 1.12 2014/09/30 12:56:26 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.11 2014/09/24 20:51:43 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.12 2014/09/30 12:56:26 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,8 @@ struct exynos_usb_softc {
 	bus_space_handle_t sc_ohci_bsh;
 	bus_space_handle_t sc_usb2phy_bsh;
 
-	bus_space_handle_t sc_sysregs_bsh;
-	bus_space_handle_t sc_pmuregs_bsh;
+	bus_space_handle_t sc_sysreg_bsh;
+	bus_space_handle_t sc_pmureg_bsh;
 
 	device_t	 sc_ohci_dev;
 	device_t	 sc_ehci_dev;
@@ -152,7 +152,6 @@ exynos_usb_attach(device_t parent, device_t self, void *aux)
 	struct exynos_gpio_pindata XuhostOVERCUR;
 	struct exynos_gpio_pindata XuhostPWREN;
 	bus_size_t ehci_offset, ohci_offset, usb2phy_offset;
-	bus_size_t pmu_offset, sysreg_offset;
 
 	/* no locators expected */
 	KASSERT(loc->loc_port == EXYOCF_PORT_DEFAULT);
@@ -172,8 +171,6 @@ exynos_usb_attach(device_t parent, device_t self, void *aux)
 		ehci_offset    = EXYNOS4_USB2_HOST_EHCI_OFFSET;
 		ohci_offset    = EXYNOS4_USB2_HOST_OHCI_OFFSET;
 		usb2phy_offset = EXYNOS4_USB2_HOST_PHYCTRL_OFFSET;
-		sysreg_offset  = EXYNOS4_SYSREG_OFFSET;
-		pmu_offset     = EXYNOS4_PMU_OFFSET;
 	}
 #endif
 #ifdef EXYNOS5
@@ -181,8 +178,6 @@ exynos_usb_attach(device_t parent, device_t self, void *aux)
 		ehci_offset    = EXYNOS5_USB2_HOST_EHCI_OFFSET;
 		ohci_offset    = EXYNOS5_USB2_HOST_OHCI_OFFSET;
 		usb2phy_offset = EXYNOS5_USB2_HOST_PHYCTRL_OFFSET;
-		sysreg_offset  = EXYNOS5_SYSREG_OFFSET;
-		pmu_offset     = EXYNOS5_PMU_OFFSET;
 	}
 #endif
 	KASSERT(ehci_offset);
@@ -197,12 +192,8 @@ exynos_usb_attach(device_t parent, device_t self, void *aux)
 		usb2phy_offset, EXYNOS_BLOCK_SIZE,
 		&sc->sc_usb2phy_bsh);
 
-	bus_space_subregion(sc->sc_bst, exyoaa->exyo_core_bsh,
-		sysreg_offset, EXYNOS_BLOCK_SIZE,
-		&sc->sc_sysregs_bsh);
-	bus_space_subregion(sc->sc_bst, exyoaa->exyo_core_bsh,
-		pmu_offset, EXYNOS_BLOCK_SIZE,
-		&sc->sc_pmuregs_bsh);
+	sc->sc_pmureg_bsh = exynos_pmu_bsh;
+	sc->sc_sysreg_bsh = exynos_sysreg_bsh;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -468,23 +459,23 @@ exynos_usb2_set_isolation(struct exynos_usb_softc *sc, bool on)
 	if (IS_EXYNOS5_P() || IS_EXYNOS4410_P()) {
 		/* set usbhost mode */
 		regval = on ? 0 : USB20_PHY_HOST_LINK_EN;
-		bus_space_write_4(sc->sc_bst, sc->sc_sysregs_bsh,
+		bus_space_write_4(sc->sc_bst, sc->sc_sysreg_bsh,
 			EXYNOS5_SYSREG_USB20_PHY_TYPE, regval);
 		reg = EXYNOS_PMU_USBHOST_PHY_CTRL;
 	}
 
 	/* do enable PHY */
 	en_mask = PMU_PHY_ENABLE;
-	regval = bus_space_read_4(sc->sc_bst, sc->sc_pmuregs_bsh, reg);
+	regval = bus_space_read_4(sc->sc_bst, sc->sc_pmureg_bsh, reg);
 	regval = on ? regval & ~en_mask : regval | en_mask;
 
-	bus_space_write_4(sc->sc_bst, sc->sc_pmuregs_bsh,
+	bus_space_write_4(sc->sc_bst, sc->sc_pmureg_bsh,
 		reg, regval);
 
 	if (IS_EXYNOS4X12_P()) {
-		bus_space_write_4(sc->sc_bst, sc->sc_pmuregs_bsh,
+		bus_space_write_4(sc->sc_bst, sc->sc_pmureg_bsh,
 			EXYNOS_PMU_USB_HSIC_1_PHY_CTRL, regval);
-		bus_space_write_4(sc->sc_bst, sc->sc_pmuregs_bsh,
+		bus_space_write_4(sc->sc_bst, sc->sc_pmureg_bsh,
 			EXYNOS_PMU_USB_HSIC_2_PHY_CTRL, regval);
 	}
 }
