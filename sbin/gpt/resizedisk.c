@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resizedisk.c,v 1.3 2014/09/29 20:28:57 christos Exp $");
+__RCSID("$NetBSD: resizedisk.c,v 1.4 2014/09/30 02:12:55 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -139,7 +139,7 @@ resizedisk(int fd)
 	for (ent = tbl->map_data; ent <
 	    (struct gpt_ent *)((char *)tbl->map_data +
 	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)); ent++) {
-		le_uuid_dec(ent->ent_type, &uuid);
+		uuid_dec_le(ent->ent_type, &uuid);
 		if (!uuid_is_nil(&uuid, NULL) &&
 		    (le64toh(ent->ent_lba_end) > lastdata)) {
 			lastdata = le64toh(ent->ent_lba_end);

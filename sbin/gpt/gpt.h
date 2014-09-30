@@ -35,14 +35,9 @@
 #else
 #include <nbinclude/sys/disklabel_gpt.h>
 #endif
-#define GPT_SIZE GPT_HDR_SIZE
-#define hdr_uuid hdr_guid
-#define ent_uuid ent_guid
 
 #include <uuid.h>
 
-#define le_uuid_dec uuid_dec_le
-#define le_uuid_enc uuid_enc_le
 int	parse_uuid(const char *, uuid_t *);
 
 struct mbr_part {
