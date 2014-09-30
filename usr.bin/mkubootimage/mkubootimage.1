@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkubootimage.1,v 1.5 2012/12/29 15:11:56 jmcneill Exp $
+.\"	$NetBSD: mkubootimage.1,v 1.6 2014/09/30 10:21:50 msaitoh Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl h
-.Fl A No ( arm Ns | Ns mips Ns | Ns mips64 Ns | Ns powerpc )
+.Fl A No ( arm Ns | Ns arm64 Ns | Ns i386 Ns | Ns mips Ns | Ns mips64 Ns | Ns or1k Ns | Ns powerpc )
 .Fl a Ar address
 .Op Fl C No Po bz2 Ns | Ns gz Ns | Ns lzma Ns | Ns lzo Ns | Ns none Pc
 .Op Fl E Ar address
@@ -55,7 +55,7 @@ utility is used to create an image for Das U-Boot, the
 .Pp
 The arguments are as follows:
 .Bl -tag -width indent
-.It Fl A No ( arm Ns | Ns mips Ns | Ns mips64 Ns | Ns powerpc )
+.It Fl A No ( arm Ns | Ns arm64 Ns | Ns i386 Ns | Ns mips Ns | Ns mips64 Ns | Ns or1k Ns | Ns powerpc )
 Defines the architecture.
 This is required.
 .It Fl a Ar address
