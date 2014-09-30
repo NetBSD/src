@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.8 2012/09/29 07:18:21 mlelstv Exp $ */
+/* $NetBSD: disk.c,v 1.9 2014/09/30 15:25:18 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -703,33 +703,38 @@ device_set_var(const char *var, const char *arg)
 /* allocate some space for a disk/extent, using an lseek, read and
 * write combination */
 static int
-de_allocate(disc_de_t *de, char *filename)
+de_allocate(disc_de_t *de, char *filename, uint64_t blocklen)
 {
 	off_t	size;
-	char	block[DEFAULT_TARGET_BLOCK_LEN];
+	char	 *block;
 
+	block = malloc(blocklen);
 	size = de_getsize(de);
-	if (de_lseek(de, size - sizeof(block), SEEK_SET) == -1) {
+	if (de_lseek(de, size - blocklen, SEEK_SET) == -1) {
 		iscsi_err(__FILE__, __LINE__,
 				"error seeking \"%s\"\n", filename);
+		free(block);
 		return 0;
 	}
-	if (de_read(de, block, sizeof(block)) == -1) {
+	if (de_read(de, block, blocklen) == -1) {
 		iscsi_err(__FILE__, __LINE__,
 				"error reading \"%s\"\n", filename);
+		free(block);
 		return 0;
 	}
-	if (de_write(de, block, sizeof(block)) == -1) {
+	if (de_write(de, block, blocklen) == -1) {
 		iscsi_err(__FILE__, __LINE__,
 				"error writing \"%s\"\n", filename);
+		free(block);
 		return 0;
 	}
+	free(block);
 	return 1;
 }
 
 /* allocate space as desired */
 static int
-allocate_space(disc_target_t *tp)
+allocate_space(disc_target_t *tp, uint64_t blocklen)
 {
 	uint32_t	i;
 
@@ -737,10 +742,10 @@ allocate_space(disc_target_t *tp)
 	following write() in de_allocate is non-destructive */
 	switch(tp->de.type) {
 	case DE_EXTENT:
-		return de_allocate(&tp->de, tp->target);
+		return de_allocate(&tp->de, tp->target, blocklen);
 	case DE_DEVICE:
 		for (i = 0 ; i < tp->de.u.dp->c ; i++) {
-			if (!de_allocate(&tp->de.u.dp->xv[i], tp->target)) {
+			if (!de_allocate(&tp->de.u.dp->xv[i], tp->target, blocklen)) {
 				return 0;
 			}
 		}
@@ -877,7 +882,7 @@ device_init(iscsi_target_t *tgt, targv_t *tvp, disc_target_t *tp)
 			"error opening \"%s\"\n", idisk->filename);
 		return -1;
 	}
-	if (!(tp->flags & TARGET_READONLY) && !allocate_space(tp)) {
+	if (!(tp->flags & TARGET_READONLY) && !allocate_space(tp, idisk->blocklen)) {
 		iscsi_err(__FILE__, __LINE__,
 			"error allocating space for \"%s\"\n", tp->target);
 		return -1;
@@ -1514,7 +1519,7 @@ disk_read(target_session_t *sess, iscsi_scsi_cmd_args_t *args, uint32_t lba,
 			(unsigned) bytec;
 	args->length = (unsigned) bytec;
 	args->send_sg_len = 1;
-	args->status = 0;
+	args->status = SCSI_SUCCESS;
 	args->send_buffer = ptr;
 	return 0;
 out:
