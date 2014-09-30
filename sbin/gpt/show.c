@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.18 2014/09/30 02:12:55 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.19 2014/09/30 18:00:00 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -64,87 +64,14 @@ usage_show(void)
 	exit(1);
 }
 
-static const char *
-friendly(uuid_t *t)
-{
-	static const uuid_t efi_slice = GPT_ENT_TYPE_EFI;
-	static const uuid_t bios_boot = GPT_ENT_TYPE_BIOS;
-	static const uuid_t msdata = GPT_ENT_TYPE_MS_BASIC_DATA;
-	static const uuid_t freebsd = GPT_ENT_TYPE_FREEBSD;
-	static const uuid_t hfs = GPT_ENT_TYPE_APPLE_HFS;
-	static const uuid_t linuxdata = GPT_ENT_TYPE_LINUX_DATA;
-	static const uuid_t linuxswap = GPT_ENT_TYPE_LINUX_SWAP;
-	static const uuid_t msr = GPT_ENT_TYPE_MS_RESERVED;
-	static const uuid_t swap = GPT_ENT_TYPE_FREEBSD_SWAP;
-	static const uuid_t ufs = GPT_ENT_TYPE_FREEBSD_UFS;
-	static const uuid_t vinum = GPT_ENT_TYPE_FREEBSD_VINUM;
-	static const uuid_t zfs = GPT_ENT_TYPE_FREEBSD_ZFS;
-	static const uuid_t nb_swap = GPT_ENT_TYPE_NETBSD_SWAP;
-	static const uuid_t nb_ffs = GPT_ENT_TYPE_NETBSD_FFS;
-	static const uuid_t nb_lfs = GPT_ENT_TYPE_NETBSD_LFS;
-	static const uuid_t nb_raid = GPT_ENT_TYPE_NETBSD_RAIDFRAME;
-	static const uuid_t nb_ccd = GPT_ENT_TYPE_NETBSD_CCD;
-	static const uuid_t nb_cgd = GPT_ENT_TYPE_NETBSD_CGD;
-	static char buf[80];
-	char *s;
-
-	if (show_uuid)
-		goto unfriendly;
-
-	if (uuid_equal(t, &efi_slice, NULL))
-		return ("EFI System");
-	if (uuid_equal(t, &bios_boot, NULL))
-		return ("BIOS Boot");
-	if (uuid_equal(t, &nb_swap, NULL))
-		return ("NetBSD swap");
-	if (uuid_equal(t, &nb_ffs, NULL))
-		return ("NetBSD FFSv1/FFSv2");
-	if (uuid_equal(t, &nb_lfs, NULL))
-		return ("NetBSD LFS");
-	if (uuid_equal(t, &nb_raid, NULL))
-		return ("NetBSD RAIDFrame component");
-	if (uuid_equal(t, &nb_ccd, NULL))
-		return ("NetBSD ccd component");
-	if (uuid_equal(t, &nb_cgd, NULL))
-		return ("NetBSD Cryptographic Disk");
-	if (uuid_equal(t, &swap, NULL))
-		return ("FreeBSD swap");
-	if (uuid_equal(t, &ufs, NULL))
-		return ("FreeBSD UFS/UFS2");
-	if (uuid_equal(t, &vinum, NULL))
-		return ("FreeBSD vinum");
-	if (uuid_equal(t, &zfs, NULL))
-		return ("FreeBSD ZFS");
-	if (uuid_equal(t, &freebsd, NULL))
-		return ("FreeBSD legacy");
-	if (uuid_equal(t, &msdata, NULL))
-		return ("Windows basic data");
-	if (uuid_equal(t, &msr, NULL))
-		return ("Windows reserved");
-	if (uuid_equal(t, &linuxdata, NULL))
-		return ("Linux data");
-	if (uuid_equal(t, &linuxswap, NULL))
-		return ("Linux swap");
-	if (uuid_equal(t, &hfs, NULL))
-		return ("Apple HFS");
-
-unfriendly:
-	uuid_to_string(t, &s, NULL);
-	strlcpy(buf, s, sizeof buf);
-	free(s);
-	return (buf);
-}
-
 static void
 show(void)
 {
-	uuid_t guid, type;
 	off_t start;
 	map_t *m, *p;
 	struct mbr *mbr;
 	struct gpt_ent *ent;
 	unsigned int i;
-	char *s;
 
 	printf("  %*s", lbawidth, "start");
 	printf("  %*s", lbawidth, "size");
@@ -202,13 +129,15 @@ show(void)
 				printf("- \"%s\"",
 				    utf16_to_utf8(ent->ent_name));
 			} else if (show_guid) {
-				uuid_dec_le(ent->ent_guid, &guid);
-				uuid_to_string(&guid, &s, NULL);
-				printf("- %s", s);
-				free(s);
+				char buf[128];
+				gpt_uuid_snprintf(
+				    buf, sizeof(buf), "%d", ent->ent_guid);
+				printf("- %s", buf);
 			} else {
-				uuid_dec_le(ent->ent_type, &type);
-				printf("- %s", friendly(&type));
+				char buf[128];
+				gpt_uuid_snprintf(
+				    buf, sizeof(buf), "%s", ent->ent_type);
+				printf("- %s", buf);
 			}
 			break;
 		case MAP_TYPE_PMBR:
@@ -223,11 +152,9 @@ show(void)
 static void
 show_one(void)
 {
-	uuid_t guid, type;
 	map_t *m;
 	struct gpt_ent *ent;
-	const char *s1;
-	char *s2;
+	char s1[128], s2[128];
 #ifdef HN_AUTOSCALE
 	char human_num[5];
 #endif
@@ -263,18 +190,14 @@ show_one(void)
 #endif
 		printf("Size: %llu\n", (long long)m->map_size);
 
-	uuid_dec_le(ent->ent_type, &type);
-	s1 = friendly(&type);
-	uuid_to_string(&type, &s2, NULL);
+	gpt_uuid_snprintf(s1, sizeof(s1), "%s", ent->ent_type);
+	gpt_uuid_snprintf(s2, sizeof(s1), "%d", ent->ent_type);
 	if (strcmp(s1, s2) == 0)
-		s1 = "unknown";
+		strlcpy(s1, "unknown", sizeof(s1));
 	printf("Type: %s (%s)\n", s1, s2);
-	free(s2);
 
-	uuid_dec_le(ent->ent_guid, &guid);
-	uuid_to_string(&guid, &s2, NULL);
+	gpt_uuid_snprintf(s2, sizeof(s1), "%d", ent->ent_guid);
 	printf("GUID: %s\n", s2);
-	free(s2);
 
 	printf("Label: %s\n", utf16_to_utf8(ent->ent_name));
 
