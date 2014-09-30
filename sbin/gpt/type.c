@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: type.c,v 1.3 2014/09/29 20:28:57 christos Exp $");
+__RCSID("$NetBSD: type.c,v 1.4 2014/09/30 02:12:55 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -125,13 +125,13 @@ chtype(int fd)
 			    (char *)utf16_to_utf8(ent->ent_name)) != 0)
 				continue;
 
-		le_uuid_dec(ent->ent_type, &uuid);
+		uuid_dec_le(ent->ent_type, &uuid);
 		if (!uuid_is_nil(&type, NULL) &&
 		    !uuid_equal(&type, &uuid, NULL))
 			continue;
 
 		/* Change the primary entry. */
-		le_uuid_enc(ent->ent_type, &newtype);
+		uuid_enc_le(ent->ent_type, &newtype);
 
 		hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
@@ -146,7 +146,7 @@ chtype(int fd)
 		    le32toh(hdr->hdr_entsz));
 
 		/* Change the secondary entry. */
-		le_uuid_enc(ent->ent_type, &newtype);
+		uuid_enc_le(ent->ent_type, &newtype);
 
 		hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
 		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
