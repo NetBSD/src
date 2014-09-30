@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.33 2014/09/05 15:39:18 manu Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.34 2014/09/30 10:15:03 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.33 2014/09/05 15:39:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.34 2014/09/30 10:15:03 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -260,7 +260,7 @@ puffs_cookie2vnode(struct puffs_mount *pmp, puffs_cookie_t ck,
 		return 0;
 	}
 
-	rv = vcache_get(PMPTOMP(pmp), ck, sizeof(ck), vpp);
+	rv = vcache_get(PMPTOMP(pmp), &ck, sizeof(ck), vpp);
 	if (rv != 0)
 		return rv;
 	mutex_enter((*vpp)->v_interlock);
@@ -270,6 +270,7 @@ puffs_cookie2vnode(struct puffs_mount *pmp, puffs_cookie_t ck,
 		*vpp = NULL;
 		return PUFFS_NOSUCHCOOKIE;
 	}
+	mutex_exit((*vpp)->v_interlock);
 
 	return 0;
 }
