@@ -1,4 +1,4 @@
-/*	$NetBSD: am335x_prcm.c,v 1.7 2014/07/20 23:08:43 bouyer Exp $	*/
+/*	$NetBSD: am335x_prcm.c,v 1.8 2014/09/30 11:34:07 jmcneill Exp $	*/
 
 /*
  * TI OMAP Power, Reset, and Clock Management on the AM335x
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.7 2014/07/20 23:08:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.8 2014/09/30 11:34:07 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -220,7 +220,7 @@ mpu_current_frequency_sysctl_helper(SYSCTLFN_ARGS)
 				mpu_frequency.mvolt = old_mvolt;
 			}
 		}
-		aprint_normal_dev(curcpu()->ci_dev,
+		aprint_debug_dev(curcpu()->ci_dev,
 		    "frequency changed from %d MHz to %d MHz\n",
 		    old_freq, freq);
 		pmf_event_inject(NULL, PMFE_SPEED_CHANGED);
