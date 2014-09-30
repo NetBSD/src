@@ -1,4 +1,4 @@
-.\"	$NetBSD: 0.t,v 1.5 2013/10/06 05:45:19 dholland Exp $
+.\"	$NetBSD: 0.t,v 1.6 2014/09/30 23:30:48 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -171,7 +171,7 @@ uint	unsigned int	/* System V compatibility */
 uint16_t	unsigned short	/* unsigned 16-bit integer */
 uint32_t	unsigned int	/* unsigned 32-bit integer */
 uint64_t	unsigned long long	/* unsigned 64-bit integer */
-uint8_t		unsigned char	/* unsigned 8-bit integer */
+uint8_t	unsigned char	/* unsigned 8-bit integer */
 ushort	unsigned short	/* System V compatibility */
 .TE
 .ft R
