@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.19 2014/09/30 18:00:00 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.20 2014/09/30 20:23:23 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -191,7 +191,7 @@ show_one(void)
 		printf("Size: %llu\n", (long long)m->map_size);
 
 	gpt_uuid_snprintf(s1, sizeof(s1), "%s", ent->ent_type);
-	gpt_uuid_snprintf(s2, sizeof(s1), "%d", ent->ent_type);
+	gpt_uuid_snprintf(s2, sizeof(s2), "%d", ent->ent_type);
 	if (strcmp(s1, s2) == 0)
 		strlcpy(s1, "unknown", sizeof(s1));
 	printf("Type: %s (%s)\n", s1, s2);
