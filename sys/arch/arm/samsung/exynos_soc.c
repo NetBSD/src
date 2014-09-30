@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.21 2014/09/29 14:47:52 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.22 2014/09/30 12:55:29 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.21 2014/09/29 14:47:52 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.22 2014/09/30 12:55:29 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -127,6 +127,7 @@ bus_space_handle_t exynos_wdt_bsh;
 bus_space_handle_t exynos_pmu_bsh;
 bus_space_handle_t exynos_cmu_bsh;
 bus_space_handle_t exynos_cmu_apll_bsh;
+bus_space_handle_t exynos_sysreg_bsh;
 
 
 static int sysctl_cpufreq_target(SYSCTLFN_ARGS);
@@ -509,6 +510,7 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 	bus_addr_t audiocore_vbase __diagused;
 	bus_addr_t exynos_wdt_offset;
 	bus_addr_t exynos_pmu_offset;
+	bus_addr_t exynos_sysreg_offset;
 	bus_addr_t exynos_cmu_apll_offset;
 
 	/* set up early console so we can use printf() and friends */
@@ -525,6 +527,7 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 	audiocore_vbase = EXYNOS4_AUDIOCORE_VBASE;
 	exynos_wdt_offset = EXYNOS4_WDT_OFFSET;
 	exynos_pmu_offset = EXYNOS4_PMU_OFFSET;
+	exynos_sysreg_offset = EXYNOS4_SYSREG_OFFSET;
 	exynos_cmu_apll_offset = EXYNOS4_CMU_APLL;
 
 	cpu_freq_settings = cpu_freq_settings_exynos4;
@@ -538,6 +541,7 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 	audiocore_vbase = EXYNOS5_AUDIOCORE_VBASE;
 	exynos_wdt_offset = EXYNOS5_WDT_OFFSET;
 	exynos_pmu_offset = EXYNOS5_PMU_OFFSET;
+	exynos_sysreg_offset = EXYNOS5_SYSREG_OFFSET;
 	exynos_cmu_apll_offset = EXYNOS5_CMU_APLL;
 
 	cpu_freq_settings = cpu_freq_settings_exynos5;
@@ -573,6 +577,13 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 			__func__, error);
 
 	exynos_cmu_bsh = exynos_core_bsh;
+	bus_space_subregion(&exynos_bs_tag, exynos_core_bsh,
+		exynos_sysreg_offset, EXYNOS_BLOCK_SIZE,
+		&exynos_sysreg_bsh);
+	if (error)
+		panic("%s: failed to subregion sysreg registers: %d",
+			__func__, error);
+
 	error = bus_space_subregion(&exynos_bs_tag, exynos_cmu_bsh,
 		exynos_cmu_apll_offset, 0xfff, &exynos_cmu_apll_bsh);
 	if (error)
