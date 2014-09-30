@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.38 2014/09/29 16:21:56 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.39 2014/09/30 18:23:20 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -979,3 +979,24 @@ sys/dev/ic/mpt_netbsd.c				1.26-1.31
 
 	Add support for the bio(4) API to the mpt(4) driver.
 	[jmcneill, ticket #120]
+
+sys/fs/puffs/puffs_node.c			1.34
+sys/fs/puffs/puffs_vnops.c			1.187
+
+	Fix the puffs_sop_thread -> puffs_cookie2vnode path:
+	- pass the cookie by reference
+	- add missing mutex_exit()
+	- update assertion for VNON typed vnodes 
+	[hannken, ticket #67]
+
+distrib/utils/embedded/conf/beagleboard.conf	1.18
+
+	Escape $ in $board so this will boot on beaglebone too.
+	[jmcneill, ticket #121]
+
+lib/libc/stdio/printf.3				1.64
+lib/libc/stdio/vsnprintf.c			1.28
+lib/libc/stdio/vsnprintf_ss.c			1.13
+
+	Return EOVERFLOW like FreeBSD does if the buffer size exceeds INT_MAX.
+	[christos, ticket #122]
