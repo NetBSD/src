@@ -1,4 +1,4 @@
-.\"	$NetBSD: Title,v 1.5 2014/10/01 01:03:47 christos Exp $
+.\"	$NetBSD: Title,v 1.6 2014/10/01 14:12:29 christos Exp $
 .\"
 .\" Copyright (c) 1986, 1993, 1994 The Regents of the University of California.
 .\" All rights reserved.
@@ -242,7 +242,7 @@ ISBN: 1-56592-079-1
 .bp
 .OH '\s10Contents''- \*(%% -\s0'
 .EH '\s10- \*(%% -''Contents\s0'
-\& 
+\&
 .sp |1.5i
 .nr PS 24
 .nr VS 26
