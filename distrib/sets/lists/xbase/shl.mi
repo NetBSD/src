@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.55 2014/03/20 09:05:28 mrg Exp $
+# $NetBSD: shl.mi,v 1.56 2014/10/01 09:30:58 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -376,8 +376,8 @@
 ./usr/X11R7/lib/libxcb-property.so.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-property.so.1.0		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-randr.so			-unknown-		xorg
-./usr/X11R7/lib/libxcb-randr.so.0		-unknown-		xorg
-./usr/X11R7/lib/libxcb-randr.so.0.1		-unknown-		xorg
+./usr/X11R7/lib/libxcb-randr.so.1		-unknown-		xorg
+./usr/X11R7/lib/libxcb-randr.so.1.0		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-record.so		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-record.so.0		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-record.so.0.1		-unknown-		xorg
@@ -403,8 +403,8 @@
 ./usr/X11R7/lib/libxcb-shm.so.0			-unknown-		xorg
 ./usr/X11R7/lib/libxcb-shm.so.0.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-sync.so			-unknown-		xorg
-./usr/X11R7/lib/libxcb-sync.so.0		-unknown-		xorg
-./usr/X11R7/lib/libxcb-sync.so.0.1		-unknown-		xorg
+./usr/X11R7/lib/libxcb-sync.so.1		-unknown-		xorg
+./usr/X11R7/lib/libxcb-sync.so.1.0		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xevie.so			-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xevie.so.0		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xevie.so.0.1		-unknown-		xorg
@@ -430,8 +430,8 @@
 ./usr/X11R7/lib/libxcb-xvmc.so.0		-unknown-		xorg
 ./usr/X11R7/lib/libxcb-xvmc.so.0.1		-unknown-		xorg
 ./usr/X11R7/lib/libxcb.so			-unknown-		xorg
-./usr/X11R7/lib/libxcb.so.1			-unknown-		xorg
-./usr/X11R7/lib/libxcb.so.1.1			-unknown-		xorg
+./usr/X11R7/lib/libxcb.so.2			-unknown-		xorg
+./usr/X11R7/lib/libxcb.so.2.0			-unknown-		xorg
 ./usr/X11R7/lib/libxkbfile.so			-unknown-		xorg
 ./usr/X11R7/lib/libxkbfile.so.2			-unknown-		xorg
 ./usr/X11R7/lib/libxkbfile.so.2.0		-unknown-		xorg
