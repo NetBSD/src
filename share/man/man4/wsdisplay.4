@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.41 2012/06/02 10:25:07 njoly Exp $
+.\" $NetBSD: wsdisplay.4,v 1.42 2014/10/01 12:08:04 mlelstv Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
 .\" Copyright (c) 2002 Ben Harris.
@@ -325,18 +325,18 @@ The
 member indicates which of the values the application requires to be returned.
 It should contain the logical OR of the following flags:
 .Bl -tag -width Dv
-.It Dv WSDISPLAYIO_CURSOR_DOCUR
+.It Dv WSDISPLAY_CURSOR_DOCUR
 Get
 .Va enable ,
 which indicates whether the cursor is currently displayed (non-zero) or
 not (zero).
-.It Dv WSDISPLAYIO_CURSOR_DOPOS
+.It Dv WSDISPLAY_CURSOR_DOPOS
 Get
 .Va pos ,
 which indicates the current position of the cursor on the display, as
 would be returned by
 .Dv WSDISPLAYIO_GCURPOS .
-.It Dv WSDISPLAYIO_CURSOR_DOHOT
+.It Dv WSDISPLAY_CURSOR_DOHOT
 Get
 .Va hot ,
 which indicates the location of the
@@ -345,7 +345,7 @@ within the cursor.
 This is the point on the cursor whose position on the display is treated
 as being the position of the cursor by other calls.
 Its location is counted in pixels from the top-right corner of the cursor.
-.It Dv WSDISPLAYIO_CURSOR_DOCMAP
+.It Dv WSDISPLAY_CURSOR_DOCMAP
 Get
 .Va cmap ,
 which indicates the current cursor color map.
@@ -365,7 +365,7 @@ and
 .Va cmap . Ns Va blue
 must each point to at least enough space to hold two
 .Li u_char Ns s .
-.It Dv WSDISPLAYIO_CURSOR_DOSHAPE
+.It Dv WSDISPLAY_CURSOR_DOSHAPE
 Get
 .Va size , image ,
 and
@@ -375,7 +375,7 @@ bitmap of set pixels in the cursor and the bitmap of opaque pixels in
 the cursor.
 The format in which these bitmaps are returned, and hence the amount of
 space that must be provided by the application, are device-dependent.
-.It Dv WSDISPLAYIO_CURSOR_DOALL
+.It Dv WSDISPLAY_CURSOR_DOALL
 Get all of the above.
 .El
 .Pp
@@ -395,22 +395,22 @@ The
 member specifies which attributes of the cursor are to be changed.
 It should contain the logical OR of the following flags:
 .Bl -tag -width Dv
-.It Dv WSDISPLAYIO_CURSOR_DOCUR
+.It Dv WSDISPLAY_CURSOR_DOCUR
 If
 .Va enable
 is zero, hide the cursor.
 Otherwise, display it.
-.It Dv WSDISPLAYIO_CURSOR_DOPOS
+.It Dv WSDISPLAY_CURSOR_DOPOS
 Set the cursor's position on the display to
 .Va pos ,
 the same as
 .Dv WSDISPLAYIO_SCURPOS .
-.It Dv WSDISPLAYIO_CURSOR_DOHOT
+.It Dv WSDISPLAY_CURSOR_DOHOT
 Set the
 .Dq hot spot
 of the cursor, as defined above, to
 .Va hot .
-.It Dv WSDISPLAYIO_CURSOR_DOCMAP
+.It Dv WSDISPLAY_CURSOR_DOCMAP
 Set some or all of the cursor color map based on
 .Va cmap .
 The
@@ -424,13 +424,13 @@ indicate which color map entries to set, and the entries themselves come from
 .Va cmap . Ns Va green ,
 and
 .Va cmap . Ns Va blue .
-.It Dv WSDISPLAYIO_CURSOR_DOSHAPE
+.It Dv WSDISPLAY_CURSOR_DOSHAPE
 Set the cursor shape from
 .Va size , image ,
 and
 .Va mask .
 See above for their meanings.
-.It Dv WSDISPLAYIO_CURSOR_DOALL
+.It Dv WSDISPLAY_CURSOR_DOALL
 Do all of the above.
 .El
 .Pp
