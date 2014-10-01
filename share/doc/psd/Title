@@ -1,4 +1,4 @@
-.\"	$NetBSD: Title,v 1.4 2014/10/01 00:48:14 christos Exp $
+.\"	$NetBSD: Title,v 1.5 2014/10/01 01:03:47 christos Exp $
 .\"
 .\" Copyright (c) 1986, 1993, 1994 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,9 +29,8 @@
 .\"
 .\"	@(#)Title	8.4 (Berkeley) 8/8/94
 .\"
-.\" Using roman letters for the page number causes .ms macros a heartache.
-.\" Is this a bug in groff?
-.af % i
+.ds %% \\\\\\\\n(PN
+.af PN i
 .nr LL 6.5i
 .EH ''''
 .OH ''''
@@ -241,8 +240,8 @@ with high quality.
 .sp 1
 ISBN: 1-56592-079-1
 .bp
-.OH '\s10Contents''- % -\s0'
-.EH '\s10- % -''Contents\s0'
+.OH '\s10Contents''- \*(%% -\s0'
+.EH '\s10- \*(%% -''Contents\s0'
 \& 
 .sp |1.5i
 .nr PS 24
@@ -413,8 +412,8 @@ Facilities of 4.4BSD.
 .if o .bp
 \&
 .bp
-.OH '\s10Introduction''- % -\s0'
-.EH '\s10- % -''Introduction\s0'
+.OH '\s10Introduction''- \*(%% -\s0'
+.EH '\s10- \*(%% -''Introduction\s0'
 .de IR
 \fI\\$1\^\fR\\$2
 ..
