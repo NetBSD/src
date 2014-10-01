@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.2 2014/09/30 22:56:36 jnemeth Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.3 2014/10/01 01:07:24 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.2 2014/09/30 22:56:36 jnemeth Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.3 2014/10/01 01:07:24 jnemeth Exp $");
 #endif
 
 #include <stdio.h>
@@ -211,8 +211,10 @@ gpt_uuid_parse(const char *s, gpt_uuid_t uuid)
 {
 	struct dce_uuid u;
 
-	if (gpt_uuid_parse_numeric(s, &u) != -1)
+	if (gpt_uuid_parse_numeric(s, &u) != -1) {
+		gpt_dce_to_uuid(&u, uuid);
 		return 0;
+	}
 
 	if (gpt_uuid_parse_symbolic(s, &u) == -1)
 		return -1;
