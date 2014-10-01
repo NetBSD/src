@@ -1,4 +1,4 @@
-.\"	$NetBSD: Title,v 1.3 2003/08/07 10:30:56 agc Exp $
+.\"	$NetBSD: Title,v 1.4 2014/10/01 01:11:39 christos Exp $
 .\"
 .\" Copyright (c) 1986, 1993, 1994 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,8 @@
 .\"
 .\"	@(#)Title	8.4 (Berkeley) 8/8/94
 .\"
-.af % i
+.ds %% \\\\\\\\n(PN
+.af PN i
 .nr LL 6.5i
 .EH ''''
 .OH ''''
@@ -228,8 +229,8 @@ with high quality.
 .sp 2
 ISBN: 1-56592-076-7
 .bp
-.OH '\s10Contents''- % -\s0'
-.EH '\s10- % -''Contents\s0'
+.OH '\s10Contents''- \*(%% -\s0'
+.EH '\s10- \*(%% -''Contents\s0'
 \&
 .sp |1.5i
 .nr PS 24
@@ -459,8 +460,8 @@ Wipe out the Klingons and save the Federation.
 .EH ''''
 .OH ''''
 .bp
-.OH '\s10Introduction''- % -\s0'
-.EH '\s10- % -''Introduction\s0'
+.OH '\s10Introduction''- \*(%% -\s0'
+.EH '\s10- \*(%% -''Introduction\s0'
 .de IR
 \fI\\$1\^\fR\\$2
 ..
