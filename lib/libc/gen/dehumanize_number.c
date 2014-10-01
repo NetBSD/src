@@ -1,4 +1,4 @@
-/*	$NetBSD: dehumanize_number.c,v 1.6 2014/10/01 12:55:39 apb Exp $	*/
+/*	$NetBSD: dehumanize_number.c,v 1.7 2014/10/01 13:53:04 apb Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -31,12 +31,12 @@
  */
 
 #ifdef HAVE_NBTOOL_CONFIG_H
-#include "nbtools_config.h"
+#include "nbtool_config.h"
 #endif /* HAVE_NBTOOL_CONFIG_H */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dehumanize_number.c,v 1.6 2014/10/01 12:55:39 apb Exp $");
+__RCSID("$NetBSD: dehumanize_number.c,v 1.7 2014/10/01 13:53:04 apb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
