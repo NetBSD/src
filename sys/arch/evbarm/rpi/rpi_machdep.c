@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.51 2014/10/01 13:30:18 mlelstv Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.52 2014/10/01 13:31:27 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.51 2014/10/01 13:30:18 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.52 2014/10/01 13:31:27 mlelstv Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -941,6 +941,8 @@ rpi_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 				return 0;
 			rpi_video_on = d;
 			rpi_fb_set_video(d);
+			rpi_fb_movecursor(cursor_x, cursor_y,
+			                  d ? cursor_on : 0);
 		}
 		return 0;
 	case WSDISPLAYIO_GVIDEO:
