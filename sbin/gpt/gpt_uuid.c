@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.3 2014/10/01 01:07:24 jnemeth Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.4 2014/10/01 12:55:41 apb Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.3 2014/10/01 01:07:24 jnemeth Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.4 2014/10/01 12:55:41 apb Exp $");
 #endif
 
 #include <stdio.h>
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: gpt_uuid.c,v 1.3 2014/10/01 01:07:24 jnemeth Exp $");
 #include "map.h"
 #include "gpt.h"
 
-#ifndef HAVE_NBTOOLS_CONFIG_H
+#ifndef HAVE_NBTOOL_CONFIG_H
 #include <sys/endian.h>
 #endif
 
