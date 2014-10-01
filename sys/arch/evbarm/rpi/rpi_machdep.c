@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.50 2014/09/29 21:45:15 macallan Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.51 2014/10/01 13:30:18 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.50 2014/09/29 21:45:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.51 2014/10/01 13:30:18 mlelstv Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -1060,6 +1060,21 @@ SYSCTL_SETUP(sysctl_machdep_rpi, "sysctl machdep subtree setup (rpi)")
 	sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
 	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY|CTLFLAG_HEX,
+	    CTLTYPE_INT, "firmware_revision", NULL, NULL, 0,
+	    &vb.vbt_fwrev.rev, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+	    CTLTYPE_INT, "board_model", NULL, NULL, 0,
+	    &vb.vbt_boardmodel.model, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+	    CTLTYPE_INT, "board_revision", NULL, NULL, 0,
+	    &vb.vbt_boardrev.rev, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY|CTLFLAG_HEX|CTLFLAG_PRIVATE,
