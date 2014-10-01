@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2014/10/01 22:26:05 joerg Exp $
+#	$NetBSD: Makefile,v 1.18 2014/10/01 22:27:33 joerg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -18,7 +18,8 @@ LIBDPLIBS+=	m ${.CURDIR}/../../../../../lib/libm
 COPTS.random.cc+=	${${ACTIVE_CC} == "clang":? -mrdrnd :}
 .endif
 
-UNSUPPORTED_COMPILER.clang=	# defined
+CXXFLAGS.clang+=	-stdlib=libstdc++ -std=c++11 -D_GLIBCXX_ABI_TAG_CXX11=
+CXXFLAGS+=	${CXXFLAGS.${ACTIVE_CC}}
 CWARNFLAGS.clang+=	-Wno-logical-op-parentheses \
 			-Wno-deprecated-writable-strings -Wno-parentheses
 
