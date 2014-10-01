@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail9.nr,v 1.5 2014/09/30 20:54:11 christos Exp $
+.\"	$NetBSD: mail9.nr,v 1.6 2014/10/01 23:41:41 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -121,7 +121,7 @@ escape	valued	Escape character to be used instead of\ \ ~
 folder	valued	Directory to store folders in
 hold	binary	Hold messages in system mailbox by default
 ignore	binary	Ignore \s-2RUBOUT\s0 while sending mail
-ignoreeof	binary	Don't terminate letters/command input with \fB\(haD\fP
+ignoreeof	binary	Don't terminate letters/command input with \fB\(uaD\fP
 keep	binary	Don't unlink system mailbox when empty
 keepsave	binary	Don't delete \fBsave\fPd messages by default
 metoo	binary	Include sending user in aliases
