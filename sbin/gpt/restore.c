@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.6 2014/09/30 17:59:59 christos Exp $");
+__RCSID("$NetBSD: restore.c,v 1.7 2014/10/01 01:08:25 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -72,7 +72,7 @@ usage_restore(void)
 static void
 restore(int fd)
 {
-	gpt_uuid_t uuid;
+	gpt_uuid_t gpt_guid, uuid;
 	off_t firstdata, last, lastdata, gpe_start, gpe_end;
 	map_t *map;
 	struct mbr *mbr;
@@ -145,7 +145,7 @@ restore(int fd)
 	propstr = prop_dictionary_get(gpt_dict, "guid");
 	PROP_ERR(propstr);
 	s = prop_string_cstring_nocopy(propstr);
-	if (gpt_uuid_parse(s, uuid) != 0) {
+	if (gpt_uuid_parse(s, gpt_guid) != 0) {
 		warnx("%s: not able to convert to an UUID\n", s);
 		return;
 	}
@@ -355,7 +355,7 @@ restore(int fd)
 	hdr->hdr_lba_alt = htole64(last);
 	hdr->hdr_lba_start = htole64(firstdata);
 	hdr->hdr_lba_end = htole64(lastdata);
-	gpt_uuid_copy(hdr->hdr_guid, uuid);
+	gpt_uuid_copy(hdr->hdr_guid, gpt_guid);
 	hdr->hdr_lba_table = htole64(2);
 	hdr->hdr_entries = htole32(entries);
 	hdr->hdr_entsz = htole32(sizeof(struct gpt_ent));
