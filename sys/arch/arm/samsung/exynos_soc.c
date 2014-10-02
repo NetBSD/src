@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.23 2014/09/30 14:23:41 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.24 2014/10/02 11:17:50 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.23 2014/09/30 14:23:41 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.24 2014/10/02 11:17:50 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,11 +92,16 @@ const struct cpu_freq cpu_freq_settings_exynos4[] = {
 	{1300, 6, 325, 0},
 	{1400, 3, 175, 0},
 	{1600, 3, 200, 0},
+//	{1704, 3, 213, 0},
+//	{1800, 4, 300, 0},
+//	{1920, 3, 240, 0},
+//	{2000, 3, 250, 0},
 };
 #endif
 
 
 #ifdef EXYNOS5
+#define EXYNOS5_DEFAULT_ENTRY 7
 const struct cpu_freq cpu_freq_settings_exynos5[] = {
 	{ 200,  3, 100, 2},
 	{ 333,  4, 222, 2},
@@ -105,6 +110,7 @@ const struct cpu_freq cpu_freq_settings_exynos5[] = {
 	{ 600,  4, 200, 1},
 	{ 667,  7, 389, 1},
 	{ 800,  3, 100, 0},
+	{ 900,  4, 150, 0},
 	{1000,  3, 125, 0},
 	{1066, 12, 533, 0},
 	{1200,  3, 150, 0},
@@ -117,7 +123,7 @@ static struct cpu_freq const *cpu_freq_settings = NULL;
 static int ncpu_freq_settings = 0;
 
 static int cpu_freq_target = 0;
-#define NFRQS 15
+#define NFRQS 18
 static char sysctl_cpu_freqs_txt[NFRQS*5];
 
 bus_space_handle_t exynos_core_bsh;
@@ -477,13 +483,21 @@ exynos_clocks_bootstrap(void)
 {
 	KASSERT(ncpu_freq_settings != 0);
 	KASSERT(ncpu_freq_settings < NFRQS);
+	int fsel;
 
 #ifdef VERBOSE_INIT_ARM
 	exynos_dump_clocks();
 #endif
 
-	/* set max cpufreq */
-	exynos_set_cpufreq(&cpu_freq_settings[ncpu_freq_settings-1]);
+	/* set (max) cpufreq */
+	fsel = ncpu_freq_settings-1;
+
+#ifdef EXYNOS5
+	/* XXX BUGFIX selecting freq on E5 goes wrong for now XXX */
+	fsel = EXYNOS5_DEFAULT_ENTRY;
+#endif
+
+	exynos_set_cpufreq(&cpu_freq_settings[fsel]);
 
 	/* set external USB frequency to XCLKOUT */
 	exynos_init_clkout_for_usb();
