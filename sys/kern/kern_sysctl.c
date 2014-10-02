@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.253 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.254 2014/10/02 23:07:30 justin Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.253 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.254 2014/10/02 23:07:30 justin Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -1636,6 +1636,7 @@ sysctl_mmap(SYSCTLFN_ARGS)
 	const struct sysctlnode *node;
 	struct sysctlnode nnode;
 	int error;
+	int sysctl_num;
 
 	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
 		printf("sysctl_mmap: rnode %p wrong version\n", rnode);
@@ -1663,7 +1664,8 @@ sysctl_mmap(SYSCTLFN_ARGS)
 	if (namelen != 1)
 		return (EOPNOTSUPP);
 	node = rnode;
-        error = sysctl_locate(l, &nnode.sysctl_num, 1, &node, NULL);
+	sysctl_num = nnode.sysctl_num;
+	error = sysctl_locate(l, &sysctl_num, 1, &node, NULL);
 	if (error)
 		return (error);
 
