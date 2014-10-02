@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.24 2014/10/02 11:17:50 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.25 2014/10/02 11:27:09 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.24 2014/10/02 11:17:50 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.25 2014/10/02 11:27:09 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -465,7 +465,8 @@ exynos_dump_clocks(void)
 #ifdef EXYNOS5
 	DUMP_PLL(5, APLL);
 	DUMP_PLL(5, MPLL);
-	DUMP_PLL(5, EPLL);
+	DUMP_PLL(5, KPLL);
+	DUMP_PLL(5, DPLL);
 	DUMP_PLL(5, VPLL);
 	DUMP_PLL(5, CPLL);
 	DUMP_PLL(5, GPLL);
