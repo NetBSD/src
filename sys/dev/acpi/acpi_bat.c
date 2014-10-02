@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.112 2012/08/14 14:36:43 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.113 2014/10/02 12:42:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.112 2012/08/14 14:36:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.113 2014/10/02 12:42:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -381,7 +381,10 @@ acpibat_get_info(device_t dv)
 			goto out;
 		}
 
-		KDASSERT((uint64_t)elm[i].Integer.Value < INT_MAX);
+		if (elm[i].Integer.Value >= INT_MAX) {
+			rv = AE_LIMIT;
+			goto out;
+		}
 	}
 
 	if ((elm[ACPIBAT_BIF_UNIT].Integer.Value & ACPIBAT_PWRUNIT_MA) != 0) {
