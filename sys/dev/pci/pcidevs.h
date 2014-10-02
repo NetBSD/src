@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1196 2014/09/25 03:29:31 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1197 2014/10/02 03:58:48 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1202 2014/09/25 03:28:57 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1203 2014/10/01 08:37:48 msaitoh Exp
  */
 
 /*
@@ -2660,17 +2660,36 @@
 #define	PCI_PRODUCT_INTEL_S1200_S1260	0x0c75		/* Atom S1260 Internal */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_HB	0x0f00		/* Bay Trail Processor Transaction Router */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_HDA	0x0f04		/* Bay Trail HD Audio */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SIO2_DMA	0x0f06		/* Bay Trail Serial IO (DMA) */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SIO2_PWM1	0x0f08		/* Bay Trail Serial IO (PWM) */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SIO2_PWM2	0x0f09		/* Bay Trail Serial IO (PWM) */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SIO2_UART1	0x0f0a		/* Bay Trail Serial IO (HSUART) */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SIO2_UART2	0x0f0c		/* Bay Trail Serial IO (HSUART) */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SIO2_SPI	0x0f0e		/* Bay Trail Serial IO (SPI) */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_PCU_SMB	0x0f12		/* Bay Trail PCU SMBus */
-#define	PCI_PRODUCT_INTEL_BAYTRAIL_SCC	0x0f16		/* Bay Trail Storage Control Cluster */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SCC_MMC	0x0f14		/* Bay Trail Storage Control Cluster(MMC) */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SCC_SDIO	0x0f15		/* Bay Trail Storage Control Cluster(SDIO) */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SCC	0x0f16		/* Bay Trail Storage Control Cluster(SD) */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_TXE	0x0f18		/* Bay Trail Trusted Execution Engine */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_PCU_LPC	0x0f1c		/* Bay Trail LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_SATA_IDE_0	0x0f20		/* Bay Trail SATA (IDE) */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_SATA_IDE_1	0x0f21		/* Bay Trail SATA (IDE) */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_SATA_AHCI_0	0x0f22		/* Bay Trail SATA (AHCI) */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_SATA_AHCI_1	0x0f23		/* Bay Trail SATA (AHCI) */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_LPEA	0x0f28		/* Bay Trail Low Power Engine Audio */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_IGD	0x0f31		/* Bay Trail Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_EHCI	0x0f34		/* Bay Trail USB EHCI */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_XHCI	0x0f35		/* Bay Trail USB xHCI */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_USB_DEV	0x0f37		/* Bay Trail USB device */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_CISP	0x0f38		/* Bay Trail Camera Image Signal Processor */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SIO_DMA	0x0f40		/* Bay Trail Serial IO (DMA) */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SIO_I2C1	0x0f41		/* Bay Trail Serial IO (I2C) */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SIO_I2C2	0x0f42		/* Bay Trail Serial IO (I2C) */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SIO_I2C3	0x0f43		/* Bay Trail Serial IO (I2C) */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SIO_I2C4	0x0f44		/* Bay Trail Serial IO (I2C) */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SIO_I2C5	0x0f45		/* Bay Trail Serial IO (I2C) */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SIO_I2C6	0x0f46		/* Bay Trail Serial IO (I2C) */
+#define	PCI_PRODUCT_INTEL_BAYTRAIL_SIO_I2C7	0x0f47		/* Bay Trail Serial IO (I2C) */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_PCIE_1	0x0f48		/* Bay Trail PCIE Root Port */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_PCIE_2	0x0f4a		/* Bay Trail PCIE Root Port */
 #define	PCI_PRODUCT_INTEL_BAYTRAIL_PCIE_3	0x0f4c		/* Bay Trail PCIE Root Port */
