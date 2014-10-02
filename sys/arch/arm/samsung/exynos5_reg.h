@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos5_reg.h,v 1.18 2014/10/02 11:39:45 reinoud Exp $	*/
+/*	$NetBSD: exynos5_reg.h,v 1.19 2014/10/02 16:17:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #define   EXYNOS5_CMU_GPLL			0x00020050	/* Graphic 3D proc. clock */
 #define EXYNOS5_CMU_MEM_PART_OFFSET		0x00030000
 #define   EXYNOS5_CMU_BPLL			0x00030010
-#define   EXYNOS5_CMU_KPLL			0x00038010
+#define   EXYNOS5_CMU_KPLL			0x00038000
 #define EXYNOS5_ALIVE_OFFSET			0x00040000
 #define EXYNOS5_PMU_OFFSET			0x00040000	/* alias */
 #define EXYNOS5_SYSREG_OFFSET			0x00050000
