@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox.c,v 1.6 2013/04/14 15:11:52 skrll Exp $	*/
+/*	$NetBSD: bcm2835_mbox.c,v 1.7 2014/10/02 11:58:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.6 2013/04/14 15:11:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.7 2014/10/02 11:58:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +162,7 @@ bcmmbox_request(uint8_t chan, void *buf, size_t buflen, uint32_t *pres)
 	bus_dmamap_sync(sc->sc_dmat, map, 0, buflen, BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_sync(sc->sc_dmat, map, 0, buflen, BUS_DMASYNC_PREREAD);
 	bcmmbox_read(chan, pres);
+	bus_dmamap_sync(sc->sc_dmat, map, 0, buflen, BUS_DMASYNC_POSTREAD);
 
 	mutex_exit(&sc->sc_lock);
 
