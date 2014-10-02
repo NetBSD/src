@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.90 2014/07/25 08:10:35 dholland Exp $ */
+/* $NetBSD: cgd.c,v 1.91 2014/10/02 21:01:38 justin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.90 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.91 2014/10/02 21:01:38 justin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1006,7 +1006,7 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 	int error = 0;
 
 #ifdef _MODULE
-	int bmajor = -1, cmajor = -1;
+	devmajor_t bmajor = -1, cmajor = -1;
 #endif
 
 	switch (cmd) {

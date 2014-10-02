@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.34 2014/07/25 08:10:36 dholland Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.35 2014/10/02 21:01:38 justin Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -156,7 +156,8 @@ static int
 dm_modcmd(modcmd_t cmd, void *arg)
 {
 #ifdef _MODULE
-	int error, bmajor, cmajor;
+	int error;
+	devmajor_t bmajor, cmajor;
 
 	error = 0;
 	bmajor = -1;
