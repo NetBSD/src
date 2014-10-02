@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.40 2014/10/01 08:54:46 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.41 2014/10/02 14:43:59 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1007,3 +1007,8 @@ sys/dev/sdmmc/sdhc.c				1.48
 	reserved at the time. If an older controller advertises 1.8V
 	support, just use it.
 	[jmcneill, ticket #123]
+
+sys/dev/sdmmc/sdhc.c				1.49
+
+	Correct clk div calculation for SD 3.0 controllers.
+	[jmcneill, ticket #124]
