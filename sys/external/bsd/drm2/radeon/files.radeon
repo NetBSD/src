@@ -1,4 +1,4 @@
-#	$NetBSD: files.radeon,v 1.8 2014/10/02 10:17:53 riastradh Exp $
+#	$NetBSD: files.radeon,v 1.9 2014/10/02 10:56:09 riastradh Exp $
 
 define	radeonfbbus	{ }
 device	radeon: drmkms, drmkms_pci, drmkms_ttm, radeonfbbus, firmload
@@ -37,7 +37,7 @@ makeoptions	radeon	"CWARNFLAGS.radeon_atombios.c"+="-Wno-missing-field-initializ
 makeoptions	radeon	"CWARNFLAGS.radeon_atombios.c"+="-Wno-missing-prototypes"
 makeoptions	radeon	"CWARNFLAGS.radeon_clocks.c"+="-Wno-missing-prototypes"
 makeoptions	radeon	"CWARNFLAGS.radeon_combios.c"+="-Wno-missing-field-initializers"
-makeoptions	radeon	"CWARNFLAGS.radeon_combios.c"+="-Wno-prototypes-field-initializers"
+makeoptions	radeon	"CWARNFLAGS.radeon_combios.c"+="-Wno-missing-prototypes"
 makeoptions	radeon	"CWARNFLAGS.radeon_drv.c"+="-Wno-missing-field-initializers"
 makeoptions	radeon	"CWARNFLAGS.radeon_gem.c"+="-Wno-missing-prototypes"
 makeoptions	radeon	"CWARNFLAGS.radeon_irq_kms.c"+="-Wno-missing-prototypes"
