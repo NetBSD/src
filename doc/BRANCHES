@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.332 2014/08/11 09:12:34 riz Exp $
+#	$NetBSD: BRANCHES,v 1.333 2014/10/02 09:18:44 apb Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -195,7 +195,7 @@ Notes:
 
 Branch:		netbsd-4
 Description:	The NetBSD 4 release branch
-Status:		Active
+Status:		Terminated
 Start Date:	8 Aug 2006
 End Date:
 Base Tag:	netbsd-4-base
@@ -217,11 +217,31 @@ Notes:
 
 Branch:		netbsd-5-0
 Description:	Tracking security/critical fixes for NetBSD 5.0
-Status:		Active
+Status:		Terminated
 Start Date:	29 Apr 2009
 End Date:
 Base Tag:	netbsd-5-0-RELEASE
 Maintainer:	5.0 Release Engineering <releng-5@NetBSD.org>
+Scope:		Entire tree. (src + xsrc)
+Notes:		Commits restricted to Release Engineering.
+
+Branch:		netbsd-5-1
+Description:	Tracking security/critical fixes for NetBSD 5.1
+Status:		Active
+Start Date:
+End Date:
+Base Tag:	netbsd-5-1-RELEASE
+Maintainer:	5.1 Release Engineering <releng-5@NetBSD.org>
+Scope:		Entire tree. (src + xsrc)
+Notes:		Commits restricted to Release Engineering.
+
+Branch:		netbsd-5-2
+Description:	Tracking security/critical fixes for NetBSD 5.2
+Status:		Active
+Start Date:
+End Date:
+Base Tag:	netbsd-5-2-RELEASE
+Maintainer:	5.2 Release Engineering <releng-5@NetBSD.org>
 Scope:		Entire tree. (src + xsrc)
 Notes:		Commits restricted to Release Engineering.
 
@@ -232,6 +252,28 @@ Start Date:	15 Feb 2012
 End Date:
 Base Tag:	netbsd-6-base
 Maintainer:	6.0 Release Engineering <releng-6@NetBSD.org>
+Scope:		Entire tree. (src + xsrc)
+Notes:
+		Commits restricted to Release Engineering.
+
+Branch:		netbsd-6-0
+Description:	Tracking security/critical fixes for NetBSD 6.0
+Status:		Active
+Start Date:	17 Oct 2012
+End Date:
+Base Tag:	netbsd-6-0-RELEASE
+Maintainer:	6.0 Release Engineering <releng-6@NetBSD.org>
+Scope:		Entire tree. (src + xsrc)
+Notes:
+		Commits restricted to Release Engineering.
+
+Branch:		netbsd-6-1
+Description:	Tracking security/critical fixes for NetBSD 6.1
+Status:		Active
+Start Date:	01 Feb 2013
+End Date:
+Base Tag:	netbsd-6-1-RELEASE
+Maintainer:	6.1 Release Engineering <releng-6@NetBSD.org>
 Scope:		Entire tree. (src + xsrc)
 Notes:
 		Commits restricted to Release Engineering.
