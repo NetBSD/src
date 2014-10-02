@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.12 2013/10/12 16:49:01 christos Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.13 2014/10/02 18:16:13 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.12 2013/10/12 16:49:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.13 2014/10/02 18:16:13 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -211,9 +211,10 @@ ld_sdmmc_dobio(void *arg)
 	/* is everything done in terms of blocks? */
 	if (bp->b_rawblkno >= sc->sc_sf->csd.capacity) {
 		/* trying to read or write past end of device */
-		DPRINTF(("%s: blkno exceeds capacity 0x%x\n",
-		    device_xname(sc->sc_ld.sc_dv), sc->sc_sf->csd.capacity));
-		bp->b_error = EIO; /* XXX  */
+		aprint_error_dev(sc->sc_ld.sc_dv,
+		    "blkno 0x%" PRIu64 " exceeds capacity %d\n",
+		    bp->b_rawblkno, sc->sc_sf->csd.capacity);
+		bp->b_error = EINVAL;
 		bp->b_resid = bp->b_bcount;
 		lddone(&sc->sc_ld, bp);
 		return;
@@ -229,7 +230,7 @@ ld_sdmmc_dobio(void *arg)
 	if (error) {
 		DPRINTF(("%s: error %d\n", device_xname(sc->sc_ld.sc_dv),
 		    error));
-		bp->b_error = EIO;	/* XXXX */
+		bp->b_error = error;
 		bp->b_resid = bp->b_bcount;
 	} else {
 		bp->b_resid = 0;
@@ -256,6 +257,8 @@ ld_sdmmc_timeout(void *arg)
 	bp->b_resid = bp->b_bcount;
 	sdmmc_del_task(&task->task);
 	splx(s);
+
+	aprint_error_dev(sc->sc_ld.sc_dv, "task timeout");
 
 	lddone(&sc->sc_ld, bp);
 }
