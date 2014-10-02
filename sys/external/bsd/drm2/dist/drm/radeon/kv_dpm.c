@@ -1535,8 +1535,10 @@ static u8 kv_get_acp_boot_level(struct radeon_device *rdev)
 		&rdev->pm.dpm.dyn_state.acp_clock_voltage_dependency_table;
 
 	for (i = 0; i < table->count; i++) {
+#if 0		/* XXX Upstream has changed this to make sense.  */
 		if (table->entries[i].clk >= 0) /* XXX */
 			break;
+#endif
 	}
 
 	if (i >= table->count)
