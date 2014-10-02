@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_start.S,v 1.5 2014/09/26 18:59:29 reinoud Exp $	*/
+/*	$NetBSD: odroid_start.S,v 1.6 2014/10/02 12:12:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <evbarm/odroid/platform.h>
 
-RCSID("$NetBSD: odroid_start.S,v 1.5 2014/09/26 18:59:29 reinoud Exp $")
+RCSID("$NetBSD: odroid_start.S,v 1.6 2014/10/02 12:12:55 skrll Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -182,7 +182,7 @@ _C_LABEL(odroid_start):
 #ifdef EXYNOS4
 	adr	r1, .Lsscom_exynos4_table
 #endif
-#ifdef EXYNO55
+#ifdef EXYNOS5
 	adr	r1, .Lsscom_exynos5_table
 #endif
 #ifdef SSCOM0CONSOLE
