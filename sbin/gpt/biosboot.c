@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.12 2014/09/30 17:59:59 christos Exp $ */
+/*	$NetBSD: biosboot.c,v 1.13 2014/10/02 19:15:21 joerg Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,13 +37,15 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.12 2014/09/30 17:59:59 christos Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.13 2014/10/02 19:15:21 joerg Exp $");
 #endif
 
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#ifndef HAVE_NBTOOL_CONFIG_H
 #include <sys/disk.h>
+#endif
 #include <sys/param.h>
 #include <sys/bootblock.h>
 
