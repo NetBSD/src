@@ -35,12 +35,11 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.34 2014/09/30 17:59:59 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.35 2014/10/02 19:15:21 joerg Exp $");
 #endif
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/disk.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/bootblock.h>
@@ -58,6 +57,7 @@ __RCSID("$NetBSD: gpt.c,v 1.34 2014/09/30 17:59:59 christos Exp $");
 #ifndef HAVE_NBTOOL_CONFIG_H
 #include <prop/proplib.h>
 #include <sys/drvctlio.h>
+#include <sys/disk.h>
 #endif
 
 #include "map.h"
