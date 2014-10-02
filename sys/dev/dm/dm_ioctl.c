@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.28 2013/12/24 22:14:07 mlelstv Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.29 2014/10/02 21:29:44 justin Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -200,7 +200,8 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 {
 	dm_dev_t *dmv;
 	const char *name, *uuid;
-	int r, flags;
+	int r;
+	uint32_t flags;
 	device_t devt;
 
 	r = 0;
@@ -843,11 +844,10 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	prop_array_t cmd_array;
 	prop_dictionary_t target_dict;
 
-	uint32_t minor;
+	uint32_t minor, flags;
 
 	const char *name, *uuid;
 	char *params;
-	int flags;
 	int table_type;
 
 	dmv = NULL;
@@ -952,7 +952,7 @@ int
 dm_check_version(prop_dictionary_t dm_dict)
 {
 	size_t i;
-	int dm_version[3];
+	uint32_t dm_version[3];
 	prop_array_t ver;
 
 	ver = prop_dictionary_get(dm_dict, DM_IOCTL_VERSION);
