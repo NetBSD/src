@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.52 2014/10/01 13:31:27 mlelstv Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.53 2014/10/03 11:40:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.52 2014/10/01 13:31:27 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.53 2014/10/03 11:40:55 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_arm_debug.h"
+#include "opt_rpi.h"
 #include "opt_vcprop.h"
 
 #include "sdhc.h"
@@ -380,17 +381,20 @@ static struct __aligned(16) {
 extern void bcmgenfb_set_console_dev(device_t dev);
 void bcmgenfb_set_ioctl(int(*)(void *, void *, u_long, void *, int, struct lwp *));
 extern void bcmgenfb_ddb_trap_callback(int where);
-static int	rpi_ioctl(void *, void *, u_long, void *, int, lwp_t *);
+static int rpi_ioctl(void *, void *, u_long, void *, int, lwp_t *);
 
+static int rpi_video_on = WSDISPLAYIO_VIDEO_ON;
+
+#if defined(RPI_HWCURSOR)
 #define CURSOR_BITMAP_SIZE	(64 * 8)
 #define CURSOR_ARGB_SIZE	(64 * 64 * 4)
-static int rpi_video_on = WSDISPLAYIO_VIDEO_ON;
 static uint32_t hcursor = 0;
 static bus_addr_t pcursor = 0;
 static uint32_t *cmem = NULL;
 static int cursor_x = 0, cursor_y = 0, hot_x = 0, hot_y = 0, cursor_on = 0;
 static uint32_t cursor_cmap[4];
 static uint8_t cursor_mask[8 * 64], cursor_bitmap[8 * 64];
+#endif
 #endif
 
 
@@ -741,8 +745,6 @@ rpi_fb_get_edid_mode(uint32_t *pwidth, uint32_t *pheight)
 static bool
 rpi_fb_init(prop_dictionary_t dict, void *aux)
 {
-	struct amba_attach_args *aaa = aux;
-	bus_space_handle_t hc;
 	uint32_t width = 0, height = 0;
 	uint32_t res;
 	char *ptr;
@@ -828,6 +830,10 @@ rpi_fb_init(prop_dictionary_t dict, void *aux)
 		prop_dictionary_set_uint32(dict, "wsdisplay_type", integer);
 	}
 
+#if defined(RPI_HWCURSOR)
+	struct amba_attach_args *aaa = aux;
+	bus_space_handle_t hc;
+
 	hcursor = rpi_alloc_mem(CURSOR_ARGB_SIZE, PAGE_SIZE,
 	    MEM_FLAG_L1_NONALLOCATING | MEM_FLAG_HINT_PERMALOCK);
 	pcursor = rpi_lock_mem(hcursor);
@@ -853,15 +859,19 @@ rpi_fb_init(prop_dictionary_t dict, void *aux)
 		}
 		cpu_dcache_wb_range((vaddr_t)cmem, CURSOR_ARGB_SIZE);
 		rpi_fb_initcursor(pcursor, 0, 0);
-	}	
 #ifdef RPI_IOCTL_DEBUG
-	rpi_fb_movecursor(600, 400, 1);
+		rpi_fb_movecursor(600, 400, 1);
 #else
-	rpi_fb_movecursor(cursor_x, cursor_y, cursor_on);
+		rpi_fb_movecursor(cursor_x, cursor_y, cursor_on);
 #endif
+	}	
+#endif
+
 	return true;
 }
 
+
+#if defined(RPI_HWCURSOR)
 static int
 rpi_fb_do_cursor(struct wsdisplay_cursor *cur)
 {
@@ -928,6 +938,7 @@ rpi_fb_do_cursor(struct wsdisplay_cursor *cur)
 	}
 	return 0;
 }
+#endif
 
 static int
 rpi_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
@@ -941,13 +952,16 @@ rpi_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 				return 0;
 			rpi_video_on = d;
 			rpi_fb_set_video(d);
+#if defined(RPI_HWCURSOR)
 			rpi_fb_movecursor(cursor_x, cursor_y,
 			                  d ? cursor_on : 0);
+#endif
 		}
 		return 0;
 	case WSDISPLAYIO_GVIDEO:
 		*(int *)data = rpi_video_on;
 		return 0;
+#if defined(RPI_HWCURSOR)
 	case WSDISPLAYIO_GCURPOS:
 		{
 			struct wsdisplay_curpos *cp = (void *)data;
@@ -979,6 +993,7 @@ rpi_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 
 			return rpi_fb_do_cursor(cursor);
 		}
+#endif
 	default:
 		return EPASSTHROUGH;
 	}
