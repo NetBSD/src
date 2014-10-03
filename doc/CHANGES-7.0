@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.41 2014/10/02 14:43:59 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.42 2014/10/03 16:42:46 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1012,3 +1012,13 @@ sys/dev/sdmmc/sdhc.c				1.49
 
 	Correct clk div calculation for SD 3.0 controllers.
 	[jmcneill, ticket #124]
+
+sys/dev/wsfb/genfb.c				1.56
+
+	Handle WSDISPLAYIO_GET_EDID and WSDISPLAYIO_GET_FBINFO only if the bus
+	frontend doesn't (as in, returns EPASSTHROUGH or doesn't register a
+	handler).
+	Now flags passed from things like bcm2835_genfb.c are actually seen by
+	xf86-video-wsfb again and automatically disabling shadowfb works again,
+	which results in a major speedup on this kind of hardware.
+	[skrll, ticket #125]
