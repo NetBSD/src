@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/06/01 19:51:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2014/10/03 12:41:41 apb Exp $
 
 USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes
@@ -59,7 +59,7 @@ libgcc.map:	${LIBGCC_S_OBJS} ${G_SHLIB_MKMAP} ${G_SHLIB_MAPFILES}
 		${NM} ${G_SHLIB_NM_FLAGS} ${LIBGCC_S_OBJS}; \
 		echo %%; \
 		for f in ${G_SHLIB_MAPFILES}; do \
-			if [ -f ${.OBJDIR}/$${f}]; then \
+			if [ -f ${.OBJDIR}/$${f} ]; then \
 				cat ${.OBJDIR}/$${f}; \
 			else \
 				cat $${f}; \
