@@ -1,4 +1,4 @@
-#	$NetBSD: files.rpi,v 1.6 2014/09/30 18:13:29 macallan Exp $
+#	$NetBSD: files.rpi,v 1.7 2014/10/03 11:40:54 skrll Exp $
 #
 # Raspberry Pi
 #
@@ -23,3 +23,4 @@ file	arch/evbarm/rpi/rpi_vcmbox.c		vcmbox
 
 # Maximum command-line length
 defparam opt_vcprop.h				VCPROP_MAXCMDLINE
+defflag opt_rpi.h				RPI_HWCURSOR

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.55 2014/09/25 16:05:44 jakllsch Exp $
+#	$NetBSD: RPI,v 1.56 2014/10/03 11:40:54 skrll Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -197,6 +197,7 @@ plcom0		at obio?
 genfb0		at obio?
 wsdisplay*	at genfb?
 options		VCONS_DRAW_INTR
+#options 	RPI_HWCURSOR
 
 # System timer
 bcmtmr0		at obio?
