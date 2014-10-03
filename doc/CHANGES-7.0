@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.42 2014/10/03 16:42:46 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.43 2014/10/03 18:55:37 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1022,3 +1022,17 @@ sys/dev/wsfb/genfb.c				1.56
 	xf86-video-wsfb again and automatically disabling shadowfb works again,
 	which results in a major speedup on this kind of hardware.
 	[skrll, ticket #125]
+
+sys/arch/arm/broadcom/bcm2835_dmac.c		1.3-1.9
+sys/arch/arm/broadcom/bcm2835_dmac.h		1.2-1.3
+sys/arch/arm/broadcom/bcm2835_emmc.c		1.10-1.15, 1.18
+sys/arch/arm/broadcom/bcm2835reg.h		1.12
+sys/arch/arm/broadcom/files.bcm2835		1.23
+sys/arch/evbarm/conf/RPI			1.52-1.54
+sys/arch/evbarm/rpi/rpi_machdep.c		1.47
+sys/dev/sdmmc/sdhc.c				1.45-1.47
+sys/dev/sdmmc/sdhcvar.h				1.14
+
+	Various RPI DMAC and sdhc improvements.
+	[skrll, ticket #126]
+
