@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.5 2014/10/02 21:27:41 apb Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.6 2014/10/03 00:51:31 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.5 2014/10/02 21:27:41 apb Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.6 2014/10/03 00:51:31 jnemeth Exp $");
 #endif
 
 #include <stdio.h>
@@ -42,6 +42,11 @@ __RCSID("$NetBSD: gpt_uuid.c,v 1.5 2014/10/02 21:27:41 apb Exp $");
 
 #if defined(HAVE_SYS_ENDIAN_H) || ! defined(HAVE_NBTOOL_CONFIG_H)
 #include <sys/endian.h>
+#endif
+
+#if !defined(HAVE_NBTOOL_CONFIG_H)
+#include <sys/types.h>
+#include <sys/uuid.h>
 #endif
 
 const gpt_uuid_t gpt_uuid_nil;
@@ -230,3 +235,14 @@ gpt_uuid_create(gpt_type_t t, gpt_uuid_t u, uint16_t *b, size_t s)
 	if (b)
 		utf8_to_utf16((const uint8_t *)gpt_nv[t].d, b, s / sizeof(*b));
 }
+
+#if !defined(HAVE_NBTOOL_CONFIG_H)
+void
+gpt_uuid_create_new(gpt_uuid_t t)
+{
+	struct uuid u;
+
+	uuidgen(&u, 1);
+	gpt_dce_to_uuid((struct dce_uuid *)&u, t);
+}
+#endif
