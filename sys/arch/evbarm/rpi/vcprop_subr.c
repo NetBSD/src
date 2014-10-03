@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop_subr.c,v 1.1 2014/09/28 14:38:29 macallan Exp $	*/
+/*	$NetBSD: vcprop_subr.c,v 1.2 2014/10/03 17:57:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Michael Lorenz
@@ -90,7 +90,15 @@ rpi_fb_set_video(int b)
 	    vb_setblank.vbt_blank.state, error, res,
 	    vb_setblank.vbt_blank.tag.vpt_rcode);
 #endif
-	return (error == 0);
+	if (error)
+		return error;
+
+	if (!vcprop_buffer_success_p(&vb_setblank.vb_hdr) ||
+	    !vcprop_tag_success_p(&vb_setblank.vbt_blank.tag)) {
+		return EIO;
+	}
+
+	return 0;
 }
 
 uint32_t
@@ -131,9 +139,16 @@ rpi_alloc_mem(uint32_t size, uint32_t align, uint32_t flags)
 	    vb_allocmem.vbt_am.size, error, res,
 	    vb_allocmem.vbt_am.tag.vpt_rcode);
 #endif
-	if (error == 0)
-		return vb_allocmem.vbt_am.size;
-	return 0;
+	if (error)
+		return error;
+
+	if (!vcprop_buffer_success_p(&vb_allocmem.vb_hdr) ||
+	    !vcprop_tag_success_p(&vb_allocmem.vbt_am.tag)) {
+		return EIO;
+	}
+
+	/* Return the handle from the VC */
+	return vb_allocmem.vbt_am.size;
 }
 
 bus_addr_t
@@ -172,9 +187,15 @@ rpi_lock_mem(uint32_t handle)
 	    vb_lockmem.vbt_lm.handle, error, res,
 	    vb_lockmem.vbt_lm.tag.vpt_rcode);
 #endif
-	if (error == 0)
-		return (vb_lockmem.vbt_lm.handle /*& 0x3fffffff*/);
-	return 0;
+	if (error)
+		return 0;
+
+	if (!vcprop_buffer_success_p(&vb_lockmem.vb_hdr) ||
+	    !vcprop_tag_success_p(&vb_lockmem.vbt_lm.tag)) {
+		return 0;
+	}
+
+	return vb_lockmem.vbt_lm.handle;
 }
 
 int
@@ -213,7 +234,15 @@ rpi_unlock_mem(uint32_t handle)
 	    vb_unlockmem.vbt_lm.handle, error, res,
 	    vb_unlockmem.vbt_lm.tag.vpt_rcode);
 #endif
-	return (error == 0);
+	if (error)
+		return error;
+
+	if (!vcprop_buffer_success_p(&vb_unlockmem.vb_hdr) ||
+	    !vcprop_tag_success_p(&vb_unlockmem.vbt_lm.tag)) {
+		return EIO;
+	}
+
+	return 0;
 }
 
 int
@@ -252,7 +281,15 @@ rpi_release_mem(uint32_t handle)
 	    vb_releasemem.vbt_lm.handle, error, res,
 	    vb_releasemem.vbt_lm.tag.vpt_rcode);
 #endif
-	return (error == 0);
+	if (error)
+		return error;
+
+	if (!vcprop_buffer_success_p(&vb_releasemem.vb_hdr) ||
+	    !vcprop_tag_success_p(&vb_releasemem.vbt_lm.tag)) {
+		return EIO;
+	}
+
+	return 0;
 }
 
 int
@@ -294,7 +331,15 @@ rpi_fb_movecursor(int x, int y, int on)
 	    vb_cursorstate.vbt_cs.enable, error, res,
 	    vb_cursorstate.vbt_cs.tag.vpt_rcode);
 #endif
-	return (error == 0);
+	if (error)
+		return error;
+
+	if (!vcprop_buffer_success_p(&vb_cursorstate.vb_hdr) ||
+	    !vcprop_tag_success_p(&vb_cursorstate.vbt_cs.tag)) {
+		return EIO;
+	}
+
+	return 0;
 }
 
 int
@@ -339,5 +384,13 @@ rpi_fb_initcursor(bus_addr_t pixels, int hx, int hy)
 	    vb_cursorinfo.vbt_ci.width, error, res,
 	    vb_cursorinfo.vbt_ci.tag.vpt_rcode);
 #endif
-	return (error == 0);
+	if (error)
+		return error;
+
+	if (!vcprop_buffer_success_p(&vb_cursorinfo.vb_hdr) ||
+	    !vcprop_tag_success_p(&vb_cursorinfo.vbt_ci.tag)) {
+		return EIO;
+	}
+
+	return 0;
 }
