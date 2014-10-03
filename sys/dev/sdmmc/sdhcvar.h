@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.13 2013/01/10 17:19:33 jmcneill Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.13.12.1 2014/10/03 18:53:56 martin Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -25,6 +25,7 @@
 #include <sys/pmf.h>
 
 struct sdhc_host;
+struct sdmmc_command;
 
 struct sdhc_softc {
 	device_t		sc_dev;
@@ -49,6 +50,7 @@ struct sdhc_softc {
 #define	SDHC_FLAG_SINGLE_ONLY	0x0800	/* Single transfer only */
 #define	SDHC_FLAG_WAIT_RESET	0x1000	/* Wait for soft resets to start */
 #define	SDHC_FLAG_NO_HS_BIT	0x2000	/* Don't set SDHC_HIGH_SPEED bit */
+#define	SDHC_FLAG_EXTERNAL_DMA	0x4000
 
 	uint32_t		sc_clkbase;
 	int			sc_clkmsk;	/* Mask for SDCLK */
@@ -58,6 +60,7 @@ struct sdhc_softc {
 	int (*sc_vendor_write_protect)(struct sdhc_softc *);
 	int (*sc_vendor_card_detect)(struct sdhc_softc *);
 	int (*sc_vendor_bus_clock)(struct sdhc_softc *, int);
+	int (*sc_vendor_transfer_data_dma)(struct sdhc_host *, struct sdmmc_command *);
 };
 
 /* Host controller functions called by the attachment driver. */

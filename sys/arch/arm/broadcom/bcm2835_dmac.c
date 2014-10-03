@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_dmac.c,v 1.2.2.2 2014/09/11 14:20:11 martin Exp $ */
+/* $NetBSD: bcm2835_dmac.c,v 1.2.2.3 2014/10/03 18:53:56 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.2.2.2 2014/09/11 14:20:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.2.2.3 2014/10/03 18:53:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_dmac.c,v 1.2.2.2 2014/09/11 14:20:11 martin 
 
 #include <arm/broadcom/bcm2835_dmac.h>
 
-#define BCM_DMAC_CHANNELMASK	0x00000ff2
+#define BCM_DMAC_CHANNELMASK	0x00000fff
 
 struct bcm_dmac_softc;
 
@@ -109,6 +109,7 @@ static void
 bcm_dmac_attach(device_t parent, device_t self, void *aux)
 {
 	struct bcm_dmac_softc *sc = device_private(self);
+	const prop_dictionary_t cfg = device_properties(self);
 	struct bcm_dmac_channel *ch;
 	struct amba_attach_args *aaa = aux;
 	uint32_t val;
@@ -123,12 +124,12 @@ bcm_dmac_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_channelmask = BCM_DMAC_CHANNELMASK;
-	sc->sc_nchannels = 31 - __builtin_clz(sc->sc_channelmask);
+	prop_dictionary_get_uint32(cfg, "chanmask", &sc->sc_channelmask);
+	sc->sc_channelmask &= BCM_DMAC_CHANNELMASK;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SCHED);
 
-	sc->sc_nchannels = 31 - __builtin_clz(BCM_DMAC_CHANNELMASK);
+	sc->sc_nchannels = 31 - __builtin_clz(sc->sc_channelmask);
 	sc->sc_channels = kmem_alloc(
 	    sizeof(*sc->sc_channels) * sc->sc_nchannels, KM_SLEEP);
 	if (sc->sc_channels == NULL) {
@@ -143,6 +144,7 @@ bcm_dmac_attach(device_t parent, device_t self, void *aux)
 		ch->ch_index = index;
 		ch->ch_callback = NULL;
 		ch->ch_callbackarg = NULL;
+		ch->ch_ih = NULL;
 		if ((__BIT(index) & sc->sc_channelmask) == 0)
 			continue;
 
@@ -153,13 +155,6 @@ bcm_dmac_attach(device_t parent, device_t self, void *aux)
 		val = DMAC_READ(sc, DMAC_CS(index));
 		val |= DMAC_CS_RESET;
 		DMAC_WRITE(sc, DMAC_CS(index), val);
-
-		ch->ch_ih = bcm2835_intr_establish(BCM2835_INT_DMA0 + index,
-		    IPL_SCHED, bcm_dmac_intr, ch);
-		if (ch->ch_ih == NULL) {
-			aprint_error("(err)");
-			sc->sc_channelmask &= ~__BIT(index);
-		}
 	}
 	aprint_normal("\n");
 	aprint_naive("\n");
@@ -185,7 +180,8 @@ bcm_dmac_intr(void *priv)
 }
 
 struct bcm_dmac_channel *
-bcm_dmac_alloc(enum bcm_dmac_type type, void (*cb)(void *), void *cbarg)
+bcm_dmac_alloc(enum bcm_dmac_type type, int ipl, void (*cb)(void *),
+    void *cbarg)
 {
 	struct bcm_dmac_softc *sc;
 	struct bcm_dmac_channel *ch = NULL;
@@ -213,6 +209,20 @@ bcm_dmac_alloc(enum bcm_dmac_type type, void (*cb)(void *), void *cbarg)
 	}
 	mutex_exit(&sc->sc_lock);
 
+	if (ch == NULL)
+		return NULL;
+
+	KASSERT(ch->ch_ih == NULL);
+	ch->ch_ih = bcm2835_intr_establish(BCM2835_INT_DMA0 + ch->ch_index,
+	    ipl, bcm_dmac_intr, ch);
+	if (ch->ch_ih == NULL) {
+		aprint_error_dev(sc->sc_dev,
+		    "failed to establish interrupt for DMA%d\n", ch->ch_index);
+		ch->ch_callback = NULL;
+		ch->ch_callbackarg = NULL;
+		ch = NULL;
+	}
+
 	return ch;
 }
 
@@ -231,6 +241,8 @@ bcm_dmac_free(struct bcm_dmac_channel *ch)
 	DMAC_WRITE(sc, DMAC_CS(ch->ch_index), val);
 
 	mutex_enter(&sc->sc_lock);
+	intr_disestablish(ch->ch_ih);
+	ch->ch_ih = NULL;
 	ch->ch_callback = NULL;
 	ch->ch_callbackarg = NULL;
 	mutex_exit(&sc->sc_lock);
