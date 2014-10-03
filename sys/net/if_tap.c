@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.78 2014/09/05 09:22:22 matt Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.79 2014/10/03 06:46:02 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.78 2014/09/05 09:22:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.79 2014/10/03 06:46:02 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.78 2014/09/05 09:22:22 matt Exp $");
 #include <sys/device.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/ksyms.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/select.h>
