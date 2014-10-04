@@ -1,0 +1,12 @@
+#! /bin/sh
+
+# Remove '#line ...' lines to not confuse mkdep(1).
+find . -name '*.[ch]pp' -print |
+xargs grep -l '^#line' |
+while read f; do
+	mv $f $f.orig
+	sed '/^#line/d' <$f.orig >$f
+	rm $f.orig
+done
+
+exit 0

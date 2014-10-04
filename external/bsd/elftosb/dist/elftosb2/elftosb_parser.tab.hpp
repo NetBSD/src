@@ -117,7 +117,6 @@
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 58 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
 typedef union YYSTYPE {
 	int m_num;
 	elftosb::SizedIntegerValue * m_int;
@@ -126,7 +125,6 @@ typedef union YYSTYPE {
 	elftosb::ASTNode * m_ast;	// must use full name here because this is put into *.tab.hpp
 } YYSTYPE;
 /* Line 1447 of yacc.c.  */
-#line 130 "/Users/creed/projects/fsl/fromsvr/elftosb/build/elftosb.build/Debug/elftosb.build/DerivedSources/elftosb_parser.tab.hpp"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

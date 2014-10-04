@@ -1,6 +1,4 @@
-#line 2 "/Users/creed/projects/fsl/fromsvr/elftosb/build/elftosb.build/Debug/elftosb.build/DerivedSources/elftosb_lexer.cpp"
 
-#line 4 "/Users/creed/projects/fsl/fromsvr/elftosb/build/elftosb.build/Debug/elftosb.build/DerivedSources/elftosb_lexer.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -602,9 +600,7 @@ static yyconst flex_int32_t yy_rule_can_match_eol[75] =
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-#line 1 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 /* %option prefix="Elftosb" */
-#line 10 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 #include "ElftosbLexer.h"
 #include <stdlib.h>
 #include <limits.h>
@@ -624,7 +620,6 @@ using namespace elftosb;
 
 /* start conditions */
 
-#line 628 "/Users/creed/projects/fsl/fromsvr/elftosb/build/elftosb.build/Debug/elftosb.build/DerivedSources/elftosb_lexer.cpp"
 
 #define INITIAL 0
 #define blob 1
@@ -726,10 +721,8 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 38 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 
 
-#line 733 "/Users/creed/projects/fsl/fromsvr/elftosb/build/elftosb.build/Debug/elftosb.build/DerivedSources/elftosb_lexer.cpp"
 
 	if ( !(yy_init) )
 		{
@@ -820,112 +813,90 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 40 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_OPTIONS; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 41 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_CONSTANTS; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 42 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_SOURCES; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 43 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_FILTERS; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 44 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_SECTION; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 45 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_EXTERN; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 46 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_FROM; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 47 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_RAW; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 48 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_LOAD; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 49 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_JUMP; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 50 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_CALL; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 51 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_MODE; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 52 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_IF; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 53 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_ELSE; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 54 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_DEFINED; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 55 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_INFO; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 56 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_WARNING; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 57 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_ERROR; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 58 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_SIZEOF; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 59 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_DCD; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 60 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_HAB; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 61 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_IVT; }
 	YY_BREAK
 case 23:
@@ -934,7 +905,6 @@ case 23:
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 63 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 {	// must be followed by any non-ident char
 										int_size_t theSize;
 										switch (yytext[0])
@@ -955,7 +925,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 81 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 {
 										m_symbolValue.m_int = new elftosb::SizedIntegerValue(1, kWordSize);
 										return TOK_INT_LITERAL;
@@ -963,7 +932,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 86 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 {
 										m_symbolValue.m_int = new elftosb::SizedIntegerValue(0, kWordSize);
 										return TOK_INT_LITERAL;
@@ -971,7 +939,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 91 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 {
 										m_symbolValue.m_str = new std::string(yytext);
 										if (isSourceName(m_symbolValue.m_str))
@@ -986,7 +953,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 103 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 {
 										int base = 0;
 										uint32_t value;
@@ -1026,7 +992,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 140 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 {
 										uint32_t value = 0;
 										int_size_t theSize;
@@ -1053,7 +1018,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 164 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 {
 										// remove $ from string
 										m_symbolValue.m_str = new std::string(&yytext[1]);
@@ -1062,12 +1026,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 171 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { BEGIN(mlcmt); }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 173 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 {
 										m_blob = new Blob();
 										m_blobFirstLine = yylineno;
@@ -1076,173 +1038,139 @@ YY_RULE_SETUP
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 179 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '{'; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 181 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '}'; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 183 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '('; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 185 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return ')'; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 187 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '['; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 189 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return ']'; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 191 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '='; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 193 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return ','; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 195 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return ':'; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 197 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return ';'; }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 199 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '.'; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 201 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '>'; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 203 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_DOT_DOT; }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 205 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '+'; }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 207 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '-'; }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 209 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '*'; }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 211 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '/'; }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 213 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '%'; }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 215 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '~'; }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 217 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '^'; }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 219 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_LSHIFT; }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 221 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_RSHIFT; }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 223 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '&'; }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 225 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '|'; }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 227 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_POWER; }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 229 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '<'; }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 231 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_GEQ; }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 233 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_LEQ; }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 235 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_EQ; }
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 237 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_NEQ; }
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 239 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_AND; }
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 241 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return TOK_OR; }
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 243 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 { return '!'; }
 	YY_BREAK
 case 65:
 /* rule 65 can match eol */
 YY_RULE_SETUP
-#line 245 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 {
 										// get rid of quotes
 										yytext++;
@@ -1254,7 +1182,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 254 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 {
 										uint8_t x = (hexCharToInt(yytext[0]) << 4) | hexCharToInt(yytext[1]);
 										m_blob->append(&x, 1);
@@ -1262,7 +1189,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 259 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 {
 										BEGIN(INITIAL);
 										m_symbolValue.m_blob = m_blob;
@@ -1273,7 +1199,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 267 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 {
                                         // end of multi-line comment, return to initial state
                                         BEGIN(INITIAL);
@@ -1284,18 +1209,15 @@ case 69:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 273 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 /* absorb single-line comment */
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 275 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 /* eat up whitespace in all states */
 	YY_BREAK
 case 71:
 /* rule 71 can match eol */
 YY_RULE_SETUP
-#line 277 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 {
 										/* eat up whitespace and count lines in all states */
 										m_line++;
@@ -1303,12 +1225,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 282 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 /* ignore all other chars in a multi-line comment */
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 284 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 {
 										/* all other chars produce errors */
 										char msg[50];
@@ -1318,10 +1238,8 @@ YY_RULE_SETUP
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 291 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 ECHO;
 	YY_BREAK
-#line 1325 "/Users/creed/projects/fsl/fromsvr/elftosb/build/elftosb.build/Debug/elftosb.build/DerivedSources/elftosb_lexer.cpp"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(blob):
 case YY_STATE_EOF(mlcmt):
@@ -2231,7 +2149,6 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 291 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_lexer.l"
 
 
 
