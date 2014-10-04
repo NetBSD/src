@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.19 2014/09/11 08:01:31 matt Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.20 2014/10/04 19:38:17 martin Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.19 2014/09/11 08:01:31 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.20 2014/10/04 19:38:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,10 +91,10 @@ static volatile uint32_t *uart_base;
 static int
 awin_cngetc(dev_t dv)
 {
-        if ((uart_base[com_lsr] & LSR_RXRDY) == 0)
+        if ((le32toh(uart_base[com_lsr]) & LSR_RXRDY) == 0)
 		return -1;
 
-	return uart_base[com_data] & 0xff;
+	return le32toh(uart_base[com_data]) & 0xff;
 }
 
 static void
@@ -102,13 +102,13 @@ awin_cnputc(dev_t dv, int c)
 {
 	int timo = 150000;
 
-        while ((uart_base[com_lsr] & LSR_TXRDY) == 0 && --timo > 0)
+        while ((le32toh(uart_base[com_lsr]) & LSR_TXRDY) == 0 && --timo > 0)
 		;
 
-	uart_base[com_data] = c & 0xff;
+	uart_base[com_data] = htole32(c & 0xff);
 
 	timo = 150000;
-        while ((uart_base[com_lsr] & LSR_TSRE) == 0 && --timo > 0)
+        while ((le32toh(uart_base[com_lsr]) & LSR_TSRE) == 0 && --timo > 0)
 		;
 }
 
