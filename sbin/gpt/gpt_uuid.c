@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.7 2014/10/03 20:30:06 christos Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.8 2014/10/04 10:30:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,10 +32,13 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.7 2014/10/03 20:30:06 christos Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.8 2014/10/04 10:30:13 riastradh Exp $");
 #endif
 
+#include <err.h>
+#include <fcntl.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "map.h"
 #include "gpt.h"
@@ -53,12 +56,6 @@ struct dce_uuid {
 	uint16_t	time_hi_and_version;
 	uint8_t		clock_seq_hi_and_reserved;
 	uint8_t		clock_seq_low;
-	uint8_t		node[6];
-};
-
-struct kern_uuid {
-	uint64_t	ll;
-	uint16_t	seq;
 	uint8_t		node[6];
 };
 
@@ -238,96 +235,35 @@ gpt_uuid_create(gpt_type_t t, gpt_uuid_t u, uint16_t *b, size_t s)
 		utf8_to_utf16((const uint8_t *)gpt_nv[t].d, b, s / sizeof(*b));
 }
 
-#if !defined(HAVE_NBTOOL_CONFIG_H)
-#include <sys/types.h>
-#include <sys/uuid.h>
-#else
-#include <time.h>
-/*
- * Get the current time as a 5x bit count of 100000-microsecond intervals
- * since 00:00:00.00, October 15,1582. We apply a magic offset to convert
- * the Unix time since 00:00:00.00, January 1, 1970 to the date of the
- * Gregorian reform to the Christian calendar.
- */
-static uint64_t
-uuid_time(void)
-{
-	struct timeval tv;
-	uint64_t xtime = 0x01B21DD213814000LL;
-
-	(void)gettimeofday(&tv, NULL);
-	xtime += (uint64_t)tv.tv_sec * 10000000LL;
-	xtime += (uint64_t)(tv.tv_usec / 100000);
-	return (xtime & ((1LL << 60) - 1LL));
-}
-
-/*
- * No portable way to get ethernet, use hostid instead
- */
-static void
-uuid_node(uint8_t node[6])
-{
-	long hid = gethostid();
-	node[0] = 'N';
-	node[1] = 'B';
-	node[2] = (hid >> 24) & 0xff;
-	node[3] = (hid >> 16) & 0xff;
-	node[4] = (hid >>  8) & 0xff;
-	node[5] = (hid >>  0) & 0xff;
-}
-
-static void
-uuid_generate(void *u, uint64_t *timep, int count)
-{
-	static struct kern_uuid uuid_last;
-	uint64_t xtime, ltime;
-	uint16_t lseq;
-	struct kern_uuid *uuid = u;
-
-	uuid_node(uuid->node);
-	xtime = uuid_time();
-	*timep = xtime;
-
-	if (uuid_last.ll == 0LL || uuid_last.node[0] != uuid->node[0] ||
-	    uuid_last.node[1] != uuid->node[1] ||
-	    uuid_last.node[2] != uuid->node[2]) {
-		srandom((unsigned int) xtime);
-		uuid->seq = (uint16_t)random() & 0x3fff;
-	} else if (uuid_last.ll >= xtime)
-		uuid->seq = (uuid_last.seq + 1) & 0x3fff;
-
-	uuid_last = *uuid;
-	uuid_last.ll = (xtime + count - 1) & ((1LL << 60) - 1LL);
-}
-
-static void
-uuidgen(struct dce_uuid *store, int count)
-{
-	uint64_t xtime;
-	struct kern_uuid uuid;
-	int i;
-
-	/* Generate the base UUID. */
-	uuid_generate(&uuid, &xtime, count);
-
-	for (i = 0; i < count; xtime++, i++) {
-		/* Set time and version (=1) and deal with byte order. */
-		store[i].time_low = (uint32_t)xtime;
-		store[i].time_mid = (uint16_t)(xtime >> 32);
-		store[i].time_hi_and_version =
-		    ((uint16_t)(xtime >> 48) & 0xfff) | (1 << 12);
-		store[i].clock_seq_hi_and_reserved = (uuid.seq >> 16) | 0x80;
-		store[i].clock_seq_low = uuid.seq & 0xff;
-		memcpy(store[i].node, uuid.node, sizeof(uuid.node));
-	}
-}
-#endif
-
 void
 gpt_uuid_generate(gpt_uuid_t t)
 {
 	struct dce_uuid u;
+	int fd;
+	uint8_t *p;
+	size_t n;
+	ssize_t nread;
 
-	uuidgen((void *)&u, 1);
+	/* Randomly generate the content.  */
+	fd = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
+	if (fd == -1)
+		err(1, "open(/dev/urandom)");
+	for (p = (void *)&u, n = sizeof u; 0 < n; p += nread, n -= nread) {
+		nread = read(fd, p, n);
+		if (nread < 0)
+			err(1, "read(/dev/urandom)");
+		if ((size_t)nread > n)
+			errx(1, "read too much: %zd > %zu", nread, n);
+	}
+	(void)close(fd);
+
+	/* Set the version number to 4.  */
+	u.time_hi_and_version &= ~(uint32_t)0xf000;
+	u.time_hi_and_version |= 0x4000;
+
+	/* Fix the reserved bits.  */
+	u.clock_seq_hi_and_reserved &= ~(uint8_t)0x40;
+	u.clock_seq_hi_and_reserved |= 0x80;
+
 	gpt_dce_to_uuid(&u, t);
 }
