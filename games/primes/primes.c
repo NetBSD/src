@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.c,v 1.20 2014/10/02 21:36:37 ast Exp $	*/
+/*	$NetBSD: primes.c,v 1.21 2014/10/04 13:15:50 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: primes.c,v 1.20 2014/10/02 21:36:37 ast Exp $");
+__RCSID("$NetBSD: primes.c,v 1.21 2014/10/04 13:15:50 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,13 +52,13 @@ __RCSID("$NetBSD: primes.c,v 1.20 2014/10/02 21:36:37 ast Exp $");
  * By Landon Curt Noll, http://www.isthe.com/chongo/index.html /\oo/\
  *
  * usage:
- *	primes [-d] [-h] [start [stop]]
+ *	primes [-dh] [start [stop]]
  *
  *	Print primes >= start and < stop.  If stop is omitted,
  *	the value SPSPMAX is assumed.  If start is
  *	omitted, start is read from standard input.
- *		-h: print primes in hexadecimal
  *		-d: print difference to previous prime, e.g. 3 (1)
+ *		-h: print primes in hexadecimal
  *
  * validation check: there are 664579 primes between 0 and 10^7
  */
@@ -338,6 +338,6 @@ primes(uint64_t start, uint64_t stop)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: primes [-d] [-h] [start [stop]]\n");
+	(void)fprintf(stderr, "usage: primes [-dh] [start [stop]]\n");
 	exit(1);
 }
