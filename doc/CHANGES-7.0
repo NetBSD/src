@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.43 2014/10/03 18:55:37 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.44 2014/10/04 08:21:23 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1035,4 +1035,9 @@ sys/dev/sdmmc/sdhcvar.h				1.14
 
 	Various RPI DMAC and sdhc improvements.
 	[skrll, ticket #126]
+
+sys/dev/sdmmc/sdhc.c				1.50
+
+	Fix divisor calculation for SDHC 3.0.
+	[skrll, ticket #127]
 
