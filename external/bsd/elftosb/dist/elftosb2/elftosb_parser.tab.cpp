@@ -144,7 +144,6 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 14 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
 
 #include "ElftosbLexer.h"
 #include "ElftosbAST.h"
@@ -207,7 +206,6 @@ static void yyerror(YYLTYPE * yylloc, ElftosbLexer * lexer, CommandFileASTNode *
 #endif
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 58 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
 typedef union YYSTYPE {
 	int m_num;
 	elftosb::SizedIntegerValue * m_int;
@@ -216,7 +214,6 @@ typedef union YYSTYPE {
 	elftosb::ASTNode * m_ast;	// must use full name here because this is put into *.tab.hpp
 } YYSTYPE;
 /* Line 196 of yacc.c.  */
-#line 220 "/Users/creed/projects/fsl/fromsvr/elftosb/build/elftosb.build/Debug/elftosb.build/DerivedSources/elftosb_parser.tab.cpp"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
@@ -240,7 +237,6 @@ typedef struct YYLTYPE
 
 
 /* Line 219 of yacc.c.  */
-#line 244 "/Users/creed/projects/fsl/fromsvr/elftosb/build/elftosb.build/Debug/elftosb.build/DerivedSources/elftosb_parser.tab.cpp"
 
 #if ! defined (YYSIZE_T) && defined (__SIZE_TYPE__)
 # define YYSIZE_T __SIZE_TYPE__
@@ -1203,39 +1199,25 @@ yydestruct (yymsg, yytype, yyvaluep, yylocationp)
   switch (yytype)
     {
       case 3: /* "\"identifier\"" */
-#line 158 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
         { delete (yyvaluep->m_str); };
-#line 1209 "/Users/creed/projects/fsl/fromsvr/elftosb/build/elftosb.build/Debug/elftosb.build/DerivedSources/elftosb_parser.tab.cpp"
         break;
       case 4: /* "\"string\"" */
-#line 158 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
         { delete (yyvaluep->m_str); };
-#line 1214 "/Users/creed/projects/fsl/fromsvr/elftosb/build/elftosb.build/Debug/elftosb.build/DerivedSources/elftosb_parser.tab.cpp"
         break;
       case 5: /* "\"integer\"" */
-#line 158 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
         { delete (yyvaluep->m_int); };
-#line 1219 "/Users/creed/projects/fsl/fromsvr/elftosb/build/elftosb.build/Debug/elftosb.build/DerivedSources/elftosb_parser.tab.cpp"
         break;
       case 6: /* "\"section name\"" */
-#line 158 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
         { delete (yyvaluep->m_str); };
-#line 1224 "/Users/creed/projects/fsl/fromsvr/elftosb/build/elftosb.build/Debug/elftosb.build/DerivedSources/elftosb_parser.tab.cpp"
         break;
       case 7: /* "\"source name\"" */
-#line 158 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
         { delete (yyvaluep->m_str); };
-#line 1229 "/Users/creed/projects/fsl/fromsvr/elftosb/build/elftosb.build/Debug/elftosb.build/DerivedSources/elftosb_parser.tab.cpp"
         break;
       case 8: /* "\"binary object\"" */
-#line 158 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
         { delete (yyvaluep->m_blob); };
-#line 1234 "/Users/creed/projects/fsl/fromsvr/elftosb/build/elftosb.build/Debug/elftosb.build/DerivedSources/elftosb_parser.tab.cpp"
         break;
       case 36: /* "\"integer size\"" */
-#line 158 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
         { delete (yyvaluep->m_int); };
-#line 1239 "/Users/creed/projects/fsl/fromsvr/elftosb/build/elftosb.build/Debug/elftosb.build/DerivedSources/elftosb_parser.tab.cpp"
         break;
 
       default:
@@ -1553,7 +1535,6 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 163 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							CommandFileASTNode * commandFile = new CommandFileASTNode();
 							commandFile->setBlocks(dynamic_cast<ListASTNode*>((yyvsp[-1].m_ast)));
@@ -1564,7 +1545,6 @@ yyreduce:
     break;
 
   case 3:
-#line 173 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							ListASTNode * list = new ListASTNode();
 							list->appendNode((yyvsp[0].m_ast));
@@ -1573,7 +1553,6 @@ yyreduce:
     break;
 
   case 4:
-#line 179 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							dynamic_cast<ListASTNode*>((yyvsp[-1].m_ast))->appendNode((yyvsp[0].m_ast));
 							(yyval.m_ast) = (yyvsp[-1].m_ast);
@@ -1581,36 +1560,30 @@ yyreduce:
     break;
 
   case 5:
-#line 186 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[0].m_ast); ;}
     break;
 
   case 6:
-#line 187 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[0].m_ast); ;}
     break;
 
   case 7:
-#line 188 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[0].m_ast); ;}
     break;
 
   case 8:
-#line 192 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new OptionsBlockASTNode(dynamic_cast<ListASTNode *>((yyvsp[-1].m_ast)));
 							;}
     break;
 
   case 9:
-#line 198 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new ConstantsBlockASTNode(dynamic_cast<ListASTNode *>((yyvsp[-1].m_ast)));
 							;}
     break;
 
   case 10:
-#line 204 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ListASTNode * list = new ListASTNode();
 								list->appendNode((yyvsp[0].m_ast));
@@ -1619,7 +1592,6 @@ yyreduce:
     break;
 
   case 11:
-#line 210 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								dynamic_cast<ListASTNode*>((yyvsp[-1].m_ast))->appendNode((yyvsp[0].m_ast));
 								(yyval.m_ast) = (yyvsp[-1].m_ast);
@@ -1627,17 +1599,14 @@ yyreduce:
     break;
 
   case 12:
-#line 216 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[-1].m_ast); ;}
     break;
 
   case 13:
-#line 217 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = NULL; ;}
     break;
 
   case 14:
-#line 221 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new AssignmentASTNode((yyvsp[-2].m_str), (yyvsp[0].m_ast));
 								(yyval.m_ast)->setLocation((yylsp[-2]), (yylsp[0]));
@@ -1645,14 +1614,12 @@ yyreduce:
     break;
 
   case 15:
-#line 228 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							(yyval.m_ast) = new SourcesBlockASTNode(dynamic_cast<ListASTNode *>((yyvsp[-1].m_ast)));
 						;}
     break;
 
   case 16:
-#line 234 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							ListASTNode * list = new ListASTNode();
 							list->appendNode((yyvsp[0].m_ast));
@@ -1661,7 +1628,6 @@ yyreduce:
     break;
 
   case 17:
-#line 240 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							dynamic_cast<ListASTNode*>((yyvsp[-1].m_ast))->appendNode((yyvsp[0].m_ast));
 							(yyval.m_ast) = (yyvsp[-1].m_ast);
@@ -1669,7 +1635,6 @@ yyreduce:
     break;
 
   case 18:
-#line 248 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								// tell the lexer that this is the name of a source file
 								SourceDefASTNode * node = dynamic_cast<SourceDefASTNode*>((yyvsp[-2].m_ast));
@@ -1684,12 +1649,10 @@ yyreduce:
     break;
 
   case 19:
-#line 259 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = NULL; ;}
     break;
 
   case 20:
-#line 263 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new PathSourceDefASTNode((yyvsp[-2].m_str), (yyvsp[0].m_str));
 								(yyval.m_ast)->setLocation((yylsp[-2]), (yylsp[0]));
@@ -1697,7 +1660,6 @@ yyreduce:
     break;
 
   case 21:
-#line 268 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new ExternSourceDefASTNode((yyvsp[-5].m_str), dynamic_cast<ExprASTNode*>((yyvsp[-1].m_ast)));
 								(yyval.m_ast)->setLocation((yylsp[-5]), (yylsp[0]));
@@ -1705,17 +1667,14 @@ yyreduce:
     break;
 
   case 22:
-#line 275 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[-1].m_ast); ;}
     break;
 
   case 23:
-#line 276 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = NULL; ;}
     break;
 
   case 24:
-#line 281 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ListASTNode * list = new ListASTNode();
 								list->appendNode((yyvsp[0].m_ast));
@@ -1724,7 +1683,6 @@ yyreduce:
     break;
 
   case 25:
-#line 287 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								dynamic_cast<ListASTNode*>((yyvsp[-2].m_ast))->appendNode((yyvsp[0].m_ast));
 								(yyval.m_ast) = (yyvsp[-2].m_ast);
@@ -1732,7 +1690,6 @@ yyreduce:
     break;
 
   case 26:
-#line 295 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new AssignmentASTNode((yyvsp[-2].m_str), (yyvsp[0].m_ast));
 								(yyval.m_ast)->setLocation((yylsp[-2]), (yylsp[0]));
@@ -1740,7 +1697,6 @@ yyreduce:
     break;
 
   case 27:
-#line 302 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ListASTNode * list = new ListASTNode();
 								list->appendNode((yyvsp[0].m_ast));
@@ -1749,7 +1705,6 @@ yyreduce:
     break;
 
   case 28:
-#line 308 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								dynamic_cast<ListASTNode*>((yyvsp[-1].m_ast))->appendNode((yyvsp[0].m_ast));
 								(yyval.m_ast) = (yyvsp[-1].m_ast);
@@ -1757,7 +1712,6 @@ yyreduce:
     break;
 
   case 29:
-#line 315 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								SectionContentsASTNode * sectionNode = dynamic_cast<SectionContentsASTNode*>((yyvsp[0].m_ast));
 								if (sectionNode)
@@ -1772,35 +1726,30 @@ yyreduce:
     break;
 
   case 30:
-#line 330 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = (yyvsp[0].m_ast);
 							;}
     break;
 
   case 31:
-#line 334 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = NULL;
 							;}
     break;
 
   case 32:
-#line 341 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = (yyvsp[0].m_ast);
 							;}
     break;
 
   case 33:
-#line 345 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = NULL;
 							;}
     break;
 
   case 34:
-#line 352 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								DataSectionContentsASTNode * dataSection = new DataSectionContentsASTNode((yyvsp[-1].m_ast));
 								dataSection->setLocation((yylsp[-2]), (yylsp[0]));
@@ -1809,7 +1758,6 @@ yyreduce:
     break;
 
   case 35:
-#line 358 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ListASTNode * listNode = dynamic_cast<ListASTNode*>((yyvsp[-1].m_ast));
 								(yyval.m_ast) = new BootableSectionContentsASTNode(listNode);
@@ -1818,7 +1766,6 @@ yyreduce:
     break;
 
   case 36:
-#line 366 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ListASTNode * list = new ListASTNode();
 								list->appendNode((yyvsp[0].m_ast));
@@ -1827,7 +1774,6 @@ yyreduce:
     break;
 
   case 37:
-#line 372 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								dynamic_cast<ListASTNode*>((yyvsp[-1].m_ast))->appendNode((yyvsp[0].m_ast));
 								(yyval.m_ast) = (yyvsp[-1].m_ast);
@@ -1835,27 +1781,22 @@ yyreduce:
     break;
 
   case 38:
-#line 379 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[-1].m_ast); ;}
     break;
 
   case 39:
-#line 380 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[0].m_ast); ;}
     break;
 
   case 40:
-#line 381 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[0].m_ast); ;}
     break;
 
   case 41:
-#line 382 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = NULL; ;}
     break;
 
   case 42:
-#line 386 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ListASTNode * list = new ListASTNode();
 								list->appendNode((yyvsp[0].m_ast));
@@ -1864,7 +1805,6 @@ yyreduce:
     break;
 
   case 43:
-#line 392 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								dynamic_cast<ListASTNode*>((yyvsp[-1].m_ast))->appendNode((yyvsp[0].m_ast));
 								(yyval.m_ast) = (yyvsp[-1].m_ast);
@@ -1872,42 +1812,34 @@ yyreduce:
     break;
 
   case 44:
-#line 399 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[-1].m_ast); ;}
     break;
 
   case 45:
-#line 400 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[0].m_ast); ;}
     break;
 
   case 46:
-#line 401 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = NULL; ;}
     break;
 
   case 47:
-#line 404 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[0].m_ast); ;}
     break;
 
   case 48:
-#line 405 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[0].m_ast); ;}
     break;
 
   case 49:
-#line 406 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[0].m_ast); ;}
     break;
 
   case 50:
-#line 407 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[0].m_ast); ;}
     break;
 
   case 51:
-#line 411 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								LoadStatementASTNode * stmt = new LoadStatementASTNode();
 								stmt->setData((yyvsp[-1].m_ast));
@@ -1931,7 +1863,6 @@ yyreduce:
     break;
 
   case 52:
-#line 434 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								if (!elftosb::g_enableHABSupport)
 								{
@@ -1944,19 +1875,16 @@ yyreduce:
     break;
 
   case 53:
-#line 443 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_num) = 0; ;}
     break;
 
   case 54:
-#line 446 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = (yyvsp[0].m_ast);
 							;}
     break;
 
   case 55:
-#line 450 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new StringConstASTNode((yyvsp[0].m_str));
 								(yyval.m_ast)->setLocation((yylsp[0]));
@@ -1964,7 +1892,6 @@ yyreduce:
     break;
 
   case 56:
-#line 455 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new SourceASTNode((yyvsp[0].m_str));
 								(yyval.m_ast)->setLocation((yylsp[0]));
@@ -1972,7 +1899,6 @@ yyreduce:
     break;
 
   case 57:
-#line 460 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new SectionMatchListASTNode(dynamic_cast<ListASTNode*>((yyvsp[0].m_ast)));
 								(yyval.m_ast)->setLocation((yylsp[0]));
@@ -1980,7 +1906,6 @@ yyreduce:
     break;
 
   case 58:
-#line 465 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new SectionMatchListASTNode(dynamic_cast<ListASTNode*>((yyvsp[-2].m_ast)), (yyvsp[0].m_str));
 								(yyval.m_ast)->setLocation((yylsp[-2]), (yylsp[0]));
@@ -1988,7 +1913,6 @@ yyreduce:
     break;
 
   case 59:
-#line 470 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new SectionMatchListASTNode(dynamic_cast<ListASTNode*>((yyvsp[-1].m_ast)), (yyvsp[-3].m_str));
 								(yyval.m_ast)->setLocation((yylsp[-3]), (yylsp[0]));
@@ -1996,7 +1920,6 @@ yyreduce:
     break;
 
   case 60:
-#line 475 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new BlobConstASTNode((yyvsp[0].m_blob));
 								(yyval.m_ast)->setLocation((yylsp[0]));
@@ -2004,13 +1927,11 @@ yyreduce:
     break;
 
   case 61:
-#line 480 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							;}
     break;
 
   case 62:
-#line 485 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ListASTNode * list = new ListASTNode();
 								list->appendNode((yyvsp[0].m_ast));
@@ -2019,7 +1940,6 @@ yyreduce:
     break;
 
   case 63:
-#line 491 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								dynamic_cast<ListASTNode*>((yyvsp[-2].m_ast))->appendNode((yyvsp[0].m_ast));
 								(yyval.m_ast) = (yyvsp[-2].m_ast);
@@ -2027,7 +1947,6 @@ yyreduce:
     break;
 
   case 64:
-#line 499 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new SectionASTNode((yyvsp[0].m_str), SectionASTNode::kInclude);
 								(yyval.m_ast)->setLocation((yylsp[0]));
@@ -2035,7 +1954,6 @@ yyreduce:
     break;
 
   case 65:
-#line 504 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new SectionASTNode((yyvsp[0].m_str), SectionASTNode::kExclude);
 								(yyval.m_ast)->setLocation((yylsp[-1]), (yylsp[0]));
@@ -2043,14 +1961,12 @@ yyreduce:
     break;
 
   case 66:
-#line 511 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = (yyvsp[0].m_ast);
 							;}
     break;
 
   case 67:
-#line 515 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new NaturalLocationASTNode();
 //								$$->setLocation();
@@ -2058,7 +1974,6 @@ yyreduce:
     break;
 
   case 68:
-#line 522 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new NaturalLocationASTNode();
 								(yyval.m_ast)->setLocation((yylsp[0]));
@@ -2066,14 +1981,12 @@ yyreduce:
     break;
 
   case 69:
-#line 527 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = (yyvsp[0].m_ast);
 							;}
     break;
 
   case 70:
-#line 533 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								IVTConstASTNode * ivt = new IVTConstASTNode();
 								if ((yyvsp[-1].m_ast))
@@ -2086,17 +1999,14 @@ yyreduce:
     break;
 
   case 71:
-#line 544 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[0].m_ast); ;}
     break;
 
   case 72:
-#line 545 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = NULL; ;}
     break;
 
   case 73:
-#line 549 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								CallStatementASTNode * stmt = new CallStatementASTNode();
 								switch ((yyvsp[-2].m_num))
@@ -2128,7 +2038,6 @@ yyreduce:
     break;
 
   case 74:
-#line 578 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								if (!elftosb::g_enableHABSupport)
 								{
@@ -2166,17 +2075,14 @@ yyreduce:
     break;
 
   case 75:
-#line 614 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_num) = 1; ;}
     break;
 
   case 76:
-#line 615 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_num) = 2; ;}
     break;
 
   case 77:
-#line 619 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new SymbolASTNode(NULL, (yyvsp[0].m_str));
 								(yyval.m_ast)->setLocation((yylsp[0]));
@@ -2184,7 +2090,6 @@ yyreduce:
     break;
 
   case 78:
-#line 624 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new AddressRangeASTNode((yyvsp[0].m_ast), NULL);
 								(yyval.m_ast)->setLocation((yyvsp[0].m_ast));
@@ -2192,22 +2097,18 @@ yyreduce:
     break;
 
   case 79:
-#line 630 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[-1].m_ast); ;}
     break;
 
   case 80:
-#line 631 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = NULL; ;}
     break;
 
   case 81:
-#line 632 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = NULL; ;}
     break;
 
   case 82:
-#line 636 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new FromStatementASTNode((yyvsp[-3].m_str), dynamic_cast<ListASTNode*>((yyvsp[-1].m_ast)));
 								(yyval.m_ast)->setLocation((yylsp[-4]), (yylsp[0]));
@@ -2215,7 +2116,6 @@ yyreduce:
     break;
 
   case 83:
-#line 643 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new ModeStatementASTNode(dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast)));
 								(yyval.m_ast)->setLocation((yylsp[-1]), (yylsp[0]));
@@ -2223,7 +2123,6 @@ yyreduce:
     break;
 
   case 84:
-#line 650 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new MessageStatementASTNode(MessageStatementASTNode::kInfo, (yyvsp[0].m_str));
 								(yyval.m_ast)->setLocation((yylsp[-1]), (yylsp[0]));
@@ -2231,7 +2130,6 @@ yyreduce:
     break;
 
   case 85:
-#line 655 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new MessageStatementASTNode(MessageStatementASTNode::kWarning, (yyvsp[0].m_str));
 								(yyval.m_ast)->setLocation((yylsp[-1]), (yylsp[0]));
@@ -2239,7 +2137,6 @@ yyreduce:
     break;
 
   case 86:
-#line 660 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new MessageStatementASTNode(MessageStatementASTNode::kError, (yyvsp[0].m_str));
 								(yyval.m_ast)->setLocation((yylsp[-1]), (yylsp[0]));
@@ -2247,7 +2144,6 @@ yyreduce:
     break;
 
   case 87:
-#line 667 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								IfStatementASTNode * ifStmt = new IfStatementASTNode();
 								ifStmt->setConditionExpr(dynamic_cast<ExprASTNode*>((yyvsp[-4].m_ast)));
@@ -2259,14 +2155,12 @@ yyreduce:
     break;
 
   case 88:
-#line 678 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = (yyvsp[-1].m_ast);
 							;}
     break;
 
   case 89:
-#line 682 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ListASTNode * list = new ListASTNode();
 								list->appendNode((yyvsp[0].m_ast));
@@ -2276,12 +2170,10 @@ yyreduce:
     break;
 
   case 90:
-#line 688 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = NULL; ;}
     break;
 
   case 91:
-#line 692 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new AddressRangeASTNode((yyvsp[0].m_ast), NULL);
 								(yyval.m_ast)->setLocation((yyvsp[0].m_ast));
@@ -2289,7 +2181,6 @@ yyreduce:
     break;
 
   case 92:
-#line 697 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new AddressRangeASTNode((yyvsp[-2].m_ast), (yyvsp[0].m_ast));
 								(yyval.m_ast)->setLocation((yylsp[-2]), (yylsp[0]));
@@ -2297,14 +2188,12 @@ yyreduce:
     break;
 
   case 93:
-#line 704 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = (yyvsp[0].m_ast);
 							;}
     break;
 
   case 94:
-#line 708 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new StringConstASTNode((yyvsp[0].m_str));
 								(yyval.m_ast)->setLocation((yylsp[0]));
@@ -2312,14 +2201,12 @@ yyreduce:
     break;
 
   case 95:
-#line 715 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							(yyval.m_ast) = (yyvsp[0].m_ast);
 						;}
     break;
 
   case 96:
-#line 719 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 							ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2329,7 +2216,6 @@ yyreduce:
     break;
 
   case 97:
-#line 726 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 							ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2339,7 +2225,6 @@ yyreduce:
     break;
 
   case 98:
-#line 733 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 							ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2349,7 +2234,6 @@ yyreduce:
     break;
 
   case 99:
-#line 740 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 							ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2359,7 +2243,6 @@ yyreduce:
     break;
 
   case 100:
-#line 747 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 							ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2369,7 +2252,6 @@ yyreduce:
     break;
 
   case 101:
-#line 754 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 							ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2379,7 +2261,6 @@ yyreduce:
     break;
 
   case 102:
-#line 761 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 							ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2389,7 +2270,6 @@ yyreduce:
     break;
 
   case 103:
-#line 768 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 							ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2399,7 +2279,6 @@ yyreduce:
     break;
 
   case 104:
-#line 775 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							(yyval.m_ast) = new BooleanNotExprASTNode(dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast)));
 							(yyval.m_ast)->setLocation((yylsp[-1]), (yylsp[0]));
@@ -2407,7 +2286,6 @@ yyreduce:
     break;
 
   case 105:
-#line 780 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							(yyval.m_ast) = new SourceFileFunctionASTNode((yyvsp[-3].m_str), (yyvsp[-1].m_str));
 							(yyval.m_ast)->setLocation((yylsp[-3]), (yylsp[0]));
@@ -2415,7 +2293,6 @@ yyreduce:
     break;
 
   case 106:
-#line 785 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							(yyval.m_ast) = (yyvsp[-1].m_ast);
 							(yyval.m_ast)->setLocation((yylsp[-2]), (yylsp[0]));
@@ -2423,7 +2300,6 @@ yyreduce:
     break;
 
   case 107:
-#line 790 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							(yyval.m_ast) = new DefinedOperatorASTNode((yyvsp[-1].m_str));
 							(yyval.m_ast)->setLocation((yylsp[-3]), (yylsp[0]));
@@ -2431,12 +2307,10 @@ yyreduce:
     break;
 
   case 108:
-#line 796 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     { (yyval.m_ast) = (yyvsp[0].m_ast); ;}
     break;
 
   case 109:
-#line 800 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new SymbolASTNode((yyvsp[0].m_str), (yyvsp[-2].m_str));
 								(yyval.m_ast)->setLocation((yylsp[-2]), (yylsp[0]));
@@ -2444,7 +2318,6 @@ yyreduce:
     break;
 
   case 110:
-#line 805 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new SymbolASTNode((yyvsp[0].m_str));
 								(yyval.m_ast)->setLocation((yylsp[-1]), (yylsp[0]));
@@ -2452,14 +2325,12 @@ yyreduce:
     break;
 
   case 111:
-#line 813 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = (yyvsp[0].m_ast);
 							;}
     break;
 
   case 112:
-#line 817 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new VariableExprASTNode((yyvsp[0].m_str));
 								(yyval.m_ast)->setLocation((yylsp[0]));
@@ -2467,7 +2338,6 @@ yyreduce:
     break;
 
   case 113:
-#line 822 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new SymbolRefExprASTNode(dynamic_cast<SymbolASTNode*>((yyvsp[0].m_ast)));
 								(yyval.m_ast)->setLocation((yylsp[0]));
@@ -2475,7 +2345,6 @@ yyreduce:
     break;
 
   case 114:
-#line 833 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 								ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2485,7 +2354,6 @@ yyreduce:
     break;
 
   case 115:
-#line 840 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 								ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2495,7 +2363,6 @@ yyreduce:
     break;
 
   case 116:
-#line 847 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 								ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2505,7 +2372,6 @@ yyreduce:
     break;
 
   case 117:
-#line 854 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 								ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2515,7 +2381,6 @@ yyreduce:
     break;
 
   case 118:
-#line 861 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 								ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2525,7 +2390,6 @@ yyreduce:
     break;
 
   case 119:
-#line 868 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 								ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2535,7 +2399,6 @@ yyreduce:
     break;
 
   case 120:
-#line 875 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 								ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2545,7 +2408,6 @@ yyreduce:
     break;
 
   case 121:
-#line 882 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 								ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2555,7 +2417,6 @@ yyreduce:
     break;
 
   case 122:
-#line 889 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 								ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2565,7 +2426,6 @@ yyreduce:
     break;
 
   case 123:
-#line 896 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 								ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2575,7 +2435,6 @@ yyreduce:
     break;
 
   case 124:
-#line 903 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								ExprASTNode * left = dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast));
 								ExprASTNode * right = dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast));
@@ -2585,14 +2444,12 @@ yyreduce:
     break;
 
   case 125:
-#line 910 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = (yyvsp[0].m_ast);
 							;}
     break;
 
   case 126:
-#line 914 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new IntSizeExprASTNode(dynamic_cast<ExprASTNode*>((yyvsp[-2].m_ast)), (yyvsp[0].m_int)->getWordSize());
 								(yyval.m_ast)->setLocation((yylsp[-2]), (yylsp[0]));
@@ -2600,7 +2457,6 @@ yyreduce:
     break;
 
   case 127:
-#line 919 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = (yyvsp[-1].m_ast);
 								(yyval.m_ast)->setLocation((yylsp[-2]), (yylsp[0]));
@@ -2608,7 +2464,6 @@ yyreduce:
     break;
 
   case 128:
-#line 924 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							(yyval.m_ast) = new SizeofOperatorASTNode(dynamic_cast<SymbolASTNode*>((yyvsp[-1].m_ast)));
 							(yyval.m_ast)->setLocation((yylsp[-3]), (yylsp[0]));
@@ -2616,7 +2471,6 @@ yyreduce:
     break;
 
   case 129:
-#line 929 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							(yyval.m_ast) = new SizeofOperatorASTNode((yyvsp[-1].m_str));
 							(yyval.m_ast)->setLocation((yylsp[-3]), (yylsp[0]));
@@ -2624,7 +2478,6 @@ yyreduce:
     break;
 
   case 130:
-#line 934 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 							(yyval.m_ast) = new SizeofOperatorASTNode((yyvsp[-1].m_str));
 							(yyval.m_ast)->setLocation((yylsp[-3]), (yylsp[0]));
@@ -2632,14 +2485,12 @@ yyreduce:
     break;
 
   case 131:
-#line 941 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = (yyvsp[0].m_ast);
 							;}
     break;
 
   case 132:
-#line 945 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new NegativeExprASTNode(dynamic_cast<ExprASTNode*>((yyvsp[0].m_ast)));
 								(yyval.m_ast)->setLocation((yylsp[-1]), (yylsp[0]));
@@ -2647,7 +2498,6 @@ yyreduce:
     break;
 
   case 133:
-#line 952 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
     {
 								(yyval.m_ast) = new IntConstExprASTNode((yyvsp[0].m_int)->getValue(), (yyvsp[0].m_int)->getWordSize());
 								(yyval.m_ast)->setLocation((yylsp[0]));
@@ -2659,7 +2509,6 @@ yyreduce:
     }
 
 /* Line 1126 of yacc.c.  */
-#line 2663 "/Users/creed/projects/fsl/fromsvr/elftosb/build/elftosb.build/Debug/elftosb.build/DerivedSources/elftosb_parser.tab.cpp"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -2934,7 +2783,6 @@ yyreturn:
 }
 
 
-#line 958 "/Users/creed/projects/fsl/fromsvr/elftosb/elftosb2/elftosb_parser.y"
 
 
 /* code goes here */
