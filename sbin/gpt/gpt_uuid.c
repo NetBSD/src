@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.8 2014/10/04 10:30:13 riastradh Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.9 2014/10/04 11:23:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.8 2014/10/04 10:30:13 riastradh Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.9 2014/10/04 11:23:35 riastradh Exp $");
 #endif
 
 #include <err.h>
@@ -252,6 +252,8 @@ gpt_uuid_generate(gpt_uuid_t t)
 		nread = read(fd, p, n);
 		if (nread < 0)
 			err(1, "read(/dev/urandom)");
+		if (nread == 0)
+			errx(1, "EOF from /dev/urandom");
 		if ((size_t)nread > n)
 			errx(1, "read too much: %zd > %zu", nread, n);
 	}
