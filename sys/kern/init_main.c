@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.459 2014/08/14 16:27:55 riastradh Exp $	*/
+/*	$NetBSD: init_main.c,v 1.460 2014/10/04 11:15:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.459 2014/08/14 16:27:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.460 2014/10/04 11:15:44 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -604,9 +604,6 @@ main(void)
 	/* Initialize ptrace. */
 	ptrace_init();
 #endif /* PTRACE */
-
-	/* Initialize the UUID system calls. */
-	uuid_init();
 
 	machdep_init();
 
