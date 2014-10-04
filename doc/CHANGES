@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1987 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1988 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -35,7 +35,6 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		The related changes to src/sys/conf require a rebuild of
 		config(1). [joerg 20140824]
 	zoneinfo: Import tzdata2014g. [apb 20140831]
-
 	wm(4): Add internal SERDES support for 82575 and newer controllers.
 		[msaitoh 20140903]
 	or1k: Add new port.  [matt 20140903]
@@ -57,3 +56,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	mpt(4): added bio(4) support. [jmcneill 20140927]
 	gpt(8): added type subcommand to modify partition type.
 		[jnemeth 20140927]
+	zoneinfo: Import tzdata2014h. [apb 20141004]
