@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.20 2014/06/03 19:30:30 joerg Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.21 2014/10/04 13:27:24 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.20 2014/06/03 19:30:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.21 2014/10/04 13:27:24 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -128,8 +128,6 @@ filecore_lookup(void *v)
 	struct buf *bp;			/* a buffer of directory entries */
 	struct filecore_direntry *de;
 	int numdirpasses;		/* strategy for directory search */
-	struct vnode *pdp;		/* saved dp during symlink work */
-	struct vnode *tdp;		/* returned by filecore_vget_internal */
 	int error;
 	u_short namelen;
 	int res;
@@ -259,54 +257,24 @@ found:
 	if ((flags & ISLASTCN) && nameiop == LOOKUP)
 		dp->i_diroff = i;
 
-	/*
-	 * Step through the translation in the name.  We do not `iput' the
-	 * directory because we may need it again if a symbolic link
-	 * is relative to the current directory.  Instead we save it
-	 * unlocked as "pdp".  We must get the target inode before unlocking
-	 * the directory to insure that the inode will not be removed
-	 * before we get it.  We prevent deadlock by always fetching
-	 * inodes from the root, moving down the directory tree. Thus
-	 * when following backward pointers ".." we must unlock the
-	 * parent directory before getting the requested directory.
-	 * There is a potential race condition here if both the current
-	 * and parent directories are removed before the `iget' for the
-	 * inode associated with ".." returns.  We hope that this occurs
-	 * infrequently since we cannot avoid this race condition without
-	 * implementing a sophisticated deadlock detection algorithm.
-	 * Note also that this simple deadlock detection scheme will not
-	 * work if the file system has any hard links other than ".."
-	 * that point backwards in the directory structure.
-	 */
-	pdp = vdp;
-
-	/*
-	 * If ino is different from dp->i_ino,
-	 * it's a relocated directory.
-	 */
-	if (flags & ISDOTDOT) {
-		ino_t pin = filecore_getparent(dp);
-
-		VOP_UNLOCK(pdp);	/* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, pin, &tdp);
-		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
-		if (error) {
-			return error;
-		}
-		*vpp = tdp;
-	} else if (name[0] == '.' && namelen == 1) {
+	if (name[0] == '.' && namelen == 1) {
 		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
+		ino_t ino;
+
+		if (flags & ISDOTDOT) {
+			ino = filecore_getparent(dp);
+		} else {
+			ino = dp->i_dirent.addr | (i << FILECORE_INO_INDEX);
 #ifdef FILECORE_DEBUG_BR
 			printf("brelse(%p) lo4\n", bp);
 #endif
-		brelse(bp, 0);
-		error = VFS_VGET(vdp->v_mount, dp->i_dirent.addr |
-		    (i << FILECORE_INO_INDEX), &tdp);
+			brelse(bp, 0);
+		}
+		error = vcache_get(vdp->v_mount, &ino, sizeof(ino), vpp);
 		if (error)
-			return (error);
-		*vpp = tdp;
+			return error;
 	}
 
 	/*
@@ -314,7 +282,5 @@ found:
 	 */
 	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
 		    cnp->cn_flags);
-	if (*vpp != vdp)
-		VOP_UNLOCK(*vpp);
 	return 0;
 }

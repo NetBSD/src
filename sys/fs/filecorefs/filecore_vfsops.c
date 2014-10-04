@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.76 2014/04/16 18:55:18 maxv Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.77 2014/10/04 13:27:24 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.76 2014/04/16 18:55:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.77 2014/10/04 13:27:24 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -117,6 +117,7 @@ struct vfsops filecore_vfsops = {
 	.vfs_statvfs = filecore_statvfs,
 	.vfs_sync = filecore_sync,
 	.vfs_vget = filecore_vget,
+	.vfs_loadvnode = filecore_loadvnode,
 	.vfs_fhtovp = filecore_fhtovp,
 	.vfs_vptofh = filecore_vptofh,
 	.vfs_init = filecore_init,
@@ -129,10 +130,6 @@ struct vfsops filecore_vfsops = {
 	.vfs_renamelock_exit = genfs_renamelock_exit,
 	.vfs_fsync = (void *)eopnotsupp,
 	.vfs_opv_descs = filecore_vnodeopv_descs
-};
-
-static const struct genfs_ops filecore_genfsops = {
-	.gop_size = genfs_size,
 };
 
 static int
@@ -558,112 +555,18 @@ filecore_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 int
 filecore_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
-	struct filecore_mnt *fcmp;
-	struct filecore_node *ip;
-	struct buf *bp;
-	struct vnode *vp;
-	dev_t dev;
 	int error;
 
-	fcmp = VFSTOFILECORE(mp);
-	dev = fcmp->fc_dev;
-	if ((*vpp = filecore_ihashget(dev, ino)) != NULLVP)
-		return (0);
-
-	/* Allocate a new vnode/filecore_node. */
-	error = getnewvnode(VT_FILECORE, mp, filecore_vnodeop_p, NULL, &vp);
+	error = vcache_get(mp, &ino, sizeof(ino), vpp);
+	if (error)
+		return error;
+	error = vn_lock(*vpp, LK_EXCLUSIVE);
 	if (error) {
-		*vpp = NULLVP;
-		return (error);
+		vrele(*vpp);
+		*vpp = NULL;
+		return error;
 	}
-	ip = pool_get(&filecore_node_pool, PR_WAITOK);
-	memset(ip, 0, sizeof(struct filecore_node));
-	vp->v_data = ip;
-	ip->i_vnode = vp;
-	ip->i_dev = dev;
-	ip->i_number = ino;
-	ip->i_block = -1;
-	ip->i_parent = -2;
-	genfs_node_init(vp, &filecore_genfsops);
-
-	/*
-	 * Put it onto its hash chain and lock it so that other requests for
-	 * this inode will block if they arrive while we are sleeping waiting
-	 * for old data structures to be purged or for the contents of the
-	 * disk portion of this inode to be read.
-	 */
-	filecore_ihashins(ip);
-
-	if (ino == FILECORE_ROOTINO) {
-		/* Here we need to construct a root directory inode */
-		memcpy(ip->i_dirent.name, "root", 4);
-		ip->i_dirent.load = 0;
-		ip->i_dirent.exec = 0;
-		ip->i_dirent.len = FILECORE_DIR_SIZE;
-		ip->i_dirent.addr = fcmp->drec.root;
-		ip->i_dirent.attr = FILECORE_ATTR_DIR | FILECORE_ATTR_READ;
-
-	} else {
-		/* Read in Data from Directory Entry */
-		if ((error = filecore_bread(fcmp, ino & FILECORE_INO_MASK,
-		    FILECORE_DIR_SIZE, NOCRED, &bp)) != 0) {
-			vput(vp);
-			*vpp = NULL;
-			return (error);
-		}
-
-		memcpy(&ip->i_dirent,
-		    fcdirentry(bp->b_data, ino >> FILECORE_INO_INDEX),
-		    sizeof(struct filecore_direntry));
-#ifdef FILECORE_DEBUG_BR
-		printf("brelse(%p) vf5\n", bp);
-#endif
-		brelse(bp, 0);
-	}
-
-	ip->i_mnt = fcmp;
-	ip->i_devvp = fcmp->fc_devvp;
-	ip->i_diroff = 0;
-	vref(ip->i_devvp);
-
-	/*
-	 * Setup type
-	 */
-	vp->v_type = VREG;
-	if (ip->i_dirent.attr & FILECORE_ATTR_DIR)
-		vp->v_type = VDIR;
-
-	/*
-	 * Initialize the associated vnode
-	 */
-	switch (vp->v_type) {
-	case VFIFO:
-	case VCHR:
-	case VBLK:
-		/*
-		 * Devices not supported.
-		 */
-		vput(vp);
-		return (EOPNOTSUPP);
-	case VLNK:
-	case VNON:
-	case VSOCK:
-	case VDIR:
-	case VBAD:
-	case VREG:
-		break;
-	}
-
-	if (ino == FILECORE_ROOTINO)
-		vp->v_vflag |= VV_ROOT;
-
-	/*
-	 * XXX need generation number?
-	 */
-
-	uvm_vnp_setsize(vp, ip->i_size);
-	*vpp = vp;
-	return (0);
+	return 0;
 }
 
 /*
