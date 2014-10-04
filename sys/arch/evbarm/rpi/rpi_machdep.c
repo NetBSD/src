@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.53 2014/10/03 11:40:55 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.54 2014/10/04 13:05:57 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.53 2014/10/03 11:40:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.54 2014/10/04 13:05:57 macallan Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -911,9 +911,12 @@ rpi_fb_do_cursor(struct wsdisplay_cursor *cur)
 		shape = 1;
 	}
 	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
+		int err;
 
-		copyin(cur->mask, cursor_mask, CURSOR_BITMAP_SIZE);
-		copyin(cur->image, cursor_bitmap, CURSOR_BITMAP_SIZE);
+		err = copyin(cur->mask, cursor_mask, CURSOR_BITMAP_SIZE);
+		err += copyin(cur->image, cursor_bitmap, CURSOR_BITMAP_SIZE);
+		if (err != 0)
+			return EFAULT;
 		shape = 1;
 	}
 	if (shape) {
