@@ -103,7 +103,7 @@ POSIX has the following properties and limitations.
 	signed time_t values stop working after 2038-01-19 03:14:07 UTC, so
 	new implementations these days typically use a signed 64-bit integer.
 	Unsigned 32-bit integers are used on one or two platforms,
-	and 36-bit integers are also used occasionally.
+	and 36-bit and 40-bit integers are also used occasionally.
 	Although earlier POSIX versions allowed time_t to be a
 	floating-point type, this was not supported by any practical
 	systems, and POSIX.1-2013 and the tz code both require time_t
@@ -318,7 +318,7 @@ Errors in the tz database arise from many sources:
    way to specify Easter, these exceptional years are entered as
    separate tz Rule lines, even though the legal rules did not change.
 
- * The tz database models pre-standard time using the Gregorian
+ * The tz database models pre-standard time using the proleptic Gregorian
    calendar and local mean time (LMT), but many people used other
    calendars and other timescales.  For example, the Roman Empire used
    the Julian calendar, and had 12 varying-length daytime hours with a
