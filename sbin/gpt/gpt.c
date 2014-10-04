@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.35 2014/10/02 19:15:21 joerg Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.36 2014/10/04 01:00:42 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -375,6 +375,9 @@ drvctl(const char *name, u_int *sector_size, off_t *media_size)
 	int dfd, res;
 	char *dname, *p;
 
+	if (*sector_size && *media_size)
+		return 0;
+
 	if ((dfd = open("/dev/drvctl", O_RDONLY)) == -1) {
 		warn("%s: /dev/drvctl", __func__);
 		return -1;
@@ -434,13 +437,15 @@ drvctl(const char *name, u_int *sector_size, off_t *media_size)
 	if (number == NULL)
 		goto out;
 
-	*sector_size = prop_number_integer_value(number);
+	if (*sector_size == 0)
+		*sector_size = prop_number_integer_value(number);
 
 	number = prop_dictionary_get(geometry, "sectors-per-unit");
 	if (number == NULL)
 		goto out;
 
-	*media_size = prop_number_integer_value(number) * *sector_size;
+	if (*media_size == 0)
+		*media_size = prop_number_integer_value(number) * *sector_size;
 
 	return 0;
 out:
@@ -572,21 +577,26 @@ gpt_open(const char *dev)
 
 	if ((sb.st_mode & S_IFMT) != S_IFREG) {
 #ifdef DIOCGSECTORSIZE
-		if (ioctl(fd, DIOCGSECTORSIZE, &secsz) == -1 ||
-		    ioctl(fd, DIOCGMEDIASIZE, &mediasz) == -1)
+		if ((secsz == 0 && ioctl(fd, DIOCGSECTORSIZE, &secsz) == -1) ||
+		    (mediasz == 0 && ioctl(fd, DIOCGMEDIASIZE, &mediasz) == -1))
 			goto close;
 #endif
 #ifndef HAVE_NBTOOL_CONFIG_H
 		if (drvctl(device_name, &secsz, &mediasz) == -1)
 			goto close;
 #endif
+		if (secsz == 0 || mediasz == 0)
+			errx(1, "Please specify sector/media size");
 	} else {
-		secsz = 512;	/* Fixed size for files. */
-		if (sb.st_size % secsz) {
-			errno = EINVAL;
-			goto close;
+		if (secsz == 0)
+			secsz = 512;	/* Fixed size for files. */
+		if (mediasz == 0) {
+			if (sb.st_size % secsz) {
+				errno = EINVAL;
+				goto close;
+			}
+			mediasz = sb.st_size;
 		}
-		mediasz = sb.st_size;
 	}
 
 	/*
@@ -670,61 +680,53 @@ usage(void)
 #ifndef HAVE_NBTOOL_CONFIG_H
 	extern const char backupmsg[], restoremsg[];
 #endif
-
+	const char *p = getprogname();
+	const char *f =
+	    "[-rv] [-m <mediasize>] [-p <partitionnum>] [-s <sectorsize>]";
 
 	fprintf(stderr,
-	    "usage: %s %s\n"
-	    "       %s %s\n"
+	    "Usage: %s %s <command> [<args>]\n", p, f);
+	fprintf(stderr, 
+	    "Commands:\n"
 #ifndef HAVE_NBTOOL_CONFIG_H
-	    "       %s %s\n"
+	    "       %s\n"
+	    "       %s\n"
 #endif
-	    "       %s %s\n"
-	    "       %s %s\n"
-	    "       %s %s\n"
-	    "       %s %s\n"
-	    "       %s %s\n"
-	    "       %*s %s\n"
-	    "       %s %s\n"
-	    "       %s %s\n"
-	    "       %s %s\n"
-	    "       %s %s\n"
-	    "       %s %s\n"
-	    "       %s %s\n"
-	    "       %s %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n"
+	    "       %s\n",
+	    addmsg1, addmsg2,
 #ifndef HAVE_NBTOOL_CONFIG_H
-	    "       %s %s\n"
+	    backupmsg,
 #endif
-	    "       %s %s\n"
-	    "       %s %s\n"
-	    "       %s %s\n"
-	    "       %*s %s\n"
-	    "       %s %s\n",
-	    getprogname(), addmsg1,
-	    getprogname(), addmsg2,
+	    biosbootmsg, createmsg, destroymsg,
+	    labelmsg1, labelmsg2, labelmsg3,
+	    migratemsg, recovermsg,
+	    removemsg1, removemsg2,
+	    resizemsg, resizediskmsg,
 #ifndef HAVE_NBTOOL_CONFIG_H
-	    getprogname(), backupmsg,
+	    restoremsg,
 #endif
-	    getprogname(), biosbootmsg,
-	    getprogname(), createmsg,
-	    getprogname(), destroymsg,
-	    getprogname(), labelmsg1,
-	    getprogname(), labelmsg2,
-	    (int)strlen(getprogname()), "", labelmsg3,
-	    getprogname(), migratemsg,
-	    getprogname(), recovermsg,
-	    getprogname(), removemsg1,
-	    getprogname(), removemsg2,
-	    getprogname(), resizemsg,
-	    getprogname(), resizediskmsg,
-#ifndef HAVE_NBTOOL_CONFIG_H
-	    getprogname(), restoremsg,
-#endif
-	    getprogname(), setmsg,
-	    getprogname(), showmsg,
-	    getprogname(), typemsg1,
-	    getprogname(), typemsg2,
-	    (int)strlen(getprogname()), "", typemsg3,
-	    getprogname(), unsetmsg);
+	    setmsg, showmsg,
+	    typemsg1, typemsg2, typemsg3,
+	    unsetmsg);
 	exit(1);
 }
 
@@ -751,8 +753,15 @@ main(int argc, char *argv[])
 	int ch, i;
 
 	/* Get the generic options */
-	while ((ch = getopt(argc, argv, "p:rv")) != -1) {
+	while ((ch = getopt(argc, argv, "m:p:rs:v")) != -1) {
 		switch(ch) {
+		case 'm':
+			if (mediasz > 0)
+				usage();
+			mediasz = strtoul(optarg, &p, 10);
+			if (*p != 0 || mediasz < 1)
+				usage();
+			break;
 		case 'p':
 			if (parts > 0)
 				usage();
@@ -762,6 +771,13 @@ main(int argc, char *argv[])
 			break;
 		case 'r':
 			readonly = 1;
+			break;
+		case 's':
+			if (secsz > 0)
+				usage();
+			secsz = strtoul(optarg, &p, 10);
+			if (*p != 0 || secsz < 1)
+				usage();
 			break;
 		case 'v':
 			verbose++;

@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.32 2014/09/29 05:56:43 jnemeth Exp $
+.\" $NetBSD: gpt.8,v 1.33 2014/10/04 01:00:42 christos Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd September 29, 2014
+.Dd October 3, 2014
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -68,6 +68,12 @@ Not all commands use all default settings, so some general options may not
 have an effect on all commands.
 .Pp
 The
+.Fl m Ar mediasize
+option overrides the default media size for the device (obtained
+from the kernel if possible) or defaulting to the file size for
+plain files.
+.Pp
+The
 .Fl p Ar partitions
 option allows the user to change the number of partitions the GPT can
 accommodate.
@@ -85,6 +91,13 @@ Currently this option is primarily useful for the
 .Ic show
 command, but the intent
 is to use it to implement dry-run behaviour.
+.Pp
+The 
+.Fl s Ar sectorsize
+option overrides the default sector size for the device (obtained
+from the kernel if possible) or
+.Dv 512
+for plain files.
 .Pp
 The
 .Fl v
