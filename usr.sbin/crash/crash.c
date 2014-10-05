@@ -1,4 +1,4 @@
-/*	$NetBSD: crash.c,v 1.5 2013/03/10 19:32:29 christos Exp $	*/
+/*	$NetBSD: crash.c,v 1.6 2014/10/05 22:58:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crash.c,v 1.5 2013/03/10 19:32:29 christos Exp $");
+__RCSID("$NetBSD: crash.c,v 1.6 2014/10/05 22:58:43 christos Exp $");
 #endif /* not lint */
 
 #include <ddb/ddb.h>
@@ -329,25 +329,29 @@ main(int argc, char **argv)
 	struct stat sb;
 	size_t sz;
 	void *elf;
-	int fd, ch;
+	int fd, ch, flags;
 	char c;
 
 	nlistf = _PATH_KSYMS;
 	memf = _PATH_MEM;
 	ofp = stdout;
+	flags = O_RDONLY;
 
 	setprogname(argv[0]);
 
 	/*
 	 * Parse options.
 	 */
-	while ((ch = getopt(argc, argv, "M:N:")) != -1) {
+	while ((ch = getopt(argc, argv, "M:N:w")) != -1) {
 		switch (ch) {
 		case 'M':
 			memf = optarg;
 			break;
 		case 'N':
 			nlistf = optarg;
+			break;
+		case 'w':
+			flags = O_RDWR;
 			break;
 		default:
 			usage();
@@ -364,7 +368,7 @@ main(int argc, char **argv)
 	/*
 	 * Open the images (crash dump and symbol table).
 	 */
-	kd = kvm_open(nlistf, memf, NULL, O_RDONLY, getprogname());
+	kd = kvm_open(nlistf, memf, NULL, flags, getprogname());
 	if (kd == NULL) {
 		return EXIT_FAILURE;
 	}
