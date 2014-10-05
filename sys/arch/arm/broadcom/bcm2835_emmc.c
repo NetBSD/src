@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.9.4.1 2014/10/03 18:53:56 martin Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.9.4.2 2014/10/05 20:00:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.9.4.1 2014/10/03 18:53:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.9.4.2 2014/10/05 20:00:54 martin Exp $");
 
 #include "bcmdmac.h"
 
@@ -82,7 +82,7 @@ static int bcmemmc_match(device_t, struct cfdata *, void *);
 static void bcmemmc_attach(device_t, device_t, void *);
 static void bcmemmc_attach_i(device_t);
 #if NBCMDMAC > 0
-static int bcmemmc_xfer_data_dma(struct sdhc_host *, struct sdmmc_command *);
+static int bcmemmc_xfer_data_dma(struct sdhc_softc *, struct sdmmc_command *);
 static void bcmemmc_dma_done(void *);
 #endif
 
@@ -239,9 +239,9 @@ fail:
 
 #if NBCMDMAC > 0
 static int
-bcmemmc_xfer_data_dma(struct sdhc_host *hp, struct sdmmc_command *cmd)
+bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 {
-	struct bcmemmc_softc * const sc = *(void **)hp;	/* XXX XXX XXX */
+	struct bcmemmc_softc * const sc = device_private(sdhc_sc->sc_dev);
 	size_t seg;
 	int error;
 

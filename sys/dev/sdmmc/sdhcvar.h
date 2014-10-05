@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.13.12.1 2014/10/03 18:53:56 martin Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.13.12.2 2014/10/05 20:00:54 martin Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ struct sdhc_softc {
 	int (*sc_vendor_write_protect)(struct sdhc_softc *);
 	int (*sc_vendor_card_detect)(struct sdhc_softc *);
 	int (*sc_vendor_bus_clock)(struct sdhc_softc *, int);
-	int (*sc_vendor_transfer_data_dma)(struct sdhc_host *, struct sdmmc_command *);
+	int (*sc_vendor_transfer_data_dma)(struct sdhc_softc *, struct sdmmc_command *);
 };
 
 /* Host controller functions called by the attachment driver. */
