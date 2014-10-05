@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.44 2014/10/04 08:21:23 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.45 2014/10/05 10:22:50 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1041,3 +1041,16 @@ sys/dev/sdmmc/sdhc.c				1.50
 	Fix divisor calculation for SDHC 3.0.
 	[skrll, ticket #127]
 
+games/factor/factor.6				1.13
+games/factor/factor.c				1.27
+games/primes/Makefile				1.8
+games/primes/pattern.c				1.7
+games/primes/pr_tbl.c				1.8
+games/primes/primes.6				1.4-1.5
+games/primes/primes.c				1.20-1.21
+games/primes/primes.h				1.6
+games/primes/spsp.c				1.1
+
+	Fix primes(6) and factor(6) for 64bit numbers upto
+	3825123056546413050 (from FreeBSD).
+	[ast, ticket #128]
