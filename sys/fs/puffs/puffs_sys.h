@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.87 2014/10/05 14:13:14 apb Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.88 2014/10/05 20:40:46 apb Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -65,10 +65,10 @@ extern struct pool puffs_vapool;
 extern int puffsdebug; /* puffs_subr.c */
 #define DPRINTF(x) do { \
 		if (puffsdebug > 0) printf x; \
-	while (/*CONSTCOND*/0)
+	} while (/*CONSTCOND*/0)
 #define DPRINTF_VERBOSE(x) do { \
 		if (puffsdebug > 1) printf x; \
-	while (/*CONSTCOND*/0)
+	} while (/*CONSTCOND*/0)
 #else
 #define DPRINTF(x) ((void)0)
 #define DPRINTF_VERBOSE(x) ((void)0)
