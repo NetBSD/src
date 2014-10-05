@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.121 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.122 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -11700,3 +11700,5 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 		[tls 20140810]
 	OpenSSL: Update to 1.0.1i. [spz 20140810]
 	kernel: Add MODULAR infrastructure for Xen kernels. [jnemeth 20140810]
+	hp300: Add arcofi(4) audio driver for the HP "Audio1" device found on
+		HP9000/425e.  Ported from OpenBSD.  [tsutsui 20140824]
