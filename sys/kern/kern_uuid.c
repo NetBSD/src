@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uuid.c,v 1.19 2014/10/04 11:15:44 riastradh Exp $	*/
+/*	$NetBSD: kern_uuid.c,v 1.20 2014/10/05 10:00:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.19 2014/10/04 11:15:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.20 2014/10/05 10:00:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -82,7 +82,7 @@ sys_uuidgen(struct lwp *l, const struct sys_uuidgen_args *uap, register_t *retva
 	     count > 0;
 	     store++, count--) {
 		uuid_generate(&tmp);
-		error = copyout(store, &tmp, sizeof tmp);
+		error = copyout(&tmp, store, sizeof tmp);
 		if (error)
 			return error;
 	}
