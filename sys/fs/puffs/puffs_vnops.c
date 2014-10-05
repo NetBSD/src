@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.187 2014/09/30 10:15:03 hannken Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.188 2014/10/05 07:53:22 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.187 2014/09/30 10:15:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.188 2014/10/05 07:53:22 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1130,6 +1130,38 @@ puffs_vnop_getattr(void *v)
 	return error;
 }
 
+static void
+zerofill_lastpage(struct vnode *vp, voff_t off)
+{
+	char zbuf[PAGE_SIZE];
+	struct iovec iov;
+	struct uio uio;
+	vsize_t len;
+	int error;
+
+	if (trunc_page(off) == off)
+		return;
+
+	len = round_page(off) - off;
+	memset(zbuf, 0, len);
+
+	iov.iov_base = zbuf;
+	iov.iov_len = len;
+	UIO_SETUP_SYSSPACE(&uio);
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = off;
+	uio.uio_resid = len;
+	uio.uio_rw = UIO_WRITE;
+
+	error = ubc_uiomove(&vp->v_uobj, &uio, len,
+			    UVM_ADV_SEQUENTIAL, UBC_WRITE|UBC_UNMAP_FLAG(vp));
+	if (error)
+		DPRINTF(("zero-fill 0x%lx@0x%llx => %d\n", len, off, error));
+
+	return;
+}
+
 static int
 dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int flags)
 {
@@ -1190,6 +1222,17 @@ dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int flags)
 	puffs_msg_enqueue(pmp, park_setattr);
 	if ((flags & SETATTR_ASYNC) == 0)
 		error = puffs_msg_wait2(pmp, park_setattr, vp->v_data, NULL);
+
+	/*
+	 * If we truncate the file, make sure we zero-fill
+	 * the end of the last page, otherwise if the file
+	 * is later truncated to a larger size (creating a
+	 * a hole), that area will not return zeroes as it
+	 * should.
+	 */
+	if ((error == 0) && (flags & SETATTR_CHSIZE) &&
+	    (vap->va_size != VNOVAL) && (vap->va_size < vp->v_size))
+		zerofill_lastpage(vp, vap->va_size);
 
 	if ((error == 0) && PUFFS_USE_FS_TTL(pmp)) {
 		struct timespec *va_ttl = &setattr_msg->pvnr_va_ttl;
