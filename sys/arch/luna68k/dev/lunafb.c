@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.35 2014/07/25 16:40:12 tsutsui Exp $ */
+/* $NetBSD: lunafb.c,v 1.35.2.1 2014/10/05 20:12:49 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.35 2014/07/25 16:40:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.35.2.1 2014/10/05 20:12:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,11 +75,8 @@ struct bt458 {
 };
 
 #define	OMFB_RFCNT	0xB1000000	/* video h-origin/v-origin */
-#define	OMFB_PLANEMASK	0xB1040000	/* planemask register */
-#define	OMFB_FB_WADDR	0xB1080008	/* common plane */
-#define	OMFB_FB_RADDR	0xB10C0008	/* plane #0 */
-#define	OMFB_ROPFUNC	0xB12C0000	/* ROP function code */
 #define	OMFB_RAMDAC	0xC1100000	/* Bt454/Bt458 RAMDAC */
+
 #define	OMFB_SIZE	(0xB1300000 - 0xB1080000 + PAGE_SIZE)
 
 struct hwcmap {
