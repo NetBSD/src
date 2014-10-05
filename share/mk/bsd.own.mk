@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.835 2014/09/19 17:45:42 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.836 2014/10/05 17:08:46 apb Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -98,7 +98,7 @@ _LIBC_COMPILER_RT.powerpc=	yes
 _LIBC_COMPILER_RT.powerpc64=	yes
 _LIBC_COMPILER_RT.x86_64=	yes
 
-.if ${MKLLVM:Uno} == "yes" && ${_LIBC_COMPILER_RT.${MACHINE_ARCH}:Uno} == "yes"
+.if ${HAVE_LLVM:Uno} == "yes" && ${_LIBC_COMPILER_RT.${MACHINE_ARCH}:Uno} == "yes"
 HAVE_LIBGCC?=	no
 .else
 HAVE_LIBGCC?=	yes
@@ -106,7 +106,7 @@ HAVE_LIBGCC?=	yes
 
 
 # ia64 is not support
-.if ${MKLLVM:Uno} == "yes" || !empty(MACHINE_ARCH:Mearm*)
+.if ${HAVE_LLVM:Uno} == "yes" || !empty(MACHINE_ARCH:Mearm*)
 HAVE_LIBGCC_EH?=	no
 .else
 HAVE_LIBGCC_EH?=	yes
