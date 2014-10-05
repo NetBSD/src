@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.44.2.4 2014/10/04 08:20:11 martin Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.44.2.5 2014/10/05 20:00:54 martin Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.44.2.4 2014/10/04 08:20:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.44.2.5 2014/10/05 20:00:54 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1272,6 +1272,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 static void
 sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 {
+	struct sdhc_softc *sc = hp->sc;
 	int error;
 
 	DPRINTF(1,("%s: data transfer: resp=%08x datalen=%u\n", HDEVNAME(hp),
@@ -1289,7 +1290,7 @@ sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 
 	if (cmd->c_dmamap != NULL) {
 		if (hp->sc->sc_vendor_transfer_data_dma != NULL) {
-			error = hp->sc->sc_vendor_transfer_data_dma(hp, cmd);
+			error = hp->sc->sc_vendor_transfer_data_dma(sc, cmd);
 			if (error == 0 && !sdhc_wait_intr(hp,
 			    SDHC_TRANSFER_COMPLETE, SDHC_TRANSFER_TIMEOUT)) {
 				error = ETIMEDOUT;
