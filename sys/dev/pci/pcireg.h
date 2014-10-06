@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.96 2014/09/24 10:57:03 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.97 2014/10/06 07:15:56 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -180,9 +180,13 @@ typedef u_int8_t pci_revision_t;
 #define		PCI_INTERFACE_ATA_SINGLEDMA		0x20
 #define		PCI_INTERFACE_ATA_CHAINEDDMA		0x30
 #define	PCI_SUBCLASS_MASS_STORAGE_SATA		0x06
+#define		PCI_INTERFACE_SATA_VND			0x00
 #define		PCI_INTERFACE_SATA_AHCI10		0x01
+#define		PCI_INTERFACE_SATA_SSBI			0x02
 #define	PCI_SUBCLASS_MASS_STORAGE_SAS		0x07
 #define	PCI_SUBCLASS_MASS_STORAGE_NVM		0x08
+#define		PCI_INTERFACE_NVM_VND			0x00
+#define		PCI_INTERFACE_NVM_NVMHCI10		0x01
 #define	PCI_SUBCLASS_MASS_STORAGE_MISC		0x80
 
 /* 0x02 network subclasses */
@@ -220,7 +224,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_BRIDGE_HOST		0x00
 #define	PCI_SUBCLASS_BRIDGE_ISA			0x01
 #define	PCI_SUBCLASS_BRIDGE_EISA		0x02
-#define	PCI_SUBCLASS_BRIDGE_MC			0x03	/* XXX _MCA? */
+#define	PCI_SUBCLASS_BRIDGE_MC			0x03	/* XXX _MCA */
 #define	PCI_SUBCLASS_BRIDGE_PCI			0x04
 #define		PCI_INTERFACE_BRIDGE_PCI_PCI		0x00
 #define		PCI_INTERFACE_BRIDGE_PCI_SUBDEC		0x01
@@ -228,10 +232,14 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_BRIDGE_NUBUS		0x06
 #define	PCI_SUBCLASS_BRIDGE_CARDBUS		0x07
 #define	PCI_SUBCLASS_BRIDGE_RACEWAY		0x08
+		/* bit0 == 0 ? "transparent mode" : "endpoint mode" */
 #define	PCI_SUBCLASS_BRIDGE_STPCI		0x09
-#define	PCI_SUBCLASS_BRIDGE_INFINIBAND		0x0a
 #define		PCI_INTERFACE_STPCI_PRIMARY		0x40
 #define		PCI_INTERFACE_STPCI_SECONDARY		0x80
+#define	PCI_SUBCLASS_BRIDGE_INFINIBAND		0x0a
+#define	PCI_SUBCLASS_BRIDGE_ADVSW		0x0b
+#define		PCI_INTERFACE_ADVSW_CUSTOM		0x00
+#define		PCI_INTERFACE_ADVSW_ASISIG		0x01
 #define	PCI_SUBCLASS_BRIDGE_MISC		0x80
 
 /* 0x07 communications subclasses */
@@ -247,7 +255,7 @@ typedef u_int8_t pci_revision_t;
 #define		PCI_INTERFACE_PARALLEL			0x00
 #define		PCI_INTERFACE_PARALLEL_BIDIRECTIONAL	0x01
 #define		PCI_INTERFACE_PARALLEL_ECP1X		0x02
-#define		PCI_INTERFACE_PARALLEL_IEEE1284		0x03
+#define		PCI_INTERFACE_PARALLEL_IEEE1284_CNTRL	0x03
 #define		PCI_INTERFACE_PARALLEL_IEEE1284_TGT	0xfe
 #define	PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL	0x02
 #define	PCI_SUBCLASS_COMMUNICATIONS_MODEM	0x03
@@ -275,6 +283,7 @@ typedef u_int8_t pci_revision_t;
 #define		PCI_INTERFACE_TIMER_8254		0x00
 #define		PCI_INTERFACE_TIMER_ISA			0x01
 #define		PCI_INTERFACE_TIMER_EISA		0x02
+#define		PCI_INTERFACE_TIMER_HPET		0x03
 #define	PCI_SUBCLASS_SYSTEM_RTC			0x03
 #define		PCI_INTERFACE_RTC_GENERIC		0x00
 #define		PCI_INTERFACE_RTC_ISA			0x01
@@ -306,6 +315,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_PROCESSOR_POWERPC		0x20
 #define	PCI_SUBCLASS_PROCESSOR_MIPS		0x30
 #define	PCI_SUBCLASS_PROCESSOR_COPROC		0x40
+#define	PCI_SUBCLASS_PROCESSOR_MISC		0x80
 
 /* 0x0c serial bus subclasses */
 #define	PCI_SUBCLASS_SERIALBUS_FIREWIRE		0x00
@@ -334,6 +344,8 @@ typedef u_int8_t pci_revision_t;
 /* 0x0d wireless subclasses */
 #define	PCI_SUBCLASS_WIRELESS_IRDA		0x00
 #define	PCI_SUBCLASS_WIRELESS_CONSUMERIR	0x01
+#define		PCI_INTERFACE_CONSUMERIR		0x00
+#define		PCI_INTERFACE_UWB			0x10
 #define	PCI_SUBCLASS_WIRELESS_RF		0x10
 #define	PCI_SUBCLASS_WIRELESS_BLUETOOTH		0x11
 #define	PCI_SUBCLASS_WIRELESS_BROADBAND		0x12
@@ -362,7 +374,7 @@ typedef u_int8_t pci_revision_t;
 
 /* 0x11 data acquisition and signal processing subclasses */
 #define	PCI_SUBCLASS_DASP_DPIO			0x00
-#define	PCI_SUBCLASS_DASP_TIMEFREQ		0x01
+#define	PCI_SUBCLASS_DASP_TIMEFREQ		0x01 /* performance counters */
 #define	PCI_SUBCLASS_DASP_SYNC			0x10
 #define	PCI_SUBCLASS_DASP_MGMT			0x20
 #define	PCI_SUBCLASS_DASP_MISC			0x80
@@ -518,7 +530,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CAP_MSI		0x05
 #define	PCI_CAP_CPCI_HOTSWAP	0x06
 #define	PCI_CAP_PCIX		0x07
-#define	PCI_CAP_LDT		0x08
+#define	PCI_CAP_LDT		0x08	/* HyperTransport */
 #define	PCI_CAP_VENDSPEC	0x09
 #define	PCI_CAP_DEBUGPORT	0x0a
 #define	PCI_CAP_CPCI_RSRCCTL	0x0b
