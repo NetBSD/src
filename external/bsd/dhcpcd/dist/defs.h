@@ -1,4 +1,4 @@
-/* $NetBSD: defs.h,v 1.1.1.46 2014/10/06 18:20:19 roy Exp $ */
+/* $NetBSD: defs.h,v 1.2 2014/10/06 18:22:29 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon

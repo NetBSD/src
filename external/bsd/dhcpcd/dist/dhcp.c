@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.17 2014/09/27 01:17:34 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.18 2014/10/06 18:22:29 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -135,6 +135,7 @@ dhcp_printoptions(const struct dhcpcd_ctx *ctx,
 	const char * const *p;
 	size_t i, j;
 	const struct dhcp_opt *opt, *opt2;
+	int cols;
 
 	for (p = dhcp_params; *p; p++)
 		printf("    %s\n", *p);
@@ -143,11 +144,15 @@ dhcp_printoptions(const struct dhcpcd_ctx *ctx,
 		for (j = 0, opt2 = opts; j < opts_len; j++, opt2++)
 			if (opt->option == opt2->option)
 				break;
-		if (j == opts_len)
-			printf("%03d %s\n", opt->option, opt->var);
+		if (j == opts_len) {
+			cols = printf("%03d %s", opt->option, opt->var);
+			dhcp_print_option_encoding(opt, cols);
+		}
 	}
-	for (i = 0, opt = opts; i < opts_len; i++, opt++)
-		printf("%03d %s\n", opt->option, opt->var);
+	for (i = 0, opt = opts; i < opts_len; i++, opt++) {
+		cols = printf("%03d %s", opt->option, opt->var);
+		dhcp_print_option_encoding(opt, cols);
+	}
 }
 
 #define get_option_raw(ctx, dhcp, opt) get_option(ctx, dhcp, opt, NULL)
@@ -1272,12 +1277,12 @@ dhcp_env(char **env, const char *prefix, const struct dhcp_message *dhcp,
 	}
 
 	if (*dhcp->bootfile && !(overl & 1)) {
-		print_string(safe, sizeof(safe),
+		print_string(safe, sizeof(safe), STRING,
 		    dhcp->bootfile, sizeof(dhcp->bootfile));
 		setvar(&ep, prefix, "filename", safe);
 	}
 	if (*dhcp->servername && !(overl & 2)) {
-		print_string(safe, sizeof(safe),
+		print_string(safe, sizeof(safe), STRING | DOMAIN,
 		    dhcp->servername, sizeof(dhcp->servername));
 		setvar(&ep, prefix, "server_name", safe);
 	}
@@ -2193,9 +2198,25 @@ log_dhcp1(int lvl, const char *msg,
 	struct in_addr addr;
 	int r;
 
-	if (strcmp(msg, "NAK:") == 0)
+	if (strcmp(msg, "NAK:") == 0) {
 		a = get_option_string(iface->ctx, dhcp, DHO_MESSAGE);
-	else if (ad && dhcp->yiaddr != 0) {
+		if (a) {
+			char *tmp;
+			size_t al, tmpl;
+
+			al = strlen(a);
+			tmpl = (al * 4) + 1;
+			tmp = malloc(tmpl);
+			if (tmp == NULL) {
+				syslog(LOG_ERR, "%s: %m", __func__);
+				free(a);
+				return;
+			}
+			print_string(tmp, tmpl, STRING, (uint8_t *)a, al);
+			free(a);
+			a = tmp;
+		}
+	} else if (ad && dhcp->yiaddr != 0) {
 		addr.s_addr = dhcp->yiaddr;
 		a = strdup(inet_ntoa(addr));
 		if (a == NULL) {
@@ -2208,7 +2229,7 @@ log_dhcp1(int lvl, const char *msg,
 	tfrom = "from";
 	r = get_option_addr(iface->ctx, &addr, dhcp, DHO_SERVERID);
 	if (dhcp->servername[0] && r == 0) {
-		print_string(sname, sizeof(sname),
+		print_string(sname, sizeof(sname), STRING,
 		    dhcp->servername, strlen((const char *)dhcp->servername));
 		if (a == NULL)
 			syslog(lvl, "%s: %s %s %s `%s'", iface->name, msg,
@@ -2694,7 +2715,7 @@ dhcp_handlepacket(void *arg)
 		{
 			char buf[sizeof(dhcp->chaddr) * 3];
 
-			syslog(LOG_DEBUG, "%s: xid 0x%x is not for hwaddr %s",
+			syslog(LOG_DEBUG, "%s: xid 0x%x is for hwaddr %s",
 			    ifp->name, ntohl(dhcp->xid),
 			    hwaddr_ntoa(dhcp->chaddr, sizeof(dhcp->chaddr),
 				buf, sizeof(buf)));
