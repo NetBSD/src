@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp-common.h,v 1.1.1.6 2014/09/16 22:23:21 roy Exp $ */
+/* $NetBSD: dhcp-common.h,v 1.1.1.7 2014/10/06 18:20:19 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -63,6 +63,10 @@
 #define ENCAP		(1 << 18)
 #define INDEX		(1 << 19)
 #define OPTION		(1 << 20)
+#define DOMAIN		(1 << 21)
+#define ASCII		(1 << 22)
+#define RAW		(1 << 23)
+#define ESCSTRING	(1 << 24)
 
 struct dhcp_opt {
 	uint32_t option; /* Also used for IANA Enterpise Number */
@@ -86,6 +90,7 @@ struct dhcp_opt *vivso_find(uint32_t, const void *);
 
 ssize_t dhcp_vendor(char *, size_t);
 
+void dhcp_print_option_encoding(const struct dhcp_opt *opt, int cols);
 #define add_option_mask(var, val) (var[val >> 3] |= 1 << (val & 7))
 #define del_option_mask(var, val) (var[val >> 3] &= ~(1 << (val & 7)))
 #define has_option_mask(var, val) (var[val >> 3] & (1 << (val & 7)))
@@ -95,7 +100,7 @@ int make_option_mask(const struct dhcp_opt *, size_t,
 
 size_t encode_rfc1035(const char *src, uint8_t *dst);
 ssize_t decode_rfc3397(char *, size_t, const uint8_t *, size_t);
-ssize_t print_string(char *, size_t, const uint8_t *, size_t);
+ssize_t print_string(char *, size_t, int, const uint8_t *, size_t);
 ssize_t print_option(char *, size_t, int, const uint8_t *, size_t,
     const char *);
 
