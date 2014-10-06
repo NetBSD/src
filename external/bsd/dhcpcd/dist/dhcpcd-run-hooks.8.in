@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd-run-hooks.8.in,v 1.7 2014/09/27 01:17:34 roy Exp $
+.\"     $NetBSD: dhcpcd-run-hooks.8.in,v 1.8 2014/10/06 18:22:29 roy Exp $
 .\" Copyright (c) 2006-2014 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 26, 2014
+.Dd October 3, 2014
 .Dt DHCPCD-RUN-HOOKS 8
 .Os
 .Sh NAME
@@ -137,7 +137,7 @@ and
 .Ev $RC_SVCNAME .
 The following variables will then be set, along with any protocol supplied
 ones.
-.Bl -tag -width xnew_dhcp6_prefix
+.Bl -tag -width xnew_delegated_dhcp6_prefix
 .It Ev $interface
 the name of the interface.
 .It Ev $reason
@@ -166,6 +166,10 @@ flags.
 .It Ev $ifmtu
 .Ev $interface
 MTU.
+.It Ev $ifssid
+the name of the SSID the
+.Ev interface
+is connected to.
 .It Ev $interface_order
 A list of interfaces, in order of preference.
 .It Ev $if_up
@@ -191,15 +195,7 @@ requirements specified in
 .It Ev $profile
 the name of the profile selected from
 .Xr dhcpcd.conf 5 .
-.It Ev $new_ssid
-the name of the SSID the
-.Ev interface
-is connected to.
-.It Ev $old_ssid
-the name of the SSID the
-.Ev interface
-was connected to.
-.It Ev $new_dhcp6_prefix
+.It Ev $new_delegated_dhcp6_prefix
 space separated list of delegated prefixes.
 .El
 .Sh FILES
@@ -219,10 +215,9 @@ in a lexical order and then finally
 Please report them to
 .Lk http://roy.marples.name/projects/dhcpcd
 .Sh SECURITY CONSIDERATIONS
-Little validation of DHCP options is done in dhcpcd itself.
-Instead, it is up to the hooks to handle any validation needed.
-To this end, some helper functions are provided, such as valid_domainname as
-used by the
-.Pa 20-resolv.conf
-hook to ensure that the hostname is not set to an invalid value.
-valid_path is also provided, but is currently unused by a stock hook script.
+.Nm dhcpcd
+will validate the content of each option against its encoding.
+For string, ascii, raw or binhex encoding it's up to the user to validate it
+for the intended purpose.
+.Pp
+When used in a shell script, each variable must be quoted correctly.
