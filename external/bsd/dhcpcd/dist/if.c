@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if.c,v 1.1.1.6 2014/10/06 18:20:16 roy Exp $");
+ __RCSID("$NetBSD: if.c,v 1.2 2014/10/06 18:22:29 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon

@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6nd.c,v 1.12 2014/09/18 20:46:30 roy Exp $");
+ __RCSID("$NetBSD: ipv6nd.c,v 1.13 2014/10/06 18:22:29 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1008,18 +1008,21 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 				    ifp->name);
 				continue;
 			} else {
-				l = (size_t)r;
+				l = (size_t)r + 1;
 				tmp = malloc(l);
 				if (tmp) {
 					decode_rfc3397(tmp, l, op, n);
 					l -= 1;
 					n = (size_t)print_string(NULL, 0,
+					    STRING | ARRAY | DOMAIN,
 					    (const uint8_t *)tmp, l);
+					n++;
 					opt = malloc(n);
-					if (opt)
+					if (opt) {
 						print_string(opt, n,
+						    STRING | ARRAY | DOMAIN,
 						    (const uint8_t *)tmp, l);
-					else
+					} else
 						syslog(LOG_ERR, "%s: %m",
 						    __func__);
 					free(tmp);

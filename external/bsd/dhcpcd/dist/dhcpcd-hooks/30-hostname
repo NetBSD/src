@@ -1,4 +1,4 @@
-# $NetBSD: 30-hostname,v 1.1.1.10 2013/07/29 20:35:33 roy Exp $
+# $NetBSD: 30-hostname,v 1.2 2014/10/06 18:22:30 roy Exp $
 
 # Set the hostname from DHCP data if required
 

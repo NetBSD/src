@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: eloop.c,v 1.1.1.10 2014/09/16 22:23:18 roy Exp $");
+ __RCSID("$NetBSD: eloop.c,v 1.2 2014/10/06 18:22:29 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon

@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.9 2014/09/27 01:17:34 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.10 2014/10/06 18:22:29 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -377,28 +377,20 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 		snprintf(env[elen++], e, "profile=%s", ifp->profile);
 	}
 	if (ifp->wireless) {
-		const char *pfx;
+		static const char *pfx = "ifssid=";
+		size_t pfx_len;
+		ssize_t psl;
 
-		if (strcmp(reason, "CARRIER") == 0)
-			pfx = "new_ssid=";
-		else if (strcmp(reason, "NOCARRIER") == 0)
-			pfx = "old_ssid=";
-		else	
-			pfx = NULL;
-		if (pfx) {
-			size_t pfx_len;
-			ssize_t psl;
-
-			pfx_len = strlen(pfx);
-			psl = print_string(NULL, 0,
+		pfx_len = strlen(pfx);
+		psl = print_string(NULL, 0, ESCSTRING,
+		    (const uint8_t *)ifp->ssid, ifp->ssid_len);
+		if (psl != -1) {
+			EMALLOC(elen, pfx_len + (size_t)psl + 1);
+			memcpy(env[elen], pfx, pfx_len);
+			print_string(env[elen] + pfx_len, (size_t)psl + 1,
+			    ESCSTRING,
 			    (const uint8_t *)ifp->ssid, ifp->ssid_len);
-			if (psl != -1) {
-				EMALLOC(elen, pfx_len + (size_t)psl + 1);
-				memcpy(env[elen], pfx, pfx_len);
-				print_string(env[elen] + pfx_len, (size_t)psl,
-				    (const uint8_t *)ifp->ssid, ifp->ssid_len);
-				elen++;
-			}
+			elen++;
 		}
 	}
 #ifdef INET
@@ -473,9 +465,7 @@ dumplease:
 	}
 #endif
 #ifdef INET6
-	if (dhcp6 && d6_state &&
-	    (d6_state->new || d6_state->state == DH6S_DELEGATED))
-	{
+	if (dhcp6 && D6_STATE_RUNNING(ifp)) {
 		n = dhcp6_env(NULL, NULL, ifp,
 		    d6_state->new, d6_state->new_len);
 		if (n > 0) {

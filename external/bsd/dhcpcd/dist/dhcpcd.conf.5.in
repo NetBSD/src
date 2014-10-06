@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.conf.5.in,v 1.11 2014/09/16 22:27:04 roy Exp $
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.12 2014/10/06 18:22:29 roy Exp $
 .\" Copyright (c) 2006-2014 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 14, 2014
+.Dd October 3, 2014
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -353,13 +353,11 @@ always fork on an RA.
 .It Ic ipv6ra_own
 Disables kernel IPv6 Router Advertisment processing so dhcpcd can manage
 addresses and routes.
-This does not work reliably on any BSD system, probably due to kernel issues.
 .It Ic ipv6ra_own_default
 Each time dhcpcd receives an IPv6 Router Adveristment, dhcpcd will manage
 the default route only.
 This allows dhcpcd to prefer an interface for outbound traffic based on metric
 and/or user selection rather than the kernel.
-This does work reliably on BSD systems.
 .It Ic ipv6rs
 Enables IPv6 Router Advertisment solicitation.
 This is on by default, but is documented here in the case where it is disabled
@@ -684,7 +682,7 @@ An IPv4 address, 4 bytes
 .It Ic ip6address
 An IPv6 address, 16 bytes
 .It Ic string Op : Ic length
-A shell escaped string (binary data escaped as octal)
+A NVT ASCII string of printable characters.
 .It Ic byte
 A byte
 .It Ic int16
@@ -699,6 +697,8 @@ An unsigned 32bit integer, 4 bytes
 A fixed value (1) to indicate that the option is present, 0 bytes
 .It Ic domain
 A RFC 3397 encoded string
+.It Ic dname
+A RFC 1035 validated string
 .It Ic binhex Op : Ic length
 Binary data expressed as hexadecimal
 .It Ic embed

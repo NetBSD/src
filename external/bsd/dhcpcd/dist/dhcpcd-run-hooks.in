@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: dhcpcd-run-hooks.in,v 1.1.1.20 2014/07/14 11:45:05 roy Exp $
+# $NetBSD: dhcpcd-run-hooks.in,v 1.2 2014/10/06 18:22:29 roy Exp $
 
 # dhcpcd client configuration script 
 
