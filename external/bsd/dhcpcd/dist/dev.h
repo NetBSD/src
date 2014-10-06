@@ -1,4 +1,4 @@
-/* $NetBSD: dev.h,v 1.1.1.4 2014/06/14 20:51:09 roy Exp $ */
+/* $NetBSD: dev.h,v 1.1.1.5 2014/10/06 18:20:19 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -51,12 +51,12 @@ int dev_init(struct dev *, const struct dev_dhcpcd *);
 int dev_initialized(struct dhcpcd_ctx *, const char *);
 int dev_listening(struct dhcpcd_ctx *);
 int dev_start(struct dhcpcd_ctx *);
-void dev_stop(struct dhcpcd_ctx *, int);
+void dev_stop(struct dhcpcd_ctx *);
 #else
 #define dev_initialized(a, b) (1)
 #define dev_listening(a) (0)
 #define dev_start(a) {}
-#define dev_stop(a, b) {}
+#define dev_stop(a) {}
 #endif
 
 #endif
