@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_reg.h,v 1.2 2014/09/25 05:05:28 ryo Exp $	*/
+/*	$NetBSD: imx6_reg.h,v 1.3 2014/10/06 10:15:40 ryo Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,8 @@
 #define	AIPS1_EPIT2_BASE	0x000d4000
 #define	AIPS1_EPIT1_BASE	0x000d0000
 #define	AIPS1_EPIT_SIZE		0x00000020
-#define	AIPS1_SNVS_HP_BASE	0x000cc000
+#define	AIPS1_SNVS_BASE		0x000cc000
+#define	AIPS1_SNVS_SIZE		0x00000c00
 #define	AIPS1_USBPHY2_BASE	0x000ca000
 #define	AIPS1_USBPHY1_BASE	0x000c9000
 #define	AIPS1_ANATOP_DIG_BASE	0x000c8000
