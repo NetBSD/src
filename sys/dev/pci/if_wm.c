@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.298 2014/09/16 07:06:42 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.299 2014/10/06 07:09:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.298 2014/09/16 07:06:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.299 2014/10/06 07:09:30 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -888,13 +888,29 @@ static const struct wm_product {
 	  "Intel PRO/1000 QT (82571EB)",
 	  WM_T_82571,		WMP_F_COPPER },
 
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_COPPER,
-	  "Intel i82572EI 1000baseT Ethernet",
-	  WM_T_82572,		WMP_F_COPPER },
-
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER,
 	  "Intel PRO/1000 PT Quad Port Server Adapter",
 	  WM_T_82571,		WMP_F_COPPER, },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571PT_QUAD_COPPER,
+	  "Intel Gigabit PT Quad Port Server ExpressModule",
+	  WM_T_82571,		WMP_F_COPPER, },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_DUAL_SERDES,
+	  "Intel 82571EB Dual Gigabit Ethernet (SERDES)",
+	  WM_T_82571,		WMP_F_SERDES, },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_QUAD_SERDES,
+	  "Intel 82571EB Quad Gigabit Ethernet (SERDES)",
+	  WM_T_82571,		WMP_F_SERDES, },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_QUAD_FIBER,
+	  "Intel 82571EB Quad 1000baseX Ethernet",
+	  WM_T_82571,		WMP_F_FIBER, },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_COPPER,
+	  "Intel i82572EI 1000baseT Ethernet",
+	  WM_T_82572,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_FIBER,
 	  "Intel i82572EI 1000baseX Ethernet",
@@ -921,6 +937,10 @@ static const struct wm_product {
 	  WM_T_82573,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82574L,
+	  "Intel i82574L",
+	  WM_T_82574,		WMP_F_COPPER },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82574LA,
 	  "Intel i82574L",
 	  WM_T_82574,		WMP_F_COPPER },
 
@@ -1064,6 +1084,11 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82576_QUAD_COPPER,
 	  "82576 quad-1000BaseT Ethernet",
 	  WM_T_82576,		WMP_F_COPPER },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82576_QUAD_COPPER_ET2,
+	  "82576 Gigabit ET2 Quad Port Server Adapter",
+	  WM_T_82576,		WMP_F_COPPER },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82576_NS,
 	  "82576 gigabit Ethernet",
 	  WM_T_82576,		WMP_F_COPPER },
@@ -1112,6 +1137,10 @@ static const struct wm_product {
 	  "I350 Gigabit Backplane Connection",
 	  WM_T_I350,		WMP_F_SERDES },
 
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_DA4,
+	  "I350 Quad Port Gigabit Ethernet",
+	  WM_T_I350,		WMP_F_SERDES },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_SGMII,
 	  "I350 Gigabit Connection",
 	  WM_T_I350,		WMP_F_COPPER },
@@ -1122,18 +1151,29 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_T1,
 	  "I210-T1 Ethernet Server Adapter",
 	  WM_T_I210,		WMP_F_COPPER },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_COPPER_OEM1,
 	  "I210 Ethernet (Copper OEM)",
 	  WM_T_I210,		WMP_F_COPPER },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_COPPER_IT,
 	  "I210 Ethernet (Copper IT)",
 	  WM_T_I210,		WMP_F_COPPER },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_COPPER_WOF,
+	  "I210 Ethernet (FLASH less)",
+	  WM_T_I210,		WMP_F_COPPER },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_FIBER,
 	  "I210 Gigabit Ethernet (Fiber)",
 	  WM_T_I210,		WMP_F_FIBER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_SERDES,
 	  "I210 Gigabit Ethernet (SERDES)",
+	  WM_T_I210,		WMP_F_SERDES },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_SERDES_WOF,
+	  "I210 Gigabit Ethernet (FLASH less)",
 	  WM_T_I210,		WMP_F_SERDES },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_SGMII,
