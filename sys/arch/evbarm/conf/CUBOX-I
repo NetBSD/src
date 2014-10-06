@@ -1,7 +1,7 @@
-# $NetBSD: NITROGEN6X,v 1.3 2014/10/06 10:37:20 ryo Exp $
+# $NetBSD: CUBOX-I,v 1.1 2014/10/06 10:37:20 ryo Exp $
 #
-# Nitrogen6X
-# - http://boundarydevices.com/products/nitrogen6x-board-imx6-arm-cortex-a9-sbc/
+# CuBox-i
+# - http://www.solid-run.com/products/cubox-i-mini-computer/
 #
 
 include	"arch/evbarm/conf/std.nitrogen6"
@@ -63,7 +63,7 @@ options 	DDB_VERBOSE_HELP
 #options 	IPKDB			# remote kernel debugging
 #options	KGDB
 #options 	KGDB_DEVNAME="\"imxuart\""
-#options 	KGDB_DEVADDR=0x021e8000
+#options 	KGDB_DEVADDR=0x02020000
 #options 	KGDB_DEVRATE=115200
 makeoptions	DEBUG="-g"		# compile full symbol table
 makeoptions	COPY_SYMTAB=1
@@ -172,7 +172,7 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 # Device options
 
 # Console options.    also need IMXUARTCONSOLE
-options 	CONSDEVNAME="\"imxuart\"",CONADDR=0x021e8000,CONSPEED=115200
+options 	CONSDEVNAME="\"imxuart\"",CONADDR=0x02020000,CONSPEED=115200
 options 	CONS_OVERRIDE
 
 # These options enable verbose messages for several subsystems.
@@ -186,6 +186,17 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
+
+options 		NFS_BOOT_BOOTP
+options 		NFS_BOOT_DHCP
+#options 		NFS_BOOT_BOOTPARAM
+#options 		NFS_BOOT_BOOTSTATIC
+#options 		NFS_BOOTSTATIC_MYIP="\"192.168.0.2\""
+#options 		NFS_BOOTSTATIC_GWIP="\"192.168.0.1\""
+#options 		NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
+#options 		NFS_BOOTSTATIC_SERVADDR="\"192.168.0.3\""
+#options 		NFS_BOOTSTATIC_SERVER="\"192.168.0.3:/nfs/cubox\""
+
 
 #
 # Device configuration
@@ -237,7 +248,7 @@ imxwdog0	at axi? addr 0x020bc000 irq 112 flags 0
 
 # Serial
 imxuart0	at axi? addr 0x02020000 irq 58		# UART1
-imxuart1	at axi? addr 0x021e8000 irq 59		# UART2
+#imxuart1	at axi? addr 0x021e8000 irq 59		# UART2
 #imxuart2	at axi? addr 0x021ec000 irq 60		# UART3
 #imxuart3	at axi? addr 0x021f0000 irq 61		# UART4
 #imxuart4	at axi? addr 0x021f4000 irq 62		# UART5
@@ -316,7 +327,7 @@ include "dev/usb/usbdevices.config"
 #sdmmc*		at sdhc?
 #options 	SDHC_DEBUG
 #options 	SDMMC_DEBUG
-#
+
 #ld*		at sdmmc?			# MMC/SD card
 
 
