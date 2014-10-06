@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: control.c,v 1.1.1.8 2014/09/16 22:23:17 roy Exp $");
+ __RCSID("$NetBSD: control.c,v 1.1.1.9 2014/10/06 18:20:16 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -301,6 +301,9 @@ control_stop(struct dhcpcd_ctx *ctx)
 	int retval = 0;
 	struct fd_list *l;
 
+	if (ctx->options & DHCPCD_FORKED)
+		goto freeit;
+
 	if (ctx->control_fd == -1)
 		return 0;
 	eloop_event_delete(ctx->eloop, ctx->control_fd, 0);
@@ -317,6 +320,7 @@ control_stop(struct dhcpcd_ctx *ctx)
 			retval = -1;
 	}
 
+freeit:
 	while ((l = TAILQ_FIRST(&ctx->control_fds))) {
 		TAILQ_REMOVE(&ctx->control_fds, l, next);
 		eloop_event_delete(ctx->eloop, l->fd, 0);

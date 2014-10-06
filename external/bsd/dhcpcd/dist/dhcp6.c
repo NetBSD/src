@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.1.1.16 2014/09/27 01:14:55 roy Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.1.1.17 2014/10/06 18:20:18 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -137,6 +137,7 @@ dhcp6_printoptions(const struct dhcpcd_ctx *ctx,
 {
 	size_t i, j;
 	const struct dhcp_opt *opt, *opt2;
+	int cols;
 
 	for (i = 0, opt = ctx->dhcp6_opts;
 	    i < ctx->dhcp6_opts_len; i++, opt++)
@@ -144,11 +145,15 @@ dhcp6_printoptions(const struct dhcpcd_ctx *ctx,
 		for (j = 0, opt2 = opts; j < opts_len; j++, opt2++)
 			if (opt2->option == opt->option)
 				break;
-		if (j == opts_len)
-			printf("%05d %s\n", opt->option, opt->var);
+		if (j == opts_len) {
+			cols = printf("%05d %s", opt->option, opt->var);
+			dhcp_print_option_encoding(opt, cols);
+		}
 	}
-	for (i = 0, opt = opts; i < opts_len; i++, opt++)
-		printf("%05d %s\n", opt->option, opt->var);
+	for (i = 0, opt = opts; i < opts_len; i++, opt++) {
+		cols = printf("%05d %s", opt->option, opt->var);
+		dhcp_print_option_encoding(opt, cols);
+	}
 }
 
 static size_t
@@ -436,7 +441,7 @@ dhcp6_makemessage(struct interface *ifp)
 	const struct dhcp6_option *si, *unicast;
 	size_t l, n, len, ml, auth_len;
 	uint8_t u8, type;
-	uint16_t *u16, n_options;
+	uint16_t u16, n_options;
 	struct if_options *ifo;
 	const struct dhcp_opt *opt, *opt2;
 	uint8_t IA, *p;
@@ -496,7 +501,7 @@ dhcp6_makemessage(struct interface *ifp)
 			    has_option_mask(ifo->requestmask6, opt->option)))
 			{
 				n_options++;
-				len += sizeof(*u16);
+				len += sizeof(u16);
 			}
 		}
 		for (l = 0, opt = ifo->dhcp6_override;
@@ -508,12 +513,12 @@ dhcp6_makemessage(struct interface *ifp)
 			    has_option_mask(ifo->requestmask6, opt->option)))
 			{
 				n_options++;
-				len += sizeof(*u16);
+				len += sizeof(u16);
 			}
 		}
 		if (dhcp6_findselfsla(ifp, NULL)) {
 			n_options++;
-			len += sizeof(*u16);
+			len += sizeof(u16);
 		}
 		if (len)
 			len += sizeof(*o);
@@ -807,7 +812,7 @@ dhcp6_makemessage(struct interface *ifp)
 			o = D6_NEXT_OPTION(o);
 			o->code = htons(D6_OPTION_ORO);
 			o->len = 0;
-			u16 = (uint16_t *)(void *)D6_OPTION_DATA(o);
+			p = D6_OPTION_DATA(o);
 			for (l = 0, opt = ifp->ctx->dhcp6_opts;
 			    l < ifp->ctx->dhcp6_opts_len;
 			    l++, opt++)
@@ -826,8 +831,10 @@ dhcp6_makemessage(struct interface *ifp)
 				    has_option_mask(ifo->requestmask6,
 				        opt->option)))
 				{
-					*u16++ = htons(opt->option);
-					o->len += sizeof(*u16);
+					u16 = htons(opt->option);
+					memcpy(p, &u16, sizeof(u16));
+					p += sizeof(u16);
+					o->len += sizeof(u16);
 				}
 			}
 			for (l = 0, opt = ifo->dhcp6_override;
@@ -839,13 +846,16 @@ dhcp6_makemessage(struct interface *ifp)
 				    has_option_mask(ifo->requestmask6,
 				        opt->option)))
 				{
-					*u16++ = htons(opt->option);
-					o->len += sizeof(*u16);
+					u16 = htons(opt->option);
+					memcpy(p, &u16, sizeof(u16));
+					p += sizeof(u16);
+					o->len += sizeof(u16);
 				}
 			}
 			if (dhcp6_findselfsla(ifp, NULL)) {
-				*u16++ = htons(D6_OPTION_PD_EXCLUDE);
-				o->len += sizeof(*u16);
+				u16 = htons(D6_OPTION_PD_EXCLUDE);
+				memcpy(p, &u16, sizeof(u16));
+				o->len += sizeof(u16);
 			}
 			o->len = htons(o->len);
 		}
@@ -1168,6 +1178,9 @@ dhcp6_dadcompleted(const struct interface *ifp)
 	const struct ipv6_addr *ap;
 
 	state = D6_CSTATE(ifp);
+	if (!TAILQ_FIRST(&state->addrs))
+		return 0;
+
 	TAILQ_FOREACH(ap, &state->addrs, next) {
 		if (ap->flags & IPV6_AF_ADDED &&
 		    !(ap->flags & IPV6_AF_DADCOMPLETED))
@@ -1182,7 +1195,7 @@ dhcp6_dadcallback(void *arg)
 	struct ipv6_addr *ap = arg;
 	struct interface *ifp;
 	struct dhcp6_state *state;
-	int wascompleted;
+	int wascompleted, valid;
 
 	wascompleted = (ap->flags & IPV6_AF_DADCOMPLETED);
 	ap->flags |= IPV6_AF_DADCOMPLETED;
@@ -1198,6 +1211,7 @@ dhcp6_dadcallback(void *arg)
 		if (state->state == DH6S_BOUND ||
 		    state->state == DH6S_DELEGATED)
 		{
+			valid = (ap->delegating_iface == NULL);
 			TAILQ_FOREACH(ap, &state->addrs, next) {
 				if (ap->flags & IPV6_AF_ADDED &&
 				    !(ap->flags & IPV6_AF_DADCOMPLETED))
@@ -1210,7 +1224,8 @@ dhcp6_dadcallback(void *arg)
 				syslog(LOG_DEBUG, "%s: DHCPv6 DAD completed",
 				    ifp->name);
 				script_runreason(ifp, state->reason);
-				dhcpcd_daemonise(ifp->ctx);
+				if (valid)
+					dhcpcd_daemonise(ifp->ctx);
 			}
 		}
 	}
@@ -2225,12 +2240,13 @@ dhcp6_script_try_run(struct interface *ifp)
 {
 	struct dhcp6_state *state;
 	struct ipv6_addr *ap;
-	int completed;
+	int completed, valid;
 
 	state = D6_STATE(ifp);
 	if (!TAILQ_FIRST(&state->addrs))
 		return;
 
+	valid = 0;
 	completed = 1;
 	/* If all addresses have completed DAD run the script */
 	TAILQ_FOREACH(ap, &state->addrs, next) {
@@ -2243,10 +2259,13 @@ dhcp6_script_try_run(struct interface *ifp)
 				break;
 			}
 		}
+		if (ap->delegating_iface == NULL)
+			valid = 1;
 	}
 	if (completed) {
 		script_runreason(ifp, state->reason);
-		dhcpcd_daemonise(ifp->ctx);
+		if (valid)
+			dhcpcd_daemonise(ifp->ctx);
 	} else
 		syslog(LOG_DEBUG,
 		    "%s: waiting for DHCPv6 DAD to complete",
@@ -3140,23 +3159,7 @@ dhcp6_freedrop(struct interface *ifp, int drop, const char *reason)
 	struct dhcp6_state *state;
 	struct dhcpcd_ctx *ctx;
 	unsigned long long options;
-
-	ifpx = dhcp6_findpfxdlgif(ifp);
-	if (ifpx) {
-		/* Read the below comment why we need to force
-		 * a drop here */
-		dhcp6_freedrop(ifpx, 1, reason);
-		TAILQ_REMOVE(ifp->ctx->ifaces, ifpx, next);
-		if_free(ifpx);
-	}
-
-	if (ifp->ctx->eloop)
-		eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
-
-	if (ifp->options)
-		options = ifp->options->options;
-	else
-		options = 0;
+	int dropdele;
 
 	/*
 	 * As the interface is going away from dhcpcd we need to
@@ -3174,10 +3177,26 @@ dhcp6_freedrop(struct interface *ifp, int drop, const char *reason)
 	 * the same name or index so think very hard before changing
 	 * this.
 	 */
-	if (options & (DHCPCD_STOPPING | DHCPCD_RELEASE) &&
+	if (ifp->options)
+		options = ifp->options->options;
+	else
+		options = 0;
+	dropdele = (options & (DHCPCD_STOPPING | DHCPCD_RELEASE) &&
 	    (options &
 	    (DHCPCD_EXITING | DHCPCD_PERSISTENT)) !=
-	    (DHCPCD_EXITING | DHCPCD_PERSISTENT))
+	    (DHCPCD_EXITING | DHCPCD_PERSISTENT));
+
+	ifpx = dhcp6_findpfxdlgif(ifp);
+	if (ifpx) {
+		dhcp6_freedrop(ifpx, dropdele ? 1 : drop, reason);
+		TAILQ_REMOVE(ifp->ctx->ifaces, ifpx, next);
+		if_free(ifpx);
+	}
+
+	if (ifp->ctx->eloop)
+		eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
+
+	if (dropdele)
 		dhcp6_delete_delegates(ifp);
 
 	state = D6_STATE(ifp);
@@ -3376,21 +3395,25 @@ delegated:
 	i = 0;
 	TAILQ_FOREACH(ap, &state->addrs, next) {
 		if (ap->delegating_iface) {
-                       	i += strlen(ap->saddr) + 1;
+			i += strlen(ap->saddr) + 1;
 		}
 	}
 	if (env && i) {
-		i += strlen(prefix) + strlen("_dhcp6_prefix=");
+		i += strlen(prefix) + strlen("_delegated_dhcp6_prefix=");
                 v = val = env[n] = malloc(i);
 		if (v == NULL) {
 			syslog(LOG_ERR, "%s: %m", __func__);
 			return -1;
 		}
-		v += snprintf(val, i, "%s_dhcp6_prefix=", prefix);
+		v += snprintf(val, i, "%s_delegated_dhcp6_prefix=", prefix);
 		TAILQ_FOREACH(ap, &state->addrs, next) {
 			if (ap->delegating_iface) {
-				strcpy(v, ap->saddr);
-				v += strlen(ap->saddr);
+				/* Can't use stpcpy(3) due to "security" */
+				const char *sap = ap->saddr;
+
+				do
+					*v++ = *sap;
+				while (*++sap != '\0');
 				*v++ = ' ';
 			}
 		}
