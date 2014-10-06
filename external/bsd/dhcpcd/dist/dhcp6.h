@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp6.h,v 1.1.1.8 2014/09/16 22:23:21 roy Exp $ */
+/* $NetBSD: dhcp6.h,v 1.1.1.9 2014/10/06 18:20:19 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -210,7 +210,7 @@ struct dhcp6_state {
 #define D6_CSTATE(ifp)							       \
 	((const struct dhcp6_state *)(ifp)->if_data[IF_DATA_DHCP6])
 #define D6_STATE_RUNNING(ifp)						       \
-	(D6_CSTATE((ifp)) && D6_CSTATE((ifp))->new &&			       \
+	(D6_CSTATE((ifp)) &&						       \
 	D6_CSTATE((ifp))->reason && dhcp6_dadcompleted((ifp)))
 
 #define D6_FIRST_OPTION(m)						       \
