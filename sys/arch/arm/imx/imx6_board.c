@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_board.c,v 1.1 2014/09/25 05:05:28 ryo Exp $	*/
+/*	$NetBSD: imx6_board.c,v 1.2 2014/10/06 10:27:13 ryo Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.1 2014/09/25 05:05:28 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.2 2014/10/06 10:27:13 ryo Exp $");
 
 #include "opt_imx.h"
 #include "arml2cc.h"
@@ -45,7 +45,19 @@ __KERNEL_RCSID(1, "$NetBSD: imx6_board.c,v 1.1 2014/09/25 05:05:28 ryo Exp $");
 #include <arm/imx/imx6var.h>
 #include <arm/imx/imx6_reg.h>
 #include <arm/imx/imx6_mmdcreg.h>
+#include <arm/imx/imx6_ccmreg.h>
+#include <arm/imx/imxclockvar.h>
 #include <arm/imx/imxwdogreg.h>
+
+/*
+ * PERIPHCLK_N is an arm root clock divider for MPcore interupt controller.
+ * PERIPHCLK_N is equal to, or greater than two.
+ * see "Cortex-A9 MPCore Technical Reference Manual" -
+ *     Chapter 5: Clocks, Resets, and Power Management, 5.1: Clocks.
+ */
+#ifndef PERIPHCLK_N
+#define PERIPHCLK_N	2
+#endif
 
 bus_space_tag_t imx6_ioreg_bst = &imx_bs_tag;
 bus_space_handle_t imx6_ioreg_bsh;
@@ -75,6 +87,24 @@ imx6_bootstrap(vaddr_t iobase)
 #if NARML2CC > 0
 	arml2cc_init(imx6_armcore_bst, imx6_armcore_bsh, ARMCORE_L2C_BASE);
 #endif
+}
+
+/* iMX6 SoC type */
+uint32_t
+imx6_chip_id(void)
+{
+	uint32_t v;
+
+	/* read DIGPROG_SOLOLITE (IMX6SL only) */
+	v = bus_space_read_4(imx6_ioreg_bst, imx6_ioreg_bsh,
+	    AIPS1_CCM_BASE + USB_ANALOG_DIGPROG_SOLOLITE);
+	if (__SHIFTOUT(v, USB_ANALOG_DIGPROG_MAJOR) == CHIPID_MAJOR_IMX6SL)
+		return v;
+
+	/* not SOLOLITE, read DIGPROG */
+	v = bus_space_read_4(imx6_ioreg_bst, imx6_ioreg_bsh,
+	    AIPS1_CCM_BASE + USB_ANALOG_DIGPROG);
+	return v;
 }
 
 /*
@@ -150,6 +180,21 @@ imx6_reset(void)
 		__asm("wfi");
 }
 
+uint32_t
+imx6_armrootclk(void)
+{
+	uint32_t clk;
+	uint32_t v;
+
+	v = bus_space_read_4(imx6_ioreg_bst, imx6_ioreg_bsh,
+	    AIPS1_CCM_BASE + CCM_ANALOG_PLL_ARM);
+	clk = IMX6_OSC_FREQ * (v & CCM_ANALOG_PLL_ARM_DIV_SELECT) / 2;
+	v = bus_space_read_4(imx6_ioreg_bst, imx6_ioreg_bsh,
+	    AIPS1_CCM_BASE + CCM_CACRR);
+	v = __SHIFTOUT(v, CCM_CACRR_ARM_PODF);
+	return clk / (v + 1);
+}
+
 void
 imx6_device_register(device_t self, void *aux)
 {
@@ -174,7 +219,7 @@ imx6_device_register(device_t self, void *aux)
 	 */
 	if (device_is_a(self, "a9tmr") || device_is_a(self, "a9wdt")) {
 		prop_dictionary_set_uint32(dict, "frequency",
-		   792000000 / 2);	/* XXX? */
+		   imx6_armrootclk() / PERIPHCLK_N);
 		return;
 	}
 }
