@@ -1,4 +1,4 @@
-/* $NetBSD: arp.h,v 1.1.1.4 2014/02/25 13:14:30 roy Exp $ */
+/* $NetBSD: arp.h,v 1.2 2014/10/06 18:22:29 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
