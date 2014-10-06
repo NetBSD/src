@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.299 2014/10/06 07:09:30 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.300 2014/10/06 07:31:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.299 2014/10/06 07:09:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.300 2014/10/06 07:31:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1117,15 +1117,11 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_COPPER_DUAL,
 	  "82580 dual-1000BaseT Ethernet",
 	  WM_T_82580,		WMP_F_COPPER },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_ER,
-	  "82580 1000BaseT Ethernet",
-	  WM_T_82580ER,		WMP_F_COPPER },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_ER_DUAL,
-	  "82580 dual-1000BaseT Ethernet",
-	  WM_T_82580ER,		WMP_F_COPPER },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_QUAD_FIBER,
 	  "82580 quad-1000BaseX Ethernet",
 	  WM_T_82580,		WMP_F_FIBER },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_COPPER,
 	  "I350 Gigabit Network Connection",
 	  WM_T_I350,		WMP_F_COPPER },
@@ -1369,7 +1365,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	    || (sc->sc_type == WM_T_82580)
 	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)
 	    || (sc->sc_type == WM_T_I210) || (sc->sc_type == WM_T_I211))
 		sc->sc_flags |= WM_F_NEWQUEUE;
@@ -1488,7 +1484,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	if ((sc->sc_type == WM_T_82546) || (sc->sc_type == WM_T_82546_3)
 	    || (sc->sc_type ==  WM_T_82571) || (sc->sc_type == WM_T_80003)
 	    || (sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	    || (sc->sc_type == WM_T_82580)
 	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354))
 		sc->sc_funcid = (CSR_READ(sc, WMREG_STATUS)
 		    >> STATUS_FUNCID_SHIFT) & STATUS_FUNCID_MASK;
@@ -1766,7 +1762,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_80003:
@@ -1975,7 +1970,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354: /* XXX ok? */
 	case WM_T_ICH8:
@@ -2104,7 +2098,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 		case WM_T_82575:
 		case WM_T_82576:
 		case WM_T_82580:
-		case WM_T_82580ER:
 		case WM_T_I350:
 		case WM_T_I354:
 		case WM_T_I210:
@@ -2218,7 +2211,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354: /* XXXX ok? */
 	case WM_T_I210:
@@ -2782,7 +2774,6 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 
 	switch (sc->sc_type) {
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 		switch (sc->sc_funcid) {
@@ -3103,7 +3094,6 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -3195,7 +3185,6 @@ wm_get_cfg_done(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -3275,7 +3264,6 @@ wm_reset(struct wm_softc *sc)
 		sc->sc_pba = PBA_32K;
 		break;
 	case WM_T_82580:
-	case WM_T_82580ER:
 		sc->sc_pba = PBA_35K;
 		break;
 	case WM_T_I210:
@@ -3329,7 +3317,7 @@ wm_reset(struct wm_softc *sc)
 
 	/* Set the completion timeout for interface */
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	    || (sc->sc_type == WM_T_82580)
 	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)
 	    || (sc->sc_type == WM_T_I210) || (sc->sc_type == WM_T_I211))
 		wm_set_pcie_completion_timeout(sc);
@@ -3444,7 +3432,6 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_82583:
 	case WM_T_I350:
 	case WM_T_I354:
@@ -3522,7 +3509,6 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -3548,7 +3534,6 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82576:
 #if 0 /* XXX */
 	case WM_T_82580:
-	case WM_T_82580ER:
 #endif
 	case WM_T_I350:
 	case WM_T_I354:
@@ -3560,7 +3545,6 @@ wm_reset(struct wm_softc *sc)
 			if ((sc->sc_type == WM_T_82575)
 			    || (sc->sc_type == WM_T_82576)
 			    || (sc->sc_type == WM_T_82580)
-			    || (sc->sc_type == WM_T_82580ER)
 			    || (sc->sc_type == WM_T_I350)
 			    || (sc->sc_type == WM_T_I354))
 				wm_reset_init_script_82575(sc);
@@ -3570,7 +3554,7 @@ wm_reset(struct wm_softc *sc)
 		break;
 	}
 
-	if ((sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	if ((sc->sc_type == WM_T_82580)
 	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)) {
 		/* clear global device reset status bit */
 		CSR_WRITE(sc, WMREG_STATUS, STATUS_DEV_RST_SET);
@@ -5907,7 +5891,6 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -5984,7 +5967,6 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -6040,7 +6022,6 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -6085,7 +6066,6 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -6205,7 +6185,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 		sc->sc_tipg = TIPG_1000T_DFLT;
 
 	/* XXX Not for I354? FreeBSD's e1000_82575.c doesn't include it */
-	if ((sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	if ((sc->sc_type == WM_T_82580)
 	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I210)
 	    || (sc->sc_type == WM_T_I211)) {
 		reg = CSR_READ(sc, WMREG_PHPM);
@@ -6312,7 +6292,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	    wm_gmii_mediastatus);
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	    || (sc->sc_type == WM_T_82580)
 	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)
 	    || (sc->sc_type == WM_T_I210) || (sc->sc_type == WM_T_I211)) {
 		if ((sc->sc_flags & WM_F_SGMII) == 0) {
@@ -7156,7 +7136,6 @@ wm_sgmii_uses_mdio(struct wm_softc *sc)
 		ismdio = ((reg & MDIC_DEST) != 0);
 		break;
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -7888,7 +7867,6 @@ wm_nvm_set_addrbits_size_eecd(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -9054,7 +9032,6 @@ wm_get_wakeup(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_MODE_MASK) != 0)
