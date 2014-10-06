@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1988 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1989 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -57,3 +57,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	gpt(8): added type subcommand to modify partition type.
 		[jnemeth 20140927]
 	zoneinfo: Import tzdata2014h. [apb 20141004]
+	dhcpcd(8): Import dhcpcd-6.5.0. [roy 20141006]
