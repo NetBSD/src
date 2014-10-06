@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.160 2014/07/13 17:12:23 dholland Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.161 2014/10/06 14:42:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.160 2014/07/13 17:12:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.161 2014/10/06 14:42:08 christos Exp $");
 
 #include "opt_scsi.h"
 
@@ -1064,7 +1064,7 @@ scsipi_inquire(struct scsipi_periph *periph, struct scsipi_inquiry_data *inqbuf,
 
 	/*
 	 * If we request more data than the device can provide, it SHOULD just
-	 * return a short reponse.  However, some devices error with an
+	 * return a short response.  However, some devices error with an
 	 * ILLEGAL REQUEST sense code, and yet others have even more special
 	 * failture modes (such as the GL641USB flash adapter, which goes loony
 	 * and sends corrupted CRCs).  To work around this, and to bring our
@@ -1081,6 +1081,7 @@ scsipi_inquire(struct scsipi_periph *periph, struct scsipi_inquiry_data *inqbuf,
 	    10000, NULL, flags | XS_CTL_DATA_IN);
 	if (!error &&
 	    inqbuf->additional_length > SCSIPI_INQUIRY_LENGTH_SCSI2 - 4) {
+	    if (inqbuf->additional_length <= SCSIPI_INQUIRY_LENGTH_SCSI3 - 4) {
 #if 0
 printf("inquire: addlen=%d, retrying\n", inqbuf->additional_length);
 #endif
@@ -1091,6 +1092,11 @@ printf("inquire: addlen=%d, retrying\n", inqbuf->additional_length);
 #if 0
 printf("inquire: error=%d\n", error);
 #endif
+#if 1
+	    } else {
+printf("inquire: addlen=%d, not retrying\n", inqbuf->additional_length);
+#endif
+	    }
 	}
 
 #ifdef SCSI_OLD_NOINQUIRY
