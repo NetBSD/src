@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6.c,v 1.1.1.13 2014/09/27 01:14:54 roy Exp $");
+ __RCSID("$NetBSD: ipv6.c,v 1.1.1.14 2014/10/06 18:20:18 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -576,7 +576,7 @@ ipv6_checkaddrflags(void *arg)
 	int ifa_flags;
 
 	ap = arg;
-	ifa_flags = if_addrflags6(ap->iface->name, &ap->addr);
+	ifa_flags = if_addrflags6(&ap->addr, ap->iface);
 	if (ifa_flags == -1)
 		syslog(LOG_ERR, "%s: if_addrflags6: %m", ap->iface->name);
 	else if (!(ifa_flags & IN6_IFF_TENTATIVE)) {
