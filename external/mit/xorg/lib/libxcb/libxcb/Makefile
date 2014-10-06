@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2011/02/24 08:15:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.22.1 2014/10/06 13:09:41 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,9 @@ LIB=	xcb
 .PATH:	${X11SRCDIR.${LIB}}/src
 .PATH:	${X11SRCDIR.${LIB}}
 .PATH:	${.CURDIR}/../files
+
+SHLIB_MAJOR=	2
+SHLIB_MINOR=	0
 
 SRCS=	xcb_auth.c \
 	xcb_conn.c \

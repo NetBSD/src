@@ -1,4 +1,4 @@
-#	$NetBSD: xcb.mk,v 1.2 2013/05/31 09:14:19 mrg Exp $
+#	$NetBSD: xcb.mk,v 1.2.6.1 2014/10/06 13:09:41 martin Exp $
 
 # define XCBEXT to something before including this
 
@@ -14,8 +14,8 @@ LIBDPLIBS=\
 	Xau	${.CURDIR}/../../libXau \
 	Xdmcp	${.CURDIR}/../../libXdmcp
 
-SHLIB_MAJOR=	0
-SHLIB_MINOR=	1
+SHLIB_MAJOR?=	0
+SHLIB_MINOR?=	1
 
 PKGCONFIG=	xcb-${XCBEXT}
 PKGCONFIG_VERSION.${PKGCONFIG}=     1.9
