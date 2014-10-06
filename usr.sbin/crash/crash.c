@@ -1,4 +1,4 @@
-/*	$NetBSD: crash.c,v 1.7 2014/10/05 23:08:01 wiz Exp $	*/
+/*	$NetBSD: crash.c,v 1.8 2014/10/06 13:14:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crash.c,v 1.7 2014/10/05 23:08:01 wiz Exp $");
+__RCSID("$NetBSD: crash.c,v 1.8 2014/10/06 13:14:36 christos Exp $");
 #endif /* not lint */
 
 #include <ddb/ddb.h>
@@ -307,7 +307,7 @@ usage(void)
 
 	fprintf(stderr,
 	    "usage: %s [-w] [-M core] [-N kernel]\n\n"
-	    "-M core\tspecify memory file\n"
+	    "-M core\tspecify memory file (default /dev/mem)\n"
 	    "-N kernel\tspecify name list file (default /dev/ksyms)\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
