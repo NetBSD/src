@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccmreg.h,v 1.1 2014/09/25 05:05:28 ryo Exp $	*/
+/*	$NetBSD: imx6_ccmreg.h,v 1.2 2014/10/06 10:27:13 ryo Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -30,6 +30,10 @@
 #define _ARM_IMX_IMX6_CCMREG_H
 
 #include <sys/cdefs.h>
+
+#ifndef IMX6_OSC_FREQ
+#define IMX6_OSC_FREQ	(24 * 1000 * 1000)	/* 24MHz */
+#endif
 
 #define IMX6_CCM_SIZE				0x8000
 
@@ -240,8 +244,11 @@
 #define USB_ANALOG_USB2_VBUS_DETECT_STAT	0x00004220
 #define USB_ANALOG_USB2_CHRG_DETECT_STAT	0x00004230
 #define USB_ANALOG_USB2_MISC			0x00004250
-#define USB_ANALOG_DIGPROG			0x00004260
 
+#define USB_ANALOG_DIGPROG			0x00004260
+#define USB_ANALOG_DIGPROG_SOLOLITE		0x00004280
+#define  USB_ANALOG_DIGPROG_MAJOR		__BITS(23, 8)
+#define  USB_ANALOG_DIGPROG_MINOR		__BITS(7, 0)
 
 						/* 0x00005000 = 0x020c9000 */
 #define USBPHY1_PWD				0x00005000	/* = 020c9000 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ahcisata.c,v 1.1 2014/09/25 05:05:28 ryo Exp $	*/
+/*	$NetBSD: imx6_ahcisata.c,v 1.2 2014/10/06 10:27:13 ryo Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.1 2014/09/25 05:05:28 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.2 2014/10/06 10:27:13 ryo Exp $");
 
 #include "locators.h"
 #include "opt_imx.h"
@@ -73,10 +73,20 @@ imx6_ahcisata_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct axi_attach_args * const aa = aux;
 
-	if (aa->aa_addr == IMX6_SATA_BASE)
-		return 1;
+	if (aa->aa_addr != IMX6_SATA_BASE)
+		return 0;
 
-	return 0;
+	/* i.MX6 Solo/SoloLite/DualLite has no SATA interface */
+	switch (IMX6_CHIPID_MAJOR(imx6_chip_id())) {
+	case CHIPID_MAJOR_IMX6SL:
+	case CHIPID_MAJOR_IMX6DL:
+	case CHIPID_MAJOR_IMX6SOLO:
+		return 0;
+	default:
+		break;
+	}
+
+	return 1;
 }
 
 static void

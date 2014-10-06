@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.1 2014/09/25 05:05:28 ryo Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.2 2014/10/06 10:27:13 ryo Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.1 2014/09/25 05:05:28 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.2 2014/10/06 10:27:13 ryo Exp $");
 
 #include "opt_imx.h"
 #include "opt_imx6clk.h"
@@ -54,10 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.1 2014/09/25 05:05:28 ryo Exp $");
 
 #include <arm/imx/imx6var.h>
 #include <arm/imx/imx6_reg.h>
-
-#ifndef IMX6_OSC_FREQ
-#define IMX6_OSC_FREQ	(24 * 1000 * 1000)	/* 24MHz */
-#endif
 
 struct imxccm_softc {
 	device_t sc_dev;
