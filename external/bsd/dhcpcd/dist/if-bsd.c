@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.1.1.29 2014/09/27 01:14:51 roy Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.1.1.30 2014/10/06 18:20:17 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -69,6 +69,13 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+
+#if defined(OpenBSD) && OpenBSD >= 201411
+/* OpenBSD dropped the global setting from sysctl but left the #define
+ * which causes a EPERM error when trying to use it.
+ * I think both the error and keeping the define are wrong, so we #undef it. */
+#undef IPV6CTL_ACCEPT_RTADV
+#endif
 
 #include "config.h"
 #include "common.h"
@@ -551,6 +558,27 @@ if_route(const struct rt *rt, int action)
 #endif
 
 #ifdef INET6
+static void
+ifa_scope(struct sockaddr_in6 *sin, unsigned int ifindex)
+{
+
+#ifdef __KAME__
+	/* KAME based systems want to store the scope inside the sin6_addr
+	 * for link local addreses */
+	if (IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr)) {
+		uint16_t scope = htons(ifindex);
+		memcpy(&sin->sin6_addr.s6_addr[2], &scope,
+		    sizeof(scope));
+	}
+	sin->sin6_scope_id = 0;
+#else
+	if (IN6_IS_ADDR_LINKLOCAL(&sin->sin6_addr))
+		sin->sin6_scope_id = ifindex;
+	else
+		sin->sin6_scope_id = 0;
+#endif
+}
+
 int
 if_address6(const struct ipv6_addr *a, int action)
 {
@@ -583,6 +611,7 @@ if_address6(const struct ipv6_addr *a, int action)
 	}
 
 	ADDADDR(&ifa.ifra_addr, &a->addr);
+	ifa_scope(&ifa.ifra_addr, a->iface->index);
 	ipv6_mask(&mask, a->prefix_len);
 	ADDADDR(&ifa.ifra_prefixmask, &mask);
 	ifa.ifra_lifetime.ia6t_vltime = a->prefix_vltime;
@@ -616,21 +645,6 @@ if_route6(const struct rt6 *rt, int action)
 	if ((s = socket(PF_ROUTE, SOCK_RAW, 0)) == -1)
 		return -1;
 
-/* KAME based systems want to store the scope inside the sin6_addr
- * for link local addreses */
-#ifdef __KAME__
-#define SCOPE {								      \
-		if (IN6_IS_ADDR_LINKLOCAL(&su.sin.sin6_addr)) {		      \
-			uint16_t scope = htons(su.sin.sin6_scope_id);	      \
-			memcpy(&su.sin.sin6_addr.s6_addr[2], &scope,	      \
-			    sizeof(scope));				      \
-			su.sin.sin6_scope_id = 0;			      \
-		}							      \
-	}
-#else
-#define SCOPE
-#endif
-
 #define ADDSU {								      \
 		l = RT_ROUNDUP(su.sa.sa_len);				      \
 		memcpy(bp, &su, l);					      \
@@ -641,8 +655,8 @@ if_route6(const struct rt6 *rt, int action)
 		su.sin.sin6_family = AF_INET6;				      \
 		su.sin.sin6_len = sizeof(su.sin);			      \
 		(&su.sin)->sin6_addr = *addr;				      \
-		su.sin.sin6_scope_id = scope;				      \
-		SCOPE;							      \
+		if (scope)						      \
+			ifa_scope(&su.sin, scope);			      \
 		ADDSU;							      \
 	}
 #define ADDADDR(addr) ADDADDRS(addr, 0)
@@ -684,9 +698,7 @@ if_route6(const struct rt6 *rt, int action)
 				return -1;
 			ADDADDRS(&lla->addr, rt->iface->index);
 		} else {
-			ADDADDRS(&rt->gate,
-			    IN6_ARE_ADDR_EQUAL(&rt->gate, &in6addr_loopback)
-			    ? 0 : rt->iface->index);
+			ADDADDRS(&rt->gate, rt->iface->index);
 		}
 	}
 
@@ -712,7 +724,6 @@ if_route6(const struct rt6 *rt, int action)
 
 #undef ADDADDR
 #undef ADDSU
-#undef SCOPE
 
 	if (action >= 0 && rt->mtu) {
 		rtm.hdr.rtm_inits |= RTV_MTU;
@@ -748,7 +759,7 @@ get_addrs(int type, char *cp, struct sockaddr **sa)
 
 #ifdef INET6
 int
-if_addrflags6(const char *ifname, const struct in6_addr *addr)
+if_addrflags6(const struct in6_addr *addr, const struct interface *ifp)
 {
 	int s, flags;
 	struct in6_ifreq ifr6;
@@ -757,9 +768,10 @@ if_addrflags6(const char *ifname, const struct in6_addr *addr)
 	flags = -1;
 	if (s != -1) {
 		memset(&ifr6, 0, sizeof(ifr6));
-		strncpy(ifr6.ifr_name, ifname, sizeof(ifr6.ifr_name));
+		strncpy(ifr6.ifr_name, ifp->name, sizeof(ifr6.ifr_name));
 		ifr6.ifr_addr.sin6_family = AF_INET6;
 		ifr6.ifr_addr.sin6_addr = *addr;
+		ifa_scope(&ifr6.ifr_addr, ifp->index);
 		if (ioctl(s, SIOCGIFAFLAG_IN6, &ifr6) != -1)
 			flags = ifr6.ifr_ifru.ifru_flags6;
 		close(s);
@@ -916,9 +928,12 @@ if_managelink(struct dhcpcd_ctx *ctx)
 				sin6 = (struct sockaddr_in6*)(void *)
 				    rti_info[RTAX_IFA];
 				ia6 = sin6->sin6_addr;
+#ifdef __KAME__
+				if (IN6_IS_ADDR_LINKLOCAL(&ia6))
+					ia6.s6_addr[2] = ia6.s6_addr[3] = '\0';
+#endif
 				if (rtm->rtm_type == RTM_NEWADDR) {
-					ifa_flags = if_addrflags6(ifp->name,
-					    &ia6);
+					ifa_flags = if_addrflags6(&ia6, ifp);
 					if (ifa_flags == -1)
 						break;
 				} else
@@ -957,6 +972,7 @@ if_machinearch(char *str, size_t len)
 }
 
 #ifdef INET6
+#ifdef IPV6CTL_ACCEPT_RTADV
 #define get_inet6_sysctl(code) inet6_sysctl(code, 0, 0)
 #define set_inet6_sysctl(code, val) inet6_sysctl(code, val, 1)
 static int
@@ -977,6 +993,7 @@ inet6_sysctl(int code, int val, int action)
 		return -1;
 	return val;
 }
+#endif
 
 #define del_if_nd6_flag(ifname, flag) if_nd6_flag(ifname, flag, -1)
 #define get_if_nd6_flag(ifname, flag) if_nd6_flag(ifname, flag,  0)
@@ -1063,6 +1080,37 @@ if_raflush(void)
 	return 0;
 }
 
+#ifdef SIOCGIFXFLAGS
+static int
+set_ifxflags(const struct interface *ifp, int own)
+{
+	struct ifreq ifr;
+	int s, flags;
+
+	s = socket(PF_INET6, SOCK_DGRAM, 0);
+	if (s == -1)
+		return -1;
+	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCGIFXFLAGS, (void *)&ifr) == -1) {
+		close(s);
+		return -1;
+	}
+	flags = ifr.ifr_flags;
+	flags &= ~IFXF_NOINET6;
+	if (own)
+		flags &= ~IFXF_AUTOCONF6;
+	if (ifr.ifr_flags != flags) {
+		ifr.ifr_flags = flags;
+		if (ioctl(s, SIOCSIFXFLAGS, (void *)&ifr) == -1) {
+			close(s);
+			return -1;
+		}
+	}
+	close(s);
+	return 0;
+}
+#endif
+
 int
 if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp, int own)
 {
@@ -1119,6 +1167,10 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp, int own)
 		}
 #endif
 
+#ifdef SIOCGIFXFLAGS
+		set_ifxflags(ifp, own);
+#endif
+
 #ifdef ND6_IFF_OVERRIDE_RTADV
 		override = get_if_nd6_flag(ifp->name, ND6_IFF_OVERRIDE_RTADV);
 		if (override == -1)
@@ -1168,6 +1220,7 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp, int own)
 #endif
 	}
 
+#ifdef IPV6CTL_ACCEPT_RTADV
 	ra = get_inet6_sysctl(IPV6CTL_ACCEPT_RTADV);
 	if (ra == -1)
 		/* The sysctl probably doesn't exist, but this isn't an
@@ -1181,7 +1234,10 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp, int own)
 			return ra;
 		}
 		ra = 0;
-
+#else
+	ra = 0;
+	if (own) {
+#endif
 		/* Flush the kernel knowledge of advertised routers
 		 * and prefixes so the kernel does not expire prefixes
 		 * and default routes we are trying to own. */
