@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.300 2014/10/06 07:31:24 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.301 2014/10/06 07:52:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.300 2014/10/06 07:31:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.301 2014/10/06 07:52:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -8492,9 +8492,9 @@ wm_nvm_validate_checksum(struct wm_softc *sc)
 		printf("%s: NVM dump:\n", device_xname(sc->sc_dev));
 		for (i = 0; i < NVM_SIZE; i++) {
 			if (wm_nvm_read(sc, i, 1, &eeprom_data))
-				printf("XX ");
+				printf("XXXX ");
 			else
-				printf("%04x ", eeprom_data);
+				printf("%04hx ", eeprom_data);
 			if (i % 8 == 7)
 				printf("\n");
 		}
