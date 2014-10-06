@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.128 2014/10/06 07:15:56 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.129 2014/10/06 08:00:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.128 2014/10/06 07:15:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.129 2014/10/06 08:00:57 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -249,7 +249,7 @@ static const struct pci_class pci_subclass_bridge[] = {
 
 /* Serial controller programming interface */
 static const struct pci_class pci_interface_serial[] = {
-	{ "genric XT-compat",	PCI_INTERFACE_SERIAL_XT,	NULL,	},
+	{ "generic XT-compat",	PCI_INTERFACE_SERIAL_XT,	NULL,	},
 	{ "16450-compat",	PCI_INTERFACE_SERIAL_16450,	NULL,	},
 	{ "16550-compat",	PCI_INTERFACE_SERIAL_16550,	NULL,	},
 	{ "16650-compat",	PCI_INTERFACE_SERIAL_16650,	NULL,	},
@@ -301,7 +301,7 @@ static const struct pci_class pci_subclass_communications[] = {
 
 /* PIC programming interface */
 static const struct pci_class pci_interface_pic[] = {
-	{ "genric 8259",	PCI_INTERFACE_PIC_8259,		NULL,	},
+	{ "generic 8259",	PCI_INTERFACE_PIC_8259,		NULL,	},
 	{ "ISA PIC",		PCI_INTERFACE_PIC_ISA,		NULL,	},
 	{ "EISA PIC",		PCI_INTERFACE_PIC_EISA,		NULL,	},
 	{ "IO APIC",		PCI_INTERFACE_PIC_IOAPIC,	NULL,	},
@@ -311,7 +311,7 @@ static const struct pci_class pci_interface_pic[] = {
 
 /* DMA programming interface */
 static const struct pci_class pci_interface_dma[] = {
-	{ "genric 8237",	PCI_INTERFACE_DMA_8237,		NULL,	},
+	{ "generic 8237",	PCI_INTERFACE_DMA_8237,		NULL,	},
 	{ "ISA",		PCI_INTERFACE_DMA_ISA,		NULL,	},
 	{ "EISA",		PCI_INTERFACE_DMA_EISA,		NULL,	},
 	{ NULL,			0,				NULL,	},
@@ -319,7 +319,7 @@ static const struct pci_class pci_interface_dma[] = {
 
 /* Timer programming interface */
 static const struct pci_class pci_interface_tmr[] = {
-	{ "genric 8254",	PCI_INTERFACE_TIMER_8254,	NULL,	},
+	{ "generic 8254",	PCI_INTERFACE_TIMER_8254,	NULL,	},
 	{ "ISA",		PCI_INTERFACE_TIMER_ISA,	NULL,	},
 	{ "EISA",		PCI_INTERFACE_TIMER_EISA,	NULL,	},
 	{ "HPET",		PCI_INTERFACE_TIMER_HPET,	NULL,	},
