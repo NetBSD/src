@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.6 2014/07/22 01:55:54 ozaki-r Exp $	*/
+/*	$NetBSD: virtio.c,v 1.7 2014/10/06 13:31:54 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.6 2014/07/22 01:55:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.7 2014/10/06 13:31:54 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,8 +128,8 @@ virtio_attach(device_t parent, device_t self, void *aux)
 	/* subsystem ID shows what I am */
 	id = pci_conf_read(pc, tag, PCI_SUBSYS_ID_REG);
 	aprint_normal_dev(self, "Virtio %s Device (rev. 0x%02x)\n",
-			  (PCI_PRODUCT(id) < NDEVNAMES?
-			   virtio_device_name[PCI_PRODUCT(id)] : "Unknown"),
+			  (PCI_SUBSYS_ID(id) < NDEVNAMES?
+			   virtio_device_name[PCI_SUBSYS_ID(id)] : "Unknown"),
 			  revision);
 
 	sc->sc_dev = self;
@@ -150,7 +150,7 @@ virtio_attach(device_t parent, device_t self, void *aux)
 	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER);
 
 	/* XXX: use softc as aux... */
-	sc->sc_childdevid = PCI_PRODUCT(id);
+	sc->sc_childdevid = PCI_SUBSYS_ID(id);
 	sc->sc_child = NULL;
 	config_found(self, sc, NULL);
 	if (sc->sc_child == NULL) {
