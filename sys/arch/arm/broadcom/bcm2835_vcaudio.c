@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.6 2014/09/02 21:46:35 jmcneill Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.7 2014/10/06 06:59:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.6 2014/09/02 21:46:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.7 2014/10/06 06:59:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.6 2014/09/02 21:46:35 jmcneill
 #include <sys/conf.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
-#include <sys/workqueue.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -68,16 +67,33 @@ enum vcaudio_dest {
 	VCAUDIO_DEST_HDMI = 2,
 };
 
-struct vcaudio_work {
-	struct work			vw_wk;
-};
+
+/*
+ * Standard message size is 4000 bytes and VCHIQ can accept 16 messages.
+ *
+ * 4000 bytes of 16bit 48kHz stereo is approximately 21ms.
+ *
+ * We get complete messages at ~10ms intervals.
+ *
+ * Setting blocksize to 2 x 4000 means that we send approx 42ms of audio. We
+ * prefill by two blocks before starting audio meaning we have 83ms of latency.
+ */
+
+#define VCAUDIO_MSGSIZE		4000
+#define VCAUDIO_NUMMSGS		2
+#define VCAUDIO_BLOCKSIZE	(VCAUDIO_MSGSIZE * VCAUDIO_NUMMSGS)
+#define VCAUDIO_BUFFERSIZE	128000
+#define VCAUDIO_PREFILLCOUNT	2
 
 struct vcaudio_softc {
 	device_t			sc_dev;
 	device_t			sc_audiodev;
 
+	lwp_t				*sc_lwp;
+
 	kmutex_t			sc_lock;
 	kmutex_t			sc_intr_lock;
+	kcondvar_t			sc_datacv;
 
 	kmutex_t			sc_msglock;
 	kcondvar_t			sc_msgcv;
@@ -89,7 +105,9 @@ struct vcaudio_softc {
 	void				*sc_pintarg;
 	audio_params_t			sc_pparam;
 	bool				sc_started;
-	int				sc_pbytes;
+	int				sc_pblkcnt;	// prefill block count
+	int				sc_abytes;	// available bytes
+	int				sc_pbytes;	// played bytes
 	off_t				sc_ppos;
 	void				*sc_pstart;
 	void				*sc_pend;
@@ -104,9 +122,6 @@ struct vcaudio_softc {
 
 	short				sc_peer_version;
 
-	struct workqueue		*sc_wq;
-	struct vcaudio_work		sc_work;
-
 	int				sc_volume;
 	enum vcaudio_dest		sc_dest;
 };
@@ -118,18 +133,17 @@ static void	vcaudio_childdet(device_t, device_t);
 
 static int	vcaudio_init(struct vcaudio_softc *);
 static void	vcaudio_service_callback(void *,
-					 const VCHI_CALLBACK_REASON_T,
-					 void *);
-static int	vcaudio_msg_sync(struct vcaudio_softc *, VC_AUDIO_MSG_T *, size_t);
-static void	vcaudio_worker(struct work *, void *);
+    const VCHI_CALLBACK_REASON_T, void *);
+static int	vcaudio_msg_sync(struct vcaudio_softc *, VC_AUDIO_MSG_T *,
+    size_t);
+static void	vcaudio_worker(void *);
 
 static int	vcaudio_open(void *, int);
 static void	vcaudio_close(void *);
 static int	vcaudio_query_encoding(void *, struct audio_encoding *);
 static int	vcaudio_set_params(void *, int, int,
-				  audio_params_t *, audio_params_t *,
-				  stream_filter_list_t *,
-				  stream_filter_list_t *);
+    audio_params_t *, audio_params_t *,
+    stream_filter_list_t *, stream_filter_list_t *);
 static int	vcaudio_halt_output(void *);
 static int	vcaudio_halt_input(void *);
 static int	vcaudio_set_port(void *, mixer_ctrl_t *);
@@ -137,14 +151,16 @@ static int	vcaudio_get_port(void *, mixer_ctrl_t *);
 static int	vcaudio_query_devinfo(void *, mixer_devinfo_t *);
 static int	vcaudio_getdev(void *, struct audio_device *);
 static int	vcaudio_get_props(void *);
-static int	vcaudio_round_blocksize(void *, int, int, const audio_params_t *);
+
+static int	vcaudio_round_blocksize(void *, int, int,
+    const audio_params_t *);
 static size_t	vcaudio_round_buffersize(void *, int, size_t);
+
 static int	vcaudio_trigger_output(void *, void *, void *, int,
-				     void (*)(void *), void *,
-				     const audio_params_t *);
+    void (*)(void *), void *, const audio_params_t *);
 static int	vcaudio_trigger_input(void *, void *, void *, int,
-				    void (*)(void *), void *,
-				    const audio_params_t *);
+    void (*)(void *), void *, const audio_params_t *);
+
 static void	vcaudio_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static const struct audio_hw_if vcaudio_hw_if = {
@@ -167,7 +183,8 @@ static const struct audio_hw_if vcaudio_hw_if = {
 };
 
 CFATTACH_DECL2_NEW(vcaudio, sizeof(struct vcaudio_softc),
-    vcaudio_match, vcaudio_attach, NULL, NULL, vcaudio_rescan, vcaudio_childdet);
+    vcaudio_match, vcaudio_attach, NULL, NULL, vcaudio_rescan,
+    vcaudio_childdet);
 
 static int
 vcaudio_match(device_t parent, cfdata_t match, void *aux)
@@ -187,19 +204,24 @@ vcaudio_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_msglock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&sc->sc_msgcv, "vcaudiocv");
+	cv_init(&sc->sc_msgcv, "msg");
+	cv_init(&sc->sc_datacv, "data");
 	sc->sc_success = -1;
-	error = workqueue_create(&sc->sc_wq, "vcaudiowq", vcaudio_worker,
-	    sc, PRI_BIO, IPL_SCHED, WQ_MPSAFE);
+
+	error = kthread_create(PRI_BIO, KTHREAD_MPSAFE, NULL, vcaudio_worker,
+	    sc, &sc->sc_lwp, "vcaudio");
 	if (error) {
-		aprint_error(": couldn't create workqueue (%d)\n", error);
+		aprint_error(": couldn't create thread (%d)\n", error);
 		return;
 	}
 
 	aprint_naive("\n");
-	aprint_normal(": AUDS\n");
+	aprint_normal(": auds\n");
 
-	vcaudio_rescan(self, NULL, NULL);
+	error = vcaudio_rescan(self, NULL, NULL);
+	if (error)
+		aprint_error_dev(self, "not configured\n");
+
 }
 
 static int
@@ -210,8 +232,9 @@ vcaudio_rescan(device_t self, const char *ifattr, const int *locs)
 
 	if (ifattr_match(ifattr, "audiobus") && sc->sc_audiodev == NULL) {
 		error = vcaudio_init(sc);
-		if (error)
+		if (error) {
 			return error;
+		}
 
 		sc->sc_audiodev = audio_attach_mi(&vcaudio_hw_if,
 		    sc, sc->sc_dev);
@@ -256,15 +279,15 @@ vcaudio_init(struct vcaudio_softc *sc)
 
 	error = vchi_initialise(&sc->sc_instance);
 	if (error) {
-		device_printf(sc->sc_dev, "couldn't init vchi instance (%d)\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't init vchi instance (%d)\n", error);
 		return EIO;
 	}
 
 	error = vchi_connect(NULL, 0, sc->sc_instance);
 	if (error) {
-		device_printf(sc->sc_dev, "couldn't connect vchi (%d)\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't connect vchi (%d)\n", error);
 		return EIO;
 	}
 
@@ -283,7 +306,7 @@ vcaudio_init(struct vcaudio_softc *sc)
 
 	error = vchi_service_open(sc->sc_instance, &setup, &sc->sc_service);
 	if (error) {
-		device_printf(sc->sc_dev, "couldn't open service (%d)\n",
+		aprint_error_dev(sc->sc_dev, "couldn't open service (%d)\n",
 		    error);
 		return EIO;
 	}
@@ -302,8 +325,8 @@ vcaudio_init(struct vcaudio_softc *sc)
 	error = vchi_msg_queue(sc->sc_service, &msg, sizeof(msg),
 	    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
 	if (error) {
-		device_printf(sc->sc_dev, "couldn't send OPEN message (%d)\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't send OPEN message (%d)\n", error);
 	}
 
 	memset(&msg, 0, sizeof(msg));
@@ -313,8 +336,8 @@ vcaudio_init(struct vcaudio_softc *sc)
 	msg.u.config.bps = 16;
 	error = vcaudio_msg_sync(sc, &msg, sizeof(msg));
 	if (error) {
-		device_printf(sc->sc_dev, "couldn't send CONFIG message (%d)\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't send CONFIG message (%d)\n", error);
 	}
 
 	memset(&msg, 0, sizeof(msg));
@@ -323,8 +346,10 @@ vcaudio_init(struct vcaudio_softc *sc)
 	msg.u.control.dest = VCAUDIO_DEST_AUTO;
 	error = vcaudio_msg_sync(sc, &msg, sizeof(msg));
 	if (error) {
-		device_printf(sc->sc_dev, "couldn't send CONTROL message (%d)\n", error);
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't send CONTROL message (%d)\n", error);
 	}
+
 	vchi_service_release(sc->sc_service);
 
 	return 0;
@@ -361,14 +386,17 @@ vcaudio_service_callback(void *priv, const VCHI_CALLBACK_REASON_T reason,
 		cv_broadcast(&sc->sc_msgcv);
 		mutex_exit(&sc->sc_msglock);
 		break;
+
 	case VC_AUDIO_MSG_TYPE_COMPLETE:
 		intr = msg.u.complete.callback;
 		intrarg = msg.u.complete.cookie;
 		if (intr && intrarg) {
 			int count = msg.u.complete.count & 0xffff;
-			int perr = (msg.u.complete.count & 0x40000000) != 0;
+			int perr = (msg.u.complete.count & __BIT(30)) != 0;
 			bool sched = false;
+
 			mutex_enter(&sc->sc_intr_lock);
+
 			if (count > 0) {
 				sc->sc_pbytes += count;
 			}
@@ -385,7 +413,8 @@ vcaudio_service_callback(void *priv, const VCHI_CALLBACK_REASON_T reason,
 
 			if (sched) {
 				intr(intrarg);
-				workqueue_enqueue(sc->sc_wq, (struct work *)&sc->sc_work, NULL);
+				sc->sc_abytes += sc->sc_pblksize;
+				cv_signal(&sc->sc_datacv);
 			}
 			mutex_exit(&sc->sc_intr_lock);
 		}
@@ -396,7 +425,7 @@ vcaudio_service_callback(void *priv, const VCHI_CALLBACK_REASON_T reason,
 }
 
 static void
-vcaudio_worker(struct work *wk, void *priv)
+vcaudio_worker(void *priv)
 {
 	struct vcaudio_softc *sc = priv;
 	VC_AUDIO_MSG_T msg;
@@ -406,77 +435,92 @@ vcaudio_worker(struct work *wk, void *priv)
 	int error, resid, off, nb, count;
 
 	mutex_enter(&sc->sc_intr_lock);
-	intr = sc->sc_pint;
-	intrarg = sc->sc_pintarg;
 
-	if (intr == NULL || intrarg == NULL) {
-		mutex_exit(&sc->sc_intr_lock);
-		return;
-	}
+	while (true) {
+		intr = sc->sc_pint;
+		intrarg = sc->sc_pintarg;
 
-	vchi_service_use(sc->sc_service);
+		if (intr == NULL || intrarg == NULL) {
+			cv_wait_sig(&sc->sc_datacv, &sc->sc_intr_lock);
+			continue;
+		}
 
-	if (sc->sc_started == false) {
-#ifdef VCAUDIO_DEBUG
-		device_printf(sc->sc_dev, "starting output\n");
-#endif
+		KASSERT(sc->sc_pblksize != 0);
+
+		if (sc->sc_abytes < sc->sc_pblksize) {
+			cv_wait_sig(&sc->sc_datacv, &sc->sc_intr_lock);
+			continue;
+		}
+		count = sc->sc_pblksize;
 
 		memset(&msg, 0, sizeof(msg));
-		msg.type = VC_AUDIO_MSG_TYPE_START;
+		msg.type = VC_AUDIO_MSG_TYPE_WRITE;
+		msg.u.write.max_packet = VCAUDIO_MSGSIZE;
+		msg.u.write.count = count;
+		msg.u.write.callback = intr;
+		msg.u.write.cookie = intrarg;
+		msg.u.write.silence = 0;
+
+	    	block = (uint8_t *)sc->sc_pstart + sc->sc_ppos;
+		resid = count;
+		off = 0;
+
+		vchi_service_use(sc->sc_service);
+
 		error = vchi_msg_queue(sc->sc_service, &msg, sizeof(msg),
 		    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
 		if (error) {
-			printf("%s: failed to start (%d)\n", __func__, error);
+			printf("%s: failed to write (%d)\n", __func__, error);
 			goto done;
 		}
 
-		sc->sc_started = true;
-		sc->sc_pbytes = 0;
-		sc->sc_ppos = 0;
-
-		count = sc->sc_pblksize * 2;
-	} else {
-		count = sc->sc_pblksize;
-	}
-
-	memset(&msg, 0, sizeof(msg));
-	msg.type = VC_AUDIO_MSG_TYPE_WRITE;
-	msg.u.write.max_packet = 4000;
-	msg.u.write.count = count;
-	msg.u.write.callback = intr;
-	msg.u.write.cookie = intrarg;
-	msg.u.write.silence = 0;
-
-	error = vchi_msg_queue(sc->sc_service, &msg, sizeof(msg),
-	    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
-	if (error) {
-		printf("%s: failed to write (%d)\n", __func__, error);
-		goto done;
-	}
-
-	block = (uint8_t *)sc->sc_pstart + sc->sc_ppos;
-	resid = count;
-	off = 0;
-	while (resid > 0) {
-		nb = min(resid, msg.u.write.max_packet);
-		error = vchi_msg_queue(sc->sc_service,
-		    (char *)block + off, nb,
-		    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
-		if (error) {
-			printf("%s: failed to queue data (%d)\n", __func__, error);
-			goto done;
+		while (resid > 0) {
+			nb = min(resid, msg.u.write.max_packet);
+			error = vchi_msg_queue(sc->sc_service,
+			    (char *)block + off, nb,
+			    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
+			if (error) {
+				/* XXX What to do here? */
+				device_printf(sc->sc_dev,
+				    "failed to queue data (%d)\n", error);
+				goto done;
+			}
+			off += nb;
+			resid -= nb;
 		}
-		off += nb;
-		resid -= nb;
-	}
 
-	sc->sc_ppos += count;
-	if ((uint8_t *)sc->sc_pstart + sc->sc_ppos >= (uint8_t *)sc->sc_pend)
-		sc->sc_ppos = 0;
+		sc->sc_abytes -= count;
+		sc->sc_ppos += count;
+		if ((uint8_t *)sc->sc_pstart + sc->sc_ppos >=
+		    (uint8_t *)sc->sc_pend)
+			sc->sc_ppos = 0;
+
+		if (!sc->sc_started) {
+        		++sc->sc_pblkcnt;
+
+			if (sc->sc_pblkcnt == VCAUDIO_PREFILLCOUNT) {
+
+				memset(&msg, 0, sizeof(msg));
+				msg.type = VC_AUDIO_MSG_TYPE_START;
+				error = vchi_msg_queue(sc->sc_service, &msg,
+				    sizeof(msg), VCHI_FLAGS_BLOCK_UNTIL_QUEUED,
+				    NULL);
+				if (error) {
+					device_printf(sc->sc_dev,
+					    "failed to start (%d)\n", error);
+					goto done;
+				}
+				sc->sc_started = true;
+				sc->sc_pbytes = 0;
+			} else {
+				intr(intrarg);
+				sc->sc_abytes += sc->sc_pblksize;
+			}
+		}
 
 done:
-	mutex_exit(&sc->sc_intr_lock);
-	vchi_service_release(sc->sc_service);
+		vchi_service_release(sc->sc_service);
+	}
 }
 
 static int
@@ -553,10 +597,12 @@ vcaudio_halt_output(void *priv)
 	VC_AUDIO_MSG_T msg;
 	int error = 0;
 
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
+
 	vchi_service_use(sc->sc_service);
 	memset(&msg, 0, sizeof(msg));
 	msg.type = VC_AUDIO_MSG_TYPE_STOP;
-	msg.u.stop.draining = 1;
+	msg.u.stop.draining = 0;
 	error = vchi_msg_queue(sc->sc_service, &msg, sizeof(msg),
 	    VCHI_FLAGS_BLOCK_UNTIL_QUEUED, NULL);
 	if (error) {
@@ -593,15 +639,20 @@ vcaudio_set_port(void *priv, mixer_ctrl_t *mc)
 	case VCAUDIO_OUTPUT_MASTER_VOLUME:
 	case VCAUDIO_INPUT_DAC_VOLUME:
 		sc->sc_volume = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+
+		vchi_service_use(sc->sc_service);
+
 		memset(&msg, 0, sizeof(msg));
 		msg.type = VC_AUDIO_MSG_TYPE_CONTROL;
 		msg.u.control.volume = vol2pct(sc->sc_volume);
 		msg.u.control.dest = VCAUDIO_DEST_AUTO;
-		vchi_service_use(sc->sc_service);
+
 		error = vcaudio_msg_sync(sc, &msg, sizeof(msg));
 		if (error) {
-			device_printf(sc->sc_dev, "couldn't send CONTROL message (%d)\n", error);
+			device_printf(sc->sc_dev,
+			    "couldn't send CONTROL message (%d)\n", error);
 		}
+
 		vchi_service_release(sc->sc_service);
 
 		return error;
@@ -667,7 +718,7 @@ vcaudio_getdev(void *priv, struct audio_device *audiodev)
 {
 	struct vcaudio_softc *sc = priv;
 
-	snprintf(audiodev->name, sizeof(audiodev->name), "VCHIQ AUDS");
+	snprintf(audiodev->name, sizeof(audiodev->name), "vchiq auds");
 	snprintf(audiodev->version, sizeof(audiodev->version),
 	    "%d", sc->sc_peer_version);
 	snprintf(audiodev->config, sizeof(audiodev->config), "vcaudio");
@@ -685,19 +736,14 @@ static int
 vcaudio_round_blocksize(void *priv, int bs, int mode,
     const audio_params_t *params)
 {
-	return PAGE_SIZE;
+	return VCAUDIO_BLOCKSIZE;
 }
 
 static size_t
 vcaudio_round_buffersize(void *priv, int direction, size_t bufsize)
 {
-	size_t sz;
 
-	sz = (bufsize + 0x3ff) & ~0x3ff;
-	if (sz > 32768)
-		sz = 32768;
-
-	return sz;
+	return VCAUDIO_BUFFERSIZE;
 }
 
 static int
@@ -706,6 +752,9 @@ vcaudio_trigger_output(void *priv, void *start, void *end, int blksize,
 {
 	struct vcaudio_softc *sc = priv;
 
+	ASSERT_SLEEPABLE();
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
+
 	sc->sc_pparam = *params;
 	sc->sc_pint = intr;
 	sc->sc_pintarg = intrarg;
@@ -713,7 +762,11 @@ vcaudio_trigger_output(void *priv, void *start, void *end, int blksize,
 	sc->sc_pstart = start;
 	sc->sc_pend = end;
 	sc->sc_pblksize = blksize;
-	workqueue_enqueue(sc->sc_wq, (struct work *)&sc->sc_work, NULL);
+	sc->sc_pblkcnt = 0;
+	sc->sc_pbytes = 0;
+	sc->sc_abytes = blksize;
+
+	cv_signal(&sc->sc_datacv);
 
 	return 0;
 }
