@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.127 2014/09/22 13:01:44 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.128 2014/10/06 07:15:56 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.127 2014/09/22 13:01:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.128 2014/10/06 07:15:56 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -104,7 +104,16 @@ static const struct pci_class pci_interface_ata[] = {
 
 /* SATA programming interface */
 static const struct pci_class pci_interface_sata[] = {
+	{ "vendor specific",	PCI_INTERFACE_SATA_VND,		NULL,	},
 	{ "AHCI 1.0",		PCI_INTERFACE_SATA_AHCI10,	NULL,	},
+	{ "Serial Storage Bus Interface", PCI_INTERFACE_SATA_SSBI, NULL, },
+	{ NULL,			0,				NULL,	},
+};
+
+/* Flash programming interface */
+static const struct pci_class pci_interface_nvm[] = {
+	{ "vendor specific",	PCI_INTERFACE_NVM_VND,		NULL,	},
+	{ "NVMHCI 1.0",		PCI_INTERFACE_NVM_NVMHCI10,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
@@ -120,7 +129,8 @@ static const struct pci_class pci_subclass_mass_storage[] = {
 	{ "SATA",		PCI_SUBCLASS_MASS_STORAGE_SATA,
 	  pci_interface_sata, },
 	{ "SAS",		PCI_SUBCLASS_MASS_STORAGE_SAS,	NULL,	},
-	{ "NVM",		PCI_SUBCLASS_MASS_STORAGE_NVM,	NULL,	},
+	{ "Flash",		PCI_SUBCLASS_MASS_STORAGE_NVM,
+	  pci_interface_nvm,	},
 	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -169,7 +179,7 @@ static const struct pci_class pci_subclass_multimedia[] = {
 	{ "video",		PCI_SUBCLASS_MULTIMEDIA_VIDEO,	NULL,	},
 	{ "audio",		PCI_SUBCLASS_MULTIMEDIA_AUDIO,	NULL,	},
 	{ "telephony",		PCI_SUBCLASS_MULTIMEDIA_TELEPHONY, NULL,},
-	{ "HD audio",		PCI_SUBCLASS_MULTIMEDIA_HDAUDIO, NULL,	},
+	{ "mixed mode",		PCI_SUBCLASS_MULTIMEDIA_HDAUDIO, NULL, },
 	{ "miscellaneous",	PCI_SUBCLASS_MULTIMEDIA_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -197,10 +207,17 @@ static const struct pci_class pci_interface_pcibridge[] = {
 	{ NULL,			0,				NULL,	},
 };
 
-/* Semi-transparent PCI-toPCI bridge programming interface */
+/* Semi-transparent PCI-to-PCI bridge programming interface */
 static const struct pci_class pci_interface_stpci[] = {
 	{ "primary side facing host",	PCI_INTERFACE_STPCI_PRIMARY, NULL, },
 	{ "secondary side facing host",	PCI_INTERFACE_STPCI_SECONDARY, NULL, },
+	{ NULL,			0,				NULL,	},
+};
+
+/* Advanced Switching programming interface */
+static const struct pci_class pci_interface_advsw[] = {
+	{ "custom interface",	PCI_INTERFACE_ADVSW_CUSTOM, NULL, },
+	{ "ASI-SIG",		PCI_INTERFACE_ADVSW_ASISIG, NULL, },
 	{ NULL,			0,				NULL,	},
 };
 
@@ -219,6 +236,8 @@ static const struct pci_class pci_subclass_bridge[] = {
 	{ "Semi-transparent PCI", PCI_SUBCLASS_BRIDGE_STPCI,
 	  pci_interface_stpci,	},
 	{ "InfiniBand",		PCI_SUBCLASS_BRIDGE_INFINIBAND,	NULL,	},
+	{ "advanced switching",	PCI_SUBCLASS_BRIDGE_ADVSW,
+	  pci_interface_advsw,	},
 	{ "miscellaneous",	PCI_SUBCLASS_BRIDGE_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -245,8 +264,8 @@ static const struct pci_class pci_interface_parallel[] = {
 	{ "",			PCI_INTERFACE_PARALLEL,			NULL,},
 	{ "bi-directional",	PCI_INTERFACE_PARALLEL_BIDIRECTIONAL,	NULL,},
 	{ "ECP 1.X-compat",	PCI_INTERFACE_PARALLEL_ECP1X,		NULL,},
-	{ "IEEE1284",		PCI_INTERFACE_PARALLEL_IEEE1284,	NULL,},
-	{ "IEE1284 target",	PCI_INTERFACE_PARALLEL_IEEE1284_TGT,	NULL,},
+	{ "IEEE1284 controller", PCI_INTERFACE_PARALLEL_IEEE1284_CNTRL,	NULL,},
+	{ "IEEE1284 target",	PCI_INTERFACE_PARALLEL_IEEE1284_TGT,	NULL,},
 	{ NULL,			0,					NULL,},
 };
 
@@ -303,6 +322,7 @@ static const struct pci_class pci_interface_tmr[] = {
 	{ "genric 8254",	PCI_INTERFACE_TIMER_8254,	NULL,	},
 	{ "ISA",		PCI_INTERFACE_TIMER_ISA,	NULL,	},
 	{ "EISA",		PCI_INTERFACE_TIMER_EISA,	NULL,	},
+	{ "HPET",		PCI_INTERFACE_TIMER_HPET,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
@@ -373,6 +393,7 @@ static const struct pci_class pci_subclass_processor[] = {
 	{ "PowerPC",		PCI_SUBCLASS_PROCESSOR_POWERPC, NULL,	},
 	{ "MIPS",		PCI_SUBCLASS_PROCESSOR_MIPS,	NULL,	},
 	{ "Co-processor",	PCI_SUBCLASS_PROCESSOR_COPROC,	NULL,	},
+	{ "miscellaneous",	PCI_SUBCLASS_PROCESSOR_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
@@ -433,7 +454,7 @@ static const struct pci_class pci_subclass_serialbus[] = {
  */
 static const struct pci_class pci_subclass_wireless[] = {
 	{ "IrDA",		PCI_SUBCLASS_WIRELESS_IRDA,	NULL,	},
-	{ "Consumer IR",	PCI_SUBCLASS_WIRELESS_CONSUMERIR, NULL,	},
+	{ "Consumer IR",/*XXX*/	PCI_SUBCLASS_WIRELESS_CONSUMERIR, NULL,	},
 	{ "RF",			PCI_SUBCLASS_WIRELESS_RF,	NULL,	},
 	{ "bluetooth",		PCI_SUBCLASS_WIRELESS_BLUETOOTH, NULL,	},
 	{ "broadband",		PCI_SUBCLASS_WIRELESS_BROADBAND, NULL,	},
@@ -491,7 +512,7 @@ static const struct pci_class pci_subclass_crypto[] = {
  */
 static const struct pci_class pci_subclass_dasp[] = {
 	{ "DPIO",		PCI_SUBCLASS_DASP_DPIO,		NULL,	},
-	{ "Time and Frequency",	PCI_SUBCLASS_DASP_TIMEFREQ,	NULL,	},
+	{ "performance counters", PCI_SUBCLASS_DASP_TIMEFREQ,	NULL,	},
 	{ "synchronization",	PCI_SUBCLASS_DASP_SYNC,		NULL,	},
 	{ "management",		PCI_SUBCLASS_DASP_MGMT,		NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_DASP_MISC,		NULL,	},
@@ -1828,7 +1849,7 @@ pci_conf_print_caplist(
 			printf("PCI-X");
 			break;
 		case PCI_CAP_LDT:
-			printf("LDT");
+			printf("HyperTransport");
 			break;
 		case PCI_CAP_VENDSPEC:
 			vendspec_off = off;
@@ -1845,7 +1866,7 @@ pci_conf_print_caplist(
 			printf("Hot-Plug");
 			break;
 		case PCI_CAP_SUBVENDOR:
-			printf("Subsystem ID");
+			printf("Subsystem vendor ID");
 			subsystem_off = off;
 			break;
 		case PCI_CAP_AGP8:
