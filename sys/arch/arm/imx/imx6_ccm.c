@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.2 2014/10/06 10:27:13 ryo Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.3 2014/10/07 09:36:09 ryo Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.2 2014/10/06 10:27:13 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.3 2014/10/07 09:36:09 ryo Exp $");
 
 #include "opt_imx.h"
 #include "opt_imx6clk.h"
@@ -167,13 +167,13 @@ imxccm_attach(device_t parent, device_t self, void *aux)
 	    imx6_get_clock(IMX6CLK_AXI));
 
 	aprint_verbose_dev(self, "IMX6CLK_USDHC1=%d\n",
-	    imx6_get_clock(IMX6CLK_USDHC1_CLK_ROOT));
+	    imx6_get_clock(IMX6CLK_USDHC1));
 	aprint_verbose_dev(self, "IMX6CLK_USDHC2=%d\n",
-	    imx6_get_clock(IMX6CLK_USDHC2_CLK_ROOT));
+	    imx6_get_clock(IMX6CLK_USDHC2));
 	aprint_verbose_dev(self, "IMX6CLK_USDHC3=%d\n",
-	    imx6_get_clock(IMX6CLK_USDHC3_CLK_ROOT));
+	    imx6_get_clock(IMX6CLK_USDHC3));
 	aprint_verbose_dev(self, "IMX6CLK_USDHC4=%d\n",
-	    imx6_get_clock(IMX6CLK_USDHC4_CLK_ROOT));
+	    imx6_get_clock(IMX6CLK_USDHC4));
 }
 
 static int
@@ -630,33 +630,39 @@ imx6_get_clock(enum imx6_clock clk)
 		}
 		break;
 
-	case IMX6CLK_USDHC1_CLK_ROOT:
+	case IMX6CLK_USDHC1:
 		v = imx6_ccm_read(CCM_CSCMR1);
 		freq = imx6_get_clock((v & CCM_CSCMR1_USDHC1_CLK_SEL) ?
 		    IMX6CLK_PLL2_PFD0 : IMX6CLK_PLL2_PFD2);
 		v = imx6_ccm_read(CCM_CSCDR1);
 		freq = freq / (__SHIFTOUT(v, CCM_CSCDR1_USDHC1_PODF) + 1);
 		break;
-	case IMX6CLK_USDHC2_CLK_ROOT:
+	case IMX6CLK_USDHC2:
 		v = imx6_ccm_read(CCM_CSCMR1);
 		freq = imx6_get_clock((v & CCM_CSCMR1_USDHC2_CLK_SEL) ?
 		    IMX6CLK_PLL2_PFD0 : IMX6CLK_PLL2_PFD2);
 		v = imx6_ccm_read(CCM_CSCDR1);
 		freq = freq / (__SHIFTOUT(v, CCM_CSCDR1_USDHC2_PODF) + 1);
 		break;
-	case IMX6CLK_USDHC3_CLK_ROOT:
+	case IMX6CLK_USDHC3:
 		v = imx6_ccm_read(CCM_CSCMR1);
 		freq = imx6_get_clock((v & CCM_CSCMR1_USDHC3_CLK_SEL) ?
 		    IMX6CLK_PLL2_PFD0 : IMX6CLK_PLL2_PFD2);
 		v = imx6_ccm_read(CCM_CSCDR1);
 		freq = freq / (__SHIFTOUT(v, CCM_CSCDR1_USDHC3_PODF) + 1);
 		break;
-	case IMX6CLK_USDHC4_CLK_ROOT:
+	case IMX6CLK_USDHC4:
 		v = imx6_ccm_read(CCM_CSCMR1);
 		freq = imx6_get_clock((v & CCM_CSCMR1_USDHC4_CLK_SEL) ?
 		    IMX6CLK_PLL2_PFD0 : IMX6CLK_PLL2_PFD2);
 		v = imx6_ccm_read(CCM_CSCDR1);
 		freq = freq / (__SHIFTOUT(v, CCM_CSCDR1_USDHC4_PODF) + 1);
+		break;
+
+	case IMX6CLK_PERCLK:
+		freq = imx6_get_clock(IMX6CLK_IPG);
+		v = imx6_ccm_read(CCM_CSCMR1);
+		freq = freq / (__SHIFTOUT(v, CCM_CSCMR1_PERCLK_PODF) + 1);
 		break;
 
 	default:
