@@ -1,26 +1,113 @@
-.\"	$NetBSD: tzset.3,v 1.29 2014/08/15 11:04:07 christos Exp $
+.\"	$NetBSD: tzset.3,v 1.30 2014/10/07 21:51:03 christos Exp $
 .Dd August 15, 2014
 .Dt TZSET 3
 .Os
 .Sh NAME
-.Nm tzset
+.Nm tzset ,
+.Nm tzalloc ,
+.Nm tzgetname ,
+.Nm tzfree
 .Nd initialize time conversion information
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
 .In time.h
+.Ft timezone_t
+.Fn tzalloc "const char *zone"
+.Ft void
+.Fn tzfree "timezone_t restrict tz"
+.Ft const char *
+.Fn tzgetname "timezone_t restrict tz" "int isdst"
 .Ft void
 .Fn tzset "void"
 .Sh DESCRIPTION
 The
+.Fn tzalloc
+function takes as an argument a timezone name and returns a
+.Ft timezone_t
+object suitable to be used in the
+.Fn ctime_rz ,
+.Fn localtime_rz ,
+and
+.Fn mktime_z
+functions.
+.Pp
+If
+.Ar tz
+is not a valid time zone description, or if the object cannot be allocated,
+.Fn tzalloc
+returns a
+.Dv NULL
+pointer and sets
+.Va errno .
+.Pp
+A
+.Dv NULL
+pointer may be passed to
+.Fn tzalloc
+instead of a timezone name, to refer to the current system timezone.
+An empty timezone string indicates Coordinated Universal Time
+.Pq Tn UTC .
+.Pp
+Note that instead of setting the environment variable
+.Va TZ ,
+and globally changing the behavior of the calling program, one can use
+multiple timezones at the same time by using separate
+.Ft timezone_t
+objects allocated by
+.Fn tzalloc
+and calling the
+.Dq z
+variants of the functions.
+The
+.Fn tzfree
+function deallocates
+.Fa tz ,
+which was previously allocated by
+.Fn tzalloc .
+This invalidates any
+.Ft tm_zone
+pointers that
+.Fa tz
+was used to set.
+Finally,
+.Fn tzgetname
+returns the name for the given
+.Fa tz .
+If
+.Fa isdst
+is
+.Va 0 ,
+the call is equivalent to
+.Va tzname[0] .
+If
+.Fa isdst
+is set to
+.Va 1
+the call is equivalent to
+.Va tzname[1] .
+The
 .Fn tzset
-function uses the value of the environment variable
-.Ev TZ
-to set time conversion information used by
+function acts like
+.Dv tzalloc(getenv("TZ")) ,
+except it saves any resulting time zone object into internal
+storage that is accessed by
+.Fn localtime ,
+.Fn localtime_r ,
+and
+.Fn mktime .
+The anonymous shared time zone object is freed by the next call to
+.Fn tzset .
+If the implied call to
+.Fn tzalloc
+fails,
+.Fn tzset
+falls back on UTC.
 .Xr localtime 3 .
 If
 .Ev TZ
-does not appear in the environment,
+is
+.Dv NULL ,
 the best available approximation to local wall clock time, as
 specified by the
 .Xr tzfile 5
@@ -30,14 +117,14 @@ is used by
 .Xr localtime 3 .
 If
 .Ev TZ
-appears in the environment but its value is a null string,
+appears in the environment but its value is the empty string,
 Universal Time (UT) is used, with the abbreviation
 .Dq UTC
 and without leap second correction; please see
 .Xr ctime 3 .
 If
 .Ev TZ
-appears in the environment and its value is not a null string:
+is nonnull and nonempty:
 .Bl -dash
 .It
 if the value begins with a colon, it is used as a pathname of a file
@@ -276,13 +363,6 @@ For compatibility with System V Release 3.1, a semicolon (;) may be
 used to separate the
 .Cm rule
 from the rest of the specification.
-.Pp
-If the
-.Ev TZ
-environment variable does not specify a
-.Xr tzfile 5
-format file and cannot be interpreted as a direct specification, UTC
-is used.
 .Sh FILES
 .Bl -tag -width /usr/share/zoneinfo/posixrules -compact
 .It Pa /etc/localtime
