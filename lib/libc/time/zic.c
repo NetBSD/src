@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.51 2014/10/07 21:51:03 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.52 2014/10/07 22:14:46 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,10 +10,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.51 2014/10/07 21:51:03 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.52 2014/10/07 22:14:46 christos Exp $");
 #endif /* !defined lint */
 
-#include "version.h"
 #include "private.h"
 #include "locale.h"
 #include "tzfile.h"
