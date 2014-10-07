@@ -1,5 +1,5 @@
-.\"	$NetBSD: zic.8,v 1.23 2014/08/15 11:04:07 christos Exp $
-.Dd August 15, 2014
+.\"	$NetBSD: zic.8,v 1.24 2014/10/07 21:51:03 christos Exp $
+.Dd October 6, 2014
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ You can use this option to generate SVVS-compatible files.
 .It Fl v
 Be more verbose, and complain about the following situations:
 .Bl -dash
-.It The input data specifies a link to a link.
+.It The input specifies a link to a link.
 .It A year that appears in a data file is outside the range
 .It A time of 24:00 or more appears in the input.
 Pre-1998 versions of
@@ -144,7 +144,7 @@ The fields that make up a rule line are:
 Gives the (arbitrary) name of the set of rules this rule is part of.
 .It FROM
 Gives the first year in which the rule applies.
-Any integer year can be supplied; the Gregorian calendar is assumed.
+Any integer year can be supplied; the proleptic Gregorian calendar is assumed.
 The word
 .Em minimum
 (or an abbreviation) means the minimum year representable as an integer.
@@ -344,16 +344,16 @@ information, just as zone lines do, indicating that the next line is a further
 continuation.
 .Pp
 A link line has the form
-.Dl Link	LINK-FROM	LINK-TO
+.Dl Link	TARGET	LINK-NAME
 For example:
 .Dl Link	Europe/Istanbul	Asia/Istanbul
 The
-.Em LINK-FROM
+.Em TARGET
 field should appear as the
 .Em NAME
 field in some zone line.
 The
-.Em LINK-TO
+.Em LINK-NAME
 field is used as an alternative name for that zone;
 it has the same syntax as a zone line's
 .Em NAME
@@ -460,7 +460,7 @@ For purposes of
 display, "LMT" and "BMT" were initially used, respectively.
 Since
 Swiss rules and later EU rules were applied, the display name for the
-timezone has been CET for standard time and CEST for daylight saving
+time zone has been CET for standard time and CEST for daylight saving
 time.
 .Sh NOTES
 For areas with more than two types of local time,
