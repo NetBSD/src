@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.95 2014/09/21 09:47:24 roy Exp $
+# $NetBSD: rc.subr,v 1.96 2014/10/07 19:09:45 roy Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -322,10 +322,13 @@ wait_for_pids()
 		if [ -z "$_nlist" ]; then
 			break
 		fi
-		_list=$_nlist
-		echo -n ${_prefix:-"Waiting for PIDS: "}$_list
-		_prefix=", "
-		sleep 2
+		if [ "$_list" != "$_nlist" ]; then
+			_list=$_nlist
+			echo -n ${_prefix:-"Waiting for PIDS: "}$_list
+			_prefix=", "
+		fi
+		# We want this to be a tight loop for a fast exit
+		sleep 0.05
 	done
 	if [ -n "$_prefix" ]; then
 		echo "."
