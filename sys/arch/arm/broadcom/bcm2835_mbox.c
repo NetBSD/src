@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox.c,v 1.7 2014/10/02 11:58:12 skrll Exp $	*/
+/*	$NetBSD: bcm2835_mbox.c,v 1.8 2014/10/07 08:30:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.7 2014/10/02 11:58:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.8 2014/10/07 08:30:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,14 +52,20 @@ struct bcm2835mbox_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_dma_tag_t sc_dmat;
+	void *sc_intrh;
 
 	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
+	kcondvar_t sc_chan[BCM2835_MBOX_NUMCHANNELS];
+	uint32_t sc_mbox[BCM2835_MBOX_NUMCHANNELS];
 };
 
 static struct bcm2835mbox_softc *bcm2835mbox_sc;
 
 static int bcmmbox_match(device_t, cfdata_t, void *);
 static void bcmmbox_attach(device_t, device_t, void *);
+static int bcmmbox_intr1(struct bcm2835mbox_softc *, int);
+static int bcmmbox_intr(void *);
 
 CFATTACH_DECL_NEW(bcmmbox, sizeof(struct bcm2835mbox_softc),
     bcmmbox_match, bcmmbox_attach, NULL, NULL);
@@ -82,17 +88,18 @@ bcmmbox_attach(device_t parent, device_t self, void *aux)
         struct bcm2835mbox_softc *sc = device_private(self);
  	struct amba_attach_args *aaa = aux;
 	struct bcmmbox_attach_args baa;
+	int i;
 
 	aprint_naive("\n");
 	aprint_normal(": VC mailbox\n");
-
-	if (bcm2835mbox_sc == NULL)
-		bcm2835mbox_sc = sc;
 
 	sc->sc_dev = self;
 	sc->sc_iot = aaa->aaa_iot;
 	sc->sc_dmat = aaa->aaa_dmat;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_VM);
+	for (i = 0; i < BCM2835_MBOX_NUMCHANNELS; ++i)
+		cv_init(&sc->sc_chan[i], "bcmmbox");
 
 	if (bus_space_map(aaa->aaa_iot, aaa->aaa_addr, BCM2835_MBOX_SIZE, 0,
 	    &sc->sc_ioh)) {
@@ -100,8 +107,72 @@ bcmmbox_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	sc->sc_intrh = bcm2835_intr_establish(aaa->aaa_intr, IPL_VM,
+	    bcmmbox_intr, sc);
+	if (sc->sc_intrh == NULL) {
+		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
+		return;
+	}
+
+	/* enable mbox interrupt */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCM2835_MBOX_CFG,
+	    BCM2835_MBOX_CFG_DATAIRQEN);
+
+	if (bcm2835mbox_sc == NULL)
+		bcm2835mbox_sc = sc;
+
 	baa.baa_dmat = aaa->aaa_dmat;
 	sc->sc_platdev = config_found_ia(self, "bcmmboxbus", &baa, NULL);
+}
+
+static int
+bcmmbox_intr1(struct bcm2835mbox_softc *sc, int cv)
+{
+	uint32_t mbox, chan, data;
+	int ret = 0;
+
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
+
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, 0, BCM2835_MBOX_SIZE,
+	    BUS_SPACE_BARRIER_READ);
+
+	while ((bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+	    BCM2835_MBOX0_STATUS) & BCM2835_MBOX_STATUS_EMPTY) == 0) {
+
+		mbox = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    BCM2835_MBOX0_READ);
+
+		chan = BCM2835_MBOX_CHAN(mbox);
+		data = BCM2835_MBOX_DATA(mbox);
+		ret = 1;
+
+		if (BCM2835_MBOX_CHAN(sc->sc_mbox[chan]) != 0) {
+			aprint_error("bcmmbox_intr: chan %d overflow\n",chan);
+			continue;
+		}
+
+		sc->sc_mbox[chan] = data | BCM2835_MBOX_CHANMASK;
+
+		if (cv)
+			cv_broadcast(&sc->sc_chan[chan]);
+	}
+
+	return ret;
+}
+
+static int
+bcmmbox_intr(void *cookie)
+{
+	struct bcm2835mbox_softc *sc = cookie;
+	int ret;
+
+	mutex_enter(&sc->sc_intr_lock);
+
+	ret = bcmmbox_intr1(sc, 1);
+
+	mutex_exit(&sc->sc_intr_lock);
+
+	return ret;
 }
 
 void
@@ -111,7 +182,20 @@ bcmmbox_read(uint8_t chan, uint32_t *data)
 
 	KASSERT(sc != NULL);
 
-	return bcm2835_mbox_read(sc->sc_iot, sc->sc_ioh, chan, data);
+	mutex_enter(&sc->sc_lock);
+
+	mutex_enter(&sc->sc_intr_lock);
+	while (BCM2835_MBOX_CHAN(sc->sc_mbox[chan]) == 0) {
+		if (cold)
+			bcmmbox_intr1(sc, 0);
+		else
+			cv_wait(&sc->sc_chan[chan], &sc->sc_intr_lock);
+	}
+	*data = BCM2835_MBOX_DATA(sc->sc_mbox[chan]);
+	sc->sc_mbox[chan] = 0;
+	mutex_exit(&sc->sc_intr_lock);
+
+	mutex_exit(&sc->sc_lock);
 }
 
 void
@@ -120,8 +204,14 @@ bcmmbox_write(uint8_t chan, uint32_t data)
 	struct bcm2835mbox_softc *sc = bcm2835mbox_sc;
 
 	KASSERT(sc != NULL);
+	KASSERT(BCM2835_MBOX_CHAN(chan) == chan);
+	KASSERT(BCM2835_MBOX_CHAN(data) == 0);
 
-	return bcm2835_mbox_write(sc->sc_iot, sc->sc_ioh, chan, data);
+	mutex_enter(&sc->sc_lock);
+
+	bcm2835_mbox_write(sc->sc_iot, sc->sc_ioh, chan, data);
+
+	mutex_exit(&sc->sc_lock);
 }
 
 int
@@ -155,16 +245,12 @@ bcmmbox_request(uint8_t chan, void *buf, size_t buflen, uint32_t *pres)
 
 	memcpy(dma_buf, buf, buflen);
 
-	mutex_enter(&sc->sc_lock);
-
-	bus_dmamap_sync(sc->sc_dmat, map, 0, buflen, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, map, 0, buflen,
+	     BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 	bcmmbox_write(chan, map->dm_segs[0].ds_addr);
-	bus_dmamap_sync(sc->sc_dmat, map, 0, buflen, BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_sync(sc->sc_dmat, map, 0, buflen, BUS_DMASYNC_PREREAD);
 	bcmmbox_read(chan, pres);
-	bus_dmamap_sync(sc->sc_dmat, map, 0, buflen, BUS_DMASYNC_POSTREAD);
-
-	mutex_exit(&sc->sc_lock);
+	bus_dmamap_sync(sc->sc_dmat, map, 0, buflen,
+	    BUS_DMASYNC_POSTWRITE|BUS_DMASYNC_POSTREAD);
 
 	memcpy(buf, dma_buf, buflen);
 
