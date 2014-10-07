@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.36 2014/10/07 21:51:03 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.37 2014/10/07 22:20:33 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -422,10 +422,9 @@ time_t posix2time(time_t);
 ** is not done here.  What we call 'struct state' NetBSD calls
 ** 'struct __state', but this is a private name so it doesn't matter.
 */
-#if NETBSD_INSPIRED
 #ifndef __NetBSD__
+#if NETBSD_INSPIRED
 typedef struct state *timezone_t;
-#endif
 struct tm *localtime_rz(timezone_t restrict, time_t const *restrict,
 			struct tm *restrict);
 time_t mktime_z(timezone_t restrict, struct tm *restrict);
@@ -439,6 +438,7 @@ time_t posix2time_z(timezone_t __restrict, time_t) ATTRIBUTE_PURE;
 time_t time2posix_z(timezone_t __restrict, time_t) ATTRIBUTE_PURE;
 #  endif
 # endif
+#endif
 #endif
 
 /*
