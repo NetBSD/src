@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.3 2014/10/06 10:15:40 ryo Exp $
+#	$NetBSD: files.imx6,v 1.4 2014/10/07 09:36:09 ryo Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -60,6 +60,12 @@ defflag opt_imxgpio.h				IMX_GPIO_INTR_SPLIT
 device	imxiomux
 attach	imxiomux at axi
 file	arch/arm/imx/imx6_iomux.c		imxiomux
+
+# iMX iic Controler
+device	imxi2c: i2cbus
+attach	imxi2c at axi
+file	arch/arm/imx/imxi2c.c			imxi2c
+file	arch/arm/imx/imx6_i2c.c			imxi2c
 
 # iMX UART
 device	imxuart
