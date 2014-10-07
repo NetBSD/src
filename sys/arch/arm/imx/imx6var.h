@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6var.h,v 1.1 2014/09/25 05:05:28 ryo Exp $	*/
+/*	$NetBSD: imx6var.h,v 1.2 2014/10/07 09:32:47 ryo Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #ifndef _ARM_IMX_IMX6VAR_H
-#define	_ARM_IMX_IMX6VAR_H
+#define _ARM_IMX_IMX6VAR_H
 
 #include <sys/cdefs.h>
 
@@ -46,15 +46,10 @@ extern struct arm32_bus_dma_tag imx_bus_dma_tag;
 extern bus_space_tag_t imx6_armcore_bst;
 extern bus_space_handle_t imx6_armcore_bsh;
 
-/* gpio utility functions in imxgpio.c */
-void gpio_set_direction(uint32_t, uint32_t);
-void gpio_data_write(uint32_t, uint32_t);
-bool gpio_data_read(uint32_t);
-
 /* iomux utility functions in imx6_iomux.c */
 struct iomux_conf {
 	u_int pin;
-#define	IOMUX_CONF_EOT	((u_int)(-1))
+#define IOMUX_CONF_EOT	((u_int)(-1))
 	u_short mux;
 	u_short pad;
 };
@@ -69,8 +64,18 @@ void iomux_mux_config(const struct iomux_conf *);
 /* imx6_board.c */
 void imx6_bootstrap(vaddr_t);
 psize_t imx6_memprobe(void);
+uint32_t imx6_armrootclk(void);
 void imx6_reset(void) __dead;
 void imx6_device_register(device_t, void *);
 void imx6_cpu_hatch(struct cpu_info *);
+uint32_t imx6_chip_id(void);
+#define CHIPID_MINOR_MASK		0x000000ff
+#define CHIPID_MAJOR_MASK		0x00ffff00
+#define CHIPID_MAJOR_IMX6SL		0x00600000
+#define CHIPID_MAJOR_IMX6DL		0x00610000
+#define CHIPID_MAJOR_IMX6SOLO		0x00620000
+#define CHIPID_MAJOR_IMX6Q		0x00630000
+#define IMX6_CHIPID_MAJOR(v)		((v) & CHIPID_MAJOR_MASK)
+#define IMX6_CHIPID_MINOR(v)		((v) & CHIPID_MINOR_MASK)
 
 #endif /* _ARM_IMX_IMX6VAR_H */
