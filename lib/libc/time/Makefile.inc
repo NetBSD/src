@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2014/10/07 21:51:03 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2014/10/07 22:20:17 christos Exp $
 
 .PATH: ${.CURDIR}/time
 
@@ -24,7 +24,7 @@ MLINKS+=ctime.3 ctime_r.3	\
 	offtime.3 timegm.3	\
 	offtime.3 timelocal.3	\
 	offtime.3 timeoff.3	\
-	strftime.3 strftime_z.3
+	strftime.3 strftime_z.3 \
 	time2posix.3 posix2time.3 \
 	time2posix.3 posix2time_z.3 \
 	time2posix.3 time2posix_z.3 \
@@ -32,6 +32,6 @@ MLINKS+=ctime.3 ctime_r.3	\
 	tzset.3 daylight.3	\
 	tzset.3 tzalloc.3	\
 	tzset.3 tzfree.3	\
-	tzset.3 tzsetwall.3	\
+	tzset.3 tzsetwall.3	
 
 COPTS.strftime.c = -Wno-format-nonliteral
