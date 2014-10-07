@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.21 2014/09/07 14:16:44 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.22 2014/10/07 08:30:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.21 2014/09/07 14:16:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.22 2014/10/07 08:30:05 skrll Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -81,7 +81,7 @@ static const struct ambadev_locators bcm2835_ambadev_locs[] = {
 		.ad_name = "bcmmbox",
 		.ad_addr = BCM2835_ARMMBOX_BASE,
 		.ad_size = BCM2835_ARMMBOX_SIZE,
-		.ad_intr = -1, /* BCM2835_INT_ARMMAILBOX */
+		.ad_intr = BCM2835_INT_ARMMAILBOX
 	},
 	{
 		/* System Timer */
