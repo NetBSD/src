@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.301 2014/10/06 07:52:50 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.302 2014/10/07 07:04:35 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.301 2014/10/06 07:52:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.302 2014/10/07 07:04:35 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2677,7 +2677,15 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			}
 			sc->sc_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
 		}
+		WM_BOTH_UNLOCK(sc);
+#ifdef WM_MPSAFE
+		s = splnet();
+#endif
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
+#ifdef WM_MPSAFE
+		splx(s);
+#endif
+		WM_BOTH_LOCK(sc);
 		break;
 	case SIOCINITIFADDR:
 		if (ifa->ifa_addr->sa_family == AF_LINK) {
