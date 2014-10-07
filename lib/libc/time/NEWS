@@ -1,5 +1,222 @@
 News for the tz database
 
+Release 2014h - 2014-09-25 18:59:03 -0700
+
+  Changes affecting past time stamps
+
+    America/Jamaica's 1974 spring-forward transition was Jan. 6, not Apr. 28.
+
+    Shanks says Asia/Novokuznetsk switched from LMT (not "NMT") on 1924-05-01,
+    not 1920-01-06.  The old entry was based on a misinterpretation of Shanks.
+
+    Some more zones have been turned into links, when they differed
+    from existing zones only for older time stamps.  As usual,
+    these changes affect UTC offsets in pre-1970 time stamps only.
+    Their old contents have been moved to the 'backzone' file.
+    The affected zones are: Africa/Blantyre, Africa/Bujumbura,
+    Africa/Gaborone, Africa/Harare, Africa/Kigali, Africa/Lubumbashi,
+    Africa/Lusaka, Africa/Maseru, and Africa/Mbabane.
+
+  Changes affecting code
+
+    zdump -V and -v now output gmtoff= values on all platforms,
+    not merely on platforms defining TM_GMTOFF.
+
+    The tz library's localtime and mktime functions now set tzname to a value
+    appropriate for the requested time stamp, and zdump now uses this
+    on platforms not defining TM_ZONE, fixing a 2014g regression.
+    (Thanks to Tim Parenti for reporting the problem.)
+
+    The tz library no longer sets tzname if localtime or mktime fails.
+
+    zdump -c no longer mishandles transitions near year boundaries.
+    (Thanks to Tim Parenti for reporting the problem.)
+
+    An access to uninitalized data has been fixed.
+    (Thanks to Jörg Richter for reporting the problem.)
+
+    When THREAD_SAFE is defined, the code ports to the C11 memory model.
+    A memory leak has been fixed if ALL_STATE and THREAD_SAFE are defined
+    and two threads race to initialize data used by gmtime-like functions.
+    (Thanks to Andy Heninger for reporting the problems.)
+
+  Changes affecting build procedure
+
+    'make check' now checks better for properly-sorted data.
+
+  Changes affecting documentation and commentary
+
+    zdump's gmtoff=N output is now documented, and its isdst=D output
+    is now documented to possibly output D values other than 0 or 1.
+
+    zdump -c's treatment of years is now documented to use the
+    Gregorian calendar and Universal Time without leap seconds,
+    and its behavior at cutoff boundaries is now documented better.
+    (Thanks to Arthur David Olson and Tim Parenti for reporting the problems.)
+
+    Programs are now documented to use the proleptic Gregorian calendar.
+    (Thanks to Alan Barrett for the suggestion.)
+
+    Fractional-second GMT offsets have been documented for civil time
+    in 19th-century Chennai, Jakarta, and New York.
+
+
+Release 2014g - 2014-08-28 12:31:23 -0700
+
+  Changes affecting future time stamps
+
+    Turks & Caicos is switching from US eastern time to UTC-4 year-round,
+    modeled as a switch from EST/EDT to AST on 2014-11-02 at 02:00.
+
+  Changes affecting past time stamps
+
+    Time in Russia or the USSR before 1926 or so has been corrected by
+    a few seconds in the following zones: Asia/Irkutsk,
+    Asia/Krasnoyarsk, Asia/Omsk, Asia/Samarkand, Asia/Tbilisi,
+    Asia/Vladivostok, Asia/Yakutsk, Europe/Riga, Europe/Samara.  For
+    Asia/Yekaterinburg the correction is a few minutes.  (Thanks to
+    Vladimir Karpinsky.)
+
+    The Portuguese decree of 1911-05-26 took effect on 1912-01-01.
+    This affects 1911 time stamps in Africa/Bissau, Africa/Luanda,
+    Atlantic/Azores, and Atlantic/Madeira.  Also, Lisbon's pre-1912
+    GMT offset was -0:36:45 (rounded from -0:36:44.68), not -0:36:32.
+    (Thanks to Stephen Colebourne for pointing to the decree.)
+
+    Asia/Dhaka ended DST on 2009-12-31 at 24:00, not 23:59.
+
+    A new file 'backzone' contains data which may appeal to
+    connoisseurs of old time stamps, although it is out of scope for
+    the tz database, is often poorly sourced, and contains some data
+    that is known to be incorrect.  The new file is not recommended
+    for ordinary use and its entries are not installed by default.
+    (Thanks to Lester Caine for the high-quality Jersey, Guernsey, and
+    Isle of Man entries.)
+
+    Some more zones have been turned into links, when they differed
+    from existing zones only for older time stamps.  As usual,
+    these changes affect UTC offsets in pre-1970 time stamps only.
+    Their old contents have been moved to the 'backzone' file.
+    The affected zones are: Africa/Bangui, Africa/Brazzaville,
+    Africa/Douala, Africa/Kinshasa, Africa/Libreville, Africa/Luanda,
+    Africa/Malabo, Africa/Niamey, and Africa/Porto-Novo.
+
+  Changes affecting code
+
+    Unless NETBSD_INSPIRED is defined to 0, the tz library now
+    supplies functions for creating and using objects that represent
+    time zones. The new functions are tzalloc, tzfree, localtime_rz,
+    mktime_z, and (if STD_INSPIRED is also defined) posix2time_z and
+    time2posix_z.  They are intended for performance: for example,
+    localtime_rz (unlike localtime_r) is trivially thread-safe without
+    locking.  (Thanks to Christos Zoulas for proposing NetBSD-inspired
+    functions, and to Alan Barrett and Jonathan Lennox for helping to
+    debug the change.)
+
+    zdump now builds with the tz library unless USE_LTZ is defined to 0,
+    This lets zdump use tz features even if the system library lacks them.
+    To build zdump with the system library, use 'make CFLAGS=-DUSE_LTZ=0
+    TZDOBJS=zdump.o CHECK_TIME_T_ALTERNATIVES='.
+
+    zdump now uses localtime_rz if available, as it's significantly faster,
+    and it can help zdump better diagnose invalid time zone names.
+    Define HAVE_LOCALTIME_RZ to 0 to suppress this.  HAVE_LOCALTIME_RZ
+    defaults to 1 if NETBSD_INSPIRED && USE_LTZ.  When localtime_rz is
+    not available, zdump now uses localtime_r and tzset if available,
+    as this is a bit cleaner and faster than plain localtime.  Compile
+    with -DHAVE_LOCALTIME_R=0 and/or -DHAVE_TZSET=0 if your system
+    lacks these two functions.
+
+    If THREAD_SAFE is defined to 1, the tz library is now thread-safe.
+    Although not needed for tz's own applications, which are single-threaded,
+    this supports POSIX better if the tz library is used in multithreaded apps.
+
+    Some crashes have been fixed when zdump or the tz library is given
+    invalid or outlandish input.
+
+    The tz library no longer mishandles leap seconds on platforms with
+    unsigned time_t in time zones that lack ordinary transitions after 1970.
+
+    The tz code now attempts to infer TM_GMTOFF and TM_ZONE if not
+    already defined, to make it easier to configure on common platforms.
+    Define NO_TM_GMTOFF and NO_TM_ZONE to suppress this.
+
+    Unless the new macro UNINIT_TRAP is defined to 1, the tz code now
+    assumes that reading uninitialized memory yields garbage values
+    but does not cause other problems such as traps.
+
+    If TM_GMTOFF is defined and UNINIT_TRAP is 0, mktime is now
+    more likely to guess right for ambiguous time stamps near
+    transitions where tm_isdst does not change.
+
+    If HAVE_STRFTIME_L is defined to 1, the tz library now defines
+    strftime_l for compatibility with recent versions of POSIX.
+    Only the C locale is supported, though.  HAVE_STRFTIME_L defaults
+    to 1 on recent POSIX versions, and to 0 otherwise.
+
+    tzselect -c now uses a hybrid distance measure that works better
+    in Africa.  (Thanks to Alan Barrett for noting the problem.)
+
+    The C source code now ports to NetBSD when GCC_DEBUG_FLAGS is used,
+    or when time_tz is defined.
+
+    When HAVE_UTMPX_H is set the 'date' command now builds on systems
+    whose <utmpx.h> file does not define WTMPX_FILE, and when setting
+    the date it updates the wtmpx file if _PATH_WTMPX is defined.
+    This affects GNU/Linux and similar systems.
+
+    For easier maintenance later, some C code has been simplified,
+    some lint has been removed, and the code has been tweaked so that
+    plain 'make' is more likely to work.
+
+    The C type 'bool' is now used for boolean values, instead of 'int'.
+
+    The long-obsolete LOCALE_HOME code has been removed.
+
+    The long-obsolete 'gtime' function has been removed.
+
+  Changes affecting build procedure
+
+    'zdump' no longer links in ialloc.o, as it's not needed.
+
+    'make check_time_t_alternatives' no longer assumes GNU diff.
+
+  Changes affecting distribution tarballs
+
+    The files checktab.awk and zoneinfo2tdf.pl are now distributed in
+    the tzdata tarball instead of the tzcode tarball, since they help
+    maintain the data.  The NEWS and Theory files are now also
+    distributed in the tzdata tarball, as they're relevant for data.
+    (Thanks to Alan Barrett for pointing this out.)  Also, the
+    leapseconds.awk file is no longer distributed in the tzcode
+    tarball, since it belongs in the tzdata tarball (where 2014f
+    inadvertently also distributed it).
+
+  Changes affecting documentation and commentary
+
+    A new file CONTRIBUTING is distributed.  (Thanks to Tim Parenti for
+    suggesting a CONTRIBUTING file, and to Tony Finch and Walter Harms
+    for debugging it.)
+
+    The man pages have been updated to use function prototypes,
+    to document thread-safe variants like localtime_r, and to document
+    the NetBSD-inspired functions tzalloc, tzfree, localtime_rz, and
+    mktime_z.
+
+    The fields in Link lines have been renamed to be more descriptive
+    and more like the parameters of 'ln'.  LINK-FROM has become TARGET,
+    and LINK-TO has become LINK-NAME.
+
+    tz-link.htm mentions the IETF's tzdist working group; Windows
+    Runtime etc. (thanks to Matt Johnson); and HP-UX's tztab.
+
+    Some broken URLs have been fixed in the commentary.  (Thanks to
+    Lester Caine.)
+
+    Commentary about Philippines DST has been updated, and commentary
+    on pre-1970 time in India has been added.
+
+
 Release 2014f - 2014-08-05 17:42:36 -0700
 
   Changes affecting future time stamps
@@ -65,7 +282,7 @@ Release 2014f - 2014-08-05 17:42:36 -0700
     Treindl sent helpful translations of two papers by Guo Qingsheng.)
 
     Some zones have been turned into links, when they differed from existing
-    zones only for older UTC offsets where the data were likely invented.
+    zones only for older UTC offsets where data entries were likely invented.
     These changes affect UTC offsets in pre-1970 time stamps only.  This is
     similar to the change in release 2013e, except this time for western
     Africa.  The affected zones are: Africa/Bamako, Africa/Banjul,
@@ -172,7 +389,7 @@ Release 2014f - 2014-08-05 17:42:36 -0700
     are not already surrounded by white space.  (Thanks to suggestions by
     Steffen Nurpmeso.)
 
-    There is new commentary about Xujiahui Observatory, the five timezone
+    There is new commentary about Xujiahui Observatory, the five time-zone
     project in China from 1918 to 1949, timekeeping in Japanese-occupied
     Shanghai, and Tibet Time in the 1950s.  The sharp-eyed can spot the
     warlord Jin Shuren in the data.
@@ -292,7 +509,7 @@ Release 2014b - 2014-03-24 21:28:50 -0700
   Changes affecting code
 
     'zic' and 'localtime' no longer reject locations needing four transitions
-    per year for the forseeable future.  (Thanks to Andrew Main (Zefram).)
+    per year for the foreseeable future.  (Thanks to Andrew Main (Zefram).)
     Also, 'zic' avoids some unlikely failures due to integer overflow.
 
   Changes affecting build procedure
@@ -365,7 +582,7 @@ Release 2014a - 2014-03-07 23:30:29 -0800
 
       Microsoft has some support for tz database names.
 
-      CLDR data is available in both XML and JSON form.
+      CLDR data formats include both XML and JSON.
 
       Mention Maggiolo's map of solar vs standard time.
       (Thanks to Arthur David Olson.)
@@ -467,7 +684,7 @@ Release 2013h - 2013-10-25 15:32:32 -0700
 
   Changes affecting documentation and commentary
 
-    tz-link.htm now mentions TC TIMEZONE's draft timezone service protocol
+    tz-link.htm now mentions TC TIMEZONE's draft time zone service protocol
     (thanks to Mike Douglass) and TimezoneJS.Date (thanks to Jim Fehrle).
 
     Update URLs in tz-link page.  Add URLs for Microsoft Windows, since
@@ -545,7 +762,7 @@ Release 2013f - 2013-09-24 23:37:36 -0700
 
   Changes affecting version-control only
 
-    The experimental github repository now contains annotated and
+    The experimental GitHub repository now contains annotated and
     signed tags for recent releases, e.g., '2013e' for Release 2013e.
     Releases are tagged starting with 2012e; earlier releases were
     done differently, and tags would either not have a simple name or
@@ -608,9 +825,9 @@ Release 2013e - 2013-09-19 23:50:04 -0700
     Pacific/Johnston is now a link to Pacific/Honolulu.  This corrects
     some errors before 1947.
 
-    Some zones have been turned into links, when they differ from
-    existing zones only in older data that was likely invented or that
-    differs only in LMT or transition from LMT.  These changes affect
+    Some zones have been turned into links, when they differ from existing
+    zones only in older data entries that were likely invented or that
+    differ only in LMT or transitions from LMT.  These changes affect
     only time stamps before 1943.  The affected zones are:
     Africa/Juba, America/Anguilla, America/Aruba, America/Dominica,
     America/Grenada, America/Guadeloupe, America/Marigot,
@@ -667,7 +884,7 @@ Release 2013e - 2013-09-19 23:50:04 -0700
     The signatures of 'offtime', 'timeoff', and 'gtime' have been
     changed back to the old practice of using 'long' to represent UT
     offsets.  This had been inadvertently and mistakenly changed to
-    'int_fast32_t'.  (Thanks to Christos Zoulos.)
+    'int_fast32_t'.  (Thanks to Christos Zoulas.)
 
     The code avoids undefined behavior on integer overflow in some
     more places, including gmtime, localtime, mktime and zdump.
@@ -686,7 +903,7 @@ Release 2013e - 2013-09-19 23:50:04 -0700
 
     Remove from zone.tab the names America/Montreal, America/Shiprock,
     and Antarctica/South_Pole, as they are equivalent to existing
-    same-country-code zones for post-1970 time stamps.  The data for
+    same-country-code zones for post-1970 time stamps.  The data entries for
     these names are unchanged, so the names continue to work as before.
 
   Changes affecting code internals
@@ -976,7 +1193,7 @@ Release 2012i - 2012-11-03 12:57:09 -0700
   AWK now defaults to 'awk', not 'nawk'.
   The shell in tzselect now defaults to /bin/bash, but this can
   be overridden by specifying KSHELL.
-  The main web page now mentions the unofficial github repository.
+  The main web page now mentions the unofficial GitHub repository.
   (Thanks to Mike Frysinger.)
 
   Tarball signatures can now be built by running 'make signatures'.
@@ -1098,7 +1315,7 @@ Release 2012a - 2012-03-01 18:28:10 +0700
 
   Other minor changes are:
 	Corrections to 1918 Canadian summer time end dates.
-	Updated URL for UK timezone history (in comments)
+	Updated URL for UK time zone history (in comments)
 	A few typos in Le Corre's list of free French place names (comments)
 
 
@@ -2481,8 +2698,8 @@ Release 94h - 1994-12-10 12:51:14 -0500
 	data files.
 
   Think of this as "TZ Classic" - the software has been set up not to break if
-  universal time shows up in its input, and the data has been left as is so as
-  not to break existing implementations.
+  universal time shows up in its input, and data entries have been
+  left as is so as not to break existing implementations.
 
 
 Release data94f - 1994-08-20 12:56:09 -0400
@@ -2561,7 +2778,7 @@ Release 93f - 1993-10-15 12:27:46 -0400
 
 Release 93e - 1993-09-05 21:21:44 -0400
 
-  There's updated data for Israel, England, and Kwajalein; there's
+  This has updated data for Israel, England, and Kwajalein.  There's
   also an update to "zdump" to cope with Kwajalein's 24-hour jump.
   Thanks to Paul Eggert and Peter Ilieve for the changes.
 
@@ -2656,7 +2873,7 @@ numbers.
 Release time stamps are taken from the release's commit (for newer,
 git releases), from the newest file in the tarball (for older
 releases, where this info is available) or from the email announcing
-the release (if all else fails; these are marked with a timezone of
+the release (if all else fails; these are marked with a time zone of
 -0000 and an "is missing!" comment).
 
 Earlier versions of the code and data were not announced on the tz
