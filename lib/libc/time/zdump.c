@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.36 2014/10/07 21:51:03 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.37 2014/10/07 22:14:46 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -6,10 +6,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.36 2014/10/07 21:51:03 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.37 2014/10/07 22:14:46 christos Exp $");
 #endif /* !defined lint */
 
-#include "version.h"
 /*
 ** This code has been made independent of the rest of the time
 ** conversion package to increase confidence in the verification it provides.
