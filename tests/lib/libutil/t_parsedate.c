@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.7 2013/01/19 15:21:43 apb Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.8 2014/10/07 19:20:28 apb Exp $ */
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,13 +29,65 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.7 2013/01/19 15:21:43 apb Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.8 2014/10/07 19:20:28 apb Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <time.h>
 #include <util.h>
+
+/*
+ * ANY is used as a placeholder for values that do not need to be
+ * checked.  The actual value is arbitrary.  We don't use -1
+ * because some tests might want to use -1 as a literal value.
+ */
+#define ANY -30215
+
+/* parsecheck --
+ * call parsedate(), then call time_to_tm() on the result,
+ * and check that year/month/day/hour/minute/second are as expected.
+ *
+ * time_to_tm should usually be localtime_r or gmtime_r.
+ *
+ * Don't check values specified as ANY.
+ */
+static void
+parsecheck(const char *datestr, const time_t *reftime, const int *zoff,
+	struct tm * time_to_tm(const time_t *, struct tm *),
+	int year, int month, int day, int hour, int minute, int second)
+{
+	time_t t;
+	struct tm tm;
+
+	ATF_CHECK_MSG((t = parsedate(datestr, reftime, zoff)) != -1,
+	    "parsedate(\"%s\",,) returned -1\n", datestr);
+	ATF_CHECK(time_to_tm(&t, &tm) != NULL);
+	if (year != ANY)
+		ATF_CHECK_MSG(tm.tm_year + 1900 == year,
+		    "parsedate(\"%s\",,) expected year %d got %d (+1900)\n",
+		    datestr, year, (int)tm.tm_year);
+	if (month != ANY)
+		ATF_CHECK_MSG(tm.tm_mon + 1 == month,
+		    "parsedate(\"%s\",,) expected month %d got %d (+1)\n",
+		    datestr, month, (int)tm.tm_mon);
+	if (day != ANY)
+		ATF_CHECK_MSG(tm.tm_mday == day,
+		    "parsedate(\"%s\",,) expected day %d got %d\n",
+		    datestr, day, (int)tm.tm_mday);
+	if (hour != ANY)
+		ATF_CHECK_MSG(tm.tm_hour == hour,
+		    "parsedate(\"%s\",,) expected hour %d got %d\n",
+		    datestr, hour, (int)tm.tm_hour);
+	if (minute != ANY)
+		ATF_CHECK_MSG(tm.tm_min == minute,
+		    "parsedate(\"%s\",,) expected minute %d got %d\n",
+		    datestr, minute, (int)tm.tm_min);
+	if (second != ANY)
+		ATF_CHECK_MSG(tm.tm_sec == second,
+		    "parsedate(\"%s\",,) expected second %d got %d\n",
+		    datestr, second, (int)tm.tm_sec);
+}
 
 ATF_TC(dates);
 
@@ -48,15 +100,24 @@ ATF_TC_HEAD(dates, tc)
 ATF_TC_BODY(dates, tc)
 {
 
-	ATF_CHECK(parsedate("69-09-10", NULL, NULL) != -1);
-	ATF_CHECK(parsedate("2006-11-17", NULL, NULL) != -1);
-	ATF_CHECK(parsedate("10/1/2000", NULL, NULL) != -1);
-	ATF_CHECK(parsedate("20 Jun 1994", NULL, NULL) != -1);
-	ATF_CHECK(parsedate("23jun2001", NULL, NULL) != -1);
-	ATF_CHECK(parsedate("1-sep-06", NULL, NULL) != -1);
-	ATF_CHECK(parsedate("1/11", NULL, NULL) != -1);
-	ATF_CHECK(parsedate("1500-01-02", NULL, NULL) != -1);
-	ATF_CHECK(parsedate("9999-12-21", NULL, NULL) != -1);
+	parsecheck("69-09-10", NULL, NULL, localtime_r,
+		2069, 9, 10, 0, 0, 0);
+	parsecheck("2006-11-17", NULL, NULL, localtime_r,
+		2006, 11, 17, 0, 0, 0);
+	parsecheck("10/1/2000", NULL, NULL, localtime_r,
+		2000, 10, 1, 0, 0, 0);
+	parsecheck("20 Jun 1994", NULL, NULL, localtime_r,
+		1994, 6, 20, 0, 0, 0);
+	parsecheck("23jun2001", NULL, NULL, localtime_r,
+		2001, 6, 23, 0, 0, 0);
+	parsecheck("1-sep-06", NULL, NULL, localtime_r,
+		2006, 9, 1, 0, 0, 0);
+	parsecheck("1/11", NULL, NULL, localtime_r,
+		ANY, 1, 11, 0, 0, 0);
+	parsecheck("1500-01-02", NULL, NULL, localtime_r,
+		1500, 1, 2, 0, 0, 0);
+	parsecheck("9999-12-21", NULL, NULL, localtime_r,
+		9999, 12, 21, 0, 0, 0);
 }
 
 ATF_TC(times);
@@ -70,10 +131,14 @@ ATF_TC_HEAD(times, tc)
 ATF_TC_BODY(times, tc)
 {
 
-	ATF_CHECK(parsedate("10:01", NULL, NULL) != -1);
-	ATF_CHECK(parsedate("10:12pm", NULL, NULL) != -1);
-	ATF_CHECK(parsedate("12:11:01.000012", NULL, NULL) != -1);
-	ATF_CHECK(parsedate("12:21-0500", NULL, NULL) != -1);
+	parsecheck("10:01", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 10, 1, 0);
+	parsecheck("10:12pm", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 22, 12, 0);
+	parsecheck("12:11:01.000012", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 12, 11, 1);
+	parsecheck("12:21-0500", NULL, NULL, gmtime_r,
+		ANY, ANY, ANY, 12+5, 21, 0);
 }
 
 ATF_TC(relative);
