@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.8 2014/10/07 19:20:28 apb Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.9 2014/10/07 19:26:31 apb Exp $ */
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.8 2014/10/07 19:20:28 apb Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.9 2014/10/07 19:26:31 apb Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -101,11 +101,13 @@ ATF_TC_BODY(dates, tc)
 {
 
 	parsecheck("69-09-10", NULL, NULL, localtime_r,
-		2069, 9, 10, 0, 0, 0);
+		2069, 9, 10, 0, 0, 0); /* year < 70: add 2000 */
+	parsecheck("70-09-10", NULL, NULL, localtime_r,
+		1970, 9, 10, 0, 0, 0); /* 70 <= year < 100: add 1900 */
 	parsecheck("2006-11-17", NULL, NULL, localtime_r,
 		2006, 11, 17, 0, 0, 0);
 	parsecheck("10/1/2000", NULL, NULL, localtime_r,
-		2000, 10, 1, 0, 0, 0);
+		2000, 10, 1, 0, 0, 0); /* month/day/year */
 	parsecheck("20 Jun 1994", NULL, NULL, localtime_r,
 		1994, 6, 20, 0, 0, 0);
 	parsecheck("23jun2001", NULL, NULL, localtime_r,
@@ -113,7 +115,7 @@ ATF_TC_BODY(dates, tc)
 	parsecheck("1-sep-06", NULL, NULL, localtime_r,
 		2006, 9, 1, 0, 0, 0);
 	parsecheck("1/11", NULL, NULL, localtime_r,
-		ANY, 1, 11, 0, 0, 0);
+		ANY, 1, 11, 0, 0, 0); /* month/day */
 	parsecheck("1500-01-02", NULL, NULL, localtime_r,
 		1500, 1, 2, 0, 0, 0);
 	parsecheck("9999-12-21", NULL, NULL, localtime_r,
