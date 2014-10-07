@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.302 2014/10/07 07:04:35 ozaki-r Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.303 2014/10/07 08:45:02 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.302 2014/10/07 07:04:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.303 2014/10/07 08:45:02 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2660,11 +2660,10 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #ifndef WM_MPSAFE
 	s = splnet();
 #endif
-	WM_BOTH_LOCK(sc);
-
 	switch (cmd) {
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
+		WM_BOTH_LOCK(sc);
 		/* Flow control requires full-duplex mode. */
 		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
 		    (ifr->ifr_media & IFM_FDX) == 0)
@@ -2685,9 +2684,9 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #ifdef WM_MPSAFE
 		splx(s);
 #endif
-		WM_BOTH_LOCK(sc);
 		break;
 	case SIOCINITIFADDR:
+		WM_BOTH_LOCK(sc);
 		if (ifa->ifa_addr->sa_family == AF_LINK) {
 			sdl = satosdl(ifp->if_dl->ifa_addr);
 			(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len,
@@ -2695,11 +2694,12 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			/* unicast address is first multicast entry */
 			wm_set_filter(sc);
 			error = 0;
+			WM_BOTH_UNLOCK(sc);
 			break;
 		}
+		WM_BOTH_UNLOCK(sc);
 		/*FALLTHROUGH*/
 	default:
-		WM_BOTH_UNLOCK(sc);
 #ifdef WM_MPSAFE
 		s = splnet();
 #endif
@@ -2708,17 +2708,13 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #ifdef WM_MPSAFE
 		splx(s);
 #endif
-		WM_BOTH_LOCK(sc);
-
 		if (error != ENETRESET)
 			break;
 
 		error = 0;
 
 		if (cmd == SIOCSIFCAP) {
-			WM_BOTH_UNLOCK(sc);
 			error = (*ifp->if_init)(ifp);
-			WM_BOTH_LOCK(sc);
 		} else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
 		else if (ifp->if_flags & IFF_RUNNING) {
@@ -2726,12 +2722,12 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
+			WM_BOTH_LOCK(sc);
 			wm_set_filter(sc);
+			WM_BOTH_UNLOCK(sc);
 		}
 		break;
 	}
-
-	WM_BOTH_UNLOCK(sc);
 
 	/* Try to get more packets going. */
 	ifp->if_start(ifp);
