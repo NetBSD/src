@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.16 2013/06/12 01:46:07 yamt Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.17 2014/10/07 22:27:14 apb Exp $");
 #endif
 
 #include <stdio.h>
@@ -69,22 +69,24 @@ typedef enum _MERIDIAN {
 
 
 struct dateinfo {
-	DSTMODE	yyDSTmode;
+	DSTMODE	yyDSTmode;	/* DST on/off/maybe */
 	time_t	yyDayOrdinal;
 	time_t	yyDayNumber;
 	int	yyHaveDate;
+	int	yyHaveFullYear;	/* if true, year is not abbreviated. */
+				/* if false, need to call AdjustYear(). */
 	int	yyHaveDay;
 	int	yyHaveRel;
 	int	yyHaveTime;
 	int	yyHaveZone;
-	time_t	yyTimezone;
-	time_t	yyDay;
-	time_t	yyHour;
-	time_t	yyMinutes;
-	time_t	yyMonth;
-	time_t	yySeconds;
-	time_t	yyYear;
-	MERIDIAN	yyMeridian;
+	time_t	yyTimezone;	/* Timezone as minutes ahead/east of UTC */
+	time_t	yyDay;		/* Day of month [1-31] */
+	time_t	yyHour;		/* Hour of day [0-24] or [1-12] */
+	time_t	yyMinutes;	/* Minute of hour [0-59] */
+	time_t	yyMonth;	/* Month of year [1-12] */
+	time_t	yySeconds;	/* Second of minute [0-60] */
+	time_t	yyYear;		/* Year, see also yyHaveFullYear */
+	MERIDIAN yyMeridian;	/* Interpret yyHour as AM/PM/24 hour clock */
 	time_t	yyRelMonth;
 	time_t	yyRelSeconds;
 };
@@ -144,6 +146,7 @@ item	: time {
 cvsstamp: tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER {
 	    param->yyYear = $1;
 	    if (param->yyYear < 100) param->yyYear += 1900;
+	    param->yyHaveFullYear = 1;
 	    param->yyMonth = $3;
 	    param->yyDay = $5;
 	    param->yyHour = $7;
@@ -174,6 +177,7 @@ epochdate: AT_SIGN at_number {
 		param->yyMinutes = 0;
 		param->yySeconds = 0;
 	    }
+	    param->yyHaveFullYear = 1;
 	    param->yyDSTmode = DSToff;
 	    param->yyTimezone = 0;
 	}
@@ -272,6 +276,7 @@ date	: tUNUMBER '/' tUNUMBER {
 	| tUNUMBER tSNUMBER tSNUMBER {
 	    /* ISO 8601 format.  yyyy-mm-dd.  */
 	    param->yyYear = $1;
+	    param->yyHaveFullYear = 1;
 	    param->yyMonth = -$2;
 	    param->yyDay = -$3;
 	}
@@ -581,15 +586,31 @@ yyerror(struct dateinfo *param, const char **inp, const char *s __unused)
 }
 
 
-/* Year is either
-   * A negative number, which means to use its absolute value (why?)
-   * A number from 0 to 99, which means a year from 1900 to 1999, or
-   * The actual year (>=100).  */
+/* Adjust year from a value that might be abbreviated, to a full value.
+ * e.g. convert 70 to 1970.
+ * Input Year is either:
+ *  - A negative number, which means to use its absolute value (why?)
+ *  - A number from 0 to 99, which means a year from 1900 to 1999, or
+ *  - The actual year (>=100).
+ * Returns the full year. */
+static time_t
+AdjustYear(time_t Year)
+{
+    /* XXX Y2K */
+    if (Year < 0)
+	Year = -Year;
+    if (Year < 70)
+	Year += 2000;
+    else if (Year < 100)
+	Year += 1900;
+    return Year;
+}
+
 static time_t
 Convert(
     time_t	Month,		/* month of year [1-12] */
     time_t	Day,		/* day of month [1-31] */
-    time_t	Year,		/* year; see above comment */
+    time_t	Year,		/* year, not abbreviated in any way */
     time_t	Hours,		/* Hour of day [0-24] */
     time_t	Minutes,	/* Minute of hour [0-59] */
     time_t	Seconds,	/* Second of minute [0-60] */
@@ -600,14 +621,6 @@ Convert(
 {
     struct tm tm = {.tm_sec = 0};
     time_t result;
-
-    /* XXX Y2K */
-    if (Year < 0)
-	Year = -Year;
-    if (Year < 70)
-	Year += 2000;
-    else if (Year < 100)
-	Year += 1900;
 
     tm.tm_sec = Seconds;
     tm.tm_min = Minutes;
@@ -933,6 +946,7 @@ parsedate(const char *p, const time_t *now, const int *zone)
     param.yyRelSeconds = 0;
     param.yyRelMonth = 0;
     param.yyHaveDate = 0;
+    param.yyHaveFullYear = 0;
     param.yyHaveDay = 0;
     param.yyHaveRel = 0;
     param.yyHaveTime = 0;
@@ -945,6 +959,10 @@ parsedate(const char *p, const time_t *now, const int *zone)
     }
 
     if (param.yyHaveDate || param.yyHaveTime || param.yyHaveDay) {
+	if (! param.yyHaveFullYear) {
+		param.yyYear = AdjustYear(param.yyYear);
+		param.yyHaveFullYear = 1;
+	}
 	Start = Convert(param.yyMonth, param.yyDay, param.yyYear, param.yyHour,
 	    param.yyMinutes, param.yySeconds, param.yyTimezone,
 	    param.yyMeridian, param.yyDSTmode);
