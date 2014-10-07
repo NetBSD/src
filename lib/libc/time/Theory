@@ -103,7 +103,7 @@ POSIX has the following properties and limitations.
 	signed time_t values stop working after 2038-01-19 03:14:07 UTC, so
 	new implementations these days typically use a signed 64-bit integer.
 	Unsigned 32-bit integers are used on one or two platforms,
-	and 36-bit integers are also used occasionally.
+	and 36-bit and 40-bit integers are also used occasionally.
 	Although earlier POSIX versions allowed time_t to be a
 	floating-point type, this was not supported by any practical
 	systems, and POSIX.1-2013 and the tz code both require time_t
@@ -127,7 +127,7 @@ These are the extensions that have been made to the POSIX functions:
 	consideration was given to using some other environment variable
 	(for example, "TIMEZONE") to hold the string used to generate the
 	time zone information file name.  In the end, however, it was decided
-	to continue using "TZ":  it is widely used for time zone purposes;
+	to continue using "TZ": it is widely used for time zone purposes;
 	separately maintaining both "TZ" and "TIMEZONE" seemed a nuisance;
 	and systems where "new" forms of "TZ" might cause problems can simply
 	use TZ values such as "EST5EDT" which can be used both by
@@ -223,7 +223,7 @@ before computer timekeeping became prevalent.
 
 Clock transitions before 1970 are recorded for each such location,
 because most POSIX-compatible systems support negative time stamps and
-could misbehave if data were omitted for pre-1970 transitions.
+could misbehave if data entries were omitted for pre-1970 transitions.
 However, the database is not designed for and does not suffice for
 applications requiring accurate handling of all past times everywhere,
 as it would take far too much effort and guesswork to record all
@@ -233,9 +233,9 @@ details of pre-1970 civil timekeeping.
 ----- Accuracy of the tz database -----
 
 The tz database is not authoritative, and it surely has errors.
-Corrections are welcome and encouraged.  Users requiring authoritative
-data should consult national standards bodies and the references cited
-in the database's comments.
+Corrections are welcome and encouraged; see the file CONTRIBUTING.
+Users requiring authoritative data should consult national standards
+bodies and the references cited in the database's comments.
 
 Errors in the tz database arise from many sources:
 
@@ -246,7 +246,7 @@ Errors in the tz database arise from many sources:
    daylight saving rules, software can mess up after the rule change
    if it blithely relies on conversions made before the change.
 
- * The pre-1970 data in this database cover only a tiny sliver of how
+ * The pre-1970 entries in this database cover only a tiny sliver of how
    clocks actually behaved; the vast majority of the necessary
    information was lost or never recorded.  Thousands more zones would
    be needed if the tz database's scope were extended to cover even
@@ -254,12 +254,12 @@ Errors in the tz database arise from many sources:
    the current single entry for France would need to split into dozens
    of entries, perhaps hundreds.
 
- * Most of the pre-1970 data comes from unreliable sources, often
+ * Most of the pre-1970 data entries come from unreliable sources, often
    astrology books that lack citations and whose compilers evidently
    invented entries when the true facts were unknown, without
    reporting which entries were known and which were invented.
    These books often contradict each other or give implausible entries,
-   and on the rare occasions when their old data are checked they are
+   and on the rare occasions when they are checked they are
    typically found to be incorrect.
 
  * For the UK the tz database relies on years of first-class work done by
@@ -282,8 +282,8 @@ Errors in the tz database arise from many sources:
    transition to GMT is known to be valid only for the L&NW and the
    Caledonian railways.
 
- * The tz database does not record the earliest time for which a
-   zone's data is thereafter valid for every location in the region.
+ * The tz database does not record the earliest time for which a zone's
+   data entries are thereafter valid for every location in the region.
    For example, Europe/London is valid for all locations in its
    region after GMT was made the standard time, but the date of
    standardization (1880-08-02) is not in the tz database, other than
@@ -318,14 +318,14 @@ Errors in the tz database arise from many sources:
    way to specify Easter, these exceptional years are entered as
    separate tz Rule lines, even though the legal rules did not change.
 
- * The tz database models pre-standard time using the Gregorian
+ * The tz database models pre-standard time using the proleptic Gregorian
    calendar and local mean time (LMT), but many people used other
    calendars and other timescales.  For example, the Roman Empire used
    the Julian calendar, and had 12 varying-length daytime hours with a
    non-hour-based system at night.
 
- * Early clocks were less reliable, and the data do not represent this
-   unreliability.
+ * Early clocks were less reliable, and data entries do not represent
+   this unreliability.
 
  * As for leap seconds, civil time was not based on atomic time before
    1972, and we don't know the history of earth's rotation accurately
@@ -345,7 +345,7 @@ Errors in the tz database arise from many sources:
    a leap second, or are slightly slowed while near a leap second.
 
  * The tz database does not represent how uncertain its information is.
-   Ideally it would contain information about when the data are
+   Ideally it would contain information about when data entries are
    incomplete or dicey.  Partial temporal knowledge is a field of
    active research, though, and it's not clear how to apply it here.
 
@@ -710,9 +710,9 @@ Gregorian calendar:
 The Russian empire (including Finland and the Baltic states) did not
 convert to the Gregorian calendar until the Soviet revolution of 1917.
 
-Source:  H. Grotefend, _Taschenbuch der Zeitrechnung des deutschen
+Source: H. Grotefend, _Taschenbuch der Zeitrechnung des deutschen
 Mittelalters und der Neuzeit_, herausgegeben von Dr. O. Grotefend
-(Hannover:  Hahnsche Buchhandlung, 1941), pp. 26-28.
+(Hannover: Hahnsche Buchhandlung, 1941), pp. 26-28.
 
 
 ----- Time and time zones on Mars -----
