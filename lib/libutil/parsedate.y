@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.18 2014/10/08 14:32:29 apb Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.19 2014/10/08 14:43:48 apb Exp $");
 #endif
 
 #include <stdio.h>
@@ -118,6 +118,10 @@ spec	: /* NULL */
 item	: time {
 	    param->yyHaveTime++;
 	}
+	| time_numericzone {
+	    param->yyHaveTime++;
+	    param->yyHaveZone++;
+	}
 	| zone {
 	    param->yyHaveZone++;
 	}
@@ -197,18 +201,27 @@ time	: tUNUMBER tMERIDIAN {
 	    param->yySeconds = 0;
 	    param->yyMeridian = $4;
 	}
-	| tUNUMBER ':' tUNUMBER tSNUMBER {
-	    param->yyHour = $1;
-	    param->yyMinutes = $3;
-	    param->yyMeridian = MER24;
-	    param->yyDSTmode = DSToff;
-	    param->yyTimezone = - ($4 % 100 + ($4 / 100) * 60);
-	}
 	| tUNUMBER ':' tUNUMBER ':' tUNUMBER o_merid {
 	    param->yyHour = $1;
 	    param->yyMinutes = $3;
 	    param->yySeconds = $5;
 	    param->yyMeridian = $6;
+	}
+	| tUNUMBER ':' tUNUMBER ':' tUNUMBER '.' tUNUMBER {
+	    param->yyHour = $1;
+	    param->yyMinutes = $3;
+	    param->yySeconds = $5;
+	    param->yyMeridian = MER24;
+/* XXX: Do nothing with millis */
+	}
+	;
+
+time_numericzone : tUNUMBER ':' tUNUMBER tSNUMBER {
+	    param->yyHour = $1;
+	    param->yyMinutes = $3;
+	    param->yyMeridian = MER24;
+	    param->yyDSTmode = DSToff;
+	    param->yyTimezone = - ($4 % 100 + ($4 / 100) * 60);
 	}
 	| tUNUMBER ':' tUNUMBER ':' tUNUMBER tSNUMBER {
 	    param->yyHour = $1;
@@ -217,13 +230,6 @@ time	: tUNUMBER tMERIDIAN {
 	    param->yyMeridian = MER24;
 	    param->yyDSTmode = DSToff;
 	    param->yyTimezone = - ($6 % 100 + ($6 / 100) * 60);
-	}
-	| tUNUMBER ':' tUNUMBER ':' tUNUMBER '.' tUNUMBER {
-	    param->yyHour = $1;
-	    param->yyMinutes = $3;
-	    param->yySeconds = $5;
-	    param->yyMeridian = MER24;
-/* XXX: Do nothing with millis */
 	}
 	;
 
