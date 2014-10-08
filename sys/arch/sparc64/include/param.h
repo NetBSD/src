@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.54 2014/07/10 06:24:02 jdc Exp $ */
+/*	$NetBSD: param.h,v 1.55 2014/10/08 10:30:27 macallan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -281,3 +281,5 @@ extern const int cputyp;
 #define	PGSHIFT		13		/* log2(NBPG) */
 #define	NBPG		(1<<PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
+
+#define PCI_MAGIC_IO_RANGE	0x100000000LL
