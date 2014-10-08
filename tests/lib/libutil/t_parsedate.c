@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.10 2014/10/07 22:33:52 apb Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.11 2014/10/08 13:26:47 apb Exp $ */
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.10 2014/10/07 22:33:52 apb Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.11 2014/10/08 13:26:47 apb Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -147,6 +147,49 @@ ATF_TC_BODY(times, tc)
 		ANY, ANY, ANY, 12+5, 21, 0);
 }
 
+ATF_TC(dsttimes);
+
+ATF_TC_HEAD(dsttimes, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test DST transition times"
+	    " (PR lib/47916)");
+}
+
+ATF_TC_BODY(dsttimes, tc)
+{
+	struct tm tm;
+	time_t t;
+	int tzoff;
+
+	putenv(__UNCONST("TZ=EST"));
+	tzset();
+	parsecheck("12:0", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 12, 0, 0);
+
+	putenv(__UNCONST("TZ=Japan"));
+	tzset();
+	parsecheck("12:0", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 12, 0, 0);
+
+	/*
+	 * When the effective local time is Tue Jul  9 13:21:53 BST 2013,
+	 * check mktime("14:00")
+	 */
+	putenv(__UNCONST("TZ=Europe/London"));
+	tzset();
+	tm = (struct tm){
+		.tm_year = 2013-1900, .tm_mon = 7-1, .tm_mday = 9,
+		.tm_hour = 13, .tm_min = 21, .tm_sec = 53,
+		.tm_isdst = 0 };
+	t = mktime(&tm);
+	ATF_CHECK(t != (time_t)-1);
+	parsecheck("14:00", &t, NULL, localtime_r,
+		2013, 7, 9, 14, 0, 0);
+	tzoff = 0;
+	parsecheck("14:00", &t, &tzoff, localtime_r,
+		2013, 7, 9, 14, 0, 0);
+}
+
 ATF_TC(relative);
 
 ATF_TC_HEAD(relative, tc)
@@ -206,6 +249,7 @@ ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, dates);
 	ATF_TP_ADD_TC(tp, times);
+	ATF_TP_ADD_TC(tp, dsttimes);
 	ATF_TP_ADD_TC(tp, relative);
 	ATF_TP_ADD_TC(tp, atsecs);
 
