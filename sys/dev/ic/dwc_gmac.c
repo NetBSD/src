@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.7 2014/09/14 18:28:37 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.8 2014/10/08 18:24:21 martin Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -86,17 +86,37 @@ static void dwc_gmac_stop(struct ifnet *ifp, int disable);
 static void dwc_gmac_start(struct ifnet *ifp);
 static int dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0);
 static int dwc_gmac_ioctl(struct ifnet *, u_long, void *);
-
+static void dwc_gmac_tx_intr(struct dwc_gmac_softc *sc);
+static void dwc_gmac_rx_intr(struct dwc_gmac_softc *sc);
 
 #define	TX_DESC_OFFSET(N)	((AWGE_RX_RING_COUNT+(N)) \
 				    *sizeof(struct dwc_gmac_dev_dmadesc))
+#define	TX_NEXT(N)		(((N)+1) & (AWGE_TX_RING_COUNT-1))
 
 #define RX_DESC_OFFSET(N)	((N)*sizeof(struct dwc_gmac_dev_dmadesc))
+#define	RX_NEXT(N)		(((N)+1) & (AWGE_RX_RING_COUNT-1))
+
+
+
+#define	GMAC_DEF_DMA_INT_MASK	(GMAC_DMA_INT_TIE|GMAC_DMA_INT_RIE| \
+				GMAC_DMA_INT_NIE|GMAC_DMA_INT_AIE| \
+				GMAC_DMA_INT_FBE|GMAC_DMA_INT_UNE)
+
+#define	GMAC_DMA_INT_ERRORS	(GMAC_DMA_INT_AIE|GMAC_DMA_INT_ERE| \
+				GMAC_DMA_INT_FBE|GMAC_DMA_INT_ETE| \
+				GMAC_DMA_INT_RWE|GMAC_DMA_INT_RUE| \
+				GMAC_DMA_INT_UNE|GMAC_DMA_INT_OVE| \
+				GMAC_DMA_INT_TJE|GMAC_DMA_INT_TUE)
+
+#define	AWIN_DEF_MAC_INTRMASK	\
+	(AWIN_GMAC_MAC_INT_TSI | AWIN_GMAC_MAC_INT_ANEG |	\
+	AWIN_GMAC_MAC_INT_LINKCHG | AWIN_GMAC_MAC_INT_RGSMII)
 
 
 #ifdef DWC_GMAC_DEBUG
 static void dwc_gmac_dump_dma(struct dwc_gmac_softc *sc);
 static void dwc_gmac_dump_tx_desc(struct dwc_gmac_softc *sc);
+static void dwc_dump_and_abort(struct dwc_gmac_softc *sc, const char *msg);
 #endif
 
 void
@@ -127,8 +147,10 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 		 * try to read one from the current filter setup,
 		 * before resetting the chip.
 		 */
-		maclo = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0LO);
-		machi = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_ADDR0HI);
+		maclo = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+		    AWIN_GMAC_MAC_ADDR0LO);
+		machi = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+		    AWIN_GMAC_MAC_ADDR0HI);
 		enaddr[0] = maclo & 0x0ff;
 		enaddr[1] = (maclo >> 8) & 0x0ff;
 		enaddr[2] = (maclo >> 16) & 0x0ff;
@@ -136,10 +158,6 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 		enaddr[4] = machi & 0x0ff;
 		enaddr[5] = (machi >> 8) & 0x0ff;
 	}
-
-#ifdef DWC_GMAC_DEBUG
-	dwc_gmac_dump_dma(sc);
-#endif
 
 	/*
 	 * Init chip and do intial setup
@@ -210,8 +228,10 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 	/*
 	 * Enable interrupts
 	 */
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_INTR, AWIN_DEF_MAC_INTRMASK);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_INTENABLE, GMAC_DEF_DMA_INT_MASK);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_INTR,
+	    AWIN_DEF_MAC_INTRMASK);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_INTENABLE,
+	    GMAC_DEF_DMA_INT_MASK);
 
 	return;
 
@@ -364,7 +384,7 @@ dwc_gmac_alloc_rx_ring(struct dwc_gmac_softc *sc,
 
 		desc = &sc->sc_rxq.r_desc[i];
 		desc->ddesc_data = htole32(physaddr);
-		next = (i+1) % AWGE_RX_RING_COUNT;
+		next = RX_NEXT(i);
 		desc->ddesc_next = htole32(ring->r_physaddr 
 		    + next * sizeof(*desc));
 		desc->ddesc_cntl = htole32(
@@ -528,7 +548,7 @@ dwc_gmac_alloc_tx_ring(struct dwc_gmac_softc *sc,
 		}
 		ring->t_desc[i].ddesc_next = htole32(
 		    ring->t_physaddr + sizeof(struct dwc_gmac_dev_dmadesc)
-		    *((i+1)%AWGE_TX_RING_COUNT));
+		    *TX_NEXT(i));
 	}
 
 	return 0;
@@ -706,11 +726,6 @@ dwc_gmac_start(struct ifnet *ifp)
 		    bus_space_read_4(sc->sc_bst, sc->sc_bsh,
 		        AWIN_GMAC_DMA_OPMODE) | GMAC_DMA_OP_TXSTART);
 	}
-
-#ifdef DWC_GMAC_DEBUG
-	dwc_gmac_dump_dma(sc);
-	dwc_gmac_dump_tx_desc(sc);
-#endif
 }
 
 static void
@@ -745,6 +760,11 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 	uint32_t flags, len;
 	int error, i, first;
 
+#ifdef DWC_GMAC_DEBUG
+	aprint_normal_dev(sc->sc_dev,
+	    "dwc_gmac_queue: adding mbuf chain %p\n", m0);
+#endif
+
 	first = sc->sc_txq.t_cur;
 	map = sc->sc_txq.t_data[first].td_map;
 	flags = 0;
@@ -763,23 +783,24 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 	}
 
 	data = NULL;
-	flags = DDESC_CNTL_TXFIRST|DDESC_CNTL_TXINT|DDESC_CNTL_TXCHAIN;
+	flags = DDESC_CNTL_TXFIRST|DDESC_CNTL_TXCHAIN;
 	for (i = 0; i < map->dm_nsegs; i++) {
 		data = &sc->sc_txq.t_data[sc->sc_txq.t_cur];
-
-#ifdef DWC_GMAC_DEBUG
-		aprint_normal_dev(sc->sc_dev, "enqueing desc #%d data %08lx "
-		    "len %lu\n", sc->sc_txq.t_cur,
-		    (unsigned long)map->dm_segs[i].ds_addr,
-		    (unsigned long)map->dm_segs[i].ds_len);
-#endif
-
 		desc = &sc->sc_txq.t_desc[sc->sc_txq.t_cur];
 
 		desc->ddesc_data = htole32(map->dm_segs[i].ds_addr);
 		len = __SHIFTIN(map->dm_segs[i].ds_len,DDESC_CNTL_SIZE1MASK);
 		if (i == map->dm_nsegs-1)
-			flags |= DDESC_CNTL_TXLAST;
+			flags |= DDESC_CNTL_TXLAST|DDESC_CNTL_TXINT;
+
+#ifdef DWC_GMAC_DEBUG
+		aprint_normal_dev(sc->sc_dev, "enqueing desc #%d data %08lx "
+		    "len %lu (flags: %08x, len: %08x)\n", sc->sc_txq.t_cur,
+		    (unsigned long)map->dm_segs[i].ds_addr,
+		    (unsigned long)map->dm_segs[i].ds_len,
+		    flags, len);
+#endif
+
 		desc->ddesc_cntl = htole32(len|flags);
 		flags &= ~DDESC_CNTL_TXFIRST;
 
@@ -789,10 +810,9 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 		 */
 		if (i)
 			desc->ddesc_status = htole32(DDESC_STATUS_OWNEDBYDEV);
-		sc->sc_txq.t_queued++;
 
-		sc->sc_txq.t_cur = (sc->sc_txq.t_cur + 1)
-		    & (AWGE_TX_RING_COUNT-1);
+		sc->sc_txq.t_queued++;
+		sc->sc_txq.t_cur = TX_NEXT(sc->sc_txq.t_cur);
 	}
 
 	/* Pass first to device */
@@ -846,29 +866,105 @@ dwc_gmac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return error;
 }
 
+static void
+dwc_gmac_tx_intr(struct dwc_gmac_softc *sc)
+{
+	struct dwc_gmac_tx_data *data;
+	struct dwc_gmac_dev_dmadesc *desc;
+	uint32_t flags;
+	int i;
+
+	for (i = sc->sc_txq.t_next; sc->sc_txq.t_queued > 0;
+	    i = TX_NEXT(i), sc->sc_txq.t_queued--) {
+
+#ifdef DWC_GMAC_DEBUG
+		aprint_normal_dev(sc->sc_dev,
+		    "dwc_gmac_tx_intr: checking desc #%d (t_queued: %d)\n",
+		    i, sc->sc_txq.t_queued);
+#endif
+
+		desc = &sc->sc_txq.t_desc[i];
+		dwc_gmac_txdesc_sync(sc, i, i+1,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		flags = le32toh(desc->ddesc_status);
+		if (flags & DDESC_STATUS_OWNEDBYDEV)
+			break;
+		data = &sc->sc_txq.t_data[i];
+		if (data->td_m == NULL)
+			continue;
+		sc->sc_ec.ec_if.if_opackets++;
+		bus_dmamap_sync(sc->sc_dmat, data->td_active, 0,
+		    data->td_active->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, data->td_active);
+
+#ifdef DWC_GMAC_DEBUG
+		aprint_normal_dev(sc->sc_dev,
+		    "dwc_gmac_tx_intr: done with packet at desc #%d, "
+		    "freeing mbuf %p\n", i, data->td_m);
+#endif
+
+		m_freem(data->td_m);
+		data->td_m = NULL;
+	}
+
+	sc->sc_txq.t_next = i;
+
+	if (sc->sc_txq.t_queued < AWGE_TX_RING_COUNT) {
+		sc->sc_ec.ec_if.if_flags &= ~IFF_OACTIVE;
+	}
+}
+
+static void
+dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
+{
+#ifdef DWC_GMAC_DEBUG
+	aprint_normal_dev(sc->sc_dev, "rx intr\n");
+	/* XXX */
+#endif
+}
+
 int
 dwc_gmac_intr(struct dwc_gmac_softc *sc)
 {
 	uint32_t status, dma_status;
+	int rv = 0;
 
 	status = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_INTR);
 	if (status & AWIN_GMAC_MII_IRQ) {
 		(void)bus_space_read_4(sc->sc_bst, sc->sc_bsh,
 		    AWIN_GMAC_MII_STATUS);
+		rv = 1;
 		mii_pollstat(&sc->sc_mii);
 	}
 
 	dma_status = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
 	    AWIN_GMAC_DMA_STATUS);
 
-printf("%s: INTR status: %08x, DMA status: %08x\n", device_xname(sc->sc_dev),
-    status, dma_status);
+	if (dma_status & (GMAC_DMA_INT_NIE|GMAC_DMA_INT_AIE))
+		rv = 1;
 
-static size_t cnt = 0;
-if (++cnt > 20)
-	panic("enough now");
+	if (dma_status & GMAC_DMA_INT_TIE)
+		dwc_gmac_tx_intr(sc);
 
-	return 1;
+	if (dma_status & GMAC_DMA_INT_RIE)
+		dwc_gmac_rx_intr(sc);
+
+	/*
+	 * Check error conditions
+	 */
+	if (dma_status & GMAC_DMA_INT_ERRORS) {
+		sc->sc_ec.ec_if.if_oerrors++;
+#ifdef DWC_GMAC_DEBUG
+		dwc_dump_and_abort(sc, "interrupt error condition");
+#endif
+	}
+
+	/* ack interrupt */
+	if (dma_status)
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
+		    AWIN_GMAC_DMA_STATUS, dma_status & GMAC_DMA_INT_MASK);
+
+	return rv;
 }
 
 #ifdef DWC_GMAC_DEBUG
@@ -906,7 +1002,9 @@ dwc_gmac_dump_tx_desc(struct dwc_gmac_softc *sc)
 {
 	int i;
 
-	aprint_normal_dev(sc->sc_dev, " TX DMA descriptors:\n");
+	aprint_normal_dev(sc->sc_dev, "TX queue: cur=%d, next=%d, queued=%d\n",
+	    sc->sc_txq.t_cur, sc->sc_txq.t_next, sc->sc_txq.t_queued);
+	aprint_normal_dev(sc->sc_dev, "TX DMA descriptors:\n");
 	for (i = 0; i < AWGE_TX_RING_COUNT; i++) {
 		struct dwc_gmac_dev_dmadesc *desc = &sc->sc_txq.t_desc[i];
 		aprint_normal("#%d (%08lx): status: %08x cntl: %08x data: %08x next: %08x\n",
@@ -915,5 +1013,42 @@ dwc_gmac_dump_tx_desc(struct dwc_gmac_softc *sc)
 		    le32toh(desc->ddesc_data), le32toh(desc->ddesc_next));
 
 	}
+}
+
+static void
+dwc_dump_and_abort(struct dwc_gmac_softc *sc, const char *msg)
+{
+	uint32_t status = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+	     AWIN_GMAC_MAC_INTR);
+	uint32_t dma_status = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+	     AWIN_GMAC_DMA_STATUS);
+	char buf[200];
+
+	/* print interrupt state */
+	snprintb(buf, sizeof(buf), "\177\20"
+	    "b\x10""NIE\0"
+	    "b\x0f""AIE\0"
+	    "b\x0e""ERE\0"
+	    "b\x0d""FBE\0"
+	    "b\x0a""ETE\0"
+	    "b\x09""RWE\0"
+	    "b\x08""RSE\0"
+	    "b\x07""RUE\0"
+	    "b\x06""RIE\0"
+	    "b\x05""UNE\0"
+	    "b\x04""OVE\0"
+	    "b\x03""TJE\0"
+	    "b\x02""TUE\0"
+	    "b\x01""TSE\0"
+	    "b\x00""TIE\0"
+	    "\0", dma_status);
+	printf("%s: INTR status: %08x, DMA status: %s\n",
+	    device_xname(sc->sc_dev),
+	    status, buf);
+
+	dwc_gmac_dump_dma(sc);
+	dwc_gmac_dump_tx_desc(sc);
+
+	panic(msg);
 }
 #endif
