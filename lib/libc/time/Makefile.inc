@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2014/10/07 22:20:17 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2014/10/08 05:44:03 msaitoh Exp $
 
 .PATH: ${.CURDIR}/time
 
@@ -28,7 +28,7 @@ MLINKS+=ctime.3 ctime_r.3	\
 	time2posix.3 posix2time.3 \
 	time2posix.3 posix2time_z.3 \
 	time2posix.3 time2posix_z.3 \
-	tszet.3 tzgetname.3	\
+	tzset.3 tzgetname.3	\
 	tzset.3 daylight.3	\
 	tzset.3 tzalloc.3	\
 	tzset.3 tzfree.3	\
