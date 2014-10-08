@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.37 2014/10/07 22:14:46 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.38 2014/10/08 13:13:34 martin Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.37 2014/10/07 22:14:46 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.38 2014/10/08 13:13:34 martin Exp $");
 #endif /* !defined lint */
 
 /*
@@ -752,7 +752,7 @@ main(int argc, char *argv[])
 }
 
 static time_t
-yeartot(const long y)
+yeartot(const intmax_t y)
 {
 	intmax_t	myy, seconds, years;
 	time_t		t;
