@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.11 2014/10/08 13:26:47 apb Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.12 2014/10/08 17:21:40 apb Exp $ */
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,10 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.11 2014/10/08 13:26:47 apb Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.12 2014/10/08 17:21:40 apb Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <util.h>
@@ -59,34 +60,55 @@ parsecheck(const char *datestr, const time_t *reftime, const int *zoff,
 {
 	time_t t;
 	struct tm tm;
+	char argstr[128];
+
+	/*
+	 * printable version of the args.
+	 *
+	 * Note that printf("%.*d", 0, 0)) prints nothing at all,
+	 * while printf("%.*d", 1, val) prints the value as usual.
+	 */
+	snprintf(argstr, sizeof(argstr), "%s%s%s, %s%.*jd, %s%.*d",
+		/* NULL or \"<datestr>\" */
+		(datestr ? "\"" : ""),
+		(datestr ? datestr : "NULL"),
+		(datestr ? "\"" : ""),
+		/* NULL or *reftime */
+		(reftime ? "" : "NULL"),
+		(reftime ? 1 : 0), 
+		(reftime ? (intmax_t)*reftime : (intmax_t)0), 
+		/* NULL or *zoff */
+		(zoff ? "" : "NULL"),
+		(zoff ? 1 : 0), 
+		(zoff ? *zoff : 0));
 
 	ATF_CHECK_MSG((t = parsedate(datestr, reftime, zoff)) != -1,
-	    "parsedate(\"%s\",,) returned -1\n", datestr);
+	    "parsedate(%s) returned -1\n", argstr);
 	ATF_CHECK(time_to_tm(&t, &tm) != NULL);
 	if (year != ANY)
 		ATF_CHECK_MSG(tm.tm_year + 1900 == year,
-		    "parsedate(\"%s\",,) expected year %d got %d (+1900)\n",
-		    datestr, year, (int)tm.tm_year);
+		    "parsedate(%s) expected year %d got %d (+1900)\n",
+		    argstr, year, (int)tm.tm_year);
 	if (month != ANY)
 		ATF_CHECK_MSG(tm.tm_mon + 1 == month,
-		    "parsedate(\"%s\",,) expected month %d got %d (+1)\n",
-		    datestr, month, (int)tm.tm_mon);
+		    "parsedate(%s) expected month %d got %d (+1)\n",
+		    argstr, month, (int)tm.tm_mon);
 	if (day != ANY)
 		ATF_CHECK_MSG(tm.tm_mday == day,
-		    "parsedate(\"%s\",,) expected day %d got %d\n",
-		    datestr, day, (int)tm.tm_mday);
+		    "parsedate(%s) expected day %d got %d\n",
+		    argstr, day, (int)tm.tm_mday);
 	if (hour != ANY)
 		ATF_CHECK_MSG(tm.tm_hour == hour,
-		    "parsedate(\"%s\",,) expected hour %d got %d\n",
-		    datestr, hour, (int)tm.tm_hour);
+		    "parsedate(%s) expected hour %d got %d\n",
+		    argstr, hour, (int)tm.tm_hour);
 	if (minute != ANY)
 		ATF_CHECK_MSG(tm.tm_min == minute,
-		    "parsedate(\"%s\",,) expected minute %d got %d\n",
-		    datestr, minute, (int)tm.tm_min);
+		    "parsedate(%s) expected minute %d got %d\n",
+		    argstr, minute, (int)tm.tm_min);
 	if (second != ANY)
 		ATF_CHECK_MSG(tm.tm_sec == second,
-		    "parsedate(\"%s\",,) expected second %d got %d\n",
-		    datestr, second, (int)tm.tm_sec);
+		    "parsedate(%s) expected second %d got %d\n",
+		    argstr, second, (int)tm.tm_sec);
 }
 
 ATF_TC(dates);
