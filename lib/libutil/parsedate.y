@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.19 2014/10/08 14:43:48 apb Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.20 2014/10/08 17:38:28 apb Exp $");
 #endif
 
 #include <stdio.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: parsedate.y,v 1.19 2014/10/08 14:43:48 apb Exp $");
 #define HOUR(x)		((time_t)(x) * 60)
 #define SECSPERDAY	(24L * 60L * 60L)
 
+#define USE_LOCAL_TIME	99999 /* special case for Convert() and yyTimezone */
 
 /*
 **  An entry in the lexical lookup table.
@@ -618,7 +619,8 @@ Convert(
     time_t	Hours,		/* Hour of day [0-24] */
     time_t	Minutes,	/* Minute of hour [0-59] */
     time_t	Seconds,	/* Second of minute [0-60] */
-    time_t	Timezone,	/* Timezone as minutes east of UTC */
+    time_t	Timezone,	/* Timezone as minutes east of UTC,
+				 * or USE_LOCAL_TIME special case */
     MERIDIAN	Meridian,	/* Hours are am/pm/24 hour clock */
     DSTMODE	DSTmode		/* DST on/off/maybe */
 )
@@ -638,9 +640,25 @@ Convert(
     default:     tm.tm_isdst = -1; break;
     }
 
-    /* We rely on mktime_z(NULL, ...) working in UTC, not in local time. */
-    result = mktime_z(NULL, &tm);
-    result += Timezone * 60;
+    if (Timezone == USE_LOCAL_TIME) {
+	    result = mktime(&tm);
+    } else {
+	    /* We rely on mktime_z(NULL, ...) working in UTC */
+	    result = mktime_z(NULL, &tm);
+	    result += Timezone * 60;
+    }
+
+#if PARSEDATE_DEBUG
+    fprintf(stderr, "%s(M=%jd D=%jd Y=%jd H=%jd M=%jd S=%jd Z=%jd"
+		    " mer=%d DST=%d)",
+	__func__,
+	(intmax_t)Month, (intmax_t)Day, (intmax_t)Year,
+	(intmax_t)Hours, (intmax_t)Minutes, (intmax_t)Seconds,
+	(intmax_t)Timezone, (int)Meridian, (int)DSTmode);
+    fprintf(stderr, " -> %jd", (intmax_t)result);
+    fprintf(stderr, " %s", ctime(&result));
+#endif
+
     return result;
 }
 
@@ -878,31 +896,10 @@ yylex(YYSTYPE *yylval, const char **yyInput)
 
 #define TM_YEAR_ORIGIN 1900
 
-/* Yield A - B, measured in seconds.  */
-static time_t
-difftm (struct tm *a, struct tm *b)
-{
-  int ay = a->tm_year + (TM_YEAR_ORIGIN - 1);
-  int by = b->tm_year + (TM_YEAR_ORIGIN - 1);
-  int days = (
-	      /* difference in day of year */
-	      a->tm_yday - b->tm_yday
-	      /* + intervening leap days */
-	      +  ((ay >> 2) - (by >> 2))
-	      -  (ay/100 - by/100)
-	      +  ((ay/100 >> 2) - (by/100 >> 2))
-	      /* + difference in years * 365 */
-	      +  (long)(ay-by) * 365
-	      );
-  return ((time_t)60*(60*(24*days + (a->tm_hour - b->tm_hour))
-	      + (a->tm_min - b->tm_min))
-	  + (a->tm_sec - b->tm_sec));
-}
-
 time_t
 parsedate(const char *p, const time_t *now, const int *zone)
 {
-    struct tm gmt, local, *gmt_ptr, *tm;
+    struct tm		local, *tm;
     time_t		nowt;
     int			zonet;
     time_t		Start;
@@ -913,29 +910,24 @@ parsedate(const char *p, const time_t *now, const int *zone)
     saved_errno = errno;
     errno = 0;
 
-    if (now == NULL || zone == NULL) {
+    if (now == NULL) {
         now = &nowt;
-	zone = &zonet;
 	(void)time(&nowt);
-
-	gmt_ptr = gmtime_r(now, &gmt);
+    }
+    if (zone == NULL) {
+	zone = &zonet;
+	zonet = USE_LOCAL_TIME;
 	if ((tm = localtime_r(now, &local)) == NULL)
 	    return -1;
-
-	if (gmt_ptr != NULL)
-	    zonet = difftm(&gmt, &local) / 60;
-	else
-	    /* We are on a system like VMS, where the system clock is
-	       in local time and the system has no concept of timezones.
-	       Hopefully we can fake this out (for the case in which the
-	       user specifies no timezone) by just saying the timezone
-	       is zero.  */
-	    zonet = 0;
-
-	if (local.tm_isdst)
-	    zonet += 60;
     } else {
-	if ((tm = localtime_r(now, &local)) == NULL)
+	/*
+	 * Should use the specified zone, not localtime.
+	 * Fake it using gmtime and arithmetic.
+	 * This is good enough because we use only the year/month/day,
+	 * not other fields of struct tm.
+	 */
+	time_t fake = *now + (*zone * 60);
+	if ((tm = gmtime_r(&fake, &local)) == NULL)
 	    return -1;
     }
     param.yyYear = tm->tm_year + 1900;
