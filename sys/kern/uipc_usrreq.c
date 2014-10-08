@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.171 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.172 2014/10/08 16:13:02 taca Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.171 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.172 2014/10/08 16:13:02 taca Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -927,8 +927,6 @@ makeun(struct mbuf *nam, size_t *addrlen) {
 	sun = malloc(*addrlen, M_SONAME, M_WAITOK);
 	m_copydata(nam, 0, nam->m_len, (void *)sun);
 	*(((char *)sun) + nam->m_len) = '\0';
-	sun->sun_len = strlen(sun->sun_path) +
-	    offsetof(struct sockaddr_un, sun_path);
 	return sun;
 }
 
