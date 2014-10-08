@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.9 2014/10/08 01:45:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.10 2014/10/08 03:34:44 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.9 2014/10/08 01:45:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.10 2014/10/08 03:34:44 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -651,7 +651,7 @@ vioif_deferred_init(device_t self)
 	int r;
 
 	if (ifp->if_flags & IFF_PROMISC)
-		return
+		return;
 
 	r =  vioif_set_promisc(sc, false);
 	if (r != 0)
