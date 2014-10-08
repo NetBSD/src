@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.12 2014/10/08 17:21:40 apb Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.13 2014/10/08 17:23:03 apb Exp $ */
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.12 2014/10/08 17:21:40 apb Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.13 2014/10/08 17:23:03 apb Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -207,7 +207,7 @@ ATF_TC_BODY(dsttimes, tc)
 	ATF_CHECK(t != (time_t)-1);
 	parsecheck("14:00", &t, NULL, localtime_r,
 		2013, 7, 9, 14, 0, 0);
-	tzoff = 0;
+	tzoff = -60; /* British Summer Time */
 	parsecheck("14:00", &t, &tzoff, localtime_r,
 		2013, 7, 9, 14, 0, 0);
 }
