@@ -35,12 +35,18 @@
 #define	AWIN_GMAC_MAC_MIIDATA		0x0014
 #define	AWIN_GMAC_MAC_FLOWCTRL		0x0018
 #define	AWIN_GMAC_MAC_VLANTAG		0x001c
-#define	AWIN_GMAC_MAC_VERSION		0x0020
+#define	AWIN_GMAC_MAC_VERSION		0x0020	/* not always implemented? */
 #define	AWIN_GMAC_MAC_INTR		0x0038
 #define	AWIN_GMAC_MAC_INTMASK		0x003c
 #define	AWIN_GMAC_MAC_ADDR0HI		0x0040
 #define	AWIN_GMAC_MAC_ADDR0LO		0x0044
 #define	AWIN_GMAC_MII_STATUS		0x00D8
+
+#define	AWIN_GMAC_MAC_INT_LPI		__BIT(10)
+#define	AWIN_GMAC_MAC_INT_TSI		__BIT(9)
+#define	AWIN_GMAC_MAC_INT_ANEG		__BIT(2)
+#define	AWIN_GMAC_MAC_INT_LINKCHG	__BIT(1)
+#define	AWIN_GMAC_MAC_INT_RGSMII	__BIT(0)
 
 #define	AWIN_GMAC_DMA_BUSMODE		0x1000
 #define	AWIN_GMAC_DMA_TXPOLL		0x1004
@@ -54,6 +60,7 @@
 #define	AWIN_GMAC_DMA_CUR_RX_DESC	0x104c
 #define	AWIN_GMAC_DMA_CUR_TX_BUFADDR	0x1050
 #define	AWIN_GMAC_DMA_CUR_RX_BUFADDR	0x1054
+#define	AWIN_GMAC_DMA_HWFEATURES	0x1058	/* not always implemented? */
 
 #define GMAC_MII_PHY_SHIFT		11
 #define	GMAC_MII_PHY_MASK		__BITS(15,11)
@@ -68,9 +75,11 @@
 
 #define	AWIN_GMAC_MII_IRQ		__BIT(0)
 
+#define	GMAC_DMA_OP_STOREFORWARD	__BIT(21)
 #define	GMAC_DMA_OP_FLUSHTX		__BIT(20)
 #define	GMAC_DMA_OP_TXSTART		__BIT(13)
-#define	GMAC_DMA_OP_RXSTART		__BIT(0)
+#define	GMAC_DMA_OP_TXSECONDFRAME	__BIT(2)
+#define	GMAC_DMA_OP_RXSTART		__BIT(1)
 
 #define GMAC_DMA_INT_NIE		__BIT(16) /* Normal/Summary */
 #define GMAC_DMA_INT_AIE		__BIT(15) /* Abnormal/Summary */
@@ -88,11 +97,7 @@
 #define	GMAC_DMA_INT_TSE		__BIT(1) /* Transmit stopped */
 #define	GMAC_DMA_INT_TIE		__BIT(0) /* Transmit interrupt */
 
-#define	GMAC_DEF_DMA_INT_MASK	(GMAC_DMA_INT_TIE|GMAC_DMA_INT_RIE| \
-				GMAC_DMA_INT_NIE|GMAC_DMA_INT_AIE| \
-				GMAC_DMA_INT_FBE|GMAC_DMA_INT_UNE)
-
-#define	AWIN_DEF_MAC_INTRMASK	0x207	/* XXX ??? */
+#define	GMAC_DMA_INT_MASK	__BITS(0,16)	/* all possible intr bits */
 
 struct dwc_gmac_dev_dmadesc {
 	uint32_t ddesc_status;
@@ -144,4 +149,3 @@ struct dwc_gmac_dev_dmadesc {
 	uint32_t ddesc_data;	/* pointer to buffer data */
 	uint32_t ddesc_next;	/* link to next descriptor */
 };
-
