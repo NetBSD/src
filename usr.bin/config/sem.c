@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.45 2014/10/09 10:29:36 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.46 2014/10/09 15:25:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,6 +65,7 @@ const char *s_none;
 
 static struct hashtab *cfhashtab;	/* for config lookup */
 struct hashtab *devitab;		/* etc */
+struct attr allattr;
 
 static struct attr errattr;
 static struct devbase errdev;
@@ -95,6 +96,11 @@ initsem(void)
 {
 
 	attrtab = ht_new();
+
+	allattr.a_name = "netbsd";
+	TAILQ_INIT(&allattr.a_files);
+	(void)ht_insert(attrtab, allattr.a_name, &allattr);
+
 	errattr.a_name = "<internal>";
 
 	TAILQ_INIT(&allbases);
