@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.14 2014/10/09 10:29:36 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.15 2014/10/09 15:25:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -203,9 +203,11 @@ addfiletoattr(const char *name, struct files *fi)
 	struct attr *a;
 
 	a = ht_lookup(attrtab, name);
-	if (a != NULL) {
-		TAILQ_INSERT_TAIL(&a->a_files, fi, fi_anext);
+	if (a == NULL) {
+		CFGDBG(1, "attr `%s' not found", name);
+	} else {
 		fi->fi_attr = a;
+		TAILQ_INSERT_TAIL(&a->a_files, fi, fi_anext);
 	}
 }
 
@@ -314,10 +316,14 @@ fixfiles(void)
 			}
 		}
 		fi->fi_flags |= FI_SEL;
-		CFGDBG(3, "file slected `%s'", fi->fi_path);
-		if (fi->fi_attr != NULL)
-			CFGDBG(3, "file `%s' belongs to attr `%s'", fi->fi_path,
-			    fi->fi_attr->a_name);
+		CFGDBG(3, "file selected `%s'", fi->fi_path);
+
+		/* Add other files to the default "netbsd" attribute. */
+		if (fi->fi_attr == NULL) {
+			addfiletoattr(allattr.a_name, fi);
+		}
+		CFGDBG(3, "file `%s' belongs to attr `%s'", fi->fi_path,
+		    fi->fi_attr->a_name);
 	}
 	return (err);
 }
