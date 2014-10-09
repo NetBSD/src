@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.13 2014/10/09 06:49:53 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.14 2014/10/09 10:29:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,6 +65,7 @@ static struct hashtab *pathtab;		/* full path names */
 
 static struct files **unchecked;
 
+static void	addfiletoattr(const char *, struct files *);
 static int	checkaux(const char *, void *);
 static int	fixcount(const char *, void *);
 static int	fixfsel(const char *, void *);
@@ -157,6 +158,7 @@ addfile(const char *path, struct condexpr *optx, int flags, const char *rule)
 	fi->fi_optx = optx;
 	fi->fi_optf = NULL;
 	fi->fi_mkrule = rule;
+	fi->fi_attr = NULL;
 	TAILQ_INSERT_TAIL(&allfiles, fi, fi_next);
 	return;
  bad:
@@ -194,6 +196,18 @@ addobject(const char *path, struct condexpr *optx, int flags)
 	TAILQ_INSERT_TAIL(&allobjects, oi, oi_next);
 	return;
 }     
+
+static void
+addfiletoattr(const char *name, struct files *fi)
+{
+	struct attr *a;
+
+	a = ht_lookup(attrtab, name);
+	if (a != NULL) {
+		TAILQ_INSERT_TAIL(&a->a_files, fi, fi_anext);
+		fi->fi_attr = a;
+	}
+}
 
 /*
  * We have finished reading some "files" file, either ../../conf/files
@@ -260,6 +274,9 @@ fixfiles(void)
 			/* include it */ ;
 		}
 		else if (fi->fi_optx != NULL) {
+			if (fi->fi_optx->cx_type == CX_ATOM) {
+				addfiletoattr(fi->fi_optx->cx_u.atom, fi);
+			}
 			flathead = NULL;
 			flatp = &flathead;
 			sel = expr_eval(fi->fi_optx,
@@ -298,6 +315,9 @@ fixfiles(void)
 		}
 		fi->fi_flags |= FI_SEL;
 		CFGDBG(3, "file slected `%s'", fi->fi_path);
+		if (fi->fi_attr != NULL)
+			CFGDBG(3, "file `%s' belongs to attr `%s'", fi->fi_path,
+			    fi->fi_attr->a_name);
 	}
 	return (err);
 }
