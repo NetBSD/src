@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.50 2014/10/09 15:25:26 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.51 2014/10/09 19:20:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -606,6 +606,7 @@ int	emitioconfh(void);
 int	mkioconf(void);
 
 /* mkmakefile.c */
+extern int usekobjs;
 int	mkmakefile(void);
 
 /* mkswap.c */
