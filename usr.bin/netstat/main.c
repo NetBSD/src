@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.91 2014/05/30 01:44:21 rmind Exp $	*/
+/*	$NetBSD: main.c,v 1.92 2014/10/09 23:45:47 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.91 2014/05/30 01:44:21 rmind Exp $");
+__RCSID("$NetBSD: main.c,v 1.92 2014/10/09 23:45:47 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -344,12 +344,17 @@ prepare(const char *nf, const char *mf, struct protox *tp)
 	/*
 	 * Try to figure out if we can use sysctl or not.
 	 */
-	if (nf != NULL && mf != NULL) {
+	if (nf != NULL || mf != NULL) {
 		/* Of course, we can't use sysctl with dumps. */
 		if (force_sysctl)
 			errx(EXIT_FAILURE, "can't use sysctl with dumps");
 
-		/* If we have -M and -N, we're not dealing with live memory. */
+		/*
+		 * If we have -M or -N, we're not dealing with live memory
+		 * or want to use kvm interface explicitly.  It is sometimes
+		 * useful to dig inside of kernel without extending
+		 * sysctl interface (i.e., without rebuilding kernel).
+		 */
 		use_sysctl = 0;
 	} else if (qflag ||
 		   iflag ||
