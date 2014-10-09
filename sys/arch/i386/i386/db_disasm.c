@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.42 2014/10/07 15:34:05 msaitoh Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.43 2014/10/09 18:34:24 msaitoh Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.42 2014/10/07 15:34:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.43 2014/10/09 18:34:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -228,6 +228,7 @@ const struct inst db_inst_0f4x[] = {
 /*45*/	{ "cmovnz", true,  LONG,  op2(E,R),    0 },
 /*46*/	{ "cmovbe", true,  LONG,  op2(E,R),    0 },
 /*47*/	{ "cmovmbe",true,  LONG,  op2(E,R),    0 },
+
 /*48*/	{ "cmovs",  true,  LONG,  op2(E,R),    0 },
 /*49*/	{ "cmovns", true,  LONG,  op2(E,R),    0 },
 /*4a*/	{ "cmovp",  true,  LONG,  op2(E,R),    0 },
@@ -283,8 +284,8 @@ const struct inst db_inst_0fax[] = {
 /*a1*/	{ "pop",   false, NONE,  op1(Si),     0 },
 /*a2*/	{ "cpuid", false, NONE,  0,	      0 },
 /*a3*/	{ "bt",    true,  LONG,  op2(R,E),    0 },
-/*a4*/	{ "shld",  true,  LONG,  op3(Ib,E,R), 0 },
-/*a5*/	{ "shld",  true,  LONG,  op3(CL,E,R), 0 },
+/*a4*/	{ "shld",  true,  LONG,  op3(Ib,R,E), 0 },
+/*a5*/	{ "shld",  true,  LONG,  op3(CL,R,E), 0 },
 /*a6*/	{ "",      false, NONE,  0,	      0 },
 /*a7*/	{ "",      false, NONE,  0,	      0 },
 
@@ -292,8 +293,8 @@ const struct inst db_inst_0fax[] = {
 /*a9*/	{ "pop",   false, NONE,  op1(Si),     0 },
 /*aa*/	{ "rsm",   false, NONE,  0,	      0 },
 /*ab*/	{ "bts",   true,  LONG,  op2(R,E),    0 },
-/*ac*/	{ "shrd",  true,  LONG,  op3(Ib,E,R), 0 },
-/*ad*/	{ "shrd",  true,  LONG,  op3(CL,E,R), 0 },
+/*ac*/	{ "shrd",  true,  LONG,  op3(Ib,R,E), 0 },
+/*ad*/	{ "shrd",  true,  LONG,  op3(CL,R,E), 0 },
 /*ae*/	{ "fxsave",true,  LONG,  0,	      0 },
 /*af*/	{ "imul",  true,  LONG,  op2(E,R),    0 },
 };
@@ -327,6 +328,7 @@ const struct inst db_inst_0fcx[] = {
 /*c5*/	{ "",	   false, NONE,	 0,	      0 },
 /*c6*/	{ "",	   false, NONE,	 0,	      0 },
 /*c7*/	{ "",	   true,  NONE,	 op1(E),      db_Grp9 },
+
 /*c8*/	{ "bswap", false, LONG,  op1(Ri),     0 },
 /*c9*/	{ "bswap", false, LONG,  op1(Ri),     0 },
 /*ca*/	{ "bswap", false, LONG,  op1(Ri),     0 },
@@ -584,7 +586,7 @@ const struct inst db_inst_table[256] = {
 /*24*/	{ "and",   false, BYTE,  op2(I, A),  0 },
 /*25*/	{ "and",   false, LONG,  op2(I, A),  0 },
 /*26*/	{ "",      false, NONE,  0,	     0 },
-/*27*/	{ "aaa",   false, NONE,  0,	     0 },
+/*27*/	{ "daa",   false, NONE,  0,	     0 },
 
 /*28*/	{ "sub",   true,  BYTE,  op2(R, E),  0 },
 /*29*/	{ "sub",   true,  LONG,  op2(R, E),  0 },
@@ -602,7 +604,7 @@ const struct inst db_inst_table[256] = {
 /*34*/	{ "xor",   false, BYTE,  op2(I, A),  0 },
 /*35*/	{ "xor",   false, LONG,  op2(I, A),  0 },
 /*36*/	{ "",      false, NONE,  0,	     0 },
-/*37*/	{ "daa",   false, NONE,  0,	     0 },
+/*37*/	{ "aaa",   false, NONE,  0,	     0 },
 
 /*38*/	{ "cmp",   true,  BYTE,  op2(R, E),  0 },
 /*39*/	{ "cmp",   true,  LONG,  op2(R, E),  0 },
