@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.47 2014/10/09 06:45:31 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.48 2014/10/09 07:43:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -628,6 +628,8 @@ extern	int dflag;
 	do { if ((dflag) >= (n)) cfgdbg(__VA_ARGS__); } while (0)
 void	cfgdbg(const char *, ...)			/* debug info */
      __printflike(1, 2);
+#else
+#define	CFGDBG(n, ...) /* */
 #endif
 void	cfgwarn(const char *, ...)			/* immediate warns */
      __printflike(1, 2);
