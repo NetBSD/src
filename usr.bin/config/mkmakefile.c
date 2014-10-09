@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.23 2014/10/09 19:24:36 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.24 2014/10/09 19:33:43 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,7 +100,8 @@ mkmakefile(void)
 	    machine, machine);
 	ifname = sourcepath(buf);
 	if ((ifp = fopen(ifname, "r")) == NULL) {
-		/* Try a makefile for the architecture second.
+		/*
+		 * Try a makefile for the architecture second.
 		 */
 		(void)snprintf(buf, sizeof(buf), "arch/%s/conf/Makefile.%s",
 		    machinearch, machinearch);
@@ -232,11 +233,13 @@ emitsubs(FILE *fp, const char *line, const char *file, int lineno)
 			if (option != NULL)
 				fputs(option->nv_str ? option->nv_str : "1",
 				    fp);
-			/* Otherwise it's not a selected option and we don't
-			 * output anything. */
+			/*
+			 * Otherwise it's not a selected option and we don't
+			 * output anything.
+			 */
 		}
 
-		line = nextpct+1;
+		line = nextpct + 1;
 	}
 }
 
@@ -295,12 +298,12 @@ emitdefs(FILE *fp)
 	sp = "";
 	for (nv = options; nv != NULL; nv = nv->nv_next) {
 
-		/* skip any options output to a header file */
+		/* Skip any options output to a header file */
 		if (DEFINED_OPTION(nv->nv_name))
 			continue;
 		fprintf(fp, "%s-D%s", sp, nv->nv_name);
 		if (nv->nv_str)
-		    fprintf(fp, "=\"%s\"", nv->nv_str);
+			fprintf(fp, "=\"%s\"", nv->nv_str);
 		sp = " ";
 	}
 	putc('\n', fp);
@@ -339,12 +342,12 @@ emitobjs(FILE *fp)
 		} else {
 			if (oi->oi_prefix != NULL) {
 				fprintf(fp, "\t%s%s/%s \\\n",
-					    prefix_prologue(oi->oi_path),
-					    oi->oi_prefix, oi->oi_path);
+				    prefix_prologue(oi->oi_path),
+				    oi->oi_prefix, oi->oi_path);
 			} else {
 				fprintf(fp, "\t%s%s \\\n",
-				            filetype_prologue(&oi->oi_fit),
-				            oi->oi_path);
+				    filetype_prologue(&oi->oi_fit),
+				    oi->oi_path);
 			}
 		}
 	}
@@ -447,12 +450,12 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
 		} else {
 			if (fi->fi_prefix != NULL) {
 				fprintf(fp, "\t%s%s/%s \\\n",
-					    prefix_prologue(fi->fi_prefix),
-					    fi->fi_prefix, fpath);
+				    prefix_prologue(fi->fi_prefix),
+				    fi->fi_prefix, fpath);
 			} else {
 				fprintf(fp, "\t%s%s \\\n",
-				            filetype_prologue(&fi->fi_fit),
-				            fpath);
+				    filetype_prologue(&fi->fi_fit),
+				    fpath);
 			}
 		}
 	}
@@ -490,13 +493,13 @@ emitrules(FILE *fp)
 		} else {
 			if (fi->fi_prefix != NULL) {
 				fprintf(fp, "%s.o: %s%s/%s\n", fi->fi_base,
-					    prefix_prologue(fi->fi_prefix),
-					    fi->fi_prefix, fpath);
+				    prefix_prologue(fi->fi_prefix),
+				    fi->fi_prefix, fpath);
 			} else {
 				fprintf(fp, "%s.o: %s%s\n",
-				            fi->fi_base,
-				            filetype_prologue(&fi->fi_fit),
-				            fpath);
+				    fi->fi_base,
+				    filetype_prologue(&fi->fi_fit),
+				    fpath);
  			}
 		}
 		if (fi->fi_mkrule != NULL) {
@@ -538,9 +541,9 @@ emitload(FILE *fp)
 	TAILQ_FOREACH(cf, &allcf, cf_next) {
 		fprintf(fp, "KERNELS+=%s\n", cf->cf_name);
 		fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o vers.o build_kernel\n",
-			cf->cf_name, cf->cf_name);
+		    cf->cf_name, cf->cf_name);
 		fprintf(fp, "swap%s.o: swap%s.c\n"
-			"\t${NORMAL_C}\n\n", cf->cf_name, cf->cf_name);
+		    "\t${NORMAL_C}\n\n", cf->cf_name, cf->cf_name);
 	}
 	fputs("\n", fp);
 }
