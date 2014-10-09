@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.54 2014/08/09 12:40:14 bad Exp $	*/
+/*	$NetBSD: main.c,v 1.55 2014/10/09 06:45:31 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,6 +92,7 @@ int	yyparse(void);
 
 #ifndef MAKE_BOOTSTRAP
 extern int yydebug;
+int	dflag;
 #endif
 
 static struct dlhash *obsopttab;
@@ -166,6 +167,7 @@ main(int argc, char **argv)
 #ifndef MAKE_BOOTSTRAP
 		case 'd':
 			yydebug = 1;
+			dflag++;
 			break;
 #endif
 
