@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.46 2014/10/09 15:25:26 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.47 2014/10/09 16:08:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,6 +100,7 @@ initsem(void)
 	allattr.a_name = "netbsd";
 	TAILQ_INIT(&allattr.a_files);
 	(void)ht_insert(attrtab, allattr.a_name, &allattr);
+	selectattr(&allattr);
 
 	errattr.a_name = "<internal>";
 

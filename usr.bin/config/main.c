@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.56 2014/10/09 06:49:53 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.57 2014/10/09 16:08:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -283,8 +283,6 @@ main(int argc, char **argv)
 	minmaxusers = 1;
 	maxmaxusers = 10000;
 	initintern();
-	initfiles();
-	initsem();
 	ident = NULL;
 	devbasetab = ht_new();
 	devroottab = ht_new();
@@ -312,6 +310,8 @@ main(int argc, char **argv)
 	nextappmkopt = &appmkoptions;
 	nextcndmkopt = &condmkoptions;
 	nextfsopt = &fsoptions;
+	initfiles();
+	initsem();
 
 	/*
 	 * Handle profiling (must do this before we try to create any
