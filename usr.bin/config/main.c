@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.57 2014/10/09 16:08:36 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.58 2014/10/09 19:20:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -161,7 +161,7 @@ main(int argc, char **argv)
 
 	pflag = 0;
 	xflag = 0;
-	while ((ch = getopt(argc, argv, "D:LPU:dgpvb:s:x")) != -1) {
+	while ((ch = getopt(argc, argv, "D:LMPU:dgpvb:s:x")) != -1) {
 		switch (ch) {
 
 #ifndef MAKE_BOOTSTRAP
@@ -170,6 +170,10 @@ main(int argc, char **argv)
 			dflag++;
 			break;
 #endif
+
+		case 'M':
+			usekobjs = 1;
+			break;
 
 		case 'L':
 			Lflag = 1;
