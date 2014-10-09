@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.15 2014/10/09 15:25:26 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.16 2014/10/09 19:27:04 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -270,12 +270,7 @@ fixfiles(void)
 		if (fi->fi_flags & FI_HIDDEN)
 			continue;
 
-		/* Optional: see if it is to be included. */
-		if (fi->fi_flags & FIT_FORCESELECT)
-		{
-			/* include it */ ;
-		}
-		else if (fi->fi_optx != NULL) {
+		if (fi->fi_optx != NULL) {
 			if (fi->fi_optx->cx_type == CX_ATOM) {
 				addfiletoattr(fi->fi_optx->cx_u.atom, fi);
 			}
