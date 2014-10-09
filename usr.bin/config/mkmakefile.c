@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.21 2014/10/09 19:20:56 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.22 2014/10/09 19:22:31 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -442,14 +442,6 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
 		len = strlen(fpath);
 		if (fpath[len - 1] != suffix && fpath[len - 1] != upper_suffix)
 			continue;
-		if (*fpath != '/') {
-			/* "$S/" */
- 			if (fi->fi_prefix != NULL)
-				len += strlen(prefix_prologue(fi->fi_prefix)) +
-				       strlen(fi->fi_prefix) + 1;
-			else
-				len += strlen(filetype_prologue(&fi->fi_fit));
-		}
 		if (*fi->fi_path == '/') {
 			fprintf(fp, "\t%s \\\n", fpath);
 		} else {
