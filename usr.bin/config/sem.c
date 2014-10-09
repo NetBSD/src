@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.44 2014/10/09 06:49:53 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.45 2014/10/09 10:29:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -269,6 +269,7 @@ defattr(const char *name, struct loclist *locs, struct attrlist *deps,
 	a->a_refs = NULL;
 	a->a_deps = deps;
 	a->a_expanding = 0;
+	TAILQ_INIT(&a->a_files);
 
 	/* Expand the attribute to check for cycles in the graph. */
 	expandattr(a, NULL);
