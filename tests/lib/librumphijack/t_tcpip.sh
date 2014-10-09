@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.13 2014/01/03 13:18:00 pooka Exp $
+#       $NetBSD: t_tcpip.sh,v 1.14 2014/10/09 06:52:37 apb Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -53,8 +53,9 @@ http_body()
 	# check that we got what we wanted
 	atf_check -o match:'HTTP/1.0 200 OK' cat webfile
 	atf_check -o match:'Content-Length: 95' cat webfile
+	blank_line_re="$(printf '^\r$')" # matches a line with only <CR><LF>
 	atf_check -o file:"$(atf_get_srcdir)/index.html" \
-	    sed -n '1,/^$/!p' webfile
+	    sed -n "1,/${blank_line_re}/!p" webfile
 }
 
 http_cleanup()
