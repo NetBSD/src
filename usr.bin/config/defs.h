@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.48 2014/10/09 07:43:55 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.49 2014/10/09 10:29:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -174,6 +174,7 @@ struct attr {
 	struct	nvlist *a_refs;		/* parents */
 	struct	attrlist *a_deps;	/* we depend on these other attrs */
 	int	a_expanding;		/* to detect cycles in attr graph */
+	TAILQ_HEAD(, files) a_files;	/* files in this attr */
 };
 
 /*
@@ -319,6 +320,8 @@ struct filetype
 	char	fit_lastc;	/* last char from path */
 	const char *fit_path;	/* full file path */
 	const char *fit_prefix;	/* any file prefix */
+	struct attr *fit_attr;	/* owner attr */
+	TAILQ_ENTRY(files) fit_anext;	/* next file in attr */
 };
 /* Anything less than 0x10 is sub-type specific */
 #define FIT_NOPROLOGUE  0x10    /* Don't prepend $S/ */
@@ -350,6 +353,8 @@ struct files {
 #define fi_lastc   fi_fit.fit_lastc
 #define fi_path    fi_fit.fit_path
 #define fi_prefix  fi_fit.fit_prefix
+#define fi_attr    fi_fit.fit_attr
+#define fi_anext   fi_fit.fit_anext
 
 /* flags */
 #define	FI_SEL		0x01	/* selected */
