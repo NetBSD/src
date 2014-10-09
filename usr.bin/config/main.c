@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.55 2014/10/09 06:45:31 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.56 2014/10/09 06:49:53 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -956,6 +956,7 @@ addoption(const char *name, const char *value)
 	/* make lowercase, then add to select table */
 	n = strtolower(name);
 	(void)ht_insert(selecttab, n, (void *)__UNCONST(n));
+	CFGDBG(3, "option selected `%s'", n);
 }
 
 void
@@ -995,6 +996,7 @@ addfsoption(const char *name)
 
 	/* Add to select table. */
 	(void)ht_insert(selecttab, n, __UNCONST(n));
+	CFGDBG(3, "fs selected `%s'", name);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.12 2014/05/21 05:25:34 dholland Exp $	*/
+/*	$NetBSD: files.c,v 1.13 2014/10/09 06:49:53 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -297,6 +297,7 @@ fixfiles(void)
 			}
 		}
 		fi->fi_flags |= FI_SEL;
+		CFGDBG(3, "file slected `%s'", fi->fi_path);
 	}
 	return (err);
 }
