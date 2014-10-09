@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.39 2014/05/29 07:47:45 mrg Exp $	*/
+/*	$NetBSD: gram.y,v 1.40 2014/10/09 07:05:01 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -223,7 +223,7 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 %%
 
 /*
- * A complete configuration consists of both the configuration part (a
+ * A complete configuration consists of both the selection part (a
  * kernel config such as GENERIC or SKYNET, plus also the various
  * std.* files), which selects the material to be in the kernel, and
  * also the definition part (files, files.*, etc.) that declares what
@@ -254,7 +254,7 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 
 /* Complete configuration. */
 configuration:
-	topthings machine_spec definition_part configuration_part
+	topthings machine_spec definition_part selection_part
 ;
 
 /* Sequence of zero or more topthings. */
@@ -600,24 +600,24 @@ majordef:
 /************************************************************/
 
 /*
- * The configuration grammar.
+ * The selection grammar.
  */
 
-/* Complete configuration part: all std.* files plus selected config. */
-configuration_part:
-	config_items
+/* Complete selection part: all std.* files plus selected config. */
+selection_part:
+	selections
 ;
 
 /* Zero or more config items. Trap errors. */
-config_items:
+selections:
 	  /* empty */
-	| config_items '\n'
-	| config_items config_item '\n'	{ wrap_continue(); }
-	| config_items error '\n'	{ wrap_cleanup(); }
+	| selections '\n'
+	| selections selection '\n'	{ wrap_continue(); }
+	| selections error '\n'	{ wrap_cleanup(); }
 ;
 
 /* One config item. */
-config_item:
+selection:
 	  definition
 	| NO FILE_SYSTEM no_fs_list
 	| FILE_SYSTEM fs_list
