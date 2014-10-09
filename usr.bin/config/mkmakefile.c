@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.17 2014/08/18 08:07:02 joerg Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.18 2014/10/09 17:00:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,6 +68,11 @@ static void emitdefs(FILE *);
 static void emitfiles(FILE *, int, int);
 
 static void emitobjs(FILE *);
+static void emitallkobjs(FILE *);
+static int emitallkobjscb(const char *, void *, void *);
+static void emitattrkobjs(FILE *);
+static int emitattrkobjscb(const char *, void *, void *);
+static void emitkobjs(FILE *);
 static void emitcfiles(FILE *);
 static void emitsfiles(FILE *);
 static void emitrules(FILE *);
@@ -76,6 +81,9 @@ static void emitincludes(FILE *);
 static void emitappmkoptions(FILE *);
 static void emitsubs(FILE *, const char *, const char *, int);
 static int  selectopt(const char *, void *);
+
+/* Generate Makefile to build things per-attribute *.ko (a.k.a modular build). */
+int usekobjs = 0;	/* XXX */
 
 int
 mkmakefile(void)
@@ -120,7 +128,7 @@ mkmakefile(void)
 			continue;
 		}
 		if (strcmp(line, "%OBJS\n") == 0)
-			fn = emitobjs;
+			fn = usekobjs ? emitobjs : emitkobjs;
 		else if (strcmp(line, "%CFILES\n") == 0)
 			fn = emitcfiles;
 		else if (strcmp(line, "%SFILES\n") == 0)
@@ -369,6 +377,66 @@ emitobjs(FILE *fp)
 		sp = ' ';
 	}
 	putc('\n', fp);
+}
+
+static void
+emitkobjs(FILE *fp)
+{
+	emitallkobjs(fp);
+	emitattrkobjs(fp);
+}
+
+static void
+emitallkobjs(FILE *fp)
+{
+
+	fputs("OBJS=", fp);
+	ht_enumerate(attrtab, emitallkobjscb, fp);
+	putc('\n', fp);
+}
+
+static int
+emitallkobjscb(const char *name, void *v, void *arg)
+{
+	struct attr *a = v;
+	FILE *fp = arg;
+
+	if (ht_lookup(selecttab, name) == NULL)
+		return 0;
+	if (TAILQ_EMPTY(&a->a_files))
+		return 0;
+	fprintf(fp, " %s.ko", name);
+	return 0;
+}
+
+static void
+emitattrkobjs(FILE *fp)
+{
+	extern struct	hashtab *attrtab;
+
+	ht_enumerate(attrtab, emitattrkobjscb, fp);
+}
+
+static int
+emitattrkobjscb(const char *name, void *v, void *arg)
+{
+	struct attr *a = v;
+	struct files *fi;
+	FILE *fp = arg;
+
+	if (ht_lookup(selecttab, name) == NULL)
+		return 0;
+	if (TAILQ_EMPTY(&a->a_files))
+		return 0;
+	fputc('\n', fp);
+	fprintf(fp, "OBJS.%s=", name);
+	TAILQ_FOREACH(fi, &a->a_files, fi_anext) {
+		fprintf(fp, " %s.o", fi->fi_base);
+	}
+	fputc('\n', fp);
+	fprintf(fp, "%s.ko: ${OBJS.%s}\n", name, name);
+	fprintf(fp, "\t${LINK_O}\n");
+	return 0;
 }
 
 static void
