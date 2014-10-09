@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.67 2013/10/18 22:18:14 bad Exp $
+.\"	$NetBSD: netstat.1,v 1.68 2014/10/09 23:52:47 enami Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -225,7 +225,7 @@ columns.
 .It Fl M
 Extract values associated with the name list from the specified core
 instead of the default
-.Pa /dev/kmem .
+.Pa /dev/mem .
 .It Fl m
 Show statistics recorded by the mbuf memory management routines
 (the network manages a private pool of memory buffers).
@@ -443,10 +443,10 @@ command appeared in
 .Bx 4.2 .
 IPv6 support was added by WIDE/KAME project.
 .\" .Sh FILES
-.\" .Bl -tag -width /dev/kmem -compact
+.\" .Bl -tag -width /dev/mem -compact
 .\" .It Pa /netbsd
 .\" default kernel namelist
-.\" .It Pa /dev/kmem
+.\" .It Pa /dev/mem
 .\" default memory file
 .\" .El
 .Sh BUGS
