@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.49 2014/10/09 10:29:36 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.50 2014/10/09 15:25:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -507,6 +507,7 @@ SLIST_HEAD(, prefix)	prefixes,	/* prefix stack */
 			allprefixes;	/* all prefixes used (after popped) */
 SLIST_HEAD(, prefix)	curdirs;	/* curdir stack */
 
+extern struct attr allattr;
 struct	devi **packed;		/* arrayified table for packed devi's */
 size_t	npacked;		/* size of packed table, <= ndevi */
 
