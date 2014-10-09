@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.10 2014/10/08 03:34:44 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.11 2014/10/09 04:58:42 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.10 2014/10/08 03:34:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.11 2014/10/09 04:58:42 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -612,6 +612,8 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	ifp->if_stop = vioif_stop;
 	ifp->if_capabilities = 0;
 	ifp->if_watchdog = vioif_watchdog;
+
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_mac);
