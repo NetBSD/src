@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.18 2014/10/09 17:00:15 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.19 2014/10/09 17:22:55 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,7 +128,7 @@ mkmakefile(void)
 			continue;
 		}
 		if (strcmp(line, "%OBJS\n") == 0)
-			fn = usekobjs ? emitobjs : emitkobjs;
+			fn = usekobjs ? emitkobjs : emitobjs;
 		else if (strcmp(line, "%CFILES\n") == 0)
 			fn = emitcfiles;
 		else if (strcmp(line, "%SFILES\n") == 0)
