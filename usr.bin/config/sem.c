@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.43 2014/05/29 07:47:45 mrg Exp $	*/
+/*	$NetBSD: sem.c,v 1.44 2014/10/09 06:49:53 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1765,6 +1765,7 @@ selectattr(struct attr *a)
 {
 
 	(void)ht_insert(selecttab, a->a_name, __UNCONST(a->a_name));
+	CFGDBG(3, "attr selected `%s'", a->a_name);
 }
 
 /*
@@ -1778,12 +1779,14 @@ selectbase(struct devbase *d, struct deva *da)
 	struct attrlist *al;
 
 	(void)ht_insert(selecttab, d->d_name, __UNCONST(d->d_name));
+	CFGDBG(3, "devbase selected `%s'", d->d_name);
 	for (al = d->d_attrs; al != NULL; al = al->al_next) {
 		a = al->al_this;
 		expandattr(a, selectattr);
 	}
 	if (da != NULL) {
 		(void)ht_insert(selecttab, da->d_name, __UNCONST(da->d_name));
+		CFGDBG(3, "devattr selected `%s'", da->d_name);
 		for (al = da->d_attrs; al != NULL; al = al->al_next) {
 			a = al->al_this;
 			expandattr(a, selectattr);
