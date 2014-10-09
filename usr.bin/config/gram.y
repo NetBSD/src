@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.40 2014/10/09 07:05:01 uebayasi Exp $	*/
+/*	$NetBSD: gram.y,v 1.41 2014/10/09 09:39:24 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -307,44 +307,132 @@ definitions:
 
 /* A single definition. */
 definition:
-	  file
-	| object
-	| device_major			{ do_devsw = 1; }
-	| prefix
-	| DEVCLASS WORD			{ (void)defattr($2, NULL, NULL, 1); }
-	| DEFFS deffses optdepend_list	{ deffilesystem($2, $3); }
-	| DEFINE WORD interface_opt depend_list
-					{ (void)defattr($2, $3, $4, 0); }
-	| DEFOPT optfile_opt defopts optdepend_list
-					{ defoption($2, $3, $4); }
-	| DEFFLAG optfile_opt defopts optdepend_list
-					{ defflag($2, $3, $4, 0); }
-	| OBSOLETE DEFFLAG optfile_opt defopts
-					{ defflag($3, $4, NULL, 1); }
-	| DEFPARAM optfile_opt defopts optdepend_list
-					{ defparam($2, $3, $4, 0); }
-	| OBSOLETE DEFPARAM optfile_opt defopts
-					{ defparam($3, $4, NULL, 1); }
-	| DEVICE devbase interface_opt depend_list
-					{ defdev($2, $3, $4, 0); }
-	| ATTACH devbase AT atlist devattach_opt depend_list
-					{ defdevattach($5, $2, $4, $6); }
-	| MAXPARTITIONS NUMBER		{ maxpartitions = $2.val; }
-	| MAXUSERS NUMBER NUMBER NUMBER
-				    { setdefmaxusers($2.val, $3.val, $4.val); }
-	| MAKEOPTIONS condmkopt_list
-	/* interface_opt in DEFPSEUDO is for backwards compatibility */
-	| DEFPSEUDO devbase interface_opt depend_list
-					{ defdev($2, $3, $4, 1); }
-	| DEFPSEUDODEV devbase interface_opt depend_list
-					{ defdev($2, $3, $4, 2); }
-	| MAJOR '{' majorlist '}'
-	| VERSION NUMBER		{ setversion($2.val); }
+	  define_file
+	| define_object
+	| define_device_major
+	| define_prefix
+	| define_devclass
+	| define_filesystems
+	| define_attribute
+	| define_option
+	| define_flag
+	| define_obsolete_flag
+	| define_param
+	| define_obsolete_param
+	| define_device
+	| define_device_attachment
+	| define_maxpartitions
+	| define_maxusers
+	| define_makeoptions
+	| define_pseudo
+	| define_pseudodev
+	| define_major
+	| define_version
 ;
 
 /* source file: file foo/bar.c bar|baz needs-flag compile-with blah */
-file:
+define_file:
 	XFILE filename fopts fflags rule	{ addfile($2, $3, $4, $5); }
+;
+
+/* object file: object zot.o foo|zot needs-flag */
+define_object:
+	XOBJECT filename fopts oflags	{ addobject($2, $3, $4); }
+;
+
+/* device major declaration */
+define_device_major:
+	DEVICE_MAJOR WORD device_major_char device_major_block fopts devnodes
+					{
+		adddevm($2, $3, $4, $5, $6);
+		do_devsw = 1;
+	}
+;
+
+/* prefix delimiter */
+define_prefix:
+	  PREFIX filename		{ prefix_push($2); }
+	| PREFIX			{ prefix_pop(); }
+;
+
+define_devclass:
+	DEVCLASS WORD			{ (void)defattr($2, NULL, NULL, 1); }
+;
+
+define_filesystems:
+	DEFFS deffses optdepend_list	{ deffilesystem($2, $3); }
+;
+
+define_attribute:
+	DEFINE WORD interface_opt depend_list
+					{ (void)defattr($2, $3, $4, 0); }
+;
+
+define_option:
+	DEFOPT optfile_opt defopts optdepend_list
+					{ defoption($2, $3, $4); }
+;
+
+define_flag:
+	DEFFLAG optfile_opt defopts optdepend_list
+					{ defflag($2, $3, $4, 0); }
+;
+
+define_obsolete_flag:
+	OBSOLETE DEFFLAG optfile_opt defopts
+					{ defflag($3, $4, NULL, 1); }
+;
+
+define_param:
+	DEFPARAM optfile_opt defopts optdepend_list
+					{ defparam($2, $3, $4, 0); }
+;
+
+define_obsolete_param:
+	OBSOLETE DEFPARAM optfile_opt defopts
+					{ defparam($3, $4, NULL, 1); }
+;
+
+define_device:
+	DEVICE devbase interface_opt depend_list
+					{ defdev($2, $3, $4, 0); }
+;
+
+define_device_attachment:
+	ATTACH devbase AT atlist devattach_opt depend_list
+					{ defdevattach($5, $2, $4, $6); }
+;
+
+define_maxpartitions:
+	MAXPARTITIONS NUMBER		{ maxpartitions = $2.val; }
+;
+
+define_maxusers:
+	MAXUSERS NUMBER NUMBER NUMBER
+					{ setdefmaxusers($2.val, $3.val, $4.val); }
+;
+
+define_makeoptions:
+	MAKEOPTIONS condmkopt_list
+;
+
+define_pseudo:
+	/* interface_opt in DEFPSEUDO is for backwards compatibility */
+	DEFPSEUDO devbase interface_opt depend_list
+					{ defdev($2, $3, $4, 1); }
+;
+
+define_pseudodev:
+	DEFPSEUDODEV devbase interface_opt depend_list
+					{ defdev($2, $3, $4, 2); }
+;
+
+define_major:
+	MAJOR '{' majorlist '}'
+;
+
+define_version:
+	VERSION NUMBER		{ setversion($2.val); }
 ;
 
 /* file options: optional expression of conditions */
@@ -371,11 +459,6 @@ rule:
 	| COMPILE_WITH stringvalue	{ $$ = $2; }
 ;
 
-/* object file: object zot.o foo|zot needs-flag */
-object:
-	XOBJECT filename fopts oflags	{ addobject($2, $3, $4); }
-;
-
 /* zero or more flags for an object file */
 oflags:
 	  /* empty */			{ $$ = 0; }
@@ -385,12 +468,6 @@ oflags:
 /* a single flag for an object file */
 oflag:
 	NEEDS_FLAG			{ $$ = OI_NEEDSFLAG; }
-;
-
-/* device major declaration */
-device_major:
-	DEVICE_MAJOR WORD device_major_char device_major_block fopts devnodes
-					{ adddevm($2, $3, $4, $5, $6); }
 ;
 
 /* char 55 */
@@ -433,12 +510,6 @@ devnode_dims:
 /* flags for device nodes */
 devnodeflags:
 	LINKZERO			{ $$ = new_s("DEVNODE_FLAG_LINKZERO");}
-;
-
-/* prefix delimiter */
-prefix:
-	  PREFIX filename		{ prefix_push($2); }
-	| PREFIX			{ prefix_pop(); }
 ;
 
 /* one or more file system names */
@@ -613,32 +684,104 @@ selections:
 	  /* empty */
 	| selections '\n'
 	| selections selection '\n'	{ wrap_continue(); }
-	| selections error '\n'	{ wrap_cleanup(); }
+	| selections error '\n'		{ wrap_cleanup(); }
 ;
 
 /* One config item. */
 selection:
 	  definition
-	| NO FILE_SYSTEM no_fs_list
-	| FILE_SYSTEM fs_list
-	| NO MAKEOPTIONS no_mkopt_list
-	| MAKEOPTIONS mkopt_list
-	| NO OPTIONS no_opt_list
-	| OPTIONS opt_list
-	| MAXUSERS NUMBER		{ setmaxusers($2.val); }
-	| IDENT stringvalue		{ setident($2); }
-	| NO IDENT			{ setident(NULL); }
-	| CONFIG conf root_spec sysparam_list
+	| select_no_filesystems
+	| select_filesystems
+	| select_no_makeoptions
+	| select_makeoptions
+	| select_no_options
+	| select_options
+	| select_maxusers
+	| select_ident
+	| select_no_ident
+	| select_config
+	| select_no_config
+	| select_no_pseudodev
+	| select_pseudodev
+	| select_pseudoroot
+	| select_no_device_instance_attachment
+	| select_no_device_attachment
+	| select_no_device_instance
+	| select_device_instance
+;
+
+select_no_filesystems:
+	NO FILE_SYSTEM no_fs_list
+;
+
+select_filesystems:
+	FILE_SYSTEM fs_list
+;
+
+select_no_makeoptions:
+	NO MAKEOPTIONS no_mkopt_list
+;
+
+select_makeoptions:
+	MAKEOPTIONS mkopt_list
+;
+
+select_no_options:
+	NO OPTIONS no_opt_list
+;
+
+select_options:
+	OPTIONS opt_list
+;
+
+select_maxusers:
+	MAXUSERS NUMBER			{ setmaxusers($2.val); }
+;
+
+select_ident:
+	IDENT stringvalue		{ setident($2); }
+;
+
+select_no_ident:
+	NO IDENT			{ setident(NULL); }
+;
+
+select_config:
+	CONFIG conf root_spec sysparam_list
 					{ addconf(&conf); }
-	| NO CONFIG WORD		{ delconf($3); }
-	| NO PSEUDO_DEVICE WORD		{ delpseudo($3); }
-	| PSEUDO_DEVICE WORD npseudo	{ addpseudo($2, $3); }
-	| PSEUDO_ROOT device_instance	{ addpseudoroot($2); }
-	| NO device_instance AT attachment
+;
+
+select_no_config:
+	NO CONFIG WORD			{ delconf($3); }
+;
+
+select_no_pseudodev:
+	NO PSEUDO_DEVICE WORD		{ delpseudo($3); }
+;
+
+select_pseudodev:
+	PSEUDO_DEVICE WORD npseudo	{ addpseudo($2, $3); }
+;
+
+select_pseudoroot:
+	PSEUDO_ROOT device_instance	{ addpseudoroot($2); }
+;
+
+select_no_device_instance_attachment:
+	NO device_instance AT attachment
 					{ deldevi($2, $4); }
-	| NO DEVICE AT attachment	{ deldeva($4); }
-	| NO device_instance		{ deldev($2); }
-	| device_instance AT attachment locators device_flags
+;
+
+select_no_device_attachment:
+	NO DEVICE AT attachment		{ deldeva($4); }
+;
+
+select_no_device_instance:
+	NO device_instance		{ deldev($2); }
+;
+
+select_device_instance:
+	device_instance AT attachment locators device_flags
 					{ adddev($1, $3, $4, $5); }
 ;
 
