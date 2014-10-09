@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.22 2014/10/09 19:22:31 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.23 2014/10/09 19:24:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -269,7 +269,7 @@ srcpath(struct files *fi)
 static const char *
 filetype_prologue(struct filetype *fit)
 {
-	if (fit->fit_flags & FIT_NOPROLOGUE || *fit->fit_path == '/')
+	if (*fit->fit_path == '/')
 		return ("");
 	else
 		return ("$S/");
