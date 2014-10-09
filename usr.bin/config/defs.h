@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.51 2014/10/09 19:20:56 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.52 2014/10/09 19:24:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -324,7 +324,6 @@ struct filetype
 	TAILQ_ENTRY(files) fit_anext;	/* next file in attr */
 };
 /* Anything less than 0x10 is sub-type specific */
-#define FIT_NOPROLOGUE  0x10    /* Don't prepend $S/ */
 #define FIT_FORCESELECT 0x20    /* Always include this file */
 
 /*
