@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.20 2014/10/09 17:36:10 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.21 2014/10/09 19:20:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,7 +83,7 @@ static void emitsubs(FILE *, const char *, const char *, int);
 static int  selectopt(const char *, void *);
 
 /* Generate Makefile to build things per-attribute *.ko (a.k.a modular build). */
-int usekobjs = 0;	/* XXX */
+int usekobjs = 0;
 
 int
 mkmakefile(void)
