@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.74 2014/09/15 06:07:37 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.75 2014/10/09 04:48:12 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.74 2014/09/15 06:07:37 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.75 2014/10/09 04:48:12 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -695,7 +695,9 @@ vlan_start(struct ifnet *ifp)
 	int error;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
+#ifndef NET_MPSAFE
 	KASSERT(KERNEL_LOCKED_P());
+#endif
 
 	ifp->if_flags |= IFF_OACTIVE;
 
