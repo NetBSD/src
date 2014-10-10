@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.41 2014/10/09 09:39:24 uebayasi Exp $	*/
+/*	$NetBSD: gram.y,v 1.42 2014/10/10 06:13:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -356,7 +356,7 @@ define_prefix:
 ;
 
 define_devclass:
-	DEVCLASS WORD			{ (void)defattr($2, NULL, NULL, 1); }
+	DEVCLASS WORD			{ (void)defdevclass($2, NULL, NULL, 1); }
 ;
 
 define_filesystems:
@@ -365,7 +365,7 @@ define_filesystems:
 
 define_attribute:
 	DEFINE WORD interface_opt depend_list
-					{ (void)defattr($2, $3, $4, 0); }
+					{ (void)defattr0($2, $3, $4, 0); }
 ;
 
 define_option:
