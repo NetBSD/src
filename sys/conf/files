@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1113 2014/10/10 12:20:13 uebayasi Exp $
+#	$NetBSD: files,v 1.1114 2014/10/10 12:29:28 uebayasi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20141010
@@ -317,22 +317,7 @@ define 	pckbport	{[slot = -1]}
 define	pckbport_machdep_cnattach
 define	firmload
 
-# audio device attributes
-#
-define	mulaw
-define	auconv
-define	aurateconv
-
-# audio and midi devices, attaches to audio hardware driver
-#
-device	audio: audiodev
-attach	audio at audiobus
-device	midi
-attach	midi at midibus
-
-# console bell via audio device
-#
-define	audiobell
+include "dev/files.audio"
 
 # Base verbose vendor/product printing support
 file	dev/dev_verbose.c
@@ -1496,10 +1481,6 @@ define	kern:	machdep, uvm
 defflag	opt_kern.h			KERN
 file	compat/common/compat_mod.c	compat_netbsd | compat_netbsd32
 file	conf/debugsyms.c
-file	dev/auconv.c			auconv | mulaw
-file	dev/audio.c			audio | midi | midibus	needs-flag
-file	dev/audiobell.c			audiobell
-file	dev/aurateconv.c		aurateconv		needs-flag
 file	dev/bio.c			bio			needs-flag
 file	dev/ccd.c			ccd
 file	dev/cgd.c			cgd
@@ -1517,11 +1498,7 @@ file	dev/fss.c			fss
 file	dev/keylock.c			keylock
 file	dev/lockstat.c			lockstat		needs-flag
 file	dev/md.c			md
-file	dev/midi.c			midi | midibus		needs-flag
-file	dev/midictl.c			midisyn
-file	dev/midisyn.c			midisyn
 file	dev/mm.c
-file	dev/mulaw.c			mulaw			needs-flag
 file	dev/nullcons_subr.c		nullcons		needs-flag
 file	dev/radio.c			radio			needs-flag
 file	dev/rndpseudo.c			rnd			needs-flag
@@ -1554,7 +1531,7 @@ file	kern/kern_condvar.c		kern
 file	kern/kern_core.c		coredump
 file	kern/kern_cpu.c			kern
 file	kern/kern_ctf.c			kdtrace_hooks
-file	kern/kern_descrip.c			kern
+file	kern/kern_descrip.c		kern
 file	kern/kern_event.c		kern
 file	kern/kern_exec.c		kern
 file	kern/kern_exit.c		kern
