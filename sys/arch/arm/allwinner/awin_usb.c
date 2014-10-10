@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.13 2014/09/13 17:48:00 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.14 2014/10/10 07:36:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,6 +90,8 @@ struct awinusb_attach_args {
 
 #if NOHCI > 0
 static const int awinusb_ohci_irqs[2] = { AWIN_IRQ_USB3, AWIN_IRQ_USB4 };
+static const int awinusb_ohci_irqs_a31[2] = { AWIN_A31_IRQ_USB3,
+					      AWIN_A31_IRQ_USB4 };
 
 #ifdef OHCI_DEBUG
 #define OHCI_DPRINTF(x)	if (ohcidebug) printf x
@@ -145,7 +147,9 @@ ohci_awinusb_attach(device_t parent, device_t self, void *aux)
 	/* Attach usb device. */
 	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
 
-	const int irq = awinusb_ohci_irqs[usbaa->usbaa_port];
+	const int irq = awin_chip_id() == AWIN_CHIP_ID_A31 ?
+			awinusb_ohci_irqs_a31[usbaa->usbaa_port] :
+			awinusb_ohci_irqs[usbaa->usbaa_port];
 	usbsc->usbsc_ohci_ih = intr_establish(irq, IPL_USB,
 	    IST_LEVEL, ohci_intr, sc);
 	if (usbsc->usbsc_ohci_ih == NULL) {
@@ -169,6 +173,8 @@ static int ehci_awinusb_match(device_t, cfdata_t, void *);
 static void ehci_awinusb_attach(device_t, device_t, void *);
 
 static const int awinusb_ehci_irqs[2] = { AWIN_IRQ_USB1, AWIN_IRQ_USB2 };
+static const int awinusb_ehci_irqs_a31[2] = { AWIN_A31_IRQ_USB1,
+					      AWIN_A31_IRQ_USB2 };
 
 CFATTACH_DECL_NEW(ehci_awinusb, sizeof(struct ehci_softc),
 	ehci_awinusb_match, ehci_awinusb_attach, NULL, NULL);
@@ -218,7 +224,9 @@ ehci_awinusb_attach(device_t parent, device_t self, void *aux)
 	/* Attach usb device. */
 	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
 
-	const int irq = awinusb_ehci_irqs[usbaa->usbaa_port];
+	const int irq = awin_chip_id() == AWIN_CHIP_ID_A31 ?
+			awinusb_ehci_irqs_a31[usbaa->usbaa_port] :
+			awinusb_ehci_irqs[usbaa->usbaa_port];
 	usbsc->usbsc_ehci_ih = intr_establish(irq, IPL_USB,
 	    IST_LEVEL, ehci_intr, sc);
 	if (usbsc->usbsc_ehci_ih == NULL) {
@@ -289,6 +297,16 @@ static const uint32_t awinusb_ahb_gating[2] = {
 #endif
 	AWIN_AHB_GATING0_USB_EHCI1,
 };
+static const uint32_t awinusb_ahb_gating_a31[2] = {
+#if NOHCI > 0
+	AWIN_A31_AHB_GATING0_USB_OHCI0 |
+#endif
+	AWIN_A31_AHB_GATING0_USB_EHCI0,
+#if NOHCI > 0
+	AWIN_A31_AHB_GATING0_USB_OHCI1 |
+#endif
+	AWIN_A31_AHB_GATING0_USB_EHCI1,
+};
 static const uint32_t awinusb_usb_clk_set[2] = {
 #if NOHCI > 0
 	AWIN_USB_CLK_OHCI0_ENABLE |
@@ -298,6 +316,20 @@ static const uint32_t awinusb_usb_clk_set[2] = {
 	AWIN_USB_CLK_OHCI1_ENABLE |
 #endif
 	AWIN_USB_CLK_USBPHY_ENABLE|AWIN_USB_CLK_PHY2_ENABLE,
+};
+static const uint32_t awinusb_usb_clk_set_a31[2] = {
+#if NOHCI > 0
+	AWIN_A31_USB_CLK_OHCI0_ENABLE |
+#endif
+	AWIN_A31_USB_CLK_USBPHY0_ENABLE |
+	AWIN_A31_USB_CLK_USBPHY1_ENABLE |
+	AWIN_A31_USB_CLK_PHY1_ENABLE,
+#if NOHCI > 0
+	AWIN_A31_USB_CLK_OHCI1_ENABLE |
+#endif
+	AWIN_A31_USB_CLK_USBPHY0_ENABLE |
+	AWIN_A31_USB_CLK_USBPHY2_ENABLE |
+	AWIN_A31_USB_CLK_PHY2_ENABLE,
 };
 
 int
@@ -341,19 +373,35 @@ awinusb_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	/*
-	 * Access to the USB phy is off USB0 so make sure it's on.
-	*/
-	awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_ccm_bsh,
-	    AWIN_AHB_GATING0_REG,
-	    AWIN_AHB_GATING0_USB0 | awinusb_ahb_gating[loc->loc_port], 0);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		/*
+		 * Access to the USB phy is off USB0 so make sure it's on.
+		*/
+		awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_ccm_bsh,
+		    AWIN_AHB_GATING0_REG,
+		    awinusb_ahb_gating_a31[loc->loc_port], 0);
 
+		/*
+		 * Enable the USB phy for this port.
+		 */
+		awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_ccm_bsh,
+		    AWIN_USB_CLK_REG, awinusb_usb_clk_set_a31[loc->loc_port],
+		    0);
+	} else {
+		/*
+		 * Access to the USB phy is off USB0 so make sure it's on.
+		*/
+		awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_ccm_bsh,
+		    AWIN_AHB_GATING0_REG,
+		    AWIN_AHB_GATING0_USB0 | awinusb_ahb_gating[loc->loc_port],
+		    0);
 
-	/*
-	 * Enable the USB phy for this port.
-	 */
-	awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_ccm_bsh,
-	    AWIN_USB_CLK_REG, awinusb_usb_clk_set[loc->loc_port], 0);
+		/*
+		 * Enable the USB phy for this port.
+		 */
+		awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_ccm_bsh,
+		    AWIN_USB_CLK_REG, awinusb_usb_clk_set[loc->loc_port], 0);
+	}
 
 	/*
 	 * Allow USB DMA engine access to the DRAM.
@@ -361,11 +409,13 @@ awinusb_attach(device_t parent, device_t self, void *aux)
 	awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_core_bsh,
 	    loc->loc_offset + AWIN_USB_PMU_IRQ_REG,
 	    AWIN_USB_PMU_IRQ_AHB_INCR8 | AWIN_USB_PMU_IRQ_AHB_INCR4
-	       | AWIN_USB_PMU_IRQ_AHB_INCRX | AWIN_USB_PMU_IRQ_ULPI_BYPASS,
-	    0);
-	awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_core_bsh,
-	    AWIN_DRAM_OFFSET + awinusb_dram_hpcr_regs[loc->loc_port],
-	    AWIN_DRAM_HPCR_ACCESS_EN, 0);
+	       | AWIN_USB_PMU_IRQ_AHB_INCRX | AWIN_USB_PMU_IRQ_ULPI_BYPASS, 0);
+
+	if (awin_chip_id() != AWIN_CHIP_ID_A31) {
+		awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_core_bsh,
+		    AWIN_DRAM_OFFSET + awinusb_dram_hpcr_regs[loc->loc_port],
+		    AWIN_DRAM_HPCR_ACCESS_EN, 0);
+	}
 
 	/* initialize the USB phy */
 	awin_usb_phy_write(usbsc, 0x20, 0x14, 5);

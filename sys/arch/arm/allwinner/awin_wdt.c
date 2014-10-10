@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_wdt.c,v 1.3 2014/02/20 21:48:38 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_wdt.c,v 1.4 2014/10/10 07:36:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -200,9 +200,19 @@ void
 awin_wdog_reset(void)
 {
 	cpsid(I32_bit|F32_bit);
-	bus_space_write_4(&awin_bs_tag, awin_core_bsh,
-	    AWIN_TMR_OFFSET + AWIN_WDOG_MODE_REG,
-	    AWIN_WDOG_MODE_EN | AWIN_WDOG_MODE_RST_EN);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		bus_space_write_4(&awin_bs_tag, awin_core_bsh,
+		    AWIN_TMR_OFFSET + AWIN_A31_WDOG1_CFG_REG,
+		    __SHIFTIN(AWIN_A31_WDOG_CFG_CONFIG_SYS,
+			      AWIN_A31_WDOG_CFG_CONFIG));
+		bus_space_write_4(&awin_bs_tag, awin_core_bsh,
+		    AWIN_TMR_OFFSET + AWIN_A31_WDOG1_MODE_REG,
+		    AWIN_A31_WDOG_MODE_EN);
+	} else {
+		bus_space_write_4(&awin_bs_tag, awin_core_bsh,
+		    AWIN_TMR_OFFSET + AWIN_WDOG_MODE_REG,
+		    AWIN_WDOG_MODE_EN | AWIN_WDOG_MODE_RST_EN);
+	}
 	for (;;) {
 		__asm("wfi");
 	}
