@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.46 2014/08/10 16:44:36 tls Exp $ */
+/* $NetBSD: if_msk.c,v 1.47 2014/10/10 14:23:06 christos Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.46 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.47 2014/10/10 14:23:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,6 +165,7 @@ static const struct msk_product {
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8036 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8038 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8039 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8040 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8050 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8052 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8053 },
@@ -948,6 +949,7 @@ msk_probe(device_t parent, cfdata_t match, void *aux)
 	case SK_YUKON_EC_U:
 	case SK_YUKON_EC:
 	case SK_YUKON_FE:
+	case SK_YUKON_FE_P:
 		return (1);
 	}
 
