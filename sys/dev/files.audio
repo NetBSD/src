@@ -1,8 +1,12 @@
-#	$NetBSD: files.audio,v 1.1 2014/10/10 12:29:28 uebayasi Exp $
+#	$NetBSD: files.audio,v 1.2 2014/10/10 17:21:20 uebayasi Exp $
+
+define	audiobus	{ }
+define	midibus		{ }
+define	midisyn
 
 # audio device attributes
 #
-define	mulaw
+define	mulaw: auconv
 define	auconv
 define	aurateconv
 
@@ -10,18 +14,18 @@ define	aurateconv
 #
 device	audio: audiodev
 attach	audio at audiobus
-device	midi
+device	midi: audio
 attach	midi at midibus
 
 # console bell via audio device
 #
 define	audiobell
 
-file	dev/auconv.c			auconv | mulaw
-file	dev/audio.c			audio | midi | midibus	needs-flag
+file	dev/auconv.c			auconv
+file	dev/audio.c			audio			needs-flag
 file	dev/audiobell.c			audiobell
 file	dev/aurateconv.c		aurateconv		needs-flag
-file	dev/midi.c			midi | midibus		needs-flag
+file	dev/midi.c			midi			needs-flag
 file	dev/midictl.c			midisyn
 file	dev/midisyn.c			midisyn
 file	dev/mulaw.c			mulaw			needs-flag
