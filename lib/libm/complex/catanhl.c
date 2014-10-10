@@ -1,4 +1,4 @@
-/* $NetBSD: catanhl.c,v 1.2 2014/10/10 08:34:30 martin Exp $ */
+/* $NetBSD: catanhl.c,v 1.3 2014/10/10 12:43:15 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,6 +37,6 @@ catanhl(long double complex z)
 {
 	long double complex w;
 
-	w = -1.0 * I * catanl(z * I);
+	w = -1.0L * I * catanl(z * I);
 	return w;
 }
