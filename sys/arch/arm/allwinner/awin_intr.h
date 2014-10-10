@@ -1,4 +1,4 @@
-/* $NetBSD: awin_intr.h,v 1.4 2014/09/03 21:42:46 jmcneill Exp $ */
+/* $NetBSD: awin_intr.h,v 1.5 2014/10/10 07:36:11 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -133,5 +133,22 @@
 #define AWIN_IRQ_TWI3		120
 #define AWIN_IRQ_TWI4		121
 #define AWIN_IRQ_IIS2		122
+
+/*
+ * A31
+ */
+#define AWIN_A31_IRQ_UART0	32
+#define AWIN_A31_IRQ_AC		61
+#define AWIN_A31_IRQ_DMA	82
+#define AWIN_A31_IRQ_SDMMC0	92
+#define AWIN_A31_IRQ_SDMMC1	93
+#define AWIN_A31_IRQ_SDMMC2	94
+#define AWIN_A31_IRQ_SDMMC3	95
+#define AWIN_A31_IRQ_USB0	103
+#define AWIN_A31_IRQ_USB1	104
+#define AWIN_A31_IRQ_USB2	105
+#define AWIN_A31_IRQ_USB3	106
+#define AWIN_A31_IRQ_USB4	108
+#define AWIN_A31_IRQ_GMAC	114
 
 #endif /* _ARM_ALLWINNER_AWIN_INTR_H_ */

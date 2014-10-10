@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.20 2014/10/04 19:38:17 martin Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.21 2014/10/10 07:36:11 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.20 2014/10/04 19:38:17 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.21 2014/10/10 07:36:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -123,8 +123,11 @@ static void
 awin_cpu_clk(void)
 {
 	struct cpu_info * const ci = curcpu();
+	u_int reg = awin_chip_id() == AWIN_CHIP_ID_A31 ?
+				      AWIN_A31_CPU_AXI_CFG_REG :
+				      AWIN_CPU_AHB_APB0_CFG_REG;
 	const uint32_t cpu0_cfg = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
-	    AWIN_CCM_OFFSET + AWIN_CPU_AHB_APB0_CFG_REG);
+	    AWIN_CCM_OFFSET + reg);
 	const u_int cpu_clk_sel = __SHIFTIN(cpu0_cfg, AWIN_CPU_CLK_SRC_SEL);
 	switch (__SHIFTOUT(cpu_clk_sel, AWIN_CPU_CLK_SRC_SEL)) {
 	case AWIN_CPU_CLK_SRC_SEL_LOSC:
@@ -136,10 +139,18 @@ awin_cpu_clk(void)
 	case AWIN_CPU_CLK_SRC_SEL_PLL1: {
 		const uint32_t pll1_cfg = bus_space_read_4(&awin_bs_tag,
 		    awin_core_bsh, AWIN_CCM_OFFSET + AWIN_PLL1_CFG_REG);
-		u_int p = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_OUT_EXP_DIVP);
-		u_int n = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_FACTOR_N);
-		u_int k = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_FACTOR_K) + 1;
-		u_int m = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_FACTOR_M) + 1;
+		u_int p, n, k, m;
+		if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+			p = 0;
+			n = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_FACTOR_N) + 1;
+			k = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_FACTOR_K) + 1;
+			m = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_FACTOR_M) + 1;
+		} else {
+			p = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_OUT_EXP_DIVP);
+			n = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_FACTOR_N);
+			k = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_FACTOR_K) + 1;
+			m = __SHIFTOUT(pll1_cfg, AWIN_PLL_CFG_FACTOR_M) + 1;
+		}
 		ci->ci_data.cpu_cc_freq =
 		    ((uint64_t)AWIN_REF_FREQ * (n ? n : 1) * k / m) >> p;
 		break;
@@ -185,11 +196,24 @@ awin_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 #endif
 
 #ifdef VERBOSE_INIT_ARM
-	uint32_t s0 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
-	    AWIN_CPUCFG_OFFSET + AWIN_CPUCFG_CPU0_STATUS_REG);
-	uint32_t s1 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
-	    AWIN_CPUCFG_OFFSET + AWIN_CPUCFG_CPU1_STATUS_REG);
-	printf("%s: cpu status: 0=%#x 1=%#x\n", __func__, s0, s1);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		uint32_t s0 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
+		    AWIN_A31_CPUCFG_OFFSET + AWIN_A31_CPUCFG_CPU0_STATUS_REG);
+		uint32_t s1 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
+		    AWIN_A31_CPUCFG_OFFSET + AWIN_A31_CPUCFG_CPU1_STATUS_REG);
+		uint32_t s2 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
+		    AWIN_A31_CPUCFG_OFFSET + AWIN_A31_CPUCFG_CPU2_STATUS_REG);
+		uint32_t s3 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
+		    AWIN_A31_CPUCFG_OFFSET + AWIN_A31_CPUCFG_CPU3_STATUS_REG);
+		printf("%s: cpu status: 0=%#x 1=%#x 2=%#x 3=%#x\n", __func__,
+		    s0, s1, s2, s3);
+	} else {
+		uint32_t s0 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
+		    AWIN_CPUCFG_OFFSET + AWIN_CPUCFG_CPU0_STATUS_REG);
+		uint32_t s1 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
+		    AWIN_CPUCFG_OFFSET + AWIN_CPUCFG_CPU1_STATUS_REG);
+		printf("%s: cpu status: 0=%#x 1=%#x\n", __func__, s0, s1);
+	}
 #endif
 
 #if !defined(MULTIPROCESSOR) && defined(VERBOSE_INIT_ARM)
@@ -228,16 +252,27 @@ awin_cpu_hatch(struct cpu_info *ci)
 psize_t
 awin_memprobe(void)
 {
-	const uint32_t dcr = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
-	    AWIN_DRAM_OFFSET + AWIN_DRAM_DCR_REG);
+	psize_t memsize;
 
-	psize_t memsize = (__SHIFTOUT(dcr, AWIN_DRAM_DCR_BUS_WIDTH) + 1)
-	   / __SHIFTOUT(dcr, AWIN_DRAM_DCR_IO_WIDTH);
-	memsize *= 1 << (__SHIFTOUT(dcr, AWIN_DRAM_DCR_CHIP_DENSITY) + 28 - 3);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
 #ifdef VERBOSE_INIT_ARM
-	printf("sdram_config = %#x, memsize = %uMB\n", dcr,
-	    (u_int)(memsize >> 20));
+		printf("memprobe not supported on A31\n");
 #endif
+		memsize = 0;
+	} else {
+		const uint32_t dcr = bus_space_read_4(&awin_bs_tag,
+		    awin_core_bsh,
+		    AWIN_DRAM_OFFSET + AWIN_DRAM_DCR_REG);
+
+		memsize = (__SHIFTOUT(dcr, AWIN_DRAM_DCR_BUS_WIDTH) + 1)
+		   / __SHIFTOUT(dcr, AWIN_DRAM_DCR_IO_WIDTH);
+		memsize *= 1 << (__SHIFTOUT(dcr, AWIN_DRAM_DCR_CHIP_DENSITY)
+		   + 28 - 3);
+#ifdef VERBOSE_INIT_ARM
+		printf("sdram_config = %#x, memsize = %uMB\n", dcr,
+		    (u_int)(memsize >> 20));
+#endif
+	}
 	return memsize;
 }
 
