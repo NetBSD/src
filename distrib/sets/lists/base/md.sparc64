@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.236 2014/10/10 00:49:14 christos Exp $
+# $NetBSD: md.sparc64,v 1.237 2014/10/10 10:10:41 mrg Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -296,7 +296,7 @@
 ./usr/lib/sparc/libstdc++.so.7			base-compat-shlib	compat,pic,gcccmds,libstdcxx
 ./usr/lib/sparc/libstdc++.so.7.0		base-compat-shlib	gcc=4,compat,pic,libstdcxx
 ./usr/lib/sparc/libstdc++.so.7.1		base-compat-shlib	gcc=45,compat,pic,libstdcxx
-./usr/lib/sparc/libstdc++.so.7.2		base-compat-shlib	gcc=48,compat,pic,libstdcxx
+./usr/lib/sparc/libstdc++.so.7.3		base-compat-shlib	gcc=48,compat,pic,libstdcxx
 ./usr/lib/sparc/libsupc++.so.1			base-obsolete		obsolete
 ./usr/lib/sparc/libsupc++.so.1.0		base-obsolete		obsolete
 ./usr/lib/sparc/libtermcap.so.0			base-compat-shlib	compat,pic

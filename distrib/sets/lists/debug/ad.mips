@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.42 2014/10/10 00:49:14 christos Exp $
+# $NetBSD: ad.mips,v 1.43 2014/10/10 10:10:41 mrg Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -194,7 +194,7 @@
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/64/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat,libstdcxx,arch64
-./usr/libdata/debug/usr/lib/64/libstdc++.so.7.2.debug	comp-sys-debug	gcc=48,cxx,debug,compat,libstdcxx,arch64
+./usr/libdata/debug/usr/lib/64/libstdc++.so.7.3.debug	comp-sys-debug	gcc=48,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/64/libterminfo.so.1.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libtre.so.0.8.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libukfs.so.1.0.debug	comp-sys-debug	debug,compat,rump,arch64
@@ -372,7 +372,7 @@
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/o32/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat,libstdcxx,arch64
-./usr/libdata/debug/usr/lib/o32/libstdc++.so.7.2.debug	comp-sys-debug	gcc=48,cxx,debug,compat,libstdcxx,arch64
+./usr/libdata/debug/usr/lib/o32/libstdc++.so.7.3.debug	comp-sys-debug	gcc=48,cxx,debug,compat,libstdcxx,arch64
 ./usr/libdata/debug/usr/lib/o32/libterminfo.so.1.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libtre.so.0.8.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libukfs.so.1.0.debug	comp-sys-debug	debug,compat,rump,arch64
