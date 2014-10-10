@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.60 2014/10/10 07:48:50 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.61 2014/10/10 10:22:49 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -531,6 +531,8 @@ dependopts_one(const char *name)
 	if (fs != NULL) {
 		do_depends(fs->nv_ptr);
 	}
+
+	CFGDBG(3, "depend `%s' searched", name);
 }
 
 static void
@@ -549,15 +551,24 @@ do_depend(struct nvlist *nv)
 	struct attr *a;
 
 	if (nv != NULL && (nv->nv_flags & NV_DEPENDED) == 0) {
+		const char *n = strtolower(nv->nv_name);
+
 		nv->nv_flags |= NV_DEPENDED;
 		/*
 		 * If the dependency is an attribute, then just add
 		 * it to the selecttab.
 		 */
+		CFGDBG(3, "depend attr `%s'", nv->nv_name);
+		/* XXX Do uppercased attribute names exist? */
 		if ((a = ht_lookup(attrtab, nv->nv_name)) != NULL) {
 			if (a->a_iattr)
 				panic("do_depend(%s): dep `%s' is an iattr",
 				    nv->nv_name, a->a_name);
+			expandattr(a, selectattr);
+		} else if ((a = ht_lookup(attrtab, n)) != NULL) {
+			if (a->a_iattr)
+				panic("do_depend(%s): dep `%s' is an iattr",
+				    n, a->a_name);
 			expandattr(a, selectattr);
 		} else {
 			if (ht_lookup(opttab, nv->nv_name) == NULL)
@@ -975,6 +986,13 @@ addoption(const char *name, const char *value)
 	n = strtolower(name);
 	(void)ht_insert(selecttab, n, (void *)__UNCONST(n));
 	CFGDBG(3, "option selected `%s'", n);
+
+	/*
+	 * Select attribute if one exists.
+	 */
+	struct attr *a;
+	if ((a = ht_lookup(attrtab, n)) != NULL)
+		selectattr(a);
 }
 
 void
