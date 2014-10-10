@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.59 2014/10/10 07:08:26 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.60 2014/10/10 07:48:50 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -875,6 +875,13 @@ defopt(struct dlhash *ht, const char *fname, struct defoptlist *opts,
 				olddl = olddl->dl_next;
 			olddl->dl_next = dl;
 		}
+
+		/*
+		 * Implicit attribute definition for option.
+		 */
+		const char *n; 
+		n = strtolower(dl->dl_name);
+		refattr(n);
 	}
 }
 
