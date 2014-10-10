@@ -1,12 +1,10 @@
-# $NetBSD: std,v 1.17 2014/10/10 09:13:21 uebayasi Exp $
+# $NetBSD: std,v 1.18 2014/10/10 09:31:40 uebayasi Exp $
 #
 # standard MI 'options'
 #
 # this file is for options which can't be off-by-default for some reasons.
 # "it's commonly used" is NOT a good reason to enable options here.
 
-options	MACHDEP
-options	UVM
 options	KERN
 
 # the following options are on-by-default to keep
