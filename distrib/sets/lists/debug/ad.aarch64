@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.7 2014/10/10 00:49:14 christos Exp $
+# $NetBSD: ad.aarch64,v 1.8 2014/10/10 10:10:41 mrg Exp $
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetmask.debug
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetround.debug
 ./usr/lib/eabi/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib
@@ -170,7 +170,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/eabi/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/eabi/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat,libstdcxx
-./usr/libdata/debug/usr/lib/eabi/libstdc++.so.7.2.debug	comp-sys-debug	gcc=48,cxx,debug,compat,libstdcxx
+./usr/libdata/debug/usr/lib/eabi/libstdc++.so.7.3.debug	comp-sys-debug	gcc=48,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/eabi/libterminfo.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libtre.so.0.8.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libukfs.so.1.0.debug	comp-sys-debug	debug,compat,rump

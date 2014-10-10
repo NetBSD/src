@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2014/10/01 22:27:33 joerg Exp $
+#	$NetBSD: Makefile,v 1.19 2014/10/10 10:10:41 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -29,7 +29,7 @@ CWARNFLAGS.clang+=	-Wno-logical-op-parentheses \
 .include "${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}/defs.mk"
 
 SHLIB_MAJOR=	7
-SHLIB_MINOR=	2
+SHLIB_MINOR=	3
 
 SUBDIR=		include
 
