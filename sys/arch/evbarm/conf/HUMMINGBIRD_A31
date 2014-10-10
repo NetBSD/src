@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.1 2014/10/10 07:37:50 jmcneill Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.2 2014/10/10 17:49:12 jmcneill Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -9,6 +9,7 @@ no makeoptions	BOARDTYPE
 makeoptions	BOARDTYPE="hummingbird_a31"
 options 	ALLWINNER_A31
 options 	MEMSIZE=1024
+options 	AWIN_GPIO_IGNORE_FW
 
 no ahcisata*
 no awe0
@@ -17,7 +18,6 @@ no axp20x0
 # TODO
 no awinusb0
 no awinusb1
-no motg0
 no awge0
 
 #
