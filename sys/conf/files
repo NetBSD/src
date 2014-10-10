@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1109 2014/10/10 09:13:21 uebayasi Exp $
+#	$NetBSD: files,v 1.1110 2014/10/10 09:31:40 uebayasi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20140824
@@ -1493,7 +1493,7 @@ include "secmodel/files.secmodel"
 # kernel sources
 #
 define	kern
-defflag	opt_kern.h			KERN
+defflag	opt_kern.h			KERN:	MACHDEP, UVM
 file	compat/common/compat_mod.c	compat_netbsd | compat_netbsd32
 file	conf/debugsyms.c
 file	dev/auconv.c			auconv | mulaw
