@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.140 2014/08/10 16:44:35 tls Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.141 2014/10/10 17:41:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.140 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.141 2014/10/10 17:41:05 christos Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -610,6 +610,14 @@ re_attach(struct rtk_softc *sc)
 		case RTK_HWREV_8168F:
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
 			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_NOJUMBO;
+			break;
+		case RTK_HWREV_8168G:
+		case RTK_HWREV_8168G_SPIN1:
+		case RTK_HWREV_8168G_SPIN2:
+		case RTK_HWREV_8168G_SPIN4:
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
+			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_NOJUMBO | 
+			    RTKQ_RXDV_GATED;
 			break;
 		case RTK_HWREV_8100E:
 		case RTK_HWREV_8100E_SPIN2:
@@ -1834,6 +1842,11 @@ re_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, RTK_TXLIST_ADDR_LO,
 	    RE_ADDR_LO(sc->re_ldata.re_tx_list_map->dm_segs[0].ds_addr));
 
+	if (sc->sc_quirk & RTKQ_RXDV_GATED) {
+		CSR_WRITE_4(sc, RTK_MISC,
+		    CSR_READ_4(sc, RTK_MISC) & ~RTK_MISC_RXDV_GATED_EN);
+	}
+		
 	/*
 	 * Enable transmit and receive.
 	 */
