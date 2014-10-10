@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.303 2014/10/07 08:45:02 ozaki-r Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.304 2014/10/10 11:04:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.303 2014/10/07 08:45:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.304 2014/10/10 11:04:21 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,6 +272,7 @@ struct wm_softc {
 	int sc_bus_speed;		/* PCI/PCIX bus speed */
 	int sc_pcixe_capoff;		/* PCI[Xe] capability reg offset */
 
+	uint16_t sc_pcidevid;		/* PCI device ID */
 	wm_chip_type sc_type;		/* MAC type */
 	int sc_rev;			/* MAC revision */
 	wm_phy_type sc_phytype;		/* PHY type */
@@ -1122,9 +1123,26 @@ static const struct wm_product {
 	  "82580 quad-1000BaseX Ethernet",
 	  WM_T_82580,		WMP_F_FIBER },
 
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_DH89XXCC_SGMII,
+	  "DH89XXCC Gigabit Ethernet (SGMII)",
+	  WM_T_82580,		WMP_F_COPPER },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_DH89XXCC_SERDES,
+	  "DH89XXCC Gigabit Ethernet (SERDES)",
+	  WM_T_82580,		WMP_F_SERDES },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_DH89XXCC_BPLANE,
+	  "DH89XXCC 1000BASE-KX Ethernet",
+	  WM_T_82580,		WMP_F_SERDES },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_DH89XXCC_SFP,
+	  "DH89XXCC Gigabit Ethernet (SFP)",
+	  WM_T_82580,		WMP_F_SERDES },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_COPPER,
 	  "I350 Gigabit Network Connection",
 	  WM_T_I350,		WMP_F_COPPER },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_FIBER,
 	  "I350 Gigabit Fiber Network Connection",
 	  WM_T_I350,		WMP_F_FIBER },
@@ -1350,6 +1368,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->sc_dmat = pa->pa_dmat;
 
+	sc->sc_pcidevid = PCI_PRODUCT(pa->pa_id);
 	sc->sc_rev = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
 	pci_aprint_devinfo_fancy(pa, "Ethernet controller", wmp->wmp_name, 1);
 
@@ -3423,6 +3442,16 @@ wm_reset(struct wm_softc *sc)
 		delay(20*1000);
 		wm_put_swfwhw_semaphore(sc);
 		break;
+	case WM_T_82580:
+	case WM_T_I350:
+	case WM_T_I354:
+	case WM_T_I210:
+	case WM_T_I211:
+		CSR_WRITE(sc, WMREG_CTRL, CSR_READ(sc, WMREG_CTRL) | CTRL_RST);
+		if (sc->sc_pcidevid != PCI_PRODUCT_INTEL_DH89XXCC_SGMII)
+			CSR_WRITE_FLUSH(sc);
+		delay(5000);
+		break;
 	case WM_T_82542_2_0:
 	case WM_T_82542_2_1:
 	case WM_T_82543:
@@ -3435,12 +3464,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82574:
 	case WM_T_82575:
 	case WM_T_82576:
-	case WM_T_82580:
 	case WM_T_82583:
-	case WM_T_I350:
-	case WM_T_I354:
-	case WM_T_I210:
-	case WM_T_I211:
 	default:
 		/* Everything else can safely use the documented method. */
 		CSR_WRITE(sc, WMREG_CTRL, CSR_READ(sc, WMREG_CTRL) | CTRL_RST);
