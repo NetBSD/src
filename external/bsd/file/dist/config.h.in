@@ -44,6 +44,9 @@
 /* Define to 1 if you have the `fork' function. */
 #undef HAVE_FORK
 
+/* Define to 1 if you have the `freelocale' function. */
+#undef HAVE_FREELOCALE
+
 /* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
 #undef HAVE_FSEEKO
 
@@ -94,6 +97,9 @@
 
 /* Define to 1 if you have a working `mmap' system call. */
 #undef HAVE_MMAP
+
+/* Define to 1 if you have the `newlocale' function. */
+#undef HAVE_NEWLOCALE
 
 /* Define to 1 if you have the `pread' function. */
 #undef HAVE_PREAD
@@ -181,6 +187,9 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `uselocale' function. */
+#undef HAVE_USELOCALE
 
 /* Define to 1 if you have the `utime' function. */
 #undef HAVE_UTIME

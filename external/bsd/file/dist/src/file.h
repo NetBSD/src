@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.11 2014/06/13 02:08:06 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.12 2014/10/10 20:15:02 christos Exp $	*/
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -28,7 +28,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)$File: file.h,v 1.152 2014/06/03 19:01:34 christos Exp $
+ * @(#)$File: file.h,v 1.154 2014/09/10 18:41:51 christos Exp $
  */
 
 #ifndef __file_h__
@@ -443,6 +443,8 @@ protected int file_is_tar(struct magic_set *, const unsigned char *, size_t);
 protected int file_softmagic(struct magic_set *, const unsigned char *, size_t,
     size_t, int, int);
 protected int file_apprentice(struct magic_set *, const char *, int);
+protected int buffer_apprentice(struct magic_set *, struct magic **,
+    size_t *, size_t);
 protected int file_magicfind(struct magic_set *, const char *, struct mlist *);
 protected uint64_t file_signextend(struct magic_set *, struct magic *,
     uint64_t);
@@ -470,9 +472,17 @@ protected int file_os2_apptype(struct magic_set *, const char *, const void *,
     size_t);
 #endif /* __EMX__ */
 
+#if defined(HAVE_LOCALE_H)
+#include <locale.h>
+#endif
+
 typedef struct {
 	const char *pat;
-	char *old_lc_ctype;
+#if defined(HAVE_NEWLOCALE) && defined(HAVE_USELOCALE) && defined(HAVE_FREELOCALE)
+#define USE_C_LOCALE
+	locale_t old_lc_ctype;
+	locale_t c_lc_ctype;
+#endif
 	int rc;
 	regex_t rx;
 } file_regex_t;

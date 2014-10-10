@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.8 2014/06/13 02:08:06 christos Exp $	*/
+/*	$NetBSD: funcs.c,v 1.9 2014/10/10 20:15:02 christos Exp $	*/
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -29,9 +29,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: funcs.c,v 1.72 2014/05/14 23:15:42 christos Exp $")
+FILE_RCSID("@(#)$File: funcs.c,v 1.73 2014/09/10 18:41:51 christos Exp $")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.8 2014/06/13 02:08:06 christos Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.9 2014/10/10 20:15:02 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -49,9 +49,6 @@ __RCSID("$NetBSD: funcs.c,v 1.8 2014/06/13 02:08:06 christos Exp $");
 #endif
 #if defined(HAVE_LIMITS_H)
 #include <limits.h>
-#endif
-#if defined(HAVE_LOCALE_H)
-#include <locale.h>
 #endif
 
 #ifndef SIZE_MAX
@@ -461,13 +458,14 @@ out:
 protected int
 file_regcomp(file_regex_t *rx, const char *pat, int flags)
 {
-	rx->old_lc_ctype = setlocale(LC_CTYPE, NULL);
+#ifdef USE_C_LOCALE
+	rx->c_lc_ctype = newlocale(LC_CTYPE_MASK, "C", 0);
+	assert(rx->c_lc_ctype != NULL);
+	rx->old_lc_ctype = uselocale(rx->c_lc_ctype);
 	assert(rx->old_lc_ctype != NULL);
-	rx->old_lc_ctype = strdup(rx->old_lc_ctype);
-	assert(rx->old_lc_ctype != NULL);
+#endif
 	rx->pat = pat;
 
-	(void)setlocale(LC_CTYPE, "C");
 	return rx->rc = regcomp(&rx->rx, pat, flags);
 }
 
@@ -484,8 +482,10 @@ file_regfree(file_regex_t *rx)
 {
 	if (rx->rc == 0)
 		regfree(&rx->rx);
-	(void)setlocale(LC_CTYPE, rx->old_lc_ctype);
-	free(rx->old_lc_ctype);
+#ifdef USE_C_LOCALE
+	(void)uselocale(rx->old_lc_ctype);
+	freelocale(rx->c_lc_ctype);
+#endif
 }
 
 protected void
