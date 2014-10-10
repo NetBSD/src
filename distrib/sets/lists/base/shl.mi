@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.717 2014/10/10 00:49:14 christos Exp $
+# $NetBSD: shl.mi,v 1.718 2014/10/10 10:10:41 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -750,7 +750,7 @@
 ./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=48,cxx,libstdcxx
 ./usr/lib/libstdc++.so.7.0			base-sys-shlib		gcc=4,cxx,libstdcxx
 ./usr/lib/libstdc++.so.7.1			base-sys-shlib		gcc=45,cxx,libstdcxx
-./usr/lib/libstdc++.so.7.2			base-sys-shlib		gcc=48,cxx,libstdcxx
+./usr/lib/libstdc++.so.7.3			base-sys-shlib		gcc=48,cxx,libstdcxx
 ./usr/lib/libtelnet.so				base-obsolete		obsolete
 ./usr/lib/libtermcap.so				base-sys-shlib
 ./usr/lib/libtermcap.so.0			base-sys-shlib

@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.46 2014/10/10 00:49:14 christos Exp $
+# $NetBSD: ad.arm,v 1.47 2014/10/10 10:10:41 mrg Exp $
 ./usr/lib/libarm_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libc_vfp_g.a				comp-c-debuglib		debuglib,softfloat
 ./usr/lib/libpmc_g.a				comp-c-debuglib		debuglib
@@ -190,7 +190,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,compat,libstdcxx
-./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.2.debug	comp-sys-debug	gcc=48,cxx,debug,compat,libstdcxx
+./usr/libdata/debug/usr/lib/oabi/libstdc++.so.7.3.debug	comp-sys-debug	gcc=48,cxx,debug,compat,libstdcxx
 ./usr/libdata/debug/usr/lib/oabi/libterminfo.so.1.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libtre.so.0.8.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libukfs.so.1.0.debug	comp-sys-debug	debug,compat,rump

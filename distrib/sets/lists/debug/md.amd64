@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.66 2014/10/10 00:49:14 christos Exp $
+# $NetBSD: md.amd64,v 1.67 2014/10/10 10:10:41 mrg Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-debuglib		compat,debuglib
@@ -319,7 +319,7 @@
 ./usr/libdata/debug/usr/lib/i386/libssl.so.10.4.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	gcc=4,compat,pic,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.1.debug	comp-compat-shlib	gcc=45,compat,pic,debug,libstdcxx
-./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.2.debug	comp-compat-shlib	gcc=48,compat,pic,debug,libstdcxx
+./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.3.debug	comp-compat-shlib	gcc=48,compat,pic,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/i386/libterminfo.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libtpm_unseal.so.1.0.debug	comp-compat-shlib	compat,pic,debug,tpm
 ./usr/libdata/debug/usr/lib/i386/libtre.so.0.8.debug	comp-compat-shlib	compat,pic,debug

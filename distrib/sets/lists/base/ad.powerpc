@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.21 2014/10/10 00:49:14 christos Exp $
+# $NetBSD: ad.powerpc,v 1.22 2014/10/10 10:10:40 mrg Exp $
 ./lib/powerpc					base-npf-shlib		compat,arch64
 ./lib/powerpc/npf				base-npf-shlib		compat,arch64
 ./lib/powerpc/npf/ext_log.so			base-npf-shlib		compat,arch64,pic
@@ -279,7 +279,7 @@
 ./usr/lib/powerpc/libstdc++.so.7		base-compat-shlib	compat,arch64,pic,gcccmds,libstdcxx
 ./usr/lib/powerpc/libstdc++.so.7.0		base-compat-shlib	compat,arch64,pic,gcc=4,libstdcxx
 ./usr/lib/powerpc/libstdc++.so.7.1		base-compat-shlib	compat,arch64,pic,gcc=45,libstdcxx
-./usr/lib/powerpc/libstdc++.so.7.2		base-compat-shlib	compat,arch64,pic,gcc=48,libstdcxx
+./usr/lib/powerpc/libstdc++.so.7.3		base-compat-shlib	compat,arch64,pic,gcc=48,libstdcxx
 ./usr/lib/powerpc/libtermcap.so.0		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libtermcap.so.0.6		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libterminfo.so.1		base-compat-shlib	compat,arch64,pic

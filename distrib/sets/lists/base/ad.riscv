@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv,v 1.4 2014/10/10 00:49:14 christos Exp $
+# $NetBSD: ad.riscv,v 1.5 2014/10/10 10:10:41 mrg Exp $
 ./lib/rv32					base-compat-shlib	compat,arch64
 ./lib/rv32/npf					base-npf-shlib		compat,arch64
 ./lib/rv32/npf/ext_log.so			base-npf-shlib		compat,pic,arch64
@@ -269,7 +269,7 @@
 ./usr/lib/rv32/libssl.so.10.4			base-compat-shlib	compat,pic,crypto,arch64
 ./usr/lib/rv32/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx,arch64
 ./usr/lib/rv32/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx,libstdcxx,arch64
-./usr/lib/rv32/libstdc++.so.7.2			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx,arch64
+./usr/lib/rv32/libstdc++.so.7.3			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx,arch64
 ./usr/lib/rv32/libtermcap.so.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libtermcap.so.0.6		base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libterminfo.so.1			base-compat-shlib	compat,pic,arch64

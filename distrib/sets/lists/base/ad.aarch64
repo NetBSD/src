@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.8 2014/10/10 00:49:14 christos Exp $
+# $NetBSD: ad.aarch64,v 1.9 2014/10/10 10:10:40 mrg Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-npf-shlib		compat
 ./lib/eabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -300,7 +300,7 @@
 ./usr/lib/eabi/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx
 ./usr/lib/eabi/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx,libstdcxx
 ./usr/lib/eabi/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx,libstdcxx
-./usr/lib/eabi/libstdc++.so.7.2			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx
+./usr/lib/eabi/libstdc++.so.7.3			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx
 ./usr/lib/eabi/libtermcap.so.0			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libtermcap.so.0.6			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libterminfo.so.1			base-compat-shlib	compat,pic
@@ -614,7 +614,7 @@
 ./usr/lib/eabihf/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx
 ./usr/lib/eabihf/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx,libstdcxx
 ./usr/lib/eabihf/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx,libstdcxx
-./usr/lib/eabihf/libstdc++.so.7.2			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx
+./usr/lib/eabihf/libstdc++.so.7.3			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx
 ./usr/lib/eabihf/libtermcap.so.0			base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libtermcap.so.0.6			base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libterminfo.so.1			base-compat-shlib	compat,pic
@@ -926,7 +926,7 @@
 ./usr/lib/oabi/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx
 ./usr/lib/oabi/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx,libstdcxx
 ./usr/lib/oabi/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx,libstdcxx
-./usr/lib/oabi/libstdc++.so.7.2			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx
+./usr/lib/oabi/libstdc++.so.7.3			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx
 ./usr/lib/oabi/libtermcap.so.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libtermcap.so.0.6		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libterminfo.so.1			base-compat-shlib	compat,pic
