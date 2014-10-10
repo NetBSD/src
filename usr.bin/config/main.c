@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.62 2014/10/10 10:46:05 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.63 2014/10/10 15:35:08 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -559,16 +559,10 @@ do_depend(struct nvlist *nv)
 		 * it to the selecttab.
 		 */
 		CFGDBG(3, "depend attr `%s'", nv->nv_name);
-		/* XXX Do uppercased attribute names exist? */
 		if ((a = ht_lookup(attrtab, nv->nv_name)) != NULL) {
 			if (a->a_iattr)
 				panic("do_depend(%s): dep `%s' is an iattr",
 				    nv->nv_name, a->a_name);
-			expandattr(a, selectattr);
-		} else if ((a = ht_lookup(attrtab, n)) != NULL) {
-			if (a->a_iattr)
-				panic("do_depend(%s): dep `%s' is an iattr",
-				    n, a->a_name);
 			expandattr(a, selectattr);
 		} else {
 			if (ht_lookup(opttab, nv->nv_name) == NULL)
