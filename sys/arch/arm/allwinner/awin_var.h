@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.16 2014/09/11 02:16:15 jmcneill Exp $ */
+/* $NetBSD: awin_var.h,v 1.17 2014/10/10 23:50:43 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -94,11 +94,11 @@ void	awin_pll6_enable(void);
 void	awin_pll7_enable(void);
 void	awin_cpu_hatch(struct cpu_info *);
 
-#define AWIN_CHIP_ID_A10	0x1623
-#define AWIN_CHIP_ID_A13	0x1625
-#define AWIN_CHIP_ID_A31	0x1633
-#define AWIN_CHIP_ID_A23	0x1650
-#define AWIN_CHIP_ID_A20	0x1651
+#define AWIN_CHIP_ID_A10	AWIN_SRAM_VER_KEY_A10
+#define AWIN_CHIP_ID_A13	AWIN_SRAM_VER_KEY_A13
+#define AWIN_CHIP_ID_A31	AWIN_SRAM_VER_KEY_A31
+#define AWIN_CHIP_ID_A23	AWIN_SRAM_VER_KEY_A23
+#define AWIN_CHIP_ID_A20	AWIN_SRAM_VER_KEY_A20
 uint16_t awin_chip_id(void);
 const char *awin_chip_name(void);
 

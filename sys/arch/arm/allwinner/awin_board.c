@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.21 2014/10/10 07:36:11 jmcneill Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.22 2014/10/10 23:50:43 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.21 2014/10/10 07:36:11 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.22 2014/10/10 23:50:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -175,7 +175,7 @@ awin_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 	error = bus_space_map(&awin_bs_tag, AWIN_CORE_PBASE,
 	    AWIN_CORE_SIZE, 0, &awin_core_bsh);
 	if (error)
-		panic("%s: failed to map a[12]0 %s registers: %d",
+		panic("%s: failed to map awin %s registers: %d",
 		    __func__, "io", error);
 	KASSERT(awin_core_bsh == iobase);
 
@@ -197,16 +197,15 @@ awin_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 
 #ifdef VERBOSE_INIT_ARM
 	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
-		uint32_t s0 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
-		    AWIN_A31_CPUCFG_OFFSET + AWIN_A31_CPUCFG_CPU0_STATUS_REG);
-		uint32_t s1 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
-		    AWIN_A31_CPUCFG_OFFSET + AWIN_A31_CPUCFG_CPU1_STATUS_REG);
-		uint32_t s2 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
-		    AWIN_A31_CPUCFG_OFFSET + AWIN_A31_CPUCFG_CPU2_STATUS_REG);
-		uint32_t s3 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
-		    AWIN_A31_CPUCFG_OFFSET + AWIN_A31_CPUCFG_CPU3_STATUS_REG);
+		uint32_t s[4];
+		unsigned int cpuno;
+		for (cpuno = 0; cpuno < 4; cpuno++) {
+			s[cpuno] = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
+			    AWIN_A31_CPUCFG_OFFSET +
+			    AWIN_A31_CPUCFG_STATUS_REG(cpuno));
+		}
 		printf("%s: cpu status: 0=%#x 1=%#x 2=%#x 3=%#x\n", __func__,
-		    s0, s1, s2, s3);
+		    s[0], s[1], s[2], s[3]);
 	} else {
 		uint32_t s0 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
 		    AWIN_CPUCFG_OFFSET + AWIN_CPUCFG_CPU0_STATUS_REG);
