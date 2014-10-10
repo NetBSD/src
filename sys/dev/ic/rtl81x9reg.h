@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.45 2013/12/13 20:52:48 jakllsch Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.46 2014/10/10 17:41:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -136,6 +136,7 @@
 #define RTK_DBG_REG		0x00D1
 #define RTK_MAXRXPKTLEN		0x00DA	/* 16 bits, chip multiplies by 8 */
 #define RTK_IM			0x00E2
+#define RTK_MISC		0x00F0
 
 /*
  * TX config register bits
@@ -165,6 +166,11 @@
 #define RTK_HWREV_8168E		0x2C000000
 #define RTK_HWREV_8168E_VL	0x2C800000
 #define RTK_HWREV_8168_SPIN1	0x30000000
+#define RTK_HWREV_8168G		0x4c000000
+#define RTK_HWREV_8168G_SPIN1	0x4c100000
+#define RTK_HWREV_8168G_SPIN2	0x50900000
+#define RTK_HWREV_8168G_SPIN4	0x5c800000
+#define RTK_HWREV_8168GU	0x50800000
 #define RTK_HWREV_8100E		0x30800000
 #define RTK_HWREV_8101E		0x34000000
 #define RTK_HWREV_8102E		0x34800000
@@ -213,6 +219,14 @@
 #define RTK_TXSTAT_THRESH(x)	(((x) << 16) & RTK_TXSTAT_EARLY_THRESH)
 #define RTK_TXTH_256		8	/* (x) * 32 bytes */
 #define RTK_TXTH_1536		48
+
+/* MISC register */
+#define	RTK_MISC_TXPLA_RST	__BIT(29)
+#define	RTK_MISC_DISABLE_LAN_EN	__BIT(23)	/* Enable GPIO pin */
+#define	RTK_MISC_PWM_EN		__BIT(22)
+#define	RTK_MISC_RXDV_GATED_EN	__BIT(19)
+#define	RTK_MISC_EARLY_TALLY_EN	__BIT(16)
+
 
 /*
  * Interrupt status register bits.
