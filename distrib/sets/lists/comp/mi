@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1915 2014/10/10 08:31:49 martin Exp $
+#	$NetBSD: mi,v 1.1916 2014/10/10 11:36:00 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -12594,11 +12594,13 @@
 ./usr/share/man/html3/casinl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/casinh.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/casinhf.html		comp-c-htmlman		complex,html
+./usr/share/man/html3/casinhl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/catan.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/catanf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/catanl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/catanh.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/catanhf.html		comp-c-htmlman		complex,html
+./usr/share/man/html3/catanhl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/catclose.html		comp-c-htmlman		html
 ./usr/share/man/html3/catgets.html		comp-c-htmlman		html
 ./usr/share/man/html3/catopen.html		comp-c-htmlman		html
