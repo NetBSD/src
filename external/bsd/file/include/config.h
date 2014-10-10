@@ -39,8 +39,14 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
 
+/* Define to 1 if you have the `fmtcheck' function. */
+#define HAVE_FMTCHECK 1
+
 /* Define to 1 if you have the `fork' function. */
 #define HAVE_FORK 1
+
+/* Define to 1 if you have the `freelocale' function. */
+#define HAVE_FREELOCALE 1
 
 /* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
 #define HAVE_FSEEKO 1
@@ -56,6 +62,9 @@
 
 /* Define to 1 if you have the `getpagesize' function. */
 #define HAVE_GETPAGESIZE 1
+
+/* Define to 1 if the system has the type `intptr_t'. */
+#define HAVE_INTPTR_T 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -82,13 +91,16 @@
 #define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the `mkostemp' function. */
-/* #undef HAVE_MKOSTEMP */
+#define HAVE_MKOSTEMP 1
 
 /* Define to 1 if you have the `mkstemp' function. */
 #define HAVE_MKSTEMP 1
 
 /* Define to 1 if you have a working `mmap' system call. */
 #define HAVE_MMAP 1
+
+/* Define to 1 if you have the `newlocale' function. */
+#define HAVE_NEWLOCALE 1
 
 /* Define to 1 if you have the `pread' function. */
 #define HAVE_PREAD 1
@@ -101,6 +113,9 @@
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
+
+/* Define to 1 if you have the `strcasestr' function. */
+#define HAVE_STRCASESTR 1
 
 /* Define to 1 if you have the `strerror' function. */
 #define HAVE_STRERROR 1
@@ -168,8 +183,14 @@
 /* HAVE_TZNAME */
 #define HAVE_TZNAME 1
 
+/* Define to 1 if the system has the type `uintptr_t'. */
+#define HAVE_UINTPTR_T 1
+
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
+
+/* Define to 1 if you have the `uselocale' function. */
+/* #undef HAVE_USELOCALE */
 
 /* Define to 1 if you have the `utime' function. */
 #define HAVE_UTIME 1
@@ -223,9 +244,6 @@
    <sysmacros.h>. */
 /* #undef MAJOR_IN_SYSMACROS */
 
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-/* #undef NO_MINUS_C_MINUS_O */
-
 /* Name of package */
 #define PACKAGE "file"
 
@@ -236,7 +254,7 @@
 #define PACKAGE_NAME "file"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "file 5.14"
+#define PACKAGE_STRING "file 5.20"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "file"
@@ -245,9 +263,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#if 0
-#define PACKAGE_VERSION "5.14"
-#endif
+#define PACKAGE_VERSION "5.20"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -276,11 +292,8 @@
 # define __EXTENSIONS__ 1
 #endif
 
-
-#if 0
 /* Version number of package */
-#define VERSION "5.14"
-#endif
+#define VERSION "5.20"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
@@ -344,6 +357,10 @@
    such a type exists and the standard includes do not define it. */
 /* #undef int64_t */
 
+/* Define to the type of a signed integer type wide enough to hold a pointer,
+   if such a type exists, and if the system does not define it. */
+/* #undef intptr_t */
+
 /* Define to a type if <wchar.h> does not define. */
 /* #undef mbstate_t */
 
@@ -371,6 +388,10 @@
 /* Define to the type of an unsigned integer type of width exactly 8 bits if
    such a type exists and the standard includes do not define it. */
 /* #undef uint8_t */
+
+/* Define to the type of an unsigned integer type wide enough to hold a
+   pointer, if such a type exists, and if the system does not define it. */
+/* #undef uintptr_t */
 
 /* Define as `fork' if `vfork' does not work. */
 /* #undef vfork */
