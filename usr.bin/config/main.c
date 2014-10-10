@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.58 2014/10/09 19:20:56 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.59 2014/10/10 07:08:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -698,6 +698,13 @@ deffilesystem(struct nvlist *fses, struct nvlist *deps)
 			    nv->nv_name);
 
 		add_fs_dependencies(nv, deps);
+
+		/*
+		 * Implicit attribute definition for filesystem.
+		 */
+		const char *n; 
+		n = strtolower(nv->nv_name);
+		refattr(n);
 	}
 }
 

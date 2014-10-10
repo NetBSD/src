@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.50 2014/10/10 06:59:38 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.51 2014/10/10 07:08:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -560,7 +560,7 @@ defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
 	CFGDBG(3, "deva `%s' defined", deva->d_name);
 
 	/*
-	 * Implicit attribute definition.
+	 * Implicit attribute definition for device attachment.
 	 */
 	refattr(deva->d_name);
 
