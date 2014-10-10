@@ -1,4 +1,4 @@
-/* $NetBSD: catanhl.c,v 1.1 2014/10/10 08:19:37 martin Exp $ */
+/* $NetBSD: catanhl.c,v 1.2 2014/10/10 08:34:30 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <complex.h>
 
 long double complex
-catanh(long double complex z)
+catanhl(long double complex z)
 {
 	long double complex w;
 
