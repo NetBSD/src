@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.83 2014/02/20 03:48:06 pgoyette Exp $
+#	$NetBSD: files.amd64,v 1.84 2014/10/10 09:13:21 uebayasi Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -27,25 +27,25 @@ defparam opt_physmem.h	PHYSMEM_MAX_ADDR PHYSMEM_MAX_SIZE
 defflag			USER_LDT
 defflag eisa.h EISA
 
-file	arch/amd64/amd64/amd64func.S
-file	arch/amd64/amd64/autoconf.c
-file	arch/amd64/amd64/busfunc.S
+file	arch/amd64/amd64/amd64func.S		machdep
+file	arch/amd64/amd64/autoconf.c		machdep
+file	arch/amd64/amd64/busfunc.S		machdep
 file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
-file	arch/amd64/amd64/cpufunc.S
+file	arch/amd64/amd64/cpufunc.S		machdep
 file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c		ddb
 file	arch/amd64/amd64/db_machdep.c		ddb
 file	arch/amd64/amd64/kobj_machdep.c		modular
 file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 file	kern/subr_disk_mbr.c			disk
-file	arch/amd64/amd64/gdt.c
-file	arch/amd64/amd64/machdep.c
-file	arch/amd64/amd64/process_machdep.c
-file	arch/amd64/amd64/trap.c
-file	arch/x86/x86/fpu.c
-file	arch/x86/x86/convert_xmm_s87.c
-file	arch/amd64/amd64/lock_stubs.S
-file	dev/cons.c
+file	arch/amd64/amd64/gdt.c			machdep
+file	arch/amd64/amd64/machdep.c		machdep
+file	arch/amd64/amd64/process_machdep.c	machdep
+file	arch/amd64/amd64/trap.c			machdep
+file	arch/x86/x86/fpu.c			machdep
+file	arch/x86/x86/convert_xmm_s87.c		machdep
+file	arch/amd64/amd64/lock_stubs.S		machdep
+file	dev/cons.c				machdep
 
 file	arch/amd64/amd64/mptramp.S        multiprocessor
 
