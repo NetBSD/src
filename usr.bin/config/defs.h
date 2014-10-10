@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.53 2014/10/09 19:27:04 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.54 2014/10/10 05:27:28 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -166,15 +166,19 @@ struct defoptlist {
  */
 struct attr {
 	const char *a_name;		/* name of this attribute */
+	struct	attrlist *a_deps;	/* we depend on these other attrs */
+	int	a_expanding;		/* to detect cycles in attr graph */
+	TAILQ_HEAD(, files) a_files;	/* files in this attr */
+
+	/* "interface attribute" */
 	int	a_iattr;		/* true => allows children */
-	const char *a_devclass;		/* device class described */
 	struct	loclist *a_locs;	/* locators required */
 	int	a_loclen;		/* length of above list */
 	struct	nvlist *a_devs;		/* children */
 	struct	nvlist *a_refs;		/* parents */
-	struct	attrlist *a_deps;	/* we depend on these other attrs */
-	int	a_expanding;		/* to detect cycles in attr graph */
-	TAILQ_HEAD(, files) a_files;	/* files in this attr */
+
+	/* "device class" */
+	const char *a_devclass;		/* device class described */
 };
 
 /*
