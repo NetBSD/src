@@ -1,10 +1,14 @@
-# $NetBSD: std,v 1.18 2014/10/10 09:31:40 uebayasi Exp $
+# $NetBSD: std,v 1.19 2014/10/10 12:46:32 uebayasi Exp $
 #
 # standard MI 'options'
 #
 # this file is for options which can't be off-by-default for some reasons.
 # "it's commonly used" is NOT a good reason to enable options here.
 
+#
+# Always include "kern" attribute (module).  Other attributes don't need to
+# depend on "kern".
+#
 options	KERN
 
 # the following options are on-by-default to keep
@@ -17,6 +21,8 @@ options	PTRACE		# Include ptrace(2)
 options	COREDUMP	# allow processes to coredump.
 options	AIO		# POSIX asynchronous I/O
 options	MQUEUE		# POSIX message queues
+
+options	NET		# XXX Clean up dependency
 
 #
 # Security model.
