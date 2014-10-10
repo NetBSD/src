@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.63 2014/10/10 15:35:08 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.64 2014/10/10 16:17:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -551,8 +551,6 @@ do_depend(struct nvlist *nv)
 	struct attr *a;
 
 	if (nv != NULL && (nv->nv_flags & NV_DEPENDED) == 0) {
-		const char *n = strtolower(nv->nv_name);
-
 		nv->nv_flags |= NV_DEPENDED;
 		/*
 		 * If the dependency is an attribute, then just add
