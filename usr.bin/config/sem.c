@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.54 2014/10/10 10:16:19 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.55 2014/10/10 11:09:50 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -672,12 +672,14 @@ getattr(const char *name)
 /*
  * Implicit attribute definition.
  */
-void
+struct attr *
 refattr(const char *name)
 {
+	struct attr *a;
 
-	if ((ht_lookup(attrtab, name)) == NULL)
-		(void)mkattr(name);
+	if ((a = ht_lookup(attrtab, name)) == NULL)
+		a = mkattr(name);
+	return a;
 }
 
 int
