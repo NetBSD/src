@@ -1,4 +1,4 @@
-#	$NetBSD: files.uvm,v 1.21 2014/10/10 08:24:54 uebayasi Exp $
+#	$NetBSD: files.uvm,v 1.22 2014/10/10 09:01:01 uebayasi Exp $
 
 #
 # UVM options
@@ -14,6 +14,7 @@ defparam			USER_VA0_DISABLE_DEFAULT
 defflag opt_uvm_page_trkown.h	UVM_PAGE_TRKOWN
 
 define	uvm
+defflag	opt_uvm.h			UVM
 file	uvm/uvm_amap.c			uvm
 file	uvm/uvm_anon.c			uvm
 file	uvm/uvm_aobj.c			uvm
