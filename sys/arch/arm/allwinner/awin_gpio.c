@@ -31,10 +31,11 @@
 #include "gpio.h"
 
 #include "opt_arm_debug.h"
+#include "opt_allwinner.h"
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.9 2014/08/24 12:42:03 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.10 2014/10/10 17:48:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -382,6 +383,7 @@ awin_gpio_init(void)
 		grp->grp_cfg.pul[1] = bus_space_read_4(sc->sc_bst,
 		    grp->grp_bsh, AWIN_PIO_PUL1_REG);
 
+#if !defined(AWIN_GPIO_IGNORE_FW)
 		for (uint32_t j = 0, mask = 1;
 		     (mask & grp->grp_pin_mask) != 0;
 		     j++, mask <<= 1) {
@@ -390,6 +392,8 @@ awin_gpio_init(void)
 				grp->grp_pin_inuse_mask |= mask;
 			}
 		}
+#endif
+
 #ifdef VERBOSE_INIT_ARM
 		printf(" P%c=%d", 'A' + i,
 		    popcount32(grp->grp_pin_mask & ~grp->grp_pin_inuse_mask));

@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.14 2014/09/13 17:48:52 jmcneill Exp $
+#	$NetBSD: files.awin,v 1.15 2014/10/10 17:48:30 jmcneill Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -26,6 +26,7 @@ defflag opt_allwinner.h				AWINETH_COUNTERS
 defflag opt_allwinner.h				ALLWINNER_A10
 defflag opt_allwinner.h				ALLWINNER_A20
 defflag opt_allwinner.h				ALLWINNER_A31
+defflag opt_allwinner.h				AWIN_GPIO_IGNORE_FW
 
 # SoC I/O attach point
 device	awinio { [port=-1] } : bus_space_generic
