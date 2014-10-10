@@ -1,4 +1,4 @@
-/*	$NetBSD: readcdf.c,v 1.10 2014/06/13 02:08:06 christos Exp $	*/
+/*	$NetBSD: readcdf.c,v 1.11 2014/10/10 20:15:02 christos Exp $	*/
 /*-
  * Copyright (c) 2008 Christos Zoulas
  * All rights reserved.
@@ -28,9 +28,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: readcdf.c,v 1.44 2014/05/14 23:22:48 christos Exp $")
+FILE_RCSID("@(#)$File: readcdf.c,v 1.48 2014/09/10 18:41:51 christos Exp $")
 #else
-__RCSID("$NetBSD: readcdf.c,v 1.10 2014/06/13 02:08:06 christos Exp $");
+__RCSID("$NetBSD: readcdf.c,v 1.11 2014/10/10 20:15:02 christos Exp $");
 #endif
 #endif
 
@@ -40,9 +40,6 @@ __RCSID("$NetBSD: readcdf.c,v 1.10 2014/06/13 02:08:06 christos Exp $");
 #include <string.h>
 #include <time.h>
 #include <ctype.h>
-#if defined(HAVE_LOCALE_H)
-#include <locale.h>
-#endif
 
 #include "cdf.h"
 #include "magic.h"
@@ -116,20 +113,23 @@ cdf_app_to_mime(const char *vbuf, const struct nv *nv)
 {
 	size_t i;
 	const char *rv = NULL;
-	char *old_lc_ctype;
+#ifdef USE_C_LOCALE
+	locale_t old_lc_ctype, c_lc_ctype;
 
-	old_lc_ctype = setlocale(LC_CTYPE, NULL);
+	c_lc_ctype = newlocale(LC_CTYPE_MASK, "C", 0);
+	assert(c_lc_ctype != NULL);
+	old_lc_ctype = uselocale(c_lc_ctype);
 	assert(old_lc_ctype != NULL);
-	old_lc_ctype = strdup(old_lc_ctype);
-	assert(old_lc_ctype != NULL);
-	(void)setlocale(LC_CTYPE, "C");
+#endif
 	for (i = 0; nv[i].pattern != NULL; i++)
 		if (strcasestr(vbuf, nv[i].pattern) != NULL) {
 			rv = nv[i].mime;
 			break;
 		}
-	(void)setlocale(LC_CTYPE, old_lc_ctype);
-	free(old_lc_ctype);
+#ifdef USE_C_LOCALE
+	(void)uselocale(old_lc_ctype);
+	freelocale(c_lc_ctype);
+#endif
 	return rv;
 }
 
@@ -250,6 +250,37 @@ cdf_file_property_info(struct magic_set *ms, const cdf_property_info_t *info,
 }
 
 private int
+cdf_file_catalog(struct magic_set *ms, const cdf_header_t *h,
+    const cdf_stream_t *sst)
+{
+	cdf_catalog_t *cat;
+	size_t i;
+	char buf[256];
+	cdf_catalog_entry_t *ce;
+
+        if (NOTMIME(ms)) {
+		if (file_printf(ms, "Microsoft Thumbs.db [") == -1)
+			return -1;
+		if (cdf_unpack_catalog(h, sst, &cat) == -1)
+			return -1;
+		ce = cat->cat_e;
+		/* skip first entry since it has a , or paren */
+		for (i = 1; i < cat->cat_num; i++)
+			if (file_printf(ms, "%s%s",
+			    cdf_u16tos8(buf, ce[i].ce_namlen, ce[i].ce_name),
+			    i == cat->cat_num - 1 ? "]" : ", ") == -1) {
+				free(cat);
+				return -1;
+			}
+		free(cat);
+	} else {
+		if (file_printf(ms, "application/CDFV2") == -1)
+			return -1;
+	}
+	return 1;
+}
+
+private int
 cdf_file_summary_info(struct magic_set *ms, const cdf_header_t *h,
     const cdf_stream_t *sst, const cdf_directory_t *root_storage)
 {
@@ -294,11 +325,12 @@ cdf_file_summary_info(struct magic_set *ms, const cdf_header_t *h,
 		if (root_storage) {
 			str = cdf_clsid_to_mime(root_storage->d_storage_uuid,
 			    clsid2desc);
-			if (str)
+			if (str) {
 				if (file_printf(ms, ", %s", str) == -1)
 					return -2;
 			}
 		}
+	}
 
         m = cdf_file_property_info(ms, info, count, root_storage);
         free(info);
@@ -413,8 +445,24 @@ file_trycdf(struct magic_set *ms, int fd, const unsigned char *buf,
         if ((i = cdf_read_summary_info(&info, &h, &sat, &ssat, &sst, &dir,
             &scn)) == -1) {
                 if (errno == ESRCH) {
-                        corrupt = expn;
-                        expn = "No summary info";
+			if ((i = cdf_read_catalog(&info, &h, &sat, &ssat, &sst,
+			    &dir, &scn)) == -1) {
+				corrupt = expn;
+				if ((i = cdf_read_encrypted_package(&info, &h,
+				    &sat, &ssat, &sst, &dir, &scn)) == -1)
+					expn = "No summary info";
+				else {
+					expn = "Encrypted";
+					i = -1;
+				}
+				goto out4;
+			}
+#ifdef CDF_DEBUG
+			cdf_dump_catalog(&h, &scn);
+#endif
+			if ((i = cdf_file_catalog(ms, &h, &scn))
+			    < 0)
+				expn = "Can't expand catalog";
                 } else {
                         expn = "Cannot read summary info";
                 }
@@ -473,7 +521,8 @@ out0:
 		    if (file_printf(ms, ", %s%s", corrupt, expn) == -1)
 			return -1;
 	    } else {
-		if (file_printf(ms, "application/CDFV2-corrupt") == -1)
+		if (file_printf(ms, "application/CDFV2-%s",
+		    *corrupt ? "corrupt" : "encrypted") == -1)
 		    return -1;
 	    }
 	    i = 1;
