@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.76 2014/10/10 00:49:14 christos Exp $
+# $NetBSD: shl.mi,v 1.77 2014/10/10 10:10:41 mrg Exp $
 ./usr/libdata/debug/lib/libc.so.12.195.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.3.debug		comp-sys-debug	debug
@@ -252,7 +252,7 @@
 ./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,libstdcxx
-./usr/libdata/debug/usr/lib/libstdc++.so.7.2.debug	comp-sys-debug	gcc=48,cxx,debug,libstdcxx
+./usr/libdata/debug/usr/lib/libstdc++.so.7.3.debug	comp-sys-debug	gcc=48,cxx,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libtpm_unseal.so.1.0.debug	comp-tpm-debug	tpm,debug
 ./usr/libdata/debug/usr/lib/libtre.so.0.8.debug		comp-sys-debug	debug

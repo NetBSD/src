@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.22 2014/10/10 00:49:14 christos Exp $
+# $NetBSD: ad.powerpc,v 1.23 2014/10/10 10:10:41 mrg Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasn1_g.a			comp-c-debuglib		compat,arch64,debuglib,kerberos
@@ -252,7 +252,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/libssl.so.10.4.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libstdc++.so.7.0.debug		comp-compat-shlib	gcc=4,compat,arch64,debug,pic,libstdcxx
 ./usr/libdata/debug/usr/lib/powerpc/libstdc++.so.7.1.debug		comp-compat-shlib	gcc=45,compat,arch64,debug,pic,libstdcxx
-./usr/libdata/debug/usr/lib/powerpc/libstdc++.so.7.2.debug		comp-compat-shlib	gcc=48,compat,arch64,debug,pic,libstdcxx
+./usr/libdata/debug/usr/lib/powerpc/libstdc++.so.7.3.debug		comp-compat-shlib	gcc=48,compat,arch64,debug,pic,libstdcxx
 ./usr/libdata/debug/usr/lib/powerpc/libterminfo.so.1.0.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libtre.so.0.8.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libukfs.so.1.0.debug			comp-compat-shlib	compat,arch64,debug,pic,rump
