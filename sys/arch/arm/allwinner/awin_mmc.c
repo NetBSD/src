@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.12 2014/10/10 07:36:11 jmcneill Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.13 2014/10/10 17:49:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.12 2014/10/10 07:36:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.13 2014/10/10 17:49:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -184,7 +184,7 @@ awin_mmc_probe_clocks(struct awin_mmc_softc *sc, struct awinio_attach_args *aio)
 	sc->sc_mod_clk = sc->sc_pll_freq / (div + 1);
 
 	bus_space_write_4(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_SD0_CLK_REG + (sc->sc_mmc_number * 8),
+	    AWIN_SD0_CLK_REG + (sc->sc_mmc_number * 4),
 	    AWIN_PLL_CFG_ENABLE | AWIN_PLL_CFG_PLL6 | div);
 
 #ifdef AWIN_MMC_DEBUG
@@ -254,7 +254,7 @@ awin_mmc_attach(device_t parent, device_t self, void *aux)
 	bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 	bus_space_subregion(sc->sc_bst, aio->aio_ccm_bsh,
-	    AWIN_SD0_CLK_REG + (loc->loc_port * 8), 0, &sc->sc_clk_bsh);
+	    AWIN_SD0_CLK_REG + (loc->loc_port * 4), 0, &sc->sc_clk_bsh);
 
 	sc->sc_use_dma = true;
 	prop_dictionary_get_bool(cfg, "dma", &sc->sc_use_dma);
@@ -262,7 +262,6 @@ awin_mmc_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": SD3.0 (%s)\n", sc->sc_use_dma ? "DMA" : "PIO");
 
-	awin_pll6_enable();
 	awin_mmc_probe_clocks(sc, aio);
 
 	if (prop_dictionary_get_cstring_nocopy(cfg, "detect-gpio", &pin_name)) {
