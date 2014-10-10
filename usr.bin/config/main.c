@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.61 2014/10/10 10:22:49 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.62 2014/10/10 10:46:05 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1033,6 +1033,13 @@ addfsoption(const char *name)
 	/* Add to select table. */
 	(void)ht_insert(selecttab, n, __UNCONST(n));
 	CFGDBG(3, "fs selected `%s'", name);
+
+	/*
+	 * Select attribute if one exists.
+	 */
+	struct attr *a;
+	if ((a = ht_lookup(attrtab, n)) != NULL)
+		selectattr(a);
 }
 
 void
