@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.42 2014/10/10 06:13:30 uebayasi Exp $	*/
+/*	$NetBSD: gram.y,v 1.43 2014/10/10 11:09:50 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -587,7 +587,7 @@ depends:
 
 /* one depend item (which is an attribute) */
 depend:
-	WORD				{ $$ = getattr($1); }
+	WORD				{ $$ = refattr($1); }
 ;
 
 /* list of option depends, may be empty */
