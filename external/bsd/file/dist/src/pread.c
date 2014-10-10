@@ -1,10 +1,10 @@
-/*	$NetBSD: pread.c,v 1.1.1.3 2014/06/13 01:48:21 christos Exp $	*/
+/*	$NetBSD: pread.c,v 1.1.1.4 2014/10/10 20:08:17 christos Exp $	*/
 #include "file.h"
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: pread.c,v 1.2 2013/04/02 16:23:07 christos Exp $")
+FILE_RCSID("@(#)$File: pread.c,v 1.3 2014/09/15 19:11:25 christos Exp $")
 #else
-__RCSID("$NetBSD: pread.c,v 1.1.1.3 2014/06/13 01:48:21 christos Exp $");
+__RCSID("$NetBSD: pread.c,v 1.1.1.4 2014/10/10 20:08:17 christos Exp $");
 #endif
 #endif  /* lint */
 #include <fcntl.h>
@@ -12,8 +12,17 @@ __RCSID("$NetBSD: pread.c,v 1.1.1.3 2014/06/13 01:48:21 christos Exp $");
 
 ssize_t
 pread(int fd, void *buf, size_t len, off_t off) {
-	if (lseek(fd, off, SEEK_SET) == (off_t)-1)
+	off_t old;
+	ssize_t rv;
+
+	if ((old = lseek(fd, off, SEEK_SET)) == -1)
 		return -1;
 
-	return read(fd, buf, len);
+	if ((rv = read(fd, buf, len)) == -1)
+		return -1;
+
+	if (lseek(fd, old, SEEK_SET) == -1)
+		return -1;
+
+	return rv;
 }
