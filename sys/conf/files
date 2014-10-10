@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1112 2014/10/10 12:10:02 uebayasi Exp $
+#	$NetBSD: files,v 1.1113 2014/10/10 12:20:13 uebayasi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20141010
@@ -1688,38 +1688,40 @@ file	kern/uipc_socket.c		kern
 file	kern/uipc_socket2.c		kern
 file	kern/uipc_syscalls.c		kern
 file	kern/uipc_usrreq.c		kern
-file	kern/vfs_bio.c			kern
-file	kern/vfs_cache.c		kern
-file	kern/vfs_cwd.c			kern
-file	kern/vfs_dirhash.c		kern
-file	kern/vfs_getcwd.c		kern
-file	kern/vfs_hooks.c		kern
-file	kern/vfs_init.c			kern
-file	kern/vfs_lockf.c		kern
-file	kern/vfs_lookup.c		kern
-file	kern/vfs_mount.c		kern
-file	kern/vfs_quotactl.c		kern
-file	kern/vfs_subr.c			kern
-file	kern/vfs_syscalls.c		kern
-file	kern/vfs_trans.c		kern
-file	kern/vfs_vnode.c		kern
-file	kern/vfs_vnops.c		kern
+
+define	vfs: kern
+file	kern/vfs_bio.c			vfs
+file	kern/vfs_cache.c		vfs
+file	kern/vfs_cwd.c			vfs
+file	kern/vfs_dirhash.c		vfs
+file	kern/vfs_getcwd.c		vfs
+file	kern/vfs_hooks.c		vfs
+file	kern/vfs_init.c			vfs
+file	kern/vfs_lockf.c		vfs
+file	kern/vfs_lookup.c		vfs
+file	kern/vfs_mount.c		vfs
+file	kern/vfs_quotactl.c		vfs
+file	kern/vfs_subr.c			vfs
+file	kern/vfs_syscalls.c		vfs
+file	kern/vfs_trans.c		vfs
+file	kern/vfs_vnode.c		vfs
+file	kern/vfs_vnops.c		vfs
 file	kern/vfs_wapbl.c		wapbl
-file	kern/vfs_xattr.c		kern
-file	kern/vnode_if.c			kern
-file	miscfs/deadfs/dead_vfsops.c	kern
-file	miscfs/deadfs/dead_vnops.c	kern
-file	miscfs/fifofs/fifo_vnops.c	kern
-file	miscfs/genfs/genfs_io.c		kern
-file	miscfs/genfs/genfs_rename.c	kern
-file	miscfs/genfs/genfs_vfsops.c	kern
-file	miscfs/genfs/genfs_vnops.c	kern
+file	kern/vfs_xattr.c		vfs
+file	kern/vnode_if.c			vfs
+file	miscfs/deadfs/dead_vfsops.c	vfs
+file	miscfs/deadfs/dead_vnops.c	vfs
+file	miscfs/fifofs/fifo_vnops.c	vfs
+file	miscfs/genfs/genfs_io.c		vfs
+file	miscfs/genfs/genfs_rename.c	vfs
+file	miscfs/genfs/genfs_vfsops.c	vfs
+file	miscfs/genfs/genfs_vnops.c	vfs
 file	miscfs/genfs/layer_subr.c	nullfs | overlay | umapfs
 file	miscfs/genfs/layer_vfsops.c	nullfs | overlay | umapfs
 file	miscfs/genfs/layer_vnops.c	nullfs | overlay | umapfs
-file	miscfs/specfs/spec_vnops.c	kern
-file	miscfs/syncfs/sync_subr.c	kern
-file	miscfs/syncfs/sync_vnops.c	kern
+file	miscfs/specfs/spec_vnops.c	vfs
+file	miscfs/syncfs/sync_subr.c	vfs
+file	miscfs/syncfs/sync_vnops.c	vfs
 
 file	net/bpf.c			bpfilter
 file	net/bpf_filter.c		bpf_filter
