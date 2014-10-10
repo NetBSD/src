@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.56 2014/07/17 10:21:51 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.57 2014/10/10 05:10:59 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20140717"
+#define SERVER_SOFTWARE		"bozohttpd/20141009"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
