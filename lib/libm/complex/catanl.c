@@ -1,8 +1,11 @@
-/*	$NetBSD: cprojl.c,v 1.7 2014/10/10 00:48:18 christos Exp $	*/
+/* $NetBSD: catanl.c,v 1.1 2014/10/10 00:48:18 christos Exp $ */
 
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software written by Stephen L. Moshier.
+ * It is redistributed by the NetBSD Foundation by permission of the author.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,40 +28,53 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: cprojl.c,v 1.7 2014/10/10 00:48:18 christos Exp $");
 
+#include "../src/namespace.h"
 #include <complex.h>
 #include <math.h>
+#include <float.h>
+#include "cephes_subrl.h"
 
-#include "../src/math_private.h"
-
-/*
- * cprojl(long double complex z)
- *
- * These functions return the value of the projection (not stereographic!)
- * onto the Riemann sphere.
- *
- * z projects to z, except that all complex infinities (even those with one
- * infinite part and one NaN part) project to positive infinity on the real axis.
- * If z has an infinite part, then cproj(z) shall be equivalent to:
- *
- * INFINITY + I * copysign(0.0, cimag(z))
- */
-long double complex
-cprojl(long double complex z)
-{
-	long_double_complex w = { .z = z };
-
-	/*CONSTCOND*/
-	if (isinf(creall(z)) || isinf(cimagl(z))) {
-#ifdef __INFINITY
-		REAL_PART(w) = HUGE_VAL;
-#else
-		REAL_PART(w) = INFINITY;
+#ifdef __weak_alias
+__weak_alias(catanl, _catanl)
 #endif
-		IMAG_PART(w) = copysignl(0.0L, cimagl(z));
-	}
 
-	return (w.z);
+#define MAXNUM LDBL_MAX
+
+long double complex
+catanl(long double complex z)
+{
+	long double complex w;
+	long double a, t, x, x2, y;
+
+	x = creall(z);
+	y = cimagl(z);
+
+	if ((x == 0.0L) && (y > 1.0L))
+		goto ovrf;
+
+	x2 = x * x;
+	a = 1.0L - x2 - (y * y);
+	if (a == 0.0)
+		goto ovrf;
+
+	t = 0.5L * atan2l(2.0L * x, a);
+	w = _redupil(t);
+
+	t = y - 1.0L;
+	a = x2 + (t * t);
+	if (a == 0.0L)
+		goto ovrf;
+
+	t = y + 1.0L;
+	a = (x2 + (t * t))/a;
+	w = w + (0.25L * logl(a)) * I;
+	return w;
+
+ovrf:
+#if 0
+	mtherr ("catanl", OVERFLOW);
+#endif
+	w = MAXNUM + MAXNUM * I;
+	return w;
 }
