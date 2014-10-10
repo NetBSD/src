@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1105 2014/09/21 14:31:38 christos Exp $
+#	$NetBSD: files,v 1.1106 2014/10/10 08:18:04 uebayasi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20140824
@@ -1489,6 +1489,7 @@ include "secmodel/files.secmodel"
 #
 # kernel sources
 #
+define	kern
 file	compat/common/compat_mod.c	compat_netbsd | compat_netbsd32
 file	conf/debugsyms.c
 file	dev/auconv.c			auconv | mulaw
@@ -1530,191 +1531,191 @@ file	kern/bufq_readprio.c		bufq_readprio | new_bufq_strategy
 file	kern/core_elf32.c		exec_elf32
 file	kern/core_elf64.c		exec_elf64
 file	kern/core_netbsd.c		exec_aout | exec_coff | exec_ecoff
-file	kern/cnmagic.c
+file	kern/cnmagic.c			kern
 file	kern/exec_aout.c		exec_aout
 file	kern/exec_ecoff.c		exec_ecoff
 file	kern/exec_elf32.c		exec_elf32
 file	kern/exec_elf64.c		exec_elf64
 file	kern/exec_script.c		exec_script
-file	kern/exec_subr.c
-file	kern/init_main.c
-file	kern/init_sysctl.c
-file	kern/init_sysctl_base.c
-file	kern/init_sysent.c
-file	kern/kern_acct.c
-file	kern/kern_auth.c
-file	kern/kern_cfglock.c
-file	kern/kern_clock.c
-file	kern/kern_condvar.c
+file	kern/exec_subr.c		kern
+file	kern/init_main.c		kern
+file	kern/init_sysctl.c		kern
+file	kern/init_sysctl_base.c		kern
+file	kern/init_sysent.c		kern
+file	kern/kern_acct.c		kern
+file	kern/kern_auth.c		kern
+file	kern/kern_cfglock.c		kern
+file	kern/kern_clock.c		kern
+file	kern/kern_condvar.c		kern
 file	kern/kern_core.c		coredump
-file	kern/kern_cpu.c
+file	kern/kern_cpu.c			kern
 file	kern/kern_ctf.c			kdtrace_hooks
-file	kern/kern_descrip.c
-file	kern/kern_event.c
-file	kern/kern_exec.c
-file	kern/kern_exit.c
-file	kern/kern_fork.c
-file	kern/kern_idle.c
-file	kern/kern_hook.c
-file	kern/kern_kthread.c
+file	kern/kern_descrip.c			kern
+file	kern/kern_event.c		kern
+file	kern/kern_exec.c		kern
+file	kern/kern_exit.c		kern
+file	kern/kern_fork.c		kern
+file	kern/kern_idle.c		kern
+file	kern/kern_hook.c		kern
+file	kern/kern_kthread.c		kern
 file	kern/kern_ktrace.c		ktrace
 file	kern/kern_ktrace_vfs.c		ktrace
 file	kern/kern_ksyms.c		ksyms | ddb | modular needs-flag
-file	kern/kern_lock.c
-file	kern/kern_lwp.c
-file	kern/kern_malloc.c
-file	kern/kern_module.c
-file	kern/kern_module_vfs.c
-file	kern/kern_mutex.c
-file	kern/kern_mutex_obj.c
+file	kern/kern_lock.c		kern
+file	kern/kern_lwp.c			kern
+file	kern/kern_malloc.c		kern
+file	kern/kern_module.c		kern
+file	kern/kern_module_vfs.c		kern
+file	kern/kern_mutex.c		kern
+file	kern/kern_mutex_obj.c		kern
 file	kern/kern_fileassoc.c		fileassoc
-file	kern/kern_ntptime.c
+file	kern/kern_ntptime.c		kern
 file	kern/kern_pax.c			pax_mprotect | pax_segvguard | pax_aslr
-file	kern/kern_physio.c
-file	kern/kern_pmf.c
-file	kern/kern_proc.c
-file	kern/kern_prot.c
-file	kern/kern_ras.c
-file	kern/kern_rate.c
-file	kern/kern_resource.c
-file	kern/kern_rndpool.c
-file	kern/kern_rndq.c
-file	kern/kern_rndsink.c
-file	kern/kern_runq.c
-file	kern/kern_rwlock.c
-file	kern/kern_rwlock_obj.c
+file	kern/kern_physio.c		kern
+file	kern/kern_pmf.c			kern
+file	kern/kern_proc.c		kern
+file	kern/kern_prot.c		kern
+file	kern/kern_ras.c			kern
+file	kern/kern_rate.c		kern
+file	kern/kern_resource.c		kern
+file	kern/kern_rndpool.c		kern
+file	kern/kern_rndq.c		kern
+file	kern/kern_rndsink.c		kern
+file	kern/kern_runq.c		kern
+file	kern/kern_rwlock.c		kern
+file	kern/kern_rwlock_obj.c		kern
 file	kern/kern_sdt.c			kdtrace_hooks
-file	kern/kern_sig.c
-file	kern/kern_sleepq.c
-file	kern/kern_softint.c
-file	kern/kern_ssp.c
-file	kern/kern_stub.c
-file	kern/kern_subr.c
-file	kern/kern_synch.c
-file	kern/kern_syscall.c
-file	kern/kern_sysctl.c
-file	kern/kern_tc.c
-file	kern/kern_time.c
-file	kern/kern_timeout.c
-file	kern/kern_turnstile.c
-file	kern/kern_todr.c
-file	kern/kern_uidinfo.c
-file	kern/kern_uuid.c
-file	kern/kern_xxx.c
+file	kern/kern_sig.c			kern
+file	kern/kern_sleepq.c		kern
+file	kern/kern_softint.c		kern
+file	kern/kern_ssp.c			kern
+file	kern/kern_stub.c		kern
+file	kern/kern_subr.c		kern
+file	kern/kern_synch.c		kern
+file	kern/kern_syscall.c		kern
+file	kern/kern_sysctl.c		kern
+file	kern/kern_tc.c			kern
+file	kern/kern_time.c		kern
+file	kern/kern_timeout.c		kern
+file	kern/kern_turnstile.c		kern
+file	kern/kern_todr.c		kern
+file	kern/kern_uidinfo.c		kern
+file	kern/kern_uuid.c		kern
+file	kern/kern_xxx.c			kern
 file	kern/kgdb_stub.c		kgdb
 file	kern/sched_4bsd.c		sched_4bsd
 file	kern/sched_m2.c			sched_m2
-file	kern/subr_autoconf.c
+file	kern/subr_autoconf.c		kern
 file	kern/subr_blist.c		vmswap
-file	kern/subr_bufq.c
-file	kern/subr_callback.c
-file	kern/subr_cprng.c
-file	kern/subr_cpufreq.c
-file	kern/subr_copy.c
+file	kern/subr_bufq.c		kern
+file	kern/subr_callback.c		kern
+file	kern/subr_cprng.c		kern
+file	kern/subr_cpufreq.c		kern
+file	kern/subr_copy.c		kern
 file	kern/subr_debug.c		debug
-file	kern/subr_device.c
-file	kern/subr_devsw.c
-file	kern/subr_disk.c
-file	kern/subr_disk_open.c
-file	kern/subr_evcnt.c
-file	kern/subr_exec_fd.c
-file	kern/subr_extent.c
-file	kern/subr_hash.c
-file	kern/subr_humanize.c
-file	kern/subr_iostat.c
-file	kern/subr_ipi.c
-file	kern/subr_kcpuset.c
-file	kern/subr_kmem.c
-file	kern/subr_kobj.c
-file	kern/subr_kobj_vfs.c
-file	kern/subr_lockdebug.c
-file	kern/subr_log.c
-file	kern/subr_lwp_specificdata.c
-file	kern/subr_once.c
-file	kern/subr_optstr.c
-file	kern/subr_pcq.c
-file	kern/subr_pcu.c
-file	kern/subr_percpu.c
-file	kern/subr_pool.c
-file	kern/subr_prf.c
-file	kern/subr_prof.c
-file	kern/subr_pserialize.c
-file	kern/subr_specificdata.c
+file	kern/subr_device.c		kern
+file	kern/subr_devsw.c		kern
+file	kern/subr_disk.c		kern
+file	kern/subr_disk_open.c		kern
+file	kern/subr_evcnt.c		kern
+file	kern/subr_exec_fd.c		kern
+file	kern/subr_extent.c		kern
+file	kern/subr_hash.c		kern
+file	kern/subr_humanize.c		kern
+file	kern/subr_iostat.c		kern
+file	kern/subr_ipi.c			kern
+file	kern/subr_kcpuset.c		kern
+file	kern/subr_kmem.c		kern
+file	kern/subr_kobj.c		kern
+file	kern/subr_kobj_vfs.c		kern
+file	kern/subr_lockdebug.c		kern
+file	kern/subr_log.c			kern
+file	kern/subr_lwp_specificdata.c	kern
+file	kern/subr_once.c		kern
+file	kern/subr_optstr.c		kern
+file	kern/subr_pcq.c			kern
+file	kern/subr_pcu.c			kern
+file	kern/subr_percpu.c		kern
+file	kern/subr_pool.c		kern
+file	kern/subr_prf.c			kern
+file	kern/subr_prof.c		kern
+file	kern/subr_pserialize.c		kern
+file	kern/subr_specificdata.c	kern
 file	kern/subr_tftproot.c		tftproot
-file	kern/subr_time.c
+file	kern/subr_time.c		kern
 file	kern/subr_userconf.c		userconf
-file	kern/subr_vmem.c
-file	kern/subr_workqueue.c
-file	kern/subr_xcall.c
+file	kern/subr_vmem.c		kern
+file	kern/subr_workqueue.c		kern
+file	kern/subr_xcall.c		kern
 file	kern/sys_aio.c			aio
-file	kern/sys_descrip.c
-file	kern/sys_generic.c
-file	kern/sys_module.c
+file	kern/sys_descrip.c		kern
+file	kern/sys_generic.c		kern
+file	kern/sys_module.c		kern
 file	kern/sys_mqueue.c		mqueue
-file	kern/sys_lwp.c
+file	kern/sys_lwp.c			kern
 file	kern/sys_pipe.c			!pipe_socketpair
-file	kern/sys_pmc.c
+file	kern/sys_pmc.c			kern
 file	kern/sys_process.c		ptrace | ktrace
-file	kern/sys_pset.c
-file	kern/sys_select.c
-file	kern/sys_sig.c
-file	kern/sys_sched.c
-file	kern/sys_socket.c
+file	kern/sys_pset.c			kern
+file	kern/sys_select.c		kern
+file	kern/sys_sig.c			kern
+file	kern/sys_sched.c		kern
+file	kern/sys_socket.c		kern
 file	kern/syscalls.c			syscall_debug
 file	kern/sysv_ipc.c			sysvshm | sysvsem | sysvmsg
 file	kern/sysv_msg.c			sysvmsg
 file	kern/sysv_sem.c			sysvsem
 file	kern/sysv_shm.c			sysvshm
-file	kern/tty.c
-file	kern/tty_conf.c
+file	kern/tty.c			kern
+file	kern/tty_conf.c			kern
 file	kern/tty_bsdpty.c		compat_bsdpty
 file	kern/tty_pty.c			pty 			needs-flag
 file	kern/tty_ptm.c			pty
-file	kern/tty_subr.c
-file	kern/tty_tty.c
-file	kern/uipc_accf.c
-file	kern/uipc_domain.c
-file	kern/uipc_mbuf.c
-file	kern/uipc_mbuf2.c
+file	kern/tty_subr.c			kern
+file	kern/tty_tty.c			kern
+file	kern/uipc_accf.c		kern
+file	kern/uipc_domain.c		kern
+file	kern/uipc_mbuf.c		kern
+file	kern/uipc_mbuf2.c		kern
 file	net/link_proto.c
-file	kern/uipc_proto.c
-file	kern/uipc_sem.c
-file	kern/uipc_socket.c
-file	kern/uipc_socket2.c
-file	kern/uipc_syscalls.c
-file	kern/uipc_usrreq.c
-file	kern/vfs_bio.c
-file	kern/vfs_cache.c
-file	kern/vfs_cwd.c
-file	kern/vfs_dirhash.c
-file	kern/vfs_getcwd.c
-file	kern/vfs_hooks.c
-file	kern/vfs_init.c
-file	kern/vfs_lockf.c
-file	kern/vfs_lookup.c
-file	kern/vfs_mount.c
-file	kern/vfs_quotactl.c
-file	kern/vfs_subr.c
-file	kern/vfs_syscalls.c
-file	kern/vfs_trans.c
-file	kern/vfs_vnode.c
-file	kern/vfs_vnops.c
+file	kern/uipc_proto.c		kern
+file	kern/uipc_sem.c			kern
+file	kern/uipc_socket.c		kern
+file	kern/uipc_socket2.c		kern
+file	kern/uipc_syscalls.c		kern
+file	kern/uipc_usrreq.c		kern
+file	kern/vfs_bio.c			kern
+file	kern/vfs_cache.c		kern
+file	kern/vfs_cwd.c			kern
+file	kern/vfs_dirhash.c		kern
+file	kern/vfs_getcwd.c		kern
+file	kern/vfs_hooks.c		kern
+file	kern/vfs_init.c			kern
+file	kern/vfs_lockf.c		kern
+file	kern/vfs_lookup.c		kern
+file	kern/vfs_mount.c		kern
+file	kern/vfs_quotactl.c		kern
+file	kern/vfs_subr.c			kern
+file	kern/vfs_syscalls.c		kern
+file	kern/vfs_trans.c		kern
+file	kern/vfs_vnode.c		kern
+file	kern/vfs_vnops.c		kern
 file	kern/vfs_wapbl.c		wapbl
-file	kern/vfs_xattr.c
-file	kern/vnode_if.c
-file	miscfs/deadfs/dead_vfsops.c
-file	miscfs/deadfs/dead_vnops.c
-file	miscfs/fifofs/fifo_vnops.c
-file	miscfs/genfs/genfs_io.c
-file	miscfs/genfs/genfs_rename.c
-file	miscfs/genfs/genfs_vfsops.c
-file	miscfs/genfs/genfs_vnops.c
+file	kern/vfs_xattr.c		kern
+file	kern/vnode_if.c			kern
+file	miscfs/deadfs/dead_vfsops.c	kern
+file	miscfs/deadfs/dead_vnops.c	kern
+file	miscfs/fifofs/fifo_vnops.c	kern
+file	miscfs/genfs/genfs_io.c		kern
+file	miscfs/genfs/genfs_rename.c	kern
+file	miscfs/genfs/genfs_vfsops.c	kern
+file	miscfs/genfs/genfs_vnops.c	kern
 file	miscfs/genfs/layer_subr.c	nullfs | overlay | umapfs
 file	miscfs/genfs/layer_vfsops.c	nullfs | overlay | umapfs
 file	miscfs/genfs/layer_vnops.c	nullfs | overlay | umapfs
-file	miscfs/specfs/spec_vnops.c
-file	miscfs/syncfs/sync_subr.c
-file	miscfs/syncfs/sync_vnops.c
+file	miscfs/specfs/spec_vnops.c	kern
+file	miscfs/syncfs/sync_subr.c	kern
+file	miscfs/syncfs/sync_vnops.c	kern
 
 file	net/bpf.c			bpfilter
 file	net/bpf_filter.c		bpf_filter
