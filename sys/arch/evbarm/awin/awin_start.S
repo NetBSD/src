@@ -41,7 +41,7 @@
 #include <arm/allwinner/awin_reg.h>
 #include <evbarm/awin/platform.h>  
 
-RCSID("$NetBSD: awin_start.S,v 1.2 2014/09/25 07:59:29 matt Exp $")
+RCSID("$NetBSD: awin_start.S,v 1.3 2014/10/10 23:51:28 jmcneill Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -150,7 +150,29 @@ _C_LABEL(awin_start):
 	XPUTC2(#60)
 	// Make sure the cache is flushed out to RAM for the other CPUs
 	bl	_C_LABEL(armv7_dcache_wbinv_all)
-	bl	a20_mpinit
+
+	// Read SoC ID
+	movw	r5, #:lower16:(AWIN_CORE_PBASE+AWIN_SRAM_OFFSET)
+	movt	r5, #:upper16:(AWIN_CORE_PBASE+AWIN_SRAM_OFFSET)
+	ldr	r1, [r5, #AWIN_SRAM_VER_REG]
+	orr	r1, r1, AWIN_SRAM_VER_R_EN
+	str	r1, [r5, #AWIN_SRAM_VER_REG]
+	dsb
+	ldr	r1, [r5, #AWIN_SRAM_VER_REG]
+	lsr	r1, r1, #16
+
+	// MP init based on SoC ID
+#if defined(ALLWINNER_A20)
+	movw	r0, #AWIN_SRAM_VER_KEY_A20
+	cmp	r1, r0
+	bleq	a20_mpinit
+#endif
+#if defined(ALLWINNER_A31)
+	movw	r0, #AWIN_SRAM_VER_KEY_A31
+	cmp	r1, r0
+	bleq	a31_mpinit
+#endif
+
 	XPUTC2(#62)
 #endif /* MULTIPROCESSOR */
 	XPUTC2(#13)
@@ -177,6 +199,10 @@ a20_mpinit:
 	mov	r4, lr			// because we call gtmr_bootdelay
 	movw	r5, #:lower16:(AWIN_CORE_PBASE+AWIN_CPUCFG_OFFSET)
 	movt	r5, #:upper16:(AWIN_CORE_PBASE+AWIN_CPUCFG_OFFSET)
+
+	XPUTC2(#65)
+	XPUTC2(#50)
+	XPUTC2(#48)
 
 #ifdef __ARMEB__
 	setend	le			// everything here is little-endian
@@ -258,6 +284,144 @@ ASEND(a20_mpinit)
 #ifndef KERNEL_BASES_EQUAL
 	.popsection
 #endif
+
+#ifndef KERNEL_BASES_EQUAL
+	.pushsection .text,"ax",%progbits
+#endif
+a31_mpinit:
+	mov	r4, lr			// because we call gtmr_bootdelay
+	movw	r5, #:lower16:(AWIN_CORE_PBASE+AWIN_A31_CPUCFG_OFFSET)
+	movt	r5, #:upper16:(AWIN_CORE_PBASE+AWIN_A31_CPUCFG_OFFSET)
+	movw	r6, #:lower16:(AWIN_CORE_PBASE+AWIN_A31_PRCM_OFFSET)
+	movt	r6, #:upper16:(AWIN_CORE_PBASE+AWIN_A31_PRCM_OFFSET)
+
+	XPUTC2(#65)
+	XPUTC2(#51)
+	XPUTC2(#49)
+
+#ifdef __ARMEB__
+	setend	le			// everything here is little-endian
+#endif
+
+	mov	r12, #1			// CPU number
+
+a31_mpinit_cpu:
+
+	XPUTC2(r12)
+
+	/* Set where the other CPU(s) are going to execute */
+	movw	r1, #:lower16:cortex_mpstart
+	movt	r1, #:upper16:cortex_mpstart
+	str	r1, [r5, #AWIN_CPUCFG_PRIVATE_REG]
+	dsb
+
+	/* Assert CPU core reset */
+	mov	r1, #0
+	mov	r2, #0x40
+	mul	r7, r12, r2
+	add	r7, r7, #AWIN_A31_CPUCFG_CPU0_RST_CTRL_REG
+	str	r1, [r5, r7]
+	dsb
+
+	/* Ensure CPUX reset also invalidates its L1 caches */
+	ldr	r1, [r5, #AWIN_CPUCFG_GENCTRL_REG] 
+	mov	r0, #1
+	lsl	r0, r0, r12
+	bic	r1, r1, r0
+	str	r1, [r5, #AWIN_CPUCFG_GENCTRL_REG]
+	dsb
+
+	/* Release power clamp */
+	mov	r1, #0xe7
+	mov	r2, #0x4
+	mul	r7, r12, r2
+	add	r7, r7, #AWIN_A31_PRCM_CPUX_PWR_CLAMP_REG
+	str	r1, [r6, r7]
+	dsb
+
+	mov	r2, #0x40
+	mul	r7, r12, r2
+	add	r7, r7, #AWIN_A31_CPUCFG_CPU0_PWR_CLAMP_STATUS_REG
+1:
+	ldr	r1, [r5, r7]
+	cmp	r1, #0xe7
+	bne	1b
+
+	/* We need to wait (at least) 10ms */
+	mov	r0, #0x3b000			// 10.06ms
+	bl	_C_LABEL(gtmr_bootdelay)	// endian-neutral
+
+	/* Restore power clamp */
+	mov	r1, #0
+	mov	r2, #0x4
+	mul	r7, r12, r2
+	add	r7, r7, #AWIN_A31_PRCM_CPUX_PWR_CLAMP_REG
+	str	r1, [r6, r7]
+	dsb
+
+	mov	r2, #0x40
+	mul	r7, r12, r2
+	add	r7, r7, #AWIN_A31_CPUCFG_CPU0_PWR_CLAMP_STATUS_REG
+1:
+	ldr	r1, [r5, r7]
+	cmp	r1, #0
+	bne	1b
+
+	/* We need to wait (at least) 10ms */
+	mov	r0, #0x3b000			// 10.06ms
+	bl	_C_LABEL(gtmr_bootdelay)	// endian-neutral
+	
+	/* Clear power-off gating */
+	ldr	r1, [r6, #AWIN_A31_PRCM_PWROFF_GATING_REG] 
+	mov	r0, #1
+	lsl	r0, r0, r12
+	bic	r1, r1, r0
+	str	r1, [r6, #AWIN_A31_PRCM_PWROFF_GATING_REG]
+	dsb
+
+	/* We need to wait (at least) 10ms */
+	mov	r0, #0x3b000			// 10.06ms
+	bl	_C_LABEL(gtmr_bootdelay)	// endian-neutral
+	
+	/* Bring CPUX out of reset */
+	mov	r1, #(AWIN_A31_CPUCFG_RST_CTRL_CPU_RESET|AWIN_A31_CPUCFG_RST_CTRL_CORE_RESET)
+	mov	r2, #0x40
+	mul	r7, r12, r2
+	add	r7, r7, #AWIN_A31_CPUCFG_CPU0_RST_CTRL_REG
+	str	r1, [r5, r7]
+	dsb
+
+	/* If there is another CPU, start it */
+	add	r12, r12, #1
+	cmp	r12, #3
+	ble	a31_mpinit_cpu
+
+#ifdef __ARMEB__
+	setend	be				// we're done with little endian
+#endif
+
+	//
+	// Wait up a second for CPU1-3 to hatch. 
+	//
+	movw	r6, #:lower16:arm_cpu_hatched
+	movt	r6, #:upper16:arm_cpu_hatched
+	mov	r5, #200			// 200 x 5ms
+
+1:	dmb					// memory barrier
+	ldr	r0, [r6]			// load hatched
+	tst	r0, #0xe			// our bits set yet?
+	bxne	r4				//   yes, return
+	subs	r5, r5, #1			// decrement count
+	bxeq	r4				//   0? return
+	mov	r0, #0x1d800			// 5.03ms
+	bl	_C_LABEL(gtmr_bootdelay)
+	b	1b
+
+ASEND(a31_mpinit)
+#ifndef KERNEL_BASES_EQUAL
+	.popsection
+#endif
+
 #endif /* MULTIPROCESSOR */
 
 .Lmmu_init_table:
