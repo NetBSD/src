@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.52 2014/10/10 07:48:50 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.53 2014/10/10 08:14:47 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -440,6 +440,11 @@ defdev(struct devbase *dev, struct loclist *loclist, struct attrlist *attrs,
 	dev->d_ispseudo = ispseudo;
 	dev->d_attrs = attrs;
 	dev->d_classattr = NULL;		/* for now */
+
+	/*
+	 * Implicit attribute definition for device.
+	 */
+	refattr(dev->d_name);
 
 	/*
 	 * For each interface attribute this device refers to, add this
