@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.175 2014/10/09 16:35:57 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.176 2014/10/10 08:13:52 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -158,7 +158,7 @@ NORMAL_S?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
 		${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} -c $<
  
 # link rules: 
-LINK_O?=	@${_MKSHMSG} "   link ${.CURDIR:T}/${.TARGET}" && \
+LINK_O?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}" && \
 		${_MKSHECHO}\
 		${LD} -r -o ${.TARGET} ${.ALLSRC} && \
 		${LD} -r -o ${.TARGET} ${.ALLSRC}
