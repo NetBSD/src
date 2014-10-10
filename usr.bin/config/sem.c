@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.53 2014/10/10 08:14:47 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.54 2014/10/10 10:16:19 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1861,7 +1861,13 @@ split(const char *name, size_t nlen, char *base, size_t bsize, int *aunit)
 void
 selectattr(struct attr *a)
 {
+	struct attrlist *al;
+	struct attr *dep;
 
+	for (al = a->a_deps; al != NULL; al = al->al_next) {
+		dep = al->al_this;
+		selectattr(dep);
+	}
 	(void)ht_insert(selecttab, a->a_name, __UNCONST(a->a_name));
 	CFGDBG(3, "attr selected `%s'", a->a_name);
 }
