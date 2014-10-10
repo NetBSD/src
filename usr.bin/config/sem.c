@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.51 2014/10/10 07:08:26 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.52 2014/10/10 07:48:50 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -236,12 +236,13 @@ defattr(const char *name, struct loclist *locs, struct attrlist *deps,
 		}
 	}
 
-	a = mkattr(name);
-	if (a == NULL) {
+	if (getrefattr(name, &a)) {
 		cfgerror("attribute `%s' already defined", name);
 		loclist_destroy(locs);
 		return (1);
 	}
+	if (a == NULL)
+		a = mkattr(name);
 
 	a->a_deps = deps;
 	expandattr(a, NULL);
@@ -672,6 +673,28 @@ refattr(const char *name)
 
 	if ((ht_lookup(attrtab, name)) == NULL)
 		(void)mkattr(name);
+}
+
+int
+getrefattr(const char *name, struct attr **ra)
+{
+	struct attr *a;
+
+	a = ht_lookup(attrtab, name);
+	if (a == NULL) {
+		*ra = NULL;
+		return (0);
+	}
+	/*
+	 * Check if the existing attr is only referenced, not really defined.
+	 */
+	if (a->a_deps == NULL &&
+	    a->a_iattr == 0 &&
+	    a->a_devclass == 0) {
+		*ra = a;
+		return (0);
+	}
+	return (1);
 }
 
 /*
