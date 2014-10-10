@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.12 2014/10/10 06:59:38 uebayasi Exp $	*/
+/*	$NetBSD: sem.h,v 1.13 2014/10/10 07:48:50 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,7 @@ struct deva    *getdevattach(const char *);
 struct attr	*mkattr(const char *);
 struct attr    *getattr(const char *);
 void		refattr(const char *);
+int		getrefattr(const char *, struct attr **);
 void		expandattr(struct attr *, void (*)(struct attr *));
 void		selectattr(struct attr *);
 void		setmajor(struct devbase *, int);
