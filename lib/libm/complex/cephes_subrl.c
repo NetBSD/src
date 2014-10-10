@@ -1,4 +1,4 @@
-/* $NetBSD: cephes_subrl.c,v 1.1 2014/10/10 00:48:18 christos Exp $ */
+/* $NetBSD: cephes_subrl.c,v 1.2 2014/10/10 14:06:40 christos Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -58,8 +58,13 @@ _cchshl(long double x, long double *c, long double *s)
 /* extended precision value of PI: */
 static const long double DP1 = 3.14159265358979323829596852490908531763125L;
 static const long double DP2 = 1.6667485837041756656403424829301998703007e-19L;
+#ifndef __vax__
 static const long double DP3 = 1.8830410776607851167459095484560349402753e-39L;
 #define MACHEPL 1.1e-38L
+#else
+static const long double DP3 = 0L;
+#define MACHEPL 1.1e-19L
+#endif
 
 long double
 _redupil(long double x)
