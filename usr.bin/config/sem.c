@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.47 2014/10/09 16:08:36 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.48 2014/10/10 05:27:28 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -240,16 +240,24 @@ defattr(const char *name, struct loclist *locs, struct attrlist *deps,
 	}
 
 	a->a_name = name;
+	a->a_deps = deps;
+	a->a_expanding = 0;
+	TAILQ_INIT(&a->a_files);
+
+	/* "interface attribute" initialization */
 	if (locs != NULL) {
 		a->a_iattr = 1;
 		/* unwrap */
 		a->a_locs = locs->ll_next;
 		locs->ll_next = NULL;
 		loclist_destroy(locs);
-	} else {
-		a->a_iattr = 0;
-		a->a_locs = NULL;
+		len = 0;
+		for (ll = a->a_locs; ll != NULL; ll = ll->ll_next)
+			len++;
+		a->a_loclen = len;
 	}
+
+	/* "device class" initialization */
 	if (devclass) {
 		char classenum[256], *cp;
 		int errored = 0;
@@ -266,17 +274,7 @@ defattr(const char *name, struct loclist *locs, struct attrlist *deps,
 			*cp = toupper((unsigned char)*cp);
 		}
 		a->a_devclass = intern(classenum);
-	} else
-		a->a_devclass = NULL;
-	len = 0;
-	for (ll = a->a_locs; ll != NULL; ll = ll->ll_next)
-		len++;
-	a->a_loclen = len;
-	a->a_devs = NULL;
-	a->a_refs = NULL;
-	a->a_deps = deps;
-	a->a_expanding = 0;
-	TAILQ_INIT(&a->a_files);
+	}
 
 	/* Expand the attribute to check for cycles in the graph. */
 	expandattr(a, NULL);
