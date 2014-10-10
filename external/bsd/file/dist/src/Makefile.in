@@ -81,9 +81,9 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = file$(EXEEXT)
 subdir = src
-DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am fmtcheck.c \
-	pread.c strlcpy.c vasprintf.c strcasestr.c getline.c \
-	asctime_r.c getopt_long.c ctime_r.c strlcat.c asprintf.c \
+DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am asctime_r.c \
+	pread.c ctime_r.c getline.c strlcat.c vasprintf.c strcasestr.c \
+	asprintf.c getopt_long.c strlcpy.c fmtcheck.c \
 	$(top_srcdir)/depcomp $(include_HEADERS)
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
