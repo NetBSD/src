@@ -1,8 +1,11 @@
-/*	$NetBSD: cprojl.c,v 1.7 2014/10/10 00:48:18 christos Exp $	*/
+/* $NetBSD: ccosl.c,v 1.1 2014/10/10 00:48:18 christos Exp $ */
 
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software written by Stephen L. Moshier.
+ * It is redistributed by the NetBSD Foundation by permission of the author.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,40 +28,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: cprojl.c,v 1.7 2014/10/10 00:48:18 christos Exp $");
 
+#include "../src/namespace.h"
 #include <complex.h>
 #include <math.h>
+#include "cephes_subrl.h"
 
-#include "../src/math_private.h"
-
-/*
- * cprojl(long double complex z)
- *
- * These functions return the value of the projection (not stereographic!)
- * onto the Riemann sphere.
- *
- * z projects to z, except that all complex infinities (even those with one
- * infinite part and one NaN part) project to positive infinity on the real axis.
- * If z has an infinite part, then cproj(z) shall be equivalent to:
- *
- * INFINITY + I * copysign(0.0, cimag(z))
- */
 long double complex
-cprojl(long double complex z)
+ccosl(long double complex z)
 {
-	long_double_complex w = { .z = z };
+	long double complex w;
+	long double ch, sh;
 
-	/*CONSTCOND*/
-	if (isinf(creall(z)) || isinf(cimagl(z))) {
-#ifdef __INFINITY
-		REAL_PART(w) = HUGE_VAL;
-#else
-		REAL_PART(w) = INFINITY;
-#endif
-		IMAG_PART(w) = copysignl(0.0L, cimagl(z));
-	}
-
-	return (w.z);
+	_cchshl(cimagl(z), &ch, &sh);
+	w = cosl(creall(z)) * ch - (sinl(creall(z)) * sh) * I;
+	return w;
 }
