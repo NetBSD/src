@@ -1,0 +1,35 @@
+o Emit everything (ioconf.*, Makefile, ...) per-attribute.
+
+o Generate modular(9) related information.  Especially module dependency.
+
+o Rename "interface attribute" to "bus".
+
+  Instead of
+
+	define	audiobus {}
+	attach	audio at audiobus
+
+  Do like this
+
+	defbus	audiobus {}
+	attach	audio at audiobus
+
+o Sort objects in more reasonable order.
+
+  Put machdep.ko in the lowest address.  uvm.ko and kern.ko follow.
+
+  Kill alphabetical sort (${OBJS:O} in sys/conf/Makefile.inc.kern.
+
+  Use ldscript.  Do like this
+
+	.text :
+	AT (ADDR(.text) & 0x0fffffff)
+	{
+	  *(.text.machdep.locore.entry)
+	  *(.text.machdep.locore)
+	  *(.text.machdep)
+	  *(.text)
+	  *(.text.*)
+	  :
+
+  Kill linker definitions in sys/conf/Makefile.inc.kern.
