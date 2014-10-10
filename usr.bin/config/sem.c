@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.49 2014/10/10 06:13:30 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.50 2014/10/10 06:59:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -236,21 +236,35 @@ defattr(const char *name, struct loclist *locs, struct attrlist *deps,
 		}
 	}
 
-	a = ecalloc(1, sizeof *a);
-	if (ht_insert(attrtab, name, a)) {
-		free(a);
+	a = mkattr(name);
+	if (a == NULL) {
 		cfgerror("attribute `%s' already defined", name);
 		loclist_destroy(locs);
 		return (1);
 	}
 
-	a->a_name = name;
 	a->a_deps = deps;
-	a->a_expanding = 0;
-	TAILQ_INIT(&a->a_files);
 	expandattr(a, NULL);
+	CFGDBG(3, "attr `%s' defined", a->a_name);
 
 	return (0);
+}
+
+struct attr *
+mkattr(const char *name)
+{
+	struct attr *a;
+
+	a = ecalloc(1, sizeof *a);
+	if (ht_insert(attrtab, name, a)) {
+		free(a);
+		return NULL;
+	}
+	a->a_name = name;
+	TAILQ_INIT(&a->a_files);
+	CFGDBG(3, "attr `%s' allocated", name);
+
+	return a;
 }
 
 /* "interface attribute" initialization */
@@ -543,6 +557,12 @@ defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
 	deva->d_attrs = attrs;
 	deva->d_atlist = atlist;
 	deva->d_devbase = dev;
+	CFGDBG(3, "deva `%s' defined", deva->d_name);
+
+	/*
+	 * Implicit attribute definition.
+	 */
+	refattr(deva->d_name);
 
 	/*
 	 * Turn the `at' list into interface attributes (map each
@@ -641,6 +661,17 @@ getattr(const char *name)
 		a = &errattr;
 	}
 	return (a);
+}
+
+/*
+ * Implicit attribute definition.
+ */
+void
+refattr(const char *name)
+{
+
+	if ((ht_lookup(attrtab, name)) == NULL)
+		(void)mkattr(name);
 }
 
 /*
