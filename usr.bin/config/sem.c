@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.48 2014/10/10 05:27:28 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.49 2014/10/10 06:13:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -204,19 +204,24 @@ setident(const char *i)
  * all locator lists include a dummy head node, which we discard here.
  */
 int
+defattr0(const char *name, struct loclist *locs, struct attrlist *deps,
+    int devclass)
+{
+
+	if (locs != NULL)
+		return defiattr(name, locs, deps, devclass);
+	else if (devclass)
+		return defdevclass(name, locs, deps, devclass);
+	else
+		return defattr(name, locs, deps, devclass);
+}
+
+int
 defattr(const char *name, struct loclist *locs, struct attrlist *deps,
     int devclass)
 {
 	struct attr *a, *dep;
 	struct attrlist *al;
-	struct loclist *ll;
-	int len;
-
-	if (locs != NULL && devclass)
-		panic("defattr(%s): locators and devclass", name);
-
-	if (deps != NULL && devclass)
-		panic("defattr(%s): dependencies and devclass", name);
 
 	/*
 	 * If this attribute depends on any others, make sure none of
@@ -243,41 +248,69 @@ defattr(const char *name, struct loclist *locs, struct attrlist *deps,
 	a->a_deps = deps;
 	a->a_expanding = 0;
 	TAILQ_INIT(&a->a_files);
-
-	/* "interface attribute" initialization */
-	if (locs != NULL) {
-		a->a_iattr = 1;
-		/* unwrap */
-		a->a_locs = locs->ll_next;
-		locs->ll_next = NULL;
-		loclist_destroy(locs);
-		len = 0;
-		for (ll = a->a_locs; ll != NULL; ll = ll->ll_next)
-			len++;
-		a->a_loclen = len;
-	}
-
-	/* "device class" initialization */
-	if (devclass) {
-		char classenum[256], *cp;
-		int errored = 0;
-
-		(void)snprintf(classenum, sizeof(classenum), "DV_%s", name);
-		for (cp = classenum + 3; *cp; cp++) {
-			if (!errored &&
-			    (!isalnum((unsigned char)*cp) ||
-			      (isalpha((unsigned char)*cp) && !islower((unsigned char)*cp)))) {
-				cfgerror("device class names must be "
-				    "lower-case alphanumeric characters");
-				errored = 1;
-			}
-			*cp = toupper((unsigned char)*cp);
-		}
-		a->a_devclass = intern(classenum);
-	}
-
-	/* Expand the attribute to check for cycles in the graph. */
 	expandattr(a, NULL);
+
+	return (0);
+}
+
+/* "interface attribute" initialization */
+int
+defiattr(const char *name, struct loclist *locs, struct attrlist *deps,
+    int devclass)
+{
+	struct attr *a;
+	int len;
+	struct loclist *ll;
+
+	if (devclass)
+		panic("defattr(%s): locators and devclass", name);
+
+	if (defattr(name, locs, deps, devclass) != 0)
+		return (1);
+
+	a = getattr(name);
+	a->a_iattr = 1;
+	/* unwrap */
+	a->a_locs = locs->ll_next;
+	locs->ll_next = NULL;
+	loclist_destroy(locs);
+	len = 0;
+	for (ll = a->a_locs; ll != NULL; ll = ll->ll_next)
+		len++;
+	a->a_loclen = len;
+	if (deps)
+		CFGDBG(2, "attr `%s' iface with deps", a->a_name);
+	return (0);
+}
+
+/* "device class" initialization */
+int
+defdevclass(const char *name, struct loclist *locs, struct attrlist *deps,
+    int devclass)
+{
+	struct attr *a;
+	char classenum[256], *cp;
+	int errored = 0;
+
+	if (deps)
+		panic("defattr(%s): dependencies and devclass", name);
+
+	if (defattr(name, locs, deps, devclass) != 0)
+		return (1);
+
+	a = getattr(name);
+	(void)snprintf(classenum, sizeof(classenum), "DV_%s", name);
+	for (cp = classenum + 3; *cp; cp++) {
+		if (!errored &&
+		    (!isalnum((unsigned char)*cp) ||
+		      (isalpha((unsigned char)*cp) && !islower((unsigned char)*cp)))) {
+			cfgerror("device class names must be "
+			    "lower-case alphanumeric characters");
+			errored = 1;
+		}
+		*cp = toupper((unsigned char)*cp);
+	}
+	a->a_devclass = intern(classenum);
 
 	return (0);
 }
@@ -360,7 +393,7 @@ defdev(struct devbase *dev, struct loclist *loclist, struct attrlist *attrs,
 	if (loclist != NULL) {
 		ll = loclist;
 		loclist = NULL;	/* defattr disposes of them for us */
-		if (defattr(dev->d_name, ll, NULL, 0))
+		if (defiattr(dev->d_name, ll, NULL, 0))
 			goto bad;
 		attrs = attrlist_cons(attrs, getattr(dev->d_name));
 		/* This used to be stored but was never used */
