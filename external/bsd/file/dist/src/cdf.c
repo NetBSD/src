@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf.c,v 1.1.1.7 2014/06/13 01:48:23 christos Exp $	*/
+/*	$NetBSD: cdf.c,v 1.1.1.8 2014/10/10 20:08:20 christos Exp $	*/
 /*-
  * Copyright (c) 2008 Christos Zoulas
  * All rights reserved.
@@ -37,9 +37,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: cdf.c,v 1.63 2014/06/09 13:04:37 christos Exp $")
+FILE_RCSID("@(#)$File: cdf.c,v 1.67 2014/09/24 19:49:07 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf.c,v 1.1.1.7 2014/06/13 01:48:23 christos Exp $");
+__RCSID("$NetBSD: cdf.c,v 1.1.1.8 2014/10/10 20:08:20 christos Exp $");
 #endif
 #endif
 
@@ -78,6 +78,8 @@ static union {
 #define CDF_TOLE8(x)	((uint64_t)(NEED_SWAP ? _cdf_tole8(x) : (uint64_t)(x)))
 #define CDF_TOLE4(x)	((uint32_t)(NEED_SWAP ? _cdf_tole4(x) : (uint32_t)(x)))
 #define CDF_TOLE2(x)	((uint16_t)(NEED_SWAP ? _cdf_tole2(x) : (uint16_t)(x)))
+#define CDF_TOLE(x)	(sizeof(x) == 2 ? CDF_TOLE2(x) : (sizeof(x) == 4 ? \
+    CDF_TOLE4(x) : CDF_TOLE8(x)))
 #define CDF_GETUINT32(x, y)	cdf_getuint32(x, y)
 
 
@@ -829,6 +831,10 @@ cdf_read_property_info(const cdf_stream_t *sst, const cdf_header_t *h,
 		q = (const uint8_t *)(const void *)
 		    ((const char *)(const void *)p + ofs
 		    - 2 * sizeof(uint32_t));
+		if (q < p) {
+			DPRINTF(("Wrapped around %p < %p\n", q, p));
+			goto out;
+		}
 		if (q > e) {
 			DPRINTF(("Ran of the end %p > %p\n", q, e));
 			goto out;
@@ -990,6 +996,54 @@ cdf_unpack_summary_info(const cdf_stream_t *sst, const cdf_header_t *h,
 }
 
 
+#define extract_catalog_field(f, l) \
+    memcpy(&ce[i].f, b + (l), sizeof(ce[i].f)); \
+    ce[i].f = CDF_TOLE(ce[i].f)
+
+int
+cdf_unpack_catalog(const cdf_header_t *h, const cdf_stream_t *sst,
+    cdf_catalog_t **cat)
+{
+	size_t ss = sst->sst_dirlen < h->h_min_size_standard_stream ?
+	    CDF_SHORT_SEC_SIZE(h) : CDF_SEC_SIZE(h);
+	const char *b = CAST(const char *, sst->sst_tab);
+	const char *eb = b + ss * sst->sst_len;
+	size_t nr, i, k;
+	cdf_catalog_entry_t *ce;
+	uint16_t reclen;
+	const uint16_t *np;
+
+	for (nr = 0; b < eb; nr++) {
+		memcpy(&reclen, b, sizeof(reclen));
+		reclen = CDF_TOLE2(reclen);
+		if (reclen == 0)
+			break;
+		b += reclen;
+	}
+	*cat = CAST(cdf_catalog_t *,
+	    malloc(sizeof(cdf_catalog_t) + nr * sizeof(*ce)));
+	(*cat)->cat_num = nr;
+	ce = (*cat)->cat_e;
+	b = CAST(const char *, sst->sst_tab);
+	for (i = 0; i < nr; i++) {
+		extract_catalog_field(ce_namlen, 0);
+		extract_catalog_field(ce_num, 2);
+		extract_catalog_field(ce_timestamp, 6);
+		reclen = ce[i].ce_namlen;
+		ce[i].ce_namlen =
+		    sizeof(ce[i].ce_name) / sizeof(ce[i].ce_name[0]) - 1;
+		if (ce[i].ce_namlen > reclen - 14)
+			ce[i].ce_namlen = reclen - 14;
+		np = CAST(const uint16_t *, (b + 16));
+		for (k = 0; k < ce[i].ce_namlen; k++) {
+			ce[i].ce_name[k] = np[k];
+			CDF_TOLE2(ce[i].ce_name[k]);
+		}
+		ce[i].ce_name[ce[i].ce_namlen] = 0;
+		b += reclen;
+	}
+	return 0;
+}
 
 int
 cdf_print_classid(char *buf, size_t buflen, const cdf_classid_t *id)
@@ -1073,6 +1127,15 @@ cdf_print_elapsed_time(char *buf, size_t bufsiz, cdf_timestamp_t ts)
 	return len;
 }
 
+char *
+cdf_u16tos8(char *buf, size_t len, const uint16_t *p)
+{
+	size_t i;
+	for (i = 0; i < len && p[i]; i++)
+		buf[i] = (char)p[i];
+	buf[i] = '\0';
+	return buf;
+}
 
 #ifdef CDF_DEBUG
 void
@@ -1098,7 +1161,7 @@ cdf_dump_header(const cdf_header_t *h)
 	for (i = 0; i < __arraycount(h->h_master_sat); i++) {
 		if (h->h_master_sat[i] == CDF_SECID_FREE)
 			break;
-		(void)fprintf(stderr, "%35.35s[%.3zu] = %d\n",
+		(void)fprintf(stderr, "%35.35s[%.3" SIZE_T_FORMAT "u] = %d\n",
 		    "master_sat", i, h->h_master_sat[i]);
 	}
 }
@@ -1293,13 +1356,34 @@ cdf_dump_summary_info(const cdf_header_t *h, const cdf_stream_t *sst)
 		return;
 	(void)fprintf(stderr, "Endian: %x\n", ssi.si_byte_order);
 	(void)fprintf(stderr, "Os Version %d.%d\n", ssi.si_os_version & 0xff,
-		ssi.si_os_version >> 8);
+	    ssi.si_os_version >> 8);
 	(void)fprintf(stderr, "Os %d\n", ssi.si_os);
 	cdf_print_classid(buf, sizeof(buf), &ssi.si_class);
 	(void)fprintf(stderr, "Class %s\n", buf);
 	(void)fprintf(stderr, "Count %d\n", ssi.si_count);
 	cdf_dump_property_info(info, count);
 	free(info);
+}
+
+
+void
+cdf_dump_catalog(const cdf_header_t *h, const cdf_stream_t *sst)
+{
+	cdf_catalog_t *cat;
+	cdf_unpack_catalog(h, sst, &cat);
+	const cdf_catalog_entry_t *ce = cat->cat_e;
+	struct timespec ts;
+	char tbuf[64], sbuf[256];
+	size_t i;
+
+	printf("Catalog:\n");
+	for (i = 0; i < cat->cat_num; i++) {
+		cdf_timestamp_to_timespec(&ts, ce[i].ce_timestamp);
+		printf("\t%d %s %s", ce[i].ce_num,
+		    cdf_u16tos8(sbuf, ce[i].ce_namlen, ce[i].ce_name),
+		    cdf_ctime(&ts.tv_sec, tbuf));
+	}
+	free(cat);
 }
 
 #endif
@@ -1314,6 +1398,7 @@ main(int argc, char *argv[])
 	cdf_stream_t sst, scn;
 	cdf_dir_t dir;
 	cdf_info_t info;
+	const cdf_directory_t *root;
 
 	if (argc < 2) {
 		(void)fprintf(stderr, "Usage: %s <filename>\n", getprogname());
@@ -1347,7 +1432,8 @@ main(int argc, char *argv[])
 		if (cdf_read_dir(&info, &h, &sat, &dir) == -1)
 			err(1, "Cannot read dir");
 
-		if (cdf_read_short_stream(&info, &h, &sat, &dir, &sst) == -1)
+		if (cdf_read_short_stream(&info, &h, &sat, &dir, &sst, &root)
+		    == -1)
 			err(1, "Cannot read short stream");
 #ifdef CDF_DEBUG
 		cdf_dump_stream(&h, &sst);
@@ -1360,9 +1446,17 @@ main(int argc, char *argv[])
 
 		if (cdf_read_summary_info(&info, &h, &sat, &ssat, &sst, &dir,
 		    &scn) == -1)
-			err(1, "Cannot read summary info");
+			warn("Cannot read summary info");
 #ifdef CDF_DEBUG
-		cdf_dump_summary_info(&h, &scn);
+		else
+			cdf_dump_summary_info(&h, &scn);
+#endif
+		if (cdf_read_catalog(&info, &h, &sat, &ssat, &sst, &dir,
+		    &scn) == -1)
+			warn("Cannot read catalog");
+#ifdef CDF_DEBUG
+		else
+			cdf_dump_catalog(&h, &scn);
 #endif
 
 		(void)close(info.i_fd);

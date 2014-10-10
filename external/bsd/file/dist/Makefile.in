@@ -316,8 +316,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = MAINT
-SUBDIRS = src
-#SUBDIRS = src magic tests doc python
+SUBDIRS = src magic tests doc python
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.1.1.8 2014/06/13 01:48:22 christos Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.1.1.9 2014/10/10 20:08:17 christos Exp $	*/
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -34,9 +34,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: softmagic.c,v 1.191 2014/06/04 17:36:34 christos Exp $")
+FILE_RCSID("@(#)$File: softmagic.c,v 1.195 2014/09/24 19:49:07 christos Exp $")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.1.1.8 2014/06/13 01:48:22 christos Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.1.1.9 2014/10/10 20:08:17 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -46,10 +46,6 @@ __RCSID("$NetBSD: softmagic.c,v 1.1.1.8 2014/06/13 01:48:22 christos Exp $");
 #include <ctype.h>
 #include <stdlib.h>
 #include <time.h>
-#if defined(HAVE_LOCALE_H)
-#include <locale.h>
-#endif
-
 
 private int match(struct magic_set *, struct magic *, uint32_t,
     const unsigned char *, size_t, size_t, int, int, int, int, int *, int *,
@@ -83,6 +79,7 @@ file_softmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes,
 {
 	struct mlist *ml;
 	int rv, printed_something = 0, need_separator = 0;
+
 	for (ml = ms->mlist[0]->next; ml != ms->mlist[0]; ml = ml->next)
 		if ((rv = match(ms, ml->magic, ml->nmagic, buf, nbytes, 0, mode,
 		    text, 0, level, &printed_something, &need_separator,
@@ -103,8 +100,8 @@ file_fmtcheck(struct magic_set *ms, const struct magic *m, const char *def,
 	const char *ptr = fmtcheck(m->desc, def);
 	if (ptr == def)
 		file_magerror(ms,
-		    "%s, %zu: format `%s' does not match with `%s'",
-		    file, line, m->desc, def);
+		    "%s, %" SIZE_T_FORMAT "u: format `%s' does not match"
+		    " with `%s'", file, line, m->desc, def);
 	return ptr;
 }
 #else
@@ -240,9 +237,9 @@ match(struct magic_set *ms, struct magic *magic, uint32_t nmagic,
 		if (file_check_mem(ms, ++cont_level) == -1)
 			return -1;
 
-		while (++magindex < nmagic &&
-		    magic[magindex].cont_level != 0) {
-			m = &magic[magindex];
+		while (magindex + 1 < nmagic &&
+		    magic[magindex + 1].cont_level != 0) {
+			m = &magic[++magindex];
 			ms->line = m->lineno; /* for messages */
 
 			if (cont_level < m->cont_level)
@@ -1065,7 +1062,7 @@ mconvert(struct magic_set *ms, struct magic *m, int flip)
 private void
 mdebug(uint32_t offset, const char *str, size_t len)
 {
-	(void) fprintf(stderr, "mget/%zu @%d: ", len, offset);
+	(void) fprintf(stderr, "mget/%" SIZE_T_FORMAT "u @%d: ", len, offset);
 	file_showstr(stderr, str, len);
 	(void) fputc('\n', stderr);
 	(void) fputc('\n', stderr);
@@ -1215,8 +1212,9 @@ mget(struct magic_set *ms, const unsigned char *s, struct magic *m,
 		return -1;
 
 	if ((ms->flags & MAGIC_DEBUG) != 0) {
-		fprintf(stderr, "mget(type=%d, flag=%x, offset=%u, o=%zu, "
-		    "nbytes=%zu)\n", m->type, m->flag, offset, o, nbytes);
+		fprintf(stderr, "mget(type=%d, flag=%x, offset=%u, o=%"
+		    SIZE_T_FORMAT "u, " "nbytes=%" SIZE_T_FORMAT "u)\n",
+		    m->type, m->flag, offset, o, nbytes);
 		mdebug(offset, (char *)(void *)p, sizeof(union VALUETYPE));
 #ifndef COMPILE_ONLY
 		file_mdump(m);
@@ -1949,6 +1947,7 @@ magiccheck(struct magic_set *ms, struct magic *m)
 	case FILE_REGEX: {
 		int rc;
 		file_regex_t rx;
+		const char *search;
 
 		if (ms->search.s == NULL)
 			return 0;
@@ -1965,19 +1964,31 @@ magiccheck(struct magic_set *ms, struct magic *m)
 			size_t slen = ms->search.s_len;
 #ifndef REG_STARTEND
 #define	REG_STARTEND	0
-			char c;
-			if (slen != 0)
-				slen--;
-			c = ms->search.s[slen];
-			((char *)(intptr_t)ms->search.s)[slen] = '\0';
+			char *copy;
+			if (slen != 0) {
+			    copy = malloc(slen);
+			    if (copy == NULL)  {
+				file_error(ms, errno,
+				    "can't allocate %" SIZE_T_FORMAT "u bytes",
+				    slen);
+				return -1;
+			    }
+			    memcpy(copy, ms->search.s, slen);
+			    copy[--slen] = '\0';
+			    search = copy;
+			} else {
+			    search = ms->search.s;
+			    copy = NULL;
+			}
 #else
+			search = ms->search.s;
 			pmatch[0].rm_so = 0;
 			pmatch[0].rm_eo = slen;
 #endif
-			rc = file_regexec(&rx, (const char *)ms->search.s,
+			rc = file_regexec(&rx, (const char *)search,
 			    1, pmatch, REG_STARTEND);
 #if REG_STARTEND == 0
-			((char *)(intptr_t)ms->search.s)[l] = c;
+			free(copy);
 #endif
 			switch (rc) {
 			case 0:

@@ -1,6 +1,6 @@
-.\"	$NetBSD: libmagic.3,v 1.1.1.6 2014/06/13 01:48:26 christos Exp $
+.\"	$NetBSD: libmagic.3,v 1.1.1.7 2014/10/10 20:08:22 christos Exp $
 .\"
-.\" $File: libmagic.man,v 1.28 2014/03/02 14:47:16 christos Exp $
+.\" $File: libmagic.man,v 1.29 2014/08/04 06:19:44 christos Exp $
 .\"
 .\" Copyright (c) Christos Zoulas 2003.
 .\" All Rights Reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 6, 2012
+.Dd August 4, 2014
 .Dt LIBMAGIC 3
 .Os
 .Sh NAME
@@ -72,6 +72,8 @@
 .Fn magic_list "magic_t cookie" "const char *filename"
 .Ft int
 .Fn magic_load "magic_t cookie" "const char *filename"
+.Ft int
+.Fn magic_load_buffers "magic_t cookie" "void **buffers" "size_t *sizes" "size_t nbuffers"
 .Ft int
 .Fn magic_version "void"
 .Sh DESCRIPTION
@@ -253,6 +255,19 @@ If that variable is not set, the default database file name is /usr/share/misc/m
 adds
 .Dq .mgc
 to the database filename as appropriate.
+.Pp
+The
+.Fn magic_load_buffers
+function takes an array of size
+.Fa nbuffers
+of
+.Fa buffers
+with a respective size for each in the array of
+.Fa sizes
+loaded with the contents of the magic databases from the filesystem.
+This function can be used in environment where the magic library does
+not have direct access to the filesystem, but can access the magic
+database via shared memory or other IPC means.
 .Pp
 The
 .Fn magic_version
