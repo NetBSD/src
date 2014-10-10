@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.4 2014/06/13 02:08:06 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.5 2014/10/10 20:15:02 christos Exp $	*/
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -34,9 +34,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: file.c,v 1.153 2014/02/11 15:41:04 christos Exp $")
+FILE_RCSID("@(#)$File: file.c,v 1.154 2014/09/10 18:41:51 christos Exp $")
 #else
-__RCSID("$NetBSD: file.c,v 1.4 2014/06/13 02:08:06 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.5 2014/10/10 20:15:02 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -58,9 +58,6 @@ __RCSID("$NetBSD: file.c,v 1.4 2014/06/13 02:08:06 christos Exp $");
 #endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>	/* for read() */
-#endif
-#ifdef HAVE_LOCALE_H
-#include <locale.h>
 #endif
 #ifdef HAVE_WCHAR_H
 #include <wchar.h>
