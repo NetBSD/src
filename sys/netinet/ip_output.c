@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.230 2014/06/06 00:11:19 rmind Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.231 2014/10/11 21:12:51 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.230 2014/06/06 00:11:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.231 2014/10/11 21:12:51 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -136,8 +136,6 @@ static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 static struct ifnet *ip_multicast_if(struct in_addr *, int *);
 static void ip_mloopback(struct ifnet *, struct mbuf *,
     const struct sockaddr_in *);
-static int ip_setmoptions(struct inpcb *, const struct sockopt *);
-static int ip_getmoptions(struct inpcb *, struct sockopt *);
 
 extern pfil_head_t *inet_pfil_hook;			/* XXX */
 
@@ -1003,7 +1001,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		case IP_MULTICAST_LOOP:
 		case IP_ADD_MEMBERSHIP:
 		case IP_DROP_MEMBERSHIP:
-			error = ip_setmoptions(inp, sopt);
+			error = ip_setmoptions(&inp->inp_moptions, sopt);
 			break;
 
 		case IP_PORTRANGE:
@@ -1151,7 +1149,7 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		case IP_MULTICAST_LOOP:
 		case IP_ADD_MEMBERSHIP:
 		case IP_DROP_MEMBERSHIP:
-			error = ip_getmoptions(inp, sopt);
+			error = ip_getmoptions(inp->inp_moptions, sopt);
 			break;
 
 		case IP_PORTRANGE:
@@ -1364,10 +1362,10 @@ ip_getoptval(const struct sockopt *sopt, u_int8_t *val, u_int maxval)
 /*
  * Set the IP multicast options in response to user setsockopt().
  */
-static int
-ip_setmoptions(struct inpcb *inp, const struct sockopt *sopt)
+int
+ip_setmoptions(struct ip_moptions **pimo, const struct sockopt *sopt)
 {
-	struct ip_moptions *imo = inp->inp_moptions;
+	struct ip_moptions *imo = *pimo;
 	struct in_addr addr;
 	struct ip_mreq lmreq, *mreq;
 	struct ifnet *ifp;
@@ -1387,7 +1385,7 @@ ip_setmoptions(struct inpcb *inp, const struct sockopt *sopt)
 		imo->imo_multicast_ttl = IP_DEFAULT_MULTICAST_TTL;
 		imo->imo_multicast_loop = IP_DEFAULT_MULTICAST_LOOP;
 		imo->imo_num_memberships = 0;
-		inp->inp_moptions = imo;
+		*pimo = imo;
 	}
 
 	switch (sopt->sopt_name) {
@@ -1583,7 +1581,7 @@ ip_setmoptions(struct inpcb *inp, const struct sockopt *sopt)
 	    imo->imo_multicast_loop == IP_DEFAULT_MULTICAST_LOOP &&
 	    imo->imo_num_memberships == 0) {
 		kmem_free(imo, sizeof(*imo));
-		inp->inp_moptions = NULL;
+		*pimo = NULL;
 	}
 
 	return error;
@@ -1592,10 +1590,9 @@ ip_setmoptions(struct inpcb *inp, const struct sockopt *sopt)
 /*
  * Return the IP multicast options in response to user getsockopt().
  */
-static int
-ip_getmoptions(struct inpcb *inp, struct sockopt *sopt)
+int
+ip_getmoptions(struct ip_moptions *imo, struct sockopt *sopt)
 {
-	struct ip_moptions *imo = inp->inp_moptions;
 	struct in_addr addr;
 	struct in_ifaddr *ia;
 	uint8_t optval;

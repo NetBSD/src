@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.106 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.107 2014/10/11 21:12:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -233,6 +233,9 @@ void	 rip_input(struct mbuf *, ...);
 int	 rip_output(struct mbuf *, ...);
 int	 rip_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
+
+int	ip_setmoptions(struct ip_moptions **, const struct sockopt *sopt);
+int	ip_getmoptions(struct ip_moptions *, struct sockopt *sopt);
 
 /* IP Flow interface. */
 void	ipflow_init(void);
