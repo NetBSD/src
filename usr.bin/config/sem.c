@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.59 2014/10/11 09:27:51 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.60 2014/10/11 15:20:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -142,12 +142,12 @@ finddep(struct attr *a, const char *name)
 }
 
 static void
-mergedeps(struct devbase *dev, const char *name)
+mergedeps(const char *devname, const char *name)
 {
 	struct attr *a, *newa;
 
-	CFGDBG(4, "merging attr `%s' to devbase `%s'", name, dev->d_name);
-	a = refattr(dev->d_name);
+	CFGDBG(4, "merging attr `%s' to devbase `%s'", name, devname);
+	a = refattr(devname);
 	if (finddep(a, name) == NULL) {
 		newa = refattr(name);
 		a->a_deps = attrlist_cons(a->a_deps, newa);
@@ -169,6 +169,7 @@ fixdev(struct devbase *dev)
 	CFGDBG(4, "fixing devbase `%s'", dev->d_name);
 	for (al = dev->d_attrs; al != NULL; al = al->al_next) {
 		a = al->al_this;
+		CFGDBG(4, "fixing devbase `%s' attr `%s'", dev->d_name, a->a_name);
 		if (a->a_iattr) {
 			a->a_refs = addtoattr(a->a_refs, dev);
 			CFGDBG(3, "device `%s' has iattr `%s'", dev->d_name,
@@ -187,7 +188,7 @@ fixdev(struct devbase *dev)
 			}
 		} else {
 			if (strcmp(dev->d_name, a->a_name) != 0) {
-				mergedeps(dev, a->a_name);
+				mergedeps(dev->d_name, a->a_name);
 			}
 		}
 	}
@@ -208,6 +209,7 @@ enddefs(void)
 			errors++;
 			continue;
 		}
+		fixdev(dev);
 	}
 	if (errors) {
 		(void)fprintf(stderr, "*** Stop.\n");
@@ -301,6 +303,7 @@ defattr(const char *name, struct loclist *locs, struct attrlist *deps,
 			    "attribute", name, dep->a_name);
 			return (1);
 		}
+		CFGDBG(2, "attr `%s' depends on attr `%s'", name, dep->a_name);
 	}
 
 	if (getrefattr(name, &a)) {
@@ -453,6 +456,7 @@ defdev(struct devbase *dev, struct loclist *loclist, struct attrlist *attrs,
 {
 	struct loclist *ll;
 	struct attrlist *al;
+	struct attr *a;
 
 	if (dev == &errdev)
 		goto bad;
@@ -511,7 +515,7 @@ defdev(struct devbase *dev, struct loclist *loclist, struct attrlist *attrs,
 	/*
 	 * Implicit attribute definition for device.
 	 */
-	refattr(dev->d_name);
+	a = refattr(dev->d_name);
 
 	/*
 	 * For each interface attribute this device refers to, add this
@@ -526,7 +530,9 @@ defdev(struct devbase *dev, struct loclist *loclist, struct attrlist *attrs,
 		/*
 		 * Implicit attribute definition for device dependencies.
 		 */
-		refattr(dev->d_name);
+		refattr(al->al_this->a_name);
+		CFGDBG(2, "device `%s' depends on attr `%s'", dev->d_name,
+		    al->al_this->a_name);
 	}
 	return;
  bad:
@@ -1235,6 +1241,7 @@ adddev(const char *name, const char *at, struct loclist *loclist, int flags)
 	i->i_pspec = p;
 	i->i_atdeva = iba;
 	i->i_cfflags = flags;
+	CFGDBG(3, "devi `%s' added", i->i_name);
 
 	*iba->d_ipp = i;
 	iba->d_ipp = &i->i_asame;
@@ -1759,7 +1766,8 @@ fixdevis(void)
 	struct devi *i;
 	int error = 0;
 
-	TAILQ_FOREACH(i, &alldevi, i_next)
+	TAILQ_FOREACH(i, &alldevi, i_next) {
+		CFGDBG(3, "fixing devis `%s'", i->i_name);
 		if (i->i_active == DEVI_ACTIVE)
 			selectbase(i->i_base, i->i_atdeva);
 		else if (i->i_active == DEVI_ORPHAN) {
@@ -1776,6 +1784,7 @@ fixdevis(void)
 			cfgxwarn(i->i_srcfile, i->i_lineno, "ignoring "
 			    "explicitly orphaned instance `%s at %s'",
 			    i->i_name, i->i_at);
+	}
 
 	if (error)
 		return error;
