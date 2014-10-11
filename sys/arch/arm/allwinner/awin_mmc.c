@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.13 2014/10/10 17:49:55 jmcneill Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.14 2014/10/11 17:29:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.13 2014/10/10 17:49:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.14 2014/10/11 17:29:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.13 2014/10/10 17:49:55 jmcneill Exp $
 #include <arm/allwinner/awin_var.h>
 
 #define AWIN_MMC_NDESC		16
+#define AWIN_MMC_DMA_FTRGLEVEL	0x20070008
 
 static int	awin_mmc_match(device_t, cfdata_t, void *);
 static void	awin_mmc_attach(device_t, device_t, void *);
@@ -104,7 +105,6 @@ struct awin_mmc_softc {
 	unsigned int sc_pll_freq;
 	unsigned int sc_mod_clk;
 
-	uint32_t sc_dma_ftrgl;
 	uint32_t sc_fifo_reg;
 
 	uint32_t sc_idma_xferlen;
@@ -290,10 +290,8 @@ awin_mmc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
-		sc->sc_dma_ftrgl = 0x2007000f;
 		sc->sc_fifo_reg = AWIN_A31_MMC_FIFO;
 	} else {
-		sc->sc_dma_ftrgl = 0x20070008;
 		sc->sc_fifo_reg = AWIN_MMC_FIFO;
 	}
 
@@ -727,7 +725,7 @@ awin_mmc_dma_prepare(struct awin_mmc_softc *sc, struct sdmmc_command *cmd)
 		val |= AWIN_MMC_IDST_TRANSMIT_INT;
 	MMC_WRITE(sc, AWIN_MMC_IDIE, val);
 	MMC_WRITE(sc, AWIN_MMC_DLBA, desc_paddr);
-	MMC_WRITE(sc, AWIN_MMC_FTRGLEVEL, sc->sc_dma_ftrgl);
+	MMC_WRITE(sc, AWIN_MMC_FTRGLEVEL, AWIN_MMC_DMA_FTRGLEVEL);
 
 	return 0;
 }
