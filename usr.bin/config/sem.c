@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.60 2014/10/11 15:20:36 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.61 2014/10/11 15:47:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1043,6 +1043,7 @@ delconf(const char *name)
 {
 	struct config *cf;
 
+	CFGDBG(5, "deselecting config `%s'", name);
 	if (ht_lookup(cfhashtab, name) == NULL) {
 		cfgerror("configuration `%s' undefined", name);
 		return;
@@ -1260,6 +1261,7 @@ deldevi(const char *name, const char *at)
 	int unit;
 	char base[NAMESIZE];
 
+	CFGDBG(5, "deselecting devi `%s'", name);
 	if (split(name, strlen(name), base, sizeof base, &unit)) {
 		cfgerror("invalid device name `%s'", name);
 		return;
@@ -1464,6 +1466,7 @@ deldeva(const char *at)
 	} else {
 		int l;
 
+		CFGDBG(5, "deselecting deva `%s'", at);
 		l = strlen(at) - 1;
 		if (at[l] == '?' || isdigit((unsigned char)at[l])) {
 			char base[NAMESIZE];
@@ -1547,6 +1550,7 @@ deldev(const char *name)
 	struct devi *firsti, *i;
 	struct nvlist *nv, *stack = NULL;
 
+	CFGDBG(5, "deselecting dev `%s'", name);
 	l = strlen(name) - 1;
 	if (name[l] == '*' || isdigit((unsigned char)name[l])) {
 		/* `no mydev0' or `no mydev*' */
@@ -1697,6 +1701,7 @@ delpseudo(const char *name)
 	struct devbase *d;
 	struct devi *i;
 
+	CFGDBG(5, "deselecting pseudo `%s'", name);
 	d = ht_lookup(devbasetab, name);
 	if (d == NULL) {
 		cfgerror("undefined pseudo-device %s", name);
