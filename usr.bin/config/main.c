@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.65 2014/10/11 03:17:40 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.66 2014/10/11 09:09:19 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -149,6 +149,7 @@ static	int	extract_config(const char *, const char *, int);
 int badfilename(const char *fname);
 
 const char *progname;
+extern const char *yyfile;
 
 int
 main(int argc, char **argv)
@@ -407,16 +408,19 @@ main(int argc, char **argv)
 	/*
 	 * Handle command line overrides
 	 */
+	yyfile = "handle_cmdline_makeoptions";
 	handle_cmdline_makeoptions();
 
 	/*
 	 * Detect and properly ignore orphaned devices
 	 */
+	yyfile = "kill_orphans";
 	kill_orphans();
 
 	/*
 	 * Select devices and pseudo devices and their attributes
 	 */
+	yyfile = "fixdevis";
 	if (fixdevis())
 		stop();
 
@@ -424,9 +428,13 @@ main(int argc, char **argv)
 	 * If working on an ioconf-only config, process here and exit
 	 */
 	if (ioconfname) {
+		yyfile = "pack";
 		pack();
+		yyfile = "mkioconf";
 		mkioconf();
+		yyfile = "emitlocs";
 		emitlocs();
+		yyfile = "emitioconfh";
 		emitioconfh();
 		return 0;
 	}
@@ -434,23 +442,27 @@ main(int argc, char **argv)
 	/*
 	 * Deal with option dependencies.
 	 */
+	yyfile = "dependopts";
 	dependopts();
 
 	/*
 	 * Fix (as in `set firmly in place') files.
 	 */
+	yyfile = "fixfiles";
 	if (fixfiles())
 		stop();
 
 	/*
 	 * Fix objects and libraries.
 	 */
+	yyfile = "fixobjects";
 	if (fixobjects())
 		stop();
 
 	/*
 	 * Fix device-majors.
 	 */
+	yyfile = "fixdevsw";
 	if (fixdevsw())
 		stop();
 
@@ -474,10 +486,13 @@ main(int argc, char **argv)
 	 * Squeeze things down and finish cross-checks (STAR checks must
 	 * run after packing).
 	 */
+	yyfile = "pack";
 	pack();
+	yyfile = "badstar";
 	if (badstar())
 		stop();
 
+	yyfile = NULL;
 	/*
 	 * Ready to go.  Build all the various files.
 	 */
