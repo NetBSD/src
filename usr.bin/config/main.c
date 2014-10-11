@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.66 2014/10/11 09:09:19 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.67 2014/10/11 15:47:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1006,6 +1006,7 @@ void
 deloption(const char *name)
 {
 
+	CFGDBG(4, "deselecting opt `%s'", name);
 	if (undo_option(opttab, &options, &nextopt, name, "options"))
 		return;
 	if (undo_option(selecttab, NULL, NULL, strtolower(name), "options"))
@@ -1054,6 +1055,7 @@ delfsoption(const char *name)
 {
 	const char *n;
 
+	CFGDBG(4, "deselecting fs `%s'", name);
 	n = strtolower(name);
 	if (undo_option(fsopttab, &fsoptions, &nextfsopt, name, "file-system"))
 		return;
@@ -1075,6 +1077,7 @@ void
 delmkoption(const char *name)
 {
 
+	CFGDBG(4, "deselecting mkopt `%s'", name);
 	(void)undo_option(mkopttab, &mkoptions, &nextmkopt, name,
 	    "makeoptions");
 }
@@ -1151,8 +1154,10 @@ undo_option(struct hashtab *ht, struct nvlist **npp,
 			cfgwarn("%s `%s' is not defined", type, name);
 		return (1);
 	}
-	if (npp == NULL)
+	if (npp == NULL) {
+		CFGDBG(2, "opt `%s' deselected", name);
 		return (0);
+	}
 
 	for ( ; *npp != NULL; npp = &(*npp)->nv_next) {
 		if ((*npp)->nv_name != name)
@@ -1160,6 +1165,7 @@ undo_option(struct hashtab *ht, struct nvlist **npp,
 		if (next != NULL && *next == &(*npp)->nv_next)
 			*next = npp;
 		nv = (*npp)->nv_next;
+		CFGDBG(2, "opt `%s' deselected", (*npp)->nv_name);
 		nvfree(*npp);
 		*npp = nv;
 		return (0);
