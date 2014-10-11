@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.133 2014/02/12 23:24:09 dsl Exp $
+#	$NetBSD: files.xen,v 1.134 2014/10/11 06:07:48 uebayasi Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -123,22 +123,22 @@ include	"dev/ata/files.ata"
 # Memory Disk for install floppy
 file	dev/md_root.c			memory_disk_hooks
 
-file	arch/x86/x86/bus_dma.c		pci
+file	arch/x86/x86/bus_dma.c		machdep
 file	arch/x86/x86/core_machdep.c	coredump
-file	arch/xen/x86/xen_bus_dma.c	pci
-file	arch/x86/x86/bus_space.c	pci
-file	arch/xen/x86/consinit.c
-file	arch/x86/x86/identcpu.c
-file	arch/xen/x86/intr.c
+file	arch/xen/x86/xen_bus_dma.c	machdep
+file	arch/x86/x86/bus_space.c	machdep
+file	arch/xen/x86/consinit.c		machdep
+file	arch/x86/x86/identcpu.c		machdep
+file	arch/xen/x86/intr.c		machdep
 file	arch/xen/x86/xen_ipi.c		multiprocessor
-file	arch/x86/x86/pmap.c
-file	arch/x86/x86/pmap_tlb.c
+file	arch/x86/x86/pmap.c		machdep
+file	arch/x86/x86/pmap_tlb.c		machdep
 file	arch/x86/x86/procfs_machdep.c	procfs
-file	arch/x86/x86/sys_machdep.c
-file	arch/x86/x86/tsc.c
-file	arch/x86/x86/vm_machdep.c
-file	arch/x86/x86/x86_machdep.c
-file	arch/x86/x86/cpu_topology.c
+file	arch/x86/x86/sys_machdep.c	machdep
+file	arch/x86/x86/tsc.c		machdep
+file	arch/x86/x86/vm_machdep.c	machdep
+file	arch/x86/x86/x86_machdep.c	machdep
+file	arch/x86/x86/cpu_topology.c	machdep
 
 include	"arch/xen/conf/files.compat"
 
