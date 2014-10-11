@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.68 2014/10/09 23:52:47 enami Exp $
+.\"	$NetBSD: netstat.1,v 1.69 2014/10/11 06:25:32 enami Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -223,15 +223,36 @@ and
 .Qq Group
 columns.
 .It Fl M
-Extract values associated with the name list from the specified core
-instead of the default
-.Pa /dev/mem .
+Use
+.Xr kvm 3
+instead of
+.Xr sysctl 3
+to retrieve information and
+extract values associated with the name list from the specified core.
+If
+.Fl M
+option is not given but
+.Fl N
+option is given, the default
+.Pa /dev/mem
+is used.
 .It Fl m
 Show statistics recorded by the mbuf memory management routines
 (the network manages a private pool of memory buffers).
 .It Fl N
-Extract the name list from the specified system instead of the default
-.Pa /netbsd .
+Use
+.Xr kvm 3
+instead of
+.Xr sysctl 3
+to retrieve information and extract the name list from the specified system.
+For the default behavior when only
+.Fl M
+option is given, see the description about when
+.Fa execfile
+is
+.Dv NULL
+in
+.Xr kvm_openfiles 3 .
 .It Fl n
 Show network addresses and ports as numbers (normally
 .Nm
