@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.56 2014/10/11 06:07:20 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.57 2014/10/11 06:18:29 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,7 +128,7 @@ initsem(void)
 /* Name of include file just ended (set in scan.l) */
 extern const char *lastfile;
 
-struct attr *
+static struct attr *
 finddep(struct attr *a, const char *name)
 {
 	struct attrlist *al;
@@ -145,7 +145,6 @@ static void
 mergedeps(struct devbase *dev, const char *name)
 {
 	struct attr *a, *newa;
-	struct attrlist *newal;
 
 	a = refattr(dev->d_name);
 
@@ -166,7 +165,7 @@ fixdev(struct devbase *dev)
 
 	devattr = refattr(dev->d_name);
 	if (devattr->a_devclass)
-		panic("%s: dev %s is devclass!", devattr->a_name);
+		panic("%s: dev %s is devclass!", __func__, devattr->a_name);
 
 	/*
 	 * For each interface attribute this device refers to, add this
@@ -456,7 +455,6 @@ defdev(struct devbase *dev, struct loclist *loclist, struct attrlist *attrs,
 {
 	struct loclist *ll;
 	struct attrlist *al;
-	struct attr *a;
 
 	if (dev == &errdev)
 		goto bad;
@@ -527,8 +525,6 @@ defdev(struct devbase *dev, struct loclist *loclist, struct attrlist *attrs,
 	 * device has two classes).
 	 */
 	for (al = attrs; al != NULL; al = al->al_next) {
-		a = al->al_this;
-
 		/*
 		 * Implicit attribute definition for device dependencies.
 		 */
