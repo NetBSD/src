@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.17 2012/03/20 20:34:57 matt Exp $	*/
+/*	$NetBSD: scan.l,v 1.18 2014/10/11 15:20:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -530,6 +530,7 @@ include(const char *fname, int ateof, int conditional, int direct)
 	if (interesting)
 		logconfig_include(fp, fname);
 	incl = in;
+	CFGDBG(1, "include `%s' from `%s' line %d", fname, yyfile, yyline);
 	yy_switch_to_buffer(yy_create_buffer(fp, YY_BUF_SIZE));
 	yyfile = intern(s);
 	yyline = 1;
