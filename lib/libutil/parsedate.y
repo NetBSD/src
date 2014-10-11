@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.16.6.1 2014/10/11 16:44:31 snj Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.16.6.2 2014/10/11 16:47:48 snj Exp $");
 #endif
 
 #include <stdio.h>
@@ -223,9 +223,7 @@ time	: tUNUMBER tMERIDIAN {
 	    param->yyMinutes = $3;
 	    param->yySeconds = $5;
 	    param->yyMeridian = MER24;
-	    param->yyDSTmode = DSToff;
 /* XXX: Do nothing with millis */
-/*	    param->yyTimezone = ($7 % 100 + ($7 / 100) * 60); */
 	}
 	;
 
