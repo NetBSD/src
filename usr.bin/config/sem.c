@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.61 2014/10/11 15:47:38 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.62 2014/10/11 17:27:42 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -456,7 +456,6 @@ defdev(struct devbase *dev, struct loclist *loclist, struct attrlist *attrs,
 {
 	struct loclist *ll;
 	struct attrlist *al;
-	struct attr *a;
 
 	if (dev == &errdev)
 		goto bad;
@@ -515,7 +514,7 @@ defdev(struct devbase *dev, struct loclist *loclist, struct attrlist *attrs,
 	/*
 	 * Implicit attribute definition for device.
 	 */
-	a = refattr(dev->d_name);
+	refattr(dev->d_name);
 
 	/*
 	 * For each interface attribute this device refers to, add this
