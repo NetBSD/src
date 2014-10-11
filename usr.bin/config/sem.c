@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.57 2014/10/11 06:18:29 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.58 2014/10/11 09:06:29 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -146,9 +146,8 @@ mergedeps(struct devbase *dev, const char *name)
 {
 	struct attr *a, *newa;
 
+	CFGDBG(4, "merging attr `%s' to devbase `%s'", name, dev->d_name);
 	a = refattr(dev->d_name);
-
-	CFGDBG(3, "merging attr `%s' in attr `%s'", name, a->a_name);
 	if (finddep(a, name) == NULL) {
 		newa = refattr(name);
 		a->a_deps = attrlist_cons(a->a_deps, newa);
@@ -167,19 +166,13 @@ fixdev(struct devbase *dev)
 	if (devattr->a_devclass)
 		panic("%s: dev %s is devclass!", __func__, devattr->a_name);
 
-	/*
-	 * For each interface attribute this device refers to, add this
-	 * device to its reference list.  This makes, e.g., finding all
-	 * "scsi"s easier.
-	 *
-	 * While looking through the attributes, set up the device
-	 * class if any are devclass attributes (and error out if the
-	 * device has two classes).
-	 */
+	CFGDBG(4, "fixing devbase `%s'", dev->d_name);
 	for (al = dev->d_attrs; al != NULL; al = al->al_next) {
 		a = al->al_this;
 		if (a->a_iattr) {
 			a->a_refs = addtoattr(a->a_refs, dev);
+			CFGDBG(3, "device `%s' has iattr `%s'", dev->d_name,
+			    a->a_name);
 		} else if (a->a_devclass != NULL) {
 			if (dev->d_classattr != NULL) {
 				cfgwarn("device `%s' has multiple classes "
@@ -188,6 +181,8 @@ fixdev(struct devbase *dev)
 				    a->a_name);
 			}
 			dev->d_classattr = a;
+			CFGDBG(3, "device `%s' is devclass `%s'", dev->d_name,
+			    a->a_name);
 		} else {
 			if (strcmp(dev->d_name, a->a_name) != 0) {
 				mergedeps(dev, a->a_name);
@@ -201,6 +196,8 @@ enddefs(void)
 {
 	struct devbase *dev;
 
+	yyfile = "enddefs";
+
 	TAILQ_FOREACH(dev, &allbases, d_next) {
 		if (!dev->d_isdef) {
 			(void)fprintf(stderr,
@@ -209,7 +206,6 @@ enddefs(void)
 			errors++;
 			continue;
 		}
-		fixdev(dev);
 	}
 	if (errors) {
 		(void)fprintf(stderr, "*** Stop.\n");
@@ -1965,6 +1961,8 @@ selectbase(struct devbase *d, struct deva *da)
 			expandattr(a, selectattr);
 		}
 	}
+
+	fixdev(d);
 }
 
 /*
