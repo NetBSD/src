@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.28 2014/09/18 15:00:08 wiz Exp $
+#	$NetBSD: BEAGLEBONE,v 1.29 2014/10/11 15:55:36 uebayasi Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -254,17 +254,17 @@ omapwdt32k*	at obio0 addr 0x44e35000 size 0x1000	# WDT1
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
-options 	WSEMUL_VT100
-options 	WSDISPLAY_COMPAT_PCVT
-options 	WSDISPLAY_COMPAT_SYSCONS
-options 	WSDISPLAY_COMPAT_USL
-options 	WSDISPLAY_SCROLLSUPPORT
-options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WSEMUL_VT100
+#options 	WSDISPLAY_COMPAT_PCVT
+#options 	WSDISPLAY_COMPAT_SYSCONS
+#options 	WSDISPLAY_COMPAT_USL
+#options 	WSDISPLAY_SCROLLSUPPORT
+#options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WSDISPLAY_DEFAULTSCREENS=4
-options 	FONT_GALLANT12x22
-options 	FONT_BOLD8x16
+#options 	FONT_GALLANT12x22
+#options 	FONT_BOLD8x16
 # compatibility to other console drivers
-options 	WSDISPLAY_COMPAT_RAWKBD 	# can get raw scancodes
+#options 	WSDISPLAY_COMPAT_RAWKBD 	# can get raw scancodes
 
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
