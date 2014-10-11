@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.129 2014/09/07 00:50:56 rmind Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.130 2014/10/11 20:53:16 christos Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.129 2014/09/07 00:50:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.130 2014/10/11 20:53:16 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -229,7 +229,8 @@ in6_pcbbind_addr(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 			sin.sin_family = AF_INET;
 			bcopy(&sin6->sin6_addr.s6_addr32[3],
 			    &sin.sin_addr, sizeof(sin.sin_addr));
-			if (ifa_ifwithaddr((struct sockaddr *)&sin) == 0)
+			if (!IN_MULTICAST(sin.sin_addr.s_addr) &&
+			    ifa_ifwithaddr((struct sockaddr *)&sin) == 0)
 				return EADDRNOTAVAIL;
 		}
 	} else if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
@@ -618,6 +619,7 @@ in6_pcbdetach(struct in6pcb *in6p)
 	}
 	rtcache_free(&in6p->in6p_route);
 	ip6_freemoptions(in6p->in6p_moptions);
+	ip_freemoptions(in6p->in6p_v4moptions);
 	sofree(so);				/* drops the socket's lock */
 
 	pool_put(&in6pcb_pool, in6p);
