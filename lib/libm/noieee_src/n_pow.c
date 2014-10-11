@@ -1,4 +1,4 @@
-/*      $NetBSD: n_pow.c,v 1.10 2014/10/10 20:58:09 martin Exp $ */
+/*      $NetBSD: n_pow.c,v 1.11 2014/10/11 07:19:27 martin Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -126,6 +126,7 @@ static double pow_P (double, double);
 __weak_alias(_powf, powf);
 __weak_alias(_pow, pow);
 __weak_alias(_powl, pow);
+__weak_alias(powl, pow);
 #endif
 
 float
