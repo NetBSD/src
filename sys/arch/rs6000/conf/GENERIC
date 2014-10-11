@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.30 2014/08/23 20:26:59 dholland Exp $
+# $NetBSD: GENERIC,v 1.31 2014/10/11 11:26:57 uebayasi Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #makeoptions	COPTS="-O2 -mno-powerpc -mno-power"	# wheeee
 
-#ident		"GENERIC-$Revision: 1.30 $"
+#ident		"GENERIC-$Revision: 1.31 $"
 
 maxusers	32
 
@@ -157,17 +157,17 @@ options 	NFS_BOOT_DHCP
 # wscons options
 #
 # builtin terminal emulations
-options 	WSEMUL_VT100		# VT100 / VT220 emulation
-options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
+#options 	WSEMUL_VT100		# VT100 / VT220 emulation
+#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 # different kernel output - see dev/wscons/wsdisplayvar.h
-options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 # see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 # use a large software cursor that doesn't blink
-options 	PCDISPLAY_SOFTCURSOR
+#options 	PCDISPLAY_SOFTCURSOR
 
 # Kernel root file system and dump configuration.
 config	netbsd	root on ? type ?
