@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.77 2014/10/11 10:18:36 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.78 2014/10/11 10:27:31 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.77 2014/10/11 10:18:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.78 2014/10/11 10:27:31 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -252,9 +252,9 @@ vlan_clone_destroy(struct ifnet *ifp)
 	s = splnet();
 	LIST_REMOVE(ifv, ifv_list);
 	vlan_unconfig(ifp);
+	if_detach(ifp);
 	splx(s);
 
-	if_detach(ifp);
 	free(ifv, M_DEVBUF);
 
 	return (0);
