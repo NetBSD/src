@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.69 2014/10/11 06:25:32 enami Exp $
+.\"	$NetBSD: netstat.1,v 1.70 2014/10/11 09:23:32 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -222,16 +222,16 @@ option, display wider fields for the IPv6 multicast routing table
 and
 .Qq Group
 columns.
-.It Fl M
+.It Fl M Ar core
 Use
 .Xr kvm 3
 instead of
 .Xr sysctl 3
 to retrieve information and
 extract values associated with the name list from the specified core.
-If
+If the
 .Fl M
-option is not given but
+option is not given but the
 .Fl N
 option is given, the default
 .Pa /dev/mem
@@ -239,7 +239,7 @@ is used.
 .It Fl m
 Show statistics recorded by the mbuf memory management routines
 (the network manages a private pool of memory buffers).
-.It Fl N
+.It Fl N Ar system
 Use
 .Xr kvm 3
 instead of
