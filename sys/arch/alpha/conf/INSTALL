@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.107 2014/08/23 20:26:56 dholland Exp $
+# $NetBSD: INSTALL,v 1.108 2014/10/11 09:16:15 uebayasi Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -184,6 +184,9 @@ pci*	at	dwlpx?
 pci*	at	mcpcia?
 pci*	at	tsp?
 pci*	at	ttwopci?
+
+# AGP support
+agp*	at	irongate?
 
 # PCI devices
 adv*	at	pci? dev ? function ?		# AdvanSys SCSI
