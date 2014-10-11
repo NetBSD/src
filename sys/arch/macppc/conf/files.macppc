@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.100 2013/04/18 16:42:46 macallan Exp $
+#	$NetBSD: files.macppc,v 1.101 2014/10/11 07:03:09 uebayasi Exp $
 #
 # macppc-specific configuration info
 
@@ -133,7 +133,7 @@ attach ofb at pci
 file arch/macppc/dev/ofb.c			ofb needs-flag
 
 # PCI-Host bridge chipsets
-device pchb: agpbus, agp_apple
+device pchb: agpbus
 attach pchb at pci
 file arch/powerpc/pci/pchb.c			pchb
 
