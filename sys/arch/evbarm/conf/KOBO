@@ -1,4 +1,4 @@
-#	$NetBSD: KOBO,v 1.5 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: KOBO,v 1.6 2014/10/11 11:55:07 uebayasi Exp $
 #
 #	KOBO -- http://kobo.com
 #
@@ -260,6 +260,8 @@ usb*		at ehci?
 
 # USB device drivers, just as soon as we have something to attach them to
 include "dev/usb/usbdevices.config"
+
+midi*		at midibus?
 
 ukphy*		at mii? phy ?
 
