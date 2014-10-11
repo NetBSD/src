@@ -1,7 +1,8 @@
-#	$NetBSD: files.filecorefs,v 1.3 2005/12/11 12:24:25 christos Exp $
+#	$NetBSD: files.filecorefs,v 1.4 2014/10/11 06:42:18 uebayasi Exp $
 
 deffs	FILECORE
 
+define	filecore: vfs
 file	fs/filecorefs/filecore_bmap.c	filecore
 file	fs/filecorefs/filecore_lookup.c	filecore
 file	fs/filecorefs/filecore_node.c	filecore
