@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.158 2014/08/16 17:27:09 maxv Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.159 2014/10/11 20:53:16 christos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.158 2014/08/16 17:27:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.159 2014/10/11 20:53:16 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.158 2014/08/16 17:27:09 maxv Exp $"
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/ip6.h>
+#include <netinet/ip_var.h>
 #include <netinet/icmp6.h>
 #include <netinet/in_offload.h>
 #include <netinet/portalgo.h>
@@ -1264,6 +1265,7 @@ ip6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	int optdatalen, uproto;
 	void *optdata;
 	struct in6pcb *in6p = sotoin6pcb(so);
+	struct ip_moptions **mopts;
 	int error, optval;
 	int level, optname;
 
@@ -1275,7 +1277,29 @@ ip6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 	error = optval = 0;
 	uproto = (int)so->so_proto->pr_protocol;
 
-	if (level != IPPROTO_IPV6) {
+	switch (level) {
+	case IPPROTO_IP:
+		switch (optname) {
+		case IP_ADD_MEMBERSHIP:
+		case IP_DROP_MEMBERSHIP:
+		case IP_MULTICAST_IF:
+		case IP_MULTICAST_LOOP:
+		case IP_MULTICAST_TTL:
+			mopts = &in6p->in6p_v4moptions;
+			switch (op) {
+			case PRCO_GETOPT:
+				return ip_getmoptions(*mopts, sopt);
+			case PRCO_SETOPT:
+				return ip_setmoptions(mopts, sopt);
+			default:
+				return EINVAL;
+			}
+		default:
+			return ENOPROTOOPT;
+		}
+	case IPPROTO_IPV6:
+		break;
+	default:
 		return ENOPROTOOPT;
 	}
 	switch (op) {
