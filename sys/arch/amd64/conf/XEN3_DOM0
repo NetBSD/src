@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.108 2014/09/19 17:30:03 christos Exp $
+# $NetBSD: XEN3_DOM0,v 1.109 2014/10/11 09:50:03 uebayasi Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -847,3 +847,6 @@ pseudo-device	xbdback
 
 options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
+
+# Atheros HAL options
+include "external/isc/atheros_hal/conf/std.ath_hal"
