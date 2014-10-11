@@ -30,7 +30,6 @@
 #include "dwarf2dbg.h"
 #include "dw2gencfi.h"
 
-#include <execinfo.h>
 #include <stdint.h>
 
 #ifdef DEBUG
