@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.48 2014/10/10 18:17:03 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.49 2014/10/11 17:03:28 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1097,4 +1097,32 @@ sys/arch/zaurus/conf/GENERIC			patch
 
 	Disable DIAGNOSTIC and/or DEBUG.
 	[bouyer/martin, ticket #116]
+
+sys/kern/uipc_usrreq.c				1.172
+
+	Fix a getsockname(2) compatibllity problem with UNIX domain
+	sockets.  PR kern/49247.
+	[taca, ticket #132]
+
+external/bsd/dhcp/Makefile.inc			1.12
+
+	Remove dhclient's dependency on /usr/lib.
+	[christos, ticket #133]
+
+lib/libperfuse/ops.c				1.75
+
+	Do not trust the filesystem's readdir to give us nul-terminated
+	file names.
+	[manu, ticket #134]
+
+lib/libutil/parsedate.3				1.13-1.14
+lib/libutil/parsedate.y				1.17-1.20
+tests/lib/libutil/t_parsedate.c			1.8-1.13
+
+	Fix some errors in parsedate(3)'s handling of local time
+	without an explicit time zone, make the second and third
+	arguments independent of each other (previously, if one
+	was NULL then the other was ignored), and add more test
+	cases.  Fixes PR lib/47916.
+	[apb, ticket #135]
 
