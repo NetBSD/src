@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.15 2014/07/25 08:10:39 dholland Exp $ */
+/* $NetBSD: spiflash.c,v 1.16 2014/10/11 13:56:01 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.15 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.16 2014/10/11 13:56:01 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -232,9 +232,7 @@ spiflash_attach(device_t parent, device_t self, void *aux)
 	bufq_alloc(&sc->sc_workq, "fcfs", BUFQ_SORT_RAWBLOCK);
 	bufq_alloc(&sc->sc_doneq, "fcfs", BUFQ_SORT_RAWBLOCK);
 
-	sc->sc_dk.dk_driver = &spiflash_dkdriver;
-	sc->sc_dk.dk_name = device_xname(self);
-
+	disk_init(&sc->sc_dk, device_xname(self), &spiflash_dkdriver);
 	disk_attach(&sc->sc_dk);
 
 	/* arrange to allocate the kthread */
