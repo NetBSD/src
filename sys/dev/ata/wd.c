@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.413 2014/09/10 07:04:48 matt Exp $ */
+/*	$NetBSD: wd.c,v 1.414 2014/10/11 14:05:11 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.413 2014/09/10 07:04:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.414 2014/10/11 14:05:11 mlelstv Exp $");
 
 #include "opt_ata.h"
 
@@ -1082,8 +1082,7 @@ wdgetdefaultlabel(struct wd_softc *wd, struct disklabel *lp)
 	lp->d_flags = 0;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size =
-	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 	lp->d_npartitions = RAW_PART + 1;
 
