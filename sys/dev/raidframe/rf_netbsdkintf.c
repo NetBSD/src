@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.313 2014/10/11 12:01:27 mlelstv Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.314 2014/10/11 12:36:25 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.313 2014/10/11 12:01:27 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.314 2014/10/11 12:36:25 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2440,17 +2440,21 @@ raidgetdisklabel(dev_t dev)
 		 * same components are used, and old disklabel may used
 		 * if that is found.
 		 */
-		if (lp->d_secperunit != rs->sc_size)
+		if (lp->d_secperunit < UINT32_MAX ?
+		    lp->d_secperunit != rs->sc_size :
+		    lp->d_secperunit > rs->sc_size)
 			printf("raid%d: WARNING: %s: "
-			    "total sector size in disklabel (%" PRIu32 ") != "
-			    "the size of raid (%" PRIu64 ")\n", unit, rs->sc_xname,
-			    lp->d_secperunit, rs->sc_size);
+			    "total sector size in disklabel (%ju) != "
+			    "the size of raid (%ju)\n", unit, rs->sc_xname,
+			    (uintmax_t)lp->d_secperunit,
+			    (uintmax_t)rs->sc_size);
 		for (i = 0; i < lp->d_npartitions; i++) {
 			pp = &lp->d_partitions[i];
 			if (pp->p_offset + pp->p_size > rs->sc_size)
 				printf("raid%d: WARNING: %s: end of partition `%c' "
-				       "exceeds the size of raid (%" PRIu64 ")\n",
-				       unit, rs->sc_xname, 'a' + i, rs->sc_size);
+				       "exceeds the size of raid (%ju)\n",
+				       unit, rs->sc_xname, 'a' + i,
+				       (uintmax_t)rs->sc_size);
 		}
 	}
 

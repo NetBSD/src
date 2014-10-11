@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.153 2014/10/11 12:01:27 mlelstv Exp $	*/
+/*	$NetBSD: ccd.c,v 1.154 2014/10/11 12:36:25 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.153 2014/10/11 12:01:27 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.154 2014/10/11 12:36:25 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1552,7 +1552,9 @@ ccdgetdisklabel(dev_t dev)
 		 * same componets are used, and old disklabel may used
 		 * if that is found.
 		 */
-		if (lp->d_secperunit != cs->sc_size)
+		if (lp->d_secperunit < UINT32_MAX ?
+			lp->d_secperunit != cs->sc_size :
+			lp->d_secperunit > cs->sc_size)
 			printf("WARNING: %s: "
 			    "total sector size in disklabel (%ju) != "
 			    "the size of ccd (%ju)\n", cs->sc_xname,
