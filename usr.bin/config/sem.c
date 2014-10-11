@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.55 2014/10/10 11:09:50 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.56 2014/10/11 06:07:20 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,6 +128,75 @@ initsem(void)
 /* Name of include file just ended (set in scan.l) */
 extern const char *lastfile;
 
+struct attr *
+finddep(struct attr *a, const char *name)
+{
+	struct attrlist *al;
+
+	for (al = a->a_deps; al != NULL; al = al->al_next) {
+		struct attr *this = al->al_this;
+		if (strcmp(this->a_name, name) == 0)
+			return this;
+	}
+	return NULL;
+}
+
+static void
+mergedeps(struct devbase *dev, const char *name)
+{
+	struct attr *a, *newa;
+	struct attrlist *newal;
+
+	a = refattr(dev->d_name);
+
+	CFGDBG(3, "merging attr `%s' in attr `%s'", name, a->a_name);
+	if (finddep(a, name) == NULL) {
+		newa = refattr(name);
+		a->a_deps = attrlist_cons(a->a_deps, newa);
+		CFGDBG(3, "attr `%s' merged to attr `%s'", newa->a_name,
+		    a->a_name);
+	}
+}
+
+static void
+fixdev(struct devbase *dev)
+{
+	struct attrlist *al;
+	struct attr *devattr, *a;
+
+	devattr = refattr(dev->d_name);
+	if (devattr->a_devclass)
+		panic("%s: dev %s is devclass!", devattr->a_name);
+
+	/*
+	 * For each interface attribute this device refers to, add this
+	 * device to its reference list.  This makes, e.g., finding all
+	 * "scsi"s easier.
+	 *
+	 * While looking through the attributes, set up the device
+	 * class if any are devclass attributes (and error out if the
+	 * device has two classes).
+	 */
+	for (al = dev->d_attrs; al != NULL; al = al->al_next) {
+		a = al->al_this;
+		if (a->a_iattr) {
+			a->a_refs = addtoattr(a->a_refs, dev);
+		} else if (a->a_devclass != NULL) {
+			if (dev->d_classattr != NULL) {
+				cfgwarn("device `%s' has multiple classes "
+				    "(`%s' and `%s')",
+				    dev->d_name, dev->d_classattr->a_name,
+				    a->a_name);
+			}
+			dev->d_classattr = a;
+		} else {
+			if (strcmp(dev->d_name, a->a_name) != 0) {
+				mergedeps(dev, a->a_name);
+			}
+		}
+	}
+}
+
 void
 enddefs(void)
 {
@@ -141,6 +210,7 @@ enddefs(void)
 			errors++;
 			continue;
 		}
+		fixdev(dev);
 	}
 	if (errors) {
 		(void)fprintf(stderr, "*** Stop.\n");
@@ -440,6 +510,7 @@ defdev(struct devbase *dev, struct loclist *loclist, struct attrlist *attrs,
 	dev->d_ispseudo = ispseudo;
 	dev->d_attrs = attrs;
 	dev->d_classattr = NULL;		/* for now */
+	CFGDBG(3, "dev `%s' defined", dev->d_name);
 
 	/*
 	 * Implicit attribute definition for device.
@@ -457,17 +528,11 @@ defdev(struct devbase *dev, struct loclist *loclist, struct attrlist *attrs,
 	 */
 	for (al = attrs; al != NULL; al = al->al_next) {
 		a = al->al_this;
-		if (a->a_iattr)
-			a->a_refs = addtoattr(a->a_refs, dev);
-		if (a->a_devclass != NULL) {
-			if (dev->d_classattr != NULL) {
-				cfgerror("device `%s' has multiple classes "
-				    "(`%s' and `%s')",
-				    dev->d_name, dev->d_classattr->a_name,
-				    a->a_name);
-			}
-			dev->d_classattr = a;
-		}
+
+		/*
+		 * Implicit attribute definition for device dependencies.
+		 */
+		refattr(dev->d_name);
 	}
 	return;
  bad:
@@ -512,6 +577,7 @@ getdevbase(const char *name)
 		TAILQ_INSERT_TAIL(&allbases, dev, d_next);
 		if (ht_insert(devbasetab, name, dev))
 			panic("getdevbase(%s)", name);
+		CFGDBG(3, "devbase defined `%s'", dev->d_name);
 	}
 	return (dev);
 }
@@ -1890,6 +1956,11 @@ selectbase(struct devbase *d, struct deva *da)
 		a = al->al_this;
 		expandattr(a, selectattr);
 	}
+
+	struct attr *devattr;
+	devattr = refattr(d->d_name);
+	expandattr(devattr, selectattr);
+	
 	if (da != NULL) {
 		(void)ht_insert(selecttab, da->d_name, __UNCONST(da->d_name));
 		CFGDBG(3, "devattr selected `%s'", da->d_name);
