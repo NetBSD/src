@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.39 2014/08/05 05:24:27 rtr Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.40 2014/10/11 20:53:16 christos Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -100,6 +100,7 @@ struct	in6pcb {
 	struct icmp6_filter *in6p_icmp6filt;
 	int	in6p_cksum;		/* IPV6_CHECKSUM setsockopt */
 	bool    in6p_bindportonsend;
+	struct ip_moptions *in6p_v4moptions;/* IP4 multicast options */
 };
 
 #define in6p_faddr	in6p_ip6.ip6_dst
