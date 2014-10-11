@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.55 2014/10/10 12:10:02 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.56 2014/10/11 03:17:40 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -631,15 +631,11 @@ int	onlist(struct nvlist *, void *);
 void	prefix_push(const char *);
 void	prefix_pop(void);
 char	*sourcepath(const char *);
-#ifndef MAKE_BOOTSTRAP
 extern	int dflag;
 #define	CFGDBG(n, ...) \
 	do { if ((dflag) >= (n)) cfgdbg(__VA_ARGS__); } while (0)
 void	cfgdbg(const char *, ...)			/* debug info */
      __printflike(1, 2);
-#else
-#define	CFGDBG(n, ...) /* */
-#endif
 void	cfgwarn(const char *, ...)			/* immediate warns */
      __printflike(1, 2);
 void	cfgxwarn(const char *, int, const char *, ...)	/* delayed warns */

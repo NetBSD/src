@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.64 2014/10/10 16:17:27 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.65 2014/10/11 03:17:40 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,8 +92,8 @@ int	yyparse(void);
 
 #ifndef MAKE_BOOTSTRAP
 extern int yydebug;
-int	dflag;
 #endif
+int	dflag;
 
 static struct dlhash *obsopttab;
 static struct hashtab *mkopttab;
@@ -164,12 +164,12 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "D:LMPU:dgpvb:s:x")) != -1) {
 		switch (ch) {
 
-#ifndef MAKE_BOOTSTRAP
 		case 'd':
+#ifndef MAKE_BOOTSTRAP
 			yydebug = 1;
+#endif
 			dflag++;
 			break;
-#endif
 
 		case 'M':
 			usekobjs = 1;
