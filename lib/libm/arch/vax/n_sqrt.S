@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sqrt.S,v 1.10 2014/10/11 06:34:31 martin Exp $	*/
+/*	$NetBSD: n_sqrt.S,v 1.11 2014/10/11 06:59:29 martin Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,6 +34,7 @@
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(_sqrtl, sqrt)
+WEAK_ALIAS(sqrtl, sqrt)
 #endif
 
 /*
