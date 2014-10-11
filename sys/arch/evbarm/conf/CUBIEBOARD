@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.26 2014/09/13 17:50:27 jmcneill Exp $
+#	$NetBSD: CUBIEBOARD,v 1.27 2014/10/11 11:55:07 uebayasi Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -293,6 +293,8 @@ awe0		at awinio0 port ?
 awge0		at awinio0 port ?
 
 include "dev/usb/usbdevices.config"
+
+midi*		at midibus?
 
 rlphy*		at mii? phy ?
 rgephy* 	at mii? phy ?

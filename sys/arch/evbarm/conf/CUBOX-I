@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX-I,v 1.1 2014/10/06 10:37:20 ryo Exp $
+# $NetBSD: CUBOX-I,v 1.2 2014/10/11 11:55:07 uebayasi Exp $
 #
 # CuBox-i
 # - http://www.solid-run.com/products/cubox-i-mini-computer/
@@ -318,6 +318,8 @@ usb*		at ehci?
 
 # USB device drivers
 include "dev/usb/usbdevices.config"
+
+midi*		at midibus?
 
 # SD/MMC controller
 #sdhc0		at axi? addr 0x02190000 irq 54		# uSDHC1

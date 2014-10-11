@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.9 2014/08/24 07:59:22 jnemeth Exp $
+# $Id: IMX23_OLINUXINO,v 1.10 2014/10/11 11:55:07 uebayasi Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -77,6 +77,8 @@ uhub*		at uhub? port ?
 ugen*		at uhub? port ?
 
 include "dev/usb/usbdevices.config"
+
+midi*		at midibus?
 
 ukphy*		at mii? phy ?
 

@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.31 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: NETWALKER,v 1.32 2014/10/11 11:55:07 uebayasi Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -263,6 +263,8 @@ usb*		at ehci?
 
 # USB device drivers
 include "dev/usb/usbdevices.config"
+
+midi*		at midibus?
 
 ukphy*		at mii? phy ?
 

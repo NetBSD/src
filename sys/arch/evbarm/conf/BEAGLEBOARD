@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.58 2014/08/30 15:21:17 kiyohara Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.59 2014/10/11 11:55:07 uebayasi Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -277,6 +277,8 @@ ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
 usb*		at ehci?
 
 include "dev/usb/usbdevices.config"
+
+midi*		at midibus?
 
 ukphy*		at mii? phy ?
 

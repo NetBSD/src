@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-U,v 1.16 2014/09/26 16:30:32 reinoud Exp $
+#	$NetBSD: ODROID-U,v 1.17 2014/10/11 11:55:07 uebayasi Exp $
 #
 #	ODROID-U -- ODROID-U{2,3} series Exynos4x12(P) based kernel
 #
@@ -221,6 +221,8 @@ options		SSCOM1CONSOLE, CONSPEED=115200
 
 # include all USB devices
 include "dev/usb/usbdevices.config"
+
+midi*		at midibus?
 
 
 # Pseudo-Devices
