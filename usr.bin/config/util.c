@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.17 2014/10/09 06:45:31 uebayasi Exp $	*/
+/*	$NetBSD: util.c,v 1.18 2014/10/11 03:17:40 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,10 +57,8 @@
 
 static void cfgvxerror(const char *, int, const char *, va_list)
 	     __printflike(3, 0);
-#ifndef MAKE_BOOTSTRAP
 static void cfgvxdbg(const char *, int, const char *, va_list)
 	     __printflike(3, 0);
-#endif
 static void cfgvxwarn(const char *, int, const char *, va_list)
 	     __printflike(3, 0);
 static void cfgvxmsg(const char *, int, const char *, const char *, va_list)
@@ -417,7 +415,6 @@ condexpr_destroy(struct condexpr *expr)
  * Diagnostic messages
  */
 
-#ifndef MAKE_BOOTSTRAP
 void
 cfgdbg(const char *fmt, ...)
 {
@@ -428,7 +425,6 @@ cfgdbg(const char *fmt, ...)
 	cfgvxdbg(yyfile, currentline(), fmt, ap);
 	va_end(ap);
 }
-#endif
 
 void
 cfgwarn(const char *fmt, ...)
@@ -451,13 +447,11 @@ cfgxwarn(const char *file, int line, const char *fmt, ...)
 	va_end(ap);
 }
 
-#ifndef MAKE_BOOTSTRAP
 static void
 cfgvxdbg(const char *file, int line, const char *fmt, va_list ap)
 {
 	cfgvxmsg(file, line, "debug: ", fmt, ap);
 }
-#endif
 
 static void
 cfgvxwarn(const char *file, int line, const char *fmt, va_list ap)
