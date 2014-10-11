@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.76 2014/10/11 10:16:49 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.77 2014/10/11 10:18:36 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.76 2014/10/11 10:16:49 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.77 2014/10/11 10:18:36 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -362,10 +362,12 @@ static void
 vlan_unconfig(struct ifnet *ifp)
 {
 	struct ifvlan *ifv = ifp->if_softc;
+	struct ifnet *p;
 
 	mutex_enter(&ifv_mtx);
+	p = ifv->ifv_p;
 
-	if (ifv->ifv_p == NULL) {
+	if (p == NULL) {
 		mutex_exit(&ifv_mtx);
 		return;
 	}
@@ -378,20 +380,18 @@ vlan_unconfig(struct ifnet *ifp)
 	(*ifv->ifv_msw->vmsw_purgemulti)(ifv);
 
 	/* Disconnect from parent. */
-	switch (ifv->ifv_p->if_type) {
+	switch (p->if_type) {
 	case IFT_ETHER:
 	    {
-		struct ethercom *ec = (void *) ifv->ifv_p;
+		struct ethercom *ec = (void *) p;
 
 		if (ec->ec_nvlans-- == 1) {
 			/*
 			 * Disable Tx/Rx of VLAN-sized frames.
 			 */
 			ec->ec_capenable &= ~ETHERCAP_VLAN_MTU;
-			if (ifv->ifv_p->if_flags & IFF_UP) {
-				(void)if_flags_set(ifv->ifv_p,
-				    ifv->ifv_p->if_flags);
-			}
+			if (p->if_flags & IFF_UP)
+				(void)if_flags_set(p, p->if_flags);
 		}
 
 		ether_ifdetach(ifp);
