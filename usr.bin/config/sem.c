@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.58 2014/10/11 09:06:29 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.59 2014/10/11 09:27:51 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -174,15 +174,17 @@ fixdev(struct devbase *dev)
 			CFGDBG(3, "device `%s' has iattr `%s'", dev->d_name,
 			    a->a_name);
 		} else if (a->a_devclass != NULL) {
-			if (dev->d_classattr != NULL) {
+			if (dev->d_classattr != NULL && dev->d_classattr != a) {
 				cfgwarn("device `%s' has multiple classes "
 				    "(`%s' and `%s')",
 				    dev->d_name, dev->d_classattr->a_name,
 				    a->a_name);
 			}
-			dev->d_classattr = a;
-			CFGDBG(3, "device `%s' is devclass `%s'", dev->d_name,
-			    a->a_name);
+			if (dev->d_classattr == NULL) {
+				dev->d_classattr = a;
+				CFGDBG(3, "device `%s' is devclass `%s'", dev->d_name,
+				    a->a_name);
+			}
 		} else {
 			if (strcmp(dev->d_name, a->a_name) != 0) {
 				mergedeps(dev, a->a_name);
