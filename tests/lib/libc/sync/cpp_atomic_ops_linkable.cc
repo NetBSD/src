@@ -1,4 +1,4 @@
-/* $NetBSD: cpp_atomic_ops_linkable.cc,v 1.1 2014/10/11 14:52:15 martin Exp $ */
+/* $NetBSD: cpp_atomic_ops_linkable.cc,v 1.2 2014/10/11 17:46:58 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
  */
 
 #include <atomic>
+#include <machine/types.h>	// for __HAVE_ATOMIC64_OPS
 
 template <class T>
 class ATest {
@@ -79,16 +80,20 @@ int main(int argc, char **argv)
   ATest<uint_least16_t>();
   ATest<int_least32_t>();
   ATest<uint_least32_t>();
+#ifdef __HAVE_ATOMIC64_OPS
   ATest<int_least64_t>();
   ATest<uint_least64_t>();
+#endif
   ATest<int_fast8_t>();
   ATest<uint_fast8_t>();
   ATest<int_fast16_t>();
   ATest<uint_fast16_t>();
   ATest<int_fast32_t>();
   ATest<uint_fast32_t>();
+#ifdef __HAVE_ATOMIC64_OPS
   ATest<int_fast64_t>();
   ATest<uint_fast64_t>();
+#endif
   ATest<intptr_t>();
   ATest<uintptr_t>();
   ATest<std::size_t>();
