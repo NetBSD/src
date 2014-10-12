@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.62 2014/10/11 17:27:42 martin Exp $	*/
+/*	$NetBSD: sem.c,v 1.63 2014/10/12 15:35:40 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -142,12 +142,12 @@ finddep(struct attr *a, const char *name)
 }
 
 static void
-mergedeps(const char *devname, const char *name)
+mergedeps(const char *dname, const char *name)
 {
 	struct attr *a, *newa;
 
-	CFGDBG(4, "merging attr `%s' to devbase `%s'", name, devname);
-	a = refattr(devname);
+	CFGDBG(4, "merging attr `%s' to devbase `%s'", name, dname);
+	a = refattr(dname);
 	if (finddep(a, name) == NULL) {
 		newa = refattr(name);
 		a->a_deps = attrlist_cons(a->a_deps, newa);
