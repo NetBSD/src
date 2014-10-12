@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.1 2014/10/12 04:30:42 uebayasi Exp $
+#	$NetBSD: files.kern,v 1.2 2014/10/12 04:38:28 uebayasi Exp $
 
 #
 # kernel sources
@@ -6,15 +6,15 @@
 define	kern:	machdep, uvm
 defflag	opt_kern.h			KERN
 file	compat/common/compat_mod.c	compat_netbsd | compat_netbsd32
-file	conf/debugsyms.c
+file	conf/debugsyms.c		kern
 file	dev/bio.c			bio			needs-flag
 file	dev/ccd.c			ccd
 file	dev/cgd.c			cgd
 file	dev/cgd_crypto.c		cgd
-file	dev/clock_subr.c
+file	dev/clock_subr.c		kern	# XXX
 file	dev/clockctl.c			clockctl
 file	dev/dksubr.c			cgd | xbd | ccd | raid | dm
-file	dev/dkwedge/dk.c
+file	dev/dkwedge/dk.c		kern	# XXX
 file	dev/dkwedge/dkwedge_apple.c	dkwedge_method_apple
 file	dev/dkwedge/dkwedge_bsdlabel.c	dkwedge_method_bsdlabel
 file	dev/dkwedge/dkwedge_gpt.c	dkwedge_method_gpt
@@ -24,7 +24,7 @@ file	dev/fss.c			fss
 file	dev/keylock.c			keylock
 file	dev/lockstat.c			lockstat		needs-flag
 file	dev/md.c			md
-file	dev/mm.c
+file	dev/mm.c			kern	# XXX
 file	dev/nullcons_subr.c		nullcons		needs-flag
 file	dev/radio.c			radio			needs-flag
 file	dev/rndpseudo.c			rnd			needs-flag
@@ -184,7 +184,7 @@ file	kern/uipc_accf.c		kern
 file	kern/uipc_domain.c		kern
 file	kern/uipc_mbuf.c		kern
 file	kern/uipc_mbuf2.c		kern
-file	net/link_proto.c
+file	net/link_proto.c		kern	# XXX
 file	kern/uipc_proto.c		kern
 file	kern/uipc_sem.c			kern
 file	kern/uipc_socket.c		kern
