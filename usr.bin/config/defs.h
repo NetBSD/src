@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.56 2014/10/11 03:17:40 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.57 2014/10/12 05:20:54 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -536,14 +536,20 @@ int	expr_eval(struct condexpr *, int (*)(const char *, void *), void *);
 /* hash.c */
 struct	hashtab *ht_new(void);
 void	ht_free(struct hashtab *);
+int	ht_insrep2(struct hashtab *, const char *, const char *, void *, int);
 int	ht_insrep(struct hashtab *, const char *, void *, int);
+#define	ht_insert2(ht, nam1, nam2, val) ht_insrep2(ht, nam1, nam2, val, 0)
 #define	ht_insert(ht, nam, val) ht_insrep(ht, nam, val, 0)
 #define	ht_replace(ht, nam, val) ht_insrep(ht, nam, val, 1)
+int	ht_remove2(struct hashtab *, const char *, const char *);
 int	ht_remove(struct hashtab *, const char *);
+void	*ht_lookup2(struct hashtab *, const char *, const char *);
 void	*ht_lookup(struct hashtab *, const char *);
 void	initintern(void);
 const char *intern(const char *);
+typedef int (*ht_callback2)(const char *, const char *, void *, void *);
 typedef int (*ht_callback)(const char *, void *, void *);
+int	ht_enumerate2(struct hashtab *, ht_callback2, void *);
 int	ht_enumerate(struct hashtab *, ht_callback, void *);
 
 /* typed hash, named struct HT, whose type is string -> struct VT */
