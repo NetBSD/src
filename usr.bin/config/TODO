@@ -34,12 +34,12 @@ o Sort objects in more reasonable order.
 
   Kill linker definitions in sys/conf/Makefile.inc.kern.
 
-o Differenciate "options" and "flags"/"params".
+o Differentiate "options" and "flags"/"params".
 
-  "options" enables featurs by adding *.c files (via attributes).
+  "options" enables features by adding *.c files (via attributes).
 
   "flags" and "params" are to change contents of *.c files.  These don't add
-  *.c files to the result kernek, or don't build attributes (modules).
+  *.c files to the result kernel, or don't build attributes (modules).
 
 o Make flags/params per attributes (modules).
 
@@ -60,5 +60,5 @@ o Generate things only by definitions.
 o Split cfdata.
 
   cfdata is pattern matching rules to enable devices at runtime device
-  auto-configuration.  It is pure data and can (should) be generated separatedly
+  auto-configuration.  It is pure data and can (should) be generated separately
   from the code.
