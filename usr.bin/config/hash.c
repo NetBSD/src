@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.9 2014/10/12 05:20:54 uebayasi Exp $	*/
+/*	$NetBSD: hash.c,v 1.10 2014/10/12 05:25:21 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -265,7 +265,7 @@ ht_insrep2(struct hashtab *ht, const char *nam1, const char *nam2, void *val, in
 	struct hashenthead *hpp;
 	u_int h;
 
-	h = hash2(0, nam1, NULL);
+	h = hash2(0, nam1, nam2);
 	hpp = &ht->ht_tab[h & ht->ht_mask];
 	TAILQ_FOREACH(hp, hpp, h_next) {
 		if (hp->h_name1 == nam1 &&
@@ -327,7 +327,7 @@ ht_lookup2(struct hashtab *ht, const char *nam1, const char *nam2)
 	struct hashenthead *hpp;
 	u_int h;
 
-	h = hash2(0, nam1, NULL);
+	h = hash2(0, nam1, nam2);
 	hpp = &ht->ht_tab[h & ht->ht_mask];
 	TAILQ_FOREACH(hp, hpp, h_next)
 		if (hp->h_name == nam1)
