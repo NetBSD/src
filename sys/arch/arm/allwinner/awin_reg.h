@@ -1780,4 +1780,14 @@ struct awin_mmc_idma_descriptor {
 
 #define AWIN_A31_MMC_FIFO			0x0200
 
+#define AWIN_A31_PIO_PB_TWI3_FUNC	2
+#define AWIN_A31_PIO_PB_TWI3_PINS	0x00000060 /* PB pins 6-5 */
+
+#define AWIN_A31_PIO_PH_TWI0_FUNC	2
+#define AWIN_A31_PIO_PH_TWI0_PINS	0x0000c000 /* PH pins 15-14 */
+#define AWIN_A31_PIO_PH_TWI1_FUNC	2
+#define AWIN_A31_PIO_PH_TWI1_PINS	0x00030000 /* PH pins 17-16 */
+#define AWIN_A31_PIO_PH_TWI2_FUNC	2
+#define AWIN_A31_PIO_PH_TWI2_PINS	0x000c0000 /* PH pins 19-18 */
+
 #endif /* _ARM_ALLWINNER_AWIN_REG_H_ */
