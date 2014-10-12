@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.101 2014/09/09 20:16:12 rmind Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.102 2014/10/12 20:05:50 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.101 2014/09/09 20:16:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.102 2014/10/12 20:05:50 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1072,23 +1072,10 @@ nd6_newaddrmsg(struct ifaddr *ifa)
 	int e;
 
 	sockaddr_in6_init(&all1_sa, &in6mask128, 0, 0, 0);
-
 	e = rtrequest(RTM_GET, ifa->ifa_addr, ifa->ifa_addr,
-	    (struct sockaddr *)&all1_sa, RTF_UP|RTF_HOST|RTF_LLINFO, &nrt);
-	if (e != 0) {
-		log(LOG_ERR, "nd6_newaddrmsg: "
-		    "RTM_GET operation failed for %s (errno=%d)\n",
-		    ip6_sprintf(&((struct in6_ifaddr *)ifa)->ia_addr.sin6_addr),
-		    e);
-	}
-
+	    (struct sockaddr *)&all1_sa, RTF_UP | RTF_HOST | RTF_LLINFO, &nrt);
 	if (nrt) {
 		rt_newaddrmsg(RTM_ADD, ifa, e, nrt);
-#if 0
-		log(LOG_DEBUG, "nd6_newaddrmsg: announced %s\n",
-		    ip6_sprintf(&((struct in6_ifaddr *)ifa)->ia_addr.sin6_addr)
-		);
-#endif
 		nrt->rt_refcnt--;
 	}
 }
