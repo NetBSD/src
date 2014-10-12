@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtsold.8,v 1.35 2014/09/11 21:04:34 wiz Exp $
+.\"	$NetBSD: rtsold.8,v 1.36 2014/10/12 19:53:34 christos Exp $
 .\"	$KAME: rtsold.8,v 1.17 2001/07/09 22:30:37 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 9, 2014
+.Dd October 12, 2014
 .Dt RTSOLD 8
 .Os
 .\"
@@ -44,3 +44,9 @@ have been removed from
 .Nx
 as their functionality is now included in
 .Xr dhcpcd 8 .
+.Pp
+For example to send a routing solicitation message and print information
+about it without changing the actual routing table:
+.Bd -literal
+	dhcpcd -dB6T --nodhcp6 <interface>
+.Ed
