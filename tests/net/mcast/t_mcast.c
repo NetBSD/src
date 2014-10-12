@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mcast.c,v 1.1 2014/10/11 23:04:42 christos Exp $	*/
+/*	$NetBSD: t_mcast.c,v 1.2 2014/10/12 13:48:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mcast.c,v 1.1 2014/10/11 23:04:42 christos Exp $");
+__RCSID("$NetBSD: t_mcast.c,v 1.2 2014/10/12 13:48:25 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: t_mcast.c,v 1.1 2014/10/11 23:04:42 christos Exp $");
 #include <err.h>
 #include <errno.h>
 #include <poll.h>
+#include <stdbool.h>
 
 #ifndef TEST
 #include <atf-c.h>
@@ -125,6 +126,15 @@ allowv4mapped(int s, struct addrinfo *ai)
 	return setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &zero, sizeof(zero));
 }
 
+static struct sockaddr_storage ss;
+static int
+connector(int fd, const struct sockaddr *sa, socklen_t slen)
+{
+	assert(sizeof(ss) > slen);
+	memcpy(&ss, sa, slen);
+	return 0;
+}
+
 static int
 getsocket(const char *host, const char *port,
     int (*f)(int, const struct sockaddr *, socklen_t))
@@ -156,7 +166,7 @@ getsocket(const char *host, const char *port,
 			cause = f == bind ? "bind" : "connect";
 			goto out;
 		}
-		if (f == bind && addmc(s, ai) == -1) {
+		if ((f == bind || f == connector) && addmc(s, ai) == -1) {
 			cause = "join group";
 			goto out;
 		}
@@ -173,20 +183,21 @@ out:
 }
 
 static void
-sender(const char *host, const char *port, size_t n)
+sender(const char *host, const char *port, size_t n, bool conn)
 {
 	int s;
 	ssize_t l;
 	size_t seq;
 	char buf[64];
 
-	s = getsocket(host, port, connect);
+	s = getsocket(host, port, conn ? connect : connector);
 	for (seq = 0; seq < n; seq++) {
 		time_t t = time(&t);
 		snprintf(buf, sizeof(buf), "%zu: %-24.24s", seq, ctime(&t));
 		if (debug)
 			printf("sending: %s\n", buf);
-		l = send(s, buf, sizeof(buf), 0);
+		l = conn ? send(s, buf, sizeof(buf), 0) :
+		    sendto(s, buf, sizeof(buf), 0, (void *)&ss, ss.ss_len);
 		if (l == -1)
 			ERRX(EXIT_FAILURE, "send (%s)", strerror(errno));
 		usleep(100);
@@ -194,21 +205,24 @@ sender(const char *host, const char *port, size_t n)
 }
 
 static void
-receiver(const char *host, const char *port, size_t n)
+receiver(const char *host, const char *port, size_t n, bool conn)
 {
 	int s;
 	ssize_t l;
 	size_t seq;
 	char buf[64];
 	struct pollfd pfd;
+	socklen_t slen;
 
-	s = getsocket(host, port, bind);
+	s = getsocket(host, port, conn ? bind : connector);
 	pfd.fd = s;
 	pfd.events = POLLIN;
 	for (seq = 0; seq < n; seq++) {
 		if (poll(&pfd, 1, 1000) == -1)
 			ERRX(EXIT_FAILURE, "poll (%s)", strerror(errno));
-		l = recv(s, buf, sizeof(buf), 0);
+		slen = ss.ss_len;
+		l = conn ? recv(s, buf, sizeof(buf), 0) :
+		    recvfrom(s, buf, sizeof(buf), 0, (void *)&ss, &slen);
 		if (l == -1)
 			ERRX(EXIT_FAILURE, "recv (%s)", strerror(errno));
 		if (debug)
@@ -217,17 +231,17 @@ receiver(const char *host, const char *port, size_t n)
 }
 
 static void
-run(const char *host, const char *port, size_t n)
+run(const char *host, const char *port, size_t n, bool conn)
 {
 	switch (fork()) {
 	case 0:
-		receiver(host, port, n);
+		receiver(host, port, n, conn);
 		return;
 	case -1:
 		ERRX(EXIT_FAILURE, "fork (%s)", strerror(errno));
 	default:
 		usleep(100);
-		sender(host, port, n);
+		sender(host, port, n, conn);
 		return;
 	}
 }
@@ -239,12 +253,14 @@ main(int argc, char *argv[])
 	const char *host, *port;
 	int c;
 	size_t n;
+	bool conn;
 
 	host = HOST_V4;
 	port = PORT_V4;
 	n = TOTAL;
+	conn = false;
 
-	while ((c = getopt(argc, argv, "46dmn:")) != -1)
+	while ((c = getopt(argc, argv, "46cdmn:")) != -1)
 		switch (c) {
 		case '4':
 			host = HOST_V4;
@@ -253,6 +269,9 @@ main(int argc, char *argv[])
 		case '6':
 			host = HOST_V6;
 			port = PORT_V6;
+			break;
+		case 'c':
+			conn = true;
 			break;
 		case 'd':
 			debug++;
@@ -265,54 +284,90 @@ main(int argc, char *argv[])
 			n = atoi(optarg);
 			break;
 		default:
-			fprintf(stderr, "Usage: %s [-dm46] [-n <tot>]",
+			fprintf(stderr, "Usage: %s [-cdm46] [-n <tot>]",
 			    getprogname());
 			return 1;
 		}
 
-	run(host, port, n);
+	run(host, port, n, conn);
 	return 0;
 }
 #else
 
-ATF_TC(inet4);
-ATF_TC_HEAD(inet4, tc)
+ATF_TC(conninet4);
+ATF_TC_HEAD(conninet4, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Checks multicast for ipv4");
+	atf_tc_set_md_var(tc, "descr", "Checks connected multicast for ipv4");
 }
 
-ATF_TC_BODY(inet4, tc)
+ATF_TC_BODY(conninet4, tc)
 {
-	run(HOST_V4, PORT_V4, TOTAL);
+	run(HOST_V4, PORT_V4, TOTAL, true);
 }
 
-ATF_TC(mappedinet4);
-ATF_TC_HEAD(mappedinet4, tc)
+ATF_TC(connmappedinet4);
+ATF_TC_HEAD(connmappedinet4, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Checks multicast for mapped ipv4");
+	atf_tc_set_md_var(tc, "descr", "Checks connected multicast for mapped ipv4");
 }
 
-ATF_TC_BODY(mappedinet4, tc)
+ATF_TC_BODY(connmappedinet4, tc)
 {
-	run(HOST_V4MAPPED, PORT_V4MAPPED, TOTAL);
+	run(HOST_V4MAPPED, PORT_V4MAPPED, TOTAL, true);
 }
 
-ATF_TC(inet6);
-ATF_TC_HEAD(inet6, tc)
+ATF_TC(conninet6);
+ATF_TC_HEAD(conninet6, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Checks multicast for ipv6");
+	atf_tc_set_md_var(tc, "descr", "Checks connected multicast for ipv6");
 }
 
-ATF_TC_BODY(inet6, tc)
+ATF_TC_BODY(conninet6, tc)
 {
-	run(HOST_V6, PORT_V6, TOTAL);
+	run(HOST_V6, PORT_V6, TOTAL, true);
+}
+
+ATF_TC(unconninet4);
+ATF_TC_HEAD(unconninet4, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks unconnected multicast for ipv4");
+}
+
+ATF_TC_BODY(unconninet4, tc)
+{
+	run(HOST_V4, PORT_V4, TOTAL, false);
+}
+
+ATF_TC(unconnmappedinet4);
+ATF_TC_HEAD(unconnmappedinet4, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks unconnected multicast for mapped ipv4");
+}
+
+ATF_TC_BODY(unconnmappedinet4, tc)
+{
+	run(HOST_V4MAPPED, PORT_V4MAPPED, TOTAL, false);
+}
+
+ATF_TC(unconninet6);
+ATF_TC_HEAD(unconninet6, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks unconnected multicast for ipv6");
+}
+
+ATF_TC_BODY(unconninet6, tc)
+{
+	run(HOST_V6, PORT_V6, TOTAL, false);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
-        ATF_TP_ADD_TC(tp, inet4);
-        ATF_TP_ADD_TC(tp, mappedinet4);
-        ATF_TP_ADD_TC(tp, inet6);
+        ATF_TP_ADD_TC(tp, conninet4);
+        ATF_TP_ADD_TC(tp, connmappedinet4);
+        ATF_TP_ADD_TC(tp, conninet6);
+        ATF_TP_ADD_TC(tp, unconninet4);
+        ATF_TP_ADD_TC(tp, unconnmappedinet4);
+        ATF_TP_ADD_TC(tp, unconninet6);
 
 	return atf_no_error();
 }
