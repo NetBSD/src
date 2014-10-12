@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_twi.c,v 1.3 2014/02/20 21:48:38 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_twi.c,v 1.4 2014/10/12 14:06:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -63,6 +63,13 @@ static const struct awin_gpio_pinset awin_twi_pinsets[] = {
 	[4] = { 'I', AWIN_PIO_PI_TWI4_FUNC, AWIN_PIO_PI_TWI4_PINS },
 };
 
+static const struct awin_gpio_pinset awin_twi_pinsets_a31[] = {
+	[0] = { 'H', AWIN_A31_PIO_PH_TWI0_FUNC, AWIN_A31_PIO_PH_TWI0_PINS },
+	[1] = { 'H', AWIN_A31_PIO_PH_TWI1_FUNC, AWIN_A31_PIO_PH_TWI1_PINS },
+	[2] = { 'H', AWIN_A31_PIO_PH_TWI2_FUNC, AWIN_A31_PIO_PH_TWI2_PINS },
+	[3] = { 'B', AWIN_A31_PIO_PB_TWI3_FUNC, AWIN_A31_PIO_PB_TWI3_PINS },
+};
+
 CFATTACH_DECL_NEW(awin_twi, sizeof(struct awin_twi_softc),
 	awin_twi_match, awin_twi_attach, NULL, NULL);
 
@@ -71,6 +78,7 @@ awin_twi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
+	unsigned int port = loc->loc_port;
 
 	KASSERT(!strcmp(cf->cf_name, loc->loc_name));
 	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT
@@ -84,8 +92,13 @@ awin_twi_match(device_t parent, cfdata_t cf, void *aux)
 	if (cf->cf_flags & 1)
 		return 0;
 
-	if (!awin_gpio_pinset_available(&awin_twi_pinsets[loc->loc_port]))
-		return 0;
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		if (!awin_gpio_pinset_available(&awin_twi_pinsets_a31[port]))
+			return 0;
+	} else {
+		if (!awin_gpio_pinset_available(&awin_twi_pinsets[port]))
+			return 0;
+	}
 
 	return 1;
 }
@@ -103,7 +116,11 @@ awin_twi_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Acquite the PIO pins needed for the TWI port.
 	 */
-	awin_gpio_pinset_acquire(&awin_twi_pinsets[loc->loc_port]);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		awin_gpio_pinset_acquire(&awin_twi_pinsets_a31[loc->loc_port]);
+	} else {
+		awin_gpio_pinset_acquire(&awin_twi_pinsets[loc->loc_port]);
+	}
 
 	/*
 	 * Get a bus space handle for this TWI port.
