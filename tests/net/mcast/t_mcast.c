@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mcast.c,v 1.2 2014/10/12 13:48:25 christos Exp $	*/
+/*	$NetBSD: t_mcast.c,v 1.3 2014/10/12 14:53:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mcast.c,v 1.2 2014/10/12 13:48:25 christos Exp $");
+__RCSID("$NetBSD: t_mcast.c,v 1.3 2014/10/12 14:53:46 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -90,7 +90,11 @@ addmc(int s, struct addrinfo *ai)
 		    &m4, sizeof(m4));
 	case AF_INET6:
 		s6 = (void *)ai->ai_addr;
+#if defined(__linux__) || defined(__NetBSD__)
 		// XXX: Both linux and we do this thing wrong...
+		// It is just difficult to make the regular IPv6 multicast
+		// calls to work with mapped addresses because the code is
+		// not structured properly. MacOS/X works properly.
 		if (IN6_IS_ADDR_V4MAPPED(&s6->sin6_addr)) {
 			memcpy(&m4.imr_multiaddr, &s6->sin6_addr.s6_addr[12],
 			    sizeof(m4.imr_multiaddr));
@@ -98,6 +102,7 @@ addmc(int s, struct addrinfo *ai)
 			return setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP,
 			    &m4, sizeof(m4));
 		}
+#endif
 		assert(sizeof(*s6) == ai->ai_addrlen);
 		memset(&m6, 0, sizeof(m6));
 		m6.ipv6mr_interface = 0;
