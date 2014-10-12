@@ -35,7 +35,7 @@
 #define _GLIBCXX_CXX_CONFIG_H 1
 
 // The current version of the C++ library in compressed ISO date format.
-#define __GLIBCXX__ 20140522
+#define __GLIBCXX__ 20141009
 
 // Macros for various attributes.
 //   _GLIBCXX_PURE
@@ -771,7 +771,7 @@ namespace std
 #define _GLIBCXX_HAVE_POWF 1
 
 /* Define to 1 if you have the `powl' function. */
-/* #undef _GLIBCXX_HAVE_POWL */
+#define _GLIBCXX_HAVE_POWL 1
 
 /* Define to 1 if you have the `qfpclass' function. */
 /* #undef _GLIBCXX_HAVE_QFPCLASS */
