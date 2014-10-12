@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2014/02/22 08:53:33 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2014/10/12 17:53:33 martin Exp $
 
 .if defined(LIB) && (${LIB} == "kern" || ${LIB} == "c" || ${LIB} == "pthread" \
 	|| ${LIB} == "rump")
@@ -16,7 +16,10 @@ SRCS+=	atomic_add_16_cas.c atomic_add_8_cas.c	\
 	atomic_and_16_cas.c atomic_and_8_cas.c	\
 	atomic_nand_32_cas.c atomic_nand_16_cas.c atomic_nand_8_cas.c	\
 	atomic_cas_32_cas.c atomic_cas_16_cas.c atomic_cas_8_cas.c	\
-	atomic_swap_16_cas.c atomic_swap_8_cas.c
+	atomic_swap_16_cas.c atomic_swap_8_cas.c \
+	atomic_c11_compare_exchange_cas_32.c	\
+	atomic_c11_compare_exchange_cas_16.c	\
+	atomic_c11_compare_exchange_cas_8.c
 .endif
 
 .endif
