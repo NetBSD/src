@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.14 2014/10/12 13:08:12 jmcneill Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.15 2014/10/12 14:04:52 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.14 2014/10/12 13:08:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.15 2014/10/12 14:04:52 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -628,7 +628,12 @@ awin_device_register(device_t self, void *aux)
 #elif AWIN_board == AWIN_hummingbird_a31
 		prop_dictionary_set_cstring(dict, "mmc0detect", "<PH8");
 #endif
+
+#if AWIN_board == AWIN_hummingbird_a31
+		prop_dictionary_set_cstring(dict, "audiopactrl", ">PH22");
+#else
 		prop_dictionary_set_cstring(dict, "audiopactrl", ">PH15");
+#endif
 
 		/*
 		 * These pins have no connections.
