@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ac.c,v 1.12 2014/09/06 23:04:10 jmcneill Exp $ */
+/* $NetBSD: awin_ac.c,v 1.13 2014/10/12 17:25:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.12 2014/09/06 23:04:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.13 2014/10/12 17:25:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -353,6 +353,11 @@ awinac_attach(device_t parent, device_t self, void *aux)
 
 	if (sc->sc_has_pactrl_gpio)
 		awin_gpio_pindata_write(&sc->sc_pactrl_gpio, 0);
+
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		awin_reg_set_clear(sc->sc_bst, aio->aio_ccm_bsh,
+		    AWIN_A31_APB1_RESET_REG, AWIN_A31_APB1_RESET_CODEC_RST, 0);
+	}
 
 	awinac_init(sc);
 
