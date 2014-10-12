@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mcast.c,v 1.3 2014/10/12 14:53:46 christos Exp $	*/
+/*	$NetBSD: t_mcast.c,v 1.4 2014/10/12 18:56:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mcast.c,v 1.3 2014/10/12 14:53:46 christos Exp $");
+__RCSID("$NetBSD: t_mcast.c,v 1.4 2014/10/12 18:56:57 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -73,7 +73,7 @@ static int debug;
 #define HOST_V6 "FF05:0:0:0:0:0:0:1"
 
 static int
-addmc(int s, struct addrinfo *ai)
+addmc(int s, struct addrinfo *ai, bool bug)
 {
 	struct ip_mreq 	m4;
 	struct ipv6_mreq m6;
@@ -90,19 +90,14 @@ addmc(int s, struct addrinfo *ai)
 		    &m4, sizeof(m4));
 	case AF_INET6:
 		s6 = (void *)ai->ai_addr;
-#if defined(__linux__) || defined(__NetBSD__)
-		// XXX: Both linux and we do this thing wrong...
-		// It is just difficult to make the regular IPv6 multicast
-		// calls to work with mapped addresses because the code is
-		// not structured properly. MacOS/X works properly.
-		if (IN6_IS_ADDR_V4MAPPED(&s6->sin6_addr)) {
+		// XXX: Linux does not support the v6 ioctls on v4 sockets!
+		if (bug && IN6_IS_ADDR_V4MAPPED(&s6->sin6_addr)) {
 			memcpy(&m4.imr_multiaddr, &s6->sin6_addr.s6_addr[12],
 			    sizeof(m4.imr_multiaddr));
 			m4.imr_interface.s_addr = htonl(INADDR_ANY);
 			return setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP,
 			    &m4, sizeof(m4));
 		}
-#endif
 		assert(sizeof(*s6) == ai->ai_addrlen);
 		memset(&m6, 0, sizeof(m6));
 		m6.ipv6mr_interface = 0;
@@ -142,7 +137,7 @@ connector(int fd, const struct sockaddr *sa, socklen_t slen)
 
 static int
 getsocket(const char *host, const char *port,
-    int (*f)(int, const struct sockaddr *, socklen_t))
+    int (*f)(int, const struct sockaddr *, socklen_t), bool bug)
 {
 	int e, s;
 	struct addrinfo hints, *ai0, *ai;
@@ -171,7 +166,7 @@ getsocket(const char *host, const char *port,
 			cause = f == bind ? "bind" : "connect";
 			goto out;
 		}
-		if ((f == bind || f == connector) && addmc(s, ai) == -1) {
+		if ((f == bind || f == connector) && addmc(s, ai, bug) == -1) {
 			cause = "join group";
 			goto out;
 		}
@@ -188,14 +183,14 @@ out:
 }
 
 static void
-sender(const char *host, const char *port, size_t n, bool conn)
+sender(const char *host, const char *port, size_t n, bool conn, bool bug)
 {
 	int s;
 	ssize_t l;
 	size_t seq;
 	char buf[64];
 
-	s = getsocket(host, port, conn ? connect : connector);
+	s = getsocket(host, port, conn ? connect : connector, bug);
 	for (seq = 0; seq < n; seq++) {
 		time_t t = time(&t);
 		snprintf(buf, sizeof(buf), "%zu: %-24.24s", seq, ctime(&t));
@@ -210,7 +205,7 @@ sender(const char *host, const char *port, size_t n, bool conn)
 }
 
 static void
-receiver(const char *host, const char *port, size_t n, bool conn)
+receiver(const char *host, const char *port, size_t n, bool conn, bool bug)
 {
 	int s;
 	ssize_t l;
@@ -219,7 +214,7 @@ receiver(const char *host, const char *port, size_t n, bool conn)
 	struct pollfd pfd;
 	socklen_t slen;
 
-	s = getsocket(host, port, conn ? bind : connector);
+	s = getsocket(host, port, conn ? bind : connector, bug);
 	pfd.fd = s;
 	pfd.events = POLLIN;
 	for (seq = 0; seq < n; seq++) {
@@ -236,17 +231,17 @@ receiver(const char *host, const char *port, size_t n, bool conn)
 }
 
 static void
-run(const char *host, const char *port, size_t n, bool conn)
+run(const char *host, const char *port, size_t n, bool conn, bool bug)
 {
 	switch (fork()) {
 	case 0:
-		receiver(host, port, n, conn);
+		receiver(host, port, n, conn, bug);
 		return;
 	case -1:
 		ERRX(EXIT_FAILURE, "fork (%s)", strerror(errno));
 	default:
 		usleep(100);
-		sender(host, port, n, conn);
+		sender(host, port, n, conn, bug);
 		return;
 	}
 }
@@ -258,12 +253,12 @@ main(int argc, char *argv[])
 	const char *host, *port;
 	int c;
 	size_t n;
-	bool conn;
+	bool conn, bug;
 
 	host = HOST_V4;
 	port = PORT_V4;
 	n = TOTAL;
-	conn = false;
+	bug = conn = false;
 
 	while ((c = getopt(argc, argv, "46cdmn:")) != -1)
 		switch (c) {
@@ -274,6 +269,9 @@ main(int argc, char *argv[])
 		case '6':
 			host = HOST_V6;
 			port = PORT_V6;
+			break;
+		case 'b':
+			bug = true;
 			break;
 		case 'c':
 			conn = true;
@@ -294,7 +292,7 @@ main(int argc, char *argv[])
 			return 1;
 		}
 
-	run(host, port, n, conn);
+	run(host, port, n, conn, bug);
 	return 0;
 }
 #else
@@ -307,7 +305,7 @@ ATF_TC_HEAD(conninet4, tc)
 
 ATF_TC_BODY(conninet4, tc)
 {
-	run(HOST_V4, PORT_V4, TOTAL, true);
+	run(HOST_V4, PORT_V4, TOTAL, true, false);
 }
 
 ATF_TC(connmappedinet4);
@@ -318,7 +316,18 @@ ATF_TC_HEAD(connmappedinet4, tc)
 
 ATF_TC_BODY(connmappedinet4, tc)
 {
-	run(HOST_V4MAPPED, PORT_V4MAPPED, TOTAL, true);
+	run(HOST_V4MAPPED, PORT_V4MAPPED, TOTAL, true, false);
+}
+
+ATF_TC(connmappedbuginet4);
+ATF_TC_HEAD(connmappedbuginet4, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks connected multicast for mapped ipv4 using the v4 ioctls");
+}
+
+ATF_TC_BODY(connmappedbuginet4, tc)
+{
+	run(HOST_V4MAPPED, PORT_V4MAPPED, TOTAL, true, true);
 }
 
 ATF_TC(conninet6);
@@ -329,7 +338,7 @@ ATF_TC_HEAD(conninet6, tc)
 
 ATF_TC_BODY(conninet6, tc)
 {
-	run(HOST_V6, PORT_V6, TOTAL, true);
+	run(HOST_V6, PORT_V6, TOTAL, true, false);
 }
 
 ATF_TC(unconninet4);
@@ -340,7 +349,7 @@ ATF_TC_HEAD(unconninet4, tc)
 
 ATF_TC_BODY(unconninet4, tc)
 {
-	run(HOST_V4, PORT_V4, TOTAL, false);
+	run(HOST_V4, PORT_V4, TOTAL, false, false);
 }
 
 ATF_TC(unconnmappedinet4);
@@ -351,7 +360,18 @@ ATF_TC_HEAD(unconnmappedinet4, tc)
 
 ATF_TC_BODY(unconnmappedinet4, tc)
 {
-	run(HOST_V4MAPPED, PORT_V4MAPPED, TOTAL, false);
+	run(HOST_V4MAPPED, PORT_V4MAPPED, TOTAL, false, false);
+}
+
+ATF_TC(unconnmappedbuginet4);
+ATF_TC_HEAD(unconnmappedbuginet4, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks unconnected multicast for mapped ipv4 using the v4 ioctls");
+}
+
+ATF_TC_BODY(unconnmappedbuginet4, tc)
+{
+	run(HOST_V4MAPPED, PORT_V4MAPPED, TOTAL, false, true);
 }
 
 ATF_TC(unconninet6);
@@ -362,16 +382,18 @@ ATF_TC_HEAD(unconninet6, tc)
 
 ATF_TC_BODY(unconninet6, tc)
 {
-	run(HOST_V6, PORT_V6, TOTAL, false);
+	run(HOST_V6, PORT_V6, TOTAL, false, false);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
         ATF_TP_ADD_TC(tp, conninet4);
         ATF_TP_ADD_TC(tp, connmappedinet4);
+        ATF_TP_ADD_TC(tp, connmappedbuginet4);
         ATF_TP_ADD_TC(tp, conninet6);
         ATF_TP_ADD_TC(tp, unconninet4);
         ATF_TP_ADD_TC(tp, unconnmappedinet4);
+        ATF_TP_ADD_TC(tp, unconnmappedbuginet4);
         ATF_TP_ADD_TC(tp, unconninet6);
 
 	return atf_no_error();
