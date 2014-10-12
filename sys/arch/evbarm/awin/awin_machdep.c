@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.13 2014/10/10 07:37:50 jmcneill Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.14 2014/10/12 13:08:12 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.13 2014/10/10 07:37:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.14 2014/10/12 13:08:12 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -602,6 +602,7 @@ awin_device_register(device_t self, void *aux)
 #endif
 #if AWIN_board == AWIN_hummingbird_a31
 		prop_dictionary_set_cstring(dict, "usb1drv", ">PH27");
+		prop_dictionary_set_cstring(dict, "usb1restrict", ">PH26");
 		prop_dictionary_set_cstring(dict, "usb2drv", ">PH24");
 #else
 		prop_dictionary_set_cstring(dict, "usb2drv", ">PH3");
