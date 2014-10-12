@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.35 2013/08/29 01:05:29 tls Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.36 2014/10/12 16:23:20 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.35 2013/08/29 01:05:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.36 2014/10/12 16:23:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -226,7 +226,7 @@ todr_debug(const char *prefix, int rv, struct clock_ymdhms *dt,
 	printf("%s: rtc_offset = %d\n", prefix, rtc_offset);
 	printf("%s: %4u/%02u/%02u %02u:%02u:%02u, (wday %d) (epoch %u.%06u)\n",
 	    prefix,
-	    dt->dt_year, dt->dt_mon, dt->dt_day,
+	    (unsigned)dt->dt_year, dt->dt_mon, dt->dt_day,
 	    dt->dt_hour, dt->dt_min, dt->dt_sec,
 	    dt->dt_wday, (unsigned)tvp->tv_sec, (unsigned)tvp->tv_usec);
 }
