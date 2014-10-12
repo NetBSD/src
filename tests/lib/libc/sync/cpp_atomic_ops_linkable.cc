@@ -1,4 +1,4 @@
-/* $NetBSD: cpp_atomic_ops_linkable.cc,v 1.2 2014/10/11 17:46:58 martin Exp $ */
+/* $NetBSD: cpp_atomic_ops_linkable.cc,v 1.3 2014/10/12 12:26:41 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -69,8 +69,10 @@ int main(int argc, char **argv)
   ATest<unsigned int>();
   ATest<long>();
   ATest<unsigned long>();
+#ifdef __HAVE_ATOMIC64_OPS
   ATest<long long>();
   ATest<unsigned long long>();
+#endif
   ATest<char16_t>();
   ATest<char32_t>();
   ATest<wchar_t>();
@@ -98,6 +100,8 @@ int main(int argc, char **argv)
   ATest<uintptr_t>();
   ATest<std::size_t>();
   ATest<std::ptrdiff_t>();
+#ifdef __HAVE_ATOMIC64_OPS
   ATest<intmax_t>();
   ATest<uintmax_t>();
+#endif
 }
