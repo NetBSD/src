@@ -97,6 +97,16 @@ lvalue_kind (const_tree ref)
     case IMAGPART_EXPR:
       return lvalue_kind (TREE_OPERAND (ref, 0));
 
+    case MEMBER_REF:
+    case DOTSTAR_EXPR:
+      if (TREE_CODE (ref) == MEMBER_REF)
+	op1_lvalue_kind = clk_ordinary;
+      else
+	op1_lvalue_kind = lvalue_kind (TREE_OPERAND (ref, 0));
+      if (TYPE_PTRMEMFUNC_P (TREE_TYPE (TREE_OPERAND (ref, 1))))
+	op1_lvalue_kind = clk_none;
+      return op1_lvalue_kind;
+
     case COMPONENT_REF:
       op1_lvalue_kind = lvalue_kind (TREE_OPERAND (ref, 0));
       /* Look at the member designator.  */
@@ -3738,6 +3748,10 @@ stabilize_expr (tree exp, tree* initp)
     {
       init_expr = get_target_expr (exp);
       exp = TARGET_EXPR_SLOT (init_expr);
+      if (CLASS_TYPE_P (TREE_TYPE (exp)))
+	exp = move (exp);
+      else
+	exp = rvalue (exp);
     }
   else
     {
