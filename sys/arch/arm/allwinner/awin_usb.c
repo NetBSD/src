@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.14 2014/10/10 07:36:11 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.15 2014/10/12 13:07:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,6 +71,7 @@ struct awinusb_softc {
 	bus_space_handle_t usbsc_usb0_phy_csr_bsh;
 	u_int usbsc_number;
 	struct awin_gpio_pindata usbsc_drv_pin;
+	struct awin_gpio_pindata usbsc_restrict_pin;
 
 	device_t usbsc_ohci_dev;
 	device_t usbsc_ehci_dev;
@@ -283,6 +284,8 @@ CFATTACH_DECL_NEW(awin_usb, sizeof(struct awinusb_softc),
 static int awinusb_ports;
 
 static const char awinusb_drvpin_names[2][8] = { "usb1drv", "usb2drv" };
+static const char awinusb_restrictpin_names[2][13] = { "usb1restrict", "usb2restrict" };
+
 static const bus_size_t awinusb_dram_hpcr_regs[2] = {
 	AWIN_DRAM_HPCR_USB1_REG,
 	AWIN_DRAM_HPCR_USB2_REG,
@@ -331,6 +334,22 @@ static const uint32_t awinusb_usb_clk_set_a31[2] = {
 	AWIN_A31_USB_CLK_USBPHY2_ENABLE |
 	AWIN_A31_USB_CLK_PHY2_ENABLE,
 };
+static const uint32_t awinusb_usb_ahb_reset_a31[2] = {
+#if NOHCI > 0
+	AWIN_A31_AHB_RESET0_USBOHCI0_RST |
+#endif
+#if NEHCI > 0
+	AWIN_A31_AHB_RESET0_USBEHCI0_RST |
+#endif
+	0,
+#if NOHCI > 0
+	AWIN_A31_AHB_RESET0_USBOHCI1_RST |
+#endif
+#if NEHCI > 0
+	AWIN_A31_AHB_RESET0_USBEHCI1_RST |
+#endif
+	0,
+};
 
 int
 awinusb_match(device_t parent, cfdata_t cf, void *aux)
@@ -374,19 +393,20 @@ awinusb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
-		/*
-		 * Access to the USB phy is off USB0 so make sure it's on.
-		*/
-		awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_ccm_bsh,
-		    AWIN_AHB_GATING0_REG,
-		    awinusb_ahb_gating_a31[loc->loc_port], 0);
-
-		/*
-		 * Enable the USB phy for this port.
-		 */
+		/* Enable USB PHY */
 		awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_ccm_bsh,
 		    AWIN_USB_CLK_REG, awinusb_usb_clk_set_a31[loc->loc_port],
 		    0);
+
+		/* AHB gate enable */
+		awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_ccm_bsh,
+		    AWIN_AHB_GATING0_REG,
+		    AWIN_A31_AHB_GATING0_USB0 | awinusb_ahb_gating_a31[loc->loc_port],
+		    0);
+
+		/* Soft reset */
+		awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_ccm_bsh,
+		    AWIN_A31_AHB_RESET0_REG, awinusb_usb_ahb_reset_a31[loc->loc_port], 0);
 	} else {
 		/*
 		 * Access to the USB phy is off USB0 so make sure it's on.
@@ -430,6 +450,13 @@ awinusb_attach(device_t parent, device_t self, void *aux)
 		awin_gpio_pindata_write(&usbsc->usbsc_drv_pin, 1);
 	} else {
 		aprint_error_dev(self, "no power gpio found\n");
+	}
+
+	if (awin_gpio_pin_reserve(awinusb_restrictpin_names[loc->loc_port],
+		    &usbsc->usbsc_restrict_pin)) {
+		awin_gpio_pindata_write(&usbsc->usbsc_restrict_pin, 1);
+	} else {
+		aprint_error_dev(self, "no restrict gpio found\n");
 	}
 
 	/*
