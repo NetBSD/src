@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.18 2014/10/12 14:06:18 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.19 2014/10/12 17:20:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -95,7 +95,7 @@ static const struct awin_locators awin_locators[] = {
 	{ "awinicu", OFFANDSIZE(INTC), NOPORT, NOINTR, A10|REQ },
 	{ "awingpio", OFFANDSIZE(PIO), NOPORT, NOINTR, AANY|REQ },
 	{ "awindma", OFFANDSIZE(DMA), NOPORT, AWIN_IRQ_DMA, A10|A20|REQ },
-	{ "awindma", OFFANDSIZE(DMA), NOPORT, AWIN_A31_IRQ_DMA, A31|REQ },
+	{ "awindma", OFFANDSIZE(DMA), NOPORT, AWIN_A31_IRQ_DMA, A31 },
 	{ "awintmr", OFFANDSIZE(TMR), NOPORT, AWIN_IRQ_TMR0, A10 },
 	{ "com", OFFANDSIZE(UART0), 0, AWIN_IRQ_UART0, A10|A20 },
 	{ "com", OFFANDSIZE(UART1), 1, AWIN_IRQ_UART1, A10|A20 },
@@ -107,7 +107,8 @@ static const struct awin_locators awin_locators[] = {
 	{ "com", OFFANDSIZE(UART7), 7, AWIN_IRQ_UART7, A10|A20 },
 	{ "com", OFFANDSIZE(UART0), 0, AWIN_A31_IRQ_UART0, A31 },
 	{ "awinwdt", OFFANDSIZE(TMR), NOPORT, NOINTR, AANY },
-	{ "awinrtc", OFFANDSIZE(TMR), NOPORT, NOINTR, AANY },
+	{ "awinrtc", OFFANDSIZE(TMR), NOPORT, NOINTR, A10|A20 },
+	{ "awinrtc", OFFANDSIZE(A31_RTC), NOPORT, NOINTR, A31 },
 	{ "awinhdmi", OFFANDSIZE(HDMI), NOPORT, AWIN_IRQ_HDMI0, A20 },
 	{ "awinusb", OFFANDSIZE(USB1), 0, NOINTR, A10|A20 },
 	{ "awinusb", OFFANDSIZE(USB2), 1, NOINTR, A10|A20 },
