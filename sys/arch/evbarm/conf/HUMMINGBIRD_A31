@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.6 2014/10/12 15:38:45 jmcneill Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.7 2014/10/12 23:59:30 jmcneill Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -204,7 +204,12 @@ gpio*		at awingpio?
 # I2C Controller
 awiniic0	at awinio? port 0
 #awiniic*	at awinio? port ?
-iic*		at awiniic?
+iic0		at awiniic0
+
+# P2WI
+awinp2wi0	at awinio0
+iic1		at awinp2wi0
+axp22x0		at iic1 addr 0x34	# AXP221 Power Management Unit	
 
 # On-board 16550 UARTs
 com0		at awinio? port 0			# UART0 (console)
