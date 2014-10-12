@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1117 2014/10/10 17:21:20 uebayasi Exp $
+#	$NetBSD: files,v 1.1118 2014/10/12 03:52:30 uebayasi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20141010
@@ -1690,9 +1690,12 @@ file	miscfs/genfs/genfs_io.c		vfs
 file	miscfs/genfs/genfs_rename.c	vfs
 file	miscfs/genfs/genfs_vfsops.c	vfs
 file	miscfs/genfs/genfs_vnops.c	vfs
-file	miscfs/genfs/layer_subr.c	nullfs | overlay | umapfs
-file	miscfs/genfs/layer_vfsops.c	nullfs | overlay | umapfs
-file	miscfs/genfs/layer_vnops.c	nullfs | overlay | umapfs
+
+define	layerfs
+file	miscfs/genfs/layer_subr.c	layerfs
+file	miscfs/genfs/layer_vfsops.c	layerfs
+file	miscfs/genfs/layer_vnops.c	layerfs
+
 file	miscfs/specfs/spec_vnops.c	vfs
 file	miscfs/syncfs/sync_subr.c	vfs
 file	miscfs/syncfs/sync_vnops.c	vfs
