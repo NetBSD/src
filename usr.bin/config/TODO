@@ -62,3 +62,19 @@ o Split cfdata.
   cfdata is pattern matching rules to enable devices at runtime device
   auto-configuration.  It is pure data and can (should) be generated separately
   from the code.
+
+o Allow easier adding and removing of options.
+
+  It should be possible to add or remove options, flags, etc.,
+  without regard to whether or not they are already defined.
+  For example, a configuration like this:
+
+	include GENERIC
+	options FOO
+	no options BAR
+
+  should work regardless of whether or not options FOO and/or
+  options BAR were defined in GENERIC.  It should not give
+  errors like "options BAR was already defined" or "options FOO
+  was not defined".
+
