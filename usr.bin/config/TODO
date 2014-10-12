@@ -33,3 +33,32 @@ o Sort objects in more reasonable order.
 	  :
 
   Kill linker definitions in sys/conf/Makefile.inc.kern.
+
+o Differenciate "options" and "flags"/"params".
+
+  "options" enables featurs by adding *.c files (via attributes).
+
+  "flags" and "params" are to change contents of *.c files.  These don't add
+  *.c files to the result kernek, or don't build attributes (modules).
+
+o Make flags/params per attributes (modules).
+
+  Basically flags and params are cpp(1) #define's generated in opt_*.h.  Make
+  them local to one attributes (modules).  Flags/params which affects files
+  across attributes (modules) are possible, but should be discouraged.
+
+o Generate things only by definitions.
+
+  In the ideal dynamically modular world, "selection" will be done not at
+  compile time but at runtime.  Users select their wanted modules, by
+  dynamically loading them.
+
+  This means that the system provides all choices; that is, build all modules
+  in the source tree.  Necessary information is defined in the "definition"
+  part.
+
+o Split cfdata.
+
+  cfdata is pattern matching rules to enable devices at runtime device
+  auto-configuration.  It is pure data and can (should) be generated separatedly
+  from the code.
