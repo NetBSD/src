@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.22 2014/10/10 23:50:43 jmcneill Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.23 2014/10/12 17:19:43 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.22 2014/10/10 23:50:43 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.23 2014/10/12 17:19:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -360,11 +360,25 @@ awin_pll2_enable(void)
 	    AWIN_CCM_OFFSET + AWIN_PLL2_CFG_REG);
 
 	uint32_t ncfg = ocfg;
-	ncfg &= ~(AWIN_PLL2_CFG_PREVDIV|AWIN_PLL2_CFG_FACTOR_N|AWIN_PLL2_CFG_POSTDIV);
-	ncfg |= __SHIFTIN(21, AWIN_PLL2_CFG_PREVDIV);
-	ncfg |= __SHIFTIN(86, AWIN_PLL2_CFG_FACTOR_N);
-	ncfg |= __SHIFTIN(4, AWIN_PLL2_CFG_POSTDIV);
-	ncfg |= AWIN_PLL_CFG_ENABLE;
+
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		ncfg &= ~(AWIN_A31_PLL2_CFG_PREVDIV_M|
+			  AWIN_A31_PLL2_CFG_FACTOR_N|
+			  AWIN_A31_PLL2_CFG_POSTDIV_P);
+		ncfg |= __SHIFTIN(20, AWIN_A31_PLL2_CFG_PREVDIV_M);
+		ncfg |= __SHIFTIN(85, AWIN_A31_PLL2_CFG_FACTOR_N);
+		ncfg |= __SHIFTIN(3, AWIN_A31_PLL2_CFG_POSTDIV_P);
+		ncfg |= AWIN_PLL_CFG_ENABLE;
+	} else {
+		ncfg &= ~(AWIN_PLL2_CFG_PREVDIV|
+			  AWIN_PLL2_CFG_FACTOR_N|
+			  AWIN_PLL2_CFG_POSTDIV);
+		ncfg |= __SHIFTIN(21, AWIN_PLL2_CFG_PREVDIV);
+		ncfg |= __SHIFTIN(86, AWIN_PLL2_CFG_FACTOR_N);
+		ncfg |= __SHIFTIN(4, AWIN_PLL2_CFG_POSTDIV);
+		ncfg |= AWIN_PLL_CFG_ENABLE;
+	}
+
 	if (ncfg != ocfg) {
 		bus_space_write_4(bst, bsh,
 		    AWIN_CCM_OFFSET + AWIN_PLL2_CFG_REG, ncfg);
