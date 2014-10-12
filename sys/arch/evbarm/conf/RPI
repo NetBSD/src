@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.57 2014/10/11 11:55:07 uebayasi Exp $
+#	$NetBSD: RPI,v 1.58 2014/10/12 12:01:50 macallan Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -256,6 +256,10 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 # Broadcom Serial Control (I2C)
 bsciic* at obio?
 iic* at i2cbus?
+
+# 'DS3231 Raspberry Pi RTC Board Real Time Clock Module for Arduino'
+# sold by linksprite.com
+#dsrtc* at iic1 addr 0x68 flags 3231
 
 # SPI controller
 bcmspi* at obio?
