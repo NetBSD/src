@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.21 2014/03/30 08:00:34 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.22 2014/10/12 05:40:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.21 2014/03/30 08:00:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.22 2014/10/12 05:40:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -337,7 +337,7 @@ tlb_print_cortex_a7_entry(size_t way, size_t va_index, uint32_t d0, uint32_t d1)
 	const u_int sh = __SHIFTOUT(d2, ARM_A7_TLBDATA2_SH);
 	static const char is_types[3][3] = { "NC", "WB", "WT" };
 	static const char os_types[4][6] = { "NC", "WB+WA", "WT", "WB" };
-	static const char sh_types[4][3] = { "NC", "na", "OS", "IS" };
+	static const char sh_types[4][3] = { "NS", "na", "OS", "IS" };
 	db_printf(" %2s %5s %2s\n", is_types[is], os_types[os], sh_types[sh]);
 }
 
