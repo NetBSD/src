@@ -297,7 +297,7 @@ do {									\
 /* An expression for the alignment of a structure field FIELD if the
    alignment computed in the usual way is COMPUTED.  */
 #define ADJUST_FIELD_ALIGN(FIELD, COMPUTED)				      \
-	((TARGET_ALTIVEC && TREE_CODE (TREE_TYPE (FIELD)) == VECTOR_TYPE)     \
+	(rs6000_special_adjust_field_align_p ((FIELD), (COMPUTED))	      \
 	 ? 128 : COMPUTED)
 
 #undef  BIGGEST_FIELD_ALIGNMENT
@@ -952,3 +952,27 @@ ENDIAN_SELECT(" -mbig", " -mlittle", DEFAULT_ASM_ENDIAN)
 #define TARGET_USES_SYSV4_OPT 1
 
 #undef DBX_REGISTER_NUMBER
+
+/* Link -lasan early on the command line.  For -static-libasan, don't link
+   it for -shared link, the executable should be compiled with -static-libasan
+   in that case, and for executable link link with --{,no-}whole-archive around
+   it to force everything into the executable.  And similarly for -ltsan.  */
+#if defined(HAVE_LD_STATIC_DYNAMIC)
+#undef LIBASAN_EARLY_SPEC
+#define LIBASAN_EARLY_SPEC "%{!shared:libasan_preinit%O%s} " \
+  "%{static-libasan:%{!shared:" \
+  LD_STATIC_OPTION " --whole-archive -lasan --no-whole-archive " \
+  LD_DYNAMIC_OPTION "}}%{!static-libasan:-lasan}"
+#undef LIBTSAN_EARLY_SPEC
+#define LIBTSAN_EARLY_SPEC "%{static-libtsan:%{!shared:" \
+  LD_STATIC_OPTION " --whole-archive -ltsan --no-whole-archive " \
+  LD_DYNAMIC_OPTION "}}%{!static-libtsan:-ltsan}"
+#endif
+
+/* Additional libraries needed by -static-libasan.  */
+#undef STATIC_LIBASAN_LIBS
+#define STATIC_LIBASAN_LIBS "-ldl -lpthread"
+
+/* Additional libraries needed by -static-libtsan.  */
+#undef STATIC_LIBTSAN_LIBS
+#define STATIC_LIBTSAN_LIBS "-ldl -lpthread"
