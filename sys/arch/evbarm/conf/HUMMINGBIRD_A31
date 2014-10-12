@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.4 2014/10/11 17:35:06 jmcneill Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.5 2014/10/12 13:08:54 jmcneill Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -220,26 +220,28 @@ awinrtc*	at awinio?
 awinac0		at awinio0
 audio0		at awinac0
 
+# 10/100/1000 Ethernet (A10/A20)
+#awge0		at awinio0 port ?
+
 # On-board USB
-#awinusb0	at awinio0 port 0
-#awinusb1	at awinio0 port 1
-#ohci*		at awinusb?
-#ehci*		at awinusb?
-#usb*		at ohci?
-#usb*		at ehci?
+awinusb0	at awinio0 port 0
+awinusb1	at awinio0 port 1
+ohci*		at awinusb?
+ehci*		at awinusb?
+usb*		at ohci?
+usb*		at ehci?
 
 # USB OTG
 #motg0		at awinio0
 #usb*		at motg?
 
-#include "dev/usb/usbdevices.config"
+include "dev/usb/usbdevices.config"
 
-# 10/100/1000 Ethernet (A10/A20)
-#awge0		at awinio0 port ?
+midi*		at midibus?
 
-#rlphy*		at mii? phy ?
-#rgephy* 	at mii? phy ?
-#ukphy*		at mii? phy ?
+rlphy*		at mii? phy ?
+rgephy* 	at mii? phy ?
+ukphy*		at mii? phy ?
 
 # Pseudo-Devices
 
