@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.164 2014/08/11 08:20:57 mrg Exp $
+#  $NetBSD: Makefile,v 1.164.2.1 2014/10/13 19:34:58 martin Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -66,17 +66,14 @@ COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
 COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 .elif (${LIBC_MACHINE_CPU} == "arm")
-.PATH: ${.CURDIR}/arch/arm
+.PATH.c: ${.CURDIR}/arch/arm
 COMMON_SRCS+= fenv.c s_nexttowardf.c \
 	s_nearbyint.c s_rintl.c
 COPTS.e_sqrtl.c += -DHAVE_FENV_H
 COPTS.fenv.c+=	-mfpu=vfp
 .if (${MKSOFTFLOAT} == "no")
+.PATH.S: ${.CURDIR}/arch/arm
 ARCH_SRCS = e_sqrt.S e_sqrtf.S lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
-.else
-.for i in e_sqrt.o e_sqrtf.o lrint.o lrintf.o s_fabsf.o s_fma.o s_fmaf.o
-${i} ${i:.o=.po} ${i:.o=.pico} ${i:.o=.go} ${i:.o=.ln}: ${i:.o=.c}
-.endfor
 .endif
 .elif (${LIBC_MACHINE_ARCH} == "sparc")
 .PATH: ${.CURDIR}/arch/sparc
@@ -150,6 +147,19 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 # and emulation code isn't written yet.
 ARCH_SRCS = n_scalbn.S
 WARNS?=5
+.elif (${LIBC_MACHINE_CPU} == "riscv")
+.PATH:	${.CURDIR}/arch/riscv
+
+COMMON_SRCS += fenv.c
+
+.if ${MKSOFTFLOAT} == "no"
+ARCH_SRCS = e_sqrt.S e_sqrtf.S
+ARCH_SRCS += s_copysign.S s_copysignf.S
+ARCH_SRCS += s_fabs.S s_fabsf.S
+ARCH_SRCS += s_fma.S s_fmaf.S
+ARCH_SRCS += s_fmax.S s_fmaxf.S
+ARCH_SRCS += s_fmin.S s_fminf.S
+.endif
 .endif
 
 WARNS?=5
