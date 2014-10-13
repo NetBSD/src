@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.91 2014/08/07 17:24:03 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.92 2014/10/13 00:47:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -526,6 +526,7 @@ __END_DECLS
     defined(_NETBSD_SOURCE)
 __BEGIN_DECLS
 FILE *fmemopen(void * __restrict, size_t, const char * __restrict);
+FILE *open_memstream(char **, size_t *);
 ssize_t	 getdelim(char ** __restrict, size_t * __restrict, int,
 	    FILE * __restrict);
 ssize_t	 getline(char ** __restrict, size_t * __restrict, FILE * __restrict);
