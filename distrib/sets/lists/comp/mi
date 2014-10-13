@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1916 2014/10/10 11:36:00 martin Exp $
+#	$NetBSD: mi,v 1.1917 2014/10/13 00:46:28 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8098,6 +8098,8 @@
 ./usr/share/man/cat3/offsetof.0			comp-c-catman		.cat
 ./usr/share/man/cat3/offtime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/offtime_r.0		comp-c-catman		.cat
+./usr/share/man/cat3/open_memstream.0		comp-c-catman		.cat
+./usr/share/man/cat3/open_wmemstream.0		comp-c-catman		.cat
 ./usr/share/man/cat3/opendir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/opendisk.0			comp-c-catman		.cat
 ./usr/share/man/cat3/openlog.0			comp-c-catman		.cat
@@ -14912,6 +14914,8 @@
 ./usr/share/man/html3/offsetof.html		comp-c-htmlman		html
 ./usr/share/man/html3/offtime.html		comp-c-htmlman		html
 ./usr/share/man/html3/offtime_r.html		comp-c-htmlman		html
+./usr/share/man/html3/open_memstream.html	comp-c-htmlman		html
+./usr/share/man/html3/open_wmemstream.html	comp-c-htmlman		html
 ./usr/share/man/html3/opendir.html		comp-c-htmlman		html
 ./usr/share/man/html3/opendisk.html		comp-c-htmlman		html
 ./usr/share/man/html3/openlog.html		comp-c-htmlman		html
@@ -21718,6 +21722,8 @@
 ./usr/share/man/man3/offsetof.3			comp-c-man		.man
 ./usr/share/man/man3/offtime.3			comp-c-man		.man
 ./usr/share/man/man3/offtime_r.3		comp-c-man		.man
+./usr/share/man/man3/open_memstream.3		comp-c-man		.man
+./usr/share/man/man3/open_wmemstream.3		comp-c-man		.man
 ./usr/share/man/man3/opendir.3			comp-c-man		.man
 ./usr/share/man/man3/opendisk.3			comp-c-man		.man
 ./usr/share/man/man3/openlog.3			comp-c-man		.man
