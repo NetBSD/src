@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ac.c,v 1.14 2014/10/13 12:34:00 jmcneill Exp $ */
+/* $NetBSD: awin_ac.c,v 1.15 2014/10/13 19:01:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.14 2014/10/13 12:34:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.15 2014/10/13 19:01:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,13 +51,68 @@ __KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.14 2014/10/13 12:34:00 jmcneill Exp $"
 #define AWINAC_DRQ_CLR_CNT	0x3
 #define AWINAC_INIT_VOL		0x3b
 
-#define AC_DAC_DPC		0x00
+enum {
+	REGMAP_A10 = 0,
+	REGMAP_A31,
+};
+
+enum {
+	AC_DAC_DPC = 0,
+	AC_DAC_FIFOC,
+	AC_DAC_FIFOS,
+	AC_DAC_TXDATA,
+	AC_DAC_ACTL,
+	AC_ADC_FIFOC,
+	AC_ADC_FIFOS,
+	AC_ADC_RXDATA,
+	AC_ADC_ACTL,
+	AC_DAC_CNT,
+	AC_ADC_CNT,
+	AC_OM_DACA_CTRL,
+	AC_OM_ADCA_CTRL,
+	AC_OM_PA_CTRL,
+	AC_MIC_CTRL,
+	_AC_NREGS
+};
+
+static const uint8_t awinac_regmap[2][_AC_NREGS] = {
+	[REGMAP_A10] = {
+		[AC_DAC_DPC] = 0x00,
+		[AC_DAC_FIFOC] = 0x04,
+		[AC_DAC_FIFOS] = 0x08,
+		[AC_DAC_TXDATA] = 0x0c,
+		[AC_DAC_ACTL] = 0x10,
+		[AC_ADC_FIFOC] = 0x1c,
+		[AC_ADC_FIFOS] = 0x20,
+		[AC_ADC_RXDATA] = 0x24,
+		[AC_ADC_ACTL] = 0x28,
+		[AC_DAC_CNT] = 0x30,
+		[AC_ADC_CNT] = 0x34,
+	},
+	[REGMAP_A31] = {
+		[AC_DAC_DPC] = 0x00,
+		[AC_DAC_FIFOC] = 0x04,
+		[AC_DAC_FIFOS] = 0x08,
+		[AC_DAC_TXDATA] = 0x0c,
+		[AC_ADC_FIFOC] = 0x10,
+		[AC_ADC_FIFOS] = 0x14,
+		[AC_ADC_RXDATA] = 0x18,
+		[AC_DAC_CNT] = 0x40,
+		[AC_ADC_CNT] = 0x44,
+		[AC_OM_DACA_CTRL] = 0x20,
+		[AC_OM_ADCA_CTRL] = 0x2c,
+		[AC_OM_PA_CTRL] = 0x24,
+		[AC_MIC_CTRL] = 0x28,
+	},
+};
+
+/* DAC_DPC */
 #define  DAC_DPC_EN_DA		__BIT(31)
 #define  DAC_DPC_MODQU		__BITS(28,25)
 #define  DAC_DPC_DWA		__BIT(24)
 #define  DAC_DPC_HPF_EN		__BIT(18)
 #define  DAC_DPC_DVOL		__BITS(17,12)
-#define AC_DAC_FIFOC		0x04
+/* DAC_FIFOC */
 #define  DAC_FIFOC_FS		__BITS(31,29)
 #define   DAC_FS_48KHZ		0
 #define   DAC_FS_32KHZ		1
@@ -83,15 +138,14 @@ __KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.14 2014/10/13 12:34:00 jmcneill Exp $"
 #define  DAC_FIFOC_FIFO_UNDERRUN_IRQ_EN __BIT(2)
 #define  DAC_FIFOC_FIFO_OVERRUN_IRQ_EN __BIT(1)
 #define  DAC_FIFOC_FIFO_FLUSH	__BIT(0)
-#define AC_DAC_FIFOS		0x08
+/* DAC_FIFOS */
 #define  DAC_FIFOS_TX_EMPTY	__BIT(23)
 #define  DAC_FIFOS_TXE_CNT	__BITS(22,8)
 #define  DAC_FIFOS_TXE_INT	__BIT(3)
 #define  DAC_FIFOS_TXU_INT	__BIT(2)
 #define  DAC_FIFOS_TXO_INT	__BIT(1)
 #define  DAC_FIFOS_INT_MASK	__BITS(3,1)
-#define AC_DAC_TXDATA		0x0c
-#define AC_DAC_ACTL		0x10
+/* DAC_ACTL */
 #define  DAC_ACTL_DACAREN	__BIT(31)
 #define  DAC_ACTL_DACALEN	__BIT(30)
 #define  DAC_ACTL_MIXEN		__BIT(29)
@@ -113,8 +167,33 @@ __KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.14 2014/10/13 12:34:00 jmcneill Exp $"
 #define  DAC_ACTL_MIXPAS	__BIT(7)
 #define  DAC_ACTL_PAMUTE	__BIT(6)
 #define  DAC_ACTL_PAVOL		__BITS(5,0)
-#define AC_DAC_TUNE		0x14
-#define AC_ADC_FIFOC		0x1c
+/* OM_DACA_CTRL */
+#define  OM_DACA_CTRL_DACAREN	__BIT(31)
+#define  OM_DACA_CTRL_DACALEN	__BIT(30)
+#define  OM_DACA_CTRL_RMIXEN	__BIT(29)
+#define  OM_DACA_CTRL_LMIXEN	__BIT(28)
+#define  OM_DACA_CTRL_RMIXMUTE	__BITS(23,17)
+#define   OM_DACA_CTRL_RMIXMUTE_DACL	__BIT(0)
+#define   OM_DACA_CTRL_RMIXMUTE_DACR	__BIT(1)
+#define   OM_DACA_CTRL_RMIXMUTE_LINEINR	__BIT(2)
+#define   OM_DACA_CTRL_RMIXMUTE_PHONEP	__BIT(3)
+#define   OM_DACA_CTRL_RMIXMUTE_PHONEP_PHONEN __BIT(4)
+#define   OM_DACA_CTRL_RMIXMUTE_MIC2_BOOST __BIT(5)
+#define   OM_DACA_CTRL_RMIXMUTE_MIC1_BOOST __BIT(6)
+#define  OM_DACA_CTRL_LMIXMUTE	__BITS(16,10)
+#define   OM_DACA_CTRL_LMIXMUTE_DACR	__BIT(0)
+#define   OM_DACA_CTRL_LMIXMUTE_DACL	__BIT(1)
+#define   OM_DACA_CTRL_LMIXMUTE_LINEINL	__BIT(2)
+#define   OM_DACA_CTRL_LMIXMUTE_PHONEN	__BIT(3)
+#define   OM_DACA_CTRL_LMIXMUTE_PHONEP_PHONEN __BIT(4)
+#define   OM_DACA_CTRL_LMIXMUTE_MIC2_BOOST __BIT(5)
+#define   OM_DACA_CTRL_LMIXMUTE_MIC1_BOOST __BIT(6)
+#define  OM_DACA_CTRL_RHPIS	__BIT(9)
+#define  OM_DACA_CTRL_LHPIS	__BIT(8)
+#define  OM_DACA_CTRL_RHPPAMUTE	__BIT(7)
+#define  OM_DACA_CTRL_LHPPAMUTE	__BIT(6)
+#define  OM_DACA_CTRL_HPVOL	__BITS(5,0)
+/* ADC_FIFOC */
 #define  ADC_FIFOC_FS		__BITS(31,29)
 #define   ADC_FS_48KHZ		0
 #define   ADC_FS_32KHZ		1
@@ -131,13 +210,12 @@ __KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.14 2014/10/13 12:34:00 jmcneill Exp $"
 #define  ADC_FIFOC_IRQ_EN	__BIT(3)
 #define  ADC_FIFOC_OVERRUN_IRQ_EN __BIT(2)
 #define  ADC_FIFOC_FIFO_FLUSH	__BIT(1)
-#define AC_ADC_FIFOS		0x20
+/* ADC_FIFOS */
 #define  ADC_FIFOS_RXA		__BIT(23)
 #define  ADC_FIFOS_RXA_CNT	__BITS(13,8)
 #define  ADC_FIFOS_RXA_INT	__BIT(3)
 #define  ADC_FIFOS_RXO_INT	__BIT(1)
-#define AC_ADC_RXDATA		0x24
-#define AC_ADC_ACTL		0x28
+/* ADC_ACTL */
 #define  ADC_ACTL_ADCREN	__BIT(31)
 #define  ADC_ACTL_ADCLEN	__BIT(30)
 #define  ADC_ACTL_PREG1EN	__BIT(29)
@@ -155,10 +233,45 @@ __KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.14 2014/10/13 12:34:00 jmcneill Exp $"
 #define  ADC_ACTL_DDE		__BIT(3)
 #define  ADC_ACTL_COMPTEN	__BIT(2)
 #define  ADC_ACTL_PTDBS		__BITS(1,0)
-#define AC_DAC_CNT		0x30
-#define AC_ADC_CNT		0x34
-#define AC_DAC_CAL		0x38
-#define AC_MIC_PHONE_CAL	0x3c
+/* OM_ADCA_CTRL */
+#define  OM_ADCA_CTRL_ADCREN	__BIT(31)
+#define  OM_ADCA_CTRL_ADCLEN	__BIT(30)
+#define  OM_ADCA_CTRL_ADCRG	__BITS(29,27)
+#define  OM_ADCA_CTRL_ADCLG	__BITS(26,24)
+#define  OM_ADCA_CTRL_RADCMIXMUTE __BITS(13,7)
+#define  OM_ADCA_CTRL_LADCMIXMUTE __BITS(6,0)
+/* OM_PA_CTRL */
+#define  OM_PA_CTRL_HPPAEN	__BIT(31)
+#define  OM_PA_CTRL_HPCOM_CTL	__BITS(30,29)
+#define  OM_PA_CTRL_COMTEN	__BIT(28)
+#define  OM_PA_CTRL_PA_ANTI_POP_CTRL __BITS(27,26)
+#define  OM_PA_CTRL_MIC1G	__BITS(17,15)
+#define  OM_PA_CTRL_MIC2G	__BITS(14,12)
+#define  OM_PA_CTRL_LINEING	__BITS(11,9)
+#define  OM_PA_CTRL_PHONEG	__BITS(8,6)
+#define  OM_PA_CTRL_PHONEPG	__BITS(5,3)
+#define  OM_PA_CTRL_PHONENG	__BITS(2,0)
+/* MIC_CTRL */
+#define  MIC_CTRL_HBIASEN	__BIT(31)
+#define  MIC_CTRL_MBIASEN	__BIT(30)
+#define  MIC_CTRL_HBIASADCEN	__BIT(29)
+#define  MIC_CTRL_MIC1AMPEN	__BIT(28)
+#define  MIC_CTRL_MIC1BOOST	__BITS(27,25)
+#define  MIC_CTRL_MIC2AMPEN	__BIT(24)
+#define  MIC_CTRL_MIC2BOOST	__BITS(23,21)
+#define  MIC_CTRL_MIC2SLT	__BIT(20)
+#define  MIC_CTRL_LINEOUTLEN	__BIT(19)
+#define  MIC_CTRL_LINEOUTREN	__BIT(18)
+#define  MIC_CTRL_LINEOUTLSRC	__BIT(17)
+#define  MIC_CTRL_LINEOUTRSRC	__BIT(16)
+#define  MIC_CTRL_LINEOUTVC	__BITS(15,11)
+#define  MIC_CTRL_PHONEPREG	__BITS(10,8)
+#define  MIC_CTRL_PHONEOUTG	__BITS(7,5)
+#define  MIC_CTRL_PHONEOUTEN	__BIT(4)
+#define  MIC_CTRL_PHONEOUTS0	__BIT(3)
+#define  MIC_CTRL_PHONEOUTS1	__BIT(2)
+#define  MIC_CTRL_PHONEOUTS2	__BIT(1)
+#define  MIC_CTRL_PHONEOUTS3	__BIT(0)
 
 struct awinac_dma {
 	LIST_ENTRY(awinac_dma)	dma_list;
@@ -176,6 +289,8 @@ struct awinac_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	bus_dma_tag_t		sc_dmat;
+
+	unsigned int		sc_regmap;
 
 	LIST_HEAD(, awinac_dma)	sc_dmalist;
 
@@ -296,10 +411,11 @@ CFATTACH_DECL2_NEW(awin_ac, sizeof(struct awinac_softc),
 	awinac_match, awinac_attach, NULL, NULL,
 	awinac_rescan, awinac_childdet);
 
+#define AC_REG(sc, reg)	awinac_regmap[(sc)->sc_regmap][(reg)]
 #define AC_WRITE(sc, reg, val)	\
-	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, AC_REG((sc), reg), (val))
 #define AC_READ(sc, reg) \
-	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
+	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, AC_REG((sc), reg))
 
 static int
 awinac_match(device_t parent, cfdata_t cf, void *aux)
@@ -338,6 +454,12 @@ awinac_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": CODEC\n");
+
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		sc->sc_regmap = REGMAP_A31;
+	} else {
+		sc->sc_regmap = REGMAP_A10;
+	}
 
 	if (prop_dictionary_get_cstring_nocopy(cfg, "pactrl-gpio", &pin_name)) {
 		if (!awin_gpio_pin_reserve(pin_name, &sc->sc_pactrl_gpio)) {
@@ -434,15 +556,40 @@ awinac_init(struct awinac_softc *sc)
 	val |= DAC_DPC_EN_DA;
 	AC_WRITE(sc, AC_DAC_DPC, val);
 
-	val = AC_READ(sc, AC_DAC_ACTL);
-	val |= DAC_ACTL_PAMUTE;
-	val &= ~DAC_ACTL_PAVOL;
-	val |= __SHIFTIN(AWINAC_INIT_VOL, DAC_ACTL_PAVOL);
-	AC_WRITE(sc, AC_DAC_ACTL, val);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		val = AC_READ(sc, AC_OM_PA_CTRL);
+		val &= ~OM_PA_CTRL_HPCOM_CTL;
+		val &= ~OM_PA_CTRL_COMTEN;
+		val |= OM_PA_CTRL_HPPAEN;
+		AC_WRITE(sc, AC_OM_PA_CTRL, val);
 
-	val = AC_READ(sc, AC_ADC_ACTL);
-	val |= ADC_ACTL_PA_EN;
-	AC_WRITE(sc, AC_ADC_ACTL, val);
+		val = AC_READ(sc, AC_OM_DACA_CTRL);
+		val &= ~OM_DACA_CTRL_LHPIS;
+		val &= ~OM_DACA_CTRL_RHPIS;
+		val &= ~OM_DACA_CTRL_LHPPAMUTE;
+		val &= ~OM_DACA_CTRL_RHPPAMUTE;
+		val &= ~OM_DACA_CTRL_HPVOL;
+		val |= __SHIFTIN(AWINAC_INIT_VOL, OM_DACA_CTRL_HPVOL);
+		AC_WRITE(sc, AC_OM_DACA_CTRL, val);
+
+		val = AC_READ(sc, AC_MIC_CTRL);
+		val &= ~MIC_CTRL_LINEOUTLEN;
+		val &= ~MIC_CTRL_LINEOUTREN;
+		val &= ~MIC_CTRL_LINEOUTVC;
+		val |= MIC_CTRL_HBIASEN;
+		val |= MIC_CTRL_HBIASADCEN;
+		AC_WRITE(sc, AC_MIC_CTRL, val);
+	} else {
+		val = AC_READ(sc, AC_DAC_ACTL);
+		val |= DAC_ACTL_PAMUTE;
+		val &= ~DAC_ACTL_PAVOL;
+		val |= __SHIFTIN(AWINAC_INIT_VOL, DAC_ACTL_PAVOL);
+		AC_WRITE(sc, AC_DAC_ACTL, val);
+
+		val = AC_READ(sc, AC_ADC_ACTL);
+		val |= ADC_ACTL_PA_EN;
+		AC_WRITE(sc, AC_ADC_ACTL, val);
+	}
 
 	val = AC_READ(sc, AC_DAC_FIFOC);
 	val &= ~DAC_FIFOC_IRQ_EN;
@@ -531,7 +678,8 @@ awinac_play(struct awinac_softc *sc)
 	int error;
 
 	error = awin_dma_transfer(sc->sc_pdma,
-	    sc->sc_pcur, AWIN_CORE_PBASE + AWIN_AC_OFFSET + AC_DAC_TXDATA,
+	    sc->sc_pcur, AWIN_CORE_PBASE + AWIN_AC_OFFSET +
+	    AC_REG(sc, AC_DAC_TXDATA),
 	    sc->sc_pblksize);
 	if (error) {
 		device_printf(sc->sc_dev, "failed to transfer DMA; error %d\n",
@@ -568,8 +716,8 @@ awinac_rec(struct awinac_softc *sc)
 	int error;
 
 	error = awin_dma_transfer(sc->sc_rdma,
-	    AWIN_CORE_PBASE + AWIN_AC_OFFSET + AC_ADC_RXDATA, sc->sc_rcur,
-	    sc->sc_rblksize);
+	    AWIN_CORE_PBASE + AWIN_AC_OFFSET + AC_REG(sc, AC_ADC_RXDATA),
+	    sc->sc_rcur, sc->sc_rblksize);
 	if (error) {
 		device_printf(sc->sc_dev, "failed to transfer DMA; error %d\n",
 		    error);
@@ -719,11 +867,18 @@ awinac_halt_output(void *priv)
 
 	awin_dma_halt(sc->sc_pdma);
 
-	val = AC_READ(sc, AC_DAC_ACTL);
-	val &= ~DAC_ACTL_DACAREN;
-	val &= ~DAC_ACTL_DACALEN;
-	val &= ~DAC_ACTL_DACPAS;
-	AC_WRITE(sc, AC_DAC_ACTL, val);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		val = AC_READ(sc, AC_OM_DACA_CTRL);
+		val &= ~OM_DACA_CTRL_DACAREN;
+		val &= ~OM_DACA_CTRL_DACALEN;
+		AC_WRITE(sc, AC_OM_DACA_CTRL, val);
+	} else {
+		val = AC_READ(sc, AC_DAC_ACTL);
+		val &= ~DAC_ACTL_DACAREN;
+		val &= ~DAC_ACTL_DACALEN;
+		val &= ~DAC_ACTL_DACPAS;
+		AC_WRITE(sc, AC_DAC_ACTL, val);
+	}
 
 	val = AC_READ(sc, AC_DAC_FIFOC);
 	val &= ~DAC_FIFOC_DRQ_EN;
@@ -743,10 +898,17 @@ awinac_halt_input(void *priv)
 
 	awin_dma_halt(sc->sc_rdma);
 
-	val = AC_READ(sc, AC_ADC_ACTL);
-	val &= ~ADC_ACTL_ADCREN;
-	val &= ~ADC_ACTL_ADCLEN;
-	AC_WRITE(sc, AC_ADC_ACTL, val);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		val = AC_READ(sc, AC_OM_ADCA_CTRL);
+		val &= ~OM_ADCA_CTRL_ADCREN;
+		val &= ~OM_ADCA_CTRL_ADCLEN;
+		AC_WRITE(sc, AC_OM_ADCA_CTRL, val);
+	} else {
+		val = AC_READ(sc, AC_ADC_ACTL);
+		val &= ~ADC_ACTL_ADCREN;
+		val &= ~ADC_ACTL_ADCLEN;
+		AC_WRITE(sc, AC_ADC_ACTL, val);
+	}
 
 	val = AC_READ(sc, AC_ADC_FIFOC);
 	val &= ~ADC_FIFOC_DRQ_EN;
@@ -769,10 +931,17 @@ awinac_set_port(void *priv, mixer_ctrl_t *mc)
 	case AC_OUTPUT_MASTER_VOLUME:
 	case AC_INPUT_DAC_VOLUME:
 		nvol = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] >> 2;
-		val = AC_READ(sc, AC_DAC_ACTL);
-		val &= ~DAC_ACTL_PAVOL;
-		val |= __SHIFTIN(nvol, DAC_ACTL_PAVOL);
-		AC_WRITE(sc, AC_DAC_ACTL, val);
+		if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+			val = AC_READ(sc, AC_OM_DACA_CTRL);
+			val &= ~OM_DACA_CTRL_HPVOL;
+			val |= __SHIFTIN(nvol, OM_DACA_CTRL_HPVOL);
+			AC_WRITE(sc, AC_OM_DACA_CTRL, val);
+		} else {
+			val = AC_READ(sc, AC_DAC_ACTL);
+			val &= ~DAC_ACTL_PAVOL;
+			val |= __SHIFTIN(nvol, DAC_ACTL_PAVOL);
+			AC_WRITE(sc, AC_DAC_ACTL, val);
+		}
 		return 0;
 	}
 
@@ -789,8 +958,13 @@ awinac_get_port(void *priv, mixer_ctrl_t *mc)
 	switch (mc->dev) {
 	case AC_OUTPUT_MASTER_VOLUME:
 	case AC_INPUT_DAC_VOLUME:
-		val = AC_READ(sc, AC_DAC_ACTL);
-		nvol = __SHIFTOUT(val, DAC_ACTL_PAVOL) << 2;
+		if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+			val = AC_READ(sc, AC_OM_DACA_CTRL);
+			nvol = __SHIFTOUT(val, OM_DACA_CTRL_HPVOL) << 2;
+		} else {
+			val = AC_READ(sc, AC_DAC_ACTL);
+			nvol = __SHIFTOUT(val, DAC_ACTL_PAVOL) << 2;
+		}
 		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = nvol;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = nvol;
 		return 0;
@@ -899,7 +1073,8 @@ static int
 awinac_getdev(void *priv, struct audio_device *audiodev)
 {
 	snprintf(audiodev->name, sizeof(audiodev->name), "AllWinner");
-	snprintf(audiodev->version, sizeof(audiodev->version), "CODEC");
+	snprintf(audiodev->version, sizeof(audiodev->version),
+	    awin_chip_id() == AWIN_CHIP_ID_A31 ? "CODEC A31" : "CODEC A10/A20");
 	snprintf(audiodev->config, sizeof(audiodev->config), "awinac");
 	return 0;
 }
@@ -954,11 +1129,30 @@ awinac_trigger_output(void *priv, void *start, void *end, int blksize,
 	val |= DAC_FIFOC_FIFO_FLUSH;
 	AC_WRITE(sc, AC_DAC_FIFOC, val);
 
-	val = AC_READ(sc, AC_DAC_ACTL);
-	val |= DAC_ACTL_DACAREN;
-	val |= DAC_ACTL_DACALEN;
-	val |= DAC_ACTL_DACPAS;
-	AC_WRITE(sc, AC_DAC_ACTL, val);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		val = AC_READ(sc, AC_OM_DACA_CTRL);
+		val |= OM_DACA_CTRL_LHPIS;
+		val |= OM_DACA_CTRL_RHPIS;
+		val |= OM_DACA_CTRL_LHPPAMUTE;
+		val |= OM_DACA_CTRL_RHPPAMUTE;
+		val |= OM_DACA_CTRL_DACAREN;
+		val |= OM_DACA_CTRL_DACALEN;
+		val |= OM_DACA_CTRL_RMIXEN;
+		val |= OM_DACA_CTRL_LMIXEN;
+		val &= ~OM_DACA_CTRL_RMIXMUTE;
+		val |= __SHIFTIN(OM_DACA_CTRL_RMIXMUTE_DACR,
+				 OM_DACA_CTRL_RMIXMUTE);
+		val &= ~OM_DACA_CTRL_LMIXMUTE;
+		val |= __SHIFTIN(OM_DACA_CTRL_LMIXMUTE_DACL,
+				 OM_DACA_CTRL_LMIXMUTE);
+		AC_WRITE(sc, AC_OM_DACA_CTRL, val);
+	} else {
+		val = AC_READ(sc, AC_DAC_ACTL);
+		val |= DAC_ACTL_DACAREN;
+		val |= DAC_ACTL_DACALEN;
+		val |= DAC_ACTL_DACPAS;
+		AC_WRITE(sc, AC_DAC_ACTL, val);
+	}
 
 	sc->sc_pint = intr;
 	sc->sc_pintarg = intrarg;
@@ -1023,10 +1217,17 @@ awinac_trigger_input(void *priv, void *start, void *end, int blksize,
 	val |= ADC_FIFOC_FIFO_FLUSH;
 	AC_WRITE(sc, AC_ADC_FIFOC, val);
 
-	val = AC_READ(sc, AC_ADC_ACTL);
-	val |= ADC_ACTL_ADCREN;
-	val |= ADC_ACTL_ADCLEN;
-	AC_WRITE(sc, AC_ADC_ACTL, val);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		val = AC_READ(sc, AC_OM_ADCA_CTRL);
+		val |= OM_ADCA_CTRL_ADCREN;
+		val |= OM_ADCA_CTRL_ADCLEN;
+		AC_WRITE(sc, AC_OM_ADCA_CTRL, val);
+	} else {
+		val = AC_READ(sc, AC_ADC_ACTL);
+		val |= ADC_ACTL_ADCREN;
+		val |= ADC_ACTL_ADCLEN;
+		AC_WRITE(sc, AC_ADC_ACTL, val);
+	}
 
 	sc->sc_rint = intr;
 	sc->sc_rintarg = intrarg;
@@ -1088,14 +1289,11 @@ awinac_dump_regs(void)
 	printf("DAC_FIFOS:     %08X\n", AC_READ(sc, AC_DAC_FIFOS));
 	printf("DAC_TXDATA:    ...\n");
 	printf("DAC_ACTL:      %08X\n", AC_READ(sc, AC_DAC_ACTL));
-	printf("DAC_TUNE:      %08X\n", AC_READ(sc, AC_DAC_TUNE));
 	printf("ADC_FIFOC:     %08X\n", AC_READ(sc, AC_ADC_FIFOC));
 	printf("ADC_FIFOS:     %08X\n", AC_READ(sc, AC_ADC_FIFOS));
 	printf("ADC_RXDATA:    ...\n");
 	printf("ADC_ACTL:      %08X\n", AC_READ(sc, AC_ADC_ACTL));
 	printf("DAC_CNT:       %08X\n", AC_READ(sc, AC_DAC_CNT));
 	printf("ADC_CNT:       %08X\n", AC_READ(sc, AC_ADC_CNT));
-	printf("DAC_CAL:       %08X\n", AC_READ(sc, AC_DAC_CAL));
-	printf("MIC_PHONE_CAL: %08X\n", AC_READ(sc, AC_MIC_PHONE_CAL));
 }
 #endif
