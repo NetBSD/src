@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2014/07/05 20:44:46 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2014/10/13 07:31:12 martin Exp $
 
 .ifnmake obj
 .include "${NETBSDSRCDIR}/common/lib/libc/arch/arm/features.mk"
@@ -13,7 +13,8 @@ SRCS.atomic+=	atomic_add_32_cas.c atomic_add_32_nv_cas.c \
 		atomic_dec_32_cas.c atomic_dec_32_nv_cas.c \
 		atomic_inc_32_cas.c atomic_inc_32_nv_cas.c \
 		atomic_or_32_cas.c atomic_or_32_nv_cas.c \
-		atomic_swap_32_cas.c membar_ops_nop.c
+		atomic_swap_32_cas.c membar_ops_nop.c \
+		atomic_and_16_nv_cas.c atomic_and_8_nv_cas.c
 
 .if ${LIB} == "c"
 SRCS.atomic+=	atomic_xor_32_cas.c atomic_xor_16_cas.c atomic_xor_8_cas.c \
