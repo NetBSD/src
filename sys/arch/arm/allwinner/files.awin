@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.16 2014/10/12 23:57:58 jmcneill Exp $
+#	$NetBSD: files.awin,v 1.17 2014/10/13 12:34:00 jmcneill Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -67,6 +67,8 @@ file	arch/arm/allwinner/awin_gpio.c		awin_gpio | awin_io  needs-flag
 device	awindma
 attach	awindma at awinio with awin_dma
 file	arch/arm/allwinner/awin_dma.c		awin_dma
+file	arch/arm/allwinner/awin_dma_a10.c	awin_dma & (allwinner_a10 | allwinner_a20)
+file	arch/arm/allwinner/awin_dma_a31.c	awin_dma & allwinner_a31
 
 # A10/A20 TWI (IIC)
 device	awiniic : i2cbus, i2cexec, mvi2c

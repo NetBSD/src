@@ -1,4 +1,4 @@
-/* $NetBSD: awin_dma.c,v 1.4 2014/09/06 17:10:17 jmcneill Exp $ */
+/* $NetBSD: awin_dma.c,v 1.5 2014/10/13 12:34:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,9 +27,10 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_allwinner.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_dma.c,v 1.4 2014/09/06 17:10:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_dma.c,v 1.5 2014/10/13 12:34:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,43 +41,12 @@ __KERNEL_RCSID(0, "$NetBSD: awin_dma.c,v 1.4 2014/09/06 17:10:17 jmcneill Exp $"
 
 #include <arm/allwinner/awin_reg.h>
 #include <arm/allwinner/awin_var.h>
-
-#define NDMA_CHANNELS	8
-#define DDMA_CHANNELS	8
-
-struct awin_dma_channel {
-	uint8_t ch_index;
-	enum awin_dma_type ch_type;
-	void (*ch_callback)(void *);
-	void *ch_callbackarg;
-	uint32_t ch_regoff;
-};
-
-struct awin_dma_softc {
-	device_t sc_dev;
-	bus_space_tag_t sc_bst;
-	bus_space_handle_t sc_bsh;
-	void *sc_ih;
-};
-
-#define DMA_READ(reg)			\
-    bus_space_read_4(awin_dma_sc->sc_bst, awin_dma_sc->sc_bsh, (reg))
-#define DMA_WRITE(reg, val)		\
-    bus_space_write_4(awin_dma_sc->sc_bst, awin_dma_sc->sc_bsh, (reg), (val))
-#define DMACH_READ(ch, reg)		\
-    DMA_READ((reg) + (ch)->ch_regoff)
-#define DMACH_WRITE(ch, reg, val)	\
-    DMA_WRITE((reg) + (ch)->ch_regoff, (val))
+#include <arm/allwinner/awin_dma.h>
 
 static struct awin_dma_softc *awin_dma_sc;
-static kmutex_t awin_dma_lock;
-static struct awin_dma_channel awin_ndma_channels[NDMA_CHANNELS];
-static struct awin_dma_channel awin_ddma_channels[DDMA_CHANNELS];
 
 static int	awin_dma_match(device_t, cfdata_t, void *);
 static void	awin_dma_attach(device_t, device_t, void *);
-
-static int	awin_dma_intr(void *);
 
 #if defined(DDB)
 void		awin_dma_dump_regs(void);
@@ -88,7 +58,11 @@ CFATTACH_DECL_NEW(awin_dma, sizeof(struct awin_dma_softc),
 static int
 awin_dma_match(device_t parent, cfdata_t cf, void *aux)
 {
+#if defined(ALLWINNER_A10) || defined(ALLWINNER_A20) || defined(ALLWINNER_A31)
 	return awin_dma_sc == NULL;
+#else
+	return 0;
+#endif
 }
 
 static void
@@ -97,235 +71,106 @@ awin_dma_attach(device_t parent, device_t self, void *aux)
 	struct awin_dma_softc *sc = device_private(self);
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
-	uint8_t index;
 
 	KASSERT(awin_dma_sc == NULL);
 	awin_dma_sc = sc;
 
 	sc->sc_dev = self;
 	sc->sc_bst = aio->aio_core_bst;
+	sc->sc_dmat = aio->aio_dmat;
 	bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 
 	aprint_naive("\n");
 	aprint_normal(": DMA\n");
 
-	mutex_init(&awin_dma_lock, MUTEX_DEFAULT, IPL_SCHED);
-
-	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_AHB_GATING0_REG, AWIN_AHB_GATING0_DMA, 0);
-
-	DMA_WRITE(AWIN_DMA_IRQ_EN_REG, 0);
-	DMA_WRITE(AWIN_DMA_IRQ_PEND_STA_REG, ~0);
-
-	for (index = 0; index < NDMA_CHANNELS; index++) {
-		awin_ndma_channels[index].ch_index = index;
-		awin_ndma_channels[index].ch_type = AWIN_DMA_TYPE_NDMA;
-		awin_ndma_channels[index].ch_callback = NULL;
-		awin_ndma_channels[index].ch_callbackarg = NULL;
-		awin_ndma_channels[index].ch_regoff = AWIN_NDMA_REG(index);
-		DMACH_WRITE(&awin_ndma_channels[index], AWIN_NDMA_CTL_REG, 0);
-	}
-	for (index = 0; index < DDMA_CHANNELS; index++) {
-		awin_ddma_channels[index].ch_index = index;
-		awin_ddma_channels[index].ch_type = AWIN_DMA_TYPE_DDMA;
-		awin_ddma_channels[index].ch_callback = NULL;
-		awin_ddma_channels[index].ch_callbackarg = NULL;
-		awin_ddma_channels[index].ch_regoff = AWIN_DDMA_REG(index);
-		DMACH_WRITE(&awin_ddma_channels[index], AWIN_DDMA_CTL_REG, 0);
+	switch (awin_chip_id()) {
+#if defined(ALLWINNER_A10) || defined(ALLWINNER_A20)
+	case AWIN_CHIP_ID_A10:
+	case AWIN_CHIP_ID_A20:
+		awin_dma_a10_attach(sc, aio, loc);
+		break;
+#endif
+#if defined(ALLWINNER_A31)
+	case AWIN_CHIP_ID_A31:
+		awin_dma_a31_attach(sc, aio, loc);
+		break;
+#endif
 	}
 
-	sc->sc_ih = intr_establish(loc->loc_intr, IPL_SCHED, IST_LEVEL,
-	    awin_dma_intr, sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt %d\n",
-		    loc->loc_intr);
-		return;
-	}
-	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
+	KASSERT(sc->sc_dc != NULL);
 }
 
-static int
-awin_dma_intr(void *priv)
+void *
+awin_dma_alloc(const char *type, void (*cb)(void *), void *cbarg)
 {
-	uint32_t sta, bit, mask;
-	uint8_t index;
+	struct awin_dma_softc *sc = awin_dma_sc;
 
-	sta = DMA_READ(AWIN_DMA_IRQ_PEND_STA_REG);
-	if (!sta)
-		return 0;
+	if (sc == NULL)
+		return NULL;
 
-	DMA_WRITE(AWIN_DMA_IRQ_PEND_STA_REG, sta);
-
-	while ((bit = ffs(sta & AWIN_DMA_IRQ_END_MASK)) != 0) {
-		mask = __BIT(bit - 1);
-		sta &= ~mask;
-		index = ((bit - 1) / 2) & 7;
-		if (mask & AWIN_DMA_IRQ_NDMA) {
-			if (awin_ndma_channels[index].ch_callback == NULL)
-				continue;
-			awin_ndma_channels[index].ch_callback(
-			    awin_ndma_channels[index].ch_callbackarg);
-		} else {
-			if (awin_ddma_channels[index].ch_callback == NULL)
-				continue;
-			awin_ddma_channels[index].ch_callback(
-			    awin_ddma_channels[index].ch_callbackarg);
-		}
-	}
-
-	return 1;
-}
-
-struct awin_dma_channel *
-awin_dma_alloc(enum awin_dma_type type, void (*cb)(void *), void *cbarg)
-{
-	struct awin_dma_channel *ch_list;
-	struct awin_dma_channel *ch = NULL;
-	uint32_t irqen;
-	uint8_t ch_count, index;
-
-	if (type == AWIN_DMA_TYPE_NDMA) {
-		ch_list = awin_ndma_channels;
-		ch_count = NDMA_CHANNELS;
-	} else {
-		ch_list = awin_ndma_channels;
-		ch_count = DDMA_CHANNELS;
-	}
-
-	mutex_enter(&awin_dma_lock);
-	for (index = 0; index < ch_count; index++) {
-		if (ch_list[index].ch_callback == NULL) {
-			ch = &ch_list[index];
-			ch->ch_callback = cb;
-			ch->ch_callbackarg = cbarg;
-
-			irqen = DMA_READ(AWIN_DMA_IRQ_EN_REG);
-			if (type == AWIN_DMA_TYPE_NDMA)
-				irqen |= AWIN_DMA_IRQ_NDMA_END(index);
-			else
-				irqen |= AWIN_DMA_IRQ_DDMA_END(index);
-			DMA_WRITE(AWIN_DMA_IRQ_EN_REG, irqen);
-
-			break;
-		}
-	}
-	mutex_exit(&awin_dma_lock);
-
-	return ch;
+	return sc->sc_dc->dma_alloc(sc, type, cb, cbarg);
 }
 
 void
-awin_dma_free(struct awin_dma_channel *ch)
+awin_dma_free(void *ch)
 {
-	uint32_t irqen, cfg;
+	struct awin_dma_softc *sc = awin_dma_sc;
 
-	irqen = DMA_READ(AWIN_DMA_IRQ_EN_REG);
-	cfg = awin_dma_get_config(ch);
-	if (ch->ch_type == AWIN_DMA_TYPE_NDMA) {
-		irqen &= ~AWIN_DMA_IRQ_NDMA_END(ch->ch_index);
-		cfg &= ~AWIN_NDMA_CTL_DMA_LOADING;
-	} else {
-		irqen &= ~AWIN_DMA_IRQ_DDMA_END(ch->ch_index);
-		cfg &= ~AWIN_DDMA_CTL_DMA_LOADING;
-	}
-	awin_dma_set_config(ch, cfg);
-	DMA_WRITE(AWIN_DMA_IRQ_EN_REG, irqen);
-
-	mutex_enter(&awin_dma_lock);
-	ch->ch_callback = NULL;
-	ch->ch_callbackarg = NULL;
-	mutex_exit(&awin_dma_lock);
+	return sc->sc_dc->dma_free(ch);
 }
 
 uint32_t
-awin_dma_get_config(struct awin_dma_channel *ch)
+awin_dma_get_config(void *ch)
 {
-	return DMACH_READ(ch, AWIN_NDMA_CTL_REG);
+	struct awin_dma_softc *sc = awin_dma_sc;
+
+	return sc->sc_dc->dma_get_config(ch);
 }
 
 void
-awin_dma_set_config(struct awin_dma_channel *ch, uint32_t val)
+awin_dma_set_config(void *ch, uint32_t val)
 {
-	DMACH_WRITE(ch, AWIN_NDMA_CTL_REG, val);
+	struct awin_dma_softc *sc = awin_dma_sc;
+
+	return sc->sc_dc->dma_set_config(ch, val);
 }
 
 int
-awin_dma_transfer(struct awin_dma_channel *ch, paddr_t src, paddr_t dst,
+awin_dma_transfer(void *ch, paddr_t src, paddr_t dst,
     size_t nbytes)
 {
-	uint32_t cfg;
+	struct awin_dma_softc *sc = awin_dma_sc;
 
-	cfg = awin_dma_get_config(ch);
-	if (ch->ch_type == AWIN_DMA_TYPE_NDMA) {
-		if (cfg & AWIN_NDMA_CTL_DMA_LOADING)
-			return EBUSY;
-
-		DMACH_WRITE(ch, AWIN_NDMA_SRC_ADDR_REG, src);
-		DMACH_WRITE(ch, AWIN_NDMA_DEST_ADDR_REG, dst);
-		DMACH_WRITE(ch, AWIN_NDMA_BC_REG, nbytes);
-
-		cfg |= AWIN_NDMA_CTL_DMA_LOADING;
-		awin_dma_set_config(ch, cfg);
-	} else {
-		if (cfg & AWIN_DDMA_CTL_DMA_LOADING)
-			return EBUSY;
-
-		DMACH_WRITE(ch, AWIN_DDMA_SRC_START_ADDR_REG, src);
-		DMACH_WRITE(ch, AWIN_DDMA_DEST_START_ADDR_REG, dst);
-		DMACH_WRITE(ch, AWIN_DDMA_BC_REG, nbytes);
-
-		cfg |= AWIN_DDMA_CTL_DMA_LOADING;
-		awin_dma_set_config(ch, cfg);
-	}
-
-	return 0;
+	return sc->sc_dc->dma_transfer(ch, src, dst, nbytes);
 }
 
 void
-awin_dma_halt(struct awin_dma_channel *ch)
+awin_dma_halt(void *ch)
 {
-	uint32_t cfg;
+	struct awin_dma_softc *sc = awin_dma_sc;
 
-	cfg = awin_dma_get_config(ch);
-	if (ch->ch_type == AWIN_DMA_TYPE_NDMA) {
-		cfg &= ~AWIN_NDMA_CTL_DMA_LOADING;
-	} else {
-		cfg &= ~AWIN_DDMA_CTL_DMA_LOADING;
-	}
-	awin_dma_set_config(ch, cfg);
+	return sc->sc_dc->dma_halt(ch);
 }
 
 #if defined(DDB)
 void
 awin_dma_dump_regs(void)
 {
-	int i;
+	struct awin_dma_softc *sc = awin_dma_sc;
 
-	printf("IRQ_EN:          %08X\n", DMA_READ(AWIN_DMA_IRQ_EN_REG));
-	printf("PEND_STA:        %08X\n",
-	    DMA_READ(AWIN_DMA_IRQ_PEND_STA_REG));
-	for (i = 0; i < NDMA_CHANNELS; i++) {
-		printf("NDMA%d CTL:       %08X\n", i,
-		    DMA_READ(AWIN_NDMA_REG(i) + AWIN_NDMA_CTL_REG));
-		printf("NDMA%d SRC_ADDR:  %08X\n", i,
-		    DMA_READ(AWIN_NDMA_REG(i) + AWIN_NDMA_SRC_ADDR_REG));
-		printf("NDMA%d DEST_ADDR: %08X\n", i,
-		    DMA_READ(AWIN_NDMA_REG(i) + AWIN_NDMA_DEST_ADDR_REG));
-		printf("NDMA%d BC:        %08X\n", i,
-		    DMA_READ(AWIN_NDMA_REG(i) + AWIN_NDMA_BC_REG));
-	}
-	for (i = 0; i < DDMA_CHANNELS; i++) {
-		printf("DDMA%d CTL:       %08X\n", i,
-		    DMA_READ(AWIN_DDMA_REG(i) + AWIN_DDMA_CTL_REG));
-		printf("DDMA%d SRC_ADDR:  %08X\n", i,
-		    DMA_READ(AWIN_DDMA_REG(i) + AWIN_DDMA_SRC_START_ADDR_REG));
-		printf("DDMA%d DEST_ADDR: %08X\n", i,
-		    DMA_READ(AWIN_DDMA_REG(i) + AWIN_DDMA_DEST_START_ADDR_REG));
-		printf("DDMA%d BC:        %08X\n", i,
-		    DMA_READ(AWIN_DDMA_REG(i) + AWIN_DDMA_BC_REG));
-		printf("DDMA%d PARA:      %08X\n", i,
-		    DMA_READ(AWIN_DDMA_REG(i) + AWIN_DDMA_PARA_REG));
+	switch (awin_chip_id()) {
+#if defined(ALLWINNER_A10) || defined(ALLWINNER_A20)
+	case AWIN_CHIP_ID_A10:
+	case AWIN_CHIP_ID_A20:
+		awin_dma_a10_dump_regs(sc);
+		break;
+#endif
+#if defined(ALLWINNER_A31)
+	case AWIN_CHIP_ID_A31:
+		awin_dma_a31_dump_regs(sc);
+		break;
+#endif
 	}
 }
 #endif
