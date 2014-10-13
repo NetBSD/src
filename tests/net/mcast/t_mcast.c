@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mcast.c,v 1.7 2014/10/13 04:57:11 christos Exp $	*/
+/*	$NetBSD: t_mcast.c,v 1.8 2014/10/13 06:57:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: t_mcast.c,v 1.7 2014/10/13 04:57:11 christos Exp $");
+__RCSID("$NetBSD: t_mcast.c,v 1.8 2014/10/13 06:57:08 martin Exp $");
 #else
 extern const char *__progname;
 #define getprogname() __progname
@@ -159,7 +159,7 @@ connector(int fd, const struct sockaddr *sa, socklen_t slen)
 static void
 show(const char *prefix, const struct message *msg)
 {
-	printf("%10.10s: %zu [%jd.%jd]\n", prefix, msg->seq, (intmax_t)
+	printf("%10.10s: %zu [%jd.%ld]\n", prefix, msg->seq, (intmax_t)
 	    msg->ts.tv_sec, msg->ts.tv_nsec);
 }
 
