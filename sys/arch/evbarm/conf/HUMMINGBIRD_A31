@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.7 2014/10/12 23:59:30 jmcneill Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.8 2014/10/13 12:34:25 jmcneill Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -194,7 +194,7 @@ ld*		at sdmmc?
 awinicu0	at awinio0 
 
 # DMA Controller
-#awindma0	at awinio0
+awindma0	at awinio0
 
 # GPIO Controller
 awingpio0	at awinio0
