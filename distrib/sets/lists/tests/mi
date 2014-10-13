@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.592 2014/10/11 23:10:44 christos Exp $
+# $NetBSD: mi,v 1.593 2014/10/13 13:55:31 uebayasi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3128,6 +3128,10 @@
 ./usr/tests/net/if_loop/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/if_loop/Kyuafile		tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if_loop/t_pr		tests-net-tests		atf,rump
+./usr/tests/net/mcast				tests-net-tests
+./usr/tests/net/mcast/Atffile			tests-net-tests		atf,rump
+./usr/tests/net/mcast/Kyuafile			tests-net-tests		atf,rump,kyua
+./usr/tests/net/mcast/t_mcast			tests-net-tests		atf,rump
 ./usr/tests/net/mpls				tests-net-tests
 ./usr/tests/net/mpls/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/mpls/Kyuafile			tests-net-tests		atf,rump,kyua
@@ -3135,10 +3139,6 @@
 ./usr/tests/net/mpls/t_ldp_static		tests-net-tests		obsolete
 ./usr/tests/net/mpls/t_mpls_fw			tests-net-tests		atf,rump
 ./usr/tests/net/mpls/t_rfc4182			tests-net-tests		atf,rump
-./usr/tests/net/mcast				tests-net-tests
-./usr/tests/net/mcast/Atffile			tests-net-tests		atf,rump
-./usr/tests/net/mcast/Kyuafile			tests-net-tests		atf,rump,kyua
-./usr/tests/net/mcast/t_mcast			tests-net-tests		atf,rump
 ./usr/tests/net/net				tests-net-tests
 ./usr/tests/net/net/Atffile			tests-net-tests		atf
 ./usr/tests/net/net/Kyuafile			tests-net-tests		atf,kyua
