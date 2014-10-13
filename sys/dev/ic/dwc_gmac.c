@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.9 2014/10/13 08:24:52 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.10 2014/10/13 09:07:26 martin Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -98,15 +98,15 @@ static void dwc_gmac_rx_intr(struct dwc_gmac_softc *sc);
 
 
 
-#define	GMAC_DEF_DMA_INT_MASK	(GMAC_DMA_INT_TIE|GMAC_DMA_INT_RIE| \
+#define	GMAC_DEF_DMA_INT_MASK	(GMAC_DMA_INT_TIE| \
 				GMAC_DMA_INT_NIE|GMAC_DMA_INT_AIE| \
 				GMAC_DMA_INT_FBE|GMAC_DMA_INT_UNE)
 
 #define	GMAC_DMA_INT_ERRORS	(GMAC_DMA_INT_AIE|GMAC_DMA_INT_ERE| \
-				GMAC_DMA_INT_FBE|GMAC_DMA_INT_ETE| \
+				GMAC_DMA_INT_FBE|	\
 				GMAC_DMA_INT_RWE|GMAC_DMA_INT_RUE| \
 				GMAC_DMA_INT_UNE|GMAC_DMA_INT_OVE| \
-				GMAC_DMA_INT_TJE|GMAC_DMA_INT_TUE)
+				GMAC_DMA_INT_TJE)
 
 #define	AWIN_DEF_MAC_INTRMASK	\
 	(AWIN_GMAC_MAC_INT_TSI | AWIN_GMAC_MAC_INT_ANEG |	\
@@ -117,6 +117,7 @@ static void dwc_gmac_rx_intr(struct dwc_gmac_softc *sc);
 static void dwc_gmac_dump_dma(struct dwc_gmac_softc *sc);
 static void dwc_gmac_dump_tx_desc(struct dwc_gmac_softc *sc);
 static void dwc_dump_and_abort(struct dwc_gmac_softc *sc, const char *msg);
+static void dwc_dump_status(struct dwc_gmac_softc *sc);
 #endif
 
 void
@@ -696,10 +697,10 @@ dwc_gmac_init(struct ifnet *ifp)
 	    sc->sc_txq.t_physaddr);
 
 	/*
-	 * Start RX part
+	 * Start RX/TX part
 	 */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh,
-	    AWIN_GMAC_DMA_OPMODE, GMAC_DMA_OP_RXSTART);
+	    AWIN_GMAC_DMA_OPMODE, GMAC_DMA_OP_RXSTART|GMAC_DMA_OP_TXSTART);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -733,15 +734,12 @@ dwc_gmac_start(struct ifnet *ifp)
 		/* packets have been queued, kick it off */
 		dwc_gmac_txdesc_sync(sc, old, sc->sc_txq.t_cur,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-		
+
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
-		    AWIN_GMAC_DMA_OPMODE,
-		    bus_space_read_4(sc->sc_bst, sc->sc_bsh,
-		        AWIN_GMAC_DMA_OPMODE) | GMAC_DMA_OP_FLUSHTX);
-		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
-		    AWIN_GMAC_DMA_OPMODE,
-		    bus_space_read_4(sc->sc_bst, sc->sc_bsh,
-		        AWIN_GMAC_DMA_OPMODE) | GMAC_DMA_OP_TXSTART);
+		    AWIN_GMAC_DMA_TXPOLL, ~0U);
+#ifdef DWC_GMAC_DEBUG
+		dwc_dump_status(sc);
+#endif
 	}
 }
 
@@ -1028,12 +1026,11 @@ dwc_gmac_dump_tx_desc(struct dwc_gmac_softc *sc)
 		    i, sc->sc_txq.t_physaddr + i*sizeof(struct dwc_gmac_dev_dmadesc),
 		    le32toh(desc->ddesc_status), le32toh(desc->ddesc_cntl),
 		    le32toh(desc->ddesc_data), le32toh(desc->ddesc_next));
-
 	}
 }
 
 static void
-dwc_dump_and_abort(struct dwc_gmac_softc *sc, const char *msg)
+dwc_dump_status(struct dwc_gmac_softc *sc)
 {
 	uint32_t status = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
 	     AWIN_GMAC_MAC_INTR);
@@ -1043,26 +1040,30 @@ dwc_dump_and_abort(struct dwc_gmac_softc *sc, const char *msg)
 
 	/* print interrupt state */
 	snprintb(buf, sizeof(buf), "\177\20"
-	    "b\x10""NIE\0"
-	    "b\x0f""AIE\0"
-	    "b\x0e""ERE\0"
-	    "b\x0d""FBE\0"
-	    "b\x0a""ETE\0"
-	    "b\x09""RWE\0"
-	    "b\x08""RSE\0"
-	    "b\x07""RUE\0"
-	    "b\x06""RIE\0"
-	    "b\x05""UNE\0"
-	    "b\x04""OVE\0"
-	    "b\x03""TJE\0"
-	    "b\x02""TUE\0"
-	    "b\x01""TSE\0"
-	    "b\x00""TIE\0"
+	    "b\x10""NI\0"
+	    "b\x0f""AI\0"
+	    "b\x0e""ER\0"
+	    "b\x0d""FB\0"
+	    "b\x0a""ET\0"
+	    "b\x09""RW\0"
+	    "b\x08""RS\0"
+	    "b\x07""RU\0"
+	    "b\x06""RI\0"
+	    "b\x05""UN\0"
+	    "b\x04""OV\0"
+	    "b\x03""TJ\0"
+	    "b\x02""TU\0"
+	    "b\x01""TS\0"
+	    "b\x00""TI\0"
 	    "\0", dma_status);
-	printf("%s: INTR status: %08x, DMA status: %s\n",
-	    device_xname(sc->sc_dev),
+	aprint_normal_dev(sc->sc_dev, "INTR status: %08x, DMA status: %s\n",
 	    status, buf);
+}
 
+static void
+dwc_dump_and_abort(struct dwc_gmac_softc *sc, const char *msg)
+{
+	dwc_dump_status(sc);
 	dwc_gmac_dump_dma(sc);
 	dwc_gmac_dump_tx_desc(sc);
 
