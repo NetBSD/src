@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.48 2014/08/10 08:07:50 spz Exp $
+# $NetBSD: ad.mips,v 1.48.2.1 2014/10/13 20:05:15 martin Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -207,7 +207,7 @@
 ./usr/lib/64/liblzma.so.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/liblzma.so.1.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libm.so.0				base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libm.so.0.10			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libm.so.0.11			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libmagic.so.5			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libmagic.so.5.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libmenu.so.6			base-compat-shlib	compat,pic,arch64
@@ -546,7 +546,7 @@
 ./usr/lib/o32/liblzma.so.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/liblzma.so.1.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libm.so.0				base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libm.so.0.10			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libm.so.0.11			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libmagic.so.5			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libmagic.so.5.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libmenu.so.6			base-compat-shlib	compat,pic,arch64
