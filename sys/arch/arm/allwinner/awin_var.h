@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.17 2014/10/10 23:50:43 jmcneill Exp $ */
+/* $NetBSD: awin_var.h,v 1.18 2014/10/13 12:34:00 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,11 +73,6 @@ struct awin_gpio_pindata {
 	int pd_pin;
 };
 
-enum awin_dma_type {
-	AWIN_DMA_TYPE_NDMA,
-	AWIN_DMA_TYPE_DDMA,
-};
-
 struct awin_dma_channel;
 
 extern struct bus_space awin_bs_tag;
@@ -108,13 +103,12 @@ void	awin_gpio_pinset_acquire(const struct awin_gpio_pinset *);
 void	awin_gpio_pinset_release(const struct awin_gpio_pinset *);
 bool	awin_gpio_pin_reserve(const char *, struct awin_gpio_pindata *);
 
-struct awin_dma_channel *awin_dma_alloc(enum awin_dma_type,
-					      void (*)(void *), void *);
-void	awin_dma_free(struct awin_dma_channel *);
-uint32_t awin_dma_get_config(struct awin_dma_channel *);
-void	awin_dma_set_config(struct awin_dma_channel *, uint32_t);
-int	awin_dma_transfer(struct awin_dma_channel *, paddr_t, paddr_t, size_t);
-void	awin_dma_halt(struct awin_dma_channel *);
+void *	awin_dma_alloc(const char *, void (*)(void *), void *);
+void	awin_dma_free(void *);
+uint32_t awin_dma_get_config(void *);
+void	awin_dma_set_config(void *, uint32_t);
+int	awin_dma_transfer(void *, paddr_t, paddr_t, size_t);
+void	awin_dma_halt(void *);
 
 void	awin_wdog_reset(void);
 void	awin_tmr_cpu_init(struct cpu_info *);
