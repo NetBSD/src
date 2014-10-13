@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.19 2014/10/12 01:23:23 macallan Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.20 2014/10/13 10:29:27 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.19 2014/10/12 01:23:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.20 2014/10/13 10:29:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -712,7 +712,7 @@ static void
 dsrtc_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct dsrtc_softc *sc = sme->sme_cookie;
-	uint32_t temp;
+	uint32_t temp = 0;	/* XXX gcc */
 
 	if (dsrtc_read_temp(sc, &temp) == 0) {
 		edata->state = ENVSYS_SINVALID;
