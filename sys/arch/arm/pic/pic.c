@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.22 2014/05/19 22:47:53 rmind Exp $	*/
+/*	$NetBSD: pic.c,v 1.23 2014/10/13 09:21:06 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.22 2014/05/19 22:47:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.23 2014/10/13 09:21:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -119,7 +119,7 @@ pic_ipi_generic(void *arg)
 int
 pic_ipi_ddb(void *arg)
 {
-	printf("%s: %s: tf=%p\n", __func__, curcpu()->ci_cpuname, arg);
+//	printf("%s: %s: tf=%p\n", __func__, curcpu()->ci_cpuname, arg);
 	kdb_trap(-1, arg);
 	return 1;
 }
