@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.66.2.7 2014/10/11 16:25:19 snj Exp $ */
+/*  $NetBSD: ops.c,v 1.66.2.8 2014/10/13 19:00:16 martin Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -321,7 +321,7 @@ fuse_attr_to_vap(struct perfuse_state *ps, struct vattr *vap,
 	vap->va_gen = 0; 
 	vap->va_flags = 0;
 	vap->va_rdev = fa->rdev;
-	vap->va_bytes = fa->size;
+	vap->va_bytes = fa->blocks * S_BLKSIZE;
 	vap->va_filerev = (u_quad_t)PUFFS_VNOVAL;
 	vap->va_vaflags = 0;
 
