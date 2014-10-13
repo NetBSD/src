@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.8 2014/10/13 12:34:25 jmcneill Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.9 2014/10/13 19:04:17 jmcneill Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -222,8 +222,8 @@ awinwdt*	at awinio?
 awinrtc*	at awinio?
 
 # onboard audio codec
-#awinac0		at awinio0
-#audio0		at awinac0
+awinac0		at awinio0
+audio0		at awinac0
 
 # 10/100/1000 Ethernet (A10/A20)
 #awge0		at awinio0 port ?
