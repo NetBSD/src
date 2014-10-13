@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ac.c,v 1.13 2014/10/12 17:25:35 jmcneill Exp $ */
+/* $NetBSD: awin_ac.c,v 1.14 2014/10/13 12:34:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.13 2014/10/12 17:25:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.14 2014/10/13 12:34:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -178,6 +178,9 @@ struct awinac_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	LIST_HEAD(, awinac_dma)	sc_dmalist;
+
+	uint8_t			sc_drqtype_codec;
+	uint8_t			sc_drqtype_sdram;
 
 	kmutex_t		sc_lock;
 	kmutex_t		sc_intr_lock;
@@ -361,12 +364,19 @@ awinac_attach(device_t parent, device_t self, void *aux)
 
 	awinac_init(sc);
 
-	sc->sc_pdma = awin_dma_alloc(AWIN_DMA_TYPE_NDMA, awinac_pint, sc);
+	sc->sc_drqtype_codec = awin_chip_id() == AWIN_CHIP_ID_A31 ?
+	    AWIN_A31_DMA_DRQ_TYPE_AUDIOCODEC :
+	    AWIN_NDMA_CTL_DRQ_CODEC;
+	sc->sc_drqtype_sdram = awin_chip_id() == AWIN_CHIP_ID_A31 ?
+	    AWIN_A31_DMA_DRQ_TYPE_SDRAM :
+	    AWIN_NDMA_CTL_DRQ_SDRAM;
+
+	sc->sc_pdma = awin_dma_alloc("codec-play", awinac_pint, sc);
 	if (sc->sc_pdma == NULL) {
 		aprint_error_dev(self, "couldn't allocate play DMA channel\n");
 		return;
 	}
-	sc->sc_rdma = awin_dma_alloc(AWIN_DMA_TYPE_NDMA, awinac_rint, sc);
+	sc->sc_rdma = awin_dma_alloc("codec-rec", awinac_rint, sc);
 	if (sc->sc_rdma == NULL) {
 		aprint_error_dev(self, "couldn't allocate rec DMA channel\n");
 		return;
@@ -967,9 +977,9 @@ awinac_trigger_output(void *priv, void *start, void *end, int blksize,
 			    AWIN_DMA_CTL_SRC_BURST_LEN);
 	dmacfg |= AWIN_DMA_CTL_BC_REMAINING;
 	dmacfg |= AWIN_NDMA_CTL_DST_ADDR_NOINCR;
-	dmacfg |= __SHIFTIN(AWIN_NDMA_CTL_DRQ_CODEC,
+	dmacfg |= __SHIFTIN(sc->sc_drqtype_codec,
 			    AWIN_DMA_CTL_DST_DRQ_TYPE);
-	dmacfg |= __SHIFTIN(AWIN_NDMA_CTL_DRQ_SDRAM,
+	dmacfg |= __SHIFTIN(sc->sc_drqtype_sdram,
 			    AWIN_DMA_CTL_SRC_DRQ_TYPE);
 	awin_dma_set_config(sc->sc_pdma, dmacfg);
 
@@ -1035,9 +1045,9 @@ awinac_trigger_input(void *priv, void *start, void *end, int blksize,
 			    AWIN_DMA_CTL_SRC_BURST_LEN);
 	dmacfg |= AWIN_DMA_CTL_BC_REMAINING;
 	dmacfg |= AWIN_NDMA_CTL_SRC_ADDR_NOINCR;
-	dmacfg |= __SHIFTIN(AWIN_NDMA_CTL_DRQ_SDRAM,
+	dmacfg |= __SHIFTIN(sc->sc_drqtype_sdram,
 			    AWIN_DMA_CTL_DST_DRQ_TYPE);
-	dmacfg |= __SHIFTIN(AWIN_NDMA_CTL_DRQ_CODEC,
+	dmacfg |= __SHIFTIN(sc->sc_drqtype_codec,
 			    AWIN_DMA_CTL_SRC_DRQ_TYPE);
 	awin_dma_set_config(sc->sc_rdma, dmacfg);
 
