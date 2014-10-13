@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mcast.c,v 1.6 2014/10/13 04:56:26 christos Exp $	*/
+/*	$NetBSD: t_mcast.c,v 1.7 2014/10/13 04:57:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: t_mcast.c,v 1.6 2014/10/13 04:56:26 christos Exp $");
+__RCSID("$NetBSD: t_mcast.c,v 1.7 2014/10/13 04:57:11 christos Exp $");
 #else
 extern const char *__progname;
 #define getprogname() __progname
@@ -106,7 +106,7 @@ addmc(int s, struct addrinfo *ai, bool bug)
 		 * Linux:	Does not support the v6 ioctls on v4 mapped
 		 *		sockets but it does support the v4 ones and
 		 *		it works.
-		 * MacOS/X:	Dupports the v6 ioctls on v4 mapped sockets,
+		 * MacOS/X:	Supports the v6 ioctls on v4 mapped sockets,
 		 *		but does not work and also does not support
 		 *		the v4 ioctls. So no way to make multicasting
 		 *		work with mapped addresses.
