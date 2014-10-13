@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2014/10/13 07:31:12 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2014/10/13 12:49:59 martin Exp $
 
 .ifnmake obj
 .include "${NETBSDSRCDIR}/common/lib/libc/arch/arm/features.mk"
@@ -13,8 +13,7 @@ SRCS.atomic+=	atomic_add_32_cas.c atomic_add_32_nv_cas.c \
 		atomic_dec_32_cas.c atomic_dec_32_nv_cas.c \
 		atomic_inc_32_cas.c atomic_inc_32_nv_cas.c \
 		atomic_or_32_cas.c atomic_or_32_nv_cas.c \
-		atomic_swap_32_cas.c membar_ops_nop.c \
-		atomic_and_16_nv_cas.c atomic_and_8_nv_cas.c
+		atomic_swap_32_cas.c membar_ops_nop.c
 
 .if ${LIB} == "c"
 SRCS.atomic+=	atomic_xor_32_cas.c atomic_xor_16_cas.c atomic_xor_8_cas.c \
@@ -25,7 +24,8 @@ SRCS.atomic+=	atomic_xor_32_cas.c atomic_xor_16_cas.c atomic_xor_8_cas.c \
 		atomic_add_16_cas.c atomic_add_8_cas.c \
 		atomic_swap_16_cas.c atomic_swap_8_cas.c \
 		atomic_cas_32_cas.c atomic_cas_16_cas.c atomic_cas_8_cas.c \
-		atomic_load.c atomic_store.c
+		atomic_load.c atomic_store.c \
+		atomic_and_16_nv_cas.c atomic_and_8_nv_cas.c
 .endif
 
 .else
