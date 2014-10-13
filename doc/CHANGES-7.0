@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.50 2014/10/13 19:37:53 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.51 2014/10/13 20:07:11 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1139,44 +1139,60 @@ lib/libperfuse/ops.c				1.76
 	(which is wrong for sparse files).
 	[manu, ticket #137]
 
-src/lib/libm/Makefile			1.165-1.166
-src/lib/libm/shlib_version		1.14
-src/lib/libm/arch/vax/n_atan2.S		1.9
-src/lib/libm/arch/vax/n_cabs.S		1.7
-src/lib/libm/arch/vax/n_sincos.S	1.9
-src/lib/libm/arch/vax/n_sqrt.S		1.10-1.11
-src/lib/libm/complex/Makefile.inc	1.5-1.8
-src/lib/libm/complex/cabsl.c		1.1
-src/lib/libm/complex/cacoshl.c		1.1
-src/lib/libm/complex/cacosl.c		1.1
-src/lib/libm/complex/cargl.c		1.1
-src/lib/libm/complex/casinhl.c		1.1
-src/lib/libm/complex/casinl.c		1.1
-src/lib/libm/complex/catanhl.c		1.1
-src/lib/libm/complex/catanl.c		1.1
-src/lib/libm/complex/ccoshl.c		1.1
-src/lib/libm/complex/ccosl.c		1.1
-src/lib/libm/complex/cephes_subrl.c	1.1
-src/lib/libm/complex/cephes_subrl.h	1.1
-src/lib/libm/complex/cexpl.c		1.1
-src/lib/libm/complex/clogl.c		1.1
-src/lib/libm/complex/cpowl.c		1.1
-src/lib/libm/complex/cprojl.c		1.7
-src/lib/libm/complex/csinhl.c		1.1
-src/lib/libm/complex/csinl.c		1.1
-src/lib/libm/complex/csqrtl.c		1.1
-src/lib/libm/complex/ctanhl.c		1.1
-src/lib/libm/complex/ctanl.c		1.1
-src/lib/libm/man/acosh.3		1.17
-src/lib/libm/man/asinh.3		1.17
-src/lib/libm/man/atanh.3		1.17
-src/lib/libm/noieee_src/n_atan2.c	1.7
-src/lib/libm/noieee_src/n_cosh.c	1.9
-src/lib/libm/noieee_src/n_exp.c		1.9
-src/lib/libm/noieee_src/n_log.c		1.8
-src/lib/libm/noieee_src/n_pow.c		1.10-1.11
-src/lib/libm/noieee_src/n_sincos.c	1.7
-src/lib/libm/noieee_src/n_sinh.c	1.8
+src/lib/libm/Makefile				1.165-1.166
+src/lib/libm/shlib_version			1.14
+src/lib/libm/arch/vax/n_atan2.S			1.9
+src/lib/libm/arch/vax/n_cabs.S			1.7
+src/lib/libm/arch/vax/n_sincos.S		1.9
+src/lib/libm/arch/vax/n_sqrt.S			1.10-1.11
+src/lib/libm/complex/Makefile.inc		1.5-1.8
+src/lib/libm/complex/cabsl.c			1.1
+src/lib/libm/complex/cacoshl.c			1.1
+src/lib/libm/complex/cacosl.c			1.1
+src/lib/libm/complex/cargl.c			1.1
+src/lib/libm/complex/casinhl.c			1.1
+src/lib/libm/complex/casinl.c			1.1
+src/lib/libm/complex/catanhl.c			1.1
+src/lib/libm/complex/catanl.c			1.1
+src/lib/libm/complex/ccoshl.c			1.1
+src/lib/libm/complex/ccosl.c			1.1
+src/lib/libm/complex/cephes_subrl.c		1.1
+src/lib/libm/complex/cephes_subrl.h		1.1
+src/lib/libm/complex/cexpl.c			1.1
+src/lib/libm/complex/clogl.c			1.1
+src/lib/libm/complex/cpowl.c			1.1
+src/lib/libm/complex/cprojl.c			1.7
+src/lib/libm/complex/csinhl.c			1.1
+src/lib/libm/complex/csinl.c			1.1
+src/lib/libm/complex/csqrtl.c			1.1
+src/lib/libm/complex/ctanhl.c			1.1
+src/lib/libm/complex/ctanl.c			1.1
+src/lib/libm/man/acosh.3			1.17
+src/lib/libm/man/asinh.3			1.17
+src/lib/libm/man/atanh.3			1.17
+src/lib/libm/noieee_src/n_atan2.c		1.7
+src/lib/libm/noieee_src/n_cosh.c		1.9
+src/lib/libm/noieee_src/n_exp.c			1.9
+src/lib/libm/noieee_src/n_log.c			1.8
+src/lib/libm/noieee_src/n_pow.c			1.10-1.11
+src/lib/libm/noieee_src/n_sincos.c		1.7
+src/lib/libm/noieee_src/n_sinh.c		1.8
+distrib/sets/lists/base/ad.aarch64		1.8
+distrib/sets/lists/base/ad.arm			1.57
+distrib/sets/lists/base/ad.mips			1.52
+distrib/sets/lists/base/ad.powerpc		1.21
+distrib/sets/lists/base/md.amd64		1.248
+distrib/sets/lists/base/md.sparc64		1.236
+distrib/sets/lists/base/shl.mi			1.717
+distrib/sets/lists/comp/mi			1.1915
+distrib/sets/lists/comp/mi			1.1916
+distrib/sets/lists/debug/ad.aarch64		1.7
+distrib/sets/lists/debug/ad.arm			1.46
+distrib/sets/lists/debug/ad.mips		1.42
+distrib/sets/lists/debug/ad.powerpc		1.22
+distrib/sets/lists/debug/md.amd64		1.66
+distrib/sets/lists/debug/md.sparc64		1.65
+distrib/sets/lists/debug/shl.mi			1.76
 
 	Import the missing complex support functions from FreeBSD, so
 	we can enable C++ 2011 mode for libstc++.
