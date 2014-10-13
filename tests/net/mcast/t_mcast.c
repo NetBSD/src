@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mcast.c,v 1.5 2014/10/12 19:49:01 christos Exp $	*/
+/*	$NetBSD: t_mcast.c,v 1.6 2014/10/13 04:56:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: t_mcast.c,v 1.5 2014/10/12 19:49:01 christos Exp $");
+__RCSID("$NetBSD: t_mcast.c,v 1.6 2014/10/13 04:56:26 christos Exp $");
 #else
 extern const char *__progname;
 #define getprogname() __progname
@@ -69,7 +69,7 @@ extern const char *__progname;
 #define SKIPX(ev, msg, ...)	errx(ev, msg, __VA_ARGS__)
 #endif
 
-static int debug = 1;
+static int debug;
 
 #define TOTAL 10
 #define PORT_V4MAPPED "6666"
@@ -78,6 +78,11 @@ static int debug = 1;
 #define HOST_V4 "239.1.1.1"
 #define PORT_V6 "6666"
 #define HOST_V6 "FF05:0:0:0:0:0:0:1"
+
+struct message {
+	size_t seq;
+	struct timespec ts;
+};
 
 static int
 addmc(int s, struct addrinfo *ai, bool bug)
@@ -151,6 +156,13 @@ connector(int fd, const struct sockaddr *sa, socklen_t slen)
 	return 0;
 }
 
+static void
+show(const char *prefix, const struct message *msg)
+{
+	printf("%10.10s: %zu [%jd.%jd]\n", prefix, msg->seq, (intmax_t)
+	    msg->ts.tv_sec, msg->ts.tv_nsec);
+}
+
 static int
 getsocket(const char *host, const char *port,
     int (*f)(int, const struct sockaddr *, socklen_t), socklen_t *slen,
@@ -205,18 +217,18 @@ sender(const char *host, const char *port, size_t n, bool conn, bool bug)
 {
 	int s;
 	ssize_t l;
-	size_t seq;
-	char buf[64];
+	struct message msg;
+
 	socklen_t slen;
 
 	s = getsocket(host, port, conn ? connect : connector, &slen, bug);
-	for (seq = 0; seq < n; seq++) {
-		time_t t = time(&t);
-		snprintf(buf, sizeof(buf), "%zu: %-24.24s", seq, ctime(&t));
+	for (msg.seq = 0; msg.seq < n; msg.seq++) {
+		if (clock_gettime(CLOCK_MONOTONIC, &msg.ts) == -1)
+			ERRX(EXIT_FAILURE, "clock (%s)", strerror(errno));
 		if (debug)
-			printf("sending: %s\n", buf);
-		l = conn ? send(s, buf, sizeof(buf), 0) :
-		    sendto(s, buf, sizeof(buf), 0, (void *)&ss, slen);
+			show("sending", &msg);
+		l = conn ? send(s, &msg, sizeof(msg), 0) :
+		    sendto(s, &msg, sizeof(msg), 0, (void *)&ss, slen);
 		if (l == -1)
 			ERRX(EXIT_FAILURE, "send (%s)", strerror(errno));
 		usleep(100);
@@ -229,22 +241,24 @@ receiver(const char *host, const char *port, size_t n, bool conn, bool bug)
 	int s;
 	ssize_t l;
 	size_t seq;
-	char buf[64];
+	struct message msg;
 	struct pollfd pfd;
 	socklen_t slen;
 
-	s = getsocket(host, port, conn ? bind : connector, &slen, bug);
+	s = getsocket(host, port, bind, &slen, bug);
 	pfd.fd = s;
 	pfd.events = POLLIN;
 	for (seq = 0; seq < n; seq++) {
 		if (poll(&pfd, 1, 1000) == -1)
 			ERRX(EXIT_FAILURE, "poll (%s)", strerror(errno));
-		l = conn ? recv(s, buf, sizeof(buf), 0) :
-		    recvfrom(s, buf, sizeof(buf), 0, (void *)&ss, &slen);
+		l = conn ? recv(s, &msg, sizeof(msg), 0) :
+		    recvfrom(s, &msg, sizeof(msg), 0, (void *)&ss, &slen);
 		if (l == -1)
 			ERRX(EXIT_FAILURE, "recv (%s)", strerror(errno));
 		if (debug)
-			printf("got: %s\n", buf);
+			show("got", &msg);
+		if (seq != msg.seq)
+			ERRX(EXIT_FAILURE, "seq %zu != %zu", seq, msg.seq);
 	}
 }
 
@@ -261,7 +275,7 @@ run(const char *host, const char *port, size_t n, bool conn, bool bug)
 	case -1:
 		ERRX(EXIT_FAILURE, "fork (%s)", strerror(errno));
 	default:
-		usleep(100);
+		usleep(1000);
 		sender(host, port, n, conn, bug);
 		usleep(100);
 	again:
@@ -424,20 +438,15 @@ ATF_TC_BODY(unconninet6, tc)
 
 ATF_TP_ADD_TCS(tp)
 {
+	debug++;
         ATF_TP_ADD_TC(tp, conninet4);
         ATF_TP_ADD_TC(tp, connmappedinet4);
         ATF_TP_ADD_TC(tp, connmappedbuginet4);
         ATF_TP_ADD_TC(tp, conninet6);
-#if 0
-	/*
-	 * The receiver does not get any packets on unconnected sockets,
-	 * but the ioctl's work. Is my code wrong?
-	 */
         ATF_TP_ADD_TC(tp, unconninet4);
         ATF_TP_ADD_TC(tp, unconnmappedinet4);
         ATF_TP_ADD_TC(tp, unconnmappedbuginet4);
         ATF_TP_ADD_TC(tp, unconninet6);
-#endif
 
 	return atf_no_error();
 }
