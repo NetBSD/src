@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.2 2014/08/10 23:26:48 matt Exp $
+# $NetBSD: ad.aarch64,v 1.2.2.1 2014/10/13 20:05:15 martin Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-npf-shlib		compat
 ./lib/eabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -212,7 +212,7 @@
 ./usr/lib/eabi/liblzma.so.1			base-compat-shlib	compat,pic
 ./usr/lib/eabi/liblzma.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libm.so.0				base-compat-shlib	compat,pic
-./usr/lib/eabi/libm.so.0.10			base-compat-shlib	compat,pic
+./usr/lib/eabi/libm.so.0.11			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libmagic.so.5			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libmagic.so.5.0			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libmenu.so.6			base-compat-shlib	compat,pic
@@ -526,7 +526,7 @@
 #./usr/lib/eabihf/liblzma.so.1			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/liblzma.so.1.1			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/libm.so.0				base-compat-shlib	compat,pic
-#./usr/lib/eabihf/libm.so.0.10			base-compat-shlib	compat,pic
+#./usr/lib/eabihf/libm.so.0.11			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/libmagic.so.5			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/libmagic.so.5.0			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/libmenu.so.6			base-compat-shlib	compat,pic
@@ -838,7 +838,7 @@
 ./usr/lib/oabi/liblzma.so.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/liblzma.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libm.so.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/libm.so.0.10			base-compat-shlib	compat,pic
+./usr/lib/oabi/libm.so.0.11			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libmagic.so.5			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libmagic.so.5.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libmenu.so.6			base-compat-shlib	compat,pic

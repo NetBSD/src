@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.71 2014/08/10 08:07:50 spz Exp $
+# $NetBSD: shl.mi,v 1.71.2.1 2014/10/13 20:05:15 martin Exp $
 ./usr/libdata/debug/lib/libc.so.12.193.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.3.debug		comp-sys-debug	debug
@@ -10,7 +10,7 @@
 ./usr/libdata/debug/lib/libkvm.so.6.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/liblzf.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/liblzma.so.1.1.debug		comp-sys-debug	debug
-./usr/libdata/debug/lib/libm.so.0.10.debug		comp-sys-debug	debug
+./usr/libdata/debug/lib/libm.so.0.11.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libnpf.so.0.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libpcap.so.5.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libppath.so.0.0.debug		comp-sys-debug	debug
@@ -124,7 +124,7 @@
 ./usr/libdata/debug/usr/lib/liblwres.so.8.0.debug	comp-bind-debug	debug
 ./usr/libdata/debug/usr/lib/liblzf.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/liblzma.so.1.1.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libm.so.0.10.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libm.so.0.11.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmagic.so.5.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmenu.so.6.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmj.so.1.0.debug		comp-crypto-debug	debug
