@@ -1,4 +1,4 @@
-/* $NetBSD: awin_dma_a31.c,v 1.1 2014/10/13 12:34:00 jmcneill Exp $ */
+/* $NetBSD: awin_dma_a31.c,v 1.2 2014/10/13 13:34:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_dma_a31.c,v 1.1 2014/10/13 12:34:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_dma_a31.c,v 1.2 2014/10/13 13:34:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -161,10 +161,11 @@ awin_dma_a31_intr(void *priv)
 
 	pend = pend0 | ((uint64_t)pend1 << 32);
 
-	while ((bit = ffs64(pend)) != 0) {
+	while ((bit = ffs64(pend & AWIN_A31_DMA_IRQ_PKG_MASK)) != 0) {
 		mask = __BIT(bit - 1);
 		pend &= ~mask;
 		index = (bit - 1) / 4;
+
 		if (awin_dma_channels[index].ch_callback == NULL)
 			continue;
 		awin_dma_channels[index].ch_callback(
