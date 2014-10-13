@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.8 2014/10/08 18:24:21 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.9 2014/10/13 08:24:52 martin Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -644,20 +644,37 @@ dwc_gmac_miibus_statchg(struct ifnet *ifp)
 {
 	struct dwc_gmac_softc * const sc = ifp->if_softc;
 	struct mii_data * const mii = &sc->sc_mii;
+	uint32_t conf;
 
 	/*
 	 * Set MII or GMII interface based on the speed
 	 * negotiated by the PHY.                                           
-	 */                                                                 
+	 */
+	conf = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_CONF);
+	conf &= ~(AWIN_GMAC_MAC_CONF_FES100|AWIN_GMAC_MAC_CONF_MIISEL
+	    |AWIN_GMAC_MAC_CONF_FULLDPLX);
+	conf |= AWIN_GMAC_MAC_CONF_FRAMEBURST | AWIN_GMAC_MAC_CONF_TXENABLE
+	    | AWIN_GMAC_MAC_CONF_RXENABLE;
 	switch (IFM_SUBTYPE(mii->mii_media_active)) {
 	case IFM_10_T:
+		break;
 	case IFM_100_TX:
-		/* XXX */
+		conf |= AWIN_GMAC_MAC_CONF_FES100;
 		break;
 	case IFM_1000_T:
-		/* XXX */
+		conf |= AWIN_GMAC_MAC_CONF_MIISEL;
 		break;
 	}
+	if (IFM_OPTIONS(mii->mii_media_active) & IFM_FDX)
+		conf |= AWIN_GMAC_MAC_CONF_FULLDPLX;
+
+#ifdef DWC_GMAC_DEBUG
+	aprint_normal_dev(sc->sc_dev,
+	    "setting MAC conf register: %08x\n", conf);
+#endif
+
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh,
+	    AWIN_GMAC_MAC_CONF, conf);
 }
 
 static int
