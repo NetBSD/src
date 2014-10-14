@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.11 2014/02/25 18:30:09 pooka Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.12 2014/10/14 19:50:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.11 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.12 2014/10/14 19:50:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1871,16 +1871,40 @@ acpidisp_print_odinfo(device_t self, const struct acpidisp_odinfo *oi)
 	}
 }
 
+/*
+ * general purpose range printing function
+ * 1 -> 1
+ * 1 2 4 6 7-> [1-2,4,6-7]
+ */
+static void
+ranger(uint8_t *a, size_t l, void (*pr)(const char *, ...) __printflike(1, 2))
+{
+	uint8_t b, e; 
+
+	if (l > 1)
+		(*pr)("[");
+
+	for (size_t i = 0; i < l; i++) {
+		for (b = e = a[i]; i < l && a[i + 1] == e + 1; i++, e++)
+			continue;
+		(*pr)("%"PRIu8, b);
+		if (b != e)
+			(*pr)("-%"PRIu8, e);
+		if (i < l - 1)
+			(*pr)(",");
+	}
+
+	if (l > 1)
+		printf("]");
+}
+
 static void
 acpidisp_print_brctl(device_t self, const struct acpidisp_brctl *bc)
 {
-	uint16_t i;
-
 	KASSERT(bc != NULL);
 
-	aprint_verbose_dev(self, "brightness levels:");
-	for (i = 0; i < bc->bc_level_count; i++)
-		aprint_verbose(" %"PRIu8, bc->bc_level[i]);
+	aprint_verbose_dev(self, "brightness levels: ");
+	ranger(bc->bc_level, bc->bc_level_count, aprint_verbose);
 	aprint_verbose("\n");
 }
 
