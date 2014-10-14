@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.53 2014/10/14 08:17:28 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.54 2014/10/14 20:30:00 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1203,4 +1203,139 @@ sys/arch/x86/x86/pmap.c				1.184
 	Add a missing || defined(XEN) which cause Xen non-DIAGNOSTIC kernels
 	to panic at boot.
 	[bouyer, ticket #140]
+
+external/gpl3/gcc/dist/ChangeLog		patch
+external/gpl3/gcc/dist/LAST_UPDATED		patch
+external/gpl3/gcc/dist/MD5SUMS			patch
+external/gpl3/gcc/dist/config.sub		patch
+external/gpl3/gcc/dist/configure		patch
+external/gpl3/gcc/dist/configure.ac		patch
+external/gpl3/gcc/dist/config/ChangeLog		patch
+external/gpl3/gcc/dist/contrib/ChangeLog	patch
+external/gpl3/gcc/dist/contrib/gennews		patch
+external/gpl3/gcc/dist/gcc/BASE-VER		patch
+external/gpl3/gcc/dist/gcc/ChangeLog		patch
+external/gpl3/gcc/dist/gcc/DATESTAMP		patch
+external/gpl3/gcc/dist/gcc/DEV-PHASE		patch
+external/gpl3/gcc/dist/gcc/cgraphunit.c		patch
+external/gpl3/gcc/dist/gcc/common.opt		patch
+external/gpl3/gcc/dist/gcc/config.gcc		patch
+external/gpl3/gcc/dist/gcc/configure		patch
+external/gpl3/gcc/dist/gcc/configure.ac		patch
+external/gpl3/gcc/dist/gcc/double-int.c		patch
+external/gpl3/gcc/dist/gcc/dwarf2out.c		patch
+external/gpl3/gcc/dist/gcc/emit-rtl.c		patch
+external/gpl3/gcc/dist/gcc/emit-rtl.h		patch
+external/gpl3/gcc/dist/gcc/expr.c		patch
+external/gpl3/gcc/dist/gcc/fold-const.c		patch
+external/gpl3/gcc/dist/gcc/function.c		patch
+external/gpl3/gcc/dist/gcc/gimple-fold.c	patch
+external/gpl3/gcc/dist/gcc/haifa-sched.c	patch
+external/gpl3/gcc/dist/gcc/ifcvt.c		patch
+external/gpl3/gcc/dist/gcc/ipa-cp.c		patch
+external/gpl3/gcc/dist/gcc/omp-low.c		patch
+external/gpl3/gcc/dist/gcc/regcprop.c		patch
+external/gpl3/gcc/dist/gcc/sched-deps.c		patch
+external/gpl3/gcc/dist/gcc/sel-sched-ir.c	patch
+external/gpl3/gcc/dist/gcc/toplev.c		patch
+external/gpl3/gcc/dist/gcc/tree-cfgcleanup.c	patch
+external/gpl3/gcc/dist/gcc/tree-sra.c		patch
+external/gpl3/gcc/dist/gcc/tree-ssa-ccp.c	patch
+external/gpl3/gcc/dist/gcc/tree-ssa-ifcombine.c	patch
+external/gpl3/gcc/dist/gcc/tree-ssa-math-opts.c	patch
+external/gpl3/gcc/dist/gcc/tree-ssa-sccvn.c	patch
+external/gpl3/gcc/dist/gcc/tree-ssa-tail-merge.c patch
+external/gpl3/gcc/dist/gcc/tree-vect-data-refs.c patch
+external/gpl3/gcc/dist/gcc/tree-vect-loop.c	patch
+external/gpl3/gcc/dist/gcc/tree-vect-patterns.c	patch
+external/gpl3/gcc/dist/gcc/tree-vect-slp.c	patch
+external/gpl3/gcc/dist/gcc/tree-vect-stmts.c	patch
+external/gpl3/gcc/dist/gcc/tree-vectorizer.h	patch
+external/gpl3/gcc/dist/gcc/config/elfos.h	patch
+external/gpl3/gcc/dist/gcc/config/netbsd-stdint.h patch
+external/gpl3/gcc/dist/gcc/config/aarch64/aarch64-linux.h patch
+external/gpl3/gcc/dist/gcc/config/aarch64/aarch64.c patch
+external/gpl3/gcc/dist/gcc/config/aarch64/aarch64.md patch
+external/gpl3/gcc/dist/gcc/config/aarch64/arm_neon.h patch
+external/gpl3/gcc/dist/gcc/config/alpha/alpha.c	patch
+external/gpl3/gcc/dist/gcc/config/alpha/elf.h	patch
+external/gpl3/gcc/dist/gcc/config/arm/arm-protos.h patch
+external/gpl3/gcc/dist/gcc/config/arm/arm.c	patch
+external/gpl3/gcc/dist/gcc/config/arm/arm.md	patch
+external/gpl3/gcc/dist/gcc/config/arm/constraints.md patch
+external/gpl3/gcc/dist/gcc/config/arm/t-rtems-eabi patch
+external/gpl3/gcc/dist/gcc/config/avr/avr-fixed.md patch
+external/gpl3/gcc/dist/gcc/config/avr/avr.h	patch
+external/gpl3/gcc/dist/gcc/config/avr/avr.md	patch
+external/gpl3/gcc/dist/gcc/config/i386/driver-i386.c patch
+external/gpl3/gcc/dist/gcc/config/i386/i386.c	patch
+external/gpl3/gcc/dist/gcc/config/i386/i386.md	patch
+external/gpl3/gcc/dist/gcc/config/microblaze/microblaze.md patch
+external/gpl3/gcc/dist/gcc/config/microblaze/predicates.md patch
+external/gpl3/gcc/dist/gcc/config/mips/netbsd.h	patch
+external/gpl3/gcc/dist/gcc/config/pa/pa.c	patch
+external/gpl3/gcc/dist/gcc/config/rs6000/constraints.md patch
+external/gpl3/gcc/dist/gcc/config/rs6000/freebsd64.h patch
+external/gpl3/gcc/dist/gcc/config/rs6000/htm.md	patch
+external/gpl3/gcc/dist/gcc/config/rs6000/linux64.h patch
+external/gpl3/gcc/dist/gcc/config/rs6000/netbsd.h patch
+external/gpl3/gcc/dist/gcc/config/rs6000/netbsd64.h patch
+external/gpl3/gcc/dist/gcc/config/rs6000/predicates.md patch
+external/gpl3/gcc/dist/gcc/config/rs6000/rs6000-builtin.def patch
+external/gpl3/gcc/dist/gcc/config/rs6000/rs6000-c.c patch
+external/gpl3/gcc/dist/gcc/config/rs6000/rs6000-protos.h patch
+external/gpl3/gcc/dist/gcc/config/rs6000/rs6000.c patch
+external/gpl3/gcc/dist/gcc/config/rs6000/rs6000.h patch
+external/gpl3/gcc/dist/gcc/config/rs6000/rs6000.md patch
+external/gpl3/gcc/dist/gcc/config/rs6000/sysv4.h patch
+external/gpl3/gcc/dist/gcc/config/rs6000/t-netbsd64 patch
+external/gpl3/gcc/dist/gcc/config/rs6000/vsx.md	patch
+external/gpl3/gcc/dist/gcc/config/sh/sh.c	patch
+external/gpl3/gcc/dist/gcc/config/sh/sh.opt	patch
+external/gpl3/gcc/dist/gcc/config/sh/sync.md	patch
+external/gpl3/gcc/dist/gcc/config/sparc/netbsd-elf.h patch
+external/gpl3/gcc/dist/gcc/config/sparc/sync.md	patch
+external/gpl3/gcc/dist/gcc/config/vax/netbsd-elf.h patch
+external/gpl3/gcc/dist/gcc/cp/ChangeLog		patch
+external/gpl3/gcc/dist/gcc/cp/call.c		patch
+external/gpl3/gcc/dist/gcc/cp/friend.c		patch
+external/gpl3/gcc/dist/gcc/cp/parser.c		patch
+external/gpl3/gcc/dist/gcc/cp/pt.c		patch
+external/gpl3/gcc/dist/gcc/cp/semantics.c	patch
+external/gpl3/gcc/dist/gcc/cp/tree.c		patch
+external/gpl3/gcc/dist/gcc/doc/extend.texi	patch
+external/gpl3/gcc/dist/gcc/doc/install.texi	patch
+external/gpl3/gcc/dist/gcc/doc/invoke.texi	patch
+external/gpl3/gcc/dist/gcc/doc/md.texi		patch
+external/gpl3/gcc/dist/gcc/doc/sourcebuild.texi	patch
+external/gpl3/gcc/dist/gcc/doc/tm.texi		patch
+external/gpl3/gcc/dist/gcc/doc/tm.texi.in	patch
+external/gpl3/gcc/dist/libgcc/ChangeLog		patch
+external/gpl3/gcc/dist/libgcc/config.host	patch
+external/gpl3/gcc/dist/libgcc/unwind-dw2-fde.c	patch
+external/gpl3/gcc/dist/libgcc/config/i386/sfp-machine.h patch
+external/gpl3/gcc/dist/libobjc/ChangeLog	patch
+external/gpl3/gcc/dist/libobjc/encoding.c	patch
+external/gpl3/gcc/dist/libstdc++-v3/ChangeLog	patch
+external/gpl3/gcc/dist/libstdc++-v3/config/abi/post/hppa-linux-gnu/baseline_symbols.txt patch
+external/gpl3/gcc/dist/libstdc++-v3/doc/html/index.html patch
+external/gpl3/gcc/dist/libstdc++-v3/doc/html/manual/abi.html patch
+external/gpl3/gcc/dist/libstdc++-v3/doc/html/manual/containers.html patch
+external/gpl3/gcc/dist/libstdc++-v3/doc/html/manual/index.html patch
+external/gpl3/gcc/dist/libstdc++-v3/doc/html/manual/std_contents.html patch
+external/gpl3/gcc/dist/libstdc++-v3/doc/xml/manual/containers.xml patch
+external/gpl3/gcc/dist/libstdc++-v3/doc/xml/manual/status_cxx2011.xml patch
+external/gpl3/gcc/dist/libstdc++-v3/include/bits/stl_tree.h patch
+external/gpl3/gcc/dist/libstdc++-v3/include/ext/rope patch
+external/gpl3/gcc/dist/libstdc++-v3/include/std/future patch
+external/gpl3/gcc/dist/libstdc++-v3/include/tr2/bool_set patch
+external/gpl3/gcc/dist/libstdc++-v3/libsupc++/atexit_thread.cc patch
+external/gpl3/gcc/dist/libstdc++-v3/python/libstdcxx/v6/printers.py patch
+external/gpl3/gcc/dist/libstdc++-v3/scripts/run_doxygen patch
+external/gpl3/gcc/dist/libstdc++-v3/src/c++11/random.cc patch
+external/gpl3/gcc/dist/libstdc++-v3/src/c++98/locale-inst.cc patch
+
+	Update to gcc 4.8-20141009, fixing over 50 GCC PRs and making
+	sh3 usable.
+	[mrg, ticket #139]
 
