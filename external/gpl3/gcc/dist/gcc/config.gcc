@@ -426,6 +426,12 @@ mips*-*-*)
 	extra_headers="loongson.h"
 	extra_options="${extra_options} g.opt mips/mips-tables.opt"
 	;;
+or1k-*-*)
+        cpu_type=or1k
+        ;;
+or1knd-*-*)
+        cpu_type=or1k
+        ;;
 picochip-*-*)
         cpu_type=picochip
         ;;
@@ -439,6 +445,10 @@ powerpc*-*-*)
 		;;
 	esac
 	extra_options="${extra_options} g.opt fused-madd.opt rs6000/rs6000-tables.opt"
+	;;
+riscv*-*-*)
+	cpu_type=riscv
+	need_64bit_hwint=yes
 	;;
 rs6000*-*-*)
 	need_64bit_hwint=yes
@@ -1123,6 +1133,7 @@ hppa*-*-netbsd* | parisc*-*-netbsd*)
 	tm_file="${tm_file} dbxelf.h elfos.h ${nbsd_tm_file} \
 		 pa/pa-netbsd.h pa/pa32-regs.h pa/pa32-netbsd.h"
 	tmake_file="${tmake_file} pa/t-netbsd"
+	tm_defines="${tm_defines} CHAR_FAST8=1 SHORT_FAST16=1"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
 	;;
 hppa[12]*-*-hpux10*)
@@ -1752,6 +1763,7 @@ m68k-*-elf* | fido-*-elf*)
 m68010-*-netbsdelf* | m68k-*-netbsdelf* | m5407-*-netbsdelf*)
 	tm_file="${tm_file} dbxelf.h elfos.h ${nbsd_tm_file} m68k/netbsd-elf.h"
 	tm_defines="${tm_defines} MOTOROLA=1 USE_GAS=1"
+	tm_defines="${tm_defines} CHAR_FAST8=1 SHORT_FAST16=1"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
 	default_cf_cpu=5475
 	default_m68k_cpu=68020
@@ -2063,6 +2075,42 @@ mn10300-*-*)
 	use_collect2=no
 	use_gcc_stdint=wrap
 	;;
+or1k*-*-elf*)
+	tm_file="${tm_file} dbxelf.h elfos.h newlib-stdint.h ${cpu_type}/elf.h"
+	extra_parts="crti.o crtbegin.o crtend.o crtn.o"
+	case ${target} in
+	  or1knd-*)
+	    tmake_file=or1k/t-or1knd
+	    tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_OFF"
+	    ;;
+	  *)
+	    tmake_file=or1k/t-or1k
+	    tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_ON"
+	    ;;
+	esac
+	;;
+or1k*-*-linux-*)
+	tm_file="${tm_file} dbxelf.h elfos.h or1k/elf.h gnu-user.h linux.h or1k/linux-gas.h or1k/linux-elf.h uclibc-stdint.h"
+	case ${target} in
+	  or1knd-*)
+	    tmake_file="or1k/t-or1knd or1k/t-linux ${tmake_file}"
+	    tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_OFF"
+	    ;;
+	  *)
+	    tmake_file="or1k/t-or1k or1k/t-linux ${tmake_file}"
+	    tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_ON"
+	    ;;
+	esac
+	;;
+or1k*-*-netbsd*)
+	tm_file="${tm_file} dbxelf.h elfos.h netbsd.h netbsd-elf.h netbsd-stdint.h or1k/netbsd.h"
+	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
+	case ${target} in
+	  or1knd-*) tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_OFF" ;;
+	  *) tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_ON" ;;
+	esac
+	gcc_cv_initfini_array=yes
+	;;
 pdp11-*-*)
 	tm_file="${tm_file} newlib-stdint.h"
 	use_gcc_stdint=wrap
@@ -2283,6 +2331,31 @@ powerpcle-*-eabi*)
 	tmake_file="rs6000/t-fprules rs6000/t-ppcgas rs6000/t-ppccomm"
 	extra_options="${extra_options} rs6000/sysv4.opt"
 	use_gcc_stdint=wrap
+	;;
+riscv*-*-linux*)				# Linux RISC-V
+	tm_file="elfos.h gnu-user.h linux.h glibc-stdint.h ${tm_file} riscv/linux.h riscv/linux64.h"
+	tmake_file="${tmake_file} riscv/t-linux64"
+	gnu_ld=yes
+	gas=yes
+	gcc_cv_initfini_array=yes
+	;;
+riscv*-*-elf*)				# Linux RISC-V
+	tm_file="elfos.h newlib-stdint.h ${tm_file} riscv/elf.h"
+	tmake_file="${tmake_file} riscv/t-elf"
+	gnu_ld=yes
+	gas=yes
+	gcc_cv_initfini_array=yes
+	;;
+riscv*-*-netbsd*)				# NetBSD RISC-V
+	tm_file="elfos.h ${tm_file} netbsd.h netbsd-elf.h riscv/netbsd.h"
+	case ${target} in
+	  riscv32*) tm_defines="${tm_defines} TARGET_64BIT_DEFAULT=0" ;;
+	  *) tmake_file="${tmake_file} riscv/t-netbsd64" ;;
+	esac
+	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
+	gnu_ld=yes
+	gas=yes
+	gcc_cv_initfini_array=yes
 	;;
 rs6000-ibm-aix4.[3456789]* | powerpc-ibm-aix4.[3456789]*)
 	tm_file="rs6000/biarch64.h ${tm_file} rs6000/aix.h rs6000/aix43.h rs6000/xcoff.h rs6000/aix-stdint.h"
@@ -2745,6 +2818,7 @@ vax-*-linux*)
 	;;
 vax-*-netbsdelf*)
 	tm_file="${tm_file} elfos.h ${nbsd_tm_file} vax/elf.h vax/netbsd-elf.h"
+	tm_defines="${tm_defines} CHAR_FAST8=1 SHORT_FAST16=1"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt vax/elf.opt"
 	;;
 vax-*-openbsd*)
@@ -3680,6 +3754,30 @@ case "${target}" in
 			;;
 		*)
 			echo "Unknown ABI used in --with-abi=$with_abi"
+			exit 1
+			;;
+		esac
+		;;
+
+	riscv*-*-*)
+		supported_defaults="abi arch arch_32 arch_64 float tune tune_32 tune_64"
+
+		case ${with_float} in
+		"" | soft | hard)
+			# OK
+			;;
+		*)
+			echo "Unknown floating point type used in --with-float=$with_float" 1>&2
+			exit 1
+			;;
+		esac
+
+		case ${with_abi} in
+		"" | 32 | 64)
+			# OK
+			;;
+		*)
+			echo "Unknown ABI used in --with-abi=$with_abi" 1>&2
 			exit 1
 			;;
 		esac

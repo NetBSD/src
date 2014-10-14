@@ -3108,6 +3108,25 @@ x3:	.space 4
 	tls_first_minor=14
 	tls_as_opt="-a32 --fatal-warnings"
 	;;
+  riscv*-*-*)
+    conftest_s='
+	.section .tdata,"awT",@progbits
+x:
+	.word 2
+	.text
+	la.tls.gd a0,x
+	la.tls.ie a1,x
+	lui v0,%tls_ie_hi(x)
+	lw v0,%tls_ie_lo(x)(v0)
+	add v0,v0,tp,%tls_ie_add(x)
+	lw v0,%tls_ie_off(x)(v0)
+	lui v0,%tprel_hi(x)
+	add v0,v0,tp,%tprel_add(x)
+	lw v0,%tprel_lo(x)(v0)'
+	tls_first_major=2
+	tls_first_minor=21
+	tls_as_opt='-m32 --fatal-warnings'
+	;;
   s390-*-*)
     conftest_s='
 	.section ".tdata","awT",@progbits

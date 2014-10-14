@@ -1018,6 +1018,7 @@ See S/390 and zSeries Options.
 -ffixed-@var{reg}  -fexceptions @gol
 -fnon-call-exceptions  -fdelete-dead-exceptions  -funwind-tables @gol
 -fasynchronous-unwind-tables @gol
+-fno-gnu-unique @gol
 -finhibit-size-directive  -finstrument-functions @gol
 -finstrument-functions-exclude-function-list=@var{sym},@var{sym},@dots{} @gol
 -finstrument-functions-exclude-file-list=@var{file},@var{file},@dots{} @gol
@@ -11286,8 +11287,8 @@ of the @option{-mcpu=} option.  Permissible names are: @samp{armv2},
 
 @option{-march=native} causes the compiler to auto-detect the architecture
 of the build computer.  At present, this feature is only supported on
-Linux, and not all architectures are recognized.  If the auto-detect is
-unsuccessful the option has no effect.
+GNU/Linux, and not all architectures are recognized.  If the auto-detect
+is unsuccessful the option has no effect.
 
 @item -mtune=@var{name}
 @opindex mtune
@@ -11332,7 +11333,7 @@ this option may change in future GCC versions as CPU models come and go.
 
 @option{-mtune=native} causes the compiler to auto-detect the CPU
 of the build computer.  At present, this feature is only supported on
-Linux, and not all architectures are recognized.  If the auto-detect is
+GNU/Linux, and not all architectures are recognized.  If the auto-detect is
 unsuccessful the option has no effect.
 
 @item -mcpu=@var{name}
@@ -11353,8 +11354,8 @@ See @option{-mtune} for more information.
 
 @option{-mcpu=native} causes the compiler to auto-detect the CPU
 of the build computer.  At present, this feature is only supported on
-Linux, and not all architectures are recognized.  If the auto-detect is
-unsuccessful the option has no effect.
+GNU/Linux, and not all architectures are recognized.  If the auto-detect
+is unsuccessful the option has no effect.
 
 @item -mfpu=@var{name}
 @opindex mfpu
@@ -12494,7 +12495,7 @@ are compatible with as many systems and code bases as possible.
 @item -mkernel
 @opindex mkernel
 Enable kernel development mode.  The @option{-mkernel} option sets
-@option{-static}, @option{-fno-common}, @option{-fno-cxa-atexit},
+@option{-static}, @option{-fno-common}, @option{-fno-use-cxa-atexit},
 @option{-fno-exceptions}, @option{-fno-non-call-exceptions},
 @option{-fapple-kext}, @option{-fno-weak} and @option{-fno-rtti} where
 applicable.  This mode also sets @option{-mno-altivec},
@@ -18722,6 +18723,72 @@ single-precision mode by default.
 @opindex m4
 Generate code for the SH4.
 
+@item -m4-100
+@opindex m4-100
+Generate code for SH4-100.
+
+@item -m4-100-nofpu
+@opindex m4-100-nofpu
+Generate code for SH4-100 in such a way that the
+floating-point unit is not used.
+
+@item -m4-100-single
+@opindex m4-100-single
+Generate code for SH4-100 assuming the floating-point unit is in
+single-precision mode by default.
+
+@item -m4-100-single-only
+@opindex m4-100-single-only
+Generate code for SH4-100 in such a way that no double-precision
+floating-point operations are used.
+
+@item -m4-200
+@opindex m4-200
+Generate code for SH4-200.
+
+@item -m4-200-nofpu
+@opindex m4-200-nofpu
+Generate code for SH4-200 without in such a way that the
+floating-point unit is not used.
+
+@item -m4-200-single
+@opindex m4-200-single
+Generate code for SH4-200 assuming the floating-point unit is in
+single-precision mode by default.
+
+@item -m4-200-single-only
+@opindex m4-200-single-only
+Generate code for SH4-200 in such a way that no double-precision
+floating-point operations are used.
+
+@item -m4-300
+@opindex m4-300
+Generate code for SH4-300.
+
+@item -m4-300-nofpu
+@opindex m4-300-nofpu
+Generate code for SH4-300 without in such a way that the
+floating-point unit is not used.
+
+@item -m4-300-single
+@opindex m4-300-single
+Generate code for SH4-300 in such a way that no double-precision
+floating-point operations are used.
+
+@item -m4-300-single-only
+@opindex m4-300-single-only
+Generate code for SH4-300 in such a way that no double-precision
+floating-point operations are used.
+
+@item -m4-340
+@opindex m4-340
+Generate code for SH4-340 (no MMU, no FPU).
+
+@item -m4-500
+@opindex m4-500
+Generate code for SH4-500 (no FPU).  Passes @option{-isa=sh4-nofpu} to the
+assembler.
+
 @item -m4a-nofpu
 @opindex m4a-nofpu
 Generate code for the SH4al-dsp, or for a SH4a in such a way that the
@@ -18746,6 +18813,33 @@ Generate code for the SH4a.
 Same as @option{-m4a-nofpu}, except that it implicitly passes
 @option{-dsp} to the assembler.  GCC doesn't generate any DSP
 instructions at the moment.
+
+@item -m5-32media
+@opindex m5-32media
+Generate 32-bit code for SHmedia.
+
+@item -m5-32media-nofpu
+@opindex m5-32media-nofpu
+Generate 32-bit code for SHmedia in such a way that the
+floating-point unit is not used.
+
+@item -m5-64media
+@opindex m5-64media
+Generate 64-bit code for SHmedia.
+
+@item -m5-64media-nofpu
+@opindex m5-64media-nofpu
+Generate 64-bit code for SHmedia in such a way that the
+floating-point unit is not used.
+
+@item -m5-compact
+@opindex m5-compact
+Generate code for SHcompact.
+
+@item -m5-compact-nofpu
+@opindex m5-compact-nofpu
+Generate code for SHcompact in such a way that the
+floating-point unit is not used.
 
 @item -mb
 @opindex mb
@@ -18780,16 +18874,12 @@ Enable the use of bit manipulation instructions on SH2A.
 Enable the use of the instruction @code{fmovd}.  Check @option{-mdalign} for
 alignment constraints.
 
-@item -mhitachi
-@opindex mhitachi
-Comply with the calling conventions defined by Renesas.
-
 @item -mrenesas
-@opindex mhitachi
+@opindex mrenesas
 Comply with the calling conventions defined by Renesas.
 
 @item -mno-renesas
-@opindex mhitachi
+@opindex mno-renesas
 Comply with the calling conventions defined for GCC before the Renesas
 conventions were available.  This option is the default for all
 targets of the SH toolchain.
@@ -18797,12 +18887,12 @@ targets of the SH toolchain.
 @item -mnomacsave
 @opindex mnomacsave
 Mark the @code{MAC} register as call-clobbered, even if
-@option{-mhitachi} is given.
+@option{-mrenesas} is given.
 
 @item -mieee
 @itemx -mno-ieee
 @opindex mieee
-@opindex mnoieee
+@opindex mno-ieee
 Control the IEEE compliance of floating-point comparisons, which affects the
 handling of cases where the result of a comparison is unordered.  By default
 @option{-mieee} is implicitly enabled.  If @option{-ffinite-math-only} is
@@ -18842,14 +18932,14 @@ separated list.  For details on the atomic built-in functions see
 
 @item none
 Disable compiler generated atomic sequences and emit library calls for atomic
-operations.  This is the default if the target is not @code{sh-*-linux*}.
+operations.  This is the default if the target is not @code{sh*-*-linux*}.
 
 @item soft-gusa
 Generate GNU/Linux compatible gUSA software atomic sequences for the atomic
 built-in functions.  The generated atomic sequences require additional support
 from the interrupt/exception handling code of the system and are only suitable
 for SH3* and SH4* single-core systems.  This option is enabled by default when
-the target is @code{sh-*-linux*} and SH3* or SH4*.  When the target is SH4A,
+the target is @code{sh*-*-linux*} and SH3* or SH4*.  When the target is SH4A,
 this option will also partially utilize the hardware atomic instructions
 @code{movli.l} and @code{movco.l} to create more efficient code, unless
 @samp{strict} is specified.  
@@ -18868,7 +18958,7 @@ setting @code{SR.IMASK = 1111}.  This model works only when the program runs
 in privileged mode and is only suitable for single-core systems.  Additional
 support from the interrupt/exception handling code of the system is not
 required.  This model is enabled by default when the target is
-@code{sh-*-linux*} and SH1* or SH2*.
+@code{sh*-*-linux*} and SH1* or SH2*.
 
 @item hard-llcs
 Generate hardware atomic sequences using the @code{movli.l} and @code{movco.l}
@@ -18903,21 +18993,20 @@ that are implied by the @code{tas.b} instruction.  On multi-core SH4A
 processors the @code{tas.b} instruction must be used with caution since it
 can result in data corruption for certain cache configurations.
 
-@item -mspace
-@opindex mspace
-Optimize for space instead of speed.  Implied by @option{-Os}.
-
 @item -mprefergot
 @opindex mprefergot
 When generating position-independent code, emit function calls using
 the Global Offset Table instead of the Procedure Linkage Table.
 
 @item -musermode
+@itemx -mno-usermode
 @opindex musermode
-Don't generate privileged mode only code.  This option
-implies @option{-mno-inline-ic_invalidate}
-if the inlined code would not work in user mode.
-This is the default when the target is @code{sh-*-linux*}.
+@opindex mno-usermode
+Don't allow (allow) the compiler generating privileged mode code.  Specifying
+@option{-musermode} also implies @option{-mno-inline-ic_invalidate} if the
+inlined code would not work in user mode.  @option{-musermode} is the default
+when the target is @code{sh*-*-linux*}.  If the target is SH1* or SH2*
+@option{-musermode} has no effect, since there is no user mode.
 
 @item -multcost=@var{number}
 @opindex multcost=@var{number}
@@ -20371,6 +20460,20 @@ that needs this handling enables it on your behalf.
 Generate unwind table in DWARF 2 format, if supported by target machine.  The
 table is exact at each instruction boundary, so it can be used for stack
 unwinding from asynchronous events (such as debugger or garbage collector).
+
+@item -fno-gnu-unique
+@opindex fno-gnu-unique
+On systems with recent GNU assembler and C library, the C++ compiler
+uses the @code{STB_GNU_UNIQUE} binding to make sure that definitions
+of template static data members and static local variables in inline
+functions are unique even in the presence of @code{RTLD_LOCAL}; this
+is necessary to avoid problems with a library used by two different
+@code{RTLD_LOCAL} plugins depending on a definition in one of them and
+therefore disagreeing with the other one about the binding of the
+symbol.  But this causes @code{dlclose} to be ignored for affected
+DSOs; if your program relies on reinitialization of a DSO via
+@code{dlclose} and @code{dlopen}, you can use
+@option{-fno-gnu-unique}.
 
 @item -fpcc-struct-return
 @opindex fpcc-struct-return

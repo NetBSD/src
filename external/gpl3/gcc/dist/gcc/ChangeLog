@@ -1,3 +1,876 @@
+2014-10-09  Uros Bizjak  <ubizjak@gmail.com>
+
+	Backport from mainline
+	2014-10-09  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR rtl-optimization/57003
+	* regcprop.c (copyprop_hardreg_forward_1): If ksvd.ignore_set_reg,
+	also check CALL_INSN_FUNCTION_USAGE for clobbers again after
+	killing regs_invalidated_by_call.
+
+2014-10-08  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	Backport from mainline
+	2014-10-08  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	PR target/52941
+	* config/sh/sync.md (atomic_exchangesi_hard, atomic_exchange<mode>_hard,
+	atomic_fetch_<fetchop_name>si_hard,
+	atomic_fetch_<fetchop_name><mode>_hard, atomic_fetch_nandsi_hard,
+	atomic_fetch_nand<mode>_hard, atomic_<fetchop_name>_fetchsi_hard,
+	atomic_<fetchop_name>_fetch<mode>_hard, atomic_nand_fetchsi_hard,
+	atomic_nand_fetch<mode>_hard): Add missing set of T_REG.
+
+2014-10-02  Martin Jambor  <mjambor@suse.cz>
+
+	PR tree-optimization/63375
+	* tree-sra.c (build_access_from_expr_1): Disqualify volatile
+	references.
+
+2014-10-01  Jakub Jelinek  <jakub@redhat.com>
+
+	PR debug/63342
+	* dwarf2out.c (loc_list_from_tree): Handle TARGET_MEM_REF and
+	SSA_NAME.
+
+	PR target/63428
+	* config/i386/i386.c (expand_vec_perm_pshufb): Fix up rperm[0]
+	argument to avx2_permv2ti.
+
+2014-10-01  Uros Bizjak  <ubizjak@gmail.com>
+
+	Backport from mainline
+	2014-09-30  Uros Bizjak  <ubizjak@gmail.com>
+
+	* config/i386/i386.md (fmodxf3): Enable for flag_finite_math_only only.
+	(fmod<mode>3): Ditto.
+	(fpremxf4_i387): Ditto.
+	(reminderxf3): Ditto.
+	(reminder<mode>3): Ditto.
+	(fprem1xf4_i387): Ditto.
+
+2014-09-30  Jakub Jelinek  <jakub@redhat.com>
+
+	PR inline-asm/63282
+	* ifcvt.c (dead_or_predicable): Don't call redirect_jump_1
+	or invert_jump_1 if jump isn't any_condjump_p.
+
+2014-09-29  Charles Baylis  <charles.baylis@linaro.org>
+
+	Backport from mainline r212303
+	PR target/49423
+	* config/arm/arm-protos.h (arm_legitimate_address_p,
+	arm_is_constant_pool_ref): Add prototypes.
+	* config/arm/arm.c (arm_legitimate_address_p): Remove static.
+	(arm_is_constant_pool_ref) New function.
+	* config/arm/arm.md (unaligned_loadhis, arm_zero_extendhisi2_v6,
+	arm_zero_extendqisi2_v6): Use Uh constraint for memory operand.
+	(arm_extendhisi2, arm_extendhisi2_v6): Use Uh constraint for memory
+	operand and remove pool_range and neg_pool_range attributes.
+	(arm_extendqihi_insn, arm_extendqisi, arm_extendqisi_v6): Remove
+	pool_range and neg_pool_range attributes.
+	* config/arm/constraints.md (Uh): New constraint. (Uq): Don't allow
+	constant pool references.
+
+2014-09-28  John David Anglin  <danglin@gcc.gnu.org>
+
+	* config/pa/pa.c (pa_output_function_epilogue): Only update
+	last_address when a nonnote insn is found.
+
+2014-09-25  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	Backport from mainline
+	2014-09-25  Nick Clifton  <nickc@redhat.com>
+	2014-09-25  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	PR target/62218
+	* config/sh/sync.md (atomic_fetch_nand<mode>_soft_imask,
+	atomic_test_and_set_soft_imask): Fix typo in instruction sequence.
+
+2014-09-25  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	Backport from mainline r215559
+	2014-09-25  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	PR target/63335
+	* config/rs6000/rs6000-c.c (altivec_build_resolved_builtin):
+	Exclude VSX_BUILTIN_XVCMPGEDP_P from special handling.
+
+2014-09-25  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/63341
+	* tree-vectorizer.h (vect_create_data_ref_ptr,
+	vect_create_addr_base_for_vector_ref): Add another tree argument
+	defaulting to NULL_TREE.
+	* tree-vect-data-refs.c (vect_create_data_ref_ptr): Add byte_offset
+	argument, pass it down to vect_create_addr_base_for_vector_ref.
+	(vect_create_addr_base_for_vector_ref): Add byte_offset argument,
+	add that to base_offset too if non-NULL.
+	* tree-vect-stmts.c (vectorizable_load): Add byte_offset variable,
+	for dr_explicit_realign_optimized set it to vector byte size
+	- 1 instead of setting offset, pass byte_offset down to
+	vect_create_data_ref_ptr.
+
+2014-09-23  Michael Meissner  <meissner@linux.vnet.ibm.com>
+
+	Back port from trunk:
+	2014-09-23  Michael Meissner  <meissner@linux.vnet.ibm.com>
+
+	* config/rs6000/rs6000.md (f32_vsx): New mode attributes to
+	refine the constraints used on 32/64-bit floating point moves.
+	(f32_av): Likewise.
+	(f64_vsx): Likewise.
+	(f64_dm): Likewise.
+	(f64_av): Likewise.
+	(BOOL_REGS_OUTPUT): Use wt constraint for TImode instead of wa.
+	(BOOL_REGS_OP1): Likewise.
+	(BOOL_REGS_OP2): Likewise.
+	(BOOL_REGS_UNARY): Likewise.
+	(mov<mode>_hardfloat, SFmode/SDmode): Tighten down constraints for
+	32/64-bit floating point moves.  Do not use wa, instead use ww/ws
+	for moves involving VSX registers.  Do not use constraints that
+	target VSX registers for decimal types.
+	(mov<mode>_hardfloat32, DFmode/DDmode): Likewise.
+	(mov<mode>_hardfloat64, DFmode/DDmode): Likewise.
+
+2014-09-19  Michael Meissner  <meissner@linux.vnet.ibm.com>
+
+	Back port from trunk:
+	2014-09-19  Michael Meissner  <meissner@linux.vnet.ibm.com>
+
+	* config/rs6000/predicates.md (fusion_gpr_mem_load): Move testing
+	for base_reg_operand to be common between LO_SUM and PLUS.
+	(fusion_gpr_mem_combo): New predicate to match a fused address
+	that combines the addis and memory offset address.
+
+	* config/rs6000/rs6000-protos.h (fusion_gpr_load_p): Change
+	calling signature.
+	(emit_fusion_gpr_load): Likewise.
+
+	* config/rs6000/rs6000.c (fusion_gpr_load_p): Change calling
+	signature to pass each argument separately, rather than
+	using an operands array.  Rewrite the insns found by peephole2 to
+	be a single insn, rather than hoping the insns will still be
+	together when the peephole pass is done.  Drop being called via a
+	normal peephole.
+	(emit_fusion_gpr_load): Change calling signature to be called from
+	the fusion_gpr_load_<mode> insns with a combined memory address
+	instead of the peephole pass passing the addis and offset
+	separately.
+
+	* config/rs6000/rs6000.md (UNSPEC_FUSION_GPR): New unspec for GPR
+	fusion.
+	(power8 fusion peephole): Drop support for doing power8 via a
+	normal peephole that was created by the peephole2 pass.
+	(power8 fusion peephole2): Create a new insn with the fused
+	address, so that the fused operation is kept together after
+	register allocation is done.
+	(fusion_gpr_load_<mode>): Likewise.
+
+2014-09-17  Jakub Jelinek  <jakub@redhat.com>
+
+	PR debug/63284
+	* tree-cfgcleanup.c (fixup_noreturn_call): Don't split block
+	if there are only debug stmts after the noreturn call, instead
+	remove the debug stmts.
+
+2014-09-10  Michael Meissner  <meissner@linux.vnet.ibm.com>
+
+	* config/rs6000/vsx.md (vsx_fmav4sf4): Use correct constraints for
+	V2DF, V4SF, DF, and DI modes.
+	(vsx_fmav2df2): Likewise.
+	(vsx_float_fix_<mode>2): Likewise.
+	(vsx_reduc_<VEC_reduc_name>_v2df_scalar): Likewise.
+
+2014-09-10  Alan Modra  <amodra@gmail.com>
+
+	PR debug/60655
+	* dwarf2out.c (mem_loc_descriptor <PLUS>): Return NULL if addend
+	can't be output.
+
+2014-09-09  Richard Biener  <rguenther@suse.de>
+
+	Backport from mainline
+	2014-06-11  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/61452
+	* tree-ssa-sccvn.c (visit_phi): Remove pointless setting of
+	expr and has_constants in case we found a leader.
+	(simplify_binary_expression): Always valueize operands first.
+	(simplify_unary_expression): Likewise.
+
+2014-09-09  Richard Biener  <rguenther@suse.de>
+
+	Backport from mainline
+	2014-05-05  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/61010
+	* fold-const.c (fold_binary_loc): Consistently avoid
+	canonicalizing X & CST away from a CST that is the mask
+	of a mode.
+
+	2014-05-28  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/61045
+	* fold-const.c (fold_comparison): When folding
+	X +- C1 CMP Y +- C2 to X CMP Y +- C2 +- C1 also ensure
+	the sign of the remaining constant operand stays the same.
+
+	2014-08-11  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/62075
+	* tree-vect-slp.c (vect_detect_hybrid_slp_stmts): Properly
+	handle uses in patterns.
+
+2014-09-09  James Greenhalgh  <james.greenhalgh@arm.com>
+
+	Backport from mainline.
+	2014-09-09  James Greenhalgh  <james.greenhalgh@arm.com>
+
+	* doc/invoke.texi (-march): Use GNU/Linux rather than Linux.
+	(-mtune): Likewise.
+	(-mcpu): Likewise.
+
+2014-09-08  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/60196
+	PR tree-optimization/63189
+	Backported from mainline
+	2013-09-17  Cong Hou  <congh@google.com>
+
+	* tree-vect-patterns.c (vect_recog_dot_prod_pattern): Fix a bug
+	when checking the dot production pattern. The type of rhs operand
+	of multiply is now checked correctly.
+
+2014-09-08  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from mainline
+	2014-08-06  Vladimir Makarov  <vmakarov@redhat.com>
+
+	PR debug/61923
+	* haifa-sched.c (advance_one_cycle): Fix dump.
+	(schedule_block): Don't advance cycle if we are already at the
+	beginning of the cycle.
+
+2014-09-03  Martin Jambor  <mjambor@suse.cz>
+
+	PR ipa/62015
+	* ipa-cp.c (intersect_aggregates_with_edge): Handle impermissible
+	pass-trough jump functions correctly.
+
+2014-09-03  Martin Jambor  <mjambor@suse.cz>
+
+	PR ipa/61986
+	* ipa-cp.c (find_aggregate_values_for_callers_subset): Chain
+	created replacements in ascending order of offsets.
+	(known_aggs_to_agg_replacement_list): Likewise.
+
+2014-09-01  Marek Polacek  <polacek@redhat.com>
+
+	Backport from mainline
+	2014-08-21  Marek Polacek  <polacek@redhat.com>
+
+	PR c/61271
+	* expr.c (is_aligning_offset): Remove logical not.
+
+2014-09-01  Marek Polacek  <polacek@redhat.com>
+
+	Backport from mainline
+	2014-08-19  Marek Polacek  <polacek@redhat.com>
+
+	PR c/61271
+	* cgraphunit.c (handle_alias_pairs): Fix condition.
+
+2014-08-30  John David Anglin  <danglin@gcc.gnu.org>
+
+	* config/pa/pa.c (pa_assemble_integer): Don't add PLABEL relocation
+	prefix to function labels when generating fast indirect calls.
+
+2014-08-26  Joel Sherrill <joel.sherrill@oarcorp.com>
+
+	* doc/invoke.texi: -fno-cxa-atexit should be -fno-use-cxa-atexit.
+
+2014-08-26  Marek Polacek  <polacek@redhat.com>
+
+	Backport from mainline
+	2014-08-26  Marek Polacek  <polacek@redhat.com>
+
+	PR c/61271
+	* tree-vectorizer.h (LOOP_REQUIRES_VERSIONING_FOR_ALIGNMENT,
+	LOOP_REQUIRES_VERSIONING_FOR_ALIAS): Wrap in parens.
+
+2014-08-24  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	Backport from mainline
+	2014-08-24  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	PR target/61996
+	* config/sh/sh.opt (musermode): Allow negative form.
+	* config/sh/sh.c (sh_option_override): Disable TARGET_USERMODE for
+	targets that don't support it.
+	* doc/invoke.texi (SH Options): Rename sh-*-linux* to sh*-*-linux*.
+	Document -mno-usermode option.
+
+2014-08-23  John David Anglin  <danglin@gcc.gnu.org>
+
+	PR target/62038
+	* config/pa/pa.c (pa_output_function_epilogue): Don't set
+	last_address when the current function is a thunk.
+	(pa_asm_output_mi_thunk): When we don't have named sections or they
+	are not being used, check that thunk can reach the stub table with a
+	short branch.
+
+2014-08-22  Michael Meissner  <meissner@linux.vnet.ibm.com>
+
+	Backport fro mainline
+	2014-08-22  Michael Meissner  <meissner@linux.vnet.ibm.com>
+
+	PR target/62195
+	* doc/md.texi (Machine Constraints): Update PowerPC wi constraint
+	documentation to state it is only for VSX operations.
+
+	* config/rs6000/rs6000.c (rs6000_init_hard_regno_mode_ok): Make wi
+	constraint only active if VSX.
+
+	* config/rs6000/rs6000.md (lfiwax): Use wj constraint instead of
+	wi cosntraint for ISA 2.07 lxsiwax/lxsiwzx instructions.
+	(lfiwzx): Likewise.
+
+2014-08-15  Tom de Vries  <tom@codesourcery.com>
+
+	Backport from mainline:
+	2014-08-14  Tom de Vries  <tom@codesourcery.com>
+
+	PR rtl-optimization/62004
+	PR rtl-optimization/62030
+	* ifcvt.c (rtx_interchangeable_p): New function.
+	(noce_try_move, noce_process_if_block): Use rtx_interchangeable_p.
+
+	2014-08-05  Richard Biener  <rguenther@suse.de>
+
+	* emit-rtl.h (mem_attrs_eq_p): Declare.
+	* emit-rtl.c (mem_attrs_eq_p): Export.
+
+2014-08-16  John David Anglin  <danglin@gcc.gnu.org>
+
+	Backport from trunk:
+	2014-04-06  John David Anglin  <danglin@gcc.gnu.org>
+
+	PR debug/55794
+	* config/pa/pa.c (pa_output_function_epilogue): Skip address and code
+	size accounting for thunks.
+	(pa_asm_output_mi_thunk): Use final_start_function() and
+	final_end_function() to output function start and end directives.
+
+2014-08-15  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	Backport from mainline:
+	2014-08-15  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	* doc/invoke.texi (SH options): Document missing processor variant
+	options.  Remove references to Hitachi.  Undocument deprecated mspace
+	option.
+
+2014-08-13  Felix Yang  <fei.yang0953@gmail.com>
+
+	PR tree-optimization/62073
+	* tree-vect-loop.c (vect_is_simple_reduction_1): Check that DEF1 has
+	a basic block.
+
+2014-08-13  Thomas Preud'homme  <thomas.preudhomme@arm.com>
+
+	Backport from mainline
+	2014-08-12  Thomas Preud'homme  <thomas.preudhomme@arm.com>
+
+	PR middle-end/62103
+	* gimple-fold.c (fold_ctor_reference): Don't fold in presence of
+	bitfields, that is when size doesn't match the size of type or the
+	size of the constructor.
+
+2014-08-12  Michael Meissner  <meissner@linux.vnet.ibm.com>
+
+	Backport patch from mainline
+	2014-08-11  Michael Meissner  <meissner@linux.vnet.ibm.com>
+
+	* config/rs6000/constraints.md (wh constraint): New constraint,
+	for FP registers if direct move is available.
+	(wi constraint): New constraint, for VSX/FP registers that can
+	handle 64-bit integers.
+	(wj constraint): New constraint for VSX/FP registers that can
+	handle 64-bit integers for direct moves.
+	(wk constraint): New constraint for VSX/FP registers that can
+	handle 64-bit doubles for direct moves.
+	(wy constraint): Make documentation match implementation.
+
+	* config/rs6000/rs6000.c (struct rs6000_reg_addr): Add
+	scalar_in_vmx_p field to simplify tests of whether SFmode or
+	DFmode can go in the Altivec registers.
+	(rs6000_hard_regno_mode_ok): Use scalar_in_vmx_p field.
+	(rs6000_setup_reg_addr_masks): Likewise.
+	(rs6000_debug_print_mode): Add debug support for scalar_in_vmx_p
+	field, and wh/wi/wj/wk constraints.
+	(rs6000_init_hard_regno_mode_ok): Setup scalar_in_vmx_p field, and
+	the wh/wi/wj/wk constraints.
+	(rs6000_preferred_reload_class): If SFmode/DFmode can go in the
+	upper registers, prefer VSX registers unless the operation is a
+	memory operation with REG+OFFSET addressing.
+
+	* config/rs6000/vsx.md (VSr mode attribute): Add support for
+	DImode.  Change SFmode to use ww constraint instead of d to allow
+	SF registers in the upper registers.
+	(VSr2): Likewise.
+	(VSr3): Likewise.
+	(VSr5): Fix thinko in comment.
+	(VSa): New mode attribute that is an alternative to wa, that
+	returns the VSX register class that a mode can go in, but may not
+	be the preferred register class.
+	(VS_64dm): New mode attribute for appropriate register classes for
+	referencing 64-bit elements of vectors for direct moves and normal
+	moves.
+	(VS_64reg): Likewise.
+	(vsx_mov<mode>): Change wa constraint to <VSa> to limit the
+	register allocator to only registers the data type can handle.
+	(vsx_le_perm_load_<mode>): Likewise.
+	(vsx_le_perm_store_<mode>): Likewise.
+	(vsx_xxpermdi2_le_<mode>): Likewise.
+	(vsx_xxpermdi4_le_<mode>): Likewise.
+	(vsx_lxvd2x2_le_<mode>): Likewise.
+	(vsx_lxvd2x4_le_<mode>): Likewise.
+	(vsx_stxvd2x2_le_<mode>): Likewise.
+	(vsx_add<mode>3): Likewise.
+	(vsx_sub<mode>3): Likewise.
+	(vsx_mul<mode>3): Likewise.
+	(vsx_div<mode>3): Likewise.
+	(vsx_tdiv<mode>3_internal): Likewise.
+	(vsx_fre<mode>2): Likewise.
+	(vsx_neg<mode>2): Likewise.
+	(vsx_abs<mode>2): Likewise.
+	(vsx_nabs<mode>2): Likewise.
+	(vsx_smax<mode>3): Likewise.
+	(vsx_smin<mode>3): Likewise.
+	(vsx_sqrt<mode>2): Likewise.
+	(vsx_rsqrte<mode>2): Likewise.
+	(vsx_tsqrt<mode>2_internal): Likewise.
+	(vsx_fms<mode>4): Likewise.
+	(vsx_nfma<mode>4): Likewise.
+	(vsx_eq<mode>): Likewise.
+	(vsx_gt<mode>): Likewise.
+	(vsx_ge<mode>): Likewise.
+	(vsx_eq<mode>_p): Likewise.
+	(vsx_gt<mode>_p): Likewise.
+	(vsx_ge<mode>_p): Likewise.
+	(vsx_xxsel<mode>): Likewise.
+	(vsx_xxsel<mode>_uns): Likewise.
+	(vsx_copysign<mode>3): Likewise.
+	(vsx_float<VSi><mode>2): Likewise.
+	(vsx_floatuns<VSi><mode>2): Likewise.
+	(vsx_fix_trunc<mode><VSi>2): Likewise.
+	(vsx_fixuns_trunc<mode><VSi>2): Likewise.
+	(vsx_x<VSv>r<VSs>i): Likewise.
+	(vsx_x<VSv>r<VSs>ic): Likewise.
+	(vsx_btrunc<mode>2): Likewise.
+	(vsx_b2trunc<mode>2): Likewise.
+	(vsx_floor<mode>2): Likewise.
+	(vsx_ceil<mode>2): Likewise.
+	(vsx_<VS_spdp_insn>): Likewise.
+	(vsx_xscvspdp): Likewise.
+	(vsx_xvcvspuxds): Likewise.
+	(vsx_float_fix_<mode>2): Likewise.
+	(vsx_set_<mode>): Likewise.
+	(vsx_extract_<mode>_internal1): Likewise.
+	(vsx_extract_<mode>_internal2): Likewise.
+	(vsx_extract_<mode>_load): Likewise.
+	(vsx_extract_<mode>_store): Likewise.
+	(vsx_splat_<mode>): Likewise.
+	(vsx_xxspltw_<mode>): Likewise.
+	(vsx_xxspltw_<mode>_direct): Likewise.
+	(vsx_xxmrghw_<mode>): Likewise.
+	(vsx_xxmrglw_<mode>): Likewise.
+	(vsx_xxsldwi_<mode>): Likewise.
+	(vsx_xscvdpspn): Tighten constraints to only use register classes
+	the types use.
+	(vsx_xscvspdpn): Likewise.
+	(vsx_xscvdpspn_scalar): Likewise.
+
+	* config/rs6000/rs6000.h (enum rs6000_reg_class_enum): Add wh, wi,
+	wj, and wk constraints.
+	(GPR_REG_CLASS_P): New helper macro for register classes targeting
+	general purpose registers.
+
+	* config/rs6000/rs6000.md (f32_dm): Use wh constraint for SDmode
+	direct moves.
+	(zero_extendsidi2_lfiwz): Use wj constraint for direct move of
+	DImode instead of wm.  Use wk constraint for direct move of DFmode
+	instead of wm.
+	(extendsidi2_lfiwax): Likewise.
+	(lfiwax): Likewise.
+	(lfiwzx): Likewise.
+	(movdi_internal64): Likewise.
+
+	* doc/md.texi (PowerPC and IBM RS6000): Document wh, wi, wj, and
+	wk constraints. Make the wy constraint documentation match them
+	implementation.
+
+2014-08-01  Thomas Preud'homme  <thomas.preudhomme@arm.com>
+
+	Backport from mainline
+	2014-06-13  Thomas Preud'homme  <thomas.preudhomme@arm.com>
+
+	PR tree-optimization/61375
+	* tree-ssa-math-opts.c (find_bswap_or_nop_1): Cancel optimization if
+	symbolic number cannot be represented in an unsigned HOST_WIDE_INT.
+	(execute_optimize_bswap): Cancel optimization if CHAR_BIT != 8.
+
+2014-08-01  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/61964
+	* tree-ssa-tail-merge.c (gimple_operand_equal_value_p): New
+	function merged from trunk.
+	(gimple_equal_p): Handle non-SSA LHS solely by structural
+	equality.
+
+2014-07-25  Uros Bizjak  <ubizjak@gmail.com>
+
+	* config/alpha/elf.h: Define TARGET_UNWIND_TABLES_DEFAULT.
+
+2014-07-24  Kyle McMartin  <kyle@redhat.com>
+
+	* config/aarch64/aarch64-linux.h (TARGET_ASM_FILE_END): Define.
+
+2014-07-24  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
+
+	* config/rs6000/rs6000-protos.h (rs6000_special_adjust_field_align_p):
+	Add prototype.
+	* config/rs6000/rs6000.c (rs6000_special_adjust_field_align_p): New
+	function.  Issue -Wpsabi warning if future GCC releases will use
+	different field alignment rules for this type.
+	* config/rs6000/sysv4.h (ADJUST_FIELD_ALIGN): Call it.
+	* config/rs6000/linux64.h (ADJUST_FIELD_ALIGN): Likewise.
+	* config/rs6000/freebsd64.h (ADJUST_FIELD_ALIGN): Likewise.
+
+2014-07-24  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
+
+	* config/rs6000/rs6000.c (rs6000_function_arg_boundary): Issue
+	-Wpsabi note when encountering a type where future GCC releases
+	will apply different alignment requirements.
+
+2014-07-24  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
+
+	* config/rs6000/rs6000.c (rs6000_function_arg): If a float argument
+	does not fit fully into floating-point registers, and there is still
+	space in the register parameter area, issue -Wpsabi note that the ABI
+	will change in a future GCC release.
+
+2014-07-23  Sebastian Huber  <sebastian.huber@embedded-brains.de>
+
+	* config/arm/t-rtems-eabi: Add
+	mthumb/march=armv7-r/mfpu=vfpv3-d16/mfloat-abi=hard,
+	mthumb/march=armv7-m/mfpu=fpv4-sp-d16/mfloat-abi=hard,
+	mbig-endian/mthumb/march=armv7-r, and
+	mbig-endian/mthumb/march=armv7-r/mfpu=vfpv3-d16/mfloat-abi=hard
+	multilibs.
+
+2014-07-21  Peter Bergner  <bergner@vnet.ibm.com>
+
+	* config/rs6000/sysv4.h (LIBASAN_EARLY_SPEC): Define.
+	(LIBTSAN_EARLY_SPEC): Likewise.
+	(STATIC_LIBASAN_LIBS): Likewise.
+	(STATIC_LIBTSAN_LIBS): Likewise.
+
+2014-07-19  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* toplev.c (output_stack_usage): Adjust the location of the warning.
+
+2014-07-19  Daniel Cederman  <cederman@gaisler.com>
+
+	* config/sparc/sync.md (*membar_storeload_leon3): New insn.
+	(*membar_storeload): Disable for LEON3.
+
+2014-07-17  Richard Biener  <rguenther@suse.de>
+
+	PR rtl-optimization/61801
+	* sched-deps.c (sched_analyze_2): For ASM_OPERANDS and
+	ASM_INPUT don't set reg_pending_barrier if it appears in a
+	debug-insn.
+
+2014-07-16  Jakub Jelinek  <jakub@redhat.com>
+
+	* omp-low.c (create_omp_child_function): Don't set DECL_NAMELESS
+	on the FUNCTION_DECL.
+
+2014-07-10  Tom G. Christensen  <tgc@jupiterrise.com>
+
+	* doc/install.texi: Remove links to defunct package providers for
+	Solaris.
+
+2014-07-10  Eric Botcazou  <ebotcazou@adacore.com>
+
+	PR middle-end/53590
+	* function.c (allocate_struct_function): Revert r188667 change.
+
+2014-07-04  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/61684
+	* tree-ssa-ifcombine.c (recognize_single_bit_test): Make sure
+	rhs1 of conversion is a SSA_NAME before using SSA_NAME_DEF_STMT on it.
+
+2014-06-30  Thomas Preud'homme  <thomas.preudhomme@arm.com>
+
+	Backport from Mainline
+	2014-06-20  Jakub Jelinek  <jakub@redhat.com>
+	2014-06-11  Thomas Preud'homme  <thomas.preudhomme@arm.com>
+
+	PR tree-optimization/61306
+	* tree-ssa-math-opts.c (struct symbolic_number): Store type of
+	expression instead of its size.
+	(do_shift_rotate): Adapt to change in struct symbolic_number. Return
+	false to prevent optimization when the result is unpredictable due to
+	arithmetic right shift of signed type with highest byte is set.
+	(verify_symbolic_number_p): Adapt to change in struct symbolic_number.
+	(find_bswap_1): Likewise. Return NULL to prevent optimization when the
+	result is unpredictable due to sign extension.
+	(find_bswap): Adapt to change in struct symbolic_number.
+
+2014-06-27  Uros Bizjak  <ubizjak@gmail.com>
+
+	Backport from mainline
+	2014-06-26  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/61586
+	* config/alpha/alpha.c (alpha_handle_trap_shadows): Handle BARRIER RTX.
+
+2014-06-26  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	PR target/61542
+	* config/rs6000/vsx.md (vsx_extract_v4sf): Fix bug with element
+	extraction other than index 3.
+
+2014-06-24  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/61570
+	* config/i386/driver-i386.c (host_detect_local_cpu): For unknown
+	model family 6 CPU with has_longmode never use a CPU without
+	64-bit support.
+
+2014-06-20  Chung-Lin Tang  <cltang@codesourcery.com>
+
+	Backport from mainline
+
+	2014-06-20  Julian Brown  <julian@codesourcery.com>
+	            Chung-Lin Tang  <cltang@codesourcery.com>
+
+	* config/arm/arm.c (arm_output_mi_thunk): Fix offset for
+	TARGET_THUMB1_ONLY. Add comments.
+
+2014-06-18  Uros Bizjak  <ubizjak@gmail.com>
+
+	Backport from mainline
+	2014-06-06  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/61423
+	* config/i386/i386.md (*floatunssi<mode>2_i387_with_xmm): New
+	define_insn_and_split pattern, merged from *floatunssi<mode>2_1
+	and corresponding splitters.  Zero extend general register
+	or memory input operand to XMM temporary.  Enable for
+	TARGET_SSE2 and TARGET_INTER_UNIT_MOVES_TO_VEC only.
+	(floatunssi<mode>2): Update expander predicate.
+
+2014-06-18  Richard Henderson  <rth@redhat.com>
+
+	PR target/61545
+	* config/aarch64/aarch64.md (tlsdesc_small): Clobber CC_REGNUM.
+
+2014-06-17  Nagaraju Mekala <nagaraju.mekala@xilinx.com>
+
+	Revert on gcc-4_8-branch.
+	* config/microblaze/microblaze.md: Add movsi4_rev insn pattern.
+	* config/microblaze/predicates.md: Add reg_or_mem_operand predicate.
+
+2014-06-17  Yufeng Zhang  <yufeng.zhang@arm.com>
+
+	Backport from mainline
+
+	PR target/61483
+	* config/aarch64/aarch64.c (aarch64_layout_arg): Add new local
+	variable 'size'; calculate 'size' right in the front; use
+	'size' to compute 'nregs' (when 'allocate_ncrn != 0') and
+	pcum->aapcs_stack_words.
+
+2014-06-13  Peter Bergner  <bergner@vnet.ibm.com>
+
+	Backport from mainline
+
+	2014-06-13  Peter Bergner  <bergner@vnet.ibm.com>
+	PR target/61415
+	* config/rs6000/rs6000-builtin.def (BU_MISC_1): Delete.
+	(BU_MISC_2): Rename to ...
+	(BU_LDBL128_2): ... this.
+	* config/rs6000/rs6000.h (RS6000_BTM_LDBL128): New define.
+	(RS6000_BTM_COMMON): Add RS6000_BTM_LDBL128.
+	* config/rs6000/rs6000.c (rs6000_builtin_mask_calculate): Handle
+	RS6000_BTM_LDBL128.
+	(rs6000_invalid_builtin): Add long double 128-bit builtin support.
+	(rs6000_builtin_mask_names): Add RS6000_BTM_LDBL128.
+	* config/rs6000/rs6000.md (unpacktf_0): Remove define)expand.
+	(unpacktf_1): Likewise.
+	* doc/extend.texi (__builtin_longdouble_dw0): Remove documentation.
+	(__builtin_longdouble_dw1): Likewise.
+	* doc/sourcebuild.texi (longdouble128): Document.
+
+2014-06-13  Jason Merrill  <jason@redhat.com>
+
+	PR c++/60731
+	* common.opt (-fno-gnu-unique): Add.
+	* config/elfos.h (USE_GNU_UNIQUE_OBJECT): Check it.
+
+2014-06-12  Georg-Johann Lay  <avr@gjlay.de>
+
+	Backport from 2014-05-09 trunk r210272
+
+	* config/avr/avr-fixed.md (round<mode>3): Use -1U instead of -1 in
+	unsigned int initializers for regno_in, regno_out.
+
+	Backport from 2014-05-14 trunk r210418
+	* config/avr/avr.h (REG_CLASS_CONTENTS): Use unsigned suffix for
+	shifted values to avoid build warning.
+
+	Backport from 2014-06-12 trunk r211491
+
+	PR target/61443
+	* config/avr/avr.md (push<mode>1): Avoid (subreg(mem)) when
+	loading from address spaces.
+
+2014-06-12  Alan Modra  <amodra@gmail.com>
+
+	PR target/61300
+	* doc/tm.texi.in (INCOMING_REG_PARM_STACK_SPACE): Document.
+	* doc/tm.texi: Regenerate.
+	* function.c (INCOMING_REG_PARM_STACK_SPACE): Provide default.
+	Use throughout in place of REG_PARM_STACK_SPACE.
+	* config/rs6000/rs6000.c (rs6000_reg_parm_stack_space): Add
+	"incoming" param.  Pass to rs6000_function_parms_need_stack.
+	(rs6000_function_parms_need_stack): Add "incoming" param, ignore
+	prototype_p when incoming.  Use function decl when incoming
+	to handle K&R style functions.
+	* config/rs6000/rs6000.h (REG_PARM_STACK_SPACE): Adjust.
+	(INCOMING_REG_PARM_STACK_SPACE): Define.
+
+2014-06-06  Michael Meissner  <meissner@linux.vnet.ibm.com>
+
+	Back port from trunk
+	2014-06-06  Michael Meissner  <meissner@linux.vnet.ibm.com>
+
+	PR target/61431
+	* config/rs6000/vsx.md (VSX_LE): Split VSX_D into 2 separate
+	iterators, VSX_D that handles 64-bit types, and VSX_LE that
+	handles swapping the two 64-bit double words on little endian
+	systems.  Include V1TImode and optionally TImode in VSX_LE so that
+	these types are properly swapped.  Change all of the insns and
+	splits that do the 64-bit swaps to use VSX_LE.
+	(vsx_le_perm_load_<mode>): Likewise.
+	(vsx_le_perm_store_<mode>): Likewise.
+	(splitters for little endian memory operations): Likewise.
+	(vsx_xxpermdi2_le_<mode>): Likewise.
+	(vsx_lxvd2x2_le_<mode>): Likewise.
+	(vsx_stxvd2x2_le_<mode>): Likewise.
+
+2014-06-05  Martin Jambor  <mjambor@suse.cz>
+
+	PR ipa/61393
+	* ipa-cp.c (determine_versionability): Pretend that tm_clones are
+	not versionable.
+
+2014-06-04  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/61383
+	* tree-ssa-ifcombine.c (bb_no_side_effects_p): Make sure
+	stmts can't trap.
+
+2014-06-03  Andrey Belevantsev  <abel@ispras.ru>
+
+	Backport from mainline
+	2014-05-14  Andrey Belevantsev  <abel@ispras.ru>
+
+	PR rtl-optimization/60866
+	* sel-sched-ir (sel_init_new_insn): New parameter old_seqno.
+	Default it to -1.  Pass it down to init_simplejump_data.
+	(init_simplejump_data): New parameter old_seqno.  Pass it down
+	to get_seqno_for_a_jump.
+	(get_seqno_for_a_jump): New parameter old_seqno.  Use it for
+	initializing new jump seqno as a last resort.  Add comment.
+	(sel_redirect_edge_and_branch): Save old seqno of the conditional
+	jump and pass it down to sel_init_new_insn.
+	(sel_redirect_edge_and_branch_force): Likewise.
+
+2014-06-03  Andrey Belevantsev  <abel@ispras.ru>
+
+	Backport from mainline
+	2014-05-14  Andrey Belevantsev  <abel@ispras.ru>
+
+	PR rtl-optimization/60901
+	* config/i386/i386.c (ix86_dependencies_evaluation_hook): Check that
+	bb predecessor belongs to the same scheduling region.  Adjust comment.
+
+2014-06-03  Uros Bizjak  <ubizjak@gmail.com>
+
+	Backport from mainline
+	2014-06-02  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/61239
+	* config/i386/i386.c (ix86_expand_vec_perm) [case V32QImode]: Use
+	GEN_INT (-128) instead of GEN_INT (128) to set MSB of QImode constant.
+
+2014-05-28  Guozhi Wei  <carrot@google.com>
+
+	PR target/61202
+	* config/aarch64/arm_neon.h (vqdmulh_n_s16): Change the last operand's
+	constraint.
+	(vqdmulhq_n_s16): Likewise.
+
+2014-05-28  Eric Botcazou  <ebotcazou@adacore.com>
+
+	Backport from mainline
+	2014-05-27  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* double-int.c (div_and_round_double) <ROUND_DIV_EXPR>: Use the proper
+	predicate to detect a negative quotient.
+
+2014-05-28  Georg-Johann Lay  <avr@gjlay.de>
+
+	PR target/61044
+	* doc/extend.texi (Local Labels): Note that label differences are
+	not supported for AVR.
+
+2014-05-26  Michael Tautschnig  <mt@debian.org>
+
+	PR target/61249
+	* doc/extend.texi (X86 Built-in Functions): Fix parameter lists of
+	__builtin_ia32_vfrczs[sd] and __builtin_ia32_mpsadbw256.
+
+2014-05-23  Alan Modra  <amodra@gmail.com>
+
+	PR target/61231
+	* config/rs6000/rs6000.c (mem_operand_gpr): Handle SImode.
+	* config/rs6000/rs6000.md (extendsidi2_lfiwax, extendsidi2_nocell):
+	Use "Y" constraint rather than "m".
+
+2014-05-22  Peter Bergner  <bergner@vnet.ibm.com>
+
+	Backport from mainline
+	2014-05-22  Peter Bergner  <bergner@vnet.ibm.com>
+
+	* config/rs6000/htm.md (ttest): Use correct shift value to get CR0.
+
+2014-05-22  Richard Earnshaw  <rearnsha@arm.com>
+
+	PR target/61208
+	* arm.md (arm_cmpdi_unsigned): Fix length calculation for Thumb2.
+
+2013-05-22  Richard Biener  <rguenther@suse.de>
+
+	* BASE-VER: Set to 4.8.4.
+	* DEV-PHASE: Set to prerelease.
+
 2014-05-22  Release Manager
 
 	* GCC 4.8.3 released.

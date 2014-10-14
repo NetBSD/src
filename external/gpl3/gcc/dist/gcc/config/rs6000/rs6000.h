@@ -1438,6 +1438,10 @@ enum r6000_reg_class_enum {
   RS6000_CONSTRAINT_wd,		/* VSX register for V2DF */
   RS6000_CONSTRAINT_wf,		/* VSX register for V4SF */
   RS6000_CONSTRAINT_wg,		/* FPR register for -mmfpgpr */
+  RS6000_CONSTRAINT_wh,		/* FPR register for direct moves.  */
+  RS6000_CONSTRAINT_wi,		/* FPR/VSX register to hold DImode */
+  RS6000_CONSTRAINT_wj,		/* FPR/VSX register for DImode direct moves. */
+  RS6000_CONSTRAINT_wk,		/* FPR/VSX register for DFmode direct moves. */
   RS6000_CONSTRAINT_wl,		/* FPR register for LFIWAX */
   RS6000_CONSTRAINT_wm,		/* VSX register for direct move */
   RS6000_CONSTRAINT_wr,		/* GPR register if 64-bit  */
@@ -1461,6 +1465,9 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 /* Return whether a given register class can hold VSX objects.  */
 #define VSX_REG_CLASS_P(CLASS)			\
   ((CLASS) == VSX_REGS || (CLASS) == FLOAT_REGS || (CLASS) == ALTIVEC_REGS)
+
+/* Return whether a given register class targets general purpose registers.  */
+#define GPR_REG_CLASS_P(CLASS) ((CLASS) == GENERAL_REGS || (CLASS) == BASE_REGS)
 
 /* Given an rtx X being reloaded into a reg required to be
    in class CLASS, return the class of reg to actually use.
@@ -1593,7 +1600,14 @@ extern enum reg_class rs6000_constraints[RS6000_CONSTRAINT_MAX];
 /* Define this if stack space is still allocated for a parameter passed
    in a register.  The value is the number of bytes allocated to this
    area.  */
-#define REG_PARM_STACK_SPACE(FNDECL) rs6000_reg_parm_stack_space((FNDECL))
+#define REG_PARM_STACK_SPACE(FNDECL) \
+  rs6000_reg_parm_stack_space ((FNDECL), false)
+
+/* Define this macro if space guaranteed when compiling a function body
+   is different to space required when making a call, a situation that
+   can arise with K&R style function definitions.  */
+#define INCOMING_REG_PARM_STACK_SPACE(FNDECL) \
+  rs6000_reg_parm_stack_space ((FNDECL), true)
 
 /* Define this if the above stack space is to be considered part of the
    space allocated by the caller.  */
@@ -2483,8 +2497,8 @@ extern int frame_pointer_needed;
 #define RS6000_BTC_SAT		RS6000_BTC_MISC	/* saturate sets VSCR.  */
 
 /* Builtin targets.  For now, we reuse the masks for those options that are in
-   target flags, and pick two random bits for SPE and paired which aren't in
-   target_flags.  */
+   target flags, and pick three random bits for SPE, paired and ldbl128 which
+   aren't in target_flags.  */
 #define RS6000_BTM_ALWAYS	0		/* Always enabled.  */
 #define RS6000_BTM_ALTIVEC	MASK_ALTIVEC	/* VMX/altivec vectors.  */
 #define RS6000_BTM_VSX		MASK_VSX	/* VSX (vector/scalar).  */
@@ -2501,6 +2515,7 @@ extern int frame_pointer_needed;
 #define RS6000_BTM_CELL		MASK_FPRND	/* Target is cell powerpc.  */
 #define RS6000_BTM_DFP		MASK_DFP	/* Decimal floating point.  */
 #define RS6000_BTM_HARD_FLOAT	MASK_SOFT_FLOAT	/* Hardware floating point.  */
+#define RS6000_BTM_LDBL128	MASK_MULTIPLE	/* 128-bit long double.  */
 
 #define RS6000_BTM_COMMON	(RS6000_BTM_ALTIVEC			\
 				 | RS6000_BTM_VSX			\
@@ -2514,7 +2529,8 @@ extern int frame_pointer_needed;
 				 | RS6000_BTM_POPCNTD			\
 				 | RS6000_BTM_CELL			\
 				 | RS6000_BTM_DFP			\
-				 | RS6000_BTM_HARD_FLOAT)
+				 | RS6000_BTM_HARD_FLOAT		\
+				 | RS6000_BTM_LDBL128)
 
 /* Define builtin enum index.  */
 
