@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.141 2014/10/10 17:41:05 christos Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.142 2014/10/14 00:56:48 uwe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.141 2014/10/10 17:41:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.142 2014/10/14 00:56:48 uwe Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1311,9 +1311,19 @@ re_rxeof(struct rtk_softc *sc)
 						    M_CSUM_TCP_UDP_BAD;
 				} else if (RE_UDPPKT(rxstat)) {
 					m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
-					if (rxstat & RE_RDESC_STAT_UDPSUMBAD)
-						m->m_pkthdr.csum_flags |=
-						    M_CSUM_TCP_UDP_BAD;
+					if (rxstat & RE_RDESC_STAT_UDPSUMBAD) {
+						/*
+						 * XXX: 8139C+ thinks UDP csum
+						 * 0xFFFF is bad, force software
+						 * calculation.
+						 */
+						if (sc->sc_quirk & RTKQ_8139CPLUS)
+							m->m_pkthdr.csum_flags
+							    &= ~M_CSUM_UDPv4;
+						else
+							m->m_pkthdr.csum_flags
+							    |= M_CSUM_TCP_UDP_BAD;
+					}
 				}
 			}
 		} else {
