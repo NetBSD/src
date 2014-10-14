@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31_INSTALL,v 1.1 2014/10/14 09:32:16 uebayasi Exp $
+#	$NetBSD: HUMMINGBIRD_A31_INSTALL,v 1.2 2014/10/14 12:00:22 jmcneill Exp $
 #
 #       HUMMINGBIRD_A31_INSTALL -- Merrii Hummingbird A31 kernel with
 #	installation-sized ramdisk
@@ -7,8 +7,5 @@
 include "arch/evbarm/conf/HUMMINGBIRD_A31"
 include "arch/evbarm/conf/INSTALL"
 
-no options	MEMORY_DISK_ROOT_SIZE
-options 	MEMORY_DISK_ROOT_SIZE=17800
-
-makeoptions	RAMDISKNAME=sshramdisk
-no makeoptions	DEBUG
+options 	BOOTHOWTO=RB_SINGLE
+no makeoption 	DEBUG
