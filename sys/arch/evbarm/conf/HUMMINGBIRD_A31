@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.9 2014/10/13 19:04:17 jmcneill Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.10 2014/10/14 22:43:33 jmcneill Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -16,6 +16,8 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # CPU options
 
+no makeoptions	CPUFLAGS
+makeoptions	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
 no makeoptions	BOARDTYPE
 makeoptions	BOARDTYPE="hummingbird_a31"
 #options 	UVMHIST,UVMHIST_PRINT
