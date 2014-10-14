@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.52 2014/10/14 07:38:44 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.53 2014/10/14 08:17:28 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1126,7 +1126,7 @@ tests/lib/libutil/t_parsedate.c			1.8-1.13
 	cases.  Fixes PR lib/47916.
 	[apb, ticket #135]
 
-sys/fs/puffs/puffs_vnops.c			1.188-1.191
+sys/fs/puffs/puffs_vnops.c			1.188-1.194
 
 	If we truncate a file open for writing, make sure we zero-fill the end
 	of the last page, otherwise if the file is later truncated to a larger
