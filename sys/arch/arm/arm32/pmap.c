@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.302 2014/09/23 06:31:54 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.303 2014/10/14 12:31:14 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.302 2014/09/23 06:31:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.303 2014/10/14 12:31:14 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3348,7 +3348,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				}
 			}
 		}
-#endif /* !ARMM_MMU_EXTENDED */
+#endif /* !ARM_MMU_EXTENDED */
 
 		pmap_tlb_flush_SE(pm, va, oflags);
 
