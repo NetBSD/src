@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.87 2014/10/07 21:51:03 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.88 2014/10/14 20:35:40 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.87 2014/10/07 21:51:03 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.88 2014/10/14 20:35:40 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -250,6 +250,7 @@ tzgetname(const timezone_t sp, int isdst)
 		if (ttisp->tt_isdst == isdst)
 			return &sp->chars[ttisp->tt_abbrind];
 	}
+	errno = ESRCH;
 	return NULL;
 }
 
@@ -1353,8 +1354,10 @@ localsub(struct state const *sp, time_t const *timep, int_fast32_t offset,
 				newt += seconds;
 			else	newt -= seconds;
 			if (newt < sp->ats[0] ||
-				newt > sp->ats[sp->timecnt - 1])
-					return NULL;	/* "cannot happen" */
+				newt > sp->ats[sp->timecnt - 1]) {
+				errno = EINVAL;
+				return NULL;	/* "cannot happen" */
+			}
 			result = localsub(sp, &newt, offset, tmp);
 			if (result) {
 				int_fast64_t newy;
@@ -1363,8 +1366,10 @@ localsub(struct state const *sp, time_t const *timep, int_fast32_t offset,
 				if (t < sp->ats[0])
 					newy -= years;
 				else	newy += years;
-				if (! (INT_MIN <= newy && newy <= INT_MAX))
+				if (! (INT_MIN <= newy && newy <= INT_MAX)) {
+					errno = EOVERFLOW;
 					return NULL;
+				}
 				result->tm_year = (int)newy;
 			}
 			return result;
@@ -1398,7 +1403,7 @@ localsub(struct state const *sp, time_t const *timep, int_fast32_t offset,
 			tzname[result->tm_isdst] =
 			    __UNCONST(&sp->chars[ttisp->tt_abbrind]);
 #ifdef TM_ZONE
-		tmp->TM_ZONE = __UNCONST(&sp->chars[ttisp->tt_abbrind]);
+		result->TM_ZONE = __UNCONST(&sp->chars[ttisp->tt_abbrind]);
 #endif /* defined TM_ZONE */
 	}
 	return result;
@@ -1456,8 +1461,9 @@ gmtsub(struct state const *sp, const time_t *timep, int_fast32_t offset,
 	** "UT+xxxx" or "UT-xxxx" if offset is non-zero,
 	** but this is no time for a treasure hunt.
 	*/
-	tmp->TM_ZONE = offset ? __UNCONST(wildabbr) : gmtptr ? gmtptr->chars :
-	    __UNCONST(gmt);
+	if (result)
+		result->TM_ZONE = offset ? __UNCONST(wildabbr) : gmtptr ?
+		    gmtptr->chars : __UNCONST(gmt);
 #endif /* defined TM_ZONE */
 	return result;
 }
@@ -1575,14 +1581,14 @@ timesub(time_t const *timep, int_fast32_t offset, struct state const *sp,
 		tdelta = tdays / DAYSPERLYEAR;
 		if (! ((! TYPE_SIGNED(time_t) || INT_MIN <= tdelta)
 		       && tdelta <= INT_MAX))
-			return NULL;
+		       goto overflow;
 		_DIAGASSERT(__type_fit(int, tdelta));
 		idelta = (int)tdelta;
 		if (idelta == 0)
 			idelta = (tdays < 0) ? -1 : 1;
 		newy = y;
 		if (increment_overflow(&newy, idelta))
-			return NULL;
+			goto overflow;
 		leapdays = leaps_thru_end_of(newy - 1) -
 			leaps_thru_end_of(y - 1);
 		tdays -= ((time_t) newy - y) * DAYSPERNYEAR;
@@ -1611,13 +1617,13 @@ timesub(time_t const *timep, int_fast32_t offset, struct state const *sp,
 	}
 	while (idays < 0) {
 		if (increment_overflow(&y, -1))
-			return NULL;
+			goto overflow;
 		idays += year_lengths[isleap(y)];
 	}
 	while (idays >= year_lengths[isleap(y)]) {
 		idays -= year_lengths[isleap(y)];
 		if (increment_overflow(&y, 1))
-			return NULL;
+			goto overflow;
 	}
 	tmp->tm_year = y;
 	if (increment_overflow(&tmp->tm_year, -TM_YEAR_BASE))
@@ -1652,6 +1658,9 @@ timesub(time_t const *timep, int_fast32_t offset, struct state const *sp,
 	tmp->TM_GMTOFF = offset;
 #endif /* defined TM_GMTOFF */
 	return tmp;
+overflow:
+	errno = EOVERFLOW;
+	return NULL;
 }
 
 char *
@@ -2131,7 +2140,6 @@ static time_t
 mktime_tzname(timezone_t sp, struct tm *tmp, bool setname)
 {
 	if (sp)
-/*###2133 [lint] warning argument has incompatible pointer type, arg #2 (pointer to function != pointer to function) [153]%%%*/
 		return time1(tmp, localsub, sp, setname);
 	else {
 		gmtcheck();
