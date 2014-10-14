@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.4 2014/09/13 00:38:36 roy Exp $	*/
+/*	$NetBSD: defs.h,v 1.5 2014/10/14 16:35:20 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -549,6 +549,7 @@ void	get_tz_default(void);
 int	extract_file(distinfo *, int);
 void	do_coloring (unsigned int, unsigned int);
 int set_menu_select(menudesc *, void *);
+const char *safectime(time_t *);
 
 /* from target.c */
 #if defined(DEBUG)  ||	defined(DEBUG_ROOT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.16 2014/09/22 18:47:41 roy Exp $	*/
+/*	$NetBSD: net.c,v 1.17 2014/10/14 16:35:20 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -779,9 +779,8 @@ done:
 		}
 		scripting_fprintf(NULL, "cat <<EOF >/etc/resolv.conf\n");
 		time(&now);
-		/* NB: ctime() returns a string ending in  '\n' */
 		scripting_fprintf(f, ";\n; BIND data file\n; %s %s;\n",
-		    "Created by NetBSD sysinst on", ctime(&now));
+		    "Created by NetBSD sysinst on", safectime(&now));
 		if (net_domain[0] != '\0')
 			scripting_fprintf(f, "search %s\n", net_domain);
 		if (net_namesvr[0] != '\0')
