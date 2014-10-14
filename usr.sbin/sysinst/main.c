@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 2014/08/19 13:30:32 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.6 2014/10/14 16:35:20 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -474,14 +474,13 @@ cleanup(void)
 	endwin();
 
 	if (logfp) {
-		fprintf(logfp, "Log ended at: %s\n", asctime(localtime(&tloc)));
+		fprintf(logfp, "Log ended at: %s\n", safectime(&tloc));
 		fflush(logfp);
 		fclose(logfp);
 		logfp = NULL;
 	}
 	if (script) {
-		fprintf(script, "# Script ended at: %s\n",
-		    asctime(localtime(&tloc)));
+		fprintf(script, "# Script ended at: %s\n", safectime(&tloc));
 		fflush(script);
 		fclose(script);
 		script = NULL;
