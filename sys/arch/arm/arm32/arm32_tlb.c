@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.3 2014/10/14 08:03:13 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.4 2014/10/14 20:35:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -89,7 +89,7 @@ tlb_invalidate_asids(tlb_asid_t lo, tlb_asid_t hi)
 	arm_dsb();
 	if (arm_has_tlbiasid_p) {
 		for (; lo <= hi; lo++) {
-			armreg_tlbiasid_write(lo);
+			armreg_tlbiasidis_write(lo);
 		}
 		arm_isb();
 		if (__predict_false(vivt_icache_p)) {
