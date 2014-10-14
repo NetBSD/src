@@ -54,7 +54,10 @@ namespace std _GLIBCXX_VISIBILITY(default)
 
 #if (defined __i386__ || defined __x86_64__) && defined _GLIBCXX_X86_RDRAND
     unsigned int
+    __attribute__ ((noinline))
+#  ifndef __clang__
     __attribute__ ((target("rdrnd")))
+#  endif
     __x86_rdrand(void)
     {
       unsigned int retries = 100;

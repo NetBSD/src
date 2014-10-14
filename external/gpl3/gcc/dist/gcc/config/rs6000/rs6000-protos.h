@@ -79,9 +79,9 @@ extern int mems_ok_for_quad_peep (rtx, rtx);
 extern bool gpr_or_gpr_p (rtx, rtx);
 extern bool direct_move_p (rtx, rtx);
 extern bool quad_load_store_p (rtx, rtx);
-extern bool fusion_gpr_load_p (rtx *, bool);
+extern bool fusion_gpr_load_p (rtx, rtx, rtx, rtx);
 extern void expand_fusion_gpr_load (rtx *);
-extern const char *emit_fusion_gpr_load (rtx *);
+extern const char *emit_fusion_gpr_load (rtx, rtx);
 extern enum reg_class (*rs6000_preferred_reload_class_ptr) (rtx,
 							    enum reg_class);
 extern enum reg_class (*rs6000_secondary_reload_class_ptr) (enum reg_class,
@@ -153,6 +153,7 @@ extern void rs6000_split_logical (rtx [], enum rtx_code, bool, bool, bool, rtx);
 
 #ifdef TREE_CODE
 extern unsigned int rs6000_data_alignment (tree, unsigned int, enum data_align);
+extern bool rs6000_special_adjust_field_align_p (tree, unsigned int);
 extern unsigned int rs6000_special_round_type_align (tree, unsigned int,
 						     unsigned int);
 extern unsigned int darwin_rs6000_special_round_type_align (tree, unsigned int,
@@ -161,7 +162,7 @@ extern tree altivec_resolve_overloaded_builtin (location_t, tree, void *);
 extern rtx rs6000_libcall_value (enum machine_mode);
 extern rtx rs6000_va_arg (tree, tree);
 extern int function_ok_for_sibcall (tree);
-extern int rs6000_reg_parm_stack_space (tree);
+extern int rs6000_reg_parm_stack_space (tree, bool);
 extern void rs6000_elf_declare_function_name (FILE *, const char *, tree);
 extern bool rs6000_elf_in_small_data_p (const_tree);
 #ifdef ARGS_SIZE_RTX

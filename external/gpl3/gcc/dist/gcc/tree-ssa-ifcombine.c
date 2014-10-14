@@ -105,7 +105,11 @@ bb_no_side_effects_p (basic_block bb)
     {
       gimple stmt = gsi_stmt (gsi);
 
+      if (is_gimple_debug (stmt))
+	continue;
+
       if (gimple_has_side_effects (stmt)
+	  || gimple_could_trap_p (stmt)
 	  || gimple_vuse (stmt))
 	return false;
     }
@@ -197,7 +201,8 @@ recognize_single_bit_test (gimple cond, tree *name, tree *bit, bool inv)
       while (is_gimple_assign (stmt)
 	     && ((CONVERT_EXPR_CODE_P (gimple_assign_rhs_code (stmt))
 		  && (TYPE_PRECISION (TREE_TYPE (gimple_assign_lhs (stmt)))
-		      <= TYPE_PRECISION (TREE_TYPE (gimple_assign_rhs1 (stmt)))))
+		      <= TYPE_PRECISION (TREE_TYPE (gimple_assign_rhs1 (stmt))))
+		  && TREE_CODE (gimple_assign_rhs1 (stmt)) == SSA_NAME)
 		 || gimple_assign_ssa_name_copy_p (stmt)))
 	stmt = SSA_NAME_DEF_STMT (gimple_assign_rhs1 (stmt));
 

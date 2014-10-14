@@ -77,13 +77,15 @@ extern int dot_symbols;
    -mrelocatable or -mrelocatable-lib is given.  */
 #undef RELOCATABLE_NEEDS_FIXUP
 #define RELOCATABLE_NEEDS_FIXUP \
-  (target_flags & target_flags_explicit & MASK_RELOCATABLE)
+  (rs6000_isa_flags & rs6000_isa_flags_explicit & OPTION_MASK_RELOCATABLE)
 
 #undef	RS6000_ABI_NAME
 #define	RS6000_ABI_NAME "netbsd"
 
 #define INVALID_64BIT "-m%s not supported in this configuration"
 #define INVALID_32BIT INVALID_64BIT
+
+#define ELFv2_ABI_CHECK (rs6000_elf_abi == 2)                   
 
 #undef	SUBSUBTARGET_OVERRIDE_OPTIONS
 #define	SUBSUBTARGET_OVERRIDE_OPTIONS				\
@@ -99,6 +101,12 @@ extern int dot_symbols;
 	      error (INVALID_64BIT, "call");			\
 	    }							\
 	  dot_symbols = !strcmp (rs6000_abi_name, "aixdesc");	\
+	  if (ELFv2_ABI_CHECK)					\
+	    {							\
+	      rs6000_current_abi = ABI_ELFv2;			\
+	      if (dot_symbols)					\
+		error ("-mcall-aixdesc incompatible with -mabi=elfv2"); \
+	    }							\
 	  if (rs6000_isa_flags & OPTION_MASK_RELOCATABLE)	\
 	    {							\
 	      rs6000_isa_flags &= ~OPTION_MASK_RELOCATABLE;	\
@@ -301,6 +309,8 @@ extern int dot_symbols;
   do							\
     {							\
       NETBSD_OS_CPP_BUILTINS_ELF();			\
+      if (TARGET_ISEL)					\
+	builtin_define ("__PPC_ISEL__");		\
       if (TARGET_64BIT)					\
 	{						\
 	  builtin_define ("__PPC__");			\
@@ -386,9 +396,7 @@ extern int dot_symbols;
 #define	PTRDIFF_TYPE (TARGET_64BIT ? "long int" : "int")
 
 #undef	WCHAR_TYPE
-#define	WCHAR_TYPE (TARGET_64BIT ? "int" : "long int")
-#undef  WCHAR_TYPE_SIZE
-#define WCHAR_TYPE_SIZE 32
+#define	WCHAR_TYPE "int"
 
 /* Override rs6000.h definition.  */
 #undef  ASM_APP_ON

@@ -46,6 +46,37 @@ along with GCC; see the file COPYING3.  If not see
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE "long int"
 
+/* we keep these "long" on both 32bit and 64bit targets */
+#undef INTPTR_TYPE
+#define INTPTR_TYPE PTRDIFF_TYPE
+
+#undef UINTPTR_TYPE
+#define UINTPTR_TYPE SIZE_TYPE
+
+#undef INT_FAST8_TYPE
+#define INT_FAST8_TYPE   (LONG_TYPE_SIZE == 64 ? "long int" : "int")
+
+#undef UINT_FAST8_TYPE
+#define UINT_FAST8_TYPE  (LONG_TYPE_SIZE == 64 ? "unsigned char" : "unsigned int")
+
+#undef INT_FAST16_TYPE
+#define INT_FAST16_TYPE  (LONG_TYPE_SIZE == 64 ? "long int" : "int")
+
+#undef UINT_FAST16_TYPE
+#define UINT_FAST16_TYPE (LONG_TYPE_SIZE == 64 ? "short unsigned int" : "unsigned int")
+
+#undef INT_FAST32_TYPE
+#define INT_FAST32_TYPE  (LONG_TYPE_SIZE == 64 ? "long int" : "int")
+
+#undef UINT_FAST32_TYPE
+#define UINT_FAST32_TYPE "unsigned int"
+
+#undef INT_FAST64_TYPE
+#define INT_FAST64_TYPE  (LONG_TYPE_SIZE == 64 ? "long int" : "long long int")
+
+#undef UINT_FAST64_TYPE
+#define UINT_FAST64_TYPE (LONG_TYPE_SIZE == 64 ? "long unsigned int" : "long long unsigned int")
+
 /* This is the char to use for continuation (in case we need to turn
    continuation back on).  */
 #undef DBX_CONTIN_CHAR

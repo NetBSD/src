@@ -3237,7 +3237,12 @@ pa_assemble_integer (rtx x, unsigned int size, int aligned_p)
       && aligned_p
       && function_label_operand (x, VOIDmode))
     {
-      fputs (size == 8? "\t.dword\tP%" : "\t.word\tP%", asm_out_file);
+      fputs (size == 8? "\t.dword\t" : "\t.word\t", asm_out_file);
+
+      /* We don't want an OPD when generating fast indirect calls.  */
+      if (!TARGET_FAST_INDIRECT_CALLS)
+	fputs ("P%", asm_out_file);
+
       output_addr_const (asm_out_file, x);
       fputc ('\n', asm_out_file);
       return true;
@@ -4160,8 +4165,7 @@ static void
 pa_output_function_epilogue (FILE *file, HOST_WIDE_INT size ATTRIBUTE_UNUSED)
 {
   rtx insn = get_last_insn ();
-
-  last_address = 0;
+  bool extra_nop;
 
   /* pa_expand_epilogue does the dirty work now.  We just need
      to output the assembler directives which denote the end
@@ -4185,26 +4189,36 @@ pa_output_function_epilogue (FILE *file, HOST_WIDE_INT size ATTRIBUTE_UNUSED)
   if (insn && GET_CODE (insn) == CALL_INSN)
     {
       fputs ("\tnop\n", file);
-      last_address += 4;
+      extra_nop = true;
     }
+  else
+    extra_nop = false;
 
   fputs ("\t.EXIT\n\t.PROCEND\n", file);
 
   if (TARGET_SOM && TARGET_GAS)
     {
-      /* We done with this subspace except possibly for some additional
+      /* We are done with this subspace except possibly for some additional
 	 debug information.  Forget that we are in this subspace to ensure
 	 that the next function is output in its own subspace.  */
       in_section = NULL;
       cfun->machine->in_nsubspa = 2;
     }
 
+  /* Thunks do their own insn accounting.  */
+  if (cfun->is_thunk)
+    return;
+
   if (INSN_ADDRESSES_SET_P ())
     {
+      last_address = extra_nop ? 4 : 0;
       insn = get_last_nonnote_insn ();
-      last_address += INSN_ADDRESSES (INSN_UID (insn));
-      if (INSN_P (insn))
-	last_address += insn_default_length (insn);
+      if (insn)
+	{
+	  last_address += INSN_ADDRESSES (INSN_UID (insn));
+	  if (INSN_P (insn))
+	    last_address += insn_default_length (insn);
+	}
       last_address = ((last_address + FUNCTION_BOUNDARY / BITS_PER_UNIT - 1)
 		      & ~(FUNCTION_BOUNDARY / BITS_PER_UNIT - 1));
     }
@@ -8270,8 +8284,7 @@ pa_asm_output_mi_thunk (FILE *file, tree thunk_fndecl, HOST_WIDE_INT delta,
   xoperands[1] = XEXP (DECL_RTL (thunk_fndecl), 0);
   xoperands[2] = GEN_INT (delta);
 
-  ASM_OUTPUT_LABEL (file, XSTR (xoperands[1], 0));
-  fprintf (file, "\t.PROC\n\t.CALLINFO FRAME=0,NO_CALLS\n\t.ENTRY\n");
+  final_start_function (emit_barrier (), file, 1);
 
   /* Output the thunk.  We know that the function is in the same
      translation unit (i.e., the same space) as the thunk, and that
@@ -8301,12 +8314,16 @@ pa_asm_output_mi_thunk (FILE *file, tree thunk_fndecl, HOST_WIDE_INT delta,
 		   || ((DECL_SECTION_NAME (thunk_fndecl)
 			== DECL_SECTION_NAME (function))
 		       && last_address < 262132)))
+	      /* In this case, we need to be able to reach the start of
+		 the stub table even though the function is likely closer
+		 and can be jumped to directly.  */
 	      || (targetm_common.have_named_sections
 		  && DECL_SECTION_NAME (thunk_fndecl) == NULL
 		  && DECL_SECTION_NAME (function) == NULL
-		  && last_address < 262132)
+		  && total_code_bytes < MAX_PCREL17F_OFFSET)
+	      /* Likewise.  */
 	      || (!targetm_common.have_named_sections
-		  && last_address < 262132))))
+		  && total_code_bytes < MAX_PCREL17F_OFFSET))))
     {
       if (!val_14)
 	output_asm_insn ("addil L'%2,%%r26", xoperands);
@@ -8477,16 +8494,7 @@ pa_asm_output_mi_thunk (FILE *file, tree thunk_fndecl, HOST_WIDE_INT delta,
 	}
     }
 
-  fprintf (file, "\t.EXIT\n\t.PROCEND\n");
-
-  if (TARGET_SOM && TARGET_GAS)
-    {
-      /* We done with this subspace except possibly for some additional
-	 debug information.  Forget that we are in this subspace to ensure
-	 that the next function is output in its own subspace.  */
-      in_section = NULL;
-      cfun->machine->in_nsubspa = 2;
-    }
+  final_end_function ();
 
   if (TARGET_SOM && flag_pic && TREE_PUBLIC (function))
     {

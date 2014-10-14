@@ -31,6 +31,8 @@
         builtin_define ("_SECURE_PLT");		\
       if (TARGET_SOFT_FLOAT)			\
         builtin_define ("_SOFT_FLOAT");		\
+      if (TARGET_ISEL)				\
+        builtin_define ("__PPC_ISEL__");	\
     }						\
   while (0)
 
@@ -90,7 +92,7 @@
 #define STARTFILE_SPEC NETBSD_STARTFILE_SPEC
 
 #undef  ENDFILE_SPEC
-#define ENDFILE_SPEC "%(netbsd_endfile_spec)"
+#define ENDFILE_SPEC NETBSD_ENDFILE_SPEC
 
 #undef  LIB_SPEC
 #define LIB_SPEC NETBSD_LIB_SPEC
