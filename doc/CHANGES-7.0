@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.51 2014/10/13 20:07:11 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.52 2014/10/14 07:38:44 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1197,3 +1197,10 @@ distrib/sets/lists/debug/shl.mi			1.76
 	Import the missing complex support functions from FreeBSD, so
 	we can enable C++ 2011 mode for libstc++.
 	[christos, #138]
+
+sys/arch/x86/x86/pmap.c				1.184
+
+	Add a missing || defined(XEN) which cause Xen non-DIAGNOSTIC kernels
+	to panic at boot.
+	[bouyer, ticket #140]
+
