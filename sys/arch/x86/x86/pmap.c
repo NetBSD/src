@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.183 2014/06/14 02:54:47 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.183.2.1 2014/10/14 07:37:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183 2014/06/14 02:54:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183.2.1 2014/10/14 07:37:37 martin Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4126,7 +4126,7 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 		pmap_pte_flush();
 		pmap_update_pg((vaddr_t)early_zerop);
 		memset(early_zerop, 0, PAGE_SIZE);
-#if defined(DIAGNOSTIC)
+#if defined(DIAGNOSTIC) || defined(XEN)
 		pmap_pte_set(early_zero_pte, 0);
 		pmap_pte_flush();
 #endif /* defined(DIAGNOSTIC) */
