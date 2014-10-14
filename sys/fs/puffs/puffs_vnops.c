@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.182.2.6 2014/10/13 18:57:46 martin Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.182.2.7 2014/10/14 08:16:03 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.182.2.6 2014/10/13 18:57:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.182.2.7 2014/10/14 08:16:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1159,9 +1159,10 @@ zerofill_lastpage(struct vnode *vp, voff_t off)
 
 	error = ubc_uiomove(&vp->v_uobj, &uio, len,
 			    UVM_ADV_SEQUENTIAL, UBC_WRITE|UBC_UNMAP_FLAG(vp));
-	if (error)
-		DPRINTF(("zero-fill 0x%lx@0x%" PRIx64 " failed: error = %d\n",
-			 len, off, error));
+	if (error) {
+		DPRINTF(("zero-fill 0x%" PRIxVSIZE "@0x%" PRIx64 
+			 " failed: error = %d\n", len, off, error));
+	}
 
 	return;
 }
