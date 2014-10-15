@@ -1,0 +1,52 @@
+
+.include <bsd.own.mk>
+
+.include "../Makefile.inc"
+
+ASAN=${GCCDIST}/libsanitizer
+.PATH: ${ASAN}/asan ${ASAN}/interception ${ASAN}/sanitizer_common
+
+ASAN_SRCS= \
+	asan_allocator.cc \
+	asan_allocator2.cc \
+	asan_interceptors.cc \
+	asan_posix.cc \
+	asan_new_delete.cc \
+	asan_rtl.cc \
+	asan_stats.cc \
+	asan_globals.cc \
+	asan_thread_registry.cc \
+	asan_fake_stack.cc \
+	asan_linux.cc \
+	asan_report.cc \
+	asan_malloc_linux.cc \
+	asan_poisoning.cc \
+	asan_stack.cc \
+	asan_thread.cc \
+	asan_preinit.cc
+
+INTERCEPION_SRCS= \
+	interception_linux.cc \
+	interception_type_test.cc
+
+SANITIZER_SRCS= \
+	sanitizer_allocator.cc \
+	sanitizer_common.cc \
+	sanitizer_flags.cc \
+	sanitizer_libc.cc \
+	sanitizer_netbsd.cc \
+	sanitizer_mac.cc \
+	sanitizer_posix.cc \
+	sanitizer_platform_limits_posix.cc \
+	sanitizer_printf.cc \
+	sanitizer_stackdepot.cc \
+	sanitizer_stacktrace.cc \
+	sanitizer_symbolizer.cc \
+	sanitizer_symbolizer_linux.cc \
+	sanitizer_win.cc
+
+LIB=	asan
+SRCS=	${ASAN_SRCS} ${INTERCEPTION_SRCS} ${SANITIZER_SRCS}
+CPPFLAGS+=-I${ASAN}/include -I${ASAN}
+
+.include <bsd.lib.mk>
