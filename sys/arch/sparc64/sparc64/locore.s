@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.373 2014/09/24 18:32:10 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.374 2014/10/15 21:18:32 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -4669,7 +4669,6 @@ ENTRY(cpu_mp_startup)
 	 */
 	ldx	[%g2 + CBA_CPUINFO], %l1	! Load the interrupt stack's PA
 	
-
 #ifdef SUN4V
 	cmp	%l6, CPU_SUN4V
 	bne,pt	%icc, 3f
@@ -4681,12 +4680,12 @@ ENTRY(cpu_mp_startup)
 	sllx	%l2, 32, %l2			! Shift it into place
 	mov	-1, %l3				! Create a nice mask
 	sllx	%l3, 56, %l4			! Mask off high 8 bits
-	or	%l4, 0x1fff, %l4		! Mask off low 13 bits
+	or	%l4, 0xfff, %l4			! We can just load this in 12 (of 13) bits
 	andn	%l1, %l4, %l1			! Mask the phys page number into RA
 	or	%l2, %l1, %l1			! Now take care of the 8 high bits V|NFO|SW
 	or	%l1, 0x0141, %l2		! And low 13 bits IE=0|E=0|CP=0|CV=0|P=1|
 						!		  X=0|W=1|SW=00|SZ=0001
-			
+
 	/*
 	 *  Now, map in the interrupt stack & cpu_info as context==0
 	 */
@@ -4744,7 +4743,7 @@ ENTRY(cpu_mp_startup)
 
 4:	
 	membar	#Sync
-	
+
 	/*
 	 * Temporarily use the interrupt stack
 	 */
@@ -4771,13 +4770,14 @@ ENTRY(cpu_mp_startup)
 	LDPTR	[%o0 + CI_TSB_DESC], %o0
 	call	_C_LABEL(pmap_setup_tsb_sun4v)
 	 nop
-	
+
 	/* set trap table */
 
 	set	_C_LABEL(trapbase_sun4v), %l1
 	GET_MMFSA %o1
 	call	_C_LABEL(prom_set_trap_table_sun4v)
 	 mov	%l1, %o0
+
 	! Now we should be running 100% from our handlers	
 	ba	3f		
 	 nop
