@@ -1,4 +1,4 @@
-/* $NetBSD: awin_otg.c,v 1.3 2014/09/14 09:34:12 jmcneill Exp $ */
+/* $NetBSD: awin_otg.c,v 1.4 2014/10/15 21:47:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_otg.c,v 1.3 2014/09/14 09:34:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_otg.c,v 1.4 2014/10/15 21:47:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -107,8 +107,13 @@ awin_otg_attach(device_t parent, device_t self, void *aux)
 	    AWIN_USB_CLK_REG,
 	    AWIN_USB_CLK_USBPHY_ENABLE|AWIN_USB_CLK_PHY0_ENABLE, 0);
 
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_A31_AHB_RESET0_REG, AWIN_A31_AHB_RESET0_USBOTG_RST, 0);
+	}
+
 	awin_reg_set_clear(aio->aio_core_bst, aio->aio_core_bsh,
-	    AWIN_DRAM_OFFSET + AWIN_SRAM_CTL1_REG,
+	    AWIN_SRAM_OFFSET + AWIN_SRAM_CTL1_REG,
 	    __SHIFTIN(AWIN_SRAM_CTL1_SRAMD_MAP_USB0,
 		      AWIN_SRAM_CTL1_SRAMD_MAP),
 	    0);
