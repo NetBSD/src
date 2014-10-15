@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.16 2014/04/16 18:55:18 maxv Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.17 2014/10/15 09:03:53 hannken Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.16 2014/04/16 18:55:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.17 2014/10/15 09:03:53 hannken Exp $");
 #endif /* not lint */
 
 
@@ -69,18 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.16 2014/04/16 18:55:18 maxv Exp $
 MODULE(MODULE_CLASS_VFS, nilfs, NULL);
 
 #define VTOI(vnode) ((struct nilfs_node *) vnode->v_data)
-
-#define NILFS_SET_SYSTEMFILE(vp) { \
-	/* XXXAD Is the vnode locked? */	\
-	(vp)->v_vflag |= VV_SYSTEM;		\
-	vref(vp);				\
-	vput(vp); }
-
-#define NILFS_UNSET_SYSTEMFILE(vp) { \
-	/* XXXAD Is the vnode locked? */	\
-	(vp)->v_vflag &= ~VV_SYSTEM;		\
-	vrele(vp); }
-
 
 /* verbose levels of the nilfs filingsystem */
 int nilfs_verbose = NILFS_DEBUGGING;
@@ -257,10 +245,6 @@ nilfs_create_system_nodes(struct nilfs_device *nilfsdev)
 	if (error)
 		goto errorout;
 
-	NILFS_SET_SYSTEMFILE(nilfsdev->dat_node->vnode);
-	NILFS_SET_SYSTEMFILE(nilfsdev->cp_node->vnode);
-	NILFS_SET_SYSTEMFILE(nilfsdev->su_node->vnode);
-
 	return 0;
 errorout:
 	nilfs_dispose_node(&nilfsdev->dat_node);
@@ -278,13 +262,6 @@ nilfs_release_system_nodes(struct nilfs_device *nilfsdev)
 		return;
 	if (nilfsdev->refcnt > 0)
 		return;
-
-	if (nilfsdev->dat_node)
-		NILFS_UNSET_SYSTEMFILE(nilfsdev->dat_node->vnode);
-	if (nilfsdev->cp_node)
-		NILFS_UNSET_SYSTEMFILE(nilfsdev->cp_node->vnode);
-	if (nilfsdev->su_node)
-		NILFS_UNSET_SYSTEMFILE(nilfsdev->su_node->vnode);
 
 	nilfs_dispose_node(&nilfsdev->dat_node);
 	nilfs_dispose_node(&nilfsdev->cp_node);
@@ -513,6 +490,7 @@ nilfs_unmount_device(struct nilfs_device *nilfsdev)
 	vput(nilfsdev->devvp);
 
 	/* free our device info */
+	cv_destroy(&nilfsdev->sync_cv);
 	free(nilfsdev, M_NILFSMNT);
 }
 
@@ -745,7 +723,6 @@ nilfs_mount_checkpoint(struct nilfs_mount *ump)
 		printf("mount_nilfs: can't read ifile node\n");
 		return EINVAL;
 	}
-	NILFS_SET_SYSTEMFILE(ump->ifile_node->vnode);
 
 	/* get root node? */
 
@@ -951,13 +928,10 @@ nilfs_unmount(struct mount *mp, int mntflags)
 	nilfsdev = ump->nilfsdev;
 
 	/*
-	 * Flush all nodes associated to this mountpoint. By specifying
-	 * SKIPSYSTEM we can skip vnodes marked with VV_SYSTEM. This hardly
-	 * documented feature allows us to exempt certain files from being
-	 * flushed.
+	 * Flush all nodes associated to this mountpoint.
 	 */
 	flags = (mntflags & MNT_FORCE) ? FORCECLOSE : 0;
-	if ((error = vflush(mp, NULLVP, flags | SKIPSYSTEM)) != 0)
+	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return error;
 
 	/* if we're the write mount, we ought to close the writing session */
@@ -965,8 +939,6 @@ nilfs_unmount(struct mount *mp, int mntflags)
 	if (error)
 		return error;
 
-	if (ump->ifile_node)
-		NILFS_UNSET_SYSTEMFILE(ump->ifile_node->vnode);
 	nilfs_dispose_node(&ump->ifile_node);
 
 	/* remove our mount point */
@@ -998,17 +970,20 @@ nilfs_start(struct mount *mp, int flags)
 int
 nilfs_root(struct mount *mp, struct vnode **vpp)
 {
-	struct nilfs_mount *ump = VFSTONILFS(mp);
-	struct nilfs_node  *node;
 	int error;
 
 	DPRINTF(NODE, ("nilfs_root called\n"));
 
-	error = nilfs_get_node(ump, NILFS_ROOT_INO, &node);
-	if (node)  {
-		*vpp = node->vnode;
-		KASSERT(node->vnode->v_vflag & VV_ROOT);
+	error = nilfs_get_node(mp, NILFS_ROOT_INO, vpp);
+	if (error == 0) {
+		error = vn_lock(*vpp, LK_EXCLUSIVE);
+		if (error) {
+			vrele(*vpp);
+			*vpp = NULL;
+			return error;
+		}
 	}
+	KASSERT(error != 0 || ((*vpp)->v_vflag & VV_ROOT));
 
 	DPRINTF(NODE, ("nilfs_root finished\n"));
 	return error;
