@@ -10,7 +10,7 @@
 // Linux-specific interception methods.
 //===----------------------------------------------------------------------===//
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__NetBSD__)
 #include "interception.h"
 
 #include <stddef.h>  // for NULL
@@ -25,4 +25,4 @@ bool GetRealFunctionAddress(const char *func_name, uptr *func_addr,
 }  // namespace __interception
 
 
-#endif  // __linux__
+#endif  // __linux__ || __NetBSD__
