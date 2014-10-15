@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.h,v 1.1 2009/07/18 16:31:42 reinoud Exp $ */
+/* $NetBSD: nilfs_subr.h,v 1.2 2014/10/15 09:03:53 hannken Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -56,7 +56,8 @@ int nilfs_btree_nlookup(struct nilfs_node *node, uint64_t from, uint64_t blks, u
 int nilfs_nvtop(struct nilfs_node *node, uint64_t blks, uint64_t *l2vmap, uint64_t *v2pmap);
 
 /* node action implementators */
-int nilfs_get_node(struct nilfs_mount *ump, uint64_t ino, struct nilfs_node **nodep);
+void nilfs_deregister_node(struct nilfs_node *);
+int nilfs_get_node(struct mount *mp, uint64_t ino, struct vnode **vpp);
 int nilfs_get_node_raw(struct nilfs_device *nilfsdev, struct nilfs_mount *ump, uint64_t ino, struct nilfs_inode *inode, struct nilfs_node **nodep);
 void nilfs_dispose_node(struct nilfs_node **node);
 
