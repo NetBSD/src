@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.35 2013/06/27 23:22:04 yamt Exp $	*/
+/*	$NetBSD: redir.c,v 1.36 2014/10/15 14:54:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.35 2013/06/27 23:22:04 yamt Exp $");
+__RCSID("$NetBSD: redir.c,v 1.36 2014/10/15 14:54:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -164,10 +164,11 @@ redirect(union node *redir, int flags)
 STATIC void
 openredirect(union node *redir, char memory[10], int flags)
 {
+	struct stat sb;
 	int fd = redir->nfile.fd;
 	char *fname;
 	int f;
-	int oflags = O_WRONLY|O_CREAT|O_TRUNC, eflags;
+	int eflags;
 
 	/*
 	 * We suppress interrupts so that we won't leave open file
@@ -194,12 +195,31 @@ openredirect(union node *redir, char memory[10], int flags)
 			goto ecreate;
 		break;
 	case NTO:
-		if (Cflag)
-			oflags |= O_EXCL;
+		if (Cflag) {
+			fname = redir->nfile.expfname;
+			if (stat(fname, &sb) == -1) {
+				if ((f = open(fname, O_WRONLY|O_CREAT|O_EXCL,
+				    0666)) < 0)
+					goto ecreate;
+			} else if (!S_ISREG(sb.st_mode)) {
+				if ((f = open(fname, O_WRONLY, 0666)) < 0)
+					goto ecreate;
+				if (fstat(f, &sb) != -1 &&
+				    S_ISREG(sb.st_mode)) {
+					close(f);
+					errno = EEXIST;
+					goto ecreate;
+				}
+			} else {
+				errno = EEXIST;
+				goto ecreate;
+			}
+			break;
+		}
 		/* FALLTHROUGH */
 	case NCLOBBER:
 		fname = redir->nfile.expfname;
-		if ((f = open(fname, oflags, 0666)) < 0)
+		if ((f = open(fname, O_WRONLY|O_CREAT|O_TRUNC, 0666)) < 0)
 			goto ecreate;
 		break;
 	case NAPPEND:
