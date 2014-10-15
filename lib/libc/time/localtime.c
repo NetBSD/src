@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.88 2014/10/14 20:35:40 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.89 2014/10/15 15:13:45 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.88 2014/10/14 20:35:40 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.89 2014/10/15 15:13:45 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1237,9 +1237,14 @@ tzsetlcl(char const *name)
 	if (0 < lcl)
 		(void)strcpy(lcl_TZname, name);
 
-	if (! lclptr)
-		lclptr = malloc(sizeof *lclptr);
-	zoneinit(lclptr, name);
+	if (! lclptr) {
+		struct state *sp = malloc(sizeof *lclptr);
+		if (!zoneinit(sp, name)) {
+			free(sp);
+			return;
+		}
+		lclptr = sp;
+	}
 	settzname();
 	lcl_is_set = lcl;
 }
