@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.100 2014/10/15 21:42:58 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.101 2014/10/15 21:58:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -918,6 +918,7 @@ ARMREG_WRITE_INLINE(iciallu, "p15,0,%0,c7,c5,0") /* Instruction Invalidate All *
 ARMREG_WRITE_INLINE(icimvau, "p15,0,%0,c7,c5,1") /* Instruction Invalidate MVA */
 ARMREG_WRITE_INLINE(isb, "p15,0,%0,c7,c5,4") /* Instruction Synchronization Barrier */
 ARMREG_WRITE_INLINE(bpiall, "p15,0,%0,c7,c5,6") /* Branch Predictor Invalidate All */
+ARMREG_WRITE_INLINE(bpimva, "p15,0,%0,c7,c5,7") /* Branch Predictor invalidate by MVA */
 ARMREG_WRITE_INLINE(dcimvac, "p15,0,%0,c7,c6,1") /* Data Invalidate MVA to PoC */
 ARMREG_WRITE_INLINE(dcisw, "p15,0,%0,c7,c6,2") /* Data Invalidate Set/Way */
 ARMREG_WRITE_INLINE(ats1cpr, "p15,0,%0,c7,c8,0") /* AddrTrans CurState PL1 Read */
@@ -928,7 +929,7 @@ ARMREG_WRITE_INLINE(dccmvac, "p15,0,%0,c7,c10,1") /* Data Clean MVA to PoC */
 ARMREG_WRITE_INLINE(dccsw, "p15,0,%0,c7,c10,2") /* Data Clean Set/Way */
 ARMREG_WRITE_INLINE(dsb, "p15,0,%0,c7,c10,4") /* Data Synchronization Barrier */
 ARMREG_WRITE_INLINE(dmb, "p15,0,%0,c7,c10,5") /* Data Memory Barrier */
-ARMREG_WRITE_INLINE(dccmvau, "p15,0,%0,c7,c14,1") /* Data Clean MVA to PoU */
+ARMREG_WRITE_INLINE(dccmvau, "p15,0,%0,c7,c11,1") /* Data Clean MVA to PoU */
 ARMREG_WRITE_INLINE(dccimvac, "p15,0,%0,c7,c14,1") /* Data Clean&Inv MVA to PoC */
 ARMREG_WRITE_INLINE(dccisw, "p15,0,%0,c7,c14,2") /* Data Clean&Inv Set/Way */
 /* cp15 c8 registers */
