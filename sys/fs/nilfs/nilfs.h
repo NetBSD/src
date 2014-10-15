@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs.h,v 1.4 2013/10/18 19:57:28 christos Exp $ */
+/* $NetBSD: nilfs.h,v 1.5 2014/10/15 09:05:46 hannken Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -171,11 +171,6 @@ struct nilfs_mount {
 
 	/* instance values */
 	struct nilfs_node	*ifile_node;
-
-	/* hash table to lookup ino -> nilfs_node */
-	kmutex_t		 ihash_lock;
-	kmutex_t		 get_node_lock;
-	LIST_HEAD(, nilfs_node)  nilfs_nodes[NILFS_INODE_HASHSIZE];
 
 	/* lists */
 	STAILQ_ENTRY(nilfs_mount) next_mount;		/* in nilfs_device   */

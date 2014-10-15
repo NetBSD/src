@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.c,v 1.11 2014/10/15 09:03:53 hannken Exp $ */
+/* $NetBSD: nilfs_subr.c,v 1.12 2014/10/15 09:05:46 hannken Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.11 2014/10/15 09:03:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.12 2014/10/15 09:05:46 hannken Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -122,13 +122,6 @@ crc32_le(uint32_t crc, const uint8_t *buf, size_t len)
         }
 
         return (crc);
-}
-
-
-static int
-nilfs_calchash(uint64_t ino)
-{
-	return (int) ino;
 }
 
 
@@ -354,7 +347,7 @@ nilfs_btree_nlookup(struct nilfs_node *node, uint64_t from, uint64_t blks,
 /* vtop operations */
 
 /* translate index to a file block number and an entry */
-static void
+void
 nilfs_mdt_trans(struct nilfs_mdt *mdt, uint64_t index,
 	uint64_t *blocknr, uint32_t *entry_in_block)
 {
@@ -667,143 +660,6 @@ nilfs_search_super_root(struct nilfs_device *nilfsdev)
 
 /* --------------------------------------------------------------------- */
 
-/*
- * Genfs interfacing
- *
- * static const struct genfs_ops nilfs_genfsops = {
- * 	.gop_size = genfs_size,
- * 		size of transfers
- * 	.gop_alloc = nilfs_gop_alloc,
- * 		allocate len bytes at offset
- * 	.gop_write = genfs_gop_write,
- * 		putpages interface code
- * 	.gop_markupdate = nilfs_gop_markupdate,
- * 		set update/modify flags etc.
- * }
- */
-
-/*
- * Callback from genfs to allocate len bytes at offset off; only called when
- * filling up gaps in the allocation.
- */
-static int
-nilfs_gop_alloc(struct vnode *vp, off_t off,
-    off_t len, int flags, kauth_cred_t cred)
-{
-	DPRINTF(NOTIMPL, ("nilfs_gop_alloc not implemented\n"));
-	DPRINTF(ALLOC, ("nilfs_gop_alloc called for %"PRIu64" bytes\n", len));
-
-	return 0;
-}
-
-
-/*
- * callback from genfs to update our flags
- */
-static void
-nilfs_gop_markupdate(struct vnode *vp, int flags)
-{
-	struct nilfs_node *nilfs_node = VTOI(vp);
-	u_long mask = 0;
-
-	if ((flags & GOP_UPDATE_ACCESSED) != 0) {
-		mask = IN_ACCESS;
-	}
-	if ((flags & GOP_UPDATE_MODIFIED) != 0) {
-		if (vp->v_type == VREG) {
-			mask |= IN_CHANGE | IN_UPDATE;
-		} else {
-			mask |= IN_MODIFY;
-		}
-	}
-	if (mask) {
-		nilfs_node->i_flags |= mask;
-	}
-}
-
-
-static const struct genfs_ops nilfs_genfsops = {
-	.gop_size = genfs_size,
-	.gop_alloc = nilfs_gop_alloc,
-	.gop_write = genfs_gop_write_rwmap,
-	.gop_markupdate = nilfs_gop_markupdate,
-};
-
-/* --------------------------------------------------------------------- */
-
-static void
-nilfs_register_node(struct nilfs_node *node)
-{
-	struct nilfs_mount *ump;
-	uint32_t hashline;
-
-	ump = node->ump;
-	mutex_enter(&ump->ihash_lock);
-
-	/* add to our hash table */
-	hashline = nilfs_calchash(node->ino) & NILFS_INODE_HASHMASK;
-#ifdef DEBUG
-	struct nilfs_node *chk;
-	LIST_FOREACH(chk, &ump->nilfs_nodes[hashline], hashchain) {
-		assert(chk);
-		if (chk->ino == node->ino)
-			panic("Double node entered\n");
-	}
-#endif
-	LIST_INSERT_HEAD(&ump->nilfs_nodes[hashline], node, hashchain);
-
-	mutex_exit(&ump->ihash_lock);
-}
-
-
-void
-nilfs_deregister_node(struct nilfs_node *node) 
-{
-	struct nilfs_mount *ump;
-
-	ump = node->ump;
-	mutex_enter(&ump->ihash_lock);
-
-	/* remove from hash list */
-	LIST_REMOVE(node, hashchain);
-
-	mutex_exit(&ump->ihash_lock);
-}
-
-
-static struct nilfs_node *
-nilfs_hash_lookup(struct nilfs_mount *ump, ino_t ino)
-{
-	struct nilfs_node *node;
-	struct vnode *vp;
-	uint32_t hashline;
-
-loop:
-	mutex_enter(&ump->ihash_lock);
-
-	/* search our hash table */
-	hashline = nilfs_calchash(ino) & NILFS_INODE_HASHMASK;
-	LIST_FOREACH(node, &ump->nilfs_nodes[hashline], hashchain) {
-		assert(node);
-		if (node->ino == ino) {
-			vp = node->vnode;
-			assert(vp);
-			mutex_enter(vp->v_interlock);
-			mutex_exit(&ump->ihash_lock);
-			if (vget(vp, LK_EXCLUSIVE))
-				goto loop;
-			return node;
-		}
-	}
-	mutex_exit(&ump->ihash_lock);
-
-	return NULL;
-}
-
-
-/* node action implementators */
-extern int (**nilfs_vnodeop_p)(void *);
-
 int
 nilfs_get_node_raw(struct nilfs_device *nilfsdev, struct nilfs_mount *ump,
 	uint64_t ino, struct nilfs_inode *inode, struct nilfs_node **nodep)
@@ -840,127 +696,6 @@ nilfs_get_node_raw(struct nilfs_device *nilfsdev, struct nilfs_mount *ump,
 	*nodep = node;
 	return 0;
 }
-
-int
-nilfs_get_node(struct mount *mp, uint64_t ino, struct vnode **vpp)
-{
-	struct nilfs_device *nilfsdev;
-	struct nilfs_inode   inode, *entry;
-	struct nilfs_node *node;
-	struct nilfs_mount *ump = VFSTONILFS(mp);
-	struct vnode *nvp;
-	struct buf *bp;
-	uint64_t ivblocknr;
-	uint32_t entry_in_block;
-	int error;
-
-	/* lookup node in hash table */
-	node = nilfs_hash_lookup(ump, ino);
-	if (node) {
-		*vpp = node->vnode;
-		VOP_UNLOCK(*vpp);
-		return 0;
-	}
-
-	/* lock to disallow simultanious creation of same udf_node */
-	mutex_enter(&ump->get_node_lock);
-
-	/* relookup since it could be created while waiting for the mutex */
-	node = nilfs_hash_lookup(ump, ino);
-	if (node) {
-		*vpp = node->vnode;
-		mutex_exit(&ump->get_node_lock);
-		VOP_UNLOCK(*vpp);
-		return 0;
-	}
-
-	/* create new inode; XXX check could be handier */
-	if ((ino < NILFS_ATIME_INO) && (ino != NILFS_ROOT_INO)) {
-		printf("nilfs_get_node: system ino %"PRIu64" not in mount "
-			"point!\n", ino);
-		mutex_exit(&ump->get_node_lock);
-		return ENOENT;
-	}
-
-	/* lookup inode in the ifile */
-	DPRINTF(NODE, ("lookup ino %"PRIu64"\n", ino));
-
-	/* lookup inode structure in mountpoints ifile */
-	nilfsdev = ump->nilfsdev;
-	nilfs_mdt_trans(&nilfsdev->ifile_mdt, ino, &ivblocknr, &entry_in_block);
-
-	error = nilfs_bread(ump->ifile_node, ivblocknr, NOCRED, 0, &bp);
-	if (error) {
-		mutex_exit(&ump->get_node_lock);
-		return ENOENT;
-	}
-
-	/* get inode entry */
-	entry =  (struct nilfs_inode *) bp->b_data + entry_in_block;
-	inode = *entry;
-	brelse(bp, BC_AGE);
-
-	/* get node */
-	error = nilfs_get_node_raw(ump->nilfsdev, ump, ino, &inode, &node);
-	if (error) {
-		mutex_exit(&ump->get_node_lock);
-		return error;
-	}
-
-	error = getnewvnode(VT_NILFS, mp, nilfs_vnodeop_p, NULL, &nvp);
-	if (error) {
-		nilfs_dispose_node(&node);
-		mutex_exit(&ump->get_node_lock);
-		return error;
-	}
-
-	/* lock node */
-	error = vn_lock(nvp, LK_EXCLUSIVE | LK_RETRY);
-	if (error) {
-		ungetnewvnode(nvp);
-		nilfs_dispose_node(&node);
-		mutex_exit(&ump->get_node_lock);
-		return error;
-	}
-
-	nvp->v_type = IFTOVT(inode.i_mode);
-	switch (nvp->v_type) {
-	case VREG:
-	case VDIR:
-	case VLNK:
-		break;
-	/* other types not yet supported. */
-	default:
-		nvp->v_type = VNON;
-		VOP_UNLOCK(nvp);
-		ungetnewvnode(nvp);
-		nilfs_dispose_node(&node);
-		mutex_exit(&ump->get_node_lock);
-		return ENXIO;
-	}
-
-	node->vnode = nvp;
-	nvp->v_data = node;
-
-	/* initialise genfs */
-	genfs_node_init(nvp, &nilfs_genfsops);
-
-	/* check if we're fetching the root */
-	if (ino == NILFS_ROOT_INO)
-		nvp->v_vflag |= VV_ROOT;
-
-	uvm_vnp_setsize(nvp, nilfs_rw64(inode.i_size));
-
-	nilfs_register_node(node);
-
-	mutex_exit(&ump->get_node_lock);
-
-	*vpp = nvp;
-	VOP_UNLOCK(*vpp);
-
-	return 0;
-}
-
 
 void
 nilfs_dispose_node(struct nilfs_node **nodep)
