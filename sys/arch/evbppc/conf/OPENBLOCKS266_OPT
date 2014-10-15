@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.17 2012/09/01 18:17:50 jakllsch Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.18 2014/10/15 08:14:44 uebayasi Exp $
 #
 
 include		"arch/evbppc/conf/OPENBLOCKS266"
@@ -195,6 +195,7 @@ audio* at uaudio?
 
 # USB MIDI
 umidi*	at uhub? port ? configuration ?
+midi*	at midibus?
 
 # USB IrDA
 # USB-IrDA bridge spec

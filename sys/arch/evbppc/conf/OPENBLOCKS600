@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS600,v 1.19 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: OPENBLOCKS600,v 1.20 2014/10/15 08:14:44 uebayasi Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs600"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS600-$Revision: 1.19 $"
+#ident 		"OPENBLOCKS600-$Revision: 1.20 $"
 
 maxusers	32
 
@@ -149,7 +149,7 @@ config		netbsd	root on ? type ?
 plb0 at root				# Processor Local Bus
 cpu0	at plb?				# CPU
 ecc0	at plb? irq 17			# On-chip ECC controller
-dwctwo	at plb? addr 0xef6c0000 irq 94	# On-chip USB controller
+dwctwo0	at plb? addr 0xef6c0000 irq 94	# On-chip USB controller
 
 # On-chip Peripheral Bus support
 opb*	at plb?				# On-chip Peripheral Bus
