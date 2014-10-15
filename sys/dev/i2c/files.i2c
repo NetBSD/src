@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.57 2014/10/12 23:58:42 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.58 2014/10/15 05:11:36 uebayasi Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -119,7 +119,7 @@ attach	lmenv at iic
 file	dev/i2c/lm87.c				lmenv
 
 # Dallas DS1307 Real Time Clock
-device	dsrtc
+device	dsrtc: sysmon_envsys
 attach	dsrtc at iic
 file	dev/i2c/ds1307.c			dsrtc
 
