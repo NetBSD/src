@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.10 2014/10/10 17:48:30 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.11 2014/10/15 23:29:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -279,6 +279,17 @@ awin_gpio_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		pin_groups[0].grp_pin_mask = __BIT(AWIN_A31_PIO_PA_PINS) - 1;
+		pin_groups[1].grp_pin_mask = __BIT(AWIN_A31_PIO_PB_PINS) - 1;
+		pin_groups[2].grp_pin_mask = __BIT(AWIN_A31_PIO_PC_PINS) - 1;
+		pin_groups[3].grp_pin_mask = __BIT(AWIN_A31_PIO_PD_PINS) - 1;
+		pin_groups[4].grp_pin_mask = __BIT(AWIN_A31_PIO_PE_PINS) - 1;
+		pin_groups[5].grp_pin_mask = __BIT(AWIN_A31_PIO_PF_PINS) - 1;
+		pin_groups[6].grp_pin_mask = __BIT(AWIN_A31_PIO_PG_PINS) - 1;
+		pin_groups[7].grp_pin_mask = __BIT(AWIN_A31_PIO_PH_PINS) - 1;
+	}
 
 	for (u_int i = 0; i < __arraycount(pin_groups); i++) {
 		struct awin_gpio_pin_group * const grp = &pin_groups[i];
