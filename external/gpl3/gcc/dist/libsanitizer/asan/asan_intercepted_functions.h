@@ -41,7 +41,7 @@ using __sanitizer::uptr;
 # define ASAN_INTERCEPT_MLOCKX 0
 #endif
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__NetBSD__)
 # define ASAN_USE_ALIAS_ATTRIBUTE_FOR_INDEX 1
 #else
 # define ASAN_USE_ALIAS_ATTRIBUTE_FOR_INDEX 0
@@ -53,7 +53,7 @@ using __sanitizer::uptr;
 # define ASAN_INTERCEPT_STRNLEN 0
 #endif
 
-#if defined(__linux__) && !defined(ANDROID)
+#if (defined(__linux__) || defined(__NetBSD__)) && !defined(ANDROID) 
 # define ASAN_INTERCEPT_SWAPCONTEXT 1
 #else
 # define ASAN_INTERCEPT_SWAPCONTEXT 0

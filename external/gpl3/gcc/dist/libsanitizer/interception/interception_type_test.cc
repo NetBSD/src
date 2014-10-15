@@ -10,7 +10,7 @@
 // Compile-time tests of the internal type definitions.
 //===----------------------------------------------------------------------===//
 
-#if defined(__linux__) || defined(__APPLE__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__NetBSD__)
 
 #include "interception.h"
 #include <sys/types.h>
@@ -22,7 +22,7 @@ COMPILER_CHECK(sizeof(SSIZE_T) == sizeof(ssize_t));
 COMPILER_CHECK(sizeof(PTRDIFF_T) == sizeof(ptrdiff_t));
 COMPILER_CHECK(sizeof(INTMAX_T) == sizeof(intmax_t));
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(__NetBSD__)
 COMPILER_CHECK(sizeof(OFF64_T) == sizeof(off64_t));
 #endif
 

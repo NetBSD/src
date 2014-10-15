@@ -9,7 +9,7 @@
 //
 // Linux-specific details.
 //===----------------------------------------------------------------------===//
-#ifdef __linux__
+#if defined(__linux__) || defined(__NetBSD__)
 
 #include "asan_interceptors.h"
 #include "asan_internal.h"
@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <unwind.h>
@@ -46,6 +47,13 @@ void *AsanDoesNotSupportStaticLinkage() {
   // This will fail to link with -static.
   return &_DYNAMIC;  // defined in link.h
 }
+
+#ifdef __NetBSD__
+#define gregs __gregs
+#define REG_RIP _REG_RIP
+#define REG_RBP _REG_RBP
+#define REG_RSP _REG_RSP
+#endif
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 #if ASAN_ANDROID
@@ -131,4 +139,4 @@ void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
 
 }  // namespace __asan
 
-#endif  // __linux__
+#endif  // __linux__ || __NetBSD__
