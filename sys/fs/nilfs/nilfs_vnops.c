@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.29 2014/10/15 09:03:53 hannken Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.30 2014/10/15 09:05:46 hannken Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.29 2014/10/15 09:03:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.30 2014/10/15 09:05:46 hannken Exp $");
 #endif /* not lint */
 
 
@@ -118,8 +118,8 @@ nilfs_reclaim(void *v)
 	/* update note for closure */
 	nilfs_update(vp, NULL, NULL, NULL, UPDATE_CLOSE);
 
-	/* remove from our hash lookup table */
-	nilfs_deregister_node(nilfs_node);
+	/* remove from vnode cache. */
+	vcache_remove(vp->v_mount, &nilfs_node->ino, sizeof(nilfs_node->ino));
 
 	/* dispose all node knowledge */
 	genfs_node_destroy(vp);
@@ -697,7 +697,7 @@ nilfs_lookup(void *v)
 		if (error == 0) {
 			DPRINTF(LOOKUP, ("\tfound '..'\n"));
 			/* try to create/reuse the node */
-			error = nilfs_get_node(mp, ino, vpp);
+			error = vcache_get(mp, &ino, sizeof(ino), vpp);
 
 			if (!error) {
 				DPRINTF(LOOKUP,
@@ -734,7 +734,7 @@ nilfs_lookup(void *v)
 			/* done */
 		} else {
 			/* try to create/reuse the node */
-			error = nilfs_get_node(mp, ino, vpp);
+			error = vcache_get(mp, &ino, sizeof(ino), vpp);
 			if (!error) {
 				/*
 				 * If we are not at the last path component
