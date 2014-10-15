@@ -19,13 +19,13 @@
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_libc.h"
 
-#if !defined(__linux__) && !defined(__APPLE__) && !defined(_WIN32)
+#if !defined(__linux__) && !defined(__APPLE__) && !defined(_WIN32) && !defined(__NetBSD__)
 # error "This operating system is not supported by AddressSanitizer"
 #endif
 
 #define ASAN_DEFAULT_FAILURE_EXITCODE 1
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__NetBSD__)
 # define ASAN_LINUX   1
 #else
 # define ASAN_LINUX   0
