@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox.c,v 1.8 2014/10/07 08:30:05 skrll Exp $	*/
+/*	$NetBSD: bcm2835_mbox.c,v 1.9 2014/10/15 06:57:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.8 2014/10/07 08:30:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.9 2014/10/15 06:57:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,8 +85,8 @@ bcmmbox_match(device_t parent, cfdata_t match, void *aux)
 static void
 bcmmbox_attach(device_t parent, device_t self, void *aux)
 {
-        struct bcm2835mbox_softc *sc = device_private(self);
- 	struct amba_attach_args *aaa = aux;
+	struct bcm2835mbox_softc *sc = device_private(self);
+	struct amba_attach_args *aaa = aux;
 	struct bcmmbox_attach_args baa;
 	int i;
 
