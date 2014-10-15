@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.99 2014/10/12 05:41:24 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.100 2014/10/15 21:42:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -912,12 +912,12 @@ ARMREG_READ_INLINE(dfar, "p15,0,%0,c6,c0,0") /* Data Fault Address Register */
 ARMREG_READ_INLINE(ifar, "p15,0,%0,c6,c0,2") /* Instruction Fault Address Register */
 /* cp15 c7 registers */
 ARMREG_WRITE_INLINE(icialluis, "p15,0,%0,c7,c1,0") /* Instruction Inv All (IS) */
-ARMREG_WRITE_INLINE(bpiallis, "p15,0,%0,c7,c1,6") /* Branch Invalidate All (IS) */
+ARMREG_WRITE_INLINE(bpiallis, "p15,0,%0,c7,c1,6") /* Branch Predictor Invalidate All (IS) */
 ARMREG_READ_INLINE(par, "p15,0,%0,c7,c4,0") /* Physical Address Register */
 ARMREG_WRITE_INLINE(iciallu, "p15,0,%0,c7,c5,0") /* Instruction Invalidate All */
 ARMREG_WRITE_INLINE(icimvau, "p15,0,%0,c7,c5,1") /* Instruction Invalidate MVA */
 ARMREG_WRITE_INLINE(isb, "p15,0,%0,c7,c5,4") /* Instruction Synchronization Barrier */
-ARMREG_WRITE_INLINE(bpiall, "p15,0,%0,c5,c1,6") /* Breakpoint Invalidate All */
+ARMREG_WRITE_INLINE(bpiall, "p15,0,%0,c7,c5,6") /* Branch Predictor Invalidate All */
 ARMREG_WRITE_INLINE(dcimvac, "p15,0,%0,c7,c6,1") /* Data Invalidate MVA to PoC */
 ARMREG_WRITE_INLINE(dcisw, "p15,0,%0,c7,c6,2") /* Data Invalidate Set/Way */
 ARMREG_WRITE_INLINE(ats1cpr, "p15,0,%0,c7,c8,0") /* AddrTrans CurState PL1 Read */
