@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.42 2014/06/26 07:50:29 msaitoh Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.43 2014/10/16 19:11:38 snj Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.42 2014/06/26 07:50:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.43 2014/10/16 19:11:38 snj Exp $");
 
 #include "opt_emac.h"
 
@@ -1671,7 +1671,7 @@ emac_rxeob_intr(void *arg)
 
 		/*
 		 * Pass this up to any BPF listeners, but only
-		 * pass if up the stack if it's for us.
+		 * pass it up the stack if it's for us.
 		 */
 		bpf_mtap(ifp, m);
 
