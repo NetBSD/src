@@ -1,6 +1,6 @@
 /*
  * wpa_supplicant - WNM
- * Copyright (c) 2011-2012, Qualcomm Atheros, Inc.
+ * Copyright (c) 2011-2013, Qualcomm Atheros, Inc.
  *
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
@@ -10,12 +10,18 @@
 
 #include "utils/common.h"
 #include "common/ieee802_11_defs.h"
+#include "common/wpa_ctrl.h"
 #include "rsn_supp/wpa.h"
 #include "wpa_supplicant_i.h"
 #include "driver_i.h"
 #include "scan.h"
+#include "ctrl_iface.h"
+#include "bss.h"
+#include "wnm_sta.h"
+#include "hs20_supplicant.h"
 
 #define MAX_TFS_IE_LEN  1024
+#define WNM_MAX_NEIGHBOR_REPORT 10
 
 
 /* get the TFS IE from driver */
@@ -176,7 +182,7 @@ static void wnm_sleep_mode_exit_success(struct wpa_supplicant *wpa_s,
 	/* Install GTK/IGTK */
 
 	/* point to key data field */
-	ptr = (u8 *) frm + 1 + 1 + 2;
+	ptr = (u8 *) frm + 1 + 2;
 	end = ptr + key_len_total;
 	wpa_hexdump_key(MSG_DEBUG, "WNM: Key Data", ptr, key_len_total);
 
@@ -229,19 +235,23 @@ static void ieee802_11_rx_wnmsleep_resp(struct wpa_supplicant *wpa_s,
 					const u8 *frm, int len)
 {
 	/*
-	 * Action [1] | Diaglog Token [1] | Key Data Len [2] | Key Data |
+	 * Action [1] | Dialog Token [1] | Key Data Len [2] | Key Data |
 	 * WNM-Sleep Mode IE | TFS Response IE
 	 */
-	u8 *pos = (u8 *) frm; /* point to action field */
-	u16 key_len_total = le_to_host16(*((u16 *)(frm+2)));
+	u8 *pos = (u8 *) frm; /* point to payload after the action field */
+	u16 key_len_total;
 	struct wnm_sleep_element *wnmsleep_ie = NULL;
 	/* multiple TFS Resp IE (assuming consecutive) */
 	u8 *tfsresp_ie_start = NULL;
 	u8 *tfsresp_ie_end = NULL;
 
-	wpa_printf(MSG_DEBUG, "action=%d token = %d key_len_total = %d",
-		   frm[0], frm[1], key_len_total);
-	pos += 4 + key_len_total;
+	if (len < 3)
+		return;
+	key_len_total = WPA_GET_LE16(frm + 1);
+
+	wpa_printf(MSG_DEBUG, "WNM-Sleep Mode Response token=%u key_len_total=%d",
+		   frm[0], key_len_total);
+	pos += 3 + key_len_total;
 	if (pos > frm + len) {
 		wpa_printf(MSG_INFO, "WNM: Too short frame for Key Data field");
 		return;
@@ -294,9 +304,222 @@ static void ieee802_11_rx_wnmsleep_resp(struct wpa_supplicant *wpa_s,
 }
 
 
-static void wnm_send_bss_transition_mgmt_resp(struct wpa_supplicant *wpa_s,
-					      u8 dialog_token, u8 status,
-					      u8 delay, const u8 *target_bssid)
+void wnm_deallocate_memory(struct wpa_supplicant *wpa_s)
+{
+	int i;
+
+	for (i = 0; i < wpa_s->wnm_num_neighbor_report; i++) {
+		os_free(wpa_s->wnm_neighbor_report_elements[i].tsf_info);
+		os_free(wpa_s->wnm_neighbor_report_elements[i].con_coun_str);
+		os_free(wpa_s->wnm_neighbor_report_elements[i].bss_tran_can);
+		os_free(wpa_s->wnm_neighbor_report_elements[i].bss_term_dur);
+		os_free(wpa_s->wnm_neighbor_report_elements[i].bearing);
+		os_free(wpa_s->wnm_neighbor_report_elements[i].meas_pilot);
+		os_free(wpa_s->wnm_neighbor_report_elements[i].rrm_cap);
+		os_free(wpa_s->wnm_neighbor_report_elements[i].mul_bssid);
+	}
+
+	wpa_s->wnm_num_neighbor_report = 0;
+	os_free(wpa_s->wnm_neighbor_report_elements);
+	wpa_s->wnm_neighbor_report_elements = NULL;
+}
+
+
+static void wnm_parse_neighbor_report_elem(struct neighbor_report *rep,
+					   u8 id, u8 elen, const u8 *pos)
+{
+	switch (id) {
+	case WNM_NEIGHBOR_TSF:
+		if (elen < 2 + 2) {
+			wpa_printf(MSG_DEBUG, "WNM: Too short TSF");
+			break;
+		}
+		os_free(rep->tsf_info);
+		rep->tsf_info = os_zalloc(sizeof(struct tsf_info));
+		if (rep->tsf_info == NULL)
+			break;
+		os_memcpy(rep->tsf_info->tsf_offset, pos, 2);
+		os_memcpy(rep->tsf_info->beacon_interval, pos + 2, 2);
+		break;
+	case WNM_NEIGHBOR_CONDENSED_COUNTRY_STRING:
+		if (elen < 2) {
+			wpa_printf(MSG_DEBUG, "WNM: Too short condensed "
+				   "country string");
+			break;
+		}
+		os_free(rep->con_coun_str);
+		rep->con_coun_str =
+			os_zalloc(sizeof(struct condensed_country_string));
+		if (rep->con_coun_str == NULL)
+			break;
+		os_memcpy(rep->con_coun_str->country_string, pos, 2);
+		break;
+	case WNM_NEIGHBOR_BSS_TRANSITION_CANDIDATE:
+		if (elen < 1) {
+			wpa_printf(MSG_DEBUG, "WNM: Too short BSS transition "
+				   "candidate");
+			break;
+		}
+		os_free(rep->bss_tran_can);
+		rep->bss_tran_can =
+			os_zalloc(sizeof(struct bss_transition_candidate));
+		if (rep->bss_tran_can == NULL)
+			break;
+		rep->bss_tran_can->preference = pos[0];
+		break;
+	case WNM_NEIGHBOR_BSS_TERMINATION_DURATION:
+		if (elen < 10) {
+			wpa_printf(MSG_DEBUG, "WNM: Too short BSS termination "
+				   "duration");
+			break;
+		}
+		os_free(rep->bss_term_dur);
+		rep->bss_term_dur =
+			os_zalloc(sizeof(struct bss_termination_duration));
+		if (rep->bss_term_dur == NULL)
+			break;
+		os_memcpy(rep->bss_term_dur->duration, pos, 10);
+		break;
+	case WNM_NEIGHBOR_BEARING:
+		if (elen < 8) {
+			wpa_printf(MSG_DEBUG, "WNM: Too short neighbor "
+				   "bearing");
+			break;
+		}
+		os_free(rep->bearing);
+		rep->bearing = os_zalloc(sizeof(struct bearing));
+		if (rep->bearing == NULL)
+			break;
+		os_memcpy(rep->bearing->bearing, pos, 8);
+		break;
+	case WNM_NEIGHBOR_MEASUREMENT_PILOT:
+		if (elen < 1) {
+			wpa_printf(MSG_DEBUG, "WNM: Too short measurement "
+				   "pilot");
+			break;
+		}
+		os_free(rep->meas_pilot);
+		rep->meas_pilot = os_zalloc(sizeof(struct measurement_pilot));
+		if (rep->meas_pilot == NULL)
+			break;
+		rep->meas_pilot->measurement_pilot = pos[0];
+		rep->meas_pilot->subelem_len = elen - 1;
+		os_memcpy(rep->meas_pilot->subelems, pos + 1, elen - 1);
+		break;
+	case WNM_NEIGHBOR_RRM_ENABLED_CAPABILITIES:
+		if (elen < 5) {
+			wpa_printf(MSG_DEBUG, "WNM: Too short RRM enabled "
+				   "capabilities");
+			break;
+		}
+		os_free(rep->rrm_cap);
+		rep->rrm_cap =
+			os_zalloc(sizeof(struct rrm_enabled_capabilities));
+		if (rep->rrm_cap == NULL)
+			break;
+		os_memcpy(rep->rrm_cap->capabilities, pos, 5);
+		break;
+	case WNM_NEIGHBOR_MULTIPLE_BSSID:
+		if (elen < 1) {
+			wpa_printf(MSG_DEBUG, "WNM: Too short multiple BSSID");
+			break;
+		}
+		os_free(rep->mul_bssid);
+		rep->mul_bssid = os_zalloc(sizeof(struct multiple_bssid));
+		if (rep->mul_bssid == NULL)
+			break;
+		rep->mul_bssid->max_bssid_indicator = pos[0];
+		rep->mul_bssid->subelem_len = elen - 1;
+		os_memcpy(rep->mul_bssid->subelems, pos + 1, elen - 1);
+		break;
+	}
+}
+
+
+static void wnm_parse_neighbor_report(struct wpa_supplicant *wpa_s,
+				      const u8 *pos, u8 len,
+				      struct neighbor_report *rep)
+{
+	u8 left = len;
+
+	if (left < 13) {
+		wpa_printf(MSG_DEBUG, "WNM: Too short neighbor report");
+		return;
+	}
+
+	os_memcpy(rep->bssid, pos, ETH_ALEN);
+	os_memcpy(rep->bssid_information, pos + ETH_ALEN, 4);
+	rep->regulatory_class = *(pos + 10);
+	rep->channel_number = *(pos + 11);
+	rep->phy_type = *(pos + 12);
+
+	pos += 13;
+	left -= 13;
+
+	while (left >= 2) {
+		u8 id, elen;
+
+		id = *pos++;
+		elen = *pos++;
+		wpa_printf(MSG_DEBUG, "WNM: Subelement id=%u len=%u", id, elen);
+		left -= 2;
+		if (elen > left) {
+			wpa_printf(MSG_DEBUG,
+				   "WNM: Truncated neighbor report subelement");
+			break;
+		}
+		wnm_parse_neighbor_report_elem(rep, id, elen, pos);
+		left -= elen;
+		pos += elen;
+	}
+}
+
+
+static int compare_scan_neighbor_results(struct wpa_supplicant *wpa_s,
+					 struct wpa_scan_results *scan_res,
+					 struct neighbor_report *neigh_rep,
+					 u8 num_neigh_rep, u8 *bssid_to_connect)
+{
+
+	u8 i, j;
+
+	if (scan_res == NULL || num_neigh_rep == 0 || !wpa_s->current_bss)
+		return 0;
+
+	wpa_printf(MSG_DEBUG, "WNM: Current BSS " MACSTR " RSSI %d",
+		   MAC2STR(wpa_s->bssid), wpa_s->current_bss->level);
+
+	for (i = 0; i < num_neigh_rep; i++) {
+		for (j = 0; j < scan_res->num; j++) {
+			/* Check for a better RSSI AP */
+			if (os_memcmp(scan_res->res[j]->bssid,
+				      neigh_rep[i].bssid, ETH_ALEN) == 0 &&
+			    scan_res->res[j]->level >
+			    wpa_s->current_bss->level) {
+				/* Got a BSSID with better RSSI value */
+				os_memcpy(bssid_to_connect, neigh_rep[i].bssid,
+					  ETH_ALEN);
+				wpa_printf(MSG_DEBUG, "Found a BSS " MACSTR
+					   " with better scan RSSI %d",
+					   MAC2STR(scan_res->res[j]->bssid),
+					   scan_res->res[j]->level);
+				return 1;
+			}
+			wpa_printf(MSG_DEBUG, "scan_res[%d] " MACSTR
+				   " RSSI %d", j,
+				   MAC2STR(scan_res->res[j]->bssid),
+				   scan_res->res[j]->level);
+		}
+	}
+
+	return 0;
+}
+
+
+static void wnm_send_bss_transition_mgmt_resp(
+	struct wpa_supplicant *wpa_s, u8 dialog_token,
+	enum bss_trans_mgmt_status_code status, u8 delay,
+	const u8 *target_bssid)
 {
 	u8 buf[1000], *pos;
 	struct ieee80211_mgmt *mgmt;
@@ -322,6 +545,14 @@ static void wnm_send_bss_transition_mgmt_resp(struct wpa_supplicant *wpa_s,
 	if (target_bssid) {
 		os_memcpy(pos, target_bssid, ETH_ALEN);
 		pos += ETH_ALEN;
+	} else if (status == WNM_BSS_TM_ACCEPT) {
+		/*
+		 * P802.11-REVmc clarifies that the Target BSSID field is always
+		 * present when status code is zero, so use a fake value here if
+		 * no BSSID is yet known.
+		 */
+		os_memset(pos, 0, ETH_ALEN);
+		pos += ETH_ALEN;
 	}
 
 	len = pos - (u8 *) &mgmt->u.action.category;
@@ -332,30 +563,93 @@ static void wnm_send_bss_transition_mgmt_resp(struct wpa_supplicant *wpa_s,
 }
 
 
+void wnm_scan_response(struct wpa_supplicant *wpa_s,
+		       struct wpa_scan_results *scan_res)
+{
+	u8 bssid[ETH_ALEN];
+
+	if (scan_res == NULL) {
+		wpa_printf(MSG_ERROR, "Scan result is NULL");
+		goto send_bss_resp_fail;
+	}
+
+	/* Compare the Neighbor Report and scan results */
+	if (compare_scan_neighbor_results(wpa_s, scan_res,
+					  wpa_s->wnm_neighbor_report_elements,
+					  wpa_s->wnm_num_neighbor_report,
+					  bssid) == 1) {
+		/* Associate to the network */
+		struct wpa_bss *bss;
+		struct wpa_ssid *ssid = wpa_s->current_ssid;
+
+		bss = wpa_bss_get_bssid(wpa_s, bssid);
+		if (!bss) {
+			wpa_printf(MSG_DEBUG, "WNM: Target AP not found from "
+				   "BSS table");
+			goto send_bss_resp_fail;
+		}
+
+		/* Send the BSS Management Response - Accept */
+		if (wpa_s->wnm_reply) {
+			wnm_send_bss_transition_mgmt_resp(wpa_s,
+						  wpa_s->wnm_dialog_token,
+						  WNM_BSS_TM_ACCEPT,
+						  0, bssid);
+		}
+
+		wpa_s->reassociate = 1;
+		wpa_supplicant_connect(wpa_s, bss, ssid);
+		wnm_deallocate_memory(wpa_s);
+		return;
+	}
+
+	/* Send reject response for all the failures */
+send_bss_resp_fail:
+	wnm_deallocate_memory(wpa_s);
+	if (wpa_s->wnm_reply) {
+		wnm_send_bss_transition_mgmt_resp(wpa_s,
+						  wpa_s->wnm_dialog_token,
+						  WNM_BSS_TM_REJECT_UNSPECIFIED,
+						  0, NULL);
+	}
+	return;
+}
+
+
 static void ieee802_11_rx_bss_trans_mgmt_req(struct wpa_supplicant *wpa_s,
 					     const u8 *pos, const u8 *end,
 					     int reply)
 {
-	u8 dialog_token;
-	u8 mode;
-	u16 disassoc_timer;
-
 	if (pos + 5 > end)
 		return;
 
-	dialog_token = pos[0];
-	mode = pos[1];
-	disassoc_timer = WPA_GET_LE16(pos + 2);
+	wpa_s->wnm_dialog_token = pos[0];
+	wpa_s->wnm_mode = pos[1];
+	wpa_s->wnm_dissoc_timer = WPA_GET_LE16(pos + 2);
+	wpa_s->wnm_validity_interval = pos[4];
+	wpa_s->wnm_reply = reply;
 
 	wpa_printf(MSG_DEBUG, "WNM: BSS Transition Management Request: "
 		   "dialog_token=%u request_mode=0x%x "
 		   "disassoc_timer=%u validity_interval=%u",
-		   dialog_token, mode, disassoc_timer, pos[4]);
+		   wpa_s->wnm_dialog_token, wpa_s->wnm_mode,
+		   wpa_s->wnm_dissoc_timer, wpa_s->wnm_validity_interval);
+
 	pos += 5;
-	if (mode & 0x08)
+
+	if (wpa_s->wnm_mode & WNM_BSS_TM_REQ_BSS_TERMINATION_INCLUDED) {
+		if (pos + 12 > end) {
+			wpa_printf(MSG_DEBUG, "WNM: Too short BSS TM Request");
+			return;
+		}
+		os_memcpy(wpa_s->wnm_bss_termination_duration, pos, 12);
 		pos += 12; /* BSS Termination Duration */
-	if (mode & 0x10) {
+	}
+
+	if (wpa_s->wnm_mode & WNM_BSS_TM_REQ_ESS_DISASSOC_IMMINENT) {
 		char url[256];
+		unsigned int beacon_int;
+
 		if (pos + 1 > end || pos + 1 + pos[0] > end) {
 			wpa_printf(MSG_DEBUG, "WNM: Invalid BSS Transition "
 				   "Management Request (URL)");
@@ -363,14 +657,22 @@ static void ieee802_11_rx_bss_trans_mgmt_req(struct wpa_supplicant *wpa_s,
 		}
 		os_memcpy(url, pos + 1, pos[0]);
 		url[pos[0]] = '\0';
-		wpa_msg(wpa_s, MSG_INFO, "WNM: ESS Disassociation Imminent - "
-			"session_info_url=%s", url);
+		pos += 1 + pos[0];
+
+		if (wpa_s->current_bss)
+			beacon_int = wpa_s->current_bss->beacon_int;
+		else
+			beacon_int = 100; /* best guess */
+
+		wpa_msg(wpa_s, MSG_INFO, ESS_DISASSOC_IMMINENT "%d %u %s",
+			wpa_sm_pmf_enabled(wpa_s->wpa),
+			wpa_s->wnm_dissoc_timer * beacon_int * 128 / 125, url);
 	}
 
-	if (mode & 0x04) {
+	if (wpa_s->wnm_mode & WNM_BSS_TM_REQ_DISASSOC_IMMINENT) {
 		wpa_msg(wpa_s, MSG_INFO, "WNM: Disassociation Imminent - "
-			"Disassociation Timer %u", disassoc_timer);
-		if (disassoc_timer && !wpa_s->scanning) {
+			"Disassociation Timer %u", wpa_s->wnm_dissoc_timer);
+		if (wpa_s->wnm_dissoc_timer && !wpa_s->scanning) {
 			/* TODO: mark current BSS less preferred for
 			 * selection */
 			wpa_printf(MSG_DEBUG, "Trying to find another BSS");
@@ -378,32 +680,255 @@ static void ieee802_11_rx_bss_trans_mgmt_req(struct wpa_supplicant *wpa_s,
 		}
 	}
 
-	if (reply) {
-		/* TODO: add support for reporting Accept */
-		wnm_send_bss_transition_mgmt_resp(wpa_s, dialog_token,
-						  1 /* Reject - unspecified */,
-						  0, NULL);
+	if (wpa_s->wnm_mode & WNM_BSS_TM_REQ_PREF_CAND_LIST_INCLUDED) {
+		wpa_msg(wpa_s, MSG_INFO, "WNM: Preferred List Available");
+		wpa_s->wnm_num_neighbor_report = 0;
+		os_free(wpa_s->wnm_neighbor_report_elements);
+		wpa_s->wnm_neighbor_report_elements = os_zalloc(
+			WNM_MAX_NEIGHBOR_REPORT *
+			sizeof(struct neighbor_report));
+		if (wpa_s->wnm_neighbor_report_elements == NULL)
+			return;
+
+		while (pos + 2 <= end &&
+		       wpa_s->wnm_num_neighbor_report < WNM_MAX_NEIGHBOR_REPORT)
+		{
+			u8 tag = *pos++;
+			u8 len = *pos++;
+
+			wpa_printf(MSG_DEBUG, "WNM: Neighbor report tag %u",
+				   tag);
+			if (pos + len > end) {
+				wpa_printf(MSG_DEBUG, "WNM: Truncated request");
+				return;
+			}
+			if (tag == WLAN_EID_NEIGHBOR_REPORT) {
+				struct neighbor_report *rep;
+				rep = &wpa_s->wnm_neighbor_report_elements[
+					wpa_s->wnm_num_neighbor_report];
+				wnm_parse_neighbor_report(wpa_s, pos, len, rep);
+			}
+
+			pos += len;
+			wpa_s->wnm_num_neighbor_report++;
+		}
+
+		wpa_s->scan_res_handler = wnm_scan_response;
+		wpa_supplicant_req_scan(wpa_s, 0, 0);
+	} else if (reply) {
+		enum bss_trans_mgmt_status_code status;
+		if (wpa_s->wnm_mode & WNM_BSS_TM_REQ_ESS_DISASSOC_IMMINENT)
+			status = WNM_BSS_TM_ACCEPT;
+		else {
+			wpa_msg(wpa_s, MSG_INFO, "WNM: BSS Transition Management Request did not include candidates");
+			status = WNM_BSS_TM_REJECT_UNSPECIFIED;
+		}
+		wnm_send_bss_transition_mgmt_resp(wpa_s,
+						  wpa_s->wnm_dialog_token,
+						  status, 0, NULL);
+	}
+}
+
+
+int wnm_send_bss_transition_mgmt_query(struct wpa_supplicant *wpa_s,
+				       u8 query_reason)
+{
+	u8 buf[1000], *pos;
+	struct ieee80211_mgmt *mgmt;
+	size_t len;
+	int ret;
+
+	wpa_printf(MSG_DEBUG, "WNM: Send BSS Transition Management Query to "
+		   MACSTR " query_reason=%u",
+		   MAC2STR(wpa_s->bssid), query_reason);
+
+	mgmt = (struct ieee80211_mgmt *) buf;
+	os_memset(&buf, 0, sizeof(buf));
+	os_memcpy(mgmt->da, wpa_s->bssid, ETH_ALEN);
+	os_memcpy(mgmt->sa, wpa_s->own_addr, ETH_ALEN);
+	os_memcpy(mgmt->bssid, wpa_s->bssid, ETH_ALEN);
+	mgmt->frame_control = IEEE80211_FC(WLAN_FC_TYPE_MGMT,
+					   WLAN_FC_STYPE_ACTION);
+	mgmt->u.action.category = WLAN_ACTION_WNM;
+	mgmt->u.action.u.bss_tm_query.action = WNM_BSS_TRANS_MGMT_QUERY;
+	mgmt->u.action.u.bss_tm_query.dialog_token = 1;
+	mgmt->u.action.u.bss_tm_query.query_reason = query_reason;
+	pos = mgmt->u.action.u.bss_tm_query.variable;
+
+	len = pos - (u8 *) &mgmt->u.action.category;
+
+	ret = wpa_drv_send_action(wpa_s, wpa_s->assoc_freq, 0, wpa_s->bssid,
+				  wpa_s->own_addr, wpa_s->bssid,
+				  &mgmt->u.action.category, len, 0);
+
+	return ret;
+}
+
+
+static void ieee802_11_rx_wnm_notif_req_wfa(struct wpa_supplicant *wpa_s,
+					    const u8 *sa, const u8 *data,
+					    int len)
+{
+	const u8 *pos, *end, *next;
+	u8 ie, ie_len;
+
+	pos = data;
+	end = data + len;
+
+	while (pos + 1 < end) {
+		ie = *pos++;
+		ie_len = *pos++;
+		wpa_printf(MSG_DEBUG, "WNM: WFA subelement %u len %u",
+			   ie, ie_len);
+		if (ie_len > end - pos) {
+			wpa_printf(MSG_DEBUG, "WNM: Not enough room for "
+				   "subelement");
+			break;
+		}
+		next = pos + ie_len;
+		if (ie_len < 4) {
+			pos = next;
+			continue;
+		}
+		wpa_printf(MSG_DEBUG, "WNM: Subelement OUI %06x type %u",
+			   WPA_GET_BE24(pos), pos[3]);
+
+#ifdef CONFIG_HS20
+		if (ie == WLAN_EID_VENDOR_SPECIFIC && ie_len >= 5 &&
+		    WPA_GET_BE24(pos) == OUI_WFA &&
+		    pos[3] == HS20_WNM_SUB_REM_NEEDED) {
+			/* Subscription Remediation subelement */
+			const u8 *ie_end;
+			u8 url_len;
+			char *url;
+			u8 osu_method;
+
+			wpa_printf(MSG_DEBUG, "WNM: Subscription Remediation "
+				   "subelement");
+			ie_end = pos + ie_len;
+			pos += 4;
+			url_len = *pos++;
+			if (url_len == 0) {
+				wpa_printf(MSG_DEBUG, "WNM: No Server URL included");
+				url = NULL;
+				osu_method = 1;
+			} else {
+				if (pos + url_len + 1 > ie_end) {
+					wpa_printf(MSG_DEBUG, "WNM: Not enough room for Server URL (len=%u) and Server Method (left %d)",
+						   url_len,
+						   (int) (ie_end - pos));
+					break;
+				}
+				url = os_malloc(url_len + 1);
+				if (url == NULL)
+					break;
+				os_memcpy(url, pos, url_len);
+				url[url_len] = '\0';
+				osu_method = pos[url_len];
+			}
+			hs20_rx_subscription_remediation(wpa_s, url,
+							 osu_method);
+			os_free(url);
+			pos = next;
+			continue;
+		}
+
+		if (ie == WLAN_EID_VENDOR_SPECIFIC && ie_len >= 8 &&
+		    WPA_GET_BE24(pos) == OUI_WFA &&
+		    pos[3] == HS20_WNM_DEAUTH_IMMINENT_NOTICE) {
+			const u8 *ie_end;
+			u8 url_len;
+			char *url;
+			u8 code;
+			u16 reauth_delay;
+
+			ie_end = pos + ie_len;
+			pos += 4;
+			code = *pos++;
+			reauth_delay = WPA_GET_LE16(pos);
+			pos += 2;
+			url_len = *pos++;
+			wpa_printf(MSG_DEBUG, "WNM: HS 2.0 Deauthentication "
+				   "Imminent - Reason Code %u   "
+				   "Re-Auth Delay %u  URL Length %u",
+				   code, reauth_delay, url_len);
+			if (pos + url_len > ie_end)
+				break;
+			url = os_malloc(url_len + 1);
+			if (url == NULL)
+				break;
+			os_memcpy(url, pos, url_len);
+			url[url_len] = '\0';
+			hs20_rx_deauth_imminent_notice(wpa_s, code,
+						       reauth_delay, url);
+			os_free(url);
+			pos = next;
+			continue;
+		}
+#endif /* CONFIG_HS20 */
+
+		pos = next;
+	}
+}
+
+
+static void ieee802_11_rx_wnm_notif_req(struct wpa_supplicant *wpa_s,
+					const u8 *sa, const u8 *frm, int len)
+{
+	const u8 *pos, *end;
+	u8 dialog_token, type;
+
+	/* Dialog Token [1] | Type [1] | Subelements */
+
+	if (len < 2 || sa == NULL)
+		return;
+	end = frm + len;
+	pos = frm;
+	dialog_token = *pos++;
+	type = *pos++;
+
+	wpa_dbg(wpa_s, MSG_DEBUG, "WNM: Received WNM-Notification Request "
+		"(dialog_token %u type %u sa " MACSTR ")",
+		dialog_token, type, MAC2STR(sa));
+	wpa_hexdump(MSG_DEBUG, "WNM-Notification Request subelements",
+		    pos, end - pos);
+
+	if (wpa_s->wpa_state != WPA_COMPLETED ||
+	    os_memcmp(sa, wpa_s->bssid, ETH_ALEN) != 0) {
+		wpa_dbg(wpa_s, MSG_DEBUG, "WNM: WNM-Notification frame not "
+			"from our AP - ignore it");
+		return;
+	}
+
+	switch (type) {
+	case 1:
+		ieee802_11_rx_wnm_notif_req_wfa(wpa_s, sa, pos, end - pos);
+		break;
+	default:
+		wpa_dbg(wpa_s, MSG_DEBUG, "WNM: Ignore unknown "
+			"WNM-Notification type %u", type);
+		break;
 	}
 }
 
 
 void ieee802_11_rx_wnm_action(struct wpa_supplicant *wpa_s,
-			      struct rx_action *action)
+			      const struct ieee80211_mgmt *mgmt, size_t len)
 {
 	const u8 *pos, *end;
 	u8 act;
 
-	if (action->data == NULL || action->len == 0)
+	if (len < IEEE80211_HDRLEN + 2)
 		return;
 
-	pos = action->data;
-	end = pos + action->len;
+	pos = ((const u8 *) mgmt) + IEEE80211_HDRLEN + 1;
 	act = *pos++;
+	end = ((const u8 *) mgmt) + len;
 
 	wpa_printf(MSG_DEBUG, "WNM: RX action %u from " MACSTR,
-		   act, MAC2STR(action->sa));
+		   act, MAC2STR(mgmt->sa));
 	if (wpa_s->wpa_state < WPA_ASSOCIATED ||
-	    os_memcmp(action->sa, wpa_s->bssid, ETH_ALEN) != 0) {
+	    os_memcmp(mgmt->sa, wpa_s->bssid, ETH_ALEN) != 0) {
 		wpa_printf(MSG_DEBUG, "WNM: Ignore unexpected WNM Action "
 			   "frame");
 		return;
@@ -412,12 +937,16 @@ void ieee802_11_rx_wnm_action(struct wpa_supplicant *wpa_s,
 	switch (act) {
 	case WNM_BSS_TRANS_MGMT_REQ:
 		ieee802_11_rx_bss_trans_mgmt_req(wpa_s, pos, end,
-						 !(action->da[0] & 0x01));
+						 !(mgmt->da[0] & 0x01));
 		break;
 	case WNM_SLEEP_MODE_RESP:
-		ieee802_11_rx_wnmsleep_resp(wpa_s, action->data, action->len);
+		ieee802_11_rx_wnmsleep_resp(wpa_s, pos, end - pos);
+		break;
+	case WNM_NOTIFICATION_REQ:
+		ieee802_11_rx_wnm_notif_req(wpa_s, mgmt->sa, pos, end - pos);
 		break;
 	default:
+		wpa_printf(MSG_ERROR, "WNM: Unknown request");
 		break;
 	}
 }
