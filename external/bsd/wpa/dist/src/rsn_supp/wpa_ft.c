@@ -207,6 +207,8 @@ static u8 * wpa_ft_gen_req_ies(struct wpa_sm *sm, size_t *len,
 		RSN_SELECTOR_PUT(pos, RSN_AUTH_KEY_MGMT_FT_802_1X);
 	else if (sm->key_mgmt == WPA_KEY_MGMT_FT_PSK)
 		RSN_SELECTOR_PUT(pos, RSN_AUTH_KEY_MGMT_FT_PSK);
+	else if (sm->key_mgmt == WPA_KEY_MGMT_FT_SAE)
+		RSN_SELECTOR_PUT(pos, RSN_AUTH_KEY_MGMT_FT_SAE);
 	else {
 		wpa_printf(MSG_WARNING, "FT: Invalid key management type (%d)",
 			   sm->key_mgmt);
@@ -400,8 +402,7 @@ int wpa_ft_process_response(struct wpa_sm *sm, const u8 *ies, size_t ies_len,
 		}
 	}
 
-	if (sm->key_mgmt != WPA_KEY_MGMT_FT_IEEE8021X &&
-	    sm->key_mgmt != WPA_KEY_MGMT_FT_PSK) {
+	if (!wpa_key_mgmt_ft(sm->key_mgmt)) {
 		wpa_printf(MSG_DEBUG, "FT: Reject FT IEs since FT is not "
 			   "enabled for this connection");
 		return -1;
@@ -441,7 +442,8 @@ int wpa_ft_process_response(struct wpa_sm *sm, const u8 *ies, size_t ies_len,
 	}
 
 	if (parse.r0kh_id_len != sm->r0kh_id_len ||
-	    os_memcmp(parse.r0kh_id, sm->r0kh_id, parse.r0kh_id_len) != 0) {
+	    os_memcmp_const(parse.r0kh_id, sm->r0kh_id, parse.r0kh_id_len) != 0)
+	{
 		wpa_printf(MSG_DEBUG, "FT: R0KH-ID in FTIE did not match with "
 			   "the current R0KH-ID");
 		wpa_hexdump(MSG_DEBUG, "FT: R0KH-ID in FTIE",
@@ -457,7 +459,8 @@ int wpa_ft_process_response(struct wpa_sm *sm, const u8 *ies, size_t ies_len,
 	}
 
 	if (parse.rsn_pmkid == NULL ||
-	    os_memcmp(parse.rsn_pmkid, sm->pmk_r0_name, WPA_PMK_NAME_LEN)) {
+	    os_memcmp_const(parse.rsn_pmkid, sm->pmk_r0_name, WPA_PMK_NAME_LEN))
+	{
 		wpa_printf(MSG_DEBUG, "FT: No matching PMKR0Name (PMKID) in "
 			   "RSNIE");
 		return -1;
@@ -526,11 +529,17 @@ int wpa_ft_is_completed(struct wpa_sm *sm)
 	if (sm == NULL)
 		return 0;
 
-	if (sm->key_mgmt != WPA_KEY_MGMT_FT_IEEE8021X &&
-	    sm->key_mgmt != WPA_KEY_MGMT_FT_PSK)
+	if (!wpa_key_mgmt_ft(sm->key_mgmt))
 		return 0;
 
 	return sm->ft_completed;
+}
+
+
+void wpa_reset_ft_completed(struct wpa_sm *sm)
+{
+	if (sm != NULL)
+		sm->ft_completed = 0;
 }
 
 
@@ -557,7 +566,7 @@ static int wpa_ft_process_gtk_subelem(struct wpa_sm *sm, const u8 *gtk_elem,
 		return -1;
 	}
 	gtk_len = gtk_elem_len - 19;
-	if (aes_unwrap(sm->ptk.kek, gtk_len / 8, gtk_elem + 11, gtk)) {
+	if (aes_unwrap(sm->ptk.kek, 16, gtk_len / 8, gtk_elem + 11, gtk)) {
 		wpa_printf(MSG_WARNING, "FT: AES unwrap failed - could not "
 			   "decrypt GTK");
 		return -1;
@@ -589,6 +598,13 @@ static int wpa_ft_process_gtk_subelem(struct wpa_sm *sm, const u8 *gtk_elem,
 	}
 
 	wpa_hexdump_key(MSG_DEBUG, "FT: GTK from Reassoc Resp", gtk, keylen);
+	if (sm->group_cipher == WPA_CIPHER_TKIP) {
+		/* Swap Tx/Rx keys for Michael MIC */
+		u8 tmp[8];
+		os_memcpy(tmp, gtk + 16, 8);
+		os_memcpy(gtk + 16, gtk + 24, 8);
+		os_memcpy(gtk + 24, tmp, 8);
+	}
 	if (wpa_sm_set_key(sm, alg, broadcast_ether_addr, keyidx, 0,
 			   gtk_elem + 3, rsc_len, gtk, keylen) < 0) {
 		wpa_printf(MSG_WARNING, "WPA: Failed to set GTK to the "
@@ -629,7 +645,8 @@ static int wpa_ft_process_igtk_subelem(struct wpa_sm *sm, const u8 *igtk_elem,
 		return -1;
 	}
 
-	if (aes_unwrap(sm->ptk.kek, WPA_IGTK_LEN / 8, igtk_elem + 9, igtk)) {
+	if (aes_unwrap(sm->ptk.kek, 16, WPA_IGTK_LEN / 8, igtk_elem + 9, igtk))
+	{
 		wpa_printf(MSG_WARNING, "FT: AES unwrap failed - could not "
 			   "decrypt IGTK");
 		return -1;
@@ -664,8 +681,7 @@ int wpa_ft_validate_reassoc_resp(struct wpa_sm *sm, const u8 *ies,
 
 	wpa_hexdump(MSG_DEBUG, "FT: Response IEs", ies, ies_len);
 
-	if (sm->key_mgmt != WPA_KEY_MGMT_FT_IEEE8021X &&
-	    sm->key_mgmt != WPA_KEY_MGMT_FT_PSK) {
+	if (!wpa_key_mgmt_ft(sm->key_mgmt)) {
 		wpa_printf(MSG_DEBUG, "FT: Reject FT IEs since FT is not "
 			   "enabled for this connection");
 		return -1;
@@ -714,7 +730,8 @@ int wpa_ft_validate_reassoc_resp(struct wpa_sm *sm, const u8 *ies,
 	}
 
 	if (parse.r0kh_id_len != sm->r0kh_id_len ||
-	    os_memcmp(parse.r0kh_id, sm->r0kh_id, parse.r0kh_id_len) != 0) {
+	    os_memcmp_const(parse.r0kh_id, sm->r0kh_id, parse.r0kh_id_len) != 0)
+	{
 		wpa_printf(MSG_DEBUG, "FT: R0KH-ID in FTIE did not match with "
 			   "the current R0KH-ID");
 		wpa_hexdump(MSG_DEBUG, "FT: R0KH-ID in FTIE",
@@ -729,14 +746,15 @@ int wpa_ft_validate_reassoc_resp(struct wpa_sm *sm, const u8 *ies,
 		return -1;
 	}
 
-	if (os_memcmp(parse.r1kh_id, sm->r1kh_id, FT_R1KH_ID_LEN) != 0) {
+	if (os_memcmp_const(parse.r1kh_id, sm->r1kh_id, FT_R1KH_ID_LEN) != 0) {
 		wpa_printf(MSG_DEBUG, "FT: Unknown R1KH-ID used in "
 			   "ReassocResp");
 		return -1;
 	}
 
 	if (parse.rsn_pmkid == NULL ||
-	    os_memcmp(parse.rsn_pmkid, sm->pmk_r1_name, WPA_PMK_NAME_LEN)) {
+	    os_memcmp_const(parse.rsn_pmkid, sm->pmk_r1_name, WPA_PMK_NAME_LEN))
+	{
 		wpa_printf(MSG_DEBUG, "FT: No matching PMKR1Name (PMKID) in "
 			   "RSNIE (pmkid=%d)", !!parse.rsn_pmkid);
 		return -1;
@@ -762,7 +780,7 @@ int wpa_ft_validate_reassoc_resp(struct wpa_sm *sm, const u8 *ies,
 		return -1;
 	}
 
-	if (os_memcmp(mic, ftie->mic, 16) != 0) {
+	if (os_memcmp_const(mic, ftie->mic, 16) != 0) {
 		wpa_printf(MSG_DEBUG, "FT: Invalid MIC in FTIE");
 		wpa_hexdump(MSG_MSGDUMP, "FT: Received MIC", ftie->mic, 16);
 		wpa_hexdump(MSG_MSGDUMP, "FT: Calculated MIC", mic, 16);
@@ -788,8 +806,11 @@ int wpa_ft_validate_reassoc_resp(struct wpa_sm *sm, const u8 *ies,
 	if (parse.ric) {
 		wpa_hexdump(MSG_MSGDUMP, "FT: RIC Response",
 			    parse.ric, parse.ric_len);
-		/* TODO: parse response and inform driver about results */
+		/* TODO: parse response and inform driver about results when
+		 * using wpa_supplicant SME */
 	}
+
+	wpa_printf(MSG_DEBUG, "FT: Completed successfully");
 
 	return 0;
 }

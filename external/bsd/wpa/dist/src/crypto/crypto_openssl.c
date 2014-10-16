@@ -1,6 +1,6 @@
 /*
- * WPA Supplicant / wrapper functions for libcrypto
- * Copyright (c) 2004-2012, Jouni Malinen <j@w1.fi>
+ * Wrapper functions for OpenSSL libcrypto
+ * Copyright (c) 2004-2013, Jouni Malinen <j@w1.fi>
  *
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
@@ -19,10 +19,15 @@
 #ifdef CONFIG_OPENSSL_CMAC
 #include <openssl/cmac.h>
 #endif /* CONFIG_OPENSSL_CMAC */
+#ifdef CONFIG_ECC
+#include <openssl/ec.h>
+#endif /* CONFIG_ECC */
 
 #include "common.h"
 #include "wpabuf.h"
 #include "dh_group5.h"
+#include "sha1.h"
+#include "sha256.h"
 #include "crypto.h"
 
 #if OPENSSL_VERSION_NUMBER < 0x00907000
@@ -35,7 +40,7 @@
 
 static BIGNUM * get_group5_prime(void)
 {
-#if OPENSSL_VERSION_NUMBER < 0x00908000
+#if OPENSSL_VERSION_NUMBER < 0x00908000 || defined(OPENSSL_IS_BORINGSSL)
 	static const unsigned char RFC3526_PRIME_1536[] = {
 		0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xC9,0x0F,0xDA,0xA2,
 		0x21,0x68,0xC2,0x34,0xC4,0xC6,0x62,0x8B,0x80,0xDC,0x1C,0xD1,
@@ -125,7 +130,7 @@ void des_encrypt(const u8 *clear, const u8 *key, u8 *cypher)
 	}
 	pkey[i] = next | 1;
 
-	DES_set_key(&pkey, &ks);
+	DES_set_key((DES_cblock *) &pkey, &ks);
 	DES_ecb_encrypt((DES_cblock *) clear, (DES_cblock *) cypher, &ks,
 			DES_ENCRYPT);
 }
@@ -194,8 +199,10 @@ static const EVP_CIPHER * aes_get_evp_cipher(size_t keylen)
 	switch (keylen) {
 	case 16:
 		return EVP_aes_128_ecb();
+#ifndef OPENSSL_IS_BORINGSSL
 	case 24:
 		return EVP_aes_192_ecb();
+#endif /* OPENSSL_IS_BORINGSSL */
 	case 32:
 		return EVP_aes_256_ecb();
 	}
@@ -335,10 +342,10 @@ int crypto_mod_exp(const u8 *base, size_t base_len,
 	ret = 0;
 
 error:
-	BN_free(bn_base);
-	BN_free(bn_exp);
-	BN_free(bn_modulus);
-	BN_free(bn_result);
+	BN_clear_free(bn_base);
+	BN_clear_free(bn_exp);
+	BN_clear_free(bn_modulus);
+	BN_clear_free(bn_result);
 	BN_CTX_free(ctx);
 	return ret;
 }
@@ -373,9 +380,11 @@ struct crypto_cipher * crypto_cipher_init(enum crypto_cipher_alg alg,
 		case 16:
 			cipher = EVP_aes_128_cbc();
 			break;
+#ifndef OPENSSL_IS_BORINGSSL
 		case 24:
 			cipher = EVP_aes_192_cbc();
 			break;
+#endif /* OPENSSL_IS_BORINGSSL */
 		case 32:
 			cipher = EVP_aes_256_cbc();
 			break;
@@ -566,12 +575,12 @@ struct wpabuf * dh5_derive_shared(void *ctx, const struct wpabuf *peer_public,
 	if (keylen < 0)
 		goto err;
 	wpabuf_put(res, keylen);
-	BN_free(pub_key);
+	BN_clear_free(pub_key);
 
 	return res;
 
 err:
-	BN_free(pub_key);
+	BN_clear_free(pub_key);
 	wpabuf_free(res);
 	return NULL;
 }
@@ -818,3 +827,407 @@ int omac1_aes_128(const u8 *key, const u8 *data, size_t data_len, u8 *mac)
 	return omac1_aes_128_vector(key, 1, &data, &data_len, mac);
 }
 #endif /* CONFIG_OPENSSL_CMAC */
+
+
+struct crypto_bignum * crypto_bignum_init(void)
+{
+	return (struct crypto_bignum *) BN_new();
+}
+
+
+struct crypto_bignum * crypto_bignum_init_set(const u8 *buf, size_t len)
+{
+	BIGNUM *bn = BN_bin2bn(buf, len, NULL);
+	return (struct crypto_bignum *) bn;
+}
+
+
+void crypto_bignum_deinit(struct crypto_bignum *n, int clear)
+{
+	if (clear)
+		BN_clear_free((BIGNUM *) n);
+	else
+		BN_free((BIGNUM *) n);
+}
+
+
+int crypto_bignum_to_bin(const struct crypto_bignum *a,
+			 u8 *buf, size_t buflen, size_t padlen)
+{
+	int num_bytes, offset;
+
+	if (padlen > buflen)
+		return -1;
+
+	num_bytes = BN_num_bytes((const BIGNUM *) a);
+	if ((size_t) num_bytes > buflen)
+		return -1;
+	if (padlen > (size_t) num_bytes)
+		offset = padlen - num_bytes;
+	else
+		offset = 0;
+
+	os_memset(buf, 0, offset);
+	BN_bn2bin((const BIGNUM *) a, buf + offset);
+
+	return num_bytes + offset;
+}
+
+
+int crypto_bignum_add(const struct crypto_bignum *a,
+		      const struct crypto_bignum *b,
+		      struct crypto_bignum *c)
+{
+	return BN_add((BIGNUM *) c, (const BIGNUM *) a, (const BIGNUM *) b) ?
+		0 : -1;
+}
+
+
+int crypto_bignum_mod(const struct crypto_bignum *a,
+		      const struct crypto_bignum *b,
+		      struct crypto_bignum *c)
+{
+	int res;
+	BN_CTX *bnctx;
+
+	bnctx = BN_CTX_new();
+	if (bnctx == NULL)
+		return -1;
+	res = BN_mod((BIGNUM *) c, (const BIGNUM *) a, (const BIGNUM *) b,
+		     bnctx);
+	BN_CTX_free(bnctx);
+
+	return res ? 0 : -1;
+}
+
+
+int crypto_bignum_exptmod(const struct crypto_bignum *a,
+			  const struct crypto_bignum *b,
+			  const struct crypto_bignum *c,
+			  struct crypto_bignum *d)
+{
+	int res;
+	BN_CTX *bnctx;
+
+	bnctx = BN_CTX_new();
+	if (bnctx == NULL)
+		return -1;
+	res = BN_mod_exp((BIGNUM *) d, (const BIGNUM *) a, (const BIGNUM *) b,
+			 (const BIGNUM *) c, bnctx);
+	BN_CTX_free(bnctx);
+
+	return res ? 0 : -1;
+}
+
+
+int crypto_bignum_inverse(const struct crypto_bignum *a,
+			  const struct crypto_bignum *b,
+			  struct crypto_bignum *c)
+{
+	BIGNUM *res;
+	BN_CTX *bnctx;
+
+	bnctx = BN_CTX_new();
+	if (bnctx == NULL)
+		return -1;
+	res = BN_mod_inverse((BIGNUM *) c, (const BIGNUM *) a,
+			     (const BIGNUM *) b, bnctx);
+	BN_CTX_free(bnctx);
+
+	return res ? 0 : -1;
+}
+
+
+int crypto_bignum_sub(const struct crypto_bignum *a,
+		      const struct crypto_bignum *b,
+		      struct crypto_bignum *c)
+{
+	return BN_sub((BIGNUM *) c, (const BIGNUM *) a, (const BIGNUM *) b) ?
+		0 : -1;
+}
+
+
+int crypto_bignum_div(const struct crypto_bignum *a,
+		      const struct crypto_bignum *b,
+		      struct crypto_bignum *c)
+{
+	int res;
+
+	BN_CTX *bnctx;
+
+	bnctx = BN_CTX_new();
+	if (bnctx == NULL)
+		return -1;
+	res = BN_div((BIGNUM *) c, NULL, (const BIGNUM *) a,
+		     (const BIGNUM *) b, bnctx);
+	BN_CTX_free(bnctx);
+
+	return res ? 0 : -1;
+}
+
+
+int crypto_bignum_mulmod(const struct crypto_bignum *a,
+			 const struct crypto_bignum *b,
+			 const struct crypto_bignum *c,
+			 struct crypto_bignum *d)
+{
+	int res;
+
+	BN_CTX *bnctx;
+
+	bnctx = BN_CTX_new();
+	if (bnctx == NULL)
+		return -1;
+	res = BN_mod_mul((BIGNUM *) d, (const BIGNUM *) a, (const BIGNUM *) b,
+			 (const BIGNUM *) c, bnctx);
+	BN_CTX_free(bnctx);
+
+	return res ? 0 : -1;
+}
+
+
+int crypto_bignum_cmp(const struct crypto_bignum *a,
+		      const struct crypto_bignum *b)
+{
+	return BN_cmp((const BIGNUM *) a, (const BIGNUM *) b);
+}
+
+
+int crypto_bignum_bits(const struct crypto_bignum *a)
+{
+	return BN_num_bits((const BIGNUM *) a);
+}
+
+
+int crypto_bignum_is_zero(const struct crypto_bignum *a)
+{
+	return BN_is_zero((const BIGNUM *) a);
+}
+
+
+int crypto_bignum_is_one(const struct crypto_bignum *a)
+{
+	return BN_is_one((const BIGNUM *) a);
+}
+
+
+#ifdef CONFIG_ECC
+
+struct crypto_ec {
+	EC_GROUP *group;
+	BN_CTX *bnctx;
+	BIGNUM *prime;
+	BIGNUM *order;
+};
+
+struct crypto_ec * crypto_ec_init(int group)
+{
+	struct crypto_ec *e;
+	int nid;
+
+	/* Map from IANA registry for IKE D-H groups to OpenSSL NID */
+	switch (group) {
+	case 19:
+		nid = NID_X9_62_prime256v1;
+		break;
+	case 20:
+		nid = NID_secp384r1;
+		break;
+	case 21:
+		nid = NID_secp521r1;
+		break;
+	case 25:
+		nid = NID_X9_62_prime192v1;
+		break;
+	case 26:
+		nid = NID_secp224r1;
+		break;
+	default:
+		return NULL;
+	}
+
+	e = os_zalloc(sizeof(*e));
+	if (e == NULL)
+		return NULL;
+
+	e->bnctx = BN_CTX_new();
+	e->group = EC_GROUP_new_by_curve_name(nid);
+	e->prime = BN_new();
+	e->order = BN_new();
+	if (e->group == NULL || e->bnctx == NULL || e->prime == NULL ||
+	    e->order == NULL ||
+	    !EC_GROUP_get_curve_GFp(e->group, e->prime, NULL, NULL, e->bnctx) ||
+	    !EC_GROUP_get_order(e->group, e->order, e->bnctx)) {
+		crypto_ec_deinit(e);
+		e = NULL;
+	}
+
+	return e;
+}
+
+
+void crypto_ec_deinit(struct crypto_ec *e)
+{
+	if (e == NULL)
+		return;
+	BN_clear_free(e->order);
+	BN_clear_free(e->prime);
+	EC_GROUP_free(e->group);
+	BN_CTX_free(e->bnctx);
+	os_free(e);
+}
+
+
+struct crypto_ec_point * crypto_ec_point_init(struct crypto_ec *e)
+{
+	if (e == NULL)
+		return NULL;
+	return (struct crypto_ec_point *) EC_POINT_new(e->group);
+}
+
+
+size_t crypto_ec_prime_len(struct crypto_ec *e)
+{
+	return BN_num_bytes(e->prime);
+}
+
+
+size_t crypto_ec_prime_len_bits(struct crypto_ec *e)
+{
+	return BN_num_bits(e->prime);
+}
+
+
+const struct crypto_bignum * crypto_ec_get_prime(struct crypto_ec *e)
+{
+	return (const struct crypto_bignum *) e->prime;
+}
+
+
+const struct crypto_bignum * crypto_ec_get_order(struct crypto_ec *e)
+{
+	return (const struct crypto_bignum *) e->order;
+}
+
+
+void crypto_ec_point_deinit(struct crypto_ec_point *p, int clear)
+{
+	if (clear)
+		EC_POINT_clear_free((EC_POINT *) p);
+	else
+		EC_POINT_free((EC_POINT *) p);
+}
+
+
+int crypto_ec_point_to_bin(struct crypto_ec *e,
+			   const struct crypto_ec_point *point, u8 *x, u8 *y)
+{
+	BIGNUM *x_bn, *y_bn;
+	int ret = -1;
+	int len = BN_num_bytes(e->prime);
+
+	x_bn = BN_new();
+	y_bn = BN_new();
+
+	if (x_bn && y_bn &&
+	    EC_POINT_get_affine_coordinates_GFp(e->group, (EC_POINT *) point,
+						x_bn, y_bn, e->bnctx)) {
+		if (x) {
+			crypto_bignum_to_bin((struct crypto_bignum *) x_bn,
+					     x, len, len);
+		}
+		if (y) {
+			crypto_bignum_to_bin((struct crypto_bignum *) y_bn,
+					     y, len, len);
+		}
+		ret = 0;
+	}
+
+	BN_clear_free(x_bn);
+	BN_clear_free(y_bn);
+	return ret;
+}
+
+
+struct crypto_ec_point * crypto_ec_point_from_bin(struct crypto_ec *e,
+						  const u8 *val)
+{
+	BIGNUM *x, *y;
+	EC_POINT *elem;
+	int len = BN_num_bytes(e->prime);
+
+	x = BN_bin2bn(val, len, NULL);
+	y = BN_bin2bn(val + len, len, NULL);
+	elem = EC_POINT_new(e->group);
+	if (x == NULL || y == NULL || elem == NULL) {
+		BN_clear_free(x);
+		BN_clear_free(y);
+		EC_POINT_clear_free(elem);
+		return NULL;
+	}
+
+	if (!EC_POINT_set_affine_coordinates_GFp(e->group, elem, x, y,
+						 e->bnctx)) {
+		EC_POINT_clear_free(elem);
+		elem = NULL;
+	}
+
+	BN_clear_free(x);
+	BN_clear_free(y);
+
+	return (struct crypto_ec_point *) elem;
+}
+
+
+int crypto_ec_point_add(struct crypto_ec *e, const struct crypto_ec_point *a,
+			const struct crypto_ec_point *b,
+			struct crypto_ec_point *c)
+{
+	return EC_POINT_add(e->group, (EC_POINT *) c, (const EC_POINT *) a,
+			    (const EC_POINT *) b, e->bnctx) ? 0 : -1;
+}
+
+
+int crypto_ec_point_mul(struct crypto_ec *e, const struct crypto_ec_point *p,
+			const struct crypto_bignum *b,
+			struct crypto_ec_point *res)
+{
+	return EC_POINT_mul(e->group, (EC_POINT *) res, NULL,
+			    (const EC_POINT *) p, (const BIGNUM *) b, e->bnctx)
+		? 0 : -1;
+}
+
+
+int crypto_ec_point_invert(struct crypto_ec *e, struct crypto_ec_point *p)
+{
+	return EC_POINT_invert(e->group, (EC_POINT *) p, e->bnctx) ? 0 : -1;
+}
+
+
+int crypto_ec_point_solve_y_coord(struct crypto_ec *e,
+				  struct crypto_ec_point *p,
+				  const struct crypto_bignum *x, int y_bit)
+{
+	if (!EC_POINT_set_compressed_coordinates_GFp(e->group, (EC_POINT *) p,
+						     (const BIGNUM *) x, y_bit,
+						     e->bnctx) ||
+	    !EC_POINT_is_on_curve(e->group, (EC_POINT *) p, e->bnctx))
+		return -1;
+	return 0;
+}
+
+
+int crypto_ec_point_is_at_infinity(struct crypto_ec *e,
+				   const struct crypto_ec_point *p)
+{
+	return EC_POINT_is_at_infinity(e->group, (const EC_POINT *) p);
+}
+
+
+int crypto_ec_point_is_on_curve(struct crypto_ec *e,
+				const struct crypto_ec_point *p)
+{
+	return EC_POINT_is_on_curve(e->group, (const EC_POINT *) p, e->bnctx);
+}
+
+#endif /* CONFIG_ECC */
