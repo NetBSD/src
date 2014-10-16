@@ -261,6 +261,19 @@ struct eap_method {
 	 * private data or this function may derive the key.
 	 */
 	u8 * (*get_emsk)(struct eap_sm *sm, void *priv, size_t *len);
+
+	/**
+	 * getSessionId - Get EAP method specific Session-Id
+	 * @sm: Pointer to EAP state machine allocated with eap_peer_sm_init()
+	 * @priv: Pointer to private EAP method data from eap_method::init()
+	 * @len: Pointer to a variable to store Session-Id length
+	 * Returns: Session-Id or %NULL if not available
+	 *
+	 * This function can be used to get the Session-Id from the EAP method.
+	 * The Session-Id may already be stored in the method-specific private
+	 * data or this function may derive the Session-Id.
+	 */
+	u8 * (*getSessionId)(struct eap_sm *sm, void *priv, size_t *len);
 };
 
 
@@ -298,6 +311,8 @@ struct eap_sm {
 	Boolean eapKeyAvailable; /* peer to lower layer */
 	u8 *eapKeyData; /* peer to lower layer */
 	size_t eapKeyDataLen; /* peer to lower layer */
+	u8 *eapSessionId; /* peer to lower layer */
+	size_t eapSessionIdLen; /* peer to lower layer */
 	const struct eap_method *m; /* selected EAP method */
 	/* not defined in RFC 4137 */
 	Boolean changed;
@@ -330,9 +345,14 @@ struct eap_sm {
 	struct wps_context *wps;
 
 	int prev_failure;
+	struct eap_peer_config *last_config;
 
 	struct ext_password_data *ext_pw;
 	struct wpabuf *ext_pw_buf;
+
+	int external_sim;
+
+	unsigned int expected_failure:1;
 };
 
 const u8 * eap_get_config_identity(struct eap_sm *sm, size_t *len);

@@ -26,6 +26,7 @@ struct wpa_state_machine {
 	struct wpa_group *group;
 
 	u8 addr[ETH_ALEN];
+	u8 p2p_dev_addr[ETH_ALEN];
 
 	enum {
 		WPA_PTK_INITIALIZE, WPA_PTK_DISCONNECT, WPA_PTK_DISCONNECTED,
@@ -117,9 +118,22 @@ struct wpa_state_machine {
 	u8 sup_pmk_r1_name[WPA_PMK_NAME_LEN]; /* PMKR1Name from EAPOL-Key
 					       * message 2/4 */
 	u8 *assoc_resp_ftie;
+
+	void (*ft_pending_cb)(void *ctx, const u8 *dst, const u8 *bssid,
+			      u16 auth_transaction, u16 status,
+			      const u8 *ies, size_t ies_len);
+	void *ft_pending_cb_ctx;
+	struct wpabuf *ft_pending_req_ies;
+	u8 ft_pending_pull_nonce[FT_R0KH_R1KH_PULL_NONCE_LEN];
+	u8 ft_pending_auth_transaction;
+	u8 ft_pending_current_ap[ETH_ALEN];
 #endif /* CONFIG_IEEE80211R */
 
 	int pending_1_of_4_timeout;
+
+#ifdef CONFIG_P2P
+	u8 ip_addr[4];
+#endif /* CONFIG_P2P */
 };
 
 
@@ -138,7 +152,8 @@ struct wpa_group {
 
 	enum {
 		WPA_GROUP_GTK_INIT = 0,
-		WPA_GROUP_SETKEYS, WPA_GROUP_SETKEYSDONE
+		WPA_GROUP_SETKEYS, WPA_GROUP_SETKEYSDONE,
+		WPA_GROUP_FATAL_FAILURE
 	} wpa_group_state;
 
 	u8 GMK[WPA_GMK_LEN];
@@ -148,7 +163,7 @@ struct wpa_group {
 	Boolean first_sta_seen;
 	Boolean reject_4way_hs_for_entropy;
 #ifdef CONFIG_IEEE80211W
-	u8 IGTK[2][WPA_IGTK_LEN];
+	u8 IGTK[2][WPA_IGTK_MAX_LEN];
 	int GN_igtk, GM_igtk;
 #endif /* CONFIG_IEEE80211W */
 };
@@ -183,6 +198,10 @@ struct wpa_authenticator {
 
 	struct rsn_pmksa_cache *pmksa;
 	struct wpa_ft_pmk_cache *ft_pmk_cache;
+
+#ifdef CONFIG_P2P
+	struct bitfield *ip_pool;
+#endif /* CONFIG_P2P */
 };
 
 

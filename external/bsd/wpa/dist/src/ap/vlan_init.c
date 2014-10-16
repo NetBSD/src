@@ -4,14 +4,8 @@
  * Copyright 2005-2006, Devicescape Software, Inc.
  * Copyright (c) 2009, Jouni Malinen <j@w1.fi>
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * Alternatively, this software may be distributed under the terms of BSD
- * license.
- *
- * See README and COPYING for more details.
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
  */
 
 #include "utils/includes.h"
@@ -493,8 +487,18 @@ static void vlan_newlink(char *ifname, struct hostapd_data *hapd)
 	while (vlan) {
 		if (os_strcmp(ifname, vlan->ifname) == 0) {
 
-			os_snprintf(br_name, sizeof(br_name), "brvlan%d",
-				    vlan->vlan_id);
+			if (hapd->conf->vlan_bridge[0]) {
+				os_snprintf(br_name, sizeof(br_name), "%s%d",
+					    hapd->conf->vlan_bridge,
+					    vlan->vlan_id);
+			} else if (tagged_interface) {
+				os_snprintf(br_name, sizeof(br_name),
+				            "br%s.%d", tagged_interface,
+					    vlan->vlan_id);
+			} else {
+				os_snprintf(br_name, sizeof(br_name),
+				            "brvlan%d", vlan->vlan_id);
+			}
 
 			if (!br_addbr(br_name))
 				vlan->clean |= DVLAN_CLEAN_BR;
@@ -550,8 +554,18 @@ static void vlan_dellink(char *ifname, struct hostapd_data *hapd)
 
 	while (vlan) {
 		if (os_strcmp(ifname, vlan->ifname) == 0) {
-			os_snprintf(br_name, sizeof(br_name), "brvlan%d",
-				    vlan->vlan_id);
+			if (hapd->conf->vlan_bridge[0]) {
+				os_snprintf(br_name, sizeof(br_name), "%s%d",
+					    hapd->conf->vlan_bridge,
+					    vlan->vlan_id);
+			} else if (tagged_interface) {
+				os_snprintf(br_name, sizeof(br_name),
+				            "br%s.%d", tagged_interface,
+					    vlan->vlan_id);
+			} else {
+				os_snprintf(br_name, sizeof(br_name),
+				            "brvlan%d", vlan->vlan_id);
+			}
 
 			if (vlan->clean & DVLAN_CLEAN_WLAN_PORT)
 				br_delif(br_name, vlan->ifname);
@@ -837,6 +851,24 @@ int vlan_init(struct hostapd_data *hapd)
 	hapd->full_dynamic_vlan = full_dynamic_vlan_init(hapd);
 #endif /* CONFIG_FULL_DYNAMIC_VLAN */
 
+	if (hapd->conf->ssid.dynamic_vlan != DYNAMIC_VLAN_DISABLED &&
+	    !hapd->conf->vlan) {
+		/* dynamic vlans enabled but no (or empty) vlan_file given */
+		struct hostapd_vlan *vlan;
+		vlan = os_zalloc(sizeof(*vlan));
+		if (vlan == NULL) {
+			wpa_printf(MSG_ERROR, "Out of memory while assigning "
+				   "VLAN interfaces");
+			return -1;
+		}
+
+		vlan->vlan_id = VLAN_ID_WILDCARD;
+		os_snprintf(vlan->ifname, sizeof(vlan->ifname), "%s.#",
+			    hapd->conf->iface);
+		vlan->next = hapd->conf->vlan;
+		hapd->conf->vlan = vlan;
+	}
+
 	if (vlan_dynamic_add(hapd, hapd->conf->vlan))
 		return -1;
 
@@ -850,6 +882,7 @@ void vlan_deinit(struct hostapd_data *hapd)
 
 #ifdef CONFIG_FULL_DYNAMIC_VLAN
 	full_dynamic_vlan_deinit(hapd->full_dynamic_vlan);
+	hapd->full_dynamic_vlan = NULL;
 #endif /* CONFIG_FULL_DYNAMIC_VLAN */
 }
 

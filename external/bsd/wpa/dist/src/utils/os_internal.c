@@ -41,6 +41,17 @@ int os_get_time(struct os_time *t)
 }
 
 
+int os_get_reltime(struct os_reltime *t)
+{
+	int res;
+	struct timeval tv;
+	res = gettimeofday(&tv, NULL);
+	t->sec = tv.tv_sec;
+	t->usec = tv.tv_usec;
+	return res;
+}
+
+
 int os_mktime(int year, int month, int day, int hour, int min, int sec,
 	      os_time_t *t)
 {
@@ -449,6 +460,20 @@ size_t os_strlcpy(char *dest, const char *src, size_t siz)
 	}
 
 	return s - src - 1;
+}
+
+
+int os_memcmp_const(const void *a, const void *b, size_t len)
+{
+	const u8 *aa = a;
+	const u8 *bb = b;
+	size_t i;
+	u8 res;
+
+	for (res = 0, i = 0; i < len; i++)
+		res |= aa[i] ^ bb[i];
+
+	return res;
 }
 
 

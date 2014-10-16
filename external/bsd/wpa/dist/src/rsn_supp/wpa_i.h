@@ -58,6 +58,7 @@ struct wpa_sm {
 	u8 ssid[32];
 	size_t ssid_len;
 	int wpa_ptk_rekey;
+	int p2p;
 
 	u8 own_addr[ETH_ALEN];
 	const char *ifname;
@@ -122,6 +123,10 @@ struct wpa_sm {
 	u8 *assoc_resp_ies; /* MDIE and FTIE from (Re)Association Response */
 	size_t assoc_resp_ies_len;
 #endif /* CONFIG_IEEE80211R */
+
+#ifdef CONFIG_P2P
+	u8 p2p_ip_addr[3 * 4];
+#endif /* CONFIG_P2P */
 };
 
 
@@ -262,13 +267,15 @@ static inline int wpa_sm_tdls_get_capa(struct wpa_sm *sm,
 
 static inline int wpa_sm_send_tdls_mgmt(struct wpa_sm *sm, const u8 *dst,
 					u8 action_code, u8 dialog_token,
-					u16 status_code, const u8 *buf,
+					u16 status_code, u32 peer_capab,
+					int initiator, const u8 *buf,
 					size_t len)
 {
 	if (sm->ctx->send_tdls_mgmt)
 		return sm->ctx->send_tdls_mgmt(sm->ctx->ctx, dst, action_code,
 					       dialog_token, status_code,
-					       buf, len);
+					       peer_capab, initiator, buf,
+					       len);
 	return -1;
 }
 
@@ -282,13 +289,25 @@ static inline int wpa_sm_tdls_oper(struct wpa_sm *sm, int oper,
 
 static inline int
 wpa_sm_tdls_peer_addset(struct wpa_sm *sm, const u8 *addr, int add,
-			u16 capability, const u8 *supp_rates,
-			size_t supp_rates_len)
+			u16 aid, u16 capability, const u8 *supp_rates,
+			size_t supp_rates_len,
+			const struct ieee80211_ht_capabilities *ht_capab,
+			const struct ieee80211_vht_capabilities *vht_capab,
+			u8 qosinfo, int wmm, const u8 *ext_capab,
+			size_t ext_capab_len, const u8 *supp_channels,
+			size_t supp_channels_len, const u8 *supp_oper_classes,
+			size_t supp_oper_classes_len)
 {
 	if (sm->ctx->tdls_peer_addset)
 		return sm->ctx->tdls_peer_addset(sm->ctx->ctx, addr, add,
-						 capability, supp_rates,
-						 supp_rates_len);
+						 aid, capability, supp_rates,
+						 supp_rates_len, ht_capab,
+						 vht_capab, qosinfo, wmm,
+						 ext_capab, ext_capab_len,
+						 supp_channels,
+						 supp_channels_len,
+						 supp_oper_classes,
+						 supp_oper_classes_len);
 	return -1;
 }
 #endif /* CONFIG_TDLS */
@@ -304,7 +323,6 @@ int wpa_supplicant_send_2_of_4(struct wpa_sm *sm, const unsigned char *dst,
 int wpa_supplicant_send_4_of_4(struct wpa_sm *sm, const unsigned char *dst,
 			       const struct wpa_eapol_key *key,
 			       u16 ver, u16 key_info,
-			       const u8 *kde, size_t kde_len,
 			       struct wpa_ptk *ptk);
 
 int wpa_derive_ptk_ft(struct wpa_sm *sm, const unsigned char *src_addr,

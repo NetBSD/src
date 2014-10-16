@@ -15,7 +15,7 @@
 #include "wpa_i.h"
 #include "pmksa_cache.h"
 
-#if defined(IEEE8021X_EAPOL) && !defined(CONFIG_NO_WPA2)
+#ifdef IEEE8021X_EAPOL
 
 static const int pmksa_cache_max_entries = 32;
 
@@ -35,7 +35,7 @@ static void pmksa_cache_set_expiration(struct rsn_pmksa_cache *pmksa);
 
 static void _pmksa_cache_free_entry(struct rsn_pmksa_cache_entry *entry)
 {
-	os_free(entry);
+	bin_clear_free(entry, sizeof(*entry));
 }
 
 
@@ -53,9 +53,9 @@ static void pmksa_cache_free_entry(struct rsn_pmksa_cache *pmksa,
 static void pmksa_cache_expire(void *eloop_ctx, void *timeout_ctx)
 {
 	struct rsn_pmksa_cache *pmksa = eloop_ctx;
-	struct os_time now;
+	struct os_reltime now;
 
-	os_get_time(&now);
+	os_get_reltime(&now);
 	while (pmksa->pmksa && pmksa->pmksa->expiration <= now.sec) {
 		struct rsn_pmksa_cache_entry *entry = pmksa->pmksa;
 		pmksa->pmksa = entry->next;
@@ -80,13 +80,13 @@ static void pmksa_cache_set_expiration(struct rsn_pmksa_cache *pmksa)
 {
 	int sec;
 	struct rsn_pmksa_cache_entry *entry;
-	struct os_time now;
+	struct os_reltime now;
 
 	eloop_cancel_timeout(pmksa_cache_expire, pmksa, NULL);
 	eloop_cancel_timeout(pmksa_cache_reauth, pmksa, NULL);
 	if (pmksa->pmksa == NULL)
 		return;
-	os_get_time(&now);
+	os_get_reltime(&now);
 	sec = pmksa->pmksa->expiration - now.sec;
 	if (sec < 0)
 		sec = 0;
@@ -125,7 +125,7 @@ pmksa_cache_add(struct rsn_pmksa_cache *pmksa, const u8 *pmk, size_t pmk_len,
 		const u8 *aa, const u8 *spa, void *network_ctx, int akmp)
 {
 	struct rsn_pmksa_cache_entry *entry, *pos, *prev;
-	struct os_time now;
+	struct os_reltime now;
 
 	if (pmk_len > PMK_LEN)
 		return NULL;
@@ -137,7 +137,7 @@ pmksa_cache_add(struct rsn_pmksa_cache *pmksa, const u8 *pmk, size_t pmk_len,
 	entry->pmk_len = pmk_len;
 	rsn_pmkid(pmk, pmk_len, aa, spa, entry->pmkid,
 		  wpa_key_mgmt_sha256(akmp));
-	os_get_time(&now);
+	os_get_reltime(&now);
 	entry->expiration = now.sec + pmksa->sm->dot11RSNAConfigPMKLifetime;
 	entry->reauth_time = now.sec + pmksa->sm->dot11RSNAConfigPMKLifetime *
 		pmksa->sm->dot11RSNAConfigPMKReauthThreshold / 100;
@@ -152,9 +152,9 @@ pmksa_cache_add(struct rsn_pmksa_cache *pmksa, const u8 *pmk, size_t pmk_len,
 	while (pos) {
 		if (os_memcmp(aa, pos->aa, ETH_ALEN) == 0) {
 			if (pos->pmk_len == pmk_len &&
-			    os_memcmp(pos->pmk, pmk, pmk_len) == 0 &&
-			    os_memcmp(pos->pmkid, entry->pmkid, PMKID_LEN) ==
-			    0) {
+			    os_memcmp_const(pos->pmk, pmk, pmk_len) == 0 &&
+			    os_memcmp_const(pos->pmkid, entry->pmkid,
+					    PMKID_LEN) == 0) {
 				wpa_printf(MSG_DEBUG, "WPA: reusing previous "
 					   "PMKSA entry");
 				os_free(entry);
@@ -164,17 +164,23 @@ pmksa_cache_add(struct rsn_pmksa_cache *pmksa, const u8 *pmk, size_t pmk_len,
 				pmksa->pmksa = pos->next;
 			else
 				prev->next = pos->next;
-			wpa_printf(MSG_DEBUG, "RSN: Replace PMKSA entry for "
-				   "the current AP");
-			pmksa_cache_free_entry(pmksa, pos, PMKSA_REPLACE);
 
 			/*
 			 * If OKC is used, there may be other PMKSA cache
 			 * entries based on the same PMK. These needs to be
 			 * flushed so that a new entry can be created based on
-			 * the new PMK.
+			 * the new PMK. Only clear other entries if they have a
+			 * matching PMK and this PMK has been used successfully
+			 * with the current AP, i.e., if opportunistic flag has
+			 * been cleared in wpa_supplicant_key_neg_complete().
 			 */
-			pmksa_cache_flush(pmksa, network_ctx);
+			wpa_printf(MSG_DEBUG, "RSN: Replace PMKSA entry for "
+				   "the current AP and any PMKSA cache entry "
+				   "that was based on the old PMK");
+			if (!pos->opportunistic)
+				pmksa_cache_flush(pmksa, network_ctx, pos->pmk,
+						  pos->pmk_len);
+			pmksa_cache_free_entry(pmksa, pos, PMKSA_REPLACE);
 			break;
 		}
 		prev = pos;
@@ -235,15 +241,22 @@ pmksa_cache_add(struct rsn_pmksa_cache *pmksa, const u8 *pmk, size_t pmk_len,
  * pmksa_cache_flush - Flush PMKSA cache entries for a specific network
  * @pmksa: Pointer to PMKSA cache data from pmksa_cache_init()
  * @network_ctx: Network configuration context or %NULL to flush all entries
+ * @pmk: PMK to match for or %NYLL to match all PMKs
+ * @pmk_len: PMK length
  */
-void pmksa_cache_flush(struct rsn_pmksa_cache *pmksa, void *network_ctx)
+void pmksa_cache_flush(struct rsn_pmksa_cache *pmksa, void *network_ctx,
+		       const u8 *pmk, size_t pmk_len)
 {
 	struct rsn_pmksa_cache_entry *entry, *prev = NULL, *tmp;
 	int removed = 0;
 
 	entry = pmksa->pmksa;
 	while (entry) {
-		if (entry->network_ctx == network_ctx || network_ctx == NULL) {
+		if ((entry->network_ctx == network_ctx ||
+		     network_ctx == NULL) &&
+		    (pmk == NULL ||
+		     (pmk_len == entry->pmk_len &&
+		      os_memcmp(pmk, entry->pmk, pmk_len) == 0))) {
 			wpa_printf(MSG_DEBUG, "RSN: Flush PMKSA cache entry "
 				   "for " MACSTR, MAC2STR(entry->aa));
 			if (prev)
@@ -453,9 +466,9 @@ int pmksa_cache_list(struct rsn_pmksa_cache *pmksa, char *buf, size_t len)
 	int i, ret;
 	char *pos = buf;
 	struct rsn_pmksa_cache_entry *entry;
-	struct os_time now;
+	struct os_reltime now;
 
-	os_get_time(&now);
+	os_get_reltime(&now);
 	ret = os_snprintf(pos, buf + len - pos,
 			  "Index / AA / PMKID / expiration (in seconds) / "
 			  "opportunistic\n");
@@ -509,4 +522,4 @@ pmksa_cache_init(void (*free_cb)(struct rsn_pmksa_cache_entry *entry,
 	return pmksa;
 }
 
-#endif /* IEEE8021X_EAPOL and !CONFIG_NO_WPA2 */
+#endif /* IEEE8021X_EAPOL */

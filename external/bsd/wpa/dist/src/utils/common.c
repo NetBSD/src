@@ -350,7 +350,7 @@ void printf_encode(char *txt, size_t maxlen, const u8 *data, size_t len)
 	size_t i;
 
 	for (i = 0; i < len; i++) {
-		if (txt + 4 > end)
+		if (txt + 4 >= end)
 			break;
 
 		switch (data[i]) {
@@ -362,7 +362,7 @@ void printf_encode(char *txt, size_t maxlen, const u8 *data, size_t len)
 			*txt++ = '\\';
 			*txt++ = '\\';
 			break;
-		case '\e':
+		case '\033':
 			*txt++ = '\\';
 			*txt++ = 'e';
 			break;
@@ -400,7 +400,7 @@ size_t printf_decode(u8 *buf, size_t maxlen, const char *str)
 	int val;
 
 	while (*pos) {
-		if (len == maxlen)
+		if (len + 1 >= maxlen)
 			break;
 		switch (*pos) {
 		case '\\':
@@ -427,7 +427,7 @@ size_t printf_decode(u8 *buf, size_t maxlen, const char *str)
 				pos++;
 				break;
 			case 'e':
-				buf[len++] = '\e';
+				buf[len++] = '\033';
 				pos++;
 				break;
 			case 'x':
@@ -468,6 +468,8 @@ size_t printf_decode(u8 *buf, size_t maxlen, const char *str)
 			break;
 		}
 	}
+	if (maxlen > len)
+		buf[len] = '\0';
 
 	return len;
 }
@@ -517,11 +519,9 @@ char * wpa_config_parse_string(const char *value, size_t *len)
 		if (pos == NULL || pos[1] != '\0')
 			return NULL;
 		*len = pos - value;
-		str = os_malloc(*len + 1);
+		str = dup_binstr(value, *len);
 		if (str == NULL)
 			return NULL;
-		os_memcpy(str, value, *len);
-		str[*len] = '\0';
 		return str;
 	} else if (*value == 'P' && value[1] == '"') {
 		const char *pos;
@@ -532,11 +532,9 @@ char * wpa_config_parse_string(const char *value, size_t *len)
 		if (pos == NULL || pos[1] != '\0')
 			return NULL;
 		tlen = pos - value;
-		tstr = os_malloc(tlen + 1);
+		tstr = dup_binstr(value, tlen);
 		if (tstr == NULL)
 			return NULL;
-		os_memcpy(tstr, value, tlen);
-		tstr[tlen] = '\0';
 
 		str = os_malloc(tlen + 1);
 		if (str == NULL) {
@@ -580,6 +578,21 @@ int is_hex(const u8 *data, size_t len)
 }
 
 
+int find_first_bit(u32 value)
+{
+	int pos = 0;
+
+	while (value) {
+		if (value & 0x1)
+			return pos;
+		value >>= 1;
+		pos++;
+	}
+
+	return -1;
+}
+
+
 size_t merge_byte_arrays(u8 *res, size_t res_len,
 			 const u8 *src1, size_t src1_len,
 			 const u8 *src2, size_t src2_len)
@@ -609,4 +622,247 @@ size_t merge_byte_arrays(u8 *res, size_t res_len,
 	}
 
 	return len;
+}
+
+
+char * dup_binstr(const void *src, size_t len)
+{
+	char *res;
+
+	if (src == NULL)
+		return NULL;
+	res = os_malloc(len + 1);
+	if (res == NULL)
+		return NULL;
+	os_memcpy(res, src, len);
+	res[len] = '\0';
+
+	return res;
+}
+
+
+int freq_range_list_parse(struct wpa_freq_range_list *res, const char *value)
+{
+	struct wpa_freq_range *freq = NULL, *n;
+	unsigned int count = 0;
+	const char *pos, *pos2, *pos3;
+
+	/*
+	 * Comma separated list of frequency ranges.
+	 * For example: 2412-2432,2462,5000-6000
+	 */
+	pos = value;
+	while (pos && pos[0]) {
+		n = os_realloc_array(freq, count + 1,
+				     sizeof(struct wpa_freq_range));
+		if (n == NULL) {
+			os_free(freq);
+			return -1;
+		}
+		freq = n;
+		freq[count].min = atoi(pos);
+		pos2 = os_strchr(pos, '-');
+		pos3 = os_strchr(pos, ',');
+		if (pos2 && (!pos3 || pos2 < pos3)) {
+			pos2++;
+			freq[count].max = atoi(pos2);
+		} else
+			freq[count].max = freq[count].min;
+		pos = pos3;
+		if (pos)
+			pos++;
+		count++;
+	}
+
+	os_free(res->range);
+	res->range = freq;
+	res->num = count;
+
+	return 0;
+}
+
+
+int freq_range_list_includes(const struct wpa_freq_range_list *list,
+			     unsigned int freq)
+{
+	unsigned int i;
+
+	if (list == NULL)
+		return 0;
+
+	for (i = 0; i < list->num; i++) {
+		if (freq >= list->range[i].min && freq <= list->range[i].max)
+			return 1;
+	}
+
+	return 0;
+}
+
+
+char * freq_range_list_str(const struct wpa_freq_range_list *list)
+{
+	char *buf, *pos, *end;
+	size_t maxlen;
+	unsigned int i;
+	int res;
+
+	if (list->num == 0)
+		return NULL;
+
+	maxlen = list->num * 30;
+	buf = os_malloc(maxlen);
+	if (buf == NULL)
+		return NULL;
+	pos = buf;
+	end = buf + maxlen;
+
+	for (i = 0; i < list->num; i++) {
+		struct wpa_freq_range *range = &list->range[i];
+
+		if (range->min == range->max)
+			res = os_snprintf(pos, end - pos, "%s%u",
+					  i == 0 ? "" : ",", range->min);
+		else
+			res = os_snprintf(pos, end - pos, "%s%u-%u",
+					  i == 0 ? "" : ",",
+					  range->min, range->max);
+		if (res < 0 || res > end - pos) {
+			os_free(buf);
+			return NULL;
+		}
+		pos += res;
+	}
+
+	return buf;
+}
+
+
+int int_array_len(const int *a)
+{
+	int i;
+	for (i = 0; a && a[i]; i++)
+		;
+	return i;
+}
+
+
+void int_array_concat(int **res, const int *a)
+{
+	int reslen, alen, i;
+	int *n;
+
+	reslen = int_array_len(*res);
+	alen = int_array_len(a);
+
+	n = os_realloc_array(*res, reslen + alen + 1, sizeof(int));
+	if (n == NULL) {
+		os_free(*res);
+		*res = NULL;
+		return;
+	}
+	for (i = 0; i <= alen; i++)
+		n[reslen + i] = a[i];
+	*res = n;
+}
+
+
+static int freq_cmp(const void *a, const void *b)
+{
+	int _a = *(int *) a;
+	int _b = *(int *) b;
+
+	if (_a == 0)
+		return 1;
+	if (_b == 0)
+		return -1;
+	return _a - _b;
+}
+
+
+void int_array_sort_unique(int *a)
+{
+	int alen;
+	int i, j;
+
+	if (a == NULL)
+		return;
+
+	alen = int_array_len(a);
+	qsort(a, alen, sizeof(int), freq_cmp);
+
+	i = 0;
+	j = 1;
+	while (a[i] && a[j]) {
+		if (a[i] == a[j]) {
+			j++;
+			continue;
+		}
+		a[++i] = a[j++];
+	}
+	if (a[i])
+		i++;
+	a[i] = 0;
+}
+
+
+void int_array_add_unique(int **res, int a)
+{
+	int reslen;
+	int *n;
+
+	for (reslen = 0; *res && (*res)[reslen]; reslen++) {
+		if ((*res)[reslen] == a)
+			return; /* already in the list */
+	}
+
+	n = os_realloc_array(*res, reslen + 2, sizeof(int));
+	if (n == NULL) {
+		os_free(*res);
+		*res = NULL;
+		return;
+	}
+
+	n[reslen] = a;
+	n[reslen + 1] = 0;
+
+	*res = n;
+}
+
+
+void str_clear_free(char *str)
+{
+	if (str) {
+		size_t len = os_strlen(str);
+		os_memset(str, 0, len);
+		os_free(str);
+	}
+}
+
+
+void bin_clear_free(void *bin, size_t len)
+{
+	if (bin) {
+		os_memset(bin, 0, len);
+		os_free(bin);
+	}
+}
+
+
+int random_mac_addr(u8 *addr)
+{
+	if (os_get_random(addr, ETH_ALEN) < 0)
+		return -1;
+	addr[0] &= 0xfe; /* unicast */
+	addr[0] |= 0x02; /* locally administered */
+	return 0;
+}
+
+
+int random_mac_addr_keep_oui(u8 *addr)
+{
+	if (os_get_random(addr + 3, 3) < 0)
+		return -1;
+	addr[0] &= 0xfe; /* unicast */
+	addr[0] |= 0x02; /* locally administered */
+	return 0;
 }

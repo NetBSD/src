@@ -38,7 +38,6 @@ struct eap_sim_db_pending {
 	char imsi[20];
 	enum { PENDING, SUCCESS, FAILURE } state;
 	void *cb_session_ctx;
-	struct os_time timestamp;
 	int aka;
 	union {
 		struct {
@@ -630,7 +629,7 @@ static int eap_sim_db_open_socket(struct eap_sim_db_data *data)
 
 	data->sock = socket(PF_UNIX, SOCK_DGRAM, 0);
 	if (data->sock < 0) {
-		perror("socket(eap_sim_db)");
+		wpa_printf(MSG_INFO, "socket(eap_sim_db): %s", strerror(errno));
 		return -1;
 	}
 
@@ -640,8 +639,13 @@ static int eap_sim_db_open_socket(struct eap_sim_db_data *data)
 		    "/tmp/eap_sim_db_%d-%d", getpid(), counter++);
 	os_free(data->local_sock);
 	data->local_sock = os_strdup(addr.sun_path);
+	if (data->local_sock == NULL) {
+		close(data->sock);
+		data->sock = -1;
+		return -1;
+	}
 	if (bind(data->sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-		perror("bind(eap_sim_db)");
+		wpa_printf(MSG_INFO, "bind(eap_sim_db): %s", strerror(errno));
 		close(data->sock);
 		data->sock = -1;
 		return -1;
@@ -651,12 +655,16 @@ static int eap_sim_db_open_socket(struct eap_sim_db_data *data)
 	addr.sun_family = AF_UNIX;
 	os_strlcpy(addr.sun_path, data->fname + 5, sizeof(addr.sun_path));
 	if (connect(data->sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-		perror("connect(eap_sim_db)");
+		wpa_printf(MSG_INFO, "connect(eap_sim_db): %s",
+			   strerror(errno));
 		wpa_hexdump_ascii(MSG_INFO, "HLR/AuC GW socket",
 				  (u8 *) addr.sun_path,
 				  os_strlen(addr.sun_path));
 		close(data->sock);
 		data->sock = -1;
+		unlink(data->local_sock);
+		os_free(data->local_sock);
+		data->local_sock = NULL;
 		return -1;
 	}
 
@@ -804,7 +812,8 @@ static int eap_sim_db_send(struct eap_sim_db_data *data, const char *msg,
 
 	if (send(data->sock, msg, len, 0) < 0) {
 		_errno = errno;
-		perror("send[EAP-SIM DB UNIX]");
+		wpa_printf(MSG_INFO, "send[EAP-SIM DB UNIX]: %s",
+			   strerror(errno));
 	}
 
 	if (_errno == ENOTCONN || _errno == EDESTADDRREQ || _errno == EINVAL ||
@@ -816,7 +825,8 @@ static int eap_sim_db_send(struct eap_sim_db_data *data, const char *msg,
 		wpa_printf(MSG_DEBUG, "EAP-SIM DB: Reconnected to the "
 			   "external server");
 		if (send(data->sock, msg, len, 0) < 0) {
-			perror("send[EAP-SIM DB UNIX]");
+			wpa_printf(MSG_INFO, "send[EAP-SIM DB UNIX]: %s",
+				   strerror(errno));
 			return -1;
 		}
 	}
@@ -932,7 +942,6 @@ int eap_sim_db_get_gsm_triplets(struct eap_sim_db_data *data,
 	if (entry == NULL)
 		return EAP_SIM_DB_FAILURE;
 
-	os_get_time(&entry->timestamp);
 	os_strlcpy(entry->imsi, imsi, sizeof(entry->imsi));
 	entry->cb_session_ctx = cb_session_ctx;
 	entry->state = PENDING;
@@ -1392,7 +1401,6 @@ int eap_sim_db_get_aka_auth(struct eap_sim_db_data *data, const char *username,
 	if (entry == NULL)
 		return EAP_SIM_DB_FAILURE;
 
-	os_get_time(&entry->timestamp);
 	entry->aka = 1;
 	os_strlcpy(entry->imsi, imsi, sizeof(entry->imsi));
 	entry->cb_session_ctx = cb_session_ctx;
@@ -1480,7 +1488,6 @@ int eap_sim_db_resynchronize(struct eap_sim_db_data *data,
  */
 char * sim_get_username(const u8 *identity, size_t identity_len)
 {
-	char *username;
 	size_t pos;
 
 	if (identity == NULL)
@@ -1491,11 +1498,5 @@ char * sim_get_username(const u8 *identity, size_t identity_len)
 			break;
 	}
 
-	username = os_malloc(pos + 1);
-	if (username == NULL)
-		return NULL;
-	os_memcpy(username, identity, pos);
-	username[pos] = '\0';
-
-	return username;
+	return dup_binstr(identity, pos);
 }

@@ -37,53 +37,55 @@ static void pmksa_cache_set_expiration(struct rsn_pmksa_cache *pmksa);
 
 static void _pmksa_cache_free_entry(struct rsn_pmksa_cache_entry *entry)
 {
-	if (entry == NULL)
-		return;
 	os_free(entry->identity);
 	wpabuf_free(entry->cui);
 #ifndef CONFIG_NO_RADIUS
 	radius_free_class(&entry->radius_class);
 #endif /* CONFIG_NO_RADIUS */
-	os_free(entry);
+	bin_clear_free(entry, sizeof(*entry));
 }
 
 
-static void pmksa_cache_free_entry(struct rsn_pmksa_cache *pmksa,
-				   struct rsn_pmksa_cache_entry *entry)
+void pmksa_cache_free_entry(struct rsn_pmksa_cache *pmksa,
+			    struct rsn_pmksa_cache_entry *entry)
 {
 	struct rsn_pmksa_cache_entry *pos, *prev;
+	unsigned int hash;
 
 	pmksa->pmksa_count--;
 	pmksa->free_cb(entry, pmksa->ctx);
-	pos = pmksa->pmkid[PMKID_HASH(entry->pmkid)];
+
+	/* unlink from hash list */
+	hash = PMKID_HASH(entry->pmkid);
+	pos = pmksa->pmkid[hash];
 	prev = NULL;
 	while (pos) {
 		if (pos == entry) {
-			if (prev != NULL) {
-				prev->hnext = pos->hnext;
-			} else {
-				pmksa->pmkid[PMKID_HASH(entry->pmkid)] =
-					pos->hnext;
-			}
+			if (prev != NULL)
+				prev->hnext = entry->hnext;
+			else
+				pmksa->pmkid[hash] = entry->hnext;
 			break;
 		}
 		prev = pos;
 		pos = pos->hnext;
 	}
 
+	/* unlink from entry list */
 	pos = pmksa->pmksa;
 	prev = NULL;
 	while (pos) {
 		if (pos == entry) {
 			if (prev != NULL)
-				prev->next = pos->next;
+				prev->next = entry->next;
 			else
-				pmksa->pmksa = pos->next;
+				pmksa->pmksa = entry->next;
 			break;
 		}
 		prev = pos;
 		pos = pos->next;
 	}
+
 	_pmksa_cache_free_entry(entry);
 }
 
@@ -91,9 +93,9 @@ static void pmksa_cache_free_entry(struct rsn_pmksa_cache *pmksa,
 static void pmksa_cache_expire(void *eloop_ctx, void *timeout_ctx)
 {
 	struct rsn_pmksa_cache *pmksa = eloop_ctx;
-	struct os_time now;
+	struct os_reltime now;
 
-	os_get_time(&now);
+	os_get_reltime(&now);
 	while (pmksa->pmksa && pmksa->pmksa->expiration <= now.sec) {
 		wpa_printf(MSG_DEBUG, "RSN: expired PMKSA cache entry for "
 			   MACSTR, MAC2STR(pmksa->pmksa->spa));
@@ -107,12 +109,12 @@ static void pmksa_cache_expire(void *eloop_ctx, void *timeout_ctx)
 static void pmksa_cache_set_expiration(struct rsn_pmksa_cache *pmksa)
 {
 	int sec;
-	struct os_time now;
+	struct os_reltime now;
 
 	eloop_cancel_timeout(pmksa_cache_expire, pmksa, NULL);
 	if (pmksa->pmksa == NULL)
 		return;
-	os_get_time(&now);
+	os_get_reltime(&now);
 	sec = pmksa->pmksa->expiration - now.sec;
 	if (sec < 0)
 		sec = 0;
@@ -188,6 +190,7 @@ static void pmksa_cache_link_entry(struct rsn_pmksa_cache *pmksa,
 				   struct rsn_pmksa_cache_entry *entry)
 {
 	struct rsn_pmksa_cache_entry *pos, *prev;
+	int hash;
 
 	/* Add the new entry; order by expiration time */
 	pos = pmksa->pmksa;
@@ -205,8 +208,10 @@ static void pmksa_cache_link_entry(struct rsn_pmksa_cache *pmksa,
 		entry->next = prev->next;
 		prev->next = entry;
 	}
-	entry->hnext = pmksa->pmkid[PMKID_HASH(entry->pmkid)];
-	pmksa->pmkid[PMKID_HASH(entry->pmkid)] = entry;
+
+	hash = PMKID_HASH(entry->pmkid);
+	entry->hnext = pmksa->pmkid[hash];
+	pmksa->pmkid[hash] = entry;
 
 	pmksa->pmksa_count++;
 	if (prev == NULL)
@@ -241,7 +246,7 @@ pmksa_cache_auth_add(struct rsn_pmksa_cache *pmksa,
 		struct eapol_state_machine *eapol, int akmp)
 {
 	struct rsn_pmksa_cache_entry *entry, *pos;
-	struct os_time now;
+	struct os_reltime now;
 
 	if (pmk_len > PMK_LEN)
 		return NULL;
@@ -253,7 +258,7 @@ pmksa_cache_auth_add(struct rsn_pmksa_cache *pmksa,
 	entry->pmk_len = pmk_len;
 	rsn_pmkid(pmk, pmk_len, aa, spa, entry->pmkid,
 		  wpa_key_mgmt_sha256(akmp));
-	os_get_time(&now);
+	os_get_reltime(&now);
 	entry->expiration = now.sec;
 	if (session_timeout > 0)
 		entry->expiration += session_timeout;
@@ -342,6 +347,8 @@ void pmksa_cache_auth_deinit(struct rsn_pmksa_cache *pmksa)
 		_pmksa_cache_free_entry(prev);
 	}
 	eloop_cancel_timeout(pmksa_cache_expire, pmksa, NULL);
+	pmksa->pmksa_count = 0;
+	pmksa->pmksa = NULL;
 	for (i = 0; i < PMKID_HASH_SIZE; i++)
 		pmksa->pmkid[i] = NULL;
 	os_free(pmksa);
@@ -361,18 +368,22 @@ pmksa_cache_auth_get(struct rsn_pmksa_cache *pmksa,
 {
 	struct rsn_pmksa_cache_entry *entry;
 
-	if (pmkid)
-		entry = pmksa->pmkid[PMKID_HASH(pmkid)];
-	else
-		entry = pmksa->pmksa;
-	while (entry) {
-		if ((spa == NULL ||
-		     os_memcmp(entry->spa, spa, ETH_ALEN) == 0) &&
-		    (pmkid == NULL ||
-		     os_memcmp(entry->pmkid, pmkid, PMKID_LEN) == 0))
-			return entry;
-		entry = pmkid ? entry->hnext : entry->next;
+	if (pmkid) {
+		for (entry = pmksa->pmkid[PMKID_HASH(pmkid)]; entry;
+		     entry = entry->hnext) {
+			if ((spa == NULL ||
+			     os_memcmp(entry->spa, spa, ETH_ALEN) == 0) &&
+			    os_memcmp(entry->pmkid, pmkid, PMKID_LEN) == 0)
+				return entry;
+		}
+	} else {
+		for (entry = pmksa->pmksa; entry; entry = entry->next) {
+			if (spa == NULL ||
+			    os_memcmp(entry->spa, spa, ETH_ALEN) == 0)
+				return entry;
+		}
 	}
+
 	return NULL;
 }
 
@@ -394,15 +405,13 @@ struct rsn_pmksa_cache_entry * pmksa_cache_get_okc(
 	struct rsn_pmksa_cache_entry *entry;
 	u8 new_pmkid[PMKID_LEN];
 
-	entry = pmksa->pmksa;
-	while (entry) {
+	for (entry = pmksa->pmksa; entry; entry = entry->next) {
 		if (os_memcmp(entry->spa, spa, ETH_ALEN) != 0)
 			continue;
 		rsn_pmkid(entry->pmk, entry->pmk_len, aa, spa, new_pmkid,
 			  wpa_key_mgmt_sha256(entry->akmp));
 		if (os_memcmp(new_pmkid, pmkid, PMKID_LEN) == 0)
 			return entry;
-		entry = entry->next;
 	}
 	return NULL;
 }

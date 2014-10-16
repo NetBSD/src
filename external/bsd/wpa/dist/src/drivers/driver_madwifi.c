@@ -1,5 +1,5 @@
 /*
- * WPA Supplicant - driver interaction with MADWIFI 802.11 driver
+ * hostapd - driver interaction with MADWIFI 802.11 driver
  * Copyright (c) 2004, Sam Leffler <sam@errno.com>
  * Copyright (c) 2004, Video54 Technologies
  * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
@@ -7,10 +7,9 @@
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
  *
- * While this driver wrapper supports both AP (hostapd) and station
- * (wpa_supplicant) operations, the station side is deprecated and
- * driver_wext.c should be used instead. This driver wrapper should only be
- * used with hostapd for AP mode functionality.
+ * This driver wrapper is only for hostapd AP mode functionality. Station
+ * (wpa_supplicant) operations with madwifi are supported by the driver_wext.c
+ * wrapper.
  */
 
 #include "includes.h"
@@ -182,7 +181,7 @@ set80211priv(struct madwifi_driver_data *drv, int op, void *data, int len)
 #endif /* MADWIFI_NG */
 		int idx = op - first;
 		if (first <= op &&
-		    idx < (int) (sizeof(opnames) / sizeof(opnames[0])) &&
+		    idx < (int) ARRAY_SIZE(opnames) &&
 		    opnames[idx])
 			perror(opnames[idx]);
 		else
@@ -322,19 +321,16 @@ madwifi_set_ieee8021x(void *priv, struct wpa_bss_params *params)
 			IEEE80211_AUTH_AUTO);
 	}
 	if (!params->wpa && !params->ieee802_1x) {
-		hostapd_logger(drv->hapd, NULL, HOSTAPD_MODULE_DRIVER,
-			HOSTAPD_LEVEL_WARNING, "No 802.1X or WPA enabled!");
+		wpa_printf(MSG_WARNING, "No 802.1X or WPA enabled!");
 		return -1;
 	}
 	if (params->wpa && madwifi_configure_wpa(drv, params) != 0) {
-		hostapd_logger(drv->hapd, NULL, HOSTAPD_MODULE_DRIVER,
-			HOSTAPD_LEVEL_WARNING, "Error configuring WPA state!");
+		wpa_printf(MSG_WARNING, "Error configuring WPA state!");
 		return -1;
 	}
 	if (set80211param(priv, IEEE80211_PARAM_AUTHMODE,
 		(params->wpa ? IEEE80211_AUTH_WPA : IEEE80211_AUTH_8021X))) {
-		hostapd_logger(drv->hapd, NULL, HOSTAPD_MODULE_DRIVER,
-			HOSTAPD_LEVEL_WARNING, "Error enabling WPA/802.1X!");
+		wpa_printf(MSG_WARNING, "Error enabling WPA/802.1X!");
 		return -1;
 	}
 
