@@ -50,7 +50,29 @@ int wpa_supplicant_ap_update_beacon(struct wpa_supplicant *wpa_s);
 int wpa_supplicant_ap_mac_addr_filter(struct wpa_supplicant *wpa_s,
 				      const u8 *addr);
 void wpa_supplicant_ap_pwd_auth_fail(struct wpa_supplicant *wpa_s);
+int ap_switch_channel(struct wpa_supplicant *wpa_s,
+		      struct csa_settings *settings);
+int ap_ctrl_iface_chanswitch(struct wpa_supplicant *wpa_s, const char *txtaddr);
 void wpas_ap_ch_switch(struct wpa_supplicant *wpa_s, int freq, int ht,
-		       int offset);
+		       int offset, int width, int cf1, int cf2);
+struct wpabuf * wpas_ap_wps_nfc_config_token(struct wpa_supplicant *wpa_s,
+					     int ndef);
+#ifdef CONFIG_AP
+struct wpabuf * wpas_ap_wps_nfc_handover_sel(struct wpa_supplicant *wpa_s,
+					     int ndef);
+#else /* CONFIG_AP */
+static inline struct wpabuf *
+wpas_ap_wps_nfc_handover_sel(struct wpa_supplicant *wpa_s,
+			     int ndef)
+{
+	return NULL;
+}
+#endif /* CONFIG_AP */
+
+int wpas_ap_wps_nfc_report_handover(struct wpa_supplicant *wpa_s,
+				    const struct wpabuf *req,
+				    const struct wpabuf *sel);
+int wpas_ap_wps_add_nfc_pw(struct wpa_supplicant *wpa_s, u16 pw_id,
+			   const struct wpabuf *pw, const u8 *pubkey_hash);
 
 #endif /* AP_H */

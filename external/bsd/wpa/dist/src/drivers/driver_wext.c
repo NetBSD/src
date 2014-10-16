@@ -31,10 +31,6 @@
 #include "driver.h"
 #include "driver_wext.h"
 
-#ifdef ANDROID
-#include "android_drv.h"
-#endif /* ANDROID */
-
 static int wpa_driver_wext_flush_pmkid(void *priv);
 static int wpa_driver_wext_get_range(void *priv);
 static int wpa_driver_wext_finish_drv_init(struct wpa_driver_wext_data *drv);
@@ -299,14 +295,6 @@ wpa_driver_wext_event_wireless_custom(void *ctx, char *custom)
 		}
 		wpa_supplicant_event(ctx, EVENT_STKSTART, &data);
 #endif /* CONFIG_PEERKEY */
-#ifdef ANDROID
-	} else if (os_strncmp(custom, "STOP", 4) == 0) {
-		wpa_msg(ctx, MSG_INFO, WPA_EVENT_DRIVER_STATE "STOPPED");
-	} else if (os_strncmp(custom, "START", 5) == 0) {
-		wpa_msg(ctx, MSG_INFO, WPA_EVENT_DRIVER_STATE "STARTED");
-	} else if (os_strncmp(custom, "HANG", 4) == 0) {
-		wpa_msg(ctx, MSG_INFO, WPA_EVENT_DRIVER_STATE "HANGED");
-#endif /* ANDROID */
 	}
 }
 
@@ -502,11 +490,9 @@ static void wpa_driver_wext_event_wireless(struct wpa_driver_wext_data *drv,
 					   "IWEVCUSTOM length");
 				return;
 			}
-			buf = os_malloc(iwe->u.data.length + 1);
+			buf = dup_binstr(custom, iwe->u.data.length);
 			if (buf == NULL)
 				return;
-			os_memcpy(buf, custom, iwe->u.data.length);
-			buf[iwe->u.data.length] = '\0';
 			wpa_driver_wext_event_wireless_custom(drv->ctx, buf);
 			os_free(buf);
 			break;
@@ -859,12 +845,6 @@ void * wpa_driver_wext_init(void *ctx, const char *ifname)
 	}
 
 	drv->mlme_sock = -1;
-
-#ifdef ANDROID
-	drv->errors = 0;
-	drv->driver_is_started = TRUE;
-	drv->bgscan_enabled = 0;
-#endif /* ANDROID */
 
 	if (wpa_driver_wext_finish_drv_init(drv) < 0)
 		goto err3;
@@ -1871,10 +1851,8 @@ static void wpa_driver_wext_disconnect(struct wpa_driver_wext_data *drv)
 {
 	struct iwreq iwr;
 	const u8 null_bssid[ETH_ALEN] = { 0, 0, 0, 0, 0, 0 };
-#ifndef ANDROID
 	u8 ssid[32];
 	int i;
-#endif /* ANDROID */
 
 	/*
 	 * Only force-disconnect when the card is in infrastructure mode,
@@ -1895,7 +1873,6 @@ static void wpa_driver_wext_disconnect(struct wpa_driver_wext_data *drv)
 				   "selection on disconnect");
 		}
 
-#ifndef ANDROID
 		if (drv->cfg80211) {
 			/*
 			 * cfg80211 supports SIOCSIWMLME commands, so there is
@@ -1921,7 +1898,6 @@ static void wpa_driver_wext_disconnect(struct wpa_driver_wext_data *drv)
 			wpa_printf(MSG_DEBUG, "WEXT: Failed to set bogus "
 				   "SSID to disconnect");
 		}
-#endif /* ANDROID */
 	}
 }
 
@@ -1962,15 +1938,15 @@ static int wpa_driver_wext_set_gen_ie(void *priv, const u8 *ie,
 int wpa_driver_wext_cipher2wext(int cipher)
 {
 	switch (cipher) {
-	case CIPHER_NONE:
+	case WPA_CIPHER_NONE:
 		return IW_AUTH_CIPHER_NONE;
-	case CIPHER_WEP40:
+	case WPA_CIPHER_WEP40:
 		return IW_AUTH_CIPHER_WEP40;
-	case CIPHER_TKIP:
+	case WPA_CIPHER_TKIP:
 		return IW_AUTH_CIPHER_TKIP;
-	case CIPHER_CCMP:
+	case WPA_CIPHER_CCMP:
 		return IW_AUTH_CIPHER_CCMP;
-	case CIPHER_WEP104:
+	case WPA_CIPHER_WEP104:
 		return IW_AUTH_CIPHER_WEP104;
 	default:
 		return 0;
@@ -1981,10 +1957,10 @@ int wpa_driver_wext_cipher2wext(int cipher)
 int wpa_driver_wext_keymgmt2wext(int keymgmt)
 {
 	switch (keymgmt) {
-	case KEY_MGMT_802_1X:
-	case KEY_MGMT_802_1X_NO_WPA:
+	case WPA_KEY_MGMT_IEEE8021X:
+	case WPA_KEY_MGMT_IEEE8021X_NO_WPA:
 		return IW_AUTH_KEY_MGMT_802_1X;
-	case KEY_MGMT_PSK:
+	case WPA_KEY_MGMT_PSK:
 		return IW_AUTH_KEY_MGMT_PSK;
 	default:
 		return 0;
@@ -2051,7 +2027,11 @@ int wpa_driver_wext_associate(void *priv,
 		 * Stop cfg80211 from trying to associate before we are done
 		 * with all parameters.
 		 */
-		wpa_driver_wext_set_ssid(drv, (u8 *) "", 0);
+		if (wpa_driver_wext_set_ssid(drv, (u8 *) "", 0) < 0) {
+			wpa_printf(MSG_DEBUG,
+				   "WEXT: Failed to clear SSID to stop pending cfg80211 association attempts (if any)");
+			/* continue anyway */
+		}
 	}
 
 	if (wpa_driver_wext_set_drop_unencrypted(drv, params->drop_unencrypted)
@@ -2101,9 +2081,9 @@ int wpa_driver_wext_associate(void *priv,
 	if (wpa_driver_wext_set_auth_param(drv,
 					   IW_AUTH_KEY_MGMT, value) < 0)
 		ret = -1;
-	value = params->key_mgmt_suite != KEY_MGMT_NONE ||
-		params->pairwise_suite != CIPHER_NONE ||
-		params->group_suite != CIPHER_NONE ||
+	value = params->key_mgmt_suite != WPA_KEY_MGMT_NONE ||
+		params->pairwise_suite != WPA_CIPHER_NONE ||
+		params->group_suite != WPA_CIPHER_NONE ||
 		params->wpa_ie_len;
 	if (wpa_driver_wext_set_auth_param(drv,
 					   IW_AUTH_PRIVACY_INVOKED, value) < 0)
@@ -2112,8 +2092,8 @@ int wpa_driver_wext_associate(void *priv,
 	/* Allow unencrypted EAPOL messages even if pairwise keys are set when
 	 * not using WPA. IEEE 802.1X specifies that these frames are not
 	 * encrypted, but WPA encrypts them when pairwise keys are in use. */
-	if (params->key_mgmt_suite == KEY_MGMT_802_1X ||
-	    params->key_mgmt_suite == KEY_MGMT_PSK)
+	if (params->key_mgmt_suite == WPA_KEY_MGMT_IEEE8021X ||
+	    params->key_mgmt_suite == WPA_KEY_MGMT_PSK)
 		allow_unencrypted_eapol = 0;
 	else
 		allow_unencrypted_eapol = 1;
@@ -2139,7 +2119,8 @@ int wpa_driver_wext_associate(void *priv,
 	if (wpa_driver_wext_set_auth_param(drv, IW_AUTH_MFP, value) < 0)
 		ret = -1;
 #endif /* CONFIG_IEEE80211W */
-	if (params->freq && wpa_driver_wext_set_freq(drv, params->freq) < 0)
+	if (params->freq.freq &&
+	    wpa_driver_wext_set_freq(drv, params->freq.freq) < 0)
 		ret = -1;
 	if (!drv->cfg80211 &&
 	    wpa_driver_wext_set_ssid(drv, params->ssid, params->ssid_len) < 0)
@@ -2340,127 +2321,35 @@ static const char * wext_get_radio_name(void *priv)
 }
 
 
-#ifdef ANDROID
-
-static int android_wext_cmd(struct wpa_driver_wext_data *drv, const char *cmd)
+static int wpa_driver_wext_signal_poll(void *priv, struct wpa_signal_info *si)
 {
+	struct wpa_driver_wext_data *drv = priv;
+	struct iw_statistics stats;
 	struct iwreq iwr;
-	char buf[MAX_DRV_CMD_SIZE];
-	int ret;
+
+	os_memset(si, 0, sizeof(*si));
+	si->current_signal = -9999;
+	si->current_noise = 9999;
+	si->chanwidth = CHAN_WIDTH_UNKNOWN;
 
 	os_memset(&iwr, 0, sizeof(iwr));
 	os_strlcpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
+	iwr.u.data.pointer = (caddr_t) &stats;
+	iwr.u.data.length = sizeof(stats);
+	iwr.u.data.flags = 1;
 
-	os_memset(buf, 0, sizeof(buf));
-	os_strlcpy(buf, cmd, sizeof(buf));
-
-	iwr.u.data.pointer = buf;
-	iwr.u.data.length = sizeof(buf);
-
-	ret = ioctl(drv->ioctl_sock, SIOCSIWPRIV, &iwr);
-
-	if (ret < 0) {
-		wpa_printf(MSG_ERROR, "%s failed (%d): %s", __func__, ret,
-			   cmd);
-		drv->errors++;
-		if (drv->errors > DRV_NUMBER_SEQUENTIAL_ERRORS) {
-			drv->errors = 0;
-			wpa_msg(drv->ctx, MSG_INFO, WPA_EVENT_DRIVER_STATE
-				"HANGED");
-		}
-		return ret;
+	if (ioctl(drv->ioctl_sock, SIOCGIWSTATS, &iwr) < 0) {
+		wpa_printf(MSG_ERROR, "WEXT: SIOCGIWSTATS: %s",
+			   strerror(errno));
+		return -1;
 	}
 
-	drv->errors = 0;
+	si->current_signal = stats.qual.level -
+		((stats.qual.updated & IW_QUAL_DBM) ? 0x100 : 0);
+	si->current_noise = stats.qual.noise -
+		((stats.qual.updated & IW_QUAL_DBM) ? 0x100 : 0);
 	return 0;
 }
-
-
-static int wext_sched_scan(void *priv, struct wpa_driver_scan_params *params,
-			   u32 interval)
-{
-	struct wpa_driver_wext_data *drv = priv;
-	struct iwreq iwr;
-	int ret = 0, i = 0, bp;
-	char buf[WEXT_PNO_MAX_COMMAND_SIZE];
-
-	bp = WEXT_PNOSETUP_HEADER_SIZE;
-	os_memcpy(buf, WEXT_PNOSETUP_HEADER, bp);
-	buf[bp++] = WEXT_PNO_TLV_PREFIX;
-	buf[bp++] = WEXT_PNO_TLV_VERSION;
-	buf[bp++] = WEXT_PNO_TLV_SUBVERSION;
-	buf[bp++] = WEXT_PNO_TLV_RESERVED;
-
-	while (i < WEXT_PNO_AMOUNT && (size_t) i < params->num_ssids) {
-		/*
-		 * Check that there is enough space needed for 1 more SSID, the
-		 * other sections and null termination.
-		 */
-		if ((bp + WEXT_PNO_SSID_HEADER_SIZE + IW_ESSID_MAX_SIZE +
-		     WEXT_PNO_NONSSID_SECTIONS_SIZE + 1) >= (int) sizeof(buf))
-			break;
-
-		wpa_hexdump_ascii(MSG_DEBUG, "For PNO Scan",
-				  params->ssids[i].ssid,
-				  params->ssids[i].ssid_len);
-		buf[bp++] = WEXT_PNO_SSID_SECTION;
-		buf[bp++] = params->ssids[i].ssid_len;
-		os_memcpy(&buf[bp], params->ssids[i].ssid,
-			  params->ssids[i].ssid_len);
-		bp += params->ssids[i].ssid_len;
-		i++;
-	}
-
-	buf[bp++] = WEXT_PNO_SCAN_INTERVAL_SECTION;
-	/* TODO: consider using interval parameter (interval in msec) instead
-	 * of hardcoded value here */
-	os_snprintf(&buf[bp], WEXT_PNO_SCAN_INTERVAL_LENGTH + 1, "%x",
-		    WEXT_PNO_SCAN_INTERVAL);
-	bp += WEXT_PNO_SCAN_INTERVAL_LENGTH;
-
-	buf[bp++] = WEXT_PNO_REPEAT_SECTION;
-	os_snprintf(&buf[bp], WEXT_PNO_REPEAT_LENGTH + 1, "%x",
-		    WEXT_PNO_REPEAT);
-	bp += WEXT_PNO_REPEAT_LENGTH;
-
-	buf[bp++] = WEXT_PNO_MAX_REPEAT_SECTION;
-	os_snprintf(&buf[bp], WEXT_PNO_MAX_REPEAT_LENGTH + 1, "%x",
-		    WEXT_PNO_MAX_REPEAT);
-	bp += WEXT_PNO_MAX_REPEAT_LENGTH + 1;
-
-	os_memset(&iwr, 0, sizeof(iwr));
-	os_strncpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
-	iwr.u.data.pointer = buf;
-	iwr.u.data.length = bp;
-
-	ret = ioctl(drv->ioctl_sock, SIOCSIWPRIV, &iwr);
-	if (ret < 0) {
-		wpa_printf(MSG_ERROR, "ioctl[SIOCSIWPRIV] (pnosetup): %d",
-			   ret);
-		drv->errors++;
-		if (drv->errors > DRV_NUMBER_SEQUENTIAL_ERRORS) {
-			drv->errors = 0;
-			wpa_msg(drv->ctx, MSG_INFO,
-				WPA_EVENT_DRIVER_STATE "HANGED");
-		}
-		return ret;
-	}
-
-	drv->errors = 0;
-	drv->bgscan_enabled = 1;
-
-	return android_wext_cmd(drv, "PNOFORCE 1");
-}
-
-
-static int wext_stop_sched_scan(void *priv)
-{
-	struct wpa_driver_wext_data *drv = priv;
-	drv->bgscan_enabled = 0;
-	return android_wext_cmd(drv, "PNOFORCE 0");
-}
-
-#endif /* ANDROID */
 
 
 const struct wpa_driver_ops wpa_driver_wext_ops = {
@@ -2482,8 +2371,5 @@ const struct wpa_driver_ops wpa_driver_wext_ops = {
 	.get_capa = wpa_driver_wext_get_capa,
 	.set_operstate = wpa_driver_wext_set_operstate,
 	.get_radio_name = wext_get_radio_name,
-#ifdef ANDROID
-	.sched_scan = wext_sched_scan,
-	.stop_sched_scan = wext_stop_sched_scan,
-#endif /* ANDROID */
+	.signal_poll = wpa_driver_wext_signal_poll,
 };
