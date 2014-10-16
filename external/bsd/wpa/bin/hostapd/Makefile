@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2014/01/03 02:15:43 christos Exp $
+# $NetBSD: Makefile,v 1.6 2014/10/16 19:29:29 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -65,7 +65,6 @@ SRCS+= \
 main.c \
 config_file.c \
 ctrl_iface.c \
-dump_state.c \
 eap_register.c
 
 # l2_packet
