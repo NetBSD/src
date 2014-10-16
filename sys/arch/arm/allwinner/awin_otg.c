@@ -1,4 +1,4 @@
-/* $NetBSD: awin_otg.c,v 1.4 2014/10/15 21:47:48 jmcneill Exp $ */
+/* $NetBSD: awin_otg.c,v 1.5 2014/10/16 00:02:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_otg.c,v 1.4 2014/10/15 21:47:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_otg.c,v 1.5 2014/10/16 00:02:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +52,7 @@ struct awin_otg_softc {
 	struct motg_softc sc_motg;
 	void *sc_ih;
 	struct awin_gpio_pindata sc_drv_pin;
+	struct awin_gpio_pindata sc_restrict_pin;
 };
 
 #define OTG_READ1(sc, reg) \
@@ -101,22 +102,27 @@ awin_otg_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": OTG\n");
 
-	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_AHB_GATING0_REG, AWIN_AHB_GATING0_USB0, 0);
-	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_USB_CLK_REG,
-	    AWIN_USB_CLK_USBPHY_ENABLE|AWIN_USB_CLK_PHY0_ENABLE, 0);
-
 	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
 		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_USB_CLK_REG,
+		    AWIN_A31_USB_CLK_USBPHY0_ENABLE |
+		    AWIN_A31_USB_CLK_PHY0_ENABLE, 0);
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_AHB_GATING0_REG, AWIN_A31_AHB_GATING0_USB0, 0);
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
 		    AWIN_A31_AHB_RESET0_REG, AWIN_A31_AHB_RESET0_USBOTG_RST, 0);
+	} else {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_AHB_GATING0_REG, AWIN_AHB_GATING0_USB0, 0);
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_USB_CLK_REG,
+		    AWIN_USB_CLK_USBPHY_ENABLE|AWIN_USB_CLK_PHY0_ENABLE, 0);
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_core_bsh,
+		    AWIN_SRAM_OFFSET + AWIN_SRAM_CTL1_REG,
+		    __SHIFTIN(AWIN_SRAM_CTL1_SRAMD_MAP_USB0,
+			      AWIN_SRAM_CTL1_SRAMD_MAP),
+		    0);
 	}
-
-	awin_reg_set_clear(aio->aio_core_bst, aio->aio_core_bsh,
-	    AWIN_SRAM_OFFSET + AWIN_SRAM_CTL1_REG,
-	    __SHIFTIN(AWIN_SRAM_CTL1_SRAMD_MAP_USB0,
-		      AWIN_SRAM_CTL1_SRAMD_MAP),
-	    0);
 
 	sc->sc_motg.sc_dev = self;
 	sc->sc_motg.sc_bus.dmatag = aio->aio_dmat;
@@ -159,6 +165,11 @@ awin_otg_init(struct awin_otg_softc *sc)
 		awin_gpio_pindata_write(&sc->sc_drv_pin, 1);
 	} else {
 		aprint_error_dev(sc->sc_motg.sc_dev, "no power gpio found\n");
+	}
+	if (awin_gpio_pin_reserve("usb0restrict", &sc->sc_restrict_pin)) {
+		awin_gpio_pindata_write(&sc->sc_restrict_pin, 1);
+	} else {
+		aprint_error_dev(sc->sc_motg.sc_dev, "no restrict gpio found\n");
 	}
 
 	val = OTG_READ4(sc, AWIN_USB0_PHY_CSR_REG);
