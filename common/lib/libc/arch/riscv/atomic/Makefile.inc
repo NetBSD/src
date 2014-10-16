@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2014/09/19 17:36:24 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2014/10/16 18:52:17 dennis Exp $
 
 .for op in add and cas nand or sub swap xor
 sizes=32
@@ -21,7 +21,9 @@ SRCS.atomic+=	atomic_cas_by_cas32.c
 
 .if defined(LIB) && (${LIB} != "kern" && ${LIB} != "rump")
 
-SRCS.atomic+=	atomic_init_cas.c
+SRCS.atomic+=	atomic_init_cas.c			\
+		atomic_c11_compare_exchange_cas_16.c    \
+		atomic_c11_compare_exchange_cas_8.c
 
 .endif #LIB
 
