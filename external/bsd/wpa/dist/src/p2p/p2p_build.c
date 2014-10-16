@@ -17,8 +17,7 @@
 void p2p_buf_add_action_hdr(struct wpabuf *buf, u8 subtype, u8 dialog_token)
 {
 	wpabuf_put_u8(buf, WLAN_ACTION_VENDOR_SPECIFIC);
-	wpabuf_put_be24(buf, OUI_WFA);
-	wpabuf_put_u8(buf, P2P_OUI_TYPE);
+	wpabuf_put_be32(buf, P2P_IE_VENDOR_TYPE);
 
 	wpabuf_put_u8(buf, subtype); /* OUI Subtype */
 	wpabuf_put_u8(buf, dialog_token);
@@ -31,8 +30,7 @@ void p2p_buf_add_public_action_hdr(struct wpabuf *buf, u8 subtype,
 {
 	wpabuf_put_u8(buf, WLAN_ACTION_PUBLIC);
 	wpabuf_put_u8(buf, WLAN_PA_VENDOR_SPECIFIC);
-	wpabuf_put_be24(buf, OUI_WFA);
-	wpabuf_put_u8(buf, P2P_OUI_TYPE);
+	wpabuf_put_be32(buf, P2P_IE_VENDOR_TYPE);
 
 	wpabuf_put_u8(buf, subtype); /* OUI Subtype */
 	wpabuf_put_u8(buf, dialog_token);
@@ -47,8 +45,7 @@ u8 * p2p_buf_add_ie_hdr(struct wpabuf *buf)
 	/* P2P IE header */
 	wpabuf_put_u8(buf, WLAN_EID_VENDOR_SPECIFIC);
 	len = wpabuf_put(buf, 1); /* IE length to be filled */
-	wpabuf_put_be24(buf, OUI_WFA);
-	wpabuf_put_u8(buf, P2P_OUI_TYPE);
+	wpabuf_put_be32(buf, P2P_IE_VENDOR_TYPE);
 	wpa_printf(MSG_DEBUG, "P2P: * P2P IE header");
 	return len;
 }
@@ -258,6 +255,7 @@ void p2p_buf_add_group_id(struct wpabuf *buf, const u8 *dev_addr,
 	wpabuf_put_data(buf, ssid, ssid_len);
 	wpa_printf(MSG_DEBUG, "P2P: * P2P Group ID " MACSTR,
 		   MAC2STR(dev_addr));
+	wpa_hexdump_ascii(MSG_DEBUG, "P2P: P2P Group ID SSID", ssid, ssid_len);
 }
 
 
@@ -327,13 +325,32 @@ void p2p_buf_add_p2p_interface(struct wpabuf *buf, struct p2p_data *p2p)
 }
 
 
-static void p2p_add_wps_string(struct wpabuf *buf, enum wps_attribute attr,
-			       const char *val)
+void p2p_buf_add_oob_go_neg_channel(struct wpabuf *buf, const char *country,
+				    u8 oper_class, u8 channel,
+				    enum p2p_role_indication role)
+{
+	/* OOB Group Owner Negotiation Channel */
+	wpabuf_put_u8(buf, P2P_ATTR_OOB_GO_NEG_CHANNEL);
+	wpabuf_put_le16(buf, 6);
+	wpabuf_put_data(buf, country, 3);
+	wpabuf_put_u8(buf, oper_class); /* Operating Class */
+	wpabuf_put_u8(buf, channel); /* Channel Number */
+	wpabuf_put_u8(buf, (u8) role); /* Role indication */
+	wpa_printf(MSG_DEBUG, "P2P: * OOB GO Negotiation Channel: Operating "
+		   "Class %u Channel %u Role %d",
+		   oper_class, channel, role);
+}
+
+
+static int p2p_add_wps_string(struct wpabuf *buf, enum wps_attribute attr,
+			      const char *val)
 {
 	size_t len;
 
-	wpabuf_put_be16(buf, attr);
 	len = val ? os_strlen(val) : 0;
+	if (wpabuf_tailroom(buf) < 4 + len)
+		return -1;
+	wpabuf_put_be16(buf, attr);
 #ifndef CONFIG_WPS_STRICT
 	if (len == 0) {
 		/*
@@ -341,36 +358,46 @@ static void p2p_add_wps_string(struct wpabuf *buf, enum wps_attribute attr,
 		 * attributes. As a workaround, send a space character if the
 		 * device attribute string is empty.
 		 */
+		if (wpabuf_tailroom(buf) < 3)
+			return -1;
 		wpabuf_put_be16(buf, 1);
 		wpabuf_put_u8(buf, ' ');
-		return;
+		return 0;
 	}
 #endif /* CONFIG_WPS_STRICT */
 	wpabuf_put_be16(buf, len);
 	if (val)
 		wpabuf_put_data(buf, val, len);
+	return 0;
 }
 
 
-void p2p_build_wps_ie(struct p2p_data *p2p, struct wpabuf *buf, int pw_id,
-		      int all_attr)
+int p2p_build_wps_ie(struct p2p_data *p2p, struct wpabuf *buf, int pw_id,
+		     int all_attr)
 {
 	u8 *len;
 	int i;
 
+	if (wpabuf_tailroom(buf) < 6)
+		return -1;
 	wpabuf_put_u8(buf, WLAN_EID_VENDOR_SPECIFIC);
 	len = wpabuf_put(buf, 1);
 	wpabuf_put_be32(buf, WPS_DEV_OUI_WFA);
 
-	wps_build_version(buf);
+	if (wps_build_version(buf) < 0)
+		return -1;
 
 	if (all_attr) {
+		if (wpabuf_tailroom(buf) < 5)
+			return -1;
 		wpabuf_put_be16(buf, ATTR_WPS_STATE);
 		wpabuf_put_be16(buf, 1);
 		wpabuf_put_u8(buf, WPS_STATE_NOT_CONFIGURED);
 	}
 
 	if (pw_id >= 0) {
+		if (wpabuf_tailroom(buf) < 6)
+			return -1;
 		/* Device Password ID */
 		wpabuf_put_be16(buf, ATTR_DEV_PASSWORD_ID);
 		wpabuf_put_be16(buf, 2);
@@ -380,33 +407,47 @@ void p2p_build_wps_ie(struct p2p_data *p2p, struct wpabuf *buf, int pw_id,
 	}
 
 	if (all_attr) {
+		if (wpabuf_tailroom(buf) < 5)
+			return -1;
 		wpabuf_put_be16(buf, ATTR_RESPONSE_TYPE);
 		wpabuf_put_be16(buf, 1);
 		wpabuf_put_u8(buf, WPS_RESP_ENROLLEE_INFO);
 
-		wps_build_uuid_e(buf, p2p->cfg->uuid);
-		p2p_add_wps_string(buf, ATTR_MANUFACTURER,
-				   p2p->cfg->manufacturer);
-		p2p_add_wps_string(buf, ATTR_MODEL_NAME, p2p->cfg->model_name);
-		p2p_add_wps_string(buf, ATTR_MODEL_NUMBER,
-				   p2p->cfg->model_number);
-		p2p_add_wps_string(buf, ATTR_SERIAL_NUMBER,
-				   p2p->cfg->serial_number);
+		if (wps_build_uuid_e(buf, p2p->cfg->uuid) < 0 ||
+		    p2p_add_wps_string(buf, ATTR_MANUFACTURER,
+				       p2p->cfg->manufacturer) < 0 ||
+		    p2p_add_wps_string(buf, ATTR_MODEL_NAME,
+				       p2p->cfg->model_name) < 0 ||
+		    p2p_add_wps_string(buf, ATTR_MODEL_NUMBER,
+				       p2p->cfg->model_number) < 0 ||
+		    p2p_add_wps_string(buf, ATTR_SERIAL_NUMBER,
+				       p2p->cfg->serial_number) < 0)
+			return -1;
 
+		if (wpabuf_tailroom(buf) < 4 + WPS_DEV_TYPE_LEN)
+			return -1;
 		wpabuf_put_be16(buf, ATTR_PRIMARY_DEV_TYPE);
 		wpabuf_put_be16(buf, WPS_DEV_TYPE_LEN);
 		wpabuf_put_data(buf, p2p->cfg->pri_dev_type, WPS_DEV_TYPE_LEN);
 
-		p2p_add_wps_string(buf, ATTR_DEV_NAME, p2p->cfg->dev_name);
+		if (p2p_add_wps_string(buf, ATTR_DEV_NAME, p2p->cfg->dev_name)
+		    < 0)
+			return -1;
 
+		if (wpabuf_tailroom(buf) < 6)
+			return -1;
 		wpabuf_put_be16(buf, ATTR_CONFIG_METHODS);
 		wpabuf_put_be16(buf, 2);
 		wpabuf_put_be16(buf, p2p->cfg->config_methods);
 	}
 
-	wps_build_wfa_ext(buf, 0, NULL, 0);
+	if (wps_build_wfa_ext(buf, 0, NULL, 0) < 0)
+		return -1;
 
 	if (all_attr && p2p->cfg->num_sec_dev_types) {
+		if (wpabuf_tailroom(buf) <
+		    4 + WPS_DEV_TYPE_LEN * p2p->cfg->num_sec_dev_types)
+			return -1;
 		wpabuf_put_be16(buf, ATTR_SECONDARY_DEV_TYPE_LIST);
 		wpabuf_put_be16(buf, WPS_DEV_TYPE_LEN *
 				p2p->cfg->num_sec_dev_types);
@@ -428,4 +469,6 @@ void p2p_build_wps_ie(struct p2p_data *p2p, struct wpabuf *buf, int pw_id,
 	}
 
 	p2p_buf_update_ie_hdr(buf, len);
+
+	return 0;
 }

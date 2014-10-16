@@ -103,8 +103,11 @@ static void * eap_ikev2_init(struct eap_sm *sm)
 	data->ikev2.proposal.encr = ENCR_AES_CBC;
 	data->ikev2.proposal.dh = DH_GROUP2_1024BIT_MODP;
 
-	data->ikev2.IDi = (u8 *) os_strdup("hostapd");
-	data->ikev2.IDi_len = 7;
+	data->ikev2.IDi = os_malloc(sm->server_id_len);
+	if (data->ikev2.IDi == NULL)
+		goto failed;
+	os_memcpy(data->ikev2.IDi, sm->server_id, sm->server_id_len);
+	data->ikev2.IDi_len = sm->server_id_len;
 
 	data->ikev2.get_shared_secret = eap_ikev2_get_shared_secret;
 	data->ikev2.cb_ctx = sm;
@@ -124,7 +127,7 @@ static void eap_ikev2_reset(struct eap_sm *sm, void *priv)
 	wpabuf_free(data->in_buf);
 	wpabuf_free(data->out_buf);
 	ikev2_initiator_deinit(&data->ikev2);
-	os_free(data);
+	bin_clear_free(data, sizeof(*data));
 }
 
 
@@ -253,7 +256,8 @@ static Boolean eap_ikev2_check(struct eap_sm *sm, void *priv,
 
 static int eap_ikev2_process_icv(struct eap_ikev2_data *data,
 				 const struct wpabuf *respData,
-				 u8 flags, const u8 *pos, const u8 **end)
+				 u8 flags, const u8 *pos, const u8 **end,
+				 int frag_ack)
 {
 	if (flags & IKEV2_FLAGS_ICV_INCLUDED) {
 		int icv_len = eap_ikev2_validate_icv(
@@ -263,7 +267,7 @@ static int eap_ikev2_process_icv(struct eap_ikev2_data *data,
 			return -1;
 		/* Hide Integrity Checksum Data from further processing */
 		*end -= icv_len;
-	} else if (data->keys_ready) {
+	} else if (data->keys_ready && !frag_ack) {
 		wpa_printf(MSG_INFO, "EAP-IKEV2: The message should have "
 			   "included integrity checksum");
 		return -1;
@@ -362,7 +366,9 @@ static void eap_ikev2_process(struct eap_sm *sm, void *priv,
 	} else
 		flags = *pos++;
 
-	if (eap_ikev2_process_icv(data, respData, flags, pos, &end) < 0) {
+	if (eap_ikev2_process_icv(data, respData, flags, pos, &end,
+				  data->state == WAIT_FRAG_ACK && len == 0) < 0)
+	{
 		eap_ikev2_state(data, FAIL);
 		return;
 	}

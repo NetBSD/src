@@ -268,6 +268,19 @@ static int p2p_parse_attribute(u8 id, const u8 *data, u16 len,
 		wpa_printf(MSG_DEBUG, "P2P: * Minor Reason Code: %u",
 			   *msg->minor_reason_code);
 		break;
+	case P2P_ATTR_OOB_GO_NEG_CHANNEL:
+		if (len < 6) {
+			wpa_printf(MSG_DEBUG, "P2P: Too short OOB GO Neg "
+				   "Channel attribute (length %d)", len);
+			return -1;
+		}
+		msg->oob_go_neg_channel = data;
+		wpa_printf(MSG_DEBUG, "P2P: * OOB GO Neg Channel: "
+			   "Country %c%c(0x%02x) Operating Class %d "
+			   "Channel Number %d Role %d",
+			   data[0], data[1], data[2], data[3], data[4],
+			   data[5]);
+		break;
 	default:
 		wpa_printf(MSG_DEBUG, "P2P: Skipped unknown attribute %d "
 			   "(length %d)", id, len);
@@ -340,6 +353,7 @@ static int p2p_parse_wps_ie(const struct wpabuf *buf, struct p2p_message *msg)
 		msg->dev_password_id = WPA_GET_BE16(attr.dev_password_id);
 		wpa_printf(MSG_DEBUG, "P2P: Device Password ID: %d",
 			   msg->dev_password_id);
+		msg->dev_password_id_present = 1;
 	}
 	if (attr.primary_dev_type) {
 		char devtype[WPS_DEV_TYPE_BUFSIZE];
@@ -366,6 +380,9 @@ static int p2p_parse_wps_ie(const struct wpabuf *buf, struct p2p_message *msg)
 	msg->model_number_len = attr.model_number_len;
 	msg->serial_number = attr.serial_number;
 	msg->serial_number_len = attr.serial_number_len;
+
+	msg->oob_dev_password = attr.oob_dev_password;
+	msg->oob_dev_password_len = attr.oob_dev_password_len;
 
 	return 0;
 }
@@ -447,6 +464,33 @@ int p2p_parse(const u8 *data, size_t len, struct p2p_message *msg)
 	wpa_printf(MSG_DEBUG, "P2P: * Dialog Token: %d", msg->dialog_token);
 
 	return p2p_parse_ies(data + 1, len - 1, msg);
+}
+
+
+int p2p_parse_ies_separate(const u8 *wsc, size_t wsc_len, const u8 *p2p,
+			   size_t p2p_len, struct p2p_message *msg)
+{
+	os_memset(msg, 0, sizeof(*msg));
+
+	msg->wps_attributes = wpabuf_alloc_copy(wsc, wsc_len);
+	if (msg->wps_attributes &&
+	    p2p_parse_wps_ie(msg->wps_attributes, msg)) {
+		p2p_parse_free(msg);
+		return -1;
+	}
+
+	msg->p2p_attributes = wpabuf_alloc_copy(p2p, p2p_len);
+	if (msg->p2p_attributes &&
+	    p2p_parse_p2p_ie(msg->p2p_attributes, msg)) {
+		wpa_printf(MSG_DEBUG, "P2P: Failed to parse P2P IE data");
+		if (msg->p2p_attributes)
+			wpa_hexdump_buf(MSG_MSGDUMP, "P2P: P2P IE data",
+					msg->p2p_attributes);
+		p2p_parse_free(msg);
+		return -1;
+	}
+
+	return 0;
 }
 
 

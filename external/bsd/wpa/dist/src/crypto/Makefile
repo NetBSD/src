@@ -1,7 +1,7 @@
 all: libcrypto.a
 
 clean:
-	rm -f *~ *.o *.d libcrypto.a
+	rm -f *~ *.o *.d *.gcno *.gcda *.gcov libcrypto.a
 
 install:
 	@echo Nothing to be made.
@@ -9,6 +9,7 @@ install:
 
 include ../lib.rules
 
+CFLAGS += -DCONFIG_CRYPTO_INTERNAL
 CFLAGS += -DCONFIG_TLS_INTERNAL_CLIENT
 CFLAGS += -DCONFIG_TLS_INTERNAL_SERVER
 #CFLAGS += -DALL_DH_GROUPS
