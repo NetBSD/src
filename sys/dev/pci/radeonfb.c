@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.84 2014/07/22 15:42:59 riastradh Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.85 2014/10/16 12:31:23 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.84 2014/07/22 15:42:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.85 2014/10/16 12:31:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1321,7 +1321,7 @@ radeonfb_loadbios(struct radeonfb_softc *sc, const struct pci_attach_args *pa)
 		return;
 	}
 
-	pci_find_rom(pa, romt, romh, PCI_ROM_CODE_TYPE_X86, &biosh,
+	pci_find_rom(pa, romt, romh, romsz, PCI_ROM_CODE_TYPE_X86, &biosh,
 	    &sc->sc_biossz);
 	if (sc->sc_biossz == 0) {
 		aprint_verbose("%s: Video BIOS not present\n", XNAME(sc));
