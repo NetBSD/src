@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.89 2014/10/15 15:13:45 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.90 2014/10/16 17:53:32 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.89 2014/10/15 15:13:45 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.90 2014/10/16 17:53:32 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1234,18 +1234,19 @@ tzsetlcl(char const *name)
 	if (lcl < 0 ? lcl_is_set < 0
 	    : 0 < lcl_is_set && strcmp(lcl_TZname, name) == 0)
 		return;
+
+	if (!lclptr && !(lclptr = malloc(sizeof *lclptr)))
+		return;
+
+	if (!zoneinit(lclptr, name)) {
+		free(lclptr);
+		lclptr = NULL;
+		return;
+	}
+
+	settzname();
 	if (0 < lcl)
 		(void)strcpy(lcl_TZname, name);
-
-	if (! lclptr) {
-		struct state *sp = malloc(sizeof *lclptr);
-		if (!zoneinit(sp, name)) {
-			free(sp);
-			return;
-		}
-		lclptr = sp;
-	}
-	settzname();
 	lcl_is_set = lcl;
 }
 
@@ -1432,8 +1433,6 @@ localtime_tzset(time_t const *timep, struct tm *tmp, bool setname)
 		tzset_unlocked();
 	tmp = localsub(lclptr, timep, setname, tmp);
 	rwlock_unlock(&lcl_lock);
-	if (tmp == NULL)
-		errno = EOVERFLOW;
 	return tmp;
 }
 
@@ -1487,12 +1486,7 @@ struct tm *
 gmtime_r(const time_t * const timep, struct tm *tmp)
 {
 	gmtcheck();
-	tmp = gmtsub(NULL, timep, 0, tmp);
-
-	if (tmp == NULL)
-		errno = EOVERFLOW;
-
-	return tmp;
+	return gmtsub(NULL, timep, 0, tmp);
 }
 
 #ifdef STD_INSPIRED
@@ -1500,27 +1494,15 @@ gmtime_r(const time_t * const timep, struct tm *tmp)
 struct tm *
 offtime(const time_t *const timep, long offset)
 {
-	struct tm *tmp;
-
 	gmtcheck();
-	tmp = gmtsub(gmtptr, timep, (int_fast32_t)offset, &tm);
-
-	if (tmp == NULL)
-		errno = EOVERFLOW;
-
-	return tmp;
+	return gmtsub(gmtptr, timep, (int_fast32_t)offset, &tm);
 }
 
 struct tm *
 offtime_r(const time_t *timep, long offset, struct tm *tmp)
 {
 	gmtcheck();
-	tmp = gmtsub(NULL, timep, (int_fast32_t)offset, tmp);
-
-	if (tmp == NULL)
-		errno = EOVERFLOW;
-
-	return tmp;
+	return gmtsub(NULL, timep, (int_fast32_t)offset, tmp);
 }
 
 #endif /* defined STD_INSPIRED */
@@ -1632,7 +1614,7 @@ timesub(time_t const *timep, int_fast32_t offset, struct state const *sp,
 	}
 	tmp->tm_year = y;
 	if (increment_overflow(&tmp->tm_year, -TM_YEAR_BASE))
-		return NULL;
+		goto overflow;
 	tmp->tm_yday = idays;
 	/*
 	** The "extra" mods below avoid overflow problems.
@@ -2078,6 +2060,7 @@ time1(struct tm *const tmp,
 	int			sameind, otherind;
 	int			i;
 	int			nseen;
+	int			save_errno;
 	char				seen[TZ_MAX_TYPES];
 	unsigned char			types[TZ_MAX_TYPES];
 	bool				okay;
@@ -2088,9 +2071,12 @@ time1(struct tm *const tmp,
 	}
 	if (tmp->tm_isdst > 1)
 		tmp->tm_isdst = 1;
+	save_errno = errno;
 	t = time2(tmp, funcp, sp, offset, &okay);
-	if (okay)
+	if (okay) {
+		errno = save_errno;
 		return t;
+	}
 	if (tmp->tm_isdst < 0)
 #ifdef PCTS
 		/*
@@ -2130,8 +2116,10 @@ time1(struct tm *const tmp,
 					sp->ttis[samei].tt_gmtoff);
 			tmp->tm_isdst = !tmp->tm_isdst;
 			t = time2(tmp, funcp, sp, offset, &okay);
-			if (okay)
+			if (okay) {
+				errno = save_errno;
 				return t;
+			}
 			tmp->tm_sec -= (int)(sp->ttis[otheri].tt_gmtoff -
 					sp->ttis[samei].tt_gmtoff);
 			tmp->tm_isdst = !tmp->tm_isdst;
