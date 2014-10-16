@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.87 2014/10/13 00:25:12 htodd Exp $
+# $NetBSD: mi,v 1.88 2014/10/16 23:00:38 htodd Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -1914,6 +1914,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_format.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_fputc.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_mktemp.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdio/t_open_memstream.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_popen.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_printf.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdio/t_scanf.debug		tests-lib-debug		debug,atf
