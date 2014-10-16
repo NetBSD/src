@@ -13,11 +13,7 @@
 struct ieee802_11_elems {
 	const u8 *ssid;
 	const u8 *supp_rates;
-	const u8 *fh_params;
 	const u8 *ds_params;
-	const u8 *cf_params;
-	const u8 *tim;
-	const u8 *ibss_params;
 	const u8 *challenge;
 	const u8 *erp_info;
 	const u8 *ext_supp_rates;
@@ -26,7 +22,6 @@ struct ieee802_11_elems {
 	const u8 *wmm; /* WMM Information or Parameter Element */
 	const u8 *wmm_tspec;
 	const u8 *wps_ie;
-	const u8 *power_cap;
 	const u8 *supp_channels;
 	const u8 *mdie;
 	const u8 *ftie;
@@ -35,23 +30,22 @@ struct ieee802_11_elems {
 	const u8 *ht_operation;
 	const u8 *vht_capabilities;
 	const u8 *vht_operation;
+	const u8 *vht_opmode_notif;
 	const u8 *vendor_ht_cap;
 	const u8 *p2p;
 	const u8 *wfd;
 	const u8 *link_id;
 	const u8 *interworking;
+	const u8 *qos_map_set;
 	const u8 *hs20;
 	const u8 *ext_capab;
 	const u8 *bss_max_idle_period;
 	const u8 *ssid_list;
+	const u8 *osen;
 
 	u8 ssid_len;
 	u8 supp_rates_len;
-	u8 fh_params_len;
 	u8 ds_params_len;
-	u8 cf_params_len;
-	u8 tim_len;
-	u8 ibss_params_len;
 	u8 challenge_len;
 	u8 erp_info_len;
 	u8 ext_supp_rates_len;
@@ -60,7 +54,6 @@ struct ieee802_11_elems {
 	u8 wmm_len; /* 7 = WMM Information; 24 = WMM Parameter */
 	u8 wmm_tspec_len;
 	u8 wps_ie_len;
-	u8 power_cap_len;
 	u8 supp_channels_len;
 	u8 mdie_len;
 	u8 ftie_len;
@@ -73,9 +66,11 @@ struct ieee802_11_elems {
 	u8 p2p_len;
 	u8 wfd_len;
 	u8 interworking_len;
+	u8 qos_map_set_len;
 	u8 hs20_len;
 	u8 ext_capab_len;
 	u8 ssid_list_len;
+	u8 osen_len;
 };
 
 typedef enum { ParseOK = 0, ParseUnknown = 1, ParseFailed = -1 } ParseRes;
@@ -99,5 +94,9 @@ struct hostapd_wmm_ac_params {
 
 int hostapd_config_wmm_ac(struct hostapd_wmm_ac_params wmm_ac_params[],
 			  const char *name, const char *val);
+enum hostapd_hw_mode ieee80211_freq_to_chan(int freq, u8 *channel);
 
+int supp_rates_11b_only(struct ieee802_11_elems *elems);
+
+const char * fc2str(u16 fc);
 #endif /* IEEE802_11_COMMON_H */

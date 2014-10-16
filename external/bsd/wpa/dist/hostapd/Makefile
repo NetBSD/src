@@ -6,14 +6,19 @@ ifndef CFLAGS
 CFLAGS = -MMD -O2 -Wall -g
 endif
 
-CFLAGS += -I../src
-CFLAGS += -I../src/utils
+CFLAGS += -I$(abspath ../src)
+CFLAGS += -I$(abspath ../src/utils)
 
 # Uncomment following line and set the path to your kernel tree include
 # directory if your C library does not include all header files.
 # CFLAGS += -DUSE_KERNEL_HEADERS -I/usr/src/linux/include
 
 -include .config
+
+ifdef CONFIG_TESTING_OPTIONS
+CFLAGS += -DCONFIG_TESTING_OPTIONS
+CONFIG_WPS_TESTING=y
+endif
 
 ifndef CONFIG_OS
 ifdef CONFIG_NATIVE_WINDOWS
@@ -65,6 +70,11 @@ NEED_SHA1=y
 OBJS += ../src/drivers/drivers.o
 CFLAGS += -DHOSTAPD
 
+ifdef CONFIG_MODULE_TESTS
+CFLAGS += -DCONFIG_MODULE_TESTS
+OBJS += hapd_module_tests.o
+endif
+
 ifdef CONFIG_WPA_TRACE
 CFLAGS += -DWPA_TRACE
 OBJS += ../src/utils/trace.o
@@ -72,10 +82,10 @@ HOBJS += ../src/utils/trace.o
 LDFLAGS += -rdynamic
 CFLAGS += -funwind-tables
 ifdef CONFIG_WPA_TRACE_BFD
-CFLAGS += -DWPA_TRACE_BFD
-LIBS += -lbfd
-LIBS_c += -lbfd
-LIBS_h += -lbfd
+CFLAGS += -DPACKAGE="hostapd" -DWPA_TRACE_BFD
+LIBS += -lbfd -ldl -liberty -lz
+LIBS_c += -lbfd -ldl -liberty -lz
+LIBS_h += -lbfd -ldl -liberty -lz
 endif
 endif
 
@@ -84,6 +94,15 @@ CONFIG_ELOOP=eloop
 endif
 OBJS += ../src/utils/$(CONFIG_ELOOP).o
 OBJS_c += ../src/utils/$(CONFIG_ELOOP).o
+
+ifeq ($(CONFIG_ELOOP), eloop)
+# Using glibc < 2.17 requires -lrt for clock_gettime()
+LIBS += -lrt
+LIBS_c += -lrt
+LIBS_h += -lrt
+LIBS_n += -lrt
+endif
+
 OBJS += ../src/utils/common.o
 OBJS += ../src/utils/wpa_debug.o
 OBJS_c += ../src/utils/wpa_debug.o
@@ -97,11 +116,19 @@ OBJS += ../src/common/wpa_common.o
 OBJS += ../src/eapol_auth/eapol_auth_sm.o
 
 
+ifdef CONFIG_CODE_COVERAGE
+CFLAGS += -O0 -fprofile-arcs -ftest-coverage
+LIBS += -lgcov
+LIBS_c += -lgcov
+LIBS_h += -lgcov
+LIBS_n += -lgcov
+endif
+
 ifndef CONFIG_NO_DUMP_STATE
-# define HOSTAPD_DUMP_STATE to include SIGUSR1 handler for dumping state to
-# a file (undefine it, if you want to save in binary size)
+# define HOSTAPD_DUMP_STATE to include support for dumping internal state
+# through control interface commands (undefine it, if you want to save in
+# binary size)
 CFLAGS += -DHOSTAPD_DUMP_STATE
-OBJS += dump_state.o
 OBJS += ../src/eapol_auth/eapol_auth_dump.o
 endif
 
@@ -158,6 +185,10 @@ CFLAGS += -DCONFIG_PEERKEY
 OBJS += ../src/ap/peerkey_auth.o
 endif
 
+ifdef CONFIG_HS20
+NEED_AES_OMAC1=y
+endif
+
 ifdef CONFIG_IEEE80211W
 CFLAGS += -DCONFIG_IEEE80211W
 NEED_SHA256=y
@@ -174,6 +205,9 @@ endif
 
 ifdef CONFIG_SAE
 CFLAGS += -DCONFIG_SAE
+OBJS += ../src/common/sae.o
+NEED_ECC=y
+NEED_DH_GROUPS=y
 endif
 
 ifdef CONFIG_WNM
@@ -308,7 +342,7 @@ ifdef CONFIG_EAP_GPSK
 CFLAGS += -DEAP_SERVER_GPSK
 OBJS += ../src/eap_server/eap_server_gpsk.o ../src/eap_common/eap_gpsk_common.o
 ifdef CONFIG_EAP_GPSK_SHA256
-CFLAGS += -DEAP_SERVER_GPSK_SHA256
+CFLAGS += -DEAP_GPSK_SHA256
 endif
 NEED_SHA256=y
 NEED_AES_OMAC1=y
@@ -318,6 +352,13 @@ ifdef CONFIG_EAP_PWD
 CFLAGS += -DEAP_SERVER_PWD
 OBJS += ../src/eap_server/eap_server_pwd.o ../src/eap_common/eap_pwd_common.o
 NEED_SHA256=y
+endif
+
+ifdef CONFIG_EAP_EKE
+CFLAGS += -DEAP_SERVER_EKE
+OBJS += ../src/eap_server/eap_server_eke.o ../src/eap_common/eap_eke_common.o
+NEED_DH_GROUPS=y
+NEED_DH_GROUPS_ALL=y
 endif
 
 ifdef CONFIG_EAP_VENDOR_TEST
@@ -335,10 +376,6 @@ NEED_AES_UNWRAP=y
 endif
 
 ifdef CONFIG_WPS
-ifdef CONFIG_WPS2
-CFLAGS += -DCONFIG_WPS2
-endif
-
 CFLAGS += -DCONFIG_WPS -DEAP_SERVER_WSC
 OBJS += ../src/utils/uuid.o
 OBJS += ../src/ap/wps_hostapd.o
@@ -481,7 +518,8 @@ endif
 OBJS += ../src/crypto/crypto_gnutls.o
 HOBJS += ../src/crypto/crypto_gnutls.o
 ifdef NEED_FIPS186_2_PRF
-OBJS += ../src/crypto/fips_prf_gnutls.o
+OBJS += ../src/crypto/fips_prf_internal.o
+SHA1OBJS += ../src/crypto/sha1-internal.o
 endif
 LIBS += -lgcrypt
 LIBS_h += -lgcrypt
@@ -508,7 +546,8 @@ LIBS += -lssl3
 endif
 OBJS += ../src/crypto/crypto_nss.o
 ifdef NEED_FIPS186_2_PRF
-OBJS += ../src/crypto/fips_prf_nss.o
+OBJS += ../src/crypto/fips_prf_internal.o
+SHA1OBJS += ../src/crypto/sha1-internal.o
 endif
 LIBS += -lnss3
 LIBS_h += -lnss3
@@ -730,6 +769,10 @@ OBJS += ../src/crypto/dh_group5.o
 endif
 endif
 
+ifdef NEED_ECC
+CFLAGS += -DCONFIG_ECC
+endif
+
 ifdef CONFIG_NO_RANDOM_POOL
 CFLAGS += -DCONFIG_NO_RANDOM_POOL
 else
@@ -768,6 +811,7 @@ OBJS += ../src/ap/wmm.o
 OBJS += ../src/ap/ap_list.o
 OBJS += ../src/ap/ieee802_11.o
 OBJS += ../src/ap/hw_features.o
+OBJS += ../src/ap/dfs.o
 CFLAGS += -DNEED_AP_MLME
 endif
 ifdef CONFIG_IEEE80211N
@@ -803,8 +847,18 @@ else
 OBJS_c += ../src/utils/edit_simple.o
 endif
 
+ifdef CONFIG_ACS
+CFLAGS += -DCONFIG_ACS
+OBJS += ../src/ap/acs.o
+LIBS += -lm
+endif
+
 ifdef CONFIG_NO_STDOUT_DEBUG
 CFLAGS += -DCONFIG_NO_STDOUT_DEBUG
+endif
+
+ifdef CONFIG_DEBUG_LINUX_TRACING
+CFLAGS += -DCONFIG_DEBUG_LINUX_TRACING
 endif
 
 ifdef CONFIG_DEBUG_FILE
@@ -828,9 +882,15 @@ Q=
 E=true
 endif
 
+ifdef CONFIG_CODE_COVERAGE
+%.o: %.c
+	@$(E) "  CC " $<
+	$(Q)cd $(dir $@); $(CC) -c -o $(notdir $@) $(CFLAGS) $(notdir $<)
+else
 %.o: %.c
 	$(Q)$(CC) -c -o $@ $(CFLAGS) $<
 	@$(E) "  CC " $<
+endif
 
 verify_config:
 	@if [ ! -r .config ]; then \
@@ -899,9 +959,15 @@ hlr_auc_gw: $(HOBJS)
 	$(Q)$(CC) $(LDFLAGS) -o hlr_auc_gw $(HOBJS) $(LIBS_h)
 	@$(E) "  LD " $@
 
+lcov-html:
+	lcov -c -d .. > lcov.info
+	genhtml lcov.info --output-directory lcov-html
+
 clean:
 	$(MAKE) -C ../src clean
 	rm -f core *~ *.o hostapd hostapd_cli nt_password_hash hlr_auc_gw
-	rm -f *.d
+	rm -f *.d *.gcno *.gcda *.gcov
+	rm -f lcov.info
+	rm -rf lcov-html
 
 -include $(OBJS:%.o=%.d)
