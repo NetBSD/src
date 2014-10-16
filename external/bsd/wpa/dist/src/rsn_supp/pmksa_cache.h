@@ -44,7 +44,7 @@ enum pmksa_free_reason {
 	PMKSA_EXPIRE,
 };
 
-#if defined(IEEE8021X_EAPOL) && !defined(CONFIG_NO_WPA2)
+#ifdef IEEE8021X_EAPOL
 
 struct rsn_pmksa_cache *
 pmksa_cache_init(void (*free_cb)(struct rsn_pmksa_cache_entry *entry,
@@ -66,13 +66,14 @@ int pmksa_cache_set_current(struct wpa_sm *sm, const u8 *pmkid,
 struct rsn_pmksa_cache_entry *
 pmksa_cache_get_opportunistic(struct rsn_pmksa_cache *pmksa,
 			      void *network_ctx, const u8 *aa);
-void pmksa_cache_flush(struct rsn_pmksa_cache *pmksa, void *network_ctx);
+void pmksa_cache_flush(struct rsn_pmksa_cache *pmksa, void *network_ctx,
+		       const u8 *pmk, size_t pmk_len);
 
-#else /* IEEE8021X_EAPOL and !CONFIG_NO_WPA2 */
+#else /* IEEE8021X_EAPOL */
 
 static inline struct rsn_pmksa_cache *
 pmksa_cache_init(void (*free_cb)(struct rsn_pmksa_cache_entry *entry,
-				 void *ctx, int reason),
+				 void *ctx, enum pmksa_free_reason reason),
 		 void *ctx, struct wpa_sm *sm)
 {
 	return (void *) -1;
@@ -121,10 +122,11 @@ static inline int pmksa_cache_set_current(struct wpa_sm *sm, const u8 *pmkid,
 }
 
 static inline void pmksa_cache_flush(struct rsn_pmksa_cache *pmksa,
-				     void *network_ctx)
+				     void *network_ctx,
+				     const u8 *pmk, size_t pmk_len)
 {
 }
 
-#endif /* IEEE8021X_EAPOL and !CONFIG_NO_WPA2 */
+#endif /* IEEE8021X_EAPOL */
 
 #endif /* PMKSA_CACHE_H */

@@ -1,6 +1,6 @@
 /*
  * hostapd / WPA authenticator glue code
- * Copyright (c) 2002-2011, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2002-2012, Jouni Malinen <j@w1.fi>
  *
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
@@ -10,11 +10,11 @@
 
 #include "utils/common.h"
 #include "common/ieee802_11_defs.h"
+#include "common/sae.h"
 #include "eapol_auth/eapol_auth_sm.h"
 #include "eapol_auth/eapol_auth_sm_i.h"
 #include "eap_server/eap.h"
 #include "l2_packet/l2_packet.h"
-#include "drivers/driver.h"
 #include "hostapd.h"
 #include "ieee802_1x.h"
 #include "preauth_auth.h"
@@ -27,6 +27,7 @@
 
 
 static void hostapd_wpa_auth_conf(struct hostapd_bss_config *conf,
+				  struct hostapd_config *iconf,
 				  struct wpa_auth_config *wconf)
 {
 	os_memset(wconf, 0, sizeof(*wconf));
@@ -48,6 +49,7 @@ static void hostapd_wpa_auth_conf(struct hostapd_bss_config *conf,
 	wconf->okc = conf->okc;
 #ifdef CONFIG_IEEE80211W
 	wconf->ieee80211w = conf->ieee80211w;
+	wconf->group_mgmt_cipher = conf->group_mgmt_cipher;
 #endif /* CONFIG_IEEE80211W */
 #ifdef CONFIG_IEEE80211R
 	wconf->ssid_len = conf->ssid.ssid_len;
@@ -72,7 +74,30 @@ static void hostapd_wpa_auth_conf(struct hostapd_bss_config *conf,
 #endif /* CONFIG_IEEE80211R */
 #ifdef CONFIG_HS20
 	wconf->disable_gtk = conf->disable_dgaf;
+	if (conf->osen) {
+		wconf->disable_gtk = 1;
+		wconf->wpa = WPA_PROTO_OSEN;
+		wconf->wpa_key_mgmt = WPA_KEY_MGMT_OSEN;
+		wconf->wpa_pairwise = 0;
+		wconf->wpa_group = WPA_CIPHER_CCMP;
+		wconf->rsn_pairwise = WPA_CIPHER_CCMP;
+		wconf->rsn_preauth = 0;
+		wconf->disable_pmksa_caching = 1;
+#ifdef CONFIG_IEEE80211W
+		wconf->ieee80211w = 1;
+#endif /* CONFIG_IEEE80211W */
+	}
 #endif /* CONFIG_HS20 */
+#ifdef CONFIG_TESTING_OPTIONS
+	wconf->corrupt_gtk_rekey_mic_probability =
+		iconf->corrupt_gtk_rekey_mic_probability;
+#endif /* CONFIG_TESTING_OPTIONS */
+#ifdef CONFIG_P2P
+	os_memcpy(wconf->ip_addr_go, conf->ip_addr_go, 4);
+	os_memcpy(wconf->ip_addr_mask, conf->ip_addr_mask, 4);
+	os_memcpy(wconf->ip_addr_start, conf->ip_addr_start, 4);
+	os_memcpy(wconf->ip_addr_end, conf->ip_addr_end, 4);
+#endif /* CONFIG_P2P */
 }
 
 
@@ -180,11 +205,22 @@ static int hostapd_wpa_auth_get_eapol(void *ctx, const u8 *addr,
 
 
 static const u8 * hostapd_wpa_auth_get_psk(void *ctx, const u8 *addr,
+					   const u8 *p2p_dev_addr,
 					   const u8 *prev_psk)
 {
 	struct hostapd_data *hapd = ctx;
 	struct sta_info *sta = ap_get_sta(hapd, addr);
-	const u8 *psk = hostapd_get_psk(hapd->conf, addr, prev_psk);
+	const u8 *psk;
+
+#ifdef CONFIG_SAE
+	if (sta && sta->auth_alg == WLAN_AUTH_SAE) {
+		if (!sta->sae || prev_psk)
+			return NULL;
+		return sta->sae->pmk;
+	}
+#endif /* CONFIG_SAE */
+
+	psk = hostapd_get_psk(hapd->conf, addr, p2p_dev_addr, prev_psk);
 	/*
 	 * This is about to iterate over all psks, prev_psk gives the last
 	 * returned psk which should not be returned again.
@@ -455,7 +491,7 @@ hostapd_wpa_auth_add_sta(void *ctx, const u8 *sta_addr)
 		return sta->wpa_sm;
 	}
 
-	sta->wpa_sm = wpa_auth_sta_init(hapd->wpa_auth, sta->addr);
+	sta->wpa_sm = wpa_auth_sta_init(hapd->wpa_auth, sta->addr, NULL);
 	if (sta->wpa_sm == NULL) {
 		ap_free_sta(hapd, sta);
 		return NULL;
@@ -498,7 +534,7 @@ int hostapd_setup_wpa(struct hostapd_data *hapd)
 	const u8 *wpa_ie;
 	size_t wpa_ie_len;
 
-	hostapd_wpa_auth_conf(hapd->conf, &_conf);
+	hostapd_wpa_auth_conf(hapd->conf, hapd->iconf, &_conf);
 	if (hapd->iface->drv_flags & WPA_DRIVER_FLAGS_EAPOL_TX_STATUS)
 		_conf.tx_status = 1;
 	if (hapd->iface->drv_flags & WPA_DRIVER_FLAGS_AP_MLME)
@@ -572,7 +608,7 @@ int hostapd_setup_wpa(struct hostapd_data *hapd)
 void hostapd_reconfig_wpa(struct hostapd_data *hapd)
 {
 	struct wpa_auth_config wpa_auth_conf;
-	hostapd_wpa_auth_conf(hapd->conf, &wpa_auth_conf);
+	hostapd_wpa_auth_conf(hapd->conf, hapd->iconf, &wpa_auth_conf);
 	wpa_reconfig(hapd->wpa_auth, &wpa_auth_conf);
 }
 
@@ -601,5 +637,6 @@ void hostapd_deinit_wpa(struct hostapd_data *hapd)
 
 #ifdef CONFIG_IEEE80211R
 	l2_packet_deinit(hapd->l2);
+	hapd->l2 = NULL;
 #endif /* CONFIG_IEEE80211R */
 }

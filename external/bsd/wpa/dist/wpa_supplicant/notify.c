@@ -79,20 +79,22 @@ void wpas_notify_state_changed(struct wpa_supplicant *wpa_s,
 	/* notify the new DBus API */
 	wpas_dbus_signal_prop_changed(wpa_s, WPAS_DBUS_PROP_STATE);
 
-#ifdef CONFIG_P2P
 	if (new_state == WPA_COMPLETED)
 		wpas_p2p_notif_connected(wpa_s);
 	else if (old_state >= WPA_ASSOCIATED && new_state < WPA_ASSOCIATED)
 		wpas_p2p_notif_disconnected(wpa_s);
-#endif /* CONFIG_P2P */
 
 	sme_state_changed(wpa_s);
 
 #ifdef ANDROID
 	wpa_msg_ctrl(wpa_s, MSG_INFO, WPA_EVENT_STATE_CHANGE
-		     "id=%d state=%d BSSID=" MACSTR,
+		     "id=%d state=%d BSSID=" MACSTR " SSID=%s",
 		     wpa_s->current_ssid ? wpa_s->current_ssid->id : -1,
-		     new_state, MAC2STR(wpa_s->pending_bssid));
+		     new_state,
+		     MAC2STR(wpa_s->bssid),
+		     wpa_s->current_ssid && wpa_s->current_ssid->ssid ?
+		     wpa_ssid_txt(wpa_s->current_ssid->ssid,
+				  wpa_s->current_ssid->ssid_len) : "");
 #endif /* ANDROID */
 }
 
@@ -222,7 +224,7 @@ void wpas_notify_network_added(struct wpa_supplicant *wpa_s,
 	 * applications since these network objects won't behave like
 	 * regular ones.
 	 */
-	if (wpa_s->global->p2p_group_formation != wpa_s)
+	if (!ssid->p2p_group && wpa_s->global->p2p_group_formation != wpa_s)
 		wpas_dbus_register_network(wpa_s, ssid);
 }
 
@@ -248,13 +250,13 @@ void wpas_notify_persistent_group_removed(struct wpa_supplicant *wpa_s,
 void wpas_notify_network_removed(struct wpa_supplicant *wpa_s,
 				 struct wpa_ssid *ssid)
 {
+	if (wpa_s->next_ssid == ssid)
+		wpa_s->next_ssid = NULL;
 	if (wpa_s->wpa)
 		wpa_sm_pmksa_cache_flush(wpa_s->wpa, ssid);
-	if (wpa_s->global->p2p_group_formation != wpa_s)
+	if (!ssid->p2p_group && wpa_s->global->p2p_group_formation != wpa_s)
 		wpas_dbus_unregister_network(wpa_s, ssid->id);
-#ifdef CONFIG_P2P
 	wpas_p2p_network_removed(wpa_s, ssid);
-#endif /* CONFIG_P2P */
 }
 
 
@@ -340,6 +342,12 @@ void wpas_notify_bss_rates_changed(struct wpa_supplicant *wpa_s,
 				   unsigned int id)
 {
 	wpas_dbus_bss_signal_prop_changed(wpa_s, WPAS_DBUS_BSS_PROP_RATES, id);
+}
+
+
+void wpas_notify_bss_seen(struct wpa_supplicant *wpa_s, unsigned int id)
+{
+	wpas_dbus_bss_signal_prop_changed(wpa_s, WPAS_DBUS_BSS_PROP_AGE, id);
 }
 
 
@@ -436,9 +444,9 @@ void wpas_notify_p2p_group_removed(struct wpa_supplicant *wpa_s,
 				   const struct wpa_ssid *ssid,
 				   const char *role)
 {
-	wpas_dbus_unregister_p2p_group(wpa_s, ssid);
-
 	wpas_dbus_signal_p2p_group_removed(wpa_s, role);
+
+	wpas_dbus_unregister_p2p_group(wpa_s, ssid);
 }
 
 
@@ -535,37 +543,31 @@ static void wpas_notify_ap_sta_authorized(struct wpa_supplicant *wpa_s,
 	wpas_p2p_notify_ap_sta_authorized(wpa_s, p2p_dev_addr);
 
 	/*
-	 * Register a group member object corresponding to this peer and
-	 * emit a PeerJoined signal. This will check if it really is a
-	 * P2P group.
-	 */
-	wpas_dbus_register_p2p_groupmember(wpa_s, sta);
-
-	/*
 	 * Create 'peer-joined' signal on group object -- will also
 	 * check P2P itself.
 	 */
-	wpas_dbus_signal_p2p_peer_joined(wpa_s, sta);
+	wpas_dbus_signal_p2p_peer_joined(wpa_s, p2p_dev_addr);
 #endif /* CONFIG_P2P */
+
+	/* Notify listeners a new station has been authorized */
+	wpas_dbus_signal_sta_authorized(wpa_s, sta);
 }
 
 
 static void wpas_notify_ap_sta_deauthorized(struct wpa_supplicant *wpa_s,
-					    const u8 *sta)
+					    const u8 *sta,
+					    const u8 *p2p_dev_addr)
 {
 #ifdef CONFIG_P2P
-	/*
-	 * Unregister a group member object corresponding to this peer
-	 * if this is a P2P group.
-	 */
-	wpas_dbus_unregister_p2p_groupmember(wpa_s, sta);
-
 	/*
 	 * Create 'peer-disconnected' signal on group object if this
 	 * is a P2P group.
 	 */
-	wpas_dbus_signal_p2p_peer_disconnected(wpa_s, sta);
+	wpas_dbus_signal_p2p_peer_disconnected(wpa_s, p2p_dev_addr);
 #endif /* CONFIG_P2P */
+
+	/* Notify listeners a station has been deauthorized */
+	wpas_dbus_signal_sta_deauthorized(wpa_s, sta);
 }
 
 
@@ -576,7 +578,7 @@ void wpas_notify_sta_authorized(struct wpa_supplicant *wpa_s,
 	if (authorized)
 		wpas_notify_ap_sta_authorized(wpa_s, mac_addr, p2p_dev_addr);
 	else
-		wpas_notify_ap_sta_deauthorized(wpa_s, mac_addr);
+		wpas_notify_ap_sta_deauthorized(wpa_s, mac_addr, p2p_dev_addr);
 }
 
 
@@ -627,4 +629,22 @@ void wpas_notify_eap_status(struct wpa_supplicant *wpa_s, const char *status,
 			    const char *parameter)
 {
 	wpas_dbus_signal_eap_status(wpa_s, status, parameter);
+	wpa_msg_ctrl(wpa_s, MSG_INFO, WPA_EVENT_EAP_STATUS
+		     "status='%s' parameter='%s'",
+		     status, parameter);
+}
+
+
+void wpas_notify_network_bssid_set_changed(struct wpa_supplicant *wpa_s,
+					   struct wpa_ssid *ssid)
+{
+	if (wpa_s->current_ssid != ssid)
+		return;
+
+	wpa_dbg(wpa_s, MSG_DEBUG,
+		"Network bssid config changed for the current network - within-ESS roaming %s",
+		ssid->bssid_set ? "disabled" : "enabled");
+
+	wpa_drv_roaming(wpa_s, !ssid->bssid_set,
+			ssid->bssid_set ? ssid->bssid : NULL);
 }

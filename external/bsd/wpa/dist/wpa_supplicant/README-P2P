@@ -72,7 +72,8 @@ over the main control interface.
 Device Discovery
 
 p2p_find [timeout in seconds] [type=<social|progressive>] \
-	[dev_id=<addr>] [delay=<search delay in ms>]
+	[dev_id=<addr>] [dev_type=<device type>] \
+	[delay=<search delay in ms>]
 
 The default behavior is to run a single full scan in the beginning and
 then scan only social channels. type=social will scan only social
@@ -86,6 +87,10 @@ The optional dev_id option can be used to specify a single P2P peer to
 search for. The optional delay parameter can be used to request an extra
 delay to be used between search iterations (e.g., to free up radio
 resources for concurrent operations).
+
+The optional dev_type option can be used to specify a single device type
+(primary or secondary) to search for, e.g.,
+"p2p_find dev_type=1-0050F204-1".
 
 p2p_listen [timeout in seconds]
 
@@ -125,7 +130,7 @@ join-a-group style PD instead of GO Negotiation style PD.
 
 p2p_connect <peer device address> <pbc|pin|PIN#> [display|keypad]
 	[persistent|persistent=<network id>] [join|auth]
-	[go_intent=<0..15>] [freq=<in MHz>] [ht40] [provdisc]
+	[go_intent=<0..15>] [freq=<in MHz>] [ht40] [vht] [provdisc]
 
 Start P2P group formation with a discovered P2P peer. This includes
 optional group owner negotiation, group interface setup, provisioning,
@@ -166,7 +171,8 @@ used prior to starting GO Negotiation as a workaround with some deployed
 P2P implementations that require this to allow the user to accept the
 connection.
 
-p2p_group_add [persistent|persistent=<network id>] [freq=<freq in MHz>] [ht40]
+p2p_group_add [persistent|persistent=<network id>] [freq=<freq in MHz>]
+	[ht40] [vht]
 
 Set up a P2P group owner manually (i.e., without group owner
 negotiation with a specific peer). This is also known as autonomous
@@ -199,6 +205,14 @@ P2P group interface (if one was used) that is in the WPS provisioning
 step. If the WPS provisioning step has been completed, the group is not
 terminated.
 
+p2p_remove_client <peer's P2P Device Address|iface=<interface address>>
+
+This command can be used to remove the specified client from all groups
+(operating and persistent) from the local GO. Note that the peer device
+can rejoin the group if it is in possession of a valid key. See p2p_set
+per_sta_psk command below for more details on how the peer can be
+removed securely.
+
 Service Discovery
 
 p2p_serv_disc_req
@@ -216,14 +230,26 @@ discovery protocols and requests this to be sent to all discovered
 peers (note: this can result in long response frames). The pending
 requests are sent during device discovery (see p2p_find).
 
-Only a single pending wildcard query is supported, but there can be
-multiple pending peer device specific queries (each will be sent in
-sequence whenever the peer is found).
+There can be multiple pending peer device specific queries (each will be
+sent in sequence whenever the peer is found).
 
 This command returns an identifier for the pending query (e.g.,
 "1f77628") that can be used to cancel the request. Directed requests
 will be automatically removed when the specified peer has replied to
 it.
+
+Service Query TLV has following format:
+Length (2 octets, little endian) - length of following data
+Service Protocol Type (1 octet) - see the table below
+Service Transaction ID (1 octet) - nonzero identifier for the TLV
+Query Data (Length - 2 octets of data) - service protocol specific data
+
+Service Protocol Types:
+0 = All service protocols
+1 = Bonjour
+2 = UPnP
+3 = WS-Discovery
+4 = Wi-Fi Display
 
 For UPnP, an alternative command format can be used to specify a
 single query TLV (i.e., a service discovery for a specific UPnP
@@ -352,7 +378,8 @@ Remove all local services from internal SD query processing.
 Invitation
 
 p2p_invite [persistent=<network id>|group=<group ifname>] [peer=address]
-	[go_dev_addr=address] [freq=<freq in MHz>] [ht40]
+	[go_dev_addr=address] [freq=<freq in MHz>] [ht40] [vht]
+	[pref=<MHz>]
 
 Invite a peer to join a group (e.g., group=wlan1) or to reinvoke a
 persistent group (e.g., persistent=4). If the peer device is the GO of
@@ -361,7 +388,11 @@ used to specify which device to invite. go_dev_addr parameter can be
 used to override the GO device address for Invitation Request should
 it be not known for some reason (this should not be needed in most
 cases). When reinvoking a persistent group, the GO device can specify
-the frequency for the group with the freq parameter.
+the frequency for the group with the freq parameter. When reinvoking a
+persistent group, the P2P client device can use freq parameter to force
+a specific operating channel (or invitation failure if GO rejects that)
+or pref parameter to request a specific channel (while allowing GO to
+select to use another channel, if needed).
 
 Group Operations
 
@@ -391,9 +422,11 @@ p2p_presence_req [<duration> <interval>] [<duration> <interval>]
 Send a P2P Presence Request to the GO (this is only available when
 acting as a P2P client). If no duration/interval pairs are given, the
 request indicates that this client has no special needs for GO
-presence. the first parameter pair gives the preferred duration and
+presence. The first parameter pair gives the preferred duration and
 interval values in microseconds. If the second pair is included, that
-indicates which value would be acceptable.
+indicates which value would be acceptable. This command returns OK
+immediately and the response from the GO is indicated in a
+P2P-PRESENCE-RESPONSE event message.
 
 Parameters
 
@@ -438,6 +471,20 @@ p2p_set ssid_postfix <postfix>
 Set postfix string to be added to the automatically generated P2P SSID
 (DIRECT-<two random characters>). For example, postfix of "-testing"
 could result in the SSID becoming DIRECT-ab-testing.
+
+p2p_set per_sta_psk <0/1>
+
+Disabled(default)/enables use of per-client PSK in the P2P groups. This
+can be used to request GO to assign a unique PSK for each client during
+WPS provisioning. When enabled, this allow clients to be removed from
+the group securily with p2p_remove_client command since that client's
+PSK is removed at the same time to prevent it from connecting back using
+the old PSK. When per-client PSK is not used, the client can still be
+disconnected, but it will be able to re-join the group since the PSK it
+learned previously is still valid. It should be noted that the default
+passphrase on the GO that is normally used to allow legacy stations to
+connect through manual configuration does not change here, so if that is
+shared, devices with knowledge of that passphrase can still connect.
 
 set <field> <value>
 
@@ -506,6 +553,13 @@ accepted without separate authorization (e.g., user interaction).
 set country <two character country code>
 
 Set country code (this is included in some P2P messages).
+
+set p2p_search_delay <delay>
+
+Set p2p_search_delay which adds extra delay in milliseconds between
+concurrent search iterations to make p2p_find friendlier to concurrent
+operations by avoiding it from taking 100% of radio resources. The
+default value is 500 ms.
 
 Status
 
