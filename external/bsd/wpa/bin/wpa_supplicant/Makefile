@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2014/01/03 02:07:31 christos Exp $
+# $NetBSD: Makefile,v 1.4 2014/10/16 19:29:29 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -22,6 +22,7 @@ eap_register.c \
 eapol_supp_sm.c \
 eloop.c \
 events.c \
+ieee802_11_common.c \
 l2_packet_freebsd.c \
 main.c \
 md5.c \
