@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.23 2014/10/12 17:19:43 jmcneill Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.24 2014/10/16 00:04:35 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.23 2014/10/12 17:19:43 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.24 2014/10/16 00:04:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -398,9 +398,17 @@ awin_pll7_enable(void)
 	    AWIN_CCM_OFFSET + AWIN_PLL7_CFG_REG);
 
 	uint32_t ncfg = ocfg;
-	ncfg &= ~(AWIN_PLL7_MODE_SEL|AWIN_PLL7_FRAC_SET|AWIN_PLL7_FACTOR_M);
-	ncfg |= AWIN_PLL7_FRAC_SET;
-	ncfg |= AWIN_PLL_CFG_ENABLE;
+
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		ncfg &= ~AWIN_A31_PLL7_CFG_MODE_SEL;
+		ncfg |= AWIN_A31_PLL7_CFG_FRAC_CLK_OUT;
+		ncfg |= AWIN_PLL_CFG_ENABLE;
+	} else {
+		ncfg &= ~AWIN_PLL7_MODE_SEL;
+		ncfg |= AWIN_PLL7_FRAC_SET;
+		ncfg |= AWIN_PLL_CFG_ENABLE;
+	}
+
 	if (ncfg != ocfg) {
 		bus_space_write_4(bst, bsh,
 		    AWIN_CCM_OFFSET + AWIN_PLL7_CFG_REG, ncfg);
