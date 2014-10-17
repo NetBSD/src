@@ -25,7 +25,7 @@ ASAN_SRCS= \
 	asan_thread.cc \
 	asan_preinit.cc
 
-INTERCEPION_SRCS= \
+INTERCEPTION_SRCS= \
 	interception_linux.cc \
 	interception_type_test.cc
 
@@ -47,6 +47,6 @@ SANITIZER_SRCS= \
 
 LIB=	asan
 SRCS=	${ASAN_SRCS} ${INTERCEPTION_SRCS} ${SANITIZER_SRCS}
-CPPFLAGS+=-I${ASAN}/include -I${ASAN}
+CPPFLAGS+=-I${ASAN}/include -I${ASAN} -I${NETBSDSRCDIR}/lib/libexecinfo
 
 .include <bsd.lib.mk>
