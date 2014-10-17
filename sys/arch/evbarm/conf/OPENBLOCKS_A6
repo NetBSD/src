@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.23 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.24 2014/10/17 18:45:14 martin Exp $
 #
 #	OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -17,9 +17,8 @@ options 	EVBARM_BOARDTYPE=openblocks_a6
 
 # CPU options
 options 	CPU_SHEEVA
-#options 	MV_L2_CACHE_ENABLE
-#options 	MV_L2_CACHE_WRITE_THROUGH
-options 	MV_CACHE_RANGE_OPS
+#options 	SHEEVA_L2_CACHE
+#options 	SHEEVA_L2_CACHE_WT
 makeoptions	CPUFLAGS="-march=armv5te"
 
 # Marvell SoC options
