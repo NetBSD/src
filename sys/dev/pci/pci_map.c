@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.30 2012/10/20 06:03:38 matt Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.30.12.1 2014/10/17 07:14:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.30 2012/10/20 06:03:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.30.12.1 2014/10/17 07:14:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,24 +347,21 @@ pci_mapreg_submap(const struct pci_attach_args *pa, int reg, pcireg_t type,
 
 int
 pci_find_rom(const struct pci_attach_args *pa, bus_space_tag_t bst,
-    bus_space_handle_t bsh, int type, bus_space_handle_t *romh, bus_size_t *sz)
+    bus_space_handle_t bsh, bus_size_t sz, int type,
+    bus_space_handle_t *romh, bus_size_t *romsz)
 {
-	bus_size_t	romsz, offset = 0, imagesz;
+	bus_size_t	offset = 0, imagesz;
 	uint16_t	ptr;
 	int		done = 0;
-
-	if (pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM,
-	    PCI_MAPREG_TYPE_ROM, NULL, &romsz, NULL))
-		return 1;
 
 	/*
 	 * no upper bound check; i cannot imagine a 4GB ROM, but
 	 * it appears the spec would allow it!
 	 */
-	if (romsz < 1024)
+	if (sz < 1024)
 		return 1;
 
-	while (offset < romsz && !done){
+	while (offset < sz && !done){
 		struct pci_rom_header	hdr;
 		struct pci_rom		rom;
 
@@ -379,7 +376,7 @@ pci_find_rom(const struct pci_attach_args *pa, bus_space_tag_t bst,
 
 		ptr = offset + hdr.romh_data_ptr;
 		
-		if (ptr > romsz) {
+		if (ptr > sz) {
 			printf("pci_find_rom: rom data ptr out of range\n");
 			return 1;
 		}
@@ -415,7 +412,7 @@ pci_find_rom(const struct pci_attach_args *pa, bus_space_tag_t bst,
 		    (rom.rom_subclass == PCI_SUBCLASS(pa->pa_class)) &&
 		    (rom.rom_interface == PCI_INTERFACE(pa->pa_class)) &&
 		    (rom.rom_code_type == type)) {
-			*sz = imagesz;
+			*romsz = imagesz;
 			bus_space_subregion(bst, bsh, offset, imagesz, romh);
 			return 0;
 		}
