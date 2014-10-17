@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.345 2014/05/16 19:18:21 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.346 2014/10/17 18:14:42 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.345 2014/05/16 19:18:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.346 2014/10/17 18:14:42 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,6 +130,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.345 2014/05/16 19:18:21 matt Exp $");
 
 #ifdef DEBUG
 #include <machine/sigdebug.h>
+int sigdebug = 0x0;
+int sigpid = 0;
 #endif
 
 #include <machine/alpha.h>
