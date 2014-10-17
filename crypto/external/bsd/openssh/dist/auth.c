@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.8 2013/11/08 19:18:24 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.8.4.1 2014/10/17 16:12:36 martin Exp $	*/
 /* $OpenBSD: auth.c,v 1.103 2013/05/19 02:42:42 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.8 2013/11/08 19:18:24 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.8.4.1 2014/10/17 16:12:36 martin Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -101,7 +101,7 @@ allowed_user(struct passwd * pw)
 		return 0;
 
 #ifdef HAVE_LOGIN_CAP
-	hostname = get_canonical_hostname(1);
+	hostname = get_canonical_hostname(options.use_dns);
 	ipaddr = get_remote_ipaddr();
 
 	lc = login_getclass(pw->pw_class);
