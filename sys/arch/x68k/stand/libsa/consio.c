@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.10 2012/10/12 18:01:53 tsutsui Exp $	*/
+/*	$NetBSD: consio.c,v 1.11 2014/10/17 17:48:53 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -42,7 +42,7 @@ int
 consio_init(int device)
 {
 
-	if (device < 0) {	/* undetemined yet */
+	if (device < 0) {	/* undetermined yet */
 		if (KEYCTRL & 8)
 			device = ITE;
 		else {
