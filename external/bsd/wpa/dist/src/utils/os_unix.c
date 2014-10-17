@@ -570,7 +570,7 @@ int os_exec(const char *program, const char *arg, int wait_completion)
 
 	if (pid == 0) {
 		/* run the external command in the child process */
-		const int MAX_ARG = 30;
+#define MAX_ARG 30
 		char *_program, *_arg, *pos;
 		char *argv[MAX_ARG + 1];
 		int i;
