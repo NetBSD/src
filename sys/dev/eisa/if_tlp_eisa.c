@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.25 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.26 2014/10/17 17:09:44 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.25 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.26 2014/10/17 17:09:44 snj Exp $");
 
 #include "opt_inet.h"
 
@@ -251,7 +251,7 @@ tlp_eisa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mediasw = &tlp_21040_mediasw;
 
 	/*
-	 * Figure out which IRQ we want to use, and determine of it's
+	 * Figure out which IRQ we want to use, and determine if it's
 	 * edge- or level-triggered.
 	 */
 	val = bus_space_read_4(iot, ioh, DE425_CFG0);
