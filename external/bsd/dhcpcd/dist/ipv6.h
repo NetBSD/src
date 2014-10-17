@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6.h,v 1.2 2014/10/06 18:22:29 roy Exp $ */
+/* $NetBSD: ipv6.h,v 1.3 2014/10/17 23:42:24 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -161,9 +161,6 @@ struct ipv6_ctx {
 	const char *sfrom;
 
 	int nd_fd;
-#ifdef IPV6_POLLADDRFLAG
-	uint8_t polladdr_warned;
-#endif
 	struct ra_head *ra_routers;
 	struct rt6_head *routes;
 
@@ -193,9 +190,11 @@ void ipv6_handleifa(struct dhcpcd_ctx *ctx, int, struct if_head *,
     const char *, const struct in6_addr *, int);
 int ipv6_handleifa_addrs(int, struct ipv6_addrhead *,
     const struct in6_addr *, int);
-const struct ipv6_addr *ipv6_findaddr(const struct interface *,
+const struct ipv6_addr *ipv6_iffindaddr(const struct interface *,
     const struct in6_addr *);
-#define ipv6_linklocal(ifp) (ipv6_findaddr((ifp), NULL))
+struct ipv6_addr *ipv6_findaddr(struct dhcpcd_ctx *,
+    const struct in6_addr *, short);
+#define ipv6_linklocal(ifp) (ipv6_iffindaddr((ifp), NULL))
 int ipv6_addlinklocalcallback(struct interface *, void (*)(void *), void *);
 void ipv6_free_ll_callbacks(struct interface *);
 int ipv6_start(struct interface *);

@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if.c,v 1.2 2014/10/06 18:22:29 roy Exp $");
+ __RCSID("$NetBSD: if.c,v 1.3 2014/10/17 23:42:24 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -305,7 +305,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		sdl_type = 0;
 		/* Don't allow loopback unless explicit */
 		if (ifp->flags & IFF_LOOPBACK) {
-			if (argc == 0 && ctx->ifac == 0) {
+			if ((argc == 0 || argc == -1) && ctx->ifac == 0) {
 				if_free(ifp);
 				continue;
 			}
@@ -329,11 +329,22 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 			}
 #endif
 
+#ifdef __FreeBSD__
+			memcpy(&ifp->linkaddr, sdl, sdl->sdl_len);
+#endif
 			ifp->index = sdl->sdl_index;
 			sdl_type = sdl->sdl_type;
 			switch(sdl->sdl_type) {
 #ifdef IFT_BRIDGE
-			case IFT_BRIDGE: /* FALLTHROUGH */
+			case IFT_BRIDGE:
+				/* Don't allow bridge unless explicit */
+				if ((argc == 0 || argc == -1)
+				    && ctx->ifac == 0)
+				{
+					if_free(ifp);
+					continue;
+				}
+				/* FALLTHOUGH */
 #endif
 #ifdef IFT_L2VLAN
 			case IFT_L2VLAN: /* FALLTHOUGH */
@@ -379,7 +390,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		if (!(ifp->flags & IFF_POINTOPOINT) &&
 		    ifp->family != ARPHRD_ETHER)
 		{
-			if (argc == 0 && ctx->ifac == 0) {
+			if ((argc == 0 || argc == -1) && ctx->ifac == 0) {
 				if_free(ifp);
 				continue;
 			}

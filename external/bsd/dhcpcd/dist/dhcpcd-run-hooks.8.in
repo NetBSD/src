@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd-run-hooks.8.in,v 1.8 2014/10/06 18:22:29 roy Exp $
+.\"     $NetBSD: dhcpcd-run-hooks.8.in,v 1.9 2014/10/17 23:42:24 roy Exp $
 .\" Copyright (c) 2006-2014 Roy Marples
 .\" All rights reserved
 .\"
