@@ -1,4 +1,4 @@
-/* $NetBSD: if-options.h,v 1.2 2014/10/06 18:22:29 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.3 2014/10/17 23:42:24 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -125,6 +125,7 @@ struct if_ia {
 	uint8_t iaid_set;
 	struct in6_addr addr;
 	uint8_t prefix_len;
+	uint32_t sla_max;
 	size_t sla_len;
 	struct if_sla *sla;
 #endif

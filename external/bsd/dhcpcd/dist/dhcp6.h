@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp6.h,v 1.2 2014/10/06 18:22:29 roy Exp $ */
+/* $NetBSD: dhcp6.h,v 1.3 2014/10/17 23:42:24 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -233,7 +233,8 @@ struct dhcp6_state {
 #ifdef INET6
 void dhcp6_printoptions(const struct dhcpcd_ctx *,
     const struct dhcp_opt *, size_t);
-int dhcp6_addrexists(struct dhcpcd_ctx *, const struct ipv6_addr *);
+struct ipv6_addr *dhcp6_findaddr(struct dhcpcd_ctx *, const struct in6_addr *,
+    short);
 size_t dhcp6_find_delegates(struct interface *);
 int dhcp6_start(struct interface *, enum DH6S);
 void dhcp6_reboot(struct interface *);
@@ -246,7 +247,7 @@ int dhcp6_dadcompleted(const struct interface *);
 void dhcp6_drop(struct interface *, const char *);
 int dhcp6_dump(struct interface *);
 #else
-#define dhcp6_addrexists(a, b) (0)
+#define dhcp6_findaddr(a, b, c) (0)
 #define dhcp6_find_delegates(a)
 #define dhcp6_start(a, b) (0)
 #define dhcp6_reboot(a)
