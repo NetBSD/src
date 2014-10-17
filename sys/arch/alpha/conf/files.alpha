@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.187 2014/02/22 18:42:47 martin Exp $
+# $NetBSD: files.alpha,v 1.188 2014/10/17 18:31:07 uebayasi Exp $
 #
 # alpha-specific configuration info
 
@@ -240,7 +240,7 @@ file	arch/alpha/pci/dwlpx_bus_mem.c	dwlpx
 file	arch/alpha/pci/dwlpx_dma.c	dwlpx
 file	arch/alpha/pci/dwlpx_pci.c	dwlpx
 
-device	irongate: pcibus, agpbus, agp_amd, isadma_bounce
+device	irongate: pcibus, agpbus, isadma_bounce
 attach	irongate at mainbus
 file	arch/alpha/pci/irongate.c		irongate
 file	arch/alpha/pci/irongate_bus_io.c	irongate
