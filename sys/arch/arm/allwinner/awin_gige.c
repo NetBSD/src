@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.8 2014/10/04 15:25:15 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.9 2014/10/17 20:18:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,6 +92,9 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 	struct awin_gige_softc * const sc = device_private(self);
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
+	prop_dictionary_t cfg = device_properties(self);
+	uint32_t clkreg;
+	const char *phy_type;
 
 	sc->sc_core.sc_dev = self;
 
@@ -123,13 +126,21 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 	 */
 	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
 	    AWIN_AHB_GATING1_REG, AWIN_AHB_GATING1_GMAC, 0);
+
 	/*
-	 * We use RGMII phy mode, set up clock accordingly
+	 * PHY clock setup
 	 */
-	bus_space_write_4(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_GMAC_CLK_REG, 4); /* GPIT = RMII */
+	if (!prop_dictionary_get_cstring_nocopy(cfg, "phy-type", &phy_type))
+		phy_type = "rgmii";
+	if (strcmp(phy_type, "rgmii")) {
+		clkreg = AWIN_GMAC_CLK_PIT | AWIN_GMAC_CLK_TCS_INT_RGMII;
+	} else if (strcmp(phy_type, "mii")) {
+		clkreg = AWIN_GMAC_CLK_TCS_MII;
+	} else {
+		panic("unknown phy type '%s'", phy_type);
+	}
 	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_GMAC_CLK_REG, 2, 0); /* GTCS = internal transmit clock */
+	    AWIN_GMAC_CLK_REG, clkreg, AWIN_GMAC_CLK_PIT|AWIN_GMAC_CLK_TCS);
 
 	dwc_gmac_attach(&sc->sc_core, 2);
 }
