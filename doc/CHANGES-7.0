@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.55 2014/10/15 08:46:21 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.56 2014/10/17 07:15:34 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1649,3 +1649,12 @@ sys/dev/usb/usbdevs_data.h			(regen)
 	PR/49233: Ben Gergely: Add huawei e353 to u3g
 	(factor out some common code in the process)
 	[christos, ticket #142]
+
+sys/dev/pci/pci_map.c				1.31
+sys/dev/pci/pcivar.h				1.100
+sys/dev/pci/radeonfb.c				1.85
+sys/external/bsd/drm2/include/linux/pci.h	1.9
+
+	Generalize pci_find_rom and use it to locate x86 video ROM in drm2.
+	[riastradh, ticket #144]
+
