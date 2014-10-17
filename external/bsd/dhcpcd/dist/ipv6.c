@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6.c,v 1.2 2014/10/06 18:22:29 roy Exp $");
+ __RCSID("$NetBSD: ipv6.c,v 1.3 2014/10/17 23:42:24 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -151,16 +151,6 @@ ipv6_init(struct dhcpcd_ctx *dhcpcd_ctx)
 
 	ctx->nd_fd = -1;
 	ctx->dhcp_fd = -1;
-
-#ifdef IPV6_POLLADDRFLAG
-	if (!ctx->polladdr_warned) {
-		syslog(LOG_WARNING,
-		    "kernel does not report IPv6 address flag changes");
-		syslog(LOG_WARNING,
-		    "polling tentative address flags periodically instead");
-		ctx->polladdr_warned = 1;
-	}
-#endif
 
 	dhcpcd_ctx->ipv6 = ctx;
 	return ctx;
@@ -593,14 +583,55 @@ ipv6_checkaddrflags(void *arg)
 }
 #endif
 
+
+static void
+ipv6_deleteaddr(struct ipv6_addr *addr)
+{
+	struct ipv6_state *state;
+	struct ipv6_addr *ap;
+
+	syslog(LOG_INFO, "%s: deleting address %s",
+	    addr->iface->name, addr->saddr);
+	if (if_deladdress6(addr) == -1 &&
+	    errno != EADDRNOTAVAIL && errno != ENXIO && errno != ENODEV)
+		syslog(LOG_ERR, "if_deladdress6: :%m");
+
+	state = IPV6_STATE(addr->iface);
+	TAILQ_FOREACH(ap, &state->addrs, next) {
+		if (IN6_ARE_ADDR_EQUAL(&ap->addr, &addr->addr)) {
+			TAILQ_REMOVE(&state->addrs, ap, next);
+			free(ap);
+			break;
+		}
+	}
+}
+
 int
 ipv6_addaddr(struct ipv6_addr *ap)
 {
+	struct interface *ifp;
+	struct ipv6_state *state;
+	struct ipv6_addr *nap;
+
+	/* Ensure no other interface has this address */
+	TAILQ_FOREACH(ifp, ap->iface->ctx->ifaces, next) {
+		if (ifp == ap->iface || strcmp(ifp->name, ap->iface->name) == 0)
+			continue;
+		state = IPV6_STATE(ifp);
+		if (state == NULL)
+			continue;
+		TAILQ_FOREACH(nap, &state->addrs, next) {
+			if (IN6_ARE_ADDR_EQUAL(&nap->addr, &ap->addr)) {
+				ipv6_deleteaddr(nap);
+				break;
+			}
+		}
+	}
 
 	syslog(ap->flags & IPV6_AF_NEW ? LOG_INFO : LOG_DEBUG,
 	    "%s: adding address %s", ap->iface->name, ap->saddr);
 	if (!(ap->flags & IPV6_AF_DADCOMPLETED) &&
-	    ipv6_findaddr(ap->iface, &ap->addr))
+	    ipv6_iffindaddr(ap->iface, &ap->addr))
 		ap->flags |= IPV6_AF_DADCOMPLETED;
 	if (if_addaddress6(ap) == -1) {
 		syslog(LOG_ERR, "if_addaddress6: %m");
@@ -646,23 +677,36 @@ ipv6_addaddr(struct ipv6_addr *ap)
 	return 0;
 }
 
+struct ipv6_addr *
+ipv6_findaddr(struct dhcpcd_ctx *ctx, const struct in6_addr *addr, short flags)
+{
+	struct ipv6_addr *dap, *nap;
+
+	dap = dhcp6_findaddr(ctx, addr, flags);
+	nap = ipv6nd_findaddr(ctx, addr, flags);
+	if (!dap && !nap)
+		return NULL;
+	if (dap && !nap)
+		return dap;
+	if (nap && !dap)
+		return nap;
+	if (nap->iface->metric < dap->iface->metric)
+		return nap;
+	return dap;
+}
+
 ssize_t
 ipv6_addaddrs(struct ipv6_addrhead *addrs)
 {
-	struct ipv6_addr *ap, *apn;
+	struct ipv6_addr *ap, *apn, *apf;
 	ssize_t i;
 
 	i = 0;
 	TAILQ_FOREACH_SAFE(ap, addrs, next, apn) {
 		if (ap->prefix_vltime == 0) {
 			if (ap->flags & IPV6_AF_ADDED) {
-				syslog(LOG_INFO, "%s: deleting address %s",
-				    ap->iface->name, ap->saddr);
+				ipv6_deleteaddr(ap);
 				i++;
-				if (!IN6_IS_ADDR_UNSPECIFIED(&ap->addr) &&
-				    if_deladdress6(ap) == -1 &&
-				    errno != EADDRNOTAVAIL && errno != ENXIO)
-					syslog(LOG_ERR, "if_deladdress6: %m");
 			}
 			eloop_q_timeout_delete(ap->iface->ctx->eloop,
 			    0, NULL, ap);
@@ -672,7 +716,34 @@ ipv6_addaddrs(struct ipv6_addrhead *addrs)
 				TAILQ_REMOVE(addrs, ap, next);
 				free(ap);
 			}
-		} else if (!IN6_IS_ADDR_UNSPECIFIED(&ap->addr)) {
+		} else if (!(ap->flags & IPV6_AF_STALE) &&
+		    !IN6_IS_ADDR_UNSPECIFIED(&ap->addr))
+		{
+			apf = ipv6_findaddr(ap->iface->ctx,
+			    &ap->addr, IPV6_AF_ADDED);
+			if (apf && apf->iface != ap->iface &&
+			    strcmp(apf->iface->name, ap->iface->name))
+			{
+				if (apf->iface->metric <= ap->iface->metric) {
+					syslog(LOG_INFO,
+					    "%s: preferring %s on %s",
+					    ap->iface->name,
+					    ap->saddr,
+					    apf->iface->name);
+					continue;
+				}
+				syslog(LOG_INFO,
+				    "%s: preferring %s on %s",
+				    apf->iface->name,
+				    ap->saddr,
+				    ap->iface->name);
+				if (if_deladdress6(apf) == -1 &&
+				    errno != EADDRNOTAVAIL && errno != ENXIO)
+					syslog(LOG_ERR, "if_deladdress6: %m");
+				apf->flags &=
+				    ~(IPV6_AF_ADDED | IPV6_AF_DADCOMPLETED);
+			} else if (apf)
+				apf->flags &= ~IPV6_AF_ADDED;
 			if (ap->flags & IPV6_AF_NEW)
 				i++;
 			ipv6_addaddr(ap);
@@ -682,33 +753,31 @@ ipv6_addaddrs(struct ipv6_addrhead *addrs)
 	return i;
 }
 
-
 void
 ipv6_freedrop_addrs(struct ipv6_addrhead *addrs, int drop,
     const struct interface *ifd)
 {
-	struct ipv6_addr *ap, *apn;
+	struct ipv6_addr *ap, *apn, *apf;
 
 	TAILQ_FOREACH_SAFE(ap, addrs, next, apn) {
 		if (ifd && ap->delegating_iface != ifd)
 			continue;
 		TAILQ_REMOVE(addrs, ap, next);
 		eloop_q_timeout_delete(ap->iface->ctx->eloop, 0, NULL, ap);
-		/* Only drop the address if no other RAs have assigned it.
-		 * This is safe because the RA is removed from the list
-		 * before we are called. */
 		if (drop && ap->flags & IPV6_AF_ADDED &&
-		    !ipv6nd_addrexists(ap->iface->ctx, ap) &&
-		    !dhcp6_addrexists(ap->iface->ctx, ap) &&
 		    (ap->iface->options->options &
 		    (DHCPCD_EXITING | DHCPCD_PERSISTENT)) !=
 		    (DHCPCD_EXITING | DHCPCD_PERSISTENT))
 		{
-			syslog(LOG_INFO, "%s: deleting address %s",
-			    ap->iface->name, ap->saddr);
-			if (if_deladdress6(ap) == -1 &&
-			    errno != EADDRNOTAVAIL && errno != ENXIO)
-				syslog(LOG_ERR, "if_deladdress6: :%m");
+			/* Find the same address somewhere else */
+			apf = ipv6_findaddr(ap->iface->ctx, &ap->addr, 0);
+			if (apf == NULL ||
+			    (apf->iface != ap->iface &&
+			    strcmp(apf->iface->name, ap->iface->name)))
+				ipv6_deleteaddr(ap);
+			if (!(ap->iface->options->options &
+			    DHCPCD_EXITING) && apf)
+				ipv6_addaddr(apf);
 		}
 		free(ap);
 	}
@@ -787,6 +856,8 @@ ipv6_handleifa(struct dhcpcd_ctx *ctx,
 				ap = calloc(1, sizeof(*ap));
 				ap->iface = ifp;
 				ap->addr = *addr;
+				inet_ntop(AF_INET6, &addr->s6_addr,
+				    ap->saddr, sizeof(ap->saddr));
 				TAILQ_INSERT_TAIL(&state->addrs,
 				    ap, next);
 			}
@@ -825,7 +896,7 @@ ipv6_handleifa(struct dhcpcd_ctx *ctx,
 }
 
 const struct ipv6_addr *
-ipv6_findaddr(const struct interface *ifp, const struct in6_addr *addr)
+ipv6_iffindaddr(const struct interface *ifp, const struct in6_addr *addr)
 {
 	const struct ipv6_state *state;
 	const struct ipv6_addr *ap;
@@ -1069,10 +1140,11 @@ ipv6_handleifa_addrs(int cmd,
 		}
 		switch (cmd) {
 		case RTM_DELADDR:
-			syslog(LOG_INFO, "%s: deleted address %s",
-			    ap->iface->name, ap->saddr);
-			TAILQ_REMOVE(addrs, ap, next);
-			free(ap);
+			if (ap->flags & IPV6_AF_ADDED) {
+				syslog(LOG_INFO, "%s: deleted address %s",
+				    ap->iface->name, ap->saddr);
+				ap->flags &= ~IPV6_AF_ADDED;
+			}
 			break;
 		case RTM_NEWADDR:
 			/* Safety - ignore tentative announcements */
@@ -1143,6 +1215,9 @@ int
 ipv6_routedeleted(struct dhcpcd_ctx *ctx, const struct rt6 *rt)
 {
 	struct rt6 *f;
+
+	if (ctx->ipv6 == NULL)
+		return 0;
 
 	f = find_route6(ctx->ipv6->routes, rt);
 	if (f == NULL)

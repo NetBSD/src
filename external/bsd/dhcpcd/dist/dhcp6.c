@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.2 2014/10/06 18:22:29 roy Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.3 2014/10/17 23:42:24 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -356,14 +356,48 @@ dhcp6_findselfsla(struct interface *ifp, const uint8_t *iaid)
 	return NULL;
 }
 
+
+#ifndef ffs32
+static int
+ffs32(uint32_t n)
+{
+	int v;
+
+	if (!n)
+		return 0;
+
+	v = 1;
+	if ((n & 0x0000FFFFU) == 0) {
+		n >>= 16;
+		v += 16;
+	}
+	if ((n & 0x000000FFU) == 0) {
+		n >>= 8;
+		v += 8;
+	}
+	if ((n & 0x0000000FU) == 0) {
+		n >>= 4;
+		v += 4;
+	}
+	if ((n & 0x00000003U) == 0) {
+		n >>= 2;
+		v += 2;
+	}
+	if ((n & 0x00000001U) == 0)
+		v += 1;
+
+	return v;
+}
+#endif
+
 static int
 dhcp6_delegateaddr(struct in6_addr *addr, struct interface *ifp,
-    const struct ipv6_addr *prefix, const struct if_sla *sla)
+    const struct ipv6_addr *prefix, const struct if_sla *sla, struct if_ia *ia)
 {
 	struct dhcp6_state *state;
 	struct if_sla asla;
-	char iabuf[INET6_ADDRSTRLEN];
-	const char *ia;
+	char sabuf[INET6_ADDRSTRLEN];
+	const char *sa;
 
 	state = D6_STATE(ifp);
 	if (state == NULL) {
@@ -380,18 +414,34 @@ dhcp6_delegateaddr(struct in6_addr *addr, struct interface *ifp,
 	}
 
 	if (sla == NULL || sla->sla_set == 0) {
-		struct interface *ifi;
-		unsigned int idx;
+		asla.sla = ifp->index;
+		asla.prefix_len = 0;
+		sla = &asla;
+
+		if (ia->sla_max == 0) {
+		}
+	} else if (sla->prefix_len == 0) {
+		asla.sla = sla->sla;
+		asla.prefix_len = 0;
+		sla = &asla;
+	}
+	if (sla->prefix_len == 0) {
+		uint32_t sla_max;
 		int bits;
 
-		asla.sla = ifp->index;
-		/* Work out our largest index delegating to. */
-		idx = 0;
-		TAILQ_FOREACH(ifi, ifp->ctx->ifaces, next) {
-			if (ifi != ifp && ifi->index > idx)
-				idx = ifi->index;
-		}
-		bits = ffs((int)idx);
+		if (ia->sla_max == 0) {
+			const struct interface *ifi;
+
+			sla_max = 0;
+			TAILQ_FOREACH(ifi, ifp->ctx->ifaces, next) {
+				if (ifi != ifp && ifi->index > sla_max)
+					sla_max = ifi->index;
+			}
+		} else
+			sla_max = ia->sla_max;
+
+		bits = ffs32(sla_max);
+
 		if (prefix->prefix_len + bits > UINT8_MAX)
 			asla.prefix_len = UINT8_MAX;
 		else {
@@ -405,16 +455,22 @@ dhcp6_delegateaddr(struct in6_addr *addr, struct interface *ifp,
 				asla.prefix_len = ROUNDUP8(asla.prefix_len);
 
 		}
-		sla = &asla;
+
+#define BIT(n) (1l << (n))
+#define BIT_MASK(len) (BIT(len) - 1)
+		if (ia->sla_max == 0)
+			/* Work out the real sla_max from our bits used */
+			ia->sla_max = (uint32_t)BIT_MASK(asla.prefix_len -
+			    prefix->prefix_len);
 	}
 
 	if (ipv6_userprefix(&prefix->prefix, prefix->prefix_len,
 		sla->sla, addr, sla->prefix_len) == -1)
 	{
-		ia = inet_ntop(AF_INET6, &prefix->prefix,
-		    iabuf, sizeof(iabuf));
+		sa = inet_ntop(AF_INET6, &prefix->prefix,
+		    sabuf, sizeof(sabuf));
 		syslog(LOG_ERR, "%s: invalid prefix %s/%d + %d/%d: %m",
-			ifp->name, ia, prefix->prefix_len,
+			ifp->name, sa, prefix->prefix_len,
 			sla->sla, sla->prefix_len);
 		return -1;
 	}
@@ -422,10 +478,10 @@ dhcp6_delegateaddr(struct in6_addr *addr, struct interface *ifp,
 	if (prefix->prefix_exclude_len &&
 	    IN6_ARE_ADDR_EQUAL(addr, &prefix->prefix_exclude))
 	{
-		ia = inet_ntop(AF_INET6, &prefix->prefix_exclude,
-		    iabuf, sizeof(iabuf));
+		sa = inet_ntop(AF_INET6, &prefix->prefix_exclude,
+		    sabuf, sizeof(sabuf));
 		syslog(LOG_ERR, "%s: cannot delegate excluded prefix %s/%d",
-		    ifp->name, ia, prefix->prefix_exclude_len);
+		    ifp->name, sa, prefix->prefix_exclude_len);
 		return -1;
 	}
 
@@ -1211,10 +1267,12 @@ dhcp6_dadcallback(void *arg)
 		if (state->state == DH6S_BOUND ||
 		    state->state == DH6S_DELEGATED)
 		{
+			struct ipv6_addr *ap2;
+
 			valid = (ap->delegating_iface == NULL);
-			TAILQ_FOREACH(ap, &state->addrs, next) {
-				if (ap->flags & IPV6_AF_ADDED &&
-				    !(ap->flags & IPV6_AF_DADCOMPLETED))
+			TAILQ_FOREACH(ap2, &state->addrs, next) {
+				if (ap2->flags & IPV6_AF_ADDED &&
+				    !(ap2->flags & IPV6_AF_DADCOMPLETED))
 				{
 					wascompleted = 1;
 					break;
@@ -1223,7 +1281,9 @@ dhcp6_dadcallback(void *arg)
 			if (!wascompleted) {
 				syslog(LOG_DEBUG, "%s: DHCPv6 DAD completed",
 				    ifp->name);
-				script_runreason(ifp, state->reason);
+				script_runreason(ifp,
+				    ap->delegating_iface ?
+				    "DELEGATED6" : state->reason);
 				if (valid)
 					dhcpcd_daemonise(ifp->ctx);
 			}
@@ -1598,12 +1658,13 @@ dhcp6_checkstatusok(const struct interface *ifp,
 }
 
 static struct ipv6_addr *
-dhcp6_findaddr(struct interface *ifp, const struct in6_addr *addr)
+dhcp6_iffindaddr(struct interface *ifp, const struct in6_addr *addr,
+    short flags)
 {
-	const struct dhcp6_state *state;
+	struct dhcp6_state *state;
 	struct ipv6_addr *ap;
 
-	state = D6_CSTATE(ifp);
+	state = D6_STATE(ifp);
 	if (state) {
 		TAILQ_FOREACH(ap, &state->addrs, next) {
 			if (addr == NULL) {
@@ -1611,23 +1672,28 @@ dhcp6_findaddr(struct interface *ifp, const struct in6_addr *addr)
 				    (IPV6_AF_ADDED | IPV6_AF_DADCOMPLETED)) ==
 				    (IPV6_AF_ADDED | IPV6_AF_DADCOMPLETED))
 					return ap;
-			} else if (IN6_ARE_ADDR_EQUAL(&ap->addr, addr))
+			} else if (ap->prefix_vltime &&
+			    IN6_ARE_ADDR_EQUAL(&ap->addr, addr) &&
+			    (!flags || ap->flags & flags))
 				return ap;
 		}
 	}
 	return NULL;
 }
 
-int
-dhcp6_addrexists(struct dhcpcd_ctx *ctx, const struct ipv6_addr *addr)
+struct ipv6_addr *
+dhcp6_findaddr(struct dhcpcd_ctx *ctx, const struct in6_addr *addr,
+    short flags)
 {
 	struct interface *ifp;
+	struct ipv6_addr *ap;
 
 	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-		if (dhcp6_findaddr(ifp, addr == NULL ? NULL : &addr->addr))
-			return 1;
+		ap = dhcp6_iffindaddr(ifp, addr, flags);
+		if (ap)
+			return ap;
 	}
-	return 0;
+	return NULL;
 }
 
 static int
@@ -1660,7 +1726,7 @@ dhcp6_findna(struct interface *ifp, uint16_t ot, const uint8_t *iaid,
 			continue;
 		}
 		iap = (const struct dhcp6_ia_addr *)D6_COPTION_DATA(o);
-		a = dhcp6_findaddr(ifp, &iap->addr);
+		a = dhcp6_iffindaddr(ifp, &iap->addr, 0);
 		if (a == NULL) {
 			a = calloc(1, sizeof(*a));
 			if (a == NULL) {
@@ -2171,13 +2237,13 @@ dhcp6_startinit(struct interface *ifp)
 
 static struct ipv6_addr *
 dhcp6_ifdelegateaddr(struct interface *ifp, struct ipv6_addr *prefix,
-    const struct if_sla *sla, struct interface *ifs)
+    const struct if_sla *sla, struct if_ia *ia, struct interface *ifs)
 {
 	struct dhcp6_state *state;
 	struct in6_addr addr;
 	struct ipv6_addr *a, *ap, *apn;
-	char iabuf[INET6_ADDRSTRLEN];
-	const char *ia;
+	char sabuf[INET6_ADDRSTRLEN];
+	const char *sa;
 	int pfxlen;
 
 	/* RFC6603 Section 4.2 */
@@ -2193,7 +2259,8 @@ dhcp6_ifdelegateaddr(struct interface *ifp, struct ipv6_addr *prefix,
 		}
 		pfxlen = prefix->prefix_exclude_len;
 		memcpy(&addr, &prefix->prefix_exclude, sizeof(addr));
-	} else if ((pfxlen = dhcp6_delegateaddr(&addr, ifp, prefix, sla)) == -1)
+	} else if ((pfxlen = dhcp6_delegateaddr(&addr, ifp, prefix,
+	    sla, ia)) == -1)
 		return NULL;
 
 
@@ -2229,42 +2296,44 @@ dhcp6_ifdelegateaddr(struct interface *ifp, struct ipv6_addr *prefix,
 		}
 	}
 
-	ia = inet_ntop(AF_INET6, &a->addr, iabuf, sizeof(iabuf));
-	snprintf(a->saddr, sizeof(a->saddr), "%s/%d", ia, a->prefix_len);
+	sa = inet_ntop(AF_INET6, &a->addr, sabuf, sizeof(sabuf));
+	snprintf(a->saddr, sizeof(a->saddr), "%s/%d", sa, a->prefix_len);
 	TAILQ_INSERT_TAIL(&state->addrs, a, next);
 	return a;
 }
 
 static void
-dhcp6_script_try_run(struct interface *ifp)
+dhcp6_script_try_run(struct interface *ifp, int delegated)
 {
 	struct dhcp6_state *state;
 	struct ipv6_addr *ap;
-	int completed, valid;
+	int completed;
 
 	state = D6_STATE(ifp);
 	if (!TAILQ_FIRST(&state->addrs))
 		return;
 
-	valid = 0;
 	completed = 1;
 	/* If all addresses have completed DAD run the script */
 	TAILQ_FOREACH(ap, &state->addrs, next) {
+		if (!(ap->flags & IPV6_AF_ADDED))
+			continue;
 		if (ap->flags & IPV6_AF_ONLINK) {
 			if (!(ap->flags & IPV6_AF_DADCOMPLETED) &&
-			    ipv6_findaddr(ap->iface, &ap->addr))
+			    ipv6_iffindaddr(ap->iface, &ap->addr))
 				ap->flags |= IPV6_AF_DADCOMPLETED;
-			if ((ap->flags & IPV6_AF_DADCOMPLETED) == 0) {
+			if ((ap->flags & IPV6_AF_DADCOMPLETED) == 0 &&
+			    ((delegated && ap->delegating_iface) ||
+			    (!delegated && !ap->delegating_iface)))
+			{
 				completed = 0;
 				break;
 			}
 		}
-		if (ap->delegating_iface == NULL)
-			valid = 1;
 	}
 	if (completed) {
-		script_runreason(ifp, state->reason);
-		if (valid)
+		script_runreason(ifp, delegated ? "DELEGATED6" : state->reason);
+		if (!delegated)
 			dhcpcd_daemonise(ifp->ctx);
 	} else
 		syslog(LOG_DEBUG,
@@ -2331,7 +2400,7 @@ dhcp6_delegate_prefix(struct interface *ifp)
 				if (ia->sla_len == 0) {
 					/* no SLA configured, so lets
 					 * automate it */
-					if (ifd->carrier == LINK_DOWN) {
+					if (ifd->carrier != LINK_UP) {
 						syslog(LOG_DEBUG,
 						    "%s: has no carrier, cannot"
 						    " delegate addresses",
@@ -2340,7 +2409,7 @@ dhcp6_delegate_prefix(struct interface *ifp)
 						break;
 					}
 					if (dhcp6_ifdelegateaddr(ifd, ap,
-					    NULL, ifp))
+					    NULL, ia, ifp))
 						k++;
 				}
 				for (j = 0; j < ia->sla_len; j++) {
@@ -2350,7 +2419,7 @@ dhcp6_delegate_prefix(struct interface *ifp)
 						    IPV6_AF_DELEGATEDZERO;
 					if (strcmp(ifd->name, sla->ifname))
 						continue;
-					if (ifd->carrier == LINK_DOWN) {
+					if (ifd->carrier != LINK_UP) {
 						syslog(LOG_DEBUG,
 						    "%s: has no carrier, cannot"
 						    " delegate addresses",
@@ -2359,7 +2428,7 @@ dhcp6_delegate_prefix(struct interface *ifp)
 						break;
 					}
 					if (dhcp6_ifdelegateaddr(ifd, ap,
-					    sla, ifp))
+					    sla, ia, ifp))
 						k++;
 				}
 				if (carrier_warned ||abrt)
@@ -2371,7 +2440,7 @@ dhcp6_delegate_prefix(struct interface *ifp)
 		if (k && !carrier_warned) {
 			ifd_state = D6_STATE(ifd);
 			ipv6_addaddrs(&ifd_state->addrs);
-			dhcp6_script_try_run(ifd);
+			dhcp6_script_try_run(ifd, 1);
 		}
 	}
 }
@@ -2423,7 +2492,7 @@ dhcp6_find_delegates(struct interface *ifp)
 						return 1;
 					}
 					if (dhcp6_ifdelegateaddr(ifp, ap,
-					    sla, ifd))
+					    sla, ia, ifd))
 					    k++;
 				}
 			}
@@ -2436,7 +2505,7 @@ dhcp6_find_delegates(struct interface *ifp)
 		state->state = DH6S_DELEGATED;
 		ipv6_addaddrs(&state->addrs);
 		ipv6_buildroutes(ifp->ctx);
-		dhcp6_script_try_run(ifp);
+		dhcp6_script_try_run(ifp, 1);
 	}
 	return k;
 }
@@ -2907,7 +2976,7 @@ recv:
 			    "%s: will expire", ifp->name);
 		ipv6_buildroutes(ifp->ctx);
 		dhcp6_writelease(ifp);
-		dhcp6_script_try_run(ifp);
+		dhcp6_script_try_run(ifp, 0);
 	}
 
 	if (ifp->ctx->options & DHCPCD_TEST ||
@@ -3081,18 +3150,23 @@ dhcp6_start(struct interface *ifp, enum DH6S init_state)
 
 	state = D6_STATE(ifp);
 	if (state) {
-		if (state->state == DH6S_DELEGATED) {
-			dhcp6_find_delegates(ifp);
-			return 0;
-		}
 		if (state->state == DH6S_INFORMED &&
 		    init_state == DH6S_INFORM)
 		{
 			dhcp6_startinform(ifp);
 			return 0;
 		}
+		if (init_state == DH6S_INIT &&
+		    ifp->options->options & DHCPCD_DHCP6 &&
+		    (state->state == DH6S_INFORM ||
+		    state->state == DH6S_INFORMED ||
+		    state->state == DH6S_DELEGATED))
+		{
+			/* Change from stateless to stateful */
+			goto gogogo;
+		}
 		/* We're already running DHCP6 */
-		/* XXX: What if the managed flag changes? */
+		/* XXX: What if the managed flag vanishes from all RA? */
 		return 0;
 	}
 
@@ -3109,16 +3183,13 @@ dhcp6_start(struct interface *ifp, enum DH6S init_state)
 
 	state->sol_max_rt = SOL_MAX_RT;
 	state->inf_max_rt = INF_MAX_RT;
-
 	TAILQ_INIT(&state->addrs);
-	if (dhcp6_find_delegates(ifp))
-		return 0;
 
+gogogo:
 	state->state = init_state;
 	snprintf(state->leasefile, sizeof(state->leasefile),
 	    LEASEFILE6, ifp->name,
 	    ifp->options->options & DHCPCD_PFXDLGONLY ? ".pd" : "");
-
 	if (ipv6_linklocal(ifp) == NULL) {
 		syslog(LOG_DEBUG,
 		    "%s: delaying DHCPv6 soliciation for LL address",
@@ -3188,6 +3259,8 @@ dhcp6_freedrop(struct interface *ifp, int drop, const char *reason)
 
 	ifpx = dhcp6_findpfxdlgif(ifp);
 	if (ifpx) {
+		if (options & DHCPCD_EXITING)
+			ifpx->options->options |= DHCPCD_EXITING;
 		dhcp6_freedrop(ifpx, dropdele ? 1 : drop, reason);
 		TAILQ_REMOVE(ifp->ctx->ifaces, ifpx, next);
 		if_free(ifpx);
@@ -3203,7 +3276,7 @@ dhcp6_freedrop(struct interface *ifp, int drop, const char *reason)
 	if (state) {
 		dhcp_auth_reset(&state->auth);
 		if (options & DHCPCD_RELEASE) {
-			if (ifp->carrier != LINK_DOWN)
+			if (ifp->carrier == LINK_UP)
 				dhcp6_startrelease(ifp);
 			unlink(state->leasefile);
 		}
