@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd.h,v 1.1.1.20 2014/09/16 22:23:21 roy Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.1.1.21 2014/10/17 23:40:32 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -54,6 +54,10 @@
 #define IF_DATA_DHCP6	4
 #define IF_DATA_MAX	5
 
+/* If the interface does not support carrier status (ie PPP),
+ * dhcpcd can poll it for the relevant flags periodically */
+#define IF_POLL_UP	100	/* milliseconds */
+
 struct interface {
 	struct dhcpcd_ctx *ctx;
 	TAILQ_ENTRY(interface) next;
@@ -61,6 +65,9 @@ struct interface {
 	unsigned int index;
 	unsigned int flags;
 	sa_family_t family;
+#ifdef __FreeBSD__
+	struct sockaddr_storage linkaddr;
+#endif
 	unsigned char hwaddr[HWADDR_LEN];
 	uint8_t hwlen;
 	unsigned int metric;
