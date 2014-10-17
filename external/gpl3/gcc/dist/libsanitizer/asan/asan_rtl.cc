@@ -133,8 +133,10 @@ void InitializeFlags(Flags *f, const char *env) {
   f->quarantine_size = (ASAN_LOW_MEMORY) ? 1UL << 26 : 1UL << 28;
   f->symbolize = false;
   f->verbosity = 0;
+f->verbosity = 100;
   f->redzone = ASAN_ALLOCATOR_VERSION == 2 ? 16 : (ASAN_LOW_MEMORY) ? 64 : 128;
   f->debug = false;
+f->debug = true;
   f->report_globals = 1;
   f->check_initialization_order = true;
   f->malloc_context_size = kDeafultMallocContextSize;
@@ -152,6 +154,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->unmap_shadow_on_exit = false;
   f->abort_on_error = false;
   f->print_stats = false;
+f->print_stats = true;
   f->print_legend = true;
   f->atexit = false;
   f->disable_core = (SANITIZER_WORDSIZE == 64);
