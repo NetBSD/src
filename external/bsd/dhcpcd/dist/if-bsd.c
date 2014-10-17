@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.11 2014/10/06 18:22:29 roy Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.12 2014/10/17 23:42:24 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -144,6 +144,19 @@ if_openlinksocket(void)
 	        return -1;
 	}
 	return s;
+#endif
+}
+
+static void
+if_linkaddr(struct sockaddr_dl *sdl, const struct interface *ifp)
+{
+
+#ifdef __FreeBSD__
+	memcpy(sdl, &ifp->linkaddr, sizeof(*sdl));
+	sdl->sdl_nlen = sdl->sdl_alen = sdl->sdl_slen = 0;
+#else
+	sdl->sdl_len = sizeof(*sdl);
+	link_addr(ifp->name, sdl);
 #endif
 }
 
@@ -494,6 +507,10 @@ if_route(const struct rt *rt, int action)
 	} else
 		rtm.hdr.rtm_type = RTM_DELETE;
 	rtm.hdr.rtm_flags = RTF_UP;
+#ifdef RTF_PINNED
+	if (rtm.hdr.rtm_type != RTM_ADD)
+		rtm.hdr.rtm_flags |= RTF_PINNED;
+#endif
 #ifdef SIOCGIFPRIORITY
 	rtm.hdr.rtm_priority = rt->metric;
 #endif
@@ -523,10 +540,7 @@ if_route(const struct rt *rt, int action)
 		    rt->gate.s_addr != htonl(INADDR_LOOPBACK)) ||
 		    !(rtm.hdr.rtm_flags & RTF_STATIC))
 		{
-			/* Make us a link layer socket for the host gateway */
-			memset(&su, 0, sizeof(su));
-			su.sdl.sdl_len = sizeof(struct sockaddr_dl);
-			link_addr(rt->iface->name, &su.sdl);
+			if_linkaddr(&su.sdl, rt->iface);
 			ADDSU;
 		} else
 			ADDADDR(&rt->gate);
@@ -536,10 +550,7 @@ if_route(const struct rt *rt, int action)
 		ADDADDR(&rt->net);
 
 	if (rtm.hdr.rtm_addrs & RTA_IFP) {
-		/* Make us a link layer socket for the host gateway */
-		memset(&su, 0, sizeof(su));
-		su.sdl.sdl_len = sizeof(struct sockaddr_dl);
-		link_addr(rt->iface->name, &su.sdl);
+		if_linkaddr(&su.sdl, rt->iface);
 		ADDSU;
 	}
 
@@ -671,6 +682,10 @@ if_route6(const struct rt6 *rt, int action)
 	else
 		rtm.hdr.rtm_type = RTM_DELETE;
 	rtm.hdr.rtm_flags = RTF_UP | (int)rt->flags;
+#ifdef RTF_PINNED
+	if (rtm.hdr.rtm_type != RTM_ADD)
+		rtm.hdr.rtm_flags |= RTF_PINNED;
+#endif
 	rtm.hdr.rtm_addrs = RTA_DST | RTA_NETMASK;
 #ifdef SIOCGIFPRIORITY
 	rtm.hdr.rtm_priority = rt->metric;
@@ -693,10 +708,8 @@ if_route6(const struct rt6 *rt, int action)
 	lla = NULL;
 	if (rtm.hdr.rtm_addrs & RTA_GATEWAY) {
 		if (IN6_IS_ADDR_UNSPECIFIED(&rt->gate)) {
-			lla = ipv6_linklocal(rt->iface);
-			if (lla == NULL) /* unlikely */
-				return -1;
-			ADDADDRS(&lla->addr, rt->iface->index);
+			if_linkaddr(&su.sdl, rt->iface);
+			ADDSU;
 		} else {
 			ADDADDRS(&rt->gate, rt->iface->index);
 		}
@@ -706,10 +719,7 @@ if_route6(const struct rt6 *rt, int action)
 		ADDADDR(&rt->net);
 
 	if (rtm.hdr.rtm_addrs & RTA_IFP) {
-		/* Make us a link layer socket for the host gateway */
-		memset(&su, 0, sizeof(su));
-		su.sdl.sdl_len = sizeof(struct sockaddr_dl);
-		link_addr(rt->iface->name, &su.sdl);
+		if_linkaddr(&su.sdl, rt->iface);
 		ADDSU;
 	}
 
@@ -1043,11 +1053,17 @@ if_nd6reachable(const char *ifname, struct in6_addr *addr)
 	memset(&nbi, 0, sizeof(nbi));
 	strlcpy(nbi.ifname, ifname, sizeof(nbi.ifname));
 	nbi.addr = *addr;
-	if (ioctl(s, SIOCGNBRINFO_IN6, &nbi) == -1)
+	if (ioctl(s, SIOCGNBRINFO_IN6, &nbi) == -1) {
+#ifdef __FreeBSD__
+		/* FreeBSD doesn't support reachable routers? */
+		if (errno == EINVAL)
+			errno = ENOTSUP;
+#endif
 		flags = -1;
-	else {
+	} else {
 		flags = 0;
 		switch(nbi.state) {
+		case ND6_LLINFO_NOSTATE:	/* just added */
 		case ND6_LLINFO_REACHABLE:
 		case ND6_LLINFO_STALE:
 		case ND6_LLINFO_DELAY:
