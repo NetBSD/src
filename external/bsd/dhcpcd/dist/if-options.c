@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.13 2014/10/06 18:22:29 roy Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.14 2014/10/17 23:42:24 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1316,6 +1316,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 						ia->prefix_len = (uint8_t)i;
 				}
 			}
+			ia->sla_max = 0;
 			ia->sla_len = 0;
 			ia->sla = NULL;
 		}
@@ -1375,27 +1376,34 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 						goto err_sla;
 					sla->prefix_len = (uint8_t)i;
 				} else
-					sla->prefix_len = 64;
+					sla->prefix_len = 0;
 			} else {
 				sla->sla_set = 0;
-				/* Sanity - check there are no more
-				 * unspecified SLA's */
-				for (sl = 0; sl < ia->sla_len - 1; sl++) {
-					slap = &ia->sla[sl];
-					if (slap->sla_set == 0 &&
-					    strcmp(slap->ifname, sla->ifname)
-					    == 0)
-					{
-						syslog(LOG_WARNING,
-						    "%s: cannot specify the "
-						    "same interface twice with "
-						    "an automatic SLA",
-						    sla->ifname);
-						ia->sla_len--;
-						break;
-					}
+				sla->prefix_len = 0;
+			}
+			/* Sanity check */
+			for (sl = 0; sl < ia->sla_len - 1; sl++) {
+				slap = &ia->sla[sl];
+				if (slap->sla_set && sla->sla_set == 0) {
+					syslog(LOG_WARNING,
+					    "%s: cannot mix automatic "
+					    "and fixed SLA",
+					    sla->ifname);
+					goto err_sla;
+				}
+				if (sla->sla_set == 0 &&
+				    strcmp(slap->ifname, sla->ifname) == 0)
+				{
+					syslog(LOG_WARNING,
+					    "%s: cannot specify the "
+					    "same interface twice with "
+					    "an automatic SLA",
+					    sla->ifname);
+					goto err_sla;
 				}
 			}
+			if (sla->sla_set && sla->sla > ia->sla_max)
+				ia->sla_max = sla->sla;
 		}
 		break;
 err_sla:

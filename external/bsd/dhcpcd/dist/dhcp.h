@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp.h,v 1.2 2014/10/06 18:22:29 roy Exp $ */
+/* $NetBSD: dhcp.h,v 1.3 2014/10/17 23:42:24 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -229,6 +229,7 @@ struct dhcp_state {
 	struct in_addr addr;
 	struct in_addr net;
 	struct in_addr dst;
+	uint8_t added;
 
 	char leasefile[sizeof(LEASEFILE) + IF_NAMESIZE];
 	time_t start_uptime;
@@ -272,9 +273,6 @@ int dhcp_message_add_addr(struct dhcp_message *, uint8_t, struct in_addr);
 ssize_t make_message(struct dhcp_message **, const struct interface *,
     uint8_t);
 int valid_dhcp_packet(unsigned char *);
-
-ssize_t write_lease(const struct interface *, const struct dhcp_message *);
-struct dhcp_message *read_lease(struct interface *);
 
 void dhcp_handleifa(int, struct interface *,
     const struct in_addr *, const struct in_addr *, const struct in_addr *);
