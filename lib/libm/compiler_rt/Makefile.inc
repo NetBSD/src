@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.6 2014/06/13 01:17:45 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.7 2014/10/17 14:53:59 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -21,6 +21,12 @@ GENERIC_SRCS+= \
 	divxc3.c \
 	divdc3.c \
 	divsc3.c
+
+.if ${MACHINE_ARCH} == "powerpc"
+GENERIC_SRCS+= \
+	divtc3.c \
+	multc3.c
+.endif
 
 .for src in ${GENERIC_SRCS}
 .  if exists(${COMPILER_RT_CPU_DIR}/${src:R}.S) || \
