@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.7.2.1 2014/08/15 11:11:59 martin Exp $	*/
+/*	$NetBSD: pci.h,v 1.7.2.2 2014/10/17 07:14:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -430,6 +430,36 @@ pci_unmap_rom(struct pci_dev *pdev, void __pci_rom_iomem *vaddr __unused)
 	pdev->pd_rom_vaddr = NULL;
 }
 
+/* XXX Whattakludge!  Should move this in sys/arch/.  */
+static int
+pci_map_rom_md(struct pci_dev *pdev)
+{
+#if defined(__i386__) || defined(__x86_64__) || defined(__ia64__)
+	const bus_addr_t rom_base = 0xc0000;
+	const bus_size_t rom_size = 0x20000;
+	bus_space_handle_t rom_bsh;
+	int error;
+
+	if (PCI_CLASS(pdev->pd_pa.pa_class) != PCI_CLASS_DISPLAY)
+		return ENXIO;
+	if (PCI_SUBCLASS(pdev->pd_pa.pa_class) != PCI_SUBCLASS_DISPLAY_VGA)
+		return ENXIO;
+	/* XXX Check whether this is the primary VGA card?  */
+	error = bus_space_map(pdev->pd_pa.pa_memt, rom_base, rom_size,
+	    (BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE), &rom_bsh);
+	if (error)
+		return ENXIO;
+
+	pdev->pd_rom_bst = pdev->pd_pa.pa_memt;
+	pdev->pd_rom_bsh = rom_bsh;
+	pdev->pd_rom_size = rom_size;
+
+	return 0;
+#else
+	return ENXIO;
+#endif
+}
+
 static inline void __pci_rom_iomem *
 pci_map_rom(struct pci_dev *pdev, size_t *sizep)
 {
@@ -441,13 +471,14 @@ pci_map_rom(struct pci_dev *pdev, size_t *sizep)
 	if (pci_mapreg_map(&pdev->pd_pa, PCI_MAPREG_ROM, PCI_MAPREG_TYPE_ROM,
 		(BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR),
 		&pdev->pd_rom_bst, &pdev->pd_rom_bsh, NULL, &pdev->pd_rom_size)
-	    != 0)
+	    != 0 &&
+	    pci_map_rom_md(pdev) != 0)
 		return NULL;
 	pdev->pd_kludges |= NBPCI_KLUDGE_MAP_ROM;
 
 	/* XXX This type is obviously wrong in general...  */
 	if (pci_find_rom(&pdev->pd_pa, pdev->pd_rom_bst, pdev->pd_rom_bsh,
-		PCI_ROM_CODE_TYPE_X86, &bsh, &size)) {
+		pdev->pd_rom_size, PCI_ROM_CODE_TYPE_X86, &bsh, &size)) {
 		pci_unmap_rom(pdev, NULL);
 		return NULL;
 	}
