@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4ll.c,v 1.1.1.10 2014/06/14 20:51:05 roy Exp $");
+ __RCSID("$NetBSD: ipv4ll.c,v 1.1.1.11 2014/10/17 23:40:30 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -35,6 +35,7 @@
 #include <syslog.h>
 #include <unistd.h>
 
+#define ELOOP_QUEUE 2
 #include "config.h"
 #include "arp.h"
 #include "common.h"
