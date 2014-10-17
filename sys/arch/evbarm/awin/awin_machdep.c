@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.15 2014/10/12 14:04:52 jmcneill Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.16 2014/10/17 20:24:18 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.15 2014/10/12 14:04:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.16 2014/10/17 20:24:18 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -670,6 +670,16 @@ awin_device_register(device_t self, void *aux)
 
 	if (device_is_a(self, "awinac")) {
 		prop_dictionary_set_cstring(dict, "pactrl-gpio", "audiopactrl");
+		return;
+	}
+
+	if (device_is_a(self, "awge")) {
+#if AWIN_board == AWIN_cubieboard
+		if (awin_chip_id() == AWIN_CHIP_ID_A20) {
+			/* Cubieboard2 uses GMAC with a 100Mbit PHY */
+			prop_dictionary_set_cstring(dict, "phy-type", "mii");
+		}
+#endif
 		return;
 	}
 
