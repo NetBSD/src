@@ -28,13 +28,13 @@ class MemoryMappingLayout {
 };
 
 #else  // _WIN32
-#if defined(__linux__)
+#if defined(__linux__) || defined(__NetBSD__)
 struct ProcSelfMapsBuff {
   char *data;
   uptr mmaped_size;
   uptr len;
 };
-#endif  // defined(__linux__)
+#endif  // defined(__linux__) || defined(__NetBSD__)
 
 class MemoryMappingLayout {
  public:
@@ -84,7 +84,7 @@ class MemoryMappingLayout {
     return false;
   }
 
-# if defined __linux__
+# if defined __linux__ || defined(__NetBSD__)
   ProcSelfMapsBuff proc_self_maps_;
   char *current_;
 

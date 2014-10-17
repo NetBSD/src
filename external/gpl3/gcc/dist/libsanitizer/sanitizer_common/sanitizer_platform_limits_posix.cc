@@ -10,7 +10,7 @@
 // Sizes and layouts of platform-specific POSIX data structures.
 //===----------------------------------------------------------------------===//
 
-#if defined(__linux__) || defined(__APPLE__)
+#if defined(__linux__) || defined(__APPLE__) || defined(__NetBSD__)
 
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_platform_limits_posix.h"
@@ -32,7 +32,9 @@
 namespace __sanitizer {
   unsigned struct_utsname_sz = sizeof(struct utsname);
   unsigned struct_stat_sz = sizeof(struct stat);
+#if defined(__linux__) || defined(__APPLE__)
   unsigned struct_stat64_sz = sizeof(struct stat64);
+#endif
   unsigned struct_rusage_sz = sizeof(struct rusage);
   unsigned struct_tm_sz = sizeof(struct tm);
 
@@ -65,4 +67,4 @@ namespace __sanitizer {
   }
 }  // namespace __sanitizer
 
-#endif  // __linux__ || __APPLE__
+#endif  // __linux__ || __APPLE__ || __NetBSD__
