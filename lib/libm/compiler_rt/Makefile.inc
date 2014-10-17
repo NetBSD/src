@@ -1,8 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.7 2014/10/17 14:53:59 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.8 2014/10/17 20:02:12 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
-.if ${MACHINE_ARCH} == "powerpc"
+.if ${MACHINE_CPU} == "powerpc"
 COMPILER_RT_CPU_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
 COMPILER_RT_ARCH_DIR=	${COMPILER_RT_SRCDIR}/lib/builtins/ppc
 .else
@@ -22,7 +22,7 @@ GENERIC_SRCS+= \
 	divdc3.c \
 	divsc3.c
 
-.if ${MACHINE_ARCH} == "powerpc"
+.if ${MACHINE_CPU} == "powerpc"
 GENERIC_SRCS+= \
 	divtc3.c \
 	multc3.c
