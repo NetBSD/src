@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.304 2014/10/10 11:04:21 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.305 2014/10/17 17:48:53 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.304 2014/10/10 11:04:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.305 2014/10/17 17:48:53 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -6241,7 +6241,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	 *  For some devices, we can determine the PHY access method
 	 * from sc_type.
 	 *
-	 *  For ICH8 variants, it's difficult to detemine the PHY access
+	 *  For ICH8 variants, it's difficult to determine the PHY access
 	 * method by sc_type, so use the PCI product ID for some devices.
 	 * For other ICH8 variants, try to use igp's method. If the PHY
 	 * can't detect, then use bm's method.
