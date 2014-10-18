@@ -1,4 +1,4 @@
-/* $NetBSD: monitor.h,v 1.4 2008/04/28 20:24:16 martin Exp $ */
+/* $NetBSD: monitor.h,v 1.5 2014/10/18 08:33:30 snj Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
 #define	I4B_MON_IDEV_STATE		I4B_MON_EVNT_HDR+I4B_MAX_MON_STRING+0	/* 2 byte: state of device */
 
 /*
- * The client sets it's protocol version and event mask (usually once after
+ * The client sets its protocol version and event mask (usually once after
  * connection establishement)
  */
 #define	I4B_MON_CCMD_SETMASK		0x7e			/* command code */

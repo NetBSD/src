@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.101 2013/09/13 21:09:40 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.102 2014/10/18 08:33:29 snj Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.101 2013/09/13 21:09:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.102 2014/10/18 08:33:29 snj Exp $");
 
 #include "pppoe.h"
 #include "opt_pppoe.h"
@@ -1447,7 +1447,7 @@ pppoe_tls(struct sppp *sp)
 	    sc->sc_sppp.pp_auth_failures > 0) {
 		/*
 		 * Delay trying to reconnect a bit more - the peer
-		 * might have failed to contact it's radius server.
+		 * might have failed to contact its radius server.
 		 */
 		wtime = PPPOE_RECON_FAST * sc->sc_sppp.pp_auth_failures;
 		if (wtime > PPPOE_SLOW_RETRY)

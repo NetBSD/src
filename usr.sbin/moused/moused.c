@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.24 2013/10/19 17:16:38 christos Exp $ */
+/* $NetBSD: moused.c,v 1.25 2014/10/18 08:33:31 snj Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.24 2013/10/19 17:16:38 christos Exp $");
+__RCSID("$NetBSD: moused.c,v 1.25 2014/10/18 08:33:31 snj Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -1299,7 +1299,7 @@ r_init(void)
 	 * Initialize Hitachi PUMA Plus - Model 1212E to desired settings.
 	 * The tablet must be configured to be in MM mode, NO parity,
 	 * Binary Format.  xf86Info.sampleRate controls the sensativity
-	 * of the tablet.  We only use this tablet for it's 4-button puck
+	 * of the tablet.  We only use this tablet for its 4-button puck
 	 * so we don't run in "Absolute Mode"
 	 */
 	write(rodent.mfd, "z8", 2);	/* Set Parity = "NONE" */

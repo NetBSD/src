@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.324 2014/10/03 00:00:11 justin Exp $	*/
+/*	$NetBSD: cd.c,v 1.325 2014/10/18 08:33:28 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.324 2014/10/03 00:00:11 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.325 2014/10/18 08:33:28 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1901,7 +1901,7 @@ read_cd_capacity(struct scsipi_periph *periph, uint32_t *blksize, u_long *last_l
 }
 
 /*
- * Find out from the device what it's capacity is
+ * Find out from the device what its capacity is
  */
 static u_long
 cd_size(struct cd_softc *cd, int flags)

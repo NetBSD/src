@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.20 2013/09/07 15:56:11 tsutsui Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.21 2014/10/18 08:33:27 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.20 2013/09/07 15:56:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunmon.c,v 1.21 2014/10/18 08:33:27 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ _mode_kernel(void)
 /*
  * This function takes care of restoring enough of the
  * hardware state to allow the PROM to run normally.
- * The PROM needs: NMI enabled, it's own vector table.
+ * The PROM needs: NMI enabled, its own vector table.
  * In case of a temporary "drop into PROM", this will
  * also put our hardware state back into place after
  * the PROM "c" (continue) command is given.

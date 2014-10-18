@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.140 2014/07/25 08:10:40 dholland Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.141 2014/10/18 08:33:29 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.140 2014/07/25 08:10:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.141 2014/10/18 08:33:29 snj Exp $");
 
 #include "opt_ptm.h"
 
@@ -243,7 +243,7 @@ pty_check(int ptn)
 
 		/*
 		 * Now grab the pty array mutex - we need to ensure
-		 * that the pty array is consistent while copying it's
+		 * that the pty array is consistent while copying its
 		 * content to newly allocated, larger space; we also
 		 * need to be safe against pty_maxptys().
 		 */

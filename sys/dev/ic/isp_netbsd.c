@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.86 2012/08/21 15:53:07 bouyer Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.87 2014/10/18 08:33:27 snj Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.86 2012/08/21 15:53:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.87 2014/10/18 08:33:27 snj Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -824,7 +824,7 @@ isp_dog(void *arg)
 	ISP_ILOCK(isp);
 	/*
 	 * We've decided this command is dead. Make sure we're not trying
-	 * to kill a command that's already dead by getting it's handle and
+	 * to kill a command that's already dead by getting its handle and
 	 * and seeing whether it's still alive.
 	 */
 	handle = isp_find_handle(isp, xs);

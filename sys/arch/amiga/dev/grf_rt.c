@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.57 2012/11/08 18:04:56 rkujawa Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.58 2014/10/18 08:33:24 snj Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.57 2012/11/08 18:04:56 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.58 2014/10/18 08:33:24 snj Exp $");
 
 #include "grfrt.h"
 #include "ite.h"
@@ -582,7 +582,7 @@ rt_load_mon(struct grf_softc *gp, struct MonDef *md)
 						| (0	 			& 0x1f)));
 
 
-	/* not it's time for guessing... */
+	/* now it's time for guessing... */
 
 	vgaw (ba, VDAC_REG_D, 	   0x02);
 

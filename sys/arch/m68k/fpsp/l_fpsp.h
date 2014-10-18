@@ -1,4 +1,4 @@
-*	$NetBSD: l_fpsp.h,v 1.2 1994/10/26 07:49:14 cgd Exp $
+*	$NetBSD: l_fpsp.h,v 1.3 2014/10/18 08:33:25 snj Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -37,7 +37,7 @@
 *	l_fpsp.h --- stack frame offsets for library version of FPSP
 *
 *	This file is derived from fpsp.h.  All equates that refer
-*	to the fsave frame and it's bits are removed with the
+*	to the fsave frame and its bits are removed with the
 *	exception of ETEMP, WBTEMP, DTAG and STAG which are simulated
 *	in the library version.  Equates for the exception frame are
 *	also not needed.  Some of the equates that are only used in
