@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.20 2014/03/25 16:39:27 matt Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.21 2014/10/18 08:33:26 snj Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.20 2014/03/25 16:39:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.21 2014/10/18 08:33:26 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -406,7 +406,7 @@ genofw_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		    "ofw-pcibus-rawdevnum");
 		dev = prop_number_integer_value(pbus);
 
-		/* now that we know the parent bus, we need to find it's pbi */
+		/* now that we know the parent bus, we need to find its pbi */
 		pbi = SIMPLEQ_FIRST(&pa->pa_pc->pc_pbi);
 		while (busno--)
 			pbi = SIMPLEQ_NEXT(pbi, next);
