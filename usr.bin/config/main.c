@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.68 2014/10/14 08:00:27 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.69 2014/10/18 06:36:40 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -438,6 +438,9 @@ main(int argc, char **argv)
 		emitioconfh();
 		return 0;
 	}
+
+	yyfile = "dependattrs";
+	dependattrs();
 
 	/*
 	 * Deal with option dependencies.
