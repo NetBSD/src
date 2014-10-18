@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.11 2014/10/18 11:23:17 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.12 2014/10/18 12:36:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,6 +57,7 @@ static int awin_gige_intr(void*);
 struct awin_gige_softc {
 	struct dwc_gmac_softc sc_core;
 	void *sc_ih;
+	struct awin_gpio_pindata sc_power_pin;
 };
 
 static const struct awin_gpio_pinset awin_gige_gpio_pinset = {
@@ -94,7 +95,7 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 	const struct awin_locators * const loc = &aio->aio_loc;
 	prop_dictionary_t cfg = device_properties(self);
 	uint32_t clkreg;
-	const char *phy_type;
+	const char *phy_type, *pin_name;
 
 	sc->sc_core.sc_dev = self;
 
@@ -120,6 +121,15 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on irq %d\n",
 	     loc->loc_intr);
+
+	if (prop_dictionary_get_cstring_nocopy(cfg, "phy-power", &pin_name)) {
+		if (awin_gpio_pin_reserve(pin_name, &sc->sc_power_pin)) {
+			awin_gpio_pindata_write(&sc->sc_power_pin, 1);
+		} else {
+			aprint_error_dev(self,
+			    "failed to reserve GPIO \"%s\"\n", pin_name);
+		}
+	}
 
 	/*
 	 * Enable GMAC clock
