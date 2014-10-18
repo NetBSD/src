@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.32 2009/03/15 22:24:57 cegger Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.33 2014/10/18 08:33:24 snj Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.32 2009/03/15 22:24:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.33 2014/10/18 08:33:24 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -600,7 +600,7 @@ vidcvideo_cursor_init(int width, int height)
 		IOMD_WRITE_WORD(IOMD_CURSINIT, pa);
 	}
 
-	/* Blank the cursor while initialising it's sprite */
+	/* Blank the cursor while initialising its sprite */
 
 	vidcvideo_write ( VIDC_CP1, 0x0 );
 	vidcvideo_write ( VIDC_CP2, 0x0 );

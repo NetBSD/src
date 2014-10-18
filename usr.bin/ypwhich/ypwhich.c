@@ -1,4 +1,4 @@
-/*	$NetBSD: ypwhich.c,v 1.19 2011/08/30 17:06:21 plunky Exp $	*/
+/*	$NetBSD: ypwhich.c,v 1.20 2014/10/18 08:33:30 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor
@@ -286,7 +286,7 @@ find_mapmaster(const char *host, const char *domain, const char *map,
 	size_t i;
 
 	/*
-         * we can either ask the hosts ypbind where it's ypserv is located,
+         * we can either ask the hosts ypbind where its ypserv is located,
          * or we can be forced to assume that ypserv is running on the host.
          */
 	if (force) {

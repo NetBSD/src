@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.130 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.131 2014/10/18 08:33:29 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.130 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.131 2014/10/18 08:33:29 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1812,7 +1812,7 @@ encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 	}
 
 	/*
-	 * copy the old packet & pullup it's IP header into the
+	 * copy the old packet & pullup its IP header into the
 	 * new mbuf so we can modify it.  Try to fill the new
 	 * mbuf since if we don't the ethernet driver will.
 	 */

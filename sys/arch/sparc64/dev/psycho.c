@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.119 2014/09/21 16:39:12 christos Exp $	*/
+/*	$NetBSD: psycho.c,v 1.120 2014/10/18 08:33:27 snj Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.119 2014/09/21 16:39:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.120 2014/10/18 08:33:27 snj Exp $");
 
 #include "opt_ddb.h"
 
@@ -286,7 +286,7 @@ psycho_dump_intmap(struct psycho_softc *sc)
  *	- get interrupt-map and interrupt-map-mask
  *	- setup the chipsets.
  *	- if we're the first of the pair, initialise the IOMMU, otherwise
- *	  just copy it's tags and addresses.
+ *	  just copy its tags and addresses.
  */
 static	void
 psycho_attach(device_t parent, device_t self, void *aux)
@@ -755,7 +755,7 @@ psycho_power_button_pressed(void *arg)
  */
 
 /*
- * allocate a PCI chipset tag and set it's cookie.
+ * allocate a PCI chipset tag and set its cookie.
  */
 static pci_chipset_tag_t
 psycho_alloc_chipset(struct psycho_pbm *pp, int node, pci_chipset_tag_t pc)
