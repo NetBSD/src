@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.84 2014/06/15 02:27:15 ozaki-r Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.85 2014/10/18 08:33:24 snj Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.84 2014/06/15 02:27:15 ozaki-r Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.85 2014/10/18 08:33:24 snj Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -300,7 +300,7 @@ ENTRY(cpu_switchto)
 .Lswitch_return:
 	/* cpu_switchto returns the old lwp */
 	mov	r0, r4
-	/* lwp_trampoline expects new lwp as it's second argument */
+	/* lwp_trampoline expects new lwp as its second argument */
 	mov	r1, r6
 
 #ifdef _ARM_ARCH_7
@@ -413,7 +413,7 @@ ENTRY_NP(softint_switch)
 
 	/*
 	 * Normally, we'd get {r8-r13} but since this is a softint lwp
-	 * it's existing state doesn't matter.  We start the stack just
+	 * its existing state doesn't matter.  We start the stack just
 	 * below the trapframe.
 	 */
 	ldr	sp, [r5, #(L_MD_TF)]	/* get new lwp's stack ptr */

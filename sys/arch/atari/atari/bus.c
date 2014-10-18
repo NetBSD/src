@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.57 2012/01/27 18:52:52 para Exp $	*/
+/*	$NetBSD: bus.c,v 1.58 2014/10/18 08:33:24 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.57 2012/01/27 18:52:52 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.58 2014/10/18 08:33:24 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ extern paddr_t avail_end;
  * We need these for the early memory allocator. The idea is this:
  * Allocate VA-space through ptextra (atari_init.c:startc()). When
  * The VA & size of this space are known, call bootm_init().
- * Until the VM-system is up, bus_mem_add_mapping() allocates it's virtual
+ * Until the VM-system is up, bus_mem_add_mapping() allocates its virtual
  * addresses from this extent-map.
  *
  * This allows for the console code to use the bus_space interface at a

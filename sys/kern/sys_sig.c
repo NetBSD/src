@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.42 2014/02/14 16:35:11 christos Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.43 2014/10/18 08:33:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.42 2014/02/14 16:35:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.43 2014/10/18 08:33:29 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -357,7 +357,7 @@ sys_setcontext(struct lwp *l, const struct sys_setcontext_args *uap,
  * of sigwaitinfo() and sigwait().
  *
  * This only handles single LWP in signal wait. libpthread provides
- * it's own sigtimedwait() wrapper to DTRT WRT individual threads.
+ * its own sigtimedwait() wrapper to DTRT WRT individual threads.
  */
 int
 sys_____sigtimedwait50(struct lwp *l,

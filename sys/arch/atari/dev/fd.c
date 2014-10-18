@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.79 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: fd.c,v 1.80 2014/10/18 08:33:25 snj Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.79 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.80 2014/10/18 08:33:25 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ uint8_t read_dmastat(void)
 /*
  * Config switch stuff. Used only for the floppy type for now. That's
  * why it's here...
- * XXX: If needed in more places, it should be moved to it's own include file.
+ * XXX: If needed in more places, it should be moved to its own include file.
  * Note: This location _must_ be read as an u_short. Failure to do so
  *       will return garbage!
  */
