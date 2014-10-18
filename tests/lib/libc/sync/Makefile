@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2014/10/13 11:07:38 martin Exp $
+# $NetBSD: Makefile,v 1.6 2014/10/18 02:22:35 joerg Exp $
 
 WARNS=0
 NOMAN=1
@@ -11,7 +11,7 @@ PROG=	all_sync_ops_linkable
     ("${ACTIVE_CC}" == "gcc" && "${HAVE_GCC}" == "48")
 
 CXXFLAGS+= -std=c++11
-PROG+=	cpp_atomic_ops_linkable
+PROG_CXX+=	cpp_atomic_ops_linkable
 
 .endif
 
