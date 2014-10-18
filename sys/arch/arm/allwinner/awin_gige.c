@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.9 2014/10/17 20:18:41 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.10 2014/10/18 11:02:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,7 +132,7 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (!prop_dictionary_get_cstring_nocopy(cfg, "phy-type", &phy_type))
 		phy_type = "rgmii";
-	if (strcmp(phy_type, "rgmii")) {
+	if (strcmp(phy_type, "rgmii") == 0) {
 		clkreg = AWIN_GMAC_CLK_PIT | AWIN_GMAC_CLK_TCS_INT_RGMII;
 	} else if (strcmp(phy_type, "mii")) {
 		clkreg = AWIN_GMAC_CLK_TCS_MII;
