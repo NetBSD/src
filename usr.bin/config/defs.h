@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.57 2014/10/12 05:20:54 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.58 2014/10/18 06:36:40 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -483,6 +483,7 @@ struct	dlhash *defoptlint;	/* lint values for options */
 struct	nvhash *deffstab;	/* defined file systems */
 struct	dlhash *optfiletab;	/* "defopt"'d option .h files */
 struct	hashtab *attrtab;	/* attributes (locators, etc.) */
+struct	hashtab *attrdeptab;	/* attribute dependencies */
 struct	hashtab *bdevmtab;	/* block devm lookup */
 struct	hashtab *cdevmtab;	/* character devm lookup */
 

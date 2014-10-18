@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.63 2014/10/12 15:35:40 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.64 2014/10/18 06:36:40 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,6 +96,7 @@ initsem(void)
 {
 
 	attrtab = ht_new();
+	attrdeptab = ht_new();
 
 	allattr.a_name = "netbsd";
 	TAILQ_INIT(&allattr.a_files);
@@ -303,6 +304,7 @@ defattr(const char *name, struct loclist *locs, struct attrlist *deps,
 			    "attribute", name, dep->a_name);
 			return (1);
 		}
+		(void)ht_insert2(attrdeptab, name, dep->a_name, NULL);
 		CFGDBG(2, "attr `%s' depends on attr `%s'", name, dep->a_name);
 	}
 
@@ -530,6 +532,7 @@ defdev(struct devbase *dev, struct loclist *loclist, struct attrlist *attrs,
 		 * Implicit attribute definition for device dependencies.
 		 */
 		refattr(al->al_this->a_name);
+		(void)ht_insert2(attrdeptab, dev->d_name, al->al_this->a_name, NULL);
 		CFGDBG(2, "device `%s' depends on attr `%s'", dev->d_name,
 		    al->al_this->a_name);
 	}
@@ -1947,6 +1950,21 @@ selectattr(struct attr *a)
 	CFGDBG(3, "attr selected `%s'", a->a_name);
 }
 
+static int
+dumpattrdepcb2(const char *name1, const char *name2, void *v, void *arg)
+{
+
+	CFGDBG(3, "attr `%s' depends on attr `%s'", name1, name2);
+	return 0;
+}
+
+void
+dependattrs(void)
+{
+
+	ht_enumerate2(attrdeptab, dumpattrdepcb2, NULL);
+}
+
 /*
  * We have an instance of the base foo, so select it and all its
  * attributes for "optional foo".
@@ -1959,6 +1977,7 @@ selectbase(struct devbase *d, struct deva *da)
 
 	(void)ht_insert(selecttab, d->d_name, __UNCONST(d->d_name));
 	CFGDBG(3, "devbase selected `%s'", d->d_name);
+	CFGDBG(5, "selecting dependencies of devbase `%s'", d->d_name);
 	for (al = d->d_attrs; al != NULL; al = al->al_next) {
 		a = al->al_this;
 		expandattr(a, selectattr);
