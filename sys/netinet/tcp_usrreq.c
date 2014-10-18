@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.200 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.201 2014/10/18 08:33:29 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.200 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.201 2014/10/18 08:33:29 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2277,7 +2277,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 			       "before disabling ECN on the connection"),
 	    	       NULL, 0, &tcp_ecn_maxretries, 0, CTL_CREATE, CTL_EOL);
 	
-	/* SACK gets it's own little subtree. */
+	/* SACK gets its own little subtree. */
 	sysctl_createv(clog, 0, NULL, &sack_node,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "enable",

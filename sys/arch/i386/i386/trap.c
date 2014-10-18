@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.272 2014/03/12 18:59:07 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.273 2014/10/18 08:33:25 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.272 2014/03/12 18:59:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.273 2014/10/18 08:33:25 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -303,7 +303,7 @@ trap(struct trapframe *frame)
 	/*
 	 * A trap can occur while DTrace executes a probe. Before
 	 * executing the probe, DTrace blocks re-scheduling and sets
-	 * a flag in it's per-cpu flags to indicate that it doesn't
+	 * a flag in its per-cpu flags to indicate that it doesn't
 	 * want to fault. On returning from the the probe, the no-fault
 	 * flag is cleared and finally re-scheduling is enabled.
 	 *

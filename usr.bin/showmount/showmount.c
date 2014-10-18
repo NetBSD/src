@@ -1,4 +1,4 @@
-/*	$NetBSD: showmount.c,v 1.20 2011/09/06 18:30:56 joerg Exp $	*/
+/*	$NetBSD: showmount.c,v 1.21 2014/10/18 08:33:30 snj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1995\
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-__RCSID("$NetBSD: showmount.c,v 1.20 2011/09/06 18:30:56 joerg Exp $");
+__RCSID("$NetBSD: showmount.c,v 1.21 2014/10/18 08:33:30 snj Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -97,8 +97,8 @@ static int	tcp_callrpc(const char *host, int prognum, int versnum,
     int procnum, xdrproc_t inproc, char *in, xdrproc_t outproc, char *out);
 
 /*
- * This command queries the NFS mount daemon for it's mount list and/or
- * it's exports list and prints them out.
+ * This command queries the NFS mount daemon for its mount list and/or
+ * its exports list and prints them out.
  * See "NFS: Network File System Protocol Specification, RFC1094, Appendix A"
  * and the "Network File System Protocol XXX.."
  * for detailed information on the protocol.

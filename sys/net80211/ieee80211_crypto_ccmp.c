@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_ccmp.c,v 1.7 2005/07/11 03:06:23 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.10 2013/03/30 15:12:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.11 2014/10/18 08:33:29 snj Exp $");
 #endif
 
 /*
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.10 2013/03/30 15:12:28 c
  *
  * Part of this module is derived from similar code in the Host
  * AP driver. The code is used with the consent of the author and
- * it's license is included below.
+ * its license is included below.
  */
 #include <sys/param.h>
 #include <sys/systm.h>

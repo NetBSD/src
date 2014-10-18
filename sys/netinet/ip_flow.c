@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.64 2014/05/22 22:01:12 rmind Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.65 2014/10/18 08:33:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.64 2014/05/22 22:01:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.65 2014/10/18 08:33:29 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,7 +285,7 @@ ipflow_fastforward(struct mbuf *m)
 	}
 
 	/*
-	 * Send the packet on it's way.  All we can get back is ENOBUFS
+	 * Send the packet on its way.  All we can get back is ENOBUFS
 	 */
 	ipf->ipf_uses++;
 	PRT_SLOW_ARM(ipf->ipf_timer, IPFLOW_TIMER);
@@ -436,7 +436,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	KERNEL_LOCK(1, NULL);
 
 	/*
-	 * See if an existing flow struct exists.  If so remove it from it's
+	 * See if an existing flow struct exists.  If so remove it from its
 	 * list and free the old route.  If not, try to malloc a new one
 	 * (if we aren't at our limit).
 	 */

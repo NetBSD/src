@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.39 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.40 2014/10/18 08:33:27 snj Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.39 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.40 2014/10/18 08:33:27 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ CFATTACH_DECL_NEW(ahc_eisa, sizeof(struct ahc_softc),
 
 /*
  * Check the slots looking for a board we recognise
- * If we find one, note it's address (slot) and call
+ * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
 static int

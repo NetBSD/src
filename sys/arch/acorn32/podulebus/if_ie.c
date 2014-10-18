@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.32 2012/10/27 17:17:23 chs Exp $ */
+/* $NetBSD: if_ie.c,v 1.33 2014/10/18 08:33:24 snj Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -45,7 +45,7 @@
  */
 
 /*
- *	This driver is at it's last beta release.  It should not cause
+ *	This driver is at its last beta release.  It should not cause
  *	any problems (Touch wood)
  *
  * 	If it passes field tests again.  This will constitute the realse
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.32 2012/10/27 17:17:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.33 2014/10/18 08:33:24 snj Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -965,7 +965,7 @@ iestop(struct ie_softc *sc)
 }
 
 /*
- * Send a command to the card and awaits it's completion.
+ * Send a command to the card and await its completion.
  * Timeout if it's taking too long
  */
 

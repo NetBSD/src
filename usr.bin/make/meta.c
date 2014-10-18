@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.33 2013/10/01 05:37:17 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.34 2014/10/18 08:33:30 snj Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -844,7 +844,7 @@ string_match(const void *p, const void *q)
 
 /*
  * When running with 'meta' functionality, a target can be out-of-date
- * if any of the references in it's meta data file is more recent.
+ * if any of the references in its meta data file is more recent.
  * We have to track the latestdir on a per-process basis.
  */
 #define LDIR_VNAME_FMT ".meta.%d.ldir"

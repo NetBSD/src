@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.44 2014/02/25 18:30:09 pooka Exp $	*/
+/*	$NetBSD: firewire.c,v 1.45 2014/10/18 08:33:28 snj Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.44 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.45 2014/10/18 08:33:28 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -579,7 +579,7 @@ fw_busreset(struct firewire_comm *fc, uint32_t new_status)
 	 * A generation of 0 indicates a device
 	 * that is not 1394a-2000 compliant.
 	 * A generation of 1 indicates a device that
-	 * does not change it's Bus Info Block or
+	 * does not change its Bus Info Block or
 	 * Configuration ROM.
 	 */
 #define FW_MAX_GENERATION	0xF

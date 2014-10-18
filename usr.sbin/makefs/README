@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.5 2011/07/18 08:58:38 uch Exp $
+$NetBSD: README,v 1.6 2014/10/18 08:33:31 snj Exp $
 
 makefs - build a file system image from a directory tree
 
@@ -99,7 +99,7 @@ NOTE: All file system specific options are referenced via the fs_specific
 pointer from the fsinfo_t strucutre. It is up to the filesystem to allocate
 and free any data needed for this via the prepare and cleanup callbacks.
 
-Each fs-specific module will need to add it's routines to the dispatch array
+Each fs-specific module will need to add its routines to the dispatch array
 in makefs.c and add prototypes for these to makefs.h
 
 All other implementation details should not need to change any of the
