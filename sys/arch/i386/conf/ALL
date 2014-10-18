@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.386 2014/09/19 17:30:03 christos Exp $
+# $NetBSD: ALL,v 1.387 2014/10/18 16:56:51 uebayasi Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.386 $"
+#ident 		"ALL-$Revision: 1.387 $"
 
 maxusers	64		# estimated number of users
 
@@ -497,6 +497,7 @@ viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
 iic*	at viapcib?
 rdcpcib* at pci? dev ? function ?	# RDC Vortex86/PMX-1000 PCI-ISA w/
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
+options 	AGP_X86
 pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 pcmb*	at pci? dev ? function ?	# PCI-MCA bridges

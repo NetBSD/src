@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.26 2014/08/23 21:10:20 dholland Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.27 2014/10/18 16:56:51 uebayasi Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -209,6 +209,7 @@ pci*	at ppb? bus ?
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
+#options 	AGP_X86
 pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges

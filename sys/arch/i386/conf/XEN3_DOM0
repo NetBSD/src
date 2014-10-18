@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.90 2014/09/19 17:30:03 christos Exp $
+#	$NetBSD: XEN3_DOM0,v 1.91 2014/10/18 16:56:51 uebayasi Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -232,6 +232,7 @@ ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog and SpeedStep support
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
+options 	AGP_X86
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
