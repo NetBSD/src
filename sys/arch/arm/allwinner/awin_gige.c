@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.12 2014/10/18 12:36:08 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.13 2014/10/18 12:45:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.12 2014/10/18 12:36:08 jmcneill Exp 
 #include <dev/mii/miivar.h>
 
 #include <dev/ic/dwc_gmac_var.h>
+#include <dev/ic/dwc_gmac_reg.h>
 
 static int awin_gige_match(device_t, cfdata_t, void *);
 static void awin_gige_attach(device_t, device_t, void *);
@@ -152,7 +153,7 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
 	    AWIN_GMAC_CLK_REG, clkreg, AWIN_GMAC_CLK_PIT|AWIN_GMAC_CLK_TCS);
 
-	dwc_gmac_attach(&sc->sc_core, 2);
+	dwc_gmac_attach(&sc->sc_core, GMAC_MII_CLK_150_250M_DIV102);
 }
 
 static int
