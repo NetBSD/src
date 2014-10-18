@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.399 2014/09/19 17:30:03 christos Exp $
+# $NetBSD: GENERIC,v 1.400 2014/10/18 16:56:51 uebayasi Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.399 $"
+#ident 		"GENERIC-$Revision: 1.400 $"
 
 maxusers	64		# estimated number of users
 
@@ -331,6 +331,7 @@ pci*	at ppb? bus ?
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
+options 	AGP_X86
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here

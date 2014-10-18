@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.20 2014/09/19 17:30:03 christos Exp $
+# $NetBSD: ALL,v 1.21 2014/10/18 16:56:51 uebayasi Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.20 $"
+#ident 		"ALL-$Revision: 1.21 $"
 
 maxusers	64		# estimated number of users
 
@@ -454,6 +454,7 @@ hpet0	at ichlpcib?			# High Precision Event Timer
 fwhrng* at ichlpcib?			# Intel 82802 FWH Random Number Generator
 rdcpcib* at pci? dev ? function ?	# RDC Vortex86/PMX-1000 PCI-ISA w/
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
+options 	AGP_X86
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
