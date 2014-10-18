@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.33 2014/10/18 08:33:23 snj Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.34 2014/10/18 15:07:02 riz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.33 2014/10/18 08:33:23 snj Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.34 2014/10/18 15:07:02 riz Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -64,7 +64,7 @@ static const Char break_chars[] = { ' ', '\t', '\n', '"', '\\', '\'', '`', '@',
  * if ``user'' isn't valid user name or ``txt'' doesn't start
  * w/ '~', returns pointer to strdup()ed copy of ``txt''
  *
- * it's the callers's responsibility to free() the returned string
+ * it's the caller's responsibility to free() the returned string
  */
 char *
 fn_tilde_expand(const char *txt)
