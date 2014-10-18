@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.25 2014/09/26 17:11:05 christos Exp $	*/
+/*	$NetBSD: intr.c,v 1.26 2014/10/18 08:33:24 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25 2014/09/26 17:11:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.26 2014/10/18 08:33:24 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ intr_init(void)
  *			means:
  *				- This vector can't be shared
  *				- 'ih_fun' must save registers
- *				- 'ih_fun' must do it's own interrupt accounting
+ *				- 'ih_fun' must do its own interrupt accounting
  *				- The argument to 'ih_fun' is a standard
  *				  interrupt frame.
  *		- ARG_CLOCKRAME

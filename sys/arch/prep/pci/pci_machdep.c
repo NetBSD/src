@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.40 2014/04/03 23:49:47 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.41 2014/10/18 08:33:26 snj Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.40 2014/04/03 23:49:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.41 2014/10/18 08:33:26 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -183,7 +183,7 @@ prep_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		    "prep-pcibus-rawdevnum");
 		dev = prop_number_integer_value(pbus);
 
-		/* now that we know the parent bus, we need to find it's pbi */
+		/* now that we know the parent bus, we need to find its pbi */
 		pbi = SIMPLEQ_FIRST(&genppc_pct->pc_pbi);
 		while (busno--)
 			pbi = SIMPLEQ_NEXT(pbi, next);

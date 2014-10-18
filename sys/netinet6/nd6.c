@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.153 2014/10/14 15:29:43 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.154 2014/10/18 08:33:29 snj Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.153 2014/10/14 15:29:43 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.154 2014/10/18 08:33:29 snj Exp $");
 
 #include "bridge.h"
 #include "carp.h"
@@ -185,14 +185,14 @@ nd6_ifattach(struct ifnet *ifp)
 
 	/* A loopback interface always has ND6_IFF_AUTO_LINKLOCAL.
 	 * A bridge interface should not have ND6_IFF_AUTO_LINKLOCAL
-	 * because one of it's members should. */
+	 * because one of its members should. */
 	if ((ip6_auto_linklocal && ifp->if_type != IFT_BRIDGE) ||
 	    (ifp->if_flags & IFF_LOOPBACK))
 		nd->flags |= ND6_IFF_AUTO_LINKLOCAL;
 
 	/* A loopback interface does not need to accept RTADV.
 	 * A bridge interface should not accept RTADV
-	 * because one of it's members should. */
+	 * because one of its members should. */
 	if (ip6_accept_rtadv &&
 	    !(ifp->if_flags & IFF_LOOPBACK) &&
 	    !(ifp->if_type != IFT_BRIDGE))

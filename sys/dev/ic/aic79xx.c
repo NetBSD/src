@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.49 2014/04/17 18:17:09 christos Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.50 2014/10/18 08:33:27 snj Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.49 2014/04/17 18:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.50 2014/10/18 08:33:27 snj Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -1838,7 +1838,7 @@ ahd_handle_transmission_error(struct ahd_softc *ahd)
 		 * ignore a perfectly valid "unexected busfree"
 		 * after our "initiator detected error" message is
 		 * sent.  A busfree is the expected response after
-		 * we tell the target that it's L_Q was corrupted.
+		 * we tell the target that its L_Q was corrupted.
 		 * (SPI4R09 10.7.3.3.3)
 		 */
 		ahd_outb(ahd, LQCTL2, LQIRETRY);

@@ -1,4 +1,4 @@
-/*	$NetBSD: environment.c,v 1.3 2009/11/22 19:09:15 mbalmer Exp $	*/
+/*	$NetBSD: environment.c,v 1.4 2014/10/18 08:33:25 snj Exp $	*/
 
 
 /* 
@@ -46,7 +46,7 @@ static void	env_discard(struct env_var *ev);
 struct env_var	*environ = NULL;
 
 /*
- * Look up (name) and return it's env_var structure.
+ * Look up (name) and return its env_var structure.
  */
 struct env_var	*
 env_getenv(const char *name)

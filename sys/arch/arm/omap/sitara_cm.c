@@ -1,4 +1,4 @@
-/* $NetBSD: sitara_cm.c,v 1.1 2013/04/17 14:31:02 bouyer Exp $ */
+/* $NetBSD: sitara_cm.c,v 1.2 2014/10/18 08:33:24 snj Exp $ */
 /*
  * Copyright (c) 2010
  *	Ben Gray <ben.r.gray@gmail.com>.
@@ -47,7 +47,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sitara_cm.c,v 1.1 2013/04/17 14:31:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sitara_cm.c,v 1.2 2014/10/18 08:33:24 snj Exp $");
 
 #include "opt_omap.h"
 
@@ -126,7 +126,7 @@ sitara_cm_padconf_from_name(const char *ballname)
  *	
  *
  *	LOCKING:
- *	Internally locks it's own context.
+ *	Internally locks its own context.
  *
  *	RETURNS:
  *	0 on success.
@@ -176,7 +176,7 @@ sitara_cm_padconf_set_internal(struct sitara_cm_softc *sc,
  *	
  *
  *	LOCKING:
- *	Internally locks it's own context.
+ *	Internally locks its own context.
  *
  *	RETURNS:
  *	0 on success.
@@ -208,7 +208,7 @@ sitara_cm_padconf_set(const char *padname, const char *muxmode, unsigned int sta
  *	
  *
  *	LOCKING:
- *	Internally locks it's own context.
+ *	Internally locks its own context.
  *
  *	RETURNS:
  *	0 on success.
@@ -254,7 +254,7 @@ sitara_cm_padconf_get(const char *padname, const char **muxmode,
  *	
  *
  *	LOCKING:
- *	Internally locks it's own context.
+ *	Internally locks its own context.
  *
  *	RETURNS:
  *	0 on success.
@@ -300,7 +300,7 @@ sitara_cm_padconf_set_gpiomode(uint32_t gpio, unsigned int state)
  *	
  *
  *	LOCKING:
- *	Internally locks it's own context.
+ *	Internally locks its own context.
  *
  *	RETURNS:
  *	0 on success.

@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.40 2014/03/29 19:28:24 christos Exp $ */
+/* $NetBSD: auixp.c,v 1.41 2014/10/18 08:33:28 snj Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.40 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.41 2014/10/18 08:33:28 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -665,7 +665,7 @@ auixp_allocate_dma_chain(struct auixp_softc *sc, struct auixp_dma **dmap)
 }
 
 
-/* program dma chain in it's link address descriptor */
+/* program dma chain in its link address descriptor */
 static void
 auixp_program_dma_chain(struct auixp_softc *sc, struct auixp_dma *dma)
 {
@@ -795,7 +795,7 @@ auixp_trigger_output(void *hdl, void *start, void *end, int blksize,
 }
 
 
-/* halt output of audio, just disable it's dma and update bus state */
+/* halt output of audio, just disable its dma and update bus state */
 static int
 auixp_halt_output(void *hdl)
 {
@@ -870,7 +870,7 @@ auixp_trigger_input(void *hdl, void *start, void *end, int blksize,
 }
 
 
-/* halt sampling audio, just disable it's dma and update bus state */
+/* halt sampling audio, just disable its dma and update bus state */
 static int
 auixp_halt_input(void *hdl)
 {

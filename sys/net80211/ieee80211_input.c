@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.77 2013/09/13 20:19:53 joerg Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.78 2014/10/18 08:33:29 snj Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.77 2013/09/13 20:19:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.78 2014/10/18 08:33:29 snj Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -950,7 +950,7 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		} else if ((ni->ni_flags & IEEE80211_NODE_AREF) == 0)
 			(void) ieee80211_ref_node(ni);
 		/*
-		 * Mark the node as referenced to reflect that it's
+		 * Mark the node as referenced to reflect that its
 		 * reference count has been bumped to insure it remains
 		 * after the transaction completes.
 		 */
@@ -1145,7 +1145,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				allocbs = 0;
 			}
 			/*
-			 * Mark the node as referenced to reflect that it's
+			 * Mark the node as referenced to reflect that its
 			 * reference count has been bumped to insure it remains
 			 * after the transaction completes.
 			 */
