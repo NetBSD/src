@@ -1,10 +1,13 @@
-#	$NetBSD: files.pci,v 1.17 2014/10/17 20:55:21 uebayasi Exp $
+#	$NetBSD: files.pci,v 1.18 2014/10/18 16:56:51 uebayasi Exp $
 
 device 	aapic
 attach 	aapic at pci
 file 	arch/x86/pci/aapic.c		aapic
 
 file	arch/x86/pci/agp_machdep.c	agp
+
+define	agp_x86: agp_ali, agp_amd, agp_amd64, agp_i810, agp_intel, agp_sis, agp_via
+defflag	AGP_X86
 
 define amdnb_miscbus {}
 
