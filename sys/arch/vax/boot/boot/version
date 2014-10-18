@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.6 2005/12/11 12:19:30 christos Exp $
+$NetBSD: version,v 1.7 2014/10/18 08:33:27 snj Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -20,7 +20,7 @@ is taken as the current.
 	Create a fake RPB if either netbooted (on machine without RPB) or
 	loaded from console storage (without VMB intervention).
 1.7:	Add support for loading a 2nd stage boot in either a.out or ELF.
-	Add support for loading a 2nd stage boot directly to it's desired
+	Add support for loading a 2nd stage boot directly to its desired
 	address if possible.
 	Cleanup use of u_int/size_t.
 1.8:	Switch to loadfile instead of exec.  Now we can load a.out or ELF

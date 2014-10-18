@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ctf.c,v 1.4 2014/09/21 17:17:15 christos Exp $	*/
+/*	$NetBSD: kern_ctf.c,v 1.5 2014/10/18 08:33:29 snj Exp $	*/
 /*-
  * Copyright (c) 2008 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -168,7 +168,7 @@ mod_ctf_get(struct module *mod, mod_ctf_t *mc)
 	}
 
 	/*
-	 * Allocate memory to buffer the CTF data in it's decompressed
+	 * Allocate memory to buffer the CTF data in its decompressed
 	 * form.
 	 */
 	if (compressed) {

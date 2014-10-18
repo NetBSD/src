@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.54 2013/03/21 18:30:09 christos Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.55 2014/10/18 08:33:29 snj Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.22 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.54 2013/03/21 18:30:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.55 2014/10/18 08:33:29 snj Exp $");
 #endif
 
 /*
@@ -492,7 +492,7 @@ findrate(struct ieee80211com *ic, enum ieee80211_phymode mode, int rate)
 }
 
 /*
- * Find an instance by it's mac address.
+ * Find an instance by its mac address.
  */
 struct ieee80211com *
 ieee80211_find_vap(const u_int8_t mac[IEEE80211_ADDR_LEN])

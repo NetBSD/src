@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.36 2014/09/09 20:16:12 rmind Exp $	 */
+/*	$NetBSD: at_control.c,v 1.37 2014/10/18 08:33:29 snj Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.36 2014/09/09 20:16:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.37 2014/10/18 08:33:29 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -697,7 +697,7 @@ at_broadcast(const struct sockaddr_at *sat)
  *
  * Split the range into two subranges such that the middle
  * of the two ranges is the point where the highest bit of difference
- * between the two addresses, makes it's transition
+ * between the two addresses, makes its transition
  * Each of the upper and lower ranges might not exist, or might be
  * representable by 1 or more netmasks. In addition, if both
  * ranges can be represented by the same netmask, then teh can be merged

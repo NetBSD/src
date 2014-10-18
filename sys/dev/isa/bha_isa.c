@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.35 2012/10/27 17:18:24 chs Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.36 2014/10/18 08:33:28 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.35 2012/10/27 17:18:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.36 2014/10/18 08:33:28 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ CFATTACH_DECL_NEW(bha_isa, sizeof(struct bha_softc),
 
 /*
  * Check the slots looking for a board we recognise
- * If we find one, note it's address (slot) and call
+ * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
 int

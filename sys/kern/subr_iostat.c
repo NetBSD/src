@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.20 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.21 2014/10/18 08:33:29 snj Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.20 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.21 2014/10/18 08:33:29 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -330,7 +330,7 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 
 	/*
 	 * The original hw.diskstats call was broken and did not require
-	 * the userland to pass in it's size of struct disk_sysctl.  This
+	 * the userland to pass in its size of struct disk_sysctl.  This
 	 * was fixed after NetBSD 1.6 was released.
 	 */
 	if (namelen == 0)

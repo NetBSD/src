@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.25 2012/10/27 17:17:35 chs Exp $	*/
+/*	$NetBSD: btl.c,v 1.26 2014/10/18 08:33:24 snj Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.25 2012/10/27 17:17:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.26 2014/10/18 08:33:24 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -883,7 +883,7 @@ bt_done(struct bt_softc *sc, struct bt_ccb *ccb)
 }
 
 /*
- * Find the board and find it's irq/drq
+ * Find the board and find its irq/drq
  */
 int
 bt_find(struct isa_attach_args *ia, struct bt_softc *sc)

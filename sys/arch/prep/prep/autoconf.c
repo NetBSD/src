@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 2014/03/27 18:22:56 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.28 2014/10/18 08:33:26 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27 2014/03/27 18:22:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28 2014/10/18 08:33:26 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,7 @@ gen_fwpath(device_t dev)
 }
 
 /*
- * Generate properties for each device by totaling up it's parent device
+ * Generate properties for each device by totaling up its parent device
  */
 static void
 build_fwpath(void)

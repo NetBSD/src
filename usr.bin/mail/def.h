@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.27 2009/04/10 13:08:24 christos Exp $	*/
+/*	$NetBSD: def.h,v 1.28 2014/10/18 08:33:30 snj Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.27 2009/04/10 13:08:24 christos Exp $
+ *	$NetBSD: def.h,v 1.28 2014/10/18 08:33:30 snj Exp $
  */
 
 /*
@@ -358,7 +358,7 @@ struct name {
 struct var {
 	struct	var *v_link;		/* Forward link to next variable */
 	char	*v_name;		/* The variable's name */
-	char	*v_value;		/* And it's current value */
+	char	*v_value;		/* And its current value */
 };
 
 struct group {

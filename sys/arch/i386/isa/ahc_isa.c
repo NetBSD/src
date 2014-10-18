@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.39 2011/07/01 18:11:24 dyoung Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.40 2014/10/18 08:33:25 snj Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.39 2011/07/01 18:11:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.40 2014/10/18 08:33:25 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,7 +299,7 @@ ahc_isa_match(struct isa_attach_args *ia, bus_addr_t iobase)
 
 /*
  * Check the slots looking for a board we recognise
- * If we find one, note it's address (slot) and call
+ * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
 int

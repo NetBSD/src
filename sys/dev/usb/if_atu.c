@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.49 2013/03/30 03:15:52 christos Exp $ */
+/*	$NetBSD: if_atu.c,v 1.50 2014/10/18 08:33:28 snj Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.49 2013/03/30 03:15:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50 2014/10/18 08:33:28 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -497,7 +497,7 @@ atu_start_ibss(struct atu_softc *sc)
 		return err;
 	}
 
-	/* Wait for the adapter to do it's thing */
+	/* Wait for the adapter to do its thing */
 	err = atu_wait_completion(sc, CMD_START_IBSS, NULL);
 	if (err) {
 		DPRINTF(("%s: error waiting for start_ibss\n",
@@ -1026,7 +1026,7 @@ atu_external_firmware(device_t arg)
 	}
 
 	/*
-	 * The SMC2662w V.4 seems to require some time to do it's thing with
+	 * The SMC2662w V.4 seems to require some time to do its thing with
 	 * the external firmware... 20 ms isn't enough, but 21 ms works 100
 	 * times out of 100 tries. We'll wait a bit longer just to be sure
 	 */

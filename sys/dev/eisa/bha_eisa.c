@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.36 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.37 2014/10/18 08:33:27 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.36 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_eisa.c,v 1.37 2014/10/18 08:33:27 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ bha_eisa_address(bus_space_tag_t iot, bus_space_handle_t ioh, int *portp)
 
 /*
  * Check the slots looking for a board we recognise
- * If we find one, note it's address (slot) and call
+ * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
 static int

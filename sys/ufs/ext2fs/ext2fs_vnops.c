@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.113 2014/07/25 08:20:53 dholland Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.114 2014/10/18 08:33:29 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.113 2014/07/25 08:20:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.114 2014/10/18 08:33:29 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -749,7 +749,7 @@ ext2fs_mkdir(void *v)
 		uvm_vnp_setsize(tvp, ext2fs_size(ip));
 	}
 
-	/* Directory set up, now install it's entry in the parent directory. */
+	/* Directory set up, now install its entry in the parent directory. */
 	error = ext2fs_direnter(ip, dvp, ulr, cnp);
 	if (error != 0) {
 		dp->i_e2fs_nlink--;

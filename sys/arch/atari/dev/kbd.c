@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.45 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: kbd.c,v 1.46 2014/10/18 08:33:25 snj Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.45 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.46 2014/10/18 08:33:25 snj Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -211,7 +211,7 @@ kbdattach(device_t parent, device_t self, void *aux)
 		timeout = KBD->ac_da;
 
 	/*
-	 * Now send the reset string, and read+ignore it's response
+	 * Now send the reset string, and read+ignore its response
 	 */
 	if (!kbd_write_poll(kbd_rst, 2))
 		printf("kbd: error cannot reset keyboard\n");

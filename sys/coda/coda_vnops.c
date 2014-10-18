@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.97 2014/07/25 08:20:51 dholland Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.98 2014/10/18 08:33:27 snj Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.97 2014/07/25 08:20:51 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.98 2014/10/18 08:33:27 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -784,7 +784,7 @@ coda_fsync(void *v)
     MARK_ENTRY(CODA_FSYNC_STATS);
 
     /* Check for fsync on an unmounting object */
-    /* The NetBSD kernel, in it's infinite wisdom, can try to fsync
+    /* The NetBSD kernel, in its infinite wisdom, can try to fsync
      * after an unmount has been initiated.  This is a Bad Thing,
      * which we have to avoid.  Not a legitimate failure for stats.
      */

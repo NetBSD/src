@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.25 2009/04/15 01:20:57 christos Exp $ */
+/* $NetBSD: read.c,v 1.26 2014/10/18 08:33:30 snj Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.25 2009/04/15 01:20:57 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.26 2014/10/18 08:33:30 snj Exp $");
 #endif
 
 #include <ctype.h>
@@ -556,7 +556,7 @@ inptype(const char *cp, const char **epp)
 	u_short	tidx, sidx;
 	int	h;
 
-	/* If we have this type already, return it's index. */
+	/* If we have this type already, return its index. */
 	tlen = gettlen(cp, &ep);
 	h = thash(cp, tlen);
 	if ((tidx = findtype(cp, tlen, h)) != 0) {
@@ -966,7 +966,7 @@ gettlen(const char *cp, const char **epp)
 }
 
 /*
- * Search a type by it's type string.
+ * Search a type by its type string.
  */
 static u_short
 findtype(const char *cp, size_t len, int h)
@@ -984,7 +984,7 @@ findtype(const char *cp, size_t len, int h)
 }
 
 /*
- * Store a type and it's type string so we can later share this type
+ * Store a type and its type string so we can later share this type
  * if we read the same type string from the input file.
  */
 static u_short

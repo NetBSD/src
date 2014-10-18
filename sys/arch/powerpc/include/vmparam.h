@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18 2014/01/25 15:16:50 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.19 2014/10/18 08:33:26 snj Exp $	*/
 
 #ifndef _POWERPC_VMPARAM_H_
 #define _POWERPC_VMPARAM_H_
@@ -21,7 +21,7 @@
 
 /*
  * The address to which unspecified mapping requests default
- * Put the stack in it's own segment and start mmaping at the
+ * Put the stack in its own segment and start mmaping at the
  * top of the next lower segment.
  */
 #define	__USE_TOPDOWN_VM

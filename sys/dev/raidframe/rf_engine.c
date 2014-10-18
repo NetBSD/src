@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.49 2013/09/15 12:45:11 martin Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.50 2014/10/18 08:33:28 snj Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.49 2013/09/15 12:45:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.50 2014/10/18 08:33:28 snj Exp $");
 
 #include <sys/errno.h>
 
@@ -187,7 +187,7 @@ BranchDone(RF_DagNode_t *node)
 {
 	int     i;
 
-	/* return true if forward execution is completed for a node and it's
+	/* return true if forward execution is completed for a node and its
 	 * succedents */
 	switch (node->status) {
 	case rf_wait:

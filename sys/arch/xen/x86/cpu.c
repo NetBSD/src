@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.98 2014/02/12 23:24:09 dsl Exp $	*/
+/*	$NetBSD: cpu.c,v 1.99 2014/10/18 08:33:27 snj Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.98 2014/02/12 23:24:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.99 2014/10/18 08:33:27 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -441,7 +441,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		cpu_init(ci);
 		pmap_cpu_init_late(ci);
 
-		/* Every processor needs to init it's own ipi h/w (similar to lapic) */
+		/* Every processor needs to init its own ipi h/w (similar to lapic) */
 		xen_ipi_init();
 
 		/* Make sure DELAY() is initialized. */

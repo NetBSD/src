@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.16 2014/08/01 12:55:00 wiz Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.17 2014/10/18 08:33:31 snj Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.16 2014/08/01 12:55:00 wiz Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.17 2014/10/18 08:33:31 snj Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -714,7 +714,7 @@ callback_html(void *data, const char *section, const char *name,
 /*
  * run_query_html --
  *  Utility function to output query result in HTML format.
- *  It internally calls run_query only, but it first passes the output to it's
+ *  It internally calls run_query only, but it first passes the output to its
  *  own custom callback function, which preprocess the snippet for quoting
  *  inline HTML fragments.
  *  After that it delegates the call the actual user supplied callback function.
@@ -876,7 +876,7 @@ callback_term(void *data, const char *section, const char *name,
  * run_query_pager --
  *  Utility function similar to run_query_html. This function tries to
  *  pre-process the result assuming it will be piped to a pager.
- *  For this purpose it first calls it's own callback function callback_pager
+ *  For this purpose it first calls its own callback function callback_pager
  *  which then delegates the call to the user supplied callback.
  */
 static int
@@ -933,7 +933,7 @@ term_init(int fd, const char *sa[5])
  * run_query_term --
  *  Utility function similar to run_query_html. This function tries to
  *  pre-process the result assuming it will be displayed on a terminal
- *  For this purpose it first calls it's own callback function callback_pager
+ *  For this purpose it first calls its own callback function callback_pager
  *  which then delegates the call to the user supplied callback.
  */
 static int

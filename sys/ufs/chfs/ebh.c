@@ -1,4 +1,4 @@
-/*	$NetBSD: ebh.c,v 1.4 2014/09/01 16:48:42 he Exp $	*/
+/*	$NetBSD: ebh.c,v 1.5 2014/10/18 08:33:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -425,7 +425,7 @@ nand_check_eb_hdr(struct chfs_ebh *ebh, void *buf)
  *
  * @ebh: chfs eraseblock handler
  * @pebnr: eraseblock number
- * @lid: leb id (it's bit number 31 will be set to 0)
+ * @lid: leb id (its bit number 31 will be set to 0)
  *
  * It pulls the CHFS_LID_NOT_DIRTY_BIT to zero on flash.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.105 2011/08/30 23:06:00 joerg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.106 2014/10/18 08:33:30 snj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
@@ -30,7 +30,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006\
  Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.105 2011/08/30 23:06:00 joerg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.106 2014/10/18 08:33:30 snj Exp $");
 #endif /* not lint */
 
 /*
@@ -1723,7 +1723,7 @@ handle_stdout(void)
 		return;
 	}
 #endif
-	/* If stdin is a file use it's mtime, otherwise use current time */
+	/* If stdin is a file use its mtime, otherwise use current time */
 	ret = fstat(STDIN_FILENO, &sb);
 
 #ifndef SMALL

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.221 2014/05/25 13:46:16 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.222 2014/10/18 08:33:30 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.221 2014/05/25 13:46:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.222 2014/10/18 08:33:30 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1086,7 +1086,7 @@ ufs_mkdir(void *v)
 	memcpy((void *)bp->b_data, (void *)&dirtemplate, sizeof dirtemplate);
 
 	/*
-	 * Directory set up, now install it's entry in the parent directory.
+	 * Directory set up, now install its entry in the parent directory.
 	 * We must write out the buffer containing the new directory body
 	 * before entering the new name in the parent.
 	 */

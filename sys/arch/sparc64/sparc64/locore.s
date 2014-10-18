@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.374 2014/10/15 21:18:32 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.375 2014/10/18 08:33:27 snj Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -4487,7 +4487,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 4:
 
 	!! Setup kernel stack (we rely on curlwp on this cpu
-	!! being lwp0 here and it's uarea is mapped special
+	!! being lwp0 here and its uarea is mapped special
 	!! and already accessible here)
 	flushw
 	LDPTR	[%l7 + CI_CPCB], %l0		! load PCB/uarea pointer

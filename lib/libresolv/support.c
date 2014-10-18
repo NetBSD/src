@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.1 2012/11/15 18:48:49 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.2 2014/10/18 08:33:23 snj Exp $	*/
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -20,7 +20,7 @@
 #if 0
 static const char rcsid[] = "Header: /proj/cvs/prod/libbind/dst/support.c,v 1.6 2005/10/11 00:10:13 marka Exp ";
 #else
-__RCSID("$NetBSD: support.c,v 1.1 2012/11/15 18:48:49 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.2 2014/10/18 08:33:23 snj Exp $");
 #endif
 
 #include "port_before.h"
@@ -256,7 +256,7 @@ dst_s_filename_length(const char *name, const char *suffix)
 
 /*%
  *  dst_s_build_filename ()
- *	Builds a key filename from the key name, it's id, and a
+ *	Builds a key filename from the key name, its id, and a
  *	suffix.  '\', '/' and ':' are not allowed. fA filename is of the
  *	form:  K&lt;keyname&gt;&lt;id&gt;.&lt;suffix&gt;
  *	form: K&lt;keyname&gt;+&lt;alg&gt;+&lt;id&gt;.&lt;suffix&gt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.72 2014/04/16 18:55:19 maxv Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.73 2014/10/18 08:33:29 snj Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.72 2014/04/16 18:55:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.73 2014/10/18 08:33:29 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/*
 	 * Copy in the upper layer's RDONLY flag.  This is for the benefit
 	 * of lookup() which explicitly checks the flag, rather than asking
-	 * the filesystem for it's own opinion.  This means, that an update
+	 * the filesystem for its own opinion.  This means, that an update
 	 * mount of the underlying filesystem to go from rdonly to rdwr
 	 * will leave the unioned view as read-only.
 	 */

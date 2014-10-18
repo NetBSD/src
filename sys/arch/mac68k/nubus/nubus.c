@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.64 2012/10/27 17:17:59 chs Exp $	*/
+/*	$NetBSD: nubus.c,v 1.65 2014/10/18 08:33:26 snj Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nubus.c,v 1.64 2012/10/27 17:17:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nubus.c,v 1.65 2014/10/18 08:33:26 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,7 @@ nubus_video_resource(int slot)
 
 /*
  * Probe a given nubus slot.  If a card is there and we can get the
- * format block from it's clutching decl. ROMs, fill the format block
+ * format block from its clutching decl. ROMs, fill the format block
  * and return non-zero.  If we can't find a card there with a valid
  * decl. ROM, return 0.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66 2013/08/23 06:19:46 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.67 2014/10/18 08:33:26 snj Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.66 2013/08/23 06:19:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67 2014/10/18 08:33:26 snj Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -293,7 +293,7 @@ trap(struct trapframe *tf)
 		/*
 		 * Illegal insn:
 		 *
-		 * let's try to see if it's FPU and can be emulated.
+		 * let's try to see if its FPU and can be emulated.
 		 */
 		curcpu()->ci_data.cpu_ntrap++;
 		pcb = lwp_getpcb(l);

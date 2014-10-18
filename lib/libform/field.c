@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.27 2013/11/21 15:40:17 christos Exp $	*/
+/*	$NetBSD: field.c,v 1.28 2014/10/18 08:33:23 snj Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: field.c,v 1.27 2013/11/21 15:40:17 christos Exp $");
+__RCSID("$NetBSD: field.c,v 1.28 2014/10/18 08:33:23 snj Exp $");
 
 #include <sys/param.h>
 #include <stdlib.h>
@@ -835,7 +835,7 @@ new_field(int rows, int cols, int frow, int fcol, int nrows, int nbuf)
 }
 
 /*
- * Duplicate the given field, including it's buffers.
+ * Duplicate the given field, including its buffers.
  */
 FIELD *
 dup_field(FIELD *field, int frow, int fcol)

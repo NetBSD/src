@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.174 2014/08/24 07:59:23 jnemeth Exp $
+# $NetBSD: GENERIC,v 1.175 2014/10/18 08:33:26 snj Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.174 $"
+#ident 		"GENERIC-$Revision: 1.175 $"
 
 maxusers	64
 
@@ -423,7 +423,7 @@ ld*	at mlx? unit ?
 ## Floppy controller and drive found on SPARCstations.
 
 # need share with the sparc, and everyone else.  needs to use auxio.
-# actually, the ebus version has (will have) direct access to it's AUXIO
+# actually, the ebus version has (will have) direct access to its AUXIO
 # register space (it is mapped in to fdthree not auxio).
 fdc0	at sbus? slot ? offset ?		# SUNW,fdtwo
 #fdc0	at ebus?				# fdthree, EXPERIMENTAL

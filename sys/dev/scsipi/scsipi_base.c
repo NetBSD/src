@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.161 2014/10/06 14:42:08 christos Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.162 2014/10/18 08:33:28 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.161 2014/10/06 14:42:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.162 2014/10/18 08:33:28 snj Exp $");
 
 #include "opt_scsi.h"
 
@@ -808,7 +808,7 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 #endif
 
 	/*
-	 * If the periph has it's own error handler, call it first.
+	 * If the periph has its own error handler, call it first.
 	 * If it returns a legit error value, return that, otherwise
 	 * it wants us to continue with normal error processing.
 	 */
@@ -2451,7 +2451,7 @@ scsipi_sync_factor_to_freq(int factor)
 
 #ifdef SCSIPI_DEBUG
 /*
- * Given a scsipi_xfer, dump the request, in all it's glory
+ * Given a scsipi_xfer, dump the request, in all its glory
  */
 void
 show_scsipi_xs(struct scsipi_xfer *xs)

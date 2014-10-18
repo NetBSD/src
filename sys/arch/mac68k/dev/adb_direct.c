@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.66 2013/10/25 21:19:56 martin Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.67 2014/10/18 08:33:25 snj Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.66 2013/10/25 21:19:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.67 2014/10/18 08:33:25 snj Exp $");
 
 #include "opt_adb.h"
 
@@ -1603,7 +1603,7 @@ send_adb_iop(int cmd, u_char * buffer, void *compRout, void *data)
  *
  * If in->unsol is 1, then this packet was unsolicited and
  * so we look up the device in the ADB device table to determine
- * what it's default service routine is.
+ * what its default service routine is.
  *
  * If in->ack_only is 1, then we really only need to call
  * the completion routine, so don't do any other stuff.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.12 2010/05/17 23:09:52 jakllsch Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.13 2014/10/18 08:33:27 snj Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.12 2010/05/17 23:09:52 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.13 2014/10/18 08:33:27 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.12 2010/05/17 23:09:52 jakllsch Ex
  * GUID to dkw_ptype mapping information.
  *
  * GPT_ENT_TYPE_MS_BASIC_DATA is not suited to mapping.  Aside from being
- * used for multiple Microsoft file systems, Linux uses it for it's own
+ * used for multiple Microsoft file systems, Linux uses it for its own
  * set of native file systems.  Treating this GUID as unknown seems best.
  */
 

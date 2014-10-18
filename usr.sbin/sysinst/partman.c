@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.6 2014/08/19 13:44:31 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.7 2014/10/18 08:33:31 snj Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -690,7 +690,7 @@ pm_raid_commit(void)
 							raids[i].node) == 0
 			) {
 			raids[i].blocked = 1; /* RAID creation done, remove it from list to 
-									 prevent it's repeated reinitialization */
+									 prevent its repeated reinitialization */
 			for (ii = 0; ii < MAX_IN_RAID; ii++)
 				if (raids[i].pm[ii] != NULL)
 					raids[i].pm[ii]->blocked++;

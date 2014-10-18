@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.59 2014/04/21 21:52:24 christos Exp $ */
+/* $NetBSD: scan.l,v 1.60 2014/10/18 08:33:30 snj Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.59 2014/04/21 21:52:24 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.60 2014/10/18 08:33:30 snj Exp $");
 #endif
 
 #include <stdlib.h>
@@ -434,7 +434,7 @@ hash(const char *s)
  * more deeply by data written to yylval.
  *
  * If it is a symbol, T_NAME is returned and the pointer to a sbuf struct
- * is stored in yylval. This struct contains the name of the symbol, it's
+ * is stored in yylval. This struct contains the name of the symbol, its
  * length and hash value. If there is already a symbol of the same name
  * and type in the symbol table, the sbuf struct also contains a pointer
  * to the symbol table entry.

@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.49 2014/07/25 08:10:37 dholland Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.50 2014/10/18 08:33:27 snj Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.49 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.50 2014/10/18 08:33:27 snj Exp $");
 
 #include "opt_ddb.h"
 
@@ -367,7 +367,7 @@ clmpcc_init(struct clmpcc_softc *sc)
 	delay(1000);
 
 	/*
-	 * The chip will set it's firmware revision register to a non-zero
+	 * The chip will set its firmware revision register to a non-zero
 	 * value to indicate completion of reset.
 	 */
 	for (i = 10000; clmpcc_rdreg(sc, CLMPCC_REG_GFRCR) == 0 && i; i--)

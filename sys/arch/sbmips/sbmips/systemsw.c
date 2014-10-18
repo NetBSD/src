@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.c,v 1.17 2011/07/09 16:59:40 matt Exp $ */
+/* $NetBSD: systemsw.c,v 1.18 2014/10/18 08:33:26 snj Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.17 2011/07/09 16:59:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: systemsw.c,v 1.18 2014/10/18 08:33:26 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -107,7 +107,7 @@ cpu_initclocks(void)
 		(*systemsw.s_statclock_init)(systemsw.s_statclock_arg);
 
 	/*
-	 * ``Disable'' the compare interrupt by setting it to it's largest
+	 * ``Disable'' the compare interrupt by setting it to its largest
 	 * value.  Each hard clock interrupt we'll reset the CP0 compare
 	 * register to just bind the CP0 clock register.
 	 */

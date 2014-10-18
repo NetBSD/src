@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clstate.c,v 1.1.1.1 2013/09/30 07:19:02 dholland Exp $	*/
+/*	$NetBSD: nfs_clstate.c,v 1.2 2014/10/18 08:33:28 snj Exp $	*/
 /*-
  * Copyright (c) 2009 Rick Macklem, University of Guelph
  * All rights reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clstate.c 252100 2013-06-22 21:58:21Z rmacklem "); */
-__RCSID("$NetBSD: nfs_clstate.c,v 1.1.1.1 2013/09/30 07:19:02 dholland Exp $");
+__RCSID("$NetBSD: nfs_clstate.c,v 1.2 2014/10/18 08:33:28 snj Exp $");
 
 /*
  * These functions implement the client side state handling for NFSv4.
@@ -4713,7 +4713,7 @@ nfscl_layout(struct nfsmount *nmp, vnode_t vp, u_int8_t *fhp, int fhlen,
 	if (lyp == NULL) {
 		/*
 		 * Although no lyp was passed in, another thread might have
-		 * allocated one. If one is found, just increment it's ref
+		 * allocated one. If one is found, just increment its ref
 		 * count and return it.
 		 */
 		lyp = nfscl_findlayout(clp, fhp, fhlen);

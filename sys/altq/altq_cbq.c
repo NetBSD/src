@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.27 2014/03/20 20:51:54 christos Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.28 2014/10/18 08:33:24 snj Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.27 2014/03/20 20:51:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.28 2014/10/18 08:33:24 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -348,7 +348,7 @@ cbq_add_queue(struct pf_altq *a)
 		borrow = NULL;
 
 	/*
-	 * A class must borrow from it's parent or it can not
+	 * A class must borrow from its parent or it can not
 	 * borrow at all.  Hence, borrow can be null.
 	 */
 	if (parent == NULL && (opts->flags & CBQCLF_ROOTCLASS) == 0) {
@@ -626,7 +626,7 @@ cbq_add_class(struct cbq_add_class *acp)
 	borrow = clh_to_clp(cbqp, acp->cbq_class.borrow_class_handle);
 
 	/*
-	 * A class must borrow from it's parent or it can not
+	 * A class must borrow from its parent or it can not
 	 * borrow at all.  Hence, borrow can be null.
 	 */
 	if (parent == NULL && (acp->cbq_class.flags & CBQCLF_ROOTCLASS) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.71 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: dpt.c,v 1.72 2014/10/18 08:33:27 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.71 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.72 2014/10/18 08:33:27 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -608,7 +608,7 @@ dpt_readcfg(struct dpt_softc *sc)
 
 /*
  * Our `shutdownhook' to cleanly shut down the HBA.  The HBA must flush all
- * data from it's cache and mark array groups as clean.
+ * data from its cache and mark array groups as clean.
  *
  * XXX This doesn't always work (i.e., the HBA may still be flushing after
  * we tell root that it's safe to power off).

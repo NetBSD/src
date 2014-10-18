@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.61 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: ahb.c,v 1.62 2014/10/18 08:33:27 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.61 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.62 2014/10/18 08:33:27 snj Exp $");
 
 #include "opt_ddb.h"
 
@@ -144,7 +144,7 @@ CFATTACH_DECL_NEW(ahb, sizeof(struct ahb_softc),
 
 /*
  * Check the slots looking for a board we recognise
- * If we find one, note it's address (slot) and call
+ * If we find one, note its address (slot) and call
  * the actual probe routine to check it out.
  */
 static int
