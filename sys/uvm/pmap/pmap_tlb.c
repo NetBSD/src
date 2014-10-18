@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.8 2014/04/03 14:46:25 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.9 2014/10/18 09:54:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.8 2014/04/03 14:46:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.9 2014/10/18 09:54:19 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -437,7 +437,7 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 			tlb_invalidate_asids(KERNEL_PID + 1, ti->ti_asid_max);
 #else /* MULTIPROCESSOR && !PMAP_NEED_TLB_SHOOTDOWN */
 			/*
-			 * For those systems (PowerPC) that don't need require
+			 * For those systems (PowerPC) that don't require
 			 * cross cpu TLB shootdowns, we have to invalidate the
 			 * entire TLB because we can't record the ASIDs in use
 			 * on the other CPUs.  This is hopefully cheaper than
