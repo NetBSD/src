@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.13 2014/10/18 12:45:25 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.14 2014/10/19 16:09:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -65,6 +65,11 @@ static const struct awin_gpio_pinset awin_gige_gpio_pinset = {
 	'A', AWIN_PIO_PA_GMAC_FUNC, AWIN_PIO_PA_GMAC_PINS,
 };
 
+static const struct awin_gpio_pinset awin_gige_gpio_pinset_a31 = {
+	'A', AWIN_A31_PIO_PA_GMAC_FUNC, AWIN_A31_PIO_PA_GMAC_PINS,
+};
+
+
 CFATTACH_DECL_NEW(awin_gige, sizeof(struct awin_gige_softc),
 	awin_gige_match, awin_gige_attach, NULL, NULL);
 
@@ -72,6 +77,9 @@ static int
 awin_gige_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct awinio_attach_args * const aio = aux;
+	const struct awin_gpio_pinset *pinset =
+	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
+	    &awin_gige_gpio_pinset_a31 : &awin_gige_gpio_pinset;
 #ifdef DIAGNOSTIC
 	const struct awin_locators * const loc = &aio->aio_loc;
 #endif
@@ -82,7 +90,7 @@ awin_gige_match(device_t parent, cfdata_t cf, void *aux)
 	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT
 	    || cf->cf_loc[AWINIOCF_PORT] == loc->loc_port);
 
-	if (!awin_gpio_pinset_available(&awin_gige_gpio_pinset))
+	if (!awin_gpio_pinset_available(pinset))
 		return 0;
 
 	return 1;
@@ -94,13 +102,16 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 	struct awin_gige_softc * const sc = device_private(self);
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
+	const struct awin_gpio_pinset *pinset =
+	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
+	    &awin_gige_gpio_pinset_a31 : &awin_gige_gpio_pinset;
 	prop_dictionary_t cfg = device_properties(self);
 	uint32_t clkreg;
 	const char *phy_type, *pin_name;
 
 	sc->sc_core.sc_dev = self;
 
-	awin_gpio_pinset_acquire(&awin_gige_gpio_pinset);
+	awin_gpio_pinset_acquire(pinset);
 
 	sc->sc_core.sc_bst = aio->aio_core_bst;
 	sc->sc_core.sc_dmat = aio->aio_dmat;
@@ -139,19 +150,36 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 	    AWIN_AHB_GATING1_REG, AWIN_AHB_GATING1_GMAC, 0);
 
 	/*
+	 * Soft reset
+	 */
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_A31_AHB_RESET0_REG, AWIN_A31_AHB_RESET0_GMAC_RST, 0);
+	}
+
+	/*
 	 * PHY clock setup
 	 */
 	if (!prop_dictionary_get_cstring_nocopy(cfg, "phy-type", &phy_type))
 		phy_type = "rgmii";
 	if (strcmp(phy_type, "rgmii") == 0) {
 		clkreg = AWIN_GMAC_CLK_PIT | AWIN_GMAC_CLK_TCS_INT_RGMII;
+	} else if (strcmp(phy_type, "gmii") == 0) {
+		clkreg = AWIN_GMAC_CLK_TCS_INT_RGMII;
 	} else if (strcmp(phy_type, "mii") == 0) {
 		clkreg = AWIN_GMAC_CLK_TCS_MII;
 	} else {
 		panic("unknown phy type '%s'", phy_type);
 	}
-	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_GMAC_CLK_REG, clkreg, AWIN_GMAC_CLK_PIT|AWIN_GMAC_CLK_TCS);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_A31_GMAC_CLK_REG, clkreg,
+		    AWIN_GMAC_CLK_PIT|AWIN_GMAC_CLK_TCS);
+	} else {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_GMAC_CLK_REG, clkreg,
+		    AWIN_GMAC_CLK_PIT|AWIN_GMAC_CLK_TCS);
+	}
 
 	dwc_gmac_attach(&sc->sc_core, GMAC_MII_CLK_150_250M_DIV102);
 }
