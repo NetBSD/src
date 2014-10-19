@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.60 2014/10/19 10:04:00 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.61 2014/10/19 15:24:07 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1787,4 +1787,22 @@ sys/kern/vfs_vnode.c				1.39
 	before it is fully initialised and revoking it then would panic.
 	Should prevent the panic from PR kern/49171 (panic when closing a pty).
 	[hannken, ticket #150]
+
+
+sys/compat/svr4/svr4_stat.c			1.70
+sys/dev/dm/dm_target_snapshot.c			1.17
+sys/dev/if_ndis/if_ndis_pci.c			1.20
+sys/fs/smbfs/smbfs_smb.c			1.45
+sys/ufs/ext2fs/ext2fs_readwrite.c		1.65
+
+	Various fixes: two memory leaks, a typo, a dead compiler condition and
+	unused macros, respectively in if_ndis and dm, smbfs, svr4 and ext2fs.
+	[maxv, ticket #148]
+
+
+sys/arch/arm/broadcom/bcm2835_vcaudio.c		1.4-1.7
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_shim.c 1.5
+
+	Various audio fixes for RPi.
+	[skrll, ticket #151]
 
