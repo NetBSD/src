@@ -1321,6 +1321,8 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 
 	if (sk == NULL) return(0);
 	q=p;
+	if (put_cb == NULL)
+		put_cb = s->method->put_cipher_by_char;
 
 	for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
 		{
@@ -1336,9 +1338,33 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 		    s->psk_client_callback == NULL)
 			continue;
 #endif /* OPENSSL_NO_PSK */
-		j = put_cb ? put_cb(c,p) : ssl_put_cipher_by_char(s,c,p);
+		j = put_cb(c,p);
 		p+=j;
 		}
+	/* If p == q, no ciphers; caller indicates an error.
+	* Otherwise, add applicable SCSVs. */
+	if (p != q)
+		{
+		if (!s->new_session)
+			{
+			static SSL_CIPHER scsv =
+				{
+				0, NULL, SSL3_CK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
+				};
+			j = put_cb(&scsv,p);
+			p+=j;
+			}
+		if (s->mode & SSL_MODE_SEND_FALLBACK_SCSV)
+			{
+			static SSL_CIPHER scsv =
+				{
+				0, NULL, SSL3_CK_FALLBACK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
+				};
+			j = put_cb(&scsv,p);
+			p+=j;
+			}
+		}
+
 	return(p-q);
 	}
 
@@ -1349,8 +1375,11 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
 	STACK_OF(SSL_CIPHER) *sk;
 	int i,n;
 
+	if (s->s3)
+		s->s3->send_connection_binding = 0;
+
 	n=ssl_put_cipher_by_char(s,NULL,NULL);
-	if ((num%n) != 0)
+	if (n == 0 || (num%n) != 0)
 		{
 		SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
 		return(NULL);
@@ -1365,6 +1394,62 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
 
 	for (i=0; i<num; i+=n)
 		{
+		c=ssl_get_cipher_by_char(s,p);
+		p+=n;
+		if (c != NULL)
+			{
+			if (!sk_SSL_CIPHER_push(sk,c))
+				{
+				SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,ERR_R_MALLOC_FAILURE);
+				goto err;
+				}
+			}
+		}
+
+	if ((skp == NULL) || (*skp == NULL))
+		sk=sk_SSL_CIPHER_new_null(); /* change perhaps later */
+	else
+		{
+		sk= *skp;
+		sk_SSL_CIPHER_zero(sk);
+		}
+
+	for (i=0; i<num; i+=n)
+		{
+		/* Check for TLS_EMPTY_RENEGOTIATION_INFO_SCSV */
+		if (s->s3 && (n != 3 || !p[0]) &&
+			(p[n-2] == ((SSL3_CK_SCSV >> 8) & 0xff)) &&
+			(p[n-1] == (SSL3_CK_SCSV & 0xff)))
+			{
+			/* SCSV fatal if renegotiating */
+			if (s->new_session)
+				{
+				SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING);
+				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_HANDSHAKE_FAILURE);
+				goto err;
+				}
+			s->s3->send_connection_binding = 1;
+			p += n;
+			continue;
+			}
+
+		/* Check for TLS_FALLBACK_SCSV */
+		if ((n != 3 || !p[0]) &&
+			(p[n-2] == ((SSL3_CK_FALLBACK_SCSV >> 8) & 0xff)) &&
+			(p[n-1] == (SSL3_CK_FALLBACK_SCSV & 0xff)))
+			{
+			/* The SCSV indicates that the client previously tried a higher version.
+			 * Fail if the current version is an unexpected downgrade. */
+			if (!SSL_ctrl(s, SSL_CTRL_CHECK_PROTO_VERSION, 0, NULL))
+				{
+				SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,SSL_R_INAPPROPRIATE_FALLBACK);
+				if (s->s3)
+					ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_INAPPROPRIATE_FALLBACK);
+				goto err;
+				}
+			continue;
+			}
+
 		c=ssl_get_cipher_by_char(s,p);
 		p+=n;
 		if (c != NULL)
