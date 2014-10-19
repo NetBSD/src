@@ -1,5 +1,5 @@
-/*	$NetBSD: kexgexs.c,v 1.6 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: kexgexs.c,v 1.16 2013/07/19 07:37:48 markus Exp $ */
+/*	$NetBSD: kexgexs.c,v 1.7 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: kexgexs.c,v 1.19 2014/02/02 03:44:31 djm Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexs.c,v 1.6 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: kexgexs.c,v 1.7 2014/10/19 16:30:58 christos Exp $");
 #include <sys/param.h>
 
 #include <stdio.h>
@@ -150,7 +150,7 @@ kexgex_server(Kex *kex)
 		fatal("kexgex_server: BN_new failed");
 	if (BN_bin2bn(kbuf, kout, shared_secret) == NULL)
 		fatal("kexgex_server: BN_bin2bn failed");
-	memset(kbuf, 0, klen);
+	explicit_bzero(kbuf, klen);
 	free(kbuf);
 
 	key_to_blob(server_host_public, &server_host_key_blob, &sbloblen);
@@ -160,11 +160,11 @@ kexgex_server(Kex *kex)
 
 	/* calc H */
 	kexgex_hash(
-	    kex->evp_md,
+	    kex->hash_alg,
 	    kex->client_version_string,
 	    kex->server_version_string,
-	    buffer_ptr(&kex->peer), buffer_len(&kex->peer),
-	    buffer_ptr(&kex->my), buffer_len(&kex->my),
+	    (char *)buffer_ptr(&kex->peer), buffer_len(&kex->peer),
+	    (char *)buffer_ptr(&kex->my), buffer_len(&kex->my),
 	    server_host_key_blob, sbloblen,
 	    omin, onbits, omax,
 	    dh->p, dh->g,
@@ -201,7 +201,7 @@ kexgex_server(Kex *kex)
 	/* have keys, free DH */
 	DH_free(dh);
 
-	kex_derive_keys(kex, hash, hashlen, shared_secret);
+	kex_derive_keys_bn(kex, hash, hashlen, shared_secret);
 	BN_clear_free(shared_secret);
 
 	kex_finish(kex);

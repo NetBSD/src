@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.13 2013/11/08 19:18:25 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2014/10/19 16:30:59 christos Exp $
 
 .include <bsd.own.mk>
+
+.include "../Makefile.inc"
 
 LIB=	ssh
 SRCS=\
@@ -8,6 +10,9 @@ addrmatch.c \
 atomicio.c \
 authfd.c \
 authfile.c \
+bcrypt_pbkdf.c \
+blocks.c \
+blowfish.c \
 bufaux.c \
 bufbn.c \
 bufec.c \
@@ -16,7 +21,9 @@ canohost.c \
 channels.c \
 cipher-3des1.c \
 cipher-bf1.c \
+cipher-chachapoly.c \
 cipher.c \
+chacha.c \
 cleanup.c \
 compat.c \
 compress.c \
@@ -25,9 +32,13 @@ deattack.c \
 dh.c \
 dispatch.c \
 dns.c \
+ed25519.c \
 fatal.c \
+fe25519.c \
+ge25519.c \
+hash.c \
+hmac.c \
 hostfile.c \
-jpake.c \
 kex.c \
 kexdh.c \
 kexdhc.c \
@@ -45,24 +56,48 @@ monitor_fdpass.c \
 msg.c \
 nchan.c \
 packet.c \
+poly1305.c \
 progressmeter.c \
 readpass.c \
 roaming_dummy.c \
 rsa.c \
-schnorr.c \
-ssh-dss.c \
-ssh-ecdsa.c \
+sc25519.c \
+smult_curve25519_ref.c \
+sshbuf-getput-basic.c \
+sshbuf-misc.c \
+sshbuf-getput-crypto.c \
+sshbuf.c \
+ssherr.c \
+sshkey.c \
+ssh-ed25519.c \
 ssh-pkcs11.c \
-ssh-rsa.c \
 ttymodes.c \
 uidswap.c \
 uuencode.c \
+verify.c \
 xmalloc.c
+
+OPENSSL_SRCS=\
+digest-openssl.c \
+kexc25519.c \
+kexc25519c.c \
+kexc25519s.c \
+ssh-dss.c \
+ssh-ecdsa.c \
+ssh-rsa.c
 
 #	umac.c
 SRCS+=	fmt_scaled.c strtonum.c
 SRCS+=	readpassphrase.c getpeereid.c getrrsetbyname.c
 COPTS.monitor_fdpass.c = -Wno-stack-protector
+
+.if WITH_OPENSSL
+SRCS+=		${OPENSSL_SRCS}
+.else
+SRCS+=		digest-libc.c
+.endif
+
+CPPFLAGS+= -DHAVE_BLF_H
 
 SSHDIST=	${NETBSDSRCDIR}/crypto/external/bsd/openssh/dist
 CPPFLAGS+=	-I${SSHDIST}

@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.c,v 1.10 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: clientloop.c,v 1.253.2.1 2013/11/08 01:33:56 djm Exp $ */
+/*	$NetBSD: clientloop.c,v 1.11 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: clientloop.c,v 1.261 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -61,7 +61,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.10 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.11 2014/10/19 16:30:58 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -94,13 +94,13 @@ __RCSID("$NetBSD: clientloop.c,v 1.10 2013/11/08 19:18:25 christos Exp $");
 #include "cipher.h"
 #include "kex.h"
 #include "log.h"
+#include "misc.h"
 #include "readconf.h"
 #include "clientloop.h"
 #include "sshconnect.h"
 #include "authfd.h"
 #include "atomicio.h"
 #include "sshpty.h"
-#include "misc.h"
 #include "match.h"
 #include "msg.h"
 #include "roaming.h"
@@ -284,7 +284,7 @@ client_x11_display_valid(const char *display)
 
 	dlen = strlen(display);
 	for (i = 0; i < dlen; i++) {
-		if (!isalnum((unsigned char)display[i]) &&
+		if (!isalnum((u_char)display[i]) &&
 		    strchr(SSH_X11_VALID_DISPLAY_CHARS, display[i]) == NULL) {
 			debug("Invalid character '%c' in DISPLAY", display[i]);
 			return 0;
@@ -544,7 +544,7 @@ client_global_request_reply(int type, u_int32_t seq, void *ctxt)
 		gc->cb(type, seq, gc->ctx);
 	if (--gc->ref_count <= 0) {
 		TAILQ_REMOVE(&global_confirms, gc, entry);
-		bzero(gc, sizeof(*gc));
+		explicit_bzero(gc, sizeof(*gc));
 		free(gc);
 	}
 
@@ -868,20 +868,18 @@ static void
 process_cmdline(void)
 {
 	void (*handler)(int);
-	char *s, *cmd, *cancel_host;
-	int delete = 0, local = 0, remote = 0, dynamic = 0;
-	int cancel_port, ok;
-	Forward fwd;
+	char *s, *cmd;
+	int ok, delete = 0, local = 0, remote = 0, dynamic = 0;
+	struct Forward fwd;
 
-	bzero(&fwd, sizeof(fwd));
-	fwd.listen_host = fwd.connect_host = NULL;
+	memset(&fwd, 0, sizeof(fwd));
 
 	leave_raw_mode(options.request_tty == REQUEST_TTY_FORCE);
 	handler = signal(SIGINT, SIG_IGN);
 	cmd = s = read_passphrase("\r\nssh> ", RP_ECHO);
 	if (s == NULL)
 		goto out;
-	while (isspace((unsigned char)*s))
+	while (isspace((u_char)*s))
 		s++;
 	if (*s == '-')
 		s++;	/* Skip cmdline '-', if any */
@@ -936,34 +934,25 @@ process_cmdline(void)
 	}
 
 	s++;
-	while (isspace((unsigned char)*s))
+	while (isspace((u_char)*s))
 		s++;
 
 	/* XXX update list of forwards in options */
 	if (delete) {
-		cancel_port = 0;
-		cancel_host = hpdelim(&s);	/* may be NULL */
-		if (s != NULL) {
-			cancel_port = a2port(s);
-			cancel_host = cleanhostname(cancel_host);
-		} else {
-			cancel_port = a2port(cancel_host);
-			cancel_host = NULL;
-		}
-		if (cancel_port <= 0) {
-			logit("Bad forwarding close port");
+		/* We pass 1 for dynamicfwd to restrict to 1 or 2 fields. */
+		if (!parse_forward(&fwd, s, 1, 0)) {
+			logit("Bad forwarding close specification.");
 			goto out;
 		}
 		if (remote)
-			ok = channel_request_rforward_cancel(cancel_host,
-			    cancel_port) == 0;
+			ok = channel_request_rforward_cancel(&fwd) == 0;
 		else if (dynamic)
-                	ok = channel_cancel_lport_listener(cancel_host,
-			    cancel_port, 0, options.gateway_ports) > 0;
+			ok = channel_cancel_lport_listener(&fwd,
+			    0, &options.fwd_opts) > 0;
 		else
-                	ok = channel_cancel_lport_listener(cancel_host,
-			    cancel_port, CHANNEL_CANCEL_PORT_STATIC,
-			    options.gateway_ports) > 0;
+			ok = channel_cancel_lport_listener(&fwd,
+			    CHANNEL_CANCEL_PORT_STATIC,
+			    &options.fwd_opts) > 0;
 		if (!ok) {
 			logit("Unkown port forwarding.");
 			goto out;
@@ -975,16 +964,13 @@ process_cmdline(void)
 			goto out;
 		}
 		if (local || dynamic) {
-			if (!channel_setup_local_fwd_listener(fwd.listen_host,
-			    fwd.listen_port, fwd.connect_host,
-			    fwd.connect_port, options.gateway_ports)) {
+			if (!channel_setup_local_fwd_listener(&fwd,
+			    &options.fwd_opts)) {
 				logit("Port forwarding failed.");
 				goto out;
 			}
 		} else {
-			if (channel_request_remote_forwarding(fwd.listen_host,
-			    fwd.listen_port, fwd.connect_host,
-			    fwd.connect_port) < 0) {
+			if (channel_request_remote_forwarding(&fwd) < 0) {
 				logit("Port forwarding failed.");
 				goto out;
 			}
@@ -997,7 +983,9 @@ out:
 	enter_raw_mode(options.request_tty == REQUEST_TTY_FORCE);
 	free(cmd);
 	free(fwd.listen_host);
+	free(fwd.listen_path);
 	free(fwd.connect_host);
+	free(fwd.connect_path);
 }
 
 /* reasons to suppress output of an escape command in help output */
@@ -1151,7 +1139,7 @@ process_escapes(Channel *c, Buffer *bin, Buffer *bout, Buffer *berr,
 					    "%cB\r\n", escape_char);
 					buffer_append(berr, string,
 					    strlen(string));
-					channel_request_start(session_ident,
+					channel_request_start(c->self,
 					    "break", 0);
 					packet_put_int(1000);
 					packet_send();
@@ -1756,7 +1744,7 @@ client_input_stdout_data(int type, u_int32_t seq, void *ctxt)
 	char *data = packet_get_string(&data_len);
 	packet_check_eom();
 	buffer_append(&stdout_buffer, data, data_len);
-	memset(data, 0, data_len);
+	explicit_bzero(data, data_len);
 	free(data);
 }
 static void
@@ -1766,7 +1754,7 @@ client_input_stderr_data(int type, u_int32_t seq, void *ctxt)
 	char *data = packet_get_string(&data_len);
 	packet_check_eom();
 	buffer_append(&stderr_buffer, data, data_len);
-	memset(data, 0, data_len);
+	explicit_bzero(data, data_len);
 	free(data);
 }
 static void
@@ -1840,15 +1828,35 @@ client_request_forwarded_tcpip(const char *request_type, int rchan)
 	originator_port = packet_get_int();
 	packet_check_eom();
 
-	debug("client_request_forwarded_tcpip: listen %s port %d, "
-	    "originator %s port %d", listen_address, listen_port,
-	    originator_address, originator_port);
+	debug("%s: listen %s port %d, originator %s port %d", __func__,
+	    listen_address, listen_port, originator_address, originator_port);
 
-	c = channel_connect_by_listen_address(listen_port,
+	c = channel_connect_by_listen_address(listen_address, listen_port,
 	    "forwarded-tcpip", originator_address);
 
 	free(originator_address);
 	free(listen_address);
+	return c;
+}
+
+static Channel *
+client_request_forwarded_streamlocal(const char *request_type, int rchan)
+{
+	Channel *c = NULL;
+	char *listen_path;
+
+	/* Get the remote path. */
+	listen_path = packet_get_string(NULL);
+	/* XXX: Skip reserved field for now. */
+	if (packet_get_string_ptr(NULL) == NULL)
+		fatal("%s: packet_get_string_ptr failed", __func__);
+	packet_check_eom();
+
+	debug("%s: %s", __func__, listen_path);
+
+	c = channel_connect_by_listen_path(listen_path,
+	    "forwarded-streamlocal@openssh.com", "forwarded-streamlocal");
+	free(listen_path);
 	return c;
 }
 
@@ -1989,6 +1997,8 @@ client_input_channel_open(int type, u_int32_t seq, void *ctxt)
 
 	if (strcmp(ctype, "forwarded-tcpip") == 0) {
 		c = client_request_forwarded_tcpip(ctype, rchan);
+	} else if (strcmp(ctype, "forwarded-streamlocal@openssh.com") == 0) {
+		c = client_request_forwarded_streamlocal(ctype, rchan);
 	} else if (strcmp(ctype, "x11") == 0) {
 		c = client_request_x11(ctype, rchan);
 	} else if (strcmp(ctype, "auth-agent@openssh.com") == 0) {
@@ -2059,7 +2069,7 @@ client_input_channel_req(int type, u_int32_t seq, void *ctxt)
 		}
 		packet_check_eom();
 	}
-	if (reply && c != NULL) {
+	if (reply && c != NULL && !(c->flags & CHAN_CLOSE_SENT)) {
 		packet_start(success ?
 		    SSH2_MSG_CHANNEL_SUCCESS : SSH2_MSG_CHANNEL_FAILURE);
 		packet_put_int(c->remote_id);

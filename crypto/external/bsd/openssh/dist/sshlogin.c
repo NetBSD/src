@@ -1,5 +1,5 @@
-/*	$NetBSD: sshlogin.c,v 1.4 2011/07/25 03:03:11 christos Exp $	*/
-/* $OpenBSD: sshlogin.c,v 1.27 2011/01/11 06:06:09 djm Exp $ */
+/*	$NetBSD: sshlogin.c,v 1.5 2014/10/19 16:30:59 christos Exp $	*/
+/* $OpenBSD: sshlogin.c,v 1.29 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshlogin.c,v 1.4 2011/07/25 03:03:11 christos Exp $");
+__RCSID("$NetBSD: sshlogin.c,v 1.5 2014/10/19 16:30:59 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: sshlogin.c,v 1.4 2011/07/25 03:03:11 christos Exp $");
 #include "sshlogin.h"
 #include "log.h"
 #include "buffer.h"
+#include "misc.h"
 #include "servconf.h"
 
 extern Buffer loginmsg;
@@ -199,7 +200,7 @@ record_login(pid_t pid, const char *tty, const char *user, uid_t uid,
 	/* Update lastlog unless actually recording a logout. */
 	if (*user != '\0') {
 		/*
-		 * It is safer to bzero the lastlog structure first because
+		 * It is safer to memset the lastlog structure first because
 		 * some systems might have some extra fields in it (e.g. SGI)
 		 */
 		memset(&ll, 0, sizeof(ll));

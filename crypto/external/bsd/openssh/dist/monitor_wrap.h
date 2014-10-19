@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.h,v 1.5 2011/09/07 17:49:19 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.h,v 1.23 2011/06/17 21:44:31 djm Exp $ */
+/*	$NetBSD: monitor_wrap.h,v 1.6 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.h,v 1.24 2014/01/29 06:18:35 djm Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>

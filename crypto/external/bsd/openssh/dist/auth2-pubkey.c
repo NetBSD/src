@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.9 2013/11/08 19:18:24 christos Exp $	*/
-/* $OpenBSD: auth2-pubkey.c,v 1.38 2013/06/21 00:34:49 djm Exp $ */
+/*	$NetBSD: auth2-pubkey.c,v 1.10 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: auth2-pubkey.c,v 1.41 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-pubkey.c,v 1.9 2013/11/08 19:18:24 christos Exp $");
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.10 2014/10/19 16:30:58 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: auth2-pubkey.c,v 1.9 2013/11/08 19:18:24 christos Exp $");
 #include "packet.h"
 #include "buffer.h"
 #include "log.h"
+#include "misc.h"
 #include "servconf.h"
 #include "compat.h"
 #include "key.h"
@@ -60,7 +61,6 @@ __RCSID("$NetBSD: auth2-pubkey.c,v 1.9 2013/11/08 19:18:24 christos Exp $");
 #include "ssh-gss.h"
 #endif
 #include "monitor_wrap.h"
-#include "misc.h"
 #include "authfile.h"
 #include "match.h"
 
@@ -117,6 +117,12 @@ userauth_pubkey(Authctxt *authctxt)
 	if (key->type != pktype) {
 		error("userauth_pubkey: type mismatch for decoded key "
 		    "(received %d, expected %d)", key->type, pktype);
+		goto done;
+	}
+	if (key_type_plain(key->type) == KEY_RSA &&
+	    (datafellows & SSH_BUG_RSASIGMD5) != 0) {
+		logit("Refusing RSA key because client uses unsafe "
+		    "signature scheme");
 		goto done;
 	}
 	if (have_sig) {
@@ -227,7 +233,7 @@ pubkey_auth_info(Authctxt *authctxt, const Key *key, const char *fmt, ...)
 }
 
 static int
-match_principals_option(const char *principal_list, struct KeyCert *cert)
+match_principals_option(const char *principal_list, struct sshkey_cert *cert)
 {
 	char *result;
 	u_int i;
@@ -247,7 +253,7 @@ match_principals_option(const char *principal_list, struct KeyCert *cert)
 }
 
 static int
-match_principals_file(char *file, struct passwd *pw, struct KeyCert *cert)
+match_principals_file(char *file, struct passwd *pw, struct sshkey_cert *cert)
 {
 	FILE *f;
 	char line[SSH_MAX_PUBKEY_BYTES], *cp, *ep, *line_opts;

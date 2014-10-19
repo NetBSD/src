@@ -15,6 +15,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #define SSHKEY_INTERNAL
+#include "includes.h"
+__RCSID("$NetBSD: ssh-ed25519.c,v 1.2 2014/10/19 16:30:58 christos Exp $");
+
 #include <sys/types.h>
 #include <limits.h>
 

@@ -1,5 +1,5 @@
-/*	$NetBSD: ldapauth.h,v 1.1 2010/11/21 18:59:04 adam Exp $	*/
-/* $Id: ldapauth.h,v 1.1 2010/11/21 18:59:04 adam Exp $ 
+/*	$NetBSD: ldapauth.h,v 1.2 2014/10/19 16:30:58 christos Exp $	*/
+/* $Id: ldapauth.h,v 1.2 2014/10/19 16:30:58 christos Exp $ 
  */
 
 /*

@@ -1,4 +1,4 @@
-.\"	$NetBSD: scp.1,v 1.7 2013/11/08 19:18:25 christos Exp $
+.\"	$NetBSD: scp.1,v 1.8 2014/10/19 16:30:58 christos Exp $
 .\"  -*- nroff -*-
 .\"
 .\" scp.1
@@ -10,9 +10,9 @@
 .\"
 .\" Created: Sun May  7 00:14:37 1995 ylo
 .\"
-.\" $OpenBSD: scp.1,v 1.59 2013/07/16 00:07:52 schwarze Exp $
+.\" $OpenBSD: scp.1,v 1.62 2014/03/19 14:42:44 tedu Exp $
 .\"
-.Dd July 16 2013
+.Dd March 19 2014
 .Dt SCP 1
 .Os
 .Sh NAME
@@ -51,8 +51,6 @@ It uses
 for data transfer, and uses the same authentication and provides the
 same security as
 .Xr ssh 1 .
-Unlike
-.Xr rcp 1 ,
 .Nm
 will ask for passwords or passphrases if they are needed for
 authentication.
@@ -132,6 +130,11 @@ For full details of the options listed below, and their possible values, see
 .It AddressFamily
 .It BatchMode
 .It BindAddress
+.It CanonicalDomains
+.It CanonicalizeFallbackLocal
+.It CanonicalizeHostname
+.It CanonicalizeMaxDots
+.It CanonicalizePermittedCNAMEs
 .It ChallengeResponseAuthentication
 .It CheckHostIP
 .It Cipher
@@ -188,8 +191,7 @@ Note that this option is written with a capital
 .Sq P ,
 because
 .Fl p
-is already reserved for preserving the times and modes of the file in
-.Xr rcp 1 .
+is already reserved for preserving the times and modes of the file.
 .It Fl p
 Preserves modification times, access times, and modes from the
 original file.
@@ -222,7 +224,6 @@ debugging connection, authentication, and configuration problems.
 .Sh EXIT STATUS
 .Ex -std scp
 .Sh SEE ALSO
-.Xr rcp 1 ,
 .Xr sftp 1 ,
 .Xr ssh 1 ,
 .Xr ssh-add 1 ,
@@ -232,10 +233,9 @@ debugging connection, authentication, and configuration problems.
 .Xr sshd 8
 .Sh HISTORY
 .Nm
-is based on the
-.Xr rcp 1
-program in BSD source code from the Regents of the University of
-California.
+is based on the rcp program in
+.Bx
+source code from the Regents of the University of California.
 .Sh AUTHORS
 .An Timo Rinne Aq Mt tri@iki.fi
 .An Tatu Ylonen Aq Mt ylo@cs.hut.fi

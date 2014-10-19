@@ -231,22 +231,22 @@ int	sshbuf_b64tod(struct sshbuf *buf, const char *b64);
 
 /* Macros for decoding/encoding integers */
 #define PEEK_U64(p) \
-	(((u_int64_t)(((u_char *)(p))[0]) << 56) | \
-	 ((u_int64_t)(((u_char *)(p))[1]) << 48) | \
-	 ((u_int64_t)(((u_char *)(p))[2]) << 40) | \
-	 ((u_int64_t)(((u_char *)(p))[3]) << 32) | \
-	 ((u_int64_t)(((u_char *)(p))[4]) << 24) | \
-	 ((u_int64_t)(((u_char *)(p))[5]) << 16) | \
-	 ((u_int64_t)(((u_char *)(p))[6]) << 8) | \
-	  (u_int64_t)(((u_char *)(p))[7]))
+	(((u_int64_t)(((const u_char *)(p))[0]) << 56) | \
+	 ((u_int64_t)(((const u_char *)(p))[1]) << 48) | \
+	 ((u_int64_t)(((const u_char *)(p))[2]) << 40) | \
+	 ((u_int64_t)(((const u_char *)(p))[3]) << 32) | \
+	 ((u_int64_t)(((const u_char *)(p))[4]) << 24) | \
+	 ((u_int64_t)(((const u_char *)(p))[5]) << 16) | \
+	 ((u_int64_t)(((const u_char *)(p))[6]) << 8) | \
+	  (u_int64_t)(((const u_char *)(p))[7]))
 #define PEEK_U32(p) \
-	(((u_int32_t)(((u_char *)(p))[0]) << 24) | \
-	 ((u_int32_t)(((u_char *)(p))[1]) << 16) | \
-	 ((u_int32_t)(((u_char *)(p))[2]) << 8) | \
-	  (u_int32_t)(((u_char *)(p))[3]))
+	(((u_int32_t)(((const u_char *)(p))[0]) << 24) | \
+	 ((u_int32_t)(((const u_char *)(p))[1]) << 16) | \
+	 ((u_int32_t)(((const u_char *)(p))[2]) << 8) | \
+	  (u_int32_t)(((const u_char *)(p))[3]))
 #define PEEK_U16(p) \
-	(((u_int16_t)(((u_char *)(p))[0]) << 8) | \
-	  (u_int16_t)(((u_char *)(p))[1]))
+	(((u_int16_t)(((const u_char *)(p))[0]) << 8) | \
+	  (u_int16_t)(((const u_char *)(p))[1]))
 
 #define POKE_U64(p, v) \
 	do { \

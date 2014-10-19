@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-add.c,v 1.8 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: ssh-add.c,v 1.106 2013/05/17 00:13:14 djm Exp $ */
+/*	$NetBSD: ssh-add.c,v 1.9 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: ssh-add.c,v 1.113 2014/07/09 14:15:56 benno Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-add.c,v 1.8 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: ssh-add.c,v 1.9 2014/10/19 16:30:58 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: ssh-add.c,v 1.8 2013/11/08 19:18:25 christos Exp $");
 #include "authfile.h"
 #include "pathnames.h"
 #include "misc.h"
+#include "ssherr.h"
 
 /* argv0 */
 extern char *__progname;
@@ -70,6 +71,7 @@ static const char *default_files[] = {
 	_PATH_SSH_CLIENT_ID_RSA,
 	_PATH_SSH_CLIENT_ID_DSA,
 	_PATH_SSH_CLIENT_ID_ECDSA,
+	_PATH_SSH_CLIENT_ID_ED25519,
 	_PATH_SSH_CLIENT_IDENTITY,
 	NULL
 };
@@ -86,7 +88,7 @@ static void
 clear_pass(void)
 {
 	if (pass) {
-		memset(pass, 0, strlen(pass));
+		explicit_bzero(pass, strlen(pass));
 		free(pass);
 		pass = NULL;
 	}
@@ -166,7 +168,7 @@ add_file(AuthenticationConnection *ac, const char *filename, int key_only)
 	Key *private, *cert;
 	char *comment = NULL;
 	char msg[1024], *certpath = NULL;
-	int fd, perms_ok, ret = -1;
+	int r, fd, perms_ok, ret = -1;
 	Buffer keyblob;
 
 	if (strcmp(filename, "-") == 0) {
@@ -197,12 +199,18 @@ add_file(AuthenticationConnection *ac, const char *filename, int key_only)
 	close(fd);
 
 	/* At first, try empty passphrase */
-	private = key_parse_private(&keyblob, filename, "", &comment);
+	if ((r = sshkey_parse_private_fileblob(&keyblob, "", filename,
+	    &private, &comment)) != 0 && r != SSH_ERR_KEY_WRONG_PASSPHRASE)
+		fatal("Cannot parse %s: %s", filename, ssh_err(r));
+	/* try last */
+	if (private == NULL && pass != NULL) {
+		if ((r = sshkey_parse_private_fileblob(&keyblob, pass, filename,
+		    &private, &comment)) != 0 &&
+		    r != SSH_ERR_KEY_WRONG_PASSPHRASE)
+			fatal("Cannot parse %s: %s", filename, ssh_err(r));
+	}
 	if (comment == NULL)
 		comment = xstrdup(filename);
-	/* try last */
-	if (private == NULL && pass != NULL)
-		private = key_parse_private(&keyblob, filename, pass, NULL);
 	if (private == NULL) {
 		/* clear passphrase since it did not work */
 		clear_pass();
@@ -216,8 +224,11 @@ add_file(AuthenticationConnection *ac, const char *filename, int key_only)
 				buffer_free(&keyblob);
 				return -1;
 			}
-			private = key_parse_private(&keyblob, filename, pass,
-			    &comment);
+			if ((r = sshkey_parse_private_fileblob(&keyblob,
+			     pass, filename, &private, NULL)) != 0 &&
+			    r != SSH_ERR_KEY_WRONG_PASSPHRASE)
+				fatal("Cannot parse %s: %s",
+					    filename, ssh_err(r));
 			if (private != NULL)
 				break;
 			clear_pass();
@@ -289,14 +300,17 @@ add_file(AuthenticationConnection *ac, const char *filename, int key_only)
 static int
 update_card(AuthenticationConnection *ac, int add, const char *id)
 {
-	char *pin;
+	char *pin = NULL;
 	int ret = -1;
 
-	pin = read_passphrase("Enter passphrase for PKCS#11: ", RP_ALLOW_STDIN);
-	if (pin == NULL)
-		return -1;
+	if (add) {
+		if ((pin = read_passphrase("Enter passphrase for PKCS#11: ",
+		    RP_ALLOW_STDIN)) == NULL)
+			return -1;
+	}
 
-	if (ssh_update_card(ac, add, id, pin, lifetime, confirm)) {
+	if (ssh_update_card(ac, add, id, pin == NULL ? "" : pin,
+	    lifetime, confirm)) {
 		fprintf(stderr, "Card %s: %s\n",
 		    add ? "added" : "removed", id);
 		ret = 0;
@@ -359,7 +373,7 @@ lock_agent(AuthenticationConnection *ac, int lock)
 			fprintf(stderr, "Passwords do not match.\n");
 			passok = 0;
 		}
-		memset(p2, 0, strlen(p2));
+		explicit_bzero(p2, strlen(p2));
 		free(p2);
 	}
 	if (passok && ssh_lock_agent(ac, lock, p1)) {
@@ -367,7 +381,7 @@ lock_agent(AuthenticationConnection *ac, int lock)
 		ret = 0;
 	} else
 		fprintf(stderr, "Failed to %slock agent.\n", lock ? "" : "un");
-	memset(p1, 0, strlen(p1));
+	explicit_bzero(p1, strlen(p1));
 	free(p1);
 	return (ret);
 }
@@ -416,6 +430,8 @@ main(int argc, char **argv)
 	sanitise_stdfd();
 
 	OpenSSL_add_all_algorithms();
+
+	setlinebuf(stdout);
 
 	/* At first, get a connection to the authentication agent. */
 	ac = ssh_get_authentication_connection();

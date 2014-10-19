@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.c,v 1.8 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.c,v 1.76.2.1 2013/11/08 00:25:26 djm Exp $ */
+/*	$NetBSD: monitor_wrap.c,v 1.9 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.c,v 1.80 2014/04/29 18:01:49 markus Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.8 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.9 2014/10/19 16:30:58 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
@@ -39,13 +39,16 @@ __RCSID("$NetBSD: monitor_wrap.c,v 1.8 2013/11/08 19:18:25 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 
+#ifdef WITH_OPENSSL
 #include <openssl/bn.h>
 #include <openssl/dh.h>
-#include <openssl/evp.h>
+#endif
 
 #include "xmalloc.h"
 #include "ssh.h"
+#ifdef WITH_OPENSSL
 #include "dh.h"
+#endif
 #include "buffer.h"
 #include "key.h"
 #include "cipher.h"
@@ -65,12 +68,11 @@ __RCSID("$NetBSD: monitor_wrap.c,v 1.8 2013/11/08 19:18:25 christos Exp $");
 #include "atomicio.h"
 #include "monitor_fdpass.h"
 #ifdef USE_PAM
+#include "misc.h"
 #include "servconf.h"
 #include <security/pam_appl.h>
 #endif
 #include "misc.h"
-#include "schnorr.h"
-#include "jpake.h"
 #include "uuencode.h"
 
 #include "channels.h"
@@ -174,6 +176,7 @@ mm_request_receive_expect(int sock, enum monitor_reqtype type, Buffer *m)
 		    rtype, type);
 }
 
+#ifdef WITH_OPENSSL
 DH *
 mm_choose_dh(int min, int nbits, int max)
 {
@@ -207,6 +210,7 @@ mm_choose_dh(int min, int nbits, int max)
 
 	return (dh_new_group(g, p));
 }
+#endif
 
 int
 mm_key_sign(Key *key, u_char **sigp, u_int *lenp, u_char *data, u_int datalen)
@@ -568,7 +572,7 @@ mm_newkeys_to_blob(int mode, u_char **blobp, u_int *lenp)
 		*blobp = xmalloc(len);
 		memcpy(*blobp, buffer_ptr(&b), len);
 	}
-	memset(buffer_ptr(&b), 0, len);
+	explicit_bzero(buffer_ptr(&b), len);
 	buffer_free(&b);
 	return len;
 }
@@ -612,7 +616,7 @@ mm_send_keystate(struct monitor *monitor)
 		key = xmalloc(keylen+1);	/* add 1 if keylen == 0 */
 		keylen = packet_get_encryption_key(key);
 		buffer_put_string(&m, key, keylen);
-		memset(key, 0, keylen);
+		explicit_bzero(key, keylen);
 		free(key);
 
 		ivlen = packet_get_keyiv_len(MODE_OUT);
@@ -908,6 +912,7 @@ mm_terminate(void)
 	buffer_free(&m);
 }
 
+#ifdef WITH_SSH1
 int
 mm_ssh1_session_key(BIGNUM *num)
 {
@@ -927,6 +932,7 @@ mm_ssh1_session_key(BIGNUM *num)
 
 	return (rsafail);
 }
+#endif
 
 #if defined(BSD_AUTH) || defined(SKEY)
 static void
@@ -1078,6 +1084,7 @@ mm_ssh1_session_id(u_char session_id[16])
 	buffer_free(&m);
 }
 
+#ifdef WITH_SSH1
 int
 mm_auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 {
@@ -1173,6 +1180,7 @@ mm_auth_rsa_verify_response(Key *key, BIGNUM *p, u_char response[16])
 
 	return (success);
 }
+#endif
 
 #ifdef GSSAPI
 OM_uint32

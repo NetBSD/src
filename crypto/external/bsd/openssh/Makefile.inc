@@ -1,14 +1,16 @@
-#	$NetBSD: Makefile.inc,v 1.5 2011/10/13 17:23:28 plunky Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2014/10/19 16:30:58 christos Exp $
 
 WARNS?=	4
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network client/server
+WITH_OPENSSL=1
 
 SSHDIST?= ${NETBSDSRCDIR}/crypto/external/bsd/openssh/dist
 
-CPPFLAGS+=-I${SSHDIST} -DHAVE_LOGIN_CAP -DHAVE_MMAP -DHAVE_OPENPTY -DENABLE_PKCS11
+CPPFLAGS+=-I${SSHDIST} -DHAVE_LOGIN_CAP -DHAVE_MMAP -DHAVE_OPENPTY
+CPPFLAGS+=-DWITH_SSH1 -DWITH_OPENSSL -DENABLE_PKCS11
 .if !defined(NOPIC)
 CPPFLAGS+=-DHAVE_DLOPEN
 .endif

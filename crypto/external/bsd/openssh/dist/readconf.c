@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.c,v 1.11 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: readconf.c,v 1.204 2013/06/10 19:19:44 dtucker Exp $ */
+/*	$NetBSD: readconf.c,v 1.12 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: readconf.c,v 1.220 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,10 +14,12 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.11 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.12 2014/10/19 16:30:58 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
+#include <sys/un.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -25,7 +27,10 @@ __RCSID("$NetBSD: readconf.c,v 1.11 2013/11/08 19:18:25 christos Exp $");
 
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
+#include <paths.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
@@ -40,13 +45,14 @@ __RCSID("$NetBSD: readconf.c,v 1.11 2013/11/08 19:18:25 christos Exp $");
 #include "pathnames.h"
 #include "log.h"
 #include "key.h"
+#include "misc.h"
 #include "readconf.h"
 #include "match.h"
-#include "misc.h"
 #include "buffer.h"
 #include "kex.h"
 #include "mac.h"
 #include "fmt_scaled.h"
+#include "uidswap.h"
 
 /* Format of the configuration file:
 
@@ -115,6 +121,7 @@ __RCSID("$NetBSD: readconf.c,v 1.11 2013/11/08 19:18:25 christos Exp $");
 
 typedef enum {
 	oBadOption,
+	oHost, oMatch,
 	oForwardAgent, oForwardX11, oForwardX11Trusted, oForwardX11Timeout,
 	oGatewayPorts, oExitOnForwardFailure,
 	oPasswordAuthentication, oRSAAuthentication,
@@ -129,7 +136,7 @@ typedef enum {
 	oAFSTokenPassing,
 #endif
 	oIdentityFile, oHostName, oPort, oCipher, oRemoteForward, oLocalForward,
-	oUser, oHost, oEscapeChar, oRhostsRSAAuthentication, oProxyCommand,
+	oUser, oEscapeChar, oRhostsRSAAuthentication, oProxyCommand,
 	oGlobalKnownHostsFile, oUserKnownHostsFile, oConnectionAttempts,
 	oBatchMode, oCheckHostIP, oStrictHostKeyChecking, oCompression,
 	oCompressionLevel, oTCPKeepAlive, oNumberOfPasswordPrompts,
@@ -145,13 +152,15 @@ typedef enum {
 	oSendEnv, oControlPath, oControlMaster, oControlPersist,
 	oHashKnownHosts,
 	oTunnel, oTunnelDevice, oLocalCommand, oPermitLocalCommand,
-	oVisualHostKey, oUseRoaming, oZeroKnowledgePasswordAuthentication,
-	oKexAlgorithms, oIPQoS, oRequestTTY, oIgnoreUnknown,
-	oIgnoredUnknownOption,
+	oVisualHostKey, oUseRoaming,
+	oKexAlgorithms, oIPQoS, oRequestTTY, oIgnoreUnknown, oProxyUseFdpass,
+	oCanonicalDomains, oCanonicalizeHostname, oCanonicalizeMaxDots,
+	oCanonicalizeFallbackLocal, oCanonicalizePermittedCNAMEs,
+	oStreamLocalBindMask, oStreamLocalBindUnlink,
 	oNoneEnabled, oTcpRcvBufPoll, oTcpRcvBuf, oNoneSwitch, oHPNDisabled,
 	oHPNBufferSize,
 	oSendVersionFirst,
-	oDeprecated, oUnsupported
+	oIgnoredUnknownOption, oDeprecated, oUnsupported
 } OpCodes;
 
 /* Textual representations of the tokens. */
@@ -215,6 +224,7 @@ static struct {
 	{ "localforward", oLocalForward },
 	{ "user", oUser },
 	{ "host", oHost },
+	{ "match", oMatch },
 	{ "escapechar", oEscapeChar },
 	{ "globalknownhostsfile", oGlobalKnownHostsFile },
 	{ "globalknownhostsfile2", oDeprecated },
@@ -261,16 +271,17 @@ static struct {
 	{ "permitlocalcommand", oPermitLocalCommand },
 	{ "visualhostkey", oVisualHostKey },
 	{ "useroaming", oUseRoaming },
-#ifdef JPAKE
-	{ "zeroknowledgepasswordauthentication",
-	    oZeroKnowledgePasswordAuthentication },
-#else
-	{ "zeroknowledgepasswordauthentication", oUnsupported },
-#endif
 	{ "kexalgorithms", oKexAlgorithms },
 	{ "ipqos", oIPQoS },
 	{ "requesttty", oRequestTTY },
-	{ "ignoreunknown", oIgnoreUnknown },
+	{ "proxyusefdpass", oProxyUseFdpass },
+	{ "canonicaldomains", oCanonicalDomains },
+	{ "canonicalizefallbacklocal", oCanonicalizeFallbackLocal },
+	{ "canonicalizehostname", oCanonicalizeHostname },
+	{ "canonicalizemaxdots", oCanonicalizeMaxDots },
+	{ "canonicalizepermittedcnames", oCanonicalizePermittedCNAMEs },
+	{ "streamlocalbindmask", oStreamLocalBindMask },
+	{ "streamlocalbindunlink", oStreamLocalBindUnlink },
 	{ "noneenabled", oNoneEnabled },
 	{ "tcprcvbufpoll", oTcpRcvBufPoll },
 	{ "tcprcvbuf", oTcpRcvBuf },
@@ -278,6 +289,7 @@ static struct {
 	{ "hpndisabled", oHPNDisabled },
 	{ "hpnbuffersize", oHPNBufferSize },
 	{ "sendversionfirst", oSendVersionFirst },
+	{ "ignoreunknown", oIgnoreUnknown },
 	{ NULL, oBadOption }
 };
 
@@ -287,12 +299,13 @@ static struct {
  */
 
 void
-add_local_forward(Options *options, const Forward *newfwd)
+add_local_forward(Options *options, const struct Forward *newfwd)
 {
-	Forward *fwd;
+	struct Forward *fwd;
 	extern uid_t original_real_uid;
 
-	if (newfwd->listen_port < IPPORT_RESERVED && original_real_uid != 0)
+	if (newfwd->listen_port < IPPORT_RESERVED && original_real_uid != 0 &&
+	    newfwd->listen_path == NULL)
 		fatal("Privileged ports can only be forwarded by root.");
 	options->local_forwards = xrealloc(options->local_forwards,
 	    options->num_local_forwards + 1,
@@ -301,8 +314,10 @@ add_local_forward(Options *options, const Forward *newfwd)
 
 	fwd->listen_host = newfwd->listen_host;
 	fwd->listen_port = newfwd->listen_port;
+	fwd->listen_path = newfwd->listen_path;
 	fwd->connect_host = newfwd->connect_host;
 	fwd->connect_port = newfwd->connect_port;
+	fwd->connect_path = newfwd->connect_path;
 }
 
 /*
@@ -311,9 +326,9 @@ add_local_forward(Options *options, const Forward *newfwd)
  */
 
 void
-add_remote_forward(Options *options, const Forward *newfwd)
+add_remote_forward(Options *options, const struct Forward *newfwd)
 {
-	Forward *fwd;
+	struct Forward *fwd;
 
 	options->remote_forwards = xrealloc(options->remote_forwards,
 	    options->num_remote_forwards + 1,
@@ -322,8 +337,10 @@ add_remote_forward(Options *options, const Forward *newfwd)
 
 	fwd->listen_host = newfwd->listen_host;
 	fwd->listen_port = newfwd->listen_port;
+	fwd->listen_path = newfwd->listen_path;
 	fwd->connect_host = newfwd->connect_host;
 	fwd->connect_port = newfwd->connect_port;
+	fwd->connect_path = newfwd->connect_path;
 	fwd->handle = newfwd->handle;
 	fwd->allocated_port = 0;
 }
@@ -335,7 +352,9 @@ clear_forwardings(Options *options)
 
 	for (i = 0; i < options->num_local_forwards; i++) {
 		free(options->local_forwards[i].listen_host);
+		free(options->local_forwards[i].listen_path);
 		free(options->local_forwards[i].connect_host);
+		free(options->local_forwards[i].connect_path);
 	}
 	if (options->num_local_forwards > 0) {
 		free(options->local_forwards);
@@ -344,7 +363,9 @@ clear_forwardings(Options *options)
 	options->num_local_forwards = 0;
 	for (i = 0; i < options->num_remote_forwards; i++) {
 		free(options->remote_forwards[i].listen_host);
+		free(options->remote_forwards[i].listen_path);
 		free(options->remote_forwards[i].connect_host);
+		free(options->remote_forwards[i].connect_path);
 	}
 	if (options->num_remote_forwards > 0) {
 		free(options->remote_forwards);
@@ -359,6 +380,7 @@ add_identity_file(Options *options, const char *dir, const char *filename,
     int userprovided)
 {
 	char *path;
+	int i;
 
 	if (options->num_identity_files >= SSH_MAX_IDENTITY_FILES)
 		fatal("Too many identity files specified (max %d)",
@@ -369,15 +391,270 @@ add_identity_file(Options *options, const char *dir, const char *filename,
 	else
 		(void)xasprintf(&path, "%.100s%.100s", dir, filename);
 
+	/* Avoid registering duplicates */
+	for (i = 0; i < options->num_identity_files; i++) {
+		if (options->identity_file_userprovided[i] == userprovided &&
+		    strcmp(options->identity_files[i], path) == 0) {
+			debug2("%s: ignoring duplicate key %s", __func__, path);
+			free(path);
+			return;
+		}
+	}
+
 	options->identity_file_userprovided[options->num_identity_files] =
 	    userprovided;
 	options->identity_files[options->num_identity_files++] = path;
 }
 
+int
+default_ssh_port(void)
+{
+	static int port;
+	struct servent *sp;
+
+	if (port == 0) {
+		sp = getservbyname(SSH_SERVICE_NAME, "tcp");
+		port = sp ? ntohs(sp->s_port) : SSH_DEFAULT_PORT;
+	}
+	return port;
+}
+
+/*
+ * Execute a command in a shell.
+ * Return its exit status or -1 on abnormal exit.
+ */
+static int
+execute_in_shell(const char *cmd)
+{
+	const char *shell;
+	char *command_string;
+	pid_t pid;
+	int devnull, status;
+	extern uid_t original_real_uid;
+
+	if ((shell = getenv("SHELL")) == NULL)
+		shell = _PATH_BSHELL;
+
+	/*
+	 * Use "exec" to avoid "sh -c" processes on some platforms
+	 * (e.g. Solaris)
+	 */
+	xasprintf(&command_string, "exec %s", cmd);
+
+	/* Need this to redirect subprocess stdin/out */
+	if ((devnull = open(_PATH_DEVNULL, O_RDWR)) == -1)
+		fatal("open(/dev/null): %s", strerror(errno));
+
+	debug("Executing command: '%.500s'", cmd);
+
+	/* Fork and execute the command. */
+	if ((pid = fork()) == 0) {
+		char *argv[4];
+
+		/* Child.  Permanently give up superuser privileges. */
+		permanently_drop_suid(original_real_uid);
+
+		/* Redirect child stdin and stdout. Leave stderr */
+		if (dup2(devnull, STDIN_FILENO) == -1)
+			fatal("dup2: %s", strerror(errno));
+		if (dup2(devnull, STDOUT_FILENO) == -1)
+			fatal("dup2: %s", strerror(errno));
+		if (devnull > STDERR_FILENO)
+			close(devnull);
+		closefrom(STDERR_FILENO + 1);
+
+		argv[0] = __UNCONST(shell);
+		argv[1] = __UNCONST("-c");
+		argv[2] = command_string;
+		argv[3] = NULL;
+
+		execv(argv[0], argv);
+		error("Unable to execute '%.100s': %s", cmd, strerror(errno));
+		/* Die with signal to make this error apparent to parent. */
+		signal(SIGTERM, SIG_DFL);
+		kill(getpid(), SIGTERM);
+		_exit(1);
+	}
+	/* Parent. */
+	if (pid < 0)
+		fatal("%s: fork: %.100s", __func__, strerror(errno));
+
+	close(devnull);
+	free(command_string);
+
+	while (waitpid(pid, &status, 0) == -1) {
+		if (errno != EINTR && errno != EAGAIN)
+			fatal("%s: waitpid: %s", __func__, strerror(errno));
+	}
+	if (!WIFEXITED(status)) {
+		error("command '%.100s' exited abnormally", cmd);
+		return -1;
+	} 
+	debug3("command returned status %d", WEXITSTATUS(status));
+	return WEXITSTATUS(status);
+}
+
+/*
+ * Parse and execute a Match directive.
+ */
+static int
+match_cfg_line(Options *options, char **condition, struct passwd *pw,
+    const char *host_arg, const char *filename, int linenum)
+{
+	char *arg, *attrib, *cmd, *cp = *condition, *host;
+	const char *ruser;
+	int r, port, result = 1, attributes = 0;
+	size_t len;
+	char thishost[NI_MAXHOST], shorthost[NI_MAXHOST], portstr[NI_MAXSERV];
+
+	/*
+	 * Configuration is likely to be incomplete at this point so we
+	 * must be prepared to use default values.
+	 */
+	port = options->port <= 0 ? default_ssh_port() : options->port;
+	ruser = options->user == NULL ? pw->pw_name : options->user;
+	if (options->hostname != NULL) {
+		/* NB. Please keep in sync with ssh.c:main() */
+		host = percent_expand(options->hostname,
+		    "h", host_arg, (char *)NULL);
+	} else
+		host = xstrdup(host_arg);
+
+	debug3("checking match for '%s' host %s", cp, host);
+	while ((attrib = strdelim(&cp)) && *attrib != '\0') {
+		attributes++;
+		if (strcasecmp(attrib, "all") == 0) {
+			if (attributes != 1 ||
+			    ((arg = strdelim(&cp)) != NULL && *arg != '\0')) {
+				error("'all' cannot be combined with other "
+				    "Match attributes");
+				result = -1;
+				goto out;
+			}
+			*condition = cp;
+			result = 1;
+			goto out;
+		}
+		if ((arg = strdelim(&cp)) == NULL || *arg == '\0') {
+			error("Missing Match criteria for %s", attrib);
+			result = -1;
+			goto out;
+		}
+		len = strlen(arg);
+		if (strcasecmp(attrib, "host") == 0) {
+			if (match_hostname(host, arg, len) != 1)
+				result = 0;
+			else
+				debug("%.200s line %d: matched 'Host %.100s' ",
+				    filename, linenum, host);
+		} else if (strcasecmp(attrib, "originalhost") == 0) {
+			if (match_hostname(host_arg, arg, len) != 1)
+				result = 0;
+			else
+				debug("%.200s line %d: matched "
+				    "'OriginalHost %.100s' ",
+				    filename, linenum, host_arg);
+		} else if (strcasecmp(attrib, "user") == 0) {
+			if (match_pattern_list(ruser, arg, len, 0) != 1)
+				result = 0;
+			else
+				debug("%.200s line %d: matched 'User %.100s' ",
+				    filename, linenum, ruser);
+		} else if (strcasecmp(attrib, "localuser") == 0) {
+			if (match_pattern_list(pw->pw_name, arg, len, 0) != 1)
+				result = 0;
+			else
+				debug("%.200s line %d: matched "
+				    "'LocalUser %.100s' ",
+				    filename, linenum, pw->pw_name);
+		} else if (strcasecmp(attrib, "exec") == 0) {
+			if (gethostname(thishost, sizeof(thishost)) == -1)
+				fatal("gethostname: %s", strerror(errno));
+			strlcpy(shorthost, thishost, sizeof(shorthost));
+			shorthost[strcspn(thishost, ".")] = '\0';
+			snprintf(portstr, sizeof(portstr), "%d", port);
+
+			cmd = percent_expand(arg,
+			    "L", shorthost,
+			    "d", pw->pw_dir,
+			    "h", host,
+			    "l", thishost,
+			    "n", host_arg,
+			    "p", portstr,
+			    "r", ruser,
+			    "u", pw->pw_name,
+			    (char *)NULL);
+			if (result != 1) {
+				/* skip execution if prior predicate failed */
+				debug("%.200s line %d: skipped exec \"%.100s\"",
+				    filename, linenum, cmd);
+			} else {
+				r = execute_in_shell(cmd);
+				if (r == -1) {
+					fatal("%.200s line %d: match exec "
+					    "'%.100s' error", filename,
+					    linenum, cmd);
+				} else if (r == 0) {
+					debug("%.200s line %d: matched "
+					    "'exec \"%.100s\"'", filename,
+					    linenum, cmd);
+				} else {
+					debug("%.200s line %d: no match "
+					    "'exec \"%.100s\"'", filename,
+					    linenum, cmd);
+					result = 0;
+				}
+			}
+			free(cmd);
+		} else {
+			error("Unsupported Match attribute %s", attrib);
+			result = -1;
+			goto out;
+		}
+	}
+	if (attributes == 0) {
+		error("One or more attributes required for Match");
+		result = -1;
+		goto out;
+	}
+	debug3("match %sfound", result ? "" : "not ");
+	*condition = cp;
+ out:
+	free(host);
+	return result;
+}
+
+/* Check and prepare a domain name: removes trailing '.' and lowercases */
+static void
+valid_domain(char *name, const char *filename, int linenum)
+{
+	size_t i, l = strlen(name);
+	u_char c, last = '\0';
+
+	if (l == 0)
+		fatal("%s line %d: empty hostname suffix", filename, linenum);
+	if (!isalpha((u_char)name[0]) && !isdigit((u_char)name[0]))
+		fatal("%s line %d: hostname suffix \"%.100s\" "
+		    "starts with invalid character", filename, linenum, name);
+	for (i = 0; i < l; i++) {
+		c = tolower((u_char)name[i]);
+		name[i] = (char)c;
+		if (last == '.' && c == '.')
+			fatal("%s line %d: hostname suffix \"%.100s\" contains "
+			    "consecutive separators", filename, linenum, name);
+		if (c != '.' && c != '-' && !isalnum(c) &&
+		    c != '_') /* technically invalid, but common */
+			fatal("%s line %d: hostname suffix \"%.100s\" contains "
+			    "invalid characters", filename, linenum, name);
+		last = c;
+	}
+	if (name[l - 1] == '.')
+		name[l - 1] = '\0';
+}
+
 /*
  * Returns the number of the token pointed to by cp or oBadOption.
  */
-
 static OpCodes
 parse_token(const char *cp, const char *filename, int linenum,
     const char *ignored_unknown)
@@ -395,25 +672,93 @@ parse_token(const char *cp, const char *filename, int linenum,
 	return oBadOption;
 }
 
+/* Multistate option parsing */
+struct multistate {
+	const char *key;
+	int value;
+};
+static const struct multistate multistate_flag[] = {
+	{ "true",			1 },
+	{ "false",			0 },
+	{ "yes",			1 },
+	{ "no",				0 },
+	{ NULL, -1 }
+};
+static const struct multistate multistate_yesnoask[] = {
+	{ "true",			1 },
+	{ "false",			0 },
+	{ "yes",			1 },
+	{ "no",				0 },
+	{ "ask",			2 },
+	{ NULL, -1 }
+};
+static const struct multistate multistate_addressfamily[] = {
+	{ "inet",			AF_INET },
+	{ "inet6",			AF_INET6 },
+	{ "any",			AF_UNSPEC },
+	{ NULL, -1 }
+};
+static const struct multistate multistate_controlmaster[] = {
+	{ "true",			SSHCTL_MASTER_YES },
+	{ "yes",			SSHCTL_MASTER_YES },
+	{ "false",			SSHCTL_MASTER_NO },
+	{ "no",				SSHCTL_MASTER_NO },
+	{ "auto",			SSHCTL_MASTER_AUTO },
+	{ "ask",			SSHCTL_MASTER_ASK },
+	{ "autoask",			SSHCTL_MASTER_AUTO_ASK },
+	{ NULL, -1 }
+};
+static const struct multistate multistate_tunnel[] = {
+	{ "ethernet",			SSH_TUNMODE_ETHERNET },
+	{ "point-to-point",		SSH_TUNMODE_POINTOPOINT },
+	{ "true",			SSH_TUNMODE_DEFAULT },
+	{ "yes",			SSH_TUNMODE_DEFAULT },
+	{ "false",			SSH_TUNMODE_NO },
+	{ "no",				SSH_TUNMODE_NO },
+	{ NULL, -1 }
+};
+static const struct multistate multistate_requesttty[] = {
+	{ "true",			REQUEST_TTY_YES },
+	{ "yes",			REQUEST_TTY_YES },
+	{ "false",			REQUEST_TTY_NO },
+	{ "no",				REQUEST_TTY_NO },
+	{ "force",			REQUEST_TTY_FORCE },
+	{ "auto",			REQUEST_TTY_AUTO },
+	{ NULL, -1 }
+};
+static const struct multistate multistate_canonicalizehostname[] = {
+	{ "true",			SSH_CANONICALISE_YES },
+	{ "false",			SSH_CANONICALISE_NO },
+	{ "yes",			SSH_CANONICALISE_YES },
+	{ "no",				SSH_CANONICALISE_NO },
+	{ "always",			SSH_CANONICALISE_ALWAYS },
+	{ NULL, -1 }
+};
+
 /*
  * Processes a single option line as used in the configuration files. This
  * only sets those values that have not already been set.
  */
 #define WHITESPACE " \t\r\n"
-
 int
-process_config_line(Options *options, const char *host,
-		    char *line, const char *filename, int linenum,
-		    int *activep, int userconfig)
+process_config_line(Options *options, struct passwd *pw, const char *host,
+    char *line, const char *filename, int linenum, int *activep, int userconfig)
 {
 	char *s, **charptr, *endofnumber, *keyword, *arg, *arg2;
 	char **cpptr, fwdarg[256];
 	u_int i, *uintptr, max_entries = 0;
-	int negated, opcode, *intptr, value, value2;
+	int negated, opcode, *intptr, value, value2, cmdline = 0;
 	LogLevel *log_level_ptr;
 	long long val64;
 	size_t len;
-	Forward fwd;
+	struct Forward fwd;
+	const struct multistate *multistate_ptr;
+	struct allowed_cname *cname;
+
+	if (activep == NULL) { /* We are processing a command line directive */
+		cmdline = 1;
+		activep = &cmdline;
+	}
 
 	/* Strip trailing whitespace */
 	for (len = strlen(line) - 1; len > 0; len--) {
@@ -432,8 +777,7 @@ process_config_line(Options *options, const char *host,
 	if (keyword == NULL || !*keyword || *keyword == '\n' || *keyword == '#')
 		return 0;
 	/* Match lowercase keyword */
-	for (i = 0; i < strlen(keyword); i++)
-		keyword[i] = tolower((unsigned char)keyword[i]);
+	lowercase(keyword);
 
 	opcode = parse_token(keyword, filename, linenum,
 	    options->ignored_unknown);
@@ -463,17 +807,23 @@ parse_time:
 
 	case oForwardAgent:
 		intptr = &options->forward_agent;
-parse_flag:
+ parse_flag:
+		multistate_ptr = multistate_flag;
+ parse_multistate:
 		arg = strdelim(&s);
 		if (!arg || *arg == '\0')
-			fatal("%.200s line %d: Missing yes/no argument.", filename, linenum);
-		value = 0;	/* To avoid compiler warning... */
-		if (strcmp(arg, "yes") == 0 || strcmp(arg, "true") == 0)
-			value = 1;
-		else if (strcmp(arg, "no") == 0 || strcmp(arg, "false") == 0)
-			value = 0;
-		else
-			fatal("%.200s line %d: Bad yes/no argument.", filename, linenum);
+			fatal("%s line %d: missing argument.",
+			    filename, linenum);
+		value = -1;
+		for (i = 0; multistate_ptr[i].key != NULL; i++) {
+			if (strcasecmp(arg, multistate_ptr[i].key) == 0) {
+				value = multistate_ptr[i].value;
+				break;
+			}
+		}
+		if (value == -1)
+			fatal("%s line %d: unsupported option \"%s\".",
+			    filename, linenum, arg);
 		if (*activep && *intptr == -1)
 			*intptr = value;
 		break;
@@ -491,7 +841,7 @@ parse_flag:
 		goto parse_time;
 
 	case oGatewayPorts:
-		intptr = &options->gateway_ports;
+		intptr = &options->fwd_opts.gateway_ports;
 		goto parse_flag;
 
 	case oExitOnForwardFailure:
@@ -504,10 +854,6 @@ parse_flag:
 
 	case oPasswordAuthentication:
 		intptr = &options->password_authentication;
-		goto parse_flag;
-
-	case oZeroKnowledgePasswordAuthentication:
-		intptr = &options->zero_knowledge_password_authentication;
 		goto parse_flag;
 
 	case oKbdInteractiveAuthentication:
@@ -604,27 +950,13 @@ parse_flag:
 
 	case oVerifyHostKeyDNS:
 		intptr = &options->verify_host_key_dns;
-		goto parse_yesnoask;
+		multistate_ptr = multistate_yesnoask;
+		goto parse_multistate;
 
 	case oStrictHostKeyChecking:
 		intptr = &options->strict_host_key_checking;
-parse_yesnoask:
-		arg = strdelim(&s);
-		if (!arg || *arg == '\0')
-			fatal("%.200s line %d: Missing yes/no/ask argument.",
-			    filename, linenum);
-		value = 0;	/* To avoid compiler warning... */
-		if (strcmp(arg, "yes") == 0 || strcmp(arg, "true") == 0)
-			value = 1;
-		else if (strcmp(arg, "no") == 0 || strcmp(arg, "false") == 0)
-			value = 0;
-		else if (strcmp(arg, "ask") == 0)
-			value = 2;
-		else
-			fatal("%.200s line %d: Bad yes/no/ask argument.", filename, linenum);
-		if (*activep && *intptr == -1)
-			*intptr = value;
-		break;
+		multistate_ptr = multistate_yesnoask;
+		goto parse_multistate;
 
 	case oCompression:
 		intptr = &options->compression;
@@ -905,6 +1237,9 @@ parse_int:
 		goto parse_flag;
 
 	case oHost:
+		if (cmdline)
+			fatal("Host directive not supported as a command-line "
+			    "option");
 		*activep = 0;
 		arg2 = NULL;
 		while ((arg = strdelim(&s)) != NULL && *arg != '\0') {
@@ -931,6 +1266,18 @@ parse_int:
 		/* Avoid garbage check below, as strdelim is done. */
 		return 0;
 
+	case oMatch:
+		if (cmdline)
+			fatal("Host directive not supported as a command-line "
+			    "option");
+		value = match_cfg_line(options, &s, pw, host,
+		    filename, linenum);
+		if (value < 0)
+			fatal("%.200s line %d: Bad Match condition", filename,
+			    linenum);
+		*activep = value;
+		break;
+
 	case oEscapeChar:
 		intptr = &options->escape_char;
 		arg = strdelim(&s);
@@ -955,23 +1302,9 @@ parse_int:
 		break;
 
 	case oAddressFamily:
-		arg = strdelim(&s);
-		if (!arg || *arg == '\0')
-			fatal("%s line %d: missing address family.",
-			    filename, linenum);
 		intptr = &options->address_family;
-		value = 0;	/* To avoid compiler warning... */
-		if (strcasecmp(arg, "inet") == 0)
-			value = AF_INET;
-		else if (strcasecmp(arg, "inet6") == 0)
-			value = AF_INET6;
-		else if (strcasecmp(arg, "any") == 0)
-			value = AF_UNSPEC;
-		else
-			fatal("Unsupported AddressFamily \"%s\"", arg);
-		if (*activep && *intptr == -1)
-			*intptr = value;
-		break;
+		multistate_ptr = multistate_addressfamily;
+		goto parse_multistate;
 
 	case oEnableSSHKeysign:
 		intptr = &options->enable_ssh_keysign;
@@ -1010,27 +1343,8 @@ parse_int:
 
 	case oControlMaster:
 		intptr = &options->control_master;
-		arg = strdelim(&s);
-		if (!arg || *arg == '\0')
-			fatal("%.200s line %d: Missing ControlMaster argument.",
-			    filename, linenum);
-		value = 0;	/* To avoid compiler warning... */
-		if (strcmp(arg, "yes") == 0 || strcmp(arg, "true") == 0)
-			value = SSHCTL_MASTER_YES;
-		else if (strcmp(arg, "no") == 0 || strcmp(arg, "false") == 0)
-			value = SSHCTL_MASTER_NO;
-		else if (strcmp(arg, "auto") == 0)
-			value = SSHCTL_MASTER_AUTO;
-		else if (strcmp(arg, "ask") == 0)
-			value = SSHCTL_MASTER_ASK;
-		else if (strcmp(arg, "autoask") == 0)
-			value = SSHCTL_MASTER_AUTO_ASK;
-		else
-			fatal("%.200s line %d: Bad ControlMaster argument.",
-			    filename, linenum);
-		if (*activep && *intptr == -1)
-			*intptr = value;
-		break;
+		multistate_ptr = multistate_controlmaster;
+		goto parse_multistate;
 
 	case oControlPersist:
 		/* no/false/yes/true, or a time spec */
@@ -1062,25 +1376,8 @@ parse_int:
 
 	case oTunnel:
 		intptr = &options->tun_open;
-		arg = strdelim(&s);
-		if (!arg || *arg == '\0')
-			fatal("%s line %d: Missing yes/point-to-point/"
-			    "ethernet/no argument.", filename, linenum);
-		value = 0;	/* silence compiler */
-		if (strcasecmp(arg, "ethernet") == 0)
-			value = SSH_TUNMODE_ETHERNET;
-		else if (strcasecmp(arg, "point-to-point") == 0)
-			value = SSH_TUNMODE_POINTOPOINT;
-		else if (strcasecmp(arg, "yes") == 0)
-			value = SSH_TUNMODE_DEFAULT;
-		else if (strcasecmp(arg, "no") == 0)
-			value = SSH_TUNMODE_NO;
-		else
-			fatal("%s line %d: Bad yes/point-to-point/ethernet/"
-			    "no argument: %s", filename, linenum, arg);
-		if (*activep)
-			*intptr = value;
-		break;
+		multistate_ptr = multistate_tunnel;
+		goto parse_multistate;
 
 	case oTunnelDevice:
 		arg = strdelim(&s);
@@ -1129,24 +1426,9 @@ parse_int:
 		goto parse_flag;
 
 	case oRequestTTY:
-		arg = strdelim(&s);
-		if (!arg || *arg == '\0')
-			fatal("%s line %d: missing argument.",
-			    filename, linenum);
 		intptr = &options->request_tty;
-		if (strcasecmp(arg, "yes") == 0)
-			value = REQUEST_TTY_YES;
-		else if (strcasecmp(arg, "no") == 0)
-			value = REQUEST_TTY_NO;
-		else if (strcasecmp(arg, "force") == 0)
-			value = REQUEST_TTY_FORCE;
-		else if (strcasecmp(arg, "auto") == 0)
-			value = REQUEST_TTY_AUTO;
-		else
-			fatal("Unsupported RequestTTY \"%s\"", arg);
-		if (*activep && *intptr == -1)
-			*intptr = value;
-		break;
+		multistate_ptr = multistate_requesttty;
+		goto parse_multistate;
 
 	case oSendVersionFirst:
 		intptr = &options->send_version_first;
@@ -1155,6 +1437,81 @@ parse_int:
 	case oIgnoreUnknown:
 		charptr = &options->ignored_unknown;
 		goto parse_string;
+
+	case oProxyUseFdpass:
+		intptr = &options->proxy_use_fdpass;
+		goto parse_flag;
+
+	case oCanonicalDomains:
+		value = options->num_canonical_domains != 0;
+		while ((arg = strdelim(&s)) != NULL && *arg != '\0') {
+			valid_domain(arg, filename, linenum);
+			if (!*activep || value)
+				continue;
+			if (options->num_canonical_domains >= MAX_CANON_DOMAINS)
+				fatal("%s line %d: too many hostname suffixes.",
+				    filename, linenum);
+			options->canonical_domains[
+			    options->num_canonical_domains++] = xstrdup(arg);
+		}
+		break;
+
+	case oCanonicalizePermittedCNAMEs:
+		value = options->num_permitted_cnames != 0;
+		while ((arg = strdelim(&s)) != NULL && *arg != '\0') {
+			/* Either '*' for everything or 'list:list' */
+			if (strcmp(arg, "*") == 0)
+				arg2 = arg;
+			else {
+				lowercase(arg);
+				if ((arg2 = strchr(arg, ':')) == NULL ||
+				    arg2[1] == '\0') {
+					fatal("%s line %d: "
+					    "Invalid permitted CNAME \"%s\"",
+					    filename, linenum, arg);
+				}
+				*arg2 = '\0';
+				arg2++;
+			}
+			if (!*activep || value)
+				continue;
+			if (options->num_permitted_cnames >= MAX_CANON_DOMAINS)
+				fatal("%s line %d: too many permitted CNAMEs.",
+				    filename, linenum);
+			cname = options->permitted_cnames +
+			    options->num_permitted_cnames++;
+			cname->source_list = xstrdup(arg);
+			cname->target_list = xstrdup(arg2);
+		}
+		break;
+
+	case oCanonicalizeHostname:
+		intptr = &options->canonicalize_hostname;
+		multistate_ptr = multistate_canonicalizehostname;
+		goto parse_multistate;
+
+	case oCanonicalizeMaxDots:
+		intptr = &options->canonicalize_max_dots;
+		goto parse_int;
+
+	case oCanonicalizeFallbackLocal:
+		intptr = &options->canonicalize_fallback_local;
+		goto parse_flag;
+
+	case oStreamLocalBindMask:
+		arg = strdelim(&s);
+		if (!arg || *arg == '\0')
+			fatal("%.200s line %d: Missing StreamLocalBindMask argument.", filename, linenum);
+		/* Parse mode in octal format */
+		value = strtol(arg, &endofnumber, 8);
+		if (arg == endofnumber || value < 0 || value > 0777)
+			fatal("%.200s line %d: Bad mask.", filename, linenum);
+		options->fwd_opts.streamlocal_bind_mask = (mode_t)value;
+		break;
+
+	case oStreamLocalBindUnlink:
+		intptr = &options->fwd_opts.streamlocal_bind_unlink;
+		goto parse_flag;
 
 	case oDeprecated:
 		debug("%s line %d: Deprecated option \"%s\"",
@@ -1186,8 +1543,8 @@ parse_int:
  */
 
 int
-read_config_file(const char *filename, const char *host, Options *options,
-    int flags)
+read_config_file(const char *filename, struct passwd *pw, const char *host,
+    Options *options, int flags)
 {
 	FILE *f;
 	char line[1024];
@@ -1218,8 +1575,8 @@ read_config_file(const char *filename, const char *host, Options *options,
 	while (fgets(line, sizeof(line), f)) {
 		/* Update line number counter. */
 		linenum++;
-		if (process_config_line(options, host, line, filename, linenum,
-		    &active, flags & SSHCONF_USERCONF) != 0)
+		if (process_config_line(options, pw, host, line, filename,
+		    linenum, &active, flags & SSHCONF_USERCONF) != 0)
 			bad_options++;
 	}
 	fclose(f);
@@ -1227,6 +1584,13 @@ read_config_file(const char *filename, const char *host, Options *options,
 		fatal("%s: terminating, %d bad configuration options",
 		    filename, bad_options);
 	return 1;
+}
+
+/* Returns 1 if a string option is unset or set to "none" or 0 otherwise. */
+int
+option_clear_or_none(const char *o)
+{
+	return o == NULL || strcasecmp(o, "none") == 0;
 }
 
 /*
@@ -1246,7 +1610,9 @@ initialize_options(Options * options)
 	options->forward_x11_timeout = -1;
 	options->exit_on_forward_failure = -1;
 	options->xauth_location = NULL;
-	options->gateway_ports = -1;
+	options->fwd_opts.gateway_ports = -1;
+	options->fwd_opts.streamlocal_bind_mask = (mode_t)-1;
+	options->fwd_opts.streamlocal_bind_unlink = -1;
 	options->use_privileged_port = -1;
 	options->rsa_authentication = -1;
 	options->pubkey_authentication = -1;
@@ -1322,11 +1688,16 @@ initialize_options(Options * options)
 	options->permit_local_command = -1;
 	options->use_roaming = -1;
 	options->visual_host_key = -1;
-	options->zero_knowledge_password_authentication = -1;
 	options->ip_qos_interactive = -1;
 	options->ip_qos_bulk = -1;
 	options->request_tty = -1;
+	options->proxy_use_fdpass = -1;
 	options->ignored_unknown = NULL;
+	options->num_canonical_domains = 0;
+	options->num_permitted_cnames = 0;
+	options->canonicalize_max_dots = -1;
+	options->canonicalize_fallback_local = -1;
+	options->canonicalize_hostname = -1;
 	options->none_switch = -1;
 	options->none_enabled = -1;
 	options->hpn_disabled = -1;
@@ -1337,10 +1708,24 @@ initialize_options(Options * options)
 }
 
 /*
+ * A petite version of fill_default_options() that just fills the options
+ * needed for hostname canonicalization to proceed.
+ */
+void
+fill_default_options_for_canonicalization(Options *options)
+{
+	if (options->canonicalize_max_dots == -1)
+		options->canonicalize_max_dots = 1;
+	if (options->canonicalize_fallback_local == -1)
+		options->canonicalize_fallback_local = 1;
+	if (options->canonicalize_hostname == -1)
+		options->canonicalize_hostname = SSH_CANONICALISE_NO;
+}
+
+/*
  * Called after processing other sources of option data, this fills those
  * options for which no value has been specified with their default values.
  */
-
 void
 fill_default_options(Options * options)
 {
@@ -1356,8 +1741,12 @@ fill_default_options(Options * options)
 		options->exit_on_forward_failure = 0;
 	if (options->xauth_location == NULL)
 		options->xauth_location = __UNCONST(_PATH_XAUTH);
-	if (options->gateway_ports == -1)
-		options->gateway_ports = 0;
+	if (options->fwd_opts.gateway_ports == -1)
+		options->fwd_opts.gateway_ports = 0;
+	if (options->fwd_opts.streamlocal_bind_mask == (mode_t)-1)
+		options->fwd_opts.streamlocal_bind_mask = 0177;
+	if (options->fwd_opts.streamlocal_bind_unlink == -1)
+		options->fwd_opts.streamlocal_bind_unlink = 0;
 	if (options->use_privileged_port == -1)
 		options->use_privileged_port = 0;
 	if (options->rsa_authentication == -1)
@@ -1431,6 +1820,8 @@ fill_default_options(Options * options)
 			    _PATH_SSH_CLIENT_ID_DSA, 0);
 			add_identity_file(options, "~/",
 			    _PATH_SSH_CLIENT_ID_ECDSA, 0);
+			add_identity_file(options, "~/",
+			    _PATH_SSH_CLIENT_ID_ED25519, 0);
 		}
 	}
 	if (options->escape_char == -1)
@@ -1510,80 +1901,195 @@ fill_default_options(Options * options)
 		options->use_roaming = 1;
 	if (options->visual_host_key == -1)
 		options->visual_host_key = 0;
-	if (options->zero_knowledge_password_authentication == -1)
-		options->zero_knowledge_password_authentication = 0;
 	if (options->ip_qos_interactive == -1)
 		options->ip_qos_interactive = IPTOS_LOWDELAY;
 	if (options->ip_qos_bulk == -1)
 		options->ip_qos_bulk = IPTOS_THROUGHPUT;
 	if (options->request_tty == -1)
 		options->request_tty = REQUEST_TTY_AUTO;
+	if (options->proxy_use_fdpass == -1)
+		options->proxy_use_fdpass = 0;
+	if (options->canonicalize_max_dots == -1)
+		options->canonicalize_max_dots = 1;
+	if (options->canonicalize_fallback_local == -1)
+		options->canonicalize_fallback_local = 1;
+	if (options->canonicalize_hostname == -1)
+		options->canonicalize_hostname = SSH_CANONICALISE_NO;
 	if (options->send_version_first == -1)
 		options->send_version_first = 1;
-	/* options->local_command should not be set by default */
-	/* options->proxy_command should not be set by default */
+#define CLEAR_ON_NONE(v) \
+	do { \
+		if (option_clear_or_none(v)) { \
+			free(v); \
+			v = NULL; \
+		} \
+	} while(0)
+	CLEAR_ON_NONE(options->local_command);
+	CLEAR_ON_NONE(options->proxy_command);
+	CLEAR_ON_NONE(options->control_path);
 	/* options->user will be set in the main program if appropriate */
 	/* options->hostname will be set in the main program if appropriate */
 	/* options->host_key_alias should not be set by default */
 	/* options->preferred_authentications will be set in ssh */
 }
 
+struct fwdarg {
+	char *arg;
+	int ispath;
+};
+
+/*
+ * parse_fwd_field
+ * parses the next field in a port forwarding specification.
+ * sets fwd to the parsed field and advances p past the colon
+ * or sets it to NULL at end of string.
+ * returns 0 on success, else non-zero.
+ */
+static int
+parse_fwd_field(char **p, struct fwdarg *fwd)
+{
+	char *ep, *cp = *p;
+	int ispath = 0;
+
+	if (*cp == '\0') {
+		*p = NULL;
+		return -1;	/* end of string */
+	}
+
+	/*
+	 * A field escaped with square brackets is used literally.
+	 * XXX - allow ']' to be escaped via backslash?
+	 */
+	if (*cp == '[') {
+		/* find matching ']' */
+		for (ep = cp + 1; *ep != ']' && *ep != '\0'; ep++) {
+			if (*ep == '/')
+				ispath = 1;
+		}
+		/* no matching ']' or not at end of field. */
+		if (ep[0] != ']' || (ep[1] != ':' && ep[1] != '\0'))
+			return -1;
+		/* NUL terminate the field and advance p past the colon */
+		*ep++ = '\0';
+		if (*ep != '\0')
+			*ep++ = '\0';
+		fwd->arg = cp + 1;
+		fwd->ispath = ispath;
+		*p = ep;
+		return 0;
+	}
+
+	for (cp = *p; *cp != '\0'; cp++) {
+		switch (*cp) {
+		case '\\':
+			memmove(cp, cp + 1, strlen(cp + 1) + 1);
+			cp++;
+			break;
+		case '/':
+			ispath = 1;
+			break;
+		case ':':
+			*cp++ = '\0';
+			goto done;
+		}
+	}
+done:
+	fwd->arg = *p;
+	fwd->ispath = ispath;
+	*p = cp;
+	return 0;
+}
+
 /*
  * parse_forward
  * parses a string containing a port forwarding specification of the form:
  *   dynamicfwd == 0
- *	[listenhost:]listenport:connecthost:connectport
+ *	[listenhost:]listenport|listenpath:connecthost:connectport|connectpath
+ *	listenpath:connectpath
  *   dynamicfwd == 1
  *	[listenhost:]listenport
  * returns number of arguments parsed or zero on error
  */
 int
-parse_forward(Forward *fwd, const char *fwdspec, int dynamicfwd, int remotefwd)
+parse_forward(struct Forward *fwd, const char *fwdspec, int dynamicfwd, int remotefwd)
 {
+	struct fwdarg fwdargs[4];
+	char *p, *cp;
 	int i;
-	char *p, *cp, *fwdarg[4];
 
-	memset(fwd, '\0', sizeof(*fwd));
+	memset(fwd, 0, sizeof(*fwd));
+	memset(fwdargs, 0, sizeof(fwdargs));
 
 	cp = p = xstrdup(fwdspec);
 
 	/* skip leading spaces */
-	while (isspace((unsigned char)*cp))
+	while (isspace((u_char)*cp))
 		cp++;
 
-	for (i = 0; i < 4; ++i)
-		if ((fwdarg[i] = hpdelim(&cp)) == NULL)
+	for (i = 0; i < 4; ++i) {
+		if (parse_fwd_field(&cp, &fwdargs[i]) != 0)
 			break;
+	}
 
 	/* Check for trailing garbage */
-	if (cp != NULL)
+	if (cp != NULL && *cp != '\0') {
 		i = 0;	/* failure */
+	}
 
 	switch (i) {
 	case 1:
-		fwd->listen_host = NULL;
-		fwd->listen_port = a2port(fwdarg[0]);
+		if (fwdargs[0].ispath) {
+			fwd->listen_path = xstrdup(fwdargs[0].arg);
+			fwd->listen_port = PORT_STREAMLOCAL;
+		} else {
+			fwd->listen_host = NULL;
+			fwd->listen_port = a2port(fwdargs[0].arg);
+		}
 		fwd->connect_host = xstrdup("socks");
 		break;
 
 	case 2:
-		fwd->listen_host = xstrdup(cleanhostname(fwdarg[0]));
-		fwd->listen_port = a2port(fwdarg[1]);
-		fwd->connect_host = xstrdup("socks");
+		if (fwdargs[0].ispath && fwdargs[1].ispath) {
+			fwd->listen_path = xstrdup(fwdargs[0].arg);
+			fwd->listen_port = PORT_STREAMLOCAL;
+			fwd->connect_path = xstrdup(fwdargs[1].arg);
+			fwd->connect_port = PORT_STREAMLOCAL;
+		} else if (fwdargs[1].ispath) {
+			fwd->listen_host = NULL;
+			fwd->listen_port = a2port(fwdargs[0].arg);
+			fwd->connect_path = xstrdup(fwdargs[1].arg);
+			fwd->connect_port = PORT_STREAMLOCAL;
+		} else {
+			fwd->listen_host = xstrdup(fwdargs[0].arg);
+			fwd->listen_port = a2port(fwdargs[1].arg);
+			fwd->connect_host = xstrdup("socks");
+		}
 		break;
 
 	case 3:
-		fwd->listen_host = NULL;
-		fwd->listen_port = a2port(fwdarg[0]);
-		fwd->connect_host = xstrdup(cleanhostname(fwdarg[1]));
-		fwd->connect_port = a2port(fwdarg[2]);
+		if (fwdargs[0].ispath) {
+			fwd->listen_path = xstrdup(fwdargs[0].arg);
+			fwd->listen_port = PORT_STREAMLOCAL;
+			fwd->connect_host = xstrdup(fwdargs[1].arg);
+			fwd->connect_port = a2port(fwdargs[2].arg);
+		} else if (fwdargs[2].ispath) {
+			fwd->listen_host = xstrdup(fwdargs[0].arg);
+			fwd->listen_port = a2port(fwdargs[1].arg);
+			fwd->connect_path = xstrdup(fwdargs[2].arg);
+			fwd->connect_port = PORT_STREAMLOCAL;
+		} else {
+			fwd->listen_host = NULL;
+			fwd->listen_port = a2port(fwdargs[0].arg);
+			fwd->connect_host = xstrdup(fwdargs[1].arg);
+			fwd->connect_port = a2port(fwdargs[2].arg);
+		}
 		break;
 
 	case 4:
-		fwd->listen_host = xstrdup(cleanhostname(fwdarg[0]));
-		fwd->listen_port = a2port(fwdarg[1]);
-		fwd->connect_host = xstrdup(cleanhostname(fwdarg[2]));
-		fwd->connect_port = a2port(fwdarg[3]);
+		fwd->listen_host = xstrdup(fwdargs[0].arg);
+		fwd->listen_port = a2port(fwdargs[1].arg);
+		fwd->connect_host = xstrdup(fwdargs[2].arg);
+		fwd->connect_port = a2port(fwdargs[3].arg);
 		break;
 	default:
 		i = 0; /* failure */
@@ -1595,29 +2101,42 @@ parse_forward(Forward *fwd, const char *fwdspec, int dynamicfwd, int remotefwd)
 		if (!(i == 1 || i == 2))
 			goto fail_free;
 	} else {
-		if (!(i == 3 || i == 4))
-			goto fail_free;
-		if (fwd->connect_port <= 0)
+		if (!(i == 3 || i == 4)) {
+			if (fwd->connect_path == NULL &&
+			    fwd->listen_path == NULL)
+				goto fail_free;
+		}
+		if (fwd->connect_port <= 0 && fwd->connect_path == NULL)
 			goto fail_free;
 	}
 
-	if (fwd->listen_port < 0 || (!remotefwd && fwd->listen_port == 0))
+	if ((fwd->listen_port < 0 && fwd->listen_path == NULL) ||
+	    (!remotefwd && fwd->listen_port == 0))
 		goto fail_free;
-
 	if (fwd->connect_host != NULL &&
 	    strlen(fwd->connect_host) >= NI_MAXHOST)
+		goto fail_free;
+	/* XXX - if connecting to a remote socket, max sun len may not match this host */
+	if (fwd->connect_path != NULL &&
+	    strlen(fwd->connect_path) >= PATH_MAX_SUN)
 		goto fail_free;
 	if (fwd->listen_host != NULL &&
 	    strlen(fwd->listen_host) >= NI_MAXHOST)
 		goto fail_free;
-
+	if (fwd->listen_path != NULL &&
+	    strlen(fwd->listen_path) >= PATH_MAX_SUN)
+		goto fail_free;
 
 	return (i);
 
  fail_free:
 	free(fwd->connect_host);
 	fwd->connect_host = NULL;
+	free(fwd->connect_path);
+	fwd->connect_path = NULL;
 	free(fwd->listen_host);
 	fwd->listen_host = NULL;
+	free(fwd->listen_path);
+	fwd->listen_path = NULL;
 	return (0);
 }

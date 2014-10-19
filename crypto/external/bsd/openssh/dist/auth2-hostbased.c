@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-hostbased.c,v 1.5 2013/11/08 19:18:24 christos Exp $	*/
-/* $OpenBSD: auth2-hostbased.c,v 1.16 2013/06/21 00:34:49 djm Exp $ */
+/*	$NetBSD: auth2-hostbased.c,v 1.6 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: auth2-hostbased.c,v 1.18 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-hostbased.c,v 1.5 2013/11/08 19:18:24 christos Exp $");
+__RCSID("$NetBSD: auth2-hostbased.c,v 1.6 2014/10/19 16:30:58 christos Exp $");
 #include <sys/types.h>
 
 #include <pwd.h>
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: auth2-hostbased.c,v 1.5 2013/11/08 19:18:24 christos Exp $");
 #include "packet.h"
 #include "buffer.h"
 #include "log.h"
+#include "misc.h"
 #include "servconf.h"
 #include "compat.h"
 #include "key.h"
@@ -99,6 +100,12 @@ userauth_hostbased(Authctxt *authctxt)
 	if (key->type != pktype) {
 		error("userauth_hostbased: type mismatch for decoded key "
 		    "(received %d, expected %d)", key->type, pktype);
+		goto done;
+	}
+	if (key_type_plain(key->type) == KEY_RSA &&
+	    (datafellows & SSH_BUG_RSASIGMD5) != 0) {
+		error("Refusing RSA key because peer uses unsafe "
+		    "signature format");
 		goto done;
 	}
 	service = datafellows & SSH_BUG_HBSERVICE ? __UNCONST("ssh-userauth") :

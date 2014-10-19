@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.7 2014/01/07 02:13:39 joerg Exp $	*/
+/*	$NetBSD: log.h,v 1.8 2014/10/19 16:30:58 christos Exp $	*/
 /* $OpenBSD: log.h,v 1.20 2013/04/07 02:10:33 dtucker Exp $ */
 
 /*

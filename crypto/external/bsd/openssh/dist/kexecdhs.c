@@ -1,5 +1,5 @@
-/*	$NetBSD: kexecdhs.c,v 1.3 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: kexecdhs.c,v 1.5 2013/07/19 07:37:48 markus Exp $ */
+/*	$NetBSD: kexecdhs.c,v 1.4 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: kexecdhs.c,v 1.10 2014/02/02 03:44:31 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexecdhs.c,v 1.3 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: kexecdhs.c,v 1.4 2014/10/19 16:30:58 christos Exp $");
 #include <sys/types.h>
 #include <string.h>
 #include <signal.h>
@@ -40,12 +40,7 @@ __RCSID("$NetBSD: kexecdhs.c,v 1.3 2013/11/08 19:18:25 christos Exp $");
 #include "kex.h"
 #include "log.h"
 #include "packet.h"
-#include "dh.h"
 #include "ssh2.h"
-#ifdef GSSAPI
-#include "ssh-gss.h"
-#endif
-#include "monitor_wrap.h"
 
 void
 kexecdh_server(Kex *kex)
@@ -107,18 +102,18 @@ kexecdh_server(Kex *kex)
 		fatal("%s: BN_new failed", __func__);
 	if (BN_bin2bn(kbuf, klen, shared_secret) == NULL)
 		fatal("%s: BN_bin2bn failed", __func__);
-	memset(kbuf, 0, klen);
+	explicit_bzero(kbuf, klen);
 	free(kbuf);
 
 	/* calc H */
 	key_to_blob(server_host_public, &server_host_key_blob, &sbloblen);
 	kex_ecdh_hash(
-	    kex->evp_md,
+	    kex->hash_alg,
 	    group,
 	    kex->client_version_string,
 	    kex->server_version_string,
-	    buffer_ptr(&kex->peer), buffer_len(&kex->peer),
-	    buffer_ptr(&kex->my), buffer_len(&kex->my),
+	    (char *)buffer_ptr(&kex->peer), buffer_len(&kex->peer),
+	    (char *)buffer_ptr(&kex->my), buffer_len(&kex->my),
 	    server_host_key_blob, sbloblen,
 	    client_public,
 	    EC_KEY_get0_public_key(server_key),
@@ -152,7 +147,7 @@ kexecdh_server(Kex *kex)
 	/* have keys, free server key */
 	EC_KEY_free(server_key);
 
-	kex_derive_keys(kex, hash, hashlen, shared_secret);
+	kex_derive_keys_bn(kex, hash, hashlen, shared_secret);
 	BN_clear_free(shared_secret);
 	kex_finish(kex);
 }

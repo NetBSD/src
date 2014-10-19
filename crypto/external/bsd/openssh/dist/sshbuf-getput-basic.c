@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: sshbuf-getput-basic.c,v 1.2 2014/10/19 16:30:59 christos Exp $");
 
 #include <sys/types.h>
 #include <stdlib.h>
@@ -357,7 +359,7 @@ sshbuf_put_string(struct sshbuf *buf, const void *v, size_t len)
 int
 sshbuf_put_cstring(struct sshbuf *buf, const char *v)
 {
-	return sshbuf_put_string(buf, (u_char *)v, strlen(v));
+	return sshbuf_put_string(buf, __UNCONST(v), strlen(v));
 }
 
 int

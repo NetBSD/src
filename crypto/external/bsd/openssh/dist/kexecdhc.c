@@ -1,5 +1,5 @@
-/*	$NetBSD: kexecdhc.c,v 1.3 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: kexecdhc.c,v 1.4 2013/05/17 00:13:13 djm Exp $ */
+/*	$NetBSD: kexecdhc.c,v 1.4 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: kexecdhc.c,v 1.7 2014/02/02 03:44:31 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexecdhc.c,v 1.3 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: kexecdhc.c,v 1.4 2014/10/19 16:30:58 christos Exp $");
 #include <sys/types.h>
 
 #include <stdio.h>
@@ -93,7 +93,7 @@ kexecdh_client(Kex *kex)
 		fatal("%s: EC_POINT_new failed", __func__);
 	packet_get_ecpoint(group, server_public);
 
-	if (key_ec_validate_public(group, server_public) != 0)
+	if (sshkey_ec_validate_public(group, server_public) != 0)
 		fatal("%s: invalid server public key", __func__);
 
 #ifdef DEBUG_KEXECDH
@@ -118,17 +118,17 @@ kexecdh_client(Kex *kex)
 		fatal("%s: BN_new failed", __func__);
 	if (BN_bin2bn(kbuf, klen, shared_secret) == NULL)
 		fatal("%s: BN_bin2bn failed", __func__);
-	memset(kbuf, 0, klen);
+	explicit_bzero(kbuf, klen);
 	free(kbuf);
 
 	/* calc and verify H */
 	kex_ecdh_hash(
-	    kex->evp_md,
+	    kex->hash_alg,
 	    group,
 	    kex->client_version_string,
 	    kex->server_version_string,
-	    buffer_ptr(&kex->my), buffer_len(&kex->my),
-	    buffer_ptr(&kex->peer), buffer_len(&kex->peer),
+	    (char *)buffer_ptr(&kex->my), buffer_len(&kex->my),
+	    (char *)buffer_ptr(&kex->peer), buffer_len(&kex->peer),
 	    server_host_key_blob, sbloblen,
 	    EC_KEY_get0_public_key(client_key),
 	    server_public,
@@ -151,7 +151,7 @@ kexecdh_client(Kex *kex)
 		memcpy(kex->session_id, hash, kex->session_id_len);
 	}
 
-	kex_derive_keys(kex, hash, hashlen, shared_secret);
+	kex_derive_keys_bn(kex, hash, hashlen, shared_secret);
 	BN_clear_free(shared_secret);
 	kex_finish(kex);
 }

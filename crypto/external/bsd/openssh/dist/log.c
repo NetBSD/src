@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.10 2013/11/08 19:18:25 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.11 2014/10/19 16:30:58 christos Exp $	*/
 /* $OpenBSD: log.c,v 1.45 2013/05/16 09:08:41 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.10 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.11 2014/10/19 16:30:58 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 

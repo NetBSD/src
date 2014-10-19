@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: digest-openssl.c,v 1.2 2014/10/19 16:30:58 christos Exp $");
 
 #include <sys/types.h>
 #include <limits.h>
