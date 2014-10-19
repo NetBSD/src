@@ -42,13 +42,16 @@
 #define	AWIN_GMAC_MAC_ADDR0LO		0x0044
 #define	AWIN_GMAC_MII_STATUS		0x00D8
 
-#define	AWIN_GMAC_MAC_CONF_FRAMEBURST	__BIT(21)
-#define	AWIN_GMAC_MAC_CONF_MIISEL	__BIT(15)
-#define	AWIN_GMAC_MAC_CONF_FES100	__BIT(14)
-#define	AWIN_GMAC_MAC_CONF_DISABLERXOWN	__BIT(13)
-#define	AWIN_GMAC_MAC_CONF_FULLDPLX	__BIT(11)
-#define	AWIN_GMAC_MAC_CONF_TXENABLE	__BIT(3)
-#define	AWIN_GMAC_MAC_CONF_RXENABLE	__BIT(2)
+#define	AWIN_GMAC_MAC_CONF_FRAMEBURST	__BIT(21) /* allow TX frameburst when
+						     in half duplex mode */
+#define	AWIN_GMAC_MAC_CONF_MIISEL	__BIT(15) /* select MII phy */
+#define	AWIN_GMAC_MAC_CONF_FES100	__BIT(14) /* 100 mbit mode */
+#define	AWIN_GMAC_MAC_CONF_DISABLERXOWN	__BIT(13) /* do not receive our own
+						     TX frames in half duplex
+						     mode */
+#define	AWIN_GMAC_MAC_CONF_FULLDPLX	__BIT(11) /* select full duplex */
+#define	AWIN_GMAC_MAC_CONF_TXENABLE	__BIT(3)  /* enable TX dma engine */
+#define	AWIN_GMAC_MAC_CONF_RXENABLE	__BIT(2)  /* enable RX dma engine */
 
 #define	AWIN_GMAC_MAC_FFILT_PM		__BIT(4) /* promiscious multicast */
 #define	AWIN_GMAC_MAC_FFILT_HMC		__BIT(2) /* multicast hash compare */
