@@ -18,6 +18,7 @@
  * an equivalent notion.
  */
 
+#include "constant_time_locl.h"
 
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
 #include <stdio.h>
@@ -92,82 +93,115 @@ int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
 	const unsigned char *from, int flen, int num,
 	const unsigned char *param, int plen)
 	{
-	int i, dblen, mlen = -1;
-	const unsigned char *maskeddb;
-	int lzero;
-	unsigned char *db = NULL, seed[SHA_DIGEST_LENGTH], phash[SHA_DIGEST_LENGTH];
-	int bad = 0;
+	int i, dblen, mlen = -1, one_index = 0, msg_index;
+	unsigned int good, found_one_byte;
+	const unsigned char *maskedseed, *maskeddb;
+	/* |em| is the encoded message, zero-padded to exactly |num| bytes:
+	* em = Y || maskedSeed || maskedDB */
+	unsigned char *db = NULL, *em = NULL, seed[EVP_MAX_MD_SIZE],
+		phash[EVP_MAX_MD_SIZE];
 
-	if (--num < 2 * SHA_DIGEST_LENGTH + 1)
-		/* 'num' is the length of the modulus, i.e. does not depend on the
-		 * particular ciphertext. */
+	if (tlen <= 0 || flen <= 0)
+		return -1;
+
+	/*
+	 * |num| is the length of the modulus; |flen| is the length of the
+	 * encoded message. Therefore, for any |from| that was obtained by
+	 * decrypting a ciphertext, we must have |flen| <= |num|. Similarly,
+	 * num < 2 * SHA_DIGEST_LENGTH + 2 must hold for the modulus
+	 * irrespective of the ciphertext, see PKCS #1 v2.2, section 7.1.2.
+	 * This does not leak any side-channel information.
+	 */
+	if (num < flen || num < 2 * SHA_DIGEST_LENGTH + 2)
 		goto decoding_err;
 
-	lzero = num - flen;
-	if (lzero < 0)
-		{
-		/* lzero == -1 */
-
-		/* signalling this error immediately after detection might allow
-		 * for side-channel attacks (e.g. timing if 'plen' is huge
-		 * -- cf. James H. Manger, "A Chosen Ciphertext Attack on RSA Optimal
-		 * Asymmetric Encryption Padding (OAEP) [...]", CRYPTO 2001),
-		 * so we use a 'bad' flag */
-		bad = 1;
-		lzero = 0;
-		}
-	maskeddb = from - lzero + SHA_DIGEST_LENGTH;
-
-	dblen = num - SHA_DIGEST_LENGTH;
+	dblen = num - SHA_DIGEST_LENGTH - 1;
 	db = OPENSSL_malloc(dblen);
-	if (db == NULL)
+	em = OPENSSL_malloc(num);
+	if (db == NULL || em == NULL)
 		{
 		RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, ERR_R_MALLOC_FAILURE);
-		return -1;
+		goto cleanup;
 		}
 
-	MGF1(seed, SHA_DIGEST_LENGTH, maskeddb, dblen);
-	for (i = lzero; i < SHA_DIGEST_LENGTH; i++)
-		seed[i] ^= from[i - lzero];
+	/*
+	 * Always do this zero-padding copy (even when num == flen) to avoid
+	 * leaking that information. The copy still leaks some side-channel
+	 * information, but it's impossible to have a fixed  memory access
+	 * pattern since we can't read out of the bounds of |from|.
+	 *
+	 * TODO(emilia): Consider porting BN_bn2bin_padded from BoringSSL.
+	 */
+	memset(em, 0, num);
+	memcpy(em + num - flen, from, flen);
+
+	/*
+	 * The first byte must be zero, however we must not leak if this is
+	 * true. See James H. Manger, "A Chosen Ciphertext  Attack on RSA
+	 * Optimal Asymmetric Encryption Padding (OAEP) [...]", CRYPTO 2001).
+	 */
+	good = constant_time_is_zero(em[0]);
+
+	maskedseed = em + 1;
+	maskeddb = em + 1 + SHA_DIGEST_LENGTH;
+
+	if (MGF1(seed, SHA_DIGEST_LENGTH, maskeddb, dblen))
+		goto cleanup;
+	for (i = 0; i < SHA_DIGEST_LENGTH; i++)
+		seed[i] ^= maskedseed[i];
   
-	MGF1(db, dblen, seed, SHA_DIGEST_LENGTH);
+	if (MGF1(db, dblen, seed, SHA_DIGEST_LENGTH))
+		goto cleanup;
 	for (i = 0; i < dblen; i++)
 		db[i] ^= maskeddb[i];
 
 	EVP_Digest((void *)param, plen, phash, NULL, EVP_sha1(), NULL);
 
-	if (memcmp(db, phash, SHA_DIGEST_LENGTH) != 0 || bad)
+	good &= constant_time_is_zero(memcmp(db, phash, SHA_DIGEST_LENGTH));
+
+	found_one_byte = 0;
+	for (i = SHA_DIGEST_LENGTH; i < dblen; i++)
+		{
+		/* Padding consists of a number of 0-bytes, followed by a 1. */
+		unsigned int equals1 = constant_time_eq(db[i], 1);
+		unsigned int equals0 = constant_time_is_zero(db[i]);
+		one_index = constant_time_select_int(~found_one_byte & equals1,
+			i, one_index);
+		found_one_byte |= equals1;
+		good &= (found_one_byte | equals0);
+		}
+
+	good &= found_one_byte;
+
+	/*
+	 * At this point |good| is zero unless the plaintext was valid,
+	 * so plaintext-awareness ensures timing side-channels are no longer a
+	 * concern.
+	 */
+	if (!good)
 		goto decoding_err;
+
+	msg_index = one_index + 1;
+	mlen = dblen - msg_index;
+
+	if (tlen < mlen)
+		{
+		RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, RSA_R_DATA_TOO_LARGE);
+		mlen = -1;
+		}
 	else
 		{
-		for (i = SHA_DIGEST_LENGTH; i < dblen; i++)
-			if (db[i] != 0x00)
-				break;
-		if (db[i] != 0x01 || i++ >= dblen)
-			goto decoding_err;
-		else
-			{
-			/* everything looks OK */
-
-			mlen = dblen - i;
-			if (tlen < mlen)
-				{
-				RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, RSA_R_DATA_TOO_LARGE);
-				mlen = -1;
-				}
-			else
-				memcpy(to, db + i, mlen);
-			}
+		memcpy(to, db + msg_index, mlen);
+		goto cleanup;
 		}
-	OPENSSL_free(db);
-	return mlen;
 
 decoding_err:
-	/* to avoid chosen ciphertext attacks, the error message should not reveal
+	/* To avoid chosen ciphertext attacks, the error message should not reveal
 	 * which kind of decoding error happened */
 	RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP, RSA_R_OAEP_DECODING_ERROR);
-	if (db != NULL) OPENSSL_free(db);
-	return -1;
+cleanup:
+	if (em != NULL) OPENSSL_free(em);
+	return mlen;
 	}
 
 int PKCS1_MGF1(unsigned char *mask, long len,
