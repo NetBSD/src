@@ -1,4 +1,4 @@
-/* $OpenBSD: auth1.c,v 1.79 2013/05/19 02:42:42 djm Exp $ */
+/* $OpenBSD: auth1.c,v 1.82 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -24,6 +24,7 @@
 #include "packet.h"
 #include "buffer.h"
 #include "log.h"
+#include "misc.h"
 #include "servconf.h"
 #include "compat.h"
 #include "key.h"
@@ -122,7 +123,7 @@ auth1_process_password(Authctxt *authctxt)
 	/* Try authentication with the password. */
 	authenticated = PRIVSEP(auth_password(authctxt, password));
 
-	memset(password, 0, dlen);
+	explicit_bzero(password, dlen);
 	free(password);
 
 	return (authenticated);
@@ -217,7 +218,7 @@ auth1_process_tis_response(Authctxt *authctxt)
 	response = packet_get_string(&dlen);
 	packet_check_eom();
 	authenticated = verify_response(authctxt, response);
-	memset(response, 'r', dlen);
+	explicit_bzero(response, dlen);
 	free(response);
 
 	return (authenticated);
@@ -297,7 +298,7 @@ do_authloop(Authctxt *authctxt)
 			return;
 
 		if (++authctxt->failures >= options.max_authtries)
-			packet_disconnect(AUTH_FAIL_MSG, authctxt->user);
+			auth_maxtries_exceeded(authctxt);
 
 		packet_start(SSH_SMSG_FAILURE);
 		packet_send();

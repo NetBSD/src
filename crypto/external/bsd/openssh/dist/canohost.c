@@ -1,4 +1,4 @@
-/* $OpenBSD: canohost.c,v 1.67 2013/05/17 00:13:13 djm Exp $ */
+/* $OpenBSD: canohost.c,v 1.71 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,10 +14,10 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 
 #include <netinet/in.h>
 
-#include <ctype.h>
 #include <errno.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -45,7 +45,6 @@ static char *
 get_remote_hostname(int sock, int use_dns)
 {
 	struct sockaddr_storage from;
-	int i;
 	socklen_t fromlen;
 	struct addrinfo hints, *ai, *aitop;
 	char name[NI_MAXHOST], ntop[NI_MAXHOST], ntop2[NI_MAXHOST];
@@ -91,13 +90,9 @@ get_remote_hostname(int sock, int use_dns)
 		return xstrdup(ntop);
 	}
 
-	/*
-	 * Convert it to all lowercase (which is expected by the rest
-	 * of this software).
-	 */
-	for (i = 0; name[i]; i++)
-		if (isupper(name[i]))
-			name[i] = (char)tolower(name[i]);
+	/* Names are stores in lowercase. */
+	lowercase(name);
+
 	/*
 	 * Map it back to an IP address and check that the given
 	 * address actually is an address of this host.  This is
@@ -151,8 +146,7 @@ check_ip_options(int sock, char *ipaddr)
 {
 	u_char options[200];
 	char text[sizeof(options) * 3 + 1];
-	socklen_t option_size;
-	u_int i;
+	socklen_t option_size, i;
 	int ipproto;
 	struct protoent *ip;
 
@@ -229,6 +223,12 @@ get_socket_address(int sock, int remote, int flags)
 		    < 0)
 			return NULL;
 	}
+
+	if (addr.ss_family == AF_UNIX) {
+		/* Get the Unix domain socket path. */
+		return xstrdup(((struct sockaddr_un *)&addr)->sun_path);
+	}
+
 	/* Get the address in ascii. */
 	if ((r = getnameinfo((struct sockaddr *)&addr, addrlen, ntop,
 	    sizeof(ntop), NULL, 0, flags)) != 0) {
@@ -344,6 +344,11 @@ get_sock_port(int sock, int local)
 			return -1;
 		}
 	}
+
+	/* Unix domain sockets don't have a port number. */
+	if (from.ss_family == AF_UNIX)
+		return 0;
+
 	/* Return port number. */
 	if ((r = getnameinfo((struct sockaddr *)&from, fromlen, NULL, 0,
 	    strport, sizeof(strport), NI_NUMERICSERV)) != 0)

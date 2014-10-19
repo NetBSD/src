@@ -1,4 +1,4 @@
-/* $OpenBSD: hostfile.c,v 1.52 2013/07/12 00:19:58 djm Exp $ */
+/* $OpenBSD: hostfile.c,v 1.57 2014/06/24 01:13:21 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,13 +40,11 @@
 
 #include <netinet/in.h>
 
-#include <openssl/hmac.h>
-#include <openssl/sha.h>
-
 #include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "xmalloc.h"
 #include "match.h"
@@ -54,6 +52,8 @@
 #include "hostfile.h"
 #include "log.h"
 #include "misc.h"
+#include "digest.h"
+#include "hmac.h"
 
 struct hostkeys {
 	struct hostkey_entry *entries;
@@ -98,9 +98,9 @@ extract_salt(const char *s, u_int l, u_char *salt, size_t salt_len)
 		debug2("extract_salt: salt decode error");
 		return (-1);
 	}
-	if (ret != SHA_DIGEST_LENGTH) {
-		debug2("extract_salt: expected salt len %d, got %d",
-		    SHA_DIGEST_LENGTH, ret);
+	if (ret != (int)ssh_hmac_bytes(SSH_DIGEST_SHA1)) {
+		debug2("extract_salt: expected salt len %zd, got %d",
+		    ssh_hmac_bytes(SSH_DIGEST_SHA1), ret);
 		return (-1);
 	}
 
@@ -110,14 +110,13 @@ extract_salt(const char *s, u_int l, u_char *salt, size_t salt_len)
 char *
 host_hash(const char *host, const char *name_from_hostfile, u_int src_len)
 {
-	const EVP_MD *md = EVP_sha1();
-	HMAC_CTX mac_ctx;
+	struct ssh_hmac_ctx *ctx;
 	u_char salt[256], result[256];
 	char uu_salt[512], uu_result[512];
 	static char encoded[1024];
 	u_int i, len;
 
-	len = EVP_MD_size(md);
+	len = ssh_digest_bytes(SSH_DIGEST_SHA1);
 
 	if (name_from_hostfile == NULL) {
 		/* Create new salt */
@@ -130,14 +129,16 @@ host_hash(const char *host, const char *name_from_hostfile, u_int src_len)
 			return (NULL);
 	}
 
-	HMAC_Init(&mac_ctx, salt, len, md);
-	HMAC_Update(&mac_ctx, (u_char *)host, strlen(host));
-	HMAC_Final(&mac_ctx, result, NULL);
-	HMAC_cleanup(&mac_ctx);
+	if ((ctx = ssh_hmac_start(SSH_DIGEST_SHA1)) == NULL ||
+	    ssh_hmac_init(ctx, salt, len) < 0 ||
+	    ssh_hmac_update(ctx, host, strlen(host)) < 0 ||
+	    ssh_hmac_final(ctx, result, sizeof(result)))
+		fatal("%s: ssh_hmac failed", __func__);
+	ssh_hmac_free(ctx);
 
 	if (__b64_ntop(salt, len, uu_salt, sizeof(uu_salt)) == -1 ||
 	    __b64_ntop(result, len, uu_result, sizeof(uu_result)) == -1)
-		fatal("host_hash: __b64_ntop failed");
+		fatal("%s: __b64_ntop failed", __func__);
 
 	snprintf(encoded, sizeof(encoded), "%s%s%c%s", HASH_MAGIC, uu_salt,
 	    HASH_DELIM, uu_result);
@@ -179,6 +180,7 @@ static int
 hostfile_check_key(int bits, const Key *key, const char *host,
     const char *filename, u_long linenum)
 {
+#ifdef WITH_SSH1
 	if (key == NULL || key->type != KEY_RSA1 || key->rsa == NULL)
 		return 1;
 	if (bits != BN_num_bits(key->rsa->n)) {
@@ -188,6 +190,7 @@ hostfile_check_key(int bits, const Key *key, const char *host,
 		logit("Warning: replace %d with %d in %s, line %lu.",
 		    bits, BN_num_bits(key->rsa->n), filename, linenum);
 	}
+#endif
 	return 1;
 }
 
@@ -293,11 +296,15 @@ load_hostkeys(struct hostkeys *hostkeys, const char *host, const char *path)
 		key = key_new(KEY_UNSPEC);
 		if (!hostfile_read_key(&cp, &kbits, key)) {
 			key_free(key);
+#ifdef WITH_SSH1
 			key = key_new(KEY_RSA1);
 			if (!hostfile_read_key(&cp, &kbits, key)) {
 				key_free(key);
 				continue;
 			}
+#else
+			continue;
+#endif
 		}
 		if (!hostfile_check_key(kbits, key, host, path, linenum))
 			continue;
@@ -330,10 +337,10 @@ free_hostkeys(struct hostkeys *hostkeys)
 		free(hostkeys->entries[i].host);
 		free(hostkeys->entries[i].file);
 		key_free(hostkeys->entries[i].key);
-		bzero(hostkeys->entries + i, sizeof(*hostkeys->entries));
+		explicit_bzero(hostkeys->entries + i, sizeof(*hostkeys->entries));
 	}
 	free(hostkeys->entries);
-	bzero(hostkeys, sizeof(*hostkeys));
+	explicit_bzero(hostkeys, sizeof(*hostkeys));
 	free(hostkeys);
 }
 

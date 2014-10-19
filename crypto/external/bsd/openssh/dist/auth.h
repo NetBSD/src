@@ -1,4 +1,4 @@
-/* $OpenBSD: auth.h,v 1.76 2013/07/19 07:37:48 markus Exp $ */
+/* $OpenBSD: auth.h,v 1.78 2014/07/03 11:16:55 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -56,7 +56,6 @@ struct Authctxt {
 	char		*style;
 	void		*kbdintctxt;
 	char		*info;		/* Extra info for next auth_log */
-	void		*jpake_ctx;
 	auth_session_t	*as;
 	char		**auth_methods;	/* modified from server config */
 	u_int		 num_auth_methods;
@@ -134,6 +133,7 @@ void	auth_info(Authctxt *authctxt, const char *, ...)
 	    __attribute__((__format__ (printf, 2, 3)))
 	    __attribute__((__nonnull__ (2)));
 void	auth_log(Authctxt *, int, int, const char *, const char *);
+void	auth_maxtries_exceeded(Authctxt *) __attribute__((noreturn));
 void	userauth_finish(Authctxt *, int, const char *, const char *);
 int	auth_root_allowed(const char *);
 
@@ -151,9 +151,6 @@ int	bsdauth_query(void *, char **, char **, u_int *, char ***, u_int **);
 int	bsdauth_respond(void *, u_int, char **);
 int	skey_query(void *, char **, char **, u_int *, char ***, u_int **);
 int	skey_respond(void *, u_int, char **);
-
-void	auth2_jpake_get_pwdata(Authctxt *, BIGNUM **, char **, char **);
-void	auth2_jpake_stop(Authctxt *);
 
 int	allowed_user(struct passwd *);
 struct passwd * getpwnamallow(const char *user);
@@ -187,7 +184,5 @@ void	 auth_debug_send(void);
 void	 auth_debug_reset(void);
 
 struct passwd *fakepw(void);
-
-#define AUTH_FAIL_MSG "Too many authentication failures for %.100s"
 
 #endif

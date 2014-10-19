@@ -1,4 +1,4 @@
-/* $OpenBSD: auth2-passwd.c,v 1.10 2013/05/17 00:13:13 djm Exp $ */
+/* $OpenBSD: auth2-passwd.c,v 1.12 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -39,6 +39,7 @@
 #include "ssh-gss.h"
 #endif
 #include "monitor_wrap.h"
+#include "misc.h"
 #include "servconf.h"
 
 /* import */
@@ -57,7 +58,7 @@ userauth_passwd(Authctxt *authctxt)
 	if (change) {
 		/* discard new password from packet */
 		newpass = packet_get_string(&newlen);
-		memset(newpass, 0, newlen);
+		explicit_bzero(newpass, newlen);
 		free(newpass);
 	}
 	packet_check_eom();
@@ -66,7 +67,7 @@ userauth_passwd(Authctxt *authctxt)
 		logit("password change not supported");
 	else if (PRIVSEP(auth_password(authctxt, password)) == 1)
 		authenticated = 1;
-	memset(password, 0, len);
+	explicit_bzero(password, len);
 	free(password);
 	return authenticated;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: auth-options.c,v 1.59.2.1 2013/11/08 01:33:56 djm Exp $ */
+/* $OpenBSD: auth-options.c,v 1.64 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -24,17 +24,13 @@
 #include "log.h"
 #include "canohost.h"
 #include "buffer.h"
+#include "misc.h"
 #include "channels.h"
 #include "servconf.h"
-#include "misc.h"
 #include "key.h"
 #include "auth-options.h"
 #include "hostfile.h"
 #include "auth.h"
-#ifdef GSSAPI
-#include "ssh-gss.h"
-#endif
-#include "monitor_wrap.h"
 
 /* Flags set authorized_keys flags */
 int no_port_forwarding_flag = 0;
@@ -327,6 +323,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 			patterns[i] = '\0';
 			opts++;
 			p = patterns;
+			/* XXX - add streamlocal support */
 			host = hpdelim(&p);
 			if (host == NULL || strlen(host) >= NI_MAXHOST) {
 				debug("%.100s, line %lu: Bad permitopen "
@@ -434,7 +431,7 @@ parse_option_list(u_char *optblob, size_t optblob_len, struct passwd *pw,
 	u_char *data_blob = NULL;
 	u_int nlen, dlen, clen;
 	Buffer c, data;
-	int ret = -1, found;
+	int ret = -1, result, found;
 
 	buffer_init(&data);
 
@@ -503,11 +500,12 @@ parse_option_list(u_char *optblob, size_t optblob_len, struct passwd *pw,
 					goto out;
 				}
 				remote_ip = get_remote_ipaddr();
-				switch (addr_match_cidr_list(remote_ip,
-				    allowed)) {
+				result = addr_match_cidr_list(remote_ip,
+				    allowed);
+				free(allowed);
+				switch (result) {
 				case 1:
 					/* accepted */
-					free(allowed);
 					break;
 				case 0:
 					/* no match */
@@ -520,12 +518,11 @@ parse_option_list(u_char *optblob, size_t optblob_len, struct passwd *pw,
 					    "is not permitted to use this "
 					    "certificate for login.",
 					    remote_ip);
-					free(allowed);
 					goto out;
 				case -1:
+				default:
 					error("Certificate source-address "
 					    "contents invalid");
-					free(allowed);
 					goto out;
 				}
 				found = 1;
@@ -588,8 +585,8 @@ auth_cert_options(Key *k, struct passwd *pw)
 
 	if (key_cert_is_legacy(k)) {
 		/* All options are in the one field for v00 certs */
-		if (parse_option_list(buffer_ptr(&k->cert->critical),
-		    buffer_len(&k->cert->critical), pw,
+		if (parse_option_list(buffer_ptr(k->cert->critical),
+		    buffer_len(k->cert->critical), pw,
 		    OPTIONS_CRITICAL|OPTIONS_EXTENSIONS, 1,
 		    &cert_no_port_forwarding_flag,
 		    &cert_no_agent_forwarding_flag,
@@ -601,14 +598,14 @@ auth_cert_options(Key *k, struct passwd *pw)
 			return -1;
 	} else {
 		/* Separate options and extensions for v01 certs */
-		if (parse_option_list(buffer_ptr(&k->cert->critical),
-		    buffer_len(&k->cert->critical), pw,
+		if (parse_option_list(buffer_ptr(k->cert->critical),
+		    buffer_len(k->cert->critical), pw,
 		    OPTIONS_CRITICAL, 1, NULL, NULL, NULL, NULL, NULL,
 		    &cert_forced_command,
 		    &cert_source_address_done) == -1)
 			return -1;
-		if (parse_option_list(buffer_ptr(&k->cert->extensions),
-		    buffer_len(&k->cert->extensions), pw,
+		if (parse_option_list(buffer_ptr(k->cert->extensions),
+		    buffer_len(k->cert->extensions), pw,
 		    OPTIONS_EXTENSIONS, 1,
 		    &cert_no_port_forwarding_flag,
 		    &cert_no_agent_forwarding_flag,

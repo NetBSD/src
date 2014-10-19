@@ -1,4 +1,4 @@
-/* $OpenBSD: auth.c,v 1.103 2013/05/19 02:42:42 djm Exp $ */
+/* $OpenBSD: auth.c,v 1.106 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -43,6 +43,7 @@
 #include "groupaccess.h"
 #include "log.h"
 #include "buffer.h"
+#include "misc.h"
 #include "servconf.h"
 #include "key.h"
 #include "hostfile.h"
@@ -50,7 +51,6 @@
 #include "auth-options.h"
 #include "canohost.h"
 #include "uidswap.h"
-#include "misc.h"
 #include "packet.h"
 #ifdef GSSAPI
 #include "ssh-gss.h"
@@ -234,6 +234,19 @@ auth_log(Authctxt *authctxt, int authenticated, int partial,
 	    authctxt->info != NULL ? authctxt->info : "");
 	free(authctxt->info);
 	authctxt->info = NULL;
+}
+
+void
+auth_maxtries_exceeded(Authctxt *authctxt)
+{
+	packet_disconnect("Too many authentication failures for "
+	    "%s%.100s from %.200s port %d %s",
+	    authctxt->valid ? "" : "invalid user ",
+	    authctxt->user,
+	    get_remote_ipaddr(),
+	    get_remote_port(),
+	    compat20 ? "ssh2" : "ssh1");
+	/* NOTREACHED */
 }
 
 /*
@@ -533,6 +546,7 @@ getpwnamallow(const char *user)
 int
 auth_key_is_revoked(Key *key)
 {
+#ifdef WITH_OPENSSL
 	char *key_fp;
 
 	if (options.revoked_keys_file == NULL)
@@ -545,6 +559,7 @@ auth_key_is_revoked(Key *key)
 	default:
 		goto revoked;
 	}
+#endif
 	debug3("%s: treating %s as a key list", __func__,
 	    options.revoked_keys_file);
 	switch (key_in_file(key, options.revoked_keys_file, 0)) {
@@ -556,6 +571,7 @@ auth_key_is_revoked(Key *key)
 		error("Revoked keys file is unreadable: refusing public key "
 		    "authentication");
 		return 1;
+#ifdef WITH_OPENSSL
 	case 1:
  revoked:
 		/* Key revoked */
@@ -564,6 +580,7 @@ auth_key_is_revoked(Key *key)
 		    "%s key %s ", key_type(key), key_fp);
 		free(key_fp);
 		return 1;
+#endif
 	}
 	fatal("key_in_file returned junk");
 }

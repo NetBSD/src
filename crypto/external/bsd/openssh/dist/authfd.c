@@ -1,4 +1,4 @@
-/* $OpenBSD: authfd.c,v 1.87.2.1 2013/11/08 01:33:56 djm Exp $ */
+/* $OpenBSD: authfd.c,v 1.93 2014/04/29 18:01:49 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,9 +40,6 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 
-#include <openssl/evp.h>
-
-#include <openssl/crypto.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -100,7 +97,7 @@ ssh_get_authentication_socket(void)
 	if (!authsocket)
 		return -1;
 
-	bzero(&sunaddr, sizeof(sunaddr));
+	memset(&sunaddr, 0, sizeof(sunaddr));
 	sunaddr.sun_family = AF_UNIX;
 	strlcpy(sunaddr.sun_path, authsocket, sizeof(sunaddr.sun_path));
 
@@ -311,8 +308,10 @@ ssh_get_first_identity(AuthenticationConnection *auth, char **comment, int versi
 Key *
 ssh_get_next_identity(AuthenticationConnection *auth, char **comment, int version)
 {
+#ifdef WITH_SSH1
 	int keybits;
 	u_int bits;
+#endif
 	u_char *blob;
 	u_int blen;
 	Key *key = NULL;
@@ -326,6 +325,7 @@ ssh_get_next_identity(AuthenticationConnection *auth, char **comment, int versio
 	 * error if the packet is too short or contains corrupt data.
 	 */
 	switch (version) {
+#ifdef WITH_SSH1
 	case 1:
 		key = key_new(KEY_RSA1);
 		bits = buffer_get_int(&auth->identities);
@@ -337,6 +337,7 @@ ssh_get_next_identity(AuthenticationConnection *auth, char **comment, int versio
 			logit("Warning: identity keysize mismatch: actual %d, announced %u",
 			    BN_num_bits(key->rsa->n), bits);
 		break;
+#endif
 	case 2:
 		blob = buffer_get_string(&auth->identities, &blen);
 		*comment = buffer_get_string(&auth->identities, NULL);
@@ -359,6 +360,7 @@ ssh_get_next_identity(AuthenticationConnection *auth, char **comment, int versio
  * supported) and 1 corresponding to protocol version 1.1.
  */
 
+#ifdef WITH_SSH1
 int
 ssh_decrypt_challenge(AuthenticationConnection *auth,
     Key* key, BIGNUM *challenge,
@@ -408,6 +410,7 @@ ssh_decrypt_challenge(AuthenticationConnection *auth,
 	buffer_free(&buffer);
 	return success;
 }
+#endif
 
 /* ask agent to sign data, returns -1 on error, 0 on success */
 int
@@ -455,6 +458,7 @@ ssh_agent_sign(AuthenticationConnection *auth,
 
 /* Encode key for a message to the agent. */
 
+#ifdef WITH_SSH1
 static void
 ssh_encode_identity_rsa1(Buffer *b, RSA *key, const char *comment)
 {
@@ -468,60 +472,12 @@ ssh_encode_identity_rsa1(Buffer *b, RSA *key, const char *comment)
 	buffer_put_bignum(b, key->p);	/* ssh key->q, SSL key->p */
 	buffer_put_cstring(b, comment);
 }
+#endif
 
 static void
 ssh_encode_identity_ssh2(Buffer *b, Key *key, const char *comment)
 {
-	buffer_put_cstring(b, key_ssh_name(key));
-	switch (key->type) {
-	case KEY_RSA:
-		buffer_put_bignum2(b, key->rsa->n);
-		buffer_put_bignum2(b, key->rsa->e);
-		buffer_put_bignum2(b, key->rsa->d);
-		buffer_put_bignum2(b, key->rsa->iqmp);
-		buffer_put_bignum2(b, key->rsa->p);
-		buffer_put_bignum2(b, key->rsa->q);
-		break;
-	case KEY_RSA_CERT_V00:
-	case KEY_RSA_CERT:
-		if (key->cert == NULL || buffer_len(&key->cert->certblob) == 0)
-			fatal("%s: no cert/certblob", __func__);
-		buffer_put_string(b, buffer_ptr(&key->cert->certblob),
-		    buffer_len(&key->cert->certblob));
-		buffer_put_bignum2(b, key->rsa->d);
-		buffer_put_bignum2(b, key->rsa->iqmp);
-		buffer_put_bignum2(b, key->rsa->p);
-		buffer_put_bignum2(b, key->rsa->q);
-		break;
-	case KEY_DSA:
-		buffer_put_bignum2(b, key->dsa->p);
-		buffer_put_bignum2(b, key->dsa->q);
-		buffer_put_bignum2(b, key->dsa->g);
-		buffer_put_bignum2(b, key->dsa->pub_key);
-		buffer_put_bignum2(b, key->dsa->priv_key);
-		break;
-	case KEY_DSA_CERT_V00:
-	case KEY_DSA_CERT:
-		if (key->cert == NULL || buffer_len(&key->cert->certblob) == 0)
-			fatal("%s: no cert/certblob", __func__);
-		buffer_put_string(b, buffer_ptr(&key->cert->certblob),
-		    buffer_len(&key->cert->certblob));
-		buffer_put_bignum2(b, key->dsa->priv_key);
-		break;
-	case KEY_ECDSA:
-		buffer_put_cstring(b, key_curve_nid_to_name(key->ecdsa_nid));
-		buffer_put_ecpoint(b, EC_KEY_get0_group(key->ecdsa),
-		    EC_KEY_get0_public_key(key->ecdsa));
-		buffer_put_bignum2(b, EC_KEY_get0_private_key(key->ecdsa));
-		break;
-	case KEY_ECDSA_CERT:
-		if (key->cert == NULL || buffer_len(&key->cert->certblob) == 0)
-			fatal("%s: no cert/certblob", __func__);
-		buffer_put_string(b, buffer_ptr(&key->cert->certblob),
-		    buffer_len(&key->cert->certblob));
-		buffer_put_bignum2(b, EC_KEY_get0_private_key(key->ecdsa));
-		break;
-	}
+	key_private_serialize(key, b);
 	buffer_put_cstring(b, comment);
 }
 
@@ -540,6 +496,7 @@ ssh_add_identity_constrained(AuthenticationConnection *auth, Key *key,
 	buffer_init(&msg);
 
 	switch (key->type) {
+#ifdef WITH_SSH1
 	case KEY_RSA1:
 		type = constrained ?
 		    SSH_AGENTC_ADD_RSA_ID_CONSTRAINED :
@@ -547,6 +504,8 @@ ssh_add_identity_constrained(AuthenticationConnection *auth, Key *key,
 		buffer_put_char(&msg, type);
 		ssh_encode_identity_rsa1(&msg, key->rsa, comment);
 		break;
+#endif
+#ifdef WITH_OPENSSL
 	case KEY_RSA:
 	case KEY_RSA_CERT:
 	case KEY_RSA_CERT_V00:
@@ -555,6 +514,9 @@ ssh_add_identity_constrained(AuthenticationConnection *auth, Key *key,
 	case KEY_DSA_CERT_V00:
 	case KEY_ECDSA:
 	case KEY_ECDSA_CERT:
+#endif
+	case KEY_ED25519:
+	case KEY_ED25519_CERT:
 		type = constrained ?
 		    SSH2_AGENTC_ADD_ID_CONSTRAINED :
 		    SSH2_AGENTC_ADD_IDENTITY;
@@ -597,14 +559,15 @@ ssh_remove_identity(AuthenticationConnection *auth, Key *key)
 
 	buffer_init(&msg);
 
+#ifdef WITH_SSH1
 	if (key->type == KEY_RSA1) {
 		buffer_put_char(&msg, SSH_AGENTC_REMOVE_RSA_IDENTITY);
 		buffer_put_int(&msg, BN_num_bits(key->rsa->n));
 		buffer_put_bignum(&msg, key->rsa->e);
 		buffer_put_bignum(&msg, key->rsa->n);
-	} else if (key_type_plain(key->type) == KEY_DSA ||
-	    key_type_plain(key->type) == KEY_RSA ||
-	    key_type_plain(key->type) == KEY_ECDSA) {
+	} else
+#endif
+	if (key->type != KEY_UNSPEC) {
 		key_to_blob(key, &blob, &blen);
 		buffer_put_char(&msg, SSH2_AGENTC_REMOVE_IDENTITY);
 		buffer_put_string(&msg, blob, blen);

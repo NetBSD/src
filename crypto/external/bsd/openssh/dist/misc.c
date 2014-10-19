@@ -1,4 +1,4 @@
-/* $OpenBSD: misc.c,v 1.91 2013/07/12 00:43:50 djm Exp $ */
+/* $OpenBSD: misc.c,v 1.94 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/param.h>
 
 #include <net/if.h>
@@ -35,6 +36,7 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -764,6 +766,20 @@ get_u32(const void *vp)
 	return (v);
 }
 
+u_int32_t
+get_u32_le(const void *vp)
+{
+	const u_char *p = (const u_char *)vp;
+	u_int32_t v;
+
+	v  = (u_int32_t)p[0];
+	v |= (u_int32_t)p[1] << 8;
+	v |= (u_int32_t)p[2] << 16;
+	v |= (u_int32_t)p[3] << 24;
+
+	return (v);
+}
+
 u_int16_t
 get_u16(const void *vp)
 {
@@ -802,6 +818,16 @@ put_u32(void *vp, u_int32_t v)
 	p[3] = (u_char)v & 0xff;
 }
 
+void
+put_u32_le(void *vp, u_int32_t v)
+{
+	u_char *p = (u_char *)vp;
+
+	p[0] = (u_char)v & 0xff;
+	p[1] = (u_char)(v >> 8) & 0xff;
+	p[2] = (u_char)(v >> 16) & 0xff;
+	p[3] = (u_char)(v >> 24) & 0xff;
+}
 
 void
 put_u16(void *vp, u_int16_t v)
@@ -986,4 +1012,57 @@ iptos2str(int iptos)
 	}
 	snprintf(iptos_str, sizeof iptos_str, "0x%02x", iptos);
 	return iptos_str;
+}
+
+void
+lowercase(char *s)
+{
+	for (; *s; s++)
+		*s = tolower((u_char)*s);
+}
+
+int
+unix_listener(const char *path, int backlog, int unlink_first)
+{
+	struct sockaddr_un sunaddr;
+	int saved_errno, sock;
+
+	memset(&sunaddr, 0, sizeof(sunaddr));
+	sunaddr.sun_family = AF_UNIX;
+	if (strlcpy(sunaddr.sun_path, path, sizeof(sunaddr.sun_path)) >= sizeof(sunaddr.sun_path)) {
+		error("%s: \"%s\" too long for Unix domain socket", __func__,
+		    path);
+		errno = ENAMETOOLONG;
+		return -1;
+	}
+
+	sock = socket(PF_UNIX, SOCK_STREAM, 0);
+	if (sock < 0) {
+		saved_errno = errno;
+		error("socket: %.100s", strerror(errno));
+		errno = saved_errno;
+		return -1;
+	}
+	if (unlink_first == 1) {
+		if (unlink(path) != 0 && errno != ENOENT)
+			error("unlink(%s): %.100s", path, strerror(errno));
+	}
+	if (bind(sock, (struct sockaddr *)&sunaddr, sizeof(sunaddr)) < 0) {
+		saved_errno = errno;
+		error("bind: %.100s", strerror(errno));
+		close(sock);
+		error("%s: cannot bind to path: %s", __func__, path);
+		errno = saved_errno;
+		return -1;
+	}
+	if (listen(sock, backlog) < 0) {
+		saved_errno = errno;
+		error("listen: %.100s", strerror(errno));
+		close(sock);
+		unlink(path);
+		error("%s: cannot listen on path: %s", __func__, path);
+		errno = saved_errno;
+		return -1;
+	}
+	return sock;
 }

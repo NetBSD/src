@@ -1,4 +1,4 @@
-/* $OpenBSD: scp.c,v 1.178 2013/06/22 06:31:57 djm Exp $ */
+/* $OpenBSD: scp.c,v 1.180 2014/06/24 02:21:01 djm Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -726,7 +726,7 @@ source(int argc, char **argv)
 	static BUF buffer;
 	BUF *bp;
 	off_t i, statbytes;
-	size_t amt;
+	size_t amt, nr;
 	int fd = -1, haderr, indx;
 	char *last, *name, buf[2048], encname[MAXPATHLEN];
 	int len;
@@ -799,12 +799,16 @@ next:			if (fd != -1) {
 			if (i + (off_t)amt > stb.st_size)
 				amt = stb.st_size - i;
 			if (!haderr) {
-				if (atomicio(read, fd, bp->buf, amt) != amt)
+				if ((nr = atomicio(read, fd,
+				    bp->buf, amt)) != amt) {
 					haderr = errno;
+					memset(bp->buf + nr, 0, amt - nr);
+				}
 			}
 			/* Keep writing after error to retain sync */
 			if (haderr) {
 				(void)atomicio(vwrite, remout, bp->buf, amt);
+				memset(bp->buf, 0, amt);
 				continue;
 			}
 			if (atomicio6(vwrite, remout, bp->buf, amt, scpio,
@@ -1002,7 +1006,7 @@ sink(int argc, char **argv)
 		if (*cp++ != ' ')
 			SCREWUP("mode not delimited");
 
-		for (size = 0; isdigit(*cp);)
+		for (size = 0; isdigit((unsigned char)*cp);)
 			size = size * 10 + (*cp++ - '0');
 		if (*cp++ != ' ')
 			SCREWUP("size not delimited");
@@ -1258,7 +1262,7 @@ okname(char *cp0)
 		c = (int)*cp;
 		if (c & 0200)
 			goto bad;
-		if (!isalpha(c) && !isdigit(c)) {
+		if (!isalpha(c) && !isdigit((unsigned char)c)) {
 			switch (c) {
 			case '\'':
 			case '"':
