@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.10 2014/10/13 09:07:26 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.11 2014/10/19 11:45:01 martin Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -98,7 +98,7 @@ static void dwc_gmac_rx_intr(struct dwc_gmac_softc *sc);
 
 
 
-#define	GMAC_DEF_DMA_INT_MASK	(GMAC_DMA_INT_TIE| \
+#define	GMAC_DEF_DMA_INT_MASK	(GMAC_DMA_INT_TIE|GMAC_DMA_INT_RIE| \
 				GMAC_DMA_INT_NIE|GMAC_DMA_INT_AIE| \
 				GMAC_DMA_INT_FBE|GMAC_DMA_INT_UNE)
 
@@ -116,6 +116,7 @@ static void dwc_gmac_rx_intr(struct dwc_gmac_softc *sc);
 #ifdef DWC_GMAC_DEBUG
 static void dwc_gmac_dump_dma(struct dwc_gmac_softc *sc);
 static void dwc_gmac_dump_tx_desc(struct dwc_gmac_softc *sc);
+static void dwc_gmac_dump_rx_desc(struct dwc_gmac_softc *sc);
 static void dwc_dump_and_abort(struct dwc_gmac_softc *sc, const char *msg);
 static void dwc_dump_status(struct dwc_gmac_softc *sc);
 #endif
@@ -389,7 +390,8 @@ dwc_gmac_alloc_rx_ring(struct dwc_gmac_softc *sc,
 		desc->ddesc_next = htole32(ring->r_physaddr 
 		    + next * sizeof(*desc));
 		desc->ddesc_cntl = htole32(
-		    __SHIFTIN(AWGE_MAX_PACKET,DDESC_CNTL_SIZE1MASK));
+		    __SHIFTIN(AWGE_MAX_PACKET,DDESC_CNTL_SIZE1MASK) |
+		    DDESC_CNTL_RXCHAIN | DDESC_CNTL_RXINT);
 		desc->ddesc_status = htole32(DDESC_STATUS_OWNEDBYDEV);
 	}
 
@@ -425,6 +427,9 @@ dwc_gmac_reset_rx_ring(struct dwc_gmac_softc *sc,
 	    BUS_DMASYNC_PREWRITE);
 
 	ring->r_cur = ring->r_next = 0;
+	/* reset DMA address to start of ring */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_RX_ADDR,
+	    sc->sc_rxq.r_physaddr);
 }
 
 static int
@@ -654,8 +659,10 @@ dwc_gmac_miibus_statchg(struct ifnet *ifp)
 	conf = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_CONF);
 	conf &= ~(AWIN_GMAC_MAC_CONF_FES100|AWIN_GMAC_MAC_CONF_MIISEL
 	    |AWIN_GMAC_MAC_CONF_FULLDPLX);
-	conf |= AWIN_GMAC_MAC_CONF_FRAMEBURST | AWIN_GMAC_MAC_CONF_TXENABLE
-	    | AWIN_GMAC_MAC_CONF_RXENABLE;
+	conf |= AWIN_GMAC_MAC_CONF_FRAMEBURST
+	    | AWIN_GMAC_MAC_CONF_DISABLERXOWN
+	    | AWIN_GMAC_MAC_CONF_RXENABLE
+	    | AWIN_GMAC_MAC_CONF_TXENABLE;
 	switch (IFM_SUBTYPE(mii->mii_media_active)) {
 	case IFM_10_T:
 		break;
@@ -689,6 +696,21 @@ dwc_gmac_init(struct ifnet *ifp)
 	dwc_gmac_stop(ifp, 0);
 
 	/*
+	 * Configure DMA burst/transfer mode and RX/TX priorities.
+	 * XXX - the GMAC_BUSMODE_PRIORXTX bits are undocumented.
+	 */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_BUSMODE,
+	    GMAC_BUSMODE_FIXEDBURST |
+	    __SHIFTIN(GMAC_BUSMODE_PRIORXTX_41, GMAC_BUSMODE_PRIORXTX) |
+	    __SHIFTIN(8, GMCA_BUSMODE_PBL));
+
+	/*
+	 * Set up address filter (XXX for testing only: promiscous)
+	 */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT,
+	    AWIN_GMAC_MAC_FFILT_PR);
+
+	/*
 	 * Set up dma pointer for RX and TX ring
 	 */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_RX_ADDR,
@@ -700,7 +722,8 @@ dwc_gmac_init(struct ifnet *ifp)
 	 * Start RX/TX part
 	 */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh,
-	    AWIN_GMAC_DMA_OPMODE, GMAC_DMA_OP_RXSTART|GMAC_DMA_OP_TXSTART);
+	    AWIN_GMAC_DMA_OPMODE, GMAC_DMA_OP_RXSTART | GMAC_DMA_OP_TXSTART |
+	    GMAC_DMA_OP_STOREFORWARD);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -846,7 +869,6 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 static int
 dwc_gmac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	// struct dwc_gmac_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
@@ -865,6 +887,43 @@ dwc_gmac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		default:
 			break;
 		}
+		break;
+
+	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
+			/*
+			 * If interface is marked down and it is running, then
+			 * stop it.
+			 */
+			dwc_gmac_stop(ifp, 0);
+			ifp->if_flags &= ~IFF_RUNNING;
+			break;
+		case IFF_UP:
+			/*
+			 * If interface is marked up and it is stopped, then
+			 * start it.
+			 */
+			error = dwc_gmac_init(ifp);
+			break;
+		case IFF_UP|IFF_RUNNING:
+			/*
+			 * If setting debug or promiscuous mode, do not reset
+			 * the chip; for everything else, call dwc_gmac_init()
+			 * which will trigger a reset.
+			 */
+			/* XXX - for now allways init */
+			error = dwc_gmac_init(ifp);
+			break;
+		case 0:
+			break;
+		}
+
+		break;
+
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;
@@ -902,8 +961,10 @@ dwc_gmac_tx_intr(struct dwc_gmac_softc *sc)
 		dwc_gmac_txdesc_sync(sc, i, i+1,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		flags = le32toh(desc->ddesc_status);
+
 		if (flags & DDESC_STATUS_OWNEDBYDEV)
 			break;
+
 		data = &sc->sc_txq.t_data[i];
 		if (data->td_m == NULL)
 			continue;
@@ -932,10 +993,116 @@ dwc_gmac_tx_intr(struct dwc_gmac_softc *sc)
 static void
 dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct dwc_gmac_dev_dmadesc *desc;
+	struct dwc_gmac_rx_data *data;
+	bus_addr_t physaddr;
+	uint32_t status;
+	struct mbuf *m, *mnew;
+	int i, len, error;
+
+	for (i = sc->sc_rxq.r_cur; ; i = RX_NEXT(i)) {
+
 #ifdef DWC_GMAC_DEBUG
-	aprint_normal_dev(sc->sc_dev, "rx intr\n");
-	/* XXX */
+printf("rx int: checking desc #%d\n", i);
 #endif
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
+		    RX_DESC_OFFSET(i), sizeof(*desc),
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		desc = &sc->sc_rxq.r_desc[i];
+		data = &sc->sc_rxq.r_data[i];
+
+		status = le32toh(desc->ddesc_status);
+		if (status & DDESC_STATUS_OWNEDBYDEV) {
+#ifdef DWC_GMAC_DEBUG
+printf("status %08x, still owned by device\n", status);
+#endif
+			break;
+		}
+
+		if (status & (DDESC_STATUS_RXERROR|DDESC_STATUS_RXTRUNCATED)) {
+#ifdef DWC_GMAC_DEBUG
+printf("status %08x, RX error, skipping\n", status);
+#endif
+			ifp->if_ierrors++;
+			goto skip;
+		}
+
+		len = __SHIFTOUT(status, DDESC_STATUS_FRMLENMSK);
+
+#ifdef DWC_GMAC_DEBUG
+printf("rx int: device is done with #%d, len: %d\n", i, len);
+#endif
+
+		/*
+		 * Try to get a new mbuf before passing this one
+		 * up, if that fails, drop the packet and reuse
+		 * the existing one.
+		 */
+		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
+		if (mnew == NULL) {
+			ifp->if_ierrors++;
+			goto skip;
+		}
+		MCLGET(mnew, M_DONTWAIT);
+		if ((mnew->m_flags & M_EXT) == 0) {
+			m_freem(mnew);
+			ifp->if_ierrors++;
+			goto skip;
+		}
+
+		/* unload old DMA map */
+		bus_dmamap_sync(sc->sc_dmat, data->rd_map, 0,
+		    data->rd_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, data->rd_map);
+
+		/* and reload with new mbuf */
+		error = bus_dmamap_load(sc->sc_dmat, data->rd_map,
+		    mtod(mnew, void*), MCLBYTES, NULL,
+		    BUS_DMA_READ | BUS_DMA_NOWAIT);
+		if (error != 0) {
+			m_freem(mnew);
+			/* try to reload old mbuf */
+			error = bus_dmamap_load(sc->sc_dmat, data->rd_map,
+			    mtod(data->rd_m, void*), MCLBYTES, NULL,
+			    BUS_DMA_READ | BUS_DMA_NOWAIT);
+			if (error != 0) {
+				panic("%s: could not load old rx mbuf",
+				    device_xname(sc->sc_dev));
+			}
+			ifp->if_ierrors++;
+			goto skip;
+		}
+		physaddr = data->rd_map->dm_segs[0].ds_addr;
+
+		/*
+		 * New mbuf loaded, update RX ring and continue
+		 */
+		m = data->rd_m;
+		data->rd_m = mnew;
+		desc->ddesc_data = htole32(physaddr);
+
+		/* finalize mbuf */
+		m->m_pkthdr.len = m->m_len = len;
+		m->m_pkthdr.rcvif = ifp;
+
+		bpf_mtap(ifp, m);
+		ifp->if_ipackets++;
+		(*ifp->if_input)(ifp, m);
+
+skip:
+		desc->ddesc_cntl = htole32(
+		    __SHIFTIN(AWGE_MAX_PACKET,DDESC_CNTL_SIZE1MASK));
+		desc->ddesc_status = htole32(DDESC_STATUS_OWNEDBYDEV);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
+		    RX_DESC_OFFSET(i), sizeof(*desc),
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	}
+
+	/* update RX pointer */
+	sc->sc_rxq.r_cur = i;
+
 }
 
 int
@@ -1030,6 +1197,23 @@ dwc_gmac_dump_tx_desc(struct dwc_gmac_softc *sc)
 }
 
 static void
+dwc_gmac_dump_rx_desc(struct dwc_gmac_softc *sc)
+{
+	int i;
+
+	aprint_normal_dev(sc->sc_dev, "RX queue: cur=%d, next=%d\n",
+	    sc->sc_rxq.r_cur, sc->sc_rxq.r_next);
+	aprint_normal_dev(sc->sc_dev, "RX DMA descriptors:\n");
+	for (i = 0; i < AWGE_RX_RING_COUNT; i++) {
+		struct dwc_gmac_dev_dmadesc *desc = &sc->sc_rxq.r_desc[i];
+		aprint_normal("#%d (%08lx): status: %08x cntl: %08x data: %08x next: %08x\n",
+		    i, sc->sc_txq.t_physaddr + i*sizeof(struct dwc_gmac_dev_dmadesc),
+		    le32toh(desc->ddesc_status), le32toh(desc->ddesc_cntl),
+		    le32toh(desc->ddesc_data), le32toh(desc->ddesc_next));
+	}
+}
+
+static void
 dwc_dump_status(struct dwc_gmac_softc *sc)
 {
 	uint32_t status = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
@@ -1066,6 +1250,7 @@ dwc_dump_and_abort(struct dwc_gmac_softc *sc, const char *msg)
 	dwc_dump_status(sc);
 	dwc_gmac_dump_dma(sc);
 	dwc_gmac_dump_tx_desc(sc);
+	dwc_gmac_dump_rx_desc(sc);
 
 	panic(msg);
 }
