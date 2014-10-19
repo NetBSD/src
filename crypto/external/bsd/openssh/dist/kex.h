@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.h,v 1.7 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: kex.h,v 1.56 2013/07/19 07:37:48 markus Exp $ */
+/*	$NetBSD: kex.h,v 1.8 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: kex.h,v 1.64 2014/05/02 03:27:54 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -41,6 +41,7 @@
 #define	KEX_ECDH_SHA2_NISTP256	"ecdh-sha2-nistp256"
 #define	KEX_ECDH_SHA2_NISTP384	"ecdh-sha2-nistp384"
 #define	KEX_ECDH_SHA2_NISTP521	"ecdh-sha2-nistp521"
+#define	KEX_CURVE25519_SHA256	"curve25519-sha256@libssh.org"
 
 #define COMP_NONE	0
 #define COMP_ZLIB	1
@@ -72,6 +73,7 @@ enum kex_exchange {
 	KEX_DH_GEX_SHA1,
 	KEX_DH_GEX_SHA256,
 	KEX_ECDH_SHA2,
+	KEX_C25519_SHA256,
 	KEX_MAX
 };
 
@@ -101,9 +103,8 @@ struct Mac {
 	u_int	key_len;
 	int	type;
 	int	etm;		/* Encrypt-then-MAC */
-	const EVP_MD	*evp_md;
-	HMAC_CTX	evp_ctx;
-	struct umac_ctx *umac_ctx;
+	struct ssh_hmac_ctx	*hmac_ctx;
+	struct umac_ctx		*umac_ctx;
 };
 struct Comp {
 	int	type;
@@ -120,6 +121,7 @@ struct Kex {
 	u_int	session_id_len;
 	Newkeys	*newkeys[MODE_MAX];
 	u_int	we_need;
+	u_int	dh_need;
 	int	server;
 	char	*name;
 	int	hostkey_type;
@@ -129,7 +131,7 @@ struct Kex {
 	Buffer	peer;
 	sig_atomic_t done;
 	int	flags;
-	const EVP_MD *evp_md;
+	int	hash_alg;
 	int	ec_nid;
 	char	*client_version_string;
 	char	*server_version_string;
@@ -144,14 +146,15 @@ struct Kex {
 void	 kex_prop2buf(Buffer *, const char *proposal[PROPOSAL_MAX]);
 
 int	 kex_names_valid(const char *);
-char	*kex_alg_list(void);
+char	*kex_alg_list(char);
 
 Kex	*kex_setup(const char *[PROPOSAL_MAX]);
 void	 kex_finish(Kex *);
 
 void	 kex_send_kexinit(Kex *);
 void	 kex_input_kexinit(int, u_int32_t, void *);
-void	 kex_derive_keys(Kex *, u_char *, u_int, BIGNUM *);
+void	 kex_derive_keys(Kex *, u_char *, u_int, const u_char *, u_int);
+void	 kex_derive_keys_bn(Kex *, u_char *, u_int, const BIGNUM *);
 
 Newkeys *kex_get_newkeys(int);
 
@@ -161,18 +164,33 @@ void	 kexgex_client(Kex *);
 void	 kexgex_server(Kex *);
 void	 kexecdh_client(Kex *);
 void	 kexecdh_server(Kex *);
+void	 kexc25519_client(Kex *);
+void	 kexc25519_server(Kex *);
 
 void
 kex_dh_hash(char *, char *, char *, int, char *, int, u_char *, int,
     BIGNUM *, BIGNUM *, BIGNUM *, u_char **, u_int *);
 void
-kexgex_hash(const EVP_MD *, char *, char *, char *, int, char *,
+kexgex_hash(int, char *, char *, char *, int, char *,
     int, u_char *, int, int, int, int, BIGNUM *, BIGNUM *, BIGNUM *,
     BIGNUM *, BIGNUM *, u_char **, u_int *);
 void
-kex_ecdh_hash(const EVP_MD *, const EC_GROUP *, char *, char *, char *, int,
+kex_ecdh_hash(int, const EC_GROUP *, char *, char *, char *, int,
     char *, int, u_char *, int, const EC_POINT *, const EC_POINT *,
     const BIGNUM *, u_char **, u_int *);
+void
+kex_c25519_hash(int, char *, char *, char *, int,
+    char *, int, u_char *, int, const u_char *, const u_char *,
+    const u_char *, u_int, u_char **, u_int *);
+
+#define CURVE25519_SIZE 32
+void	kexc25519_keygen(u_char[CURVE25519_SIZE], u_char[CURVE25519_SIZE])
+	__attribute__((__bounded__(__minbytes__, 1, CURVE25519_SIZE)))
+	__attribute__((__bounded__(__minbytes__, 2, CURVE25519_SIZE)));
+void kexc25519_shared_key(const u_char key[CURVE25519_SIZE],
+    const u_char pub[CURVE25519_SIZE], Buffer *out)
+	__attribute__((__bounded__(__minbytes__, 1, CURVE25519_SIZE)))
+	__attribute__((__bounded__(__minbytes__, 2, CURVE25519_SIZE)));
 
 void
 derive_ssh1_session_id(BIGNUM *, BIGNUM *, u_int8_t[8], u_int8_t[16]);

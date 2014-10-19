@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd_config.5,v 1.15 2013/11/08 19:18:25 christos Exp $
+.\"	$NetBSD: sshd_config.5,v 1.16 2014/10/19 16:30:59 christos Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,8 +35,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd_config.5,v 1.162 2013/07/19 07:37:48 markus Exp $
-.Dd July 19 2013
+.\" $OpenBSD: sshd_config.5,v 1.176 2014/07/28 15:40:08 schwarze Exp $
+.Dd July 28 2014
 .Dt SSHD_CONFIG 5
 .Os
 .Sh NAME
@@ -140,6 +140,26 @@ to allow remote forwarding only.
 The default is
 .Dq yes .
 Note that disabling TCP forwarding does not improve security unless
+users are also denied shell access, as they can always install their
+own forwarders.
+.It Cm AllowStreamLocalForwarding
+Specifies whether StreamLocal (Unix-domain socket) forwarding is permitted.
+The available options are
+.Dq yes
+or
+.Dq all
+to allow StreamLocal forwarding,
+.Dq no
+to prevent all StreamLocal forwarding,
+.Dq local
+to allow local (from the perspective of
+.Xr ssh 1 )
+forwarding only or
+.Dq remote
+to allow remote forwarding only.
+The default is
+.Dq yes .
+Note that disabling StreamLocal forwarding does not improve security unless
 users are also denied shell access, as they can always install their
 own forwarders.
 .It Cm AllowUsers
@@ -327,9 +347,9 @@ For file transfer sessions using
 .Dq sftp ,
 no additional configuration of the environment is necessary if the
 in-process sftp server is used,
-though sessions which use logging do require
+though sessions which use logging may require
 .Pa /dev/log
-inside the chroot directory (see
+inside the chroot directory on some operating systems (see
 .Xr sftp-server 8
 for details).
 .Pp
@@ -338,29 +358,52 @@ The default is not to
 .It Cm Ciphers
 Specifies the ciphers allowed for protocol version 2.
 Multiple ciphers must be comma-separated.
-The supported ciphers are
-.Dq 3des-cbc ,
-.Dq aes128-cbc ,
-.Dq aes192-cbc ,
-.Dq aes256-cbc ,
-.Dq aes128-ctr ,
-.Dq aes192-ctr ,
-.Dq aes256-ctr ,
-.Dq aes128-gcm@openssh.com ,
-.Dq aes256-gcm@openssh.com ,
-.Dq arcfour128 ,
-.Dq arcfour256 ,
-.Dq arcfour ,
-.Dq blowfish-cbc ,
-and
-.Dq cast128-cbc .
+The supported ciphers are:
+.Pp
+.Bl -item -compact -offset indent
+.It
+3des-cbc
+.It
+aes128-cbc
+.It
+aes192-cbc
+.It
+aes256-cbc
+.It
+aes128-ctr
+.It
+aes192-ctr
+.It
+aes256-ctr
+.It
+aes128-gcm@openssh.com
+.It
+aes256-gcm@openssh.com
+.It
+arcfour
+.It
+arcfour128
+.It
+arcfour256
+.It
+blowfish-cbc
+.It
+cast128-cbc
+.It
+chacha20-poly1305@openssh.com
+.El
+.Pp
 The default is:
-.Bd -literal -offset 3n
-aes128-ctr,aes192-ctr,aes256-ctr,arcfour256,arcfour128,
+.Bd -literal -offset indent
+aes128-ctr,aes192-ctr,aes256-ctr,
 aes128-gcm@openssh.com,aes256-gcm@openssh.com,
-aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc,aes192-cbc,
-aes256-cbc,arcfour
+chacha20-poly1305@openssh.com
 .Ed
+.Pp
+The list of available ciphers may also be obtained using the
+.Fl Q
+option of
+.Xr ssh 1 .
 .It Cm ClientAliveCountMax
 Sets the number of client alive messages (see below) which may be
 sent without
@@ -534,7 +577,8 @@ The default is
 .Pa /etc/ssh/ssh_host_key
 for protocol version 1, and
 .Pa /etc/ssh/ssh_host_dsa_key ,
-.Pa /etc/ssh/ssh_host_ecdsa_key
+.Pa /etc/ssh/ssh_host_ecdsa_key ,
+.Pa /etc/ssh/ssh_host_ed25519_key
 and
 .Pa /etc/ssh/ssh_host_rsa_key
 for protocol version 2.
@@ -545,7 +589,8 @@ It is possible to have multiple host key files.
 .Dq rsa1
 keys are used for version 1 and
 .Dq dsa ,
-.Dq ecdsa
+.Dq ecdsa ,
+.Dq ed25519
 or
 .Dq rsa
 are used for version 2 of the SSH protocol.
@@ -625,6 +670,17 @@ The default is
 for interactive sessions and
 .Dq throughput
 for non-interactive sessions.
+.It Cm KbdInteractiveAuthentication
+Specifies whether to allow keyboard-interactive authentication.
+The argument to this keyword must be
+.Dq yes
+or
+.Dq no .
+The default is to use whatever value
+.Cm ChallengeResponseAuthentication
+is set to
+(by default
+.Dq yes ) .
 .It Cm KerberosAuthentication
 Specifies whether the password provided by the user for
 .Cm PasswordAuthentication
@@ -653,14 +709,34 @@ The default is
 .It Cm KexAlgorithms
 Specifies the available KEX (Key Exchange) algorithms.
 Multiple algorithms must be comma-separated.
-The default is
-.Dq ecdh-sha2-nistp256 ,
-.Dq ecdh-sha2-nistp384 ,
-.Dq ecdh-sha2-nistp521 ,
-.Dq diffie-hellman-group-exchange-sha256 ,
-.Dq diffie-hellman-group-exchange-sha1 ,
-.Dq diffie-hellman-group14-sha1 ,
-.Dq diffie-hellman-group1-sha1 .
+The supported algorithms are:
+.Pp
+.Bl -item -compact -offset indent
+.It
+curve25519-sha256@libssh.org
+.It
+diffie-hellman-group1-sha1
+.It
+diffie-hellman-group14-sha1
+.It
+diffie-hellman-group-exchange-sha1
+.It
+diffie-hellman-group-exchange-sha256
+.It
+ecdh-sha2-nistp256
+.It
+ecdh-sha2-nistp384
+.It
+ecdh-sha2-nistp521
+.El
+.Pp
+The default is:
+.Bd -literal -offset indent
+curve25519-sha256@libssh.org,
+ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,
+diffie-hellman-group-exchange-sha256,
+diffie-hellman-group14-sha1
+.Ed
 .It Cm KeyRegenerationInterval
 In protocol version 1, the ephemeral server key is automatically regenerated
 after this many seconds (if it has been used).
@@ -733,16 +809,53 @@ The algorithms that contain
 .Dq -etm
 calculate the MAC after encryption (encrypt-then-mac).
 These are considered safer and their use recommended.
+The supported MACs are:
+.Pp
+.Bl -item -compact -offset indent
+.It
+hmac-md5
+.It
+hmac-md5-96
+.It
+hmac-ripemd160
+.It
+hmac-sha1
+.It
+hmac-sha1-96
+.It
+hmac-sha2-256
+.It
+hmac-sha2-512
+.It
+umac-64@openssh.com
+.It
+umac-128@openssh.com
+.It
+hmac-md5-etm@openssh.com
+.It
+hmac-md5-96-etm@openssh.com
+.It
+hmac-ripemd160-etm@openssh.com
+.It
+hmac-sha1-etm@openssh.com
+.It
+hmac-sha1-96-etm@openssh.com
+.It
+hmac-sha2-256-etm@openssh.com
+.It
+hmac-sha2-512-etm@openssh.com
+.It
+umac-64-etm@openssh.com
+.It
+umac-128-etm@openssh.com
+.El
+.Pp
 The default is:
 .Bd -literal -offset indent
-hmac-md5-etm@openssh.com,hmac-sha1-etm@openssh.com,
 umac-64-etm@openssh.com,umac-128-etm@openssh.com,
 hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,
-hmac-ripemd160-etm@openssh.com,hmac-sha1-96-etm@openssh.com,
-hmac-md5-96-etm@openssh.com,
-hmac-md5,hmac-sha1,umac-64@openssh.com,umac-128@openssh.com,
-hmac-sha2-256,hmac-sha2-512,hmac-ripemd160,
-hmac-sha1-96,hmac-md5-96
+umac-64@openssh.com,umac-128@openssh.com,
+hmac-sha2-256,hmac-sha2-512
 .Ed
 .It Cm Match
 Introduces a conditional block.
@@ -752,10 +865,16 @@ line are satisfied, the keywords on the following lines override those
 set in the global section of the config file, until either another
 .Cm Match
 line or the end of the file.
+If a keyword appears in multiple
+.Cm Match
+blocks that are satisified, only the first instance of the keyword is
+applied.
 .Pp
 The arguments to
 .Cm Match
-are one or more criteria-pattern pairs.
+are one or more criteria-pattern pairs or the single token
+.Cm All
+which matches all criteria.
 The available criteria are
 .Cm User ,
 .Cm Group ,
@@ -816,7 +935,9 @@ Available keywords are
 .Cm PermitEmptyPasswords ,
 .Cm PermitOpen ,
 .Cm PermitRootLogin ,
+.Cm PermitTTY ,
 .Cm PermitTunnel ,
+.Cm PermitUserRC ,
 .Cm PubkeyAuthentication ,
 .Cm RekeyLimit ,
 .Cm RhostsRSAAuthentication ,
@@ -945,6 +1066,12 @@ and
 .Dq ethernet .
 The default is
 .Dq no .
+.It Cm PermitTTY
+Specifies whether
+.Xr pty 4
+allocation is permitted.
+The default is
+.Dq yes .
 .It Cm PermitUserEnvironment
 Specifies whether
 .Pa ~/.ssh/environment
@@ -959,6 +1086,12 @@ The default is
 Enabling environment processing may enable users to bypass access
 restrictions in some configurations using mechanisms such as
 .Ev LD_PRELOAD .
+.It Cm PermitUserRC
+Specifies whether any
+.Pa ~/.ssh/rc
+file is executed.
+The default is
+.Dq yes .
 .It Cm PidFile
 Specifies the file that contains the process ID of the
 SSH daemon.
@@ -1063,6 +1196,33 @@ This option applies to protocol version 1 only.
 .It Cm ServerKeyBits
 Defines the number of bits in the ephemeral protocol version 1 server key.
 The minimum value is 512, and the default is 1024.
+.It Cm StreamLocalBindMask
+Sets the octal file creation mode mask
+.Pq umask
+used when creating a Unix-domain socket file for local or remote
+port forwarding.
+This option is only used for port forwarding to a Unix-domain socket file.
+.Pp
+The default value is 0177, which creates a Unix-domain socket file that is
+readable and writable only by the owner.
+Note that not all operating systems honor the file mode on Unix-domain
+socket files.
+.It Cm StreamLocalBindUnlink
+Specifies whether to remove an existing Unix-domain socket file for local
+or remote port forwarding before creating a new one.
+If the socket file already exists and
+.Cm StreamLocalBindUnlink
+is not enabled,
+.Nm sshd
+will be unable to forward the port to the Unix-domain socket file.
+This option is only used for port forwarding to a Unix-domain socket file.
+.Pp
+The argument must be
+.Dq yes
+or
+.Dq no .
+The default is
+.Dq no .
 .It Cm StrictModes
 Specifies whether
 .Xr sshd 8

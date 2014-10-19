@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-pkcs11-helper.c,v 1.6 2013/11/11 16:32:10 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11-helper.c,v 1.6 2013/05/17 00:13:14 djm Exp $ */
+/*	$NetBSD: ssh-pkcs11-helper.c,v 1.7 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11-helper.c,v 1.8 2014/06/24 01:13:21 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.6 2013/11/11 16:32:10 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.7 2014/10/19 16:30:58 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/types.h>
@@ -166,7 +166,7 @@ process_sign(void)
 {
 	u_char *blob, *data, *signature = NULL;
 	u_int blen, dlen, slen = 0;
-	int ok = -1, ret;
+	int ok = -1;
 	Key *key, *found;
 	Buffer msg;
 
@@ -176,6 +176,9 @@ process_sign(void)
 
 	if ((key = key_from_blob(blob, blen)) != NULL) {
 		if ((found = lookup_key(key)) != NULL) {
+#ifdef WITH_OPENSSL
+			int ret;
+
 			slen = RSA_size(key->rsa);
 			signature = xmalloc(slen);
 			if ((ret = RSA_private_encrypt(dlen, data, signature,
@@ -183,6 +186,7 @@ process_sign(void)
 				slen = ret;
 				ok = 0;
 			}
+#endif /* WITH_OPENSSL */
 		}
 		key_free(key);
 	}

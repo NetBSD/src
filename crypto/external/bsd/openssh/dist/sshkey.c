@@ -24,6 +24,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: sshkey.c,v 1.2 2014/10/19 16:30:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1001,7 +1003,7 @@ fingerprint_randomart(u_char *dgst_raw, size_t dgst_raw_len,
 	 * Chars to be used after each other every time the worm
 	 * intersects with itself.  Matter of taste.
 	 */
-	char	*augmentation_string = " .o+=*BOX@%&#/^SE";
+	const char	*augmentation_string = " .o+=*BOX@%&#/^SE";
 	char	*retval, *p, title[FLDSIZE_X];
 	u_char	 field[FLDSIZE_X][FLDSIZE_Y];
 	size_t	 i, tlen;
@@ -2902,7 +2904,8 @@ sshkey_private_to_blob2(const struct sshkey *prv, struct sshbuf *blob,
     const char *passphrase, const char *comment, const char *ciphername,
     int rounds)
 {
-	u_char *cp, *b64 = NULL, *key = NULL, *pubkeyblob = NULL;
+	u_char *cp, *key = NULL, *pubkeyblob = NULL;
+	char *b64 = NULL;
 	u_char salt[SALT_LEN];
 	size_t i, pubkeylen, keylen, ivlen, blocksize, authlen;
 	u_int check;
@@ -3115,7 +3118,7 @@ sshkey_parse_private2(struct sshbuf *blob, int type, const char *passphrase,
 	}
 
 	/* decode base64 */
-	if ((r = sshbuf_b64tod(decoded, sshbuf_ptr(encoded))) != 0)
+	if ((r = sshbuf_b64tod(decoded, (const char *)sshbuf_ptr(encoded))) != 0)
 		goto out;
 
 	/* check magic */
@@ -3374,7 +3377,7 @@ sshkey_private_pem_to_blob(struct sshkey *key, struct sshbuf *blob,
 {
 	int success, r;
 	int blen, len = strlen(_passphrase);
-	u_char *passphrase = (len > 0) ? (u_char *)_passphrase : NULL;
+	u_char *passphrase = (len > 0) ? __UNCONST(_passphrase) : NULL;
 	const EVP_CIPHER *cipher = (len > 0) ? EVP_aes_128_cbc() : NULL;
 	const u_char *bptr;
 	BIO *bio = NULL;
@@ -3426,9 +3429,11 @@ sshkey_private_to_fileblob(struct sshkey *key, struct sshbuf *blob,
 {
 	switch (key->type) {
 #ifdef WITH_OPENSSL
+#ifdef WITH_SSH1
 	case KEY_RSA1:
 		return sshkey_private_rsa1_to_blob(key, blob,
 		    passphrase, comment);
+#endif
 	case KEY_DSA:
 	case KEY_ECDSA:
 	case KEY_RSA:
@@ -3641,7 +3646,7 @@ sshkey_parse_private_pem_fileblob(struct sshbuf *blob, int type,
 {
 	EVP_PKEY *pk = NULL;
 	struct sshkey *prv = NULL;
-	char *name = "<no key>";
+	const char *name = "<no key>";
 	BIO *bio = NULL;
 	int r;
 
@@ -3658,7 +3663,7 @@ sshkey_parse_private_pem_fileblob(struct sshbuf *blob, int type,
 	}
 
 	if ((pk = PEM_read_bio_PrivateKey(bio, NULL, NULL,
-	    (char *)passphrase)) == NULL) {
+	    __UNCONST(passphrase))) == NULL) {
 		r = SSH_ERR_KEY_WRONG_PASSPHRASE;
 		goto out;
 	}
@@ -3746,9 +3751,11 @@ sshkey_parse_private_fileblob_type(struct sshbuf *blob, int type,
 
 	switch (type) {
 #ifdef WITH_OPENSSL
+#ifdef WITH_SSH1
 	case KEY_RSA1:
 		return sshkey_parse_private_rsa1(blob, passphrase,
 		    keyp, commentp);
+#endif
 	case KEY_DSA:
 	case KEY_ECDSA:
 	case KEY_RSA:
