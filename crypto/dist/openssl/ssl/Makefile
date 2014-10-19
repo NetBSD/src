@@ -604,6 +604,7 @@ s3_pkt.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 s3_pkt.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 s3_pkt.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h s3_pkt.c
 s3_pkt.o: ssl_locl.h
+s3_srvr.o: ../crypto/constant_time_locl.h
 s3_srvr.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 s3_srvr.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 s3_srvr.o: ../include/openssl/comp.h ../include/openssl/crypto.h
