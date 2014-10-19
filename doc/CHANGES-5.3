@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.71 2014/09/03 02:16:50 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.72 2014/10/19 20:09:14 snj Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -1031,3 +1031,64 @@ UPDATING					1.209 via patch
 
 	Note shared objects extension change, and stalled files.
 	[tls, ticket #1339]
+
+crypto/dist/openssl/apps/s_client.c		patch
+crypto/dist/openssl/crypto/LPdir_vms.c		patch
+crypto/dist/openssl/crypto/LPdir_win.c		patch
+crypto/dist/openssl/crypto/Makefile		patch
+crypto/dist/openssl/crypto/constant_time_locl.h	patch
+crypto/dist/openssl/crypto/constant_time_test.c	patch
+crypto/dist/openssl/crypto/bn/bn_exp.c		patch
+crypto/dist/openssl/crypto/bn/exptest.c		patch
+crypto/dist/openssl/crypto/bn/asm/x86_64-gcc.c	patch
+crypto/dist/openssl/crypto/dsa/dsa_ameth.c	patch
+crypto/dist/openssl/crypto/ec/ec.h		patch
+crypto/dist/openssl/crypto/ec/ec_ameth.c	patch
+crypto/dist/openssl/crypto/ec/ec_asn1.c		patch
+crypto/dist/openssl/crypto/ec/ec_key.c		patch
+crypto/dist/openssl/crypto/ec/ecp_smpl.c	patch
+crypto/dist/openssl/crypto/err/openssl.ec	patch
+crypto/dist/openssl/crypto/evp/Makefile		patch
+crypto/dist/openssl/crypto/evp/evp_enc.c	patch
+crypto/dist/openssl/crypto/pkcs7/pkcs7.h	patch
+crypto/dist/openssl/crypto/rsa/Makefile		patch
+crypto/dist/openssl/crypto/rsa/rsa.h		patch
+crypto/dist/openssl/crypto/rsa/rsa_err.c	patch
+crypto/dist/openssl/crypto/rsa/rsa_oaep.c	patch
+crypto/dist/openssl/crypto/rsa/rsa_pk1.c	patch
+crypto/dist/openssl/crypto/rsa/rsa_sign.c	patch
+crypto/dist/openssl/doc/apps/s_client.pod	patch
+crypto/dist/openssl/doc/crypto/BIO_s_accept.pod	patch
+crypto/dist/openssl/doc/crypto/CMS_add1_signer.pod patch
+crypto/dist/openssl/doc/crypto/EVP_DigestInit.pod patch
+crypto/dist/openssl/doc/crypto/EVP_DigestVerifyInit.pod patch
+crypto/dist/openssl/doc/crypto/EVP_EncryptInit.pod patch
+crypto/dist/openssl/doc/crypto/EVP_PKEY_set1_RSA.pod patch
+crypto/dist/openssl/doc/crypto/EVP_PKEY_sign.pod patch
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_mode.pod patch
+crypto/dist/openssl/doc/ssl/SSL_CTX_set_tmp_dh_callback.pod patch
+crypto/dist/openssl/ssl/Makefile		patch
+crypto/dist/openssl/ssl/s23_clnt.c		patch
+crypto/dist/openssl/ssl/s23_srvr.c		patch
+crypto/dist/openssl/ssl/s2_lib.c		patch
+crypto/dist/openssl/ssl/s3_clnt.c		patch
+crypto/dist/openssl/ssl/s3_enc.c		patch
+crypto/dist/openssl/ssl/s3_lib.c		patch
+crypto/dist/openssl/ssl/s3_pkt.c		patch
+crypto/dist/openssl/ssl/s3_srvr.c		patch
+crypto/dist/openssl/ssl/ssl-lib.com		patch
+crypto/dist/openssl/ssl/ssl.h			patch
+crypto/dist/openssl/ssl/ssl3.h			patch
+crypto/dist/openssl/ssl/ssl_err.c		patch
+crypto/dist/openssl/ssl/ssl_lib.c		patch
+crypto/dist/openssl/ssl/t1_enc.c		patch
+crypto/dist/openssl/ssl/t1_lib.c		patch
+crypto/dist/openssl/ssl/tls1.h			patch
+crypto/dist/openssl/test/Makefile		patch
+crypto/dist/openssl/test/constant_time_test.c	patch
+
+	OpenSSL security fixes derived from the diff between
+	OpenSSL 1.0.0n and 1.0.0o, fixing CVE-2014-3567, CVE-2014-3568,
+	and adding POODLE mitigation via support for TLS_FALLBACK_SCSV.
+	[spz, ticket #1927]
+	
