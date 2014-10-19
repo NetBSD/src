@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.135 2014/09/30 00:30:00 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.136 2014/10/19 19:46:44 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -3815,3 +3815,10 @@ share/man/man9/iic.9				1.10
 
 	Correct return type of iic_release_bus.
 	[riastradh, ticket #1130]
+
+sys/compat/freebsd/freebsd_sysctl.c		1.17
+
+	Do not access a userland pointer from kernel space directly, use
+	copyin() instead, avoiding a crash.
+	[maxv, ticket #1168]
+
