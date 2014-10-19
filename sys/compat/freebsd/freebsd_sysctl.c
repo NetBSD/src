@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysctl.c,v 1.15 2008/11/19 18:36:02 ad Exp $	*/
+/*	$NetBSD: freebsd_sysctl.c,v 1.15.36.1 2014/10/19 19:40:55 snj Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.15 2008/11/19 18:36:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.15.36.1 2014/10/19 19:40:55 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ freebsd_sys_sysctl(struct lwp *l, const struct freebsd_sys_sysctl_args *uap, reg
 	} */
 	int error;
 	int name[CTL_MAXNAME];
-	size_t newlen, *oldlenp;
+	size_t newlen, *oldlenp, oldlen;
 	u_int namelen;
 	void *new, *old;
 
@@ -146,8 +146,13 @@ freebsd_sys_sysctl(struct lwp *l, const struct freebsd_sys_sysctl_args *uap, reg
 
 		old = SCARG(uap, old);
 		oldlenp = SCARG(uap, oldlenp);
-		if (old == NULL || oldlenp == NULL || *oldlenp < sizeof(int))
+		if (old == NULL || oldlenp == NULL)
 			return(EINVAL);
+
+		if ((error = copyin(oldlenp, &oldlen, sizeof(oldlen))))
+			return (error);
+		if (oldlen < sizeof(int))
+			return (EINVAL);
 
 		if ((locnew =
 		     (char *) malloc(newlen + 1, M_TEMP, M_WAITOK)) == NULL)
@@ -168,11 +173,11 @@ freebsd_sys_sysctl(struct lwp *l, const struct freebsd_sys_sysctl_args *uap, reg
 
 		oidlen *= sizeof(int);
 		error = copyout(oid, SCARG(uap, old),
-				MIN(oidlen, *SCARG(uap, oldlenp)));
+				MIN(oidlen, oldlen));
 		if (error)
 			return(error);
 		ktrmibio(-1, UIO_READ, SCARG(uap, old),
-		    MIN(oidlen, *SCARG(uap, oldlenp)),  0);
+		    MIN(oidlen, oldlen),  0);
 
 		error = copyout(&oidlen, SCARG(uap, oldlenp), sizeof(u_int));
 
