@@ -3405,8 +3405,8 @@ static void radio_start_next_work(void *eloop_ctx, void *timeout_ctx)
 
 	os_get_reltime(&now);
 	os_reltime_sub(&now, &work->time, &diff);
-	wpa_dbg(work->wpa_s, MSG_DEBUG, "Starting radio work '%s'@%p after %ld.%06ld second wait",
-		work->type, work, diff.sec, diff.usec);
+	wpa_dbg(work->wpa_s, MSG_DEBUG, "Starting radio work '%s'@%p after %jd.%06ld second wait",
+		work->type, work, (intmax_t)diff.sec, (long)diff.usec);
 	work->started = 1;
 	work->time = now;
 	work->cb(work, 0);
@@ -3555,9 +3555,9 @@ void radio_work_done(struct wpa_radio_work *work)
 
 	os_get_reltime(&now);
 	os_reltime_sub(&now, &work->time, &diff);
-	wpa_dbg(wpa_s, MSG_DEBUG, "Radio work '%s'@%p %s in %ld.%06ld seconds",
+	wpa_dbg(wpa_s, MSG_DEBUG, "Radio work '%s'@%p %s in %jd.%06ld seconds",
 		work->type, work, started ? "done" : "canceled",
-		diff.sec, diff.usec);
+		(intmax_t)diff.sec, (long)diff.usec);
 	radio_work_free(work);
 	if (started)
 		radio_work_check_next(wpa_s);
