@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.11 2014/10/19 11:45:01 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.12 2014/10/19 13:04:24 jmcneill Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -665,12 +665,13 @@ dwc_gmac_miibus_statchg(struct ifnet *ifp)
 	    | AWIN_GMAC_MAC_CONF_TXENABLE;
 	switch (IFM_SUBTYPE(mii->mii_media_active)) {
 	case IFM_10_T:
+		conf |= AWIN_GMAC_MAC_CONF_MIISEL;
 		break;
 	case IFM_100_TX:
-		conf |= AWIN_GMAC_MAC_CONF_FES100;
+		conf |= AWIN_GMAC_MAC_CONF_FES100 |
+			AWIN_GMAC_MAC_CONF_MIISEL;
 		break;
 	case IFM_1000_T:
-		conf |= AWIN_GMAC_MAC_CONF_MIISEL;
 		break;
 	}
 	if (IFM_OPTIONS(mii->mii_media_active) & IFM_FDX)
