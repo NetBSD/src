@@ -1,4 +1,4 @@
-/*	$NetBSD: deattack.h,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
+/*	$NetBSD: deattack.h,v 1.3 2014/10/19 16:30:58 christos Exp $	*/
 /* $OpenBSD: deattack.h,v 1.10 2006/09/16 19:53:37 djm Exp $ */
 
 /*

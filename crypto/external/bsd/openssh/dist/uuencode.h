@@ -1,4 +1,4 @@
-/*	$NetBSD: uuencode.h,v 1.3 2011/07/25 03:03:11 christos Exp $	*/
+/*	$NetBSD: uuencode.h,v 1.4 2014/10/19 16:30:59 christos Exp $	*/
 /* $OpenBSD: uuencode.h,v 1.14 2010/08/31 11:54:45 djm Exp $ */
 
 /*
