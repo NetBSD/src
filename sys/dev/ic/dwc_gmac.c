@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.12 2014/10/19 13:04:24 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.13 2014/10/19 13:15:23 jmcneill Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -690,6 +690,7 @@ static int
 dwc_gmac_init(struct ifnet *ifp)
 {
 	struct dwc_gmac_softc *sc = ifp->if_softc;
+	uint32_t ffilt;
 
 	if (ifp->if_flags & IFF_RUNNING)
 		return 0;
@@ -706,10 +707,14 @@ dwc_gmac_init(struct ifnet *ifp)
 	    __SHIFTIN(8, GMCA_BUSMODE_PBL));
 
 	/*
-	 * Set up address filter (XXX for testing only: promiscous)
+	 * Set up address filter
 	 */
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT,
-	    AWIN_GMAC_MAC_FFILT_PR);
+	ffilt = 0;
+	if (ifp->if_flags & IFF_PROMISC)
+		ffilt |= AWIN_GMAC_MAC_FFILT_PR;
+	else if (ifp->if_flags & IFF_ALLMULTI)
+		ffilt |= AWIN_GMAC_MAC_FFILT_PM;
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT, ffilt);
 
 	/*
 	 * Set up dma pointer for RX and TX ring
