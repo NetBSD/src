@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-rhosts.c,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
-/* $OpenBSD: auth-rhosts.c,v 1.44 2010/03/07 11:57:13 dtucker Exp $ */
+/*	$NetBSD: auth-rhosts.c,v 1.4 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: auth-rhosts.c,v 1.45 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-rhosts.c,v 1.3 2010/11/21 18:29:48 adam Exp $");
+__RCSID("$NetBSD: auth-rhosts.c,v 1.4 2014/10/19 16:30:58 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -33,12 +33,12 @@ __RCSID("$NetBSD: auth-rhosts.c,v 1.3 2010/11/21 18:29:48 adam Exp $");
 #include "uidswap.h"
 #include "pathnames.h"
 #include "log.h"
+#include "misc.h"
 #include "servconf.h"
 #include "canohost.h"
 #include "key.h"
 #include "hostfile.h"
 #include "auth.h"
-#include "misc.h"
 
 /* import */
 extern ServerOptions options;

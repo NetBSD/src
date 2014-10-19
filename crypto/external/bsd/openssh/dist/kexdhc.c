@@ -1,5 +1,5 @@
-/*	$NetBSD: kexdhc.c,v 1.4 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: kexdhc.c,v 1.13 2013/05/17 00:13:13 djm Exp $ */
+/*	$NetBSD: kexdhc.c,v 1.5 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: kexdhc.c,v 1.15 2014/02/02 03:44:31 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexdhc.c,v 1.4 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: kexdhc.c,v 1.5 2014/10/19 16:30:58 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/dh.h>
@@ -124,15 +124,15 @@ kexdh_client(Kex *kex)
 		fatal("kexdh_client: BN_new failed");
 	if (BN_bin2bn(kbuf, kout, shared_secret) == NULL)
 		fatal("kexdh_client: BN_bin2bn failed");
-	memset(kbuf, 0, klen);
+	explicit_bzero(kbuf, klen);
 	free(kbuf);
 
 	/* calc and verify H */
 	kex_dh_hash(
 	    kex->client_version_string,
 	    kex->server_version_string,
-	    buffer_ptr(&kex->my), buffer_len(&kex->my),
-	    buffer_ptr(&kex->peer), buffer_len(&kex->peer),
+	    (char *)buffer_ptr(&kex->my), buffer_len(&kex->my),
+	    (char *)buffer_ptr(&kex->peer), buffer_len(&kex->peer),
 	    server_host_key_blob, sbloblen,
 	    dh->pub_key,
 	    dh_server_pub,
@@ -155,7 +155,7 @@ kexdh_client(Kex *kex)
 		memcpy(kex->session_id, hash, kex->session_id_len);
 	}
 
-	kex_derive_keys(kex, hash, hashlen, shared_secret);
+	kex_derive_keys_bn(kex, hash, hashlen, shared_secret);
 	BN_clear_free(shared_secret);
 	kex_finish(kex);
 }

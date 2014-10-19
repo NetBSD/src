@@ -1,5 +1,5 @@
-/*	$NetBSD: session.h,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
-/* $OpenBSD: session.h,v 1.30 2008/05/08 12:21:16 djm Exp $ */
+/*	$NetBSD: session.h,v 1.3 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: session.h,v 1.31 2013/10/14 21:20:52 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -58,6 +58,7 @@ struct Session {
 	int	chanid;
 	int	*x11_chanids;
 	int	is_subsystem;
+	char	*subsys;
 	u_int	num_env;
 	struct {
 		char	*name;

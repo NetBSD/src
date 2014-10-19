@@ -1,4 +1,4 @@
-/*	$NetBSD: match.h,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
+/*	$NetBSD: match.h,v 1.4 2014/10/19 16:30:58 christos Exp $	*/
 /* $OpenBSD: match.h,v 1.15 2010/02/26 20:29:54 djm Exp $ */
 
 /*
