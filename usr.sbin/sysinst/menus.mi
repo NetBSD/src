@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.4 2014/08/06 10:03:49 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.4.4.1 2014/10/19 09:14:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -593,7 +593,7 @@ menu pkgsrc, y=-4, x=0, w=70, no box, no clear,
 			clean_xfer_dir ? MSG_Yes : MSG_No);},
 		action {process_menu(MENU_yesno, deconst(MSG_delete_xfer_file));
 			clean_xfer_dir = yesno; };
-	option MSG_quit_pkgsrc, exit, action { yesno = 0;};
+	option MSG_quit_pkgsrc, exit, action { yesno = SET_SKIP;};
 
 menu usersh, title MSG_User_shell, no clear;
 	option "/bin/sh",  exit, action { ushell = "/bin/sh";}; 
