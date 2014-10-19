@@ -298,6 +298,10 @@ test_ige: $(IGETEST)$(EXE_EXT)
 	@echo "Test IGE mode"
 	../util/shlib_wrap.sh ./$(IGETEST)
 
+test_constant_time: $(CONSTTIMETEST)$(EXE_EXT)
+	@echo "Test constant time utilites"
+	../util/shlib_wrap.sh ./$(CONSTTIMETEST)
+
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
@@ -428,6 +432,9 @@ $(ECDHTEST)$(EXE_EXT): $(ECDHTEST).o $(DLIBCRYPTO)
 $(IGETEST)$(EXE_EXT): $(IGETEST).o $(DLIBCRYPTO)
 	@target=$(IGETEST); $(BUILD_CMD)
 
+$(CONSTTIMETEST)$(EXE_EXT): $(CONSTTIMETEST).o
+	@target=$(CONSTTIMETEST) $(BUILD_CMD)
+
 #$(AESTEST).o: $(AESTEST).c
 #	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
 
@@ -461,6 +468,9 @@ bntest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 bntest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h bntest.c
 casttest.o: ../e_os.h ../include/openssl/cast.h ../include/openssl/e_os2.h
 casttest.o: ../include/openssl/opensslconf.h casttest.c
+constant_time_test.o: ../crypto/constant_time_locl.h ../e_os.h
+constant_time_test.o: ../include/openssl/e_os2.h
+constant_time_test.o: ../include/openssl/opensslconf.h constant_time_test.c
 destest.o: ../include/openssl/des.h ../include/openssl/des_old.h
 destest.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
 destest.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
