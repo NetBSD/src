@@ -1,4 +1,4 @@
-/*	$NetBSD: atomicio.h,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
+/*	$NetBSD: atomicio.h,v 1.4 2014/10/19 16:30:58 christos Exp $	*/
 /* $OpenBSD: atomicio.h,v 1.11 2010/09/22 22:58:51 djm Exp $ */
 
 /*

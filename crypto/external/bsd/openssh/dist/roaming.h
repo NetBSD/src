@@ -1,4 +1,4 @@
-/*	$NetBSD: roaming.h,v 1.4 2012/05/02 02:41:08 christos Exp $	*/
+/*	$NetBSD: roaming.h,v 1.5 2014/10/19 16:30:58 christos Exp $	*/
 /* $OpenBSD: roaming.h,v 1.6 2011/12/07 05:44:38 djm Exp $ */
 /*
  * Copyright (c) 2004-2009 AppGate Network Security AB

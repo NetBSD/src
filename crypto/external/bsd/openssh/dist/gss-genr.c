@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-genr.c,v 1.5 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: gss-genr.c,v 1.21.2.1 2013/11/08 01:33:56 djm Exp $ */
+/*	$NetBSD: gss-genr.c,v 1.6 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: gss-genr.c,v 1.22 2013/11/08 00:39:15 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2007 Simon Wilkinson. All rights reserved.

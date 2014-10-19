@@ -6,6 +6,9 @@ Public domain.
 Derived from public domain code by D. J. Bernstein.
 */
 
+#include "includes.h"
+__RCSID("$NetBSD: smult_curve25519_ref.c,v 1.2 2014/10/19 16:30:58 christos Exp $");
+
 int crypto_scalarmult_curve25519(unsigned char *, const unsigned char *, const unsigned char *);
 
 static void add(unsigned int out[32],const unsigned int a[32],const unsigned int b[32])
