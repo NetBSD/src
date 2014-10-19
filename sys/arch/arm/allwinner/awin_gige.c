@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.14 2014/10/19 16:09:28 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.15 2014/10/19 17:01:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -146,8 +146,13 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Enable GMAC clock
 	 */
-	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_AHB_GATING1_REG, AWIN_AHB_GATING1_GMAC, 0);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_AHB_GATING0_REG, AWIN_A31_AHB_GATING0_GMAC, 0);
+	} else {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_AHB_GATING1_REG, AWIN_AHB_GATING1_GMAC, 0);
+	}
 
 	/*
 	 * Soft reset
