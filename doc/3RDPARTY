@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1159 2014/10/17 23:56:47 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1160 2014/10/19 16:38:21 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -971,8 +971,8 @@ Notes:
 Patch applied after OpenSSH import.
 
 Package:	OpenSSH
-Version:	6.4
-Current Vers:	6.4 / portable 6.4p1
+Version:	6.7
+Current Vers:	6.7 / portable 6.7p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
