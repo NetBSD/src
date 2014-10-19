@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.59 2014/10/19 09:15:59 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.60 2014/10/19 10:04:00 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1779,4 +1779,12 @@ usr.sbin/sysinst/menus.mi			1.7
 	pkgsrc, you'd get stuck here, unable to make it back to the parent
 	menu.
 	[snj, ticket #149]
+
+sys/kern/vfs_vnode.c				1.39
+
+	When creating a vnode with vcache_get() mark the vnode VI_CHANGING
+	until it is fully initialised.  It may be on the specnode list
+	before it is fully initialised and revoking it then would panic.
+	Should prevent the panic from PR kern/49171 (panic when closing a pty).
+	[hannken, ticket #150]
 
