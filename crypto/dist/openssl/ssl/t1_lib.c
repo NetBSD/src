@@ -938,15 +938,15 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				return 0;
 				}
 			if (!s->hit) {
-			s->session->tlsext_ecpointformatlist_length = 0;
-			if (s->session->tlsext_ecpointformatlist != NULL) OPENSSL_free(s->session->tlsext_ecpointformatlist);
-			if ((s->session->tlsext_ecpointformatlist = OPENSSL_malloc(ecpointformatlist_length)) == NULL)
-				{
-				*al = TLS1_AD_INTERNAL_ERROR;
-				return 0;
-				}
-			s->session->tlsext_ecpointformatlist_length = ecpointformatlist_length;
-			memcpy(s->session->tlsext_ecpointformatlist, sdata, ecpointformatlist_length);
+				s->session->tlsext_ecpointformatlist_length = 0;
+				if (s->session->tlsext_ecpointformatlist != NULL) OPENSSL_free(s->session->tlsext_ecpointformatlist);
+				if ((s->session->tlsext_ecpointformatlist = OPENSSL_malloc(ecpointformatlist_length)) == NULL)
+					{
+					*al = TLS1_AD_INTERNAL_ERROR;
+					return 0;
+					}
+				s->session->tlsext_ecpointformatlist_length = ecpointformatlist_length;
+				memcpy(s->session->tlsext_ecpointformatlist, sdata, ecpointformatlist_length);
 			}
 #if 0
 			fprintf(stderr,"ssl_parse_serverhello_tlsext s->session->tlsext_ecpointformatlist ");
@@ -1517,7 +1517,10 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	HMAC_Final(&hctx, tick_hmac, NULL);
 	HMAC_CTX_cleanup(&hctx);
 	if (memcmp(tick_hmac, etick + eticklen, mlen))
+		{
+		EVP_CIPHER_CTX_cleanup(&ctx);
 		goto tickerr;
+		}
 	/* Attempt to decrypt session data */
 	/* Move p after IV to start of encrypted ticket, update length */
 	p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);
