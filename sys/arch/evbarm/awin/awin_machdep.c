@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.17 2014/10/18 12:36:39 jmcneill Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.18 2014/10/19 22:34:55 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.17 2014/10/18 12:36:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.18 2014/10/19 22:34:55 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -678,6 +678,24 @@ awin_device_register(device_t self, void *aux)
 	}
 
 	if (device_is_a(self, "awge")) {
+		/*
+		 * Get the GMAC MAC address from cmdline.
+		 */
+		uint8_t enaddr[ETHER_ADDR_LEN];
+		char argname[strlen("awge?.mac-address") + 1];
+		char *mac_addr;
+		snprintf(argname, sizeof(argname), "%s.mac-address",
+		    device_xname(self));
+		if (get_bootconf_option(boot_args, argname,
+		    BOOTOPT_TYPE_STRING, &mac_addr) &&
+		    ether_aton_r(enaddr, sizeof(enaddr), mac_addr) == 0) {
+			prop_data_t pd;
+			pd = prop_data_create_data(enaddr, sizeof(enaddr));
+			KASSERT(pd != NULL);
+			prop_dictionary_set(dict, "mac-address", pd);
+			prop_object_release(pd);
+		}
+
 #if AWIN_board == AWIN_cubieboard
 		if (awin_chip_id() == AWIN_CHIP_ID_A20) {
 			/* Cubieboard2 uses GMAC with a 100Mbit PHY */
