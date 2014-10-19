@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.58 2014/10/18 14:06:58 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.59 2014/10/19 09:15:59 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1669,3 +1669,114 @@ sys/compat/freebsd/freebsd_sysctl.c		1.17
 	Do not access a userland pointer from kernel space directly, use
 	copyin() instead.
 	[maxv, ticket #146]
+
+crypto/external/bsd/openssl/dist/CHANGES	1.2			(patch)
+crypto/external/bsd/openssl/dist/Configure	1.9			(patch)
+crypto/external/bsd/openssl/dist/Makefile	1.3			(patch)
+crypto/external/bsd/openssl/dist/NEWS		1.2			(patch)
+crypto/external/bsd/openssl/dist/README		1.2			(patch)
+crypto/external/bsd/openssl/dist/apps/makeapps.com 1.2			(patch)
+crypto/external/bsd/openssl/dist/apps/s_client.c 1.7			(patch)
+crypto/external/bsd/openssl/dist/crypto/LPdir_vms.c 1.2			(patch)
+crypto/external/bsd/openssl/dist/crypto/LPdir_win.c 1.2			(patch)
+crypto/external/bsd/openssl/dist/crypto/Makefile 1.2			(patch)
+crypto/external/bsd/openssl/dist/crypto/aes/asm/aesni-x86_64.pl 1.2	(patch)
+crypto/external/bsd/openssl/dist/crypto/asn1/a_strex.c 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/bn/asm/x86_64-gcc.c 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/bn/bn_exp.c 1.7			(patch)
+crypto/external/bsd/openssl/dist/crypto/bn/bn_nist.c 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/bn/exptest.c 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/constant_time_locl.h 1.1	(patch)
+crypto/external/bsd/openssl/dist/crypto/crypto-lib.com 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/dsa/dsa_ameth.c 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/ebcdic.h 1.2			(patch)
+crypto/external/bsd/openssl/dist/crypto/ec/ec.h	1.2			(patch)
+crypto/external/bsd/openssl/dist/crypto/ec/ec2_smpl.c 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/ec/ec_ameth.c 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/ec/ec_asn1.c 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/ec/ecp_mont.c 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/ec/ecp_nist.c 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/ec/ecp_smpl.c 1.3		(patch)
+crypto/external/bsd/openssl/dist/crypto/ec/ectest.c 1.6			(patch)
+crypto/external/bsd/openssl/dist/crypto/err/openssl.ec 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/evp/Makefile 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/evp/e_aes.c 1.5			(patch)
+crypto/external/bsd/openssl/dist/crypto/evp/evp_enc.c 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/install-crypto.com 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/md5/asm/md5-x86_64.pl 1.2	(patch)
+crypto/external/bsd/openssl/dist/crypto/modes/modes.h 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/ocsp/ocsp_vfy.c 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/opensslconf.h 1.7		(patch)
+crypto/external/bsd/openssl/dist/crypto/opensslv.h 1.11			(patch)
+crypto/external/bsd/openssl/dist/crypto/ossl_typ.h 1.2			(patch)
+crypto/external/bsd/openssl/dist/crypto/pkcs7/pkcs7.h 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/pqueue/pqueue.h 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/rsa/Makefile 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa.h 1.2			(patch)
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa_err.c 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa_oaep.c 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa_pk1.c 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa_sign.c 1.2		(patch)
+crypto/external/bsd/openssl/dist/crypto/stack/safestack.h 1.2		(patch)
+crypto/external/bsd/openssl/dist/doc/apps/dgst.pod 1.2			(patch)
+crypto/external/bsd/openssl/dist/doc/crypto/BIO_s_accept.pod 1.2	(patch)
+crypto/external/bsd/openssl/dist/doc/crypto/EVP_DigestInit.pod 1.2	(patch)
+crypto/external/bsd/openssl/dist/doc/crypto/EVP_DigestVerifyInit.pod 1.2 (patch)
+crypto/external/bsd/openssl/dist/doc/crypto/EVP_EncryptInit.pod 1.2	(patch)
+crypto/external/bsd/openssl/dist/doc/crypto/EVP_PKEY_set1_RSA.pod 1.2	(patch)
+crypto/external/bsd/openssl/dist/doc/crypto/EVP_PKEY_sign.pod 1.2	(patch)
+crypto/external/bsd/openssl/dist/doc/ssl/SSL_CTX_set_tmp_dh_callback.pod 1.2 (patch)
+crypto/external/bsd/openssl/dist/e_os.h		1.2			(patch)
+crypto/external/bsd/openssl/dist/engines/makeengines.com 1.2		(patch)
+crypto/external/bsd/openssl/dist/makevms.com	1.2			(patch)
+crypto/external/bsd/openssl/dist/openssl.spec	1.2			(patch)
+crypto/external/bsd/openssl/dist/ssl/Makefile	1.2			(patch)
+crypto/external/bsd/openssl/dist/ssl/d1_both.c	1.2			(patch)
+crypto/external/bsd/openssl/dist/ssl/d1_lib.c	1.2			(patch)
+crypto/external/bsd/openssl/dist/ssl/d1_srtp.c	1.2			(patch)
+crypto/external/bsd/openssl/dist/ssl/dtls1.h	1.2			(patch)
+crypto/external/bsd/openssl/dist/ssl/s23_clnt.c	1.7			(patch)
+crypto/external/bsd/openssl/dist/ssl/s23_srvr.c	1.2			(patch)
+crypto/external/bsd/openssl/dist/ssl/s2_lib.c	1.2			(patch)
+crypto/external/bsd/openssl/dist/ssl/s3_cbc.c	1.2			(patch)
+crypto/external/bsd/openssl/dist/ssl/s3_clnt.c	1.11			(patch)
+crypto/external/bsd/openssl/dist/ssl/s3_enc.c	1.7			(patch)
+crypto/external/bsd/openssl/dist/ssl/s3_lib.c	1.12			(patch)
+crypto/external/bsd/openssl/dist/ssl/s3_pkt.c	1.18			(patch)
+crypto/external/bsd/openssl/dist/ssl/s3_srvr.c	1.18			(patch)
+crypto/external/bsd/openssl/dist/ssl/srtp.h	1.2			(patch)
+crypto/external/bsd/openssl/dist/ssl/ssl-lib.com 1.2			(patch)
+crypto/external/bsd/openssl/dist/ssl/ssl.h	1.9			(patch)
+crypto/external/bsd/openssl/dist/ssl/ssl3.h	1.7			(patch)
+crypto/external/bsd/openssl/dist/ssl/ssl_err.c	1.7			(patch)
+crypto/external/bsd/openssl/dist/ssl/ssl_lib.c	1.2			(patch)
+crypto/external/bsd/openssl/dist/ssl/t1_enc.c	1.11			(patch)
+crypto/external/bsd/openssl/dist/ssl/t1_lib.c	1.14			(patch)
+crypto/external/bsd/openssl/dist/ssl/tls1.h	1.2			(patch)
+crypto/external/bsd/openssl/dist/test/Makefile	1.2			(patch)
+crypto/external/bsd/openssl/dist/test/maketests.com 1.2			(patch)
+crypto/external/bsd/openssl/dist/test/tests.com	1.2			(patch)
+crypto/external/bsd/openssl/dist/test/testssl	1.2			(patch)
+crypto/external/bsd/openssl/dist/util/mk1mf.pl	1.2			(patch)
+crypto/external/bsd/openssl/dist/util/mkdef.pl	1.2			(patch)
+crypto/external/bsd/openssl/dist/util/ssleay.num 1.2			(patch)
+
+	Update of openssl to the next higher version, 1.0.1j.
+
+	Upstream condensed log:
+	  Major changes between OpenSSL 1.0.1i and OpenSSL 1.0.1j [15 Oct 2014]
+
+	      o Fix for CVE-2014-3513
+	      o Fix for CVE-2014-3567
+	      o Mitigation for CVE-2014-3566 (SSL protocol vulnerability)
+	      o Fix for CVE-2014-3568
+	[spz, ticket #147]
+
+usr.sbin/sysinst/menus.mi			1.7
+
+	Make the option to abort pkgsrc fetching/extraction actually work.
+	Previously, if the network was not set up and you couldn't fetch
+	pkgsrc, you'd get stuck here, unable to make it back to the parent
+	menu.
+	[snj, ticket #149]
+
