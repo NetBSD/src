@@ -128,6 +128,14 @@
 extern "C" {
 #endif
 
+/* Signalling cipher suite value from RFC 5746
+ * (TLS_EMPTY_RENEGOTIATION_INFO_SCSV) */
+#define SSL3_CK_SCSV				0x030000FF
+
+/* Signalling cipher suite value from draft-ietf-tls-downgrade-scsv-00
+ * (TLS_FALLBACK_SCSV) */
+#define SSL3_CK_FALLBACK_SCSV			0x03005600
+
 #define SSL3_CK_RSA_NULL_MD5			0x03000001
 #define SSL3_CK_RSA_NULL_SHA			0x03000002
 #define SSL3_CK_RSA_RC4_40_MD5 			0x03000003
@@ -505,6 +513,21 @@ typedef struct ssl3_state_st
 		int cert_request;
 		} tmp;
 
+	/* Connection binding to prevent renegotiation attacks */
+	unsigned char previous_client_finished[EVP_MAX_MD_SIZE];
+	unsigned char previous_client_finished_len;
+	unsigned char previous_server_finished[EVP_MAX_MD_SIZE];
+	unsigned char previous_server_finished_len;
+	int send_connection_binding; /* TODOEKR */
+
+#ifndef OPENSSL_NO_TLSEXT
+#ifndef OPENSSL_NO_EC
+        /* This is set to true if we believe that this is a version of Safari
+         * running on OS X 10.6 or newer. We wish to know this because Safari
+         * on 10.8 .. 10.8.3 has broken ECDHE-ECDSA support. */
+        char is_probably_safari;
+#endif /* !OPENSSL_NO_EC */
+#endif /* !OPENSSL_NO_TLSEXT */
 	} SSL3_STATE;
 
 
