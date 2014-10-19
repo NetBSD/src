@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_open_memstream.c,v 1.1 2014/10/15 21:55:34 justin Exp $");
+__RCSID("$NetBSD: t_open_memstream.c,v 1.2 2014/10/19 11:17:43 justin Exp $");
 
 #include <atf-c.h>
 #include <err.h>
@@ -53,6 +53,7 @@ ATF_TC_BODY(test_open_memstream, tc)
 	ATF_CHECK(fflush(fp) == 0);
 	ATF_CHECK(size == 0);
 	ATF_CHECK(buf != (char *)0xff);
+	ATF_CHECK(fseek(fp, -6, SEEK_SET) == -1);
 	ATF_CHECK(fseek(fp, OFFSET, SEEK_SET) == 0);
 	ATF_CHECK(fprintf(fp, hello) != EOF);
 	ATF_CHECK(fflush(fp) != EOF);
