@@ -5814,9 +5814,10 @@ static int wpas_ctrl_radio_work_show(struct wpa_supplicant *wpa_s,
 		int ret;
 
 		os_reltime_sub(&now, &work->time, &diff);
-		ret = os_snprintf(pos, end - pos, "%s@%s:%u:%u:%ld.%06ld\n",
+		ret = os_snprintf(pos, end - pos, "%s@%s:%u:%u:%jd.%06ld\n",
 				  work->type, work->wpa_s->ifname, work->freq,
-				  work->started, diff.sec, diff.usec);
+				  work->started, (intmax_t)diff.sec,
+				  (long)diff.usec);
 		if (ret < 0 || ret >= end - pos)
 			break;
 		pos += ret;
