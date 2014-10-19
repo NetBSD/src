@@ -1,5 +1,5 @@
-/*	$NetBSD: kexdh.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
-/* $OpenBSD: kexdh.c,v 1.23 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: kexdh.c,v 1.3 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: kexdh.c,v 1.24 2014/01/09 23:20:00 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexdh.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: kexdh.c,v 1.3 2014/10/19 16:30:58 christos Exp $");
 #include <sys/types.h>
 
 #include <signal.h>
@@ -37,6 +37,8 @@ __RCSID("$NetBSD: kexdh.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
 #include "key.h"
 #include "cipher.h"
 #include "kex.h"
+#include "digest.h"
+#include "log.h"
 
 void
 kex_dh_hash(
@@ -51,9 +53,7 @@ kex_dh_hash(
     u_char **hash, u_int *hashlen)
 {
 	Buffer b;
-	static u_char digest[EVP_MAX_MD_SIZE];
-	const EVP_MD *evp_md = EVP_sha1();
-	EVP_MD_CTX md;
+	static u_char digest[SSH_DIGEST_MAX_LENGTH];
 
 	buffer_init(&b);
 	buffer_put_cstring(&b, client_version_string);
@@ -75,15 +75,14 @@ kex_dh_hash(
 #ifdef DEBUG_KEX
 	buffer_dump(&b);
 #endif
-	EVP_DigestInit(&md, evp_md);
-	EVP_DigestUpdate(&md, buffer_ptr(&b), buffer_len(&b));
-	EVP_DigestFinal(&md, digest, NULL);
+	if (ssh_digest_buffer(SSH_DIGEST_SHA1, &b, digest, sizeof(digest)) != 0)
+		fatal("%s: ssh_digest_buffer failed", __func__);
 
 	buffer_free(&b);
 
 #ifdef DEBUG_KEX
-	dump_digest("hash", digest, EVP_MD_size(evp_md));
+	dump_digest("hash", digest, ssh_digest_bytes(SSH_DIGEST_SHA1));
 #endif
 	*hash = digest;
-	*hashlen = EVP_MD_size(evp_md);
+	*hashlen = ssh_digest_bytes(SSH_DIGEST_SHA1);
 }

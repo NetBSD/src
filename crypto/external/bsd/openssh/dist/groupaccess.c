@@ -1,4 +1,4 @@
-/*	$NetBSD: groupaccess.c,v 1.3 2013/11/08 19:18:25 christos Exp $	*/
+/*	$NetBSD: groupaccess.c,v 1.4 2014/10/19 16:30:58 christos Exp $	*/
 /* $OpenBSD: groupaccess.c,v 1.14 2013/05/17 00:13:13 djm Exp $ */
 /*
  * Copyright (c) 2001 Kevin Steves.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: groupaccess.c,v 1.3 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: groupaccess.c,v 1.4 2014/10/19 16:30:58 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 

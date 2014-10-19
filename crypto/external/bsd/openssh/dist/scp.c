@@ -1,5 +1,5 @@
-/*	$NetBSD: scp.c,v 1.9 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: scp.c,v 1.178 2013/06/22 06:31:57 djm Exp $ */
+/*	$NetBSD: scp.c,v 1.10 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: scp.c,v 1.180 2014/06/24 02:21:01 djm Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -73,7 +73,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.9 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.10 2014/10/19 16:30:58 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/poll.h>
@@ -736,7 +736,7 @@ source(int argc, char **argv)
 	static BUF buffer;
 	BUF *bp;
 	off_t i, statbytes;
-	size_t amt;
+	size_t amt, nr;
 	int fd = -1, haderr, indx;
 	char *last, *name, buf[16384], encname[MAXPATHLEN];
 	int len;
@@ -810,12 +810,16 @@ next:			if (fd != -1) {
 			if (i + (off_t)amt > stb.st_size)
 				amt = stb.st_size - i;
 			if (!haderr) {
-				if (atomicio(read, fd, bp->buf, amt) != amt)
+				if ((nr = atomicio(read, fd,
+				    bp->buf, amt)) != amt) {
 					haderr = errno;
+					memset(bp->buf + nr, 0, amt - nr);
+				}
 			}
 			/* Keep writing after error to retain sync */
 			if (haderr) {
 				(void)atomicio(vwrite, remout, bp->buf, amt);
+				memset(bp->buf, 0, amt);
 				continue;
 			}
 			if (atomicio6(vwrite, remout, bp->buf, amt, scpio,
@@ -1270,7 +1274,7 @@ okname(char *cp0)
 		c = (int)*cp;
 		if (c & 0200)
 			goto bad;
-		if (!isalpha(c) && !isdigit(c)) {
+		if (!isalpha(c) && !isdigit((unsigned char)c)) {
 			switch (c) {
 			case '\'':
 			case '"':

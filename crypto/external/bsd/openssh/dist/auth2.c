@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2.c,v 1.8 2013/11/08 19:18:24 christos Exp $	*/
-/* $OpenBSD: auth2.c,v 1.126 2012/12/02 20:34:09 djm Exp $ */
+/*	$NetBSD: auth2.c,v 1.9 2014/10/19 16:30:58 christos Exp $	*/
+/* $OpenBSD: auth2.c,v 1.132 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2.c,v 1.8 2013/11/08 19:18:24 christos Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.9 2014/10/19 16:30:58 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: auth2.c,v 1.8 2013/11/08 19:18:24 christos Exp $");
 #include "packet.h"
 #include "log.h"
 #include "buffer.h"
+#include "misc.h"
 #include "servconf.h"
 #include "compat.h"
 #include "key.h"
@@ -77,9 +78,6 @@ extern Authmethod method_kerberos;
 #ifdef GSSAPI
 extern Authmethod method_gssapi;
 #endif
-#ifdef JPAKE
-extern Authmethod method_jpake;
-#endif
 
 static int log_flag = 0;
 
@@ -88,9 +86,6 @@ Authmethod *authmethods[] = {
 	&method_pubkey,
 #ifdef GSSAPI
 	&method_gssapi,
-#endif
-#ifdef JPAKE
-	&method_jpake,
 #endif
 	&method_passwd,
 	&method_kbdint,
@@ -283,9 +278,6 @@ input_userauth_request(int type, u_int32_t seq, void *ctxt)
 	}
 	/* reset state */
 	auth2_challenge_stop(authctxt);
-#ifdef JPAKE
-	auth2_jpake_stop(authctxt);
-#endif
 
 #ifdef GSSAPI
 	/* XXX move to auth2_gssapi_stop() */
@@ -337,7 +329,7 @@ userauth_finish(Authctxt *authctxt, int authenticated, const char *method,
 			/* if PAM returned a message, send it to the user */
 			if (buffer_len(&loginmsg) > 0) {
 				buffer_append(&loginmsg, "\0", 1);
-				userauth_send_banner(buffer_ptr(&loginmsg));
+				userauth_send_banner((const char *)buffer_ptr(&loginmsg));
 				packet_write_wait();
 			}
 			fatal("Access denied for user %s by PAM account "
@@ -372,12 +364,8 @@ userauth_finish(Authctxt *authctxt, int authenticated, const char *method,
 		if (!authctxt->server_caused_failure &&
 		    (authctxt->attempt > 1 || strcmp(method, "none") != 0))
 			authctxt->failures++;
-		if (authctxt->failures >= options.max_authtries) {
-			packet_disconnect(AUTH_FAIL_MSG, authctxt->user);
-#ifdef SSH_AUDIT_EVENTS
-			PRIVSEP(audit_event(SSH_LOGIN_EXCEED_MAXTRIES));
-#endif
-		}
+		if (authctxt->failures >= options.max_authtries)
+			auth_maxtries_exceeded(authctxt);
 		methods = authmethods_get(authctxt);
 		debug3("%s: failure partial=%d next methods=\"%s\"", __func__,
 		    partial, methods);
@@ -438,7 +426,7 @@ authmethods_get(Authctxt *authctxt)
 		    strlen(authmethods[i]->name));
 	}
 	buffer_append(&b, "\0", 1);
-	list = xstrdup(buffer_ptr(&b));
+	list = xstrdup((const char *)buffer_ptr(&b));
 	buffer_free(&b);
 	return list;
 }

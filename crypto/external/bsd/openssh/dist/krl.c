@@ -1,4 +1,4 @@
-/*	$NetBSD: krl.c,v 1.3 2013/11/08 19:18:25 christos Exp $	*/
+/*	$NetBSD: krl.c,v 1.4 2014/10/19 16:30:58 christos Exp $	*/
 /*
  * Copyright (c) 2012 Damien Miller <djm@mindrot.org>
  *
@@ -15,9 +15,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $OpenBSD: krl.c,v 1.13 2013/07/20 22:20:42 djm Exp $ */
+/* $OpenBSD: krl.c,v 1.17 2014/06/24 01:13:21 djm Exp $ */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: krl.c,v 1.3 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: krl.c,v 1.4 2014/10/19 16:30:58 christos Exp $");
 
 #include "includes.h"
 #include <sys/types.h>
@@ -240,7 +240,7 @@ insert_serial_range(struct revoked_serial_tree *rt, u_int64_t lo, u_int64_t hi)
 	struct revoked_serial rs, *ers, *crs, *irs;
 
 	KRL_DBG(("%s: insert %"PRIu64":%"PRIu64, __func__, lo, hi));
-	bzero(&rs, sizeof(rs));
+	memset(&rs, 0, sizeof(rs));
 	rs.lo = lo;
 	rs.hi = hi;
 	ers = RB_NFIND(revoked_serial_tree, rt, &rs);
@@ -371,7 +371,7 @@ plain_key_blob(const Key *key, u_char **blob, u_int *blen)
 	}
 	r = key_to_blob(kcopy, blob, blen);
 	free(kcopy);
-	return r == 0 ? -1 : 0;
+	return r;
 }
 
 /* Revoke a key blob. Ownership of blob is transferred to the tree */
@@ -399,7 +399,7 @@ ssh_krl_revoke_key_explicit(struct ssh_krl *krl, const Key *key)
 	u_int len;
 
 	debug3("%s: revoke type %s", __func__, key_type(key));
-	if (plain_key_blob(key, &blob, &len) != 0)
+	if (plain_key_blob(key, &blob, &len) < 0)
 		return -1;
 	return revoke_blob(&krl->revoked_keys, blob, len);
 }
@@ -580,6 +580,7 @@ revoked_certs_generate(struct revoked_certs *rc, Buffer *buf)
 			buffer_put_char(buf, state);
 			buffer_put_string(buf,
 			    buffer_ptr(&sect), buffer_len(&sect));
+			buffer_clear(&sect);
 		}
 
 		/* If we are starting a new section then prepare it now */
@@ -758,8 +759,8 @@ static int
 parse_revoked_certs(Buffer *buf, struct ssh_krl *krl)
 {
 	int ret = -1, nbits;
-	u_char type;
-	u_char *blob;
+	char type;
+	const u_char *blob;
 	u_int blen;
 	Buffer subsect;
 	u_int64_t serial, serial_lo, serial_hi;
@@ -893,7 +894,9 @@ ssh_krl_from_blob(Buffer *buf, struct ssh_krl **krlp,
 	char timestamp[64];
 	int ret = -1, r, sig_seen;
 	Key *key = NULL, **ca_used = NULL;
-	u_char type, *blob, *rdata = NULL;
+	u_char *rdata = NULL;
+	char type;
+	const u_char *blob;
 	u_int i, j, sig_off, sects_off, rlen, blen, format_version, nca_used;
 
 	nca_used = 0;
@@ -1121,7 +1124,7 @@ is_key_revoked(struct ssh_krl *krl, const Key *key)
 	struct revoked_certs *rc;
 
 	/* Check explicitly revoked hashes first */
-	bzero(&rb, sizeof(rb));
+	memset(&rb, 0, sizeof(rb));
 	if ((rb.blob = key_fingerprint_raw(key, SSH_FP_SHA1, &rb.len)) == NULL)
 		return -1;
 	erb = RB_FIND(revoked_blob_tree, &krl->revoked_sha1s, &rb);
@@ -1132,8 +1135,8 @@ is_key_revoked(struct ssh_krl *krl, const Key *key)
 	}
 
 	/* Next, explicit keys */
-	bzero(&rb, sizeof(rb));
-	if (plain_key_blob(key, &rb.blob, &rb.len) != 0)
+	memset(&rb, 0, sizeof(rb));
+	if (plain_key_blob(key, &rb.blob, &rb.len) < 0)
 		return -1;
 	erb = RB_FIND(revoked_blob_tree, &krl->revoked_keys, &rb);
 	free(rb.blob);
@@ -1153,7 +1156,7 @@ is_key_revoked(struct ssh_krl *krl, const Key *key)
 		return 0; /* No entry for this CA */
 
 	/* Check revocation by cert key ID */
-	bzero(&rki, sizeof(rki));
+	memset(&rki, 0, sizeof(rki));
 	rki.key_id = key->cert->key_id;
 	erki = RB_FIND(revoked_key_id_tree, &rc->revoked_key_ids, &rki);
 	if (erki != NULL) {
@@ -1168,7 +1171,7 @@ is_key_revoked(struct ssh_krl *krl, const Key *key)
 	if (key_cert_is_legacy(key) || key->cert->serial == 0)
 		return 0;
 
-	bzero(&rs, sizeof(rs));
+	memset(&rs, 0, sizeof(rs));
 	rs.lo = rs.hi = key->cert->serial;
 	ers = RB_FIND(revoked_serial_tree, &rc->revoked_serials, &rs);
 	if (ers != NULL) {

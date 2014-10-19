@@ -23,6 +23,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: kexc25519s.c,v 1.2 2014/10/19 16:30:58 christos Exp $");
 
 #include <sys/types.h>
 #include <string.h>
@@ -83,8 +85,8 @@ kexc25519_server(Kex *kex)
 	    kex->hash_alg,
 	    kex->client_version_string,
 	    kex->server_version_string,
-	    buffer_ptr(&kex->peer), buffer_len(&kex->peer),
-	    buffer_ptr(&kex->my), buffer_len(&kex->my),
+	    (char *)buffer_ptr(&kex->peer), buffer_len(&kex->peer),
+	    (char *)buffer_ptr(&kex->my), buffer_len(&kex->my),
 	    server_host_key_blob, sbloblen,
 	    client_pubkey,
 	    server_pubkey,

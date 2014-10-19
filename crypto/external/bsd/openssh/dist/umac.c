@@ -1,5 +1,5 @@
-/*	$NetBSD: umac.c,v 1.4 2013/11/08 19:18:25 christos Exp $	*/
-/* $OpenBSD: umac.c,v 1.7.2.1 2013/11/08 01:33:56 djm Exp $ */
+/*	$NetBSD: umac.c,v 1.5 2014/10/19 16:30:59 christos Exp $	*/
+/* $OpenBSD: umac.c,v 1.11 2014/07/22 07:13:42 guenther Exp $ */
 /* -----------------------------------------------------------------------
  * 
  * umac.c -- C Implementation UMAC Message Authentication
@@ -65,15 +65,17 @@
 /* ---------------------------------------------------------------------- */
 
 #include "includes.h"
-__RCSID("$NetBSD: umac.c,v 1.4 2013/11/08 19:18:25 christos Exp $");
+__RCSID("$NetBSD: umac.c,v 1.5 2014/10/19 16:30:59 christos Exp $");
 #include <sys/types.h>
-#include <sys/endian.h>
+#include <endian.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
 
 #include "xmalloc.h"
 #include "umac.h"
-#include <string.h>
-#include <stdlib.h>
-#include <stddef.h>
+#include "misc.h"
 
 /* ---------------------------------------------------------------------- */
 /* --- Primitive Data Types ---                                           */
@@ -137,40 +139,21 @@ typedef unsigned int	UWORD;  /* Register */
 /* --- Endian Conversion --- Forcing assembly on some platforms           */
 /* ---------------------------------------------------------------------- */
 
-#if !defined(__OpenBSD__)
-static UINT32 LOAD_UINT32_REVERSED(const void *ptr)
-{
-    UINT32 temp = *(const UINT32 *)ptr;
-    temp = (temp >> 24) | ((temp & 0x00FF0000) >> 8 )
-         | ((temp & 0x0000FF00) << 8 ) | (temp << 24);
-    return (UINT32)temp;
-}
-
-static void STORE_UINT32_REVERSED(void *ptr, UINT32 x)
-{
-    UINT32 i = (UINT32)x;
-    *(UINT32 *)ptr = (i >> 24) | ((i & 0x00FF0000) >> 8 )
-                   | ((i & 0x0000FF00) << 8 ) | (i << 24);
-}
-#endif
-
-#else
 /* The following definitions use the above reversal-primitives to do the right
  * thing on endian specific load and stores.
  */
 
-#define LOAD_UINT32_REVERSED(p)		(swap32(*(const UINT32 *)(p)))
-#define STORE_UINT32_REVERSED(p,v) 	(*(UINT32 *)(p) = swap32(v))
-#endif
-
-#if (__LITTLE_ENDIAN__)
-#define LOAD_UINT32_LITTLE(ptr)     (*(const UINT32 *)(ptr))
-#define STORE_UINT32_BIG(ptr,x)     STORE_UINT32_REVERSED(ptr,x)
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define LOAD_UINT32_REVERSED(p)		get_u32(p)
+#define STORE_UINT32_REVERSED(p,v) 	put_u32(p,v)
 #else
-#define LOAD_UINT32_LITTLE(ptr)     LOAD_UINT32_REVERSED(ptr)
-#define STORE_UINT32_BIG(ptr,x)     (*(UINT32 *)(ptr) = (UINT32)(x))
+#define LOAD_UINT32_REVERSED(p)		get_u32_le(p)
+#define STORE_UINT32_REVERSED(p,v) 	put_u32_le(p,v)
 #endif
 #endif /*!NetBSD*/
+
+#define LOAD_UINT32_LITTLE(p)           (get_u32_le(p))
+#define STORE_UINT32_BIG(p,v)           put_u32(p, v)
 
 
 
@@ -183,13 +166,23 @@ static void STORE_UINT32_REVERSED(void *ptr, UINT32 x)
 /* UMAC uses AES with 16 byte block and key lengths */
 #define AES_BLOCK_LEN  16
 
-/* OpenSSL's AES */
+#ifdef WITH_OPENSSL
 #include <openssl/aes.h>
 typedef AES_KEY aes_int_key[1];
 #define aes_encryption(in,out,int_key)                  \
   AES_encrypt((u_char *)(in),(u_char *)(out),(AES_KEY *)int_key)
 #define aes_key_setup(key,int_key)                      \
   AES_set_encrypt_key((const u_char *)(key),UMAC_KEY_LEN*8,int_key)
+#else
+#include "rijndael.h"
+#define AES_ROUNDS ((UMAC_KEY_LEN / 4) + 6)
+typedef UINT8 aes_int_key[AES_ROUNDS+1][4][4];	/* AES internal */
+#define aes_encryption(in,out,int_key) \
+  rijndaelEncrypt((u32 *)(int_key), AES_ROUNDS, (u8 *)(in), (u8 *)(out))
+#define aes_key_setup(key,int_key) \
+  rijndaelKeySetupEnc((u32 *)(int_key), (const unsigned char *)(key), \
+  UMAC_KEY_LEN*8)
+#endif
 
 /* The user-supplied UMAC key is stretched using AES in a counter
  * mode to supply all random bits needed by UMAC. The kdf function takes

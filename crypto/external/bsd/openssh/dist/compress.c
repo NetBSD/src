@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.3 2011/07/25 03:03:10 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.4 2014/10/19 16:30:58 christos Exp $	*/
 /* $OpenBSD: compress.c,v 1.26 2010/09/08 04:13:31 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: compress.c,v 1.3 2011/07/25 03:03:10 christos Exp $");
+__RCSID("$NetBSD: compress.c,v 1.4 2014/10/19 16:30:58 christos Exp $");
 #include <sys/types.h>
 
 #include <stdarg.h>

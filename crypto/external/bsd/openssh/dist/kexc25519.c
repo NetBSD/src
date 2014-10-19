@@ -24,6 +24,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: kexc25519.c,v 1.2 2014/10/19 16:30:58 christos Exp $");
 
 #include <sys/types.h>
 
