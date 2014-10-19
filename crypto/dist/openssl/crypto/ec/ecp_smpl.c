@@ -1695,8 +1695,8 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT
 		/* heap[pow2/2] .. heap[pow2-1] have not been allocated locally! */
 		for (i = pow2/2 - 1; i > 0; i--)
 			{
-			if (heap[i] != NULL)
-				BN_clear_free(heap[i]);
+			if (heap[i] == NULL) break;
+			BN_clear_free(heap[i]);
 			}
 		OPENSSL_free(heap);
 		}
