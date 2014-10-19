@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.13 2014/10/19 13:15:23 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.14 2014/10/19 22:31:33 jmcneill Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -153,6 +153,13 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 		    AWIN_GMAC_MAC_ADDR0LO);
 		machi = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
 		    AWIN_GMAC_MAC_ADDR0HI);
+
+		if (maclo == 0xffffffff && (machi & 0xffff) == 0xffff) {
+			aprint_error_dev(sc->sc_dev,
+			    "couldn't read MAC address\n");
+			return;
+		}
+
 		enaddr[0] = maclo & 0x0ff;
 		enaddr[1] = (maclo >> 8) & 0x0ff;
 		enaddr[2] = (maclo >> 16) & 0x0ff;
