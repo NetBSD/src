@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.14 2014/10/11 17:29:59 jmcneill Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.15 2014/10/20 19:04:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.14 2014/10/11 17:29:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.15 2014/10/20 19:04:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -186,6 +186,12 @@ awin_mmc_probe_clocks(struct awin_mmc_softc *sc, struct awinio_attach_args *aio)
 	bus_space_write_4(aio->aio_core_bst, aio->aio_ccm_bsh,
 	    AWIN_SD0_CLK_REG + (sc->sc_mmc_number * 4),
 	    AWIN_PLL_CFG_ENABLE | AWIN_PLL_CFG_PLL6 | div);
+
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_A31_AHB_RESET0_REG,
+		    AWIN_A31_AHB_RESET0_SD0_RST << sc->sc_mmc_number, 0);
+	}
 
 #ifdef AWIN_MMC_DEBUG
 	aprint_normal_dev(sc->sc_dev, "PLL6 @ %u Hz\n", freq);
