@@ -1,3 +1,5 @@
+/* $NetBSD: dwc_gmac_reg.h,v 1.10 2014/10/20 20:10:05 jmcneill Exp $ */
+
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
