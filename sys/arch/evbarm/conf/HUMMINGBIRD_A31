@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.11 2014/10/19 22:38:00 jmcneill Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.12 2014/10/20 16:35:07 jmcneill Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -272,5 +272,3 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
 
 cinclude "arch/evbarm/conf/HUMMINGBIRD_A31.local"
-
-options 	VERBOSE_INIT_ARM # verbose bootstraping messages
