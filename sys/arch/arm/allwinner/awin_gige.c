@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.15 2014/10/19 17:01:40 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.16 2014/10/20 20:02:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -124,7 +124,7 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Interrupt handler
 	 */
-	sc->sc_ih = intr_establish(loc->loc_intr, IPL_VM, IST_LEVEL|IST_MPSAFE,
+	sc->sc_ih = intr_establish(loc->loc_intr, IPL_NET, IST_LEVEL,
 	    awin_gige_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
