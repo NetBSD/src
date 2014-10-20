@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.17 2014/10/20 03:05:13 christos Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.18 2014/10/20 18:14:37 christos Exp $	*/
 /* $OpenBSD: sshconnect2.c,v 1.210 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.17 2014/10/20 03:05:13 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.18 2014/10/20 18:14:37 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -435,9 +435,9 @@ ssh_userauth2(const char *local_user, const char *server_user, char *host,
 	/* tty allocated */
 	if ((options.none_switch == 1) && (options.none_enabled == 1)) 
 	{
-#ifdef notyet
 		if (!tty_flag) /* no null on tty sessions */
 		{
+			const char *myproposal[PROPOSAL_MAX] = { KEX_CLIENT };
 			debug("Requesting none rekeying...");
 			myproposal[PROPOSAL_ENC_ALGS_STOC] = "none";
 			myproposal[PROPOSAL_ENC_ALGS_CTOS] = "none";
@@ -451,7 +451,6 @@ ssh_userauth2(const char *local_user, const char *server_user, char *host,
 			debug("Cannot switch to NONE cipher with tty allocated");
 			fprintf(stderr, "NONE cipher switch disabled when a TTY is allocated\n");
 		}
-#endif
 	}
 	debug("Authentication succeeded (%s).", authctxt.method->name);
 }

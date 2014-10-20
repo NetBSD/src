@@ -1,4 +1,4 @@
-/*	$NetBSD: myproposal.h,v 1.8 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: myproposal.h,v 1.9 2014/10/20 18:14:37 christos Exp $	*/
 /* $OpenBSD: myproposal.h,v 1.41 2014/07/11 13:54:34 tedu Exp $ */
 
 /*
@@ -64,8 +64,6 @@
 	"arcfour256,arcfour128," \
 	"aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc," \
 	"aes192-cbc,aes256-cbc,arcfour,rijndael-cbc@lysator.liu.se"
-#define KEX_CLIENT_ENCRYPT_INCLUDE_NONE KEX_CLIENT_ENCRYPT \
-	",none"
 
 #define	KEX_SERVER_MAC \
 	"umac-64-etm@openssh.com," \
@@ -118,14 +116,19 @@
 
 #endif /* WITH_OPENSSL */
 
+#define KEX_CLIENT_ENCRYPT_INCLUDE_NONE KEX_CLIENT_ENCRYPT \
+	",none"
+#define KEX_SERVER_ENCRYPT_INCLUDE_NONE KEX_SERVER_ENCRYPT \
+	",none"
+
 #define	KEX_DEFAULT_COMP	"none,zlib@openssh.com,zlib"
 #define	KEX_DEFAULT_LANG	""
 
 #define KEX_CLIENT \
 	KEX_CLIENT_KEX, \
 	KEX_DEFAULT_PK_ALG, \
-	KEX_CLIENT_ENCRYPT, \
-	KEX_CLIENT_ENCRYPT, \
+	KEX_CLIENT_ENCRYPT_INCLUDE_NONE, \
+	KEX_CLIENT_ENCRYPT_INCLUDE_NONE, \
 	KEX_CLIENT_MAC, \
 	KEX_CLIENT_MAC, \
 	KEX_DEFAULT_COMP, \
@@ -136,8 +139,8 @@
 #define KEX_SERVER \
 	KEX_SERVER_KEX, \
 	KEX_DEFAULT_PK_ALG, \
-	KEX_SERVER_ENCRYPT, \
-	KEX_SERVER_ENCRYPT, \
+	KEX_SERVER_ENCRYPT_INCLUDE_NONE, \
+	KEX_SERVER_ENCRYPT_INCLUDE_NONE, \
 	KEX_SERVER_MAC, \
 	KEX_SERVER_MAC, \
 	KEX_DEFAULT_COMP, \
