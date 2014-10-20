@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.9 2014/06/13 13:38:52 joerg Exp $	*/
+/*	$NetBSD: readelf.c,v 1.10 2014/10/20 21:48:57 christos Exp $	*/
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -29,9 +29,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: readelf.c,v 1.103 2014/05/02 02:25:10 christos Exp $")
+FILE_RCSID("@(#)$File: readelf.c,v 1.104 2014/10/17 15:49:00 christos Exp $")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.9 2014/06/13 13:38:52 joerg Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.10 2014/10/20 21:48:57 christos Exp $");
 #endif
 #endif
 
@@ -481,6 +481,13 @@ donote(struct magic_set *ms, void *vbuf, size_t offset, size_t size,
 #endif
 	uint32_t namesz, descsz;
 	unsigned char *nbuf = CAST(unsigned char *, vbuf);
+
+	if (xnh_sizeof + offset > size) {
+		/*
+		 * We're out of note headers.
+		 */
+		return xnh_sizeof + offset;
+	}
 
 	(void)memcpy(xnh_addr, &nbuf[offset], xnh_sizeof);
 	offset += xnh_sizeof;
