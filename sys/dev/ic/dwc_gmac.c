@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.16 2014/10/20 19:51:40 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.17 2014/10/20 20:08:01 martin Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -129,6 +129,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 	struct mii_data * const mii = &sc->sc_mii;
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	prop_dictionary_t dict;
+	int s;
 
 	mutex_init(&sc->sc_mdio_lock, MUTEX_DEFAULT, IPL_NET);
 	sc->sc_mii_clk = mii_clk & 7;
@@ -237,10 +238,12 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 	/*
 	 * Enable interrupts
 	 */
+	s = splnet();
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_INTR,
 	    AWIN_DEF_MAC_INTRMASK);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_INTENABLE,
 	    GMAC_DEF_DMA_INT_MASK);
+	splx(s);
 
 	return;
 
