@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1160 2014/10/19 16:38:21 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1161 2014/10/20 09:13:07 roy Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -946,8 +946,8 @@ Notes:
 Next import will need moving lib sources to lib/libpam
 
 Package:	openresolv
-Version:	3.5.6
-Current Vers:	3.5.6
+Version:	3.6.0
+Current Vers:	3.6.0
 Maintainer:	roy
 Archive Site:	ftp://roy.marples.name/pub/openresolv/
 Home Page:	http://roy.marples.name/projects/openresolv/
