@@ -1704,6 +1704,7 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_A31_PRCM_OFFSET		0x00301400	/* PRCM */
 #define AWIN_A31_CPUCFG_OFFSET		0x00301C00
 #define AWIN_A31_RTC_OFFSET		0x00300000	/* RTC */
+#define AWIN_A31_CPUPIO_OFFSET		0x00302c00	/* CPUs-PORT */
 #define AWIN_A31_P2WI_OFFSET		0x00303400	/* P2WI */
 
 #define AWIN_A31_PRCM_PWROFF_GATING_REG		0x100
@@ -1984,5 +1985,9 @@ struct awin_a31_dma_desc {
 #define AWIN_A31_PIO_PH_TWI1_PINS	0x00030000 /* PH pins 17-16 */
 #define AWIN_A31_PIO_PH_TWI2_FUNC	2
 #define AWIN_A31_PIO_PH_TWI2_PINS	0x000c0000 /* PH pins 19-18 */
+
+#define AWIN_A31_PIO_PL_PINS		9
+
+#define AWIN_A31_PIO_PM_PINS		8
 
 #endif /* _ARM_ALLWINNER_AWIN_REG_H_ */
