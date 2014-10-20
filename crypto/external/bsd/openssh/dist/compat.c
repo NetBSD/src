@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.7 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.8 2014/10/20 03:05:13 christos Exp $	*/
 /* $OpenBSD: compat.c,v 1.85 2014/04/20 02:49:32 djm Exp $ */
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: compat.c,v 1.7 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.8 2014/10/20 03:05:13 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -179,6 +179,7 @@ compat_datafellows(const char *version)
 		if (match_pattern_list(version, check[i].pat,
 		    strlen(check[i].pat), 0) == 1) {
 			datafellows = check[i].bugs;
+			/* Check to see if the remote side is OpenSSH and not HPN */
 			if(strstr(version,"OpenSSH") != NULL)
 			{
 				if (strstr(version,"hpn") == NULL)
