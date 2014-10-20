@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.18 2014/10/20 20:10:05 jmcneill Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.19 2014/10/20 23:41:46 matt Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.18 2014/10/20 20:10:05 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.19 2014/10/20 23:41:46 matt Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -1100,6 +1100,7 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 		/* finalize mbuf */
 		m->m_pkthdr.len = m->m_len = len;
 		m->m_pkthdr.rcvif = ifp;
+		m->m_flags |= M_HASFCS;
 
 		bpf_mtap(ifp, m);
 		ifp->if_ipackets++;
