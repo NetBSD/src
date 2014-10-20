@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.11 2014/04/16 18:55:19 maxv Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.12 2014/10/20 06:41:51 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -152,9 +152,12 @@ chfs_mount(struct mount *mp,
 		}
 		/* Look up the name and verify that it's sane. */
 		NDINIT(&nd, LOOKUP, FOLLOW, pb);
-		if ((err = namei(&nd)) != 0 )
+		if ((err = namei(&nd)) != 0 ) {
+			pathbuf_destroy(pb);
 			return (err);
+		}
 		devvp = nd.ni_vp;
+		pathbuf_destroy(pb);
 
 		/* Be sure this is a valid block device */
 		if (devvp->v_type != VBLK)
