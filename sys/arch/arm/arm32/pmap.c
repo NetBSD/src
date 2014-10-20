@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.303 2014/10/14 12:31:14 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.304 2014/10/20 07:13:27 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 #include <arm/locore.h>
 //#include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.303 2014/10/14 12:31:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.304 2014/10/20 07:13:27 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -686,8 +686,8 @@ struct pv_entry {
 };
 
 /*
- * Macro to determine if a mapping might be resident in the
- * instruction cache and/or TLB
+ * Macros to determine if a mapping might be resident in the
+ * instruction/data cache and/or TLB
  */
 #if ARM_MMU_V7 > 0 && !defined(ARM_MMU_EXTENDED)
 /*
@@ -696,27 +696,14 @@ struct pv_entry {
  * flush.  If we used ASIDs then this would not be a problem.
  */
 #define	PV_BEEN_EXECD(f)  (((f) & PVF_EXEC) == PVF_EXEC)
+#define	PV_BEEN_REFD(f)   (true)
 #else
 #define	PV_BEEN_EXECD(f)  (((f) & (PVF_REF | PVF_EXEC)) == (PVF_REF | PVF_EXEC))
+#define	PV_BEEN_REFD(f)   (((f) & PVF_REF) != 0)
 #endif
 #define	PV_IS_EXEC_P(f)   (((f) & PVF_EXEC) != 0)
 #define	PV_IS_KENTRY_P(f) (((f) & PVF_KENTRY) != 0)
 #define	PV_IS_WRITE_P(f)  (((f) & PVF_WRITE) != 0)
-
-/*
- * Macro to determine if a mapping might be resident in the
- * data cache and/or TLB
- */
-#if ARM_MMU_V7 > 0 && !defined(ARM_MMU_EXTENDED)
-/*
- * Speculative loads by Cortex cores can cause TLB entries to be filled even if
- * there are no explicit accesses, so there may be always be TLB entries to
- * flush.  If we used ASIDs then this would not be a problem.
- */
-#define	PV_BEEN_REFD(f)   (1)
-#else
-#define	PV_BEEN_REFD(f)   (((f) & PVF_REF) != 0)
-#endif
 
 /*
  * Local prototypes
