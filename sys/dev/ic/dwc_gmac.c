@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.14 2014/10/19 22:31:33 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.15 2014/10/20 19:36:03 martin Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -1015,11 +1015,6 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 	int i, len, error;
 
 	for (i = sc->sc_rxq.r_cur; ; i = RX_NEXT(i)) {
-
-#ifdef DWC_GMAC_DEBUG
-printf("rx int: checking desc #%d\n", i);
-#endif
-
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
 		    RX_DESC_OFFSET(i), sizeof(*desc),
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
@@ -1027,16 +1022,14 @@ printf("rx int: checking desc #%d\n", i);
 		data = &sc->sc_rxq.r_data[i];
 
 		status = le32toh(desc->ddesc_status);
-		if (status & DDESC_STATUS_OWNEDBYDEV) {
-#ifdef DWC_GMAC_DEBUG
-printf("status %08x, still owned by device\n", status);
-#endif
+		if (status & DDESC_STATUS_OWNEDBYDEV)
 			break;
-		}
 
 		if (status & (DDESC_STATUS_RXERROR|DDESC_STATUS_RXTRUNCATED)) {
 #ifdef DWC_GMAC_DEBUG
-printf("status %08x, RX error, skipping\n", status);
+			aprint_normal_dev(sc->sc_dev,
+			    "RX error: descriptor status %08x, skipping\n",
+			    status);
 #endif
 			ifp->if_ierrors++;
 			goto skip;
@@ -1045,7 +1038,9 @@ printf("status %08x, RX error, skipping\n", status);
 		len = __SHIFTOUT(status, DDESC_STATUS_FRMLENMSK);
 
 #ifdef DWC_GMAC_DEBUG
-printf("rx int: device is done with #%d, len: %d\n", i, len);
+		aprint_normal_dev(sc->sc_dev,
+		    "rx int: device is done with descriptor #%d, len: %d\n",
+		    i, len);
 #endif
 
 		/*
@@ -1202,8 +1197,10 @@ dwc_gmac_dump_tx_desc(struct dwc_gmac_softc *sc)
 	aprint_normal_dev(sc->sc_dev, "TX DMA descriptors:\n");
 	for (i = 0; i < AWGE_TX_RING_COUNT; i++) {
 		struct dwc_gmac_dev_dmadesc *desc = &sc->sc_txq.t_desc[i];
-		aprint_normal("#%d (%08lx): status: %08x cntl: %08x data: %08x next: %08x\n",
-		    i, sc->sc_txq.t_physaddr + i*sizeof(struct dwc_gmac_dev_dmadesc),
+		aprint_normal("#%d (%08lx): status: %08x cntl: %08x "
+		    "data: %08x next: %08x\n",
+		    i, sc->sc_txq.t_physaddr +
+			i*sizeof(struct dwc_gmac_dev_dmadesc),
 		    le32toh(desc->ddesc_status), le32toh(desc->ddesc_cntl),
 		    le32toh(desc->ddesc_data), le32toh(desc->ddesc_next));
 	}
@@ -1219,8 +1216,10 @@ dwc_gmac_dump_rx_desc(struct dwc_gmac_softc *sc)
 	aprint_normal_dev(sc->sc_dev, "RX DMA descriptors:\n");
 	for (i = 0; i < AWGE_RX_RING_COUNT; i++) {
 		struct dwc_gmac_dev_dmadesc *desc = &sc->sc_rxq.r_desc[i];
-		aprint_normal("#%d (%08lx): status: %08x cntl: %08x data: %08x next: %08x\n",
-		    i, sc->sc_txq.t_physaddr + i*sizeof(struct dwc_gmac_dev_dmadesc),
+		aprint_normal("#%d (%08lx): status: %08x cntl: %08x "
+		    "data: %08x next: %08x\n",
+		    i, sc->sc_rxq.r_physaddr +
+			i*sizeof(struct dwc_gmac_dev_dmadesc),
 		    le32toh(desc->ddesc_status), le32toh(desc->ddesc_cntl),
 		    le32toh(desc->ddesc_data), le32toh(desc->ddesc_next));
 	}
