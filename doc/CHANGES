@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1995 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1996 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -38,11 +38,11 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	wm(4): Add internal SERDES support for 82575 and newer controllers.
 		[msaitoh 20140903]
 	or1k: Add new port.  [matt 20140903]
-	awindma(4): Add support for AllWinner A10/A20 DMA controller.
+	awindma(4): Add support for Allwinner A10/A20 DMA controller.
 		[jmcneill 20140906]
-	awinac(4): Add support for AllWinner A10/A20 audio codec.
+	awinac(4): Add support for Allwinner A10/A20 audio codec.
 		[jmcneill 20140906]
-	awinrtc(4): Add support for AllWinner A10/A20 real-time clock.
+	awinrtc(4): Add support for Allwinner A10/A20 real-time clock.
 		[jmcneill 20140907]
 	awinmmc(4): Use DMA for MMC transfers. [jmcneill 20140908]
 	rtsol(8): Removed in favour of dhcpcd. [roy 20140911]
