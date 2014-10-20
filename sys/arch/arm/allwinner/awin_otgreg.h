@@ -1,4 +1,4 @@
-/* $NetBSD: awin_otgreg.h,v 1.3 2014/09/14 09:32:11 jmcneill Exp $ */
+/* $NetBSD: awin_otgreg.h,v 1.4 2014/10/20 21:18:00 jmcneill Exp $ */
 /* FreeBSD: head/sys/dev/usb/controller/musb_otg.h 267122 2014-06-05 18:23:51Z hselasky */
 /*-
  * Copyright (c) 2008 Hans Petter Selasky. All rights reserved.
@@ -27,7 +27,7 @@
 
 /*
  * This header file defines the registers of the Mentor Graphics USB OnTheGo
- * Inventra chip (AllWinner specific).
+ * Inventra chip (Allwinner specific).
  */
 
 #ifndef _MUSB2_OTG_H_
