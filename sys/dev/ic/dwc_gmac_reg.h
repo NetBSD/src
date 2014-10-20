@@ -175,7 +175,7 @@ struct dwc_gmac_dev_dmadesc {
 #define	DDESC_CNTL_TXCHAIN		__BIT(24)
 
 /* for RX descriptors */
-#define	DDESC_CNTL_RXINT		__BIT(31)
+#define	DDESC_CNTL_RXINTDIS		__BIT(31)
 #define	DDESC_CNTL_RXRINGEND		__BIT(25)
 #define	DDESC_CNTL_RXCHAIN		__BIT(24)
 
