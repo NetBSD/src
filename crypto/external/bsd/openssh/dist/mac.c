@@ -1,4 +1,4 @@
-/*	$NetBSD: mac.c,v 1.9 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: mac.c,v 1.10 2014/10/20 03:05:13 christos Exp $	*/
 /* $OpenBSD: mac.c,v 1.30 2014/04/30 19:07:48 naddy Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: mac.c,v 1.9 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: mac.c,v 1.10 2014/10/20 03:05:13 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/hmac.h>
@@ -153,14 +153,12 @@ mac_init(Mac *mac)
 		    ssh_hmac_init(mac->hmac_ctx, mac->key, mac->key_len) < 0)
 			return -1;
 		return 0;
-#ifdef UMAC_HAS_BEEN_UNBROKEN
 	case SSH_UMAC:
 		mac->umac_ctx = umac_new(mac->key);
 		return 0;
 	case SSH_UMAC128:
 		mac->umac_ctx = umac128_new(mac->key);
 		return 0;
-#endif
 	default:
 		return -1;
 	}
@@ -174,9 +172,7 @@ mac_compute(Mac *mac, u_int32_t seqno, u_char *data, int datalen)
 		u_int64_t for_align;
 	} u;
 	u_char b[4];
-#ifdef UMAC_HAS_BEEN_UNBROKEN
 	u_char nonce[8];
-#endif
 
 	if (mac->mac_len > sizeof(u))
 		fatal("mac_compute: mac too long %u %zu",
@@ -192,7 +188,6 @@ mac_compute(Mac *mac, u_int32_t seqno, u_char *data, int datalen)
 		    ssh_hmac_final(mac->hmac_ctx, u.m, sizeof(u.m)) < 0)
 			fatal("ssh_hmac failed");
 		break;
-#ifdef UMAC_HAS_BEEN_UNBROKEN
 	case SSH_UMAC:
 		put_u64(nonce, seqno);
 		umac_update(mac->umac_ctx, data, datalen);
@@ -203,7 +198,6 @@ mac_compute(Mac *mac, u_int32_t seqno, u_char *data, int datalen)
 		umac128_update(mac->umac_ctx, data, datalen);
 		umac128_final(mac->umac_ctx, u.m, nonce);
 		break;
-#endif
 	default:
 		fatal("mac_compute: unknown MAC type");
 	}
@@ -213,16 +207,13 @@ mac_compute(Mac *mac, u_int32_t seqno, u_char *data, int datalen)
 void
 mac_clear(Mac *mac)
 {
-#ifdef UMAC_HAS_BEEN_UNBROKEN
 	if (mac->type == SSH_UMAC) {
 		if (mac->umac_ctx != NULL)
 			umac_delete(mac->umac_ctx);
 	} else if (mac->type == SSH_UMAC128) {
 		if (mac->umac_ctx != NULL)
 			umac128_delete(mac->umac_ctx);
-	} else
-#endif
-	if (mac->hmac_ctx != NULL)
+	} else if (mac->hmac_ctx != NULL)
 		ssh_hmac_free(mac->hmac_ctx);
 	mac->hmac_ctx = NULL;
 	mac->umac_ctx = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.8 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: auth.h,v 1.9 2014/10/20 03:05:13 christos Exp $	*/
 /* $OpenBSD: auth.h,v 1.78 2014/07/03 11:16:55 djm Exp $ */
 
 /*
@@ -62,7 +62,6 @@ struct Authctxt {
 	char		*style;
 	void		*kbdintctxt;
 	char		*info;		/* Extra info for next auth_log */
-	void		*jpake_ctx;
 #ifdef BSD_AUTH
 	auth_session_t	*as;
 #endif
