@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.35 2014/10/20 06:56:38 maxv Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.36 2014/10/20 11:58:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.35 2014/10/20 06:56:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.36 2014/10/20 11:58:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,12 +356,10 @@ compat_30_sys_getfh(struct lwp *l, const struct compat_30_sys_getfh_args *uap, r
 	}
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
 	error = namei(&nd);
-	if (error) {
-		pathbuf_destroy(pb);
-		return (error);
-	}
-	vp = nd.ni_vp;
 	pathbuf_destroy(pb);
+	if (error)
+		return error;
+	vp = nd.ni_vp;
 
 	sz = sizeof(struct compat_30_fhandle);
 	error = vfs_composefh(vp, (void *)&fh, &sz);
