@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.15 2014/10/20 19:36:03 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.16 2014/10/20 19:51:40 martin Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -398,7 +398,7 @@ dwc_gmac_alloc_rx_ring(struct dwc_gmac_softc *sc,
 		    + next * sizeof(*desc));
 		desc->ddesc_cntl = htole32(
 		    __SHIFTIN(AWGE_MAX_PACKET,DDESC_CNTL_SIZE1MASK) |
-		    DDESC_CNTL_RXCHAIN | DDESC_CNTL_RXINT);
+		    DDESC_CNTL_RXCHAIN);
 		desc->ddesc_status = htole32(DDESC_STATUS_OWNEDBYDEV);
 	}
 
@@ -425,7 +425,8 @@ dwc_gmac_reset_rx_ring(struct dwc_gmac_softc *sc,
 	for (i = 0; i < AWGE_RX_RING_COUNT; i++) {
 		desc = &sc->sc_rxq.r_desc[i];
 		desc->ddesc_cntl = htole32(
-		    __SHIFTIN(AWGE_MAX_PACKET,DDESC_CNTL_SIZE1MASK));
+		    __SHIFTIN(AWGE_MAX_PACKET,DDESC_CNTL_SIZE1MASK) |
+		    DDESC_CNTL_RXCHAIN);
 		desc->ddesc_status = htole32(DDESC_STATUS_OWNEDBYDEV);
 	}
 
@@ -1101,7 +1102,8 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 
 skip:
 		desc->ddesc_cntl = htole32(
-		    __SHIFTIN(AWGE_MAX_PACKET,DDESC_CNTL_SIZE1MASK));
+		    __SHIFTIN(AWGE_MAX_PACKET,DDESC_CNTL_SIZE1MASK) |
+		    DDESC_CNTL_RXCHAIN);
 		desc->ddesc_status = htole32(DDESC_STATUS_OWNEDBYDEV);
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
 		    RX_DESC_OFFSET(i), sizeof(*desc),
