@@ -30,7 +30,6 @@
 #>>>(0x38+0xcc) string	>\0		of '%s'
 #>>>(0x38+0x10) lelong	>0		(signal %d),
 >16	leshort		&0xff00		processor-specific,
->18	clear		x
 >18	leshort		0		no machine,
 >18	leshort		1		AT&T WE32100,
 >18	leshort		2		SPARC,

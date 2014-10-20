@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.5 2014/10/10 20:15:02 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.6 2014/10/20 21:48:57 christos Exp $	*/
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -34,9 +34,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: file.c,v 1.154 2014/09/10 18:41:51 christos Exp $")
+FILE_RCSID("@(#)$File: file.c,v 1.155 2014/10/11 15:03:16 christos Exp $")
 #else
-__RCSID("$NetBSD: file.c,v 1.5 2014/10/10 20:15:02 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.6 2014/10/20 21:48:57 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -153,7 +153,9 @@ main(int argc, char *argv[])
 	const char *magicfile = NULL;		/* where the magic is	*/
 
 	/* makes islower etc work for other langs */
+#ifdef HAVE_SETLOCALE
 	(void)setlocale(LC_CTYPE, "");
+#endif
 
 #ifdef __EMX__
 	/* sh-like wildcard expansion! Shouldn't hurt at least ... */
