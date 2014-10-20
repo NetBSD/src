@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2014/10/19 16:30:59 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2014/10/20 03:05:13 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -73,6 +73,8 @@ ssh-ed25519.c \
 ssh-pkcs11.c \
 ttymodes.c \
 uidswap.c \
+umac.c \
+umac128.c \
 uuencode.c \
 verify.c \
 xmalloc.c
@@ -99,7 +101,6 @@ SRCS+=		digest-libc.c
 
 CPPFLAGS+= -DHAVE_BLF_H
 
-SSHDIST=	${NETBSDSRCDIR}/crypto/external/bsd/openssh/dist
 CPPFLAGS+=	-I${SSHDIST}
 .PATH:		${SSHDIST}
 
