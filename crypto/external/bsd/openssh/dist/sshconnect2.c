@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect2.c,v 1.16 2014/10/19 16:30:59 christos Exp $	*/
+/*	$NetBSD: sshconnect2.c,v 1.17 2014/10/20 03:05:13 christos Exp $	*/
 /* $OpenBSD: sshconnect2.c,v 1.210 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect2.c,v 1.16 2014/10/19 16:30:59 christos Exp $");
+__RCSID("$NetBSD: sshconnect2.c,v 1.17 2014/10/20 03:05:13 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -306,9 +306,6 @@ int	userauth_passwd(Authctxt *);
 int	userauth_kbdint(Authctxt *);
 int	userauth_hostbased(Authctxt *);
 int	userauth_kerberos(Authctxt *);
-int	userauth_jpake(Authctxt *);
-
-void	userauth_jpake_cleanup(Authctxt *);
 
 #ifdef GSSAPI
 int	userauth_gssapi(Authctxt *authctxt);
@@ -1613,79 +1610,6 @@ userauth_hostbased(Authctxt *authctxt)
 	packet_send();
 	return 1;
 }
-
-#ifdef JPAKE
-int
-userauth_jpake(Authctxt *authctxt)
-{
-	struct jpake_ctx *pctx;
-	u_char *x1_proof, *x2_proof;
-	u_int x1_proof_len, x2_proof_len;
-	static int attempt = 0; /* XXX share with userauth_password's? */
-
-	if (attempt++ >= options.number_of_password_prompts)
-		return 0;
-	if (attempt != 1)
-		error("Permission denied, please try again.");
-
-	if (authctxt->methoddata != NULL)
-		fatal("%s: authctxt->methoddata already set (%p)",
-		    __func__, authctxt->methoddata);
-
-	authctxt->methoddata = pctx = jpake_new();
-
-	/*
-	 * Send request immediately, to get the protocol going while
-	 * we do the initial computations.
-	 */
-	packet_start(SSH2_MSG_USERAUTH_REQUEST);
-	packet_put_cstring(authctxt->server_user);
-	packet_put_cstring(authctxt->service);
-	packet_put_cstring(authctxt->method->name);
-	packet_send();
-	packet_write_wait();
-
-	jpake_step1(pctx->grp,
-	    &pctx->client_id, &pctx->client_id_len,
-	    &pctx->x1, &pctx->x2, &pctx->g_x1, &pctx->g_x2,
-	    &x1_proof, &x1_proof_len,
-	    &x2_proof, &x2_proof_len);
-
-	JPAKE_DEBUG_CTX((pctx, "step 1 sending in %s", __func__));
-
-	packet_start(SSH2_MSG_USERAUTH_JPAKE_CLIENT_STEP1);
-	packet_put_string(pctx->client_id, pctx->client_id_len);
-	packet_put_bignum2(pctx->g_x1);
-	packet_put_bignum2(pctx->g_x2);
-	packet_put_string(x1_proof, x1_proof_len);
-	packet_put_string(x2_proof, x2_proof_len);
-	packet_send();
-
-	bzero(x1_proof, x1_proof_len);
-	bzero(x2_proof, x2_proof_len);
-	free(x1_proof);
-	free(x2_proof);
-
-	/* Expect step 1 packet from peer */
-	dispatch_set(SSH2_MSG_USERAUTH_JPAKE_SERVER_STEP1,
-	    input_userauth_jpake_server_step1);
-	dispatch_set(SSH2_MSG_USERAUTH_SUCCESS,
-	    &input_userauth_success_unexpected);
-
-	return 1;
-}
-
-void
-userauth_jpake_cleanup(Authctxt *authctxt)
-{
-	debug3("%s: clean up", __func__);
-	if (authctxt->methoddata != NULL) {
-		jpake_free(authctxt->methoddata);
-		authctxt->methoddata = NULL;
-	}
-	dispatch_set(SSH2_MSG_USERAUTH_SUCCESS, &input_userauth_success);
-}
-#endif /* JPAKE */
 
 #if KRB5
 static int
