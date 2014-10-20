@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.34 2014/10/18 08:33:30 snj Exp $ */
+/*      $NetBSD: meta.c,v 1.35 2014/10/20 23:22:57 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -155,8 +155,8 @@ filemon_open(BuildMon *pbm)
 static void
 filemon_read(FILE *mfp, int fd)
 {
-    FILE *fp;
     char buf[BUFSIZ];
+    int n;
 
     /* Check if we're not writing to a meta data file.*/
     if (mfp == NULL) {
@@ -166,17 +166,14 @@ filemon_read(FILE *mfp, int fd)
     }
     /* rewind */
     (void)lseek(fd, (off_t)0, SEEK_SET);
-    if ((fp = fdopen(fd, "r")) == NULL)
-	err(1, "Could not read build monitor file '%d'", fd);
 
     fprintf(mfp, "-- filemon acquired metadata --\n");
 
-    while (fgets(buf, sizeof(buf), fp)) {
-	fprintf(mfp, "%s", buf);
+    while ((n = read(fd, buf, sizeof(buf))) > 0) {
+	fwrite(buf, 1, n, mfp);
     }
     fflush(mfp);
-    clearerr(fp);
-    fclose(fp);
+    close(fd);
 }
 #endif
 
