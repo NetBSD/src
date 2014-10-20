@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ac.c,v 1.15 2014/10/13 19:01:42 jmcneill Exp $ */
+/* $NetBSD: awin_ac.c,v 1.16 2014/10/20 21:18:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.15 2014/10/13 19:01:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ac.c,v 1.16 2014/10/20 21:18:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1072,7 +1072,7 @@ awinac_mappage(void *priv, void *addr, off_t off, int prot)
 static int
 awinac_getdev(void *priv, struct audio_device *audiodev)
 {
-	snprintf(audiodev->name, sizeof(audiodev->name), "AllWinner");
+	snprintf(audiodev->name, sizeof(audiodev->name), "Allwinner");
 	snprintf(audiodev->version, sizeof(audiodev->version),
 	    awin_chip_id() == AWIN_CHIP_ID_A31 ? "CODEC A31" : "CODEC A10/A20");
 	snprintf(audiodev->config, sizeof(audiodev->config), "awinac");
