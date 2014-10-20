@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2007-2012 Roy Marples
+# Copyright (c) 2007-2014 Roy Marples
 # All rights reserved
 
 # libc subscriber for resolvconf
@@ -72,6 +72,8 @@ keys_remove()
 	done
 }
 
+local_nameservers="127.* 0.0.0.0 255.255.255.255 ::1"
+
 # Support original resolvconf configuration layout
 # as well as the openresolv config file
 if [ -f "$SYSCONFDIR"/resolvconf.conf ]; then
@@ -93,7 +95,6 @@ elif [ -d "$SYSCONFDIR"/resolvconf ]; then
 		resolv_conf_tail="$(cat "$SYSCONFDIR"/resolv.conf.d/tail)"
 	fi
 fi
-: ${domain:=$DOMAIN}
 : ${resolv_conf:=/etc/resolv.conf}
 : ${libc_service:=nscd}
 : ${libc_restart:=@RESTARTCMD ${libc_service}@}
@@ -129,22 +130,41 @@ case "${resolv_conf_passthrough:-NO}" in
 	[ -z "$newest" ] && exit 0
 	newconf="$(cat "$newest")$NL"
 	;;
+/dev/null|[Nn][Uu][Ll][Ll])
+	: ${resolv_conf_local_only:=NO}
+	if [ "$local_nameservers" = "127.* 0.0.0.0 255.255.255.255 ::1" ]; then
+		local_nameservers=
+	fi
+	# Need to overwrite our variables.
+	eval "$(@SBINDIR@/resolvconf -V)"
+	;;
+
 *)
 	[ -z "$RESOLVCONF" ] && eval "$(@SBINDIR@/resolvconf -v)"
+	;;
+esac
+case "${resolv_conf_passthrough:-NO}" in
+[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1) ;;
+*)
+	: ${domain:=$DOMAIN}
 	newsearch="$(uniqify $prepend_search $SEARCH)"
 	NS="$LOCALNAMESERVERS $NAMESERVERS"
 	newns=
 	gotlocal=false
 	for n in $(uniqify $prepend_nameservers $NS); do
 		add=true
-		case "$n" in
-		127.*|0.0.0.0|255.255.255.255|::1) gotlocal=true;;
-		*)
+		islocal=false
+		for l in $local_nameservers; do
+			case "$n" in
+			$l) islocal=true; gotlocal=true; break;;
+			esac
+		done
+		if ! $islocal; then
 			case "${resolv_conf_local_only:-YES}" in
 			[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1)
 				$gotlocal && add=false;;
 			esac
-		esac
+		fi
 		$add && newns="$newns $n"
 	done
 
