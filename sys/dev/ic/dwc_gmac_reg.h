@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_reg.h,v 1.10 2014/10/20 20:10:05 jmcneill Exp $ */
+/* $NetBSD: dwc_gmac_reg.h,v 1.11 2014/10/21 00:01:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -55,10 +55,16 @@
 #define	AWIN_GMAC_MAC_CONF_TXENABLE	__BIT(3)  /* enable TX dma engine */
 #define	AWIN_GMAC_MAC_CONF_RXENABLE	__BIT(2)  /* enable RX dma engine */
 
-#define	AWIN_GMAC_MAC_FFILT_PM		__BIT(4) /* promiscious multicast */
-#define	AWIN_GMAC_MAC_FFILT_HMC		__BIT(2) /* multicast hash compare */
-#define	AWIN_GMAC_MAC_FFILT_HUC		__BIT(1) /* unicast hash compare */
-#define	AWIN_GMAC_MAC_FFILT_PR		__BIT(0) /* promiscious mode */
+#define	AWIN_GMAC_MAC_FFILT_RA		__BIT(31) /* receive all mode */
+#define	AWIN_GMAC_MAC_FFILT_HPF		__BIT(10) /* hash or perfect filter */
+#define	AWIN_GMAC_MAC_FFILT_SAF		__BIT(9)  /* source address filter */
+#define	AWIN_GMAC_MAC_FFILT_SAIF	__BIT(8)  /* inverse filtering */
+#define	AWIN_GMAC_MAC_FFILT_DBF		__BIT(5)  /* disable broadcast frames */
+#define	AWIN_GMAC_MAC_FFILT_PM		__BIT(4)  /* promiscious multicast */
+#define	AWIN_GMAC_MAC_FFILT_DAIF	__BIT(3)  /* DA inverse filtering */
+#define	AWIN_GMAC_MAC_FFILT_HMC		__BIT(2)  /* multicast hash compare */
+#define	AWIN_GMAC_MAC_FFILT_HUC		__BIT(1)  /* unicast hash compare */
+#define	AWIN_GMAC_MAC_FFILT_PR		__BIT(0)  /* promiscious mode */
 
 #define	AWIN_GMAC_MAC_INT_LPI		__BIT(10)
 #define	AWIN_GMAC_MAC_INT_TSI		__BIT(9)
