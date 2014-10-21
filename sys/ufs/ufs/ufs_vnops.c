@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.222 2014/10/18 08:33:30 snj Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.223 2014/10/21 10:39:26 slp Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.222 2014/10/18 08:33:30 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.223 2014/10/21 10:39:26 slp Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -464,6 +464,8 @@ ufs_setattr(void *v)
 	int		error;
 	kauth_action_t	action;
 	bool		changing_sysflags;
+	uint64_t	incr;
+	uint64_t	base;
 
 	vap = ap->a_vap;
 	vp = ap->a_vp;
@@ -579,39 +581,25 @@ ufs_setattr(void *v)
 				error = EPERM;
 				goto out;
 			}
-			error = UFS_WAPBL_BEGIN(vp->v_mount);
-			if (error)
-				goto out;
+			incr = MNINDIR(ip->i_ump) <<
+			    vp->v_mount->mnt_fs_bshift; /* Power of 2 */
+			base = UFS_NDADDR <<
+			    vp->v_mount->mnt_fs_bshift;
 			/*
 			 * When journaling, only truncate one indirect block
 			 * at a time.
 			 */
-			if (vp->v_mount->mnt_wapbl) {
-				uint64_t incr = MNINDIR(ip->i_ump) <<
-				    vp->v_mount->mnt_fs_bshift; /* Power of 2 */
-				uint64_t base = UFS_NDADDR <<
-				    vp->v_mount->mnt_fs_bshift;
-				while (!error && ip->i_size > base + incr &&
-				    ip->i_size > vap->va_size + incr) {
-					/*
-					 * round down to next full indirect
-					 * block boundary.
-					 */
-					uint64_t nsize = base +
-					    ((ip->i_size - base - 1) &
-					    ~(incr - 1));
-					error = UFS_TRUNCATE(vp, nsize, 0,
-					    cred);
-					if (error == 0) {
-						UFS_WAPBL_END(vp->v_mount);
-						error =
-						   UFS_WAPBL_BEGIN(vp->v_mount);
-					}
-				}
+			if (vp->v_mount->mnt_wapbl && ip->i_size > base + incr) {
+				error = ufs_wapbl_truncate(vp, incr, base,
+				    vap->va_size);
 			}
-			if (!error)
+			if (!error) {
+				error = UFS_WAPBL_BEGIN(vp->v_mount);
+				if (error)
+					goto out;
 				error = UFS_TRUNCATE(vp, vap->va_size, 0, cred);
-			UFS_WAPBL_END(vp->v_mount);
+				UFS_WAPBL_END(vp->v_mount);
+			}
 			if (error)
 				goto out;
 			break;
