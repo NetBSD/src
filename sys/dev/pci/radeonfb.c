@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.86 2014/10/21 08:46:44 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.87 2014/10/21 09:07:07 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.86 2014/10/21 08:46:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.87 2014/10/21 09:07:07 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1254,8 +1254,6 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 	dp = (struct radeonfb_display *)vd->cookie;
 	sc = dp->rd_softc;
 
-	/* XXX: note that we don't allow mapping of registers right now */
-	/* XXX: this means that the XFree86 radeon driver won't work */
 	if ((offset >= 0) && (offset < (dp->rd_virty * dp->rd_stride))) {
 		pa = bus_space_mmap(sc->sc_memt,
 		    sc->sc_memaddr + dp->rd_offset + offset, 0,
