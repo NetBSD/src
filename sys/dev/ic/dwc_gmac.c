@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.19 2014/10/20 23:41:46 matt Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.20 2014/10/21 00:01:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.19 2014/10/20 23:41:46 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.20 2014/10/21 00:01:01 jmcneill Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -90,6 +90,7 @@ static int dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0);
 static int dwc_gmac_ioctl(struct ifnet *, u_long, void *);
 static void dwc_gmac_tx_intr(struct dwc_gmac_softc *sc);
 static void dwc_gmac_rx_intr(struct dwc_gmac_softc *sc);
+static void dwc_gmac_setmulti(struct dwc_gmac_softc *sc);
 
 #define	TX_DESC_OFFSET(N)	((AWGE_RX_RING_COUNT+(N)) \
 				    *sizeof(struct dwc_gmac_dev_dmadesc))
@@ -722,12 +723,23 @@ dwc_gmac_init(struct ifnet *ifp)
 	/*
 	 * Set up address filter
 	 */
-	ffilt = 0;
-	if (ifp->if_flags & IFF_PROMISC)
+	ffilt = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT);
+	if (ifp->if_flags & IFF_PROMISC) {
 		ffilt |= AWIN_GMAC_MAC_FFILT_PR;
-	else if (ifp->if_flags & IFF_ALLMULTI)
-		ffilt |= AWIN_GMAC_MAC_FFILT_PM;
+	} else {
+		ffilt &= ~AWIN_GMAC_MAC_FFILT_PR;
+	}
+	if (ifp->if_flags & IFF_BROADCAST) {
+		ffilt &= ~AWIN_GMAC_MAC_FFILT_DBF;
+	} else {
+		ffilt |= AWIN_GMAC_MAC_FFILT_DBF;
+	}
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT, ffilt);
+
+	/*
+	 * Set up multicast filter
+	 */
+	dwc_gmac_setmulti(sc);
 
 	/*
 	 * Set up dma pointer for RX and TX ring
@@ -888,6 +900,7 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 static int
 dwc_gmac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
+	struct dwc_gmac_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
@@ -950,7 +963,7 @@ dwc_gmac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
 		else if (ifp->if_flags & IFF_RUNNING)
-			/* setmulti */;
+			dwc_gmac_setmulti(sc);
 		break;
 	}
 
@@ -1119,6 +1132,63 @@ skip:
 	/* update RX pointer */
 	sc->sc_rxq.r_cur = i;
 
+}
+
+static void
+dwc_gmac_setmulti(struct dwc_gmac_softc *sc)
+{
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	uint32_t hashes[2] = { 0, 0 };
+	uint32_t ffilt;
+	int h, mcnt;
+
+	ffilt = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT);
+	
+	if (ifp->if_flags & IFF_PROMISC) {
+allmulti:
+		ifp->if_flags |= IFF_ALLMULTI;
+		ffilt |= AWIN_GMAC_MAC_FFILT_PM;
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT,
+		    ffilt);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTLOW,
+		    0xffffffff);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTHIGH,
+		    0xffffffff);
+		return;
+	}
+
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	ffilt &= ~AWIN_GMAC_MAC_FFILT_PM;
+
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTLOW, 0);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTHIGH, 0);
+
+	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+	mcnt = 0;
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+		    ETHER_ADDR_LEN) != 0)
+			goto allmulti;
+
+		h = (~ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN)) >> 26;
+		hashes[h >> 5] |= (1 << (h & 0x1f));
+
+		mcnt++;
+		ETHER_NEXT_MULTI(step, enm);
+	}
+
+	if (mcnt)
+		ffilt |= AWIN_GMAC_MAC_FFILT_HMC;
+	else
+		ffilt &= ~AWIN_GMAC_MAC_FFILT_HMC;
+
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT, ffilt);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTLOW,
+	    hashes[0]);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTHIGH,
+	    hashes[1]);
 }
 
 int
