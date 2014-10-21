@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.54 2014/10/15 15:00:03 christos Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.55 2014/10/21 16:05:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.54 2014/10/15 15:00:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.55 2014/10/21 16:05:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,8 +217,7 @@ ptyfs__allocvp(struct mount *mp, struct lwp *l, struct vnode **vpp,
 		*vpp = NULL;
 		return error;
 	}
-	/* Activate node only after we have grabbed device. */
-	if (type == PTYFSpts)
+	if (type == PTYFSptc)
 		ptyfs_set_active(mp, minor(dev));
 	return 0;
 }
