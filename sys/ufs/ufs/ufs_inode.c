@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.90 2014/05/08 08:21:53 hannken Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.91 2014/10/21 10:39:26 slp Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.90 2014/05/08 08:21:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.91 2014/10/21 10:39:26 slp Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -102,40 +102,25 @@ ufs_inactive(void *v)
 #ifdef UFS_EXTATTR
 		ufs_extattr_vnode_inactive(vp, curlwp);
 #endif
-		error = UFS_WAPBL_BEGIN(vp->v_mount);
-		if (error)
-			goto out;
-		logged = 1;
 		if (ip->i_size != 0) {
+			uint64_t incr = MNINDIR(ip->i_ump) <<
+			    vp->v_mount->mnt_fs_bshift; /* Power of 2 */
+			uint64_t base = UFS_NDADDR <<
+			    vp->v_mount->mnt_fs_bshift;
 			/*
 			 * When journaling, only truncate one indirect block
 			 * at a time
 			 */
-			if (vp->v_mount->mnt_wapbl) {
-				uint64_t incr = MNINDIR(ip->i_ump) <<
-				    vp->v_mount->mnt_fs_bshift; /* Power of 2 */
-				uint64_t base = UFS_NDADDR <<
-				    vp->v_mount->mnt_fs_bshift;
-				while (!error && ip->i_size > base + incr) {
-					/*
-					 * round down to next full indirect
-					 * block boundary.
-					 */
-					uint64_t nsize = base +
-					    ((ip->i_size - base - 1) &
-					    ~(incr - 1));
-					error = UFS_TRUNCATE(vp, nsize, 0,
-					    NOCRED);
-					if (error)
-						break;
-					UFS_WAPBL_END(vp->v_mount);
-					error = UFS_WAPBL_BEGIN(vp->v_mount);
-					if (error)
-						goto out;
-				}
+			if (vp->v_mount->mnt_wapbl && ip->i_size > base + incr) {
+				error = ufs_wapbl_truncate(vp, incr, base, 0);
 			}
-			if (!error)
+			if (!error) {
+				error = UFS_WAPBL_BEGIN(vp->v_mount);
+				if (error)
+					goto out;
+				logged = 1;
 				error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
+			}
 		}
 #if defined(QUOTA) || defined(QUOTA2)
 		(void)chkiq(ip, -1, NOCRED, 0);
@@ -309,3 +294,35 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
  	kmem_free(pgs, pgssize);
 	return error;
 }
+
+int
+ufs_wapbl_truncate(struct vnode *vp, uint64_t incr, uint64_t base,
+    uint64_t newsize)
+{
+	struct inode *ip = VTOI(vp);
+	int error;
+
+	error = UFS_WAPBL_BEGIN(vp->v_mount);
+	if (error)
+		return error;
+
+	while (ip->i_size > base + incr) {
+		/*
+		 * round down to next full indirect
+		 * block boundary.
+		 */
+		uint64_t nsize =
+		    base + ((ip->i_size - base - 1) & ~(incr - 1));
+		error = UFS_TRUNCATE(vp, nsize, 0, NOCRED);
+		if (error)
+			break;
+		UFS_WAPBL_END(vp->v_mount);
+		error = UFS_WAPBL_BEGIN(vp->v_mount);
+		if (error)
+			return error;
+	}
+	UFS_WAPBL_END(vp->v_mount);
+
+	return error;
+}
+
