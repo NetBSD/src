@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.85 2014/10/16 12:31:23 riastradh Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.86 2014/10/21 08:46:44 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.85 2014/10/16 12:31:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.86 2014/10/21 08:46:44 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1263,7 +1263,6 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 		return pa;
 	}
 
-#ifdef RADEONFB_MMAP_BARS
 	/*
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
@@ -1301,8 +1300,6 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 		return pa;
 	}	
 #endif /* PCI_MAGIC_IO_RANGE */
-
-#endif /* RADEONFB_MMAP_BARS */
 
 	return -1;
 }
