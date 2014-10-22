@@ -395,10 +395,6 @@ bool SanitizerGetThreadName(char *name, int max_len) {
 #define UNWIND_STOP _URC_END_OF_STACK
 #define UNWIND_CONTINUE _URC_NO_REASON
 #else
-#ifndef _URC_NORMAL_STOP
-#define _URC_NORMAL_STOP 0
-#define _URC_NO_REASON 1
-#endif
 #define UNWIND_STOP _URC_NORMAL_STOP
 #define UNWIND_CONTINUE _URC_NO_REASON
 #endif
