@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2014/03/09 21:37:37 christos Exp $
+# $NetBSD: Makefile,v 1.6 2014/10/22 16:30:21 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -26,6 +26,8 @@ SRCS+=unwind_arm_ehabi_stub.c
 .else
 SRCS+=builtin.c
 .endif
+
+INCS=unwind.h
 
 MLINKS+= backtrace.3 backtrace_symbols.3
 MLINKS+= backtrace.3 backtrace_symbols_fmt.3
