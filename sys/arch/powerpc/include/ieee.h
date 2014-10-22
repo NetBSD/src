@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.5 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: ieee.h,v 1.6 2014/10/22 10:32:50 joerg Exp $	*/
 
 #include <sys/ieee754.h>
 
@@ -11,3 +11,8 @@
 #define	SNG_QUIETNAN	(1 << 22)
 #define	DBL_QUIETNAN	(1 << 19)
 #endif
+
+union ldbl_u {
+	long double	ldblu_ld;
+	double		ldblu_d[2];
+};
