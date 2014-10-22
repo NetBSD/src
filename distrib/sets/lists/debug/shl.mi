@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.79 2014/10/19 16:35:09 christos Exp $
+# $NetBSD: shl.mi,v 1.80 2014/10/22 16:51:32 christos Exp $
 ./usr/libdata/debug/lib/libc.so.12.196.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.3.debug		comp-sys-debug	debug
@@ -49,6 +49,7 @@
 ./usr/libdata/debug/usr/lib/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug
 ./usr/libdata/debug/usr/lib/libamu.so.4.0.debug		comp-amd-debug	debug
 ./usr/libdata/debug/usr/lib/libarchive.so.3.1.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libasan.so.0.0.debug	comp-krb5-debug	debug
 ./usr/libdata/debug/usr/lib/libasn1.so.9.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libatf-c++.so.0.0.debug	comp-atf-debug	atf,debug,obsolete
 ./usr/libdata/debug/usr/lib/libatf-c++.so.1.0.debug	comp-atf-debug	atf,debug

@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.61 2014/10/22 16:36:52 christos Exp $
+# $NetBSD: ad.arm,v 1.62 2014/10/22 16:51:31 christos Exp $
 ./usr/include/acorn26				comp-c-include
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
 ./usr/include/acorn26/aout_machdep.h		comp-obsolete		obsolete
@@ -784,7 +784,10 @@
 ./usr/lib/oabi/libarm.so			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libarm_p.a			comp-c-proflib		compat,profile
 ./usr/lib/oabi/libarm_pic.a			comp-c-piclib		compat,pic,picinstall
-./usr/lib/oabi/libasn1.a				comp-c-lib		compat,kerberos
+./usr/lib/oabi/libasan.a			comp-c-lib		compat
+./usr/lib/oabi/libasan.so			base-sys-shlib		compat,pic
+./usr/lib/oabi/libasan_p.a			comp-c-proflib		compat,profile
+./usr/lib/oabi/libasan_pic.a			comp-c-piclib		compat,pic,picinstall
 ./usr/lib/oabi/libasn1.a			comp-c-lib		compat,kerberos
 ./usr/lib/oabi/libasn1.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/oabi/libasn1_p.a			comp-c-proflib		compat,profile,kerberos
