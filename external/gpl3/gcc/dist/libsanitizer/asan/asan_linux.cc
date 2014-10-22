@@ -48,15 +48,42 @@ void *AsanDoesNotSupportStaticLinkage() {
   return &_DYNAMIC;  // defined in link.h
 }
 
+void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 #ifdef __NetBSD__
-#define gregs __gregs
-#define REG_RIP _REG_RIP
-#define REG_RBP _REG_RBP
-#define REG_RSP _REG_RSP
+# if defined(__arm__)
+#  define REG_PC _REG_PC
+#  define REG_BP _REG_FP
+#  define REG_SP _REG_SP
+# elif defined(__x86_64__)
+#  define REG_PC _REG_RIP
+#  define REG_BP _REG_RBP
+#  define REG_SP _REG_RSP
+# elif defined(__i386__)
+#  define REG_PC _REG_EIP
+#  define REG_BP _REG_EBP
+#  define REG_SP _REG_ESP
+# elif defined(__powerpc__) || defined(__powerpc64__)
+#  define REG_PC _REG_PC
+#  define REG_BP _REG_R1
+#  define REG_SP _REG_R31
+# elif defined(__sparc__)
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = _UC_MACHINE_PC(ucontext);
+  *sp = _UC_MACHINE_SP(ucontext);
+  *bp = sp[15]; // XXX: christos
+# else
+  // Lot's are missing, please add more.
 #endif
 
-void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
-#if ASAN_ANDROID
+# ifdef REG_PC
+  ucontext_t *ucontext = (ucontext_t*)context;
+  *pc = ucontext->uc_mcontext.__gregs[REG_PC];
+  *bp = ucontext->uc_mcontext.__gregs[REG_BP];
+  *sp = ucontext->uc_mcontext.__gregs[REG_SP];
+# else
+  *pc = *bp = *sp = 0;
+# endif
+#elif ASAN_ANDROID
   *pc = *sp = *bp = 0;
 #elif defined(__arm__)
   ucontext_t *ucontext = (ucontext_t*)context;
