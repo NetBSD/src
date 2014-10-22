@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.55 2014/10/19 16:35:09 christos Exp $
+# $NetBSD: ad.mips,v 1.56 2014/10/22 16:51:31 christos Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -75,6 +75,8 @@
 ./usr/lib/64/libamu.so.4.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libarchive.so.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libarchive.so.3.1			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libasan.so.0			base-compat-shlib	compat,pic
+./usr/lib/64/libasan.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libasn1.so.9			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/64/libasn1.so.9.0			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/64/libatf-c++.so.1			base-compat-shlib	compat,pic,atf,arch64
@@ -422,6 +424,8 @@
 ./usr/lib/o32/libamu.so.4.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libarchive.so.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libarchive.so.3.1			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libasan.so.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libasan.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libasn1.so.9			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/o32/libasn1.so.9.0			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/o32/libatf-c++.so.1			base-compat-shlib	compat,pic,atf,arch64

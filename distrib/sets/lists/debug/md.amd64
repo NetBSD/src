@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.69 2014/10/19 16:35:09 christos Exp $
+# $NetBSD: md.amd64,v 1.70 2014/10/22 16:51:32 christos Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-debuglib		compat,debuglib
@@ -24,6 +24,7 @@
 ./usr/lib/i386/i18n/libmapper_zone_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/libamu_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/libarchive_g.a			comp-c-debuglib		compat,debuglib
+./usr/lib/i386/libasan_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/libasn1_g.a			comp-c-debuglib		compat,debuglib,kerberos
 ./usr/lib/i386/libatf-c++_g.a			comp-c-debuglib		compat,debuglib,atf
 ./usr/lib/i386/libatf-c_g.a			comp-c-debuglib		compat,debuglib,atf
@@ -190,6 +191,7 @@
 ./usr/libdata/debug/usr/lib/i386/libamu.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libarchive.so.3.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libasn1.so.8.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/i386/libasan.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libasn1.so.9.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libatf-c++.so.0.0.debug	comp-compat-shlib	compat,pic,atf,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libatf-c++.so.1.0.debug	comp-compat-shlib	compat,pic,atf,debug
