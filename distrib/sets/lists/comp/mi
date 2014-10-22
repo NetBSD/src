@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1917 2014/10/13 00:46:28 christos Exp $
+#	$NetBSD: mi,v 1.1918 2014/10/22 16:51:31 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3404,7 +3404,7 @@
 ./usr/include/ulimit.h				comp-c-include
 ./usr/include/unctrl.h				comp-c-include
 ./usr/include/unistd.h				comp-c-include
-./usr/include/unwind.h				comp-c-include		!libgcc_eh
+./usr/include/unwind.h				comp-c-include
 ./usr/include/usb.h				comp-obsolete		obsolete
 ./usr/include/usbhid.h				comp-c-include
 ./usr/include/util.h				comp-c-include
@@ -3495,6 +3495,8 @@
 ./usr/lib/libamu_p.a				comp-obsolete		obsolete
 ./usr/lib/libarchive.a				comp-c-lib
 ./usr/lib/libarchive_p.a			comp-c-proflib		profile
+./usr/lib/libasan.a				comp-c-lib		
+./usr/lib/libasan_p.a				comp-c-proflib		profile
 ./usr/lib/libasn1.a				comp-krb5-lib		kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	profile,kerberos
 ./usr/lib/libatf-c++.a				comp-atf-lib		atf
