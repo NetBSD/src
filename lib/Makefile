@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.215 2014/06/13 01:17:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.216 2014/10/22 23:20:48 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -143,6 +143,7 @@ SUBDIR+=	../external/bsd/libc++
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libstdc++-v3
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libsupc++
 .endif
+SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libasan
 
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
