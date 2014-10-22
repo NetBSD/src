@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2014/10/22 16:30:21 christos Exp $
+# $NetBSD: Makefile,v 1.7 2014/10/22 19:29:31 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ LIBEXECINFO_MACHINE_ARCH?= ${MACHINE_ARCH}
 USE_UNWIND=yes
 WARNS?=4
 INCSDIR=/usr/include
-INCS=execinfo.h
+INCS=execinfo.h unwind.h
 
 #CPPFLAGS+='-D__RCSID(a)=' -D_GNU_SOURCE '-D__printflike(a,b)='
 #CPPFLAGS+=-I/usr/include/libelf
@@ -26,8 +26,6 @@ SRCS+=unwind_arm_ehabi_stub.c
 .else
 SRCS+=builtin.c
 .endif
-
-INCS=unwind.h
 
 MLINKS+= backtrace.3 backtrace_symbols.3
 MLINKS+= backtrace.3 backtrace_symbols_fmt.3
