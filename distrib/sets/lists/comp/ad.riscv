@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv,v 1.1 2014/09/19 17:36:24 matt Exp $
+# $NetBSD: ad.riscv,v 1.2 2014/10/22 16:51:31 christos Exp $
 ./usr/include/g++/bits/riscv32			comp-c-include		arch64
 ./usr/include/g++/bits/riscv32/c++config.h	comp-c-include		arch64,gcc=48
 ./usr/include/g++/bits/riscv64			comp-c-include		arch64
@@ -109,6 +109,10 @@
 ./usr/lib/rv32/libarchive.so			base-sys-shlib		compat,pic
 ./usr/lib/rv32/libarchive_p.a			comp-c-proflib		compat,profile
 ./usr/lib/rv32/libarchive_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/rv32/libasan.a			comp-c-lib		compat
+./usr/lib/rv32/libasan.so			base-sys-shlib		compat,pic
+./usr/lib/rv32/libasan_p.a			comp-c-proflib		compat,profile
+./usr/lib/rv32/libasan_pic.a			comp-c-piclib		compat,pic,picinstall
 ./usr/lib/rv32/libasn1.a			comp-c-lib		compat,kerberos
 ./usr/lib/rv32/libasn1.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/rv32/libasn1_p.a			comp-c-proflib		compat,profile,kerberos
