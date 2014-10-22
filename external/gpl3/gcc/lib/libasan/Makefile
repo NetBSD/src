@@ -26,7 +26,7 @@ ASAN_SRCS= \
 	asan_preinit.cc
 
 INTERCEPTION_SRCS= \
-	interception_netbsd.cc \
+	interception_linux.cc \
 	interception_type_test.cc
 
 SANITIZER_SRCS= \
