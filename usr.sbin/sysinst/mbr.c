@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.2.4.1 2014/08/23 03:44:02 riz Exp $ */
+/*	$NetBSD: mbr.c,v 1.2.4.2 2014/10/22 12:28:30 sborrill Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1459,6 +1459,11 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 	 */
 	if (bsec == 0)
 		bsec = pm->dlsec;
+	if (bhead == 0)
+		bhead = pm->dlhead;
+	if (bcyl == 0)
+		bhead = pm->dlcyl;
+
 	ptn_0_offset = bsec;
 	/* use 1MB default offset on large disks as fdisk(8) */
 	if (pm->dlsize > 2048 * 1024 * 128)
