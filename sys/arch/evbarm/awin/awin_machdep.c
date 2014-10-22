@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.19 2014/10/19 22:37:08 jmcneill Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.20 2014/10/22 00:24:52 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.19 2014/10/19 22:37:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.20 2014/10/22 00:24:52 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -182,6 +182,10 @@ __KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.19 2014/10/19 22:37:08 jmcneill E
 #include <evbarm/include/autoconf.h>
 #include <evbarm/awin/platform.h>
 
+#ifdef AWIN_SYSCONFIG
+#include <evbarm/awin/awin_sysconfig.h>
+#endif
+
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/ddcreg.h>
 
@@ -199,6 +203,12 @@ bool cubietruck_p;
 #define cubietruck_p	true
 #else
 #define cubietruck_p	false
+#endif
+
+#ifdef AWIN_SYSCONFIG
+bool awin_sysconfig_p;
+#else
+#define awin_sysconfig_p false
 #endif
 
 /*
@@ -235,6 +245,10 @@ static void kgdb_port_init(void);
 #endif
 
 static void awin_device_register(device_t, void *);
+
+#ifdef AWIN_SYSCONFIG
+static void awin_gpio_sysconfig(prop_dictionary_t);
+#endif
 
 #if NCOM > 0
 #include <dev/ic/comreg.h>
@@ -416,10 +430,17 @@ initarm(void *arg)
 			     (uboot_args[3] + KERNEL_BASE_VOFFSET);
 			strlcpy(bootargs, args, sizeof(bootargs));
 		}
+
 	}
 
 	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
+
+#ifdef AWIN_SYSCONFIG
+	if (mapallmem_p) {
+		awin_sysconfig_p = awin_sysconfig_init();
+	}
+#endif
 
 	/* we've a specific device_register routine */
 	evbarm_device_register = awin_device_register;
@@ -586,6 +607,16 @@ awin_device_register(device_t self, void *aux)
 	}
 
 	if (device_is_a(self, "awingpio")) {
+#ifdef AWIN_SYSCONFIG
+		/*
+		 * Configure GPIOs using FEX script
+		 */
+		if (awin_sysconfig_p) {
+			awin_gpio_sysconfig(dict);
+			return;
+		}
+#endif
+
 		/*
 		 * These are GPIOs being used for various functions.
 		 */
@@ -720,3 +751,44 @@ awin_device_register(device_t self, void *aux)
 		return;
 	}
 }
+
+#ifdef AWIN_SYSCONFIG
+static void
+awin_gpio_sysconfig(prop_dictionary_t dict)
+{
+	static const struct {
+		const char *prop;
+		const char *key;
+		const char *subkey;
+	} gpios[] = {
+		{ "satapwren",		"sata_para", "sata_power_en" },
+		{ "usb0drv",		"usbc0", "usb_drv_vbus_gpio" },
+		{ "usb0iddet",		"usbc0", "usb_id_gpio" },
+		{ "usb0vbusdet",	"usbc0", "usb_det_vbus_gpio" },
+		{ "usb1drv",		"usbc1", "usb_drv_vbus_gpio" },
+		{ "usb1iddet",		"usbc1", "usb_id_gpio" },
+		{ "usb1vbusdet",	"usbc1", "usb_det_vbus_gpio" },
+		{ "usb2drv",		"usbc2", "usb_drv_vbus_gpio" },
+		{ "usb2iddet",		"usbc2", "usb_id_gpio" },
+		{ "usb2vbusdet",	"usbc2", "usb_det_vbus_gpio" },
+		{ "status-led1",	"leds_para", "leds_pin_1" },
+		{ "status-led2",	"leds_para", "leds_pin_2" },
+		{ "status-led3",	"leds_para", "leds_pin_3" },
+		{ "status-led4",	"leds_para", "leds_pin_4" },
+		{ "mmc0detect",		"mmc0_para", "sdc_det" },
+		{ "audiopactrl",	"audio_para", "audio_pa_ctrl" },
+	};
+	unsigned int n;
+
+	aprint_normal(":");
+
+	for (n = 0; n < __arraycount(gpios); n++) {
+		const char *cfg = awin_sysconfig_get_gpio(
+		    gpios[n].key, gpios[n].subkey);
+		if (cfg) {
+			aprint_normal(" [%s %s]", gpios[n].prop, cfg);
+			prop_dictionary_set_cstring(dict, gpios[n].prop, cfg);
+		}
+	}
+}
+#endif
