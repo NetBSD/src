@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.2 2014/10/22 00:24:52 jmcneill Exp $
+#	$NetBSD: files.awin,v 1.3 2014/10/22 00:46:15 jmcneill Exp $
 #
 # Allwinner AXX evaluation board configuration info
 #
@@ -9,7 +9,7 @@ file	arch/evbarm/awin/awin_machdep.c
 defparam opt_machdep.h				BOOT_ARGS
 
 # System config
-defopt	opt_allwinner.h				AWIN_SYSCONFIG
+defflag	opt_allwinner.h				AWIN_SYSCONFIG
 
 file	arch/evbarm/awin/awin_sysconfig.c	awin_sysconfig
 
