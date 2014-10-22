@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.5 2014/09/10 22:50:25 matt Exp $
+# $NetBSD: ad.aarch64,v 1.6 2014/10/22 16:51:31 christos Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -184,6 +184,10 @@
 ./usr/lib/eabi/libarm.so			base-sys-shlib		compat,pic
 ./usr/lib/eabi/libarm_p.a			comp-c-proflib		compat,profile
 ./usr/lib/eabi/libarm_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/eabi/libasan.a			comp-c-lib		compat
+./usr/lib/eabi/libasan.so			base-sys-shlib		compat,pic
+./usr/lib/eabi/libasan_p.a			comp-c-proflib		compat,profile
+./usr/lib/eabi/libasan_pic.a			comp-c-piclib		compat,pic,picinstall
 ./usr/lib/eabi/libasn1.a			comp-c-lib		compat,kerberos
 ./usr/lib/eabi/libasn1.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/eabi/libasn1_p.a			comp-c-proflib		compat,profile,kerberos
@@ -699,6 +703,10 @@
 ./usr/lib/eabihf/libarm.so			base-sys-shlib		compat,pic
 ./usr/lib/eabihf/libarm_p.a			comp-c-proflib		compat,profile
 ./usr/lib/eabihf/libarm_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/eabihf/libasan.a			comp-c-lib		compat
+./usr/lib/eabihf/libasan.so			base-sys-shlib		compat,pic
+./usr/lib/eabihf/libasan_p.a			comp-c-proflib		compat,profile
+./usr/lib/eabihf/libasan_pic.a			comp-c-piclib		compat,pic,picinstall
 ./usr/lib/eabihf/libasn1.a			comp-c-lib		compat,kerberos
 ./usr/lib/eabihf/libasn1.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/eabihf/libasn1_p.a			comp-c-proflib		compat,profile,kerberos
@@ -1214,6 +1222,10 @@
 ./usr/lib/oabi/libarm.so			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libarm_p.a			comp-c-proflib		compat,profile
 ./usr/lib/oabi/libarm_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/oabi/libasan.a			comp-c-lib		compat
+./usr/lib/oabi/libasan.so			base-sys-shlib		compat,pic
+./usr/lib/oabi/libasan_p.a			comp-c-proflib		compat,profile
+./usr/lib/oabi/libasan_pic.a			comp-c-piclib		compat,pic,picinstall
 ./usr/lib/oabi/libasn1.a			comp-c-lib		compat,kerberos
 ./usr/lib/oabi/libasn1.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/oabi/libasn1_p.a			comp-c-proflib		compat,profile,kerberos
