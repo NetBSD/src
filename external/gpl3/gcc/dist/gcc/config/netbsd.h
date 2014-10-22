@@ -144,6 +144,7 @@ along with GCC; see the file COPYING3.  If not see
 #undef LIB_SPEC
 #define LIB_SPEC NETBSD_LIB_SPEC
 
+#undef ADD_STATIC_LIBASAN_LIBS
 #define ADD_STATIC_LIBASAN_LIBS -lstdc++ -lpthread
 
 /* Pass -cxx-isystem to cc1/cc1plus.  */
