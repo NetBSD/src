@@ -50,7 +50,7 @@ CSHLIBFLAGS+= -DPIC
 
 LIB=	asan
 SRCS=	${ASAN_SRCS} ${INTERCEPTION_SRCS} ${SANITIZER_SRCS}
-CPPFLAGS+=-I${ASAN}/include -I${ASAN} -I${NETBSDSRCDIR}/lib/libexecinfo
+CPPFLAGS+=-I${ASAN}/include -I${ASAN}
 
 LDADD+=	-lstdc++ -lpthread
 DPADD+= ${LIBSTDCXX} ${LIBPTHREAD}
