@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1998 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1999 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -78,3 +78,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	OpenSSH: Imported 6.7. [christos 20141018]
 	resolvconf(8): Import openresolv-3.6.0 [roy 20141020]
 	gcc: Support -fsanitize=address
+	zoneinfo: Import tzdata2014i. [apb 20141023]
