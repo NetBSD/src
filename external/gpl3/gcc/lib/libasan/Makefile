@@ -52,7 +52,7 @@ LIB=	asan
 SRCS=	${ASAN_SRCS} ${INTERCEPTION_SRCS} ${SANITIZER_SRCS}
 CPPFLAGS+=-I${ASAN}/include -I${ASAN}
 
-LDADD+=	-lstdc++ -lpthread
-DPADD+= ${LIBSTDCXX} ${LIBPTHREAD}
+LIBDPLIBS+=    stdc++ ${.CURDIR}/../libstdc++-v3
+LIBDPLIBS+=    pthread ${.CURDIR}/../../../../../lib/libpthread
 
 .include <bsd.lib.mk>
