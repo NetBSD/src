@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.129 2014/10/06 08:00:57 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.130 2014/10/23 09:59:56 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.129 2014/10/06 08:00:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.130 2014/10/23 09:59:56 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -92,7 +92,7 @@ static const struct pci_class pci_subclass_prehistoric[] = {
 
 /*
  * Class 0x01.
- * Mass strage controller
+ * Mass storage controller
  */
 
 /* ATA programming interface */
