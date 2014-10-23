@@ -1,5 +1,5 @@
-.\"	$NetBSD: zdump.8,v 1.13 2014/10/07 21:51:03 christos Exp $
-.Dd October 6, 2014
+.\"	$NetBSD: zdump.8,v 1.14 2014/10/23 18:45:58 christos Exp $
+.Dd October 23, 2014
 .Dt ZDUMP 8
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@ Cutoff times are computed using the proleptic Gregorian calendar with year 0
 and with Universal Time (UT) ignoring leap seconds.
 The lower bound is exclusive and the upper is inclusive; for example, a
 .Dl loyear
-of 1970 excludes a transition occurring at the very start of 1970 but a
+of 1970 excludes a transition occurring at 1970-01-01 00:00:00 UTC but a
 .Dl hiyear
 of 1970 includes the transition.
 The default cutoff is

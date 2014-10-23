@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.37 2014/10/07 22:20:33 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.38 2014/10/23 18:45:58 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -117,10 +117,18 @@
 
 #include "sys/types.h"	/* for time_t */
 #include "stdio.h"
-#include "errno.h"
 #include "string.h"
 #include "limits.h"	/* for CHAR_BIT et al. */
 #include "stdlib.h"
+
+#include "errno.h"
+
+#ifndef ENAMETOOLONG
+# define ENAMETOOLONG EINVAL
+#endif
+#ifndef EOVERFLOW
+# define EOVERFLOW EINVAL
+#endif
 
 #if HAVE_GETTEXT
 #include "libintl.h"
