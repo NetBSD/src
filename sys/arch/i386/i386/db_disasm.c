@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.43 2014/10/09 18:34:24 msaitoh Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.44 2014/10/23 10:01:53 msaitoh Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.43 2014/10/09 18:34:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.44 2014/10/23 10:01:53 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -204,10 +204,10 @@ const struct inst db_inst_0f3x[] = {
 /*31*/	{ "rdtsc", false, NONE,  0,	      0 },
 /*32*/	{ "rdmsr", false, NONE,  0,	      0 },
 /*33*/	{ "rdpmc", false, NONE,  0,	      0 },
-/*34*/	{ "",	   false, NONE,  0,	      0 },
-/*35*/	{ "",	   false, NONE,  0,	      0 },
+/*34*/	{ "sysenter",false,NONE, 0,	      0 },
+/*35*/	{ "sysexit",false, NONE, 0,	      0 },
 /*36*/	{ "",	   false, NONE,  0,	      0 },
-/*37*/	{ "",	   false, NONE,  0,	      0 },
+/*37*/	{ "getsec",false, NONE,  0,	      0 },
 
 /*38*/	{ "",	   false, NONE,  0,	      0 },
 /*39*/	{ "",	   false, NONE,  0,	      0 },

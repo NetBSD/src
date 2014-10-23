@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.19 2014/10/09 18:34:24 msaitoh Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.20 2014/10/23 10:01:53 msaitoh Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19 2014/10/09 18:34:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.20 2014/10/23 10:01:53 msaitoh Exp $");
 
 #ifndef _KERNEL
 #include <sys/types.h>
@@ -167,8 +167,8 @@ const char * const db_Grp9[] = {
 	"",
 	"",
 	"",
-	"",
-	"",
+	"vmptrld",
+	"vmptrst"
 };
 
 const struct inst db_inst_0f0x[] = {
@@ -219,7 +219,7 @@ const struct inst db_inst_0f3x[] = {
 /*34*/	{ "sysenter",false,NONE, 0,	      0 },
 /*35*/	{ "sysexit",false, NONE, 0,	      0 },
 /*36*/	{ "",	   false, NONE,  0,	      0 },
-/*37*/	{ "",	   false, NONE,  0,	      0 },
+/*37*/	{ "getsec",false, NONE,  0,	      0 },
 
 /*38*/	{ "",	   false, NONE,  0,	      0 },
 /*39*/	{ "",	   false, NONE,  0,	      0 },
