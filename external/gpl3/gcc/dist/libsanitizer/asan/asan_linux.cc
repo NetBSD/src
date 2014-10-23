@@ -56,7 +56,7 @@ void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
  * Unfortunately we don't have a portable frame pointer (yet)
  */
 # if defined(__alpha__)
-#  define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_X15)
+#  define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_S6)
 # elif defined(__arm__)
 #  define _UC_MACHINE_FP(ucontext) __UC_MACHINE_FP(ucontext, _REG_FP)
 # elif defined(__x86_64__)
