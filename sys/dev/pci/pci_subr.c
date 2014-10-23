@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.131 2014/10/23 13:40:15 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.132 2014/10/23 13:44:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.131 2014/10/23 13:40:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.132 2014/10/23 13:44:37 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -969,6 +969,20 @@ pci_conf_print_regs(const pcireg_t *regs, int first, int pastlast)
 		printf("\n");
 }
 
+static void
+pci_conf_print_agp_cap(const pcireg_t *regs, int capoff)
+{
+	pcireg_t rval;
+
+	printf("\n  AGP Capabilities Register\n");
+
+	rval = regs[o2i(capoff)];
+	printf("    Revision: %d.%d\n",
+	    PCI_CAP_AGP_MAJOR(rval), PCI_CAP_AGP_MINOR(rval));
+
+	/* XXX need more */
+}
+
 static const char *
 pci_conf_print_pcipm_cap_aux(uint16_t caps)
 {
@@ -1796,6 +1810,35 @@ pci_conf_print_pciaf_cap(const pcireg_t *regs, int capoff)
 	onoff("Transaction Pending", reg, PCI_AFSR_TP);
 }
 
+static struct {
+	pcireg_t cap;
+	const char *name;
+	void (*printfunc)(const pcireg_t *, int);
+} pci_captab[] = {
+	{ PCI_CAP_RESERVED0,	"reserved",	NULL },
+	{ PCI_CAP_PWRMGMT,	"Power Management", pci_conf_print_pcipm_cap },
+	{ PCI_CAP_AGP,		"AGP",		pci_conf_print_agp_cap },
+	{ PCI_CAP_VPD,		"VPD",		NULL },
+	{ PCI_CAP_SLOTID,	"SlotID",	NULL },
+	{ PCI_CAP_MSI,		"MSI",		pci_conf_print_msi_cap }, 
+	{ PCI_CAP_CPCI_HOTSWAP,	"CompactPCI Hot-swapping", NULL },
+	{ PCI_CAP_PCIX,		"PCI-X",	pci_conf_print_pcix_cap },
+	{ PCI_CAP_LDT,		"HyperTransport", NULL },
+	{ PCI_CAP_VENDSPEC,	"Vendor-specific",
+	  pci_conf_print_vendspec_cap },
+	{ PCI_CAP_DEBUGPORT,	"Debug Port",	pci_conf_print_debugport_cap },
+	{ PCI_CAP_CPCI_RSRCCTL, "CompactPCI Resource Control", NULL },
+	{ PCI_CAP_HOTPLUG,	"Hot-Plug",	NULL },
+	{ PCI_CAP_SUBVENDOR,	"Subsystem vendor ID",
+	  pci_conf_print_subsystem_cap },
+	{ PCI_CAP_AGP8,		"AGP 8x",	NULL },
+	{ PCI_CAP_SECURE,	"Secure Device", NULL },
+	{ PCI_CAP_PCIEXPRESS,	"PCI Express",	pci_conf_print_pcie_cap },
+	{ PCI_CAP_MSIX,		"MSI-X",	pci_conf_print_msix_cap },
+	{ PCI_CAP_SATA,		"SATA",		NULL },
+	{ PCI_CAP_PCIAF,	"Advanced Features", pci_conf_print_pciaf_cap }
+};
+
 static void
 pci_conf_print_caplist(
 #ifdef _KERNEL
@@ -1804,11 +1847,16 @@ pci_conf_print_caplist(
     const pcireg_t *regs, int capoff)
 {
 	int off;
+	pcireg_t foundcap;
 	pcireg_t rval;
-	int pcie_off = -1, pcipm_off = -1, msi_off = -1, pcix_off = -1;
-	int vendspec_off = -1, msix_off = -1;
-	int debugport_off = -1, subsystem_off = -1, pciaf_off = -1;
+	bool foundtable[__arraycount(pci_captab)];
+	unsigned int i;
 
+	/* Clear table */
+	for (i = 0; i < __arraycount(pci_captab); i++)
+		foundtable[i] = false;
+
+	/* Print capability register's offset and the type first */
 	for (off = PCI_CAPLIST_PTR(regs[o2i(capoff)]);
 	     off != 0;
 	     off = PCI_CAPLIST_NEXT(regs[o2i(off)])) {
@@ -1816,113 +1864,39 @@ pci_conf_print_caplist(
 		printf("  Capability register at 0x%02x\n", off);
 
 		printf("    type: 0x%02x (", PCI_CAPLIST_CAP(rval));
-		switch (PCI_CAPLIST_CAP(rval)) {
-		case PCI_CAP_RESERVED0:
-			printf("reserved");
-			break;
-		case PCI_CAP_PWRMGMT:
-			printf("Power Management, rev. %s",
-			    pci_conf_print_pcipm_cap_pmrev(
-				    (rval >> 16) & 0x07));
-			pcipm_off = off;
-			break;
-		case PCI_CAP_AGP:
-			printf("AGP, rev. %d.%d",
-				PCI_CAP_AGP_MAJOR(rval),
-				PCI_CAP_AGP_MINOR(rval));
-			break;
-		case PCI_CAP_VPD:
-			printf("VPD");
-			break;
-		case PCI_CAP_SLOTID:
-			printf("SlotID");
-			break;
-		case PCI_CAP_MSI:
-			printf("MSI");
-			msi_off = off;
-			break;
-		case PCI_CAP_CPCI_HOTSWAP:
-			printf("CompactPCI Hot-swapping");
-			break;
-		case PCI_CAP_PCIX:
-			pcix_off = off;
-			printf("PCI-X");
-			break;
-		case PCI_CAP_LDT:
-			printf("HyperTransport");
-			break;
-		case PCI_CAP_VENDSPEC:
-			vendspec_off = off;
-			printf("Vendor-specific");
-			break;
-		case PCI_CAP_DEBUGPORT:
-			printf("Debug Port");
-			debugport_off = off;
-			break;
-		case PCI_CAP_CPCI_RSRCCTL:
-			printf("CompactPCI Resource Control");
-			break;
-		case PCI_CAP_HOTPLUG:
-			printf("Hot-Plug");
-			break;
-		case PCI_CAP_SUBVENDOR:
-			printf("Subsystem vendor ID");
-			subsystem_off = off;
-			break;
-		case PCI_CAP_AGP8:
-			printf("AGP 8x");
-			break;
-		case PCI_CAP_SECURE:
-			printf("Secure Device");
-			break;
-		case PCI_CAP_PCIEXPRESS:
-			printf("PCI Express");
-			pcie_off = off;
-			break;
-		case PCI_CAP_MSIX:
-			printf("MSI-X");
-			msix_off = off;
-			break;
-		case PCI_CAP_SATA:
-			printf("SATA");
-			break;
-		case PCI_CAP_PCIAF:
-			printf("Advanced Features");
-			pciaf_off = off;
-			break;
-		default:
-			printf("unknown");
-		}
-		printf(")\n");
+		foundcap = PCI_CAPLIST_CAP(rval);
+		if (foundcap < __arraycount(pci_captab)) {
+			printf("%s)\n", pci_captab[foundcap].name);
+			/* Mark as found */
+			foundtable[foundcap] = true;
+		} else
+			printf("unknown)\n");
 	}
-	if (pcipm_off != -1)
-		pci_conf_print_pcipm_cap(regs, pcipm_off);
-	/* XXX AGP */
-	/* XXX VPD */
-	/* XXX SLOTID */
-	if (msi_off != -1)
-		pci_conf_print_msi_cap(regs, msi_off);
-	/* XXX CPCI_HOTSWAP */
-	if (pcix_off != -1)
-		pci_conf_print_pcix_cap(regs, pcix_off);
-	/* XXX LDT */
-	if (vendspec_off != -1)
-		pci_conf_print_vendspec_cap(regs, vendspec_off);
-	if (debugport_off != -1)
-		pci_conf_print_debugport_cap(regs, debugport_off);
-	/* XXX CPCI_RSRCCTL */
-	/* XXX HOTPLUG */
-	if (subsystem_off != -1)
-		pci_conf_print_subsystem_cap(regs, subsystem_off);
-	/* XXX AGP8 */
-	/* XXX SECURE */
-	if (pcie_off != -1)
-		pci_conf_print_pcie_cap(regs, pcie_off);
-	if (msix_off != -1)
-		pci_conf_print_msix_cap(regs, msix_off);
-	/* XXX SATA */
-	if (pciaf_off != -1)
-		pci_conf_print_pciaf_cap(regs, pciaf_off);
+
+	/*
+	 * And then, print the detail of each capability registers
+	 * in capability value's order.
+	 */
+	for (i = 0; i < __arraycount(pci_captab); i++) {
+		if (foundtable[i] == false)
+			continue;
+
+		/*
+		 * The type was found. Search capability list again and
+		 * print all capabilities that the capabiliy type is
+		 * the same. This is required because some capabilities
+		 * appear multiple times (e.g. HyperTransport capability).
+		 */
+		for (off = PCI_CAPLIST_PTR(regs[o2i(capoff)]);
+		     off != 0;
+		     off = PCI_CAPLIST_NEXT(regs[o2i(off)])) {
+			rval = regs[o2i(off)];
+			foundcap = PCI_CAPLIST_CAP(rval);
+			if ((i == foundcap)
+			    && (pci_captab[foundcap].printfunc != NULL))
+				pci_captab[foundcap].printfunc(regs, off);
+		}
+	}
 }
 
 /* Print the Secondary Status Register. */
