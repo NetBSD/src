@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.130 2014/10/23 09:59:56 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.131 2014/10/23 13:40:15 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.130 2014/10/23 09:59:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.131 2014/10/23 13:40:15 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1823,7 +1823,7 @@ pci_conf_print_caplist(
 		case PCI_CAP_PWRMGMT:
 			printf("Power Management, rev. %s",
 			    pci_conf_print_pcipm_cap_pmrev(
-				    (rval >> 0) & 0x07));
+				    (rval >> 16) & 0x07));
 			pcipm_off = off;
 			break;
 		case PCI_CAP_AGP:
