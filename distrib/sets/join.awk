@@ -1,4 +1,4 @@
-#	$NetBSD: join.awk,v 1.4 2014/10/21 23:15:38 apb Exp $
+#	$NetBSD: join.awk,v 1.5 2014/10/23 14:19:33 apb Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,8 @@
 # join.awk F1 F2
 #	Similar to join(1), this reads a list of words from F1
 #	and outputs lines in F2 with a first word that is in F1.
-#	Neither file needs to be sorted
+#	The first word is canonicalised via vis(unvis(word))).
+#	Neither file needs to be sorted.
 
 function unvis(s) \
 {
@@ -53,7 +54,7 @@ function unvis(s) \
 			s = substr(s, 3)
 		} else if (match(s, "\\\\[0-7][0-7][0-7]") == 1) {
 			# \ooo with three octal digits.
-			# XXX: use strnum() is that is available
+			# XXX: use strtonum() when that is available
 			unvis_result = unvis_result "" sprintf("%c", \
 				0+substr(s, 2, 1) * 64 + \
 				0+substr(s, 3, 1) * 8 + \
@@ -72,6 +73,60 @@ function unvis(s) \
 	return unvis_result
 }
 
+function vis(s) \
+{
+	# We need to encode backslash, space, and tab, because they
+	# would interfere with scripts that attempt to manipulate
+	# the set files.
+	#
+	# We make no attempt to encode shell special characters
+	# such as " ' $ ( ) { } [ ] < > * ?, because nothing that
+	# parses set files would need that.
+	#
+	# We would like to handle other white space or non-graph
+	# characters, because they may be confusing for human readers,
+	# but they are too difficult to handle in awk without the ord()
+	# function, so we print an error message.
+	#
+	# As of October 2014, no files in the set lists contain
+	# characters that would need any kind of encoding.
+	#
+	vis_result = ""
+	while (length(s) > 0) {
+		vis_pos = match(s, "(\\\\|[[:space:]]|[^[:graph:]])")
+		if (vis_pos == 0) {
+			vis_result = vis_result "" s
+			s = ""
+			break
+		}
+		# copy the part before the next special char
+		vis_result = vis_result "" substr(s, 1, vis_pos - 1)
+		vis_char = substr(s, vis_pos, 1)
+		s = substr(s, vis_pos + 1)
+		# process the special char
+		if (vis_char == "\\") {
+			# backslash -> double backslash
+			vis_result = vis_result "\\\\"
+		} else if (vis_char == " ") {
+			# space -> \040
+			vis_result = vis_result "\\040"
+		} else if (vis_char == "\t") {
+			# tab -> \011
+			vis_result = vis_result "\\011"
+		} else {
+			# generalised \ooo with three octal digits.
+			# XXX: I don't know how to do this in awk without ord()
+			printf "%s: %s:%s: cannot perform vis encoding\n", \
+				ARGV[0], (FILENAME ? FILENAME : "stdin"), FNR \
+				>"/dev/stderr"
+			vis_result = vis_result "" vis_char
+		}
+	}
+	return vis_result
+}
+
+// { $1 = vis(unvis($1)); print }
+
 BEGIN \
 {
 	if (ARGC != 3) {
@@ -79,13 +134,13 @@ BEGIN \
 		exit 1
 	}
 	while ( (getline < ARGV[1]) > 0) {
-		$1 = unvis($1)
+		$1 = vis(unvis($1))
 		words[$1] = $0
 	}
 	delete ARGV[1]
 }
 
-// { $1 = unvis($1) }
+// { $1 = vis(unvis($1)) }
 
 $1 in words \
 {
