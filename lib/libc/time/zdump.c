@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.39 2014/10/23 18:45:58 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.40 2014/10/23 21:19:53 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2009-05-17 by Arthur David Olson.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.39 2014/10/23 18:45:58 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.40 2014/10/23 21:19:53 christos Exp $");
 #endif /* !defined lint */
 
 /*
@@ -860,7 +860,6 @@ delta(struct tm *newp, struct tm *oldp)
 	result += newp->tm_sec - oldp->tm_sec;
 	return result;
 }
-#endif
 
 #ifndef TM_GMTOFF
 /* Return A->tm_yday, adjusted to compare it fairly to B->tm_yday.
