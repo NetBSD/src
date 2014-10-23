@@ -1,5 +1,71 @@
 News for the tz database
 
+Release 2014i - 2014-10-21 22:04:57 -0700
+
+  Changes affecting future time stamps
+
+    Pacific/Fiji will observe DST from 2014-11-02 02:00 to 2015-01-18 03:00.
+    (Thanks to Ken Rylander for the heads-up.)  Guess that future
+    years will use a similar pattern.
+
+    A new Zone Pacific/Bougainville, for the part of Papua New Guinea
+    that plans to switch from UTC+10 to UTC+11 on 2014-12-28 at 02:00.
+    (Thanks to Kiley Walbom for the heads-up.)
+
+  Changes affecting time zone abbreviations
+
+    Since Belarus is not changing its clocks even though Moscow is,
+    the time zone abbreviation in Europe/Minsk is changing from FET
+    to its more-traditional value MSK on 2014-10-26 at 01:00.
+    (Thanks to Alexander Bokovoy for the heads-up about Belarus.)
+
+    The new abbreviation IDT stands for the pre-1976 use of UT+8 in
+    Indochina, to distinguish it better from ICT (UT+7).
+
+  Changes affecting past time stamps
+
+    Many time stamps have been corrected for Asia/Ho_Chi_Minh before 1976
+    (thanks to Trần Ngọc Quân for an indirect pointer to Trần Tiến Bình's
+    authoritative book).  Asia/Ho_Chi_Minh has been added to
+    zone1970.tab, to give tzselect users in Vietnam two choices,
+    since north and south Vietnam disagreed after our 1970 cutoff.
+
+    Asia/Phnom_Penh and Asia/Vientiane have been turned into links, as
+    they differed from existing zones only for older time stamps.  As
+    usual, these changes affect pre-1970 time stamps only.  Their old
+    contents have been moved to the 'backzone' file.
+
+  Changes affecting code
+
+    The time-related library functions now set errno on failure, and
+    some crashes in the new tzalloc-related library functions have
+    been fixed.  (Thanks to Christos Zoulas for reporting most of
+    these problems and for suggesting fixes.)
+
+    If USG_COMPAT is defined and the requested time stamp is standard time,
+    the tz library's localtime and mktime functions now set the extern
+    variable timezone to a value appropriate for that time stamp; and
+    similarly for ALTZONE, daylight saving time, and the altzone variable.
+    This change is a companion to the tzname change in 2014h, and is
+    designed to make timezone and altzone more compatible with tzname.
+
+    The tz library's functions now set errno to EOVERFLOW if they fail
+    because the result cannot be represented.  ctime and ctime_r now
+    return NULL and set errno when a time stamp is out of range, rather
+    than having undefined behavior.
+
+    Some bugs associated with the new 2014g functions have been fixed.
+    This includes a bug that largely incapacitated the new functions
+    time2posix_z and posix2time_z.  (Thanks to Christos Zoulas.)
+    It also includes some uses of uninitialized variables after tzalloc.
+    The new code uses the standard type 'ssize_t', which the Makefile
+    now gives porting advice about.
+
+  Changes affecting commentary
+
+    Updated URLs for NRC Canada (thanks to Matt Johnson and Brian Inglis).
+
+
 Release 2014h - 2014-09-25 18:59:03 -0700
 
   Changes affecting past time stamps
