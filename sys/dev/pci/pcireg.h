@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.97 2014/10/06 07:15:56 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.98 2014/10/23 09:57:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -289,7 +289,7 @@ typedef u_int8_t pci_revision_t;
 #define		PCI_INTERFACE_RTC_ISA			0x01
 #define	PCI_SUBCLASS_SYSTEM_PCIHOTPLUG		0x04
 #define	PCI_SUBCLASS_SYSTEM_SDHC		0x05
-#define	PCI_SUBCLASS_SYSTEM_IOMMU		0x06
+#define	PCI_SUBCLASS_SYSTEM_IOMMU		0x06 /* or RCEC in old spec */
 #define	PCI_SUBCLASS_SYSTEM_RCEC		0x07
 #define	PCI_SUBCLASS_SYSTEM_MISC		0x80
 
