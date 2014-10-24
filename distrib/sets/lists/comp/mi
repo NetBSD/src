@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1918 2014/10/22 16:51:31 christos Exp $
+#	$NetBSD: mi,v 1.1919 2014/10/24 02:39:34 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3495,8 +3495,8 @@
 ./usr/lib/libamu_p.a				comp-obsolete		obsolete
 ./usr/lib/libarchive.a				comp-c-lib
 ./usr/lib/libarchive_p.a			comp-c-proflib		profile
-./usr/lib/libasan.a				comp-c-lib		
-./usr/lib/libasan_p.a				comp-c-proflib		profile
+./usr/lib/libasan.a				comp-c-lib		gcc=48
+./usr/lib/libasan_p.a				comp-c-proflib		profile,gcc=48
 ./usr/lib/libasn1.a				comp-krb5-lib		kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	profile,kerberos
 ./usr/lib/libatf-c++.a				comp-atf-lib		atf
