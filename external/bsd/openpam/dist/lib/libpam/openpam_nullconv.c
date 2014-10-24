@@ -1,3 +1,5 @@
+/*	$NetBSD: openpam_nullconv.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav
@@ -39,6 +41,9 @@
 # include "config.h"
 #endif
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: openpam_nullconv.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
+
 #include <sys/types.h>
 
 #include <security/pam_appl.h>
@@ -59,9 +64,13 @@ openpam_nullconv(int n,
 {
 
 	ENTER();
+	/*LINTED unused*/
 	(void)n;
+	/*LINTED unused*/
 	(void)msg;
+	/*LINTED unused*/
 	(void)resp;
+	/*LINTED unused*/
 	(void)data;
 	RETURNC(PAM_CONV_ERR);
 }

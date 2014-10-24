@@ -1,3 +1,5 @@
+/*	$NetBSD: openpam_configure.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2014 Dag-Erling Smørgrav
@@ -38,6 +40,9 @@
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: openpam_configure.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
 
 #include <sys/param.h>
 
@@ -107,9 +112,9 @@ parse_facility_name(const char *name)
 static pam_control_t
 parse_control_flag(const char *name)
 {
-	int i;
+	pam_control_t i;
 
-	for (i = 0; i < PAM_NUM_CONTROL_FLAGS; ++i)
+	for (i = PAM_BINDING; i < PAM_NUM_CONTROL_FLAGS; ++i)
 		if (strcmp(pam_control_flag_name[i], name) == 0)
 			return (i);
 	return ((pam_control_t)-1);
@@ -255,7 +260,7 @@ openpam_parse_chain(pam_handle_t *pamh,
 		}
 
 		/* allocate new entry */
-		if ((this = calloc(1, sizeof *this)) == NULL)
+		if ((this = calloc((size_t)1, sizeof *this)) == NULL)
 			goto syserr;
 		this->flag = ctlf;
 
@@ -466,6 +471,27 @@ openpam_configure(pam_handle_t *pamh,
 		if (openpam_load_chain(pamh, PAM_OTHER, fclt) < 0)
 			goto load_err;
 	}
+#ifdef __NetBSD__
+	/*
+	 * On NetBSD we require the AUTH chain to have a binding,
+	 * a required, or requisite module.
+	 */
+	{
+		pam_chain_t *this = pamh->chains[PAM_AUTH];
+		for (; this != NULL; this = this->next)
+			if (this->flag == PAM_BINDING ||
+			    this->flag == PAM_REQUIRED ||
+			    this->flag == PAM_REQUISITE)
+				break;
+		if (this == NULL) {
+			openpam_log(PAM_LOG_ERROR,
+			    "No required, requisite, or binding component "
+			    "in service %s, facility %s",
+			    service, pam_facility_name[PAM_AUTH]);
+			goto load_err;
+		}
+	}
+#endif
 	RETURNC(PAM_SUCCESS);
 load_err:
 	serrno = errno;

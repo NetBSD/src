@@ -1,3 +1,5 @@
+/*	$NetBSD: openpam_constants.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav
@@ -38,6 +40,9 @@
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: openpam_constants.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
 
 #include <security/pam_appl.h>
 
@@ -91,6 +96,8 @@ const char *pam_item_name[PAM_NUM_ITEMS] = {
 	"PAM_AUTHTOK_PROMPT",
 	"PAM_OLDAUTHTOK_PROMPT",
 	"PAM_HOST",
+	"PAM_SOCKADDR",
+	"PAM_NUSER"
 };
 
 const char *pam_facility_name[PAM_NUM_FACILITIES] = {
@@ -129,8 +136,10 @@ const char *pam_sm_func_name[PAM_NUM_PRIMITIVES] = {
 const char *openpam_policy_path[] = {
 	"/etc/pam.d/",
 	"/etc/pam.conf",
+#ifndef __NetBSD__
 	"/usr/local/etc/pam.d/",
 	"/usr/local/etc/pam.conf",
+#endif
 	NULL
 };
 

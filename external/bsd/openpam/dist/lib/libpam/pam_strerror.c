@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_strerror.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav
@@ -39,6 +41,9 @@
 # include "config.h"
 #endif
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pam_strerror.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
+
 #include <stdio.h>
 
 #include <security/pam_appl.h>
@@ -58,6 +63,7 @@ pam_strerror(const pam_handle_t *pamh,
 {
 	static char unknown[16];
 
+	/*LINTED unused*/
 	(void)pamh;
 
 	switch (error_number) {

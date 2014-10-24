@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_set_data.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav
@@ -38,6 +40,9 @@
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pam_set_data.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -105,4 +110,6 @@ pam_set_data(pam_handle_t *pamh,
  *
  * This function and its counterpart =pam_get_data are useful for managing
  * data that are meaningful only to a particular service module.
+ *
+ * >openpam_free_data
  */

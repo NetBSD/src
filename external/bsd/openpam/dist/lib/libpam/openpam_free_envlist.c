@@ -1,3 +1,5 @@
+/*	$NetBSD: openpam_free_envlist.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+
 /*-
  * Copyright (c) 2005-2011 Dag-Erling Smørgrav
  * All rights reserved.
@@ -30,6 +32,9 @@
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: openpam_free_envlist.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
 
 #include <stdlib.h>
 

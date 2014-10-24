@@ -1,3 +1,5 @@
+/*	$NetBSD: openpam_vasprintf.h,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+
 /*-
  * Copyright (c) 2012 Dag-Erling Smørgrav
  * All rights reserved.
