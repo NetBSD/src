@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.306 2014/10/24 17:50:50 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.307 2014/10/24 17:58:09 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.306 2014/10/24 17:50:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.307 2014/10/24 17:58:09 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2804,24 +2804,8 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 	case WM_T_82580:
 	case WM_T_I350:
 	case WM_T_I354:
-		switch (sc->sc_funcid) {
-		case 0:
-			/* default value (== NVM_OFF_MACADDR) */
-			break;
-		case 1:
-			offset = NVM_OFF_LAN1;
-			break;
-		case 2:
-			offset = NVM_OFF_LAN2;
-			break;
-		case 3:
-			offset = NVM_OFF_LAN3;
-			break;
-		default:
-			goto bad;
-			/* NOTREACHED */
-			break;
-		}
+		/* EEPROM Top Level Partitioning */
+		offset = NVM_OFF_LAN_FUNC_82580(sc->sc_funcid) + 0;
 		break;
 	case WM_T_82571:
 	case WM_T_82575:
