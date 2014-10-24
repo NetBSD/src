@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.299 2014/05/24 16:34:04 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.300 2014/10/24 13:18:51 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.299 2014/05/24 16:34:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.300 2014/10/24 13:18:51 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -180,7 +180,7 @@ ffs_snapshot_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
     void *arg0, void *arg1, void *arg2, void *arg3)
 {
 	vnode_t *vp = arg2;
-	int result = KAUTH_RESULT_DEFER;;
+	int result = KAUTH_RESULT_DEFER;
 
 	if (action != KAUTH_SYSTEM_FS_SNAPSHOT)
 		return result;
