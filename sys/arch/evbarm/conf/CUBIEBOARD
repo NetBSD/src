@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.28 2014/10/15 23:04:08 jmcneill Exp $
+#	$NetBSD: CUBIEBOARD,v 1.29 2014/10/24 10:48:05 jmcneill Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -226,7 +226,7 @@ gpio*		at awingpio?
 awiniic0	at awinio? port 0
 #awiniic*	at awinio? port ?
 iic*		at awiniic?
-axp20x0 	at iic0 addr 0x34	# AXP209 Power Management Unit
+#axp20x0 	at iic0 addr 0x34	# AXP209 Power Management Unit
 
 # On-board 16550 UARTs
 com0		at awinio? port 0			# UART0 (console)
