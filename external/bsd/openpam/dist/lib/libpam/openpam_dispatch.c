@@ -1,3 +1,5 @@
+/*	$NetBSD: openpam_dispatch.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav
@@ -38,6 +40,9 @@
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: openpam_dispatch.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
 
 #include <sys/param.h>
 
@@ -117,7 +122,7 @@ openpam_dispatch(pam_handle_t *pamh,
 			openpam_log(PAM_LOG_LIBDEBUG, "calling %s() in %s",
 			    pam_sm_func_name[primitive], chain->module->path);
 			r = (chain->module->func[primitive])(pamh, flags,
-			    chain->optc, (const char **)chain->optv);
+			    chain->optc, (void *)chain->optv);
 			pamh->current = NULL;
 			openpam_log(PAM_LOG_LIBDEBUG, "%s: %s(): %s",
 			    chain->module->path, pam_sm_func_name[primitive],
