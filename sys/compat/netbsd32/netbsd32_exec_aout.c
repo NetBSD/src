@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.27 2014/01/25 23:58:10 christos Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.28 2014/10/24 21:08:36 christos Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.27 2014/01/25 23:58:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.28 2014/10/24 21:08:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,9 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.27 2014/01/25 23:58:10 chri
 
 #include <machine/frame.h>
 #include <machine/netbsd32_machdep.h>
-
-int netbsd32_copyinargs(struct exec_package *, struct ps_strings *,
-			     void *, size_t, const void *, const void *);
 
 /*
  * exec_netbsd32_makecmds(): Check if it's an netbsd32 a.out format
