@@ -1,8 +1,5 @@
-<<<<<<< pamtest.c
-/*	$NetBSD: pamtest.c,v 1.5 2014/10/24 18:17:56 christos Exp $	*/
+/*	$NetBSD: pamtest.c,v 1.6 2014/10/24 18:27:12 christos Exp $	*/
 
-=======
->>>>>>> 1.1.1.4
 /*-
  * Copyright (c) 2011 Dag-Erling Smørgrav
  * All rights reserved.
