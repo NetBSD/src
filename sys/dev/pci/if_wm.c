@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.305 2014/10/17 17:48:53 snj Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.306 2014/10/24 17:50:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.305 2014/10/17 17:48:53 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.306 2014/10/24 17:50:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -546,7 +546,7 @@ static void	wm_tick(void *);
 static int	wm_ifflags_cb(struct ethercom *);
 static int	wm_ioctl(struct ifnet *, u_long, void *);
 /* MAC address related */
-static int	wm_check_alt_mac_addr(struct wm_softc *);
+static uint16_t	wm_check_alt_mac_addr(struct wm_softc *);
 static int	wm_read_mac_addr(struct wm_softc *, uint8_t *);
 static void	wm_set_ral(struct wm_softc *, const uint8_t *, int);
 static uint32_t	wm_mchash(struct wm_softc *, const uint8_t *);
@@ -2759,7 +2759,11 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 /* MAC address related */
 
-static int
+/*
+ * Get the offset of MAC address and return it.
+ * If error occured, use offset 0.
+ */
+static uint16_t
 wm_check_alt_mac_addr(struct wm_softc *sc)
 {
 	uint16_t myea[ETHER_ADDR_LEN / 2];
@@ -2767,12 +2771,13 @@ wm_check_alt_mac_addr(struct wm_softc *sc)
 
 	/* Try to read alternative MAC address pointer */
 	if (wm_nvm_read(sc, NVM_OFF_ALT_MAC_ADDR_PTR, 1, &offset) != 0)
-		return -1;
+		return 0;
 
-	/* Check pointer */
-	if (offset == 0xffff)
-		return -1;
+	/* Check pointer if it's valid or not. */
+	if ((offset == 0x0000) || (offset == 0xffff))
+		return 0;
 
+	offset += NVM_OFF_MACADDR_82571(sc->sc_funcid);
 	/*
 	 * Check whether alternative MAC address is valid or not.
 	 * Some cards have non 0xffff pointer but those don't use
@@ -2782,10 +2787,10 @@ wm_check_alt_mac_addr(struct wm_softc *sc)
 	 */
 	if (wm_nvm_read(sc, offset, 1, myea) == 0)
 		if (((myea[0] & 0xff) & 0x01) == 0)
-			return 0; /* found! */
+			return offset; /* Found */
 
-	/* not found */
-	return -1;
+	/* Not found */
+	return 0;
 }
 
 static int
@@ -2824,34 +2829,10 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 	case WM_T_80003:
 	case WM_T_I210:
 	case WM_T_I211:
-		if (wm_check_alt_mac_addr(sc) != 0) {
-			/* reset the offset to LAN0 */
-			offset = NVM_OFF_MACADDR;
+		offset = wm_check_alt_mac_addr(sc);
+		if (offset == 0)
 			if ((sc->sc_funcid & 0x01) == 1)
 				do_invert = 1;
-			goto do_read;
-		}
-		switch (sc->sc_funcid) {
-		case 0:
-			/*
-			 * The offset is the value in NVM_OFF_ALT_MAC_ADDR_PTR
-			 * itself.
-			 */
-			break;
-		case 1:
-			offset += NVM_OFF_MACADDR_LAN1;
-			break;
-		case 2:
-			offset += NVM_OFF_MACADDR_LAN2;
-			break;
-		case 3:
-			offset += NVM_OFF_MACADDR_LAN3;
-			break;
-		default:
-			goto bad;
-			/* NOTREACHED */
-			break;
-		}
 		break;
 	default:
 		if ((sc->sc_funcid & 0x01) == 1)
@@ -2859,11 +2840,9 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 		break;
 	}
 
- do_read:
 	if (wm_nvm_read(sc, offset, sizeof(myea) / sizeof(myea[0]),
-		myea) != 0) {
+		myea) != 0)
 		goto bad;
-	}
 
 	enaddr[0] = myea[0] & 0xff;
 	enaddr[1] = myea[0] >> 8;
