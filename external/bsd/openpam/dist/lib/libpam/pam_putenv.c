@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_putenv.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav
@@ -39,6 +41,9 @@
 # include "config.h"
 #endif
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pam_putenv.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -69,7 +74,8 @@ pam_putenv(pam_handle_t *pamh,
 		RETURNC(PAM_SYSTEM_ERR);
 
 	/* see if the variable is already in the environment */
-	if ((i = openpam_findenv(pamh, namevalue, p - namevalue)) >= 0) {
+	if ((i = openpam_findenv(pamh, namevalue,
+	    (size_t)(p - namevalue))) >= 0) {
 		if ((p = strdup(namevalue)) == NULL)
 			RETURNC(PAM_BUF_ERR);
 		FREE(pamh->env[i]);
@@ -80,7 +86,7 @@ pam_putenv(pam_handle_t *pamh,
 	/* grow the environment list if necessary */
 	if (pamh->env_count == pamh->env_size) {
 		env = realloc(pamh->env,
-		    sizeof(char *) * (pamh->env_size * 2 + 1));
+		    sizeof(*env) * ((size_t)pamh->env_size * 2 + 1));
 		if (env == NULL)
 			RETURNC(PAM_BUF_ERR);
 		pamh->env = env;
