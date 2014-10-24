@@ -1,3 +1,5 @@
+/*	$NetBSD: openpam_static.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav
@@ -39,6 +41,9 @@
 # include "config.h"
 #endif
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: openpam_static.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
+
 #include <string.h>
 
 #include <security/pam_appl.h>
@@ -58,7 +63,7 @@ SET_DECLARE(openpam_static_modules, pam_module_t);
 pam_module_t *
 openpam_static(const char *path)
 {
-	pam_module_t **module;
+	pam_module_t * const *module;
 
 	SET_FOREACH(module, openpam_static_modules) {
 		if (strcmp((*module)->path, path) == 0)
@@ -67,7 +72,7 @@ openpam_static(const char *path)
 	return (NULL);
 }
 
-#endif
+#endif /* OPENPAM_STATIC_MODULES */
 
 /*
  * NOPARSE
