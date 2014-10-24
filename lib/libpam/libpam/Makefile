@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2013/12/28 18:04:18 christos Exp $
+# $NetBSD: Makefile,v 1.17 2014/10/24 18:27:41 christos Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -72,6 +72,7 @@ SRCS=	openpam_borrow_cred.c \
 	openpam_set_feature.c \
 	openpam_set_option.c \
 	openpam_straddch.c \
+	openpam_strlset.c \
 	openpam_subst.c \
 	openpam_ttyconv.c \
 	pam_acct_mgmt.c \
@@ -206,6 +207,6 @@ openpam_static_modules.o: openpam_static.o ${STATIC_MODULE_LIBS}
 
 .include <bsd.lib.mk>
 .PATH.h: ${DIST}/include
-.PATH.c: ${DIST}/lib
+.PATH.c: ${DIST}/lib/libpam
 .PATH.3: ${DIST}/doc/man
 .PATH.5: ${DIST}/doc/man
