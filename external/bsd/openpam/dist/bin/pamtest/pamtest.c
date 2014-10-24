@@ -1,5 +1,3 @@
-/*	$NetBSD: pamtest.c,v 1.1.1.3 2013/12/27 19:16:14 christos Exp $	*/
-
 /*-
  * Copyright (c) 2011 Dag-Erling Smørgrav
  * All rights reserved.

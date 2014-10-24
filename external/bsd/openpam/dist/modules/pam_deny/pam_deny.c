@@ -1,5 +1,3 @@
-/*	$NetBSD: pam_deny.c,v 1.1.1.3 2013/12/27 19:16:10 christos Exp $	*/
-
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav
