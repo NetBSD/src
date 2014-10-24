@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_get_item.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav
@@ -39,6 +41,9 @@
 # include "config.h"
 #endif
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pam_get_item.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
+
 #include <sys/param.h>
 
 #include <security/pam_appl.h>
@@ -75,6 +80,8 @@ pam_get_item(const pam_handle_t *pamh,
 	case PAM_AUTHTOK_PROMPT:
 	case PAM_OLDAUTHTOK_PROMPT:
 	case PAM_HOST:
+	case PAM_SOCKADDR:
+	case PAM_NUSER:
 		*item = pamh->item[item_type];
 		RETURNC(PAM_SUCCESS);
 	default:
@@ -128,6 +135,10 @@ pam_get_item(const pam_handle_t *pamh,
  *		expired authentication token prior to changing it.
  *	=PAM_HOST:
  *		The name of the host the application runs on.
+ *	=PAM_SOCKADDR:
+ *		The sockaddr_storage of the applicants's host.
+ *	=PAM_NUSER:
+ *		The "nested" user if this is a login on top of a previous one.
  *
  * See =pam_start for a description of =struct pam_conv.
  *

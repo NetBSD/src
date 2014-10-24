@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_vprompt.c,v 1.2 2014/10/24 18:17:56 christos Exp $	*/
+
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
  * Copyright (c) 2004-2011 Dag-Erling Smørgrav
@@ -39,6 +41,9 @@
 # include "config.h"
 #endif
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pam_vprompt.c,v 1.2 2014/10/24 18:17:56 christos Exp $");
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,7 +82,7 @@ pam_vprompt(const pam_handle_t *pamh,
 		openpam_log(PAM_LOG_ERROR, "no conversation function");
 		RETURNC(PAM_SYSTEM_ERR);
 	}
-	vsnprintf(msgbuf, PAM_MAX_MSG_SIZE, fmt, ap);
+	vsnprintf(msgbuf, (size_t)PAM_MAX_MSG_SIZE, fmt, ap);
 	msg.msg_style = style;
 	msg.msg = msgbuf;
 	msgp = &msg;
