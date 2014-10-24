@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.63 2014/10/22 12:28:52 sborrill Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.64 2014/10/24 07:32:25 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1819,3 +1819,22 @@ usr.sbin/sysinst/mbr.c				1.4
 	before using them.
 	[martin, ticket #153]
 
+sys/netinet/tcp_output.c			1.177
+
+	Fix wrong condition checking for TSO capability:
+	ipsec_used is not necessary condition.
+	IPsec outbound policy will not be checked when ipsec_used is false.
+	[hikaru, ticket #154]
+
+distrib/sets/join.awk				1.4-1.5
+
+	Add an unvis function and use it on file names in mtree specs.
+
+	This should correct the problem that ./bin/[ was missing from the
+	base.tgz set, despite being listed in src/distrib/sets/base/mi
+	and being present in METALOG.  The corresponding entry in
+	METALOG.sanitised has ./bin/\133 instead of ./bin/[, and that made
+	join.awk omit it.
+
+	Add vis() function, and canonicalise file names via vis(unvis($1)).
+	[apb, ticket #155]
