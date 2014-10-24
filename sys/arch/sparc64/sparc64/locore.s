@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.375 2014/10/18 08:33:27 snj Exp $	*/
+/*	$NetBSD: locore.s,v 1.376 2014/10/24 15:51:16 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -5772,7 +5772,7 @@ ENTRY(softint_fastintr)
 	wrpr	%g0, PIL_HIGH, %pil
 	LDPTR	[%l0 + CI_EINTSTACK], %l6	! l6 = ci_eintstack
 	add	%sp, -CC64FSZ, %l2		! ci_eintstack = sp - CC64FSZ
-	STPTR	%l2, [%l0 + CI_EINTSTACK]	! save intstack for nexted intr
+	STPTR	%l2, [%l0 + CI_EINTSTACK]	! save intstack for nested intr
 
 	mov	%i0, %o0			! o0/i0 = softint lwp
 	mov	%l7, %o1			! o1/i1 = ipl
