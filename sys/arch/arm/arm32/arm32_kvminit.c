@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.30 2014/05/23 13:24:15 kiyohara Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.31 2014/10/24 07:08:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.30 2014/05/23 13:24:15 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.31 2014/10/24 07:08:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -139,8 +139,6 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.30 2014/05/23 13:24:15 kiyohara 
 #include <arm/undefined.h>
 #include <arm/bootconfig.h>
 #include <arm/arm32/machdep.h>
-
-#include "ksyms.h"
 
 struct bootmem_info bootmem_info;
 
