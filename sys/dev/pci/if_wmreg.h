@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.64 2014/10/24 17:50:50 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.65 2014/10/24 17:58:09 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -972,9 +972,7 @@ struct livengood_tcpip_ctxdesc {
  * EEPROM Partitioning. See Table 6-1, "EEPROM Top Level Partitioning"
  * in 82580's datasheet.
  */
-#define NVM_OFF_LAN1	0x0080	/* Offset for LAN1 (82580)*/
-#define NVM_OFF_LAN2	0x00c0	/* Offset for LAN2 (82580)*/
-#define NVM_OFF_LAN3	0x0100	/* Offset for LAN3 (82580)*/
+#define NVM_OFF_LAN_FUNC_82580(x)	((x) ? (0x40 + (0x40 * (x))) : 0)
 
 /* ich8 flash control */
 #define ICH_FLASH_COMMAND_TIMEOUT            5000    /* 5000 uSecs - adjusted */
