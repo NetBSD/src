@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.217 2014/10/23 15:29:06 martin Exp $
+#	$NetBSD: Makefile,v 1.218 2014/10/24 22:42:40 joerg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -143,7 +143,7 @@ SUBDIR+=	../external/bsd/libc++
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libstdc++-v3
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libsupc++
 .endif
-.if (${HAVE_GCC} == "48")
+.if (${HAVE_GCC:U} == "48")
 SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libasan
 .endif
 
