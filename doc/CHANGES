@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2002 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2003 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -82,4 +82,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	libc: Update to tzcode2014i. [christos 201401023]
 	openpam(3): update to 20140912 (ourouparia) [christos 20141024]
 	pppd(8): updated to version 2.4.7. [christos 20141025]
-
+	acpi(4): Updated ACPICA to 20140926. [christos 20141025]
