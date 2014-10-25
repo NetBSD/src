@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.33 2014/10/18 08:33:24 snj Exp $ */
+/* $NetBSD: if_ie.c,v 1.34 2014/10/25 10:58:12 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.33 2014/10/18 08:33:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.34 2014/10/25 10:58:12 skrll Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.33 2014/10/18 08:33:24 snj Exp $");
 #include <sys/device.h>
 #include <machine/io.h>
 #include <machine/intr.h>
-#include <arm/arm32/katelib.h>
 #include <acorn32/podulebus/podulebus.h>
 #include <dev/podulebus/podules.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.19 2014/01/21 19:46:45 christos Exp $	*/
+/*	$NetBSD: cosc.c,v 1.20 2014/10/25 10:58:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.19 2014/01/21 19:46:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.20 2014/10/25 10:58:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.19 2014/01/21 19:46:45 christos Exp $");
 #include <machine/bootconfig.h>
 #include <machine/io.h>
 #include <machine/intr.h>
-#include <arm/arm32/katelib.h>
 #include <acorn32/podulebus/podulebus.h>
 #include <acorn32/podulebus/escreg.h>
 #include <acorn32/podulebus/escvar.h>

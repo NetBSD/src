@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.28 2014/09/13 18:08:38 matt Exp $ */
+/* $NetBSD: podulebus.c,v 1.29 2014/10/25 10:58:12 skrll Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.28 2014/09/13 18:08:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.29 2014/10/25 10:58:12 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.28 2014/09/13 18:08:38 matt Exp $");
 #include <sys/device.h>
 #include <uvm/uvm_extern.h>
 #include <machine/io.h>
-#include <arm/arm32/katelib.h>
 #include <machine/intr.h>
 #include <machine/bootconfig.h>
 #include <machine/pmap.h>
@@ -63,6 +62,11 @@ __KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.28 2014/09/13 18:08:38 matt Exp $");
 #include <dev/podulebus/podule_data.h>
 
 #include "locators.h"
+
+#define WriteByte(a, b) \
+    *((volatile unsigned char *)(a)) = (b)
+#define ReadByte(a) \
+    (*((volatile unsigned char *)(a)))
 
 /* Array of podule structures, one per possible podule */
 

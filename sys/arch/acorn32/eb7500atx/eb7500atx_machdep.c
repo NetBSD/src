@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.27 2014/09/13 17:36:42 matt Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.28 2014/10/25 10:58:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.27 2014/09/13 17:36:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.28 2014/10/25 10:58:12 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.27 2014/09/13 17:36:42 matt 
 #include <machine/signal.h>
 #include <machine/bootconfig.h>
 #include <machine/io.h>
-#include <arm/arm32/katelib.h>
 #include <arm/arm32/machdep.h>
 #include <machine/rtc.h>
 

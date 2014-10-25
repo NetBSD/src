@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.33 2014/10/18 08:33:24 snj Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.34 2014/10/25 10:58:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,12 +48,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.33 2014/10/18 08:33:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.34 2014/10/25 10:58:12 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <arm/iomd/vidc.h>
-#include <arm/arm32/katelib.h>
 #include <machine/bootconfig.h>
 #include <machine/intr.h>
 
@@ -65,6 +64,11 @@ __KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.33 2014/10/18 08:33:24 snj Exp $"
 #include <arm/iomd/iomdvar.h>
 #include <arm/iomd/vidc20config.h>
 
+#define WriteWord(a, b) \
+*((volatile unsigned int *)(a)) = (b)
+
+#define ReadWord(a) \
+(*((volatile unsigned int *)(a)))
 
 /*
  * A structure containing ALL the information required to restore
