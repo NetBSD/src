@@ -1,4 +1,4 @@
-/*	NetBSD	*/
+/*	$NetBSD: eap.c,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
 /*
  * eap.c - Extensible Authentication Protocol for PPP (RFC 2284)
  *
@@ -49,7 +49,7 @@
 #define RCSID	"Id: eap.c,v 1.4 2004/11/09 22:39:25 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("NetBSD");
+__RCSID("$NetBSD: eap.c,v 1.4 2014/10/25 21:11:37 christos Exp $");
 #endif
 
 /*

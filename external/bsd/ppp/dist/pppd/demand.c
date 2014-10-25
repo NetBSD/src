@@ -1,4 +1,4 @@
-/*	NetBSD	*/
+/*	$NetBSD: demand.c,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -35,7 +35,7 @@
 #define RCSID	"Id: demand.c,v 1.20 2005/08/25 12:14:18 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("NetBSD");
+__RCSID("$NetBSD: demand.c,v 1.4 2014/10/25 21:11:37 christos Exp $");
 #endif
 
 #include <stdio.h>

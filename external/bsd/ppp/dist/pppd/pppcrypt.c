@@ -1,4 +1,4 @@
-/*	NetBSD	*/
+/*	$NetBSD: pppcrypt.c,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
 
 /*
  * pppcrypt.c - PPP/DES linkage for MS-CHAP and EAP SRP-SHA1
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("NetBSD");
+__RCSID("$NetBSD: pppcrypt.c,v 1.4 2014/10/25 21:11:37 christos Exp $");
 
 #include <errno.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	NetBSD	*/
+/*	$NetBSD: chap-md5.h,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
 
 /*
  * chap-md5.h - New CHAP/MD5 implementation.
