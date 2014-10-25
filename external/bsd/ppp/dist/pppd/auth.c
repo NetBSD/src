@@ -68,7 +68,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"$Id: auth.c,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $"
+#define RCSID	"Id: auth.c,v 1.117 2008/07/01 12:27:56 paulus Exp "
 
 #include <stdio.h>
 #include <stddef.h>

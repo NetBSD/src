@@ -28,7 +28,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"$Id: demand.c,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $"
+#define RCSID	"Id: demand.c,v 1.20 2005/08/25 12:14:18 paulus Exp "
 
 #include <stdio.h>
 #include <stdlib.h>

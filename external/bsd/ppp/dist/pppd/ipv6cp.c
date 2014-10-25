@@ -135,10 +135,10 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ipv6cp.c,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $ 
+ * Id: ipv6cp.c,v 1.21 2005/08/25 23:59:34 paulus Exp  
  */
 
-#define RCSID	"$Id: ipv6cp.c,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $"
+#define RCSID	"Id: ipv6cp.c,v 1.21 2005/08/25 23:59:34 paulus Exp "
 
 /*
  * TODO: 

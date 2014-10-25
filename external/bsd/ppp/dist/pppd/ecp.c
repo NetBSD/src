@@ -57,7 +57,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"$Id: ecp.c,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $"
+#define RCSID	"Id: ecp.c,v 1.4 2004/11/04 10:02:26 paulus Exp "
 
 static const char rcsid[] = RCSID;
 

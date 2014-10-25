@@ -40,7 +40,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"$Id: fsm.c,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $"
+#define RCSID	"Id: fsm.c,v 1.23 2004/11/13 02:28:15 paulus Exp "
 
 /*
  * TODO:

@@ -40,7 +40,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"$Id: upap.c,v 1.1.1.2 2014/10/25 18:43:29 christos Exp $"
+#define RCSID	"Id: upap.c,v 1.30 2005/07/13 10:41:58 paulus Exp "
 
 /*
  * TODO:

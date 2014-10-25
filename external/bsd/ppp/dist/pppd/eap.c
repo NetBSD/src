@@ -43,7 +43,7 @@
  * Based on draft-ietf-pppext-eap-srp-03.txt.
  */
 
-#define RCSID	"$Id: eap.c,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $"
+#define RCSID	"Id: eap.c,v 1.4 2004/11/09 22:39:25 paulus Exp "
 
 /*
  * TODO:

@@ -28,7 +28,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"$Id: utils.c,v 1.1.1.2 2014/10/25 18:43:29 christos Exp $"
+#define RCSID	"Id: utils.c,v 1.25 2008/06/03 12:06:37 paulus Exp "
 
 #include <stdio.h>
 #include <ctype.h>

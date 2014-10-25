@@ -17,7 +17,7 @@
  *
  * Original version by James Carlson
  *
- * $Id: eap.h,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $
+ * Id: eap.h,v 1.2 2003/06/11 23:56:26 paulus Exp 
  */
 
 #ifndef PPP_EAP_H

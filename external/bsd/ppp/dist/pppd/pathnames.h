@@ -1,7 +1,7 @@
 /*
  * define path names
  *
- * $Id: pathnames.h,v 1.1.1.2 2014/10/25 18:43:29 christos Exp $
+ * Id: pathnames.h,v 1.18 2005/08/25 23:59:34 paulus Exp 
  */
 
 #ifdef HAVE_PATHS_H

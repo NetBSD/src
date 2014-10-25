@@ -74,7 +74,7 @@
  *
  */
 
-#define RCSID	"$Id: chap_ms.c,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $"
+#define RCSID	"Id: chap_ms.c,v 1.38 2007/12/01 20:10:51 carlsonj Exp "
 
 #ifdef CHAPMS
 

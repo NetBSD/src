@@ -27,7 +27,7 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ccp.h,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $
+ * Id: ccp.h,v 1.12 2004/11/04 10:02:26 paulus Exp 
  */
 
 typedef struct ccp_options {

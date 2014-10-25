@@ -40,7 +40,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"$Id: options.c,v 1.1.1.2 2014/10/25 18:43:29 christos Exp $"
+#define RCSID	"Id: options.c,v 1.102 2008/06/15 06:53:06 paulus Exp "
 
 #include <ctype.h>
 #include <stdio.h>
