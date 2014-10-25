@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,6 +56,7 @@
 #include "acdebug.h"
 #include "actables.h"
 #include "acinterp.h"
+#include "amlresrc.h"
 #include "acapps.h"
 
 #include <stdio.h>
@@ -68,6 +69,8 @@ extern UINT8                AcpiGbl_RegionFillValue;
 extern UINT8                AcpiGbl_UseHwReducedFadt;
 extern BOOLEAN              AcpiGbl_DisplayRegionAccess;
 extern BOOLEAN              AcpiGbl_DoInterfaceTests;
+extern BOOLEAN              AcpiGbl_LoadTestTables;
+extern ACPI_CONNECTION_INFO AeMyContext;
 
 /* Check for unexpected exceptions */
 
@@ -194,5 +197,20 @@ AeGlobalEventHandler (
     ACPI_HANDLE             GpeDevice,
     UINT32                  EventNumber,
     void                    *Context);
+
+/* aeregion */
+
+ACPI_STATUS
+AeInstallDeviceHandlers (
+    void);
+
+void
+AeInstallRegionHandlers (
+    void);
+
+void
+AeOverrideRegionHandlers (
+    void);
+
 
 #endif /* _AECOMMON */

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-
+#include "aslcompiler.h"
 #include "acpi.h"
 #include "accommon.h"
 #include "acapps.h"
@@ -203,11 +203,16 @@ FlGenerateFilename (
 
 
     /*
-     * Copy the original filename to a new buffer. Leave room for the worst case
-     * where we append the suffix, an added dot and the null terminator.
+     * Copy the original filename to a new buffer. Leave room for the worst
+     * case where we append the suffix, an added dot and the null terminator.
      */
-    NewFilename = ACPI_ALLOCATE_ZEROED ((ACPI_SIZE)
+    NewFilename = UtStringCacheCalloc ((ACPI_SIZE)
         strlen (InputFilename) + strlen (Suffix) + 2);
+    if (!NewFilename)
+    {
+        return (NULL);
+    }
+
     strcpy (NewFilename, InputFilename);
 
     /* Try to find the last dot in the filename */
@@ -250,7 +255,7 @@ FlStrdup (
     char                *NewString;
 
 
-    NewString = ACPI_ALLOCATE ((ACPI_SIZE) strlen (String) + 1);
+    NewString = UtStringCacheCalloc ((ACPI_SIZE) strlen (String) + 1);
     if (!NewString)
     {
         return (NULL);
@@ -332,7 +337,6 @@ FlSplitInputPathname (
 
     if (!Filename)
     {
-        ACPI_FREE (DirectoryPath);
         return (AE_NO_MEMORY);
     }
 
@@ -344,6 +348,5 @@ FlSplitInputPathname (
         return (AE_OK);
     }
 
-    ACPI_FREE (Filename);
     return (AE_OK);
 }
