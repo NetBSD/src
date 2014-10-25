@@ -1,4 +1,4 @@
-/*	NetBSD	*/
+/*	$NetBSD: upap.c,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
 
 /*
  * upap.c - User/Password Authentication Protocol.
@@ -47,7 +47,7 @@
 #define RCSID	"Id: upap.c,v 1.30 2005/07/13 10:41:58 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("NetBSD");
+__RCSID("$NetBSD: upap.c,v 1.4 2014/10/25 21:11:37 christos Exp $");
 #endif
 
 /*
