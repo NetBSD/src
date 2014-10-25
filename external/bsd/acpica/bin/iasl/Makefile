@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2013/12/28 16:03:51 christos Exp $
+# $NetBSD: Makefile,v 1.8 2014/10/25 21:01:12 christos Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 PROG=	iasl
@@ -19,13 +19,14 @@ CPPFLAGS+=	-DACPI_REPRO
 LDADD+=		-ll -ly -lrt -lpthread
 DPADD+=		${LIBL} ${LIBY} ${LIBRT} ${LIBPTHREAD}
 
-DPSRCS= aslcompilerparse.c aslcompilerlex.c \
+DPSRCS= aslcompiler.y aslcompilerlex.c aslcompilerparse.c \
 	dtparserparse.c dtparserlex.c prparserparse.c prparserlex.c
 
 .PATH:	${TOPDIR}
 SRCS+= \
 	adfile.c \
 	aslanalyze.c \
+	aslascii.c \
 	aslbtypes.c \
 	aslcodegen.c \
 	aslcompile.c \
@@ -43,6 +44,10 @@ SRCS+= \
 	asllookup.c \
 	aslmain.c \
 	aslmap.c \
+	aslmapenter.c \
+	aslmapoutput.c \
+	aslmaputils.c \
+	aslmessages.c \
 	aslmethod.c \
 	aslnamesp.c \
 	asloffset.c \
@@ -90,7 +95,10 @@ SRCS+= \
 SRCS+= \
 	adisasm.c \
 	adwalk.c \
+	ahids.c \
 	ahpredef.c \
+	ahuuids.c \
+	cmfsize.c \
 	dmextern.c \
 	dmrestag.c \
 	dmtable.c \
@@ -168,6 +176,7 @@ SRCS+= \
 .PATH: ${TOPDIR}/../tables
 SRCS+=	\
 	tbfadt.c \
+	tbdata.c \
 	tbinstal.c \
 	tbprint.c \
 	tbutils.c \
@@ -198,7 +207,9 @@ SRCS+= \
 	utdelete.c \
 	uterror.c \
 	utexcep.c \
+	utfileio.c \
 	utglobal.c \
+	uthex.c \
 	utinit.c \
 	utlock.c \
 	utmath.c \
@@ -208,16 +219,24 @@ SRCS+= \
 	utosi.c \
 	utownerid.c \
 	utpredef.c \
+	utprint.c \
 	utresrc.c \
 	utstate.c \
 	utstring.c \
+	utuuid.c \
 	utxface.c \
 	utxferror.c
 
 .PATH: ${TOPDIR}/../os_specific/service_layers
-SRCS+=	osunixxf.c
+SRCS+=	osunixxf.c oslibcfs.c
 
-aslcompiler.y.h aslcompilerparse.c: ${TOPDIR}/aslcompiler.y
+
+aslparser.y: asltokens.y asltypes.y aslrules.y aslsupport.y
+
+aslcompiler.y: aslparser.y
+	${TOOL_M4} -P -I${TOPDIR} ${.ALLSRC} > ${.TARGET}
+
+aslcompiler.y.h aslcompilerparse.c: aslcompiler.y
 	${YACC} -v -d -o${.TARGET} -pAslCompiler ${.ALLSRC}
 	mv -f ${.PREFIX}.h aslcompiler.y.h
 
@@ -244,7 +263,8 @@ prparserlex.c: ${TOPDIR}/prparser.l
 
 prparserlex.o: prparser.y.h
 
-CLEANFILES+=	aslcompilerlex.c aslcompilerparse.c	\
+CLEANFILES+=	aslcompiler.y 				\
+		aslcompilerlex.c aslcompilerparse.c	\
 		aslcompiler.y.h aslcompilerparse.output \
 		dtparserlex.c dtparserparse.c		\
 		dtparser.y.h dtparserparse.output	\
