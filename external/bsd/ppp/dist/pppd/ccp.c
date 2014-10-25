@@ -1,4 +1,4 @@
-/*	$NetBSD: ccp.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+/*	NetBSD	*/
 
 /*
  * ccp.c - PPP Compression Control Protocol.
@@ -35,7 +35,7 @@
 #define RCSID	"Id: ccp.c,v 1.50 2005/06/26 19:34:41 carlsonj Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("$NetBSD: ccp.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+__RCSID("NetBSD");
 #endif
 
 #include <stdlib.h>

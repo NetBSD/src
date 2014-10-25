@@ -1,4 +1,4 @@
-/*	$NetBSD: ipxcp.c,v 1.2 2013/11/28 22:33:42 christos Exp $ 	*/
+/*	NetBSD 	*/
 
 /*
  * ipxcp.c - PPP IPX Control Protocol.
@@ -47,7 +47,7 @@
 #define RCSID	"Id: ipxcp.c,v 1.24 2005/08/25 23:59:34 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("$NetBSD: ipxcp.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+__RCSID("NetBSD");
 #endif
 #ifdef IPX_CHANGE
 

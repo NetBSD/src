@@ -1,4 +1,4 @@
-/*	$NetBSD: multilink.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+/*	NetBSD	*/
 
 /*
  * multilink.c - support routines for multilink.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: multilink.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+__RCSID("NetBSD");
 
 #include <string.h>
 #include <ctype.h>
