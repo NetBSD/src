@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -635,4 +635,34 @@ AcpiUtPtrExit (
     }
 }
 
+#endif
+
+
+#ifdef ACPI_APPLICATION
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiLogError
+ *
+ * PARAMETERS:  Format              - Printf format field
+ *              ...                 - Optional printf arguments
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Print error message to the console, used by applications.
+ *
+ ******************************************************************************/
+
+void  ACPI_INTERNAL_VAR_XFACE
+AcpiLogError (
+    const char              *Format,
+    ...)
+{
+    va_list                 Args;
+
+    va_start (Args, Format);
+    (void) AcpiUtFileVprintf (ACPI_FILE_ERR, Format, Args);
+    va_end (Args);
+}
+
+ACPI_EXPORT_SYMBOL (AcpiLogError)
 #endif
