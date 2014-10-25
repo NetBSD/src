@@ -45,6 +45,10 @@
 #include "accommon.h"
 #include "acdisasm.h"
 
+#ifdef _KERNEL
+#define MpSaveGpioInfo(a, b, c, d, e)
+#define MpSaveSerialInfo(a, b, c)
+#endif
 
 #ifdef ACPI_DISASSEMBLER
 

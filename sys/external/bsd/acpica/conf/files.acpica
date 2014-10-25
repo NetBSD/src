@@ -1,7 +1,11 @@
-# $NetBSD: files.acpica,v 1.6 2013/12/27 20:55:03 christos Exp $
+# $NetBSD: files.acpica,v 1.7 2014/10/25 21:00:06 christos Exp $
 
 define		acpica
 makeoptions	acpi	CPPFLAGS+="-I$S/external/bsd/acpica/dist/include"
+
+# common/
+file	external/bsd/acpica/dist/common/ahids.c			acpica
+file	external/bsd/acpica/dist/common/ahuuids.c		acpica
 
 # debugger/
 file	external/bsd/acpica/dist/debugger/dbcmds.c		acpica & acpi_debug & ddb
@@ -14,6 +18,7 @@ file	external/bsd/acpica/dist/debugger/dbinput.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/debugger/dbmethod.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/debugger/dbnames.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/debugger/dbstats.c		acpica & acpi_debug & ddb
+file	external/bsd/acpica/dist/debugger/dbtest.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/debugger/dbutils.c		acpica & acpi_debug & ddb
 file	external/bsd/acpica/dist/debugger/dbxface.c		acpica & acpi_debug & ddb
 
@@ -155,6 +160,7 @@ file	external/bsd/acpica/dist/resources/rsutils.c		acpica
 file	external/bsd/acpica/dist/resources/rsxface.c		acpica
 
 # tables/
+file	external/bsd/acpica/dist/tables/tbdata.c		acpica
 file	external/bsd/acpica/dist/tables/tbfadt.c		acpica
 file	external/bsd/acpica/dist/tables/tbfind.c		acpica
 file	external/bsd/acpica/dist/tables/tbinstal.c		acpica
@@ -177,6 +183,7 @@ file	external/bsd/acpica/dist/utilities/uterror.c		acpica
 file	external/bsd/acpica/dist/utilities/uteval.c		acpica
 file	external/bsd/acpica/dist/utilities/utexcep.c		acpica
 file	external/bsd/acpica/dist/utilities/utglobal.c		acpica
+file	external/bsd/acpica/dist/utilities/uthex.c		acpica
 file	external/bsd/acpica/dist/utilities/utids.c		acpica
 file	external/bsd/acpica/dist/utilities/utinit.c		acpica
 file	external/bsd/acpica/dist/utilities/utlock.c		acpica
@@ -191,6 +198,7 @@ file	external/bsd/acpica/dist/utilities/utresrc.c		acpica
 file	external/bsd/acpica/dist/utilities/utstate.c		acpica
 file	external/bsd/acpica/dist/utilities/utstring.c		acpica
 file	external/bsd/acpica/dist/utilities/uttrack.c		acpica
+file	external/bsd/acpica/dist/utilities/utuuid.c		acpica
 file	external/bsd/acpica/dist/utilities/utxface.c		acpica
 file	external/bsd/acpica/dist/utilities/utxfinit.c		acpica
 file	external/bsd/acpica/dist/utilities/utxferror.c		acpica
