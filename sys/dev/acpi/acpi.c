@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.258 2014/02/25 18:30:09 pooka Exp $	*/
+/*	$NetBSD: acpi.c,v 1.259 2014/10/25 21:00:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.258 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.259 2014/10/25 21:00:20 christos Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -253,7 +253,6 @@ acpi_probe(void)
 	/*
 	 * Start up ACPICA.
 	 */
-	AcpiGbl_AllMethodsSerialized = false;
 	AcpiGbl_EnableInterpreterSlack = true;
 
 	rv = AcpiInitializeSubsystem();
