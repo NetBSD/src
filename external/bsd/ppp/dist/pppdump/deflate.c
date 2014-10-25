@@ -38,7 +38,7 @@
  * Id: deflate.c,v 1.5 2004/01/17 05:47:55 carlsonj Exp
  */
 #include <sys/cdefs.h>
-__RCSID("NetBSD");
+__RCSID("$NetBSD: deflate.c,v 1.4 2014/10/25 21:11:37 christos Exp $");
 
 #include <sys/types.h>
 #include <stdio.h>
