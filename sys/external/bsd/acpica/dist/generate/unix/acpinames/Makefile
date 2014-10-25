@@ -21,7 +21,6 @@ PROG = $(OBJDIR)/acpinames
 #
 vpath %.c \
     $(ACPINAMES)\
-    $(ACPICA_DEBUGGER)\
     $(ACPICA_DISPATCHER)\
     $(ACPICA_EXECUTER)\
     $(ACPICA_NAMESPACE)\
@@ -38,7 +37,7 @@ OBJECTS = \
 	$(OBJDIR)/anmain.o\
 	$(OBJDIR)/anstubs.o\
 	$(OBJDIR)/antables.o\
-	$(OBJDIR)/dbfileio.o\
+	$(OBJDIR)/cmfsize.o\
 	$(OBJDIR)/dsfield.o\
 	$(OBJDIR)/dsmthdat.o\
 	$(OBJDIR)/dsobject.o\
@@ -48,9 +47,12 @@ OBJECTS = \
 	$(OBJDIR)/dswscope.o\
 	$(OBJDIR)/dswstate.o\
 	$(OBJDIR)/excreate.o\
+	$(OBJDIR)/exdump.o\
+	$(OBJDIR)/exmutex.o\
 	$(OBJDIR)/exnames.o\
 	$(OBJDIR)/exresnte.o\
 	$(OBJDIR)/exresolv.o\
+	$(OBJDIR)/exsystem.o\
 	$(OBJDIR)/exutils.o\
 	$(OBJDIR)/getopt.o\
 	$(OBJDIR)/nsaccess.o\
@@ -67,6 +69,7 @@ OBJECTS = \
 	$(OBJDIR)/nsxfeval.o\
 	$(OBJDIR)/nsxfname.o\
 	$(OBJDIR)/nsxfobj.o\
+	$(OBJDIR)/oslibcfs.o\
 	$(OBJDIR)/osunixxf.o\
 	$(OBJDIR)/psargs.o\
 	$(OBJDIR)/psloop.o\
@@ -79,6 +82,7 @@ OBJECTS = \
 	$(OBJDIR)/psutils.o\
 	$(OBJDIR)/pswalk.o\
 	$(OBJDIR)/psxface.o\
+	$(OBJDIR)/tbdata.o\
 	$(OBJDIR)/tbfadt.o\
 	$(OBJDIR)/tbfind.o\
 	$(OBJDIR)/tbinstal.o\
@@ -89,13 +93,19 @@ OBJECTS = \
 	$(OBJDIR)/tbxfroot.o\
 	$(OBJDIR)/utaddress.o\
 	$(OBJDIR)/utalloc.o\
+	$(OBJDIR)/utbuffer.o\
 	$(OBJDIR)/utcache.o\
 	$(OBJDIR)/utdebug.o\
 	$(OBJDIR)/utdecode.o\
 	$(OBJDIR)/utdelete.o\
 	$(OBJDIR)/uterror.o\
+	$(OBJDIR)/uteval.o\
 	$(OBJDIR)/utexcep.o\
+	$(OBJDIR)/utfileio.o\
 	$(OBJDIR)/utglobal.o\
+	$(OBJDIR)/uthex.o\
+	$(OBJDIR)/utids.o\
+	$(OBJDIR)/utinit.o\
 	$(OBJDIR)/utlock.o\
 	$(OBJDIR)/utmath.o\
 	$(OBJDIR)/utmisc.o\
@@ -103,6 +113,7 @@ OBJECTS = \
 	$(OBJDIR)/utobject.o\
 	$(OBJDIR)/utosi.o\
 	$(OBJDIR)/utownerid.o\
+	$(OBJDIR)/utprint.o\
 	$(OBJDIR)/utstate.o\
 	$(OBJDIR)/utstring.o\
 	$(OBJDIR)/utxface.o\

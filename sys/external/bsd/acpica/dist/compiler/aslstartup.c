@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
 
 #include "aslcompiler.h"
 #include "actables.h"
@@ -251,7 +250,7 @@ AslDoDisassembly (
     AcpiGbl_DbOpt_disasm = TRUE;
     Status = AdAmlDisassemble (AslToFile,
         Gbl_Files[ASL_FILE_INPUT].Filename, Gbl_OutputFilenamePrefix,
-        &Gbl_Files[ASL_FILE_INPUT].Filename, Gbl_GetAllTables);
+        &Gbl_Files[ASL_FILE_INPUT].Filename);
     if (ACPI_FAILURE (Status))
     {
         return (Status);
@@ -284,8 +283,11 @@ AslDoDisassembly (
         return (AE_CTRL_CONTINUE);
     }
 
-    ACPI_FREE (Gbl_Files[ASL_FILE_INPUT].Filename);
+    /* No need to free the filename string */
+
     Gbl_Files[ASL_FILE_INPUT].Filename = NULL;
+
+    CmDeleteCaches ();
     return (AE_OK);
 }
 
@@ -325,13 +327,18 @@ AslDoOneFile (
         return (Status);
     }
 
-    Gbl_Files[ASL_FILE_INPUT].Filename = Filename;
-    UtConvertBackslashes (Filename);
+    /* Take a copy of the input filename, convert any backslashes */
+
+    Gbl_Files[ASL_FILE_INPUT].Filename =
+        UtStringCacheCalloc (strlen (Filename) + 1);
+
+    strcpy (Gbl_Files[ASL_FILE_INPUT].Filename, Filename);
+    UtConvertBackslashes (Gbl_Files[ASL_FILE_INPUT].Filename);
 
     /*
      * AML Disassembly (Optional)
      */
-    if (Gbl_DisasmFlag || Gbl_GetAllTables)
+    if (Gbl_DisasmFlag)
     {
         Status = AslDoDisassembly ();
         if (Status != AE_CTRL_CONTINUE)
@@ -396,7 +403,6 @@ AslDoOneFile (
 
         if (Gbl_Signature)
         {
-            ACPI_FREE (Gbl_Signature);
             Gbl_Signature = NULL;
         }
 
