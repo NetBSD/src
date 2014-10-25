@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.21 2014/09/21 15:46:44 christos Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.22 2014/10/25 10:58:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.21 2014/09/21 15:46:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.22 2014/10/25 10:58:12 skrll Exp $");
 
 #include "opt_irqstats.h"
 
@@ -49,12 +49,12 @@ __KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.21 2014/09/21 15:46:44 christo
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 
+#include <arm/cpufunc.h>
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>
 
 #include <machine/intr.h>
 #include <machine/cpu.h>
-#include <arm/arm32/katelib.h>
 
 irqhandler_t *irqhandlers[NIRQS];
 
