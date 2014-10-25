@@ -47,7 +47,7 @@
 #define RCSID	"Id: ipxcp.c,v 1.24 2005/08/25 23:59:34 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("NetBSD");
+__RCSID("$NetBSD: ipxcp.c,v 1.4 2014/10/25 21:11:37 christos Exp $");
 #endif
 #ifdef IPX_CHANGE
 
