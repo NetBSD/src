@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.20 2014/10/21 00:01:01 jmcneill Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.21 2014/10/25 18:00:25 joerg Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.20 2014/10/21 00:01:01 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.21 2014/10/25 18:00:25 joerg Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -173,7 +173,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 	}
 
 	/*
-	 * Init chip and do intial setup
+	 * Init chip and do initial setup
 	 */
 	if (dwc_gmac_reset(sc) != 0)
 		return;	/* not much to cleanup, haven't attached yet */
@@ -1342,6 +1342,6 @@ dwc_dump_and_abort(struct dwc_gmac_softc *sc, const char *msg)
 	dwc_gmac_dump_tx_desc(sc);
 	dwc_gmac_dump_rx_desc(sc);
 
-	panic(msg);
+	panic("%s", msg);
 }
 #endif
