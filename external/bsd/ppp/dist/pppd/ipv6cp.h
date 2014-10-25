@@ -135,7 +135,7 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Id: ipv6cp.h,v 1.7 2002/12/04 23:03:32 paulus Exp 
+ * $Id: ipv6cp.h,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $
  */
 
 /*
@@ -154,9 +154,7 @@ typedef struct ipv6cp_options {
     int opt_local;		/* ourtoken set by option */
     int opt_remote;		/* histoken set by option */
     int use_ip;			/* use IP as interface identifier */
-#if defined(SOL2) || defined(__linux__)
     int use_persistent;		/* use uniquely persistent value for address */
-#endif /* defined(SOL2) */
     int neg_vj;			/* Van Jacobson Compression? */
     u_short vj_protocol;	/* protocol value to use in VJ option */
     eui64_t ourid, hisid;	/* Interface identifiers */

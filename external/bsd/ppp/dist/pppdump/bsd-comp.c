@@ -38,7 +38,7 @@
  */
 
 /*
- * Id: bsd-comp.c,v 1.4 2004/01/17 05:47:55 carlsonj Exp 
+ * $Id: bsd-comp.c,v 1.1.1.2 2014/10/25 18:43:27 christos Exp $
  */
 
 #include <sys/types.h>

@@ -39,7 +39,7 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Id: pppd.h,v 1.96 2008/06/23 11:47:18 paulus Exp 
+ * $Id: pppd.h,v 1.1.1.2 2014/10/25 18:43:29 christos Exp $
  */
 
 /*
@@ -279,6 +279,7 @@ extern int	kdebugflag;	/* Tell kernel to print debug messages */
 extern int	default_device;	/* Using /dev/tty or equivalent */
 extern char	devnam[MAXPATHLEN];	/* Device name */
 extern int	crtscts;	/* Use hardware flow control */
+extern int	stop_bits;	/* Number of serial port stop bits */
 extern bool	modem;		/* Use modem control lines */
 extern int	inspeed;	/* Input/Output speed requested */
 extern u_int32_t netmask;	/* IP netmask to set on interface */
@@ -657,6 +658,8 @@ int  cifaddr __P((int, u_int32_t, u_int32_t));
 				/* Reset i/f IP addresses */
 #ifdef INET6
 int  ether_to_eui64(eui64_t *p_eui64);	/* convert eth0 hw address to EUI64 */
+int  sif6up __P((int));		/* Configure i/f up for IPv6 */
+int  sif6down __P((int));	/* Configure i/f down for IPv6 */
 int  sif6addr __P((int, eui64_t, eui64_t));
 				/* Configure IPv6 addresses for i/f */
 int  cif6addr __P((int, eui64_t, eui64_t));

@@ -28,7 +28,7 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Id: ecp.h,v 1.2 2003/01/10 07:12:36 fcusack Exp 
+ * $Id: ecp.h,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $
  */
 
 typedef struct ecp_options {

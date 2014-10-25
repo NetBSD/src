@@ -28,7 +28,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"Id: utils.c,v 1.25 2008/06/03 12:06:37 paulus Exp "
+#define RCSID	"$Id: utils.c,v 1.1.1.2 2014/10/25 18:43:29 christos Exp $"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -296,6 +296,8 @@ vslprintf(buf, buflen, fmt, args)
 	case 'q':		/* quoted string */
 	    quoted = c == 'q';
 	    p = va_arg(args, unsigned char *);
+	    if (p == NULL)
+		    p = (unsigned char *)"<NULL>";
 	    if (fillch == '0' && prec >= 0) {
 		n = prec;
 	    } else {

@@ -28,7 +28,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"Id: chap-md5.c,v 1.4 2004/11/09 22:39:25 paulus Exp "
+#define RCSID	"$Id: chap-md5.c,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $"
 
 #include <stdlib.h>
 #include <string.h>

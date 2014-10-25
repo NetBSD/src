@@ -39,7 +39,7 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Id: magic.h,v 1.5 2003/06/11 23:56:26 paulus Exp 
+ * $Id: magic.h,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $
  */
 
 void magic_init __P((void));	/* Initialize the magic number generator */

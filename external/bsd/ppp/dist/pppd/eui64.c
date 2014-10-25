@@ -32,10 +32,10 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Id: eui64.c,v 1.6 2002/12/04 23:03:32 paulus Exp 
+ * $Id: eui64.c,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $
  */
 
-#define RCSID	"Id: eui64.c,v 1.6 2002/12/04 23:03:32 paulus Exp "
+#define RCSID	"$Id: eui64.c,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $"
 
 #include "pppd.h"
 

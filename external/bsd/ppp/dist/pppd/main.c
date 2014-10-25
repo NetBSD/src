@@ -66,7 +66,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"Id: main.c,v 1.156 2008/06/23 11:47:18 paulus Exp "
+#define RCSID	"$Id: main.c,v 1.1.1.2 2014/10/25 18:43:29 christos Exp $"
 
 #include <stdio.h>
 #include <ctype.h>

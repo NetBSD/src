@@ -28,7 +28,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"Id: ccp.c,v 1.50 2005/06/26 19:34:41 carlsonj Exp "
+#define RCSID	"$Id: ccp.c,v 1.1.1.2 2014/10/25 18:43:28 christos Exp $"
 
 #include <stdlib.h>
 #include <string.h>

@@ -33,7 +33,7 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Id: deflate.c,v 1.5 2004/01/17 05:47:55 carlsonj Exp 
+ * $Id: deflate.c,v 1.1.1.2 2014/10/25 18:43:27 christos Exp $
  */
 
 #include <sys/types.h>
