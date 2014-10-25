@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.19 2012/10/27 17:17:23 chs Exp $	*/
+/*	$NetBSD: asc.c,v 1.20 2014/10/25 10:58:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -98,7 +98,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.19 2012/10/27 17:17:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.20 2014/10/25 10:58:12 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -114,8 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.19 2012/10/27 17:17:23 chs Exp $");
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-
-#include <arm/arm32/katelib.h>
 
 #include <dev/podulebus/podules.h>
 #include <dev/podulebus/powerromreg.h>

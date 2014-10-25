@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.89 2014/09/13 17:36:41 matt Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.90 2014/10/25 10:58:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.89 2014/09/13 17:36:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.90 2014/10/25 10:58:12 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -85,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.89 2014/09/13 17:36:41 matt Exp $"
 
 #include <arm/locore.h>
 #include <arm/undefined.h>
-#include <arm/arm32/katelib.h>
 #include <arm/arm32/machdep.h>
 #include <arm/arm32/pmap.h>
 
