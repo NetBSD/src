@@ -1,4 +1,4 @@
-/*	NetBSD	*/
+/*	$NetBSD: ipv6cp.c,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
 
 /*
  * ipv6cp.c - PPP IPV6 Control Protocol.
@@ -145,7 +145,7 @@
 #define RCSID	"Id: ipv6cp.c,v 1.21 2005/08/25 23:59:34 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("NetBSD");
+__RCSID("$NetBSD: ipv6cp.c,v 1.4 2014/10/25 21:11:37 christos Exp $");
 #endif
 
 /*
