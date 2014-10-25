@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -290,6 +290,7 @@ typedef struct acpi_create_field_info
     UINT32                          FieldBitPosition;
     UINT32                          FieldBitLength;
     UINT16                          ResourceLength;
+    UINT16                          PinNumberIndex;
     UINT8                           FieldFlags;
     UINT8                           Attribute;
     UINT8                           FieldType;
@@ -515,9 +516,9 @@ typedef struct acpi_gpe_register_info
 {
     ACPI_GENERIC_ADDRESS            StatusAddress;  /* Address of status reg */
     ACPI_GENERIC_ADDRESS            EnableAddress;  /* Address of enable reg */
+    UINT16                          BaseGpeNumber;  /* Base GPE number for this register */
     UINT8                           EnableForWake;  /* GPEs to keep enabled when sleeping */
     UINT8                           EnableForRun;   /* GPEs to keep enabled when running */
-    UINT8                           BaseGpeNumber;  /* Base GPE number for this register */
 
 } ACPI_GPE_REGISTER_INFO;
 
@@ -533,10 +534,11 @@ typedef struct acpi_gpe_block_info
     struct acpi_gpe_xrupt_info      *XruptBlock;    /* Backpointer to interrupt block */
     ACPI_GPE_REGISTER_INFO          *RegisterInfo;  /* One per GPE register pair */
     ACPI_GPE_EVENT_INFO             *EventInfo;     /* One for each GPE */
-    ACPI_GENERIC_ADDRESS            BlockAddress;   /* Base address of the block */
+    UINT64                          Address;        /* Base address of the block */
     UINT32                          RegisterCount;  /* Number of register pairs in block */
     UINT16                          GpeCount;       /* Number of individual GPEs in block */
-    UINT8                           BlockBaseNumber;/* Base GPE number for this block */
+    UINT16                          BlockBaseNumber;/* Base GPE number for this block */
+    UINT8                           SpaceId;
     BOOLEAN                         Initialized;    /* TRUE if this block is initialized */
 
 } ACPI_GPE_BLOCK_INFO;
@@ -876,11 +878,13 @@ typedef union acpi_parse_value
 #define ACPI_DASM_STRING                0x02        /* Buffer is a ASCII string */
 #define ACPI_DASM_UNICODE               0x03        /* Buffer is a Unicode string */
 #define ACPI_DASM_PLD_METHOD            0x04        /* Buffer is a _PLD method bit-packed buffer */
-#define ACPI_DASM_EISAID                0x05        /* Integer is an EISAID */
-#define ACPI_DASM_MATCHOP               0x06        /* Parent opcode is a Match() operator */
-#define ACPI_DASM_LNOT_PREFIX           0x07        /* Start of a LNotEqual (etc.) pair of opcodes */
-#define ACPI_DASM_LNOT_SUFFIX           0x08        /* End  of a LNotEqual (etc.) pair of opcodes */
-#define ACPI_DASM_IGNORE                0x09        /* Not used at this time */
+#define ACPI_DASM_UUID                  0x05        /* Buffer is a UUID/GUID */
+#define ACPI_DASM_EISAID                0x06        /* Integer is an EISAID */
+#define ACPI_DASM_MATCHOP               0x07        /* Parent opcode is a Match() operator */
+#define ACPI_DASM_LNOT_PREFIX           0x08        /* Start of a LNotEqual (etc.) pair of opcodes */
+#define ACPI_DASM_LNOT_SUFFIX           0x09        /* End  of a LNotEqual (etc.) pair of opcodes */
+#define ACPI_DASM_HID_STRING            0x0A        /* String is a _HID or _CID */
+#define ACPI_DASM_IGNORE                0x0B        /* Not used at this time */
 
 /*
  * Generic operation (for example:  If, While, Store)
@@ -1347,5 +1351,19 @@ typedef struct ah_predefined_name
 #endif
 
 } AH_PREDEFINED_NAME;
+
+typedef struct ah_device_id
+{
+    const char      *Name;
+    const char      *Description;
+
+} AH_DEVICE_ID;
+
+typedef struct ah_uuid
+{
+    const char      *Description;
+    const char      *String;
+
+} AH_UUID;
 
 #endif /* __ACLOCAL_H__ */
