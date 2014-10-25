@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,12 +72,6 @@ EXTERN BOOLEAN              INIT_GLOBAL (Gbl_TerseMode, FALSE);
 
 int
 AbCompareAmlFiles (
-    char                    *File1Path,
-    char                    *File2Path);
-
-int
-AbExtractAmlFile (
-    char                    *TableSig,
     char                    *File1Path,
     char                    *File2Path);
 
