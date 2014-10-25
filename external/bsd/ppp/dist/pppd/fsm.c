@@ -1,4 +1,4 @@
-/*	$NetBSD: fsm.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+/*	NetBSD	*/
 
 /*
  * fsm.c - {Link, IP} Control Protocol Finite State Machine.
@@ -47,7 +47,7 @@
 #define RCSID   "Id: fsm.c,v 1.23 2004/11/13 02:28:15 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("$NetBSD: fsm.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+__RCSID("NetBSD");
 #endif
 
 /*

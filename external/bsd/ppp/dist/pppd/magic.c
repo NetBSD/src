@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+/*	NetBSD	*/
 
 /*
  * magic.c - PPP Magic Number routines.
@@ -47,7 +47,7 @@
 #define RCSID	"Id: magic.c,v 1.11 2003/06/11 23:56:26 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("$NetBSD: magic.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+__RCSID("NetBSD");
 #endif
 
 #include <stdio.h>
