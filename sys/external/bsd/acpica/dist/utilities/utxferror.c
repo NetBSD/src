@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,6 +55,8 @@
  * This module is used for the in-kernel ACPICA as well as the ACPICA
  * tools/applications.
  */
+
+#ifndef ACPI_NO_ERROR_MESSAGES /* Entire module */
 
 /*******************************************************************************
  *
@@ -290,3 +292,5 @@ AcpiBiosWarning (
 }
 
 ACPI_EXPORT_SYMBOL (AcpiBiosWarning)
+
+#endif /* ACPI_NO_ERROR_MESSAGES */

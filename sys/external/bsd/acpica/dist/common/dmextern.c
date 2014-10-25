@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,7 +67,7 @@
  */
 static const char           *AcpiGbl_DmTypeNames[] =
 {
-    /* 00 */ "",                    /* Type ANY */
+    /* 00 */ ", UnknownObj",        /* Type ANY */
     /* 01 */ ", IntObj",
     /* 02 */ ", StrObj",
     /* 03 */ ", BuffObj",
@@ -397,6 +397,7 @@ AcpiDmGetExternalsFromFile (
     {
         fprintf (stderr, "Could not open external reference file \"%s\"\n",
             Gbl_ExternalRefFilename);
+        AslAbort ();
         return;
     }
 
@@ -405,18 +406,37 @@ AcpiDmGetExternalsFromFile (
     while (fgets (StringBuffer, ASL_MSG_BUFFER_SIZE, ExternalRefFile))
     {
         Token = strtok (StringBuffer, METHOD_SEPARATORS);   /* "External" */
-        if (!Token) continue;
-        if (strcmp (Token, "External")) continue;
+        if (!Token)
+        {
+            continue;
+        }
+        if (strcmp (Token, "External"))
+        {
+            continue;
+        }
 
         MethodName = strtok (NULL, METHOD_SEPARATORS);      /* Method namepath */
-        if (!MethodName) continue;
+        if (!MethodName)
+        {
+            continue;
+        }
 
         Token = strtok (NULL, METHOD_SEPARATORS);           /* "MethodObj" */
-        if (!Token) continue;
-        if (strcmp (Token, "MethodObj")) continue;
+        if (!Token)
+        {
+            continue;
+        }
+
+        if (strcmp (Token, "MethodObj"))
+        {
+            continue;
+        }
 
         Token = strtok (NULL, METHOD_SEPARATORS);           /* Arg count */
-        if (!Token) continue;
+        if (!Token)
+        {
+            continue;
+        }
 
         /* Convert arg count string to an integer */
 
@@ -791,7 +811,8 @@ AcpiDmCreateNewExternal (
             /* Duplicate method, check that the Value (ArgCount) is the same */
 
             if ((NextExternal->Type == ACPI_TYPE_METHOD) &&
-                (NextExternal->Value != Value))
+                (NextExternal->Value != Value) &&
+                (Value > 0))
             {
                 ACPI_ERROR ((AE_INFO,
                     "External method arg count mismatch %s: Current %u, attempted %u",
@@ -1065,9 +1086,8 @@ AcpiDmEmitExternals (
                 NextExternal->Path,
                 AcpiDmGetObjectTypeName (NextExternal->Type));
 
-            AcpiOsPrintf (
-                ")    // Warning: Unresolved Method, "
-                "guessing %u arguments (may be incorrect, see warning above)\n",
+            AcpiOsPrintf (")    // Warning: Unresolved method, "
+                "guessing %u arguments\n",
                 NextExternal->Value);
 
             NextExternal->Flags |= ACPI_EXT_EXTERNAL_EMITTED;
@@ -1265,12 +1285,24 @@ AcpiDmUnresolvedWarning (
                 "     * were not specified. This resulting disassembler output file may not\n"
                 "     * compile because the disassembler did not know how many arguments\n"
                 "     * to assign to these methods. To specify the tables needed to resolve\n"
-                "     * external control method references, use the one of the following\n"
-                "     * example iASL invocations:\n"
-                "     *     iasl -e <ssdt1.aml,ssdt2.aml...> -d <dsdt.aml>\n"
-                "     *     iasl -e <dsdt.aml,ssdt2.aml...> -d <ssdt1.aml>\n"
+                "     * external control method references, the -e option can be used to\n"
+                "     * specify the filenames. Example iASL invocations:\n"
+                "     *     iasl -e ssdt1.aml ssdt2.aml ssdt3.aml -d dsdt.aml\n"
+                "     *     iasl -e dsdt.aml ssdt2.aml -d ssdt1.aml\n"
+                "     *     iasl -e ssdt*.aml -d dsdt.aml\n"
+                "     *\n"
+                "     * In addition, the -fe option can be used to specify a file containing\n"
+                "     * control method external declarations with the associated method\n"
+                "     * argument counts. Each line of the file must be of the form:\n"
+                "     *     External (<method pathname>, MethodObj, <argument count>)\n"
+                "     * Invocation:\n"
+                "     *     iasl -fe refs.txt -d dsdt.aml\n"
+                "     *\n"
+                "     * The following methods were unresolved and many not compile properly\n"
+                "     * because the disassembler had to guess at the number of arguments\n"
+                "     * required for each:\n"
                 "     */\n",
-                AcpiGbl_NumExternalMethods);
+               AcpiGbl_NumExternalMethods);
         }
         else if (AcpiGbl_NumExternalMethods != AcpiGbl_ResolvedExternalMethods)
         {
@@ -1279,10 +1311,21 @@ AcpiDmUnresolvedWarning (
             AcpiOsPrintf ("    /*\n"
                 "     * iASL Warning: There were %u external control methods found during\n"
                 "     * disassembly, but only %u %s resolved (%u unresolved). Additional\n"
-                "     * ACPI tables are required to properly disassemble the code. This\n"
+                "     * ACPI tables may be required to properly disassemble the code. This\n"
                 "     * resulting disassembler output file may not compile because the\n"
                 "     * disassembler did not know how many arguments to assign to the\n"
                 "     * unresolved methods.\n"
+                "     *\n"
+                "     * If necessary, the -fe option can be used to specify a file containing\n"
+                "     * control method external declarations with the associated method\n"
+                "     * argument counts. Each line of the file must be of the form:\n"
+                "     *     External (<method pathname>, MethodObj, <argument count>)\n"
+                "     * Invocation:\n"
+                "     *     iasl -fe refs.txt -d dsdt.aml\n"
+                "     *\n"
+                "     * The following methods were unresolved and many not compile properly\n"
+                "     * because the disassembler had to guess at the number of arguments\n"
+                "     * required for each:\n"
                 "     */\n",
                 AcpiGbl_NumExternalMethods, AcpiGbl_ResolvedExternalMethods,
                 (AcpiGbl_ResolvedExternalMethods > 1 ? "were" : "was"),
@@ -1301,10 +1344,18 @@ AcpiDmUnresolvedWarning (
                 "were not specified. The resulting disassembler output file may not\n"
                 "compile because the disassembler did not know how many arguments\n"
                 "to assign to these methods. To specify the tables needed to resolve\n"
-                "external control method references, use the one of the following\n"
-                "example iASL invocations:\n"
-                "    iasl -e <ssdt1.aml,ssdt2.aml...> -d <dsdt.aml>\n"
-                "    iasl -e <dsdt.aml,ssdt2.aml...> -d <ssdt1.aml>\n",
+                "external control method references, the -e option can be used to\n"
+                "specify the filenames. Example iASL invocations:\n"
+                "    iasl -e ssdt1.aml ssdt2.aml ssdt3.aml -d dsdt.aml\n"
+                "    iasl -e dsdt.aml ssdt2.aml -d ssdt1.aml\n"
+                "    iasl -e ssdt*.aml -d dsdt.aml\n"
+                "\n"
+                "In addition, the -fe option can be used to specify a file containing\n"
+                "control method external declarations with the associated method\n"
+                "argument counts. Each line of the file must be of the form:\n"
+                "    External (<method pathname>, MethodObj, <argument count>)\n"
+                "Invocation:\n"
+                "    iasl -fe refs.txt -d dsdt.aml\n",
                 AcpiGbl_NumExternalMethods);
         }
         else if (AcpiGbl_NumExternalMethods != AcpiGbl_ResolvedExternalMethods)
@@ -1314,10 +1365,17 @@ AcpiDmUnresolvedWarning (
             fprintf (stderr, "\n"
                 "iASL Warning: There were %u external control methods found during\n"
                 "disassembly, but only %u %s resolved (%u unresolved). Additional\n"
-                "ACPI tables are required to properly disassemble the code. The\n"
+                "ACPI tables may be required to properly disassemble the code. The\n"
                 "resulting disassembler output file may not compile because the\n"
                 "disassembler did not know how many arguments to assign to the\n"
-                "unresolved methods.\n",
+                "unresolved methods.\n"
+                "\n"
+                "If necessary, the -fe option can be used to specify a file containing\n"
+                "control method external declarations with the associated method\n"
+                "argument counts. Each line of the file must be of the form:\n"
+                "    External (<method pathname>, MethodObj, <argument count>)\n"
+                "Invocation:\n"
+                "    iasl -fe refs.txt -d dsdt.aml\n",
                 AcpiGbl_NumExternalMethods, AcpiGbl_ResolvedExternalMethods,
                 (AcpiGbl_ResolvedExternalMethods > 1 ? "were" : "was"),
                 (AcpiGbl_NumExternalMethods - AcpiGbl_ResolvedExternalMethods));

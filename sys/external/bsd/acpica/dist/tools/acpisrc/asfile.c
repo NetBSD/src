@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,7 @@
  */
 
 #include "acpisrc.h"
+#include "acapps.h"
 
 /* Local prototypes */
 
@@ -332,6 +333,17 @@ AsConvertFile (
         MacroTable          = ConversionTable->HeaderMacroTable;
         StructTable         = ConversionTable->HeaderStructTable;
         SpecialMacroTable   = ConversionTable->HeaderSpecialMacroTable;
+        break;
+
+    case FILE_TYPE_PATCH:
+
+        Functions           = ConversionTable->PatchFunctions;
+        StringTable         = ConversionTable->PatchStringTable;
+        LineTable           = ConversionTable->PatchLineTable;
+        ConditionalTable    = ConversionTable->PatchConditionalTable;
+        MacroTable          = ConversionTable->PatchMacroTable;
+        StructTable         = ConversionTable->PatchStructTable;
+        SpecialMacroTable   = ConversionTable->PatchSpecialMacroTable;
         break;
 
     default:
@@ -703,8 +715,6 @@ AsGetFile (
     FILE                    *File;
     UINT32                  Size;
     char                    *Buffer;
-    int                     Seek1;
-    int                     Seek2;
     size_t                  Actual;
 
 
@@ -719,11 +729,8 @@ AsGetFile (
 
     /* Need file size to allocate a buffer */
 
-    Seek1 = fseek (File, 0L, SEEK_END);
-    Size = ftell (File);
-    Seek2 = fseek (File, 0L, SEEK_SET);
-
-    if (Seek1 || Seek2 || (Size == -1))
+    Size = CmGetFileSize (File);
+    if (Size == ACPI_UINT32_MAX)
     {
         printf ("Could not get file size for %s\n", Filename);
         goto ErrorExit;

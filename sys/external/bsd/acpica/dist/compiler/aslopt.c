@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
 
 #include "aslcompiler.h"
 #include "aslcompiler.y.h"
@@ -168,7 +167,7 @@ OptSearchToRoot (
 
     /* We must allocate a new string for the name (TargetPath gets deleted) */
 
-    *NewPath = ACPI_ALLOCATE_ZEROED (ACPI_NAME_SIZE + 1);
+    *NewPath = UtStringCacheCalloc (ACPI_NAME_SIZE + 1);
     ACPI_STRCPY (*NewPath, Path);
 
     if (ACPI_STRNCMP (*NewPath, "_T_", 3))
@@ -749,7 +748,7 @@ OptOptimizeNamePath (
         HowMuchShorter = (AmlNameStringLength - ACPI_STRLEN (NewPath));
         OptTotal += HowMuchShorter;
 
-        ACPI_DEBUG_PRINT_RAW ((ACPI_DB_OPTIMIZATIONS, 
+        ACPI_DEBUG_PRINT_RAW ((ACPI_DB_OPTIMIZATIONS,
             " REDUCED BY %2u (TOTAL SAVED %2u)",
             (UINT32) HowMuchShorter, OptTotal));
 

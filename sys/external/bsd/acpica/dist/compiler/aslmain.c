@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,6 +72,36 @@ AslSignalHandler (
 static void
 AslInitialize (
     void);
+
+UINT8
+AcpiIsBigEndianMachine (
+    void);
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiIsBigEndianMachine
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      TRUE if machine is big endian
+ *              FALSE if machine is little endian
+ *
+ * DESCRIPTION: Detect whether machine is little endian or big endian.
+ *
+ ******************************************************************************/
+
+UINT8
+AcpiIsBigEndianMachine (
+    void)
+{
+    union {
+        UINT32              Integer;
+        UINT8               Bytes[4];
+    } Overlay = {0xFF000000};
+
+    return (Overlay.Bytes[0]); /* Returns 0xFF (TRUE) for big endian */
+}
 
 
 /*******************************************************************************
@@ -142,6 +172,7 @@ Usage (
 
     printf ("\nOptional Listing Files:\n");
     ACPI_OPTION ("-l",              "Create mixed listing file (ASL source and AML) (*.lst)");
+    ACPI_OPTION ("-lm",             "Create hardware summary map file (*.map)");
     ACPI_OPTION ("-ln",             "Create namespace file (*.nsp)");
     ACPI_OPTION ("-ls",             "Create combined source file (expanded includes) (*.src)");
 
@@ -158,7 +189,6 @@ Usage (
     ACPI_OPTION ("",                "  (Obtain DSDT from current system if no input file)");
     ACPI_OPTION ("-e  <f1 f2 ...>", "Include ACPI table(s) for external symbol resolution");
     ACPI_OPTION ("-fe <file>",      "Specify external symbol declaration file");
-    ACPI_OPTION ("-g",              "Get ACPI tables and write to files (*.dat)");
     ACPI_OPTION ("-in",             "Ignore NoOp opcodes");
     ACPI_OPTION ("-vt",             "Dump binary table data in hex format within output file");
 
@@ -298,8 +328,22 @@ main (
     ACPI_STATUS             Status;
     int                     Index1;
     int                     Index2;
+    int                     ReturnStatus = 0;
 
 
+    /*
+     * Big-endian machines are not currently supported. ACPI tables must
+     * be little-endian, and support for big-endian machines needs to
+     * be implemented.
+     */
+    if (AcpiIsBigEndianMachine ())
+    {
+        fprintf (stderr,
+            "iASL is not currently supported on big-endian machines.\n");
+        return (-1);
+    }
+
+    AcpiOsInitialize ();
     ACPI_DEBUG_INITIALIZE (); /* For debug version only */
 
     /* Initialize preprocessor and compiler before command line processing */
@@ -318,16 +362,6 @@ main (
     UtExpandLineBuffers ();
 
     /* Perform global actions first/only */
-
-    if (Gbl_GetAllTables)
-    {
-        Status = AslDoOneFile (NULL);
-        if (ACPI_FAILURE (Status))
-        {
-            return (-1);
-        }
-        return (0);
-    }
 
     if (Gbl_DisassembleAll)
     {
@@ -360,16 +394,23 @@ main (
         Status = AslDoOneFile (argv[Index2]);
         if (ACPI_FAILURE (Status))
         {
-            return (-1);
+            ReturnStatus = -1;
+            goto CleanupAndExit;
         }
 
         Index2++;
     }
+
+
+CleanupAndExit:
+
+    UtFreeLineBuffers ();
+    AslParserCleanup ();
 
     if (AcpiGbl_ExternalFileList)
     {
         AcpiDmClearExternalFileList();
     }
 
-    return (0);
+    return (ReturnStatus);
 }

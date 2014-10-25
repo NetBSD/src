@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -141,7 +141,7 @@ const AH_AML_OPCODE         AmlOpcodeInfo[] =
                                                                 "DefFatal := FatalOp FatalType FatalCode FatalArg"},
     {0x5B33, 0x5B33, "0x5B33",          "TimerOp",              "TermObject",   NULL,                                           NULL,
                                                                 "DefTimer := TimerOp"},
-    {0x5B80, 0x5B80, "0x5B80",          "OpRegionOp",           "TermObject",   "NameString ByteData TermArg TermArg",          NULL,
+    {0x5B80, 0x5B80, "0x5B80",          "OperationRegionOp",    "TermObject",   "NameString ByteData TermArg TermArg",          NULL,
                                                                 "DefOpRegion := OpRegionOp NameString RegionSpace RegionOffset RegionLen"},
     {0x5B81, 0x5B81, "0x5B81",          "FieldOp",              "TermObject",   "NameString ByteData",                          "FieldList",
                                                                 "DefField := FieldOp PkgLength NameString FieldFlags FieldList"},

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
 
 #include "acpi.h"
 #include "accommon.h"
@@ -760,10 +759,12 @@ AcpiDmXrefDescendingOp (
 
     if ((!(OpInfo->Flags & AML_NAMED)) &&
         (!(OpInfo->Flags & AML_CREATE)) &&
-        (Op->Common.AmlOpcode != AML_INT_NAMEPATH_OP))
+        (Op->Common.AmlOpcode != AML_INT_NAMEPATH_OP) &&
+        (Op->Common.AmlOpcode != AML_NOTIFY_OP))
     {
         goto Exit;
     }
+
 
     /* Get the NamePath from the appropriate place */
 
@@ -800,6 +801,10 @@ AcpiDmXrefDescendingOp (
         {
             Path = NextOp->Common.Value.String;
         }
+    }
+    else if (Op->Common.AmlOpcode == AML_NOTIFY_OP)
+    {
+        Path = Op->Common.Value.Arg->Asl.Value.String;
     }
     else
     {

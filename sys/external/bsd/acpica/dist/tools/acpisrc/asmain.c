@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,6 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  */
-
 
 #include "acpisrc.h"
 #include "acapps.h"
@@ -242,8 +241,8 @@ AsDisplayStats (
     printf ("%8u Total bytes (%.1fK/file)\n",
         Gbl_TotalSize, ((double) Gbl_TotalSize/Gbl_Files)/1024);
     printf ("%8u Tabs found\n", Gbl_Tabs);
-    printf ("%8u Missing if/else braces\n", Gbl_MissingBraces);
-    printf ("%8u Non-ANSI comments found\n", Gbl_NonAnsiComments);
+    printf ("%8u Missing if/else/while braces\n", Gbl_MissingBraces);
+    printf ("%8u Non-ANSI // comments found\n", Gbl_NonAnsiComments);
     printf ("%8u Total Lines\n", Gbl_TotalLines);
     printf ("%8u Lines of code\n", Gbl_SourceLines);
     printf ("%8u Lines of non-comment whitespace\n", Gbl_WhiteLines);
@@ -297,7 +296,7 @@ AsDisplayUsage (
     ACPI_OPTION ("-l",          "Generate Linux version of the source");
     ACPI_OPTION ("-u",          "Generate Custom source translation");
 
-    printf ("\n");
+    ACPI_USAGE_TEXT ("\n");
     ACPI_OPTION ("-d",          "Leave debug statements in code");
     ACPI_OPTION ("-s",          "Generate source statistics only");
     ACPI_OPTION ("-v",          "Display version information");
@@ -327,6 +326,7 @@ main (
 
 
     ACPI_DEBUG_INITIALIZE (); /* For debug version only */
+    AcpiOsInitialize ();
     printf (ACPI_COMMON_SIGNON (AS_UTILITY_NAME));
 
     if (argc < 2)
@@ -337,7 +337,7 @@ main (
 
     /* Command line options */
 
-    while ((j = AcpiGetopt (argc, argv, AS_SUPPORTED_OPTIONS)) != EOF) switch(j)
+    while ((j = AcpiGetopt (argc, argv, AS_SUPPORTED_OPTIONS)) != ACPI_OPT_END) switch(j)
     {
     case 'l':
 
@@ -495,9 +495,17 @@ main (
         {
             AsProcessOneFile (ConversionTable, NULL, TargetPath, 0, SourcePath, FILE_TYPE_HEADER);
         }
-        else
+        else if (strstr (SourcePath, ".c"))
         {
             AsProcessOneFile (ConversionTable, NULL, TargetPath, 0, SourcePath, FILE_TYPE_SOURCE);
+        }
+        else if (strstr (SourcePath, ".patch"))
+        {
+            AsProcessOneFile (ConversionTable, NULL, TargetPath, 0, SourcePath, FILE_TYPE_PATCH);
+        }
+        else
+        {
+            printf ("Unknown file type - %s\n", SourcePath);
         }
     }
 

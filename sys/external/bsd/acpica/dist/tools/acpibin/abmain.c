@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,6 @@
  * POSSIBILITY OF SUCH DAMAGES.
  */
 
-
 #define _DECLARE_GLOBALS
 #include "acpibin.h"
 #include "acapps.h"
@@ -54,7 +53,7 @@ AbDisplayUsage (
 
 
 #define AB_UTILITY_NAME             "ACPI Binary Table Dump Utility"
-#define AB_SUPPORTED_OPTIONS        "c:d:e:h:s:tv"
+#define AB_SUPPORTED_OPTIONS        "c:d:h:s:tv"
 
 
 /******************************************************************************
@@ -79,7 +78,6 @@ AbDisplayUsage (
 
     ACPI_OPTION ("-c <File1><File2>",       "Compare two binary AML files");
     ACPI_OPTION ("-d <In><Out>",            "Dump AML binary to text file");
-    ACPI_OPTION ("-e <Sig><In><Out>",       "Extract binary AML table from AcpiDump file");
     ACPI_OPTION ("-h <File>",               "Display table header for binary AML file");
     ACPI_OPTION ("-s <File>",               "Update checksum for binary AML file");
     ACPI_OPTION ("-t",                      "Terse mode");
@@ -120,7 +118,7 @@ main (
 
     /* Command line options */
 
-    while ((j = AcpiGetopt (argc, argv, AB_SUPPORTED_OPTIONS)) != EOF) switch(j)
+    while ((j = AcpiGetopt (argc, argv, AB_SUPPORTED_OPTIONS)) != ACPI_OPT_END) switch(j)
     {
     case 'c':   /* Compare Files */
 
@@ -142,18 +140,6 @@ main (
         }
 
         Status = AbDumpAmlFile (AcpiGbl_Optarg, argv[AcpiGbl_Optind]);
-        break;
-
-    case 'e':   /* Extract AML text file */
-
-        if (argc < 5)
-        {
-            AbDisplayUsage (3);
-            return (-1);
-        }
-
-        Status = AbExtractAmlFile (AcpiGbl_Optarg, argv[AcpiGbl_Optind],
-                    argv[AcpiGbl_Optind+1]);
         break;
 
     case 'h':   /* Display ACPI table header */
