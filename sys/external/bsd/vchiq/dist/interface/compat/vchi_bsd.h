@@ -53,46 +53,6 @@
 #define copy_to_user(to, from, n)	copyout((from), (to), (n))
 
 /*
- * Bit API
- */
-
-static __inline int
-test_and_set_bit(int nr, volatile void *addr)
-{
-	volatile uint32_t *val;
-	uint32_t mask, old;
-
-	val = (volatile uint32_t *)addr;
-	mask = 1 << nr;
-
-	do {
-		old = *val;
-		if ((old & mask) != 0)
-			break;
-	} while (atomic_cas_uint(val, old, old | mask) != old);
-
-	return old & mask;
-}
-
-static __inline__ int
-test_and_clear_bit(int nr, volatile void *addr)
-{
-	volatile uint32_t *val;
-	uint32_t mask, old;
-
-	val = (volatile uint32_t *)addr;
-	mask = 1 << nr;
-
-	do {
-		old = *val;
-		if ((old & mask) == 0)
-			break;
-	} while (atomic_cas_uint(val, old, old & ~mask) != old);
-
-	return old & mask;
-}
-
-/*
  * Atomic API
  */
 typedef volatile unsigned int atomic_t;
