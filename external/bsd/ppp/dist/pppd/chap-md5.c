@@ -1,4 +1,4 @@
-/*	NetBSD	*/
+/*	$NetBSD: chap-md5.c,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
 
 /*
  * chap-md5.c - New CHAP/MD5 implementation.
@@ -35,7 +35,7 @@
 #define RCSID	"Id: chap-md5.c,v 1.4 2004/11/09 22:39:25 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("NetBSD");
+__RCSID("$NetBSD: chap-md5.c,v 1.4 2014/10/25 21:11:37 christos Exp $");
 #endif
 
 #include <stdlib.h>

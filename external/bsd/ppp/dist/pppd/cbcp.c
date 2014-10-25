@@ -1,4 +1,4 @@
-/*	NetBSD	*/
+/*	$NetBSD: cbcp.c,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
 
 /*
  * cbcp - Call Back Configuration Protocol.
@@ -40,7 +40,7 @@
 #define RCSID	"Id: cbcp.c,v 1.17 2006/05/22 00:04:07 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("NetBSD");
+__RCSID("$NetBSD: cbcp.c,v 1.4 2014/10/25 21:11:37 christos Exp $");
 #endif
 
 #include <stdio.h>

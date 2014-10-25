@@ -1,4 +1,4 @@
-/*	NetBSD	*/
+/*	$NetBSD: chap-new.h,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
 
 /*
  * chap-new.c - New CHAP implementation.

@@ -1,4 +1,4 @@
-/*	NetBSD	*/
+/*	$NetBSD: eap.h,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
 
 /*
  * eap.h - Extensible Authentication Protocol for PPP (RFC 2284)

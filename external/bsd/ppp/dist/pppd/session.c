@@ -1,4 +1,4 @@
-/*	NetBSD	*/
+/*	$NetBSD: session.c,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
 
 /*
  * session.c - PPP session control.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("NetBSD");
+__RCSID("$NetBSD: session.c,v 1.4 2014/10/25 21:11:37 christos Exp $");
 
 
 #include <stdio.h>

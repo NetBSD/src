@@ -1,4 +1,4 @@
-/*	NetBSD	*/
+/*	$NetBSD: mppe.h,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
 
 /*
  * mppe.h - Definitions for MPPE

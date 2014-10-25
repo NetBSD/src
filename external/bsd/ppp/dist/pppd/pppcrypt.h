@@ -1,4 +1,4 @@
-/*	NetBSD	*/
+/*	$NetBSD: pppcrypt.h,v 1.4 2014/10/25 21:11:37 christos Exp $	*/
 
 /*
  * pppcrypt.c - PPP/DES linkage for MS-CHAP and EAP SRP-SHA1
