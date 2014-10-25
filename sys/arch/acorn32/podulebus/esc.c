@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.28 2014/09/13 18:08:38 matt Exp $	*/
+/*	$NetBSD: esc.c,v 1.29 2014/10/25 10:58:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.28 2014/09/13 18:08:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.29 2014/10/25 10:58:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.28 2014/09/13 18:08:38 matt Exp $");
 #include <machine/cpu.h>
 #include <machine/io.h>
 #include <machine/intr.h>
-#include <arm/arm32/katelib.h>
 #include <acorn32/podulebus/podulebus.h>
 #include <acorn32/podulebus/escreg.h>
 #include <acorn32/podulebus/escvar.h>
