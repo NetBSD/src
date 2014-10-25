@@ -1,4 +1,4 @@
-/*	$NetBSD: eui64.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+/*	NetBSD	*/
 
 /*
  * eui64.c - EUI64 routines for IPv6CP.
@@ -42,7 +42,7 @@
 #define RCSID	"Id: eui64.c,v 1.6 2002/12/04 23:03:32 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("$NetBSD: eui64.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+__RCSID("NetBSD");
 #endif
 
 #include "pppd.h"

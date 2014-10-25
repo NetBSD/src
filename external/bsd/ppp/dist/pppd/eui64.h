@@ -1,4 +1,4 @@
-/*	$NetBSD: eui64.h,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+/*	NetBSD	*/
 
 /*
  * eui64.h - EUI64 routines for IPv6CP.
