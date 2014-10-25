@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,10 +47,6 @@
         ACPI_MODULE_NAME    ("antables")
 
 /* Local prototypes */
-
-ACPI_PHYSICAL_ADDRESS
-AeLocalGetRootPointer (
-    void);
 
 /* Non-AML tables that are constructed locally and installed */
 
@@ -284,7 +280,7 @@ AeBuildLocalTables (
 
 /******************************************************************************
  *
- * FUNCTION:    AeLocalGetRootPointer
+ * FUNCTION:    AcpiOsGetRootPointer
  *
  * PARAMETERS:  None
  *
@@ -296,7 +292,7 @@ AeBuildLocalTables (
  *****************************************************************************/
 
 ACPI_PHYSICAL_ADDRESS
-AeLocalGetRootPointer (
+AcpiOsGetRootPointer (
     void)
 {
 

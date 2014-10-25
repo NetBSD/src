@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2013, Intel Corp.
+ * Copyright (C) 2000 - 2014, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -118,8 +118,7 @@ AslCommandLine (
     /* Next parameter must be the input filename */
 
     if (!argv[AcpiGbl_Optind] &&
-        !Gbl_DisasmFlag &&
-        !Gbl_GetAllTables)
+        !Gbl_DisasmFlag)
     {
         printf ("Missing input filename\n");
         BadCommandLine = TRUE;
@@ -169,7 +168,7 @@ AslDoOptions (
 
     /* Get the command line options */
 
-    while ((j = AcpiGetopt (argc, argv, ASL_SUPPORTED_OPTIONS)) != EOF) switch (j)
+    while ((j = AcpiGetopt (argc, argv, ASL_SUPPORTED_OPTIONS)) != ACPI_OPT_END) switch (j)
     {
     case '@':   /* Begin a response file */
 
@@ -270,6 +269,7 @@ AslDoOptions (
         /* Get entire list of external files */
 
         AcpiGbl_Optind--;
+        argv[AcpiGbl_Optind] = AcpiGbl_Optarg;
 
         while (argv[AcpiGbl_Optind] &&
               (argv[AcpiGbl_Optind][0] != '-'))
@@ -318,9 +318,8 @@ AslDoOptions (
 
     case 'g':   /* Get all ACPI tables */
 
-        Gbl_GetAllTables = TRUE;
-        Gbl_DoCompile = FALSE;
-        break;
+        printf ("-g option is deprecated, use acpidump utility instead\n");
+        exit (1);
 
     case 'h':
 
@@ -412,6 +411,13 @@ AslDoOptions (
             /* Produce preprocessor output file */
 
             Gbl_PreprocessorOutputFlag = TRUE;
+            break;
+
+        case 'm':
+
+            /* Produce hardware map summary file */
+
+            Gbl_MapfileFlag = TRUE;
             break;
 
         case 'n':
