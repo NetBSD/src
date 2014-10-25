@@ -403,7 +403,7 @@ AcpiTbValidateTempTable (
 ACPI_STATUS
 AcpiTbVerifyTempTable (
     ACPI_TABLE_DESC         *TableDesc,
-    char                    *Signature)
+    const char              *Signature)
 {
     ACPI_STATUS             Status = AE_OK;
 

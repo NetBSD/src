@@ -732,7 +732,7 @@ AcpiDbTestStringType (
     ACPI_OBJECT             *Temp1 = NULL;
     ACPI_OBJECT             *Temp2 = NULL;
     ACPI_OBJECT             *Temp3 = NULL;
-    char                    *ValueToWrite = "Test String from AML Debugger";
+    char                    *ValueToWrite = __UNCONST("Test String from AML Debugger");
     ACPI_OBJECT             WriteValue;
     ACPI_STATUS             Status;
 
@@ -1076,7 +1076,7 @@ AcpiDbEvaluateOnePredefinedName (
 
             case ACPI_TYPE_STRING:
 
-                ThisParam->String.Pointer = "This is the default argument string";
+                ThisParam->String.Pointer = __UNCONST("This is the default argument string");
                 ThisParam->String.Length = ACPI_STRLEN (ThisParam->String.Pointer);
                 break;
 
