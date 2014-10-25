@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.65 2014/10/24 23:13:22 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.66 2014/10/25 10:02:15 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1826,3 +1826,10 @@ sys/netinet/tcp_output.c			1.177
 	IPsec outbound policy will not be checked when ipsec_used is false.
 	[hikaru, ticket #154]
 
+sys/kern/kern_exec.c				1.409
+
+	PR/49287: David Holland: Skip the right number of bytes to go over
+	the first argument in the argv vector. Fixes netbsd32 script
+	execution, where you lost the first argument because it skipped
+	8 bytes instead of 4.
+	[dholland, ticket #156]
