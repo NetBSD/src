@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.67 2014/10/26 09:49:58 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.68 2014/10/26 16:48:36 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1840,3 +1840,8 @@ sys/netinet/tcp_output.c			1.178
 	Thanks to Jonathan Looney for pointing this out.
 	[christos, ticket #157]
 
+usr.bin/ftp/fetch.c				1.206
+
+	Don't pay attention to special characters if they don't come from
+	the command line (from jmcneill).
+	[christos, ticket #158]
