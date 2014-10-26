@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.21 2014/10/25 18:00:25 joerg Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.22 2014/10/26 17:39:16 martin Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.21 2014/10/25 18:00:25 joerg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.22 2014/10/26 17:39:16 martin Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -91,6 +91,8 @@ static int dwc_gmac_ioctl(struct ifnet *, u_long, void *);
 static void dwc_gmac_tx_intr(struct dwc_gmac_softc *sc);
 static void dwc_gmac_rx_intr(struct dwc_gmac_softc *sc);
 static void dwc_gmac_setmulti(struct dwc_gmac_softc *sc);
+static int dwc_gmac_ifflags_cb(struct ethercom *);
+static uint32_t	bitrev32(uint32_t x);
 
 #define	TX_DESC_OFFSET(N)	((AWGE_RX_RING_COUNT+(N)) \
 				    *sizeof(struct dwc_gmac_dev_dmadesc))
@@ -122,6 +124,7 @@ static void dwc_gmac_dump_tx_desc(struct dwc_gmac_softc *sc);
 static void dwc_gmac_dump_rx_desc(struct dwc_gmac_softc *sc);
 static void dwc_dump_and_abort(struct dwc_gmac_softc *sc, const char *msg);
 static void dwc_dump_status(struct dwc_gmac_softc *sc);
+static void dwc_gmac_dump_ffilt(struct dwc_gmac_softc *sc, uint32_t ffilt);
 #endif
 
 void
@@ -237,6 +240,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+	ether_set_ifflags_cb(&sc->sc_ec, dwc_gmac_ifflags_cb);
 
 	/*
 	 * Enable interrupts
@@ -897,78 +901,51 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 	return 0;
 }
 
+/*
+ * If the interface is up and running, only modify the receive
+ * filter when setting promiscuous or debug mode.  Otherwise fall
+ * through to ether_ioctl, which will reset the chip.
+ */
+static int
+dwc_gmac_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct dwc_gmac_softc *sc = ifp->if_softc;
+	int change = ifp->if_flags ^ sc->sc_if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+		return ENETRESET;
+	if ((change & IFF_PROMISC) != 0)
+		dwc_gmac_setmulti(sc);
+	return 0;
+}
+
 static int
 dwc_gmac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct dwc_gmac_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
 	s = splnet();
 
-	switch (cmd) {
-	case SIOCINITIFADDR:
-		ifp->if_flags |= IFF_UP;
-		dwc_gmac_init(ifp);
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			arp_ifinit(ifp, ifa);
-			break;
-#endif
-		default:
-			break;
-		}
-		break;
-
-	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
-			break;
-
-		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
-		case IFF_RUNNING:
-			/*
-			 * If interface is marked down and it is running, then
-			 * stop it.
-			 */
-			dwc_gmac_stop(ifp, 0);
-			ifp->if_flags &= ~IFF_RUNNING;
-			break;
-		case IFF_UP:
-			/*
-			 * If interface is marked up and it is stopped, then
-			 * start it.
-			 */
-			error = dwc_gmac_init(ifp);
-			break;
-		case IFF_UP|IFF_RUNNING:
-			/*
-			 * If setting debug or promiscuous mode, do not reset
-			 * the chip; for everything else, call dwc_gmac_init()
-			 * which will trigger a reset.
-			 */
-			/* XXX - for now allways init */
-			error = dwc_gmac_init(ifp);
-			break;
-		case 0:
-			break;
-		}
-
-		break;
-
-	default:
-		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
-			break;
+	if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 		error = 0;
 		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
-		else if (ifp->if_flags & IFF_RUNNING)
+		else if (ifp->if_flags & IFF_RUNNING) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
 			dwc_gmac_setmulti(sc);
-		break;
+		}
 	}
 
+	/* Try to get things going again */
+	if (ifp->if_flags & IFF_UP)
+		dwc_gmac_start(ifp);
+	sc->sc_if_flags = sc->sc_ec.ec_if.if_flags;
 	splx(s);
-
 	return error;
 }
 
@@ -1134,6 +1111,20 @@ skip:
 
 }
 
+/*
+ * Revers order of bits - http://aggregate.org/MAGIC/#Bit%20Reversal
+ */
+static uint32_t
+bitrev32(uint32_t x)
+{
+	x = (((x & 0xaaaaaaaa) >> 1) | ((x & 0x55555555) << 1));
+	x = (((x & 0xcccccccc) >> 2) | ((x & 0x33333333) << 2));
+	x = (((x & 0xf0f0f0f0) >> 4) | ((x & 0x0f0f0f0f) << 4));
+	x = (((x & 0xff00ff00) >> 8) | ((x & 0x00ff00ff) << 8));
+
+	return (x >> 16) | (x << 16);
+}
+
 static void
 dwc_gmac_setmulti(struct dwc_gmac_softc *sc)
 {
@@ -1141,26 +1132,20 @@ dwc_gmac_setmulti(struct dwc_gmac_softc *sc)
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	uint32_t hashes[2] = { 0, 0 };
-	uint32_t ffilt;
-	int h, mcnt;
+	uint32_t ffilt, h;
+	int mcnt, s;
+
+	s = splnet();
 
 	ffilt = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT);
 	
 	if (ifp->if_flags & IFF_PROMISC) {
-allmulti:
-		ifp->if_flags |= IFF_ALLMULTI;
-		ffilt |= AWIN_GMAC_MAC_FFILT_PM;
-		bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT,
-		    ffilt);
-		bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTLOW,
-		    0xffffffff);
-		bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTHIGH,
-		    0xffffffff);
-		return;
+		ffilt |= AWIN_GMAC_MAC_FFILT_PR;
+		goto special_filter;
 	}
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
-	ffilt &= ~AWIN_GMAC_MAC_FFILT_PM;
+	ffilt &= ~(AWIN_GMAC_MAC_FFILT_PM|AWIN_GMAC_MAC_FFILT_PR);
 
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTLOW, 0);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTHIGH, 0);
@@ -1169,10 +1154,15 @@ allmulti:
 	mcnt = 0;
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0)
-			goto allmulti;
+		    ETHER_ADDR_LEN) != 0) {
+			ffilt |= AWIN_GMAC_MAC_FFILT_PM;
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto special_filter;
+		}
 
-		h = (~ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN)) >> 26;
+		h = bitrev32(
+			~ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN)
+		    ) >> 26;
 		hashes[h >> 5] |= (1 << (h & 0x1f));
 
 		mcnt++;
@@ -1189,6 +1179,28 @@ allmulti:
 	    hashes[0]);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTHIGH,
 	    hashes[1]);
+	sc->sc_if_flags = sc->sc_ec.ec_if.if_flags;
+
+	splx(s);
+
+#ifdef DWC_GMAC_DEBUG
+	dwc_gmac_dump_ffilt(sc, ffilt);
+#endif
+	return;
+
+special_filter:
+#ifdef DWC_GMAC_DEBUG
+	dwc_gmac_dump_ffilt(sc, ffilt);
+#endif
+	/* no MAC hashes, ALLMULTI or PROMISC */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT,
+	    ffilt);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTLOW,
+	    0xffffffff);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_HTHIGH,
+	    0xffffffff);
+	sc->sc_if_flags = sc->sc_ec.ec_if.if_flags;
+	splx(s);
 }
 
 int
@@ -1338,10 +1350,32 @@ static void
 dwc_dump_and_abort(struct dwc_gmac_softc *sc, const char *msg)
 {
 	dwc_dump_status(sc);
+	dwc_gmac_dump_ffilt(sc,
+	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT));
 	dwc_gmac_dump_dma(sc);
 	dwc_gmac_dump_tx_desc(sc);
 	dwc_gmac_dump_rx_desc(sc);
 
 	panic("%s", msg);
+}
+
+static void dwc_gmac_dump_ffilt(struct dwc_gmac_softc *sc, uint32_t ffilt)
+{
+	char buf[200];
+
+	/* print filter setup */
+	snprintb(buf, sizeof(buf), "\177\20"
+	    "b\x1f""RA\0"
+	    "b\x0a""HPF\0"
+	    "b\x09""SAF\0"
+	    "b\x08""SAIF\0"
+	    "b\x05""DBF\0"
+	    "b\x04""PM\0"
+	    "b\x03""DAIF\0"
+	    "b\x02""HMC\0"
+	    "b\x01""HUC\0"
+	    "b\x00""PR\0"
+	    "\0", ffilt);
+	aprint_normal_dev(sc->sc_dev, "FFILT: %s\n", buf);
 }
 #endif
