@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2003 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2004 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -83,3 +83,9 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	openpam(3): update to 20140912 (ourouparia) [christos 20141024]
 	pppd(8): updated to version 2.4.7. [christos 20141025]
 	acpi(4): Updated ACPICA to 20140926. [christos 20141025]
+	rnd(9): Add explicit enable/disable hooks for callout-driven
+		sources (be more power friendly). [tls 20141026]
+	rnd(9): Make "skew" source polled so it runs only when there
+	        is entropy demand. [tls 20141026]
+	rnd(9): Adjust entropy collection from polled sources so it's
+		processed sooner. [tls 20141026]
