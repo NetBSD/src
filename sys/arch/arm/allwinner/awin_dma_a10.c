@@ -1,4 +1,4 @@
-/* $NetBSD: awin_dma_a10.c,v 1.1 2014/10/13 12:34:00 jmcneill Exp $ */
+/* $NetBSD: awin_dma_a10.c,v 1.2 2014/10/26 15:07:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_dma_a10.c,v 1.1 2014/10/13 12:34:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_dma_a10.c,v 1.2 2014/10/26 15:07:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -195,7 +195,7 @@ awin_dma_a10_alloc(struct awin_dma_softc *sc, const char *type,
 			ch->ch_callbackarg = cbarg;
 
 			irqen = DMA_READ(sc, AWIN_DMA_IRQ_EN_REG);
-			if (type == CH_NDMA)
+			if (ch->ch_type == CH_NDMA)
 				irqen |= AWIN_DMA_IRQ_NDMA_END(index);
 			else
 				irqen |= AWIN_DMA_IRQ_DDMA_END(index);
