@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.66 2014/09/05 05:36:21 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.67 2014/10/26 01:42:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.66 2014/09/05 05:36:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.67 2014/10/26 01:42:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 	free_list = uvm_page_lookup_freelist(pg);
 	color = VM_PGCOLOR_BUCKET(pg);
 	pgflidx = (pg->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN;
-#ifdef NOT_DEBUG
+#ifdef UVMDEBUG
 	struct vm_page *tp;
 	LIST_FOREACH(tp,
 	    &uvm.page_free[free_list].pgfl_buckets[color].pgfl_queues[pgflidx],
