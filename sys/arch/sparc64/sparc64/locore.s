@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.376 2014/10/24 15:51:16 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.377 2014/10/26 21:03:45 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -493,41 +493,9 @@ label:	\
 	NOTREACHED; \
 	TA32
 
-	.globl	start, _C_LABEL(kernel_text)
-	_C_LABEL(kernel_text) = kernel_start		! for kvm_mkdb(8)
-kernel_start:
-	/* Traps from TL=0 -- traps from user mode */
-#ifdef __STDC__
-#define TABLE(name)	user_ ## name
-#else
-#define	TABLE(name)	user_/**/name
-#endif
-	.globl	_C_LABEL(trapbase)
-_C_LABEL(trapbase):
-	b dostart; nop; TA8	! 000 = reserved -- Use it to boot
-	/* We should not get the next 5 traps */
-	UTRAP(0x001)		! 001 = POR Reset -- ROM should get this
-	UTRAP(0x002)		! 002 = WDR -- ROM should get this
-	UTRAP(0x003)		! 003 = XIR -- ROM should get this
-	UTRAP(0x004)		! 004 = SIR -- ROM should get this
-	UTRAP(0x005)		! 005 = RED state exception
-	UTRAP(0x006); UTRAP(0x007)
-	VTRAP(T_INST_EXCEPT, textfault)	! 008 = instr. access except
-	VTRAP(T_TEXTFAULT, textfault)	! 009 = instr access MMU miss
-	VTRAP(T_INST_ERROR, textfault)	! 00a = instr. access err
-	UTRAP(0x00b); UTRAP(0x00c); UTRAP(0x00d); UTRAP(0x00e); UTRAP(0x00f)
-	TRAP(T_ILLINST)			! 010 = illegal instruction
-	TRAP(T_PRIVINST)		! 011 = privileged instruction
-	UTRAP(0x012)			! 012 = unimplemented LDD
-	UTRAP(0x013)			! 013 = unimplemented STD
-	UTRAP(0x014); UTRAP(0x015); UTRAP(0x016); UTRAP(0x017); UTRAP(0x018)
-	UTRAP(0x019); UTRAP(0x01a); UTRAP(0x01b); UTRAP(0x01c); UTRAP(0x01d)
-	UTRAP(0x01e); UTRAP(0x01f)
-	TRAP(T_FPDISABLED)		! 020 = fp instr, but EF bit off in psr
-	TRAP(T_FP_IEEE_754)		! 021 = ieee 754 exception
-	TRAP(T_FP_OTHER)		! 022 = other fp exception
-	TRAP(T_TAGOF)			! 023 = tag overflow
-	rdpr %cleanwin, %o7		! 024-027 = clean window trap
+	/* handle clean window trap when trap level = 0 */
+	.macro CLEANWIN0
+	rdpr %cleanwin, %o7
 	inc %o7				!	This handler is in-lined and cannot fault
 #ifdef DEBUG
 	set	0xbadcafe, %l0		! DEBUG -- compiler should not rely on zero-ed registers.
@@ -569,6 +537,74 @@ _C_LABEL(trapbase):
 	mov %l0, %o6; mov %l0, %o7
 	CLRTT
 	retry; nop; NOTREACHED; TA32
+	.endm
+
+	/* handle clean window trap when trap level = 1 */
+	.macro CLEANWIN1
+	clr	%l0
+#ifdef DEBUG
+	set	0xbadbeef, %l0		! DEBUG
+#endif
+	mov %l0, %l1; mov %l0, %l2
+	rdpr %cleanwin, %o7		!	This handler is in-lined and cannot fault
+	inc %o7; mov %l0, %l3		!       Nucleus (trap&IRQ) code does not need clean windows
+	wrpr %g0, %o7, %cleanwin	!	Clear out %l0-%l8 and %o0-%o8 and inc %cleanwin and done
+#ifdef NOT_DEBUG
+	!!
+	!! Check the sp redzone
+	!!
+	rdpr	%wstate, t1
+	cmp	t1, WSTATE_KERN
+	bne,pt	icc, 7f
+	 sethi	%hi(_C_LABEL(redzone)), t1
+	ldx	[t1 + %lo(_C_LABEL(redzone))], t2
+	cmp	%sp, t2			! if sp >= t2, not in red zone
+	blu	panic_red		! and can continue normally
+7:
+#endif
+	mov %l0, %l4; mov %l0, %l5; mov %l0, %l6; mov %l0, %l7
+	mov %l0, %o0; mov %l0, %o1; mov %l0, %o2; mov %l0, %o3
+
+	mov %l0, %o4; mov %l0, %o5; mov %l0, %o6; mov %l0, %o7
+	CLRTT
+	retry; nop; TA32
+	.endm
+	
+	.globl	start, _C_LABEL(kernel_text)
+	_C_LABEL(kernel_text) = kernel_start		! for kvm_mkdb(8)
+kernel_start:
+	/* Traps from TL=0 -- traps from user mode */
+#ifdef __STDC__
+#define TABLE(name)	user_ ## name
+#else
+#define	TABLE(name)	user_/**/name
+#endif
+	.globl	_C_LABEL(trapbase)
+_C_LABEL(trapbase):
+	b dostart; nop; TA8	! 000 = reserved -- Use it to boot
+	/* We should not get the next 5 traps */
+	UTRAP(0x001)		! 001 = POR Reset -- ROM should get this
+	UTRAP(0x002)		! 002 = WDR -- ROM should get this
+	UTRAP(0x003)		! 003 = XIR -- ROM should get this
+	UTRAP(0x004)		! 004 = SIR -- ROM should get this
+	UTRAP(0x005)		! 005 = RED state exception
+	UTRAP(0x006); UTRAP(0x007)
+	VTRAP(T_INST_EXCEPT, textfault)	! 008 = instr. access except
+	VTRAP(T_TEXTFAULT, textfault)	! 009 = instr access MMU miss
+	VTRAP(T_INST_ERROR, textfault)	! 00a = instr. access err
+	UTRAP(0x00b); UTRAP(0x00c); UTRAP(0x00d); UTRAP(0x00e); UTRAP(0x00f)
+	TRAP(T_ILLINST)			! 010 = illegal instruction
+	TRAP(T_PRIVINST)		! 011 = privileged instruction
+	UTRAP(0x012)			! 012 = unimplemented LDD
+	UTRAP(0x013)			! 013 = unimplemented STD
+	UTRAP(0x014); UTRAP(0x015); UTRAP(0x016); UTRAP(0x017); UTRAP(0x018)
+	UTRAP(0x019); UTRAP(0x01a); UTRAP(0x01b); UTRAP(0x01c); UTRAP(0x01d)
+	UTRAP(0x01e); UTRAP(0x01f)
+	TRAP(T_FPDISABLED)		! 020 = fp instr, but EF bit off in psr
+	TRAP(T_FP_IEEE_754)		! 021 = ieee 754 exception
+	TRAP(T_FP_OTHER)		! 022 = other fp exception
+	TRAP(T_TAGOF)			! 023 = tag overflow
+	CLEANWIN0			! 024-027 = clean window trap
 	TRAP(T_DIV0)			! 028 = divide by zero
 	UTRAP(0x029)			! 029 = internal processor error
 	UTRAP(0x02a); UTRAP(0x02b); UTRAP(0x02c); UTRAP(0x02d); UTRAP(0x02e); UTRAP(0x02f)
@@ -777,33 +813,7 @@ ktextfault:
 	TRAP(T_FP_IEEE_754)		! 021 = ieee 754 exception
 	TRAP(T_FP_OTHER)		! 022 = other fp exception
 	TRAP(T_TAGOF)			! 023 = tag overflow
-	clr	%l0
-#ifdef DEBUG
-	set	0xbadbeef, %l0		! DEBUG
-#endif
-	mov %l0, %l1; mov %l0, %l2	! 024-027 = clean window trap
-	rdpr %cleanwin, %o7		!	This handler is in-lined and cannot fault
-	inc %o7; mov %l0, %l3		!       Nucleus (trap&IRQ) code does not need clean windows
-	wrpr %g0, %o7, %cleanwin	!	Clear out %l0-%l8 and %o0-%o8 and inc %cleanwin and done
-#ifdef NOT_DEBUG
-	!!
-	!! Check the sp redzone
-	!!
-	rdpr	%wstate, t1
-	cmp	t1, WSTATE_KERN
-	bne,pt	icc, 7f
-	 sethi	%hi(_C_LABEL(redzone)), t1
-	ldx	[t1 + %lo(_C_LABEL(redzone))], t2
-	cmp	%sp, t2			! if sp >= t2, not in red zone
-	blu	panic_red		! and can continue normally
-7:
-#endif
-	mov %l0, %l4; mov %l0, %l5; mov %l0, %l6; mov %l0, %l7
-	mov %l0, %o0; mov %l0, %o1; mov %l0, %o2; mov %l0, %o3
-
-	mov %l0, %o4; mov %l0, %o5; mov %l0, %o6; mov %l0, %o7
-	CLRTT
-	retry; nop; TA32
+	CLEANWIN1			! 024-027 = clean window trap
 	TRAP(T_DIV0)			! 028 = divide by zero
 	UTRAP(0x029)			! 029 = internal processor error
 	UTRAP(0x02a); UTRAP(0x02b); UTRAP(0x02c); UTRAP(0x02d); UTRAP(0x02e); UTRAP(0x02f)
@@ -1010,7 +1020,9 @@ _C_LABEL(trapbase_sun4v):
 	!
 	! trap level 0
 	!
-	sun4v_trap_entry 49					! 0x000-0x030
+	sun4v_trap_entry 36					! 0x000-0x023
+	CLEANWIN0						! 0x24-0x27 = clean window
+	sun4v_trap_entry 9					! 0x028-0x030			
 	VTRAP(T_DATA_MMU_MISS, sun4v_dtsb_miss)			! 0x031 = data MMU miss
 	sun4v_trap_entry 15					! 0x032-0x040
 	HARDINT4V(1)						! 0x041 = level 1 interrupt
@@ -1065,7 +1077,9 @@ _C_LABEL(trapbase_sun4v):
 	!
 	! trap level 1
 	!
-	sun4v_trap_entry_fail 49				! 0x000-0x030
+	sun4v_trap_entry_fail 36				! 0x000-0x023
+	CLEANWIN1						! 0x24-0x27 = clean window
+	sun4v_trap_entry_fail 9					! 0x028-0x030			
 	VTRAP(T_DATA_MMU_MISS, sun4v_dtsb_miss)			! 0x031 = data MMU miss
 	sun4v_trap_entry_fail 78				! 0x032-0x07f
 	SPILL64(uspill8_sun4vt1,ASI_AIUS)			! 0x080 spill_0_normal -- save user windows
