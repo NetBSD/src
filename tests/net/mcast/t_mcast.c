@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mcast.c,v 1.8 2014/10/13 06:57:08 martin Exp $	*/
+/*	$NetBSD: t_mcast.c,v 1.9 2014/10/26 18:33:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: t_mcast.c,v 1.8 2014/10/13 06:57:08 martin Exp $");
+__RCSID("$NetBSD: t_mcast.c,v 1.9 2014/10/26 18:33:43 christos Exp $");
 #else
 extern const char *__progname;
 #define getprogname() __progname
@@ -39,6 +39,7 @@ extern const char *__progname;
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 
 #include <assert.h>
@@ -77,7 +78,7 @@ static int debug;
 #define PORT_V4 "6666"
 #define HOST_V4 "239.1.1.1"
 #define PORT_V6 "6666"
-#define HOST_V6 "FF05:0:0:0:0:0:0:1"
+#define HOST_V6 "FF02:0:0:0:0:0:0:1"
 
 struct message {
 	size_t seq;
@@ -91,6 +92,7 @@ addmc(int s, struct addrinfo *ai, bool bug)
 	struct ipv6_mreq m6;
 	struct sockaddr_in *s4;
 	struct sockaddr_in6 *s6;
+	unsigned int ifc;
 	
 	switch (ai->ai_family) {
 	case AF_INET:
@@ -121,7 +123,23 @@ addmc(int s, struct addrinfo *ai, bool bug)
 		}
 		assert(sizeof(*s6) == ai->ai_addrlen);
 		memset(&m6, 0, sizeof(m6));
-		m6.ipv6mr_interface = 0;
+#if 0
+		ifc = 1;
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
+		    &ifc, sizeof(ifc))) == -1)
+		    	return -1;
+		ifc = 224;
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
+		    &ifc, sizeof(ifc)) == -1)
+		    	return -1;
+#endif
+#if 1
+		ifc = 1;
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifc,
+		    sizeof(ifc)) == -1)
+			return -1;
+#endif
+		m6.ipv6mr_interface = ifc;
 	        m6.ipv6mr_multiaddr = s6->sin6_addr;
 		return setsockopt(s, IPPROTO_IPV6, IPV6_JOIN_GROUP,
 		    &m6, sizeof(m6));
@@ -223,8 +241,16 @@ sender(const char *host, const char *port, size_t n, bool conn, bool bug)
 
 	s = getsocket(host, port, conn ? connect : connector, &slen, bug);
 	for (msg.seq = 0; msg.seq < n; msg.seq++) {
+#ifdef CLOCK_MONOTONIC
 		if (clock_gettime(CLOCK_MONOTONIC, &msg.ts) == -1)
 			ERRX(EXIT_FAILURE, "clock (%s)", strerror(errno));
+#else
+		struct timeval tv;
+		if (gettimeofday(&tv, NULL) == -1)
+			ERRX(EXIT_FAILURE, "clock (%s)", strerror(errno));
+		msg.ts.tv_sec = tv.tv_sec;
+		msg.ts.tv_nsec = tv.tv_usec * 1000;
+#endif
 		if (debug)
 			show("sending", &msg);
 		l = conn ? send(s, &msg, sizeof(msg), 0) :
