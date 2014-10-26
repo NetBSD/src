@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.136 2014/10/19 19:46:44 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.137 2014/10/26 20:00:16 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -3821,4 +3821,101 @@ sys/compat/freebsd/freebsd_sysctl.c		1.17
 	Do not access a userland pointer from kernel space directly, use
 	copyin() instead, avoiding a crash.
 	[maxv, ticket #1168]
+
+crypto/external/bsd/openssl/dist/CHANGES	patch
+crypto/external/bsd/openssl/dist/Configure	patch
+crypto/external/bsd/openssl/dist/Makefile	patch
+crypto/external/bsd/openssl/dist/NEWS		patch
+crypto/external/bsd/openssl/dist/README		patch
+crypto/external/bsd/openssl/dist/e_os.h		patch
+crypto/external/bsd/openssl/dist/makevms.com	patch
+crypto/external/bsd/openssl/dist/openssl.spec	patch
+crypto/external/bsd/openssl/dist/apps/makeapps.com patch
+crypto/external/bsd/openssl/dist/apps/s_client.c patch
+crypto/external/bsd/openssl/dist/crypto/LPdir_vms.c patch
+crypto/external/bsd/openssl/dist/crypto/LPdir_win.c patch
+crypto/external/bsd/openssl/dist/crypto/Makefile patch
+crypto/external/bsd/openssl/dist/crypto/crypto-lib.com patch
+crypto/external/bsd/openssl/dist/crypto/ebcdic.h patch
+crypto/external/bsd/openssl/dist/crypto/install-crypto.com patch
+crypto/external/bsd/openssl/dist/crypto/opensslconf.h patch
+crypto/external/bsd/openssl/dist/crypto/opensslv.h patch
+crypto/external/bsd/openssl/dist/crypto/ossl_typ.h patch
+crypto/external/bsd/openssl/dist/crypto/aes/asm/aesni-x86_64.pl patch
+crypto/external/bsd/openssl/dist/crypto/asn1/a_strex.c patch
+crypto/external/bsd/openssl/dist/crypto/bn/bn_exp.c patch
+crypto/external/bsd/openssl/dist/crypto/bn/bn_nist.c patch
+crypto/external/bsd/openssl/dist/crypto/bn/exptest.c patch
+crypto/external/bsd/openssl/dist/crypto/bn/asm/x86_64-gcc.c patch
+crypto/external/bsd/openssl/dist/crypto/dsa/dsa_ameth.c patch
+crypto/external/bsd/openssl/dist/crypto/ec/ec.h	patch
+crypto/external/bsd/openssl/dist/crypto/ec/ec2_smpl.c patch
+crypto/external/bsd/openssl/dist/crypto/ec/ec_ameth.c patch
+crypto/external/bsd/openssl/dist/crypto/ec/ec_asn1.c patch
+crypto/external/bsd/openssl/dist/crypto/ec/ecp_mont.c patch
+crypto/external/bsd/openssl/dist/crypto/ec/ecp_nist.c patch
+crypto/external/bsd/openssl/dist/crypto/ec/ecp_smpl.c patch
+crypto/external/bsd/openssl/dist/crypto/ec/ectest.c patch
+crypto/external/bsd/openssl/dist/crypto/err/openssl.ec patch
+crypto/external/bsd/openssl/dist/crypto/evp/Makefile patch
+crypto/external/bsd/openssl/dist/crypto/evp/e_aes.c patch
+crypto/external/bsd/openssl/dist/crypto/evp/evp_enc.c patch
+crypto/external/bsd/openssl/dist/crypto/md5/asm/md5-x86_64.pl patch
+crypto/external/bsd/openssl/dist/crypto/modes/modes.h patch
+crypto/external/bsd/openssl/dist/crypto/ocsp/ocsp_vfy.c patch
+crypto/external/bsd/openssl/dist/crypto/pkcs7/pkcs7.h patch
+crypto/external/bsd/openssl/dist/crypto/pqueue/pqueue.h patch
+crypto/external/bsd/openssl/dist/crypto/rsa/Makefile patch
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa.h patch
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa_err.c patch
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa_oaep.c patch
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa_pk1.c patch
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa_sign.c patch
+crypto/external/bsd/openssl/dist/crypto/stack/safestack.h patch
+crypto/external/bsd/openssl/dist/doc/apps/dgst.pod patch
+crypto/external/bsd/openssl/dist/doc/crypto/BIO_s_accept.pod patch
+crypto/external/bsd/openssl/dist/doc/crypto/EVP_DigestInit.pod patch
+crypto/external/bsd/openssl/dist/doc/crypto/EVP_DigestVerifyInit.pod patch
+crypto/external/bsd/openssl/dist/doc/crypto/EVP_EncryptInit.pod patch
+crypto/external/bsd/openssl/dist/doc/crypto/EVP_PKEY_set1_RSA.pod patch
+crypto/external/bsd/openssl/dist/doc/crypto/EVP_PKEY_sign.pod patch
+crypto/external/bsd/openssl/dist/doc/ssl/SSL_CTX_set_tmp_dh_callback.pod patch
+crypto/external/bsd/openssl/dist/engines/makeengines.com patch
+crypto/external/bsd/openssl/dist/ssl/Makefile	patch
+crypto/external/bsd/openssl/dist/ssl/d1_both.c	patch
+crypto/external/bsd/openssl/dist/ssl/d1_lib.c	patch
+crypto/external/bsd/openssl/dist/ssl/d1_srtp.c	patch
+crypto/external/bsd/openssl/dist/ssl/dtls1.h	patch
+crypto/external/bsd/openssl/dist/ssl/s23_clnt.c	patch
+crypto/external/bsd/openssl/dist/ssl/s23_srvr.c	patch
+crypto/external/bsd/openssl/dist/ssl/s2_lib.c	patch
+crypto/external/bsd/openssl/dist/ssl/s3_cbc.c	patch
+crypto/external/bsd/openssl/dist/ssl/s3_clnt.c	patch
+crypto/external/bsd/openssl/dist/ssl/s3_enc.c	patch
+crypto/external/bsd/openssl/dist/ssl/s3_lib.c	patch
+crypto/external/bsd/openssl/dist/ssl/s3_pkt.c	patch
+crypto/external/bsd/openssl/dist/ssl/s3_srvr.c	patch
+crypto/external/bsd/openssl/dist/ssl/srtp.h	patch
+crypto/external/bsd/openssl/dist/ssl/ssl-lib.com patch
+crypto/external/bsd/openssl/dist/ssl/ssl.h	patch
+crypto/external/bsd/openssl/dist/ssl/ssl3.h	patch
+crypto/external/bsd/openssl/dist/ssl/ssl_err.c	patch
+crypto/external/bsd/openssl/dist/ssl/ssl_lib.c	patch
+crypto/external/bsd/openssl/dist/ssl/t1_enc.c	patch
+crypto/external/bsd/openssl/dist/ssl/t1_lib.c	patch
+crypto/external/bsd/openssl/dist/ssl/tls1.h	patch
+crypto/external/bsd/openssl/dist/test/Makefile	patch
+crypto/external/bsd/openssl/dist/test/maketests.com patch
+crypto/external/bsd/openssl/dist/test/tests.com	patch
+crypto/external/bsd/openssl/dist/test/testssl	patch
+crypto/external/bsd/openssl/dist/util/mk1mf.pl	patch
+crypto/external/bsd/openssl/dist/util/mkdef.pl	patch
+crypto/external/bsd/openssl/dist/util/ssleay.num patch
+
+	Update OpenSSL to 1.0.1j.  Changes:
+	  o Fix for CVE-2014-3513
+	  o Fix for CVE-2014-3567
+	  o Mitigation for CVE-2014-3566 (SSL protocol vulnerability)
+	  o Fix for CVE-2014-3568
+	[spz, ticket #1170]
 
