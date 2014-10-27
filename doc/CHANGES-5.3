@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.72 2014/10/19 20:09:14 snj Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.73 2014/10/27 12:45:25 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -1092,3 +1092,14 @@ crypto/dist/openssl/test/constant_time_test.c	patch
 	and adding POODLE mitigation via support for TLS_FALLBACK_SCSV.
 	[spz, ticket #1927]
 	
+sys/compat/freebsd/freebsd_sysctl.c		1.17
+
+	Do not access a userland pointer from kernel space directly, use
+	copyin() instead, avoiding a crash.
+	[maxv, ticket #1926]
+
+usr.bin/ftp/fetch.c				1.206 via patch
+
+	Don't pay attention to special characters if they don't come
+	from the command line.
+	[jmcneill, ticket #1928]
