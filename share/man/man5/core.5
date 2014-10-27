@@ -1,4 +1,4 @@
-.\"	$NetBSD: core.5,v 1.26 2014/10/27 16:18:38 wiz Exp $
+.\"	$NetBSD: core.5,v 1.27 2014/10/27 16:20:48 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -128,14 +128,15 @@ The maximum size of a core file is limited by
 Files which would be larger than the limit are not created.
 .Ss ELF CORE FORMAT
 ELF-format core files are described by a standard ELF exec header and
-a series of ELF program headers.  Each program header describes a range
+a series of ELF program headers.
+Each program header describes a range
 of the virtual address space of the process.
 .Pp
 In addition,
 .Nx
 ELF core files include an ELF note section which provides additional
-information about the process.  The first note in the note section
-has a note name of
+information about the process.
+The first note in the note section has a note name of
 .Dq NetBSD-CORE
 and a note type of
 ELF_NOTE_NETBSD_CORE_PROCINFO (1), and contains the following
@@ -172,8 +173,10 @@ The fields of
 are as follows:
 .Bl -tag -width cpi_sigignoreXX
 .It cpi_version
-The version of this structure.  The current version is defined by
-the NETBSD_ELFCORE_PROCINFO_VERSION constant.
+The version of this structure.
+The current version is defined by the
+.Dv NETBSD_ELFCORE_PROCINFO_VERSION
+constant.
 .It cpi_cpisize
 The size of this structure.
 .It cpi_signo
@@ -182,20 +185,20 @@ Signal that caused the process to dump core.
 Signal-specific code, if any, corresponding to
 .Va cpi_signo .
 .It cpi_sigpend
-A mask of signals pending delivery to the process.  This may be
-examined by copying it to a
+A mask of signals pending delivery to the process.
+This may be examined by copying it to a
 .Fa sigset_t .
 .It cpi_sigmask
-The set of signals currently blocked by the process.  This may be
-examined by copying it to a
+The set of signals currently blocked by the process.
+This may be examined by copying it to a
 .Fa sigset_t .
 .It cpi_sigignore
-The set of signals currently being ignored by the process.  This may be
-examined by copying it to a
+The set of signals currently being ignored by the process.
+This may be examined by copying it to a
 .Fa sigset_t .
 .It cpi_sigcatch
-The set of signals with registers signals handlers for the process.  This
-may be examined by copying it to a
+The set of signals with registers signals handlers for the process.
+This may be examined by copying it to a
 .Fa sigset_t .
 .It cpi_pid
 Process ID of the process.
@@ -235,9 +238,11 @@ is the LWP ID of the execution context, for example:
 These notes contain register and other per-execution context
 data in the same format as is used by the
 .Xr ptrace 2
-system call.  The note types correspond to the
+system call.
+The note types correspond to the
 .Xr ptrace 2
-request numbers that return the same data.  For example,
+request numbers that return the same data.
+For example,
 a note with a note type of PT_GETREGS would contain a
 .Fa struct reg
 with the register contents of the execution context.
@@ -249,7 +254,8 @@ header file.
 .Ss A.OUT CORE FORMAT
 .Pp
 The core file consists of a core header followed by a number of
-segments. Each segment is preceded by a core segment header.
+segments.
+Each segment is preceded by a core segment header.
 Both the core header and core segment header are defined in
 .In sys/core.h .
 .Pp
@@ -285,7 +291,8 @@ These values may be extracted with the
 .Fn CORE_GETMAGIC ,
 and
 .Fn CORE_GETFLAG
-macros. The machine ID values are listed in
+macros.
+The machine ID values are listed in
 .In sys/exec_aout.h .
 For a valid core file, the magic value in the header must be
 .Dv COREMAGIC .
