@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.68 2014/10/26 16:48:36 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.69 2014/10/27 13:43:43 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1845,3 +1845,17 @@ usr.bin/ftp/fetch.c				1.206
 	Don't pay attention to special characters if they don't come from
 	the command line (from jmcneill).
 	[christos, ticket #158]
+
+sys/netinet6/nd6.c				1.153
+
+	Tests for neighbour now work correctly on bridge(4) and carp(4)
+	interfaces.
+	[roy, ticket #159]
+
+sbin/ifconfig/af_inet6.c			1.30
+sbin/ifconfig/ifconfig.8			1.109
+sys/netinet6/in6.c				1.177
+
+	Remove the ability for userland to toggle IN6_IFF_TENTATIVE.
+	Preserve IN6_IFF_TENTATIVE when updating address flags.
+	[roy, ticket #160]
