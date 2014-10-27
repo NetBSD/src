@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.258 2014/10/27 09:06:35 martin Exp $
+$NetBSD: UPDATING,v 1.259 2014/10/27 11:21:28 msaitoh Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -20,7 +20,7 @@ Recent changes:
 ^^^^^^^^^^^^^^^
 
 20141026:
-	A mishap during the import of ppd may cause your corruption
+	A mishap during the import of pppd may cause your corruption
 	in your cvs directory if you happened to do a cvs update
 	during a short period of time. To fix, just remove the
 	directory src/external/bsd/ppp/dist/pppd completely
