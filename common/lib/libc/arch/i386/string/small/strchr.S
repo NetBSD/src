@@ -1,4 +1,4 @@
-/*	$NetBSD: strchr.S,v 1.1 2011/06/16 16:39:14 joerg Exp $	*/
+/*	$NetBSD: strchr.S,v 1.1.4.1 2014/10/27 10:51:16 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <machine/asm.h>
-	RCSID("$NetBSD: strchr.S,v 1.1 2011/06/16 16:39:14 joerg Exp $")
+	RCSID("$NetBSD: strchr.S,v 1.1.4.1 2014/10/27 10:51:16 msaitoh Exp $")
 
 ENTRY(strchr)
 	popl	%edx		/* Return address */
@@ -39,10 +39,10 @@ ENTRY(strchr)
 	pushl	%eax
 	pushl	%edx
 1:
-	cmpb	$0, 0(%eax)
-	je 2f
 	cmpb	%cl, 0(%eax)
 	je 3f
+	cmpb	$0, 0(%eax)
+	je 2f
 	incl	%eax
 	jmp 1b
 2:
