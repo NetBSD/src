@@ -1,4 +1,4 @@
-/* $NetBSD: awin_rtc.c,v 1.2 2014/10/12 17:20:58 jmcneill Exp $ */
+/* $NetBSD: awin_rtc.c,v 1.3 2014/10/27 08:51:59 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_rtc.c,v 1.2 2014/10/12 17:20:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_rtc.c,v 1.3 2014/10/27 08:51:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -135,18 +135,42 @@ static int
 awin_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	struct awin_rtc_softc *sc = tch->cookie;
-	uint32_t yymmdd, hhmmss, losc;
+	uint32_t yymmdd, hhmmss, losc, maxyear;
 
 	losc = RTC_READ(sc, sc->sc_loscctrl_reg);
 	if (losc & AWIN_LOSC_CTRL_BUSY)
 		return EBUSY;
 
-	yymmdd = 0;
-	yymmdd |= __SHIFTIN(dt->dt_year - POSIX_BASE_YEAR,
+	/*
+	 * Sanity check the date before writing it back
+	 */
+	if (dt->dt_year < POSIX_BASE_YEAR) {
+		aprint_normal_dev(sc->sc_dev, "year pre the epoch: %llu, "
+		    "not writing back time\n", dt->dt_year);
+		return EIO;
+	}
+	maxyear = __SHIFTOUT(0xffffffff, 
+	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
+	    AWIN_A31_RTC_YY_MM_DD_YEAR : AWIN_RTC_YY_MM_DD_YEAR)
+	    + POSIX_BASE_YEAR;
+	if (dt->dt_year > maxyear) {
+		aprint_normal_dev(sc->sc_dev, "year exceeds avialable field:"
+		    " %llu, not writing back time\n", dt->dt_year);
+		return EIO;
+	}
+
+	yymmdd = __SHIFTIN(dt->dt_year - POSIX_BASE_YEAR,
 	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
 	    AWIN_A31_RTC_YY_MM_DD_YEAR : AWIN_RTC_YY_MM_DD_YEAR);
+
+	KASSERT(__SHIFTOUT(yymmdd,
+	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
+	    AWIN_A31_RTC_YY_MM_DD_YEAR : AWIN_RTC_YY_MM_DD_YEAR) +
+	    POSIX_BASE_YEAR == dt->dt_year);
+
 	yymmdd |= __SHIFTIN(dt->dt_mon, AWIN_RTC_YY_MM_DD_MONTH);
 	yymmdd |= __SHIFTIN(dt->dt_day, AWIN_RTC_YY_MM_DD_DAY);
+
 	hhmmss = 0;
 	hhmmss |= __SHIFTIN(dt->dt_wday, AWIN_RTC_HH_MM_SS_WK_NO);
 	hhmmss |= __SHIFTIN(dt->dt_hour, AWIN_RTC_HH_MM_SS_HOUR);
