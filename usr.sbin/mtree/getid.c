@@ -1,4 +1,4 @@
-/*	$NetBSD: getid.c,v 1.9 2014/03/31 00:00:22 christos Exp $	*/
+/*	$NetBSD: getid.c,v 1.10 2014/10/27 21:46:45 christos Exp $	*/
 /*	from: NetBSD: getpwent.c,v 1.48 2000/10/03 03:22:26 enami Exp */
 /*	from: NetBSD: getgrent.c,v 1.41 2002/01/12 23:51:30 lukem Exp */
 
@@ -65,7 +65,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getid.c,v 1.9 2014/03/31 00:00:22 christos Exp $");
+__RCSID("$NetBSD: getid.c,v 1.10 2014/10/27 21:46:45 christos Exp $");
 
 #include <sys/param.h>
 
@@ -236,7 +236,7 @@ grscan(int search, gid_t gid, const char *name)
 			continue;
 		}
 		/* skip comments */
-		if (pwline[0] == '#')
+		if (grline[0] == '#')
 			continue;
 		if (grmatchline(search, gid, name))
 			return 1;
