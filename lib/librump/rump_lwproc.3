@@ -1,4 +1,4 @@
-.\"     $NetBSD: rump_lwproc.3,v 1.6 2014/10/27 12:32:08 pooka Exp $
+.\"     $NetBSD: rump_lwproc.3,v 1.7 2014/10/27 12:50:41 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -56,7 +56,7 @@ a rump kernel uses the host's thread and process context directly, the rules
 for how thread context is determined are different.
 .Pp
 In the rump kernel model, each host thread (implemented for example
-with pthreads) is either bound to
+with pthreads or green threads) is either bound to
 a rump kernel lwp or accesses the rump kernel with an implicit thread
 context associated with pid 1.
 An implicit thread context is created every time the rump kernel
@@ -70,13 +70,13 @@ The association between host threads and the rump kernel curlwp is
 left to the caller.
 It is possible to create a dedicated host thread for every
 rump kernel lwp or multiplex them on top of a single host thread.
-After rump kernel lwps have been created, switching curlwp is very cheap
--- faster than a thread context switch on the host.
+After rump kernel lwps have been created, switching curlwp is very cheap.
 In case multiple lwps/processes are created, it is the caller's
 responsibility to keep track of them and release them when they
 are no longer necessary.
-Like other rump kernel resources, procs/lwps will be released when
-the process hosting the rump kernel exits.
+A rump kernel lwp will persist until it is explicitly released.
+A rump kernel process will persist until all of its lwps have been
+released, at which point the process is automatically released.
 .Bl -tag -width xxxx
 .It Fn rump_pub_lwproc_rfork
 Create a process, one lwp inside it and set curlwp to the new lwp.
