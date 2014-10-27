@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.23 2014/10/26 20:51:54 joerg Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.24 2014/10/27 09:40:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.23 2014/10/26 20:51:54 joerg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.24 2014/10/27 09:40:00 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -1112,7 +1112,7 @@ skip:
 }
 
 /*
- * Revers order of bits - http://aggregate.org/MAGIC/#Bit%20Reversal
+ * Reverse order of bits - http://aggregate.org/MAGIC/#Bit%20Reversal
  */
 static uint32_t
 bitrev32(uint32_t x)
