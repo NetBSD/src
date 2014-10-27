@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.28.18.1 2012/07/02 18:01:17 jdc Exp $	*/
+/*	$NetBSD: genfs.h,v 1.28.18.2 2014/10/27 05:46:27 msaitoh Exp $	*/
 
 #ifndef	_MISCFS_GENFS_GENFS_H_
 #define	_MISCFS_GENFS_GENFS_H_
@@ -105,7 +105,7 @@ struct genfs_rename_ops {
 	    struct vnode *dvp, struct componentname *cnp, void *de,
 	    struct vnode *vp);
 	int (*gro_lookup)(struct mount *mp, struct vnode *dvp,
-	    struct componentname *cnp, void *fde_ret, struct vnode **vp_ret);
+	    struct componentname *cnp, void *de_ret, struct vnode **vp_ret);
 	int (*gro_genealogy)(struct mount *mp, kauth_cred_t cred,
 	    struct vnode *fdvp, struct vnode *tdvp,
 	    struct vnode **intermediate_node_ret);
