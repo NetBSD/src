@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.137 2014/10/26 20:00:16 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.138 2014/10/27 05:58:51 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -3919,3 +3919,47 @@ crypto/external/bsd/openssl/dist/util/ssleay.num patch
 	  o Fix for CVE-2014-3568
 	[spz, ticket #1170]
 
+sys/arch/i386/conf/ALL				1.372
+
+	Remove FFS_NO_SNAPSHOT from x86/ALL so we do compile the snapshot
+	code.
+	[riastradh, ticket #1128]
+
+usr.sbin/acpitools/acpidump/acpi.c		1.9
+
+	Don't choke on an assertion for an RSDT with a null address entry.
+	[riastradh, ticket #1131]
+
+sys/kern/subr_pcq.c				1.7
+
+	__HAVE_ATOMIC_AS_MEMBAR is spelled with two leading underscores.
+	This underscores the need to replace this error-prone cpp API by
+	unconditionally defined {pre,post}atomic_membar_*.
+	This change should only remove unnecessary membar_producers on x86.
+	[riastradh, ticket #1132]
+
+sys/uvm/uvm_swap.c				1.163
+
+	Set bp->b_resid to bp->b_bcount on error in swstrategy as required.
+	[riastradh, ticket #1133]
+
+share/man/man9/genfs_rename.9			1.1
+
+	Add the genfs_rename(9) manpage.
+	[riastradh, ticket #1134]
+
+sys/miscfs/genfs/genfs.h			1.31
+
+	Fix harmless typo in struct genfs_rename_ops::gro_lookup prototype.
+	[riastradh, ticket #1135]
+
+share/man/man3/rbtree.3				1.8
+
+	Fix documentation of rbtree(3) iteration.
+	Addresses PR lib/46034 and PR lib/47144.
+	[riastradh, ticket #1136]
+
+share/man/man9/autoconf.9			1.30
+
+	Fix argument order for config_attach_loc in autoconf(9).
+	[riastradh, ticket #1137]
