@@ -1,4 +1,4 @@
-/* $NetBSD: awin_rtc.c,v 1.3 2014/10/27 08:51:59 martin Exp $ */
+/* $NetBSD: awin_rtc.c,v 1.4 2014/10/27 10:50:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_rtc.c,v 1.3 2014/10/27 08:51:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_rtc.c,v 1.4 2014/10/27 10:50:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -154,7 +154,7 @@ awin_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 	    AWIN_A31_RTC_YY_MM_DD_YEAR : AWIN_RTC_YY_MM_DD_YEAR)
 	    + POSIX_BASE_YEAR;
 	if (dt->dt_year > maxyear) {
-		aprint_normal_dev(sc->sc_dev, "year exceeds avialable field:"
+		aprint_normal_dev(sc->sc_dev, "year exceeds available field:"
 		    " %llu, not writing back time\n", dt->dt_year);
 		return EIO;
 	}
