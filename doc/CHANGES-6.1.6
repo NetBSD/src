@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.3 2014/10/26 19:59:45 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.4 2014/10/27 06:01:06 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -113,4 +113,10 @@ crypto/external/bsd/openssl/dist/util/ssleay.num patch
 	  o Mitigation for CVE-2014-3566 (SSL protocol vulnerability)
 	  o Fix for CVE-2014-3568
 	[spz, ticket #1170]
+
+usr.bin/ftp/fetch.c				1.206 via patch
+
+	Don't pay attention to special characters if they don't come
+	from the command line.
+	[christos, ticket #1175]
 
