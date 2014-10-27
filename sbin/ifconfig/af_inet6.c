@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.29 2013/10/19 15:50:26 christos Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.29.4.1 2014/10/27 13:42:37 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.29 2013/10/19 15:50:26 christos Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.29.4.1 2014/10/27 13:42:37 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -78,7 +78,6 @@ static cmdloop_branch_t branch[2];
 
 static const struct kwinst ia6flagskw[] = {
 	  IFKW("anycast",	IN6_IFF_ANYCAST)
-	, IFKW("tentative",	IN6_IFF_TENTATIVE)
 	, IFKW("deprecated",	IN6_IFF_DEPRECATED)
 };
 
@@ -476,7 +475,7 @@ in6_usage(prop_dictionary_t env)
 {
 	fprintf(stderr,
 	    "\t[ anycast | -anycast ] [ deprecated | -deprecated ]\n"
-	    "\t[ tentative | -tentative ] [ pltime n ] [ vltime n ] "
+	    "\t[ pltime n ] [ vltime n ] "
 	    "[ eui64 ]\n");
 }
 
