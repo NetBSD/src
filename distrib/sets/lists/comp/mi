@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1738.2.18 2014/08/15 08:10:41 msaitoh Exp $
+#	$NetBSD: mi,v 1.1738.2.19 2014/10/27 06:23:36 msaitoh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10068,6 +10068,7 @@
 ./usr/share/man/cat9/fuswintr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fusword.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fuword.0			comp-sys-catman		.cat
+./usr/share/man/cat9/genfs_rename.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getbintime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getbinuptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getblk.0			comp-sys-catman		.cat
@@ -16250,6 +16251,7 @@
 ./usr/share/man/html9/fuswintr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/fusword.html		comp-sys-htmlman	html
 ./usr/share/man/html9/fuword.html		comp-sys-htmlman	html
+./usr/share/man/html9/genfs_rename.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getbintime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getbinuptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getblk.html		comp-sys-htmlman	html
@@ -22583,6 +22585,7 @@
 ./usr/share/man/man9/fuswintr.9			comp-sys-man		.man
 ./usr/share/man/man9/fusword.9			comp-sys-man		.man
 ./usr/share/man/man9/fuword.9			comp-sys-man		.man
+./usr/share/man/man9/genfs_rename.9		comp-sys-man		.man
 ./usr/share/man/man9/getbintime.9		comp-sys-man		.man
 ./usr/share/man/man9/getbinuptime.9		comp-sys-man		.man
 ./usr/share/man/man9/getblk.9			comp-sys-man		.man
