@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mcast.c,v 1.9 2014/10/26 18:33:43 christos Exp $	*/
+/*	$NetBSD: t_mcast.c,v 1.10 2014/10/27 21:28:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: t_mcast.c,v 1.9 2014/10/26 18:33:43 christos Exp $");
+__RCSID("$NetBSD: t_mcast.c,v 1.10 2014/10/27 21:28:58 christos Exp $");
 #else
 extern const char *__progname;
 #define getprogname() __progname
@@ -78,7 +78,7 @@ static int debug;
 #define PORT_V4 "6666"
 #define HOST_V4 "239.1.1.1"
 #define PORT_V6 "6666"
-#define HOST_V6 "FF02:0:0:0:0:0:0:1"
+#define HOST_V6 "FF05:1:0:0:0:0:0:1"
 
 struct message {
 	size_t seq;
@@ -126,18 +126,18 @@ addmc(int s, struct addrinfo *ai, bool bug)
 #if 0
 		ifc = 1;
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_LOOP,
-		    &ifc, sizeof(ifc))) == -1)
+		    &ifc, sizeof(ifc)) == -1)
 		    	return -1;
 		ifc = 224;
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
 		    &ifc, sizeof(ifc)) == -1)
 		    	return -1;
-#endif
-#if 1
 		ifc = 1;
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_IF, &ifc,
 		    sizeof(ifc)) == -1)
 			return -1;
+#else
+		ifc = 1;
 #endif
 		m6.ipv6mr_interface = ifc;
 	        m6.ipv6mr_multiaddr = s6->sin6_addr;
