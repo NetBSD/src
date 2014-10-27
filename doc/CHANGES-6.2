@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.140 2014/10/27 06:25:19 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.141 2014/10/27 11:03:19 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -3971,3 +3971,20 @@ usr.bin/ftp/fetch.c				1.206 via patch
 	from the command line.
 	[christos, ticket #1175]
 
+common/lib/libc/gen/rb.c			1.12-1.13
+
+	Fix failure case in rb_tree_find_node_leq/geq.
+	Return NULL, not `NULL - offset'.
+	[riastradh, ticket #1142]
+
+share/man/man9/uvm_map.9			1.6
+
+	Fix typo: mask, not mark.
+	[riastradh, ticket #1154]
+
+common/lib/libc/arch/i386/string/small/strchr.S	1.3
+
+	Look for the character to locate before checking for the NUL character.
+	This fixes strchr(s, '\0'), as used by the FAT first-stage bootloader
+	on x86 (bootxx_msdos). Fixes PR port-i386/49208.
+	[khorben, ticket #1158]
