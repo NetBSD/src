@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.185 2008/04/28 20:24:13 martin Exp $	*/
+/*	$NetBSD: fetch.c,v 1.185.14.1 2014/10/27 12:22:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.185 2008/04/28 20:24:13 martin Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.185.14.1 2014/10/27 12:22:39 msaitoh Exp $");
 #endif /* not lint */
 
 /*
@@ -537,7 +537,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	url_decode(decodedpath);
 
 	if (outfile)
-		savefile = ftp_strdup(outfile);
+		savefile = outfile;
 	else {
 		cp = strrchr(decodedpath, '/');		/* find savefile */
 		if (cp != NULL)
@@ -561,8 +561,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	rangestart = rangeend = entitylen = -1;
 	mtime = -1;
 	if (restartautofetch) {
-		if (strcmp(savefile, "-") != 0 && *savefile != '|' &&
-		    stat(savefile, &sb) == 0)
+		if (stat(savefile, &sb) == 0)
 			restart_point = sb.st_size;
 	}
 	if (urltype == FILE_URL_T) {		/* file:// URLs */
@@ -1087,18 +1086,27 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		}
 	}		/* end of ftp:// or http:// specific setup */
 
-			/* Open the output file. */
-	if (strcmp(savefile, "-") == 0) {
-		fout = stdout;
-	} else if (*savefile == '|') {
-		oldintp = xsignal(SIGPIPE, SIG_IGN);
-		fout = popen(savefile + 1, "w");
-		if (fout == NULL) {
-			warn("Can't execute `%s'", savefile + 1);
-			goto cleanup_fetch_url;
+	/* Open the output file. */
+
+	/*
+	 * Only trust filenames with special meaning if they came from
+	 * the command line
+	 */
+
+	if (savefile == outfile) {
+		if (strcmp(savefile, "-") == 0) {
+			fout = stdout;
+		} else if (*savefile == '|') {
+			oldintp = xsignal(SIGPIPE, SIG_IGN);
+			fout = popen(savefile + 1, "w");
+			if (fout == NULL) {
+				warn("Can't execute `%s'", savefile + 1);
+				goto cleanup_fetch_url;
+			}
+			closefunc = pclose;
 		}
-		closefunc = pclose;
-	} else {
+	}
+	if (fout == NULL) {
 		if ((rangeend != -1 && rangeend <= restart_point) ||
 		    (rangestart == -1 && filesize != -1 && filesize <= restart_point)) {
 			/* already done */
@@ -1308,7 +1316,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		(*closefunc)(fout);
 	if (res0)
 		freeaddrinfo(res0);
-	FREEPTR(savefile);
+	if (savefile != outfile)
+		FREEPTR(savefile);
 	FREEPTR(user);
 	if (pass != NULL)
 		memset(pass, 0, strlen(pass));
