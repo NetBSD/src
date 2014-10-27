@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.177 2014/10/20 14:50:09 roy Exp $	*/
+/*	$NetBSD: in6.c,v 1.178 2014/10/27 14:10:12 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.177 2014/10/20 14:50:09 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.178 2014/10/27 14:10:12 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1887,6 +1887,12 @@ ip6_sprintf(const struct in6_addr *addr)
 
 	ip6round = (ip6round + 1) & 7;
 	cp = ip6buf[ip6round];
+
+	if (IN6_IS_ADDR_V4MAPPED(addr)) {
+		struct in_addr ia = { .s_addr = addr->s6_addr32[3] };
+		snprintf(cp, 48, "::ffff:%s", inet_ntoa(ia));
+		return cp;
+	}
 
 	for (i = 0; i < 8; i++) {
 		if (dcolon == 1) {
