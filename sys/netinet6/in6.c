@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.174 2014/07/01 23:01:54 justin Exp $	*/
+/*	$NetBSD: in6.c,v 1.174.2.1 2014/10/27 13:42:37 martin Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.174 2014/07/01 23:01:54 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.174.2.1 2014/10/27 13:42:37 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -649,6 +649,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		/* reject read-only flags */
 		if ((ifra->ifra_flags & IN6_IFF_DUPLICATED) != 0 ||
 		    (ifra->ifra_flags & IN6_IFF_DETACHED) != 0 ||
+		    (ifra->ifra_flags & IN6_IFF_TENTATIVE) != 0 ||
 		    (ifra->ifra_flags & IN6_IFF_NODAD) != 0 ||
 		    (ifra->ifra_flags & IN6_IFF_AUTOCONF) != 0) {
 			return EINVAL;
@@ -834,7 +835,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	struct in6_multi_mship *imm;
 	struct in6_multi *in6m_sol;
 	struct rtentry *rt;
-	int dad_delay;
+	int dad_delay, was_tentative;
 
 	in6m_sol = NULL;
 
@@ -1063,7 +1064,10 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 
 	/*
 	 * configure address flags.
+	 * We need to preserve tentative state so DAD works if
+	 * something adds the same address before DAD finishes.
 	 */
+	was_tentative = ia->ia6_flags & (IN6_IFF_TENTATIVE|IN6_IFF_DUPLICATED);
 	ia->ia6_flags = ifra->ifra_flags;
 
 	/*
@@ -1075,7 +1079,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	if (ifp->if_link_state == LINK_STATE_DOWN) {
 		ia->ia6_flags |= IN6_IFF_DETACHED;
 		ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
-	} else if (hostIsNew && in6if_do_dad(ifp))
+	} else if ((hostIsNew || was_tentative) && in6if_do_dad(ifp))
 		ia->ia6_flags |= IN6_IFF_TENTATIVE;
 
 	/*
