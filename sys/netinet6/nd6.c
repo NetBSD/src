@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.152 2014/06/06 01:02:47 rmind Exp $	*/
+/*	$NetBSD: nd6.c,v 1.152.2.1 2014/10/27 13:39:11 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,8 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.152 2014/06/06 01:02:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.152.2.1 2014/10/27 13:39:11 martin Exp $");
 
+#include "bridge.h"
+#include "carp.h"
 #include "opt_ipsec.h"
 
 #include <sys/param.h>
@@ -906,7 +908,7 @@ nd6_lookup1(const struct in6_addr *addr6, int create, struct ifnet *ifp,
 	    rt->rt_flags & (RTF_CLONING | RTF_CLONED) &&
 	    (rt->rt_ifp == ifp
 #if NBRIDGE > 0
-	    || SAME_BRIDGE(rt->rt_ifp->if_bridgeport, ifp->if_bridgeport)
+	    || rt->rt_ifp->if_bridge == ifp->if_bridge
 #endif
 #if NCARP > 0
 	    || (ifp->if_type == IFT_CARP && rt->rt_ifp == ifp->if_carpdev) ||
