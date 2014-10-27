@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.138 2014/10/27 05:58:51 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.139 2014/10/27 05:59:42 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -3963,3 +3963,10 @@ share/man/man9/autoconf.9			1.30
 
 	Fix argument order for config_attach_loc in autoconf(9).
 	[riastradh, ticket #1137]
+
+usr.bin/ftp/fetch.c				1.206 via patch
+
+	Don't pay attention to special characters if they don't come
+	from the command line.
+	[christos, ticket #1175]
+
