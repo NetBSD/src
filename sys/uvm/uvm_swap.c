@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.161.2.1 2014/03/18 08:09:46 msaitoh Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.161.2.2 2014/10/27 05:42:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.161.2.1 2014/03/18 08:09:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.161.2.2 2014/10/27 05:42:43 msaitoh Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1134,6 +1134,7 @@ swstrategy(struct buf *bp)
 	mutex_exit(&uvm_swap_data_lock);
 	if (sdp == NULL) {
 		bp->b_error = EINVAL;
+		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 		UVMHIST_LOG(pdhist, "  failed to get swap device", 0, 0, 0, 0);
 		return;
