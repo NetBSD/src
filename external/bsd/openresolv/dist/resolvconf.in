@@ -354,6 +354,47 @@ echo_append()
 	echo
 }
 
+replace()
+{
+	local r= k= f= v= val= sub=
+
+	while read -r keyword value; do
+		for r in $replace; do
+			k="${r%%/*}"
+			r="${r#*/}"
+			f="${r%%/*}"
+			r="${r#*/}"
+			v="${r%%/*}"
+			case "$keyword" in
+			$k)
+				case "$value" in
+				$f) value="$v";;
+				esac
+				;;
+			esac
+		done
+		val=
+		for sub in $value; do
+			for r in $replace_sub; do
+				k="${r%%/*}"
+				r="${r#*/}"
+				f="${r%%/*}"
+				r="${r#*/}"
+				v="${r%%/*}"
+				case "$keyword" in
+				$k)
+					case "$sub" in
+					$f) sub="$v";;
+					esac
+					;;
+				esac
+			done
+			val="$val${val:+ }$sub"
+		done
+		printf "%s %s\n" "$keyword" "$val"
+	done
+}
+
 make_vars()
 {
 	local newdomains= d= dn= newns= ns=
@@ -369,7 +410,7 @@ make_vars()
 		eval "$(echo_prepend | parse_resolv)"
 	fi
 	if [ -z "$VFLAG" ]; then
-		eval "$(list_resolv -l "$@" | parse_resolv)"
+		eval "$(list_resolv -l "$@" | replace | parse_resolv)"
 	fi
 	if [ -n "$name_servers_append" -o -n "$search_domains_append" ]; then
 		eval "$(echo_append | parse_resolv)"
@@ -510,6 +551,17 @@ fi
 if [ ! -d "$IFACEDIR" ]; then
 	mkdir -m 0755 -p "$IFACEDIR" || \
 		error_exit "Failed to create needed directory $IFACEDIR"
+	if [ "$cmd" = d ]; then
+		# Provide the same error messages as below
+		if ! ${force}; then
+			cd "$IFACEDIR"
+			for i in $args; do
+				warn "No resolv.conf for interface $i"
+			done
+		fi
+		${force}
+		exit $?
+	fi
 else
 	# Delete any existing information about the interface
 	if [ "$cmd" = d ]; then
