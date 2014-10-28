@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.14 2014/10/19 16:30:59 christos Exp $	*/
+/*	$NetBSD: sshd.c,v 1.15 2014/10/28 21:36:16 joerg Exp $	*/
 /* $OpenBSD: sshd.c,v 1.428 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.14 2014/10/19 16:30:59 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.15 2014/10/28 21:36:16 joerg Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -287,7 +287,7 @@ close_startup_pipes(void)
  */
 
 /*ARGSUSED*/
-__dead static void
+static void
 sighup_handler(int sig)
 {
 	int save_errno = errno;
