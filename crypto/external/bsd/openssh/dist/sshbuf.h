@@ -161,7 +161,8 @@ int	sshbuf_putb(struct sshbuf *buf, const struct sshbuf *v);
 /* Append using a printf(3) format */
 int	sshbuf_putf(struct sshbuf *buf, const char *fmt, ...)
 	    __attribute__((format(printf, 2, 3)));
-int	sshbuf_putfv(struct sshbuf *buf, const char *fmt, va_list ap);
+int	sshbuf_putfv(struct sshbuf *buf, const char *fmt, va_list ap)
+	    __printflike(2, 0);
 
 /* Functions to extract or store big-endian words of various sizes */
 int	sshbuf_get_u64(struct sshbuf *buf, u_int64_t *valp);
