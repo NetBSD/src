@@ -1,4 +1,4 @@
-/* $NetBSD: byte_swap.h,v 1.1 2014/09/19 17:36:26 matt Exp $ */
+/* $NetBSD: byte_swap.h,v 1.2 2014/10/28 19:46:18 dennis Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -63,9 +63,9 @@ static __inline uint64_t
 __byte_swap_u64_variable(uint64_t v)
 {
 	v =   ((v & 0x000000ff) << (56 -  0)) | ((v >> (56 -  0)) & 0x000000ff)
-	    | ((v & 0x0000ff00) << (48 -  8)) | ((v << (48 -  8)) & 0x0000ff00) 
-	    | ((v & 0x00ff0000) << (40 - 16)) | ((v << (40 - 16)) & 0x00ff0000)
-	    | ((v & 0xff000000) << (32 - 24)) | ((v << (32 - 24)) & 0xff000000);
+	    | ((v & 0x0000ff00) << (48 -  8)) | ((v >> (48 -  8)) & 0x0000ff00) 
+	    | ((v & 0x00ff0000) << (40 - 16)) | ((v >> (40 - 16)) & 0x00ff0000)
+	    | ((v & 0xff000000) << (32 - 24)) | ((v >> (32 - 24)) & 0xff000000);
 
 	return v;
 }
@@ -75,7 +75,7 @@ static __inline uint32_t
 __byte_swap_u32_variable(uint32_t v)
 {
 	v =   ((v & 0x00ff) << (24 - 0)) | ((v >> (24 - 0)) & 0x00ff)
-	    | ((v & 0xff00) << (16 - 8)) | ((v << (16 - 8)) & 0xff00);
+	    | ((v & 0xff00) << (16 - 8)) | ((v >> (16 - 8)) & 0xff00);
 
 	return v;
 }
