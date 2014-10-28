@@ -1,4 +1,4 @@
-/*	$NetBSD: umac.c,v 1.7 2014/10/20 10:31:32 martin Exp $	*/
+/*	$NetBSD: umac.c,v 1.8 2014/10/28 21:36:30 joerg Exp $	*/
 /* $OpenBSD: umac.c,v 1.11 2014/07/22 07:13:42 guenther Exp $ */
 /* -----------------------------------------------------------------------
  * 
@@ -67,7 +67,7 @@
 /* ---------------------------------------------------------------------- */
 
 #include "includes.h"
-__RCSID("$NetBSD: umac.c,v 1.7 2014/10/20 10:31:32 martin Exp $");
+__RCSID("$NetBSD: umac.c,v 1.8 2014/10/28 21:36:30 joerg Exp $");
 #include <sys/types.h>
 #include <sys/endian.h>
 #include <string.h>
@@ -239,7 +239,7 @@ xor64(uint8_t *dp, int di, uint8_t *sp, int si)
     memcpy(dp + sizeof(dst) * di, &dst, sizeof(dst));
 }
 
-static inline void
+__unused static inline void
 xor32(uint8_t *dp, int di, uint8_t *sp, int si)
 {
     uint32_t dst, src;
