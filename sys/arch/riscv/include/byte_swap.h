@@ -1,4 +1,4 @@
-/* $NetBSD: byte_swap.h,v 1.2 2014/10/28 19:46:18 dennis Exp $ */
+/* $NetBSD: byte_swap.h,v 1.3 2014/10/28 20:25:36 dennis Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -62,10 +62,12 @@ __BEGIN_DECLS
 static __inline uint64_t
 __byte_swap_u64_variable(uint64_t v)
 {
-	v =   ((v & 0x000000ff) << (56 -  0)) | ((v >> (56 -  0)) & 0x000000ff)
-	    | ((v & 0x0000ff00) << (48 -  8)) | ((v >> (48 -  8)) & 0x0000ff00) 
-	    | ((v & 0x00ff0000) << (40 - 16)) | ((v >> (40 - 16)) & 0x00ff0000)
-	    | ((v & 0xff000000) << (32 - 24)) | ((v >> (32 - 24)) & 0xff000000);
+	const uint64_t m1 = 0x0000ffff0000ffffull;
+	const uint64_t m0 = 0x00ff00ff00ff00ffull;
+
+	v = (v >> 32) | (v << 32);
+	v = ((v >> 16) & m1) | ((v & m1) << 16);
+	v = ((v >> 8) & m0) | ((v & m0) << 8);
 
 	return v;
 }
@@ -74,8 +76,10 @@ __byte_swap_u64_variable(uint64_t v)
 static __inline uint32_t
 __byte_swap_u32_variable(uint32_t v)
 {
-	v =   ((v & 0x00ff) << (24 - 0)) | ((v >> (24 - 0)) & 0x00ff)
-	    | ((v & 0xff00) << (16 - 8)) | ((v >> (16 - 8)) & 0xff00);
+	const uint32_t m = 0xff00ff;
+
+	v = (v >> 16) | (v << 16);
+	v = ((v >> 8) & m) | ((v & m) << 8);
 
 	return v;
 }
