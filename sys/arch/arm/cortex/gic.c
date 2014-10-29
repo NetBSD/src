@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.11 2014/10/29 14:14:14 skrll Exp $	*/
+/*	$NetBSD: gic.c,v 1.12 2014/10/29 19:27:36 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.11 2014/10/29 14:14:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.12 2014/10/29 19:27:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -350,10 +350,12 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		 * to the primary cpu.
 		 */
 		targets &= ~(0xff << byte_shift);
+#if 0
 #ifdef MULTIPROCESSOR
 		if (is->is_mpsafe) {
-			targets |= sc->sc_mptargets;
+			targets |= sc->sc_mptargets << byte_shift;
 		} else
+#endif
 #endif
 		targets |= 1 << byte_shift;
 		gicd_write(sc, targets_reg, targets);
@@ -443,7 +445,7 @@ armgic_cpu_init_targets(struct armgic_softc *sc)
 		struct intrsource * const is = sc->sc_pic.pic_sources[irq];
 		const bus_size_t targets_reg = GICD_ITARGETSRn(irq / 4);
 		if (is != NULL && is->is_mpsafe) {
-			const u_int byte_shift = 0xff << (8 * (irq & 3));
+			const u_int byte_shift = 8 * (irq & 3);
 			uint32_t targets = gicd_read(sc, targets_reg);
 			targets |= sc->sc_mptargets << byte_shift;
 			gicd_write(sc, targets_reg, targets);
