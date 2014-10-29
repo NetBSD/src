@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.106 2014/10/25 10:58:12 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.107 2014/10/29 14:14:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,11 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.106 2014/10/25 10:58:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.107 2014/10/29 14:14:14 skrll Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

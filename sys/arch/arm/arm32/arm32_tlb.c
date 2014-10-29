@@ -26,8 +26,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.4 2014/10/14 20:35:03 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.5 2014/10/29 14:14:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>

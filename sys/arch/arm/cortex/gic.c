@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.10 2014/05/19 22:47:53 rmind Exp $	*/
+/*	$NetBSD: gic.c,v 1.11 2014/10/29 14:14:14 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,11 +29,12 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_multiprocessor.h"
 
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.10 2014/05/19 22:47:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.11 2014/10/29 14:14:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
