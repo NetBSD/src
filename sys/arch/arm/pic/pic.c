@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.23 2014/10/13 09:21:06 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.24 2014/10/29 14:41:57 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.23 2014/10/13 09:21:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.24 2014/10/29 14:41:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -646,7 +646,7 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	is->is_func = func;
 	is->is_arg = arg;
 #ifdef MULTIPROCESSOR
-	is->is_mpsafe = (type & IST_MPSAFE);
+	is->is_mpsafe = (type & IST_MPSAFE) || ipl != IPL_VM;
 #endif
 
 	if (pic->pic_ops->pic_source_name)
