@@ -1,5 +1,3 @@
-/*	$NetBSD: tables.h,v 1.1.1.1 2009/10/26 00:27:05 christos Exp $	*/
-
 /*  tables.h - tables serialization code
  *
  *  Copyright (c) 1990 The Regents of the University of California.
