@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2014/10/29 17:14:50 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2014/10/29 19:10:49 christos Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/19/94
 
 .include <bsd.own.mk>
@@ -21,8 +21,6 @@ CPPFLAGS+= -I${NETBSDSRCDIR}/usr.bin/cksum
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
 .endif
-
-COPTS.scan.c+=-Wno-conversion
 
 CWARNFLAGS+=-Wno-format-y2k
 
