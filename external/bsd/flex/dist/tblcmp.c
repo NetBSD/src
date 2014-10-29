@@ -1,5 +1,3 @@
-/*	$NetBSD: tblcmp.c,v 1.1.1.1 2009/10/26 00:27:05 christos Exp $	*/
-
 /* tblcmp - table compression routines */
 
 /*  Copyright (c) 1990 The Regents of the University of California. */
