@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11.S,v 1.15 2014/07/31 10:44:58 skrll Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11.S,v 1.16 2014/10/29 16:14:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -68,12 +68,10 @@ ENTRY(arm11_context_switch)
 	 * We can assume that the caches will only contain kernel addresses
 	 * at this point.  So no need to flush them again.
 	 */
-#ifdef ARM_MMU_EXTENDED
-	cmp	r1, #0
-#endif
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	mcr	p15, 0, r0, c2, c0, 0	/* set the new TTBR0 */
 #ifdef ARM_MMU_EXTENDED
+	cmp	r1, #0
 	mcreq	p15, 0, r0, c2, c0, 1	/* set the new TTBR1 */
 #else
 	mcr	p15, 0, r0, c8, c7, 0	/* and flush the I+D tlbs */
