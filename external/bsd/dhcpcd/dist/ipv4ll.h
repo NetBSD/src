@@ -1,4 +1,4 @@
-/* $NetBSD: ipv4ll.h,v 1.1.1.3 2013/06/21 19:33:08 roy Exp $ */
+/* $NetBSD: ipv4ll.h,v 1.1.1.4 2014/10/29 01:03:54 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -31,6 +31,7 @@
 #define IPV4LL_H
 
 void ipv4ll_start(void *);
+void ipv4ll_claimed(void *);
 void ipv4ll_handle_failure(void *);
 
 #endif
