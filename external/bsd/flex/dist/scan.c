@@ -1,5 +1,3 @@
-/*	$NetBSD: scan.c,v 1.1.1.2 2013/04/06 14:05:44 christos Exp $	*/
-
 
 #line 3 "scan.c"
 
@@ -10,7 +8,7 @@
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 5
-#define YY_FLEX_SUBMINOR_VERSION 36
+#define YY_FLEX_SUBMINOR_VERSION 37
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -169,6 +167,7 @@ extern FILE *yyin, *yyout;
 #define EOB_ACT_LAST_MATCH 2
 
     #define YY_LESS_LINENO(n)
+    #define YY_LINENO_REWIND_TO(ptr)
     
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
@@ -1976,7 +1975,7 @@ extern const char *escaped_qstart, *escaped_qend;
 
 
 
-#line 1978 "scan.c"
+#line 1979 "scan.c"
 
 #define INITIAL 0
 #define SECT2 1
@@ -2192,19 +2191,6 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 131 "scan.l"
-
-	static int bracelevel, didadef, indented_code;
-	static int doing_rule_action = false;
-	static int option_sense;
-
-	int doing_codeblock = false;
-	int i, brace_depth=0, brace_start_line=0;
-	Char nmdef[MAXLINE];
-
-
-#line 2205 "scan.c"
-
 	if ( !(yy_init) )
 		{
 		(yy_init) = 1;
@@ -2237,6 +2223,20 @@ YY_DECL
 		yy_load_buffer_state( );
 		}
 
+	{
+#line 131 "scan.l"
+
+	static int bracelevel, didadef, indented_code;
+	static int doing_rule_action = false;
+	static int option_sense;
+
+	int doing_codeblock = false;
+	int i, brace_depth=0, brace_start_line=0;
+	Char nmdef[MAXLINE];
+
+
+#line 2239 "scan.c"
+
 	while ( 1 )		/* loops until end-of-file is reached */
 		{
 		(yy_more_len) = 0;
@@ -2264,7 +2264,7 @@ YY_DECL
 yy_match:
 		do
 			{
-			register YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)];
+			register YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)] ;
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
@@ -3227,6 +3227,7 @@ YY_RULE_SETUP
 case 144:
 /* rule 144 can match eol */
 *yy_cp = (yy_hold_char); /* undo effects of setting up yytext */
+YY_LINENO_REWIND_TO(yy_bp + 1);
 (yy_c_buf_p) = yy_cp = yy_bp + 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
@@ -4110,7 +4111,7 @@ YY_RULE_SETUP
 #line 969 "scan.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 4112 "scan.c"
+#line 4115 "scan.c"
 			case YY_STATE_EOF(INITIAL):
 			case YY_STATE_EOF(SECT2):
 			case YY_STATE_EOF(CODEBLOCK):
@@ -4254,6 +4255,7 @@ YY_FATAL_ERROR( "flex scanner jammed" );
 			"fatal flex scanner internal error--no action found" );
 	} /* end of action switch */
 		} /* end of scanning one token */
+	} /* end of user's declarations */
 } /* end of yylex */
 
 /* yy_get_next_buffer - try to read in a new buffer
@@ -4856,7 +4858,7 @@ YY_BUFFER_STATE yy_scan_bytes  (yyconst char * yybytes, yy_size_t  _yybytes_len 
 	YY_BUFFER_STATE b;
 	char *buf;
 	yy_size_t n;
-	int i;
+	yy_size_t i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = _yybytes_len + 2;

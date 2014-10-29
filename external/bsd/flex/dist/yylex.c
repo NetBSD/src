@@ -1,5 +1,3 @@
-/*	$NetBSD: yylex.c,v 1.1.1.1 2009/10/26 00:27:05 christos Exp $	*/
-
 /* yylex - scanner front-end for flex */
 
 /*  Copyright (c) 1990 The Regents of the University of California. */

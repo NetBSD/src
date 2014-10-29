@@ -1,5 +1,3 @@
-/*	$NetBSD: libmain.c,v 1.1.1.1 2009/10/26 00:26:24 christos Exp $	*/
-
 /* libmain - flex run-time support library "main" function */
 
 /*  This file is part of flex. */

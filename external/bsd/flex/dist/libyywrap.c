@@ -1,5 +1,3 @@
-/*	$NetBSD: libyywrap.c,v 1.1.1.1 2009/10/26 00:26:24 christos Exp $	*/
-
 /* libyywrap - flex run-time support library "yywrap" function */
 
 /*  This file is part of flex. */

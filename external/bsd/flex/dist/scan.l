@@ -1,5 +1,3 @@
-/*	$NetBSD: scan.l,v 1.1.1.2 2013/04/06 14:05:44 christos Exp $	*/
-
 /* scan.l - scanner for flex input -*-C-*- */
 
 %{

@@ -1,5 +1,3 @@
-/*	$NetBSD: flexdef.h,v 1.1.1.2 2013/04/06 14:05:42 christos Exp $	*/
-
 
 /* flexdef - definitions file for flex */
 
@@ -909,6 +907,9 @@ extern void lerrif PROTO ((const char *, int));
 
 /* Report an error message formatted with one string argument. */
 extern void lerrsf PROTO ((const char *, const char *));
+
+/* Like lerrsf, but also exit after displaying message. */
+extern void lerrsf_fatal PROTO ((const char *, const char *));
 
 /* Spit out a "#line" statement. */
 extern void line_directive_out PROTO ((FILE *, int));

@@ -1,5 +1,3 @@
-/*	$NetBSD: main.c,v 1.1.1.2 2013/04/06 14:05:43 christos Exp $	*/
-
 /* flex - tool to generate fast lexical analyzers */
 
 /*  Copyright (c) 1990 The Regents of the University of California. */
@@ -184,6 +182,8 @@ int flex_main (argc, argv)
 
 	readin ();
 
+	skelout ();
+	/* %% [1.5] DFA */
 	ntod ();
 
 	for (i = 1; i <= num_rules; ++i)
@@ -241,11 +241,6 @@ void check_options ()
 		if (reentrant || bison_bridge_lval)
 			flexerror (_
 				   ("Can't use --reentrant or --bison-bridge with -l option"));
-
-		/* Don't rely on detecting use of yymore() and REJECT,
-		 * just assume they'll be used.
-		 */
-		yymore_really_used = reject_really_used = true;
 
 		yytext_is_array = true;
 		do_yylineno = true;

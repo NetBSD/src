@@ -1,5 +1,3 @@
-/*	$NetBSD: buf.c,v 1.1.1.2 2013/04/06 14:05:39 christos Exp $	*/
-
 /* flex - tool to generate fast lexical analyzers */
 
 /*  Copyright (c) 1990 The Regents of the University of California. */

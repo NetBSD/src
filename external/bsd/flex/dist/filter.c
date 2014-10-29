@@ -1,5 +1,3 @@
-/*	$NetBSD: filter.c,v 1.1.1.2 2013/04/06 14:05:42 christos Exp $	*/
-
 /* filter - postprocessing of flex output through filters */
 
 /*  This file is part of flex. */
