@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.15 2013/11/18 11:02:34 nisimura Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.16 2014/10/29 00:48:12 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.15 2013/11/18 11:02:34 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.16 2014/10/29 00:48:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -564,8 +564,38 @@ adbms_process_event(struct adbms_softc *sc, int len, uint8_t *buffer)
 			break;
 	}
 
-	dx = ((int)(buffer[1] & 0x3f)) - ((buffer[1] & 0x40) ? 64 : 0);
-	dy = ((int)(buffer[0] & 0x3f)) - ((buffer[0] & 0x40) ? 64 : 0);
+	if (sc->sc_adbdev->handler_id != ADBMS_EXTENDED) {
+		dx = ((int)(buffer[1] & 0x3f)) - ((buffer[1] & 0x40) ? 64 : 0);
+		dy = ((int)(buffer[0] & 0x3f)) - ((buffer[0] & 0x40) ? 64 : 0);
+	} else {
+		/* EMP crap, additional motion bits */
+		int shift = 7, ddx, ddy, sign, smask;
+
+#ifdef ADBMS_DEBUG
+		printf("EMP packet:");
+		for (i = 0; i < len; i++)
+			printf(" %02x", buffer[i]);
+		printf("\n");
+#endif
+		dx = (int)buffer[1] & 0x7f;
+		dy = (int)buffer[0] & 0x7f;
+		for (i = 2; i < len; i++) {
+			ddx = (buffer[i] & 0x07);
+			ddy = (buffer[i] & 0x70) >> 4;
+			dx |= (ddx << shift);
+			dy |= (ddy << shift);
+			shift += 3;
+		}
+		sign = 1 << (shift - 1);
+		smask = 0xffffffff << shift;
+		if (dx & sign)
+			dx |= smask;
+		if (dy & sign)
+			dy |= smask;
+#ifdef ADBMS_DEBUG
+		printf("%d %d %08x %d\n", dx, dy, smask, shift);
+#endif
+	}
 
 	if (sc->sc_class == MSCLASS_TRACKPAD) {
 
