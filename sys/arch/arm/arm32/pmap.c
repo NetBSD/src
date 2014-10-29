@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.306 2014/10/29 22:11:34 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.307 2014/10/29 22:52:21 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -215,7 +215,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.306 2014/10/29 22:11:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.307 2014/10/29 22:52:21 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -2496,11 +2496,14 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 		}
 
 		if (npte != opte) {
-			l2pte_set(ptep, npte, opte);
+			l2pte_reset(ptep);
 			PTE_SYNC(ptep);
 
 			/* Flush the TLB entry if a current pmap. */
 			pmap_tlb_flush_SE(pm, va, oflags);
+
+			l2pte_set(ptep, npte, 0);
+			PTE_SYNC(ptep);
 		}
 
 		pmap_release_pmap_lock(pm);
@@ -2655,6 +2658,9 @@ pmap_syncicache_page(struct vm_page_md *md, paddr_t pa)
 
 	for (size_t i = 0, j = 0; i < way_size;
 	     i += PAGE_SIZE, j += PAGE_SIZE / L2_S_SIZE) {
+		l2pte_reset(ptep + j);
+		PTE_SYNC(ptep + j);
+
 		pmap_tlb_flush_SE(kpm, dstp + i, PVF_REF | PVF_EXEC);
 		/*
 		 * Set up a PTE with to flush these cache lines.
@@ -2883,10 +2889,6 @@ pmap_page_remove(struct vm_page_md *md, paddr_t pa)
 		pmap_release_page_lock(md);
 		pmap_acquire_pmap_lock(pm);
 
-#ifdef ARM_MMU_EXTENDED
-		pmap_tlb_invalidate_addr(pm, pv->pv_va);
-#endif
-
 		l2b = pmap_get_l2_bucket(pm, pv->pv_va);
 		KASSERTMSG(l2b != NULL, "%#lx", pv->pv_va);
 
@@ -2908,7 +2910,14 @@ pmap_page_remove(struct vm_page_md *md, paddr_t pa)
 		 */
 		l2pte_reset(ptep);
 		PTE_SYNC_CURRENT(pm, ptep);
+
+#ifdef ARM_MMU_EXTENDED
+		/* XXXNH pmap_tlb_flush_SE()? */
+		pmap_tlb_invalidate_addr(pm, pv->pv_va);
+#endif
+
 		pmap_free_l2_bucket(pm, l2b, PAGE_SIZE / L2_S_SIZE);
+
 		pmap_release_pmap_lock(pm);
 
 		pool_put(&pmap_pv_pool, pv);
@@ -3307,8 +3316,11 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * identical, so there's no need to update the page table.
 	 */
 	if (npte != opte) {
+		l2pte_reset(ptep);
+		PTE_SYNC(ptep);
+		pmap_tlb_flush_SE(pm, va, oflags);
 
-		l2pte_set(ptep, npte, opte);
+		l2pte_set(ptep, npte, 0);
 		PTE_SYNC(ptep);
 #ifndef ARM_MMU_EXTENDED
 		bool is_cached = pmap_is_cached(pm);
@@ -3335,8 +3347,6 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			}
 		}
 #endif /* !ARM_MMU_EXTENDED */
-
-		pmap_tlb_flush_SE(pm, va, oflags);
 
 #ifndef ARM_MMU_EXTENDED
 		UVMHIST_LOG(maphist, "  is_cached %d cs 0x%08x\n",
@@ -3481,6 +3491,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 				 */
 				l2pte_reset(ptep);
 				PTE_SYNC_CURRENT(pm, ptep);
+ 				pmap_tlb_flush_SE(pm, sva, flags);
 				continue;
 			}
 
@@ -3488,7 +3499,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			if (pm == pmap_kernel()) {
 				l2pte_reset(ptep);
 				PTE_SYNC(ptep);
-				pmap_tlb_flush_SE(pm, sva, flags);
+ 				pmap_tlb_flush_SE(pm, sva, flags);
 				continue;
 			}
 #endif
@@ -3531,6 +3542,8 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 		if (cleanlist_idx <= PMAP_REMOVE_CLEAN_LIST_SIZE) {
 			total += cleanlist_idx;
 			for (cnt = 0; cnt < cleanlist_idx; cnt++) {
+				l2pte_reset(cleanlist[cnt].ptep);
+				PTE_SYNC_CURRENT(pm, cleanlist[cnt].ptep);
 #ifdef ARM_MMU_EXTENDED
 				vaddr_t clva = cleanlist[cnt].va;
 				pmap_tlb_flush_SE(pm, clva, PVF_REF);
@@ -3547,8 +3560,6 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 					    PVF_REF | flags);
 				}
 #endif /* ARM_MMU_EXTENDED */
-				l2pte_reset(cleanlist[cnt].ptep);
-				PTE_SYNC_CURRENT(pm, cleanlist[cnt].ptep);
 			}
 
 			/*
@@ -3682,6 +3693,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		}
 #endif
 		if (l2pte_valid_p(opte)) {
+			l2pte_reset(ptep);
+			PTE_SYNC(ptep);
 #ifdef PMAP_CACHE_VIVT
 			cpu_dcache_wbinv_range(va, PAGE_SIZE);
 #endif
@@ -3699,7 +3712,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (prot & VM_PROT_EXECUTE)
 		npte &= ~L2_XS_XN;
 #endif
-	l2pte_set(ptep, npte, opte);
+	l2pte_set(ptep, npte, 0);
 	PTE_SYNC(ptep);
 
 	if (pg) {
@@ -3790,7 +3803,8 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		if (next_bucket > eva)
 			next_bucket = eva;
 
-		struct l2_bucket * const l2b = pmap_get_l2_bucket(pmap_kernel(), va);
+		pmap_t kpm = pmap_kernel();
+		struct l2_bucket * const l2b = pmap_get_l2_bucket(kpm, va);
 		KDASSERT(l2b != NULL);
 
 		pt_entry_t * const sptep = &l2b->l2b_kva[l2pte_index(va)];
@@ -3825,13 +3839,13 @@ pmap_kremove(vaddr_t va, vsize_t len)
 				}
 			}
 			if (l2pte_valid_p(opte)) {
+				l2pte_reset(ptep);
+				PTE_SYNC(ptep);
 #ifdef PMAP_CACHE_VIVT
 				cpu_dcache_wbinv_range(va, PAGE_SIZE);
 #endif
 				cpu_tlb_flushD_SE(va);
-			}
-			if (opte) {
-				l2pte_reset(ptep);
+
 				mappings += PAGE_SIZE / L2_S_SIZE;
 			}
 			va += PAGE_SIZE;
@@ -3840,7 +3854,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		KDASSERTMSG(mappings <= l2b->l2b_occupancy, "%u %u",
 		    mappings, l2b->l2b_occupancy);
 		l2b->l2b_occupancy -= mappings;
-		PTE_SYNC_RANGE(sptep, (u_int)(ptep - sptep));
+		//PTE_SYNC_RANGE(sptep, (u_int)(ptep - sptep));
 #ifdef UVMHIST
 		total_mappings += mappings;
 #endif
@@ -3939,9 +3953,11 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 	pmap_acquire_pmap_lock(pm);
 
+#ifndef ARM_MMU_EXTENDED
 	const bool flush = eva - sva >= PAGE_SIZE * 4;
-	u_int clr_mask = PVF_WRITE | ((prot & VM_PROT_EXECUTE) ? 0 : PVF_EXEC);
 	u_int flags = 0;
+#endif
+	u_int clr_mask = PVF_WRITE | ((prot & VM_PROT_EXECUTE) ? 0 : PVF_EXEC);
 
 	while (sva < eva) {
 		next_bucket = L2_NEXT_BUCKET_VA(sva);
@@ -3960,7 +3976,9 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			const pt_entry_t opte = *ptep;
 			if (l2pte_valid_p(opte) && l2pte_writable_p(opte)) {
 				struct vm_page *pg;
+#ifndef ARM_MMU_EXTENDED
 				u_int f;
+#endif
 
 #ifdef PMAP_CACHE_VIVT
 				/*
@@ -3974,7 +3992,12 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 				pg = PHYS_TO_VM_PAGE(l2pte_pa(opte));
 				pt_entry_t npte = l2pte_set_readonly(opte);
-				l2pte_set(ptep, npte, opte);
+				l2pte_reset(ptep);
+				PTE_SYNC(ptep);
+#ifdef ARM_MMU_EXTENDED
+				pmap_tlb_flush_SE(pm, sva, PVF_REF);
+#endif
+				l2pte_set(ptep, npte, 0);
 				PTE_SYNC(ptep);
 
 				if (pg != NULL) {
@@ -3982,10 +4005,14 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 					paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
 					pmap_acquire_page_lock(md);
-					f = pmap_modify_pv(md, pa, pm, sva,
-					    clr_mask, 0);
+#ifndef ARM_MMU_EXTENDED
+					f = 
+#endif
+					    pmap_modify_pv(md, pa, pm, sva,
+					       clr_mask, 0);
 					pmap_vac_me_harder(md, pa, pm, sva);
 					pmap_release_page_lock(md);
+#ifndef ARM_MMU_EXTENDED
 				} else {
 					f = PVF_REF | PVF_EXEC;
 				}
@@ -3994,6 +4021,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 					flags |= f;
 				} else {
 					pmap_tlb_flush_SE(pm, sva, f);
+#endif
 				}
 			}
 
@@ -4002,6 +4030,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		}
 	}
 
+#ifndef ARM_MMU_EXTENDED
 	if (flush) {
 		if (PV_BEEN_EXECD(flags)) {
 			pmap_tlb_flushID(pm);
@@ -4009,6 +4038,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			pmap_tlb_flushD(pm);
 		}
 	}
+#endif
 
 	pmap_release_pmap_lock(pm);
 }
@@ -4207,12 +4237,15 @@ pmap_prefetchabt_fixup(void *v)
 	KASSERT(pv != NULL);
 
 	if (PV_IS_EXEC_P(pv->pv_flags)) {
+		l2pte_reset(ptep);
+		PTE_SYNC(ptep);
+		pmap_tlb_flush_SE(pm, va, PVF_EXEC | PVF_REF);
 		if (!PV_IS_EXEC_P(md->pvh_attrs)) {
 			pmap_syncicache_page(md, pa);
 		}
 		rv = ABORT_FIXUP_RETURN;
-		l2pte_set(ptep, opte & ~L2_XS_XN, opte);
-		pmap_tlb_flush_SE(pm, va, PVF_EXEC | PVF_REF);
+		l2pte_set(ptep, opte & ~L2_XS_XN, 0);
+		PTE_SYNC(ptep);
 	}
 	pmap_release_page_lock(md);
 
@@ -4358,7 +4391,11 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		    | (pm != pmap_kernel() ? L2_XS_nG : 0)
 #endif
 		    | 0;
-		l2pte_set(ptep, npte, opte);
+		l2pte_reset(ptep);
+		PTE_SYNC(ptep);
+		pmap_tlb_flush_SE(pm, va,
+		    (ftype & VM_PROT_EXECUTE) ? PVF_EXEC | PVF_REF : PVF_REF);
+		l2pte_set(ptep, npte, 0);
 		PTE_SYNC(ptep);
 		PMAPCOUNT(fixup_mod);
 		rv = 1;
@@ -4425,7 +4462,11 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		}
 #endif /* ARM_MMU_EXTENDED */
 		pmap_release_page_lock(md);
-		l2pte_set(ptep, npte, opte);
+		l2pte_reset(ptep);
+		PTE_SYNC(ptep);
+		pmap_tlb_flush_SE(pm, va,
+		    (ftype & VM_PROT_EXECUTE) ? PVF_EXEC | PVF_REF : PVF_REF);
+		l2pte_set(ptep, npte, 0);
 		PTE_SYNC(ptep);
 		PMAPCOUNT(fixup_ref);
 		rv = 1;
@@ -4463,7 +4504,10 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		 * Turn off no-execute.
 		 */
 		KASSERT(opte & L2_XS_nG);
-		l2pte_set(ptep, opte & ~L2_XS_XN, opte);
+		l2pte_reset(ptep);
+		PTE_SYNC(ptep);
+		pmap_tlb_flush_SE(pm, va, PVF_EXEC | PVF_REF);
+		l2pte_set(ptep, opte & ~L2_XS_XN, 0);
 		PTE_SYNC(ptep);
 		rv = 1;
 		PMAPCOUNT(fixup_exec);
@@ -4610,9 +4654,6 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 #endif
 	}
 #endif
-
-	pmap_tlb_flush_SE(pm, va,
-	    (ftype & VM_PROT_EXECUTE) ? PVF_EXEC | PVF_REF : PVF_REF);
 
 	rv = 1;
 
@@ -4920,6 +4961,11 @@ pmap_update(pmap_t pm)
 	}
 
 #ifdef ARM_MMU_EXTENDED
+#if defined(MULTIPROCESSOR)
+	armreg_bpiallis_write(0);
+#else
+	armreg_bpiall_write(0);
+#endif
 
 #if defined(MULTIPROCESSOR) && PMAP_MAX_TLB > 1
 	u_int pending = atomic_swap_uint(&pmap->pm_shootdown_pending, 0);
