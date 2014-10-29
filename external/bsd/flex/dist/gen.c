@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.8 2013/04/06 20:05:40 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.9 2014/10/29 18:28:36 christos Exp $	*/
 
 /* gen - actual generation (writing) of flex scanners */
 
@@ -32,6 +32,8 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: gen.c,v 1.9 2014/10/29 18:28:36 christos Exp $");
 
 #include "flexdef.h"
 #include "tables.h"
@@ -879,7 +881,7 @@ void gen_next_state (worry_about_NULs)
 
 	else
 		strcpy (char_map, useecs ?
-			"yy_ec[YY_SC_TO_UI(*yy_cp)]" :
+			"yy_ec[YY_SC_TO_UI(*yy_cp)] " :
 			"YY_SC_TO_UI(*yy_cp)");
 
 	if (worry_about_NULs && nultrans) {

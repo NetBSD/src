@@ -1,5 +1,4 @@
-/*	$NetBSD: flexdef.h,v 1.5 2013/04/09 15:19:45 christos Exp $	*/
-
+/*	$NetBSD: flexdef.h,v 1.6 2014/10/29 18:28:36 christos Exp $	*/
 
 /* flexdef - definitions file for flex */
 
@@ -910,6 +909,13 @@ extern void lerrif PROTO ((const char *, int));
 /* Report an error message formatted with one string argument. */
 extern void lerrsf PROTO ((const char *, const char *));
 
+/* Like lerrsf, but also exit after displaying message. */
+extern
+#ifdef __printflike
+__printflike(1, 2)
+#endif
+void lerrsf_fatal (const char *msg, ...);
+
 /* Spit out a "#line" statement. */
 extern void line_directive_out PROTO ((FILE *, int));
 
@@ -1220,13 +1226,5 @@ extern size_t _sf_top_ix, _sf_max; /**< stack of scanner flags. */
 extern void sf_init(void);
 extern void sf_push(void);
 extern void sf_pop(void);
-
-/*
- * From "misc.c"
- */
-#ifdef __printflike
-__printflike(1, 2)
-#endif
-void lerrsf_fatal (const char *msg, ...);
 
 #endif /* not defined FLEXDEF_H */

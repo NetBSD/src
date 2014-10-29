@@ -1,4 +1,4 @@
-/*	$NetBSD: yylex.c,v 1.2 2009/10/26 04:27:15 christos Exp $	*/
+/*	$NetBSD: yylex.c,v 1.3 2014/10/29 18:28:36 christos Exp $	*/
 
 /* yylex - scanner front-end for flex */
 
@@ -32,6 +32,8 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: yylex.c,v 1.3 2014/10/29 18:28:36 christos Exp $");
 
 #include <ctype.h>
 #include "flexdef.h"
