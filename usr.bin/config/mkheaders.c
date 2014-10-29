@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.21 2012/03/12 02:58:55 dholland Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.22 2014/10/29 17:14:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mkheaders.c,v 1.22 2014/10/29 17:14:50 christos Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -137,7 +140,7 @@ fprint_global(FILE *fp, const char *name, long long value)
 static unsigned int
 global_hash(const char *str)
 {
-        unsigned int h;
+        unsigned long h;
 	char *ep;
 
 	/* If the value is a valid numeric, just use it */
@@ -145,10 +148,12 @@ global_hash(const char *str)
 	if (*ep != 0)
 		/* Otherwise shove through a 32bit CRC function */
 		h = crc_buf(0, str, strlen(str));
+	else if (h > UINT_MAX)
+		panic("overflow");
 
 	/* Avoid colliding with the value used for undefined options. */
 	/* At least until I stop any options being set to zero */
-	return h != UNDEFINED ? h : DEFINED;
+	return (unsigned int)(h != UNDEFINED ? h : DEFINED);
 }
 
 static void
@@ -520,13 +525,13 @@ static char *
 cntname(const char *src)
 {
 	char *dst;
-	unsigned char c;
+	char c;
 	static char buf[100];
 
 	dst = buf;
 	*dst++ = 'N';
 	while ((c = *src++) != 0)
-		*dst++ = islower(c) ? toupper(c) : c;
+		*dst++ = islower((u_char)c) ? toupper((u_char)c) : c;
 	*dst = 0;
 	return (buf);
 }
