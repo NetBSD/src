@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.31 2014/10/24 07:08:26 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.32 2014/10/29 14:14:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -121,8 +121,10 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.31 2014/10/24 07:08:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.32 2014/10/29 14:14:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
