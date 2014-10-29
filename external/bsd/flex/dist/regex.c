@@ -1,5 +1,3 @@
-/*	$NetBSD: regex.c,v 1.1.1.2 2013/04/06 14:05:44 christos Exp $	*/
-
 /** regex - regular expression functions related to POSIX regex lib. */
 
 /*  This file is part of flex. */
