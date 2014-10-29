@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2005 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2006 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -91,3 +91,5 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		processed sooner. [tls 20141026]
 	viornd(4):	Add driver for VirtIO entropy source available on
 			QEMU, KVM, and Google Compute Engine.  From OpenBSD.
+	dhcpcd(8): Import dhcpcd-6.6.0 [roy 20141029]
+	resolvconf(8): Import openresolv-3.6.1 [roy 20141029]
