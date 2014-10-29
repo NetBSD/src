@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.24 2014/10/16 00:04:35 jmcneill Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.25 2014/10/29 14:14:14 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,12 +30,13 @@
 
 #include "opt_allwinner.h"
 #include "opt_arm_debug.h"
+#include "opt_multiprocessor.h"
 
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.24 2014/10/16 00:04:35 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.25 2014/10/29 14:14:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
