@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.19 2014/10/29 17:14:50 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.20 2014/10/29 19:10:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scan.l,v 1.19 2014/10/29 17:14:50 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.20 2014/10/29 19:10:18 christos Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -338,7 +338,7 @@ package[ \t]+{FILENAME}{RESTOFLINE}	{
 	}
 0[xX][0-9a-fA-F]+ {
 		yylval.num.fmt = 16;
-		yylval.num.val = strtoull(yytext + 2, NULL, 16);
+		yylval.num.val = (long long)strtoull(yytext + 2, NULL, 16);
 		return NUMBER;
 	}
 [1-9][0-9]* {
