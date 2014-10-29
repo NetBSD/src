@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.20 2014/10/29 19:35:29 justin Exp $
+#	$NetBSD: listsrcdirs,v 1.21 2014/10/29 19:59:32 pooka Exp $
 #
 
 #
@@ -10,9 +10,14 @@
 #
 # ./listsrcdirs | xargs cvs -d anoncvs@anoncvs.netbsd.org:/cvsroot -z3 co -P
 #
-# Note: after making changes, test that "sh listsrcdirs all | sort | uniq -d"
-# returns an empty set.
-#
+
+# Check that the intersection between all branches is the null set
+if [ "${LISTSRCDIRS_INSANITY}" != 'y' ]; then
+	if [ ! -z "$(LISTSRCDIRS_INSANITY=y sh $0 all | sort | uniq -d)" ]; then
+		echo $0: INTERNAL ERROR
+		exit 1
+	fi
+fi
 
 # default echomode (for compat)
 em='sys posix'
