@@ -78,10 +78,7 @@ END(armv7_tlb_flushID_ASID)
 STRONG_ALIAS(armv7_tlb_flushD_SE, armv7_tlb_flushID_SE)
 STRONG_ALIAS(armv7_tlb_flushI_SE, armv7_tlb_flushID_SE)
 ENTRY(armv7_tlb_flushID_SE)
-	bfc	r0, #0, #12		@ clear ASID
-#ifdef ARM_MMU_EXTENDED
-	bfi	r0, r1, #0, #8		@ insert ASID into MVA
-#endif
+	bfc	r0, #0, #12		@ Always KERNEL_PID, i.e. 0
 #ifdef MULTIPROCESSOR
 	mcr	p15, 0, r0, c8, c3, 1	@ flush I+D tlb single entry
 #if PAGE_SIZE == 2*L2_S_SIZE
