@@ -1,3 +1,5 @@
+/*	$NetBSD: nfa.c,v 1.2 2014/10/29 18:28:36 christos Exp $	*/
+
 /* nfa - NFA construction routines */
 
 /*  Copyright (c) 1990 The Regents of the University of California. */
@@ -30,6 +32,8 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: nfa.c,v 1.2 2014/10/29 18:28:36 christos Exp $");
 
 #include "flexdef.h"
 
