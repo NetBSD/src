@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.24 2014/10/09 19:33:43 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.25 2014/10/29 17:14:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mkmakefile.c,v 1.25 2014/10/29 17:14:50 christos Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -432,7 +435,7 @@ static void
 emitfiles(FILE *fp, int suffix, int upper_suffix)
 {
 	struct files *fi;
-	int len;
+	size_t len;
 	const char *fpath;
  	struct config *cf;
  	char swapname[100];
