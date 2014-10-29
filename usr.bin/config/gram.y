@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.43 2014/10/10 11:09:50 uebayasi Exp $	*/
+/*	$NetBSD: gram.y,v 1.44 2014/10/29 17:14:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,6 +40,9 @@
  *
  *	from: @(#)gram.y	8.1 (Berkeley) 6/6/93
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: gram.y,v 1.44 2014/10/29 17:14:50 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -159,6 +162,9 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 	const char *str;
 	struct	numconst num;
 	int64_t	val;
+	u_char	flag;
+	devmajor_t devmajor;
+	int32_t i32;
 }
 
 %token	AND AT ATTACH
@@ -187,7 +193,7 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 %type	<condexpr>	cond_or_expr cond_and_expr cond_prefix_expr
 %type	<condexpr>	 cond_base_expr
 %type	<str>	fs_spec
-%type	<val>	fflags fflag oflags oflag
+%type	<flag>	fflags fflag oflags oflag
 %type	<str>	rule
 %type	<attr>	depend
 %type	<devb>	devbase
@@ -204,9 +210,9 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 %type	<str>	device_instance
 %type	<str>	attachment
 %type	<str>	value
-%type	<val>	major_minor npseudo
+%type	<val>	major_minor
 %type	<num>	signed_number
-%type	<val>	device_flags
+%type	<i32>	int32 npseudo device_flags
 %type	<str>	deffs
 %type	<list>	deffses
 %type	<defoptlist>	defopt
@@ -217,7 +223,7 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 %type	<str>	optfile_opt
 %type	<list>	subarches
 %type	<str>	filename stringvalue locname mkvarname
-%type	<val>	device_major_block device_major_char
+%type	<devmajor>	device_major_block device_major_char
 %type	<list>	devnodes devnodetype devnodeflags devnode_dims
 
 %%
@@ -404,12 +410,12 @@ define_device_attachment:
 ;
 
 define_maxpartitions:
-	MAXPARTITIONS NUMBER		{ maxpartitions = $2.val; }
+	MAXPARTITIONS int32		{ maxpartitions = $2; }
 ;
 
 define_maxusers:
-	MAXUSERS NUMBER NUMBER NUMBER
-					{ setdefmaxusers($2.val, $3.val, $4.val); }
+	MAXUSERS int32 int32 int32
+					{ setdefmaxusers($2, $3, $4); }
 ;
 
 define_makeoptions:
@@ -432,7 +438,7 @@ define_major:
 ;
 
 define_version:
-	VERSION NUMBER		{ setversion($2.val); }
+	VERSION int32		{ setversion($2); }
 ;
 
 /* file options: optional expression of conditions */
@@ -473,13 +479,13 @@ oflag:
 /* char 55 */
 device_major_char:
 	  /* empty */			{ $$ = -1; }
-	| CHAR NUMBER			{ $$ = $2.val; }
+	| CHAR int32			{ $$ = $2; }
 ;
 
 /* block 33 */
 device_major_block:
 	  /* empty */			{ $$ = -1; }
-	| BLOCK NUMBER			{ $$ = $2.val; }
+	| BLOCK int32			{ $$ = $2; }
 ;
 
 /* device node specification */
@@ -550,11 +556,11 @@ locdef:
 	  locname locdefault 		{ $$ = MK3(loc, $1, $2, 0); }
 	| locname			{ $$ = MK3(loc, $1, NULL, 0); }
 	| '[' locname locdefault ']'	{ $$ = MK3(loc, $2, $3, 1); }
-	| locname '[' NUMBER ']'	{ $$ = locarray($1, $3.val, NULL, 0); }
-	| locname '[' NUMBER ']' locdefaults
-					{ $$ = locarray($1, $3.val, $5, 0); }
-	| '[' locname '[' NUMBER ']' locdefaults ']'
-					{ $$ = locarray($2, $4.val, $6, 1); }
+	| locname '[' int32 ']'	{ $$ = locarray($1, $3, NULL, 0); }
+	| locname '[' int32 ']' locdefaults
+					{ $$ = locarray($1, $3, $5, 0); }
+	| '[' locname '[' int32 ']' locdefaults ']'
+					{ $$ = locarray($2, $4, $6, 1); }
 ;
 
 /* locator name */
@@ -665,7 +671,16 @@ majorlist:
 
 /* one major number */
 majordef:
-	devbase '=' NUMBER		{ setmajor($1, $3.val); }
+	devbase '=' int32		{ setmajor($1, $3); }
+;
+
+int32:
+	NUMBER	{
+		if ($1.val > INT_MAX || $1.val < INT_MIN)
+			cfgerror("overflow %" PRId64, $1.val);
+		else
+			$$ = (int32_t)$1.val;
+	}
 ;
 
 /************************************************************/
@@ -735,7 +750,7 @@ select_options:
 ;
 
 select_maxusers:
-	MAXUSERS NUMBER			{ setmaxusers($2.val); }
+	MAXUSERS int32			{ setmaxusers($2); }
 ;
 
 select_ident:
@@ -874,8 +889,10 @@ root_spec:
 
 /* device for root fs or dump */
 dev_spec:
-	  '?'				{ $$ = new_si(intern("?"), NODEV); }
-	| WORD				{ $$ = new_si($1, NODEV); }
+	  '?'				{ $$ = new_si(intern("?"),
+					    (long long)NODEV); }
+	| WORD				{ $$ = new_si($1,
+					    (long long)NODEV); }
 	| major_minor			{ $$ = new_si(NULL, $1); }
 ;
 
@@ -904,7 +921,7 @@ sysparam:
 /* number of pseudo devices to configure (which is optional) */
 npseudo:
 	  /* empty */			{ $$ = 1; }
-	| NUMBER			{ $$ = $1.val; }
+	| int32				{ $$ = $1; }
 ;
 
 /* name of a device to configure */
@@ -935,7 +952,7 @@ locator:
 /* optional device flags */
 device_flags:
 	  /* empty */			{ $$ = 0; }
-	| FLAGS NUMBER			{ $$ = $2.val; }
+	| FLAGS int32			{ $$ = $2; }
 ;
 
 /************************************************************/
