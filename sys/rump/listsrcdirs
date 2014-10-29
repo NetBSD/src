@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.18 2014/08/11 22:13:56 justin Exp $
+#	$NetBSD: listsrcdirs,v 1.19 2014/10/29 17:36:07 justin Exp $
 #
 
 #
@@ -102,6 +102,7 @@ lsrc usr /usr.bin/		kdump ktrace
 lsrc usr /usr.sbin/		arp dumpfs ndp npf pcictl vnconfig
 lsrc usr /usr.sbin/		wlanctl
 lsrc usr /external/bsd/		libpcap tcpdump wpa
+lsrc usr /external/cddl/	osnet
 lsrc usr /crypto/		Makefile.openssl
 lsrc usr /crypto/dist/		ipsec-tools
 lsrc usr /crypto/external/bsd/	openssl
