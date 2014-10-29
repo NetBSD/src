@@ -1,5 +1,3 @@
-/*	$NetBSD: dfa.c,v 1.1.1.2 2013/04/06 14:05:42 christos Exp $	*/
-
 /* dfa - DFA construction routines */
 
 /*  Copyright (c) 1990 The Regents of the University of California. */
