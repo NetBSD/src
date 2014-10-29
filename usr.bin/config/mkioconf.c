@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.21 2012/03/11 21:16:08 dholland Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.22 2014/10/29 17:14:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mkioconf.c,v 1.22 2014/10/29 17:14:50 christos Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -136,7 +139,7 @@ static void
 emithdr(FILE *ofp)
 {
 	FILE *ifp;
-	int n;
+	size_t n;
 	char ifnbuf[200], buf[BUFSIZ];
 	char *ifn;
 

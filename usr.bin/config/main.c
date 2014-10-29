@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.69 2014/10/18 06:36:40 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.70 2014/10/29 17:14:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: main.c,v 1.70 2014/10/29 17:14:50 christos Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -1557,10 +1560,10 @@ strtolower(const char *name)
 {
 	const char *n;
 	char *p, low[500];
-	unsigned char c;
+	char c;
 
 	for (n = name, p = low; (c = *n) != '\0'; n++)
-		*p++ = isupper(c) ? tolower(c) : c;
+		*p++ = isupper((u_char)c) ? tolower((u_char)c) : c;
 	*p = 0;
 	return (intern(low));
 }
@@ -1585,8 +1588,9 @@ static int
 extract_config(const char *kname, const char *cname, int cfd)
 {
 	char *ptr;
-	int found, kfd, i;
+	int found, kfd;
 	struct stat st;
+	off_t i;
 
 	found = 0;
 
@@ -1596,7 +1600,7 @@ extract_config(const char *kname, const char *cname, int cfd)
 		err(EXIT_FAILURE, "cannot open %s", kname);
 	if (fstat(kfd, &st) == -1)
 		err(EXIT_FAILURE, "cannot stat %s", kname);
-	ptr = mmap(0, st.st_size, PROT_READ, MAP_FILE | MAP_SHARED,
+	ptr = mmap(0, (size_t)st.st_size, PROT_READ, MAP_FILE | MAP_SHARED,
 	    kfd, 0);
 	if (ptr == MAP_FAILED)
 		err(EXIT_FAILURE, "cannot mmap %s", kname);

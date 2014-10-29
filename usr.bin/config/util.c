@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.18 2014/10/11 03:17:40 uebayasi Exp $	*/
+/*	$NetBSD: util.c,v 1.19 2014/10/29 17:14:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: util.c,v 1.19 2014/10/29 17:14:50 christos Exp $");
 
 #include <sys/types.h>
 #include <assert.h>
