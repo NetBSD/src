@@ -1,3 +1,8 @@
+/*	$NetBSD: initparse.c,v 1.4 2014/10/29 18:28:36 christos Exp $	*/
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: initparse.c,v 1.4 2014/10/29 18:28:36 christos Exp $");
+
 #ifndef lint
 static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 #endif

@@ -30,6 +30,8 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: ccl.c,v 1.2 2014/10/29 18:28:36 christos Exp $");
 
 #include "flexdef.h"
 
