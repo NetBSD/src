@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp.h,v 1.3 2014/10/17 23:42:24 roy Exp $ */
+/* $NetBSD: dhcp.h,v 1.4 2014/10/29 01:08:31 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -36,6 +36,7 @@
 #include <limits.h>
 #include <stdint.h>
 
+#include "arp.h"
 #include "auth.h"
 #include "dhcp-common.h"
 
@@ -68,7 +69,6 @@
 #define DHCP_MAX		64
 #define DHCP_RAND_MIN		-1
 #define DHCP_RAND_MAX		1
-#define DHCP_ARP_FAIL		2
 
 #ifdef RFC2131_STRICT
 /* Be strictly conformant for section 4.1.1 */
@@ -198,7 +198,7 @@ enum DHS {
 	DHS_REBOOT,
 	DHS_INFORM,
 	DHS_RENEW_REQUESTED,
-	DHS_INIT_IPV4LL,
+	DHS_IPV4LL_BOUND,
 	DHS_PROBE
 };
 
@@ -214,12 +214,6 @@ struct dhcp_state {
 	time_t nakoff;
 	uint32_t xid;
 	int socket;
-	int probes;
-	int claims;
-	int conflicts;
-	time_t defend;
-	struct in_addr fail;
-	size_t arping_index;
 
 	int raw_fd;
 	int arp_fd;
@@ -237,6 +231,14 @@ struct dhcp_state {
 	unsigned char *clientid;
 
 	struct authstate auth;
+	struct arp_statehead arp_states;
+
+	size_t arping_index;
+
+	struct arp_state *arp_ipv4ll;
+	unsigned int conflicts;
+	time_t defend;
+	char randomstate[128];
 };
 
 #define D_STATE(ifp)							       \
@@ -283,7 +285,8 @@ void dhcp_stop(struct interface *);
 void dhcp_decline(struct interface *);
 void dhcp_discover(void *);
 void dhcp_inform(struct interface *);
-void dhcp_bind(void *);
+void dhcp_probe(struct interface *);
+void dhcp_bind(struct interface *, struct arp_state *);
 void dhcp_reboot_newopts(struct interface *, unsigned long long);
 void dhcp_close(struct interface *);
 void dhcp_free(struct interface *);
