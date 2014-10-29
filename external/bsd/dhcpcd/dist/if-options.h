@@ -1,4 +1,4 @@
-/* $NetBSD: if-options.h,v 1.3 2014/10/17 23:42:24 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.4 2014/10/29 01:08:31 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -65,6 +65,7 @@
 #define DHCPCD_LASTLEASE		(1ULL << 7)
 #define DHCPCD_INFORM			(1ULL << 8)
 #define DHCPCD_REQUEST			(1ULL << 9)
+
 #define DHCPCD_IPV4LL			(1ULL << 10)
 #define DHCPCD_DUID			(1ULL << 11)
 #define DHCPCD_PERSISTENT		(1ULL << 12)
@@ -78,7 +79,7 @@
 #define DHCPCD_QUIET			(1ULL << 21)
 #define DHCPCD_BACKGROUND		(1ULL << 22)
 #define DHCPCD_VENDORRAW		(1ULL << 23)
-#define DHCPCD_TIMEOUT_IPV4LL		(1ULL << 24)
+#define DHCPCD_NOWAITIP			(1ULL << 24) /* To force daemonise */
 #define DHCPCD_WAITIP			(1ULL << 25)
 #define DHCPCD_SLAACPRIVATE		(1ULL << 26)
 #define DHCPCD_CSR_WARNED		(1ULL << 27)
