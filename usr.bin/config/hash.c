@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.10 2014/10/12 05:25:21 uebayasi Exp $	*/
+/*	$NetBSD: hash.c,v 1.11 2014/10/29 17:14:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,9 @@
 #include "nbtool_config.h"
 #endif
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: hash.c,v 1.11 2014/10/29 17:14:50 christos Exp $");
+
 #include <sys/param.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -67,9 +70,9 @@ struct hashent {
 };
 struct hashtab {
 	size_t	ht_size;		/* size (power of 2) */
-	u_int	ht_mask;		/* == ht_size - 1 */
-	u_int	ht_used;		/* number of entries used */
-	u_int	ht_lim;			/* when to expand */
+	size_t	ht_mask;		/* == ht_size - 1 */
+	size_t	ht_used;		/* number of entries used */
+	size_t	ht_lim;			/* when to expand */
 	TAILQ_HEAD(hashenthead, hashent) *ht_tab;
 };
 
@@ -113,7 +116,7 @@ ht_expand(struct hashtab *ht)
 {
 	struct hashenthead *h, *oldh;
 	struct hashent *p;
-	u_int n, i;
+	size_t n, i;
 
 	n = ht->ht_size * 2;
 	h = emalloc(n * sizeof *h);
@@ -162,7 +165,7 @@ newhashent(const char *name, u_int h)
 static inline u_int
 hv(u_int h, char c)
 {
-	return (h << 5) + h + c;
+	return (h << 5) + h + (unsigned char)c;
 }
 
 /*

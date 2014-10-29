@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.10 2010/07/30 16:23:49 cube Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.11 2014/10/29 17:14:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mkdevsw.c,v 1.11 2014/10/29 17:14:50 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -189,7 +192,9 @@ emitconv(FILE *fp)
 				d_flags = nv->nv_str;
 				break;
 			}
-			d_vec[i++] = nv->nv_num;
+			if (nv->nv_num > INT_MAX || nv->nv_num < INT_MIN)
+				panic("out of range devnode definition");
+			d_vec[i++] = (int)nv->nv_num;
 		}
 
 		fprintf(fp, "\t{ \"%s\", %d, %d, %s, %s, { %d, %d }},\n",

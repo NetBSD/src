@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.58 2014/10/18 06:36:40 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.59 2014/10/29 17:14:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -304,8 +304,8 @@ struct devi {
 
 	/* created during packing or ioconf.c generation */
 	short	i_collapsed;	/* set => this alias no longer needed */
-	short	i_cfindex;	/* our index in cfdata */
-	short	i_locoff;	/* offset in locators.vec */
+	u_short	i_cfindex;	/* our index in cfdata */
+	int	i_locoff;	/* offset in locators.vec */
 
 };
 /* special units */
@@ -530,8 +530,8 @@ void	checkfiles(void);
 int	fixfiles(void);		/* finalize */
 int	fixobjects(void);
 int	fixdevsw(void);
-void	addfile(const char *, struct condexpr *, int, const char *);
-void	addobject(const char *, struct condexpr *, int);
+void	addfile(const char *, struct condexpr *, u_char, const char *);
+void	addobject(const char *, struct condexpr *, u_char);
 int	expr_eval(struct condexpr *, int (*)(const char *, void *), void *);
 
 /* hash.c */
@@ -625,7 +625,7 @@ int	mkswap(void);
 void	pack(void);
 
 /* scan.l */
-int	currentline(void);
+u_short	currentline(void);
 int	firstfile(const char *);
 void	package(const char *);
 int	include(const char *, int, int, int);

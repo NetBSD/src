@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.16 2014/10/09 19:27:04 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.17 2014/10/29 17:14:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,9 @@
 #include "nbtool_config.h"
 #endif
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: files.c,v 1.17 2014/10/29 17:14:50 christos Exp $");
+
 #include <sys/param.h>
 #include <errno.h>
 #include <stdio.h>
@@ -83,7 +86,7 @@ initfiles(void)
 }
 
 void
-addfile(const char *path, struct condexpr *optx, int flags, const char *rule)
+addfile(const char *path, struct condexpr *optx, u_char flags, const char *rule)
 {
 	struct files *fi;
 	const char *dotp, *tail;
@@ -112,7 +115,7 @@ addfile(const char *path, struct condexpr *optx, int flags, const char *rule)
 		tail++;
 	dotp = strrchr(tail, '.');
 	if (dotp == NULL || dotp[1] == 0 ||
-	    (baselen = dotp - tail) >= sizeof(base)) {
+	    (baselen = (size_t)(dotp - tail)) >= sizeof(base)) {
 		cfgerror("invalid pathname `%s'", path);
 		goto bad;
 	}
@@ -168,7 +171,7 @@ addfile(const char *path, struct condexpr *optx, int flags, const char *rule)
 }
 
 void
-addobject(const char *path, struct condexpr *optx, int flags)
+addobject(const char *path, struct condexpr *optx, u_char flags)
 {
 	struct objects *oi;
 
@@ -298,7 +301,7 @@ fixfiles(void)
 				if (ht_replace(basetab, fi->fi_base, fi) != 1)
 					panic("fixfiles ht_replace(%s)",
 					    fi->fi_base);
-				ofi->fi_flags &= ~FI_SEL;
+				ofi->fi_flags &= (u_char)~FI_SEL;
 				ofi->fi_flags |= FI_HIDDEN;
 			} else {
 				cfgxerror(fi->fi_srcfile, fi->fi_srcline,

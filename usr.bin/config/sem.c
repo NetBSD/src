@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.64 2014/10/18 06:36:40 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.65 2014/10/29 17:14:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: sem.c,v 1.65 2014/10/29 17:14:50 christos Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -885,7 +888,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 	const char *cp;
 	devmajor_t maj;
 	devminor_t min;
-	int i, l;
+	size_t i, l;
 	int unit;
 	char buf[NAMESIZE];
 
@@ -905,7 +908,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 			cp = makedevstr(maj, min);
 		} else
 			cp = NULL;
-		*nvp = nv = newnv(NULL, cp, NULL, d, NULL);
+		*nvp = nv = newnv(NULL, cp, NULL, (long long)d, NULL);
 	}
 	if ((dev_t)nv->nv_num != NODEV) {
 		/*
@@ -952,7 +955,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 	 * don't bother making a device number.
 	 */
 	if (has_attr(dev->d_attrs, s_ifnet)) {
-		nv->nv_num = NODEV;
+		nv->nv_num = (long long)NODEV;
 		nv->nv_ifunit = unit;	/* XXX XXX XXX */
 	} else {
 		maj = dev2major(dev);
@@ -1466,14 +1469,18 @@ deldeva(const char *at)
 			if (i->i_at == NULL)
 				stack = newnv(NULL, NULL, i, 0, stack);
 	} else {
-		int l;
+		size_t l;
 
 		CFGDBG(5, "deselecting deva `%s'", at);
+		if (at[0] == '\0')
+			goto out;
+			
 		l = strlen(at) - 1;
 		if (at[l] == '?' || isdigit((unsigned char)at[l])) {
 			char base[NAMESIZE];
 
 			if (split(at, l+1, base, sizeof base, &unit)) {
+out:
 				cfgerror("invalid attachment name `%s'", at);
 				return;
 			}
@@ -1548,16 +1555,20 @@ deldeva(const char *at)
 void
 deldev(const char *name)
 {
-	int l;
+	size_t l;
 	struct devi *firsti, *i;
 	struct nvlist *nv, *stack = NULL;
 
 	CFGDBG(5, "deselecting dev `%s'", name);
+	if (name[0] == '\0')
+		goto out;
+
 	l = strlen(name) - 1;
 	if (name[l] == '*' || isdigit((unsigned char)name[l])) {
 		/* `no mydev0' or `no mydev*' */
 		firsti = ht_lookup(devitab, name);
 		if (firsti == NULL) {
+out:
 			cfgerror("unknown instance %s", name);
 			return;
 		}
@@ -1883,8 +1894,8 @@ concat(const char *name, int c)
 		len = sizeof(buf) - 2;
 	}
 	memmove(buf, name, len);
-	buf[len] = c;
-	buf[len + 1] = 0;
+	buf[len] = (char)c;
+	buf[len + 1] = '\0';
 	return (intern(buf));
 }
 
@@ -2047,7 +2058,7 @@ fixloc(const char *name, struct attr *attr, struct loclist *got)
 	if (attr->a_loclen == 0)	/* e.g., "at root" */
 		lp = nullvec;
 	else
-		lp = emalloc((attr->a_loclen + 1) * sizeof(const char *));
+		lp = emalloc((size_t)(attr->a_loclen + 1) * sizeof(const char *));
 	for (n = got; n != NULL; n = n->ll_next)
 		n->ll_num = -1;
 	nmissing = 0;
