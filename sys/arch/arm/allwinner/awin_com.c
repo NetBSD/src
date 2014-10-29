@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_com.c,v 1.6 2014/10/15 23:29:46 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_com.c,v 1.7 2014/10/29 10:47:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -168,7 +168,7 @@ awin_com_attach(device_t parent, device_t self, void *aux)
 
 	KASSERT(loc->loc_intr != AWINIO_INTR_DEFAULT);
 	asc->asc_ih = intr_establish(loc->loc_intr, IPL_SERIAL,
-	    IST_EDGE /* | IST_MPSAFE */, comintr, sc);
+	    IST_EDGE | IST_MPSAFE, comintr, sc);
 	if (asc->asc_ih == NULL)
 		panic("%s: failed to establish interrupt %d",
 		    device_xname(self), loc->loc_intr);
