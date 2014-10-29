@@ -1,5 +1,3 @@
-/*	$NetBSD: ecs.c,v 1.1.1.1 2009/10/26 00:24:20 christos Exp $	*/
-
 /* ecs - equivalence class routines */
 
 /*  Copyright (c) 1990 The Regents of the University of California. */
