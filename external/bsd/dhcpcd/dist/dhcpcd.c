@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.13 2014/10/17 23:42:24 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.14 2014/10/29 01:08:31 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -188,28 +188,15 @@ static void
 handle_exit_timeout(void *arg)
 {
 	struct dhcpcd_ctx *ctx;
-	int timeout;
 
 	ctx = arg;
 	syslog(LOG_ERR, "timed out");
-	if (!(ctx->options & DHCPCD_IPV4) ||
-	    !(ctx->options & DHCPCD_TIMEOUT_IPV4LL))
-	{
-		if (ctx->options & DHCPCD_MASTER) {
-			/* We've timed out, so remove the waitip requirements.
-			 * If the user doesn't like this they can always set
-			 * an infinite timeout. */
-			ctx->options &=
-			    ~(DHCPCD_WAITIP | DHCPCD_WAITIP4 | DHCPCD_WAITIP6);
-			dhcpcd_daemonise(ctx);
-		} else
-			eloop_exit(ctx->eloop, EXIT_FAILURE);
+	if (!(ctx->options & DHCPCD_MASTER)) {
+		eloop_exit(ctx->eloop, EXIT_FAILURE);
 		return;
 	}
-	ctx->options &= ~DHCPCD_TIMEOUT_IPV4LL;
-	timeout = (PROBE_NUM * PROBE_MAX) + (PROBE_WAIT * 2) + DHCP_MAX_DELAY;
-	syslog(LOG_WARNING, "allowing %d seconds for IPv4LL timeout", timeout);
-	eloop_timeout_add_sec(ctx->eloop, timeout, handle_exit_timeout, ctx);
+	ctx->options |= DHCPCD_NOWAITIP;
+	dhcpcd_daemonise(ctx);
 }
 
 int
@@ -260,7 +247,7 @@ dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
 	int sidpipe[2], fd;
 
 	if (ctx->options & DHCPCD_DAEMONISE &&
-	    !(ctx->options & DHCPCD_DAEMONISED))
+	    !(ctx->options & (DHCPCD_DAEMONISED | DHCPCD_NOWAITIP)))
 	{
 		if (!dhcpcd_ipwaited(ctx))
 			return 0;
@@ -329,6 +316,7 @@ stop_interface(struct interface *ifp)
 	dhcp6_drop(ifp, NULL);
 	ipv6nd_drop(ifp);
 	dhcp_drop(ifp, "STOP");
+	arp_close(ifp);
 	eloop_timeout_delete(ctx->eloop, NULL, ifp);
 	if (ifp->options->options & DHCPCD_DEPARTED)
 		script_runreason(ifp, "DEPARTED");
@@ -371,14 +359,20 @@ configure_interface1(struct interface *ifp)
 	if (ifo->metric != -1)
 		ifp->metric = (unsigned int)ifo->metric;
 
+	if (!(ifo->options & DHCPCD_IPV4))
+		ifo->options &= ~(DHCPCD_DHCP | DHCPCD_IPV4LL);
+
 	if (!(ifo->options & DHCPCD_IPV6))
-		ifo->options &= ~DHCPCD_IPV6RS;
+		ifo->options &= ~(DHCPCD_IPV6RS | DHCPCD_DHCP6);
 
 	if (ifo->options & DHCPCD_SLAACPRIVATE)
 		ifo->options |= DHCPCD_IPV6RA_OWN;
 
 	/* We want to disable kernel interface RA as early as possible. */
 	if (ifo->options & DHCPCD_IPV6RS) {
+		/* If not doing any DHCP, disable the RDNSS requirement. */
+		if (!(ifo->options & (DHCPCD_DHCP | DHCPCD_DHCP6)))
+			ifo->options &= ~DHCPCD_IPV6RA_REQRDNSS;
 		ra_global = if_checkipv6(ifp->ctx, NULL,
 		    ifp->ctx->options & DHCPCD_IPV6RA_OWN ? 1 : 0);
 		ra_iface = if_checkipv6(ifp->ctx, ifp,
@@ -574,6 +568,7 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 			 * do nothing. */
 			ipv6_free_ll_callbacks(ifp);
 			dhcp_drop(ifp, "EXPIRE");
+			arp_close(ifp);
 		}
 	} else if (carrier == LINK_UP && ifp->flags & IFF_UP) {
 		if (ifp->carrier != LINK_UP) {
@@ -1706,8 +1701,6 @@ main(int argc, char **argv)
 			if (dhcpcd_daemonise(&ctx))
 				goto exit_success;
 		} else if (t > 0) {
-			if (ctx.options & DHCPCD_IPV4LL)
-				ctx.options |= DHCPCD_TIMEOUT_IPV4LL;
 			eloop_timeout_add_sec(ctx.eloop, t,
 			    handle_exit_timeout, &ctx);
 		}

@@ -1,4 +1,4 @@
-/* $NetBSD: arp.h,v 1.3 2014/10/17 23:42:24 roy Exp $ */
+/* $NetBSD: arp.h,v 1.4 2014/10/29 01:08:31 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -44,8 +44,35 @@
 
 #include "dhcpcd.h"
 
-void arp_announce(void *);
-void arp_probe(void *);
-void arp_start(struct interface *);
+struct arp_msg {
+	uint16_t op;
+	unsigned char sha[HWADDR_LEN];
+	struct in_addr sip;
+	unsigned char tha[HWADDR_LEN];
+	struct in_addr tip;
+};
+
+struct arp_state {
+	TAILQ_ENTRY(arp_state) next;
+	struct interface *iface;
+
+	void (*probed_cb)(struct arp_state *);
+	void (*announced_cb)(struct arp_state *);
+	void (*conflicted_cb)(struct arp_state *, const struct arp_msg *);
+
+	struct in_addr addr;
+	int probes;
+	int claims;
+	struct in_addr failed;
+};
+TAILQ_HEAD(arp_statehead, arp_state);
+
+void arp_report_conflicted(const struct arp_state *, const struct arp_msg *);
+void arp_announce(struct arp_state *);
+void arp_probe(struct arp_state *);
+struct arp_state *arp_new(struct interface *);
+void arp_cancel(struct arp_state *);
+void arp_free(struct arp_state *);
+void arp_free_but(struct arp_state *);
 void arp_close(struct interface *);
 #endif

@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.11 2014/10/17 23:42:24 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.12 2014/10/29 01:08:31 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -338,7 +338,11 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 		}
 	}
 	*--p = '\0';
-	if (strcmp(reason, "TEST") == 0) {
+	if (strcmp(reason, "TEST") == 0 ||
+	    strcmp(reason, "PREINIT") == 0 ||
+	    strcmp(reason, "CARRIER") == 0 ||
+	    strcmp(reason, "UNKNOWN") == 0)
+	{
 		env[9] = strdup("if_up=false");
 		env[10] = strdup("if_down=false");
 	} else if (1 == 2 /* appease ifdefs */

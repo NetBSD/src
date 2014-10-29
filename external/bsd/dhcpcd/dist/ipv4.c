@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4.c,v 1.3 2014/10/17 23:42:24 roy Exp $");
+ __RCSID("$NetBSD: ipv4.c,v 1.4 2014/10/29 01:08:31 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -129,6 +129,22 @@ ipv4_iffindaddr(struct interface *ifp,
 		TAILQ_FOREACH(ap, &state->addrs, next) {
 			if ((addr == NULL || ap->addr.s_addr == addr->s_addr) &&
 			    (net == NULL || ap->net.s_addr == net->s_addr))
+				return ap;
+		}
+	}
+	return NULL;
+}
+
+struct ipv4_addr *
+ipv4_iffindlladdr(struct interface *ifp)
+{
+	struct ipv4_state *state;
+	struct ipv4_addr *ap;
+
+	state = IPV4_STATE(ifp);
+	if (state) {
+		TAILQ_FOREACH(ap, &state->addrs, next) {
+			if (IN_LINKLOCAL(htonl(ap->addr.s_addr)))
 				return ap;
 		}
 	}
@@ -770,10 +786,7 @@ ipv4_applyaddr(void *arg)
 						if (ifn->options->options &
 						    DHCPCD_ARP)
 						{
-							nstate->claims = 0;
-							nstate->probes = 0;
-							nstate->conflicts = 0;
-							arp_probe(ifn);
+							dhcp_bind(ifn, NULL);
 						} else {
 							ipv4_addaddr(ifn,
 							    &nstate->lease);
@@ -855,6 +868,7 @@ ipv4_applyaddr(void *arg)
 		delete_address(ifp);
 
 	state->added = 1;
+	state->defend = 0;
 	state->addr.s_addr = lease->addr.s_addr;
 	state->net.s_addr = lease->net.s_addr;
 
