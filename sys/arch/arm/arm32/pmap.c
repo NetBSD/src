@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.305 2014/10/25 10:58:12 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.306 2014/10/29 22:11:34 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -215,7 +215,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.305 2014/10/25 10:58:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.306 2014/10/29 22:11:34 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -4872,7 +4872,6 @@ pmap_deactivate(struct lwp *l)
 #ifdef ARM_MMU_EXTENDED
 	kpreempt_disable();
 	struct cpu_info * const ci = curcpu();
-	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
 	/*
 	 * Disable translation table walks from TTBR0 while no pmap has been
 	 * activated.
@@ -4881,7 +4880,7 @@ pmap_deactivate(struct lwp *l)
 	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
 	arm_isb();
 	pmap_tlb_asid_deactivate(pm);
-	cpu_setttb(pmap_kernel()->pm_l1_pa, pai->pai_asid);
+	cpu_setttb(pmap_kernel()->pm_l1_pa, KERNEL_PID);
 	ci->ci_pmap_cur = pmap_kernel();
 	kpreempt_enable();
 #else
