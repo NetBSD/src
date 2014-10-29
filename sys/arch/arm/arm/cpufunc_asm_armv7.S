@@ -377,6 +377,7 @@ ENTRY_NP(armv7_dcache_inv_all)
 	b	1b
 
 .Lnext_level_inv:
+	dsb
 	mrc	p15, 1, r0, c0, c0, 1	@ read CLIDR
 	ubfx	ip, r0, #24, #3		@ narrow to LoC
 	add	r3, r3, #2		@ go to next level
@@ -437,6 +438,7 @@ ENTRY_NP(armv7_dcache_wbinv_all)
 	b	1b
 
 .Lnext_level_wbinv:
+	dsb
 	mrc	p15, 1, r0, c0, c0, 1	@ read CLIDR
 	ubfx	ip, r0, #24, #3		@ narrow to LoC
 	add	r3, r3, #2		@ go to next level
