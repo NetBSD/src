@@ -1,3 +1,5 @@
+/*	$NetBSD: flexint.h,v 1.2 2014/10/29 18:28:36 christos Exp $	*/
+
 /* flex integer type definitions */
 
 #ifndef FLEXINT_H
