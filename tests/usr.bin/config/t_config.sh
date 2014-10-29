@@ -1,4 +1,4 @@
-# $NetBSD: t_config.sh,v 1.1 2012/03/17 16:33:12 jruoho Exp $
+# $NetBSD: t_config.sh,v 1.2 2014/10/29 16:24:32 uebayasi Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,13 +25,20 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-run_and_check_pass()
+run_and_check_prep()
 {
 	local name="${1}"; shift
 
 	mkdir compile
 	supportdir="$(atf_get_srcdir)/support"
 	config="$(atf_get_srcdir)/d_${name}"
+}
+
+run_and_check_pass()
+{
+	local name="${1}"; shift
+
+	run_and_check_prep "${name}"
 
 	atf_check -o ignore \
 	    config -s "${supportdir}" -b "compile/${name}" "${config}"
@@ -41,9 +48,7 @@ run_and_check_fail()
 {
 	local name="${1}"; shift
 
-	mkdir compile
-	supportdir="$(atf_get_srcdir)/support"
-	config="$(atf_get_srcdir)/d_${name}"
+	run_and_check_prep "${name}"
 
 	atf_check -o ignore -e ignore -s ne:0 \
 	    config -s "${supportdir}" -b "compile/${name}" "${config}"
@@ -79,6 +84,54 @@ test_case no_pseudo fail "Checks that config catches ommited 'pseudo-device'" \
 test_case deffs_redef fail "Checks that config doesn't allow a deffs to use" \
     "the same name as a previous defflag/defparam"
 
+# Check minimal kernel config(1) output
+check_min_files()
+{
+	test -e Makefile &&
+	test -e config_file.h &&
+	test -e config_time.src &&
+	test -e ioconf.c &&
+	test -e ioconf.h &&
+	test -e locators.h &&
+	test -e swapregress.c &&
+	test -h machine &&
+	test -h regress &&
+	:
+}
+
+check_min_makefile()
+{
+	grep -q '^%' >tmp.template
+
+	grep -q '^MACHINE=regress$' &&
+	grep -q '^PARAM=-DMAXUSERS=4$' &&
+	grep -q '^all: regress$' &&
+	grep -q '^regress:' &&
+	[ ! -s tmp.template ] &&
+	:
+}
+
+test_min()
+{
+	local res=1
+
+	run_and_check_prep min
+
+	config -s "${supportdir}" -b compile/min "${config}" >/dev/null &&
+	cd compile/min &&
+	check_min_files &&
+	check_min_makefile &&
+	cd $OLDPWD &&
+	res=0
+
+	atf_check test $res -eq 0
+}
+
+test_case min pass "Minimal config"
+min_body() {
+	test_min
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case shadow_instance
@@ -88,4 +141,5 @@ atf_init_test_cases()
 	atf_add_test_case postponed_orphan
 	atf_add_test_case no_pseudo
 	atf_add_test_case deffs_redef
+	atf_add_test_case min
 }

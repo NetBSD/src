@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.595 2014/10/20 14:55:03 christos Exp $
+# $NetBSD: mi,v 1.596 2014/10/29 16:24:32 uebayasi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3370,6 +3370,7 @@
 ./usr/tests/usr.bin/config/d_deffs_redef	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/config/d_loop		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/config/d_loop2		tests-usr.bin-tests	atf
+./usr/tests/usr.bin/config/d_min		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/config/d_no_pseudo		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/config/d_postponed_orphan	tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/config/d_pseudo_parent	tests-usr.bin-tests	atf
