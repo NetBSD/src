@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2008 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2009 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -96,3 +96,5 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	rtsx(4): Add support for Realtek RTS5227/RTL8402/RTL8411/RTL8411B.
 		[nonaka 20141029]
 	flex(1): Import flex-2.5.37 [christos 20141029]
+	iwn(4): Add support for Intel Centrino Wireless-N
+		100/105/130/135/2200/2230. From OpenBSD. [nonaka 20141030]
