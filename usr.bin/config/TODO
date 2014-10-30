@@ -91,8 +91,8 @@ o Allow easier adding and removing of options.
 
 o Introduce "class".
 
-  Every module should be classfied as at least one class, as modular(9)
-  modules already do.  For example, filesystems are marked as "vfs", network
+  Every module should be classified as at least one class, as modular(9)
+  modules already do.  For example, file systems are marked as "vfs", network
   protocols are "netproto".
 
   Consider to merge "devclass" into "class".
@@ -123,7 +123,7 @@ o Support kernel constructor/destructor (.kctors/.kdtors)
   The .kctors/.kdtors entries are executed by kernel's main() function, unlike
   userland where start code executes .ctors/.dtors before main().  The hardcoded
   sequence of various subsystem initializations in init_main.c:main() will be
-  replaced by an array of .kctors invocaions, and #ifdef's there will be gone.
+  replaced by an array of .kctors invocations, and #ifdef's there will be gone.
 
 o Replace linkset.
 
@@ -139,7 +139,7 @@ o Replace linkset.
 
 o Shared kernel objects.
 
-  Since NetBSD has not established a clear kernek ABI, every single kernel
+  Since NetBSD has not established a clear kernel ABI, every single kernel
   has to build all the objects by their own.  As a result, similar kernels
   (e.g. evbarm kernels) repeatedly compile similar objects, that is waste of
   energy & space.
