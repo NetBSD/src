@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.22 2014/10/29 17:14:50 christos Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.23 2014/10/30 01:36:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkheaders.c,v 1.22 2014/10/29 17:14:50 christos Exp $");
+__RCSID("$NetBSD: mkheaders.c,v 1.23 2014/10/30 01:36:13 christos Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -149,7 +149,7 @@ global_hash(const char *str)
 		/* Otherwise shove through a 32bit CRC function */
 		h = crc_buf(0, str, strlen(str));
 	else if (h > UINT_MAX)
-		panic("overflow");
+		panic("overflow %s = 0x%lx", str, h);
 
 	/* Avoid colliding with the value used for undefined options. */
 	/* At least until I stop any options being set to zero */
