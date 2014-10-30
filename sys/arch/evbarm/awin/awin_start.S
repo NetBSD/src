@@ -41,7 +41,7 @@
 #include <arm/allwinner/awin_reg.h>
 #include <evbarm/awin/platform.h>  
 
-RCSID("$NetBSD: awin_start.S,v 1.4 2014/10/30 00:55:53 jmcneill Exp $")
+RCSID("$NetBSD: awin_start.S,v 1.5 2014/10/30 01:15:30 jmcneill Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -409,8 +409,8 @@ a31_mpinit_cpu:
 
 1:	dmb					// memory barrier
 	ldr	r0, [r6]			// load hatched
-	tst	r0, #0xe			// our bits set yet?
-	bxeq	r4				//   yes, return
+	cmp	r0, #0xe			// our bits set yet?
+	bxge	r4				//   yes, return
 	subs	r5, r5, #1			// decrement count
 	bxeq	r4				//   0? return
 	mov	r0, #0x1d800			// 5.03ms
