@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.71 2014/10/30 12:40:36 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.72 2014/10/30 19:00:12 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1930,4 +1930,13 @@ lib/libperfuse/ops.c				1.77
 	Fix invalid free in deletextattr FUSE handler:
 	do not free FUSE message on error as it was not allocated.
 	[manu, ticket #170]
+
+sys/arch/x86/x86/identcpu.c			1.46-1.47
+
+	Force x86_xsave_features to 0 when running under XEN.
+	This prevents the use of xsave and xrstor thus fixing
+	the problem in PR/49150.  The basic problem is that the way AMD
+	implements those instructions means that information can leak
+	between domains so XEN treats them as privileged.
+	[riz, ticket #171]
 
