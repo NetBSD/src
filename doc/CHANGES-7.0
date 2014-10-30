@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.69 2014/10/27 13:43:43 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.70 2014/10/30 10:44:07 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1859,3 +1859,14 @@ sys/netinet6/in6.c				1.177
 	Remove the ability for userland to toggle IN6_IFF_TENTATIVE.
 	Preserve IN6_IFF_TENTATIVE when updating address flags.
 	[roy, ticket #160]
+
+sys/external/bsd/drm2/include/linux/sched.h	1.4
+
+	Don't call kpause(9) if cold.
+	[nonaka, ticket #161]
+
+sys/dev/pci/hdaudio/hdaudio_pci.c		1.13
+
+	Disestablish interrupt and unmap register when attach failed.
+	[nonaka, ticket #162]
+
