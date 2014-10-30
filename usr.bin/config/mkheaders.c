@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.23 2014/10/30 01:36:13 christos Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.24 2014/10/30 15:13:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkheaders.c,v 1.23 2014/10/30 01:36:13 christos Exp $");
+__RCSID("$NetBSD: mkheaders.c,v 1.24 2014/10/30 15:13:11 christos Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -140,16 +140,18 @@ fprint_global(FILE *fp, const char *name, long long value)
 static unsigned int
 global_hash(const char *str)
 {
-        unsigned long h;
+	unsigned long h;
 	char *ep;
 
-	/* If the value is a valid numeric, just use it */
+	/*
+	 * If the value is a valid numeric, just use it
+	 * We don't care about negative values here, we
+	 * just use the value as a hash.
+	 */
 	h = strtoul(str, &ep, 0);
 	if (*ep != 0)
 		/* Otherwise shove through a 32bit CRC function */
 		h = crc_buf(0, str, strlen(str));
-	else if (h > UINT_MAX)
-		panic("overflow %s = 0x%lx", str, h);
 
 	/* Avoid colliding with the value used for undefined options. */
 	/* At least until I stop any options being set to zero */
