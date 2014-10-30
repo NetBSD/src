@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.278 2014/07/14 12:40:38 nakayama Exp $ */
+/*	$NetBSD: machdep.c,v 1.278.2.1 2014/10/30 12:33:17 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.278 2014/07/14 12:40:38 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.278.2.1 2014/10/30 12:33:17 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -599,10 +599,13 @@ cpu_reboot(int howto, char *user_boot_string)
 	 */
 	maybe_dump(howto);
 
-	if ((howto & RB_NOSYNC) == 0 && !syncdone) {
+	/*
+	 * If we've panic'd, don't make the situation potentially
+	 * worse by syncing or unmounting the file systems.
+	 */
+	if ((howto & RB_NOSYNC) == 0 && panicstr == NULL) {
 		if (!syncdone) {
-		syncdone = true;
-		vfs_shutdown();
+			syncdone = true;
 			/* XXX used to force unmount as well, here */
 			vfs_sync_all(l);
 			/*
@@ -630,6 +633,7 @@ cpu_reboot(int howto, char *user_boot_string)
 	splhigh();
 
 haltsys:
+	doshutdownhooks();
 
 #ifdef MULTIPROCESSOR
 	/* Stop all secondary cpus */
