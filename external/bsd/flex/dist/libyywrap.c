@@ -1,4 +1,4 @@
-/*	$NetBSD: libyywrap.c,v 1.4 2014/10/30 18:44:05 christos Exp $	*/
+/*	$NetBSD: libyywrap.c,v 1.5 2014/10/30 20:21:39 christos Exp $	*/
 
 /* libyywrap - flex run-time support library "yywrap" function */
 
@@ -22,8 +22,10 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-#include "flexdef.h"
-__RCSID("$NetBSD: libyywrap.c,v 1.4 2014/10/30 18:44:05 christos Exp $");
+#include <sys/cdefs.h>
+#ifdef __RCSID
+__RCSID("$NetBSD: libyywrap.c,v 1.5 2014/10/30 20:21:39 christos Exp $");
+#endif
 
 int yywrap(void);
 int
