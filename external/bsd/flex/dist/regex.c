@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.c,v 1.2 2014/10/29 18:28:36 christos Exp $	*/
+/*	$NetBSD: regex.c,v 1.3 2014/10/30 18:44:05 christos Exp $	*/
 
 /** regex - regular expression functions related to POSIX regex lib. */
 
@@ -22,11 +22,8 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: regex.c,v 1.2 2014/10/29 18:28:36 christos Exp $");
-
 #include "flexdef.h"
-
+__RCSID("$NetBSD: regex.c,v 1.3 2014/10/30 18:44:05 christos Exp $");
 
 static const char* REGEXP_LINEDIR = "^#line ([[:digit:]]+) \"(.*)\"";
 static const char* REGEXP_BLANK_LINE = "^[[:space:]]*$";

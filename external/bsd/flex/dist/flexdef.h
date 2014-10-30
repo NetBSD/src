@@ -1,4 +1,4 @@
-/*	$NetBSD: flexdef.h,v 1.6 2014/10/29 18:28:36 christos Exp $	*/
+/*	$NetBSD: flexdef.h,v 1.7 2014/10/30 18:44:05 christos Exp $	*/
 
 /* flexdef - definitions file for flex */
 
@@ -41,6 +41,7 @@
 #endif
 
 /* AIX requires this to be the first thing in the file.  */
+#ifndef __lint__
 #ifndef __GNUC__
 # if HAVE_ALLOCA_H
 #  include <alloca.h>
@@ -53,6 +54,7 @@ char *alloca ();
 #   endif
 #  endif
 # endif
+#endif
 #endif
 
 #ifdef STDC_HEADERS
@@ -1226,5 +1228,9 @@ extern size_t _sf_top_ix, _sf_max; /**< stack of scanner flags. */
 extern void sf_init(void);
 extern void sf_push(void);
 extern void sf_pop(void);
+
+#ifndef __RCSID
+#define __RCSID(a)
+#endif
 
 #endif /* not defined FLEXDEF_H */
