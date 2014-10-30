@@ -1,3 +1,14 @@
+o Call module as module.
+
+  Until now, everything is called as attribute.  Separate module from it:
+
+	- Module is a collection of code (*.[cSo]), and provides a function.
+	  Module can depend on other modules.
+
+	- Attribute provides metadata for modules.  One module can have
+	  multiple attributes.  Attribute doesn't generate a module (*.o,
+	  *.ko).
+
 o Emit everything (ioconf.*, Makefile, ...) per-attribute.
 
 o Generate modular(9) related information.  Especially module dependency.
@@ -78,3 +89,45 @@ o Allow easier adding and removing of options.
   errors like "options BAR was already defined" or "options FOO
   was not defined".
 
+o Introduce "class".
+
+  Every module should be classfied as at least one class, as modular(9)
+  modules already do.  For example, filesystems are marked as "vfs", network
+  protocols are "netproto".
+
+  Consider to merge "devclass" into "class".
+
+  For syntax clarity, class names could be used as a keyword to select the
+  class's instance module:
+
+	# Define net80211 module as netproto class
+	class netproto
+	define net80211: netproto
+
+	# Select net80211 to be builtin
+	netproto net80211
+
+  Accordingly device/attach selection syntax should be revisited.
+
+o Support kernel constructor/destructor (.ctors/.dtors)
+
+  Initialization and finalization should be called via constructors and
+  destructors.  Don't hardcode those sequences as sys/kern/init_main.c:main()
+  does.
+
+  The order of .ctors/.dtors is resolved by dependency.  The difference from
+  userland is that in kernel depended ones are located in lower addresses;
+  "machdep" module is the lowest.  Thus the lowest entry in .ctors must be
+  executed the first.
+
+o Replace linkset.
+
+  Don't allow kernel subsystems create random ELF sections (with potentially
+  long names) in the final kernel.  To collect some data in statically linked
+  modules, creating intermediate sections (e.g. .data.linkset.sysctl) and
+  exporting the start/end symbols (e.g. _data_linkset_sysctl_{start,end})
+  using linker script should be fine.
+
+  Dynamically loaded modules have to register those entries via constructors
+  (functions).  This means that dynamically loaded modules are flexible but
+  come with overhead.
