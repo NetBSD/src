@@ -109,16 +109,21 @@ o Introduce "class".
 
   Accordingly device/attach selection syntax should be revisited.
 
-o Support kernel constructor/destructor (.ctors/.dtors)
+o Support kernel constructor/destructor (.kctors/.kdtors)
 
   Initialization and finalization should be called via constructors and
   destructors.  Don't hardcode those sequences as sys/kern/init_main.c:main()
   does.
 
-  The order of .ctors/.dtors is resolved by dependency.  The difference from
+  The order of .kctors/.kdtors is resolved by dependency.  The difference from
   userland is that in kernel depended ones are located in lower addresses;
   "machdep" module is the lowest.  Thus the lowest entry in .ctors must be
   executed the first.
+
+  The .kctors/.kdtors entries are executed by kernel's main() function, unlike
+  userland where start code executes .ctors/.dtors before main().  The hardcoded
+  sequence of various subsystem initializations in init_main.c:main() will be
+  replaced by an array of .kctors invocaions, and #ifdef's there will be gone.
 
 o Replace linkset.
 
@@ -131,3 +136,17 @@ o Replace linkset.
   Dynamically loaded modules have to register those entries via constructors
   (functions).  This means that dynamically loaded modules are flexible but
   come with overhead.
+
+o Shared kernel objects.
+
+  Since NetBSD has not established a clear kernek ABI, every single kernel
+  has to build all the objects by their own.  As a result, similar kernels
+  (e.g. evbarm kernels) repeatedly compile similar objects, that is waste of
+  energy & space.
+
+  Share them if possible.  For evb* ports, ideally everything except machdep.ko
+  should be shared.
+
+  While leaving optimizations as options (CPU specific optimizations, inlined
+  bus_space(9) operations, etc.) for users, the official binaries build
+  provided by TNF should be as portable as possible.
