@@ -1,4 +1,4 @@
-/* $Id: imx23_olinuxino_machdep.c,v 1.3 2013/10/07 17:36:40 matt Exp $ */
+/* $Id: imx23_olinuxino_machdep.c,v 1.3.4.1 2014/10/30 12:35:21 martin Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@ initarm(void *arg)
             ((vsize_t)&KERNEL_BASE_phys));
 
         arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap,
-	    true);
+	    false);
 
         return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 }
