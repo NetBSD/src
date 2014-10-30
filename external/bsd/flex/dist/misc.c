@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 2014/10/29 18:28:36 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.5 2014/10/30 18:44:05 christos Exp $	*/
 
 /* misc - miscellaneous flex routines */
 
@@ -32,10 +32,9 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.4 2014/10/29 18:28:36 christos Exp $");
-
 #include "flexdef.h"
+__RCSID("$NetBSD: misc.c,v 1.5 2014/10/30 18:44:05 christos Exp $");
+
 #include "tables.h"
 #include <stdarg.h>
 
