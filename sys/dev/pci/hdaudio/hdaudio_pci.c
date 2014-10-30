@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.12 2014/03/29 19:28:25 christos Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.12.4.1 2014/10/30 10:36:52 martin Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.12 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.12.4.1 2014/10/30 10:36:52 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -162,7 +162,17 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 	hdaudio_pci_reinit(sc);
 
 	/* Attach bus-independent HD audio layer */
-	hdaudio_attach(self, &sc->sc_hdaudio);
+	if (hdaudio_attach(self, &sc->sc_hdaudio)) {
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+		bus_space_unmap(sc->sc_hdaudio.sc_memt,
+				sc->sc_hdaudio.sc_memh,
+				sc->sc_hdaudio.sc_memsize);
+		sc->sc_hdaudio.sc_memvalid = false;
+		csr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG);
+		csr &= ~(PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_BACKTOBACK_ENABLE);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG, csr);
+	}
 }
 
 static int
