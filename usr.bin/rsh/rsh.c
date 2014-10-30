@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.36 2014/06/08 02:44:15 enami Exp $	*/
+/*	$NetBSD: rsh.c,v 1.37 2014/10/30 06:13:50 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.36 2014/06/08 02:44:15 enami Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.37 2014/10/30 06:13:50 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,6 +203,7 @@ main(int argc, char **argv)
 #else
 		if (asrsh)
 			*argv = __UNCONST("rlogin");
+		setuid(uid);
 		execv(_PATH_RLOGIN, argv);
 		err(1, "can't exec %s", _PATH_RLOGIN);
 #endif
