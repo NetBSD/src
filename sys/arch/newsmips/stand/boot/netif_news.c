@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_news.c,v 1.8 2009/10/21 23:12:09 snj Exp $	*/
+/*	$NetBSD: netif_news.c,v 1.8.38.1 2014/10/30 12:14:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -191,7 +191,7 @@ int
 prom_getether(struct romdev *pd, u_char *ea)
 {
 
-	if (apcall_ioctl(pd->fd, APIOCGIFHWADDR, ea));
+	if (apcall_ioctl(pd->fd, APIOCGIFHWADDR, ea))
 		return -1;
 
 #ifdef BOOT_DEBUG

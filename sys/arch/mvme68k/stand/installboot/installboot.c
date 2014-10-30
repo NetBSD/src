@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.18 2013/06/23 02:06:05 dholland Exp $ */
+/*	$NetBSD: installboot.c,v 1.18.8.1 2014/10/30 12:14:36 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -219,10 +219,6 @@ loadprotoblocks(char *fname, size_t *size)
 	}
 
 	return (char *)bp;
-
-	if (bp)
-		free((void *)bp);
-	return NULL;
 }
 
 static void
