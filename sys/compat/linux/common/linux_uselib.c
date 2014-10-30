@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.31 2014/10/19 17:33:58 maxv Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.32 2014/10/30 16:45:28 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.31 2014/10/19 17:33:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.32 2014/10/30 16:45:28 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,11 @@ linux_sys_uselib(struct lwp *l, const struct linux_sys_uselib_args *uap, registe
 				NSM_FOLLOW_TRYEMULROOT, &vp);
 	if (error != 0)
 		return error;
+
+	if (vp->v_type != VREG) {
+		error = EINVAL;
+		goto out;
+	}
 
 	if ((error = vn_rdwr(UIO_READ, vp, (void *) &hdr, LINUX_AOUT_HDR_SIZE,
 			     0, UIO_SYSSPACE, IO_NODELOCKED, l->l_cred,
