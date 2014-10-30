@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.300 2014/10/24 13:18:51 njoly Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.301 2014/10/30 17:13:41 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.300 2014/10/24 13:18:51 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.301 2014/10/30 17:13:41 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -974,7 +974,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			continue;
 
 		/* Validate size of superblock */
-		if (sbsize > MAXBSIZE || sbsize < sizeof(struct fs))
+		if (sbsize > SBLOCKSIZE || sbsize < sizeof(struct fs))
 			continue;
 
 		/* Check that we can handle the file system blocksize */
