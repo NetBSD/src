@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.22 2014/10/29 10:28:03 joerg Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.23 2014/10/30 00:32:55 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.22 2014/10/29 10:28:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.23 2014/10/30 00:32:55 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -768,12 +768,15 @@ awin_gpio_sysconfig(prop_dictionary_t dict)
 		{ "usb0drv",		"usbc0", "usb_drv_vbus_gpio" },
 		{ "usb0iddet",		"usbc0", "usb_id_gpio" },
 		{ "usb0vbusdet",	"usbc0", "usb_det_vbus_gpio" },
+		{ "usb0restrict",	"usbc0", "usb_restrict_gpio" },
 		{ "usb1drv",		"usbc1", "usb_drv_vbus_gpio" },
 		{ "usb1iddet",		"usbc1", "usb_id_gpio" },
 		{ "usb1vbusdet",	"usbc1", "usb_det_vbus_gpio" },
+		{ "usb1restrict",	"usbc1", "usb_restrict_gpio" },
 		{ "usb2drv",		"usbc2", "usb_drv_vbus_gpio" },
 		{ "usb2iddet",		"usbc2", "usb_id_gpio" },
 		{ "usb2vbusdet",	"usbc2", "usb_det_vbus_gpio" },
+		{ "usb2restrict",	"usbc2", "usb_restrict_gpio" },
 		{ "status-led1",	"leds_para", "leds_pin_1" },
 		{ "status-led2",	"leds_para", "leds_pin_2" },
 		{ "status-led3",	"leds_para", "leds_pin_3" },
