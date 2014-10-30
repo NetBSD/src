@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.70 2014/10/30 10:44:07 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.71 2014/10/30 12:40:36 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1869,4 +1869,65 @@ sys/dev/pci/hdaudio/hdaudio_pci.c		1.13
 
 	Disestablish interrupt and unmap register when attach failed.
 	[nonaka, ticket #162]
+
+sys/compat/linux/arch/i386/linux_ptrace.c	1.29
+sys/compat/linux/arch/powerpc/linux_ptrace.c	1.26-1.27
+
+	Fix four memory leaks in compat/linux.
+	[maxv, ticket #163]
+
+sys/dev/ieee1394/fwcrom.c			1.15-1.16
+sys/dev/marvell/if_gfe.c			1.43
+sys/dev/pci/cxgb/cxgb_offload.c			1.4
+sys/dev/pci/twa.c				1.51-1.52
+sys/dev/usb/stuirda.c				1.16
+
+	Various fixes in dev/: remove dead code and fix two inconsistencies.
+	[maxv, ticket #164]
+
+sys/arch/amiga/amiga/disksubr.c			1.62
+sys/arch/amiga/dev/siop.c			1.69
+sys/arch/amiga/dev/siop2.c			1.43
+sys/arch/arm/arm32/pmap.c			1.300
+sys/arch/mvme68k/stand/installboot/installboot.c 1.19
+sys/arch/news68k/news68k/bus_space.c		1.13
+sys/arch/newsmips/stand/boot/netif_news.c	1.9
+sys/arch/x86/x86/x86_autoconf.c			1.72
+
+	Remove dead code in various places under arch/.
+	[maxv, ticket #165]
+
+sys/compat/netbsd32/netbsd32_compat_50.c	1.28
+
+	Fix multiple mistakes:
+	- error from copyout was ignored
+	- the wrong size was specified in copyin
+	- missing locking.
+	[mav, ticket #166]
+
+sys/arch/m68k/m68k/db_disasm.c			1.41
+
+	Fix cut-n-paste
+	[maxv, ticket #167]
+
+sys/arch/sparc64/sparc64/machdep.c		1.280
+
+	Sync cpu_reboot with i386:
+	- avoid sync and unmount after panic.
+	- remove vfs_shutdown, we call vfs_sync_all and vfs_unmount* instead.
+	- resurrect doshutdownhooks since some drivers still use it
+	  (eg. sab(4)).
+	[nakayama, ticket #168]
+
+sys/arch/evbarm/imx23_olinuxino/imx23_olinuxino_machdep.c 1.4
+
+	PR/48669 evbarm/imx23_olinuxino (ARM9E) doesn't boot.
+	Don't try to map all memory and fix booting.
+	[skrll, ticket #169]
+
+lib/libperfuse/ops.c				1.77
+
+	Fix invalid free in deletextattr FUSE handler:
+	do not free FUSE message on error as it was not allocated.
+	[manu, ticket #170]
 
