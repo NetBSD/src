@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.6 2014/10/30 10:38:57 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.7 2014/10/30 10:45:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -122,6 +122,7 @@ tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 #endif
 		//armreg_tlbiall_write(asid);
 	}
+	arm_dsb();
 	arm_isb();
 }
 
