@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.5 2014/10/29 14:14:14 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.6 2014/10/30 10:38:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -51,8 +51,9 @@ void
 tlb_set_asid(tlb_asid_t asid)
 {
 	arm_dsb();
-	if (asid == 0) {
+	if (asid == KERNEL_PID) {
 		armreg_ttbcr_write(armreg_ttbcr_read() | TTBCR_S_PD0);
+		arm_isb();
 	}
 	armreg_contextidr_write(asid);
 	arm_isb();
