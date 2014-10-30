@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: sched.h,v 1.3.2.1 2014/10/30 09:20:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -51,12 +51,17 @@ schedule_timeout_uninterruptible(long timeout)
 {
 	int start, end;
 
+	if (cold) {
+		DELAY(timeout);
+		return 0;
+	}
+
 	start = hardclock_ticks;
 	/* XXX Integer truncation...not likely to matter here.  */
 	(void)kpause("loonix", false /*!intr*/, timeout, NULL);
 	end = hardclock_ticks;
 
-	return (end - start);
+	return (end - start) > 0 ? (end - start) : 0;
 }
 
 #endif  /* _LINUX_SCHED_H_ */
