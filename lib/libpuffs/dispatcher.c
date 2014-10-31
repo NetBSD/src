@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.47 2014/08/16 16:25:44 manu Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.48 2014/10/31 13:56:04 manu Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.47 2014/08/16 16:25:44 manu Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.48 2014/10/31 13:56:04 manu Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1137,6 +1137,34 @@ dispatch(struct puffs_cc *pcc)
 			error = pops->puffs_node_deleteextattr(pu,
 			    opcookie, auxt->pvnr_attrnamespace,
 			    auxt->pvnr_attrname, pcr);
+			break;
+		}
+
+		case PUFFS_VN_FALLOCATE:
+		{
+			struct puffs_vnmsg_fallocate *auxt = auxbuf;
+
+			if (pops->puffs_node_fallocate == NULL) {
+				error = EOPNOTSUPP;
+				break;
+			}
+
+			error = pops->puffs_node_fallocate(pu,
+			    opcookie, auxt->pvnr_off, auxt->pvnr_len);
+			break;
+		}
+
+		case PUFFS_VN_FDISCARD:
+		{
+			struct puffs_vnmsg_fdiscard *auxt = auxbuf;
+
+			if (pops->puffs_node_fdiscard == NULL) {
+				error = EOPNOTSUPP;
+				break;
+			}
+
+			error = pops->puffs_node_fdiscard(pu,
+			    opcookie, auxt->pvnr_off, auxt->pvnr_len);
 			break;
 		}
 
