@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.59 2014/10/29 17:14:50 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.60 2014/10/31 07:38:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,7 +107,7 @@ extern const char *progname;
  * The next two lines define the current version of the config(1) binary,
  * and the minimum version of the configuration files it supports.
  */
-#define CONFIG_VERSION		20141010
+#define CONFIG_VERSION		20141030
 #define CONFIG_MINVERSION	0
 
 /*
