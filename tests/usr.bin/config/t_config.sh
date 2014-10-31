@@ -1,4 +1,4 @@
-# $NetBSD: t_config.sh,v 1.3 2014/10/31 04:54:17 uebayasi Exp $
+# $NetBSD: t_config.sh,v 1.4 2014/10/31 07:38:36 uebayasi Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,6 +62,22 @@ run_and_check_fail()
 	    config -s "${supportdir}" -b "compile/${name}" "${config}"
 }
 
+test_output()
+{
+	local name="${1}"; shift
+	local res=1
+
+	run_and_check_prep "${name}"
+
+	config -s "${supportdir}" -b compile/"${name}" "${config}" >/dev/null &&
+	cd compile/"${name}" &&
+	check_${name} &&
+	cd $OLDPWD &&
+	res=0
+
+	atf_check test $res -eq 0
+}
+
 # Defines a test case for config(1).
 test_case()
 {
@@ -108,7 +124,50 @@ no options UNDEFINED
 test_case no_undefined_opt pass \
     "Checks that config allows a negation for an undefined options"
 
+# Attribute selection
+test_case select pass "Attribute selection"
+select_config_str='
+include "../d_min"
+select c
+'
+check_select()
+{
+	local f=Makefile
+
+	grep -q '^a\.o:' $f &&
+	grep -q '^b\.o:' $f &&
+	grep -q '^c\.o:' $f &&
+	:
+}
+select_body() {
+	test_output select
+}
+
+# Attribute negation
+test_case no_select pass "Attribute negation"
+no_select_config_str='
+include "../d_min"
+select c
+no select a
+'
+check_no_select()
+{
+	local f=Makefile
+
+	: >tmp
+	grep -q '^a\.o:' $f >>tmp
+	grep -q '^b\.o:' $f >>tmp
+	grep -q '^c\.o:' $f >>tmp
+
+	[ ! -s tmp ] &&
+	:
+}
+no_select_body() {
+	test_output no_select
+}
+
 # Check minimal kernel config(1) output
+test_case min pass "Minimal config"
 check_min_files()
 {
 	test -e Makefile &&
@@ -122,7 +181,6 @@ check_min_files()
 	test -h regress &&
 	:
 }
-
 check_min_makefile()
 {
 	local f=Makefile
@@ -136,26 +194,14 @@ check_min_makefile()
 	[ ! -s tmp.template ] &&
 	:
 }
-
-test_min()
+check_min()
 {
-	local res=1
-
-	run_and_check_prep min
-
-	config -s "${supportdir}" -b compile/min "${config}" >/dev/null &&
-	cd compile/min &&
 	check_min_files &&
 	check_min_makefile &&
-	cd $OLDPWD &&
-	res=0
-
-	atf_check test $res -eq 0
+	:
 }
-
-test_case min pass "Minimal config"
 min_body() {
-	test_min
+	test_output min
 }
 
 atf_init_test_cases()
@@ -169,5 +215,7 @@ atf_init_test_cases()
 	atf_add_test_case deffs_redef
 	atf_add_test_case undefined_opt
 	atf_add_test_case no_undefined_opt
+	atf_add_test_case select
+	atf_add_test_case no_select
 	atf_add_test_case min
 }

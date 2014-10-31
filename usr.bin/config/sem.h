@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.16 2014/10/29 17:14:50 christos Exp $	*/
+/*	$NetBSD: sem.h,v 1.17 2014/10/31 07:38:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,7 +60,10 @@ struct attr    *getattr(const char *);
 struct attr    *refattr(const char *);
 int		getrefattr(const char *, struct attr **);
 void		expandattr(struct attr *, void (*)(struct attr *));
+void		addattr(const char *);
+void		delattr(const char *);
 void		selectattr(struct attr *);
+void		deselectattr(struct attr *);
 void		dependattrs(void);
 void		setmajor(struct devbase *, int);
 void		addconf(struct config *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.65 2014/10/29 17:14:50 christos Exp $	*/
+/*	$NetBSD: sem.c,v 1.66 2014/10/31 07:38:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.65 2014/10/29 17:14:50 christos Exp $");
+__RCSID("$NetBSD: sem.c,v 1.66 2014/10/31 07:38:36 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -1305,6 +1305,7 @@ remove_devi(struct devi *i)
 	struct devi *f, *j, **ppi;
 	struct deva *iba;
 
+	CFGDBG(5, "removing devi `%s'", i->i_name);
 	f = ht_lookup(devitab, i->i_name);
 	if (f == NULL)
 		panic("remove_devi(): instance %s disappeared from devitab",
@@ -1948,17 +1949,56 @@ split(const char *name, size_t nlen, char *base, size_t bsize, int *aunit)
 }
 
 void
+addattr(const char *name)
+{
+	struct attr *a;
+
+	a = refattr(name);
+	selectattr(a);
+}
+
+void
+delattr(const char *name)
+{
+	struct attr *a;
+
+	a = refattr(name);
+	deselectattr(a);
+}
+
+void
 selectattr(struct attr *a)
 {
 	struct attrlist *al;
 	struct attr *dep;
 
+	CFGDBG(5, "selecting attr `%s'", a->a_name);
 	for (al = a->a_deps; al != NULL; al = al->al_next) {
 		dep = al->al_this;
 		selectattr(dep);
 	}
 	(void)ht_insert(selecttab, a->a_name, __UNCONST(a->a_name));
 	CFGDBG(3, "attr selected `%s'", a->a_name);
+}
+
+static int
+deselectattrcb2(const char *name1, const char *name2, void *v, void *arg)
+{
+	const char *name = arg;
+
+	if (strcmp(name, name2) == 0)
+		delattr(name1);
+	return 0;
+}
+
+void
+deselectattr(struct attr *a)
+{
+
+	CFGDBG(5, "deselecting attr `%s'", a->a_name);
+	ht_enumerate2(attrdeptab, deselectattrcb2, __UNCONST(a->a_name));
+	(void)ht_remove(selecttab, a->a_name);
+	CFGDBG(3, "attr deselected `%s'", a->a_name);
 }
 
 static int

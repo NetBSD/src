@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.44 2014/10/29 17:14:50 christos Exp $	*/
+/*	$NetBSD: gram.y,v 1.45 2014/10/31 07:38:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gram.y,v 1.44 2014/10/29 17:14:50 christos Exp $");
+__RCSID("$NetBSD: gram.y,v 1.45 2014/10/31 07:38:36 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -181,7 +181,7 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 %token	XOBJECT OBSOLETE ON OPTIONS
 %token	PACKAGE PLUSEQ PREFIX PSEUDO_DEVICE PSEUDO_ROOT
 %token	ROOT
-%token	SINGLE SOURCE
+%token	SELECT SINGLE SOURCE
 %token	TYPE
 %token	VECTOR VERSION
 %token	WITH
@@ -705,6 +705,8 @@ selections:
 /* One config item. */
 selection:
 	  definition
+	| select_attr
+	| select_no_attr
 	| select_no_filesystems
 	| select_filesystems
 	| select_no_makeoptions
@@ -723,6 +725,14 @@ selection:
 	| select_no_device_attachment
 	| select_no_device_instance
 	| select_device_instance
+;
+
+select_attr:
+	SELECT WORD			{ addattr($2); }
+;
+
+select_no_attr:
+	NO SELECT WORD			{ delattr($3); }
 ;
 
 select_no_filesystems:
