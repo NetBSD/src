@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.82 2014/10/31 13:52:41 manu Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.83 2014/10/31 14:20:54 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -667,6 +667,7 @@ struct puffs_vnmsg_deleteextattr {
 	struct puffs_kcred	pvnr_cred;			/* OUT	*/
 };
 
+#define PUFFS_HAVE_FALLOCATE 1
 struct puffs_vnmsg_fallocate {
 	struct puffs_req	pvn_pr;
 	off_t			pvnr_off;			/* OUT    */
