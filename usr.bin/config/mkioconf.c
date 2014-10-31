@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.22 2014/10/29 17:14:50 christos Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.23 2014/10/31 17:43:55 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkioconf.c,v 1.22 2014/10/29 17:14:50 christos Exp $");
+__RCSID("$NetBSD: mkioconf.c,v 1.23 2014/10/31 17:43:55 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -176,6 +176,8 @@ cf_locators_print(const char *name, void *value, void *arg)
 
 	a = value;
 	if (!a->a_iattr)
+		return (0);
+	if (ht_lookup(selecttab, name) == NULL)
 		return (0);
 
 	if (a->a_locs) {
