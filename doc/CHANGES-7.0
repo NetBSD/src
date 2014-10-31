@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.72 2014/10/30 19:00:12 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.73 2014/10/31 08:31:13 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1939,4 +1939,11 @@ sys/arch/x86/x86/identcpu.c			1.46-1.47
 	implements those instructions means that information can leak
 	between domains so XEN treats them as privileged.
 	[riz, ticket #171]
+
+usr.bin/ftp/version.h				1.85
+
+	Version 20141026
+	Ignore special characters unless they're from the command line.
+	Fixes CVE-2014-8517
+	[lukem, ticket #172]
 
