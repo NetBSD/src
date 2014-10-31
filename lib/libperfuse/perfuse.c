@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.34 2014/09/03 16:01:45 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.35 2014/10/31 15:12:15 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -503,6 +503,9 @@ perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 #ifdef PUFFS_OPEN_IO_DIRECT 
 	PUFFSOP_SET(pops, perfuse, node, open2);
 #endif /* PUFFS_OPEN_IO_DIRECT */
+#ifdef PUFFS_HAVE_FALLOCATE
+	PUFFSOP_SET(pops, perfuse, node, fallocate);
+#endif /* PUFFS_HAVE_FALLOCATE */
 
 	/*
 	 * PUFFS_KFLAG_NOCACHE_NAME is required so that we can see changes
