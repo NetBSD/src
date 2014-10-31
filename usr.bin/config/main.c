@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.70 2014/10/29 17:14:50 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.71 2014/10/31 07:38:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.70 2014/10/29 17:14:50 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.71 2014/10/31 07:38:36 uebayasi Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -992,13 +992,6 @@ addoption(const char *name, const char *value)
 	n = strtolower(name);
 	(void)ht_insert(selecttab, n, (void *)__UNCONST(n));
 	CFGDBG(3, "option selected `%s'", n);
-
-	/*
-	 * Select attribute if one exists.
-	 */
-	struct attr *a;
-	if ((a = ht_lookup(attrtab, n)) != NULL)
-		selectattr(a);
 }
 
 void
