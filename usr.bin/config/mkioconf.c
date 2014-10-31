@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.23 2014/10/31 17:43:55 uebayasi Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.24 2014/10/31 17:58:02 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkioconf.c,v 1.23 2014/10/31 17:43:55 uebayasi Exp $");
+__RCSID("$NetBSD: mkioconf.c,v 1.24 2014/10/31 17:58:02 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -184,7 +184,7 @@ cf_locators_print(const char *name, void *value, void *arg)
 		fprintf(fp,
 		    "static const struct cfiattrdata %scf_iattrdata = {\n",
 			    name);
-		fprintf(fp, "\t\"%s\", %d,\n\t{\n", name, a->a_loclen);
+		fprintf(fp, "\t\"%s\", %d, {\n", name, a->a_loclen);
 		for (ll = a->a_locs; ll; ll = ll->ll_next)
 			fprintf(fp, "\t\t{ \"%s\", \"%s\", %s },\n",
 				ll->ll_name,
