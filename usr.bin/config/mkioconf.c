@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.24 2014/10/31 17:58:02 uebayasi Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.25 2014/10/31 18:26:06 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkioconf.c,v 1.24 2014/10/31 17:58:02 uebayasi Exp $");
+__RCSID("$NetBSD: mkioconf.c,v 1.25 2014/10/31 18:26:06 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -380,7 +380,7 @@ emitcfdata(FILE *fp)
 		"\n"
 		"%sstruct cfdata cfdata%s%s[] = {\n"
 		"    /* driver           attachment    unit state "
-		"loc   flags pspec */\n",
+		"     loc   flags  pspec */\n",
 		    ioconfname ? "static " : "",
 		    ioconfname ? "_ioconf_" : "",
 		    ioconfname ? ioconfname : "");
@@ -435,7 +435,7 @@ emitcfdata(FILE *fp)
 		} else
 			loc = "loc";
 		fprintf(fp, "    { \"%s\",%s\"%s\",%s%2d, %s, %7s, %#6x, ",
-			    basename, strlen(basename) < 8 ? "\t\t"
+			    basename, strlen(basename) < 7 ? "\t\t"
 			    				   : "\t",
 			    attachment, strlen(attachment) < 5 ? "\t\t"
 			    				       : "\t",
@@ -446,7 +446,7 @@ emitcfdata(FILE *fp)
 			fputs("NULL },\n", fp);
 	}
 	fprintf(fp, "    { %s,%s%s,%s%2d, %s, %7s, %#6x, %s }\n};\n",
-	    "NULL", "\t\t", "NULL", "\t\t", 0, "0", "NULL", 0, "NULL");
+	    "NULL", "\t\t", "NULL", "\t\t", 0, "   0", "NULL", 0, "NULL");
 }
 
 /*
