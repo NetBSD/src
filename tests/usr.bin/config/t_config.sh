@@ -1,4 +1,4 @@
-# $NetBSD: t_config.sh,v 1.2 2014/10/29 16:24:32 uebayasi Exp $
+# $NetBSD: t_config.sh,v 1.3 2014/10/31 04:54:17 uebayasi Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,7 +31,15 @@ run_and_check_prep()
 
 	mkdir compile
 	supportdir="$(atf_get_srcdir)/support"
-	config="$(atf_get_srcdir)/d_${name}"
+
+	local config_str
+	eval config_str=\$${name}_config_str
+	if [ -n "$config_str" ]; then
+		config="d_${name}"
+		printf "$config_str" >"${config}"
+	else
+		config="$(atf_get_srcdir)/d_${name}"
+	fi
 }
 
 run_and_check_pass()
@@ -84,6 +92,22 @@ test_case no_pseudo fail "Checks that config catches ommited 'pseudo-device'" \
 test_case deffs_redef fail "Checks that config doesn't allow a deffs to use" \
     "the same name as a previous defflag/defparam"
 
+# Selecting an undefined option.
+undefined_opt_config_str='
+include "../d_min"
+options UNDEFINED
+'
+test_case undefined_opt pass \
+    "Checks that config allows a selection for an undefined options"
+
+# Negating an undefined option.
+no_undefined_opt_config_str='
+include "../d_min"
+no options UNDEFINED
+'
+test_case no_undefined_opt pass \
+    "Checks that config allows a negation for an undefined options"
+
 # Check minimal kernel config(1) output
 check_min_files()
 {
@@ -101,12 +125,14 @@ check_min_files()
 
 check_min_makefile()
 {
-	grep -q '^%' >tmp.template
+	local f=Makefile
 
-	grep -q '^MACHINE=regress$' &&
-	grep -q '^PARAM=-DMAXUSERS=4$' &&
-	grep -q '^all: regress$' &&
-	grep -q '^regress:' &&
+	grep -q '^%' $f >tmp.template
+
+	grep -q '^MACHINE=regress$' $f &&
+	grep -q '^PARAM=-DMAXUSERS=4$' $f &&
+	grep -q '^all: regress$' $f &&
+	grep -q '^regress:' $f &&
 	[ ! -s tmp.template ] &&
 	:
 }
@@ -141,5 +167,7 @@ atf_init_test_cases()
 	atf_add_test_case postponed_orphan
 	atf_add_test_case no_pseudo
 	atf_add_test_case deffs_redef
+	atf_add_test_case undefined_opt
+	atf_add_test_case no_undefined_opt
 	atf_add_test_case min
 }
