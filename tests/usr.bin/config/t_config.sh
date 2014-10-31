@@ -1,4 +1,4 @@
-# $NetBSD: t_config.sh,v 1.4 2014/10/31 07:38:36 uebayasi Exp $
+# $NetBSD: t_config.sh,v 1.5 2014/10/31 09:11:42 uebayasi Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -166,6 +166,31 @@ no_select_body() {
 	test_output no_select
 }
 
+# Device instance
+test_case devi pass "Device instance"
+devi_config_str='
+include "../d_min"
+d0 at root
+'
+check_devi()
+{
+	local f=ioconf.c
+
+	sed -ne '/^struct cfdriver \* const cfdriver_list_initial\[\]/,/^};/p' $f >tmp.cfdriver
+	sed -ne '/^struct cfdata cfdata\[\]/,/^};/p' $f >tmp.cfdata
+
+	grep -q '^CFDRIVER_DECL(d, ' $f &&
+	grep -q '&d_cd,' tmp.cfdriver &&
+	grep -q '^extern struct cfattach d_ca;$' $f &&
+	grep -q '^static const struct cfiattrdata \* const d_attrs\[\]' $f &&
+	grep -q '^static const struct cfiattrdata icf_iattrdata' $f &&
+	grep -q '{ "d",' tmp.cfdata &&
+	:
+}
+devi_body() {
+	test_output devi
+}
+
 # Check minimal kernel config(1) output
 test_case min pass "Minimal config"
 check_min_files()
@@ -217,5 +242,6 @@ atf_init_test_cases()
 	atf_add_test_case no_undefined_opt
 	atf_add_test_case select
 	atf_add_test_case no_select
+	atf_add_test_case devi
 	atf_add_test_case min
 }
