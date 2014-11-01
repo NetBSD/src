@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.25 2014/10/31 18:26:06 uebayasi Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.26 2014/11/01 06:20:24 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkioconf.c,v 1.25 2014/10/31 18:26:06 uebayasi Exp $");
+__RCSID("$NetBSD: mkioconf.c,v 1.26 2014/11/01 06:20:24 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -433,7 +433,7 @@ emitcfdata(FILE *fp)
 			    i->i_locoff);
 			loc = locbuf;
 		} else
-			loc = "loc";
+			loc = "NULL";
 		fprintf(fp, "    { \"%s\",%s\"%s\",%s%2d, %s, %7s, %#6x, ",
 			    basename, strlen(basename) < 7 ? "\t\t"
 			    				   : "\t",
