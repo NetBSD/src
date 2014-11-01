@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.26 2014/11/01 06:20:24 uebayasi Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.27 2014/11/01 07:26:11 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkioconf.c,v 1.26 2014/11/01 06:20:24 uebayasi Exp $");
+__RCSID("$NetBSD: mkioconf.c,v 1.27 2014/11/01 07:26:11 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -484,7 +484,7 @@ emitpseudo(FILE *fp)
 		fprintf(fp, "void %sattach(int);\n",
 		    i->i_base->d_name);
 	}
-	fputs("\nstruct pdevinit pdevinit[] = {\n", fp);
+	fputs("\nconst struct pdevinit pdevinit[] = {\n", fp);
 	TAILQ_FOREACH(i, &allpseudo, i_next) {
 		d = i->i_base;
 		fprintf(fp, "\t{ %sattach, %d },\n",
