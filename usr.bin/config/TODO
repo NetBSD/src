@@ -25,6 +25,20 @@ o Rename "interface attribute" to "bus".
 	defbus	audiobus {}
 	attach	audio at audiobus
 
+o Retire "attach foo at bar with foo_bar.c"
+
+  Most of these should be rewritten by defining a common interface attribute
+  "foobus", instead of writing multiple attachments.  com(4), ld(4), ehci(4)
+  are typical examples.  For ehci(4), EHCI-capable controller drivers implement
+  "ehcibus" interface, like:
+
+	defne	ehcibus {}
+	device	imxehci: ehcibus
+
+  These drivers' attach functions call config_found() to attach ehci(4) via
+  the "ehcibus" interface attribute, instead of calling ehci_init() directly.
+  Same for com(4) (com_attach_subr()) and ld(4) (ldattach()).
+
 o Sort objects in more reasonable order.
 
   Put machdep.ko in the lowest address.  uvm.ko and kern.ko follow.
@@ -70,7 +84,7 @@ o Generate things only by definitions.
 
 o Split cfdata.
 
-  cfdata is pattern matching rules to enable devices at runtime device
+  cfdata is a set of pattern matching rules to enable devices at runtime device
   auto-configuration.  It is pure data and can (should) be generated separately
   from the code.
 
