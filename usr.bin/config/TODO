@@ -11,7 +11,26 @@ o Call module as module.
 
 o Emit everything (ioconf.*, Makefile, ...) per-attribute.
 
+  config(9) related metadata (cfdriver, cfattach, cfdata, ...) should be
+  collected using linker.  Create ELF sections like
+  .{rodata,data}.config.{cfdriver,cfattach,cfdata}.  Provide reference
+  symbols (e.g. cfdriverinit[]) using linker script.  Sort entries by name
+  to lookup entries by binary search in kernel.
+
 o Generate modular(9) related information.  Especially module dependency.
+
+  At this moment modular(9) modules hardcode dependency in *.c using the
+  MODULE() macro:
+
+	MODULE(MODULE_CLASS_DRIVER, hdaudio, "pci");
+
+  This information already exists in config(5) definitions (files.*).
+  Extend config(5) to be able to specify module's class.
+
+  Ideally these module metadata are kept somewhere in ELF headers, so that
+  loaders (e.g. boot(8)) can easily read.  One idea is to abuse DYNAMIC
+  sections to record dependency, as shared library does.  (Feasibility
+  unknown.)
 
 o Rename "interface attribute" to "bus".
 
