@@ -446,21 +446,21 @@ static int evergreen_cs_track_validate_cb(struct radeon_cs_parser *p, unsigned i
 		 */
 		if (!surf.mode) {
 			volatile u32 *ib = p->ib.ptr;
-			unsigned long tmp, nby, bsize, size, min = 0;
+			unsigned long tmp, nby, bsize, size, vmin = 0;
 
 			/* find the height the ddx wants */
 			if (surf.nby > 8) {
-				min = surf.nby - 8;
+				vmin = surf.nby - 8;
 			}
 			bsize = radeon_bo_size(track->cb_color_bo[id]);
 			tmp = track->cb_color_bo_offset[id] << 8;
-			for (nby = surf.nby; nby > min; nby--) {
+			for (nby = surf.nby; nby > vmin; nby--) {
 				size = nby * surf.nbx * surf.bpe * surf.nsamples;
 				if ((tmp + size * mslice) <= bsize) {
 					break;
 				}
 			}
-			if (nby > min) {
+			if (nby > vmin) {
 				surf.nby = nby;
 				slice = ((nby * surf.nbx) / 64) - 1;
 				if (!evergreen_surface_check(p, &surf, "cb")) {
