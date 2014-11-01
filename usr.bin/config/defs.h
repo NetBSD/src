@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.60 2014/10/31 07:38:36 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.61 2014/11/01 14:24:45 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -149,6 +149,18 @@ struct defoptlist {
 	struct nvlist *dl_depends;
 };
 
+struct module {
+	const char		*m_name;
+#if 1
+	struct attrlist		*m_deps;
+#else
+	struct attrlist		*m_attrs;
+	struct modulelist	*m_deps;
+#endif
+	int			m_expanding;
+	TAILQ_HEAD(, files)	m_files;
+};
+
 /*
  * Attributes.  These come in three flavors: "plain", "device class,"
  * and "interface".  Plain attributes (e.g., "ether") simply serve
@@ -165,10 +177,12 @@ struct defoptlist {
  * SCSI host adapter drivers such as the SPARC "esp").
  */
 struct attr {
-	const char *a_name;		/* name of this attribute */
-	struct	attrlist *a_deps;	/* we depend on these other attrs */
-	int	a_expanding;		/* to detect cycles in attr graph */
-	TAILQ_HEAD(, files) a_files;	/* files in this attr */
+	/* XXX */
+	struct module a_m;
+#define	a_name		a_m.m_name
+#define	a_deps		a_m.m_deps
+#define	a_expanding	a_m.m_expanding
+#define	a_files		a_m.m_files
 
 	/* "interface attribute" */
 	int	a_iattr;		/* true => allows children */
