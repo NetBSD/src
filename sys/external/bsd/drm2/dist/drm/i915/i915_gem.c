@@ -1391,6 +1391,8 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 
 	if (timeout)
 		ticks = mstohz(timespec_to_ns(timeout) / 1000000);
+	else
+		ticks = 1;
 
 	if (INTEL_INFO(dev)->gen >= 6 && can_wait_boost(file_priv)) {
 		gen6_rps_boost(dev_priv);
