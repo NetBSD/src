@@ -361,29 +361,29 @@ static int ci_min_max_v_gnbl_pm_lid_from_bapm_vddc(struct radeon_device *rdev)
 	struct ci_power_info *pi = ci_get_pi(rdev);
 	u8 *hi_vid = pi->smc_powertune_table.BapmVddCVidHiSidd;
 	u8 *lo_vid = pi->smc_powertune_table.BapmVddCVidLoSidd;
-	int i, min, max;
+	int i, vmin, vmax;
 
-	min = max = hi_vid[0];
+	vmin = vmax = hi_vid[0];
 	for (i = 0; i < 8; i++) {
 		if (0 != hi_vid[i]) {
-			if (min > hi_vid[i])
-				min = hi_vid[i];
-			if (max < hi_vid[i])
-				max = hi_vid[i];
+			if (vmin > hi_vid[i])
+				vmin = hi_vid[i];
+			if (vmax < hi_vid[i])
+				vmax = hi_vid[i];
 		}
 
 		if (0 != lo_vid[i]) {
-			if (min > lo_vid[i])
-				min = lo_vid[i];
-			if (max < lo_vid[i])
-				max = lo_vid[i];
+			if (vmin > lo_vid[i])
+				vmin = lo_vid[i];
+			if (vmax < lo_vid[i])
+				vmax = lo_vid[i];
 		}
 	}
 
-	if ((min == 0) || (max == 0))
+	if ((vmin == 0) || (vmax == 0))
 		return -EINVAL;
-	pi->smc_powertune_table.GnbLPMLMaxVid = (u8)max;
-	pi->smc_powertune_table.GnbLPMLMinVid = (u8)min;
+	pi->smc_powertune_table.GnbLPMLMaxVid = (u8)vmax;
+	pi->smc_powertune_table.GnbLPMLMinVid = (u8)vmin;
 
 	return 0;
 }
@@ -2028,15 +2028,15 @@ static u8 ci_get_sleep_divider_id_from_clock(struct radeon_device *rdev,
 {
 	u32 i;
 	u32 tmp;
-	u32 min = (min_sclk_in_sr > CISLAND_MINIMUM_ENGINE_CLOCK) ?
+	u32 vmin = (min_sclk_in_sr > CISLAND_MINIMUM_ENGINE_CLOCK) ?
 		min_sclk_in_sr : CISLAND_MINIMUM_ENGINE_CLOCK;
 
-	if (sclk < min)
+	if (sclk < vmin)
 		return 0;
 
 	for (i = CISLAND_MAX_DEEPSLEEP_DIVIDER_ID;  ; i--) {
 		tmp = sclk / (1 << i);
-		if (tmp >= min || i == 0)
+		if (tmp >= vmin || i == 0)
 			break;
 	}
 
