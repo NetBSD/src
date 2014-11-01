@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.66 2014/10/31 07:38:36 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.67 2014/11/01 04:34:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.66 2014/10/31 07:38:36 uebayasi Exp $");
+__RCSID("$NetBSD: sem.c,v 1.67 2014/11/01 04:34:27 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -1329,7 +1329,8 @@ remove_devi(struct devi *i)
 	 *      list.
 	 */
 	if (i != f) {
-		for (j = f; j->i_alias != i; j = j->i_alias);
+		for (j = f; j->i_alias != i; j = j->i_alias)
+			continue;
 		j->i_alias = i->i_alias;
 	} else {
 		if (i->i_alias == NULL) {
@@ -1352,7 +1353,8 @@ remove_devi(struct devi *i)
 		 */
 		for (ppi = &d->d_ihead;
 		    *ppi != NULL && *ppi != i && (*ppi)->i_bsame != i;
-		    ppi = &(*ppi)->i_bsame);
+		    ppi = &(*ppi)->i_bsame)
+			continue;
 		if (*ppi == NULL)
 			panic("deldev: dev (%s) doesn't list the devi"
 			    " (%s at %s)", d->d_name, i->i_name, i->i_at);
@@ -1378,7 +1380,8 @@ remove_devi(struct devi *i)
 	iba = i->i_atdeva;
 	for (ppi = &iba->d_ihead;
 	    *ppi != NULL && *ppi != i && (*ppi)->i_asame != i;
-	    ppi = &(*ppi)->i_asame);
+	    ppi = &(*ppi)->i_asame)
+		continue;
 	if (*ppi == NULL)
 		panic("deldev: deva (%s) doesn't list the devi (%s)",
 		    iba->d_name, i->i_name);
@@ -1442,7 +1445,8 @@ remove_devi(struct devi *i)
 			panic("remove_devi(%s) - can't add to deaddevitab",
 			    i->i_name);
 	} else {
-		for (j = f; j->i_alias != NULL; j = j->i_alias);
+		for (j = f; j->i_alias != NULL; j = j->i_alias)
+			continue;
 		j->i_alias = i;
 	}
 	/*
