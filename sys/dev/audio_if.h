@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.68 2014/11/01 05:56:36 uebayasi Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.69 2014/11/01 07:54:18 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -254,31 +254,9 @@ struct audio_attach_args {
 #define AUDIODEV_TYPE_MPU	3
 #define AUDIODEV_TYPE_AUX	4
 
+/* Attach the MI driver(s) to the MD driver. */
+device_t audio_attach_mi(const struct audio_hw_if *, void *, device_t);
 int	audioprint(void *, const char *);
-
-/*
- * Called from hardware driver.  This is where the MI audio driver gets
- * probed/attached to the hardware driver.
- *
- * This is provided as inline so that hardware drivers don't need to depend
- * on audio.c.
- */
-static inline device_t
-audio_attach_mi(const struct audio_hw_if *ahwp, void *hdlp, device_t dev)
-{
-	struct audio_attach_args arg;
-
-#ifdef DIAGNOSTIC
-	if (ahwp == NULL) {
-		aprint_error("audio_attach_mi: NULL\n");
-		return 0;
-	}
-#endif
-	arg.type = AUDIODEV_TYPE_AUDIO;
-	arg.hwif = ahwp;
-	arg.hdl = hdlp;
-	return config_found(dev, &arg, audioprint);
-}
 
 /* Device identity flags */
 #define SOUND_DEVICE		0
