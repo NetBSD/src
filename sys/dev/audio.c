@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.263 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: audio.c,v 1.264 2014/11/01 05:56:36 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.263 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.264 2014/11/01 05:56:36 uebayasi Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -827,27 +827,6 @@ au_setup_ports(struct audio_softc *sc, struct au_mixer_ports *ports,
 				++ports->nports;
 			}
 	}
-}
-
-/*
- * Called from hardware driver.  This is where the MI audio driver gets
- * probed/attached to the hardware driver.
- */
-device_t
-audio_attach_mi(const struct audio_hw_if *ahwp, void *hdlp, device_t dev)
-{
-	struct audio_attach_args arg;
-
-#ifdef DIAGNOSTIC
-	if (ahwp == NULL) {
-		aprint_error("audio_attach_mi: NULL\n");
-		return 0;
-	}
-#endif
-	arg.type = AUDIODEV_TYPE_AUDIO;
-	arg.hwif = ahwp;
-	arg.hdl = hdlp;
-	return config_found(dev, &arg, audioprint);
 }
 
 #ifdef AUDIO_DEBUG
