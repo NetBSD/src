@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.27 2014/11/01 07:26:11 uebayasi Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.28 2014/11/01 11:02:41 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkioconf.c,v 1.27 2014/11/01 07:26:11 uebayasi Exp $");
+__RCSID("$NetBSD: mkioconf.c,v 1.28 2014/11/01 11:02:41 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -324,10 +324,6 @@ emitloc(FILE *fp)
 		for (i = 0; i < locators.used; i++)
 			fprintf(fp, "%s%s,", SEP(i, 8), locators.vec[i]);
 		fprintf(fp, "\n};\n");
-	} else if (*packed != NULL) {
-		/* We need to have *something*. */
-		fprintf(fp, "\n/* locators */\n"
-			"static int loc[1] = { -1 };\n");
 	}
 }
 
