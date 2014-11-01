@@ -2082,7 +2082,7 @@ static bool intel_alloc_plane_obj(struct intel_crtc *crtc,
 {
 	struct drm_device *dev = crtc->base.dev;
 	struct drm_i915_gem_object *obj = NULL;
-	struct drm_mode_fb_cmd2 mode_cmd = { 0 };
+	struct drm_mode_fb_cmd2 mode_cmd = { .fb_id = 0 };
 	u32 base = plane_config->base;
 
 	if (plane_config->size == 0)
