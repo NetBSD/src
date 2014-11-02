@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.12 2014/10/20 19:05:46 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.13 2014/11/02 23:54:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -488,7 +488,15 @@ awin_gpio_pinset_available(const struct awin_gpio_pinset *req)
 	if (!req->pinset_group)
 		return false;
 
-	KASSERT('A' <= req->pinset_group && req->pinset_group <= 'I');
+#ifdef DIAGNOSTIC
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		KASSERT(
+		    ('A' <= req->pinset_group && req->pinset_group <= 'I') ||
+		    ('L' <= req->pinset_group && req->pinset_group <= 'M'));
+	} else {
+		KASSERT('A' <= req->pinset_group && req->pinset_group <= 'I');
+	}
+#endif
 
 	struct awin_gpio_pin_group * const grp =
 	    &pin_groups[req->pinset_group - 'A'];
@@ -564,6 +572,11 @@ awin_gpio_pinset_acquire(const struct awin_gpio_pinset *req)
 		 * Change the function of this pin.
 		 */
 		awin_gpio_set_pin_func(&ncfg, j, req->pinset_func);
+
+		if (req->pinset_flags & GPIO_PIN_PULLDOWN)
+			awin_gpio_set_pin_pull(&ncfg, j, AWIN_PIO_PULL_DOWN);
+		else if (req->pinset_flags & GPIO_PIN_PULLUP)
+			awin_gpio_set_pin_pull(&ncfg, j, AWIN_PIO_PULL_UP);
 	}
 
 	/*
