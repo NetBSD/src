@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.12 2014/10/20 16:35:07 jmcneill Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.13 2014/11/02 23:56:13 jmcneill Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -216,6 +216,10 @@ axp22x0		at iic1 addr 0x34	# AXP221 Power Management Unit
 # On-board 16550 UARTs
 com0		at awinio? port 0			# UART0 (console)
 options 	CONADDR=0x01c28000, CONSPEED=115200
+
+# Consumer IR
+awinir0		at awinio?
+cir0		at awinir0
 
 # Watchdog timers
 awinwdt*	at awinio?
