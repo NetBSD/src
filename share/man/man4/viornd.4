@@ -1,4 +1,4 @@
-.\" $NetBSD: viornd.4,v 1.2.2.2 2014/11/02 10:09:44 martin Exp $
+.\" $NetBSD: viornd.4,v 1.2.2.3 2014/11/02 10:15:12 martin Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,8 +43,8 @@ driver, used with a compatible hypervisor such as QEMU, KVM, or Google
 Compute Engine, requests entropy using the VirtIO random number interface
 and feeds it into the system entropy pool.
 .Sh SEE ALSO
-.Xr virtio 4 ,
-.Xr rnd 4
+.Xr rnd 4 ,
+.Xr virtio 4
 .Sh HISTORY
 The
 .Nm
@@ -53,8 +53,10 @@ driver appeared in
 .Sh AUTHORS
 The
 .Nm
-driver was written by Stephan Fritsch <sf@fritsch.de> and reworked to
-request entropy upon demand by Thor Lancelot Simon <tls@NetBSD.ORG>.
+driver was written by
+.An Stephan Fritsch Aq Mt sf@fritsch.de
+and reworked to request entropy upon demand by
+.An Thor Lancelot Simon Aq Mt tls@NetBSD.org .
 .Sh CAVEATS
 VirtIO appears to support at least 8 pending entropy requests, but
 .Nm
