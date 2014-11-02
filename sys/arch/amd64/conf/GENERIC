@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.392.2.1 2014/10/10 18:16:36 snj Exp $
+# $NetBSD: GENERIC,v 1.392.2.2 2014/11/02 10:09:44 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.392.2.1 $"
+#ident 		"GENERIC-$Revision: 1.392.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -1167,6 +1167,7 @@ virtio*	at pci? dev ? function ?	# Virtio PCI device
 viomb*	at virtio?			# Virtio memory balloon device
 ld*	at virtio?			# Virtio disk device
 vioif*	at virtio?			# Virtio network device
+viornd*	at virtio?			# Virtio entropy device
 
 
 # Pull in optional local configuration
