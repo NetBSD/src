@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.26.2.1 2014/08/11 15:38:27 martin Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.26.2.2 2014/11/02 09:47:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.26.2.1 2014/08/11 15:38:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.26.2.2 2014/11/02 09:47:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -160,7 +160,7 @@ static krndsource_t rnd_source_anonymous = {
 krndsource_t rnd_printf_source, rnd_autoconf_source;
 
 void *rnd_process, *rnd_wakeup;
-struct callout skew_callout;
+struct callout skew_callout, skew_stop_callout;
 
 void	      		rnd_wakeup_readers(void);
 static inline uint32_t	rnd_counter(void);
@@ -283,6 +283,8 @@ rnd_getmore(size_t byteswanted)
 			KASSERT(rs->getarg != NULL);
 			rs->get(byteswanted, rs->getarg);
 #ifdef RND_VERBOSE
+			rnd_printf("rnd: entropy estimate %zu bits\n",
+				   rndpool_get_entropy_count(&rnd_pool));
 			rnd_printf("rnd: asking source %s for %zu bytes\n",
 			       rs->name, byteswanted);
 #endif
@@ -426,6 +428,44 @@ rnd_dv_estimate(krndsource_t *rs, uint32_t v)
 }
 
 #if defined(__HAVE_CPU_COUNTER)
+kmutex_t                        rnd_skew_mtx;
+
+static void rnd_skew(void *);
+
+static void
+rnd_skew_enable(krndsource_t *rs, bool enabled)
+{
+	mutex_spin_enter(&rnd_skew_mtx);
+	if (enabled) {
+		rnd_skew(rs);
+	} else {
+		callout_stop(&skew_callout);
+	}
+	mutex_spin_exit(&rnd_skew_mtx);
+}
+
+static void
+rnd_skew_stop(void *arg)
+{
+	mutex_spin_enter(&rnd_skew_mtx);
+	callout_stop(&skew_callout);
+	mutex_spin_exit(&rnd_skew_mtx);
+}
+
+static void
+rnd_skew_get(size_t bytes, void *priv)
+{
+	krndsource_t *skewsrcp = priv;
+	if (RND_ENABLED(skewsrcp)) {
+		/* Measure for 30s */
+		if (mutex_tryenter(&rnd_skew_mtx)) {
+			callout_schedule(&skew_stop_callout, hz * 30);
+			callout_schedule(&skew_callout, 1);
+			mutex_spin_exit(&rnd_skew_mtx);
+		}
+	}
+}
+
 static void
 rnd_skew(void *arg)
 {
@@ -433,34 +473,35 @@ rnd_skew(void *arg)
 	static int live, flipflop;
 
 	/*
-	 * Only one instance of this callout will ever be scheduled
-	 * at a time (it is only ever scheduled by itself).  So no
-	 * locking is required here.
-	 */
-
-	/*
 	 * Even on systems with seemingly stable clocks, the
 	 * delta-time entropy estimator seems to think we get 1 bit here
-	 * about every 2 calls.  That seems like too much.  Instead,
-	 * we feed the rnd_counter() value to the value estimator as well,
-	 * to take advantage of the additional LZ test on estimated values.
+	 * about every 2 calls.
 	 *
 	 */
 	if (__predict_false(!live)) {
+		/* XXX must be spin, taken with rndpool_mtx held */
+		mutex_init(&rnd_skew_mtx, MUTEX_DEFAULT, IPL_VM);
+		rndsource_setcb(&skewsrc, rnd_skew_get, &skewsrc);
+		rndsource_setenable(&skewsrc, rnd_skew_enable);
 		rnd_attach_source(&skewsrc, "callout", RND_TYPE_SKEW,
 				  RND_FLAG_COLLECT_VALUE|
-				  RND_FLAG_ESTIMATE_VALUE);
+				  RND_FLAG_ESTIMATE_VALUE|
+				  RND_FLAG_HASCB|RND_FLAG_HASENABLE);
 		live = 1;
+		return;
 	}
-
+	mutex_spin_enter(&rnd_skew_mtx);
 	flipflop = !flipflop;
 
-	if (flipflop) {
-		rnd_add_uint32(&skewsrc, rnd_counter());
-		callout_schedule(&skew_callout, hz / 10);
-	} else {
-		callout_schedule(&skew_callout, 1);
+	if (RND_ENABLED(&skewsrc)) {
+		if (flipflop) {
+			rnd_add_uint32(&skewsrc, rnd_counter());
+			callout_schedule(&skew_callout, hz / 10);
+		} else {
+			callout_schedule(&skew_callout, 1);
+		}
 	}
+	mutex_spin_exit(&rnd_skew_mtx);
 }
 #endif
 
@@ -527,7 +568,9 @@ rnd_init(void)
 	 */
 #if defined(__HAVE_CPU_COUNTER)
 	callout_init(&skew_callout, CALLOUT_MPSAFE);
+	callout_init(&skew_stop_callout, CALLOUT_MPSAFE);
 	callout_setfunc(&skew_callout, rnd_skew, NULL);
+	callout_setfunc(&skew_stop_callout, rnd_skew_stop, NULL);
 	rnd_skew(NULL);
 #endif
 
@@ -835,15 +878,16 @@ rnd_add_data_ts(krndsource_t *rs, const void *const data, u_int32_t len,
 	 * is adding entropy at a rate of at least 1 bit every 10 seconds,
 	 * mark it as "fast" and add its samples in bulk.
 	 */
-	if (__predict_true(rs->flags & RND_FLAG_FAST)) {
+	if (__predict_true(rs->flags & RND_FLAG_FAST) ||
+	    (todo >= RND_SAMPLE_COUNT)) {
 		sample_count = RND_SAMPLE_COUNT;
 	} else {
-		if (!cold && rnd_initial_entropy) {
+		if (!(rs->flags & RND_FLAG_HASCB) &&
+		    !cold && rnd_initial_entropy) {
 			struct timeval upt;
 
 			getmicrouptime(&upt);
-			if ((todo >= RND_SAMPLE_COUNT) ||
-			    (upt.tv_sec > 0  && rs->total > upt.tv_sec * 10) ||
+			if ( (upt.tv_sec > 0  && rs->total > upt.tv_sec * 10) ||
 			    (upt.tv_sec > 10 && rs->total > upt.tv_sec) ||
 			    (upt.tv_sec > 100 &&
 			      rs->total > upt.tv_sec / 10)) {
@@ -1083,10 +1127,10 @@ rnd_process_events(void)
 		wake++;
 	} else {
 		rnd_empty = 1;
-		rnd_getmore((RND_POOLBITS - pool_entropy) / 8);
+		rnd_getmore(howmany((RND_POOLBITS - pool_entropy), NBBY));
 #ifdef RND_VERBOSE
-		rnd_printf("rnd: empty, asking for %d bits\n",
-		       (int)((RND_POOLBITS - pool_entropy) / 8));
+		rnd_printf("rnd: empty, asking for %d bytes\n",
+		       (int)(howmany((RND_POOLBITS - pool_entropy), NBBY)));
 #endif
 	}
 	mutex_spin_exit(&rndpool_mtx);
@@ -1201,6 +1245,11 @@ rnd_extract_data_locked(void *p, u_int32_t len, u_int32_t flags)
 #endif
 	entropy_count = rndpool_get_entropy_count(&rnd_pool);
 	if (entropy_count < (RND_ENTROPY_THRESHOLD * 2 + len) * NBBY) {
+#ifdef RND_VERBOSE
+		rnd_printf("rnd: empty, asking for %d bytes\n",
+			   (int)(howmany((RND_POOLBITS - entropy_count),
+				 NBBY)));
+#endif
 		rnd_getmore(howmany((RND_POOLBITS - entropy_count), NBBY));
 	}
 	return rndpool_extract_data(&rnd_pool, p, len, flags);

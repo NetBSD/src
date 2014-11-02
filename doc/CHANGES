@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1967.2.2 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1967.2.3 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -21,7 +21,7 @@
 #
 # See htutils/changes/changes2html script for more details.
 #
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.1967.2.2 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.1967.2.3 $>
 
 
 Changes from NetBSD 6.0 to NetBSD 7.0:
@@ -83,6 +83,12 @@ Changes from NetBSD 6.0 to NetBSD 7.0:
 	kernel, libc: Add MurmurHash2 function. [rmind 20120708]
 	atf(7): Import 0.16.  [jmmv 20120711]
 	dhcpcd(8): Import dhcpcd-5.6.1. [roy 20120712]
+	rnd(9): Add explicit enable/disable hooks for callout-driven
+		sources (be more power friendly). [tls 20141026]
+	rnd(9): Make "skew" source polled so it runs only when there
+	        is entropy demand. [tls 20141026]
+	rnd(9): Adjust entropy collection from polled sources so it's
+		processed sooner. [tls 20141026]
 	kernel: Add support for sensors to provide entropy to rnd(4)
 		[pgoyette 20120715]
 	tdvfb(4): Add 3Dfx Voodoo2 driver. [rkujawa 20120719]
