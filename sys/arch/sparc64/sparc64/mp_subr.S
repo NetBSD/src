@@ -1,4 +1,4 @@
-/*	$NetBSD: mp_subr.S,v 1.7 2014/09/24 18:32:10 palle Exp $	*/
+/*	$NetBSD: mp_subr.S,v 1.8 2014/11/02 19:40:06 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -389,9 +389,10 @@ ENTRY(sparc64_ipi_drop_fpstate)
 	 nop
 
 /*
- * IPI handler to drop the current FPU state.
+ * Flush data cache page.
  * void sparc64_ipi_dcache_flush_page_usiii(paddr_t pa, int line_size)
  * void sparc64_ipi_dcache_flush_page_us(paddr_t pa, int line_size)
+ * void sparc64_ipi_dcache_flush_page_sun4v(paddr_t pa, int line_size)
  *
  * On entry:
  *	%g2 = pa
@@ -447,4 +448,21 @@ ENTRY(sparc64_ipi_dcache_flush_page_us)
 	ba,a	ret_from_intr_vector
 	 nop
 
+#ifdef SUN4V
+ENTRY(sparc64_ipi_dcache_flush_page_sun4v)
+	set	NBPG, %o1
+	call	hv_mem_sync
+	 mov	%g2, %o0
+	cmp	%o0, 0
+	be,pt	%icc, 1f
+	 nop
+	sir				! crash if hv-call fails
+1:
+	sethi	%hi(KERNBASE), %g5
+	flush	%g5
+	membar	#Sync
+	ba,a	ret_from_intr_vector
+	 nop
+#endif
+		
 #endif
