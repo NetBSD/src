@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.73 2014/10/31 08:31:13 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.74 2014/11/02 10:16:20 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1946,4 +1946,42 @@ usr.bin/ftp/version.h				1.85
 	Ignore special characters unless they're from the command line.
 	Fixes CVE-2014-8517
 	[lukem, ticket #172]
+
+doc/CHANGES					1.2004
+sys/dev/rndpseudo.c				1.23
+sys/kern/kern_rndq.c				1.28
+sys/kern/kern_rndsink.c				1.10
+sys/sys/rnd.h					1.43
+
+	Fixes and enhancements for polled entropy sources:
+	  Add explicit enable/disable hooks for callout-driven sources (be more
+	  power friendly).
+
+	  Make "skew" source polled so it runs only when there is entropy
+	  demand.
+
+	  Adjust entropy collection from polled sources so it's processed
+	  sooner.
+	[tls, ticket #173]
+
+doc/CHANGES					1.2005
+share/man/man4/viornd.4				1.1
+sys/arch/amd64/conf/GENERIC			1.401
+sys/dev/pci/files.pci				1.372
+sys/dev/pci/viornd.c				1.1
+
+	Add viornd(4), a driver for the VirtIO entropy source available on
+	QEMU, KVM, and Google Compute Engine.  From OpenBSD.
+	[tls, ticket #174]
+
+distrib/sets/lists/man/mi			1.1488
+share/man/man4/Makefile				1.618
+
+	Build and install virtio(4) manual page - missed in previous commit.
+	[tls, ticket #175]
+
+share/man/man4/viornd.4				1.2
+
+	Use proper markup in AUTHORS, and sort SEE ALSO.
+	[tls, ticket #176]
 
