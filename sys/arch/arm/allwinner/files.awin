@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.17 2014/10/13 12:34:00 jmcneill Exp $
+#	$NetBSD: files.awin,v 1.18 2014/11/02 23:55:48 jmcneill Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -132,3 +132,8 @@ file	arch/arm/allwinner/awin_ac.c		awin_ac
 device	awinhdmi: edid, ddc_read_edid
 attach	awinhdmi at awinio with awin_hdmi
 file	arch/arm/allwinner/awin_hdmi.c		awin_hdmi
+
+# A10/A20/A31 Consumer IR (CIR)
+device	awinir: irbus
+attach	awinir at awinio with awin_ir
+file	arch/arm/allwinner/awin_ir.c		awin_ir
