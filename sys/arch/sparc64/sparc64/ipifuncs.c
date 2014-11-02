@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.50 2014/06/08 17:33:24 palle Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.51 2014/11/02 19:40:06 palle Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.50 2014/06/08 17:33:24 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.51 2014/11/02 19:40:06 palle Exp $");
 
 #include "opt_ddb.h"
 
@@ -85,6 +85,9 @@ void	sparc64_ipi_flush_pte_sun4v(void *, void *);
 #endif
 void	sparc64_ipi_dcache_flush_page_us(void *, void *);
 void	sparc64_ipi_dcache_flush_page_usiii(void *, void *);
+#ifdef SUN4V
+void	sparc64_ipi_dcache_flush_page_sun4v(void *, void *);
+#endif
 void	sparc64_ipi_blast_dcache(void *, void *);
 void	sparc64_ipi_ccall(void *, void *);
 
@@ -491,7 +494,13 @@ smp_dcache_flush_page_cpuset(paddr_t pa, sparc64_cpuset_t activecpus)
 {
 	ipifunc_t func;
 
+#ifdef SUN4V
+	if (CPU_ISSUN4V)
+		func = sparc64_ipi_dcache_flush_page_sun4v;
+	else if (CPU_IS_USIII_UP())
+#else		
 	if (CPU_IS_USIII_UP())
+#endif		
 		func = sparc64_ipi_dcache_flush_page_usiii;
 	else
 		func = sparc64_ipi_dcache_flush_page_us;
