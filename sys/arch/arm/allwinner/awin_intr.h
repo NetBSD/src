@@ -1,4 +1,4 @@
-/* $NetBSD: awin_intr.h,v 1.8 2014/10/16 00:03:48 jmcneill Exp $ */
+/* $NetBSD: awin_intr.h,v 1.9 2014/11/02 23:55:06 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -148,6 +148,7 @@
 #define AWIN_A31_IRQ_TWI2	40
 #define AWIN_A31_IRQ_TWI3	41
 #define AWIN_A31_IRQ_AC		61
+#define AWIN_A31_IRQ_CIR	69
 #define AWIN_A31_IRQ_P2WI	71
 #define AWIN_A31_IRQ_DMA	82
 #define AWIN_A31_IRQ_SDMMC0	92
