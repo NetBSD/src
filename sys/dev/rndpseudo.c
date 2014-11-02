@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.21 2014/08/10 16:44:35 tls Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.21.2.1 2014/11/02 09:47:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.21 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.21.2.1 2014/11/02 09:47:04 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -526,6 +526,20 @@ krndsource_to_rndsource_est(krndsource_t *kr, rndsource_est_t *re)
 	re->dv_total = kr->value_delta.outbits;
 }
 
+static void
+krs_setflags(krndsource_t *kr, uint32_t flags, uint32_t mask)
+{
+	uint32_t oflags = kr->flags;
+
+	kr->flags &= ~mask;
+	kr->flags |= (flags & mask);
+
+	if (oflags & RND_FLAG_HASENABLE &&
+            ((oflags & RND_FLAG_NO_COLLECT) != (flags & RND_FLAG_NO_COLLECT))) {
+		kr->enable(kr, !(flags & RND_FLAG_NO_COLLECT));
+	}
+}
+
 int
 rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 {
@@ -536,7 +550,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 	rndstat_est_name_t *rsetnm;
 	rndctl_t *rctl;
 	rnddata_t *rnddata;
-	u_int32_t count, start;
+	uint32_t count, start;
 	int ret = 0;
 	int estimate_ok = 0, estimate = 0;
 
@@ -736,12 +750,9 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 		if (rctl->type != 0xff) {
 			while (kr != NULL) {
 				if (kr->type == rctl->type) {
-					kr->flags &= ~rctl->mask;
-
-					kr->flags |=
-					    (rctl->flags & rctl->mask);
+					krs_setflags(kr,
+						     rctl->flags, rctl->mask);
 				}
-
 				kr = kr->list.le_next;
 			}
 			mutex_spin_exit(&rndpool_mtx);
@@ -755,9 +766,7 @@ rnd_ioctl(struct file *fp, u_long cmd, void *addr)
 			if (strncmp(kr->name, rctl->name,
 				    MIN(sizeof(kr->name),
                                         sizeof(rctl->name))) == 0) {
-				kr->flags &= ~rctl->mask;
-				kr->flags |= (rctl->flags & rctl->mask);
-
+				krs_setflags(kr, rctl->flags, rctl->mask);
 				mutex_spin_exit(&rndpool_mtx);
 				return (0);
 			}

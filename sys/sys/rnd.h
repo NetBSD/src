@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.41 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: rnd.h,v 1.41.2.1 2014/11/02 09:47:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@ typedef struct {
 #define RND_FLAG_COLLECT_VALUE	0x00002000	/* use value as input */
 #define RND_FLAG_ESTIMATE_TIME	0x00004000	/* estimate entropy on time */
 #define RND_FLAG_ESTIMATE_VALUE	0x00008000	/* estimate entropy on value */
+#define	RND_FLAG_HASENABLE	0x00010000	/* has enable/disable fns */
 #define RND_FLAG_DEFAULT	(RND_FLAG_COLLECT_VALUE|RND_FLAG_COLLECT_TIME|\
 				 RND_FLAG_ESTIMATE_TIME)
 
@@ -150,6 +151,7 @@ typedef struct krndsource {
         size_t          test_cnt;       /* how much test data accumulated? */
 	void		(*get)(size_t, void *);	/* pool wants N bytes (badly) */
 	void		*getarg;	/* argument to get-function */
+	void		(*enable)(struct krndsource *, bool); /* turn on/off */
 	rngtest_t	*test;		/* test data for RNG type sources */
 } krndsource_t;
 
@@ -158,6 +160,12 @@ rndsource_setcb(struct krndsource *const rs, void *const cb, void *const arg)
 {
 	rs->get = cb;
 	rs->getarg = arg;
+}
+
+static inline void
+rndsource_setenable(struct krndsource *const rs, void *const cb)
+{
+	rs->enable = cb;
 }
 
 typedef struct {
