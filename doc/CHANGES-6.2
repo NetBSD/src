@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.142 2014/10/27 15:06:06 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.143 2014/11/03 13:01:25 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -3989,3 +3989,9 @@ common/lib/libc/arch/i386/string/small/strchr.S	1.3
 	This fixes strchr(s, '\0'), as used by the FAT first-stage bootloader
 	on x86 (bootxx_msdos). Fixes PR port-i386/49208.
 	[khorben, ticket #1158]
+
+usr.bin/ftp/version.h				1.85
+
+	Change the version that ftp announces to 20141026. It can be a
+	useful method to determine if CVE-2014-8517 is fixed.
+	[lukem, ticket #1180]
