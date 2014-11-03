@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.7 2014/11/03 21:38:00 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.8 2014/11/03 23:09:17 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -156,3 +156,9 @@ crypto/external/bsd/openssh/dist/auth.c		1.9
 	hostname. [we do the same below for hosts.allow and deny]
 	Reported by rudolf.
 	[christos, ticket #1169]
+
+sys/netinet/tcp_output.c			1.178
+
+	Avoid stack overflow when SACK and TCP_SIGNATURE are both present.
+	Pointed out by Jonathan Looney.
+	[christos, ticket #1174]
