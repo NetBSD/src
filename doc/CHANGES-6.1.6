@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.6 2014/11/03 16:33:47 msaitoh Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.7 2014/11/03 21:37:38 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -149,3 +149,10 @@ sys/arch/sun3/dev/fd.c				1.78
 
 	Fix unexpected memory corruption on opening fd(4).
 	[tsutsui, ticket #1139]
+
+crypto/external/bsd/openssh/dist/auth.c		1.9
+
+	For consistency use options.use_dns when getting the canonical
+	hostname. [we do the same below for hosts.allow and deny]
+	Reported by rudolf.
+	[christos, ticket #1169]
