@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.25.2.4 2014/11/03 19:18:09 msaitoh Exp $ */
+/*  $NetBSD: perfuse.c,v 1.25.2.5 2014/11/03 19:37:58 msaitoh Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -483,6 +483,7 @@ perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 	PUFFSOP_SET(pops, perfuse, node, reclaim);
 	PUFFSOP_SET(pops, perfuse, node, inactive);
 	PUFFSOP_SET(pops, perfuse, node, print);
+	PUFFSOP_SET(pops, perfuse, node, pathconf);
 	PUFFSOP_SET(pops, perfuse, node, advlock);
 	PUFFSOP_SET(pops, perfuse, node, read);
 	PUFFSOP_SET(pops, perfuse, node, write);
