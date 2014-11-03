@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.73 2014/10/27 12:45:25 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.74 2014/11/03 13:05:59 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -1103,3 +1103,9 @@ usr.bin/ftp/fetch.c				1.206 via patch
 	Don't pay attention to special characters if they don't come
 	from the command line.
 	[jmcneill, ticket #1928]
+
+usr.bin/ftp/version.h				1.85
+
+	Change the version that ftp announces to 20141026. It can be a
+	useful method to determine if CVE-2014-8517 is fixed.
+	[lukem, ticket #1929]
