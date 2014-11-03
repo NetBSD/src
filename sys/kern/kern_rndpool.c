@@ -1,4 +1,4 @@
-/*      $NetBSD: kern_rndpool.c,v 1.1.2.1 2012/04/20 23:35:20 riz Exp $        */
+/*      $NetBSD: kern_rndpool.c,v 1.1.2.2 2014/11/03 15:27:46 msaitoh Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.1.2.1 2012/04/20 23:35:20 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndpool.c,v 1.1.2.2 2014/11/03 15:27:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,8 +191,7 @@ rndpool_add_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t entropy)
 	buf = p;
 
 	for (; len > 3; len -= 4) {
-		val = *((u_int32_t *)buf);
-
+		(void)memcpy(&val, buf, 4);
 		rndpool_add_one_word(rp, val);
 		buf += 4;
 	}
