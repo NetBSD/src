@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.50.2.10 2014/11/03 19:37:58 msaitoh Exp $ */
+/*  $NetBSD: ops.c,v 1.50.2.11 2014/11/03 19:40:10 msaitoh Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -2341,6 +2341,12 @@ perfuse_node_rmdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 	if ((pnd->pnd_flags & PND_REMOVED) ||
 	    (PERFUSE_NODE_DATA(targ)->pnd_flags & PND_REMOVED))
 		return ENOENT;
+
+	/*
+	 * Attempt to rmdir dir/.. shoud raise ENOTEMPTY
+	 */
+	if (PERFUSE_NODE_DATA(targ)->pnd_nodeid == pnd->pnd_parent_nodeid)
+		return ENOTEMPTY;
 
 	node_ref(opc);
 	node_ref(targ);
