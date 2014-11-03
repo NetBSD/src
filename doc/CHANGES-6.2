@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.147 2014/11/03 21:35:25 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.148 2014/11/03 22:09:32 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4155,3 +4155,19 @@ crypto/external/bsd/openssh/dist/auth.c		1.9
 	hostname. [we do the same below for hosts.allow and deny]
 	Reported by rudolf.
 	[christos, ticket #1169]
+
+sys/dev/ic/mpt_netbsd.c				1.26-1.31
+sys/dev/ic/mpt.c				1.17
+share/man/man4/bio.4				1.12
+share/man/man4/mpt.4				1.6
+sys/dev/ic/mpt.h				1.8
+
+	- Add bio(4) support into mpt(4).
+	- xref mpt(4) in bio(4).
+	- xref bio(4) in mpt(4).
+	- show "sd0" instead of "mpt0" for volume device name
+	- include vendor/product/rev info for volumes and their disks.
+	- for BIOCDISK_NOVOL, set bd_disknovol=true for any disk not
+	  associated with a volume for BIOCDISK_NOVOL, when setting
+	  bd_disknovol=false, also set bv_volid.
+	[jmcneill, ticket #1160]
