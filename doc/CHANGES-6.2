@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.145 2014/11/03 16:39:11 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.146 2014/11/03 20:01:51 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4032,3 +4032,78 @@ sys/arch/sun3/dev/fd.c				1.78
 
 	Fix unexpected memory corruption on opening fd(4).
 	[tsutsui, ticket #1139]
+
+lib/libperfuse/ops.c				1.63-1.69
+lib/libperfuse/perfuse.c			1.32-1.33
+lib/libperfuse/perfuse_priv.h			1.32-1.34
+lib/libperfuse/subr.c				1.20
+lib/libpuffs/creds.c				1.16
+lib/libpuffs/dispatcher.c			1.47
+lib/libpuffs/puffs.h				1.125
+lib/libpuffs/puffs_ops.3			1.37-1.38
+lib/libpuffs/requests.c				1.24
+sys/fs/puffs/puffs_msgif.h			1.81
+sys/fs/puffs/puffs_sys.h			1.85
+sys/fs/puffs/puffs_vnops.c			1.183
+usr.sbin/perfused/msg.c				1.22
+
+	Bring libpuffs, libperfuse and perfused on par with -current:
+	- implement  FUSE direct I/O
+	- remove useless code and warnings
+	- fix missing GETATTR bugs
+	- fix exended attribute get and list operations
+	[manu, ticket #1140]
+
+usr.bin/flock/flock.1				1.10
+usr.bin/flock/flock.c				1.8, 1.10-1.11
+
+	PR/48351: Dennis Ferguson: Fix incorrect parsing of flock flags.
+	Improve Linux compatibility, by making exclusive lock the default.
+	Also check for file descriptor value being sane.
+	[manu, ticket #1143]
+
+lib/libperfuse/ops.c				1.70
+
+	We used to remove the trailing zeros in FUSE readlink replies, but
+	it seems it does not always happen. Just remove them if present.
+	[manu, ticket #1144]
+
+lib/libperfuse/ops.c				1.71
+lib/libperfuse/perfuse.c			1.34
+
+	Improve POSIX compliance of FUSE filesystems through PERUSE:
+	- access denied is EPERM and not EACCES
+	- access to file owned by someone else in a sticy-bit directory should
+	  be allowed for the sticy-bit directory owner
+	- setting sticky-bit on a non directory should produce EFTYPE
+	- implement PATHCONF method as much as we can.
+	[manu, ticket #1147]
+
+lib/libperfuse/ops.c				1.73
+
+	rmdir dir/.. must return an error. Use ENOTEMPTY like FFS does.
+	[manu, ticket #1148]
+
+sys/fs/puffs/puffs_node.c			1.33
+sys/fs/puffs/puffs_vnops.c			1.185
+
+	When changing a directory content, update the ctime/mtime in kernel
+	cache, otherwise the updated ctime/mtime appears after the cached
+	entry expire.
+	[manu, ticket #1149]
+
+lib/libc/sys/truncate.2				1.27
+sys/kern/vfs_syscalls.c				1.484
+
+	Follow OpenGroup online documents for truncate and ftruncate.
+	Fail with EINVAL for length argument negative values.
+	[manu, ticket #1150]
+
+sys/fs/puffs/puffs_vnops.c			1.186
+
+	PUFFS fixes for size update ater write plus read/write sanity checks:
+	- Always update kernel metadata cache for size when writing. This
+	  fixes situation where size update after appending to a file lagged.
+	- Make read/write nilpotent when called with null size, as FFS does
+	- Return EFBIG instead of EINVAL for negative offsets, as FFS does
+	[manu, ticket #1152]
