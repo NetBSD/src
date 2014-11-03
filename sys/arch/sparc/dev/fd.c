@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.150.8.1 2012/10/17 22:30:08 riz Exp $	*/
+/*	$NetBSD: fd.c,v 1.150.8.1.2.1 2014/11/03 16:47:07 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.150.8.1 2012/10/17 22:30:08 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.150.8.1.2.1 2014/11/03 16:47:07 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -2227,7 +2227,7 @@ fdgetdisklabel(dev_t dev)
 	struct cpu_disklabel *clp = fd->sc_dk.dk_cpulabel;
 
 	memset(lp, 0, sizeof(struct disklabel));
-	memset(lp, 0, sizeof(struct cpu_disklabel));
+	memset(clp, 0, sizeof(struct cpu_disklabel));
 
 	lp->d_type = DTYPE_FLOPPY;
 	lp->d_secsize = FD_BSIZE(fd);
