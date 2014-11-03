@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.173 2011/12/31 20:41:59 christos Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.173.6.1 2014/11/03 23:06:13 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.173 2011/12/31 20:41:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.173.6.1 2014/11/03 23:06:13 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -561,6 +561,7 @@ tcp_output(struct tcpcb *tp)
 #endif
 	struct tcphdr *th;
 	u_char opt[MAX_TCPOPTLEN];
+#define OPT_FITS(more)	((optlen + (more)) < sizeof(opt))
 	unsigned optlen, hdrlen, packetlen;
 	unsigned int sack_numblks;
 	int idle, sendalot, txsegsize, rxsegsize;
@@ -1127,7 +1128,7 @@ send:
 		tp->snd_nxt = tp->iss;
 		tp->t_ourmss = tcp_mss_to_advertise(synrt != NULL ?
 						    synrt->rt_ifp : NULL, af);
-		if ((tp->t_flags & TF_NOOPT) == 0) {
+		if ((tp->t_flags & TF_NOOPT) == 0 && OPT_FITS(4)) {
 			opt[0] = TCPOPT_MAXSEG;
 			opt[1] = 4;
 			opt[2] = (tp->t_ourmss >> 8) & 0xff;
@@ -1136,7 +1137,8 @@ send:
 
 			if ((tp->t_flags & TF_REQ_SCALE) &&
 			    ((flags & TH_ACK) == 0 ||
-			    (tp->t_flags & TF_RCVD_SCALE))) {
+			    (tp->t_flags & TF_RCVD_SCALE)) &&
+			    OPT_FITS(4)) {
 				*((u_int32_t *) (opt + optlen)) = htonl(
 					TCPOPT_NOP << 24 |
 					TCPOPT_WINDOW << 16 |
@@ -1144,7 +1146,7 @@ send:
 					tp->request_r_scale);
 				optlen += 4;
 			}
-			if (tcp_do_sack) {
+			if (tcp_do_sack && OPT_FITS(4)) {
 				u_int8_t *cp = (u_int8_t *)(opt + optlen);
 
 				cp[0] = TCPOPT_SACK_PERMITTED;
@@ -1164,7 +1166,7 @@ send:
 	if ((tp->t_flags & (TF_REQ_TSTMP|TF_NOOPT)) == TF_REQ_TSTMP &&
 	     (flags & TH_RST) == 0 &&
 	    ((flags & (TH_SYN|TH_ACK)) == TH_SYN ||
-	     (tp->t_flags & TF_RCVD_TSTMP))) {
+	     (tp->t_flags & TF_RCVD_TSTMP)) && OPT_FITS(TCPOLEN_TSTAMP_APPA)) {
 		u_int32_t *lp = (u_int32_t *)(opt + optlen);
 
 		/* Form timestamp option as shown in appendix A of RFC 1323. */
@@ -1188,30 +1190,33 @@ send:
 		struct ipqent *tiqe;
 
 		sack_len = sack_numblks * 8 + 2;
-		bp[0] = TCPOPT_NOP;
-		bp[1] = TCPOPT_NOP;
-		bp[2] = TCPOPT_SACK;
-		bp[3] = sack_len;
-		if ((tp->rcv_sack_flags & TCPSACK_HAVED) != 0) {
-			sack_numblks--;
-			*lp++ = htonl(tp->rcv_dsack_block.left);
-			*lp++ = htonl(tp->rcv_dsack_block.right);
-			tp->rcv_sack_flags &= ~TCPSACK_HAVED;
+		if (OPT_FITS(sack_len + 2)) {
+			bp[0] = TCPOPT_NOP;
+			bp[1] = TCPOPT_NOP;
+			bp[2] = TCPOPT_SACK;
+			bp[3] = sack_len;
+			if ((tp->rcv_sack_flags & TCPSACK_HAVED) != 0) {
+				sack_numblks--;
+				*lp++ = htonl(tp->rcv_dsack_block.left);
+				*lp++ = htonl(tp->rcv_dsack_block.right);
+				tp->rcv_sack_flags &= ~TCPSACK_HAVED;
+			}
+			for (tiqe = TAILQ_FIRST(&tp->timeq);
+			    sack_numblks > 0;
+			    tiqe = TAILQ_NEXT(tiqe, ipqe_timeq)) {
+				KASSERT(tiqe != NULL);
+				sack_numblks--;
+				*lp++ = htonl(tiqe->ipqe_seq);
+				*lp++ = htonl(tiqe->ipqe_seq + tiqe->ipqe_len +
+				    ((tiqe->ipqe_flags & TH_FIN) != 0 ? 1 : 0));
+			}
+			optlen += sack_len + 2;
 		}
-		for (tiqe = TAILQ_FIRST(&tp->timeq);
-		    sack_numblks > 0; tiqe = TAILQ_NEXT(tiqe, ipqe_timeq)) {
-			KASSERT(tiqe != NULL);
-			sack_numblks--;
-			*lp++ = htonl(tiqe->ipqe_seq);
-			*lp++ = htonl(tiqe->ipqe_seq + tiqe->ipqe_len +
-			    ((tiqe->ipqe_flags & TH_FIN) != 0 ? 1 : 0));
-		}
-		optlen += sack_len + 2;
 	}
 	TCP_REASS_UNLOCK(tp);
 
 #ifdef TCP_SIGNATURE
-	if (tp->t_flags & TF_SIGNATURE) {
+	if ((tp->t_flags & TF_SIGNATURE) && OPT_FITS(TCPOLEN_SIGNATURE + 2)) {
 		u_char *bp;
 		/*
 		 * Initialize TCP-MD5 option (RFC2385)
