@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.146 2014/11/03 20:01:51 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.147 2014/11/03 21:35:25 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4107,3 +4107,51 @@ sys/fs/puffs/puffs_vnops.c			1.186
 	- Make read/write nilpotent when called with null size, as FFS does
 	- Return EFBIG instead of EINVAL for negative offsets, as FFS does
 	[manu, ticket #1152]
+
+sbin/ifconfig/ifconfig.8			1.108
+sbin/ifconfig/vlan.c				1.14
+sys/net/if_vlan.c				1.71, 1.73-1.74
+
+	- PR#49112: Restore vlan_ioctl overwritten by ether_ifdetach in
+	  vlan_unconfig.
+	- PR#49114: Write about -vlanif in ifconfig.8.
+	  Add -vlanif to the help message of ifconfig.
+	- PR#49196: Leave promiscuous mode when detaching a parent
+	 (ifconfig -vlanif). We have to call ifpromisc(ifp, 0) for both a VLAN
+	 interface and its parent when they are in promiscuous mode.
+	- PR#49197: Delete link local addresses of a vlan interface when
+	  detaching its parent.
+	[ozaki-r, ticket #1156]
+
+external/gpl3/gcc/dist/gcc/config/i386/pmm_malloc.h 1.2
+
+	Kill the "throw()" on a forward declaration for posix_memalign (it does
+	not match our base declaration and may cause warnings).
+	Fixes PR#49199.
+	[joerg, ticket #1157]
+
+etc/mtree/Makefile				1.24
+
+	Avoid echoing a make command when running postinstall with a source
+	directory.
+	[gdt, ticket #1163]
+
+lib/libc/stdio/printf.3				1.64 via patch
+lib/libc/stdio/vsnprintf.c			1.28 via patch
+lib/libc/stdio/vsnprintf_ss.c			1.13 via patch
+
+	Return EOVERFLOW like FreeBSD does if the buffer size exceeds INT_MAX
+	(well FreeBSD documents INT_MAX + 1, but in the code it is INT_MAX).
+	[christos, ticket #1161]
+
+usr.sbin/route6d/route6d.c			1.67
+
+	Use system RT_ROUNDUP for correct alignment.
+	[gdt, ticket #1164]
+
+crypto/external/bsd/openssh/dist/auth.c		1.9
+
+	For consistency use options.use_dns when getting the canonical
+	hostname. [we do the same below for hosts.allow and deny]
+	Reported by rudolf.
+	[christos, ticket #1169]
