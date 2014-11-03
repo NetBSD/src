@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.1.2.5 2013/02/08 20:28:07 riz Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.1.2.6 2014/11/03 15:27:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.1.2.5 2013/02/08 20:28:07 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.1.2.6 2014/11/03 15:27:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -663,7 +663,8 @@ rnd_add_data_ts(krndsource_t *rs, const void *const data, u_int32_t len,
 		u_int32_t entropy, uint32_t ts)
 {
 	rnd_sample_t *state = NULL;
-	const uint32_t *dint = data;
+	const uint8_t *p = data;
+	uint32_t dint;
 	int todo, done, filled = 0;
 	SIMPLEQ_HEAD(, _rnd_sample_t) tmp_samples =
 	    		SIMPLEQ_HEAD_INITIALIZER(tmp_samples);
@@ -676,7 +677,7 @@ rnd_add_data_ts(krndsource_t *rs, const void *const data, u_int32_t len,
 	 * Loop over data packaging it into sample buffers.
 	 * If a sample buffer allocation fails, drop all data.
 	 */
-	todo = len / sizeof(*dint);
+	todo = len / sizeof(dint);
 	for (done = 0; done < todo ; done++) {
 		state = rs->state;
 		if (state == NULL) {
@@ -688,7 +689,8 @@ rnd_add_data_ts(krndsource_t *rs, const void *const data, u_int32_t len,
 		}
 
 		state->ts[state->cursor] = ts;
-		state->values[state->cursor] = dint[done];
+		(void)memcpy(&dint, &p[done*4], 4);
+		state->values[state->cursor] = dint;
 		state->cursor++;
 
 		if (state->cursor == RND_SAMPLE_COUNT) {
