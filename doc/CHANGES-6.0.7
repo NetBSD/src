@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.5 2014/11/03 13:03:53 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.6 2014/11/03 16:34:08 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -125,3 +125,27 @@ usr.bin/ftp/version.h				1.85
 	Change the version that ftp announces to 20141026. It can be a
 	useful method to determine if CVE-2014-8517 is fixed.
 	[lukem, ticket #1180]
+
+sys/altq/altq_jobs.c				1.7
+sys/dev/ic/oosiop.c				1.14
+sys/dev/qbus/if_qe.c				1.73
+sys/dev/rasops/rasops.c				1.72
+sys/dev/vme/if_ie_vme.c				1.31
+sys/net/if_gre.c				1.160
+
+	Fix resource leask in miscellaneous error branches noted by maxv@.
+	[riastradh, ticket #1117]
+
+sys/kern/kern_rndpool.c				1.7
+sys/kern/kern_rndq.c				1.27
+
+	"buf" and "done" is not guaranteed to be aligned; don't *(uint32_t *)
+	it.
+	[riastradh, ticket #1118]
+
+sys/arch/sparc/dev/fd.c				1.155
+sys/arch/sparc64/dev/fdc.c			1.42
+sys/arch/sun3/dev/fd.c				1.78
+
+	Fix unexpected memory corruption on opening fd(4).
+	[tsutsui, ticket #1139]
