@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.74 2014/11/03 13:05:59 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.75 2014/11/03 18:50:31 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -1109,3 +1109,11 @@ usr.bin/ftp/version.h				1.85
 	Change the version that ftp announces to 20141026. It can be a
 	useful method to determine if CVE-2014-8517 is fixed.
 	[lukem, ticket #1929]
+
+usr.sbin/ypbind/ypbind.8			1.19-1.20
+usr.sbin/ypbind/ypbind.c			1.63-1.98
+
+	State handling fixes and cleanups in ypbind; it no longer churns the
+	disk, spams syslogd when the server goes down, or gets confused about
+	its binding state. Fixes PR#15355, PR#32519 and also PR#43900.
+	[dholland, ticket #1925]
