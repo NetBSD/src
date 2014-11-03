@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.178 2014/10/27 14:10:12 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.179 2014/11/03 13:04:12 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.178 2014/10/27 14:10:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.179 2014/11/03 13:04:12 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -2167,6 +2167,10 @@ in6_if_link_up(struct ifnet *ifp)
 
 		if (ia->ia6_flags & IN6_IFF_TENTATIVE) {
 			int rand_delay;
+
+			/* Clear the duplicated flag as we're starting DAD. */
+			ia->ia6_flags &= ~IN6_IFF_DUPLICATED;
+
 			/*
 			 * The TENTATIVE flag was likely set by hand
 			 * beforehand, implicitly indicating the need for DAD.
@@ -2196,6 +2200,7 @@ in6_if_up(struct ifnet *ifp)
 	/* interface may not support link state, so bring it up also */
 	in6_if_link_up(ifp);
 }
+
 /*
  * Mark all addresses as detached.
  */
@@ -2229,7 +2234,8 @@ in6_if_link_down(struct ifnet *ifp)
 			    "%s marked detached\n",
 			    ip6_sprintf(&ia->ia_addr.sin6_addr)));
 			ia->ia6_flags |= IN6_IFF_DETACHED;
-			ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
+			ia->ia6_flags &=
+			    ~(IN6_IFF_TENTATIVE | IN6_IFF_DUPLICATED);
 			nd6_newaddrmsg(ifa);
 		}
 	}
