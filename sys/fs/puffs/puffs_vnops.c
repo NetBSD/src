@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.163.2.6 2014/11/03 19:42:33 msaitoh Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.163.2.7 2014/11/03 19:51:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.163.2.6 2014/11/03 19:42:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.163.2.7 2014/11/03 19:51:36 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2199,7 +2199,7 @@ puffs_vnop_read(void *v)
 	if (uio->uio_resid == 0)
 		return 0;
 	if (uio->uio_offset < 0)
-		return EINVAL;
+		return EFBIG;
 
 	if (vp->v_type == VREG &&
 	    PUFFS_USE_PAGECACHE(pmp) &&
@@ -2306,6 +2306,12 @@ puffs_vnop_write(void *v)
 	error = uflags = 0;
 	write_msg = NULL;
 
+	/* std sanity */
+	if (uio->uio_resid == 0)
+		return 0;
+	if (uio->uio_offset < 0)
+		return EFBIG;
+
 	mutex_enter(&pn->pn_sizemtx);
 
 	if (vp->v_type == VREG && 
@@ -2322,10 +2328,6 @@ puffs_vnop_write(void *v)
 
 		origoff = uio->uio_offset;
 		while (uio->uio_resid > 0) {
-			if (vp->v_mount->mnt_flag & MNT_RELATIME)
-				uflags |= PUFFS_UPDATEATIME;
-			uflags |= PUFFS_UPDATECTIME;
-			uflags |= PUFFS_UPDATEMTIME;
 			oldoff = uio->uio_offset;
 			bytelen = uio->uio_resid;
 
@@ -2386,8 +2388,6 @@ puffs_vnop_write(void *v)
 			error = VOP_PUTPAGES(vp, trunc_page(origoff),
 			    round_page(uio->uio_offset), PGO_CLEANIT);
 		}
-
-		puffs_updatenode(VPTOPP(vp), uflags, vp->v_size);
 	} else {
 		/* tomove is non-increasing */
 		tomove = PUFFS_TOMOVE(uio->uio_resid, pmp);
@@ -2421,8 +2421,10 @@ puffs_vnop_write(void *v)
 			}
 
 			/* adjust file size */
-			if (vp->v_size < uio->uio_offset)
+			if (vp->v_size < uio->uio_offset) {
+				uflags |= PUFFS_UPDATESIZE;
 				uvm_vnp_setsize(vp, uio->uio_offset);
+			}
 
 			/* didn't move everything?  bad userspace.  bail */
 			if (write_msg->pvnr_resid != 0) {
@@ -2432,6 +2434,12 @@ puffs_vnop_write(void *v)
 		}
 		puffs_msgmem_release(park_write);
 	}
+
+	if (vp->v_mount->mnt_flag & MNT_RELATIME)
+		uflags |= PUFFS_UPDATEATIME;
+	uflags |= PUFFS_UPDATECTIME;
+	uflags |= PUFFS_UPDATEMTIME;
+	puffs_updatenode(VPTOPP(vp), uflags, vp->v_size);
 
 	mutex_exit(&pn->pn_sizemtx);
 	return error;
