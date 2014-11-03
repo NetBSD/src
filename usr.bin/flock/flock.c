@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.6.4.3 2013/02/10 23:42:19 riz Exp $	*/
+/*	$NetBSD: flock.c,v 1.6.4.4 2014/11/03 19:26:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: flock.c,v 1.6.4.3 2013/02/10 23:42:19 riz Exp $");
+__RCSID("$NetBSD: flock.c,v 1.6.4.4 2014/11/03 19:26:02 msaitoh Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: flock.c,v 1.6.4.3 2013/02/10 23:42:19 riz Exp $");
 #include <errno.h>
 #include <getopt.h>
 #include <paths.h>
+#include <limits.h>
 #include <time.h>
 
 static struct option flock_longopts[] = {
@@ -149,12 +150,13 @@ int
 main(int argc, char *argv[])
 {
 	int c;
-	int lock = LOCK_EX;
+	int lock = 0;
 	double timeout = 0;
 	int cls = 0;
 	int fd = -1;
 	int debug = 0;
 	int verbose = 0;
+	long l;
 	char *mcargv[] = {
 	    __UNCONST(_PATH_BSHELL), __UNCONST("-c"), NULL, NULL
 	};
@@ -170,7 +172,8 @@ main(int argc, char *argv[])
 			debug++;
 			break;
 		case 'x':
-			if (lock & ~LOCK_NB)
+#define T(l)	(lock & ~LOCK_NB) != (l) && (lock & ~LOCK_NB) != 0
+			if (T(LOCK_EX))
 				goto badlock;
 			lock |= LOCK_EX;
 			break;
@@ -178,12 +181,12 @@ main(int argc, char *argv[])
 			lock |= LOCK_NB;
 			break;
 		case 's':
-			if (lock & ~LOCK_NB)
+			if (T(LOCK_SH))
 				goto badlock;
 			lock |= LOCK_SH;
 			break;
 		case 'u':
-			if (lock & ~LOCK_NB)
+			if (T(LOCK_UN))
 				goto badlock;
 			lock |= LOCK_UN;
 			break;
@@ -205,13 +208,22 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	if ((lock & ~LOCK_NB) == 0)
+		lock |= LOCK_EX;	/* default to exclusive like linux */
+
 	switch (argc) {
 	case 0:
 		usage("Missing lock file argument");
 	case 1:
 		if (cls)
-			usage("Close is valid only for descriptors");
-		fd = strtol(argv[0], NULL, 0);	// XXX: error checking
+			usage("Close is not valid for descriptors");
+		errno = 0;
+		l = strtol(argv[0], &v, 0);
+		if ((l == LONG_MIN || l == LONG_MAX) && errno == ERANGE)
+			err(EXIT_FAILURE, "Bad file descriptor `%s'", argv[0]);
+		if (l > INT_MAX || l < 0 || *v)
+			errx(EXIT_FAILURE, "Bad file descriptor `%s'", argv[0]);
+		fd = (int)l;
 		if (debug) {
 			fprintf(stderr, "descriptor %s lock %s\n",
 			    argv[0], lock2name(lock));
