@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.70 2012/01/11 15:52:32 macallan Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.70.8.1 2014/11/03 15:10:38 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.70 2012/01/11 15:52:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.70.8.1 2014/11/03 15:10:38 msaitoh Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -1351,16 +1351,21 @@ rasops_rotate_font(int *cookie, int rotate)
 
 	f = malloc(sizeof(struct rotatedfont), M_DEVBUF, M_WAITOK);
 	if (f == NULL)
-		return;
+		goto fail0;
 
 	if ((ncookie = wsfont_rotate(*cookie, rotate)) == -1)
-		return;
+		goto fail1;
 
 	f->rf_cookie = *cookie;
 	f->rf_rotated = ncookie;
 	SLIST_INSERT_HEAD(&rotatedfonts, f, rf_next);
 
 	*cookie = ncookie;
+	return;
+
+fail1:	free(f, M_DEVBUF);
+fail0:	/* Just use the existing font, I guess...  */
+	return;
 }
 
 static void
