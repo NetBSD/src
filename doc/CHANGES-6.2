@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.148 2014/11/03 22:09:32 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.149 2014/11/03 23:08:44 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4171,3 +4171,9 @@ sys/dev/ic/mpt.h				1.8
 	  associated with a volume for BIOCDISK_NOVOL, when setting
 	  bd_disknovol=false, also set bv_volid.
 	[jmcneill, ticket #1160]
+
+sys/netinet/tcp_output.c			1.178
+
+	Avoid stack overflow when SACK and TCP_SIGNATURE are both present.
+	Pointed out by Jonathan Looney.
+	[christos, ticket #1174]
