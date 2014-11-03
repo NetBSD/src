@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.20.2.1 2012/08/12 13:13:21 martin Exp $ */
+/*  $NetBSD: msg.c,v 1.20.2.2 2014/11/03 19:18:09 msaitoh Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -493,7 +493,10 @@ perfused_readframe(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
 
 	switch (readen = recv(fd, data, len, MSG_NOSIGNAL|MSG_PEEK)) {
 	case 0:
-		perfused_panic();
+		DPRINTF("Filesystem exit\n");
+		/* NOTREACHED */
+		exit(0);
+		break;
 	case -1:
 		if (errno == EAGAIN)
 			return 0;

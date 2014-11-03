@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.25.2.4 2012/08/12 13:13:20 martin Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.25.2.5 2014/11/03 19:18:09 msaitoh Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -186,6 +186,7 @@ uint64_t perfuse_get_fh(puffs_cookie_t, int);
 uint64_t perfuse_next_unique(struct puffs_usermount *);
 char *perfuse_node_path(struct perfuse_state *, puffs_cookie_t);
 int perfuse_node_close_common(struct puffs_usermount *, puffs_cookie_t, int);
+int perfuse_ns_match(const int, const char *);
 const char *perfuse_native_ns(const int, const char *, char *);
 
 char *perfuse_fs_mount(int, ssize_t);
@@ -222,12 +223,8 @@ int perfuse_node_getattr(struct puffs_usermount *,
 int perfuse_node_setattr(struct puffs_usermount *,
     puffs_cookie_t, const struct vattr *, const struct puffs_cred *);
 int perfuse_node_poll(struct puffs_usermount *, puffs_cookie_t, int *);
-int perfuse_node_mmap(struct puffs_usermount *,
-    puffs_cookie_t, vm_prot_t, const struct puffs_cred *);
 int perfuse_node_fsync(struct puffs_usermount *,
     puffs_cookie_t, const struct puffs_cred *, int, off_t, off_t);
-int perfuse_node_seek(struct puffs_usermount *,
-    puffs_cookie_t, off_t, off_t, const struct puffs_cred *);
 int perfuse_node_remove(struct puffs_usermount *,
     puffs_cookie_t, puffs_cookie_t, const struct puffs_cn *);
 int perfuse_node_link(struct puffs_usermount *,
@@ -261,6 +258,8 @@ int perfuse_node_write(struct puffs_usermount *, puffs_cookie_t,
     uint8_t *, off_t, size_t *, const struct puffs_cred *, int);
 int perfuse_node_write2(struct puffs_usermount *, puffs_cookie_t,
     uint8_t *, off_t, size_t *, const struct puffs_cred *, int, int);
+int perfuse_node_open2(struct puffs_usermount *,
+    puffs_cookie_t, int, const struct puffs_cred *, int *);
 void perfuse_cache_write(struct puffs_usermount *,
     puffs_cookie_t, size_t, struct puffs_cacherun *);
 int perfuse_node_getextattr(struct puffs_usermount *, puffs_cookie_t,
