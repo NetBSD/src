@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.4 2014/10/27 06:01:06 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.5 2014/11/03 13:03:03 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -120,3 +120,8 @@ usr.bin/ftp/fetch.c				1.206 via patch
 	from the command line.
 	[christos, ticket #1175]
 
+usr.bin/ftp/version.h				1.85
+
+	Change the version that ftp announces to 20141026. It can be a
+	useful method to determine if CVE-2014-8517 is fixed.
+	[lukem, ticket #1180]
