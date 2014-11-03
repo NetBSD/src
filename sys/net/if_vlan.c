@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.69.8.1 2014/06/03 15:34:00 msaitoh Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.69.8.2 2014/11/03 20:38:09 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.69.8.1 2014/06/03 15:34:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.69.8.2 2014/11/03 20:38:09 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -102,6 +102,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.69.8.1 2014/06/03 15:34:00 msaitoh Exp
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
+#endif
+#ifdef INET6
+#include <netinet6/in6_ifattach.h>
 #endif
 
 struct vlan_mc_entry {
@@ -384,6 +387,8 @@ vlan_unconfig(struct ifnet *ifp)
 		}
 
 		ether_ifdetach(ifp);
+		/* Restore vlan_ioctl overwritten by ether_ifdetach */
+		ifp->if_ioctl = vlan_ioctl;
 		vlan_reset_linkname(ifp);
 		break;
 	    }
@@ -398,6 +403,12 @@ vlan_unconfig(struct ifnet *ifp)
 	ifv->ifv_if.if_mtu = 0;
 	ifv->ifv_flags = 0;
 
+#ifdef INET6
+	/* To delete v6 link local addresses */
+	in6_ifdetach(ifp);
+#endif
+	if ((ifp->if_flags & IFF_PROMISC) != 0)
+		ifpromisc(ifp, 0);
 	if_down(ifp);
 	ifp->if_flags &= ~(IFF_UP|IFF_RUNNING);
 	ifp->if_capabilities = 0;
@@ -482,6 +493,9 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((error = copyin(ifr->ifr_data, &vlr, sizeof(vlr))) != 0)
 			break;
 		if (vlr.vlr_parent[0] == '\0') {
+			if (ifv->ifv_p != NULL &&
+			    (ifp->if_flags & IFF_PROMISC) != 0)
+				error = ifpromisc(ifv->ifv_p, 0);
 			vlan_unconfig(ifp);
 			break;
 		}
