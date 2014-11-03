@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.58 2010/12/26 12:39:54 jnemeth Exp $
+.\"	$NetBSD: printf.3,v 1.58.8.1 2014/11/03 21:22:28 msaitoh Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd December 26, 2010
+.Dd September 29, 2014
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -793,6 +793,13 @@ family of functions may fail if:
 An invalid wide-character code was encountered.
 .It Bq Er ENOMEM
 Insufficient storage space is available.
+.It Bq Er EOVERFLOW
+The
+.Fa size
+argument exceeds
+.Dv INT_MAX ,
+or the return value would be too large to be represented by an
+.Vt int .
 .El
 .Sh SEE ALSO
 .Xr printf 1 ,
