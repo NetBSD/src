@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.151 2014/11/04 01:56:17 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.152 2014/11/04 09:27:59 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4191,3 +4191,23 @@ lib/libperfuse/ops.c				1.74
 	PUFFS_IO_APPEND flag. The symptom was a hang when appending to
 	a file with a null size.
 	[manu, ticket #1151]
+
+sys/dev/mii/atphy.c				1.15
+sys/dev/mii/brgphy.c				1.66
+sys/dev/mii/mii.h				1.17
+sys/dev/mii/mii_physubr.c			1.79
+sys/dev/mii/rgephy.c				1.33
+
+	The bit location of link ability is different between 1000Base-X
+	and others (See annex 28B.2 and 28D). The old mii.h defined
+	ANAR_X_PAUSE_* macros. Those macros were named for 1000Base-X,
+	but the bit definitions were not for 1000Base-X but for others
+	(e.g. 1000BaseT). So there was bug in auto negotiation for
+	1000Base-X, but there was no bug for other media. Define new
+	macro named ANAR_PAUSE_* and ANLPAR_PAUSE_* for other than
+	1000Base-X and fix the bit definitions of ANAR_X_PAUSE_* and
+	ANLPPAR_X_*. Change some PHY drivers to use true macro. Same as
+	other *BSDs.
+	[msaitoh, ticket #1146]
+
+
