@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_file.c,v 1.3 2014/11/04 19:05:17 pooka Exp $	*/
+/*	$NetBSD: rumpuser_file.c,v 1.4 2014/11/04 21:08:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_file.c,v 1.3 2014/11/04 19:05:17 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_file.c,v 1.4 2014/11/04 21:08:12 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -126,7 +126,7 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp)
 			goto out;
 		}
 
-#if !defined(DIOCGDINFO) && !defined(DIOCGWEDGEINFO)
+#if (!defined(DIOCGDINFO) || !defined(DISKPART)) && !defined(DIOCGWEDGEINFO)
 		{
 		off_t off = lseek(fd, 0, SEEK_END);
 		if (off != 0) {
@@ -140,7 +140,7 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp)
 		}
 #else
 
-#if defined(DIOCGDINFO)
+#if defined(DIOCGDINFO) && defined(DISKPART)
 		{
 		struct disklabel lab;
 		struct partition *parta;
