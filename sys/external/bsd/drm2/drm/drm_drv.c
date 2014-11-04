@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.9 2014/07/26 21:15:45 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.10 2014/11/04 11:27:31 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.9 2014/07/26 21:15:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.10 2014/11/04 11:27:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -234,8 +234,7 @@ const struct cdevsw drm_cdevsw = {
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
 	/* XXX was D_TTY | D_NEGOFFSAFE */
-	/* XXX Add D_MPSAFE some day... */
-	.d_flag = D_NEGOFFSAFE,
+	.d_flag = D_NEGOFFSAFE | D_MPSAFE,
 };
 
 static const struct fileops drm_fileops = {
