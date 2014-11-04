@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.67 2014/11/01 04:34:27 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.68 2014/11/04 23:00:35 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.67 2014/11/01 04:34:27 uebayasi Exp $");
+__RCSID("$NetBSD: sem.c,v 1.68 2014/11/04 23:00:35 joerg Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -398,7 +398,7 @@ defdevclass(const char *name, struct loclist *locs, struct attrlist *deps,
 			    "lower-case alphanumeric characters");
 			errored = 1;
 		}
-		*cp = toupper((unsigned char)*cp);
+		*cp = (char)toupper((unsigned char)*cp);
 	}
 	a->a_devclass = intern(classenum);
 
