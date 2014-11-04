@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_irq_netbsd.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: drm_irq_netbsd.h,v 1.3 2014/11/04 11:27:31 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,7 +40,5 @@ typedef int irqreturn_t;
 #define	DRM_IRQ_ARGS	void *arg
 
 #define	IRQF_SHARED	0	/* XXX */
-
-#define	IPL_DRM		IPL_TTY	/* XXX */
 
 #endif  /* _DRM_DRM_IRQ_NETBSD_H_ */
