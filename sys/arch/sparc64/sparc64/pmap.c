@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.291 2014/10/30 13:57:14 palle Exp $	*/
+/*	$NetBSD: pmap.c,v 1.292 2014/11/04 18:11:42 palle Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.291 2014/10/30 13:57:14 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.292 2014/11/04 18:11:42 palle Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1155,12 +1155,10 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		cpus->ci_eintstack = NULL;
 		cpus->ci_spinup = main; /* Call main when we're running. */
 		cpus->ci_paddr = cpu0paddr;
-#ifdef SUN4V
 		if (CPU_ISSUN4V) {
 			cpus->ci_mmfsa = cpu0paddr;
 			cpus->ci_tsb_desc = NULL;
 		}
-#endif
 		cpus->ci_cpcb = (struct pcb *)u0va;
 		cpus->ci_idepth = -1;
 		memset(cpus->ci_intrpending, -1, sizeof(cpus->ci_intrpending));
@@ -1244,7 +1242,6 @@ cpu_pmap_prepare(struct cpu_info *ci, bool initial)
 		ci->ci_ctxbusy = curcpu()->ci_ctxbusy;
 	}
 
-#ifdef SUN4V
 	if (CPU_ISSUN4V) {
 		ci->ci_tsb_desc = (struct tsb_desc *)kdata_alloc(
 			sizeof(struct tsb_desc), 16);
@@ -1261,7 +1258,6 @@ cpu_pmap_prepare(struct cpu_info *ci, bool initial)
 		    ci->ci_index, ci->ci_tsb_desc, sizeof(struct tsb_desc),
 		    ci->ci_tsb_desc->td_pa));
 	}
-#endif
 
 	BDPRINTF(PDB_BOOT1, ("cpu %d: TSB allocated at %p/%p size %08x\n",
 	    ci->ci_index, ci->ci_tsb_dmmu, ci->ci_tsb_immu, TSBSIZE));
