@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.14 2014/08/27 19:02:17 palle Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.15 2014/11/04 18:11:42 palle Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.14 2014/08/27 19:02:17 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.15 2014/11/04 18:11:42 palle Exp $");
 
 #ifdef DEBUG
 #define	EDB_PROM	0x01
@@ -277,7 +277,6 @@ ebus_mainbus_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	u_int64_t *imap, *iclr;
 	int ino;
 
-#ifdef SUN4V
 #if 0
 XXX
 	if (CPU_ISSUN4V) {
@@ -328,7 +327,6 @@ XXX
 
 		return (ih);
 	}
-#endif
 #endif
 
 	ino = INTINO(ihandle);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.118 2014/09/24 18:32:10 palle Exp $ */
+/*	$NetBSD: cpu.c,v 1.119 2014/11/04 18:11:42 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.118 2014/09/24 18:32:10 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.119 2014/11/04 18:11:42 palle Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -140,7 +140,6 @@ cpuid_from_node(u_int cpu_node)
 		id = prom_getpropint(cpu_node, "portid", -1);
 	if (id == -1)
 		id = prom_getpropint(cpu_node, "cpuid", -1);
-#ifdef SUN4V	
 	if (CPU_ISSUN4V) {
 		int reg[4];
 		int* regp=reg;
@@ -152,7 +151,6 @@ cpuid_from_node(u_int cpu_node)
 		/* cpuid in the lower 24 bits - sun4v hypervisor arch */
 		id = reg[0] & 0x0fffffff;
 	}
-#endif	
 	if (id == -1)
 		panic("failed to determine cpuid");
 	
@@ -210,10 +208,8 @@ alloc_cpuinfo(u_int cpu_node)
 	cpi->ci_spinup = NULL;
 	cpi->ci_paddr = pa0;
 	cpi->ci_self = cpi;
-#ifdef SUN4V
 	if (CPU_ISSUN4V)
 		cpi->ci_mmfsa = pa0;
-#endif
 	cpi->ci_node = cpu_node;
 	cpi->ci_idepth = -1;
 	memset(cpi->ci_intrpending, -1, sizeof(cpi->ci_intrpending));
@@ -461,7 +457,6 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 	 * CPU specific ipi setup
 	 * Currently only necessary for SUN4V
 	 */
-#ifdef SUN4V	
 	if (CPU_ISSUN4V) {
 		paddr_t pa = ci->ci_paddr;
 		int err;
@@ -487,7 +482,6 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 		ci->ci_cpuset = pa;
 		pa += 64;
 	}
-#endif	
 	
 }
 
@@ -497,13 +491,11 @@ cpu_myid(void)
 	char buf[32];
 	int impl;
 
-#ifdef SUN4V
 	if (CPU_ISSUN4V) {
 		uint64_t myid;
 		hv_cpu_myid(&myid);
 		return myid;
 	}
-#endif
 	if (OF_getprop(findroot(), "name", buf, sizeof(buf)) > 0 &&
 	    strcmp(buf, "SUNW,Ultra-Enterprise-10000") == 0)
 		return lduwa(0x1fff40000d0UL, ASI_PHYS_NON_CACHED);
