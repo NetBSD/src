@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_bio.c,v 1.9 2014/08/25 10:21:39 justin Exp $	*/
+/*	$NetBSD: rumpuser_bio.c,v 1.10 2014/11/04 19:05:17 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_bio.c,v 1.9 2014/08/25 10:21:39 justin Exp $");
+__RCSID("$NetBSD: rumpuser_bio.c,v 1.10 2014/11/04 19:05:17 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ dobio(struct rumpuser_bio *biop)
 			rv = 0;
 			error = rumpuser__errtrans(errno);
 		} else if (biop->bio_op & RUMPUSER_BIO_SYNC) {
-#ifdef __NetBSD__
+#ifdef HAVE_FSYNC_RANGE
 			fsync_range(biop->bio_fd, FDATASYNC,
 			    biop->bio_off, biop->bio_dlen);
 #else
