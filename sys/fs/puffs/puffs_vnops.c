@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.196 2014/10/31 13:52:41 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.197 2014/11/04 09:10:37 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.196 2014/10/31 13:52:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.197 2014/11/04 09:10:37 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1329,6 +1329,18 @@ puffs_vnop_inactive(void *v)
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	struct puffs_node *pnode;
 	bool recycle = false;
+
+	/*
+	 * When puffs_cookie2vnode() misses an entry, vcache_get()
+	 * creates a new node (puffs_vfsop_loadvnode being called to
+	 * initialize the PUFFS part), then it discovers it is VNON,
+	 * and tries to vrele() it. This leads us there, while the 
+	 * cookie was stall and the node likely already reclaimed. 
+	 */
+	if (vp->v_type == VNON) {
+		VOP_UNLOCK(vp);
+		return 0;
+	}
 
 	pnode = vp->v_data;
 	mutex_enter(&pnode->pn_sizemtx);
