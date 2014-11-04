@@ -27,12 +27,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: boot.c,v 1.17 2014/11/03 18:55:04 jakllsch Exp $");
+__RCSID("$NetBSD: boot.c,v 1.18 2014/11/04 03:05:43 msaitoh Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <unistd.h>
 
