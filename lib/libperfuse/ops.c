@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.50.2.12 2014/11/04 01:50:42 msaitoh Exp $ */
+/*  $NetBSD: ops.c,v 1.50.2.13 2014/11/04 01:52:53 msaitoh Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -3188,16 +3188,6 @@ perfuse_node_write2(struct puffs_usermount *pu, puffs_cookie_t opc,
 		requeue_request(pu, opc, PCQ_WRITE);
 	pnd->pnd_flags |= PND_INWRITE;
 
-	/* 
-	 * Serialize size access, see comment in perfuse_node_setattr().
-	 */
-	if ((u_quad_t)offset + *resid > vap->va_size) {
-		while (pnd->pnd_flags & PND_INRESIZE)
-			requeue_request(pu, opc, PCQ_RESIZE);
-		pnd->pnd_flags |= PND_INRESIZE;
-		inresize = 1;
-	}
-
 	/*
 	 * append flag: re-read the file size so that 
 	 * we get the latest value.
@@ -3207,6 +3197,16 @@ perfuse_node_write2(struct puffs_usermount *pu, puffs_cookie_t opc,
 			goto out;
 
 		offset = vap->va_size;
+	}
+
+	/* 
+	 * Serialize size access, see comment in perfuse_node_setattr().
+	 */
+	if ((u_quad_t)offset + *resid > vap->va_size) {
+		while (pnd->pnd_flags & PND_INRESIZE)
+			requeue_request(pu, opc, PCQ_RESIZE);
+		pnd->pnd_flags |= PND_INRESIZE;
+		inresize = 1;
 	}
 
 #ifdef PERFUSE_DEBUG
