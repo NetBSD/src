@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.34 2014/09/30 10:15:03 hannken Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.35 2014/11/04 09:10:37 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.34 2014/09/30 10:15:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.35 2014/11/04 09:10:37 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -266,6 +266,7 @@ puffs_cookie2vnode(struct puffs_mount *pmp, puffs_cookie_t ck,
 	mutex_enter((*vpp)->v_interlock);
 	if ((*vpp)->v_type == VNON) {
 		mutex_exit((*vpp)->v_interlock);
+		/* XXX vrele() calls VOP_INACTIVE() with VNON node */
 		vrele(*vpp);
 		*vpp = NULL;
 		return PUFFS_NOSUCHCOOKIE;
