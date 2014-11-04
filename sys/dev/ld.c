@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.77 2014/10/11 12:01:27 mlelstv Exp $	*/
+/*	$NetBSD: ld.c,v 1.78 2014/11/04 07:51:54 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.77 2014/10/11 12:01:27 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.78 2014/11/04 07:51:54 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -555,6 +555,16 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 
 		return (dkwedge_list(&sc->sc_dk, dkwl, l));
 	    }
+
+	case DIOCMWEDGES:
+	    {
+	    	if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		dkwedge_discover(&sc->sc_dk);
+		return 0;
+	    }
+
 	case DIOCGSTRATEGY:
 	    {
 		struct disk_strategy *dks = (void *)addr;

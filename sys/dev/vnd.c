@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.233 2014/10/11 12:01:27 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.234 2014/11/04 07:51:54 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.233 2014/10/11 12:01:27 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.234 2014/11/04 07:51:54 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1591,6 +1591,13 @@ unlock_and_exit:
 		dkwl = (void *) data;
 
 		return dkwedge_list(&vnd->sc_dkdev, dkwl, l);
+
+	case DIOCMWEDGES:
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+
+		dkwedge_discover(&vnd->sc_dkdev);
+		return 0;
 
 	default:
 		return ENOTTY;
