@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.309 2014/09/05 05:30:42 matt Exp $	*/
+/*	$NetBSD: sd.c,v 1.310 2014/11/04 07:51:55 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.309 2014/09/05 05:30:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.310 2014/11/04 07:51:55 mlelstv Exp $");
 
 #include "opt_scsi.h"
 
@@ -1254,6 +1254,15 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	    	struct dkwedge_list *dkwl = (void *) addr;
 
 		return (dkwedge_list(&sd->sc_dk, dkwl, l));
+	    }
+
+	case DIOCMWEDGES:
+	    {
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		dkwedge_discover(&sd->sc_dk);
+		return 0;
 	    }
 
 	case DIOCGSTRATEGY:
