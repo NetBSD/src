@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.74 2014/11/02 10:16:20 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.75 2014/11/04 07:16:05 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -17,7 +17,6 @@ sys/dev/usb/xhci.c				1.24
 	While this is correct according to the specification only fixed sizes
 	are allowed, i.e. 512 for SS, etc. Maybe these should be used?
 	[skrll, ticket #3]
-
 
 sys/kern/kern_rndpool.c				1.7
 sys/kern/kern_rndq.c				1.27
@@ -38,7 +37,6 @@ external/gpl3/binutils/dist/bfd/elflink.c	1.8
 	symbol that will be skipped, we don't have a new definition.
 	[skrll, ticket #5]
 
-
 sys/dev/usb/motg.c				1.7-1.8
 
 	Trailing whitespace.
@@ -55,7 +53,6 @@ usr.sbin/postinstall/postinstall		1.177-1.179
 	not just print the unexpanded value.  This is done by
 	using make -V '${VAR}' instead of make -V 'VAR'.
 	[apb, ticket #8]
-
 
 usr.sbin/postinstall/postinstall		1.176
 
@@ -1788,7 +1785,6 @@ sys/kern/vfs_vnode.c				1.39
 	Should prevent the panic from PR kern/49171 (panic when closing a pty).
 	[hannken, ticket #150]
 
-
 sys/compat/svr4/svr4_stat.c			1.70
 sys/dev/dm/dm_target_snapshot.c			1.17
 sys/dev/if_ndis/if_ndis_pci.c			1.20
@@ -1798,7 +1794,6 @@ sys/ufs/ext2fs/ext2fs_readwrite.c		1.65
 	Various fixes: two memory leaks, a typo, a dead compiler condition and
 	unused macros, respectively in if_ndis and dm, smbfs, svr4 and ext2fs.
 	[maxv, ticket #148]
-
 
 sys/arch/arm/broadcom/bcm2835_vcaudio.c		1.4-1.7
 sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_shim.c 1.5
