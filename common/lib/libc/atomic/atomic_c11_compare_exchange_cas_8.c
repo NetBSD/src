@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_c11_compare_exchange_cas_8.c,v 1.1 2014/10/12 17:51:47 martin Exp $	*/
+/*	$NetBSD: atomic_c11_compare_exchange_cas_8.c,v 1.2 2014/11/04 19:56:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
 #include <stdbool.h>
 #endif
 #include <sys/atomic.h>
+
+bool __atomic_compare_exchange_1(volatile uint8_t *, uint8_t *, uint8_t,
+    bool, int, int);
 
 bool
 __atomic_compare_exchange_1(volatile uint8_t *mem,
