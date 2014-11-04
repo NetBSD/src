@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.halt.c,v 1.4 2014/01/15 16:53:32 pooka Exp $	*/
+/*	$NetBSD: rump.halt.c,v 1.5 2014/11/04 19:05:17 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump.halt.c,v 1.4 2014/01/15 16:53:32 pooka Exp $");
+__RCSID("$NetBSD: rump.halt.c,v 1.5 2014/11/04 19:05:17 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: rump.halt.c,v 1.4 2014/01/15 16:53:32 pooka Exp $");
 
 #define ARGFLAGS "dhn"
 
-#ifndef PLATFORM_HAS_SETGETPROGNAME
+#ifndef HAVE_GETPROGNAME
 #define getprogname() "rump_halt"
 #endif
 
@@ -65,7 +65,6 @@ main(int argc, char *argv[])
 	int ch, flags;
 
 	setprogname(argv[0]);
-
 	flags = 0;
 	while ((ch = getopt(argc, argv, ARGFLAGS)) != -1) {
 		switch (ch) {
