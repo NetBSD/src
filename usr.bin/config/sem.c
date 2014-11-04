@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.68 2014/11/04 23:00:35 joerg Exp $	*/
+/*	$NetBSD: sem.c,v 1.69 2014/11/04 23:02:14 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.68 2014/11/04 23:00:35 joerg Exp $");
+__RCSID("$NetBSD: sem.c,v 1.69 2014/11/04 23:02:14 joerg Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -964,7 +964,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 			    name, what, nv->nv_str);
 			return (1);
 		}
-		nv->nv_num = makedev(maj, unit * maxpartitions + part);
+		nv->nv_num = (long long)makedev(maj, unit * maxpartitions + part);
 	}
 
 	nv->nv_name = dev->d_name;
