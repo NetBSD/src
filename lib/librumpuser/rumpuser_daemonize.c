@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_daemonize.c,v 1.6 2013/05/07 15:18:35 pooka Exp $	*/
+/*	$NetBSD: rumpuser_daemonize.c,v 1.7 2014/11/04 19:05:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_daemonize.c,v 1.6 2013/05/07 15:18:35 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_daemonize.c,v 1.7 2014/11/04 19:05:17 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -42,10 +42,10 @@ __RCSID("$NetBSD: rumpuser_daemonize.c,v 1.6 2013/05/07 15:18:35 pooka Exp $");
 
 #include "rumpuser_int.h"
 
-#ifdef __sun__
-#define _PATH_DEVNULL "/dev/null"
-#else
+#if defined(HAVE_PATHS_H)
 #include <paths.h>
+#else
+#define _PATH_DEVNULL "/dev/null"
 #endif
 
 static int isdaemonizing;

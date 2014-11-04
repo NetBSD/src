@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_file.c,v 1.2 2014/08/24 14:37:31 pooka Exp $	*/
+/*	$NetBSD: rumpuser_file.c,v 1.3 2014/11/04 19:05:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_file.c,v 1.2 2014/08/24 14:37:31 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_file.c,v 1.3 2014/11/04 19:05:17 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -40,18 +40,17 @@ __RCSID("$NetBSD: rumpuser_file.c,v 1.2 2014/08/24 14:37:31 pooka Exp $");
 #include <sys/time.h>
 #include <sys/types.h>
 
-#ifdef __NetBSD__
+#if defined(HAVE_SYS_DISK_H)
 #include <sys/disk.h>
+#endif
+#if defined(HAVE_SYS_DISKLABEL_H)
 #include <sys/disklabel.h>
+#endif
+#if defined(HAVE_SYS_DKIO_H)
 #include <sys/dkio.h>
 #endif
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || \
-    defined(__DragonFly__) || defined(__APPLE__)
-#define	__BSD__
-#endif
-
-#if defined(__BSD__)
+#if defined(HAVE_SYS_SYSCTL_H)
 #include <sys/sysctl.h>
 #endif
 
@@ -120,8 +119,6 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp)
 		 * usually called only in bootstrap and then we can
 		 * forget about it.
 		 */
-#ifndef __NetBSD__
-		off_t off;
 
 		fd = open(path, O_RDONLY);
 		if (fd == -1) {
@@ -129,7 +126,9 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp)
 			goto out;
 		}
 
-		off = lseek(fd, 0, SEEK_END);
+#if !defined(DIOCGDINFO) && !defined(DIOCGWEDGEINFO)
+		{
+		off_t off = lseek(fd, 0, SEEK_END);
 		if (off != 0) {
 			size = off;
 			goto out;
@@ -138,23 +137,24 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp)
 		    "this platform\n");
 		rv = EOPNOTSUPP;
 		goto out;
+		}
 #else
+
+#if defined(DIOCGDINFO)
+		{
 		struct disklabel lab;
 		struct partition *parta;
-		struct dkwedge_info dkw;
-
-		fd = open(path, O_RDONLY);
-		if (fd == -1) {
-			rv = errno;
-			goto out;
-		}
-
 		if (ioctl(fd, DIOCGDINFO, &lab) == 0) {
 			parta = &lab.d_partitions[DISKPART(sb.st_rdev)];
 			size = (uint64_t)lab.d_secsize * parta->p_size;
 			goto out;
 		}
+		}
+#endif
 
+#if defined(DIOCGWEDGEINFO)
+		{
+		struct dkwedge_info dkw;
 		if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == 0) {
 			/*
 			 * XXX: should use DIOCGDISKINFO to query
@@ -166,9 +166,10 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp)
 			size = dkw.dkw_size << DEV_BSHIFT;
 			goto out;
 		}
-
+		}
+#endif
 		rv = errno;
-#endif /* __NetBSD__ */
+#endif
 	}
 
  out:
@@ -321,7 +322,7 @@ rumpuser_syncfd(int fd, int flags, uint64_t start, uint64_t len)
 		goto out;
 	}
 
-#ifdef __NetBSD__
+#if defined(HAVE_FSYNC_RANGE)
 	{
 	int fsflags = FDATASYNC;
 

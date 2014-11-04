@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.37 2014/04/27 15:26:05 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.38 2014/11/04 19:05:17 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.37 2014/04/27 15:26:05 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.38 2014/11/04 19:05:17 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -54,7 +54,7 @@ __dead static void
 usage(void)
 {
 
-#ifndef PLATFORM_HAS_SETGETPROGNAME
+#ifndef HAVE_GETPROGNAME
 #define getprogname() "rump_server"
 #endif
 	fprintf(stderr, "usage: %s [-s] [-c ncpu] [-d drivespec] [-l libs] "
@@ -151,10 +151,7 @@ main(int argc, char *argv[])
 	unsigned nmods = 0, curmod = 0, nlibs = 0, curlib = 0, libidx;
 	unsigned liblast = -1; /* XXXgcc */
 
-#ifdef PLATFORM_HAS_SETGETPROGNAME
 	setprogname(argv[0]);
-#endif
-
 	sflag = 0;
 	while ((ch = getopt(argc, argv, "c:d:l:m:r:sv")) != -1) {
 		switch (ch) {
@@ -210,7 +207,7 @@ main(int argc, char *argv[])
 						}
 						flen = DSIZE_E;
 					} else {
-#ifdef PLATFORM_HAS_STRSUFTOLL
+#ifdef HAVE_STRSUFTOLL
 						/* XXX: off_t max? */
 						flen = strsuftoll("-d size",
 						    value, 0, LLONG_MAX);
@@ -232,7 +229,7 @@ main(int argc, char *argv[])
 						    "size=host\n");
 						usage();
 					}
-#ifdef PLATFORM_HAS_STRSUFTOLL
+#ifdef HAVE_STRSUFTOLL
 					/* XXX: off_t max? */
 					foffset = strsuftoll("-d offset", value,
 					    0, LLONG_MAX);
