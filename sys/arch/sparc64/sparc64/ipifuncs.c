@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.51 2014/11/02 19:40:06 palle Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.52 2014/11/04 18:11:42 palle Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.51 2014/11/02 19:40:06 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.52 2014/11/04 18:11:42 palle Exp $");
 
 #include "opt_ddb.h"
 
@@ -219,11 +219,9 @@ sparc64_broadcast_ipi(ipifunc_t func, uint64_t arg1, uint64_t arg2)
 void
 sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 {
-#ifdef SUN4V	
 	if (CPU_ISSUN4V)
 		sparc64_send_ipi_sun4v(upaid, func, arg1, arg2);
 	else
-#endif		
 		sparc64_send_ipi_sun4u(upaid, func, arg1, arg2);
 		    
 }
@@ -451,13 +449,9 @@ smp_tlb_flush_pte(vaddr_t va, struct pmap * pm)
 	int ctx;
 	bool kpm = (pm == pmap_kernel());
 	ipifunc_t func;
-#ifdef SUN4V
 	if (CPU_ISSUN4V)
 		func = sparc64_ipi_flush_pte_sun4v;
 	else if (CPU_IS_USIII_UP())
-#else
-	if (CPU_IS_USIII_UP())
-#endif		
 		func = sparc64_ipi_flush_pte_usiii;
 	else
 		func = sparc64_ipi_flush_pte_us;
@@ -494,13 +488,9 @@ smp_dcache_flush_page_cpuset(paddr_t pa, sparc64_cpuset_t activecpus)
 {
 	ipifunc_t func;
 
-#ifdef SUN4V
 	if (CPU_ISSUN4V)
 		func = sparc64_ipi_dcache_flush_page_sun4v;
 	else if (CPU_IS_USIII_UP())
-#else		
-	if (CPU_IS_USIII_UP())
-#endif		
 		func = sparc64_ipi_dcache_flush_page_usiii;
 	else
 		func = sparc64_ipi_dcache_flush_page_us;
