@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kmap.c,v 1.10 2014/08/27 16:41:50 riastradh Exp $	*/
+/*	$NetBSD: linux_kmap.c,v 1.11 2014/11/04 11:27:31 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.10 2014/08/27 16:41:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kmap.c,v 1.11 2014/11/04 11:27:31 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -104,8 +104,8 @@ int
 linux_kmap_init(void)
 {
 
-	/* IPL_VM since interrupt handlers use kmap_atomic.  */
-	mutex_init(&linux_kmap_atomic_lock, MUTEX_DEFAULT, IPL_VM);
+	/* IPL_SCHED since interrupt handlers use kmap_atomic.  */
+	mutex_init(&linux_kmap_atomic_lock, MUTEX_DEFAULT, IPL_SCHED);
 
 	linux_kmap_atomic_vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 	    (UVM_KMF_VAONLY | UVM_KMF_WAITVA));
