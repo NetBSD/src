@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.29 2010/07/18 03:00:39 jakllsch Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.29.14.1 2014/11/04 09:23:20 martin Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.29 2010/07/18 03:00:39 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.29.14.1 2014/11/04 09:23:20 martin Exp $");
 
 
 /*
@@ -433,7 +433,7 @@ rgephy_mii_phy_auto(struct mii_softc *mii)
 
 	anar = BMSR_MEDIA_TO_ANAR(mii->mii_capabilities) | ANAR_CSMA;
 	if (mii->mii_flags & MIIF_DOPAUSE)
-		anar |= ANAR_FC | ANAR_X_PAUSE_ASYM;
+		anar |= ANAR_FC | ANAR_PAUSE_ASYM;
 
 	PHY_WRITE(mii, MII_ANAR, anar);
 	DELAY(1000);

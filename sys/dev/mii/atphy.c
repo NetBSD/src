@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.11 2011/10/02 21:42:19 jmcneill Exp $ */
+/*	$NetBSD: atphy.c,v 1.11.8.1 2014/11/04 09:23:20 martin Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.11 2011/10/02 21:42:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.11.8.1 2014/11/04 09:23:20 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			bmcr |= BMCR_FDX;
 			/* Enable pause. */
 			if (sc->mii_flags & MIIF_DOPAUSE)
-				anar |= ANAR_X_PAUSE_TOWARDS;
+				anar |= ANAR_PAUSE_TOWARDS;
 		}
 
 		if ((sc->mii_extcapabilities & (EXTSR_1000TFDX |
