@@ -1,57 +1,64 @@
-/*	$NetBSD: rumpuser_port.h,v 1.36 2014/10/07 12:48:02 justin Exp $	*/
-
-/*
- * Portability header for non-NetBSD platforms.
- * Quick & dirty.
- * Maybe should try to use the infrastructure in tools/compat instead?
- */
+/*	$NetBSD: rumpuser_port.h,v 1.37 2014/11/04 19:05:17 pooka Exp $	*/
 
 #ifndef _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
 #define _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
 
-#ifdef __NetBSD__
-#include <sys/cdefs.h>
-#include <sys/param.h>
-
-#define PLATFORM_HAS_KQUEUE
-#define PLATFORM_HAS_CHFLAGS
-#define PLATFORM_HAS_NBMOUNT
-#define PLATFORM_HAS_NFSSVC
-#define PLATFORM_HAS_FSYNC_RANGE
-#define PLATFORM_HAS_NBSYSCTL
-#define PLATFORM_HAS_NBFILEHANDLE
-#ifndef HAVE_PTHREAD_SETNAME_3
-#define HAVE_PTHREAD_SETNAME_3
-#endif
-
-#define PLATFORM_HAS_STRSUFTOLL
-#define PLATFORM_HAS_SETGETPROGNAME
-
-#if __NetBSD_Prereq__(5,99,48)
-#define PLATFORM_HAS_NBQUOTA
-#endif
-
-#if __NetBSD_Prereq__(6,99,16)
-#define HAVE_CLOCK_NANOSLEEP
-#endif
-
 /*
- * This includes also statvfs1() and fstatvfs1().  They could be
- * reasonably easily emulated on other platforms.
+ * Define things found by autoconf.  buildrump.sh defines RUMPUSER_CONFIG,
+ * the NetBSD build does not run autoconf during build and supplies the
+ * necessary values here.  To update the NetBSD values, run ./configure
+ * for an up-to-date NetBSD installation and insert rumpuser_config.h
+ * in the space below, e.g. with ":r !sed -ne '/^\#/p' rumpuser_config.h"
  */
-#define PLATFORM_HAS_NBVFSSTAT
-#endif /* __NetBSD__ */
+#if !defined(RUMPUSER_CONFIG)
 
-#ifndef MIN
-#define MIN(a,b)        ((/*CONSTCOND*/(a)<(b))?(a):(b))
-#endif
-#ifndef MAX
-#define MAX(a,b)        ((/*CONSTCOND*/(a)>(b))?(a):(b))
+#define HAVE_ARC4RANDOM_BUF 1
+#define HAVE_CHFLAGS 1
+#define HAVE_CLOCKID_T 1
+#define HAVE_CLOCK_GETTIME 1
+#define HAVE_DLINFO 1
+#define HAVE_FSYNC_RANGE 1
+#define HAVE_GETENV_R 1
+#define HAVE_GETPROGNAME 1
+#define HAVE_GETSUBOPT 1
+#define HAVE_INTTYPES_H 1
+#define HAVE_KQUEUE 1
+#define HAVE_MEMORY_H 1
+#define HAVE_PATHS_H 1
+#define HAVE_POSIX_MEMALIGN 1
+#define HAVE_PTHREAD_SETNAME3 1
+#define HAVE_REGISTER_T 1
+#define HAVE_SETPROGNAME 1
+#define HAVE_STDINT_H 1
+#define HAVE_STDLIB_H 1
+#define HAVE_STRINGS_H 1
+#define HAVE_STRING_H 1
+#define HAVE_STRSUFTOLL 1
+#define HAVE_STRUCT_SOCKADDR_IN_SIN_LEN 1
+#define HAVE_SYS_ATOMIC_H 1
+#define HAVE_SYS_CDEFS_H 1
+#define HAVE_SYS_DISKLABEL_H 1
+#define HAVE_SYS_DISK_H 1
+#define HAVE_SYS_DKIO_H 1
+#define HAVE_SYS_PARAM_H 1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_SYSCTL_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_UNISTD_H 1
+#define HAVE___QUOTACTL 1
+#define PACKAGE_BUGREPORT "http://rumpkernel.org/"
+#define PACKAGE_NAME "rumpuser-posix"
+#define PACKAGE_STRING "rumpuser-posix 999"
+#define PACKAGE_TARNAME "rumpuser-posix"
+#define PACKAGE_URL ""
+#define PACKAGE_VERSION "999"
+#define STDC_HEADERS 1
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
 #endif
 
-/* might not be 100% accurate, maybe need to revisit later */
-#if (defined(__linux__) && !defined(__ANDROID__)) || defined(__sun__)
-#define HAVE_CLOCK_NANOSLEEP
+#else /* RUMPUSER_CONFIG */
+#include "rumpuser_config.h"
 #endif
 
 #ifdef __linux__
@@ -60,13 +67,21 @@
 #define _GNU_SOURCE
 #endif
 
-#ifdef __ANDROID__
-#include <stdint.h>
-typedef uint16_t in_port_t;
-#include <sys/select.h>
-#define atomic_inc_uint(x)  __sync_fetch_and_add(x, 1)
-#define atomic_dec_uint(x)  __sync_fetch_and_sub(x, 1)
-static inline int getsubopt(char **optionp, char * const *tokens, char **valuep);
+#if defined(HAVE_SYS_CDEFS_H)
+#include <sys/cdefs.h>
+#endif
+#if defined(HAVE_SYS_PARAM_H)
+#include <sys/param.h>
+#endif
+
+#ifndef MIN
+#define MIN(a,b)        ((/*CONSTCOND*/(a)<(b))?(a):(b))
+#endif
+#ifndef MAX
+#define MAX(a,b)        ((/*CONSTCOND*/(a)>(b))?(a):(b))
+#endif
+
+#if !defined(HAVE_GETSUBOPT)
 static inline int
 getsubopt(char **optionp, char * const *tokens, char **valuep)
 {
@@ -76,25 +91,29 @@ getsubopt(char **optionp, char * const *tokens, char **valuep)
 }
 #endif
 
+#ifdef __ANDROID__
+#include <stdint.h>
+typedef uint16_t in_port_t;
+#include <sys/select.h>
+#define atomic_inc_uint(x)  __sync_fetch_and_add(x, 1)
+#define atomic_dec_uint(x)  __sync_fetch_and_sub(x, 1)
+#endif
+
+/* sunny magic */
 #if defined(__sun__)
 #  if defined(RUMPUSER_NO_FILE_OFFSET_BITS)
 #    undef _FILE_OFFSET_BITS
+#    define _FILE_OFFSET_BITS 32
 #  endif
 #endif
 
-#if defined(__APPLE__)
-#define	__dead		__attribute__((noreturn))
-#include <sys/cdefs.h>
-
-#include <libkern/OSAtomic.h>
-#define	atomic_inc_uint(x)	OSAtomicIncrement32((volatile int32_t *)(x))
-#define	atomic_dec_uint(x)	OSAtomicDecrement32((volatile int32_t *)(x))
-
-#include <sys/time.h>
-
-#define	CLOCK_REALTIME	0
+#if !defined(HAVE_CLOCKID_T)
 typedef int clockid_t;
+#endif
 
+#if !defined(HAVE_CLOCK_GETTIME)
+#include <sys/time.h>
+#define	CLOCK_REALTIME	0
 static inline int
 clock_gettime(clockid_t clk, struct timespec *ts)
 {
@@ -106,20 +125,21 @@ clock_gettime(clockid_t clk, struct timespec *ts)
 	}
 	return -1;
 }
+#endif
 
+#if defined(__APPLE__)
+#include <libkern/OSAtomic.h>
+#define	atomic_inc_uint(x)	OSAtomicIncrement32((volatile int32_t *)(x))
+#define	atomic_dec_uint(x)	OSAtomicDecrement32((volatile int32_t *)(x))
 #endif
 
 #include <sys/types.h>
-#include <sys/param.h>
 
-/* NetBSD is almost the only platform with getenv_r() */
-#if !(defined(__NetBSD__) || defined(__minix))
+#if !defined(HAVE_GETENV_R)
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
-
-/* this is inline simply to make this header self-contained */
 static inline int 
 getenv_r(const char *name, char *buf, size_t buflen)
 {
@@ -139,13 +159,12 @@ getenv_r(const char *name, char *buf, size_t buflen)
 }
 #endif
 
-#if defined(__sun__)
-#include <sys/sysmacros.h>
-
 #if !defined(HAVE_POSIX_MEMALIGN)
-/* Solarisa 10 has memalign() but no posix_memalign() */
+#if !defined(HAVE_MEMALIGN)
+#error method for aligned memory allocation required
+#endif
+#include <sys/sysmacros.h>
 #include <stdlib.h>
-
 static inline int
 posix_memalign(void **ptr, size_t align, size_t size)
 {
@@ -155,8 +174,30 @@ posix_memalign(void **ptr, size_t align, size_t size)
 		return ENOMEM;
 	return 0;
 }
-#endif /* !HAVE_POSIX_MEMALIGN */
-#endif /* __sun__ */
+#endif
+
+/*
+ * For NetBSD, use COHERENCY_UNIT as the lock alignment size.
+ * On other platforms, just guess it to be 64.
+ */
+#ifdef __NetBSD__
+#define RUMPUSER_LOCKALIGN COHERENCY_UNIT
+#else
+#define RUMPUSER_LOCKALIGN 64
+#endif
+
+#if !defined(HAVE_ALIGNED_ALLOC)
+#include <stdlib.h>
+static inline void *
+aligned_alloc(size_t alignment, size_t size)
+{
+	void *ptr;
+	int rv;
+
+	rv = posix_memalign(&ptr, alignment, size);
+	return rv ? NULL : ptr;
+}
+#endif
 
 #ifndef __RCSID
 #define __RCSID(a)
@@ -170,9 +211,9 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #define _DIAGASSERT(_p_)
 #endif
 
-#if defined(__linux__) || defined(__sun__) || defined(__CYGWIN__)
+#if !defined(HAVE_STRUCT_SOCKADDR_IN_SIN_LEN)
 #define SIN_SETLEN(a,b)
-#else /* BSD */
+#else
 #define SIN_SETLEN(_sin_, _len_) _sin_.sin_len = _len_
 #endif
 
@@ -217,11 +258,6 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #define __STRING(x)	#x
 #endif
 
-#if (defined(__NetBSD__) && __NetBSD_Version__ > 600000000) || \
-  defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
-#define PLATFORM_HAS_ARC4RANDOM_BUF
-#endif
-
 #ifndef __NetBSD_Prereq__
 #define __NetBSD_Prereq__(a,b,c) 0
 #endif
@@ -246,7 +282,7 @@ posix_memalign(void **ptr, size_t align, size_t size)
 #define MSG_NOSIGNAL 0
 #endif
 
-#if (defined(__sun__) || defined(__ANDROID__)) && !defined(RUMP_REGISTER_T)
+#if !defined(HAVE_REGISTER_T) && !defined(RUMP_REGISTER_T)
 #define RUMP_REGISTER_T long
 typedef RUMP_REGISTER_T register_t;
 #endif
@@ -261,7 +297,7 @@ do {						\
 } while (/*CONSTCOND*/0)
 #endif
 
-#ifndef PLATFORM_HAS_SETGETPROGNAME
+#if !defined(HAVE_SETPROGNAME)
 #define setprogname(a)
 #endif
 

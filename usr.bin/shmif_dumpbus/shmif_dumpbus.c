@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_dumpbus.c,v 1.17 2014/08/18 14:40:17 pooka Exp $	*/
+/*	$NetBSD: shmif_dumpbus.c,v 1.18 2014/11/04 19:05:17 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 #include <rump/rumpuser_port.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shmif_dumpbus.c,v 1.17 2014/08/18 14:40:17 pooka Exp $");
+__RCSID("$NetBSD: shmif_dumpbus.c,v 1.18 2014/11/04 19:05:17 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -60,7 +60,7 @@ __dead static void
 usage(void)
 {
 
-#ifndef PLATFORM_HAS_SETGETPROGNAME
+#ifndef HAVE_GETPROGNAME
 #define getprogname() "shmif_dumpbus"
 #endif
 
@@ -128,10 +128,7 @@ main(int argc, char *argv[])
 	FILE *dumploc = stdout;
 	int useversion;
 
-#ifdef PLATFORM_HAS_SETGETPROGNAME
 	setprogname(argv[0]);
-#endif
-
 	while ((ch = getopt(argc, argv, "hp:")) != -1) {
 		switch (ch) {
 		case 'h':

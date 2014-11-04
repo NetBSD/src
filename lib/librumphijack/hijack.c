@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.110 2014/08/12 23:47:09 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.111 2014/11/04 19:05:17 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -25,10 +25,16 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * XXX: rumphijack sort of works on glibc Linux.  But it's not
+ * the same quality working as on NetBSD.
+ * autoconf HAVE_FOO vs. __NetBSD__ / __linux__ could be further
+ * improved.
+ */
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.110 2014/08/12 23:47:09 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.111 2014/11/04 19:05:17 pooka Exp $");
 #endif
 
 #include <sys/param.h>
@@ -41,15 +47,15 @@ __RCSID("$NetBSD: hijack.c,v 1.110 2014/08/12 23:47:09 pooka Exp $");
 #include <sys/time.h>
 #include <sys/uio.h>
 
-#ifdef PLATFORM_HAS_NBVFSSTAT
+#ifdef __NetBSD__
 #include <sys/statvfs.h>
 #endif
 
-#ifdef PLATFORM_HAS_KQUEUE
+#ifdef HAVE_KQUEUE
 #include <sys/event.h>
 #endif
 
-#ifdef PLATFORM_HAS_NBQUOTA
+#ifdef __NetBSD__
 #include <sys/quotactl.h>
 #endif
 
@@ -120,39 +126,39 @@ enum dualcall {
 	DUALCALL_MKNOD,
 #endif
 
-#ifdef PLATFORM_HAS_NBFILEHANDLE
+#ifdef __NetBSD__
 	DUALCALL_GETFH, DUALCALL_FHOPEN, DUALCALL_FHSTAT, DUALCALL_FHSTATVFS1,
 #endif
 
-#ifdef PLATFORM_HAS_KQUEUE
+#ifdef HAVE_KQUEUE
 	DUALCALL_KEVENT,
 #endif
 
-#ifdef PLATFORM_HAS_NBSYSCTL
+#ifdef __NetBSD__
 	DUALCALL___SYSCTL,
 #endif
 
-#ifdef PLATFORM_HAS_NFSSVC
+#ifdef __NetBSD__
 	DUALCALL_NFSSVC,
 #endif
 
-#ifdef PLATFORM_HAS_NBVFSSTAT
+#ifdef __NetBSD__
 	DUALCALL_STATVFS1, DUALCALL_FSTATVFS1, DUALCALL_GETVFSSTAT, 
 #endif
 
-#ifdef PLATFORM_HAS_NBMOUNT
+#ifdef __NetBSD__
 	DUALCALL_MOUNT, DUALCALL_UNMOUNT,
 #endif
 
-#ifdef PLATFORM_HAS_FSYNC_RANGE
+#ifdef HAVE_FSYNC_RANGE
 	DUALCALL_FSYNC_RANGE,
 #endif
 
-#ifdef PLATFORM_HAS_CHFLAGS
+#ifdef HAVE_CHFLAGS
 	DUALCALL_CHFLAGS, DUALCALL_LCHFLAGS, DUALCALL_FCHFLAGS,
 #endif
 
-#ifdef PLATFORM_HAS_NBQUOTA
+#ifdef HAVE___QUOTACTL
 	DUALCALL_QUOTACTL,
 #endif
 	DUALCALL__NUM
@@ -202,7 +208,6 @@ enum dualcall {
 #define REALGETFH __getfh30
 #define REALFHOPEN __fhopen40
 #define REALFHSTATVFS1 __fhstatvfs140
-#define OLDREALQUOTACTL __quotactl50	/* 5.99.48-62 only */
 #define REALSOCKET __socket30
 
 #define LSEEK_ALIAS _lseek
@@ -252,10 +257,6 @@ int REALFHOPEN(const void *, size_t, int);
 int REALFHSTAT(const void *, size_t, struct stat *);
 int REALFHSTATVFS1(const void *, size_t, struct statvfs *, int);
 int REALSOCKET(int, int, int);
-
-#ifdef PLATFORM_HAS_NBQUOTA
-int OLDREALQUOTACTL(const char *, struct plistref *);
-#endif
 
 #define S(a) __STRING(a)
 struct sysnames {
@@ -329,53 +330,49 @@ struct sysnames {
 	{ DUALCALL_MKNOD,	S(REALMKNOD),	RSYS_NAME(MKNOD)	},
 #endif
 
-#ifdef PLATFORM_HAS_NBFILEHANDLE
+#ifdef __NetBSD__
 	{ DUALCALL_GETFH,	S(REALGETFH),	RSYS_NAME(GETFH)	},
 	{ DUALCALL_FHOPEN,	S(REALFHOPEN),	RSYS_NAME(FHOPEN)	},
 	{ DUALCALL_FHSTAT,	S(REALFHSTAT),	RSYS_NAME(FHSTAT)	},
 	{ DUALCALL_FHSTATVFS1,	S(REALFHSTATVFS1),RSYS_NAME(FHSTATVFS1)	},
 #endif
 
-#ifdef PLATFORM_HAS_KQUEUE
+#ifdef HAVE_KQUEUE
 	{ DUALCALL_KEVENT,	S(REALKEVENT),	RSYS_NAME(KEVENT)	},
 #endif
 
-#ifdef PLATFORM_HAS_NBSYSCTL
+#ifdef __NetBSD__
 	{ DUALCALL___SYSCTL,	"__sysctl",	RSYS_NAME(__SYSCTL)	},
 #endif
 
-#ifdef PLATFORM_HAS_NFSSVC
+#ifdef __NetBSD__
 	{ DUALCALL_NFSSVC,	"nfssvc",	RSYS_NAME(NFSSVC)	},
 #endif
 
-#ifdef PLATFORM_HAS_NBVFSSTAT
+#ifdef __NetBSD__
 	{ DUALCALL_STATVFS1,	"statvfs1",	RSYS_NAME(STATVFS1)	},
 	{ DUALCALL_FSTATVFS1,	"fstatvfs1",	RSYS_NAME(FSTATVFS1)	},
 	{ DUALCALL_GETVFSSTAT,	"getvfsstat",	RSYS_NAME(GETVFSSTAT)	},
 #endif
 
-#ifdef PLATFORM_HAS_NBMOUNT
+#ifdef __NetBSD__
 	{ DUALCALL_MOUNT,	S(REALMOUNT),	RSYS_NAME(MOUNT)	},
 	{ DUALCALL_UNMOUNT,	"unmount",	RSYS_NAME(UNMOUNT)	},
 #endif
 
-#ifdef PLATFORM_HAS_FSYNC_RANGE
+#ifdef HAVE_FSYNC_RANGE
 	{ DUALCALL_FSYNC_RANGE,	"fsync_range",	RSYS_NAME(FSYNC_RANGE)	},
 #endif
 
-#ifdef PLATFORM_HAS_CHFLAGS
+#ifdef HAVE_CHFLAGS
 	{ DUALCALL_CHFLAGS,	"chflags",	RSYS_NAME(CHFLAGS)	},
 	{ DUALCALL_LCHFLAGS,	"lchflags",	RSYS_NAME(LCHFLAGS)	},
 	{ DUALCALL_FCHFLAGS,	"fchflags",	RSYS_NAME(FCHFLAGS)	},
-#endif /* PLATFORM_HAS_CHFLAGS */
+#endif /* HAVE_CHFLAGS */
 
-#ifdef PLATFORM_HAS_NBQUOTA
-#if __NetBSD_Prereq__(5,99,63)
+#ifdef HAVE___QUOTACTL
 	{ DUALCALL_QUOTACTL,	"__quotactl",	RSYS_NAME(__QUOTACTL)	},
-#elif __NetBSD_Prereq__(5,99,48)
-	{ DUALCALL_QUOTACTL,	S(OLDREALQUOTACTL),RSYS_NAME(QUOTACTL)	},
-#endif
-#endif /* PLATFORM_HAS_NBQUOTA */
+#endif /* HAVE___QUOTACTL */
 
 };
 #undef S
@@ -2161,7 +2158,7 @@ poll(struct pollfd *fds, nfds_t nfds, int timeout)
 	return REALPOLLTS(fds, nfds, tsp, NULL);
 }
 
-#ifdef PLATFORM_HAS_KQUEUE
+#ifdef HAVE_KQUEUE
 int
 REALKEVENT(int kq, const struct kevent *changelist, size_t nchanges,
 	struct kevent *eventlist, size_t nevents,
@@ -2192,7 +2189,7 @@ REALKEVENT(int kq, const struct kevent *changelist, size_t nchanges,
 	op_kevent = GETSYSCALL(host, KEVENT);
 	return op_kevent(kq, changelist, nchanges, eventlist, nevents, timeout);
 }
-#endif /* PLATFORM_HAS_KQUEUE */
+#endif /* HAVE_KQUEUE */
 
 /*
  * mmapping from a rump kernel is not supported, so disallow it.
@@ -2208,7 +2205,7 @@ mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 	return host_mmap(addr, len, prot, flags, fd, offset);
 }
 
-#ifdef PLATFORM_HAS_NBSYSCTL
+#ifdef __NetBSD__
 /*
  * these go to one or the other on a per-process configuration
  */
@@ -2339,7 +2336,7 @@ FDCALL(int, REALFSTAT, DUALCALL_FSTAT,					\
 	(fd, sb))
 #endif
 
-#ifdef PLATFORM_HAS_NBVFSSTAT
+#ifdef __NetBSD__
 FDCALL(int, fstatvfs1, DUALCALL_FSTATVFS1,				\
 	(int fd, struct statvfs *buf, int flags),			\
 	(int, struct statvfs *, int),					\
@@ -2381,7 +2378,7 @@ FDCALL(int, fsync, DUALCALL_FSYNC,					\
 	(int),								\
 	(fd))
 
-#ifdef PLATFORM_HAS_FSYNC_RANGE
+#ifdef HAVE_FSYNC_RANGE
 FDCALL(int, fsync_range, DUALCALL_FSYNC_RANGE,				\
 	(int fd, int how, off_t start, off_t length),			\
 	(int, int, off_t, off_t),					\
@@ -2393,7 +2390,7 @@ FDCALL(int, futimes, DUALCALL_FUTIMES,					\
 	(int, const struct timeval *),					\
 	(fd, tv))
 
-#ifdef PLATFORM_HAS_CHFLAGS
+#ifdef HAVE_CHFLAGS
 FDCALL(int, fchflags, DUALCALL_FCHFLAGS,				\
 	(int fd, u_long flags),						\
 	(int, u_long),							\
@@ -2436,7 +2433,7 @@ PATHCALL(int, lchmod, DUALCALL_LCHMOD,					\
 	(const char *, mode_t),						\
 	(path, mode))
 
-#ifdef PLATFORM_HAS_NBVFSSTAT
+#ifdef __NetBSD__
 PATHCALL(int, statvfs1, DUALCALL_STATVFS1,				\
 	(const char *path, struct statvfs *buf, int flags),		\
 	(const char *, struct statvfs *, int),				\
@@ -2499,7 +2496,7 @@ PATHCALL(int, lutimes, DUALCALL_LUTIMES,				\
 	(const char *, const struct timeval *),				\
 	(path, tv))
 
-#ifdef PLATFORM_HAS_CHFLAGS
+#ifdef HAVE_CHFLAGS
 PATHCALL(int, chflags, DUALCALL_CHFLAGS,				\
 	(const char *path, u_long flags),				\
 	(const char *, u_long),						\
@@ -2509,7 +2506,7 @@ PATHCALL(int, lchflags, DUALCALL_LCHFLAGS,				\
 	(const char *path, u_long flags),				\
 	(const char *, u_long),						\
 	(path, flags))
-#endif /* PLATFORM_HAS_CHFLAGS */
+#endif /* HAVE_CHFLAGS */
 
 PATHCALL(int, truncate, DUALCALL_TRUNCATE,				\
 	(const char *path, off_t length),				\
@@ -2534,7 +2531,7 @@ PATHCALL(int, REALMKNOD, DUALCALL_MKNOD,				\
  * about the "source" directory in a generic call (and besides,
  * it might not even exist, cf. nfs).
  */
-#ifdef PLATFORM_HAS_NBMOUNT
+#ifdef __NetBSD__
 PATHCALL(int, REALMOUNT, DUALCALL_MOUNT,				\
 	(const char *type, const char *path, int flags,			\
 	    void *data, size_t dlen),					\
@@ -2545,23 +2542,16 @@ PATHCALL(int, unmount, DUALCALL_UNMOUNT,				\
 	(const char *path, int flags),					\
 	(const char *, int),						\
 	(path, flags))
-#endif /* PLATFORM_HAS_NBMOUNT */
+#endif /* __NetBSD__ */
 
-#ifdef PLATFORM_HAS_NBQUOTA
-#if __NetBSD_Prereq__(5,99,63)
+#ifdef HAVE___QUOTACTL
 PATHCALL(int, __quotactl, DUALCALL_QUOTACTL,				\
 	(const char *path, struct quotactl_args *args),			\
 	(const char *, struct quotactl_args *),				\
 	(path, args))
-#elif __NetBSD_Prereq__(5,99,48)
-PATHCALL(int, OLDREALQUOTACTL, DUALCALL_QUOTACTL,			\
-	(const char *path, struct plistref *p),				\
-	(const char *, struct plistref *),				\
-	(path, p))
-#endif
-#endif /* PLATFORM_HAS_NBQUOTA */
+#endif /* HAVE___QUOTACTL */
 
-#ifdef PLATFORM_HAS_NBFILEHANDLE
+#ifdef __NetBSD__
 PATHCALL(int, REALGETFH, DUALCALL_GETFH,				\
 	(const char *path, void *fhp, size_t *fh_size),			\
 	(const char *, void *, size_t *),				\
@@ -2572,14 +2562,14 @@ PATHCALL(int, REALGETFH, DUALCALL_GETFH,				\
  * These act different on a per-process vfs configuration
  */
 
-#ifdef PLATFORM_HAS_NBVFSSTAT
+#ifdef __NetBSD__
 VFSCALL(VFSBIT_GETVFSSTAT, int, getvfsstat, DUALCALL_GETVFSSTAT,	\
 	(struct statvfs *buf, size_t buflen, int flags),		\
 	(struct statvfs *, size_t, int),				\
 	(buf, buflen, flags))
 #endif
 
-#ifdef PLATFORM_HAS_NBFILEHANDLE
+#ifdef __NetBSD__
 VFSCALL(VFSBIT_FHCALLS, int, REALFHOPEN, DUALCALL_FHOPEN,		\
 	(const void *fhp, size_t fh_size, int flags),			\
 	(const char *, size_t, int),					\
@@ -2597,7 +2587,7 @@ VFSCALL(VFSBIT_FHCALLS, int, REALFHSTATVFS1, DUALCALL_FHSTATVFS1,	\
 #endif
 
 
-#ifdef PLATFORM_HAS_NFSSVC
+#ifdef __NetBSD__
 
 /* finally, put nfssvc here.  "keep the namespace clean" */
 #include <nfs/rpcv2.h>
@@ -2622,4 +2612,4 @@ nfssvc(int flags, void *argstructp)
 
 	return op_nfssvc(flags, argstructp);
 }
-#endif /* PLATFORM_HAS_NFSSVC */
+#endif /* __NetBSD__ */
