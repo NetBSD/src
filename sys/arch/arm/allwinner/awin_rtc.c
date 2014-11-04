@@ -1,4 +1,4 @@
-/* $NetBSD: awin_rtc.c,v 1.5 2014/11/04 18:15:11 jakllsch Exp $ */
+/* $NetBSD: awin_rtc.c,v 1.6 2014/11/04 19:22:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_rtc.c,v 1.5 2014/11/04 18:15:11 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_rtc.c,v 1.6 2014/11/04 19:22:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,8 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: awin_rtc.c,v 1.5 2014/11/04 18:15:11 jakllsch Exp $"
 #include <arm/allwinner/awin_var.h>
 
 #include <dev/clock_subr.h>
-
-#define AWIN_RTC_BASE_YEAR 1900
 
 struct awin_rtc_softc {
 	device_t sc_dev;
@@ -122,7 +120,7 @@ awin_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 	dt->dt_year = __SHIFTOUT(yymmdd,
 	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
 	    AWIN_A31_RTC_YY_MM_DD_YEAR : AWIN_RTC_YY_MM_DD_YEAR) +
-	    AWIN_RTC_BASE_YEAR;
+	    POSIX_BASE_YEAR;
 	dt->dt_mon = __SHIFTOUT(yymmdd, AWIN_RTC_YY_MM_DD_MONTH);
 	dt->dt_day = __SHIFTOUT(yymmdd, AWIN_RTC_YY_MM_DD_DAY);
 	dt->dt_wday = __SHIFTOUT(hhmmss, AWIN_RTC_HH_MM_SS_WK_NO);
@@ -146,29 +144,29 @@ awin_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 	/*
 	 * Sanity check the date before writing it back
 	 */
-	if (dt->dt_year < AWIN_RTC_BASE_YEAR) {
+	if (dt->dt_year < POSIX_BASE_YEAR) {
 		aprint_normal_dev(sc->sc_dev, "year pre the epoch: %llu, "
 		    "not writing back time\n", dt->dt_year);
 		return EIO;
 	}
-	maxyear = __SHIFTOUT(0xffffffff,
+	maxyear = __SHIFTOUT(0xffffffff, 
 	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
 	    AWIN_A31_RTC_YY_MM_DD_YEAR : AWIN_RTC_YY_MM_DD_YEAR)
-	    + AWIN_RTC_BASE_YEAR;
+	    + POSIX_BASE_YEAR;
 	if (dt->dt_year > maxyear) {
 		aprint_normal_dev(sc->sc_dev, "year exceeds available field:"
 		    " %llu, not writing back time\n", dt->dt_year);
 		return EIO;
 	}
 
-	yymmdd = __SHIFTIN(dt->dt_year - AWIN_RTC_BASE_YEAR,
+	yymmdd = __SHIFTIN(dt->dt_year - POSIX_BASE_YEAR,
 	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
 	    AWIN_A31_RTC_YY_MM_DD_YEAR : AWIN_RTC_YY_MM_DD_YEAR);
 
 	KASSERT(__SHIFTOUT(yymmdd,
 	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
 	    AWIN_A31_RTC_YY_MM_DD_YEAR : AWIN_RTC_YY_MM_DD_YEAR) +
-	    AWIN_RTC_BASE_YEAR == dt->dt_year);
+	    POSIX_BASE_YEAR == dt->dt_year);
 
 	yymmdd |= __SHIFTIN(dt->dt_mon, AWIN_RTC_YY_MM_DD_MONTH);
 	yymmdd |= __SHIFTIN(dt->dt_day, AWIN_RTC_YY_MM_DD_DAY);
