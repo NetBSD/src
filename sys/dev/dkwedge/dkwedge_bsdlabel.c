@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.22 2014/08/30 09:35:10 apb Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.23 2014/11/04 07:45:45 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.22 2014/08/30 09:35:10 apb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.23 2014/11/04 07:45:45 mlelstv Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -137,6 +137,7 @@ typedef struct mbr_args {
 	struct vnode	*vp;
 	void		*buf;
 	int		error;
+	uint32_t	secsize;
 } mbr_args_t;
 
 static const char *
@@ -274,7 +275,7 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 	int error, swapped;
 	uint16_t npartitions;
 
-	error = dkwedge_read(a->pdk, a->vp, label_sector, a->buf, DEV_BSIZE);
+	error = dkwedge_read(a->pdk, a->vp, label_sector, a->buf, a->secsize);
 	if (error) {
 		aprint_error("%s: unable to read BSD disklabel @ %" PRId64
 		    ", error = %d\n", a->pdk->dk_name, label_sector, error);
@@ -288,7 +289,7 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 	 * in the sector.
 	 */
 	lp = a->buf;
-	lp_lim = (char *)a->buf + DEV_BSIZE - DISKLABEL_MINSIZE;
+	lp_lim = (char *)a->buf + a->secsize - DISKLABEL_MINSIZE;
 	for (;; lp = (void *)((char *)lp + sizeof(uint32_t))) {
 		if ((char *)lp > (char *)lp_lim)
 			return (SCAN_CONTINUE);
@@ -307,7 +308,7 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 
 		/* Validate label length. */
 		if ((char *)lp + DISKLABEL_SIZE(npartitions) >
-		    (char *)a->buf + DEV_BSIZE) {
+		    (char *)a->buf + a->secsize) {
 			aprint_error("%s: BSD disklabel @ "
 			    "%" PRId64 "+%zd has bogus partition count (%u)\n",
 			    a->pdk->dk_name, label_sector, label_offset,
@@ -351,7 +352,7 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, struct mbr_partition *,
 	this_ext = 0;
 	for (;;) {
 		a->error = dkwedge_read(a->pdk, a->vp, this_ext, a->buf,
-					DEV_BSIZE);
+					a->secsize);
 		if (a->error) {
 			aprint_error("%s: unable to read MBR @ %u, "
 			    "error = %d\n", a->pdk->dk_name, this_ext,
@@ -447,8 +448,9 @@ dkwedge_discover_bsdlabel(struct disk *pdk, struct vnode *vp)
 	int rval;
 
 	a.pdk = pdk;
+	a.secsize = DEV_BSIZE << pdk->dk_blkshift;
 	a.vp = vp;
-	a.buf = DKW_MALLOC(DEV_BSIZE);
+	a.buf = DKW_MALLOC(a.secsize);
 	a.error = 0;
 
 	/* MBR search. */
