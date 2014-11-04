@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.414 2014/10/11 14:05:11 mlelstv Exp $ */
+/*	$NetBSD: wd.c,v 1.415 2014/11/04 07:51:55 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.414 2014/10/11 14:05:11 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.415 2014/11/04 07:51:55 mlelstv Exp $");
 
 #include "opt_ata.h"
 
@@ -1508,6 +1508,15 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 	    	struct dkwedge_list *dkwl = (void *) addr;
 
 		return (dkwedge_list(&wd->sc_dk, dkwl, l));
+	    }
+
+	case DIOCMWEDGES:
+	    {
+	    	if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		dkwedge_discover(&wd->sc_dk);
+		return 0;
 	    }
 
 	case DIOCGSTRATEGY:
