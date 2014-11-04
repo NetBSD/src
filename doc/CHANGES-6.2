@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.150 2014/11/04 00:54:16 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.151 2014/11/04 01:56:17 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4178,3 +4178,16 @@ sys/netinet/tcp_output.c			1.178
 	Avoid stack overflow when SACK and TCP_SIGNATURE are both present.
 	Pointed out by Jonathan Looney.
 	[christos, ticket #1174]
+
+lib/libperfuse/ops.c				1.72
+lib/libperfuse/perfuse_priv.h			1.35
+
+	Fix build failure on amd64.
+	[manu, ticket #1153]
+
+lib/libperfuse/ops.c				1.74
+
+	Avoid a file resize serialization deadlock when writing with
+	PUFFS_IO_APPEND flag. The symptom was a hang when appending to
+	a file with a null size.
+	[manu, ticket #1151]
