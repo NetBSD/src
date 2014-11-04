@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.45 2014/10/31 07:38:36 uebayasi Exp $	*/
+/*	$NetBSD: gram.y,v 1.46 2014/11/04 23:01:23 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gram.y,v 1.45 2014/10/31 07:38:36 uebayasi Exp $");
+__RCSID("$NetBSD: gram.y,v 1.46 2014/11/04 23:01:23 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -908,7 +908,7 @@ dev_spec:
 
 /* major and minor device number */
 major_minor:
-	MAJOR NUMBER MINOR NUMBER	{ $$ = makedev($2.val, $4.val); }
+	MAJOR NUMBER MINOR NUMBER	{ $$ = (int64_t)makedev($2.val, $4.val); }
 ;
 
 /* filesystem type for root fs specification */
