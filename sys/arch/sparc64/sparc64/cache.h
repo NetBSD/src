@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.23 2014/06/08 17:33:24 palle Exp $ */
+/*	$NetBSD: cache.h,v 1.24 2014/11/04 18:11:42 palle Exp $ */
 
 /*
  * Copyright (c) 2011 Matthew R. Green
@@ -140,10 +140,8 @@ sp_tlb_flush_pte(vaddr_t va, int ctx)
 		else
 			sp_tlb_flush_pte_us(va, ctx);
 	}
-#ifdef SUN4V	
-	else
+	else if (CPU_ISSUN4V)
 		sp_tlb_flush_pte_sun4v(va, ctx);
-#endif
 }
 
 static __inline__ void
