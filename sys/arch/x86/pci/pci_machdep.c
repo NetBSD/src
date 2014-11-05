@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.67 2014/05/06 18:54:34 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.68 2014/11/05 05:07:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.67 2014/05/06 18:54:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.68 2014/11/05 05:07:43 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -789,24 +789,28 @@ static bool
 x86_genfb_setmode(struct genfb_softc *sc, int newmode)
 {
 #if NGENFB > 0
+# if NACPICA > 0 && defined(VGA_POST)
 	static int curmode = WSDISPLAYIO_MODE_EMUL;
+# endif
 
 	switch (newmode) {
 	case WSDISPLAYIO_MODE_EMUL:
 		x86_genfb_mtrr_init(sc->sc_fboffset,
 		    sc->sc_height * sc->sc_stride);
-#if NACPICA > 0 && defined(VGA_POST)
+# if NACPICA > 0 && defined(VGA_POST)
 		if (curmode != newmode) {
 			if (vga_posth != NULL && acpi_md_vesa_modenum != 0) {
 				vga_post_set_vbe(vga_posth,
 				    acpi_md_vesa_modenum);
 			}
 		}
-#endif
+# endif
 		break;
 	}
 
+# if NACPICA > 0 && defined(VGA_POST)
 	curmode = newmode;
+# endif
 #endif
 	return true;
 }
