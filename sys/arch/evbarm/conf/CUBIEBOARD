@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.29 2014/10/24 10:48:05 jmcneill Exp $
+#	$NetBSD: CUBIEBOARD,v 1.30 2014/11/05 18:32:29 jmcneill Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -172,7 +172,8 @@ config		netbsd		root on ? type ?
 # The main bus device
 mainbus0	at root
 
-# The boot cpu
+# CPU(s)
+options 	MULTIPROCESSOR
 cpu*		at mainbus?
 
 # Specify the memory size in megabytes (optional).
@@ -213,6 +214,9 @@ awinicu0	at awinio0
 
 # DMA Controller
 awindma0	at awinio0
+
+# 64-bit counter
+awincnt0	at awinio0
 
 # GPIO Controller
 awingpio0	at awinio0
