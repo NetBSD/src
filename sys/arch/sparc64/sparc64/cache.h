@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.25 2014/11/05 13:30:11 nakayama Exp $ */
+/*	$NetBSD: cache.h,v 1.26 2014/11/05 13:50:50 nakayama Exp $ */
 
 /*
  * Copyright (c) 2011 Matthew R. Green
@@ -130,14 +130,12 @@ sp_tlb_flush_pte_sun4v(vaddr_t va, int ctx)
 static __inline__ void
 sp_tlb_flush_pte(vaddr_t va, int ctx)
 {
-	if (CPU_ISSUN4U || CPU_ISSUN4US) {
-		if (CPU_IS_USIII_UP() || CPU_IS_SPARC64_V_UP())
-			sp_tlb_flush_pte_usiii(va, ctx);
-		else
-			sp_tlb_flush_pte_us(va, ctx);
-	}
-	else if (CPU_ISSUN4V)
+	if (CPU_ISSUN4V)
 		sp_tlb_flush_pte_sun4v(va, ctx);
+	else if (CPU_IS_USIII_UP() || CPU_IS_SPARC64_V_UP())
+		sp_tlb_flush_pte_usiii(va, ctx);
+	else
+		sp_tlb_flush_pte_us(va, ctx);
 }
 
 static __inline__ void
