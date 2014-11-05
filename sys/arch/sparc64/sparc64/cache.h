@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.24 2014/11/04 18:11:42 palle Exp $ */
+/*	$NetBSD: cache.h,v 1.25 2014/11/05 13:30:11 nakayama Exp $ */
 
 /*
  * Copyright (c) 2011 Matthew R. Green
@@ -82,9 +82,7 @@
  */
 
 #include <machine/psl.h>
-#ifdef SUN4V
 #include <machine/hypervisor.h>
-#endif
 
 /* Various cache size/line sizes */
 extern	int	ecache_min_line_size;
@@ -120,7 +118,6 @@ void sp_tlb_flush_pte_usiii(vaddr_t, int);
 void sp_tlb_flush_all_us(void);
 void sp_tlb_flush_all_usiii(void);
 
-#ifdef SUN4V
 static __inline__ void
 sp_tlb_flush_pte_sun4v(vaddr_t va, int ctx)
 {
@@ -129,7 +126,6 @@ sp_tlb_flush_pte_sun4v(vaddr_t va, int ctx)
 	if ( hv_rc != H_EOK )
 		panic("hv_mmu_demap_page(%p,%d) failed - rc = %" PRIx64 "\n", (void*)va, ctx, hv_rc);
 }
-#endif
 
 static __inline__ void
 sp_tlb_flush_pte(vaddr_t va, int ctx)
