@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.87 2014/10/21 09:07:07 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.88 2014/11/05 19:39:17 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.87 2014/10/21 09:07:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.88 2014/11/05 19:39:17 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1001,7 +1001,14 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	pmf_event_register(dev, PMFE_DISPLAY_BRIGHTNESS_DOWN,
 	    radeonfb_brightness_down, TRUE);
 
-	config_found_ia(dev, "drm", aux, radeonfb_drm_print);
+	/*
+	 * if we attach a DRM we need to unmap registers in
+	 * WSDISPLAYIO_MODE_MAPPED, since this keeps us from doing things like
+	 * screen blanking we only do it if needed
+	 */
+	sc->sc_needs_unmap = 
+	    (config_found_ia(dev, "drm", aux, radeonfb_drm_print) != 0);
+	DPRINTF(("needs_unmap: %d\n", sc->sc_needs_unmap));
 
 	PRINTREG(RADEON_CRTC_EXT_CNTL);
 	PRINTREG(RADEON_CRTC_GEN_CNTL);
@@ -1048,6 +1055,9 @@ radeonfb_map(struct radeonfb_softc *sc)
 static void
 radeonfb_unmap(struct radeonfb_softc *sc)
 {
+	if (!sc->sc_needs_unmap)
+		return;
+
 	if (sc->sc_mapped) {
 		bus_space_unmap(sc->sc_regt, sc->sc_regh, sc->sc_regsz);
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_memsz);
@@ -1119,6 +1129,8 @@ radeonfb_ioctl(void *v, void *vs,
 	case WSDISPLAYIO_SVIDEO:
 		radeonfb_blank(dp,
 		    (*(unsigned int *)d == WSDISPLAYIO_VIDEO_OFF));
+		radeonfb_switch_backlight(dp,
+		    (*(unsigned int *)d == WSDISPLAYIO_VIDEO_ON));
 		return 0;
 
 	case WSDISPLAYIO_GETCMAP:
@@ -4093,9 +4105,12 @@ radeonfb_switch_backlight(struct radeonfb_display *dp, int on)
 static int 
 radeonfb_set_backlight(struct radeonfb_display *dp, int level)
 {
-	struct radeonfb_softc *sc;
+	struct radeonfb_softc *sc = dp->rd_softc;;
 	int rlevel, s;
 	uint32_t lvds;
+
+	if(!sc->sc_mapped)
+		return 0;
 
 	s = spltty();
 
@@ -4108,11 +4123,9 @@ radeonfb_set_backlight(struct radeonfb_display *dp, int level)
 	else if (level >= RADEONFB_BACKLIGHT_MAX)
 		level = RADEONFB_BACKLIGHT_MAX;
 
-	sc = dp->rd_softc;
-
 	/* On some chips, we should negate the backlight level. */
 	if (dp->rd_softc->sc_flags & RFB_INV_BLIGHT) {
-	rlevel = RADEONFB_BACKLIGHT_MAX - level;
+		rlevel = RADEONFB_BACKLIGHT_MAX - level;
 	} else
 	rlevel = level;
 
