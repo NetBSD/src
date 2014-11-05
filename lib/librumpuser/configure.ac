@@ -27,12 +27,16 @@ AC_CANONICAL_TARGET
 AC_CHECK_TYPES([clockid_t, register_t])
 
 AC_CHECK_FUNCS([kqueue chflags strsuftoll setprogname getprogname	\
-	clock_gettime getenv_r posix_memalign memalign aligned_alloc	\
+	getenv_r posix_memalign memalign aligned_alloc	\
 	arc4random_buf getsubopt fsync_range __quotactl])
 
 AC_TRY_LINK_FUNC([clock_nanosleep],,
         AC_CHECK_LIB([rt], [clock_nanosleep])
 )
+AC_CHECK_LIB([rt], [clock_gettime],
+	AC_DEFINE([HAVE_CLOCK_GETTIME], 1, [clock_gettime]),
+	AC_TRY_LINK_FUNC([clock_gettime],
+	    AC_DEFINE([HAVE_CLOCK_GETTIME], 1, [clock_gettime])))
 AC_CHECK_LIB([rt], [clock_nanosleep],
 	AC_DEFINE([HAVE_CLOCK_NANOSLEEP], 1, [clock_nanosleep]),
 	AC_TRY_LINK_FUNC([clock_nanosleep],

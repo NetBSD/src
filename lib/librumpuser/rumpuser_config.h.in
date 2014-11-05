@@ -12,7 +12,7 @@
 /* Define to 1 if the system has the type `clockid_t'. */
 #undef HAVE_CLOCKID_T
 
-/* Define to 1 if you have the `clock_gettime' function. */
+/* clock_gettime */
 #undef HAVE_CLOCK_GETTIME
 
 /* clock_nanosleep */
