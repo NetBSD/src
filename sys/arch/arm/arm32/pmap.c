@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.308 2014/11/04 23:58:21 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.309 2014/11/05 09:13:16 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -215,7 +215,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.308 2014/11/04 23:58:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.309 2014/11/05 09:13:16 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -2540,7 +2540,7 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
  *
  * This is a local function used to work out the best strategy to clean
  * a single page referenced by its entry in the PV table. It's used by
- * pmap_copy_page, pmap_zero page and maybe some others later on.
+ * pmap_copy_page, pmap_zero_page and maybe some others later on.
  *
  * Its policy is effectively:
  *  o If there are no mappings, we don't bother doing anything with the cache.
