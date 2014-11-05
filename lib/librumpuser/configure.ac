@@ -33,9 +33,10 @@ AC_CHECK_FUNCS([kqueue chflags strsuftoll setprogname getprogname	\
 AC_TRY_LINK_FUNC([clock_nanosleep],,
         AC_CHECK_LIB([rt], [clock_nanosleep])
 )
-AC_TRY_LINK_FUNC([clock_gettime],,
-        AC_CHECK_LIB([rt], [clock_gettime])
-)
+AC_CHECK_LIB([rt], [clock_nanosleep],
+	AC_DEFINE([HAVE_CLOCK_NANOSLEEP], 1, [clock_nanosleep]),
+	AC_TRY_LINK_FUNC([clock_nanosleep],
+	    AC_DEFINE([HAVE_CLOCK_NANOSLEEP], 1, [clock_nanosleep])))
 AC_CHECK_LIB([dl], [dlinfo],
 	AC_DEFINE([HAVE_DLINFO], 1, [dlinfo]),
 	AC_TRY_LINK_FUNC([dlinfo], AC_DEFINE([HAVE_DLINFO], 1, [dlinfo])))
