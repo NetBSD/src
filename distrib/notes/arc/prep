@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.1.6.1 2009/04/25 23:16:33 snj Exp $
+.\"	$NetBSD: prep,v 1.1.6.2 2014/11/05 13:11:12 sborrill Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -40,7 +40,7 @@ install kernel onto a CD-R.
 Go to one of the
 .Nx
 mirror sites and download CD-R image from the
-.Pa pub/NetBSD/iso
+.Pa pub/NetBSD/images
 directory.
 .Lk http://www.NetBSD.org/mirrors/#iso
 .Pp

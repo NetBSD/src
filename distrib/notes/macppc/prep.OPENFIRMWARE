@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep.OPENFIRMWARE,v 1.11.2.2 2010/11/05 07:29:48 snj Exp $
+.\"	$NetBSD: prep.OPENFIRMWARE,v 1.11.2.3 2014/11/05 13:11:12 sborrill Exp $
 .if \*[OF_VERSION_3] \{\
 .
 .Ss2 Updating your BootROM
@@ -1177,7 +1177,7 @@ Go to one of the
 mirror sites and download the CD-R image
 .Pa macppccd-\*V.iso
 from the
-.Pa pub/NetBSD/iso
+.Pa pub/NetBSD/images
 directory.
 .Lk http://www.NetBSD.org/mirrors/#iso
 .Pp
