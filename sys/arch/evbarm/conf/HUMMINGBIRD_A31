@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.13 2014/11/02 23:56:13 jmcneill Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.14 2014/11/05 00:16:19 jmcneill Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -173,7 +173,7 @@ config		netbsd		root on ? type ?
 mainbus0	at root
 
 # CPU
-#options 	MULTIPROCESSOR
+options 	MULTIPROCESSOR
 cpu*		at mainbus?
 
 # Specify the memory size in megabytes.
