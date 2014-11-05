@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.63 2014/07/25 14:00:31 justin Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.64 2014/11/05 00:43:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.63 2014/07/25 14:00:31 justin Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.64 2014/11/05 00:43:55 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/stat.h>
@@ -143,7 +143,8 @@ rumpuser_clock_sleep(int enum_rumpclock, int64_t sec, long nsec)
 #else
 			/* le/la/der/die/das sigh. timevalspec tailspin */
 			struct timespec ts, tsr;
-			clock_gettime(CLOCK_REALTIME, &ts);
+			if ((rv = clock_gettime(CLOCK_REALTIME, &ts)) == -1)
+				continue;
 			if (ts.tv_sec == rqt.tv_sec ?
 			    ts.tv_nsec > rqt.tv_nsec : ts.tv_sec > rqt.tv_sec) {
 				rv = 0;
