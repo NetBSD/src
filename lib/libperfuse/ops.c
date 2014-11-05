@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.66.2.10 2014/11/05 18:11:30 snj Exp $ */
+/*  $NetBSD: ops.c,v 1.66.2.11 2014/11/05 18:18:27 snj Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -3299,6 +3299,7 @@ perfuse_node_write2(struct puffs_usermount *pu, puffs_cookie_t opc,
 	if (*resid != 0)
 		error = EFBIG;
 
+out:
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RESIZE) {
 		if (offset > (off_t)vap->va_size)
@@ -3314,16 +3315,6 @@ perfuse_node_write2(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 */
 	if (offset > (off_t)vap->va_size) 
 		vap->va_size = offset;
-
-	if (inresize) {
-#ifdef PERFUSE_DEBUG
-		if (!(pnd->pnd_flags & PND_INRESIZE))
-			DERRX(EX_SOFTWARE, "file write grow without resize");
-#endif
-		pnd->pnd_flags &= ~PND_INRESIZE;
-		(void)dequeue_requests(opc, PCQ_RESIZE, DEQUEUE_ALL);
-	}
-
 
 	/*
 	 * Statistics
@@ -3344,7 +3335,15 @@ perfuse_node_write2(struct puffs_usermount *pu, puffs_cookie_t opc,
 			__func__, (void*)opc, perfuse_node_path(ps, opc));
 #endif
 
-out:
+	if (inresize) {
+#ifdef PERFUSE_DEBUG
+		if (!(pnd->pnd_flags & PND_INRESIZE))
+			DERRX(EX_SOFTWARE, "file write grow without resize");
+#endif
+		pnd->pnd_flags &= ~PND_INRESIZE;
+		(void)dequeue_requests(opc, PCQ_RESIZE, DEQUEUE_ALL);
+	}
+
 	/*
 	 * VOP_PUTPAGE causes FAF write where kernel does not 
 	 * check operation result. At least warn if it failed.
