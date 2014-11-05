@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.298 2014/09/30 14:57:51 apb Exp $
+#	$NetBSD: build.sh,v 1.299 2014/11/05 08:19:17 snj Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1037,8 +1037,8 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
     sourcesets          Create source sets in RELEASEDIR/source/sets.
     syspkgs             Create syspkgs in
                         RELEASEDIR/RELEASEMACHINEDIR/binary/syspkgs.
-    iso-image           Create CD-ROM image in RELEASEDIR/iso.
-    iso-image-source    Create CD-ROM image with source in RELEASEDIR/iso.
+    iso-image           Create CD-ROM image in RELEASEDIR/images.
+    iso-image-source    Create CD-ROM image with source in RELEASEDIR/images.
     live-image          Create bootable live image in
                         RELEASEDIR/RELEASEMACHINEDIR/installation/liveimage.
     install-image       Create bootable installation image in
@@ -1870,7 +1870,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.298 2014/09/30 14:57:51 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.299 2014/11/05 08:19:17 snj Exp $
 # with these arguments: ${_args}
 #
 
