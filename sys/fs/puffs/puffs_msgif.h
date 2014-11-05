@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.80.14.1 2014/08/26 23:15:12 riz Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.80.14.2 2014/11/05 18:11:31 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -86,11 +86,12 @@ enum {
 	PUFFS_VN_ADVLOCK,	PUFFS_VN_LEASE,		PUFFS_VN_WHITEOUT,
 	PUFFS_VN_GETPAGES,	PUFFS_VN_PUTPAGES,	PUFFS_VN_GETEXTATTR,
 	PUFFS_VN_LISTEXTATTR,	PUFFS_VN_OPENEXTATTR,	PUFFS_VN_DELETEEXTATTR,
-	PUFFS_VN_SETEXTATTR,	PUFFS_VN_CLOSEEXTATTR
+	PUFFS_VN_SETEXTATTR,	PUFFS_VN_CLOSEEXTATTR,	PUFFS_VN_FALLOCATE,
+	PUFFS_VN_FDISCARD,
 	/* NOTE: If you add an op, decrement PUFFS_VN_SPARE accordingly */
 };
-#define PUFFS_VN_MAX PUFFS_VN_CLOSEEXTATTR
-#define PUFFS_VN_SPARE 32
+#define PUFFS_VN_MAX PUFFS_VN_FDISCARD
+#define PUFFS_VN_SPARE 30
 
 /*
  * These signal invalid parameters the file system returned.
@@ -664,6 +665,19 @@ struct puffs_vnmsg_deleteextattr {
 	char			pvnr_attrname[PUFFS_EXTNAMELEN];/* OUT	  */
 
 	struct puffs_kcred	pvnr_cred;			/* OUT	*/
+};
+
+#define PUFFS_HAVE_FALLOCATE 1
+struct puffs_vnmsg_fallocate {
+	struct puffs_req	pvn_pr;
+	off_t			pvnr_off;			/* OUT    */
+	off_t			pvnr_len;			/* OUT    */
+};
+
+struct puffs_vnmsg_fdiscard {
+	struct puffs_req	pvn_pr;
+	off_t			pvnr_off;			/* OUT    */
+	off_t			pvnr_len;			/* OUT    */
 };
 
 /*
