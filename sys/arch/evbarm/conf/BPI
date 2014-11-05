@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BPI,v 1.7 2014/10/24 10:59:24 jmcneill Exp $
+#	$NetBSD: BPI,v 1.8 2014/11/05 08:11:35 skrll Exp $
 #
 #	BPI -- Banana Pi - an Allwinner A20 Eval Board Kernel
 #
@@ -26,7 +26,7 @@ options 	CPU_CORTEXA7
 options 	ALLWINNER_A20
 options 	PMAPCOUNTERS
 options 	AWIN_CONSOLE_EARLY
-#options 	MULTIPROCESSOR
+options 	MULTIPROCESSOR
 
 # Architecture options
 
