@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.6 2014/11/05 14:47:16 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.7 2014/11/05 15:03:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.6 2014/11/05 14:47:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.7 2014/11/05 15:03:19 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -132,7 +132,7 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		}
 	}
 
-	ret = ttm_bo_uvm_fault_idle(bo, ufi, uobj);
+	ret = ttm_bo_uvm_fault_idle(bo, ufi);
 	if (ret) {
 		/* Unlocks if it restarts.  */
 		KASSERT(ret == -ERESTART);
