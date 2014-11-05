@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfiber.c,v 1.4 2014/08/24 14:37:31 pooka Exp $	*/
+/*	$NetBSD: rumpfiber.c,v 1.5 2014/11/05 01:39:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -68,7 +68,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpfiber.c,v 1.4 2014/08/24 14:37:31 pooka Exp $");
+__RCSID("$NetBSD: rumpfiber.c,v 1.5 2014/11/05 01:39:40 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -119,8 +119,10 @@ static int64_t
 now(void)
 {
 	struct timespec ts;
+	int rv;
 
-	clock_gettime(CLOCK_MONOTONIC, &ts);
+	rv = clock_gettime(CLOCK_MONOTONIC, &ts);
+	assert(rv == 0);
 	return (ts.tv_sec * 1000LL) + (ts.tv_nsec / 1000000LL);
 }
 
