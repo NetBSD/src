@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.14.2.7 2014/01/18 11:23:49 bouyer Exp $
+.\"	$NetBSD: main,v 1.425.2.14.2.8 2014/11/05 14:17:33 sborrill Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -118,7 +118,7 @@ Option 1: bootable CD-ROM images containing the full distribution.
 .Pp
 These can be found
 on an FTP site near you, usually located in the
-.Pa /pub/NetBSD/iso/
+.Pa /pub/NetBSD/images/
 directory.
 Check the NetBSD website for details.
 .Pp
