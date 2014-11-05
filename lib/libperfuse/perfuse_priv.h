@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.32.2.2 2014/09/12 08:13:20 martin Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.32.2.3 2014/11/05 18:11:30 snj Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -67,6 +67,7 @@ struct perfuse_state {
 #define PS_NO_ACCESS	0x0001	/* access is unimplemented; */
 #define PS_NO_CREAT	0x0004	/* create is unimplemented */
 #define PS_INLOOP	0x0008	/* puffs mainloop started */
+#define PS_NO_FALLOCATE	0x0010	/* fallocate is unimplemented */
 	uint64_t ps_fsid;
 	uint32_t ps_max_readahead;
 	uint32_t ps_max_write;
@@ -277,6 +278,8 @@ int perfuse_node_getattr_ttl(struct puffs_usermount *,
 int perfuse_node_setattr_ttl(struct puffs_usermount *,
     puffs_cookie_t, struct vattr *, const struct puffs_cred *,
     struct timespec *, int);
+int perfuse_node_fallocate(struct puffs_usermount *,
+    puffs_cookie_t, off_t, off_t);
 
 struct perfuse_trace *perfuse_trace_begin(struct perfuse_state *, 
     puffs_cookie_t, perfuse_msg_t *);

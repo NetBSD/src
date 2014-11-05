@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.124.10.1 2014/08/24 08:42:06 martin Exp $	*/
+/*	$NetBSD: puffs.h,v 1.124.10.2 2014/11/05 18:11:31 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -252,8 +252,12 @@ struct puffs_ops {
 	    puffs_cookie_t, int);
 	int (*puffs_node_open2)(struct puffs_usermount *,
 	    puffs_cookie_t, int, const struct puffs_cred *, int *);
+	int (*puffs_node_fallocate)(struct puffs_usermount *,
+	    puffs_cookie_t, off_t, off_t);
+	int (*puffs_node_fdiscard)(struct puffs_usermount *,
+	    puffs_cookie_t, off_t, off_t);
 
-	void *puffs_ops_spare[28];
+	void *puffs_ops_spare[26];
 };
 
 typedef	int (*pu_pathbuild_fn)(struct puffs_usermount *,
@@ -414,7 +418,11 @@ enum {
 	int fsname##_node_reclaim2(struct puffs_usermount *,		\
 	    puffs_cookie_t, int);					\
 	int fsname##_node_open2(struct puffs_usermount *,		\
-	    puffs_cookie_t, int, const struct puffs_cred *, int *);
+	    puffs_cookie_t, int, const struct puffs_cred *, int *);	\
+	int fsname##_node_fallocate(struct puffs_usermount *,		\
+	    puffs_cookie_t, int, off_t, off_t);				\
+	int fsname##_node_fdiscard(struct puffs_usermount *,		\
+	    puffs_cookie_t, int, off_t, off_t);
 
 
 #define PUFFSOP_INIT(ops)						\

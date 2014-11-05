@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.66.2.9 2014/10/30 12:38:15 martin Exp $ */
+/*  $NetBSD: ops.c,v 1.66.2.10 2014/11/05 18:11:30 snj Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -3635,8 +3635,47 @@ perfuse_node_deleteextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	error = xchg_msg(pu, opc, pm, NO_PAYLOAD_REPLY_LEN, wait_reply);
 	if (error != 0)
 		goto out;
-	
+		
 	ps->ps_destroy_msg(pm);
+
+out:
+	node_rele(opc);
+	return error;
+}
+
+int
+perfuse_node_fallocate(struct puffs_usermount *pu, puffs_cookie_t opc,
+	off_t off, off_t len)
+{
+	struct perfuse_state *ps;
+	perfuse_msg_t *pm;
+	struct fuse_fallocate_in *fai;
+	int error;
+	
+	ps = puffs_getspecific(pu);
+	if (ps->ps_flags & PS_NO_FALLOCATE)
+		return EOPNOTSUPP;
+
+	node_ref(opc);
+
+	pm = ps->ps_new_msg(pu, opc, FUSE_FALLOCATE, sizeof(*fai), NULL);
+
+	fai = GET_INPAYLOAD(ps, pm, fuse_fallocate_in);
+	fai->fh = perfuse_get_fh(opc, FWRITE);
+	fai->offset = off;
+	fai->length = len;
+	fai->mode = 0;
+		
+	error = xchg_msg(pu, opc, pm, NO_PAYLOAD_REPLY_LEN, wait_reply);
+	if (error == EOPNOTSUPP || error == ENOSYS) {
+		ps->ps_flags |= PS_NO_FALLOCATE;
+		error = EOPNOTSUPP;
+	}
+	if (error != 0)
+		goto out;
+		
+	ps->ps_destroy_msg(pm);
+
 out:
 	node_rele(opc);
 	return error;

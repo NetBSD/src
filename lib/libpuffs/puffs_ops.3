@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.36.10.1 2014/08/24 08:42:06 martin Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.36.10.2 2014/11/05 18:11:31 snj Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 16, 2014
+.Dd October 31, 2014
 .Dt PUFFS_OPS 3
 .Os
 .Sh NAME
@@ -227,7 +227,17 @@
 .Fa "const struct puffs_cred *pcr"
 .Fc
 .Ft int
-.Fn puffs_node_print "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fo puffs_node_fallocate
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "off_t pos" "off_t len"
+.Fc
+.Ft int
+.Fo puffs_node_fdiscard
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "off_t pos" "off_t len"
+.Fc
+.Ft int
+.Fo puffs_node_print
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fc
 .Ft int
 .Fo puffs_node_reclaim
 .Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
@@ -800,6 +810,20 @@ with an additional
 in which
 .Dv PUFFS_WRITE_FAF
 is set for Fire-And-Forget operations.
+.It Fn puffs_node_fallocate "pu" "opc" "pos" "len"
+Allocate
+.Fa len
+bytes of backing store at offset
+.Fa pos
+for the node referenced by the cookie
+.Fa opc .
+.It Fn puffs_node_fdiscard "pu" "opc" "pos" "len"
+Free
+.Fa len
+bytes of backing store (creating a hole) at offset
+.Fa pos
+for the node referenced by the cookie
+.Fa opc .
 .It Fn puffs_node_print "pu" "opc"
 Print information about node.
 This is used only for kernel-initiated diagnostic purposes.

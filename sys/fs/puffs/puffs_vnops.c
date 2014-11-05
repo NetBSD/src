@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.182.2.7 2014/10/14 08:16:03 martin Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.182.2.8 2014/11/05 18:11:31 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.182.2.7 2014/10/14 08:16:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.182.2.8 2014/11/05 18:11:31 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -73,6 +73,8 @@ int	puffs_vnop_symlink(void *);
 int	puffs_vnop_rename(void *);
 int	puffs_vnop_read(void *);
 int	puffs_vnop_write(void *);
+int	puffs_vnop_fallocate(void *);
+int	puffs_vnop_fdiscard(void *);
 int	puffs_vnop_fcntl(void *);
 int	puffs_vnop_ioctl(void *);
 int	puffs_vnop_inactive(void *);
@@ -113,8 +115,8 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
         { &vop_setattr_desc, puffs_vnop_checkop },	/* setattr */
         { &vop_read_desc, puffs_vnop_checkop },		/* read */
         { &vop_write_desc, puffs_vnop_checkop },	/* write */
-	{ &vop_fallocate_desc, genfs_eopnotsupp },	/* fallocate */
-	{ &vop_fdiscard_desc, genfs_eopnotsupp },	/* fdiscard */
+	{ &vop_fallocate_desc, puffs_vnop_fallocate },	/* fallocate */
+	{ &vop_fdiscard_desc, puffs_vnop_fdiscard },	/* fdiscard */
         { &vop_fsync_desc, puffs_vnop_fsync },		/* REAL fsync */
         { &vop_seek_desc, puffs_vnop_checkop },		/* seek */
         { &vop_remove_desc, puffs_vnop_checkop },	/* remove */
@@ -2496,6 +2498,80 @@ puffs_vnop_write(void *v)
 
 	mutex_exit(&pn->pn_sizemtx);
 	return error;
+}
+
+int
+puffs_vnop_fallocate(void *v)
+{
+	struct vop_fallocate_args /* {
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		off_t a_pos;
+		off_t a_len;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct puffs_node *pn = VPTOPP(vp);
+	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
+	PUFFS_MSG_VARS(vn, fallocate);
+	int error;
+
+	mutex_enter(&pn->pn_sizemtx);
+
+	PUFFS_MSG_ALLOC(vn, fallocate);
+	fallocate_msg->pvnr_off = ap->a_pos;
+	fallocate_msg->pvnr_len = ap->a_len;
+	puffs_msg_setinfo(park_fallocate, PUFFSOP_VN,
+	    PUFFS_VN_FALLOCATE, VPTOPNC(vp));
+
+	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_fallocate, vp->v_data, NULL, error);
+	error = checkerr(pmp, error, __func__);
+	PUFFS_MSG_RELEASE(fallocate);
+
+	switch (error) {
+	case 0:
+		break;
+	case EAGAIN:
+		error = EIO;
+		/* FALLTHROUGH */
+	default:
+		goto out;
+	}
+
+	if (ap->a_pos + ap->a_len > vp->v_size) {
+		uvm_vnp_setsize(vp, ap->a_pos + ap->a_len);
+		puffs_updatenode(pn, PUFFS_UPDATESIZE, vp->v_size);
+	}
+out:
+ 	mutex_exit(&pn->pn_sizemtx);
+
+ 	return error;
+}
+
+int
+puffs_vnop_fdiscard(void *v)
+{
+	struct vop_fdiscard_args /* {
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		off_t a_pos;
+		off_t a_len;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
+	PUFFS_MSG_VARS(vn, fdiscard);
+	int error;
+
+	PUFFS_MSG_ALLOC(vn, fdiscard);
+	fdiscard_msg->pvnr_off = ap->a_pos;
+	fdiscard_msg->pvnr_len = ap->a_len;
+	puffs_msg_setinfo(park_fdiscard, PUFFSOP_VN,
+	    PUFFS_VN_FALLOCATE, VPTOPNC(vp));
+
+	PUFFS_MSG_ENQUEUEWAIT2(pmp, park_fdiscard, vp->v_data, NULL, error);
+	error = checkerr(pmp, error, __func__);
+	PUFFS_MSG_RELEASE(fdiscard);
+
+ 	return error;
 }
 
 int
