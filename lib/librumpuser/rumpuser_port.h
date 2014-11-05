@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.38 2014/11/05 01:15:58 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.39 2014/11/05 01:37:27 pooka Exp $	*/
 
 #ifndef _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
 #define _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
@@ -123,6 +123,7 @@ clock_gettime(clockid_t clk, struct timespec *ts)
 	if (gettimeofday(&tv, 0) == 0) {
 		ts->tv_sec = tv.tv_sec;
 		ts->tv_nsec = tv.tv_usec * 1000;
+		return 0;
 	}
 	return -1;
 }
