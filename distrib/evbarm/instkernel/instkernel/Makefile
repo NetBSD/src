@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2014/03/01 01:53:36 matt Exp $
+#	$NetBSD: Makefile,v 1.25 2014/11/05 13:53:22 joerg Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -46,7 +46,8 @@ MDSETTARGETS+=		RPI_INSTALL		${SSHRAMDISK}	-
 # Little endian (any ABI) ARMv7 platforms.
 MDSETTARGETS+=		BCM5301X_INSTALL	${RAMDISK}	-	\
 			BEAGLEBONE_INSTALL	${RAMDISK}	-	\
-			CUBIEBOARD_INSTALL	${RAMDISK}	-
+			CUBIEBOARD_INSTALL	${RAMDISK}	-	\
+			CUBIETRUCK_INSTALL	${RAMDISK}	-
 .endif
 
 MDSET_RELEASEDIR=	installation/instkernel
