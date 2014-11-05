@@ -30,6 +30,13 @@
 #ifndef _I915_DRV_H_
 #define _I915_DRV_H_
 
+#if defined(__NetBSD__) && (defined(i386) || defined(amd64))
+#include "acpica.h"
+#if (NACPICA > 0)
+#define CONFIG_ACPI
+#endif
+#endif
+
 #include <uapi/drm/i915_drm.h>
 
 #include "i915_reg.h"
@@ -2720,8 +2727,8 @@ extern void intel_i2c_reset(struct drm_device *dev);
 
 /* intel_opregion.c */
 struct intel_encoder;
-extern int intel_opregion_setup(struct drm_device *dev);
 #ifdef CONFIG_ACPI
+extern int intel_opregion_setup(struct drm_device *dev);
 extern void intel_opregion_init(struct drm_device *dev);
 extern void intel_opregion_fini(struct drm_device *dev);
 extern void intel_opregion_asle_intr(struct drm_device *dev);
@@ -2730,6 +2737,7 @@ extern int intel_opregion_notify_encoder(struct intel_encoder *intel_encoder,
 extern int intel_opregion_notify_adapter(struct drm_device *dev,
 					 pci_power_t state);
 #else
+static inline int intel_opregion_setup(struct drm_device *dev) { return 0; }
 static inline void intel_opregion_init(struct drm_device *dev) { return; }
 static inline void intel_opregion_fini(struct drm_device *dev) { return; }
 static inline void intel_opregion_asle_intr(struct drm_device *dev) { return; }
@@ -2747,10 +2755,22 @@ intel_opregion_notify_adapter(struct drm_device *dev, pci_power_t state)
 
 /* intel_acpi.c */
 #ifdef CONFIG_ACPI
+#ifdef __NetBSD__
+extern void intel_register_dsm_handler(struct drm_device *);
+#else
 extern void intel_register_dsm_handler(void);
+#endif
 extern void intel_unregister_dsm_handler(void);
 #else
+#ifdef __NetBSD__
+static inline void
+intel_register_dsm_handler(struct drm_device *dev)
+{
+	return;
+}
+#else
 static inline void intel_register_dsm_handler(void) { return; }
+#endif
 static inline void intel_unregister_dsm_handler(void) { return; }
 #endif /* CONFIG_ACPI */
 
