@@ -1375,7 +1375,11 @@ static int i915_load_modeset_init(struct drm_device *dev)
 		goto out;
 #endif
 
+#ifdef __NetBSD__
+	intel_register_dsm_handler(dev);
+#else
 	intel_register_dsm_handler();
+#endif
 
 #ifndef __NetBSD__		/* XXX vga */
 	ret = vga_switcheroo_register_client(dev->pdev, &i915_switcheroo_ops, false);
