@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.75 2014/11/04 07:16:05 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.76 2014/11/05 18:24:47 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -1979,4 +1979,45 @@ share/man/man4/viornd.4				1.2
 
 	Use proper markup in AUTHORS, and sort SEE ALSO.
 	[tls, ticket #176]
+
+sys/external/bsd/drm2/dist/drm/i915/intel_panel.c 1.6
+
+	i915: set backlight duty cycle after backlight enable for gen4,
+	to fix an issue with a blank screen upon booting.
+	[jmcneill, ticket #177]
+
+sys/external/bsd/drm2/dist/drm/i915/i915_gem.c	1.18
+
+	When moving an object to inactive, make sure that we first flush
+	it from the GTT domain in case it belonged there. Fixes random
+	panic when running X (PR 49195).
+	[sborrill, ticket #178]
+
+lib/libperfuse/fuse.h				1.6
+lib/libperfuse/ops.c				1.78
+lib/libperfuse/perfuse.c			1.35
+lib/libperfuse/perfuse_priv.h			1.36
+lib/libpuffs/dispatcher.c			1.48
+lib/libpuffs/opdump.c				1.37
+lib/libpuffs/puffs.c				1.118
+lib/libpuffs/puffs.h				1.126
+lib/libpuffs/puffs_ops.3			1.40-1.41
+sys/fs/puffs/puffs_msgif.h			1.82-1.83
+sys/fs/puffs/puffs_vnops.c			1.196
+
+	Add PUFFS support for fallocate and fdiscard operations, and
+	add FUSE fallocate support.
+	[manu, ticket #181]
+	
+sys/fs/puffs/puffs_vnops.c			1.195
+
+	A long time ago, VOP_STRATEGY could not fail without taking
+	down the kernel. This is not the case anymore, so we can stop
+	dropping errors in puffs_vnop_strategy()
+	[manu, ticket #182]
+
+lib/libperfuse/ops.c				1.79
+
+	Avoid deadlocks on write errors.
+	[manu, ticket #183]
 
