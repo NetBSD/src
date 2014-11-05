@@ -58,6 +58,7 @@
 #include <linux/time.h>
 #include <linux/err.h>
 #include <linux/bitops.h>
+#include <linux/printk.h>
 #include <asm/param.h>
 #include <asm/page.h>
 
@@ -2826,10 +2827,18 @@ void i915_vma_move_to_active(struct i915_vma *vma,
 static void
 i915_gem_object_move_to_inactive(struct drm_i915_gem_object *obj)
 {
-	struct drm_i915_private *dev_priv = obj->base.dev->dev_private;
+	struct drm_device *dev = obj->base.dev;
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct i915_address_space *vm;
 	struct i915_vma *vma;
 
+	if ((obj->base.write_domain & I915_GEM_DOMAIN_GTT) != 0) {
+#if 0
+		printk(KERN_ERR "%s: %p 0x%x flushing gtt\n", __func__, obj,
+			obj->base.write_domain);
+#endif
+		i915_gem_object_flush_gtt_write_domain(obj);
+	}
 	BUG_ON(obj->base.write_domain & ~I915_GEM_GPU_DOMAINS);
 	BUG_ON(!obj->active);
 
@@ -3934,7 +3943,7 @@ static void i915_gem_verify_gtt(struct drm_device *dev)
 	struct drm_i915_gem_object *obj;
 	int err = 0;
 
-	list_for_each_entry(obj, &dev_priv->mm.gtt_list, global_list) {
+	list_for_each_entry(obj, &dev_priv->mm.bound_list, global_list) {
 		if (obj->gtt_space == NULL) {
 			printk(KERN_ERR "object found on GTT list with no space reserved\n");
 			err++;
