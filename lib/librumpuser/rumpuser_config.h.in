@@ -15,6 +15,9 @@
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
+/* clock_nanosleep */
+#undef HAVE_CLOCK_NANOSLEEP
+
 /* dlinfo */
 #undef HAVE_DLINFO
 
