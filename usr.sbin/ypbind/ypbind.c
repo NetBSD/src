@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.57.18.2 2014/11/03 18:48:42 msaitoh Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.57.18.3 2014/11/05 09:59:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.57.18.2 2014/11/03 18:48:42 msaitoh Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.57.18.3 2014/11/05 09:59:25 msaitoh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -202,7 +202,7 @@ static int debug;
 #define DPRINTF(...)
 #endif
 
-static void yp_log(int, const char *, ...) __attribute__((__format__(__printf, 2, 3)));
+static void yp_log(int, const char *, ...) __attribute__((__format__(__printf__, 2, 3)));
 
 /*
  * Log some stuff, to syslog or stderr depending on the debug setting.
