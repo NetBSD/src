@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.45 2014/09/19 17:45:42 matt Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.46 2014/11/06 12:05:44 uebayasi Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -103,6 +103,7 @@ ${XOBJS}:	${DPSRCS}
 ${PROG}: ${XOBJS} ${XSRCS} ${DPSRCS} ${DPADD}
 	${_MKTARGET_LINK}
 	${CC} ${LDFLAGS} -nostdlib -MD -combine -r -Wl,-T,${KMODSCRIPT},-d \
+		-Wl,-Map=${.TARGET}.map \
 		-o ${.TARGET} ${CFLAGS} ${CPPFLAGS} ${XOBJS} \
 		${XSRCS:@.SRC.@${.ALLSRC:M*.c:M*${.SRC.}}@:O:u} && \
 	echo '.-include "${KMOD}.d"' > .depend
@@ -137,18 +138,21 @@ ${KMOD}_tramp.S: ${KMOD}_tmp.o ${ARCHDIR}/kmodtramp.awk ${ASM_H}
 ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 	${_MKTARGET_LINK}
 .if exists(${ARCHDIR}/kmodhide.awk)
-	${LD} -r -o tmp.o ${KMOD}_tmp.o ${KMOD}_tramp.o
+	${LD} -r -Map=${.TARGET}.map \
+	    -o tmp.o ${KMOD}_tmp.o ${KMOD}_tramp.o
 	${OBJCOPY} \
 		`${NM} tmp.o | ${TOOL_AWK} -f ${ARCHDIR}/kmodhide.awk` \
 		tmp.o ${.TARGET} && \
 	rm tmp.o
 .else
-	${LD} -r -o ${.TARGET} ${KMOD}_tmp.o ${KMOD}_tramp.o
+	${LD} -r -Map=${.TARGET}.map \
+	    -o ${.TARGET} ${KMOD}_tmp.o ${KMOD}_tramp.o
 .endif
 .else
 ${PROG}: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
 	${CC} ${LDFLAGS} -nostdlib -r -Wl,-T,${KMODSCRIPT},-d \
+		-Wl,-Map=${.TARGET}.map \
 		-o ${.TARGET} ${OBJS}
 .endif
 .endif
@@ -195,6 +199,7 @@ kmodinstall::	${_PROG}
 
 ##### Clean rules
 CLEANFILES+= a.out [Ee]rrs mklog core *.core ${PROG} ${OBJS} ${LOBJS}
+CLEANFILES+= ${PROG}.map
 
 ##### Custom rules
 lint: ${LOBJS}
