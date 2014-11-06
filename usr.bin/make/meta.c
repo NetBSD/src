@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.35 2014/10/20 23:22:57 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.36 2014/11/06 01:36:57 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -167,7 +167,7 @@ filemon_read(FILE *mfp, int fd)
     /* rewind */
     (void)lseek(fd, (off_t)0, SEEK_SET);
 
-    fprintf(mfp, "-- filemon acquired metadata --\n");
+    fprintf(mfp, "\n-- filemon acquired metadata --\n");
 
     while ((n = read(fd, buf, sizeof(buf))) > 0) {
 	fwrite(buf, 1, n, mfp);
