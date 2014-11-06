@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.105 2014/11/05 08:15:04 snj Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.106 2014/11/06 06:41:23 uebayasi Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1506,6 +1506,13 @@ file alongside of the kernel
 which contains a full symbol table and can be used for debugging
 (for example with a cross-gdb built by
 .Sy MKCROSSGDB ) .
+.It Sy kernels
+This command will build all kernels defined in port specific release build
+procedure.
+.Pp
+This command internally calls the
+.Sy kernel Ns = Ns Ar kconf
+operation for each found kernel configuration file.
 .It Sy modules
 This command will build kernel modules and install them into
 .Sy DESTDIR .
