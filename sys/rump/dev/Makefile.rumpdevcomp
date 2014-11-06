@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpdevcomp,v 1.14 2014/08/22 09:58:55 pooka Exp $
+#	$NetBSD: Makefile.rumpdevcomp,v 1.15 2014/11/06 00:45:58 pooka Exp $
 #
 
 RUMPDEVCOMP=	audio bpf cgd disk dm drvctl fss md netsmb pad pud	\
@@ -8,7 +8,7 @@ RUMPDEVCOMP=	audio bpf cgd disk dm drvctl fss md netsmb pad pud	\
 RUMPUSBDEVS=	ubt ucom ugenhc ulpt umass usb
 
 RUMPPCIDEVS=	pci pci_if_iwn pci_if_pcn pci_if_wm
-RUMPPCIDEVS+=	pci_virtio virtio_if_vioif virtio_ld
+RUMPPCIDEVS+=	pci_virtio virtio_if_vioif virtio_ld virtio_viornd
 # Not really a PCI device, but ....
 RUMPPCIDEVS+=	miiphy
 
