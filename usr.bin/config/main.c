@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.72 2014/11/04 23:00:35 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.73 2014/11/06 11:40:32 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.72 2014/11/04 23:00:35 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.73 2014/11/06 11:40:32 uebayasi Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -89,6 +89,7 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 int	vflag;				/* verbose output */
 int	Pflag;				/* pack locators */
 int	Lflag;				/* lint config generation */
+int	Mflag;				/* modular build */
 int	handling_cmdlineopts;		/* currently processing -D/-U options */
 
 int	yyparse(void);
@@ -176,7 +177,7 @@ main(int argc, char **argv)
 			break;
 
 		case 'M':
-			usekobjs = 1;
+			Mflag = 1;
 			break;
 
 		case 'L':
