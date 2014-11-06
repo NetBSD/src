@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.1 2014/10/26 18:43:18 tls Exp $ */
+/* 	$NetBSD: viornd.c,v 1.2 2014/11/06 00:41:33 pooka Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -143,6 +143,9 @@ viornd_attach( device_t parent, device_t self, void *aux)
 	vsc->sc_intrhand = virtio_vq_intr;
 	sc->sc_virtio = vsc;
 	sc->sc_dev = self;
+
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	(void)virtio_negotiate_features(vsc, 0);
 
