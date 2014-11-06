@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.299 2014/11/05 08:19:17 snj Exp $
+#	$NetBSD: build.sh,v 1.300 2014/11/06 02:02:48 uebayasi Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -543,6 +543,7 @@ initdefaults()
 	do_release=false
 	do_kernel=false
 	do_releasekernel=false
+	do_kernels=false
 	do_modules=false
 	do_installmodules=false
 	do_install=false
@@ -1027,6 +1028,7 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
     kernel.gdb=conf     Build kernel (including netbsd.gdb) with config
     			file \`conf'
     releasekernel=conf  Install kernel built by kernel=conf to RELEASEDIR.
+    kernels		Build all kernels
     installmodules=idir Run "make installmodules" to \`idir' to install all
                         kernel modules.
     modules             Build kernel modules.
@@ -1341,6 +1343,10 @@ parseoptions()
 			op=${op%%=*}
 			[ -n "${arg}" ] ||
 			    bomb "Must supply a kernel name with \`${op}=...'"
+			;;
+
+		kernels)
+			op=kernels
 			;;
 
 		disk-image=*)
@@ -1870,7 +1876,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.299 2014/11/05 08:19:17 snj Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.300 2014/11/06 02:02:48 uebayasi Exp $
 # with these arguments: ${_args}
 #
 
@@ -2017,6 +2023,14 @@ releasekernel()
 		else
 			gzip -c -9 < "${builtkern}" > "${releasekern}"
 		fi
+	done
+}
+
+buildkernels()
+{
+	allkernels=$( make_in_dir etc '-V ${ALL_KERNELS}' )
+	for k in $allkernels; do
+		buildkernel "${k}"
 	done
 }
 
@@ -2243,6 +2257,10 @@ main()
 		releasekernel=*)
 			arg=${op#*=}
 			releasekernel "${arg}"
+			;;
+
+		kernels)
+			buildkernels
 			;;
 
 		disk-image=*)
