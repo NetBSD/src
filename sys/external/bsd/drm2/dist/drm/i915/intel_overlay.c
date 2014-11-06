@@ -173,15 +173,6 @@ struct overlay_registers {
 #  define	__intel_overlay_iomem
 #  define	__iomem			__intel_overlay_iomem
 
-static inline uint32_t
-ioread32(const uint32_t __intel_overlay_iomem *ptr)
-{
-	const uint32_t value = *ptr;
-
-	__insn_barrier();
-	return value;
-}
-
 static inline void
 iowrite32(uint32_t value, uint32_t __intel_overlay_iomem *ptr)
 {
@@ -1061,6 +1052,7 @@ int intel_overlay_put_image(struct drm_device *dev, void *data,
 	struct intel_overlay *overlay;
 	struct drm_mode_object *drmmode_obj;
 	struct intel_crtc *crtc;
+	struct drm_gem_object *new_gbo;
 	struct drm_i915_gem_object *new_bo;
 	struct put_image_params *params;
 	int ret;
@@ -1096,12 +1088,13 @@ int intel_overlay_put_image(struct drm_device *dev, void *data,
 	}
 	crtc = to_intel_crtc(obj_to_crtc(drmmode_obj));
 
-	new_bo = to_intel_bo(drm_gem_object_lookup(dev, file_priv,
-						   put_image_rec->bo_handle));
-	if (&new_bo->base == NULL) {
+	new_gbo = drm_gem_object_lookup(dev, file_priv,
+	    put_image_rec->bo_handle);
+	if (new_gbo == NULL) {
 		ret = -ENOENT;
 		goto out_free;
 	}
+	new_bo = to_intel_bo(new_gbo);
 
 	drm_modeset_lock_all(dev);
 	mutex_lock(&dev->struct_mutex);
