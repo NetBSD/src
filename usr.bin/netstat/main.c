@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.92 2014/10/09 23:45:47 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.93 2014/11/06 21:30:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.92 2014/10/09 23:45:47 enami Exp $");
+__RCSID("$NetBSD: main.c,v 1.93 2014/11/06 21:30:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: main.c,v 1.92 2014/10/09 23:45:47 enami Exp $");
 #include <string.h>
 #include <unistd.h>
 #include "netstat.h"
+#include "rtutil.h"
 #include "prog_ops.h"
 
 struct nlist nl[] = {
@@ -468,7 +469,7 @@ main(int argc, char *argv[])
 			nlistf = optarg;
 			break;
 		case 'n':
-			numeric_addr = numeric_port = nflag = 1;
+			numeric_addr = numeric_port = nflag = RT_NFLAG;
 			break;
 		case 'P':
 			errno = 0;
@@ -637,7 +638,7 @@ main(int argc, char *argv[])
 				rt_stats(use_sysctl ? 0 : nl[N_RTSTAT].n_value);
 			else {
 				if (use_sysctl)
-					p_rttables(af);
+					p_rttables(af, nflag, 0, ~0);
 				else
 					routepr(nl[N_RTREE].n_value);
 			}
