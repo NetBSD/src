@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.232 2014/09/05 05:57:21 matt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.233 2014/11/06 08:46:04 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.232 2014/09/05 05:57:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.233 2014/11/06 08:46:04 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -707,11 +707,12 @@ config_stdsubmatch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	KASSERT(!nlocs || locs);
 	for (i = 0; i < nlocs; i++) {
 		cl = &ci->ci_locdesc[i];
-		/* !cld_defaultstr means no default value */
-		if ((!(cl->cld_defaultstr)
-		     || (cf->cf_loc[i] != cl->cld_default))
-		    && cf->cf_loc[i] != locs[i])
-			return 0;
+		if (cl->cld_defaultstr != NULL &&
+		    cf->cf_loc[i] == cl->cld_default)
+			continue;
+		if (cf->cf_loc[i] == locs[i])
+			continue;
+		return 0;
 	}
 
 	return config_match(parent, cf, aux);
