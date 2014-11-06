@@ -12,6 +12,10 @@
 #ifdef CONFIG_ACPI
 
 #ifdef __NetBSD__
+#include <dev/acpi/acpireg.h>
+#define _COMPONENT ACPI_BUTTON_COMPONENT
+ACPI_MODULE_NAME("acpi_intel_brightness")
+
 static ACPI_OBJECT *
 acpi_evaluate_dsm(ACPI_HANDLE handle, const uint8_t *uuid, int rev, int func,
     ACPI_OBJECT *argv4)
