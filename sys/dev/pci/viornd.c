@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.2 2014/11/06 00:41:33 pooka Exp $ */
+/* 	$NetBSD: viornd.c,v 1.3 2014/11/06 00:42:18 pooka Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
 
 #define	VIORND_BUFSIZE			32
 
-#define VIORND_DEBUG 1
+#define VIORND_DEBUG 0
 
 struct viornd_softc {
 	device_t		sc_dev;
