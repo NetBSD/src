@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.61 2014/11/01 14:24:45 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.62 2014/11/06 11:40:32 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -587,6 +587,7 @@ void	emit_options(void);
 void	emit_params(void);
 
 /* main.c */
+extern	int Mflag;
 void	addoption(const char *, const char *);
 void	addfsoption(const char *);
 void	addmkoption(const char *, const char *);
@@ -629,7 +630,6 @@ int	emitioconfh(void);
 int	mkioconf(void);
 
 /* mkmakefile.c */
-extern int usekobjs;
 int	mkmakefile(void);
 
 /* mkswap.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.25 2014/10/29 17:14:50 christos Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.26 2014/11/06 11:40:32 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.25 2014/10/29 17:14:50 christos Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.26 2014/11/06 11:40:32 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -84,9 +84,6 @@ static void emitincludes(FILE *);
 static void emitappmkoptions(FILE *);
 static void emitsubs(FILE *, const char *, const char *, int);
 static int  selectopt(const char *, void *);
-
-/* Generate Makefile to build things per-attribute *.ko (a.k.a modular build). */
-int usekobjs = 0;
 
 int
 mkmakefile(void)
@@ -132,7 +129,7 @@ mkmakefile(void)
 			continue;
 		}
 		if (strcmp(line, "%OBJS\n") == 0)
-			fn = usekobjs ? emitkobjs : emitobjs;
+			fn = Mflag ? emitkobjs : emitobjs;
 		else if (strcmp(line, "%CFILES\n") == 0)
 			fn = emitcfiles;
 		else if (strcmp(line, "%SFILES\n") == 0)
