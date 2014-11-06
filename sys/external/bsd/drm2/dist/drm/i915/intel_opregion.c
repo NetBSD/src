@@ -257,12 +257,12 @@ struct opregion_asle {
 static int swsci(struct drm_device *dev, u32 function, u32 parm, u32 *parm_out)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	struct opregion_swsci __iomem *swsci = dev_priv->opregion.swsci;
+	struct opregion_swsci __iomem *region_swsci = dev_priv->opregion.swsci;
 	u32 main_function, sub_function, scic;
 	u16 pci_swsci;
 	u32 dslp;
 
-	if (!swsci)
+	if (!region_swsci)
 		return -ENODEV;
 
 	main_function = (function & SWSCI_SCIC_MAIN_FUNCTION_MASK) >>
@@ -282,7 +282,7 @@ static int swsci(struct drm_device *dev, u32 function, u32 parm, u32 *parm_out)
 	}
 
 	/* Driver sleep timeout in ms. */
-	dslp = ioread32(&swsci->dslp);
+	dslp = ioread32(&region_swsci->dslp);
 	if (!dslp) {
 		/* The spec says 2ms should be the default, but it's too small
 		 * for some machines. */
@@ -295,7 +295,7 @@ static int swsci(struct drm_device *dev, u32 function, u32 parm, u32 *parm_out)
 	}
 
 	/* The spec tells us to do this, but we are the only user... */
-	scic = ioread32(&swsci->scic);
+	scic = ioread32(&region_swsci->scic);
 	if (scic & SWSCI_SCIC_INDICATOR) {
 		DRM_DEBUG_DRIVER("SWSCI request already in progress\n");
 		return -EBUSY;
@@ -303,8 +303,8 @@ static int swsci(struct drm_device *dev, u32 function, u32 parm, u32 *parm_out)
 
 	scic = function | SWSCI_SCIC_INDICATOR;
 
-	iowrite32(parm, &swsci->parm);
-	iowrite32(scic, &swsci->scic);
+	iowrite32(parm, &region_swsci->parm);
+	iowrite32(scic, &region_swsci->scic);
 
 	/* Ensure SCI event is selected and event trigger is cleared. */
 	pci_read_config_word(dev->pdev, PCI_SWSCI, &pci_swsci);
@@ -319,7 +319,7 @@ static int swsci(struct drm_device *dev, u32 function, u32 parm, u32 *parm_out)
 	pci_write_config_word(dev->pdev, PCI_SWSCI, pci_swsci);
 
 	/* Poll for the result. */
-#define C (((scic = ioread32(&swsci->scic)) & SWSCI_SCIC_INDICATOR) == 0)
+#define C (((scic = ioread32(&region_swsci->scic)) & SWSCI_SCIC_INDICATOR) == 0)
 	if (wait_for(C, dslp)) {
 		DRM_DEBUG_DRIVER("SWSCI request timed out\n");
 		return -ETIMEDOUT;
@@ -335,7 +335,7 @@ static int swsci(struct drm_device *dev, u32 function, u32 parm, u32 *parm_out)
 	}
 
 	if (parm_out)
-		*parm_out = ioread32(&swsci->parm);
+		*parm_out = ioread32(&region_swsci->parm);
 
 	return 0;
 
