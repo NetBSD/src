@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.4 2014/11/06 01:29:25 pooka Exp $ */
+/* 	$NetBSD: viornd.c,v 1.5 2014/11/06 01:42:01 pooka Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -91,8 +91,10 @@ viornd_get(size_t bytes, void *priv)
         struct virtqueue *vq = &sc->sc_vq;
         int slot;
 
+#if VIORND_DEBUG
 	aprint_normal("%s: asked for %d bytes of entropy\n", __func__,
 		      VIORND_BUFSIZE);
+#endif
 	mutex_enter(&sc->sc_mutex);
 
 	if (sc->sc_active) {
