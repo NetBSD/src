@@ -820,6 +820,12 @@ BUILDING
                    symbol table and can be used for debugging (for example
                    with a cross-gdb built by MKCROSSGDB).
 
+     kernels       This command will build all kernels defined in port specific
+                   release build procedure.
+
+		   This command internally calls the kernel=kconf operation
+		   for each found kernel configuration file.
+
      modules       This command will build kernel modules and install them
                    into DESTDIR.
 
