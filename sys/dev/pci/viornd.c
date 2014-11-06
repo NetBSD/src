@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.3 2014/11/06 00:42:18 pooka Exp $ */
+/* 	$NetBSD: viornd.c,v 1.4 2014/11/06 01:29:25 pooka Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -102,10 +102,10 @@ viornd_get(size_t bytes, void *priv)
         bus_dmamap_sync(vsc->sc_dmat, sc->sc_dmamap, 0, VIORND_BUFSIZE,
             BUS_DMASYNC_PREREAD);
 	if (virtio_enqueue_prep(vsc, vq, &slot)) {
-		virtio_enqueue_abort(vsc, vq, slot);
 		goto out;
 	}
         if (virtio_enqueue_reserve(vsc, vq, slot, 1)) {
+		virtio_enqueue_abort(vsc, vq, slot);
 		goto out;
 	}
         virtio_enqueue(vsc, vq, slot, sc->sc_dmamap, 0);
