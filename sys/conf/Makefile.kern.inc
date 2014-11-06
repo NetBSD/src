@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.176 2014/10/10 08:13:52 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.177 2014/11/06 11:59:17 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -346,7 +346,7 @@ assym.h machdep.o: Makefile
 .if !target(__CLEANKERNEL)
 __CLEANKERNEL: .USE
 	${_MKMSG} "${.TARGET}ing the kernel objects"
-	rm -f ${KERNELS} eddep tags *.[io] *.ln [a-z]*.s vers.c \
+	rm -f ${KERNELS} *.map eddep tags *.[io] *.ko *.ln [a-z]*.s vers.c \
 	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h \
 	    ${EXTRA_KERNELS} ${EXTRA_CLEAN}
 .endif
