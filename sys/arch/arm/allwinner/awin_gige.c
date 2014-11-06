@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.16 2014/10/20 20:02:16 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.17 2014/11/06 23:19:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -169,6 +169,13 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 		phy_type = "rgmii";
 	if (strcmp(phy_type, "rgmii") == 0) {
 		clkreg = AWIN_GMAC_CLK_PIT | AWIN_GMAC_CLK_TCS_INT_RGMII;
+	} else if (strcmp(phy_type, "rgmii-bpi") == 0) {
+		clkreg = AWIN_GMAC_CLK_PIT | AWIN_GMAC_CLK_TCS_INT_RGMII;
+		/*
+		 * These magic bits seem to be necessary for RGMII at gigabit
+		 * speeds on Banana Pi.
+		 */
+		clkreg |= __BITS(11,10);
 	} else if (strcmp(phy_type, "gmii") == 0) {
 		clkreg = AWIN_GMAC_CLK_TCS_INT_RGMII;
 	} else if (strcmp(phy_type, "mii") == 0) {
