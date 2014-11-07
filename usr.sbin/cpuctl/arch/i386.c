@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.59 2014/09/09 15:14:39 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.60 2014/11/07 05:37:05 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.59 2014/09/09 15:14:39 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.60 2014/11/07 05:37:05 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -220,6 +220,7 @@ static void	tmx86_get_longrun_status(u_int *, u_int *, u_int *);
 static void	transmeta_cpu_info(struct cpu_info *);
 /* Common functions */
 static void	cpu_probe_base_features(struct cpu_info *, const char *);
+static void	cpu_probe_hv_features(struct cpu_info *, const char *);
 static void	cpu_probe_features(struct cpu_info *);
 static void	print_bits(const char *, const char *, const char *, uint32_t);
 static void	identifycpu_cpuids(struct cpu_info *);
@@ -1546,6 +1547,51 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 }
 
 static void
+cpu_probe_hv_features(struct cpu_info *ci, const char *cpuname)
+{
+	uint32_t descs[4];
+	char hv_sig[13];
+	char *p;
+	const char *hv_name;
+	int i;
+
+	/*
+	 * [RFC] CPUID usage for interaction between Hypervisors and Linux.
+	 * http://lkml.org/lkml/2008/10/1/246
+	 *
+	 * KB1009458: Mechanisms to determine if software is running in
+	 * a VMware virtual machine
+	 * http://kb.vmware.com/kb/1009458
+	 */
+	if ((ci->ci_feat_val[1] & CPUID2_RAZ) != 0) {
+		x86_cpuid(0x40000000, descs);
+		for (i = 1, p = hv_sig; i < 4; i++, p += sizeof(descs) / 4)
+			memcpy(p, &descs[i], sizeof(descs[i]));
+		*p = '\0';
+		/*
+		 * HV vendor	ID string
+		 * ------------+--------------
+		 * KVM		"KVMKVMKVM"
+		 * Microsoft	"Microsoft Hv"
+		 * VMware	"VMwareVMware"
+		 * Xen		"XenVMMXenVMM"
+		 */
+		if (strncmp(hv_sig, "KVMKVMKVM", 9) == 0)
+			hv_name = "KVM";
+		else if (strncmp(hv_sig, "Microsoft Hv", 12) == 0)
+			hv_name = "Hypver-V";
+		else if (strncmp(hv_sig, "VMwareVMware", 12) == 0)
+			hv_name = "VMware";
+		else if (strncmp(hv_sig, "XenVMMXenVMM", 12) == 0)
+			hv_name = "Xen";
+		else
+			hv_name = "unknown";
+
+		printf("%s: Running on hypervisor: %s\n", cpuname, hv_name);
+	}
+}
+
+static void
 cpu_probe_features(struct cpu_info *ci)
 {
 	const struct cpu_cpuid_nameclass *cpup = NULL;
@@ -1669,6 +1715,7 @@ identifycpu(int fd, const char *cpuname)
 
 	ci = &cistore;
 	cpu_probe_base_features(ci, cpuname);
+	cpu_probe_hv_features(ci, cpuname);
 	cpu_probe_features(ci);
 
 	if (ci->ci_cpu_type >= 0) {
