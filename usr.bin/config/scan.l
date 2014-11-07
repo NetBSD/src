@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.21 2014/10/31 07:38:36 uebayasi Exp $	*/
+/*	$NetBSD: scan.l,v 1.22 2014/11/07 17:50:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scan.l,v 1.21 2014/10/31 07:38:36 uebayasi Exp $");
+__RCSID("$NetBSD: scan.l,v 1.22 2014/11/07 17:50:14 christos Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -111,12 +111,12 @@ static int getcurifdef(void);
 
 %}
 
-%option  noyywrap
+%option  noyywrap nounput noinput
 
 PATH	[A-Za-z_0-9]*[./][-A-Za-z_0-9./]*
-QCHARS	([^"\n]|\\\")+
+QCHARS	\"(\\.|[^\\"])*\" 
 WORD	[A-Za-z_][-A-Za-z_0-9]*
-FILENAME	({PATH}|\"{QCHARS}\")
+FILENAME	({PATH}|{QCHARS})
 RESTOFLINE	[ \t]*(#[^\n]*)?\n
 
 %x	IGNORED
@@ -323,12 +323,11 @@ package[ \t]+{FILENAME}{RESTOFLINE}	{
 		return EMPTYSTRING;
 	}
 
-\"{QCHARS}	{
-		tok = input();  /* eat closing quote */
-		if (tok != '"') {
-			cfgerror("closing quote missing\n");
-			unput(tok);
-		}
+{QCHARS}	{
+		size_t l = strlen(yytext);
+		if (l > 1 && yytext[l - 1] == '"')
+			yytext[l - 1] = '\0';
+
 		yylval.str = intern(yytext + 1);
 		return QSTRING;
 	}
@@ -401,8 +400,7 @@ curdir_push(const char *fname)
 			free(f);
 			return (-1);
 		}
-		p = emalloc(strlen(cwd) + strlen(d) + 2);
-		sprintf(p, "%s/%s", cwd, d);
+		easprintf(&p, "%s/%s", cwd, d);
 	}
 	free(f);
 	pf = ecalloc(1, sizeof(*pf));
@@ -502,8 +500,7 @@ include(const char *fname, int ateof, int conditional, int direct)
 		s = estrdup(fname);
 	else if (fname[0] == '.' && fname[1] == '/') {
 		struct prefix *pf = SLIST_FIRST(&curdirs);
-		s = emalloc(strlen(pf->pf_prefix) + strlen(fname));
-		sprintf(s, "%s/%s", pf->pf_prefix, fname + 2);
+		easprintf(&s, "%s/%s", pf->pf_prefix, fname + 2);
 	} else
 		s = sourcepath(fname);
 	if ((fp = fopen(s, "r")) == NULL) {
