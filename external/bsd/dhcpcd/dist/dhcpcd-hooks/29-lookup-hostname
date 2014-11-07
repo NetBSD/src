@@ -1,4 +1,4 @@
-# $NetBSD: 29-lookup-hostname,v 1.3 2014/10/17 23:42:25 roy Exp $
+
 
 # Lookup the hostname in DNS if not set
 

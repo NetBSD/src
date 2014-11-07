@@ -1,6 +1,3 @@
-#include <sys/cdefs.h>
- __RCSID("$NetBSD: hmac_md5.c,v 1.3 2014/10/17 23:42:24 roy Exp $");
-
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>

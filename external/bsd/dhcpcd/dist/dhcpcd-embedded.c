@@ -1,6 +1,3 @@
-#include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.4 2014/10/29 01:08:31 roy Exp $");
-
 /*
  * DO NOT EDIT
  * Automatically generated from dhcpcd-embedded.conf

@@ -1,6 +1,3 @@
-#include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6.c,v 1.4 2014/10/29 01:08:31 roy Exp $");
-
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
@@ -985,7 +982,7 @@ static int
 ipv6_addlinklocal(struct interface *ifp)
 {
 	struct ipv6_state *state;
-	struct ipv6_addr *ap;
+	struct ipv6_addr *ap, *ap2;
 	int dadcounter;
 
 	if (ipv6_linklocal(ifp))
@@ -1023,6 +1020,7 @@ ipv6_addlinklocal(struct interface *ifp)
 
 	if (ifp->options->options & DHCPCD_SLAACPRIVATE) {
 		dadcounter = 0;
+nextslaacprivate:
 		if (ipv6_makestableprivate(&ap->addr,
 			&ap->prefix, ap->prefix_len, ifp, &dadcounter) == -1)
 		{
@@ -1055,6 +1053,29 @@ ipv6_addlinklocal(struct interface *ifp)
 			return -1;
 		}
 		EUI64_TO_IFID(&ap->addr);
+	}
+
+	/* Do we already have this address? */
+	TAILQ_FOREACH(ap2, &state->addrs, next) {
+		if (IN6_ARE_ADDR_EQUAL(&ap->addr, &ap2->addr)) {
+			if (ap2->addr_flags & IN6_IFF_DUPLICATED) {
+				if (ifp->options->options &
+				    DHCPCD_SLAACPRIVATE)
+				{
+					dadcounter++;
+					goto nextslaacprivate;
+				}
+				free(ap);
+				errno = EADDRNOTAVAIL;
+				return -1;
+			}
+
+			syslog(LOG_WARNING, "%s: waiting for %s to complete",
+			    ap2->iface->name, ap2->saddr);
+			free(ap);
+			errno =	EEXIST;
+			return 0;
+		}
 	}
 
 	inet_ntop(AF_INET6, &ap->addr, ap->saddr, sizeof(ap->saddr));
