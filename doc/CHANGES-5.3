@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.76 2014/11/05 13:11:32 sborrill Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.77 2014/11/07 08:02:16 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -1130,3 +1130,13 @@ share/man/man7/release.7			1.33-1.36 via patch
 	this.
 	[snj, ticket #1930]
 
+distrib/common/Makefile.bootcd			1.18
+distrib/notes/common/main			1.484
+distrib/notes/macppc/prep.OPENFIRMWARE		1.15
+distrib/notes/sparc/install			1.57
+etc/Makefile					1.394
+share/man/man7/release.7			1.32
+
+	Change release ISO's more meaningful names like NetBSD-5.2.3-i386.iso
+	instead of i386cd.iso. Fix PR# install/44593.
+	[snj, ticket #1931]
