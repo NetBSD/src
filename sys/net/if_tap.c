@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.79 2014/10/03 06:46:02 skrll Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.80 2014/11/07 09:26:08 ozaki-r Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.79 2014/10/03 06:46:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.80 2014/11/07 09:26:08 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -275,6 +275,25 @@ tap_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sih = NULL;
 	getnanotime(&sc->sc_btime);
 	sc->sc_atime = sc->sc_mtime = sc->sc_btime;
+	sc->sc_flags = 0;
+	selinit(&sc->sc_rsel);
+
+	/*
+	 * Initialize the two locks for the device.
+	 *
+	 * We need a lock here because even though the tap device can be
+	 * opened only once, the file descriptor might be passed to another
+	 * process, say a fork(2)ed child.
+	 *
+	 * The Giant saves us from most of the hassle, but since the read
+	 * operation can sleep, we don't want two processes to wake up at
+	 * the same moment and both try and dequeue a single packet.
+	 *
+	 * The queue for event listeners (used by kqueue(9), see below) has
+	 * to be protected too, so use a spin lock.
+	 */
+	mutex_init(&sc->sc_rdlock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_kqlock, MUTEX_DEFAULT, IPL_VM);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -327,8 +346,6 @@ tap_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 
-	sc->sc_flags = 0;
-
 #if defined(COMPAT_40) || defined(MODULAR)
 	/*
 	 * Add a sysctl node for that interface.
@@ -353,25 +370,6 @@ tap_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "sysctl_createv returned %d, ignoring\n",
 		    error);
 #endif
-
-	/*
-	 * Initialize the two locks for the device.
-	 *
-	 * We need a lock here because even though the tap device can be
-	 * opened only once, the file descriptor might be passed to another
-	 * process, say a fork(2)ed child.
-	 *
-	 * The Giant saves us from most of the hassle, but since the read
-	 * operation can sleep, we don't want two processes to wake up at
-	 * the same moment and both try and dequeue a single packet.
-	 *
-	 * The queue for event listeners (used by kqueue(9), see below) has
-	 * to be protected too, so use a spin lock.
-	 */
-	mutex_init(&sc->sc_rdlock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_kqlock, MUTEX_DEFAULT, IPL_VM);
-
-	selinit(&sc->sc_rsel);
 }
 
 /*
