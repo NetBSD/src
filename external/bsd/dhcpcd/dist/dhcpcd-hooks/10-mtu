@@ -1,3 +1,5 @@
+# $NetBSD: 10-mtu,v 1.6 2014/11/07 20:51:03 roy Exp $
+
 # Configure the MTU for the interface
 
 mtu_dir="$state_dir/mtu"
