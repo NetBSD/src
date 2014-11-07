@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.93 2014/11/06 21:30:09 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.94 2014/11/07 12:42:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.93 2014/11/06 21:30:09 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.94 2014/11/07 12:42:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -421,7 +421,7 @@ main(int argc, char *argv[])
 	    "AabBdf:ghI:LliM:mN:nP:p:qrsStTuVvw:X")) != -1)
 		switch (ch) {
 		case 'A':
-			Aflag = 1;
+			Aflag = RT_AFLAG;
 			break;
 		case 'a':
 			aflag = 1;
@@ -501,7 +501,7 @@ main(int argc, char *argv[])
 			tflag = 1;
 			break;
 		case 'T':
-			tagflag = 1;
+			tagflag = RT_TFLAG;
 			break;
 		case 'u':
 			af = AF_LOCAL;
@@ -510,7 +510,7 @@ main(int argc, char *argv[])
 			Vflag++;
 			break;
 		case 'v':
-			vflag++;
+			vflag = RT_VFLAG;
 			break;
 		case 'w':
 			interval = atoi(optarg);
@@ -638,7 +638,8 @@ main(int argc, char *argv[])
 				rt_stats(use_sysctl ? 0 : nl[N_RTSTAT].n_value);
 			else {
 				if (use_sysctl)
-					p_rttables(af, nflag, 0, ~0);
+					p_rttables(af,
+					    nflag|tagflag|vflag, 0, ~0);
 				else
 					routepr(nl[N_RTREE].n_value);
 			}
