@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.78 2014/11/07 08:40:43 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.79 2014/11/07 21:39:06 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2032,4 +2032,36 @@ usr.sbin/makemandb/apropos.1			1.15
 	Removeoutdated sentence referring to the original (well, old new)
 	limit of 10.
 	[snj, ticket #185]
+
+sys/arch/sparc64/dev/sab.c			1.53
+
+	Convert sab_shutdown from deprecated shutdownhook_establish(9)
+	API to PMF(9) framework.
+	[nakayama, ticket #186]
+
+sys/dev/pci/pcidevs				1.1201-1.1202 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/if_wm.c				1.291-1.301, 1.307 via patch
+sys/dev/pci/if_wmreg.h				1.61-1.65 via patch
+sys/dev/pci/if_wmvar.h				1.21 via patch
+share/man/man4/wm.4				1.31 via patch
+
+	- Add Internal SERDES mode support newer than or equal to 82575.
+	- Add new I218 devices.
+	- Add DH89xxCC device.
+	- Add some old devices.
+	- Fix a bug that wm_get_swsm_semaphore() timed out when
+	  attaching device on some machines.
+	- Fix a bug that the offset of alt MAC address is wrongly
+	  calculated to 0 when alt MAC address function is really used.
+	  This bug does not appear as real bug if the same MAC address
+	  is written in the default location and alt MAC address's
+	  location.
+	- Don't print "failed to detect NVM bank" message.
+	- Delete 82580ER related code.
+	- Fix typo in comment.
+	- Fix debug message.
+	- Cleanup
+	[msaitoh, ticket #190]
 
