@@ -1,3 +1,5 @@
+# $NetBSD: 15-timezone,v 1.6 2014/11/07 20:51:03 roy Exp $
+
 # Configure timezone
 
 : ${localtime:=/etc/localtime}

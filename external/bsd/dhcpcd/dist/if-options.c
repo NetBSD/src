@@ -1,3 +1,6 @@
+#include <sys/cdefs.h>
+ __RCSID("$NetBSD: if-options.c,v 1.17 2014/11/07 20:51:02 roy Exp $");
+
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>

@@ -1,3 +1,5 @@
+/* $NetBSD: config.h,v 1.6 2014/11/07 20:51:02 roy Exp $ */
+
 /* netbsd */
 #define SYSCONFDIR	"/etc"
 #define SBINDIR		"/sbin"

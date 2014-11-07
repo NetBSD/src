@@ -1,3 +1,6 @@
+#include <sys/cdefs.h>
+ __RCSID("$NetBSD: dhcpcd.c,v 1.16 2014/11/07 20:51:02 roy Exp $");
+
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
