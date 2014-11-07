@@ -1,5 +1,3 @@
-
-
 # Configure the MTU for the interface
 
 mtu_dir="$state_dir/mtu"

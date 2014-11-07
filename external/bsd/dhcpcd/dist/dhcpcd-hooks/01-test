@@ -1,5 +1,3 @@
-
-
 # Just echo our DHCP options we have
 
 if [ "$reason" = "TEST" ]; then

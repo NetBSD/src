@@ -1,5 +1,3 @@
-
-
 # Lookup the hostname in DNS if not set
 
 lookup_hostname()

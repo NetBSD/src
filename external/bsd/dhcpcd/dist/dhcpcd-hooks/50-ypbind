@@ -1,5 +1,3 @@
-
-
 # Sample dhcpcd hook for ypbind
 # This script is only suitable for the BSD versions.
 
