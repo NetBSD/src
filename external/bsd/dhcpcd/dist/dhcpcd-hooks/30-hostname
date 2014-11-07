@@ -1,3 +1,5 @@
+# $NetBSD: 30-hostname,v 1.6 2014/11/07 20:51:03 roy Exp $
+
 # Set the hostname from DHCP data if required
 
 # A hostname can either be a short hostname or a FQDN.

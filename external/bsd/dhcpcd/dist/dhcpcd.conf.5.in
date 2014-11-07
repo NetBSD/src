@@ -1,3 +1,4 @@
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.16 2014/11/07 20:51:02 roy Exp $
 .\" Copyright (c) 2006-2014 Roy Marples
 .\" All rights reserved
 .\"
