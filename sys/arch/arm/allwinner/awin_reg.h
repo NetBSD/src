@@ -1517,8 +1517,10 @@ struct awin_mmc_idma_descriptor {
 	 AWIN_LOSC_CTRL_RTC_YYMMDD_ACCE)
 
 #define AWIN_RTC_YY_MM_DD_RTC_SIM_CTRL	__BIT(30)
-#define AWIN_RTC_YY_MM_DD_LEAP		__BIT(24)
-#define AWIN_RTC_YY_MM_DD_YEAR		__BITS(23,16)
+#define AWIN_RTC_YY_MM_DD_LEAP		__BIT(22)
+#define AWIN_A20_RTC_YY_MM_DD_LEAP	__BIT(24)
+#define AWIN_RTC_YY_MM_DD_YEAR		__BITS(21,16)
+#define AWIN_A20_RTC_YY_MM_DD_YEAR	__BITS(23,16)
 #define AWIN_RTC_YY_MM_DD_MONTH		__BITS(11,8)
 #define AWIN_RTC_YY_MM_DD_DAY		__BITS(4,0)
 #define AWIN_RTC_HH_MM_SS_WK_NO		__BITS(31,29)
@@ -1906,8 +1908,6 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_A31_LOSC_CTRL_REG			0x0000
 #define AWIN_A31_RTC_YY_MM_DD_REG		0x0010
 #define AWIN_A31_RTC_HH_MM_SS_REG		0x0014
-
-#define AWIN_A31_RTC_YY_MM_DD_YEAR		__BITS(21,16)
 
 #define AWIN_A31_P2WI_CTRL_REG			0x0000
 #define AWIN_A31_P2WI_CCR_REG			0x0004

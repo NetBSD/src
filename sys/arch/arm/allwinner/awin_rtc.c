@@ -1,4 +1,4 @@
-/* $NetBSD: awin_rtc.c,v 1.6 2014/11/04 19:22:50 jmcneill Exp $ */
+/* $NetBSD: awin_rtc.c,v 1.7 2014/11/07 18:10:16 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_rtc.c,v 1.6 2014/11/04 19:22:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_rtc.c,v 1.7 2014/11/07 18:10:16 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +49,8 @@ struct awin_rtc_softc {
 	uint32_t sc_loscctrl_reg;
 	uint32_t sc_yymmdd_reg;
 	uint32_t sc_hhmmss_reg;
+	uint32_t sc_year_base;
+	uint32_t sc_year_mask;
 };
 
 #define RTC_READ(sc, reg) \
@@ -99,6 +101,17 @@ awin_rtc_attach(device_t parent, device_t self, void *aux)
 		sc->sc_hhmmss_reg = AWIN_RTC_HH_MM_SS_REG;
 	}
 
+	if (awin_chip_id() == AWIN_CHIP_ID_A20) {
+		sc->sc_year_base = 1900;
+		sc->sc_year_mask = AWIN_A20_RTC_YY_MM_DD_YEAR;
+	} else {
+		sc->sc_year_base = POSIX_BASE_YEAR;
+		sc->sc_year_mask = AWIN_RTC_YY_MM_DD_YEAR;
+	}
+#ifdef AWIN_RTC_BASE_YEAR
+	sc->sc_year_base = AWIN_RTC_BASE_YEAR;
+#endif
+
 	aprint_naive("\n");
 	aprint_normal(": RTC\n");
 
@@ -117,10 +130,7 @@ awin_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 	yymmdd = RTC_READ(sc, sc->sc_yymmdd_reg);
 	hhmmss = RTC_READ(sc, sc->sc_hhmmss_reg);
 
-	dt->dt_year = __SHIFTOUT(yymmdd,
-	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
-	    AWIN_A31_RTC_YY_MM_DD_YEAR : AWIN_RTC_YY_MM_DD_YEAR) +
-	    POSIX_BASE_YEAR;
+	dt->dt_year = __SHIFTOUT(yymmdd, sc->sc_year_mask) + sc->sc_year_base;
 	dt->dt_mon = __SHIFTOUT(yymmdd, AWIN_RTC_YY_MM_DD_MONTH);
 	dt->dt_day = __SHIFTOUT(yymmdd, AWIN_RTC_YY_MM_DD_DAY);
 	dt->dt_wday = __SHIFTOUT(hhmmss, AWIN_RTC_HH_MM_SS_WK_NO);
@@ -149,24 +159,18 @@ awin_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 		    "not writing back time\n", dt->dt_year);
 		return EIO;
 	}
-	maxyear = __SHIFTOUT(0xffffffff, 
-	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
-	    AWIN_A31_RTC_YY_MM_DD_YEAR : AWIN_RTC_YY_MM_DD_YEAR)
-	    + POSIX_BASE_YEAR;
+	maxyear = __SHIFTOUT(0xffffffff, sc->sc_year_mask) + sc->sc_year_base;
 	if (dt->dt_year > maxyear) {
 		aprint_normal_dev(sc->sc_dev, "year exceeds available field:"
 		    " %llu, not writing back time\n", dt->dt_year);
 		return EIO;
 	}
 
-	yymmdd = __SHIFTIN(dt->dt_year - POSIX_BASE_YEAR,
-	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
-	    AWIN_A31_RTC_YY_MM_DD_YEAR : AWIN_RTC_YY_MM_DD_YEAR);
+	yymmdd = __SHIFTIN(dt->dt_year - sc->sc_year_base,
+	    sc->sc_year_mask);
 
-	KASSERT(__SHIFTOUT(yymmdd,
-	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
-	    AWIN_A31_RTC_YY_MM_DD_YEAR : AWIN_RTC_YY_MM_DD_YEAR) +
-	    POSIX_BASE_YEAR == dt->dt_year);
+	KASSERT(__SHIFTOUT(yymmdd, sc->sc_year_mask) +
+	    sc->sc_year_base == dt->dt_year);
 
 	yymmdd |= __SHIFTIN(dt->dt_mon, AWIN_RTC_YY_MM_DD_MONTH);
 	yymmdd |= __SHIFTIN(dt->dt_day, AWIN_RTC_YY_MM_DD_DAY);
