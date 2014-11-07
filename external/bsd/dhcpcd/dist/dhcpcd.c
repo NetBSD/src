@@ -1,6 +1,3 @@
-#include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.14 2014/10/29 01:08:31 roy Exp $");
-
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
@@ -627,7 +624,7 @@ pre_start(struct interface *ifp)
 	 * from under us. */
 	if (ifp->options->options & DHCPCD_IPV6 && ipv6_start(ifp) == -1) {
 		syslog(LOG_ERR, "%s: ipv6_start: %m", ifp->name);
-		ifp->options->options &= DHCPCD_IPV6;
+		ifp->options->options &= ~DHCPCD_IPV6;
 	}
 }
 
@@ -804,7 +801,7 @@ dhcpcd_initstate1(struct interface *ifp, int argc, char **argv)
 	 * inadvertently ups the interface. */
 	if (ifo->options & DHCPCD_IPV6 && ipv6_start(ifp) == -1) {
 		syslog(LOG_ERR, "%s: ipv6_start: %m", ifp->name);
-		ifo->options &= DHCPCD_IPV6;
+		ifo->options &= ~DHCPCD_IPV6;
 	}
 }
 
@@ -973,18 +970,18 @@ reconf_reboot(struct dhcpcd_ctx *ctx, int action, int argc, char **argv, int oi)
 static void
 stop_all_interfaces(struct dhcpcd_ctx *ctx, int do_release)
 {
-	struct interface *ifp, *ifpm;
+	struct interface *ifp;
 
 	/* drop_dhcp could change the order, so we do it like this. */
 	for (;;) {
-		/* Be sane and drop the last config first */
-		ifp = TAILQ_LAST(ctx->ifaces, if_head);
+		/* Be sane and drop the last config first,
+		 * skipping any pseudo interfaces */
+		TAILQ_FOREACH_REVERSE(ifp, ctx->ifaces, if_head, next) {
+			if (!(ifp->options->options & DHCPCD_PFXDLGONLY))
+				break;
+		}
 		if (ifp == NULL)
 			break;
-		/* Stop the master interface only */
-		ifpm = if_find(ifp->ctx, ifp->name);
-		if (ifpm)
-			ifp = ifpm;
 		if (do_release) {
 			ifp->options->options |= DHCPCD_RELEASE;
 			ifp->options->options &= ~DHCPCD_PERSISTENT;

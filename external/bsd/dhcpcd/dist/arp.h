@@ -1,5 +1,3 @@
-/* $NetBSD: arp.h,v 1.4 2014/10/29 01:08:31 roy Exp $ */
-
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
