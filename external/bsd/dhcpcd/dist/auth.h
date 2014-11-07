@@ -1,5 +1,3 @@
-/* $NetBSD: auth.h,v 1.1.1.2 2014/06/14 20:51:06 roy Exp $ */
-
 /*
  * dhcpcd - DHCP client daemon
  * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
