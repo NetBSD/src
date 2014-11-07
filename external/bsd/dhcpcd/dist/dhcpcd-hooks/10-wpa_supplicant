@@ -1,5 +1,3 @@
-
-
 # Start, reconfigure and stop wpa_supplicant per wireless interface.
 # This is needed because wpa_supplicant lacks hotplugging of any kind
 # and the user should not be expected to have to wire it into their system
