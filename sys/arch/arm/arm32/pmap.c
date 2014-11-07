@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.309 2014/11/05 09:13:16 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.310 2014/11/07 12:43:36 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -215,7 +215,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.309 2014/11/05 09:13:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.310 2014/11/07 12:43:36 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3316,8 +3316,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (npte != opte) {
 		l2pte_reset(ptep);
 		PTE_SYNC(ptep);
-		pmap_tlb_flush_SE(pm, va, oflags);
-
+		if (l2pte_valid_p(opte)) {
+			pmap_tlb_flush_SE(pm, va, oflags);
+		}
 		l2pte_set(ptep, npte, 0);
 		PTE_SYNC(ptep);
 #ifndef ARM_MMU_EXTENDED
