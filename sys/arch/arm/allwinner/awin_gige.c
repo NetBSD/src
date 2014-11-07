@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.17 2014/11/06 23:19:38 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.18 2014/11/07 11:42:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -102,16 +102,17 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 	struct awin_gige_softc * const sc = device_private(self);
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
-	const struct awin_gpio_pinset *pinset =
+	struct awin_gpio_pinset pinset =
 	    awin_chip_id() == AWIN_CHIP_ID_A31 ?
-	    &awin_gige_gpio_pinset_a31 : &awin_gige_gpio_pinset;
+	    awin_gige_gpio_pinset_a31 : awin_gige_gpio_pinset;
 	prop_dictionary_t cfg = device_properties(self);
 	uint32_t clkreg;
 	const char *phy_type, *pin_name;
 
 	sc->sc_core.sc_dev = self;
 
-	awin_gpio_pinset_acquire(pinset);
+	prop_dictionary_get_uint8(cfg, "pinset-func", &pinset.pinset_func);
+	awin_gpio_pinset_acquire(&pinset);
 
 	sc->sc_core.sc_bst = aio->aio_core_bst;
 	sc->sc_core.sc_dmat = aio->aio_dmat;
