@@ -259,11 +259,9 @@ static bool intel_dsm_pci_probe(struct pci_dev *pdev)
 }
 
 #ifdef __NetBSD__
-struct dsm_pa {
-	struct pci_attach_args	pa;
-	int			vga_count;
-	bool			has_dsm;
-};
+
+static int vga_count;
+static bool has_dsm;
 
 /* XXX from sys/dev/pci/vga_pcivar.h */
 #define	DEVICE_IS_VGA_PCI(class, id)					\
@@ -275,30 +273,27 @@ struct dsm_pa {
 static int
 intel_dsm_vga_match(const struct pci_attach_args *pa)
 {
-	struct dsm_pa *dpa = (struct dsm_pa *)__UNCONST(pa);
 
 	if (!DEVICE_IS_VGA_PCI(pa->pa_class, pa->pa_id))
 		return 0;
 
-	dpa->vga_count++;
+	vga_count++;
 	struct acpi_devnode *node = acpi_pcidev_find(0 /*XXX segment*/,
 	    pa->pa_bus, pa->pa_device, pa->pa_function);
 	if (node != NULL)
-		dpa->has_dsm |= intel_dsm_pci_probe(node->ad_handle);
+		has_dsm |= intel_dsm_pci_probe(node->ad_handle);
 	return 0;
 }
 
 static bool intel_dsm_detect(struct drm_device *dev)
 {
 	char acpi_method_name[255] = { 0 };
-	struct dsm_pa dpa;
 
-	dpa.pa = dev->pdev->pd_pa;
-	dpa.vga_count = 0;
-	dpa.has_dsm = false;
-	pci_find_device(&dpa.pa, intel_dsm_vga_match);
+	vga_count = 0;
+	has_dsm = false;
+	pci_find_device(&dev->pdev->pd_pa, intel_dsm_vga_match);
 
-	if (dpa.vga_count == 2 && dpa.has_dsm) {
+	if (vga_count == 2 && has_dsm) {
 		const char *name = acpi_name(intel_dsm_priv.dhandle);
 		strlcpy(acpi_method_name, name, sizeof(acpi_method_name));
 		DRM_DEBUG_DRIVER("VGA switcheroo: detected DSM switching method %s handle\n",
