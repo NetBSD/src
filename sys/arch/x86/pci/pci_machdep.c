@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.68 2014/11/05 05:07:43 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.69 2014/11/07 12:48:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.68 2014/11/05 05:07:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.69 2014/11/07 12:48:21 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -333,7 +333,7 @@ pci_conf_selector(pcitag_t tag, int reg)
 	case 2:
 		return tag.mode1 & mode2_mask.mode1;
 	default:
-		panic("%s: mode not configured", __func__);
+		panic("%s: mode %d not configured", __func__, pci_mode);
 	}
 }
 
@@ -346,7 +346,7 @@ pci_conf_port(pcitag_t tag, int reg)
 	case 2:
 		return tag.mode2.port | reg;
 	default:
-		panic("%s: mode not configured", __func__);
+		panic("%s: mode %d not configured", __func__, pci_mode);
 	}
 }
 
@@ -366,7 +366,7 @@ pci_conf_select(uint32_t sel)
 			outb(PCI_MODE2_FORWARD_REG, tag.mode2.forward);
 		return;
 	default:
-		panic("%s: mode not configured", __func__);
+		panic("%s: mode %d not configured", __func__, pci_mode);
 	}
 }
 
@@ -415,21 +415,23 @@ pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 	switch (pci_mode) {
 	case 1:
 		if (bus >= 256 || device >= 32 || function >= 8)
-			panic("%s: bad request", __func__);
+			panic("%s: bad request(%d, %d, %d)", __func__,
+			    bus, device, function);
 
 		tag.mode1 = PCI_MODE1_ENABLE |
 			    (bus << 16) | (device << 11) | (function << 8);
 		return tag;
 	case 2:
 		if (bus >= 256 || device >= 16 || function >= 8)
-			panic("%s: bad request", __func__);
+			panic("%s: bad request(%d, %d, %d)", __func__,
+			    bus, device, function);
 
 		tag.mode2.port = 0xc000 | (device << 8);
 		tag.mode2.enable = 0xf0 | (function << 1);
 		tag.mode2.forward = bus;
 		return tag;
 	default:
-		panic("%s: mode not configured", __func__);
+		panic("%s: mode %d not configured", __func__, pci_mode);
 	}
 }
 
@@ -465,7 +467,7 @@ pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
 			*fp = (tag.mode2.enable >> 1) & 0x7;
 		return;
 	default:
-		panic("%s: mode not configured", __func__);
+		panic("%s: mode %d not configured", __func__, pci_mode);
 	}
 }
 
