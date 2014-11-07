@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.76 2014/11/05 18:24:47 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.77 2014/11/07 08:22:42 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2020,4 +2020,9 @@ lib/libperfuse/ops.c				1.79
 
 	Avoid deadlocks on write errors.
 	[manu, ticket #183]
+
+sys/secmodel/secmodel.c				1.2
+
+	Do not release secmodels_lock when it is not held.
+	[maxv, ticket #180]
 
