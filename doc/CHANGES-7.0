@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.77 2014/11/07 08:22:42 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.78 2014/11/07 08:40:43 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2025,4 +2025,11 @@ sys/secmodel/secmodel.c				1.2
 
 	Do not release secmodels_lock when it is not held.
 	[maxv, ticket #180]
+
+usr.sbin/makemandb/apropos.1			1.15
+
+	Thankfully, apropos returns all results by default these days.
+	Removeoutdated sentence referring to the original (well, old new)
+	limit of 10.
+	[snj, ticket #185]
 
