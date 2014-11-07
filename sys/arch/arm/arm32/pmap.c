@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.310 2014/11/07 12:43:36 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.311 2014/11/07 12:44:58 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -215,7 +215,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.310 2014/11/07 12:43:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.311 2014/11/07 12:44:58 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -4574,6 +4574,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 	}
 #endif
 
+#ifndef MULTIPROCESSOR
 #if defined(DEBUG) || 1
 	/*
 	 * If 'rv == 0' at this point, it generally indicates that there is a
@@ -4652,6 +4653,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		}
 #endif
 	}
+#endif
 #endif
 
 	rv = 1;
