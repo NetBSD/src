@@ -1,5 +1,3 @@
-
-
 # Set the hostname from DHCP data if required
 
 # A hostname can either be a short hostname or a FQDN.
