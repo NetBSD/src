@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.289.2.1 2014/08/29 11:37:51 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.289.2.2 2014/11/07 21:34:56 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -73,7 +73,6 @@
  * TODO (in order of importance):
  *
  *	- Check XXX'ed comments
- *	- Internal SERDES mode newer than or equal to 82575.
  *	- EEE (Energy Efficiency Ethernet)
  *	- MSI/MSI-X
  *	- Virtual Function
@@ -82,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.289.2.1 2014/08/29 11:37:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.289.2.2 2014/11/07 21:34:56 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,10 +272,11 @@ struct wm_softc {
 	int sc_bus_speed;		/* PCI/PCIX bus speed */
 	int sc_pcixe_capoff;		/* PCI[Xe] capability reg offset */
 
-	const struct wm_product *sc_wmp; /* Pointer to the wm_product entry */
+	uint16_t sc_pcidevid;		/* PCI device ID */
 	wm_chip_type sc_type;		/* MAC type */
 	int sc_rev;			/* MAC revision */
 	wm_phy_type sc_phytype;		/* PHY type */
+	uint32_t sc_mediatype;		/* Media type (Copper, Fiber, SERDES)*/
 	int sc_funcid;			/* unit number of the chip (0 to 3) */
 	int sc_flags;			/* flags; see below */
 	int sc_if_flags;		/* last if_flags */
@@ -287,7 +287,8 @@ struct wm_softc {
 	callout_t sc_tick_ch;		/* tick callout */
 	bool sc_stopping;
 
-	int sc_ee_addrbits;		/* EEPROM address bits */
+	int sc_nvm_addrbits;		/* NVM address bits */
+	unsigned int sc_nvm_wordsize;		/* NVM word size */
 	int sc_ich8_flash_base;
 	int sc_ich8_flash_bank_size;
 	int sc_nvm_k1_enabled;
@@ -545,7 +546,7 @@ static void	wm_tick(void *);
 static int	wm_ifflags_cb(struct ethercom *);
 static int	wm_ioctl(struct ifnet *, u_long, void *);
 /* MAC address related */
-static int	wm_check_alt_mac_addr(struct wm_softc *);
+static uint16_t	wm_check_alt_mac_addr(struct wm_softc *);
 static int	wm_read_mac_addr(struct wm_softc *, uint8_t *);
 static void	wm_set_ral(struct wm_softc *, const uint8_t *, int);
 static uint32_t	wm_mchash(struct wm_softc *, const uint8_t *);
@@ -585,7 +586,7 @@ static int	wm_intr(void *);
 
 /*
  * Media related.
- * GMII, SGMII, TBI (and SERDES)
+ * GMII, SGMII, TBI, SERDES and SFP.
  */
 /* GMII related */
 static void	wm_gmii_reset(struct wm_softc *);
@@ -622,18 +623,21 @@ static void	wm_tbi_mediastatus(struct ifnet *, struct ifmediareq *);
 static int	wm_tbi_mediachange(struct ifnet *);
 static void	wm_tbi_set_linkled(struct wm_softc *);
 static void	wm_tbi_check_link(struct wm_softc *);
+/* SFP related */
+static int	wm_sfp_read_data_byte(struct wm_softc *, uint16_t, uint8_t *);
+static uint32_t	wm_sfp_get_media_type(struct wm_softc *);
 
 /*
  * NVM related.
  * Microwire, SPI (w/wo EERD) and Flash.
  */
-/* Both spi and uwire */
+/* Misc functions */
 static void	wm_eeprom_sendbits(struct wm_softc *, uint32_t, int);
 static void	wm_eeprom_recvbits(struct wm_softc *, uint32_t *, int);
+static int	wm_nvm_set_addrbits_size_eecd(struct wm_softc *);
 /* Microwire */
 static int	wm_nvm_read_uwire(struct wm_softc *, int, int, uint16_t *);
 /* SPI */
-static void	wm_set_spiaddrbits(struct wm_softc *);
 static int	wm_nvm_ready_spi(struct wm_softc *);
 static int	wm_nvm_read_spi(struct wm_softc *, int, int, uint16_t *);
 /* Using with EERD */
@@ -718,70 +722,72 @@ static const struct wm_product {
 	pci_product_id_t	wmp_product;
 	const char		*wmp_name;
 	wm_chip_type		wmp_type;
-	int			wmp_flags;
-#define	WMP_F_1000X		0x01
-#define	WMP_F_1000T		0x02
-#define	WMP_F_SERDES		0x04
+	uint32_t		wmp_flags;
+#define	WMP_F_UNKNOWN		0x00
+#define	WMP_F_FIBER		0x01
+#define	WMP_F_COPPER		0x02
+#define	WMP_F_SERDES		0x03 /* Internal SERDES */
+#define WMP_MEDIATYPE(x)	((x) & 0x03)
 } wm_products[] = {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82542,
 	  "Intel i82542 1000BASE-X Ethernet",
-	  WM_T_82542_2_1,	WMP_F_1000X },
+	  WM_T_82542_2_1,	WMP_F_FIBER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82543GC_FIBER,
 	  "Intel i82543GC 1000BASE-X Ethernet",
-	  WM_T_82543,		WMP_F_1000X },
+	  WM_T_82543,		WMP_F_FIBER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82543GC_COPPER,
 	  "Intel i82543GC 1000BASE-T Ethernet",
-	  WM_T_82543,		WMP_F_1000T },
+	  WM_T_82543,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82544EI_COPPER,
 	  "Intel i82544EI 1000BASE-T Ethernet",
-	  WM_T_82544,		WMP_F_1000T },
+	  WM_T_82544,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82544EI_FIBER,
 	  "Intel i82544EI 1000BASE-X Ethernet",
-	  WM_T_82544,		WMP_F_1000X },
+	  WM_T_82544,		WMP_F_FIBER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82544GC_COPPER,
 	  "Intel i82544GC 1000BASE-T Ethernet",
-	  WM_T_82544,		WMP_F_1000T },
+	  WM_T_82544,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82544GC_LOM,
 	  "Intel i82544GC (LOM) 1000BASE-T Ethernet",
-	  WM_T_82544,		WMP_F_1000T },
+	  WM_T_82544,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82540EM,
 	  "Intel i82540EM 1000BASE-T Ethernet",
-	  WM_T_82540,		WMP_F_1000T },
+	  WM_T_82540,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82540EM_LOM,
 	  "Intel i82540EM (LOM) 1000BASE-T Ethernet",
-	  WM_T_82540,		WMP_F_1000T },
+	  WM_T_82540,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82540EP_LOM,
 	  "Intel i82540EP 1000BASE-T Ethernet",
-	  WM_T_82540,		WMP_F_1000T },
+	  WM_T_82540,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82540EP,
 	  "Intel i82540EP 1000BASE-T Ethernet",
-	  WM_T_82540,		WMP_F_1000T },
+	  WM_T_82540,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82540EP_LP,
 	  "Intel i82540EP 1000BASE-T Ethernet",
-	  WM_T_82540,		WMP_F_1000T },
+	  WM_T_82540,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82545EM_COPPER,
 	  "Intel i82545EM 1000BASE-T Ethernet",
-	  WM_T_82545,		WMP_F_1000T },
+	  WM_T_82545,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82545GM_COPPER,
 	  "Intel i82545GM 1000BASE-T Ethernet",
-	  WM_T_82545_3,		WMP_F_1000T },
+	  WM_T_82545_3,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82545GM_FIBER,
 	  "Intel i82545GM 1000BASE-X Ethernet",
-	  WM_T_82545_3,		WMP_F_1000X },
+	  WM_T_82545_3,		WMP_F_FIBER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82545GM_SERDES,
 	  "Intel i82545GM Gigabit Ethernet (SERDES)",
@@ -789,27 +795,27 @@ static const struct wm_product {
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546EB_COPPER,
 	  "Intel i82546EB 1000BASE-T Ethernet",
-	  WM_T_82546,		WMP_F_1000T },
+	  WM_T_82546,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546EB_QUAD,
 	  "Intel i82546EB 1000BASE-T Ethernet",
-	  WM_T_82546,		WMP_F_1000T },
+	  WM_T_82546,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82545EM_FIBER,
 	  "Intel i82545EM 1000BASE-X Ethernet",
-	  WM_T_82545,		WMP_F_1000X },
+	  WM_T_82545,		WMP_F_FIBER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546EB_FIBER,
 	  "Intel i82546EB 1000BASE-X Ethernet",
-	  WM_T_82546,		WMP_F_1000X },
+	  WM_T_82546,		WMP_F_FIBER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546GB_COPPER,
 	  "Intel i82546GB 1000BASE-T Ethernet",
-	  WM_T_82546_3,		WMP_F_1000T },
+	  WM_T_82546_3,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546GB_FIBER,
 	  "Intel i82546GB 1000BASE-X Ethernet",
-	  WM_T_82546_3,		WMP_F_1000X },
+	  WM_T_82546_3,		WMP_F_FIBER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546GB_SERDES,
 	  "Intel i82546GB Gigabit Ethernet (SERDES)",
@@ -817,63 +823,63 @@ static const struct wm_product {
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER,
 	  "i82546GB quad-port Gigabit Ethernet",
-	  WM_T_82546_3,		WMP_F_1000T },
+	  WM_T_82546_3,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER_KSP3,
 	  "i82546GB quad-port Gigabit Ethernet (KSP3)",
-	  WM_T_82546_3,		WMP_F_1000T },
+	  WM_T_82546_3,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546GB_PCIE,
 	  "Intel PRO/1000MT (82546GB)",
-	  WM_T_82546_3,		WMP_F_1000T },
+	  WM_T_82546_3,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541EI,
 	  "Intel i82541EI 1000BASE-T Ethernet",
-	  WM_T_82541,		WMP_F_1000T },
+	  WM_T_82541,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541ER_LOM,
 	  "Intel i82541ER (LOM) 1000BASE-T Ethernet",
-	  WM_T_82541,		WMP_F_1000T },
+	  WM_T_82541,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541EI_MOBILE,
 	  "Intel i82541EI Mobile 1000BASE-T Ethernet",
-	  WM_T_82541,		WMP_F_1000T },
+	  WM_T_82541,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541ER,
 	  "Intel i82541ER 1000BASE-T Ethernet",
-	  WM_T_82541_2,		WMP_F_1000T },
+	  WM_T_82541_2,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541GI,
 	  "Intel i82541GI 1000BASE-T Ethernet",
-	  WM_T_82541_2,		WMP_F_1000T },
+	  WM_T_82541_2,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541GI_MOBILE,
 	  "Intel i82541GI Mobile 1000BASE-T Ethernet",
-	  WM_T_82541_2,		WMP_F_1000T },
+	  WM_T_82541_2,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82541PI,
 	  "Intel i82541PI 1000BASE-T Ethernet",
-	  WM_T_82541_2,		WMP_F_1000T },
+	  WM_T_82541_2,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82547EI,
 	  "Intel i82547EI 1000BASE-T Ethernet",
-	  WM_T_82547,		WMP_F_1000T },
+	  WM_T_82547,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82547EI_MOBILE,
 	  "Intel i82547EI Mobile 1000BASE-T Ethernet",
-	  WM_T_82547,		WMP_F_1000T },
+	  WM_T_82547,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82547GI,
 	  "Intel i82547GI 1000BASE-T Ethernet",
-	  WM_T_82547_2,		WMP_F_1000T },
+	  WM_T_82547_2,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_COPPER,
 	  "Intel PRO/1000 PT (82571EB)",
-	  WM_T_82571,		WMP_F_1000T },
+	  WM_T_82571,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_FIBER,
 	  "Intel PRO/1000 PF (82571EB)",
-	  WM_T_82571,		WMP_F_1000X },
+	  WM_T_82571,		WMP_F_FIBER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_SERDES,
 	  "Intel PRO/1000 PB (82571EB)",
@@ -881,19 +887,35 @@ static const struct wm_product {
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_QUAD_COPPER,
 	  "Intel PRO/1000 QT (82571EB)",
-	  WM_T_82571,		WMP_F_1000T },
-
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_COPPER,
-	  "Intel i82572EI 1000baseT Ethernet",
-	  WM_T_82572,		WMP_F_1000T },
+	  WM_T_82571,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER,
 	  "Intel PRO/1000 PT Quad Port Server Adapter",
-	  WM_T_82571,		WMP_F_1000T, },
+	  WM_T_82571,		WMP_F_COPPER, },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571PT_QUAD_COPPER,
+	  "Intel Gigabit PT Quad Port Server ExpressModule",
+	  WM_T_82571,		WMP_F_COPPER, },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_DUAL_SERDES,
+	  "Intel 82571EB Dual Gigabit Ethernet (SERDES)",
+	  WM_T_82571,		WMP_F_SERDES, },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_QUAD_SERDES,
+	  "Intel 82571EB Quad Gigabit Ethernet (SERDES)",
+	  WM_T_82571,		WMP_F_SERDES, },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_QUAD_FIBER,
+	  "Intel 82571EB Quad 1000baseX Ethernet",
+	  WM_T_82571,		WMP_F_FIBER, },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_COPPER,
+	  "Intel i82572EI 1000baseT Ethernet",
+	  WM_T_82572,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_FIBER,
 	  "Intel i82572EI 1000baseX Ethernet",
-	  WM_T_82572,		WMP_F_1000X },
+	  WM_T_82572,		WMP_F_FIBER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_SERDES,
 	  "Intel i82572EI Gigabit Ethernet (SERDES)",
@@ -901,35 +923,39 @@ static const struct wm_product {
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI,
 	  "Intel i82572EI 1000baseT Ethernet",
-	  WM_T_82572,		WMP_F_1000T },
+	  WM_T_82572,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82573E,
 	  "Intel i82573E",
-	  WM_T_82573,		WMP_F_1000T },
+	  WM_T_82573,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82573E_IAMT,
 	  "Intel i82573E IAMT",
-	  WM_T_82573,		WMP_F_1000T },
+	  WM_T_82573,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82573L,
 	  "Intel i82573L Gigabit Ethernet",
-	  WM_T_82573,		WMP_F_1000T },
+	  WM_T_82573,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82574L,
 	  "Intel i82574L",
-	  WM_T_82574,		WMP_F_1000T },
+	  WM_T_82574,		WMP_F_COPPER },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82574LA,
+	  "Intel i82574L",
+	  WM_T_82574,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82583V,
 	  "Intel i82583V",
-	  WM_T_82583,		WMP_F_1000T },
+	  WM_T_82583,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_CPR_DPT,
 	  "i80003 dual 1000baseT Ethernet",
-	  WM_T_80003,		WMP_F_1000T },
+	  WM_T_80003,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_FIB_DPT,
 	  "i80003 dual 1000baseX Ethernet",
-	  WM_T_80003,		WMP_F_1000T },
+	  WM_T_80003,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_SDS_DPT,
 	  "Intel i80003ES2 dual Gigabit Ethernet (SERDES)",
@@ -937,7 +963,7 @@ static const struct wm_product {
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_CPR_SPT,
 	  "Intel i80003 1000baseT Ethernet",
-	  WM_T_80003,		WMP_F_1000T },
+	  WM_T_80003,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT,
 	  "Intel i80003 Gigabit Ethernet (SERDES)",
@@ -945,118 +971,112 @@ static const struct wm_product {
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_M_AMT,
 	  "Intel i82801H (M_AMT) LAN Controller",
-	  WM_T_ICH8,		WMP_F_1000T },
+	  WM_T_ICH8,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_AMT,
 	  "Intel i82801H (AMT) LAN Controller",
-	  WM_T_ICH8,		WMP_F_1000T },
+	  WM_T_ICH8,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_LAN,
 	  "Intel i82801H LAN Controller",
-	  WM_T_ICH8,		WMP_F_1000T },
+	  WM_T_ICH8,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_IFE_LAN,
 	  "Intel i82801H (IFE) LAN Controller",
-	  WM_T_ICH8,		WMP_F_1000T },
+	  WM_T_ICH8,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_M_LAN,
 	  "Intel i82801H (M) LAN Controller",
-	  WM_T_ICH8,		WMP_F_1000T },
+	  WM_T_ICH8,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_IFE_GT,
 	  "Intel i82801H IFE (GT) LAN Controller",
-	  WM_T_ICH8,		WMP_F_1000T },
+	  WM_T_ICH8,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_IFE_G,
 	  "Intel i82801H IFE (G) LAN Controller",
-	  WM_T_ICH8,		WMP_F_1000T },
+	  WM_T_ICH8,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_AMT,
 	  "82801I (AMT) LAN Controller",
-	  WM_T_ICH9,		WMP_F_1000T },
+	  WM_T_ICH9,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IFE,
 	  "82801I LAN Controller",
-	  WM_T_ICH9,		WMP_F_1000T },
+	  WM_T_ICH9,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IFE_G,
 	  "82801I (G) LAN Controller",
-	  WM_T_ICH9,		WMP_F_1000T },
+	  WM_T_ICH9,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IFE_GT,
 	  "82801I (GT) LAN Controller",
-	  WM_T_ICH9,		WMP_F_1000T },
+	  WM_T_ICH9,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_C,
 	  "82801I (C) LAN Controller",
-	  WM_T_ICH9,		WMP_F_1000T },
+	  WM_T_ICH9,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_M,
 	  "82801I mobile LAN Controller",
-	  WM_T_ICH9,		WMP_F_1000T },
+	  WM_T_ICH9,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_IGP_M_V,
 	  "82801I mobile (V) LAN Controller",
-	  WM_T_ICH9,		WMP_F_1000T },
+	  WM_T_ICH9,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_M_AMT,
 	  "82801I mobile (AMT) LAN Controller",
-	  WM_T_ICH9,		WMP_F_1000T },
+	  WM_T_ICH9,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_BM,
 	  "82567LM-4 LAN Controller",
-	  WM_T_ICH9,		WMP_F_1000T },
+	  WM_T_ICH9,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_82567V_3,
 	  "82567V-3 LAN Controller",
-	  WM_T_ICH9,		WMP_F_1000T },
+	  WM_T_ICH9,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801J_R_BM_LM,
 	  "82567LM-2 LAN Controller",
-	  WM_T_ICH10,		WMP_F_1000T },
+	  WM_T_ICH10,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801J_R_BM_LF,
 	  "82567LF-2 LAN Controller",
-	  WM_T_ICH10,		WMP_F_1000T },
+	  WM_T_ICH10,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801J_D_BM_LM,
 	  "82567LM-3 LAN Controller",
-	  WM_T_ICH10,		WMP_F_1000T },
+	  WM_T_ICH10,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801J_D_BM_LF,
 	  "82567LF-3 LAN Controller",
-	  WM_T_ICH10,		WMP_F_1000T },
+	  WM_T_ICH10,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801J_R_BM_V,
 	  "82567V-2 LAN Controller",
-	  WM_T_ICH10,		WMP_F_1000T },
+	  WM_T_ICH10,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801J_D_BM_V,
 	  "82567V-3? LAN Controller",
-	  WM_T_ICH10,		WMP_F_1000T },
+	  WM_T_ICH10,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_HANKSVILLE,
 	  "HANKSVILLE LAN Controller",
-	  WM_T_ICH10,		WMP_F_1000T },
+	  WM_T_ICH10,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_M_LM,
 	  "PCH LAN (82577LM) Controller",
-	  WM_T_PCH,		WMP_F_1000T },
+	  WM_T_PCH,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_M_LC,
 	  "PCH LAN (82577LC) Controller",
-	  WM_T_PCH,		WMP_F_1000T },
+	  WM_T_PCH,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_D_DM,
 	  "PCH LAN (82578DM) Controller",
-	  WM_T_PCH,		WMP_F_1000T },
+	  WM_T_PCH,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_D_DC,
 	  "PCH LAN (82578DC) Controller",
-	  WM_T_PCH,		WMP_F_1000T },
+	  WM_T_PCH,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH2_LV_LM,
 	  "PCH2 LAN (82579LM) Controller",
-	  WM_T_PCH2,		WMP_F_1000T },
+	  WM_T_PCH2,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH2_LV_V,
 	  "PCH2 LAN (82579V) Controller",
-	  WM_T_PCH2,		WMP_F_1000T },
+	  WM_T_PCH2,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82575EB_COPPER,
 	  "82575EB dual-1000baseT Ethernet",
-	  WM_T_82575,		WMP_F_1000T },
-#if 0
-	/*
-	 * not sure if WMP_F_1000X or WMP_F_SERDES - we do not have it - so
-	 * disabled for now ...
-	 */
+	  WM_T_82575,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82575EB_FIBER_SERDES,
 	  "82575EB dual-1000baseX Ethernet (SERDES)",
 	  WM_T_82575,		WMP_F_SERDES },
-#endif
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82575GB_QUAD_COPPER,
 	  "82575GB quad-1000baseT Ethernet",
-	  WM_T_82575,		WMP_F_1000T },
+	  WM_T_82575,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82575GB_QUAD_COPPER_PM,
 	  "82575GB quad-1000baseT Ethernet (PM)",
-	  WM_T_82575,		WMP_F_1000T },
+	  WM_T_82575,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82576_COPPER,
 	  "82576 1000BaseT Ethernet",
-	  WM_T_82576,		WMP_F_1000T },
+	  WM_T_82576,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82576_FIBER,
 	  "82576 1000BaseX Ethernet",
-	  WM_T_82576,		WMP_F_1000X },
+	  WM_T_82576,		WMP_F_FIBER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82576_SERDES,
 	  "82576 gigabit Ethernet (SERDES)",
@@ -1064,10 +1084,15 @@ static const struct wm_product {
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82576_QUAD_COPPER,
 	  "82576 quad-1000BaseT Ethernet",
-	  WM_T_82576,		WMP_F_1000T },
+	  WM_T_82576,		WMP_F_COPPER },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82576_QUAD_COPPER_ET2,
+	  "82576 Gigabit ET2 Quad Port Server Adapter",
+	  WM_T_82576,		WMP_F_COPPER },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82576_NS,
 	  "82576 gigabit Ethernet",
-	  WM_T_82576,		WMP_F_1000T },
+	  WM_T_82576,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82576_NS_SERDES,
 	  "82576 gigabit Ethernet (SERDES)",
@@ -1078,10 +1103,10 @@ static const struct wm_product {
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_COPPER,
 	  "82580 1000BaseT Ethernet",
-	  WM_T_82580,		WMP_F_1000T },
+	  WM_T_82580,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_FIBER,
 	  "82580 1000BaseX Ethernet",
-	  WM_T_82580,		WMP_F_1000X },
+	  WM_T_82580,		WMP_F_FIBER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_SERDES,
 	  "82580 1000BaseT Ethernet (SERDES)",
@@ -1089,73 +1114,113 @@ static const struct wm_product {
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_SGMII,
 	  "82580 gigabit Ethernet (SGMII)",
-	  WM_T_82580,		WMP_F_1000T },
+	  WM_T_82580,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_COPPER_DUAL,
 	  "82580 dual-1000BaseT Ethernet",
-	  WM_T_82580,		WMP_F_1000T },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_ER,
-	  "82580 1000BaseT Ethernet",
-	  WM_T_82580ER,		WMP_F_1000T },
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_ER_DUAL,
-	  "82580 dual-1000BaseT Ethernet",
-	  WM_T_82580ER,		WMP_F_1000T },
+	  WM_T_82580,		WMP_F_COPPER },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82580_QUAD_FIBER,
 	  "82580 quad-1000BaseX Ethernet",
-	  WM_T_82580,		WMP_F_1000X },
+	  WM_T_82580,		WMP_F_FIBER },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_DH89XXCC_SGMII,
+	  "DH89XXCC Gigabit Ethernet (SGMII)",
+	  WM_T_82580,		WMP_F_COPPER },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_DH89XXCC_SERDES,
+	  "DH89XXCC Gigabit Ethernet (SERDES)",
+	  WM_T_82580,		WMP_F_SERDES },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_DH89XXCC_BPLANE,
+	  "DH89XXCC 1000BASE-KX Ethernet",
+	  WM_T_82580,		WMP_F_SERDES },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_DH89XXCC_SFP,
+	  "DH89XXCC Gigabit Ethernet (SFP)",
+	  WM_T_82580,		WMP_F_SERDES },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_COPPER,
 	  "I350 Gigabit Network Connection",
-	  WM_T_I350,		WMP_F_1000T },
+	  WM_T_I350,		WMP_F_COPPER },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_FIBER,
 	  "I350 Gigabit Fiber Network Connection",
-	  WM_T_I350,		WMP_F_1000X },
+	  WM_T_I350,		WMP_F_FIBER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_SERDES,
 	  "I350 Gigabit Backplane Connection",
 	  WM_T_I350,		WMP_F_SERDES },
-#if 0
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_DA4,
+	  "I350 Quad Port Gigabit Ethernet",
+	  WM_T_I350,		WMP_F_SERDES },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I350_SGMII,
 	  "I350 Gigabit Connection",
-	  WM_T_I350,		WMP_F_1000T },
-#endif
+	  WM_T_I350,		WMP_F_COPPER },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_C2000_SGMII,
 	  "I354 Gigabit Connection",
-	  WM_T_I354,		WMP_F_1000T },
+	  WM_T_I354,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_T1,
 	  "I210-T1 Ethernet Server Adapter",
-	  WM_T_I210,		WMP_F_1000T },
+	  WM_T_I210,		WMP_F_COPPER },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_COPPER_OEM1,
 	  "I210 Ethernet (Copper OEM)",
-	  WM_T_I210,		WMP_F_1000T },
+	  WM_T_I210,		WMP_F_COPPER },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_COPPER_IT,
 	  "I210 Ethernet (Copper IT)",
-	  WM_T_I210,		WMP_F_1000T },
+	  WM_T_I210,		WMP_F_COPPER },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_COPPER_WOF,
+	  "I210 Ethernet (FLASH less)",
+	  WM_T_I210,		WMP_F_COPPER },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_FIBER,
 	  "I210 Gigabit Ethernet (Fiber)",
-	  WM_T_I210,		WMP_F_1000X },
+	  WM_T_I210,		WMP_F_FIBER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_SERDES,
 	  "I210 Gigabit Ethernet (SERDES)",
 	  WM_T_I210,		WMP_F_SERDES },
-#if 0
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_SERDES_WOF,
+	  "I210 Gigabit Ethernet (FLASH less)",
+	  WM_T_I210,		WMP_F_SERDES },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I210_SGMII,
 	  "I210 Gigabit Ethernet (SGMII)",
-	  WM_T_I210,		WMP_F_SERDES },
-#endif
+	  WM_T_I210,		WMP_F_COPPER },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I211_COPPER,
 	  "I211 Ethernet (COPPER)",
-	  WM_T_I211,		WMP_F_1000T },
+	  WM_T_I211,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I217_V,
 	  "I217 V Ethernet Connection",
-	  WM_T_PCH_LPT,		WMP_F_1000T },
+	  WM_T_PCH_LPT,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I217_LM,
 	  "I217 LM Ethernet Connection",
-	  WM_T_PCH_LPT,		WMP_F_1000T },
+	  WM_T_PCH_LPT,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_V,
 	  "I218 V Ethernet Connection",
-	  WM_T_PCH_LPT,		WMP_F_1000T },
+	  WM_T_PCH_LPT,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_V2,
+	  "I218 V Ethernet Connection",
+	  WM_T_PCH_LPT,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_V3,
+	  "I218 V Ethernet Connection",
+	  WM_T_PCH_LPT,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_LM,
 	  "I218 LM Ethernet Connection",
-	  WM_T_PCH_LPT,		WMP_F_1000T },
+	  WM_T_PCH_LPT,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_LM2,
+	  "I218 LM Ethernet Connection",
+	  WM_T_PCH_LPT,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I218_LM3,
+	  "I218 LM Ethernet Connection",
+	  WM_T_PCH_LPT,		WMP_F_COPPER },
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
@@ -1278,6 +1343,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	pcireg_t preg, memtype;
 	uint16_t eeprom_data, apme_mask;
 	bool force_clear_smbi;
+	uint32_t link_mode;
 	uint32_t reg;
 	char intrbuf[PCI_INTRSTR_LEN];
 
@@ -1285,11 +1351,14 @@ wm_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_tick_ch, CALLOUT_FLAGS);
 	sc->sc_stopping = false;
 
-	sc->sc_wmp = wmp = wm_lookup(pa);
+	wmp = wm_lookup(pa);
+#ifdef DIAGNOSTIC
 	if (wmp == NULL) {
 		printf("\n");
 		panic("wm_attach: impossible");
 	}
+#endif
+	sc->sc_mediatype = WMP_MEDIATYPE(wmp->wmp_flags);
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -1299,6 +1368,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->sc_dmat = pa->pa_dmat;
 
+	sc->sc_pcidevid = PCI_PRODUCT(pa->pa_id);
 	sc->sc_rev = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
 	pci_aprint_devinfo_fancy(pa, "Ethernet controller", wmp->wmp_name, 1);
 
@@ -1314,7 +1384,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	    || (sc->sc_type == WM_T_82580)
 	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)
 	    || (sc->sc_type == WM_T_I210) || (sc->sc_type == WM_T_I211))
 		sc->sc_flags |= WM_F_NEWQUEUE;
@@ -1433,7 +1503,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	if ((sc->sc_type == WM_T_82546) || (sc->sc_type == WM_T_82546_3)
 	    || (sc->sc_type ==  WM_T_82571) || (sc->sc_type == WM_T_80003)
 	    || (sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	    || (sc->sc_type == WM_T_82580)
 	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354))
 		sc->sc_funcid = (CSR_READ(sc, WMREG_STATUS)
 		    >> STATUS_FUNCID_SHIFT) & STATUS_FUNCID_MASK;
@@ -1646,7 +1716,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82543:
 	case WM_T_82544:
 		/* Microwire */
-		sc->sc_ee_addrbits = 6;
+		sc->sc_nvm_wordsize = 64;
+		sc->sc_nvm_addrbits = 6;
 		break;
 	case WM_T_82540:
 	case WM_T_82545:
@@ -1655,10 +1726,13 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82546_3:
 		/* Microwire */
 		reg = CSR_READ(sc, WMREG_EECD);
-		if (reg & EECD_EE_SIZE)
-			sc->sc_ee_addrbits = 8;
-		else
-			sc->sc_ee_addrbits = 6;
+		if (reg & EECD_EE_SIZE) {
+			sc->sc_nvm_wordsize = 256;
+			sc->sc_nvm_addrbits = 8;
+		} else {
+			sc->sc_nvm_wordsize = 64;
+			sc->sc_nvm_addrbits = 6;
+		}
 		sc->sc_flags |= WM_F_LOCK_EECD;
 		break;
 	case WM_T_82541:
@@ -1668,16 +1742,25 @@ wm_attach(device_t parent, device_t self, void *aux)
 		reg = CSR_READ(sc, WMREG_EECD);
 		if (reg & EECD_EE_TYPE) {
 			/* SPI */
-			wm_set_spiaddrbits(sc);
-		} else
+			sc->sc_flags |= WM_F_EEPROM_SPI;
+			wm_nvm_set_addrbits_size_eecd(sc);
+		} else {
 			/* Microwire */
-			sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 8 : 6;
+			if ((reg & EECD_EE_ABITS) != 0) {
+				sc->sc_nvm_wordsize = 256;
+				sc->sc_nvm_addrbits = 8;
+			} else {
+				sc->sc_nvm_wordsize = 64;
+				sc->sc_nvm_addrbits = 6;
+			}
+		}
 		sc->sc_flags |= WM_F_LOCK_EECD;
 		break;
 	case WM_T_82571:
 	case WM_T_82572:
 		/* SPI */
-		wm_set_spiaddrbits(sc);
+		sc->sc_flags |= WM_F_EEPROM_SPI;
+		wm_nvm_set_addrbits_size_eecd(sc);
 		sc->sc_flags |= WM_F_LOCK_EECD | WM_F_LOCK_SWSM;
 		break;
 	case WM_T_82573:
@@ -1685,23 +1768,25 @@ wm_attach(device_t parent, device_t self, void *aux)
 		/* FALLTHROUGH */
 	case WM_T_82574:
 	case WM_T_82583:
-		if (wm_nvm_is_onboard_eeprom(sc) == 0)
+		if (wm_nvm_is_onboard_eeprom(sc) == 0) {
 			sc->sc_flags |= WM_F_EEPROM_FLASH;
-		else {
+			sc->sc_nvm_wordsize = 2048;
+		} else {
 			/* SPI */
-			wm_set_spiaddrbits(sc);
+			sc->sc_flags |= WM_F_EEPROM_SPI;
+			wm_nvm_set_addrbits_size_eecd(sc);
 		}
 		sc->sc_flags |= WM_F_EEPROM_EERDEEWR;
 		break;
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_80003:
 		/* SPI */
-		wm_set_spiaddrbits(sc);
+		sc->sc_flags |= WM_F_EEPROM_SPI;
+		wm_nvm_set_addrbits_size_eecd(sc);
 		sc->sc_flags |= WM_F_EEPROM_EERDEEWR | WM_F_LOCK_SWFW
 		    | WM_F_LOCK_SWSM;
 		break;
@@ -1713,6 +1798,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_PCH_LPT:
 		/* FLASH */
 		sc->sc_flags |= WM_F_EEPROM_FLASH | WM_F_LOCK_EXTCNF;
+		sc->sc_nvm_wordsize = 2048;
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, WM_ICH8_FLASH);
 		if (pci_mapreg_map(pa, WM_ICH8_FLASH, memtype, 0,
 		    &sc->sc_flasht, &sc->sc_flashh, NULL, NULL)) {
@@ -1732,6 +1818,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		break;
 	case WM_T_I210:
 	case WM_T_I211:
+		wm_nvm_set_addrbits_size_eecd(sc);
 		sc->sc_flags |= WM_F_EEPROM_FLASH_HW;
 		sc->sc_flags |= WM_F_EEPROM_EERDEEWR | WM_F_LOCK_SWFW;
 		break;
@@ -1790,19 +1877,21 @@ wm_attach(device_t parent, device_t self, void *aux)
 
 	if (sc->sc_flags & WM_F_EEPROM_INVALID)
 		aprint_verbose_dev(sc->sc_dev, "No EEPROM\n");
-	else if (sc->sc_flags & WM_F_EEPROM_FLASH_HW) {
-		aprint_verbose_dev(sc->sc_dev, "FLASH(HW)\n");
-	} else if (sc->sc_flags & WM_F_EEPROM_FLASH) {
-		aprint_verbose_dev(sc->sc_dev, "FLASH\n");
-	} else {
-		if (sc->sc_flags & WM_F_EEPROM_SPI)
-			eetype = "SPI";
-		else
-			eetype = "MicroWire";
-		aprint_verbose_dev(sc->sc_dev,
-		    "%u word (%d address bits) %s EEPROM\n",
-		    1U << sc->sc_ee_addrbits,
-		    sc->sc_ee_addrbits, eetype);
+	else {
+		aprint_verbose_dev(sc->sc_dev, "%u words ",
+		    sc->sc_nvm_wordsize);
+		if (sc->sc_flags & WM_F_EEPROM_FLASH_HW) {
+			aprint_verbose("FLASH(HW)\n");
+		} else if (sc->sc_flags & WM_F_EEPROM_FLASH) {
+			aprint_verbose("FLASH\n");
+		} else {
+			if (sc->sc_flags & WM_F_EEPROM_SPI)
+				eetype = "SPI";
+			else
+				eetype = "MicroWire";
+			aprint_verbose("(%d address bits) %s EEPROM\n",
+			    sc->sc_nvm_addrbits, eetype);
+		}
 	}
 
 	switch (sc->sc_type) {
@@ -1854,7 +1943,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
 		cfg1 = (uint16_t) prop_number_integer_value(pn);
 	} else {
-		if (wm_nvm_read(sc, EEPROM_OFF_CFG1, 1, &cfg1)) {
+		if (wm_nvm_read(sc, NVM_OFF_CFG1, 1, &cfg1)) {
 			aprint_error_dev(sc->sc_dev, "unable to read CFG1\n");
 			goto fail_5;
 		}
@@ -1865,7 +1954,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
 		cfg2 = (uint16_t) prop_number_integer_value(pn);
 	} else {
-		if (wm_nvm_read(sc, EEPROM_OFF_CFG2, 1, &cfg2)) {
+		if (wm_nvm_read(sc, NVM_OFF_CFG2, 1, &cfg2)) {
 			aprint_error_dev(sc->sc_dev, "unable to read CFG2\n");
 			goto fail_5;
 		}
@@ -1878,10 +1967,10 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82543:
 		/* dummy? */
 		eeprom_data = 0;
-		apme_mask = EEPROM_CFG3_APME;
+		apme_mask = NVM_CFG3_APME;
 		break;
 	case WM_T_82544:
-		apme_mask = EEPROM_CFG2_82544_APM_EN;
+		apme_mask = NVM_CFG2_82544_APM_EN;
 		eeprom_data = cfg2;
 		break;
 	case WM_T_82546:
@@ -1893,14 +1982,13 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82583:
 	case WM_T_80003:
 	default:
-		apme_mask = EEPROM_CFG3_APME;
-		wm_nvm_read(sc, (sc->sc_funcid == 1) ? EEPROM_OFF_CFG3_PORTB
-		    : EEPROM_OFF_CFG3_PORTA, 1, &eeprom_data);
+		apme_mask = NVM_CFG3_APME;
+		wm_nvm_read(sc, (sc->sc_funcid == 1) ? NVM_OFF_CFG3_PORTB
+		    : NVM_OFF_CFG3_PORTA, 1, &eeprom_data);
 		break;
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354: /* XXX ok? */
 	case WM_T_ICH8:
@@ -1934,7 +2022,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 			KASSERT(prop_object_type(pn) == PROP_TYPE_NUMBER);
 			swdpin = (uint16_t) prop_number_integer_value(pn);
 		} else {
-			if (wm_nvm_read(sc, EEPROM_OFF_SWDPIN, 1, &swdpin)) {
+			if (wm_nvm_read(sc, NVM_OFF_SWDPIN, 1, &swdpin)) {
 				aprint_error_dev(sc->sc_dev,
 				    "unable to read SWDPIN\n");
 				goto fail_5;
@@ -1942,36 +2030,36 @@ wm_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	if (cfg1 & EEPROM_CFG1_ILOS)
+	if (cfg1 & NVM_CFG1_ILOS)
 		sc->sc_ctrl |= CTRL_ILOS;
 	if (sc->sc_type >= WM_T_82544) {
 		sc->sc_ctrl |=
-		    ((swdpin >> EEPROM_SWDPIN_SWDPIO_SHIFT) & 0xf) <<
+		    ((swdpin >> NVM_SWDPIN_SWDPIO_SHIFT) & 0xf) <<
 		    CTRL_SWDPIO_SHIFT;
 		sc->sc_ctrl |=
-		    ((swdpin >> EEPROM_SWDPIN_SWDPIN_SHIFT) & 0xf) <<
+		    ((swdpin >> NVM_SWDPIN_SWDPIN_SHIFT) & 0xf) <<
 		    CTRL_SWDPINS_SHIFT;
 	} else {
 		sc->sc_ctrl |=
-		    ((cfg1 >> EEPROM_CFG1_SWDPIO_SHIFT) & 0xf) <<
+		    ((cfg1 >> NVM_CFG1_SWDPIO_SHIFT) & 0xf) <<
 		    CTRL_SWDPIO_SHIFT;
 	}
 
 #if 0
 	if (sc->sc_type >= WM_T_82544) {
-		if (cfg1 & EEPROM_CFG1_IPS0)
+		if (cfg1 & NVM_CFG1_IPS0)
 			sc->sc_ctrl_ext |= CTRL_EXT_IPS;
-		if (cfg1 & EEPROM_CFG1_IPS1)
+		if (cfg1 & NVM_CFG1_IPS1)
 			sc->sc_ctrl_ext |= CTRL_EXT_IPS1;
 		sc->sc_ctrl_ext |=
-		    ((swdpin >> (EEPROM_SWDPIN_SWDPIO_SHIFT + 4)) & 0xd) <<
+		    ((swdpin >> (NVM_SWDPIN_SWDPIO_SHIFT + 4)) & 0xd) <<
 		    CTRL_EXT_SWDPIO_SHIFT;
 		sc->sc_ctrl_ext |=
-		    ((swdpin >> (EEPROM_SWDPIN_SWDPIN_SHIFT + 4)) & 0xd) <<
+		    ((swdpin >> (NVM_SWDPIN_SWDPIN_SHIFT + 4)) & 0xd) <<
 		    CTRL_EXT_SWDPINS_SHIFT;
 	} else {
 		sc->sc_ctrl_ext |=
-		    ((cfg2 >> EEPROM_CFG2_SWDPIO_SHIFT) & 0xf) <<
+		    ((cfg2 >> NVM_CFG2_SWDPIO_SHIFT) & 0xf) <<
 		    CTRL_EXT_SWDPIO_SHIFT;
 	}
 #endif
@@ -1997,9 +2085,9 @@ wm_attach(device_t parent, device_t self, void *aux)
 		uint16_t val;
 
 		/* Save the NVM K1 bit setting */
-		wm_nvm_read(sc, EEPROM_OFF_K1_CONFIG, 1, &val);
+		wm_nvm_read(sc, NVM_OFF_K1_CONFIG, 1, &val);
 
-		if ((val & EEPROM_K1_CONFIG_ENABLE) != 0)
+		if ((val & NVM_K1_CONFIG_ENABLE) != 0)
 			sc->sc_nvm_k1_enabled = 1;
 		else
 			sc->sc_nvm_k1_enabled = 0;
@@ -2018,57 +2106,96 @@ wm_attach(device_t parent, device_t self, void *aux)
 		wm_gmii_mediainit(sc, wmp->wmp_product);
 	} else if (sc->sc_type < WM_T_82543 ||
 	    (CSR_READ(sc, WMREG_STATUS) & STATUS_TBIMODE) != 0) {
-		if (wmp->wmp_flags & WMP_F_1000T)
+		if (sc->sc_mediatype & WMP_F_COPPER) {
 			aprint_error_dev(sc->sc_dev,
 			    "WARNING: TBIMODE set on 1000BASE-T product!\n");
+			sc->sc_mediatype = WMP_F_FIBER;
+		}
 		wm_tbi_mediainit(sc);
 	} else {
 		switch (sc->sc_type) {
 		case WM_T_82575:
 		case WM_T_82576:
 		case WM_T_82580:
-		case WM_T_82580ER:
 		case WM_T_I350:
 		case WM_T_I354:
 		case WM_T_I210:
 		case WM_T_I211:
 			reg = CSR_READ(sc, WMREG_CTRL_EXT);
-			switch (reg & CTRL_EXT_LINK_MODE_MASK) {
+			link_mode = reg & CTRL_EXT_LINK_MODE_MASK;
+			switch (link_mode) {
 			case CTRL_EXT_LINK_MODE_1000KX:
 				aprint_verbose_dev(sc->sc_dev, "1000KX\n");
-				CSR_WRITE(sc, WMREG_CTRL_EXT,
-				    reg | CTRL_EXT_I2C_ENA);
-				panic("not supported yet\n");
+				sc->sc_mediatype = WMP_F_SERDES;
 				break;
 			case CTRL_EXT_LINK_MODE_SGMII:
 				if (wm_sgmii_uses_mdio(sc)) {
 					aprint_verbose_dev(sc->sc_dev,
 					    "SGMII(MDIO)\n");
 					sc->sc_flags |= WM_F_SGMII;
-					wm_gmii_mediainit(sc,
-					    wmp->wmp_product);
+					sc->sc_mediatype = WMP_F_COPPER;
 					break;
 				}
 				aprint_verbose_dev(sc->sc_dev, "SGMII(I2C)\n");
 				/*FALLTHROUGH*/
 			case CTRL_EXT_LINK_MODE_PCIE_SERDES:
-				aprint_verbose_dev(sc->sc_dev, "SERDES\n");
-				CSR_WRITE(sc, WMREG_CTRL_EXT,
-				    reg | CTRL_EXT_I2C_ENA);
-				panic("not supported yet\n");
+				sc->sc_mediatype = wm_sfp_get_media_type(sc);
+				if (sc->sc_mediatype == WMP_F_UNKNOWN) {
+					if (link_mode
+					    == CTRL_EXT_LINK_MODE_SGMII) {
+						sc->sc_mediatype
+						    = WMP_F_COPPER;
+						sc->sc_flags |= WM_F_SGMII;
+					} else {
+						sc->sc_mediatype
+						    = WMP_F_SERDES;
+						aprint_verbose_dev(sc->sc_dev,
+						    "SERDES\n");
+					}
+					break;
+				}
+				if (sc->sc_mediatype == WMP_F_SERDES)
+					aprint_verbose_dev(sc->sc_dev,
+					    "SERDES\n");
+
+				/* Change current link mode setting */
+				reg &= ~CTRL_EXT_LINK_MODE_MASK;
+				switch (sc->sc_mediatype) {
+				case WMP_F_COPPER:
+					reg |= CTRL_EXT_LINK_MODE_SGMII;
+					break;
+				case WMP_F_SERDES:
+					reg |= CTRL_EXT_LINK_MODE_PCIE_SERDES;
+					break;
+				default:
+					break;
+				}
+				CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
 				break;
 			case CTRL_EXT_LINK_MODE_GMII:
 			default:
-				CSR_WRITE(sc, WMREG_CTRL_EXT,
-				    reg & ~CTRL_EXT_I2C_ENA);
-				wm_gmii_mediainit(sc, wmp->wmp_product);
+				aprint_verbose_dev(sc->sc_dev, "Copper\n");
+				sc->sc_mediatype = WMP_F_COPPER;
 				break;
 			}
+
+			reg &= ~CTRL_EXT_I2C_ENA;
+			if ((sc->sc_flags & WM_F_SGMII) != 0)
+				reg |= CTRL_EXT_I2C_ENA;
+			else
+				reg &= ~CTRL_EXT_I2C_ENA;
+			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+
+			if (sc->sc_mediatype == WMP_F_COPPER)
+				wm_gmii_mediainit(sc, wmp->wmp_product);
+			else
+				wm_tbi_mediainit(sc);
 			break;
 		default:
-			if (wmp->wmp_flags & WMP_F_1000X)
+			if (sc->sc_mediatype & WMP_F_FIBER)
 				aprint_error_dev(sc->sc_dev,
 				    "WARNING: TBIMODE clear on 1000BASE-X product!\n");
+			sc->sc_mediatype = WMP_F_COPPER;
 			wm_gmii_mediainit(sc, wmp->wmp_product);
 		}
 	}
@@ -2093,8 +2220,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	switch (sc->sc_type) {
 	case WM_T_82573:
 		/* XXX limited to 9234 if ASPM is disabled */
-		wm_nvm_read(sc, EEPROM_INIT_3GIO_3, 1, &io3);
-		if ((io3 & EEPROM_3GIO_3_ASPM_MASK) != 0)
+		wm_nvm_read(sc, NVM_OFF_INIT_3GIO_3, 1, &io3);
+		if ((io3 & NVM_3GIO_3_ASPM_MASK) != 0)
 			sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 		break;
 	case WM_T_82571:
@@ -2103,7 +2230,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354: /* XXXX ok? */
 	case WM_T_I210:
@@ -2629,20 +2755,25 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 /* MAC address related */
 
-static int
+/*
+ * Get the offset of MAC address and return it.
+ * If error occured, use offset 0.
+ */
+static uint16_t
 wm_check_alt_mac_addr(struct wm_softc *sc)
 {
 	uint16_t myea[ETHER_ADDR_LEN / 2];
-	uint16_t offset = EEPROM_OFF_MACADDR;
+	uint16_t offset = NVM_OFF_MACADDR;
 
 	/* Try to read alternative MAC address pointer */
-	if (wm_nvm_read(sc, EEPROM_ALT_MAC_ADDR_PTR, 1, &offset) != 0)
-		return -1;
+	if (wm_nvm_read(sc, NVM_OFF_ALT_MAC_ADDR_PTR, 1, &offset) != 0)
+		return 0;
 
-	/* Check pointer */
-	if (offset == 0xffff)
-		return -1;
+	/* Check pointer if it's valid or not. */
+	if ((offset == 0x0000) || (offset == 0xffff))
+		return 0;
 
+	offset += NVM_OFF_MACADDR_82571(sc->sc_funcid);
 	/*
 	 * Check whether alternative MAC address is valid or not.
 	 * Some cards have non 0xffff pointer but those don't use
@@ -2652,42 +2783,25 @@ wm_check_alt_mac_addr(struct wm_softc *sc)
 	 */
 	if (wm_nvm_read(sc, offset, 1, myea) == 0)
 		if (((myea[0] & 0xff) & 0x01) == 0)
-			return 0; /* found! */
+			return offset; /* Found */
 
-	/* not found */
-	return -1;
+	/* Not found */
+	return 0;
 }
 
 static int
 wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 {
 	uint16_t myea[ETHER_ADDR_LEN / 2];
-	uint16_t offset = EEPROM_OFF_MACADDR;
+	uint16_t offset = NVM_OFF_MACADDR;
 	int do_invert = 0;
 
 	switch (sc->sc_type) {
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
-		switch (sc->sc_funcid) {
-		case 0:
-			/* default value (== EEPROM_OFF_MACADDR) */
-			break;
-		case 1:
-			offset = EEPROM_OFF_LAN1;
-			break;
-		case 2:
-			offset = EEPROM_OFF_LAN2;
-			break;
-		case 3:
-			offset = EEPROM_OFF_LAN3;
-			break;
-		default:
-			goto bad;
-			/* NOTREACHED */
-			break;
-		}
+		/* EEPROM Top Level Partitioning */
+		offset = NVM_OFF_LAN_FUNC_82580(sc->sc_funcid) + 0;
 		break;
 	case WM_T_82571:
 	case WM_T_82575:
@@ -2695,34 +2809,10 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 	case WM_T_80003:
 	case WM_T_I210:
 	case WM_T_I211:
-		if (wm_check_alt_mac_addr(sc) != 0) {
-			/* reset the offset to LAN0 */
-			offset = EEPROM_OFF_MACADDR;
+		offset = wm_check_alt_mac_addr(sc);
+		if (offset == 0)
 			if ((sc->sc_funcid & 0x01) == 1)
 				do_invert = 1;
-			goto do_read;
-		}
-		switch (sc->sc_funcid) {
-		case 0:
-			/*
-			 * The offset is the value in EEPROM_ALT_MAC_ADDR_PTR
-			 * itself.
-			 */
-			break;
-		case 1:
-			offset += EEPROM_OFF_MACADDR_LAN1;
-			break;
-		case 2:
-			offset += EEPROM_OFF_MACADDR_LAN2;
-			break;
-		case 3:
-			offset += EEPROM_OFF_MACADDR_LAN3;
-			break;
-		default:
-			goto bad;
-			/* NOTREACHED */
-			break;
-		}
 		break;
 	default:
 		if ((sc->sc_funcid & 0x01) == 1)
@@ -2730,11 +2820,9 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 		break;
 	}
 
- do_read:
 	if (wm_nvm_read(sc, offset, sizeof(myea) / sizeof(myea[0]),
-		myea) != 0) {
+		myea) != 0)
 		goto bad;
-	}
 
 	enaddr[0] = myea[0] & 0xff;
 	enaddr[1] = myea[0] >> 8;
@@ -2988,7 +3076,6 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -3080,7 +3167,6 @@ wm_get_cfg_done(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -3160,7 +3246,6 @@ wm_reset(struct wm_softc *sc)
 		sc->sc_pba = PBA_32K;
 		break;
 	case WM_T_82580:
-	case WM_T_82580ER:
 		sc->sc_pba = PBA_35K;
 		break;
 	case WM_T_I210:
@@ -3214,7 +3299,7 @@ wm_reset(struct wm_softc *sc)
 
 	/* Set the completion timeout for interface */
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	    || (sc->sc_type == WM_T_82580)
 	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)
 	    || (sc->sc_type == WM_T_I210) || (sc->sc_type == WM_T_I211))
 		wm_set_pcie_completion_timeout(sc);
@@ -3316,6 +3401,16 @@ wm_reset(struct wm_softc *sc)
 		delay(20*1000);
 		wm_put_swfwhw_semaphore(sc);
 		break;
+	case WM_T_82580:
+	case WM_T_I350:
+	case WM_T_I354:
+	case WM_T_I210:
+	case WM_T_I211:
+		CSR_WRITE(sc, WMREG_CTRL, CSR_READ(sc, WMREG_CTRL) | CTRL_RST);
+		if (sc->sc_pcidevid != PCI_PRODUCT_INTEL_DH89XXCC_SGMII)
+			CSR_WRITE_FLUSH(sc);
+		delay(5000);
+		break;
 	case WM_T_82542_2_0:
 	case WM_T_82542_2_1:
 	case WM_T_82543:
@@ -3328,13 +3423,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82574:
 	case WM_T_82575:
 	case WM_T_82576:
-	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_82583:
-	case WM_T_I350:
-	case WM_T_I354:
-	case WM_T_I210:
-	case WM_T_I211:
 	default:
 		/* Everything else can safely use the documented method. */
 		CSR_WRITE(sc, WMREG_CTRL, CSR_READ(sc, WMREG_CTRL) | CTRL_RST);
@@ -3407,7 +3496,6 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -3433,7 +3521,6 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82576:
 #if 0 /* XXX */
 	case WM_T_82580:
-	case WM_T_82580ER:
 #endif
 	case WM_T_I350:
 	case WM_T_I354:
@@ -3445,7 +3532,6 @@ wm_reset(struct wm_softc *sc)
 			if ((sc->sc_type == WM_T_82575)
 			    || (sc->sc_type == WM_T_82576)
 			    || (sc->sc_type == WM_T_82580)
-			    || (sc->sc_type == WM_T_82580ER)
 			    || (sc->sc_type == WM_T_I350)
 			    || (sc->sc_type == WM_T_I354))
 				wm_reset_init_script_82575(sc);
@@ -3455,7 +3541,7 @@ wm_reset(struct wm_softc *sc)
 		break;
 	}
 
-	if ((sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	if ((sc->sc_type == WM_T_82580)
 	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)) {
 		/* clear global device reset status bit */
 		CSR_WRITE(sc, WMREG_STATUS, STATUS_DEV_RST_SET);
@@ -5792,7 +5878,6 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -5869,7 +5954,6 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -5925,7 +6009,6 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -5970,7 +6053,6 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -6081,7 +6163,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	struct mii_data *mii = &sc->sc_mii;
 	uint32_t reg;
 
-	/* We have MII. */
+	/* We have GMII. */
 	sc->sc_flags |= WM_F_HAS_MII;
 
 	if (sc->sc_type == WM_T_80003)
@@ -6090,7 +6172,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 		sc->sc_tipg = TIPG_1000T_DFLT;
 
 	/* XXX Not for I354? FreeBSD's e1000_82575.c doesn't include it */
-	if ((sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	if ((sc->sc_type == WM_T_82580)
 	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I210)
 	    || (sc->sc_type == WM_T_I211)) {
 		reg = CSR_READ(sc, WMREG_PHPM);
@@ -6118,7 +6200,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	 *  For some devices, we can determine the PHY access method
 	 * from sc_type.
 	 *
-	 *  For ICH8 variants, it's difficult to detemine the PHY access
+	 *  For ICH8 variants, it's difficult to determine the PHY access
 	 * method by sc_type, so use the PCI product ID for some devices.
 	 * For other ICH8 variants, try to use igp's method. If the PHY
 	 * can't detect, then use bm's method.
@@ -6197,7 +6279,7 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	    wm_gmii_mediastatus);
 
 	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
-	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)
+	    || (sc->sc_type == WM_T_82580)
 	    || (sc->sc_type == WM_T_I350) || (sc->sc_type == WM_T_I354)
 	    || (sc->sc_type == WM_T_I210) || (sc->sc_type == WM_T_I211)) {
 		if ((sc->sc_flags & WM_F_SGMII) == 0) {
@@ -7041,7 +7123,6 @@ wm_sgmii_uses_mdio(struct wm_softc *sc)
 		ismdio = ((reg & MDIC_DEST) != 0);
 		break;
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 	case WM_T_I210:
@@ -7151,7 +7232,7 @@ wm_check_for_link(struct wm_softc *sc)
 	uint32_t status;
 	uint32_t sig;
 
-	if (sc->sc_wmp->wmp_flags & WMP_F_SERDES) {
+	if (sc->sc_mediatype & WMP_F_SERDES) {
 		sc->sc_tbi_linkup = 1;
 		return 0;
 	}
@@ -7250,7 +7331,7 @@ wm_tbi_mediainit(struct wm_softc *sc)
 	 */
 	sc->sc_ctrl |= CTRL_SWDPIO(0);
 	sc->sc_ctrl &= ~CTRL_SWDPIO(1);
-	if (sc->sc_wmp->wmp_flags & WMP_F_SERDES)
+	if (sc->sc_mediatype & WMP_F_SERDES)
 		sc->sc_ctrl &= ~CTRL_LRST;
 
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
@@ -7330,7 +7411,7 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	uint32_t status;
 	int i;
 
-	if (sc->sc_wmp->wmp_flags & WMP_F_SERDES)
+	if (sc->sc_mediatype & WMP_F_SERDES)
 		return 0;
 
 	if ((sc->sc_type == WM_T_82571) || (sc->sc_type == WM_T_82572)
@@ -7460,7 +7541,7 @@ wm_tbi_check_link(struct wm_softc *sc)
 
 	KASSERT(WM_TX_LOCKED(sc));
 
-	if (sc->sc_wmp->wmp_flags & WMP_F_SERDES) {
+	if (sc->sc_mediatype & WMP_F_SERDES) {
 		sc->sc_tbi_linkup = 1;
 		return;
 	}
@@ -7515,6 +7596,93 @@ wm_tbi_check_link(struct wm_softc *sc)
 	wm_tbi_set_linkled(sc);
 }
 
+/* SFP related */
+
+static int
+wm_sfp_read_data_byte(struct wm_softc *sc, uint16_t offset, uint8_t *data)
+{
+	uint32_t i2ccmd;
+	int i;
+
+	i2ccmd = (offset << I2CCMD_REG_ADDR_SHIFT) | I2CCMD_OPCODE_READ;
+	CSR_WRITE(sc, WMREG_I2CCMD, i2ccmd);
+
+	/* Poll the ready bit */
+	for (i = 0; i < I2CCMD_PHY_TIMEOUT; i++) {
+		delay(50);
+		i2ccmd = CSR_READ(sc, WMREG_I2CCMD);
+		if (i2ccmd & I2CCMD_READY)
+			break;
+	}
+	if ((i2ccmd & I2CCMD_READY) == 0)
+		return -1;
+	if ((i2ccmd & I2CCMD_ERROR) != 0)
+		return -1;
+
+	*data = i2ccmd & 0x00ff;
+
+	return 0;
+}
+
+static uint32_t
+wm_sfp_get_media_type(struct wm_softc *sc)
+{
+	uint32_t ctrl_ext;
+	uint8_t val = 0;
+	int timeout = 3;
+	uint32_t mediatype = WMP_F_UNKNOWN;
+	int rv = -1;
+
+	ctrl_ext = CSR_READ(sc, WMREG_CTRL_EXT);
+	ctrl_ext &= ~CTRL_EXT_SWDPIN(3);
+	CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext | CTRL_EXT_I2C_ENA);
+	CSR_WRITE_FLUSH(sc);
+
+	/* Read SFP module data */
+	while (timeout) {
+		rv = wm_sfp_read_data_byte(sc, SFF_SFP_ID_OFF, &val);
+		if (rv == 0)
+			break;
+		delay(100*1000); /* XXX too big */
+		timeout--;
+	}
+	if (rv != 0)
+		goto out;
+	switch (val) {
+	case SFF_SFP_ID_SFF:
+		aprint_normal_dev(sc->sc_dev,
+		    "Module/Connector soldered to board\n");
+		break;
+	case SFF_SFP_ID_SFP:
+		aprint_normal_dev(sc->sc_dev, "SFP\n");
+		break;
+	case SFF_SFP_ID_UNKNOWN:
+		goto out;
+	default:
+		break;
+	}
+
+	rv = wm_sfp_read_data_byte(sc, SFF_SFP_ETH_FLAGS_OFF, &val);
+	if (rv != 0) {
+		goto out;
+	}
+
+	if ((val & (SFF_SFP_ETH_FLAGS_1000SX | SFF_SFP_ETH_FLAGS_1000LX)) != 0)
+		mediatype = WMP_F_SERDES;
+	else if ((val & SFF_SFP_ETH_FLAGS_1000T) != 0){
+		sc->sc_flags |= WM_F_SGMII;
+		mediatype = WMP_F_COPPER;
+	} else if ((val & SFF_SFP_ETH_FLAGS_100FX) != 0){
+		sc->sc_flags |= WM_F_SGMII;
+		mediatype = WMP_F_SERDES;
+	}
+
+out:
+	/* Restore I2C interface setting */
+	CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext);
+
+	return mediatype;
+}
 /*
  * NVM related.
  * Microwire, SPI (w/wo EERD) and Flash.
@@ -7624,7 +7792,7 @@ wm_nvm_read_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 		wm_eeprom_sendbits(sc, UWIRE_OPC_READ, 3);
 
 		/* Shift in address. */
-		wm_eeprom_sendbits(sc, word + i, sc->sc_ee_addrbits);
+		wm_eeprom_sendbits(sc, word + i, sc->sc_nvm_addrbits);
 
 		/* Shift out the data. */
 		wm_eeprom_recvbits(sc, &val, 16);
@@ -7642,15 +7810,68 @@ wm_nvm_read_uwire(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 
 /* SPI */
 
-/* Set SPI related information */
-static void
-wm_set_spiaddrbits(struct wm_softc *sc)
+/*
+ * Set SPI and FLASH related information from the EECD register.
+ * For 82541 and 82547, the word size is taken from EEPROM.
+ */
+static int
+wm_nvm_set_addrbits_size_eecd(struct wm_softc *sc)
 {
+	int size;
 	uint32_t reg;
+	uint16_t data;
 
-	sc->sc_flags |= WM_F_EEPROM_SPI;
 	reg = CSR_READ(sc, WMREG_EECD);
-	sc->sc_ee_addrbits = (reg & EECD_EE_ABITS) ? 16 : 8;
+	sc->sc_nvm_addrbits = (reg & EECD_EE_ABITS) ? 16 : 8;
+
+	/* Read the size of NVM from EECD by default */
+	size = __SHIFTOUT(reg, EECD_EE_SIZE_EX_MASK);
+	switch (sc->sc_type) {
+	case WM_T_82541:
+	case WM_T_82541_2:
+	case WM_T_82547:
+	case WM_T_82547_2:
+		/* Set dummy value to access EEPROM */
+		sc->sc_nvm_wordsize = 64;
+		wm_nvm_read(sc, NVM_OFF_EEPROM_SIZE, 1, &data);
+		reg = data;
+		size = __SHIFTOUT(reg, EECD_EE_SIZE_EX_MASK);
+		if (size == 0)
+			size = 6; /* 64 word size */
+		else
+			size += NVM_WORD_SIZE_BASE_SHIFT + 1;
+		break;
+	case WM_T_80003:
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573: /* SPI case */
+	case WM_T_82574: /* SPI case */
+	case WM_T_82583: /* SPI case */
+		size += NVM_WORD_SIZE_BASE_SHIFT;
+		if (size > 14)
+			size = 14;
+		break;
+	case WM_T_82575:
+	case WM_T_82576:
+	case WM_T_82580:
+	case WM_T_I350:
+	case WM_T_I354:
+	case WM_T_I210:
+	case WM_T_I211:
+		size += NVM_WORD_SIZE_BASE_SHIFT;
+		if (size > 15)
+			size = 15;
+		break;
+	default:
+		aprint_error_dev(sc->sc_dev,
+		    "%s: unknown device(%d)?\n", __func__, sc->sc_type);
+		return -1;
+		break;
+	}
+
+	sc->sc_nvm_wordsize = 1 << size;
+
+	return 0;
 }
 
 /*
@@ -7707,11 +7928,11 @@ wm_nvm_read_spi(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 	delay(2);
 
 	opc = SPI_OPC_READ;
-	if (sc->sc_ee_addrbits == 8 && word >= 128)
+	if (sc->sc_nvm_addrbits == 8 && word >= 128)
 		opc |= SPI_OPC_A8;
 
 	wm_eeprom_sendbits(sc, opc, 8);
-	wm_eeprom_sendbits(sc, word << 1, sc->sc_ee_addrbits);
+	wm_eeprom_sendbits(sc, word << 1, sc->sc_nvm_addrbits);
 
 	for (i = 0; i < wordcnt; i++) {
 		wm_eeprom_recvbits(sc, &val, 16);
@@ -8065,8 +8286,8 @@ wm_nvm_read_ich8(struct wm_softc *sc, int offset, int words, uint16_t *data)
 	 */
 	error = wm_nvm_valid_bank_detect_ich8lan(sc, &flash_bank);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "%s: failed to detect NVM bank\n",
-		    __func__);
+		DPRINTF(WM_DEBUG_NVM, ("%s: failed to detect NVM bank\n",
+			device_xname(sc->sc_dev)));
 		flash_bank = 0;
 	}
 
@@ -8211,13 +8432,6 @@ wm_nvm_is_onboard_eeprom(struct wm_softc *sc)
 	return 1;
 }
 
-#define NVM_CHECKSUM			0xBABA
-#define EEPROM_SIZE			0x0040
-#define NVM_COMPAT			0x0003
-#define NVM_COMPAT_VALID_CHECKSUM	0x0001
-#define NVM_FUTURE_INIT_WORD1			0x0019
-#define NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM	0x0040
-
 /*
  * wm_nvm_validate_checksum
  *
@@ -8241,10 +8455,10 @@ wm_nvm_validate_checksum(struct wm_softc *sc)
 
 #ifdef WM_DEBUG
 	if (sc->sc_type == WM_T_PCH_LPT) {
-		csum_wordaddr = NVM_COMPAT;
+		csum_wordaddr = NVM_OFF_COMPAT;
 		valid_checksum = NVM_COMPAT_VALID_CHECKSUM;
 	} else {
-		csum_wordaddr = NVM_FUTURE_INIT_WORD1;
+		csum_wordaddr = NVM_OFF_FUTURE_INIT_WORD1;
 		valid_checksum = NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM;
 	}
 
@@ -8263,11 +8477,11 @@ wm_nvm_validate_checksum(struct wm_softc *sc)
 
 	if ((wm_debug & WM_DEBUG_NVM) != 0) {
 		printf("%s: NVM dump:\n", device_xname(sc->sc_dev));
-		for (i = 0; i < EEPROM_SIZE; i++) {
+		for (i = 0; i < NVM_SIZE; i++) {
 			if (wm_nvm_read(sc, i, 1, &eeprom_data))
-				printf("XX ");
+				printf("XXXX ");
 			else
-				printf("%04x ", eeprom_data);
+				printf("%04hx ", eeprom_data);
 			if (i % 8 == 7)
 				printf("\n");
 		}
@@ -8275,7 +8489,7 @@ wm_nvm_validate_checksum(struct wm_softc *sc)
 
 #endif /* WM_DEBUG */
 
-	for (i = 0; i < EEPROM_SIZE; i++) {
+	for (i = 0; i < NVM_SIZE; i++) {
 		if (wm_nvm_read(sc, i, 1, &eeprom_data))
 			return 1;
 		checksum += eeprom_data;
@@ -8335,7 +8549,7 @@ wm_get_swsm_semaphore(struct wm_softc *sc)
 
 	if (sc->sc_flags & WM_F_LOCK_SWSM) {
 		/* Get the SW semaphore. */
-		timeout = 1000 + 1; /* XXX */
+		timeout = sc->sc_nvm_wordsize + 1;
 		while (timeout) {
 			swsm = CSR_READ(sc, WMREG_SWSM);
 
@@ -8354,7 +8568,7 @@ wm_get_swsm_semaphore(struct wm_softc *sc)
 	}
 
 	/* Get the FW semaphore. */
-	timeout = 1000 + 1; /* XXX */
+	timeout = sc->sc_nvm_wordsize + 1;
 	while (timeout) {
 		swsm = CSR_READ(sc, WMREG_SWSM);
 		swsm |= SWSM_SWESMBI;
@@ -8560,9 +8774,9 @@ wm_check_mng_mode_82574(struct wm_softc *sc)
 {
 	uint16_t data;
 
-	wm_nvm_read(sc, EEPROM_OFF_CFG2, 1, &data);
+	wm_nvm_read(sc, NVM_OFF_CFG2, 1, &data);
 
-	if ((data & EEPROM_CFG2_MNGM_MASK) != 0)
+	if ((data & NVM_CFG2_MNGM_MASK) != 0)
 		return 1;
 
 	return 0;
@@ -8607,12 +8821,12 @@ wm_enable_mng_pass_thru(struct wm_softc *sc)
 		uint16_t data;
 
 		factps = CSR_READ(sc, WMREG_FACTPS);
-		wm_nvm_read(sc, EEPROM_OFF_CFG2, 1, &data);
+		wm_nvm_read(sc, NVM_OFF_CFG2, 1, &data);
 		DPRINTF(WM_DEBUG_MANAGE, ("%s: FACTPS = %08x, CFG2=%04x\n",
 			device_xname(sc->sc_dev), factps, data));
 		if (((factps & FACTPS_MNGCG) == 0)
-		    && ((data & EEPROM_CFG2_MNGM_MASK)
-			== (EEPROM_CFG2_MNGM_PT << EEPROM_CFG2_MNGM_SHIFT)))
+		    && ((data & NVM_CFG2_MNGM_MASK)
+			== (NVM_CFG2_MNGM_PT << NVM_CFG2_MNGM_SHIFT)))
 			return 1;
 	} else if (((manc & MANC_SMBUS_EN) != 0)
 	    && ((manc & MANC_ASF_EN) == 0))
@@ -8805,7 +9019,6 @@ wm_get_wakeup(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-	case WM_T_82580ER:
 	case WM_T_I350:
 	case WM_T_I354:
 		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_MODE_MASK) != 0)
@@ -8954,8 +9167,8 @@ wm_enable_wakeup(struct wm_softc *sc)
 	}
 
 	/* Keep the laser running on fiber adapters */
-	if (((sc->sc_wmp->wmp_flags & WMP_F_1000X) != 0)
-	    || (sc->sc_wmp->wmp_flags & WMP_F_SERDES) != 0) {
+	if (((sc->sc_mediatype & WMP_F_FIBER) != 0)
+	    || (sc->sc_mediatype & WMP_F_SERDES) != 0) {
 		reg = CSR_READ(sc, WMREG_CTRL_EXT);
 		reg |= CTRL_EXT_SWDPIN(3);
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
