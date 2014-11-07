@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_ipuv3.c,v 1.2 2014/05/06 11:22:53 hkenken Exp $	*/
+/*	$NetBSD: imx51_ipuv3.c,v 1.3 2014/11/07 11:54:18 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2011, 2012  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_ipuv3.c,v 1.2 2014/05/06 11:22:53 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_ipuv3.c,v 1.3 2014/11/07 11:54:18 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,8 +369,8 @@ imx51_ipuv3_di_sync_conf(struct imx51_ipuv3_softc *sc, int no,
 	IPUV3_WRITE(sc, di0, IPU_DI_SW_GEN0(no), reg_gen0);
 	IPUV3_WRITE(sc, di0, IPU_DI_SW_GEN1(no), reg_gen1);
 	reg = IPUV3_READ(sc, di0, IPU_DI_STP_REP(no));
-	reg &= ~DI_STP_REP_MASK(no);
-	reg |= repeat << DI_STP_REP_SHIFT(no);
+	reg &= ~DI_STP_REP(no);
+	reg |= __SHIFTIN(repeat, DI_STP_REP(no));
 	IPUV3_WRITE(sc, di0, IPU_DI_STP_REP(no), reg);
 
 #ifdef IPUV3_DEBUG
@@ -413,7 +413,7 @@ imx51_ipuv3_di_init(struct imx51_ipuv3_softc *sc)
 
 	IPUV3_WRITE(sc, di0, IPU_DI_BS_CLKGEN0, div);
 	IPUV3_WRITE(sc, di0, IPU_DI_BS_CLKGEN1,
-	    (div / 16) << DI_BS_CLKGEN1_DOWN_SHIFT);
+	    __SHIFTIN(div / 16, DI_BS_CLKGEN1_DOWN));
 #ifdef IPUV3_DEBUG
 	printf("%s: IPU_DI_BS_CLKGEN0 = 0x%08X\n", __func__,
 	    IPUV3_READ(sc, di0, IPU_DI_BS_CLKGEN0));
@@ -421,9 +421,9 @@ imx51_ipuv3_di_init(struct imx51_ipuv3_softc *sc)
 	    IPUV3_READ(sc, di0, IPU_DI_BS_CLKGEN1));
 #endif
 	/* Display Time settings */
-	reg = ((div / 16 - 1) << DI_DW_GEN_ACCESS_SIZE_SHIFT) |
-	    ((div / 16 - 1) << DI_DW_GEN_COMPONNENT_SIZE_SHIFT) |
-	    (3 << DI_DW_GEN_PIN_SHIFT(15));
+	reg = __SHIFTIN(div / 16 - 1, DI_DW_GEN_ACCESS_SIZE) |
+	    __SHIFTIN(div / 16 - 1, DI_DW_GEN_COMPONNENT_SIZE) |
+	    __SHIFTIN(3, DI_DW_GEN_PIN(15));
 	IPUV3_WRITE(sc, di0, IPU_DI_DW_GEN(0), reg);
 #ifdef IPUV3_DEBUG
 	printf("%s: div = %d\n", __func__, div);
@@ -432,7 +432,7 @@ imx51_ipuv3_di_init(struct imx51_ipuv3_softc *sc)
 #endif
 
 	/* Up & Down Data Wave Set */
-	reg = (div / 16 * 2) << DI_DW_SET_DOWN_SHIFT;
+	reg = __SHIFTIN(div / 16 * 2, DI_DW_SET_DOWN);
 	IPUV3_WRITE(sc, di0, IPU_DI_DW_SET(0, 3), reg);
 #ifdef IPUV3_DEBUG
 	printf("%s: IPU_DI_DW_SET(0, 3) 0x%08X = 0x%08X\n", __func__,
@@ -486,13 +486,14 @@ imx51_ipuv3_di_init(struct imx51_ipuv3_softc *sc)
 	IPUV3_WRITE(sc, di0, IPU_DI_SW_GEN1(9), 0);
 
 	reg = IPUV3_READ(sc, di0, IPU_DI_STP_REP(6));
-	reg &= ~DI_STP_REP_MASK(6);
+	reg &= ~DI_STP_REP(6);
 	IPUV3_WRITE(sc, di0, IPU_DI_STP_REP(6), reg);
 	IPUV3_WRITE(sc, di0, IPU_DI_STP_REP(7), 0);
 	IPUV3_WRITE(sc, di0, IPU_DI_STP_REP(9), 0);
 
 	IPUV3_WRITE(sc, di0, IPU_DI_GENERAL, 0);
-	reg = ((3 - 1) << DI_SYNC_AS_GEN_VSYNC_SEL_SHIFT) | 0x2;
+	reg = __SHIFTIN(3 - 1, DI_SYNC_AS_GEN_VSYNC_SEL) |
+	    __SHIFTIN(0x2, DI_SYNC_AS_GEN_SYNC_START);
 	IPUV3_WRITE(sc, di0, IPU_DI_SYNC_AS_GEN, reg);
 	IPUV3_WRITE(sc, di0, IPU_DI_POL, DI_POL_DRDY_POLARITY_15);
 
@@ -576,7 +577,7 @@ imx51_ipuv3_initialize(struct imx51_ipuv3_softc *sc,
 
 	reg = IPUV3_READ(sc, cm, IPU_CM_DISP_GEN);
 	reg |= CM_DISP_GEN_MCU_MAX_BURST_STOP |
-	    CM_DISP_GEN_MCU_T(0x8);
+	    __SHIFTIN(0x8, CM_DISP_GEN_MCU_T);
 	IPUV3_WRITE(sc, cm, IPU_CM_DISP_GEN, reg);
 }
 
