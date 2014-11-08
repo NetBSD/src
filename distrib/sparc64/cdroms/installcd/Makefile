@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2007/03/06 21:57:24 bouyer Exp $
+#	$NetBSD: Makefile,v 1.1.22.1 2014/11/08 11:35:45 msaitoh Exp $
 CDBASE=		sparc64cd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 
@@ -11,7 +11,7 @@ SUN_BOOT_ARGS:=  - - - - ${CDBOOTIMAGE}
 image_md_post:
 	SUNLABEL=${TOOL_SUNLABEL:Q} \
 		${HOST_SH} ${NETBSDSRCDIR}/distrib/common/sunbootcd.sh \
-		${CDBASE}.iso ${SUN_BOOT_ARGS}
+		${CDIMAGE} ${SUN_BOOT_ARGS}
 	
 
 .include "${.CURDIR}/../../../common/Makefile.bootcd"
