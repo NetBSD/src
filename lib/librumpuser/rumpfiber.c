@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfiber.c,v 1.7 2014/11/08 23:20:23 justin Exp $	*/
+/*	$NetBSD: rumpfiber.c,v 1.8 2014/11/08 23:47:15 justin Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -68,7 +68,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpfiber.c,v 1.7 2014/11/08 23:20:23 justin Exp $");
+__RCSID("$NetBSD: rumpfiber.c,v 1.8 2014/11/08 23:47:15 justin Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -388,7 +388,6 @@ init_sched(void)
 {
 	struct thread *thread = calloc(1, sizeof(struct thread));
 
-	getcontext(&thread->ctx);
 	thread->name = strdup("init");
 	thread->flags = 0;
 	thread->wakeup_time = -1;
