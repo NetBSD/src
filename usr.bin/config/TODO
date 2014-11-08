@@ -192,7 +192,8 @@ o Control ELF sections using linker script.
   cacheline_aligned) to load address specification for external boot loaders.
 
   Make this into multiple stages to make linkage more structural.  Especially,
-  reserve the final link for purely MD purpose.
+  reserve the final link for purely MD purpose.  Note that in modular build,
+  *.ko are shared between build of kernel and modular(9) modules (*.kmod).
 
 	Monolithic build:
 		     *.o  ---> netbsd.ko	Generic MI linkage
@@ -227,5 +228,12 @@ o Control ELF sections using linker script.
   (netbsd.ro) is linked into multiple final kernel image (netbsd) for diferent
   load addresses.
 
-  XXX Modular MI linkage 
-  XXX Modular MD linkage
+  Modular MI linkage is to prepare a module to be loadable as modular(9).  This
+  may add some extra sections and/or symbols.
+
+  Modular MD linkage is again for pure MD purposes like kernel MD linkage.
+  Adjustment and/or optimization may be done.
+
+  Kernel and modular MI linkages may change behavior depending on existence
+  of debug information.  In the future .symtab will be copied using linker
+  during this stage.
