@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.311 2014/11/07 12:44:58 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.312 2014/11/08 08:01:34 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -215,7 +215,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.311 2014/11/07 12:44:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.312 2014/11/08 08:01:34 matt Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -1282,13 +1282,18 @@ pmap_alloc_l1(pmap_t pm)
 {
 #ifdef ARM_MMU_EXTENDED
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-#ifdef PMAP_NEED_ALLOC_POOLPAGE
-	struct vm_page *pg = arm_pmap_alloc_poolpage(UVM_PGA_ZERO);
-#else
-	struct vm_page *pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
-#endif
+	struct vm_page *pg;
 	bool ok __diagused;
-	KASSERT(pg != NULL);
+	for (;;) {
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+		pg = arm_pmap_alloc_poolpage(UVM_PGA_ZERO);
+#else
+		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
+#endif
+		if (pg != NULL)
+			break;
+		uvm_wait("pmapl1alloc");
+	}
 	pm->pm_l1_pa = VM_PAGE_TO_PHYS(pg);
 	vaddr_t va = pmap_direct_mapped_phys(pm->pm_l1_pa, &ok, 0);
 	KASSERT(ok);
