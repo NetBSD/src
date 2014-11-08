@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfiber.c,v 1.6 2014/11/08 21:27:04 justin Exp $	*/
+/*	$NetBSD: rumpfiber.c,v 1.7 2014/11/08 23:20:23 justin Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -68,7 +68,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpfiber.c,v 1.6 2014/11/08 21:27:04 justin Exp $");
+__RCSID("$NetBSD: rumpfiber.c,v 1.7 2014/11/08 23:20:23 justin Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -181,7 +181,8 @@ schedule(void)
 }
 
 static void
-create_ctx(ucontext_t *ctx, void *stack, size_t stack_size)
+create_ctx(ucontext_t *ctx, void *stack, size_t stack_size,
+	void (*f)(void *), void *data)
 {
 
 	getcontext(ctx);
@@ -189,9 +190,10 @@ create_ctx(ucontext_t *ctx, void *stack, size_t stack_size)
 	ctx->uc_stack.ss_size = stack_size;
 	ctx->uc_stack.ss_flags = 0;
 	ctx->uc_link = NULL; /* TODO may link to main thread */
+	/* may have to do bounce function to call, if args to makecontext are ints */
+	makecontext(ctx, (void (*)(void))f, 1, data);
 }
 
-/* may have to do bounce function to call, if args to makecontext are ints */
 /* TODO see notes in rumpuser_thread_create, have flags here */
 struct thread *
 create_thread(const char *name, void *cookie, void (*f)(void *), void *data,
@@ -215,8 +217,7 @@ create_thread(const char *name, void *cookie, void (*f)(void *), void *data,
 	} else {
 		thread->flags = THREAD_EXTSTACK;
 	}
-	create_ctx(&thread->ctx, stack, stack_size);
-	makecontext(&thread->ctx, (void (*)(void))f, 1, data);
+	create_ctx(&thread->ctx, stack, stack_size, f, data);
 	
 	thread->name = strdup(name);
 	thread->cookie = cookie;
