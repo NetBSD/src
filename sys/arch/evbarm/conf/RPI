@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.58 2014/10/12 12:01:50 macallan Exp $
+#	$NetBSD: RPI,v 1.59 2014/11/08 08:08:32 skrll Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -17,10 +17,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 # CPU options
 
-options 	CPU_ARM1176
-options 	BCM2835
 options 	PMAPCOUNTERS
-options 	FPU_VFP
 
 # Architecture options
 
