@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.15 2014/11/05 15:05:40 jmcneill Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.16 2014/11/08 00:32:33 jmcneill Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -236,6 +236,9 @@ audio0		at awinac0
 
 # GMAC Ethernet
 awge0		at awinio0 port ?
+
+# HDMI
+awinhdmi0	at awinio0
 
 # On-board USB
 awinusb0	at awinio0 port 0
