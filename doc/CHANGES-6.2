@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.154 2014/11/09 11:09:11 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.155 2014/11/09 12:15:48 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4323,3 +4323,70 @@ sys/fs/puffs/puffs_vnops.c			1.198
 
 	PUFFS direct I/O cache fix.
 	[manu, ticket #1187]
+
+sys/dev/pci/pcidevs			1.1172
+sys/dev/pci/pcidevs.h			regen
+sys/dev/pci/pcidevs_data.h		regen
+sys/dev/pci/if_wm.c			1.263-1.266 via patch
+sys/dev/pci/if_wmreg.h			1.55-1.56
+sys/dev/pci/if_wmvar.h			1.17
+share/man/man4/wm.4			1.26-1.27 and 1.29 via patch
+
+	- Add I354 support.
+	- Insert completion barrier between register write and delay().
+	- Fix the definition of CTRL_GIO_M_DIS. This bit is not bit 3 but
+	  bit 2.
+	- Cleanup
+	[msaitoh, #1188]
+
+sys/arch/mips/adm5120/dev/if_admsw.c		1.12
+sys/dev/ic/rtl80x9.c				1.16
+sys/dev/mii/acphy.c				1.24
+sys/dev/mii/amhphy.c				1.20
+sys/dev/mii/bmtphy.c				1.31
+sys/dev/mii/brgphy.c				1.70
+sys/dev/mii/brgphyreg.h				1.8
+sys/dev/mii/ciphy.c				1.25
+sys/dev/mii/ciphyreg.h				1.5
+sys/dev/mii/dmphy.c				1.35
+sys/dev/mii/gentbi.c				1.26
+sys/dev/mii/gentbi.c				1.27
+sys/dev/mii/glxtphy.c				1.24
+sys/dev/mii/gphyter.c				1.29
+sys/dev/mii/icsphy.c				1.49
+sys/dev/mii/igphy.c				1.23
+sys/dev/mii/ihphy.c				1.8
+sys/dev/mii/ikphy.c				1.10
+sys/dev/mii/inphy.c				1.53
+sys/dev/mii/iophy.c				1.37
+sys/dev/mii/lxtphy.c				1.49
+sys/dev/mii/makphy.c				1.40
+sys/dev/mii/mii.h				1.18
+sys/dev/mii/mvphy.c				1.10
+sys/dev/mii/nsphy.c				1.58
+sys/dev/mii/nsphy.c				1.59
+sys/dev/mii/nsphyter.c				1.38
+sys/dev/mii/qsphy.c				1.48
+sys/dev/mii/rlphy.c				1.28
+sys/dev/mii/rlphy.c				1.29
+sys/dev/mii/sqphy.c				1.50
+sys/dev/mii/tlphy.c				1.62
+sys/dev/mii/tqphy.c				1.39
+sys/dev/mii/ukphy_subr.c			1.12
+sys/dev/mii/ukphy_subr.c			1.13
+sys/dev/mii/urlphy.c				1.30
+sys/dev/pci/if_kse.c				1.28
+sys/dev/pci/if_txp.c				1.41
+sys/dev/pci/if_wm.c				1.270
+
+	No functional change:
+	- Fix typo.
+	- Remove trailing white spaces.
+	- Capitalize comments.
+	- Tabify.
+	- KNF.
+
+	IFM_FDX and IFM_HDX use different bit, so set IFM_HDX bit if it's
+	not full duplex. For many drivers, it recognize half duplex if
+	IFM_FDX isn't set, but not for others. Same as {Free|Open}BSD.
+	[msaitoh, ticket #1189]
