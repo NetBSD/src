@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.124 2014/08/20 08:00:39 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.125 2014/11/09 18:40:19 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.121 2014/08/20 08:00:18 msaitoh Exp
+ *	NetBSD: miidevs,v 1.122 2014/11/09 17:53:37 nonaka Exp
  */
 
 /*-
@@ -460,6 +460,8 @@
 #define	MII_STR_yyREALTEK_RTL8201L	"RTL8201L 10/100 media interface"
 #define	MII_MODEL_xxREALTEK_RTL8169S	0x0011
 #define	MII_STR_xxREALTEK_RTL8169S	"RTL8169S/8110S/8211 1000BASE-T media interface"
+#define	MII_MODEL_REALTEK_RTL8251	0x0000
+#define	MII_STR_REALTEK_RTL8251	"RTL8251 1000BASE-T media interface"
 #define	MII_MODEL_REALTEK_RTL8169S	0x0011
 #define	MII_STR_REALTEK_RTL8169S	"RTL8169S/8110S/8211 1000BASE-T media interface"
 
