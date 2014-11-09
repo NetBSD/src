@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.36 2014/11/09 17:54:45 nonaka Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.37 2014/11/09 19:35:43 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.36 2014/11/09 17:54:45 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.37 2014/11/09 19:35:43 nonaka Exp $");
 
 
 /*
@@ -456,7 +456,8 @@ rgephy_loop(struct mii_softc *sc)
 	uint32_t bmsr;
 	int i;
 
-	if (sc->mii_mpd_rev < 2) {
+	if (sc->mii_mpd_model != MII_MODEL_REALTEK_RTL8251 &&
+	    sc->mii_mpd_rev < 2) {
 		PHY_WRITE(sc, MII_BMCR, BMCR_PDOWN);
 		DELAY(1000);
 	}
