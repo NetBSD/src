@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.21 2014/11/08 00:48:06 jmcneill Exp $
+#	$NetBSD: files.awin,v 1.22 2014/11/09 14:10:54 jmcneill Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -138,6 +138,20 @@ file	arch/arm/allwinner/awin_ac.c		awin_ac
 device	awinhdmi: edid, ddc_read_edid
 attach	awinhdmi at awinio with awin_hdmi
 file	arch/arm/allwinner/awin_hdmi.c		awin_hdmi
+
+# A10/A20/A31 LCD/TV timing controller (TCON)
+device	awintcon
+attach	awintcon at awinio with awin_tcon
+file	arch/arm/allwinner/awin_tcon.c		awin_tcon | awin_hdmi
+
+# A10/A20/A31 Display engine backend (DE-BE)
+device	awindebe { }
+attach	awindebe at awinio with awin_debe
+file	arch/arm/allwinner/awin_debe.c		awin_debe | awin_hdmi
+
+# Framebuffer
+attach	genfb at awindebe with awin_fb: edid
+file	arch/arm/allwinner/awin_fb.c		awin_fb		needs-flag
 
 # A10/A20/A31 Consumer IR (CIR)
 device	awinir: irbus
