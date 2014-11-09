@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.1 2014/11/09 14:10:54 jmcneill Exp $ */
+/* $NetBSD: awin_debe.c,v 1.2 2014/11/09 14:30:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "genfb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.1 2014/11/09 14:10:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.2 2014/11/09 14:30:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -74,7 +74,7 @@ static void	awin_debe_attach(device_t, device_t, void *);
 
 static int	awin_debe_alloc_videomem(struct awin_debe_softc *);
 static void	awin_debe_setup_fbdev(struct awin_debe_softc *,
-				      struct videomode *);
+				      const struct videomode *);
 
 CFATTACH_DECL_NEW(awin_debe, sizeof(struct awin_debe_softc),
 	awin_debe_match, awin_debe_attach, NULL, NULL);
@@ -202,9 +202,9 @@ free:
 }
 
 static void
-awin_debe_setup_fbdev(struct awin_debe_softc *sc, struct videomode *mode)
+awin_debe_setup_fbdev(struct awin_debe_softc *sc, const struct videomode *mode)
 {
-	if (sc->sc_fbdev == NULL) {
+	if (mode && sc->sc_fbdev == NULL) {
 		struct awinfb_attach_args afb = {
 			.afb_fb = sc->sc_dmap,
 			.afb_width = mode->hdisplay,
@@ -218,14 +218,14 @@ awin_debe_setup_fbdev(struct awin_debe_softc *sc, struct videomode *mode)
 		    &afb, NULL);
 	}
 #if NGENFB > 0
-	else {
+	else if (sc->sc_fbdev != NULL) {
 		awin_fb_set_videomode(sc->sc_fbdev, mode);
 	}
 #endif
 }
 
 void
-awin_debe_set_videomode(struct videomode *mode)
+awin_debe_set_videomode(const struct videomode *mode)
 {
 	struct awin_debe_softc *sc;
 	device_t dev;
