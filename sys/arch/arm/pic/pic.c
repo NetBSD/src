@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.22 2014/05/19 22:47:53 rmind Exp $	*/
+/*	$NetBSD: pic.c,v 1.22.2.1 2014/11/09 16:05:25 martin Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.22 2014/05/19 22:47:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.22.2.1 2014/11/09 16:05:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -119,7 +119,7 @@ pic_ipi_generic(void *arg)
 int
 pic_ipi_ddb(void *arg)
 {
-	printf("%s: %s: tf=%p\n", __func__, curcpu()->ci_cpuname, arg);
+//	printf("%s: %s: tf=%p\n", __func__, curcpu()->ci_cpuname, arg);
 	kdb_trap(-1, arg);
 	return 1;
 }
@@ -646,7 +646,7 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	is->is_func = func;
 	is->is_arg = arg;
 #ifdef MULTIPROCESSOR
-	is->is_mpsafe = (type & IST_MPSAFE);
+	is->is_mpsafe = (type & IST_MPSAFE) || ipl != IPL_VM;
 #endif
 
 	if (pic->pic_ops->pic_source_name)
