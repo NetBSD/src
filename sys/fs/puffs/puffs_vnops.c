@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.163.2.9 2014/11/09 07:50:12 msaitoh Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.163.2.10 2014/11/09 11:05:15 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.163.2.9 2014/11/09 07:50:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.163.2.10 2014/11/09 11:05:15 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -893,6 +893,12 @@ puffs_vnop_open(void *v)
 	error = checkerr(pmp, error, __func__);
 
 	if (open_msg->pvnr_oflags & PUFFS_OPEN_IO_DIRECT) {
+		/*
+		 * Flush cache:
+		 * - we do not want to discard cached write by direct write
+		 * - read cache is now useless and should be freed
+		 */
+		flushvncache(vp, 0, 0, true);
 		if (mode & FREAD)
 			pn->pn_stat |= PNODE_RDIRECT;
 		if (mode & FWRITE)
@@ -1392,6 +1398,11 @@ puffs_vnop_inactive(void *v)
 			mutex_exit(&pmp->pmp_sopmtx);
 		}
 	}
+
+	/*
+	 * Wipe direct I/O flags
+	 */
+	pnode->pn_stat &= ~(PNODE_RDIRECT|PNODE_WDIRECT);
 
 	*ap->a_recycle = recycle;
 
@@ -2363,19 +2374,20 @@ puffs_vnop_write(void *v)
 
 	mutex_enter(&pn->pn_sizemtx);
 
+	/*
+	 * userspace *should* be allowed to control this,
+	 * but with UBC it's a bit unclear how to handle it
+	 */
+	if (ap->a_ioflag & IO_APPEND)
+		uio->uio_offset = vp->v_size;
+
+	origoff = uio->uio_offset;
+
 	if (vp->v_type == VREG && 
 	    PUFFS_USE_PAGECACHE(pmp) &&
 	    !(pn->pn_stat & PNODE_WDIRECT)) {
 		ubcflags = UBC_WRITE | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp);
 
-		/*
-		 * userspace *should* be allowed to control this,
-		 * but with UBC it's a bit unclear how to handle it
-		 */
-		if (ap->a_ioflag & IO_APPEND)
-			uio->uio_offset = vp->v_size;
-
-		origoff = uio->uio_offset;
 		while (uio->uio_resid > 0) {
 			oldoff = uio->uio_offset;
 			bytelen = uio->uio_resid;
@@ -2482,6 +2494,22 @@ puffs_vnop_write(void *v)
 			}
 		}
 		puffs_msgmem_release(park_write);
+
+		/*
+		 * Direct I/O on write but not on read: we must
+		 * invlidate the written pages so that we read
+		 * the written data and not the stalled cache.
+		 */
+		if ((error == 0) && 
+		    (vp->v_type == VREG) && PUFFS_USE_PAGECACHE(pmp) &&
+		    (pn->pn_stat & PNODE_WDIRECT) &&
+		    !(pn->pn_stat & PNODE_RDIRECT)) {
+			voff_t off_lo = trunc_page(origoff);
+			voff_t off_hi = round_page(uio->uio_offset);
+
+			mutex_enter(vp->v_uobj.vmobjlock);
+			error = VOP_PUTPAGES(vp, off_lo, off_hi, PGO_FREE);
+		}
 	}
 
 	if (vp->v_mount->mnt_flag & MNT_RELATIME)
