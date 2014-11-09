@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.25 2014/10/29 14:14:14 skrll Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.26 2014/11/09 14:10:54 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.25 2014/10/29 14:14:14 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.26 2014/11/09 14:10:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -323,18 +323,25 @@ awin_pll6_enable(void)
 	 */
 	const uint32_t ocfg = bus_space_read_4(bst, bsh,
 	    AWIN_CCM_OFFSET + AWIN_PLL6_CFG_REG);
-	const u_int k = __SHIFTOUT(ocfg, AWIN_PLL_CFG_FACTOR_K);
 
 	/*
 	 * Output freq is 24MHz * n * k / m / 6.
 	 * To get to 100MHz, k & m must be equal and n must be 25.
 	 */
 	uint32_t ncfg = ocfg;
-	ncfg &= ~(AWIN_PLL_CFG_FACTOR_M|AWIN_PLL_CFG_FACTOR_N);
 	ncfg &= ~(AWIN_PLL_CFG_BYPASS);
-	ncfg |= __SHIFTIN(k, AWIN_PLL_CFG_FACTOR_M);
-	ncfg |= __SHIFTIN(25, AWIN_PLL_CFG_FACTOR_N);
-	ncfg |= AWIN_PLL_CFG_ENABLE | AWIN_PLL6_CFG_SATA_CLK_EN;
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		ncfg &= ~(AWIN_PLL_CFG_FACTOR_N|AWIN_PLL_CFG_FACTOR_K);
+		ncfg |= __SHIFTIN(1, AWIN_PLL_CFG_FACTOR_K);
+		ncfg |= __SHIFTIN(24, AWIN_PLL_CFG_FACTOR_N);
+	} else {
+		const u_int k = __SHIFTOUT(ocfg, AWIN_PLL_CFG_FACTOR_K);
+		ncfg &= ~(AWIN_PLL_CFG_FACTOR_M|AWIN_PLL_CFG_FACTOR_N);
+		ncfg |= __SHIFTIN(k, AWIN_PLL_CFG_FACTOR_M);
+		ncfg |= __SHIFTIN(25, AWIN_PLL_CFG_FACTOR_N);
+		ncfg |= AWIN_PLL6_CFG_SATA_CLK_EN;
+	}
+	ncfg |= AWIN_PLL_CFG_ENABLE;
 	if (ncfg != ocfg) {
 		bus_space_write_4(bst, bsh,
 		    AWIN_CCM_OFFSET + AWIN_PLL6_CFG_REG, ncfg);
@@ -387,6 +394,40 @@ awin_pll2_enable(void)
 }
 
 void
+awin_pll3_enable(void)
+{
+	bus_space_tag_t bst = &awin_bs_tag;
+	bus_space_handle_t bsh = awin_core_bsh;
+
+	/*
+	 * HDMI needs PLL3 to be 29700000 Hz
+	 */
+	const uint32_t ocfg = bus_space_read_4(bst, bsh,
+	    AWIN_CCM_OFFSET + AWIN_PLL3_CFG_REG);
+
+	uint32_t ncfg = ocfg;
+
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		ncfg &= ~AWIN_A31_PLL3_CFG_MODE;
+		ncfg &= ~AWIN_A31_PLL3_CFG_MODE_SEL;
+		ncfg |= AWIN_A31_PLL3_CFG_FRAC_CLK_OUT;
+		/* 24MHz*N/M - for 29.7MHz, N=99, M=8 */
+		ncfg |= __SHIFTIN(98, AWIN_A31_PLL3_CFG_FACTOR_N);
+		ncfg |= __SHIFTIN(7, AWIN_A31_PLL3_CFG_PREDIV_M);
+		ncfg |= AWIN_PLL_CFG_ENABLE;
+	} else {
+		ncfg &= ~AWIN_PLL3_MODE_SEL;
+		ncfg |= AWIN_PLL3_FRAC_SET;
+		ncfg |= AWIN_PLL_CFG_ENABLE;
+	}
+
+	if (ncfg != ocfg) {
+		bus_space_write_4(bst, bsh,
+		    AWIN_CCM_OFFSET + AWIN_PLL3_CFG_REG, ncfg);
+	}
+}
+
+void
 awin_pll7_enable(void)
 {
 	bus_space_tag_t bst = &awin_bs_tag;
@@ -401,8 +442,14 @@ awin_pll7_enable(void)
 	uint32_t ncfg = ocfg;
 
 	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		ncfg &= ~AWIN_A31_PLL7_CFG_MODE;
 		ncfg &= ~AWIN_A31_PLL7_CFG_MODE_SEL;
 		ncfg |= AWIN_A31_PLL7_CFG_FRAC_CLK_OUT;
+		/* 24MHz*N/M - for 29.7MHz, N=99, M=8 */
+		ncfg &= ~AWIN_A31_PLL7_CFG_FACTOR_N;
+		ncfg &= ~AWIN_A31_PLL7_CFG_PREDIV_M;
+		ncfg |= __SHIFTIN(98, AWIN_A31_PLL7_CFG_FACTOR_N);
+		ncfg |= __SHIFTIN(7, AWIN_A31_PLL7_CFG_PREDIV_M);
 		ncfg |= AWIN_PLL_CFG_ENABLE;
 	} else {
 		ncfg &= ~AWIN_PLL7_MODE_SEL;
@@ -413,5 +460,41 @@ awin_pll7_enable(void)
 	if (ncfg != ocfg) {
 		bus_space_write_4(bst, bsh,
 		    AWIN_CCM_OFFSET + AWIN_PLL7_CFG_REG, ncfg);
+	}
+}
+
+void
+awin_pll3_set_rate(uint32_t rate)
+{
+	bus_space_tag_t bst = &awin_bs_tag;
+	bus_space_handle_t bsh = awin_core_bsh;
+
+	const uint32_t ocfg = bus_space_read_4(bst, bsh,
+	    AWIN_CCM_OFFSET + AWIN_PLL3_CFG_REG);
+
+	uint32_t ncfg = ocfg;
+	if (rate == 0) {
+		ncfg &= ~AWIN_PLL_CFG_ENABLE;
+	} else {
+		if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+			unsigned int m = rate / 3000000;
+			ncfg |= AWIN_PLL3_MODE_SEL;
+			ncfg &= ~AWIN_PLL3_FACTOR_M;
+			ncfg |= __SHIFTIN(m, AWIN_PLL3_FACTOR_M);
+		} else {
+			unsigned int m = 8;
+			unsigned int n = rate / 3000000;
+			ncfg |= AWIN_A31_PLL3_CFG_MODE_SEL;
+			ncfg &= ~AWIN_A31_PLL3_CFG_FACTOR_N;
+			ncfg |= __SHIFTIN(n - 1, AWIN_A31_PLL3_CFG_FACTOR_N);
+			ncfg &= ~AWIN_A31_PLL3_CFG_PREDIV_M;
+			ncfg |= __SHIFTIN(m - 1, AWIN_A31_PLL3_CFG_PREDIV_M);
+		}
+		ncfg |= AWIN_PLL_CFG_ENABLE;
+	}
+
+	if (ncfg != ocfg) {
+		bus_space_write_4(bst, bsh,
+		    AWIN_CCM_OFFSET + AWIN_PLL3_CFG_REG, ncfg);
 	}
 }
