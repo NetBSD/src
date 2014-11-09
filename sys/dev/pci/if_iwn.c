@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.73 2014/11/09 14:29:13 nonaka Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.74 2014/11/09 14:40:54 nonaka Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.73 2014/11/09 14:29:13 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.74 2014/11/09 14:40:54 nonaka Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -436,7 +436,9 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	/* Read hardware revision and attach. */
-	sc->hw_type = (IWN_READ(sc, IWN_HW_REV) >> 4) & 0xf;
+	sc->hw_type =
+	    (IWN_READ(sc, IWN_HW_REV) & IWN_HW_REV_TYPE_MASK)
+	      >> IWN_HW_REV_TYPE_SHIFT;
 	if (sc->hw_type == IWN_HW_REV_TYPE_4965)
 		error = iwn4965_attach(sc, PCI_PRODUCT(pa->pa_id));
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnreg.h,v 1.14 2014/10/30 13:05:58 nonaka Exp $	*/
+/*	$NetBSD: if_iwnreg.h,v 1.15 2014/11/09 14:40:54 nonaka Exp $	*/
 /*	$OpenBSD: if_iwnreg.h,v 1.49 2014/09/09 18:56:24 sthen Exp $	*/
 
 /*-
@@ -201,7 +201,7 @@
 
 /* Possible flags for register IWN_HW_REV. */
 #define IWN_HW_REV_TYPE_SHIFT	4
-#define IWN_HW_REV_TYPE_MASK	0x000000f0
+#define IWN_HW_REV_TYPE_MASK	0x000001f0
 #define IWN_HW_REV_TYPE_4965	0
 #define IWN_HW_REV_TYPE_5300	2
 #define IWN_HW_REV_TYPE_5350	3
