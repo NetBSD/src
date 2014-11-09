@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.5 2014/08/10 16:44:33 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.5.2.1 2014/11/09 14:42:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -172,6 +172,7 @@ awin_eth_attach(device_t parent, device_t self, void *aux)
 	char enaddr[ETHER_ADDR_LEN];
 
 	sc->sc_dev = self;
+	sc->sc_ec.ec_mii = mii;
 
 	awin_gpio_pinset_acquire(pinset);
 	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
@@ -196,7 +197,7 @@ awin_eth_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": 10/100 Ethernet Controller\n");
 
 	/*
-	 * Diable and then clear all interrupts
+	 * Disable and then clear all interrupts
 	 */
 	awin_eth_write(sc, AWIN_EMAC_INT_CTL_REG, 0);
 	awin_eth_write(sc, AWIN_EMAC_INT_STA_REG,
@@ -222,13 +223,17 @@ awin_eth_attach(device_t parent, device_t self, void *aux)
 		enaddr[5] = a0 >>  0;
 	}
 
+	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_softc = sc;
+	ifp->if_capabilities = 0;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = awin_eth_ifstart;
 	ifp->if_ioctl = awin_eth_ifioctl;
 	ifp->if_init = awin_eth_ifinit;
 	ifp->if_stop = awin_eth_ifstop;
 	ifp->if_watchdog = awin_eth_ifwatchdog;
 	ifp->if_drain = awin_eth_ifdrain;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 

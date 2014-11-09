@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.8 2014/02/26 00:19:01 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.8.10.1 2014/11/09 14:42:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -88,41 +88,71 @@ awinio_print(void *aux, const char *pnp)
 #define	AANY	0
 #define	A10	AWINIO_ONLY_A10
 #define	A20	AWINIO_ONLY_A20
+#define	A31	AWINIO_ONLY_A31
 #define	REQ	AWINIO_REQUIRED
 
 static const struct awin_locators awin_locators[] = {
 	{ "awinicu", OFFANDSIZE(INTC), NOPORT, NOINTR, A10|REQ },
 	{ "awingpio", OFFANDSIZE(PIO), NOPORT, NOINTR, AANY|REQ },
+	{ "awindma", OFFANDSIZE(DMA), NOPORT, AWIN_IRQ_DMA, A10|A20|REQ },
+	{ "awindma", OFFANDSIZE(DMA), NOPORT, AWIN_A31_IRQ_DMA, A31 },
 	{ "awintmr", OFFANDSIZE(TMR), NOPORT, AWIN_IRQ_TMR0, A10 },
-	{ "com", OFFANDSIZE(UART0), 0, AWIN_IRQ_UART0, AANY },
-	{ "com", OFFANDSIZE(UART1), 1, AWIN_IRQ_UART1, AANY },
-	{ "com", OFFANDSIZE(UART2), 2, AWIN_IRQ_UART2, AANY },
-	{ "com", OFFANDSIZE(UART3), 3, AWIN_IRQ_UART3, AANY },
-	{ "com", OFFANDSIZE(UART4), 4, AWIN_IRQ_UART4, AANY },
-	{ "com", OFFANDSIZE(UART5), 5, AWIN_IRQ_UART5, AANY },
-	{ "com", OFFANDSIZE(UART6), 6, AWIN_IRQ_UART6, AANY },
-	{ "com", OFFANDSIZE(UART7), 7, AWIN_IRQ_UART7, AANY },
+	{ "awincnt", OFFANDSIZE(CPUCFG), NOPORT, NOINTR, A20 },
+	{ "awincnt", OFFANDSIZE(A31_CPUCFG), NOPORT, NOINTR, A31 },
+	{ "com", OFFANDSIZE(UART0), 0, AWIN_IRQ_UART0, A10|A20 },
+	{ "com", OFFANDSIZE(UART1), 1, AWIN_IRQ_UART1, A10|A20 },
+	{ "com", OFFANDSIZE(UART2), 2, AWIN_IRQ_UART2, A10|A20 },
+	{ "com", OFFANDSIZE(UART3), 3, AWIN_IRQ_UART3, A10|A20 },
+	{ "com", OFFANDSIZE(UART4), 4, AWIN_IRQ_UART4, A10|A20 },
+	{ "com", OFFANDSIZE(UART5), 5, AWIN_IRQ_UART5, A10|A20 },
+	{ "com", OFFANDSIZE(UART6), 6, AWIN_IRQ_UART6, A10|A20 },
+	{ "com", OFFANDSIZE(UART7), 7, AWIN_IRQ_UART7, A10|A20 },
+	{ "com", OFFANDSIZE(UART0), 0, AWIN_A31_IRQ_UART0, A31 },
 	{ "awinwdt", OFFANDSIZE(TMR), NOPORT, NOINTR, AANY },
-	{ "awinusb", OFFANDSIZE(USB1), 0, NOINTR, AANY },
-	{ "awinusb", OFFANDSIZE(USB2), 1, NOINTR, AANY },
-	{ "awinmmc", OFFANDSIZE(SDMMC0), 0, AWIN_IRQ_SDMMC0, AANY },
-	{ "awinmmc", OFFANDSIZE(SDMMC1), 1, AWIN_IRQ_SDMMC1, AANY },
-	{ "awinmmc", OFFANDSIZE(SDMMC2), 2, AWIN_IRQ_SDMMC2, AANY },
-	{ "awinmmc", OFFANDSIZE(SDMMC3), 3, AWIN_IRQ_SDMMC3, AANY },
-	{ "awinmmc", OFFANDSIZE(SDMMC1), 4, AWIN_IRQ_SDMMC1, AANY },
-	{ "ahcisata", OFFANDSIZE(SATA), NOPORT, AWIN_IRQ_SATA, AANY },
-	{ "awiniic", OFFANDSIZE(TWI0), 0, AWIN_IRQ_TWI0, AANY },
-	{ "awiniic", OFFANDSIZE(TWI1), 1, AWIN_IRQ_TWI1, AANY },
-	{ "awiniic", OFFANDSIZE(TWI2), 2, AWIN_IRQ_TWI2, AANY },
-	{ "awiniic", OFFANDSIZE(TWI3), 3, AWIN_IRQ_TWI3, AANY },
-	{ "awiniic", OFFANDSIZE(TWI4), 4, AWIN_IRQ_TWI4, AANY },
+	{ "awinrtc", OFFANDSIZE(TMR), NOPORT, NOINTR, A10|A20 },
+	{ "awinrtc", OFFANDSIZE(A31_RTC), NOPORT, NOINTR, A31 },
+	{ "awinhdmi", OFFANDSIZE(HDMI), NOPORT, AWIN_IRQ_HDMI0, A20 },
+	{ "awinhdmi", OFFANDSIZE(HDMI), NOPORT, AWIN_A31_IRQ_HDMI, A31 },
+	{ "awinusb", OFFANDSIZE(USB1), 0, NOINTR, A10|A20 },
+	{ "awinusb", OFFANDSIZE(USB2), 1, NOINTR, A10|A20 },
+	{ "awinusb", OFFANDSIZE(A31_USB1), 0, NOINTR, A31 },
+	{ "awinusb", OFFANDSIZE(A31_USB2), 1, NOINTR, A31 },
+	{ "motg", OFFANDSIZE(USB0), NOPORT, AWIN_IRQ_USB0, A10|A20 },
+	{ "motg", OFFANDSIZE(A31_USB0), NOPORT, AWIN_A31_IRQ_USB0, A31 },
+	{ "awinmmc", OFFANDSIZE(SDMMC0), 0, AWIN_IRQ_SDMMC0, A10|A20 },
+	{ "awinmmc", OFFANDSIZE(SDMMC1), 1, AWIN_IRQ_SDMMC1, A10|A20 },
+	{ "awinmmc", OFFANDSIZE(SDMMC2), 2, AWIN_IRQ_SDMMC2, A10|A20 },
+	{ "awinmmc", OFFANDSIZE(SDMMC3), 3, AWIN_IRQ_SDMMC3, A10|A20 },
+	{ "awinmmc", OFFANDSIZE(SDMMC1), 4, AWIN_IRQ_SDMMC1, A10|A20 },
+	{ "awinmmc", OFFANDSIZE(SDMMC0), 0, AWIN_A31_IRQ_SDMMC0, A31 },
+	{ "awinmmc", OFFANDSIZE(SDMMC1), 1, AWIN_A31_IRQ_SDMMC1, A31 },
+	{ "awinmmc", OFFANDSIZE(SDMMC2), 2, AWIN_A31_IRQ_SDMMC2, A31 },
+	{ "awinmmc", OFFANDSIZE(SDMMC3), 3, AWIN_A31_IRQ_SDMMC3, A31 },
+	{ "ahcisata", OFFANDSIZE(SATA), NOPORT, AWIN_IRQ_SATA, A10|A20 },
+	{ "awiniic", OFFANDSIZE(TWI0), 0, AWIN_IRQ_TWI0, A10|A20 },
+	{ "awiniic", OFFANDSIZE(TWI1), 1, AWIN_IRQ_TWI1, A10|A20 },
+	{ "awiniic", OFFANDSIZE(TWI2), 2, AWIN_IRQ_TWI2, A10|A20 },
+	{ "awiniic", OFFANDSIZE(TWI3), 3, AWIN_IRQ_TWI3, A10|A20 },
+	{ "awiniic", OFFANDSIZE(TWI4), 4, AWIN_IRQ_TWI4, A10|A20 },
+	{ "awiniic", OFFANDSIZE(TWI0), 0, AWIN_A31_IRQ_TWI0, A31 },
+	{ "awiniic", OFFANDSIZE(TWI1), 1, AWIN_A31_IRQ_TWI1, A31 },
+	{ "awiniic", OFFANDSIZE(TWI2), 2, AWIN_A31_IRQ_TWI2, A31 },
+	{ "awiniic", OFFANDSIZE(TWI3), 3, AWIN_A31_IRQ_TWI3, A31 },
+	{ "awinp2wi", OFFANDSIZE(A31_P2WI), NOPORT, AWIN_A31_IRQ_P2WI, A31 },
 	{ "spi", OFFANDSIZE(SPI0), 0, AWIN_IRQ_SPI0, AANY },
 	{ "spi", OFFANDSIZE(SPI1), 1, AWIN_IRQ_SPI1, AANY },
 	{ "spi", OFFANDSIZE(SPI2), 1, AWIN_IRQ_SPI2, AANY },
 	{ "spi", OFFANDSIZE(SPI3), 3, AWIN_IRQ_SPI3, AANY },
-	{ "awe", OFFANDSIZE(EMAC), NOPORT, AWIN_IRQ_EMAC, AANY },
-	{ "awge", AWIN_GMAC_OFFSET, AWIN_GMAC_SIZE, NOPORT, AWIN_IRQ_GMAC, A20 },
+	{ "awe", OFFANDSIZE(EMAC), NOPORT, AWIN_IRQ_EMAC, A10|A20 },
+	{ "awge", OFFANDSIZE(GMAC), NOPORT, AWIN_IRQ_GMAC, A20 },
+	{ "awge", OFFANDSIZE(A31_GMAC), NOPORT, AWIN_A31_IRQ_GMAC, A31 },
 	{ "awincrypto", OFFANDSIZE(SS), NOPORT, AWIN_IRQ_SS, AANY },
+	{ "awinac", OFFANDSIZE(AC), NOPORT, AWIN_IRQ_AC, A10|A20 },
+	{ "awinac", OFFANDSIZE(AC), NOPORT, AWIN_A31_IRQ_AC, A31 },
+	{ "awinnand", OFFANDSIZE(NFC), NOPORT, AWIN_IRQ_NAND, A10|A20 },
+	{ "awinir", OFFANDSIZE(IR0), 0, AWIN_IRQ_IR0, A10|A20 },
+	{ "awinir", OFFANDSIZE(IR1), 1, AWIN_IRQ_IR1, A10|A20 },
+	{ "awinir", OFFANDSIZE(A31_CIR), NOPORT, AWIN_A31_IRQ_CIR, A31 },
 };
 
 static int
@@ -143,8 +173,11 @@ static void
 awinio_attach(device_t parent, device_t self, void *aux)
 {
 	struct awinio_softc * const sc = &awinio_sc;
-	const bool a10_p = CPU_ID_CORTEX_A8_P(curcpu()->ci_arm_cpuid);
-	const bool a20_p = CPU_ID_CORTEX_A7_P(curcpu()->ci_arm_cpuid);
+	uint16_t chip_id = awin_chip_id();
+	const char *chip_name = awin_chip_name();
+	const bool a10_p = chip_id == AWIN_CHIP_ID_A10;
+	const bool a20_p = chip_id == AWIN_CHIP_ID_A20;
+	const bool a31_p = chip_id == AWIN_CHIP_ID_A31;
 	prop_dictionary_t dict = device_properties(self);
 
 	sc->sc_dev = self;
@@ -159,7 +192,7 @@ awinio_attach(device_t parent, device_t self, void *aux)
 	    &sc->sc_ccm_bsh);
 
 	aprint_naive("\n");
-	aprint_normal("\n");
+	aprint_normal(": %s (0x%04x)\n", chip_name, chip_id);
 
 	const struct awin_locators * const eloc =
 	    awin_locators + __arraycount(awin_locators);
@@ -180,6 +213,8 @@ awinio_attach(device_t parent, device_t self, void *aux)
 			if (a10_p && !(loc->loc_flags & AWINIO_ONLY_A10))
 				continue;
 			if (a20_p && !(loc->loc_flags & AWINIO_ONLY_A20))
+				continue;
+			if (a31_p && !(loc->loc_flags & AWINIO_ONLY_A31))
 				continue;
 		}
 

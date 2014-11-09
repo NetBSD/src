@@ -1,4 +1,4 @@
-/* $NetBSD: awin_intr.h,v 1.3 2013/09/07 00:35:52 matt Exp $ */
+/* $NetBSD: awin_intr.h,v 1.3.10.1 2014/11/09 14:42:33 martin Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -72,7 +72,7 @@
 #define AWIN_IRQ_DMA		59
 #define AWIN_IRQ_PIO		60
 #define AWIN_IRQ_TP		61
-#define AWIN_IRQ_ADDC		62
+#define AWIN_IRQ_AC		62
 #define AWIN_IRQ_LRADC		63
 #define AWIN_IRQ_SDMMC0		64
 #define AWIN_IRQ_SDMMC1		65
@@ -133,5 +133,34 @@
 #define AWIN_IRQ_TWI3		120
 #define AWIN_IRQ_TWI4		121
 #define AWIN_IRQ_IIS2		122
+
+/*
+ * A31
+ */
+#define AWIN_A31_IRQ_UART0	32
+#define AWIN_A31_IRQ_UART1	33
+#define AWIN_A31_IRQ_UART2	34
+#define AWIN_A31_IRQ_UART3	35
+#define AWIN_A31_IRQ_UART4	36
+#define AWIN_A31_IRQ_UART5	37
+#define AWIN_A31_IRQ_TWI0	38
+#define AWIN_A31_IRQ_TWI1	39
+#define AWIN_A31_IRQ_TWI2	40
+#define AWIN_A31_IRQ_TWI3	41
+#define AWIN_A31_IRQ_AC		61
+#define AWIN_A31_IRQ_CIR	69
+#define AWIN_A31_IRQ_P2WI	71
+#define AWIN_A31_IRQ_DMA	82
+#define AWIN_A31_IRQ_SDMMC0	92
+#define AWIN_A31_IRQ_SDMMC1	93
+#define AWIN_A31_IRQ_SDMMC2	94
+#define AWIN_A31_IRQ_SDMMC3	95
+#define AWIN_A31_IRQ_USB0	103
+#define AWIN_A31_IRQ_USB1	104
+#define AWIN_A31_IRQ_USB2	105
+#define AWIN_A31_IRQ_USB3	106
+#define AWIN_A31_IRQ_USB4	108
+#define AWIN_A31_IRQ_GMAC	114
+#define AWIN_A31_IRQ_HDMI	120
 
 #endif /* _ARM_ALLWINNER_AWIN_INTR_H_ */
