@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.50.2.15 2014/11/09 06:29:22 msaitoh Exp $ */
+/*  $NetBSD: ops.c,v 1.50.2.16 2014/11/09 07:02:57 msaitoh Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -3623,9 +3623,11 @@ perfuse_node_deleteextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	(void)strlcpy(np, attrname, attrnamelen);
 	
 	error = xchg_msg(pu, opc, pm, NO_PAYLOAD_REPLY_LEN, wait_reply);
+	if (error != 0)
+		goto out;
 	
 	ps->ps_destroy_msg(pm);
-
+out:
 	node_rele(opc);
 	return error;
 }
