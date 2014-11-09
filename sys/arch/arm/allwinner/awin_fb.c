@@ -1,4 +1,4 @@
-/* $NetBSD: awin_fb.c,v 1.1 2014/11/09 14:10:54 jmcneill Exp $ */
+/* $NetBSD: awin_fb.c,v 1.2 2014/11/09 14:30:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_fb.c,v 1.1 2014/11/09 14:10:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_fb.c,v 1.2 2014/11/09 14:30:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -180,7 +180,7 @@ awin_fb_ddb_trap_callback(int where)
 }
 
 void
-awin_fb_set_videomode(device_t dev, struct videomode *mode)
+awin_fb_set_videomode(device_t dev, const struct videomode *mode)
 {
 	struct awin_fb_softc *sc = device_private(dev);
 
