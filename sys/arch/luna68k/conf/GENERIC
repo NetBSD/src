@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.97.2.2 2014/01/12 12:08:36 bouyer Exp $
+# $NetBSD: GENERIC,v 1.97.2.3 2014/11/09 07:34:12 msaitoh Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.97.2.2 $"
+#ident 		"GENERIC-$Revision: 1.97.2.3 $"
 
 maxusers	8
 
@@ -138,6 +138,7 @@ options 	NFS_BOOT_DHCP	# superset of BOOTP
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_RAWKBD
 options 	FONT_OMRON12x20
 
 config		netbsd root on ? type ?
