@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.50.2.13 2014/11/04 01:52:53 msaitoh Exp $ */
+/*  $NetBSD: ops.c,v 1.50.2.14 2014/11/09 06:16:50 msaitoh Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -597,6 +597,7 @@ fuse_to_dirent(struct puffs_usermount *pu, puffs_cookie_t opc,
 	do {
 		char *ndp;
 		size_t reclen;
+		char name[MAXPATHLEN];
 
 		reclen = _DIRENT_RECLEN(dents, fd->namelen);
 
@@ -629,6 +630,9 @@ fuse_to_dirent(struct puffs_usermount *pu, puffs_cookie_t opc,
 			dents = (struct dirent *)(void *)ndp;
 		}
 		
+		strncpy(name, fd->name, fd->namelen);
+		name[fd->namelen] = '\0';
+
 		/*
 		 * Filesystem was mounted without -o use_ino
 		 * Perform a lookup to find it.
@@ -641,13 +645,17 @@ fuse_to_dirent(struct puffs_usermount *pu, puffs_cookie_t opc,
 			 * Avoid breaking out of fs 
 			 * by lookup to .. on root
 			 */
-			if ((strcmp(fd->name, "..") == 0) && 
+			if ((strcmp(name, "..") == 0) && 
 			    (pnd->pnd_nodeid == FUSE_ROOT_ID)) {
 				fd->ino = FUSE_ROOT_ID;
 			} else {
-				if (node_lookup_common(pu, opc, NULL, fd->name,
-						       NULL, &pn) != 0) {
-					DWARNX("node_lookup_common failed");
+				int error;
+
+				error = node_lookup_common(pu, opc, NULL, 
+							   name, NULL, &pn);
+				if (error != 0) {
+					DWARNX("node_lookup_common %s "
+					       "failed: %d", name, error);
 				} else {
 					fd->ino = pn->pn_va.va_fileid;
 					(void)perfuse_node_reclaim(pu, pn);
@@ -659,7 +667,7 @@ fuse_to_dirent(struct puffs_usermount *pu, puffs_cookie_t opc,
 		dents->d_reclen = (unsigned short)reclen;
 		dents->d_namlen = fd->namelen;
 		dents->d_type = fd->type;
-		strlcpy(dents->d_name, fd->name, fd->namelen + 1);
+		strlcpy(dents->d_name, name, fd->namelen + 1);
 
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_READDIR)
@@ -710,7 +718,7 @@ fuse_to_dirent(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 */
 	if (written != -1)
 		PERFUSE_NODE_DATA(opc)->pnd_dirent_len = written;
-	
+
 	return written;
 }
 
