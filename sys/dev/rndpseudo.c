@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.23 2014/10/26 18:22:32 tls Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.24 2014/11/09 20:29:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.23 2014/10/26 18:22:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.24 2014/11/09 20:29:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.23 2014/10/26 18:22:32 tls Exp $");
 #include <sys/cpu.h>
 #include <sys/stat.h>
 #include <sys/percpu.h>
+#include <sys/evcnt.h>
 
 #include <sys/rnd.h>
 #ifdef COMPAT_50
@@ -166,6 +167,13 @@ extern int		rnd_ready;		/* XXX */
 extern rndsave_t	*boot_rsp;		/* XXX */
 extern LIST_HEAD(, krndsource) rnd_sources;	/* XXX */
 
+static struct evcnt rndpseudo_soft = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "rndpseudo", "open soft");
+static struct evcnt rndpseudo_hard = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "rndpseudo", "open hard");
+EVCNT_ATTACH_STATIC(rndpseudo_soft);
+EVCNT_ATTACH_STATIC(rndpseudo_hard);
+
 /*
  * Generate a 32-bit counter.  This should be more machine dependent,
  * using cycle counters and the like when possible.
@@ -219,10 +227,12 @@ rndopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	switch (minor(dev)) {
 	case RND_DEV_URANDOM:
 		hard = false;
+		rndpseudo_soft.ev_count++;
 		break;
 
 	case RND_DEV_RANDOM:
 		hard = true;
+		rndpseudo_hard.ev_count++;
 		break;
 
 	default:
