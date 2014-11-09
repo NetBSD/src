@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.72 2014/10/30 13:05:58 nonaka Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.73 2014/11/09 14:29:13 nonaka Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.72 2014/10/30 13:05:58 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.73 2014/11/09 14:29:13 nonaka Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -391,7 +391,8 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	error = pci_get_capability(sc->sc_pct, sc->sc_pcitag,
 	    PCI_CAP_PCIEXPRESS, &sc->sc_cap_off, NULL);
 	if (error == 0) {
-		aprint_error(": PCIe capability structure not found!\n");
+		aprint_error_dev(self,
+		    "PCIe capability structure not found!\n");
 		return;
 	}
 
@@ -414,19 +415,19 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	error = pci_mapreg_map(pa, IWN_PCI_BAR0, memtype, 0, &sc->sc_st,
 	    &sc->sc_sh, NULL, &sc->sc_sz);
 	if (error != 0) {
-		aprint_error(": can't map mem space\n");
+		aprint_error_dev(self, "can't map mem space\n");
 		return;
 	}
 
 	/* Install interrupt handler. */
 	if (pci_intr_map(pa, &ih) != 0) {
-		aprint_error(": can't map interrupt\n");
+		aprint_error_dev(self, "can't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwn_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error(": can't establish interrupt");
+		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
@@ -441,43 +442,45 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	else
 		error = iwn5000_attach(sc, PCI_PRODUCT(pa->pa_id));
 	if (error != 0) {
-		aprint_error(": could not attach device\n");
+		aprint_error_dev(self, "could not attach device\n");
 		return;
 	}	
 
 	if ((error = iwn_hw_prepare(sc)) != 0) {
-		aprint_error(": hardware not ready\n");
+		aprint_error_dev(self, "hardware not ready\n");
 		return;
 	}
 
 	/* Read MAC address, channels, etc from EEPROM. */
 	if ((error = iwn_read_eeprom(sc)) != 0) {
-		aprint_error(": could not read EEPROM\n");
+		aprint_error_dev(self, "could not read EEPROM\n");
 		return;
 	}
 
 	/* Allocate DMA memory for firmware transfers. */
 	if ((error = iwn_alloc_fwmem(sc)) != 0) {
-		aprint_error(": could not allocate memory for firmware\n");
+		aprint_error_dev(self,
+		    "could not allocate memory for firmware\n");
 		return;
 	}
 
 	/* Allocate "Keep Warm" page. */
 	if ((error = iwn_alloc_kw(sc)) != 0) {
-		aprint_error(": could not allocate keep warm page\n");
+		aprint_error_dev(self, "could not allocate keep warm page\n");
 		goto fail1;
 	}
 
 	/* Allocate ICT table for 5000 Series. */
 	if (sc->hw_type != IWN_HW_REV_TYPE_4965 &&
 	    (error = iwn_alloc_ict(sc)) != 0) {
-		aprint_error(": could not allocate ICT table\n");
+		aprint_error_dev(self, "could not allocate ICT table\n");
 		goto fail2;
 	}
 
 	/* Allocate TX scheduler "rings". */
 	if ((error = iwn_alloc_sched(sc)) != 0) {
-		aprint_error(": could not allocate TX scheduler rings\n");
+		aprint_error_dev(self,
+		    "could not allocate TX scheduler rings\n");
 		goto fail3;
 	}
 
@@ -492,14 +495,15 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	/* Allocate TX rings (16 on 4965AGN, 20 on >=5000). */
 	for (i = 0; i < sc->ntxqs; i++) {
 		if ((error = iwn_alloc_tx_ring(sc, &sc->txq[i], i)) != 0) {
-			aprint_error(": could not allocate TX ring %d\n", i);
+			aprint_error_dev(self,
+			    "could not allocate TX ring %d\n", i);
 			goto fail4;
 		}
 	}
 
 	/* Allocate RX ring. */
 	if ((error = iwn_alloc_rx_ring(sc, &sc->rxq)) != 0) {
-		aprint_error(": could not allocate RX ring\n");
+		aprint_error_dev(self, "could not allocate RX ring\n");
 		goto fail4;
 	}
 
