@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.79 2014/11/07 21:39:06 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.80 2014/11/09 10:11:26 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2065,3 +2065,19 @@ share/man/man4/wm.4				1.31 via patch
 	- Cleanup
 	[msaitoh, ticket #190]
 
+lib/libperfuse/ops.c				1.80
+
+	Restore build with -DDEBUG, and avoid a spurious diagnostic error with
+	-DDEBUG
+	[manu, ticket #192]
+
+sys/fs/puffs/puffs_vnops.c			1.198
+
+	PUFFS direct I/O cache fix.
+	[manu, ticket #193]
+
+sys/fs/puffs/puffs_node.c			1.35
+sys/fs/puffs/puffs_vnops.c			1.197
+
+	Fix PUFFS node use-after-reclaim.
+	[manu, ticket #194]
