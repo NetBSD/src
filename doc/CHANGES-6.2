@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.153 2014/11/09 08:00:41 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.154 2014/11/09 11:09:11 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4312,3 +4312,14 @@ lib/libperfuse/ops.c				1.79
 	Avoid deadlocks on write errors. On write errors, we failed to dequeue
 	some operations, leading to rare but unpleasant deadlocks.
 	[manu, ticket #1185]
+
+lib/libperfuse/ops.c				1.80
+
+	Restore build with -DDEBUG, and avoid a spurious diagnostic error with
+	-DDEBUG
+	[manu, ticket #1186]
+
+sys/fs/puffs/puffs_vnops.c			1.198
+
+	PUFFS direct I/O cache fix.
+	[manu, ticket #1187]
