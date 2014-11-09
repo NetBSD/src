@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.152 2014/11/04 09:27:59 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.153 2014/11/09 08:00:41 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4210,4 +4210,105 @@ sys/dev/mii/rgephy.c				1.33
 	other *BSDs.
 	[msaitoh, ticket #1146]
 
+lib/libperfuse/ops.c				1.75
 
+	Do not trust the filesystem's readdir to give us nul-terminated file
+	names.
+	[manu, ticket #1165]
+
+sys/fs/puffs/puffs_vnops.c			1.188-1.194
+
+	- If we truncate the file, make sure we zero-fill the end of the last
+	  page, otherwise if the file is later truncated to a larger size
+	  (creating a hole), that area will not return zeroes as it should.
+	- Use PRIx64 for printing offsets
+	- Improve zero-fill of last page after shrink fix:
+	  1) do it only if the file is open for writing, otherwise we send
+	  write requests to the FS on a file that has never been open.
+	  2) do it inside existing if (vap->va_size != VNOVAL) block.
+	- Retore LP64 fix that was removed by mistake
+	- Make this build again without debugging enabled; DPRINTF() can end up
+	  as empty, and in an if conditional, you then need braces if that's
+	  the only potential body.
+	- As is evidenced by several of our 32-bit MIPS ports, it's wrong to
+	  print vsize_t with PRIx64 -- instead use our own PRIxVSIZE macro.
+	[manu, ticket #1166]
+
+lib/libperfuse/ops.c				1.76
+
+	Report allocated bytes on FS correctly, instead of using file size
+	(which is wrong for sparse files).
+	[manu, ticket #1167]
+
+sys/fs/msdosfs/msdosfs_vfsops.c			1.110 via patch
+
+	- Perform sanity checks not just for GEMDOSFS, but for all FAT devices.
+	  This also fixes a division-by-zero bug that could crash the system.
+	- Define GEMDOSFS_BSIZE instead of a hard-coded 512 value, and remove
+	  'bsize'.
+	- Rename 'tmp' to 'BlkPerSec'.
+	- Remove 'secsize==0' and added 'secsize<DEV_BSIZE'
+	[maxv, ticket #1171]
+
+sys/arch/sparc64/sparc64/machdep.c		1.274 and 1.280
+
+	- avoid sync and unmount after panic.
+	- remove vfs_shutdown, we call vfs_sync_all and vfs_unmount* instead.
+	- resurrect doshutdownhooks since some drivers still use it
+          (eg. sab(4)).
+	[nakayama, ticket #1176]
+
+lib/libperfuse/ops.c				1.77
+
+	Fix invalid free in deletextattr FUSE handler.
+	Do not free FUSE message on error as it was not allocated.
+	[manu, ticket #1177]
+
+sys/compat/netbsd32/netbsd32_compat_50.c	1.28
+
+	fix multiple mistakes:
+	- error from copyout was ignored
+	- the wrong size was specified in copyin
+	- missing locking.
+	[maxv, ticket #1179]
+
+xsrc/external/mit/libXt/dist/src/ResConfig.c	patch
+
+	Fix DEBUG build of libXt.  From Sandro Millien in PR xsrc/48863.
+	[snj, ticket #1181]
+
+sys/arch/luna68k/conf/GENERIC			1.113 via patch
+sys/arch/luna68k/conf/files.luna68k		1.24
+sys/arch/luna68k/dev/lunafb.c			1.31-1.36
+sys/arch/luna68k/dev/lunaws.c			1.30
+sys/arch/luna68k/dev/omkbdmap.c			1.1-1.2
+sys/arch/luna68k/dev/omkbdmap.h			1.1
+sys/arch/luna68k/dev/omrasops.c			1.17-1.19
+sys/arch/luna68k/dev/omrasopsvar.h		1.3
+
+	Improve luna86 console:
+	- 8bpp framebuffer support
+	- reset color palette properly after Xserver fails
+	- several framebuffer performance improvements
+	- RAWKBD support for xorg server
+	[tsutsui, ticket #1182]
+
+xsrc/external/mit/xf86-video-wsfb/dist/src/wsfb_driver.c 1.22-1.23 and 1.25 via patch
+
+	- Fix wrong VRAM size calculation on old drivers without GET_FBINFO
+	  ioctl.
+	- No need to handle colormap ioctls if cmsize == 0 even in WSFB_CI
+	  case.
+	- Add kludge to use luna68k 4/8bpp framebuffers as a monochrome server.
+	[tsutsui, ticket #1183]
+
+sys/fs/puffs/puffs_vnops.c			1.195
+
+	Pass error correctly in puffs_vnop_strategy().
+	[manu, ticket #1184]
+
+lib/libperfuse/ops.c				1.79
+
+	Avoid deadlocks on write errors. On write errors, we failed to dequeue
+	some operations, leading to rare but unpleasant deadlocks.
+	[manu, ticket #1185]
