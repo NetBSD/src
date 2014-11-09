@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.80 2014/11/09 10:11:26 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.81 2014/11/09 16:09:49 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2081,3 +2081,78 @@ sys/fs/puffs/puffs_vnops.c			1.197
 
 	Fix PUFFS node use-after-reclaim.
 	[manu, ticket #194]
+
+distrib/sets/lists/xcomp/mi			1.153
+external/mit/xorg/server/xorg-server/include/Makefile 1.12
+
+	Install fbpict.h (e.g., new xf86-video-intel assumes it
+	exists if RENDER is defined)
+	[snj, ticket #184]
+
+sys/arch/evbarm/awin/awin_machdep.c		1.5-1.25
+sys/arch/evbarm/awin/awin_start.S		1.2-1.6
+sys/arch/evbarm/awin/awin_sysconfig.c		1.1
+sys/arch/evbarm/awin/awin_sysconfig.h		1.1
+sys/arch/arm/allwinner/awin_ac.c		1.1-1.16
+sys/arch/arm/allwinner/awin_cnt.c		1.1
+sys/arch/arm/allwinner/awin_dma.c		1.1-1.5
+sys/arch/arm/allwinner/awin_dma.h		1.1
+sys/arch/arm/allwinner/awin_dma_a10.c		1.1-1.2
+sys/arch/arm/allwinner/awin_dma_a31.c		1.1-1.2
+sys/arch/arm/allwinner/awin_hdmi.c		1.1-1.2
+sys/arch/arm/allwinner/awin_ir.c		1.1
+sys/arch/arm/allwinner/awin_otg.c		1.1-1.5
+sys/arch/arm/allwinner/awin_otgreg.h		1.1-1.4
+sys/arch/arm/allwinner/awin_p2wi.c		1.1
+sys/arch/arm/allwinner/awin_rtc.c		1.1-1.7
+sys/arch/arm/allwinner/awin_board.c		1.15-1.25
+sys/arch/arm/allwinner/awin_com.c		1.6-1.7
+sys/arch/arm/allwinner/awin_eth.c		1.6-1.7
+sys/arch/arm/allwinner/awin_gige.c		1.5-1.18
+sys/arch/arm/allwinner/awin_gpio.c		1.9-1.13
+sys/arch/arm/allwinner/awin_intr.h		1.4-1.9
+sys/arch/arm/allwinner/awin_io.h		1.9-1.26
+sys/arch/arm/allwinner/awin_mmc.c		1.5-1.15
+sys/arch/arm/allwinner/awin_reg.h		1.16-1.45
+sys/arch/arm/allwinner/awin_twi.c		1.4
+sys/arch/arm/allwinner/awin_usb.c		1.13-1.16
+sys/arch/arm/allwinner/awin_var.h		1.11-1.19
+sys/arch/arm/allwinner/awin_wdt.c		1.4
+sys/arch/arm/allwinner/files.awin		1.9-1.21
+
+	Various fixes and new drivers for Allwinner SoC.
+	[skrll, ticket #203]
+
+sys/fs/smbfs/smbfs_vnops.c			1.92
+
+	Fix vnode locking changes in rev.1.89:
+	- lock vnode by the end of cache_purge and vput.
+	[nakayama, ticket #187]
+
+sys/arch/arm/arm/arm_machdep.c			1.43
+sys/arch/arm/arm/ast.c				1.25
+sys/arch/arm/arm/cpufunc_asm_arm11.S		1.17
+sys/arch/arm/arm/cpufunc_asm_armv7.S		1.19
+sys/arch/arm/arm/cpufunc_asm_armv7.S		1.20
+sys/arch/arm/arm/cpufunc_asm_pj4b.S		1.5
+sys/arch/arm/arm/undefined.c			1.55
+sys/arch/arm/arm32/arm32_boot.c			1.8-1.10
+sys/arch/arm/arm32/arm32_kvminit.c		1.32
+sys/arch/arm/arm32/arm32_machdep.c		1.107
+sys/arch/arm/arm32/arm32_tlb.c			1.3-1.7
+sys/arch/arm/arm32/db_interface.c		1.54
+sys/arch/arm/arm32/db_machdep.c			1.22
+sys/arch/arm/arm32/pmap.c			1.298,1.306-1.307,1.310-1.311
+sys/arch/arm/cortex/a9_mpsubr.S			1.19-1.24
+sys/arch/arm/cortex/gic.c			1.11-1.12
+sys/arch/arm/include/arm32/pmap.h		1.136
+sys/arch/arm/include/armreg.h			1.98,1.100-1.101
+sys/arch/arm/mainbus/cpu_mainbus.c		1.16
+sys/arch/arm/pic/pic.c				1.23-1.24
+sys/arch/arm/pic/picvar.h			1.11
+sys/arch/evbarm/conf/BPI			1.5,1.8
+sys/arch/evbarm/conf/CUBIETRUCK			1.5
+sys/uvm/pmap/pmap_tlb.c				1.10
+
+	Various fixes for ARM MP.
+	[skrll, ticket #188]
