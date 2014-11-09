@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.153 2014/05/16 12:22:32 martin Exp $ */
+/*	$NetBSD: sysctl.c,v 1.154 2014/11/09 18:36:02 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.153 2014/05/16 12:22:32 martin Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.154 2014/11/09 18:36:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,6 +181,7 @@ static const struct handlespec {
 	const void *ps_d;
 } handlers[] = {
 	{ "/kern/clockrate",			kern_clockrate, NULL, NULL },
+	{ "/kern/evcnt",			printother, NULL, "vmstat -e" },
 	{ "/kern/vnode",			printother, NULL, "pstat" },
 	{ "/kern/proc(2|_args)?",		printother, NULL, "ps" },
 	{ "/kern/file2?",			printother, NULL, "pstat" },
@@ -688,6 +689,8 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 	}
 
 	if (type != CTLTYPE_NODE && pnode->sysctl_size == 0) {
+		printf("x=%zu\n", sz);
+		sz = 0;
 		rc = prog_sysctl(&name[0], namelen, NULL, &sz, NULL, 0);
 		if (rc == -1) {
 			sysctlerror(1);
@@ -1701,8 +1704,8 @@ sysctlerror(int soft)
 		case EOPNOTSUPP:
 		case EPROTONOSUPPORT:
 			if (Aflag || req)
-				sysctlperror("%s: the value is not available\n",
-					     gsname);
+				sysctlperror("%s: the value is not available "
+				    "(%s)\n", gsname, strerror(errno));
 			return;
 		}
 	}
