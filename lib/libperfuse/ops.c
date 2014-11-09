@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.50.2.17 2014/11/09 07:53:39 msaitoh Exp $ */
+/*  $NetBSD: ops.c,v 1.50.2.18 2014/11/09 11:03:41 msaitoh Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -803,11 +803,6 @@ requeue_request(struct puffs_usermount *pu, puffs_cookie_t opc,
 {
 	struct perfuse_cc_queue pcq;
 	struct perfuse_node_data *pnd;
-#ifdef PERFUSE_DEBUG
-	struct perfuse_state *ps;
-
-	ps = perfuse_getspecific(pu);
-#endif
 
 	pnd = PERFUSE_NODE_DATA(opc);
 	pcq.pcq_type = type;
@@ -2811,11 +2806,11 @@ perfuse_node_inactive(struct puffs_usermount *pu, puffs_cookie_t opc)
 	if (opc == 0)
 		return 0;
 
-	node_ref(opc);
 	pnd = PERFUSE_NODE_DATA(opc);
-
 	if (!(pnd->pnd_flags & (PND_OPEN|PND_REMOVED)))
-		goto out;
+		return 0;
+
+	node_ref(opc);
 
 	/*
 	 * Make sure all operation are finished
