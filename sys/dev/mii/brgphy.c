@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.59.8.5 2014/11/04 09:23:20 martin Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.59.8.6 2014/11/09 12:13:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.59.8.5 2014/11/04 09:23:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.59.8.6 2014/11/09 12:13:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,7 +576,7 @@ brgphy_status(struct mii_softc *sc)
 				break;
 
 			case BRGPHY_RES_1000HD:
-				mii->mii_media_active |= IFM_1000_T;
+				mii->mii_media_active |= IFM_1000_T | IFM_HDX;
 				gtsr = PHY_READ(sc, MII_100T2SR);
 				if (gtsr & GTSR_MS_RES)
 					mii->mii_media_active |= IFM_ETH_MASTER;
@@ -587,11 +587,11 @@ brgphy_status(struct mii_softc *sc)
 				break;
 
 			case BRGPHY_RES_100T4:
-				mii->mii_media_active |= IFM_100_T4;
+				mii->mii_media_active |= IFM_100_T4 | IFM_HDX;
 				break;
 
 			case BRGPHY_RES_100HD:
-				mii->mii_media_active |= IFM_100_TX;
+				mii->mii_media_active |= IFM_100_TX | IFM_HDX;
 				break;
 
 			case BRGPHY_RES_10FD:
@@ -599,7 +599,7 @@ brgphy_status(struct mii_softc *sc)
 				break;
 
 			case BRGPHY_RES_10HD:
-				mii->mii_media_active |= IFM_10_T;
+				mii->mii_media_active |= IFM_10_T | IFM_HDX;
 				break;
 
 			default:

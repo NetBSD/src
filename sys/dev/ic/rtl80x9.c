@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9.c,v 1.15 2009/03/14 15:36:17 dsl Exp $	*/
+/*	$NetBSD: rtl80x9.c,v 1.15.18.1 2014/11/09 12:13:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.15 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.15.18.1 2014/11/09 12:13:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,8 @@ rtl80x9_mediastatus(struct dp8390_softc *sc, struct ifmediareq *ifmr)
 		if (NIC_GET(sc->sc_regt, sc->sc_regh, NERTL_RTL3_CONFIG3) &
 		    RTL3_CONFIG3_FUDUP)
 			ifmr->ifm_active |= IFM_FDX;
+		else
+			ifmr->ifm_active |= IFM_HDX;
 	}
 
 	/* Set NIC to page 0 registers. */

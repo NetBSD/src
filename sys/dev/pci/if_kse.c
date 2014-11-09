@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.22 2010/04/05 07:20:26 joerg Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.22.14.1 2014/11/09 12:13:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.22 2010/04/05 07:20:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.22.14.1 2014/11/09 12:13:15 martin Exp $");
 
 
 #include <sys/param.h>
@@ -1312,11 +1312,11 @@ ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 		if (result & (1U << 3))
 			ifmr->ifm_active |= IFM_100_TX|IFM_FDX;
 		else if (result & (1U << 2))
-			ifmr->ifm_active |= IFM_100_TX;
+			ifmr->ifm_active |= IFM_100_TX|IFM_HDX;
 		else if (result & (1U << 1))
 			ifmr->ifm_active |= IFM_10_T|IFM_FDX;
 		else if (result & (1U << 0))
-			ifmr->ifm_active |= IFM_10_T;
+			ifmr->ifm_active |= IFM_10_T|IFM_HDX;
 		else
 			ifmr->ifm_active |= IFM_NONE;
 		if (ctl & (1U << 4))
