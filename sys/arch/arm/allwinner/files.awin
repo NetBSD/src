@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.8 2014/02/25 02:51:52 matt Exp $
+#	$NetBSD: files.awin,v 1.8.10.1 2014/11/09 14:42:33 martin Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -26,6 +26,8 @@ defflag opt_allwinner.h				AWINETH_COUNTERS
 defflag opt_allwinner.h				ALLWINNER_A10
 defflag opt_allwinner.h				ALLWINNER_A20
 defflag opt_allwinner.h				ALLWINNER_A31
+defflag opt_allwinner.h				ALLWINNER_A80
+defflag opt_allwinner.h				AWIN_GPIO_IGNORE_FW
 
 # SoC I/O attach point
 device	awinio { [port=-1] } : bus_space_generic
@@ -42,10 +44,20 @@ device	awinwdt : sysmon_wdog
 attach	awinwdt at awinio with awin_wdt
 file	arch/arm/allwinner/awin_wdt.c		awin_wdt | awin_io needs-flag
 
+# A10/A20 RTC
+device	awinrtc
+attach	awinrtc at awinio with awin_rtc
+file	arch/arm/allwinner/awin_rtc.c		awin_rtc
+
 # A10 Timers
 device	awintmr
 attach	awintmr at awinio with awin_tmr
 file	arch/arm/allwinner/awin_tmr.c		awin_tmr
+
+# A20/A31 64-bit counter
+device	awincnt
+attach	awincnt at awinio with awin_cnt
+file	arch/arm/allwinner/awin_cnt.c		awin_cnt
 
 # A10/A20 UART
 options 	COM_16750			# for IIR_BUSY
@@ -57,10 +69,22 @@ device	awingpio : gpiobus
 attach	awingpio at awinio with awin_gpio
 file	arch/arm/allwinner/awin_gpio.c		awin_gpio | awin_io  needs-flag
 
+# A10/A20 DMA
+device	awindma
+attach	awindma at awinio with awin_dma
+file	arch/arm/allwinner/awin_dma.c		awin_dma
+file	arch/arm/allwinner/awin_dma_a10.c	awin_dma & (allwinner_a10 | allwinner_a20)
+file	arch/arm/allwinner/awin_dma_a31.c	awin_dma & allwinner_a31
+
 # A10/A20 TWI (IIC)
 device	awiniic : i2cbus, i2cexec, mvi2c
 attach	awiniic at awinio with awin_twi
 file	arch/arm/allwinner/awin_twi.c		awin_twi
+
+# A31 P2WI
+device	awinp2wi : i2cbus, i2cexec
+attach	awinp2wi at awinio with awin_p2wi
+file	arch/arm/allwinner/awin_p2wi.c		awin_p2wi
 
 # A10/A20 NAND controller
 device	awinnand : nandbus
@@ -78,9 +102,12 @@ attach	awe at awinio with awin_eth
 file	arch/arm/allwinner/awin_eth.c		awin_eth
 
 # A20 GMAC
-device	awge { } : ether, ifnet, arp, mii
 attach	awge at awinio with awin_gige
 file	arch/arm/allwinner/awin_gige.c		awin_gige
+
+# USB2 OTG Controller
+attach	motg at awinio with awin_otg
+file	arch/arm/allwinner/awin_otg.c		awin_otg
 
 # USB2 Host Controller (EHCI/OHCI)
 device	awinusb { }
@@ -101,3 +128,18 @@ file	arch/arm/allwinner/awin_wdc.c		awin_wdc
 # A20 AHCI Controller (SATA)
 attach	ahcisata at awinio with awin_ahcisata
 file	arch/arm/allwinner/awin_ahcisata.c	awin_ahcisata
+
+# A10/A20 Audio Codec (AC)
+device	awinac: audiobus, auconv, mulaw, aurateconv
+attach	awinac at awinio with awin_ac
+file	arch/arm/allwinner/awin_ac.c		awin_ac
+
+# A10/A20/A31 HDMI
+device	awinhdmi: edid, ddc_read_edid
+attach	awinhdmi at awinio with awin_hdmi
+file	arch/arm/allwinner/awin_hdmi.c		awin_hdmi
+
+# A10/A20/A31 Consumer IR (CIR)
+device	awinir: irbus
+attach	awinir at awinio with awin_ir
+file	arch/arm/allwinner/awin_ir.c		awin_ir

@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.10 2014/06/05 03:48:32 matt Exp $ */
+/* $NetBSD: awin_var.h,v 1.10.2.1 2014/11/09 14:42:33 martin Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,6 +47,7 @@ struct awin_locators {
 	int loc_flags;
 #define	AWINIO_REQUIRED		__BIT(8)
 #define	AWINIO_ONLY		__BITS(7,0)
+#define	AWINIO_ONLY_A31		__BIT(2)
 #define	AWINIO_ONLY_A20		__BIT(1)
 #define	AWINIO_ONLY_A10		__BIT(0)
 };
@@ -65,12 +66,15 @@ struct awin_gpio_pinset {
 	uint8_t pinset_group;
 	uint8_t pinset_func;
 	uint32_t pinset_mask;
+	int pinset_flags;
 };
 
 struct awin_gpio_pindata {
 	gpio_chipset_tag_t pd_gc;
 	int pd_pin;
 };
+
+struct awin_dma_channel;
 
 extern struct bus_space awin_bs_tag;
 extern struct bus_space awin_a4x_bs_tag;
@@ -81,14 +85,31 @@ extern struct arm32_bus_dma_tag awin_coherent_dma_tag;
 psize_t awin_memprobe(void);
 void	awin_bootstrap(vaddr_t, vaddr_t); 
 void	awin_dma_bootstrap(psize_t);
+void	awin_pll2_enable(void);
 void	awin_pll6_enable(void);
+void	awin_pll7_enable(void);
 void	awin_cpu_hatch(struct cpu_info *);
+
+#define AWIN_CHIP_ID_A10	AWIN_SRAM_VER_KEY_A10
+#define AWIN_CHIP_ID_A13	AWIN_SRAM_VER_KEY_A13
+#define AWIN_CHIP_ID_A31	AWIN_SRAM_VER_KEY_A31
+#define AWIN_CHIP_ID_A23	AWIN_SRAM_VER_KEY_A23
+#define AWIN_CHIP_ID_A20	AWIN_SRAM_VER_KEY_A20
+uint16_t awin_chip_id(void);
+const char *awin_chip_name(void);
 
 void	awin_gpio_init(void);
 bool	awin_gpio_pinset_available(const struct awin_gpio_pinset *);
 void	awin_gpio_pinset_acquire(const struct awin_gpio_pinset *);
 void	awin_gpio_pinset_release(const struct awin_gpio_pinset *);
 bool	awin_gpio_pin_reserve(const char *, struct awin_gpio_pindata *);
+
+void *	awin_dma_alloc(const char *, void (*)(void *), void *);
+void	awin_dma_free(void *);
+uint32_t awin_dma_get_config(void *);
+void	awin_dma_set_config(void *, uint32_t);
+int	awin_dma_transfer(void *, paddr_t, paddr_t, size_t);
+void	awin_dma_halt(void *);
 
 void	awin_wdog_reset(void);
 void	awin_tmr_cpu_init(struct cpu_info *);
