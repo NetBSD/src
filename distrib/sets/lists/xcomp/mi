@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.152 2014/05/15 16:32:28 apb Exp $
+#	 $NetBSD: mi,v 1.152.2.1 2014/11/09 13:22:58 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5911,6 +5911,7 @@
 ./usr/X11R7/include/xorg/fbdevhw.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/fboverlay.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/fbpseudocolor.h		-unknown-	obsolete
+./usr/X11R7/include/xorg/fbpict.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/fbrop.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/fi1236.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/fourcc.h			-unknown-	xorg
