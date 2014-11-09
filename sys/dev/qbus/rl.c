@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.45 2014/07/25 08:10:38 dholland Exp $	*/
+/*	$NetBSD: rl.c,v 1.46 2014/11/09 10:10:08 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.45 2014/07/25 08:10:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.46 2014/11/09 10:10:08 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -533,6 +533,14 @@ rlioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		struct dkwedge_list *dkwl = (void *) addr;
 
 		return dkwedge_list(&rc->rc_disk, dkwl, l);
+	}
+
+	case DIOCMWEDGES: {
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		dkwedge_discover(&rc->rc_disk);
+		return 0;
 	}
 
 	default:
