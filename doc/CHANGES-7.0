@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.82 2014/11/09 19:26:47 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.83 2014/11/09 21:00:16 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2157,6 +2157,7 @@ sys/uvm/pmap/pmap_tlb.c				1.10
 	Various fixes for ARM MP.
 	[skrll, ticket #188]
 
+sys/conf/files					1.1103
 sys/dev/ic/dwc_gmac.c				1.1-1.24
 sys/dev/ic/dwc_gmac_reg.h			1.1-12
 sys/dev/ic/dwc_gmac_var.h			1.1-1.5
