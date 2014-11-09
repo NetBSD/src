@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.11 2014/09/01 16:33:20 he Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.12 2014/11/09 18:23:28 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,6 @@
 
 #include "chfs.h"
 #include "chfs_inode.h"
-#include <sys/malloc.h>
 #include <sys/kauth.h>
 #include <sys/namei.h>
 #include <sys/uio.h>

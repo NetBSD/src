@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.13 2014/10/20 11:57:05 christos Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.14 2014/11/09 18:23:28 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -43,7 +43,6 @@
 #include <sys/proc.h>
 #include <sys/module.h>
 #include <sys/namei.h>
-#include <sys/malloc.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
