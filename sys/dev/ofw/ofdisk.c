@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.47 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.48 2014/11/09 10:10:08 mlelstv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.47 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.48 2014/11/09 10:10:08 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -471,6 +471,18 @@ ofdisk_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return (ENOTTY);
 
 		return (dkwedge_list(&of->sc_dk, dkwl, l));
+	    }
+
+	case DIOCMWEDGES:
+	    {
+		if (OFDISK_FLOPPY_P(of))
+			return (ENOTTY);
+
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		dkwedge_discover(&of->sc_dk);
+		return 0;
 	    }
 
 	default:
