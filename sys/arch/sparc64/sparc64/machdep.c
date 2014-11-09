@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.265.2.1 2012/05/21 15:25:56 riz Exp $ */
+/*	$NetBSD: machdep.c,v 1.265.2.2 2014/11/09 06:53:32 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.265.2.1 2012/05/21 15:25:56 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.265.2.2 2014/11/09 06:53:32 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -156,12 +156,9 @@ extern vaddr_t avail_end;
 #ifdef MODULAR
 vaddr_t module_start, module_end;
 static struct vm_map module_map_store;
-extern struct vm_map *module_map;
 #endif
 
 int	physmem;
-
-extern	void *msgbufaddr;
 
 /*
  * Maximum number of DMA segments we'll allow in dmamem_load()
@@ -609,12 +606,13 @@ cpu_reboot(int howto, char *user_boot_string)
 	 */
 	maybe_dump(howto);
 
-	if ((howto & RB_NOSYNC) == 0 && !syncdone) {
-		extern struct lwp lwp0;
-
+	/*
+	 * If we've panic'd, don't make the situation potentially
+	 * worse by syncing or unmounting the file systems.
+	 */
+	if ((howto & RB_NOSYNC) == 0 && panicstr == NULL) {
 		if (!syncdone) {
-		syncdone = true;
-		vfs_shutdown();
+			syncdone = true;
 			/* XXX used to force unmount as well, here */
 			vfs_sync_all(l);
 			/*
@@ -642,6 +640,7 @@ cpu_reboot(int howto, char *user_boot_string)
 	splhigh();
 
 haltsys:
+	doshutdownhooks();
 
 #ifdef MULTIPROCESSOR
 	/* Stop all secondary cpus */
