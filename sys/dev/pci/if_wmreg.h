@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.46.2.5 2013/07/29 20:24:04 jdc Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.46.2.6 2014/11/09 12:03:18 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -209,8 +209,8 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_FD		(1U << 0)	/* full duplex */
 #define	CTRL_BEM	(1U << 1)	/* big-endian mode */
 #define	CTRL_PRIOR	(1U << 2)	/* 0 = receive, 1 = fair */
+#define	CTRL_GIO_M_DIS	(1U << 2)	/* disabl PCI master access */
 #define	CTRL_LRST	(1U << 3)	/* link reset */
-#define	CTRL_GIO_M_DIS	(1U << 3)	/* disabl PCI master access */
 #define	CTRL_ASDE	(1U << 5)	/* auto speed detect enable */
 #define	CTRL_SLU	(1U << 6)	/* set link up */
 #define	CTRL_ILOS	(1U << 7)	/* invert loss of signal */
@@ -417,12 +417,15 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_MDIC	0x0020	/* MDI Control Register */
 #define	MDIC_DATA(x)	((x) & 0xffff)
 #define	MDIC_REGADD(x)	((x) << 16)
+#define	MDIC_PHY_SHIFT	21
+#define	MDIC_PHY_MASK	__BITS(25, 21)
 #define	MDIC_PHYADD(x)	((x) << 21)
 #define	MDIC_OP_WRITE	(1U << 26)
 #define	MDIC_OP_READ	(2U << 26)
 #define	MDIC_READY	(1U << 28)
 #define	MDIC_I		(1U << 29)	/* interrupt on MDI complete */
 #define	MDIC_E		(1U << 30)	/* MDI error */
+#define	MDIC_DEST	(1U << 31)	/* Destination */
 
 #define WMREG_SCTL	0x0024	/* SerDes Control - RW */
 /*
@@ -704,6 +707,12 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_AIT	0x0458	/* Adaptive IFS Throttle */
 
 #define	WMREG_VFTA	0x0600
+
+#define	WMREG_MDICNFG	0x0e04	/* MDC/MDIO Configuration Register */
+#define MDICNFG_PHY_SHIFT	21
+#define MDICNFG_PHY_MASK	__BITS(25, 21)
+#define MDICNFG_COM_MDIO	__BIT(30)
+#define MDICNFG_DEST		__BIT(31)
 
 #define	WM_MC_TABSIZE	128
 #define	WM_ICH8_MC_TABSIZE 32
