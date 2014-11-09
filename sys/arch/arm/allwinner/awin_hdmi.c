@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmi.c,v 1.3 2014/11/09 14:10:54 jmcneill Exp $ */
+/* $NetBSD: awin_hdmi.c,v 1.4 2014/11/09 14:30:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #define AWIN_HDMI_PLL	3	/* PLL7 or PLL3 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.3 2014/11/09 14:10:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.4 2014/11/09 14:30:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,9 +93,9 @@ static int	awin_hdmi_i2c_reset(struct awin_hdmi_softc *, int);
 static void	awin_hdmi_enable(struct awin_hdmi_softc *);
 static void	awin_hdmi_read_edid(struct awin_hdmi_softc *);
 static void	awin_hdmi_set_videomode(struct awin_hdmi_softc *,
-					struct videomode *);
+					const struct videomode *);
 static void	awin_hdmi_set_audiomode(struct awin_hdmi_softc *,
-					struct videomode *);
+					const struct videomode *);
 static void	awin_hdmi_hpd(struct awin_hdmi_softc *);
 static void	awin_hdmi_thread(void *);
 #if 0
@@ -459,6 +459,7 @@ awin_hdmi_enable(struct awin_hdmi_softc *sc)
 static void
 awin_hdmi_read_edid(struct awin_hdmi_softc *sc)
 {
+	const struct videomode *mode;
 	char edid[128];
 	struct edid_info ei;
 	int retry = 4;
@@ -477,18 +478,22 @@ awin_hdmi_read_edid(struct awin_hdmi_softc *sc)
 	edid_print(&ei);
 #endif
 
-	awin_debe_set_videomode(ei.edid_preferred_mode);
-	awin_tcon_set_videomode(ei.edid_preferred_mode);
+	mode = ei.edid_preferred_mode;
+	if (mode == NULL)
+		mode = pick_mode_by_ref(640, 480, 60);
 
-	if (ei.edid_preferred_mode != NULL) {
+	awin_debe_set_videomode(mode);
+	awin_tcon_set_videomode(mode);
+
+	if (mode != NULL) {
 		delay(10000);
-		awin_hdmi_set_videomode(sc, ei.edid_preferred_mode);
-		awin_hdmi_set_audiomode(sc, ei.edid_preferred_mode);
+		awin_hdmi_set_videomode(sc, mode);
+		awin_hdmi_set_audiomode(sc, mode);
 	}
 }
 
 static void
-awin_hdmi_set_videomode(struct awin_hdmi_softc *sc, struct videomode *mode)
+awin_hdmi_set_videomode(struct awin_hdmi_softc *sc, const struct videomode *mode)
 {
 	uint32_t val;
 	const u_int dblscan_p = !!(mode->flags & VID_DBLSCAN);
@@ -617,7 +622,7 @@ awin_hdmi_set_videomode(struct awin_hdmi_softc *sc, struct videomode *mode)
 }
 
 static void
-awin_hdmi_set_audiomode(struct awin_hdmi_softc *sc, struct videomode *mode)
+awin_hdmi_set_audiomode(struct awin_hdmi_softc *sc, const struct videomode *mode)
 {
 	/* TODO */
 	HDMI_WRITE(sc, AWIN_HDMI_AUD_CTRL_REG, 0);

@@ -1,4 +1,4 @@
-/* $NetBSD: awin_tcon.c,v 1.1 2014/11/09 14:10:54 jmcneill Exp $ */
+/* $NetBSD: awin_tcon.c,v 1.2 2014/11/09 14:30:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.1 2014/11/09 14:10:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.2 2014/11/09 14:30:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,7 +60,8 @@ struct awin_tcon_softc {
 static int	awin_tcon_match(device_t, cfdata_t, void *);
 static void	awin_tcon_attach(device_t, device_t, void *);
 
-static void	awin_tcon_set_pll(struct awin_tcon_softc *, struct videomode *);
+static void	awin_tcon_set_pll(struct awin_tcon_softc *,
+				  const struct videomode *);
 
 CFATTACH_DECL_NEW(awin_tcon, sizeof(struct awin_tcon_softc),
 	awin_tcon_match, awin_tcon_attach, NULL, NULL);
@@ -133,7 +134,7 @@ awin_tcon_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-awin_tcon_set_pll(struct awin_tcon_softc *sc, struct videomode *mode)
+awin_tcon_set_pll(struct awin_tcon_softc *sc, const struct videomode *mode)
 {
 	unsigned int n, m, freq;
 	unsigned int m1 = ~0, n1 = ~0;
@@ -168,7 +169,7 @@ awin_tcon_set_pll(struct awin_tcon_softc *sc, struct videomode *mode)
 }
 
 void
-awin_tcon_set_videomode(struct videomode *mode)
+awin_tcon_set_videomode(const struct videomode *mode)
 {
 	struct awin_tcon_softc *sc;
 	device_t dev;

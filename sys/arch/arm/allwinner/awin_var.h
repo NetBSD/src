@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.20 2014/11/09 14:10:54 jmcneill Exp $ */
+/* $NetBSD: awin_var.h,v 1.21 2014/11/09 14:30:55 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -125,9 +125,9 @@ void	awin_dma_halt(void *);
 
 struct videomode;
 unsigned int awin_tcon_get_clk_div(void);
-void	awin_tcon_set_videomode(struct videomode *);
-void	awin_debe_set_videomode(struct videomode *);
-void	awin_fb_set_videomode(device_t, struct videomode *);
+void	awin_tcon_set_videomode(const struct videomode *);
+void	awin_debe_set_videomode(const struct videomode *);
+void	awin_fb_set_videomode(device_t, const struct videomode *);
 void	awin_fb_ddb_trap_callback(int);
 
 void	awin_wdog_reset(void);
