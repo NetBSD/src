@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.114 2014/10/18 08:33:29 snj Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.115 2014/11/09 18:23:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.114 2014/10/18 08:33:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.115 2014/11/09 18:23:28 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.114 2014/10/18 08:33:29 snj Exp $
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/lockf.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
