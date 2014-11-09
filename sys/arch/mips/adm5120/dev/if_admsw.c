@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.10 2011/07/10 23:13:23 matt Exp $ */
+/* $NetBSD: if_admsw.c,v 1.10.8.1 2014/11/09 12:13:16 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.10 2011/07/10 23:13:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.10.8.1 2014/11/09 12:13:16 martin Exp $");
 
 
 #include <sys/param.h>
@@ -1276,4 +1276,6 @@ admsw_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_active |= (status & PHY_ST_100M) ? IFM_100_TX : IFM_10_T;
 	if (status & PHY_ST_FDX)
 		ifmr->ifm_active |= IFM_FDX;
+	else
+		ifmr->ifm_active |= IFM_HDX;
 }
