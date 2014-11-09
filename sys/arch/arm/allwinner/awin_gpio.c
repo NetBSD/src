@@ -33,9 +33,11 @@
 #include "opt_arm_debug.h"
 #include "opt_allwinner.h"
 
+#include "opt_arm_debug.h"
+
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.8.10.1 2014/11/09 14:42:33 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.8.10.2 2014/11/09 16:25:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
