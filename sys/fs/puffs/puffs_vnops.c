@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.163.2.8 2014/11/09 06:28:03 msaitoh Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.163.2.9 2014/11/09 07:50:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.163.2.8 2014/11/09 06:28:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.163.2.9 2014/11/09 07:50:12 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2761,13 +2761,6 @@ puffs_vnop_strategy(void *v)
 
 		if (dobiodone == 0)
 			goto out;
-
-		/*
-		 * XXXXXXXX: wrong, but kernel can't survive strategy
-		 * failure currently.  Here, have one more X: X.
-		 */
-		if (error != ENOMEM)
-			error = 0;
 
 		error = checkerr(pmp, error, __func__);
 		if (error)
