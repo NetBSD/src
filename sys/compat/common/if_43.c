@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.8 2014/09/05 09:21:54 matt Exp $	*/
+/*	$NetBSD: if_43.c,v 1.9 2014/11/09 17:48:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.8 2014/09/05 09:21:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.9 2014/11/09 17:48:07 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.8 2014/09/05 09:21:54 matt Exp $");
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>

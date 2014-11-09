@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.45 2013/12/17 20:45:22 martin Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.46 2014/11/09 17:48:07 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.45 2013/12/17 20:45:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.46 2014/11/09 17:48:07 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.45 2013/12/17 20:45:22 martin Exp 
 #include <sys/exec.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/mount.h>
