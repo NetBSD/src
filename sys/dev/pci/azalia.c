@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.82 2014/09/21 14:30:22 christos Exp $	*/
+/*	$NetBSD: azalia.c,v 1.83 2014/11/09 19:57:53 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.82 2014/09/21 14:30:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.83 2014/11/09 19:57:53 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -816,6 +816,17 @@ azalia_init_rirb(azalia_t *az, int reinit)
 	/* Run! */
 	rirbctl = AZ_READ_1(az, RIRBCTL);
 	AZ_WRITE_1(az, RIRBCTL, rirbctl | HDA_RIRBCTL_RIRBDMAEN | HDA_RIRBCTL_RINTCTL);
+	for (i = 5000; i >= 0; i--) {
+		DELAY(10);
+		rirbctl = AZ_READ_1(az, RIRBCTL);
+		if (rirbctl & HDA_RIRBCTL_RIRBDMAEN)
+			break;
+	}
+	if (i <= 0) {
+		aprint_error_dev(az->dev, "RIRB is not running\n");
+		return EBUSY;
+	}
+
 	return 0;
 }
 
