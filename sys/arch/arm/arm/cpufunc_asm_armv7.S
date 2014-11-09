@@ -34,6 +34,7 @@
 	.arch	armv7a
 
 ENTRY(armv7_cpu_sleep)
+	dsb
 	wfi				@ wait for an interrupt
 	b	irq_idle_entry		@ assume we got an interrupt
 END(armv7_cpu_sleep)
