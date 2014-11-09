@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.89 2014/05/25 13:51:25 hannken Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.90 2014/11/09 18:08:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.89 2014/05/25 13:51:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.90 2014/11/09 18:08:07 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.89 2014/05/25 13:51:25 hannken Exp
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/malloc.h>
 #include <sys/module.h>
 
 #include <miscfs/nullfs/null.h>
