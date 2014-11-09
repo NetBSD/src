@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.23 2013/11/18 01:32:52 chs Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.24 2014/11/09 17:48:08 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,13 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.23 2013/11/18 01:32:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.24 2014/11/09 17:48:08 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/malloc.h>
 #include <sys/fstypes.h>
 #include <sys/vfs_syscalls.h>
 #include <sys/ptrace.h>

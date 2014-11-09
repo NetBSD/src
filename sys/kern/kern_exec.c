@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.409 2014/10/24 21:13:30 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.410 2014/11/09 17:50:01 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.409 2014/10/24 21:13:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410 2014/11/09 17:50:01 maxv Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.409 2014/10/24 21:13:30 christos Exp
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
