@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.81 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.82 2014/11/09 10:10:08 mlelstv Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.81 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.82 2014/11/09 10:10:08 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -528,6 +528,15 @@ raioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	    	struct dkwedge_list *dkwl = (void *) data;
 
 		return (dkwedge_list(&ra->ra_disk, dkwl, l));
+	    }
+
+	case DIOCMWEDGES:
+	    {
+	    	if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		dkwedge_discover(&ra->ra_disk);
+		return 0;
 	    }
 
 	default:

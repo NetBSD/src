@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.58 2014/08/10 16:44:35 tls Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.59 2014/11/09 10:10:08 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.58 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.59 2014/11/09 10:10:08 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -600,6 +600,15 @@ edmcaioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 	    	struct dkwedge_list *dkwl = (void *) addr;
 
 		return (dkwedge_list(&ed->sc_dk, dkwl, l));
+	    }
+
+	case DIOCMWEDGES:
+	    {
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+		dkwedge_discover(&ed->sc_dk);
+		return 0;
 	    }
 
 	default:
