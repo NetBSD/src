@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11.S,v 1.15 2014/07/31 10:44:58 skrll Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11.S,v 1.15.2.1 2014/11/09 16:05:25 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -99,7 +99,8 @@ END(arm11_tlb_flushI)
 
 ENTRY(arm11_tlb_flushI_SE)
 #ifdef ARM_MMU_EXTENDED
-	orr	r0, r0, r1		/* insert ASID into MVA */
+	bic	r0, r0, #0xff
+	bic	r0, r0, #0xf00		/* Always KERNEL_PID, i.e. 0 */
 #endif
 	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
 #if PAGE_SIZE == 2 * L2_S_SIZE
@@ -121,7 +122,8 @@ END(arm11_tlb_flushD)
 
 ENTRY(arm11_tlb_flushD_SE)
 #ifdef ARM_MMU_EXTENDED
-	orr	r0, r0, r1		/* insert ASID into MVA */
+	bic	r0, r0, #0xff
+	bic	r0, r0, #0xf00		/* Always KERNEL_PID, i.e. 0 */
 #endif
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
 #if PAGE_SIZE == 2 * L2_S_SIZE
@@ -142,7 +144,8 @@ END(arm11_tlb_flushID)
 
 ENTRY(arm11_tlb_flushID_SE)
 #ifdef ARM_MMU_EXTENDED
-	orr	r0, r0, r1		/* insert ASID into MVA */
+	bic	r0, r0, #0xff
+	bic	r0, r0, #0xf00		/* Always KERNEL_PID, i.e. 0 */
 #endif
 	mcr	p15, 0, r0, c8, c7, 1	/* flush I+D tlb single entry */
 #if PAGE_SIZE == 2 * L2_S_SIZE

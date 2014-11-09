@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.42 2014/06/14 09:13:30 ozaki-r Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.42.2.1 2014/11/09 16:05:25 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -75,10 +75,11 @@
 #include "opt_cpuoptions.h"
 #include "opt_cputypes.h"
 #include "opt_arm_debug.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.42 2014/06/14 09:13:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.42.2.1 2014/11/09 16:05:25 martin Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>

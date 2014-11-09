@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.10 2014/05/19 22:47:53 rmind Exp $	*/
+/*	$NetBSD: picvar.h,v 1.10.2.1 2014/11/09 16:05:25 martin Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,6 +29,8 @@
  */
 #ifndef _ARM_PIC_PICVAR_H_
 #define _ARM_PIC_PICVAR_H_
+
+#include "opt_multiprocessor.h"
 
 #ifdef MULTIPROCESSOR
 #include <sys/kcpuset.h>

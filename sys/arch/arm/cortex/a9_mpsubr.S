@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.18 2014/05/21 01:02:45 ozaki-r Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.18.2.1 2014/11/09 16:05:25 martin Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -343,8 +343,8 @@ cortex_init:
 	bxne	r10				// return if set
 #endif
 
-#if defined(CPU_CORTEXA7)
 	mrc	p15, 0, r4, c1, c0, 0		// SCTLR read
+#if defined(CPU_CORTEXA7)
 	//
 	// Before turning on SMP, turn off the caches and the MMU.
 	//
@@ -369,9 +369,9 @@ cortex_init:
 #ifdef __ARMEB__
 	setend	le
 #endif
-	ldr	r0, [r3, #SCU_CFG]		// read scu config
-	and	r0, r0, #7			// get cpu max
-	add	r0, r0, #2			// adjust to cpu num shift
+	mrc	p15, 0, r0, c0, c0, 5		// MPIDR get
+	and	r0, r0, #3			// get our cpu numder
+	lsl	r0, r0, #2			// adjust to cpu num shift
 	mov	r1, #0xf			// select all ways
 	lsl	r1, r1, r0			// shift into place
 	str	r1, [r3, #SCU_INV_ALL_REG]	// write scu invalidate all
@@ -443,26 +443,37 @@ cortex_init:
 	mcr	p15, 0, r1, c8, c7, 0	// TLBIALL (just this core)
 #endif
 
+	// For the A7, SMP must be on ldrex/strex to work.
 	//
-	// Step 4b, set ACTLR.SMP=1
+#if defined(MULTIPROCESSOR) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9)
+#if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9)
+	//
+	// Step 4a, set ACTLR.SMP=1
 	//
 	mrc	p15, 0, r0, c1, c0, 1		// ACTLR read
 	orr	r0, r0, #CORTEXA9_AUXCTL_SMP	// enable SMP
-	mcr	p15, 0, r0, c1, c0, 1		// ACTLR write
-	isb
 
-#if defined(MULTIPROCESSOR) && (defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9))
+#if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA9)
 	//
-	// Step 4b (continued on A5/A9), ACTRL.FW=1)
+	// Step 4a (continued on A5/A9), ACTLR.FW=1)
 	//
 	orr	r0, r0, #CORTEXA9_AUXCTL_FW	// enable cache/tlb/coherency
-	mcr	p15, 0, r0, c1, c0, 1		// ACTRL write
-	isb
-	dsb
+#endif	/* A5 || A9 */
+#if defined(CPU_CORTEXA9)
+	//
+	// Step 4b (continued on A9), ACTLR.L2PE=1)
+	//
+	orr	r0, r0, #CORTEXA9_AUXCTL_L2PE	// enable L2 cache prefetch
 #endif
 
+	mcr	p15, 0, r0, c1, c0, 1		// ACTLR write
+	isb
+	dsb
+#endif	/* A5 || A7 || A9 */
+#endif	/* MULTIPROCESSOR */
+
 	//
-	// Step 4a, resoter SCTRL (enable the data cache)
+	// Step 4b, restore SCTRL (enable the data cache)
 	//
 	orr	r4, r4, #CPU_CONTROL_IC_ENABLE	// enable icache
 	orr	r4, r4, #CPU_CONTROL_DC_ENABLE	// enable dcache
@@ -509,7 +520,7 @@ cortex_mpstart:
 
 #if 0
 	mrc	p15, 0, r0, c1, c1, 2		// NSACR read
-	// Allow non-secure access to ACTRL[SMP]
+	// Allow non-secure access to ACTLR[SMP]
 	orr	r0, r0, #NSACR_SMP
 #ifdef FPU_VFP
 	// Allow non-secure access to VFP/Neon

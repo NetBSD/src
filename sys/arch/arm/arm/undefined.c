@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.54 2014/03/28 21:44:35 matt Exp $	*/
+/*	$NetBSD: undefined.c,v 1.54.4.1 2014/11/09 16:05:25 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -55,7 +55,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.54 2014/03/28 21:44:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.54.4.1 2014/11/09 16:05:25 martin Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -102,7 +102,8 @@ install_coproc_handler(int coproc, undef_handler_t handler)
 	KASSERT(coproc >= 0 && coproc < NUM_UNKNOWN_HANDLERS);
 	KASSERT(handler != NULL); /* Used to be legal. */
 
-	uh = kmem_alloc(sizeof(*uh), KM_SLEEP);
+	uh = kmem_alloc(sizeof(*uh), KM_NOSLEEP);
+	KASSERT(uh != NULL);
 	uh->uh_handler = handler;
 	install_coproc_handler_static(coproc, uh);
 	return uh;

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BPI,v 1.2.2.2 2014/09/10 09:37:51 martin Exp $
+#	$NetBSD: BPI,v 1.2.2.3 2014/11/09 16:05:25 martin Exp $
 #
 #	BPI -- Banana Pi - an Allwinner A20 Eval Board Kernel
 #
@@ -20,12 +20,11 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 no makeoptions	BOARDTYPE
 makeoptions	BOARDTYPE="bpi"
 #options 	UVMHIST,UVMHIST_PRINT
-options 	CPU_CORTEXA8
 options 	CPU_CORTEXA7
-options 	ALLWINNER_A10
 options 	ALLWINNER_A20
 options 	PMAPCOUNTERS
 options 	AWIN_CONSOLE_EARLY
+options 	MULTIPROCESSOR
 
 # Architecture options
 

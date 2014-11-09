@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.135 2014/07/31 08:04:57 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.135.2.1 2014/11/09 16:05:25 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -75,6 +75,7 @@
 #ifndef _LOCORE
 #if defined(_KERNEL_OPT)
 #include "opt_arm32_pmap.h"
+#include "opt_multiprocessor.h"
 #endif
 #include <arm/cpufunc.h>
 #include <uvm/uvm_object.h>
