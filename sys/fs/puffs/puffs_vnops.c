@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.163.2.7 2014/11/03 19:51:36 msaitoh Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.163.2.8 2014/11/09 06:28:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.163.2.7 2014/11/03 19:51:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.163.2.8 2014/11/09 06:28:03 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1117,12 +1117,50 @@ puffs_vnop_getattr(void *v)
 	return error;
 }
 
+static void
+zerofill_lastpage(struct vnode *vp, voff_t off)
+{
+	char zbuf[PAGE_SIZE];
+	struct iovec iov;
+	struct uio uio;
+	vsize_t len;
+	int error;
+
+	if (trunc_page(off) == off)
+		return;
+ 
+	if (vp->v_writecount == 0)
+		return;
+
+	len = round_page(off) - off;
+	memset(zbuf, 0, len);
+
+	iov.iov_base = zbuf;
+	iov.iov_len = len;
+	UIO_SETUP_SYSSPACE(&uio);
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = off;
+	uio.uio_resid = len;
+	uio.uio_rw = UIO_WRITE;
+
+	error = ubc_uiomove(&vp->v_uobj, &uio, len,
+			    UVM_ADV_SEQUENTIAL, UBC_WRITE|UBC_UNMAP_FLAG(vp));
+	if (error) {
+		DPRINTF(("zero-fill 0x%" PRIxVSIZE "@0x%" PRIx64 
+			 " failed: error = %d\n", len, off, error));
+	}
+
+	return;
+}
+
 static int
 dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int flags)
 {
 	PUFFS_MSG_VARS(vn, setattr);
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	struct puffs_node *pn = vp->v_data;
+	vsize_t oldsize = vp->v_size;
 	int error = 0;
 
 	KASSERT(!(flags & SETATTR_CHSIZE) || mutex_owned(&pn->pn_sizemtx));
@@ -1195,6 +1233,17 @@ dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred, int flags)
 	}
 
 	if (vap->va_size != VNOVAL) {
+		/*
+		 * If we truncated the file, make sure the data beyond 
+		 * EOF in last page does not remain in cache, otherwise 
+		 * if the file is later truncated to a larger size (creating
+		 * a hole), that area will not return zeroes as it
+		 * should. 
+		 */
+		if ((flags & SETATTR_CHSIZE) && PUFFS_USE_PAGECACHE(pmp) && 
+		    (vap->va_size < oldsize))
+			zerofill_lastpage(vp, vap->va_size);
+
 		pn->pn_serversize = vap->va_size;
 		if (flags & SETATTR_CHSIZE)
 			uvm_vnp_setsize(vp, vap->va_size);
