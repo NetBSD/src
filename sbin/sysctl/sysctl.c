@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.154 2014/11/09 18:36:02 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.155 2014/11/09 22:50:38 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.154 2014/11/09 18:36:02 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.155 2014/11/09 22:50:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -689,8 +689,6 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 	}
 
 	if (type != CTLTYPE_NODE && pnode->sysctl_size == 0) {
-		printf("x=%zu\n", sz);
-		sz = 0;
 		rc = prog_sysctl(&name[0], namelen, NULL, &sz, NULL, 0);
 		if (rc == -1) {
 			sysctlerror(1);
