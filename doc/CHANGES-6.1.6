@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.8 2014/11/03 23:09:00 msaitoh Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.9 2014/11/09 08:01:58 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -162,3 +162,34 @@ sys/netinet/tcp_output.c			1.178
 	Avoid stack overflow when SACK and TCP_SIGNATURE are both present.
 	Pointed out by Jonathan Looney.
 	[christos, ticket #1174]
+
+sys/fs/msdosfs/msdosfs_vfsops.c			1.110 via patch
+
+	- Perform sanity checks not just for GEMDOSFS, but for all FAT devices.
+	  This also fixes a division-by-zero bug that could crash the system.
+	- Define GEMDOSFS_BSIZE instead of a hard-coded 512 value, and remove
+	  'bsize'.
+	- Rename 'tmp' to 'BlkPerSec'.
+	- Remove 'secsize==0' and added 'secsize<DEV_BSIZE'
+	[maxv, ticket #1171]
+
+sys/arch/sparc64/sparc64/machdep.c		1.274 and 1.280
+
+	- avoid sync and unmount after panic.
+	- remove vfs_shutdown, we call vfs_sync_all and vfs_unmount* instead.
+	- resurrect doshutdownhooks since some drivers still use it
+          (eg. sab(4)).
+	[nakayama, ticket #1176]
+
+sys/compat/netbsd32/netbsd32_compat_50.c	1.28
+
+	fix multiple mistakes:
+	- error from copyout was ignored
+	- the wrong size was specified in copyin
+	- missing locking.
+	[maxv, ticket #1179]
+
+xsrc/external/mit/libXt/dist/src/ResConfig.c	patch
+
+	Fix DEBUG build of libXt.  From Sandro Millien in PR xsrc/48863.
+	[snj, ticket #1181]
