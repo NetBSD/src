@@ -1,6 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.3.24.1 2012/11/22 17:39:28 riz Exp $
+# $NetBSD: Makefile.inc,v 1.3.24.2 2014/11/10 02:33:50 msaitoh Exp $
 
-CFLAGS+=	-mno-red-zone
+CFLAGS+=	-mno-red-zone -mno-mmx -mno-sse -mno-avx
+CFLAGS+=	-msoft-float
 
 # this should really be !(RUMPKERNEL && PIC)
 .if !defined(RUMPKERNEL)
