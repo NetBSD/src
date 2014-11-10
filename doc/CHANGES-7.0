@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.84 2014/11/10 04:25:55 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.85 2014/11/10 18:00:07 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2170,4 +2170,21 @@ sbin/atactl/atactl.c				1.74
 
 	Add more S.M.A.R.T. attributes.
 	[mrg, ticket #196]
+
+sys/arch/arm/iomd/iomd_irqhandler.c		1.21
+sys/arch/arm/ofw/ofw_irqhandler.c		1.21
+sys/arch/atari/atari/intr.c			1.24-1.25
+sys/arch/ews4800mips/sbd/fb_sbdio.c		1.14
+sys/arch/hpcmips/tx/tx39icu.c			1.34
+sys/arch/shark/isa/isa_irqhandler.c		1.27
+sys/arch/sparc/sparc/machdep.c			1.327
+sys/arch/sparc64/dev/psycho.c			1.119
+sys/arch/sparc64/dev/schizo.c			1.32
+sys/arch/sparc64/sparc64/machdep.c		1.279
+sys/arch/sun68k/sun68k/bus.c			1.22
+sys/arch/x86/x86/ipmi.c				1.58
+sys/arch/xen/xen/privcmd.c			1.46-1.49
+
+	Fix several memory leaks.
+	[maxv, ticket #195]
 
