@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.312 2014/11/08 08:01:34 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.313 2014/11/10 14:33:00 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -215,7 +215,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.312 2014/11/08 08:01:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.313 2014/11/10 14:33:00 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -4659,6 +4659,12 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 #endif
 	}
 #endif
+#endif
+
+#ifndef ARM_MMU_EXTENDED
+	/* Flush the TLB in the shared L1 case - see comment above */
+	pmap_tlb_flush_SE(pm, va,
+	    (ftype & VM_PROT_EXECUTE) ? PVF_EXEC | PVF_REF : PVF_REF);
 #endif
 
 	rv = 1;
