@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.22.2.1 2014/11/09 16:05:25 martin Exp $	*/
+/*	$NetBSD: pic.c,v 1.22.2.2 2014/11/10 19:57:26 martin Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,9 +30,10 @@
 
 #define _INTR_PRIVATE
 #include "opt_ddb.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.22.2.1 2014/11/09 16:05:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.22.2.2 2014/11/10 19:57:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
