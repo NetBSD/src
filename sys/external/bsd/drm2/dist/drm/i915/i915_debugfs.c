@@ -2360,7 +2360,7 @@ static int i915_display_info(struct seq_file *m, void *unused)
 struct pipe_crc_info {
 	const char *name;
 	struct drm_device *dev;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 };
 
 static int i915_pipe_crc_open(struct inode *inode, struct file *filep)
@@ -2511,7 +2511,7 @@ static struct pipe_crc_info i915_pipe_crc_data[I915_MAX_PIPES] = {
 };
 
 static int i915_pipe_crc_create(struct dentry *root, struct drm_minor *minor,
-				enum pipe pipe)
+				enum i915_pipe pipe)
 {
 	struct drm_device *dev = minor->dev;
 	struct dentry *ent;
@@ -2585,7 +2585,7 @@ static int i8xx_pipe_crc_ctl_reg(enum intel_pipe_crc_source *source,
 	return 0;
 }
 
-static int i9xx_pipe_crc_auto_source(struct drm_device *dev, enum pipe pipe,
+static int i9xx_pipe_crc_auto_source(struct drm_device *dev, enum i915_pipe pipe,
 				     enum intel_pipe_crc_source *source)
 {
 	struct intel_encoder *encoder;
@@ -2637,7 +2637,7 @@ static int i9xx_pipe_crc_auto_source(struct drm_device *dev, enum pipe pipe,
 }
 
 static int vlv_pipe_crc_ctl_reg(struct drm_device *dev,
-				enum pipe pipe,
+				enum i915_pipe pipe,
 				enum intel_pipe_crc_source *source,
 				uint32_t *val)
 {
@@ -2694,7 +2694,7 @@ static int vlv_pipe_crc_ctl_reg(struct drm_device *dev,
 }
 
 static int i9xx_pipe_crc_ctl_reg(struct drm_device *dev,
-				 enum pipe pipe,
+				 enum i915_pipe pipe,
 				 enum intel_pipe_crc_source *source,
 				 uint32_t *val)
 {
@@ -2770,7 +2770,7 @@ static int i9xx_pipe_crc_ctl_reg(struct drm_device *dev,
 }
 
 static void vlv_undo_pipe_scramble_reset(struct drm_device *dev,
-					 enum pipe pipe)
+					 enum i915_pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t tmp = I915_READ(PORT_DFT2_G4X);
@@ -2786,7 +2786,7 @@ static void vlv_undo_pipe_scramble_reset(struct drm_device *dev,
 }
 
 static void g4x_undo_pipe_scramble_reset(struct drm_device *dev,
-					 enum pipe pipe)
+					 enum i915_pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t tmp = I915_READ(PORT_DFT2_G4X);
@@ -2855,7 +2855,7 @@ static int ivb_pipe_crc_ctl_reg(enum intel_pipe_crc_source *source,
 	return 0;
 }
 
-static int pipe_crc_set_source(struct drm_device *dev, enum pipe pipe,
+static int pipe_crc_set_source(struct drm_device *dev, enum i915_pipe pipe,
 			       enum intel_pipe_crc_source source)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -2996,7 +2996,7 @@ display_crc_ctl_parse_object(const char *buf, enum intel_pipe_crc_object *o)
 	return -EINVAL;
 }
 
-static int display_crc_ctl_parse_pipe(const char *buf, enum pipe *pipe)
+static int display_crc_ctl_parse_pipe(const char *buf, enum i915_pipe *pipe)
 {
 	const char name = buf[0];
 
@@ -3027,7 +3027,7 @@ static int display_crc_ctl_parse(struct drm_device *dev, char *buf, size_t len)
 #define N_WORDS 3
 	int n_words;
 	char *words[N_WORDS];
-	enum pipe pipe;
+	enum i915_pipe pipe;
 	enum intel_pipe_crc_object object;
 	enum intel_pipe_crc_source source;
 
@@ -3824,7 +3824,7 @@ static const struct i915_debugfs_files {
 void intel_display_crc_init(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	for_each_pipe(pipe) {
 		struct intel_pipe_crc *pipe_crc = &dev_priv->pipe_crc[pipe];

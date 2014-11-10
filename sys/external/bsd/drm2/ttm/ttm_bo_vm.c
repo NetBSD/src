@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.2.4.3 2014/09/21 18:04:38 snj Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.2.4.4 2014/11/10 19:45:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.2.4.3 2014/09/21 18:04:38 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.2.4.4 2014/11/10 19:45:54 martin Exp $");
 
 #include <sys/types.h>
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.2.4.3 2014/09/21 18:04:38 snj Exp $"
 #include <ttm/ttm_bo_driver.h>
 
 static int	ttm_bo_uvm_fault_idle(struct ttm_buffer_object *,
-		    struct uvm_faultinfo *, struct uvm_object *);
+		    struct uvm_faultinfo *);
 static int	ttm_bo_uvm_lookup(struct ttm_bo_device *, unsigned long,
 		    unsigned long, struct ttm_buffer_object **);
 
@@ -111,8 +111,7 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		 * relocking uobj's vmobjlock first), wait for it, and
 		 * start over.
 		 */
-		mutex_enter(uobj->vmobjlock);
-		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
+		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
 		(void)ttm_bo_wait_unreserved(bo);
 		return -ERESTART;
 	}
@@ -133,7 +132,7 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		}
 	}
 
-	ret = ttm_bo_uvm_fault_idle(bo, ufi, uobj);
+	ret = ttm_bo_uvm_fault_idle(bo, ufi);
 	if (ret) {
 		/* Unlocks if it restarts.  */
 		KASSERT(ret == -ERESTART);
@@ -204,15 +203,13 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 out3:	pmap_update(ufi->orig_map->pmap);
 out2:	ttm_mem_io_unlock(man);
 out1:	ttm_bo_unreserve(bo);
-out0:	mutex_enter(uobj->vmobjlock);
-	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
+out0:	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
 	/* XXX errno Linux->NetBSD */
 	return -ret;
 }
 
 static int
-ttm_bo_uvm_fault_idle(struct ttm_buffer_object *bo, struct uvm_faultinfo *ufi,
-    struct uvm_object *uobj)
+ttm_bo_uvm_fault_idle(struct ttm_buffer_object *bo, struct uvm_faultinfo *ufi)
 {
 	struct ttm_bo_device *const bdev = bo->bdev;
 	int ret = 0;
@@ -224,7 +221,7 @@ ttm_bo_uvm_fault_idle(struct ttm_buffer_object *bo, struct uvm_faultinfo *ufi,
 	if (ttm_bo_wait(bo, false, false, true) == 0)
 		goto out;
 
-	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
+	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
 	(void)ttm_bo_wait(bo, false, true, false);
 	ret = -ERESTART;
 

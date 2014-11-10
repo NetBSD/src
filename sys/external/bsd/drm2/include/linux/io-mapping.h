@@ -1,4 +1,4 @@
-/*	$NetBSD: io-mapping.h,v 1.2.8.1 2014/09/21 18:01:28 snj Exp $	*/
+/*	$NetBSD: io-mapping.h,v 1.2.8.2 2014/11/10 19:45:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@ static inline void
 io_mapping_unmap_atomic(struct io_mapping *mapping, void *ptr)
 {
 
-	return io_mapping_unmap(mapping, ptr);
+	io_mapping_unmap(mapping, ptr);
 }
 
 #endif  /* _LINUX_IO_MAPPING_H_ */

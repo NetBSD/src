@@ -1552,7 +1552,7 @@ static void intel_device_info_runtime_init(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_device_info *info;
-	enum pipe pipe;
+	enum i915_pipe pipe;
 
 	info = (struct intel_device_info *)&dev_priv->info;
 
