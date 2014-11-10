@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.156 2014/11/10 02:34:54 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.157 2014/11/10 02:38:12 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4349,8 +4349,7 @@ sys/dev/mii/brgphyreg.h				1.8
 sys/dev/mii/ciphy.c				1.25
 sys/dev/mii/ciphyreg.h				1.5
 sys/dev/mii/dmphy.c				1.35
-sys/dev/mii/gentbi.c				1.26
-sys/dev/mii/gentbi.c				1.27
+sys/dev/mii/gentbi.c				1.26-1.27
 sys/dev/mii/glxtphy.c				1.24
 sys/dev/mii/gphyter.c				1.29
 sys/dev/mii/icsphy.c				1.49
@@ -4363,32 +4362,23 @@ sys/dev/mii/lxtphy.c				1.49
 sys/dev/mii/makphy.c				1.40
 sys/dev/mii/mii.h				1.18
 sys/dev/mii/mvphy.c				1.10
-sys/dev/mii/nsphy.c				1.58
-sys/dev/mii/nsphy.c				1.59
+sys/dev/mii/nsphy.c				1.58-1.59
 sys/dev/mii/nsphyter.c				1.38
 sys/dev/mii/qsphy.c				1.48
-sys/dev/mii/rlphy.c				1.28
-sys/dev/mii/rlphy.c				1.29
+sys/dev/mii/rlphy.c				1.28-1.29
 sys/dev/mii/sqphy.c				1.50
 sys/dev/mii/tlphy.c				1.62
 sys/dev/mii/tqphy.c				1.39
-sys/dev/mii/ukphy_subr.c			1.12
-sys/dev/mii/ukphy_subr.c			1.13
+sys/dev/mii/ukphy_subr.c			1.12-1.13
 sys/dev/mii/urlphy.c				1.30
 sys/dev/pci/if_kse.c				1.28
 sys/dev/pci/if_txp.c				1.41
 sys/dev/pci/if_wm.c				1.270
 
-	No functional change:
-	- Fix typo.
-	- Remove trailing white spaces.
-	- Capitalize comments.
-	- Tabify.
-	- KNF.
-
-	IFM_FDX and IFM_HDX use different bit, so set IFM_HDX bit if it's
-	not full duplex. For many drivers, it recognize half duplex if
-	IFM_FDX isn't set, but not for others. Same as {Free|Open}BSD.
+	- IFM_FDX and IFM_HDX use different bit, so set IFM_HDX bit if it's
+	  not full duplex. For many drivers, it recognize half duplex if
+	  IFM_FDX isn't set, but not for others. Same as {Free|Open}BSD.
+	- KNF. Fix typo in comment.
 	[msaitoh, ticket #1189]
 
 sys/arch/amd64/include/Makefile.inc		1.5
