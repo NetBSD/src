@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.45 2013/11/06 06:23:15 mrg Exp $ */
+/* $NetBSD: privcmd.c,v 1.45.4.1 2014/11/10 17:59:57 snj Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.45 2013/11/06 06:23:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.45.4.1 2014/11/10 17:59:57 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -553,7 +553,7 @@ privcmd_map_obj(struct vm_map *map, vaddr_t start, paddr_t *maddr,
 	/* remove current entries */
 	uvm_unmap1(map, start, start + size, 0);
 
-	obj = kmem_alloc(sizeof(struct privcmd_object), KM_SLEEP);
+	obj = kmem_alloc(sizeof(*obj), KM_SLEEP);
 	if (obj == NULL) {
 		kmem_free(maddr, sizeof(paddr_t) * npages);
 		return ENOMEM;
@@ -577,6 +577,9 @@ privcmd_map_obj(struct vm_map *map, vaddr_t start, paddr_t *maddr,
 	}
 	if (newstart != start) {
 		printf("uvm_map didn't give us back our vm space\n");
+		uvm_unmap1(map, newstart, newstart + size, 0);
+		if (obj)
+			obj->uobj.pgops->pgo_detach(&obj->uobj);
 		return EINVAL;
 	}
 	return 0;

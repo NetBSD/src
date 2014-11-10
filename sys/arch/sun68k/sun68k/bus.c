@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.21 2008/06/04 12:41:41 ad Exp $	*/
+/*	$NetBSD: bus.c,v 1.21.60.1 2014/11/10 17:59:57 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -153,7 +153,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.21 2008/06/04 12:41:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.21.60.1 2014/11/10 17:59:57 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,8 +266,10 @@ extern	paddr_t avail_end;
 	 */
 	error = uvm_pglistalloc(size, low, high, 0, 0,
 				mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-	if (error)
+	if (error) {
+		free(mlist, M_DEVBUF);
 		return (error);
+	}
 
 	/*
 	 * Simply keep a pointer around to the linked list, so
