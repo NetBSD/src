@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2014 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2015 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -93,3 +93,9 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	awge(4): Add support for gigabit ethernet found on various
 		Allwinner SOCs. [martin 20141101]
 	dhcpcd(8): Import dhcpcd-6.6.1. [roy 20141107]
+	awinhdmi(4): Add support for Allwinner A20/A31 HDMI controller.
+		[jmcneill 20141110]
+	awintcon(4): Add support for Allwinner A20/A31 TV/LCD controller.
+		[jmcneill 20141110]
+	awindebe(4): Add support for Allwinner A20/A31 Display engine
+		backend (DE-BE). [jmcneill 20141110]
