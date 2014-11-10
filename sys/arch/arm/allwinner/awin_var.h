@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.21 2014/11/09 14:30:55 jmcneill Exp $ */
+/* $NetBSD: awin_var.h,v 1.22 2014/11/10 17:55:25 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,6 @@ struct awinfb_attach_args {
 	void *afb_fb;
 	uint32_t afb_width;
 	uint32_t afb_height;
-	bool afb_console;
 	bus_dma_tag_t afb_dmat;
 	bus_dma_segment_t *afb_dmasegs;
 	int afb_ndmasegs;
@@ -100,6 +99,8 @@ void	awin_pll3_enable(void);
 void	awin_pll6_enable(void);
 void	awin_pll7_enable(void);
 void	awin_pll3_set_rate(uint32_t);
+uint32_t awin_pll5x_get_rate(void);
+uint32_t awin_pll6_get_rate(void);
 void	awin_cpu_hatch(struct cpu_info *);
 
 #define AWIN_CHIP_ID_A10	AWIN_SRAM_VER_KEY_A10
@@ -125,8 +126,11 @@ void	awin_dma_halt(void *);
 
 struct videomode;
 unsigned int awin_tcon_get_clk_div(void);
+bool	awin_tcon_get_clk_dbl(void);
 void	awin_tcon_set_videomode(const struct videomode *);
+void	awin_tcon_enable(bool);
 void	awin_debe_set_videomode(const struct videomode *);
+void	awin_debe_enable(bool);
 void	awin_fb_set_videomode(device_t, const struct videomode *);
 void	awin_fb_ddb_trap_callback(int);
 
