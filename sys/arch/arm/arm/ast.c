@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.23 2014/03/28 21:43:49 matt Exp $	*/
+/*	$NetBSD: ast.c,v 1.23.4.1 2014/11/10 19:20:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.23 2014/03/28 21:43:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.23.4.1 2014/11/10 19:20:33 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -71,9 +71,6 @@ void ast(struct trapframe *);
 void
 userret(struct lwp *l)
 {
-	/* Invoke MI userret code */
-	mi_userret(l);
-
 #if defined(__PROG32) && defined(ARM_MMU_EXTENDED)
 	/*
 	 * If our ASID got released, access via TTBR0 will have been disabled.
@@ -83,7 +80,11 @@ userret(struct lwp *l)
 	if (armreg_ttbcr_read() & TTBCR_S_PD0) {
 		pmap_activate(l);
 	}
+	KASSERT(!(armreg_ttbcr_read() & TTBCR_S_PD0));
 #endif
+
+	/* Invoke MI userret code */
+	mi_userret(l);
 
 #if defined(__PROG32) && defined(DIAGNOSTIC)
 	KASSERT((lwp_trapframe(l)->tf_spsr & IF32_bits) == 0);
