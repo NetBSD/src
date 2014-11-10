@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.300 2014/11/06 02:02:48 uebayasi Exp $
+#	$NetBSD: build.sh,v 1.301 2014/11/10 09:59:33 apb Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1319,34 +1319,11 @@ parseoptions()
 			exit $?
 			;;
 
-		makewrapper|cleandir|obj|tools|build|distribution|release|sets|sourcesets|syspkgs|params)
-			;;
-
-		iso-image)
-			op=iso_image	# used as part of a variable name
-			;;
-
-		iso-image-source)
-			op=iso_image_source   # used as part of a variable name
-			;;
-
-		live-image)
-			op=live_image	# used as part of a variable name
-			;;
-
-		install-image)
-			op=install_image # used as part of a variable name
-			;;
-
 		kernel=*|releasekernel=*|kernel.gdb=*)
 			arg=${op#*=}
 			op=${op%%=*}
 			[ -n "${arg}" ] ||
 			    bomb "Must supply a kernel name with \`${op}=...'"
-			;;
-
-		kernels)
-			op=kernels
 			;;
 
 		disk-image=*)
@@ -1357,10 +1334,6 @@ parseoptions()
 
 			;;
 
-		modules)
-			op=modules
-			;;
-
 		install=*|installmodules=*)
 			arg=${op#*=}
 			op=${op%%=*}
@@ -1368,8 +1341,25 @@ parseoptions()
 			    bomb "Must supply a directory with \`install=...'"
 			;;
 
-		rump|rumptest)
-			op=${op}
+		build|\
+		cleandir|\
+		distribution|\
+		install-image|\
+		iso-image-source|\
+		iso-image|\
+		kernels|\
+		live-image|\
+		makewrapper|\
+		modules|\
+		obj|\
+		params|\
+		release|\
+		rump|\
+		rumptest|\
+		sets|\
+		sourcesets|\
+		syspkgs|\
+		tools)
 			;;
 
 		*)
@@ -1377,6 +1367,9 @@ parseoptions()
 			;;
 
 		esac
+		# ${op} may contain chars that are not allowed in variable
+		# names.  Replace them with '_' before setting do_${op}.
+		op="$( echo "$op" | tr -s '.-' '__')"
 		eval do_${op}=true
 	done
 	[ -n "${operations}" ] || usage "Missing operation to perform."
@@ -1876,7 +1869,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.300 2014/11/06 02:02:48 uebayasi Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.301 2014/11/10 09:59:33 apb Exp $
 # with these arguments: ${_args}
 #
 
