@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.141 2014/09/19 17:25:47 christos Exp $
+#	$NetBSD: Makefile,v 1.142 2014/11/10 21:15:19 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -196,28 +196,18 @@ SUBDIR+=	wmimsi
 .endif
 
 .if ${MACHINE_ARCH} == "x86_64"
-SUBDIR+=	azalia
-SUBDIR+=	compat_linux
 SUBDIR+=	compat_linux32
 SUBDIR+=	compat_netbsd32
-SUBDIR+=	drm
-SUBDIR+=	i915drm
-SUBDIR+=	pad
 .endif
 
 .if ${MACHINE_ARCH} == "i386"
 SUBDIR+=	ati_pcigart
-SUBDIR+=	azalia
 SUBDIR+=	compat_freebsd
 SUBDIR+=	compat_ibcs2
-SUBDIR+=	compat_linux
 SUBDIR+=	compat_svr4
-SUBDIR+=	drm
-SUBDIR+=	i915drm
 SUBDIR+=	mach64drm
 SUBDIR+=	mgadrm
 SUBDIR+=	nsclpcsio
-SUBDIR+=	pad
 SUBDIR+=	padlock
 SUBDIR+=	r128drm
 SUBDIR+=	radeondrm
@@ -228,11 +218,20 @@ SUBDIR+=	viac7temp
 SUBDIR+=	viadrm
 .endif
 
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	azalia
+SUBDIR+=	compat_linux
+SUBDIR+=	drm
+SUBDIR+=	drmkms
+SUBDIR+=	drmkms_linux
+SUBDIR+=	drmkms_pci
+SUBDIR+=	i915drm
+SUBDIR+=	i915drmkms
+SUBDIR+=	pad
 #
 # ISA modules
 #
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	aps
 SUBDIR+=	finsio
 SUBDIR+=	itesio
