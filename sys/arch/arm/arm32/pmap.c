@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.315 2014/11/10 14:37:14 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.316 2014/11/10 15:46:33 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -215,7 +215,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.315 2014/11/10 14:37:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.316 2014/11/10 15:46:33 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -946,13 +946,19 @@ pmap_is_cached(pmap_t pm)
  *       - There is no pmap active in the cache/tlb.
  *       - The specified pmap is 'active' in the cache/tlb.
  */
+
+static inline void
+pmap_pte_sync_current(pmap_t pm, pt_entry_t *ptep)
+{
+	if (PMAP_NEEDS_PTE_SYNC && pmap_is_cached(pm))
+		PTE_SYNC(ptep);
+#if ARM_MMU_V7 > 0
+	__asm("dsb":::"memory");
+#endif
+}
+
 #ifdef PMAP_INCLUDE_PTE_SYNC
-#define	PTE_SYNC_CURRENT(pm, ptep)	\
-do {					\
-	if (PMAP_NEEDS_PTE_SYNC && 	\
-	    pmap_is_cached(pm))		\
-		PTE_SYNC(ptep);		\
-} while (/*CONSTCOND*/0)
+#define	PTE_SYNC_CURRENT(pm, ptep)	pmap_pte_sync_current(pm, ptep)
 #else
 #define	PTE_SYNC_CURRENT(pm, ptep)	/* nothing */
 #endif
