@@ -835,7 +835,7 @@ static struct intel_tv *intel_attached_tv(struct drm_connector *connector)
 }
 
 static bool
-intel_tv_get_hw_state(struct intel_encoder *encoder, enum pipe *pipe)
+intel_tv_get_hw_state(struct intel_encoder *encoder, enum i915_pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
