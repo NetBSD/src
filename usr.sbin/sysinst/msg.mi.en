@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.5 2014/09/22 19:01:02 roy Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.6 2014/11/10 01:05:10 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1149,7 +1149,7 @@ message vnd_cyl_ask {Cylinders?}
 message cgd_err_menufmt {   DISK NOT DEFINED!}
 message cgd_menufmt {   cgd%1d %-48s %11uM}
 message cgd_dev_fmt {Base device:    %24s}
-message cgd_enc_fmt {Encyption:      %24s}
+message cgd_enc_fmt {Encryption:      %24s}
 message cgd_key_fmt {Key size:       %24d}
 message cgd_iv_fmt {IV algorithm:   %24s}
 message cgd_keygen_fmt {Key generation: %24s}
