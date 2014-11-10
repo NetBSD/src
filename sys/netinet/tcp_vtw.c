@@ -84,7 +84,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
@@ -124,7 +123,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.11 2014/09/05 06:03:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.12 2014/11/10 18:52:51 maxv Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
