@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.87 2014/01/02 18:29:01 pooka Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.88 2014/11/10 18:52:51 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,14 +93,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.87 2014/01/02 18:29:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.88 2014/11/10 18:52:51 maxv Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
