@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.278.2.1 2014/10/30 12:33:17 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.278.2.2 2014/11/10 17:59:57 snj Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.278.2.1 2014/10/30 12:33:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.278.2.2 2014/11/10 17:59:57 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1441,8 +1441,10 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	 */
 	error = uvm_pglistalloc(size, low, high,
 	    alignment, boundary, pglist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-	if (error)
+	if (error) {
+		free(pglist, M_DEVBUF);
 		return (error);
+	}
 
 	/*
 	 * Compute the location, size, and number of segments actually
