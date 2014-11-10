@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmi.c,v 1.5 2014/11/10 17:55:25 jmcneill Exp $ */
+/* $NetBSD: awin_hdmi.c,v 1.6 2014/11/10 18:18:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #define AWIN_HDMI_PLL	3	/* PLL7 or PLL3 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.5 2014/11/10 17:55:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.6 2014/11/10 18:18:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -271,10 +271,12 @@ awin_hdmi_i2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 			    AWIN_A31_HDMI_DDC_FIFO_ACCESS_REG, pbuf, blklen);
 		}
 
+#ifdef AWIN_HDMI_DEBUG
 		printf("off=%d:", (int)off);
 		for (int i = 0; i < blklen; i++)
 			printf(" %02x", pbuf[i]);
 		printf("\n");
+#endif
 
 		pbuf += blklen;
 		off += blklen;
