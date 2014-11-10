@@ -1,4 +1,4 @@
-/* $NetBSD: awin_fb.c,v 1.2 2014/11/09 14:30:55 jmcneill Exp $ */
+/* $NetBSD: awin_fb.c,v 1.3 2014/11/10 17:55:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_fb.c,v 1.2 2014/11/09 14:30:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_fb.c,v 1.3 2014/11/10 17:55:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,7 +86,6 @@ awin_fb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmasegs = afb->afb_dmasegs;
 	sc->sc_ndmasegs = afb->afb_ndmasegs;
 
-	prop_dictionary_set_bool(cfg, "is_console", afb->afb_console);
 	prop_dictionary_set_uint32(cfg, "width", afb->afb_width);
 	prop_dictionary_set_uint32(cfg, "height", afb->afb_height);
 	prop_dictionary_set_uint8(cfg, "depth", 32);
@@ -110,7 +109,10 @@ awin_fb_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 
-	if (afb->afb_console)
+	bool is_console = false;
+	prop_dictionary_get_bool(cfg, "is_console", &is_console);
+
+	if (is_console)
 		aprint_normal(": switching to framebuffer console\n");
 	else
 		aprint_normal("\n");
