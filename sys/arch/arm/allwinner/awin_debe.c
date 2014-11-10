@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.2 2014/11/09 14:30:55 jmcneill Exp $ */
+/* $NetBSD: awin_debe.c,v 1.3 2014/11/10 17:55:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "genfb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.2 2014/11/09 14:30:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.3 2014/11/10 17:55:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -109,33 +109,48 @@ awin_debe_attach(device_t parent, device_t self, void *aux)
 	    &sc->sc_ccm_bsh);
 
 	aprint_naive("\n");
-	aprint_normal(": Display Engine Backend\n");
+	aprint_normal(": Display Engine Backend (BE%d)\n", loc->loc_port);
 
 	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
 		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
 		    AWIN_A31_AHB_RESET1_REG,
 		    AWIN_A31_AHB_RESET1_BE0_RST << loc->loc_port,
 		    0);
-	}
-
-	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
-		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-		    AWIN_BE0_SCLK_CFG_REG + (loc->loc_port * 4),
-		    __SHIFTIN(AWIN_A31_BEx_CLK_SRC_SEL_PLL6_2X,
-			      AWIN_A31_BEx_CLK_SRC_SEL),
-		    AWIN_A31_BEx_CLK_SRC_SEL);
-		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-		    AWIN_BE0_SCLK_CFG_REG + (loc->loc_port * 4),
-		    4 - 1, AWIN_BEx_CLK_DIV_RATIO_M);
 	} else {
 		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
 		    AWIN_BE0_SCLK_CFG_REG + (loc->loc_port * 4),
-		    AWIN_BEx_CLK_RST |
-		    __SHIFTIN(AWIN_BEx_CLK_SRC_SEL_PLL5, AWIN_BEx_CLK_SRC_SEL),
-		    AWIN_BEx_CLK_SRC_SEL);
+		    AWIN_BEx_CLK_RST,
+		    0);
+	}
+
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		uint32_t pll6_freq = awin_pll6_get_rate() * 2;
+		unsigned int clk_div = (pll6_freq + 299999999) / 300000000;
+
+#ifdef AWIN_DEBE_DEBUG
+		device_printf(sc->sc_dev, "PLL6 @ %u Hz\n", pll6_freq);
+		device_printf(sc->sc_dev, "div %d\n", clk_div);
+#endif
 		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
 		    AWIN_BE0_SCLK_CFG_REG + (loc->loc_port * 4),
-		    0 /* XXX */, AWIN_BEx_CLK_DIV_RATIO_M);
+		    __SHIFTIN(AWIN_A31_BEx_CLK_SRC_SEL_PLL6_2X,
+			      AWIN_A31_BEx_CLK_SRC_SEL) |
+		    __SHIFTIN(clk_div - 1, AWIN_BEx_CLK_DIV_RATIO_M),
+		    AWIN_A31_BEx_CLK_SRC_SEL | AWIN_BEx_CLK_DIV_RATIO_M);
+	} else {
+		uint32_t pll5x_freq = awin_pll5x_get_rate();
+		unsigned int clk_div = (pll5x_freq + 299999999) / 300000000;
+
+#ifdef AWIN_DEBE_DEBUG
+		device_printf(sc->sc_dev, "PLL5x @ %u Hz\n", pll5x_freq);
+		device_printf(sc->sc_dev, "div %d\n", clk_div);
+#endif
+
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_BE0_SCLK_CFG_REG + (loc->loc_port * 4),
+		    __SHIFTIN(AWIN_BEx_CLK_SRC_SEL_PLL5, AWIN_BEx_CLK_SRC_SEL) |
+		    __SHIFTIN(clk_div - 1, AWIN_BEx_CLK_DIV_RATIO_M),
+		    AWIN_BEx_CLK_SRC_SEL | AWIN_BEx_CLK_DIV_RATIO_M);
 	}
 
 	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
@@ -209,7 +224,6 @@ awin_debe_setup_fbdev(struct awin_debe_softc *sc, const struct videomode *mode)
 			.afb_fb = sc->sc_dmap,
 			.afb_width = mode->hdisplay,
 			.afb_height = mode->vdisplay,
-			.afb_console = false, /* XXX */
 			.afb_dmat = sc->sc_dmat,
 			.afb_dmasegs = sc->sc_dmasegs,
 			.afb_ndmasegs = 1
@@ -222,6 +236,35 @@ awin_debe_setup_fbdev(struct awin_debe_softc *sc, const struct videomode *mode)
 		awin_fb_set_videomode(sc->sc_fbdev, mode);
 	}
 #endif
+}
+
+void
+awin_debe_enable(bool enable)
+{
+	struct awin_debe_softc *sc;
+	device_t dev;
+	uint32_t val;
+
+	dev = device_find_by_driver_unit("awindebe", 0);
+	if (dev == NULL) {
+		printf("DEBE: no driver found\n");
+		return;
+	}
+	sc = device_private(dev);
+
+	if (enable) {
+		val = DEBE_READ(sc, AWIN_DEBE_REGBUFFCTL_REG);
+		val |= AWIN_DEBE_REGBUFFCTL_REGLOADCTL;
+		DEBE_WRITE(sc, AWIN_DEBE_REGBUFFCTL_REG, val);
+
+		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
+		val |= AWIN_DEBE_MODCTL_START_CTL;
+		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
+	} else {
+		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
+		val &= ~AWIN_DEBE_MODCTL_START_CTL;
+		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
+	}
 }
 
 void
@@ -249,11 +292,6 @@ awin_debe_set_videomode(const struct videomode *mode)
 			return;
 		}
 
-		/* disable */
-		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
-		val &= ~AWIN_DEBE_MODCTL_LAY0_EN;
-		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
-
 		/* notify fb */
 		awin_debe_setup_fbdev(sc, mode);
 
@@ -269,24 +307,14 @@ awin_debe_set_videomode(const struct videomode *mode)
 
 		val = DEBE_READ(sc, AWIN_DEBE_ATTCTL1_REG);
 		val &= ~AWIN_DEBE_ATTCTL1_LAY_FBFMT;
-		val |= AWIN_DEBE_ATTCTL1_LAY_FBFMT_XRGB8888;
+		val |= __SHIFTIN(AWIN_DEBE_ATTCTL1_LAY_FBFMT_XRGB8888,
+				 AWIN_DEBE_ATTCTL1_LAY_FBFMT);
 		val &= ~AWIN_DEBE_ATTCTL1_LAY_BRSWAPEN;
 		val &= ~AWIN_DEBE_ATTCTL1_LAY_FBPS;
 		DEBE_WRITE(sc, AWIN_DEBE_ATTCTL1_REG, val);
 
 		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
 		val |= AWIN_DEBE_MODCTL_LAY0_EN;
-		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
-
-		val = DEBE_READ(sc, AWIN_DEBE_REGBUFFCTL_REG);
-		val |= AWIN_DEBE_REGBUFFCTL_REGLOADCTL;
-		DEBE_WRITE(sc, AWIN_DEBE_REGBUFFCTL_REG, val);
-
-		delay(50000);
-
-		/* enable */
-		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
-		val |= AWIN_DEBE_MODCTL_START_CTL;
 		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
 	} else {
 		/* disable */
