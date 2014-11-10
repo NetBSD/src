@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.83 2014/11/09 21:00:16 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.84 2014/11/10 04:25:55 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2042,7 +2042,7 @@ sys/arch/sparc64/dev/sab.c			1.53
 sys/dev/pci/pcidevs				1.1201-1.1202 via patch
 sys/dev/pci/pcidevs.h				regen
 sys/dev/pci/pcidevs_data.h			regen
-sys/dev/pci/if_wm.c				1.291-1.301, 1.307 via patch
+sys/dev/pci/if_wm.c				1.291-1.301, 1.304, 1.306-1.307 via patch
 sys/dev/pci/if_wmreg.h				1.61-1.65 via patch
 sys/dev/pci/if_wmvar.h				1.21 via patch
 share/man/man4/wm.4				1.31 via patch
