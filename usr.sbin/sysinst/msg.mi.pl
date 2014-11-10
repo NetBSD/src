@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.2.4.1 2014/11/10 19:51:56 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1158,7 +1158,7 @@ message vnd_cyl_ask {Cylindry}
 message cgd_err_menufmt {   DISK NIE ZDEFINIOWANE!}
 message cgd_menufmt {   cgd%1d %-48s %11uM}
 message cgd_dev_fmt {Urz±dzenie podstawy: %19s}
-message cgd_enc_fmt {Encyption:           %19s}
+message cgd_enc_fmt {Encryption:           %19s}
 message cgd_key_fmt {Rozmiar klucza:      %19d}
 message cgd_iv_fmt {Algorytm IV: %27s}
 message cgd_keygen_fmt {Generowanie kluczy: %20s}
