@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2013 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2014 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -90,6 +90,6 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	flex(1): Import flex-2.5.37 [christos 20141029]
 	iwn(4): Add support for Intel Centrino Wireless-N
 		100/105/130/135/2200/2230. From OpenBSD. [nonaka 20141030]
-	awge(4): Add support for giagbit ethernet found on various
-		allwinner SOCs. [martin 20141101]
+	awge(4): Add support for gigabit ethernet found on various
+		Allwinner SOCs. [martin 20141101]
 	dhcpcd(8): Import dhcpcd-6.6.1. [roy 20141107]
