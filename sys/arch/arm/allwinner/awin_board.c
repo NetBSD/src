@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.26 2014/11/09 14:10:54 jmcneill Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.27 2014/11/10 17:55:25 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.26 2014/11/09 14:10:54 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.27 2014/11/10 17:55:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -411,9 +411,6 @@ awin_pll3_enable(void)
 		ncfg &= ~AWIN_A31_PLL3_CFG_MODE;
 		ncfg &= ~AWIN_A31_PLL3_CFG_MODE_SEL;
 		ncfg |= AWIN_A31_PLL3_CFG_FRAC_CLK_OUT;
-		/* 24MHz*N/M - for 29.7MHz, N=99, M=8 */
-		ncfg |= __SHIFTIN(98, AWIN_A31_PLL3_CFG_FACTOR_N);
-		ncfg |= __SHIFTIN(7, AWIN_A31_PLL3_CFG_PREDIV_M);
 		ncfg |= AWIN_PLL_CFG_ENABLE;
 	} else {
 		ncfg &= ~AWIN_PLL3_MODE_SEL;
@@ -424,6 +421,13 @@ awin_pll3_enable(void)
 	if (ncfg != ocfg) {
 		bus_space_write_4(bst, bsh,
 		    AWIN_CCM_OFFSET + AWIN_PLL3_CFG_REG, ncfg);
+
+		if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+			do {
+				ncfg = bus_space_read_4(bst, bsh,
+				    AWIN_CCM_OFFSET + AWIN_PLL3_CFG_REG);
+			} while ((ncfg & AWIN_A31_PLL3_CFG_LOCK) == 0);
+		}
 	}
 }
 
@@ -445,11 +449,6 @@ awin_pll7_enable(void)
 		ncfg &= ~AWIN_A31_PLL7_CFG_MODE;
 		ncfg &= ~AWIN_A31_PLL7_CFG_MODE_SEL;
 		ncfg |= AWIN_A31_PLL7_CFG_FRAC_CLK_OUT;
-		/* 24MHz*N/M - for 29.7MHz, N=99, M=8 */
-		ncfg &= ~AWIN_A31_PLL7_CFG_FACTOR_N;
-		ncfg &= ~AWIN_A31_PLL7_CFG_PREDIV_M;
-		ncfg |= __SHIFTIN(98, AWIN_A31_PLL7_CFG_FACTOR_N);
-		ncfg |= __SHIFTIN(7, AWIN_A31_PLL7_CFG_PREDIV_M);
 		ncfg |= AWIN_PLL_CFG_ENABLE;
 	} else {
 		ncfg &= ~AWIN_PLL7_MODE_SEL;
@@ -477,18 +476,18 @@ awin_pll3_set_rate(uint32_t rate)
 		ncfg &= ~AWIN_PLL_CFG_ENABLE;
 	} else {
 		if (awin_chip_id() == AWIN_CHIP_ID_A31) {
-			unsigned int m = rate / 3000000;
-			ncfg |= AWIN_PLL3_MODE_SEL;
-			ncfg &= ~AWIN_PLL3_FACTOR_M;
-			ncfg |= __SHIFTIN(m, AWIN_PLL3_FACTOR_M);
-		} else {
 			unsigned int m = 8;
-			unsigned int n = rate / 3000000;
+			unsigned int n = rate / (AWIN_REF_FREQ / m);
 			ncfg |= AWIN_A31_PLL3_CFG_MODE_SEL;
 			ncfg &= ~AWIN_A31_PLL3_CFG_FACTOR_N;
 			ncfg |= __SHIFTIN(n - 1, AWIN_A31_PLL3_CFG_FACTOR_N);
 			ncfg &= ~AWIN_A31_PLL3_CFG_PREDIV_M;
 			ncfg |= __SHIFTIN(m - 1, AWIN_A31_PLL3_CFG_PREDIV_M);
+		} else {
+			unsigned int m = rate / 3000000;
+			ncfg |= AWIN_PLL3_MODE_SEL;
+			ncfg &= ~AWIN_PLL3_FACTOR_M;
+			ncfg |= __SHIFTIN(m, AWIN_PLL3_FACTOR_M);
 		}
 		ncfg |= AWIN_PLL_CFG_ENABLE;
 	}
@@ -496,5 +495,54 @@ awin_pll3_set_rate(uint32_t rate)
 	if (ncfg != ocfg) {
 		bus_space_write_4(bst, bsh,
 		    AWIN_CCM_OFFSET + AWIN_PLL3_CFG_REG, ncfg);
+
+		if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+			do {
+				ncfg = bus_space_read_4(bst, bsh,
+				    AWIN_CCM_OFFSET + AWIN_PLL3_CFG_REG);
+			} while ((ncfg & AWIN_A31_PLL3_CFG_LOCK) == 0);
+		}
 	}
+}
+
+uint32_t
+awin_pll5x_get_rate(void)
+{
+	bus_space_tag_t bst = &awin_bs_tag;
+	bus_space_handle_t bsh = awin_core_bsh;
+	unsigned int n, k, p;
+
+	KASSERT(awin_chip_id() != AWIN_CHIP_ID_A31);
+
+	const uint32_t cfg = bus_space_read_4(bst, bsh,
+	    AWIN_CCM_OFFSET + AWIN_PLL5_CFG_REG);
+
+	n = __SHIFTOUT(cfg, AWIN_PLL_CFG_FACTOR_N);
+	k = __SHIFTOUT(cfg, AWIN_PLL_CFG_FACTOR_K);
+	p = __SHIFTOUT(cfg, AWIN_PLL5_OUT_EXT_DIV_P);
+
+	return (AWIN_REF_FREQ * n * k) >> p;
+}
+
+uint32_t
+awin_pll6_get_rate(void)
+{
+	bus_space_tag_t bst = &awin_bs_tag;
+	bus_space_handle_t bsh = awin_core_bsh;
+	unsigned int n, k, m;
+
+	const uint32_t cfg = bus_space_read_4(bst, bsh,
+	    AWIN_CCM_OFFSET + AWIN_PLL6_CFG_REG);
+
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		n = __SHIFTOUT(cfg, AWIN_PLL_CFG_FACTOR_N) + 1;
+		k = __SHIFTOUT(cfg, AWIN_PLL_CFG_FACTOR_K) + 1;
+		m = 2;
+	} else {
+		n = __SHIFTOUT(cfg, AWIN_PLL_CFG_FACTOR_N);
+		k = __SHIFTOUT(cfg, AWIN_PLL_CFG_FACTOR_K) + 1;
+		m = __SHIFTOUT(cfg, AWIN_PLL_CFG_FACTOR_M) + 1;
+	}
+
+	return (AWIN_REF_FREQ * n * k) / m;
 }
