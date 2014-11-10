@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.313 2014/11/10 14:33:00 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.314 2014/11/10 14:35:59 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -215,7 +215,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.313 2014/11/10 14:33:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.314 2014/11/10 14:35:59 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3495,7 +3495,6 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 				 */
 				l2pte_reset(ptep);
 				PTE_SYNC_CURRENT(pm, ptep);
- 				pmap_tlb_flush_SE(pm, sva, flags);
 				continue;
 			}
 
