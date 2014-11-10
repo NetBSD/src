@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.40 2014/11/05 12:28:46 justin Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.41 2014/11/10 22:29:06 pooka Exp $	*/
 
 #ifndef _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
 #define _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
@@ -63,8 +63,6 @@
 #endif
 
 #ifdef __linux__
-#define _XOPEN_SOURCE 600
-#define _BSD_SOURCE
 #define _GNU_SOURCE
 #endif
 
