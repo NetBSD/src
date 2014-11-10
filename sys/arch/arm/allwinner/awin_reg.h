@@ -967,6 +967,7 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_PLL3_FACTOR_M		__BITS(6,0)
 
 #define AWIN_PLL5_CFG_DDR_CLK_EN	__BIT(29)
+#define AWIN_PLL5_OUT_EXT_DIV_P		__BITS(17,16)
 #define AWIN_PLL5_CFG_LDO_EN		__BIT(7)
 #define AWIN_PLL5_CFG_FACTOR_M1		__BITS(3,2)
 
