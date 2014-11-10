@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.29 2013/11/12 09:02:05 kefren Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.30 2014/11/10 18:52:51 maxv Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.29 2013/11/12 09:02:05 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.30 2014/11/10 18:52:51 maxv Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -112,7 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.29 2013/11/12 09:02:05 kefren Exp $")
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
