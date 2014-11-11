@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: acpi.h,v 1.2.8.1 2014/11/11 09:06:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,7 @@
 
 #ifndef _LINUX_ACPI_H_
 #define _LINUX_ACPI_H_
+
+#include <dev/acpi/acpivar.h>
 
 #endif  /* _LINUX_ACPI_H_ */

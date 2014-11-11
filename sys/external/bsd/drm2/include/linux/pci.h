@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.7.2.2 2014/10/17 07:14:33 martin Exp $	*/
+/*	$NetBSD: pci.h,v 1.7.2.3 2014/11/11 09:06:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,6 +32,12 @@
 #ifndef _LINUX_PCI_H_
 #define _LINUX_PCI_H_
 
+#if defined(i386) || defined(amd64)
+#include "acpica.h"
+#else	/* !(i386 || amd64) */
+#define NACPICA	0
+#endif	/* i386 || amd64 */
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,10 +52,15 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/agpvar.h>
 
+#include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_pci.h>
+
 #include <linux/dma-mapping.h>
 #include <linux/ioport.h>
 
-struct pci_bus;
+struct pci_bus {
+	u_int		number;
+};
 
 struct pci_device_id {
 	uint32_t	vendor;
@@ -122,6 +133,7 @@ struct pci_dev {
 		void __pci_iomem	*kva;
 	}			pd_resources[PCI_NUM_RESOURCES];
 	struct pci_conf_state	*pd_saved_state;
+	struct acpi_devnode	*pd_ad;
 	struct device		dev;		/* XXX Don't believe me!  */
 	struct pci_bus		*bus;
 	uint32_t		devfn;
@@ -152,7 +164,14 @@ linux_pci_dev_init(struct pci_dev *pdev, device_t dev,
 	pdev->pd_kludges = kludges;
 	pdev->pd_rom_vaddr = NULL;
 	pdev->pd_dev = dev;
-	pdev->bus = NULL;	/* XXX struct pci_dev::bus */
+#if (NACPICA > 0)
+	pdev->pd_ad = acpi_pcidev_find(0 /*XXX segment*/, pa->pa_bus,
+	    pa->pa_device, pa->pa_function);
+#else
+	pdev->pd_ad = NULL;
+#endif
+	pdev->bus = kmem_zalloc(sizeof(struct pci_bus), KM_NOSLEEP);
+	pdev->bus->number = pa->pa_bus;
 	pdev->devfn = PCI_DEVFN(pa->pa_device, pa->pa_function);
 	pdev->vendor = PCI_VENDOR(pa->pa_id);
 	pdev->device = PCI_PRODUCT(pa->pa_id);
