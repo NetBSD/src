@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.40 2013/04/25 11:22:22 macallan Exp $	*/
+/*	$NetBSD: obio.c,v 1.41 2014/11/11 23:08:37 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.40 2013/04/25 11:22:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.41 2014/11/11 23:08:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -627,9 +627,7 @@ sysctl_cpuspeed_available(SYSCTLFN_ARGS)
 	struct sysctlnode node = *rnode;
 	struct obio_softc *sc = node.sysctl_data;
 	char buf[128];
-	int speed;
 
-	speed = obio_get_cpu_speed(sc);
 	snprintf(buf, 128, "%d %d", sc->sc_spd_lo, sc->sc_spd_hi);	
 	node.sysctl_data = buf;
 	return(sysctl_lookup(SYSCTLFN_CALL(&node)));
