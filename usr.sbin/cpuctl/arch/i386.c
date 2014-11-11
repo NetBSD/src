@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.60 2014/11/07 05:37:05 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.61 2014/11/11 08:23:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.60 2014/11/07 05:37:05 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.61 2014/11/11 08:23:17 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1579,7 +1579,7 @@ cpu_probe_hv_features(struct cpu_info *ci, const char *cpuname)
 		if (strncmp(hv_sig, "KVMKVMKVM", 9) == 0)
 			hv_name = "KVM";
 		else if (strncmp(hv_sig, "Microsoft Hv", 12) == 0)
-			hv_name = "Hypver-V";
+			hv_name = "Hyper-V";
 		else if (strncmp(hv_sig, "VMwareVMware", 12) == 0)
 			hv_name = "VMware";
 		else if (strncmp(hv_sig, "XenVMMXenVMM", 12) == 0)
