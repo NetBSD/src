@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.3 2014/11/10 17:55:25 jmcneill Exp $ */
+/* $NetBSD: awin_debe.c,v 1.4 2014/11/11 19:22:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,14 +26,15 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_allwinner.h"
+#include "genfb.h"
+
 #ifndef AWIN_DEBE_VIDEOMEM
 #define AWIN_DEBE_VIDEOMEM	(16 * 1024 * 1024)
 #endif
 
-#include "genfb.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.3 2014/11/10 17:55:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.4 2014/11/11 19:22:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
