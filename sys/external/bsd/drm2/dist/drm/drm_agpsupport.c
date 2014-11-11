@@ -518,6 +518,16 @@ void drm_agp_clear(struct drm_device *dev)
 	dev->agp->enabled = 0;
 }
 
+void drm_agp_destroy(struct drm_device *dev)
+{
+	if (dev->agp) {
+		arch_phys_wc_del(dev->agp->agp_mtrr);
+		drm_agp_clear(dev);
+		kfree(dev->agp);
+		dev->agp = NULL;
+	}
+}
+
 #ifndef __NetBSD__		/* XXX Dead code that doesn't make sense...  */
 /**
  * Binds a collection of pages into AGP memory at the given offset, returning
