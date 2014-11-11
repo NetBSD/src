@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.19 2014/07/25 08:34:48 dholland Exp $	*/
+/*	$NetBSD: dkio.h,v 1.19.2.1 2014/11/11 10:36:41 martin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -111,5 +111,8 @@
 
 /* 129 was DIOCGDISCARDPARAMS during 6.99 */
 /* 130 was DIOCDISCARD during 6.99 */
+
+		/* trigger wedge auto discover */
+#define	DIOCMWEDGES	_IOR('d', 131, int)	/* make wedges */
 
 #endif /* _SYS_DKIO_H_ */

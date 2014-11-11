@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.20 2011/08/27 16:34:38 joerg Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.20.20.1 2014/11/11 10:36:40 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.20 2011/08/27 16:34:38 joerg Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.20.20.1 2014/11/11 10:36:40 martin Exp $");
 #endif
 
 
@@ -101,6 +101,7 @@ static void	disk_addwedge(int, char *[]);
 static void	disk_delwedge(int, char *[]);
 static void	disk_getwedgeinfo(int, char *[]);
 static void	disk_listwedges(int, char *[]);
+static void	disk_makewedges(int, char *[]);
 static void	disk_strategy(int, char *[]);
 
 static struct command commands[] = {
@@ -148,6 +149,11 @@ static struct command commands[] = {
 	  "",
 	  disk_listwedges,
 	  O_RDONLY },
+
+	{ "makewedges",
+	  "",
+	  disk_makewedges,
+	  O_RDWR },
 
 	{ "strategy",
 	  "[name]",
@@ -664,6 +670,20 @@ disk_listwedges(int argc, char *argv[])
 		    dkw[i].dkw_wname,	/* XXX Unicode */
 		    dkw[i].dkw_size, dkw[i].dkw_offset, dkw[i].dkw_ptype);
 	}
+}
+
+static void
+disk_makewedges(int argc, char *argv[])
+{
+	int bits;
+
+	if (argc != 0)
+		usage();
+
+	if (ioctl(fd, DIOCMWEDGES, &bits) == -1)
+		err(1, "%s: makewedges", dvname);
+	else
+		printf("successfully scanned %s.\n", dvname);
 }
 
 static int
