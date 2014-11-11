@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_mbr.c,v 1.7 2012/04/07 05:09:09 christos Exp $	*/
+/*	$NetBSD: dkwedge_mbr.c,v 1.7.14.1 2014/11/11 10:31:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.7 2012/04/07 05:09:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.7.14.1 2014/11/11 10:31:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ dkwedge_discover_mbr(struct disk *pdk, struct vnode *vp)
 	mbr_args_t a;
 
 	a.pdk = pdk;
-	a.secsize = pdk->dk_label->d_secsize;
+	a.secsize = DEV_BSIZE << pdk->dk_blkshift;  
 	a.vp = vp;
 	a.buf = malloc(a.secsize, M_DEVBUF, M_WAITOK);
 	a.error = 0;
