@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.86 2014/11/10 19:59:24 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.87 2014/11/11 12:28:28 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2240,4 +2240,79 @@ sys/arch/arm/pic/pic.c				1.25
 
 	Various ARM pmap/bus_dma fixes.
 	[skrll, ticket #209]
+
+sys/external/bsd/drm2/dist/drm/i915/i915_dma.c	1.12
+sys/external/bsd/drm2/dist/drm/i915/i915_drv.h	1.10
+sys/external/bsd/drm2/dist/drm/i915/intel_acpi.c 1.3-1.5
+sys/external/bsd/drm2/dist/drm/i915/intel_opregion.c 1.6-1.7
+sys/external/bsd/drm2/i915drm/files.i915drmkms	1.8
+sys/external/bsd/drm2/include/linux/acpi.h	1.3
+sys/external/bsd/drm2/include/linux/pci.h	1.10
+
+	i915drmkms(4): Enable CONFIG_ACPI if NACPICA > 0.
+	Now brightness can be adjusted via hotkey on Mouse Computer LB-J300X
+	(Clevo W330SU2).
+
+	Fix debug build.
+
+	pci_attach_args of pci_find_device and match function is not the
+	same thing - fix PR/49372.
+	[nonaka, ticket #197]
+
+sys/external/bsd/drm2/include/linux/sched.h	1.5
+
+	Return the correct remaining jiffies, fixes a X server hang when
+	screen blanking by DPMS.
+	[nonaka, ticket #198]
+
+sbin/fsck/fsck.c				1.52
+sbin/newfs/newfs.c				1.112
+
+	Add/fix named wedges support for fsck/newfs.
+	[mlelstv, ticket #199]
+
+sys/dev/dkwedge/dkwedge_bsdlabel.c		1.23
+sys/dev/dkwedge/dkwedge_gpt.c			1.14
+sys/dev/dkwedge/dkwedge_mbr.c			1.8
+
+	Handle disks with non DEV_BSIZE sectors.
+	Be less noisy when handling wedge name conflicts.
+	[mlelstv, ticket #200]
+
+sbin/dkctl/dkctl.8				1.24-1.25
+sbin/dkctl/dkctl.c				1.21
+sys/dev/ata/wd.c				1.415
+sys/dev/dksubr.c				1.54
+sys/dev/dkwedge/dk.c				1.74
+sys/dev/ld.c					1.78
+sys/dev/raidframe/rf_netbsdkintf.c		1.315
+sys/dev/scsipi/sd.c				1.310
+sys/dev/vnd.c					1.234
+sys/sys/dkio.h					1.20
+
+	Implement DIOCMWEDGES ioctl that triggers wedge autodiscovery.
+	Also fix a reference counting bug and clean up some code.
+
+	Add 'makewedges' option to dkctl(8) to autodiscover wedges from a
+	changed label.
+	[mlelstv, ticket #201]
+
+sys/dev/ccd.c					1.153-1.154
+sys/dev/dksubr.c				1.52-1.53
+sys/dev/ld.c					1.77
+sys/dev/raidframe/rf_netbsdkintf.c		1.313-1.314
+sys/dev/vnd.c					1.233
+
+	Clamp total number of sectors to UINT32_MAX instead of providing the
+	lower 32bit of the 64bit number.
+
+	No longer warn about differences bewteen disk size and total sector
+	count in disklabel when the latter is just clamped to the maximum.
+	[mlelstv, ticket #202]
+
+sys/net/if.c					1.292
+
+	PR/49373: Ryota Ozaki: Running if_clone_create and if_clone_destroy in
+	parallel causes panic.
+	[ozaki-r, ticket #205]
 
