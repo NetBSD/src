@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.87 2014/11/11 12:28:28 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.88 2014/11/11 12:53:54 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2315,4 +2315,15 @@ sys/net/if.c					1.292
 	PR/49373: Ryota Ozaki: Running if_clone_create and if_clone_destroy in
 	parallel causes panic.
 	[ozaki-r, ticket #205]
+
+sys/arch/evbarm/awin/awin_machdep.c		1.27
+
+	get_bootconf_option doesnt return the value null-terminated, so
+	look for an awge0.mac-address value of exactly the correct length.
+	[jmcneill, ticket #211]
+
+sys/dev/wscons/wsdisplay_vcons.c		1.33
+
+	Allocate char and attr buffers with M_ZERO.
+	[jmcneill, ticket #212]
 
