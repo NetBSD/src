@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.290 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: if.c,v 1.290.2.1 2014/11/11 12:20:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.290 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.290.2.1 2014/11/11 12:20:28 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -164,6 +164,7 @@ static u_int			if_index = 1;
 static size_t			if_indexlim = 0;
 static uint64_t			index_gen;
 static kmutex_t			index_gen_mtx;
+static kmutex_t			if_clone_mtx;
 
 static struct ifaddr **		ifnet_addrs = NULL;
 
@@ -252,6 +253,7 @@ void
 ifinit1(void)
 {
 	mutex_init(&index_gen_mtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&if_clone_mtx, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INIT(&ifnet_list);
 	if_indexlim = 8;
 
@@ -1833,6 +1835,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	struct ifreq ifrb;
 	struct oifreq *oifr = NULL;
 #endif
+	int r;
 
 	switch (cmd) {
 #ifdef COMPAT_OIFREQ
@@ -1874,9 +1877,12 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 			if (error != 0)
 				return error;
 		}
-		return (cmd == SIOCIFCREATE) ?
+		mutex_enter(&if_clone_mtx);
+		r = (cmd == SIOCIFCREATE) ?
 			if_clone_create(ifr->ifr_name) :
 			if_clone_destroy(ifr->ifr_name);
+		mutex_exit(&if_clone_mtx);
+		return r;
 
 	case SIOCIFGCLONERS:
 		return if_clone_list((struct if_clonereq *)data);
