@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.32 2014/03/18 18:20:42 riastradh Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.32.4.1 2014/11/11 12:50:48 martin Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.32 2014/03/18 18:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.32.4.1 2014/11/11 12:50:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,8 +314,10 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 		if (vd->chars != NULL) free(vd->chars, M_DEVBUF);
 		if (vd->attrs != NULL) free(vd->attrs, M_DEVBUF);
 		vd->cells = size;
-		vd->chars = malloc(size * sizeof(uint32_t), M_DEVBUF, M_WAITOK);
-		vd->attrs = malloc(size * sizeof(long), M_DEVBUF, M_WAITOK);
+		vd->chars = malloc(size * sizeof(uint32_t), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
+		vd->attrs = malloc(size * sizeof(long), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		vcons_invalidate_cache(vd);
 	}
 #endif
