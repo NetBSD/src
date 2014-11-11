@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmi.c,v 1.8 2014/11/11 17:27:12 jmcneill Exp $ */
+/* $NetBSD: awin_hdmi.c,v 1.9 2014/11/11 19:22:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,14 +26,13 @@
  * SUCH DAMAGE.
  */
 
-//#define AWIN_HDMI_DEBUG
-
+#include "opt_allwinner.h"
 #include "opt_ddb.h"
 
 #define AWIN_HDMI_PLL	3	/* PLL7 or PLL3 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.8 2014/11/11 17:27:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.9 2014/11/11 19:22:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
