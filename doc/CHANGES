@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2015 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2016 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -99,3 +99,5 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		[jmcneill 20141110]
 	awindebe(4): Add support for Allwinner A20/A31 Display engine
 		backend (DE-BE). [jmcneill 20141110]
+	awinhdmiaudio(4): Add support for Allwinner A20/A31 HDMI audio
+		controller. [jmcneill 20141111]
