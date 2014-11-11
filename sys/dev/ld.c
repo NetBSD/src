@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.75.2.1 2014/11/11 10:36:41 martin Exp $	*/
+/*	$NetBSD: ld.c,v 1.75.2.2 2014/11/11 10:42:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.75.2.1 2014/11/11 10:36:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.75.2.2 2014/11/11 10:42:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -824,14 +824,16 @@ ldgetdefaultlabel(struct ld_softc *sc, struct disklabel *lp)
 	lp->d_type = DTYPE_LD;
 	strlcpy(lp->d_typename, "unknown", sizeof(lp->d_typename));
 	strlcpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
-	lp->d_secperunit = sc->sc_secperunit;
+	if (sc->sc_secperunit > UINT32_MAX)
+		lp->d_secperunit = UINT32_MAX;
+	else
+		lp->d_secperunit = sc->sc_secperunit;
 	lp->d_rpm = 7200;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
 
 	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size =
-	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 	lp->d_npartitions = RAW_PART + 1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.232.2.1 2014/11/11 10:36:41 martin Exp $	*/
+/*	$NetBSD: vnd.c,v 1.232.2.2 2014/11/11 10:42:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.232.2.1 2014/11/11 10:36:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.232.2.2 2014/11/11 10:42:22 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1796,7 +1796,10 @@ vndgetdefaultlabel(struct vnd_softc *sc, struct disklabel *lp)
 
 	memset(lp, 0, sizeof(*lp));
 
-	lp->d_secperunit = sc->sc_size / (vng->vng_secsize / DEV_BSIZE);
+	if (sc->sc_size > UINT32_MAX)
+		lp->d_secperunit = UINT32_MAX;
+	else
+		lp->d_secperunit = sc->sc_size;
 	lp->d_secsize = vng->vng_secsize;
 	lp->d_nsectors = vng->vng_nsectors;
 	lp->d_ntracks = vng->vng_ntracks;
