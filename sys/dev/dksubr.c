@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.51 2014/06/14 07:39:00 hannken Exp $ */
+/* $NetBSD: dksubr.c,v 1.51.2.1 2014/11/11 10:36:41 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.51 2014/06/14 07:39:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.51.2.1 2014/11/11 10:36:41 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,6 +304,7 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	case DIOCAWEDGE:
 	case DIOCDWEDGE:
 	case DIOCLWEDGES:
+	case DIOCMWEDGES:
 	case DIOCCACHESYNC:
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
@@ -431,6 +432,15 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	    	struct dkwedge_list *dkwl = (void *)data;
 
 		return (dkwedge_list(&dksc->sc_dkdev, dkwl, l));
+	    }
+
+	case DIOCMWEDGES:
+	    {
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+
+	    	dkwedge_discover(&dksc->sc_dkdev);
+		return 0;
 	    }
 
 	case DIOCGSTRATEGY:
