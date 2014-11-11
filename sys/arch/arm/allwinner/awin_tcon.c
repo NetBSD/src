@@ -1,4 +1,4 @@
-/* $NetBSD: awin_tcon.c,v 1.3 2014/11/10 17:55:25 jmcneill Exp $ */
+/* $NetBSD: awin_tcon.c,v 1.4 2014/11/11 19:22:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,10 @@
  * SUCH DAMAGE.
  */
 
-//#define AWIN_TCON_DEBUG
+#include "opt_allwinner.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.3 2014/11/10 17:55:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.4 2014/11/11 19:22:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
