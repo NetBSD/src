@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.18 2014/10/18 16:56:51 uebayasi Exp $
+#	$NetBSD: files.pci,v 1.19 2014/11/11 02:31:55 christos Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -12,7 +12,7 @@ defflag	AGP_X86
 define amdnb_miscbus {}
 
 # PCI-Host bridge chipsets
-device	pchb:	pcibus, agpbus
+device	pchb:	pcibus, agpbus, agp_x86
 attach	pchb at pci
 file	arch/x86/pci/pchb.c		pchb		needs-flag
 
