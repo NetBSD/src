@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2014/11/06 18:58:18 snj Exp $
+#	$NetBSD: Makefile,v 1.19 2014/11/11 11:30:55 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -195,5 +195,7 @@ LIBDPLIBS+=	pthread		${NETBSDSRCDIR}/lib/libpthread
 
 CWARNFLAGS.clang+=	-Wno-parentheses -Wno-tautological-compare \
 			-Wno-empty-body -Wno-error
+
+COPTS.sna_display.c=	-Wno-stack-protector
 
 .include <bsd.subdir.mk>
