@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.91 2014/10/23 18:45:58 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.92 2014/11/11 18:46:54 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.91 2014/10/23 18:45:58 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.92 2014/11/11 18:46:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -290,6 +290,27 @@ settzname_z(timezone_t sp)
 	}
 }
 
+static char *
+setzone(const struct state *sp, const struct ttinfo *ttisp, int_fast32_t offset)
+{
+	char *zn = __UNCONST(&sp->chars[ttisp->tt_abbrind]);
+	if (offset) {
+#ifdef USG_COMPAT
+		if (ttisp->tt_isdst)
+			daylight = 1;
+		if (!ttisp->tt_isdst)
+			timezone = -(ttisp->tt_gmtoff);
+#endif /* defined USG_COMPAT */
+#ifdef ALTZONE
+		if (ttisp->tt_isdst)
+			altzone = -(ttisp->tt_gmtoff);
+#endif /* defined ALTZONE */
+	}
+
+	tzname[ttisp->tt_isdst] = zn;
+	return zn;
+}
+
 static void
 settzname(void)
 {
@@ -312,21 +333,9 @@ settzname(void)
 	/*
 	** And to get the latest zone names into tzname. . .
 	*/
-	for (i = 0; i < sp->typecnt; ++i) {
-		const struct ttinfo * const	ttisp = &sp->ttis[i];
+	for (i = 0; i < sp->typecnt; ++i)
+		setzone(sp, &sp->ttis[i], -1);
 
-		tzname[ttisp->tt_isdst] = &sp->chars[ttisp->tt_abbrind];
-#ifdef USG_COMPAT
-		if (ttisp->tt_isdst)
-			daylight = 1;
-		if (!ttisp->tt_isdst)
-			timezone = -(ttisp->tt_gmtoff);
-#endif /* defined USG_COMPAT */
-#ifdef ALTZONE
-		if (ttisp->tt_isdst)
-			altzone = -(ttisp->tt_gmtoff);
-#endif /* defined ALTZONE */
-	}
 	settzname_z(sp);
 }
 
@@ -1428,23 +1437,11 @@ localsub(struct state const *sp, time_t const *timep, int_fast32_t offset,
 	*/
 	result = timesub(&t, ttisp->tt_gmtoff, sp, tmp);
 	if (result) {
-		bool tm_isdst = ttisp->tt_isdst;
-		char *tm_zone = __UNCONST(&sp->chars[ttisp->tt_abbrind]);
-		result->tm_isdst = tm_isdst;
-		if (offset) {
-		    /* Always set the tzname etc. vars whose values can easily
-		       be determined, as it's too much trouble to tell whether
-	    	       tzset has already done it correctly.  */
-			tzname[tm_isdst] = tm_zone;
-#ifdef USG_COMPAT
-			if (!tm_isdst)
-				timezone = - ttisp->tt_gmtoff;
-#endif
-#ifdef ALTZONE
-			if (tm_isdst)
-				altzone = - ttisp->tt_gmtoff;
-#endif
-		}
+		char *zn = setzone(sp, ttisp, offset);
+		result->tm_isdst = ttisp->tt_isdst;
+#ifdef TM_ZONE
+		result->TM_ZONE = zn;
+#endif /* defined TM_ZONE */
 	}
 	return result;
 }
