@@ -277,12 +277,7 @@ static void drm_pci_agp_init(struct drm_device *dev)
 
 void drm_pci_agp_destroy(struct drm_device *dev)
 {
-	if (dev->agp) {
-		arch_phys_wc_del(dev->agp->agp_mtrr);
-		drm_agp_clear(dev);
-		kfree(dev->agp);
-		dev->agp = NULL;
-	}
+	drm_agp_destroy(dev);
 }
 
 static struct drm_bus drm_pci_bus = {
