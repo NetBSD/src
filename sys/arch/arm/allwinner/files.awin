@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.23 2014/11/09 14:30:55 jmcneill Exp $
+#	$NetBSD: files.awin,v 1.24 2014/11/11 17:00:59 jmcneill Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -134,10 +134,15 @@ device	awinac: audiobus, auconv, mulaw, aurateconv
 attach	awinac at awinio with awin_ac
 file	arch/arm/allwinner/awin_ac.c		awin_ac
 
-# A10/A20/A31 HDMI
+# A20/A31 HDMI
 device	awinhdmi: edid, ddc_read_edid, videomode
 attach	awinhdmi at awinio with awin_hdmi
 file	arch/arm/allwinner/awin_hdmi.c		awin_hdmi
+
+# A20/A31 HDMI audio (HDMIAUDIO)
+device	awinhdmiaudio: audiobus, auconv, mulaw, aurateconv
+attach	awinhdmiaudio at awinio with awin_hdmiaudio
+file	arch/arm/allwinner/awin_hdmiaudio.c	awin_hdmiaudio
 
 # A10/A20/A31 LCD/TV timing controller (TCON)
 device	awintcon
