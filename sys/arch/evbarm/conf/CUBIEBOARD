@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.32 2014/11/10 17:56:58 jmcneill Exp $
+#	$NetBSD: CUBIEBOARD,v 1.33 2014/11/11 15:12:51 skrll Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -244,9 +244,6 @@ awinwdt*	at awinio?
 
 # RTC
 awinrtc*	at awinio?
-
-# 64-bit counter
-awincnt0	at awinio0
 
 # onboard audio codec
 awinac0		at awinio0
