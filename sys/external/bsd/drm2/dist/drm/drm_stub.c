@@ -849,7 +849,7 @@ void drm_dev_unregister(struct drm_device *dev)
 		dev->driver->unload(dev);
 
 	if (dev->agp)
-		drm_pci_agp_destroy(dev);
+		drm_agp_destroy(dev);
 
 	drm_vblank_cleanup(dev);
 
