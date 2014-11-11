@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2014/07/16 20:56:25 riastradh Exp $
+# $NetBSD: Makefile,v 1.4 2014/11/11 11:30:21 nonaka Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -57,5 +57,7 @@ SRCS+=	drm_module.c
 COPTS.drm_crtc.c+=	-Wno-shadow
 COPTS.drm_crtc.c+=	-Wno-missing-field-initializers
 COPTS.drm_edid.c+=	-Wno-shadow
+
+CPPFLAGS+=		-DNACPICA=1
 
 .include <bsd.kmodule.mk>
