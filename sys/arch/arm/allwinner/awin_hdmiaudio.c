@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmiaudio.c,v 1.1 2014/11/11 17:00:59 jmcneill Exp $ */
+/* $NetBSD: awin_hdmiaudio.c,v 1.2 2014/11/11 17:14:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmiaudio.c,v 1.1 2014/11/11 17:00:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmiaudio.c,v 1.2 2014/11/11 17:14:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -361,13 +361,6 @@ awin_hdmiaudio_close(void *priv)
 static int
 awin_hdmiaudio_drain(void *priv)
 {
-	struct awin_hdmiaudio_softc *sc = priv;
-	uint32_t val;
-
-	val = HDMIAUDIO_READ(sc, AWIN_HDMI_ADMA_CTRL_REG);
-	val |= AWIN_HDMI_ADMA_CTRL_FIFO_CLEAR;
-	HDMIAUDIO_WRITE(sc, AWIN_HDMI_ADMA_CTRL_REG, val);
-
 	return 0;
 }
 
