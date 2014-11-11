@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmi.c,v 1.7 2014/11/11 17:00:59 jmcneill Exp $ */
+/* $NetBSD: awin_hdmi.c,v 1.8 2014/11/11 17:27:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #define AWIN_HDMI_PLL	3	/* PLL7 or PLL3 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.7 2014/11/11 17:00:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.8 2014/11/11 17:27:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -727,7 +727,7 @@ awin_hdmi_set_audiomode(struct awin_hdmi_softc *sc,
 	val |= AWIN_HDMI_AUD_CTRL_EN;
 	HDMI_WRITE(sc, AWIN_HDMI_AUD_CTRL_REG, val);
 
-#if defined(DDB)
+#if defined(AWIN_HDMI_DEBUG) && defined(DDB)
 	awin_hdmi_dump_regs();
 #endif
 }
