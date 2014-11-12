@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.48 2014/11/12 02:50:01 christos Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.49 2014/11/12 13:24:34 christos Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -109,7 +109,7 @@ ${XOBJS}:	${DPSRCS}
 ${PROG}: ${XOBJS} ${XSRCS} ${DPSRCS} ${DPADD}
 	${_MKTARGET_LINK}
 .if ${MKLDSCRIPT} == "yes"
-	$S/conf/mkldscript.sh ${KMODSCRIPTSRC} ${XOBJS} > ${KMODSCRIPT}
+	$S/conf/mkldscript.sh -t ${KMODSCRIPTSRC} ${XOBJS} > ${KMODSCRIPT}
 .endif
 	${CC} ${LDFLAGS} -nostdlib -MD -combine -r -Wl,-T,${KMODSCRIPT},-d \
 		-Wl,-Map=${.TARGET}.map \
