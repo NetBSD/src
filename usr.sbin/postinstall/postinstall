@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.182 2014/11/12 19:31:05 apb Exp $
+# $NetBSD: postinstall,v 1.183 2014/11/12 19:41:24 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -226,7 +226,7 @@ check_dir()
 # check_ids op type file srcfile start id [...]
 #	Check if file of type "users" or "groups" contains the relevant IDs.
 #	Use srcfile as a reference for the expected contents.
-#       The specified "id" names should be given in numerical order,
+#	The specified "id" names should be given in numerical order,
 #	with the first name corresponding to numerical value "start",
 #	and with the special name "SKIP" being used to mark gaps in the
 #	sequence.
