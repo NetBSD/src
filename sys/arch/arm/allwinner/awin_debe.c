@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.4 2014/11/11 19:22:32 jmcneill Exp $ */
+/* $NetBSD: awin_debe.c,v 1.5 2014/11/12 23:12:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.4 2014/11/11 19:22:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.5 2014/11/12 23:12:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -293,6 +293,14 @@ awin_debe_set_videomode(const struct videomode *mode)
 			return;
 		}
 
+		paddr_t pa = sc->sc_dmamap->dm_segs[0].ds_addr;
+		/*
+		 * On 2GB systems, we need to subtract AWIN_SDRAM_PBASE from
+		 * the phys addr.
+		 */
+		if (pa >= AWIN_SDRAM_PBASE)
+			pa -= AWIN_SDRAM_PBASE;
+
 		/* notify fb */
 		awin_debe_setup_fbdev(sc, mode);
 
@@ -301,10 +309,8 @@ awin_debe_set_videomode(const struct videomode *mode)
 		DEBE_WRITE(sc, AWIN_DEBE_LAYSIZE_REG,
 		    ((mode->vdisplay - 1) << 16) | (mode->hdisplay - 1));
 		DEBE_WRITE(sc, AWIN_DEBE_LAYLINEWIDTH_REG, mode->hdisplay << 5);
-		DEBE_WRITE(sc, AWIN_DEBE_LAYFB_L32ADD_REG,
-		    sc->sc_dmamap->dm_segs[0].ds_addr << 3);
-		DEBE_WRITE(sc, AWIN_DEBE_LAYFB_H4ADD_REG,
-		    sc->sc_dmamap->dm_segs[0].ds_addr >> 29);
+		DEBE_WRITE(sc, AWIN_DEBE_LAYFB_L32ADD_REG, pa << 3);
+		DEBE_WRITE(sc, AWIN_DEBE_LAYFB_H4ADD_REG, pa >> 29);
 
 		val = DEBE_READ(sc, AWIN_DEBE_ATTCTL1_REG);
 		val &= ~AWIN_DEBE_ATTCTL1_LAY_FBFMT;
