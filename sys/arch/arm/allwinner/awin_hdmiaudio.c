@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmiaudio.c,v 1.2 2014/11/11 17:14:38 jmcneill Exp $ */
+/* $NetBSD: awin_hdmiaudio.c,v 1.3 2014/11/12 17:38:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmiaudio.c,v 1.2 2014/11/11 17:14:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmiaudio.c,v 1.3 2014/11/12 17:38:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -602,18 +602,33 @@ awin_hdmiaudio_trigger_output(void *priv, void *start, void *end, int blksize,
 	dmacfg = 0;
 	dmacfg |= __SHIFTIN(AWIN_DMA_CTL_DATA_WIDTH_32,
 			    AWIN_DMA_CTL_DST_DATA_WIDTH);
-	dmacfg |= __SHIFTIN(AWIN_DMA_CTL_BURST_LEN_4,
-			    AWIN_DMA_CTL_DST_BURST_LEN);
-	dmacfg |= __SHIFTIN(AWIN_DMA_CTL_DATA_WIDTH_16,
+	dmacfg |= __SHIFTIN(AWIN_DMA_CTL_DATA_WIDTH_32,
 			    AWIN_DMA_CTL_SRC_DATA_WIDTH);
-	dmacfg |= __SHIFTIN(AWIN_DMA_CTL_BURST_LEN_4,
-			    AWIN_DMA_CTL_SRC_BURST_LEN);
 	dmacfg |= AWIN_DMA_CTL_BC_REMAINING;
-	dmacfg |= AWIN_NDMA_CTL_DST_ADDR_NOINCR;
-	dmacfg |= __SHIFTIN(sc->sc_drqtype_hdmiaudio,
-			    AWIN_DMA_CTL_DST_DRQ_TYPE);
 	dmacfg |= __SHIFTIN(sc->sc_drqtype_sdram,
 			    AWIN_DMA_CTL_SRC_DRQ_TYPE);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		/* NDMA */
+		dmacfg |= __SHIFTIN(AWIN_DMA_CTL_BURST_LEN_4,
+				    AWIN_DMA_CTL_DST_BURST_LEN);
+		dmacfg |= __SHIFTIN(AWIN_DMA_CTL_BURST_LEN_4,
+				    AWIN_DMA_CTL_SRC_BURST_LEN);
+		dmacfg |= AWIN_NDMA_CTL_DST_ADDR_NOINCR;
+		dmacfg |= __SHIFTIN(sc->sc_drqtype_hdmiaudio,
+				    AWIN_DMA_CTL_DST_DRQ_TYPE);
+	} else {
+		/* DDMA */
+		dmacfg |= __SHIFTIN(AWIN_DMA_CTL_BURST_LEN_8,
+				    AWIN_DMA_CTL_DST_BURST_LEN);
+		dmacfg |= __SHIFTIN(AWIN_DMA_CTL_BURST_LEN_8,
+				    AWIN_DMA_CTL_SRC_BURST_LEN);
+		dmacfg |= __SHIFTIN(AWIN_DDMA_CTL_DMA_ADDR_IO,
+				    AWIN_DDMA_CTL_DST_ADDR_MODE);
+		dmacfg |= __SHIFTIN(AWIN_DDMA_CTL_DMA_ADDR_LINEAR,
+				    AWIN_DDMA_CTL_SRC_ADDR_MODE);
+		dmacfg |= __SHIFTIN(sc->sc_drqtype_hdmiaudio,
+				    AWIN_DDMA_CTL_DST_DRQ_TYPE);
+	}
 	awin_dma_set_config(sc->sc_pdma, dmacfg);
 
 	error = awin_hdmiaudio_play(sc);
