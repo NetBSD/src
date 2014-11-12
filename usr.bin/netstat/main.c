@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.94 2014/11/07 12:42:27 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.95 2014/11/12 03:34:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.94 2014/11/07 12:42:27 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.95 2014/11/12 03:34:59 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -454,7 +454,7 @@ main(int argc, char *argv[])
 			iflag = 1;
 			break;
 		case 'L':
-			Lflag = 1;
+			Lflag = RT_LFLAG;
 			break;
 		case 'l':
 			lflag = 1;
@@ -639,7 +639,7 @@ main(int argc, char *argv[])
 			else {
 				if (use_sysctl)
 					p_rttables(af,
-					    nflag|tagflag|vflag, 0, ~0);
+					    nflag|tagflag|vflag|Lflag, 0, ~0);
 				else
 					routepr(nl[N_RTREE].n_value);
 			}
