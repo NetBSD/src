@@ -30,10 +30,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define RT_AFLAG	1
-#define RT_TFLAG	2
-#define RT_VFLAG	4
-#define RT_NFLAG	8
+#define RT_AFLAG	__BIT(0)	/* show address field */
+#define RT_TFLAG	__BIT(1)	/* show tag field */
+#define RT_VFLAG	__BIT(2)	/* show verbose statistics */
+#define RT_NFLAG	__BIT(3)	/* numeric output */
+#define RT_LFLAG	__BIT(4)	/* don't show LLINFO entries */
 
 void p_rttables(int, int, int, int);
 void p_rthdr(int, int);
