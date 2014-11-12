@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.49 2014/11/12 13:24:34 christos Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.50 2014/11/12 19:33:32 christos Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -109,7 +109,9 @@ ${XOBJS}:	${DPSRCS}
 ${PROG}: ${XOBJS} ${XSRCS} ${DPSRCS} ${DPADD}
 	${_MKTARGET_LINK}
 .if ${MKLDSCRIPT} == "yes"
-	$S/conf/mkldscript.sh -t ${KMODSCRIPTSRC} ${XOBJS} > ${KMODSCRIPT}
+	@rm -f ${KMODSCRIPT}
+	@OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh \
+	    -t ${KMODSCRIPTSRC} ${OBJS} > ${KMODSCRIPT}
 .endif
 	${CC} ${LDFLAGS} -nostdlib -MD -combine -r -Wl,-T,${KMODSCRIPT},-d \
 		-Wl,-Map=${.TARGET}.map \
@@ -162,8 +164,8 @@ ${PROG}: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
 .if ${MKLDSCRIPT} == "yes"
 	@rm -f ${KMODSCRIPT}
-	@OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh ${KMODSCRIPTSRC} ${OBJS} \
-	    > ${KMODSCRIPT}
+	@OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh \
+	    -t ${KMODSCRIPTSRC} ${OBJS} > ${KMODSCRIPT}
 .endif
 	${CC} ${LDFLAGS} -nostdlib -r -Wl,-T,${KMODSCRIPT},-d \
 		-Wl,-Map=${.TARGET}.map \
