@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmi.c,v 1.9 2014/11/11 19:22:32 jmcneill Exp $ */
+/* $NetBSD: awin_hdmi.c,v 1.10 2014/11/12 17:38:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define AWIN_HDMI_PLL	3	/* PLL7 or PLL3 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.9 2014/11/11 19:22:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.10 2014/11/12 17:38:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -681,7 +681,11 @@ awin_hdmi_set_audiomode(struct awin_hdmi_softc *sc,
 
 	/* DMA & FIFO control */
 	val = HDMI_READ(sc, AWIN_HDMI_ADMA_CTRL_REG);
-	val |= AWIN_HDMI_ADMA_CTRL_SRC_DMA_MODE;	/* NDMA */
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		val |= AWIN_HDMI_ADMA_CTRL_SRC_DMA_MODE;	/* NDMA */
+	} else {
+		val &= ~AWIN_HDMI_ADMA_CTRL_SRC_DMA_MODE;	/* DDMA */
+	}
 	val &= ~AWIN_HDMI_ADMA_CTRL_SRC_DMA_SAMPLE_RATE;
 	val &= ~AWIN_HDMI_ADMA_CTRL_SRC_SAMPLE_LAYOUT;
 	val &= ~AWIN_HDMI_ADMA_CTRL_SRC_WORD_LEN;
