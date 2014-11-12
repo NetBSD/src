@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.31 2014/08/21 13:52:22 macallan Exp $ */
+/* $NetBSD: vgavar.h,v 1.32 2014/11/12 03:12:35 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,9 @@
 
 #include <sys/callout.h>
 
+#ifdef _KERNEL_OPT
 #include "opt_vga.h"
+#endif
 
 struct vga_handle {
 	struct pcdisplay_handle vh_ph;
