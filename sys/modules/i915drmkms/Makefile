@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2014/11/11 11:30:21 nonaka Exp $
+# $NetBSD: Makefile,v 1.6 2014/11/12 02:15:16 christos Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -11,6 +11,7 @@ CPPFLAGS+=	-I${S}/external/bsd/drm2/i915drm
 
 KMOD=	i915drmkms
 IOCONF=	i915drmkms.ioconf
+MKLDSCRIPT=yes
 
 SRCS+=	dvo_ch7017.c
 SRCS+=	dvo_ch7xxx.c
