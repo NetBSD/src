@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.21.38.1 2014/11/12 18:50:55 snj Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.2.2.2 2014/11/12 18:50:55 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,6 +33,10 @@
 #define _DEV_CLOCK_SUBR_H_
 
 /*
+ * This is a slightly stripped down version of src/sys/dev/clock_subr.h
+ */
+
+/*
  * "POSIX time" to/from "YY/MM/DD/hh/mm/ss"
  */
 struct clock_ymdhms {
@@ -48,59 +52,11 @@ struct clock_ymdhms {
 time_t	clock_ymdhms_to_secs(struct clock_ymdhms *);
 int	clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
 
-/*
- * BCD to binary and binary to BCD.
- */
-#define	FROMBCD(x)	bcdtobin((x))
-#define	TOBCD(x)	bintobcd((x))
-
 /* Some handy constants. */
 #define SECDAY		(24 * 60 * 60)
 #define SECYR		(SECDAY * 365)
 
 /* Traditional POSIX base year */
 #define	POSIX_BASE_YEAR	1970
-
-/*
- * Interface to time-of-day clock devices.
- *
- * todr_gettime: convert time-of-day clock into a `struct timeval'
- * todr_settime: set time-of-day clock from a `struct timeval'
- *
- * (this is probably not so useful:)
- * todr_setwen: provide a machine-dependent TOD clock write-enable callback
- *		function which takes one boolean argument:
- *			1 to enable writes; 0 to disable writes.
- */
-struct todr_chip_handle {
-	void	*cookie;	/* Device specific data */
-	void	*bus_cookie;	/* Bus specific data */
-	time_t	base_time;	/* Base time (e.g. rootfs time) */
-
-	int	(*todr_gettime)(struct todr_chip_handle *, struct timeval *);
-	int	(*todr_settime)(struct todr_chip_handle *, struct timeval *);
-	int	(*todr_gettime_ymdhms)(struct todr_chip_handle *,
-	    			struct clock_ymdhms *);
-	int	(*todr_settime_ymdhms)(struct todr_chip_handle *,
-	    			struct clock_ymdhms *);
-	int	(*todr_setwen)(struct todr_chip_handle *, int);
-
-};
-typedef struct todr_chip_handle *todr_chip_handle_t;
-
-#define todr_wenable(ct, v)	if ((ct)->todr_setwen) \
-					((*(ct)->todr_setwen)(ct, v))
-
-/*
- * Probably these should evolve into internal routines in kern_todr.c.
- */
-extern int todr_gettime(todr_chip_handle_t tch, struct timeval *);
-extern int todr_settime(todr_chip_handle_t tch, struct timeval *);
-
-/*
- * Machine-dependent function that machine-independent RTC drivers can
- * use to register their todr_chip_handle_t with inittodr()/resettodr().
- */
-void	todr_attach(todr_chip_handle_t);
 
 #endif /* _DEV_CLOCK_SUBR_H_ */
