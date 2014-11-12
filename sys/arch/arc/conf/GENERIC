@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.182 2014/08/23 20:26:56 dholland Exp $
+# $NetBSD: GENERIC,v 1.183 2014/11/12 10:47:21 manu Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.182 $"
+#ident		"GENERIC-$Revision: 1.183 $"
 
 maxusers	32		# estimated number of users
 
@@ -128,6 +128,9 @@ options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	UFS_EXTATTR_AUTOSTART
+options 	UFS_EXTATTR_AUTOCREATE=1024
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
