@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.47 2014/11/12 02:19:28 christos Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.48 2014/11/12 02:50:01 christos Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -162,7 +162,7 @@ ${PROG}: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
 .if ${MKLDSCRIPT} == "yes"
 	@rm -f ${KMODSCRIPT}
-	@OBJDUMP=${OBJDUMP} $S/conf/mkldscript.sh ${KMODSCRIPTSRC} ${OBJS} \
+	@OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh ${KMODSCRIPTSRC} ${OBJS} \
 	    > ${KMODSCRIPT}
 .endif
 	${CC} ${LDFLAGS} -nostdlib -r -Wl,-T,${KMODSCRIPT},-d \
