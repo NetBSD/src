@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2014/11/12 02:13:30 christos Exp $
+# $NetBSD: Makefile,v 1.6 2014/11/12 03:03:01 christos Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -7,6 +7,7 @@
 .PATH:	${S}/external/bsd/drm2/pci
 .PATH:	${S}/external/bsd/drm2/dist/drm
 
+MKLDSCRIPT=yes
 KMOD=	drmkms
 
 # Upstream source files.
