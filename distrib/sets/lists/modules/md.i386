@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.50 2014/11/11 11:23:25 nonaka Exp $
+# $NetBSD: md.i386,v 1.51 2014/11/12 03:48:30 enami Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -288,12 +288,12 @@
 ./stand/i386-xen/@OSRELEASE@/modules/dm/dm.kmod				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/drm				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/drm/drm.kmod			base-kernel-modules	kmod,compatmodules
-./stand/i386-xen/@OSRELEASE@/modules/drmkms					base-kernel-modules	kmod
-./stand/i386-xen/@OSRELEASE@/modules/drmkms/drmkms.kmod				base-kernel-modules	kmod
-./stand/i386-xen/@OSRELEASE@/modules/drmkms_linux				base-kernel-modules	kmod
-./stand/i386-xen/@OSRELEASE@/modules/drmkms_linux/drmkms_linux.kmod		base-kernel-modules	kmod
-./stand/i386-xen/@OSRELEASE@/modules/drmkms_pci					base-kernel-modules	kmod
-./stand/i386-xen/@OSRELEASE@/modules/drmkms_pci/drmkms_pci.kmod			base-kernel-modules	kmod
+./stand/i386-xen/@OSRELEASE@/modules/drmkms				base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/drmkms/drmkms.kmod			base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/drmkms_linux			base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/drmkms_linux/drmkms_linux.kmod	base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/drmkms_pci				base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/drmkms_pci/drmkms_pci.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/dtv				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/dtv/dtv.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/dtv_math				base-kernel-modules	kmod,compatmodules
@@ -677,12 +677,12 @@
 ./stand/i386pae-xen/@OSRELEASE@/modules/dm/dm.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/drm				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/drm/drm.kmod			base-kernel-modules	kmod,compatmodules
-./stand/i386pae-xen/@OSRELEASE@/modules/drmkms					base-kernel-modules	kmod
-./stand/i386pae-xen/@OSRELEASE@/modules/drmkms/drmkms.kmod			base-kernel-modules	kmod
-./stand/i386pae-xen/@OSRELEASE@/modules/drmkms_linux				base-kernel-modules	kmod
-./stand/i386pae-xen/@OSRELEASE@/modules/drmkms_linux/drmkms_linux.kmod		base-kernel-modules	kmod
-./stand/i386pae-xen/@OSRELEASE@/modules/drmkms_pci				base-kernel-modules	kmod
-./stand/i386pae-xen/@OSRELEASE@/modules/drmkms_pci/drmkms_pci.kmod		base-kernel-modules	kmod
+./stand/i386pae-xen/@OSRELEASE@/modules/drmkms				base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/drmkms/drmkms.kmod		base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/drmkms_linux			base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/drmkms_linux/drmkms_linux.kmod	base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/drmkms_pci			base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/drmkms_pci/drmkms_pci.kmod	base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/dtv				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/dtv/dtv.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/dtv_math			base-kernel-modules	kmod,compatmodules
