@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.99 2014/08/23 20:26:59 dholland Exp $
+# $NetBSD: GENERIC,v 1.100 2014/11/12 10:47:23 manu Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.99 $"
+#ident 		"GENERIC-$Revision: 1.100 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -78,6 +78,9 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	UFS_EXTATTR_AUTOSTART
+options 	UFS_EXTATTR_AUTOCREATE=1024
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
