@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.54 2014/05/18 11:46:23 kardel Exp $
+#	$NetBSD: files.i2c,v 1.54.2.1 2014/11/12 20:07:20 martin Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -54,6 +54,7 @@ define	motoi2c
 file	dev/i2c/motoi2c.c			motoi2c
 define	mvi2c
 file	dev/i2c/gttwsi_core.c			mvi2c
+defflag opt_gttwsi.h				GTTWSI_ALLWINNER
 
 #
 # I2C client devices
@@ -214,3 +215,7 @@ device  mpl115a: sysmon_envsys
 attach  mpl115a at iic
 file    dev/i2c/mpl115a.c		mpl115a
 
+# AXP20x Power Management Unit
+device	axp20x: sysmon_envsys
+attach	axp20x at iic
+file	dev/i2c/axp20x.c			axp20x
