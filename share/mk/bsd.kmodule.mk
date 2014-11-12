@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.46 2014/11/06 12:05:44 uebayasi Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.47 2014/11/12 02:19:28 christos Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -11,6 +11,7 @@ MKPIE=no
 realinstall:	kmodinstall
 
 KERN=		$S/kern
+MKLDSCRIPT?=	no
 
 CFLAGS+=	-ffreestanding ${COPTS}
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -isystem $S -isystem $S/arch
@@ -72,9 +73,14 @@ DPSRCS+=	${_YKMSRCS}
 CLEANFILES+=	${_YKMSRCS}
 
 .if exists($S/../sys/modules/xldscripts/kmodule)
-KMODSCRIPT=	$S/../sys/modules/xldscripts/kmodule
+KMODSCRIPTSRC=	$S/../sys/modules/xldscripts/kmodule
 .else
-KMODSCRIPT=	${DESTDIR}/usr/libdata/ldscripts/kmodule
+KMODSCRIPTSRC=	${DESTDIR}/usr/libdata/ldscripts/kmodule
+.endif
+.if ${MKLDSCRIPT} == "yes"
+KMODSCRIPT=	kldscript
+.else
+KMODSCRIPT=	${KMODSCRIPTSRC}
 .endif
 
 PROG?=		${KMOD}.kmod
@@ -102,6 +108,9 @@ ${XOBJS}:	${DPSRCS}
 
 ${PROG}: ${XOBJS} ${XSRCS} ${DPSRCS} ${DPADD}
 	${_MKTARGET_LINK}
+.if ${MKLDSCRIPT} == "yes"
+	$S/conf/mkldscript.sh ${KMODSCRIPTSRC} ${XOBJS} > ${KMODSCRIPT}
+.endif
 	${CC} ${LDFLAGS} -nostdlib -MD -combine -r -Wl,-T,${KMODSCRIPT},-d \
 		-Wl,-Map=${.TARGET}.map \
 		-o ${.TARGET} ${CFLAGS} ${CPPFLAGS} ${XOBJS} \
@@ -151,6 +160,11 @@ ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 .else
 ${PROG}: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
+.if ${MKLDSCRIPT} == "yes"
+	@rm -f ${KMODSCRIPT}
+	@OBJDUMP=${OBJDUMP} $S/conf/mkldscript.sh ${KMODSCRIPTSRC} ${OBJS} \
+	    > ${KMODSCRIPT}
+.endif
 	${CC} ${LDFLAGS} -nostdlib -r -Wl,-T,${KMODSCRIPT},-d \
 		-Wl,-Map=${.TARGET}.map \
 		-o ${.TARGET} ${OBJS}
@@ -200,6 +214,9 @@ kmodinstall::	${_PROG}
 ##### Clean rules
 CLEANFILES+= a.out [Ee]rrs mklog core *.core ${PROG} ${OBJS} ${LOBJS}
 CLEANFILES+= ${PROG}.map
+.if ${MKLDSCRIPT} == "yes"
+CLEANFILES+= kldscript
+.endif
 
 ##### Custom rules
 lint: ${LOBJS}
