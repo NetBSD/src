@@ -1,0 +1,10 @@
+#	$NetBSD: BPI_INSTALL,v 1.1.2.2 2014/11/12 19:54:46 martin Exp $
+#
+#	BPI_INSTALL -- BPI kernel with installation-sized ramdisk
+#
+
+include "arch/evbarm/conf/BPI"
+include "arch/evbarm/conf/INSTALL"
+
+options BOOTHOWTO=RB_SINGLE
+no makeoptions	DEBUG

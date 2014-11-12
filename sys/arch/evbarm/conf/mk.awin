@@ -1,5 +1,4 @@
-#	$NetBSD: mk.awin,v 1.2.2.2 2014/09/10 09:37:51 martin Exp $
-CPPFLAGS+= -mcpu=cortex-a8 -mfpu=neon
+#	$NetBSD: mk.awin,v 1.2.2.3 2014/11/12 19:54:46 martin Exp $
 
 .if !empty(MACHINE_ARCH:M*eb)
 EXTRA_LINKFLAGS+=	--be8
