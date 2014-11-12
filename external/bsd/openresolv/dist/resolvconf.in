@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2007-2012 Roy Marples
+# Copyright (c) 2007-2014 Roy Marples
 # All rights reserved
 
 # Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,13 @@ VARDIR=@VARDIR@
 # Disregard dhcpcd setting
 unset interface_order state_dir
 
+# If you change this, change the test in VFLAG and libc.in as well
+local_nameservers="127.* 0.0.0.0 255.255.255.255 ::1"
+
+dynamic_order="tap[0-9]* tun[0-9]* vpn vpn[0-9]* ppp[0-9]* ippp[0-9]*"
+interface_order="lo lo[0-9]*"
+name_server_blacklist="0.0.0.0"
+
 # Support original resolvconf configuration layout
 # as well as the openresolv config file
 if [ -f "$SYSCONFDIR"/resolvconf.conf ]; then
@@ -43,13 +50,16 @@ elif [ -d "$SYSCONFDIR/resolvconf" ]; then
 		interface_order="$(cat "$SYSCONFDIR"/interface-order)"
 	fi
 fi
+TMPDIR="$VARDIR/tmp"
 IFACEDIR="$VARDIR/interfaces"
 METRICDIR="$VARDIR/metrics"
 PRIVATEDIR="$VARDIR/private"
+LOCKDIR="$VARDIR/lock"
 
-: ${dynamic_order:=tap[0-9]* tun[0-9]* vpn vpn[0-9]* ppp[0-9]* ippp[0-9]*}
-: ${interface_order:=lo lo[0-9]*}
-: ${name_server_blacklist:=0.0.0.0}
+warn()
+{
+	echo "$*" >&2
+}
 
 error_exit()
 {
@@ -113,7 +123,7 @@ echo_resolv()
 parse_resolv()
 {
 	local line= ns= ds= search= d= n= newns=
-	local new=true iface= private=false p= domain=
+	local new=true iface= private=false p= domain= l= islocal=
 
 	newns=
 
@@ -138,13 +148,17 @@ parse_resolv()
 			fi
 			;;
 		"nameserver "*)
-			case "${line#* }" in
-			127.*|0.0.0.0|255.255.255.255|::1)
-				echo "LOCALNAMESERVERS=\"\$LOCALNAMESERVERS ${line#* }\""
-				continue
-				;;
-			esac
-			ns="$ns${line#* } "
+			islocal=false
+			for l in $local_nameservers; do
+				case "${line#* }" in
+				$l)
+					islocal=true
+					echo "LOCALNAMESERVERS=\"\$LOCALNAMESERVERS ${line#* }\""
+					break
+					;;
+				esac
+			done
+			$islocal || ns="$ns${line#* } "
 			;;
 		"domain "*)
 			if [ -z "$domain" ]; then
@@ -340,6 +354,47 @@ echo_append()
 	echo
 }
 
+replace()
+{
+	local r= k= f= v= val= sub=
+
+	while read -r keyword value; do
+		for r in $replace; do
+			k="${r%%/*}"
+			r="${r#*/}"
+			f="${r%%/*}"
+			r="${r#*/}"
+			v="${r%%/*}"
+			case "$keyword" in
+			$k)
+				case "$value" in
+				$f) value="$v";;
+				esac
+				;;
+			esac
+		done
+		val=
+		for sub in $value; do
+			for r in $replace_sub; do
+				k="${r%%/*}"
+				r="${r#*/}"
+				f="${r%%/*}"
+				r="${r#*/}"
+				v="${r%%/*}"
+				case "$keyword" in
+				$k)
+					case "$sub" in
+					$f) sub="$v";;
+					esac
+					;;
+				esac
+			done
+			val="$val${val:+ }$sub"
+		done
+		printf "%s %s\n" "$keyword" "$val"
+	done
+}
+
 make_vars()
 {
 	local newdomains= d= dn= newns= ns=
@@ -354,7 +409,9 @@ make_vars()
 	if [ -n "$name_servers" -o -n "$search_domains" ]; then
 		eval "$(echo_prepend | parse_resolv)"
 	fi
-	eval "$(list_resolv -l "$@" | parse_resolv)"
+	if [ -z "$VFLAG" ]; then
+		eval "$(list_resolv -l "$@" | replace | parse_resolv)"
+	fi
 	if [ -n "$name_servers_append" -o -n "$search_domains_append" ]; then
 		eval "$(echo_append | parse_resolv)"
 	fi
@@ -374,7 +431,7 @@ make_vars()
 					case ",$newns," in
 					*,${ns%%,*},*) ;;
 					*) list_remove name_server_blacklist \
-						"$ns" >/dev/null \
+						"${ns%%,*}" >/dev/null \
 					&& newns="$newns${newns:+,}${ns%%,*}";;
 					esac
 					[ "$ns" = "${ns#*,}" ] && break
@@ -401,12 +458,21 @@ make_vars()
 }
 
 force=false
-while getopts a:Dd:fhIilm:puv OPT; do
+VFLAG=
+while getopts a:Dd:fhIilm:puvV OPT; do
 	case "$OPT" in
 	f) force=true;;
 	h) usage;;
 	m) IF_METRIC="$OPTARG";;
 	p) IF_PRIVATE=1;;
+	V)
+		VFLAG=1
+		if [ "$local_nameservers" = \
+		    "127.* 0.0.0.0 255.255.255.255 ::1" ]
+		then
+			local_nameservers=
+		fi
+		;;
 	'?') ;;
 	*) cmd="$OPT"; iface="$OPTARG";;
 	esac
@@ -435,7 +501,7 @@ if [ "$cmd" = l -o "$cmd" = i ]; then
 fi
 
 # Not normally needed, but subscribers should be able to run independently
-if [ "$cmd" = v ]; then
+if [ "$cmd" = v -o -n "$VFLAG" ]; then
 	make_vars "$iface"
 	exit $?
 fi
@@ -449,6 +515,7 @@ elif [ "$cmd" != u ]; then
 	[ -n "$cmd" -a "$cmd" != h ] && usage "Unknown option $cmd"
 	usage
 fi
+
 if [ "$cmd" = a ]; then
 	for x in '/' \\ ' ' '*'; do
 		case "$iface" in
@@ -464,38 +531,56 @@ if [ "$cmd" = a ]; then
 	[ "$cmd" = a -a -t 0 ] && error_exit "No file given via stdin"
 fi
 
-if [ ! -d "$IFACEDIR" ]; then
-	if [ ! -d "$VARDIR" ]; then
-		if [ -L "$VARDIR" ]; then
-			dir="$(readlink "$VARDIR")"
-			# link maybe relative
-			cd "${VARDIR%/*}"
-			if ! mkdir -m 0755 -p "$dir"; then
-				error_exit "Failed to create needed" \
-					"directory $dir"
-			fi
-		else
-			if ! mkdir -m 0755 -p "$VARDIR"; then
-				error_exit "Failed to create needed" \
-					"directory $VARDIR"
-			fi
+if [ ! -d "$VARDIR" ]; then
+	if [ -L "$VARDIR" ]; then
+		dir="$(readlink "$VARDIR")"
+		# link maybe relative
+		cd "${VARDIR%/*}"
+		if ! mkdir -m 0755 -p "$dir"; then
+			error_exit "Failed to create needed" \
+				"directory $dir"
+		fi
+	else
+		if ! mkdir -m 0755 -p "$VARDIR"; then
+			error_exit "Failed to create needed" \
+				"directory $VARDIR"
 		fi
 	fi
+fi
+
+if [ ! -d "$IFACEDIR" ]; then
 	mkdir -m 0755 -p "$IFACEDIR" || \
 		error_exit "Failed to create needed directory $IFACEDIR"
+	if [ "$cmd" = d ]; then
+		# Provide the same error messages as below
+		if ! ${force}; then
+			cd "$IFACEDIR"
+			for i in $args; do
+				warn "No resolv.conf for interface $i"
+			done
+		fi
+		${force}
+		exit $?
+	fi
 else
 	# Delete any existing information about the interface
 	if [ "$cmd" = d ]; then
 		cd "$IFACEDIR"
+		changed=false
 		for i in $args; do
-			if [ "$cmd" = d -a ! -e "$i" ]; then
-				$force && continue
-				error_exit "No resolv.conf for" \
-					"interface $i"
+			if [ -e "$i" ]; then
+				changed=true
+			elif ! ${force}; then
+				warn "No resolv.conf for interface $i"
 			fi
 			rm -f "$i" "$METRICDIR/"*" $i" \
 				"$PRIVATEDIR/$i" || exit $?
 		done
+		if ! ${changed}; then
+			# Set the return code based on the forced flag
+			${force}
+			exit $?
+		fi
 	fi
 fi
 
@@ -503,20 +588,21 @@ if [ "$cmd" = a ]; then
 	# Read resolv.conf from stdin
 	resolv="$(cat)"
 	changed=false
+	changedfile=false
 	# If what we are given matches what we have, then do nothing
 	if [ -e "$IFACEDIR/$iface" ]; then
 		if [ "$(echo "$resolv")" != \
 			"$(cat "$IFACEDIR/$iface")" ]
 		then
-			rm "$IFACEDIR/$iface"
 			changed=true
+			changedfile=true
 		fi
 	else
 		changed=true
+		changedfile=true
 	fi
-	if $changed; then
-		echo "$resolv" >"$IFACEDIR/$iface" || exit $?
-	fi
+	# Set metric and private before creating the interface resolv.conf file
+	# to ensure that it will have the correct flags
 	[ ! -d "$METRICDIR" ] && mkdir "$METRICDIR"
 	oldmetric="$METRICDIR/"*" $iface"
 	newmetric=
@@ -548,9 +634,52 @@ if [ "$cmd" = a ]; then
 		fi
 		;;
 	esac
+	if $changedfile; then
+		# Ensure that creating the file is an atomic operation
+		if [ ! -d "$TMPDIR" ]; then
+			mkdir -m 0755 -p "$TMPDIR" || \
+			    error_exit \
+				"Failed to create needed directory $TMPDIR"
+		fi
+		TMPFILE="$TMPDIR/$iface.$$"
+		cleanup() { [ -n "$TMPFILE" ] && rm -f "$TMPFILE"; }
+		trap cleanup EXIT
+		echo "$resolv" >"$TMPFILE" || exit $?
+		mv -f "$TMPFILE" "$IFACEDIR/$iface" || exit $?
+		TMPFILE=
+	fi
 	$changed || exit 0
 	unset changed oldmetric newmetric
 fi
+
+case "${resolvconf:-YES}" in
+[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1) ;;
+*) exit 0;;
+esac
+
+# An interface was added, deleted or changed.
+# These above actions are atomic, however calling our subcribers is not.
+# Even if we do our very best, the action of restarting the subscriber daemon
+# is not guaranteed to be serialised due to our many flavours of OS we support.
+# As such we spinlock at this point as best we can.
+# We don't use flock(1) because it's not widely available and normally resides
+# in /usr which we do our very best to operate without.
+[ -w "$VARDIR" ] || error_exit "Cannot write to $LOCKDIR"
+: ${lock_timeout:=10}
+while true; do
+	if mkdir "$LOCKDIR" 2>/dev/null; then
+		trap 'rm -rf "$LOCKDIR";' EXIT
+		trap 'rm -rf "$LOCKDIR"; exit 1' INT QUIT ABRT SEGV ALRM TERM
+		echo $$ >"$LOCKDIR/pid"
+		break
+	fi
+	lock_timeout=$(($lock_timeout - 1))
+	if [ "$lock_timeout" -le 0 ]; then
+		pid=$(cat "$LOCKDIR/pid")
+		error_exit "timed out waiting for lock from pid $pid"
+	fi
+	sleep 1
+done
 
 eval "$(make_vars)"
 export RESOLVCONF DOMAINS SEARCH NAMESERVERS LOCALNAMESERVERS
@@ -558,6 +687,11 @@ export RESOLVCONF DOMAINS SEARCH NAMESERVERS LOCALNAMESERVERS
 retval=0
 for script in "$LIBEXECDIR"/*; do
 	if [ -f "$script" ]; then
+		eval script_enabled="\$${script##*/}"
+		case "${script_enabled:-YES}" in
+		[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1) ;;
+		*) continue;;
+		esac
 		if [ -x "$script" ]; then
 			"$script" "$cmd" "$iface"
 		else
