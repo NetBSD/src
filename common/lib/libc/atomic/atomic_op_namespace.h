@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_namespace.h,v 1.6 2014/02/22 17:08:30 martin Exp $	*/
+/*	$NetBSD: atomic_op_namespace.h,v 1.6.4.1 2014/11/12 19:20:06 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,6 +57,8 @@
 #define	atomic_and_uint_nv	_atomic_and_uint_nv
 #define	atomic_and_ulong_nv	_atomic_and_ulong_nv
 #define	atomic_and_64_nv	_atomic_and_64_nv
+#define	atomic_and_16_nv	_atomic_and_16_nv
+#define	atomic_and_8_nv		_atomic_and_8_nv
 
 #define	atomic_or_32		_atomic_or_32
 #define	atomic_or_uint		_atomic_or_uint
