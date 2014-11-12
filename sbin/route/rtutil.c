@@ -1,4 +1,4 @@
-/*	$NetBSD: rtutil.c,v 1.2 2014/11/08 00:47:32 christos Exp $	*/
+/*	$NetBSD: rtutil.c,v 1.3 2014/11/12 03:34:08 christos Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -260,6 +260,9 @@ p_rtentry(struct rt_msghdr *rtm, int flags, int interesting)
 #ifndef SMALL
 	char		 ifbuf[IF_NAMESIZE];
 #endif
+
+	if ((flags & RT_LFLAG) && (rtm->rtm_flags & RTF_LLINFO))
+		return;
 
 	if (old_af != sa->sa_family) {
 		old_af = sa->sa_family;
