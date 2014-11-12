@@ -27,5 +27,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 struct sysctllog;
-extern void drm_sysctl_init(const void **, struct sysctllog **);
-extern void drm_sysctl_fini(struct sysctllog **);
+
+struct drm_sysctl_def {
+	struct sysctllog *log;
+	const void *bp, *ep, *bd, *ed;
+};
+
+void drm_sysctl_init(struct drm_sysctl_def *);
+void drm_sysctl_fini(struct drm_sysctl_def *);
+
+#define DRM_SYSCTL_INIT() {				\
+	NULL,						\
+	__link_set_start(linux_module_param_info),	\
+	__link_set_end(linux_module_param_info),	\
+	__link_set_start(linux_module_param_desc),	\
+	__link_set_end(linux_module_param_desc),	\
+};
+
+__link_set_decl(linux_module_param_info, struct linux_module_param_info);
+__link_set_decl(linux_module_param_desc, struct linux_module_param_desc);

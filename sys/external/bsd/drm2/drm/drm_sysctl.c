@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_sysctl.c,v 1.1 2014/11/12 02:24:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_sysctl.c,v 1.2 2014/11/12 03:14:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -41,9 +41,10 @@ __KERNEL_RCSID(0, "$NetBSD: drm_sysctl.c,v 1.1 2014/11/12 02:24:40 christos Exp 
 #include <drm/drm_sysctl.h>
 
 static const char *
-drm_sysctl_get_description(const struct linux_module_param_info *p, const void **v)
+drm_sysctl_get_description(const struct linux_module_param_info *p,
+    const struct drm_sysctl_def *def)
 {
-	const void * const *b = v[0], * const *e = v[1];
+	const void * const *b = def->bd, * const *e = def->ed;
 
 	for (; b < e; b++) {
 		const struct linux_module_param_desc *d = *b;
@@ -112,14 +113,14 @@ drm_sysctl_node(const char *name, const struct sysctlnode **node,
 	
 
 void
-drm_sysctl_init(const void **v, struct sysctllog **log)
+drm_sysctl_init(struct drm_sysctl_def *def)
 {
-	const void * const *b = v[0], * const *e = v[1];
+	const void * const *b = def->bp, * const *e = def->ep;
 	const struct sysctlnode *rnode = NULL, *cnode;
 	const char *name = "drm2";
 
 	int error;
-	if ((error = sysctl_createv(log, 0, NULL, &rnode,
+	if ((error = sysctl_createv(&def->log, 0, NULL, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, name,
 	    SYSCTL_DESCR("DRM driver parameters"),
 	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0) {
@@ -135,17 +136,18 @@ drm_sysctl_init(const void **v, struct sysctllog **log)
 		cnode = rnode;
 		for (n = copy; (nn = strchr(n, '.')) != NULL; n = nn) {
 			*nn++ = '\0';
-			if ((error = drm_sysctl_node(n, &cnode, log)) != 0) {
+			if ((error = drm_sysctl_node(n, &cnode, &def->log))
+			    != 0) {
 				aprint_error("sysctl_createv returned %d, "
 				    "for %s ignoring\n", error, n);
 				continue;
 			}
 		}
 			
-	        if ((error = sysctl_createv(log, 0, &cnode,
+	        if ((error = sysctl_createv(&def->log, 0, &cnode,
 		    &cnode, p->mode == 0600 ? CTLFLAG_READWRITE : 0,
 		    drm_sysctl_get_type(p), n,
-		    SYSCTL_DESCR(drm_sysctl_get_description(p, v + 2)),
+		    SYSCTL_DESCR(drm_sysctl_get_description(p, def)),
 		    NULL, 0, p->ptr, 0, CTL_CREATE, CTL_EOL)) != 0)
 			aprint_error("sysctl_createv returned %d, "
 			    "for %s ignoring\n", error, n);
@@ -153,7 +155,7 @@ drm_sysctl_init(const void **v, struct sysctllog **log)
 }
 
 void
-drm_sysctl_fini(struct sysctllog **log)
+drm_sysctl_fini(struct drm_sysctl_def *def)
 {
-	sysctl_teardown(log);
+	sysctl_teardown(&def->log);
 }
