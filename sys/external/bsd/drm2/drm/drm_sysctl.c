@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_sysctl.c,v 1.2 2014/11/12 03:14:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_sysctl.c,v 1.3 2014/11/12 04:53:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,7 +48,7 @@ drm_sysctl_get_description(const struct linux_module_param_info *p,
 
 	for (; b < e; b++) {
 		const struct linux_module_param_desc *d = *b;
-		if (strcmp(p->name, d->name) == 0)
+		if (strcmp(p->dname, d->name) == 0)
 			return d->description;
 	}
 	return NULL;
