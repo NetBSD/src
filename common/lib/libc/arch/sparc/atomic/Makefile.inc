@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2014/02/21 16:21:02 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.17.4.1 2014/11/12 19:20:06 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -34,7 +34,10 @@ SRCS+=	atomic_nand_16_cas.c atomic_nand_8_cas.c	\
 	atomic_cas_16_cas.c atomic_cas_8_cas.c		\
 	atomic_sub_16_cas.c atomic_sub_8_cas.c		\
 	atomic_or_16_cas.c atomic_or_8_cas.c		\
-	atomic_swap_16_cas.c atomic_swap_8_cas.c
+	atomic_swap_16_cas.c atomic_swap_8_cas.c	\
+	atomic_c11_compare_exchange_cas_32.c		\
+	atomic_c11_compare_exchange_cas_16.c		\
+	atomic_c11_compare_exchange_cas_8.c
 .  endif
 
 .  if (${LIB} == "kern" || ${LIB} == "rump")
