@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.88 2014/11/11 12:53:54 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.89 2014/11/12 13:48:31 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2326,4 +2326,25 @@ sys/dev/wscons/wsdisplay_vcons.c		1.33
 
 	Allocate char and attr buffers with M_ZERO.
 	[jmcneill, ticket #212]
+
+external/bsd/openresolv/dist/resolvconf.8.in	1.3-1.4
+external/bsd/openresolv/dist/resolvconf.conf.5.in 1.10-1.11
+
+	Import openresolv-3.6.0 with the following changes:
+
+	  *  dnsmasq subscriber no longer moans if it hasn't written a pidfile
+	  *  Ensure that name_server_blacklist works for more than one option.
+	     Thanks to Frederic Barthelery.
+	  *  unbound_insecure can disable DNSSEC for all domains processed.
+	  *  local_nameservers now defaults to
+	     127.* 0.0.0.0 255.255.255.255 ::1
+	     and is used instead of a hard coded list.
+	  *  Allow the disabling of resolvconf or optionally an individual
+	     subscriber.
+	  *  Don't wait around trying to create a lock if we don't have
+	     permission.
+	  *  resolv_conf_passthrough=NULL will update resolv.conf to match
+	     only what is configured in resolvconf.conf and ignore any
+	     interface configuration.
+	[roy, ticket #208]
 
