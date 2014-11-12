@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.89 2014/11/12 13:48:31 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.90 2014/11/12 14:22:20 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2347,4 +2347,25 @@ external/bsd/openresolv/dist/resolvconf.conf.5.in 1.10-1.11
 	     only what is configured in resolvconf.conf and ignore any
 	     interface configuration.
 	[roy, ticket #208]
+
+lib/libc/resolv/res_mkquery.c			1.14
+
+	PR/48475: YAMAGUCHI Takanori: EDNS option broken with unbound. struct
+	querybuf in net/gethnamaddr.c defines MAXPACKET to 64K. This in turn
+	gets passed down until it reached res_nopt(..., answer, anslen), where
+	the size of the buffer must fit in 16 bits. Unfortunately we end up
+	being one more than the max so we end up sending a 0 as the size and
+	unbound does not like that. Instead we clip now to 64K - 1, and
+	everyone is happy.
+	[christos, ticket #213]
+
+sys/external/bsd/drm2/radeon/files.radeon	1.6-1.12
+
+	Relax some radeon drm warnings.
+	[snj, ticket #215]
+
+usr.bin/vmstat/vmstat.c				1.204
+
+	Print the cpu in the kernhist record.
+	[skrll, ticket #221]
 
