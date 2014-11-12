@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.6.4.1 2014/08/12 10:22:54 martin Exp $	*/
+/*	$NetBSD: motg.c,v 1.6.4.2 2014/11/12 19:54:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -39,8 +39,10 @@
  * NOTE: The current implementation only supports Device Side Mode!
  */
 
+#include "opt_motg.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.6.4.1 2014/08/12 10:22:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.6.4.2 2014/11/12 19:54:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +64,12 @@ __KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.6.4.1 2014/08/12 10:22:54 martin Exp $");
 #include <dev/usb/usb_mem.h>
 #include <dev/usb/usb_quirks.h>
 
+#ifdef MOTG_ALLWINNER
+#include <arch/arm/allwinner/awin_otgreg.h>
+#else
 #include <dev/usb/motgreg.h>
+#endif
+
 #include <dev/usb/motgvar.h>
 #include <dev/usb/usbroothub_subr.h>
 
@@ -261,9 +268,11 @@ motg_init(struct motg_softc *sc)
 
 	musbotg_pull_common(sc, 0);
 
+#ifdef MUSB2_REG_RXDBDIS
 	/* disable double packet buffering XXX what's this ? */
 	UWRITE2(sc, MUSB2_REG_RXDBDIS, 0xFFFF);
 	UWRITE2(sc, MUSB2_REG_TXDBDIS, 0xFFFF);
+#endif
 
 	/* enable HighSpeed and ISO Update flags */
 
@@ -288,24 +297,30 @@ motg_init(struct motg_softc *sc)
 
 	UWRITE1(sc, MUSB2_REG_TESTMODE, 0);
 
+#ifdef MUSB2_REG_MISC
 	/* set default value */
 
 	UWRITE1(sc, MUSB2_REG_MISC, 0);
+#endif
 
 	/* select endpoint index 0 */
 
 	UWRITE1(sc, MUSB2_REG_EPINDEX, 0);
 
-	/* read out number of endpoints */
-	nrx = (UREAD1(sc, MUSB2_REG_EPINFO) / 16);
+	if (sc->sc_ep_max == 0) {
+		/* read out number of endpoints */
+		nrx = (UREAD1(sc, MUSB2_REG_EPINFO) / 16);
 
-	ntx = (UREAD1(sc, MUSB2_REG_EPINFO) % 16);
+		ntx = (UREAD1(sc, MUSB2_REG_EPINFO) % 16);
 
-	/* these numbers exclude the control endpoint */
+		/* these numbers exclude the control endpoint */
 
-	DPRINTF(("RX/TX endpoints: %u/%u\n", nrx, ntx));
+		DPRINTF(("RX/TX endpoints: %u/%u\n", nrx, ntx));
 
-	sc->sc_ep_max = MAX(nrx, ntx);
+		sc->sc_ep_max = MAX(nrx, ntx);
+	} else {
+		nrx = ntx = sc->sc_ep_max;
+	}
 	if (sc->sc_ep_max == 0) {
 		aprint_error_dev(sc->sc_dev, " no endpoints\n");
 		return USBD_INVAL;
@@ -338,20 +353,28 @@ motg_init(struct motg_softc *sc)
 		/* select endpoint */
 		UWRITE1(sc, MUSB2_REG_EPINDEX, i);
 
-		val = UREAD1(sc, MUSB2_REG_FSIZE);
-		fiforx_size = (val & MUSB2_MASK_RX_FSIZE) >> 4;
-		fifotx_size = (val & MUSB2_MASK_TX_FSIZE);
+		if (sc->sc_ep_fifosize) {
+			fiforx_size = fifotx_size = sc->sc_ep_fifosize;
+		} else {
+			val = UREAD1(sc, MUSB2_REG_FSIZE);
+			fiforx_size = (val & MUSB2_MASK_RX_FSIZE) >> 4;
+			fifotx_size = (val & MUSB2_MASK_TX_FSIZE);
+		}
 
 		DPRINTF(("Endpoint %u FIFO size: IN=%u, OUT=%u, DYN=%d\n",
 		    i, fifotx_size, fiforx_size, dynfifo));
 
 		if (dynfifo) {
-			if (i < 3) {
-				fifo_size = 12;       /* 4K */
-			} else if (i < 10) {
-				fifo_size = 10;       /* 1K */
+			if (sc->sc_ep_fifosize) {
+				fifo_size = ffs(sc->sc_ep_fifosize) - 1;
 			} else {
-				fifo_size = 7;        /* 128 bytes */
+				if (i < 3) {
+					fifo_size = 12;       /* 4K */
+				} else if (i < 10) {
+					fifo_size = 10;       /* 1K */
+				} else {
+					fifo_size = 7;        /* 128 bytes */
+				}
 			}
 			if (fiforx_size && (i <= nrx)) {
 				fiforx_size = fifo_size;
@@ -643,7 +666,7 @@ motg_softintr(void *v)
 	tx_status |= UREAD2(sc, MUSB2_REG_INTTX);
 
 	if (rx_status & 0x01)
-		panic("ctrl_rx");
+		panic("ctrl_rx %08x", rx_status);
 	if (tx_status & 0x01)
 		motg_device_ctrl_intr_tx(sc);
 	for (i = 1; i <= sc->sc_ep_max; i++) {
