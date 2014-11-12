@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.92 2014/11/12 19:24:25 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.93 2014/11/12 20:09:08 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2403,4 +2403,32 @@ common/lib/libc/atomic/atomic_op_namespace.h	1.7
 	Provide missing __sync_*/__atomic_* builtin/support
 	functions and primitives needed for C++11 <atomic>.
 	[martin, ticket #218]
+
+etc/etc.evbarm/Makefile.inc			1.64
+sys/arch/evbarm/conf/BPI			1.2,1.4,1.6-1.7,1.9
+sys/arch/evbarm/conf/BPI_INSTALL		1.1
+sys/arch/evbarm/conf/CUBIEBOARD			1.18-1.30
+sys/arch/evbarm/conf/CUBIETRUCK			1.4,1.6
+sys/arch/evbarm/conf/mk.awin			1.4
+sys/arch/evbarm/conf/std.awin			1.4 (via patch)
+sys/conf/files					1.1104
+sys/dev/usb/motg.c				1.9-1.12
+sys/dev/usb/motgreg.h				1.2-1.4
+
+	Various allwinner USB OTG driver and kernel config enhancements.
+	[skrll, ticket #222]
+
+sys/arch/evbarm/conf/std.awin			1.2
+sys/dev/i2c/axp20x.c				1.1-1.2
+sys/dev/i2c/files.i2c				1.55-1.56
+sys/dev/i2c/gttwsireg.h				1.2
+
+	AllWinner implementation uses a different register layout, select it
+	with options GTTWSI_ALLWINNER.
+
+	AXP20x Power Management Unit driver, pretty basic at the moment
+	 -- only acts as a temperature sensor.
+
+	Fix a sizeof typo.
+	[skrll, ticket #223]
 
