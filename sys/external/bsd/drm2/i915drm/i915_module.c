@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_module.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: i915_module.c,v 1.4 2014/11/12 02:24:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.4 2014/11/12 02:24:40 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.3 2014/07/16 20:56:25 riastradh Ex
 #include <sys/systm.h>
 
 #include <drm/drmP.h>
+#include <drm/drm_sysctl.h>
 
 #include "i915_drv.h"
 
@@ -53,6 +54,10 @@ MODULE(MODULE_CLASS_DRIVER, i915drmkms, "drmkms,drmkms_pci"); /* XXX drmkms_i2c 
 extern struct drm_driver *const i915_drm_driver;
 extern const struct pci_device_id *const i915_device_ids;
 extern const size_t i915_n_device_ids;
+
+static struct sysctllog *i915_sysctllog;
+__link_set_decl(linux_module_param_info, struct linux_module_param_info);
+__link_set_decl(linux_module_param_desc, struct linux_module_param_desc);
 
 static int
 i915drmkms_init(void)
@@ -74,6 +79,13 @@ i915drmkms_init(void)
 		    error);
 		return error;
 	}
+	const void *v[] = {
+	    __link_set_start(linux_module_param_info),
+	    __link_set_end(linux_module_param_info),
+	    __link_set_start(linux_module_param_desc),
+	    __link_set_end(linux_module_param_desc),
+	};
+	drm_sysctl_init(v, &i915_sysctllog);
 
 	return 0;
 }
@@ -96,6 +108,7 @@ i915drmkms_fini(void)
 {
 
 	drm_pci_exit(i915_drm_driver, NULL);
+	drm_sysctl_fini(&i915_sysctllog);
 }
 
 static int

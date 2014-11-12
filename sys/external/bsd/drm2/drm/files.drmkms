@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.8 2014/09/14 19:06:00 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.9 2014/11/12 02:24:40 christos Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -65,5 +65,6 @@ file	external/bsd/drm2/drm/drm_vma_manager.c		drmkms
 
 file	external/bsd/drm2/drm/drm_gem_vm.c		drmkms
 file	external/bsd/drm2/drm/drm_module.c		drmkms
+file	external/bsd/drm2/drm/drm_sysctl.c		drmkms
 
 include "external/bsd/drm2/ttm/files.ttm"

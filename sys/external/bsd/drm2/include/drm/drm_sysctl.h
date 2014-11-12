@@ -1,11 +1,9 @@
-/*	$NetBSD: moduleparam.h,v 1.3 2014/11/12 02:24:40 christos Exp $	*/
-
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Taylor R. Campbell.
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,29 +26,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef _LINUX_MODULEPARAM_H_
-#define _LINUX_MODULEPARAM_H_
-
-#include <sys/types.h>
-
-struct linux_module_param_info {
-	const char *name;
-	void *ptr;
-	int type;
-	mode_t mode;
-};
-
-#define MTYPE_int	0
-#define MTYPE_bool	1
-
-#define	module_param_named(NAME, VAR, TYPE, MODE) \
-static __attribute__((__used__)) struct linux_module_param_info info_ ## NAME = { \
-	.name = # VAR, \
-	.ptr = & VAR, \
-	.type = MTYPE_ ## TYPE, \
-	.mode = MODE, \
-}; \
-__link_set_add_data(linux_module_param_info, info_ ## NAME)
-
-#endif  /* _LINUX_MODULEPARAM_H_ */
+struct sysctllog;
+extern void drm_sysctl_init(const void **, struct sysctllog **);
+extern void drm_sysctl_fini(struct sysctllog **);
