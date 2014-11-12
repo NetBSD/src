@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.91 2014/11/12 18:55:07 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.92 2014/11/12 19:24:25 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2385,4 +2385,22 @@ usr.sbin/makefs/msdos/Makefile.inc		1.6
 	Make msdos and udf file system code (and corresponding makefs)
 	use subr_clock.c support functions.
 	[martin, ticket #216]
+
+common/lib/libc/arch/arm/atomic/Makefile.inc	1.24-1.26
+common/lib/libc/arch/hppa/atomic/Makefile.inc	1.13
+common/lib/libc/arch/mips/atomic/Makefile.inc	1.13
+common/lib/libc/arch/sh3/atomic/Makefile.inc	1.7
+common/lib/libc/arch/sparc/atomic/Makefile.inc	1.18
+common/lib/libc/arch/vax/atomic/Makefile.inc	1.7
+common/lib/libc/atomic/atomic_and_16_nv_cas.c	1.2
+common/lib/libc/atomic/atomic_and_8_nv_cas.c	1.2
+common/lib/libc/atomic/atomic_c11_compare_exchange_cas_16.c 1.1-1.2
+common/lib/libc/atomic/atomic_c11_compare_exchange_cas_32.c 1.1-1.2
+common/lib/libc/atomic/atomic_c11_compare_exchange_cas_8.c 1.1-1.2
+common/lib/libc/atomic/atomic_cas_by_cas32.c	1.4
+common/lib/libc/atomic/atomic_op_namespace.h	1.7
+
+	Provide missing __sync_*/__atomic_* builtin/support
+	functions and primitives needed for C++11 <atomic>.
+	[martin, ticket #218]
 
