@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.90 2014/11/12 14:22:20 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.91 2014/11/12 18:55:07 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2368,4 +2368,21 @@ usr.bin/vmstat/vmstat.c				1.204
 
 	Print the cpu in the kernhist record.
 	[skrll, ticket #221]
+
+share/man/man9/todr.9				1.17
+sys/arch/sh3/dev/rtc.c				1.9
+sys/dev/clock_subr.c				1.17-1.22
+sys/dev/clock_subr.h				1.22
+sys/fs/msdosfs/msdosfs_conv.c			1.10
+tools/compat/compat_defs.h			1.98
+tools/compat/dev/clock_subr.h			1.1-1.2
+usr.sbin/makefs/msdos/Makefile.inc		1.6
+
+	Adapt subr_clock.c to 64 bit time_t and make its leap year
+	calculations faster for years in the distant future. Also
+	make it usable from userland (even in tools).
+
+	Make msdos and udf file system code (and corresponding makefs)
+	use subr_clock.c support functions.
+	[martin, ticket #216]
 
