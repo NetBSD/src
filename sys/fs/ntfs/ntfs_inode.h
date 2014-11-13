@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_inode.h,v 1.7 2008/01/29 18:21:10 pooka Exp $	*/
+/*	$NetBSD: ntfs_inode.h,v 1.8 2014/11/13 16:49:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -54,8 +54,6 @@ struct ntnode {
 	dev_t           i_dev;		/* Device associated with the inode. */
 
 	LIST_ENTRY(ntnode)	i_hash;
-	struct ntnode  *i_next;
-	struct ntnode **i_prev;
 	struct ntfsmount       *i_mp;
 	ino_t           i_number;
 	u_int32_t       i_flag;
@@ -76,7 +74,6 @@ struct ntnode {
 
 #define	FN_PRELOADED	0x0001
 #define	FN_VALID	0x0002
-#define	FN_AATTRNAME	0x0004	/* space allocated for f_attrname */
 struct fnode {
 	struct genfs_node f_gnode;
 
