@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.94 2014/11/13 06:37:43 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.95 2014/11/13 07:27:52 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2431,4 +2431,10 @@ sys/dev/i2c/gttwsireg.h				1.2
 
 	Fix a sizeof typo.
 	[skrll, ticket #223]
+
+usr.sbin/etcupdate/etcupdate			1.59
+
+	A colon-separated list of tgz files is no longer accepted; you
+	must use multiple -s options instead.
+	[apb, ticket #225]
 
