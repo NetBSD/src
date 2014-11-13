@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2014/11/12 02:15:16 christos Exp $
+# $NetBSD: Makefile,v 1.7 2014/11/13 16:37:39 joerg Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -70,8 +70,10 @@ SRCS+=	i915_pci.c
 SRCS+=	intel_gtt.c
 SRCS+=	intelfb.c
 
-COPTS.i915_drv.c+=	-Wno-override-init
-COPTS.intel_display.c+=	-Wno-shadow
+COPTS.i915_drv.c+=	${${ACTIVE_CC} == "gcc":? -Wno-override-init :}
+COPTS.i915_drv.c+=	${${ACTIVE_CC} == "clang":? -Wno-initializer-overrides :}
+
+COPTS.intel_display.c+=	-Wno-shadow -Wno-conversion
 COPTS.intel_panel.c+=	-Wno-shadow
 COPTS.intel_pm.c+=	-Wno-shadow
 
