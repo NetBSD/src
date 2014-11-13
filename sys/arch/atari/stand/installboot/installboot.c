@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.28 2014/03/31 06:32:31 ozaki-r Exp $	*/
+/*	$NetBSD: installboot.c,v 1.29 2014/11/13 17:19:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -467,6 +467,7 @@ mkbootblock(struct bootblock *bb, char *xxb, char *bxx,
     struct disklabel *label, u_int magic)
 {
 	int		 fd;
+	uint16_t	 sum;
 
 	memset(bb, 0, sizeof(*bb));
 
@@ -498,8 +499,10 @@ mkbootblock(struct bootblock *bb, char *xxb, char *bxx,
 	setIDEpar(bb->bb_xxboot, sizeof(bb->bb_xxboot));
 
 	/* set AHDI checksum */
-	*((u_int16_t *)bb->bb_xxboot + 255) = 0;
-	*((u_int16_t *)bb->bb_xxboot + 255) = 0x1234 - abcksum(bb->bb_xxboot);
+	sum = 0;
+	memcpy(bb->bb_xxboot + 255, &sum, sizeof(sum));
+	sum = 0x1234 - abcksum(bb->bb_xxboot);
+	memcpy(bb->bb_xxboot + 255, &sum, sizeof(sum));
 
 	if (verbose) {
 		printf("Primary   boot loader: %s\n", xxb);
