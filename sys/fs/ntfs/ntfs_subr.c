@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.52 2014/11/13 16:49:56 hannken Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.53 2014/11/13 16:51:10 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.52 2014/11/13 16:49:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.53 2014/11/13 16:51:10 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,11 +232,8 @@ ntfs_ntvattrget(
 		dprintf(("%s: attribute in ino: %d\n", __func__,
 				 aalp->al_inumber));
 
-		/* this is not a main record, so we can't use just plain
-		   vget() */
 		error = ntfs_vgetex(ntmp->ntm_mountp, aalp->al_inumber,
-				NTFS_A_DATA, "", LK_EXCLUSIVE,
-				VG_EXT, &newvp);
+				NTFS_A_DATA, "", LK_EXCLUSIVE, &newvp);
 		if (error) {
 			printf("%s: CAN'T VGET INO: %d\n", __func__,
 			       aalp->al_inumber);
@@ -880,9 +877,7 @@ ntfs_ntlookupfile(
 	u_int32_t       aoff;
 	int attrtype = NTFS_A_DATA;
 	char *attrname = NULL;
-	struct fnode   *nfp;
 	struct vnode   *nvp;
-	enum vtype	f_type;
 	int fullscan = 0;
 	struct ntfs_lookup_ctx *lookup_ctx = NULL, *tctx;
 
@@ -989,11 +984,10 @@ ntfs_ntlookupfile(
 				goto fail;
 			}
 
-			/* vget node, but don't load it */
+			/* vget node */
 			error = ntfs_vgetex(ntmp->ntm_mountp, iep->ie_number,
 				   attrtype, attrname ? attrname : "",
-				   LK_EXCLUSIVE, VG_DONTLOADIN | VG_DONTVALIDFN,
-				   &nvp);
+				   LK_EXCLUSIVE, &nvp);
 
 			/* free the buffer returned by ntfs_ntlookupattr() */
 			if (attrname) {
@@ -1004,45 +998,8 @@ ntfs_ntlookupfile(
 			if (error)
 				goto fail;
 
-			nfp = VTOF(nvp);
+			KASSERT(VTOF(nvp)->f_flag & FN_VALID);
 
-			if (nfp->f_flag & FN_VALID) {
-				*vpp = nvp;
-				goto fail;
-			}
-
-			nfp->f_fflag = iep->ie_fflag;
-			nfp->f_pnumber = iep->ie_fpnumber;
-			nfp->f_times = iep->ie_ftimes;
-
-			if((nfp->f_fflag & NTFS_FFLAG_DIR) &&
-			   (nfp->f_attrtype == NTFS_A_DATA) &&
-			   strcmp(nfp->f_attrname, "") == 0)
-				f_type = VDIR;
-			else
-				f_type = VREG;
-
-			nvp->v_type = f_type;
-
-			if ((nfp->f_attrtype == NTFS_A_DATA) &&
-			    strcmp(nfp->f_attrname, "") == 0)
-			{
-				/* Opening default attribute */
-				nfp->f_size = iep->ie_fsize;
-				nfp->f_allocated = iep->ie_fallocated;
-				nfp->f_flag |= FN_PRELOADED;
-				uvm_vnp_setsize(nvp, iep->ie_fsize);
-			} else {
-				error = ntfs_filesize(ntmp, nfp,
-					    &nfp->f_size, &nfp->f_allocated);
-				if (error) {
-					vput(nvp);
-					goto fail;
-				}
-				uvm_vnp_setsize(nvp, nfp->f_size);
-			}
-
-			nfp->f_flag &= ~FN_VALID;
 			*vpp = nvp;
 			goto fail;
 		}
@@ -1334,78 +1291,6 @@ ntfs_nttimetounix(
 		369LL * 365LL * 24LL * 60LL * 60LL -
 		89LL * 1LL * 24LL * 60LL * 60LL;
 	return (t);
-}
-
-/*
- * Get file times from NTFS_A_NAME attribute.
- */
-int
-ntfs_times(
-	   struct ntfsmount * ntmp,
-	   struct ntnode * ip,
-	   ntfs_times_t * tm)
-{
-	struct ntvattr *vap;
-	int             error;
-
-	dprintf(("%s: ino: %llu...\n", __func__,
-	    (unsigned long long)ip->i_number));
-
-	error = ntfs_ntget(ip);
-	if (error)
-		return (error);
-
-	error = ntfs_ntvattrget(ntmp, ip, NTFS_A_NAME, NULL, 0, &vap);
-	if (error) {
-		ntfs_ntput(ip);
-		return (error);
-	}
-	*tm = vap->va_a_name->n_times;
-	ntfs_ntvattrrele(vap);
-	ntfs_ntput(ip);
-
-	return (0);
-}
-
-/*
- * Get file sizes from corresponding attribute.
- *
- * ntnode under fnode should be locked.
- */
-int
-ntfs_filesize(
-	      struct ntfsmount * ntmp,
-	      struct fnode * fp,
-	      u_int64_t * size,
-	      u_int64_t * bytes)
-{
-	struct ntvattr *vap;
-	struct ntnode *ip = FTONT(fp);
-	u_int64_t       sz, bn;
-	int             error;
-
-	dprintf(("%s: ino: %llu\n", __func__,
-	    (unsigned long long)ip->i_number));
-
-	error = ntfs_ntvattrget(ntmp, ip,
-		fp->f_attrtype, fp->f_attrname, 0, &vap);
-	if (error)
-		return (error);
-
-	bn = vap->va_allocated;
-	sz = vap->va_datalen;
-
-	dprintf(("%s: %d bytes (%d bytes allocated)\n", __func__,
-		(u_int32_t) sz, (u_int32_t) bn));
-
-	if (size)
-		*size = sz;
-	if (bytes)
-		*bytes = bn;
-
-	ntfs_ntvattrrele(vap);
-
-	return (0);
 }
 
 /*
