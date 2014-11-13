@@ -1,4 +1,4 @@
-#	$NetBSD: std.awin,v 1.1.2.4 2014/11/13 07:17:40 martin Exp $
+#	$NetBSD: std.awin,v 1.1.2.5 2014/11/13 09:55:45 martin Exp $
 #
 # standard NetBSD/evbarm for Allwinner based options
 
@@ -19,6 +19,7 @@ options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	TPIDRPRW_IS_CURCPU
 options 	KERNEL_BASE_EXT=0x80000000
 options 	FPU_VFP
+options 	GTTWSI_ALLWINNER
 options 	MOTG_ALLWINNER
 
 makeoptions	KERNEL_BASE_PHYS="0x40007800"
