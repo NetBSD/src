@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.25 2014/11/13 15:03:06 uebayasi Exp $
+#	$NetBSD: Makefile.luna68k,v 1.26 2014/11/13 16:18:38 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -60,23 +60,8 @@ locore.o: ${LUNA68K}/luna68k/locore.s assym.h
 ##
 ## (5) link settings
 ##
-LINKFORMAT=	-N -T ldscript
-.if (${OBJECT_FMT} == "ELF")
-# Need to convert the kernel from ELF to a.out so that PROM can load it.
-
-SYSTEM_LD_HEAD_EXTRA+=; \
-	( cat ${LUNA68K}/conf/kern.ldscript.head ; \
-	  OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh \
-	        ${SYSTEM_OBJ} ; \
-	  cat ${LUNA68K}/conf/kern.ldscript.tail ) > ldscript
-SYSTEM_DEP+=	${LUNA68K}/conf/kern.ldscript.head \
-		$S/conf/mkldscript.sh \
-		${LUNA68K}/conf/kern.ldscript.tail
-
-SYSTEM_LD_TAIL_EXTRA+=; \
-	echo "${ELF2AOUT} $@ $@.aout" ; \
-	    ${ELF2AOUT} $@ $@.aout
-.endif
+LINKFORMAT=	-N
+TEXTADDR?=	0xc000
 
 ##
 ## (6) port specific target dependencies
