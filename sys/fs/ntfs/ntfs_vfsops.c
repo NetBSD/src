@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.95 2014/11/13 16:49:56 hannken Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.96 2014/11/13 16:51:10 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.95 2014/11/13 16:49:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.96 2014/11/13 16:51:10 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -660,7 +660,7 @@ ntfs_fhtovp(
 	    (unsigned long long)ntfh.ntfid_ino));
 
 	error = ntfs_vgetex(mp, ntfh.ntfid_ino, ntfh.ntfid_attr, "",
-			LK_EXCLUSIVE, 0, vpp);
+			LK_EXCLUSIVE, vpp);
 	if (error != 0) {
 		*vpp = NULLVP;
 		return (error);
@@ -710,7 +710,6 @@ ntfs_vgetex(
 	u_int32_t attrtype,
 	const char *attrname,
 	u_long lkflags,
-	u_long flags,
 	struct vnode **vpp)
 {
 	int error;
@@ -720,9 +719,8 @@ ntfs_vgetex(
 	struct vnode *vp;
 	enum vtype f_type = VBAD;
 
-	dprintf(("ntfs_vgetex: ino: %llu, attr: 0x%x:%s, lkf: 0x%lx, f:"
-	    " 0x%lx\n", (unsigned long long)ino, attrtype,
-	    attrname, (u_long)lkflags, (u_long)flags));
+	dprintf(("ntfs_vgetex: ino: %llu, attr: 0x%x:%s, lkf: 0x%lx\n", (unsigned long long)ino, attrtype,
+	    attrname, (u_long)lkflags));
 
 	ntmp = VFSTONTFS(mp);
 	*vpp = NULL;
@@ -736,7 +734,7 @@ loop:
 	}
 
 	/* It may be not initialized fully, so force load it */
-	if (!(flags & VG_DONTLOADIN) && !(ip->i_flag & IN_LOADED)) {
+	if (!(ip->i_flag & IN_LOADED)) {
 		error = ntfs_loadntnode(ntmp, ip);
 		if(error) {
 			printf("ntfs_vget: CAN'T LOAD ATTRIBUTES FOR INO:"
@@ -753,20 +751,39 @@ loop:
 		return (error);
 	}
 
-	if (!(flags & VG_DONTVALIDFN) && !(fp->f_flag & FN_VALID)) {
+	if (!(fp->f_flag & FN_VALID)) {
+		struct ntvattr *vap;
+
+		error = ntfs_ntvattrget(ntmp, ip, NTFS_A_NAME, NULL, 0, &vap);
+		if (error) {
+			ntfs_ntput(ip);
+			return error;
+		}
+		fp->f_fflag = vap->va_a_name->n_flag;
+		fp->f_pnumber = vap->va_a_name->n_pnumber;
+		fp->f_times = vap->va_a_name->n_times;
+		ntfs_ntvattrrele(vap);
+
 		if ((ip->i_frflag & NTFS_FRFLAG_DIR) &&
 		    (fp->f_attrtype == NTFS_A_DATA &&
 		     strcmp(fp->f_attrname, "") == 0)) {
 			f_type = VDIR;
-		} else if (flags & VG_EXT) {
-			f_type = VNON;
-			fp->f_size = fp->f_allocated = 0;
 		} else {
 			f_type = VREG;
 
-			error = ntfs_filesize(ntmp, fp,
-					      &fp->f_size, &fp->f_allocated);
-			if (error) {
+			error = ntfs_ntvattrget(ntmp, ip,
+				fp->f_attrtype, fp->f_attrname, 0, &vap);
+			if (error == 0) {
+				fp->f_size = vap->va_datalen;
+				fp->f_allocated = vap->va_allocated;
+				ntfs_ntvattrrele(vap);
+			} else if (fp->f_attrtype == NTFS_A_DATA &&
+			    strcmp(fp->f_attrname, "") == 0 &&
+			    error == ENOENT) {
+				fp->f_size = 0;
+				fp->f_allocated = 0;
+				error = 0;
+			} else {
 				ntfs_ntput(ip);
 				return (error);
 			}
@@ -850,7 +867,7 @@ ntfs_vget(
 	ino_t ino,
 	struct vnode **vpp)
 {
-	return ntfs_vgetex(mp, ino, NTFS_A_DATA, "", LK_EXCLUSIVE, 0, vpp);
+	return ntfs_vgetex(mp, ino, NTFS_A_DATA, "", LK_EXCLUSIVE, vpp);
 }
 
 extern const struct vnodeopv_desc ntfs_vnodeop_opv_desc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.h,v 1.7 2014/11/13 16:49:56 hannken Exp $	*/
+/*	$NetBSD: ntfs_subr.h,v 1.8 2014/11/13 16:51:10 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -82,9 +82,6 @@ int ntfs_readattr_plain(struct ntfsmount *, struct ntnode *, u_int32_t,
 	const char *, off_t, size_t, void *,size_t *, struct uio *);
 int ntfs_readattr(struct ntfsmount *, struct ntnode *, u_int32_t,
 	const char *, off_t, size_t, void *, struct uio *);
-int ntfs_filesize(struct ntfsmount *, struct fnode *, u_int64_t *,
-	u_int64_t *);
-int ntfs_times(struct ntfsmount *, struct ntnode *, ntfs_times_t *);
 struct timespec	ntfs_nttimetounix(u_int64_t);
 int ntfs_ntreaddir(struct ntfsmount *, struct fnode *, u_int32_t,
 	struct attr_indexentry **);
