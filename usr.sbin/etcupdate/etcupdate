@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.58 2014/08/04 21:56:30 apb Exp $
+# $NetBSD: etcupdate,v 1.58.2.1 2014/11/13 07:26:33 snj Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -93,9 +93,10 @@ Options:
                following:
                * A directory that contains a NetBSD source tree;
                * A distribution set file such as "etc.tgz" or
-                 "xetc.tgz", or a colon-separated list of such files;
-               * A temporary directory in which one or both of "etc.tgz"
-                 and "xetc.tgz" have been extracted.
+                 "xetc.tgz".  Pass multiple -s options to specify
+                 multiple such files;
+               * A temporary directory in which one or both of
+                 "etc.tgz" and "xetc.tgz" have been extracted.
   -t temproot  Where to store temporary files  (default: /tmp/temproot)
   -d destdir   Destination directory to check. (default: /)
   -w width     Screen width                    (default: 80)
