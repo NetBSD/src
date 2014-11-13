@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.3 2013/09/11 23:04:10 joerg Exp $
+# $NetBSD: Makefile,v 1.4 2014/11/13 07:03:23 mlelstv Exp $
+
+USE_SHLIBDIR= yes
 USE_FORT?= no  # network protocol library
 
 LIB=    dm

@@ -1,8 +1,9 @@
-# $NetBSD: shl.mi,v 1.81 2014/10/24 02:39:34 christos Exp $
+# $NetBSD: shl.mi,v 1.82 2014/11/13 07:03:23 mlelstv Exp $
 ./usr/libdata/debug/lib/libc.so.12.196.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.3.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libdevmapper.so.1.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/lib/libdm.so.0.0.debug 		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libedit.so.3.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libevent.so.4.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libgcc_s.so.1.0.debug		comp-sys-debug	gcc,debug
