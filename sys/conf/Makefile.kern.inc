@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.179 2014/11/07 12:34:14 nakayama Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.180 2014/11/13 13:44:31 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -160,8 +160,8 @@ NORMAL_S?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
 # link rules: 
 LINK_O?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}" && \
 		${_MKSHECHO}\
-		${LD} -r -Map=${.TARGET}.map -o ${.TARGET} ${.ALLSRC} && \
-		${LD} -r -Map=${.TARGET}.map -o ${.TARGET} ${.ALLSRC}
+		${LD} -r ${LINKFORMAT} -Map=${.TARGET}.map -o ${.TARGET} ${.ALLSRC} && \
+		${LD} -r ${LINKFORMAT} -Map=${.TARGET}.map -o ${.TARGET} ${.ALLSRC}
 
 ##
 ## (3) libkern and compat
