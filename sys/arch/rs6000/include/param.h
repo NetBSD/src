@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2011/06/20 06:29:54 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.3 2014/11/13 22:29:30 snj Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,6 +40,6 @@
 #define	KERNBASE		0x100000
 #define	__NO_FIXED_MSGBUF
 
-#endif /* _KENREL && !_MODULE */
+#endif /* _KERNEL && !_MODULE */
 
 #include <powerpc/param.h>
