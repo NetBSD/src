@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.3 2014/11/05 07:09:47 snj Exp $
+.\"	$NetBSD: prep,v 1.4 2014/11/13 08:16:42 snj Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -54,7 +54,7 @@ collection should get it from the official website:
 .Lk http://cdrecord.berlios.de/old/private/cdrecord.html
 .Pp
 .(disp
-.No # Ic "cdrecord -v speed=16 dev=/dev/cd0d arccd.iso"
+.No # Ic "cdrecord -v speed=16 dev=/dev/cd0d NetBSD-arc-\*V.iso"
 .disp)
 .Pp
 You will need to substitute the correct name of the disk image file,
