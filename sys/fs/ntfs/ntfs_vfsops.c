@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.94 2014/04/16 18:55:18 maxv Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.95 2014/11/13 16:49:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.94 2014/04/16 18:55:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.95 2014/11/13 16:49:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -659,7 +659,7 @@ ntfs_fhtovp(
 	ddprintf(("ntfs_fhtovp(): %s: %llu\n", mp->mnt_stat.f_mntonname,
 	    (unsigned long long)ntfh.ntfid_ino));
 
-	error = ntfs_vgetex(mp, ntfh.ntfid_ino, ntfh.ntfid_attr, NULL,
+	error = ntfs_vgetex(mp, ntfh.ntfid_ino, ntfh.ntfid_attr, "",
 			LK_EXCLUSIVE, 0, vpp);
 	if (error != 0) {
 		*vpp = NULLVP;
@@ -708,7 +708,7 @@ ntfs_vgetex(
 	struct mount *mp,
 	ino_t ino,
 	u_int32_t attrtype,
-	char *attrname,
+	const char *attrname,
 	u_long lkflags,
 	u_long flags,
 	struct vnode **vpp)
@@ -722,7 +722,7 @@ ntfs_vgetex(
 
 	dprintf(("ntfs_vgetex: ino: %llu, attr: 0x%x:%s, lkf: 0x%lx, f:"
 	    " 0x%lx\n", (unsigned long long)ino, attrtype,
-	    attrname ? attrname : "", (u_long)lkflags, (u_long)flags));
+	    attrname, (u_long)lkflags, (u_long)flags));
 
 	ntmp = VFSTONTFS(mp);
 	*vpp = NULL;
@@ -755,7 +755,8 @@ loop:
 
 	if (!(flags & VG_DONTVALIDFN) && !(fp->f_flag & FN_VALID)) {
 		if ((ip->i_frflag & NTFS_FRFLAG_DIR) &&
-		    (fp->f_attrtype == NTFS_A_DATA && fp->f_attrname == NULL)) {
+		    (fp->f_attrtype == NTFS_A_DATA &&
+		     strcmp(fp->f_attrname, "") == 0)) {
 			f_type = VDIR;
 		} else if (flags & VG_EXT) {
 			f_type = VNON;
@@ -849,7 +850,7 @@ ntfs_vget(
 	ino_t ino,
 	struct vnode **vpp)
 {
-	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL, LK_EXCLUSIVE, 0, vpp);
+	return ntfs_vgetex(mp, ino, NTFS_A_DATA, "", LK_EXCLUSIVE, 0, vpp);
 }
 
 extern const struct vnodeopv_desc ntfs_vnodeop_opv_desc;
