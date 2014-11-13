@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.57 2014/07/25 08:20:52 dholland Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.58 2014/11/13 16:49:56 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.57 2014/07/25 08:20:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.58 2014/11/13 16:49:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,7 +470,7 @@ ntfs_open(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct ntnode *ip = VTONT(vp);
 
-	printf("ntfs_open: %llu\n", (unsigned long long)ip->i_number);
+	dprintf(("ntfs_open: %llu\n", (unsigned long long)ip->i_number));
 #endif
 
 	/*
@@ -498,7 +498,7 @@ ntfs_close(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct ntnode *ip = VTONT(vp);
 
-	printf("ntfs_close: %llu\n", (unsigned long long)ip->i_number);
+	dprintf(("ntfs_close: %llu\n", (unsigned long long)ip->i_number));
 #endif
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.51 2013/06/28 17:13:34 matt Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.52 2014/11/13 16:49:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.51 2013/06/28 17:13:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.52 2014/11/13 16:49:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,7 @@ ntfs_ntvattrget(
 		/* this is not a main record, so we can't use just plain
 		   vget() */
 		error = ntfs_vgetex(ntmp->ntm_mountp, aalp->al_inumber,
-				NTFS_A_DATA, NULL, LK_EXCLUSIVE,
+				NTFS_A_DATA, "", LK_EXCLUSIVE,
 				VG_EXT, &newvp);
 		if (error) {
 			printf("%s: CAN'T VGET INO: %d\n", __func__,
@@ -274,7 +274,6 @@ ntfs_loadntnode(
 	      struct ntnode * ip)
 {
 	struct filerec  *mfrp;
-	daddr_t         bn;
 	int		error,off;
 	struct attr    *ap;
 	struct ntvattr *nvap;
@@ -286,20 +285,28 @@ ntfs_loadntnode(
 
 	if (ip->i_number < NTFS_SYSNODESNUM) {
 		struct buf     *bp;
+		daddr_t         bn;
+		off_t           boff;
 
 		dprintf(("%s: read system node\n", __func__));
 
-		bn = ntfs_cntobn(ntmp->ntm_mftcn) +
-			ntmp->ntm_bpmftrec * ip->i_number;
+		/*
+		 * Make sure we always read full cluster to
+		 * prevent buffer cache inconsistency.
+		 */
+		boff = ntfs_cntob(ntmp->ntm_mftcn) +
+		    ntfs_bntob(ntmp->ntm_bpmftrec) * ip->i_number;
+		bn = ntfs_cntobn(ntfs_btocn(boff));
+		off = ntfs_btocnoff(boff);
 
-		error = bread(ntmp->ntm_devvp,
-			      bn, ntfs_bntob(ntmp->ntm_bpmftrec),
+		error = bread(ntmp->ntm_devvp, bn, ntfs_cntob(1),
 			      NOCRED, 0, &bp);
 		if (error) {
 			printf("%s: BREAD FAILED\n", __func__);
 			goto out;
 		}
-		memcpy(mfrp, bp->b_data, ntfs_bntob(ntmp->ntm_bpmftrec));
+		memcpy(mfrp, (char *)bp->b_data + off,
+		    ntfs_bntob(ntmp->ntm_bpmftrec));
 		bqrelse(bp);
 	} else {
 		struct vnode   *vp;
@@ -731,23 +738,21 @@ ntfs_fget(
     struct ntfsmount *ntmp,
     struct ntnode *ip,
     int attrtype,
-    char *attrname,
+    const char *attrname,
     struct fnode **fpp
 )
 {
 	struct fnode *fp;
 
 	dprintf(("%s: ino: %llu, attrtype: 0x%x, attrname: %s\n", __func__,
-	    (unsigned long long)ip->i_number, attrtype, attrname?attrname:""));
+	    (unsigned long long)ip->i_number, attrtype, attrname));
 	*fpp = NULL;
 	for (fp = ip->i_fnlist.lh_first; fp != NULL; fp = fp->f_fnlist.le_next){
 		dprintf(("%s: fnode: attrtype: %d, attrname: %s\n", __func__,
-			fp->f_attrtype, fp->f_attrname?fp->f_attrname:""));
+			fp->f_attrtype, fp->f_attrname));
 
 		if ((attrtype == fp->f_attrtype) &&
-		    ((!attrname && !fp->f_attrname) ||
-		     (attrname && fp->f_attrname &&
-		      !strcmp(attrname,fp->f_attrname)))){
+		    strcmp(attrname, fp->f_attrname) == 0) {
 			dprintf(("%s: found existed: %p\n", __func__, fp));
 			*fpp = fp;
 		}
@@ -760,8 +765,8 @@ ntfs_fget(
 	dprintf(("%s: allocating fnode: %p\n", __func__, fp));
 
 	fp->f_ip = ip;
-	fp->f_attrname = attrname;
-	if (fp->f_attrname) fp->f_flag |= FN_AATTRNAME;
+	fp->f_attrname = malloc(strlen(attrname)+1, M_TEMP, M_WAITOK);
+	strcpy(fp->f_attrname, attrname);
 	fp->f_attrtype = attrtype;
 
 	ntfs_ntref(ip);
@@ -789,8 +794,7 @@ ntfs_frele(
 
 	dprintf(("%s: deallocating fnode\n", __func__));
 	LIST_REMOVE(fp,f_fnlist);
-	if (fp->f_flag & FN_AATTRNAME)
-		free(fp->f_attrname, M_TEMP);
+	free(fp->f_attrname, M_TEMP);
 	if (fp->f_dirblbuf)
 		free(fp->f_dirblbuf, M_NTFSDIR);
 	free(fp, M_NTFSFNODE);
@@ -839,14 +843,14 @@ ntfs_ntlookupattr(
 			goto out;
 		}
 		return (ENOENT);
-	}
+	} else
+		*attrtype = NTFS_A_DATA;
 
     out:
 	if (namelen) {
-		*attrname = malloc(namelen, M_TEMP, M_WAITOK);
+		*attrname = malloc(namelen+1, M_TEMP, M_WAITOK);
 		memcpy((*attrname), name, namelen);
 		(*attrname)[namelen] = '\0';
-		*attrtype = NTFS_A_DATA;
 	}
 
 	return (0);
@@ -977,9 +981,7 @@ ntfs_ntlookupfile(
 			/* Check if we've found ourselves */
 			if ((iep->ie_number == ip->i_number) &&
 			    (attrtype == fp->f_attrtype) &&
-			    ((!attrname && !fp->f_attrname) ||
-			     (attrname && fp->f_attrname &&
-			      !strcmp(attrname, fp->f_attrname))))
+			    !strcmp(attrname ? attrname : "", fp->f_attrname))
 			{
 				vref(vp);
 				*vpp = vp;
@@ -987,17 +989,18 @@ ntfs_ntlookupfile(
 				goto fail;
 			}
 
+			/* vget node, but don't load it */
+			error = ntfs_vgetex(ntmp->ntm_mountp, iep->ie_number,
+				   attrtype, attrname ? attrname : "",
+				   LK_EXCLUSIVE, VG_DONTLOADIN | VG_DONTVALIDFN,
+				   &nvp);
+
 			/* free the buffer returned by ntfs_ntlookupattr() */
 			if (attrname) {
 				free(attrname, M_TEMP);
 				attrname = NULL;
 			}
 
-			/* vget node, but don't load it */
-			error = ntfs_vgetex(ntmp->ntm_mountp,
-				   iep->ie_number, attrtype, attrname,
-				   LK_EXCLUSIVE, VG_DONTLOADIN | VG_DONTVALIDFN,
-				   &nvp);
 			if (error)
 				goto fail;
 
@@ -1014,7 +1017,7 @@ ntfs_ntlookupfile(
 
 			if((nfp->f_fflag & NTFS_FFLAG_DIR) &&
 			   (nfp->f_attrtype == NTFS_A_DATA) &&
-			   (nfp->f_attrname == NULL))
+			   strcmp(nfp->f_attrname, "") == 0)
 				f_type = VDIR;
 			else
 				f_type = VREG;
@@ -1022,7 +1025,7 @@ ntfs_ntlookupfile(
 			nvp->v_type = f_type;
 
 			if ((nfp->f_attrtype == NTFS_A_DATA) &&
-			    (nfp->f_attrname == NULL))
+			    strcmp(nfp->f_attrname, "") == 0)
 			{
 				/* Opening default attribute */
 				nfp->f_size = iep->ie_fsize;
