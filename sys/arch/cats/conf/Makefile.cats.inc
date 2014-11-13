@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cats.inc,v 1.27 2013/08/17 19:57:09 skrll Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.28 2014/11/13 15:03:06 uebayasi Exp $
 
 MACHINE_ARCH?=	arm
 CPPFLAGS+=	-D${MACHINE}
@@ -20,6 +20,9 @@ SYSTEM_LD_HEAD_EXTRA+=; \
 	  OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh \
 		${SYSTEM_OBJ} ; \
 	  cat ${ARM}/conf/kern.ldscript.tail ) > ldscript
+SYSTEM_DEP+=	${ARM}/conf/kern.ldscript.head \
+		$S/conf/mkldscript.sh \
+		${ARM}/conf/kern.ldscript.tail
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo "${OBJCOPY} ${OBJCOPY_ELF2AOUT_FLAGS} $@ $@.aout"; \
