@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.96 2014/11/13 16:51:10 hannken Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.97 2014/11/13 16:51:53 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.96 2014/11/13 16:51:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.97 2014/11/13 16:51:53 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,6 @@ MODULE(MODULE_CLASS_VFS, ntfs, NULL);
 
 MALLOC_JUSTDEFINE(M_NTFSMNT, "NTFS mount", "NTFS mount structure");
 MALLOC_JUSTDEFINE(M_NTFSNTNODE,"NTFS ntnode",  "NTFS ntnode information");
-MALLOC_JUSTDEFINE(M_NTFSFNODE,"NTFS fnode",  "NTFS fnode information");
 MALLOC_JUSTDEFINE(M_NTFSDIR,"NTFS dir",  "NTFS dir buffer");
 
 static int	ntfs_mount(struct mount *, const char *, void *, size_t *);
@@ -74,6 +73,8 @@ static int	ntfs_sync(struct mount *, int, kauth_cred_t);
 static int	ntfs_unmount(struct mount *, int);
 static int	ntfs_vget(struct mount *mp, ino_t ino,
 			       struct vnode **vpp);
+static int	ntfs_loadvnode(struct mount *, struct vnode *,
+		                    const void *, size_t, const void **);
 static int	ntfs_mountfs(struct vnode *, struct mount *,
 				  struct ntfs_args *, struct lwp *);
 static int	ntfs_vptofh(struct vnode *, struct fid *, size_t *);
@@ -130,7 +131,6 @@ ntfs_init(void)
 
 	malloc_type_attach(M_NTFSMNT);
 	malloc_type_attach(M_NTFSNTNODE);
-	malloc_type_attach(M_NTFSFNODE);
 	malloc_type_attach(M_NTFSDIR);
 	malloc_type_attach(M_NTFSNTVATTR);
 	malloc_type_attach(M_NTFSRDATA);
@@ -152,7 +152,6 @@ ntfs_done(void)
 	ntfs_nthashdone();
 	malloc_type_detach(M_NTFSMNT);
 	malloc_type_detach(M_NTFSNTNODE);
-	malloc_type_detach(M_NTFSFNODE);
 	malloc_type_detach(M_NTFSDIR);
 	malloc_type_detach(M_NTFSNTVATTR);
 	malloc_type_detach(M_NTFSRDATA);
@@ -703,162 +702,118 @@ ntfs_vptofh(
 	return (0);
 }
 
-int
-ntfs_vgetex(
-	struct mount *mp,
-	ino_t ino,
-	u_int32_t attrtype,
-	const char *attrname,
-	u_long lkflags,
-	struct vnode **vpp)
+static int
+ntfs_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
 {
 	int error;
+	struct ntvattr *vap;
+	struct ntkey small_key, *ntkey;
 	struct ntfsmount *ntmp;
 	struct ntnode *ip;
-	struct fnode *fp;
-	struct vnode *vp;
+	struct fnode *fp = NULL;
 	enum vtype f_type = VBAD;
 
-	dprintf(("ntfs_vgetex: ino: %llu, attr: 0x%x:%s, lkf: 0x%lx\n", (unsigned long long)ino, attrtype,
-	    attrname, (u_long)lkflags));
+	if (key_len <= sizeof(small_key))
+		ntkey = &small_key;
+	else
+		ntkey = kmem_alloc(key_len, KM_SLEEP);
+	memcpy(ntkey, key, key_len);
+
+	dprintf(("ntfs_loadvnode: ino: %llu, attr: 0x%x:%s",
+	    (unsigned long long)ntkey->k_ino,
+	    ntkey->k_attrtype, ntkey->k_attrname));
 
 	ntmp = VFSTONTFS(mp);
-	*vpp = NULL;
 
-loop:
 	/* Get ntnode */
-	error = ntfs_ntlookup(ntmp, ino, &ip);
+	error = ntfs_ntlookup(ntmp, ntkey->k_ino, &ip);
 	if (error) {
-		printf("ntfs_vget: ntfs_ntget failed\n");
-		return (error);
+		printf("ntfs_loadvnode: ntfs_ntget failed\n");
+		goto out;
 	}
-
 	/* It may be not initialized fully, so force load it */
 	if (!(ip->i_flag & IN_LOADED)) {
-		error = ntfs_loadntnode(ntmp, ip);
-		if(error) {
-			printf("ntfs_vget: CAN'T LOAD ATTRIBUTES FOR INO:"
-			    " %llu\n", (unsigned long long)ip->i_number);
-			ntfs_ntput(ip);
-			return (error);
-		}
+	       error = ntfs_loadntnode(ntmp, ip);
+	       if(error) {
+		       printf("ntfs_loadvnode: CAN'T LOAD ATTRIBUTES FOR INO:"
+			   " %llu\n", (unsigned long long)ip->i_number);
+		       ntfs_ntput(ip);
+		       goto out;
+	       }
 	}
 
-	error = ntfs_fget(ntmp, ip, attrtype, attrname, &fp);
+	/* Setup fnode */
+	fp = kmem_zalloc(sizeof(*fp), KM_SLEEP);
+	dprintf(("%s: allocating fnode: %p\n", __func__, fp));
+
+	error = ntfs_ntvattrget(ntmp, ip, NTFS_A_NAME, NULL, 0, &vap);
 	if (error) {
-		printf("ntfs_vget: ntfs_fget failed\n");
 		ntfs_ntput(ip);
-		return (error);
+		goto out;
+	}
+	fp->f_fflag = vap->va_a_name->n_flag;
+	fp->f_pnumber = vap->va_a_name->n_pnumber;
+	fp->f_times = vap->va_a_name->n_times;
+	ntfs_ntvattrrele(vap);
+
+	if ((ip->i_frflag & NTFS_FRFLAG_DIR) &&
+	    (ntkey->k_attrtype == NTFS_A_DATA &&
+	    strcmp(ntkey->k_attrname, "") == 0)) {
+                        f_type = VDIR;
+	} else {
+		f_type = VREG;
+		error = ntfs_ntvattrget(ntmp, ip,
+		    ntkey->k_attrtype, ntkey->k_attrname, 0, &vap);
+		if (error == 0) {
+			fp->f_size = vap->va_datalen;
+			fp->f_allocated = vap->va_allocated;
+			ntfs_ntvattrrele(vap);
+		} else if (ntkey->k_attrtype == NTFS_A_DATA &&
+		    strcmp(ntkey->k_attrname, "") == 0 &&
+		    error == ENOENT) {
+			fp->f_size = 0;
+			fp->f_allocated = 0;
+			error = 0;
+		} else
+			goto out;
 	}
 
-	if (!(fp->f_flag & FN_VALID)) {
-		struct ntvattr *vap;
-
-		error = ntfs_ntvattrget(ntmp, ip, NTFS_A_NAME, NULL, 0, &vap);
-		if (error) {
-			ntfs_ntput(ip);
-			return error;
-		}
-		fp->f_fflag = vap->va_a_name->n_flag;
-		fp->f_pnumber = vap->va_a_name->n_pnumber;
-		fp->f_times = vap->va_a_name->n_times;
-		ntfs_ntvattrrele(vap);
-
-		if ((ip->i_frflag & NTFS_FRFLAG_DIR) &&
-		    (fp->f_attrtype == NTFS_A_DATA &&
-		     strcmp(fp->f_attrname, "") == 0)) {
-			f_type = VDIR;
-		} else {
-			f_type = VREG;
-
-			error = ntfs_ntvattrget(ntmp, ip,
-				fp->f_attrtype, fp->f_attrname, 0, &vap);
-			if (error == 0) {
-				fp->f_size = vap->va_datalen;
-				fp->f_allocated = vap->va_allocated;
-				ntfs_ntvattrrele(vap);
-			} else if (fp->f_attrtype == NTFS_A_DATA &&
-			    strcmp(fp->f_attrname, "") == 0 &&
-			    error == ENOENT) {
-				fp->f_size = 0;
-				fp->f_allocated = 0;
-				error = 0;
-			} else {
-				ntfs_ntput(ip);
-				return (error);
-			}
-		}
-
-		fp->f_flag |= FN_VALID;
-	}
-
-	/*
-	 * We may be calling vget() now. To avoid potential deadlock, we need
-	 * to release ntnode lock, since due to locking order vnode
-	 * lock has to be acquired first.
-	 * ntfs_fget() bumped ntnode usecount, so ntnode won't be recycled
-	 * prematurely.
-	 * Take v_interlock before releasing ntnode lock to avoid races.
-	 */
-	vp = FTOV(fp);
-	if (vp) {
-		mutex_enter(vp->v_interlock);
-		ntfs_ntput(ip);
-		if (vget(vp, lkflags) != 0)
-			goto loop;
-		*vpp = vp;
-		return 0;
-	}
-	ntfs_ntput(ip);
-
-	error = getnewvnode(VT_NTFS, ntmp->ntm_mountp, ntfs_vnodeop_p,
-	    NULL, &vp);
-	if(error) {
-		ntfs_frele(fp);
-		return (error);
-	}
-	ntfs_ntget(ip);
-	error = ntfs_fget(ntmp, ip, attrtype, attrname, &fp);
-	if (error) {
-		printf("ntfs_vget: ntfs_fget failed\n");
-		ntfs_ntput(ip);
-		return (error);
-	}
-	if (FTOV(fp)) {
-		/*
-		 * Another thread beat us, put back freshly allocated
-		 * vnode and retry.
-		 */
-		ntfs_ntput(ip);
-		ungetnewvnode(vp);
-		goto loop;
-	}
-	dprintf(("ntfs_vget: vnode: %p for ntnode: %llu\n", vp,
-	    (unsigned long long)ino));
-
+	if (key_len <= sizeof(fp->f_smallkey))
+		fp->f_key = &fp->f_smallkey;
+	else
+		fp->f_key = kmem_alloc(key_len, KM_SLEEP);
+	fp->f_ip = ip;
+	fp->f_ino = ip->i_number;
+	strcpy(fp->f_attrname, ntkey->k_attrname);
+	fp->f_attrtype = ntkey->k_attrtype;
 	fp->f_vp = vp;
 	vp->v_data = fp;
-	if (f_type != VBAD)
-		vp->v_type = f_type;
+
+	vp->v_tag = VT_NTFS;
+	vp->v_type = f_type;
+	vp->v_op = ntfs_vnodeop_p;
+	ntfs_ntref(ip);
+	vref(ip->i_devvp);
 	genfs_node_init(vp, &ntfs_genfsops);
 
-	if (ino == NTFS_ROOTINO)
+	if (ip->i_number == NTFS_ROOTINO)
 		vp->v_vflag |= VV_ROOT;
 
+	uvm_vnp_setsize(vp, fp->f_size);
 	ntfs_ntput(ip);
 
-	if (lkflags & (LK_EXCLUSIVE | LK_SHARED)) {
-		error = vn_lock(vp, lkflags);
-		if (error) {
-			vput(vp);
-			return (error);
-		}
-	}
+	*new_key = fp->f_key;
 
-	uvm_vnp_setsize(vp, fp->f_size); /* XXX: mess, cf. ntfs_lookupfile() */
-	vref(ip->i_devvp);
-	*vpp = vp;
-	return (0);
+	fp = NULL;
+
+out:
+	if (ntkey != &small_key)
+		kmem_free(ntkey, key_len);
+	if (fp)
+		kmem_free(fp, sizeof(*fp));
+
+	return error;
 }
 
 static int
@@ -868,6 +823,45 @@ ntfs_vget(
 	struct vnode **vpp)
 {
 	return ntfs_vgetex(mp, ino, NTFS_A_DATA, "", LK_EXCLUSIVE, vpp);
+}
+
+int
+ntfs_vgetex(
+	struct mount *mp,
+	ino_t ino,
+	u_int32_t attrtype,
+	const char *attrname,
+	u_long lkflags,
+	struct vnode **vpp)
+{
+	const int attrlen = strlen(attrname);
+	int error;
+	struct ntkey small_key, *ntkey;
+
+	if (NTKEY_SIZE(attrlen) <= sizeof(small_key))
+		ntkey = &small_key;
+	else
+		ntkey = malloc(NTKEY_SIZE(attrlen), M_TEMP, M_WAITOK);
+	ntkey->k_ino = ino;
+	ntkey->k_attrtype = attrtype;
+	strcpy(ntkey->k_attrname, attrname);
+
+	error = vcache_get(mp, ntkey, NTKEY_SIZE(attrlen), vpp);
+	if (error)
+		goto out;
+
+	if ((lkflags & (LK_SHARED | LK_EXCLUSIVE)) != 0) {
+		error = vn_lock(*vpp, lkflags);
+		if (error) {
+			vrele(*vpp);
+			*vpp = NULL;
+		}
+	}
+
+out:
+	if (ntkey != &small_key)
+		free(ntkey, M_TEMP);
+	return error;
 }
 
 extern const struct vnodeopv_desc ntfs_vnodeop_opv_desc;
@@ -888,6 +882,7 @@ struct vfsops ntfs_vfsops = {
 	.vfs_statvfs = ntfs_statvfs,
 	.vfs_sync = ntfs_sync,
 	.vfs_vget = ntfs_vget,
+	.vfs_loadvnode = ntfs_loadvnode,
 	.vfs_fhtovp = ntfs_fhtovp,
 	.vfs_vptofh = ntfs_vptofh,
 	.vfs_init = ntfs_init,

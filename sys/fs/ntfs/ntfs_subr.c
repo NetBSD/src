@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.53 2014/11/13 16:51:10 hannken Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.54 2014/11/13 16:51:53 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.53 2014/11/13 16:51:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.54 2014/11/13 16:51:53 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,8 +428,6 @@ ntfs_ntlookup(
 	ip->i_number = ino;
 	ip->i_mp = ntmp;
 
-	LIST_INIT(&ip->i_fnlist);
-
 	/* init lock and lock the newborn ntnode */
 	cv_init(&ip->i_lock, "ntfslk");
 	mutex_init(&ip->i_interlock, MUTEX_DEFAULT, IPL_NONE);
@@ -478,9 +476,6 @@ ntfs_ntput(struct ntnode *ip)
 	if (ip->i_usecount == 0) {
 		dprintf(("%s: deallocating ntnode: %llu\n", __func__,
 		    (unsigned long long)ip->i_number));
-
-		if (ip->i_fnlist.lh_first)
-			panic("ntfs_ntput: ntnode has fnodes");
 
 		ntfs_nthashrem(ip);
 
@@ -726,79 +721,6 @@ ntfs_uastrcmp(struct ntfsmount *ntmp, const wchar *ustr, size_t ustrlen, const c
 }
 
 /*
- * Search fnode in ntnode, if not found allocate and preinitialize.
- *
- * ntnode should be locked on entry.
- */
-int
-ntfs_fget(
-    struct ntfsmount *ntmp,
-    struct ntnode *ip,
-    int attrtype,
-    const char *attrname,
-    struct fnode **fpp
-)
-{
-	struct fnode *fp;
-
-	dprintf(("%s: ino: %llu, attrtype: 0x%x, attrname: %s\n", __func__,
-	    (unsigned long long)ip->i_number, attrtype, attrname));
-	*fpp = NULL;
-	for (fp = ip->i_fnlist.lh_first; fp != NULL; fp = fp->f_fnlist.le_next){
-		dprintf(("%s: fnode: attrtype: %d, attrname: %s\n", __func__,
-			fp->f_attrtype, fp->f_attrname));
-
-		if ((attrtype == fp->f_attrtype) &&
-		    strcmp(attrname, fp->f_attrname) == 0) {
-			dprintf(("%s: found existed: %p\n", __func__, fp));
-			*fpp = fp;
-		}
-	}
-
-	if (*fpp)
-		return (0);
-
-	fp = malloc(sizeof(*fp), M_NTFSFNODE, M_WAITOK|M_ZERO);
-	dprintf(("%s: allocating fnode: %p\n", __func__, fp));
-
-	fp->f_ip = ip;
-	fp->f_attrname = malloc(strlen(attrname)+1, M_TEMP, M_WAITOK);
-	strcpy(fp->f_attrname, attrname);
-	fp->f_attrtype = attrtype;
-
-	ntfs_ntref(ip);
-
-	LIST_INSERT_HEAD(&ip->i_fnlist, fp, f_fnlist);
-
-	*fpp = fp;
-
-	return (0);
-}
-
-/*
- * Deallocate fnode, remove it from ntnode's fnode list.
- *
- * ntnode should be locked.
- */
-void
-ntfs_frele(
-	struct fnode *fp)
-{
-	struct ntnode *ip = FTONT(fp);
-
-	dprintf(("%s: fnode: %p for %llu: %p\n", __func__, fp,
-	    (unsigned long long)ip->i_number, ip));
-
-	dprintf(("%s: deallocating fnode\n", __func__));
-	LIST_REMOVE(fp,f_fnlist);
-	free(fp->f_attrname, M_TEMP);
-	if (fp->f_dirblbuf)
-		free(fp->f_dirblbuf, M_NTFSDIR);
-	free(fp, M_NTFSFNODE);
-	ntfs_ntrele(ip);
-}
-
-/*
  * Lookup attribute name in format: [[:$ATTR_TYPE]:$ATTR_NAME],
  * $ATTR_TYPE is searched in attrdefs read from $AttrDefs.
  * If $ATTR_TYPE not specified, ATTR_A_DATA assumed.
@@ -855,7 +777,7 @@ ntfs_ntlookupattr(
 
 /*
  * Lookup specified node for filename, matching cnp,
- * return fnode filled.
+ * return referenced vnode with fnode filled.
  */
 int
 ntfs_ntlookupfile(
@@ -987,7 +909,7 @@ ntfs_ntlookupfile(
 			/* vget node */
 			error = ntfs_vgetex(ntmp->ntm_mountp, iep->ie_number,
 				   attrtype, attrname ? attrname : "",
-				   LK_EXCLUSIVE, &nvp);
+				   0, &nvp);
 
 			/* free the buffer returned by ntfs_ntlookupattr() */
 			if (attrname) {
@@ -997,8 +919,6 @@ ntfs_ntlookupfile(
 
 			if (error)
 				goto fail;
-
-			KASSERT(VTOF(nvp)->f_flag & FN_VALID);
 
 			*vpp = nvp;
 			goto fail;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_inode.h,v 1.8 2014/11/13 16:49:56 hannken Exp $	*/
+/*	$NetBSD: ntfs_inode.h,v 1.9 2014/11/13 16:51:53 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -64,7 +64,6 @@ struct ntnode {
 	int		i_usecount;
 	int		i_busy;
 
-	LIST_HEAD(,fnode)	i_fnlist;
 	LIST_HEAD(,ntvattr)	i_valist;
 
 	long		i_nlink;	/* MFR */
@@ -72,15 +71,19 @@ struct ntnode {
 	u_int32_t	i_frflag;	/* MFR */
 };
 
-#define	FN_PRELOADED	0x0001
-#define	FN_VALID	0x0002
+#define NTKEY_SIZE(attrlen) (sizeof(struct ntkey) + (attrlen))
+struct ntkey {
+	ino_t		k_ino;		/* Inode number of ntnode. */
+	u_int32_t	k_attrtype;	/* Attribute type. */
+	char		k_attrname[1];	/* Attribute name (variable length). */
+} __packed;
+
 struct fnode {
 	struct genfs_node f_gnode;
 
 	LIST_ENTRY(fnode) f_fnlist;
 	struct vnode   *f_vp;		/* Associatied vnode */
 	struct ntnode  *f_ip;		/* Associated ntnode */
-	u_long		f_flag;
 
 	ntfs_times_t	f_times;	/* $NAME/dirinfo */
 	ino_t		f_pnumber;	/* $NAME/dirinfo */
@@ -88,8 +91,11 @@ struct fnode {
 	u_int64_t	f_size;		/* defattr/dirinfo: */
 	u_int64_t	f_allocated;	/* defattr/dirinfo */
 
-	u_int32_t	f_attrtype;
-	char	       *f_attrname;
+	struct ntkey   *f_key;
+	struct ntkey	f_smallkey;
+#define f_ino f_key->k_ino
+#define f_attrtype f_key->k_attrtype
+#define f_attrname f_key->k_attrname
 
 	/* for ntreaddir */
 	u_int32_t       f_lastdattr;

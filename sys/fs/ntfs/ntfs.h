@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.19 2008/05/05 17:11:16 ad Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.20 2014/11/13 16:51:53 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -294,7 +294,6 @@ struct ntfsmount {
 #ifdef _KERNEL
 MALLOC_DECLARE(M_NTFSMNT);
 MALLOC_DECLARE(M_NTFSNTNODE);
-MALLOC_DECLARE(M_NTFSFNODE);
 MALLOC_DECLARE(M_NTFSDIR);
 MALLOC_DECLARE(M_NTFSNTVATTR);
 MALLOC_DECLARE(M_NTFSRDATA);
