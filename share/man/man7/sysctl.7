@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.85 2014/08/03 09:15:21 apb Exp $
+.\"	$NetBSD: sysctl.7,v 1.86 2014/11/13 16:10:21 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd August 3, 2014
+.Dd November 13, 2014
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1229,6 +1229,7 @@ The currently defined protocols and names are:
 .It arp	keep	integer	yes
 .It arp	log_movements	integer	yes
 .It arp	log_permanent_modify	integer	yes
+.It arp	log_unknown_network	integer	yes
 .It arp	log_wrong_iface	integer	yes
 .It arp	prune	integer	yes
 .It arp	refresh	integer	yes
