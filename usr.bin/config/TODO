@@ -158,17 +158,21 @@ o Support kernel constructor/destructor (.kctors/.kdtors)
   sequence of various subsystem initializations in init_main.c:main() will be
   replaced by an array of .kctors invocations, and #ifdef's there will be gone.
 
-o Replace linkset.
+o Hide link-set in the final kernel.
 
-  Don't allow kernel subsystems create random ELF sections (with potentially
-  long names) in the final kernel.  To collect some data in statically linked
-  modules, creating intermediate sections (e.g. .data.linkset.sysctl) and
-  exporting the start/end symbols (e.g. _data_linkset_sysctl_{start,end})
-  using linker script should be fine.
+  Link-set is used to collect references (pointers) at link time.  It relys on
+  the ld(1) behavior that it automatically generates `__start_X' and `__stop_X'
+  symbols for the section `X' to reduce coding.
 
-  Dynamically loaded modules have to register those entries via constructors
-  (functions).  This means that dynamically loaded modules are flexible but
-  come with overhead.
+  Don't allow kernel subsystems create random ELF sections.
+
+  Pre-define all the available link-set names and pre-generate a linker script
+  to merge them into .rodata.
+
+  (For modular(9) modules, `link_set_modules' is looked up by kernel loader.
+  Provide only it.)
+
+  Provide a way for 3rd party modules to declare extra link-set.
 
 o Shared kernel objects.
 
