@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.51 2014/11/13 01:09:59 uebayasi Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.52 2014/11/13 02:31:24 christos Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -79,6 +79,7 @@ KMODSCRIPTSRC=	${DESTDIR}/usr/libdata/ldscripts/kmodule
 .endif
 .if ${MKLDSCRIPT} == "yes"
 KMODSCRIPT=	kldscript
+MKLDSCRIPTSH=	
 .else
 KMODSCRIPT=	${KMODSCRIPTSRC}
 .endif
@@ -106,14 +107,14 @@ NODPSRCS+=	${f}
 ${XOBJS}:	${DPSRCS}
 .endif
 
-${PROG}: ${XOBJS} ${XSRCS} ${DPSRCS} ${DPADD} \
-    ${"${MKLDSCRIPT}" == "yes":?$S/conf/mkldscript.sh ${KMODSCRIPTSRC}:}
-	${_MKTARGET_LINK}
 .if ${MKLDSCRIPT} == "yes"
-	@rm -f ${KMODSCRIPT}
+${KMODSCRIPT}: ${KMODSCRIPTSRC} ${XOBJS} $S/conf/mkldscript.sh
+	@rm -f ${.TARGET}
 	@OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh \
-	    -t ${KMODSCRIPTSRC} ${OBJS} > ${KMODSCRIPT}
+	    -t ${KMODSCRIPTSRC} ${XOBJS} > ${.TARGET}
 .endif
+
+${PROG}: ${XOBJS} ${XSRCS} ${DPSRCS} ${DPADD} ${KMODSCRIPT}
 	${CC} ${LDFLAGS} -nostdlib -MD -combine -r -Wl,-T,${KMODSCRIPT},-d \
 		-Wl,-Map=${.TARGET}.map \
 		-o ${.TARGET} ${CFLAGS} ${CPPFLAGS} ${XOBJS} \
@@ -124,6 +125,13 @@ ${PROG}: ${XOBJS} ${XSRCS} ${DPSRCS} ${DPADD} \
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 
 ${OBJS} ${LOBJS}: ${DPSRCS}
+
+.if ${MKLDSCRIPT} == "yes"
+${KMODSCRIPT}: ${KMODSCRIPTSRC} ${OBJS} $S/conf/mkldscript.sh
+	@rm -f ${.TARGET}
+	@OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh \
+	    -t ${KMODSCRIPTSRC} ${OBJS} > ${.TARGET}
+.endif
 
 .if ${MACHINE_CPU} == "arm"
 # The solution to limited branch space involves generating trampolines for
@@ -161,14 +169,7 @@ ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 	    -o ${.TARGET} ${KMOD}_tmp.o ${KMOD}_tramp.o
 .endif
 .else
-${PROG}: ${OBJS} ${DPADD} \
-    ${"${MKLDSCRIPT}" == "yes":?$S/conf/mkldscript.sh ${KMODSCRIPTSRC}:}
-	${_MKTARGET_LINK}
-.if ${MKLDSCRIPT} == "yes"
-	@rm -f ${KMODSCRIPT}
-	@OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh \
-	    -t ${KMODSCRIPTSRC} ${OBJS} > ${KMODSCRIPT}
-.endif
+${PROG}: ${OBJS} ${DPADD} ${KMODSCRIPT}
 	${CC} ${LDFLAGS} -nostdlib -r -Wl,-T,${KMODSCRIPT},-d \
 		-Wl,-Map=${.TARGET}.map \
 		-o ${.TARGET} ${OBJS}
