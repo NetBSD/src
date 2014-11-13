@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.106 2014/11/06 06:41:23 uebayasi Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.107 2014/11/13 08:25:31 apb Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -155,6 +155,11 @@ If any of these directories are missing, they will be skipped during the build.
 .Dq Reachover
 build structure for X11R6; the source is in
 .Sy X11SRCDIR .
+.It Pa extsrc/
+.Dq Reachover
+build structure for externally added programs and libraries;
+the source is in
+.Sy EXTSRCSRCDIR .
 .El
 .
 .Ss Build tree layout
@@ -416,6 +421,15 @@ unless run in
 .Sq expert
 mode.
 .
+.It Sy EXTSRCSRCDIR
+Directory containing sources of externally added programs
+and libraries.
+If specified, must be an absolute path.
+.DFLT
+.Sy NETBSDRCDIR Ns Pa /../extsrc ,
+if that exists; otherwise
+.Pa /usr/extsrc .
+.
 .It Sy MAKECONF
 The name of the
 .Xr make 1
@@ -506,6 +520,12 @@ Indicates whether system documentation destined for
 .Sy DESTDIR Ns Pa /usr/share/doc
 will be installed during a build.
 .DFLTy
+.
+.It Sy MKEXTSRC
+.YorN
+Indicates whether extsrc is built from
+.Sy EXTSRCSRCDIR .
+.DFLTn
 .
 .It Sy MKHTML
 .YorN
@@ -1942,6 +1962,18 @@ absolute path before being used.
 .It Fl x
 Set
 .Sy MKX11=yes .
+.
+.It Fl Y Ar extsrcdir
+Set the value of
+.Sy EXTSRCSRCDIR
+to
+.Ar extsrcdir .
+If a relative path is specified, it will be converted to an
+absolute path before being used.
+.
+.It Fl y
+Set
+.Sy MKEXTSRC=yes .
 .
 .It Fl Z Ar var
 Unset ("zap") the environment variable
