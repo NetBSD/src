@@ -27,12 +27,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: boot.c,v 1.16 2014/07/07 19:04:37 christos Exp $");
+__RCSID("$NetBSD: boot.c,v 1.16.2.1 2014/11/14 15:49:16 martin Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -184,7 +185,7 @@ readboot(int dosfs, struct bootblock *boot)
 		return FSFATAL;
 	}
 
-	boot->ClusterOffset = (boot->RootDirEnts * 32 + boot->BytesPerSec - 1)
+	boot->ClusterOffset = (int)(boot->RootDirEnts * 32 + boot->BytesPerSec - 1)
 	    / boot->BytesPerSec
 	    + boot->ResSectors
 	    + boot->FATs * boot->FATsecs
@@ -205,8 +206,8 @@ readboot(int dosfs, struct bootblock *boot)
 		boot->NumSectors = boot->HugeSectors;
 	boot->NumClusters = (boot->NumSectors - boot->ClusterOffset) / boot->SecPerClust;
 
-	if (boot->ClusterOffset > boot->NumSectors) {
-		pfatal("Cluster offset too large (%u clusters)\n",
+	if (boot->ClusterOffset > (intmax_t)boot->NumSectors) {
+		pfatal("Cluster offset too large (%d sectors)\n",
 		    boot->ClusterOffset);
 		return FSFATAL;
 	}
