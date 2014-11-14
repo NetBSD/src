@@ -28,7 +28,7 @@
 #ifndef AUTH_H
 #define AUTH_H
 
-#include <sys/queue.h>
+#include "config.h"
 
 #define DHCPCD_AUTH_SEND	(1 << 0)
 #define DHCPCD_AUTH_REQUIRE	(1 << 1)

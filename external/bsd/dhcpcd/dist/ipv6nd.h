@@ -28,10 +28,9 @@
 #ifndef IPV6ND_H
 #define IPV6ND_H
 
-#include <sys/queue.h>
-
 #include <time.h>
 
+#include "config.h"
 #include "dhcpcd.h"
 #include "ipv6.h"
 
