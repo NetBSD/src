@@ -1,4 +1,4 @@
-/* $NetBSD: awin_fb.c,v 1.4 2014/11/14 00:31:54 jmcneill Exp $ */
+/* $NetBSD: awin_fb.c,v 1.5 2014/11/14 19:47:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_fb.c,v 1.4 2014/11/14 00:31:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_fb.c,v 1.5 2014/11/14 19:47:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -182,16 +182,9 @@ awin_fb_ddb_trap_callback(int where)
 }
 
 void
-awin_fb_set_videomode(device_t dev, const struct videomode *mode)
+awin_fb_set_videomode(device_t dev, u_int width, u_int height)
 {
 	struct awin_fb_softc *sc = device_private(dev);
-
-	if (mode == NULL)
-		return;
-
-	const u_int interlace_p = !!(mode->flags & VID_INTERLACE);
-	const u_int width = mode->hdisplay;
-	const u_int height = (mode->vdisplay << interlace_p);
 
 	if (sc->sc_gen.sc_width != width || sc->sc_gen.sc_height != height) {
 		device_printf(sc->sc_gen.sc_dev,

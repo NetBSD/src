@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.27 2014/11/10 20:36:12 jmcneill Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.28 2014/11/14 19:47:36 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.27 2014/11/10 20:36:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.28 2014/11/14 19:47:36 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -759,6 +759,14 @@ awin_device_register(device_t self, void *aux)
 			prop_dictionary_set_bool(dict, "is_console", false);
 #endif
 		return;
+	}
+
+	if (device_is_a(self, "awindebe")) {
+		int margin;
+		if (get_bootconf_option(boot_args, "fb.margin",
+		    BOOTOPT_TYPE_INT, &margin) && margin > 0) {
+			prop_dictionary_set_uint16(dict, "margin", margin);
+		}
 	}
 
 #if NGENFB > 0
