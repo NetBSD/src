@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.14.6.2 2014/11/14 13:26:46 martin Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.14.6.3 2014/11/14 13:37:39 martin Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.14.6.2 2014/11/14 13:26:46 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.14.6.3 2014/11/14 13:37:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -518,7 +518,7 @@ awin_pll5x_get_rate(void)
 	    AWIN_CCM_OFFSET + AWIN_PLL5_CFG_REG);
 
 	n = __SHIFTOUT(cfg, AWIN_PLL_CFG_FACTOR_N);
-	k = __SHIFTOUT(cfg, AWIN_PLL_CFG_FACTOR_K);
+	k = __SHIFTOUT(cfg, AWIN_PLL_CFG_FACTOR_K) + 1;
 	p = __SHIFTOUT(cfg, AWIN_PLL5_OUT_EXT_DIV_P);
 
 	return (AWIN_REF_FREQ * n * k) >> p;

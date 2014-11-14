@@ -1,4 +1,4 @@
-/* $NetBSD: awin_dma_a10.c,v 1.2.2.2 2014/11/09 14:42:33 martin Exp $ */
+/* $NetBSD: awin_dma_a10.c,v 1.2.2.3 2014/11/14 13:37:39 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_dma_a10.c,v 1.2.2.2 2014/11/09 14:42:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_dma_a10.c,v 1.2.2.3 2014/11/14 13:37:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -179,7 +179,8 @@ awin_dma_a10_alloc(struct awin_dma_softc *sc, const char *type,
 	uint32_t irqen;
 	uint8_t ch_count, index;
 
-	if (strcmp(type, "ddma") == 0) {
+	if (strcmp(type, "ddma") == 0 ||
+	    strcmp(type, "hdmiaudio") == 0) {
 		ch_list = awin_ddma_channels;
 		ch_count = DDMA_CHANNELS;
 	} else {
@@ -239,7 +240,11 @@ awin_dma_a10_get_config(void *priv)
 {
 	struct awin_dma_a10_channel *ch = priv;
 
-	return DMACH_READ(ch, AWIN_NDMA_CTL_REG);
+	if (ch->ch_type == CH_NDMA) {
+		return DMACH_READ(ch, AWIN_NDMA_CTL_REG);
+	} else {
+		return DMACH_READ(ch, AWIN_DDMA_CTL_REG);
+	}
 }
 
 static void
@@ -247,7 +252,11 @@ awin_dma_a10_set_config(void *priv, uint32_t val)
 {
 	struct awin_dma_a10_channel *ch = priv;
 
-	DMACH_WRITE(ch, AWIN_NDMA_CTL_REG, val);
+	if (ch->ch_type == CH_NDMA) {
+		DMACH_WRITE(ch, AWIN_NDMA_CTL_REG, val);
+	} else {
+		DMACH_WRITE(ch, AWIN_DDMA_CTL_REG, val);
+	}
 }
 
 static int
@@ -275,6 +284,11 @@ awin_dma_a10_transfer(void *priv, paddr_t src, paddr_t dst,
 		DMACH_WRITE(ch, AWIN_DDMA_SRC_START_ADDR_REG, src);
 		DMACH_WRITE(ch, AWIN_DDMA_DEST_START_ADDR_REG, dst);
 		DMACH_WRITE(ch, AWIN_DDMA_BC_REG, nbytes);
+		DMACH_WRITE(ch, AWIN_DDMA_PARA_REG,
+		    __SHIFTIN(31, AWIN_DDMA_PARA_DST_DATA_BLK_SIZ) |
+		    __SHIFTIN(7, AWIN_DDMA_PARA_DST_WAIT_CYC) |
+		    __SHIFTIN(31, AWIN_DDMA_PARA_SRC_DATA_BLK_SIZ) |
+		    __SHIFTIN(7, AWIN_DDMA_PARA_SRC_WAIT_CYC));
 
 		cfg |= AWIN_DDMA_CTL_DMA_LOADING;
 		awin_dma_a10_set_config(ch, cfg);

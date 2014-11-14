@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.12.2.3 2014/11/14 13:26:46 martin Exp $
+#	$NetBSD: CUBIEBOARD,v 1.12.2.4 2014/11/14 13:37:39 martin Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -249,6 +249,8 @@ audio0		at awinac0
 
 # HDMI
 awinhdmi0       at awinio0
+awinhdmiaudio0	at awinio0
+audio1		at awinhdmiaudio0
 
 # TCON
 awintcon0       at awinio0 port 0
