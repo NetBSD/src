@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.101 2014/11/14 18:19:01 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.102 2014/11/14 22:27:05 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2644,4 +2644,15 @@ usr.sbin/postinstall/postinstall		1.181-1.183
 	file) and grep that on error for the missing information, so the user
 	gets all the info needed how to "FIX MANUALLY".
 	[martin, ticket #220]
+
+sys/arch/arm/allwinner/awin_debe.c		1.7
+sys/arch/arm/allwinner/awin_fb.c		1.5
+sys/arch/arm/allwinner/awin_var.h		1.23
+sys/arch/evbarm/awin/awin_machdep.c		1.28
+
+	Allow the DEBE layer and output sizes to be set independently. Now you
+	can pass fb.margin=<n> in bootargs to add a border to the framebuffer,
+	in case your display doesn't let you turn off overscan and you really
+	want to see the whole screen.
+	[jmcneill, ticket #238]
 
