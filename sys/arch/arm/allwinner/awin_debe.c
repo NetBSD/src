@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.7 2014/11/14 19:47:36 jmcneill Exp $ */
+/* $NetBSD: awin_debe.c,v 1.8 2014/11/14 23:45:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.7 2014/11/14 19:47:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.8 2014/11/14 23:45:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.7 2014/11/14 19:47:36 jmcneill Exp $
 #include <arm/allwinner/awin_var.h>
 
 #include <dev/videomode/videomode.h>
+#include <dev/wscons/wsconsio.h>
 
 struct awin_debe_softc {
 	device_t sc_dev;
@@ -360,3 +361,30 @@ awin_debe_set_videomode(const struct videomode *mode)
 		awin_debe_setup_fbdev(sc, mode);
 	}
 }
+
+int
+awin_debe_ioctl(device_t self, u_long cmd, void *data)
+{
+	struct awin_debe_softc *sc = device_private(self);
+	uint32_t val;
+	int enable;
+
+	switch (cmd) {
+	case WSDISPLAYIO_SVIDEO:
+		enable = *(int *)data;
+		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
+		if (enable)
+			val |= AWIN_DEBE_MODCTL_LAY0_EN;
+		else
+			val &= ~AWIN_DEBE_MODCTL_LAY0_EN;
+		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
+		return 0;
+	case WSDISPLAYIO_GVIDEO:
+		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
+		*(int *)data = !!(val & AWIN_DEBE_MODCTL_LAY0_EN);
+		return 0;
+	}
+
+	return EPASSTHROUGH;
+}
+
