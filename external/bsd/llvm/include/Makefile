@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2014/11/14 15:56:12 joerg Exp $
+#	$NetBSD: Makefile,v 1.35 2014/11/14 15:59:46 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -14,6 +14,7 @@ INCS=	__wmmintrin_aes.h \
 	avxintrin.h \
 	bmi2intrin.h \
 	bmiintrin.h \
+	cpuid.h \
 	emmintrin.h \
 	f16cintrin.h \
 	fmaintrin.h \
@@ -41,7 +42,8 @@ INCS=	__wmmintrin_aes.h \
 .elif ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "powerpc64"
 INCS=	altivec.h
 .elif ${MACHINE_CPU} == "arm"
-INCS=	arm_acle.h
+INCS=	arm_acle.h \
+	arm_neon.h
 .endif
 INCSDIR=	/usr/include/clang-${CLANG_VERSION:R}
 
@@ -113,7 +115,7 @@ CLANG_TABLEGEN_OUTPUT.Diagnostic.td= \
 
 CLANG_TABLEGEN_OUTPUT.arm_neon.td= \
 	clang/Basic/arm_neon.inc|-gen-arm-neon-sema \
-	arm_neon.h.inc|-gen-arm-neon
+	arm_neon.h|-gen-arm-neon
 
 TABLEGEN_INCLUDES.Options.td=	-I${CLANG_SRCDIR}/include/clang/Driver
 TABLEGEN_OUTPUT.Options.td= \
