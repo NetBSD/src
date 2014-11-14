@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.28 2009/04/25 01:33:12 snj Exp $
+.\"	$NetBSD: upgrade,v 1.29 2014/11/14 07:06:40 snj Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,15 +97,10 @@ Make sure you know whether or not to install the bootloader.
 .Pp
 The upgrade procedure
 is similar to an installation, but without the hard disk partitioning.
-.Ic sysinst
-will attempt to merge the settings stored in your
-.Pa /etc
-directory with the new version of
-.Nx .
-Also, file systems are checked before unpacking the sets.
-Fetching the binary
-sets is done in the same manner as the installation procedure;
-refer to the installation part of the document for help.
+.Pp
+Fetching the binary sets is done in the same manner as the installation
+procedure; refer to the installation part of the document for help.
+File systems are checked before unpacking the sets.
 .Pp
 After a new kernel has been copied to your hard disk, your
 machine is a complete
@@ -113,8 +108,7 @@ machine is a complete
 \*V
 system.
 However, that doesn't mean that you're finished with the upgrade process.
-You will probably want to update the set of device
-nodes you have in
+You will probably want to update the set of device nodes you have in
 .Pa /dev .
 If you've changed the contents of
 .Pa /dev
@@ -125,9 +119,17 @@ and run the command:
 .Pp
 .Dl # Ic "sh MAKEDEV all"
 .Pp
-Finally, you will want to delete old binaries that were part
-of the version of
+.Ic sysinst
+will attempt to merge the settings stored in your
+.Pa /etc
+directory with the new version of
 .Nx
-that you upgraded from and have since been removed from the
-.Nx
-distribution.
+using the
+.Xr postinstall 8
+utility.
+However,
+.Xr postinstall 8
+is only able to deal with changes that are easily automated.
+It is recommended that you use the
+.Xr etcupdate 8
+tool to merge any remaining configuration changes.
