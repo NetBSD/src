@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2014/06/01 19:51:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.22.2.1 2014/11/14 15:01:02 martin Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -50,11 +50,12 @@ CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp1
 	${NM} -pg ${.TARGET}.tmp1 | \
 	    ${TOOL_AWK} 'NF == 3 { print "\t.hidden", $$3 }' | \
-	    ${CC} ${COPTS} -Wl,-x -r -nostdinc -nostdlib ${CPUFLAGS} -o ${.TARGET}.tmp2 ${.TARGET}.tmp1 -xassembler -
+	    ${CC} ${COPTS} -r -nostdinc -nostdlib ${CPUFLAGS} -o ${.TARGET}.tmp2 ${.TARGET}.tmp1 -xassembler -
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}.tmp2
 .if defined(COPTS) && !empty(COPTS:M*-g*)
 	mv ${.TARGET}.tmp2 ${.TARGET}
 .else
-	${LD} -x -r ${.TARGET}.tmp2 -o ${.TARGET}
+	${LD} -r ${.TARGET}.tmp2 -o ${.TARGET}
 	rm -f ${.TARGET}.tmp2
 .endif
 	rm -f ${.TARGET}.tmp1
@@ -64,11 +65,12 @@ CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 	${COMPILE.S} ${PICFLAGS} ${CFLAGS:M-[ID]*} ${.IMPSRC} -o ${.TARGET}.tmp1
 	${NM} -pg ${.TARGET}.tmp1 | \
 	    ${TOOL_AWK} 'NF == 3 { print "\t.hidden", $$3 }' | \
-	    ${CC} ${COPTS} -Wl,-x -r -nostdinc -nostdlib -o ${.TARGET}.tmp2 ${.TARGET}.tmp1 -xassembler -
+	    ${CC} ${COPTS} -r -nostdinc -nostdlib -o ${.TARGET}.tmp2 ${.TARGET}.tmp1 -xassembler -
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}.tmp2
 .if defined(COPTS) && !empty(COPTS:M*-g*)
 	mv ${.TARGET}.tmp2 ${.TARGET}
 .else
-	${LD} -x -r ${.TARGET}.tmp2 -o ${.TARGET}
+	${LD} -r ${.TARGET}.tmp2 -o ${.TARGET}
 	rm -f ${.TARGET}.tmp2
 .endif
 	rm -f ${.TARGET}.tmp1
