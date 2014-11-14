@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.243 2014/03/24 14:15:38 szptvlfn Exp $
+# $NetBSD: GENERIC,v 1.243.4.1 2014/11/14 15:16:19 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.243 $"
+#ident 		"GENERIC-$Revision: 1.243.4.1 $"
 
 maxusers	32
 
@@ -213,6 +213,9 @@ options 	QUOTA		# FFS quotas
 options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	UFS_EXTATTR_AUTOSTART
+options 	UFS_EXTATTR_AUTOCREATE=1024
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

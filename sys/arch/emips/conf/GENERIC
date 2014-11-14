@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.12 2013/06/30 21:38:56 rmind Exp $
+# $NetBSD: GENERIC,v 1.12.6.1 2014/11/14 15:16:16 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/emips/conf/std.emips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.12 $"
+#ident		"GENERIC-$Revision: 1.12.6.1 $"
 
 maxusers	64
 
@@ -93,6 +93,9 @@ options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	UFS_EXTATTR_AUTOSTART
+options 	UFS_EXTATTR_AUTOCREATE=1024
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options

@@ -1,8 +1,8 @@
-# 	$NetBSD: NONPLUS64,v 1.41 2014/03/24 14:15:38 szptvlfn Exp $
+# 	$NetBSD: NONPLUS64,v 1.41.4.1 2014/11/14 15:16:16 martin Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.41 $"
+#ident		"NONPLUS64-$Revision: 1.41.4.1 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -152,6 +152,9 @@ options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	UFS_EXTATTR_AUTOSTART
+options 	UFS_EXTATTR_AUTOCREATE=1024
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

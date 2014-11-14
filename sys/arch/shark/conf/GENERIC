@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.115.2.1 2014/10/10 18:16:37 snj Exp $
+#	$NetBSD: GENERIC,v 1.115.2.2 2014/11/14 15:16:16 martin Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.115.2.1 $"
+#ident		"GENERIC-$Revision: 1.115.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -65,6 +65,9 @@ options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
+#options 	UFS_EXTATTR_AUTOSTART
+#options 	UFS_EXTATTR_AUTOCREATE=1024
 
 # Networking options
 

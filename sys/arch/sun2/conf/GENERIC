@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.90 2014/07/26 17:32:07 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.90.2.1 2014/11/14 15:16:17 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90 $"
+#ident 		"GENERIC-$Revision: 1.90.2.1 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -103,6 +103,9 @@ file-system	PTYFS		# /dev/pts/N support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
+#options 	UFS_EXTATTR_AUTOSTART
+#options 	UFS_EXTATTR_AUTOCREATE=1024
 
 # Networking options
 options 	INET		# IP protocol stack support

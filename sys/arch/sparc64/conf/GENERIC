@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.171.4.1 2014/10/10 18:16:37 snj Exp $
+# $NetBSD: GENERIC,v 1.171.4.2 2014/11/14 15:16:16 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.171.4.1 $"
+#ident 		"GENERIC-$Revision: 1.171.4.2 $"
 
 maxusers	64
 
@@ -188,6 +188,9 @@ options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	UFS_EXTATTR_AUTOSTART
+options 	UFS_EXTATTR_AUTOCREATE=1024
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.18 2014/07/20 10:06:11 alnsn Exp $
+# $NetBSD: GENERIC64,v 1.18.2.1 2014/11/14 15:16:15 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.18 $"
+#ident		"GENERIC-$Revision: 1.18.2.1 $"
 
 maxusers	64
 
@@ -93,6 +93,9 @@ options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	UFS_EXTATTR_AUTOSTART
+options 	UFS_EXTATTR_AUTOCREATE=1024
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options
