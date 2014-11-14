@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.2 2009/04/23 01:56:48 snj Exp $
+.\"	$NetBSD: prep,v 1.2.26.1 2014/11/14 14:58:28 martin Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -40,7 +40,7 @@ install kernel onto a CD-R.
 Go to one of the
 .Nx
 mirror sites and download CD-R image from the
-.Pa pub/NetBSD/iso
+.Pa pub/NetBSD/images
 directory.
 .Lk http://www.NetBSD.org/mirrors/#iso
 .Pp
@@ -54,7 +54,7 @@ collection should get it from the official website:
 .Lk http://cdrecord.berlios.de/old/private/cdrecord.html
 .Pp
 .(disp
-.No # Ic "cdrecord -v speed=16 dev=/dev/cd0d arccd.iso"
+.No # Ic "cdrecord -v speed=16 dev=/dev/cd0d NetBSD-arc-\*V.iso"
 .disp)
 .Pp
 You will need to substitute the correct name of the disk image file,

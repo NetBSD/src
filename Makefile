@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.309 2014/06/16 09:06:26 apb Exp $
+#	$NetBSD: Makefile,v 1.309.2.1 2014/11/14 14:58:27 martin Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -64,11 +64,11 @@
 #	Populate ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/syspkgs
 #	from ${DESTDIR}
 #   iso-image:
-#	Create CD-ROM image in RELEASEDIR/iso.
+#	Create CD-ROM image in RELEASEDIR/images.
 #	RELEASEDIR must already have been populated by `make release'
 #	or equivalent.
 #   iso-image-source:
-#	Create CD-ROM image with source in RELEASEDIR/iso.
+#	Create CD-ROM image with source in RELEASEDIR/images.
 #	RELEASEDIR must already have been populated by
 #	`make release sourcesets' or equivalent.
 #   live-image:
