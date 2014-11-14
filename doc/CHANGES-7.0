@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.96 2014/11/14 07:30:06 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.97 2014/11/14 08:17:38 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2439,4 +2439,10 @@ usr.sbin/etcupdate/etcupdate			1.59
 	A colon-separated list of tgz files is no longer accepted; you
 	must use multiple -s options instead.
 	[apb, ticket #225]
+
+sys/arch/arm/arm32/kobj_machdep.c		1.10
+
+	PR port-arm/49299: add support for BE8 byte swapped instructions.
+	Avoids a kernel crash when loading modules.
+	[martin, ticket #228]
 
