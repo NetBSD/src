@@ -1,4 +1,4 @@
-#	$NetBSD: t_section.sh,v 1.1 2014/11/14 13:30:48 uebayasi Exp $
+#	$NetBSD: t_section.sh,v 1.2 2014/11/14 16:20:42 uebayasi Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,13 +36,12 @@ startstop_body() {
 #include <sys/cdefs.h>
 int i __section("hoge");
 extern int __start_hoge[], __stop_hoge[];
-int main = __start_hoge[0] + __stop_hoge[0];
+int main(void) { return __start_hoge[0] + __stop_hoge[0]; }
 EOF
 	atf_check -s exit:0 -o ignore -e ignore cc -o test test.c
 }
 
 atf_init_test_cases()
 {
-
 	atf_add_test_case startstop
 }
