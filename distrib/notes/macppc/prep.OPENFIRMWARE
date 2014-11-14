@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep.OPENFIRMWARE,v 1.15 2012/01/14 22:56:30 jmcneill Exp $
+.\"	$NetBSD: prep.OPENFIRMWARE,v 1.15.20.1 2014/11/14 14:58:28 martin Exp $
 .if \*[OF_VERSION_3] \{\
 .
 .Ss2 Updating your BootROM
@@ -1177,7 +1177,7 @@ Go to one of the
 mirror sites and download the CD-R image
 .Pa NetBSD-\*V-macppc.iso
 from the
-.Pa pub/NetBSD/iso
+.Pa pub/NetBSD/images
 directory.
 .Lk http://www.NetBSD.org/mirrors/#iso
 .Pp
@@ -1385,12 +1385,12 @@ systems should get it from the official website:
 .Pp
 .(disp
 .if \*[OF_VERSION_12] \{\
-.No # Ic "mkisofs -o output.iso -l -J -r -L -N /cdsources"
+.No # Ic "mkisofs -o NetBSD-\*V-macppc.iso -l -J -r -L -N /cdsources"
 .\}
 .if \*[OF_VERSION_3] \{\
-.No # Ic "mkisofs -o output.iso -hfs -part -l -J -r -L -N /cdsources"
+.No # Ic "mkisofs -o NetBSD-\*V-macppc.iso -hfs -part -l -J -r -L -N /cdsources"
 .\}
-.No # Ic "cdrecord -v speed=4 dev=/dev/cd1c output.iso"
+.No # Ic "cdrecord -v speed=4 dev=/dev/cd1c NetBSD-\*V-macppc.iso"
 .disp)
 .Pp
 You will need to substitute the correct speed for your CD writer, and the

@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.104 2014/08/07 21:45:27 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.104.2.1 2014/11/14 14:58:28 martin Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1146,7 +1146,7 @@ be set (see above).
 Create a
 .Nx
 installation CD-ROM image in the
-.Sy RELEASEDIR Ns Pa /iso
+.Sy RELEASEDIR Ns Pa /images
 directory.
 The CD-ROM file system will have a layout as described in
 .Xr release 7 .
@@ -1173,7 +1173,7 @@ Note that other, smaller, CD-ROM images may be created in the
 directory by
 .Dq "make release" .
 These smaller images usually contain the same tools as the larger images in
-.Sy RELEASEDIR Ns Pa /iso ,
+.Sy RELEASEDIR Ns Pa /images ,
 but do not contain additional content such as the distribution sets.
 .Pp
 Note that the mac68k port still uses an older method of creating
@@ -1189,7 +1189,7 @@ but which can be installed from
 Create a
 .Nx
 installation CD-ROM image in the
-.Sy RELEASEDIR Ns Pa /iso
+.Sy RELEASEDIR Ns Pa /images
 directory.
 The CD-ROM file system will have a layout as described in
 .Xr release 7 .
@@ -1217,7 +1217,7 @@ Note that other, smaller, CD-ROM images may be created in the
 directory by
 .Dq make release .
 These smaller images usually contain the same tools as the larger images in
-.Sy RELEASEDIR Ns Pa /iso ,
+.Sy RELEASEDIR Ns Pa /images ,
 but do not contain additional content such as the distribution sets.
 .Pp
 Note that the mac68k port still uses an older method of creating

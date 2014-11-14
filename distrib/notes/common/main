@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.510 2014/03/31 11:25:47 martin Exp $
+.\"	$NetBSD: main,v 1.510.4.1 2014/11/14 14:58:28 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -119,7 +119,7 @@ full distribution.
 .Pp
 These can be found
 on an FTP site near you, usually located in the
-.Pa /pub/NetBSD/iso/
+.Pa /pub/NetBSD/images/
 directory.
 Check the list of
 .Nx
