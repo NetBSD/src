@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.46.2.3 2014/10/03 18:53:56 martin Exp $
+#	$NetBSD: RPI,v 1.46.2.4 2014/11/14 15:51:20 martin Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -70,8 +70,8 @@ options 	INET6		# IPV6
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-#options 	NFS_BOOT_BOOTP
-#options 	NFS_BOOT_DHCP
+options 	NFS_BOOT_BOOTP
+options 	NFS_BOOT_DHCP
 #options		NFS_BOOT_BOOTSTATIC
 #options		NFS_BOOTSTATIC_MYIP="\"192.168.1.4\""
 #options		NFS_BOOTSTATIC_GWIP="\"192.168.1.1\""
@@ -259,7 +259,7 @@ spi* at spibus?
 
 # PIFace or other boards using that chip (needs gpio)
 #mcp23s17gpio0 at spi? slave 0 flags 0
-#mcp23s17gpio1 at spi? slave 0 flags 1 
+#mcp23s17gpio1 at spi? slave 0 flags 1
 #mcp23s17gpio2 at spi? slave 0 flags 2
 #mcp23s17gpio3 at spi? slave 0 flags 3
 
