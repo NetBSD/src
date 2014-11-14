@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.81 2014/03/05 14:13:20 phx Exp $
+# $NetBSD: GENERIC,v 1.81.4.1 2014/11/14 15:16:16 martin Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.81 $"
+#ident 		"GENERIC-$Revision: 1.81.4.1 $"
 
 maxusers	32
 
@@ -117,6 +117,9 @@ options 	QUOTA2		# new, in-filesystem UFS quotas
 options 	WAPBL		# File system journaling support
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	UFS_EXTATTR_AUTOSTART
+options 	UFS_EXTATTR_AUTOCREATE=1024
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 
 #options 	NFS_BOOT_DHCP

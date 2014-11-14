@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.112 2014/08/03 08:53:56 martin Exp $
+# 	$NetBSD: GENERIC,v 1.112.2.1 2014/11/14 15:16:17 martin Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.112 $"
+#ident		"GENERIC-$Revision: 1.112.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -73,6 +73,9 @@ options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	UFS_EXTATTR_AUTOSTART
+options 	UFS_EXTATTR_AUTOCREATE=1024
 
 # Networking options
 

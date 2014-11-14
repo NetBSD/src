@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.166 2013/06/30 21:38:59 rmind Exp $
+# $NetBSD: GENERIC,v 1.166.6.1 2014/11/14 15:16:16 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.166 $"
+#ident		"GENERIC-$Revision: 1.166.6.1 $"
 
 makeoptions	COPTS="-Os"		# bootloader has size limit (~2MB)
 
@@ -114,6 +114,9 @@ options 	NFSSERVER	# nfs server support
 options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	UFS_EXTATTR	# Extended attribute support for UFS1
+#options 	UFS_EXTATTR_AUTOSTART
+#options 	UFS_EXTATTR_AUTOCREATE=1024
 
 # Networking options
 options 	INET		# IP protocol stack support

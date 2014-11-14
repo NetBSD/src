@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.78 2014/08/03 16:15:46 martin Exp $
+# $NetBSD: GENERIC,v 1.78.2.1 2014/11/14 15:16:17 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -72,6 +72,9 @@ options 	FFS_EI		# FFS endianness-independence support
 options 	WAPBL		# File system journaling support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	UFS_EXTATTR_AUTOSTART
+options 	UFS_EXTATTR_AUTOCREATE=1024
 
 # Executable format options
 options 	EXEC_ELF32

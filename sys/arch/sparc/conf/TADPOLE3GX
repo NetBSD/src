@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.61 2014/03/24 14:15:38 szptvlfn Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.61.4.1 2014/11/14 15:16:19 martin Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -170,6 +170,9 @@ options 	QUOTA		# legacy UFS quotas
 options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	UFS_EXTATTR	# Extended attribute support for UFS1
+options 	UFS_EXTATTR_AUTOSTART
+options 	UFS_EXTATTR_AUTOCREATE=1024
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
