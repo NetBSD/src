@@ -1,4 +1,4 @@
-/* $NetBSD: awin_tcon.c,v 1.4 2014/11/11 19:22:32 jmcneill Exp $ */
+/* $NetBSD: awin_tcon.c,v 1.5 2014/11/14 00:31:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_allwinner.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.4 2014/11/11 19:22:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.5 2014/11/14 00:31:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.4 2014/11/11 19:22:32 jmcneill Exp $
 #include <arm/allwinner/awin_var.h>
 
 #include <dev/videomode/videomode.h>
+
+#define DIVIDE(x,y)     (((x) + ((y) / 2)) / (y))
 
 struct awin_tcon_softc {
 	device_t sc_dev;
@@ -234,10 +236,17 @@ awin_tcon_set_videomode(const struct videomode *mode)
 	sc = device_private(dev);
 
 	if (mode) {
+		const u_int interlace_p = !!(mode->flags & VID_INTERLACE);
+		const u_int phsync_p = !!(mode->flags & VID_PHSYNC);
+		const u_int pvsync_p = !!(mode->flags & VID_PVSYNC);
 		const u_int hspw = mode->hsync_end - mode->hsync_start;
 		const u_int hbp = mode->htotal - mode->hsync_start;
 		const u_int vspw = mode->vsync_end - mode->vsync_start;
 		const u_int vbp = mode->vtotal - mode->vsync_start;
+		const u_int vblank_len =
+		    ((mode->vtotal << interlace_p) >> 1) - mode->vdisplay - 2;
+		const u_int start_delay =
+		    vblank_len >= 32 ? 30 : vblank_len - 2;
 
 		val = TCON_READ(sc, AWIN_TCON_GCTL_REG);
 		val |= AWIN_TCON_GCTL_IO_MAP_SEL;
@@ -245,7 +254,9 @@ awin_tcon_set_videomode(const struct videomode *mode)
 
 		/* enable */
 		val = AWIN_TCON_CTL_EN;
-		val |= __SHIFTIN(0x1e, AWIN_TCON_CTL_START_DELAY);
+		if (interlace_p)
+			val |= AWIN_TCON_CTL_INTERLACE_EN;
+		val |= __SHIFTIN(start_delay, AWIN_TCON_CTL_START_DELAY);
 #ifdef AWIN_TCON_BLUEDATA
 		val |= __SHIFTIN(AWIN_TCON_CTL_SRC_SEL_BLUEDATA,
 				 AWIN_TCON_CTL_SRC_SEL);
@@ -268,11 +279,32 @@ awin_tcon_set_videomode(const struct videomode *mode)
 		TCON_WRITE(sc, AWIN_TCON1_BASIC3_REG,
 		    ((mode->htotal - 1) << 16) | (hbp - 1));
 		/* Vertical total + back porch */
+		u_int vtotal = mode->vtotal * 2;
+		if (interlace_p) {
+			u_int framerate =
+			    DIVIDE(DIVIDE(mode->dot_clock * 1000, mode->htotal),
+			    mode->vtotal);
+			u_int clk = mode->htotal * (mode->vtotal * 2 + 1) *
+			    framerate;
+			if ((clk / 2) == mode->dot_clock * 1000)
+				vtotal += 1;
+		}
 		TCON_WRITE(sc, AWIN_TCON1_BASIC4_REG,
-		    ((mode->vtotal * 2) << 16) | (vbp - 1));
+		    (vtotal << 16) | (vbp - 1));
+
 		/* Sync */
 		TCON_WRITE(sc, AWIN_TCON1_BASIC5_REG,
 		    ((hspw - 1) << 16) | (vspw - 1));
+		/* Polarity */
+		val = AWIN_TCON_IO_POL_IO2_INV;
+		if (phsync_p)
+			val |= AWIN_TCON_IO_POL_PHSYNC;
+		if (pvsync_p)
+			val |= AWIN_TCON_IO_POL_PVSYNC;
+		TCON_WRITE(sc, AWIN_TCON1_IO_POL_REG, val);
+
+		TCON_WRITE(sc, AWIN_TCON_GINT1_REG,
+		    __SHIFTIN(start_delay + 2, AWIN_TCON_GINT1_TCON1_LINENO));
 
 		/* Setup LCDx CH1 PLL */
 		awin_tcon_set_pll(sc, mode);
