@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.74 2014/08/10 17:34:19 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.75 2014/11/14 15:56:12 joerg Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -17,8 +17,9 @@ LLVM_REVISION=		${COMMON_REVISION}
 MCLINKER_REVISION=	deeb2a77b4165827316f88e0a7ba4ba6b743a080
 MCLINKER_ROOT=		https://code.google.com/p/mclinker/
 
-LLVM_VERSION=		3.6
-CLANG_VERSION=		3.6
+LLVM_VERSION=		3.6.0
+CLANG_VERSION=		3.6.0
+LLD_VERSION=		3.6.0
 
 CLANG_SRCDIR:=	${.PARSEDIR}/dist/clang
 LLD_SRCDIR:=	${.PARSEDIR}/dist/lld
@@ -63,7 +64,7 @@ LLVM_PLATFORM=${MACHINE_GNU_ARCH}--netbsd
 
 LLVM_CONFIGURE_ARGS=	\
 	--enable-targets=x86,powerpc,sparc,aarch64,arm,mips \
-	--with-c-include-dirs=/usr/include/clang-${CLANG_VERSION}:/usr/include \
+	--with-c-include-dirs=/usr/include/clang-${CLANG_VERSION:R}:/usr/include \
 	--disable-timestamps --prefix=/usr --sysconfdir=/etc/llvm \
 	--with-clang-srcdir=${CLANG_SRCDIR} \
 	--host=${LLVM_PLATFORM} --disable-compiler-version-checks \
