@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.294.2.1 2014/08/15 23:59:24 riz Exp $
+#	$NetBSD: build.sh,v 1.294.2.2 2014/11/14 14:17:12 martin Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1314,25 +1314,6 @@ parseoptions()
 			exit $?
 			;;
 
-		makewrapper|cleandir|obj|tools|build|distribution|release|sets|sourcesets|syspkgs|params)
-			;;
-
-		iso-image)
-			op=iso_image	# used as part of a variable name
-			;;
-
-		iso-image-source)
-			op=iso_image_source   # used as part of a variable name
-			;;
-
-		live-image)
-			op=live_image	# used as part of a variable name
-			;;
-
-		install-image)
-			op=install_image # used as part of a variable name
-			;;
-
 		kernel=*|releasekernel=*|kernel.gdb=*)
 			arg=${op#*=}
 			op=${op%%=*}
@@ -1348,10 +1329,6 @@ parseoptions()
 
 			;;
 
-		modules)
-			op=modules
-			;;
-
 		install=*|installmodules=*)
 			arg=${op#*=}
 			op=${op%%=*}
@@ -1359,8 +1336,24 @@ parseoptions()
 			    bomb "Must supply a directory with \`install=...'"
 			;;
 
-		rump|rumptest)
-			op=${op}
+		build|\
+		cleandir|\
+		distribution|\
+		install-image|\
+		iso-image-source|\
+		iso-image|\
+		live-image|\
+		makewrapper|\
+		modules|\
+		obj|\
+		params|\
+		release|\
+		rump|\
+		rumptest|\
+		sets|\
+		sourcesets|\
+		syspkgs|\
+		tools)
 			;;
 
 		*)
@@ -1368,6 +1361,9 @@ parseoptions()
 			;;
 
 		esac
+		# ${op} may contain chars that are not allowed in variable
+		# names.  Replace them with '_' before setting do_${op}.
+		op="$( echo "$op" | tr -s '.-' '__')"
 		eval do_${op}=true
 	done
 	[ -n "${operations}" ] || usage "Missing operation to perform."
@@ -1867,7 +1863,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.294.2.1 2014/08/15 23:59:24 riz Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.294.2.2 2014/11/14 14:17:12 martin Exp $
 # with these arguments: ${_args}
 #
 
