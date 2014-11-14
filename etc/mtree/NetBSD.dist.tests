@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.111 2014/10/12 12:32:15 uebayasi Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.112 2014/11/14 09:03:39 uebayasi Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -359,6 +359,7 @@
 ./usr/tests/usr.bin/netpgpverify
 ./usr/tests/usr.bin/infocmp
 ./usr/tests/usr.bin/jot
+./usr/tests/usr.bin/ld
 ./usr/tests/usr.bin/m4
 ./usr/tests/usr.bin/make
 ./usr/tests/usr.bin/make/unit-tests
