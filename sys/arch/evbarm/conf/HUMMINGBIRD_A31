@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.19.2.3 2014/11/14 13:26:46 martin Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.19.2.4 2014/11/14 18:11:22 snj Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -255,6 +255,11 @@ options 	WSDISPLAY_COMPAT_SYSCONS
 options 	WSDISPLAY_COMPAT_USL
 options 	WSDISPLAY_COMPAT_RAWKBD
 options 	WSDISPLAY_DEFAULTSCREENS=4
+
+# HDMI
+awinhdmi0	at awinio0
+awinhdmiaudio0	at awinio0
+audio1		at awinhdmiaudio0
 
 # On-board USB
 awinusb0	at awinio0 port 0
