@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.2.4.4 2014/11/10 19:45:54 martin Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.2.4.5 2014/11/14 14:22:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.2.4.4 2014/11/10 19:45:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.2.4.5 2014/11/14 14:22:41 martin Exp $");
 
 #include <sys/types.h>
 
@@ -107,9 +107,8 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		if (ret != -EBUSY)
 			goto out0;
 		/*
-		 * It's currently locked.  Unlock the fault (requires
-		 * relocking uobj's vmobjlock first), wait for it, and
-		 * start over.
+		 * It's currently locked.  Unlock the fault, wait for
+		 * it, and start over.
 		 */
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
 		(void)ttm_bo_wait_unreserved(bo);
