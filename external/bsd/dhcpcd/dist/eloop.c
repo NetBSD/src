@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: eloop.c,v 1.6 2014/11/07 20:51:02 roy Exp $");
+ __RCSID("$NetBSD: eloop.c,v 1.7 2014/11/14 12:00:54 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -31,7 +31,6 @@
 /* Needed for ppoll(2) */
 #define _GNU_SOURCE
 
-#include <sys/queue.h>
 #include <sys/time.h>
 
 #include <errno.h>
@@ -41,6 +40,7 @@
 #include <stdlib.h>
 #include <syslog.h>
 
+#include "config.h"
 #include "common.h"
 #include "dhcpcd.h"
 #include "eloop.h"
@@ -242,7 +242,8 @@ eloop_q_timeout_delete(struct eloop_ctx *ctx, int queue,
 	struct eloop_timeout *t, *tt;
 
 	TAILQ_FOREACH_SAFE(t, &ctx->timeouts, next, tt) {
-		if (t->queue == queue && t->arg == arg &&
+		if ((queue == 0 || t->queue == queue) &&
+		    t->arg == arg &&
 		    (!callback || t->callback == callback))
 		{
 			TAILQ_REMOVE(&ctx->timeouts, t, next);

@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6.h,v 1.6 2014/11/07 20:51:03 roy Exp $ */
+/* $NetBSD: ipv6.h,v 1.7 2014/11/14 12:00:54 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,7 +30,6 @@
 #ifndef IPV6_H
 #define IPV6_H
 
-#include <sys/queue.h>
 #include <sys/uio.h>
 
 #include <netinet/in.h>
@@ -40,6 +39,7 @@
 #  include <linux/ipv6.h>
 #endif
 
+#include "config.h"
 #include "dhcpcd.h"
 
 #define ALLROUTERS "ff02::2"
