@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmi.c,v 1.4.2.3 2014/11/14 13:26:46 martin Exp $ */
+/* $NetBSD: awin_hdmi.c,v 1.4.2.4 2014/11/14 13:37:39 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define AWIN_HDMI_PLL	3	/* PLL7 or PLL3 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.4.2.3 2014/11/14 13:26:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.4.2.4 2014/11/14 13:37:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -101,6 +101,7 @@ static void	awin_hdmi_thread(void *);
 #if 0
 static int	awin_hdmi_intr(void *);
 #endif
+
 #if defined(DDB)
 void		awin_hdmi_dump_regs(void);
 #endif
@@ -536,7 +537,8 @@ awin_hdmi_video_enable(struct awin_hdmi_softc *sc, bool enable)
 }
 
 static void
-awin_hdmi_set_videomode(struct awin_hdmi_softc *sc, const struct videomode *mode)
+awin_hdmi_set_videomode(struct awin_hdmi_softc *sc,
+    const struct videomode *mode)
 {
 	uint32_t val;
 	const u_int dblscan_p = !!(mode->flags & VID_DBLSCAN);
@@ -601,8 +603,8 @@ awin_hdmi_set_videomode(struct awin_hdmi_softc *sc, const struct videomode *mode
 #endif
 
 	val = HDMI_READ(sc, AWIN_HDMI_VID_CTRL_REG);
- 	val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_HDMI_MODE_HDMI,
- 			 AWIN_HDMI_VID_CTRL_HDMI_MODE);
+	val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_HDMI_MODE_HDMI,
+			 AWIN_HDMI_VID_CTRL_HDMI_MODE);
 	val &= ~AWIN_HDMI_VID_CTRL_OUTPUT_FMT;
 	if (dblscan_p) {
 		val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_REPEATER_SEL_2X,
@@ -648,13 +650,85 @@ awin_hdmi_set_videomode(struct awin_hdmi_softc *sc, const struct videomode *mode
 	val |= __SHIFTIN(AWIN_HDMI_VID_TIMING_4_TX_CLOCK_NORMAL,
 			 AWIN_HDMI_VID_TIMING_4_TX_CLOCK);
 	HDMI_WRITE(sc, AWIN_HDMI_VID_TIMING_4_REG, val);
+
+	/* Packet control */
+	HDMI_WRITE(sc, AWIN_HDMI_PKT_CTRL0_REG, 0x00005321);
+	HDMI_WRITE(sc, AWIN_HDMI_PKT_CTRL1_REG, 0x0000000f);
 }
 
 static void
-awin_hdmi_set_audiomode(struct awin_hdmi_softc *sc, const struct videomode *mode)
+awin_hdmi_set_audiomode(struct awin_hdmi_softc *sc,
+    const struct videomode *mode)
 {
-	/* TODO */
-	HDMI_WRITE(sc, AWIN_HDMI_AUD_CTRL_REG, 0);
+	uint32_t cts, n, val;
+
+	/*
+	 * Before changing audio parameters, disable and reset the
+	 * audio module. Wait for the soft reset bit to clear before
+	 * configuring the audio parameters.
+	 */
+	val = HDMI_READ(sc, AWIN_HDMI_AUD_CTRL_REG);
+	val &= ~AWIN_HDMI_AUD_CTRL_EN;
+	val |= AWIN_HDMI_AUD_CTRL_RST;
+	HDMI_WRITE(sc, AWIN_HDMI_AUD_CTRL_REG, val);
+	do {
+		val = HDMI_READ(sc, AWIN_HDMI_AUD_CTRL_REG);
+	} while (val & AWIN_HDMI_AUD_CTRL_RST);
+
+	/* DMA & FIFO control */
+	val = HDMI_READ(sc, AWIN_HDMI_ADMA_CTRL_REG);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		val |= AWIN_HDMI_ADMA_CTRL_SRC_DMA_MODE;	/* NDMA */
+	} else {
+		val &= ~AWIN_HDMI_ADMA_CTRL_SRC_DMA_MODE;	/* DDMA */
+	}
+	val &= ~AWIN_HDMI_ADMA_CTRL_SRC_DMA_SAMPLE_RATE;
+	val &= ~AWIN_HDMI_ADMA_CTRL_SRC_SAMPLE_LAYOUT;
+	val &= ~AWIN_HDMI_ADMA_CTRL_SRC_WORD_LEN;
+	val &= ~AWIN_HDMI_ADMA_CTRL_DATA_SEL;
+	HDMI_WRITE(sc, AWIN_HDMI_ADMA_CTRL_REG, val);
+
+	/* Audio format control */
+	val = HDMI_READ(sc, AWIN_HDMI_AUD_FMT_REG);
+	val &= ~AWIN_HDMI_AUD_FMT_SRC_SEL;
+	val &= ~AWIN_HDMI_AUD_FMT_SEL;
+	val &= ~AWIN_HDMI_AUD_FMT_DSD_FMT;
+	val &= ~AWIN_HDMI_AUD_FMT_LAYOUT;
+	val &= ~AWIN_HDMI_AUD_FMT_SRC_CH_CFG;
+	val |= __SHIFTIN(1, AWIN_HDMI_AUD_FMT_SRC_CH_CFG);
+	HDMI_WRITE(sc, AWIN_HDMI_AUD_FMT_REG, val);
+
+	/* PCM control (channel map) */
+	HDMI_WRITE(sc, AWIN_HDMI_AUD_PCM_CTRL_REG, 0x76543210);
+
+	/* Clock setup */
+	n = 6144;	/* 48 kHz */
+	cts = ((mode->dot_clock * 10) * (n / 128)) / 480;
+	HDMI_WRITE(sc, AWIN_HDMI_AUD_CTS_REG, cts);
+	HDMI_WRITE(sc, AWIN_HDMI_AUD_N_REG, n);
+
+	/* Audio PCM channel status 0 */
+	val = __SHIFTIN(AWIN_HDMI_AUD_CH_STATUS0_FS_FREQ_48,
+			AWIN_HDMI_AUD_CH_STATUS0_FS_FREQ);
+	HDMI_WRITE(sc, AWIN_HDMI_AUD_CH_STATUS0_REG, val);
+
+	/* Audio PCM channel status 1 */
+	val = HDMI_READ(sc, AWIN_HDMI_AUD_CH_STATUS1_REG);
+	val &= ~AWIN_HDMI_AUD_CH_STATUS1_CGMS_A;
+	val &= ~AWIN_HDMI_AUD_CH_STATUS1_ORIGINAL_FS;
+	val &= ~AWIN_HDMI_AUD_CH_STATUS1_WORD_LEN;
+	val |= __SHIFTIN(5, AWIN_HDMI_AUD_CH_STATUS1_WORD_LEN);
+	val |= AWIN_HDMI_AUD_CH_STATUS1_WORD_LEN_MAX;
+	HDMI_WRITE(sc, AWIN_HDMI_AUD_CH_STATUS1_REG, val);
+
+	/* Re-enable */
+	val = HDMI_READ(sc, AWIN_HDMI_AUD_CTRL_REG);
+	val |= AWIN_HDMI_AUD_CTRL_EN;
+	HDMI_WRITE(sc, AWIN_HDMI_AUD_CTRL_REG, val);
+
+#if defined(AWIN_HDMI_DEBUG) && defined(DDB)
+	awin_hdmi_dump_regs();
+#endif
 }
 
 static void
@@ -695,7 +769,7 @@ awin_hdmi_intr(void *priv)
 	uint32_t intsts;
 
 	intsts = HDMI_READ(sc, AWIN_HDMI_INT_STATUS_REG);
-	if (!intsts)
+	if (!(intsts & 0x73))
 		return 0;
 
 	HDMI_WRITE(sc, AWIN_HDMI_INT_STATUS_REG, intsts);
