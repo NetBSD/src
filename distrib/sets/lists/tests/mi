@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.598 2014/11/14 13:30:48 uebayasi Exp $
+# $NetBSD: mi,v 1.599 2014/11/14 16:21:12 uebayasi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3466,6 +3466,7 @@
 ./usr/tests/usr.bin/ld				tests-usr.bin-tests
 ./usr/tests/usr.bin/ld/Atffile			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/ld/Kyuafile			tests-usr.bin-tests	atf,kyua
+./usr/tests/usr.bin/ld/t_orphan			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/ld/t_script			tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/ld/t_section		tests-usr.bin-tests	atf
 ./usr/tests/usr.bin/m4				tests-usr.bin-tests
