@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.8.10.1 2014/11/09 14:42:33 martin Exp $
+#	$NetBSD: files.awin,v 1.8.10.2 2014/11/14 13:26:46 martin Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -28,6 +28,10 @@ defflag opt_allwinner.h				ALLWINNER_A20
 defflag opt_allwinner.h				ALLWINNER_A31
 defflag opt_allwinner.h				ALLWINNER_A80
 defflag opt_allwinner.h				AWIN_GPIO_IGNORE_FW
+defflag opt_allwinner.h				AWIN_HDMI_DEBUG
+defflag opt_allwinner.h				AWIN_TCON_DEBUG
+defflag opt_allwinner.h				AWIN_DEBE_DEBUG
+defparam opt_allwinner.h			AWIN_DEBE_VIDEOMEM
 
 # SoC I/O attach point
 device	awinio { [port=-1] } : bus_space_generic
@@ -135,9 +139,23 @@ attach	awinac at awinio with awin_ac
 file	arch/arm/allwinner/awin_ac.c		awin_ac
 
 # A10/A20/A31 HDMI
-device	awinhdmi: edid, ddc_read_edid
+device	awinhdmi: edid, ddc_read_edid, videomode
 attach	awinhdmi at awinio with awin_hdmi
 file	arch/arm/allwinner/awin_hdmi.c		awin_hdmi
+
+# A10/A20/A31 LCD/TV timing controller (TCON)
+device	awintcon
+attach	awintcon at awinio with awin_tcon
+file	arch/arm/allwinner/awin_tcon.c		awin_tcon | awin_hdmi
+
+# A10/A20/A31 Display engine backend (DE-BE)
+device	awindebe { }
+attach	awindebe at awinio with awin_debe
+file	arch/arm/allwinner/awin_debe.c		awin_debe | awin_hdmi
+
+# Framebuffer
+attach	genfb at awindebe with awin_fb: edid
+file	arch/arm/allwinner/awin_fb.c		awin_fb		needs-flag
 
 # A10/A20/A31 Consumer IR (CIR)
 device	awinir: irbus

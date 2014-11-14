@@ -1,0 +1,344 @@
+/* $NetBSD: awin_debe.c,v 1.6.2.2 2014/11/14 13:26:46 martin Exp $ */
+
+/*-
+ * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#include "opt_allwinner.h"
+#include "genfb.h"
+
+#ifndef AWIN_DEBE_VIDEOMEM
+#define AWIN_DEBE_VIDEOMEM	(16 * 1024 * 1024)
+#endif
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.6.2.2 2014/11/14 13:26:46 martin Exp $");
+
+#include <sys/param.h>
+#include <sys/bus.h>
+#include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
+
+#include <arm/allwinner/awin_reg.h>
+#include <arm/allwinner/awin_var.h>
+
+#include <dev/videomode/videomode.h>
+
+struct awin_debe_softc {
+	device_t sc_dev;
+	device_t sc_fbdev;
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
+	bus_space_handle_t sc_ccm_bsh;
+	bus_dma_tag_t sc_dmat;
+	unsigned int sc_port;
+
+	bus_dma_segment_t sc_dmasegs[1];
+	bus_size_t sc_dmasize;
+	bus_dmamap_t sc_dmamap;
+	void *sc_dmap;
+};
+
+#define DEBE_READ(sc, reg) \
+    bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
+#define DEBE_WRITE(sc, reg, val) \
+    bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+
+static int	awin_debe_match(device_t, cfdata_t, void *);
+static void	awin_debe_attach(device_t, device_t, void *);
+
+static int	awin_debe_alloc_videomem(struct awin_debe_softc *);
+static void	awin_debe_setup_fbdev(struct awin_debe_softc *,
+				      const struct videomode *);
+
+CFATTACH_DECL_NEW(awin_debe, sizeof(struct awin_debe_softc),
+	awin_debe_match, awin_debe_attach, NULL, NULL);
+
+static int
+awin_debe_match(device_t parent, cfdata_t cf, void *aux)
+{
+	struct awinio_attach_args * const aio = aux;
+	const struct awin_locators * const loc = &aio->aio_loc;
+
+	if (strcmp(cf->cf_name, loc->loc_name))
+		return 0;
+
+	return 1;
+}
+
+static void
+awin_debe_attach(device_t parent, device_t self, void *aux)
+{
+	struct awin_debe_softc *sc = device_private(self);
+	struct awinio_attach_args * const aio = aux;
+	const struct awin_locators * const loc = &aio->aio_loc;
+	int error;
+
+	sc->sc_dev = self;
+	sc->sc_bst = aio->aio_core_bst;
+	sc->sc_dmat = aio->aio_dmat;
+	sc->sc_port = loc->loc_port;
+	bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
+	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+	bus_space_subregion(sc->sc_bst, aio->aio_ccm_bsh, 0, 0x1000,
+	    &sc->sc_ccm_bsh);
+
+	aprint_naive("\n");
+	aprint_normal(": Display Engine Backend (BE%d)\n", loc->loc_port);
+
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_A31_AHB_RESET1_REG,
+		    AWIN_A31_AHB_RESET1_BE0_RST << loc->loc_port,
+		    0);
+	} else {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_BE0_SCLK_CFG_REG + (loc->loc_port * 4),
+		    AWIN_BEx_CLK_RST,
+		    0);
+	}
+
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		uint32_t pll6_freq = awin_pll6_get_rate() * 2;
+		unsigned int clk_div = (pll6_freq + 299999999) / 300000000;
+
+#ifdef AWIN_DEBE_DEBUG
+		device_printf(sc->sc_dev, "PLL6 @ %u Hz\n", pll6_freq);
+		device_printf(sc->sc_dev, "div %d\n", clk_div);
+#endif
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_BE0_SCLK_CFG_REG + (loc->loc_port * 4),
+		    __SHIFTIN(AWIN_A31_BEx_CLK_SRC_SEL_PLL6_2X,
+			      AWIN_A31_BEx_CLK_SRC_SEL) |
+		    __SHIFTIN(clk_div - 1, AWIN_BEx_CLK_DIV_RATIO_M),
+		    AWIN_A31_BEx_CLK_SRC_SEL | AWIN_BEx_CLK_DIV_RATIO_M);
+	} else {
+		uint32_t pll5x_freq = awin_pll5x_get_rate();
+		unsigned int clk_div = (pll5x_freq + 299999999) / 300000000;
+
+#ifdef AWIN_DEBE_DEBUG
+		device_printf(sc->sc_dev, "PLL5x @ %u Hz\n", pll5x_freq);
+		device_printf(sc->sc_dev, "div %d\n", clk_div);
+#endif
+
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_BE0_SCLK_CFG_REG + (loc->loc_port * 4),
+		    __SHIFTIN(AWIN_BEx_CLK_SRC_SEL_PLL5, AWIN_BEx_CLK_SRC_SEL) |
+		    __SHIFTIN(clk_div - 1, AWIN_BEx_CLK_DIV_RATIO_M),
+		    AWIN_BEx_CLK_SRC_SEL | AWIN_BEx_CLK_DIV_RATIO_M);
+	}
+
+	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+	    AWIN_AHB_GATING1_REG, AWIN_AHB_GATING1_DE_BE0 << loc->loc_port, 0);
+
+	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+	    AWIN_DRAM_CLK_REG,
+	    AWIN_DRAM_CLK_BE0_DCLK_ENABLE << loc->loc_port, 0);
+
+	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+	    AWIN_BE0_SCLK_CFG_REG + (loc->loc_port * 4),
+	    AWIN_CLK_ENABLE, 0);
+
+	for (unsigned int reg = 0x800; reg < 0x1000; reg += 4) {
+		DEBE_WRITE(sc, reg, 0);
+	}
+
+	DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, AWIN_DEBE_MODCTL_EN);
+
+	error = awin_debe_alloc_videomem(sc);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't allocate video memory, error = %d\n", error);
+		return;
+	}
+}
+
+static int
+awin_debe_alloc_videomem(struct awin_debe_softc *sc)
+{
+	int error, nsegs;
+
+	sc->sc_dmasize = AWIN_DEBE_VIDEOMEM;
+	error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dmasize, 0,
+	    sc->sc_dmasize, sc->sc_dmasegs, 1, &nsegs, BUS_DMA_WAITOK);
+	if (error)
+		return error;
+	error = bus_dmamem_map(sc->sc_dmat, sc->sc_dmasegs, nsegs,
+	    sc->sc_dmasize, &sc->sc_dmap, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
+	if (error)
+		goto free;
+	error = bus_dmamap_create(sc->sc_dmat, sc->sc_dmasize, 1,
+	    sc->sc_dmasize, 0, BUS_DMA_WAITOK, &sc->sc_dmamap);
+	if (error)
+		goto unmap;
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap, sc->sc_dmap,
+	    sc->sc_dmasize, NULL, BUS_DMA_WAITOK);
+	if (error)
+		goto destroy;
+
+	return 0;
+
+destroy:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
+unmap:
+	bus_dmamem_unmap(sc->sc_dmat, sc->sc_dmap, sc->sc_dmasize);
+free:
+	bus_dmamem_free(sc->sc_dmat, sc->sc_dmasegs, nsegs);
+
+	sc->sc_dmasize = 0;
+	sc->sc_dmap = NULL;
+
+	return error;
+}
+
+static void
+awin_debe_setup_fbdev(struct awin_debe_softc *sc, const struct videomode *mode)
+{
+	if (mode && sc->sc_fbdev == NULL) {
+		const u_int interlace_p = !!(mode->flags & VID_INTERLACE);
+		struct awinfb_attach_args afb = {
+			.afb_fb = sc->sc_dmap,
+			.afb_width = mode->hdisplay,
+			.afb_height = (mode->vdisplay << interlace_p),
+			.afb_dmat = sc->sc_dmat,
+			.afb_dmasegs = sc->sc_dmasegs,
+			.afb_ndmasegs = 1
+		};
+		sc->sc_fbdev = config_found_ia(sc->sc_dev, "awindebe",
+		    &afb, NULL);
+	}
+#if NGENFB > 0
+	else if (sc->sc_fbdev != NULL) {
+		awin_fb_set_videomode(sc->sc_fbdev, mode);
+	}
+#endif
+}
+
+void
+awin_debe_enable(bool enable)
+{
+	struct awin_debe_softc *sc;
+	device_t dev;
+	uint32_t val;
+
+	dev = device_find_by_driver_unit("awindebe", 0);
+	if (dev == NULL) {
+		printf("DEBE: no driver found\n");
+		return;
+	}
+	sc = device_private(dev);
+
+	if (enable) {
+		val = DEBE_READ(sc, AWIN_DEBE_REGBUFFCTL_REG);
+		val |= AWIN_DEBE_REGBUFFCTL_REGLOADCTL;
+		DEBE_WRITE(sc, AWIN_DEBE_REGBUFFCTL_REG, val);
+
+		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
+		val |= AWIN_DEBE_MODCTL_START_CTL;
+		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
+	} else {
+		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
+		val &= ~AWIN_DEBE_MODCTL_START_CTL;
+		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
+	}
+}
+
+void
+awin_debe_set_videomode(const struct videomode *mode)
+{
+	struct awin_debe_softc *sc;
+	device_t dev;
+	uint32_t val;
+
+	dev = device_find_by_driver_unit("awindebe", 0);
+	if (dev == NULL) {
+		printf("DEBE: no driver found\n");
+		return;
+	}
+	sc = device_private(dev);
+
+	if (mode) {
+		const u_int interlace_p = !!(mode->flags & VID_INTERLACE);
+		const u_int width = mode->hdisplay;
+		const u_int height = (mode->vdisplay << interlace_p);
+		uint32_t vmem = width * height * 4;
+
+		if (vmem > sc->sc_dmasize) {
+			device_printf(sc->sc_dev,
+			    "not enough memory for %ux%u fb (req %u have %u)\n",
+			    width, height, vmem, (unsigned int)sc->sc_dmasize);
+			return;
+		}
+
+		paddr_t pa = sc->sc_dmamap->dm_segs[0].ds_addr;
+		/*
+		 * On 2GB systems, we need to subtract AWIN_SDRAM_PBASE from
+		 * the phys addr.
+		 */
+		if (pa >= AWIN_SDRAM_PBASE)
+			pa -= AWIN_SDRAM_PBASE;
+
+		/* notify fb */
+		awin_debe_setup_fbdev(sc, mode);
+
+		DEBE_WRITE(sc, AWIN_DEBE_DISSIZE_REG,
+		    ((height - 1) << 16) | (width - 1));
+		DEBE_WRITE(sc, AWIN_DEBE_LAYSIZE_REG,
+		    ((height - 1) << 16) | (width - 1));
+		DEBE_WRITE(sc, AWIN_DEBE_LAYLINEWIDTH_REG, (width << 5));
+		DEBE_WRITE(sc, AWIN_DEBE_LAYFB_L32ADD_REG, pa << 3);
+		DEBE_WRITE(sc, AWIN_DEBE_LAYFB_H4ADD_REG, pa >> 29);
+
+		val = DEBE_READ(sc, AWIN_DEBE_ATTCTL1_REG);
+		val &= ~AWIN_DEBE_ATTCTL1_LAY_FBFMT;
+		val |= __SHIFTIN(AWIN_DEBE_ATTCTL1_LAY_FBFMT_XRGB8888,
+				 AWIN_DEBE_ATTCTL1_LAY_FBFMT);
+		val &= ~AWIN_DEBE_ATTCTL1_LAY_BRSWAPEN;
+		val &= ~AWIN_DEBE_ATTCTL1_LAY_FBPS;
+		DEBE_WRITE(sc, AWIN_DEBE_ATTCTL1_REG, val);
+
+		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
+		val |= AWIN_DEBE_MODCTL_LAY0_EN;
+		if (interlace_p) {
+			val |= AWIN_DEBE_MODCTL_ITLMOD_EN;
+		} else {
+			val &= ~AWIN_DEBE_MODCTL_ITLMOD_EN;
+		}
+		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
+	} else {
+		/* disable */
+		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
+		val &= ~AWIN_DEBE_MODCTL_LAY0_EN;
+		val &= ~AWIN_DEBE_MODCTL_START_CTL;
+		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
+
+		/* notify fb */
+		awin_debe_setup_fbdev(sc, mode);
+	}
+}

@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.19.2.2 2014/11/14 10:04:40 martin Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.19.2.3 2014/11/14 13:26:46 martin Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -237,6 +237,25 @@ audio0		at awinac0
 # GMAC Ethernet
 awge0		at awinio0 port ?
 
+# TCON
+awintcon0	at awinio0 port 0
+
+# DE-BE
+awindebe0	at awinio0 port 0
+
+# Framebuffer
+genfb0		at awindebe0
+wsdisplay*	at genfb?
+options 	VCONS_DRAW_INTR
+options 	WSEMUL_VT100
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WSDISPLAY_COMPAT_PCVT
+options 	WSDISPLAY_COMPAT_SYSCONS
+options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WSDISPLAY_DEFAULTSCREENS=4
+
 # On-board USB
 awinusb0	at awinio0 port 0
 awinusb1	at awinio0 port 1
@@ -277,5 +296,9 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
+
+# wscons pseudo-devices
+pseudo-device 	wsmux			# mouse & keyboard mux
+pseudo-device 	wsfont
 
 cinclude "arch/evbarm/conf/HUMMINGBIRD_A31.local"

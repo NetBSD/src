@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.8.2.5 2014/11/11 12:48:59 martin Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.8.2.6 2014/11/14 13:26:46 martin Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.8.2.5 2014/11/11 12:48:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.8.2.6 2014/11/14 13:26:46 martin Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -138,6 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.8.2.5 2014/11/11 12:48:59 martin 
 
 #include "com.h"
 #include "ukbd.h"
+#include "genfb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -759,6 +760,24 @@ awin_device_register(device_t self, void *aux)
 #endif
 		return;
 	}
+
+#if NGENFB > 0
+	if (device_is_a(self, "genfb")) {
+#ifdef DDB
+		db_trap_callback = awin_fb_ddb_trap_callback;
+#endif
+		char *ptr;
+		if (get_bootconf_option(boot_args, "console",
+		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
+			prop_dictionary_set_bool(dict, "is_console", true);
+#if NUKBD > 0
+			ukbd_cnattach();
+#endif
+		} else {
+			prop_dictionary_set_bool(dict, "is_console", false);
+		}
+	}
+#endif
 }
 
 #ifdef AWIN_SYSCONFIG
