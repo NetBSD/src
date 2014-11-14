@@ -1,4 +1,4 @@
-/*	$NetBSD: s_copysignl.c,v 1.3 2014/10/22 10:32:50 joerg Exp $	*/
+/*	$NetBSD: s_copysignl.c,v 1.4 2014/11/14 14:53:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,10 +26,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_copysignl.c,v 1.3 2014/10/22 10:32:50 joerg Exp $");
+__RCSID("$NetBSD: s_copysignl.c,v 1.4 2014/11/14 14:53:17 joerg Exp $");
+#include "namespace.h"
 
 #include <math.h>
 #include <machine/ieee.h>
+
+#ifdef __HAVE_LONG_DOUBLE
+
+#ifdef __weak_alias
+__weak_alias(copysignl, _copysignl)
+#endif
 
 /*
  * copysignl(long double x, long double y)
@@ -62,3 +69,4 @@ copysignl(long double x, long double y)
 	return ux.ldblu_ld;
 }
 #endif
+#endif /* __HAVE_LONG_DOUBLE */
