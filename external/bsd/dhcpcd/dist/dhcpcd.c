@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.16 2014/11/07 20:51:02 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.17 2014/11/14 12:00:54 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -33,7 +33,6 @@ const char dhcpcd_copyright[] = "Copyright (c) 2006-2014 Roy Marples";
 #define _WITH_DPRINTF /* Stop FreeBSD bitching */
 
 #include <sys/file.h>
-#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -317,13 +316,15 @@ stop_interface(struct interface *ifp)
 	ipv6nd_drop(ifp);
 	dhcp_drop(ifp, "STOP");
 	arp_close(ifp);
-	eloop_timeout_delete(ctx->eloop, NULL, ifp);
 	if (ifp->options->options & DHCPCD_DEPARTED)
 		script_runreason(ifp, "DEPARTED");
 	else
 		script_runreason(ifp, "STOPPED");
 
-	// Remove the interface from our list
+	/* Delete all timeouts for the interfaces */
+	eloop_q_timeout_delete(ctx->eloop, 0, NULL, ifp);
+
+	/* Remove the interface from our list */
 	TAILQ_REMOVE(ifp->ctx->ifaces, ifp, next);
 	if_free(ifp);
 
