@@ -1,4 +1,4 @@
-/* $NetBSD: awin_fb.c,v 1.3 2014/11/10 17:55:25 jmcneill Exp $ */
+/* $NetBSD: awin_fb.c,v 1.4 2014/11/14 00:31:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_fb.c,v 1.3 2014/11/10 17:55:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_fb.c,v 1.4 2014/11/14 00:31:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -189,8 +189,11 @@ awin_fb_set_videomode(device_t dev, const struct videomode *mode)
 	if (mode == NULL)
 		return;
 
-	if (sc->sc_gen.sc_width != mode->hdisplay ||
-	    sc->sc_gen.sc_height != mode->vdisplay) {
+	const u_int interlace_p = !!(mode->flags & VID_INTERLACE);
+	const u_int width = mode->hdisplay;
+	const u_int height = (mode->vdisplay << interlace_p);
+
+	if (sc->sc_gen.sc_width != width || sc->sc_gen.sc_height != height) {
 		device_printf(sc->sc_gen.sc_dev,
 		    "mode switching not yet supported\n");
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmi.c,v 1.10 2014/11/12 17:38:14 jmcneill Exp $ */
+/* $NetBSD: awin_hdmi.c,v 1.11 2014/11/14 00:31:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define AWIN_HDMI_PLL	3	/* PLL7 or PLL3 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.10 2014/11/12 17:38:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.11 2014/11/14 00:31:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -601,29 +601,21 @@ awin_hdmi_set_videomode(struct awin_hdmi_softc *sc,
 	val = HDMI_READ(sc, AWIN_HDMI_VID_CTRL_REG);
 	val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_HDMI_MODE_HDMI,
 			 AWIN_HDMI_VID_CTRL_HDMI_MODE);
+	val &= ~AWIN_HDMI_VID_CTRL_OUTPUT_FMT;
 	if (dblscan_p) {
 		val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_REPEATER_SEL_2X,
 				 AWIN_HDMI_VID_CTRL_REPEATER_SEL);
-	} else {
-		val &= ~AWIN_HDMI_VID_CTRL_REPEATER_SEL;
 	}
 	if (interlace_p) {
 		val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_OUTPUT_FMT_INTERLACE,
 				 AWIN_HDMI_VID_CTRL_OUTPUT_FMT);
-	} else {
-		val &= ~AWIN_HDMI_VID_CTRL_OUTPUT_FMT;
 	}
 	HDMI_WRITE(sc, AWIN_HDMI_VID_CTRL_REG, val);
 
 	val = __SHIFTIN((mode->hdisplay << dblscan_p) - 1,
 			AWIN_HDMI_VID_TIMING_0_ACT_H);
-	if (interlace_p) {
-		val |= __SHIFTIN((mode->vdisplay / 2) - 1,
-				 AWIN_HDMI_VID_TIMING_0_ACT_V);
-	} else {
-		val |= __SHIFTIN(mode->vdisplay - 1,
-				 AWIN_HDMI_VID_TIMING_0_ACT_V);
-	}
+	val |= __SHIFTIN(mode->vdisplay - 1,
+			 AWIN_HDMI_VID_TIMING_0_ACT_V);
 	HDMI_WRITE(sc, AWIN_HDMI_VID_TIMING_0_REG, val);
 
 	val = __SHIFTIN((hbp << dblscan_p) - 1,

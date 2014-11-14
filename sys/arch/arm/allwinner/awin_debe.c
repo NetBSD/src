@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.5 2014/11/12 23:12:27 jmcneill Exp $ */
+/* $NetBSD: awin_debe.c,v 1.6 2014/11/14 00:31:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.5 2014/11/12 23:12:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.6 2014/11/14 00:31:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -221,10 +221,11 @@ static void
 awin_debe_setup_fbdev(struct awin_debe_softc *sc, const struct videomode *mode)
 {
 	if (mode && sc->sc_fbdev == NULL) {
+		const u_int interlace_p = !!(mode->flags & VID_INTERLACE);
 		struct awinfb_attach_args afb = {
 			.afb_fb = sc->sc_dmap,
 			.afb_width = mode->hdisplay,
-			.afb_height = mode->vdisplay,
+			.afb_height = (mode->vdisplay << interlace_p),
 			.afb_dmat = sc->sc_dmat,
 			.afb_dmasegs = sc->sc_dmasegs,
 			.afb_ndmasegs = 1
@@ -283,13 +284,15 @@ awin_debe_set_videomode(const struct videomode *mode)
 	sc = device_private(dev);
 
 	if (mode) {
-		uint32_t vmem = mode->vdisplay * mode->hdisplay * 4;
+		const u_int interlace_p = !!(mode->flags & VID_INTERLACE);
+		const u_int width = mode->hdisplay;
+		const u_int height = (mode->vdisplay << interlace_p);
+		uint32_t vmem = width * height * 4;
 
 		if (vmem > sc->sc_dmasize) {
 			device_printf(sc->sc_dev,
 			    "not enough memory for %ux%u fb (req %u have %u)\n",
-			    mode->hdisplay, mode->vdisplay,
-			    vmem, (unsigned int)sc->sc_dmasize);
+			    width, height, vmem, (unsigned int)sc->sc_dmasize);
 			return;
 		}
 
@@ -305,10 +308,10 @@ awin_debe_set_videomode(const struct videomode *mode)
 		awin_debe_setup_fbdev(sc, mode);
 
 		DEBE_WRITE(sc, AWIN_DEBE_DISSIZE_REG,
-		    ((mode->vdisplay - 1) << 16) | (mode->hdisplay - 1));
+		    ((height - 1) << 16) | (width - 1));
 		DEBE_WRITE(sc, AWIN_DEBE_LAYSIZE_REG,
-		    ((mode->vdisplay - 1) << 16) | (mode->hdisplay - 1));
-		DEBE_WRITE(sc, AWIN_DEBE_LAYLINEWIDTH_REG, mode->hdisplay << 5);
+		    ((height - 1) << 16) | (width - 1));
+		DEBE_WRITE(sc, AWIN_DEBE_LAYLINEWIDTH_REG, (width << 5));
 		DEBE_WRITE(sc, AWIN_DEBE_LAYFB_L32ADD_REG, pa << 3);
 		DEBE_WRITE(sc, AWIN_DEBE_LAYFB_H4ADD_REG, pa >> 29);
 
@@ -322,6 +325,11 @@ awin_debe_set_videomode(const struct videomode *mode)
 
 		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
 		val |= AWIN_DEBE_MODCTL_LAY0_EN;
+		if (interlace_p) {
+			val |= AWIN_DEBE_MODCTL_ITLMOD_EN;
+		} else {
+			val &= ~AWIN_DEBE_MODCTL_ITLMOD_EN;
+		}
 		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
 	} else {
 		/* disable */
