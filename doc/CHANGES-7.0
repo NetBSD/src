@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.100 2014/11/14 16:25:55 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.101 2014/11/14 18:19:01 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2632,4 +2632,16 @@ tools/compat/nl_types.h				1.3
 	to pick up the system version. <locale> from libc++ requires this
 	and is used by src/tools/elftosb2.
 	[jmcneill, ticket #236]
+
+sys/arch/evbarm/conf/HUMMINGBIRD_A31		1.16, 1.19
+
+	Add awinhdmi and awinhdmiaudio to HUMMINGBIRD_A31.
+	[jmcneill, ticket #237]
+
+usr.sbin/postinstall/postinstall		1.181-1.183
+
+	Make check_ids take an additional argument (the corresponding source
+	file) and grep that on error for the missing information, so the user
+	gets all the info needed how to "FIX MANUALLY".
+	[martin, ticket #220]
 
