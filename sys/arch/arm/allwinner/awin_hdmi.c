@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmi.c,v 1.11 2014/11/14 00:31:54 jmcneill Exp $ */
+/* $NetBSD: awin_hdmi.c,v 1.12 2014/11/14 01:05:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define AWIN_HDMI_PLL	3	/* PLL7 or PLL3 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.11 2014/11/14 00:31:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.12 2014/11/14 01:05:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -494,6 +494,10 @@ awin_hdmi_read_edid(struct awin_hdmi_softc *sc)
 		mode = pick_mode_by_ref(640, 480, 60);
 
 	if (mode != NULL) {
+		awin_hdmi_video_enable(sc, false);
+		awin_tcon_enable(false);
+		delay(20000);
+
 		awin_debe_set_videomode(mode);
 		awin_tcon_set_videomode(mode);
 		awin_hdmi_set_videomode(sc, mode);
