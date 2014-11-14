@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.315 2014/11/04 07:51:55 mlelstv Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.316 2014/11/14 14:29:16 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.315 2014/11/04 07:51:55 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.316 2014/11/14 14:29:16 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1532,6 +1532,10 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 		for (j = d_cfg->cols, i = 0; i < d_cfg->nspares; i++, j++) {
 			d_cfg->spares[i] = raidPtr->Disks[j];
+			if (d_cfg->spares[i].status == rf_ds_rebuilding_spare) {
+				/* XXX: raidctl(8) expects to see this as a used spare */
+				d_cfg->spares[i].status = rf_ds_used_spare;
+			}
 		}
 		retcode = copyout(d_cfg, *ucfgp, sizeof(RF_DeviceConfig_t));
 		RF_Free(d_cfg, sizeof(RF_DeviceConfig_t));
