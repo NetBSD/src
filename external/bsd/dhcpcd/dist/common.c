@@ -30,10 +30,6 @@
 #  define _GNU_SOURCE
 #endif
 
-#ifndef __sun
-#  include <sys/cdefs.h>
-#endif
-
 #ifdef __APPLE__
 #  include <mach/mach_time.h>
 #  include <mach/kern_return.h>
