@@ -1,4 +1,4 @@
-#	$NetBSD: t_orphan.sh,v 1.1 2014/11/14 16:21:12 uebayasi Exp $
+#	$NetBSD: t_orphan.sh,v 1.2 2014/11/14 16:29:03 uebayasi Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,9 +35,9 @@ orphan_body() {
 	cat > test.c << EOF
 #include <sys/cdefs.h>
 /* read-only orphan */
-const char a[] __section("hoge") = { 'h', 'o', 'g', 'e', '\0' };
+const char a[] __section("hoge") = "hoge";
 /* read-write orphan */
-char b[] __section("fuga") = "fuga";
+char b[] __section("fuga") = { 'f', 'u', 'g', 'a', '\0' };
 /* .data */
 int c = 123;
 /* .bss */
@@ -46,27 +46,27 @@ int d = 0;
 int main(void) { return 0; }
 EOF
 	atf_check -s exit:0 -o ignore -e ignore cc -o test test.c
-	readelf -S test
 	readelf -S test |
 	grep ' \.text\| hoge\| \.data\| fuga\| \.bss' >test.secs
 	{
 		# Read-only orphan sections are placed after well-known
-		# read-only sections (.text, .rodata) but before .data
-		read line && match "$line" ".text" &&
-		read line && match "$line" "hoge" &&
+		# read-only sections (.text, .rodata) but before .data.
+		match ".text" &&
+		match "hoge" &&
 		# Read-write orphan sections are placed after well-known
-		# read-write sections (.data) but before .bss
-		read line && match "$line" ".data" &&
-		read line && match "$line" "fuga" &&
-		read line && match "$line" ".bss" &&
+		# read-write sections (.data) but before .bss.
+		match ".data" &&
+		match "fuga" &&
+		match ".bss" &&
 		:
 	} < test.secs
 	atf_check test "$?" -eq 0
 }
 
 match() {
-	case "$1" in
-	*"$2"*) return 0;
+	read line
+	case "$line" in
+	*"$1"*) return 0;
 	esac
 	return 1
 }
