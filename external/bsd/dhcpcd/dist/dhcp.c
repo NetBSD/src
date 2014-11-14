@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.22 2014/11/07 20:51:02 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.23 2014/11/14 12:00:54 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -2175,8 +2175,12 @@ dhcp_drop(struct interface *ifp, const char *reason)
 		eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 		return;
 	}
-	/* Don't reset DHCP state if we have an IPv4LL address and link is up */
-	if (state->state != DHS_IPV4LL_BOUND || ifp->carrier != LINK_UP) {
+	/* Don't reset DHCP state if we have an IPv4LL address and link is up,
+	 * unless the interface is departing. */
+	if (state->state != DHS_IPV4LL_BOUND ||
+	    ifp->carrier != LINK_UP ||
+	    ifp->options->options & DHCPCD_DEPARTED)
+	{
 		eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 		dhcp_auth_reset(&state->auth);
 		dhcp_close(ifp);

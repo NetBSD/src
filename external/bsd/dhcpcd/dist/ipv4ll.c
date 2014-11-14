@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4ll.c,v 1.6 2014/11/07 20:51:03 roy Exp $");
+ __RCSID("$NetBSD: ipv4ll.c,v 1.7 2014/11/14 12:00:54 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -90,7 +90,6 @@ ipv4ll_pick_addr(const struct arp_state *astate)
 		if (addr == astate->failed.s_addr)
 			continue;
 
-		state = D_CSTATE(astate->iface);
 		/* Ensure we don't have the address on another interface */
 		TAILQ_FOREACH(ifp, astate->iface->ctx->ifaces, next) {
 			state = D_CSTATE(ifp);
@@ -109,14 +108,19 @@ static void
 ipv4ll_probed(struct arp_state *astate)
 {
 	struct dhcp_state *state = D_STATE(astate->iface);
+	struct dhcp_message *offer;
 
-	free(state->offer);
-	state->offer = ipv4ll_make_lease(astate->addr.s_addr);
-	if (state->offer == NULL) {
-		syslog(LOG_ERR, "%s: %m", __func__);
-		return;
+	if (state->state != DHS_BOUND) {
+		/* A DHCP lease could have already been offered.
+		 * Backup and replace once the IPv4LL addres is bound */
+		offer = state->offer;
+		state->offer = ipv4ll_make_lease(astate->addr.s_addr);
+		if (state->offer == NULL)
+			syslog(LOG_ERR, "%s: %m", __func__);
+		else
+			dhcp_bind(astate->iface, astate);
+		state->offer = offer;
 	}
-	dhcp_bind(astate->iface, astate);
 }
 
 static void
@@ -252,4 +256,12 @@ ipv4ll_start(void *arg)
 	if (astate->addr.s_addr == INADDR_ANY)
 		astate->addr.s_addr = ipv4ll_pick_addr(astate);
 	arp_probe(astate);
+}
+
+void
+ipv4ll_stop(struct interface *ifp)
+{
+	struct dhcp_state *state = D_STATE(ifp);
+
+	eloop_timeout_delete(ifp->ctx->eloop, NULL, state->arp_ipv4ll);
 }
