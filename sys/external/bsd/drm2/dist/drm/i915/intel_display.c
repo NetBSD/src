@@ -2082,7 +2082,8 @@ static bool intel_alloc_plane_obj(struct intel_crtc *crtc,
 {
 	struct drm_device *dev = crtc->base.dev;
 	struct drm_i915_gem_object *obj = NULL;
-	struct drm_mode_fb_cmd2 mode_cmd = { .fb_id = 0 };
+	static const struct drm_mode_fb_cmd2 zero_mode_cmd;
+	struct drm_mode_fb_cmd2 mode_cmd = zero_mode_cmd;
 	u32 base = plane_config->base;
 
 	if (plane_config->size == 0)
@@ -7799,6 +7800,7 @@ static int intel_crtc_cursor_set(struct drm_crtc *crtc,
 	struct drm_device *dev = crtc->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
+	struct drm_gem_object *gobj;
 	struct drm_i915_gem_object *obj;
 	unsigned old_width;
 	uint32_t addr;
@@ -7821,9 +7823,10 @@ static int intel_crtc_cursor_set(struct drm_crtc *crtc,
 		return -EINVAL;
 	}
 
-	obj = to_intel_bo(drm_gem_object_lookup(dev, file, handle));
-	if (&obj->base == NULL)
+	gobj = drm_gem_object_lookup(dev, file, handle);
+	if (gobj == NULL)
 		return -ENOENT;
+	obj = to_intel_bo(gobj);
 
 	if (obj->base.size < width * height * 4) {
 		DRM_DEBUG_KMS("buffer is to small\n");
@@ -11031,12 +11034,13 @@ intel_user_framebuffer_create(struct drm_device *dev,
 			      struct drm_file *filp,
 			      struct drm_mode_fb_cmd2 *mode_cmd)
 {
+	struct drm_gem_object *gobj;
 	struct drm_i915_gem_object *obj;
 
-	obj = to_intel_bo(drm_gem_object_lookup(dev, filp,
-						mode_cmd->handles[0]));
-	if (&obj->base == NULL)
+	gobj = drm_gem_object_lookup(dev, filp, mode_cmd->handles[0]);
+	if (gobj == NULL)
 		return ERR_PTR(-ENOENT);
+	obj = to_intel_bo(gobj);
 
 	return intel_framebuffer_create(dev, mode_cmd, obj);
 }

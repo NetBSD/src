@@ -152,8 +152,10 @@ void radeon_debugfs_cleanup(struct drm_minor *minor);
 void radeon_register_atpx_handler(void);
 void radeon_unregister_atpx_handler(void);
 #else
+#ifndef __NetBSD__
 static inline void radeon_register_atpx_handler(void) {}
 static inline void radeon_unregister_atpx_handler(void) {}
+#endif
 #endif
 
 int radeon_no_wb;
