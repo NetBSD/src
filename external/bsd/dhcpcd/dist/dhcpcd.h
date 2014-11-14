@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd.h,v 1.6 2014/11/07 20:51:02 roy Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.7 2014/11/14 12:00:54 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,10 +30,10 @@
 #ifndef DHCPCD_H
 #define DHCPCD_H
 
-#include <sys/queue.h>
 #include <sys/socket.h>
 #include <net/if.h>
 
+#include "config.h"
 #include "defs.h"
 #include "control.h"
 #include "if-options.h"
