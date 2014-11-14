@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.12.2.2 2014/11/12 19:54:46 martin Exp $
+#	$NetBSD: CUBIEBOARD,v 1.12.2.3 2014/11/14 13:26:46 martin Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -247,27 +247,30 @@ awinrtc*	at awinio?
 awinac0		at awinio0
 audio0		at awinac0
 
-# onboard video
-#awinfb* 	at obio0 addr 0x48050000 size 0x10000
-#wsdisplay*	at wsemuldisplaydev? console ?
+# HDMI
+awinhdmi0       at awinio0
 
-# various options for wscons - we try to look as much like a standard
-# sun console as possible
-#options 	WSEMUL_VT100		# sun terminal emulation
-#options 	WS_DEFAULT_FG=WSCOL_BLACK
-#options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
-#options 	WS_KERNEL_FG=WSCOL_GREEN
-#options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
-#options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
-#options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some more ioctls
-#options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
-#options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-#options 	WSDISPLAY_DEFAULTSCREENS=4
-#options 	FONT_QVSS8x15
-#options 	FONT_GALLANT12x22	# the console font
+# TCON
+awintcon0       at awinio0 port 0
 
-#pseudo-device	wsmux			# mouse & keyboard multiplexor
-#pseudo-device	wsfont
+# DE-BE
+awindebe0       at awinio0 port 0
+
+# Framebuffer
+genfb0          at awindebe0
+wsdisplay*      at genfb?
+options        VCONS_DRAW_INTR
+options         WSEMUL_VT100
+options         WS_KERNEL_FG=WSCOL_GREEN
+options         WS_KERNEL_BG=WSCOL_BLACK
+options         WSDISPLAY_COMPAT_PCVT
+options         WSDISPLAY_COMPAT_SYSCONS
+options         WSDISPLAY_COMPAT_USL
+options         WSDISPLAY_COMPAT_RAWKBD
+options         WSDISPLAY_DEFAULTSCREENS=4
+
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
 
 # Power, Reset and Clock Management
 #prcm*		at awinio?

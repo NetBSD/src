@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmi.c,v 1.4.2.2 2014/11/09 14:42:33 martin Exp $ */
+/* $NetBSD: awin_hdmi.c,v 1.4.2.3 2014/11/14 13:26:46 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,13 @@
  * SUCH DAMAGE.
  */
 
-#define AWIN_HDMI_PLL	7	/* PLL7 or PLL3 */
+#include "opt_allwinner.h"
+#include "opt_ddb.h"
+
+#define AWIN_HDMI_PLL	3	/* PLL7 or PLL3 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.4.2.2 2014/11/09 14:42:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.4.2.3 2014/11/14 13:26:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,8 +74,8 @@ struct awin_hdmi_softc {
 #define HDMI_WRITE(sc, reg, val)		\
     bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val));
 
-#define HDMI_1_3_P(sc)	((sc)->sc_ver == 0x0103)
-#define HDMI_1_4_P(sc)	((sc)->sc_ver == 0x0104)
+#define HDMI_1_3_P(sc)	((sc)->sc_ver == 0x00010003)
+#define HDMI_1_4_P(sc)	((sc)->sc_ver == 0x00010004)
 
 static int	awin_hdmi_match(device_t, cfdata_t, void *);
 static void	awin_hdmi_attach(device_t, device_t, void *);
@@ -87,10 +90,20 @@ static int	awin_hdmi_i2c_xfer(void *, i2c_addr_t, uint8_t,
 static int	awin_hdmi_i2c_reset(struct awin_hdmi_softc *, int);
 
 static void	awin_hdmi_enable(struct awin_hdmi_softc *);
-static void	awin_hdmi_connect(struct awin_hdmi_softc *);
 static void	awin_hdmi_read_edid(struct awin_hdmi_softc *);
+static void	awin_hdmi_video_enable(struct awin_hdmi_softc *, bool);
+static void	awin_hdmi_set_videomode(struct awin_hdmi_softc *,
+					const struct videomode *);
+static void	awin_hdmi_set_audiomode(struct awin_hdmi_softc *,
+					const struct videomode *);
+static void	awin_hdmi_hpd(struct awin_hdmi_softc *);
 static void	awin_hdmi_thread(void *);
+#if 0
 static int	awin_hdmi_intr(void *);
+#endif
+#if defined(DDB)
+void		awin_hdmi_dump_regs(void);
+#endif
 
 CFATTACH_DECL_NEW(awin_hdmi, sizeof(struct awin_hdmi_softc),
 	awin_hdmi_match, awin_hdmi_attach, NULL, NULL);
@@ -133,14 +146,17 @@ awin_hdmi_attach(device_t parent, device_t self, void *aux)
 		    AWIN_A31_AHB_RESET1_REG, AWIN_A31_AHB_RESET1_HDMI_RST, 0);
 	}
 
+#if AWIN_HDMI_PLL == 3
+	clk = __SHIFTIN(AWIN_HDMI_CLK_SRC_SEL_PLL3, AWIN_HDMI_CLK_SRC_SEL);
+#else
 	clk = __SHIFTIN(AWIN_HDMI_CLK_SRC_SEL_PLL7, AWIN_HDMI_CLK_SRC_SEL);
-	clk |= __SHIFTIN(0, AWIN_HDMI_CLK_DIV_RATIO_M);
+#endif
 	clk |= AWIN_CLK_ENABLE;
 	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
 		clk |= AWIN_A31_HDMI_CLK_DDC_GATING;
 	}
-	bus_space_write_4(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_HDMI_CLK_REG, clk);
+	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+	    AWIN_HDMI_CLK_REG, clk, AWIN_HDMI_CLK_SRC_SEL);
 	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
 	    AWIN_AHB_GATING1_REG, AWIN_AHB_GATING1_HDMI, 0);
 
@@ -153,12 +169,9 @@ awin_hdmi_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": HDMI %d.%d\n", vmaj, vmin);
 
 	sc->sc_ver = ver;
-	if (HDMI_1_3_P(sc)) {
-		sc->sc_i2c_blklen = 1;
-	} else {
-		sc->sc_i2c_blklen = 16;
-	}
+	sc->sc_i2c_blklen = 16;
 
+#if 0
 	sc->sc_ih = intr_establish(loc->loc_intr, IPL_SCHED, IST_LEVEL,
 	    awin_hdmi_intr, sc);
 	if (sc->sc_ih == NULL) {
@@ -167,10 +180,15 @@ awin_hdmi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
+#endif
 
 	awin_hdmi_i2c_init(sc);
 
 	awin_hdmi_enable(sc);
+
+	delay(50000);
+
+	awin_hdmi_hpd(sc);
 
 	kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, awin_hdmi_thread, sc,
 	    &sc->sc_thread, "%s", device_xname(sc->sc_dev));
@@ -252,6 +270,13 @@ awin_hdmi_i2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 			    AWIN_A31_HDMI_DDC_FIFO_ACCESS_REG, pbuf, blklen);
 		}
 
+#ifdef AWIN_HDMI_DEBUG
+		printf("off=%d:", (int)off);
+		for (int i = 0; i < blklen; i++)
+			printf(" %02x", pbuf[i]);
+		printf("\n");
+#endif
+
 		pbuf += blklen;
 		off += blklen;
 		resid -= blklen;
@@ -300,7 +325,7 @@ awin_hdmi_i2c_xfer_1_3(void *priv, i2c_addr_t addr, uint8_t reg,
 	if (retry == 0)
 		return ETIMEDOUT;
 
-	val = HDMI_READ(sc, AWIN_HDMI_DDC_FIFO_STATUS_REG);
+	val = HDMI_READ(sc, AWIN_HDMI_DDC_INT_STATUS_REG);
 	if ((val & AWIN_HDMI_DDC_INT_STATUS_TRANSFER_COMPLETE) == 0) {
 		device_printf(sc->sc_dev, "xfer failed, status=%08x\n", val);
 		return EIO;
@@ -340,7 +365,10 @@ awin_hdmi_i2c_xfer_1_4(void *priv, i2c_addr_t addr, uint8_t reg,
 		val = HDMI_READ(sc, AWIN_A31_HDMI_DDC_CTRL_REG);
 		if ((val & AWIN_A31_HDMI_DDC_CTRL_ACCESS_CMD_START) == 0)
 			break;
-		kpause("hdmiddc", false, mstohz(10), &sc->sc_ic_lock);
+		if (cold)
+			delay(1000);
+		else
+			kpause("hdmiddc", false, mstohz(10), &sc->sc_ic_lock);
 	}
 	if (retry == 0)
 		return ETIMEDOUT;
@@ -380,7 +408,7 @@ awin_hdmi_i2c_reset(struct awin_hdmi_softc *sc, int flags)
 		HDMI_WRITE(sc, AWIN_HDMI_DDC_CTRL_REG,
 		    AWIN_HDMI_DDC_CTRL_EN | AWIN_HDMI_DDC_CTRL_SW_RST); 
 
-		delay(10000);
+		delay(1000);
 
 		ctrl = HDMI_READ(sc, AWIN_HDMI_DDC_CTRL_REG);
 		if (ctrl & AWIN_HDMI_DDC_CTRL_SW_RST) {
@@ -417,62 +445,31 @@ awin_hdmi_enable(struct awin_hdmi_softc *sc)
 {
 	HDMI_WRITE(sc, AWIN_HDMI_CTRL_REG, AWIN_HDMI_CTRL_MODULE_EN);
 	if (awin_chip_id() == AWIN_CHIP_ID_A20) {
-		HDMI_WRITE(sc, AWIN_HDMI_PAD_CTRL0_REG,
-		    AWIN_HDMI_PAD_CTRL0_BIAS |
-		    AWIN_HDMI_PAD_CTRL0_LDOCEN |
-		    AWIN_HDMI_PAD_CTRL0_LD0DEN);
+		HDMI_WRITE(sc, AWIN_HDMI_PAD_CTRL0_REG, 0xfe800000);
+		HDMI_WRITE(sc, AWIN_HDMI_PAD_CTRL1_REG, 0x00d8c830);
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		HDMI_WRITE(sc, AWIN_HDMI_PAD_CTRL0_REG, 0x7e80000f);
+		HDMI_WRITE(sc, AWIN_HDMI_PAD_CTRL1_REG, 0x01ded030);
 	}
-}
+#if AWIN_HDMI_PLL == 7
+	HDMI_WRITE(sc, AWIN_HDMI_PLL_DBG0_REG, (1<<21));
+#elif AWIN_HDMI_PLL == 3
+	HDMI_WRITE(sc, AWIN_HDMI_PLL_DBG0_REG, (0<<21));
+#endif
 
-static void
-awin_hdmi_connect(struct awin_hdmi_softc *sc)
-{
-	HDMI_WRITE(sc, AWIN_HDMI_CTRL_REG, AWIN_HDMI_CTRL_MODULE_EN);
-
-	HDMI_WRITE(sc, AWIN_HDMI_PLL_CTRL_REG,
-	    AWIN_HDMI_PLL_CTRL_PLL_EN |
-	    AWIN_HDMI_PLL_CTRL_BWS |
-	    AWIN_HDMI_PLL_CTRL_HV_IS_33 |
-	    AWIN_HDMI_PLL_CTRL_LDO1_EN |
-	    AWIN_HDMI_PLL_CTRL_LDO2_EN |
-	    AWIN_HDMI_PLL_CTRL_SDIV2 |
-	    __SHIFTIN(0x4, AWIN_HDMI_PLL_CTRL_VCO_GAIN) |
-	    __SHIFTIN(0x7, AWIN_HDMI_PLL_CTRL_S) |
-	    __SHIFTIN(0xf, AWIN_HDMI_PLL_CTRL_CP_S) |
-	    __SHIFTIN(0x7, AWIN_HDMI_PLL_CTRL_CS) |
-	    __SHIFTIN(0xf, AWIN_HDMI_PLL_CTRL_PREDIV) |
-	    __SHIFTIN(0x8, AWIN_HDMI_PLL_CTRL_VCO_S));
-
-	HDMI_WRITE(sc, AWIN_HDMI_PAD_CTRL0_REG,
-	    AWIN_HDMI_PAD_CTRL0_BIAS |
-	    AWIN_HDMI_PAD_CTRL0_LDOCEN |
-	    AWIN_HDMI_PAD_CTRL0_LD0DEN |
-	    AWIN_HDMI_PAD_CTRL0_PWENC |
-	    AWIN_HDMI_PAD_CTRL0_PWEND |
-	    AWIN_HDMI_PAD_CTRL0_PWENG |
-	    AWIN_HDMI_PAD_CTRL0_CKEN |
-	    AWIN_HDMI_PAD_CTRL0_TXEN);
-
-	HDMI_WRITE(sc, AWIN_HDMI_PAD_CTRL1_REG,
-	    AWIN_HDMI_PAD_CTRL1_AMP_OPT |
-	    AWIN_HDMI_PAD_CTRL1_AMPCK_OPT |
-	    AWIN_HDMI_PAD_CTRL1_EMP_OPT |
-	    AWIN_HDMI_PAD_CTRL1_EMPCK_OPT |
-	    AWIN_HDMI_PAD_CTRL1_REG_DEN |
-	    AWIN_HDMI_PAD_CTRL1_REG_DENCK |
-	    __SHIFTIN(0x2, AWIN_HDMI_PAD_CTRL1_REG_EMP) |
-	    __SHIFTIN(0x1, AWIN_HDMI_PAD_CTRL1_REG_CKSS) |
-	    __SHIFTIN(0x4, AWIN_HDMI_PAD_CTRL1_REG_AMP));
-
-	HDMI_WRITE(sc, AWIN_HDMI_PLL_DBG0_REG, 0);
+	delay(1000);
 }
 
 static void
 awin_hdmi_read_edid(struct awin_hdmi_softc *sc)
 {
+	const struct videomode *mode;
 	char edid[128];
 	struct edid_info ei;
 	int retry = 4;
+
+	memset(edid, 0, sizeof(edid));
+	memset(&ei, 0, sizeof(ei));
 
 	while (--retry > 0) {
 		if (ddc_read_edid(&sc->sc_ic, edid, sizeof(edid)) == 0)
@@ -480,11 +477,203 @@ awin_hdmi_read_edid(struct awin_hdmi_softc *sc)
 	}
 	if (retry == 0) {
 		device_printf(sc->sc_dev, "failed to read EDID\n");
+	} else {
+		if (edid_parse(edid, &ei) != 0) {
+			device_printf(sc->sc_dev, "failed to parse EDID\n");
+		}
+#ifdef AWIN_HDMI_DEBUG
+		else {
+			edid_print(&ei);
+		}
+#endif
+	}
+
+	mode = ei.edid_preferred_mode;
+	if (mode == NULL)
+		mode = pick_mode_by_ref(640, 480, 60);
+
+	if (mode != NULL) {
+		awin_hdmi_video_enable(sc, false);
+		awin_tcon_enable(false);
+		delay(20000);
+
+		awin_debe_set_videomode(mode);
+		awin_tcon_set_videomode(mode);
+		awin_hdmi_set_videomode(sc, mode);
+		awin_hdmi_set_audiomode(sc, mode);
+		awin_debe_enable(true);
+		delay(20000);
+		awin_tcon_enable(true);
+		delay(20000);
+		awin_hdmi_video_enable(sc, true);
+	}
+}
+
+static void
+awin_hdmi_video_enable(struct awin_hdmi_softc *sc, bool enable)
+{
+	uint32_t val;
+
+	val = HDMI_READ(sc, AWIN_HDMI_VID_CTRL_REG);
+	val &= ~AWIN_HDMI_VID_CTRL_SRC_SEL;
+#ifdef AWIN_HDMI_CBGEN
+	val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_SRC_SEL_CBGEN,
+			 AWIN_HDMI_VID_CTRL_SRC_SEL);
+#else
+	val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_SRC_SEL_RGB,
+			 AWIN_HDMI_VID_CTRL_SRC_SEL);
+#endif
+	if (enable) {
+		val |= AWIN_HDMI_VID_CTRL_VIDEO_EN;
+	} else {
+		val &= ~AWIN_HDMI_VID_CTRL_VIDEO_EN;
+	}
+	HDMI_WRITE(sc, AWIN_HDMI_VID_CTRL_REG, val);
+
+#if defined(AWIN_HDMI_DEBUG) && defined(DDB)
+	awin_hdmi_dump_regs();
+#endif
+}
+
+static void
+awin_hdmi_set_videomode(struct awin_hdmi_softc *sc, const struct videomode *mode)
+{
+	uint32_t val;
+	const u_int dblscan_p = !!(mode->flags & VID_DBLSCAN);
+	const u_int interlace_p = !!(mode->flags & VID_INTERLACE);
+	const u_int phsync_p = !!(mode->flags & VID_PHSYNC);
+	const u_int pvsync_p = !!(mode->flags & VID_PVSYNC);
+	const u_int hfp = mode->hsync_start - mode->hdisplay;
+	const u_int hspw = mode->hsync_end - mode->hsync_start;
+	const u_int hbp = mode->htotal - mode->hsync_start;
+	const u_int vfp = mode->vsync_start - mode->vdisplay;
+	const u_int vspw = mode->vsync_end - mode->vsync_start;
+	const u_int vbp = mode->vtotal - mode->vsync_start;
+
+#ifdef AWIN_HDMI_DEBUG
+	device_printf(sc->sc_dev,
+	    "dblscan %d, interlace %d, phsync %d, pvsync %d\n",
+	    dblscan_p, interlace_p, phsync_p, pvsync_p);
+	device_printf(sc->sc_dev, "h: %u %u %u %u\n",
+	    mode->hdisplay, hbp, hfp, hspw);
+	device_printf(sc->sc_dev, "v: %u %u %u %u\n",
+	    mode->vdisplay, vbp, vfp, vspw);
+#endif
+
+	HDMI_WRITE(sc, AWIN_HDMI_INT_STATUS_REG, 0xffffffff);
+
+	u_int clk_div = awin_tcon_get_clk_div();
+	bool clk_dbl = awin_tcon_get_clk_dbl();
+
+#ifdef AWIN_HDMI_DEBUG
+	device_printf(sc->sc_dev, "dot_clock: %d\n", mode->dot_clock);
+	device_printf(sc->sc_dev, "clkdiv: %d\n", clk_div);
+	device_printf(sc->sc_dev, "clkdbl: %c\n", clk_dbl ? 'Y' : 'N');
+#endif
+
+	if (clk_div == 0) {
+		device_printf(sc->sc_dev, "ERROR: TCON clk not configured\n");
 		return;
 	}
 
-	edid_parse(edid, &ei);
-	edid_print(&ei);
+	uint32_t pll_ctrl, pad_ctrl0, pad_ctrl1;
+	if (HDMI_1_4_P(sc)) {
+		pad_ctrl0 = 0x7e8000ff;
+		pad_ctrl1 = 0x01ded030;
+		pll_ctrl = 0xba48a308;
+		pll_ctrl |= __SHIFTIN(clk_div-1, AWIN_HDMI_PLL_CTRL_PREDIV);
+	} else {
+		pad_ctrl0 = 0xfe800000;
+		pad_ctrl1 = 0x00d8c830;
+		pll_ctrl = 0xfa4ef708;
+		pll_ctrl |= __SHIFTIN(clk_div, AWIN_HDMI_PLL_CTRL_PREDIV);
+	}
+	if (clk_dbl == false)
+		pad_ctrl1 |= 0x40;
+
+	HDMI_WRITE(sc, AWIN_HDMI_PAD_CTRL0_REG, pad_ctrl0);
+	HDMI_WRITE(sc, AWIN_HDMI_PAD_CTRL1_REG, pad_ctrl1);
+	HDMI_WRITE(sc, AWIN_HDMI_PLL_CTRL_REG, pll_ctrl);
+#if AWIN_HDMI_PLL == 7
+	HDMI_WRITE(sc, AWIN_HDMI_PLL_DBG0_REG, (1<<21));
+#elif AWIN_HDMI_PLL == 3
+	HDMI_WRITE(sc, AWIN_HDMI_PLL_DBG0_REG, (0<<21));
+#endif
+
+	val = HDMI_READ(sc, AWIN_HDMI_VID_CTRL_REG);
+ 	val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_HDMI_MODE_HDMI,
+ 			 AWIN_HDMI_VID_CTRL_HDMI_MODE);
+	val &= ~AWIN_HDMI_VID_CTRL_OUTPUT_FMT;
+	if (dblscan_p) {
+		val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_REPEATER_SEL_2X,
+				 AWIN_HDMI_VID_CTRL_REPEATER_SEL);
+	}
+	if (interlace_p) {
+		val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_OUTPUT_FMT_INTERLACE,
+				 AWIN_HDMI_VID_CTRL_OUTPUT_FMT);
+	}
+	HDMI_WRITE(sc, AWIN_HDMI_VID_CTRL_REG, val);
+
+	val = __SHIFTIN((mode->hdisplay << dblscan_p) - 1,
+			AWIN_HDMI_VID_TIMING_0_ACT_H);
+	val |= __SHIFTIN(mode->vdisplay - 1,
+			 AWIN_HDMI_VID_TIMING_0_ACT_V);
+	HDMI_WRITE(sc, AWIN_HDMI_VID_TIMING_0_REG, val);
+
+	val = __SHIFTIN((hbp << dblscan_p) - 1,
+			AWIN_HDMI_VID_TIMING_1_HBP);
+	val |= __SHIFTIN(vbp - 1,
+			 AWIN_HDMI_VID_TIMING_1_VBP);
+	HDMI_WRITE(sc, AWIN_HDMI_VID_TIMING_1_REG, val);
+
+	val = __SHIFTIN((hfp << dblscan_p) - 1,
+			AWIN_HDMI_VID_TIMING_2_HFP);
+	val |= __SHIFTIN(vfp - 1,
+			 AWIN_HDMI_VID_TIMING_2_VFP);
+	HDMI_WRITE(sc, AWIN_HDMI_VID_TIMING_2_REG, val);
+
+	val = __SHIFTIN((hspw << dblscan_p) - 1,
+			AWIN_HDMI_VID_TIMING_3_HSPW);
+	val |= __SHIFTIN(vspw - 1,
+			 AWIN_HDMI_VID_TIMING_3_VSPW);
+	HDMI_WRITE(sc, AWIN_HDMI_VID_TIMING_3_REG, val);
+
+	val = 0;
+	if (phsync_p) {
+		val |= AWIN_HDMI_VID_TIMING_4_HSYNC_ACTIVE_SEL;
+	}
+	if (pvsync_p) {
+		val |= AWIN_HDMI_VID_TIMING_4_VSYNC_ACTIVE_SEL;
+	}
+	val |= __SHIFTIN(AWIN_HDMI_VID_TIMING_4_TX_CLOCK_NORMAL,
+			 AWIN_HDMI_VID_TIMING_4_TX_CLOCK);
+	HDMI_WRITE(sc, AWIN_HDMI_VID_TIMING_4_REG, val);
+}
+
+static void
+awin_hdmi_set_audiomode(struct awin_hdmi_softc *sc, const struct videomode *mode)
+{
+	/* TODO */
+	HDMI_WRITE(sc, AWIN_HDMI_AUD_CTRL_REG, 0);
+}
+
+static void
+awin_hdmi_hpd(struct awin_hdmi_softc *sc)
+{
+	uint32_t hpd = HDMI_READ(sc, AWIN_HDMI_HPD_REG);
+	bool con = !!(hpd & AWIN_HDMI_HPD_HOTPLUG_DET);
+
+	if (sc->sc_connected == con)
+		return;
+
+	sc->sc_connected = con;
+	if (con) {
+		device_printf(sc->sc_dev, "display connected\n");
+		awin_hdmi_read_edid(sc);
+	} else {
+		device_printf(sc->sc_dev, "display disconnected\n");
+		awin_tcon_set_videomode(NULL);
+	}
 }
 
 static void
@@ -493,26 +682,12 @@ awin_hdmi_thread(void *priv)
 	struct awin_hdmi_softc *sc = priv;
 
 	for (;;) {
-		uint32_t hpd = HDMI_READ(sc, AWIN_HDMI_HPD_REG);
-		bool con = !!(hpd & AWIN_HDMI_HPD_HOTPLUG_DET);
-
-		if (sc->sc_connected == con)
-			goto next;
-
-		sc->sc_connected = con;
-		if (con) {
-			device_printf(sc->sc_dev, "display connected\n");
-			awin_hdmi_connect(sc);
-			awin_hdmi_read_edid(sc);
-		} else {
-			device_printf(sc->sc_dev, "display disconnected\n");
-		}
-
-next:
+		awin_hdmi_hpd(sc);
 		kpause("hdmihotplug", false, mstohz(1000), NULL);
 	}
 }
 
+#if 0
 static int
 awin_hdmi_intr(void *priv)
 {
@@ -529,3 +704,41 @@ awin_hdmi_intr(void *priv)
 
 	return 1;
 }
+#endif
+
+#if defined(DDB)
+void
+awin_hdmi_dump_regs(void)
+{
+	static const struct {
+		const char *name;
+		uint16_t reg;
+	} regs[] = {
+		{ "CTRL", AWIN_HDMI_CTRL_REG },
+		{ "INT_STATUS", AWIN_HDMI_INT_STATUS_REG },
+		{ "VID_CTRL", AWIN_HDMI_VID_CTRL_REG },
+		{ "VID_TIMING_0", AWIN_HDMI_VID_TIMING_0_REG },
+		{ "VID_TIMING_1", AWIN_HDMI_VID_TIMING_1_REG },
+		{ "VID_TIMING_2", AWIN_HDMI_VID_TIMING_2_REG },
+		{ "VID_TIMING_3", AWIN_HDMI_VID_TIMING_3_REG },
+		{ "VID_TIMING_4", AWIN_HDMI_VID_TIMING_4_REG },
+		{ "PAD_CTRL0", AWIN_HDMI_PAD_CTRL0_REG },
+		{ "PAD_CTRL1", AWIN_HDMI_PAD_CTRL1_REG },
+		{ "PLL_CTRL", AWIN_HDMI_PLL_CTRL_REG },
+		{ "PLL_DBG0", AWIN_HDMI_PLL_DBG0_REG },
+		{ "PLL_DBG1", AWIN_HDMI_PLL_DBG1_REG },
+	};
+	struct awin_hdmi_softc *sc;
+	device_t dev;
+
+	dev = device_find_by_driver_unit("awinhdmi", 0);
+	if (dev == NULL)
+		return;
+	sc = device_private(dev);
+
+	for (int i = 0; i < __arraycount(regs); i++) {
+		printf("%s: 0x%08x\n", regs[i].name,
+		    HDMI_READ(sc, regs[i].reg));
+	}
+}
+#endif

@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.8.10.1 2014/11/09 14:42:33 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.8.10.2 2014/11/14 13:26:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -108,11 +108,15 @@ static const struct awin_locators awin_locators[] = {
 	{ "com", OFFANDSIZE(UART6), 6, AWIN_IRQ_UART6, A10|A20 },
 	{ "com", OFFANDSIZE(UART7), 7, AWIN_IRQ_UART7, A10|A20 },
 	{ "com", OFFANDSIZE(UART0), 0, AWIN_A31_IRQ_UART0, A31 },
+	{ "awindebe", AWIN_DE_BE0_OFFSET, 0x1000, 0, NOINTR, AANY },
+	{ "awindebe", AWIN_DE_BE1_OFFSET, 0x1000, 1, NOINTR, AANY },
+	{ "awintcon", OFFANDSIZE(LCD0), 0, NOINTR, AANY },
+	{ "awintcon", OFFANDSIZE(LCD1), 1, NOINTR, AANY },
+	{ "awinhdmi", OFFANDSIZE(HDMI), NOPORT, AWIN_IRQ_HDMI0, A20 },
+	{ "awinhdmi", OFFANDSIZE(HDMI), NOPORT, AWIN_A31_IRQ_HDMI, A31 },
 	{ "awinwdt", OFFANDSIZE(TMR), NOPORT, NOINTR, AANY },
 	{ "awinrtc", OFFANDSIZE(TMR), NOPORT, NOINTR, A10|A20 },
 	{ "awinrtc", OFFANDSIZE(A31_RTC), NOPORT, NOINTR, A31 },
-	{ "awinhdmi", OFFANDSIZE(HDMI), NOPORT, AWIN_IRQ_HDMI0, A20 },
-	{ "awinhdmi", OFFANDSIZE(HDMI), NOPORT, AWIN_A31_IRQ_HDMI, A31 },
 	{ "awinusb", OFFANDSIZE(USB1), 0, NOINTR, A10|A20 },
 	{ "awinusb", OFFANDSIZE(USB2), 1, NOINTR, A10|A20 },
 	{ "awinusb", OFFANDSIZE(A31_USB1), 0, NOINTR, A31 },
