@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.95 2014/11/13 07:27:52 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.96 2014/11/14 07:30:06 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2405,6 +2405,8 @@ common/lib/libc/atomic/atomic_op_namespace.h	1.7
 	[martin, ticket #218]
 
 etc/etc.evbarm/Makefile.inc			1.64
+src/sys/arch/arm/arm32/locore.S			1.37
+src/sys/arch/arm/arm32/bus_dma.c		1.87
 sys/arch/evbarm/conf/BPI			1.2,1.4,1.6-1.7,1.9
 sys/arch/evbarm/conf/BPI_INSTALL		1.1
 sys/arch/evbarm/conf/CUBIEBOARD			1.18-1.30
