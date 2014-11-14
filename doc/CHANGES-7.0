@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.98 2014/11/14 15:22:40 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.99 2014/11/14 15:52:27 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2614,4 +2614,15 @@ sys/arch/zaurus/conf/GENERIC			1.64
 	Support for UFS1 extended attributes in GENERIC and GENERIC-like
 	kernels.
 	[manu, ticket #232]
+
+sbin/fsck_msdos/boot.c				1.17-1.18
+sbin/fsck_msdos/dosfs.h				1.7
+
+	ClusterOffset actually needs to be able to be negative.
+	[jakllsch, ticket #234]
+
+sys/arch/evbarm/conf/RPI			1.55
+
+	Enable NFS root FS support in RPI.
+	[jakllsch, ticket #235]
 
