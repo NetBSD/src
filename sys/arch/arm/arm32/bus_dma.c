@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.86.2.1 2014/11/10 19:57:26 martin Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.86.2.2 2014/11/14 07:29:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.86.2.1 2014/11/10 19:57:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.86.2.2 2014/11/14 07:29:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1306,6 +1306,19 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 				direct_mapable = true;
 			}
 		}
+
+#ifdef PMAP_NEED_ALLOC_POOLPAGE
+		/*
+		 * The page can only be direct mapped if was allocated out
+		 * of the arm poolpage vm freelist.  
+		 */
+		int lcv = vm_physseg_find(atop(pa), NULL);
+		KASSERT(lcv != -1);
+		if (direct_mapable) {
+			direct_mapable =
+			    (arm_poolpage_vmfreelist == VM_PHYSMEM_PTR(lcv)->free_list);
+		}
+#endif
 
 		if (direct_mapable) {
 			*kvap = (void *)PMAP_MAP_POOLPAGE(pa);
