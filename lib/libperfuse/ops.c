@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.66.2.12 2014/11/09 10:06:34 msaitoh Exp $ */
+/*  $NetBSD: ops.c,v 1.66.2.13 2014/11/14 15:06:36 martin Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -3460,6 +3460,7 @@ perfuse_node_setextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	perfuse_msg_t *pm;
 	struct fuse_setxattr_in *fsi;
 	size_t attrnamelen;
+	size_t datalen;
 	size_t len;
 	char *np;
 	int error;
@@ -3472,23 +3473,27 @@ perfuse_node_setextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	ps = puffs_getspecific(pu);
 	attrname = perfuse_native_ns(attrns, attrname, fuse_attrname);
 	attrnamelen = strlen(attrname) + 1;
-	len = sizeof(*fsi) + attrnamelen + *resid;
+
+	datalen = (resid != NULL) ? *resid : 0;
+	len = sizeof(*fsi) + attrnamelen + datalen;
 
 	pm = ps->ps_new_msg(pu, opc, FUSE_SETXATTR, len, pcr);
 	fsi = GET_INPAYLOAD(ps, pm, fuse_setxattr_in);
-	fsi->size = (unsigned int)*resid;
+	fsi->size = (unsigned int)datalen;
 	fsi->flags = 0;
 	np = (char *)(void *)(fsi + 1);
 	(void)strlcpy(np, attrname, attrnamelen);
 	np += attrnamelen;
-	(void)memcpy(np, (char *)attr, *resid);
+	if (datalen)
+		(void)memcpy(np, (char *)attr, datalen);
 
 	if ((error = xchg_msg(pu, opc, pm, 
 			      NO_PAYLOAD_REPLY_LEN, wait_reply)) != 0)
 		goto out;
 
 	ps->ps_destroy_msg(pm);
-	*resid = 0;
+	if (resid)
+		*resid = 0;
 	error = 0;
 
 out:
