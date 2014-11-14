@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4.c,v 1.6 2014/11/07 20:51:02 roy Exp $");
+ __RCSID("$NetBSD: ipv4.c,v 1.7 2014/11/14 12:00:54 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -28,7 +28,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 

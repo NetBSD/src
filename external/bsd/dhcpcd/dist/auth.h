@@ -1,4 +1,4 @@
-/* $NetBSD: auth.h,v 1.6 2014/11/07 20:51:02 roy Exp $ */
+/* $NetBSD: auth.h,v 1.7 2014/11/14 12:00:54 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,7 +30,7 @@
 #ifndef AUTH_H
 #define AUTH_H
 
-#include <sys/queue.h>
+#include "config.h"
 
 #define DHCPCD_AUTH_SEND	(1 << 0)
 #define DHCPCD_AUTH_REQUIRE	(1 << 1)

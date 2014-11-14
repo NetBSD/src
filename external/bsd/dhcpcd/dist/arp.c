@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: arp.c,v 1.6 2014/11/07 20:51:02 roy Exp $");
+ __RCSID("$NetBSD: arp.c,v 1.7 2014/11/14 12:00:54 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -320,8 +320,10 @@ arp_free(struct arp_state *astate)
 		eloop_timeout_delete(astate->iface->ctx->eloop, NULL, astate);
 		state = D_STATE(astate->iface);
 		TAILQ_REMOVE(&state->arp_states, astate, next);
-		if (state->arp_ipv4ll == astate)
+		if (state->arp_ipv4ll == astate) {
+			ipv4ll_stop(astate->iface);
 			state->arp_ipv4ll = NULL;
+		}
 		free(astate);
 	}
 }
@@ -355,6 +357,10 @@ arp_close(struct interface *ifp)
 	}
 
 	while ((astate = TAILQ_FIRST(&state->arp_states))) {
+#ifndef __clang_analyzer__
+		/* clang guard needed for a more compex variant on this bug:
+		 * http://llvm.org/bugs/show_bug.cgi?id=18222 */
 		arp_free(astate);
+#endif
 	}
 }
