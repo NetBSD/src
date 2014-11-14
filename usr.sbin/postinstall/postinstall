@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.175.2.2 2014/08/12 15:14:55 martin Exp $
+# $NetBSD: postinstall,v 1.175.2.3 2014/11/14 18:18:14 snj Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -223,18 +223,24 @@ check_dir()
 	return 0
 }
 
-# check_ids op type file start id [...]
-#	Check if file of type "users" or "groups" contains the relevant IDs
+# check_ids op type file srcfile start id [...]
+#	Check if file of type "users" or "groups" contains the relevant IDs.
+#	Use srcfile as a reference for the expected contents.
+#	The specified "id" names should be given in numerical order,
+#	with the first name corresponding to numerical value "start",
+#	and with the special name "SKIP" being used to mark gaps in the
+#	sequence.
 #	Returns 0 if ok, 1 otherwise.
 #	
 check_ids()
 {
-	[ $# -ge 5 ] || err 3 "USAGE: checks_ids op type file start id [...]"
+	[ $# -ge 6 ] || err 3 "USAGE: checks_ids op type file start srcfile id [...]"
 	_op="$1"
 	_type="$2"
 	_file="$3"
-	_start="$4"
-	shift 4
+	_srcfile="$4"
+	_start="$5"
+	shift 5
 	#_ids="$@"
 
 	if [ ! -f "${_file}" ]; then
@@ -276,6 +282,14 @@ check_ids()
 	' "$@" < "${_file}")"	|| return 1
 	if [ -n "${_missing}" ]; then
 		msg "Error ${_type}${_notfixed}:" $(echo ${_missing})
+		msg "Use the following as a template:"
+		set -- ${_missing}
+		while [ $# -gt 0 ]
+		do
+			${GREP} -E "^${1}:" ${_srcfile}
+			shift 2
+		done
+		msg "and adjust if necessary."
 		return 1
 	fi
 	return 0
@@ -1018,7 +1032,8 @@ do_gid()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_gid  fix|check"
 
-	check_ids "$1" groups "${DEST_DIR}/etc/group" 14 \
+	check_ids "$1" groups "${DEST_DIR}/etc/group" \
+	    "${SRC_DIR}/etc/group" 14 \
 	    named ntpd sshd SKIP _pflogd _rwhod staff _proxy _timedc \
 	    _sdpd _httpd _mdnsd _tests _tcpdump _tss _gpio _rtadvd
 }
@@ -1696,7 +1711,8 @@ do_uid()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_uid  fix|check"
 
-	check_ids "$1" users "${DEST_DIR}/etc/master.passwd" 12 \
+	check_ids "$1" users "${DEST_DIR}/etc/master.passwd" \
+	    "${SRC_DIR}/etc/master.passwd" 12 \
 	    postfix SKIP named ntpd sshd SKIP _pflogd _rwhod SKIP _proxy \
 	    _timedc _sdpd _httpd _mdnsd _tests _tcpdump _tss SKIP _rtadvd
 }
