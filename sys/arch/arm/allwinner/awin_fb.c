@@ -1,4 +1,4 @@
-/* $NetBSD: awin_fb.c,v 1.4.2.3 2014/11/14 22:23:28 martin Exp $ */
+/* $NetBSD: awin_fb.c,v 1.4.2.4 2014/11/15 11:31:40 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_fb.c,v 1.4.2.3 2014/11/14 22:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_fb.c,v 1.4.2.4 2014/11/15 11:31:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: awin_fb.c,v 1.4.2.3 2014/11/14 22:23:28 martin Exp $
 
 struct awin_fb_softc {
 	struct genfb_softc sc_gen;
+	device_t sc_debedev;
 
 	bus_dma_tag_t sc_dmat;
 	bus_dma_segment_t *sc_dmasegs;
@@ -82,6 +83,7 @@ awin_fb_attach(device_t parent, device_t self, void *aux)
 		awin_fb_consoledev = self;
 
 	sc->sc_gen.sc_dev = self;
+	sc->sc_debedev = parent;
 	sc->sc_dmat = afb->afb_dmat;
 	sc->sc_dmasegs = afb->afb_dmasegs;
 	sc->sc_ndmasegs = afb->afb_ndmasegs;
@@ -144,6 +146,9 @@ awin_fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 		if (error == 0)
 			fbi->fbi_flags |= WSFB_VRAM_IS_RAM;
 		return error;
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GVIDEO:
+		return awin_debe_ioctl(sc->sc_debedev, cmd, data);
 	default:
 		return EPASSTHROUGH;
 	}
