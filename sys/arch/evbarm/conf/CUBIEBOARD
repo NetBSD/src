@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.34 2014/11/12 17:38:56 jmcneill Exp $
+#	$NetBSD: CUBIEBOARD,v 1.35 2014/11/15 14:59:25 jmcneill Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -235,6 +235,10 @@ iic*		at awiniic?
 # On-board 16550 UARTs
 com0		at awinio? port 0			# UART0 (console)
 options 	CONADDR=0x01c28000, CONSPEED=115200
+
+# Consumer IR
+awinir0		at awinio?
+cir0		at awinir0
 
 # Operating System Timer (A10)
 awintmr0	at awinio?
