@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ia64,v 1.2 2008/01/17 01:56:02 lukem Exp $
+#	$NetBSD: Makefile.ia64,v 1.3 2014/11/15 12:28:06 uebayasi Exp $
 
 # Makefile for NetBSD
 #
@@ -54,7 +54,7 @@ locore.o: ${IA64}/ia64/locore.S assym.h
 ##TEXTADDR?=	0xdeadbeeffeeddead
 LINKFLAGS_NORMAL=	-X
 KERN_LDSCRIPT?=	kern.ldscript
-LINKFORMAT=	-T ${IA64}/conf/${KERN_LDSCRIPT}
+LINKSCRIPT=	-T ${IA64}/conf/${KERN_LDSCRIPT}
 
 ##
 ## (6) port specific target dependencies
