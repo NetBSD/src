@@ -1,4 +1,4 @@
-/*	$NetBSD: s_copysign.S,v 1.8 2014/11/15 20:59:02 joerg Exp $	*/
+/*	$NetBSD: s_copysign.S,v 1.9 2014/11/15 21:07:01 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,9 @@
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_copysign.S,v 1.8 2014/11/15 20:59:02 joerg Exp $")
+RCSID("$NetBSD: s_copysign.S,v 1.9 2014/11/15 21:07:01 joerg Exp $")
 
-STRONG_ALIAS(_copysignl, _copysign)
+STRONG_ALIAS(_copysignl, copysign)
 WEAK_ALIAS(copysignl, _copysignl)
 
 | copysign(x,y)
