@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.50 2014/10/18 08:33:27 snj Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.51 2014/11/15 19:18:18 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.50 2014/10/18 08:33:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.51 2014/11/15 19:18:18 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -75,9 +75,9 @@ static void	clmpcc_set_params(struct clmpcc_chan *);
 static void	clmpcc_start(struct tty *);
 static int 	clmpcc_modem_control(struct clmpcc_chan *, int, int);
 
-#define	CLMPCCUNIT(x)		(minor(x) & 0x7fffc)
-#define CLMPCCCHAN(x)		(minor(x) & 0x00003)
-#define	CLMPCCDIALOUT(x)	(minor(x) & 0x80000)
+#define	CLMPCCUNIT(x)		(TTUNIT(x) & ~0x3)	// XXX >> 2? 
+#define	CLMPCCCHAN(x)		(TTUNIT(x) & 0x3)
+#define	CLMPCCDIALOUT(x)	TTDIALOUT(x)
 
 /*
  * These should be in a header file somewhere...
