@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.89 2013/10/03 22:01:04 mrg Exp $
+# 	$NetBSD: Makefile.sparc,v 1.90 2014/11/15 12:37:37 uebayasi Exp $
 
 # Makefile for NetBSD
 #
@@ -61,7 +61,8 @@ amd7930intr.o bsd_fdintr.o lock_stubs.o: assym.h
 TEXTADDR?=	F0004000
 EXTRA_LINKFLAGS=	-X
 KERN_LDSCRIPT?= kern.ldscript
-LINKFORMAT=	-n -T ${SPARC}/conf/${KERN_LDSCRIPT}
+LINKFORMAT=	-n
+LINKSCRIPT=	-T ${SPARC}/conf/${KERN_LDSCRIPT}
 
 ##
 ## (6) port specific target dependencies
