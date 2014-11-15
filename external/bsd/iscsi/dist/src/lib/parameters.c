@@ -919,12 +919,7 @@ answer:
 		if (strcmp(value, "?") == 0) {
 			iscsi_trace(TRACE_ISCSI_PARAM, "got inquiry for param \"%s\"\n", param->key);
 			if (param->value_l) {
-				if (param->value_l->value) {
-					(void) strlcpy(param->answer_tx, param->value_l->value, sizeof(param->answer_tx));
-				} else {
-					iscsi_err(__FILE__, __LINE__, "param \"%s\" has NULL value_l->value\n", param->key);
-					param->answer_tx[0] = 0x0;
-				}
+				(void) strlcpy(param->answer_tx, param->value_l->value, sizeof(param->answer_tx));
 			} else {
 				iscsi_err(__FILE__, __LINE__, "param \"%s\" has NULL value_l\n", param->key);
 				param->answer_tx[0] = 0x0;
