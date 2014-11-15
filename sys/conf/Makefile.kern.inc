@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.180 2014/11/13 13:44:31 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.181 2014/11/15 08:20:01 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -215,8 +215,8 @@ ${_cfile:T:R}.o: ${_cfile}
 ##
 ## (5) link settings
 ##
-## TEXTADDR (or LOADADDRESS), LINKFORMAT, and any EXTRA_LINKFLAGS must
-## be set in the port's Makefile.  The port specific definitions for
+## TEXTADDR (or LOADADDRESS), LINKFORMAT, LINKSCRIPT, and any EXTRA_LINKFLAGS
+## must be set in the port's Makefile.  The port specific definitions for
 ## LINKFLAGS_NORMAL and LINKFLAGS_DEBUG will added to the LINKFLAGS
 ## depending on the value of DEBUG.
 ##
@@ -244,7 +244,7 @@ LINKTEXT?=	${TEXTADDR:C/.+/-Ttext &/}
 LINKDATA?=	${DATAADDR:C/.+/-Tdata &/}
 ENTRYPOINT?=	start
 LINKENTRY?=	${ENTRYPOINT:C/.+/-e &/}
-LINKFLAGS?=	${LINKFORMAT} ${LINKTEXT} ${LINKDATA} ${LINKENTRY} \
+LINKFLAGS?=	${LINKFORMAT} ${LINKSCRIPT} ${LINKTEXT} ${LINKDATA} ${LINKENTRY} \
 		${EXTRA_LINKFLAGS}
 
 LINKFLAGS_DEBUG?=	-X
