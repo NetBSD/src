@@ -1,4 +1,4 @@
-#	$NetBSD: t_script.sh,v 1.2 2014/11/15 03:10:01 uebayasi Exp $
+#	$NetBSD: t_script.sh,v 1.3 2014/11/15 03:47:29 uebayasi Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -24,6 +24,40 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+
+################################################################################
+
+atf_test_case order
+order_head() {
+	atf_set "descr" "check if object ordering work"
+	atf_set "require.progs" "cc" "ld" "readelf" "nm" "sed" "grep"
+}
+
+order_body() {
+	for i in a b c; do
+		cat > $i.c << EOF
+#include <sys/cdefs.h>
+char $i __section(".data.$i") = '$i';
+EOF
+	done
+	cat > test.c << EOF
+int main(void) { return 0; }
+EOF
+	# c -> b -> a
+	atf_check -s exit:0 -o ignore -e ignore \
+	    cc -o test test.c c.c b.c a.c
+	extract_symbol_names test |
+	grep '^[abc]$' >test.syms
+	{
+		match c &&
+		match b &&
+		match a &&
+		:
+	} <test.syms
+	atf_check test "$?" -eq 0
+}
+
+################################################################################
 
 atf_test_case multisec
 multisec_head() {
@@ -63,6 +97,8 @@ EOF
 	assert_sec '\.data\.c'
 }
 
+################################################################################
+
 extract_section_names() {
 	readelf -S "$1" |
 	sed -ne '/\] \./ { s/^.*\] //; s/ .*$//; p }'
@@ -71,6 +107,14 @@ extract_section_names() {
 extract_symbol_names() {
 	nm -n "$1" |
 	sed -e 's/^.* //'
+}
+
+match() {
+	read line
+	case "$line" in
+	*"$1"*) return 0;
+	esac
+	return 1
 }
 
 assert_sec() {
@@ -83,8 +127,10 @@ assert_nosec() {
 	    grep "^$1\$" test.secs
 }
 
+################################################################################
+
 atf_init_test_cases()
 {
-
+	atf_add_test_case order
 	atf_add_test_case multisec
 }
