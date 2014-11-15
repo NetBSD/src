@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.16 2014/03/28 21:39:09 matt Exp $	*/
+/*	$NetBSD: locore.h,v 1.16.6.1 2014/11/15 11:34:44 martin Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -233,6 +233,7 @@ read_thumb_insn(vaddr_t va, bool user_p)
 	return insn;
 }
 
+#ifndef _RUMPKERNEL
 static inline void
 arm_dmb(void)
 {
@@ -259,6 +260,7 @@ arm_isb(void)
 	else if (CPU_IS_ARMV7_P())
 		__asm __volatile("isb");
 }
+#endif
 
 /*
  * Random cruft
