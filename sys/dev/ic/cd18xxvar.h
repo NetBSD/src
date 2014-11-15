@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xxvar.h,v 1.4 2012/10/27 17:18:19 chs Exp $	*/
+/*	$NetBSD: cd18xxvar.h,v 1.5 2014/11/15 19:18:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -150,10 +150,10 @@ void cd18xx_attach(struct cd18xx_softc *);
  * the first 3 bits of the unit are the channel number inside a single
  * cd18xx instance, and the remaining bits indicate the instance number.
  */
-#define CD18XX_TTY(x)		(minor(x) & 0x7ffff)
-#define CD18XX_CHANNEL(x)	(minor(x) & 7)
-#define CD18XX_INSTANCE(x)	((minor(x) >> 3) & 0xffff)
-#define CD18XX_DIALOUT(x)	((minor(x) & 0x80000) != 0)
+#define CD18XX_TTY(x)		TTUNIT(x)
+#define CD18XX_CHANNEL(x)	(TTUNIT(x) & 7)
+#define CD18XX_INSTANCE(x)	(TTUNIT(x) >> 3)
+#define CD18XX_DIALOUT(x)	TTDIALOUT(x)
 
 /* short helpers for read/write */
 #define cd18xx_read(sc, o)		\
