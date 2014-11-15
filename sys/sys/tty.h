@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.92 2014/05/22 16:31:19 dholland Exp $	*/
+/*	$NetBSD: tty.h,v 1.93 2014/11/15 19:17:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -174,6 +174,12 @@ struct tty {
 #define	TTMAXLOWAT	(tp->t_qsize >> 2)
 #define	TTMINLOWAT	(tp->t_qsize >> 5)
 #define	TTROUND		64
+#define	TTDIALOUT_MASK	0x80000		/* dialout=524288 in MAKEDEV.tmpl */
+#define	TTCALLUNIT_MASK	0x40000		/* XXX: compat */
+#define	TTUNIT_MASK	0x3ffff
+#define	TTDIALOUT(d)	(minor(d) & TTDIALOUT_MASK)
+#define	TTCALLUNIT(d)	(minor(d) & TTCALLUNIT_MASK)
+#define	TTUNIT(d)	(minor(d) & TTUNIT_MASK)
 #endif /* _KERNEL */
 
 /* These flags are kept in t_state. */
