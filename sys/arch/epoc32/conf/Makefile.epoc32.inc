@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.epoc32.inc,v 1.1 2013/04/28 12:11:25 kiyohara Exp $
+#	$NetBSD: Makefile.epoc32.inc,v 1.2 2014/11/15 14:25:22 uebayasi Exp $
 
 MACHINE_ARCH=		arm
 CPPFLAGS+=		-D${MACHINE}
@@ -8,7 +8,7 @@ SYSTEM_FIRST_SFILE=	${THISARM}/epoc32/epoc32_start.S
 
 KERNEL_BASE_VIRT=	$(LOADADDRESS)
 
-LINKFLAGS=		-T ldscript
+LINKSCRIPT=		-T ldscript
 
 EXTRA_CLEAN+=		netbsd.map assym.d ldscript tmp
 
