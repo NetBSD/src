@@ -1,10 +1,10 @@
-/* $NetBSD: s_copysign.S,v 1.2 2014/11/15 20:59:02 joerg Exp $ */
+/* $NetBSD: s_copysign.S,v 1.3 2014/11/15 21:07:01 joerg Exp $ */
 
 /* The contents of this file are in the public domain. */
 
 #include <machine/asm.h>
 
-STRONG_ALIAS(_copysignl, _copysign)
+STRONG_ALIAS(_copysignl, copysign)
 WEAK_ALIAS(copysignl, _copysignl)
 
 ENTRY(copysign)
