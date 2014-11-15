@@ -1,4 +1,4 @@
-#	$NetBSD: t_script.sh,v 1.4 2014/11/15 04:23:48 uebayasi Exp $
+#	$NetBSD: t_script.sh,v 1.5 2014/11/15 04:47:11 uebayasi Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,6 @@ order_default_head() {
 }
 
 order_default_body() {
-	order_compile
 	cat > test.x << EOF
 SECTIONS {
 	/* do nothing */
@@ -47,12 +46,11 @@ EOF
 
 atf_test_case order_merge
 order_merge_head() {
-	atf_set "descr" "check if glob merge doesn't change ordering"
+	atf_set "descr" "check if glob merge keeps object ordering"
 	atf_set "require.progs" "cc" "ld" "readelf" "nm" "sed" "grep"
 }
 
 order_merge_body() {
-	order_compile
 	cat > test.x << EOF
 SECTIONS {
 	.data : {
@@ -67,12 +65,11 @@ EOF
 
 atf_test_case reorder
 reorder_head() {
-	atf_set "descr" "check if reordering works"
+	atf_set "descr" "check if object reordering works"
 	atf_set "require.progs" "cc" "ld" "readelf" "nm" "sed" "grep"
 }
 
 reorder_body() {
-	order_compile
 	cat > test.x << EOF
 SECTIONS {
 	.data : {
@@ -128,6 +125,23 @@ EOF
 
 ################################################################################
 
+order_assert_ascending() {
+	order_assert_order a b c
+}
+
+order_assert_descending() {
+	order_assert_order c b a
+}
+
+order_assert_order() {
+	order_compile
+	order_link
+	{
+		match $1 && match $2 && match $3
+	} <test.syms
+	atf_check test "$?" -eq 0
+}
+
 order_compile() {
 	for i in a b c; do
 		cat > $i.c << EOF
@@ -143,28 +157,13 @@ EOF
 }
 
 order_link() {
+	# c -> b -> a
 	atf_check -s exit:0 -o ignore -e ignore \
 	    ld -r -T test.x -Map test.map -o x.o c.o b.o a.o
 	atf_check -s exit:0 -o ignore -e ignore \
 	    cc -o test test.o x.o
 	extract_symbol_names test |
 	grep '^[abc]$' >test.syms
-}
-
-order_assert_ascending() {
-	order_assert_order a b c
-}
-
-order_assert_descending() {
-	order_assert_order c b a
-}
-
-order_assert_order() {
-	order_link
-	{
-		match $1 && match $2 && match $3
-	} <test.syms
-	atf_check test "$?" -eq 0
 }
 
 extract_section_names() {
