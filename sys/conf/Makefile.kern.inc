@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.181 2014/11/15 08:20:01 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.182 2014/11/15 08:20:42 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -223,7 +223,11 @@ ${_cfile:T:R}.o: ${_cfile}
 # load lines for config "xxx" will be emitted as:
 # xxx: ${SYSTEM_DEP} swapxxxx.o vers.o build_kernel
 
+.if !empty(OBJS:Mnetbsd.ko)
+SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${SYSLIBCOMPAT} ${LIBKERN}
+.else
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS:O} ${SYSLIBCOMPAT} ${LIBKERN}
+.endif
 SYSTEM_DEP+=	Makefile ${SYSTEM_OBJ:O} .gdbinit
 .if defined(KERNLDSCRIPT)
 SYSTEM_DEP+=	${KERNLDSCRIPT}
