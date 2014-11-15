@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.34 2013/11/10 19:49:49 jmcneill Exp $
+# $NetBSD: Makefile.usermode,v 1.35 2014/11/15 12:28:06 uebayasi Exp $
 
 USETOOLS?=			no
 NEED_OWN_INSTALL_TARGET?=	no
@@ -69,7 +69,7 @@ TEXTADDR?=	  %TEXTADDR%
 
 LINKFLAGS_NORMAL=	-X
 KERN_LDSCRIPT?=	kern.ldscript
-#LINKFORMAT=	-T ${USERMODE}/conf/${KERN_LDSCRIPT}
+#LINKSCRIPT=	-T ${USERMODE}/conf/${KERN_LDSCRIPT}
 
 SYSTEM_LD=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
