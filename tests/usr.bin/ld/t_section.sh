@@ -1,4 +1,4 @@
-#	$NetBSD: t_section.sh,v 1.2 2014/11/14 16:20:42 uebayasi Exp $
+#	$NetBSD: t_section.sh,v 1.3 2014/11/15 03:22:29 uebayasi Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,6 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+################################################################################
+
 atf_test_case startstop
 startstop_head() {
 	atf_set "descr" "check if __start_*/__stop_* symbols are generated"
@@ -41,7 +43,58 @@ EOF
 	atf_check -s exit:0 -o ignore -e ignore cc -o test test.c
 }
 
+################################################################################
+
+atf_test_case orphan
+orphan_head() {
+	atf_set "descr" "check orphan section placement"
+	atf_set "require.progs" "cc" "readelf" "grep"
+}
+
+orphan_body() {
+	cat > test.c << EOF
+#include <sys/cdefs.h>
+/* read-only orphan */
+const char a[] __section("hoge") = "hoge";
+/* read-write orphan */
+char b[] __section("fuga") = { 'f', 'u', 'g', 'a', '\0' };
+/* .data */
+int c = 123;
+/* .bss */
+int d = 0;
+/* .text */
+int main(void) { return 0; }
+EOF
+	atf_check -s exit:0 -o ignore -e ignore cc -o test test.c
+	readelf -S test |
+	grep ' \.text\| hoge\| \.data\| fuga\| \.bss' >test.secs
+	{
+		# Read-only orphan sections are placed after well-known
+		# read-only sections (.text, .rodata) but before .data.
+		match ".text" &&
+		match "hoge" &&
+		# Read-write orphan sections are placed after well-known
+		# read-write sections (.data) but before .bss.
+		match ".data" &&
+		match "fuga" &&
+		match ".bss" &&
+		:
+	} < test.secs
+	atf_check test "$?" -eq 0
+}
+
+match() {
+	read line
+	case "$line" in
+	*"$1"*) return 0;
+	esac
+	return 1
+}
+
+################################################################################
+
 atf_init_test_cases()
 {
 	atf_add_test_case startstop
+	atf_add_test_case orphan
 }
