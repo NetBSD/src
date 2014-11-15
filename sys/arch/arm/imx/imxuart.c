@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.15 2014/09/25 05:05:28 ryo Exp $ */
+/* $NetBSD: imxuart.c,v 1.16 2014/11/15 19:20:01 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.15 2014/09/25 05:05:28 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.16 2014/11/15 19:20:01 christos Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -382,11 +382,10 @@ int	imxuart_kgdb_getc(void *);
 void	imxuart_kgdb_putc(void *, int);
 #endif /* KGDB */
 
-#define	IMXUART_UNIT_MASK	0x7ffff
-#define	IMXUART_DIALOUT_MASK	0x80000
+#define	IMXUART_DIALOUT_MASK	TTDIALOUT_MASK
 
-#define	IMXUART_UNIT(x)	(minor(x) & IMXUART_UNIT_MASK)
-#define	IMXUART_DIALOUT(x)	(minor(x) & IMXUART_DIALOUT_MASK)
+#define	IMXUART_UNIT(x)		TTUNIT(x)
+#define	IMXUART_DIALOUT(x)	TTDIALOUT(x)
 
 #define	IMXUART_ISALIVE(sc)	((sc)->enabled != 0 && \
 			 device_is_active((sc)->sc_dev))

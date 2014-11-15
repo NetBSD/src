@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.87 2014/07/25 08:10:33 dholland Exp $	*/
+/*	$NetBSD: dcm.c,v 1.88 2014/11/15 19:20:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.87 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.88 2014/11/15 19:20:01 christos Exp $");
 
 #include "opt_kgdb.h"
 
@@ -191,8 +191,8 @@ struct	dcmstats {
 };
 #endif
 
-#define DCMUNIT(x)		(minor(x) & 0x7ffff)
-#define	DCMDIALOUT(x)		(minor(x) & 0x80000)
+#define DCMUNIT(x)		TTUNIT(x)
+#define	DCMDIALOUT(x)		TTDIALOUT(x)
 #define	DCMBOARD(x)		(((x) >> 2) & 0x3f)
 #define DCMPORT(x)		((x) & 3)
 
