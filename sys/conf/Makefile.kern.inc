@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.182 2014/11/15 08:20:42 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.183 2014/11/15 12:56:28 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -228,7 +228,7 @@ SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${SYSLIBCOMPAT} ${LIBKERN}
 .else
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS:O} ${SYSLIBCOMPAT} ${LIBKERN}
 .endif
-SYSTEM_DEP+=	Makefile ${SYSTEM_OBJ:O} .gdbinit
+SYSTEM_DEP+=	Makefile ${SYSTEM_OBJ} .gdbinit
 .if defined(KERNLDSCRIPT)
 SYSTEM_DEP+=	${KERNLDSCRIPT}
 .endif
@@ -377,7 +377,7 @@ MKDEP_CFLAGS?=	${CFLAGS}
 SSRCS=${MD_SFILES} ${SFILES}
 CSRCS=${MD_CFILES} ${MI_CFILES} ${CFILES}
 SRCS=${SSRCS} ${CSRCS}
-DEPS=	${SRCS:T:O:u:R:S/$/.d/g}
+DEPS=	${SRCS:T:u:R:S/$/.d/g}
 
 .for _s in ${SSRCS}
 .if !target(${_s:T:R}.d)
