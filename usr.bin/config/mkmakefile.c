@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.27 2014/11/15 08:21:38 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.28 2014/11/15 12:18:55 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.27 2014/11/15 08:21:38 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.28 2014/11/15 12:18:55 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -374,10 +374,10 @@ emitallkobjs(FILE *fp)
 {
 	int i;
 
-	attrbuf = ecalloc((size_t)nattrs, sizeof(attrbuf));
+	attrbuf = emalloc((size_t)nattrs * sizeof(attrbuf));
 
 	ht_enumerate(attrtab, emitallkobjsweighcb, NULL);
-	ht_enumerate(attrtab, emitallkobjscb, fp);
+	ht_enumerate(attrtab, emitallkobjscb, NULL);
 	qsort(attrbuf, (size_t)attridx, sizeof(struct attr *), attrcmp);
 
 	fputs("OBJS=", fp);
@@ -398,6 +398,11 @@ emitallkobjscb(const char *name, void *v, void *arg)
 	if (TAILQ_EMPTY(&a->a_files))
 		return 0;
 	attrbuf[attridx++] = a;
+	/* XXX nattrs tracking is not exact yet */
+	if (attridx == nattrs) {
+		nattrs *= 2;
+		attrbuf = erealloc(attrbuf, (size_t)nattrs * sizeof(attrbuf));
+	}
 	return 0;
 }
 
