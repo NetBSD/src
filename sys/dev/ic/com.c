@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.327 2014/08/10 16:44:35 tls Exp $ */
+/* $NetBSD: com.c,v 1.328 2014/11/15 19:18:18 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.327 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.328 2014/11/15 19:18:18 christos Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -270,11 +270,10 @@ const bus_size_t com_std_map[16] = COM_REG_16550;
 #endif /* COM_16750 */
 #endif /* COM_REGMAP */
 
-#define	COMUNIT_MASK	0x7ffff
-#define	COMDIALOUT_MASK	0x80000
+#define	COMDIALOUT_MASK	TTDIALOUT_MASK
 
-#define	COMUNIT(x)	(minor(x) & COMUNIT_MASK)
-#define	COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
+#define	COMUNIT(x)	TTUNIT(x)
+#define	COMDIALOUT(x)	TTDIALOUT(x)
 
 #define	COM_ISALIVE(sc)	((sc)->enabled != 0 && \
 			 device_is_active((sc)->sc_dev))

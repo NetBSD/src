@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.130 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.131 2014/11/15 19:18:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.130 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.131 2014/11/15 19:18:18 christos Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -285,8 +285,8 @@ static void zstty_txint  (struct zs_chanstate *);
 static void zstty_softint(struct zs_chanstate *);
 static void zstty_softint1(struct zs_chanstate *);
 
-#define	ZSUNIT(x)	(minor(x) & 0x7ffff)
-#define	ZSDIALOUT(x)	(minor(x) & 0x80000)
+#define	ZSUNIT(x)	TTUNIT(x)
+#define	ZSDIALOUT(x)	TTDIALOUT(x)
 
 struct tty *zstty_get_tty_from_dev(device_t);
 
