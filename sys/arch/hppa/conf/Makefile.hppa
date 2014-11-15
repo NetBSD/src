@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.hppa,v 1.1 2014/02/24 07:23:42 skrll Exp $
+# $NetBSD: Makefile.hppa,v 1.2 2014/11/15 12:20:06 uebayasi Exp $
 
 # Makefile for NetBSD
 #
@@ -67,7 +67,7 @@ locore.o: ${HPPA}/hppa/locore.S
 ##
 ## (5) link settings
 ##
-LINKFORMAT=	-T ${HPPA}/conf/ld.script
+LINKSCRIPT=	-T ${HPPA}/conf/ld.script
 TEXTADDR?=	00200000
 LINKFLAGS_NORMAL=       -X
 EXTRA_LINKFLAGS= -Map $@.map
