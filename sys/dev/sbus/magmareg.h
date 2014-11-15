@@ -1,4 +1,4 @@
-/*	$NetBSD: magmareg.h,v 1.17 2012/10/27 17:18:37 chs Exp $	*/
+/*	$NetBSD: magmareg.h,v 1.18 2014/11/15 19:18:19 christos Exp $	*/
 
 /*-
  *  Copyright (c) 1998 Iain Hibbert
@@ -40,7 +40,7 @@
  *    |   |   |   |   |   |   |   |
  *    |   |   |   |   +---+---+---+---> port number
  *    |   |   |   |
- *    |   |   |   +-------------------> dialout (on tty ports)
+ *    |   |   |   +-------------------> unused
  *    |   |   |
  *    |   |   +-----------------------> unused
  *    |   |
@@ -54,10 +54,10 @@
 #define MAGMA_MAX_CD1400	4
 #define MAGMA_MAX_CD1190	2
 
-#define MAGMA_CARD(x)	((minor(x) >> 6) & 0x03)
-#define MAGMA_PORT(x)	(minor(x) & 0x0f)
+#define MAGMA_CARD(x)	((TTUNIT(x) >> 6) & 0x03)
+#define MAGMA_PORT(x)	(TTUNIT(x) & 0x0f)
 
-#define MTTY_DIALOUT(x) (minor(x) & 0x10)
+#define MTTY_DIALOUT(x) TTDIALOUT(x)
 
 /*
  * Supported Card Types
