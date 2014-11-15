@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ir.c,v 1.3 2014/11/15 13:41:11 jmcneill Exp $ */
+/* $NetBSD: awin_ir.c,v 1.4 2014/11/15 14:56:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ir.c,v 1.3 2014/11/15 13:41:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ir.c,v 1.4 2014/11/15 14:56:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,6 +60,7 @@ struct awin_ir_softc {
 	device_t sc_i2cdev;
 	void *sc_ih;
 	size_t sc_avail;
+	int sc_port;
 };
 
 #define IR_READ(sc, reg) \
@@ -118,6 +119,7 @@ awin_ir_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bst = aio->aio_core_bst;
+	sc->sc_port = loc->loc_port;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_IR);
 	cv_init(&sc->sc_cv, "awinir");
 	bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
@@ -185,6 +187,29 @@ awin_ir_init(struct awin_ir_softc *sc, struct awinio_attach_args * const aio)
 		    AWIN_A31_PRCM_CIR_CLK_REG, clk);
 
 		bus_space_unmap(sc->sc_bst, prcm_bsh, prcm_size);
+	} else  {
+		const struct awin_gpio_pinset pinset =
+		    { 'B', AWIN_PIO_PB_IR0_FUNC, AWIN_PIO_PB_IR0_PINS };
+		uint32_t clk;
+
+		awin_gpio_pinset_acquire(&pinset);
+
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_APB0_GATING_REG,
+		    AWIN_APB_GATING0_IR0 << sc->sc_port,
+		    0);
+
+		clk = bus_space_read_4(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_IR0_CLK_REG + (sc->sc_port * 4));
+		clk &= ~AWIN_CLK_SRC_SEL;
+		clk |= __SHIFTIN(AWIN_CLK_SRC_SEL_OSC24M, AWIN_CLK_SRC_SEL);
+		clk &= ~AWIN_CLK_DIV_RATIO_M;
+		clk |= __SHIFTIN(7, AWIN_CLK_DIV_RATIO_M);
+		clk &= ~AWIN_CLK_DIV_RATIO_N;
+		clk |= __SHIFTIN(0, AWIN_CLK_DIV_RATIO_N);
+		clk |= AWIN_CLK_ENABLE;
+		bus_space_write_4(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_IR0_CLK_REG + (sc->sc_port * 4), clk);
 	}
 }
 
@@ -228,8 +253,10 @@ awin_ir_open(void *priv, int flag, int mode, struct proc *p)
 	cir |= __SHIFTIN(0, AWIN_IR_CIR_SCS2);
 	cir |= __SHIFTIN(8, AWIN_IR_CIR_NTHR);
 	cir |= __SHIFTIN(2, AWIN_IR_CIR_ITHR);
-	cir |= __SHIFTIN(99, AWIN_IR_CIR_ATHR);
-	cir |= __SHIFTIN(0, AWIN_IR_CIR_ATHC);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		cir |= __SHIFTIN(99, AWIN_IR_CIR_ATHR);
+		cir |= __SHIFTIN(0, AWIN_IR_CIR_ATHC);
+	}
 	IR_WRITE(sc, AWIN_IR_CIR_REG, cir);
 
 	IR_WRITE(sc, AWIN_IR_RXCTL_REG, AWIN_IR_RXCTL_RPPI);
