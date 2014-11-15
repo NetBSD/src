@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.48 2014/07/25 08:10:33 dholland Exp $ */
+/*	$NetBSD: txcom.c,v 1.49 2014/11/15 19:20:01 christos Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.48 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.49 2014/11/15 19:20:01 christos Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -857,7 +857,7 @@ txcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 
 	splx(s);
-#define	TXCOMDIALOUT(x)	(minor(x) & 0x80000)
+#define	TXCOMDIALOUT(x)	TTDIALOUT(x)
 	if ((err = ttyopen(tp, TXCOMDIALOUT(dev), ISSET(flag, O_NONBLOCK)))) {
 		DPRINTF("ttyopen failed\n");
 		goto out;

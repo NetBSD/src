@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.50 2014/08/10 16:44:34 tls Exp $	*/
+/*	$NetBSD: plcom.c,v 1.51 2014/11/15 19:20:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.50 2014/08/10 16:44:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.51 2014/11/15 19:20:01 christos Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -245,11 +245,10 @@ int	plcom_kgdb_getc (void *);
 void	plcom_kgdb_putc (void *, int);
 #endif /* KGDB */
 
-#define	PLCOMUNIT_MASK		0x7ffff
-#define	PLCOMDIALOUT_MASK	0x80000
+#define	PLCOMDIALOUT_MASK	TTDIALOUT_MASK
 
-#define	PLCOMUNIT(x)	(minor(x) & PLCOMUNIT_MASK)
-#define	PLCOMDIALOUT(x)	(minor(x) & PLCOMDIALOUT_MASK)
+#define	PLCOMUNIT(x)	TTUNIT(x)
+#define	PLCOMDIALOUT(x)	TTDIALOUT(x)
 
 #define	PLCOM_ISALIVE(sc)	((sc)->enabled != 0 && \
 				 device_is_active((sc)->sc_dev))

@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.64 2014/07/25 08:10:34 dholland Exp $ */
+/*	$NetBSD: scif.c,v 1.65 2014/11/15 19:20:01 christos Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.64 2014/07/25 08:10:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.65 2014/11/15 19:20:01 christos Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -187,11 +187,8 @@ static int scif_attached = 0;	/* XXX: FIXME: don't limit to just one! */
 
 extern struct cfdriver scif_cd;
 
-#define	SCIFUNIT_MASK		0x7ffff
-#define	SCIFDIALOUT_MASK	0x80000
-
-#define	SCIFUNIT(x)	(minor(x) & SCIFUNIT_MASK)
-#define	SCIFDIALOUT(x)	(minor(x) & SCIFDIALOUT_MASK)
+#define	SCIFUNIT(x)	TTUNIT(x)
+#define	SCIFDIALOUT(x)	TTDIALOUT(x)
 
 
 /* console */

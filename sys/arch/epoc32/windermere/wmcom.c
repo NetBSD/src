@@ -1,4 +1,4 @@
-/*      $NetBSD: wmcom.c,v 1.4 2014/08/10 16:44:33 tls Exp $      */
+/*      $NetBSD: wmcom.c,v 1.5 2014/11/15 19:20:01 christos Exp $      */
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.4 2014/08/10 16:44:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.5 2014/11/15 19:20:01 christos Exp $");
 
 #include "rnd.h"
 
@@ -56,11 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.4 2014/08/10 16:44:33 tls Exp $");
 #include "ioconf.h"
 #include "locators.h"
 
-#define COMUNIT_MASK	0x7ffff
-#define COMDIALOUT_MASK	0x80000
-
-#define COMUNIT(x)	(minor(x) & COMUNIT_MASK)
-#define COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
+#define COMUNIT(x)	TTUNIT(x)
+#define COMDIALOUT(x)	TTDIALOUT(x)
 
 #define WMCOM_RING_SIZE	2048
 

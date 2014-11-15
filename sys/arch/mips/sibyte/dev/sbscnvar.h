@@ -1,4 +1,4 @@
-/* $NetBSD: sbscnvar.h,v 1.6 2012/02/02 19:43:00 tls Exp $ */
+/* $NetBSD: sbscnvar.h,v 1.7 2014/11/15 19:20:01 christos Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -71,9 +71,9 @@
 
 #include <sys/callout.h>
 
-#define	SBSCN_CHAN(x)		((minor(x) & 0x00001) >> 0)
-#define	SBSCN_UNIT(x)		((minor(x) & 0x7fffe) >> 1)
-#define	SBSCN_DIALOUT(x)	((minor(x) & 0x80000) != 0)
+#define	SBSCN_CHAN(x)		(TTUNIT(x) & 1)
+#define	SBSCN_UNIT(x)		(TTUNIT(x) >> 1)
+#define	SBSCN_DIALOUT(x)	TTDIALOUT(x)
 
 #define	SBSCN_TOLERANCE	30	/* baud rate tolerance, in 0.1% units */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.28 2014/08/10 16:44:33 tls Exp $ */
+/*	$NetBSD: epcom.c,v 1.29 2014/11/15 19:20:01 christos Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.28 2014/08/10 16:44:33 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.29 2014/11/15 19:20:01 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -185,11 +185,8 @@ struct consdev epcomcons = {
 #define DEFAULT_COMSPEED 115200
 #endif
 
-#define COMUNIT_MASK    0x7ffff
-#define COMDIALOUT_MASK 0x80000
-
-#define COMUNIT(x)	(minor(x) & COMUNIT_MASK)
-#define COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
+#define COMUNIT(x)	TTUNIT(x)
+#define COMDIALOUT(x)	TTDIALOUT(x)
 
 #define COM_ISALIVE(sc)	((sc)->enabled != 0 && \
 			device_is_active((sc)->sc_dev))

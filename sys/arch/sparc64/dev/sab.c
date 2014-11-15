@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.53 2014/11/01 16:45:16 nakayama Exp $	*/
+/*	$NetBSD: sab.c,v 1.54 2014/11/15 19:20:02 christos Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.53 2014/11/01 16:45:16 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.54 2014/11/15 19:20:02 christos Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.53 2014/11/01 16:45:16 nakayama Exp $");
 
 #include "locators.h"
 
-#define SABUNIT(x)		(minor(x) & 0x7ffff)
-#define SABDIALOUT(x)		(minor(x) & 0x80000)
+#define SABUNIT(x)		TTUNIT(x)
+#define SABDIALOUT(x)		TTDIALOUT(x)
 
 #define	SABTTY_RBUF_SIZE	1024	/* must be divisible by 2 */
 
