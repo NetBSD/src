@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ir.c,v 1.2 2014/11/15 13:40:39 jmcneill Exp $ */
+/* $NetBSD: awin_ir.c,v 1.3 2014/11/15 13:41:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ir.c,v 1.2 2014/11/15 13:40:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ir.c,v 1.3 2014/11/15 13:41:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -196,7 +196,9 @@ awin_ir_intr(void *priv)
 
 	sta = IR_READ(sc, AWIN_IR_RXSTA_REG);
 
+#ifdef AWIN_IR_DEBUG
 	printf("%s: sta = 0x%08x\n", __func__, sta);
+#endif
 
 	if ((sta & AWIN_IR_RXSTA_MASK) == 0)
 		return 0;
