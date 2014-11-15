@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.netwinder.inc,v 1.8 2005/11/24 12:54:29 dbj Exp $
+#	$NetBSD: Makefile.netwinder.inc,v 1.9 2014/11/15 14:03:37 uebayasi Exp $
 
 CPPFLAGS+=	-D${MACHINE}
 
 SYSTEM_FIRST_OBJ=	nwmmu.o
 SYSTEM_FIRST_SFILE=	${THISARM}/${MACHINE}/nwmmu.S
 
-LINKFLAGS=		-T ${THISARM}/conf/kern.ldscript
+LINKSCRIPT=		-T ${THISARM}/conf/kern.ldscript

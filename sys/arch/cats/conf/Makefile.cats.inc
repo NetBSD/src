@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.cats.inc,v 1.28 2014/11/13 15:03:06 uebayasi Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.29 2014/11/15 14:02:19 uebayasi Exp $
 
 MACHINE_ARCH?=	arm
 CPPFLAGS+=	-D${MACHINE}
 
 .if defined(ABLEELF) && (${ABLEELF} == "1")
 # use a standard ELF format, adjusted to align areas
-LINKFLAGS=	-T ${THISARM}/conf/ldscript.elf
+LINKSCRIPT=	-T ${THISARM}/conf/ldscript.elf
 
 .else
 # Need to convert the kernel from ELF to a.out so that the firmware
@@ -13,7 +13,7 @@ LINKFLAGS=	-T ${THISARM}/conf/ldscript.elf
 
 CFLAGS+=	-fno-unwind-tables
 
-LINKFLAGS=	-T ldscript
+LINKSCRIPT=	-T ldscript
 
 SYSTEM_LD_HEAD_EXTRA+=; \
 	( cat ${ARM}/conf/kern.ldscript.head ; \
