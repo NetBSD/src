@@ -907,7 +907,7 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_SPI0_CLK_REG		0x00A0
 #define AWIN_SPI1_CLK_REG		0x00A4
 #define AWIN_SPI2_CLK_REG		0x00A8
-#define AWIN_IR0_CLK_REG		0x00B9
+#define AWIN_IR0_CLK_REG		0x00B0
 #define AWIN_IR1_CLK_REG		0x00B4
 #define AWIN_IIS_CLK_REG		0x00B8
 #define AWIN_AC97_CLK_REG		0x00BC
