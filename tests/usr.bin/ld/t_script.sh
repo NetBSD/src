@@ -1,4 +1,4 @@
-#	$NetBSD: t_script.sh,v 1.1 2014/11/14 09:03:39 uebayasi Exp $
+#	$NetBSD: t_script.sh,v 1.2 2014/11/15 03:10:01 uebayasi Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -58,12 +58,9 @@ EOF
 	    ld -r -T test.x -Map test.map -o test.ro test.o
 	extract_section_names test.ro >test.secs
 	extract_symbol_names test.ro >test.syms
-	atf_check -s exit:1 -o ignore -e ignore \
-	    grep '\.data\.a$' test.secs
-	atf_check -s exit:1 -o ignore -e ignore \
-	    grep '\.data\.b$' test.secs
-	atf_check -s exit:0 -o ignore -e ignore \
-	    grep '\.data\.c$' test.secs
+	assert_nosec '\.data\.a'
+	assert_nosec '\.data\.b'
+	assert_sec '\.data\.c'
 }
 
 extract_section_names() {
@@ -74,6 +71,16 @@ extract_section_names() {
 extract_symbol_names() {
 	nm -n "$1" |
 	sed -e 's/^.* //'
+}
+
+assert_sec() {
+	atf_check -s exit:0 -o ignore -e ignore \
+	    grep "^$1\$" test.secs
+}
+
+assert_nosec() {
+	atf_check -s exit:1 -o ignore -e ignore \
+	    grep "^$1\$" test.secs
 }
 
 atf_init_test_cases()
