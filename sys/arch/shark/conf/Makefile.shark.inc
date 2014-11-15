@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.shark.inc,v 1.20 2014/11/13 15:03:07 uebayasi Exp $
+#	$NetBSD: Makefile.shark.inc,v 1.21 2014/11/15 13:41:16 uebayasi Exp $
 
 CPPFLAGS+=		-D${MACHINE}
 COPTS+=			-fno-unwind-tables
@@ -7,7 +7,7 @@ GENASSYM_EXTRAS+=	${THISARM}/shark/genassym.cf
 # Need to convert the kernel from ELF to a.out so that OpenFirmware
 # can load it.
 
-LINKFLAGS=	-T ldscript
+LINKSCRIPT=	-T ldscript
 
 SYSTEM_LD_HEAD_EXTRA+=; \
 	( cat ${ARM}/conf/kern.ldscript.head ; \
