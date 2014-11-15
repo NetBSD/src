@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.102 2014/11/14 22:27:05 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.103 2014/11/15 11:35:57 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2655,4 +2655,17 @@ sys/arch/evbarm/awin/awin_machdep.c		1.28
 	in case your display doesn't let you turn off overscan and you really
 	want to see the whole screen.
 	[jmcneill, ticket #238]
+
+sys/arch/arm/allwinner/awin_debe.c		1.8
+sys/arch/arm/allwinner/awin_fb.c		1.6
+sys/arch/arm/allwinner/awin_var.h		1.24
+
+	Implement WSDISPLAYIO_SVIDEO, WSDISPLAYIO_GVIDEO for screen blanking.
+	[jmcneill, ticket #239]
+
+sys/arch/arm/include/locore.h			1.18
+
+	Guard a few inline functions by #ifndef _RUMPKERNEL, to allow
+	including this file in rump builds.
+	[skrll, ticket #240]
 
