@@ -1,4 +1,4 @@
-/* $NetBSD: awin_ir.c,v 1.1 2014/11/02 23:55:48 jmcneill Exp $ */
+/* $NetBSD: awin_ir.c,v 1.2 2014/11/15 13:40:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ir.c,v 1.1 2014/11/02 23:55:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ir.c,v 1.2 2014/11/15 13:40:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -175,11 +175,11 @@ awin_ir_init(struct awin_ir_softc *sc, struct awinio_attach_args * const aio)
 		clk = bus_space_read_4(sc->sc_bst, prcm_bsh,
 		    AWIN_A31_PRCM_CIR_CLK_REG);
 		clk &= ~AWIN_CLK_SRC_SEL;
-		clk |= 1;	/* HOSC */
+		clk |= __SHIFTIN(AWIN_CLK_SRC_SEL_CIR_HOSC, AWIN_CLK_SRC_SEL);
 		clk &= ~AWIN_CLK_DIV_RATIO_M;
-		clk |= 7;	/* (24MHz / 3MHz) - 1 */
+		clk |= __SHIFTIN(7, AWIN_CLK_DIV_RATIO_M);
 		clk &= ~AWIN_CLK_DIV_RATIO_N;
-		clk |= 0;	/* 1 - 1 */
+		clk |= __SHIFTIN(0, AWIN_CLK_DIV_RATIO_N);
 		clk |= AWIN_CLK_ENABLE;
 		bus_space_write_4(sc->sc_bst, prcm_bsh,
 		    AWIN_A31_PRCM_CIR_CLK_REG, clk);
@@ -203,7 +203,7 @@ awin_ir_intr(void *priv)
 
 	IR_WRITE(sc, AWIN_IR_RXSTA_REG, sta & AWIN_IR_RXSTA_MASK);
 
-	if (sta & AWIN_IR_RXSTA_RA) {
+	if (sta & AWIN_IR_RXSTA_RPE) {
 		mutex_enter(&sc->sc_lock);
 		sc->sc_avail = __SHIFTOUT(sta, AWIN_IR_RXSTA_RAC);
 		cv_broadcast(&sc->sc_cv);
@@ -217,17 +217,25 @@ static int
 awin_ir_open(void *priv, int flag, int mode, struct proc *p)
 {
 	struct awin_ir_softc *sc = priv;
-	uint32_t ctl, rxint;
+	uint32_t ctl, rxint, cir;
 
 	ctl = __SHIFTIN(AWIN_IR_CTL_MD_CIR, AWIN_IR_CTL_MD);
 	IR_WRITE(sc, AWIN_IR_CTL_REG, ctl);
+
+	cir = __SHIFTIN(3, AWIN_IR_CIR_SCS);
+	cir |= __SHIFTIN(0, AWIN_IR_CIR_SCS2);
+	cir |= __SHIFTIN(8, AWIN_IR_CIR_NTHR);
+	cir |= __SHIFTIN(2, AWIN_IR_CIR_ITHR);
+	cir |= __SHIFTIN(99, AWIN_IR_CIR_ATHR);
+	cir |= __SHIFTIN(0, AWIN_IR_CIR_ATHC);
+	IR_WRITE(sc, AWIN_IR_CIR_REG, cir);
 
 	IR_WRITE(sc, AWIN_IR_RXCTL_REG, AWIN_IR_RXCTL_RPPI);
 
 	IR_WRITE(sc, AWIN_IR_RXSTA_REG, AWIN_IR_RXSTA_MASK);
 
-	rxint = AWIN_IR_RXINT_RAI_EN;
-	rxint |= __SHIFTIN(0, AWIN_IR_RXINT_RAL);
+	rxint = AWIN_IR_RXINT_RPEI_EN;
+	rxint |= __SHIFTIN(31, AWIN_IR_RXINT_RAL);
 	IR_WRITE(sc, AWIN_IR_RXINT_REG, rxint);
 
 	ctl |= AWIN_IR_CTL_GEN;
