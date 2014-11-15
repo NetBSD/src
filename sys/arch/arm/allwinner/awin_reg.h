@@ -1320,8 +1320,10 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_PIO_PB_STANBYWFI_FUNC	6
 
 #define AWIN_PIO_PC_PINS		25
-#define AWIN_PIO_PC_NAND_PINS		0x017fffff /* PC pins 24,22-0 */
+#define AWIN_PIO_PC_NAND_PINS		0x0107ffff /* PC pins 24,18-0 */
 #define AWIN_PIO_PC_NAND_FUNC		2
+#define AWIN_PIO_PC_NAND_PINS2		0x00800000 /* PC pin 23 */
+#define AWIN_PIO_PC_NAND_FUNC2		3
 #define AWIN_PIO_PC_SPI0_PINS		0x00800007 /* PC pins 23-23,3-0 */
 #define AWIN_PIO_PC_SPI0_FUNC		3
 #define AWIN_PIO_PC_SPI2_PINS		0x00f80000 /* PC pins 23-19 */
