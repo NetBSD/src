@@ -1,4 +1,4 @@
-#	$NetBSD: t_script.sh,v 1.3 2014/11/15 03:47:29 uebayasi Exp $
+#	$NetBSD: t_script.sh,v 1.4 2014/11/15 04:23:48 uebayasi Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,34 +27,63 @@
 
 ################################################################################
 
-atf_test_case order
-order_head() {
-	atf_set "descr" "check if object ordering work"
+atf_test_case order_default
+order_default_head() {
+	atf_set "descr" "check if default object ordering works"
 	atf_set "require.progs" "cc" "ld" "readelf" "nm" "sed" "grep"
 }
 
-order_body() {
-	for i in a b c; do
-		cat > $i.c << EOF
-#include <sys/cdefs.h>
-char $i __section(".data.$i") = '$i';
+order_default_body() {
+	order_compile
+	cat > test.x << EOF
+SECTIONS {
+	/* do nothing */
+}
 EOF
-	done
-	cat > test.c << EOF
-int main(void) { return 0; }
+	order_assert_descending
+}
+
+################################################################################
+
+atf_test_case order_merge
+order_merge_head() {
+	atf_set "descr" "check if glob merge doesn't change ordering"
+	atf_set "require.progs" "cc" "ld" "readelf" "nm" "sed" "grep"
+}
+
+order_merge_body() {
+	order_compile
+	cat > test.x << EOF
+SECTIONS {
+	.data : {
+		*(.data .data.*)
+	}
+}
 EOF
-	# c -> b -> a
-	atf_check -s exit:0 -o ignore -e ignore \
-	    cc -o test test.c c.c b.c a.c
-	extract_symbol_names test |
-	grep '^[abc]$' >test.syms
-	{
-		match c &&
-		match b &&
-		match a &&
-		:
-	} <test.syms
-	atf_check test "$?" -eq 0
+	order_assert_descending
+}
+
+################################################################################
+
+atf_test_case reorder
+reorder_head() {
+	atf_set "descr" "check if reordering works"
+	atf_set "require.progs" "cc" "ld" "readelf" "nm" "sed" "grep"
+}
+
+reorder_body() {
+	order_compile
+	cat > test.x << EOF
+SECTIONS {
+	.data : {
+		*(.data)
+		*(.data.a)
+		*(.data.b)
+		*(.data.c)
+	}
+}
+EOF
+	order_assert_ascending
 }
 
 ################################################################################
@@ -99,6 +128,45 @@ EOF
 
 ################################################################################
 
+order_compile() {
+	for i in a b c; do
+		cat > $i.c << EOF
+#include <sys/cdefs.h>
+char $i __section(".data.$i") = '$i';
+EOF
+		atf_check -s exit:0 -o ignore -e ignore cc -c $i.c
+	done
+	cat > test.c << EOF
+int main(void) { return 0; }
+EOF
+	atf_check -s exit:0 -o ignore -e ignore cc -c test.c
+}
+
+order_link() {
+	atf_check -s exit:0 -o ignore -e ignore \
+	    ld -r -T test.x -Map test.map -o x.o c.o b.o a.o
+	atf_check -s exit:0 -o ignore -e ignore \
+	    cc -o test test.o x.o
+	extract_symbol_names test |
+	grep '^[abc]$' >test.syms
+}
+
+order_assert_ascending() {
+	order_assert_order a b c
+}
+
+order_assert_descending() {
+	order_assert_order c b a
+}
+
+order_assert_order() {
+	order_link
+	{
+		match $1 && match $2 && match $3
+	} <test.syms
+	atf_check test "$?" -eq 0
+}
+
 extract_section_names() {
 	readelf -S "$1" |
 	sed -ne '/\] \./ { s/^.*\] //; s/ .*$//; p }'
@@ -131,6 +199,8 @@ assert_nosec() {
 
 atf_init_test_cases()
 {
-	atf_add_test_case order
+	atf_add_test_case order_default
+	atf_add_test_case order_merge
+	atf_add_test_case reorder
 	atf_add_test_case multisec
 }
