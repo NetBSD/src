@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.14.2.9 2014/11/07 08:05:14 msaitoh Exp $
+.\"	$NetBSD: main,v 1.425.2.14.2.10 2014/11/15 08:11:26 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd January 18, 2014
+.Dd November 15, 2014
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -452,47 +452,91 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
+.Ss Changes Between The NetBSD 5.1.4 and 5.1.5 Releases
+.Pp
+.Nx
+\*V
+is the fifth critical/security update of the NetBSD 5.1 release branch.
+It represents a selected subset of fixes deemed critical for security
+or stability reasons.
 .Pp
 The complete list of changes can be found in the
-CHANGES-5.1.4:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.1.4/CHANGES-5.1.4
-file in the top level directory of the NetBSD 5.1.4 release tree. An abbreviated list is as follows:
-.Ss2 Security Advisory Fixes
+CHANGES-5.1.5:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-5.1.5/CHANGES-5.1.5
+file in the top level directory of the NetBSD 5.1.5 release tree.
+An abbreviated list is as follows:
 .(bullet
-NetBSD-SA2013-010:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-010.txt.asc
-Use after free in Xserver handling of ImageText requests (CVE-2013-4396)
+NetBSD-SA2014-005:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2014-005.txt.asc
+libXfont multiple vulnerabilities
 .It
-NetBSD-SA2013-011:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-011.txt.asc
-embryonic TCP sockets local DoS
+NetBSD-SA2014-006:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-006.txt.asc
+Multiple OpenSSL vulnerabilities
 .It
-NetBSD-SA2013-012:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2013-012.txt.asc
-Router Advertisement sysctl local Denial of Service
+NetBSD-SA2014-007:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-007.txt.asc
+bozohttpd basic http authentication bypass
 .It
-NetBSD-SA2014-001:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2014-001.txt.asc
-Stack buffer overflow in libXfont (CVE-2013-6462)
+NetBSD-SA2014-008:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-008.txt.asc
+Multiple OpenSSL vulnerabilities
 .It
-NetBSD-SA2014-002:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2014-002.txt.asc
-ntpd used as DDoS amplifier
+NetBSD-SA2014-010:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-010.txt.asc
+Multiple vulnerabilities in the compatibility layers
+.It
+NetBSD-SA2014-011:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-011.txt.asc
+User-controlled memory allocation in the
+.Xr modctl 2
+system call
+.It
+NetBSD-SA2014-012:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-012.txt.asc
+Memory leak in the
+.Xr setsockopt 2
+system call
+.It
+NetBSD-SA2014-013:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-013.txt.asc
+.Xr ftp 1
+can be made to execute arbitrary commands
+.It
+NetBSD-SA2014-014:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-014.txt.asc
+Multiple vulnerabilities in the
+.Xr mount 2
+system call
+.It
+NetBSD-SA2014-015:
+.Lk http://ftp.netbsd.org/pub/NetBSD/security/advisories/NetBSD-SA2014-015.txt.asc
+OpenSSL and SSLv3 vulnerabilities
 .bullet)
 .
 .Pp
-Advisories prior to NetBSD-SA2013-010 do not affect
-NetBSD 5.1.4:
-.Lk http://www.NetBSD.org/support/security/patches-5.1.4.html .
-.Ss2 Other Security Fixes
-.(bullet
-bind: Fix CVE-2014-0591.
-.bullet)
-.
+Advisories prior to NetBSD-SA2014-005 do not affect
+NetBSD 5.1.5:
+.Lk http://www.NetBSD.org/support/security/patches-5.1.5.html .
 .Ss2 Kernel
 .(bullet
-Xen: remove a bogus diagostic message spamming the console.  (PR#46313):
-.Lk http://gnats.netbsd.org/46313
+Reject unaligned PCI config register ioctl requests before we kassert.
+.bullet)
+.
+.Ss2 Miscellaneous
+.(bullet
+Update to tzdata2014f.
+.It
+Update root.cache to 2014060201.
+.It
+For consistency with newer branches, ISO images built with
+.Dq build.sh iso-images
+are now named
+.Pa NetBSD-\*[Lt]version\*[Gt]-\*[Lt]machine\*[Gt].iso
+and placed under the
+.Pa images
+directory instead of
+.Pa iso .
 .bullet)
 .
 .\} \" \n[FOR_RELEASE]
@@ -581,6 +625,8 @@ Changes between the 5.1.1 and 5.1.2 releases.
 Changes between the 5.1.2 and 5.1.3 releases.
 .It Li CHANGES-5.1.4
 Changes between the 5.1.3 and 5.1.4 releases.
+.It Li CHANGES-5.1.5
+Changes between the 5.1.4 and 5.1.5 releases.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
