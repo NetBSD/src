@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.62 2014/11/06 11:40:32 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.63 2014/11/15 08:21:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -159,6 +159,7 @@ struct module {
 #endif
 	int			m_expanding;
 	TAILQ_HEAD(, files)	m_files;
+	int			m_weight;
 };
 
 /*
@@ -183,6 +184,7 @@ struct attr {
 #define	a_deps		a_m.m_deps
 #define	a_expanding	a_m.m_expanding
 #define	a_files		a_m.m_files
+#define	a_weight	a_m.m_weight
 
 	/* "interface attribute" */
 	int	a_iattr;		/* true => allows children */
