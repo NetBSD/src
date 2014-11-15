@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.69 2014/11/04 23:02:14 joerg Exp $	*/
+/*	$NetBSD: sem.c,v 1.70 2014/11/15 08:21:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.69 2014/11/04 23:02:14 joerg Exp $");
+__RCSID("$NetBSD: sem.c,v 1.70 2014/11/15 08:21:38 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -69,6 +69,7 @@ const char *s_none;
 static struct hashtab *cfhashtab;	/* for config lookup */
 struct hashtab *devitab;		/* etc */
 struct attr allattr;
+int nattrs;
 
 static struct attr errattr;
 static struct devbase errdev;
@@ -1981,7 +1982,8 @@ selectattr(struct attr *a)
 		dep = al->al_this;
 		selectattr(dep);
 	}
-	(void)ht_insert(selecttab, a->a_name, __UNCONST(a->a_name));
+	if (ht_insert(selecttab, a->a_name, __UNCONST(a->a_name)) == 0)
+		nattrs++;
 	CFGDBG(3, "attr selected `%s'", a->a_name);
 }
 
@@ -2001,7 +2003,8 @@ deselectattr(struct attr *a)
 
 	CFGDBG(5, "deselecting attr `%s'", a->a_name);
 	ht_enumerate2(attrdeptab, deselectattrcb2, __UNCONST(a->a_name));
-	(void)ht_remove(selecttab, a->a_name);
+	if (ht_remove(selecttab, a->a_name) == 0)
+		nattrs--;
 	CFGDBG(3, "attr deselected `%s'", a->a_name);
 }
 

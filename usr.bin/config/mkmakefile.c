@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.26 2014/11/06 11:40:32 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.27 2014/11/15 08:21:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.26 2014/11/06 11:40:32 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.27 2014/11/15 08:21:38 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: mkmakefile.c,v 1.26 2014/11/06 11:40:32 uebayasi Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <err.h>
+#include <util.h>
 #include "defs.h"
 #include "sem.h"
 
@@ -361,27 +362,71 @@ emitkobjs(FILE *fp)
 	emitattrkobjs(fp);
 }
 
+static int emitallkobjsweighcb(const char *name, void *v, void *arg);
+static void weighattr(struct attr *a);
+static int attrcmp(const void *l, const void *r);
+
+struct attr **attrbuf;
+int attridx;
+
 static void
 emitallkobjs(FILE *fp)
 {
+	int i;
+
+	attrbuf = ecalloc((size_t)nattrs, sizeof(attrbuf));
+
+	ht_enumerate(attrtab, emitallkobjsweighcb, NULL);
+	ht_enumerate(attrtab, emitallkobjscb, fp);
+	qsort(attrbuf, (size_t)attridx, sizeof(struct attr *), attrcmp);
 
 	fputs("OBJS=", fp);
-	ht_enumerate(attrtab, emitallkobjscb, fp);
+	for (i = 0; i < attridx; i++)
+		fprintf(fp, " %s.ko", attrbuf[i]->a_name);
 	putc('\n', fp);
+
+	free(attrbuf);
 }
 
 static int
 emitallkobjscb(const char *name, void *v, void *arg)
 {
 	struct attr *a = v;
-	FILE *fp = arg;
 
 	if (ht_lookup(selecttab, name) == NULL)
 		return 0;
 	if (TAILQ_EMPTY(&a->a_files))
 		return 0;
-	fprintf(fp, " %s.ko", name);
+	attrbuf[attridx++] = a;
 	return 0;
+}
+
+static int
+emitallkobjsweighcb(const char *name, void *v, void *arg)
+{
+	struct attr *a = v;
+
+	weighattr(a);
+	return 0;
+}
+
+static void
+weighattr(struct attr *a)
+{
+	struct attrlist *al;
+
+	for (al = a->a_deps; al != NULL; al = al->al_next) {
+		weighattr(al->al_this);
+	}
+	a->a_weight++;
+}
+
+static int
+attrcmp(const void *l, const void *r)
+{
+	const struct attr * const *a = l, * const *b = r;
+	const int wa = (*a)->a_weight, wb = (*b)->a_weight;
+	return (wa > wb) ? -1 : (wa < wb) ? 1 : 0;
 }
 
 static void
@@ -404,6 +449,7 @@ emitattrkobjscb(const char *name, void *v, void *arg)
 	if (TAILQ_EMPTY(&a->a_files))
 		return 0;
 	fputc('\n', fp);
+	fprintf(fp, "# %s (%d)\n", name, a->a_weight);
 	fprintf(fp, "OBJS.%s=", name);
 	TAILQ_FOREACH(fi, &a->a_files, fi_anext) {
 		fprintf(fp, " %s.o", fi->fi_base);
