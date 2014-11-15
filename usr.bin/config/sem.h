@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.17 2014/10/31 07:38:36 uebayasi Exp $	*/
+/*	$NetBSD: sem.h,v 1.18 2014/11/15 08:21:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,3 +88,4 @@ int		has_attr(struct attrlist *, const char *);
 extern const char *s_qmark;
 extern const char *s_none;
 extern const char *s_ifnet;
+extern int nattrs;
