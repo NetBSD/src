@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.87 2014/11/12 10:47:22 manu Exp $
+# $NetBSD: GENERIC,v 1.88 2014/11/16 16:01:41 manu Exp $
 #
 # GENERIC machine description file
 # 
@@ -97,8 +97,6 @@ options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
-options 	UFS_EXTATTR_AUTOSTART
-options 	UFS_EXTATTR_AUTOCREATE=1024
 
 # Networking options
 options 	INET		# Internet protocols
