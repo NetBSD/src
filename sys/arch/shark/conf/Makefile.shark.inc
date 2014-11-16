@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.shark.inc,v 1.21 2014/11/15 13:41:16 uebayasi Exp $
+#	$NetBSD: Makefile.shark.inc,v 1.22 2014/11/16 12:02:55 uebayasi Exp $
 
 CPPFLAGS+=		-D${MACHINE}
 COPTS+=			-fno-unwind-tables
@@ -14,7 +14,7 @@ SYSTEM_LD_HEAD_EXTRA+=; \
 	  OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh \
 		${SYSTEM_OBJ} ; \
 	  cat ${ARM}/conf/kern.ldscript.tail ) > ldscript
-SYSTEM_DEP+=	${ARM}/conf/kern.ldscript.head \
+KERNLDSCRIPT=	${ARM}/conf/kern.ldscript.head \
 		$S/conf/mkldscript.sh \
 		${ARM}/conf/kern.ldscript.tail
 
