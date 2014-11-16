@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.28 2014/11/15 12:18:55 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.29 2014/11/16 14:26:14 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.28 2014/11/15 12:18:55 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.29 2014/11/16 14:26:14 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -292,20 +292,18 @@ static void
 emitdefs(FILE *fp)
 {
 	struct nvlist *nv;
-	const char *sp;
 
 	fprintf(fp, "KERNEL_BUILD=%s\n", conffile);
-	fputs("IDENT=", fp);
-	sp = "";
+	fputs("IDENT= \\\n", fp);
 	for (nv = options; nv != NULL; nv = nv->nv_next) {
 
 		/* Skip any options output to a header file */
 		if (DEFINED_OPTION(nv->nv_name))
 			continue;
-		fprintf(fp, "%s-D%s", sp, nv->nv_name);
-		if (nv->nv_str)
-			fprintf(fp, "=\"%s\"", nv->nv_str);
-		sp = " ";
+		fprintf(fp, "\t-D%s%s%s%s \\\n", nv->nv_name,
+		    (nv->nv_str != NULL) ? "=\"" : "",
+		    (nv->nv_str != NULL) ? nv->nv_str : "",
+		    (nv->nv_str != NULL) ? "\"" : "");
 	}
 	putc('\n', fp);
 	fprintf(fp, "PARAM=-DMAXUSERS=%d\n", maxusers);
@@ -380,9 +378,9 @@ emitallkobjs(FILE *fp)
 	ht_enumerate(attrtab, emitallkobjscb, NULL);
 	qsort(attrbuf, (size_t)attridx, sizeof(struct attr *), attrcmp);
 
-	fputs("OBJS=", fp);
+	fputs("OBJS= \\\n", fp);
 	for (i = 0; i < attridx; i++)
-		fprintf(fp, " %s.ko", attrbuf[i]->a_name);
+		fprintf(fp, "\t%s.ko \\\n", attrbuf[i]->a_name);
 	putc('\n', fp);
 
 	free(attrbuf);
@@ -455,9 +453,9 @@ emitattrkobjscb(const char *name, void *v, void *arg)
 		return 0;
 	fputc('\n', fp);
 	fprintf(fp, "# %s (%d)\n", name, a->a_weight);
-	fprintf(fp, "OBJS.%s=", name);
+	fprintf(fp, "OBJS.%s= \\\n", name);
 	TAILQ_FOREACH(fi, &a->a_files, fi_anext) {
-		fprintf(fp, " %s.o", fi->fi_base);
+		fprintf(fp, "\t%s.o \\\n", fi->fi_base);
 	}
 	fputc('\n', fp);
 	fprintf(fp, "%s.ko: ${OBJS.%s}\n", name, name);
