@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.93 2014/11/12 10:47:24 manu Exp $
+# $NetBSD: GENERIC,v 1.94 2014/11/16 16:01:43 manu Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.93 $"
+#ident 		"GENERIC-$Revision: 1.94 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -105,8 +105,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	UFS_EXTATTR	# Extended attribute support for UFS1
-#options 	UFS_EXTATTR_AUTOSTART
-#options 	UFS_EXTATTR_AUTOCREATE=1024
 
 # Networking options
 options 	INET		# IP protocol stack support
