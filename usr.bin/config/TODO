@@ -241,3 +241,9 @@ o Control ELF sections using linker script.
   Kernel and modular MI linkages may change behavior depending on existence
   of debug information.  In the future .symtab will be copied using linker
   during this stage.
+
+o Redesign swapnetbsd.c (root/swap device specification)
+
+  Don't build a whole kernel only to specify root/swap devices.
+
+  Make these parameter re-configurable afterwards.
