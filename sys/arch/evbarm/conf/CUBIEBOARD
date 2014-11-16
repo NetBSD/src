@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.35 2014/11/15 14:59:25 jmcneill Exp $
+#	$NetBSD: CUBIEBOARD,v 1.36 2014/11/16 10:20:21 martin Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -317,9 +317,10 @@ ukphy*		at mii? phy ?
 
 # disk/mass storage pseudo-devices
 #pseudo-device	md			# memory disk device (ramdisk)
-#pseudo-device	vnd			# disk-like interface to files
+pseudo-device	vnd			# disk-like interface to files
+options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	fss			# file system snapshot device
-#pseudo-device	putter			# for puffs and pud
+pseudo-device	putter			# for puffs and pud
 pseudo-device	drvctl			# driver control
 
 # network pseudo-devices
