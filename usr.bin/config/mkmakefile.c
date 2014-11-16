@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.29 2014/11/16 14:26:14 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.30 2014/11/16 14:49:12 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.29 2014/11/16 14:26:14 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.30 2014/11/16 14:49:12 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -334,21 +334,22 @@ emitobjs(FILE *fp)
 		fprintf(fp, "\t%s.o \\\n", fi->fi_base);
 	}
 	TAILQ_FOREACH(oi, &allobjects, oi_next) {
+		const char *prologue, *prefix, *sep;
+
 		if ((oi->oi_flags & OI_SEL) == 0)
 			continue;
-		if (*oi->oi_path == '/') {
-			fprintf(fp, "\t%s \\\n", oi->oi_path);
-		} else {
+		prologue = prefix = sep = "";
+		if (*oi->oi_path != '/') {
 			if (oi->oi_prefix != NULL) {
-				fprintf(fp, "\t%s%s/%s \\\n",
-				    prefix_prologue(oi->oi_path),
-				    oi->oi_prefix, oi->oi_path);
+				prologue = prefix_prologue(oi->oi_path);
+				prefix = oi->oi_prefix;
+				sep = "/";
 			} else {
-				fprintf(fp, "\t%s%s \\\n",
-				    filetype_prologue(&oi->oi_fit),
-				    oi->oi_path);
+				prologue = filetype_prologue(&oi->oi_fit);
 			}
 		}
+		fprintf(fp, "\t%s%s%s%s \\\n", prologue, prefix, sep,
+		    oi->oi_path);
 	}
 	putc('\n', fp);
 }
@@ -488,25 +489,27 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
 
 	fprintf(fp, "%cFILES= \\\n", toupper(suffix));
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
+		const char *prologue, *prefix, *sep;
+
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		fpath = srcpath(fi);
 		len = strlen(fpath);
 		if (fpath[len - 1] != suffix && fpath[len - 1] != upper_suffix)
 			continue;
-		if (*fi->fi_path == '/') {
-			fprintf(fp, "\t%s \\\n", fpath);
+		prologue = prefix = sep = "";
+		if (*fi->fi_path != '/') {
 		} else {
 			if (fi->fi_prefix != NULL) {
-				fprintf(fp, "\t%s%s/%s \\\n",
-				    prefix_prologue(fi->fi_prefix),
-				    fi->fi_prefix, fpath);
+				prologue = prefix_prologue(fi->fi_prefix);
+				prefix = fi->fi_prefix;
+				sep = "/";
 			} else {
-				fprintf(fp, "\t%s%s \\\n",
-				    filetype_prologue(&fi->fi_fit),
-				    fpath);
+				prologue = filetype_prologue(&fi->fi_fit);
 			}
 		}
+		fprintf(fp, "\t%s%s%s%s \\\n",
+		    prologue, prefix, sep, fpath);
 	}
  	/*
  	 * The allfiles list does not include the configuration-specific
@@ -534,23 +537,23 @@ emitrules(FILE *fp)
 	int ch;
 
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
+		const char *prologue, *prefix, *sep;
+
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		fpath = srcpath(fi);
-		if (*fpath == '/') {
-			fprintf(fp, "%s.o: %s\n", fi->fi_base, fpath);
-		} else {
+		prologue = prefix = sep = "";
+		if (*fpath != '/') {
 			if (fi->fi_prefix != NULL) {
-				fprintf(fp, "%s.o: %s%s/%s\n", fi->fi_base,
-				    prefix_prologue(fi->fi_prefix),
-				    fi->fi_prefix, fpath);
+				prologue = prefix_prologue(fi->fi_prefix);
+				prefix = fi->fi_prefix;
+				sep = "/";
 			} else {
-				fprintf(fp, "%s.o: %s%s\n",
-				    fi->fi_base,
-				    filetype_prologue(&fi->fi_fit),
-				    fpath);
+				prologue = filetype_prologue(&fi->fi_fit);
  			}
 		}
+		fprintf(fp, "%s.o: %s%s%s%s\n", fi->fi_base,
+		    prologue, prefix, sep, fpath);
 		if (fi->fi_mkrule != NULL) {
 			fprintf(fp, "\t%s\n\n", fi->fi_mkrule);
 		} else {
