@@ -1,4 +1,4 @@
-#	$NetBSD: t_script.sh,v 1.6 2014/11/16 03:49:09 uebayasi Exp $
+#	$NetBSD: t_script.sh,v 1.7 2014/11/16 04:47:18 uebayasi Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,7 +36,8 @@ order_default_head() {
 order_default_body() {
 	cat > test.x << EOF
 SECTIONS {
-	/* do nothing */
+	/* do nothing; but ld has implicit scripts internally */
+	/* which usually do: *(.data) *(.data.*) */
 }
 EOF
 	order_assert_descending
@@ -47,7 +48,7 @@ EOF
 atf_test_case order_merge
 order_merge_head() {
 	atf_set "descr" "check if glob merge keeps object ordering"
-	atf_set "require.progs" "cc" "ld" "readelf" "nm" "sed" "grep"
+	atf_set "require.progs" ${order_require_progs}
 }
 
 order_merge_body() {
@@ -66,7 +67,7 @@ EOF
 atf_test_case order_reorder
 order_reorder_head() {
 	atf_set "descr" "check if object reordering works"
-	atf_set "require.progs" "cc" "ld" "readelf" "nm" "sed" "grep"
+	atf_set "require.progs" ${order_require_progs}
 }
 
 order_reorder_body() {
@@ -88,7 +89,7 @@ EOF
 atf_test_case order_sort
 order_sort_head() {
 	atf_set "descr" "check if object sort works"
-	atf_set "require.progs" "cc" "ld" "readelf" "nm" "sed" "grep"
+	atf_set "require.progs" ${order_require_progs}
 }
 
 order_sort_body() {
@@ -109,7 +110,7 @@ EOF
 atf_test_case multisec
 multisec_head() {
 	atf_set "descr" "check if multiple SECTIONS commands work"
-	atf_set "require.progs" "cc" "ld" "readelf" "nm" "sed" "grep"
+	atf_set "require.progs" ${order_require_progs}
 }
 
 multisec_body() {
@@ -145,6 +146,8 @@ EOF
 }
 
 ################################################################################
+
+order_require_progs="cc ld readelf nm sed grep"
 
 order_assert_ascending() {
 	order_assert_order a b c
