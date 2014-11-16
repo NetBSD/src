@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.30 2014/11/16 14:49:12 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.31 2014/11/16 14:57:59 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.30 2014/11/16 14:49:12 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.31 2014/11/16 14:57:59 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -533,8 +533,9 @@ static void
 emitrules(FILE *fp)
 {
 	struct files *fi;
-	const char *cp, *fpath;
-	int ch;
+	size_t len;
+	const char *fpath;
+	int suffix;
 
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
 		const char *prologue, *prefix, *sep;
@@ -542,6 +543,8 @@ emitrules(FILE *fp)
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		fpath = srcpath(fi);
+		len = strlen(fpath);
+		suffix = fpath[len - 1];
 		prologue = prefix = sep = "";
 		if (*fpath != '/') {
 			if (fi->fi_prefix != NULL) {
@@ -557,13 +560,7 @@ emitrules(FILE *fp)
 		if (fi->fi_mkrule != NULL) {
 			fprintf(fp, "\t%s\n\n", fi->fi_mkrule);
 		} else {
-			fputs("\t${NORMAL_", fp);
-			cp = strrchr(fpath, '.');
-			cp = cp == NULL ? fpath : cp + 1;
-			while ((ch = *cp++) != '\0') {
-				fputc(toupper(ch), fp);
-			}
-			fputs("}\n\n", fp);
+			fprintf(fp, "\t${NORMAL_%c}\n\n", toupper(suffix));
 		}
 	}
 }
