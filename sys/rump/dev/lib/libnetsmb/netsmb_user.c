@@ -1,4 +1,4 @@
-/*	$NetBSD: netsmb_user.c,v 1.1 2014/11/15 18:49:04 nakayama Exp $	*/
+/*	$NetBSD: netsmb_user.c,v 1.2 2014/11/16 04:26:46 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2014 Takeshi Nakayama.
@@ -36,6 +36,7 @@
 int
 rumpcomp_netsmb_iconv_open(const char *to, const char *from, void **handle)
 {
+#ifdef __NetBSD__
 	iconv_t cd;
 	int rv;
 
@@ -49,11 +50,16 @@ rumpcomp_netsmb_iconv_open(const char *to, const char *from, void **handle)
 	}
 
 	return rumpuser_component_errtrans(rv);
+#else
+	/* fallback to use dumb copy function */
+	return 0;
+#endif
 }
 
 int
 rumpcomp_netsmb_iconv_close(void *handle)
 {
+#ifdef __NetBSD__
 	int rv;
 
 	if (iconv_close((iconv_t)handle) == -1)
@@ -62,12 +68,17 @@ rumpcomp_netsmb_iconv_close(void *handle)
 		rv = 0;
 
 	return rumpuser_component_errtrans(rv);
+#else
+	/* do nothing */
+	return 0;
+#endif
 }
 
 int
 rumpcomp_netsmb_iconv_conv(void *handle, const char **inbuf,
     size_t *inbytesleft, char **outbuf, size_t *outbytesleft)
 {
+#ifdef __NetBSD__
 	int rv;
 
 	if (iconv((iconv_t)handle, inbuf, inbytesleft, outbuf, outbytesleft)
@@ -77,5 +88,9 @@ rumpcomp_netsmb_iconv_conv(void *handle, const char **inbuf,
 		rv = 0;
 
 	return rumpuser_component_errtrans(rv);
+#else
+	/* do nothing */
+	return 0;
+#endif
 }
 #endif
