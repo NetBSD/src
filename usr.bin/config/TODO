@@ -247,3 +247,18 @@ o Redesign swapnetbsd.c (root/swap device specification)
   Don't build a whole kernel only to specify root/swap devices.
 
   Make these parameter re-configurable afterwards.
+
+o Namespace.
+
+  Investigate namespace of attributes/modules/options.  Figure out the hidden
+  design about these, document it, then re-design it.
+
+  At this moment, all of them share the single "selecttab", which means their
+  namespaces are common, but they also have respective tables (attrtab,
+  opttab, etc.).
+
+  Selecting an option (addoption()), that is also a module name, works only if
+  the module doesn't depend on anything, because addoption() doesn't select
+  module and its dependencies (selectattr()).  In other words, an option is
+  only safely converted to a module (define), only if it doesn't depend on
+  anything.  (One example is DDB.)
