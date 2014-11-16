@@ -846,6 +846,9 @@ BUILDING
                    This command internally calls the kernel=kconf operation
                    for each found kernel configuration file.
 
+     mkernels      Similar to the above kernels operation, but builds kernels
+                   in modular build.
+
      modules       This command will build kernel modules and install them
                    into DESTDIR.
 
