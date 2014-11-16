@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.59 2014/11/12 10:47:20 manu Exp $
+# $NetBSD: XEN3_DOMU,v 1.60 2014/11/16 16:01:40 manu Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -110,8 +110,6 @@ options 	WAPBL		# File system journaling support
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
-options 	UFS_EXTATTR_AUTOSTART
-options 	UFS_EXTATTR_AUTOCREATE=1024
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
