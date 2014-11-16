@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.103 2014/11/15 11:35:57 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.104 2014/11/16 10:43:02 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2668,4 +2668,18 @@ sys/arch/arm/include/locore.h			1.18
 	Guard a few inline functions by #ifndef _RUMPKERNEL, to allow
 	including this file in rump builds.
 	[skrll, ticket #240]
+
+sys/arch/arm/allwinner/awin_ir.c		1.2-1.4
+sys/arch/arm/allwinner/awin_reg.h		1.50-1.51
+sys/arch/evbarm/conf/BPI			1.12
+sys/arch/evbarm/conf/CUBIEBOARD			1.35
+
+	Fix CIR setup, enable awinir and cir.
+	[jmcneill, ticket #241]
+
+distrib/utils/libhack/multibyte.c		1.6
+
+	Handle the "special" wc NULL case.
+	[christos, ticket #242]
+
 
