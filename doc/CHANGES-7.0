@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.104 2014/11/16 10:43:02 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.105 2014/11/16 11:18:54 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2677,9 +2677,8 @@ sys/arch/evbarm/conf/CUBIEBOARD			1.35
 	Fix CIR setup, enable awinir and cir.
 	[jmcneill, ticket #241]
 
-distrib/utils/libhack/multibyte.c		1.6
+distrib/utils/libhack/multibyte.c		1.6-1.7
 
 	Handle the "special" wc NULL case.
 	[christos, ticket #242]
-
 
