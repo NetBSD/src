@@ -1,4 +1,4 @@
-#	$NetBSD: t_script.sh,v 1.5 2014/11/15 04:47:11 uebayasi Exp $
+#	$NetBSD: t_script.sh,v 1.6 2014/11/16 03:49:09 uebayasi Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,13 +63,13 @@ EOF
 
 ################################################################################
 
-atf_test_case reorder
-reorder_head() {
+atf_test_case order_reorder
+order_reorder_head() {
 	atf_set "descr" "check if object reordering works"
 	atf_set "require.progs" "cc" "ld" "readelf" "nm" "sed" "grep"
 }
 
-reorder_body() {
+order_reorder_body() {
 	cat > test.x << EOF
 SECTIONS {
 	.data : {
@@ -77,6 +77,27 @@ SECTIONS {
 		*(.data.a)
 		*(.data.b)
 		*(.data.c)
+	}
+}
+EOF
+	order_assert_ascending
+}
+
+################################################################################
+
+atf_test_case order_sort
+order_sort_head() {
+	atf_set "descr" "check if object sort works"
+	atf_set "require.progs" "cc" "ld" "readelf" "nm" "sed" "grep"
+}
+
+order_sort_body() {
+	cat > test.x << EOF
+SECTIONS {
+	.data : {
+		*(.data)
+		/* SORT_BY_NAME */
+		SORT(*)(.data.*)
 	}
 }
 EOF
@@ -200,6 +221,7 @@ atf_init_test_cases()
 {
 	atf_add_test_case order_default
 	atf_add_test_case order_merge
-	atf_add_test_case reorder
+	atf_add_test_case order_reorder
+	atf_add_test_case order_sort
 	atf_add_test_case multisec
 }
