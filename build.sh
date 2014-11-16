@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.301 2014/11/10 09:59:33 apb Exp $
+#	$NetBSD: build.sh,v 1.302 2014/11/16 05:38:10 uebayasi Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1029,6 +1029,7 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
     			file \`conf'
     releasekernel=conf  Install kernel built by kernel=conf to RELEASEDIR.
     kernels		Build all kernels
+    mkernel=conf        Build kernel with config file \`conf' in modular build
     installmodules=idir Run "make installmodules" to \`idir' to install all
                         kernel modules.
     modules             Build kernel modules.
@@ -1319,7 +1320,7 @@ parseoptions()
 			exit $?
 			;;
 
-		kernel=*|releasekernel=*|kernel.gdb=*)
+		kernel=*|releasekernel=*|kernel.gdb=*|mkernel=*)
 			arg=${op#*=}
 			op=${op%%=*}
 			[ -n "${arg}" ] ||
@@ -1869,7 +1870,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.301 2014/11/10 09:59:33 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.302 2014/11/16 05:38:10 uebayasi Exp $
 # with these arguments: ${_args}
 #
 
@@ -1985,7 +1986,7 @@ buildkernel()
 	[ -x "${TOOLDIR}/bin/${toolprefix}config" ] \
 	|| bomb "${TOOLDIR}/bin/${toolprefix}config does not exist. You need to \"$0 tools\" first."
 	${runcmd} "${TOOLDIR}/bin/${toolprefix}config" -b "${kernelbuildpath}" \
-		${ksymopts} -s "${TOP}/sys" "${kernelconfpath}" ||
+		${configopts} -s "${TOP}/sys" "${kernelconfpath}" ||
 	    bomb "${toolprefix}config failed for ${kernelconf}"
 	make_in_dir "${kernelbuildpath}" depend
 	make_in_dir "${kernelbuildpath}" all
@@ -2244,7 +2245,12 @@ main()
 			;;
 		kernel.gdb=*)
 			arg=${op#*=}
-			ksymopts="-D DEBUG=-g"
+			configopts="-D DEBUG=-g"
+			buildkernel "${arg}"
+			;;
+		mkernel=*)
+			arg=${op#*=}
+			configopts="-M"
 			buildkernel "${arg}"
 			;;
 		releasekernel=*)
