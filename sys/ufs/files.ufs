@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.37 2014/10/10 12:20:13 uebayasi Exp $
+#	$NetBSD: files.ufs,v 1.38 2014/11/16 16:01:39 manu Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -7,12 +7,10 @@ deffs					LFS
 deffs					CHFS
 
 defflag	opt_ffs.h			FFS_EI FFS_NO_SNAPSHOT APPLE_UFS
-					UFS_DIRHASH
-					UFS_EXTATTR UFS_EXTATTR_AUTOSTART
+					UFS_DIRHASH UFS_EXTATTR
 
 defflag	opt_lfs.h			LFS_EI LFS_KERNEL_RFW
-					LFS_DIRHASH
-					LFS_EXTATTR LFS_EXTATTR_AUTOSTART
+					LFS_DIRHASH LFS_EXTATTR
 					LFS_QUOTA LFS_QUOTA2
 
 define	ext2fs:	vfs, ffs

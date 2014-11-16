@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.192 2014/11/12 10:47:24 manu Exp $
+# $NetBSD: GENERIC,v 1.193 2014/11/16 16:01:43 manu Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.192 $"
+#ident 		"GENERIC-$Revision: 1.193 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -117,8 +117,6 @@ options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
 options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
-options 	UFS_EXTATTR_AUTOSTART
-options 	UFS_EXTATTR_AUTOCREATE=1024
 
 # WS console uses VT100 terminal emulation
 options 	WSEMUL_VT100
