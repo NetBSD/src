@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.23 2014/11/12 10:47:23 manu Exp $
+# $NetBSD: GENERIC,v 1.24 2014/11/16 16:01:42 manu Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.23 $"
+ident		"GENERIC-$Revision: 1.24 $"
 
 maxusers	8
 
@@ -62,8 +62,6 @@ file-system	TMPFS		# Efficient memory file-system
 #options 	FFS_EI		# FFS Endian Independent support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	UFS_EXTATTR	# Extended attribute support for UFS1
-#options 	UFS_EXTATTR_AUTOSTART
-#options 	UFS_EXTATTR_AUTOCREATE=1024
 options 	WAPBL		# File system journaling support
 #options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
