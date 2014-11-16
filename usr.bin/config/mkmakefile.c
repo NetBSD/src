@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.31 2014/11/16 14:57:59 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.32 2014/11/16 15:10:54 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.31 2014/11/16 14:57:59 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.32 2014/11/16 15:10:54 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -499,7 +499,6 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
 			continue;
 		prologue = prefix = sep = "";
 		if (*fi->fi_path != '/') {
-		} else {
 			if (fi->fi_prefix != NULL) {
 				prologue = prefix_prologue(fi->fi_prefix);
 				prefix = fi->fi_prefix;
