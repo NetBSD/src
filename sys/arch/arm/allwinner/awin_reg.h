@@ -816,7 +816,7 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_IR_TXSTA_TPE		__BIT(1)
 #define AWIN_IR_TXSTA_TU		__BIT(0)
 
-#define AWIN_IR_RXINT_RAL		__BITS(11,8)
+#define AWIN_IR_RXINT_RAL		__BITS(13,8)
 #define AWIN_IR_RXINT_DRQ_EN		__BIT(5)
 #define AWIN_IR_RXINT_RAI_EN		__BIT(4)
 #define AWIN_IR_RXINT_CRCI_EN		__BIT(3)
@@ -833,6 +833,8 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_IR_RXSTA_ROI		__BIT(0)
 
 #define AWIN_IR_CIR_SCS2		__BIT(24)
+#define AWIN_IR_CIR_ATHC		__BIT(23)
+#define AWIN_IR_CIR_ATHR		__BITS(22,16)
 #define AWIN_IR_CIR_ITHR		__BITS(15,8)
 #define AWIN_IR_CIR_NTHR		__BITS(7,2)
 #define AWIN_IR_CIR_SCS			__BITS(1,0)
@@ -905,7 +907,7 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_SPI0_CLK_REG		0x00A0
 #define AWIN_SPI1_CLK_REG		0x00A4
 #define AWIN_SPI2_CLK_REG		0x00A8
-#define AWIN_IR0_CLK_REG		0x00B9
+#define AWIN_IR0_CLK_REG		0x00B0
 #define AWIN_IR1_CLK_REG		0x00B4
 #define AWIN_IIS_CLK_REG		0x00B8
 #define AWIN_AC97_CLK_REG		0x00BC
@@ -1072,6 +1074,8 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_CLK_SRC_SEL_DE_PLL3	0
 #define AWIN_CLK_SRC_SEL_DE_PLL7	1
 #define AWIN_CLK_SRC_SEL_DE_PLL5	2
+#define AWIN_CLK_SRC_SEL_CIR_LOSC	0
+#define AWIN_CLK_SRC_SEL_CIR_HOSC	1
 #define AWIN_CLK_DIV_RATIO_N		__BITS(17,16)
 #define AWIN_CLK_DIV_RATIO_M		__BITS(3,0)
 
