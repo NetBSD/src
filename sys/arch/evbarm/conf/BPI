@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BPI,v 1.2.2.6 2014/11/14 13:37:39 martin Exp $
+#	$NetBSD: BPI,v 1.2.2.7 2014/11/16 10:33:57 martin Exp $
 #
 #	BPI -- Banana Pi - an Allwinner A20 Eval Board Kernel
 #
@@ -235,6 +235,10 @@ iic*		at awiniic?
 # On-board 16550 UARTs
 com0		at awinio? port 0			# UART0 (console)
 options 	CONADDR=0x01c28000, CONSPEED=115200
+
+# Consumer IR
+awinir0		at awinio?
+cir0		at awinir0
 
 # Operating System Timer (A10)
 awintmr0	at awinio?
