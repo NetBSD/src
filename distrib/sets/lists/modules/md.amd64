@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.48 2014/11/12 03:48:30 enami Exp $
+# $NetBSD: md.amd64,v 1.49 2014/11/16 18:33:19 riastradh Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -350,8 +350,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/if_smsc/if_smsc.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/iic				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/iic/iic.kmod			base-kernel-modules	kmod,compatmodules
-./stand/amd64-xen/@OSRELEASE@/modules/iscsi				base-kernel-modules	kmod,compatmodules
-./stand/amd64-xen/@OSRELEASE@/modules/iscsi/iscsi.kmod			base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/iscsi				base-kernel-modules	kmod,compatmodules,iscsi
+./stand/amd64-xen/@OSRELEASE@/modules/iscsi/iscsi.kmod			base-kernel-modules	kmod,compatmodules,iscsi
 ./stand/amd64-xen/@OSRELEASE@/modules/itesio				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/itesio/itesio.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/kernfs				base-kernel-modules	kmod,compatmodules
