@@ -1,4 +1,4 @@
-/*	$NetBSD: netsmb_user.c,v 1.2 2014/11/16 04:26:46 nakayama Exp $	*/
+/*	$NetBSD: netsmb_user.c,v 1.3 2014/11/16 15:31:12 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2014 Takeshi Nakayama.
@@ -26,8 +26,10 @@
  */
 #ifndef _KERNEL
 #include <stddef.h>
-#include <iconv.h>
 #include <errno.h>
+#ifdef __NetBSD__
+#include <iconv.h>
+#endif
 
 #include <rump/rumpuser_component.h>
 
