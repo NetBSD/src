@@ -1,4 +1,4 @@
-.\"	$NetBSD: arc4random.3,v 1.13 2014/11/17 07:11:00 riastradh Exp $
+.\"	$NetBSD: arc4random.3,v 1.14 2014/11/17 15:05:12 riastradh Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -239,11 +239,23 @@ for testing purposes.
 .Pp
 The name
 .Sq arc4random
-was chosen for hysterical raisins, because it was originally
-implemented using the RC4 stream cipher, which is now known to be
-badly enough biased to admit practical attacks in the real world.
-Unfortunately, the library found widespread adoption and the name
-stuck before anyone recognized that it was silly.
+was chosen for hysterical raisins -- it was originally implemented
+using the RC4 stream cipher, which has been known since shortly after
+it was published in 1994 to have observable biases in the output, and
+is now known to be broken badly enough to admit practical attacks in
+the real world.
+.\" Bob Jenkins, sci.crypt post dated 1994-09-16, message-id
+.\" <359qjg$55v$1@mhadg.production.compuserve.com>,
+.\" https://groups.google.com/forum/msg/sci.crypt/JsO3xEATGFA/-wO4ttv7BCYJ
+.\"
+.\" Andrew Roos, `A Class of Weak Keys in the RC4 Stream Cipher',
+.\" sci.crypt posts dated 1995-09-22, message-ids
+ \" 43u1eh$1j3@hermes.is.co.za and 44ebge$llf@hermes.is.co.za.
+.\"
+.\" Paul Crowley, `Small bias in RC4 experimentally verified', March
+.\" 1998, http://www.ciphergoth.org/crypto/rc4/
+Unfortunately, the library found widespread adoption and the name stuck
+before anyone recognized that it was silly.
 .Pp
 The signature of
 .Fn arc4random_addrandom
