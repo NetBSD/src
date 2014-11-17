@@ -1,4 +1,4 @@
-.\"	$NetBSD: arc4random.3,v 1.12 2014/11/17 06:37:23 riastradh Exp $
+.\"	$NetBSD: arc4random.3,v 1.13 2014/11/17 07:11:00 riastradh Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -259,3 +259,39 @@ But it's too late to change that now.
 .Fn arc4random_uniform
 does not help to choose integers in [0, n) uniformly at random when n >
 2^32.
+.Pp
+The security model of
+.Nm
+is stronger than many applications need, and stronger than other
+operating systems provide.
+For example, applications encrypting messages with random, but not
+secret, initialization vectors need only prevent an adversary from
+guessing future outputs, since past outputs will have been published
+already.
+.Pp
+On the one hand,
+.Nm
+could be marginally faster if it were not necessary to prevent an
+adversary who sees the state from predicting past outputs.
+On the other hand, there are applications in the wild that use
+.Nm
+to generate key material, such as OpenSSH, so for the sake of
+.Nx
+users it would be imprudent to weaken the security model.
+On the third hand, relying on the security model of
+.Nm
+in
+.Nx
+may lead you to an unpleasant surprise on another operating system
+whose implementation of
+.Nm
+has a weaker security model.
+.Pp
+One may be tempted to create new APIs to accommodate different
+security models and performance constraints without unpleasant
+surprises on different operating systems.
+This should not be done lightly, though, because there are already too
+many different choices, and too many opportunities for programmers to
+reach for one and pick the wrong one, leading to money being stolen
+and people being killed if they err on the side of faster code with a
+weaker security model.
