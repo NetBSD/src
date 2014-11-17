@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.c,v 1.18 2014/11/17 02:15:49 christos Exp $	*/
+/*	$NetBSD: smbfs_subr.c,v 1.19 2014/11/17 02:23:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.18 2014/11/17 02:15:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.19 2014/11/17 02:23:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.18 2014/11/17 02:15:49 christos Exp
 #include <sys/time.h>
 #include <sys/vnode.h>
 #include <sys/sysctl.h>
+#include <sys/clock.h>
 #include <netsmb/iconv.h>
 
 #include <netsmb/smb.h>
