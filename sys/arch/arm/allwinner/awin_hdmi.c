@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmi.c,v 1.13 2014/11/17 00:49:32 jmcneill Exp $ */
+/* $NetBSD: awin_hdmi.c,v 1.14 2014/11/17 01:38:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define AWIN_HDMI_PLL	3	/* PLL7 or PLL3 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.13 2014/11/17 00:49:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.14 2014/11/17 01:38:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -64,8 +64,11 @@ struct awin_hdmi_softc {
 	kmutex_t sc_ic_lock;
 
 	bool sc_connected;
+	char sc_display_vendor[16];
+	char sc_display_product[16];
 
 	u_int sc_display_mode;
+	u_int sc_current_display_mode;
 #define DISPLAY_MODE_AUTO	0
 #define DISPLAY_MODE_HDMI	1
 #define DISPLAY_MODE_DVI	2
@@ -522,6 +525,12 @@ awin_hdmi_read_edid(struct awin_hdmi_softc *sc)
 	device_printf(sc->sc_dev, "%s mode (%s)\n",
 	    display_mode == DISPLAY_MODE_HDMI ? "HDMI" : "DVI", forced);
 
+	strlcpy(sc->sc_display_vendor, ei.edid_vendorname,
+	    sizeof(sc->sc_display_vendor));
+	strlcpy(sc->sc_display_product, ei.edid_productname,
+	    sizeof(sc->sc_display_product));
+	sc->sc_current_display_mode = display_mode;
+
 	mode = ei.edid_preferred_mode;
 	if (mode == NULL)
 		mode = pick_mode_by_ref(640, 480, 60);
@@ -868,7 +877,6 @@ awin_hdmi_hpd(struct awin_hdmi_softc *sc)
 	if (sc->sc_connected == con)
 		return;
 
-	sc->sc_connected = con;
 	if (con) {
 		device_printf(sc->sc_dev, "display connected\n");
 		awin_hdmi_read_edid(sc);
@@ -876,6 +884,8 @@ awin_hdmi_hpd(struct awin_hdmi_softc *sc)
 		device_printf(sc->sc_dev, "display disconnected\n");
 		awin_tcon_set_videomode(NULL);
 	}
+
+	sc->sc_connected = con;
 }
 
 static void
@@ -907,6 +917,32 @@ awin_hdmi_intr(void *priv)
 	return 1;
 }
 #endif
+
+void
+awin_hdmi_get_info(struct awin_hdmi_info *info)
+{
+	struct awin_hdmi_softc *sc;
+	device_t dev;
+
+	memset(info, 0, sizeof(*info));
+
+	dev = device_find_by_driver_unit("awinhdmi", 0);
+	if (dev == NULL) {
+		info->display_connected = false;
+		return;
+	}
+	sc = device_private(dev);
+
+	info->display_connected = sc->sc_connected;
+	if (info->display_connected) {
+		strlcpy(info->display_vendor, sc->sc_display_vendor,
+		    sizeof(info->display_vendor));
+		strlcpy(info->display_product, sc->sc_display_product,
+		    sizeof(info->display_product));
+		info->display_hdmimode =
+		    sc->sc_current_display_mode == DISPLAY_MODE_HDMI;
+	}
+}
 
 #if defined(DDB)
 void
