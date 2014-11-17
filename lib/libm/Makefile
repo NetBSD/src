@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.166 2014/09/19 17:42:44 matt Exp $
+#  $NetBSD: Makefile,v 1.167 2014/11/17 16:53:23 christos Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -308,7 +308,11 @@ MLINKS+=copysign.3 copysignf.3 \
 	copysign.3 copysignl.3
 MLINKS+=cos.3 cosf.3
 MLINKS+=cosh.3 coshf.3
-MLINKS+=erf.3 erff.3 erf.3 erfc.3 erf.3 erfcf.3
+MLINKS+=erf.3 erff.3 \
+	erf.3 erfl.3 \
+	erf.3 erfc.3 \
+	erf.3 erfcf.3 \
+	erf.3 erfcl.3
 MLINKS+=exp.3 expf.3 exp.3 expm1.3 exp.3 expm1f.3 			\
 	exp.3 exp2.3 exp.3 exp2f.3
 MLINKS+=log.3 logf.3 \
