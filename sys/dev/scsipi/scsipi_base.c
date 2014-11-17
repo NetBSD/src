@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.162 2014/10/18 08:33:28 snj Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.163 2014/11/17 18:43:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.162 2014/10/18 08:33:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.163 2014/11/17 18:43:48 christos Exp $");
 
 #include "opt_scsi.h"
 
@@ -1044,6 +1044,28 @@ scsipi_test_unit_ready(struct scsipi_periph *periph, int flags)
 	    retries, 10000, NULL, flags));
 }
 
+static const struct scsipi_inquiry3_pattern {
+	const char vendor[8];
+	const char product[16];
+	const char revision[4];
+} scsipi_inquiry3_quirk[] = {
+	{ "ES-6600 ", "", "" },
+};
+
+static int
+scsipi_inquiry3_ok(const struct scsipi_inquiry_data *ib)
+{
+	for (size_t i = 0; i < __arraycount(scsipi_inquiry3_quirk); i++) {
+		const struct scsipi_inquiry3_pattern *q =
+		    &scsipi_inquiry3_quirk[i];
+#define MATCH(field) \
+    (q->field[0] ? memcmp(ib->field, q->field, sizeof(ib->field) == 0) : 1)
+		if (MATCH(vendor) && MATCH(product) && MATCH(revision))
+			return 0;
+	}
+	return 1;
+}
+
 /*
  * scsipi_inquire:
  *
@@ -1081,7 +1103,7 @@ scsipi_inquire(struct scsipi_periph *periph, struct scsipi_inquiry_data *inqbuf,
 	    10000, NULL, flags | XS_CTL_DATA_IN);
 	if (!error &&
 	    inqbuf->additional_length > SCSIPI_INQUIRY_LENGTH_SCSI2 - 4) {
-	    if (inqbuf->additional_length <= SCSIPI_INQUIRY_LENGTH_SCSI3 - 4) {
+	    if (scsipi_inquiry3_ok(inqbuf)) {
 #if 0
 printf("inquire: addlen=%d, retrying\n", inqbuf->additional_length);
 #endif
@@ -1091,10 +1113,6 @@ printf("inquire: addlen=%d, retrying\n", inqbuf->additional_length);
 		    10000, NULL, flags | XS_CTL_DATA_IN);
 #if 0
 printf("inquire: error=%d\n", error);
-#endif
-#if 1
-	    } else {
-printf("inquire: addlen=%d, not retrying\n", inqbuf->additional_length);
 #endif
 	    }
 	}
