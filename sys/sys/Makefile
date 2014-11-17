@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.151 2014/08/19 07:27:31 matt Exp $
+#	$NetBSD: Makefile,v 1.152 2014/11/17 02:15:49 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ INCSDIR= /usr/include/sys
 INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	bitops.h bootblock.h bswap.h buf.h \
 	callback.h callout.h cdbr.h cdefs.h cdefs_aout.h \
-	cdefs_elf.h cdio.h chio.h clockctl.h \
+	cdefs_elf.h cdio.h chio.h clock.h clockctl.h \
 	common_ansi.h common_int_const.h common_int_fmtio.h \
 	common_int_limits.h common_int_mwgwtypes.h common_int_types.h \
 	common_limits.h common_wchar_limits.h \
