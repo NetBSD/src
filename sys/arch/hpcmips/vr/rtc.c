@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.32 2011/03/18 15:31:38 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.33 2014/11/17 02:15:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.32 2011/03/18 15:31:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.33 2014/11/17 02:15:48 christos Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -203,10 +203,10 @@ vrrtc_attach(device_t parent, device_t self, void *aux)
 	 * be on Jan 1.
 	 */
 	for (year = EPOCHYEAR; year < POSIX_BASE_YEAR; year++) {
-		sc->sc_epoch += LEAPYEAR4(year) ? SECYR + SECDAY : SECYR;
+		sc->sc_epoch += days_per_year(year) * SECS_PER_YEAR;
 	}
 	for (year = POSIX_BASE_YEAR; year < EPOCHYEAR; year++) {
-		sc->sc_epoch -= LEAPYEAR4(year) ? SECYR + SECDAY : SECYR;
+		sc->sc_epoch -= days_per_year(year) * SECS_PER_YEAR;
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.36 2014/10/12 16:23:20 jmcneill Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.37 2014/11/17 02:15:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.36 2014/10/12 16:23:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.37 2014/11/17 02:15:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,7 +85,7 @@ inittodr(time_t base)
 
 	rnd_add_data(NULL, &base, sizeof(base), 0);
 
-	if (base < 5 * SECYR) {
+	if (base < 5 * SECS_PER_COMMON_YEAR) {
 		struct clock_ymdhms basedate;
 
 		/*
@@ -113,7 +113,7 @@ inittodr(time_t base)
 
 	if ((todr_handle == NULL) ||
 	    (todr_gettime(todr_handle, &tv) != 0) ||
-	    (tv.tv_sec < (25 * SECYR))) {
+	    (tv.tv_sec < (25 * SECS_PER_COMMON_YEAR))) {
 
 		if (todr_handle != NULL)
 			printf("WARNING: preposterous TOD clock time\n");
@@ -126,7 +126,7 @@ inittodr(time_t base)
 		if (deltat < 0)
 			deltat = -deltat;
 
-		if (!badbase && deltat >= 2 * SECDAY) {
+		if (!badbase && deltat >= 2 * SECS_PER_DAY) {
 			
 			if (tv.tv_sec < base) {
 				/*
@@ -136,11 +136,11 @@ inittodr(time_t base)
 				 * believe the filesystem.
 				 */
 				printf("WARNING: clock lost %" PRId64 " days\n",
-				    deltat / SECDAY);
+				    deltat / SECS_PER_DAY);
 				badrtc = true;
 			} else {
 				aprint_verbose("WARNING: clock gained %" PRId64
-				    " days\n", deltat / SECDAY);
+				    " days\n", deltat / SECS_PER_DAY);
 				goodtime = true;
 			}
 		} else {
@@ -179,8 +179,8 @@ inittodr(time_t base)
  * Reset the TODR based on the time value; used when the TODR
  * has a preposterous value and also when the time is reset
  * by the stime system call.  Also called when the TODR goes past
- * TODRZERO + 100*(SECYEAR+2*SECDAY) (e.g. on Jan 2 just after midnight)
- * to wrap the TODR around.
+ * TODRZERO + 100*(SECS_PER_COMMON_YEAR+2*SECS_PER_DAY)
+ * (e.g. on Jan 2 just after midnight) to wrap the TODR around.
  */
 void
 resettodr(void)

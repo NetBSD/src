@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.c,v 1.17 2014/11/15 18:52:44 nakayama Exp $	*/
+/*	$NetBSD: smbfs_subr.c,v 1.18 2014/11/17 02:15:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.17 2014/11/15 18:52:44 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.18 2014/11/17 02:15:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,12 +176,12 @@ smb_time_unix2dos(struct timespec *tsp, int tzoff, u_int16_t *ddp,
 		if (days != lastday) {
 			lastday = days;
 			for (year = 1970;; year++) {
-				inc = year & 0x03 ? 365 : 366;
+ 				inc = days_per_year(year);
 				if (days < inc)
 					break;
 				days -= inc;
 			}
-			months = year & 0x03 ? regyear : leapyear;
+ 			months = is_leap_year(year) ? leapyear : regyear;
 			for (month = 0; days >= months[month]; month++)
 				;
 			if (month > 0)
