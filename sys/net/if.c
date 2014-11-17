@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.292 2014/11/07 12:57:42 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.293 2014/11/17 13:58:53 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.292 2014/11/07 12:57:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.293 2014/11/17 13:58:53 pooka Exp $");
 
 #include "opt_inet.h"
 
@@ -891,7 +891,8 @@ again:
 	pktq_barrier(ip_pktq);
 #endif
 #ifdef INET6
-	pktq_barrier(ip6_pktq);
+	if (in6_present)
+		pktq_barrier(ip6_pktq);
 #endif
 	xc = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
 	xc_wait(xc);
