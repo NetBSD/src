@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.57 2014/07/25 08:10:40 dholland Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.58 2014/11/17 14:30:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.57 2014/07/25 08:10:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.58 2014/11/17 14:30:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -339,6 +339,25 @@ rumpblk_deregister(const char *path)
 	rblk->rblk_path = NULL;
 
 	return 0;
+}
+
+/*
+ * Release all backend resources, to be called only when the rump
+ * kernel is being shut down.
+ * This routine does not do a full "fini" since we're going down anyway.
+ */
+void
+rumpblk_fini(void)
+{
+	int i;
+
+	for (i = 0; i < RUMPBLK_SIZE; i++) {
+		struct rblkdev *rblk;
+
+		rblk = &minors[i];
+		if (rblk->rblk_fd != -1)
+			backend_close(rblk);
+	}
 }
 
 static int
