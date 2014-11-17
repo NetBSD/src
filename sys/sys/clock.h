@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.h,v 1.2 2014/11/17 10:55:12 joerg Exp $	*/
+/*	$NetBSD: clock.h,v 1.3 2014/11/17 17:11:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -32,12 +32,6 @@
 #ifndef _SYS_CLOCK_H_
 #define _SYS_CLOCK_H_
 
-#if !defined(_KERNEL) && !defined(_STANDALONE)
-#include <errno.h>
-#else
-#include <sys/errno.h>
-#endif
-
 /* Some handy constants. */
 #define SECS_PER_MINUTE		60
 #define SECS_PER_HOUR		3600
@@ -54,14 +48,16 @@
 static inline int
 days_in_month(int m)
 {
-	static const int month_days[12] = {
-        	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-	};
-
-	if (__predict_false(m < 1 || m > 12))
-		return EINVAL;
-
-	return month_days[m - 1];
+	switch (m) {
+	case 2:
+		return 28;
+	case 4: case 6: case 9: case 11:
+		return 30;
+	case 1: case 3: case 5: case 7: case 8: case 10: case 12:
+		return 31;
+	default:
+		return -1;
+	}
 }
 
 /*
@@ -75,17 +71,13 @@ days_in_month(int m)
 static inline int
 is_leap_year(uint64_t year)
 {
-	int rv = 0;
+	if ((year & 3) != 0)
+		return 0;
 
-	if ((year & 3) == 0) {
-		rv = 1;
-		if (__predict_false((year % 100) == 0)) {
-			rv = 0;
-			if (__predict_false((year % 400) == 0))
-				rv = 1;
-		}
-	}
-	return rv;
+	if (__predict_false((year % 100) != 0))
+		return 1;
+
+	return __predict_false((year % 400) == 0);
 }
 
 static inline int
