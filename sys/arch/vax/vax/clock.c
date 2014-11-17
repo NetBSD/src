@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.56 2012/03/06 22:50:24 jklos Exp $	 */
+/*	$NetBSD: clock.c,v 1.57 2014/11/17 02:15:49 christos Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.56 2012/03/06 22:50:24 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.57 2014/11/17 02:15:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ yeartonum(int y)
 	int n;
 
 	for (n = 0, y -= 1; y > 1969; y--)
-		n += SECPERYEAR(y);
+ 		n += days_per_year(y) * SECS_PER_DAY;
 	return n;
 }
 
@@ -209,7 +209,7 @@ int
 numtoyear(int num)
 {
 	int y = 1970, j;
-	while(num >= (j = SECPERYEAR(y))) {
+	while(num >= (j = days_per_year(y) * SECS_PER_DAY)) {
 		y++;
 		num -= j;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.22 2014/09/07 11:50:23 martin Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.23 2014/11/17 02:15:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -32,17 +32,19 @@
 #ifndef _DEV_CLOCK_SUBR_H_
 #define _DEV_CLOCK_SUBR_H_
 
+#include <sys/clock.h>
+
 /*
  * "POSIX time" to/from "YY/MM/DD/hh/mm/ss"
  */
 struct clock_ymdhms {
 	uint64_t dt_year;
-	u_char dt_mon;
-	u_char dt_day;
-	u_char dt_wday;	/* Day of week */
-	u_char dt_hour;
-	u_char dt_min;
-	u_char dt_sec;
+	uint8_t dt_mon;
+	uint8_t dt_day;
+	uint8_t dt_wday;	/* Day of week */
+	uint8_t dt_hour;
+	uint8_t dt_min;
+	uint8_t dt_sec;
 };
 
 time_t	clock_ymdhms_to_secs(struct clock_ymdhms *);
@@ -53,13 +55,6 @@ int	clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
  */
 #define	FROMBCD(x)	bcdtobin((x))
 #define	TOBCD(x)	bintobcd((x))
-
-/* Some handy constants. */
-#define SECDAY		(24 * 60 * 60)
-#define SECYR		(SECDAY * 365)
-
-/* Traditional POSIX base year */
-#define	POSIX_BASE_YEAR	1970
 
 /*
  * Interface to time-of-day clock devices.

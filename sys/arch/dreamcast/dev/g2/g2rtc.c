@@ -1,4 +1,4 @@
-/* $NetBSD: g2rtc.c,v 1.6 2011/07/19 15:52:29 dyoung Exp $ */
+/* $NetBSD: g2rtc.c,v 1.7 2014/11/17 02:15:48 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g2rtc.c,v 1.6 2011/07/19 15:52:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2rtc.c,v 1.7 2014/11/17 02:15:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: g2rtc.c,v 1.6 2011/07/19 15:52:29 dyoung Exp $");
 #define G2RTC_REG_SIZE	12
 
 /* Offset by 20 years, 5 of them are leap */
-#define G2RTC_OFFSET	(20 * SECYR + 5 * SECDAY)
+#define G2RTC_OFFSET	(20 * SECS_PER_COMMON_YEAR + 5 * SECS_PER_DAY)
 
 struct g2rtc_softc {
 	device_t sc_dev;
