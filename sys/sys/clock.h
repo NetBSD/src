@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.h,v 1.1 2014/11/17 02:27:26 christos Exp $	*/
+/*	$NetBSD: clock.h,v 1.2 2014/11/17 10:55:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,6 +31,12 @@
 
 #ifndef _SYS_CLOCK_H_
 #define _SYS_CLOCK_H_
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <errno.h>
+#else
+#include <sys/errno.h>
+#endif
 
 /* Some handy constants. */
 #define SECS_PER_MINUTE		60
