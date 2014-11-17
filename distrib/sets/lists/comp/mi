@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1919 2014/10/24 02:39:34 christos Exp $
+#	$NetBSD: mi,v 1.1920 2014/11/17 02:16:51 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3130,6 +3130,7 @@
 ./usr/include/sys/cdio.h			comp-c-include
 ./usr/include/sys/chio.h			comp-c-include
 ./usr/include/sys/clist.h			comp-obsolete		obsolete
+./usr/include/sys/clock.h			comp-c-include
 ./usr/include/sys/clockctl.h			comp-c-include
 ./usr/include/sys/common_ansi.h			comp-c-include
 ./usr/include/sys/common_int_const.h		comp-c-include
