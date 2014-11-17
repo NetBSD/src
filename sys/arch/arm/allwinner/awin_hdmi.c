@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmi.c,v 1.14 2014/11/17 01:38:00 jmcneill Exp $ */
+/* $NetBSD: awin_hdmi.c,v 1.15 2014/11/17 10:00:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define AWIN_HDMI_PLL	3	/* PLL7 or PLL3 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.14 2014/11/17 01:38:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.15 2014/11/17 10:00:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -737,11 +737,12 @@ awin_hdmi_set_videomode(struct awin_hdmi_softc *sc,
 		val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_HDMI_MODE_HDMI,
 				 AWIN_HDMI_VID_CTRL_HDMI_MODE);
 	}
-	val &= ~AWIN_HDMI_VID_CTRL_OUTPUT_FMT;
+	val &= ~AWIN_HDMI_VID_CTRL_REPEATER_SEL;
 	if (dblscan_p) {
 		val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_REPEATER_SEL_2X,
 				 AWIN_HDMI_VID_CTRL_REPEATER_SEL);
 	}
+	val &= ~AWIN_HDMI_VID_CTRL_OUTPUT_FMT;
 	if (interlace_p) {
 		val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_OUTPUT_FMT_INTERLACE,
 				 AWIN_HDMI_VID_CTRL_OUTPUT_FMT);
