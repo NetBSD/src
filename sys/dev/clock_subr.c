@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.24 2014/11/17 02:23:33 christos Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.25 2014/11/17 10:55:42 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.24 2014/11/17 02:23:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.25 2014/11/17 10:55:42 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.24 2014/11/17 02:23:33 christos Exp
 #include <errno.h>
 #endif /* ! _KERNEL */
 
+#include "../sys/clock.h"
 #include <dev/clock_subr.h>
 
 #define FEBRUARY	2
