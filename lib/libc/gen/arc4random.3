@@ -1,4 +1,4 @@
-.\"	$NetBSD: arc4random.3,v 1.14 2014/11/17 15:05:12 riastradh Exp $
+.\"	$NetBSD: arc4random.3,v 1.15 2014/11/17 15:06:59 riastradh Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -269,8 +269,11 @@ length.
 But it's too late to change that now.
 .Pp
 .Fn arc4random_uniform
-does not help to choose integers in [0, n) uniformly at random when n >
-2^32.
+does not help to choose integers in [0,
+.Fa n Ns )
+uniformly at random when
+.Fa n
+> 2^32.
 .Pp
 The security model of
 .Nm
