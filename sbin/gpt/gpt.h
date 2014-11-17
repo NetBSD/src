@@ -61,7 +61,7 @@ struct mbr {
 };
 
 extern const char *device_arg;
-extern char *device_name;
+extern const char *device_name;
 extern off_t mediasz;
 extern u_int parts;
 extern u_int secsz;
