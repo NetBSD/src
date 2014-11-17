@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.28 2014/11/14 19:47:36 jmcneill Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.29 2014/11/17 00:50:40 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.28 2014/11/14 19:47:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.29 2014/11/17 00:50:40 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -766,6 +766,20 @@ awin_device_register(device_t self, void *aux)
 		if (get_bootconf_option(boot_args, "fb.margin",
 		    BOOTOPT_TYPE_INT, &margin) && margin > 0) {
 			prop_dictionary_set_uint16(dict, "margin", margin);
+		}
+	}
+
+	if (device_is_a(self, "awinhdmi")) {
+		char *display_mode;
+		if (get_bootconf_option(boot_args, "hdmi.forcemode",
+		    BOOTOPT_TYPE_STRING, &display_mode)) {
+			if (strcasecmp(display_mode, "hdmi") == 0) {
+				prop_dictionary_set_cstring(dict,
+				    "display-mode", "hdmi");
+			} else if (strcasecmp(display_mode, "dvi") == 0) {
+				prop_dictionary_set_cstring(dict,
+				    "display-mode", "dvi");
+			}
 		}
 	}
 
