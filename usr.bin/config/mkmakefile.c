@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.32 2014/11/16 15:10:54 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.33 2014/11/17 00:53:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.32 2014/11/16 15:10:54 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.33 2014/11/17 00:53:15 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -273,19 +273,15 @@ srcpath(struct files *fi)
 static const char *
 filetype_prologue(struct filetype *fit)
 {
-	if (*fit->fit_path == '/')
-		return ("");
-	else
-		return ("$S/");
+
+	return (*fit->fit_path == '/') ? "" : "$S/";
 }
 
 static const char *
 prefix_prologue(const char *path)
 {
-	if (*path == '/')
-		return ("");
-	else
-		return ("$S/");
+
+	return (*path == '/') ? "" : "$S/";
 }
 
 static void
@@ -300,23 +296,25 @@ emitdefs(FILE *fp)
 		/* Skip any options output to a header file */
 		if (DEFINED_OPTION(nv->nv_name))
 			continue;
+		const char *s = nv->nv_str;
 		fprintf(fp, "\t-D%s%s%s%s \\\n", nv->nv_name,
-		    (nv->nv_str != NULL) ? "=\"" : "",
-		    (nv->nv_str != NULL) ? nv->nv_str : "",
-		    (nv->nv_str != NULL) ? "\"" : "");
+		    s ? "=\"" : "",
+		    s ? s : "",
+		    s ? "\"" : "");
 	}
 	putc('\n', fp);
 	fprintf(fp, "PARAM=-DMAXUSERS=%d\n", maxusers);
 	fprintf(fp, "MACHINE=%s\n", machine);
-	if (*srcdir == '/' || *srcdir == '.') {
-		fprintf(fp, "S=\t%s\n", srcdir);
-	} else {
+
+	const char *subdir = "";
+	if (*srcdir != '/' && *srcdir != '.') {
 		/*
 		 * libkern and libcompat "Makefile.inc"s want relative S
 		 * specification to begin with '.'.
 		 */
-		fprintf(fp, "S=\t./%s\n", srcdir);
+		subdir = "./";
 	}
+	fprintf(fp, "S=\t%s%s\n", subdir, srcdir);
 	for (nv = mkoptions; nv != NULL; nv = nv->nv_next)
 		fprintf(fp, "%s=%s\n", nv->nv_name, nv->nv_str);
 }
@@ -482,7 +480,6 @@ static void
 emitfiles(FILE *fp, int suffix, int upper_suffix)
 {
 	struct files *fi;
-	size_t len;
 	const char *fpath;
  	struct config *cf;
  	char swapname[100];
@@ -494,8 +491,7 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		fpath = srcpath(fi);
-		len = strlen(fpath);
-		if (fpath[len - 1] != suffix && fpath[len - 1] != upper_suffix)
+		if (fi->fi_suffix != suffix && fi->fi_suffix != upper_suffix)
 			continue;
 		prologue = prefix = sep = "";
 		if (*fi->fi_path != '/') {
@@ -532,9 +528,7 @@ static void
 emitrules(FILE *fp)
 {
 	struct files *fi;
-	size_t len;
 	const char *fpath;
-	int suffix;
 
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
 		const char *prologue, *prefix, *sep;
@@ -542,8 +536,6 @@ emitrules(FILE *fp)
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		fpath = srcpath(fi);
-		len = strlen(fpath);
-		suffix = fpath[len - 1];
 		prologue = prefix = sep = "";
 		if (*fpath != '/') {
 			if (fi->fi_prefix != NULL) {
@@ -559,7 +551,7 @@ emitrules(FILE *fp)
 		if (fi->fi_mkrule != NULL) {
 			fprintf(fp, "\t%s\n\n", fi->fi_mkrule);
 		} else {
-			fprintf(fp, "\t${NORMAL_%c}\n\n", toupper(suffix));
+			fprintf(fp, "\t${NORMAL_%c}\n\n", toupper(fi->fi_suffix));
 		}
 	}
 }
@@ -574,7 +566,8 @@ emitload(FILE *fp)
 {
 	struct config *cf;
 
-	fputs(".MAIN: all\nall:", fp);
+	fputs(".MAIN: all\n", fp);
+	fputs("all:", fp);
 	TAILQ_FOREACH(cf, &allcf, cf_next) {
 		fprintf(fp, " %s", cf->cf_name);
 		/*
