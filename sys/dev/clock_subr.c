@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.23 2014/11/17 02:15:49 christos Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.24 2014/11/17 02:23:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.23 2014/11/17 02:15:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.24 2014/11/17 02:23:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.23 2014/11/17 02:15:49 christos Exp
 
 #include <dev/clock_subr.h>
 
-static inline int leapyear(uint64_t year);
 #define FEBRUARY	2
 
 /* for easier alignment:
@@ -118,7 +117,7 @@ clock_ymdhms_to_secs(struct clock_ymdhms *dt)
 		year -= i * 4;
 
 		for (i = dt->dt_year-year; i < dt->dt_year; i++)
-			days += days_in_year(i);
+			days += days_per_year(i);
 	}
 
 
