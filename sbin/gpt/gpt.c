@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.38 2014/11/17 07:13:42 mlelstv Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.39 2014/11/17 07:15:28 mlelstv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: gpt.c,v 1.38 2014/11/17 07:13:42 mlelstv Exp $");
 
 char	device_path[MAXPATHLEN];
 const char *device_arg;
-char	*device_name;
+const char *device_name;
 
 off_t	mediasz;
 
@@ -563,8 +563,7 @@ gpt_open(const char *dev)
 
 	mode = readonly ? O_RDONLY : O_RDWR|O_EXCL;
 
-	device_arg = dev;
-	device_name = __UNCONST(device_arg);
+	device_arg = device_name = dev;
 	fd = opendisk(dev, mode, device_path, sizeof(device_path), 0);
 	if (fd == -1)
 		return -1;
