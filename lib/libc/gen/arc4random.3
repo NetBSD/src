@@ -1,4 +1,4 @@
-.\"	$NetBSD: arc4random.3,v 1.16 2014/11/17 15:08:37 riastradh Exp $
+.\"	$NetBSD: arc4random.3,v 1.17 2014/11/17 15:17:41 wiz Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -251,7 +251,7 @@ the real world.
 .\"
 .\" Andrew Roos, `A Class of Weak Keys in the RC4 Stream Cipher',
 .\" sci.crypt posts dated 1995-09-22, message-ids
- \" 43u1eh$1j3@hermes.is.co.za and 44ebge$llf@hermes.is.co.za.
+.\" 43u1eh$1j3@hermes.is.co.za and 44ebge$llf@hermes.is.co.za.
 .\"
 .\" Paul Crowley, `Small bias in RC4 experimentally verified', March
 .\" 1998, http://www.ciphergoth.org/crypto/rc4/
@@ -271,7 +271,7 @@ But it's too late to change that now.
 .Pp
 .Fn arc4random_uniform
 does not help to choose integers in [0,
-.Fa n Ns )
+.Fa n )
 uniformly at random when
 .Fa n
 > 2^32.
