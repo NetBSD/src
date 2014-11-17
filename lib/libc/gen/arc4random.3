@@ -1,4 +1,4 @@
-.\"	$NetBSD: arc4random.3,v 1.18 2014/11/17 15:28:22 riastradh Exp $
+.\"	$NetBSD: arc4random.3,v 1.19 2014/11/17 18:41:29 riastradh Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,9 +110,9 @@ entropy pool.
 The
 .Nm
 functions provide the following security properties against three
-different classes of attackers, assuming that the state of the
-operating system's entropy pool is unknown to the attacker:
-.Bl -bullet -offset abcd -compact
+different classes of attackers, assuming enough entropy is provided by
+the operating system:
+.Bl -bullet -offset abcd
 .It
 An attacker who has seen some outputs of any of the
 .Nm
@@ -125,6 +125,12 @@ An attacker who has seen one process's PRNG state cannot predict past
 or future outputs in other processes, particularly its parent or
 siblings.
 .El
+.Pp
+One
+.Sq output
+means the result of any single request to an
+.Nm
+function, no matter how short it is.
 .Sh IMPLEMENTATION NOTES
 The
 .Nm
@@ -308,6 +314,4 @@ security models and performance constraints without unpleasant
 surprises on different operating systems.
 This should not be done lightly, though, because there are already too
 many different choices, and too many opportunities for programmers to
-reach for one and pick the wrong one, leading to money being stolen
-and people being killed if they err on the side of faster code with a
-weaker security model.
+reach for one and pick the wrong one.
