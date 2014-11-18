@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.21 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.21.2.1 2014/11/18 18:45:30 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.21 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.21.2.1 2014/11/18 18:45:30 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -70,7 +70,9 @@ rfcomm_attach_pcb(struct rfcomm_dlc **handle,
 	KASSERT(proto != NULL);
 	KASSERT(upper != NULL);
 
-	dlc = kmem_zalloc(sizeof(struct rfcomm_dlc), KM_SLEEP);
+	dlc = kmem_intr_zalloc(sizeof(struct rfcomm_dlc), KM_NOSLEEP);
+	if (dlc == NULL)
+		return ENOMEM;
 
 	dlc->rd_state = RFCOMM_DLC_CLOSED;
 	dlc->rd_mtu = rfcomm_mtu_default;
@@ -296,7 +298,7 @@ rfcomm_detach_pcb(struct rfcomm_dlc **handle)
 		dlc->rd_flags |= RFCOMM_DLC_DETACH;
 	else {
 		callout_destroy(&dlc->rd_timeout);
-		kmem_free(dlc, sizeof(*dlc));
+		kmem_intr_free(dlc, sizeof(*dlc));
 	}
 }
 
