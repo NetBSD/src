@@ -5,7 +5,7 @@
 PACKAGE=	tzcode
 
 # Version numbers of the code and data distributions.
-VERSION=	2014g
+VERSION=	2014j
 
 # Email address for bug reports.
 BUGEMAIL=	tz@iana.org
@@ -129,6 +129,7 @@ LDLIBS=
 #  -DNO_RUN_TIME_WARNINGS_ABOUT_YEAR_2000_PROBLEMS_THANK_YOU=1
 #	if you do not want run time warnings about formats that may cause
 #	year 2000 grief
+#  -Dssize_t=long on ancient hosts that lack ssize_t
 #  -DTHREAD_SAFE=1 to make localtime.c thread-safe, as POSIX requires;
 #	not needed by the main-program tz code, which is single-threaded.
 #	Append other compiler flags as needed, e.g., -pthread on GNU/Linux.
@@ -467,7 +468,8 @@ tzselect:	tzselect.ksh
 			<$? >$@
 		chmod +x $@
 
-check:		check_character_set check_white_space check_tables check_web
+check:		check_character_set check_white_space check_sorted \
+		  check_tables check_web
 
 check_character_set: $(ENCHILADA)
 		LC_ALL=en_US.utf8 && export LC_ALL && \
@@ -485,6 +487,18 @@ check_white_space: $(ENCHILADA)
 		! grep -n ' '$(TAB_CHAR) $(ENCHILADA)
 		! grep -n '[[:space:]]$$' $(ENCHILADA)
 		! grep -n "$$(printf '[\f\r\v]\n')" $(ENCHILADA)
+
+CHECK_CC_LIST = { n = split($$1,a,/,/); for (i=2; i<=n; i++) print a[1], a[i]; }
+
+check_sorted: backward backzone iso3166.tab zone.tab zone1970.tab
+		$(AWK) '/^Link/ {print $$3}' backward | LC_ALL=C sort -cu
+		$(AWK) '/^Zone/ {print $$2}' backzone | LC_ALL=C sort -cu
+		$(AWK) '/^[^#]/ {print $$1}' iso3166.tab | LC_ALL=C sort -cu
+		$(AWK) '/^[^#]/ {print $$1}' zone.tab | LC_ALL=C sort -c
+		$(AWK) '/^[^#]/ {print substr($$0, 1, 2)}' zone1970.tab | \
+		  LC_ALL=C sort -c
+		$(AWK) '/^[^#]/ $(CHECK_CC_LIST)' zone1970.tab | \
+		  LC_ALL=C sort -cu
 
 check_tables:	checktab.awk $(PRIMARY_YDATA) $(ZONETABLES)
 		for tab in $(ZONETABLES); do \
@@ -648,7 +662,7 @@ zic.o:		private.h tzfile.h version.h
 .KEEP_STATE:
 
 .PHONY: ALL INSTALL all
-.PHONY: check check_character_set check_public check_tables
+.PHONY: check check_character_set check_public check_sorted check_tables
 .PHONY: check_time_t_alternatives check_web check_white_space clean clean_misc
 .PHONY: install maintainer-clean names posix_packrat posix_only posix_right
 .PHONY: public right_only right_posix signatures tarballs typecheck
