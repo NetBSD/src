@@ -1,4 +1,4 @@
-/*	$NetBSD: ddcvar.h,v 1.1 2006/04/25 21:18:16 gdamore Exp $	*/
+/*	$NetBSD: ddcvar.h,v 1.1.138.1 2014/11/18 18:19:10 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -40,5 +40,6 @@
  * autoconfiguration framework.
  */
 int ddc_read_edid(i2c_tag_t, u_int8_t *, size_t);
+int ddc_read_edid_block(i2c_tag_t, u_int8_t *, size_t, uint8_t);
 
 #endif /* _DEV_I2C_DDCVAR_H_ */
