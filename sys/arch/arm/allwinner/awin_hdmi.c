@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmi.c,v 1.4.2.4 2014/11/14 13:37:39 martin Exp $ */
+/* $NetBSD: awin_hdmi.c,v 1.4.2.5 2014/11/18 18:19:09 snj Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define AWIN_HDMI_PLL	3	/* PLL7 or PLL3 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.4.2.4 2014/11/14 13:37:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.4.2.5 2014/11/18 18:19:09 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -64,6 +64,14 @@ struct awin_hdmi_softc {
 	kmutex_t sc_ic_lock;
 
 	bool sc_connected;
+	char sc_display_vendor[16];
+	char sc_display_product[16];
+
+	u_int sc_display_mode;
+	u_int sc_current_display_mode;
+#define DISPLAY_MODE_AUTO	0
+#define DISPLAY_MODE_HDMI	1
+#define DISPLAY_MODE_DVI	2
 
 	uint32_t sc_ver;
 	unsigned int sc_i2c_blklen;
@@ -85,17 +93,19 @@ static int	awin_hdmi_i2c_acquire_bus(void *, int);
 static void	awin_hdmi_i2c_release_bus(void *, int);
 static int	awin_hdmi_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 				   size_t, void *, size_t, int);
-static int	awin_hdmi_i2c_xfer(void *, i2c_addr_t, uint8_t,
+static int	awin_hdmi_i2c_xfer(void *, i2c_addr_t, uint8_t, uint8_t,
 				   size_t, int, int);
 static int	awin_hdmi_i2c_reset(struct awin_hdmi_softc *, int);
 
 static void	awin_hdmi_enable(struct awin_hdmi_softc *);
 static void	awin_hdmi_read_edid(struct awin_hdmi_softc *);
+static u_int	awin_hdmi_get_display_mode(struct awin_hdmi_softc *,
+					   const struct edid_info *);
 static void	awin_hdmi_video_enable(struct awin_hdmi_softc *, bool);
 static void	awin_hdmi_set_videomode(struct awin_hdmi_softc *,
-					const struct videomode *);
+					const struct videomode *, u_int);
 static void	awin_hdmi_set_audiomode(struct awin_hdmi_softc *,
-					const struct videomode *);
+					const struct videomode *, u_int);
 static void	awin_hdmi_hpd(struct awin_hdmi_softc *);
 static void	awin_hdmi_thread(void *);
 #if 0
@@ -127,6 +137,7 @@ awin_hdmi_attach(device_t parent, device_t self, void *aux)
 	struct awin_hdmi_softc *sc = device_private(self);
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
+	prop_dictionary_t cfg = device_properties(self);
 	uint32_t ver, clk;
 
 	sc->sc_dev = self;
@@ -171,6 +182,15 @@ awin_hdmi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ver = ver;
 	sc->sc_i2c_blklen = 16;
+
+	const char *display_mode = NULL;
+	prop_dictionary_get_cstring_nocopy(cfg, "display-mode", &display_mode);
+	if (display_mode) {
+		if (strcasecmp(display_mode, "hdmi") == 0)
+			sc->sc_display_mode = DISPLAY_MODE_HDMI;
+		else if (strcasecmp(display_mode, "dvi") == 0)
+			sc->sc_display_mode = DISPLAY_MODE_DVI;
+	}
 
 #if 0
 	sc->sc_ih = intr_establish(loc->loc_intr, IPL_SCHED, IST_LEVEL,
@@ -237,6 +257,7 @@ awin_hdmi_i2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 {
 	struct awin_hdmi_softc *sc = priv;
 	uint8_t *pbuf;
+	uint8_t block;
 	int resid;
 	off_t off;
 	int err;
@@ -251,14 +272,15 @@ awin_hdmi_i2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	if (err)
 		goto done;
 
-	off = *(const uint8_t *)cmdbuf;
+	block = *(const uint8_t *)cmdbuf;
+	off = (block & 1) ? 128 : 0;
 
 	pbuf = buf;
 	resid = len;
 	while (resid > 0) {
 		size_t blklen = min(resid, sc->sc_i2c_blklen);
 
-		err = awin_hdmi_i2c_xfer(sc, addr, off, blklen,
+		err = awin_hdmi_i2c_xfer(sc, addr, block >> 1, off, blklen,
 		      AWIN_HDMI_DDC_COMMAND_ACCESS_CMD_EOREAD, flags);
 		if (err)
 			goto done;
@@ -288,7 +310,7 @@ done:
 }
 
 static int
-awin_hdmi_i2c_xfer_1_3(void *priv, i2c_addr_t addr, uint8_t reg,
+awin_hdmi_i2c_xfer_1_3(void *priv, i2c_addr_t addr, uint8_t block, uint8_t reg,
     size_t len, int type, int flags)
 {
 	struct awin_hdmi_softc *sc = priv;
@@ -299,7 +321,8 @@ awin_hdmi_i2c_xfer_1_3(void *priv, i2c_addr_t addr, uint8_t reg,
 	val &= ~AWIN_HDMI_DDC_CTRL_FIFO_DIR;
 	HDMI_WRITE(sc, AWIN_HDMI_DDC_CTRL_REG, val);
 
-	val = __SHIFTIN(0x60, AWIN_HDMI_DDC_SLAVE_ADDR_1);
+	val |= __SHIFTIN(block, AWIN_HDMI_DDC_SLAVE_ADDR_0);
+	val |= __SHIFTIN(0x60, AWIN_HDMI_DDC_SLAVE_ADDR_1);
 	val |= __SHIFTIN(reg, AWIN_HDMI_DDC_SLAVE_ADDR_2);
 	val |= __SHIFTIN(addr, AWIN_HDMI_DDC_SLAVE_ADDR_3);
 	HDMI_WRITE(sc, AWIN_HDMI_DDC_SLAVE_ADDR_REG, val);
@@ -336,7 +359,7 @@ awin_hdmi_i2c_xfer_1_3(void *priv, i2c_addr_t addr, uint8_t reg,
 }
 
 static int
-awin_hdmi_i2c_xfer_1_4(void *priv, i2c_addr_t addr, uint8_t reg,
+awin_hdmi_i2c_xfer_1_4(void *priv, i2c_addr_t addr, uint8_t block, uint8_t reg,
     size_t len, int type, int flags)
 {
 	struct awin_hdmi_softc *sc = priv;
@@ -347,7 +370,7 @@ awin_hdmi_i2c_xfer_1_4(void *priv, i2c_addr_t addr, uint8_t reg,
 	val |= AWIN_A31_HDMI_DDC_FIFO_CTRL_RST;
 	HDMI_WRITE(sc, AWIN_A31_HDMI_DDC_FIFO_CTRL_REG, val);
 
-	val = __SHIFTIN(0, AWIN_A31_HDMI_DDC_SLAVE_ADDR_SEG_PTR);
+	val = __SHIFTIN(block, AWIN_A31_HDMI_DDC_SLAVE_ADDR_SEG_PTR);
 	val |= __SHIFTIN(0x60, AWIN_A31_HDMI_DDC_SLAVE_ADDR_DDC_CMD);
 	val |= __SHIFTIN(reg, AWIN_A31_HDMI_DDC_SLAVE_ADDR_OFF_ADR);
 	val |= __SHIFTIN(addr, AWIN_A31_HDMI_DDC_SLAVE_ADDR_DEV_ADR);
@@ -378,16 +401,18 @@ awin_hdmi_i2c_xfer_1_4(void *priv, i2c_addr_t addr, uint8_t reg,
 }
 
 static int
-awin_hdmi_i2c_xfer(void *priv, i2c_addr_t addr, uint8_t reg,
+awin_hdmi_i2c_xfer(void *priv, i2c_addr_t addr, uint8_t block, uint8_t reg,
     size_t len, int type, int flags)
 {
 	struct awin_hdmi_softc *sc = priv;
 	int rv;
 
 	if (HDMI_1_3_P(sc)) {
-		rv = awin_hdmi_i2c_xfer_1_3(priv, addr, reg, len, type, flags);
+		rv = awin_hdmi_i2c_xfer_1_3(priv, addr, block, reg, len,
+		    type, flags);
 	} else {
-		rv = awin_hdmi_i2c_xfer_1_4(priv, addr, reg, len, type, flags);
+		rv = awin_hdmi_i2c_xfer_1_4(priv, addr, block, reg, len,
+		    type, flags);
 	}
 
 	return rv;
@@ -468,12 +493,13 @@ awin_hdmi_read_edid(struct awin_hdmi_softc *sc)
 	char edid[128];
 	struct edid_info ei;
 	int retry = 4;
+	u_int display_mode;
 
 	memset(edid, 0, sizeof(edid));
 	memset(&ei, 0, sizeof(ei));
 
 	while (--retry > 0) {
-		if (ddc_read_edid(&sc->sc_ic, edid, sizeof(edid)) == 0)
+		if (!ddc_read_edid_block(&sc->sc_ic, edid, sizeof(edid), 0))
 			break;
 	}
 	if (retry == 0) {
@@ -489,6 +515,22 @@ awin_hdmi_read_edid(struct awin_hdmi_softc *sc)
 #endif
 	}
 
+	if (sc->sc_display_mode == DISPLAY_MODE_AUTO)
+		display_mode = awin_hdmi_get_display_mode(sc, &ei);
+	else
+		display_mode = sc->sc_display_mode;
+
+	const char *forced = sc->sc_display_mode == DISPLAY_MODE_AUTO ?
+	    "auto-detected" : "forced";
+	device_printf(sc->sc_dev, "%s mode (%s)\n",
+	    display_mode == DISPLAY_MODE_HDMI ? "HDMI" : "DVI", forced);
+
+	strlcpy(sc->sc_display_vendor, ei.edid_vendorname,
+	    sizeof(sc->sc_display_vendor));
+	strlcpy(sc->sc_display_product, ei.edid_productname,
+	    sizeof(sc->sc_display_product));
+	sc->sc_current_display_mode = display_mode;
+
 	mode = ei.edid_preferred_mode;
 	if (mode == NULL)
 		mode = pick_mode_by_ref(640, 480, 60);
@@ -500,14 +542,98 @@ awin_hdmi_read_edid(struct awin_hdmi_softc *sc)
 
 		awin_debe_set_videomode(mode);
 		awin_tcon_set_videomode(mode);
-		awin_hdmi_set_videomode(sc, mode);
-		awin_hdmi_set_audiomode(sc, mode);
+		awin_hdmi_set_videomode(sc, mode, display_mode);
+		awin_hdmi_set_audiomode(sc, mode, display_mode);
 		awin_debe_enable(true);
 		delay(20000);
 		awin_tcon_enable(true);
 		delay(20000);
 		awin_hdmi_video_enable(sc, true);
 	}
+}
+
+static u_int
+awin_hdmi_get_display_mode(struct awin_hdmi_softc *sc,
+    const struct edid_info *ei)
+{
+	char edid[128];
+	bool found_hdmi = false;
+	unsigned int n, p;
+
+	/*
+	 * Scan through extension blocks, looking for a CEA-861-D v3
+	 * block. If an HDMI Vendor-Specific Data Block (HDMI VSDB) is
+	 * found in that, assume HDMI mode.
+	 */
+	for (n = 1; n <= MIN(ei->edid_ext_block_count, 4); n++) {
+		if (ddc_read_edid_block(&sc->sc_ic, edid, sizeof(edid), n)) {
+#ifdef AWIN_HDMI_DEBUG
+			device_printf(sc->sc_dev,
+			    "Failed to read EDID block %d\n", n);
+#endif
+			break;
+		}
+
+#ifdef AWIN_HDMI_DEBUG
+		device_printf(sc->sc_dev, "EDID block #%d:\n", n);
+#endif
+
+		const uint8_t tag = edid[0];
+		const uint8_t rev = edid[1];
+		const uint8_t off = edid[2];
+
+#ifdef AWIN_HDMI_DEBUG
+		device_printf(sc->sc_dev, "  Tag %d, Revision %d, Offset %d\n",
+		    tag, rev, off);
+		device_printf(sc->sc_dev, "  Flags: 0x%02x\n", edid[3]);
+#endif
+
+		/* We are looking for a CEA-861-D tag (02h) with revision 3 */
+		if (tag != 0x02 || rev != 3)
+			continue;
+		/*
+		 * CEA data block collection starts at byte 4, so the
+		 * DTD blocks must start after it.
+		 */
+		if (off <= 4)
+			continue;
+
+		/* Parse the CEA data blocks */
+		for (p = 4; p < off;) {
+			const uint8_t btag = (edid[p] >> 5) & 0x7;
+			const uint8_t blen = edid[p] & 0x1f;
+
+#ifdef AWIN_HDMI_DEBUG
+			device_printf(sc->sc_dev, "  CEA data block @ %d\n", p);
+			device_printf(sc->sc_dev, "    Tag %d, Length %d\n",
+			    btag, blen);
+#endif
+
+			/* Make sure the length is sane */
+			if (p + blen + 1 > off)
+				break;
+			/* Looking for a VSDB tag */
+			if (btag != 3)
+				goto next_block;
+			/* HDMI VSDB is at least 5 bytes long */
+			if (blen < 5)
+				goto next_block;
+
+#ifdef AWIN_HDMI_DEBUG
+			device_printf(sc->sc_dev, "    ID: %02x%02x%02x\n",
+			    edid[p + 1], edid[p + 2], edid[p + 3]);
+#endif
+
+			/* HDMI 24-bit IEEE registration ID is 0x000C03 */
+			if (memcmp(&edid[p + 1], "\x03\x0c\x00", 3) == 0)
+				found_hdmi = true;
+
+next_block:
+			p += (1 + blen);
+		}
+	}
+
+	return found_hdmi ? DISPLAY_MODE_HDMI : DISPLAY_MODE_DVI;
 }
 
 static void
@@ -538,7 +664,7 @@ awin_hdmi_video_enable(struct awin_hdmi_softc *sc, bool enable)
 
 static void
 awin_hdmi_set_videomode(struct awin_hdmi_softc *sc,
-    const struct videomode *mode)
+    const struct videomode *mode, u_int display_mode)
 {
 	uint32_t val;
 	const u_int dblscan_p = !!(mode->flags & VID_DBLSCAN);
@@ -603,13 +729,20 @@ awin_hdmi_set_videomode(struct awin_hdmi_softc *sc,
 #endif
 
 	val = HDMI_READ(sc, AWIN_HDMI_VID_CTRL_REG);
-	val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_HDMI_MODE_HDMI,
-			 AWIN_HDMI_VID_CTRL_HDMI_MODE);
-	val &= ~AWIN_HDMI_VID_CTRL_OUTPUT_FMT;
+	val &= ~AWIN_HDMI_VID_CTRL_HDMI_MODE;
+	if (display_mode == DISPLAY_MODE_DVI) {
+		val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_HDMI_MODE_DVI,
+				 AWIN_HDMI_VID_CTRL_HDMI_MODE);
+	} else {
+		val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_HDMI_MODE_HDMI,
+				 AWIN_HDMI_VID_CTRL_HDMI_MODE);
+	}
+	val &= ~AWIN_HDMI_VID_CTRL_REPEATER_SEL;
 	if (dblscan_p) {
 		val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_REPEATER_SEL_2X,
 				 AWIN_HDMI_VID_CTRL_REPEATER_SEL);
 	}
+	val &= ~AWIN_HDMI_VID_CTRL_OUTPUT_FMT;
 	if (interlace_p) {
 		val |= __SHIFTIN(AWIN_HDMI_VID_CTRL_OUTPUT_FMT_INTERLACE,
 				 AWIN_HDMI_VID_CTRL_OUTPUT_FMT);
@@ -658,7 +791,7 @@ awin_hdmi_set_videomode(struct awin_hdmi_softc *sc,
 
 static void
 awin_hdmi_set_audiomode(struct awin_hdmi_softc *sc,
-    const struct videomode *mode)
+    const struct videomode *mode, u_int display_mode)
 {
 	uint32_t cts, n, val;
 
@@ -674,6 +807,11 @@ awin_hdmi_set_audiomode(struct awin_hdmi_softc *sc,
 	do {
 		val = HDMI_READ(sc, AWIN_HDMI_AUD_CTRL_REG);
 	} while (val & AWIN_HDMI_AUD_CTRL_RST);
+
+	/* No audio support in DVI mode */
+	if (display_mode != DISPLAY_MODE_HDMI) {
+		return;
+	}
 
 	/* DMA & FIFO control */
 	val = HDMI_READ(sc, AWIN_HDMI_ADMA_CTRL_REG);
@@ -740,7 +878,6 @@ awin_hdmi_hpd(struct awin_hdmi_softc *sc)
 	if (sc->sc_connected == con)
 		return;
 
-	sc->sc_connected = con;
 	if (con) {
 		device_printf(sc->sc_dev, "display connected\n");
 		awin_hdmi_read_edid(sc);
@@ -748,6 +885,8 @@ awin_hdmi_hpd(struct awin_hdmi_softc *sc)
 		device_printf(sc->sc_dev, "display disconnected\n");
 		awin_tcon_set_videomode(NULL);
 	}
+
+	sc->sc_connected = con;
 }
 
 static void
@@ -779,6 +918,32 @@ awin_hdmi_intr(void *priv)
 	return 1;
 }
 #endif
+
+void
+awin_hdmi_get_info(struct awin_hdmi_info *info)
+{
+	struct awin_hdmi_softc *sc;
+	device_t dev;
+
+	memset(info, 0, sizeof(*info));
+
+	dev = device_find_by_driver_unit("awinhdmi", 0);
+	if (dev == NULL) {
+		info->display_connected = false;
+		return;
+	}
+	sc = device_private(dev);
+
+	info->display_connected = sc->sc_connected;
+	if (info->display_connected) {
+		strlcpy(info->display_vendor, sc->sc_display_vendor,
+		    sizeof(info->display_vendor));
+		strlcpy(info->display_product, sc->sc_display_product,
+		    sizeof(info->display_product));
+		info->display_hdmimode =
+		    sc->sc_current_display_mode == DISPLAY_MODE_HDMI;
+	}
+}
 
 #if defined(DDB)
 void

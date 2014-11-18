@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmiaudio.c,v 1.3.2.2 2014/11/14 13:37:39 martin Exp $ */
+/* $NetBSD: awin_hdmiaudio.c,v 1.3.2.3 2014/11/18 18:19:09 snj Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmiaudio.c,v 1.3.2.2 2014/11/14 13:37:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmiaudio.c,v 1.3.2.3 2014/11/18 18:19:09 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -538,14 +538,35 @@ static int
 awin_hdmiaudio_getdev(void *priv, struct audio_device *audiodev)
 {
 	struct awin_hdmiaudio_softc *sc = priv;
+	struct awin_hdmi_info info;
+	const char *vendor = NULL, *product = NULL;
 
 	const int vmaj = __SHIFTOUT(sc->sc_ver, AWIN_HDMI_VERSION_ID_H);
 	const int vmin = __SHIFTOUT(sc->sc_ver, AWIN_HDMI_VERSION_ID_L);
 
-	snprintf(audiodev->name, sizeof(audiodev->name), "Allwinner");
-	snprintf(audiodev->version, sizeof(audiodev->version),
+	awin_hdmi_get_info(&info);
+
+	if (info.display_connected && info.display_hdmimode) {
+		if (strlen(info.display_vendor) > 0 &&
+		    strlen(info.display_product) > 0) {
+			vendor = info.display_vendor;
+			product = info.display_product;
+		} else {
+			vendor = "HDMI";
+			product = "";
+		}
+	} else if (info.display_connected) {
+		vendor = "DVI";
+		product = "(unsupported)";
+	} else {
+		vendor = "HDMI";
+		product = "(disconnected)";
+	}
+
+	strlcpy(audiodev->name, vendor, sizeof(audiodev->name));
+	strlcpy(audiodev->version, product, sizeof(audiodev->version));
+	snprintf(audiodev->config, sizeof(audiodev->config),
 	    "HDMI %d.%d", vmaj, vmin);
-	snprintf(audiodev->config, sizeof(audiodev->config), "awin_hdmiaudio");
 	return 0;
 }
 
@@ -574,10 +595,15 @@ awin_hdmiaudio_trigger_output(void *priv, void *start, void *end, int blksize,
 {
 	struct awin_hdmiaudio_softc *sc = priv;
 	struct awin_hdmiaudio_dma *dma;
+	struct awin_hdmi_info info;
 	bus_addr_t pstart;
 	bus_size_t psize;
 	uint32_t dmacfg;
 	int error;
+
+	awin_hdmi_get_info(&info);
+	if (info.display_connected == false || info.display_hdmimode == false)
+		return ENXIO;
 
 	pstart = 0;
 	psize = (uintptr_t)end - (uintptr_t)start;
