@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.25 2014/11/11 19:22:32 jmcneill Exp $
+#	$NetBSD: files.awin,v 1.26 2014/11/18 01:53:53 jmcneill Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -144,7 +144,7 @@ attach	awinhdmi at awinio with awin_hdmi
 file	arch/arm/allwinner/awin_hdmi.c		awin_hdmi
 
 # A20/A31 HDMI audio (HDMIAUDIO)
-device	awinhdmiaudio: audiobus, auconv, mulaw, aurateconv
+device	awinhdmiaudio: audiobus, auconv, mulaw, aurateconv, auvolconv
 attach	awinhdmiaudio at awinio with awin_hdmiaudio
 file	arch/arm/allwinner/awin_hdmiaudio.c	awin_hdmiaudio
 
