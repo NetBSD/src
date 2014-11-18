@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.83 2014/11/15 20:28:50 htodd Exp $
+# $NetBSD: shl.mi,v 1.84 2014/11/18 09:12:30 pooka Exp $
 ./usr/libdata/debug/lib/libc.so.12.196.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.3.debug		comp-sys-debug	debug
@@ -167,6 +167,7 @@
 ./usr/libdata/debug/usr/lib/librumpclient.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpdev.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpdev_audio.so.0.0.debug	comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpdev_audio_ac97.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpdev_bpf.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpdev_cgd.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpdev_disk.so.0.0.debug	comp-rump-debug	debug,rump
