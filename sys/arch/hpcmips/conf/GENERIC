@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.224.2.1 2014/11/14 15:16:19 martin Exp $
+# $NetBSD: GENERIC,v 1.224.2.2 2014/11/18 19:05:29 snj Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.224.2.1 $"
+#ident 		"GENERIC-$Revision: 1.224.2.2 $"
 
 maxusers	16
 
@@ -97,8 +97,6 @@ options 	WAPBL		# File system journaling support
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	UFS_EXTATTR	# Extended attribute support for UFS1
-#options 	UFS_EXTATTR_AUTOSTART
-#options 	UFS_EXTATTR_AUTOCREATE=1024
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
