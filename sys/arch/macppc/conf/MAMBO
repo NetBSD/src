@@ -6,7 +6,7 @@ include		"arch/macppc/conf/std.macppc.g5"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.21.2.1 $"
+#ident 		"GENERIC-$Revision: 1.21.2.2 $"
 
 maxusers	32
 
@@ -80,8 +80,6 @@ options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# ffs snapshots
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
-options 	UFS_EXTATTR_AUTOSTART
-options 	UFS_EXTATTR_AUTOCREATE=1024
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 

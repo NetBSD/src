@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.36 2014/05/16 09:34:03 dholland Exp $
+#	$NetBSD: files.ufs,v 1.36.2.1 2014/11/18 19:05:32 snj Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -7,12 +7,10 @@ deffs					LFS
 deffs					CHFS
 
 defflag	opt_ffs.h			FFS_EI FFS_NO_SNAPSHOT APPLE_UFS
-					UFS_DIRHASH
-					UFS_EXTATTR UFS_EXTATTR_AUTOSTART
+					UFS_DIRHASH UFS_EXTATTR
 
 defflag	opt_lfs.h			LFS_EI LFS_KERNEL_RFW
-					LFS_DIRHASH
-					LFS_EXTATTR LFS_EXTATTR_AUTOSTART
+					LFS_DIRHASH LFS_EXTATTR
 					LFS_QUOTA LFS_QUOTA2
 
 file	ufs/ext2fs/ext2fs_alloc.c	ext2fs
