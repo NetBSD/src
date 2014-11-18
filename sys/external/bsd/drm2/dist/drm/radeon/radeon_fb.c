@@ -255,6 +255,7 @@ static int radeonfb_create(struct drm_fb_helper *helper,
 	rfa.rfa_fb_helper = helper;
 	rfa.rfa_fb_sizes = *sizes;
 	rfa.rfa_fb_ptr = rbo->kptr;
+	rfa.rfa_fb_linebytes = mode_cmd.pitches[0];
 
 	helper->fbdev = config_found_ia(rdev->ddev->dev, "radeonfbbus", &rfa,
 	    NULL);
