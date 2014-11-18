@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.166 2014/05/28 20:57:22 justin Exp $	*/
+/*	$NetBSD: emul.c,v 1.167 2014/11/18 13:05:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.166 2014/05/28 20:57:22 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.167 2014/11/18 13:05:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -231,14 +231,22 @@ module_init_md(void)
 	 */
 }
 
-/* us and them, after all we're only ordinary seconds */
+/*
+ * Try to emulate all the MD definitions of DELAY() / delay().
+ * Would be nice to fix the #defines in MD headers, but this quicker.
+ */
 static void
 rump_delay(unsigned int us)
 {
 	uint64_t sec, nsec;
 
+#ifdef __mac68k__
+	sec = us / 1000;
+	nsec = (us % 1000) * 1000000;
+#else
 	sec = us / 1000000;
 	nsec = (us % 1000000) * 1000;
+#endif
 
 	if (__predict_false(sec != 0))
 		printf("WARNING: over 1s delay\n");
@@ -246,6 +254,8 @@ rump_delay(unsigned int us)
 	rumpuser_clock_sleep(RUMPUSER_CLOCK_RELWALL, sec, nsec);
 }
 void (*delay_func)(unsigned int) = rump_delay;
+__strong_alias(delay,rump_delay);
+__strong_alias(_delay,rump_delay);
 
 /*
  * Provide weak aliases for tty routines used by printf.
