@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.43.4.1 2014/11/18 18:40:06 snj Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.43.4.2 2014/11/18 18:42:42 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.43.4.1 2014/11/18 18:40:06 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.43.4.2 2014/11/18 18:42:42 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -210,9 +210,9 @@ ufs_extattr_valid_attrname(int attrnamespace, const char *attrname)
 /*
  * Autocreate an attribute storage
  */
-static struct ufs_extattr_list_entry *
+static int
 ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
-    const char *attrname, struct lwp *l)
+    const char *attrname, struct lwp *l, struct ufs_extattr_list_entry **uelep)
 {
 	struct mount *mp = vp->v_mount;
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -246,9 +246,19 @@ ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 		break;
 	default:
 		PNBUF_PUT(path);
-		return NULL;
+		*uelep = NULL;
+		return EINVAL;
 		break;
 	}
+
+	/*
+	 * Release extended attribute mount lock, otherwise
+	 * we can deadlock with another thread that would lock 
+	 * vp after we unlock it below, and call 
+	 * ufs_extattr_uepm_lock(ump), for instance
+	 * in ufs_getextattr().
+	 */
+	ufs_extattr_uepm_unlock(ump);
 
 	/*
 	 * XXX unlock/lock should only be done when setting extattr
@@ -261,7 +271,12 @@ ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 	pb = pathbuf_create(path);
 	NDINIT(&nd, CREATE, LOCKPARENT, pb);
 	
-	error = vn_open(&nd, O_CREAT|O_RDWR, 0600);
+	/*
+	 * Since we do not hold ufs_extattr_uepm_lock anymore,
+	 * another thread may race with us for backend creation,
+	 * but only one can succeed here thanks to O_EXCL
+	 */
+	error = vn_open(&nd, O_CREAT|O_EXCL|O_RDWR, 0600);
 
 	/*
 	 * Reacquire the lock on the vnode
@@ -269,10 +284,13 @@ ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 	KASSERT(VOP_ISLOCKED(vp) == 0);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
+	ufs_extattr_uepm_lock(ump);
+
 	if (error != 0) {
 		pathbuf_destroy(pb);
 		PNBUF_PUT(path);
-		return NULL;
+		*uelep = NULL;
+		return error;
 	}
 
 	KASSERT(nd.ni_vp != NULL);
@@ -300,7 +318,8 @@ ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 		printf("%s: write uef header failed for %s, error = %d\n", 
 		       __func__, attrname, error);
 		vn_close(backing_vp, FREAD|FWRITE, l->l_cred);
-		return NULL;
+		*uelep = NULL;
+		return error;
 	}
 
 	/*
@@ -313,7 +332,8 @@ ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 		printf("%s: enable %s failed, error %d\n", 
 		       __func__, attrname, error);
 		vn_close(backing_vp, FREAD|FWRITE, l->l_cred);
-		return NULL;
+		*uelep = NULL;
+		return error;
 	}
 
 	uele = ufs_extattr_find_attr(ump, attrnamespace, attrname);
@@ -321,13 +341,15 @@ ufs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 		printf("%s: atttribute %s created but not found!\n",
 		       __func__, attrname);
 		vn_close(backing_vp, FREAD|FWRITE, l->l_cred);
-		return NULL;
+		*uelep = NULL;
+		return ESRCH; /* really internal error */
 	}
 
 	printf("%s: EA backing store autocreated for %s\n",
 	       mp->mnt_stat.f_mntonname, attrname);
 
-	return uele;
+	*uelep = uele;
+	return 0;
 }
 
 /*
@@ -1405,10 +1427,17 @@ ufs_extattr_set(struct vnode *vp, int attrnamespace, const char *name,
 
 	attribute = ufs_extattr_find_attr(ump, attrnamespace, name);
 	if (!attribute) {
-		attribute =  ufs_extattr_autocreate_attr(vp, attrnamespace, 
-							 name, l);
-		if  (!attribute)
-			return (ENODATA);
+		error = ufs_extattr_autocreate_attr(vp, attrnamespace, 
+						    name, l, &attribute);
+		if (error == EEXIST) {
+			/* Another thread raced us for backend creation */
+			error = 0;
+			attribute = 
+			    ufs_extattr_find_attr(ump, attrnamespace, name);
+		}
+
+		if (error || !attribute)
+			return ENODATA;
 	}
 
 	/*
