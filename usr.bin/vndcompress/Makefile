@@ -77,6 +77,7 @@ tentinyblock.in:
 	head -c 5120 < /usr/share/dict/words > ${.TARGET}.tmp \
 	&& mv -f ${.TARGET}.tmp ${.TARGET}
 
+# Make sure we can restart from a pipe.
 CHECKS+=	check-pipe-restart
 CLEANFILES+=	piperestart.in piperestart.in.tmp
 CLEANFILES+=	piperestart.cl2 piperestart.cl2.tmp
@@ -87,7 +88,7 @@ check-pipe-restart: .PHONY piperestart.cl2 piperestart.cl2restart
 piperestart.cl2restart: piperestart.cl2part vndcompress
 	cp piperestart.cl2part ${.TARGET}.tmp \
 	&& head -c 700000 < /usr/share/dict/words \
-	| ./vndcompress -l 655360 -k 1 -rR /dev/stdin ${.TARGET}.tmp \
+	| ./vndcompress -l 655360 -k 1 -r -R /dev/stdin ${.TARGET}.tmp \
 	&& mv -f ${.TARGET}.tmp ${.TARGET}
 # The following rule uses ; and not && on purpose: vndcompress is
 # supposed to fail (and it is even OK to interrupt!) so we can restart
@@ -100,19 +101,74 @@ piperestart.in:
 	head -c 655360 < /usr/share/dict/words > ${.TARGET}.tmp \
 	&& mv -f ${.TARGET}.tmp ${.TARGET}
 
+# Make sure we can restart from a pipe even if the original start was
+# corrupted, as long as we don't pass -R.
+CHECKS+=	check-pipe-badstart
+CLEANFILES+=	pipebadstart.in pipebadstart.in.tmp
+CLEANFILES+=	pipebadstart.cl2 pipebadstart.cl2.tmp
+CLEANFILES+=	pipebadstart.cl2restart pipebadstart.cl2restart.tmp
+CLEANFILES+=	pipebadstart.cl2part pipebadstart.cl2part.tmp
+check-pipe-badstart: .PHONY pipebadstart.cl2 pipebadstart.cl2restart
+	cmp ${.ALLSRC}
+pipebadstart.cl2restart: pipebadstart.cl2part vndcompress
+	cp pipebadstart.cl2part ${.TARGET}.tmp \
+	&& head -c 700000 < /usr/share/dict/words \
+	| ./vndcompress -l 655360 -k 1 -r /dev/stdin ${.TARGET}.tmp \
+	&& mv -f ${.TARGET}.tmp ${.TARGET}
+pipebadstart.cl2part:
+	touch ${.TARGET}
+pipebadstart.in:
+	head -c 655360 < /usr/share/dict/words > ${.TARGET}.tmp \
+	&& mv -f ${.TARGET}.tmp ${.TARGET}
+
+# Make sure we can `restart' even if there's nothing there.
+CHECKS+=	check-pipe-falsestart
+CLEANFILES+=	pipefalsestart.in pipefalsestart.in.tmp
+CLEANFILES+=	pipefalsestart.cl2 pipefalsestart.cl2.tmp
+CLEANFILES+=	pipefalsestart.cl2restart pipefalsestart.cl2restart.tmp
+check-pipe-falsestart: .PHONY pipefalsestart.cl2 pipefalsestart.cl2restart
+	cmp ${.ALLSRC}
+pipefalsestart.cl2restart: vndcompress
+	rm -f ${.TARGET}.tmp \
+	&& head -c 700000 < /usr/share/dict/words \
+	| ./vndcompress -l 655360 -k 1 -r /dev/stdin ${.TARGET}.tmp \
+	&& mv -f ${.TARGET}.tmp ${.TARGET}
+pipefalsestart.in:
+	head -c 655360 < /usr/share/dict/words > ${.TARGET}.tmp \
+	&& mv -f ${.TARGET}.tmp ${.TARGET}
+
+# Make sure we can restart from a file, simulated with `-p'.
 CHECKS+=	check-part
-CLEANFILES+=	part.orig part.cl2part part.cl2 part.out
+CLEANFILES+=	part.orig part.orig.tmp
+CLEANFILES+=	part.cl2part part.cl2part.tmp
+CLEANFILES+=	part.cl2 part.cl2.tmp
+CLEANFILES+=	part.out part.out.tmp
 check-part: .PHONY part.orig part.out
 	cmp part.orig part.out
 part.cl2: part.orig part.cl2part vndcompress
 	cp part.cl2part ${.TARGET}.tmp \
-	&& ./vndcompress -b 512 -rR part.orig ${.TARGET}.tmp \
+	&& ./vndcompress -b 512 -r -R part.orig ${.TARGET}.tmp \
 	&& mv -f ${.TARGET}.tmp ${.TARGET}
 part.cl2part: part.orig vndcompress
 	./vndcompress -b 512 -p 10 part.orig ${.TARGET}.tmp \
 	&& mv -f ${.TARGET}.tmp ${.TARGET}
 part.orig:
 	head -c 12345 < /usr/share/dict/words > ${.TARGET}.tmp \
+	&& mv -f ${.TARGET}.tmp ${.TARGET}
+
+# Make sure we can `restart' even if there's nothing there.
+CHECKS+=	check-falsestart
+CLEANFILES+=	falsestart.in falsestart.in.tmp
+CLEANFILES+=	falsestart.cl2 falsestart.cl2.tmp
+CLEANFILES+=	falsestart.cl2restart falsestart.cl2restart.tmp
+check-falsestart: .PHONY falsestart.cl2 falsestart.cl2restart
+	cmp ${.ALLSRC}
+falsestart.cl2restart: vndcompress falsestart.in
+	rm -f ${.TARGET}.tmp \
+	&& ./vndcompress -r falsestart.in ${.TARGET}.tmp \
+	&& mv -f ${.TARGET}.tmp ${.TARGET}
+falsestart.in:
+	head -c 655360 < /usr/share/dict/words > ${.TARGET}.tmp \
 	&& mv -f ${.TARGET}.tmp ${.TARGET}
 
 TESTFILES+=	smallwindow
