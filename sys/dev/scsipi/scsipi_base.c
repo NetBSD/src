@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.163 2014/11/17 18:43:48 christos Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.164 2014/11/18 17:03:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.163 2014/11/17 18:43:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.164 2014/11/18 17:03:41 joerg Exp $");
 
 #include "opt_scsi.h"
 
@@ -1059,7 +1059,7 @@ scsipi_inquiry3_ok(const struct scsipi_inquiry_data *ib)
 		const struct scsipi_inquiry3_pattern *q =
 		    &scsipi_inquiry3_quirk[i];
 #define MATCH(field) \
-    (q->field[0] ? memcmp(ib->field, q->field, sizeof(ib->field) == 0) : 1)
+    (q->field[0] ? memcmp(ib->field, q->field, sizeof(ib->field)) == 0 : 1)
 		if (MATCH(vendor) && MATCH(product) && MATCH(revision))
 			return 0;
 	}
