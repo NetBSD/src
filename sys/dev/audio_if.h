@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.69 2014/11/01 07:54:18 uebayasi Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.70 2014/11/18 01:50:12 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -257,6 +257,9 @@ struct audio_attach_args {
 /* Attach the MI driver(s) to the MD driver. */
 device_t audio_attach_mi(const struct audio_hw_if *, void *, device_t);
 int	audioprint(void *, const char *);
+
+/* Get the hw device from an audio softc */
+device_t audio_get_device(struct audio_softc *);
 
 /* Device identity flags */
 #define SOUND_DEVICE		0
