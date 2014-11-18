@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.30 2014/05/30 08:46:00 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.30.2.1 2014/11/18 18:40:06 snj Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.30 2014/05/30 08:46:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.30.2.1 2014/11/18 18:40:06 snj Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -616,6 +616,22 @@ mount_checkdirs(vnode_t *olddp)
 	vput(newdp);
 }
 
+/*
+ * Start extended attributes
+ */
+static int
+start_extattr(struct mount *mp)
+{
+	int error;
+
+	error = VFS_EXTATTRCTL(mp, EXTATTR_CMD_START, NULL, 0, NULL);
+	if (error) 
+		printf("%s: failed to start extattr: error = %d\n",
+		       mp->mnt_stat.f_mntonname, error);
+
+	return error;
+}
+
 int
 mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
     const char *path, int flags, void *data, size_t *data_len)
@@ -721,13 +737,9 @@ mount_domount(struct lwp *l, vnode_t **vpp, struct vfsops *vfsops,
 	error = VFS_START(mp, 0);
        if (error) {
 		vrele(vp);
-       } else if (flags & MNT_EXTATTR) {
-	       error = VFS_EXTATTRCTL(vp->v_mountedhere, 
-		   EXTATTR_CMD_START, NULL, 0, NULL);
-	       if (error) 
-		       printf("%s: failed to start extattr: error = %d\n",
-			   vp->v_mountedhere->mnt_stat.f_mntonname, error);
-       }
+	} else if (flags & MNT_EXTATTR) {
+		(void)start_extattr(mp);
+	}
 	/* Drop reference held for VFS_START(). */
 	vfs_destroy(mp);
 	*vpp = NULL;
@@ -762,7 +774,7 @@ int
 dounmount(struct mount *mp, int flags, struct lwp *l)
 {
 	vnode_t *coveredvp;
-	int error, async, used_syncer;
+	int error, async, used_syncer, used_extattr;
 
 #if NVERIEXEC > 0
 	error = veriexec_unmountchk(mp);
@@ -796,6 +808,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	}
 
 	used_syncer = (mp->mnt_syncer != NULL);
+	used_extattr = mp->mnt_flag & MNT_EXTATTR;
 
 	/*
 	 * XXX Syncer must be frozen when we get here.  This should really
@@ -835,6 +848,12 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		mutex_exit(&mp->mnt_updating);
 		if (used_syncer)
 			mutex_exit(&syncer_mutex);
+		if (used_extattr) {
+			if (start_extattr(mp) != 0)
+				mp->mnt_flag &= ~MNT_EXTATTR;
+			else
+				mp->mnt_flag |= MNT_EXTATTR;
+		}
 		return (error);
 	}
 	mutex_exit(&mp->mnt_updating);
