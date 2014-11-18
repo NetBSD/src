@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.299 2014/05/24 16:34:04 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.299.2.1 2014/11/18 18:40:06 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.299 2014/05/24 16:34:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.299.2.1 2014/11/18 18:40:06 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1272,14 +1272,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		}
 #endif
 	 }
-#ifdef UFS_EXTATTR
-	/*
-	 * Initialize file-backed extended attributes on UFS1 file
-	 * systems.
-	 */
-	if (ump->um_fstype == UFS1)
-		ufs_extattr_uepm_init(&ump->um_extattr);	
-#endif /* UFS_EXTATTR */
 
 	if (mp->mnt_flag & MNT_DISCARD)
 		ump->um_discarddata = ffs_discard_init(devvp, fs);
@@ -1527,6 +1519,7 @@ ffs_flushfiles(struct mount *mp, int flags, struct lwp *l)
 			ufs_extattr_stop(mp, l);
 		if (ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_INITIALIZED)
 			ufs_extattr_uepm_destroy(&ump->um_extattr);
+		mp->mnt_flag &= ~MNT_EXTATTR;
 	}
 #endif
 	if ((error = vflush(mp, 0, SKIPSYSTEM | flags)) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.43 2014/02/07 15:29:23 hannken Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.43.4.1 2014/11/18 18:40:06 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.43 2014/02/07 15:29:23 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.43.4.1 2014/11/18 18:40:06 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -384,10 +384,11 @@ ufs_extattr_uepm_destroy(struct ufs_extattr_per_mount *uepm)
 		panic("ufs_extattr_uepm_destroy: called while still started");
 
 	/*
-	 * It's not clear that either order for the next two lines is
+	 * It's not clear that either order for the next three lines is
 	 * ideal, and it should never be a problem if this is only called
 	 * during unmount, and with vfs_busy().
 	 */
+	uepm->uepm_flags &= ~UFS_EXTATTR_UEPM_STARTED;
 	uepm->uepm_flags &= ~UFS_EXTATTR_UEPM_INITIALIZED;
 	mutex_destroy(&uepm->uepm_lock);
 }
@@ -402,6 +403,9 @@ ufs_extattr_start(struct mount *mp, struct lwp *l)
 	int error = 0;
 
 	ump = VFSTOUFS(mp);
+
+	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_INITIALIZED))
+		ufs_extattr_uepm_init(&ump->um_extattr); 
 
 	ufs_extattr_uepm_lock(ump);
 
