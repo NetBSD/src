@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.167 2014/11/18 13:05:33 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.168 2014/11/18 16:57:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.167 2014/11/18 13:05:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.168 2014/11/18 16:57:52 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -234,11 +234,27 @@ module_init_md(void)
 /*
  * Try to emulate all the MD definitions of DELAY() / delay().
  * Would be nice to fix the #defines in MD headers, but this quicker.
+ *
+ * XXX: we'd need a rumpuser_clock_sleep_nowrap() here.  Since we
+ * don't have it in the current hypercall revision, busyloop.
+ * Note that rather than calibrate a loop delay and work with that,
+ * get call gettime (which does not block) in a loop to make sure
+ * we didn't get virtual ghosttime.  That might be slightly inaccurate
+ * for very small delays ...
+ *
+ * The other option would be to run a thread in the hypervisor which
+ * sleeps for us and we can wait for it using rumpuser_cv_wait_nowrap()
+ * Probably too fussy.  Better just wait for hypercall rev 18 ;)
  */
 static void
 rump_delay(unsigned int us)
 {
-	uint64_t sec, nsec;
+	struct timespec target, tmp;
+	uint64_t sec, sec_ini, sec_now;
+	long nsec, nsec_ini, nsec_now;
+	int loops;
+
+	rumpuser_clock_gettime(RUMPUSER_CLOCK_ABSMONO, &sec_ini, &nsec_ini);
 
 #ifdef __mac68k__
 	sec = us / 1000;
@@ -248,10 +264,27 @@ rump_delay(unsigned int us)
 	nsec = (us % 1000000) * 1000;
 #endif
 
+	target.tv_sec = sec_ini;
+	tmp.tv_sec = sec;
+	target.tv_nsec = nsec_ini;
+	tmp.tv_nsec = nsec;
+	timespecadd(&target, &tmp, &target);
+
 	if (__predict_false(sec != 0))
 		printf("WARNING: over 1s delay\n");
 
-	rumpuser_clock_sleep(RUMPUSER_CLOCK_RELWALL, sec, nsec);
+	for (loops = 0; loops < 1000*1000*100; loops++) {
+		struct timespec cur;
+
+		rumpuser_clock_gettime(RUMPUSER_CLOCK_ABSMONO,
+		    &sec_now, &nsec_now);
+		cur.tv_sec = sec_now;
+		cur.tv_nsec = nsec_now;
+		if (timespeccmp(&cur, &target, >=)) {
+			return;
+		}
+	}
+	printf("WARNING: DELAY ESCAPED\n");
 }
 void (*delay_func)(unsigned int) = rump_delay;
 __strong_alias(delay,rump_delay);
