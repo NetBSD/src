@@ -1,4 +1,4 @@
-/*	$NetBSD: radeondrmkmsfb.c,v 1.4 2014/11/12 16:07:17 chs Exp $	*/
+/*	$NetBSD: radeondrmkmsfb.c,v 1.5 2014/11/18 09:28:36 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.4 2014/11/12 16:07:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.5 2014/11/18 09:28:36 nonaka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -171,8 +171,7 @@ radeonfb_setconfig_task(struct radeon_task *task)
 	prop_dictionary_set_uint32(dict, "width", sizes->fb_width);
 	prop_dictionary_set_uint32(dict, "height", sizes->fb_height);
 	prop_dictionary_set_uint8(dict, "depth", sizes->surface_bpp);
-	prop_dictionary_set_uint16(dict, "linebytes",
-	    roundup2((sizes->fb_width * howmany(sizes->surface_bpp, 8)), 64));
+	prop_dictionary_set_uint16(dict, "linebytes", rfa->rfa_fb_linebytes);
 	prop_dictionary_set_uint32(dict, "address", 0); /* XXX >32-bit */
 	CTASSERT(sizeof(uintptr_t) <= sizeof(uint64_t));
 	prop_dictionary_set_uint64(dict, "virtual_address",
