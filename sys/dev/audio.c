@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.265 2014/11/01 07:54:18 uebayasi Exp $	*/
+/*	$NetBSD: audio.c,v 1.266 2014/11/18 01:50:12 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.265 2014/11/01 07:54:18 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.266 2014/11/18 01:50:12 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -4244,6 +4244,14 @@ audioprint(void *aux, const char *pnp)
 }
 
 #endif /* NAUDIO > 0 || (NMIDI > 0 || NMIDIBUS > 0) */
+
+#if NAUDIO > 0
+device_t
+audio_get_device(struct audio_softc *sc)
+{
+	return sc->sc_dev;
+}
+#endif
 
 #if NAUDIO > 0
 static void
