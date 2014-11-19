@@ -1,5 +1,3 @@
-/*	$NetBSD: getaddrinfo.c,v 1.1.1.3 2013/04/06 15:57:51 christos Exp $	*/
-
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -56,11 +54,6 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif 
-
-#ifndef lint
-static const char rcsid[] _U_ =
-     "@(#) Header: /tcpdump/master/libpcap/Win32/Src/getaddrinfo.c,v 1.3 2008-09-15 23:37:51 guy Exp ";
-#endif
 
 #include <pcap-stdinc.h>
 #if 0

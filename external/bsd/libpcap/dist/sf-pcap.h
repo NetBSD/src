@@ -1,5 +1,3 @@
-/*	$NetBSD: sf-pcap.h,v 1.1.1.3 2013/12/31 16:57:25 christos Exp $	*/
-
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.

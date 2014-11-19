@@ -1,5 +1,3 @@
-/*	$NetBSD: etherent.c,v 1.1.1.3 2013/04/06 15:57:49 christos Exp $	*/
-
 /*
  * Copyright (c) 1990, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -20,11 +18,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
-#ifndef lint
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/etherent.c,v 1.23 2006-10-04 18:09:22 guy Exp  (LBL)";
-#endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

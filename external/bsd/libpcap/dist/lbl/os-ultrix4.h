@@ -1,5 +1,3 @@
-/*	$NetBSD: os-ultrix4.h,v 1.1.1.3 2013/04/06 15:57:52 christos Exp $	*/
-
 /*
  * Copyright (c) 1990, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -19,8 +17,6 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
- * @(#) Header: /tcpdump/master/libpcap/lbl/os-ultrix4.h,v 1.19 1999-10-07 23:46:41 mcr Exp  (LBL)
  */
 
 /* Prototypes missing in Ultrix 4 */

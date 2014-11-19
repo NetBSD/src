@@ -1,5 +1,3 @@
-/*	$NetBSD: nametoaddr.c,v 1.1.1.4 2013/12/31 16:57:25 christos Exp $	*/
-
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
  *	The Regents of the University of California.  All rights reserved.
@@ -23,11 +21,6 @@
  * Name to id translation routines used by the scanner.
  * These functions are not time critical.
  */
-
-#ifndef lint
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/nametoaddr.c,v 1.83 2008-02-06 10:21:30 guy Exp  (LBL)";
-#endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

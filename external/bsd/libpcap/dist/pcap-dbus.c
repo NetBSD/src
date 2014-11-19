@@ -1,5 +1,3 @@
-/*	$NetBSD: pcap-dbus.c,v 1.1.1.1 2013/12/31 16:57:18 christos Exp $	*/
-
 /*
  * Copyright (c) 2012 Jakub Zawadzki
  * All rights reserved.
