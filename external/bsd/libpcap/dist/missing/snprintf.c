@@ -1,5 +1,3 @@
-/*	$NetBSD: snprintf.c,v 1.1.1.3 2013/04/06 15:57:51 christos Exp $	*/
-
 /*
  * Copyright (c) 1995-1999 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -33,15 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* Id: snprintf.c,v 1.1 2004-04-05 22:43:51 guy Exp  */
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
-
-#ifndef lint
-static const char rcsid[] _U_ =
-     "@(#) Header: /tcpdump/master/libpcap/missing/snprintf.c,v 1.1 2004-04-05 22:43:51 guy Exp ";
 #endif
 
 #include <stdio.h>
