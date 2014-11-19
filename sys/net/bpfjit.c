@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.32 2014/07/26 11:23:46 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.33 2014/11/19 19:34:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.32 2014/07/26 11:23:46 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.33 2014/11/19 19:34:43 christos Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.32 2014/07/26 11:23:46 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.33 2014/11/19 19:34:43 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -74,6 +74,11 @@ __RCSID("$NetBSD: bpfjit.c,v 1.32 2014/07/26 11:23:46 alnsn Exp $");
 #if !defined(_KERNEL) && defined(SLJIT_VERBOSE) && SLJIT_VERBOSE
 #include <stdio.h> /* for stderr */
 #endif
+
+/*
+ * XXX: Until we support SLJIT_UMOD properly
+ */
+#undef BPFJIT_USE_UDIV
 
 /*
  * Arguments of generated bpfjit_func_t.
@@ -1113,14 +1118,21 @@ divide(sljit_uw x, sljit_uw y)
 
 	return (uint32_t)x / (uint32_t)y;
 }
+
+static sljit_uw
+modulus(sljit_uw x, sljit_uw y)
+{
+
+	return (uint32_t)x % (uint32_t)y;
+}
 #endif
 
 /*
- * Emit code for A = A / div.
+ * Emit code for A = A / div or A = A % div
  * divt,divw are either SLJIT_IMM,pc->k or BJ_XREG,0.
  */
 static int
-emit_division(struct sljit_compiler *compiler, int divt, sljit_sw divw)
+emit_moddiv(bool div, struct sljit_compiler *compiler, int divt, sljit_sw divw)
 {
 	int status;
 
@@ -1161,7 +1173,8 @@ emit_division(struct sljit_compiler *compiler, int divt, sljit_sw divw)
 #else
 	status = sljit_emit_ijump(compiler,
 	    SLJIT_CALL2,
-	    SLJIT_IMM, SLJIT_FUNC_OFFSET(divide));
+	    SLJIT_IMM, div ? SLJIT_FUNC_OFFSET(divide) :
+		SLJIT_FUNC_OFFSET(modulus));
 
 #if BJ_AREG != SLJIT_RETURN_REG
 	status = sljit_emit_op1(compiler,
@@ -1560,6 +1573,7 @@ bpf_alu_to_sljit_op(const struct bpf_insn *pc)
 	case BPF_SUB: return SLJIT_SUB;
 	case BPF_MUL: return SLJIT_MUL|SLJIT_INT_OP;
 	case BPF_OR:  return SLJIT_OR;
+	case BPF_XOR: return SLJIT_XOR;
 	case BPF_AND: return SLJIT_AND;
 	case BPF_LSH: return SLJIT_SHL;
 	case BPF_RSH: return SLJIT_LSHR|SLJIT_INT_OP;
@@ -1648,7 +1662,7 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 	size_t i;
 	int status;
 	int branching, negate;
-	unsigned int rval, mode, src;
+	unsigned int rval, mode, src, op;
 	uint32_t jt, jf;
 
 	bool unconditional_ret;
@@ -1884,7 +1898,8 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 				continue;
 			}
 
-			if (BPF_OP(pc->code) != BPF_DIV) {
+			op = BPF_OP(pc->code);
+			if (op != BPF_DIV && op != BPF_MOD) {
 				status = sljit_emit_op2(compiler,
 				    bpf_alu_to_sljit_op(pc),
 				    BJ_AREG, 0,
@@ -1896,7 +1911,7 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 				continue;
 			}
 
-			/* BPF_DIV */
+			/* BPF_DIV/BPF_MOD */
 
 			src = BPF_SRC(pc->code);
 			if (src != BPF_X && src != BPF_K)
@@ -1923,13 +1938,15 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 			}
 
 			if (src == BPF_X) {
-				status = emit_division(compiler, BJ_XREG, 0);
+				status = emit_moddiv(op == BPF_DIV,
+				    compiler, BJ_XREG, 0);
 				if (status != SLJIT_SUCCESS)
 					goto fail;
 			} else if (pc->k != 0) {
-				if (pc->k & (pc->k - 1)) {
-				    status = emit_division(compiler,
-				        SLJIT_IMM, (uint32_t)pc->k);
+				/* XXX: We can do better here for MOD */
+				if ((pc->k & (pc->k - 1)) || op == BPF_MOD) {
+				    status = emit_moddiv(op == BPF_DIV,
+					compiler, SLJIT_IMM, (uint32_t)pc->k);
 				} else {
 				    status = emit_pow2_division(compiler,
 				        (uint32_t)pc->k);
@@ -1941,7 +1958,8 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 			continue;
 
 		case BPF_JMP:
-			if (BPF_OP(pc->code) == BPF_JA) {
+			op = BPF_OP(pc->code);
+			if (op == BPF_JA) {
 				jt = jf = pc->k;
 			} else {
 				jt = pc->jt;
@@ -1953,7 +1971,7 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 			jtf = insn_dat[i].u.jdata.jtf;
 
 			if (branching) {
-				if (BPF_OP(pc->code) != BPF_JSET) {
+				if (op != BPF_JSET) {
 					jump = sljit_emit_cmp(compiler,
 					    bpf_jmp_to_sljit_cond(pc, negate),
 					    BJ_AREG, 0,
