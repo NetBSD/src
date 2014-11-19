@@ -1,3 +1,5 @@
+/*	$NetBSD: usb.h,v 1.2 2014/11/19 19:33:31 christos Exp $	*/
+
 /*
  * Copyright (c) 2006 Paolo Abeni (Italy)
  * All rights reserved.

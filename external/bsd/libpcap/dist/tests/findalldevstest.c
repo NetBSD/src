@@ -1,3 +1,8 @@
+/*	$NetBSD: findalldevstest.c,v 1.2 2014/11/19 19:33:31 christos Exp $	*/
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: findalldevstest.c,v 1.2 2014/11/19 19:33:31 christos Exp $");
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

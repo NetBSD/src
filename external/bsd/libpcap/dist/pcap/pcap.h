@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.h,v 1.4 2013/12/31 17:08:23 christos Exp $	*/
+/*	$NetBSD: pcap.h,v 1.5 2014/11/19 19:33:31 christos Exp $	*/
 
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
@@ -32,8 +32,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * @(#) Header: /tcpdump/master/libpcap/pcap/pcap.h,v 1.15 2008-10-06 15:27:32 gianluca Exp  (LBL)
  */
 
 #ifndef lib_pcap_pcap_h
@@ -137,7 +135,7 @@ struct pcap_file_header {
 
 /*
  * Macros for the value returned by pcap_datalink_ext().
- * 
+ *
  * If LT_FCS_LENGTH_PRESENT(x) is true, the LT_FCS_LENGTH(x) macro
  * gives the FCS length of packets in the capture.
  */
@@ -226,6 +224,8 @@ struct pcap_if {
 };
 
 #define PCAP_IF_LOOPBACK	0x00000001	/* interface is loopback */
+#define PCAP_IF_UP		0x00000002	/* interface is up */
+#define PCAP_IF_RUNNING		0x00000004	/* interface is running */
 
 /*
  * Representation of an interface address.

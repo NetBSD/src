@@ -1,3 +1,5 @@
+/*	$NetBSD: selpolltest.c,v 1.2 2014/11/19 19:33:31 christos Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000
  *	The Regents of the University of California.  All rights reserved.
@@ -18,6 +20,9 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: selpolltest.c,v 1.2 2014/11/19 19:33:31 christos Exp $");
 
 #ifndef lint
 static const char copyright[] =

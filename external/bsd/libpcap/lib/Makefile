@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2013/04/07 00:18:55 christos Exp $	
+# $NetBSD: Makefile,v 1.12 2014/11/19 19:33:31 christos Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -67,6 +67,7 @@ pcap_open_live.3pcap \
 pcap_open_offline.3pcap \
 pcap_set_buffer_size.3pcap \
 pcap_set_datalink.3pcap \
+pcap_set_immediate_mode.3pcap \
 pcap_set_promisc.3pcap \
 pcap_set_rfmon.3pcap \
 pcap_set_snaplen.3pcap \
@@ -88,10 +89,12 @@ pcap.3pcap.in \
 pcap_compile.3pcap.in \
 pcap_datalink.3pcap.in \
 pcap_dump_open.3pcap.in \
+pcap_get_tstamp_precision.3pcap.in \
 pcap_list_datalinks.3pcap.in \
 pcap_list_tstamp_types.3pcap.in \
 pcap_open_dead.3pcap.in \
 pcap_open_offline.3pcap.in \
+pcap_set_tstamp_precision.3pcap.in \
 pcap_set_tstamp_type.3pcap.in
 
 MANMISCIN= \

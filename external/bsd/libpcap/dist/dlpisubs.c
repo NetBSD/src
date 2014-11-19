@@ -1,3 +1,5 @@
+/*	$NetBSD: dlpisubs.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+
 /*
  * This code is derived from code formerly in pcap-dlpi.c, originally
  * contributed by Atanu Ghosh (atanu@cs.ucl.ac.uk), University College
@@ -10,6 +12,9 @@
  * This file contains dlpi/libdlpi related common functions used
  * by pcap-[dlpi,libdlpi].c.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: dlpisubs.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

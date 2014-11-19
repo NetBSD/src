@@ -1,3 +1,5 @@
+/*	$NetBSD: atmuni31.h,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Yen Yen Lim and North Dakota State University
  * All rights reserved.

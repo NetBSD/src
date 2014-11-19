@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-int.h,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.

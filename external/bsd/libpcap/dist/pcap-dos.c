@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-dos.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+
 /*
  *  This file is part of DOS-libpcap
  *  Ported to DOS/DOSX by G. Vanem <gvanem@broadpark.no>

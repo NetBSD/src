@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-usb-linux.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+
 /*
  * Copyright (c) 2006 Paolo Abeni (Italy)
  * All rights reserved.
@@ -33,6 +35,9 @@
  *
  */
  
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pcap-usb-linux.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

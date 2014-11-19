@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-dos.h,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+
 /*
  * Internal details for libpcap on DOS.
  * 32-bit targets: djgpp, Pharlap or DOS4GW.

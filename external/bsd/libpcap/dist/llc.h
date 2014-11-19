@@ -1,3 +1,5 @@
+/*	$NetBSD: llc.h,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994, 1997
  *	The Regents of the University of California.  All rights reserved.

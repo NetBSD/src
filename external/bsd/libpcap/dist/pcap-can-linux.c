@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-can-linux.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+
 /*
  * Copyright (c) 2009 Felix Obenhuber
  * All rights reserved.
@@ -31,6 +33,9 @@
  * By Felix Obenhuber <felix@obenhuber.de>
  *
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pcap-can-linux.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-namedb.h,v 1.3 2013/04/06 17:29:53 christos Exp $	*/
+/*	$NetBSD: pcap-namedb.h,v 1.4 2014/11/19 19:33:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996
@@ -31,8 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * @(#) Header: /tcpdump/master/libpcap/pcap-namedb.h,v 1.13 2006-10-04 18:13:32 guy Exp  (LBL)
  */
 
 /*

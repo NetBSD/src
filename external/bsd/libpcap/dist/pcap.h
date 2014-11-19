@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap.h,v 1.3 2013/04/06 17:29:53 christos Exp $	*/
+/*	$NetBSD: pcap.h,v 1.4 2014/11/19 19:33:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -31,10 +31,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * @(#) Header: /tcpdump/master/libpcap/pcap.h,v 1.59 2006-10-04 18:09:22 guy Exp  (LBL)
  */
-/* $NetBSD: pcap.h,v 1.3 2013/04/06 17:29:53 christos Exp $ */
+/* $NetBSD: pcap.h,v 1.4 2014/11/19 19:33:30 christos Exp $ */
 
 
 /*
