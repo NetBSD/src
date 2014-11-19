@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.24 2014/11/04 00:20:19 justin Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.25 2014/11/19 10:03:51 martin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -448,13 +448,13 @@ ATF_TC_BODY(sigbus_adraln, tc)
 {
 	struct sigaction sa;
 
-#if defined(__alpha__)
+#if defined(__alpha__) || defined(__arm__)
 	int rv, val;
 	size_t len = sizeof(val);
 	rv = sysctlbyname("machdep.unaligned_sigbus", &val, &len, NULL, 0);
 	ATF_REQUIRE(rv == 0);
 	if (val == 0)
-		atf_tc_skip("SIGBUS signal not enabled for unaligned accesses");
+		atf_tc_skip("No SIGBUS signal for unaligned accesses");
 #endif
 
 	sa.sa_flags = SA_SIGINFO;
