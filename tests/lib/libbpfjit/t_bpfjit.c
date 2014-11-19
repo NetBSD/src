@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfjit.c,v 1.6 2014/07/08 21:07:52 alnsn Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.7 2014/11/19 22:56:35 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2011-2012, 2014 Alexander Nasonov.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.6 2014/07/08 21:07:52 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.7 2014/11/19 22:56:35 alnsn Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
@@ -441,6 +441,36 @@ ATF_TC_BODY(libbpfjit_alu_or_k, tc)
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 0xdead0000),
 		BPF_STMT(BPF_ALU+BPF_OR+BPF_K, 0x0000beef),
+		BPF_STMT(BPF_RET+BPF_A, 0)
+	};
+
+	bpfjit_func_t code;
+	uint8_t pkt[1]; /* the program doesn't read any data */
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	ATF_CHECK(bpf_validate(insns, insn_count));
+
+	code = bpfjit_generate_code(NULL, insns, insn_count);
+	ATF_REQUIRE(code != NULL);
+
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0xdeadbeef);
+
+	bpfjit_free_code(code);
+}
+
+ATF_TC(libbpfjit_alu_xor_k);
+ATF_TC_HEAD(libbpfjit_alu_xor_k, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test JIT compilation of BPF_ALU+BPF_XOR+BPF_K");
+}
+
+ATF_TC_BODY(libbpfjit_alu_xor_k, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_IMM, 0xdead0f0f),
+		BPF_STMT(BPF_ALU+BPF_XOR+BPF_K, 0x0000b1e0),
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
@@ -1027,6 +1057,37 @@ ATF_TC_BODY(libbpfjit_alu_or_x, tc)
 		BPF_STMT(BPF_LD+BPF_IMM, 0xdead0000),
 		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 0x0000beef),
 		BPF_STMT(BPF_ALU+BPF_OR+BPF_X, 0),
+		BPF_STMT(BPF_RET+BPF_A, 0)
+	};
+
+	bpfjit_func_t code;
+	uint8_t pkt[1]; /* the program doesn't read any data */
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	ATF_CHECK(bpf_validate(insns, insn_count));
+
+	code = bpfjit_generate_code(NULL, insns, insn_count);
+	ATF_REQUIRE(code != NULL);
+
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0xdeadbeef);
+
+	bpfjit_free_code(code);
+}
+
+ATF_TC(libbpfjit_alu_xor_x);
+ATF_TC_HEAD(libbpfjit_alu_xor_x, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test JIT compilation of BPF_ALU+BPF_XOR+BPF_X");
+}
+
+ATF_TC_BODY(libbpfjit_alu_xor_x, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_IMM, 0xdead0f0f),
+		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 0x0000b1e0),
+		BPF_STMT(BPF_ALU+BPF_XOR+BPF_X, 0),
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
@@ -3896,6 +3957,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_div80000000_k);
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_and_k);
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_or_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_xor_k);
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_lsh_k);
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_lsh0_k);
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_rsh_k);
@@ -3914,6 +3976,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_div80000000_x);
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_and_x);
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_or_x);
+	ATF_TP_ADD_TC(tp, libbpfjit_alu_xor_x);
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_lsh_x);
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_lsh0_x);
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_rsh_x);
