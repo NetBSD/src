@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1923 2014/11/19 01:08:42 pooka Exp $
+#	$NetBSD: mi,v 1.1924 2014/11/19 19:38:40 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8224,6 +8224,7 @@
 ./usr/share/man/cat3/pcap_freealldevs.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/pcap_freecode.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_get_selectable_fd.0	comp-c-catman		.cat
+./usr/share/man/cat3/pcap_get_tstamp_precision.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_geterr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_inject.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_is_swapped.0		comp-c-catman		.cat
@@ -8241,11 +8242,13 @@
 ./usr/share/man/cat3/pcap_open_offline.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_set_buffer_size.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_set_datalink.0	comp-c-catman		.cat
+./usr/share/man/cat3/pcap_set_immediate_mode.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_set_promisc.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_set_rfmon.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_set_snaplen.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_set_timeout.0		comp-c-catman		.cat
-./usr/share/man/cat3/pcap_set_tstamp_type.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_set_tstamp_precision.0	comp-c-catman		.cat
+./usr/share/man/cat3/pcap_set_tstamp_type.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_setdirection.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_setfilter.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_setnonblock.0		comp-c-catman		.cat
@@ -15042,6 +15045,7 @@
 ./usr/share/man/html3/pcap_freealldevs.html	comp-obsolete		obsolete
 ./usr/share/man/html3/pcap_freecode.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_get_selectable_fd.html comp-c-htmlman	html
+./usr/share/man/html3/pcap_get_tstamp_precision.html comp-c-htmlman	html
 ./usr/share/man/html3/pcap_geterr.html		comp-c-htmlman		html
 ./usr/share/man/html3/pcap_inject.html		comp-c-htmlman		html
 ./usr/share/man/html3/pcap_is_swapped.html	comp-c-htmlman		html
@@ -15059,10 +15063,12 @@
 ./usr/share/man/html3/pcap_open_offline.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_set_buffer_size.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_set_datalink.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_set_immediate_mode.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_set_promisc.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_set_rfmon.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_set_snaplen.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_set_timeout.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_set_tstamp_precision.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_set_tstamp_type.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_setdirection.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_setfilter.html	comp-c-htmlman		html
@@ -21852,6 +21858,7 @@
 ./usr/share/man/man3/pcap_freealldevs.3		comp-obsolete		obsolete
 ./usr/share/man/man3/pcap_freecode.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_get_selectable_fd.3	comp-c-man		.man
+./usr/share/man/man3/pcap_get_tstamp_precision.3	comp-c-man		.man
 ./usr/share/man/man3/pcap_geterr.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_inject.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_is_swapped.3		comp-c-man		.man
@@ -21869,11 +21876,13 @@
 ./usr/share/man/man3/pcap_open_offline.3	comp-c-man		.man
 ./usr/share/man/man3/pcap_set_buffer_size.3	comp-c-man		.man
 ./usr/share/man/man3/pcap_set_datalink.3	comp-c-man		.man
+./usr/share/man/man3/pcap_set_immediate_mode.3	comp-c-man		.man
 ./usr/share/man/man3/pcap_set_promisc.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_set_rfmon.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_set_snaplen.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_set_timeout.3		comp-c-man		.man
-./usr/share/man/man3/pcap_set_tstamp_type.3		comp-c-man		.man
+./usr/share/man/man3/pcap_set_tstamp_precision.3	comp-c-man		.man
+./usr/share/man/man3/pcap_set_tstamp_type.3	comp-c-man		.man
 ./usr/share/man/man3/pcap_setdirection.3	comp-c-man		.man
 ./usr/share/man/man3/pcap_setfilter.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_setnonblock.3		comp-c-man		.man
