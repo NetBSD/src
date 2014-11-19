@@ -1,5 +1,3 @@
-/*	$NetBSD: pcap-can-linux.c,v 1.1.1.3 2013/12/31 16:57:20 christos Exp $	*/
-
 /*
  * Copyright (c) 2009 Felix Obenhuber
  * All rights reserved.
@@ -245,7 +243,7 @@ can_read_linux(pcap_t *handle, int max_packets, pcap_handler callback, u_char *u
 		}
 	} while ((pkth.caplen == -1) && (errno == EINTR));
 
-	if (pkth.caplen < 0)
+	if (pkth.caplen == -1)
 	{
 		snprintf(handle->errbuf, PCAP_ERRBUF_SIZE, "Can't receive packet %d:%s",
 			errno, strerror(errno));

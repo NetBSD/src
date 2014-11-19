@@ -1,5 +1,3 @@
-/*	$NetBSD: pcap.c,v 1.1.1.4 2013/12/31 16:57:25 christos Exp $	*/
-
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
  *	The Regents of the University of California.  All rights reserved.
@@ -32,11 +30,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/pcap.c,v 1.128 2008-12-23 20:13:29 guy Exp  (LBL)";
-#endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -95,6 +88,10 @@ static const char rcsid[] _U_ =
 #include "pcap-bt-linux.h"
 #endif
 
+#ifdef PCAP_SUPPORT_BT_MONITOR
+#include "pcap-bt-monitor-linux.h"
+#endif
+
 #ifdef PCAP_SUPPORT_CAN
 #include "pcap-can-linux.h"
 #endif
@@ -111,7 +108,7 @@ static const char rcsid[] _U_ =
 #include "pcap-dbus.h"
 #endif
 
-int 
+int
 pcap_not_initialized(pcap_t *pcap _U_)
 {
 	/* this means 'not initialized' */
@@ -223,7 +220,7 @@ pcap_next(pcap_t *p, struct pcap_pkthdr *h)
 	return (pkt);
 }
 
-int 
+int
 pcap_next_ex(pcap_t *p, struct pcap_pkthdr **pkt_header,
     const u_char **pkt_data)
 {
@@ -326,6 +323,9 @@ struct capture_source_type {
 #ifdef PCAP_SUPPORT_BT
 	{ bt_findalldevs, bt_create },
 #endif
+#ifdef PCAP_SUPPORT_BT_MONITOR
+	{ bt_monitor_findalldevs, bt_monitor_create },
+#endif
 #if PCAP_SUPPORT_CANUSB
 	{ canusb_findalldevs, canusb_create },
 #endif
@@ -357,7 +357,7 @@ pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
 
 	/*
 	 * Get the list of regular interfaces first.
-	 */ 
+	 */
 	if (pcap_findalldevs_interfaces(alldevsp, errbuf) == -1)
 		return (-1);	/* failure */
 
@@ -394,6 +394,7 @@ pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
 			return (-1);
 		}
 	}
+
 	return (0);
 }
 
@@ -508,7 +509,7 @@ pcap_alloc_pcap_t(char *ebuf, size_t size)
 #ifndef WIN32
 	p->fd = -1;	/* not opened yet */
 	p->selectable_fd = -1;
-#endif 
+#endif
 
 	if (size == 0) {
 		/* No private data was requested. */
@@ -552,9 +553,9 @@ pcap_create_common(const char *source, char *ebuf, size_t size)
 	initialize_ops(p);
 
 	/* put in some defaults*/
- 	pcap_set_snaplen(p, 65535);	/* max packet size */
-	p->opt.timeout = 0;		/* no timeout specified */
-	p->opt.buffer_size = 0;		/* use the platform's default */
+ 	pcap_set_snaplen(p, MAXIMUM_SNAPLEN);	/* max packet size */
+	p->opt.timeout = 0;			/* no timeout specified */
+	p->opt.buffer_size = 0;			/* use the platform's default */
 	p->opt.promisc = 0;
 	p->opt.rfmon = 0;
 	p->opt.immediate = 0;
@@ -860,7 +861,7 @@ pcap_loop(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 		}
 		if (n <= 0)
 			return (n);
-		if (cnt > 0) {
+		if (!PACKET_COUNT_IS_UNLIMITED(cnt)) {
 			cnt -= n;
 			if (cnt <= 0)
 				return (0);
@@ -1184,6 +1185,7 @@ static struct dlt_choice dlt_choices[] = {
 	DLT_CHOICE(DLT_AX25_KISS, "AX.25 with KISS header"),
 	DLT_CHOICE(DLT_IEEE802_15_4_NONASK_PHY, "IEEE 802.15.4 with non-ASK PHY data"),
 	DLT_CHOICE(DLT_MPLS, "MPLS with label as link-layer header"),
+	DLT_CHOICE(DLT_LINUX_EVDEV, "Linux evdev events"),
 	DLT_CHOICE(DLT_USB_LINUX_MMAPPED, "USB with padded Linux header"),
 	DLT_CHOICE(DLT_DECT, "DECT"),
 	DLT_CHOICE(DLT_AOS, "AOS Space Data Link protocol"),
@@ -1195,16 +1197,33 @@ static struct dlt_choice dlt_choices[] = {
 	DLT_CHOICE(DLT_IPV4, "Raw IPv4"),
 	DLT_CHOICE(DLT_IPV6, "Raw IPv6"),
 	DLT_CHOICE(DLT_IEEE802_15_4_NOFCS, "IEEE 802.15.4 without FCS"),
+	DLT_CHOICE(DLT_DBUS, "D-Bus"),
 	DLT_CHOICE(DLT_JUNIPER_VS, "Juniper Virtual Server"),
 	DLT_CHOICE(DLT_JUNIPER_SRX_E2E, "Juniper SRX E2E"),
 	DLT_CHOICE(DLT_JUNIPER_FIBRECHANNEL, "Juniper Fibre Channel"),
 	DLT_CHOICE(DLT_DVB_CI, "DVB-CI"),
+	DLT_CHOICE(DLT_MUX27010, "MUX27010"),
+	DLT_CHOICE(DLT_STANAG_5066_D_PDU, "STANAG 5066 D_PDUs"),
 	DLT_CHOICE(DLT_JUNIPER_ATM_CEMIC, "Juniper ATM CEMIC"),
 	DLT_CHOICE(DLT_NFLOG, "Linux netfilter log messages"),
 	DLT_CHOICE(DLT_NETANALYZER, "Ethernet with Hilscher netANALYZER pseudo-header"),
 	DLT_CHOICE(DLT_NETANALYZER_TRANSPARENT, "Ethernet with Hilscher netANALYZER pseudo-header and with preamble and SFD"),
 	DLT_CHOICE(DLT_IPOIB, "RFC 4391 IP-over-Infiniband"),
-	DLT_CHOICE(DLT_DBUS, "D-Bus"),
+	DLT_CHOICE(DLT_MPEG_2_TS, "MPEG-2 transport stream"),
+	DLT_CHOICE(DLT_NG40, "ng40 protocol tester Iub/Iur"),
+	DLT_CHOICE(DLT_NFC_LLCP, "NFC LLCP PDUs with pseudo-header"),
+	DLT_CHOICE(DLT_INFINIBAND, "InfiniBand"),
+	DLT_CHOICE(DLT_SCTP, "SCTP"),
+	DLT_CHOICE(DLT_USBPCAP, "USB with USBPcap header"),
+	DLT_CHOICE(DLT_RTAC_SERIAL, "Schweitzer Engineering Laboratories RTAC packets"),
+	DLT_CHOICE(DLT_BLUETOOTH_LE_LL, "Bluetooth Low Energy air interface"),
+	DLT_CHOICE(DLT_NETLINK, "Linux netlink"),
+	DLT_CHOICE(DLT_BLUETOOTH_LINUX_MONITOR, "Bluetooth Linux Monitor"),
+	DLT_CHOICE(DLT_BLUETOOTH_BREDR_BB, "Bluetooth Basic Rate/Enhanced Data Rate baseband packets"),
+	DLT_CHOICE(DLT_BLUETOOTH_LE_LL_WITH_PHDR, "Bluetooth Low Energy air interface with pseudo-header"),
+	DLT_CHOICE(DLT_PROFIBUS_DL, "PROFIBUS data link layer"),
+	DLT_CHOICE(DLT_PKTAP, "Apple DLT_PKTAP"),
+	DLT_CHOICE(DLT_EPON, "Ethernet with 802.3 Clause 65 EPON preamble"),
 	DLT_CHOICE_SENTINEL
 };
 
@@ -1460,7 +1479,7 @@ pcap_setnonblock_fd(pcap_t *p, int nonblock, char *errbuf)
 
 #ifdef WIN32
 /*
- * Generate a string for the last Win32-specific error (i.e. an error generated when 
+ * Generate a string for the last Win32-specific error (i.e. an error generated when
  * calling a Win32 API).
  * For errors occurred during standard C calls, we still use pcap_strerror()
  */
@@ -1868,7 +1887,7 @@ pcap_offline_filter(const struct bpf_program *fp, const struct pcap_pkthdr *h,
 {
 	const struct bpf_insn *fcode = fp->bf_insns;
 
-	if (fcode != NULL) 
+	if (fcode != NULL)
 		return (bpf_filter(fcode, pkt, h->len, h->caplen));
 	else
 		return (0);

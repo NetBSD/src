@@ -1,5 +1,3 @@
-/*	$NetBSD: optimize.c,v 1.1.1.4 2013/12/31 16:57:25 christos Exp $	*/
-
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -22,10 +20,6 @@
  *
  *  Optimization module for tcpdump intermediate representation.
  */
-#ifndef lint
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/optimize.c,v 1.91 2008-01-02 04:16:46 guy Exp  (LBL)";
-#endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -612,12 +606,22 @@ fold_op(struct stmt *s, int v0, int v1)
 		a /= b;
 		break;
 
+	case BPF_MOD:
+		if (b == 0)
+			bpf_error("modulus by zero");
+		a %= b;
+		break;
+
 	case BPF_AND:
 		a &= b;
 		break;
 
 	case BPF_OR:
 		a |= b;
+		break;
+
+	case BPF_XOR:
+		a ^= b;
 		break;
 
 	case BPF_LSH:
@@ -980,8 +984,10 @@ opt_stmt(struct stmt *s, int val[], int alter)
 	case BPF_ALU|BPF_SUB|BPF_K:
 	case BPF_ALU|BPF_MUL|BPF_K:
 	case BPF_ALU|BPF_DIV|BPF_K:
+	case BPF_ALU|BPF_MOD|BPF_K:
 	case BPF_ALU|BPF_AND|BPF_K:
 	case BPF_ALU|BPF_OR|BPF_K:
+	case BPF_ALU|BPF_XOR|BPF_K:
 	case BPF_ALU|BPF_LSH|BPF_K:
 	case BPF_ALU|BPF_RSH|BPF_K:
 		op = BPF_OP(s->code);
@@ -992,7 +998,7 @@ opt_stmt(struct stmt *s, int val[], int alter)
 				 * fixup the generated math code */
 				if (op == BPF_ADD ||
 				    op == BPF_LSH || op == BPF_RSH ||
-				    op == BPF_OR) {
+				    op == BPF_OR || op == BPF_XOR) {
 					s->code = NOP;
 					break;
 				}
@@ -1015,8 +1021,10 @@ opt_stmt(struct stmt *s, int val[], int alter)
 	case BPF_ALU|BPF_SUB|BPF_X:
 	case BPF_ALU|BPF_MUL|BPF_X:
 	case BPF_ALU|BPF_DIV|BPF_X:
+	case BPF_ALU|BPF_MOD|BPF_X:
 	case BPF_ALU|BPF_AND|BPF_X:
 	case BPF_ALU|BPF_OR|BPF_X:
+	case BPF_ALU|BPF_XOR|BPF_X:
 	case BPF_ALU|BPF_LSH|BPF_X:
 	case BPF_ALU|BPF_RSH|BPF_X:
 		op = BPF_OP(s->code);
@@ -1043,12 +1051,12 @@ opt_stmt(struct stmt *s, int val[], int alter)
 		 */
 		if (alter && vmap[val[A_ATOM]].is_const
 		    && vmap[val[A_ATOM]].const_val == 0) {
-			if (op == BPF_ADD || op == BPF_OR) {
+			if (op == BPF_ADD || op == BPF_OR || op == BPF_XOR) {
 				s->code = BPF_MISC|BPF_TXA;
 				vstore(s, &val[A_ATOM], val[X_ATOM], alter);
 				break;
 			}
-			else if (op == BPF_MUL || op == BPF_DIV ||
+			else if (op == BPF_MUL || op == BPF_DIV || op == BPF_MOD ||
 				 op == BPF_AND || op == BPF_LSH || op == BPF_RSH) {
 				s->code = BPF_LD|BPF_IMM;
 				s->k = 0;

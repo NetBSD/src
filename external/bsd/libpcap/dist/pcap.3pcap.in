@@ -1,5 +1,3 @@
-.\" @(#) Header: /tcpdump/master/libpcap/pcap.3pcap.in,v 1.1 2008-10-21 07:33:01 guy Exp 
-.\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -19,7 +17,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.TH PCAP 3PCAP "1 July 2013"
+.TH PCAP 3PCAP "16 April 2014"
 .SH NAME
 pcap \- Packet Capture library
 .SH SYNOPSIS
@@ -423,7 +421,7 @@ get name for a time stamp type
 .BR pcap_tstamp_type_val_to_description (3PCAP)
 get description for a time stamp type
 .TP
-.BR pcap_tstamp_name_to_val (3PCAP)
+.BR pcap_tstamp_type_name_to_val (3PCAP)
 get time stamp type corresponding to a name
 .TP
 .BR pcap_datalink (3PCAP)
@@ -845,12 +843,12 @@ get a string for an error or warning status code
 .RE
 .SS Getting library version information
 To get a string giving version information about libpcap, call
-.BR pcap_library_version ().
+.BR pcap_lib_version ().
 .TP
 .B Routines
 .RS
 .TP
-.BR pcap_library_version (3PCAP)
+.BR pcap_lib_version (3PCAP)
 get library version string
 .RE
 .SH BACKWARDS COMPATIBILITY

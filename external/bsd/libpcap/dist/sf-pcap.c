@@ -1,5 +1,3 @@
-/*	$NetBSD: sf-pcap.c,v 1.1.1.3 2013/12/31 16:57:25 christos Exp $	*/
-
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -373,9 +371,9 @@ pcap_check_header(bpf_u_int32 magic, FILE *fp, u_int precision, char *errbuf,
 	p->bufsize = p->snapshot;
 	if (p->bufsize <= 0) {
 		/*
-		 * Bogus snapshot length; use 64KiB as a fallback.
+		 * Bogus snapshot length; use the maximum as a fallback.
 		 */
-		p->bufsize = 65536;
+		p->bufsize = MAXIMUM_SNAPLEN;
 	}
 	p->buffer = malloc(p->bufsize);
 	if (p->buffer == NULL) {
@@ -502,7 +500,7 @@ pcap_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char **data)
 		static u_char *tp = NULL;
 		static size_t tsize = 0;
 
-		if (hdr->caplen > 65535) {
+		if (hdr->caplen > MAXIMUM_SNAPLEN) {
 			snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
 			    "bogus savefile header");
 			return (-1);
@@ -561,23 +559,8 @@ pcap_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char **data)
 	}
 	*data = p->buffer;
 
-	if (p->swapped) {
-		/*
-		 * Convert pseudo-headers from the byte order of
-		 * the host on which the file was saved to our
-		 * byte order, as necessary.
-		 */
-		switch (p->linktype) {
-
-		case DLT_USB_LINUX:
-			swap_linux_usb_header(hdr, *data, 0);
-			break;
-
-		case DLT_USB_LINUX_MMAPPED:
-			swap_linux_usb_header(hdr, *data, 1);
-			break;
-		}
-	}
+	if (p->swapped)
+		swap_pseudo_headers(p->linktype, hdr, *data);
 
 	return (0);
 }
