@@ -1,13 +1,9 @@
-/*	$NetBSD: pcap-dos.c,v 1.1.1.4 2013/12/31 16:57:23 christos Exp $	*/
-
 /*
  *  This file is part of DOS-libpcap
  *  Ported to DOS/DOSX by G. Vanem <gvanem@broadpark.no>
  *
  *  pcap-dos.c: Interface to PKTDRVR, NDIS2 and 32-bit pmode
  *              network drivers.
- *
- * @(#) Header: /tcpdump/master/libpcap/pcap-dos.c,v 1.7 2008-04-22 17:16:30 guy Exp  (LBL)
  */
 
 #include <stdio.h>
@@ -337,7 +333,7 @@ pcap_read_dos (pcap_t *p, int cnt, pcap_handler callback, u_char *data)
   struct pcap_dos *pd = p->priv;
   int rc, num = 0;
 
-  while (num <= cnt || (cnt < 0))
+  while (num <= cnt || PACKET_COUNT_IS_UNLIMITED(cnt))
   {
     if (p->fd <= 0)
        return (-1);

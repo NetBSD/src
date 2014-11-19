@@ -1,5 +1,3 @@
-/*	$NetBSD: vlan.h,v 1.1.1.3 2013/04/06 15:57:51 christos Exp $	*/
-
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * @(#) Header: /tcpdump/master/libpcap/pcap/vlan.h,v 1.1 2008-08-06 07:45:00 guy Exp 
  */
 
 #ifndef lib_pcap_vlan_h

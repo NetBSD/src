@@ -1,5 +1,3 @@
-/*	$NetBSD: pcap-bt-linux.h,v 1.1.1.4 2013/12/31 16:57:18 christos Exp $	*/
-
 /*
  * Copyright (c) 2006 Paolo Abeni (Italy)
  * All rights reserved.
@@ -31,8 +29,6 @@
  *
  * Bluetooth sniffing API implementation for Linux platform
  * By Paolo Abeni <paolo.abeni@email.it>
- *
- * @(#) Header: /tcpdump/master/libpcap/pcap-bt-linux.h,v 1.5 2008-04-04 19:37:45 guy Exp  (LBL)
  */
 
 /*

@@ -1,5 +1,3 @@
-/*	$NetBSD: findalldevstest.c,v 1.1.1.1 2013/04/06 15:57:51 christos Exp $	*/
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif

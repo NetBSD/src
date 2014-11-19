@@ -1,5 +1,3 @@
-/*	$NetBSD: fad-sita.c,v 1.1.1.3 2013/12/31 16:57:24 christos Exp $	*/
-
 /*
  *  fad-sita.c: Packet capture interface additions for SITA ACN devices
  *
@@ -25,8 +23,6 @@
  *  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  *  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-
- /* $Id: fad-sita.c */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

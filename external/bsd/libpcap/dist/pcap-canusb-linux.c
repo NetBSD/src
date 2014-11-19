@@ -1,5 +1,3 @@
-/*	$NetBSD: pcap-canusb-linux.c,v 1.1.1.2 2013/12/31 16:57:24 christos Exp $	*/
-
 /*
  * Copyright (c) 2009 Felix Obenhuber
  * All rights reserved.

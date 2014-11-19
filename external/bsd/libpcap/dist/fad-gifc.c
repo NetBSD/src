@@ -1,5 +1,3 @@
-/*	$NetBSD: fad-gifc.c,v 1.1.1.4 2013/12/31 16:57:26 christos Exp $	*/
-
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
  * Copyright (c) 1994, 1995, 1996, 1997, 1998
@@ -33,11 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/fad-gifc.c,v 1.12 2008-08-06 07:34:09 guy Exp  (LBL)";
-#endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -244,8 +237,7 @@ pcap_findalldevs_interfaces(pcap_if_t **alldevsp, char *errbuf)
 			continue;
 
 		/*
-		 * Get the flags for this interface, and skip it if it's
-		 * not up.
+		 * Get the flags for this interface.
 		 */
 		strncpy(ifrflags.ifr_name, ifrp->ifr_name,
 		    sizeof(ifrflags.ifr_name));
@@ -260,8 +252,6 @@ pcap_findalldevs_interfaces(pcap_if_t **alldevsp, char *errbuf)
 			ret = -1;
 			break;
 		}
-		if (!(ifrflags.ifr_flags & IFF_UP))
-			continue;
 
 		/*
 		 * Get the netmask for this address on this interface.

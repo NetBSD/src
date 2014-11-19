@@ -1,5 +1,3 @@
-/*	$NetBSD: pcap-snf.c,v 1.1.1.3 2013/12/31 16:57:23 christos Exp $	*/
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -120,7 +118,7 @@ snf_read(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 		return -1;
 
 	n = 0;
-	while (n < cnt || cnt < 0) {
+	while (n < cnt || PACKET_COUNT_IS_UNLIMITED(cnt)) {
 		/*
 		 * Has "pcap_breakloop()" been called?
 		 */

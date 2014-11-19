@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Paolo Abeni (Italy)
+ * Copyright (c) 2014 Michal Labedzki for Tieto Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -11,8 +11,8 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  * notice, this list of conditions and the following disclaimer in the
  * documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote 
- * products derived from this software without specific prior written 
+ * 3. The name of the author may not be used to endorse or promote
+ * products derived from this software without specific prior written
  * permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -26,13 +26,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * USB sniffing API implementation for Linux platform
- * By Paolo Abeni <paolo.abeni@email.it>
  */
 
-/*
- * Prototypes for USB-related functions
- */
-int usb_findalldevs(pcap_if_t **alldevsp, char *err_str);
-pcap_t *usb_create(const char *device, char *ebuf, int *is_ours);
+int bt_monitor_findalldevs(pcap_if_t **alldevsp, char *err_str);
+pcap_t *bt_monitor_create(const char *device, char *ebuf, int *is_ours);

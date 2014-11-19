@@ -25,18 +25,20 @@ static const char copyright[] =
 The Regents of the University of California.  All rights reserved.\n";
 #endif
 
-#include <pcap.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <limits.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/select.h>
 #include <poll.h>
 
-char *program_name;
+#include <pcap.h>
+
+static char *program_name;
 
 /* Forwards */
 static void countme(u_char *, const struct pcap_pkthdr *, const u_char *);
@@ -55,47 +57,57 @@ int
 main(int argc, char **argv)
 {
 	register int op;
-	bpf_u_int32 localnet, netmask;
 	register char *cp, *cmdbuf, *device;
-	int doselect, dopoll, dotimeout, dononblock;
+	long longarg;
+	char *p;
+	int timeout = 1000;
+	int immediate = 0;
+	int nonblock = 0;
+	bpf_u_int32 localnet, netmask;
 	struct bpf_program fcode;
 	char ebuf[PCAP_ERRBUF_SIZE];
-	int selectable_fd;
 	int status;
 	int packet_count;
 
 	device = NULL;
-	doselect = 0;
-	dopoll = 0;
-	dotimeout = 0;
-	dononblock = 0;
 	if ((cp = strrchr(argv[0], '/')) != NULL)
 		program_name = cp + 1;
 	else
 		program_name = argv[0];
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "i:sptn")) != -1) {
+	while ((op = getopt(argc, argv, "i:mnt:")) != -1) {
 		switch (op) {
 
 		case 'i':
 			device = optarg;
 			break;
 
-		case 's':
-			doselect = 1;
-			break;
-
-		case 'p':
-			dopoll = 1;
-			break;
-
-		case 't':
-			dotimeout = 1;
+		case 'm':
+			immediate = 1;
 			break;
 
 		case 'n':
-			dononblock = 1;
+			nonblock = 1;
+			break;
+
+		case 't':
+			longarg = strtol(optarg, &p, 10);
+			if (p == optarg || *p != '\0') {
+				error("Timeout value \"%s\" is not a number",
+				    optarg);
+				/* NOTREACHED */
+			}
+			if (longarg < 0) {
+				error("Timeout value %ld is negative", longarg);
+				/* NOTREACHED */
+			}
+			if (longarg > INT_MAX) {
+				error("Timeout value %ld is too large (> %d)",
+				    longarg, INT_MAX);
+				/* NOTREACHED */
+			}
+			timeout = (int)longarg;
 			break;
 
 		default:
@@ -104,25 +116,44 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (doselect && dopoll) {
-		fprintf(stderr, "selpolltest: choose select (-s) or poll (-p), but not both\n");
-		return 1;
-	}
-	if (dotimeout && !doselect && !dopoll) {
-		fprintf(stderr, "selpolltest: timeout (-t) requires select (-s) or poll (-p)\n");
-		return 1;
-	}
 	if (device == NULL) {
 		device = pcap_lookupdev(ebuf);
 		if (device == NULL)
 			error("%s", ebuf);
 	}
 	*ebuf = '\0';
-	pd = pcap_open_live(device, 65535, 0, 1000, ebuf);
+	pd = pcap_create(device, ebuf);
 	if (pd == NULL)
 		error("%s", ebuf);
-	else if (*ebuf)
-		warning("%s", ebuf);
+	status = pcap_set_snaplen(pd, 65535);
+	if (status != 0)
+		error("%s: pcap_set_snaplen failed: %s",
+			    device, pcap_statustostr(status));
+	if (immediate) {
+		status = pcap_set_immediate_mode(pd, 1);
+		if (status != 0)
+			error("%s: pcap_set_immediate_mode failed: %s",
+			    device, pcap_statustostr(status));
+	}
+	status = pcap_set_timeout(pd, timeout);
+	if (status != 0)
+		error("%s: pcap_set_timeout failed: %s",
+		    device, pcap_statustostr(status));
+	status = pcap_activate(pd);
+	if (status < 0) {
+		/*
+		 * pcap_activate() failed.
+		 */
+		error("%s: %s\n(%s)", device,
+		    pcap_statustostr(status), pcap_geterr(pd));
+	} else if (status > 0) {
+		/*
+		 * pcap_activate() succeeded, but it's warning us
+		 * of a problem it had.
+		 */
+		warning("%s: %s\n(%s)", device,
+		    pcap_statustostr(status), pcap_geterr(pd));
+	}
 	if (pcap_lookupnet(device, &localnet, &netmask, ebuf) < 0) {
 		localnet = 0;
 		netmask = 0;
@@ -135,110 +166,16 @@ main(int argc, char **argv)
 
 	if (pcap_setfilter(pd, &fcode) < 0)
 		error("%s", pcap_geterr(pd));
-	if (pcap_get_selectable_fd(pd) == -1)
-		error("pcap_get_selectable_fd() fails");
-	if (dononblock) {
-		if (pcap_setnonblock(pd, 1, ebuf) == -1)
-			error("pcap_setnonblock failed: %s", ebuf);
-	}
-	selectable_fd = pcap_get_selectable_fd(pd);
+	if (pcap_setnonblock(pd, nonblock, ebuf) == -1)
+		error("pcap_setnonblock failed: %s", ebuf);
 	printf("Listening on %s\n", device);
-	if (doselect) {
-		for (;;) {
-			fd_set setread, setexcept;
-			struct timeval seltimeout;
-
-			FD_ZERO(&setread);
-			FD_SET(selectable_fd, &setread);
-			FD_ZERO(&setexcept);
-			FD_SET(selectable_fd, &setexcept);
-			if (dotimeout) {
-				seltimeout.tv_sec = 0;
-				seltimeout.tv_usec = 1000;
-				status = select(selectable_fd + 1, &setread,
-				    NULL, &setexcept, &seltimeout);
-			} else {
-				status = select(selectable_fd + 1, &setread,
-				    NULL, &setexcept, NULL);
-			}
-			if (status == -1) {
-				printf("Select returns error (%s)\n",
-				    strerror(errno));
-			} else {
-				if (status == 0)
-					printf("Select timed out: ");
-				else
-					printf("Select returned a descriptor: ");
-				if (FD_ISSET(selectable_fd, &setread))
-					printf("readable, ");
-				else
-					printf("not readable, ");
-				if (FD_ISSET(selectable_fd, &setexcept))
-					printf("exceptional condition\n");
-				else
-					printf("no exceptional condition\n");
-				packet_count = 0;
-				status = pcap_dispatch(pd, -1, countme,
-				    (u_char *)&packet_count);
-				if (status < 0)
-					break;
-				printf("%d packets seen, %d packets counted after select returns\n",
-				    status, packet_count);
-			}
-		}
-	} else if (dopoll) {
-		for (;;) {
-			struct pollfd fd;
-			int polltimeout;
-
-			fd.fd = selectable_fd;
-			fd.events = POLLIN;
-			if (dotimeout)
-				polltimeout = 1;
-			else
-				polltimeout = -1;
-			status = poll(&fd, 1, polltimeout);
-			if (status == -1) {
-				printf("Poll returns error (%s)\n",
-				    strerror(errno));
-			} else {
-				if (status == 0)
-					printf("Poll timed out\n");
-				else {
-					printf("Poll returned a descriptor: ");
-					if (fd.revents & POLLIN)
-						printf("readable, ");
-					else
-						printf("not readable, ");
-					if (fd.revents & POLLERR)
-						printf("exceptional condition, ");
-					else
-						printf("no exceptional condition, ");
-					if (fd.revents & POLLHUP)
-						printf("disconnect, ");
-					else
-						printf("no disconnect, ");
-					if (fd.revents & POLLNVAL)
-						printf("invalid\n");
-					else
-						printf("not invalid\n");
-				}
-				packet_count = 0;
-				status = pcap_dispatch(pd, -1, countme,
-				    (u_char *)&packet_count);
-				if (status < 0)
-					break;
-				printf("%d packets seen, %d packets counted after poll returns\n",
-				    status, packet_count);
-			}
-		}
-	} else {
-		for (;;) {
-			packet_count = 0;
-			status = pcap_dispatch(pd, -1, countme,
-			    (u_char *)&packet_count);
-			if (status < 0)
-				break;
+	for (;;) {
+		packet_count = 0;
+		status = pcap_dispatch(pd, -1, countme,
+		    (u_char *)&packet_count);
+		if (status < 0)
+			break;
+		if (status != 0) {
 			printf("%d packets seen, %d packets counted after pcap_dispatch returns\n",
 			    status, packet_count);
 		}
@@ -274,7 +211,7 @@ countme(u_char *user, const struct pcap_pkthdr *h, const u_char *sp)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [ -sptn ] [ -i interface ] [expression]\n",
+	(void)fprintf(stderr, "Usage: %s [ -mn ] [ -i interface ] [ -t timeout] [expression]\n",
 	    program_name);
 	exit(1);
 }

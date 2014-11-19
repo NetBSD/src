@@ -1,5 +1,3 @@
-/*	$NetBSD: pcap-netfilter-linux.h,v 1.1.1.2 2013/12/31 16:57:28 christos Exp $	*/
-
 /*
  * Copyright (c) 2011 Jakub Zawadzki
  * All rights reserved.

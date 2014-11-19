@@ -1,5 +1,3 @@
-/*	$NetBSD: getopt.c,v 1.1.1.2 2013/04/06 15:57:51 christos Exp $	*/
-
 /*
  * Copyright (c) 1987, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
