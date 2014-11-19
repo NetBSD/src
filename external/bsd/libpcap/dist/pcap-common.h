@@ -1,5 +1,3 @@
-/*	$NetBSD: pcap-common.h,v 1.1.1.2 2013/04/06 15:57:46 christos Exp $	*/
-
 
 /*
  * We use the "receiver-makes-right" approach to byte order,
@@ -23,5 +21,5 @@ extern int dlt_to_linktype(int dlt);
 
 extern int linktype_to_dlt(int linktype);
 
-extern void swap_linux_usb_header(const struct pcap_pkthdr *hdr, u_char *buf,
-    int header_len_64_bytes);
+extern void swap_pseudo_headers(int linktype, struct pcap_pkthdr *hdr,
+    u_char *data);

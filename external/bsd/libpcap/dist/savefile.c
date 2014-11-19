@@ -1,5 +1,3 @@
-/*	$NetBSD: savefile.c,v 1.1.1.4 2013/12/31 16:57:18 christos Exp $	*/
-
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -29,11 +27,6 @@
  * The first record in the file contains saved values for the machine
  * dependent values so we can print the dump file on any architecture.
  */
-
-#ifndef lint
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/savefile.c,v 1.183 2008-12-23 20:13:29 guy Exp  (LBL)";
-#endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

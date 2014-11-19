@@ -1,5 +1,3 @@
-/*	$NetBSD: pcap-dlpi.c,v 1.1.1.4 2013/12/31 16:57:26 christos Exp $	*/
-
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -69,11 +67,6 @@
  *      other places; do we support any versions of HP-UX without
  *      DL_HP_RAWDLS?
  */
-
-#ifndef lint
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/pcap-dlpi.c,v 1.128 2008-12-02 16:20:23 guy Exp  (LBL)";
-#endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -343,6 +336,8 @@ pcap_activate_dlpi(pcap_t *p)
 #ifdef DL_HP_RAWDLS
 	struct pcap_dlpi *pd = p->priv;
 #endif
+	int status = 0;
+	int retv;
 	register char *cp;
 	int ppa;
 #ifdef HAVE_SOLARIS
@@ -361,7 +356,6 @@ pcap_activate_dlpi(pcap_t *p)
 #ifndef HAVE_DEV_DLPI
 	char dname2[100];
 #endif
-	int status = PCAP_ERROR;
 
 #ifdef HAVE_DEV_DLPI
 	/*
@@ -399,6 +393,8 @@ pcap_activate_dlpi(pcap_t *p)
 	if ((p->fd = open(cp, O_RDWR)) < 0) {
 		if (errno == EPERM || errno == EACCES)
 			status = PCAP_ERROR_PERM_DENIED;
+		else
+			status = PCAP_ERROR;
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
 		    "%s: %s", cp, pcap_strerror(errno));
 		goto bad;
@@ -463,6 +459,8 @@ pcap_activate_dlpi(pcap_t *p)
 		if (errno != ENOENT) {
 			if (errno == EPERM || errno == EACCES)
 				status = PCAP_ERROR_PERM_DENIED;
+			else
+				status = PCAP_ERROR;
 			snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "%s: %s", dname,
 			    pcap_strerror(errno));
 			goto bad;
@@ -499,6 +497,8 @@ pcap_activate_dlpi(pcap_t *p)
 			} else {
 				if (errno == EPERM || errno == EACCES)
 					status = PCAP_ERROR_PERM_DENIED;
+				else
+					status = PCAP_ERROR;
 				snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "%s: %s",
 				    dname2, pcap_strerror(errno));
 			}
@@ -513,21 +513,28 @@ pcap_activate_dlpi(pcap_t *p)
 	** Attach if "style 2" provider
 	*/
 	if (dlinforeq(p->fd, p->errbuf) < 0 ||
-	    dlinfoack(p->fd, (char *)buf, p->errbuf) < 0)
+	    dlinfoack(p->fd, (char *)buf, p->errbuf) < 0) {
+		status = PCAP_ERROR;
 		goto bad;
+	}
 	infop = &(MAKE_DL_PRIMITIVES(buf))->info_ack;
 #ifdef HAVE_SOLARIS
 	if (infop->dl_mac_type == DL_IPATM)
 		isatm = 1;
 #endif
 	if (infop->dl_provider_style == DL_STYLE2) {
-		status = dl_doattach(p->fd, ppa, p->errbuf);
-		if (status < 0)
+		retv = dl_doattach(p->fd, ppa, p->errbuf);
+		if (retv < 0) {
+			status = retv;
 			goto bad;
+		}
 #ifdef DL_HP_RAWDLS
 		if (pd->send_fd >= 0) {
-			if (dl_doattach(pd->send_fd, ppa, p->errbuf) < 0)
+			retv = dl_doattach(pd->send_fd, ppa, p->errbuf);
+			if (retv < 0) {
+				status = retv;
 				goto bad;
+			}
 		}
 #endif
 	}
@@ -574,22 +581,28 @@ pcap_activate_dlpi(pcap_t *p)
 	*/
 	if ((dlbindreq(p->fd, 1537, p->errbuf) < 0 &&
 	     dlbindreq(p->fd, 2, p->errbuf) < 0) ||
-	     dlbindack(p->fd, (char *)buf, p->errbuf, NULL) < 0)
+	     dlbindack(p->fd, (char *)buf, p->errbuf, NULL) < 0) {
+		status = PCAP_ERROR;
 		goto bad;
+	}
 #elif defined(DL_HP_RAWDLS)
 	/*
 	** HP-UX 10.0x and 10.1x.
 	*/
-	if (dl_dohpuxbind(p->fd, p->errbuf) < 0)
+	if (dl_dohpuxbind(p->fd, p->errbuf) < 0) {
+		status = PCAP_ERROR;
 		goto bad;
+	}
 	if (pd->send_fd >= 0) {
 		/*
 		** XXX - if this fails, just close send_fd and
 		** set it to -1, so that you can't send but can
 		** still receive?
 		*/
-		if (dl_dohpuxbind(pd->send_fd, p->errbuf) < 0)
+		if (dl_dohpuxbind(pd->send_fd, p->errbuf) < 0) {
+			status = PCAP_ERROR;
 			goto bad;
+		}
 	}
 #else /* neither AIX nor HP-UX */
 	/*
@@ -597,8 +610,10 @@ pcap_activate_dlpi(pcap_t *p)
 	** OS using DLPI.
 	**/
 	if (dlbindreq(p->fd, 0, p->errbuf) < 0 ||
-	    dlbindack(p->fd, (char *)buf, p->errbuf, NULL) < 0)
+	    dlbindack(p->fd, (char *)buf, p->errbuf, NULL) < 0) {
+	    	status = PCAP_ERROR;
 		goto bad;
+	}
 #endif /* AIX vs. HP-UX vs. other */
 #endif /* !HP-UX 9 and !HP-UX 10.20 or later and !SINIX */
 
@@ -611,6 +626,7 @@ pcap_activate_dlpi(pcap_t *p)
 		** help, and may break things.
 		*/
 		if (strioctl(p->fd, A_PROMISCON_REQ, 0, NULL) < 0) {
+			status = PCAP_ERROR;
 			snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
 			    "A_PROMISCON_REQ: %s", pcap_strerror(errno));
 			goto bad;
@@ -621,10 +637,12 @@ pcap_activate_dlpi(pcap_t *p)
 		/*
 		** Enable promiscuous (not necessary on send FD)
 		*/
-		status = dlpromiscon(p, DL_PROMISC_PHYS);
-		if (status < 0) {
-			if (status == PCAP_ERROR_PERM_DENIED)
+		retv = dlpromiscon(p, DL_PROMISC_PHYS);
+		if (retv < 0) {
+			if (retv == PCAP_ERROR_PERM_DENIED)
 				status = PCAP_ERROR_PROMISC_PERM_DENIED;
+			else
+				status = retv;
 			goto bad;
 		}
 
@@ -634,8 +652,8 @@ pcap_activate_dlpi(pcap_t *p)
 		** HP-UX or SINIX) (Not necessary on send FD)
 		*/
 #if !defined(__hpux) && !defined(sinix)
-		status = dlpromiscon(p, DL_PROMISC_MULTI);
-		if (status < 0)
+		retv = dlpromiscon(p, DL_PROMISC_MULTI);
+		if (retv < 0)
 			status = PCAP_WARNING;
 #endif
 	}
@@ -655,16 +673,23 @@ pcap_activate_dlpi(pcap_t *p)
 	/* Everything else (except for SINIX) - always do this */
 	{
 #endif
-		status = dlpromiscon(p, DL_PROMISC_SAP);
-		if (status < 0) {
-			/*
-			 * Not fatal, since the DL_PROMISC_PHYS mode worked.
-			 * Report it as a warning, however.
-			 */
-			if (p->opt.promisc)
+		retv = dlpromiscon(p, DL_PROMISC_SAP);
+		if (retv < 0) {
+			if (p->opt.promisc) {
+				/*
+				 * Not fatal, since the DL_PROMISC_PHYS mode
+				 * worked.
+				 *
+				 * Report it as a warning, however.
+				 */
 				status = PCAP_WARNING;
-			else
+			} else {
+				/*
+				 * Fatal.
+				 */
+				status = retv;
 				goto bad;
+			}
 		}
 	}
 #endif /* sinix */
@@ -674,8 +699,10 @@ pcap_activate_dlpi(pcap_t *p)
 	** promiscuous options.
 	*/
 #if defined(HAVE_HPUX9) || defined(HAVE_HPUX10_20_OR_LATER)
-	if (dl_dohpuxbind(p->fd, p->errbuf) < 0)
+	if (dl_dohpuxbind(p->fd, p->errbuf) < 0) {
+		status = PCAP_ERROR;
 		goto bad;
+	}
 	/*
 	** We don't set promiscuous mode on the send FD, but we'll defer
 	** binding it anyway, just to keep the HP-UX 9/10.20 or later
@@ -687,8 +714,10 @@ pcap_activate_dlpi(pcap_t *p)
 		** set it to -1, so that you can't send but can
 		** still receive?
 		*/
-		if (dl_dohpuxbind(pd->send_fd, p->errbuf) < 0)
+		if (dl_dohpuxbind(pd->send_fd, p->errbuf) < 0) {
+			status = PCAP_ERROR;
 			goto bad;
+		}
 	}
 #endif
 
@@ -698,12 +727,16 @@ pcap_activate_dlpi(pcap_t *p)
 	** when sending packets.
 	*/
 	if (dlinforeq(p->fd, p->errbuf) < 0 ||
-	    dlinfoack(p->fd, (char *)buf, p->errbuf) < 0)
+	    dlinfoack(p->fd, (char *)buf, p->errbuf) < 0) {
+	    	status = PCAP_ERROR;
 		goto bad;
+	}
 
 	infop = &(MAKE_DL_PRIMITIVES(buf))->info_ack;
-	if (pcap_process_mactype(p, infop->dl_mac_type) != 0)
+	if (pcap_process_mactype(p, infop->dl_mac_type) != 0) {
+		status = PCAP_ERROR;
 		goto bad;
+	}
 
 #ifdef	DLIOCRAW
 	/*
@@ -711,6 +744,7 @@ pcap_activate_dlpi(pcap_t *p)
 	** header.
 	*/
 	if (strioctl(p->fd, DLIOCRAW, 0, NULL) < 0) {
+		status = PCAP_ERROR;
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "DLIOCRAW: %s",
 		    pcap_strerror(errno));
 		goto bad;
@@ -741,28 +775,31 @@ pcap_activate_dlpi(pcap_t *p)
 #endif
 
 	/* Push and configure bufmod. */
-	if (pcap_conf_bufmod(p, ss) != 0)
+	if (pcap_conf_bufmod(p, ss) != 0) {
+		status = PCAP_ERROR;
 		goto bad;
+	}
 #endif
 
 	/*
 	** As the last operation flush the read side.
 	*/
 	if (ioctl(p->fd, I_FLUSH, FLUSHR) != 0) {
+		status = PCAP_ERROR;
 		snprintf(p->errbuf, PCAP_ERRBUF_SIZE, "FLUSHR: %s",
 		    pcap_strerror(errno));
 		goto bad;
 	}
 
 	/* Allocate data buffer. */
-	if (pcap_alloc_databuf(p) != 0)
+	if (pcap_alloc_databuf(p) != 0) {
+		status = PCAP_ERROR;
 		goto bad;
-
-	/* Success - but perhaps with a warning */
-	if (status < 0)
-		status = 0;
+	}
 
 	/*
+	 * Success.
+	 *
 	 * "p->fd" is an FD for a STREAMS device, so "select()" and
 	 * "poll()" should work on it.
 	 */
