@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-dag.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+
 /*
  * pcap-dag.c: Packet capture interface for Endace DAG card.
  *
@@ -14,6 +16,9 @@
  *                Koryn Grant      <support@endace.com>
  *                Stephen Donnelly <support@endace.com>
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pcap-dag.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

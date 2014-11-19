@@ -1,3 +1,5 @@
+/*	$NetBSD: nametoaddr.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
  *	The Regents of the University of California.  All rights reserved.
@@ -21,6 +23,9 @@
  * Name to id translation routines used by the scanner.
  * These functions are not time critical.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: nametoaddr.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
