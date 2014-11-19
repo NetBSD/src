@@ -1,4 +1,4 @@
-/*        $NetBSD: libdm-netbsd.h,v 1.3 2011/02/08 10:45:40 rmind Exp $
+/*        $NetBSD: libdm-netbsd.h,v 1.4 2014/11/19 10:37:29 wiz Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
