@@ -1,4 +1,4 @@
-#	$NetBSD: README.files,v 1.4.10.4.2.5 2014/01/27 21:30:24 bouyer Exp $
+#	$NetBSD: README.files,v 1.4.10.4.2.6 2014/11/19 06:47:26 snj Exp $
 
 What's in this directory:
 
@@ -16,6 +16,8 @@ CHANGES-5.2.2	Changes between the 5.2.1 and 5.2.2 releases.
 
 CHANGES-5.2.3	Changes between the 5.2.2 and 5.2.3 releases.
 
+CHANGES-5.2.4	Changes between the 5.2.3 and 5.2.4 releases.
+
 CHANGES.prev	Changes in previous NetBSD releases.
 
 LAST_MINUTE	Last minute changes and notes about the release.
@@ -30,7 +32,7 @@ source/sets/	Source distribution sets; see below.
 
 In addition to the files and directories listed above, there is one
 directory per architecture, for each of the architectures for which
-NetBSD 5.2.3 has a binary distribution.  The contents of each
+NetBSD 5.2.4 has a binary distribution.  The contents of each
 architecture's directory are described in an "INSTALL" file found in
 that directory.
 
