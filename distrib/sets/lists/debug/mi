@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.92 2014/11/18 09:12:30 pooka Exp $
+# $NetBSD: mi,v 1.93 2014/11/19 01:08:42 pooka Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -138,7 +138,7 @@
 ./usr/lib/librumpclient_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpcrypto_g.a			comp-obsolete		obsolete
 ./usr/lib/librumpdev_audio_g.a			comp-c-debuglib		debuglib,rump
-./usr/lib/librumpdev_audio_ac97_g.a			comp-c-debuglib		debuglib,rump
+./usr/lib/librumpdev_audio_ac97_g.a			comp-obsolete	obsolete
 ./usr/lib/librumpdev_bpf_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_cgd_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpdev_disk_g.a			comp-c-debuglib		debuglib,rump

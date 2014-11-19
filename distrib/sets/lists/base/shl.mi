@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.724 2014/11/18 09:12:30 pooka Exp $
+# $NetBSD: shl.mi,v 1.725 2014/11/19 01:08:42 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -485,9 +485,9 @@
 ./usr/lib/librumpdev_audio.so			base-rump-shlib	rump
 ./usr/lib/librumpdev_audio.so.0			base-rump-shlib	rump
 ./usr/lib/librumpdev_audio.so.0.0		base-rump-shlib	rump
-./usr/lib/librumpdev_audio_ac97.so			base-rump-shlib	rump
-./usr/lib/librumpdev_audio_ac97.so.0			base-rump-shlib	rump
-./usr/lib/librumpdev_audio_ac97.so.0.0		base-rump-shlib	rump
+./usr/lib/librumpdev_audio_ac97.so			base-obsolete	obsolete
+./usr/lib/librumpdev_audio_ac97.so.0			base-obsolete	obsolete
+./usr/lib/librumpdev_audio_ac97.so.0.0		base-obsolete	obsolete
 ./usr/lib/librumpdev_bpf.so			base-rump-shlib	rump
 ./usr/lib/librumpdev_bpf.so.0			base-rump-shlib	rump
 ./usr/lib/librumpdev_bpf.so.0.0			base-rump-shlib	rump
