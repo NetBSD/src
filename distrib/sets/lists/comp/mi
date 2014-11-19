@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1922 2014/11/18 09:12:30 pooka Exp $
+#	$NetBSD: mi,v 1.1923 2014/11/19 01:08:42 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3748,8 +3748,8 @@
 ./usr/lib/librumpdev.a				comp-c-lib		rump
 ./usr/lib/librumpdev_audio.a			comp-c-lib		rump
 ./usr/lib/librumpdev_audio_p.a			comp-c-proflib		profile,rump
-./usr/lib/librumpdev_audio_ac97.a			comp-c-lib		rump
-./usr/lib/librumpdev_audio_ac97_p.a			comp-c-proflib		profile,rump
+./usr/lib/librumpdev_audio_ac97.a			comp-obsolete	obsolete
+./usr/lib/librumpdev_audio_ac97_p.a			comp-obsolete	obsolete
 ./usr/lib/librumpdev_bpf.a			comp-c-lib		rump
 ./usr/lib/librumpdev_bpf_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpdev_cgd.a			comp-c-lib		rump
