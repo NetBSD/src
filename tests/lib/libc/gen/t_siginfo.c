@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.25 2014/11/19 10:03:51 martin Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.26 2014/11/19 10:09:45 martin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -310,6 +310,13 @@ ATF_TC_BODY(sigfpe_flt, tc)
 		atf_tc_skip("Test does not run correctly under QEMU");
 #if defined(__powerpc__)
 	atf_tc_skip("Test not valid on powerpc");
+#elif defined(__arm__) && !__SOFTFP__	/*
+	 * Some NEON fpus do not implement IEEE exception handling,
+	 * skip these tests if running on them and compiled for
+	 * hard float.
+	 */
+	if (0 == fpsetmask(fpsetmask(FP_X_INV)))
+		atf_tc_skip("FPU does not implement exception handling");
 #endif
 	if (sigsetjmp(sigfpe_flt_env, 0) == 0) {
 		sa.sa_flags = SA_SIGINFO;
