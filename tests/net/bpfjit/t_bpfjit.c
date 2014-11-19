@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfjit.c,v 1.2 2014/07/08 21:44:26 alnsn Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.3 2014/11/19 23:00:12 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2011-2012, 2014 Alexander Nasonov.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.2 2014/07/08 21:44:26 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.3 2014/11/19 23:00:12 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -401,6 +401,31 @@ ATF_TC_BODY(bpfjit_alu_or_k, tc)
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD+BPF_IMM, 0xdead0000),
 		BPF_STMT(BPF_ALU+BPF_OR+BPF_K, 0x0000beef),
+		BPF_STMT(BPF_RET+BPF_A, 0)
+	};
+
+	uint8_t pkt[1]; /* the program doesn't read any data */
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	RZ(rump_init());
+
+	ATF_CHECK(prog_validate(insns, insn_count));
+	ATF_CHECK(exec_prog(insns, insn_count, pkt, 1) == 0xdeadbeef);
+}
+
+ATF_TC(bpfjit_alu_xor_k);
+ATF_TC_HEAD(bpfjit_alu_xor_k, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test JIT compilation of BPF_ALU+BPF_XOR+BPF_K");
+}
+
+ATF_TC_BODY(bpfjit_alu_xor_k, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_IMM, 0xdead0f0f),
+		BPF_STMT(BPF_ALU+BPF_XOR+BPF_K, 0x0000b1e0),
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
@@ -907,6 +932,32 @@ ATF_TC_BODY(bpfjit_alu_or_x, tc)
 		BPF_STMT(BPF_LD+BPF_IMM, 0xdead0000),
 		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 0x0000beef),
 		BPF_STMT(BPF_ALU+BPF_OR+BPF_X, 0),
+		BPF_STMT(BPF_RET+BPF_A, 0)
+	};
+
+	uint8_t pkt[1]; /* the program doesn't read any data */
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	RZ(rump_init());
+
+	ATF_CHECK(prog_validate(insns, insn_count));
+	ATF_CHECK(exec_prog(insns, insn_count, pkt, 1) == 0xdeadbeef);
+}
+
+ATF_TC(bpfjit_alu_xor_x);
+ATF_TC_HEAD(bpfjit_alu_xor_x, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test JIT compilation of BPF_ALU+BPF_XOR+BPF_X");
+}
+
+ATF_TC_BODY(bpfjit_alu_xor_x, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_IMM, 0xdead0f0f),
+		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 0x0000b1e0),
+		BPF_STMT(BPF_ALU+BPF_XOR+BPF_X, 0),
 		BPF_STMT(BPF_RET+BPF_A, 0)
 	};
 
@@ -3900,6 +3951,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, bpfjit_alu_div80000000_k);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_and_k);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_or_k);
+	ATF_TP_ADD_TC(tp, bpfjit_alu_xor_k);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_lsh_k);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_lsh0_k);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_rsh_k);
@@ -3918,6 +3970,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, bpfjit_alu_div80000000_x);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_and_x);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_or_x);
+	ATF_TP_ADD_TC(tp, bpfjit_alu_xor_x);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_lsh_x);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_lsh0_x);
 	ATF_TP_ADD_TC(tp, bpfjit_alu_rsh_x);
