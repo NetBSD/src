@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: libpcap2netbsd,v 1.1 2013/04/06 17:29:53 christos Exp $
+#	$NetBSD: libpcap2netbsd,v 1.2 2014/11/19 19:33:30 christos Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,7 @@
 #	$ cd /some/where/temporary
 #	$ tar xpfz /new/libpcap/release/tar/file
 #	$ sh /usr/src/external/bsd/libpcap/libpcap2netbsd libpcap-x.y.z
-#	$ cd libpcap-YYYYMMDD
+#	$ cd libpcap-x.y.z
 #	$ cvs -d cvs.netbsd.org:/cvsroot import -m "Import libpcap-x.y.z" src/external/bsd/libpcap/dist TCPDUMP libpcap-x_y_z
 #	- check makefiles to see if any extra sources have been added.
 #	- update distrib/sets if necessary.
@@ -54,33 +54,6 @@ cd $r
 
 ### Remove the $'s around RCS tags
 cleantags $r
-
-### Add our NetBSD RCS Id
-find $r -type f -name '*.[chly]' -print | while read c; do
-	sed 1q < $c | grep -q '\$NetBSD' || (
-echo "/*	\$NetBSD\$	*/" >/tmp/libpcap3n$$
-echo "" >>/tmp/libpcap3n$$
-cat $c  >> /tmp/libpcap3n$$
-mv /tmp/libpcap3n$$ $c && echo added NetBSD RCS tag to $c
-	)
-done
-
-find $r -type f -name '*.[0-9]' -print | while read m; do
-	sed 1q < $m | grep -q '\$NetBSD' || (
-echo ".\\\"	\$NetBSD\$" >/tmp/libpcap2m$$
-echo ".\\\"" >>/tmp/libpcap2m$$
-cat $m >> /tmp/libpcap2m$$
-mv /tmp/libpcap2m$$ $m && echo added NetBSD RCS tag to $m
-	)
-done
-
-find $r -type f -name '*.texi' -print | while read t; do
-        sed "2 s/^/@c \$NetBSD\$\\
-/" < $t > /tmp/libpcap4t$$
-	mv /tmp/libpcap4t$$ $t && echo added NetBSD RCS tag to $t
-done
-
-echo done
 
 ### Clean up any CVS directories that might be around.
 echo "cleaning up CVS residue."

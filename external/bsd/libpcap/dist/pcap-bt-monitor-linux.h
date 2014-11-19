@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-bt-monitor-linux.h,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+
 /*
  * Copyright (c) 2014 Michal Labedzki for Tieto Corporation
  * All rights reserved.

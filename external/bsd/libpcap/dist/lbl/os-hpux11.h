@@ -1,3 +1,5 @@
+/*	$NetBSD: os-hpux11.h,v 1.2 2014/11/19 19:33:31 christos Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.

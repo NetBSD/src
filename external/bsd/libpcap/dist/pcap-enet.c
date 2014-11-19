@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-enet.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+
 /*
  * Stanford Enetfilter subroutines for tcpdump
  *
@@ -6,6 +8,9 @@
  *
  * Rayan Zachariassen, CA*Net
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pcap-enet.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
