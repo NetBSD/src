@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-septel.h,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+
 /*
  * pcap-septel.c: Packet capture interface for Intel Septel card
  *
