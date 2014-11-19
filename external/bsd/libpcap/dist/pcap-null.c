@@ -1,5 +1,3 @@
-/*	$NetBSD: pcap-null.c,v 1.1.1.4 2013/12/31 16:57:24 christos Exp $	*/
-
 /*
  * Copyright (c) 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -20,10 +18,6 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
-#ifndef lint
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/libpcap/pcap-null.c,v 1.22 2008-04-04 19:37:45 guy Exp  (LBL)";
-#endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

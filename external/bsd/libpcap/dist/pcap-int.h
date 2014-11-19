@@ -1,5 +1,3 @@
-/*	$NetBSD: pcap-int.h,v 1.1.1.4 2013/12/31 16:57:24 christos Exp $	*/
-
 /*
  * Copyright (c) 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -31,8 +29,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * @(#) Header: /tcpdump/master/libpcap/pcap-int.h,v 1.94 2008-09-16 00:20:23 guy Exp  (LBL)
  */
 
 #ifndef pcap_int_h
@@ -85,6 +81,29 @@ extern CRITICAL_SECTION g_PcapCompileCriticalSection;
                       ((ull & 0x00000000000000ffLL) << 56)
 
 #endif /* _MSC_VER */
+
+/*
+ * Maximum snapshot length.
+ *
+ * Somewhat arbitrary, but chosen to be:
+ *
+ *    1) big enough for maximum-size Linux loopback packets (65549)
+ *       and some USB packets captured with USBPcap:
+ *
+ *           http://desowin.org/usbpcap/
+ *
+ *       (> 131072, < 262144)
+ *
+ * and
+ *
+ *    2) small enough not to cause attempts to allocate huge amounts of
+ *       memory; some applications might use the snapshot length in a
+ *       savefile header to control the size of the buffer they allocate,
+ *       so a size of, say, 2^31-1 might not work well.
+ *
+ * We don't enforce this in pcap_set_snaplen(), but we use it internally.
+ */
+#define MAXIMUM_SNAPLEN		262144
 
 struct pcap_opt {
 	char	*source;
@@ -339,6 +358,12 @@ extern int vsnprintf (char *, size_t, const char *, va_list ap);
 #endif
 
 /*
+ * Does the packet count argument to a module's read routine say
+ * "supply packets until you run out of packets"?
+ */
+#define PACKET_COUNT_IS_UNLIMITED(count)	((count) <= 0)
+
+/*
  * Routines that most pcap implementations can use for non-blocking mode.
  */
 #if !defined(WIN32) && !defined(MSDOS)
@@ -383,6 +408,9 @@ int	pcap_platform_finddevs(pcap_if_t **, char *);
 int	add_addr_to_iflist(pcap_if_t **, const char *, u_int, struct sockaddr *,
 	    size_t, struct sockaddr *, size_t, struct sockaddr *, size_t,
 	    struct sockaddr *, size_t, char *);
+int	add_addr_to_dev(pcap_if_t *, struct sockaddr *, size_t,
+	    struct sockaddr *, size_t, struct sockaddr *, size_t,
+	    struct sockaddr *dstaddr, size_t, char *errbuf);
 int	pcap_add_if(pcap_if_t **, const char *, u_int, const char *, char *);
 struct sockaddr *dup_sockaddr(struct sockaddr *, size_t);
 int	add_or_find_if(pcap_if_t **, pcap_if_t **, const char *, u_int,

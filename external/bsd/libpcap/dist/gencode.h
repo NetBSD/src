@@ -1,5 +1,3 @@
-/*	$NetBSD: gencode.h,v 1.1.1.4 2013/12/31 16:57:26 christos Exp $	*/
-
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -19,8 +17,6 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
- * @(#) Header: /tcpdump/master/libpcap/gencode.h,v 1.71 2007-11-18 02:03:52 guy Exp  (LBL)
  */
 
 /*
@@ -311,6 +307,13 @@ struct block *gen_byteop(int, int, int);
 struct block *gen_broadcast(int);
 struct block *gen_multicast(int);
 struct block *gen_inbound(int);
+
+struct block *gen_llc(void);
+struct block *gen_llc_i(void);
+struct block *gen_llc_s(void);
+struct block *gen_llc_u(void);
+struct block *gen_llc_s_subtype(bpf_u_int32);
+struct block *gen_llc_u_subtype(bpf_u_int32);
 
 struct block *gen_vlan(int);
 struct block *gen_mpls(int);

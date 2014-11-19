@@ -1,5 +1,3 @@
-/*	$NetBSD: addrinfo.h,v 1.1.1.3 2013/04/06 15:57:51 christos Exp $	*/
-
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
@@ -28,8 +26,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/* Id: addrinfo.h,v 1.1 2002-08-01 08:33:05 risso Exp  */
 
 #ifndef HAVE_ADDRINFO
 
