@@ -1,3 +1,5 @@
+/*	$NetBSD: ppp.h,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+
 /*
  * Point to Point Protocol (PPP) RFC1331
  *
