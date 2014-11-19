@@ -1,3 +1,5 @@
+/*	$NetBSD: pcap-bt-monitor-linux.c,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+
 /*
  * Copyright (c) 2014 Michal Labedzki for Tieto Corporation
  * All rights reserved.
@@ -28,6 +30,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pcap-bt-monitor-linux.c,v 1.2 2014/11/19 19:33:30 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
