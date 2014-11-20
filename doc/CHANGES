@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2020 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2021 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -106,3 +106,5 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		[jmcneill 20141115]
 	zoneinfo: Import tzdata2014j. [apb 20141116]
 	libc: Update to tzcode2014j. [christos 20141117]
+	libpcap: Import 1.6.2. [christos 20141119]
+	tcpdump(8): Import 4.6.2. [christos 20141119]
