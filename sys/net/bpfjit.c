@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.35 2014/11/20 19:18:52 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.36 2014/11/20 20:31:22 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.35 2014/11/20 19:18:52 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.36 2014/11/20 20:31:22 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.35 2014/11/20 19:18:52 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.36 2014/11/20 20:31:22 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -74,11 +74,6 @@ __RCSID("$NetBSD: bpfjit.c,v 1.35 2014/11/20 19:18:52 alnsn Exp $");
 #if !defined(_KERNEL) && defined(SLJIT_VERBOSE) && SLJIT_VERBOSE
 #include <stdio.h> /* for stderr */
 #endif
-
-/*
- * XXX: Until we support SLJIT_UMOD properly
- */
-#undef BPFJIT_USE_UDIV
 
 /*
  * Arguments of generated bpfjit_func_t.
@@ -1183,14 +1178,25 @@ emit_moddiv(struct sljit_compiler *compiler, const struct bpf_insn *pc)
 #if defined(BPFJIT_USE_UDIV)
 	status = sljit_emit_op0(compiler, SLJIT_UDIV|SLJIT_INT_OP);
 
+	if (BPF_OP(pc->code) == BPF_DIV) {
 #if BJ_AREG != SLJIT_SCRATCH_REG1
-	status = sljit_emit_op1(compiler,
-	    SLJIT_MOV,
-	    BJ_AREG, 0,
-	    SLJIT_SCRATCH_REG1, 0);
+		status = sljit_emit_op1(compiler,
+		    SLJIT_MOV,
+		    BJ_AREG, 0,
+		    SLJIT_SCRATCH_REG1, 0);
+#endif
+	} else {
+#if BJ_AREG != SLJIT_SCRATCH_REG2
+		/* Remainder is in SLJIT_SCRATCH_REG2. */
+		status = sljit_emit_op1(compiler,
+		    SLJIT_MOV,
+		    BJ_AREG, 0,
+		    SLJIT_SCRATCH_REG2, 0);
+#endif
+	}
+
 	if (status != SLJIT_SUCCESS)
 		return status;
-#endif
 #else
 	status = sljit_emit_ijump(compiler,
 	    SLJIT_CALL2,
