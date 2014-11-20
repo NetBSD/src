@@ -540,6 +540,7 @@ extern void timed_print(netdissect_options *, const u_char *);
 extern void m3ua_print(netdissect_options *, const u_char *, const u_int);
 extern void aoe_print(netdissect_options *, const u_char *, const u_int);
 
+
 /* stuff that has not yet been rototiled */
 
 #if 0
@@ -549,6 +550,7 @@ extern char *smb_errstr(netdissect_options *,int, int);
 extern const char *nt_errstr(netdissect_options *, uint32_t);
 #endif
 
+extern u_int pfsync_if_print(netdissect_options *,const struct pcap_pkthdr *, const u_char *);
 extern u_int ipnet_if_print(netdissect_options *,const struct pcap_pkthdr *, const u_char *);
 extern u_int ppi_if_print(netdissect_options *,const struct pcap_pkthdr *, const u_char *);
 extern u_int nflog_if_print(netdissect_options *,const struct pcap_pkthdr *, const u_char *);
@@ -595,5 +597,7 @@ extern int esp_print_decrypt_buffer_by_ikev2(netdissect_options *ndo,
 
 extern void geonet_print(netdissect_options *ndo,const u_char *eth_hdr,const u_char *geo_pck, u_int len);
 extern void calm_fast_print(netdissect_options *ndo,const u_char *eth_hdr,const u_char *calm_pck, u_int len);
+
+extern void pfsync_ip_print(const u_char *bp, u_int len, const u_char *bp2 __unused);
 
 #endif  /* netdissect_h */
