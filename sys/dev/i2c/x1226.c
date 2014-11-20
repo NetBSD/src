@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.18 2014/08/04 23:28:19 joerg Exp $	*/
+/*	$NetBSD: x1226.c,v 1.19 2014/11/20 16:34:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.18 2014/08/04 23:28:19 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.19 2014/11/20 16:34:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,29 +317,29 @@ xrtc_clock_read(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 	/*
 	 * Convert the X1226's register bcd values
 	 */
-	dt->dt_sec = FROMBCD(bcd[X1226_REG_SC - X1226_REG_RTC_BASE]
+	dt->dt_sec = bcdtobin(bcd[X1226_REG_SC - X1226_REG_RTC_BASE]
 			& X1226_REG_SC_MASK);
-	dt->dt_min = FROMBCD(bcd[X1226_REG_MN - X1226_REG_RTC_BASE]
+	dt->dt_min = bcdtobin(bcd[X1226_REG_MN - X1226_REG_RTC_BASE]
 			& X1226_REG_MN_MASK);
 	if (!(bcd[X1226_REG_HR - X1226_REG_RTC_BASE] & X1226_FLAG_HR_24H)) {
-		dt->dt_hour = FROMBCD(bcd[X1226_REG_HR - X1226_REG_RTC_BASE]
+		dt->dt_hour = bcdtobin(bcd[X1226_REG_HR - X1226_REG_RTC_BASE]
 				& X1226_REG_HR12_MASK);
 		if (bcd[X1226_REG_HR - X1226_REG_RTC_BASE] & X1226_FLAG_HR_12HPM) {
 			dt->dt_hour += 12;
 		}
 	} else {
-		dt->dt_hour = FROMBCD(bcd[X1226_REG_HR - X1226_REG_RTC_BASE]
+		dt->dt_hour = bcdtobin(bcd[X1226_REG_HR - X1226_REG_RTC_BASE]
 			& X1226_REG_HR24_MASK);
 	}
-	dt->dt_wday = FROMBCD(bcd[X1226_REG_DW - X1226_REG_RTC_BASE]
+	dt->dt_wday = bcdtobin(bcd[X1226_REG_DW - X1226_REG_RTC_BASE]
 			& X1226_REG_DT_MASK);
-	dt->dt_day = FROMBCD(bcd[X1226_REG_DT - X1226_REG_RTC_BASE]
+	dt->dt_day = bcdtobin(bcd[X1226_REG_DT - X1226_REG_RTC_BASE]
 			& X1226_REG_DT_MASK);
-	dt->dt_mon = FROMBCD(bcd[X1226_REG_MO - X1226_REG_RTC_BASE]
+	dt->dt_mon = bcdtobin(bcd[X1226_REG_MO - X1226_REG_RTC_BASE]
 			& X1226_REG_MO_MASK);
-	dt->dt_year = FROMBCD(bcd[X1226_REG_YR - X1226_REG_RTC_BASE]
+	dt->dt_year = bcdtobin(bcd[X1226_REG_YR - X1226_REG_RTC_BASE]
 			& X1226_REG_YR_MASK);
-	dt->dt_year += FROMBCD(bcd[X1226_REG_Y2K - X1226_REG_RTC_BASE]
+	dt->dt_year += bcdtobin(bcd[X1226_REG_Y2K - X1226_REG_RTC_BASE]
 			& X1226_REG_Y2K_MASK) * 100;
 
 	return (1);
@@ -354,15 +354,15 @@ xrtc_clock_write(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 	/*
 	 * Convert our time to bcd values
 	 */
-	bcd[X1226_REG_SC - X1226_REG_RTC_BASE] = TOBCD(dt->dt_sec);
-	bcd[X1226_REG_MN - X1226_REG_RTC_BASE] = TOBCD(dt->dt_min);
-	bcd[X1226_REG_HR - X1226_REG_RTC_BASE] = TOBCD(dt->dt_hour)
+	bcd[X1226_REG_SC - X1226_REG_RTC_BASE] = bintobcd(dt->dt_sec);
+	bcd[X1226_REG_MN - X1226_REG_RTC_BASE] = bintobcd(dt->dt_min);
+	bcd[X1226_REG_HR - X1226_REG_RTC_BASE] = bintobcd(dt->dt_hour)
 						| X1226_FLAG_HR_24H;
-	bcd[X1226_REG_DW - X1226_REG_RTC_BASE] = TOBCD(dt->dt_wday);
-	bcd[X1226_REG_DT - X1226_REG_RTC_BASE] = TOBCD(dt->dt_day);
-	bcd[X1226_REG_MO - X1226_REG_RTC_BASE] = TOBCD(dt->dt_mon);
-	bcd[X1226_REG_YR - X1226_REG_RTC_BASE] = TOBCD(dt->dt_year % 100);
-	bcd[X1226_REG_Y2K - X1226_REG_RTC_BASE] = TOBCD(dt->dt_year / 100);
+	bcd[X1226_REG_DW - X1226_REG_RTC_BASE] = bintobcd(dt->dt_wday);
+	bcd[X1226_REG_DT - X1226_REG_RTC_BASE] = bintobcd(dt->dt_day);
+	bcd[X1226_REG_MO - X1226_REG_RTC_BASE] = bintobcd(dt->dt_mon);
+	bcd[X1226_REG_YR - X1226_REG_RTC_BASE] = bintobcd(dt->dt_year % 100);
+	bcd[X1226_REG_Y2K - X1226_REG_RTC_BASE] = bintobcd(dt->dt_year / 100);
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
 		aprint_error_dev(sc->sc_dev,
