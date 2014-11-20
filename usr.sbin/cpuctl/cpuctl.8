@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpuctl.8,v 1.12 2014/02/19 09:13:21 szptvlfn Exp $
+.\"	$NetBSD: cpuctl.8,v 1.13 2014/11/20 12:49:13 msaitoh Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,8 +67,17 @@ away from individual CPUs.
 At least one CPU in the system must remain on line.
 .It online Ar cpuno
 Set the specified CPU on line, making it available to run unbound LWPs.
-.It ucode Op Ar file
-This applies the microcode patch on all CPUs.
+.It ucode Xo
+.Op Ar cpuno
+.Op Ar file
+.Xc
+This applies the microcode patch to CPUs.
+If
+.Ar cpuno
+is not specified or -1, all CPUs are updated.
+If
+.Ar cpuno
+is -2, the current CPUs are updated.
 The default filename is used if no filename is specified.
 The
 .Cm identify
