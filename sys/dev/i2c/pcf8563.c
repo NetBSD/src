@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8563.c,v 1.3 2012/01/07 21:02:15 phx Exp $	*/
+/*	$NetBSD: pcf8563.c,v 1.4 2014/11/20 16:34:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.3 2012/01/07 21:02:15 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.4 2014/11/20 16:34:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,12 +136,12 @@ pcf8563rtc_clock_read(struct pcf8563rtc_softc *sc, struct clock_ymdhms *dt)
 
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
-	dt->dt_sec = FROMBCD(bcd[PCF8563_R_SECOND] & PCF8563_M_SECOND);
-	dt->dt_min = FROMBCD(bcd[PCF8563_R_MINUTE] & PCF8563_M_MINUTE);
-	dt->dt_hour = FROMBCD(bcd[PCF8563_R_HOUR] & PCF8563_M_HOUR);
-	dt->dt_day = FROMBCD(bcd[PCF8563_R_DAY] & PCF8563_M_DAY);
-	dt->dt_mon = FROMBCD(bcd[PCF8563_R_MONTH] & PCF8563_M_MONTH);
-	dt->dt_year = FROMBCD(bcd[PCF8563_R_YEAR] & PCF8563_M_YEAR);
+	dt->dt_sec = bcdtobin(bcd[PCF8563_R_SECOND] & PCF8563_M_SECOND);
+	dt->dt_min = bcdtobin(bcd[PCF8563_R_MINUTE] & PCF8563_M_MINUTE);
+	dt->dt_hour = bcdtobin(bcd[PCF8563_R_HOUR] & PCF8563_M_HOUR);
+	dt->dt_day = bcdtobin(bcd[PCF8563_R_DAY] & PCF8563_M_DAY);
+	dt->dt_mon = bcdtobin(bcd[PCF8563_R_MONTH] & PCF8563_M_MONTH);
+	dt->dt_year = bcdtobin(bcd[PCF8563_R_YEAR] & PCF8563_M_YEAR);
 	dt->dt_year += 2000;
 
 	return 1;
@@ -153,13 +153,13 @@ pcf8563rtc_clock_write(struct pcf8563rtc_softc *sc, struct clock_ymdhms *dt)
 	uint8_t bcd[PCF8563_NREGS];
 	uint8_t reg = PCF8563_R_SECOND;
 
-	bcd[PCF8563_R_SECOND] = TOBCD(dt->dt_sec);
-	bcd[PCF8563_R_MINUTE] = TOBCD(dt->dt_min);
-	bcd[PCF8563_R_HOUR] = TOBCD(dt->dt_hour);
-	bcd[PCF8563_R_DAY] = TOBCD(dt->dt_day);
-	bcd[PCF8563_R_WEEKDAY] = TOBCD(dt->dt_wday);
-	bcd[PCF8563_R_MONTH] = TOBCD(dt->dt_mon);
-	bcd[PCF8563_R_YEAR] = TOBCD(dt->dt_year % 100);
+	bcd[PCF8563_R_SECOND] = bintobcd(dt->dt_sec);
+	bcd[PCF8563_R_MINUTE] = bintobcd(dt->dt_min);
+	bcd[PCF8563_R_HOUR] = bintobcd(dt->dt_hour);
+	bcd[PCF8563_R_DAY] = bintobcd(dt->dt_day);
+	bcd[PCF8563_R_WEEKDAY] = bintobcd(dt->dt_wday);
+	bcd[PCF8563_R_MONTH] = bintobcd(dt->dt_mon);
+	bcd[PCF8563_R_YEAR] = bintobcd(dt->dt_year % 100);
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
 		device_printf(sc->sc_dev, "acquire bus for write failed\n");
