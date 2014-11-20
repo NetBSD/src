@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.61 2014/11/11 08:23:17 skrll Exp $	*/
+/*	$NetBSD: i386.c,v 1.62 2014/11/20 10:31:10 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.61 2014/11/11 08:23:17 skrll Exp $");
+__RCSID("$NetBSD: i386.c,v 1.62 2014/11/20 10:31:10 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1444,39 +1444,16 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	ci->ci_vendor[1] = descs[3];
 	ci->ci_vendor[3] = 0;
 
-	aprint_verbose("%s: highest basic info %08x\n", cpuname,
-	    ci->ci_cpuid_level);
-	if (verbose) {
-		int bf;
-		
-		for (bf = 0; bf <= ci->ci_cpuid_level; bf++) {
-			x86_cpuid(bf, descs);
-			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
-			    bf, descs[0], descs[1], descs[2], descs[3]);
-		}
-	}
-
 	/*
 	 * Fn8000_0000:
 	 * - Get cpuid extended function's max level.
 	 */
 	x86_cpuid(0x80000000, descs);
-	if (descs[0] >=  0x80000000) {
+	if (descs[0] >= 0x80000000)
 		ci->ci_cpuid_extlevel = descs[0];
-		aprint_verbose("%s: highest extended info %08x\n", cpuname,
-		    ci->ci_cpuid_extlevel);
-	} else {
+	else {
 		/* Set lower value than 0x80000000 */
 		ci->ci_cpuid_extlevel = 0;
-	}
-	if (verbose) {
-		unsigned int ef;
-
-		for (ef = 0x80000000; ef <= ci->ci_cpuid_extlevel; ef++) {
-			x86_cpuid(ef, descs);
-			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
-			    ef, descs[0], descs[1], descs[2], descs[3]);
-		}
 	}
 
 	/*
@@ -1706,6 +1683,7 @@ identifycpu(int fd, const char *cpuname)
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	const struct cpu_cpuid_family *cpufam;
 	struct cpu_info *ci, cistore;
+	u_int descs[4];
 	size_t sz;
 	struct cpu_ucode_version ucode;
 	union {
@@ -1715,6 +1693,30 @@ identifycpu(int fd, const char *cpuname)
 
 	ci = &cistore;
 	cpu_probe_base_features(ci, cpuname);
+	aprint_verbose("%s: highest basic info %08x\n", cpuname,
+	    ci->ci_cpuid_level);
+	if (verbose) {
+		int bf;
+		
+		for (bf = 0; bf <= ci->ci_cpuid_level; bf++) {
+			x86_cpuid(bf, descs);
+			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
+			    bf, descs[0], descs[1], descs[2], descs[3]);
+		}
+	}
+	if (ci->ci_cpuid_extlevel >=  0x80000000)
+		aprint_verbose("%s: highest extended info %08x\n", cpuname,
+		    ci->ci_cpuid_extlevel);
+	if (verbose) {
+		unsigned int ef;
+
+		for (ef = 0x80000000; ef <= ci->ci_cpuid_extlevel; ef++) {
+			x86_cpuid(ef, descs);
+			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
+			    ef, descs[0], descs[1], descs[2], descs[3]);
+		}
+	}
+
 	cpu_probe_hv_features(ci, cpuname);
 	cpu_probe_features(ci);
 
