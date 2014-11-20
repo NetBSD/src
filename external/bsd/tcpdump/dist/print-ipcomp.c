@@ -21,27 +21,20 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ipcomp.c,v 1.20 2003-11-19 00:36:08 guy Exp ";
-#else
-__RCSID("$NetBSD: print-ipcomp.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
-#endif
+__RCSID("$NetBSD: print-ipcomp.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
 #endif
 
+#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <string.h>
 #include <tcpdump-stdinc.h>
 
-#include <stdio.h>
-
 struct ipcomp {
-	u_int8_t comp_nxt;	/* Next Header */
-	u_int8_t comp_flags;	/* Length of data, in 32bit */
-	u_int16_t comp_cpi;	/* Compression parameter index */
+	uint8_t comp_nxt;	/* Next Header */
+	uint8_t comp_flags;	/* Length of data, in 32bit */
+	uint16_t comp_cpi;	/* Compression parameter index */
 };
 
 #if defined(HAVE_LIBZ) && defined(HAVE_ZLIB_H)
@@ -49,15 +42,14 @@ struct ipcomp {
 #endif
 
 #include "interface.h"
-#include "addrtoname.h"
 #include "extract.h"
 
 int
-ipcomp_print(register const u_char *bp, int *nhdr _U_)
+ipcomp_print(netdissect_options *ndo, register const u_char *bp, int *nhdr _U_)
 {
 	register const struct ipcomp *ipcomp;
 	register const u_char *ep;
-	u_int16_t cpi;
+	uint16_t cpi;
 #if defined(HAVE_LIBZ) && defined(HAVE_ZLIB_H)
 	int advance;
 #endif
@@ -66,13 +58,13 @@ ipcomp_print(register const u_char *bp, int *nhdr _U_)
 	cpi = EXTRACT_16BITS(&ipcomp->comp_cpi);
 
 	/* 'ep' points to the end of available data. */
-	ep = snapend;
+	ep = ndo->ndo_snapend;
 
 	if ((u_char *)(ipcomp + 1) >= ep - sizeof(struct ipcomp)) {
-		fputs("[|IPCOMP]", stdout);
+		ND_PRINT((ndo, "[|IPCOMP]"));
 		goto fail;
 	}
-	printf("IPComp(cpi=0x%04x)", cpi);
+	ND_PRINT((ndo, "IPComp(cpi=0x%04x)", cpi));
 
 #if defined(HAVE_LIBZ) && defined(HAVE_ZLIB_H)
 	if (1)
@@ -87,7 +79,7 @@ ipcomp_print(register const u_char *bp, int *nhdr _U_)
 		*nhdr = ipcomp->comp_nxt;
 	advance = sizeof(struct ipcomp);
 
-	printf(": ");
+	ND_PRINT((ndo, ": "));
 	return advance;
 
 #endif
