@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.79 2014/11/20 08:42:03 sborrill Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.80 2014/11/20 12:19:27 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -1154,4 +1154,13 @@ lib/libc/resolv/res_mkquery.c			1.14
 	Fix EDNS option being broken with unbound by clipping MAXPACKET
 	to 64K - 1. Addresses PR/48475
 	[christos, ticket #1932]
+
+sys/dev/raidframe/raidframevar.h		1.17
+sys/dev/raidframe/rf_netbsdkintf.c		1.316
+sys/dev/raidframe/rf_reconstruct.c		1.121 via patch
+
+	Fix a long-standing bug related to rebooting while a
+	reconstruct-to-spare is underway but not yet complete.
+	Fixes PR kern/49244.
+	[oster, ticket #1933]
 
