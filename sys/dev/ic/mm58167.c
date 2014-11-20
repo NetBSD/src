@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167.c,v 1.15 2013/07/25 04:21:47 msaitoh Exp $	*/
+/*	$NetBSD: mm58167.c,v 1.16 2014/11/20 16:34:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.15 2013/07/25 04:21:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.16 2014/11/20 16:34:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -104,7 +104,7 @@ mm58167_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 	do {
 #define _MM58167_GET(dt_f, mm_f)					\
 	byte_value = mm58167_read(sc, mm_f);				\
-	dt->dt_f = FROMBCD(byte_value)
+	dt->dt_f = bcdtobin(byte_value)
 
 		_MM58167_GET(dt_mon, mm58167_mon);
 		_MM58167_GET(dt_day, mm58167_day);
@@ -246,7 +246,7 @@ mm58167_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 
 	/* Load everything. */
 #define _MM58167_PUT(dt_f, mm_f)					\
-	byte_value = TOBCD(dt->dt_f);					\
+	byte_value = bintobcd(dt->dt_f);					\
 	mm58167_write(sc, mm_f, byte_value)
 
 	_MM58167_PUT(dt_mon, mm58167_mon);

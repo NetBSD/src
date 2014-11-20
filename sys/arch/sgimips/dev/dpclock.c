@@ -1,4 +1,4 @@
-/*	$NetBSD: dpclock.c,v 1.4 2012/10/27 17:18:09 chs Exp $	*/
+/*	$NetBSD: dpclock.c,v 1.5 2014/11/20 16:34:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Erik Reid
@@ -140,11 +140,11 @@ dpclock_gettime(struct todr_chip_handle *todrch, struct timeval *tv)
 	for (i = 0; i < 32; i++)
 		regs[i] = bus_space_read_1(sc->sc_rtct, sc->sc_rtch, i);
 
-	dt.dt_sec = FROMBCD(regs[DP8573A_SAVE_SEC]);
-	dt.dt_min = FROMBCD(regs[DP8573A_SAVE_MIN]);
+	dt.dt_sec = bcdtobin(regs[DP8573A_SAVE_SEC]);
+	dt.dt_min = bcdtobin(regs[DP8573A_SAVE_MIN]);
 
 	if (regs[DP8573A_RT_MODE] & DP8573A_RT_MODE_1224) {
-		dt.dt_hour = FROMBCD(regs[DP8573A_SAVE_HOUR] &
+		dt.dt_hour = bcdtobin(regs[DP8573A_SAVE_HOUR] &
 						DP8573A_HOUR_12HR_MASK) +
 		    ((regs[DP8573A_SAVE_HOUR] & DP8573A_RT_MODE_1224) ? 0 : 12);
 
@@ -157,14 +157,14 @@ dpclock_gettime(struct todr_chip_handle *todrch, struct timeval *tv)
 		if (dt.dt_hour == 24)
 			dt.dt_hour = 0;
 	} else {
-		dt.dt_hour = FROMBCD(regs[DP8573A_SAVE_HOUR] &
+		dt.dt_hour = bcdtobin(regs[DP8573A_SAVE_HOUR] &
 							DP8573A_HOUR_24HR_MASK);
 	}
 
-	dt.dt_wday = FROMBCD(regs[DP8573A_DOW]);    /* Not from time saved */
-	dt.dt_day = FROMBCD(regs[DP8573A_SAVE_DOM]);
-	dt.dt_mon = FROMBCD(regs[DP8573A_SAVE_MONTH]);
-	dt.dt_year = FROM_IRIX_YEAR(FROMBCD(regs[DP8573A_YEAR]));
+	dt.dt_wday = bcdtobin(regs[DP8573A_DOW]);    /* Not from time saved */
+	dt.dt_day = bcdtobin(regs[DP8573A_SAVE_DOM]);
+	dt.dt_mon = bcdtobin(regs[DP8573A_SAVE_MONTH]);
+	dt.dt_year = FROM_IRIX_YEAR(bcdtobin(regs[DP8573A_YEAR]));
 
 	/* simple sanity checks */
 	if (dt.dt_mon > 12 || dt.dt_day > 31 ||
@@ -204,13 +204,13 @@ dpclock_settime(struct todr_chip_handle *todrch, struct timeval *tv)
 		regs[i] = bus_space_read_1(sc->sc_rtct, sc->sc_rtch, i);
 
 	regs[DP8573A_SUBSECOND] = 0;
-	regs[DP8573A_SECOND] = TOBCD(dt.dt_sec);
-	regs[DP8573A_MINUTE] = TOBCD(dt.dt_min);
-	regs[DP8573A_HOUR] = TOBCD(dt.dt_hour) & DP8573A_HOUR_24HR_MASK;
-	regs[DP8573A_DOW] = TOBCD(dt.dt_wday);
-	regs[DP8573A_DOM] = TOBCD(dt.dt_day);
-	regs[DP8573A_MONTH] = TOBCD(dt.dt_mon);
-	regs[DP8573A_YEAR] = TOBCD(TO_IRIX_YEAR(dt.dt_year));
+	regs[DP8573A_SECOND] = bintobcd(dt.dt_sec);
+	regs[DP8573A_MINUTE] = bintobcd(dt.dt_min);
+	regs[DP8573A_HOUR] = bintobcd(dt.dt_hour) & DP8573A_HOUR_24HR_MASK;
+	regs[DP8573A_DOW] = bintobcd(dt.dt_wday);
+	regs[DP8573A_DOM] = bintobcd(dt.dt_day);
+	regs[DP8573A_MONTH] = bintobcd(dt.dt_mon);
+	regs[DP8573A_YEAR] = bintobcd(TO_IRIX_YEAR(dt.dt_year));
 
 	s = splhigh();
 	i = bus_space_read_1(sc->sc_rtct, sc->sc_rtch, DP8573A_RT_MODE);

@@ -103,31 +103,31 @@ ssrtc_todr_gettime(struct todr_chip_handle *h, struct timeval *tv)
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_BCDSEC);
 	DPRINTF(("BCDSEC: %02X\n", reg));
-	dt.dt_sec = FROMBCD(reg);
+	dt.dt_sec = bcdtobin(reg);
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_BCDMIN);
 	DPRINTF(("BCDMIN: %02X\n", reg));
-	dt.dt_min = FROMBCD(reg);
+	dt.dt_min = bcdtobin(reg);
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_BCDHOUR);
 	DPRINTF(("BCDHOUR: %02X\n", reg));
-	dt.dt_hour = FROMBCD(reg);
+	dt.dt_hour = bcdtobin(reg);
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_BCDDATE);
 	DPRINTF(("BCDDATE: %02X\n", reg));
-	dt.dt_day = FROMBCD(reg);
+	dt.dt_day = bcdtobin(reg);
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_BCDDAY);
 	DPRINTF(("BCDDAY: %02X\n", reg));
-	dt.dt_wday = FROMBCD(reg);
+	dt.dt_wday = bcdtobin(reg);
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_BCDMON);
 	DPRINTF(("BCDMON: %02X\n", reg));
-	dt.dt_mon = FROMBCD(reg);
+	dt.dt_mon = bcdtobin(reg);
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_BCDYEAR);
 	DPRINTF(("BCDYEAR: %02X\n", reg));
-	dt.dt_year = SSRTC_YEAR_ZERO + FROMBCD(reg);
+	dt.dt_year = SSRTC_YEAR_ZERO + bcdtobin(reg);
 
 	DPRINTF(("Seconds: %d\n", dt.dt_sec));
 	DPRINTF(("Minutes: %d\n", dt.dt_min));
@@ -158,13 +158,13 @@ ssrtc_todr_settime(struct todr_chip_handle *h, struct timeval *tv)
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_RTCCON);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_RTCCON, reg | RTCCON_RTCEN);
 
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDSEC, TOBCD(dt.dt_sec));
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDMIN, TOBCD(dt.dt_min));
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDHOUR, TOBCD(dt.dt_hour));
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDDATE, TOBCD(dt.dt_day));
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDDAY, TOBCD(dt.dt_wday));
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDMON, TOBCD(dt.dt_mon));
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDYEAR, TOBCD(dt.dt_year-SSRTC_YEAR_ZERO));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDSEC, bintobcd(dt.dt_sec));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDMIN, bintobcd(dt.dt_min));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDHOUR, bintobcd(dt.dt_hour));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDDATE, bintobcd(dt.dt_day));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDDAY, bintobcd(dt.dt_wday));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDMON, bintobcd(dt.dt_mon));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, RTC_BCDYEAR, bintobcd(dt.dt_year-SSRTC_YEAR_ZERO));
 
 	/* Clear RTCEN */
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_RTCCON);

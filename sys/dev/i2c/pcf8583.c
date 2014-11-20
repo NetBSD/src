@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583.c,v 1.15 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: pcf8583.c,v 1.16 2014/11/20 16:34:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8583.c,v 1.15 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8583.c,v 1.16 2014/11/20 16:34:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,18 +354,18 @@ pcfrtc_clock_read(struct pcfrtc_softc *sc, struct clock_ymdhms *dt,
 	/*
 	 * Convert the PCF8583's register values into something useable
 	 */
-	*centi      = FROMBCD(bcd[PCF8583_REG_CENTI]);
-	dt->dt_sec  = FROMBCD(bcd[PCF8583_REG_SEC]);
-	dt->dt_min  = FROMBCD(bcd[PCF8583_REG_MIN]);
-	dt->dt_hour = FROMBCD(bcd[PCF8583_REG_HOUR] & PCF8583_HOUR_MASK);
+	*centi      = bcdtobin(bcd[PCF8583_REG_CENTI]);
+	dt->dt_sec  = bcdtobin(bcd[PCF8583_REG_SEC]);
+	dt->dt_min  = bcdtobin(bcd[PCF8583_REG_MIN]);
+	dt->dt_hour = bcdtobin(bcd[PCF8583_REG_HOUR] & PCF8583_HOUR_MASK);
 	if (bcd[PCF8583_REG_HOUR] & PCF8583_HOUR_12H) {
 		dt->dt_hour %= 12;	/* 12AM -> 0, 12PM -> 12 */
 		if (bcd[PCF8583_REG_HOUR] & PCF8583_HOUR_PM)
 			dt->dt_hour += 12;
 	}
 
-	dt->dt_day = FROMBCD(bcd[PCF8583_REG_YEARDATE] & PCF8583_DATE_MASK);
-	dt->dt_mon = FROMBCD(bcd[PCF8583_REG_WKDYMON] & PCF8583_MON_MASK);
+	dt->dt_day = bcdtobin(bcd[PCF8583_REG_YEARDATE] & PCF8583_DATE_MASK);
+	dt->dt_mon = bcdtobin(bcd[PCF8583_REG_WKDYMON] & PCF8583_MON_MASK);
 
 	dt->dt_year = bcd[8] + (bcd[9] * 100);
 	/* Try to notice if the year's rolled over. */
@@ -394,12 +394,12 @@ pcfrtc_clock_write(struct pcfrtc_softc *sc, struct clock_ymdhms *dt,
 	 * can understand.
 	 */
 	bcd[PCF8583_REG_CENTI]    = centi;
-	bcd[PCF8583_REG_SEC]      = TOBCD(dt->dt_sec);
-	bcd[PCF8583_REG_MIN]      = TOBCD(dt->dt_min);
-	bcd[PCF8583_REG_HOUR]     = TOBCD(dt->dt_hour) & PCF8583_HOUR_MASK;
-	bcd[PCF8583_REG_YEARDATE] = TOBCD(dt->dt_day) |
+	bcd[PCF8583_REG_SEC]      = bintobcd(dt->dt_sec);
+	bcd[PCF8583_REG_MIN]      = bintobcd(dt->dt_min);
+	bcd[PCF8583_REG_HOUR]     = bintobcd(dt->dt_hour) & PCF8583_HOUR_MASK;
+	bcd[PCF8583_REG_YEARDATE] = bintobcd(dt->dt_day) |
 	    ((dt->dt_year % 4) << PCF8583_YEAR_SHIFT);
-	bcd[PCF8583_REG_WKDYMON]  = TOBCD(dt->dt_mon) |
+	bcd[PCF8583_REG_WKDYMON]  = bintobcd(dt->dt_mon) |
 	    ((dt->dt_wday % 4) << PCF8583_WKDY_SHIFT);
 	bcd[8]                    = dt->dt_year % 100;
 	bcd[9]                    = dt->dt_year / 100;

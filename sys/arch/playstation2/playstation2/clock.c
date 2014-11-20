@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 2014/07/04 08:09:47 martin Exp $	*/
+/*	$NetBSD: clock.c,v 1.11 2014/11/20 16:34:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2014/07/04 08:09:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2014/11/20 16:34:25 christos Exp $");
 
 #include "debug_playstation2.h"
 
@@ -82,12 +82,12 @@ get_bootinfo_tod(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 	    (void *)MIPS_PHYS_TO_KSEG1(BOOTINFO_BLOCK_BASE + BOOTINFO_RTC);
 
 	/* PS2 RTC is JST */
-	dt->dt_year = FROMBCD(rtc->year) + 2000;
-	dt->dt_mon = FROMBCD(rtc->mon);
-	dt->dt_day = FROMBCD(rtc->day);
-	dt->dt_hour = FROMBCD(rtc->hour);
-	dt->dt_min = FROMBCD(rtc->min);
-	dt->dt_sec = FROMBCD(rtc->sec);
+	dt->dt_year = bcdtobin(rtc->year) + 2000;
+	dt->dt_mon = bcdtobin(rtc->mon);
+	dt->dt_day = bcdtobin(rtc->day);
+	dt->dt_hour = bcdtobin(rtc->hour);
+	dt->dt_min = bcdtobin(rtc->min);
+	dt->dt_sec = bcdtobin(rtc->sec);
 
 	/* convert to UTC */
 	utc = clock_ymdhms_to_secs(dt) - 9*60*60;
