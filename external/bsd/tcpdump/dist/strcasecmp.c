@@ -10,18 +10,13 @@
  * is provided ``as is'' without express or implied warranty.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-     "@(#) Header: /tcpdump/master/tcpdump/strcasecmp.c,v 1.6 2003-11-16 09:36:43 guy Exp ";
 #else
-__RCSID("$NetBSD: strcasecmp.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 #endif
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <tcpdump-stdinc.h>
