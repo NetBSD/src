@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.34 2014/11/20 14:35:01 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.35 2014/11/20 19:18:52 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.34 2014/11/20 14:35:01 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.35 2014/11/20 19:18:52 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.34 2014/11/20 14:35:01 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.35 2014/11/20 19:18:52 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1087,25 +1087,43 @@ emit_msh(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 	return SLJIT_SUCCESS;
 }
 
+/*
+ * Emit code for A = A / k or A = A % k when k is a power of 2.
+ * @pc BPF_DIV or BPF_MOD instruction.
+ */
 static int
-emit_pow2_division(struct sljit_compiler *compiler, uint32_t k)
+emit_pow2_moddiv(struct sljit_compiler *compiler, const struct bpf_insn *pc)
 {
-	int shift = 0;
+	uint32_t k = pc->k;
 	int status = SLJIT_SUCCESS;
 
-	while (k > 1) {
-		k >>= 1;
-		shift++;
-	}
+	BJ_ASSERT(k != 0 && (k & (k - 1)) == 0);
 
-	BJ_ASSERT(k == 1 && shift < 32);
-
-	if (shift != 0) {
+	if (BPF_OP(pc->code) == BPF_MOD) {
 		status = sljit_emit_op2(compiler,
-		    SLJIT_LSHR|SLJIT_INT_OP,
+		    SLJIT_AND,
 		    BJ_AREG, 0,
 		    BJ_AREG, 0,
-		    SLJIT_IMM, shift);
+		    SLJIT_IMM, k - 1);
+	} else {
+		int shift = 0;
+
+		/*
+		 * Do shift = __builtin_ctz(k).
+		 * The loop is slower, but that's ok.
+		 */
+		while (k > 1) {
+			k >>= 1;
+			shift++;
+		}
+
+		if (shift != 0) {
+			status = sljit_emit_op2(compiler,
+			    SLJIT_LSHR|SLJIT_INT_OP,
+			    BJ_AREG, 0,
+			    BJ_AREG, 0,
+			    SLJIT_IMM, shift);
+		}
 	}
 
 	return status;
@@ -1128,15 +1146,15 @@ modulus(sljit_uw x, sljit_uw y)
 #endif
 
 /*
- * Emit code for A = A / div or A = A % div
- * divt,divw are either SLJIT_IMM,pc->k or BJ_XREG,0.
+ * Emit code for A = A / div or A = A % div.
+ * @pc BPF_DIV or BPF_MOD instruction.
  */
 static int
-emit_moddiv(struct sljit_compiler *compiler,
-    const struct bpf_insn *pc, int divt, sljit_sw divw)
+emit_moddiv(struct sljit_compiler *compiler, const struct bpf_insn *pc)
 {
 	int status;
 	const bool div = BPF_OP(pc->code) == BPF_DIV;
+	const bool xreg = BPF_SRC(pc->code) == BPF_X;
 
 #if BJ_XREG == SLJIT_RETURN_REG   || \
     BJ_XREG == SLJIT_SCRATCH_REG1 || \
@@ -1157,7 +1175,8 @@ emit_moddiv(struct sljit_compiler *compiler,
 	status = sljit_emit_op1(compiler,
 	    SLJIT_MOV,
 	    SLJIT_SCRATCH_REG2, 0,
-	    divt, divw);
+	    xreg ? BJ_XREG : SLJIT_IMM,
+	    xreg ? 0 : (uint32_t)pc->k);
 	if (status != SLJIT_SUCCESS)
 		return status;
 
@@ -1940,17 +1959,14 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 			}
 
 			if (src == BPF_X) {
-				status = emit_moddiv(compiler, pc, BJ_XREG, 0);
+				status = emit_moddiv(compiler, pc);
 				if (status != SLJIT_SUCCESS)
 					goto fail;
 			} else if (pc->k != 0) {
-				/* XXX: We can do better here for MOD */
-				if ((pc->k & (pc->k - 1)) || op == BPF_MOD) {
-					status = emit_moddiv(compiler, pc,
-					    SLJIT_IMM, (uint32_t)pc->k);
+				if (pc->k & (pc->k - 1)) {
+					status = emit_moddiv(compiler, pc);
 				} else {
-				    status = emit_pow2_division(compiler,
-				        (uint32_t)pc->k);
+					status = emit_pow2_moddiv(compiler, pc);
 				}
 				if (status != SLJIT_SUCCESS)
 					goto fail;
