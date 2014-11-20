@@ -1,4 +1,4 @@
-/* 
+/*
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that: (1) source code
  * distributions retain the above copyright notice and this paragraph
@@ -15,14 +15,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/gmpls.c,v 1.7 2006-04-14 07:11:59 hannes Exp  (LBL)";
-#else
-__RCSID("$NetBSD: gmpls.c,v 1.3 2013/04/06 19:33:07 christos Exp $");
-#endif
+__RCSID("$NetBSD: gmpls.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
 #endif
 
+#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -146,8 +142,8 @@ const struct tok gmpls_payload_values[] = {
     { 0, NULL }
 };
 
-/* 
- * Link Type values used by LMP Service Discovery (specifically, the Client 
+/*
+ * Link Type values used by LMP Service Discovery (specifically, the Client
  * Port Service Attributes Object). See UNI 1.0 section 9.4.2 for details.
  */
 const struct tok lmp_sd_service_config_cpsa_link_type_values[] = {
@@ -156,9 +152,9 @@ const struct tok lmp_sd_service_config_cpsa_link_type_values[] = {
     { 0, NULL}
 };
 
-/* 
- * Signal Type values for SDH links used by LMP Service Discovery (specifically, 
- * the Client Port Service Attributes Object). See UNI 1.0 section 9.4.2 for 
+/*
+ * Signal Type values for SDH links used by LMP Service Discovery (specifically,
+ * the Client Port Service Attributes Object). See UNI 1.0 section 9.4.2 for
  * details.
  */
 const struct tok lmp_sd_service_config_cpsa_signal_type_sdh_values[] = {
@@ -173,9 +169,9 @@ const struct tok lmp_sd_service_config_cpsa_signal_type_sdh_values[] = {
     { 0, NULL}
 };
 
-/* 
- * Signal Type values for SONET links used by LMP Service Discovery (specifically, 
- * the Client Port Service Attributes Object). See UNI 1.0 section 9.4.2 for 
+/*
+ * Signal Type values for SONET links used by LMP Service Discovery (specifically,
+ * the Client Port Service Attributes Object). See UNI 1.0 section 9.4.2 for
  * details.
  */
 const struct tok lmp_sd_service_config_cpsa_signal_type_sonet_values[] = {
@@ -191,7 +187,7 @@ const struct tok lmp_sd_service_config_cpsa_signal_type_sonet_values[] = {
 };
 
 #define DIFFSERV_BC_MODEL_RDM           0   /* draft-ietf-tewg-diff-te-proto-07 */
-#define DIFFSERV_BC_MODEL_MAM           1   /* draft-ietf-tewg-diff-te-proto-07 */ 
+#define DIFFSERV_BC_MODEL_MAM           1   /* draft-ietf-tewg-diff-te-proto-07 */
 #define DIFFSERV_BC_MODEL_EXTD_MAM      254 /* experimental */
 
 const struct tok diffserv_te_bc_values[] = {
