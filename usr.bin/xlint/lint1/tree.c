@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.76 2014/04/17 18:23:18 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.77 2014/11/20 21:17:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.76 2014/04/17 18:23:18 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.77 2014/11/20 21:17:18 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -2998,17 +2998,21 @@ bldszof(type_t *tp)
 int64_t
 tsize(type_t *tp)
 {
-	int	elem, elsz;
+	int	elem, elsz, flex;
 
 	elem = 1;
+	flex = 0;
 	while (tp->t_tspec == ARRAY) {
+		flex = 1;	/* allow c99 flex arrays [] [0] */
 		elem *= tp->t_dim;
 		tp = tp->t_subt;
 	}
 	if (elem == 0) {
-		/* cannot take size of incomplete type */
-		error(143);
-		elem = 1;
+		if (!flex) {
+			/* cannot take size of incomplete type */
+			error(143);
+			elem = 1;
+		}
 	}
 	switch (tp->t_tspec) {
 	case FUNC:
