@@ -1,6 +1,7 @@
-/*	$NetBSD: chiptotime.c,v 1.5 2014/11/17 02:15:48 christos Exp $ */
+/*	$NetBSD: chiptotime.c,v 1.6 2014/11/20 15:50:25 christos Exp $ */
 
 #include <sys/types.h>
+#include <sys/clock.h>
 
 #include <machine/prom.h>
 
