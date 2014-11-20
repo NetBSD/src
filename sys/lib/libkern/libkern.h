@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.115 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: libkern.h,v 1.116 2014/11/20 16:25:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -367,10 +367,6 @@ int	 ffs(int);
 
 void	 kern_assert(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-unsigned int
-	bcdtobin(unsigned int);
-unsigned int
-	bintobcd(unsigned int);
 u_int32_t
 	inet_addr(const char *);
 struct in_addr;
