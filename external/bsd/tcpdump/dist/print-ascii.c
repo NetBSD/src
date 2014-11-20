@@ -29,19 +29,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: print-ascii.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
+#endif
+
+#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-     "@(#) Header: /tcpdump/master/tcpdump/print-ascii.c,v 1.17 2005-07-06 20:53:32 guy Exp ";
-#else
-__RCSID("$NetBSD: print-ascii.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
-#endif
-#endif
 #include <tcpdump-stdinc.h>
 #include <stdio.h>
 
@@ -55,24 +52,39 @@ __RCSID("$NetBSD: print-ascii.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 		(HEXDUMP_HEXSTUFF_PER_SHORT * HEXDUMP_SHORTS_PER_LINE)
 
 void
-ascii_print(register const u_char *cp, register u_int length)
+ascii_print(netdissect_options *ndo,
+            const u_char *cp, u_int length)
 {
-	register int s;
+	register u_char s;
 
-	putchar('\n');
+	ND_PRINT((ndo, "\n"));
 	while (length > 0) {
 		s = *cp++;
 		length--;
-		if (!isgraph(s) &&
-		    (s != '\t' && s != ' ' && s != '\n' && s != '\r'))
-			putchar('.');
-		else
-			putchar(s);
+		if (s == '\r') {
+			/*
+			 * Don't print CRs at the end of the line; they
+			 * don't belong at the ends of lines on UN*X,
+			 * and the standard I/O library will give us one
+			 * on Windows so we don't need to print one
+			 * ourselves.
+			 *
+			 * In the middle of a line, just print a '.'.
+			 */
+			if (length > 1 && *cp != '\n')
+				ND_PRINT((ndo, "."));
+		} else {
+			if (!ND_ISGRAPH(s) &&
+			    (s != '\t' && s != ' ' && s != '\n'))
+				ND_PRINT((ndo, "."));
+			else
+				ND_PRINT((ndo, "%c", s));
+		}
 	}
 }
 
 void
-hex_and_ascii_print_with_offset(register const char *ident,
+hex_and_ascii_print_with_offset(netdissect_options *ndo, register const char *ident,
     register const u_char *cp, register u_int length, register u_int oset)
 {
 	register u_int i;
@@ -90,14 +102,14 @@ hex_and_ascii_print_with_offset(register const char *ident,
 		(void)snprintf(hsp, sizeof(hexstuff) - (hsp - hexstuff),
 		    " %02x%02x", s1, s2);
 		hsp += HEXDUMP_HEXSTUFF_PER_SHORT;
-		*(asp++) = (isgraph(s1) ? s1 : '.');
-		*(asp++) = (isgraph(s2) ? s2 : '.');
+		*(asp++) = (ND_ISGRAPH(s1) ? s1 : '.');
+		*(asp++) = (ND_ISGRAPH(s2) ? s2 : '.');
 		i++;
 		if (i >= HEXDUMP_SHORTS_PER_LINE) {
 			*hsp = *asp = '\0';
-			(void)printf("%s0x%04x: %-*s  %s",
+			ND_PRINT((ndo, "%s0x%04x: %-*s  %s",
 			    ident, oset, HEXDUMP_HEXSTUFF_PER_LINE,
-			    hexstuff, asciistuff);
+			    hexstuff, asciistuff));
 			i = 0; hsp = hexstuff; asp = asciistuff;
 			oset += HEXDUMP_BYTES_PER_LINE;
 		}
@@ -107,30 +119,31 @@ hex_and_ascii_print_with_offset(register const char *ident,
 		(void)snprintf(hsp, sizeof(hexstuff) - (hsp - hexstuff),
 		    " %02x", s1);
 		hsp += 3;
-		*(asp++) = (isgraph(s1) ? s1 : '.');
+		*(asp++) = (ND_ISGRAPH(s1) ? s1 : '.');
 		++i;
 	}
 	if (i > 0) {
 		*hsp = *asp = '\0';
-		(void)printf("%s0x%04x: %-*s  %s",
+		ND_PRINT((ndo, "%s0x%04x: %-*s  %s",
 		     ident, oset, HEXDUMP_HEXSTUFF_PER_LINE,
-		     hexstuff, asciistuff);
+		     hexstuff, asciistuff));
 	}
 }
 
 void
-hex_and_ascii_print(register const char *ident, register const u_char *cp,
-    register u_int length)
+hex_and_ascii_print(netdissect_options *ndo, register const char *ident,
+    register const u_char *cp, register u_int length)
 {
-	hex_and_ascii_print_with_offset(ident, cp, length, 0);
+	hex_and_ascii_print_with_offset(ndo, ident, cp, length, 0);
 }
 
 /*
  * telnet_print() wants this.  It is essentially default_print_unaligned()
  */
 void
-hex_print_with_offset(register const char *ident, register const u_char *cp, register u_int length,
-		      register u_int oset)
+hex_print_with_offset(netdissect_options *ndo,
+                      const char *ident, const u_char *cp, u_int length,
+		      u_int oset)
 {
 	register u_int i, s;
 	register int nshorts;
@@ -139,16 +152,16 @@ hex_print_with_offset(register const char *ident, register const u_char *cp, reg
 	i = 0;
 	while (--nshorts >= 0) {
 		if ((i++ % 8) == 0) {
-			(void)printf("%s0x%04x: ", ident, oset);
+			ND_PRINT((ndo,"%s0x%04x: ", ident, oset));
 			oset += HEXDUMP_BYTES_PER_LINE;
 		}
 		s = *cp++;
-		(void)printf(" %02x%02x", s, *cp++);
+		ND_PRINT((ndo," %02x%02x", s, *cp++));
 	}
 	if (length & 1) {
 		if ((i % 8) == 0)
-			(void)printf("%s0x%04x: ", ident, oset);
-		(void)printf(" %02x", *cp);
+			ND_PRINT((ndo,"%s0x%04x: ", ident, oset));
+		ND_PRINT((ndo," %02x", *cp));
 	}
 }
 
@@ -156,9 +169,9 @@ hex_print_with_offset(register const char *ident, register const u_char *cp, reg
  * just for completeness
  */
 void
-hex_print(register const char *ident, register const u_char *cp, register u_int length)
+hex_print(netdissect_options *ndo,const char *ident, const u_char *cp, u_int length)
 {
-	hex_print_with_offset(ident, cp, length, 0);
+  hex_print_with_offset(ndo, ident, cp, length, 0);
 }
 
 #ifdef MAIN

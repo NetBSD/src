@@ -22,14 +22,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-cip.c,v 1.26 2005-07-07 01:22:17 guy Exp  (LBL)";
-#else
-__RCSID("$NetBSD: print-cip.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
-#endif
+__RCSID("$NetBSD: print-cip.c,v 1.4 2014/11/20 03:05:03 christos Exp $");
 #endif
 
+#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -38,17 +34,12 @@ __RCSID("$NetBSD: print-cip.c,v 1.3 2013/04/06 19:33:08 christos Exp $");
 
 #include <tcpdump-stdinc.h>
 
-#include <stdio.h>
-#include <pcap.h>
-
 #include "interface.h"
 #include "addrtoname.h"
-#include "ethertype.h"
-#include "ether.h"
 
 #define RFC1483LLC_LEN	8
 
-static unsigned char rfcllc[] = {
+static const unsigned char rfcllc[] = {
 	0xaa,	/* DSAP: non-ISO */
 	0xaa,	/* SSAP: non-ISO */
 	0x03,	/* Ctrl: Unnumbered Information Command PDU */
@@ -57,12 +48,12 @@ static unsigned char rfcllc[] = {
 	0x00 };
 
 static inline void
-cip_print(int length)
+cip_print(netdissect_options *ndo, int length)
 {
 	/*
 	 * There is no MAC-layer header, so just print the length.
 	 */
-	printf("%d: ", length);
+	ND_PRINT((ndo, "%d: ", length));
 }
 
 /*
@@ -72,41 +63,41 @@ cip_print(int length)
  * is the number of bytes actually captured.
  */
 u_int
-cip_if_print(const struct pcap_pkthdr *h, const u_char *p)
+cip_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_char *p)
 {
 	u_int caplen = h->caplen;
 	u_int length = h->len;
 	u_short extracted_ethertype;
 
 	if (memcmp(rfcllc, p, sizeof(rfcllc))==0 && caplen < RFC1483LLC_LEN) {
-		printf("[|cip]");
+		ND_PRINT((ndo, "[|cip]"));
 		return (0);
 	}
 
-	if (eflag)
-		cip_print(length);
+	if (ndo->ndo_eflag)
+		cip_print(ndo, length);
 
 	if (memcmp(rfcllc, p, sizeof(rfcllc)) == 0) {
 		/*
 		 * LLC header is present.  Try to print it & higher layers.
 		 */
-		if (llc_print(p, length, caplen, NULL, NULL,
+		if (llc_print(ndo, p, length, caplen, NULL, NULL,
 		    &extracted_ethertype) == 0) {
 			/* ether_type not known, print raw packet */
-			if (!eflag)
-				cip_print(length);
+			if (!ndo->ndo_eflag)
+				cip_print(ndo, length);
 			if (extracted_ethertype) {
-				printf("(LLC %s) ",
-			       etherproto_string(htons(extracted_ethertype)));
+				ND_PRINT((ndo, "(LLC %s) ",
+			       etherproto_string(htons(extracted_ethertype))));
 			}
-			if (!suppress_default_print)
-				default_print(p, caplen);
+			if (!ndo->ndo_suppress_default_print)
+				ND_DEFAULTPRINT(p, caplen);
 		}
 	} else {
 		/*
 		 * LLC header is absent; treat it as just IP.
 		 */
-		ip_print(gndo, p, length);
+		ip_print(ndo, p, length);
 	}
 
 	return (0);
