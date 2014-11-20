@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.250.4.6 2010/03/06 20:56:15 sborrill Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.250.4.6.2.1 2014/11/20 15:52:10 sborrill Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.4.6 2010/03/06 20:56:15 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.4.6.2.1 2014/11/20 15:52:10 sborrill Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1470,6 +1470,10 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 		for (j = d_cfg->cols, i = 0; i < d_cfg->nspares; i++, j++) {
 			d_cfg->spares[i] = raidPtr->Disks[j];
+			if (d_cfg->spares[i].status == rf_ds_rebuilding_spare) {
+				/* XXX: raidctl(8) expects to see this as a used spare */
+				d_cfg->spares[i].status = rf_ds_used_spare;
+			}
 		}
 		retcode = copyout(d_cfg, *ucfgp, sizeof(RF_DeviceConfig_t));
 		RF_Free(d_cfg, sizeof(RF_DeviceConfig_t));
