@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.33 2014/11/19 19:34:43 christos Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.34 2014/11/20 14:35:01 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.33 2014/11/19 19:34:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.34 2014/11/20 14:35:01 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.33 2014/11/19 19:34:43 christos Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.34 2014/11/20 14:35:01 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1132,9 +1132,11 @@ modulus(sljit_uw x, sljit_uw y)
  * divt,divw are either SLJIT_IMM,pc->k or BJ_XREG,0.
  */
 static int
-emit_moddiv(bool div, struct sljit_compiler *compiler, int divt, sljit_sw divw)
+emit_moddiv(struct sljit_compiler *compiler,
+    const struct bpf_insn *pc, int divt, sljit_sw divw)
 {
 	int status;
+	const bool div = BPF_OP(pc->code) == BPF_DIV;
 
 #if BJ_XREG == SLJIT_RETURN_REG   || \
     BJ_XREG == SLJIT_SCRATCH_REG1 || \
@@ -1938,15 +1940,14 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 			}
 
 			if (src == BPF_X) {
-				status = emit_moddiv(op == BPF_DIV,
-				    compiler, BJ_XREG, 0);
+				status = emit_moddiv(compiler, pc, BJ_XREG, 0);
 				if (status != SLJIT_SUCCESS)
 					goto fail;
 			} else if (pc->k != 0) {
 				/* XXX: We can do better here for MOD */
 				if ((pc->k & (pc->k - 1)) || op == BPF_MOD) {
-				    status = emit_moddiv(op == BPF_DIV,
-					compiler, SLJIT_IMM, (uint32_t)pc->k);
+					status = emit_moddiv(compiler, pc,
+					    SLJIT_IMM, (uint32_t)pc->k);
 				} else {
 				    status = emit_pow2_division(compiler,
 				        (uint32_t)pc->k);
