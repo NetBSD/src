@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.78 2014/11/09 05:29:20 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.79 2014/11/20 08:42:03 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -1145,6 +1145,13 @@ distrib/vax/cdroms/installcd/Makefile		1.2
 etc/Makefile					1.394
 share/man/man7/release.7			1.32
 
-	Change release ISO's more meaningful names like NetBSD-5.2.3-i386.iso
-	instead of i386cd.iso. Fix PR# install/44593.
+	Change release ISOs to have more meaningful names like
+	NetBSD-5.2.3-i386.iso instead of i386cd.iso. Fix PR# install/44593.
 	[snj, ticket #1931]
+
+lib/libc/resolv/res_mkquery.c			1.14
+
+	Fix EDNS option being broken with unbound by clipping MAXPACKET
+	to 64K - 1. Addresses PR/48475
+	[christos, ticket #1932]
+
