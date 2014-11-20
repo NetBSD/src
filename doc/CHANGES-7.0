@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.106 2014/11/18 19:11:36 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.107 2014/11/20 10:09:20 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2833,4 +2833,15 @@ sys/ufs/files.ufs				1.38
 	UFS_EXTATTR_AUTOCREATE was replaced by sysctl
 	  vfs.ffs.extattr_autocreate
 	[manu, ticket #251]
+
+sys/arch/arm/allwinner/awin_usb.c		1.17
+
+	IPL_SCHED -> IPL_VM.  Something isn't MP safe.
+	[skrll, ticket #252]
+
+external/mit/xorg/lib/libXft/Makefile		1.6
+
+	Compile xftrender.c with -O0 to workaround a crash in
+	XftGlyphSpecRender on earm with gcc 4.8.4.
+	[jmcneill, ticket #253]
 
