@@ -1,4 +1,3 @@
-/* @(#) Header: /tcpdump/master/tcpdump/udp.h,v 1.13 2007-08-08 17:20:58 hannes Exp  (LBL) */
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,10 +34,10 @@
  * Per RFC 768, September, 1981.
  */
 struct udphdr {
-	u_int16_t	uh_sport;		/* source port */
-	u_int16_t	uh_dport;		/* destination port */
-	u_int16_t	uh_ulen;		/* udp length */
-	u_int16_t	uh_sum;			/* udp checksum */
+	uint16_t	uh_sport;		/* source port */
+	uint16_t	uh_dport;		/* destination port */
+	uint16_t	uh_ulen;		/* udp length */
+	uint16_t	uh_sum;			/* udp checksum */
 };
 
 #define TFTP_PORT 69		/*XXX*/
@@ -90,6 +89,7 @@ struct udphdr {
 #define RIPNG_PORT 521		/*XXX*/
 #define DHCP6_SERV_PORT 546	/*XXX*/
 #define DHCP6_CLI_PORT 547	/*XXX*/
+#define AHCP_PORT 5359		/* draft-chroboczek-ahcp-00 */
 #define BABEL_PORT 6696
 #define BABEL_PORT_OLD 6697
 #endif
