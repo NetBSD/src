@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2014/11/20 20:52:15 christos Exp $
+# $NetBSD: Makefile,v 1.5 2014/11/20 21:18:47 christos Exp $
 
 NOMAN=		# defined
 
@@ -15,6 +15,7 @@ FILES+=		d_c99_complex_split.c
 FILES+=		d_c99_decls_after_stmt.c
 FILES+=		d_c99_decls_after_stmt2.c
 FILES+=		d_c99_decls_after_stmt3.c
+FILES+=		d_c99_flex_array_packed.c 
 FILES+=		d_c99_for_loops.c
 FILES+=		d_c99_func.c
 FILES+=		d_c99_recursive_init.c
