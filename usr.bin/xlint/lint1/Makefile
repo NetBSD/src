@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2013/05/10 15:41:44 christos Exp $
+#	$NetBSD: Makefile,v 1.51 2014/11/20 20:48:33 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ YHEADER=
 #DBG=-g
 #CPPFLAGS+=-DYYDEBUG=1
 #YFLAGS+=-v
+#LFLAGS+=-d
 
 CPPFLAGS+=	-I${.CURDIR} -I. -DPASS=\"${PROG}.h\"
 
