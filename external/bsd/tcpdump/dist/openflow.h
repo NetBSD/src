@@ -27,10 +27,14 @@
 
 /* OpenFlow: protocol between controller and datapath. */
 
+/* for netdissect_options */
+#include "netdissect.h"
+
 #define OF_HEADER_LEN 8
 
 /*
  * Routines to print packets for various versions of OpenFlow.
  */
-extern const u_char *of10_header_body_print(const u_char *, const u_char *,
+extern const u_char *of10_header_body_print(netdissect_options *ndo,
+	const u_char *, const u_char *,
 	const uint8_t, const uint16_t, const uint32_t);

@@ -25,32 +25,28 @@
  * DAMAGE.
  */
 
+#define NETDISSECT_REWORKED
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <tcpdump-stdinc.h>
 
-#include <stdio.h>
-#include <pcap.h>
-
-#include "netdissect.h"
 #include "interface.h"
 
-#include "nflog.h"
-
-#ifdef DLT_NFLOG
-
-#define NFULA_PAYLOAD 9
+#if defined(DLT_NFLOG) && defined(HAVE_PCAP_NFLOG_H)
+#include <pcap/nflog.h>
 
 static const struct tok nflog_values[] = {
 	{ AF_INET,		"IPv4" },
+#ifdef INET6
 	{ AF_INET6,		"IPv6" },
-	{ 0,				NULL }
+#endif /*INET6*/
+	{ 0,			NULL }
 };
 
 static inline void
-nflog_hdr_print(struct netdissect_options *ndo, const nflog_hdr_t *hdr, u_int length)
+nflog_hdr_print(netdissect_options *ndo, const nflog_hdr_t *hdr, u_int length)
 {
 	ND_PRINT((ndo, "version %d, resource ID %d", hdr->nflog_version, ntohs(hdr->nflog_rid)));
 
@@ -70,13 +66,13 @@ nflog_hdr_print(struct netdissect_options *ndo, const nflog_hdr_t *hdr, u_int le
 }
 
 u_int
-nflog_if_print(struct netdissect_options *ndo,
+nflog_if_print(netdissect_options *ndo,
 			   const struct pcap_pkthdr *h, const u_char *p)
 {
 	const nflog_hdr_t *hdr = (const nflog_hdr_t *)p;
 	const nflog_tlv_t *tlv;
-	u_int16_t size;
-	u_int16_t h_size = sizeof(nflog_hdr_t);
+	uint16_t size;
+	uint16_t h_size = sizeof(nflog_hdr_t);
 	u_int caplen = h->caplen;
 	u_int length = h->len;
 
@@ -93,39 +89,60 @@ nflog_if_print(struct netdissect_options *ndo,
 	if (ndo->ndo_eflag)
 		nflog_hdr_print(ndo, hdr, length);
 
+	p += sizeof(nflog_hdr_t);
 	length -= sizeof(nflog_hdr_t);
 	caplen -= sizeof(nflog_hdr_t);
-	p += sizeof(nflog_hdr_t);
 
-	do {
+	while (length > 0) {
+		/* We have some data.  Do we have enough for the TLV header? */
+		if (caplen < sizeof(nflog_tlv_t) || length < sizeof(nflog_tlv_t)) {
+			/* No. */
+			ND_PRINT((ndo, "[|nflog]"));
+			return h_size;
+		}
+
 		tlv = (const nflog_tlv_t *) p;
 		size = tlv->tlv_length;
-
 		if (size % 4 != 0)
 			size += 4 - size % 4;
 
-		h_size = h_size + size;
-
-		/* wrong size of the packet */
-		if (size > length || size == 0)
+		/* Is the TLV's length less than the minimum? */
+		if (size < sizeof(nflog_tlv_t)) {
+			/* Yes. Give up now. */
+			ND_PRINT((ndo, "[|nflog]"));
 			return h_size;
+		}
+
+		/* Do we have enough data for the full TLV? */
+		if (caplen < size || length < size) {
+			/* No. */
+			ND_PRINT((ndo, "[|nflog]"));
+			return h_size;
+		}
+
+		if (tlv->tlv_type == NFULA_PAYLOAD) {
+			/*
+			 * This TLV's data is the packet payload.
+			 * Skip past the TLV header, and break out
+			 * of the loop so we print the packet data.
+			 */
+			p += sizeof(nflog_tlv_t);
+			h_size += sizeof(nflog_tlv_t);
+			length -= sizeof(nflog_tlv_t);
+			caplen -= sizeof(nflog_tlv_t);
+			break;
+		}
 
 		p += size;
-		length = length - size;
-		caplen = caplen - size;
-
-	} while (tlv->tlv_type != NFULA_PAYLOAD);
-
-	/* dont skip payload just tlv length and type */
-	p = p - size + 4;
-	length += size - 4;
-	caplen += size - 4;
-	h_size -= length;
+		h_size += size;
+		length -= size;
+		caplen -= size;
+	}
 
 	switch (hdr->nflog_family) {
 
 	case AF_INET:
-			ip_print(ndo, p, length);
+		ip_print(ndo, p, length);
 		break;
 
 #ifdef INET6
@@ -140,11 +157,11 @@ nflog_if_print(struct netdissect_options *ndo,
 				length + sizeof(nflog_hdr_t));
 
 		if (!ndo->ndo_suppress_default_print)
-			ndo->ndo_default_print(ndo, p, caplen);
+			ND_DEFAULTPRINT(p, caplen);
 		break;
 	}
 
 	return h_size;
 }
 
-#endif /* DLT_NFLOG */
+#endif /* defined(DLT_NFLOG) && defined(HAVE_PCAP_NFLOG_H) */
