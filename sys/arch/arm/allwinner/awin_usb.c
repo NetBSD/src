@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.12.2.1 2014/11/09 14:42:33 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.12.2.2 2014/11/20 10:05:06 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -151,7 +151,7 @@ ohci_awinusb_attach(device_t parent, device_t self, void *aux)
 	const int irq = awin_chip_id() == AWIN_CHIP_ID_A31 ?
 			awinusb_ohci_irqs_a31[usbaa->usbaa_port] :
 			awinusb_ohci_irqs[usbaa->usbaa_port];
-	usbsc->usbsc_ohci_ih = intr_establish(irq, IPL_SCHED,
+	usbsc->usbsc_ohci_ih = intr_establish(irq, IPL_VM,
 	    IST_LEVEL, ohci_intr, sc);
 	if (usbsc->usbsc_ohci_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
@@ -228,7 +228,7 @@ ehci_awinusb_attach(device_t parent, device_t self, void *aux)
 	const int irq = awin_chip_id() == AWIN_CHIP_ID_A31 ?
 			awinusb_ehci_irqs_a31[usbaa->usbaa_port] :
 			awinusb_ehci_irqs[usbaa->usbaa_port];
-	usbsc->usbsc_ehci_ih = intr_establish(irq, IPL_SCHED,
+	usbsc->usbsc_ehci_ih = intr_establish(irq, IPL_VM,
 	    IST_LEVEL, ehci_intr, sc);
 	if (usbsc->usbsc_ehci_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
