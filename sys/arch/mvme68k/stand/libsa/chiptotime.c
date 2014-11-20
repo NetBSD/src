@@ -1,20 +1,12 @@
-/*	$NetBSD: chiptotime.c,v 1.6 2014/11/20 15:50:25 christos Exp $ */
+/*	$NetBSD: chiptotime.c,v 1.7 2014/11/20 16:34:25 christos Exp $ */
 
 #include <sys/types.h>
-#include <sys/clock.h>
+#include <dev/clock_subr.h>
 
 #include <machine/prom.h>
 
 #include <lib/libsa/stand.h>
 #include "libsa.h"
-
-/*
- * BCD to decimal and decimal to BCD.
- */
-#define FROMBCD(x)      (int)((((unsigned int)(x)) >> 4) * 10 +\
-				(((unsigned int)(x)) & 0xf))
-#define TOBCD(x)        (int)((((unsigned int)(x)) / 10 * 16) +\
-				(((unsigned int)(x)) % 10))
 
 #define YEAR0		68
 
@@ -30,12 +22,12 @@ chiptotime(int sec, int min, int hour, int day, int mon, int year)
 {
 	int days, yr;
 
-	sec = FROMBCD(sec);
-	min = FROMBCD(min);
-	hour = FROMBCD(hour);
-	day = FROMBCD(day);
-	mon = FROMBCD(mon);
-	year = FROMBCD(year) + YEAR0;
+	sec = bcdtobin(sec);
+	min = bcdtobin(min);
+	hour = bcdtobin(hour);
+	day = bcdtobin(day);
+	mon = bcdtobin(mon);
+	year = bcdtobin(year) + YEAR0;
 	if (year < 70)
 		year = 70;
 
