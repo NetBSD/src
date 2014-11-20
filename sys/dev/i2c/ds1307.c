@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.20 2014/10/13 10:29:27 martin Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.21 2014/11/20 16:34:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.20 2014/10/13 10:29:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.21 2014/11/20 16:34:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,23 +432,23 @@ dsrtc_clock_read_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	/*
 	 * Convert the RTC's register values into something useable
 	 */
-	dt->dt_sec = FROMBCD(bcd[DSXXXX_SECONDS] & DSXXXX_SECONDS_MASK);
-	dt->dt_min = FROMBCD(bcd[DSXXXX_MINUTES] & DSXXXX_MINUTES_MASK);
+	dt->dt_sec = bcdtobin(bcd[DSXXXX_SECONDS] & DSXXXX_SECONDS_MASK);
+	dt->dt_min = bcdtobin(bcd[DSXXXX_MINUTES] & DSXXXX_MINUTES_MASK);
 
 	if ((bcd[DSXXXX_HOURS] & DSXXXX_HOURS_12HRS_MODE) != 0) {
-		dt->dt_hour = FROMBCD(bcd[DSXXXX_HOURS] &
+		dt->dt_hour = bcdtobin(bcd[DSXXXX_HOURS] &
 		    DSXXXX_HOURS_12MASK) % 12; /* 12AM -> 0, 12PM -> 12 */
 		if (bcd[DSXXXX_HOURS] & DSXXXX_HOURS_12HRS_PM)
 			dt->dt_hour += 12;
 	} else
-		dt->dt_hour = FROMBCD(bcd[DSXXXX_HOURS] &
+		dt->dt_hour = bcdtobin(bcd[DSXXXX_HOURS] &
 		    DSXXXX_HOURS_24MASK);
 
-	dt->dt_day = FROMBCD(bcd[DSXXXX_DATE] & DSXXXX_DATE_MASK);
-	dt->dt_mon = FROMBCD(bcd[DSXXXX_MONTH] & DSXXXX_MONTH_MASK);
+	dt->dt_day = bcdtobin(bcd[DSXXXX_DATE] & DSXXXX_DATE_MASK);
+	dt->dt_mon = bcdtobin(bcd[DSXXXX_MONTH] & DSXXXX_MONTH_MASK);
 
 	/* XXX: Should be an MD way to specify EPOCH used by BIOS/Firmware */
-	dt->dt_year = FROMBCD(bcd[DSXXXX_YEAR]) + POSIX_BASE_YEAR;
+	dt->dt_year = bcdtobin(bcd[DSXXXX_YEAR]) + POSIX_BASE_YEAR;
 	if (bcd[DSXXXX_MONTH] & DSXXXX_MONTH_CENTURY)
 		dt->dt_year += 100;
 
@@ -468,13 +468,13 @@ dsrtc_clock_write_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	 * Convert our time representation into something the DSXXXX
 	 * can understand.
 	 */
-	bcd[DSXXXX_SECONDS] = TOBCD(dt->dt_sec);
-	bcd[DSXXXX_MINUTES] = TOBCD(dt->dt_min);
-	bcd[DSXXXX_HOURS] = TOBCD(dt->dt_hour); /* DSXXXX_HOURS_12HRS_MODE=0 */
-	bcd[DSXXXX_DATE] = TOBCD(dt->dt_day);
-	bcd[DSXXXX_DAY] = TOBCD(dt->dt_wday);
-	bcd[DSXXXX_MONTH] = TOBCD(dt->dt_mon);
-	bcd[DSXXXX_YEAR] = TOBCD((dt->dt_year - POSIX_BASE_YEAR) % 100);
+	bcd[DSXXXX_SECONDS] = bintobcd(dt->dt_sec);
+	bcd[DSXXXX_MINUTES] = bintobcd(dt->dt_min);
+	bcd[DSXXXX_HOURS] = bintobcd(dt->dt_hour); /* DSXXXX_HOURS_12HRS_MODE=0 */
+	bcd[DSXXXX_DATE] = bintobcd(dt->dt_day);
+	bcd[DSXXXX_DAY] = bintobcd(dt->dt_wday);
+	bcd[DSXXXX_MONTH] = bintobcd(dt->dt_mon);
+	bcd[DSXXXX_YEAR] = bintobcd((dt->dt_year - POSIX_BASE_YEAR) % 100);
 	if (dt->dt_year - POSIX_BASE_YEAR >= 100)
 		bcd[DSXXXX_MONTH] |= DSXXXX_MONTH_CENTURY;
 
