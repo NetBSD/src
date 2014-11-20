@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.23 2014/11/17 02:15:49 christos Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.24 2014/11/20 15:49:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@ int	clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
  *		function which takes one boolean argument:
  *			1 to enable writes; 0 to disable writes.
  */
+struct timeval;
 struct todr_chip_handle {
 	void	*cookie;	/* Device specific data */
 	void	*bus_cookie;	/* Bus specific data */
