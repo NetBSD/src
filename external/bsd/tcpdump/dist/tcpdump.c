@@ -30,7 +30,7 @@
 static const char copyright[] _U_ =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000\n\
 The Regents of the University of California.  All rights reserved.\n";
-__RCSID("$NetBSD: tcpdump.c,v 1.9 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.10 2014/11/21 13:31:19 christos Exp $");
 #endif
 
 /*
@@ -742,7 +742,7 @@ droproot(const char *username, const char *chroot_dir)
 			fprintf(stderr, "error : ret %d\n", ret);
 		}
 		else {
-			printf("dropped privs to %s\n", username);
+//			printf("dropped privs to %s\n", username);
 		}
 		/* We don't need CAP_SETUID and CAP_SETGID */
 		capng_update(CAPNG_DROP, CAPNG_EFFECTIVE, CAP_SETUID);
@@ -762,7 +762,7 @@ droproot(const char *username, const char *chroot_dir)
 			exit(1);
 		}
 		else {
-			printf("dropped privs to %s\n", username);
+//			printf("dropped privs to %s\n", username);
 		}
 #endif /* HAVE_CAP_NG_H */
 	}
