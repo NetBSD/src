@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.6,v 1.1.2.1 2014/11/19 06:33:54 snj Exp $
+# $NetBSD: CHANGES-5.1.6,v 1.1.2.2 2014/11/21 08:25:26 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.1.5 release to the NetBSD 5.1.6
 release:
@@ -10,4 +10,13 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 5.1.5_PATCH.
 	[snj]
+
+sys/dev/raidframe/raidframevar.h		1.17
+sys/dev/raidframe/rf_netbsdkintf.c		1.316
+sys/dev/raidframe/rf_reconstruct.c		1.121 via patch
+
+	Fix a long-standing bug related to rebooting while a
+	reconstruct-to-spare is underway but not yet complete.
+	Fixes PR kern/49244.
+	[oster, ticket #1933]
 
