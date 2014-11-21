@@ -1,4 +1,4 @@
-.\"	$NetBSD: pserialize.9,v 1.6 2014/11/21 15:42:57 riastradh Exp $
+.\"	$NetBSD: pserialize.9,v 1.7 2014/11/21 15:44:42 riastradh Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -142,7 +142,10 @@ readers:
 			break;
 		}
 	}
-	/* Wait for all existing readers to drain.  */
+	/*
+	 * Wait for all existing readers to complete.  New readers will
+	 * not see f because the list no longer points to it.
+	 */
 	pserialize_perform(frobbotzim_psz);
 	/* Now nobody else can be touching f, so it is safe to free.  */
 	mutex_exit(\*[Am]frobbotzim_lock);
