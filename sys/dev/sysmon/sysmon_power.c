@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.47 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.48 2014/11/21 23:28:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.47 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.48 2014/11/21 23:28:57 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -653,7 +653,7 @@ sysmon_power_make_dictionary(prop_dictionary_t dict, void *power_data,
 
 #define SETPROP(key, str)						\
 do {									\
-	if ((str) && !prop_dictionary_set_cstring(dict,			\
+	if ((str) != NULL && !prop_dictionary_set_cstring(dict,		\
 						  (key),		\
 						  (str))) {		\
 		printf("%s: failed to set %s\n", __func__, (str));	\
