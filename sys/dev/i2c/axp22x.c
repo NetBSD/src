@@ -1,4 +1,4 @@
-/* $NetBSD: axp22x.c,v 1.1 2014/10/12 23:58:42 jmcneill Exp $ */
+/* $NetBSD: axp22x.c,v 1.2 2014/11/21 22:31:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp22x.c,v 1.1 2014/10/12 23:58:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp22x.c,v 1.2 2014/11/21 22:31:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,8 +108,8 @@ axp22x_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	if (error) {
 		edata->state = ENVSYS_SINVALID;
 	} else {
-		/* between -267.7C and 165.8C, step +0.1C */
-		edata->value_cur = (((buf[0] << 4) | (buf[1] & 0xf)) - 2677)
+		/* between -243.7C and 165.8C, step +0.1C */
+		edata->value_cur = (((buf[0] << 4) | (buf[1] & 0xf)) - 2437)
 				   * 100000 + 273150000;
 		edata->state = ENVSYS_SVALID;
 	}
