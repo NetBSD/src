@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2009/01/12 11:32:43 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2014/11/21 00:51:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #include <netinet/in_systm.h>
 #include <lib/libsa/net.h>
 
+#include <dev/clock_subr.h>
 #include <dev/ic/mc146818reg.h>
 
 #include <mips/cpuregs.h>
