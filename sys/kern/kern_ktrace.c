@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.165 2014/09/21 17:17:15 christos Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.166 2014/11/21 09:40:10 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.165 2014/09/21 17:17:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.166 2014/11/21 09:40:10 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1402,6 +1402,9 @@ ktrace_thread(void *arg)
 	}
 
 	TAILQ_REMOVE(&ktdq, ktd, ktd_list);
+
+	callout_halt(&ktd->ktd_wakch, &ktrace_lock);
+	callout_destroy(&ktd->ktd_wakch);
 	mutex_exit(&ktrace_lock);
 
 	/*
@@ -1415,8 +1418,6 @@ ktrace_thread(void *arg)
 	cv_destroy(&ktd->ktd_sync_cv);
 	cv_destroy(&ktd->ktd_cv);
 
-	callout_stop(&ktd->ktd_wakch);
-	callout_destroy(&ktd->ktd_wakch);
 	kmem_free(ktd, sizeof(*ktd));
 
 	kthread_exit(0);
