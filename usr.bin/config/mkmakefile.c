@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.33 2014/11/17 00:53:15 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.34 2014/11/21 20:46:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.33 2014/11/17 00:53:15 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.34 2014/11/21 20:46:56 christos Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -364,18 +364,18 @@ static void weighattr(struct attr *a);
 static int attrcmp(const void *l, const void *r);
 
 struct attr **attrbuf;
-int attridx;
+size_t attridx;
 
 static void
 emitallkobjs(FILE *fp)
 {
-	int i;
+	size_t i;
 
-	attrbuf = emalloc((size_t)nattrs * sizeof(attrbuf));
+	attrbuf = emalloc(nattrs * sizeof(*attrbuf));
 
 	ht_enumerate(attrtab, emitallkobjsweighcb, NULL);
 	ht_enumerate(attrtab, emitallkobjscb, NULL);
-	qsort(attrbuf, (size_t)attridx, sizeof(struct attr *), attrcmp);
+	qsort(attrbuf, attridx, sizeof(struct attr *), attrcmp);
 
 	fputs("OBJS= \\\n", fp);
 	for (i = 0; i < attridx; i++)
@@ -398,7 +398,7 @@ emitallkobjscb(const char *name, void *v, void *arg)
 	/* XXX nattrs tracking is not exact yet */
 	if (attridx == nattrs) {
 		nattrs *= 2;
-		attrbuf = erealloc(attrbuf, (size_t)nattrs * sizeof(attrbuf));
+		attrbuf = erealloc(attrbuf, nattrs * sizeof(*attrbuf));
 	}
 	return 0;
 }

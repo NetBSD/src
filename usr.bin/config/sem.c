@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.70 2014/11/15 08:21:38 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.71 2014/11/21 20:46:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.70 2014/11/15 08:21:38 uebayasi Exp $");
+__RCSID("$NetBSD: sem.c,v 1.71 2014/11/21 20:46:56 christos Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -69,7 +69,7 @@ const char *s_none;
 static struct hashtab *cfhashtab;	/* for config lookup */
 struct hashtab *devitab;		/* etc */
 struct attr allattr;
-int nattrs;
+size_t nattrs;
 
 static struct attr errattr;
 static struct devbase errdev;
