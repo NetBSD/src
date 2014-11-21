@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.58 2014/11/21 08:54:12 shm Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.59 2014/11/21 08:58:28 shm Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -541,6 +541,7 @@ bozo_read_request(bozohttpd_t *httpd)
 	request->hr_virthostname = NULL;
 	request->hr_file = NULL;
 	request->hr_oldfile = NULL;
+	bozo_auth_init(request);
 
 	slen = sizeof(ss);
 	if (getpeername(0, (struct sockaddr *)(void *)&ss, &slen) < 0)

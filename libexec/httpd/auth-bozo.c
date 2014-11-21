@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bozo.c,v 1.13 2014/07/08 14:01:21 mrg Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.14 2014/11/21 08:58:28 shm Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -118,6 +118,13 @@ bozo_auth_check(bozo_httpreq_t *request, const char *file)
 }
 
 void
+bozo_auth_init(bozo_httpreq_t *request)
+{
+	request->hr_authuser = NULL;
+	request->hr_authpass = NULL;
+}
+
+void
 bozo_auth_cleanup(bozo_httpreq_t *request)
 {
 
@@ -150,6 +157,8 @@ bozo_auth_check_headers(bozo_httpreq_t *request, char *val, char *str, ssize_t l
 			return bozo_http_error(httpd, 400, request,
 			    "bad authorization field");
 		*pass++ = '\0';
+		free(request->hr_authuser);
+		free(request->hr_authpass);
 		request->hr_authuser = bozostrdup(httpd, authbuf);
 		request->hr_authpass = bozostrdup(httpd, pass);
 		debug((httpd, DEBUG_FAT,
