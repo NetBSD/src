@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.65 2014/05/31 08:51:19 njoly Exp $  
+	$NetBSD: syscalls.master,v 1.66 2014/11/22 13:18:45 njoly Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -478,7 +478,7 @@
 278	UNIMPL		spu_run
 279	UNIMPL		spu_create
 280	UNIMPL		pselect6
-281	STD		{ int|linux_sys||ppoll(struct pollfd *fds, int nfds, \
+281	STD		{ int|linux_sys||ppoll(struct pollfd *fds, u_int nfds, \
 			    struct linux_timespec *timeout, \
 			    linux_sigset_t *sigset); }
 282	UNIMPL		unshare
