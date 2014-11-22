@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2014/11/12 02:14:17 christos Exp $
+# $NetBSD: Makefile,v 1.4 2014/11/22 19:18:08 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -9,7 +9,7 @@
 KMOD=	drmkms_pci
 
 #SRCS+=	ati_pcigart.c		# XXX Restore for ATI support.
-#SRCS+=	drm_agpsupport.c
+SRCS+=	drm_agpsupport.c
 SRCS+=	drm_pci.c
 SRCS+=	drm_pci_module.c
 

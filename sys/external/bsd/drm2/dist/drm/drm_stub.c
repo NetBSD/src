@@ -848,8 +848,10 @@ void drm_dev_unregister(struct drm_device *dev)
 	if (dev->driver->unload)
 		dev->driver->unload(dev);
 
+#ifndef __NetBSD__		/* Moved to drm_pci.  */
 	if (dev->agp)
-		drm_agp_destroy(dev);
+		drm_pci_agp_destroy(dev);
+#endif
 
 	drm_vblank_cleanup(dev);
 

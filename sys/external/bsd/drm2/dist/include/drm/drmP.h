@@ -1607,9 +1607,11 @@ struct drm_agp_hooks {
 	drm_ioctl_t	*agph_bind_ioctl;
 	drm_ioctl_t	*agph_unbind_ioctl;
 	int		(*agph_release)(struct drm_device *);
+	void		(*agph_clear)(struct drm_device *);
 };
 
 extern int drm_agp_release_hook(struct drm_device *);
+extern void drm_agp_clear_hook(struct drm_device *);
 
 extern int drm_agp_register(const struct drm_agp_hooks *);
 extern void drm_agp_deregister(const struct drm_agp_hooks *);
