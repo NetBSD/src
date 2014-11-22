@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.215 2014/11/22 10:24:02 mlelstv Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.216 2014/11/22 11:04:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.215 2014/11/22 10:24:02 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.216 2014/11/22 11:04:57 mlelstv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -159,6 +159,7 @@ device_t booted_device;
 int booted_partition;
 daddr_t booted_startblk;
 uint64_t booted_nblks;
+char *bootspec;
 
 /*
  * Use partition letters if it's a disk class but not a wedge.
@@ -207,6 +208,12 @@ setroot(device_t bootdv, int bootpartition)
 		if (bootdv == NULL)
 			panic("Cannot open \"md0\" (root)");
 	}
+
+	/*
+	 * Let bootcode augment "rootspec".
+	 */
+	if (rootspec == NULL)
+		rootspec = bootspec;
 
 	/*
 	 * If NFS is specified as the file system, and we found
