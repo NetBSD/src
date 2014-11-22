@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 2014/10/10 20:23:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.73 2014/11/22 19:41:27 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -179,6 +179,10 @@ NATIVE_CONFIGURE_ARGS+= --enable-tls
 .endif
 .if !empty(MACHINE_ARCH:Mearm*)
 NATIVE_CONFIGURE_ARGS+=	--enable-initfini-array
+.endif
+
+.if ${MACHINE_ARCH} == "m68000"
+NATIVE_CONFIGURE_ARGS+= --disable-shared
 .endif
 
 NATIVE_CONFIGURE_ARGS+=	\
