@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.67 2014/05/29 10:47:00 njoly Exp $
+	$NetBSD: syscalls.master,v 1.68 2014/11/22 13:12:22 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -524,7 +524,8 @@
 307	STD	{ int|linux32_sys||faccessat(int fd, netbsd32_charp path, \
 		    int amode); }
 308	UNIMPL	pselect6
-309	UNIMPL	ppoll
+309	STD	{ int|linux32_sys||ppoll(netbsd32_pollfdp_t fds, u_int nfds, \
+		    linux32_timespecp_t timeout, linux32_sigsetp_t sigset); }
 310	UNIMPL	unshare
 311	STD	{ int|linux32_sys||set_robust_list( \
 		    linux32_robust_list_headp_t head, linux32_size_t len); }
