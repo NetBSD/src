@@ -1,0 +1,23 @@
+#	$NetBSD: files.ingenic,v 1.1 2014/11/22 15:17:02 macallan Exp $
+
+#file	arch/evbmips/ingenic/intr.c
+
+file	arch/evbmips/ingenic/autoconf.c
+file	arch/evbmips/ingenic/machdep.c
+
+file	arch/mips/mips/bus_dma.c
+file	arch/evbmips/evbmips/disksubr.c
+file	arch/evbmips/evbmips/interrupt.c
+file	arch/evbmips/ingenic/clock.c
+
+# System bus
+device	mainbus { }
+attach	mainbus at root
+file	arch/evbmips/ingenic/mainbus.c		mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/evbmips/evbmips/cpu.c		cpu
+
+# Memory Disk
+file	dev/md_root.c				memory_disk_hooks

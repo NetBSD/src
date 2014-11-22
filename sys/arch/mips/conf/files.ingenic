@@ -1,0 +1,6 @@
+#	$NetBSD: files.ingenic,v 1.1 2014/11/22 15:17:01 macallan Exp $
+
+# On-chip UART device
+attach	com at mainbus with com_mainbus
+file	arch/mips/ingenic/ingenic_com.c	com_mainbus
+
