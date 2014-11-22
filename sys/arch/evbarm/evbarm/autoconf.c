@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2014/05/10 20:12:16 reinoud Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 2014/11/22 11:10:22 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2014/05/10 20:12:16 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18 2014/11/22 11:10:22 mlelstv Exp $");
 
 #include "opt_md.h"
 
@@ -51,15 +51,15 @@ void	(*evbarm_device_register)(device_t, void *);
 void	(*evbarm_device_register_post_config)(device_t, void *);
 
 #ifndef MEMORY_DISK_IS_ROOT
-static void get_device(char *name);
+static int get_device(char *name, device_t *, int *);
 static void set_root_device(void);
 #endif
 
 #ifndef MEMORY_DISK_IS_ROOT
 /* Decode a device name to a major and minor number */
 
-static void
-get_device(char *name)
+static int
+get_device(char *name, device_t *dvp, int *partp)
 {
 	int unit, part;
 	char devname[16], *cp;
@@ -69,7 +69,7 @@ get_device(char *name)
 		name += 5;
 
 	if (devsw_name2blk(name, devname, sizeof(devname)) == -1)
-		return;
+		return 0;
 
 	name += strlen(devname);
 	unit = part = 0;
@@ -78,16 +78,19 @@ get_device(char *name)
 	while (*cp >= '0' && *cp <= '9')
 		unit = (unit * 10) + (*cp++ - '0');
 	if (cp == name)
-		return;
+		return 0;
 
 	if (*cp >= 'a' && *cp < ('a' + MAXPARTITIONS))
 		part = *cp - 'a';
 	else if (*cp != '\0' && *cp != ' ')
-		return;
+		return 0;
 	if ((dv = device_find_by_driver_unit(devname, unit)) != NULL) {
-		booted_device = dv;
-		booted_partition = part;
+		*dvp = dv;
+		*partp = part;
+		return 1;
 	}
+
+	return 0;
 }
 
 /* Set the rootdev variable from the root specifier in the boot args */
@@ -95,10 +98,26 @@ get_device(char *name)
 static void
 set_root_device(void)
 {
-	char *ptr;
-	if (boot_args &&
-	    get_bootconf_option(boot_args, "root", BOOTOPT_TYPE_STRING, &ptr))
-		get_device(ptr);
+	char *ptr, *end;
+
+	if (boot_args == NULL)
+		return;
+
+	if (!get_bootconf_option(boot_args, "root", BOOTOPT_TYPE_STRING, &ptr))
+		return;
+
+	if (get_device(ptr, &booted_device, &booted_partition))
+		return;
+
+	/* NUL-terminate string, get_bootconf_option doesn't */
+	for (end=ptr; *end != '\0'; ++end) {
+		if (*end == ' ' || *end == '\t') {
+			*end = '\0';
+			break;
+		}
+	}
+
+	bootspec = ptr;
 }
 #endif
 
