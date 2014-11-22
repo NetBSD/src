@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.184 2014/10/14 06:59:58 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.185 2014/11/22 06:45:08 cherry Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184 2014/10/14 06:59:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.185 2014/11/22 06:45:08 cherry Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4187,8 +4187,7 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			pmap_pte_set(&pdep[i], pte);
 #if defined(PAE) || defined(__x86_64__)
 			if (level == PTP_LEVELS && i >= PDIR_SLOT_KERN) {
-				if (__predict_true(
-				    cpu_info_primary.ci_flags & CPUF_PRESENT)) {
+			  if (__predict_true(mp_online == true)) {
 					/* update per-cpu PMDs on all cpus */
 					xen_kpm_sync(pmap_kernel(), i);
 				} else {
