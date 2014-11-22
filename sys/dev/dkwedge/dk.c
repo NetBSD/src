@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.74 2014/11/04 07:50:39 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.75 2014/11/22 11:59:33 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.74 2014/11/04 07:50:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.75 2014/11/22 11:59:33 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -217,10 +217,10 @@ dkwedge_compute_pdev(const char *pname, dev_t *pdevp, enum vtype type)
 		pmaj = devsw_name2chr(name, devname, sizeof(devname));
 		break;
 	default:
-		pmaj = -1;
+		pmaj = NODEVMAJOR;
 		break;
 	}
-	if (pmaj == -1)
+	if (pmaj == NODEVMAJOR)
 		return (ENODEV);
 
 	name += strlen(devname);
@@ -927,6 +927,7 @@ dkwedge_discover(struct disk *pdk)
 		    pdk->dk_name, error);
 		/* We'll just assume the vnode has been cleaned up. */
 	}
+
  out:
 	rw_exit(&dkwedge_discovery_methods_lock);
 }
@@ -957,9 +958,10 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
 	bp->b_cflags = BC_BUSY;
 	bp->b_dev = devsw_chr2blk(vp->v_rdev);
 	bp->b_data = tbuf;
-	bp->b_bufsize = bp->b_resid = bp->b_bcount = len;
-	bp->b_lblkno = 0;
+	bp->b_bufsize = bp->b_bcount = len;
 	bp->b_blkno = blkno;
+	bp->b_cylinder = 0;
+	bp->b_error = 0;
 
 	error = bdev_open(bp->b_dev, FREAD, S_IFBLK, curlwp);
 	if (error)
@@ -1570,3 +1572,4 @@ dkwedge_get_parent_name(dev_t dev)
 		return NULL;
 	return sc->sc_parent->dk_name;
 }
+
