@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.78 2013/10/03 13:23:03 kiyohara Exp $	*/
+/*	$NetBSD: comvar.h,v 1.79 2014/11/22 15:14:35 macallan Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -234,6 +234,7 @@ struct com_softc {
 #define	COM_TYPE_AU1x00		3	/* AMD/Alchemy Au1x000 proc. built-in */
 #define	COM_TYPE_OMAP		4	/* TI OMAP processor built-in */
 #define	COM_TYPE_16550_NOERS	5	/* like a 16550, no ERS */
+#define	COM_TYPE_INGENIC	6	/* JZ4780 built-in */
 
 	/* power management hooks */
 	int (*enable)(struct com_softc *);
