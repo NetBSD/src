@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.328 2014/11/15 19:18:18 christos Exp $ */
+/* $NetBSD: com.c,v 1.329 2014/11/22 15:14:35 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.328 2014/11/15 19:18:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.329 2014/11/22 15:14:35 macallan Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -403,7 +403,6 @@ com_attach_subr(struct com_softc *sc)
 
 	dict = device_properties(sc->sc_dev);
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
-
 	callout_init(&sc->sc_diag_callout, 0);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 
@@ -458,6 +457,12 @@ com_attach_subr(struct com_softc *sc)
 	case COM_TYPE_OMAP:
 		sc->sc_fifolen = 64;
 		fifo_msg = "OMAP UART, working fifo";
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+		goto fifodelay;
+
+	case COM_TYPE_INGENIC:
+		sc->sc_fifolen = 64;
+		fifo_msg = "Ingenic UART, working fifo";
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		goto fifodelay;
 	}
@@ -2302,8 +2307,16 @@ cominit(struct com_regs *regsp, int rate, int frequency, int type,
 	}
 	CSR_WRITE_1(regsp, COM_REG_LCR, cflag2lcr(cflag));
 	CSR_WRITE_1(regsp, COM_REG_MCR, MCR_DTR | MCR_RTS);
-	CSR_WRITE_1(regsp, COM_REG_FIFO,
-	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
+
+	if (type == COM_TYPE_INGENIC) {
+		CSR_WRITE_1(regsp, COM_REG_FIFO,
+		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
+		    FIFO_TRIGGER_1 | FIFO_UART_ON);
+	} else {
+		CSR_WRITE_1(regsp, COM_REG_FIFO,
+		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
+		    FIFO_TRIGGER_1);
+	}
 
 	if (type == COM_TYPE_OMAP) {
 		/* setup the fifos.  the FCR value is not used as long
