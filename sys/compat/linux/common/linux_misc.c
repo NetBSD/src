@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.229 2014/05/29 10:35:27 njoly Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.230 2014/11/22 13:18:45 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.229 2014/05/29 10:35:27 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.230 2014/11/22 13:18:45 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -928,7 +928,7 @@ linux_sys_ppoll(struct lwp *l,
 {
 	/* {
 		syscallarg(struct pollfd *) fds;
-		syscallarg(int) nfds;
+		syscallarg(u_int) nfds;
 		syscallarg(struct linux_timespec *) timeout;
 		syscallarg(linux_sigset_t *) sigset;
 	} */
