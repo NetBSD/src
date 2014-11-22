@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.1 2014/11/22 15:17:02 macallan Exp $
+#	$NetBSD: CI20,v 1.2 2014/11/22 19:48:36 martin Exp $
 #
 # MIPS Creator CI20
 #
@@ -8,7 +8,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DB120-$Revision: 1.1 $"
+#ident 		"CI20-$Revision: 1.2 $"
 
 maxusers	32
 
