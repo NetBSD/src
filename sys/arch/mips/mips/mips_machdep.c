@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.260 2014/06/02 04:57:02 mrg Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.261 2014/11/22 15:02:39 macallan Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.260 2014/06/02 04:57:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.261 2014/11/22 15:02:39 macallan Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -175,7 +175,12 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.260 2014/06/02 04:57:02 mrg Exp $
 #define	_MTC0_V0_USERLOCAL	_MKINSN(OP_COP0, OP_DMT, _R_V0, MIPS_COP_0_TLB_CONTEXT, 2)
 #else
 #define	_LOAD_V0_L_PRIVATE_A0	_MKINSN(OP_LW, _R_A0, _R_V0, 0, offsetof(lwp_t, l_private))
-#define	_MTC0_V0_USERLOCAL	_MKINSN(OP_COP0, OP_MT, _R_V0, MIPS_COP_0_TLB_CONTEXT, 2)
+/*
+ * XXX
+ * the asm code in mipsX_subr.S uses ,4 - the definition above probably needs
+ * the same fix
+ */
+#define	_MTC0_V0_USERLOCAL	_MKINSN(OP_COP0, OP_MT, _R_V0, MIPS_COP_0_TLB_CONTEXT, 4)
 #endif
 #define	JR_RA			_MKINSN(OP_SPECIAL, _R_RA, 0, 0, OP_JR)
 
@@ -627,6 +632,10 @@ static const struct pridtab cputab[] = {
 	/* Microsoft Research' extensible MIPS */
 	{ MIPS_PRID_CID_MICROSOFT, MIPS_eMIPS, 1, -1, CPU_ARCH_MIPS1, 64,
 	  CPU_MIPS_NO_WAIT, 0, 0,		"eMIPS CPU"		},
+
+	/* Ingenic XBurst */
+	{ MIPS_PRID_CID_INGENIC, MIPS_XBURST,  -1, -1,	-1, 0,
+	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT, 0, 0, "XBurst"		},
 
 	{ 0, 0, 0,				0, 0, 0,
 	  0, 0, 0,				NULL			}
@@ -1417,7 +1426,9 @@ cpu_identify(device_t dev)
 	if (opts->mips_cpu->cpu_cid != 0) {
 		if (opts->mips_cpu->cpu_cid <= ncidnames)
 			aprint_normal("%s ", cidnames[opts->mips_cpu->cpu_cid]);
-		else {
+		else if (opts->mips_cpu->cpu_cid == MIPS_PRID_CID_INGENIC) {
+			aprint_normal("Ingenic ");
+		} else {
 			aprint_normal("Unknown Company ID - 0x%x", opts->mips_cpu->cpu_cid);
 			aprint_normal_dev(dev, "");
 		}

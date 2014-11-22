@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.88 2011/10/29 18:56:49 jakllsch Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.89 2014/11/22 15:02:39 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -971,6 +971,11 @@
  * CPU processor revision IDs for company ID == 7 (Microsoft)
  */
 #define	MIPS_eMIPS	0x04	/* MSR's eMIPS */
+
+/*
+ * CPU processor revision IDs for company ID == e1 (Ingenic)
+ */
+#define	MIPS_XBURST	0x02	/* Ingenic XBurst */
 
 /*
  * FPU processor revision ID
