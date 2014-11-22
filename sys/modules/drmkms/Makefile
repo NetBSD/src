@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2014/11/12 03:03:01 christos Exp $
+# $NetBSD: Makefile,v 1.7 2014/11/22 19:18:07 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -12,7 +12,7 @@ KMOD=	drmkms
 
 # Upstream source files.
 #SRCS+=	ati_pcigart.c		# Moved to drmkms_pci module.
-SRCS+=	drm_agpsupport.c	# Moved to drmkms_pci module.
+#SRCS+=	drm_agpsupport.c	# Moved to drmkms_pci module.
 SRCS+=	drm_auth.c
 SRCS+=	drm_buffer.c
 SRCS+=	drm_bufs.c
