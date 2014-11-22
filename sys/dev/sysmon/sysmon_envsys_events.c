@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.111 2014/11/22 15:00:05 ozaki-r Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.112 2014/11/22 15:09:30 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.111 2014/11/22 15:00:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.112 2014/11/22 15:09:30 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -611,10 +611,16 @@ sme_events_destroy(struct sysmon_envsys *sme)
 {
 	KASSERT(mutex_owned(&sme->sme_mtx));
 
-	callout_stop(&sme->sme_callout);
-	workqueue_destroy(sme->sme_wq);
-	callout_destroy(&sme->sme_callout);
+	/*
+	 * Unset before callout_halt to ensure callout is not scheduled again
+	 * during callout_halt.
+	 */
 	sme->sme_flags &= ~SME_CALLOUT_INITIALIZED;
+
+	callout_halt(&sme->sme_callout, &sme->sme_mtx);
+	callout_destroy(&sme->sme_callout);
+
+	workqueue_destroy(sme->sme_wq);
 	DPRINTF(("%s: events framework destroyed for '%s'\n",
 	    __func__, sme->sme_name));
 }
