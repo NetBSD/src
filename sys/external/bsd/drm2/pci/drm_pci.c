@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.7 2014/11/04 11:27:31 jmcneill Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.8 2014/11/22 19:18:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.7 2014/11/04 11:27:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.8 2014/11/22 19:18:07 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -181,12 +181,7 @@ drm_pci_detach(struct drm_device *dev, int flags __unused)
 	drm_dev_unregister(dev);
 
 	/* Tear down AGP stuff if necessary.  */
-	if (dev->agp) {
-		arch_phys_wc_del(dev->agp->agp_mtrr);
-		drm_agp_clear(dev);
-		kfree(dev->agp); /* XXX Should go in drm_agp_clear...  */
-		dev->agp = NULL;
-	}
+	drm_pci_agp_destroy(dev);
 
 	/* Free the record of available bus space mappings.  */
 	dev->bus_nmaps = 0;
