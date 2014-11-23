@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.116 2014/08/27 13:56:02 apb Exp $
+#	$NetBSD: security,v 1.117 2014/11/23 16:36:03 christos Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -909,31 +909,46 @@ if checkyesno check_disklabels; then
 	    egrep -v '\.(backup|current)(,v)?$' > $LABELS
 	xargs rm < $LABELS
 
-		# generate disklabels of all disks excluding:	cd dk fd md st
-	disks=$(iostat -x | awk \
-		'NR > 1 && $1 !~ /^[cfm]d|dk|st|nfs/ { print $1; }')
+	disks="$(iostat -x | cut -f 1 -d ' ' )"
+
+		# generate disklabels of all disks excluding:	cd fd md dk st
+		# nfs and "device" (the header of iostat)
 	for i in $disks; do
-		disklabel $i > "$work_dir/disklabel.$i" 2>/dev/null
+		case $i in
+		[cfm]d[0-9]*|dk[0-9]*|st[0-9]*|nfs|device) 
+			;;
+		*)
+			if disklabel $i > /dev/null 1>&2; then
+				disklabel $i > "$work_dir/disklabel.$i"
+			fi
+			;;
+		esac
 	done
 
 		# if fdisk is available, generate fdisks for:	ed ld sd wd
 	if [ -x /sbin/fdisk ]; then
-		disks=$(iostat -x | awk \
-			'NR > 1 && $1 ~ /^[elsw]d/ { print $1; }')
 		for i in $disks; do
-			/sbin/fdisk $i > "$work_dir/fdisk.$i" 2>/dev/null
+			case $i in
+			[elsw]d[0-9]*)
+				/sbin/fdisk $i > "$work_dir/fdisk.$i" \
+				    2>/dev/null
+				;;
+			esac
 		done
 	fi
 
 		# if dkctl is available, generate dkctl listwedges
 		# for:	ed ld sd wd cgd ofdisk ra rl raid
 	if [ -x /sbin/dkctl ]; then
-		disks=$(iostat -x | awk \
-			'NR > 1 && $1 ~ /^[elsw]d|cgd|ofdisk|r[al]|raid/
-			{ print $1; }')
 		for i in $disks; do
-			/sbin/dkctl $i listwedges \
-			    > "$work_dir/wedges.$i" 2>/dev/null
+			case $i in
+			[elsw]d[0-9]*|cgd[0-9]*|ofdisk[0-9]*|r[al][0-9]*|raid[0-9]*)
+				if /sbin/dkctl $i listwedges -qe; then
+					/sbin/dkctl $i listwedges \
+					    > "$work_dir/wedges.$i" 2>/dev/null
+				fi
+				;;
+			esac
 		done
 	fi
 
