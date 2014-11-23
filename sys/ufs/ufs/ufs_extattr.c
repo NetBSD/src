@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.43.4.2 2014/11/18 18:42:42 snj Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.43.4.3 2014/11/23 13:11:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.43.4.2 2014/11/18 18:42:42 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.43.4.3 2014/11/23 13:11:02 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -1103,6 +1103,9 @@ vop_getextattr {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int error;
 
+	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED))
+		return (EOPNOTSUPP);
+
 	ufs_extattr_uepm_lock(ump);
 
 	error = ufs_extattr_get(ap->a_vp, ap->a_attrnamespace, ap->a_name,
@@ -1128,9 +1131,6 @@ ufs_extattr_get(struct vnode *vp, int attrnamespace, const char *name,
 	off_t base_offset;
 	size_t len, old_len;
 	int error = 0;
-
-	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED))
-		return (EOPNOTSUPP);
 
 	if (strlen(name) == 0)
 		return (EINVAL);
@@ -1221,6 +1221,9 @@ vop_listextattr {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	int error;
 
+	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED))
+		return (EOPNOTSUPP);
+
 	ufs_extattr_uepm_lock(ump);
 
 	error = ufs_extattr_list(ap->a_vp, ap->a_attrnamespace,
@@ -1246,9 +1249,6 @@ ufs_extattr_list(struct vnode *vp, int attrnamespace,
 	struct ufsmount *ump = VFSTOUFS(mp);
 	size_t listsize = 0;
 	int error = 0;
-
-	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED))
-		return (EOPNOTSUPP);
 
 	/*
 	 * XXX: We can move this inside the loop and iterate on individual
@@ -1348,6 +1348,9 @@ vop_deleteextattr {
 	struct ufsmount *ump = VFSTOUFS(mp); 
 	int error;
 
+	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED))
+		return (EOPNOTSUPP);
+
 	ufs_extattr_uepm_lock(ump);
 
 	error = ufs_extattr_rm(ap->a_vp, ap->a_attrnamespace, ap->a_name,
@@ -1376,6 +1379,9 @@ vop_setextattr {
 	struct mount *mp = ap->a_vp->v_mount;
 	struct ufsmount *ump = VFSTOUFS(mp); 
 	int error;
+
+	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED))
+		return (EOPNOTSUPP);
 
 	ufs_extattr_uepm_lock(ump);
 
@@ -1415,8 +1421,7 @@ ufs_extattr_set(struct vnode *vp, int attrnamespace, const char *name,
 
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (EROFS);
-	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED))
-		return (EOPNOTSUPP);
+
 	if (!ufs_extattr_valid_attrname(attrnamespace, name))
 		return (EINVAL);
 
@@ -1535,8 +1540,7 @@ ufs_extattr_rm(struct vnode *vp, int attrnamespace, const char *name,
 
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)  
 		return (EROFS);
-	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED))
-		return (EOPNOTSUPP);
+
 	if (!ufs_extattr_valid_attrname(attrnamespace, name))
 		return (EINVAL);
 
@@ -1609,12 +1613,10 @@ ufs_extattr_vnode_inactive(struct vnode *vp, struct lwp *l)
 	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_INITIALIZED))
 		return;
 
-	ufs_extattr_uepm_lock(ump);
-
-	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED)) {
-		ufs_extattr_uepm_unlock(ump);
+	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED))
 		return;
-	}
+
+	ufs_extattr_uepm_lock(ump);
 
 	LIST_FOREACH(uele, &ump->um_extattr.uepm_list, uele_entries)
 		ufs_extattr_rm(vp, uele->uele_attrnamespace,
