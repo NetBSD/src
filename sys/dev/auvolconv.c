@@ -1,4 +1,4 @@
-/* $NetBSD: auvolconv.c,v 1.2.2.2 2014/11/23 13:07:05 martin Exp $ */
+/* $NetBSD: auvolconv.c,v 1.2.2.3 2014/11/23 13:23:50 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvolconv.c,v 1.2.2.2 2014/11/23 13:07:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvolconv.c,v 1.2.2.3 2014/11/23 13:23:50 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,10 +49,12 @@ auvolconv_slinear16_le_fetch_to(struct audio_softc *asc,
 	stream_filter_t *this;
 	int16_t j, *wp;
 	int m, err;
+	u_int vol;
 
 	pf = (auvolconv_filter_t *)self;
 	this = &pf->base;
 	max_used = (max_used + 1) & ~1;
+	vol = *pf->vol;
 
 	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used)))
 		return err;
@@ -61,7 +63,7 @@ auvolconv_slinear16_le_fetch_to(struct audio_softc *asc,
 	FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
 		j = le16dec(s);
 		wp = (int16_t *)d;
-		le16enc(wp, (j * *pf->vol) / 255);
+		le16enc(wp, (j * vol) / 255);
 	} FILTER_LOOP_EPILOGUE(this->src, dst);
 
 	return 0;
@@ -75,10 +77,12 @@ auvolconv_slinear16_be_fetch_to(struct audio_softc *asc,
 	stream_filter_t *this;
 	int16_t j, *wp;
 	int m, err;
+	u_int vol;
 
 	pf = (auvolconv_filter_t *)self;
 	this = &pf->base;
 	max_used = (max_used + 1) & ~1;
+	vol = *pf->vol;
 
 	if ((err = this->prev->fetch_to(asc, this->prev, this->src, max_used)))
 		return err;
@@ -87,7 +91,7 @@ auvolconv_slinear16_be_fetch_to(struct audio_softc *asc,
 	FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
 		j = be16dec(s);
 		wp = (int16_t *)d;
-		be16enc(wp, (j * *pf->vol) / 255);
+		be16enc(wp, (j * vol) / 255);
 	} FILTER_LOOP_EPILOGUE(this->src, dst);
 
 	return 0;
