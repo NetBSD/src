@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.127 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.128 2014/11/23 10:00:20 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.127 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.128 2014/11/23 10:00:20 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -579,6 +579,7 @@ sysmon_envsys_sensor_detach(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	envsys_data_t *oedata;
 	bool found = false;
+	bool destroy = false;
 
 	KASSERT(sme != NULL || edata != NULL);
 
@@ -604,10 +605,17 @@ sysmon_envsys_sensor_detach(struct sysmon_envsys *sme, envsys_data_t *edata)
 	 * remove it, unhook from rnd(4), and decrement the sensors count.
 	 */
 	sme_event_unregister_sensor(sme, edata);
+	if (LIST_EMPTY(&sme->sme_events_list)) {
+		sme_events_halt_callout(sme);
+		destroy = true;
+	}
 	TAILQ_REMOVE(&sme->sme_sensors_list, edata, sensors_head);
 	sme->sme_nsensors--;
 	sysmon_envsys_release(sme, true);
 	mutex_exit(&sme->sme_mtx);
+
+	if (destroy)
+		sme_events_destroy(sme);
 
 	return 0;
 }
@@ -918,10 +926,6 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 	KASSERT(sme != NULL);
 
 	/*
-	 * Unregister all events associated with device.
-	 */
-	sme_event_unregister_all(sme);
-	/*
 	 * Decrement global sensors counter and the first_sensor index
 	 * for remaining devices in the list (only used for compatibility
 	 * with previous API), and remove the device from the list.
@@ -934,6 +938,11 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 	}
 	LIST_REMOVE(sme, sme_list);
 	mutex_exit(&sme_global_mtx);
+
+	/*
+	 * Unregister all events associated with device.
+	 */
+	sme_event_unregister_all(sme);
 
 	/*
 	 * Remove the device (and all its objects) from the global dictionary.

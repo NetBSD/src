@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.46 2012/12/14 03:31:10 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.47 2014/11/23 10:00:20 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -137,6 +137,7 @@ void	sme_event_unregister_all(struct sysmon_envsys *);
 void	sme_event_drvadd(void *);
 int	sme_events_init(struct sysmon_envsys *);
 void	sme_events_destroy(struct sysmon_envsys *);
+void	sme_events_halt_callout(struct sysmon_envsys *);
 void	sme_events_check(void *);
 void	sme_events_worker(struct work *, void *);
 void	sme_deliver_event(sme_event_t *);
