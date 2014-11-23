@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.51 2014/02/24 12:19:05 jmcneill Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.52 2014/11/23 01:38:49 joerg Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.51 2014/02/24 12:19:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.52 2014/11/23 01:38:49 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -636,7 +636,14 @@ ahci_exec_fis(struct ata_channel *chp, int timeout, int flags)
 	int i;
 	uint32_t is;
 
-	timeout = timeout * 10; /* wait is 10ms */
+	/*
+	 * Base timeout is specified in ms.
+	 * If we are allowed to sleep, wait a tick each round.
+	 * Otherwise delay for 1ms on each round.
+	 */
+	if (flags & AT_WAIT)
+		timeout = MAX(1, mstohz(timeout));
+
 	AHCI_CMDH_SYNC(sc, achp, 0, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	/* start command */
 	AHCI_WRITE(sc, AHCI_P_CI(chp->ch_channel), 1 << 0);
@@ -660,10 +667,11 @@ ahci_exec_fis(struct ata_channel *chp, int timeout, int flags)
 			return ERR_DF;
 		}
 		if (flags & AT_WAIT)
-			tsleep(&sc, PRIBIO, "ahcifis", mstohz(10));
+			tsleep(&sc, PRIBIO, "ahcifis", 1);
 		else
-			delay(10000);
+			delay(1000);
 	}
+
 	aprint_debug("%s channel %d: timeout sending FIS\n",
 	    AHCINAME(sc), chp->ch_channel);
 	return TIMEOUT;
@@ -709,7 +717,7 @@ again:
 	cmd_tbl->cmdt_cfis[fis_type] = RHD_FISTYPE;
 	cmd_tbl->cmdt_cfis[rhd_c] = drive;
 	cmd_tbl->cmdt_cfis[rhd_control] = WDCTL_RST;
-	switch(ahci_exec_fis(chp, 1, flags)) {
+	switch(ahci_exec_fis(chp, 100, flags)) {
 	case ERR_DF:
 	case TIMEOUT:
 		aprint_error("%s channel %d: setting WDCTL_RST failed "
@@ -727,7 +735,7 @@ again:
 	cmd_tbl->cmdt_cfis[fis_type] = RHD_FISTYPE;
 	cmd_tbl->cmdt_cfis[rhd_c] = drive;
 	cmd_tbl->cmdt_cfis[rhd_control] = 0;
-	switch(ahci_exec_fis(chp, 31, flags)) {
+	switch(ahci_exec_fis(chp, 310, flags)) {
 	case ERR_DF:
 	case TIMEOUT:
 		if ((sc->sc_ahci_quirks & AHCI_QUIRK_BADPMPRESET) != 0 &&
