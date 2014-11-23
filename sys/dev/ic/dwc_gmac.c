@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.25 2014/11/22 18:31:03 jmcneill Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.26 2014/11/23 11:08:16 martin Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.25 2014/11/22 18:31:03 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.26 2014/11/23 11:08:16 martin Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -982,7 +982,12 @@ dwc_gmac_tx_intr(struct dwc_gmac_softc *sc)
 #endif
 
 		desc = &sc->sc_txq.t_desc[i];
-		dwc_gmac_txdesc_sync(sc, i, TX_NEXT(i),
+		/*
+		 * i+1 does not need to be a valid descriptor,
+		 * this is just a special notion to just sync
+		 * a single tx descriptor (i)
+		 */
+		dwc_gmac_txdesc_sync(sc, i, i+1,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		flags = le32toh(desc->ddesc_status);
 
