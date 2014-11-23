@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.26 2014/11/23 11:08:16 martin Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.27 2014/11/23 22:42:14 matt Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.26 2014/11/23 11:08:16 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.27 2014/11/23 22:42:14 matt Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -415,7 +415,7 @@ dwc_gmac_alloc_rx_ring(struct dwc_gmac_softc *sc,
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map, 0,
 	    AWGE_RX_RING_COUNT*sizeof(struct dwc_gmac_dev_dmadesc),
-	    BUS_DMASYNC_PREREAD);
+	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_RX_ADDR,
 	    ring->r_physaddr);
 
@@ -443,7 +443,7 @@ dwc_gmac_reset_rx_ring(struct dwc_gmac_softc *sc,
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map, 0,
 	    AWGE_RX_RING_COUNT*sizeof(struct dwc_gmac_dev_dmadesc),
-	    BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	ring->r_cur = ring->r_next = 0;
 	/* reset DMA address to start of ring */
@@ -628,7 +628,7 @@ dwc_gmac_reset_tx_ring(struct dwc_gmac_softc *sc,
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
 	    TX_DESC_OFFSET(0),
 	    AWGE_TX_RING_COUNT*sizeof(struct dwc_gmac_dev_dmadesc),
-	    BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_TX_ADDR,
 	    sc->sc_txq.t_physaddr);
 
@@ -911,7 +911,7 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 	data->td_active = map;
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	return 0;
 }
@@ -1117,6 +1117,8 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 		(*ifp->if_input)(ifp, m);
 
 skip:
+		bus_dmamap_sync(sc->sc_dmat, data->rd_map, 0,
+		    data->rd_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 		desc->ddesc_cntl = htole32(
 		    __SHIFTIN(AWGE_MAX_PACKET,DDESC_CNTL_SIZE1MASK) |
 		    DDESC_CNTL_RXCHAIN);
