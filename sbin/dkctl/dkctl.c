@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.21 2014/11/04 08:00:44 mlelstv Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.22 2014/11/23 15:43:49 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,9 +41,8 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.21 2014/11/04 08:00:44 mlelstv Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.22 2014/11/23 15:43:49 christos Exp $");
 #endif
-
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -55,6 +54,7 @@ __RCSID("$NetBSD: dkctl.c,v 1.21 2014/11/04 08:00:44 mlelstv Exp $");
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>     
 #include <unistd.h>
 #include <util.h>
@@ -86,7 +86,6 @@ static void	showall(void);
 static int	fd;				/* file descriptor for device */
 static const	char *dvname;			/* device name */
 static char	dvname_store[MAXPATHLEN];	/* for opendisk(3) */
-static const	char *cmdname;			/* command user issued */
 
 static int dkw_sort(const void *, const void *);
 static int yesno(const char *);
@@ -177,15 +176,10 @@ main(int argc, char *argv[])
 	dvname = argv[1];
 	if (argc == 2)
 		showall();
-	else {
-		/* Skip program name, get and skip device name and command. */
-		cmdname = argv[2];
-		argv += 3;
-		argc -= 3;
-		run(argc, argv);
-	}
+	else
+		run(argc - 2, argv + 2);
 
-	exit(0);
+	return EXIT_SUCCESS;
 }
 
 static void
@@ -193,13 +187,13 @@ run(int argc, char *argv[])
 {
 	struct command *command;
 
-	command = lookup(cmdname);
+	command = lookup(argv[0]);
 
 	/* Open the device. */
 	fd = opendisk(dvname, command->open_flags, dvname_store,
 	    sizeof(dvname_store), 0);
 	if (fd == -1)
-		err(1, "%s", dvname);
+		err(EXIT_FAILURE, "%s", dvname);
 	dvname = dvname_store;
 
 	(*command->cmd_func)(argc, argv);
@@ -218,7 +212,7 @@ lookup(const char *name)
 		if (strcmp(name, commands[i].cmd_name) == 0)
 			break;
 	if (commands[i].cmd_name == NULL)
-		errx(1, "unknown command: %s", name);
+		errx(EXIT_FAILURE, "unknown command: %s", name);
 
 	return &commands[i];
 }
@@ -229,7 +223,7 @@ usage(void)
 	int i;
 
 	fprintf(stderr,
-	    "usage: %s device\n"
+	    "Usage: %s device\n"
 	    "       %s device command [arg [...]]\n",
 	    getprogname(), getprogname());
 
@@ -238,27 +232,23 @@ usage(void)
 		fprintf(stderr, "\t%s %s\n", commands[i].cmd_name,
 		    commands[i].arg_names);
 
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 static void
 showall(void)
 {
-	printf("strategy:\n");
-	cmdname = "strategy";
-	run(0, NULL);
+	static const char *cmds[] = { "strategy", "getcache", "listwedges" };
+	size_t i;
+	char *args[2];
 
-	putchar('\n');
-
-	printf("cache:\n");
-	cmdname = "getcache";
-	run(0, NULL);
-
-	putchar('\n');
-
-	printf("wedges:\n");
-	cmdname = "listwedges";
-	run(0, NULL);
+	args[1] = NULL;
+	for (i = 0; i < __arraycount(cmds); i++) {
+		printf("%s:\n", cmds[i]);
+		args[0] = __UNCONST(cmds[i]);
+		run(1, args);
+		putchar('\n');
+	}
 }
 
 static void
@@ -274,17 +264,17 @@ disk_strategy(int argc, char *argv[])
 
 	memset(&dks, 0, sizeof(dks));
 	switch (argc) {
-	case 0:
+	case 1:
 		/* show the buffer queue strategy used */
 		printf("%s: %s\n", dvname, odks.dks_name);
 		return;
-	case 1:
+	case 2:
 		/* set the buffer queue strategy */
-		strlcpy(dks.dks_name, argv[0], sizeof(dks.dks_name));
+		strlcpy(dks.dks_name, argv[1], sizeof(dks.dks_name));
 		if (ioctl(fd, DIOCSSTRATEGY, &dks) == -1) {
 			err(EXIT_FAILURE, "%s: DIOCSSTRATEGY", dvname);
 		}
-		printf("%s: %s -> %s\n", dvname, odks.dks_name, argv[0]);
+		printf("%s: %s -> %s\n", dvname, odks.dks_name, argv[1]);
 		break;
 	default:
 		usage();
@@ -298,7 +288,7 @@ disk_getcache(int argc, char *argv[])
 	int bits;
 
 	if (ioctl(fd, DIOCGCACHE, &bits) == -1)
-		err(1, "%s: getcache", dvname);
+		err(EXIT_FAILURE, "%s: getcache", dvname);
 
 	if ((bits & (DKCACHE_READ|DKCACHE_WRITE)) == 0)
 		printf("%s: No caches enabled\n", dvname);
@@ -323,29 +313,29 @@ disk_setcache(int argc, char *argv[])
 {
 	int bits;
 
-	if (argc > 2 || argc == 0)
+	if (argc > 3 || argc == 1)
 		usage();
 
-	if (strcmp(argv[0], "none") == 0)
+	if (strcmp(argv[1], "none") == 0)
 		bits = 0;
-	else if (strcmp(argv[0], "r") == 0)
+	else if (strcmp(argv[1], "r") == 0)
 		bits = DKCACHE_READ;
-	else if (strcmp(argv[0], "w") == 0)
+	else if (strcmp(argv[1], "w") == 0)
 		bits = DKCACHE_WRITE;
-	else if (strcmp(argv[0], "rw") == 0)
+	else if (strcmp(argv[1], "rw") == 0)
 		bits = DKCACHE_READ|DKCACHE_WRITE;
 	else
 		usage();
 
-	if (argc == 2) {
-		if (strcmp(argv[1], "save") == 0)
+	if (argc == 3) {
+		if (strcmp(argv[2], "save") == 0)
 			bits |= DKCACHE_SAVE;
 		else
 			usage();
 	}
 
 	if (ioctl(fd, DIOCSCACHE, &bits) == -1)
-		err(1, "%s: setcache", dvname);
+		err(EXIT_FAILURE, "%s: %s", dvname, argv[0]);
 }
 
 static void
@@ -354,12 +344,12 @@ disk_synccache(int argc, char *argv[])
 	int force;
 
 	switch (argc) {
-	case 0:
+	case 1:
 		force = 0;
 		break;
 
-	case 1:
-		if (strcmp(argv[0], "force") == 0)
+	case 2:
+		if (strcmp(argv[1], "force") == 0)
 			force = 1;
 		else
 			usage();
@@ -370,7 +360,7 @@ disk_synccache(int argc, char *argv[])
 	}
 
 	if (ioctl(fd, DIOCCACHESYNC, &force) == -1)
-		err(1, "%s: sync cache", dvname);
+		err(EXIT_FAILURE, "%s: %s", dvname, argv[0]);
 }
 
 static void
@@ -379,17 +369,17 @@ disk_keeplabel(int argc, char *argv[])
 	int keep;
 	int yn;
 
-	if (argc != 1)
+	if (argc != 2)
 		usage();
 
-	yn = yesno(argv[0]);
+	yn = yesno(argv[1]);
 	if (yn < 0)
 		usage();
 
 	keep = yn == YES;
 
 	if (ioctl(fd, DIOCKLABEL, &keep) == -1)
-		err(1, "%s: keep label", dvname);
+		err(EXIT_FAILURE, "%s: %s", dvname, argv[0]);
 }
 
 
@@ -405,10 +395,10 @@ disk_badsectors(int argc, char *argv[])
 	u_char *block;
 	time_t tm;
 
-	if (argc != 1)
+	if (argc != 2)
 		usage();
 
-	if (strcmp(argv[0], "list") == 0) {
+	if (strcmp(argv[1], "list") == 0) {
 		/*
 		 * Copy the list of kernel bad sectors out in chunks that fit
 		 * into buffer[].  Updating dbsi_skip means we don't sit here
@@ -422,7 +412,7 @@ disk_badsectors(int argc, char *argv[])
 
 		do {
 			if (ioctl(fd, DIOCBSLIST, (caddr_t)&dbsi) == -1)
-				err(1, "%s: badsectors list", dvname);
+				err(EXIT_FAILURE, "%s: badsectors list", dvname);
 
 			dbs = (struct disk_badsectors *)dbsi.dbsi_buffer;
 			for (count = dbsi.dbsi_copied; count > 0; count--) {
@@ -435,11 +425,11 @@ disk_badsectors(int argc, char *argv[])
 			dbsi.dbsi_skip += dbsi.dbsi_copied;
 		} while (dbsi.dbsi_left != 0);
 
-	} else if (strcmp(argv[0], "flush") == 0) {
+	} else if (strcmp(argv[1], "flush") == 0) {
 		if (ioctl(fd, DIOCBSFLUSH) == -1)
-			err(1, "%s: badsectors flush", dvname);
+			err(EXIT_FAILURE, "%s: badsectors flush", dvname);
 
-	} else if (strcmp(argv[0], "retry") == 0) {
+	} else if (strcmp(argv[1], "retry") == 0) {
 		/*
 		 * Enforce use of raw device here because the block device
 		 * causes access to blocks to be clustered in a larger group,
@@ -447,7 +437,7 @@ disk_badsectors(int argc, char *argv[])
 		 * are the cause of a problem.
 		 */ 
 		if (fstat(fd, &sb) == -1)
-			err(1, "fstat");
+			err(EXIT_FAILURE, "fstat");
 
 		if (!S_ISCHR(sb.st_mode)) {
 			fprintf(stderr, "'badsector retry' must be used %s\n",
@@ -470,13 +460,13 @@ disk_badsectors(int argc, char *argv[])
 
 		do {
 			if (ioctl(fd, DIOCBSLIST, (caddr_t)&dbsi) == -1)
-				err(1, "%s: badsectors list", dvname);
+				err(EXIT_FAILURE, "%s: badsectors list", dvname);
 
 			dbs = (struct disk_badsectors *)dbsi.dbsi_buffer;
 			for (count = dbsi.dbsi_copied; count > 0; count--) {
 				dbs2 = malloc(sizeof *dbs2);
 				if (dbs2 == NULL)
-					err(1, NULL);
+					err(EXIT_FAILURE, NULL);
 				*dbs2 = *dbs;
 				SLIST_INSERT_HEAD(&dbstop, dbs2, dbs_next);
 				dbs++;
@@ -492,7 +482,7 @@ disk_badsectors(int argc, char *argv[])
 		bad = 0;
 		totbad = 0;
 		if ((block = calloc(1, DEV_BSIZE)) == NULL)
-			err(1, NULL);
+			err(EXIT_FAILURE, NULL);
 		SLIST_FOREACH(dbs, &dbstop, dbs_next) {
 			bad++;
 			totbad += dbs->dbs_max - dbs->dbs_min + 1;
@@ -506,7 +496,7 @@ disk_badsectors(int argc, char *argv[])
 		 * to test all those it thought were bad.
 		 */
 		if (ioctl(fd, DIOCBSFLUSH) == -1)
-			err(1, "%s: badsectors flush", dvname);
+			err(EXIT_FAILURE, "%s: badsectors flush", dvname);
 
 		printf("%s: bad sectors flushed\n", dvname);
 
@@ -549,42 +539,42 @@ disk_addwedge(int argc, char *argv[])
 	daddr_t start;
 	uint64_t size;
 
-	if (argc != 4)
+	if (argc != 5)
 		usage();
 
 	/* XXX Unicode: dkw_wname is supposed to be utf-8 */
-	if (strlcpy((char *)dkw.dkw_wname, argv[0], sizeof(dkw.dkw_wname)) >=
+	if (strlcpy((char *)dkw.dkw_wname, argv[1], sizeof(dkw.dkw_wname)) >=
 	    sizeof(dkw.dkw_wname))
-		errx(1, "Wedge name too long; max %zd characters",
+		errx(EXIT_FAILURE, "Wedge name too long; max %zd characters",
 		    sizeof(dkw.dkw_wname) - 1);
 
-	if (strlcpy(dkw.dkw_ptype, argv[3], sizeof(dkw.dkw_ptype)) >=
+	if (strlcpy(dkw.dkw_ptype, argv[4], sizeof(dkw.dkw_ptype)) >=
 	    sizeof(dkw.dkw_ptype))
-		errx(1, "Wedge partition type too long; max %zd characters",
+		errx(EXIT_FAILURE, "Wedge partition type too long; max %zd characters",
 		    sizeof(dkw.dkw_ptype) - 1);
 
 	errno = 0;
-	start = strtoll(argv[1], &cp, 0);
+	start = strtoll(argv[2], &cp, 0);
 	if (*cp != '\0')
-		errx(1, "Invalid start block: %s", argv[1]);
+		errx(EXIT_FAILURE, "Invalid start block: %s", argv[2]);
 	if (errno == ERANGE && (start == LLONG_MAX ||
 				start == LLONG_MIN))
-		errx(1, "Start block out of range.");
+		errx(EXIT_FAILURE, "Start block out of range.");
 	if (start < 0)
-		errx(1, "Start block must be >= 0.");
+		errx(EXIT_FAILURE, "Start block must be >= 0.");
 
 	errno = 0;
-	size = strtoull(argv[2], &cp, 0);
+	size = strtoull(argv[3], &cp, 0);
 	if (*cp != '\0')
-		errx(1, "Invalid block count: %s", argv[2]);
+		errx(EXIT_FAILURE, "Invalid block count: %s", argv[3]);
 	if (errno == ERANGE && (size == ULLONG_MAX))
-		errx(1, "Block count out of range.");
+		errx(EXIT_FAILURE, "Block count out of range.");
 
 	dkw.dkw_offset = start;
 	dkw.dkw_size = size;
 
 	if (ioctl(fd, DIOCAWEDGE, &dkw) == -1)
-		err(1, "%s: addwedge", dvname);
+		err(EXIT_FAILURE, "%s: %s", dvname, argv[0]);
 	else
 		printf("%s created successfully.\n", dkw.dkw_devname);
 
@@ -595,16 +585,16 @@ disk_delwedge(int argc, char *argv[])
 {
 	struct dkwedge_info dkw;
 
-	if (argc != 1)
+	if (argc != 2)
 		usage();
 
-	if (strlcpy(dkw.dkw_devname, argv[0], sizeof(dkw.dkw_devname)) >=
+	if (strlcpy(dkw.dkw_devname, argv[1], sizeof(dkw.dkw_devname)) >=
 	    sizeof(dkw.dkw_devname))
-		errx(1, "Wedge dk name too long; max %zd characters",
+		errx(EXIT_FAILURE, "Wedge dk name too long; max %zd characters",
 		    sizeof(dkw.dkw_devname) - 1);
 
 	if (ioctl(fd, DIOCDWEDGE, &dkw) == -1)
-		err(1, "%s: delwedge", dvname);
+		err(EXIT_FAILURE, "%s: %s", dvname, argv[0]);
 }
 
 static void
@@ -612,11 +602,11 @@ disk_getwedgeinfo(int argc, char *argv[])
 {
 	struct dkwedge_info dkw;
 
-	if (argc != 0)
+	if (argc != 1)
 		usage();
 
 	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == -1)
-		err(1, "%s: getwedgeinfo", dvname);
+		err(EXIT_FAILURE, "%s: getwedgeinfo", dvname);
 
 	printf("%s at %s: %s\n", dkw.dkw_devname, dkw.dkw_parent,
 	    dkw.dkw_wname);	/* XXX Unicode */
@@ -631,6 +621,26 @@ disk_listwedges(int argc, char *argv[])
 	struct dkwedge_list dkwl;
 	size_t bufsize;
 	u_int i;
+	int c;
+	bool error, quiet;
+
+	optreset = 1;
+	optind = 1;
+	quiet = error = false;
+	while ((c = getopt(argc, argv, "qe")) != -1)
+		switch (c) {
+		case 'e':
+			error = true;
+			break;
+		case 'q':
+			quiet = true;
+			break;
+		default:
+			usage();
+		}
+
+	argc -= optind;
+	argv += optind;
 
 	if (argc != 0)
 		usage();
@@ -641,14 +651,14 @@ disk_listwedges(int argc, char *argv[])
 
 	for (;;) {
 		if (ioctl(fd, DIOCLWEDGES, &dkwl) == -1)
-			err(1, "%s: listwedges", dvname);
+			err(EXIT_FAILURE, "%s: listwedges", dvname);
 		if (dkwl.dkwl_nwedges == dkwl.dkwl_ncopied)
 			break;
 		bufsize = dkwl.dkwl_nwedges * sizeof(*dkw);
 		if (dkwl.dkwl_bufsize < bufsize) {
 			dkw = realloc(dkwl.dkwl_buf, bufsize);
 			if (dkw == NULL)
-				errx(1, "%s: listwedges: unable to "
+				errx(EXIT_FAILURE, "%s: listwedges: unable to "
 				    "allocate wedge info buffer", dvname);
 			dkwl.dkwl_buf = dkw;
 			dkwl.dkwl_bufsize = bufsize;
@@ -656,7 +666,10 @@ disk_listwedges(int argc, char *argv[])
 	}
 
 	if (dkwl.dkwl_nwedges == 0) {
-		printf("%s: no wedges configured\n", dvname);
+		if (!quiet)
+			printf("%s: no wedges configured\n", dvname);
+		if (error)
+			exit(EXIT_FAILURE);
 		return;
 	}
 
@@ -677,11 +690,11 @@ disk_makewedges(int argc, char *argv[])
 {
 	int bits;
 
-	if (argc != 0)
+	if (argc != 1)
 		usage();
 
 	if (ioctl(fd, DIOCMWEDGES, &bits) == -1)
-		err(1, "%s: makewedges", dvname);
+		err(EXIT_FAILURE, "%s: %s", dvname, argv[0]);
 	else
 		printf("successfully scanned %s.\n", dvname);
 }
