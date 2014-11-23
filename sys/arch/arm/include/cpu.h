@@ -179,6 +179,9 @@ struct cpu_info {
 extern struct cpu_info cpu_info_store;
 
 #if defined(TPIDRPRW_IS_CURLWP)
+#if defined(MULTIPROCESSOR)
+#error MULTIPROCESSOR requires TPIDRPRW_IS_CURCPU not TPIDRPRW_IS_CURLWP
+#else
 static inline struct lwp *
 _curlwp(void)
 {
@@ -191,12 +194,8 @@ _curlwp_set(struct lwp *l)
 	armreg_tpidrprw_write((uintptr_t)l);
 }
 
-#define	curlwp		(_curlwp())
-static inline struct cpu_info *
-curcpu(void)
-{
-	return curlwp->l_cpu;
-}
+#define	curcpu()	(&cpu_info_store)
+#endif
 #elif defined(TPIDRPRW_IS_CURCPU)
 static inline struct cpu_info *
 curcpu(void)
@@ -206,7 +205,7 @@ curcpu(void)
 #elif !defined(MULTIPROCESSOR)
 #define	curcpu()	(&cpu_info_store)
 #else
-#error MULTIPROCESSOR requires TPIDRPRW_IS_CURLWP or TPIDRPRW_IS_CURCPU
+#error MULTIPROCESSOR requires TPIDRPRW_IS_CURCPU
 #endif /* !TPIDRPRW_IS_CURCPU && !TPIDRPRW_IS_CURLWP */
 
 #ifndef curlwp
