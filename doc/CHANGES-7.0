@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.107 2014/11/20 10:09:20 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.108 2014/11/23 13:25:33 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2844,4 +2844,55 @@ external/mit/xorg/lib/libXft/Makefile		1.6
 	Compile xftrender.c with -O0 to workaround a crash in
 	XftGlyphSpecRender on earm with gcc 4.8.4.
 	[jmcneill, ticket #253]
+
+sys/arch/arm/allwinner/awin_hdmiaudio.c		1.5
+sys/arch/arm/allwinner/files.awin		1.26
+sys/dev/audio.c					1.266
+sys/dev/audio_if.h				1.70
+sys/dev/auvolconv.c				1.1
+sys/dev/auvolconv.h				1.1
+sys/dev/files.audio				1.3 (via patch: sys/conf/files)
+sys/dev/pad/files.pad				1.5
+sys/dev/pad/pad.c				1.22
+sys/dev/pad/padvar.h				1.5
+sys/dev/pad/padvol.c				delete
+sys/dev/pad/padvol.h				delete
+sys/modules/pad/Makefile			1.2
+
+	Add common audio converters for software volume control. Only supports
+	slinear16_le and slinear16_be for now.
+
+	Convert pad(4) awin_hdmiaudio to use the new converters.
+	[jmcneill, ticket #249]
+
+sys/ufs/ufs/ufs_extattr.c			1.46
+
+	Fix uninitialized mutex usage.
+
+	We use extended attribute mount mutex before testing if it had been
+	initialized, and as reported by Christos,  this caused panic with
+	LOCKDEBUG. Fix it by testing before using.
+	[manu, ticket #254]
+
+sys/dev/i2c/axp22x.c				1.2
+
+	Change internal temperature base from -267.7C to -243.7C. The
+	AXP223 datasheet says that the value is between -267.7C and
+	165.8C in steps of 0.1C, but this doesn't make sense for a
+	12-bit field. If we take the maximum value and subtract 4095 we
+	get -243.7C, effectively adding +24C to the reported temp. On my
+	A31 board, this changes a chilly 15.3C to a more reasonable
+	39.3C.
+	[jmcneill, ticket #255]
+
+sys/dev/auvolconv.c				1.2
+
+	When this code was split from dev/pad, the "volume" member size
+	was changed from u_int to uint8_t. This had the unfortunate
+	side-effect of introducing an integer overflow when adjusting
+	samples as the largest type used was now int16_t. This change
+	copies the volume level to a temporary u_int and uses that in
+	the calculation. Fixes recent failures with the
+	dev/audio/t_pad/pad_output test.
+	[jmcneill, ticket #256]
 
