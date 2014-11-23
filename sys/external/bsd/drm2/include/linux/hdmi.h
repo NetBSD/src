@@ -1,4 +1,4 @@
-/*	$NetBSD: hdmi.h,v 1.2 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: hdmi.h,v 1.3 2014/11/23 16:07:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -260,9 +260,11 @@ hdmi_audio_infoframe_pack(const struct hdmi_audio_infoframe *frame, void *buf,
 
 	KASSERT(frame->header.length == HDMI_AUDIO_INFOFRAME_SIZE);
 
-	ret = hdmi_infoframe_header_pack(&frame->header, length, p, size);
+	ret = hdmi_infoframe_header_pack(&frame->header, frame->header.length,
+	    p, size);
 	if (ret < 0)
 		return ret;
+	KASSERT(ret == HDMI_INFOFRAME_HEADER_SIZE);
 	p += HDMI_INFOFRAME_HEADER_SIZE;
 	size -= HDMI_INFOFRAME_HEADER_SIZE;
 
@@ -335,9 +337,11 @@ hdmi_avi_infoframe_pack(const struct hdmi_avi_infoframe *frame, void *buf,
 
 	KASSERT(frame->header.length == HDMI_AVI_INFOFRAME_SIZE);
 
-	ret = hdmi_infoframe_header_pack(&frame->header, length, p, size);
+	ret = hdmi_infoframe_header_pack(&frame->header, frame->header.length,
+	    p, size);
 	if (ret < 0)
 		return ret;
+	KASSERT(ret == HDMI_INFOFRAME_HEADER_SIZE);
 	p += HDMI_INFOFRAME_HEADER_SIZE;
 	size -= HDMI_INFOFRAME_HEADER_SIZE;
 
@@ -424,9 +428,11 @@ hdmi_spd_infoframe_pack(struct hdmi_spd_infoframe *frame, void *buf,
 
 	KASSERT(frame->header.length == HDMI_SPD_INFOFRAME_SIZE);
 
-	ret = hdmi_infoframe_header_pack(&frame->header, length, p, size);
+	ret = hdmi_infoframe_header_pack(&frame->header, frame->header.length,
+	    p, size);
 	if (ret < 0)
 		return ret;
+	KASSERT(ret == HDMI_INFOFRAME_HEADER_SIZE);
 	p += HDMI_INFOFRAME_HEADER_SIZE;
 	size -= HDMI_INFOFRAME_HEADER_SIZE;
 
@@ -490,9 +496,11 @@ hdmi_vendor_infoframe_pack(const struct hdmi_vendor_infoframe *frame,
 	if (frame->s3d_struct >= HDMI_3D_STRUCTURE_SIDE_BY_SIDE_HALF)
 		length += 1;
 
-	ret = hdmi_infoframe_header_pack(&frame->header, length, p, size);
+	ret = hdmi_infoframe_header_pack(&frame->header, frame->header.length,
+	    p, size);
 	if (ret < 0)
 		return ret;
+	KASSERT(ret == HDMI_INFOFRAME_HEADER_SIZE);
 	p += HDMI_INFOFRAME_HEADER_SIZE;
 	size -= HDMI_INFOFRAME_HEADER_SIZE;
 
