@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BPI,v 1.12 2014/11/15 14:59:25 jmcneill Exp $
+#	$NetBSD: BPI,v 1.13 2014/11/23 20:02:37 snj Exp $
 #
 #	BPI -- Banana Pi - an Allwinner A20 Eval Board Kernel
 #
@@ -337,4 +337,4 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
 
-cinclude "arch/evbarm/conf/CUBIEBOARD.local"
+cinclude "arch/evbarm/conf/BPI.local"
