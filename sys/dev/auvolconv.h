@@ -1,4 +1,4 @@
-/* $NetBSD: padvol.h,v 1.3 2011/11/23 23:07:33 jmcneill Exp $ */
+/* $NetBSD: auvolconv.h,v 1.1.2.2 2014/11/23 13:07:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,28 +26,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_DEV_PAD_PADVOL_H
-#define _SYS_DEV_PAD_PADVOL_H
+#ifndef _SYS_DEV_AUVOLCONV_H
+#define _SYS_DEV_AUVOLCONV_H
 
-stream_filter_t *	pad_vol_slinear16_le(struct audio_softc *,
-			    const audio_params_t *, const audio_params_t *);
-stream_filter_t *	pad_vol_slinear16_be(struct audio_softc *,
-			    const audio_params_t *, const audio_params_t *);
+int	auvolconv_slinear16_le_fetch_to(struct audio_softc *,
+	    stream_fetcher_t *, audio_stream_t *, int);
+int	auvolconv_slinear16_be_fetch_to(struct audio_softc *,
+	    stream_fetcher_t *, audio_stream_t *, int);
 
-#define PAD_DEFINE_FILTER(name)						\
-	static int							\
-	name##_fetch_to(struct audio_softc *, stream_fetcher_t *, 	\
-			audio_stream_t *, int);				\
-	stream_filter_t * name(struct audio_softc *,			\
-	    const audio_params_t *, const audio_params_t *);		\
-	stream_filter_t *						\
-	name(struct audio_softc *asc, const audio_params_t *from,	\
-	    const audio_params_t *to)					\
-	{								\
-		return pad_filter_factory(asc, name##_fetch_to);	\
-	}								\
-	static int							\
-	name##_fetch_to(struct audio_softc *asc, stream_fetcher_t *self, \
-			audio_stream_t *dst, int max_used)
+typedef struct auvolconv_filter {
+	stream_filter_t		base;
+	uint8_t			*vol;
+} auvolconv_filter_t;
 
-#endif /* !_SYS_DEV_PAD_PADVOL_H */
+#endif /* !_SYS_DEV_AUVOLCONV_H */

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/04/09 13:41:45 ahoka Exp $
+# $NetBSD: Makefile,v 1.1.40.1 2014/11/23 13:07:04 martin Exp $
 
 .include "../Makefile.inc"
 
@@ -7,6 +7,5 @@
 KMOD=   pad
 
 SRCS=	pad.c
-SRCS+=	padvol.c
 
 .include <bsd.kmodule.mk>

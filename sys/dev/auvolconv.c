@@ -1,4 +1,4 @@
-/* $NetBSD: padvol.c,v 1.6 2011/11/23 23:07:33 jmcneill Exp $ */
+/* $NetBSD: auvolconv.c,v 1.2.2.2 2014/11/23 13:07:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: padvol.c,v 1.6 2011/11/23 23:07:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvolconv.c,v 1.2.2.2 2014/11/23 13:07:05 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -39,49 +39,18 @@ __KERNEL_RCSID(0, "$NetBSD: padvol.c,v 1.6 2011/11/23 23:07:33 jmcneill Exp $");
 
 #include <dev/audiovar.h>
 #include <dev/auconv.h>
+#include <dev/auvolconv.h>
 
-#include <dev/pad/padvar.h>
-#include <dev/pad/padvol.h>
-
-typedef struct pad_filter {
-	stream_filter_t		base;
-	struct audio_softc	*audiosc;
-} pad_filter_t;
-
-static void
-pad_filter_dtor(stream_filter_t *this)
+int
+auvolconv_slinear16_le_fetch_to(struct audio_softc *asc,
+    stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 {
-	if (this)
-		kmem_free(this, sizeof(pad_filter_t));
-}
-
-static stream_filter_t *
-pad_filter_factory(struct audio_softc *sc,
-    int (*fetch_to)(struct audio_softc *, stream_fetcher_t *,
-    audio_stream_t *, int))
-{
-	pad_filter_t *this;
-
-	this = kmem_alloc(sizeof(pad_filter_t), KM_SLEEP);
-	this->base.base.fetch_to = fetch_to;
-	this->base.dtor = pad_filter_dtor;
-	this->base.set_fetcher = stream_filter_set_fetcher;
-	this->base.set_inputbuffer = stream_filter_set_inputbuffer;
-	this->audiosc = sc;
-
-	return (stream_filter_t *)this;
-}
-
-PAD_DEFINE_FILTER(pad_vol_slinear16_le)
-{
-	pad_filter_t *pf;
-	pad_softc_t *sc;
+	auvolconv_filter_t *pf;
 	stream_filter_t *this;
 	int16_t j, *wp;
 	int m, err;
 
-	pf = (pad_filter_t *)self;
-	sc = device_private(pf->audiosc->sc_dev);
+	pf = (auvolconv_filter_t *)self;
 	this = &pf->base;
 	max_used = (max_used + 1) & ~1;
 
@@ -92,22 +61,22 @@ PAD_DEFINE_FILTER(pad_vol_slinear16_le)
 	FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
 		j = le16dec(s);
 		wp = (int16_t *)d;
-		le16enc(wp, (j * sc->sc_swvol) / 255);
+		le16enc(wp, (j * *pf->vol) / 255);
 	} FILTER_LOOP_EPILOGUE(this->src, dst);
 
 	return 0;
 }
 
-PAD_DEFINE_FILTER(pad_vol_slinear16_be)
+int
+auvolconv_slinear16_be_fetch_to(struct audio_softc *asc,
+    stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 {
-	pad_filter_t *pf;
-	pad_softc_t *sc;
+	auvolconv_filter_t *pf;
 	stream_filter_t *this;
 	int16_t j, *wp;
 	int m, err;
 
-	pf = (pad_filter_t *)self;
-	sc = device_private(pf->audiosc->sc_dev);
+	pf = (auvolconv_filter_t *)self;
 	this = &pf->base;
 	max_used = (max_used + 1) & ~1;
 
@@ -118,7 +87,7 @@ PAD_DEFINE_FILTER(pad_vol_slinear16_be)
 	FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
 		j = be16dec(s);
 		wp = (int16_t *)d;
-		be16enc(wp, (j * sc->sc_swvol) / 255);
+		be16enc(wp, (j * *pf->vol) / 255);
 	} FILTER_LOOP_EPILOGUE(this->src, dst);
 
 	return 0;

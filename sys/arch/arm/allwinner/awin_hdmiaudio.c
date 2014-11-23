@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmiaudio.c,v 1.3.2.3 2014/11/18 18:19:09 snj Exp $ */
+/* $NetBSD: awin_hdmiaudio.c,v 1.3.2.4 2014/11/23 13:07:04 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmiaudio.c,v 1.3.2.3 2014/11/18 18:19:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmiaudio.c,v 1.3.2.4 2014/11/23 13:07:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: awin_hdmiaudio.c,v 1.3.2.3 2014/11/18 18:19:09 snj E
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
+#include <dev/auvolconv.h>
 
 #include <arm/allwinner/awin_reg.h>
 #include <arm/allwinner/awin_var.h>
@@ -73,7 +74,6 @@ struct awin_hdmiaudio_softc {
 	struct audio_format	sc_format;
 	struct audio_encoding_set *sc_encodings;
 
-	audio_params_t		sc_pparam;
 	struct awin_dma_channel *sc_pdma;
 	void			(*sc_pint)(void *);
 	void			*sc_pintarg;
@@ -81,6 +81,8 @@ struct awin_hdmiaudio_softc {
 	bus_addr_t		sc_pend;
 	bus_addr_t		sc_pcur;
 	int			sc_pblksize;
+
+	uint8_t			sc_swvol;
 };
 
 static int	awin_hdmiaudio_match(device_t, cfdata_t, void *);
@@ -128,6 +130,10 @@ static int	awin_hdmiaudio_trigger_input(void *, void *, void *, int,
 					     void (*)(void *), void *,
 					     const audio_params_t *);
 static void	awin_hdmiaudio_get_locks(void *, kmutex_t **, kmutex_t **);
+
+static stream_filter_t *awin_hdmiaudio_swvol_filter(struct audio_softc *,
+    const audio_params_t *, const audio_params_t *);
+static void	awin_hdmiaudio_swvol_dtor(stream_filter_t *);
 
 static const struct audio_hw_if awin_hdmiaudio_hw_if = {
 	.open = awin_hdmiaudio_open,
@@ -234,6 +240,8 @@ awin_hdmiaudio_attach(device_t parent, device_t self, void *aux)
 		    error);
 		return;
 	}
+
+	sc->sc_swvol = 255;
 
 	awin_hdmiaudio_rescan(self, NULL, NULL);
 }
@@ -385,9 +393,9 @@ awin_hdmiaudio_set_params(void *priv, int setmode, int usemode,
 		    AUMODE_PLAY, play, true, pfil);
 		if (index < 0)
 			return EINVAL;
-		sc->sc_pparam = pfil->req_size > 0 ?
-		    pfil->filters[0].param :
-		    *play;
+		if (pfil->req_size > 0)
+			play = &pfil->filters[0].param;
+		pfil->prepend(pfil, awin_hdmiaudio_swvol_filter, play);
 	}
 
 	return 0;
@@ -415,9 +423,12 @@ awin_hdmiaudio_halt_input(void *priv)
 static int
 awin_hdmiaudio_set_port(void *priv, mixer_ctrl_t *mc)
 {
+	struct awin_hdmiaudio_softc *sc = priv;
+
 	switch (mc->dev) {
 	case HDMIAUDIO_OUTPUT_MASTER_VOLUME:
 	case HDMIAUDIO_INPUT_DHDMIAUDIO_VOLUME:
+		sc->sc_swvol = mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
 		return 0;
 	}
 
@@ -427,11 +438,14 @@ awin_hdmiaudio_set_port(void *priv, mixer_ctrl_t *mc)
 static int
 awin_hdmiaudio_get_port(void *priv, mixer_ctrl_t *mc)
 {
+	struct awin_hdmiaudio_softc *sc = priv;
+	uint8_t vol = sc->sc_swvol;
+
 	switch (mc->dev) {
 	case HDMIAUDIO_OUTPUT_MASTER_VOLUME:
 	case HDMIAUDIO_INPUT_DHDMIAUDIO_VOLUME:
-		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = 255;
-		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = 255;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = vol;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = vol;
 		return 0;
 	}
 
@@ -678,4 +692,29 @@ awin_hdmiaudio_get_locks(void *priv, kmutex_t **intr, kmutex_t **thread)
 
 	*intr = &sc->sc_intr_lock;
 	*thread = &sc->sc_lock;
+}
+
+static stream_filter_t *
+awin_hdmiaudio_swvol_filter(struct audio_softc *asc,
+    const audio_params_t *from, const audio_params_t *to)
+{
+	auvolconv_filter_t *this;
+	device_t dev = audio_get_device(asc);
+	struct awin_hdmiaudio_softc *sc = device_private(dev);
+
+	this = kmem_alloc(sizeof(auvolconv_filter_t), KM_SLEEP);
+	this->base.base.fetch_to = auvolconv_slinear16_le_fetch_to;
+	this->base.dtor = awin_hdmiaudio_swvol_dtor;
+	this->base.set_fetcher = stream_filter_set_fetcher;
+	this->base.set_inputbuffer = stream_filter_set_inputbuffer;
+	this->vol = &sc->sc_swvol;
+
+	return (stream_filter_t *)this;
+}
+
+static void
+awin_hdmiaudio_swvol_dtor(stream_filter_t *this)
+{
+	if (this)
+		kmem_free(this, sizeof(auvolconv_filter_t));
 }
