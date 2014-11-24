@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1926 2014/11/24 11:19:45 pettai Exp $
+#	$NetBSD: mi,v 1.1927 2014/11/24 12:14:40 pettai Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7101,10 +7101,10 @@
 ./usr/share/man/cat3/jn.0			comp-c-catman		.cat
 ./usr/share/man/cat3/jnf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/jrand48.0			comp-c-catman		.cat
-./usr/share/man/cat3/kadm5_add_passwd_quality_verifier.0	comp-krb5-man		kerberos,.man
-./usr/share/man/cat3/kadm5_check_password_quality.0	comp-krb5-man		kerberos,.man
+./usr/share/man/cat3/kadm5_add_passwd_quality_verifier.0	comp-krb5-catman	kerberos,.man
+./usr/share/man/cat3/kadm5_check_password_quality.0	comp-krb5-catman	kerberos,.man
 ./usr/share/man/cat3/kadm5_pwcheck.0		comp-krb5-catman	kerberos,.cat
-./usr/share/man/cat3/kadm5_setup_passwd_quality_check.0	comp-krb5-man		kerberos,.man
+./usr/share/man/cat3/kadm5_setup_passwd_quality_check.0	comp-krb5-catman	kerberos,.man
 ./usr/share/man/cat3/kafs.0			comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/kerberos.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/keyname.0			comp-c-catman		.cat
