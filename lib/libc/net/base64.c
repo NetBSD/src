@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.14 2012/06/25 22:32:44 abs Exp $	*/
+/*	$NetBSD: base64.c,v 1.15 2014/11/24 15:41:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -47,7 +47,7 @@
 #if 0
 static const char rcsid[] = "Id: base64.c,v 1.4 2005/04/27 04:56:34 sra Exp";
 #else
-__RCSID("$NetBSD: base64.c,v 1.14 2012/06/25 22:32:44 abs Exp $");
+__RCSID("$NetBSD: base64.c,v 1.15 2014/11/24 15:41:18 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -218,6 +218,7 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 {
 	size_t tarindex;
 	int state, ch;
+	u_char nextbyte;
 	char *pos;
 
 	_DIAGASSERT(src != NULL);
@@ -242,33 +243,36 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 			if (target) {
 				if ((size_t)tarindex >= targsize)
 					return (-1);
-				target[tarindex] =
-				    (unsigned char)(pos - Base64) << 2;
+				target[tarindex] = (u_char)(pos - Base64) << 2;
 			}
 			state = 1;
 			break;
 		case 1:
 			if (target) {
-				if ((size_t)tarindex + 1 >= targsize)
+				if ((size_t)tarindex >= targsize)
 					return (-1);
 				target[tarindex] |= 
 				    (u_int32_t)(pos - Base64) >> 4;
-				target[tarindex+1]  = 
-				    (unsigned char)
-				    (((pos - Base64) & 0x0f) << 4);
+				nextbyte = (u_char)((pos - Base64) & 0x0f) << 4;
+				if (tarindex + 1 < targsize)
+					target[tarindex + 1] = nextbyte;
+				else if (nextbyte)
+					return (-1);
 			}
 			tarindex++;
 			state = 2;
 			break;
 		case 2:
 			if (target) {
-				if ((size_t)tarindex + 1 >= targsize)
+				if ((size_t)tarindex >= targsize)
 					return (-1);
 				target[tarindex] |= 
 					(u_int32_t)(pos - Base64) >> 2;
-				target[tarindex+1] =
-				    (unsigned char)
-				    (((pos - Base64) & 0x03) << 6);
+				nextbyte = (u_char)((pos - Base64) & 0x03) << 6;
+				if (tarindex + 1 < targsize)
+					target[tarindex + 1] = nextbyte;
+				else if (nextbyte)
+					return (-1);
 			}
 			tarindex++;
 			state = 3;
@@ -327,7 +331,8 @@ b64_pton(char const *src, u_char *target, size_t targsize)
 			 * zeros.  If we don't check them, they become a
 			 * subliminal channel.
 			 */
-			if (target && target[tarindex] != 0)
+			if (target && tarindex < targsize &&
+			    target[tarindex] != 0)
 				return (-1);
 		}
 	} else {
