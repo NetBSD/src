@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.51 2014/03/07 16:36:32 matt Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.52 2014/11/24 02:36:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.51 2014/03/07 16:36:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.52 2014/11/24 02:36:31 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -101,6 +101,8 @@ static void	lockdebug_abort1(lockdebug_t *, int, const char *,
 				 const char *, bool);
 static int	lockdebug_more(int);
 static void	lockdebug_init(void);
+static void	lockdebug_dump(lockdebug_t *, void (*)(const char *, ...)
+    __printflike(1, 2));
 
 static signed int
 ld_rbto_compare_nodes(void *ctx, const void *n1, const void *n2)
@@ -663,8 +665,13 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 	}
 	splx(s);
 	if (l->l_shlocks != 0) {
-		panic("lockdebug_barrier: holding %d shared locks",
-		    l->l_shlocks);
+		TAILQ_FOREACH(ld, &ld_all, ld_achain) {
+			if (ld->ld_lockops->lo_type == LOCKOPS_CV)
+				continue;
+			if (ld->ld_lwp == l)
+				lockdebug_dump(ld, printf);
+		}
+		panic("%s: holding %d shared locks", __func__, l->l_shlocks);
 	}
 }
 
