@@ -1,4 +1,4 @@
-#	$NetBSD: std.rpi,v 1.17 2014/11/08 08:10:13 skrll Exp $
+#	$NetBSD: std.rpi,v 1.18 2014/11/24 12:53:23 skrll Exp $
 #
 # standard NetBSD/evbarm for Raspberry Pi options
 
@@ -19,7 +19,7 @@ options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_CPU_UAREA_ALLOC_IDLELWP
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	__HAVE_MM_MD_CACHE_ALIASING
-options 	TPIDRPRW_IS_CURCPU
+options 	TPIDRPRW_IS_CURLWP
 options 	ARM_HAS_VBAR
 options 	KERNEL_BASE_EXT=0xc0000000
 
