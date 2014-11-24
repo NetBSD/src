@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.132 2014/10/23 13:44:37 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.133 2014/11/24 07:53:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.132 2014/10/23 13:44:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.133 2014/11/24 07:53:43 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1634,6 +1634,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		/* Root Capability Register */
 		printf("    Root Capability Register: %04x\n",
 		    reg >> 16);
+		onoff("CRS Software Visibility", reg, PCIE_RCR_CRS_SV);
 
 		/* Root Status Register */
 		reg = regs[o2i(capoff + PCIE_RSR)];
