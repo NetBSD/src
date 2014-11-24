@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1927 2014/11/24 12:14:40 pettai Exp $
+#	$NetBSD: mi,v 1.1928 2014/11/24 12:20:20 pettai Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -13963,10 +13963,10 @@
 ./usr/share/man/html3/jn.html			comp-c-htmlman		html
 ./usr/share/man/html3/jnf.html			comp-c-htmlman		html
 ./usr/share/man/html3/jrand48.html		comp-c-htmlman		html
-./usr/share/man/html3/kadm5_add_passwd_quality_verifier.html	comp-krb5-man		kerberos,.man
-./usr/share/man/html3/kadm5_check_password_quality.html	comp-krb5-man		kerberos,.man
+./usr/share/man/html3/kadm5_add_passwd_quality_verifier.html	comp-krb5-htmlman	kerberos,.man
+./usr/share/man/html3/kadm5_check_password_quality.html	comp-krb5-htmlman	kerberos,.man
 ./usr/share/man/html3/kadm5_pwcheck.html	comp-krb5-htmlman	kerberos,html
-./usr/share/man/html3/kadm5_setup_passwd_quality_check.html	comp-krb5-man		kerberos,.man
+./usr/share/man/html3/kadm5_setup_passwd_quality_check.html	comp-krb5-htmlman	kerberos,.man
 ./usr/share/man/html3/kafs.html			comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/keyname.html		comp-c-htmlman		html
 ./usr/share/man/html3/keypad.html		comp-c-htmlman		html
