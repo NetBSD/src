@@ -1,4 +1,4 @@
-/*	$NetBSD: hdmi.h,v 1.4 2014/11/23 16:16:29 riastradh Exp $	*/
+/*	$NetBSD: hdmi.h,v 1.5 2014/11/24 01:27:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -197,8 +197,9 @@ hdmi_infoframe_header_pack(const struct hdmi_infoframe_header *header,
 {
 	uint8_t *const p = buf;
 
-	if ((size < length) ||
-	    (size - length < HDMI_INFOFRAME_HEADER_SIZE))
+	if (length < HDMI_INFOFRAME_HEADER_SIZE)
+		return -ENOSPC;
+	if (size < length)
 		return -ENOSPC;
 
 	p[0] = header->type;
