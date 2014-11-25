@@ -1503,7 +1503,9 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_CNT64_CTRL_RL_ENABLE	__BIT(1)
 #define AWIN_CNT64_CTRL_CLR_ENABLE	__BIT(0)
 
-#define AWIN_WDOG_CTRL_RSTART		__BIT(1)
+#define AWIN_WDOG_CTRL_KEY		__BITS(12,1)
+#define AWIN_WDOG_CTRL_KEY_MAGIC	0xa57
+#define AWIN_WDOG_CTRL_RSTART		__BIT(0)
 #define AWIN_WDOG_MODE_INTV		__BITS(6,3)
 #define AWIN_WDOG_MODE_INTV_HALFSEC	0
 #define AWIN_WDOG_MODE_INTV_1SEC	1
@@ -2161,6 +2163,7 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_A31_WDOG_CFG_CONFIG_INT		2
 
 #define AWIN_A31_WDOG_MODE_EN			__BIT(0)
+#define AWIN_A31_WDOG_MODE_INTV			__BITS(7,4)
 
 #define AWIN_A31_MMC_FIFO			0x0200
 
