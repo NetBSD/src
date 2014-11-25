@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.133 2014/11/25 15:04:37 seanb Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.134 2014/11/25 19:09:13 seanb Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.133 2014/11/25 15:04:37 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.134 2014/11/25 19:09:13 seanb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -307,7 +307,7 @@ in6_pcbbind_port(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 		 * and a multicast address is bound on both
 		 * new and duplicated sockets.
 		 */
-		if (so->so_options & SO_REUSEADDR)
+		if (so->so_options & (SO_REUSEADDR | SO_REUSEPORT))
 			reuseport = SO_REUSEADDR|SO_REUSEPORT;
 	}
 
