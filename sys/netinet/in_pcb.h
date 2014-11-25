@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.54 2014/08/05 05:24:26 rtr Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.55 2014/11/25 15:04:37 seanb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,6 +152,7 @@ void	in_pcbnotifyall(struct inpcbtable *, struct in_addr, int,
 	    void (*)(struct inpcb *, int));
 void	in_pcbpurgeif0(struct inpcbtable *, struct ifnet *);
 void	in_pcbpurgeif(struct inpcbtable *, struct ifnet *);
+void	in_purgeifmcast(struct ip_moptions *, struct ifnet *);
 void	in_pcbstate(struct inpcb *, int);
 void	in_rtchange(struct inpcb *, int);
 void	in_setpeeraddr(struct inpcb *, struct mbuf *);
