@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.30 2010/12/20 00:25:24 matt Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.31 2014/11/25 19:54:08 christos Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.30 2010/12/20 00:25:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.31 2014/11/25 19:54:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ linux32_syscall(struct trapframe *frame)
 	if (__predict_false(p->p_trace_enabled)) {
 		narg = callp->sy_narg;
 		if (__predict_false(narg > __arraycount(args)))
-			panic("impossible syscall narg, code %d, narg %zd",
+			panic("impossible syscall narg, code %d, narg %zu",
 			    code, narg);
 		for (i = 0; i < narg; i++)
 			args64[i] = args[i] & 0xffffffff;
