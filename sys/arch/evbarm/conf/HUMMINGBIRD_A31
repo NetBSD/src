@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.19.2.4 2014/11/14 18:11:22 snj Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.19.2.5 2014/11/25 07:49:22 snj Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -206,10 +206,13 @@ awingpio0	at awinio0
 
 gpio*		at awingpio?
 
-# I2C Controller
-awiniic0	at awinio? port 0
-#awiniic*	at awinio? port ?
-iic0		at awiniic0
+# I2C Controllers
+#awiniic0	at awinio? port 0
+#iic0		at awiniic0
+
+awiniic2	at awinio? port 2
+iic2		at awiniic2
+pcf8563rtc0	at iic2 addr 0x51	# PCF8563 RTC
 
 # P2WI
 awinp2wi0	at awinio0
@@ -227,8 +230,8 @@ cir0		at awinir0
 # Watchdog timers
 awinwdt*	at awinio?
 
-# RTC
-awinrtc*	at awinio?
+# RTC (not battery backed on this board; use PCF8563 instead)
+#awinrtc*	at awinio?
 
 # onboard audio codec
 awinac0		at awinio0
