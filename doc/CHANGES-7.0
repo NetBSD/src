@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.109 2014/11/23 20:59:04 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.110 2014/11/25 08:09:45 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2897,4 +2897,47 @@ sys/dev/auvolconv.c				1.2
 	the calculation. Fixes recent failures with the
 	dev/audio/t_pad/pad_output test.
 	[jmcneill, ticket #256]
+
+sys/arch/arm/allwinner/awin_reg.h		1.53
+sys/arch/arm/allwinner/awin_twi.c		1.5
+sys/arch/evbarm/conf/HUMMINGBIRD_A31		1.20
+sys/dev/i2c/gttwsi_core.c			1.2
+sys/dev/i2c/gttwsivar.h				1.2
+
+	Enable the use of I2C controllers that were not initialized by
+	U-Boot and add A31 compatibility.  On Hummingbird A31, replaces
+	the SoCRTC with an externally connected PCF8563, since the board's
+	battery doesn't seem to keep time with the former.
+	[jmcneill, ticket #257]
+
+tests/usr.bin/netpgpverify/t_netpgpverify.sh	1.2
+
+	Since the netpgpverify rewrite to have no external pre-requisites,
+	the output format for signatures has changed cosmetically (mainly
+	whitespace changes).  Re-format all the test cases so that the
+	tests now pass again with the new output format.
+	[agc, ticket #258]
+
+sys/dev/ic/dwc_gmac.c				1.27
+
+	Fix bus_dmamap_sync usage.
+	[jmcneill, ticket #259]
+
+sys/arch/arm/allwinner/awin_gige.c		1.19
+sys/arch/arm/allwinner/awin_gpio.c		1.14
+sys/arch/arm/allwinner/awin_var.h		1.26
+
+	Allow a pinset to override the firmware supplied gpio drv
+	levels, and a change to the gmac attach glue to select drv
+	level 3 for GMAC gpio pins.
+	[jmcneill, ticket #260]
+
+sys/arch/arm/allwinner/awin_reg.h		1.54
+sys/arch/arm/allwinner/awin_wdt.c		1.5
+
+	- Write the correct value to the ctrl register to restart the
+	  watchdog.  Watchdog restart bit is 0 not 1, and we need to
+	  write a key as well.
+	- Add A31 support.
+	[jmcneill, ticket #266]
 
