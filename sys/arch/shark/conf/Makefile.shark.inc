@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.shark.inc,v 1.22 2014/11/16 12:02:55 uebayasi Exp $
+#	$NetBSD: Makefile.shark.inc,v 1.23 2014/11/25 07:42:35 martin Exp $
 
 CPPFLAGS+=		-D${MACHINE}
 COPTS+=			-fno-unwind-tables
@@ -8,6 +8,7 @@ GENASSYM_EXTRAS+=	${THISARM}/shark/genassym.cf
 # can load it.
 
 LINKSCRIPT=	-T ldscript
+LOADADDRESS=	0xF0000020
 
 SYSTEM_LD_HEAD_EXTRA+=; \
 	( cat ${ARM}/conf/kern.ldscript.head ; \
