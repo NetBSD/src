@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.169 2014/06/06 01:02:47 rmind Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.170 2014/11/25 19:51:17 christos Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.169 2014/06/06 01:02:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.170 2014/11/25 19:51:17 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -722,6 +722,8 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 			n->m_pkthdr.rcvif = NULL;
 			n->m_len = 0;
 			maxhlen = M_TRAILINGSPACE(n) - ICMP6_MAXLEN;
+			if (maxhlen < 0)
+				break;
 			if (maxhlen > hostnamelen)
 				maxhlen = hostnamelen;
 			/*
