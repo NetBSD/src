@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.163 2014/01/04 00:10:03 dsl Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.163.4.1 2014/11/25 14:53:23 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.163 2014/01/04 00:10:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.163.4.1 2014/11/25 14:53:23 martin Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -140,6 +140,13 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.163 2014/01/04 00:10:03 dsl Exp $"
 #include <machine/reg.h>
 
 #ifdef PTRACE
+
+# ifdef DEBUG
+#  define DPRINTF(a) uprintf a
+# else
+#  define DPRINTF(a)
+# endif
+
 static kauth_listener_t ptrace_listener;
 
 static int
@@ -398,7 +405,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		 *	    different signal delivery semantics),
 		 */
 		if (ISSET(t->p_slflag, PSL_FSTRACE)) {
-			uprintf("file system traced\n");
+			DPRINTF(("file system traced\n"));
 			error = EBUSY;
 			break;
 		}
@@ -407,8 +414,8 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		 *	(3) it's not being traced by _you_, or
 		 */
 		if (t->p_pptr != p) {
-			uprintf("parent %d != %d\n", t->p_pptr->p_pid,
-			    p->p_pid);
+			DPRINTF(("parent %d != %d\n", t->p_pptr->p_pid,
+			    p->p_pid));
 			error = EBUSY;
 			break;
 		}
@@ -417,8 +424,8 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		 *	(4) it's not currently stopped.
 		 */
 		if (t->p_stat != SSTOP || !t->p_waited /* XXXSMP */) {
-			uprintf("stat %d flag %d\n", t->p_stat,
-			    !t->p_waited);
+			DPRINTF(("stat %d flag %d\n", t->p_stat,
+			    !t->p_waited));
 			error = EBUSY;
 			break;
 		}
@@ -770,17 +777,25 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		goto sendsig;
 
 	case  PT_GET_EVENT_MASK:
-		if (SCARG(uap, data) != sizeof(pe))
-			return EINVAL;
+		if (SCARG(uap, data) != sizeof(pe)) {
+			DPRINTF(("ptrace(%d): %d != %zu\n", req,
+			    SCARG(uap, data), sizeof(pe)));
+			error = EINVAL;
+			break;
+		}
 		memset(&pe, 0, sizeof(pe));
 		pe.pe_set_event = ISSET(t->p_slflag, PSL_TRACEFORK) ? 
-			PTRACE_FORK : 0;
+		    PTRACE_FORK : 0;
 		error = copyout(&pe, SCARG(uap, addr), sizeof(pe));
 		break;
 
 	case  PT_SET_EVENT_MASK:
-		if (SCARG(uap, data) != sizeof(pe))
-			return EINVAL;
+		if (SCARG(uap, data) != sizeof(pe)) {
+			DPRINTF(("ptrace(%d): %d != %zu\n", req,
+			    SCARG(uap, data), sizeof(pe)));
+			error = EINVAL;
+			break;
+		}
 		if ((error = copyin(SCARG(uap, addr), &pe, sizeof(pe))) != 0)
 			return error;
 		if (pe.pe_set_event & PTRACE_FORK)
@@ -790,8 +805,12 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		break;
 
 	case  PT_GET_PROCESS_STATE:
-		if (SCARG(uap, data) != sizeof(ps))
-			return EINVAL;
+		if (SCARG(uap, data) != sizeof(ps)) {
+			DPRINTF(("ptrace(%d): %d != %zu\n", req,
+			    SCARG(uap, data), sizeof(ps)));
+			error = EINVAL;
+			break;
+		}
 		memset(&ps, 0, sizeof(ps));
 		if (t->p_fpid) {
 			ps.pe_report_event = PTRACE_FORK;
@@ -802,6 +821,8 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 
 	case PT_LWPINFO:
 		if (SCARG(uap, data) != sizeof(pl)) {
+			DPRINTF(("ptrace(%d): %d != %zu\n", req,
+			    SCARG(uap, data), sizeof(pl)));
 			error = EINVAL;
 			break;
 		}
