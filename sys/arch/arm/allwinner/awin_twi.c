@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_twi.c,v 1.3.10.1 2014/11/09 14:42:33 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_twi.c,v 1.3.10.2 2014/11/25 07:49:22 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +44,10 @@ __KERNEL_RCSID(1, "$NetBSD: awin_twi.c,v 1.3.10.1 2014/11/09 14:42:33 martin Exp
 
 #include <arm/allwinner/awin_reg.h>
 #include <arm/allwinner/awin_var.h>
+
+#define TWI_CCR_REG	0x14
+#define TWI_CCR_CLK_M	__BITS(6,3)
+#define TWI_CCR_CLK_N	__BITS(2,0)
 
 static int awin_twi_match(device_t, cfdata_t, void *);
 static void awin_twi_attach(device_t, device_t, void *);
@@ -109,12 +113,14 @@ awin_twi_attach(device_t parent, device_t self, void *aux)
 	struct awin_twi_softc * const asc = device_private(self);
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
+	prop_dictionary_t cfg = device_properties(self);
 	bus_space_handle_t bsh;
+	uint32_t ccr;
 
 	awin_twi_ports |= __BIT(loc->loc_port);
 
 	/*
-	 * Acquite the PIO pins needed for the TWI port.
+	 * Acquire the PIO pins needed for the TWI port.
 	 */
 	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
 		awin_gpio_pinset_acquire(&awin_twi_pinsets_a31[loc->loc_port]);
@@ -123,10 +129,36 @@ awin_twi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/*
+	 * Clock gating, soft reset
+	 */
+	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+	    AWIN_APB1_GATING_REG, AWIN_APB_GATING1_TWI0 << loc->loc_port, 0);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_A31_APB2_RESET_REG,
+		    AWIN_A31_APB2_RESET_TWI0_RST << loc->loc_port, 0);
+	}
+
+	/*
 	 * Get a bus space handle for this TWI port.
 	 */
 	bus_space_subregion(aio->aio_core_bst, aio->aio_core_bsh,
 	    loc->loc_offset, loc->loc_size, &bsh);
+
+	/*
+	 * A31 specific quirk
+	 */
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		prop_dictionary_set_bool(cfg, "iflg-rwc", true);
+	}
+
+	/*
+	 * Set clock rate to 100kHz. From the datasheet:
+	 *   For 100Khz standard speed 2Wire, CLK_N=2, CLK_M=11
+	 *   F0=48M/2^2=12Mhz, F1=F0/(10*(11+1)) = 0.1Mhz
+	 */
+	ccr = __SHIFTIN(11, TWI_CCR_CLK_M) | __SHIFTIN(2, TWI_CCR_CLK_N);
+	bus_space_write_4(aio->aio_core_bst, bsh, TWI_CCR_REG, ccr);
 
 	/*
 	 * Do the MI attach

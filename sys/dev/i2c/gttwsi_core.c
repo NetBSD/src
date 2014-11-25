@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi_core.c,v 1.1 2013/09/06 00:56:12 matt Exp $	*/
+/*	$NetBSD: gttwsi_core.c,v 1.1.10.1 2014/11/25 07:49:22 snj Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.1 2013/09/06 00:56:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.1.10.1 2014/11/25 07:49:22 snj Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -124,6 +124,7 @@ void
 gttwsi_attach_subr(device_t self, bus_space_tag_t iot, bus_space_handle_t ioh)
 {
 	struct gttwsi_softc * const sc = device_private(self);
+	prop_dictionary_t cfg = device_properties(self);
 
 	aprint_naive("\n");
 	aprint_normal(": Marvell TWSI controller\n");
@@ -135,6 +136,8 @@ gttwsi_attach_subr(device_t self, bus_space_tag_t iot, bus_space_handle_t ioh)
 	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_cv, device_xname(self));
+
+	prop_dictionary_get_bool(cfg, "iflg-rwc", &sc->sc_iflg_rwc);
 
 	sc->sc_started = false;
 	sc->sc_i2c.ic_cookie = sc;
@@ -223,11 +226,15 @@ gttwsi_send_stop(void *v, int flags)
 {
 	struct gttwsi_softc *sc = v;
 	int retry = TWSI_RETRY_COUNT;
+	uint32_t control;
 
 	sc->sc_started = false;
 
 	/* Interrupt is not generated for STAT_NRS. */
-	gttwsi_write_4(sc, TWSI_CONTROL, CONTROL_STOP | CONTROL_TWSIEN);
+	control = CONTROL_STOP | CONTROL_TWSIEN;
+	if (sc->sc_iflg_rwc)
+		control |= CONTROL_IFLG;
+	gttwsi_write_4(sc, TWSI_CONTROL, control);
 	while (retry > 0) {
 		if (gttwsi_read_4(sc, TWSI_STATUS) == STAT_NRS)
 			return 0;
@@ -324,6 +331,8 @@ gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
 	DELAY(5);
 	if (!(flags & I2C_F_POLL))
 		control |= CONTROL_INTEN;
+	if (sc->sc_iflg_rwc)
+		control |= CONTROL_IFLG;
 	gttwsi_write_4(sc, TWSI_CONTROL, control | CONTROL_TWSIEN);
 
 	timo = 0;
