@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.8.10.3 2014/11/10 08:17:45 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.8.10.4 2014/11/25 08:03:06 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -384,6 +384,16 @@ awin_gpio_set_pin_pull(struct awin_gpio_pin_cfg *cfg, u_int pin, u_int pull)
 }
 
 static void
+awin_gpio_set_pin_drv(struct awin_gpio_pin_cfg *cfg, u_int pin, u_int drv)
+{
+	const u_int shift = (pin & 15) << 1;
+	const u_int i = (pin >> 4) & 1;
+	
+	cfg->drv[i] &= ~(0x03 << shift);
+	cfg->drv[i] |= drv << shift;
+}
+
+static void
 awin_gpio_update_cfg_regs(bus_space_tag_t bst, struct awin_gpio_pin_group *grp,
     const struct awin_gpio_pin_cfg *ncfg)
 {
@@ -577,6 +587,9 @@ awin_gpio_pinset_acquire(const struct awin_gpio_pinset *req)
 			awin_gpio_set_pin_pull(&ncfg, j, AWIN_PIO_PULL_DOWN);
 		else if (req->pinset_flags & GPIO_PIN_PULLUP)
 			awin_gpio_set_pin_pull(&ncfg, j, AWIN_PIO_PULL_UP);
+
+		if (req->pinset_drv)
+			awin_gpio_set_pin_drv(&ncfg, j, req->pinset_drv);
 	}
 
 	/*
