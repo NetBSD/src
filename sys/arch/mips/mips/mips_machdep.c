@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.261 2014/11/22 15:02:39 macallan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.262 2014/11/25 05:28:26 macallan Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.261 2014/11/22 15:02:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.262 2014/11/25 05:28:26 macallan Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -172,14 +172,9 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.261 2014/11/22 15:02:39 macallan 
 
 #ifdef _LP64
 #define	_LOAD_V0_L_PRIVATE_A0	_MKINSN(OP_LD, _R_A0, _R_V0, 0, offsetof(lwp_t, l_private))
-#define	_MTC0_V0_USERLOCAL	_MKINSN(OP_COP0, OP_DMT, _R_V0, MIPS_COP_0_TLB_CONTEXT, 2)
+#define	_MTC0_V0_USERLOCAL	_MKINSN(OP_COP0, OP_DMT, _R_V0, MIPS_COP_0_TLB_CONTEXT, 4)
 #else
 #define	_LOAD_V0_L_PRIVATE_A0	_MKINSN(OP_LW, _R_A0, _R_V0, 0, offsetof(lwp_t, l_private))
-/*
- * XXX
- * the asm code in mipsX_subr.S uses ,4 - the definition above probably needs
- * the same fix
- */
 #define	_MTC0_V0_USERLOCAL	_MKINSN(OP_COP0, OP_MT, _R_V0, MIPS_COP_0_TLB_CONTEXT, 4)
 #endif
 #define	JR_RA			_MKINSN(OP_SPECIAL, _R_RA, 0, 0, OP_JR)
