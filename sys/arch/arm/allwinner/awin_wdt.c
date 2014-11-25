@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_wdt.c,v 1.3.10.1 2014/11/09 14:42:33 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_wdt.c,v 1.3.10.2 2014/11/25 08:08:10 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,6 +78,26 @@ static const uint8_t period_map[] = {
 	[16] = __SHIFTIN(AWIN_WDOG_MODE_INTV_16SEC, AWIN_WDOG_MODE_INTV),
 };
 
+static const uint8_t period_map_a31[] = {
+	[0] = __SHIFTIN(AWIN_WDOG_MODE_INTV_1SEC, AWIN_A31_WDOG_MODE_INTV),
+	[1] = __SHIFTIN(AWIN_WDOG_MODE_INTV_1SEC, AWIN_A31_WDOG_MODE_INTV),
+	[2] = __SHIFTIN(AWIN_WDOG_MODE_INTV_2SEC, AWIN_A31_WDOG_MODE_INTV),
+	[3] = __SHIFTIN(AWIN_WDOG_MODE_INTV_3SEC, AWIN_A31_WDOG_MODE_INTV),
+	[4] = __SHIFTIN(AWIN_WDOG_MODE_INTV_4SEC, AWIN_A31_WDOG_MODE_INTV),
+	[5] = __SHIFTIN(AWIN_WDOG_MODE_INTV_5SEC, AWIN_A31_WDOG_MODE_INTV),
+	[6] = __SHIFTIN(AWIN_WDOG_MODE_INTV_6SEC, AWIN_A31_WDOG_MODE_INTV),
+	[7] = __SHIFTIN(AWIN_WDOG_MODE_INTV_8SEC, AWIN_A31_WDOG_MODE_INTV),
+	[8] = __SHIFTIN(AWIN_WDOG_MODE_INTV_8SEC, AWIN_A31_WDOG_MODE_INTV),
+	[9] = __SHIFTIN(AWIN_WDOG_MODE_INTV_10SEC, AWIN_A31_WDOG_MODE_INTV),
+	[10] = __SHIFTIN(AWIN_WDOG_MODE_INTV_10SEC, AWIN_A31_WDOG_MODE_INTV),
+	[11] = __SHIFTIN(AWIN_WDOG_MODE_INTV_12SEC, AWIN_A31_WDOG_MODE_INTV),
+	[12] = __SHIFTIN(AWIN_WDOG_MODE_INTV_12SEC, AWIN_A31_WDOG_MODE_INTV),
+	[13] = __SHIFTIN(AWIN_WDOG_MODE_INTV_14SEC, AWIN_A31_WDOG_MODE_INTV),
+	[14] = __SHIFTIN(AWIN_WDOG_MODE_INTV_14SEC, AWIN_A31_WDOG_MODE_INTV),
+	[15] = __SHIFTIN(AWIN_WDOG_MODE_INTV_16SEC, AWIN_A31_WDOG_MODE_INTV),
+	[16] = __SHIFTIN(AWIN_WDOG_MODE_INTV_16SEC, AWIN_A31_WDOG_MODE_INTV),
+};
+
 static struct awin_wdt_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_bst;
@@ -86,6 +106,8 @@ static struct awin_wdt_softc {
         u_int sc_wdog_period;
         bool sc_wdog_armed;
 	uint32_t sc_wdog_mode;
+	bus_size_t sc_ctrl_reg;
+	bus_size_t sc_mode_reg;
 } awin_wdt_sc = {
 	.sc_bst = &awin_bs_tag,
 	.sc_wdog_period = AWIN_WDT_PERIOD_DEFAULT,
@@ -95,8 +117,11 @@ static int
 awin_wdt_tickle(struct sysmon_wdog *smw)
 {
 	struct awin_wdt_softc * const sc = smw->smw_cookie;
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_WDOG_CTRL_REG,
+
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, sc->sc_ctrl_reg,
+	    __SHIFTIN(AWIN_WDOG_CTRL_KEY_MAGIC, AWIN_WDOG_CTRL_KEY) |
 	    AWIN_WDOG_CTRL_RSTART);
+
 	return 0;
 }
 
@@ -104,6 +129,16 @@ static int
 awin_wdt_setmode(struct sysmon_wdog *smw)
 {
 	struct awin_wdt_softc * const sc = smw->smw_cookie;
+	const uint8_t *map;
+	size_t mapsize;
+
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		map = period_map_a31;
+		mapsize = __arraycount(period_map_a31);
+	} else {
+		map = period_map;
+		mapsize = __arraycount(period_map);
+	}
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
 		/*
@@ -113,26 +148,39 @@ awin_wdt_setmode(struct sysmon_wdog *smw)
 	}
 
 	if (sc->sc_wdog_armed && smw->smw_period == sc->sc_wdog_period) {
-		bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_WDOG_MODE_REG,
+		if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+			bus_space_write_4(sc->sc_bst, sc->sc_bsh,
+			    AWIN_A31_WDOG1_CFG_REG,
+			    __SHIFTIN(AWIN_A31_WDOG_CFG_CONFIG_SYS,
+				      AWIN_A31_WDOG_CFG_CONFIG));
+		}
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, sc->sc_mode_reg,
 		    sc->sc_wdog_mode);
-		bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_WDOG_CTRL_REG,
-		    AWIN_WDOG_CTRL_RSTART);
+		awin_wdt_tickle(smw);
 		return 0;
 	}
-	if (smw->smw_period > __arraycount(period_map)) {
+	if (smw->smw_period > mapsize) {
 		return EINVAL;
 	}
 	if (smw->smw_period == WDOG_PERIOD_DEFAULT) {
 		smw->smw_period = AWIN_WDT_PERIOD_DEFAULT;
 		sc->sc_wdog_period = AWIN_WDT_PERIOD_DEFAULT;
 	}
-	sc->sc_wdog_mode = AWIN_WDOG_MODE_EN | AWIN_WDOG_MODE_RST_EN
-	    | period_map[sc->sc_wdog_period];
+	sc->sc_wdog_mode = AWIN_WDOG_MODE_EN | map[sc->sc_wdog_period];
+	if (awin_chip_id() == AWIN_CHIP_ID_A20 ||
+	    awin_chip_id() == AWIN_CHIP_ID_A10) {
+ 		sc->sc_wdog_mode |= AWIN_WDOG_MODE_RST_EN;
+	}
 
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_WDOG_MODE_REG,
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
+		    AWIN_A31_WDOG1_CFG_REG,
+		    __SHIFTIN(AWIN_A31_WDOG_CFG_CONFIG_SYS,
+			      AWIN_A31_WDOG_CFG_CONFIG));
+	}
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, sc->sc_mode_reg,
 	    sc->sc_wdog_mode);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_WDOG_CTRL_REG,
-	    AWIN_WDOG_CTRL_RSTART);
+	awin_wdt_tickle(smw);
 	return 0;
 }
 
@@ -167,6 +215,14 @@ awin_wdt_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_wdog_armed = (device_cfdata(self)->cf_flags & 1) != 0;
+
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		sc->sc_ctrl_reg = AWIN_A31_WDOG1_CTRL_REG;
+		sc->sc_mode_reg = AWIN_A31_WDOG1_MODE_REG;
+	} else {
+		sc->sc_ctrl_reg = AWIN_WDOG_CTRL_REG;
+		sc->sc_mode_reg = AWIN_WDOG_MODE_REG;
+	}
 
 	sc->sc_bst = aio->aio_core_bst;
 	bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
