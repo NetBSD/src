@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.9.4.2 2014/10/05 20:00:54 martin Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.9.4.3 2014/11/25 15:49:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.9.4.2 2014/10/05 20:00:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.9.4.3 2014/11/25 15:49:27 martin Exp $");
 
 #include "bcmdmac.h"
 
@@ -248,9 +248,21 @@ bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 	for (seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
 		sc->sc_cblk[seg].cb_ti =
 		    __SHIFTIN(11, DMAC_TI_PERMAP); /* e.MMC */
+		sc->sc_cblk[seg].cb_txfr_len =
+		    cmd->c_dmamap->dm_segs[seg].ds_len;
+		/*
+		 * All transfers are assumed to be multiples of 32-bits.
+		 */
+		KASSERTMSG((sc->sc_cblk[seg].cb_txfr_len & 0x3) == 0,
+		    "seg %zu len %d", seg, sc->sc_cblk[seg].cb_txfr_len);
 		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
 			sc->sc_cblk[seg].cb_ti |= DMAC_TI_DEST_INC;
-			sc->sc_cblk[seg].cb_ti |= DMAC_TI_DEST_WIDTH;
+			/*
+			 * Use 128-bit mode if transfer is a multiple of
+			 * 16-bytes.
+			 */
+			if ((sc->sc_cblk[seg].cb_txfr_len & 0xf) == 0)
+				sc->sc_cblk[seg].cb_ti |= DMAC_TI_DEST_WIDTH;
 			sc->sc_cblk[seg].cb_ti |= DMAC_TI_SRC_DREQ;
 			sc->sc_cblk[seg].cb_source_ad =
 			    BCM2835_PERIPHERALS_TO_BUS(sc->sc_physaddr +
@@ -259,7 +271,12 @@ bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 			    cmd->c_dmamap->dm_segs[seg].ds_addr;
 		} else {
 			sc->sc_cblk[seg].cb_ti |= DMAC_TI_SRC_INC;
-			sc->sc_cblk[seg].cb_ti |= DMAC_TI_SRC_WIDTH;
+			/*
+			 * Use 128-bit mode if transfer is a multiple of
+			 * 16-bytes.
+			 */
+			if ((sc->sc_cblk[seg].cb_txfr_len & 0xf) == 0)
+				sc->sc_cblk[seg].cb_ti |= DMAC_TI_SRC_WIDTH;
 			sc->sc_cblk[seg].cb_ti |= DMAC_TI_DEST_DREQ;
 			sc->sc_cblk[seg].cb_source_ad =
 			    cmd->c_dmamap->dm_segs[seg].ds_addr;
@@ -267,8 +284,6 @@ bcmemmc_xfer_data_dma(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 			    BCM2835_PERIPHERALS_TO_BUS(sc->sc_physaddr +
 			    SDHC_DATA);
 		}
-		sc->sc_cblk[seg].cb_txfr_len =
-		    cmd->c_dmamap->dm_segs[seg].ds_len;
 		sc->sc_cblk[seg].cb_stride = 0;
 		if (seg == cmd->c_dmamap->dm_nsegs - 1) {
 			sc->sc_cblk[seg].cb_ti |= DMAC_TI_WAIT_RESP;
