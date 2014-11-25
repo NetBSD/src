@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.4.10.1 2014/11/09 14:42:33 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.4.10.2 2014/11/25 08:03:06 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,7 +66,7 @@ static const struct awin_gpio_pinset awin_gige_gpio_pinset = {
 };
 
 static const struct awin_gpio_pinset awin_gige_gpio_pinset_a31 = {
-	'A', AWIN_A31_PIO_PA_GMAC_FUNC, AWIN_A31_PIO_PA_GMAC_PINS,
+	'A', AWIN_A31_PIO_PA_GMAC_FUNC, AWIN_A31_PIO_PA_GMAC_PINS, 0, 3
 };
 
 

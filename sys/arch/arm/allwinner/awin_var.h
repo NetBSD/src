@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.10.2.5 2014/11/18 18:19:09 snj Exp $ */
+/* $NetBSD: awin_var.h,v 1.10.2.6 2014/11/25 08:03:06 snj Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -76,6 +76,7 @@ struct awin_gpio_pinset {
 	uint8_t pinset_func;
 	uint32_t pinset_mask;
 	int pinset_flags;
+	int pinset_drv;
 };
 
 struct awin_gpio_pindata {
