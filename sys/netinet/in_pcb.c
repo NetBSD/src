@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.153 2014/11/10 18:52:51 maxv Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.154 2014/11/25 15:04:37 seanb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.153 2014/11/10 18:52:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.154 2014/11/25 15:04:37 seanb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -698,40 +698,44 @@ in_pcbnotifyall(struct inpcbtable *table, struct in_addr faddr, int errno,
 }
 
 void
+in_purgeifmcast(struct ip_moptions *imo, struct ifnet *ifp)
+{
+	int i, gap;
+
+	if (imo == NULL)
+		return;
+
+	/*
+	 * Unselect the outgoing interface if it is being
+	 * detached.
+	 */
+	if (imo->imo_multicast_ifp == ifp)
+		imo->imo_multicast_ifp = NULL;
+
+	/*
+	 * Drop multicast group membership if we joined
+	 * through the interface being detached.
+	 */
+	for (i = 0, gap = 0; i < imo->imo_num_memberships; i++) {
+		if (imo->imo_membership[i]->inm_ifp == ifp) {
+			in_delmulti(imo->imo_membership[i]);
+			gap++;
+		} else if (gap != 0)
+			imo->imo_membership[i - gap] = imo->imo_membership[i];
+	}
+	imo->imo_num_memberships -= gap;
+}
+
+void
 in_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 {
 	struct inpcb_hdr *inph, *ninph;
-	struct ip_moptions *imo;
-	int i, gap;
 
 	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
 		struct inpcb *inp = (struct inpcb *)inph;
 		if (inp->inp_af != AF_INET)
 			continue;
-		imo = inp->inp_moptions;
-		if (imo != NULL) {
-			/*
-			 * Unselect the outgoing interface if it is being
-			 * detached.
-			 */
-			if (imo->imo_multicast_ifp == ifp)
-				imo->imo_multicast_ifp = NULL;
-
-			/*
-			 * Drop multicast group membership if we joined
-			 * through the interface being detached.
-			 */
-			for (i = 0, gap = 0; i < imo->imo_num_memberships;
-			    i++) {
-				if (imo->imo_membership[i]->inm_ifp == ifp) {
-					in_delmulti(imo->imo_membership[i]);
-					gap++;
-				} else if (gap != 0)
-					imo->imo_membership[i - gap] =
-					    imo->imo_membership[i];
-			}
-			imo->imo_num_memberships -= gap;
-		}
+		in_purgeifmcast(inp->inp_moptions, ifp);
 	}
 }
 

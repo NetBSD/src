@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.132 2014/11/14 17:34:23 maxv Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.133 2014/11/25 15:04:37 seanb Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.132 2014/11/14 17:34:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.133 2014/11/25 15:04:37 seanb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -848,6 +848,7 @@ in6_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 				}
 			}
 		}
+		in_purgeifmcast(in6p->in6p_v4moptions, ifp);
 	}
 }
 
