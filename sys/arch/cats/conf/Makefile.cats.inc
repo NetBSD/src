@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cats.inc,v 1.30 2014/11/16 12:02:55 uebayasi Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.31 2014/11/25 12:02:20 skrll Exp $
 
 MACHINE_ARCH?=	arm
 CPPFLAGS+=	-D${MACHINE}
@@ -14,6 +14,7 @@ LINKSCRIPT=	-T ${THISARM}/conf/ldscript.elf
 CFLAGS+=	-fno-unwind-tables
 
 LINKSCRIPT=	-T ldscript
+LOADADDRESS=	0xF0000020
 
 SYSTEM_LD_HEAD_EXTRA+=; \
 	( cat ${ARM}/conf/kern.ldscript.head ; \
