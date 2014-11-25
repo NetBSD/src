@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.110 2014/11/25 08:09:45 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.111 2014/11/25 15:53:38 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2940,4 +2940,37 @@ sys/arch/arm/allwinner/awin_wdt.c		1.5
 	  write a key as well.
 	- Add A31 support.
 	[jmcneill, ticket #266]
+
+sys/arch/evbarm/conf/BPI			1.13
+
+	Fix pasto: BPI.local, not CUBIEBOARD.local
+	[snj, ticket #261]
+
+sys/kern/sys_process.c				1.165
+
+	Don't return early when the incorrect size is passed to some of
+	the ptrace actions. Leaves locks dangling and causes panics with
+	lockdebug.
+	[christos, ticket #262]
+
+lib/libc/arch/x86_64/sys/ptrace.S		1.6
+
+	Fix ptrace %rcx corruption when pthread_errno() is used.
+	[christos, ticket #263]
+
+lib/libc/net/base64.c				1.15-1.16
+
+	Don't read past the end when the data is exactly the right size.
+	Reported by tedu @ openbsd in tech-userlevel.
+	[christos, ticket #264]
+
+sys/arch/arm/broadcom/bcm2835_emmc.c		1.20
+
+	Only use 128-bit mode when the transfer is a multiple of this.
+	[skrll, ticket #265]
+
+sys/arch/evbarm/conf/RPI			(patch)
+
+	Remove DEBUG option.
+	[skrll, ticket #265]
 
