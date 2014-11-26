@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.7 2011/01/19 10:21:16 tsutsui Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.8 2014/11/26 09:53:53 ozaki-r Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.7 2011/01/19 10:21:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.8 2014/11/26 09:53:53 ozaki-r Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -35,14 +35,16 @@ compat_ifconf(u_long cmd, void *data)
 	struct oifconf *ifc = data;
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
-	struct oifreq ifr, *ifrp;
-	int space, error = 0;
+	struct oifreq ifr, *ifrp = NULL;
+	int space = 0, error = 0;
 	const int sz = (int)sizeof(ifr);
+	const bool docopy = ifc->ifc_req != NULL;
 
-	if ((ifrp = ifc->ifc_req) == NULL)
-		space = 0;
-	else
+	if (docopy) {
 		space = ifc->ifc_len;
+		ifrp = ifc->ifc_req;
+	}
+
 	IFNET_FOREACH(ifp) {
 		(void)strncpy(ifr.ifr_name, ifp->if_xname,
 		    sizeof(ifr.ifr_name));
@@ -105,7 +107,7 @@ compat_ifconf(u_long cmd, void *data)
 			space -= sz;
 		}
 	}
-	if (ifrp != NULL)
+	if (docopy)
 		ifc->ifc_len -= space;
 	else
 		ifc->ifc_len = -space;
