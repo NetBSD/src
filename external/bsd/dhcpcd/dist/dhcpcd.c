@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.17 2014/11/14 12:00:54 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.18 2014/11/26 13:43:06 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -151,6 +151,12 @@ free_globals(struct dhcpcd_ctx *ctx)
 			free(ctx->ifdv[ctx->ifdc - 1]);
 		free(ctx->ifdv);
 		ctx->ifdv = NULL;
+	}
+	if (ctx->ifcc) {
+		for (; ctx->ifcc > 0; ctx->ifcc--)
+			free(ctx->ifcv[ctx->ifcc - 1]);
+		free(ctx->ifcv);
+		ctx->ifcv = NULL;
 	}
 
 #ifdef INET
@@ -354,7 +360,8 @@ configure_interface1(struct interface *ifp)
 	if (ifp->flags & IFF_NOARP ||
 	    ifo->options & (DHCPCD_INFORM | DHCPCD_STATIC))
 		ifo->options &= ~(DHCPCD_ARP | DHCPCD_IPV4LL);
-	if (!(ifp->flags & (IFF_POINTOPOINT | IFF_LOOPBACK | IFF_MULTICAST)))
+	if (ifp->flags & (IFF_POINTOPOINT | IFF_LOOPBACK) ||
+	    !(ifp->flags & IFF_MULTICAST))
 		ifo->options &= ~DHCPCD_IPV6RS;
 
 	if (ifo->metric != -1)
@@ -386,9 +393,13 @@ configure_interface1(struct interface *ifp)
 
 	/* If we haven't specified a ClientID and our hardware address
 	 * length is greater than DHCP_CHADDR_LEN then we enforce a ClientID
-	 * of the hardware address family and the hardware address. */
+	 * of the hardware address family and the hardware address.
+	 * If there is no hardware address and no ClientID set,
+	 * force a DUID based ClientID. */
 	if (ifp->hwlen > DHCP_CHADDR_LEN)
 		ifo->options |= DHCPCD_CLIENTID;
+	else if (ifp->hwlen == 0 && !(ifo->options & DHCPCD_CLIENTID))
+		ifo->options |= DHCPCD_CLIENTID | DHCPCD_DUID;
 
 	/* Firewire and InfiniBand interfaces require ClientID and
 	 * the broadcast option being set. */
@@ -435,19 +446,24 @@ configure_interface1(struct interface *ifp)
 		 * dhcpcd-6.1.0 and earlier used the interface name,
 		 * falling back to interface index if name > 4.
 		 */
-		memcpy(ifo->iaid, ifp->hwaddr + ifp->hwlen - sizeof(ifo->iaid),
-		    sizeof(ifo->iaid));
-#if 0
-		len = strlen(ifp->name);
-		if (len <= sizeof(ifo->iaid)) {
-			memcpy(ifo->iaid, ifp->name, len);
-			memset(ifo->iaid + len, 0, sizeof(ifo->iaid) - len);
-		} else {
-			/* IAID is the same size as a uint32_t */
-			len = htonl(ifp->index);
-			memcpy(ifo->iaid, &len, sizeof(len));
+		if (ifp->hwlen >= sizeof(ifo->iaid))
+			memcpy(ifo->iaid,
+			    ifp->hwaddr + ifp->hwlen - sizeof(ifo->iaid),
+			    sizeof(ifo->iaid));
+		else {
+			uint32_t len;
+			
+			len = (uint32_t)strlen(ifp->name);
+			if (len <= sizeof(ifo->iaid)) {
+				memcpy(ifo->iaid, ifp->name, len);
+				memset(ifo->iaid + len, 0,
+				    sizeof(ifo->iaid) - len);
+			} else {
+				/* IAID is the same size as a uint32_t */
+				len = htonl(ifp->index);
+				memcpy(ifo->iaid, &len, sizeof(len));
+			}
 		}
-#endif
 		ifo->options |= DHCPCD_IAID;
 	}
 
@@ -941,6 +957,23 @@ if_reboot(struct interface *ifp, int argc, char **argv)
 }
 
 static void
+reload_config(struct dhcpcd_ctx *ctx)
+{
+	struct if_options *ifo;
+
+	free_globals(ctx);
+	ifo = read_config(ctx, NULL, NULL, NULL);
+	add_options(ctx, NULL, ifo, ctx->argc, ctx->argv);
+	/* We need to preserve these two options. */
+	if (ctx->options & DHCPCD_MASTER)
+		ifo->options |= DHCPCD_MASTER;
+	if (ctx->options & DHCPCD_DAEMONISED)
+		ifo->options |= DHCPCD_DAEMONISED;
+	ctx->options = ifo->options;
+	free_options(ifo);
+}
+
+static void
 reconf_reboot(struct dhcpcd_ctx *ctx, int action, int argc, char **argv, int oi)
 {
 	struct if_head *ifs;
@@ -1008,7 +1041,6 @@ handle_signal1(void *arg)
 	struct dhcpcd_ctx *ctx;
 	struct dhcpcd_siginfo *si;
 	struct interface *ifp;
-	struct if_options *ifo;
 	int do_release;
 
 	ctx = dhcpcd_ctx;
@@ -1027,16 +1059,7 @@ handle_signal1(void *arg)
 		break;
 	case SIGHUP:
 		syslog(LOG_INFO, sigmsg, "HUP", (int)si->pid, "rebinding");
-		free_globals(ctx);
-		ifo = read_config(ctx, NULL, NULL, NULL);
-		add_options(ctx, NULL, ifo, ctx->argc, ctx->argv);
-		/* We need to preserve these two options. */
-		if (ctx->options & DHCPCD_MASTER)
-		    ifo->options |= DHCPCD_MASTER;
-		if (ctx->options & DHCPCD_DAEMONISED)
-		    ifo->options |= DHCPCD_DAEMONISED;
-		ctx->options = ifo->options;
-		free_options(ifo);
+		reload_config(ctx);
 		/* Preserve any options passed on the commandline
 		 * when we were started. */
 		reconf_reboot(ctx, 1, ctx->argc, ctx->argv,
@@ -1219,6 +1242,7 @@ dhcpcd_handleargs(struct dhcpcd_ctx *ctx, struct fd_list *fd,
 		return 0;
 	}
 
+	reload_config(ctx);
 	/* XXX: Respect initial commandline options? */
 	reconf_reboot(ctx, do_reboot, argc, argv, optind);
 	return 0;
@@ -1701,7 +1725,7 @@ main(int argc, char **argv)
 			syslog(LOG_WARNING, "no interfaces have a carrier");
 			if (dhcpcd_daemonise(&ctx))
 				goto exit_success;
-		} else if (t > 0) {
+		} else if (t > 0 && ctx.options & DHCPCD_DAEMONISE) {
 			eloop_timeout_add_sec(ctx.eloop, t,
 			    handle_exit_timeout, &ctx);
 		}
