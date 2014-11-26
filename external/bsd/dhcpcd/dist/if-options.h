@@ -63,7 +63,6 @@
 #define DHCPCD_LASTLEASE		(1ULL << 7)
 #define DHCPCD_INFORM			(1ULL << 8)
 #define DHCPCD_REQUEST			(1ULL << 9)
-
 #define DHCPCD_IPV4LL			(1ULL << 10)
 #define DHCPCD_DUID			(1ULL << 11)
 #define DHCPCD_PERSISTENT		(1ULL << 12)

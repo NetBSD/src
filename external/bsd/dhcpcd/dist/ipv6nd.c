@@ -1500,7 +1500,7 @@ ipv6nd_handledata(void *arg)
 	ctx->rcvhdr.msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
 	    CMSG_SPACE(sizeof(int));
 	len = recvmsg(ctx->nd_fd, &ctx->rcvhdr, 0);
-	if (len == -1 || len == 0) {
+	if (len == -1) {
 		syslog(LOG_ERR, "recvmsg: %m");
 		eloop_event_delete(dhcpcd_ctx->eloop, ctx->nd_fd, 0);
 		close(ctx->nd_fd);

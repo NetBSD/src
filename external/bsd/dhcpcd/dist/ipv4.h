@@ -38,6 +38,7 @@ struct rt {
 	const struct interface *iface;
 	unsigned int metric;
 	struct in_addr src;
+	uint8_t flags;
 };
 TAILQ_HEAD(rt_head, rt);
 
@@ -65,6 +66,9 @@ uint8_t inet_ntocidr(struct in_addr);
 int inet_cidrtoaddr(int, struct in_addr *);
 uint32_t ipv4_getnetmask(uint32_t);
 int ipv4_addrexists(struct dhcpcd_ctx *, const struct in_addr *);
+
+#define STATE_ADDED		0x01
+#define STATE_FAKE		0x02
 
 void ipv4_buildroutes(struct dhcpcd_ctx *);
 void ipv4_applyaddr(void *);

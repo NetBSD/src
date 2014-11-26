@@ -2551,7 +2551,7 @@ dhcp6_handledata(void *arg)
 	ctx = dhcpcd_ctx->ipv6;
 	ctx->rcvhdr.msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo));
 	bytes = recvmsg(ctx->dhcp_fd, &ctx->rcvhdr, 0);
-	if (bytes == -1 || bytes == 0) {
+	if (bytes == -1) {
 		syslog(LOG_ERR, "recvmsg: %m");
 		close(ctx->dhcp_fd);
 		eloop_event_delete(dhcpcd_ctx->eloop, ctx->dhcp_fd, 0);
@@ -2562,7 +2562,7 @@ dhcp6_handledata(void *arg)
 	ctx->sfrom = inet_ntop(AF_INET6, &ctx->from.sin6_addr,
 	    ctx->ntopbuf, sizeof(ctx->ntopbuf));
 	if (len < sizeof(struct dhcp6_message)) {
-		syslog(LOG_ERR, "DHCPv6 RA packet too short from %s",
+		syslog(LOG_ERR, "DHCPv6 packet too short from %s",
 		    ctx->sfrom);
 		return;
 	}

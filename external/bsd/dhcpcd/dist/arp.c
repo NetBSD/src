@@ -124,7 +124,7 @@ arp_packet(void *arg)
 	while (!(flags & RAW_EOF)) {
 		bytes = if_readrawpacket(ifp, ETHERTYPE_ARP,
 		    arp_buffer, sizeof(arp_buffer), &flags);
-		if (bytes == 0 || bytes == -1) {
+		if (bytes == -1) {
 			syslog(LOG_ERR, "%s: arp if_readrawpacket: %m",
 			    ifp->name);
 			dhcp_close(ifp);
@@ -214,13 +214,15 @@ arp_announce1(void *arg)
 
 	if (++astate->claims < ANNOUNCE_NUM)
 		syslog(LOG_DEBUG,
-		    "%s: sending ARP announce (%d of %d), "
+		    "%s: ARP announcing %s (%d of %d), "
 		    "next in %d.0 seconds",
-		    ifp->name, astate->claims, ANNOUNCE_NUM, ANNOUNCE_WAIT);
+		    ifp->name, inet_ntoa(astate->addr),
+		    astate->claims, ANNOUNCE_NUM, ANNOUNCE_WAIT);
 	else
 		syslog(LOG_DEBUG,
-		    "%s: sending ARP announce (%d of %d)",
-		    ifp->name, astate->claims, ANNOUNCE_NUM);
+		    "%s: ARP announcing %s (%d of %d)",
+		    ifp->name, inet_ntoa(astate->addr),
+		    astate->claims, ANNOUNCE_NUM);
 	if (arp_send(ifp, ARPOP_REQUEST,
 		astate->addr.s_addr, astate->addr.s_addr) == -1)
 		syslog(LOG_ERR, "send_arp: %m");
@@ -265,8 +267,9 @@ arp_probe1(void *arg)
 		eloop_timeout_add_tv(ifp->ctx->eloop, &tv, arp_probed, astate);
 	}
 	syslog(LOG_DEBUG,
-	    "%s: sending ARP probe (%d of %d), next in %0.1f seconds",
-	    ifp->name, astate->probes ? astate->probes : PROBE_NUM, PROBE_NUM,
+	    "%s: ARP probing %s (%d of %d), next in %0.1f seconds",
+	    ifp->name, inet_ntoa(astate->addr),
+	    astate->probes ? astate->probes : PROBE_NUM, PROBE_NUM,
 	    timeval_to_double(&tv));
 	if (arp_send(ifp, ARPOP_REQUEST, 0, astate->addr.s_addr) == -1)
 		syslog(LOG_ERR, "send_arp: %m");

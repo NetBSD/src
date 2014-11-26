@@ -2165,10 +2165,30 @@ read_config(struct dhcpcd_ctx *ctx,
 		}
 		/* Start of an interface block, skip if not ours */
 		if (strcmp(option, "interface") == 0) {
+			char **n;
+
 			if (ifname && line && strcmp(line, ifname) == 0)
 				skip = 0;
 			else
 				skip = 1;
+			if (ifname)
+				continue;
+
+			n = realloc(ctx->ifcv,
+			    sizeof(char *) * ((size_t)ctx->ifcc + 1));
+			if (n == NULL) {
+				syslog(LOG_ERR, "%s: %m", __func__);
+				continue;
+			}
+			ctx->ifcv = n;
+			ctx->ifcv[ctx->ifcc] = strdup(line);
+			if (ctx->ifcv[ctx->ifcc] == NULL) {
+				syslog(LOG_ERR, "%s: %m", __func__);
+				continue;
+			}
+			ctx->ifcc++;
+			syslog(LOG_DEBUG, "allowing interface %s",
+			    ctx->ifcv[ctx->ifcc - 1]);
 			continue;
 		}
 		/* Start of an ssid block, skip if not ours */
