@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.23 2014/11/14 12:00:54 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.24 2014/11/26 13:43:06 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1599,7 +1599,8 @@ send_message(struct interface *iface, uint8_t type,
 	if (dhcp_open(iface) == -1)
 		return;
 
-	if (state->added && state->addr.s_addr != INADDR_ANY &&
+	if (state->added && !(state->added & STATE_FAKE) &&
+	    state->addr.s_addr != INADDR_ANY &&
 	    state->new != NULL &&
 	    (state->new->cookie == htonl(MAGIC_COOKIE) ||
 	    iface->options->options & DHCPCD_INFORM))
@@ -1967,15 +1968,15 @@ applyaddr:
 	if (ifo->options & DHCPCD_ARP) {
 		if (state->added) {
 			if (astate == NULL) {
-				/* We don't care about what happens
-				 * to the ARP announcement */
 				astate = arp_new(ifp);
+				astate->addr = state->addr;
 				astate->announced_cb =
 				    dhcp_arp_announced;
 			}
 			if (astate) {
 				arp_announce(astate);
-				arp_free_but(astate);
+				if (!ipv4ll)
+					arp_free_but(astate);
 			}
 		} else if (!ipv4ll)
 			arp_close(ifp);
@@ -2185,6 +2186,7 @@ dhcp_drop(struct interface *ifp, const char *reason)
 		dhcp_auth_reset(&state->auth);
 		dhcp_close(ifp);
 	}
+
 	if (ifp->options->options & DHCPCD_RELEASE) {
 		unlink(state->leasefile);
 		if (ifp->carrier != LINK_DOWN &&
@@ -2203,6 +2205,7 @@ dhcp_drop(struct interface *ifp, const char *reason)
 #endif
 		}
 	}
+
 	free(state->old);
 	state->old = state->new;
 	state->new = NULL;
@@ -2785,7 +2788,7 @@ dhcp_handlepacket(void *arg)
 	while (!(flags & RAW_EOF)) {
 		bytes = (size_t)if_readrawpacket(ifp, ETHERTYPE_IP,
 		    ifp->ctx->packet, udp_dhcp_len, &flags);
-		if (bytes == 0 || (ssize_t)bytes == -1) {
+		if ((ssize_t)bytes == -1) {
 			syslog(LOG_ERR, "%s: dhcp if_readrawpacket: %m",
 			    ifp->name);
 			dhcp_close(ifp);
@@ -2793,7 +2796,7 @@ dhcp_handlepacket(void *arg)
 			break;
 		}
 		if (valid_udp_packet(ifp->ctx->packet, bytes,
-			&from, flags & RAW_PARTIALCSUM) == -1)
+		    &from, flags & RAW_PARTIALCSUM) == -1)
 		{
 			syslog(LOG_ERR, "%s: invalid UDP packet from %s",
 			    ifp->name, inet_ntoa(from));
@@ -3129,6 +3132,24 @@ dhcp_start1(void *arg)
 	if (state->offer) {
 		get_lease(ifp->ctx, &state->lease, state->offer);
 		state->lease.frominfo = 1;
+		if (state->new == NULL &&
+		    ipv4_iffindaddr(ifp, &state->lease.addr, &state->lease.net))
+		{
+			/* We still have the IP address from the last lease.
+			 * Fake add the address and routes from it so the lease
+			 * can be cleaned up. */
+			state->new = malloc(sizeof(*state->new));
+			if (state->new) {
+				memcpy(state->new, state->offer,
+				    sizeof(*state->new));
+				state->addr = state->lease.addr;
+				state->net = state->lease.net;
+				state->added |= STATE_ADDED | STATE_FAKE;
+				ipv4_sortinterfaces(ifp->ctx);
+				ipv4_buildroutes(ifp->ctx);
+			} else
+				syslog(LOG_ERR, "%s: %m", __func__);
+		}
 		if (state->offer->cookie == 0) {
 			if (state->offer->yiaddr == state->addr.s_addr) {
 				free(state->offer);
@@ -3148,6 +3169,22 @@ dhcp_start1(void *arg)
 				free(state->offer);
 				state->offer = NULL;
 				state->lease.addr.s_addr = 0;
+				/* Technically we should discard the lease
+				 * as it's expired, just as DHCPv6 addresses
+				 * would be by the kernel.
+				 * However, this may violate POLA so
+				 * we currently leave it be.
+				 * If we get a totally different lease from
+				 * the DHCP server we'll drop it anyway, as
+				 * we will on any other event which would
+				 * trigger a lease drop.
+				 * This should only happen if dhcpcd stops
+				 * running and the lease expires before
+				 * dhcpcd starts again. */
+#if 0
+				if (state->new)
+					dhcp_drop(ifp, "EXPIRE");
+#endif
 			} else {
 				l = (uint32_t)(now.tv_sec - st.st_mtime);
 				state->lease.leasetime -= l;
@@ -3171,7 +3208,8 @@ dhcp_start1(void *arg)
 	if (state->offer == NULL || state->offer->cookie == 0) {
 		/* If we don't have an address yet, enter the reboot
 		 * state to ensure at least fallback in short order. */
-		if (state->addr.s_addr == INADDR_ANY)
+		if (state->addr.s_addr == INADDR_ANY ||
+		    state->added & STATE_FAKE)
 			state->state = DHS_REBOOT;
 		dhcp_discover(ifp);
 	} else

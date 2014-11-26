@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd.h,v 1.7 2014/11/14 12:00:54 roy Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.8 2014/11/26 13:43:06 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -96,6 +96,8 @@ struct dhcpcd_ctx {
 	char **ifdv;	/* denied interfaces */
 	int ifc;	/* listed interfaces */
 	char **ifv;	/* listed interfaces */
+	int ifcc;	/* configured interfaces */
+	char **ifcv;	/* configured interfaces */
 	unsigned char *duid;
 	size_t duid_len;
 	int pid_fd;
