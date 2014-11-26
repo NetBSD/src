@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.18 2014/11/14 12:00:54 roy Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.19 2014/11/26 13:43:06 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -2168,10 +2168,30 @@ read_config(struct dhcpcd_ctx *ctx,
 		}
 		/* Start of an interface block, skip if not ours */
 		if (strcmp(option, "interface") == 0) {
+			char **n;
+
 			if (ifname && line && strcmp(line, ifname) == 0)
 				skip = 0;
 			else
 				skip = 1;
+			if (ifname)
+				continue;
+
+			n = realloc(ctx->ifcv,
+			    sizeof(char *) * ((size_t)ctx->ifcc + 1));
+			if (n == NULL) {
+				syslog(LOG_ERR, "%s: %m", __func__);
+				continue;
+			}
+			ctx->ifcv = n;
+			ctx->ifcv[ctx->ifcc] = strdup(line);
+			if (ctx->ifcv[ctx->ifcc] == NULL) {
+				syslog(LOG_ERR, "%s: %m", __func__);
+				continue;
+			}
+			ctx->ifcc++;
+			syslog(LOG_DEBUG, "allowing interface %s",
+			    ctx->ifcv[ctx->ifcc - 1]);
 			continue;
 		}
 		/* Start of an ssid block, skip if not ours */
