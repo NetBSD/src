@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.14 2014/11/07 20:51:03 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.15 2014/11/26 16:05:14 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -291,8 +291,8 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 		elen = 13;
 
 #define EMALLOC(i, l) if ((env[(i)] = malloc((l))) == NULL) goto eexit;
-	/* Make our env */
-	env = calloc(1, sizeof(char *) * (elen + 1));
+	/* Make our env + space for profile, wireless and debug */
+	env = calloc(1, sizeof(char *) * (elen + 3 + 1));
 	if (env == NULL)
 		goto eexit;
 	e = strlen("interface") + strlen(ifp->name) + 2;
@@ -375,8 +375,13 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 		env[12] = strdup("if_ipwaited=false");
 	if (env[12] == NULL)
 		goto eexit;
+	if (ifo->options & DHCPCD_DEBUG) {
+		e = strlen("syslog_debug=true") + 1;
+		EMALLOC(elen, e);
+		snprintf(env[elen++], e, "syslog_debug=true");
+	}
 	if (*ifp->profile) {
-		e = strlen("profile=") + strlen(ifp->profile) + 2;
+		e = strlen("profile=") + strlen(ifp->profile) + 1;
 		EMALLOC(elen, e);
 		snprintf(env[elen++], e, "profile=%s", ifp->profile);
 	}
