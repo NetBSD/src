@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.294 2014/11/26 07:06:03 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.295 2014/11/26 07:22:05 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.294 2014/11/26 07:06:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.295 2014/11/26 07:22:05 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -338,7 +338,7 @@ if_nullstop(struct ifnet *ifp, int disable)
 }
 
 void
-if_nullwatchdog(struct ifnet *ifp)
+if_nullslowtimo(struct ifnet *ifp)
 {
 
 	/* Nothing. */
@@ -688,7 +688,7 @@ if_deactivate(struct ifnet *ifp)
 	ifp->if_ioctl	 = if_nullioctl;
 	ifp->if_init	 = if_nullinit;
 	ifp->if_stop	 = if_nullstop;
-	ifp->if_watchdog = if_nullwatchdog;
+	ifp->if_slowtimo = if_nullslowtimo;
 	ifp->if_drain	 = if_nulldrain;
 
 	/* No more packets may be enqueued. */
@@ -1494,7 +1494,7 @@ if_up(struct ifnet *ifp)
 }
 
 /*
- * Handle interface watchdog timer routines.  Called
+ * Handle interface slowtimo timer routines.  Called
  * from softclock, we decrement timers (if set) and
  * call the appropriate interface routine on expiration.
  */
@@ -1507,8 +1507,8 @@ if_slowtimo(void *arg)
 	IFNET_FOREACH(ifp) {
 		if (ifp->if_timer == 0 || --ifp->if_timer)
 			continue;
-		if (ifp->if_watchdog != NULL)
-			(*ifp->if_watchdog)(ifp);
+		if (ifp->if_slowtimo != NULL)
+			(*ifp->if_slowtimo)(ifp);
 	}
 	splx(s);
 	callout_reset(&if_slowtimo_ch, hz / IFNET_SLOWHZ, if_slowtimo, NULL);
