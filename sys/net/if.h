@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.175 2014/09/09 20:16:12 rmind Exp $	*/
+/*	$NetBSD: if.h,v 1.176 2014/11/26 07:06:03 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -867,7 +867,6 @@ void	if_purgeaddrs(struct ifnet *, int, void (*)(struct ifaddr *));
 void	if_detach(struct ifnet *);
 void	if_down(struct ifnet *);
 void	if_link_state_change(struct ifnet *, int);
-void	if_slowtimo(void *);
 void	if_up(struct ifnet *);
 int	ifconf(u_long, void *);
 void	ifinit(void);
