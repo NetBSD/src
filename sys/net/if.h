@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.177 2014/11/26 07:22:05 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.178 2014/11/26 07:43:04 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -214,6 +214,7 @@ struct ifnet_lock;
 #ifdef _KERNEL
 #include <sys/condvar.h>
 #include <sys/percpu.h>
+#include <sys/callout.h>
 
 struct ifnet_lock {
 	kmutex_t il_lock;	/* Protects the critical section. */
@@ -342,6 +343,9 @@ typedef struct ifnet {
 	    const struct sockaddr *);
 	int (*if_setflags)(struct ifnet *, const short);
 	struct ifnet_lock *if_ioctl_lock;
+#ifdef _KERNEL /* XXX kvm(3) */
+	callout_t if_slowtimo_ch;
+#endif
 } ifnet_t;
  
 #define	if_mtu		if_data.ifi_mtu
