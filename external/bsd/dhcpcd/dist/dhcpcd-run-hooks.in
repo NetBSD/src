@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: dhcpcd-run-hooks.in,v 1.6 2014/11/07 20:51:02 roy Exp $
+# $NetBSD: dhcpcd-run-hooks.in,v 1.7 2014/11/26 16:05:14 roy Exp $
 
 # dhcpcd client configuration script 
 
@@ -26,6 +26,7 @@ _detected_init=false
 
 : ${if_up:=false}
 : ${if_down:=false}
+: ${syslog_debug:=false}
 
 # Ensure that all arguments are unique
 uniqify()
@@ -191,6 +192,9 @@ syslog()
 {
 	local lvl="$1"
 
+	if [ "$lvl" = debug ]; then
+		${syslog_debug} || return 0
+	fi
 	[ -n "$lvl" ] && shift
 	if [ -n "$*" ]; then
 		if type logger >/dev/null 2>&1; then

@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4.c,v 1.8 2014/11/26 13:43:06 roy Exp $");
+ __RCSID("$NetBSD: ipv4.c,v 1.9 2014/11/26 16:05:14 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -598,7 +598,7 @@ ipv4_buildroutes(struct dhcpcd_ctx *ctx)
 	struct rt_head *nrs, *dnr;
 	struct rt *or, *rt, *rtn;
 	struct interface *ifp;
-	const struct dhcp_state *state, *ostate;
+	const struct dhcp_state *state;
 
 	nrs = malloc(sizeof(*nrs));
 	if (nrs == NULL) {
