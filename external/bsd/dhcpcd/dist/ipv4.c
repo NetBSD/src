@@ -595,7 +595,7 @@ ipv4_buildroutes(struct dhcpcd_ctx *ctx)
 	struct rt_head *nrs, *dnr;
 	struct rt *or, *rt, *rtn;
 	struct interface *ifp;
-	const struct dhcp_state *state, *ostate;
+	const struct dhcp_state *state;
 
 	nrs = malloc(sizeof(*nrs));
 	if (nrs == NULL) {
