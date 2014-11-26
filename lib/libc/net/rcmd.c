@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.70 2014/09/18 13:58:20 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.71 2014/11/26 23:44:21 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.70 2014/09/18 13:58:20 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.71 2014/11/26 23:44:21 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -464,6 +464,9 @@ rshrcmd(int af, char **ahost, u_int32_t rport, const char *locuser,
 			const char *program;
 			program = strrchr(rshcmd, '/');
 			program = program ? program + 1 : rshcmd;
+			if (fd2p)
+				/* ask rcmd to relay signal information */
+				setenv("RCMD_RELAY_SIGNAL", "YES", 1);
 			switch (af) {
 			case AF_INET:
 				execlp(rshcmd, program, "-4", "-l", remuser,
