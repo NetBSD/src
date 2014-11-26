@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_rootconf.9,v 1.9 2014/11/26 20:42:29 mlelstv Exp $
+.\"     $NetBSD: cpu_rootconf.9,v 1.10 2014/11/26 20:46:46 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 29, 2012
+.Dd November 11, 2014
 .Dt CPU_ROOTCONF 9
 .Os
 .Sh NAME
@@ -68,7 +68,8 @@ for use in machine-independent code.
 .Pp
 .Fa rootconf
 may adjust the global variables and determines the parameters
-for setroot. This is for example used to translate a device
+for setroot.
+This is for example used to translate a device
 and partition number provided by the bootloader into a disk
 wedge device covering the same partition.
 .Pp
@@ -90,10 +91,10 @@ The kernel configuration variable
 .Fa rootspec
 which is set by
 .Xr config 1 .
-The value is the name and unit of the root device, e.g. "sd0" (disk)
+The value is the name and unit of the root device, e.g., "sd0" (disk)
 or "dk0" (wedge) or "le0" (network) or the prefix "wedge:" followed
-by the name of the disk wedge. For disk devices the partition
-passed as argument to
+by the name of the disk wedge.
+For disk devices the partition passed as argument to
 .Fa setroot
 is used.
 .It
@@ -103,22 +104,26 @@ following the same syntax.
 .It
 The result of an interactive query of the root device if
 .Fa boothowto
-has set the flag RB_ASKNAME. The input uses the same syntax
-as the previous sources. Here also the kernel dump device
-is queried.
+has set the flag
+.Dv RB_ASKNAME .
+The input uses the same syntax as the previous sources.
+Here also the kernel dump device is queried.
 .It
 The boot device and partition passed as arguments.
 .El
 .Pp
 If a root device cannot be selected,
 .Fa setroot
-sets the RB_ASKNAME flag and loops.
+sets the
+.Dv RB_ASKNAME
+flag and loops.
 .Pp
 Otherwise the kernel dump device is identified in a similar
 manner from
 .Bl -enum
 .It
-The result of a previous interactive query. See above.
+The result of a previous interactive query.
+See above.
 .It
 The kernel configuration variable
 .Fa dumpspec ,
@@ -129,7 +134,7 @@ The second partition of the root device, if it is a regular disk.
 The first disk wedge device of type DKW_PTYPE_SWAP.
 .El
 .Sh SEE ALSO
+.Xr config 1 ,
 .Xr dk 4 ,
 .Xr boot 8 ,
-.Xr config 1 ,
 .Xr boothowto 9
