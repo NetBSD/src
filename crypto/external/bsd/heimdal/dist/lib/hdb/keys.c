@@ -1,4 +1,4 @@
-/*	$NetBSD: keys.c,v 1.2 2014/11/26 07:39:52 pettai Exp $	*/
+/*	$NetBSD: keys.c,v 1.3 2014/11/26 10:12:27 pettai Exp $	*/
 
 
 /*
@@ -77,8 +77,8 @@ static const krb5_enctype des_etypes[] = {
 
 static const krb5_enctype all_etypes[] = {
     ETYPE_AES256_CTS_HMAC_SHA1_96,
-    ETYPE_DES3_CBC_SHA1
-    ETYPE_ARCFOUR_HMAC_MD5,
+    ETYPE_DES3_CBC_SHA1,
+    ETYPE_ARCFOUR_HMAC_MD5
 };
 
 static krb5_error_code
