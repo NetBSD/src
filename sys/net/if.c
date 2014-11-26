@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.293 2014/11/17 13:58:53 pooka Exp $	*/
+/*	$NetBSD: if.c,v 1.294 2014/11/26 07:06:03 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.293 2014/11/17 13:58:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.294 2014/11/26 07:06:03 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -194,6 +194,7 @@ static void ifnet_lock_exit(struct ifnet_lock *);
 static void if_detach_queues(struct ifnet *, struct ifqueue *);
 static void sysctl_sndq_setup(struct sysctllog **, const char *,
     struct ifaltq *);
+static void if_slowtimo(void *);
 
 #if defined(INET) || defined(INET6)
 static void sysctl_net_pktq_setup(struct sysctllog **, int);
@@ -1497,7 +1498,7 @@ if_up(struct ifnet *ifp)
  * from softclock, we decrement timers (if set) and
  * call the appropriate interface routine on expiration.
  */
-void
+static void
 if_slowtimo(void *arg)
 {
 	struct ifnet *ifp;
