@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.178 2014/11/26 07:43:04 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.179 2014/11/26 09:38:42 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -245,6 +245,7 @@ TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
 
 struct bridge_softc;
 struct bridge_iflist;
+struct callout;
 
 typedef struct ifnet {
 	void	*if_softc;		/* lower-level data for this if */
@@ -344,7 +345,7 @@ typedef struct ifnet {
 	int (*if_setflags)(struct ifnet *, const short);
 	struct ifnet_lock *if_ioctl_lock;
 #ifdef _KERNEL /* XXX kvm(3) */
-	callout_t if_slowtimo_ch;
+	struct callout *if_slowtimo_ch;
 #endif
 } ifnet_t;
  
