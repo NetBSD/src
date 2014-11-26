@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.295 2014/11/26 07:22:05 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.296 2014/11/26 07:43:04 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.295 2014/11/26 07:22:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.296 2014/11/26 07:43:04 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -168,8 +168,6 @@ static kmutex_t			if_clone_mtx;
 
 static struct ifaddr **		ifnet_addrs = NULL;
 
-static callout_t		if_slowtimo_ch;
-
 struct ifnet *lo0ifp;
 int	ifqmaxlen = IFQ_MAXLEN;
 
@@ -235,9 +233,6 @@ ifinit(void)
 #ifdef INET6
 	sysctl_net_pktq_setup(NULL, PF_INET6);
 #endif
-
-	callout_init(&if_slowtimo_ch, 0);
-	if_slowtimo(NULL);
 
 	if_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
 	    if_listener_cb, NULL);
@@ -638,6 +633,12 @@ if_attach(ifnet_t *ifp)
 
 	/* Announce the interface. */
 	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
+
+	if (ifp->if_slowtimo != NULL) {
+		callout_init(&ifp->if_slowtimo_ch, 0);
+		callout_setfunc(&ifp->if_slowtimo_ch, if_slowtimo, ifp);
+		if_slowtimo(ifp);
+	}
 }
 
 void
@@ -736,6 +737,11 @@ if_detach(struct ifnet *ifp)
 	memset(&so, 0, sizeof(so));
 
 	s = splnet();
+
+	if (ifp->if_slowtimo != NULL) {
+		callout_halt(&ifp->if_slowtimo_ch, NULL);
+		callout_destroy(&ifp->if_slowtimo_ch);
+	}
 
 	/*
 	 * Do an if_down() to give protocols a chance to do something.
@@ -1494,24 +1500,23 @@ if_up(struct ifnet *ifp)
 }
 
 /*
- * Handle interface slowtimo timer routines.  Called
- * from softclock, we decrement timers (if set) and
+ * Handle interface slowtimo timer routine.  Called
+ * from softclock, we decrement timer (if set) and
  * call the appropriate interface routine on expiration.
  */
 static void
 if_slowtimo(void *arg)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = arg;
 	int s = splnet();
 
-	IFNET_FOREACH(ifp) {
-		if (ifp->if_timer == 0 || --ifp->if_timer)
-			continue;
-		if (ifp->if_slowtimo != NULL)
-			(*ifp->if_slowtimo)(ifp);
-	}
+	KASSERT(ifp->if_slowtimo != NULL);
+
+	if (ifp->if_timer != 0 && --ifp->if_timer == 0)
+		(*ifp->if_slowtimo)(ifp);
+
 	splx(s);
-	callout_reset(&if_slowtimo_ch, hz / IFNET_SLOWHZ, if_slowtimo, NULL);
+	callout_schedule(&ifp->if_slowtimo_ch, hz / IFNET_SLOWHZ);
 }
 
 /*
