@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.232 2014/10/12 19:00:21 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.233 2014/11/26 10:18:37 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.232 2014/10/12 19:00:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.233 2014/11/26 10:18:37 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1713,5 +1713,7 @@ ip_mloopback(struct ifnet *ifp, struct mbuf *m, const struct sockaddr_in *dst)
 
 	ip->ip_sum = 0;
 	ip->ip_sum = in_cksum(copym, ip->ip_hl << 2);
+	KERNEL_LOCK(1, NULL);
 	(void)looutput(ifp, copym, sintocsa(dst), NULL);
+	KERNEL_UNLOCK_ONE(NULL);
 }
