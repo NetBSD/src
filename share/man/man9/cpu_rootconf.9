@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_rootconf.9,v 1.8 2012/07/29 18:51:48 wiz Exp $
+.\"     $NetBSD: cpu_rootconf.9,v 1.9 2014/11/26 20:42:29 mlelstv Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,28 +55,81 @@ provides the global variables
 .Fa booted_device ,
 .Fa booted_partition ,
 .Fa booted_startblk ,
+.Fa booted_nblks ,
 and
-.Fa booted_nblks
-and invokes the machine-independent function
+.Fa bootspec .
+.Fa cpu_rootconf
+invokes the machine-independent function
 .Fa rootconf
-which
-.Fa rootconf
-then calls the function
+which calls the function
 .Fa setroot
-to record the boot/root device and the boot partition information
+to record the root device and the root partition information
 for use in machine-independent code.
 .Pp
-For disk boot, if
-.Fa booted_nblks
-is not 0, then
+.Fa rootconf
+may adjust the global variables and determines the parameters
+for setroot. This is for example used to translate a device
+and partition number provided by the bootloader into a disk
+wedge device covering the same partition.
+.Pp
+If the bootloader already identified a disk wedge, it passes
+a non-zero value for
+.Fa booted_nblks ,
+then
 .Fa booted_startblk
 and
 .Fa booted_nblks
-are supposed to specify a disk wedge that is used as the root device.
-Otherwise the
-.Fa booted_partition
+specify a disk wedge as the boot device.
+.Pp
+.Fa setroot
+evaluates several sources to identify the root device in the
+following order until a valid device is selected:
+.Bl -enum
+.It
+The kernel configuration variable
+.Fa rootspec
+which is set by
+.Xr config 1 .
+The value is the name and unit of the root device, e.g. "sd0" (disk)
+or "dk0" (wedge) or "le0" (network) or the prefix "wedge:" followed
+by the name of the disk wedge. For disk devices the partition
+passed as argument to
+.Fa setroot
 is used.
+.It
+The variable
+.Fa bootspec
+following the same syntax.
+.It
+The result of an interactive query of the root device if
+.Fa boothowto
+has set the flag RB_ASKNAME. The input uses the same syntax
+as the previous sources. Here also the kernel dump device
+is queried.
+.It
+The boot device and partition passed as arguments.
+.El
+.Pp
+If a root device cannot be selected,
+.Fa setroot
+sets the RB_ASKNAME flag and loops.
+.Pp
+Otherwise the kernel dump device is identified in a similar
+manner from
+.Bl -enum
+.It
+The result of a previous interactive query. See above.
+.It
+The kernel configuration variable
+.Fa dumpspec ,
+if set.
+.It
+The second partition of the root device, if it is a regular disk.
+.It
+The first disk wedge device of type DKW_PTYPE_SWAP.
+.El
 .Sh SEE ALSO
 .Xr dk 4 ,
 .Xr boot 8 ,
+.Xr config 1 ,
 .Xr boothowto 9
