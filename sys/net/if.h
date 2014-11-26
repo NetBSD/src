@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.176 2014/11/26 07:06:03 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.177 2014/11/26 07:22:05 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -253,7 +253,7 @@ typedef struct ifnet {
 	int	if_pcount;		/* number of promiscuous listeners */
 	struct bpf_if *if_bpf;		/* packet filter structure */
 	u_short	if_index;		/* numeric abbreviation for this if */
-	short	if_timer;		/* time 'til if_watchdog called */
+	short	if_timer;		/* time 'til if_slowtimo called */
 	short	if_flags;		/* up/down, broadcast, etc. */
 	short	if__pad1;		/* be nice to m68k ports */
 	struct	if_data if_data;	/* statistics and other data about if */
@@ -274,8 +274,9 @@ typedef struct ifnet {
 		    (struct ifnet *);
 	void	(*if_stop)		/* stop routine */
 		    (struct ifnet *, int);
-	void	(*if_watchdog)		/* timer routine */
+	void	(*if_slowtimo)		/* timer routine */
 		    (struct ifnet *);
+#define	if_watchdog	if_slowtimo
 	void	(*if_drain)		/* routine to release resources */
 		    (struct ifnet *);
 	struct ifaltq if_snd;		/* output queue (includes altq) */
@@ -925,7 +926,8 @@ void	if_nullstart(struct ifnet *);
 int	if_nullioctl(struct ifnet *, u_long, void *);
 int	if_nullinit(struct ifnet *);
 void	if_nullstop(struct ifnet *, int);
-void	if_nullwatchdog(struct ifnet *);
+void	if_nullslowtimo(struct ifnet *);
+#define	if_nullwatchdog	if_nullslowtimo
 void	if_nulldrain(struct ifnet *);
 #else
 struct if_nameindex {
