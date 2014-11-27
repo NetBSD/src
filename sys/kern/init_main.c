@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.460 2014/10/04 11:15:44 riastradh Exp $	*/
+/*	$NetBSD: init_main.c,v 1.461 2014/11/27 14:38:09 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.460 2014/10/04 11:15:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.461 2014/11/27 14:38:09 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -528,6 +528,9 @@ main(void)
 	/* Now timer is working.  Enable preemption. */
 	kpreempt_enable();
 
+	/* Get the threads going and into any sleeps before continuing. */
+	yield();
+
 	/* Enable deferred processing of RNG samples */
 	rnd_init_softint();
 
@@ -803,9 +806,6 @@ configure2(void)
 	 * devices that want interrupts enabled.
 	 */
 	config_create_interruptthreads();
-
-	/* Get the threads going and into any sleeps before continuing. */
-	yield();
 }
 
 static void
