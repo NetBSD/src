@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.18 2014/05/18 14:03:26 rmind Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.19 2014/11/27 03:15:51 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.18 2014/05/18 14:03:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.19 2014/11/27 03:15:51 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/protosw.h>
@@ -61,7 +61,9 @@ __weak_alias(agr_input,rumpnet_stub);
 __weak_alias(ieee8023ad_lacp_input,rumpnet_stub);
 __weak_alias(ieee8023ad_marker_input,rumpnet_stub);
 
+/* if */
 struct ifnet_head ifnet_list;
+__weak_alias(if_drain_all,rumpnet_stub);
 
 int
 compat_ifconf(u_long cmd, void *data)
