@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.81 2014/09/05 09:23:40 matt Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.82 2014/11/27 20:30:05 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.81 2014/09/05 09:23:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.82 2014/11/27 20:30:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -695,7 +695,7 @@ eagain:
 	/* let the user know how much data was returned */
 	if (crp->crp_olen) {
 		if (crp->crp_olen > (cop->dst_len ? cop->dst_len : cop->len)) {
-			error = ENOMEM;
+			error = ENOSPC;
 			goto bail;
 		}
 		dst_len = cop->dst_len = crp->crp_olen;
