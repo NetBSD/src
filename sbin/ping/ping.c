@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.107 2013/10/19 01:08:25 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.108 2014/11/27 19:43:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.107 2013/10/19 01:08:25 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.108 2014/11/27 19:43:58 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -469,7 +469,6 @@ main(int argc, char *argv[])
 		phdrlen = 0;
 
 	packlen = datalen + 60 + 76;	/* MAXIP + MAXICMP */
-	datalen -= phdrlen;
 	if ((packet = malloc(packlen)) == NULL)
 		err(1, "Out of memory");
 
@@ -637,7 +636,7 @@ main(int argc, char *argv[])
 #endif /*IPSEC*/
 
 	(void)printf("PING %s (%s): %d data bytes\n", hostname,
-		     inet_ntoa(whereto.sin_addr), datalen + phdrlen);
+		     inet_ntoa(whereto.sin_addr), datalen);
 
 	/* When pinging the broadcast address, you can get a lot
 	 * of answers.  Doing something so evil is useful if you
@@ -887,7 +886,7 @@ pinger(void)
 	} else if (pingflags & F_TIMING64)
 		(void) memcpy(&opack_icmp.icmp_data[0], &now, sizeof(now));
 
-	cc = MAX(datalen, ICMP_MINLEN) + phdrlen;
+	cc = MAX(datalen, ICMP_MINLEN) + PHDR_LEN;
 	opack_icmp.icmp_cksum = 0;
 	opack_icmp.icmp_cksum = in_cksum((u_int16_t *)&opack_icmp, cc);
 
@@ -1115,7 +1114,7 @@ pr_pack(u_char *buf,
 			}
 			PR_PACK_SUB();
 			(void)printf("\nwrong data byte #%d should have been"
-				     " %#x but was %#x", i,
+				     " %#x but was %#x", i - phdrlen,
 				     (u_char)opack_icmp.icmp_data[i],
 				     (u_char)icp->icmp_data[i]);
 			for (i = phdrlen; i < datalen; i++) {
@@ -1350,7 +1349,7 @@ summary(int header)
 		if (n>1)
 			variance = (tsumsq - n*avg*avg) /(n-1);
 
-		printf("round-trip min/avg/max/stddev = "
+		(void)printf("round-trip min/avg/max/stddev = "
 			"%.*f/%.*f/%.*f/%.*f ms\n",
 			prec, tmin * 1000.0,
 			prec, avg * 1000.0,
@@ -1810,7 +1809,7 @@ fill(void)
 		    &pat[8], &pat[9], &pat[10], &pat[11],
 		    &pat[12], &pat[13], &pat[14], &pat[15]);
 
-	for (k = phdrlen, j = 0; k <= datalen; k++) {
+	for (k = phdrlen, j = 0; k < datalen; k++) {
 		opack_icmp.icmp_data[k] = pat[j];
 		if (++j >= i)
 			j = 0;
