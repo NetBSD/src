@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.9 2014/02/25 22:16:52 dsl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.10 2014/11/27 14:22:09 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.9 2014/02/25 22:16:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.10 2014/11/27 14:22:09 uebayasi Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -408,7 +408,7 @@ fpudna(struct trapframe *frame)
 	/* Save our state if on a remote CPU. */
 	if (pcb->pcb_fpcpu != NULL) {
 		/* Explicitly disable preemption before dropping spl. */
-		KPREEMPT_DISABLE(l);
+		kpreempt_disable();
 		splx(s);
 
 		/* Actually enable interrupts */
@@ -417,7 +417,7 @@ fpudna(struct trapframe *frame)
 		fpusave_lwp(l, true);
 		KASSERT(pcb->pcb_fpcpu == NULL);
 		s = splhigh();
-		KPREEMPT_ENABLE(l);
+		kpreempt_enable();
 	}
 
 	/*
