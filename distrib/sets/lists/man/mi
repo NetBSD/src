@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1485.2.2 2014/11/02 10:12:47 martin Exp $
+# $NetBSD: mi,v 1.1485.2.3 2014/11/27 11:36:25 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2566,6 +2566,7 @@
 ./usr/share/man/cat8/kadmind.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kcm.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kdc.0			man-krb5-catman		kerberos,.cat
+./usr/share/man/cat8/kdigest.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kerberos.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kfd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/kimpersonate.0		man-krb5-catman		kerberos,.cat
@@ -5428,6 +5429,7 @@
 ./usr/share/man/html8/kadmind.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kcm.html			man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kdc.html			man-krb5-htmlman	kerberos,html
+./usr/share/man/html8/kdigest.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kerberos.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kimpersonate.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/kpasswdd.html		man-krb5-htmlman	kerberos,html
@@ -8436,6 +8438,7 @@
 ./usr/share/man/man8/kadmind.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kcm.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kdc.8			man-krb5-man		kerberos,.man
+./usr/share/man/man8/kdigest.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kerberos.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kfd.8			man-obsolete		obsolete
 ./usr/share/man/man8/kimpersonate.8		man-krb5-man		kerberos,.man
