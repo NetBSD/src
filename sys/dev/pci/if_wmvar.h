@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.22 2014/11/25 05:05:16 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.23 2014/11/27 11:42:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -95,7 +95,7 @@
 #define WM_F_HAS_MANAGE		0x00100000
 #define WM_F_WOL		0x00200000
 #define WM_F_EEE		0x00400000 /* Energy Efficiency Ethernet */
-#define WM_F_ATTACHED		0x00800000 /* attach() fininsed successfully */
+#define WM_F_ATTACHED		0x00800000 /* attach() finished successfully */
 
 
 /*
