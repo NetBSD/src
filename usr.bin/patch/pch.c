@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: pch.c,v 1.37 2007/09/02 15:19:33 deraadt Exp $
  * $DragonFly: src/usr.bin/patch/pch.c,v 1.6 2008/08/10 23:35:40 joerg Exp $
- * $NetBSD: pch.c,v 1.26 2014/11/26 00:31:32 christos Exp $
+ * $NetBSD: pch.c,v 1.27 2014/11/27 15:07:23 christos Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pch.c,v 1.26 2014/11/26 00:31:32 christos Exp $");
+__RCSID("$NetBSD: pch.c,v 1.27 2014/11/27 15:07:23 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -619,8 +619,8 @@ another_hunk(void)
 					p_ptrn_lines = 0;
 					p_first = 1;
 				}
-				if (p_first <= LINENUM_MAX - p_ptrn_lines ||
-				    p_ptrn_lines <= LINENUM_MAX - 6)
+				if (p_first >= LINENUM_MAX - p_ptrn_lines ||
+				    p_ptrn_lines >= LINENUM_MAX - 6)
 					malformed();
 
 				/* we need this much at least */
