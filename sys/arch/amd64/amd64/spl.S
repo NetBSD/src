@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.28 2014/01/12 20:31:50 joerg Exp $	*/
+/*	$NetBSD: spl.S,v 1.29 2014/11/27 04:48:39 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -115,7 +115,7 @@ IDTVEC(softintr)
 	xchgq	%r15,CPUVAR(CURLWP)	/* must be globally visible */
 	popq	%r15			/* unwind switchframe */
 	addq	$(5 * 8),%rsp
-	jmp	*%r13			/* back to splx/doreti */
+	jmp	*%r13			/* back to Xspllower/Xdoreti */
 END(Xsoftintr)
 
 /*
@@ -130,7 +130,7 @@ NENTRY(softintr_ret)
 	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
 	movl	$0, L_CTXSWTCH(%rax)	/* %rax from cpu_switchto */
 	cli
-	jmp	*%r13			/* back to splx/doreti */
+	jmp	*%r13			/* back to Xspllower/Xdoreti */
 END(softintr_ret)
 
 /*
@@ -155,7 +155,7 @@ IDTVEC(preemptrecurse)
 	xorq	%rdi, %rdi
 	call	_C_LABEL(kpreempt)
 	cli
-	jmp	*%r13
+	jmp	*%r13			/* back to Xspllower */
 END(Xpreemptrecurse)
 
 /*
@@ -171,11 +171,11 @@ IDTVEC(preemptresume)
 	movq	TF_RIP(%rsp), %rdi
 	call	_C_LABEL(kpreempt)		# from kernel
 	cli
-	jmp	*%r13
+	jmp	*%r13			/* back to Xdoreti */
 1:
 	call	_C_LABEL(preempt)		# from user
 	cli
-	jmp	*%r13
+	jmp	*%r13			/* back to Xdoreti */
 END(Xpreemptresume)
 
 /*
@@ -303,6 +303,8 @@ IDTVEC(spllower)
 END(Xspllower)
 
 /*
+ * void Xdoreti(void);
+ * 
  * Handle return from interrupt after device handler finishes.
  *
  * Important registers:
