@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.112 2014/11/27 11:39:44 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.113 2014/11/28 10:08:37 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -2993,4 +2993,23 @@ distrib/sets/lists/man/mi			1.1489
 
 	Add kdigest(8) and some more man references to kadm5_pwcheck(3).
 	[pettai, ticket #269]
+
+usr.bin/patch/common.h				1.20
+usr.bin/patch/pch.c				1.26-1.27
+
+	Avoid coredumps when the linenumbers in the hunks turn negative.
+	From OpenBSD.
+	[christos, ticket #270]
+
+sys/external/bsd/drm2/dist/drm/i915/intel_opregion.c 1.8
+
+	Avoid NULL pointer dereference when acpivga isn't attached.
+	[nonaka, ticket #271]
+
+sys/external/bsd/drm2/dist/drm/radeon/radeon_fb.c 1.5
+sys/external/bsd/drm2/radeon/radeondrmkmsfb.c	1.5
+sys/external/bsd/drm2/radeon/radeondrmkmsfb.h	1.2
+
+	Use correct linebytes.
+	[nonaka, ticket #272]
 
