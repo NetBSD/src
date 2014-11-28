@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.44 2014/09/05 05:57:21 matt Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.45 2014/11/28 08:28:17 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.44 2014/09/05 05:57:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.45 2014/11/28 08:28:17 uebayasi Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -334,7 +334,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 			continue;
 		}
 		if (__predict_false(panicstr != NULL)) {
-			kpreempt_enable();
+			KPREEMPT_ENABLE(curlwp);
 			return;
 		}
 		if (__predict_false(RW_OWNER(rw) == curthread)) {
