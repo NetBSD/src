@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.65 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.66 2014/11/28 08:29:00 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.65 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.66 2014/11/28 08:29:00 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -554,7 +554,4 @@ token_ifdetach(struct ifnet *ifp)
 {
 
 	bpf_detach(ifp);
-#if 0	/* done in if_detach() */
-	if_free_sadl(ifp);
-#endif
 }
