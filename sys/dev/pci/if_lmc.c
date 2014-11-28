@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.55 2014/06/05 23:48:16 rmind Exp $ */
+/* $NetBSD: if_lmc.c,v 1.56 2014/11/28 08:03:46 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,7 +74,7 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.55 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.56 2014/11/28 08:03:46 ozaki-r Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -3570,8 +3570,6 @@ ifnet_detach(softc_t *sc)
 # endif
 
   IFQ_PURGE(&sc->ifp->if_snd);
-
-  if_free_sadl(sc->ifp);
 
   if_detach(sc->ifp);
 
