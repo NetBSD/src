@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.130 2014/06/06 22:15:32 rmind Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.131 2014/11/28 08:29:00 ozaki-r Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.130 2014/06/06 22:15:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.131 2014/11/28 08:29:00 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -950,10 +950,6 @@ sppp_detach(struct ifnet *ifp)
 	if (sp->myauth.secret) free(sp->myauth.secret, M_DEVBUF);
 	if (sp->hisauth.name) free(sp->hisauth.name, M_DEVBUF);
 	if (sp->hisauth.secret) free(sp->hisauth.secret, M_DEVBUF);
-
-#if 0	/* done in if_detach() */
-	if_free_sadl(ifp);
-#endif
 }
 
 /*
