@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.47 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.48 2014/11/28 08:29:00 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.47 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.48 2014/11/28 08:29:00 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -707,9 +707,6 @@ ieee1394_ifdetach(struct ifnet *ifp)
 	bpf_detach(ifp);
 	free(__UNCONST(ifp->if_broadcastaddr), M_DEVBUF);
 	ifp->if_broadcastaddr = NULL;
-#if 0	/* done in if_detach() */
-	if_free_sadl(ifp);
-#endif
 }
 
 int
