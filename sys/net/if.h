@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.180 2014/11/27 03:15:51 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.181 2014/11/28 08:29:00 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -864,7 +864,6 @@ void if_activate_sadl(struct ifnet *, struct ifaddr *,
     const struct sockaddr_dl *);
 void	if_set_sadl(struct ifnet *, const void *, u_char, bool);
 void	if_alloc_sadl(struct ifnet *);
-void	if_free_sadl(struct ifnet *);
 void	if_attach(struct ifnet *);
 void	if_attachdomain(void);
 void	if_attachdomain1(struct ifnet *);
