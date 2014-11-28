@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: common.h,v 1.26 2006/03/11 19:41:30 otto Exp $
  * $DragonFly: src/usr.bin/patch/common.h,v 1.5 2008/08/10 23:50:12 joerg Exp $
- * $NetBSD: common.h,v 1.19 2008/09/19 18:33:34 joerg Exp $
+ * $NetBSD: common.h,v 1.19.38.1 2014/11/28 09:09:19 martin Exp $
  */
 
 /*
@@ -43,6 +43,7 @@
 #define INITHUNKMAX 125		/* initial dynamic allocation size */
 #define MAXLINELEN 8192
 #define BUFFERSIZE 1024
+#define LINENUM_MAX LONG_MAX
 
 #define SCCSPREFIX "s."
 #define GET "get -e %s"
