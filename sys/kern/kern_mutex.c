@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.60 2014/09/19 17:52:43 matt Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.61 2014/11/28 08:27:27 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.60 2014/09/19 17:52:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.61 2014/11/28 08:27:27 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -534,7 +534,7 @@ mutex_vector_enter(kmutex_t *mtx)
 			continue;
 		}
 		if (__predict_false(panicstr != NULL)) {
-			kpreempt_enable();
+			KPREEMPT_ENABLE(curlwp);
 			return;
 		}
 		if (__predict_false(MUTEX_OWNER(owner) == curthread)) {
