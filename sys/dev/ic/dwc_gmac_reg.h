@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_reg.h,v 1.13 2014/11/22 18:31:03 jmcneill Exp $ */
+/* $NetBSD: dwc_gmac_reg.h,v 1.14 2014/11/28 09:01:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -188,10 +188,17 @@ struct dwc_gmac_dev_dmadesc {
 #define	DDESC_CNTL_TXINT		__BIT(31)
 #define	DDESC_CNTL_TXLAST		__BIT(30)
 #define	DDESC_CNTL_TXFIRST		__BIT(29)
-#define	DDESC_CNTL_TXCHECKINSCTRL	__BIT(27)
+#define	DDESC_CNTL_TXCHECKINSCTRL	__BITS(27,28)
+
+#define	    DDESC_TXCHECK_DISABLED	0
+#define	    DDESC_TXCHECK_IP		1
+#define	    DDESC_TXCHECK_IP_NO_PSE	2
+#define	    DDESC_TXCHECK_FULL		3
+
 #define	DDESC_CNTL_TXCRCDIS		__BIT(26)
 #define	DDESC_CNTL_TXRINGEND		__BIT(25)
 #define	DDESC_CNTL_TXCHAIN		__BIT(24)
+#define	DDESC_CNTL_TXDISPAD		__BIT(23)
 
 /* for RX descriptors */
 #define	DDESC_CNTL_RXINTDIS		__BIT(31)
