@@ -674,7 +674,9 @@ static void intel_didl_outputs(struct drm_device *dev)
 
 #ifdef __NetBSD__
 	ad = dev->pdev->pd_ad;
-	if (ad == NULL || !device_is_a(ad->ad_device, "acpivga"))
+	if (ad == NULL ||
+	    ad->ad_device == NULL ||
+	    !device_is_a(ad->ad_device, "acpivga"))
 		return;
 #else
 	handle = ACPI_HANDLE(&dev->pdev->dev);
