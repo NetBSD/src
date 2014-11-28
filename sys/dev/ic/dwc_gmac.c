@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.27 2014/11/23 22:42:14 matt Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.28 2014/11/28 09:22:02 martin Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.27 2014/11/23 22:42:14 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28 2014/11/28 09:22:02 martin Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -1265,6 +1265,12 @@ dwc_gmac_intr(struct dwc_gmac_softc *sc)
 	if (dma_status)
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
 		    AWIN_GMAC_DMA_STATUS, dma_status & GMAC_DMA_INT_MASK);
+
+	/*
+	 * Get more packets
+	 */
+	if (rv)
+		sc->sc_ec.ec_if.if_start(&sc->sc_ec.ec_if);
 
 	return rv;
 }
