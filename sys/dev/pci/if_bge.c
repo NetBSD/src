@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.200 2012/02/02 19:43:05 tls Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.200.8.1 2014/11/29 11:42:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.200 2012/02/02 19:43:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.200.8.1 2014/11/29 11:42:12 martin Exp $");
 
 #include "vlan.h"
 
@@ -3184,6 +3184,19 @@ bge_reset(struct bge_softc *sc)
 	if (sc->bge_flags & BGE_PCIX) {
 		reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, sc->bge_pcixcap
 		    + PCI_PCIX_CMD);
+		/* Set max memory read byte count to 2K */
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703) {
+			reg &= ~PCI_PCIX_CMD_BYTECNT_MASK;
+			reg |= PCI_PCIX_CMD_BCNT_2048;
+		} else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704){
+			/*
+			 * For 5704, set max outstanding split transaction
+			 * field to 0 (0 means it supports 1 request)
+			 */
+			reg &= ~(PCI_PCIX_CMD_SPLTRANS_MASK
+			    | PCI_PCIX_CMD_BYTECNT_MASK);
+			reg |= PCI_PCIX_CMD_BCNT_2048;
+		}
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, sc->bge_pcixcap
 		    + PCI_PCIX_CMD, reg & ~PCI_PCIX_CMD_RELAXED_ORDER);
 	}
