@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.9 2014/11/09 08:02:17 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.10 2014/11/29 11:51:44 martin Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -193,3 +193,11 @@ xsrc/external/mit/libXt/dist/src/ResConfig.c	patch
 
 	Fix DEBUG build of libXt.  From Sandro Millien in PR xsrc/48863.
 	[snj, ticket #1181]
+
+sys/dev/pci/if_bge.c				1.260 (via patch)
+
+	Set maximum read byte count to 2048 for PCI-X BCM5703/5704 devices.
+	For PCI-X BCM5704, set maximum outstanding split transactions to 0.
+	This change fixes a serious stability problem on those chips.
+	[msaitoh, #1200]
+
