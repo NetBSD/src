@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 	int fclk, hclk;
 	int fd;
 	unsigned long marks[MARK_MAX];
-	unsigned char hdr[0x26];
+	unsigned char hdr[0x28];
 	void (*entry)(void*);
 	unsigned elfpriv;
 	char *bootfile;
@@ -236,16 +236,17 @@ main(int argc, char *argv[])
 #endif
 	/*
 	 * ARM ELF header has a distinctive value in "private flags"
-	 * field of offset [0x24:25];
-	 * - NetBSD 02 06
+	 * field of offset [0x24-x027];
+	 * - NetBSD 02 06 (oarm)
 	 * - Linux  02 00 (2.4) or 02 02 (2.6)
+	 * - NetBSD 02 00 00 05 (earm)
 	 */
 	lseek(fd, (off_t)0, SEEK_SET);
 	read(fd, &hdr, sizeof(hdr));
 	memcpy(&elfpriv, &hdr[0x24], sizeof(elfpriv));
 
 	entry = (void *)marks[MARK_ENTRY];
-	if (elfpriv == 0x0602) {
+	if (elfpriv == 0x0602 || elfpriv == 0x5000002) {
 		struct btinfo_symtab bi_syms;
 
 		bi_syms.nsym = marks[MARK_NSYM];
