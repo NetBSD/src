@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.12 2014/04/25 18:37:38 pooka Exp $	*/
+/*	$NetBSD: string.h,v 1.13 2014/11/29 13:23:48 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -83,7 +83,9 @@ __ssp_bos_icheck3_restrict(memcpy, void *, const void *)
 __ssp_bos_icheck3(memmove, void *, const void *)
 __ssp_bos_icheck3(memset, void *, int)
 __ssp_bos_icheck2_restrict(stpcpy, char *, const char *)
+#if __GNUC_PREREQ__(4,8) || defined(__clang__)
 __ssp_bos_icheck3_restrict(stpncpy, char *, const char *)
+#endif
 __ssp_bos_icheck2_restrict(strcpy, char *, const char *)
 __ssp_bos_icheck2_restrict(strcat, char *, const char *)
 __ssp_bos_icheck3_restrict(strncpy, char *, const char *)
