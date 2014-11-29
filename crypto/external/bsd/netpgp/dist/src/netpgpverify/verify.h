@@ -25,7 +25,7 @@
 #ifndef NETPGP_VERIFY_H_
 #define NETPGP_VERIFY_H_	20140304
 
-#define NETPGPVERIFY_VERSION	"netpgpverify portable 20140304"
+#define NETPGPVERIFY_VERSION	"netpgpverify portable 20141129"
 
 #include <sys/types.h>
 
