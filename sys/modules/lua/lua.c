@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.14 2014/09/24 14:55:48 mbalmer Exp $ */
+/*	$NetBSD: lua.c,v 1.15 2014/11/30 19:15:03 lneto Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
@@ -367,7 +367,11 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 					    		    m->mod_name,
 					    		    s->lua_name);
 						klua_lock(s->K);
-					    	m->open(s->K->L);
+						luaL_requiref(
+							s->K->L,
+							m->mod_name,
+							m->open,
+							1);
 						klua_unlock(s->K);
 					    	m->refcount++;
 					    	LIST_INSERT_HEAD(
@@ -507,7 +511,8 @@ lua_require(lua_State *L)
 					device_printf(sc_self,
 					    "require module %s\n",
 					    md->mod_name);
-				md->open(L);
+				luaL_requiref(L, md->mod_name, md->open, 0);
+
 				md->refcount++;
 				LIST_INSERT_HEAD(&s->lua_modules, md, mod_next);
 				return 1;
