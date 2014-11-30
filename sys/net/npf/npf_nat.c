@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.36 2014/11/30 00:40:55 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.37 2014/11/30 01:37:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.36 2014/11/30 00:40:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.37 2014/11/30 01:37:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -364,6 +364,8 @@ npf_nat_sharepm(npf_natpolicy_t *np, npf_natpolicy_t *mnp)
 	npf_portmap_t *pm, *mpm;
 
 	KASSERT(np && mnp && np != mnp);
+	KASSERT(LIST_EMPTY(&mnp->n_nat_list));
+	KASSERT(mnp->n_refcnt == 0);
 
 	/* Using port map and having equal translation address? */
 	if ((np->n_flags & mnp->n_flags & NPF_NAT_PORTMAP) == 0) {
@@ -889,6 +891,7 @@ npf_nat_import(prop_dictionary_t natdict, npf_ruleset_t *natlist,
 		pool_cache_put(nat_cache, nt);
 		return NULL;
 	}
+	npf_stats_inc(NPF_STAT_NAT_CREATE);
 
 	/*
 	 * Associate, take a reference and insert.  Unlocked since
