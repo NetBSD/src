@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.39 2014/11/30 00:40:55 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.40 2014/11/30 01:37:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.39 2014/11/30 00:40:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.40 2014/11/30 01:37:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -449,7 +449,7 @@ npf_ruleset_export(const npf_ruleset_t *rlset, prop_array_t rules)
  * => The active (old) ruleset should be exclusively locked.
  */
 void
-npf_ruleset_reload(npf_ruleset_t *newset, npf_ruleset_t *oldset)
+npf_ruleset_reload(npf_ruleset_t *newset, npf_ruleset_t *oldset, bool load)
 {
 	npf_rule_t *rg, *rl;
 	uint64_t nid = 0;
@@ -484,6 +484,14 @@ npf_ruleset_reload(npf_ruleset_t *newset, npf_ruleset_t *oldset)
 			rl->r_parent = rg;
 		}
 	}
+
+	/*
+	 * If performing the load of connections then NAT policies may
+	 * already have translated connections associated with them and
+	 * we should not share or inherit anything.
+	 */
+	if (load)
+		return;
 
 	/*
 	 * Scan all rules in the new ruleset and share NAT policies.
