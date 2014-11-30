@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.3 2014/11/30 16:38:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.2 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.3 2014/11/30 16:38:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2174,6 +2174,7 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	DPRINTFN(1,("uhci_abort_xfer: xfer=%p, status=%d\n", xfer, status));
 
 	KASSERT(mutex_owned(&sc->sc_lock));
+	ASSERT_SLEEPABLE();
 
 	if (sc->sc_dying) {
 		/* If we're dying, just do the software part. */
@@ -2182,9 +2183,6 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		usb_transfer_complete(xfer);
 		return;
 	}
-
-	if (cpu_intr_p() || cpu_softintr_p())
-		panic("uhci_abort_xfer: not in process context");
 
 	/*
 	 * If an abort is already in progress then just wait for it to
