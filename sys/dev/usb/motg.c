@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.2 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.2 2014/11/30 13:14:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,15 +191,15 @@ UREAD4(struct motg_softc *sc, bus_size_t r)
 static void
 musbotg_pull_common(struct motg_softc *sc, uint8_t on)
 {
-        uint8_t val;
+	uint8_t val;
 
-        val = UREAD1(sc, MUSB2_REG_POWER);
-        if (on)
-                val |= MUSB2_MASK_SOFTC;
-        else
-                val &= ~MUSB2_MASK_SOFTC;
+	val = UREAD1(sc, MUSB2_REG_POWER);
+	if (on)
+		val |= MUSB2_MASK_SOFTC;
+	else
+		val &= ~MUSB2_MASK_SOFTC;
 
-        UWRITE1(sc, MUSB2_REG_POWER, val);
+	UWRITE1(sc, MUSB2_REG_POWER, val);
 }
 
 const struct usbd_bus_methods motg_bus_methods = {
@@ -1620,7 +1620,7 @@ motg_device_ctrl_intr_rx(struct motg_softc *sc)
 	    ep->phase != STATUS_IN)
 		panic("motg_device_ctrl_intr_rx: bad phase %d", ep->phase);
 #endif
-        /* select endpoint 0 */
+	/* select endpoint 0 */
 	UWRITE1(sc, MUSB2_REG_EPINDEX, 0);
 
 	/* read out FIFO status */
@@ -1745,7 +1745,7 @@ motg_device_ctrl_intr_tx(struct motg_softc *sc)
 	    ep->phase != STATUS_OUT)
 		panic("motg_device_ctrl_intr_tx: bad phase %d", ep->phase);
 #endif
-        /* select endpoint 0 */
+	/* select endpoint 0 */
 	UWRITE1(sc, MUSB2_REG_EPINDEX, 0);
 
 	csr = UREAD1(sc, MUSB2_REG_TXCSRL);
@@ -2135,7 +2135,7 @@ motg_device_intr_rx(struct motg_softc *sc, int epnumber)
 
 	DPRINTFN(MD_BULK,
 	    ("motg_device_intr_rx on ep %d\n", epnumber));
-        /* select endpoint */
+	/* select endpoint */
 	UWRITE1(sc, MUSB2_REG_EPINDEX, epnumber);
 
 	/* read out FIFO status */
@@ -2258,7 +2258,7 @@ motg_device_intr_tx(struct motg_softc *sc, int epnumber)
 
 	DPRINTFN(MD_BULK,
 	    ("motg_device_intr_tx on ep %d\n", epnumber));
-        /* select endpoint */
+	/* select endpoint */
 	UWRITE1(sc, MUSB2_REG_EPINDEX, epnumber);
 
 	csr = UREAD1(sc, MUSB2_REG_TXCSRL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.74.4.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.74.4.2 2014/11/30 13:14:11 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.4.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.4.2 2014/11/30 13:14:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ uplcom_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-        sc->sc_udev = dev;
+	sc->sc_udev = dev;
 
 	DPRINTF(("\n\nuplcom attach: sc=%p\n", sc));
 
@@ -438,12 +438,12 @@ uplcom_detach(device_t self, int flags)
 
 	DPRINTF(("uplcom_detach: sc=%p flags=%d\n", sc, flags));
 
-        if (sc->sc_intr_pipe != NULL) {
-                usbd_abort_pipe(sc->sc_intr_pipe);
-                usbd_close_pipe(sc->sc_intr_pipe);
+	if (sc->sc_intr_pipe != NULL) {
+		usbd_abort_pipe(sc->sc_intr_pipe);
+		usbd_close_pipe(sc->sc_intr_pipe);
 		free(sc->sc_intr_buf, M_USBDEV);
-                sc->sc_intr_pipe = NULL;
-        }
+		sc->sc_intr_pipe = NULL;
+	}
 
 	sc->sc_dying = 1;
 	if (sc->sc_subdev != NULL)
@@ -475,13 +475,13 @@ uplcom_reset(struct uplcom_softc *sc)
 	usb_device_request_t req;
 	usbd_status err;
 
-        req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
-        req.bRequest = UPLCOM_SET_REQUEST;
-        USETW(req.wValue, 0);
-        USETW(req.wIndex, sc->sc_iface_number);
-        USETW(req.wLength, 0);
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+	req.bRequest = UPLCOM_SET_REQUEST;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, sc->sc_iface_number);
+	USETW(req.wLength, 0);
 
-        err = usbd_do_request(sc->sc_udev, &req, 0);
+	err = usbd_do_request(sc->sc_udev, &req, 0);
 	if (err)
 		return (EIO);
 

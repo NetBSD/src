@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcireg.h,v 1.24.6.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: ohcireg.h,v 1.24.6.2 2014/11/30 13:14:11 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcireg.h,v 1.8 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 
@@ -120,7 +120,7 @@
 
 #define OHCI_LES (OHCI_PLE | OHCI_IE | OHCI_CLE | OHCI_BLE)
 #define OHCI_ALL_INTRS (OHCI_SO | OHCI_WDH | OHCI_SF | OHCI_RD | OHCI_UE | \
-                        OHCI_FNO | OHCI_RHSC | OHCI_OC)
+			OHCI_FNO | OHCI_RHSC | OHCI_OC)
 #define OHCI_NORMAL_INTRS (OHCI_SO | OHCI_WDH | OHCI_RD | OHCI_UE | OHCI_RHSC)
 
 #define OHCI_FSMPS(i) (((i-210)*6/7) << 16)

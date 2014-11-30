@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.2 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.2 2014/11/30 13:14:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1728,11 +1728,11 @@ ohci_device_request(usbd_xfer_handle xfer)
 	sed = opipe->sed;
 	opipe->u.ctl.length = len;
 
-        KASSERTMSG(OHCI_ED_GET_FA(O32TOH(sed->ed.ed_flags)) == dev->address,
+	KASSERTMSG(OHCI_ED_GET_FA(O32TOH(sed->ed.ed_flags)) == dev->address,
 	    "address ED %d pipe %d\n",
 	    OHCI_ED_GET_FA(O32TOH(sed->ed.ed_flags)), dev->address);
-        KASSERTMSG(OHCI_ED_GET_MAXP(O32TOH(sed->ed.ed_flags)) ==
-            UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize),
+	KASSERTMSG(OHCI_ED_GET_MAXP(O32TOH(sed->ed.ed_flags)) ==
+	    UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize),
 	    "MPL ED %d pipe %d\n",
 	    OHCI_ED_GET_MAXP(O32TOH(sed->ed.ed_flags)),
 	    UGETW(opipe->pipe.endpoint->edesc->wMaxPacketSize));

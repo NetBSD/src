@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.81.2.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.81.2.2 2014/11/30 13:14:11 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.81.2.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.81.2.2 2014/11/30 13:14:11 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -93,9 +93,9 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_T720C,
  	0x001, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_EICON, USB_PRODUCT_EICON_DIVA852,
-        0x100, { UQ_ASSUME_CM_OVER_DATA }},
+	0x100, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_SIEMENS2, USB_PRODUCT_SIEMENS2_MC75,
-        0x000, { UQ_ASSUME_CM_OVER_DATA }},
+	0x000, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_TELEX, USB_PRODUCT_TELEX_MIC1,	    0x009, { UQ_AU_NO_FRAC }},
  { USB_VENDOR_SILICONPORTALS, USB_PRODUCT_SILICONPORTALS_YAPPHONE,
    						    0x100, { UQ_AU_INP_ASYNC }},

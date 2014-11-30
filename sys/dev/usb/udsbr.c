@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.22.14.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.22.14.2 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.22.14.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.22.14.2 2014/11/30 13:14:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,14 +231,14 @@ void
 udsbr_setfreq(struct udsbr_softc *sc, int freq)
 {
 	DPRINTF(("udsbr_setfreq: setfreq=%d\n", freq));
-        /*
-         * Freq now is in Hz.  We need to convert it to the frequency
-         * that the radio wants.  This frequency is 10.7MHz above
-         * the actual frequency.  We then need to convert to
-         * units of 12.5kHz.  We add one to the IFM to make rounding
-         * easier.
-         */
-        freq = (freq * 1000 + 10700001) / 12500;
+	/*
+	 * Freq now is in Hz.  We need to convert it to the frequency
+	 * that the radio wants.  This frequency is 10.7MHz above
+	 * the actual frequency.  We then need to convert to
+	 * units of 12.5kHz.  We add one to the IFM to make rounding
+	 * easier.
+	 */
+	freq = (freq * 1000 + 10700001) / 12500;
 	(void)udsbr_req(sc, 0x01, (freq >> 8) & 0xff, freq & 0xff);
 	(void)udsbr_req(sc, 0x00, 0x0096, 0x00b7);
 	usbd_delay_ms(sc->sc_udev, 240); /* wait for signal to settle */

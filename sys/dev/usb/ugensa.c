@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.31.6.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.31.6.2 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.31.6.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.31.6.2 2014/11/30 13:14:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +104,8 @@ static const struct ugensa_type ugensa_devs[] = {
 	 * to work in similar device drivers on other OSes:
 	 */
 
-        {{ USB_VENDOR_ANYDATA, USB_PRODUCT_ANYDATA_ADU_500A }, UNTESTED },
-        {{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_EXPRESSCARD }, UNTESTED },
+	{{ USB_VENDOR_ANYDATA, USB_PRODUCT_ANYDATA_ADU_500A }, UNTESTED },
+	{{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_EXPRESSCARD }, UNTESTED },
 	{{ USB_VENDOR_QUALCOMM, USB_PRODUCT_QUALCOMM_MSM_HSDPA }, UNTESTED },
 	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AIRCARD875 }, UNTESTED },
 	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_EM5625 }, UNTESTED },

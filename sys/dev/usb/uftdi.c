@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.59.6.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.59.6.2 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.59.6.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.59.6.2 2014/11/30 13:14:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,8 +188,8 @@ uftdi_match(device_t parent, cfdata_t match, void *aux)
 	DPRINTFN(20,("uftdi: vendor=0x%x, product=0x%x\n",
 		     uaa->vendor, uaa->product));
 
-        return (uftdi_lookup(uaa->vendor, uaa->product) != NULL ?
-                UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return (uftdi_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 void

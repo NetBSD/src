@@ -1,4 +1,4 @@
-/* $NetBSD: ahcireg.h,v 1.1.108.1 2014/11/30 12:18:58 skrll Exp $ */
+/* $NetBSD: ahcireg.h,v 1.1.108.2 2014/11/30 13:14:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -78,13 +78,13 @@
 #define ADMHCD_PRSC             0x00100000      /* reset status change */
 
 struct admhcd_ed {
-        /* Don't change first four, they used for DMA */
-        volatile uint32_t                       control;
-        volatile struct admhcd_td               *tail;
-        volatile struct admhcd_td               *head;
-        volatile struct admhcd_ed               *next;
-        /* the rest is for the driver only: */
-        uint32_t				unused[4];
+	/* Don't change first four, they used for DMA */
+	volatile uint32_t                       control;
+	volatile struct admhcd_td               *tail;
+	volatile struct admhcd_td               *head;
+	volatile struct admhcd_ed               *next;
+	/* the rest is for the driver only: */
+	uint32_t				unused[4];
 } __attribute__ ((packed));
 
 #define ADMHCD_ED_EPSHIFT       7               /* Shift for endpoint number */

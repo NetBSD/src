@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.38.6.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.38.6.2 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.2 2014/11/30 13:14:11 skrll Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -285,7 +285,7 @@ usscanner_attach(device_t parent, device_t self, void *aux)
 	  aprint_error_dev(self, "alloc intr xfer failed, err=%d\n", err);
 	  usscanner_cleanup(sc);
 	  return;
-        }
+	}
 
 	sc->sc_data_xfer = usbd_alloc_xfer(uaa->device);
 	if (sc->sc_data_xfer == NULL) {
