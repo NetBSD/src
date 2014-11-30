@@ -835,19 +835,11 @@ BUILDING
                    symbol table and can be used for debugging (for example
                    with a cross-gdb built by MKCROSSGDB).
 
-     mkernel=kconf
-                   Build a new kernel in modular build.  Similar to the above
-                   kernel=kconf operation, but creates intermediate per-module
-                   relocatable objects and link them to the final kernel.
-
      kernels       This command will build all kernels defined in port
                    specific release build procedure.
 
                    This command internally calls the kernel=kconf operation
                    for each found kernel configuration file.
-
-     mkernels      Similar to the above kernels operation, but builds kernels
-                   in modular build.
 
      modules       This command will build kernel modules and install them
                    into DESTDIR.
