@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.1 2014/11/30 12:18:58 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.2 2014/11/30 13:46:00 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,7 +61,10 @@ typedef struct ehci_soft_qh {
 #define EHCI_SQH_CHUNK (EHCI_PAGE_SIZE / EHCI_SQH_SIZE)
 
 typedef struct ehci_soft_itd {
-	ehci_itd_t itd;
+	union {
+		ehci_itd_t itd;
+		ehci_sitd_t sitd;
+	};
 	union {
 		struct {
 			/* soft_itds links in a periodic frame*/
@@ -81,6 +84,12 @@ typedef struct ehci_soft_itd {
 #define EHCI_ITD_SIZE ((sizeof(struct ehci_soft_itd) + EHCI_QH_ALIGN - 1) / EHCI_ITD_ALIGN * EHCI_ITD_ALIGN)
 #define EHCI_ITD_CHUNK (EHCI_PAGE_SIZE / EHCI_ITD_SIZE)
 
+#define ehci_soft_sitd_t ehci_soft_itd_t
+#define ehci_soft_sitd ehci_soft_itd
+#define sc_softsitds sc_softitds
+#define EHCI_SITD_SIZE ((sizeof(struct ehci_soft_sitd) + EHCI_QH_ALIGN - 1) / EHCI_SITD_ALIGN * EHCI_SITD_ALIGN)
+#define EHCI_SITD_CHUNK (EHCI_PAGE_SIZE / EHCI_SITD_SIZE)
+
 struct ehci_xfer {
 	struct usbd_xfer xfer;
 	struct usb_task	abort_task;
@@ -89,6 +98,8 @@ struct ehci_xfer {
 	ehci_soft_qtd_t *sqtdend;
 	ehci_soft_itd_t *itdstart;
 	ehci_soft_itd_t *itdend;
+	ehci_soft_sitd_t *sitdstart;
+	ehci_soft_sitd_t *sitdend;
 	u_int isoc_len;
 	int isdone;	/* used only when DIAGNOSTIC is defined */
 };
@@ -155,6 +166,7 @@ typedef struct ehci_softc {
 	ehci_soft_qh_t *sc_freeqhs;
 	ehci_soft_qtd_t *sc_freeqtds;
 	LIST_HEAD(sc_freeitds, ehci_soft_itd) sc_freeitds;
+	LIST_HEAD(sc_freesitds, ehci_soft_sitd) sc_freesitds;
 
 	int sc_noport;
 	uint8_t sc_hasppc;		/* has Port Power Control */
