@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.32.24.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: umct.c,v 1.32.24.2 2014/11/30 13:14:11 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.2 2014/11/30 13:14:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ umct_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
-        sc->sc_udev = dev;
+	sc->sc_udev = dev;
 	sc->sc_product = uaa->product;
 
 	DPRINTF(("\n\numct attach: sc=%p\n", sc));
@@ -325,12 +325,12 @@ umct_detach(device_t self, int flags)
 
 	DPRINTF(("umct_detach: sc=%p flags=%d\n", sc, flags));
 
-        if (sc->sc_intr_pipe != NULL) {
-                usbd_abort_pipe(sc->sc_intr_pipe);
-                usbd_close_pipe(sc->sc_intr_pipe);
+	if (sc->sc_intr_pipe != NULL) {
+		usbd_abort_pipe(sc->sc_intr_pipe);
+		usbd_close_pipe(sc->sc_intr_pipe);
 		free(sc->sc_intr_buf, M_USBDEV);
-                sc->sc_intr_pipe = NULL;
-        }
+		sc->sc_intr_pipe = NULL;
+	}
 
 	sc->sc_dying = 1;
 	if (sc->sc_subdev != NULL)
@@ -450,7 +450,7 @@ umct_set_lcr(struct umct_softc *sc, u_int data)
 void
 umct_set_baudrate(struct umct_softc *sc, u_int rate)
 {
-        usb_device_request_t req;
+	usb_device_request_t req;
 	uDWord arate;
 	u_int val;
 
@@ -474,13 +474,13 @@ umct_set_baudrate(struct umct_softc *sc, u_int rate)
 	}
 	USETDW(arate, val);
 
-        req.bmRequestType = UMCT_SET_REQUEST;
-        req.bRequest = REQ_SET_BAUD_RATE;
-        USETW(req.wValue, 0);
-        USETW(req.wIndex, sc->sc_iface_number);
-        USETW(req.wLength, LENGTH_BAUD_RATE);
+	req.bmRequestType = UMCT_SET_REQUEST;
+	req.bRequest = REQ_SET_BAUD_RATE;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, sc->sc_iface_number);
+	USETW(req.wLength, LENGTH_BAUD_RATE);
 
-        (void)usbd_do_request(sc->sc_udev, &req, arate); /* XXX should check */
+	(void)usbd_do_request(sc->sc_udev, &req, arate); /* XXX should check */
 }
 
 void
@@ -546,9 +546,9 @@ umct_open(void *addr, int portno)
 	DPRINTF(("umct_open: sc=%p\n", sc));
 
 	/* initialize LCR */
-        lcr_data = LCR_DATA_BITS_8 | LCR_PARITY_NONE |
+	lcr_data = LCR_DATA_BITS_8 | LCR_PARITY_NONE |
 	    LCR_STOP_BITS_1;
-        umct_set_lcr(sc, lcr_data);
+	umct_set_lcr(sc, lcr_data);
 
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
 		sc->sc_status = 0; /* clear status bit */

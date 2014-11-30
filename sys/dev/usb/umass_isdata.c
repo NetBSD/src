@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.30.2.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.30.2.2 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.30.2.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.30.2.2 2014/11/30 13:14:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,16 +63,16 @@ int umass_wd_attach(struct umass_softc *);
 
 /* XXX move this */
 struct isd200_config {
-        uByte EventNotification;
-        uByte ExternalClock;
-        uByte ATAInitTimeout;
-        uByte ATAMisc1;
+	uByte EventNotification;
+	uByte ExternalClock;
+	uByte ATAInitTimeout;
+	uByte ATAMisc1;
 #define ATATiming		0x0f
 #define ATAPIReset		0x10
 #define MasterSlaveSelection	0x20
 #define ATAPICommandBlockSize	0xc0
-        uByte ATAMajorCommand;
-        uByte ATAMinorCommand;
+	uByte ATAMajorCommand;
+	uByte ATAMinorCommand;
 	uByte ATAMisc2;
 #define LastLUNIdentifier	0x07
 #define DescriptOverride	0x08

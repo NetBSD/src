@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.2 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.2 2014/11/30 13:14:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -932,33 +932,33 @@ uhci_dump_ii(uhci_intr_info_t *ii)
 #else
 #define DONE 0
 #endif
-        if (ii == NULL) {
-                printf("ii NULL\n");
-                return;
-        }
-        if (ii->xfer == NULL) {
+	if (ii == NULL) {
+		printf("ii NULL\n");
+		return;
+	}
+	if (ii->xfer == NULL) {
 		printf("ii %p: done=%d xfer=NULL\n",
 		       ii, DONE);
-                return;
-        }
-        pipe = ii->xfer->pipe;
-        if (pipe == NULL) {
-		printf("ii %p: done=%d xfer=%p pipe=NULL\n",
-		       ii, DONE, ii->xfer);
-                return;
+		return;
 	}
-        if (pipe->endpoint == NULL) {
+	pipe = ii->xfer->pipe;
+	if (pipe == NULL) {
+		printf("ii %p: done=%d xfer=%p pipe=NULL\n",
+		    ii, DONE, ii->xfer);
+		return;
+	}
+	if (pipe->endpoint == NULL) {
 		printf("ii %p: done=%d xfer=%p pipe=%p pipe->endpoint=NULL\n",
 		       ii, DONE, ii->xfer, pipe);
-                return;
+		return;
 	}
-        if (pipe->device == NULL) {
+	if (pipe->device == NULL) {
 		printf("ii %p: done=%d xfer=%p pipe=%p pipe->device=NULL\n",
 		       ii, DONE, ii->xfer, pipe);
-                return;
+		return;
 	}
-        ed = pipe->endpoint->edesc;
-        dev = pipe->device;
+	ed = pipe->endpoint->edesc;
+	dev = pipe->device;
 	printf("ii %p: done=%d xfer=%p dev=%p vid=0x%04x pid=0x%04x addr=%d pipe=%p ep=0x%02x attr=0x%02x\n",
 	       ii, DONE, ii->xfer, dev,
 	       UGETW(dev->ddesc.idVendor),
@@ -2556,7 +2556,7 @@ uhci_device_request(usbd_xfer_handle xfer)
 		UHCI_TD_ACTIVE | UHCI_TD_IOC);
 	stat->td.td_token =
 		htole32(isread ? UHCI_TD_OUT(0, endpt, addr, 1) :
-		                 UHCI_TD_IN (0, endpt, addr, 1));
+				 UHCI_TD_IN (0, endpt, addr, 1));
 	stat->td.td_buffer = htole32(0);
 	usb_syncmem(&stat->dma, stat->offs, sizeof(stat->td),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
@@ -2607,7 +2607,7 @@ uhci_device_request(usbd_xfer_handle xfer)
 		for (xqh = sxqh;
 		     xqh != NULL;
 		     xqh = (maxqh++ == 5 || xqh->hlink == sxqh ||
-                            xqh->hlink == xqh ? NULL : xqh->hlink)) {
+			xqh->hlink == xqh ? NULL : xqh->hlink)) {
 			uhci_dump_qh(xqh);
 		}
 		DPRINTF(("Enqueued QH:\n"));
@@ -2999,8 +2999,8 @@ uhci_device_isoc_done(usbd_xfer_handle xfer)
 		return;
 
 #ifdef DIAGNOSTIC
-        if (ii->stdend == NULL) {
-                printf("uhci_device_isoc_done: xfer=%p stdend==NULL\n", xfer);
+	if (ii->stdend == NULL) {
+		printf("uhci_device_isoc_done: xfer=%p stdend==NULL\n", xfer);
 #ifdef UHCI_DEBUG
 		uhci_dump_ii(ii);
 #endif

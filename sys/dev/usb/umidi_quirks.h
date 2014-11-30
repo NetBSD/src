@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.h,v 1.8.60.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: umidi_quirks.h,v 1.8.60.2 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ struct umidi_quirk {
 	int			product;
 	int			iface;
 	const struct umq_data	*quirks;
-        uint32_t		type_mask;
+	uint32_t		type_mask;
 };
 #define UMQ_ISTYPE(q, type) \
 	((q)->sc_quirk && ((q)->sc_quirk->type_mask & (1<<((type)-1))))

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.15.4.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.15.4.2 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ struct uhidev {
 	int sc_in_rep_size;
 #define	UHIDEV_OPEN	0x01	/* device is open */
 	void (*sc_intr)(struct uhidev *, void *, u_int);
-        krndsource_t     rnd_source;
+	krndsource_t     rnd_source;
 };
 
 struct uhidev_attach_arg {

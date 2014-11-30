@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc_dma.c,v 1.1 2013/09/19 17:55:22 pooka Exp $	*/
+/*	$NetBSD: ugenhc_dma.c,v 1.1.12.1 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -94,7 +94,7 @@ bus_dmamem_free(bus_dma_tag_t a, bus_dma_segment_t *b, int c)
 
 int
 bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
-                       size_t size, void **kvap, int flags)
+		       size_t size, void **kvap, int flags)
 {
 
 	KASSERT(nsegs == 1);

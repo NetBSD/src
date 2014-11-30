@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.1 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.1 2014/11/30 13:14:11 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -240,15 +240,15 @@ dwc2_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
 Static void
 dwc2_freem(struct usbd_bus *bus, usb_dma_t *dma)
 {
-        struct dwc2_softc *sc = DWC2_BUS2SC(bus);
+	struct dwc2_softc *sc = DWC2_BUS2SC(bus);
 
 	DPRINTFN(10, "\n");
 
-        if (dma->block->flags & USB_DMA_RESERVE) {
-                usb_reserve_freem(&sc->sc_dma_reserve, dma);
-                return;
-        }
-        usb_freemem(&sc->sc_bus, dma);
+	if (dma->block->flags & USB_DMA_RESERVE) {
+		usb_reserve_freem(&sc->sc_dma_reserve, dma);
+		return;
+	}
+	usb_freemem(&sc->sc_bus, dma);
 }
 
 usbd_xfer_handle
@@ -1228,7 +1228,7 @@ dwc2_device_start(usbd_xfer_handle xfer)
 	struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer);
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
-        struct dwc2_hcd_urb *dwc2_urb;
+	struct dwc2_hcd_urb *dwc2_urb;
 
 	usbd_device_handle dev = xfer->pipe->device;
 	usb_endpoint_descriptor_t *ed = xfer->pipe->endpoint->edesc;
@@ -1672,7 +1672,7 @@ int dwc2_host_get_speed(struct dwc2_hsotg *hsotg, void *context)
  * Must be called with interrupt disabled and spinlock held
  */
 void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
-                        int status)
+    int status)
 {
 	usbd_xfer_handle xfer;
 	struct dwc2_xfer *dxfer;
