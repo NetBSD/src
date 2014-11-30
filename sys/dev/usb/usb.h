@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.111.2.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: usb.h,v 1.111.2.2 2014/11/30 16:39:51 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -81,7 +81,6 @@ typedef uint8_t uDWord[4];
 
 #define USETW2(w,h,l) ((w)[0] = (uint8_t)(l), (w)[1] = (uint8_t)(h))
 
-#if 1
 #define UGETW(w) ((w)[0] | ((w)[1] << 8))
 #define USETW(w,v) ((w)[0] = (uint8_t)(v), (w)[1] = (uint8_t)((v) >> 8))
 #define UGETDW(w) ((w)[0] | ((w)[1] << 8) | ((w)[2] << 16) | ((w)[3] << 24))
@@ -89,17 +88,6 @@ typedef uint8_t uDWord[4];
 		     (w)[1] = (uint8_t)((v) >> 8), \
 		     (w)[2] = (uint8_t)((v) >> 16), \
 		     (w)[3] = (uint8_t)((v) >> 24))
-#else
-/*
- * On little-endian machines that can handle unaligned accesses
- * (e.g. i386) these macros can be replaced by the following.
- */
-#define UGETW(w) (*(uint16_t *)(w))
-#define USETW(w,v) (*(uint16_t *)(w) = (v))
-#define UGETDW(w) (*(uint32_t *)(w))
-#define USETDW(w,v) (*(uint32_t *)(w) = (v))
-#endif
-
 #define UPACKED __packed
 
 typedef struct {
