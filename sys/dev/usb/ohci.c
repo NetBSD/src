@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.3 2014/11/30 16:38:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.2 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.3 2014/11/30 16:38:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2300,6 +2300,7 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	DPRINTF(("ohci_abort_xfer: xfer=%p pipe=%p sed=%p\n", xfer, opipe,sed));
 
 	KASSERT(mutex_owned(&sc->sc_lock));
+	ASSERT_SLEEPABLE();
 
 	if (sc->sc_dying) {
 		/* If we're dying, just do the software part. */
@@ -2308,9 +2309,6 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		usb_transfer_complete(xfer);
 		return;
 	}
-
-	if (cpu_intr_p() || cpu_softintr_p())
-		panic("ohci_abort_xfer: not in process context");
 
 	/*
 	 * If an abort is already in progress then just wait for it to

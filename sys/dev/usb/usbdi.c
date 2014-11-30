@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.3 2014/11/30 16:38:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.2 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.3 2014/11/30 16:38:45 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -429,6 +429,8 @@ usbd_alloc_xfer(usbd_device_handle dev)
 	usbd_xfer_handle xfer;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+
+	ASSERT_SLEEPABLE();
 
 	xfer = dev->bus->methods->allocx(dev->bus);
 	if (xfer == NULL)
@@ -1053,12 +1055,7 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
-#ifdef DIAGNOSTIC
-	if (cpu_intr_p() || cpu_softintr_p()) {
-		USBHIST_LOG(usbdebug, "not in process context", 0, 0, 0, 0);
-		return (USBD_INVAL);
-	}
-#endif
+	ASSERT_SLEEPABLE();
 
 	xfer = usbd_alloc_xfer(dev);
 	if (xfer == NULL)
