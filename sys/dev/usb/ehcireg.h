@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.34.14.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.34.14.2 2014/11/30 13:46:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -247,7 +247,35 @@ typedef struct {
 /* Split Transaction Isochronous Transfer Descriptor */
 typedef struct {
 	volatile ehci_link_t	sitd_next;
-	/* XXX many more */
+	volatile uint32_t	sitd_endp;
+#define EHCI_SITD_SET_DIR(x)	(((x) & 0x01) << 31)
+#define EHCI_SITD_SET_PORT(x)	(((x) & 0x7f) << 24)
+#define EHCI_SITD_SET_HUBA(x)	(((x) & 0x7f) << 16)
+#define EHCI_SITD_SET_ENDPT(x)	(((x) & 0x0f) << 8)
+#define EHCI_SITD_SET_DADDR(x)	((x) & 0x7f)
+
+	volatile uint32_t	sitd_sched;
+#define EHCI_SITD_SET_SMASK(x)	((x) & 0xff)
+#define EHCI_SITD_SET_CMASK(x)	(((x) & 0xff) << 8)
+
+	volatile uint32_t	sitd_trans;
+#define EHCI_SITD_IOC		0x80000000
+#define EHCI_SITD_P		0x40000000
+#define EHCI_SITD_GET_LEN(x)	(((x) & 0x03ff0000) >> 16)
+#define EHCI_SITD_SET_LEN(x)	(((x) & 0x3ff) << 16)
+#define EHCI_SITD_ACTIVE	0x00000080
+#define EHCI_SITD_ERR		0x00000040
+#define EHCI_SITD_BUFERR	0x00000020
+#define EHCI_SITD_BABBLE	0x00000010
+#define EHCI_SITD_XACTERR	0x00000008
+#define EHCI_SITD_MISS		0x00000004
+#define EHCI_SITD_SPLITXSTATE	0x00000002
+
+	volatile uint32_t	sitd_buffer[2];
+#define EHCI_SITD_SET_BPTR(x)	((x) & 0xfffff000)
+#define EHCI_SITD_SET_OFFS(x)	((x) & 0xfff)
+
+	volatile uint32_t	sitd_back;
 } ehci_sitd_t;
 #define EHCI_SITD_ALIGN 32
 
