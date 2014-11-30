@@ -1,7 +1,0 @@
-\input texinfo
-@setfilename top.info
-
-@node start
-@top
-
-@bye

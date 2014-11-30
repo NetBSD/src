@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.47 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.47.4.1 2014/11/30 12:18:58 skrll Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.1 2014/11/30 12:18:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -106,8 +106,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47 2014/08/10 16:44:36 tls Exp $");
 #define UPL_ENDPT_MAX		0x3
 
 struct upl_type {
-	u_int16_t		upl_vid;
-	u_int16_t		upl_did;
+	uint16_t		upl_vid;
+	uint16_t		upl_did;
 };
 
 struct upl_softc;
@@ -139,8 +139,8 @@ struct upl_softc {
 
 	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;
-	u_int16_t		sc_vendor;
-	u_int16_t		sc_product;
+	uint16_t		sc_vendor;
+	uint16_t		sc_product;
 	int			sc_ed[UPL_ENDPT_MAX];
 	usbd_pipe_handle	sc_ep[UPL_ENDPT_MAX];
 	struct upl_cdata	sc_cdata;

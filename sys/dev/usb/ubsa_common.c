@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa_common.c,v 1.9 2012/12/11 09:17:31 msaitoh Exp $	*/
+/*	$NetBSD: ubsa_common.c,v 1.9.14.1 2014/11/30 12:18:58 skrll Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.9 2012/12/11 09:17:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.9.14.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ extern	int	ubsadebug;
 #define	DPRINTF(x) DPRINTFN(0, x)
 
 int
-ubsa_request(struct ubsa_softc *sc, int portno, u_int8_t request, u_int16_t value)
+ubsa_request(struct ubsa_softc *sc, int portno, uint8_t request, uint16_t value)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -108,7 +108,7 @@ ubsa_request(struct ubsa_softc *sc, int portno, u_int8_t request, u_int16_t valu
 	if (portno >= UBSA_MAXCONN) {
 		printf("%s: ubsa_request: invalid port(%d)#\n",
 			device_xname(sc->sc_dev), portno);
-		return USBD_INVAL; 
+		return USBD_INVAL;
 	}
 
 	req.bRequest = request;
@@ -216,7 +216,7 @@ ubsa_set(void *addr, int portno, int reg, int onoff)
 void
 ubsa_baudrate(struct ubsa_softc *sc, int portno, speed_t speed)
 {
-	u_int16_t value = 0;
+	uint16_t value = 0;
 
 	DPRINTF(("ubsa_baudrate: speed = %d\n", speed));
 

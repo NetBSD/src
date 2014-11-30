@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.45 2013/09/26 07:25:31 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.45.6.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ usbd_status	usbd_set_port_feature(usbd_device_handle dev, int, int);
 usbd_status	usbd_clear_port_feature(usbd_device_handle, int, int);
 usbd_status	usbd_get_device_status(usbd_device_handle, usb_status_t *);
 usbd_status	usbd_get_hub_status(usbd_device_handle, usb_hub_status_t *);
-usbd_status	usbd_get_protocol(usbd_interface_handle dev, u_int8_t *report);
+usbd_status	usbd_get_protocol(usbd_interface_handle dev, uint8_t *report);
 usbd_status	usbd_set_protocol(usbd_interface_handle dev, int report);
 usbd_status	usbd_get_report_descriptor(usbd_device_handle dev, int ifcno,
 					   int size, void *d);
@@ -63,7 +63,7 @@ usbd_status	usbd_get_report(usbd_interface_handle iface, int type, int id,
 usbd_status	usbd_set_idle(usbd_interface_handle iface, int duration,int id);
 usbd_status	usbd_read_report_desc(usbd_interface_handle ifc, void **descp,
 				      int *sizep, struct malloc_type *mem);
-usbd_status	usbd_get_config(usbd_device_handle dev, u_int8_t *conf);
+usbd_status	usbd_get_config(usbd_device_handle dev, uint8_t *conf);
 usbd_status	usbd_get_string_desc(usbd_device_handle dev, int sindex,
 				     int langid,usb_string_descriptor_t *sdesc,
 				     int *sizep);
@@ -73,12 +73,12 @@ usbd_status usbd_set_config_no(usbd_device_handle, int, int);
 usbd_status usbd_set_config_index(usbd_device_handle, int, int);
 
 usbd_status usbd_bulk_transfer(usbd_xfer_handle, usbd_pipe_handle,
-			       u_int16_t, u_int32_t, void *,
-			       u_int32_t *, const char *);
+			       uint16_t, uint32_t, void *,
+			       uint32_t *, const char *);
 
 usbd_status usbd_intr_transfer(usbd_xfer_handle, usbd_pipe_handle,
- 			       u_int16_t, u_int32_t, void *,
- 			       u_int32_t *, const char *);
+ 			       uint16_t, uint32_t, void *,
+ 			       uint32_t *, const char *);
 
 void usb_detach_waitold(device_t);
 void usb_detach_wakeupold(device_t);

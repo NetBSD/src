@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.18 2012/02/02 19:43:07 tls Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.18.24.1 2014/11/30 12:18:58 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -141,8 +141,8 @@
 #define CUE_ENDPT_MAX		0x3
 
 struct cue_type {
-	u_int16_t		cue_vid;
-	u_int16_t		cue_did;
+	uint16_t		cue_vid;
+	uint16_t		cue_did;
 };
 
 struct cue_softc;
@@ -175,13 +175,13 @@ struct cue_softc {
 
 	usbd_device_handle	cue_udev;
 	usbd_interface_handle	cue_iface;
-	u_int16_t		cue_vendor;
-	u_int16_t		cue_product;
+	uint16_t		cue_vendor;
+	uint16_t		cue_product;
 	int			cue_ed[CUE_ENDPT_MAX];
 	usbd_pipe_handle	cue_ep[CUE_ENDPT_MAX];
-	u_int8_t		cue_mctab[CUE_MCAST_TABLE_LEN];
+	uint8_t			cue_mctab[CUE_MCAST_TABLE_LEN];
 	int			cue_if_flags;
-	u_int16_t		cue_rxfilt;
+	uint16_t		cue_rxfilt;
 	struct cue_cdata	cue_cdata;
 
 	char			cue_dying;

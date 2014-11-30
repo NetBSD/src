@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.24 2014/07/25 08:10:39 dholland Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.24.4.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ int             utoppy_activate(device_t, enum devact);
 extern struct cfdriver utoppy_cd;
 CFATTACH_DECL_NEW(utoppy, sizeof(struct utoppy_softc), utoppy_match, utoppy_attach, utoppy_detach, utoppy_activate);
 
-int 
+int
 utoppy_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -214,7 +214,7 @@ utoppy_match(device_t parent, cfdata_t match, void *aux)
 	return (UMATCH_NONE);
 }
 
-void 
+void
 utoppy_attach(device_t parent, device_t self, void *aux)
 {
 	struct utoppy_softc *sc = device_private(self);
@@ -223,7 +223,7 @@ utoppy_attach(device_t parent, device_t self, void *aux)
 	usbd_interface_handle iface;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	u_int8_t epcount;
+	uint8_t epcount;
 	int i;
 
 	sc->sc_dev = self;
@@ -335,7 +335,7 @@ utoppy_activate(device_t self, enum devact act)
 	}
 }
 
-int 
+int
 utoppy_detach(device_t self, int flags)
 {
 	struct utoppy_softc *sc = device_private(self);
@@ -524,7 +524,7 @@ utoppy_dump_packet(const void *b, size_t len)
 
 static usbd_status
 utoppy_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
-    u_int16_t flags, u_int32_t timeout, void *buf, u_int32_t *size,
+    uint16_t flags, uint32_t timeout, void *buf, uint32_t *size,
     const char *lbl)
 {
 	usbd_status err;
@@ -1494,7 +1494,7 @@ utoppyread(dev_t dev, struct uio *uio, int flags)
 				err = utoppy_readdir_next(sc);
 			else
 			if ((err = uiomove(&ud, sizeof(ud), uio)) != 0)
-				utoppy_cancel(sc); 
+				utoppy_cancel(sc);
 		}
 		break;
 

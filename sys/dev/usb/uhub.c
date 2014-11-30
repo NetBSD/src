@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126 2014/08/13 06:26:32 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.1 2014/11/30 12:18:58 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126 2014/08/13 06:26:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,8 +68,8 @@ struct uhub_softc {
 	usbd_pipe_handle	sc_ipipe;	/* interrupt pipe */
 
 	/* XXX second buffer needed because we can't suspend pipes yet */
-	u_int8_t		*sc_statusbuf;
-	u_int8_t		*sc_status;
+	uint8_t			*sc_statusbuf;
+	uint8_t			*sc_status;
 	size_t			sc_statuslen;
 	int			sc_explorepending;
 	int		sc_isehciroothub; /* see comment in uhub_intr() */

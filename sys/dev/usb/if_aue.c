@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.132 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.132.4.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.1 2014/11/30 12:18:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -137,7 +137,7 @@ int	auedebug = 0;
  */
 struct aue_type {
 	struct usb_devno	aue_dev;
-	u_int16_t		aue_flags;
+	uint16_t		aue_flags;
 #define LSYS	0x0001		/* use Linksys reset */
 #define PNA	0x0002		/* has Home PNA */
 #define PII	0x0004		/* Pegasus II chip */
@@ -247,7 +247,7 @@ Static void aue_lock_mii(struct aue_softc *);
 Static void aue_unlock_mii(struct aue_softc *);
 
 Static void aue_setmulti(struct aue_softc *);
-Static u_int32_t aue_crc(void *);
+Static uint32_t aue_crc(void *);
 Static void aue_reset(struct aue_softc *);
 
 Static int aue_csr_read_1(struct aue_softc *, int);
@@ -435,7 +435,7 @@ aue_miibus_readreg(device_t dev, int phy, int reg)
 {
 	struct aue_softc *sc = device_private(dev);
 	int			i;
-	u_int16_t		val;
+	uint16_t		val;
 
 	if (sc->aue_dying) {
 #ifdef DIAGNOSTIC
@@ -548,7 +548,7 @@ aue_miibus_statchg(struct ifnet *ifp)
 	 * register of the Broadcom PHY.
 	 */
 	if (!sc->aue_dying && (sc->aue_flags & LSYS)) {
-		u_int16_t auxmode;
+		uint16_t auxmode;
 		auxmode = aue_miibus_readreg(sc->aue_dev, 0, 0x1b);
 		aue_miibus_writereg(sc->aue_dev, 0, 0x1b, auxmode | 0x04);
 	}
@@ -558,10 +558,10 @@ aue_miibus_statchg(struct ifnet *ifp)
 #define AUE_POLY	0xEDB88320
 #define AUE_BITS	6
 
-Static u_int32_t
+Static uint32_t
 aue_crc(void *addrv)
 {
-	u_int32_t		idx, bit, data, crc;
+	uint32_t		idx, bit, data, crc;
 	char *addr = addrv;
 
 	/* Compute CRC for the address value. */
@@ -581,7 +581,7 @@ aue_setmulti(struct aue_softc *sc)
 	struct ifnet		*ifp;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
-	u_int32_t		h = 0, i;
+	uint32_t		h = 0, i;
 
 	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
 
@@ -1102,7 +1102,7 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct aue_softc	*sc = c->aue_sc;
 	struct ifnet		*ifp = GET_IFP(sc);
 	struct mbuf		*m;
-	u_int32_t		total_len;
+	uint32_t		total_len;
 	struct aue_rxpkt	r;
 	int			s;
 
@@ -1319,8 +1319,8 @@ aue_send(struct aue_softc *sc, struct mbuf *m, int idx)
 	 * transfer, however it actually seems to ignore this info
 	 * and base the frame size on the bulk transfer length.
 	 */
-	c->aue_buf[0] = (u_int8_t)m->m_pkthdr.len;
-	c->aue_buf[1] = (u_int8_t)(m->m_pkthdr.len >> 8);
+	c->aue_buf[0] = (uint8_t)m->m_pkthdr.len;
+	c->aue_buf[1] = (uint8_t)(m->m_pkthdr.len >> 8);
 	total_len = m->m_pkthdr.len + 2;
 
 	usbd_setup_xfer(c->aue_xfer, sc->aue_ep[AUE_ENDPT_TX],

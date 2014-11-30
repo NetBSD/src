@@ -1,2 +1,0 @@
-# $NetBSD: rescue.i386,v 1.4 2014/04/20 13:41:21 abs Exp $
-./rescue/ldconfig				base-rescue-root	pic

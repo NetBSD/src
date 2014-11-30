@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.74 2014/07/14 12:04:48 ryoon Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.74.4.1 2014/11/30 12:18:58 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74 2014/07/14 12:04:48 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.4.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ Static	int  uplcom_ioctl(void *, int, u_long, void *, int, proc_t *);
 Static	int  uplcom_param(void *, int, struct termios *);
 Static	int  uplcom_open(void *, int);
 Static	void uplcom_close(void *, int);
-Static usbd_status uplcom_vendor_control_write(usbd_device_handle, u_int16_t, u_int16_t);
+Static usbd_status uplcom_vendor_control_write(usbd_device_handle, uint16_t, uint16_t);
 
 struct	ucom_methods uplcom_methods = {
 	uplcom_get_status,
@@ -205,7 +205,7 @@ extern struct cfdriver uplcom_cd;
 CFATTACH_DECL2_NEW(uplcom, sizeof(struct uplcom_softc), uplcom_match,
     uplcom_attach, uplcom_detach, uplcom_activate, NULL, uplcom_childdet);
 
-int 
+int
 uplcom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -214,7 +214,7 @@ uplcom_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+void
 uplcom_attach(device_t parent, device_t self, void *aux)
 {
 	struct uplcom_softc *sc = device_private(self);
@@ -430,7 +430,7 @@ uplcom_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-int 
+int
 uplcom_detach(device_t self, int flags)
 {
 	struct uplcom_softc *sc = device_private(self);
@@ -741,7 +741,7 @@ uplcom_param(void *addr, int portno, struct termios *t)
 }
 
 Static usbd_status
-uplcom_vendor_control_write(usbd_device_handle dev, u_int16_t value, u_int16_t index)
+uplcom_vendor_control_write(usbd_device_handle dev, uint16_t value, uint16_t index)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -778,7 +778,7 @@ uplcom_open(void *addr, int portno)
 		uplcom_vendor_control_write(sc->sc_udev, 2, 0x44);
 	else
 		uplcom_vendor_control_write(sc->sc_udev, 2, 0x24);
-	
+
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
 		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
 		err = usbd_open_pipe_intr(sc->sc_intr_iface, sc->sc_intr_number,

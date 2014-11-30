@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urlreg.h,v 1.9 2012/08/24 09:01:23 msaitoh Exp $	*/
+/*	$NetBSD: if_urlreg.h,v 1.9.16.1 2014/11/30 12:18:58 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -185,5 +185,5 @@ struct url_softc {
 	struct usb_task		sc_tick_task;
 	struct usb_task		sc_stop_task;
 
-	u_int16_t		sc_flags;
+	uint16_t		sc_flags;
 };

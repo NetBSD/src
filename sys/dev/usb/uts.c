@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.3 2013/01/05 23:34:21 christos Exp $	*/
+/*	$NetBSD: uts.c,v 1.3.14.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.3 2013/01/05 23:34:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.3.14.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ struct uts_softc {
 	int flags;		/* device configuration */
 #define UTS_ABS		0x1	/* absolute position */
 
-	u_int32_t		sc_buttons;	/* touchscreen button status */
+	uint32_t		sc_buttons;	/* touchscreen button status */
 	device_t		sc_wsmousedev;
 	struct tpcalib_softc	sc_tpcalib;	/* calibration */
 	struct wsmouse_calibcoords sc_calibcoords;
@@ -137,7 +137,7 @@ uts_attach(device_t parent, device_t self, void *aux)
 	struct wsmousedev_attach_args a;
 	int size;
 	void *desc;
-	u_int32_t flags;
+	uint32_t flags;
 	struct hid_data * d;
 	struct hid_item item;
 
@@ -353,7 +353,7 @@ uts_intr(struct uhidev *addr, void *ibuf, u_int len)
 {
 	struct uts_softc *sc = (struct uts_softc *)addr;
 	int dx, dy, dz;
-	u_int32_t buttons = 0;
+	uint32_t buttons = 0;
 	int flags, s;
 
 	DPRINTFN(5,("uts_intr: len=%d\n", len));

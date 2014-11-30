@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.43 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.43.4.1 2014/11/30 12:18:58 skrll Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.1 2014/11/30 12:18:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -146,7 +146,7 @@ int udavdebug = 0;
 
 static const struct udav_type {
 	struct usb_devno udav_dev;
-	u_int16_t udav_flags;
+	uint16_t udav_flags;
 #define UDAV_EXT_PHY	0x0001
 #define UDAV_NO_PHY	0x0002
 } udav_devs [] = {
@@ -578,7 +578,7 @@ udav_csr_write(struct udav_softc *sc, int offset, void *buf, int len)
 Static int
 udav_csr_read1(struct udav_softc *sc, int offset)
 {
-	u_int8_t val = 0;
+	uint8_t val = 0;
 
 	if (sc == NULL)
 		return (0);
@@ -771,7 +771,7 @@ udav_setmulti(struct udav_softc *sc)
 	struct ifnet *ifp;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	u_int8_t hashes[8];
+	uint8_t hashes[8];
 	int h = 0;
 
 	DPRINTF(("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
@@ -1047,8 +1047,8 @@ udav_send(struct udav_softc *sc, struct mbuf *m, int idx)
 	}
 
 	/* Frame length is specified in the first 2bytes of the buffer */
-	c->udav_buf[0] = (u_int8_t)total_len;
-	c->udav_buf[1] = (u_int8_t)(total_len >> 8);
+	c->udav_buf[0] = (uint8_t)total_len;
+	c->udav_buf[1] = (uint8_t)(total_len >> 8);
 	total_len += 2;
 
 	usbd_setup_xfer(c->udav_xfer, sc->sc_pipe_tx, c, c->udav_buf, total_len,
@@ -1132,8 +1132,8 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct udav_softc *sc = c->udav_sc;
 	struct ifnet *ifp = GET_IFP(sc);
 	struct mbuf *m;
-	u_int32_t total_len;
-	u_int8_t *pktstat;
+	uint32_t total_len;
+	uint8_t *pktstat;
 	int s;
 
 	DPRINTF(("%s: %s: enter\n", device_xname(sc->sc_dev),__func__));
@@ -1167,13 +1167,13 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	memcpy(mtod(m, char *), c->udav_buf, total_len);
 
 	/* first byte in received data */
-	pktstat = mtod(m, u_int8_t *);
-	m_adj(m, sizeof(u_int8_t));
+	pktstat = mtod(m, uint8_t *);
+	m_adj(m, sizeof(uint8_t));
 	DPRINTF(("%s: RX Status: 0x%02x\n", device_xname(sc->sc_dev),
 				*pktstat));
 
-	total_len = UGETW(mtod(m, u_int8_t *));
-	m_adj(m, sizeof(u_int16_t));
+	total_len = UGETW(mtod(m, uint8_t *));
+	m_adj(m, sizeof(uint16_t));
 
 	if (*pktstat & UDAV_RSR_LCS) {
 		ifp->if_collisions++;
@@ -1490,8 +1490,8 @@ Static int
 udav_miibus_readreg(device_t dev, int phy, int reg)
 {
 	struct udav_softc *sc;
-	u_int8_t val[2];
-	u_int16_t data16;
+	uint8_t val[2];
+	uint16_t data16;
 
 	if (dev == NULL)
 		return (0);
@@ -1547,7 +1547,7 @@ Static void
 udav_miibus_writereg(device_t dev, int phy, int reg, int data)
 {
 	struct udav_softc *sc;
-	u_int8_t val[2];
+	uint8_t val[2];
 
 	if (dev == NULL)
 		return;

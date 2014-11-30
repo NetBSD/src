@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.65 2014/09/12 16:40:38 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.65.2.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65 2014/09/12 16:40:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.1 2014/11/30 12:18:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -433,7 +433,7 @@ usb_syncmem(usb_dma_t *p, bus_addr_t offset, bus_size_t len, int ops)
 
 
 usbd_status
-usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
+usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, uint32_t size)
 {
 	int error;
 	u_long start;

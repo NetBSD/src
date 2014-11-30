@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.52 2013/01/29 00:00:15 christos Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.52.14.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -152,18 +152,18 @@ typedef struct uhci_softc {
 	uhci_soft_qh_t *sc_bulk_start;	/* dummy QH for bulk */
 	uhci_soft_qh_t *sc_bulk_end;	/* last bulk transfer */
 	uhci_soft_qh_t *sc_last_qh;	/* dummy QH at the end */
-	u_int32_t sc_loops;		/* number of QHs that wants looping */
+	uint32_t sc_loops;		/* number of QHs that wants looping */
 
 	uhci_soft_td_t *sc_freetds;	/* TD free list */
 	uhci_soft_qh_t *sc_freeqhs;	/* QH free list */
 
 	pool_cache_t sc_xferpool;	/* free xfer pool */
 
-	u_int8_t sc_addr;		/* device address */
-	u_int8_t sc_conf;		/* device configuration */
+	uint8_t sc_addr;		/* device address */
+	uint8_t sc_conf;		/* device configuration */
 
-	u_int8_t sc_saved_sof;
-	u_int16_t sc_saved_frnum;
+	uint8_t sc_saved_sof;
+	uint16_t sc_saved_frnum;
 
 	char sc_softwake;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.19 2012/03/11 01:06:07 mrg Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.19.16.1 2014/11/30 12:18:58 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -86,7 +86,7 @@ struct umidi_endpoint {
 	usbd_xfer_handle	xfer;
 	umidi_packet_bufp	buffer;
 	umidi_packet_bufp	next_slot;
-	u_int32_t               buffer_size;
+	uint32_t               buffer_size;
 	int			num_scheduled;
 	int			num_open;
 	int			num_jacks;
@@ -94,8 +94,8 @@ struct umidi_endpoint {
 	void			*solicit_cookie;
 	int			armed;
 	struct umidi_jack	*jacks[UMIDI_MAX_EPJACKS];
-	u_int16_t		this_schedule; /* see UMIDI_MAX_EPJACKS */
-	u_int16_t		next_schedule;
+	uint16_t		this_schedule; /* see UMIDI_MAX_EPJACKS */
+	uint16_t		next_schedule;
 };
 
 /* software context */

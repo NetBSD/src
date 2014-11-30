@@ -1,4 +1,4 @@
-/*	$NetBSD: uirdavar.h,v 1.5 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: uirdavar.h,v 1.5.38.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ struct uirda_softc {
 	usbd_interface_handle	sc_iface;
 
 	kmutex_t		sc_rd_buf_lk;
-	u_int8_t		*sc_rd_buf;
+	uint8_t			*sc_rd_buf;
 	int			sc_rd_addr;
 	usbd_pipe_handle	sc_rd_pipe;
 	usbd_xfer_handle	sc_rd_xfer;
@@ -131,7 +131,7 @@ struct uirda_softc {
 	u_char			sc_rd_err;
 
 	kmutex_t		sc_wr_buf_lk;
-	u_int8_t		*sc_wr_buf;
+	uint8_t			*sc_wr_buf;
 	int			sc_wr_addr;
 	usbd_xfer_handle	sc_wr_xfer;
 	usbd_pipe_handle	sc_wr_pipe;
@@ -144,7 +144,7 @@ struct uirda_softc {
 
 	int			sc_refcnt;
 	char			sc_dying;
-	u_int8_t		sc_hdszi; /* set to value if != 1 needed */
+	uint8_t		sc_hdszi; /* set to value if != 1 needed */
 
 	int			(*sc_loadfw)(struct uirda_softc *);
 	struct irframe_methods	*sc_irm;

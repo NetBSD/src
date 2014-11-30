@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.48 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_url.c,v 1.48.4.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.4.1 2014/11/30 12:18:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -149,7 +149,7 @@ int urldebug = 0;
 
 static const struct url_type {
 	struct usb_devno url_dev;
-	u_int16_t url_flags;
+	uint16_t url_flags;
 #define URL_EXT_PHY	0x0001
 } url_devs [] = {
 	/* MELCO LUA-KTX */
@@ -429,7 +429,7 @@ url_mem(struct url_softc *sc, int cmd, int offset, void *buf, int len)
 Static int
 url_csr_read_1(struct url_softc *sc, int reg)
 {
-	u_int8_t val = 0;
+	uint8_t val = 0;
 
 	DPRINTFN(0x100,
 		 ("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
@@ -460,7 +460,7 @@ url_csr_read_2(struct url_softc *sc, int reg)
 Static int
 url_csr_write_1(struct url_softc *sc, int reg, int aval)
 {
-	u_int8_t val = aval;
+	uint8_t val = aval;
 
 	DPRINTFN(0x100,
 		 ("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
@@ -637,7 +637,7 @@ url_setmulti(struct url_softc *sc)
 	struct ifnet *ifp;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	u_int32_t hashes[2] = { 0, 0 };
+	uint32_t hashes[2] = { 0, 0 };
 	int h = 0;
 	int mcnt = 0;
 
@@ -995,7 +995,7 @@ url_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct url_softc *sc = c->url_sc;
 	struct ifnet *ifp = GET_IFP(sc);
 	struct mbuf *m;
-	u_int32_t total_len;
+	uint32_t total_len;
 	url_rxhdr_t rxhdr;
 	int s;
 
@@ -1350,7 +1350,7 @@ Static int
 url_int_miibus_readreg(device_t dev, int phy, int reg)
 {
 	struct url_softc *sc;
-	u_int16_t val;
+	uint16_t val;
 
 	if (dev == NULL)
 		return (0);
@@ -1506,7 +1506,7 @@ Static int
 url_ext_miibus_redreg(device_t dev, int phy, int reg)
 {
 	struct url_softc *sc = device_private(dev);
-	u_int16_t val;
+	uint16_t val;
 
 	DPRINTF(("%s: %s: enter, phy=%d reg=0x%04x\n",
 		 device_xname(sc->sc_dev), __func__, phy, reg));
