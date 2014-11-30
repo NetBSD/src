@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.75.4.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.75.4.2 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.2 2014/11/30 13:14:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,7 +336,7 @@ uscanner_attach(device_t parent, device_t self, void *aux)
 			ed_bulkin = ed;
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT
 		    && (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
-		        ed_bulkout = ed;
+			ed_bulkout = ed;
 		}
 
 		if (ed_bulkin && ed_bulkout)	/* found all we need */

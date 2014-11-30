@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.13.24.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.13.24.2 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.24.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.24.2 2014/11/30 13:14:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ uhmodem_attach(device_t parent, device_t self, void *aux)
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_ubsa.sc_dev = self;
-        sc->sc_ubsa.sc_udev = dev;
+	sc->sc_ubsa.sc_udev = dev;
 	sc->sc_ubsa.sc_config_index = UBSA_DEFAULT_CONFIG_INDEX;
 	sc->sc_ubsa.sc_numif = 1; /* defaut device has one interface */
 

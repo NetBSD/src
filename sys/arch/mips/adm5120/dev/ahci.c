@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.12.6.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.12.6.2 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.2 2014/11/30 13:14:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,15 +307,15 @@ ahci_attach(device_t parent, device_t self, void *aux)
 	REG_WRITE(ADMHCD_REG_INTENABLE, 0); /* disable interrupts */
 	REG_WRITE(ADMHCD_REG_CONTROL, ADMHCD_SW_RESET); /* reset */
 	delay_ms(10);
-        while (REG_READ(ADMHCD_REG_CONTROL) & ADMHCD_SW_RESET)
-                delay_ms(1);
+	while (REG_READ(ADMHCD_REG_CONTROL) & ADMHCD_SW_RESET)
+		delay_ms(1);
 
 	REG_WRITE(ADMHCD_REG_CONTROL, ADMHCD_HOST_EN);
-        REG_WRITE(ADMHCD_REG_HOSTHEAD, 0x00000000);
-        REG_WRITE(ADMHCD_REG_FMINTERVAL, 0x20002edf);
-        REG_WRITE(ADMHCD_REG_LSTHRESH, 0x628);
-        REG_WRITE(ADMHCD_REG_RHDESCR, ADMHCD_NPS | ADMHCD_LPSC);
-        REG_WRITE(ADMHCD_REG_HOSTCONTROL, ADMHCD_STATE_OP);
+	REG_WRITE(ADMHCD_REG_HOSTHEAD, 0x00000000);
+	REG_WRITE(ADMHCD_REG_FMINTERVAL, 0x20002edf);
+	REG_WRITE(ADMHCD_REG_LSTHRESH, 0x628);
+	REG_WRITE(ADMHCD_REG_RHDESCR, ADMHCD_NPS | ADMHCD_LPSC);
+	REG_WRITE(ADMHCD_REG_HOSTCONTROL, ADMHCD_STATE_OP);
 
 	REG_WRITE(ADMHCD_REG_INTENABLE, 0); /* XXX: enable interrupts */
 
@@ -1066,7 +1066,7 @@ ahci_device_ctrl_start(usbd_xfer_handle xfer)
 	static struct admhcd_td td_v[4] __attribute__((aligned(16))), *td, *td1, *td2, *td3;
 	static usb_dma_t reqdma;
 	usbd_pipe_handle pipe = xfer->pipe;
-        usb_device_request_t *req = &xfer->request;
+	usb_device_request_t *req = &xfer->request;
 	struct ahci_softc *sc = (struct ahci_softc *)pipe->device->bus;
 	int len, isread;
 
@@ -1078,17 +1078,17 @@ ahci_device_ctrl_start(usbd_xfer_handle xfer)
 /*	printf("ctrl_start>>>\n"); */
 
 #ifdef DIAGNOSTIC
-        if (!(xfer->rqflags & URQ_REQUEST)) {
-                /* XXX panic */
-                printf("ahci_device_ctrl_transfer: not a request\n");
-                return (USBD_INVAL);
-        }
+	if (!(xfer->rqflags & URQ_REQUEST)) {
+		/* XXX panic */
+		printf("ahci_device_ctrl_transfer: not a request\n");
+		return (USBD_INVAL);
+	}
 #endif
 
 #define KSEG1ADDR(x) (0xa0000000 | (((uint32_t)x) & 0x1fffffff))
 	DPRINTF(D_TRACE, ("st "));
 	if (!ep) {
-	        ep = (struct admhcd_ed *)KSEG1ADDR(&ep_v);
+		ep = (struct admhcd_ed *)KSEG1ADDR(&ep_v);
 		td = (struct admhcd_td *)KSEG1ADDR(&td_v[0]);
 		td1 = (struct admhcd_td *)KSEG1ADDR(&td_v[1]);
 		td2 = (struct admhcd_td *)KSEG1ADDR(&td_v[2]);
@@ -1115,11 +1115,11 @@ ahci_device_ctrl_start(usbd_xfer_handle xfer)
 	isread = req->bmRequestType & UT_READ;
 	len = UGETW(req->wLength);
 
-        ep->next = ep;
+	ep->next = ep;
 
-        td->buffer = DMAADDR(&reqdma,0) | 0xa0000000;
-        td->buflen=sizeof(*req);
-        td->control=ADMHCD_TD_SETUP | ADMHCD_TD_DATA0 | ADMHCD_TD_OWN;
+	td->buffer = DMAADDR(&reqdma,0) | 0xa0000000;
+	td->buflen=sizeof(*req);
+	td->control=ADMHCD_TD_SETUP | ADMHCD_TD_DATA0 | ADMHCD_TD_OWN;
 
 	if (len) {
 		td->next = td1;
@@ -1128,10 +1128,10 @@ ahci_device_ctrl_start(usbd_xfer_handle xfer)
 		td1->buflen = len;
 		td1->next = td2;
 		td1->control= (isread?ADMHCD_TD_IN:ADMHCD_TD_OUT) | ADMHCD_TD_DATA1 | ADMHCD_TD_R | ADMHCD_TD_OWN;
-        } else {
-                td1->control = 0;
-                td->next = td2;
-        };
+	} else {
+		td1->control = 0;
+		td->next = td2;
+	};
 
 	td2->buffer = 0;
 	td2->buflen= 0;
@@ -1162,41 +1162,41 @@ ahci_device_ctrl_start(usbd_xfer_handle xfer)
 	printf("td3->next: %p\n",td3->next);
 */
 
-        REG_WRITE(ADMHCD_REG_HOSTHEAD, (uint32_t)ep);
-        REG_WRITE(ADMHCD_REG_HOSTCONTROL, ADMHCD_STATE_OP | ADMHCD_DMA_EN);
+	REG_WRITE(ADMHCD_REG_HOSTHEAD, (uint32_t)ep);
+	REG_WRITE(ADMHCD_REG_HOSTCONTROL, ADMHCD_STATE_OP | ADMHCD_DMA_EN);
 /*	printf("1: %x %x %x %x\n", ep->control, td->control, td1->control, td2->control); */
-        s=100;
-        while (s--) {
-                delay_ms(10);
+	s=100;
+	while (s--) {
+		delay_ms(10);
 /*                printf("%x %x %x %x\n", ep->control, td->control, td1->control, td2->control);*/
 		status = USBD_TIMEOUT;
-                if (td->control & ADMHCD_TD_OWN) continue;
+		if (td->control & ADMHCD_TD_OWN) continue;
 
-                err = (td->control & ADMHCD_TD_ERRMASK)>>ADMHCD_TD_ERRSHIFT;
-                if (err) {
+		err = (td->control & ADMHCD_TD_ERRMASK)>>ADMHCD_TD_ERRSHIFT;
+		if (err) {
 			status = USBD_IOERROR;
-                        break;
-                };
-
-		status = USBD_TIMEOUT;
-                if (td1->control & ADMHCD_TD_OWN) continue;
-                err = (td1->control & ADMHCD_TD_ERRMASK)>>ADMHCD_TD_ERRSHIFT;
-                if (err) {
-			status = USBD_IOERROR;
-                        break;
-                };
+			break;
+		};
 
 		status = USBD_TIMEOUT;
-                if (td2->control & ADMHCD_TD_OWN) continue;
-                err = (td2->control & ADMHCD_TD_ERRMASK)>>ADMHCD_TD_ERRSHIFT;
-                if (err) {
+		if (td1->control & ADMHCD_TD_OWN) continue;
+		err = (td1->control & ADMHCD_TD_ERRMASK)>>ADMHCD_TD_ERRSHIFT;
+		if (err) {
 			status = USBD_IOERROR;
-                };
+			break;
+		};
+
+		status = USBD_TIMEOUT;
+		if (td2->control & ADMHCD_TD_OWN) continue;
+		err = (td2->control & ADMHCD_TD_ERRMASK)>>ADMHCD_TD_ERRSHIFT;
+		if (err) {
+			status = USBD_IOERROR;
+		};
 		status = USBD_NORMAL_COMPLETION;
-                break;
+		break;
 
 	};
-        REG_WRITE(ADMHCD_REG_HOSTCONTROL, ADMHCD_STATE_OP);
+	REG_WRITE(ADMHCD_REG_HOSTCONTROL, ADMHCD_STATE_OP);
 
 	xfer->actlen = len;
 	xfer->status = status;
@@ -1418,7 +1418,7 @@ ahci_device_bulk_start(usbd_xfer_handle xfer)
 /* 	printf("bulk_start>>>\n"); */
 
 	if (!ep) {
-	        ep = (struct admhcd_ed *)KSEG1ADDR(&ep_v);
+		ep = (struct admhcd_ed *)KSEG1ADDR(&ep_v);
 		for (i=0; i<NBULK_TDS; i++) {
 			td[i] = (struct admhcd_td *)KSEG1ADDR(&td_v[i]);
 		};
@@ -1442,10 +1442,10 @@ ahci_device_bulk_start(usbd_xfer_handle xfer)
 	printf("speed: %x\n",pipe->device->speed);
 	printf("dmabuf: %p\n",xfer->dmabuf.block); */
 
-        isread = UE_GET_DIR(endpt) == UE_DIR_IN;
-        len = xfer->length;
+	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
+	len = xfer->length;
 
-        ep->next = ep;
+	ep->next = ep;
 
 	i = 0;
 	offset = 0;
@@ -1486,27 +1486,27 @@ ahci_device_bulk_start(usbd_xfer_handle xfer)
 		printf("td[%d]->buflen: %x\n",i,td[i]->buflen);
 	}; */
 
-        REG_WRITE(ADMHCD_REG_HOSTHEAD, (uint32_t)ep);
-        REG_WRITE(ADMHCD_REG_HOSTCONTROL, ADMHCD_STATE_OP | ADMHCD_DMA_EN);
+	REG_WRITE(ADMHCD_REG_HOSTHEAD, (uint32_t)ep);
+	REG_WRITE(ADMHCD_REG_HOSTCONTROL, ADMHCD_STATE_OP | ADMHCD_DMA_EN);
 	i = 0;
 /*	printf("1: %x %d %x %x\n", ep->control, i, td[i]->control, td[i]->buflen); */
-        s=100;
+	s=100;
 	err = 0;
-        while (s--) {
+	while (s--) {
 /*                printf("%x %d %x %x\n", ep->control, i, td[i]->control, td[i]->buflen); */
 		status = USBD_TIMEOUT;
-                if (td[i]->control & ADMHCD_TD_OWN) {
+		if (td[i]->control & ADMHCD_TD_OWN) {
 			delay_ms(3);
 			continue;
 		};
 
 		len += td[i]->len - td[i]->buflen;
 
-                err = (td[i]->control & ADMHCD_TD_ERRMASK)>>ADMHCD_TD_ERRSHIFT;
-                if (err) {
+		err = (td[i]->control & ADMHCD_TD_ERRMASK)>>ADMHCD_TD_ERRSHIFT;
+		if (err) {
 			status = USBD_IOERROR;
-                        break;
-                };
+			break;
+		};
 
 		i++;
 		if (i==segs) {
@@ -1515,7 +1515,7 @@ ahci_device_bulk_start(usbd_xfer_handle xfer)
 		};
 
 	};
-        REG_WRITE(ADMHCD_REG_HOSTCONTROL, ADMHCD_STATE_OP);
+	REG_WRITE(ADMHCD_REG_HOSTCONTROL, ADMHCD_STATE_OP);
 
 	apipe->toggle = ((uint32_t)ep->head & 2)?ADMHCD_TD_DATA1:ADMHCD_TD_DATA0;
 /*	printf("bulk_transfer_done: status: %x, err: %x, len: %x, toggle: %x\n", status,err,len,apipe->toggle); */
@@ -1680,7 +1680,7 @@ ahci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 void
 ahci_device_clear_toggle(usbd_pipe_handle pipe)
 {
-        struct ahci_pipe *apipe = (struct ahci_pipe *)pipe;
+	struct ahci_pipe *apipe = (struct ahci_pipe *)pipe;
 	apipe->toggle = 0;
 }
 

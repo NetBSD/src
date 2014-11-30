@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.30.14.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.30.14.2 2014/11/30 13:14:11 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -34,12 +34,12 @@
 typedef struct usb_dma_block {
 	bus_dma_tag_t tag;
 	bus_dmamap_t map;
-        void *kaddr;
-        bus_dma_segment_t *segs;
-        int nsegs;
-        int nsegs_alloc;
-        size_t size;
-        size_t align;
+	void *kaddr;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	int nsegs_alloc;
+	size_t size;
+	size_t align;
 	int flags;
 #define USB_DMA_FULLBLOCK	0x0001
 #define USB_DMA_RESERVE		0x0002

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.92.4.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: uhid.c,v 1.92.4.2 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.2 2014/11/30 13:14:11 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -631,7 +631,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 
 	case USB_GET_DEVICEINFO:
 		usbd_fill_deviceinfo(sc->sc_hdev.sc_parent->sc_udev,
-			             (struct usb_device_info *)addr, 0);
+				     (struct usb_device_info *)addr, 0);
 		break;
 #ifdef COMPAT_30
 	case USB_GET_DEVICEINFO_OLD:
@@ -640,15 +640,15 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 
 		break;
 #endif
-        case USB_GET_STRING_DESC:
+	case USB_GET_STRING_DESC:
 	    {
-                struct usb_string_desc *si = (struct usb_string_desc *)addr;
-                err = usbd_get_string_desc(sc->sc_hdev.sc_parent->sc_udev,
+		struct usb_string_desc *si = (struct usb_string_desc *)addr;
+		err = usbd_get_string_desc(sc->sc_hdev.sc_parent->sc_udev,
 			si->usd_string_index,
-                	si->usd_language_id, &si->usd_desc, &size);
-                if (err)
-                        return (EINVAL);
-                break;
+			si->usd_language_id, &si->usd_desc, &size);
+		if (err)
+			return (EINVAL);
+		break;
 	    }
 
 	default:

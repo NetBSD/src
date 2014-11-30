@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.87.6.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: ums.c,v 1.87.6.2 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.87.6.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.87.6.2 2014/11/30 13:14:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ ums_match(device_t parent, cfdata_t match, void *aux)
 	    !hid_is_collection(desc, size, uha->reportid,
 			       HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_POINTER)) &&
 	    !hid_is_collection(desc, size, uha->reportid,
-                               HID_USAGE2(HUP_DIGITIZERS, 0x0002)))
+			       HID_USAGE2(HUP_DIGITIZERS, 0x0002)))
 		return (UMATCH_NONE);
 
 	return (UMATCH_IFACECLASS);

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.2 2014/11/30 13:14:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.2 2014/11/30 13:14:11 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1221,8 +1221,8 @@ usb_desc_iter_init(usbd_device_handle dev, usbd_desc_iter_t *iter)
 {
 	const usb_config_descriptor_t *cd = usbd_get_config_descriptor(dev);
 
-        iter->cur = (const uByte *)cd;
-        iter->end = (const uByte *)cd + UGETW(cd->wTotalLength);
+	iter->cur = (const uByte *)cd;
+	iter->end = (const uByte *)cd + UGETW(cd->wTotalLength);
 }
 
 const usb_descriptor_t *

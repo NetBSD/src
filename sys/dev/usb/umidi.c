@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.65.14.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: umidi.c,v 1.65.14.2 2014/11/30 13:14:11 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.2 2014/11/30 13:14:11 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -495,7 +495,7 @@ alloc_pipe(struct umidi_endpoint *ep)
 	ep->buffer_size -= ep->buffer_size % UMIDI_PACKET_SIZE;
 
 	DPRINTF(("%s: alloc_pipe %p, buffer size %u\n",
-	        device_xname(sc->sc_dev), ep, ep->buffer_size));
+		device_xname(sc->sc_dev), ep, ep->buffer_size));
 	ep->num_scheduled = 0;
 	ep->this_schedule = 0;
 	ep->next_schedule = 0;
@@ -1065,7 +1065,7 @@ assign_all_jacks_automatically(struct umidi_softc *sc)
 			++ asg_spec;
 		} else {
 			out = (i<sc->sc_out_num_jacks) ? &sc->sc_out_jacks[i]
-			                               : NULL;
+						       : NULL;
 			in = (i<sc->sc_in_num_jacks) ? &sc->sc_in_jacks[i]
 						     : NULL;
 		}
@@ -1432,7 +1432,7 @@ start_input_transfer(struct umidi_endpoint *ep)
 			(usbd_private_handle)ep,
 			ep->buffer, ep->buffer_size,
 			USBD_SHORT_XFER_OK | USBD_NO_COPY,
-                        USBD_NO_TIMEOUT, in_intr);
+			USBD_NO_TIMEOUT, in_intr);
 	return usbd_transfer(ep->xfer);
 }
 
@@ -1590,13 +1590,13 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	mutex_enter(&sc->sc_lock);
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
-        if (0 == count % UMIDI_PACKET_SIZE) {
+	if (0 == count % UMIDI_PACKET_SIZE) {
 		DPRINTFN(200,("%s: input endpoint %p transfer length %u\n",
 			     device_xname(ep->sc->sc_dev), ep, count));
-        } else {
-                DPRINTF(("%s: input endpoint %p odd transfer length %u\n",
-                        device_xname(ep->sc->sc_dev), ep, count));
-        }
+	} else {
+		DPRINTF(("%s: input endpoint %p odd transfer length %u\n",
+			device_xname(ep->sc->sc_dev), ep, count));
+	}
 
 	slot = ep->buffer;
 	end = slot + count / sizeof *slot;
@@ -1615,7 +1615,7 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 		/* 0 <= cn <= 15 by inspection of above code */
 		if (!(jack = ep->jacks[cn]) || cn != jack->cable_number) {
 			DPRINTF(("%s: stray input endpoint %p cable %d len %d: "
-			         "%02X %02X %02X (try CN_SEQ quirk?)\n",
+				 "%02X %02X %02X (try CN_SEQ quirk?)\n",
 				 device_xname(ep->sc->sc_dev), ep, cn, len,
 				 (unsigned)data[0],
 				 (unsigned)data[1],
@@ -1628,7 +1628,7 @@ in_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 			continue;
 
 		DPRINTFN(500,("%s: input endpoint %p cable %d len %d: "
-		             "%02X %02X %02X\n",
+			     "%02X %02X %02X\n",
 			     device_xname(ep->sc->sc_dev), ep, cn, len,
 			     (unsigned)data[0],
 			     (unsigned)data[1],
@@ -1663,14 +1663,14 @@ out_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 		microtime(&umidi_tv);
 #endif
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
-        if ( 0 == count % UMIDI_PACKET_SIZE ) {
+	if ( 0 == count % UMIDI_PACKET_SIZE ) {
 		DPRINTFN(200,("%s: %"PRIu64".%06"PRIu64"s out ep %p xfer length %u\n",
 			     device_xname(ep->sc->sc_dev),
 			     umidi_tv.tv_sec%100, (uint64_t)umidi_tv.tv_usec, ep, count));
-        } else {
-                DPRINTF(("%s: output endpoint %p odd transfer length %u\n",
-                        device_xname(ep->sc->sc_dev), ep, count));
-        }
+	} else {
+		DPRINTF(("%s: output endpoint %p odd transfer length %u\n",
+			device_xname(ep->sc->sc_dev), ep, count));
+	}
 	count /= UMIDI_PACKET_SIZE;
 
 	/*
