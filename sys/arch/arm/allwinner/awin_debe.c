@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.9 2014/11/30 19:15:53 jmcneill Exp $ */
+/* $NetBSD: awin_debe.c,v 1.10 2014/11/30 20:04:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
 #define AWIN_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.9 2014/11/30 19:15:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.10 2014/11/30 20:04:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,6 +69,7 @@ struct awin_debe_softc {
 
 	uint16_t sc_margin;
 
+	bool sc_cursor_enable;
 	int sc_cursor_x, sc_cursor_y;
 	int sc_hot_x, sc_hot_y;
 	uint8_t sc_cursor_bitmap[8 * AWIN_DEBE_CURMAX];
@@ -320,6 +321,8 @@ awin_debe_set_cursor(struct awin_debe_softc *sc, struct wsdisplay_cursor *cur)
 		else
 			val &= ~AWIN_DEBE_MODCTL_HWC_EN;
 		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
+
+		sc->sc_cursor_enable = cur->enable;
 	}
 
 	if (cur->which & WSDISPLAY_CURSOR_DOHOT) {
@@ -504,10 +507,17 @@ awin_debe_ioctl(device_t self, u_long cmd, void *data)
 	case WSDISPLAYIO_SVIDEO:
 		enable = *(int *)data;
 		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
-		if (enable)
+		if (enable) {
 			val |= AWIN_DEBE_MODCTL_LAY0_EN;
-		else
+			if (sc->sc_cursor_enable) {
+				val |= AWIN_DEBE_MODCTL_HWC_EN;
+			} else {
+				val &= ~AWIN_DEBE_MODCTL_HWC_EN;
+			}
+		} else {
 			val &= ~AWIN_DEBE_MODCTL_LAY0_EN;
+			val &= ~AWIN_DEBE_MODCTL_HWC_EN;
+		}
 		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
 		return 0;
 	case WSDISPLAYIO_GVIDEO:
