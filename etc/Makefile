@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.421 2014/08/10 05:56:36 matt Exp $
+#	$NetBSD: Makefile,v 1.422 2014/11/30 15:53:29 uebayasi Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -578,7 +578,7 @@ build_kernels: .PHONY
 .for configfile in ${ALL_KERNELS}					# {
 build_kernels: kern-${configfile}
 kern-${configfile}: .PHONY .MAKE
-	cd ${KERNCONFDIR} && ${TOOL_CONFIG} -s ${KERNSRCDIR} \
+	cd ${KERNCONFDIR} && ${TOOL_CONFIG} ${CONFIGOPTS} -s ${KERNSRCDIR} \
 	    -U DEBUG -b ${KERNOBJDIR}/${configfile:C/.*\///} ${configfile}
 .if ${MKUPDATE} == "no"
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} distclean

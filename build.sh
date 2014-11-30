@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.304 2014/11/16 06:08:13 uebayasi Exp $
+#	$NetBSD: build.sh,v 1.305 2014/11/30 15:53:29 uebayasi Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1029,8 +1029,6 @@ Usage: ${progname} [-EhnorUuxy] [-a arch] [-B buildid] [-C cdextras]
                         file \`conf'
     releasekernel=conf  Install kernel built by kernel=conf to RELEASEDIR.
     kernels             Build all kernels
-    mkernels            Build all kernels in modular build
-    mkernel=conf        Build kernel with config file \`conf' in modular build
     installmodules=idir Run "make installmodules" to \`idir' to install all
                         kernel modules.
     modules             Build kernel modules.
@@ -1321,7 +1319,7 @@ parseoptions()
 			exit $?
 			;;
 
-		kernel=*|releasekernel=*|kernel.gdb=*|mkernel=*)
+		kernel=*|releasekernel=*|kernel.gdb=*)
 			arg=${op#*=}
 			op=${op%%=*}
 			[ -n "${arg}" ] ||
@@ -1350,7 +1348,6 @@ parseoptions()
 		iso-image-source|\
 		iso-image|\
 		kernels|\
-		mkernels|\
 		live-image|\
 		makewrapper|\
 		modules|\
@@ -1872,7 +1869,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.304 2014/11/16 06:08:13 uebayasi Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.305 2014/11/30 15:53:29 uebayasi Exp $
 # with these arguments: ${_args}
 #
 
@@ -1987,8 +1984,10 @@ buildkernel()
 	fi
 	[ -x "${TOOLDIR}/bin/${toolprefix}config" ] \
 	|| bomb "${TOOLDIR}/bin/${toolprefix}config does not exist. You need to \"$0 tools\" first."
-	${runcmd} "${TOOLDIR}/bin/${toolprefix}config" -b "${kernelbuildpath}" \
-		${configopts} -s "${TOP}/sys" "${kernelconfpath}" ||
+	CONFIGOPTS=$(getmakevar CONFIGOPTS)
+	${runcmd} "${TOOLDIR}/bin/${toolprefix}config" ${CONFIGOPTS} \
+		-b "${kernelbuildpath}" -s "${TOP}/sys" ${configopts} \
+		"${kernelconfpath}" ||
 	    bomb "${toolprefix}config failed for ${kernelconf}"
 	make_in_dir "${kernelbuildpath}" depend
 	make_in_dir "${kernelbuildpath}" all
@@ -2250,22 +2249,12 @@ main()
 			configopts="-D DEBUG=-g"
 			buildkernel "${arg}"
 			;;
-		mkernel=*)
-			arg=${op#*=}
-			configopts="-M"
-			buildkernel "${arg}"
-			;;
 		releasekernel=*)
 			arg=${op#*=}
 			releasekernel "${arg}"
 			;;
 
 		kernels)
-			buildkernels
-			;;
-
-		mkernels)
-			configopts="-M"
 			buildkernels
 			;;
 
