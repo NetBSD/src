@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.92 2014/07/25 08:10:39 dholland Exp $	*/
+/*	$NetBSD: uhid.c,v 1.92.4.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.1 2014/11/30 12:18:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -263,7 +263,7 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 
 #ifdef UHID_DEBUG
 	if (uhiddebug > 5) {
-		u_int32_t i;
+		uint32_t i;
 
 		DPRINTF(("uhid_intr: data ="));
 		for (i = 0; i < len; i++)

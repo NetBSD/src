@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.20 2011/12/19 19:34:52 jakllsch Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.20.24.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,9 +55,9 @@ struct ucom_methods {
 	 *         decrement '*count' by the number of characters consumed.
 	 * If consuming all characters, set '*count' to zero.
 	 */
-	void (*ucom_read)(void *sc, int portno, u_char **ptr, u_int32_t *count);
+	void (*ucom_read)(void *sc, int portno, u_char **ptr, uint32_t *count);
 	void (*ucom_write)(void *sc, int portno, u_char *to, u_char *from,
-			   u_int32_t *count);
+			   uint32_t *count);
 };
 
 /* modem control register */

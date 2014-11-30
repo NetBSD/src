@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.45 2011/12/23 00:51:49 jakllsch Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.45.24.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.45 2011/12/23 00:51:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.45.24.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ struct uvisor_softc {
 	device_t		sc_subdevs[UVISOR_MAX_CONN];
 	int			sc_numcon;
 
-	u_int16_t		sc_flags;
+	uint16_t		sc_flags;
 
 	u_char			sc_dying;
 };
@@ -161,7 +161,7 @@ struct ucom_methods uvisor_methods = {
 
 struct uvisor_type {
 	struct usb_devno	uv_dev;
-	u_int16_t		uv_flags;
+	uint16_t		uv_flags;
 #define PALM4	0x0001
 #define VISOR	0x0002
 
@@ -198,7 +198,7 @@ extern struct cfdriver uvisor_cd;
 CFATTACH_DECL2_NEW(uvisor, sizeof(struct uvisor_softc), uvisor_match,
     uvisor_attach, uvisor_detach, uvisor_activate, NULL, uvisor_childdet);
 
-int 
+int
 uvisor_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -210,7 +210,7 @@ uvisor_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+void
 uvisor_attach(device_t parent, device_t self, void *aux)
 {
 	struct uvisor_softc *sc = device_private(self);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.55 2014/01/28 17:24:42 skrll Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.55.6.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,8 +55,8 @@ typedef struct ohci_soft_td {
 	int offs;
 	LIST_ENTRY(ohci_soft_td) hnext;
 	usbd_xfer_handle xfer;
-	u_int16_t len;
-	u_int16_t flags;
+	uint16_t len;
+	uint16_t flags;
 #define OHCI_CALL_DONE	0x0001
 #define OHCI_ADD_LEN	0x0002
 } ohci_soft_td_t;
@@ -73,7 +73,7 @@ typedef struct ohci_soft_itd {
 	int offs;
 	LIST_ENTRY(ohci_soft_itd) hnext;
 	usbd_xfer_handle xfer;
-	u_int16_t flags;
+	uint16_t flags;
 	char isdone;	/* used only when DIAGNOSTIC is defined */
 } ohci_soft_itd_t;
 #define OHCI_SITD_SIZE ((sizeof (struct ohci_soft_itd) + OHCI_ITD_ALIGN - 1) / OHCI_ITD_ALIGN * OHCI_ITD_ALIGN)
@@ -100,7 +100,7 @@ typedef struct ohci_softc {
 	ohci_soft_ed_t *sc_eds[OHCI_NO_EDS];
 	u_int sc_bws[OHCI_NO_INTRS];
 
-	u_int32_t sc_eintrs;
+	uint32_t sc_eintrs;
 	ohci_soft_ed_t *sc_isoc_head;
 	ohci_soft_ed_t *sc_ctrl_head;
 	ohci_soft_ed_t *sc_bulk_head;
@@ -109,8 +109,8 @@ typedef struct ohci_softc {
 	LIST_HEAD(, ohci_soft_itd) sc_hash_itds[OHCI_HASH_SIZE];
 
 	int sc_noport;
-	u_int8_t sc_addr;		/* device address */
-	u_int8_t sc_conf;		/* device configuration */
+	uint8_t sc_addr;		/* device address */
+	uint8_t sc_conf;		/* device configuration */
 
 	int sc_endian;
 #define	OHCI_LITTLE_ENDIAN	0	/* typical (uninitialized default) */
@@ -134,8 +134,8 @@ typedef struct ohci_softc {
 	char sc_vendor[32];
 	int sc_id_vendor;
 
-	u_int32_t sc_control;		/* Preserved during suspend/standby */
-	u_int32_t sc_intre;
+	uint32_t sc_control;		/* Preserved during suspend/standby */
+	uint32_t sc_intre;
 
 	u_int sc_overrun_cnt;
 	struct timeval sc_overrun_ntc;

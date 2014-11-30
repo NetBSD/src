@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.30 2014/09/12 16:40:38 skrll Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.30.2.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.30 2014/09/12 16:40:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.30.2.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ int  uisdata_bio1(struct ata_drive_datas *, struct ata_bio *);
 void uisdata_reset_drive(struct ata_drive_datas *, int, uint32_t *);
 void uisdata_reset_channel(struct ata_channel *, int);
 int  uisdata_exec_command(struct ata_drive_datas *, struct ata_command *);
-int  uisdata_get_params(struct ata_drive_datas *, u_int8_t, struct ataparams *);
+int  uisdata_get_params(struct ata_drive_datas *, uint8_t, struct ataparams *);
 int  uisdata_addref(struct ata_drive_datas *);
 void uisdata_delref(struct ata_drive_datas *);
 void uisdata_kill_pending(struct ata_drive_datas *);
@@ -131,17 +131,17 @@ const struct ata_bustype uisdata_bustype = {
 };
 
 struct ata_cmd {
-	u_int8_t ac_signature0;
-	u_int8_t ac_signature1;
+	uint8_t ac_signature0;
+	uint8_t ac_signature1;
 
-	u_int8_t ac_action_select;
+	uint8_t ac_action_select;
 #define AC_ReadRegisterAccess		0x01
 #define AC_NoDeviceSelectionBit		0x02
 #define AC_NoBSYPollBit			0x04
 #define AC_IgnorePhaseErrorBit		0x08
 #define AC_IgnoreDeviceErrorBit		0x10
 
-	u_int8_t ac_register_select;
+	uint8_t ac_register_select;
 #define AC_SelectAlternateStatus	0x01 /* R */
 #define AC_SelectDeviceControl		0x01 /* W */
 #define AC_SelectError			0x02 /* R */
@@ -154,23 +154,23 @@ struct ata_cmd {
 #define AC_SelectStatus			0x80 /* R */
 #define AC_SelectCommand		0x80 /* W */
 
-	u_int8_t ac_transfer_blocksize;
+	uint8_t ac_transfer_blocksize;
 
-	u_int8_t ac_alternate_status;
+	uint8_t ac_alternate_status;
 #define ac_device_control ac_alternate_status
-	u_int8_t ac_error;
+	uint8_t ac_error;
 #define ac_features ac_error
 
-	u_int8_t ac_sector_count;
-	u_int8_t ac_sector_number;
-	u_int8_t ac_cylinder_low;
-	u_int8_t ac_cylinder_high;
-	u_int8_t ac_device_head;
+	uint8_t ac_sector_count;
+	uint8_t ac_sector_number;
+	uint8_t ac_cylinder_low;
+	uint8_t ac_cylinder_high;
+	uint8_t ac_device_head;
 
-	u_int8_t ac_status;
+	uint8_t ac_status;
 #define ac_command ac_status
 
-	u_int8_t ac_reserved[3];
+	uint8_t ac_reserved[3];
 };
 
 #define ATA_DELAY 10000 /* 10s for a drive I/O */
@@ -275,8 +275,8 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 	struct uisdata_softc *scbus = (struct uisdata_softc *)sc->bus;
 	struct isd200_config *cf = &scbus->sc_isd_config;
 	struct ata_cmd ata;
-	u_int16_t cyl;
-	u_int8_t head, sect;
+	uint16_t cyl;
+	uint8_t head, sect;
 	int dir;
 	long nbytes;
 	u_int nblks;
@@ -503,7 +503,7 @@ uisdata_kill_pending(struct ata_drive_datas *drv)
 }
 
 int
-uisdata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
+uisdata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 		struct ataparams *prms)
 {
 	char tb[DEV_BSIZE];
@@ -511,7 +511,7 @@ uisdata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	int i;
-	u_int16_t *p;
+	uint16_t *p;
 #endif
 
 	DPRINTF(("%s\n", __func__));

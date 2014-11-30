@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.50 2014/10/18 08:33:28 snj Exp $ */
+/*	$NetBSD: if_atu.c,v 1.50.2.1 2014/11/30 12:18:58 skrll Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50 2014/10/18 08:33:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -237,18 +237,18 @@ int	atu_ioctl(struct ifnet *, u_long, void *);
 int	atu_init(struct ifnet *);
 void	atu_stop(struct ifnet *, int);
 void	atu_watchdog(struct ifnet *);
-usbd_status atu_usb_request(struct atu_softc *sc, u_int8_t type,
-	    u_int8_t request, u_int16_t value, u_int16_t index,
-	    u_int16_t length, u_int8_t *data);
-int	atu_send_command(struct atu_softc *sc, u_int8_t *command, int size);
-int	atu_get_cmd_status(struct atu_softc *sc, u_int8_t cmd,
-	    u_int8_t *status);
-int	atu_wait_completion(struct atu_softc *sc, u_int8_t cmd,
-	    u_int8_t *status);
-int	atu_send_mib(struct atu_softc *sc, u_int8_t type,
-	    u_int8_t size, u_int8_t index, void *data);
-int	atu_get_mib(struct atu_softc *sc, u_int8_t type,
-	    u_int8_t size, u_int8_t index, u_int8_t *buf);
+usbd_status atu_usb_request(struct atu_softc *sc, uint8_t type,
+	    uint8_t request, uint16_t value, uint16_t index,
+	    uint16_t length, uint8_t *data);
+int	atu_send_command(struct atu_softc *sc, uint8_t *command, int size);
+int	atu_get_cmd_status(struct atu_softc *sc, uint8_t cmd,
+	    uint8_t *status);
+int	atu_wait_completion(struct atu_softc *sc, uint8_t cmd,
+	    uint8_t *status);
+int	atu_send_mib(struct atu_softc *sc, uint8_t type,
+	    uint8_t size, uint8_t index, void *data);
+int	atu_get_mib(struct atu_softc *sc, uint8_t type,
+	    uint8_t size, uint8_t index, uint8_t *buf);
 #if 0
 int	atu_start_ibss(struct atu_softc *sc);
 #endif
@@ -257,7 +257,7 @@ int	atu_switch_radio(struct atu_softc *sc, int state);
 int	atu_initial_config(struct atu_softc *sc);
 int	atu_join(struct atu_softc *sc, struct ieee80211_node *node);
 int8_t	atu_get_dfu_state(struct atu_softc *sc);
-u_int8_t atu_get_opmode(struct atu_softc *sc, u_int8_t *mode);
+uint8_t atu_get_opmode(struct atu_softc *sc, uint8_t *mode);
 void	atu_internal_firmware(device_t);
 void	atu_external_firmware(device_t);
 int	atu_get_card_config(struct atu_softc *sc);
@@ -277,7 +277,7 @@ int atu_newstate(struct ieee80211com *, enum ieee80211_state, int);
 int atu_tx_start(struct atu_softc *, struct ieee80211_node *,
     struct atu_chain *, struct mbuf *);
 void atu_complete_attach(struct atu_softc *);
-u_int8_t atu_calculate_padding(int);
+uint8_t atu_calculate_padding(int);
 
 int atu_match(device_t, cfdata_t, void *);
 void atu_attach(device_t, device_t, void *);
@@ -288,9 +288,9 @@ CFATTACH_DECL_NEW(atu, sizeof(struct atu_softc), atu_match, atu_attach,
     atu_detach, atu_activate);
 
 usbd_status
-atu_usb_request(struct atu_softc *sc, u_int8_t type,
-    u_int8_t request, u_int16_t value, u_int16_t index, u_int16_t length,
-    u_int8_t *data)
+atu_usb_request(struct atu_softc *sc, uint8_t type,
+    uint8_t request, uint16_t value, uint16_t index, uint16_t length,
+    uint8_t *data)
 {
 	usb_device_request_t	req;
 	usbd_xfer_handle	xfer;
@@ -341,14 +341,14 @@ atu_usb_request(struct atu_softc *sc, u_int8_t type,
 }
 
 int
-atu_send_command(struct atu_softc *sc, u_int8_t *command, int size)
+atu_send_command(struct atu_softc *sc, uint8_t *command, int size)
 {
 	return atu_usb_request(sc, UT_WRITE_VENDOR_DEVICE, 0x0e, 0x0000,
 	    0x0000, size, command);
 }
 
 int
-atu_get_cmd_status(struct atu_softc *sc, u_int8_t cmd, u_int8_t *status)
+atu_get_cmd_status(struct atu_softc *sc, uint8_t cmd, uint8_t *status)
 {
 	/*
 	 * all other drivers (including Windoze) request 40 bytes of status
@@ -364,10 +364,10 @@ atu_get_cmd_status(struct atu_softc *sc, u_int8_t cmd, u_int8_t *status)
 }
 
 int
-atu_wait_completion(struct atu_softc *sc, u_int8_t cmd, u_int8_t *status)
+atu_wait_completion(struct atu_softc *sc, uint8_t cmd, uint8_t *status)
 {
 	int			idle_count = 0, err;
-	u_int8_t		statusreq[6];
+	uint8_t			statusreq[6];
 
 	DPRINTFN(15, ("%s: wait-completion: cmd=%02x\n",
 	    device_xname(sc->atu_dev), cmd));
@@ -406,8 +406,8 @@ atu_wait_completion(struct atu_softc *sc, u_int8_t cmd, u_int8_t *status)
 }
 
 int
-atu_send_mib(struct atu_softc *sc, u_int8_t type, u_int8_t size,
-    u_int8_t index, void *data)
+atu_send_mib(struct atu_softc *sc, uint8_t type, uint8_t size,
+    uint8_t index, void *data)
 {
 	int				err;
 	struct atu_cmd_set_mib		request;
@@ -457,8 +457,8 @@ atu_send_mib(struct atu_softc *sc, u_int8_t type, u_int8_t size,
 }
 
 int
-atu_get_mib(struct atu_softc *sc, u_int8_t type, u_int8_t size,
-    u_int8_t index, u_int8_t *buf)
+atu_get_mib(struct atu_softc *sc, uint8_t type, uint8_t size,
+    uint8_t index, uint8_t *buf)
 {
 
 	/* linux/at76c503.c - 478 */
@@ -483,14 +483,14 @@ atu_start_ibss(struct atu_softc *sc)
 	memcpy(Request.SSID, ic->ic_des_ssid, ic->ic_des_ssidlen);
 	Request.SSIDSize = ic->ic_des_ssidlen;
 	if (sc->atu_desired_channel != IEEE80211_CHAN_ANY)
-		Request.Channel = (u_int8_t)sc->atu_desired_channel;
+		Request.Channel = (uint8_t)sc->atu_desired_channel;
 	else
 		Request.Channel = ATU_DEFAULT_CHANNEL;
 	Request.BSSType = AD_HOC_MODE;
 	memset(Request.Res, 0x00, sizeof(Request.Res));
 
 	/* Write config to adapter */
-	err = atu_send_command(sc, (u_int8_t *)&Request, sizeof(Request));
+	err = atu_send_command(sc, (uint8_t *)&Request, sizeof(Request));
 	if (err) {
 		DPRINTF(("%s: start ibss failed!\n",
 		    device_xname(sc->atu_dev)));
@@ -544,7 +544,7 @@ atu_start_scan(struct atu_softc *sc)
 	/* default values for scan */
 	Scan.ScanType = ATU_SCAN_ACTIVE;
 	if (sc->atu_desired_channel != IEEE80211_CHAN_ANY)
-		Scan.Channel = (u_int8_t)sc->atu_desired_channel;
+		Scan.Channel = (uint8_t)sc->atu_desired_channel;
 	else
 		Scan.Channel = sc->atu_channel;
 
@@ -567,7 +567,7 @@ atu_start_scan(struct atu_softc *sc)
 #endif /* ATU_DEBUG */
 
 	/* Write config to adapter */
-	err = atu_send_command(sc, (u_int8_t *)&Scan, sizeof(Scan));
+	err = atu_send_command(sc, (uint8_t *)&Scan, sizeof(Scan));
 	if (err)
 		return err;
 
@@ -604,7 +604,7 @@ atu_switch_radio(struct atu_softc *sc, int state)
 		if (state == 0)
 			CmdRadio.Cmd = CMD_RADIO_OFF;
 
-		err = atu_send_command(sc, (u_int8_t *)&CmdRadio,
+		err = atu_send_command(sc, (uint8_t *)&CmdRadio,
 		    sizeof(CmdRadio));
 		if (err)
 			return err;
@@ -624,12 +624,12 @@ int
 atu_initial_config(struct atu_softc *sc)
 {
 	struct ieee80211com		*ic = &sc->sc_ic;
-	u_int32_t			i;
+	uint32_t			i;
 	usbd_status			err;
-/*	u_int8_t			rates[4] = {0x82, 0x84, 0x8B, 0x96};*/
-	u_int8_t			rates[4] = {0x82, 0x04, 0x0B, 0x16};
+/*	uint8_t				rates[4] = {0x82, 0x84, 0x8B, 0x96};*/
+	uint8_t				rates[4] = {0x82, 0x04, 0x0B, 0x16};
 	struct atu_cmd_card_config	cmd;
-	u_int8_t			reg_domain;
+	uint8_t				reg_domain;
 
 	DPRINTFN(10, ("%s: sending mac-addr\n", device_xname(sc->atu_dev)));
 	err = atu_send_mib(sc, MIB_MAC_ADDR__ADDR, ic->ic_myaddr);
@@ -655,7 +655,7 @@ atu_initial_config(struct atu_softc *sc)
 	USETW(cmd.Size, sizeof(cmd) - 4);
 
 	if (sc->atu_desired_channel != IEEE80211_CHAN_ANY)
-		cmd.Channel = (u_int8_t)sc->atu_desired_channel;
+		cmd.Channel = (uint8_t)sc->atu_desired_channel;
 	else
 		cmd.Channel = sc->atu_channel;
 	cmd.AutoRateFallback = 1;
@@ -731,7 +731,7 @@ atu_initial_config(struct atu_softc *sc)
 
 	/* Windoze : driver says exclude-unencrypted=1 & encr-type=1 */
 
-	err = atu_send_command(sc, (u_int8_t *)&cmd, sizeof(cmd));
+	err = atu_send_command(sc, (uint8_t *)&cmd, sizeof(cmd));
 	if (err)
 		return err;
 	err = atu_wait_completion(sc, CMD_STARTUP, NULL);
@@ -778,7 +778,7 @@ int
 atu_join(struct atu_softc *sc, struct ieee80211_node *node)
 {
 	struct atu_cmd_join		join;
-	u_int8_t			status = 0;	/* XXX: GCC */
+	uint8_t				status = 0;	/* XXX: GCC */
 	usbd_status			err;
 
 	memset(&join, 0, sizeof(join));
@@ -806,7 +806,7 @@ atu_join(struct atu_softc *sc, struct ieee80211_node *node)
 
 	DPRINTFN(10, ("%s: trying to join BSSID=%s\n",
 	    device_xname(sc->atu_dev), ether_sprintf(join.bssid)));
-	err = atu_send_command(sc, (u_int8_t *)&join, sizeof(join));
+	err = atu_send_command(sc, (uint8_t *)&join, sizeof(join));
 	if (err) {
 		DPRINTF(("%s: ERROR trying to join IBSS\n",
 		    device_xname(sc->atu_dev)));
@@ -834,7 +834,7 @@ atu_join(struct atu_softc *sc, struct ieee80211_node *node)
 int8_t
 atu_get_dfu_state(struct atu_softc *sc)
 {
-	u_int8_t	state;
+	uint8_t	state;
 
 	if (atu_usb_request(sc, DFU_GETSTATE, 0, 0, 1, &state))
 		return -1;
@@ -844,8 +844,8 @@ atu_get_dfu_state(struct atu_softc *sc)
 /*
  * Get MAC opmode
  */
-u_int8_t
-atu_get_opmode(struct atu_softc *sc, u_int8_t *mode)
+uint8_t
+atu_get_opmode(struct atu_softc *sc, uint8_t *mode)
 {
 
 	return atu_usb_request(sc, UT_READ_VENDOR_INTERFACE, 0x33, 0x0001,
@@ -1056,7 +1056,7 @@ atu_get_card_config(struct atu_softc *sc)
 	case AT76C505_rfmd:
 		err = atu_usb_request(sc, UT_READ_VENDOR_INTERFACE, 0x33,
 		    0x0a02, 0x0000, sizeof(rfmd_conf),
-		    (u_int8_t *)&rfmd_conf);
+		    (uint8_t *)&rfmd_conf);
 		if (err) {
 			DPRINTF(("%s: could not get rfmd config!\n",
 			    device_xname(sc->atu_dev)));
@@ -1069,7 +1069,7 @@ atu_get_card_config(struct atu_softc *sc)
 	case AT76C503_i3863:
 		err = atu_usb_request(sc, UT_READ_VENDOR_INTERFACE, 0x33,
 		    0x0902, 0x0000, sizeof(intersil_conf),
-		    (u_int8_t *)&intersil_conf);
+		    (uint8_t *)&intersil_conf);
 		if (err) {
 			DPRINTF(("%s: could not get intersil config!\n",
 			    device_xname(sc->atu_dev)));
@@ -1237,7 +1237,7 @@ atu_attach(device_t parent, device_t self, void *aux)
 	char				*devinfop;
 	usbd_status			err;
 	usbd_device_handle		dev = uaa->device;
-	u_int8_t			mode, channel;
+	uint8_t			mode, channel;
 	int i;
 
 	sc->atu_dev = self;
@@ -1389,7 +1389,7 @@ atu_complete_attach(struct atu_softc *sc)
 
 #ifdef ATU_DEBUG
 	/* DEBUG : try to get firmware version */
-	err = atu_get_mib(sc, MIB_FW_VERSION, sizeof(fw), 0, (u_int8_t *)&fw);
+	err = atu_get_mib(sc, MIB_FW_VERSION, sizeof(fw), 0, (uint8_t *)&fw);
 	if (!err) {
 		DPRINTFN(15, ("%s: firmware: maj:%d min:%d patch:%d "
 		    "build:%d\n", device_xname(sc->atu_dev), fw.major, fw.minor,
@@ -1632,7 +1632,7 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ieee80211_frame_min	*wh;
 	struct ieee80211_node	*ni;
 	struct mbuf		*m;
-	u_int32_t		len;
+	uint32_t		len;
 	int			s;
 
 	DPRINTFN(25, ("%s: atu_rxeof\n", device_xname(sc->atu_dev)));
@@ -1778,7 +1778,7 @@ atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 	atu_start(ifp);
 }
 
-u_int8_t
+uint8_t
 atu_calculate_padding(int size)
 {
 	size %= 64;
@@ -1797,7 +1797,7 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 	int			len;
 	struct atu_tx_hdr	*h;
 	usbd_status		err;
-	u_int8_t		pad;
+	uint8_t			pad;
 
 	DPRINTFN(25, ("%s: atu_tx_start\n", device_xname(sc->atu_dev)));
 
@@ -2065,7 +2065,7 @@ void
 atu_debug_print(struct atu_softc *sc)
 {
 	usbd_status		err;
-	u_int8_t		tmp[32];
+	uint8_t			tmp[32];
 
 	/* DEBUG */
 	if ((err = atu_get_mib(sc, MIB_MAC_MGMT__CURRENT_BSSID, tmp)))

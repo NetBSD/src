@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.15 2014/06/17 09:35:46 skrll Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.15.4.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ struct uhidev {
 	device_t sc_dev;		/* base device */
 	struct uhidev_softc *sc_parent;
 	uByte sc_report_id;
-	u_int8_t sc_state;
+	uint8_t sc_state;
 	int sc_in_rep_size;
 #define	UHIDEV_OPEN	0x01	/* device is open */
 	void (*sc_intr)(struct uhidev *, void *, u_int);

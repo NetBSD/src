@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234 2014/09/22 08:13:02 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.1 2014/11/30 12:18:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234 2014/09/22 08:13:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -168,7 +168,7 @@ Static void		ehci_intrlist_timeout(void *);
 Static void		ehci_doorbell(void *);
 Static void		ehci_pcd(void *);
 
-Static usbd_status	ehci_allocm(struct usbd_bus *, usb_dma_t *, u_int32_t);
+Static usbd_status	ehci_allocm(struct usbd_bus *, usb_dma_t *, uint32_t);
 Static void		ehci_freem(struct usbd_bus *, usb_dma_t *);
 
 Static usbd_xfer_handle	ehci_allocx(struct usbd_bus *);
@@ -358,7 +358,7 @@ static const uint8_t revbits[EHCI_MAX_POLLRATE] = {
 usbd_status
 ehci_init(ehci_softc_t *sc)
 {
-	u_int32_t vers, sparams, cparams, hcr;
+	uint32_t vers, sparams, cparams, hcr;
 	u_int i;
 	usbd_status err;
 	ehci_soft_qh_t *sqh;
@@ -626,7 +626,7 @@ ehci_intr(void *v)
 
 	/* If we get an interrupt while polling, then just ignore it. */
 	if (sc->sc_bus.use_polling) {
-		u_int32_t intrs = EHCI_STS_INTRS(EOREAD4(sc, EHCI_USBSTS));
+		uint32_t intrs = EHCI_STS_INTRS(EOREAD4(sc, EHCI_USBSTS));
 
 		if (intrs)
 			EOWRITE4(sc, EHCI_USBSTS, intrs); /* Acknowledge */
@@ -647,7 +647,7 @@ done:
 Static int
 ehci_intr1(ehci_softc_t *sc)
 {
-	u_int32_t intrs, eintrs;
+	uint32_t intrs, eintrs;
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
 
@@ -818,7 +818,7 @@ Static void
 ehci_check_qh_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 {
 	ehci_soft_qtd_t *sqtd, *lsqtd;
-	__uint32_t status;
+	uint32_t status;
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
 
@@ -956,7 +956,7 @@ ehci_idone(struct ehci_xfer *ex)
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
 	struct ehci_softc *sc = xfer->pipe->device->bus->hci_private;
 	ehci_soft_qtd_t *sqtd, *lsqtd;
-	u_int32_t status = 0, nstatus = 0;
+	uint32_t status = 0, nstatus = 0;
 	int actlen;
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
@@ -1137,7 +1137,7 @@ Static void
 ehci_waitintr(ehci_softc_t *sc, usbd_xfer_handle xfer)
 {
 	int timo;
-	u_int32_t intrs;
+	uint32_t intrs;
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
 
@@ -1396,7 +1396,7 @@ ehci_shutdown(device_t self, int flags)
 }
 
 Static usbd_status
-ehci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
+ehci_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
 {
 	struct ehci_softc *sc = bus->hci_private;
 	usbd_status err;
@@ -1654,7 +1654,7 @@ ehci_dump_sqh(ehci_soft_qh_t *sqh)
 	ehci_qh_t *qh = &sqh->qh;
 	ehci_link_t link;
 #endif
-	u_int32_t endp, endphub;
+	uint32_t endp, endphub;
 	USBHIST_FUNC();	USBHIST_CALLED(ehcidebug);
 
 	usb_syncmem(&sqh->dma, sqh->offs,
@@ -1763,8 +1763,8 @@ ehci_open(usbd_pipe_handle pipe)
 	usbd_device_handle dev = pipe->device;
 	ehci_softc_t *sc = dev->bus->hci_private;
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
-	u_int8_t addr = dev->address;
-	u_int8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
+	uint8_t addr = dev->address;
+	uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
 	struct ehci_pipe *epipe = (struct ehci_pipe *)pipe;
 	ehci_soft_qh_t *sqh;
 	usbd_status err;
@@ -2014,7 +2014,7 @@ Static void
 ehci_set_qh_qtd(ehci_soft_qh_t *sqh, ehci_soft_qtd_t *sqtd)
 {
 	int i;
-	u_int32_t status;
+	uint32_t status;
 
 	/* Save toggle bit and ping status. */
 	usb_syncmem(&sqh->dma, sqh->offs, sizeof(sqh->qh),
@@ -2233,7 +2233,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 	usb_port_status_t ps;
 	usb_hub_descriptor_t hubd;
 	usbd_status err;
-	u_int32_t v;
+	uint32_t v;
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
 
@@ -2269,7 +2269,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		break;
 	case C(UR_GET_CONFIG, UT_READ_DEVICE):
 		if (len > 0) {
-			*(u_int8_t *)buf = sc->sc_conf;
+			*(uint8_t *)buf = sc->sc_conf;
 			totlen = 1;
 		}
 		break;
@@ -2348,7 +2348,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		break;
 	case C(UR_GET_INTERFACE, UT_READ_INTERFACE):
 		if (len > 0) {
-			*(u_int8_t *)buf = 0;
+			*(uint8_t *)buf = 0;
 			totlen = 1;
 		}
 		break;
@@ -2662,7 +2662,7 @@ Static void
 ehci_disown(ehci_softc_t *sc, int index, int lowspeed)
 {
 	int port;
-	u_int32_t v;
+	uint32_t v;
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
 
@@ -2883,14 +2883,14 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 {
 	ehci_soft_qtd_t *next, *cur;
 	ehci_physaddr_t nextphys;
-	u_int32_t qtdstatus;
+	uint32_t qtdstatus;
 	int len, curlen, mps;
 	int i, tog;
 	int pages, pageoffs;
 	bus_size_t curoffs;
 	vaddr_t va, va_offs;
 	usb_dma_t *dma = &xfer->dmabuf;
-	u_int16_t flags = xfer->flags;
+	uint16_t flags = xfer->flags;
 	paddr_t a;
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
@@ -3150,7 +3150,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	ehci_soft_qh_t *sqh = epipe->sqh;
 	ehci_soft_qtd_t *sqtd;
 	ehci_physaddr_t cur;
-	u_int32_t qhstatus;
+	uint32_t qhstatus;
 	int hit;
 	int wake;
 

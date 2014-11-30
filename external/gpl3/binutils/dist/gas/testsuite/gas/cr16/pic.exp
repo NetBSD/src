@@ -1,6 +1,0 @@
-# CR16 PIC testcases (ie for pic and PIC)
-
-if [istarget cr16*-*] {
-    run_dump_test "pic1"
-    run_dump_test "pic2"
-}

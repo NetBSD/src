@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.35 2013/12/22 18:30:21 mlelstv Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.35.6.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -156,7 +156,7 @@ struct umass_softc {
 	usbd_interface_handle	sc_iface;	/* interface */
 	int			sc_ifaceno;	/* interface number */
 
-	u_int8_t		sc_epaddr[UMASS_NEP];
+	uint8_t			sc_epaddr[UMASS_NEP];
 	usbd_pipe_handle	sc_pipe[UMASS_NEP];
 	usb_device_request_t	sc_req;
 
@@ -165,13 +165,13 @@ struct umass_softc {
 	kmutex_t		sc_lock;
 	kcondvar_t		sc_detach_cv;
 
-	u_int8_t		sc_wire;	/* wire protocol */
+	uint8_t			sc_wire;	/* wire protocol */
 #define	UMASS_WPROTO_UNSPEC	0
 #define	UMASS_WPROTO_BBB	1
 #define	UMASS_WPROTO_CBI	2
 #define	UMASS_WPROTO_CBI_I	3
 
-	u_int8_t		sc_cmd;		/* command protocol */
+	uint8_t			sc_cmd;		/* command protocol */
 #define	UMASS_CPROTO_UNSPEC	0
 #define	UMASS_CPROTO_SCSI	1
 #define	UMASS_CPROTO_ATAPI	2
@@ -179,7 +179,7 @@ struct umass_softc {
 #define	UMASS_CPROTO_RBC	4
 #define UMASS_CPROTO_ISD_ATA	5
 
-	u_int32_t		sc_quirks;
+	uint32_t		sc_quirks;
 #define	UMASS_QUIRK_WRONG_CSWSIG	0x00000001
 #define	UMASS_QUIRK_WRONG_CSWTAG	0x00000002
 #define	UMASS_QUIRK_RBC_PAD_TO_12	0x00000004
@@ -187,7 +187,7 @@ struct umass_softc {
 
 #define UMASS_QUIRK_USE_DEFAULTMATCH	-1
 
-	u_int32_t		sc_busquirks;
+	uint32_t		sc_busquirks;
 
 	/* Bulk specific variables for transfers in progress */
 	umass_bbb_cbw_t		cbw;	/* command block wrapper */
@@ -262,7 +262,7 @@ struct umass_softc {
 
 	int			timeout;		/* in msecs */
 
-	u_int8_t		maxlun;			/* max lun supported */
+	uint8_t			maxlun;			/* max lun supported */
 
 #ifdef UMASS_DEBUG
 	struct timeval tv;

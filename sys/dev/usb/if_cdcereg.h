@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdcereg.h,v 1.7 2012/02/02 19:43:07 tls Exp $ */
+/*	$NetBSD: if_cdcereg.h,v 1.7.24.1 2014/11/30 12:18:58 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
 
 struct cdce_type {
 	struct usb_devno	 cdce_dev;
-	u_int16_t		 cdce_flags;
+	uint16_t		 cdce_flags;
 #define CDCE_ZAURUS	1
 #define CDCE_NO_UNION	2
 };
@@ -81,6 +81,6 @@ struct cdce_softc {
 	int			 cdce_unit;
 	struct cdce_cdata	 cdce_cdata;
 	int			 cdce_rxeof_errors;
-	u_int16_t		 cdce_flags;
+	uint16_t		 cdce_flags;
 	char			 cdce_attached;
 };

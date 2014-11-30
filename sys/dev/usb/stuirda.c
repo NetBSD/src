@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.16 2014/09/21 17:02:24 christos Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.16.2.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16 2014/09/21 17:02:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16.2.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -73,7 +73,7 @@ struct stuirda_softc {
 
 int stuirda_fwload(struct uirda_softc *sc);
 
-/* 
+/*
  * These devices need firmware download.
  */
 Static const struct usb_devno stuirda_devs[] = {
@@ -103,7 +103,7 @@ int             stuirda_activate(device_t, enum devact);
 extern struct cfdriver stuirda_cd;
 CFATTACH_DECL_NEW(stuirda, sizeof(struct stuirda_softc), stuirda_match, stuirda_attach, stuirda_detach, stuirda_activate);
 
-int 
+int
 stuirda_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uaa = aux;
@@ -118,7 +118,7 @@ stuirda_match(device_t parent, cfdata_t match, void *aux)
 
 void uirda_attach(device_t, device_t, void *);
 
-void 
+void
 stuirda_attach(device_t parent, device_t self, void *aux)
 {
 	struct stuirda_softc *sc = device_private(self);
@@ -146,7 +146,7 @@ stuirda_fwload(struct uirda_softc *sc) {
 	char *p;
 	char fwname[12];
 	int n;
-	u_int8_t *usbbuf;
+	uint8_t *usbbuf;
 	/* size_t bsize; */
 
 	printf("%s: needing to download firmware\n",
@@ -169,7 +169,7 @@ stuirda_fwload(struct uirda_softc *sc) {
 
 	printf("%s: Attempting to load firmware %s\n",
 		device_xname(sc->sc_dev), fwname);
-	
+
 	rc = firmware_open("stuirda", fwname, &fh);
 
 	if (rc) {
@@ -256,7 +256,7 @@ stuirda_fwload(struct uirda_softc *sc) {
 			goto giveup4;
 		}
 		printf("%s: written %d\n", device_xname(sc->sc_dev), n);
-		p += n; 
+		p += n;
 		n = (buffer + fwsize - p);
 	}
 	delay(100000);
@@ -264,13 +264,13 @@ stuirda_fwload(struct uirda_softc *sc) {
 	rc = 0;
 	usbd_free_buffer(fwxfer);
 
-	giveup5: usbd_free_xfer(fwxfer);	
+	giveup5: usbd_free_xfer(fwxfer);
 	giveup4: usbd_close_pipe(fwpipe);
 	giveup3: firmware_free(buffer, fwsize);
 	giveup2: firmware_close(fh);
 
 	return rc;
-		
+
 }
 
 int
@@ -278,7 +278,7 @@ stuirda_write(void *h, struct uio *uio, int flag)
 {
 	struct uirda_softc *sc = h;
 	usbd_status err;
-	u_int32_t n;
+	uint32_t n;
 	int error = 0;
 
 	DPRINTFN(1,("%s: sc=%p\n", __func__, sc));

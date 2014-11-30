@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.61 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.61.4.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,13 +466,13 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 	struct uhidev *scd;
 	u_char *p;
 	u_int rep;
-	u_int32_t cc;
+	uint32_t cc;
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &cc, NULL);
 
 #ifdef UHIDEV_DEBUG
 	if (uhidevdebug > 5) {
-		u_int32_t i;
+		uint32_t i;
 
 		DPRINTF(("uhidev_intr: status=%d cc=%d\n", status, cc));
 		DPRINTF(("uhidev_intr: data ="));
@@ -702,8 +702,8 @@ uhidev_write(struct uhidev_softc *sc, void *data, int len)
 #ifdef UHIDEV_DEBUG
 	if (uhidevdebug > 50) {
 
-		u_int32_t i;
-		u_int8_t *d = data;
+		uint32_t i;
+		uint8_t *d = data;
 
 		DPRINTF(("uhidev_write: data ="));
 		for (i = 0; i < len; i++)

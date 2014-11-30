@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109 2014/09/06 10:54:04 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ struct usbd_bus_methods {
 	void		      (*soft_intr)(void *);
 	void		      (*do_poll)(struct usbd_bus *);
 	usbd_status	      (*allocm)(struct usbd_bus *, usb_dma_t *,
-					u_int32_t bufsize);
+					uint32_t bufsize);
 	void		      (*freem)(struct usbd_bus *, usb_dma_t *);
 	struct usbd_xfer *    (*allocx)(struct usbd_bus *);
 	void		      (*freex)(struct usbd_bus *, struct usbd_xfer *);
@@ -122,11 +122,11 @@ struct usbd_tt {
 
 struct usbd_port {
 	usb_port_status_t	status;
-	u_int16_t		power;	/* mA of current on port */
-	u_int8_t		portno;
-	u_int8_t		restartcnt;
+	uint16_t		power;	/* mA of current on port */
+	uint8_t			portno;
+	uint8_t			restartcnt;
 #define USBD_RESTART_MAX 5
-	u_int8_t		reattach;
+	uint8_t			reattach;
 	struct usbd_device     *device;	/* Connected device */
 	struct usbd_device     *parent;	/* The ports hub */
 #if 0
@@ -147,7 +147,7 @@ struct usbd_bus {
 	/* Filled by HC driver */
 	void			*hci_private;
 	const struct usbd_bus_methods *methods;
-	u_int32_t		pipe_size; /* size of a pipe struct */
+	uint32_t		pipe_size; /* size of a pipe struct */
 	/* Filled by usb driver */
 	kmutex_t		*lock;
 	struct usbd_device      *root_hub;
@@ -174,12 +174,12 @@ struct usbd_bus {
 struct usbd_device {
 	struct usbd_bus	       *bus;           /* our controller */
 	struct usbd_pipe       *default_pipe;  /* pipe 0 */
-	u_int8_t		address;       /* device addess */
-	u_int8_t		config;	       /* current configuration # */
-	u_int8_t		depth;         /* distance from root hub */
-	u_int8_t		speed;         /* low/full/high speed */
-	u_int8_t		self_powered;  /* flag for self powered */
-	u_int16_t		power;         /* mA the device uses */
+	uint8_t			address;       /* device addess */
+	uint8_t			config;	       /* current configuration # */
+	uint8_t			depth;         /* distance from root hub */
+	uint8_t			speed;         /* low/full/high speed */
+	uint8_t			self_powered;  /* flag for self powered */
+	uint16_t		power;         /* mA the device uses */
 	int16_t			langid;	       /* language for strings */
 #define USBD_NOLANG (-1)
 	usb_event_cookie_t	cookie;	       /* unique connection id */
@@ -234,14 +234,14 @@ struct usbd_xfer {
 	void		       *priv;
 	void		       *buffer;
 	kcondvar_t		cv;
-	u_int32_t		length;
-	u_int32_t		actlen;
-	u_int16_t		flags;
-	u_int32_t		timeout;
+	uint32_t		length;
+	uint32_t		actlen;
+	uint16_t		flags;
+	uint32_t		timeout;
 	usbd_status		status;
 	usbd_callback		callback;
-	volatile u_int8_t	done;
-	u_int8_t		busy_free;	/* used for DIAGNOSTIC */
+	volatile uint8_t	done;
+	uint8_t		busy_free;	/* used for DIAGNOSTIC */
 #define XFER_FREE 0x46
 #define XFER_BUSY 0x55
 #define XFER_ONQU 0x9e
@@ -250,14 +250,14 @@ struct usbd_xfer {
 	usb_device_request_t	request;
 
 	/* For isoc */
-	u_int16_t		*frlengths;
+	uint16_t		*frlengths;
 	int			nframes;
 
 	/* For memory allocation */
 	struct usbd_device     *device;
 	usb_dma_t		dmabuf;
 
-	u_int8_t		rqflags;
+	uint8_t			rqflags;
 #define URQ_REQUEST	0x01
 #define URQ_AUTO_DMABUF	0x10
 #define URQ_DEV_DMABUF	0x20
@@ -265,7 +265,7 @@ struct usbd_xfer {
 	SIMPLEQ_ENTRY(usbd_xfer) next;
 
 	void		       *hcpriv; /* private use by the HC driver */
-	u_int8_t		hcflags; /* private use by the HC driver */
+	uint8_t			hcflags; /* private use by the HC driver */
 #define UXFER_ABORTING	0x01	/* xfer is aborting. */
 #define UXFER_ABORTWAIT	0x02	/* abort completion is being awaited. */
 	kcondvar_t		hccv; /* private use by the HC driver */
