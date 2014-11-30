@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.109 2014/11/16 06:10:31 uebayasi Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.110 2014/11/30 15:53:29 uebayasi Exp $
 .\"
 .\" Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1526,12 +1526,6 @@ file alongside of the kernel
 which contains a full symbol table and can be used for debugging
 (for example with a cross-gdb built by
 .Sy MKCROSSGDB ) .
-.It Sy mkernel Ns = Ns Ar kconf
-Build a new kernel in modular build.
-Similar to the above
-.Sy kernel Ns = Ns Ar kconf
-operation, but creates intermediate per-module relocatable objects and link
-them to the final kernel.
 .It Sy kernels
 This command will build all kernels defined in port specific release build
 procedure.
@@ -1539,10 +1533,6 @@ procedure.
 This command internally calls the
 .Sy kernel Ns = Ns Ar kconf
 operation for each found kernel configuration file.
-.It Sy mkernels
-Similar to the above
-.Sy kernels
-operation, but builds kernels in modular build.
 .It Sy modules
 This command will build kernel modules and install them into
 .Sy DESTDIR .
