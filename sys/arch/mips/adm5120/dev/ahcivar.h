@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcivar.h,v 1.5 2013/09/22 08:30:22 skrll Exp $	*/
+/*	$NetBSD: ahcivar.h,v 1.5.6.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -97,8 +97,8 @@ struct ahci_softc {
 
 	device_t		 sc_parent;	/* parent device */
 
-	u_int8_t		 sc_addr;	/* device address of root hub */
-	u_int8_t		 sc_conf;
+	uint8_t			 sc_addr;	/* device address of root hub */
+	uint8_t			 sc_conf;
 	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers;
 
 	/* Information for the root hub interrupt pipe */

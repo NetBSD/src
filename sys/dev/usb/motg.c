@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12 2014/09/13 19:02:00 jmcneill Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12 2014/09/13 19:02:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ static void		motg_root_intr_done(usbd_xfer_handle);
 static usbd_status	motg_open(usbd_pipe_handle);
 static void		motg_poll(struct usbd_bus *);
 static void		motg_softintr(void *);
-static usbd_status	motg_allocm(struct usbd_bus *, usb_dma_t *, u_int32_t);
+static usbd_status	motg_allocm(struct usbd_bus *, usb_dma_t *, uint32_t);
 static void		motg_freem(struct usbd_bus *, usb_dma_t *);
 static usbd_xfer_handle	motg_allocx(struct usbd_bus *);
 static void		motg_freex(struct usbd_bus *, usbd_xfer_handle);
@@ -720,7 +720,7 @@ motg_intr_vbus(struct motg_softc *sc, int vbus)
 }
 
 usbd_status
-motg_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
+motg_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
 {
 	struct motg_softc *sc = bus->hci_private;
 	usbd_status status;
@@ -909,7 +909,7 @@ motg_root_ctrl_start(usbd_xfer_handle xfer)
 		break;
 	case C(UR_GET_CONFIG, UT_READ_DEVICE):
 		if (len > 0) {
-			*(u_int8_t *)buf = sc->sc_root_conf;
+			*(uint8_t *)buf = sc->sc_root_conf;
 			totlen = 1;
 		}
 		break;
@@ -969,7 +969,7 @@ motg_root_ctrl_start(usbd_xfer_handle xfer)
 		break;
 	case C(UR_GET_INTERFACE, UT_READ_INTERFACE):
 		if (len > 0) {
-			*(u_int8_t *)buf = 0;
+			*(uint8_t *)buf = 0;
 			totlen = 1;
 		}
 		break;
@@ -1334,7 +1334,7 @@ motg_hub_change(struct motg_softc *sc)
 }
 
 static uint8_t
-motg_speed(u_int8_t speed)
+motg_speed(uint8_t speed)
 {
 	switch(speed) {
 	case USB_SPEED_LOW:
@@ -1350,7 +1350,7 @@ motg_speed(u_int8_t speed)
 }
 
 static uint8_t
-motg_type(u_int8_t type)
+motg_type(uint8_t type)
 {
 	switch(type) {
 	case UE_CONTROL:

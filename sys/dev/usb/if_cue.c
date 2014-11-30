@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.68 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.68.4.1 2014/11/30 12:18:58 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68.4.1 2014/11/30 12:18:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -137,7 +137,7 @@ Static void cue_stop(struct cue_softc *);
 Static void cue_watchdog(struct ifnet *);
 
 Static void cue_setmulti(struct cue_softc *);
-Static u_int32_t cue_crc(const char *);
+Static uint32_t cue_crc(const char *);
 Static void cue_reset(struct cue_softc *);
 
 Static int cue_csr_read_1(struct cue_softc *, int);
@@ -160,7 +160,7 @@ cue_csr_read_1(struct cue_softc	*sc, int reg)
 {
 	usb_device_request_t	req;
 	usbd_status		err;
-	u_int8_t		val = 0;
+	uint8_t			val = 0;
 
 	if (sc->cue_dying)
 		return (0);
@@ -338,10 +338,10 @@ cue_getmac(struct cue_softc *sc, void *buf)
 #define CUE_POLY	0xEDB88320
 #define CUE_BITS	9
 
-Static u_int32_t
+Static uint32_t
 cue_crc(const char *addr)
 {
-	u_int32_t		idx, bit, data, crc;
+	uint32_t		idx, bit, data, crc;
 
 	/* Compute CRC for the address value. */
 	crc = 0xFFFFFFFF; /* initial value */
@@ -360,7 +360,7 @@ cue_setmulti(struct cue_softc *sc)
 	struct ifnet		*ifp;
 	struct ether_multi	*enm;
 	struct ether_multistep	step;
-	u_int32_t		h, i;
+	uint32_t		h, i;
 
 	ifp = GET_IFP(sc);
 
@@ -733,7 +733,7 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ifnet		*ifp = GET_IFP(sc);
 	struct mbuf		*m;
 	int			total_len = 0;
-	u_int16_t		len;
+	uint16_t		len;
 	int			s;
 
 	DPRINTFN(10,("%s: %s: enter status=%d\n", device_xname(sc->cue_dev),
@@ -765,7 +765,7 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	memcpy(mtod(c->cue_mbuf, char *), c->cue_buf, total_len);
 
 	m = c->cue_mbuf;
-	len = UGETW(mtod(m, u_int8_t *));
+	len = UGETW(mtod(m, uint8_t *));
 
 	/* No errors; receive the packet. */
 	total_len = len;
@@ -776,7 +776,7 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	}
 
 	ifp->if_ipackets++;
-	m_adj(m, sizeof(u_int16_t));
+	m_adj(m, sizeof(uint16_t));
 	m->m_pkthdr.len = m->m_len = total_len;
 
 	m->m_pkthdr.rcvif = ifp;
@@ -923,8 +923,8 @@ cue_send(struct cue_softc *sc, struct mbuf *m, int idx)
 		     device_xname(sc->cue_dev), __func__, total_len));
 
 	/* The first two bytes are the frame length */
-	c->cue_buf[0] = (u_int8_t)m->m_pkthdr.len;
-	c->cue_buf[1] = (u_int8_t)(m->m_pkthdr.len >> 8);
+	c->cue_buf[0] = (uint8_t)m->m_pkthdr.len;
+	c->cue_buf[1] = (uint8_t)(m->m_pkthdr.len >> 8);
 
 	/* XXX 10000 */
 	usbd_setup_xfer(c->cue_xfer, sc->cue_ep[CUE_ENDPT_TX],

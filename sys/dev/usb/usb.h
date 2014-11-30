@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.111 2014/11/08 16:20:23 skrll Exp $	*/
+/*	$NetBSD: usb.h,v 1.111.2.1 2014/11/30 12:18:58 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -75,29 +75,29 @@ MALLOC_DECLARE(M_USBHC);
  * and endian problem and should always be used to access non-byte
  * values.
  */
-typedef u_int8_t uByte;
-typedef u_int8_t uWord[2];
-typedef u_int8_t uDWord[4];
+typedef uint8_t uByte;
+typedef uint8_t uWord[2];
+typedef uint8_t uDWord[4];
 
-#define USETW2(w,h,l) ((w)[0] = (u_int8_t)(l), (w)[1] = (u_int8_t)(h))
+#define USETW2(w,h,l) ((w)[0] = (uint8_t)(l), (w)[1] = (uint8_t)(h))
 
 #if 1
 #define UGETW(w) ((w)[0] | ((w)[1] << 8))
-#define USETW(w,v) ((w)[0] = (u_int8_t)(v), (w)[1] = (u_int8_t)((v) >> 8))
+#define USETW(w,v) ((w)[0] = (uint8_t)(v), (w)[1] = (uint8_t)((v) >> 8))
 #define UGETDW(w) ((w)[0] | ((w)[1] << 8) | ((w)[2] << 16) | ((w)[3] << 24))
-#define USETDW(w,v) ((w)[0] = (u_int8_t)(v), \
-		     (w)[1] = (u_int8_t)((v) >> 8), \
-		     (w)[2] = (u_int8_t)((v) >> 16), \
-		     (w)[3] = (u_int8_t)((v) >> 24))
+#define USETDW(w,v) ((w)[0] = (uint8_t)(v), \
+		     (w)[1] = (uint8_t)((v) >> 8), \
+		     (w)[2] = (uint8_t)((v) >> 16), \
+		     (w)[3] = (uint8_t)((v) >> 24))
 #else
 /*
  * On little-endian machines that can handle unaligned accesses
  * (e.g. i386) these macros can be replaced by the following.
  */
-#define UGETW(w) (*(u_int16_t *)(w))
-#define USETW(w,v) (*(u_int16_t *)(w) = (v))
-#define UGETDW(w) (*(u_int32_t *)(w))
-#define USETDW(w,v) (*(u_int32_t *)(w) = (v))
+#define UGETW(w) (*(uint16_t *)(w))
+#define USETW(w,v) (*(uint16_t *)(w) = (v))
+#define UGETDW(w) (*(uint32_t *)(w))
+#define USETDW(w,v) (*(uint32_t *)(w) = (v))
 #endif
 
 #define UPACKED __packed
@@ -835,26 +835,26 @@ struct usb_ctl_report_desc {
 	u_char	ucrd_data[1024];	/* filled data size will vary */
 };
 
-typedef struct { u_int32_t cookie; } usb_event_cookie_t;
+typedef struct { uint32_t cookie; } usb_event_cookie_t;
 
 #define USB_MAX_DEVNAMES 4
 #define USB_MAX_DEVNAMELEN 16
 struct usb_device_info {
-	u_int8_t	udi_bus;
-	u_int8_t	udi_addr;	/* device address */
+	uint8_t		udi_bus;
+	uint8_t		udi_addr;	/* device address */
 	usb_event_cookie_t udi_cookie;
 	char		udi_product[USB_MAX_ENCODED_STRING_LEN];
 	char		udi_vendor[USB_MAX_ENCODED_STRING_LEN];
 	char		udi_release[8];
 	char		udi_serial[USB_MAX_ENCODED_STRING_LEN];
-	u_int16_t	udi_productNo;
-	u_int16_t	udi_vendorNo;
-	u_int16_t	udi_releaseNo;
-	u_int8_t	udi_class;
-	u_int8_t	udi_subclass;
-	u_int8_t	udi_protocol;
-	u_int8_t	udi_config;
-	u_int8_t	udi_speed;
+	uint16_t	udi_productNo;
+	uint16_t	udi_vendorNo;
+	uint16_t	udi_releaseNo;
+	uint8_t		udi_class;
+	uint8_t		udi_subclass;
+	uint8_t		udi_protocol;
+	uint8_t		udi_config;
+	uint8_t		udi_speed;
 #define USB_SPEED_LOW  1
 #define USB_SPEED_FULL 2
 #define USB_SPEED_HIGH 3
@@ -862,7 +862,7 @@ struct usb_device_info {
 	int		udi_power;	/* power consumption in mA, 0 if selfpowered */
 	int		udi_nports;
 	char		udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];
-	u_int8_t	udi_ports[16];/* hub only: addresses of devices on ports */
+	uint8_t		udi_ports[16];/* hub only: addresses of devices on ports */
 #define USB_PORT_ENABLED 0xff
 #define USB_PORT_SUSPENDED 0xfe
 #define USB_PORT_POWERED 0xfd
@@ -871,24 +871,24 @@ struct usb_device_info {
 
 /* <=3.0 had this layout of the structure */
 struct usb_device_info_old {
-        u_int8_t        udi_bus;
-        u_int8_t        udi_addr;       /* device address */
-        usb_event_cookie_t udi_cookie;
-        char            udi_product[USB_MAX_STRING_LEN];
-        char            udi_vendor[USB_MAX_STRING_LEN];
-        char            udi_release[8];
-        u_int16_t       udi_productNo;
-        u_int16_t       udi_vendorNo;
-        u_int16_t       udi_releaseNo;
-        u_int8_t        udi_class;
-        u_int8_t        udi_subclass;
-        u_int8_t        udi_protocol;
-        u_int8_t        udi_config;
-        u_int8_t        udi_speed;
-        int             udi_power;      /* power consumption in mA, 0 if selfpowered */
-        int             udi_nports;
-        char            udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];
-        u_int8_t        udi_ports[16];/* hub only: addresses of devices on ports */
+	uint8_t		udi_bus;
+	uint8_t		udi_addr;       /* device address */
+	usb_event_cookie_t udi_cookie;
+	char		udi_product[USB_MAX_STRING_LEN];
+	char		udi_vendor[USB_MAX_STRING_LEN];
+	char		udi_release[8];
+	uint16_t	udi_productNo;
+	uint16_t	udi_vendorNo;
+	uint16_t	udi_releaseNo;
+	uint8_t		udi_class;
+	uint8_t		udi_subclass;
+	uint8_t		udi_protocol;
+	uint8_t		udi_config;
+	uint8_t		udi_speed;
+	int		udi_power;      /* power consumption in mA, 0 if selfpowered */
+	int		udi_nports;
+	char		udi_devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];
+	uint8_t		udi_ports[16];/* hub only: addresses of devices on ports */
 };
 
 struct usb_ctl_report {

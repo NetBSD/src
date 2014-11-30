@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.38 2013/09/15 19:27:22 martin Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.38.6.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38 2013/09/15 19:27:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -156,7 +156,7 @@ CFATTACH_DECL2_NEW(usscanner, sizeof(struct usscanner_softc),
     usscanner_match, usscanner_attach, usscanner_detach, usscanner_activate,
     NULL, usscanner_childdet);
 
-int 
+int
 usscanner_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -170,7 +170,7 @@ usscanner_match(device_t parent, cfdata_t match, void *aux)
 		return (UMATCH_NONE);
 }
 
-void 
+void
 usscanner_attach(device_t parent, device_t self, void *aux)
 {
 	struct usscanner_softc *sc = device_private(self);
@@ -180,7 +180,7 @@ usscanner_attach(device_t parent, device_t self, void *aux)
 	char			*devinfop;
 	usbd_status		err;
 	usb_endpoint_descriptor_t *ed;
-	u_int8_t		epcount;
+	uint8_t			epcount;
 	int			i;
 
 	DPRINTFN(10,("usscanner_attach: sc=%p\n", sc));
@@ -353,7 +353,7 @@ usscanner_childdet(device_t self, device_t child)
 	sc->sc_child = NULL;
 }
 
-int 
+int
 usscanner_detach(device_t self, int flags)
 {
 	struct usscanner_softc *sc = device_private(self);
@@ -496,7 +496,7 @@ usscanner_data_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 {
 	struct usscanner_softc *sc = priv;
 	struct scsipi_xfer *xs = sc->sc_xs;
-	u_int32_t len;
+	uint32_t len;
 
 	DPRINTFN(10, ("usscanner_data_cb status=%d\n", status));
 
@@ -538,7 +538,7 @@ usscanner_sensedata_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 {
 	struct usscanner_softc *sc = priv;
 	struct scsipi_xfer *xs = sc->sc_xs;
-	u_int32_t len;
+	uint32_t len;
 
 	DPRINTFN(10, ("usscanner_sensedata_cb status=%d\n", status));
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.129 2013/09/26 07:25:31 skrll Exp $        */
+/*      $NetBSD: ukbd.c,v 1.129.6.1 2014/11/30 12:18:58 skrll Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.129 2013/09/26 07:25:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.129.6.1 2014/11/30 12:18:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ukbd.h"
@@ -86,8 +86,8 @@ int	ukbddebug = 0;
 #define MAXMOD 8		/* max 32 */
 
 struct ukbd_data {
-	u_int32_t	modifiers;
-	u_int8_t	keycode[MAXKEYCODE];
+	uint32_t	modifiers;
+	uint8_t		keycode[MAXKEYCODE];
 };
 
 #define PRESS    0x000
@@ -95,8 +95,8 @@ struct ukbd_data {
 #define CODEMASK 0x0ff
 
 struct ukbd_keycodetrans {
-	u_int16_t	from;
-	u_int16_t	to;
+	uint16_t	from;
+	uint16_t	to;
 };
 
 #define IS_PMF	0x8000
@@ -195,7 +195,7 @@ Static const struct ukbd_keycodetrans trtab_generic[] = {
  * For example, some keys generate Fake ShiftL events (e0 2a)
  * before the actual key sequence.
  */
-Static const u_int8_t ukbd_trtab[256] = {
+Static const uint8_t ukbd_trtab[256] = {
       NN,   NN,   NN,   NN, 0x1e, 0x30, 0x2e, 0x20, /* 00 - 07 */
     0x12, 0x21, 0x22, 0x23, 0x17, 0x24, 0x25, 0x26, /* 08 - 0f */
     0x32, 0x31, 0x18, 0x19, 0x10, 0x13, 0x1f, 0x14, /* 10 - 17 */
@@ -243,8 +243,8 @@ struct ukbd_softc {
 	struct hid_location sc_modloc[MAXMOD];
 	u_int sc_nmod;
 	struct {
-		u_int32_t mask;
-		u_int8_t key;
+		uint32_t mask;
+		uint8_t key;
 	} sc_mods[MAXMOD];
 
 	struct hid_location sc_keycodeloc;
@@ -287,7 +287,7 @@ struct ukbd_softc {
 
 	int sc_spl;
 	int sc_npollchar;
-	u_int16_t sc_pollchars[MAXKEYS];
+	uint16_t sc_pollchars[MAXKEYS];
 
 	u_char sc_dying;
 };
@@ -399,7 +399,7 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 {
 	struct ukbd_softc *sc = device_private(self);
 	struct uhidev_attach_arg *uha = aux;
-	u_int32_t qflags;
+	uint32_t qflags;
 	const char *parseerr;
 	struct wskbddev_attach_args a;
 
@@ -596,7 +596,7 @@ ukbd_translate_keycodes(struct ukbd_softc *sc, struct ukbd_data *ud,
 {
 	const struct ukbd_keycodetrans *tp;
 	int i;
-	u_int8_t key;
+	uint8_t key;
 
 	for (i = 0; i < sc->sc_nkeycode; i++) {
 		key = ud->keycode[i];
@@ -615,8 +615,8 @@ ukbd_translate_keycodes(struct ukbd_softc *sc, struct ukbd_data *ud,
 	}
 }
 
-static u_int16_t
-ukbd_translate_modifier(struct ukbd_softc *sc, u_int16_t key)
+static uint16_t
+ukbd_translate_modifier(struct ukbd_softc *sc, uint16_t key)
 {
 	if ((sc->sc_flags & FLAG_APPLE_FN) && (key & CODEMASK) == 0x00e2) {
 		if ((key & ~CODEMASK) == PRESS) {
@@ -715,7 +715,7 @@ void
 ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 {
 	int mod, omod;
-	u_int16_t ibuf[MAXKEYS];	/* chars events */
+	uint16_t ibuf[MAXKEYS];	/* chars events */
 	int s;
 	int nkeys, i, j;
 	int key;
@@ -817,7 +817,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 
 	if (sc->sc_flags & FLAG_POLLING) {
 		DPRINTFN(1,("ukbd_intr: pollchar = 0x%03x\n", ibuf[0]));
-		memcpy(sc->sc_pollchars, ibuf, nkeys * sizeof(u_int16_t));
+		memcpy(sc->sc_pollchars, ibuf, nkeys * sizeof(uint16_t));
 		sc->sc_npollchar = nkeys;
 		return;
 	}
@@ -1002,7 +1002,7 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 	c = sc->sc_pollchars[0];
 	sc->sc_npollchar--;
 	memcpy(sc->sc_pollchars, sc->sc_pollchars+1,
-	       sc->sc_npollchar * sizeof(u_int16_t));
+	       sc->sc_npollchar * sizeof(uint16_t));
 	*type = c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	*data = c & CODEMASK;
 	DPRINTFN(0,("ukbd_cngetc: return 0x%02x\n", c));

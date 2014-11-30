@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.31 2013/08/03 16:04:30 soren Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.31.6.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.31 2013/08/03 16:04:30 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.31.6.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ struct ucom_methods ugensa_methods = {
 
 struct ugensa_type {
 	struct usb_devno	ugensa_dev;
-	u_int16_t		ugensa_flags;
+	uint16_t		ugensa_flags;
 #define UNTESTED		0x0001
 };
 
@@ -122,7 +122,7 @@ extern struct cfdriver ugensa_cd;
 CFATTACH_DECL2_NEW(ugensa, sizeof(struct ugensa_softc), ugensa_match,
     ugensa_attach, ugensa_detach, ugensa_activate, NULL, ugensa_childdet);
 
-int 
+int
 ugensa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -134,7 +134,7 @@ ugensa_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+void
 ugensa_attach(device_t parent, device_t self, void *aux)
 {
 	struct ugensa_softc *sc = device_private(self);
@@ -275,7 +275,7 @@ ugensa_activate(device_t self, enum devact act)
 	}
 }
 
-int 
+int
 ugensa_detach(device_t self, int flags)
 {
 	struct ugensa_softc *sc = device_private(self);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42 2013/02/02 14:15:55 matt Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.1 2014/11/30 12:18:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ typedef struct ehci_soft_qtd {
 	int offs;                       /* qTD's offset in usb_dma_t */
 	usbd_xfer_handle xfer;
 	LIST_ENTRY(ehci_soft_qtd) hnext;
-	u_int16_t len;
+	uint16_t len;
 } ehci_soft_qtd_t;
 #define EHCI_SQTD_ALIGN	MAX(EHCI_QTD_ALIGN, CACHE_LINE_SIZE)
 #define EHCI_SQTD_SIZE ((sizeof (struct ehci_soft_qtd) + EHCI_SQTD_ALIGN - 1) & -EHCI_SQTD_ALIGN)
@@ -132,7 +132,7 @@ typedef struct ehci_softc {
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
 
-	u_int32_t sc_cmd;		/* shadow of cmd reg during suspend */
+	uint32_t sc_cmd;		/* shadow of cmd reg during suspend */
 
 	u_int sc_ncomp;
 	u_int sc_npcomp;
@@ -157,15 +157,15 @@ typedef struct ehci_softc {
 	LIST_HEAD(sc_freeitds, ehci_soft_itd) sc_freeitds;
 
 	int sc_noport;
-	u_int8_t sc_hasppc;		/* has Port Power Control */
-	u_int8_t sc_addr;		/* device address */
-	u_int8_t sc_conf;		/* device configuration */
+	uint8_t sc_hasppc;		/* has Port Power Control */
+	uint8_t sc_addr;		/* device address */
+	uint8_t sc_conf;		/* device configuration */
 	usbd_xfer_handle sc_intrxfer;
 	char sc_isreset[EHCI_MAX_PORTS];
 	char sc_softwake;
 	kcondvar_t sc_softwake_cv;
 
-	u_int32_t sc_eintrs;
+	uint32_t sc_eintrs;
 	ehci_soft_qh_t *sc_async_head;
 
 	pool_cache_t sc_xferpool;	/* free xfer pool */

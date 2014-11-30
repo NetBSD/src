@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.38 2013/09/15 15:43:20 martin Exp $	*/
+/*	$NetBSD: uirda.c,v 1.38.6.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38 2013/09/15 15:43:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.6.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ extern struct cfdriver uirda_cd;
 CFATTACH_DECL2_NEW(uirda, sizeof(struct uirda_softc), uirda_match,
     uirda_attach, uirda_detach, uirda_activate, NULL, uirda_childdet);
 
-int 
+int
 uirda_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uaa = aux;
@@ -168,7 +168,7 @@ uirda_match(device_t parent, cfdata_t match, void *aux)
 	return (UMATCH_NONE);
 }
 
-void 
+void
 uirda_attach(device_t parent, device_t self, void *aux)
 {
 	struct uirda_softc *sc = device_private(self);
@@ -178,7 +178,7 @@ uirda_attach(device_t parent, device_t self, void *aux)
 	char			*devinfop;
 	usb_endpoint_descriptor_t *ed;
 	usbd_status		err;
-	u_int8_t		epcount;
+	uint8_t			epcount;
 	u_int			specrev;
 	int			i;
 	struct ir_attach_args	ia;
@@ -291,7 +291,7 @@ uirda_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int 
+int
 uirda_detach(device_t self, int flags)
 {
 	struct uirda_softc *sc = device_private(self);
@@ -526,7 +526,7 @@ uirda_write(void *h, struct uio *uio, int flag)
 {
 	struct uirda_softc *sc = h;
 	usbd_status err;
-	u_int32_t n;
+	uint32_t n;
 	int error = 0;
 
 	DPRINTFN(1,("%s: sc=%p\n", __func__, sc));
@@ -672,8 +672,8 @@ uirda_set_params(void *h, struct irda_params *p)
 	struct uirda_softc *sc = h;
 	usbd_status err;
 	int i;
-	u_int8_t hdr;
-	u_int32_t n;
+	uint8_t hdr;
+	uint32_t n;
 	u_int mask;
 
 	DPRINTF(("%s: sc=%p, speed=%d ebofs=%d maxsize=%d\n", __func__,
@@ -850,7 +850,7 @@ uirda_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	    usbd_status status)
 {
 	struct uirda_softc *sc = priv;
-	u_int32_t size;
+	uint32_t size;
 
 	DPRINTFN(1,("%s: sc=%p\n", __func__, sc));
 

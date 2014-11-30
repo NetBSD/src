@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.22 2014/08/02 12:38:01 skrll Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.22.4.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22 2014/08/02 12:38:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -954,8 +954,8 @@ ugenhc_open(struct usbd_pipe *pipe)
 	usbd_device_handle dev = pipe->device;
 	struct ugenhc_softc *sc = dev->bus->hci_private;
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
-	u_int8_t addr = dev->address;
-	u_int8_t xfertype = ed->bmAttributes & UE_XFERTYPE;
+	uint8_t addr = dev->address;
+	uint8_t xfertype = ed->bmAttributes & UE_XFERTYPE;
 	char buf[UGENDEV_BUFSIZE];
 	int endpt, oflags, error;
 	int fd, val;

@@ -1,2 +1,0 @@
-LIB1ASMSRC    = fr30/lib1funcs.S
-LIB1ASMFUNCS  = _udivsi3 _divsi3 _umodsi3 _modsi3

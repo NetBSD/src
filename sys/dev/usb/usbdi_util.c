@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.63 2014/09/12 16:40:38 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.63.2.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63 2014/09/12 16:40:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.1 2014/11/30 12:18:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -217,7 +217,7 @@ usbd_set_port_feature(usbd_device_handle dev, int port, int sel)
 }
 
 usbd_status
-usbd_get_protocol(usbd_interface_handle iface, u_int8_t *report)
+usbd_get_protocol(usbd_interface_handle iface, uint8_t *report)
 {
 	usb_interface_descriptor_t *id = usbd_get_interface_descriptor(iface);
 	usbd_device_handle dev;
@@ -387,7 +387,7 @@ usbd_read_report_desc(usbd_interface_handle ifc, void **descp, int *sizep,
 }
 
 usbd_status
-usbd_get_config(usbd_device_handle dev, u_int8_t *conf)
+usbd_get_config(usbd_device_handle dev, uint8_t *conf)
 {
 	usb_device_request_t req;
 
@@ -401,8 +401,8 @@ usbd_get_config(usbd_device_handle dev, u_int8_t *conf)
 
 usbd_status
 usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
-		   u_int16_t flags, u_int32_t timeout, void *buf,
-		   u_int32_t *size, const char *lbl)
+		   uint16_t flags, uint32_t timeout, void *buf,
+		   uint32_t *size, const char *lbl)
 {
 	usbd_status err;
 
@@ -425,8 +425,8 @@ usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 
 usbd_status
 usbd_intr_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
-		   u_int16_t flags, u_int32_t timeout, void *buf,
-		   u_int32_t *size, const char *lbl)
+		   uint16_t flags, uint32_t timeout, void *buf,
+		   uint32_t *size, const char *lbl)
 {
 	usbd_status err;
 

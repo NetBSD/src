@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.34 2012/11/04 12:01:55 matt Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.34.14.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -192,7 +192,7 @@
 #define EHCI_PAGE(x) ((x) &~ 0xfff)
 #define EHCI_PAGE_OFFSET(x) ((x) & 0xfff)
 
-typedef u_int32_t ehci_link_t;
+typedef uint32_t ehci_link_t;
 #define EHCI_LINK_TERMINATE	0x00000001
 #define EHCI_LINK_TYPE(x)	((x) & 0x00000006)
 #define  EHCI_LINK_ITD		0x0
@@ -201,10 +201,10 @@ typedef u_int32_t ehci_link_t;
 #define  EHCI_LINK_FSTN		0x6
 #define EHCI_LINK_ADDR(x)	((x) &~ 0x1f)
 
-typedef u_int32_t ehci_physaddr_t;
+typedef uint32_t ehci_physaddr_t;
 
-typedef u_int32_t ehci_isoc_trans_t;
-typedef u_int32_t ehci_isoc_bufr_ptr_t;
+typedef uint32_t ehci_isoc_trans_t;
+typedef uint32_t ehci_isoc_bufr_ptr_t;
 
 /* Isochronous Transfer Descriptor */
 #define EHCI_ITD_NUFRAMES USB_UFRAMES_PER_FRAME
@@ -256,7 +256,7 @@ typedef struct {
 typedef struct {
 	volatile ehci_link_t	qtd_next;
 	volatile ehci_link_t	qtd_altnext;
-	volatile u_int32_t	qtd_status;
+	volatile uint32_t	qtd_status;
 #define EHCI_QTD_GET_STATUS(x)	(((x) >>  0) & 0xff)
 #define EHCI_QTD_SET_STATUS(x)	((x) <<  0)
 #define  EHCI_QTD_ACTIVE	0x80
@@ -292,7 +292,7 @@ typedef struct {
 /* Queue Head */
 typedef struct {
 	volatile ehci_link_t	qh_link;
-	volatile u_int32_t	qh_endp;
+	volatile uint32_t	qh_endp;
 #define EHCI_QH_GET_ADDR(x)	(((x) >>  0) & 0x7f) /* endpoint addr */
 #define EHCI_QH_SET_ADDR(x)	(x)
 #define EHCI_QH_ADDRMASK	0x0000007f
@@ -316,7 +316,7 @@ typedef struct {
 #define EHCI_QH_CTL		0x08000000
 #define EHCI_QH_GET_NRL(x)	(((x) >> 28) & 0x0f) /* NAK reload */
 #define EHCI_QH_SET_NRL(x)	((x) << 28)
-	volatile u_int32_t	qh_endphub;
+	volatile uint32_t	qh_endphub;
 #define EHCI_QH_GET_SMASK(x)	(((x) >>  0) & 0xff) /* intr sched mask */
 #define EHCI_QH_SET_SMASK(x)	((x) <<  0)
 #define EHCI_QH_GET_CMASK(x)	(((x) >>  8) & 0xff) /* split completion mask */

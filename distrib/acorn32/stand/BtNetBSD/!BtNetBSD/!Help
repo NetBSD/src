@@ -1,6 +1,0 @@
-| $NetBSD
-|
-| This is run when the user asks for help on !BtNetBSD in the Filer.
-| We just open a directory full of documenatation.
-
-Filer_OpenDir <Obey$Dir>.Docs

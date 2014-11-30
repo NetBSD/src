@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.19 2013/09/15 15:07:06 martin Exp $	*/
+/*	$NetBSD: uep.c,v 1.19.6.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  *  eGalax USB touchpanel controller driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.19 2013/09/15 15:07:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.19.6.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,7 +364,7 @@ uep_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 	struct uep_softc *sc = addr;
 	u_char *p = sc->sc_ibuf;
 	u_char msk;
-	u_int32_t len;
+	uint32_t len;
 	int x = 0, y = 0, s;
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);

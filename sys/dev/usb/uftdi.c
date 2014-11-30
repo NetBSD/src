@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.59 2013/12/19 08:22:40 msaitoh Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.59.6.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.59 2013/12/19 08:22:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.59.6.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +101,9 @@ Static void	uftdi_get_status(void *, int portno, u_char *lsr, u_char *msr);
 Static void	uftdi_set(void *, int, int, int);
 Static int	uftdi_param(void *, int, struct termios *);
 Static int	uftdi_open(void *sc, int portno);
-Static void	uftdi_read(void *sc, int portno, u_char **ptr,u_int32_t *count);
+Static void	uftdi_read(void *sc, int portno, u_char **ptr,uint32_t *count);
 Static void	uftdi_write(void *sc, int portno, u_char *to, u_char *from,
-			    u_int32_t *count);
+			    uint32_t *count);
 Static void	uftdi_break(void *sc, int portno, int onoff);
 
 struct ucom_methods uftdi_methods = {
@@ -117,7 +117,7 @@ struct ucom_methods uftdi_methods = {
 	uftdi_write,
 };
 
-/* 
+/*
  * The devices default to UFTDI_TYPE_8U232AM.
  * Remember to update uftdi_attach() if it should be UFTDI_TYPE_SIO instead
  */
@@ -180,7 +180,7 @@ extern struct cfdriver uftdi_cd;
 CFATTACH_DECL2_NEW(uftdi, sizeof(struct uftdi_softc), uftdi_match,
     uftdi_attach, uftdi_detach, uftdi_activate, NULL, uftdi_childdet);
 
-int 
+int
 uftdi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -192,7 +192,7 @@ uftdi_match(device_t parent, cfdata_t match, void *aux)
                 UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+void
 uftdi_attach(device_t parent, device_t self, void *aux)
 {
 	struct uftdi_softc *sc = device_private(self);
@@ -434,7 +434,7 @@ uftdi_open(void *vsc, int portno)
 }
 
 Static void
-uftdi_read(void *vsc, int portno, u_char **ptr, u_int32_t *count)
+uftdi_read(void *vsc, int portno, u_char **ptr, uint32_t *count)
 {
 	struct uftdi_softc *sc = vsc;
 	u_char msr, lsr;
@@ -466,7 +466,7 @@ uftdi_read(void *vsc, int portno, u_char **ptr, u_int32_t *count)
 }
 
 Static void
-uftdi_write(void *vsc, int portno, u_char *to, u_char *from, u_int32_t *count)
+uftdi_write(void *vsc, int portno, u_char *to, u_char *from, uint32_t *count)
 {
 	struct uftdi_softc *sc = vsc;
 

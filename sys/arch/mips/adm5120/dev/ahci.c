@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.12 2013/09/22 08:30:22 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.12.6.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12 2013/09/22 08:30:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ static void		ahci_softintr(void *);
 static void		ahci_poll(struct usbd_bus *);
 static void		ahci_poll_hub(void *);
 static void		ahci_poll_device(void *arg);
-static usbd_status	ahci_allocm(struct usbd_bus *, usb_dma_t *, u_int32_t);
+static usbd_status	ahci_allocm(struct usbd_bus *, usb_dma_t *, uint32_t);
 static void		ahci_freem(struct usbd_bus *, usb_dma_t *);
 static usbd_xfer_handle ahci_allocx(struct usbd_bus *);
 static void		ahci_freex(struct usbd_bus *, usbd_xfer_handle);
@@ -140,7 +140,7 @@ static void		ahci_device_bulk_close(usbd_pipe_handle);
 static void		ahci_device_bulk_done(usbd_xfer_handle);
 
 static int		ahci_transaction(struct ahci_softc *,
-	usbd_pipe_handle, u_int8_t, int, u_char *, u_int8_t);
+	usbd_pipe_handle, uint8_t, int, u_char *, uint8_t);
 static void		ahci_noop(usbd_pipe_handle);
 static void		ahci_abort_xfer(usbd_xfer_handle, usbd_status);
 static void		ahci_device_clear_toggle(usbd_pipe_handle);
@@ -239,7 +239,7 @@ struct usbd_pipe_methods ahci_device_bulk_methods = {
 
 struct ahci_pipe {
 	struct usbd_pipe pipe;
-	u_int32_t toggle;
+	uint32_t toggle;
 };
 
 static int	ahci_match(device_t, cfdata_t, void *);
@@ -335,7 +335,7 @@ ahci_intr(void *arg)
 {
 #if 0
 	struct ahci_softc *sc = arg;
-	u_int8_t r;
+	uint8_t r;
 #ifdef AHCI_DEBUG
 	char bitbuf[256];
 #endif
@@ -469,7 +469,7 @@ ahci_poll_hub(void *arg)
 }
 
 usbd_status
-ahci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
+ahci_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
 {
 	struct ahci_softc *sc = (struct ahci_softc *)bus;
 
@@ -698,7 +698,7 @@ ahci_root_ctrl_start(usbd_xfer_handle xfer)
 	case C(UR_GET_CONFIG, UT_READ_DEVICE):
 		DPRINTF(D_MSG, ("UR_GET_CONFIG "));
 		if (len > 0) {
-			*(u_int8_t *)buf = sc->sc_conf;
+			*(uint8_t *)buf = sc->sc_conf;
 			totlen = 1;
 		}
 		break;
@@ -738,7 +738,7 @@ ahci_root_ctrl_start(usbd_xfer_handle xfer)
 			DPRINTF(D_MSG, ("UDESC_STR "));
 			if (len == 0)
 				break;
-			*(u_int8_t *)buf = 0;
+			*(uint8_t *)buf = 0;
 			totlen = 1;
 			switch (value & 0xff) {
 			case 0:
@@ -763,7 +763,7 @@ ahci_root_ctrl_start(usbd_xfer_handle xfer)
 	case C(UR_GET_INTERFACE, UT_READ_INTERFACE):
 		/* Get Interface, 9.4.4 */
 		if (len > 0) {
-			*(u_int8_t *)buf = 0;
+			*(uint8_t *)buf = 0;
 			totlen = 1;
 		}
 		break;
@@ -1085,7 +1085,7 @@ ahci_device_ctrl_start(usbd_xfer_handle xfer)
         }
 #endif
 
-#define KSEG1ADDR(x) (0xa0000000 | (((u_int32_t)x) & 0x1fffffff))
+#define KSEG1ADDR(x) (0xa0000000 | (((uint32_t)x) & 0x1fffffff))
 	DPRINTF(D_TRACE, ("st "));
 	if (!ep) {
 	        ep = (struct admhcd_ed *)KSEG1ADDR(&ep_v);
@@ -1162,7 +1162,7 @@ ahci_device_ctrl_start(usbd_xfer_handle xfer)
 	printf("td3->next: %p\n",td3->next);
 */
 
-        REG_WRITE(ADMHCD_REG_HOSTHEAD, (u_int32_t)ep);
+        REG_WRITE(ADMHCD_REG_HOSTHEAD, (uint32_t)ep);
         REG_WRITE(ADMHCD_REG_HOSTCONTROL, ADMHCD_STATE_OP | ADMHCD_DMA_EN);
 /*	printf("1: %x %x %x %x\n", ep->control, td->control, td1->control, td2->control); */
         s=100;
@@ -1402,7 +1402,7 @@ ahci_device_bulk_start(usbd_xfer_handle xfer)
 	int endpt, i, len, tlen, segs, offset, isread, toggle, short_ok;
 	struct ahci_pipe *apipe = (struct ahci_pipe *)xfer->pipe;
 
-#define KSEG1ADDR(x) (0xa0000000 | (((u_int32_t)x) & 0x1fffffff))
+#define KSEG1ADDR(x) (0xa0000000 | (((uint32_t)x) & 0x1fffffff))
 	DPRINTF(D_TRACE, ("st "));
 
 #ifdef DIAGNOSTIC
@@ -1486,7 +1486,7 @@ ahci_device_bulk_start(usbd_xfer_handle xfer)
 		printf("td[%d]->buflen: %x\n",i,td[i]->buflen);
 	}; */
 
-        REG_WRITE(ADMHCD_REG_HOSTHEAD, (u_int32_t)ep);
+        REG_WRITE(ADMHCD_REG_HOSTHEAD, (uint32_t)ep);
         REG_WRITE(ADMHCD_REG_HOSTCONTROL, ADMHCD_STATE_OP | ADMHCD_DMA_EN);
 	i = 0;
 /*	printf("1: %x %d %x %x\n", ep->control, i, td[i]->control, td[i]->buflen); */
@@ -1517,7 +1517,7 @@ ahci_device_bulk_start(usbd_xfer_handle xfer)
 	};
         REG_WRITE(ADMHCD_REG_HOSTCONTROL, ADMHCD_STATE_OP);
 
-	apipe->toggle = ((u_int32_t)ep->head & 2)?ADMHCD_TD_DATA1:ADMHCD_TD_DATA0;
+	apipe->toggle = ((uint32_t)ep->head & 2)?ADMHCD_TD_DATA1:ADMHCD_TD_DATA0;
 /*	printf("bulk_transfer_done: status: %x, err: %x, len: %x, toggle: %x\n", status,err,len,apipe->toggle); */
 
 	if (short_ok && (err == 0x9 || err == 0xd)) {
@@ -1565,7 +1565,7 @@ ahci_device_bulk_done(usbd_xfer_handle xfer)
  */
 static int
 ahci_transaction(struct ahci_softc *sc, usbd_pipe_handle pipe,
-	u_int8_t pid, int len, u_char *buf, u_int8_t toggle)
+	uint8_t pid, int len, u_char *buf, uint8_t toggle)
 {
 	return -1;
 #if 0
@@ -1576,12 +1576,12 @@ ahci_transaction(struct ahci_softc *sc, usbd_pipe_handle pipe,
 	int timeout;
 	int ls_via_hub = 0;
 	int pl;
-	u_int8_t isr;
-	u_int8_t result = 0;
-	u_int8_t devaddr = pipe->device->address;
-	u_int8_t endpointaddr = pipe->endpoint->edesc->bEndpointAddress;
-	u_int8_t endpoint;
-	u_int8_t cmd = DATA0_RD;
+	uint8_t isr;
+	uint8_t result = 0;
+	uint8_t devaddr = pipe->device->address;
+	uint8_t endpointaddr = pipe->endpoint->edesc->bEndpointAddress;
+	uint8_t endpoint;
+	uint8_t cmd = DATA0_RD;
 
 	endpoint = UE_GET_ADDR(endpointaddr);
 	DPRINTF(D_XFER, ("\n(%x,%d%s%d,%d) ",
@@ -1620,7 +1620,7 @@ ahci_transaction(struct ahci_softc *sc, usbd_pipe_handle pipe,
 	}
 
 	/* timing ? */
-	if (sl11read(sc, SL811_CSOF) <= (u_int8_t)pl)
+	if (sl11read(sc, SL811_CSOF) <= (uint8_t)pl)
 		cmd |= SL11_EPCTRL_SOF;
 
 	/* Transfer */

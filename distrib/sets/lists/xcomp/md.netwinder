@@ -1,6 +1,0 @@
-# $NetBSD: md.netwinder,v 1.8 2013/01/16 16:01:08 christos Exp $
-./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
-./usr/X11R6/include/xf86Parser.h			-unknown-	x11
-./usr/X11R6/man/cat4/fpit.0				-unknown-	.cat,x11
-./usr/X11R6/man/html4/fpit.html				-unknown-	html,x11
-./usr/X11R6/man/man4/fpit.4				-unknown-	.man,x11

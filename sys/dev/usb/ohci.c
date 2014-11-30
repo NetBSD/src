@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254 2014/11/21 09:40:10 ozaki-r Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254 2014/11/21 09:40:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ Static ohci_soft_itd_t  *ohci_hash_find_itd(ohci_softc_t *, ohci_physaddr_t);
 Static usbd_status	ohci_setup_isoc(usbd_pipe_handle pipe);
 Static void		ohci_device_isoc_enter(usbd_xfer_handle);
 
-Static usbd_status	ohci_allocm(struct usbd_bus *, usb_dma_t *, u_int32_t);
+Static usbd_status	ohci_allocm(struct usbd_bus *, usb_dma_t *, uint32_t);
 Static void		ohci_freem(struct usbd_bus *, usb_dma_t *);
 
 Static usbd_xfer_handle	ohci_allocx(struct usbd_bus *);
@@ -210,7 +210,7 @@ OREAD4(ohci_softc_t *sc, bus_size_t r)
 }
 
 /* Reverse the bits in a value 0 .. 31 */
-Static u_int8_t revbits[OHCI_NO_INTRS] =
+Static uint8_t revbits[OHCI_NO_INTRS] =
   { 0x00, 0x10, 0x08, 0x18, 0x04, 0x14, 0x0c, 0x1c,
     0x02, 0x12, 0x0a, 0x1a, 0x06, 0x16, 0x0e, 0x1e,
     0x01, 0x11, 0x09, 0x19, 0x05, 0x15, 0x0d, 0x1d,
@@ -448,7 +448,7 @@ void
 ohci_free_std(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
 	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
-	
+
 	ohci_hash_rem_td(sc, std);
 	std->nexttd = sc->sc_freetds;
 	sc->sc_freetds = std;
@@ -461,10 +461,10 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, ohci_softc_t *sc,
 {
 	ohci_soft_td_t *next, *cur;
 	ohci_physaddr_t dataphys, dataphysend;
-	u_int32_t tdflags;
+	uint32_t tdflags;
 	int len, curlen;
 	usb_dma_t *dma = &xfer->dmabuf;
-	u_int16_t flags = xfer->flags;
+	uint16_t flags = xfer->flags;
 
 	DPRINTFN(alen < 4096,("ohci_alloc_std_chain: start len=%d\n", alen));
 
@@ -636,7 +636,7 @@ ohci_init(ohci_softc_t *sc)
 	ohci_soft_ed_t *sed, *psed;
 	usbd_status err;
 	int i;
-	u_int32_t s, ctl, rwc, ival, hcr, fm, per, rev, desca /*, descb */;
+	uint32_t s, ctl, rwc, ival, hcr, fm, per, rev, desca /*, descb */;
 
 	DPRINTF(("ohci_init: start\n"));
 	aprint_normal_dev(sc->sc_dev, "");
@@ -920,7 +920,7 @@ ohci_init(ohci_softc_t *sc)
 }
 
 usbd_status
-ohci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
+ohci_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
 {
 	struct ohci_softc *sc = bus->hci_private;
 	usbd_status status;
@@ -1142,7 +1142,7 @@ done:
 Static int
 ohci_intr1(ohci_softc_t *sc)
 {
-	u_int32_t intrs, eintrs;
+	uint32_t intrs, eintrs;
 
 	DPRINTFN(14,("ohci_intr1: enter\n"));
 
@@ -1312,7 +1312,7 @@ ohci_softintr(void *v)
 	if (ohcidebug > 10) {
 		DPRINTF(("ohci_process_done: TD done:\n"));
 		for (std = sdone; std; std = std->dnext)
-			ohci_dump_td(sc, std);	
+			ohci_dump_td(sc, std);
 	}
 #endif
 
@@ -1390,7 +1390,7 @@ ohci_softintr(void *v)
 	if (ohcidebug > 10) {
 		DPRINTF(("ohci_softintr: ITD done:\n"));
 		for (sitd = sidone; sitd; sitd = sitd->dnext)
-			ohci_dump_itd(sc, sitd);	
+			ohci_dump_itd(sc, sitd);
 	}
 #endif
 
@@ -1632,7 +1632,7 @@ void
 ohci_waitintr(ohci_softc_t *sc, usbd_xfer_handle xfer)
 {
 	int timo;
-	u_int32_t intrs;
+	uint32_t intrs;
 
 	mutex_enter(&sc->sc_lock);
 
@@ -2039,7 +2039,7 @@ ohci_dump_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 		"=\x3" "1\0"
 	    "f\32\02EC\0"
 	    "f\34\04CC\0",
-	    (u_int32_t)O32TOH(std->td.td_flags));
+	    (uint32_t)O32TOH(std->td.td_flags));
 	printf("TD(%p) at %08lx:\n\tflags=%s\n\tcbp=0x%08lx nexttd=0x%08lx be=0x%08lx\n",
 	       std, (u_long)std->physaddr, sbuf,
 	       (u_long)O32TOH(std->td.td_cbp),
@@ -2086,9 +2086,9 @@ ohci_dump_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed)
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 	snprintb(sbuf, sizeof(sbuf),
 	    "\20\14OUT\15IN\16LOWSPEED\17SKIP\20ISO",
-	    (u_int32_t)O32TOH(sed->ed.ed_flags));
+	    (uint32_t)O32TOH(sed->ed.ed_flags));
 	snprintb(sbuf2, sizeof(sbuf2), "\20\1HALT\2CARRY",
-	    (u_int32_t)O32TOH(sed->ed.ed_headp));
+	    (uint32_t)O32TOH(sed->ed.ed_headp));
 
 	printf("ED(%p) at 0x%08lx: addr=%d endpt=%d maxp=%d flags=%s\ntailp=0x%08lx "
 		 "headflags=%s headp=0x%08lx nexted=0x%08lx\n",
@@ -2109,13 +2109,13 @@ ohci_open(usbd_pipe_handle pipe)
 	ohci_softc_t *sc = dev->bus->hci_private;
 	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
 	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
-	u_int8_t addr = dev->address;
-	u_int8_t xfertype = ed->bmAttributes & UE_XFERTYPE;
+	uint8_t addr = dev->address;
+	uint8_t xfertype = ed->bmAttributes & UE_XFERTYPE;
 	ohci_soft_ed_t *sed;
 	ohci_soft_td_t *std;
 	ohci_soft_itd_t *sitd;
 	ohci_physaddr_t tdphys;
-	u_int32_t fmt;
+	uint32_t fmt;
 	usbd_status err = USBD_NOMEM;
 	int ival;
 
@@ -2509,7 +2509,7 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 	usb_port_status_t ps;
 	usb_hub_descriptor_t hubd;
 	usbd_status err;
-	u_int32_t v;
+	uint32_t v;
 
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
@@ -2543,7 +2543,7 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 		break;
 	case C(UR_GET_CONFIG, UT_READ_DEVICE):
 		if (len > 0) {
-			*(u_int8_t *)buf = sc->sc_conf;
+			*(uint8_t *)buf = sc->sc_conf;
 			totlen = 1;
 		}
 		break;
@@ -2603,7 +2603,7 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 		break;
 	case C(UR_GET_INTERFACE, UT_READ_INTERFACE):
 		if (len > 0) {
-			*(u_int8_t *)buf = 0;
+			*(uint8_t *)buf = 0;
 			totlen = 1;
 		}
 		break;
@@ -2719,7 +2719,7 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 		hubd.bPwrOn2PwrGood = OHCI_GET_POTPGT(v);
 		v = OREAD4(sc, OHCI_RH_DESCRIPTOR_B);
 		for (i = 0, l = sc->sc_noport; l > 0; i++, l -= 8, v >>= 8)
-			hubd.DeviceRemovable[i++] = (u_int8_t)v;
+			hubd.DeviceRemovable[i++] = (uint8_t)v;
 		hubd.bDescLength = USB_HUB_DESCRIPTOR_SIZE + i;
 		l = min(len, hubd.bDescLength);
 		totlen = l;
@@ -3047,7 +3047,7 @@ ohci_device_bulk_start(usbd_xfer_handle xfer)
 		  data, &tail);
 	if (err)
 		return err;
-	
+
 	/* We want interrupt at the end of the transfer. */
 	tail->td.td_flags &= HTOO32(~OHCI_TD_INTR_MASK);
 	tail->td.td_flags |= HTOO32(OHCI_TD_SET_DI(1));

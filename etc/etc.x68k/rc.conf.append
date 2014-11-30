@@ -1,7 +1,0 @@
-#	$NetBSD: rc.conf.append,v 1.1 2013/04/21 08:47:28 isaki Exp $
-#
-# Arch-specific rc.conf(5) configuration.
-
-# powerd(8) is recommended for a front power switch.
-#
-powerd=YES

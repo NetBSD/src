@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.41 2014/11/15 19:26:37 christos Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.41.2.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.41 2014/11/15 19:26:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.41.2.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -518,8 +518,8 @@ ucycomstart(struct tty *tp)
 		    sc->sc_mcr, sc->sc_obuf[0]));
 #ifdef UCYCOM_DEBUG
 		if (ucycomdebug > 10) {
-			u_int32_t i;
-			u_int8_t *d = data;
+			uint32_t i;
+			uint8_t *d = data;
 
 			DPRINTF(("ucycomstart(8): data ="));
 			for (i = 0; i < len; i++)
@@ -543,8 +543,8 @@ ucycomstart(struct tty *tp)
 		    "sc->sc_obuf[1] = %d\n", sc->sc_obuf[0], sc->sc_obuf[1]));
 #ifdef UCYCOM_DEBUG
 		if (ucycomdebug > 10) {
-			u_int32_t i;
-			u_int8_t *d = data;
+			uint32_t i;
+			uint8_t *d = data;
 
 			DPRINTF(("ucycomstart(32): data ="));
 			for (i = 0; i < len; i++)
@@ -955,7 +955,7 @@ ucycom_intr(struct uhidev *addr, void *ibuf, u_int len)
 
 #ifdef UCYCOM_DEBUG
 	if (ucycomdebug > 5) {
-		u_int32_t i;
+		uint32_t i;
 
 		if (n != 0) {
 			DPRINTF(("ucycom_intr: ibuf[0..%d) =", n));

@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.42 2014/07/25 08:10:39 dholland Exp $	*/
+/*	$NetBSD: urio.c,v 1.42.4.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.42 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.42.4.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ int             urio_activate(device_t, enum devact);
 extern struct cfdriver urio_cd;
 CFATTACH_DECL_NEW(urio, sizeof(struct urio_softc), urio_match, urio_attach, urio_detach, urio_activate);
 
-int 
+int
 urio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -140,7 +140,7 @@ urio_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+void
 urio_attach(device_t parent, device_t self, void *aux)
 {
 	struct urio_softc *sc = device_private(self);
@@ -150,7 +150,7 @@ urio_attach(device_t parent, device_t self, void *aux)
 	char			*devinfop;
 	usbd_status		err;
 	usb_endpoint_descriptor_t *ed;
-	u_int8_t		epcount;
+	uint8_t			epcount;
 	int			i;
 
 	DPRINTFN(10,("urio_attach: sc=%p\n", sc));
@@ -212,7 +212,7 @@ urio_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int 
+int
 urio_detach(device_t self, int flags)
 {
 	struct urio_softc *sc = device_private(self);
@@ -334,7 +334,7 @@ urioread(dev_t dev, struct uio *uio, int flag)
 	usbd_xfer_handle xfer;
 	usbd_status err;
 	void *bufp;
-	u_int32_t n, tn;
+	uint32_t n, tn;
 	int error = 0;
 
 	sc = device_lookup_private(&urio_cd, URIOUNIT(dev));
@@ -391,7 +391,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 	usbd_xfer_handle xfer;
 	usbd_status err;
 	void *bufp;
-	u_int32_t n;
+	uint32_t n;
 	int error = 0;
 
 	sc = device_lookup_private(&urio_cd, URIOUNIT(dev));
@@ -458,7 +458,7 @@ urioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	usb_device_request_t req;
 	usbd_status err;
 	int req_flags = 0;
-	u_int32_t req_actlen = 0;
+	uint32_t req_actlen = 0;
 	void *ptr = NULL;
 	int error = 0;
 

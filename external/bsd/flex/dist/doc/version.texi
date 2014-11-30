@@ -1,4 +1,0 @@
-@set UPDATED 6 December 2012
-@set UPDATED-MONTH December 2012
-@set EDITION 2.5.39
-@set VERSION 2.5.39

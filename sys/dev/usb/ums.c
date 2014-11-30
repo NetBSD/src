@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.87 2014/01/25 00:03:14 mlelstv Exp $	*/
+/*	$NetBSD: ums.c,v 1.87.6.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.87 2014/01/25 00:03:14 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.87.6.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ struct ums_softc {
 
 	int nbuttons;
 
-	u_int32_t sc_buttons;	/* mouse button status */
+	uint32_t sc_buttons;	/* mouse button status */
 	device_t sc_wsmousedev;
 
 	char			sc_dying;
@@ -177,7 +177,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 	struct wsmousedev_attach_args a;
 	int size;
 	void *desc;
-	u_int32_t flags, quirks;
+	uint32_t flags, quirks;
 	int i, hl;
 	struct hid_location *zloc;
 	bool isdigitizer;
@@ -418,7 +418,7 @@ ums_intr(struct uhidev *addr, void *ibuf, u_int len)
 {
 	struct ums_softc *sc = (struct ums_softc *)addr;
 	int dx, dy, dz, dw;
-	u_int32_t buttons = 0;
+	uint32_t buttons = 0;
 	int i, flags, s;
 
 	DPRINTFN(5,("ums_intr: len=%d\n", len));

@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.31 2014/09/24 00:17:13 christos Exp $	*/
+/*	$NetBSD: u3g.c,v 1.31.2.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31 2014/09/24 00:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ static void u3g_set(void *, int, int, int);
 static int  u3g_open(void *, int);
 static void u3g_close(void *, int);
 static void u3g_read(void *, int, u_char **, uint32_t *);
-static void u3g_write(void *, int, u_char *, u_char *, u_int32_t *);
+static void u3g_write(void *, int, u_char *, u_char *, uint32_t *);
 
 struct ucom_methods u3g_methods = {
 	u3g_get_status,
@@ -339,7 +339,7 @@ send_bulkmsg(usbd_device_handle dev, void *cmd, size_t cmdlen)
 static void
 set_cbw(unsigned char *cmd)
 {
-	cmd[0] = 0x55; 
+	cmd[0] = 0x55;
 	cmd[1] = 0x53;
 	cmd[2] = 0x42;
 	cmd[3] = 0x43;
@@ -726,7 +726,7 @@ u3g_attach(device_t parent, device_t self, void *aux)
 	usb_endpoint_descriptor_t *ed;
 	struct ucom_attach_args uca;
 	usbd_status error;
-	int n, intr_address, intr_size; 
+	int n, intr_address, intr_size;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -998,7 +998,7 @@ u3g_set(void *arg, int portno, int reg, int onoff)
 }
 
 /*ARGSUSED*/
-static int 
+static int
 u3g_open(void *arg, int portno)
 {
 	struct u3g_softc *sc = arg;
@@ -1021,7 +1021,7 @@ u3g_open(void *arg, int portno)
 
 	for (nin = i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(ih, i);
-		if (ed == NULL)	
+		if (ed == NULL)
 			return (EIO);
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -1047,7 +1047,7 @@ u3g_open(void *arg, int portno)
 }
 
 /*ARGSUSED*/
-static void 
+static void
 u3g_close(void *arg, int portno)
 {
 	struct u3g_softc *sc = arg;
@@ -1087,7 +1087,7 @@ u3g_read(void *arg, int portno, u_char **cpp, uint32_t *ccp)
 
 /*ARGSUSED*/
 static void
-u3g_write(void *arg, int portno, u_char *to, u_char *from, u_int32_t *count)
+u3g_write(void *arg, int portno, u_char *to, u_char *from, uint32_t *count)
 {
 	struct u3g_softc *sc = arg;
 	struct u3g_com *com = &sc->sc_com[portno];

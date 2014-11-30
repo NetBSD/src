@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsavar.h,v 1.9 2011/12/23 00:51:45 jakllsch Exp $	*/
+/*	$NetBSD: ubsavar.h,v 1.9.24.1 2014/11/30 12:18:58 skrll Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -135,7 +135,7 @@ struct	ubsa_softc {
 
 	u_char			sc_dying;	/* disconnecting */
 	u_char			sc_quadumts;
-	u_int16_t		sc_devflags;		
+	uint16_t		sc_devflags;
 };
 
 
@@ -148,7 +148,7 @@ int  ubsa_open(void *, int);
 void ubsa_close(void *, int);
 
 void ubsa_break(struct ubsa_softc *sc, int, int onoff);
-int  ubsa_request(struct ubsa_softc *, int, u_int8_t, u_int16_t);
+int  ubsa_request(struct ubsa_softc *, int, uint8_t, uint16_t);
 void ubsa_dtr(struct ubsa_softc *, int, int);
 void ubsa_quadumts_dtr(struct ubsa_softc *, int, int);
 void ubsa_rts(struct ubsa_softc *, int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.75 2014/07/25 08:10:39 dholland Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.75.4.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ int             uscanner_activate(device_t, enum devact);
 extern struct cfdriver uscanner_cd;
 CFATTACH_DECL_NEW(uscanner, sizeof(struct uscanner_softc), uscanner_match, uscanner_attach, uscanner_detach, uscanner_activate);
 
-int 
+int
 uscanner_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -277,7 +277,7 @@ uscanner_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+void
 uscanner_attach(device_t parent, device_t self, void *aux)
 {
 	struct uscanner_softc *sc = device_private(self);
@@ -490,7 +490,7 @@ uscanner_do_close(struct uscanner_softc *sc)
 Static int
 uscanner_do_read(struct uscanner_softc *sc, struct uio *uio, int flag)
 {
-	u_int32_t n, tn;
+	uint32_t n, tn;
 	usbd_status err;
 	int error = 0;
 
@@ -545,7 +545,7 @@ uscannerread(dev_t dev, struct uio *uio, int flag)
 Static int
 uscanner_do_write(struct uscanner_softc *sc, struct uio *uio, int flag)
 {
-	u_int32_t n;
+	uint32_t n;
 	int error = 0;
 	usbd_status err;
 
@@ -605,7 +605,7 @@ uscanner_activate(device_t self, enum devact act)
 	}
 }
 
-int 
+int
 uscanner_detach(device_t self, int flags)
 {
 	struct uscanner_softc *sc = device_private(self);

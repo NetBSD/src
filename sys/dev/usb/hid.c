@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.35 2012/02/24 06:48:23 mrg Exp $	*/
+/*	$NetBSD: hid.c,v 1.35.16.1 2014/11/30 12:18:58 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.35 2012/02/24 06:48:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.35.16.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 {
 	struct hid_item *c = &s->cur;
 	unsigned int bTag, bType, bSize;
-	u_int32_t oldpos;
+	uint32_t oldpos;
 	const u_char *data;
 	int32_t dval;
 	const u_char *p;
@@ -366,7 +366,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 }
 
 int
-hid_report_size(const void *buf, int len, enum hid_kind k, u_int8_t id)
+hid_report_size(const void *buf, int len, enum hid_kind k, uint8_t id)
 {
 	struct hid_data *d;
 	struct hid_item h;
@@ -398,8 +398,8 @@ hid_report_size(const void *buf, int len, enum hid_kind k, u_int8_t id)
 }
 
 int
-hid_locate(const void *desc, int size, u_int32_t u, u_int8_t id, enum hid_kind k,
-	   struct hid_location *loc, u_int32_t *flags)
+hid_locate(const void *desc, int size, uint32_t u, uint8_t id, enum hid_kind k,
+	   struct hid_location *loc, uint32_t *flags)
 {
 	struct hid_data *d;
 	struct hid_item h;
@@ -476,7 +476,7 @@ hid_get_udata(const u_char *buf, const struct hid_location *loc)
  * kind of report is considered. The current HID code that uses this for
  * matching is actually only looking for input reports, so this works
  * for now.
- * 
+ *
  * This function could try all report kinds (input, output and feature)
  * consecutively if necessary, but it may be better to integrate the
  * libusbhid code which can consider multiple report kinds simultaneously
@@ -484,11 +484,11 @@ hid_get_udata(const u_char *buf, const struct hid_location *loc)
  * Needs some thought.
  */
 int
-hid_is_collection(const void *desc, int size, u_int8_t id, u_int32_t usage)
+hid_is_collection(const void *desc, int size, uint8_t id, uint32_t usage)
 {
 	struct hid_data *hd;
 	struct hid_item hi;
-	u_int32_t coll_usage = ~0;
+	uint32_t coll_usage = ~0;
 
 	hd = hid_start_parse(desc, size, hid_input);
 	if (hd == NULL)

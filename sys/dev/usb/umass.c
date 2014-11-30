@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.149 2014/09/12 16:40:38 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.149.2.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149 2014/09/12 16:40:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.1 2014/11/30 12:18:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -244,7 +244,7 @@ Static void umass_bbb_transfer(struct umass_softc *, int, void *, int, void *,
 Static void umass_bbb_reset(struct umass_softc *, int);
 Static void umass_bbb_state(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
-usbd_status umass_bbb_get_max_lun(struct umass_softc *, u_int8_t *);
+usbd_status umass_bbb_get_max_lun(struct umass_softc *, uint8_t *);
 
 /* CBI related functions */
 Static void umass_cbi_transfer(struct umass_softc *, int, void *, int, void *,
@@ -272,7 +272,7 @@ Static void umass_bbb_dump_cbw(struct umass_softc *sc,
 				umass_bbb_cbw_t *cbw);
 Static void umass_bbb_dump_csw(struct umass_softc *sc,
 				umass_bbb_csw_t *csw);
-Static void umass_dump_buffer(struct umass_softc *sc, u_int8_t *buffer,
+Static void umass_dump_buffer(struct umass_softc *sc, uint8_t *buffer,
 				int buflen, int printlen);
 #endif
 
@@ -1677,7 +1677,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 		/* Dissect the information in the buffer */
 
 		{
-			u_int32_t actlen;
+			uint32_t actlen;
 			usbd_get_xfer_status(xfer,NULL,NULL,&actlen,NULL);
 			DPRINTF(UDMASS_CBI, ("%s: CBI_STATUS actlen=%d\n",
 				device_xname(sc->sc_dev), actlen));
@@ -1811,7 +1811,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 usbd_status
-umass_bbb_get_max_lun(struct umass_softc *sc, u_int8_t *maxlun)
+umass_bbb_get_max_lun(struct umass_softc *sc, uint8_t *maxlun)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -1872,7 +1872,7 @@ umass_bbb_dump_cbw(struct umass_softc *sc, umass_bbb_cbw_t *cbw)
 {
 	int clen = cbw->bCDBLength;
 	int dlen = UGETDW(cbw->dCBWDataTransferLength);
-	u_int8_t *c = cbw->CBWCDB;
+	uint8_t *c = cbw->CBWCDB;
 	int tag = UGETDW(cbw->dCBWTag);
 	int flags = cbw->bCBWFlags;
 
@@ -1905,7 +1905,7 @@ umass_bbb_dump_csw(struct umass_softc *sc, umass_bbb_csw_t *csw)
 }
 
 Static void
-umass_dump_buffer(struct umass_softc *sc, u_int8_t *buffer, int buflen,
+umass_dump_buffer(struct umass_softc *sc, uint8_t *buffer, int buflen,
 		  int printlen)
 {
 	int i, j;

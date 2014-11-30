@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.19 2012/12/27 16:42:32 skrll Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.19.14.1 2014/11/30 12:18:58 skrll Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 
 /*
  * iPAQ driver
- * 
+ *
  * 19 July 2003:	Incorporated changes suggested by Sam Lawrance from
  * 			the uppc module
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.19 2012/12/27 16:42:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.19.14.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,9 +82,9 @@ struct uipaq_softc {
 	usbd_interface_handle	sc_iface;	/* interface */
 
 	device_t		sc_subdev;	/* ucom uses that */
-	u_int16_t		sc_lcr;		/* state for DTR/RTS */
+	uint16_t		sc_lcr;		/* state for DTR/RTS */
 
-	u_int16_t		sc_flags;
+	uint16_t		sc_flags;
 
 	u_char			sc_dying;
 };
@@ -113,7 +113,7 @@ struct ucom_methods uipaq_methods = {
 
 struct uipaq_type {
 	struct usb_devno	uv_dev;
-	u_int16_t		uv_flags;
+	uint16_t		uv_flags;
 };
 
 static const struct uipaq_type uipaq_devs[] = {
@@ -136,7 +136,7 @@ extern struct cfdriver uipaq_cd;
 CFATTACH_DECL2_NEW(uipaq, sizeof(struct uipaq_softc), uipaq_match,
     uipaq_attach, uipaq_detach, uipaq_activate, NULL, uipaq_childdet);
 
-int 
+int
 uipaq_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -148,7 +148,7 @@ uipaq_match(device_t parent, cfdata_t match, void *aux)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+void
 uipaq_attach(device_t parent, device_t self, void *aux)
 {
 	struct uipaq_softc *sc = device_private(self);

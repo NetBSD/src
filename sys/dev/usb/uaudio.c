@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.140 2014/09/22 14:25:32 nat Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.140.2.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140 2014/09/22 14:25:32 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2333,7 +2333,7 @@ uaudio_get(struct uaudio_softc *sc, int which, int type, int wValue,
 	   int wIndex, int len)
 {
 	usb_device_request_t req;
-	u_int8_t data[4];
+	uint8_t data[4];
 	usbd_status err;
 	int val;
 
@@ -2373,7 +2373,7 @@ uaudio_set(struct uaudio_softc *sc, int which, int type, int wValue,
 	   int wIndex, int len, int val)
 {
 	usb_device_request_t req;
-	u_int8_t data[4];
+	uint8_t data[4];
 	int err __unused;
 
 	if (wValue == -1)

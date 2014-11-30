@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.126 2014/09/20 08:45:23 gson Exp $	*/
+/*	$NetBSD: ugen.c,v 1.126.2.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126 2014/09/20 08:45:23 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.1 2014/11/30 12:18:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -86,7 +86,7 @@ struct isoreq {
 	struct ugen_endpoint *sce;
 	usbd_xfer_handle xfer;
 	void *dmabuf;
-	u_int16_t sizes[UGEN_NISORFRMS];
+	uint16_t sizes[UGEN_NISORFRMS];
 };
 
 struct ugen_endpoint {
@@ -105,11 +105,11 @@ struct ugen_endpoint {
 	u_char *fill;		/* location for input (isoc) */
 	u_char *limit;		/* end of circular buffer (isoc) */
 	u_char *cur;		/* current read location (isoc) */
-	u_int32_t timeout;
-	u_int32_t ra_wb_bufsize; /* requested size for RA/WB buffer */
-	u_int32_t ra_wb_reqsize; /* requested xfer length for RA/WB */
-	u_int32_t ra_wb_used;	 /* how much is in buffer */
-	u_int32_t ra_wb_xferlen; /* current xfer length for RA/WB */
+	uint32_t timeout;
+	uint32_t ra_wb_bufsize; /* requested size for RA/WB buffer */
+	uint32_t ra_wb_reqsize; /* requested xfer length for RA/WB */
+	uint32_t ra_wb_used;	 /* how much is in buffer */
+	uint32_t ra_wb_xferlen; /* current xfer length for RA/WB */
 	usbd_xfer_handle ra_wb_xfer;
 	struct isoreq isoreqs[UGEN_NISOREQS];
 	/* Keep these last; we don't overwrite them in ugen_set_config() */
@@ -278,7 +278,7 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 	usbd_interface_handle iface;
 	usb_endpoint_descriptor_t *ed;
 	struct ugen_endpoint *sce;
-	u_int8_t niface, nendpt;
+	uint8_t niface, nendpt;
 	int ifaceno, endptno, endpt;
 	usbd_status err;
 	int dir, i;
@@ -576,7 +576,7 @@ Static int
 ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 {
 	struct ugen_endpoint *sce = &sc->sc_endpoints[endpt][IN];
-	u_int32_t n, tn;
+	uint32_t n, tn;
 	usbd_xfer_handle xfer;
 	usbd_status err;
 	int error = 0;
@@ -818,9 +818,9 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 	int flag)
 {
 	struct ugen_endpoint *sce = &sc->sc_endpoints[endpt][OUT];
-	u_int32_t n;
+	uint32_t n;
 	int error = 0;
-	u_int32_t tn;
+	uint32_t tn;
 	char *dbuf;
 	usbd_xfer_handle xfer;
 	usbd_status err;
@@ -1079,7 +1079,7 @@ ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 {
 	struct ugen_endpoint *sce = addr;
 	struct ugen_softc *sc = sce->sc;
-	u_int32_t count;
+	uint32_t count;
 	u_char *ibuf;
 
 	if (status == USBD_CANCELLED)
@@ -1119,7 +1119,7 @@ ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 	struct isoreq *req = addr;
 	struct ugen_endpoint *sce = req->sce;
 	struct ugen_softc *sc = sce->sc;
-	u_int32_t count, n;
+	uint32_t count, n;
 	int i, isize;
 
 	/* Return if we are aborting. */
@@ -1141,7 +1141,7 @@ ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 
 	isize = UGETW(sce->edesc->wMaxPacketSize);
 	for (i = 0; i < UGEN_NISORFRMS; i++) {
-		u_int32_t actlen = req->sizes[i];
+		uint32_t actlen = req->sizes[i];
 		char const *tbuf = (char const *)req->dmabuf + isize * i;
 
 		/* copy data to buffer */
@@ -1180,7 +1180,7 @@ ugen_bulkra_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
 {
 	struct ugen_endpoint *sce = addr;
 	struct ugen_softc *sc = sce->sc;
-	u_int32_t count, n;
+	uint32_t count, n;
 	char const *tbuf;
 	usbd_status err;
 
@@ -1250,7 +1250,7 @@ ugen_bulkwb_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
 {
 	struct ugen_endpoint *sce = addr;
 	struct ugen_softc *sc = sce->sc;
-	u_int32_t count, n;
+	uint32_t count, n;
 	char *tbuf;
 	usbd_status err;
 
@@ -1319,7 +1319,7 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 	usb_endpoint_descriptor_t *ed;
 	usbd_status err;
 	struct ugen_endpoint *sce;
-	u_int8_t niface, nendpt, endptno, endpt;
+	uint8_t niface, nendpt, endptno, endpt;
 	int dir;
 
 	DPRINTFN(15, ("ugen_set_interface %d %d\n", ifaceidx, altno));
@@ -1429,7 +1429,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 	usb_endpoint_descriptor_t *edesc;
 	struct usb_alt_interface *ai;
 	struct usb_string_desc *si;
-	u_int8_t conf, alt;
+	uint8_t conf, alt;
 
 	DPRINTFN(5, ("ugenioctl: cmd=%08lx\n", cmd));
 	if (sc->sc_dying)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otusvar.h,v 1.7 2013/03/30 01:10:00 christos Exp $	*/
+/*	$NetBSD: if_otusvar.h,v 1.7.12.1 2014/11/30 12:18:58 skrll Exp $	*/
 /*	$OpenBSD: if_otusreg.h,v 1.6 2009/04/06 18:17:01 damien Exp $	*/
 
 /*-
@@ -28,11 +28,11 @@
  * EDCA AC parameters.
  */
 struct ieee80211_edca_ac_params {
-	u_int8_t	ac_ecwmin;	/* CWmin = 2^ECWmin - 1 */
-	u_int8_t	ac_ecwmax;	/* CWmax = 2^ECWmax - 1 */
-	u_int8_t	ac_aifsn;
-	u_int16_t	ac_txoplimit;	/* 32TU */
-	u_int8_t	ac_acm;
+	uint8_t		ac_ecwmin;	/* CWmin = 2^ECWmin - 1 */
+	uint8_t		ac_ecwmax;	/* CWmax = 2^ECWmax - 1 */
+	uint8_t		ac_aifsn;
+	uint16_t	ac_txoplimit;	/* 32TU */
+	uint8_t		ac_acm;
 };
 /************************************************************/
 #endif /* ! HAVE_EDCA */

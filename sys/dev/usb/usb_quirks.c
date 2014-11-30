@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.81 2014/09/12 16:40:38 skrll Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.81.2.1 2014/11/30 12:18:58 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.81 2014/09/12 16:40:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.81.2.1 2014/11/30 12:18:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -52,9 +52,9 @@ extern int usbdebug;
 #define ANY 0xffff
 
 Static const struct usbd_quirk_entry {
-	u_int16_t idVendor;
-	u_int16_t idProduct;
-	u_int16_t bcdDevice;
+	uint16_t idVendor;
+	uint16_t idProduct;
+	uint16_t bcdDevice;
 	struct usbd_quirks quirks;
 } usb_quirks[] = {
  /* Devices which should be ignored by uhid */
@@ -156,9 +156,9 @@ const struct usbd_quirks *
 usbd_find_quirk(usb_device_descriptor_t *d)
 {
 	const struct usbd_quirk_entry *t;
-	u_int16_t vendor = UGETW(d->idVendor);
-	u_int16_t product = UGETW(d->idProduct);
-	u_int16_t revision = UGETW(d->bcdDevice);
+	uint16_t vendor = UGETW(d->idVendor);
+	uint16_t product = UGETW(d->idProduct);
+	uint16_t revision = UGETW(d->bcdDevice);
 
 	for (t = usb_quirks; t->idVendor != 0; t++) {
 		if (t->idVendor  == vendor &&

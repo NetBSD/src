@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47 2013/10/17 21:24:24 christos Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.1 2014/11/30 12:18:58 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47 2013/10/17 21:24:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.1 2014/11/30 12:18:58 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -301,12 +301,12 @@ struct slhci_pipe {
  * MIPS cycle counter does not directly count cpu cycles but is a different
  * fraction of cpu cycles depending on the cpu.
  */
-typedef u_int32_t cc_type;
+typedef uint32_t cc_type;
 #define CC_TYPE_FMT "%u"
 #define slhci_cc_set(x) __asm volatile ("mfc0 %[cc], $9\n\tnop\n\tnop\n\tnop" \
     : [cc] "=r"(x))
 #elif defined(__i386__)
-typedef u_int64_t cc_type;
+typedef uint64_t cc_type;
 #define CC_TYPE_FMT "%llu"
 #define slhci_cc_set(x) __asm volatile ("rdtsc" : "=A"(x))
 #else
@@ -423,7 +423,7 @@ slhci_dump_cc_times(int n) {
 typedef usbd_status (*LockCallFunc)(struct slhci_softc *, struct slhci_pipe
     *, struct usbd_xfer *);
 
-usbd_status slhci_allocm(struct usbd_bus *, usb_dma_t *, u_int32_t);
+usbd_status slhci_allocm(struct usbd_bus *, usb_dma_t *, uint32_t);
 void slhci_freem(struct usbd_bus *, usb_dma_t *);
 struct usbd_xfer * slhci_allocx(struct usbd_bus *);
 void slhci_freex(struct usbd_bus *, struct usbd_xfer *);
@@ -771,7 +771,7 @@ struct slhci_mem {
  * assumes DMA is used.  So we fake the DMA block.
  */
 usbd_status
-slhci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
+slhci_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
 {
 	struct slhci_mem *mem;
 
