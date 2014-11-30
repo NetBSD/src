@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.336 2014/09/06 12:12:32 christos Exp $
+#	$NetBSD: bsd.README,v 1.337 2014/11/30 15:53:29 uebayasi Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1435,6 +1435,8 @@ BINMODE		Binary mode.
 CLEANDIRFILES	Additional files to remove for the cleandir target.
 
 CLEANFILES	Additional files to remove for the clean and cleandir targets.
+
+CONFIGOPTS	Additional flags to config(1) when building kernels.
 
 COPTS		Additional flags to the compiler when creating C objects.
 
