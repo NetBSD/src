@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.35 2014/11/26 21:25:35 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.36 2014/11/30 00:40:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.35 2014/11/26 21:25:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.36 2014/11/30 00:40:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -252,6 +252,7 @@ npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *rset)
 		np->n_portmap = pm;
 	} else {
 		KASSERT(np->n_portmap != NULL);
+		KASSERT(np->n_portmap->p_refcnt > 0);
 	}
 	return np;
 err:
@@ -417,6 +418,9 @@ npf_nat_getport(npf_natpolicy_t *np)
 	u_int n = PORTMAP_SIZE, idx, bit;
 	uint32_t map, nmap;
 
+	KASSERT((np->n_flags & NPF_NAT_PORTMAP) != 0);
+	KASSERT(pm->p_refcnt > 0);
+
 	idx = cprng_fast32() % PORTMAP_SIZE;
 	for (;;) {
 		KASSERT(idx < PORTMAP_SIZE);
@@ -450,6 +454,9 @@ npf_nat_takeport(npf_natpolicy_t *np, in_port_t port)
 	uint32_t map, nmap;
 	u_int idx, bit;
 
+	KASSERT((np->n_flags & NPF_NAT_PORTMAP) != 0);
+	KASSERT(pm->p_refcnt > 0);
+
 	port = ntohs(port) - PORTMAP_FIRST;
 	idx = port >> PORTMAP_SHIFT;
 	bit = port & PORTMAP_MASK;
@@ -473,6 +480,9 @@ npf_nat_putport(npf_natpolicy_t *np, in_port_t port)
 	npf_portmap_t *pm = np->n_portmap;
 	uint32_t map, nmap;
 	u_int idx, bit;
+
+	KASSERT((np->n_flags & NPF_NAT_PORTMAP) != 0);
+	KASSERT(pm->p_refcnt > 0);
 
 	port = ntohs(port) - PORTMAP_FIRST;
 	idx = port >> PORTMAP_SHIFT;
@@ -686,7 +696,7 @@ npf_do_nat(npf_cache_t *npc, npf_conn_t *con, const int di)
 	 * Determines whether the stream is "forwards" or "backwards".
 	 * Note: no need to lock, since reference on connection is held.
 	 */
-	if (con && (nt = npf_conn_retnat(con, di, &forw)) != NULL) {
+	if (con && (nt = npf_conn_getnat(con, di, &forw)) != NULL) {
 		np = nt->nt_natpolicy;
 		goto translate;
 	}
@@ -874,7 +884,8 @@ npf_nat_import(prop_dictionary_t natdict, npf_ruleset_t *natlist,
 	prop_dictionary_get_uint16(natdict, "tport", &nt->nt_tport);
 
 	/* Take a specific port from port-map. */
-	if (!npf_nat_takeport(np, nt->nt_tport)) {
+	if ((np->n_flags & NPF_NAT_PORTMAP) != 0 && nt->nt_tport &
+	    !npf_nat_takeport(np, nt->nt_tport)) {
 		pool_cache_put(nat_cache, nt);
 		return NULL;
 	}
