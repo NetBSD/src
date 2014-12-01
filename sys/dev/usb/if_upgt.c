@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.12 2014/05/27 13:44:25 ryoon Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.12.4.1 2014/12/01 13:03:05 skrll Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12 2014/05/27 13:44:25 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.1 2014/12/01 13:03:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -2366,8 +2366,7 @@ upgt_bulk_xmit(struct upgt_softc *sc, struct upgt_data *data,
         usbd_status status;
 
 	status = usbd_bulk_transfer(data->xfer, pipeh,
-	    USBD_NO_COPY | flags, UPGT_USB_TIMEOUT, data->buf, size,
-	    "upgt_bulk_xmit");
+	    USBD_NO_COPY | flags, UPGT_USB_TIMEOUT, data->buf, size);
 	if (status != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(sc->sc_dev, "%s: error %s\n", __func__,
 		    usbd_errstr(status));
