@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.4 2014/11/30 16:38:45 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.5 2014/12/01 08:12:09 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.4 2014/11/30 16:38:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.5 2014/12/01 08:12:09 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -694,7 +694,6 @@ ehci_intr1(ehci_softc_t *sc)
 		return (0);
 
 	EOWRITE4(sc, EHCI_USBSTS, intrs); /* Acknowledge */
-	sc->sc_bus.no_intrs++;
 	if (eintrs & EHCI_STS_IAA) {
 		USBHIST_LOG(ehcidebug, "door bell", 0, 0, 0, 0);
 		kpreempt_disable();

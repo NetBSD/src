@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.2 2014/12/01 08:12:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.2 2014/12/01 08:12:09 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -946,7 +946,6 @@ xhci_intr1(struct xhci_softc * const sc)
 	usbsts = xhci_op_read_4(sc, XHCI_USBSTS);
 	DPRINTFN(16, "USBSTS %08x", usbsts, 0, 0, 0);
 
-	sc->sc_bus.no_intrs++;
 	usb_schedsoftintr(&sc->sc_bus);
 
 	return 1;
