@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.37 2014/08/11 01:54:12 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.37.2.1 2014/12/01 09:02:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.37 2014/08/11 01:54:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.37.2.1 2014/12/01 09:02:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -421,22 +421,6 @@ npf_ruleset_gc(npf_ruleset_t *rlset)
 }
 
 /*
- * npf_ruleset_cmpnat: find a matching NAT policy in the ruleset.
- */
-static inline npf_rule_t *
-npf_ruleset_cmpnat(npf_ruleset_t *rlset, npf_natpolicy_t *mnp)
-{
-	npf_rule_t *rl;
-
-	/* Find a matching NAT policy in the old ruleset. */
-	LIST_FOREACH(rl, &rlset->rs_all, r_aentry) {
-		if (rl->r_natp && npf_nat_cmppolicy(rl->r_natp, mnp))
-			break;
-	}
-	return rl;
-}
-
-/*
  * npf_ruleset_reload: prepare the new ruleset by scanning the active
  * ruleset and 1) sharing the dynamic rules 2) sharing NAT policies.
  *
@@ -492,18 +476,30 @@ npf_ruleset_reload(npf_ruleset_t *newset, npf_ruleset_t *oldset)
 			continue;
 		}
 
+		/*
+		 * First, try to share the active port map.  If this
+		 * policy will be unused, npf_nat_freepolicy() will
+		 * drop the reference.
+		 */
+		npf_ruleset_sharepm(oldset, np);
+
 		/* Does it match with any policy in the active ruleset? */
-		if ((actrl = npf_ruleset_cmpnat(oldset, np)) == NULL) {
+		LIST_FOREACH(actrl, &oldset->rs_all, r_aentry) {
+			if (!actrl->r_natp)
+				continue;
+			if ((actrl->r_attr & NPF_RULE_KEEPNAT) != 0)
+				continue;
+			if (npf_nat_cmppolicy(actrl->r_natp, np))
+				break;
+		}
+		if (!actrl) {
+			/* No: just set the ID and continue. */
 			npf_nat_setid(np, ++nid);
 			continue;
 		}
 
-		/*
-		 * Inherit the matching NAT policy and check other ones
-		 * in the new ruleset for sharing the portmap.
-		 */
+		/* Yes: inherit the matching NAT policy. */
 		rl->r_natp = actrl->r_natp;
-		npf_ruleset_sharepm(newset, rl->r_natp);
 		npf_nat_setid(rl->r_natp, ++nid);
 
 		/*
@@ -525,13 +521,8 @@ npf_ruleset_sharepm(npf_ruleset_t *rlset, npf_natpolicy_t *mnp)
 	npf_natpolicy_t *np;
 	npf_rule_t *rl;
 
-	/* Find a matching NAT policy in the old ruleset. */
+	/* Find a matching NAT policy in the old ruleset; skip the self. */
 	LIST_FOREACH(rl, &rlset->rs_all, r_aentry) {
-		/*
-		 * NAT policy might not yet be set during the creation of
-		 * the ruleset (in such case, rule is for our policy), or
-		 * policies might be equal due to rule exchange on reload.
-		 */
 		np = rl->r_natp;
 		if (np == NULL || np == mnp)
 			continue;
