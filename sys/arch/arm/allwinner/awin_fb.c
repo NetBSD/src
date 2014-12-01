@@ -1,4 +1,4 @@
-/* $NetBSD: awin_fb.c,v 1.4.2.4 2014/11/15 11:31:40 martin Exp $ */
+/* $NetBSD: awin_fb.c,v 1.4.2.5 2014/12/01 13:23:49 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_fb.c,v 1.4.2.4 2014/11/15 11:31:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_fb.c,v 1.4.2.5 2014/12/01 13:23:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -148,6 +148,10 @@ awin_fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, lwp_t *l)
 		return error;
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
+	case WSDISPLAYIO_GCURPOS:
+	case WSDISPLAYIO_SCURPOS:
+	case WSDISPLAYIO_GCURMAX:
+	case WSDISPLAYIO_SCURSOR:
 		return awin_debe_ioctl(sc->sc_debedev, cmd, data);
 	default:
 		return EPASSTHROUGH;
