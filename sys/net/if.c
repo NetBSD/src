@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.301 2014/12/01 00:27:05 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.302 2014/12/01 07:15:42 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.301 2014/12/01 00:27:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.302 2014/12/01 07:15:42 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -194,6 +194,10 @@ static void sysctl_sndq_setup(struct sysctllog **, const char *,
     struct ifaltq *);
 static void if_slowtimo(void *);
 static void if_free_sadl(struct ifnet *);
+static void if_attachdomain1(struct ifnet *);
+static int ifconf(u_long, void *);
+static int if_clone_create(const char *);
+static int if_clone_destroy(const char *);
 
 #if defined(INET) || defined(INET6)
 static void sysctl_net_pktq_setup(struct sysctllog **, int);
@@ -655,7 +659,7 @@ if_attachdomain(void)
 	splx(s);
 }
 
-void
+static void
 if_attachdomain1(struct ifnet *ifp)
 {
 	struct domain *dp;
@@ -968,7 +972,7 @@ if_rt_walktree(struct rtentry *rt, void *v)
 /*
  * Create a clone network interface.
  */
-int
+static int
 if_clone_create(const char *name)
 {
 	struct if_clone *ifc;
@@ -987,7 +991,7 @@ if_clone_create(const char *name)
 /*
  * Destroy a clone network interface.
  */
-int
+static int
 if_clone_destroy(const char *name)
 {
 	struct if_clone *ifc;
@@ -2109,7 +2113,7 @@ ifioctl_detach(struct ifnet *ifp)
  * would have been written had there been adequate space.
  */
 /*ARGSUSED*/
-int
+static int
 ifconf(u_long cmd, void *data)
 {
 	struct ifconf *ifc = (struct ifconf *)data;
