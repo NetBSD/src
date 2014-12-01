@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.290 2014/03/25 09:52:55 ozaki-r Exp $
+#	$NetBSD: bsd.prog.mk,v 1.291 2014/12/01 01:34:30 erh Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -59,7 +59,7 @@ CFLAGS+=	${COPTS}
 CFLAGS+=	-g
 .endif
 OBJCFLAGS+=	${OBJCOPTS}
-MKDEP_SUFFIXES?=	.o .ln
+MKDEP_SUFFIXES?=	.o .ln .d
 
 # CTF preserve debug symbols
 .if (${MKCTF:Uno} != "no") && (${CFLAGS:M-g} != "")
