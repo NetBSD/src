@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.58.2.1 2014/08/29 11:14:14 martin Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.58.2.2 2014/12/01 13:05:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -254,7 +254,7 @@ int		npf_table_flush(npf_table_t *);
 npf_ruleset_t *	npf_ruleset_create(size_t);
 void		npf_ruleset_destroy(npf_ruleset_t *);
 void		npf_ruleset_insert(npf_ruleset_t *, npf_rule_t *);
-void		npf_ruleset_reload(npf_ruleset_t *, npf_ruleset_t *);
+void		npf_ruleset_reload(npf_ruleset_t *, npf_ruleset_t *, bool);
 npf_rule_t *	npf_ruleset_sharepm(npf_ruleset_t *, npf_natpolicy_t *);
 npf_natpolicy_t *npf_ruleset_findnat(npf_ruleset_t *, uint64_t);
 void		npf_ruleset_freealg(npf_ruleset_t *, npf_alg_t *);

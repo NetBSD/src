@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.h,v 1.6 2014/08/10 19:09:43 rmind Exp $	*/
+/*	$NetBSD: npf_conn.h,v 1.6.2.1 2014/12/01 13:05:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ bool		npf_conn_pass(const npf_conn_t *, npf_rproc_t **);
 void		npf_conn_setpass(npf_conn_t *, npf_rproc_t *);
 int		npf_conn_setnat(const npf_cache_t *, npf_conn_t *,
 		    npf_nat_t *, u_int);
-npf_nat_t *	npf_conn_retnat(npf_conn_t *, const int, bool *);
+npf_nat_t *	npf_conn_getnat(npf_conn_t *, const int, bool *);
 void		npf_conn_gc(npf_conndb_t *, bool, bool);
 int		npf_conn_import(npf_conndb_t *, prop_dictionary_t,
 		    npf_ruleset_t *);
