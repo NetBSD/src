@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.300 2014/11/28 08:29:00 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.301 2014/12/01 00:27:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300 2014/11/28 08:29:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.301 2014/12/01 00:27:05 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -2115,12 +2115,13 @@ ifconf(u_long cmd, void *data)
 	struct ifconf *ifc = (struct ifconf *)data;
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
-	struct ifreq ifr, *ifrp = NULL;
-	int space = 0, error = 0;
+	struct ifreq ifr, *ifrp;
+	int space, error = 0;
 	const int sz = (int)sizeof(struct ifreq);
-	const bool docopy = ifc->ifc_req != NULL;
 
-	if (docopy)
+	if ((ifrp = ifc->ifc_req) == NULL)
+		space = 0;
+	else
 		space = ifc->ifc_len;
 	IFNET_FOREACH(ifp) {
 		(void)strncpy(ifr.ifr_name, ifp->if_xname,
@@ -2130,7 +2131,7 @@ ifconf(u_long cmd, void *data)
 		if (IFADDR_EMPTY(ifp)) {
 			/* Interface with no addresses - send zero sockaddr. */
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-			if (!docopy) {
+			if (ifrp == NULL) {
 				space += sz;
 				continue;
 			}
@@ -2148,7 +2149,7 @@ ifconf(u_long cmd, void *data)
 			/* all sockaddrs must fit in sockaddr_storage */
 			KASSERT(sa->sa_len <= sizeof(ifr.ifr_ifru));
 
-			if (!docopy) {
+			if (ifrp == NULL) {
 				space += sz;
 				continue;
 			}
@@ -2161,7 +2162,7 @@ ifconf(u_long cmd, void *data)
 			}
 		}
 	}
-	if (docopy) {
+	if (ifrp != NULL) {
 		KASSERT(0 <= space && space <= ifc->ifc_len);
 		ifc->ifc_len -= space;
 	} else {
