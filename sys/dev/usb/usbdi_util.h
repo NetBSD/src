@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.45.6.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.45.6.2 2014/12/01 13:03:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -74,11 +74,11 @@ usbd_status usbd_set_config_index(usbd_device_handle, int, int);
 
 usbd_status usbd_bulk_transfer(usbd_xfer_handle, usbd_pipe_handle,
 			       uint16_t, uint32_t, void *,
-			       uint32_t *, const char *);
+			       uint32_t *);
 
 usbd_status usbd_intr_transfer(usbd_xfer_handle, usbd_pipe_handle,
  			       uint16_t, uint32_t, void *,
- 			       uint32_t *, const char *);
+ 			       uint32_t *);
 
 void usb_detach_waitold(device_t);
 void usb_detach_wakeupold(device_t);

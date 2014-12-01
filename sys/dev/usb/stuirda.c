@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.16.2.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.16.2.2 2014/12/01 13:03:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16.2.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16.2.2 2014/12/01 13:03:05 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -247,7 +247,7 @@ stuirda_fwload(struct uirda_softc *sc) {
 		memcpy(usbbuf, p, n);
 		rc = usbd_bulk_transfer(fwxfer, fwpipe,
 		    USBD_SYNCHRONOUS|USBD_FORCE_SHORT_XFER,
-		    5000, usbbuf, &n, "uirda-fw-wr");
+		    5000, usbbuf, &n);
 		printf("%s: write: rc=%d, %d left\n",
 		    device_xname(sc->sc_dev), rc, n);
 		if (rc) {
@@ -314,7 +314,7 @@ stuirda_write(void *h, struct uio *uio, int flag)
 		err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
 			  USBD_FORCE_SHORT_XFER|USBD_NO_COPY,
 			  UIRDA_WR_TIMEOUT,
-			  sc->sc_wr_buf, &n, "uirdawr");
+			  sc->sc_wr_buf, &n);
 		DPRINTFN(2, ("uirdawrite: err=%d\n", err));
 		if (err) {
 			if (err == USBD_INTERRUPTED)

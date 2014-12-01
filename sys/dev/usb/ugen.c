@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.126.2.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.126.2.2 2014/12/01 13:03:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.2 2014/12/01 13:03:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -724,7 +724,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 				  xfer, sce->pipeh,
 				  sce->state & UGEN_SHORT_OK ?
 				      USBD_SHORT_XFER_OK : 0,
-				  sce->timeout, sc->sc_buffer, &tn, "ugenrb");
+				  sce->timeout, sc->sc_buffer, &tn);
 			if (err) {
 				if (err == USBD_INTERRUPTED)
 					error = EINTR;
@@ -937,7 +937,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 				break;
 			DPRINTFN(1, ("ugenwrite: transfer %d bytes\n", n));
 			err = usbd_bulk_transfer(xfer, sce->pipeh, 0,
-				  sce->timeout, sc->sc_buffer, &n,"ugenwb");
+				  sce->timeout, sc->sc_buffer, &n);
 			if (err) {
 				if (err == USBD_INTERRUPTED)
 					error = EINTR;
@@ -961,7 +961,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 				break;
 			DPRINTFN(1, ("ugenwrite: transfer %d bytes\n", n));
 			err = usbd_intr_transfer(xfer, sce->pipeh, 0,
-			    sce->timeout, sc->sc_buffer, &n, "ugenwi");
+			    sce->timeout, sc->sc_buffer, &n);
 			if (err) {
 				if (err == USBD_INTERRUPTED)
 					error = EINTR;
