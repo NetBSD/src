@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.75.4.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.75.4.3 2014/12/01 13:03:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.2 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.3 2014/12/01 13:03:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -506,8 +506,7 @@ uscanner_do_read(struct uscanner_softc *sc, struct uio *uio, int flag)
 		err = usbd_bulk_transfer(
 			sc->sc_bulkin_xfer, sc->sc_bulkin_pipe,
 			USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
-			sc->sc_bulkin_buffer, &tn,
-			"uscnrb");
+			sc->sc_bulkin_buffer, &tn);
 		if (err) {
 			if (err == USBD_INTERRUPTED)
 				error = EINTR;
@@ -562,8 +561,7 @@ uscanner_do_write(struct uscanner_softc *sc, struct uio *uio, int flag)
 		err = usbd_bulk_transfer(
 			sc->sc_bulkout_xfer, sc->sc_bulkout_pipe,
 			0, USBD_NO_TIMEOUT,
-			sc->sc_bulkout_buffer, &n,
-			"uscnwb");
+			sc->sc_bulkout_buffer, &n);
 		if (err) {
 			if (err == USBD_INTERRUPTED)
 				error = EINTR;

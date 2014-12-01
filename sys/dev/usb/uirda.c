@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.38.6.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: uirda.c,v 1.38.6.2 2014/12/01 13:03:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.6.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.6.2 2014/12/01 13:03:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -555,7 +555,7 @@ uirda_write(void *h, struct uio *uio, int flag)
 		err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
 			  USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
 			  UIRDA_WR_TIMEOUT,
-			  sc->sc_wr_buf, &n, "uirdawr");
+			  sc->sc_wr_buf, &n);
 		DPRINTFN(2, ("uirdawrite: err=%d\n", err));
 		if (err) {
 			if (err == USBD_INTERRUPTED)
@@ -777,7 +777,7 @@ uirda_set_params(void *h, struct irda_params *p)
 		n = UIRDA_OUTPUT_HEADER_SIZE;
 		err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
 			  USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
-			  UIRDA_WR_TIMEOUT, sc->sc_wr_buf, &n, "uirdast");
+			  UIRDA_WR_TIMEOUT, sc->sc_wr_buf, &n);
 		if (err) {
 			aprint_error_dev(sc->sc_dev, "set failed, err=%d\n",
 			    err);

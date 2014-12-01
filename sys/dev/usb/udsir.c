@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.1 2013/05/28 12:03:26 kiyohara Exp $	*/
+/*	$NetBSD: udsir.c,v 1.1.14.1 2014/12/01 13:03:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1 2013/05/28 12:03:26 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.1 2014/12/01 13:03:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -605,7 +605,7 @@ udsir_write(void *h, struct uio *uio, int flag)
 
 		err = usbd_intr_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
 				USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
-				UDSIR_WR_TIMEOUT, wrbuf, &btlen, "udsiwr");
+				UDSIR_WR_TIMEOUT, wrbuf, &btlen);
 		DPRINTFN(2, ("%s: err=%d\n", __func__, err));
 		if (err != USBD_NORMAL_COMPLETION) {
 			if (err == USBD_INTERRUPTED)

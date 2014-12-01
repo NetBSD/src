@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.11 2014/02/23 13:22:32 skrll Exp $	*/
+/*	$NetBSD: udl.c,v 1.11.6.1 2014/12/01 13:03:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11 2014/02/23 13:22:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11.6.1 2014/12/01 13:03:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1430,7 +1430,7 @@ udl_cmd_send(struct udl_softc *sc)
 
 	/* do xfer */
 	error = usbd_bulk_transfer(cmdq->cq_xfer, sc->sc_tx_pipeh,
-	    USBD_NO_COPY, USBD_NO_TIMEOUT, cmdq->cq_buf, &len, "udlcmds");
+	    USBD_NO_COPY, USBD_NO_TIMEOUT, cmdq->cq_buf, &len);
 
 	UDL_CMD_BUFINIT(sc);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.21 2011/05/24 16:42:31 joerg Exp $ */
+/* $NetBSD: pseye.c,v 1.21.34.1 2014/12/01 13:03:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21 2011/05/24 16:42:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.1 2014/12/01 13:03:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -623,7 +623,7 @@ pseye_get_frame(struct pseye_softc *sc, uint32_t *plen)
 
 	return usbd_bulk_transfer(sc->sc_bulkin_xfer, sc->sc_bulkin_pipe,
 	    USBD_SHORT_XFER_OK|USBD_NO_COPY, 1000,
-	    sc->sc_bulkin_buffer, plen, "pseyerb");
+	    sc->sc_bulkin_buffer, plen);
 }
 
 static int

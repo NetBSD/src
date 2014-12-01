@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.61.4.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.61.4.2 2014/12/01 13:03:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.2 2014/12/01 13:03:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -712,5 +712,5 @@ uhidev_write(struct uhidev_softc *sc, void *data, int len)
 	}
 #endif
 	return usbd_intr_transfer(sc->sc_oxfer, sc->sc_opipe, 0,
-	    USBD_NO_TIMEOUT, data, &len, "uhidevwi");
+	    USBD_NO_TIMEOUT, data, &len);
 }

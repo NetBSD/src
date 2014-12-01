@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.63.2.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.63.2.3 2014/12/01 13:03:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.2 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.3 2014/12/01 13:03:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -402,7 +402,7 @@ usbd_get_config(usbd_device_handle dev, uint8_t *conf)
 usbd_status
 usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 		   uint16_t flags, uint32_t timeout, void *buf,
-		   uint32_t *size, const char *lbl)
+		   uint32_t *size)
 {
 	usbd_status err;
 
@@ -426,7 +426,7 @@ usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 usbd_status
 usbd_intr_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 		   uint16_t flags, uint32_t timeout, void *buf,
-		   uint32_t *size, const char *lbl)
+		   uint32_t *size)
 {
 	usbd_status err;
 
