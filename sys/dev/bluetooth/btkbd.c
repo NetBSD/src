@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.16 2013/09/12 12:20:01 martin Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.16.4.1 2014/12/01 11:38:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.16 2013/09/12 12:20:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.16.4.1 2014/12/01 11:38:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -251,8 +251,7 @@ btkbd_detach(device_t self, int flags)
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 #ifdef BTKBD_REPEAT
-	callout_stop(&sc->sc_repeat);
-	KASSERT(!callout_invoking(&sc->sc_repeat));
+	callout_halt(&sc->sc_repeat, NULL);
 	callout_destroy(&sc->sc_repeat);
 #endif
 #endif

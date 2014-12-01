@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.253 2014/08/05 10:33:46 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.253.2.1 2014/12/01 11:38:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.253 2014/08/05 10:33:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.253.2.1 2014/12/01 11:38:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ ohci_detach(struct ohci_softc *sc, int flags)
 	if (rv != 0)
 		return (rv);
 
-	callout_stop(&sc->sc_tmo_rhsc);
+	callout_halt(&sc->sc_tmo_rhsc, &sc->sc_lock);
 
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 	callout_destroy(&sc->sc_tmo_rhsc);

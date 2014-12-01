@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.15 2012/08/14 14:36:43 jruoho Exp $	*/
+/*	$NetBSD: aps.c,v 1.15.14.1 2014/12/01 11:38:42 martin Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 /*	$OpenBSD: aps.c,v 1.17 2008/06/27 06:08:43 canacar Exp $	*/
 /*
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.15 2012/08/14 14:36:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.15.14.1 2014/12/01 11:38:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,7 +429,7 @@ aps_detach(device_t self, int flags)
 {
 	struct aps_softc *sc = device_private(self);
 
-        callout_stop(&sc->sc_callout);
+        callout_halt(&sc->sc_callout, NULL);
         callout_destroy(&sc->sc_callout);
 
 	if (sc->sc_sme)

@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.22 2014/08/10 16:44:34 tls Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.22.2.1 2014/12/01 11:38:43 martin Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.22 2014/08/10 16:44:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.22.2.1 2014/12/01 11:38:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -626,7 +626,7 @@ via_padlock_detach(device_t self, int flags)
 	struct via_padlock_softc *sc = device_private(self);
 
 	if (sc->sc_rnd_attached) {
-		callout_stop(&sc->sc_rnd_co);
+		callout_halt(&sc->sc_rnd_co, NULL);
 		callout_destroy(&sc->sc_rnd_co);
 		rnd_detach_source(&sc->sc_rnd_source);
 		sc->sc_rnd_attached = false;

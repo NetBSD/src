@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.24 2014/05/20 18:25:54 rmind Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.24.2.1 2014/12/01 11:38:43 martin Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.24 2014/05/20 18:25:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.24.2.1 2014/12/01 11:38:43 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -349,10 +349,10 @@ bcsp_detach(device_t self, int flags __unused)
 		sc->sc_unit = NULL;
 	}
 
-	callout_stop(&sc->sc_seq_timer);
+	callout_halt(&sc->sc_seq_timer, NULL);
 	callout_destroy(&sc->sc_seq_timer);
 
-	callout_stop(&sc->sc_le_timer);
+	callout_halt(&sc->sc_le_timer, NULL);
 	callout_destroy(&sc->sc_le_timer);
 
 	return 0;
