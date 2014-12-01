@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.14 2014/05/11 02:02:14 joerg Exp $	*/
+/*	$NetBSD: profile.h,v 1.14.2.1 2014/12/01 08:59:04 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -76,7 +76,7 @@
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\
-	__asm("pop	{r0-r3, pc}");					\
+	__asm("pop	{r0-r3, lr, pc}");				\
 	__asm(".size	" MCOUNT_ASM_NAME ", .-" MCOUNT_ASM_NAME);
 #elif defined(__ARM_DWARF_EH__)
 #define	MCOUNT								\
