@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.37.2.1 2014/12/01 09:02:26 martin Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.37.2.2 2014/12/01 13:05:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.37.2.1 2014/12/01 09:02:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.37.2.2 2014/12/01 13:05:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -216,6 +216,9 @@ npf_ruleset_lookup(npf_ruleset_t *rlset, const char *name)
 	return rl;
 }
 
+/*
+ * npf_ruleset_add: insert dynamic rule into the (active) ruleset.
+ */
 int
 npf_ruleset_add(npf_ruleset_t *rlset, const char *rname, npf_rule_t *rl)
 {
@@ -273,6 +276,9 @@ npf_ruleset_add(npf_ruleset_t *rlset, const char *rname, npf_rule_t *rl)
 	return 0;
 }
 
+/*
+ * npf_ruleset_remove: remove the dynamic rule given the rule ID.
+ */
 int
 npf_ruleset_remove(npf_ruleset_t *rlset, const char *rname, uint64_t id)
 {
@@ -294,6 +300,9 @@ npf_ruleset_remove(npf_ruleset_t *rlset, const char *rname, uint64_t id)
 	return ENOENT;
 }
 
+/*
+ * npf_ruleset_remkey: remove the dynamic rule given the rule key.
+ */
 int
 npf_ruleset_remkey(npf_ruleset_t *rlset, const char *rname,
     const void *key, size_t len)
@@ -320,6 +329,9 @@ npf_ruleset_remkey(npf_ruleset_t *rlset, const char *rname,
 	return ENOENT;
 }
 
+/*
+ * npf_ruleset_list: serialise and return the dynamic rules.
+ */
 prop_dictionary_t
 npf_ruleset_list(npf_ruleset_t *rlset, const char *rname)
 {
@@ -363,6 +375,10 @@ npf_ruleset_list(npf_ruleset_t *rlset, const char *rname)
 	return rgdict;
 }
 
+/*
+ * npf_ruleset_flush: flush the dynamic rules in the ruleset by inserting
+ * them into the G/C list.
+ */
 int
 npf_ruleset_flush(npf_ruleset_t *rlset, const char *rname)
 {
@@ -379,6 +395,23 @@ npf_ruleset_flush(npf_ruleset_t *rlset, const char *rname)
 	return 0;
 }
 
+/*
+ * npf_ruleset_gc: destroy the rules in G/C list.
+ */
+void
+npf_ruleset_gc(npf_ruleset_t *rlset)
+{
+	npf_rule_t *rl;
+
+	while ((rl = LIST_FIRST(&rlset->rs_gc)) != NULL) {
+		LIST_REMOVE(rl, r_aentry);
+		npf_rule_free(rl);
+	}
+}
+
+/*
+ * npf_ruleset_export: serialise and return the static rules.
+ */
 int
 npf_ruleset_export(const npf_ruleset_t *rlset, prop_array_t rules)
 {
@@ -409,25 +442,14 @@ npf_ruleset_export(const npf_ruleset_t *rlset, prop_array_t rules)
 	return error;
 }
 
-void
-npf_ruleset_gc(npf_ruleset_t *rlset)
-{
-	npf_rule_t *rl;
-
-	while ((rl = LIST_FIRST(&rlset->rs_gc)) != NULL) {
-		LIST_REMOVE(rl, r_aentry);
-		npf_rule_free(rl);
-	}
-}
-
 /*
  * npf_ruleset_reload: prepare the new ruleset by scanning the active
- * ruleset and 1) sharing the dynamic rules 2) sharing NAT policies.
+ * ruleset and: 1) sharing the dynamic rules 2) sharing NAT policies.
  *
  * => The active (old) ruleset should be exclusively locked.
  */
 void
-npf_ruleset_reload(npf_ruleset_t *newset, npf_ruleset_t *oldset)
+npf_ruleset_reload(npf_ruleset_t *newset, npf_ruleset_t *oldset, bool load)
 {
 	npf_rule_t *rg, *rl;
 	uint64_t nid = 0;
@@ -462,6 +484,14 @@ npf_ruleset_reload(npf_ruleset_t *newset, npf_ruleset_t *oldset)
 			rl->r_parent = rg;
 		}
 	}
+
+	/*
+	 * If performing the load of connections then NAT policies may
+	 * already have translated connections associated with them and
+	 * we should not share or inherit anything.
+	 */
+	if (load)
+		return;
 
 	/*
 	 * Scan all rules in the new ruleset and share NAT policies.
@@ -515,13 +545,22 @@ npf_ruleset_reload(npf_ruleset_t *newset, npf_ruleset_t *oldset)
 	newset->rs_idcnt = oldset->rs_idcnt;
 }
 
+/*
+ * npf_ruleset_sharepm: attempt to share the active NAT portmap.
+ */
 npf_rule_t *
 npf_ruleset_sharepm(npf_ruleset_t *rlset, npf_natpolicy_t *mnp)
 {
 	npf_natpolicy_t *np;
 	npf_rule_t *rl;
 
-	/* Find a matching NAT policy in the old ruleset; skip the self. */
+	/*
+	 * Scan the NAT policies in the ruleset and match with the
+	 * given policy based on the translation IP address.  If they
+	 * match - adjust the given NAT policy to use the active NAT
+	 * portmap.  In such case the reference on the old portmap is
+	 * dropped and acquired on the active one.
+	 */
 	LIST_FOREACH(rl, &rlset->rs_all, r_aentry) {
 		np = rl->r_natp;
 		if (np == NULL || np == mnp)
