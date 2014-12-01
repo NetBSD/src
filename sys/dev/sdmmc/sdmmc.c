@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.22 2014/03/19 15:26:42 nonaka Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.22.4.1 2014/12/01 11:38:43 martin Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.22 2014/03/19 15:26:42 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.22.4.1 2014/12/01 11:38:43 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -199,7 +199,7 @@ sdmmc_detach(device_t self, int flags)
 	}
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_POLL_CARD_DET)) {
-		callout_stop(&sc->sc_card_detect_ch);
+		callout_halt(&sc->sc_card_detect_ch, NULL);
 		callout_destroy(&sc->sc_card_detect_ch);
 	}
 

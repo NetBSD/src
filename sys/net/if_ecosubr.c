@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.40 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.40.2.1 2014/12/01 11:38:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.40 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.40.2.1 2014/12/01 11:38:43 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -860,7 +860,7 @@ eco_retry_free(struct eco_retry *er)
 {
 	int s;
 
-	callout_stop(&er->er_callout);
+	callout_halt(&er->er_callout, NULL);
 	m_freem(er->er_packet);
 	s = splnet();
 	LIST_REMOVE(er, er_link);

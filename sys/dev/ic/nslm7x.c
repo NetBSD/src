@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.60 2013/10/20 21:13:15 christos Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.60.4.1 2014/12/01 11:38:43 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.60 2013/10/20 21:13:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.60.4.1 2014/12/01 11:38:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1703,7 +1703,7 @@ lm_attach(struct lm_softc *lmsc)
 void
 lm_detach(struct lm_softc *lmsc)
 {
-	callout_stop(&lmsc->sc_callout);
+	callout_halt(&lmsc->sc_callout, NULL);
 	callout_destroy(&lmsc->sc_callout);
 	sysmon_envsys_unregister(lmsc->sc_sme);
 }
