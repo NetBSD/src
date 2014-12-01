@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.490 2014/07/25 16:28:12 maxv Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.490.2.1 2014/12/01 09:54:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.490 2014/07/25 16:28:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.490.2.1 2014/12/01 09:54:50 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -574,7 +574,7 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 		return error;
 	}
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
+	NDINIT(&nd, LOOKUP, LOCKLEAF | TRYEMULROOT, pb);
 	if ((error = namei(&nd)) != 0) {
 		pathbuf_destroy(pb);
 		return error;
