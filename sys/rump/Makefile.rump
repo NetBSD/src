@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.101 2014/12/01 22:58:41 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.102 2014/12/01 23:08:15 pooka Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -123,7 +123,8 @@ DPSRCS+=	${RUMPTOP}/Makefile.rump
 #
 
 # no easy way to get WARNS out of bsd.sys.mk
-RUMPCOMP_USER_WARNFLAGS=-Wall -Wextra -Wstrict-prototypes -Wmissing-prototypes
+RUMPCOMP_USER_WARNFLAGS=	-Wall -Wextra -Wno-unused-parameter
+RUMPCOMP_USER_WARNFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 
 .ifdef RUMPCOMP_USER_SRCS && !defined(RUMPKERN_ONLY)
 .if empty(DESTDIR)
