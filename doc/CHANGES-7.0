@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.113 2014/11/28 10:08:37 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.114 2014/12/01 13:45:37 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3012,4 +3012,140 @@ sys/external/bsd/drm2/radeon/radeondrmkmsfb.h	1.2
 
 	Use correct linebytes.
 	[nonaka, ticket #272]
+
+sys/arch/arm/include/profile.h			1.16
+
+	Fix __mcount in the !(__ARM_EABI__) case by popping the right number
+	of registers on exit.
+	[skrll, ticket #273]
+
+sys/net/npf/npf_nat.c				1.35
+sys/net/npf/npf_ruleset.c			1.38
+
+	NPF: fix the reference counting and share the active NAT portmap
+	correctly when performing the reload.  Should fixes PR/49412,
+	reported by kardel@.
+	[rmind, ticket #274]
+
+external/bsd/smbfs/dist/lib/smb/ctx.c		1.3
+external/bsd/smbfs/dist/mount_smbfs/mount_smbfs.8 1.3-1.4
+external/bsd/smbfs/dist/smbutil/smbutil.1	1.3
+sys/fs/smbfs/smbfs_node.c			1.52
+sys/fs/smbfs/smbfs_smb.c			1.46
+sys/fs/smbfs/smbfs_subr.c			1.17
+sys/fs/smbfs/smbfs_subr.h			1.22
+sys/netsmb/iconv.c				1.14
+sys/netsmb/mchain.h				1.10
+sys/netsmb/smb_subr.c				1.37
+sys/netsmb/subr_mchain.c			1.23
+sys/rump/dev/lib/libnetsmb/Makefile		1.5
+sys/rump/dev/lib/libnetsmb/netsmb_iconv.c	1.1
+sys/rump/dev/lib/libnetsmb/netsmb_user.c	1.1-1.3
+sys/rump/dev/lib/libnetsmb/netsmb_user.h	1.1
+
+	Make rump_smbfs(8) uses host iconv(3) to convert filenames
+	character set on NetBSD hosts.
+	Adjust smbfs/netsmb for filenames byte length changes that come as
+	a result of iconv conversion.  Most codes are taken from FreeBSD.
+	Disable unused codes that causes SIGBUS or SIGSEGV if character
+	sets option (-E) is specified to mount_smbfs/rump_smbfs.
+	Adjust man page accordingly.
+	[nakayama, ticket #275]
+
+sys/kern/vfs_syscalls.c				1.492
+
+	Do not follow symlinks in sys_unmount().
+	[manu, ticket #276]
+
+sys/netinet/ip_output.c				1.233
+
+	Call looutput with holding KERNEL_LOCK.
+	This fixes diagnostic assertion "KERNEL_LOCKED_P()" in if_loop.c.
+	PR kern/49410
+	[ozaki-r, ticket #277]
+
+tests/ipf/expected/n14				1.6
+tests/ipf/expected/n14_6			1.5
+
+	Fix wrong expected outputs
+
+	IP addresses in the expected outputs looks reversed (in byte order).
+	It seems the expected outputs had been generated based on source code
+	with a bug and the bug was fixed by a commit titled "#534 destination
+	list hashing not endian neutral" by darrenr@.
+	[ozaki-r, ticket #278]
+
+share/man/man9/callout.9			1.28
+sys/arch/x86/pci/fwhrng.c			1.8
+sys/arch/x86/x86/via_padlock.c			1.23
+sys/dev/bluetooth/bcsp.c			1.25
+sys/dev/bluetooth/btkbd.c			1.17
+sys/dev/ic/nslm7x.c				1.61
+sys/dev/ir/irframe_tty.c			1.60
+sys/dev/isa/aps.c				1.16
+sys/dev/pci/pccbb.c				1.207
+sys/dev/pcmcia/btbc.c				1.17
+sys/dev/sdmmc/sdmmc.c				1.23
+sys/dev/sysmon/sysmon_envsys_events.c		1.111-1.112
+sys/dev/sysmon/sysmonvar.h			1.45
+sys/dev/usb/ohci.c				1.254
+sys/dev/wscons/wskbd.c				1.135
+sys/kern/kern_ktrace.c				1.166
+sys/net/if_ecosubr.c				1.41
+
+	Replace callout_stop with callout_halt and ensure the callout
+	is not running before destroying it.
+	[ozaki-r, ticket #279]
+
+sys/net/npf/npf_conf.c				1.9
+sys/net/npf/npf_conn.c				1.13
+sys/net/npf/npf_conn.h				1.7
+sys/net/npf/npf_impl.h				1.60
+sys/net/npf/npf_nat.c				1.36-1.37
+sys/net/npf/npf_ruleset.c			1.39-1.40
+
+	NPF:
+	- npf_nat_import: take the port only if using the portmap.
+	- Sprinkle some comments and asserts.
+	- npf_config_load: if loading the connections, do not perform any
+	   actice NAT policy take over or or portmap sharing - just replace
+	   them all.
+	- npf_config_fini: flush with the empty connection database.
+	- npf_nat_import: fix the stat counter.
+	[rmind, ticket #280]
+
+sys/netinet/in4_cksum.c				1.20
+
+	Only check that the offset < sizeof(struct ip) if nxt != 0, i.e. in
+	the tcp and udp cases. From kre.
+	[christos, ticket #281]
+
+external/mit/lua/dist/src/luaconf.h		1.10
+
+	lua(4): fixed Lua stack size
+	[lneto, ticket #282]
+
+sys/modules/lua/lua.c				1.15
+
+	lua(4): fixed require
+	[lneto, ticket #283]
+
+sys/arch/arm/allwinner/awin_debe.c		1.9-1.10
+sys/arch/arm/allwinner/awin_fb.c		1.7
+sys/arch/arm/allwinner/awin_mp.c		1.1
+sys/arch/arm/allwinner/awin_reg.h		1.56
+
+	Hardware cursor support.
+	[jmcneill, ticket #284]
+
+sys/arch/arm/allwinner/awin_fb.c		1.8
+
+	Make the full amount of reserved video memory available to userland.
+	[jmcneill, ticket #285]
+
+lib/libc/net/rcmd.c				1.71
+usr.bin/rsh/rsh.c				1.38
+
+	Fix changes done in rsh.c rev. 1.36 to unbreak rcp(1).
+	[enami, ticket #286]
 
