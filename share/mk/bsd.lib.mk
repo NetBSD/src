@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.355 2014/06/13 01:17:45 mrg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.356 2014/12/01 01:34:30 erh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -64,7 +64,7 @@ DPADD+=		${LIBDO.${_lib}}/lib${_lib}.so	# Don't use _LIB_PREFIX
 .endif									# }
 
 ##### Build and install rules
-MKDEP_SUFFIXES?=	.o .po .pico .go .ln
+MKDEP_SUFFIXES?=	.o .po .pico .go .ln .d
 
 .if !defined(SHLIB_MAJOR) && exists(${SHLIB_VERSION_FILE})		# {
 SHLIB_MAJOR != . ${SHLIB_VERSION_FILE} ; echo $$major

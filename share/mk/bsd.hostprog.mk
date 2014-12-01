@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.73 2014/04/10 19:02:18 plunky Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.74 2014/12/01 01:34:30 erh Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -81,7 +81,7 @@ LIBRUMPFS_TMPFS?=	/usr/lib/librumpfs_tmpfs.a
 LIBRUMPFS_UDF?=		/usr/lib/librumpfs_udf.a
 LIBRUMPFS_UFS?=		/usr/lib/librumpfs_ufs.a
 
-MKDEP_SUFFIXES?=	.lo .ln
+MKDEP_SUFFIXES?=	.lo .ln .d
 
 # Override these:
 INSTALL:=	${INSTALL:NSTRIP=*}

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.81 2014/07/19 17:19:22 plunky Exp $
+#	$NetBSD: bsd.dep.mk,v 1.82 2014/12/01 01:34:30 erh Exp $
 
 ##### Basic targets
 realdepend:	beforedepend .depend afterdepend
@@ -9,7 +9,7 @@ beforedepend .depend afterdepend: # ensure existence
 ##### Default values
 MKDEP?=			mkdep
 MKDEPCXX?=		mkdep
-MKDEP_SUFFIXES?=	.o
+MKDEP_SUFFIXES?=	.o .d
 
 ##### Build rules
 # some of the rules involve .h sources, so remove them from mkdep line
