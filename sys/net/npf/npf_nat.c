@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.32.2.1 2014/08/29 11:14:14 martin Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.32.2.2 2014/12/01 09:02:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.32.2.1 2014/08/29 11:14:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.32.2.2 2014/12/01 09:02:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -313,9 +313,10 @@ npf_nat_freepolicy(npf_natpolicy_t *np)
 		kpause("npfgcnat", false, 1, NULL);
 	}
 	KASSERT(LIST_EMPTY(&np->n_nat_list));
+	KASSERT(pm == NULL || pm->p_refcnt > 0);
 
 	/* Destroy the port map, on last reference. */
-	if (pm && --pm->p_refcnt == 0) {
+	if (pm && atomic_dec_uint_nv(&pm->p_refcnt) == 0) {
 		KASSERT((np->n_flags & NPF_NAT_PORTMAP) != 0);
 		kmem_free(pm, PORTMAP_MEM_SIZE);
 	}
@@ -373,17 +374,21 @@ npf_nat_sharepm(npf_natpolicy_t *np, npf_natpolicy_t *mnp)
 	if (memcmp(&np->n_taddr, &mnp->n_taddr, np->n_alen) != 0) {
 		return false;
 	}
-	/* If NAT policy has an old port map - drop the reference. */
 	mpm = mnp->n_portmap;
-	if (mpm) {
-		/* Note: at this point we cannot hold a last reference. */
-		KASSERT(mpm->p_refcnt > 1);
-		mpm->p_refcnt--;
+	KASSERT(mpm == NULL || mpm->p_refcnt > 0);
+
+	/*
+	 * If NAT policy has an old port map - drop the reference
+	 * and destroy the port map if it was the last.
+	 */
+	if (mpm && atomic_dec_uint_nv(&mpm->p_refcnt) == 0) {
+		kmem_free(mpm, PORTMAP_MEM_SIZE);
 	}
+
 	/* Share the port map. */
 	pm = np->n_portmap;
+	atomic_inc_uint(&pm->p_refcnt);
 	mnp->n_portmap = pm;
-	pm->p_refcnt++;
 	return true;
 }
 
