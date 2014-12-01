@@ -1,4 +1,4 @@
-/*	$NetBSD: motgvar.h,v 1.4 2014/09/13 18:36:39 jmcneill Exp $	*/
+/*	$NetBSD: motgvar.h,v 1.4.2.1 2014/12/01 21:52:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@ struct motg_pipe {
 	struct usbd_pipe pipe;
 	int nexttoggle;
 	struct motg_hw_ep *hw_ep; /* pointer to the hardware EP used */
-	SIMPLEQ_ENTRY(motg_pipe) ep_pipe_list; 
+	SIMPLEQ_ENTRY(motg_pipe) ep_pipe_list;
 };
 
 /* description of a hardware endpoint */
