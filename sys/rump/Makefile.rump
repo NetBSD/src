@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.99 2014/07/22 20:25:13 alnsn Exp $
+#	$NetBSD: Makefile.rump,v 1.100 2014/12/01 22:54:32 pooka Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -124,10 +124,6 @@ DPSRCS+=	${RUMPTOP}/Makefile.rump
 
 # XXX: Warning flags are not in CWARNFLAGS.  Manually add a few important ones.
 
-.ifdef RUMPCOMP_USER
-.warning RUMPCOMP_USER is deprecated.  Use RUMPCOMP_USER_SRCS
-RUMPCOMP_USER_SRCS= rumpcomp_user.c
-.endif
 .ifdef RUMPCOMP_USER_SRCS && !defined(RUMPKERN_ONLY)
 .if empty(DESTDIR)
 DESTDIR=/
