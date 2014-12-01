@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198 2014/09/21 14:30:22 christos Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.1 2014/12/01 12:38:39 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198 2014/09/21 14:30:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.1 2014/12/01 12:38:39 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -725,7 +725,7 @@ usbd_setup_pipe_flags(usbd_device_handle dev, usbd_interface_handle iface,
 	p->interval = ival;
 	p->flags = flags;
 	SIMPLEQ_INIT(&p->queue);
-	err = dev->bus->methods->open_pipe(p);
+	err = dev->bus->methods->ubm_open(p);
 	if (err) {
 		DPRINTFN(-1,("usbd_setup_pipe: endpoint=0x%x failed, error="
 			 "%s\n",
@@ -745,7 +745,7 @@ usbd_kill_pipe(usbd_pipe_handle pipe)
 {
 	usbd_abort_pipe(pipe);
 	usbd_lock_pipe(pipe);
-	pipe->methods->close(pipe);
+	pipe->methods->upm_close(pipe);
 	usbd_unlock_pipe(pipe);
 	usb_rem_task(pipe->device, &pipe->async_task);
 	pipe->endpoint->refcnt--;
@@ -1065,8 +1065,8 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	DPRINTF(("usbd_new_device bus=%p port=%d depth=%d speed=%d\n",
 		 bus, port, depth, speed));
 
-	if (bus->methods->new_device != NULL)
-		return (bus->methods->new_device)(parent, bus, depth, speed,
+	if (bus->methods->ubm_newdev != NULL)
+		return (bus->methods->ubm_newdev)(parent, bus, depth, speed,
 		    port, up);
 
 	addr = usbd_getnewaddr(bus);

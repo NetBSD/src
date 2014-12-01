@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.4 2014/12/01 08:12:09 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.5 2014/12/01 12:38:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.4 2014/12/01 08:12:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.5 2014/12/01 12:38:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,69 +283,69 @@ UREAD4(uhci_softc_t *sc, bus_size_t r)
 #define UHCI_INTR_ENDPT 1
 
 const struct usbd_bus_methods uhci_bus_methods = {
-	.open_pipe =	uhci_open,
-	.soft_intr =	uhci_softintr,
-	.do_poll =	uhci_poll,
-	.allocm =	uhci_allocm,
-	.freem =	uhci_freem,
-	.allocx =	uhci_allocx,
-	.freex =	uhci_freex,
-	.get_lock =	uhci_get_lock,
-	.new_device =	NULL,
+	.ubm_open =	uhci_open,
+	.ubm_softint =	uhci_softintr,
+	.ubm_dopoll =	uhci_poll,
+	.ubm_allocm =	uhci_allocm,
+	.ubm_freem =	uhci_freem,
+	.ubm_allocx =	uhci_allocx,
+	.ubm_freex =	uhci_freex,
+	.ubm_getlock =	uhci_get_lock,
+	.ubm_newdev =	NULL,
 };
 
 const struct usbd_pipe_methods uhci_root_ctrl_methods = {
-	.transfer =	uhci_root_ctrl_transfer,
-	.start =	uhci_root_ctrl_start,
-	.abort =	uhci_root_ctrl_abort,
-	.close =	uhci_root_ctrl_close,
-	.cleartoggle =	uhci_noop,
-	.done =		uhci_root_ctrl_done,
+	.upm_transfer =	uhci_root_ctrl_transfer,
+	.upm_start =	uhci_root_ctrl_start,
+	.upm_abort =	uhci_root_ctrl_abort,
+	.upm_close =	uhci_root_ctrl_close,
+	.upm_cleartoggle =	uhci_noop,
+	.upm_done =	uhci_root_ctrl_done,
 };
 
 const struct usbd_pipe_methods uhci_root_intr_methods = {
-	.transfer =	uhci_root_intr_transfer,
-	.start =	uhci_root_intr_start,
-	.abort =	uhci_root_intr_abort,
-	.close =	uhci_root_intr_close,
-	.cleartoggle =	uhci_noop,
-	.done =		uhci_root_intr_done,
+	.upm_transfer =	uhci_root_intr_transfer,
+	.upm_start =	uhci_root_intr_start,
+	.upm_abort =	uhci_root_intr_abort,
+	.upm_close =	uhci_root_intr_close,
+	.upm_cleartoggle =	uhci_noop,
+	.upm_done =	uhci_root_intr_done,
 };
 
 const struct usbd_pipe_methods uhci_device_ctrl_methods = {
-	.transfer =	uhci_device_ctrl_transfer,
-	.start =	uhci_device_ctrl_start,
-	.abort =	uhci_device_ctrl_abort,
-	.close =	uhci_device_ctrl_close,
-	.cleartoggle =	uhci_noop,
-	.done =		uhci_device_ctrl_done,
+	.upm_transfer =	uhci_device_ctrl_transfer,
+	.upm_start =	uhci_device_ctrl_start,
+	.upm_abort =	uhci_device_ctrl_abort,
+	.upm_close =	uhci_device_ctrl_close,
+	.upm_cleartoggle =	uhci_noop,
+	.upm_done =	uhci_device_ctrl_done,
 };
 
 const struct usbd_pipe_methods uhci_device_intr_methods = {
-	.transfer =	uhci_device_intr_transfer,
-	.start =	uhci_device_intr_start,
-	.abort =	uhci_device_intr_abort,
-	.close =	uhci_device_intr_close,
-	.cleartoggle =	uhci_device_clear_toggle,
-	.done =		uhci_device_intr_done,
+	.upm_transfer =	uhci_device_intr_transfer,
+	.upm_start =	uhci_device_intr_start,
+	.upm_abort =	uhci_device_intr_abort,
+	.upm_close =	uhci_device_intr_close,
+	.upm_cleartoggle =	uhci_device_clear_toggle,
+	.upm_done =	uhci_device_intr_done,
 };
 
 const struct usbd_pipe_methods uhci_device_bulk_methods = {
-	.transfer =	uhci_device_bulk_transfer,
-	.start =	uhci_device_bulk_start,
-	.abort =	uhci_device_bulk_abort,
-	.close =	uhci_device_bulk_close,
-	.cleartoggle =	uhci_device_clear_toggle,
-	.done =		uhci_device_bulk_done,
+	.upm_transfer =	uhci_device_bulk_transfer,
+	.upm_start =	uhci_device_bulk_start,
+	.upm_abort =	uhci_device_bulk_abort,
+	.upm_close =	uhci_device_bulk_close,
+	.upm_cleartoggle =	uhci_device_clear_toggle,
+	.upm_done =	uhci_device_bulk_done,
 };
 
 const struct usbd_pipe_methods uhci_device_isoc_methods = {
-	.transfer =	uhci_device_isoc_transfer,
-	.start =	uhci_device_isoc_start,
-	.abort =	uhci_device_isoc_abort,
-	.close =	uhci_device_isoc_close,
-	.cleartoggle =	uhci_noop,
-	.done =		uhci_device_isoc_done,
+	.upm_transfer =	uhci_device_isoc_transfer,
+	.upm_start =	uhci_device_isoc_start,
+	.upm_abort =	uhci_device_isoc_abort,
+	.upm_close =	uhci_device_isoc_close,
+	.upm_cleartoggle =	uhci_noop,
+	.upm_done =	uhci_device_isoc_done,
 };
 
 #define uhci_add_intr_info(sc, ii) \

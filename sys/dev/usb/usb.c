@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.156 2014/09/12 16:40:38 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.156.2.1 2014/12/01 12:38:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156 2014/09/12 16:40:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.1 2014/12/01 12:38:39 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -262,7 +262,7 @@ usb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_bus->methods->get_lock(sc->sc_bus, &sc->sc_bus->lock);
+	sc->sc_bus->methods->ubm_getlock(sc->sc_bus, &sc->sc_bus->lock);
 	KASSERT(sc->sc_bus->lock != NULL);
 
 	RUN_ONCE(&init_control, usb_once_init);
@@ -1020,7 +1020,7 @@ usb_soft_intr(void *arg)
 	usbd_bus_handle bus = arg;
 
 	mutex_enter(bus->lock);
-	(*bus->methods->soft_intr)(bus);
+	bus->methods->ubm_softint(bus);
 	mutex_exit(bus->lock);
 }
 
@@ -1031,7 +1031,7 @@ usb_schedsoftintr(usbd_bus_handle bus)
 	DPRINTFN(10,("usb_schedsoftintr: polling=%d\n", bus->use_polling));
 
 	if (bus->use_polling) {
-		bus->methods->soft_intr(bus);
+		bus->methods->ubm_softint(bus);
 	} else {
 		kpreempt_disable();
 		softint_schedule(bus->soft);

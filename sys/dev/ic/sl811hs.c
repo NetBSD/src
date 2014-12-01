@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47.6.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.2 2014/12/01 12:38:39 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.2 2014/12/01 12:38:39 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -680,33 +680,32 @@ DDOLOGBUF(uint8_t *buf, unsigned int length)
 #endif
 
 const struct usbd_bus_methods slhci_bus_methods = {
-	.open_pipe = slhci_open,
-	.soft_intr = slhci_void,
-	.do_poll = slhci_poll,
-	.allocm = slhci_allocm,
-	.freem = slhci_freem,
-	.allocx = slhci_allocx,
-	.freex = slhci_freex,
-	.get_lock = slhci_get_lock,
-	NULL, /* new_device */
+	.ubm_open = slhci_open,
+	.ubm_softint= slhci_void,
+	.ubm_dopoll = slhci_poll,
+	.ubm_allocm = slhci_allocm,
+	.ubm_freem = slhci_freem,
+	.ubm_allocx = slhci_allocx,
+	.ubm_freex = slhci_freex,
+	.ubm_getlock = slhci_get_lock,
 };
 
 const struct usbd_pipe_methods slhci_pipe_methods = {
-	.transfer = slhci_transfer,
-	.start = slhci_start,
-	.abort = slhci_abort,
-	.close = slhci_close,
-	.cleartoggle = slhci_clear_toggle,
-	.done = slhci_done,
+	.upm_transfer = slhci_transfer,
+	.upm_start = slhci_start,
+	.upm_abort = slhci_abort,
+	.upm_close = slhci_close,
+	.upm_cleartoggle = slhci_clear_toggle,
+	.upm_done = slhci_done,
 };
 
 const struct usbd_pipe_methods slhci_root_methods = {
-	.transfer = slhci_transfer,
-	.start = slhci_root_start,
-	.abort = slhci_abort,
-	.close = (void (*)(struct usbd_pipe *))slhci_void, /* XXX safe? */
-	.cleartoggle = slhci_clear_toggle,
-	.done = slhci_done,
+	.upm_transfer = slhci_transfer,
+	.upm_start = slhci_root_start,
+	.upm_abort = slhci_abort,
+	.upm_close = (void (*)(struct usbd_pipe *))slhci_void, /* XXX safe? */
+	.upm_cleartoggle = slhci_clear_toggle,
+	.upm_done = slhci_done,
 };
 
 /* Queue inlines */
@@ -889,7 +888,7 @@ slhci_transfer(struct usbd_xfer *xfer)
 	/*
 	 * Start will take the lock.
 	 */
-	error = xfer->pipe->methods->start(SIMPLEQ_FIRST(&xfer->pipe->queue));
+	error = xfer->pipe->methods->upm_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
 
 	return error;
 }

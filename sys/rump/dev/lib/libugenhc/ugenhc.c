@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.22.4.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.22.4.2 2014/12/01 12:38:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.2 2014/12/01 12:38:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -363,12 +363,12 @@ rumpusb_root_ctrl_done(usbd_xfer_handle xfer)
 }
 
 static const struct usbd_pipe_methods rumpusb_root_ctrl_methods = {
-	.transfer =	rumpusb_root_ctrl_transfer,
-	.start =	rumpusb_root_ctrl_start,
-	.abort =	rumpusb_root_ctrl_abort,
-	.close =	rumpusb_root_ctrl_close,
-	.cleartoggle =	rumpusb_root_ctrl_cleartoggle,
-	.done =		rumpusb_root_ctrl_done,
+	.upm_transfer =	rumpusb_root_ctrl_transfer,
+	.upm_start =	rumpusb_root_ctrl_start,
+	.upm_abort =	rumpusb_root_ctrl_abort,
+	.upm_close =	rumpusb_root_ctrl_close,
+	.upm_cleartoggle =	rumpusb_root_ctrl_cleartoggle,
+	.upm_done =	rumpusb_root_ctrl_done,
 };
 
 static usbd_status
@@ -593,12 +593,12 @@ rumpusb_device_ctrl_done(usbd_xfer_handle xfer)
 }
 
 static const struct usbd_pipe_methods rumpusb_device_ctrl_methods = {
-	.transfer =	rumpusb_device_ctrl_transfer,
-	.start =	rumpusb_device_ctrl_start,
-	.abort =	rumpusb_device_ctrl_abort,
-	.close =	rumpusb_device_ctrl_close,
-	.cleartoggle =	rumpusb_device_ctrl_cleartoggle,
-	.done =		rumpusb_device_ctrl_done,
+	.upm_transfer =	rumpusb_device_ctrl_transfer,
+	.upm_start =	rumpusb_device_ctrl_start,
+	.upm_abort =	rumpusb_device_ctrl_abort,
+	.upm_close =	rumpusb_device_ctrl_close,
+	.upm_cleartoggle =	rumpusb_device_ctrl_cleartoggle,
+	.upm_done =	rumpusb_device_ctrl_done,
 };
 
 static void
@@ -732,12 +732,12 @@ rumpusb_root_intr_done(usbd_xfer_handle xfer)
 }
 
 static const struct usbd_pipe_methods rumpusb_root_intr_methods = {
-	.transfer =	rumpusb_root_intr_transfer,
-	.start =	rumpusb_root_intr_start,
-	.abort =	rumpusb_root_intr_abort,
-	.close =	rumpusb_root_intr_close,
-	.cleartoggle =	rumpusb_root_intr_cleartoggle,
-	.done =		rumpusb_root_intr_done,
+	.upm_transfer =	rumpusb_root_intr_transfer,
+	.upm_start =	rumpusb_root_intr_start,
+	.upm_abort =	rumpusb_root_intr_abort,
+	.upm_close =	rumpusb_root_intr_close,
+	.upm_cleartoggle =	rumpusb_root_intr_cleartoggle,
+	.upm_done =	rumpusb_root_intr_done,
 };
 
 static usbd_status
@@ -940,12 +940,12 @@ rumpusb_device_bulk_done(usbd_xfer_handle xfer)
 }
 
 static const struct usbd_pipe_methods rumpusb_device_bulk_methods = {
-	.transfer =	rumpusb_device_bulk_transfer,
-	.start =	rumpusb_device_bulk_start,
-	.abort =	rumpusb_device_bulk_abort,
-	.close =	rumpusb_device_bulk_close,
-	.cleartoggle =	rumpusb_device_bulk_cleartoggle,
-	.done =		rumpusb_device_bulk_done,
+	.upm_transfer =	rumpusb_device_bulk_transfer,
+	.upm_start =	rumpusb_device_bulk_start,
+	.upm_abort =	rumpusb_device_bulk_abort,
+	.upm_close =	rumpusb_device_bulk_close,
+	.upm_cleartoggle =	rumpusb_device_bulk_cleartoggle,
+	.upm_done =	rumpusb_device_bulk_done,
 };
 
 static usbd_status
@@ -1087,14 +1087,14 @@ struct ugenhc_pipe {
 };
 
 static const struct usbd_bus_methods ugenhc_bus_methods = {
-	.open_pipe =	ugenhc_open,
-	.soft_intr =	ugenhc_softint,
-	.do_poll =	ugenhc_poll,
-	.allocm = 	ugenhc_allocm,
-	.freem = 	ugenhc_freem,
-	.allocx = 	ugenhc_allocx,
-	.freex =	ugenhc_freex,
-	.get_lock =	ugenhc_getlock
+	.ubm_open =	ugenhc_open,
+	.ubm_softint =	ugenhc_softint,
+	.ubm_dopoll =	ugenhc_poll,
+	.ubm_allocm = 	ugenhc_allocm,
+	.ubm_freem = 	ugenhc_freem,
+	.ubm_allocx = 	ugenhc_allocx,
+	.ubm_freex =	ugenhc_freex,
+	.ubm_getlock =	ugenhc_getlock
 };
 
 static int

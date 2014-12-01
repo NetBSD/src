@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.4 2014/12/01 08:12:09 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.5 2014/12/01 12:38:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.4 2014/12/01 08:12:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.5 2014/12/01 12:38:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,69 +251,69 @@ struct ohci_pipe {
 #define OHCI_INTR_ENDPT 1
 
 Static const struct usbd_bus_methods ohci_bus_methods = {
-	.open_pipe =	ohci_open,
-	.soft_intr =	ohci_softintr,
-	.do_poll =	ohci_poll,
-	.allocm =	ohci_allocm,
-	.freem =	ohci_freem,
-	.allocx =	ohci_allocx,
-	.freex =	ohci_freex,
-	.get_lock =	ohci_get_lock,
-	.new_device =	NULL,
+	.ubm_open =	ohci_open,
+	.ubm_softint =	ohci_softintr,
+	.ubm_dopoll =	ohci_poll,
+	.ubm_allocm =	ohci_allocm,
+	.ubm_freem =	ohci_freem,
+	.ubm_allocx =	ohci_allocx,
+	.ubm_freex =	ohci_freex,
+	.ubm_getlock =	ohci_get_lock,
+	.ubm_newdev =	NULL,
 };
 
 Static const struct usbd_pipe_methods ohci_root_ctrl_methods = {
-	.transfer =	ohci_root_ctrl_transfer,
-	.start =	ohci_root_ctrl_start,
-	.abort =	ohci_root_ctrl_abort,
-	.close =	ohci_root_ctrl_close,
-	.cleartoggle =	ohci_noop,
-	.done =		ohci_root_ctrl_done,
+	.upm_transfer =	ohci_root_ctrl_transfer,
+	.upm_start =	ohci_root_ctrl_start,
+	.upm_abort =	ohci_root_ctrl_abort,
+	.upm_close =	ohci_root_ctrl_close,
+	.upm_cleartoggle =	ohci_noop,
+	.upm_done =	ohci_root_ctrl_done,
 };
 
 Static const struct usbd_pipe_methods ohci_root_intr_methods = {
-	.transfer =	ohci_root_intr_transfer,
-	.start =	ohci_root_intr_start,
-	.abort =	ohci_root_intr_abort,
-	.close =	ohci_root_intr_close,
-	.cleartoggle =	ohci_noop,
-	.done =		ohci_root_intr_done,
+	.upm_transfer =	ohci_root_intr_transfer,
+	.upm_start =	ohci_root_intr_start,
+	.upm_abort =	ohci_root_intr_abort,
+	.upm_close =	ohci_root_intr_close,
+	.upm_cleartoggle =	ohci_noop,
+	.upm_done =	ohci_root_intr_done,
 };
 
 Static const struct usbd_pipe_methods ohci_device_ctrl_methods = {
-	.transfer =	ohci_device_ctrl_transfer,
-	.start =	ohci_device_ctrl_start,
-	.abort =	ohci_device_ctrl_abort,
-	.close =	ohci_device_ctrl_close,
-	.cleartoggle =	ohci_noop,
-	.done =		ohci_device_ctrl_done,
+	.upm_transfer =	ohci_device_ctrl_transfer,
+	.upm_start =	ohci_device_ctrl_start,
+	.upm_abort =	ohci_device_ctrl_abort,
+	.upm_close =	ohci_device_ctrl_close,
+	.upm_cleartoggle =	ohci_noop,
+	.upm_done =	ohci_device_ctrl_done,
 };
 
 Static const struct usbd_pipe_methods ohci_device_intr_methods = {
-	.transfer =	ohci_device_intr_transfer,
-	.start =	ohci_device_intr_start,
-	.abort =	ohci_device_intr_abort,
-	.close =	ohci_device_intr_close,
-	.cleartoggle =	ohci_device_clear_toggle,
-	.done =		ohci_device_intr_done,
+	.upm_transfer =	ohci_device_intr_transfer,
+	.upm_start =	ohci_device_intr_start,
+	.upm_abort =	ohci_device_intr_abort,
+	.upm_close =	ohci_device_intr_close,
+	.upm_cleartoggle =	ohci_device_clear_toggle,
+	.upm_done =	ohci_device_intr_done,
 };
 
 Static const struct usbd_pipe_methods ohci_device_bulk_methods = {
-	.transfer =	ohci_device_bulk_transfer,
-	.start =	ohci_device_bulk_start,
-	.abort =	ohci_device_bulk_abort,
-	.close =	ohci_device_bulk_close,
-	.cleartoggle =	ohci_device_clear_toggle,
-	.done =		ohci_device_bulk_done,
+	.upm_transfer =	ohci_device_bulk_transfer,
+	.upm_start =	ohci_device_bulk_start,
+	.upm_abort =	ohci_device_bulk_abort,
+	.upm_close =	ohci_device_bulk_close,
+	.upm_cleartoggle =	ohci_device_clear_toggle,
+	.upm_done =	ohci_device_bulk_done,
 };
 
 Static const struct usbd_pipe_methods ohci_device_isoc_methods = {
-	.transfer =	ohci_device_isoc_transfer,
-	.start =	ohci_device_isoc_start,
-	.abort =	ohci_device_isoc_abort,
-	.close =	ohci_device_isoc_close,
-	.cleartoggle =	ohci_noop,
-	.done =		ohci_device_isoc_done,
+	.upm_transfer =	ohci_device_isoc_transfer,
+	.upm_start =	ohci_device_isoc_start,
+	.upm_abort =	ohci_device_isoc_abort,
+	.upm_close =	ohci_device_isoc_close,
+	.upm_cleartoggle =	ohci_noop,
+	.upm_done =	ohci_device_isoc_done,
 };
 
 int

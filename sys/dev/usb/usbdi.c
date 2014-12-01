@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.3 2014/11/30 16:38:45 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.4 2014/12/01 12:38:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.3 2014/11/30 16:38:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.4 2014/12/01 12:38:39 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -263,7 +263,7 @@ usbd_close_pipe(usbd_pipe_handle pipe)
 	}
 	LIST_REMOVE(pipe, next);
 	pipe->endpoint->refcnt--;
-	pipe->methods->close(pipe);
+	pipe->methods->upm_close(pipe);
 	usbd_unlock_pipe(pipe);
 	if (pipe->intrxfer != NULL)
 		usbd_free_xfer(pipe->intrxfer);
@@ -306,7 +306,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 		if (xfer->rqflags & URQ_AUTO_DMABUF)
 			printf("usbd_transfer: has old buffer!\n");
 #endif
-		err = bus->methods->allocm(bus, dmap, size);
+		err = bus->methods->ubm_allocm(bus, dmap, size);
 		if (err) {
 			USBHIST_LOG(usbdebug,
 			    "<- done xfer %p, no mem", xfer, 0, 0, 0);
@@ -322,7 +322,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 		memcpy(KERNADDR(dmap, 0), xfer->buffer, size);
 
 	/* xfer is not valid after the transfer method unless synchronous */
-	err = pipe->methods->transfer(xfer);
+	err = pipe->methods->upm_transfer(xfer);
 	USBHIST_LOG(usbdebug, "<- done transfer %p, err = %d", xfer, err, 0, 0);
 
 	if (err != USBD_IN_PROGRESS && err) {
@@ -330,7 +330,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 		if (xfer->rqflags & URQ_AUTO_DMABUF) {
 			struct usbd_bus *bus = pipe->device->bus;
 
-			bus->methods->freem(bus, &xfer->dmabuf);
+			bus->methods->ubm_freem(bus, &xfer->dmabuf);
 			xfer->rqflags &= ~URQ_AUTO_DMABUF;
 		}
 	}
@@ -361,7 +361,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 		}
 		if (err) {
 			if (!xfer->done)
-				pipe->methods->abort(xfer);
+				pipe->methods->upm_abort(xfer);
 			break;
 		}
 	}
@@ -395,7 +395,7 @@ usbd_alloc_buffer(usbd_xfer_handle xfer, uint32_t size)
 	if (xfer->rqflags & (URQ_DEV_DMABUF | URQ_AUTO_DMABUF))
 		printf("usbd_alloc_buffer: xfer already has a buffer\n");
 #endif
-	err = bus->methods->allocm(bus, &xfer->dmabuf, size);
+	err = bus->methods->ubm_allocm(bus, &xfer->dmabuf, size);
 	if (err)
 		return (NULL);
 	xfer->rqflags |= URQ_DEV_DMABUF;
@@ -412,7 +412,7 @@ usbd_free_buffer(usbd_xfer_handle xfer)
 	}
 #endif
 	xfer->rqflags &= ~(URQ_DEV_DMABUF | URQ_AUTO_DMABUF);
-	xfer->device->bus->methods->freem(xfer->device->bus, &xfer->dmabuf);
+	xfer->device->bus->methods->ubm_freem(xfer->device->bus, &xfer->dmabuf);
 }
 
 void *
@@ -432,7 +432,7 @@ usbd_alloc_xfer(usbd_device_handle dev)
 
 	ASSERT_SLEEPABLE();
 
-	xfer = dev->bus->methods->allocx(dev->bus);
+	xfer = dev->bus->methods->ubm_allocx(dev->bus);
 	if (xfer == NULL)
 		return (NULL);
 	xfer->device = dev;
@@ -461,7 +461,7 @@ usbd_free_xfer(usbd_xfer_handle xfer)
 #endif
 	cv_destroy(&xfer->cv);
 	cv_destroy(&xfer->hccv);
-	xfer->device->bus->methods->freex(xfer->device->bus, xfer);
+	xfer->device->bus->methods->ubm_freex(xfer->device->bus, xfer);
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -615,7 +615,7 @@ usbd_clear_endpoint_stall(usbd_pipe_handle pipe)
 	 * Clearing en endpoint stall resets the endpoint toggle, so
 	 * do the same to the HC toggle.
 	 */
-	pipe->methods->cleartoggle(pipe);
+	pipe->methods->upm_cleartoggle(pipe);
 
 	req.bmRequestType = UT_WRITE_ENDPOINT;
 	req.bRequest = UR_CLEAR_FEATURE;
@@ -640,7 +640,7 @@ usbd_clear_endpoint_stall_task(void *arg)
 	usbd_device_handle dev = pipe->device;
 	usb_device_request_t req;
 
-	pipe->methods->cleartoggle(pipe);
+	pipe->methods->upm_cleartoggle(pipe);
 
 	req.bmRequestType = UT_WRITE_ENDPOINT;
 	req.bRequest = UR_CLEAR_FEATURE;
@@ -660,7 +660,7 @@ usbd_clear_endpoint_stall_async(usbd_pipe_handle pipe)
 void
 usbd_clear_endpoint_toggle(usbd_pipe_handle pipe)
 {
-	pipe->methods->cleartoggle(pipe);
+	pipe->methods->upm_cleartoggle(pipe);
 }
 
 usbd_status
@@ -805,7 +805,7 @@ usbd_ar_pipe(usbd_pipe_handle pipe)
 		USBHIST_LOG(usbdebug, "pipe = %p xfer = %p (methods = %p)",
 		    pipe, xfer, pipe->methods, 0);
 		/* Make the HC abort it (and invoke the callback). */
-		pipe->methods->abort(xfer);
+		pipe->methods->upm_abort(xfer);
 		/* XXX only for non-0 usbd_clear_endpoint_stall(pipe); */
 	}
 	pipe->aborting = 0;
@@ -865,7 +865,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	if (xfer->rqflags & URQ_AUTO_DMABUF) {
 		if (!repeat) {
 			struct usbd_bus *bus = pipe->device->bus;
-			bus->methods->freem(bus, dmap);
+			bus->methods->ubm_freem(bus, dmap);
 			xfer->rqflags &= ~URQ_AUTO_DMABUF;
 		}
 	}
@@ -910,18 +910,18 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 				KERNEL_LOCK(1, curlwp);
 			xfer->callback(xfer, xfer->priv, xfer->status);
 			USBHIST_LOG(usbdebug, "xfer %p doing done %p", xfer,
-			    pipe->methods->done, 0, 0);
+			    pipe->methods->upm_done, 0, 0);
 			if (!(pipe->flags & USBD_MPSAFE))
 				KERNEL_UNLOCK_ONE(curlwp);
 
 			if (!polling)
 				mutex_enter(pipe->device->bus->lock);
 		}
-		pipe->methods->done(xfer);
+		pipe->methods->upm_done(xfer);
 	} else {
 		USBHIST_LOG(usbdebug, "xfer %p doing done %p", xfer,
-		    pipe->methods->done, 0, 0);
-		pipe->methods->done(xfer);
+		    pipe->methods->upm_done, 0, 0);
+		pipe->methods->upm_done(xfer);
 		USBHIST_LOG(usbdebug, "xfer %p doing callback %p status %x",
 		    xfer, xfer->callback, xfer->status, 0);
 		if (xfer->callback) {
@@ -1002,7 +1002,7 @@ usbd_start_next(usbd_pipe_handle pipe)
 		printf("usbd_start_next: pipe == NULL\n");
 		return;
 	}
-	if (pipe->methods == NULL || pipe->methods->start == NULL) {
+	if (pipe->methods == NULL || pipe->methods->upm_start == NULL) {
 		printf("usbd_start_next: pipe=%p no start method\n", pipe);
 		return;
 	}
@@ -1017,7 +1017,7 @@ usbd_start_next(usbd_pipe_handle pipe)
 		pipe->running = 0;
 	} else {
 		mutex_exit(pipe->device->bus->lock);
-		err = pipe->methods->start(xfer);
+		err = pipe->methods->upm_start(xfer);
 		mutex_enter(pipe->device->bus->lock);
 
 		if (err != USBD_IN_PROGRESS) {
@@ -1145,7 +1145,7 @@ usbd_get_quirks(usbd_device_handle dev)
 void
 usbd_dopoll(usbd_interface_handle iface)
 {
-	iface->device->bus->methods->do_poll(iface->device->bus);
+	iface->device->bus->methods->ubm_dopoll(iface->device->bus);
 }
 
 /*
@@ -1161,7 +1161,7 @@ usbd_set_polling(usbd_device_handle dev, int on)
 
 	/* Kick the host controller when switching modes */
 	mutex_enter(dev->bus->lock);
-	(*dev->bus->methods->soft_intr)(dev->bus);
+	dev->bus->methods->ubm_softint(dev->bus);
 	mutex_exit(dev->bus->lock);
 }
 
