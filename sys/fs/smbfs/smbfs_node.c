@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.51 2014/01/28 13:23:49 martin Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.51.4.1 2014/12/01 09:31:40 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.51 2014/01/28 13:23:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.51.4.1 2014/12/01 09:31:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,10 +197,10 @@ allocnew:
 		    || memcmp(name, np2->n_name, nmlen) != 0)
 			continue;
 		mutex_exit(&smp->sm_hashlock);
-		pool_put(&smbfs_node_pool, np);
-		ungetnewvnode(vp);
 		if ((np->n_flag & NREFPARENT) != 0)
 			vrele(dvp);
+		ungetnewvnode(vp);
+		pool_put(&smbfs_node_pool, np);
 		goto retry;
 	}
 

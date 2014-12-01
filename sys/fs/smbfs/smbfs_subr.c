@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.c,v 1.16 2012/11/30 23:24:21 nakayama Exp $	*/
+/*	$NetBSD: smbfs_subr.c,v 1.16.12.1 2014/12/01 09:31:40 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.16 2012/11/30 23:24:21 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.16.12.1 2014/12/01 09:31:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,14 +318,36 @@ smbfs_fullpath(struct mbchain *mbp, struct smb_vc *vcp, struct smbnode *dnp,
 }
 
 int
-smbfs_fname_tolocal(struct smb_vc *vcp, char *name, int nmlen,
+smbfs_fname_tolocal(struct smb_vc *vcp, char *name, int *nmlen,
     int caseopt)
 {
-/*	if (caseopt & SMB_CS_UPPER)
+	int error = 0;
+	size_t ilen, olen;
+	const char *ibuf;
+	char *obuf, *outbuf;
+
+#ifdef notyet
+	if (caseopt & SMB_CS_UPPER)
 		iconv_convmem(vcp->vc_toupper, name, name, nmlen);
 	else if (caseopt & SMB_CS_LOWER)
-		iconv_convmem(vcp->vc_tolower, name, name, nmlen);*/
-	if (vcp->vc_tolocal)
-		iconv_convmem(vcp->vc_tolocal, name, name, nmlen);
-	return 0;
+		iconv_convmem(vcp->vc_tolower, name, name, nmlen);
+#endif
+	if (vcp->vc_tolocal) {
+		const size_t buflen = SMB_MAXNAMLEN * 2;
+
+		outbuf = malloc(buflen, M_SMBTEMP, M_WAITOK);
+		if (outbuf == NULL)
+			return ENOMEM;
+		ilen = *nmlen;
+		olen = buflen;
+		ibuf = name;
+		obuf = outbuf;
+		error = iconv_conv(vcp->vc_tolocal, &ibuf, &ilen, &obuf, &olen);
+		if (!error) {
+			*nmlen = buflen - olen;
+			memcpy(name, outbuf, *nmlen);
+		}
+		free(outbuf, M_SMBTEMP);
+	}
+	return error;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2014/03/13 01:57:29 pooka Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2014/12/01 09:31:39 martin Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../netsmb
@@ -12,6 +12,9 @@ SRCS+=	netsmb_component.c
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 #CPPFLAGS+=	-DSMB_SOCKET_DEBUG -DSMB_IOD_DEBUG
+
+SRCS+=	netsmb_iconv.c
+RUMPCOMP_USER_SRCS=	netsmb_user.c
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

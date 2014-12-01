@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.44.12.1 2014/10/20 09:55:54 martin Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.44.12.2 2014/12/01 09:31:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.44.12.1 2014/10/20 09:55:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.44.12.2 2014/12/01 09:31:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1129,7 +1129,7 @@ static int
 smbfs_findopenLM2(struct smbfs_fctx *ctx, struct smbnode *dnp,
     const char *wildcard, int wclen, int attr, struct smb_cred *scred)
 {
-	ctx->f_name = malloc(SMB_MAXNAMLEN, M_SMBFSDATA, M_WAITOK);
+	ctx->f_name = malloc(SMB_MAXNAMLEN * 2, M_SMBFSDATA, M_WAITOK);
 	if (ctx->f_name == NULL)
 		return ENOMEM;
 	ctx->f_infolevel = SMB_DIALECT(SSTOVC(ctx->f_ssp)) < SMB_DIALECT_NTLM0_12 ?
@@ -1212,7 +1212,7 @@ smbfs_findnextLM2(struct smbfs_fctx *ctx, int limit)
 		return EINVAL;
 #endif
 	}
-	nmlen = min(size, SMB_MAXNAMLEN);
+	nmlen = min(size, SMB_MAXNAMLEN * 2);
 	cp = ctx->f_name;
 	error = md_get_mem(mbp, cp, nmlen, MB_MSYSTEM);
 	if (error)
@@ -1316,7 +1316,7 @@ smbfs_findnext(struct smbfs_fctx *ctx, int limit, struct smb_cred *scred)
 			continue;
 		break;
 	}
-	smbfs_fname_tolocal(SSTOVC(ctx->f_ssp), ctx->f_name, ctx->f_nmlen,
+	smbfs_fname_tolocal(SSTOVC(ctx->f_ssp), ctx->f_name, &ctx->f_nmlen,
 	    ctx->f_dnp->n_mount->sm_caseopt);
 	ctx->f_attr.fa_ino = smbfs_getino(ctx->f_dnp, ctx->f_name, ctx->f_nmlen);
 	return 0;

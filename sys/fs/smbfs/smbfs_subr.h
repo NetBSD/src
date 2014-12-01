@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.h,v 1.21 2012/11/30 23:24:21 nakayama Exp $	*/
+/*	$NetBSD: smbfs_subr.h,v 1.21.12.1 2014/12/01 09:31:40 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -176,7 +176,7 @@ int  smbfs_fullpath(struct mbchain *mbp, struct smb_vc *vcp,
 int  smbfs_smb_lookup(struct smbnode *dnp, const char *name, int nmlen,
 	struct smbfattr *fap, struct smb_cred *scred);
 
-int  smbfs_fname_tolocal(struct smb_vc *vcp, char *name, int nmlen, int caseopt);
+int  smbfs_fname_tolocal(struct smb_vc *vcp, char *name, int *nmlen, int caseopt);
 
 void  smb_time_local2server(struct timespec *tsp, int tzoff, u_long *seconds);
 void  smb_time_server2local(u_long seconds, int tzoff, struct timespec *tsp);
