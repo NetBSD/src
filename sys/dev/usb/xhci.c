@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.2 2014/12/01 08:12:09 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.3 2014/12/01 12:38:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.2 2014/12/01 08:12:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.3 2014/12/01 12:38:39 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -184,65 +184,65 @@ static void xhci_timeout(void *);
 static void xhci_timeout_task(void *);
 
 static const struct usbd_bus_methods xhci_bus_methods = {
-	.open_pipe = xhci_open,
-	.soft_intr = xhci_softintr,
-	.do_poll = xhci_poll,
-	.allocm = xhci_allocm,
-	.freem = xhci_freem,
-	.allocx = xhci_allocx,
-	.freex = xhci_freex,
-	.get_lock = xhci_get_lock,
-	.new_device = xhci_new_device,
+	.ubm_open = xhci_open,
+	.ubm_softint = xhci_softintr,
+	.ubm_dopoll = xhci_poll,
+	.ubm_allocm = xhci_allocm,
+	.ubm_freem = xhci_freem,
+	.ubm_allocx = xhci_allocx,
+	.ubm_freex = xhci_freex,
+	.ubm_getlock = xhci_get_lock,
+	.ubm_newdev = xhci_new_device,
 };
 
 static const struct usbd_pipe_methods xhci_root_ctrl_methods = {
-	.transfer = xhci_root_ctrl_transfer,
-	.start = xhci_root_ctrl_start,
-	.abort = xhci_root_ctrl_abort,
-	.close = xhci_root_ctrl_close,
-	.cleartoggle = xhci_noop,
-	.done = xhci_root_ctrl_done,
+	.upm_transfer = xhci_root_ctrl_transfer,
+	.upm_start = xhci_root_ctrl_start,
+	.upm_abort = xhci_root_ctrl_abort,
+	.upm_close = xhci_root_ctrl_close,
+	.upm_cleartoggle = xhci_noop,
+	.upm_done = xhci_root_ctrl_done,
 };
 
 static const struct usbd_pipe_methods xhci_root_intr_methods = {
-	.transfer = xhci_root_intr_transfer,
-	.start = xhci_root_intr_start,
-	.abort = xhci_root_intr_abort,
-	.close = xhci_root_intr_close,
-	.cleartoggle = xhci_noop,
-	.done = xhci_root_intr_done,
+	.upm_transfer = xhci_root_intr_transfer,
+	.upm_start = xhci_root_intr_start,
+	.upm_abort = xhci_root_intr_abort,
+	.upm_close = xhci_root_intr_close,
+	.upm_cleartoggle = xhci_noop,
+	.upm_done = xhci_root_intr_done,
 };
 
 
 static const struct usbd_pipe_methods xhci_device_ctrl_methods = {
-	.transfer = xhci_device_ctrl_transfer,
-	.start = xhci_device_ctrl_start,
-	.abort = xhci_device_ctrl_abort,
-	.close = xhci_device_ctrl_close,
-	.cleartoggle = xhci_noop,
-	.done = xhci_device_ctrl_done,
+	.upm_transfer = xhci_device_ctrl_transfer,
+	.upm_start = xhci_device_ctrl_start,
+	.upm_abort = xhci_device_ctrl_abort,
+	.upm_close = xhci_device_ctrl_close,
+	.upm_cleartoggle = xhci_noop,
+	.upm_done = xhci_device_ctrl_done,
 };
 
 static const struct usbd_pipe_methods xhci_device_isoc_methods = {
-	.cleartoggle = xhci_noop,
+	.upm_cleartoggle = xhci_noop,
 };
 
 static const struct usbd_pipe_methods xhci_device_bulk_methods = {
-	.transfer = xhci_device_bulk_transfer,
-	.start = xhci_device_bulk_start,
-	.abort = xhci_device_bulk_abort,
-	.close = xhci_device_bulk_close,
-	.cleartoggle = xhci_noop,
-	.done = xhci_device_bulk_done,
+	.upm_transfer = xhci_device_bulk_transfer,
+	.upm_start = xhci_device_bulk_start,
+	.upm_abort = xhci_device_bulk_abort,
+	.upm_close = xhci_device_bulk_close,
+	.upm_cleartoggle = xhci_noop,
+	.upm_done = xhci_device_bulk_done,
 };
 
 static const struct usbd_pipe_methods xhci_device_intr_methods = {
-	.transfer = xhci_device_intr_transfer,
-	.start = xhci_device_intr_start,
-	.abort = xhci_device_intr_abort,
-	.close = xhci_device_intr_close,
-	.cleartoggle = xhci_noop,
-	.done = xhci_device_intr_done,
+	.upm_transfer = xhci_device_intr_transfer,
+	.upm_start = xhci_device_intr_start,
+	.upm_abort = xhci_device_intr_abort,
+	.upm_close = xhci_device_intr_close,
+	.upm_cleartoggle = xhci_noop,
+	.upm_done = xhci_device_intr_done,
 };
 
 static inline uint32_t

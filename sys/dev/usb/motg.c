@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.3 2014/12/01 08:12:09 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.4 2014/12/01 12:38:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.3 2014/12/01 08:12:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.4 2014/12/01 12:38:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,51 +203,51 @@ musbotg_pull_common(struct motg_softc *sc, uint8_t on)
 }
 
 const struct usbd_bus_methods motg_bus_methods = {
-	.open_pipe =	motg_open,
-	.soft_intr =	motg_softintr,
-	.do_poll =	motg_poll,
-	.allocm =	motg_allocm,
-	.freem =	motg_freem,
-	.allocx =	motg_allocx,
-	.freex =	motg_freex,
-	.get_lock =	motg_get_lock,
-	.new_device =	NULL,
+	.ubm_open =	motg_open,
+	.ubm_softint =	motg_softintr,
+	.ubm_dopoll =	motg_poll,
+	.ubm_allocm =	motg_allocm,
+	.ubm_freem =	motg_freem,
+	.ubm_allocx =	motg_allocx,
+	.ubm_freex =	motg_freex,
+	.ubm_getlock =	motg_get_lock,
+	.ubm_newdev =	NULL,
 };
 
 const struct usbd_pipe_methods motg_root_ctrl_methods = {
-	.transfer =	motg_root_ctrl_transfer,
-	.start =	motg_root_ctrl_start,
-	.abort =	motg_root_ctrl_abort,
-	.close =	motg_root_ctrl_close,
-	.cleartoggle =	motg_noop,
-	.done =		motg_root_ctrl_done,
+	.upm_transfer =	motg_root_ctrl_transfer,
+	.upm_start =	motg_root_ctrl_start,
+	.upm_abort =	motg_root_ctrl_abort,
+	.upm_close =	motg_root_ctrl_close,
+	.upm_cleartoggle =	motg_noop,
+	.upm_done =	motg_root_ctrl_done,
 };
 
 const struct usbd_pipe_methods motg_root_intr_methods = {
-	.transfer =	motg_root_intr_transfer,
-	.start =	motg_root_intr_start,
-	.abort =	motg_root_intr_abort,
-	.close =	motg_root_intr_close,
-	.cleartoggle =	motg_noop,
-	.done =		motg_root_intr_done,
+	.upm_transfer =	motg_root_intr_transfer,
+	.upm_start =	motg_root_intr_start,
+	.upm_abort =	motg_root_intr_abort,
+	.upm_close =	motg_root_intr_close,
+	.upm_cleartoggle =	motg_noop,
+	.upm_done =	motg_root_intr_done,
 };
 
 const struct usbd_pipe_methods motg_device_ctrl_methods = {
-	.transfer =	motg_device_ctrl_transfer,
-	.start =	motg_device_ctrl_start,
-	.abort =	motg_device_ctrl_abort,
-	.close =	motg_device_ctrl_close,
-	.cleartoggle =	motg_noop,
-	.done =		motg_device_ctrl_done,
+	.upm_transfer =	motg_device_ctrl_transfer,
+	.upm_start =	motg_device_ctrl_start,
+	.upm_abort =	motg_device_ctrl_abort,
+	.upm_close =	motg_device_ctrl_close,
+	.upm_cleartoggle =	motg_noop,
+	.upm_done =	motg_device_ctrl_done,
 };
 
 const struct usbd_pipe_methods motg_device_data_methods = {
-	.transfer =	motg_device_data_transfer,
-	.start =	motg_device_data_start,
-	.abort =	motg_device_data_abort,
-	.close =	motg_device_data_close,
-	.cleartoggle =	motg_device_clear_toggle,
-	.done =		motg_device_data_done,
+	.upm_transfer =	motg_device_data_transfer,
+	.upm_start =	motg_device_data_start,
+	.upm_abort =	motg_device_data_abort,
+	.upm_close =	motg_device_data_close,
+	.upm_cleartoggle =	motg_device_clear_toggle,
+	.upm_done =	motg_device_data_done,
 };
 
 usbd_status

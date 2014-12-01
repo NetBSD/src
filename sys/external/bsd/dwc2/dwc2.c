@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.1 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.2 2014/12/01 12:38:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.1 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.2 2014/12/01 12:38:39 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -159,68 +159,68 @@ dwc2_free_bus_bandwidth(struct dwc2_hsotg *hsotg, u16 bw,
 #define DWC2_INTR_ENDPT 1
 
 Static const struct usbd_bus_methods dwc2_bus_methods = {
-	.open_pipe =	dwc2_open,
-	.soft_intr =	dwc2_softintr,
-	.do_poll =	dwc2_poll,
-	.allocm =	dwc2_allocm,
-	.freem =	dwc2_freem,
-	.allocx =	dwc2_allocx,
-	.freex =	dwc2_freex,
-	.get_lock =	dwc2_get_lock,
+	.ubm_open =	dwc2_open,
+	.ubm_softint =	dwc2_softintr,
+	.ubm_dopoll =	dwc2_poll,
+	.ubm_allocm =	dwc2_allocm,
+	.ubm_freem =	dwc2_freem,
+	.ubm_allocx =	dwc2_allocx,
+	.ubm_freex =	dwc2_freex,
+	.ubm_getlock =	dwc2_get_lock,
 };
 
 Static const struct usbd_pipe_methods dwc2_root_ctrl_methods = {
-	.transfer =	dwc2_root_ctrl_transfer,
-	.start =	dwc2_root_ctrl_start,
-	.abort =	dwc2_root_ctrl_abort,
-	.close =	dwc2_root_ctrl_close,
-	.cleartoggle =	dwc2_noop,
-	.done =		dwc2_root_ctrl_done,
+	.upm_transfer =	dwc2_root_ctrl_transfer,
+	.upm_start =	dwc2_root_ctrl_start,
+	.upm_abort =	dwc2_root_ctrl_abort,
+	.upm_close =	dwc2_root_ctrl_close,
+	.upm_cleartoggle =	dwc2_noop,
+	.upm_done =	dwc2_root_ctrl_done,
 };
 
 Static const struct usbd_pipe_methods dwc2_root_intr_methods = {
-	.transfer =	dwc2_root_intr_transfer,
-	.start =	dwc2_root_intr_start,
-	.abort =	dwc2_root_intr_abort,
-	.close =	dwc2_root_intr_close,
-	.cleartoggle =	dwc2_noop,
-	.done =		dwc2_root_intr_done,
+	.upm_transfer =	dwc2_root_intr_transfer,
+	.upm_start =	dwc2_root_intr_start,
+	.upm_abort =	dwc2_root_intr_abort,
+	.upm_close =	dwc2_root_intr_close,
+	.upm_cleartoggle =	dwc2_noop,
+	.upm_done =	dwc2_root_intr_done,
 };
 
 Static const struct usbd_pipe_methods dwc2_device_ctrl_methods = {
-	.transfer =	dwc2_device_ctrl_transfer,
-	.start =	dwc2_device_ctrl_start,
-	.abort =	dwc2_device_ctrl_abort,
-	.close =	dwc2_device_ctrl_close,
-	.cleartoggle =	dwc2_noop,
-	.done =		dwc2_device_ctrl_done,
+	.upm_transfer =	dwc2_device_ctrl_transfer,
+	.upm_start =	dwc2_device_ctrl_start,
+	.upm_abort =	dwc2_device_ctrl_abort,
+	.upm_close =	dwc2_device_ctrl_close,
+	.upm_cleartoggle =	dwc2_noop,
+	.upm_done =	dwc2_device_ctrl_done,
 };
 
 Static const struct usbd_pipe_methods dwc2_device_intr_methods = {
-	.transfer =	dwc2_device_intr_transfer,
-	.start =	dwc2_device_intr_start,
-	.abort =	dwc2_device_intr_abort,
-	.close =	dwc2_device_intr_close,
-	.cleartoggle =	dwc2_device_clear_toggle,
-	.done =		dwc2_device_intr_done,
+	.upm_transfer =	dwc2_device_intr_transfer,
+	.upm_start =	dwc2_device_intr_start,
+	.upm_abort =	dwc2_device_intr_abort,
+	.upm_close =	dwc2_device_intr_close,
+	.upm_cleartoggle =	dwc2_device_clear_toggle,
+	.upm_done =	dwc2_device_intr_done,
 };
 
 Static const struct usbd_pipe_methods dwc2_device_bulk_methods = {
-	.transfer =	dwc2_device_bulk_transfer,
-	.start =	dwc2_device_bulk_start,
-	.abort =	dwc2_device_bulk_abort,
-	.close =	dwc2_device_bulk_close,
-	.cleartoggle =	dwc2_device_clear_toggle,
-	.done =		dwc2_device_bulk_done,
+	.upm_transfer =	dwc2_device_bulk_transfer,
+	.upm_start =	dwc2_device_bulk_start,
+	.upm_abort =	dwc2_device_bulk_abort,
+	.upm_close =	dwc2_device_bulk_close,
+	.upm_cleartoggle =	dwc2_device_clear_toggle,
+	.upm_done =	dwc2_device_bulk_done,
 };
 
 Static const struct usbd_pipe_methods dwc2_device_isoc_methods = {
-	.transfer =	dwc2_device_isoc_transfer,
-	.start =	dwc2_device_isoc_start,
-	.abort =	dwc2_device_isoc_abort,
-	.close =	dwc2_device_isoc_close,
-	.cleartoggle =	dwc2_noop,
-	.done =		dwc2_device_isoc_done,
+	.upm_transfer =	dwc2_device_isoc_transfer,
+	.upm_start =	dwc2_device_isoc_start,
+	.upm_abort =	dwc2_device_isoc_abort,
+	.upm_close =	dwc2_device_isoc_close,
+	.upm_cleartoggle =	dwc2_noop,
+	.upm_done =	dwc2_device_isoc_done,
 };
 
 Static usbd_status
