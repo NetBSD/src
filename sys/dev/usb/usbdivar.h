@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.2 2014/12/01 08:12:09 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.3 2014/12/01 12:38:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -92,26 +92,26 @@ struct usbd_endpoint {
 };
 
 struct usbd_bus_methods {
-	usbd_status	      (*open_pipe)(struct usbd_pipe *pipe);
-	void		      (*soft_intr)(void *);
-	void		      (*do_poll)(struct usbd_bus *);
-	usbd_status	      (*allocm)(struct usbd_bus *, usb_dma_t *,
-					uint32_t bufsize);
-	void		      (*freem)(struct usbd_bus *, usb_dma_t *);
-	struct usbd_xfer *    (*allocx)(struct usbd_bus *);
-	void		      (*freex)(struct usbd_bus *, struct usbd_xfer *);
-	void		      (*get_lock)(struct usbd_bus *, kmutex_t **);
-	usbd_status	      (*new_device)(device_t, usbd_bus_handle, int,
+	usbd_status	      (*ubm_open)(struct usbd_pipe *pipe);
+	void		      (*ubm_softint)(void *);
+	void		      (*ubm_dopoll)(struct usbd_bus *);
+	usbd_status	      (*ubm_allocm)(struct usbd_bus *, usb_dma_t *,
+					uint32_t);
+	void		      (*ubm_freem)(struct usbd_bus *, usb_dma_t *);
+	struct usbd_xfer *    (*ubm_allocx)(struct usbd_bus *);
+	void		      (*ubm_freex)(struct usbd_bus *, struct usbd_xfer *);
+	void		      (*ubm_getlock)(struct usbd_bus *, kmutex_t **);
+	usbd_status	      (*ubm_newdev)(device_t, usbd_bus_handle, int,
 					    int, int, struct usbd_port *);
 };
 
 struct usbd_pipe_methods {
-	usbd_status	      (*transfer)(usbd_xfer_handle xfer);
-	usbd_status	      (*start)(usbd_xfer_handle xfer);
-	void		      (*abort)(usbd_xfer_handle xfer);
-	void		      (*close)(usbd_pipe_handle pipe);
-	void		      (*cleartoggle)(usbd_pipe_handle pipe);
-	void		      (*done)(usbd_xfer_handle xfer);
+	usbd_status	      (*upm_transfer)(usbd_xfer_handle);
+	usbd_status	      (*upm_start)(usbd_xfer_handle);
+	void		      (*upm_abort)(usbd_xfer_handle);
+	void		      (*upm_close)(usbd_pipe_handle);
+	void		      (*upm_cleartoggle)(usbd_pipe_handle);
+	void		      (*upm_done)(usbd_xfer_handle);
 };
 
 #if 0 /* notyet */
