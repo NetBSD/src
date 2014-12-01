@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.36 2014/06/08 02:44:15 enami Exp $	*/
+/*	$NetBSD: rsh.c,v 1.36.2.1 2014/12/01 13:43:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.36 2014/06/08 02:44:15 enami Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.36.2.1 2014/12/01 13:43:13 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,9 +76,7 @@ int	remerr;
 static int sigs[] = { SIGINT, SIGTERM, SIGQUIT };
 
 static char   *copyargs(char **);
-#ifndef IN_RCMD
 static void	sendsig(int);
-#endif
 static int	checkfd(struct pollfd *, int);
 static void	talk(int, sigset_t *, pid_t, int);
 __dead static void	usage(void);
@@ -87,6 +85,7 @@ int	 orcmd(char **, int, const char *,
     const char *, const char *, int *);
 int	 orcmd_af(char **, int, const char *,
     const char *, const char *, int *, int);
+static int	relay_signal;
 #endif
 
 int
@@ -98,7 +97,7 @@ main(int argc, char **argv)
 	struct protoent *proto;
 
 #ifdef IN_RCMD
-	char	*locuser = 0, *loop;
+	char	*locuser = 0, *loop, *relay;
 #endif /* IN_RCMD */
 	int argoff, asrsh, ch, dflag, nflag, one, rem;
 	size_t i;
@@ -133,6 +132,8 @@ main(int argc, char **argv)
 	}
 
 #ifdef IN_RCMD
+	if ((relay = getenv("RCMD_RELAY_SIGNAL")) && strcmp(relay, "YES") == 0)
+		relay_signal = 1;
 	if ((loop = getenv("RCMD_LOOP")) && strcmp(loop, "YES") == 0)
 		warnx("rcmd appears to be looping!");
 
@@ -152,7 +153,7 @@ main(int argc, char **argv)
 	if ((name = strdup(pw->pw_name)) == NULL)
 		err(1, "malloc");
 	while ((ch = getopt(argc - argoff, argv + argoff, OPTIONS)) != -1)
-		switch(ch) {
+		switch (ch) {
 		case '4':
 			family = AF_INET;
 			break;
@@ -267,16 +268,17 @@ main(int argc, char **argv)
 
 	(void)sigprocmask(SIG_BLOCK, &nset, &oset);
 
-#ifndef IN_RCMD
-	for (i = 0; i < sizeof(sigs) / sizeof(sigs[0]); i++) {
-		struct sigaction sa;
-
-		if (sa.sa_handler != SIG_IGN) {
-			sa.sa_handler = sendsig;
-			(void)sigaction(sigs[i], &sa, NULL);
-		}
-	}
+#ifdef IN_RCMD
+	if (!relay_signal)
 #endif
+		for (i = 0; i < sizeof(sigs) / sizeof(sigs[0]); i++) {
+			struct sigaction sa;
+
+			if (sa.sa_handler != SIG_IGN) {
+				sa.sa_handler = sendsig;
+				(void)sigaction(sigs[i], &sa, NULL);
+			}
+		}
 
 	if (!nflag) {
 		pid = fork();
@@ -389,17 +391,18 @@ done:
 		exit(0);
 	}
 
-#ifdef IN_RCMD
-	fdp = &fds[0];
-	nfds = 3;
-	fds[0].events = POLLIN|POLLNVAL|POLLERR|POLLHUP;
-	fds[0].fd = 2;
-#else
-	(void)sigprocmask(SIG_SETMASK, oset, NULL);
 	fdp = &fds[1];
 	nfds = 2;
 	fds[0].events = 0;
+#ifdef IN_RCMD
+	if (relay_signal) {
+		fdp = &fds[0];
+		nfds = 3;
+		fds[0].events = POLLIN|POLLNVAL|POLLERR|POLLHUP;
+		fds[0].fd = 2;
+	} else
 #endif
+		(void)sigprocmask(SIG_SETMASK, oset, NULL);
 	fds[1].events = fds[2].events = POLLIN|POLLNVAL|POLLERR|POLLHUP;
 	fds[1].fd = remerr;
 	fds[2].fd = rem;
@@ -417,8 +420,10 @@ done:
 			nfds--;
 			fds[1].events = 0;
 #ifdef IN_RCMD
-			nfds--;
-			fds[0].events = 0;
+			if (relay_signal) {
+				nfds--;
+				fds[0].events = 0;
+			}
 #endif
 			fdp = &fds[2];
 		}
@@ -430,7 +435,6 @@ done:
 	while (nfds);
 }
 
-#ifndef IN_RCMD
 static void
 sendsig(int sig)
 {
@@ -439,8 +443,6 @@ sendsig(int sig)
 	signo = sig;
 	(void)write(remerr, &signo, 1);
 }
-#endif
-
 
 static char *
 copyargs(char **argv)
