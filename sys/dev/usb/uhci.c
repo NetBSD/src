@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.3 2014/11/30 16:38:45 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.4 2014/12/01 08:12:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.3 2014/11/30 16:38:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.4 2014/12/01 08:12:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -854,7 +854,6 @@ void
 uhci_dump_all(uhci_softc_t *sc)
 {
 	uhci_dumpregs(sc);
-	printf("intrs=%d\n", sc->sc_bus.no_intrs);
 	/*printf("framelist[i].link = %08x\n", sc->sc_framelist[0].link);*/
 	uhci_dump_qhs(sc->sc_lctl_start);
 }
@@ -1363,7 +1362,6 @@ uhci_intr1(uhci_softc_t *sc)
 		return (0);	/* nothing to acknowledge */
 	UWRITE2(sc, UHCI_STS, ack); /* acknowledge the ints */
 
-	sc->sc_bus.no_intrs++;
 	usb_schedsoftintr(&sc->sc_bus);
 
 	DPRINTFN(15, ("%s: uhci_intr: exit\n", device_xname(sc->sc_dev)));

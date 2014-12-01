@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.3 2014/12/01 08:12:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.2 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.3 2014/12/01 08:12:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -699,7 +699,6 @@ motg_intr(struct motg_softc *sc, uint16_t rx_ep, uint16_t tx_ep,
 	sc->sc_intr_ctrl = ctrl;
 
 	if (!sc->sc_bus.use_polling) {
-		sc->sc_bus.no_intrs++;
 		usb_schedsoftintr(&sc->sc_bus);
 	}
 	return 1;
