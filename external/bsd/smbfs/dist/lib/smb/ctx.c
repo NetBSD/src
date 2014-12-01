@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ctx.c,v 1.2 2013/12/25 22:03:15 christos Exp $");
+__RCSID("$NetBSD: ctx.c,v 1.2.6.1 2014/12/01 09:31:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -501,8 +501,10 @@ smb_ctx_resolve(struct smb_ctx *ctx)
 	struct sockaddr *sap;
 	struct sockaddr_nb *salocal, *saserver;
 	char *cp;
+#ifdef notyet
 	u_char cstbl[256];
 	u_int i;
+#endif
 	int error = 0;
 	
 	ctx->ct_flags &= ~SMBCF_RESOLVED;
@@ -531,6 +533,7 @@ smb_ctx_resolve(struct smb_ctx *ctx)
 	error = smb_addiconvtbl("toupper", ssn->ioc_localcs, nls_upper);
 	if (error)
 		return error;
+#ifdef notyet
 	if (ssn->ioc_servercs[0] != 0) {
 		for(i = 0; i < sizeof(cstbl); i++)
 			cstbl[i] = i;
@@ -545,6 +548,7 @@ smb_ctx_resolve(struct smb_ctx *ctx)
 		if (error)
 			return error;
 	}
+#endif
 	if (ctx->ct_srvaddr) {
 		error = nb_resolvehost_in(ctx->ct_srvaddr, &sap);
 	} else {

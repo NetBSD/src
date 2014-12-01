@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.36 2011/09/25 13:42:30 chs Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.36.28.1 2014/12/01 09:31:40 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.36 2011/09/25 13:42:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.36.28.1 2014/12/01 09:31:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,11 +307,20 @@ smb_maperror(int eclass, int eno)
 }
 
 static int
-smb_copy_iconv(struct mbchain *mbp, const char *src, char *dst, size_t len)
+smb_copy_iconv(struct mbchain *mbp, const char *src, char *dst,
+    size_t *srclen, size_t *dstlen)
 {
-	size_t outlen = len;
+	int error;
+	size_t inlen = *srclen, outlen = *dstlen;
 
-	return iconv_conv((struct iconv_drv*)mbp->mb_udata, &src, &len, &dst, &outlen);
+	error = iconv_conv((struct iconv_drv*)mbp->mb_udata, &src, &inlen,
+	    &dst, &outlen);
+	if (inlen != *srclen || outlen != *dstlen) {
+		*srclen -= inlen;
+		*dstlen -= outlen;
+		return 0;
+	} else
+		return error;
 }
 
 int
