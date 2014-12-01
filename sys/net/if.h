@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.181 2014/11/28 08:29:00 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.182 2014/12/01 07:15:42 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -866,14 +866,12 @@ void	if_set_sadl(struct ifnet *, const void *, u_char, bool);
 void	if_alloc_sadl(struct ifnet *);
 void	if_attach(struct ifnet *);
 void	if_attachdomain(void);
-void	if_attachdomain1(struct ifnet *);
 void	if_deactivate(struct ifnet *);
 void	if_purgeaddrs(struct ifnet *, int, void (*)(struct ifaddr *));
 void	if_detach(struct ifnet *);
 void	if_down(struct ifnet *);
 void	if_link_state_change(struct ifnet *, int);
 void	if_up(struct ifnet *);
-int	ifconf(u_long, void *);
 void	ifinit(void);
 void	ifinit1(void);
 int	ifaddrpref_ioctl(struct socket *, u_long, void *, struct ifnet *);
@@ -904,9 +902,6 @@ void	link_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 
 void	if_clone_attach(struct if_clone *);
 void	if_clone_detach(struct if_clone *);
-
-int	if_clone_create(const char *);
-int	if_clone_destroy(const char *);
 
 int	ifq_enqueue(struct ifnet *, struct mbuf * ALTQ_COMMA
     ALTQ_DECL(struct altq_pktattr *));
