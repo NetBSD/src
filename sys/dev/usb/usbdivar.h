@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.2 2014/12/01 08:12:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -157,7 +157,6 @@ struct usbd_bus {
 	char			use_polling;
 	device_t		usbctl;
 	struct usb_device_stats	stats;
-	u_int			no_intrs;
 	int			usbrev;	/* USB revision */
 #define USBREV_UNKNOWN	0
 #define USBREV_PRE_1_0	1
