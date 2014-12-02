@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.24 2014/09/25 04:59:15 ryo Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.25 2014/12/02 22:42:04 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -334,7 +334,7 @@ cortex_init:
         msr	spsr_sxc, r0			// set SPSR[23:8] to known value
 
 	XPUTC(#64)
-#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15)
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17)
 	//
 	// If SMP is already enabled, don't do anything.
 	//
@@ -344,7 +344,7 @@ cortex_init:
 #endif
 
 	mrc	p15, 0, r4, c1, c0, 0		// SCTLR read
-#if defined(CPU_CORTEXA7)
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA17)
 	//
 	// Before turning on SMP, turn off the caches and the MMU.
 	//
@@ -404,7 +404,7 @@ cortex_init:
 	cmp	r1, #2				// is it MP?
 	bxne	r10				//    no, return
 
-#ifndef CPU_CORTEXA7
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA17)
 	//
 	// Step 2, disable the data cache
 	//
@@ -434,7 +434,7 @@ cortex_init:
 	XPUTC(#50)
 #endif /* CORTEXA5 || CORTEXA9 */
 
-#ifdef CPU_CORTEXA7
+#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA17)
 	//
 	// The MMU is off.  Make sure the TLB is invalidated before
 	// turning on SMP.
@@ -445,8 +445,8 @@ cortex_init:
 
 	// For the A7, SMP must be on ldrex/strex to work.
 	//
-#if defined(MULTIPROCESSOR) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9)
-#if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9)
+#if defined(MULTIPROCESSOR) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9) || defined(CPU_CORTEXA17)
+#if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9) || defined(CPU_CORTEXA17)
 	//
 	// Step 4a, set ACTLR.SMP=1
 	//
@@ -469,7 +469,7 @@ cortex_init:
 	mcr	p15, 0, r0, c1, c0, 1		// ACTLR write
 	isb
 	dsb
-#endif	/* A5 || A7 || A9 */
+#endif	/* A5 || A7 || A9 || A17 */
 #endif	/* MULTIPROCESSOR */
 
 	//
