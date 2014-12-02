@@ -8,7 +8,7 @@
 # the file CONTRIBUTING in the tz distribution.
 
 
-# From Paul Eggert (2014-08-12):
+# From Paul Eggert (2014-10-31):
 
 # This file contains data outside the normal scope of the tz database,
 # in that its zones do not differ from normal tz zones after 1970.
@@ -24,11 +24,10 @@
 # replaced by links as their data entries were questionable and/or they
 # differed from other zones only in pre-1970 time stamps.
 
-# Unless otherwise specified, the source for the data is the following,
-# which does not itself cite sources and is often wrong:
-#
+# Unless otherwise specified, the source for data through 1990 is:
 # Thomas G. Shanks and Rique Pottenger, The International Atlas (6th edition),
 # San Diego: ACS Publications, Inc. (2003).
+# Unfortunately this book contains many errors and cites no sources.
 
 # This file is not intended to be compiled standalone, as it
 # assumes rules from other files.  In the tz distribution, use
@@ -40,6 +39,27 @@
 #
 # As explained in the zic man page, the zone columns are:
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+
+# Ethiopia
+# From Paul Eggert (2014-07-31):
+# Like the Swahili of Kenya and Tanzania, many Ethiopians keep a
+# 12-hour clock starting at our 06:00, so their "8 o'clock" is our
+# 02:00 or 14:00.  Keep this in mind when you ask the time in Amharic.
+#
+# Shanks & Pottenger write that Ethiopia had six narrowly-spaced time
+# zones between 1870 and 1890, that they merged to 38E50 (2:35:20) in
+# 1890, and that they switched to 3:00 on 1936-05-05.  Perhaps 38E50
+# was for Adis Dera.  Quite likely the Shanks data entries are wrong
+# anyway.
+Zone Africa/Addis_Ababa	2:34:48 -	LMT	1870
+			2:35:20	-	ADMT	1936 May  5 # Adis Dera MT
+			3:00	-	EAT
+
+# Eritrea
+Zone	Africa/Asmara	2:35:32 -	LMT	1870
+			2:35:32	-	AMT	1890        # Asmara Mean Time
+			2:35:20	-	ADMT	1936 May  5 # Adis Dera MT
+			3:00	-	EAT
 
 # Mali (southern)
 Zone	Africa/Bamako	-0:32:00 -	LMT	1912
@@ -57,9 +77,17 @@ Zone	Africa/Banjul	-1:06:36 -	LMT	1912
 			-1:00	-	WAT	1964
 			 0:00	-	GMT
 
+# Malawi
+Zone	Africa/Blantyre	2:20:00 -	LMT	1903 Mar
+			2:00	-	CAT
+
 # Republic of the Congo
 Zone Africa/Brazzaville	1:01:08 -	LMT	1912
 			1:00	-	WAT
+
+# Burundi
+Zone Africa/Bujumbura	1:57:28	-	LMT	1890
+			2:00	-	CAT
 
 # Guinea
 Zone	Africa/Conakry	-0:54:52 -	LMT	1912
@@ -71,6 +99,16 @@ Zone	Africa/Conakry	-0:54:52 -	LMT	1912
 Zone	Africa/Dakar	-1:09:44 -	LMT	1912
 			-1:00	-	WAT	1941 Jun
 			 0:00	-	GMT
+
+# Tanzania
+Zone Africa/Dar_es_Salaam 2:37:08 -	LMT	1931
+			3:00	-	EAT	1948
+			2:45	-	BEAUT	1961
+			3:00	-	EAT
+
+# Djibouti
+Zone	Africa/Djibouti	2:52:36 -	LMT	1911 Jul
+			3:00	-	EAT
 
 # Cameroon
 # Whitman says they switched to 1:00 in 1920; go with Shanks & Pottenger.
@@ -92,10 +130,35 @@ Zone	Africa/Freetown	-0:53:00 -	LMT	1882
 			-1:00	SL	%s	1957
 			 0:00	SL	%s
 
+# Botswana
+# From Paul Eggert (2013-02-21):
+# Milne says they were regulated by the Cape Town Signal in 1899;
+# assume they switched to 2:00 when Cape Town did.
+Zone	Africa/Gaborone	1:43:40 -	LMT	1885
+			1:30	-	SAST	1903 Mar
+			2:00	-	CAT	1943 Sep 19  2:00
+			2:00	1:00	CAST	1944 Mar 19  2:00
+			2:00	-	CAT
+
+# Zimbabwe
+Zone	Africa/Harare	2:04:12 -	LMT	1903 Mar
+			2:00	-	CAT
+
 # South Sudan
 Zone	Africa/Juba	2:06:24 -	LMT	1931
 			2:00	Sudan	CA%sT	2000 Jan 15 12:00
 			3:00	-	EAT
+
+# Uganda
+Zone	Africa/Kampala	2:09:40 -	LMT	1928 Jul
+			3:00	-	EAT	1930
+			2:30	-	BEAT	1948
+			2:45	-	BEAUT	1957
+			3:00	-	EAT
+
+# Rwanda
+Zone	Africa/Kigali	2:00:16 -	LMT	1935 Jun
+			2:00	-	CAT
 
 # Democratic Republic of the Congo (west)
 Zone Africa/Kinshasa	1:01:12 -	LMT	1897 Nov  9
@@ -104,6 +167,10 @@ Zone Africa/Kinshasa	1:01:12 -	LMT	1897 Nov  9
 # Gabon
 Zone Africa/Libreville	0:37:48 -	LMT	1912
 			1:00	-	WAT
+
+# Togo
+Zone	Africa/Lome	0:04:52 -	LMT	1893
+			0:00	-	GMT
 
 # Angola
 #
@@ -116,9 +183,13 @@ Zone	Africa/Luanda	0:52:56	-	LMT	1892
 			0:52:04	-	AOT	1912 Jan  1 # Angola Time
 			1:00	-	WAT
 
-# Togo
-Zone	Africa/Lome	0:04:52 -	LMT	1893
-			0:00	-	GMT
+# Democratic Republic of the Congo (east)
+Zone Africa/Lubumbashi	1:49:52 -	LMT	1897 Nov 9
+			2:00	-	CAT
+
+# Zambia
+Zone	Africa/Lusaka	1:53:08 -	LMT	1903 Mar
+			2:00	-	CAT
 
 # Equatorial Guinea
 #
@@ -130,6 +201,22 @@ Zone	Africa/Lome	0:04:52 -	LMT	1893
 Zone	Africa/Malabo	0:35:08 -	LMT	1912
 			0:00	-	GMT	1963 Dec 15
 			1:00	-	WAT
+
+# Lesotho
+Zone	Africa/Maseru	1:50:00 -	LMT	1903 Mar
+			2:00	-	SAST	1943 Sep 19  2:00
+			2:00	1:00	SAST	1944 Mar 19  2:00
+			2:00	-	SAST
+
+# Swaziland
+Zone	Africa/Mbabane	2:04:24 -	LMT	1903 Mar
+			2:00	-	SAST
+
+# Somalia
+Zone Africa/Mogadishu	3:01:28 -	LMT	1893 Nov
+			3:00	-	EAT	1931
+			2:30	-	BEAT	1957
+			3:00	-	EAT
 
 # Niger
 Zone	Africa/Niamey	 0:08:28 -	LMT	1912
@@ -262,6 +349,11 @@ Zone Antarctica/McMurdo	0	-	zzz	1956
 Link Antarctica/McMurdo Antarctica/South_Pole
 
 # India
+#
+# From Paul Eggert (2014-09-06):
+# The 1876 Report of the Secretary of the [US] Navy, p 305 says that Madras
+# civil time was 5:20:57.3.
+#
 # From Paul Eggert (2014-08-21):
 # In tomorrow's The Hindu, Nitya Menon reports that India had two civil time
 # zones starting in 1884, one in Bombay and one in Calcutta, and that railways
@@ -269,16 +361,6 @@ Link Antarctica/McMurdo Antarctica/South_Pole
 # in 1881 Bombay briefly switched to Madras time, but switched back.  See:
 # http://www.thehindu.com/news/cities/chennai/madras-375-when-madras-clocked-the-time/article6339393.ece
 #Zone	  Asia/Chennai  [not enough info to complete]
-
-# China
-# Changbai Time ("Long-white Time", Long-white = Heilongjiang area)
-# Heilongjiang (except Mohe county), Jilin
-Zone	Asia/Harbin	8:26:44	-	LMT	1928     # or Haerbin
-			8:30	-	CHAT	1932 Mar # Changbai Time
-			8:00	-	CST	1940
-			9:00	-	CHAT	1966 May
-			8:30	-	CHAT	1980 May
-			8:00	PRC	C%sT
 
 # China
 # Long-shu Time (probably due to Long and Shu being two names of that area)
@@ -290,6 +372,30 @@ Zone	Asia/Chongqing	7:06:20	-	LMT	1928     # or Chungking
 			7:00	-	LONT	1980 May # Long-shu Time
 			8:00	PRC	C%sT
 Link Asia/Chongqing Asia/Chungking
+
+# Vietnam
+# From Paul Eggert (2014-10-13):
+# See Asia/Ho_Chi_Minh for the source for this data.
+# Trần's book says the 1954-55 transition to 07:00 in Hanoi was in
+# October 1954, with exact date and time unspecified.
+Zone	Asia/Hanoi	7:03:24 -	LMT	1906 Jul  1
+			7:06:30	-	PLMT	1911 May  1
+			7:00	-	ICT	1942 Dec 31 23:00
+			8:00	-	IDT	1945 Mar 14 23:00
+			9:00	-	JST	1945 Sep  2
+			7:00	-	ICT	1947 Apr  1
+			8:00	-	IDT	1954 Oct
+			7:00	-	ICT
+
+# China
+# Changbai Time ("Long-white Time", Long-white = Heilongjiang area)
+# Heilongjiang (except Mohe county), Jilin
+Zone	Asia/Harbin	8:26:44	-	LMT	1928     # or Haerbin
+			8:30	-	CHAT	1932 Mar # Changbai Time
+			8:00	-	CST	1940
+			9:00	-	CHAT	1966 May
+			8:30	-	CHAT	1980 May
+			8:00	PRC	C%sT
 
 # far west China
 Zone	Asia/Kashgar	5:03:56	-	LMT	1928     # or Kashi or Kaxgar
@@ -304,10 +410,41 @@ Zone	Asia/Kashgar	5:03:56	-	LMT	1928     # or Kashi or Kaxgar
 # Portuguese India switched to GMT+5 on 1912-01-01.
 #Zone	Asia/Panaji	[not enough info to complete]
 
+# Cambodia
+# From Paul Eggert (2014-10-11):
+# See Asia/Ho_Chi_Minh for the source for most of this data.  Also, guess
+# (1) Cambodia reverted to UT+7 on 1945-09-02, when Vietnam did, and
+# (2) they also reverted to UT+7 on 1953-11-09, the date of independence.
+# These guesses are probably wrong but they're better than guessing no
+# transitions there.
+Zone	Asia/Phnom_Penh	6:59:40 -	LMT	1906 Jul  1
+			7:06:30	-	PLMT	1911 May  1
+			7:00	-	ICT	1942 Dec 31 23:00
+			8:00	-	IDT	1945 Mar 14 23:00
+			9:00	-	JST	1945 Sep  2
+			7:00	-	ICT	1947 Apr  1
+			8:00	-	IDT	1953 Nov  9
+			7:00	-	ICT
+
 # Israel
 Zone	Asia/Tel_Aviv	2:19:04 -	LMT	1880
 			2:21	-	JMT	1918
 			2:00	Zion	I%sT
+
+# Laos
+# From Paul Eggert (2014-10-11):
+# See Asia/Ho_Chi_Minh for the source for most of this data.
+# Trần's book says that Laos reverted to UT+7 on 1955-04-15.
+# Also, guess that Laos reverted to UT+7 on 1945-09-02, when Vietnam did;
+# this is probably wrong but it's better than guessing no transition.
+Zone	Asia/Vientiane	6:50:24 -	LMT	1906 Jul  1
+			7:06:30	-	PLMT	1911 May  1
+			7:00	-	ICT	1942 Dec 31 23:00
+			8:00	-	IDT	1945 Mar 14 23:00
+			9:00	-	JST	1945 Sep  2
+			7:00	-	ICT	1947 Apr  1
+			8:00	-	IDT	1955 Apr 15
+			7:00	-	ICT
 
 # Jan Mayen
 # From Whitman:
@@ -423,6 +560,20 @@ Zone	Europe/Zagreb	1:03:52	-	LMT	1884
 			1:00	1:00	CEST	1945 Sep 16  2:00s
 			1:00	-	CET	1982 Nov 27
 			1:00	EU	CE%sT
+
+# Madagascar
+Zone Indian/Antananarivo 3:10:04 -	LMT	1911 Jul
+			3:00	-	EAT	1954 Feb 27 23:00s
+			3:00	1:00	EAST	1954 May 29 23:00s
+			3:00	-	EAT
+
+# Comoros
+Zone	Indian/Comoro	2:53:04 -	LMT	1911 Jul # Moroni, Gran Comoro
+			3:00	-	EAT
+
+# Mayotte
+Zone	Indian/Mayotte	3:00:56 -	LMT	1911 Jul # Mamoutzou
+			3:00	-	EAT
 
 # US minor outlying islands
 Zone Pacific/Johnston	-10:00	-	HST
