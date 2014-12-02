@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.302 2014/12/01 07:15:42 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.303 2014/12/02 04:43:35 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.302 2014/12/01 07:15:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.303 2014/12/02 04:43:35 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -2327,17 +2327,6 @@ if_mcast_op(ifnet_t *ifp, const unsigned long cmd, const struct sockaddr *sa)
 	}
 
 	return rc;
-}
-
-void
-if_drain_all(void)
-{
-	struct ifnet *ifp;
-
-	IFNET_FOREACH(ifp) {
-		if (ifp->if_drain)
-			(*ifp->if_drain)(ifp);
-	}
 }
 
 static void
