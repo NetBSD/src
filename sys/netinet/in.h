@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.93 2014/10/12 19:02:18 christos Exp $	*/
+/*	$NetBSD: in.h,v 1.94 2014/12/02 19:35:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -615,5 +615,10 @@ sockaddr_in_alloc(const struct in_addr *addr, in_port_t port, int flags)
 	return sa;
 }
 #endif /* _KERNEL */
+
+#if defined(_KERNEL) || defined(_TEST)
+int	in_print(char *, size_t, const struct in_addr *);
+int	sin_print(char *, size_t, const void *);
+#endif
 
 #endif /* !_NETINET_IN_H_ */
