@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1489 2014/11/22 01:29:05 pettai Exp $
+# $NetBSD: mi,v 1.1490 2014/12/02 01:51:45 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2238,6 +2238,7 @@
 ./usr/share/man/cat7/release.0			man-reference-catman	.cat
 ./usr/share/man/cat7/rfc6056.0			man-reference-catman	.cat
 ./usr/share/man/cat7/rump_sp.0			man-reference-catman	.cat,rump
+./usr/share/man/cat7/rumpkernel.0			man-reference-catman	.cat,rump
 ./usr/share/man/cat7/script.0			man-reference-catman	.cat
 ./usr/share/man/cat7/security.0			man-reference-catman	.cat
 ./usr/share/man/cat7/setuid.0			man-reference-catman	.cat
@@ -5186,6 +5187,7 @@
 ./usr/share/man/html7/release.html		man-reference-htmlman	html
 ./usr/share/man/html7/rfc6056.html		man-reference-htmlman	html
 ./usr/share/man/html7/rump_sp.html		man-reference-htmlman	html,rump
+./usr/share/man/html7/rumpkernel.html		man-reference-htmlman	html,rump
 ./usr/share/man/html7/script.html		man-reference-htmlman	html
 ./usr/share/man/html7/security.html		man-reference-htmlman	html
 ./usr/share/man/html7/setuid.html		man-reference-htmlman	html
@@ -8109,6 +8111,7 @@
 ./usr/share/man/man7/release.7			man-reference-man	.man
 ./usr/share/man/man7/rfc6056.7			man-reference-man	.man
 ./usr/share/man/man7/rump_sp.7		man-reference-man	.man,rump
+./usr/share/man/man7/rumpkernel.7		man-reference-man	.man,rump
 ./usr/share/man/man7/script.7			man-reference-man	.man
 ./usr/share/man/man7/security.7			man-reference-man	.man
 ./usr/share/man/man7/setuid.7			man-reference-man	.man
