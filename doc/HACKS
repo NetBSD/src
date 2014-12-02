@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.152 2014/06/13 01:17:46 mrg Exp $
+# $NetBSD: HACKS,v 1.153 2014/12/02 08:31:18 dennis Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -980,5 +980,17 @@ cdate	Sat May 24 09:40:58 CEST 2014
 who	martin
 file	src/sys/arch/vax/boot/boot/Makefile: 1.41
 descr	/boot does not work when compiled with -O2 and gcc 4.8
+kcah
+
+port	riscv64
+hack	compile a couple of libasan files at -O0 for riscv64
+cdate	Tue Dec  2 16:17:48 HKT 2014
+who	dennis
+file	src/external/gpl3/gcc/lib/libasan/Makefile: 1.8
+descr	Attempting to compile the libasan files asan_allocator2.cc and
+	sanitizer_netbsd.cc with gcc 4.8.3 at any optimization level
+	other than -O0 results in an internal compiler error.  The
+	compiler seems to have trouble around C11 atomics in particular.
+pr	49425
 kcah
 
