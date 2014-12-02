@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.15 2014/06/05 23:48:17 rmind Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.16 2014/12/02 01:59:16 pooka Exp $
 #
 
 LIB=		rumpnet
@@ -30,10 +30,6 @@ SRCS+=
 
 # bpf stubs, required for all kernels
 SRCS+=	bpf_stub.c
-
-# automatically in sync src/lib
-SHLIB_MAJOR=    0
-SHLIB_MINOR=    0
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpnet/opt
 
