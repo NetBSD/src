@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.157 2014/11/10 02:38:12 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.158 2014/12/02 22:24:36 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4386,3 +4386,47 @@ sys/arch/i386/include/Makefile.inc		1.3 via patch
 
 	Disable SSE and AVX for kernel modules too.
 	[joerg, ticket #1172]
+
+lib/libc/resolv/res_mkquery.c			1.14
+
+	Fix EDNS option being broken with unbound by clipping MAXPACKET
+	to 64K - 1. Addresses PR/48475
+	[pettai, ticket #1191]
+
+lib/libperfuse/ops.c				1.81
+
+	Allow setxattr to be called with a NULL value, instead of crashing.
+	[manu, ticket #1193]
+
+sys/dev/raidframe/raidframevar.h		1.17
+sys/dev/raidframe/rf_netbsdkintf.c		1.316
+sys/dev/raidframe/rf_reconstruct.c		1.121
+
+	Fix a long-standing bug related to rebooting while a
+	reconstruct-to-spare is underway but not yet complete.
+	Fixes PR kern/49244.
+	[oster, ticket #1194]
+
+doc/3RDPARTY                                    patch
+distrib/sets/lists/base/mi                      patch
+share/zoneinfo/NEWS                             patch
+share/zoneinfo/africa                           patch
+share/zoneinfo/asia                             patch
+share/zoneinfo/australasia                      patch
+share/zoneinfo/backzone                         patch
+share/zoneinfo/europe                           patch
+share/zoneinfo/leapseconds                      patch
+share/zoneinfo/leapseconds.awk                  patch
+share/zoneinfo/northamerica                     patch
+share/zoneinfo/southamerica                     patch
+share/zoneinfo/zone.tab                         patch
+share/zoneinfo/zone1970.tab                     patch
+
+        Update tzdata from 2014g to 2014j.  Some of the changes are:
+        * A new Zone Pacific/Bougainville, for the part of Papua New Guinea
+          that plans to switch from UTC+10 to UTC+11 on 2014-12-28 at 02:00.
+        * Changes for Fiji, Belarus, and Turks & Caicos that take effect
+          at various times in 2014.
+        * Changes to historical data.
+        [apb, ticket #1195]
+
