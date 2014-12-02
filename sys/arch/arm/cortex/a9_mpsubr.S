@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.25 2014/12/02 22:42:04 matt Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.26 2014/12/02 22:57:08 matt Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -404,7 +404,7 @@ cortex_init:
 	cmp	r1, #2				// is it MP?
 	bxne	r10				//    no, return
 
-#if defined(CPU_CORTEXA7) || defined(CPU_CORTEXA17)
+#if !defined(CPU_CORTEXA7) && !defined(CPU_CORTEXA17)
 	//
 	// Step 2, disable the data cache
 	//
