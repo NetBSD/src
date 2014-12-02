@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.133 2014/09/09 20:16:12 rmind Exp $	*/
+/*	$NetBSD: route.c,v 1.134 2014/12/02 19:57:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.133 2014/09/09 20:16:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.134 2014/12/02 19:57:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -841,7 +841,7 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 		sockaddr_free(rt->rt_gateway);
 	KASSERT(rt->_rt_key != NULL);
 	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
-	if ((rt->rt_gateway = sockaddr_dup(gate, M_NOWAIT)) == NULL)
+	if ((rt->rt_gateway = sockaddr_dup(gate, M_ZERO | M_NOWAIT)) == NULL)
 		return ENOMEM;
 	KASSERT(rt->_rt_key != NULL);
 	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
@@ -1330,7 +1330,7 @@ rtcache_setdst(struct route *ro, const struct sockaddr *sa)
 
 	KASSERT(ro->_ro_rt == NULL);
 
-	if ((ro->ro_sa = sockaddr_dup(sa, M_NOWAIT)) == NULL) {
+	if ((ro->ro_sa = sockaddr_dup(sa, M_ZERO | M_NOWAIT)) == NULL) {
 		rtcache_invariants(ro);
 		return ENOMEM;
 	}
@@ -1344,7 +1344,7 @@ rt_settag(struct rtentry *rt, const struct sockaddr *tag)
 	if (rt->rt_tag != tag) {
 		if (rt->rt_tag != NULL)
 			sockaddr_free(rt->rt_tag);
-		rt->rt_tag = sockaddr_dup(tag, M_NOWAIT);
+		rt->rt_tag = sockaddr_dup(tag, M_ZERO | M_NOWAIT);
 	}
 	return rt->rt_tag; 
 }
