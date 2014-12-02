@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.165 2014/12/02 20:25:48 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.166 2014/12/02 21:28:31 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.165 2014/12/02 20:25:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.166 2014/12/02 21:28:31 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -133,7 +133,7 @@ DOMAIN_DEFINE(routedomain); /* forward declare and add to link set */
 
 #ifdef RTSOCK_DEBUG
 #define RT_IN_PRINT(b, a) (in_print((b), sizeof(b), \
-    &((const struct sockaddr_in *)info.rti_info(a))->sin_addr), (b))
+    &((const struct sockaddr_in *)info.rti_info[(a)])->sin_addr), (b))
 #endif /* RTSOCK_DEBUG */
 
 struct route_info COMPATNAME(route_info) = {
@@ -584,7 +584,7 @@ COMPATNAME(route_output)(struct mbuf *m, ...)
 				    AF_INET) {
 					char ibuf[INET_ADDRSTRLEN];
 					char abuf[INET_ADDRSTRLEN];
-					printf("%s: copying out RTAX_IFA %s ",
+					printf("%s: copying out RTAX_IFA %s "
 					    "for info.rti_info[RTAX_DST] %s "
 					    "ifa_getifa %p ifa_seqno %p\n",
 					    __func__,
