@@ -1637,9 +1637,10 @@ extern unsigned int drm_timestamp_precision;
 extern unsigned int drm_timestamp_monotonic;
 
 extern struct class *drm_class;
+#ifndef __NetBSD__
 extern struct dentry *drm_debugfs_root;
 
-#ifdef __NetBSD__
+#else
 extern spinlock_t drm_minor_lock;
 #endif
 extern struct idr drm_minors_idr;
