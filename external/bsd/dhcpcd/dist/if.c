@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if.c,v 1.7 2014/11/26 13:43:06 roy Exp $");
+ __RCSID("$NetBSD: if.c,v 1.8 2014/12/02 22:13:13 christos Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -187,7 +187,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 	struct ifaddrs *ifaddrs, *ifa;
 	char *p;
 	int i;
-	sa_family_t sdl_type;
+	sa_family_t sdltype;
 	struct if_head *ifs;
 	struct interface *ifp;
 #ifdef __linux__
@@ -321,7 +321,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		ifp->flags = ifa->ifa_flags;
 		ifp->carrier = if_carrier(ifp);
 
-		sdl_type = 0;
+		sdltype = 0;
 		if (ifa->ifa_addr != NULL) {
 #ifdef AF_LINK
 			sdl = (const struct sockaddr_dl *)(void *)ifa->ifa_addr;
@@ -346,7 +346,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 			memcpy(&ifp->linkaddr, sdl, sdl->sdl_len);
 #endif
 			ifp->index = sdl->sdl_index;
-			sdl_type = sdl->sdl_type;
+			sdltype = sdl->sdl_type;
 			switch(sdl->sdl_type) {
 #ifdef IFT_BRIDGE
 			case IFT_BRIDGE:
@@ -388,7 +388,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 #elif AF_PACKET
 			sll = (const struct sockaddr_ll *)(void *)ifa->ifa_addr;
 			ifp->index = (unsigned int)sll->sll_ifindex;
-			ifp->family = sdl_type = sll->sll_hatype;
+			ifp->family = sdltype = sll->sll_hatype;
 			ifp->hwlen = sll->sll_halen;
 			if (ifp->hwlen != 0)
 				memcpy(ifp->hwaddr, sll->sll_addr, ifp->hwlen);
@@ -423,7 +423,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 				syslog(LOG_WARNING,
 				    "%s: unsupported interface type %.2x, "
 				    "family %.2x",
-				    ifp->name, sdl_type, ifp->family);
+				    ifp->name, sdltype, ifp->family);
 				break;
 			}
 		}
