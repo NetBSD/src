@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.3 2014/12/01 12:38:39 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.4 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -43,8 +43,6 @@
  *	open_pipe		-	might want to take lock?
  *	soft_intr		x
  *	do_poll			-	might want to take lock?
- *	allocm			-
- *	freem			-
  *	allocx			-
  *	freex			-
  *	get_lock 		-	Called at attach time
@@ -95,9 +93,6 @@ struct usbd_bus_methods {
 	usbd_status	      (*ubm_open)(struct usbd_pipe *pipe);
 	void		      (*ubm_softint)(void *);
 	void		      (*ubm_dopoll)(struct usbd_bus *);
-	usbd_status	      (*ubm_allocm)(struct usbd_bus *, usb_dma_t *,
-					uint32_t);
-	void		      (*ubm_freem)(struct usbd_bus *, usb_dma_t *);
 	struct usbd_xfer *    (*ubm_allocx)(struct usbd_bus *);
 	void		      (*ubm_freex)(struct usbd_bus *, struct usbd_xfer *);
 	void		      (*ubm_getlock)(struct usbd_bus *, kmutex_t **);
@@ -167,6 +162,9 @@ struct usbd_bus {
 #define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1", "2.0", "3.0" }
 
 	void		       *soft; /* soft interrupt cookie */
+
+	bool			usedma;		/* Does this HC support DMA */
+	int			dmaflags;
 	bus_dma_tag_t		dmatag;	/* DMA tag */
 };
 
@@ -255,11 +253,12 @@ struct usbd_xfer {
 	/* For memory allocation */
 	struct usbd_device     *device;
 	usb_dma_t		dmabuf;
+	void		       *buf;
+	uint32_t		bufsize;
 
 	uint8_t			rqflags;
 #define URQ_REQUEST	0x01
-#define URQ_AUTO_DMABUF	0x10
-#define URQ_DEV_DMABUF	0x20
+#define URQ_AUTO_BUFFER	0x10
 
 	SIMPLEQ_ENTRY(usbd_xfer) next;
 

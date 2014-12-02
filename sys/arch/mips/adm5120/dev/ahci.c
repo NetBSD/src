@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.12.6.3 2014/12/01 12:38:39 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.12.6.4 2014/12/02 09:00:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.3 2014/12/01 12:38:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.4 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,6 @@ static void		ahci_softintr(void *);
 static void		ahci_poll(struct usbd_bus *);
 static void		ahci_poll_hub(void *);
 static void		ahci_poll_device(void *arg);
-static usbd_status	ahci_allocm(struct usbd_bus *, usb_dma_t *, uint32_t);
-static void		ahci_freem(struct usbd_bus *, usb_dma_t *);
 static usbd_xfer_handle ahci_allocx(struct usbd_bus *);
 static void		ahci_freex(struct usbd_bus *, usbd_xfer_handle);
 
@@ -176,8 +174,6 @@ struct usbd_bus_methods ahci_bus_methods = {
 	.ubm_open = ahci_open,
 	.ubm_softint = ahci_softintr,
 	.ubm_dopoll = ahci_poll,
-	.ubm_allocm = ahci_allocm,
-	.ubm_freem = ahci_freem,
 	.ubm_allocx = ahci_allocx,
 	.ubm_freex = ahci_freex,
 	.ubm_getlock = ahci_get_lock,
@@ -280,6 +276,7 @@ ahci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bus.methods = &ahci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct ahci_pipe);
 	sc->sc_bus.dmatag = sc->sc_dmat;
+	sc->sc_bus.usedma = true;
 
 	/* Map the device. */
 	if (bus_space_map(sc->sc_st, aa->oba_addr,
@@ -466,24 +463,6 @@ ahci_poll_hub(void *arg)
 	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
 	mutex_exit(&sc->sc_lock);
-}
-
-usbd_status
-ahci_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
-{
-	struct ahci_softc *sc = (struct ahci_softc *)bus;
-
-	DPRINTF(D_MEM, ("SLallocm"));
-	return usb_allocmem(&sc->sc_bus, size, 0, dma);
-}
-
-void
-ahci_freem(struct usbd_bus *bus, usb_dma_t *dma)
-{
-	struct ahci_softc *sc = (struct ahci_softc *)bus;
-
-	DPRINTF(D_MEM, ("SLfreem"));
-	usb_freemem(&sc->sc_bus, dma);
 }
 
 usbd_xfer_handle

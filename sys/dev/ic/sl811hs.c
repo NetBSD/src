@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47.6.2 2014/12/01 12:38:39 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.3 2014/12/02 09:00:33 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.2 2014/12/01 12:38:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.3 2014/12/02 09:00:33 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -423,8 +423,6 @@ slhci_dump_cc_times(int n) {
 typedef usbd_status (*LockCallFunc)(struct slhci_softc *, struct slhci_pipe
     *, struct usbd_xfer *);
 
-usbd_status slhci_allocm(struct usbd_bus *, usb_dma_t *, uint32_t);
-void slhci_freem(struct usbd_bus *, usb_dma_t *);
 struct usbd_xfer * slhci_allocx(struct usbd_bus *);
 void slhci_freex(struct usbd_bus *, struct usbd_xfer *);
 static void slhci_get_lock(struct usbd_bus *, kmutex_t **);
@@ -683,8 +681,6 @@ const struct usbd_bus_methods slhci_bus_methods = {
 	.ubm_open = slhci_open,
 	.ubm_softint= slhci_void,
 	.ubm_dopoll = slhci_poll,
-	.ubm_allocm = slhci_allocm,
-	.ubm_freem = slhci_freem,
 	.ubm_allocx = slhci_allocx,
 	.ubm_freex = slhci_freex,
 	.ubm_getlock = slhci_get_lock,
@@ -759,55 +755,6 @@ enter_all_pipes(struct slhci_transfers *t, struct slhci_pipe *spipe)
 }
 
 /* Start out of lock functions. */
-
-struct slhci_mem {
-	usb_dma_block_t block;
-	uint8_t data[];
-};
-
-/*
- * The SL811HS does not do DMA as a host controller, but NetBSD's USB interface
- * assumes DMA is used.  So we fake the DMA block.
- */
-usbd_status
-slhci_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
-{
-	struct slhci_mem *mem;
-
-	mem = malloc(sizeof(struct slhci_mem) + size, M_USB, M_NOWAIT|M_ZERO);
-
-	DLOG(D_MEM, "allocm %p", mem, 0,0,0);
-
-	if (mem == NULL)
-		return USBD_NOMEM;
-
-	dma->block = &mem->block;
-	dma->block->kaddr = mem->data;
-
-	/* dma->offs = 0; */
-	dma->block->nsegs = 1;
-	dma->block->size = size;
-	dma->block->align = size;
-	dma->block->flags |= USB_DMA_FULLBLOCK;
-
-#ifdef SLHCI_MEM_ACCOUNTING
-	slhci_mem_use(bus, 1);
-#endif
-
-	return USBD_NORMAL_COMPLETION;
-}
-
-void
-slhci_freem(struct usbd_bus *bus, usb_dma_t *dma)
-{
-	DLOG(D_MEM, "freem %p", dma->block, 0,0,0);
-
-#ifdef SLHCI_MEM_ACCOUNTING
-	slhci_mem_use(bus, -1);
-#endif
-
-	free(dma->block, M_USB);
-}
 
 struct usbd_xfer *
 slhci_allocx(struct usbd_bus *bus)
@@ -935,7 +882,7 @@ slhci_start(struct usbd_xfer *xfer)
 			spipe->control |= SL11_EPCTRL_DATATOGGLE;
 		spipe->tregs[LEN] = spipe->newlen[1];
 		if (spipe->tregs[LEN])
-			spipe->buffer = KERNADDR(&xfer->dmabuf, 0);
+			spipe->buffer = xfer->buf;
 		else
 			spipe->buffer = NULL;
 		spipe->lastframe = t->frame;
@@ -1262,6 +1209,7 @@ slhci_attach(struct slhci_softc *sc)
 	sc->sc_bus.usbrev = USBREV_1_1;
 	sc->sc_bus.methods = __UNCONST(&slhci_bus_methods);
 	sc->sc_bus.pipe_size = sizeof(struct slhci_pipe);
+	sc->sc_bus.usedma = false;
 
 	if (!sc->sc_enable_power)
 		t->flags |= F_REALPOWER;
@@ -2126,7 +2074,7 @@ slhci_abdone(struct slhci_softc *sc, int ab)
 			    return);
 			spipe->tregs[LEN] = spipe->newlen[1];
 			spipe->bustime = spipe->newbustime[1];
-			spipe->buffer = KERNADDR(&xfer->dmabuf, 0);
+			spipe->buffer = xfer->buf;
 			spipe->ptype = PT_CTRL_DATA;
 		} else {
 status_setup:
@@ -2391,7 +2339,7 @@ slhci_callback(struct slhci_softc *sc)
 			if (t->rootintr != NULL) {
 				u_char *p;
 
-				p = KERNADDR(&t->rootintr->dmabuf, 0);
+				p = t->rootintr->buf;
 				p[0] = 2;
 				t->rootintr->actlen = 1;
 				t->rootintr->status = USBD_NORMAL_COMPLETION;
@@ -2502,7 +2450,7 @@ slhci_do_repeat(struct slhci_softc *sc, struct usbd_xfer *xfer)
 	xfer->actlen = 0;
 	spipe->xfer = xfer;
 	if (spipe->tregs[LEN])
-		KASSERT(spipe->buffer == KERNADDR(&xfer->dmabuf, 0));
+		KASSERT(spipe->buffer == xfer->buf);
 	slhci_queue_timed(sc, spipe);
 	slhci_dotransfer(sc);
 }
@@ -3230,7 +3178,7 @@ slhci_root(struct slhci_softc *sc, struct slhci_pipe *spipe, struct usbd_xfer
 	type = req->bmRequestType;
 
 	if (len)
-		buf = KERNADDR(&xfer->dmabuf, 0);
+		buf = xfer->buf;
 
 	SLHCI_DEXEC(D_TRACE, slhci_log_req_hub(req));
 
@@ -3434,7 +3382,7 @@ slhci_log_buffer(struct usbd_xfer *xfer)
 	if(xfer->length > 0 &&
 	    UE_GET_DIR(xfer->pipe->endpoint->edesc->bEndpointAddress) ==
 	    UE_DIR_IN) {
-		buf = KERNADDR(&xfer->dmabuf, 0);
+		buf = xfer->buf;
 		DDOLOGBUF(buf, xfer->actlen);
 		DDOLOG("len %d actlen %d short %d", xfer->length,
 		    xfer->actlen, xfer->length - xfer->actlen, 0);
@@ -3588,7 +3536,7 @@ slhci_log_xfer(struct usbd_xfer *xfer)
 	DDOLOG("xfer: length=%u, actlen=%u, flags=%#x, timeout=%u,",
 		xfer->length, xfer->actlen, xfer->flags, xfer->timeout);
 	if (xfer->dmabuf.block)
-		DDOLOG("buffer=%p", KERNADDR(&xfer->dmabuf, 0), 0,0,0);
+		DDOLOG("buffer=%p", xfer->buf, 0,0,0);
 	slhci_log_req_hub(&xfer->request);
 }
 

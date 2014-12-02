@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.4 2014/12/01 12:38:39 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.5 2014/12/02 09:00:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.4 2014/12/01 12:38:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.5 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,8 +116,6 @@ static void		motg_root_intr_done(usbd_xfer_handle);
 static usbd_status	motg_open(usbd_pipe_handle);
 static void		motg_poll(struct usbd_bus *);
 static void		motg_softintr(void *);
-static usbd_status	motg_allocm(struct usbd_bus *, usb_dma_t *, uint32_t);
-static void		motg_freem(struct usbd_bus *, usb_dma_t *);
 static usbd_xfer_handle	motg_allocx(struct usbd_bus *);
 static void		motg_freex(struct usbd_bus *, usbd_xfer_handle);
 static void		motg_get_lock(struct usbd_bus *, kmutex_t **);
@@ -206,8 +204,6 @@ const struct usbd_bus_methods motg_bus_methods = {
 	.ubm_open =	motg_open,
 	.ubm_softint =	motg_softintr,
 	.ubm_dopoll =	motg_poll,
-	.ubm_allocm =	motg_allocm,
-	.ubm_freem =	motg_freem,
 	.ubm_allocx =	motg_allocx,
 	.ubm_freex =	motg_freex,
 	.ubm_getlock =	motg_get_lock,
@@ -718,29 +714,6 @@ motg_intr_vbus(struct motg_softc *sc, int vbus)
 	return 1;
 }
 
-usbd_status
-motg_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
-{
-	struct motg_softc *sc = bus->hci_private;
-	usbd_status status;
-
-	status = usb_allocmem(&sc->sc_bus, size, 0, dma);
-	if (status == USBD_NOMEM)
-		status = usb_reserve_allocm(&sc->sc_dma_reserve, dma, size);
-	return status;
-}
-
-void
-motg_freem(struct usbd_bus *bus, usb_dma_t *dma)
-{
-	if (dma->block->flags & USB_DMA_RESERVE) {
-		usb_reserve_freem(&((struct motg_softc *)bus)->sc_dma_reserve,
-		    dma);
-		return;
-	}
-	usb_freemem(&((struct motg_softc *)bus)->sc_bus, dma);
-}
-
 usbd_xfer_handle
 motg_allocx(struct usbd_bus *bus)
 {
@@ -894,7 +867,7 @@ motg_root_ctrl_start(usbd_xfer_handle xfer)
 	index = UGETW(req->wIndex);
 
 	if (len != 0)
-		buf = KERNADDR(&xfer->dmabuf, 0);
+		buf = xfer->buf;
 
 #define C(x,y) ((x) | ((y) << 8))
 	switch(C(req->bRequest, req->bmRequestType)) {
@@ -1325,7 +1298,7 @@ motg_hub_change(struct motg_softc *sc)
 	if (pipe->device == NULL || pipe->device->bus == NULL)
 		return;	/* device has detached */
 
-	p = KERNADDR(&xfer->dmabuf, 0);
+	p = xfer->buf;
 	p[0] = 1<<1;
 	xfer->actlen = 1;
 	xfer->status = USBD_NORMAL_COMPLETION;
@@ -1552,7 +1525,7 @@ motg_device_ctrl_start1(struct motg_softc *sc)
 	ep->xfer = xfer;
 	ep->datalen = xfer->length;
 	if (ep->datalen > 0)
-		ep->data = KERNADDR(&xfer->dmabuf, 0);
+		ep->data = xfer->buf;
 	else
 		ep->data = NULL;
 	if ((xfer->flags & USBD_FORCE_SHORT_XFER) &&
@@ -1998,7 +1971,7 @@ motg_device_data_start1(struct motg_softc *sc, struct motg_hw_ep *ep)
 	ep->xfer = xfer;
 	ep->datalen = xfer->length;
 	KASSERT(ep->datalen > 0);
-	ep->data = KERNADDR(&xfer->dmabuf, 0);
+	ep->data = xfer->buf;
 	if ((xfer->flags & USBD_FORCE_SHORT_XFER) &&
 	    (ep->datalen % 64) == 0)
 		ep->need_short_xfer = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.17 2014/11/15 19:18:19 christos Exp $	*/
+/*	$NetBSD: uhso.c,v 1.17.2.1 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17 2014/11/15 19:18:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.1 2014/12/02 09:00:34 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -907,7 +907,7 @@ uhso_mux_write(struct uhso_port *hp)
 	USETW(req.wLength, hp->hp_wlen);
 
 	usbd_setup_default_xfer(hp->hp_wxfer, sc->sc_udev, hp, USBD_NO_TIMEOUT,
-	    &req, hp->hp_wbuf, hp->hp_wlen, USBD_NO_COPY, hp->hp_write_cb);
+	    &req, hp->hp_wbuf, hp->hp_wlen, 0, hp->hp_write_cb);
 
 	status = usbd_transfer(hp->hp_wxfer);
 	if (status != USBD_IN_PROGRESS) {
@@ -943,7 +943,7 @@ uhso_mux_read(struct uhso_port *hp)
 	USETW(req.wLength, hp->hp_rsize);
 
 	usbd_setup_default_xfer(hp->hp_rxfer, sc->sc_udev, hp, USBD_NO_TIMEOUT,
-	    &req, hp->hp_rbuf, hp->hp_rsize, USBD_NO_COPY | USBD_SHORT_XFER_OK,
+	    &req, hp->hp_rbuf, hp->hp_rsize, USBD_SHORT_XFER_OK,
 	    hp->hp_read_cb);
 
 	status = usbd_transfer(hp->hp_rxfer);
@@ -1183,7 +1183,7 @@ uhso_bulk_write(struct uhso_port *hp)
 	DPRINTF(5, "hp=%p, wlen=%zd\n", hp, hp->hp_wlen);
 
 	usbd_setup_xfer(hp->hp_wxfer, hp->hp_wpipe, hp, hp->hp_wbuf,
-	    hp->hp_wlen, USBD_NO_COPY, USBD_NO_TIMEOUT, hp->hp_write_cb);
+	    hp->hp_wlen, 0, USBD_NO_TIMEOUT, hp->hp_write_cb);
 
 	status = usbd_transfer(hp->hp_wxfer);
 	if (status != USBD_IN_PROGRESS) {
@@ -1204,7 +1204,7 @@ uhso_bulk_read(struct uhso_port *hp)
 	DPRINTF(5, "hp=%p\n", hp);
 
 	usbd_setup_xfer(hp->hp_rxfer, hp->hp_rpipe, hp, hp->hp_rbuf,
-	    hp->hp_rsize, USBD_NO_COPY | USBD_SHORT_XFER_OK,
+	    hp->hp_rsize, USBD_SHORT_XFER_OK,
 	    USBD_NO_TIMEOUT, hp->hp_read_cb);
 
 	status = usbd_transfer(hp->hp_rxfer);

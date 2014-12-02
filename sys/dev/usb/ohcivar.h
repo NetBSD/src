@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.55.6.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.55.6.2 2014/12/02 09:00:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -143,7 +143,6 @@ typedef struct ohci_softc {
 	struct callout sc_tmo_rhsc;
 	device_t sc_child;
 	char sc_dying;
-	struct usb_dma_reserve sc_dma_reserve;
 } ohci_softc_t;
 
 struct ohci_xfer {

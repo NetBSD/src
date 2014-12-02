@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.95.4.2 2014/12/01 13:03:05 skrll Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.95.4.3 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.4.2 2014/12/01 13:03:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.4.3 2014/12/02 09:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -631,7 +631,7 @@ ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 		if (error)
 			break;
 		DPRINTFN(4, ("ulptwrite: transfer %d bytes\n", n));
-		err = usbd_bulk_transfer(xfer, sc->sc_out_pipe, USBD_NO_COPY,
+		err = usbd_bulk_transfer(xfer, sc->sc_out_pipe, 0,
 			  USBD_NO_TIMEOUT, bufp, &n);
 		if (err) {
 			DPRINTFN(3, ("ulptwrite: error=%d\n", err));
@@ -721,8 +721,7 @@ ulpt_do_read(struct ulpt_softc *sc, struct uio *uio, int flags)
 		DPRINTFN(4, ("ulptread: transfer %d bytes, nonblocking=%d timeout=%d\n",
 			     n, nonblocking, timeout));
 		err = usbd_bulk_transfer(xfer, sc->sc_in_pipe,
-			  USBD_NO_COPY | USBD_SHORT_XFER_OK,
-			  timeout, bufp, &n);
+			  USBD_SHORT_XFER_OK, timeout, bufp, &n);
 
 		DPRINTFN(4, ("ulptread: transfer complete nreq %d n %d nread %d err %d\n",
 			     nreq, n, nread, err));
@@ -885,7 +884,7 @@ ulpt_tick(void *xsc)
 		return;
 
 	usbd_setup_xfer(sc->sc_in_xfer, sc->sc_in_pipe, sc, sc->sc_in_buf,
-			ULPT_BSIZE, USBD_NO_COPY | USBD_SHORT_XFER_OK,
+			ULPT_BSIZE, USBD_SHORT_XFER_OK,
 			ULPT_READ_TIMO, ulpt_read_cb);
 	err = usbd_transfer(sc->sc_in_xfer);
 	DPRINTFN(3, ("ulpt_tick: sc=%p err=%d\n", sc, err));

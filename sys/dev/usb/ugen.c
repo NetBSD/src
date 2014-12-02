@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.126.2.2 2014/12/01 13:03:05 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.126.2.3 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.2 2014/12/01 13:03:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.3 2014/12/02 09:00:34 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -479,7 +479,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 				usbd_setup_isoc_xfer
 					(xfer, sce->pipeh, &sce->isoreqs[i],
 					 sce->isoreqs[i].sizes,
-					 UGEN_NISORFRMS, USBD_NO_COPY,
+					 UGEN_NISORFRMS, 0,
 					 ugen_isoc_rintr);
 				(void)usbd_transfer(xfer);
 			}
@@ -697,7 +697,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 					usbd_setup_xfer(xfer,
 					    sce->pipeh, sce, NULL,
 					    min(n, sce->ra_wb_xferlen),
-					    USBD_NO_COPY, USBD_NO_TIMEOUT,
+					    0, USBD_NO_TIMEOUT,
 					    ugen_bulkra_intr);
 					sce->state &= ~UGEN_RA_WB_STOP;
 					err = usbd_transfer(xfer);
@@ -911,7 +911,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 						       n - tn);
 					usbd_setup_xfer(xfer,
 					    sce->pipeh, sce, NULL, n,
-					    USBD_NO_COPY, USBD_NO_TIMEOUT,
+					    0, USBD_NO_TIMEOUT,
 					    ugen_bulkwb_intr);
 					sce->state &= ~UGEN_RA_WB_STOP;
 					err = usbd_transfer(xfer);
@@ -1161,7 +1161,7 @@ ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 	}
 
 	usbd_setup_isoc_xfer(xfer, sce->pipeh, req, req->sizes, UGEN_NISORFRMS,
-			     USBD_NO_COPY, ugen_isoc_rintr);
+			     0, ugen_isoc_rintr);
 	(void)usbd_transfer(xfer);
 
 	mutex_enter(&sc->sc_lock);
@@ -1219,7 +1219,7 @@ ugen_bulkra_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
 	n = (sce->limit - sce->ibuf) - sce->ra_wb_used;
 	if (n > 0) {
 		usbd_setup_xfer(xfer, sce->pipeh, sce, NULL,
-		    min(n, sce->ra_wb_xferlen), USBD_NO_COPY,
+		    min(n, sce->ra_wb_xferlen), 0,
 		    USBD_NO_TIMEOUT, ugen_bulkra_intr);
 		err = usbd_transfer(xfer);
 		if (err != USBD_IN_PROGRESS) {
@@ -1288,7 +1288,7 @@ ugen_bulkwb_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
 			memcpy(tbuf, sce->ibuf, count - n);
 
 		usbd_setup_xfer(xfer, sce->pipeh, sce, NULL,
-		    count, USBD_NO_COPY, USBD_NO_TIMEOUT, ugen_bulkwb_intr);
+		    count, 0, USBD_NO_TIMEOUT, ugen_bulkwb_intr);
 		err = usbd_transfer(xfer);
 		if (err != USBD_IN_PROGRESS) {
 			printf("usbd_bulkwb_intr: error=%d\n", err);
@@ -1503,7 +1503,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			usbd_setup_xfer(sce->ra_wb_xfer, sce->pipeh, sce,
 			    NULL,
 			    min(sce->ra_wb_xferlen, sce->ra_wb_bufsize),
-			    USBD_NO_COPY, USBD_NO_TIMEOUT,
+			    0, USBD_NO_TIMEOUT,
 			    ugen_bulkra_intr);
 			err = usbd_transfer(sce->ra_wb_xfer);
 			if (err != USBD_IN_PROGRESS) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.16.2.2 2014/12/01 13:03:05 skrll Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.16.2.3 2014/12/02 09:00:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16.2.2 2014/12/01 13:03:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16.2.3 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -312,7 +312,7 @@ stuirda_write(void *h, struct uio *uio, int flag)
 
 		n += STUIRDA_HEADER_SIZE + sc->sc_wr_buf[1];
 		err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
-			  USBD_FORCE_SHORT_XFER|USBD_NO_COPY,
+			  USBD_FORCE_SHORT_XFER,
 			  UIRDA_WR_TIMEOUT,
 			  sc->sc_wr_buf, &n);
 		DPRINTFN(2, ("uirdawrite: err=%d\n", err));

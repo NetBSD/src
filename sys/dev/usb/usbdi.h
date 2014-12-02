@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.90.4.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.90.4.2 2014/12/02 09:00:34 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -77,7 +77,6 @@ typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
 #define USBD_DEFAULT_INTERVAL	(-1)
 
 /* Request flags */
-#define USBD_NO_COPY		0x01	/* do not copy data to DMA buffer */
 #define USBD_SYNCHRONOUS	0x02	/* wait for completion */
 /* in usb.h #define USBD_SHORT_XFER_OK	0x04*/	/* allow short reads */
 #define USBD_FORCE_SHORT_XFER	0x08	/* force last short packet on write */

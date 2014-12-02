@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.6 2013/10/16 18:55:31 christos Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.6.6.1 2014/12/02 09:00:33 skrll Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6 2013/10/16 18:55:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.1 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2676,7 +2676,7 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 	usbd_setup_xfer(data->xfer,
 	    (prior == URTW_PRIORITY_LOW) ? sc->sc_txpipe_low :
 	    sc->sc_txpipe_normal, data, data->buf, xferlen,
-	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, URTW_DATA_TIMEOUT,
+	    USBD_FORCE_SHORT_XFER, URTW_DATA_TIMEOUT,
 	    (prior == URTW_PRIORITY_LOW) ? urtw_txeof_low : urtw_txeof_normal);
 	error = usbd_transfer(data->xfer);
 	if (error != USBD_IN_PROGRESS && error != USBD_NORMAL_COMPLETION) {

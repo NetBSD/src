@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.48.4.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: if_url.c,v 1.48.4.2 2014/12/02 09:00:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.4.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.4.2 2014/12/02 09:00:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -746,7 +746,7 @@ url_openpipes(struct url_softc *sc)
 		c = &sc->sc_cdata.url_rx_chain[i];
 		usbd_setup_xfer(c->url_xfer, sc->sc_pipe_rx,
 				c, c->url_buf, URL_BUFSZ,
-				USBD_SHORT_XFER_OK | USBD_NO_COPY,
+				USBD_SHORT_XFER_OK,
 				USBD_NO_TIMEOUT, url_rxeof);
 		(void)usbd_transfer(c->url_xfer);
 		DPRINTF(("%s: %s: start read\n", device_xname(sc->sc_dev),
@@ -915,7 +915,7 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 		total_len = URL_MIN_FRAME_LEN;
 	}
 	usbd_setup_xfer(c->url_xfer, sc->sc_pipe_tx, c, c->url_buf, total_len,
-			USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+			USBD_FORCE_SHORT_XFER,
 			URL_TX_TIMEOUT, url_txeof);
 
 	/* Transmit */
@@ -1073,7 +1073,7 @@ url_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  done:
 	/* Setup new transfer */
 	usbd_setup_xfer(xfer, sc->sc_pipe_rx, c, c->url_buf, URL_BUFSZ,
-			USBD_SHORT_XFER_OK | USBD_NO_COPY,
+			USBD_SHORT_XFER_OK,
 			USBD_NO_TIMEOUT, url_rxeof);
 	sc->sc_refcnt++;
 	usbd_transfer(xfer);

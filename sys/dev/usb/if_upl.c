@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.47.4.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.47.4.2 2014/12/02 09:00:33 skrll Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.2 2014/12/02 09:00:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -555,7 +555,7 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 #if 1
 	/* Setup new transfer. */
 	usbd_setup_xfer(c->upl_xfer, sc->sc_ep[UPL_ENDPT_RX],
-	    c, c->upl_buf, UPL_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    c, c->upl_buf, UPL_BUFSZ, USBD_SHORT_XFER_OK,
 	    USBD_NO_TIMEOUT, upl_rxeof);
 	usbd_transfer(c->upl_xfer);
 
@@ -635,7 +635,7 @@ upl_send(struct upl_softc *sc, struct mbuf *m, int idx)
 		     device_xname(sc->sc_dev), __func__, total_len));
 
 	usbd_setup_xfer(c->upl_xfer, sc->sc_ep[UPL_ENDPT_TX],
-	    c, c->upl_buf, total_len, USBD_NO_COPY, USBD_DEFAULT_TIMEOUT,
+	    c, c->upl_buf, total_len, 0, USBD_DEFAULT_TIMEOUT,
 	    upl_txeof);
 
 	/* Transmit */
@@ -774,7 +774,7 @@ upl_openpipes(struct upl_softc *sc)
 		c = &sc->sc_cdata.upl_rx_chain[i];
 		usbd_setup_xfer(c->upl_xfer, sc->sc_ep[UPL_ENDPT_RX],
 		    c, c->upl_buf, UPL_BUFSZ,
-		    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
 		    upl_rxeof);
 		usbd_transfer(c->upl_xfer);
 	}

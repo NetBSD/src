@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.41.2.1 2014/12/01 13:03:05 skrll Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.41.2.2 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.1 2014/12/01 13:03:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.2 2014/12/02 09:00:34 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1745,7 +1745,7 @@ uvideo_stream_recv_isoc_start1(struct uvideo_isoc *isoc)
 			     isoc,
 			     isoc->i_frlengths,
 			     ix->ix_nframes,
-			     USBD_NO_COPY | USBD_SHORT_XFER_OK,
+			     USBD_SHORT_XFER_OK,
 			     uvideo_stream_recv_isoc_complete);
 
 	err = usbd_transfer(isoc->i_xfer);
@@ -1853,7 +1853,7 @@ uvideo_stream_recv_bulk_transfer(void *addr)
 	while (bx->bx_running) {
 		len = bx->bx_buflen;
 		err = usbd_bulk_transfer(bx->bx_xfer, bx->bx_pipe,
-		    USBD_SHORT_XFER_OK | USBD_NO_COPY,
+		    USBD_SHORT_XFER_OK,
 		    USBD_NO_TIMEOUT,
 		    bx->bx_buffer, &len);
 

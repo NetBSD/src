@@ -1,4 +1,4 @@
-/* $NetBSD: irmce.c,v 1.1.32.1 2014/12/01 13:03:05 skrll Exp $ */
+/* $NetBSD: irmce.c,v 1.1.32.2 2014/12/02 09:00:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.1.32.1 2014/12/01 13:03:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.1.32.2 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -305,7 +305,7 @@ irmce_reset(struct irmce_softc *sc)
 
 	wlen = sizeof(reset_cmd);
 	err = usbd_bulk_transfer(sc->sc_bulkin_xfer,
-	    sc->sc_bulkout_pipe, USBD_NO_COPY|USBD_FORCE_SHORT_XFER,
+	    sc->sc_bulkout_pipe, USBD_FORCE_SHORT_XFER,
 	    USBD_DEFAULT_TIMEOUT, sc->sc_bulkout_buffer, &wlen);
 	if (err != USBD_NORMAL_COMPLETION) {
 		if (err == USBD_INTERRUPTED)
@@ -551,7 +551,7 @@ irmce_read(void *priv, struct uio *uio, int flag)
 	while (uio->uio_resid > 0) {
 		rlen = sc->sc_bulkin_maxpktsize;
 		err = usbd_bulk_transfer(sc->sc_bulkin_xfer,
-		    sc->sc_bulkin_pipe, USBD_NO_COPY|USBD_SHORT_XFER_OK,
+		    sc->sc_bulkin_pipe, USBD_SHORT_XFER_OK,
 		    USBD_DEFAULT_TIMEOUT, sc->sc_bulkin_buffer, &rlen);
 		if (err != USBD_NORMAL_COMPLETION) {
 			if (err == USBD_INTERRUPTED)

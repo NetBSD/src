@@ -1,4 +1,4 @@
-/* $NetBSD: aubtfwl.c,v 1.5.10.1 2014/12/01 13:03:05 skrll Exp $ */
+/* $NetBSD: aubtfwl.c,v 1.5.10.2 2014/12/02 09:00:33 skrll Exp $ */
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.5.10.1 2014/12/01 13:03:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.5.10.2 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <dev/usb/usb.h>
@@ -191,7 +191,7 @@ aubtfwl_firmware_load(device_t self, const char *name) {
 			break;
 		}
 		error = usbd_bulk_transfer(xfer, pipe,
-		    USBD_NO_COPY, USBD_DEFAULT_TIMEOUT,
+		    0, USBD_DEFAULT_TIMEOUT,
 		    buf, &n);
 		if (error != USBD_NORMAL_COMPLETION) {
 			aprint_error_dev(self, "xfer failed, %s\n",

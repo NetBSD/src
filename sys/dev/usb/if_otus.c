@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.25 2013/10/17 21:07:37 christos Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.25.6.1 2014/12/02 09:00:33 skrll Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25 2013/10/17 21:07:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25.6.1 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1045,7 +1045,7 @@ otus_open_pipes(struct otus_softc *sc)
 
 		data = &sc->sc_rx_data[i];
 		usbd_setup_xfer(data->xfer, sc->sc_data_rx_pipe, data, data->buf,
-		    OTUS_RXBUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+		    OTUS_RXBUFSZ, USBD_SHORT_XFER_OK,
 		    USBD_NO_TIMEOUT, otus_rxeof);
 		error = usbd_transfer(data->xfer);
 		if (error != USBD_IN_PROGRESS && error != 0) {
@@ -1440,7 +1440,7 @@ otus_cmd(struct otus_softc *sc, uint8_t code, const void *idata, int ilen,
 	cmd->odata = odata;
 	cmd->done = 0;
 	usbd_setup_xfer(cmd->xfer, sc->sc_cmd_tx_pipe, cmd, cmd->buf, xferlen,
-	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, OTUS_CMD_TIMEOUT, NULL);
+	    USBD_FORCE_SHORT_XFER, OTUS_CMD_TIMEOUT, NULL);
 	error = usbd_sync_transfer(cmd->xfer);
 	if (error != 0) {
 		splx(s);
@@ -1897,7 +1897,7 @@ otus_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
  resubmit:
 	usbd_setup_xfer(xfer, sc->sc_data_rx_pipe, data, data->buf, OTUS_RXBUFSZ,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT, otus_rxeof);
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, otus_rxeof);
 	(void)usbd_transfer(data->xfer);
 }
 
@@ -2054,7 +2054,7 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	    head->len, head->macctl, head->phyctl, otus_rates[ridx].rate);
 
 	usbd_setup_xfer(data->xfer, sc->sc_data_tx_pipe, data, data->buf, xferlen,
-	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, OTUS_TX_TIMEOUT, otus_txeof);
+	    USBD_FORCE_SHORT_XFER, OTUS_TX_TIMEOUT, otus_txeof);
 	error = usbd_transfer(data->xfer);
 	if (__predict_false(
 		    error != USBD_NORMAL_COMPLETION &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.6 2013/10/16 18:23:39 christos Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.6.8.1 2014/12/02 09:00:33 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6 2013/10/16 18:23:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.1 2014/12/02 09:00:33 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -904,7 +904,7 @@ athn_usb_htc_msg(struct athn_usb_softc *usc, uint16_t msg_id, void *buf,
 
 	usbd_setup_xfer(data->xfer, usc->usc_tx_intr_pipe, NULL, data->buf,
 	    sizeof(*htc) + sizeof(*msg) + len,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY, ATHN_USB_CMD_TIMEOUT, NULL);
+	    USBD_SHORT_XFER_OK, ATHN_USB_CMD_TIMEOUT, NULL);
 	return usbd_sync_transfer(data->xfer);
 }
 
@@ -1090,7 +1090,7 @@ athn_usb_wmi_xcmd(struct athn_usb_softc *usc, uint16_t cmd_id, void *ibuf,
 
 	usbd_setup_xfer(data->xfer, usc->usc_tx_intr_pipe, usc, data->buf,
 	    sizeof(*htc) + sizeof(*wmi) + ilen,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY, ATHN_USB_CMD_TIMEOUT,
+	    USBD_SHORT_XFER_OK, ATHN_USB_CMD_TIMEOUT,
 	    athn_usb_wmieof);
 
 	s = splusb();
@@ -1821,7 +1821,7 @@ athn_usb_swba(struct athn_usb_softc *usc)
 
 	usbd_setup_xfer(data->xfer, usc->usc_tx_data_pipe, data, data->buf,
 	    sizeof(*hdr) + sizeof(*htc) + sizeof(*bcn) + m->m_pkthdr.len,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY, ATHN_USB_TX_TIMEOUT,
+	    USBD_SHORT_XFER_OK, ATHN_USB_TX_TIMEOUT,
 	    athn_usb_bcneof);
 
 	m_freem(m);
@@ -2207,7 +2207,7 @@ athn_usb_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv,
  resubmit:
 	/* Setup a new transfer. */
 	usbd_setup_xfer(xfer, usc->usc_rx_data_pipe, data, data->buf,
-	    ATHN_USB_RXBUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    ATHN_USB_RXBUFSZ, USBD_SHORT_XFER_OK,
 	    USBD_NO_TIMEOUT, athn_usb_rxeof);
 	(void)usbd_transfer(xfer);
 }
@@ -2358,7 +2358,7 @@ athn_usb_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 
 	s = splnet();
 	usbd_setup_xfer(data->xfer, usc->usc_tx_data_pipe, data, data->buf,
-	    xferlen, USBD_FORCE_SHORT_XFER | USBD_NO_COPY, ATHN_USB_TX_TIMEOUT,
+	    xferlen, USBD_FORCE_SHORT_XFER, ATHN_USB_TX_TIMEOUT,
 	    athn_usb_txeof);
 	error = usbd_transfer(data->xfer);
 	if (__predict_false(error != USBD_IN_PROGRESS && error != 0)) {
@@ -2689,7 +2689,7 @@ athn_usb_init(struct ifnet *ifp)
 		data = &usc->usc_rx_data[i];
 
 		usbd_setup_xfer(data->xfer, usc->usc_rx_data_pipe, data, data->buf,
-		    ATHN_USB_RXBUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+		    ATHN_USB_RXBUFSZ, USBD_SHORT_XFER_OK,
 		    USBD_NO_TIMEOUT, athn_usb_rxeof);
 		error = usbd_transfer(data->xfer);
 		if (error != 0 && error != USBD_IN_PROGRESS)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.5 2014/12/01 12:38:39 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.6 2014/12/02 09:00:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.5 2014/12/01 12:38:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.6 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,9 +126,6 @@ Static ohci_soft_itd_t  *ohci_hash_find_itd(ohci_softc_t *, ohci_physaddr_t);
 
 Static usbd_status	ohci_setup_isoc(usbd_pipe_handle pipe);
 Static void		ohci_device_isoc_enter(usbd_xfer_handle);
-
-Static usbd_status	ohci_allocm(struct usbd_bus *, usb_dma_t *, uint32_t);
-Static void		ohci_freem(struct usbd_bus *, usb_dma_t *);
 
 Static usbd_xfer_handle	ohci_allocx(struct usbd_bus *);
 Static void		ohci_freex(struct usbd_bus *, usbd_xfer_handle);
@@ -254,8 +251,6 @@ Static const struct usbd_bus_methods ohci_bus_methods = {
 	.ubm_open =	ohci_open,
 	.ubm_softint =	ohci_softintr,
 	.ubm_dopoll =	ohci_poll,
-	.ubm_allocm =	ohci_allocm,
-	.ubm_freem =	ohci_freem,
 	.ubm_allocx =	ohci_allocx,
 	.ubm_freex =	ohci_freex,
 	.ubm_getlock =	ohci_get_lock,
@@ -670,9 +665,7 @@ ohci_init(ohci_softc_t *sc)
 		return (USBD_INVAL);
 	}
 	sc->sc_bus.usbrev = USBREV_1_0;
-
-	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
-	    USB_MEM_RESERVE);
+	sc->sc_bus.usedma = true;
 
 	/* XXX determine alignment by R/W */
 	/* Allocate the HCCA area. */
@@ -917,29 +910,6 @@ ohci_init(ohci_softc_t *sc)
 	usb_freemem(&sc->sc_bus, &sc->sc_hccadma);
 	sc->sc_hcca = NULL;
 	return (err);
-}
-
-usbd_status
-ohci_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
-{
-	struct ohci_softc *sc = bus->hci_private;
-	usbd_status status;
-
-	status = usb_allocmem(&sc->sc_bus, size, 0, dma);
-	if (status == USBD_NOMEM)
-		status = usb_reserve_allocm(&sc->sc_dma_reserve, dma, size);
-	return status;
-}
-
-void
-ohci_freem(struct usbd_bus *bus, usb_dma_t *dma)
-{
-	struct ohci_softc *sc = bus->hci_private;
-	if (dma->block->flags & USB_DMA_RESERVE) {
-		usb_reserve_freem(&sc->sc_dma_reserve, dma);
-		return;
-	}
-	usb_freemem(&sc->sc_bus, dma);
 }
 
 usbd_xfer_handle
@@ -1597,7 +1567,7 @@ ohci_rhsc(ohci_softc_t *sc, usbd_xfer_handle xfer)
 		return;
 	}
 
-	p = KERNADDR(&xfer->dmabuf, 0);
+	p = xfer->buf;
 	m = min(sc->sc_noport, xfer->length * 8 - 1);
 	memset(p, 0, xfer->length);
 	for (i = 1; i <= m; i++) {
@@ -2526,7 +2496,7 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 	index = UGETW(req->wIndex);
 
 	if (len != 0)
-		buf = KERNADDR(&xfer->dmabuf, 0);
+		buf = xfer->buf;
 
 #define C(x,y) ((x) | ((y) << 8))
 	switch(C(req->bRequest, req->bmRequestType)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.132.4.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.132.4.2 2014/12/02 09:00:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.2 2014/12/02 09:00:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1182,7 +1182,7 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	/* Setup new transfer. */
 	usbd_setup_xfer(xfer, sc->aue_ep[AUE_ENDPT_RX],
 	    c, c->aue_buf, AUE_BUFSZ,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    USBD_SHORT_XFER_OK,
 	    USBD_NO_TIMEOUT, aue_rxeof);
 	usbd_transfer(xfer);
 
@@ -1324,7 +1324,7 @@ aue_send(struct aue_softc *sc, struct mbuf *m, int idx)
 	total_len = m->m_pkthdr.len + 2;
 
 	usbd_setup_xfer(c->aue_xfer, sc->aue_ep[AUE_ENDPT_TX],
-	    c, c->aue_buf, total_len, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+	    c, c->aue_buf, total_len, USBD_FORCE_SHORT_XFER,
 	    AUE_TX_TIMEOUT, aue_txeof);
 
 	/* Transmit */
@@ -1498,7 +1498,7 @@ aue_openpipes(struct aue_softc *sc)
 		c = &sc->aue_cdata.aue_rx_chain[i];
 		usbd_setup_xfer(c->aue_xfer, sc->aue_ep[AUE_ENDPT_RX],
 		    c, c->aue_buf, AUE_BUFSZ,
-		    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
 		    aue_rxeof);
 		(void)usbd_transfer(c->aue_xfer); /* XXX */
 		DPRINTFN(5,("%s: %s: start read\n", device_xname(sc->aue_dev),

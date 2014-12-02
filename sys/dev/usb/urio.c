@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.42.4.2 2014/12/01 13:03:05 skrll Exp $	*/
+/*	$NetBSD: urio.c,v 1.42.4.3 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.42.4.2 2014/12/01 13:03:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.42.4.3 2014/12/02 09:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +358,7 @@ urioread(dev_t dev, struct uio *uio, int flag)
 	while ((n = min(URIO_BSIZE, uio->uio_resid)) != 0) {
 		DPRINTFN(1, ("urioread: start transfer %d bytes\n", n));
 		tn = n;
-		err = usbd_bulk_transfer(xfer, sc->sc_in_pipe, USBD_NO_COPY,
+		err = usbd_bulk_transfer(xfer, sc->sc_in_pipe, 0,
 			  URIO_RW_TIMEOUT, bufp, &tn);
 		if (err) {
 			if (err == USBD_INTERRUPTED)
@@ -420,7 +420,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 
 		DPRINTFN(1, ("uriowrite: transfer %d bytes\n", n));
 
-		err = usbd_bulk_transfer(xfer, sc->sc_out_pipe, USBD_NO_COPY,
+		err = usbd_bulk_transfer(xfer, sc->sc_out_pipe, 0,
 			  URIO_RW_TIMEOUT, bufp, &n);
 		DPRINTFN(2, ("uriowrite: err=%d\n", err));
 		if (err) {

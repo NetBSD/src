@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.140.2.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.140.2.2 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.2 2014/12/02 09:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2823,7 +2823,7 @@ uaudio_chan_ptransfer(struct chan *ch)
 	//DPRINTFN(5, "ptransfer xfer=%p\n", cb->xfer);
 	/* Fill the request */
 	usbd_setup_isoc_xfer(cb->xfer, ch->pipe, cb, cb->sizes,
-			     UAUDIO_NFRAMES, USBD_NO_COPY,
+			     UAUDIO_NFRAMES, 0,
 			     uaudio_chan_pintr);
 
 	(void)usbd_transfer(cb->xfer);
@@ -2906,7 +2906,7 @@ uaudio_chan_rtransfer(struct chan *ch)
 	DPRINTFN(5, "transfer xfer=%p\n", cb->xfer);
 	/* Fill the request */
 	usbd_setup_isoc_xfer(cb->xfer, ch->pipe, cb, cb->sizes,
-			     UAUDIO_NFRAMES, USBD_NO_COPY,
+			     UAUDIO_NFRAMES, 0,
 			     uaudio_chan_rintr);
 
 	(void)usbd_transfer(cb->xfer);

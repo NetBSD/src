@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.5 2014/12/01 12:38:39 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.6 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.5 2014/12/01 12:38:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.6 2014/12/02 09:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,9 +165,6 @@ Static void		uhci_rem_loop(uhci_softc_t *sc);
 Static usbd_status	uhci_setup_isoc(usbd_pipe_handle pipe);
 Static void		uhci_device_isoc_enter(usbd_xfer_handle);
 
-Static usbd_status	uhci_allocm(struct usbd_bus *, usb_dma_t *, uint32_t);
-Static void		uhci_freem(struct usbd_bus *, usb_dma_t *);
-
 Static usbd_xfer_handle	uhci_allocx(struct usbd_bus *);
 Static void		uhci_freex(struct usbd_bus *, usbd_xfer_handle);
 Static void		uhci_get_lock(struct usbd_bus *, kmutex_t **);
@@ -286,8 +283,6 @@ const struct usbd_bus_methods uhci_bus_methods = {
 	.ubm_open =	uhci_open,
 	.ubm_softint =	uhci_softintr,
 	.ubm_dopoll =	uhci_poll,
-	.ubm_allocm =	uhci_allocm,
-	.ubm_freem =	uhci_freem,
 	.ubm_allocx =	uhci_allocx,
 	.ubm_freex =	uhci_freex,
 	.ubm_getlock =	uhci_get_lock,
@@ -407,9 +402,6 @@ uhci_init(uhci_softc_t *sc)
 	UWRITE2(sc, UHCI_INTR, 0);		/* disable interrupts */
 	uhci_globalreset(sc);			/* reset the controller */
 	uhci_reset(sc);
-
-	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
-	    USB_MEM_RESERVE);
 
 	/* Allocate and initialize real frame array. */
 	err = usb_allocmem(&sc->sc_bus,
@@ -536,6 +528,7 @@ uhci_init(uhci_softc_t *sc)
 	/* Set up the bus struct. */
 	sc->sc_bus.methods = &uhci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct uhci_pipe);
+	sc->sc_bus.usedma = true;
 
 	UHCICMD(sc, UHCI_CMD_MAXP); /* Assume 64 byte packets at frame end */
 
@@ -594,54 +587,6 @@ uhci_detach(struct uhci_softc *sc, int flags)
 	/* XXX free other data structures XXX */
 
 	return (rv);
-}
-
-usbd_status
-uhci_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
-{
-	struct uhci_softc *sc = bus->hci_private;
-	usbd_status status;
-	uint32_t n;
-
-	/*
-	 * XXX
-	 * Since we are allocating a buffer we can assume that we will
-	 * need TDs for it.  Since we don't want to allocate those from
-	 * an interrupt context, we allocate them here and free them again.
-	 * This is no guarantee that we'll get the TDs next time...
-	 */
-	n = size / 8;
-	if (n > 16) {
-		uint32_t i;
-		uhci_soft_td_t **stds;
-
-		DPRINTF(("uhci_allocm: get %d TDs\n", n));
-		stds = kmem_alloc(sizeof(uhci_soft_td_t *) * n, KM_SLEEP);
-		if (!stds)
-			return USBD_NOMEM;
-		for(i = 0; i < n; i++)
-			stds[i] = uhci_alloc_std(sc);
-		for(i = 0; i < n; i++)
-			if (stds[i] != NULL)
-				uhci_free_std(sc, stds[i]);
-		kmem_free(stds, sizeof(uhci_soft_td_t *) * n);
-	}
-
-	status = usb_allocmem(&sc->sc_bus, size, 0, dma);
-	if (status == USBD_NOMEM)
-		status = usb_reserve_allocm(&sc->sc_dma_reserve, dma, size);
-	return status;
-}
-
-void
-uhci_freem(struct usbd_bus *bus, usb_dma_t *dma)
-{
-	if (dma->block->flags & USB_DMA_RESERVE) {
-		usb_reserve_freem(&((struct uhci_softc *)bus)->sc_dma_reserve,
-		    dma);
-		return;
-	}
-	usb_freemem(&((struct uhci_softc *)bus)->sc_bus, dma);
 }
 
 usbd_xfer_handle
@@ -1002,7 +947,7 @@ uhci_poll_hub(void *addr)
 	sc = pipe->device->bus->hci_private;
 	callout_reset(&sc->sc_poll_handle, sc->sc_ival, uhci_poll_hub, xfer);
 
-	p = KERNADDR(&xfer->dmabuf, 0);
+	p = xfer->buf;
 	p[0] = 0;
 	if (UREAD2(sc, UHCI_PORTSC1) & (UHCI_PORTSC_CSC|UHCI_PORTSC_OCIC))
 		p[0] |= 1<<1;
@@ -3585,7 +3530,7 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 	index = UGETW(req->wIndex);
 
 	if (len != 0)
-		buf = KERNADDR(&xfer->dmabuf, 0);
+		buf = xfer->buf;
 
 #define C(x,y) ((x) | ((y) << 8))
 	switch(C(req->bRequest, req->bmRequestType)) {

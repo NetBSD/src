@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_video.c,v 1.6 2011/10/02 19:15:40 jmcneill Exp $ */
+/* $NetBSD: auvitek_video.c,v 1.6.32.1 2014/12/02 09:00:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.6 2011/10/02 19:15:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.6.32.1 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -680,7 +680,7 @@ auvitek_isoc_start1(struct auvitek_isoc *isoc)
 			     isoc,
 			     isoc->i_frlengths,
 			     ax->ax_nframes,
-			     USBD_NO_COPY | USBD_SHORT_XFER_OK,
+			     USBD_SHORT_XFER_OK,
 			     auvitek_isoc_intr);
 
 	err = usbd_transfer(isoc->i_xfer);
