@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.93 2014/11/19 01:08:42 pooka Exp $
+# $NetBSD: mi,v 1.94 2014/12/02 19:56:17 christos Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -2186,6 +2186,15 @@
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_basic.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_etfs.debug		tests-syscall-debug	debug,atf,rump
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_p2kifs.debug		tests-syscall-debug	debug,atf,rump
+./usr/libdata/debug/usr/tests/sys					tests-syys-debug	debug,atf
+./usr/libdata/debug/usr/tests/sys/net					tests-syys-debug	debug,atf
+./usr/libdata/debug/usr/tests/sys/net/t_printf.debug			tests-syys-debug	debug,atf
+./usr/libdata/debug/usr/tests/sys/netatalk				tests-syys-debug	debug,atf
+./usr/libdata/debug/usr/tests/sys/netatalk/t_printf.debug		tests-syys-debug	debug,atf
+./usr/libdata/debug/usr/tests/sys/netinet				tests-syys-debug	debug,atf
+./usr/libdata/debug/usr/tests/sys/netinet/t_printf.debug		tests-syys-debug	debug,atf
+./usr/libdata/debug/usr/tests/sys/netinet6				tests-syys-debug	debug,atf
+./usr/libdata/debug/usr/tests/sys/netinet6/t_printf.debug		tests-syys-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_access.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/syscall/t_chroot.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-obsolete		obsolete
