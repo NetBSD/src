@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.79 2014/02/27 00:49:46 joerg Exp $	*/
+/*	$NetBSD: w.c,v 1.80 2014/12/02 22:19:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.79 2014/02/27 00:49:46 joerg Exp $");
+__RCSID("$NetBSD: w.c,v 1.80 2014/12/02 22:19:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -156,6 +156,7 @@ main(int argc, char **argv)
 	if (*progname == 'u') {
 		wcmd = 0;
 		options = "";
+		nflag = 1;
 	} else {
 		wcmd = 1;
 		options = "hiM:N:nw";
