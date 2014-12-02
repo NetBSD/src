@@ -1,4 +1,4 @@
-#	$NetBSD: files.netinet,v 1.24 2012/06/25 15:28:39 christos Exp $
+#	$NetBSD: files.netinet,v 1.25 2014/12/02 19:35:27 christos Exp $
 
 defflag opt_tcp_debug.h		TCP_DEBUG
 defparam opt_tcp_debug.h	TCP_NDEBUG
@@ -21,6 +21,7 @@ file	netinet/igmp.c		inet
 file	netinet/in.c		inet
 file	netinet/in_offload.c	inet
 file	netinet/in_pcb.c	inet
+file	netinet/in_print.c
 file	netinet/in_proto.c	inet
 file	netinet/in_selsrc.c	inet & ipselsrc
 file	netinet/ip_flow.c	inet & gateway
