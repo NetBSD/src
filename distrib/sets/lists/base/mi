@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.984.2.19 2014/08/15 23:34:17 riz Exp $
+# $NetBSD: mi,v 1.984.2.20 2014/12/02 22:18:08 snj Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4855,6 +4855,7 @@
 ./usr/share/zoneinfo/Pacific			base-sys-share
 ./usr/share/zoneinfo/Pacific/Apia		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Auckland		base-sys-share		share
+./usr/share/zoneinfo/Pacific/Bougainville	base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Chatham		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Chuuk		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Easter		base-sys-share		share
