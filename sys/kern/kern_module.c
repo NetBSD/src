@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.101 2014/09/05 06:50:58 matt Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.102 2014/12/02 13:00:38 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.101 2014/09/05 06:50:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.102 2014/12/02 13:00:38 pooka Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -373,7 +373,6 @@ module_init(void)
 	}
 
 	sysctl_module_setup();
-	aprint_normal("kern.module.path=%s\n", module_base);
 }
 
 /*
