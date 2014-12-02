@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.12.4.1 2014/12/01 13:03:05 skrll Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.12.4.2 2014/12/02 09:00:33 skrll Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.1 2014/12/01 13:03:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.2 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -1661,7 +1661,7 @@ upgt_tx_task(void *arg)
 		    device_xname(sc->sc_dev));
 
 		usbd_setup_xfer(data_tx->xfer, sc->sc_tx_pipeh, data_tx,
-		    data_tx->buf, len, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+		    data_tx->buf, len, USBD_FORCE_SHORT_XFER,
 		    UPGT_USB_TIMEOUT, NULL);
 		error = usbd_transfer(data_tx->xfer);
 		if (error != USBD_NORMAL_COMPLETION &&
@@ -2366,7 +2366,7 @@ upgt_bulk_xmit(struct upgt_softc *sc, struct upgt_data *data,
         usbd_status status;
 
 	status = usbd_bulk_transfer(data->xfer, pipeh,
-	    USBD_NO_COPY | flags, UPGT_USB_TIMEOUT, data->buf, size);
+	    flags, UPGT_USB_TIMEOUT, data->buf, size);
 	if (status != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(sc->sc_dev, "%s: error %s\n", __func__,
 		    usbd_errstr(status));

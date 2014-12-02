@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.65.2.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.65.2.2 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.2 2014/12/02 09:00:34 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -124,20 +124,8 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 
 	DPRINTFN(5, ("usb_block_allocmem: size=%zu align=%zu\n", size, align));
 
-	if (size == 0) {
-#ifdef DIAGNOSTIC
-		printf("usb_block_allocmem: called with size==0\n");
-#endif
-		return USBD_INVAL;
-	}
-
-#ifdef DIAGNOSTIC
-	if (cpu_softintr_p() || cpu_intr_p()) {
-		printf("usb_block_allocmem: in interrupt context, size=%lu\n",
-		    (unsigned long) size);
-	}
-#endif
-
+	ASSERT_SLEEPABLE();
+	KASSERT(size != 0);
 	KASSERT(mutex_owned(&usb_blk_lock));
 
 	/* First check the free list. */
@@ -154,13 +142,6 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 			return (USBD_NORMAL_COMPLETION);
 		}
 	}
-
-#ifdef DIAGNOSTIC
-	if (cpu_softintr_p() || cpu_intr_p()) {
-		printf("usb_block_allocmem: in interrupt context, failed\n");
-		return (USBD_NOMEM);
-	}
-#endif
 
 	DPRINTFN(6, ("usb_block_allocmem: no free\n"));
 	b = kmem_zalloc(sizeof *b, KM_SLEEP);
@@ -293,6 +274,8 @@ usb_allocmem_flags(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p,
 	static ONCE_DECL(init_control);
 	bool frag;
 
+	ASSERT_SLEEPABLE();
+
 	RUN_ONCE(&init_control, usb_mem_init);
 
 	frag = (flags & USBMALLOC_MULTISEG);
@@ -351,7 +334,6 @@ usb_allocmem_flags(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p,
 #ifdef USB_FRAG_DMA_WORKAROUND
 	p->offs += USB_MEM_SMALL;
 #endif
-	p->block->flags &= ~USB_DMA_RESERVE;
 	LIST_REMOVE(f, next);
 	mutex_exit(&usb_blk_lock);
 	DPRINTFN(5, ("usb_allocmem: use frag=%p size=%d\n", f, (int)size));
@@ -429,124 +411,4 @@ usb_syncmem(usb_dma_t *p, bus_addr_t offset, bus_size_t len, int ops)
 {
 	bus_dmamap_sync(p->block->tag, p->block->map, p->offs + offset,
 	    len, ops);
-}
-
-
-usbd_status
-usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, uint32_t size)
-{
-	int error;
-	u_long start;
-	bus_addr_t baddr;
-
-	if (rs->vaddr == 0 || size > USB_MEM_RESERVE)
-		return USBD_NOMEM;
-
-	dma->block = kmem_zalloc(sizeof *dma->block, KM_SLEEP);
-	if (dma->block == NULL) {
-		aprint_error_dev(rs->dv, "%s: failed allocating dma block",
-		    __func__);
-		goto out0;
-	}
-
-	dma->block->nsegs = 1;
-	dma->block->segs = kmem_alloc(dma->block->nsegs *
-	    sizeof(*dma->block->segs), KM_SLEEP);
-	if (dma->block->segs == NULL) {
-		aprint_error_dev(rs->dv, "%s: failed allocating 1 dma segment",
-		    __func__);
-		goto out1;
-	}
-
-	error = extent_alloc(rs->extent, size, PAGE_SIZE, 0,
-	    EX_NOWAIT, &start);
-
-	if (error != 0) {
-		aprint_error_dev(rs->dv, "%s: extent_alloc size %u failed "
-		    "(error %d)", __func__, size, error);
-		goto out2;
-	}
-
-	baddr = start;
-	dma->offs = baddr - rs->paddr;
-	dma->block->flags = USB_DMA_RESERVE;
-	dma->block->align = PAGE_SIZE;
-	dma->block->size = size;
-	dma->block->segs[0] = rs->map->dm_segs[0];
-	dma->block->map = rs->map;
-	dma->block->kaddr = rs->vaddr;
-	dma->block->tag = rs->dtag;
-
-	return USBD_NORMAL_COMPLETION;
-out2:
-	kmem_free(dma->block->segs, dma->block->nsegs *
-	    sizeof(*dma->block->segs));
-out1:
-	kmem_free(dma->block, sizeof *dma->block);
-out0:
-	return USBD_NOMEM;
-}
-
-void
-usb_reserve_freem(struct usb_dma_reserve *rs, usb_dma_t *dma)
-{
-
-	extent_free(rs->extent,
-	    (u_long)(rs->paddr + dma->offs), dma->block->size, 0);
-	kmem_free(dma->block->segs, dma->block->nsegs *
-	    sizeof(*dma->block->segs));
-	kmem_free(dma->block, sizeof *dma->block);
-}
-
-int
-usb_setup_reserve(device_t dv, struct usb_dma_reserve *rs, bus_dma_tag_t dtag,
-		  size_t size)
-{
-	int error, nseg;
-	bus_dma_segment_t seg;
-
-	rs->dtag = dtag;
-	rs->size = size;
-	rs->dv = dv;
-
-	error = bus_dmamem_alloc(dtag, USB_MEM_RESERVE, PAGE_SIZE, 0,
-	    &seg, 1, &nseg, BUS_DMA_NOWAIT);
-	if (error != 0)
-		return error;
-
-	error = bus_dmamem_map(dtag, &seg, nseg, USB_MEM_RESERVE,
-	    &rs->vaddr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error != 0)
-		goto freeit;
-
-	error = bus_dmamap_create(dtag, USB_MEM_RESERVE, 1,
-	    USB_MEM_RESERVE, 0, BUS_DMA_NOWAIT, &rs->map);
-	if (error != 0)
-		goto unmap;
-
-	error = bus_dmamap_load(dtag, rs->map, rs->vaddr, USB_MEM_RESERVE,
-	    NULL, BUS_DMA_NOWAIT);
-	if (error != 0)
-		goto destroy;
-
-	rs->paddr = rs->map->dm_segs[0].ds_addr;
-	rs->extent = extent_create(device_xname(dv), (u_long)rs->paddr,
-	    (u_long)(rs->paddr + USB_MEM_RESERVE - 1), 0, 0, 0);
-	if (rs->extent == NULL) {
-		rs->vaddr = 0;
-		return ENOMEM;
-	}
-
-	return 0;
-
- destroy:
-	bus_dmamap_destroy(dtag, rs->map);
- unmap:
-	bus_dmamem_unmap(dtag, rs->vaddr, size);
- freeit:
-	bus_dmamem_free(dtag, &seg, nseg);
-
-	rs->vaddr = 0;
-
-	return error;
 }

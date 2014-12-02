@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.3 2014/12/01 12:38:39 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.4 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.3 2014/12/01 12:38:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.4 2014/12/02 09:00:34 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -119,8 +119,6 @@ static usbd_status xhci_open(usbd_pipe_handle);
 static int xhci_intr1(struct xhci_softc * const);
 static void xhci_softintr(void *);
 static void xhci_poll(struct usbd_bus *);
-static usbd_status xhci_allocm(struct usbd_bus *, usb_dma_t *, uint32_t);
-static void xhci_freem(struct usbd_bus *, usb_dma_t *);
 static usbd_xfer_handle xhci_allocx(struct usbd_bus *);
 static void xhci_freex(struct usbd_bus *, usbd_xfer_handle);
 static void xhci_get_lock(struct usbd_bus *, kmutex_t **);
@@ -187,8 +185,6 @@ static const struct usbd_bus_methods xhci_bus_methods = {
 	.ubm_open = xhci_open,
 	.ubm_softint = xhci_softintr,
 	.ubm_dopoll = xhci_poll,
-	.ubm_allocm = xhci_allocm,
-	.ubm_freem = xhci_freem,
 	.ubm_allocx = xhci_allocx,
 	.ubm_freex = xhci_freex,
 	.ubm_getlock = xhci_get_lock,
@@ -617,6 +613,7 @@ xhci_init(struct xhci_softc *sc)
 
 	/* XXX Low/Full/High speeds for now */
 	sc->sc_bus.usbrev = USBREV_2_0;
+	sc->sc_bus.usedma = true;
 
 	cap = xhci_read_4(sc, XHCI_CAPLENGTH);
 	caplength = XHCI_CAP_CAPLENGTH(cap);
@@ -1201,7 +1198,7 @@ xhci_rhpsc(struct xhci_softc * const sc, u_int port)
 	port += 1;
 	DPRINTFN(4, "hs port %u status change", port, 0, 0, 0);
 
-	p = KERNADDR(&xfer->dmabuf, 0);
+	p = xfer->buf;
 	memset(p, 0, xfer->length);
 	p[port/NBBY] |= 1 << (port%NBBY);
 	xfer->actlen = xfer->length;
@@ -1373,43 +1370,6 @@ xhci_poll(struct usbd_bus *bus)
 	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return;
-}
-
-static usbd_status
-xhci_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
-{
-	struct xhci_softc * const sc = bus->hci_private;
-	usbd_status err;
-
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-
-	err = usb_allocmem(&sc->sc_bus, size, 0, dma);
-#if 0
-	if (err == USBD_NOMEM)
-		err = usb_reserve_allocm(&sc->sc_dma_reserve, dma, size);
-#endif
-#ifdef XHCI_DEBUG
-	if (err)
-		DPRINTFN(1, "usb_allocmem(%u)=%d", err, size, 0, 0);
-#endif
-
-	return err;
-}
-
-static void
-xhci_freem(struct usbd_bus *bus, usb_dma_t *dma)
-{
-	struct xhci_softc * const sc = bus->hci_private;
-
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-
-#if 0
-	if (dma->block->flags & USB_DMA_RESERVE) {
-		usb_reserve_freem(&sc->sc_dma_reserve, dma);
-		return;
-	}
-#endif
-	usb_freemem(&sc->sc_bus, dma);
 }
 
 static usbd_xfer_handle
@@ -2157,7 +2117,7 @@ xhci_root_ctrl_start(usbd_xfer_handle xfer)
 	len = UGETW(req->wLength);
 
 	if (len != 0)
-		buf = KERNADDR(&xfer->dmabuf, 0);
+		buf = xfer->buf;
 
 	DPRINTFN(12, "rhreq: %04x %04x %04x %04x",
 	    req->bmRequestType | (req->bRequest << 8), value, index, len);

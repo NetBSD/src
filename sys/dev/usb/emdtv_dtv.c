@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_dtv.c,v 1.10 2013/01/22 12:40:42 jmcneill Exp $ */
+/* $NetBSD: emdtv_dtv.c,v 1.10.14.1 2014/12/02 09:00:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.10 2013/01/22 12:40:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.10.14.1 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,7 +381,7 @@ emdtv_dtv_isoc_start(struct emdtv_softc *sc, struct emdtv_isoc_xfer *ix)
 			     ix,
 			     ix->ix_frlengths,
 			     EMDTV_NFRAMES,
-			     USBD_NO_COPY | USBD_SHORT_XFER_OK,
+			     USBD_SHORT_XFER_OK,
 			     emdtv_dtv_isoc);
 
 	KERNEL_LOCK(1, curlwp);

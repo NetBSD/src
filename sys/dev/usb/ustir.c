@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.33.10.2 2014/12/01 13:03:05 skrll Exp $	*/
+/*	$NetBSD: ustir.c,v 1.33.10.3 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33.10.2 2014/12/01 13:03:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33.10.3 2014/12/02 09:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -650,7 +650,7 @@ ustir_start_read(struct ustir_softc *sc)
 
 	usbd_setup_xfer(sc->sc_rd_xfer, sc->sc_rd_pipe, sc, sc->sc_rd_buf,
 			sc->sc_params.maxsize,
-			USBD_SHORT_XFER_OK | USBD_NO_COPY,
+			USBD_SHORT_XFER_OK,
 			USBD_NO_TIMEOUT, ustir_rd_cb);
 	err = usbd_transfer(sc->sc_rd_xfer);
 	if (err != USBD_IN_PROGRESS) {
@@ -984,7 +984,7 @@ ustir_write(void *h, struct uio *uio, int flag)
 #endif
 
 		err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
-					 USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+					 USBD_FORCE_SHORT_XFER,
 					 USTIR_WR_TIMEOUT,
 					 wrbuf, &btlen);
 		DPRINTFN(2, ("%s: err=%d\n", __func__, err));

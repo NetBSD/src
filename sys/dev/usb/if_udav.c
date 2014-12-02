@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.43.4.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.43.4.2 2014/12/02 09:00:33 skrll Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.2 2014/12/02 09:00:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -877,7 +877,7 @@ udav_openpipes(struct udav_softc *sc)
 		c = &sc->sc_cdata.udav_rx_chain[i];
 		usbd_setup_xfer(c->udav_xfer, sc->sc_pipe_rx,
 				c, c->udav_buf, UDAV_BUFSZ,
-				USBD_SHORT_XFER_OK | USBD_NO_COPY,
+				USBD_SHORT_XFER_OK,
 				USBD_NO_TIMEOUT, udav_rxeof);
 		(void)usbd_transfer(c->udav_xfer);
 		DPRINTF(("%s: %s: start read\n", device_xname(sc->sc_dev),
@@ -1052,7 +1052,7 @@ udav_send(struct udav_softc *sc, struct mbuf *m, int idx)
 	total_len += 2;
 
 	usbd_setup_xfer(c->udav_xfer, sc->sc_pipe_tx, c, c->udav_buf, total_len,
-			USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+			USBD_FORCE_SHORT_XFER,
 			UDAV_TX_TIMEOUT, udav_txeof);
 
 	/* Transmit */
@@ -1211,7 +1211,7 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  done:
 	/* Setup new transfer */
 	usbd_setup_xfer(xfer, sc->sc_pipe_rx, c, c->udav_buf, UDAV_BUFSZ,
-			USBD_SHORT_XFER_OK | USBD_NO_COPY,
+			USBD_SHORT_XFER_OK,
 			USBD_NO_TIMEOUT, udav_rxeof);
 	sc->sc_refcnt++;
 	usbd_transfer(xfer);

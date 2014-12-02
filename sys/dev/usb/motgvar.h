@@ -1,4 +1,4 @@
-/*	$NetBSD: motgvar.h,v 1.4.2.1 2014/12/01 21:52:00 skrll Exp $	*/
+/*	$NetBSD: motgvar.h,v 1.4.2.2 2014/12/02 09:00:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,8 +84,6 @@ struct motg_softc {
 
 	struct motg_hw_ep sc_in_ep[MOTG_MAX_HW_EP];
 	struct motg_hw_ep sc_out_ep[MOTG_MAX_HW_EP];
-
-	struct usb_dma_reserve sc_dma_reserve;
 
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;

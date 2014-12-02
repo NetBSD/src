@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.65.14.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: umidi.c,v 1.65.14.3 2014/12/02 09:00:34 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.2 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.3 2014/12/02 09:00:34 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1431,7 +1431,7 @@ start_input_transfer(struct umidi_endpoint *ep)
 	usbd_setup_xfer(ep->xfer, ep->pipe,
 			(usbd_private_handle)ep,
 			ep->buffer, ep->buffer_size,
-			USBD_SHORT_XFER_OK | USBD_NO_COPY,
+			USBD_SHORT_XFER_OK,
 			USBD_NO_TIMEOUT, in_intr);
 	return usbd_transfer(ep->xfer);
 }
@@ -1449,7 +1449,7 @@ start_output_transfer(struct umidi_endpoint *ep)
 	usbd_setup_xfer(ep->xfer, ep->pipe,
 			(usbd_private_handle)ep,
 			ep->buffer, length,
-			USBD_NO_COPY, USBD_NO_TIMEOUT, out_intr);
+			0, USBD_NO_TIMEOUT, out_intr);
 	rv = usbd_transfer(ep->xfer);
 
 	/*

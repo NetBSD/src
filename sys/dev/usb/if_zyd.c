@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.36 2013/01/22 12:40:43 jmcneill Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.36.14.1 2014/12/02 09:00:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36 2013/01/22 12:40:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.1 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2045,7 +2045,7 @@ zyd_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 skip:	/* setup a new transfer */
 	usbd_setup_xfer(xfer, sc->zyd_ep[ZYD_ENDPT_BIN], data, NULL,
-	    ZYX_MAX_RXBUFSZ, USBD_NO_COPY | USBD_SHORT_XFER_OK,
+	    ZYX_MAX_RXBUFSZ, USBD_SHORT_XFER_OK,
 	    USBD_NO_TIMEOUT, zyd_rxeof);
 	(void)usbd_transfer(xfer);
 }
@@ -2150,7 +2150,7 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	m_freem(m0);	/* mbuf no longer needed */
 
 	usbd_setup_xfer(data->xfer, sc->zyd_ep[ZYD_ENDPT_BOUT], data,
-	    data->buf, xferlen, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+	    data->buf, xferlen, USBD_FORCE_SHORT_XFER,
 	    ZYD_TX_TIMEOUT, zyd_txeof);
 	error = usbd_transfer(data->xfer);
 	if (error != USBD_IN_PROGRESS && error != 0) {
@@ -2308,7 +2308,7 @@ zyd_tx_data(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	m_freem(m0);	/* mbuf no longer needed */
 
 	usbd_setup_xfer(data->xfer, sc->zyd_ep[ZYD_ENDPT_BOUT], data,
-	    data->buf, xferlen, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+	    data->buf, xferlen, USBD_FORCE_SHORT_XFER,
 	    ZYD_TX_TIMEOUT, zyd_txeof);
 	error = usbd_transfer(data->xfer);
 	if (error != USBD_IN_PROGRESS && error != 0) {
@@ -2521,7 +2521,7 @@ zyd_init(struct ifnet *ifp)
 		struct zyd_rx_data *data = &sc->rx_data[i];
 
 		usbd_setup_xfer(data->xfer, sc->zyd_ep[ZYD_ENDPT_BIN], data,
-		    NULL, ZYX_MAX_RXBUFSZ, USBD_NO_COPY | USBD_SHORT_XFER_OK,
+		    NULL, ZYX_MAX_RXBUFSZ, USBD_SHORT_XFER_OK,
 		    USBD_NO_TIMEOUT, zyd_rxeof);
 		error = usbd_transfer(data->xfer);
 		if (error != USBD_IN_PROGRESS && error != 0) {

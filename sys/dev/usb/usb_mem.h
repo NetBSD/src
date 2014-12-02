@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.30.14.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.30.14.3 2014/12/02 09:00:34 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,6 @@ typedef struct usb_dma_block {
 	size_t align;
 	int flags;
 #define USB_DMA_FULLBLOCK	0x0001
-#define USB_DMA_RESERVE		0x0002
 	LIST_ENTRY(usb_dma_block) next;
 } usb_dma_block_t;
 
@@ -59,28 +58,3 @@ bus_addr_t	usb_dmaaddr(usb_dma_t *, unsigned int);
 #define DMAADDR(dma, o) usb_dmaaddr((dma), (o))
 #define KERNADDR(dma, o) \
 	((void *)((char *)(dma)->block->kaddr + (dma)->offs + (o)))
-
-struct extent;
-
-struct usb_dma_reserve {
-	bus_dma_tag_t dtag;
-	bus_dmamap_t map;
-	void *vaddr;
-	bus_addr_t paddr;
-	size_t size;
-	struct extent *extent;
-	device_t dv;
-};
-
-#if defined(_KERNEL_OPT)
-#include "opt_usb_mem_reserve.h"
-#endif
-
-#ifndef USB_MEM_RESERVE
-#define USB_MEM_RESERVE (256 * 1024)
-#endif
-
-usbd_status usb_reserve_allocm(struct usb_dma_reserve *, usb_dma_t *,
-				uint32_t);
-int usb_setup_reserve(device_t, struct usb_dma_reserve *, bus_dma_tag_t, size_t);
-void usb_reserve_freem(struct usb_dma_reserve *, usb_dma_t *);

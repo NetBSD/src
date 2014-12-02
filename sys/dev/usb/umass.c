@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.149.2.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.149.2.2 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.2 2014/12/02 09:00:34 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1117,7 +1117,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 		if (sc->transfer_dir == DIR_IN) {
 			if (umass_setup_transfer(sc, sc->sc_pipe[UMASS_BULKIN],
 					sc->data_buffer, sc->transfer_datalen,
-					USBD_SHORT_XFER_OK | USBD_NO_COPY,
+					USBD_SHORT_XFER_OK,
 					sc->transfer_xfer[XFER_BBB_DATA]))
 				umass_bbb_reset(sc, STATUS_WIRE_FAILED);
 
@@ -1127,7 +1127,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			       sc->transfer_datalen);
 			if (umass_setup_transfer(sc, sc->sc_pipe[UMASS_BULKOUT],
 					sc->data_buffer, sc->transfer_datalen,
-					USBD_NO_COPY,/* fixed length transfer */
+					0,/* fixed length transfer */
 					sc->transfer_xfer[XFER_BBB_DATA]))
 				umass_bbb_reset(sc, STATUS_WIRE_FAILED);
 
@@ -1576,7 +1576,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 		if (sc->transfer_dir == DIR_IN) {
 			if (umass_setup_transfer(sc, sc->sc_pipe[UMASS_BULKIN],
 					sc->data_buffer, sc->transfer_datalen,
-					USBD_SHORT_XFER_OK | USBD_NO_COPY,
+					USBD_SHORT_XFER_OK,
 					sc->transfer_xfer[XFER_CBI_DATA]))
 				umass_cbi_reset(sc, STATUS_WIRE_FAILED);
 
@@ -1586,7 +1586,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 			       sc->transfer_datalen);
 			if (umass_setup_transfer(sc, sc->sc_pipe[UMASS_BULKOUT],
 					sc->data_buffer, sc->transfer_datalen,
-					USBD_NO_COPY,/* fixed length transfer */
+					0,/* fixed length transfer */
 					sc->transfer_xfer[XFER_CBI_DATA]))
 				umass_cbi_reset(sc, STATUS_WIRE_FAILED);
 

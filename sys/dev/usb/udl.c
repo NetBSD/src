@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.11.6.1 2014/12/01 13:03:05 skrll Exp $	*/
+/*	$NetBSD: udl.c,v 1.11.6.2 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11.6.1 2014/12/01 13:03:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11.6.2 2014/12/02 09:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1430,7 +1430,7 @@ udl_cmd_send(struct udl_softc *sc)
 
 	/* do xfer */
 	error = usbd_bulk_transfer(cmdq->cq_xfer, sc->sc_tx_pipeh,
-	    USBD_NO_COPY, USBD_NO_TIMEOUT, cmdq->cq_buf, &len);
+	    0, USBD_NO_TIMEOUT, cmdq->cq_buf, &len);
 
 	UDL_CMD_BUFINIT(sc);
 
@@ -1482,7 +1482,7 @@ udl_cmd_send_async(struct udl_softc *sc)
 	/* do xfer */
 	mutex_enter(&sc->sc_mtx);
 	usbd_setup_xfer(cmdq->cq_xfer, sc->sc_tx_pipeh, cmdq, cmdq->cq_buf,
-	    len, USBD_NO_COPY, USBD_NO_TIMEOUT, udl_cmd_send_async_cb);
+	    len, 0, USBD_NO_TIMEOUT, udl_cmd_send_async_cb);
 	error = usbd_transfer(cmdq->cq_xfer);
 	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS) {
 		aprint_error_dev(sc->sc_dev, "%s: %s!\n", __func__,
