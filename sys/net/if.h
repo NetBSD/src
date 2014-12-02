@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.182 2014/12/01 07:15:42 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.183 2014/12/02 04:43:35 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -962,7 +962,6 @@ extern struct ifnet_head ifnet_list;
 extern struct ifnet *lo0ifp;
 
 ifnet_t *	if_byindex(u_int);
-void		if_drain_all(void);
 
 /*
  * ifq sysctl support
