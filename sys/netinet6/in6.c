@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.179 2014/11/03 13:04:12 roy Exp $	*/
+/*	$NetBSD: in6.c,v 1.180 2014/12/02 19:36:58 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.179 2014/11/03 13:04:12 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.180 2014/12/02 19:36:58 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -1873,67 +1873,15 @@ bestia(struct in6_ifaddr *best_ia, struct in6_ifaddr *ia)
 /*
  * Convert IP6 address to printable (loggable) representation.
  */
-static int ip6round = 0;
 char *
 ip6_sprintf(const struct in6_addr *addr)
 {
-	static char ip6buf[8][48];
-	int i;
-	char *bp;
-	char *cp;
-	const u_int16_t *a = (const u_int16_t *)addr;
-	const u_int8_t *d;
-	int dcolon = 0;
+	static int ip6round = 0;
+	static char ip6buf[8][INET6_ADDRSTRLEN];
+	char *cp = ip6buf[ip6round++ & 7];
 
-	ip6round = (ip6round + 1) & 7;
-	cp = ip6buf[ip6round];
-
-	if (IN6_IS_ADDR_V4MAPPED(addr)) {
-		struct in_addr ia = { .s_addr = addr->s6_addr32[3] };
-		snprintf(cp, 48, "::ffff:%s", inet_ntoa(ia));
-		return cp;
-	}
-
-	for (i = 0; i < 8; i++) {
-		if (dcolon == 1) {
-			if (*a == 0) {
-				if (i == 7)
-					*cp++ = ':';
-				a++;
-				continue;
-			} else
-				dcolon = 2;
-		}
-		if (*a == 0) {
-			if (dcolon == 0 && *(a + 1) == 0) {
-				if (i == 0)
-					*cp++ = ':';
-				*cp++ = ':';
-				dcolon = 1;
-			} else {
-				*cp++ = '0';
-				*cp++ = ':';
-			}
-			a++;
-			continue;
-		}
-		d = (const u_char *)a;
-		bp = cp;
-		*cp = hexdigits[*d >> 4];
-		if (*cp != '0')
-			cp++;
-		*cp = hexdigits[*d++ & 0xf];
-		if (cp != bp || *cp != '0')
-			cp++;
-		*cp = hexdigits[*d >> 4];
-		if (cp != bp || *cp != '0')
-			cp++;
-		*cp++ = hexdigits[*d & 0xf];
-		*cp++ = ':';
-		a++;
-	}
-	*--cp = 0;
-	return ip6buf[ip6round];
+	in6_print(cp, INET6_ADDRSTRLEN, addr);
+	return cp;
 }
 
 /*

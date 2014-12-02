@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.79 2014/10/12 19:02:18 christos Exp $	*/
+/*	$NetBSD: in6.h,v 1.80 2014/12/02 19:36:58 christos Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -817,5 +817,10 @@ extern int inet6_rth_segments(const void *);
 extern struct in6_addr *inet6_rth_getaddr(const void *, int);
 __END_DECLS
 #endif /* _NETBSD_SOURCE */
+
+#if defined(_KERNEL) || defined(_TEST)
+int	in6_print(char *, size_t, const struct in6_addr *);
+int	sin6_print(char *, size_t, const void *);
+#endif
 
 #endif /* !_NETINET6_IN6_H_ */
