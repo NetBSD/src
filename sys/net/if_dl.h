@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dl.h,v 1.24 2014/12/02 19:32:09 christos Exp $	*/
+/*	$NetBSD: if_dl.h,v 1.25 2014/12/02 19:34:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -63,7 +63,7 @@ typedef __socklen_t   socklen_t;
 #define socklen_t     __socklen_t
 #endif
 
-struct dladdr {
+struct dl_addr {
 	uint8_t	    dl_type;	/* interface type */
 	uint8_t	    dl_nlen;	/* interface name length, no trailing 0 reqd. */
 	uint8_t	    dl_alen;	/* link level address length */
@@ -82,7 +82,7 @@ struct sockaddr_dl {
 	uint8_t	    sdl_len;	/* Total length of sockaddr */
 	sa_family_t sdl_family;	/* AF_LINK */
 	uint16_t    sdl_index;	/* if != 0, system given index for interface */
-	struct dladdr sdl_addr;
+	struct dl_addr sdl_addr;
 #define sdl_type	sdl_addr.dl_type
 #define sdl_nlen	sdl_addr.dl_nlen
 #define sdl_alen	sdl_addr.dl_alen
@@ -120,7 +120,7 @@ __END_DECLS
 // 255 xx: + 255 'a' + / + # + 3 digits + NUL
 #define LINK_ADDRSTRLEN	((255 * 4) + 5)
 
-int	dl_print(char *, size_t, const struct dladdr *);
+int	dl_print(char *, size_t, const struct dl_addr *);
 int	sdl_print(char *, size_t, const void *);
 #endif
 

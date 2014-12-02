@@ -1,4 +1,4 @@
-/*	$NetBSD: dl_print.c,v 1.1 2014/12/02 19:32:09 christos Exp $	*/
+/*	$NetBSD: dl_print.c,v 1.2 2014/12/02 19:34:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,17 +29,17 @@
 #include <sys/types.h>
 
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: dl_print.c,v 1.1 2014/12/02 19:32:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl_print.c,v 1.2 2014/12/02 19:34:33 christos Exp $");
 #include <sys/systm.h>
 #else
-__RCSID("$NetBSD: dl_print.c,v 1.1 2014/12/02 19:32:09 christos Exp $");
+__RCSID("$NetBSD: dl_print.c,v 1.2 2014/12/02 19:34:33 christos Exp $");
 #include <stdio.h>
 static const uint8_t hexdigits[] = "0123456789abcdef";
 #endif
 #include <net/if_dl.h>
 
 int
-dl_print(char *buf, size_t len, const struct dladdr *dl)
+dl_print(char *buf, size_t len, const struct dl_addr *dl)
 {
 	const uint8_t *ap = (const uint8_t *)dl->dl_data;
 	char abuf[256 * 3], *cp, *ecp;
