@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.601 2014/11/21 01:39:09 ozaki-r Exp $
+# $NetBSD: mi,v 1.602 2014/12/02 19:56:17 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -159,6 +159,11 @@
 ./usr/libdata/debug/usr/tests/rump/rumpvfs				tests-syscall-debug,rump
 ./usr/libdata/debug/usr/tests/sbin					tests-sbin-tests
 ./usr/libdata/debug/usr/tests/sbin/resize_ffs				tests-sbin-tests
+./usr/libdata/debug/usr/tests/sys					tests-sys-debug		
+./usr/libdata/debug/usr/tests/sys/net					tests-sys-debug		
+./usr/libdata/debug/usr/tests/sys/netatalk				tests-sys-debug		
+./usr/libdata/debug/usr/tests/sys/netinet				tests-sys-debug		
+./usr/libdata/debug/usr/tests/sys/netinet6				tests-sys-debug		
 ./usr/libdata/debug/usr/tests/syscall					tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/usr.bin					tests-usr.bin-debug
 ./usr/libdata/debug/usr/tests/usr.bin/id				tests-usr.bin-debug
@@ -3264,6 +3269,23 @@
 ./usr/tests/sys					tests-sys-tests
 ./usr/tests/sys/Atffile				tests-sys-tests	atf
 ./usr/tests/sys/Kyuafile			tests-sys-tests	atf,kyua
+./usr/tests/sys/net				tests-sys-tests
+./usr/tests/sys/net/Atffile			tests-sys-tests	atf
+./usr/tests/sys/net/Kyuafile			tests-sys-tests	atf,kyua
+./usr/tests/sys/net/t_print			tests-sys-tests	atf
+./usr/tests/sys/netatalk			tests-sys-tests
+./usr/tests/sys/netatalk/Atffile		tests-sys-tests	atf
+./usr/tests/sys/netatalk/Kyuafile		tests-sys-tests	atf,kyua
+./usr/tests/sys/netatalk/t_print		tests-sys-tests	atf
+./usr/tests/sys/netinet				tests-sys-tests
+./usr/tests/sys/netinet/Atffile			tests-sys-tests	atf
+./usr/tests/sys/netinet/Kyuafile		tests-sys-tests	atf,kyua
+./usr/tests/sys/netinet/t_print			tests-sys-tests	atf
+./usr/tests/sys/netinet6			tests-sys-tests
+./usr/tests/sys/netinet6/Atffile		tests-sys-tests	atf
+./usr/tests/sys/netinet6/Kyuafile		tests-sys-tests	atf,kyua
+./usr/tests/sys/netinet6/t_print		tests-sys-tests	atf
+./usr/tests/sys/rc				tests-sys-tests
 ./usr/tests/sys/rc				tests-sys-tests
 ./usr/tests/sys/rc/Atffile			tests-sys-tests	atf
 ./usr/tests/sys/rc/Kyuafile			tests-sys-tests	atf,kyua
