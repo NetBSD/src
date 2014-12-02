@@ -1,4 +1,4 @@
-.\"     $NetBSD: rumpkernel.7,v 1.1 2014/12/02 01:51:45 pooka Exp $
+.\"     $NetBSD: rumpkernel.7,v 1.2 2014/12/02 09:05:15 wiz Exp $
 .\"
 .\" Copyright (c) 2008-2014 Antti Kantee.  All rights reserved.
 .\"
@@ -42,8 +42,9 @@ The minimalistic
 .Xr rumpuser 3
 interface integrates a rump kernel to the host platform.
 Suitable and readily supported platforms include for example POSIX
-userspace (such as NetBSD), hypervisors (such as Xen and KVM), and bare
-metal hardware.
+userspace (such as
+.Nx ) ,
+hypervisors (such as Xen and KVM), and bare metal hardware.
 .Pp
 Rump kernels are component-oriented, which means that they consist
 of libraries which are linked together to form runtime images.
