@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.80 2014/12/02 19:36:58 christos Exp $	*/
+/*	$NetBSD: in6.h,v 1.81 2014/12/02 20:25:48 christos Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -820,6 +820,7 @@ __END_DECLS
 
 #if defined(_KERNEL) || defined(_TEST)
 int	in6_print(char *, size_t, const struct in6_addr *);
+#define IN6_PRINT(b, a) (in6_print((b), sizeof(b), (a)), (b))
 int	sin6_print(char *, size_t, const void *);
 #endif
 
