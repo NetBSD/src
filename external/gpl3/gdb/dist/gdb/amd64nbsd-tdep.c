@@ -164,8 +164,6 @@ amd64nbsd_trapframe_cache(struct frame_info *this_frame, void **this_cache)
     + amd64nbsd_tf_reg_offset[AMD64_CS_REGNUM], 8, byte_order);
   rip = read_memory_unsigned_integer (addr
     + amd64nbsd_tf_reg_offset[AMD64_RIP_REGNUM], 8, byte_order);
-  if (cs == 0 || rip == 0)
-     abort();
 
   /* The trap frame layout was changed lf the %rip value is less than 2^16 it
    * is almost certainly the %ss of the old format. */
@@ -187,9 +185,10 @@ amd64nbsd_trapframe_cache(struct frame_info *this_frame, void **this_cache)
         }
     }
 
-  if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
+  if ((cs & I386_SEL_RPL) == I386_SEL_UPL ||
+	(name && strncmp(name, "Xsoft", 5) == 0))
     {
-      /* Trap from user space; terminate backtrace.  */
+      /* Trap from user space or soft interrupt; terminate backtrace.  */
       trad_frame_set_id (cache, outer_frame_id);
     }
   else
