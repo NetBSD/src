@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.34 2014/07/25 15:07:03 nonaka Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.34.4.1 2014/12/02 09:00:33 skrll Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34 2014/07/25 15:07:03 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.1 2014/12/02 09:00:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2380,7 +2380,7 @@ urtwn_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
  resubmit:
 	/* Setup a new transfer. */
 	usbd_setup_xfer(xfer, sc->rx_pipe, data, data->buf, URTWN_RXBUFSZ,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT, urtwn_rxeof);
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, urtwn_rxeof);
 	(void)usbd_transfer(xfer);
 }
 
@@ -2599,7 +2599,7 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	s = splnet();
 	data->pipe = pipe;
 	usbd_setup_xfer(data->xfer, pipe, data, data->buf, xferlen,
-	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, URTWN_TX_TIMEOUT,
+	    USBD_FORCE_SHORT_XFER, URTWN_TX_TIMEOUT,
 	    urtwn_txeof);
 	error = usbd_transfer(data->xfer);
 	if (__predict_false(error != USBD_NORMAL_COMPLETION &&
@@ -4386,7 +4386,7 @@ urtwn_init(struct ifnet *ifp)
 	for (i = 0; i < URTWN_RX_LIST_COUNT; i++) {
 		data = &sc->rx_data[i];
 		usbd_setup_xfer(data->xfer, sc->rx_pipe, data, data->buf,
-		    URTWN_RXBUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+		    URTWN_RXBUFSZ, USBD_SHORT_XFER_OK,
 		    USBD_NO_TIMEOUT, urtwn_rxeof);
 		error = usbd_transfer(data->xfer);
 		if (__predict_false(error != USBD_NORMAL_COMPLETION &&

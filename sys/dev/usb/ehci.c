@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.6 2014/12/01 12:38:39 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.7 2014/12/02 09:00:33 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.6 2014/12/01 12:38:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.7 2014/12/02 09:00:33 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -169,9 +169,6 @@ Static void		ehci_timeout_task(void *);
 Static void		ehci_intrlist_timeout(void *);
 Static void		ehci_doorbell(void *);
 Static void		ehci_pcd(void *);
-
-Static usbd_status	ehci_allocm(struct usbd_bus *, usb_dma_t *, uint32_t);
-Static void		ehci_freem(struct usbd_bus *, usb_dma_t *);
 
 Static usbd_xfer_handle	ehci_allocx(struct usbd_bus *);
 Static void		ehci_freex(struct usbd_bus *, usbd_xfer_handle);
@@ -294,8 +291,6 @@ Static const struct usbd_bus_methods ehci_bus_methods = {
 	.ubm_open =	ehci_open,
 	.ubm_softint =	ehci_softintr,
 	.ubm_dopoll =	ehci_poll,
-	.ubm_allocm =	ehci_allocm,
-	.ubm_freem =	ehci_freem,
 	.ubm_allocx =	ehci_allocx,
 	.ubm_freex =	ehci_freex,
 	.ubm_getlock =	ehci_get_lock,
@@ -446,9 +441,8 @@ ehci_init(ehci_softc_t *sc)
 	}
 
 	sc->sc_bus.usbrev = USBREV_2_0;
-
-	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
-	    USB_MEM_RESERVE);
+	sc->sc_bus.usedma = true;
+	sc->sc_bus.dmaflags = USBMALLOC_MULTISEG;
 
 	/* Reset the controller */
 	USBHIST_LOG(ehcidebug, "resetting", 0, 0, 0, 0);
@@ -761,7 +755,7 @@ ehci_pcd(void *addr)
 		goto done;
 	}
 
-	p = KERNADDR(&xfer->dmabuf, 0);
+	p = xfer->buf;
 	m = min(sc->sc_noport, xfer->length * 8 - 1);
 	memset(p, 0, xfer->length);
 	for (i = 1; i <= m; i++) {
@@ -1511,41 +1505,6 @@ ehci_shutdown(device_t self, int flags)
 	EOWRITE4(sc, EHCI_USBCMD, 0);	/* Halt controller */
 	EOWRITE4(sc, EHCI_USBCMD, EHCI_CMD_HCRESET);
 	return true;
-}
-
-Static usbd_status
-ehci_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
-{
-	struct ehci_softc *sc = bus->hci_private;
-	usbd_status err;
-
-	err = usb_allocmem_flags(&sc->sc_bus, size, 0, dma, USBMALLOC_MULTISEG);
-#ifdef EHCI_DEBUG
-	if (err)
-		printf("ehci_allocm: usb_allocmem_flags()= %s (%d)\n",
-			usbd_errstr(err), err);
-#endif
-	if (err == USBD_NOMEM)
-		err = usb_reserve_allocm(&sc->sc_dma_reserve, dma, size);
-#ifdef EHCI_DEBUG
-	if (err)
-		printf("ehci_allocm: usb_reserve_allocm()= %s (%d)\n",
-			usbd_errstr(err), err);
-#endif
-	return (err);
-}
-
-Static void
-ehci_freem(struct usbd_bus *bus, usb_dma_t *dma)
-{
-	struct ehci_softc *sc = bus->hci_private;
-
-	if (dma->block->flags & USB_DMA_RESERVE) {
-		usb_reserve_freem(&sc->sc_dma_reserve,
-		    dma);
-		return;
-	}
-	usb_freemem(&sc->sc_bus, dma);
 }
 
 Static usbd_xfer_handle
@@ -2418,7 +2377,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 	index = UGETW(req->wIndex);
 
 	if (len != 0)
-		buf = KERNADDR(&xfer->dmabuf, 0);
+		buf = xfer->buf;
 
 #define C(x,y) ((x) | ((y) << 8))
 	switch(C(req->bRequest, req->bmRequestType)) {

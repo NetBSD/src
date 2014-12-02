@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.67 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.67.4.1 2014/12/02 09:00:33 skrll Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.1 2014/12/02 09:00:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1101,7 +1101,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	/* Setup new transfer. */
 	usbd_setup_xfer(xfer, sc->axe_ep[AXE_ENDPT_RX],
 	    c, c->axe_buf, sc->axe_bufsz,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    USBD_SHORT_XFER_OK,
 	    USBD_NO_TIMEOUT, axe_rxeof);
 	usbd_transfer(xfer);
 
@@ -1250,7 +1250,7 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 	}
 
 	usbd_setup_xfer(c->axe_xfer, sc->axe_ep[AXE_ENDPT_TX],
-	    c, c->axe_buf, length, USBD_FORCE_SHORT_XFER | USBD_NO_COPY, 10000,
+	    c, c->axe_buf, length, USBD_FORCE_SHORT_XFER, 10000,
 	    axe_txeof);
 
 	/* Transmit */
@@ -1411,7 +1411,7 @@ axe_init(struct ifnet *ifp)
 		c = &sc->axe_cdata.axe_rx_chain[i];
 		usbd_setup_xfer(c->axe_xfer, sc->axe_ep[AXE_ENDPT_RX],
 		    c, c->axe_buf, sc->axe_bufsz,
-		    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
 		    axe_rxeof);
 		usbd_transfer(c->axe_xfer);
 	}

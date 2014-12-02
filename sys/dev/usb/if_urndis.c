@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.9 2014/07/19 08:38:28 skrll Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.9.4.1 2014/12/02 09:00:33 skrll Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9 2014/07/19 08:38:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.1 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -755,7 +755,7 @@ urndis_encap(struct urndis_softc *sc, struct mbuf *m, int idx)
 	c->sc_mbuf = m;
 
 	usbd_setup_xfer(c->sc_xfer, sc->sc_bulkout_pipe, c, c->sc_buf,
-	    le32toh(msg->rm_len), USBD_FORCE_SHORT_XFER | USBD_NO_COPY, 10000,
+	    le32toh(msg->rm_len), USBD_FORCE_SHORT_XFER, 10000,
 	    urndis_txeof);
 
 	/* Transmit */
@@ -1081,7 +1081,7 @@ urndis_init(struct ifnet *ifp)
 		c = &sc->sc_data.sc_rx_chain[i];
 		usbd_setup_xfer(c->sc_xfer, sc->sc_bulkin_pipe, c,
 		    c->sc_buf, RNDIS_BUFSZ,
-		    USBD_SHORT_XFER_OK | USBD_NO_COPY,
+		    USBD_SHORT_XFER_OK,
 		    USBD_NO_TIMEOUT, urndis_rxeof);
 		usbd_transfer(c->sc_xfer);
 	}
@@ -1226,7 +1226,7 @@ urndis_rxeof(usbd_xfer_handle xfer,
 done:
 	/* Setup new transfer. */
 	usbd_setup_xfer(c->sc_xfer, sc->sc_bulkin_pipe, c, c->sc_buf,
-	    RNDIS_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
+	    RNDIS_BUFSZ, USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
 	    urndis_rxeof);
 	usbd_transfer(c->sc_xfer);
 }

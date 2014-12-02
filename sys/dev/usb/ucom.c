@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.2 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.2 2014/12/02 09:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1150,7 +1150,7 @@ ucom_submit_write(struct ucom_softc *sc, struct ucom_buffer *ub)
 
 	usbd_setup_xfer(ub->ub_xfer, sc->sc_bulkout_pipe,
 	    (usbd_private_handle)sc, ub->ub_data, ub->ub_len,
-	    USBD_NO_COPY, USBD_NO_TIMEOUT, ucomwritecb);
+	    0, USBD_NO_TIMEOUT, ucomwritecb);
 
 	ucom_write_status(sc, ub, usbd_transfer(ub->ub_xfer));
 }
@@ -1238,7 +1238,7 @@ ucomsubmitread(struct ucom_softc *sc, struct ucom_buffer *ub)
 
 	usbd_setup_xfer(ub->ub_xfer, sc->sc_bulkin_pipe,
 	    (usbd_private_handle)sc, ub->ub_data, sc->sc_ibufsize,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT, ucomreadcb);
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, ucomreadcb);
 
 	if ((err = usbd_transfer(ub->ub_xfer)) != USBD_IN_PROGRESS) {
 		/* XXX: Recover from this, please! */

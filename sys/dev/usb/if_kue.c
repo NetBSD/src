@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.81 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.81.4.1 2014/12/02 09:00:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.1 2014/12/02 09:00:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -731,7 +731,7 @@ kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	/* Setup new transfer. */
 	usbd_setup_xfer(c->kue_xfer, sc->kue_ep[KUE_ENDPT_RX],
-	    c, c->kue_buf, KUE_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    c, c->kue_buf, KUE_BUFSZ, USBD_SHORT_XFER_OK,
 	    USBD_NO_TIMEOUT, kue_rxeof);
 	usbd_transfer(c->kue_xfer);
 
@@ -810,7 +810,7 @@ kue_send(struct kue_softc *sc, struct mbuf *m, int idx)
 	total_len = roundup2(total_len, 64);
 
 	usbd_setup_xfer(c->kue_xfer, sc->kue_ep[KUE_ENDPT_TX],
-	    c, c->kue_buf, total_len, USBD_NO_COPY, USBD_DEFAULT_TIMEOUT,
+	    c, c->kue_buf, total_len, 0, USBD_DEFAULT_TIMEOUT,
 	    kue_txeof);
 
 	/* Transmit */
@@ -965,7 +965,7 @@ kue_open_pipes(struct kue_softc *sc)
 		c = &sc->kue_cdata.kue_rx_chain[i];
 		usbd_setup_xfer(c->kue_xfer, sc->kue_ep[KUE_ENDPT_RX],
 		    c, c->kue_buf, KUE_BUFSZ,
-		    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
 		    kue_rxeof);
 		DPRINTFN(5,("%s: %s: start read\n", device_xname(sc->kue_dev),
 			    __func__));

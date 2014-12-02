@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.52.14.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.52.14.2 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -182,7 +182,6 @@ typedef struct uhci_softc {
 	int sc_id_vendor;		/* vendor ID for root hub */
 
 	device_t sc_child;		/* /dev/usb# device */
-	struct usb_dma_reserve sc_dma_reserve;
 } uhci_softc_t;
 
 usbd_status	uhci_init(uhci_softc_t *);

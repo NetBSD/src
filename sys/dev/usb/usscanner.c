@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.38.6.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.38.6.3 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.2 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.3 2014/12/02 09:00:34 skrll Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -452,7 +452,7 @@ usscanner_sense(struct usscanner_softc *sc)
 	sc->sc_state = UAS_SENSECMD;
 	memcpy(sc->sc_cmd_buffer, &sense_cmd, sizeof sense_cmd);
 	usbd_setup_xfer(sc->sc_cmd_xfer, sc->sc_out_pipe, sc, sc->sc_cmd_buffer,
-	    sizeof sense_cmd, USBD_NO_COPY, USSCANNER_TIMEOUT,
+	    sizeof sense_cmd, 0, USSCANNER_TIMEOUT,
 	    usscanner_sensecmd_cb);
 	err = usbd_transfer(sc->sc_cmd_xfer);
 	if (err == USBD_IN_PROGRESS)
@@ -579,7 +579,7 @@ usscanner_done(struct usscanner_softc *sc)
 
 	sc->sc_state = UAS_STATUS;
 	usbd_setup_xfer(sc->sc_intr_xfer, sc->sc_intr_pipe, sc, &sc->sc_status,
-	    1, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    1, USBD_SHORT_XFER_OK,
 	    USSCANNER_TIMEOUT, usscanner_intr_cb);
 	err = usbd_transfer(sc->sc_intr_xfer);
 	if (err == USBD_IN_PROGRESS)
@@ -622,7 +622,7 @@ usscanner_sensecmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	sc->sc_state = UAS_SENSEDATA;
 	usbd_setup_xfer(sc->sc_data_xfer, sc->sc_in_pipe, sc,
 	    sc->sc_data_buffer,
-	    sizeof xs->sense, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    sizeof xs->sense, USBD_SHORT_XFER_OK,
 	    USSCANNER_TIMEOUT, usscanner_sensedata_cb);
 	err = usbd_transfer(sc->sc_data_xfer);
 	if (err == USBD_IN_PROGRESS)
@@ -685,7 +685,7 @@ usscanner_cmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	}
 	sc->sc_state = UAS_DATA;
 	usbd_setup_xfer(sc->sc_data_xfer, pipe, sc, sc->sc_data_buffer,
-	    xs->datalen, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    xs->datalen, USBD_SHORT_XFER_OK,
 	    xs->timeout, usscanner_data_cb);
 	err = usbd_transfer(sc->sc_data_xfer);
 	if (err == USBD_IN_PROGRESS)
@@ -751,7 +751,7 @@ usscanner_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, 
 		sc->sc_xs = xs;
 		memcpy(sc->sc_cmd_buffer, xs->cmd, xs->cmdlen);
 		usbd_setup_xfer(sc->sc_cmd_xfer, sc->sc_out_pipe, sc,
-		    sc->sc_cmd_buffer, xs->cmdlen, USBD_NO_COPY,
+		    sc->sc_cmd_buffer, xs->cmdlen, 0,
 		    USSCANNER_TIMEOUT, usscanner_cmd_cb);
 		err = usbd_transfer(sc->sc_cmd_xfer);
 		if (err != USBD_IN_PROGRESS) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22 2014/09/20 15:07:06 jmcneill Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.1 2014/12/02 09:00:33 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -604,7 +604,7 @@ smsc_init(struct ifnet *ifp)
 		c = &sc->sc_cdata.rx_chain[i];
 		usbd_setup_xfer(c->sc_xfer, sc->sc_ep[SMSC_ENDPT_RX],
 		    c, c->sc_buf, sc->sc_bufsz,
-		    USBD_SHORT_XFER_OK | USBD_NO_COPY,
+		    USBD_SHORT_XFER_OK,
 		    USBD_NO_TIMEOUT, smsc_rxeof);
 		usbd_transfer(c->sc_xfer);
 	}
@@ -1413,7 +1413,7 @@ done:
 	/* Setup new transfer. */
 	usbd_setup_xfer(xfer, sc->sc_ep[SMSC_ENDPT_RX],
 	    c, c->sc_buf, sc->sc_bufsz,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    USBD_SHORT_XFER_OK,
 	    USBD_NO_TIMEOUT, smsc_rxeof);
 	usbd_transfer(xfer);
 
@@ -1573,7 +1573,7 @@ smsc_encap(struct smsc_softc *sc, struct mbuf *m, int idx)
 	c->sc_mbuf = m;
 
 	usbd_setup_xfer(c->sc_xfer, sc->sc_ep[SMSC_ENDPT_TX],
-	    c, c->sc_buf, frm_len, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+	    c, c->sc_buf, frm_len, USBD_FORCE_SHORT_XFER,
 	    10000, smsc_txeof);
 
 	err = usbd_transfer(c->sc_xfer);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.2 2014/12/01 12:38:39 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.3 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.2 2014/12/01 12:38:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.3 2014/12/02 09:00:34 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -162,8 +162,6 @@ Static const struct usbd_bus_methods dwc2_bus_methods = {
 	.ubm_open =	dwc2_open,
 	.ubm_softint =	dwc2_softintr,
 	.ubm_dopoll =	dwc2_poll,
-	.ubm_allocm =	dwc2_allocm,
-	.ubm_freem =	dwc2_freem,
 	.ubm_allocx =	dwc2_allocx,
 	.ubm_freex =	dwc2_freex,
 	.ubm_getlock =	dwc2_get_lock,
@@ -222,34 +220,6 @@ Static const struct usbd_pipe_methods dwc2_device_isoc_methods = {
 	.upm_cleartoggle =	dwc2_noop,
 	.upm_done =	dwc2_device_isoc_done,
 };
-
-Static usbd_status
-dwc2_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
-{
-	struct dwc2_softc *sc = DWC2_BUS2SC(bus);
-	usbd_status status;
-
-	DPRINTFN(10, "\n");
-
-	status = usb_allocmem(&sc->sc_bus, size, 0, dma);
-	if (status == USBD_NOMEM)
-		status = usb_reserve_allocm(&sc->sc_dma_reserve, dma, size);
-	return status;
-}
-
-Static void
-dwc2_freem(struct usbd_bus *bus, usb_dma_t *dma)
-{
-	struct dwc2_softc *sc = DWC2_BUS2SC(bus);
-
-	DPRINTFN(10, "\n");
-
-	if (dma->block->flags & USB_DMA_RESERVE) {
-		usb_reserve_freem(&sc->sc_dma_reserve, dma);
-		return;
-	}
-	usb_freemem(&sc->sc_bus, dma);
-}
 
 usbd_xfer_handle
 dwc2_allocx(struct usbd_bus *bus)
@@ -1571,6 +1541,7 @@ dwc2_init(struct dwc2_softc *sc)
 	sc->sc_bus.usbrev = USBREV_2_0;
 	sc->sc_bus.methods = &dwc2_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct dwc2_pipe);
+	sc->sc_bus.usedma = true;
 	sc->sc_hcdenabled = false;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
@@ -1579,9 +1550,6 @@ dwc2_init(struct dwc2_softc *sc)
 
 	sc->sc_rhc_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    dwc2_rhc, sc);
-
-	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
-		USB_MEM_RESERVE);
 
 	sc->sc_xferpool = pool_cache_init(sizeof(struct dwc2_xfer), 0, 0, 0,
 	    "dwc2xfer", NULL, IPL_USB, NULL, NULL, NULL);

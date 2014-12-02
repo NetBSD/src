@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.51 2014/05/20 18:25:54 rmind Exp $	*/
+/*	$NetBSD: ubt.c,v 1.51.4.1 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51 2014/05/20 18:25:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.1 2014/12/02 09:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1052,7 +1052,7 @@ ubt_xmit_cmd_start(struct ubt_softc *sc)
 				&req,
 				sc->sc_cmd_buf,
 				len,
-				USBD_NO_COPY | USBD_FORCE_SHORT_XFER,
+				USBD_FORCE_SHORT_XFER,
 				ubt_xmit_cmd_complete);
 
 	status = usbd_transfer(sc->sc_cmd_xfer);
@@ -1164,7 +1164,7 @@ ubt_xmit_acl_start(struct ubt_softc *sc)
 			sc,
 			sc->sc_aclwr_buf,
 			len,
-			USBD_NO_COPY | USBD_FORCE_SHORT_XFER,
+			USBD_FORCE_SHORT_XFER,
 			UBT_ACL_TIMEOUT,
 			ubt_xmit_acl_complete);
 
@@ -1325,7 +1325,7 @@ ubt_xmit_sco_start1(struct ubt_softc *sc, struct ubt_isoc_xfer *isoc)
 			     isoc,
 			     isoc->size,
 			     num,
-			     USBD_NO_COPY | USBD_FORCE_SHORT_XFER,
+			     USBD_FORCE_SHORT_XFER,
 			     ubt_xmit_sco_complete);
 
 	usbd_transfer(isoc->xfer);
@@ -1460,7 +1460,7 @@ ubt_recv_acl_start(struct ubt_softc *sc)
 			sc,
 			sc->sc_aclrd_buf,
 			UBT_BUFSIZ_ACL,
-			USBD_NO_COPY | USBD_SHORT_XFER_OK,
+			USBD_SHORT_XFER_OK,
 			USBD_NO_TIMEOUT,
 			ubt_recv_acl_complete);
 
@@ -1559,7 +1559,7 @@ ubt_recv_sco_start1(struct ubt_softc *sc, struct ubt_isoc_xfer *isoc)
 			     isoc,
 			     isoc->size,
 			     UBT_NFRAMES,
-			     USBD_NO_COPY | USBD_SHORT_XFER_OK,
+			     USBD_SHORT_XFER_OK,
 			     ubt_recv_sco_complete);
 
 	usbd_transfer(isoc->xfer);

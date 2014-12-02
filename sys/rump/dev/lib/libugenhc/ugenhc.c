@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.22.4.2 2014/12/01 12:38:39 skrll Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.22.4.3 2014/12/02 09:00:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.2 2014/12/01 12:38:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.3 2014/12/02 09:00:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1039,22 +1039,6 @@ ugenhc_poll(struct usbd_bus *ubus)
 
 }
 
-static usbd_status
-ugenhc_allocm(struct usbd_bus *bus, usb_dma_t *dma, uint32_t size)
-{
-	struct ugenhc_softc *sc = bus->hci_private;
-
-	return usb_allocmem(&sc->sc_bus, size, 0, dma);
-}
-
-static void
-ugenhc_freem(struct usbd_bus *bus, usb_dma_t *dma)
-{
-	struct ugenhc_softc *sc = bus->hci_private;
-
-	usb_freemem(&sc->sc_bus, dma);
-}
-
 static struct usbd_xfer *
 ugenhc_allocx(struct usbd_bus *bus)
 {
@@ -1090,8 +1074,6 @@ static const struct usbd_bus_methods ugenhc_bus_methods = {
 	.ubm_open =	ugenhc_open,
 	.ubm_softint =	ugenhc_softint,
 	.ubm_dopoll =	ugenhc_poll,
-	.ubm_allocm = 	ugenhc_allocm,
-	.ubm_freem = 	ugenhc_freem,
 	.ubm_allocx = 	ugenhc_allocx,
 	.ubm_freex =	ugenhc_freex,
 	.ubm_getlock =	ugenhc_getlock
@@ -1125,6 +1107,7 @@ ugenhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bus.methods = &ugenhc_bus_methods;
 	sc->sc_bus.hci_private = sc;
 	sc->sc_bus.pipe_size = sizeof(struct ugenhc_pipe);
+	sc->sc_bus.usedma = false;
 	sc->sc_devnum = maa->maa_unit;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);

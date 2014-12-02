@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.68.4.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.68.4.2 2014/12/02 09:00:33 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68.4.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68.4.2 2014/12/02 09:00:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -806,7 +806,7 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 done:
 	/* Setup new transfer. */
 	usbd_setup_xfer(c->cue_xfer, sc->cue_ep[CUE_ENDPT_RX],
-	    c, c->cue_buf, CUE_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    c, c->cue_buf, CUE_BUFSZ, USBD_SHORT_XFER_OK,
 	    USBD_NO_TIMEOUT, cue_rxeof);
 	usbd_transfer(c->cue_xfer);
 
@@ -928,7 +928,7 @@ cue_send(struct cue_softc *sc, struct mbuf *m, int idx)
 
 	/* XXX 10000 */
 	usbd_setup_xfer(c->cue_xfer, sc->cue_ep[CUE_ENDPT_TX],
-	    c, c->cue_buf, total_len, USBD_NO_COPY, 10000, cue_txeof);
+	    c, c->cue_buf, total_len, 0, 10000, cue_txeof);
 
 	/* Transmit */
 	err = usbd_transfer(c->cue_xfer);
@@ -1099,7 +1099,7 @@ cue_open_pipes(struct cue_softc	*sc)
 		c = &sc->cue_cdata.cue_rx_chain[i];
 		usbd_setup_xfer(c->cue_xfer, sc->cue_ep[CUE_ENDPT_RX],
 		    c, c->cue_buf, CUE_BUFSZ,
-		    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
 		    cue_rxeof);
 		usbd_transfer(c->cue_xfer);
 	}

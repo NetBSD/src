@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_dtv.c,v 1.6 2013/01/22 12:40:42 jmcneill Exp $ */
+/* $NetBSD: auvitek_dtv.c,v 1.6.14.1 2014/12/02 09:00:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.6 2013/01/22 12:40:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.6.14.1 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,8 +350,8 @@ auvitek_dtv_bulk_start1(struct auvitek_bulk_xfer *bx)
 
 	usbd_setup_xfer(bx->bx_xfer, ab->ab_pipe, bx,
 	    bx->bx_buffer, AUVITEK_BULK_BUFLEN,
-	    //USBD_SHORT_XFER_OK|USBD_NO_COPY, USBD_NO_TIMEOUT,
-	    USBD_NO_COPY, 100,
+	    //USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
+	    0, 100,
 	    auvitek_dtv_bulk_cb);
 
 	KERNEL_LOCK(1, curlwp);

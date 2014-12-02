@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.10 2014/01/28 13:08:13 martin Exp $	*/
+/*	$NetBSD: if_run.c,v 1.10.6.1 2014/12/02 09:00:33 skrll Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10 2014/01/28 13:08:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.6.1 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2186,7 +2186,7 @@ run_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 skip:	/* setup a new transfer */
 	usbd_setup_xfer(xfer, sc->rxq.pipeh, data, data->buf, RUN_MAX_RXSZ,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT, run_rxeof);
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, run_rxeof);
 	(void)usbd_transfer(data->xfer);
 }
 
@@ -2345,7 +2345,7 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	xferlen += sizeof (*txd) + 4;
 
 	usbd_setup_xfer(data->xfer, ring->pipeh, data, data->buf, xferlen,
-	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RUN_TX_TIMEOUT, run_txeof);
+	    USBD_FORCE_SHORT_XFER, RUN_TX_TIMEOUT, run_txeof);
 	error = usbd_transfer(data->xfer);
 	if (__predict_false(error != USBD_IN_PROGRESS &&
 	    error != USBD_NORMAL_COMPLETION))
@@ -3620,7 +3620,7 @@ run_init(struct ifnet *ifp)
 		struct run_rx_data *data = &sc->rxq.data[i];
 
 		usbd_setup_xfer(data->xfer, sc->rxq.pipeh, data, data->buf,
-		    RUN_MAX_RXSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+		    RUN_MAX_RXSZ, USBD_SHORT_XFER_OK,
 		    USBD_NO_TIMEOUT, run_rxeof);
 		error = usbd_transfer(data->xfer);
 		if (error != USBD_NORMAL_COMPLETION &&

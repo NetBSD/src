@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.50.2.1 2014/11/30 12:18:58 skrll Exp $ */
+/*	$NetBSD: if_atu.c,v 1.50.2.2 2014/12/02 09:00:33 skrll Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.2 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1722,7 +1722,7 @@ done1:
 done:
 	/* Setup new transfer. */
 	usbd_setup_xfer(c->atu_xfer, sc->atu_ep[ATU_ENDPT_RX], c, c->atu_buf,
-	    ATU_RX_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
+	    ATU_RX_BUFSZ, USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
 		atu_rxeof);
 	usbd_transfer(c->atu_xfer);
 }
@@ -1829,7 +1829,7 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 	c->atu_mbuf = m;
 
 	usbd_setup_xfer(c->atu_xfer, sc->atu_ep[ATU_ENDPT_TX],
-	    c, c->atu_buf, c->atu_length, USBD_NO_COPY, ATU_TX_TIMEOUT,
+	    c, c->atu_buf, c->atu_length, 0, ATU_TX_TIMEOUT,
 	    atu_txeof);
 
 	/* Let's get this thing into the air! */
@@ -2017,7 +2017,7 @@ atu_init(struct ifnet *ifp)
 		c = &sc->atu_cdata.atu_rx_chain[i];
 
 		usbd_setup_xfer(c->atu_xfer, sc->atu_ep[ATU_ENDPT_RX], c,
-		    c->atu_buf, ATU_RX_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+		    c->atu_buf, ATU_RX_BUFSZ, USBD_SHORT_XFER_OK,
 		    USBD_NO_TIMEOUT, atu_rxeof);
 		usbd_transfer(c->atu_xfer);
 	}

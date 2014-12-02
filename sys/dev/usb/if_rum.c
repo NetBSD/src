@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.48 2014/03/29 00:59:05 zafer Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.48.6.1 2014/12/02 09:00:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48 2014/03/29 00:59:05 zafer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.1 2014/12/02 09:00:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1194,7 +1194,7 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		m_freem(mprot);
 
 		usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf,
-		    xferlen, USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+		    xferlen, USBD_FORCE_SHORT_XFER,
 		    RUM_TX_TIMEOUT, rum_txeof);
 		error = usbd_transfer(data->xfer);
 		if (error != USBD_NORMAL_COMPLETION &&
@@ -1261,7 +1261,7 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	m_freem(m0);
 
 	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf, xferlen,
-	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RUM_TX_TIMEOUT, rum_txeof);
+	    USBD_FORCE_SHORT_XFER, RUM_TX_TIMEOUT, rum_txeof);
 	error = usbd_transfer(data->xfer);
 	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS)
 		return error;
