@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.67.4.1 2014/12/02 09:00:33 skrll Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.67.4.2 2014/12/03 12:52:07 skrll Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.1 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.2 2014/12/03 12:52:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -735,7 +735,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 
 	/* decide on what our bufsize will be */
 	if (sc->axe_flags & AX178 || sc->axe_flags & AX772)
-		sc->axe_bufsz = (sc->axe_udev->speed == USB_SPEED_HIGH) ?
+		sc->axe_bufsz = (sc->axe_udev->ud_speed == USB_SPEED_HIGH) ?
 		    AXE_178_MAX_BUFSZ : AXE_178_MIN_BUFSZ;
 	else
 		sc->axe_bufsz = AXE_172_BUFSZ;
@@ -1227,7 +1227,7 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 	 * bytes at the beginning to hold the frame length.
 	 */
 	if (sc->axe_flags & AX178 || sc->axe_flags & AX772) {
-		boundary = (sc->axe_udev->speed == USB_SPEED_HIGH) ? 512 : 64;
+		boundary = (sc->axe_udev->ud_speed == USB_SPEED_HIGH) ? 512 : 64;
 
 		hdr.len = htole16(m->m_pkthdr.len);
 		hdr.ilen = ~hdr.len;
@@ -1367,7 +1367,7 @@ axe_init(struct ifnet *ifp)
 	if (sc->axe_flags & AX772B)
 		rxmode |= AXE_772B_RXCMD_RH1M;
 	else if (sc->axe_flags & AX178 || sc->axe_flags & AX772) {
-		if (sc->axe_udev->speed == USB_SPEED_HIGH) {
+		if (sc->axe_udev->ud_speed == USB_SPEED_HIGH) {
 			/* Largest possible USB buffer size for AX88178 */
 			rxmode |= AXE_178_RXCMD_MFB;
 		}

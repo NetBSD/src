@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.31.2.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: u3g.c,v 1.31.2.3 2014/12/03 12:52:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.2 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.3 2014/12/03 12:52:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -994,7 +994,7 @@ u3g_set(void *arg, int portno, int reg, int onoff)
 
 	err = usbd_do_request(sc->sc_udev, &req, 0);
 	if (err == USBD_STALLED)
-		usbd_clear_endpoint_stall(sc->sc_udev->default_pipe);
+		usbd_clear_endpoint_stall(sc->sc_udev->ud_pipe0);
 }
 
 /*ARGSUSED*/

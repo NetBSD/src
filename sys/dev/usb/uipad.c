@@ -1,4 +1,4 @@
-/*	$NetBSD: uipad.c,v 1.1 2011/12/31 00:08:48 christos Exp $	*/
+/*	$NetBSD: uipad.c,v 1.1.28.1 2014/12/03 12:52:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.1 2011/12/31 00:08:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.1.28.1 2014/12/03 12:52:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ uipad_cmd(struct uipad_softc *sc, uint8_t requestType, uint8_t reqno,
 static void
 uipad_charge(struct uipad_softc *sc)
 {
-	if (sc->sc_udev->power != USB_MAX_POWER)
+	if (sc->sc_udev->ud_power != USB_MAX_POWER)
 		uipad_cmd(sc, UT_VENDOR | UT_WRITE, 0x40, 0x6400, 0x6400);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.21.34.2 2014/12/02 09:00:33 skrll Exp $ */
+/* $NetBSD: pseye.c,v 1.21.34.3 2014/12/03 12:52:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.2 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.3 2014/12/03 12:52:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ pseye_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_udev = dev;
 	sc->sc_iface = uaa->iface;
 	snprintf(sc->sc_businfo, sizeof(sc->sc_businfo), "usb:%08x",
-	    sc->sc_udev->cookie.cookie);
+	    sc->sc_udev->ud_cookie.cookie);
 	sc->sc_bulkin_bufferlen = PSEYE_BULKIN_BUFLEN;
 
 	sc->sc_dying = sc->sc_running = 0;
