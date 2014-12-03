@@ -1,4 +1,4 @@
-/*	$NetBSD: radeondrmkmsfb.c,v 1.3.4.1 2014/11/28 10:03:03 martin Exp $	*/
+/*	$NetBSD: radeondrmkmsfb.c,v 1.3.4.2 2014/12/03 23:00:17 snj Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.3.4.1 2014/11/28 10:03:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.3.4.2 2014/12/03 23:00:17 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -88,6 +88,12 @@ static int	radeonfb_genfb_ioctl(void *, void *, unsigned long, void *,
 static paddr_t	radeonfb_genfb_mmap(void *, void *, off_t, int);
 static int	radeonfb_genfb_enable_polling(void *);
 static int	radeonfb_genfb_disable_polling(void *);
+static bool	radeonfb_genfb_shutdown(device_t, int);
+static bool	radeonfb_genfb_setmode(struct genfb_softc *, int);
+
+static const struct genfb_mode_callback radeonfb_genfb_mode_callback = {
+	.gmc_setmode = radeonfb_genfb_setmode,
+};
 
 CFATTACH_DECL_NEW(radeondrmkmsfb, sizeof(struct radeonfb_softc),
     radeonfb_match, radeonfb_attach, radeonfb_detach, NULL);
@@ -171,6 +177,9 @@ radeonfb_setconfig_task(struct radeon_task *task)
 	prop_dictionary_set_uint64(dict, "virtual_address",
 	    (uint64_t)(uintptr_t)rfa->rfa_fb_ptr);
 
+	prop_dictionary_set_uint64(dict, "mode_callback",
+	    (uint64_t)(uintptr_t)&radeonfb_genfb_mode_callback);
+
 	/* XXX Whattakludge!  */
 #if NVGA > 0
 	if (vga_is_console(rfa->rfa_fb_helper->dev->pdev->pd_pa.pa_iot, -1)) {
@@ -202,7 +211,8 @@ radeonfb_setconfig_task(struct radeon_task *task)
 	}
 	sc->sc_attached = true;
 
-	drm_fb_helper_set_config(sc->sc_rfa.rfa_fb_helper);
+	pmf_device_register1(sc->sc_dev, NULL, NULL,
+	    radeonfb_genfb_shutdown);
 
 	/* Success!  */
 	sc->sc_scheduled = false;
@@ -342,4 +352,23 @@ radeonfb_genfb_disable_polling(void *cookie)
 	    struct radeonfb_softc, sc_genfb);
 
 	return drm_fb_helper_debug_leave_fb(sc->sc_rfa.rfa_fb_helper);
+}
+
+static bool
+radeonfb_genfb_shutdown(device_t self, int flags)
+{
+	genfb_enable_polling(self);
+	return true;
+}
+
+static bool
+radeonfb_genfb_setmode(struct genfb_softc *genfb, int mode)
+{
+	struct radeonfb_softc *sc = (struct radeonfb_softc *)genfb;
+
+	if (mode == WSDISPLAYIO_MODE_EMUL) {
+		drm_fb_helper_set_config(sc->sc_rfa.rfa_fb_helper);
+	}
+
+	return true;
 }
