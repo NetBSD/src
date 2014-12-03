@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.24.4.2 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.24.4.3 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.2 2014/12/02 09:00:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.3 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1368,15 +1368,15 @@ utoppyopen(dev_t dev, int flag, int mode,
 		goto done;
 	}
 
-	sc->sc_out_data = malloc(UTOPPY_BSIZE + 1, M_DEVBUF, M_WAITOK);
+	sc->sc_out_data = kmem_alloc(UTOPPY_BSIZE + 1, KM_SLEEP);
 	if (sc->sc_out_data == NULL) {
 		error = ENOMEM;
 		goto error;
 	}
 
-	sc->sc_in_data = malloc(UTOPPY_BSIZE + 1, M_DEVBUF, M_WAITOK);
+	sc->sc_in_data = kmem_alloc(UTOPPY_BSIZE + 1, KM_SLEEP);
 	if (sc->sc_in_data == NULL) {
-		free(sc->sc_out_data, M_DEVBUF);
+		kmem_free(sc->sc_out_data, UTOPPY_BSIZE + 1);
 		sc->sc_out_data = NULL;
 		error = ENOMEM;
 		goto error;
@@ -1450,12 +1450,12 @@ utoppyclose(dev_t dev, int flag, int mode,
 	}
 
 	if (sc->sc_out_data) {
-		free(sc->sc_out_data, M_DEVBUF);
+		kmem_free(sc->sc_out_data, UTOPPY_BSIZE + 1);
 		sc->sc_out_data = NULL;
 	}
 
 	if (sc->sc_in_data) {
-		free(sc->sc_in_data, M_DEVBUF);
+		kmem_free(sc->sc_in_data, UTOPPY_BSIZE + 1);
 		sc->sc_in_data = NULL;
 	}
 

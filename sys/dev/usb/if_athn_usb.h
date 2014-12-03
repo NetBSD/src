@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.h,v 1.2 2013/03/30 14:14:31 christos Exp $	*/
+/*	$NetBSD: if_athn_usb.h,v 1.2.16.1 2014/12/03 14:18:07 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.h,v 1.3 2012/11/10 14:35:06 mikeb Exp $	*/
 
 /*-
@@ -463,6 +463,7 @@ struct athn_usb_softc {
 	usbd_pipe_handle		usc_rx_intr_pipe;
 	usbd_pipe_handle		usc_tx_intr_pipe;
 	uint8_t 			*usc_ibuf;
+	size_t				usc_ibufsize;
 
 	struct ar_wmi_cmd_reg_write	usc_wbuf[AR_MAX_WRITE_COUNT];
 	int				usc_wcount;

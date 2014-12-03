@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.2 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.3 2014/12/03 14:18:07 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,12 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.2 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.3 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 
@@ -212,8 +212,8 @@ uhub_attach(device_t parent, device_t self, void *aux)
 		goto bad;
 	}
 
-	hub = malloc(sizeof(*hub) + (nports-1) * sizeof(struct usbd_port),
-		     M_USBDEV, M_NOWAIT);
+	hub = kmem_alloc(sizeof(*hub) + (nports-1) * sizeof(struct usbd_port),
+	    KM_SLEEP);
 	if (hub == NULL)
 		return;
 	dev->ud_hub = hub;
@@ -245,10 +245,10 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_statuslen = (nports + 1 + 7) / 8;
-	sc->sc_statusbuf = malloc(sc->sc_statuslen, M_USBDEV, M_NOWAIT);
+	sc->sc_statusbuf = kmem_alloc(sc->sc_statuslen, KM_SLEEP);
 	if (!sc->sc_statusbuf)
 		goto bad;
-	sc->sc_status = malloc(sc->sc_statuslen, M_USBDEV, M_NOWAIT);
+	sc->sc_status = kmem_alloc(sc->sc_statuslen, KM_SLEEP);
 	if (!sc->sc_status)
 		goto bad;
 	if (device_is_a(device_parent(device_parent(sc->sc_dev)), "ehci"))
@@ -299,8 +299,8 @@ uhub_attach(device_t parent, device_t self, void *aux)
 
 #if 0
 	if (UHUB_IS_HIGH_SPEED(sc) && nports > 0) {
-		tts = malloc((UHUB_IS_SINGLE_TT(sc) ? 1 : nports) *
-			     sizeof (struct usbd_tt), M_USBDEV, M_NOWAIT);
+		tts = kmem_alloc((UHUB_IS_SINGLE_TT(sc) ? 1 : nports) *
+			     sizeof (struct usbd_tt), KM_SLEEP);
 		if (!tts)
 			goto bad;
 	}
@@ -356,11 +356,12 @@ uhub_attach(device_t parent, device_t self, void *aux)
 
  bad:
 	if (sc->sc_status)
-		free(sc->sc_status, M_USBDEV);
+		kmem_free(sc->sc_statusbuf, sc->sc_statuslen);
 	if (sc->sc_statusbuf)
-		free(sc->sc_statusbuf, M_USBDEV);
+		kmem_free(sc->sc_statusbuf, sc->sc_statuslen);
 	if (hub)
-		free(hub, M_USBDEV);
+		kmem_free(hub,
+		    sizeof(*hub) + (nports-1) * sizeof(struct usbd_port));
 	dev->ud_hub = NULL;
 	return;
 }
@@ -625,14 +626,17 @@ uhub_detach(device_t self, int flags)
 
 #if 0
 	if (hub->ports[0].tt)
-		free(hub->ports[0].tt, M_USBDEV);
+		kmem_free(hub->ports[0].tt,
+		    (UHUB_IS_SINGLE_TT(sc) ? 1 : nports) *
+		    sizeof (struct usbd_tt));
 #endif
-	free(hub, M_USBDEV);
+	kmem_free(hub,
+	    sizeof(*hub) + (nports-1) * sizeof(struct usbd_port));
 	sc->sc_hub->ud_hub = NULL;
 	if (sc->sc_status)
-		free(sc->sc_status, M_USBDEV);
+		kmem_free(sc->sc_statusbuf, sc->sc_statuslen);
 	if (sc->sc_statusbuf)
-		free(sc->sc_statusbuf, M_USBDEV);
+		kmem_free(sc->sc_statusbuf, sc->sc_statuslen);
 
 	/* XXXSMP usb */
 	KERNEL_UNLOCK_ONE(curlwp);
@@ -684,7 +688,8 @@ uhub_childdet(device_t self, device_t child)
 			}
 		}
 		if (dev->ud_nifaces_claimed == 0) {
-			free(dev->ud_subdevs, M_USB);
+			kmem_free(dev->ud_subdevs,
+			    dev->ud_subdevlen * sizeof(device_t));
 			dev->ud_subdevs = NULL;
 			dev->ud_subdevlen = 0;
 		}

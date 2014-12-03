@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.36.14.1 2014/12/02 09:00:33 skrll Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.36.14.2 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,13 +23,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.1 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.2 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -493,7 +494,6 @@ Static int
 zyd_open_pipes(struct zyd_softc *sc)
 {
 	usb_endpoint_descriptor_t *edesc;
-	int isize;
 	usbd_status error;
 
 	/* interrupt in */
@@ -501,16 +501,16 @@ zyd_open_pipes(struct zyd_softc *sc)
 	if (edesc == NULL)
 		return EINVAL;
 
-	isize = UGETW(edesc->wMaxPacketSize);
-	if (isize == 0)	/* should not happen */
+	sc->ibuf_size = UGETW(edesc->wMaxPacketSize);
+	if (sc->ibuf_size == 0)	/* should not happen */
 		return EINVAL;
 
-	sc->ibuf = malloc(isize, M_USBDEV, M_NOWAIT);
+	sc->ibuf = kmem_alloc(sc->ibuf_size, KM_SLEEP);
 	if (sc->ibuf == NULL)
 		return ENOMEM;
 
 	error = usbd_open_pipe_intr(sc->sc_iface, 0x83, USBD_SHORT_XFER_OK,
-	    &sc->zyd_ep[ZYD_ENDPT_IIN], sc, sc->ibuf, isize, zyd_intr,
+	    &sc->zyd_ep[ZYD_ENDPT_IIN], sc, sc->ibuf, sc->ibuf_size, zyd_intr,
 	    USBD_DEFAULT_INTERVAL);
 	if (error != 0) {
 		printf("%s: open rx intr pipe failed: %s\n",
@@ -564,7 +564,7 @@ zyd_close_pipes(struct zyd_softc *sc)
 		}
 	}
 	if (sc->ibuf != NULL) {
-		free(sc->ibuf, M_USBDEV);
+		kmem_free(sc->ibuf, sc->ibuf_size);
 		sc->ibuf = NULL;
 	}
 }

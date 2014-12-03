@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.156.2.2 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.156.2.3 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.2 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.3 2014/12/03 14:18:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.2 2014/12/03 12:52:07 skrll Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/kthread.h>
 #include <sys/proc.h>
@@ -573,8 +573,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 	switch (uio->uio_resid) {
 #ifdef COMPAT_30
 	case sizeof(struct usb_event_old):
-		ueo = malloc(sizeof(struct usb_event_old), M_USBDEV,
-			     M_WAITOK|M_ZERO);
+		ueo = kmem_zalloc(sizeof(struct usb_event_old), KM_SLEEP);
 		useold = 1;
 		/* FALLTHRU */
 #endif
@@ -636,7 +635,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 	usb_free_event(ue);
 #ifdef COMPAT_30
 	if (useold)
-		free(ueo, M_USBDEV);
+		kmem_free(ueo, sizeof(struct usb_event_old));
 #endif
 
 	return (error);
@@ -728,7 +727,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 				ur->ucr_request.bmRequestType & UT_READ ?
 				UIO_READ : UIO_WRITE;
 			uio.uio_vmspace = l->l_proc->p_vmspace;
-			ptr = malloc(len, M_TEMP, M_WAITOK);
+			ptr = kmem_alloc(len, KM_SLEEP);
 			if (uio.uio_rw == UIO_WRITE) {
 				error = uiomove(ptr, len, &uio);
 				if (error)
@@ -752,8 +751,10 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			}
 		}
 	ret:
-		if (ptr)
-			free(ptr, M_TEMP);
+		if (ptr) {
+			len = UGETW(ur->ucr_request.wLength);
+			kmem_free(ptr, len);
+		}
 		return (error);
 	}
 
@@ -964,13 +965,13 @@ Static struct usb_event *
 usb_alloc_event(void)
 {
 	/* Yes, this is right; we allocate enough so that we can use it later */
-	return malloc(sizeof(struct usb_event_q), M_USBDEV, M_WAITOK|M_ZERO);
+	return kmem_zalloc(sizeof(struct usb_event_q), KM_SLEEP);
 }
 
 Static void
 usb_free_event(struct usb_event *uep)
 {
-	free(uep, M_USBDEV);
+	kmem_free(uep, sizeof(struct usb_event_q));
 }
 
 Static void

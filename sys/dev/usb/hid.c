@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.35.16.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: hid.c,v 1.35.16.2 2014/12/03 14:18:07 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,12 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.35.16.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.35.16.2 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
@@ -91,7 +91,9 @@ hid_start_parse(const void *d, int len, enum hid_kind kind)
 {
 	struct hid_data *s;
 
-	s = malloc(sizeof *s, M_TEMP, M_WAITOK|M_ZERO);
+	s = kmem_zalloc(sizeof(*s), KM_SLEEP);
+	if (s == NULL)
+		return s;
 	s->start = s->p = d;
 	s->end = (const char *)d + len;
 	s->kind = kind;
@@ -104,10 +106,10 @@ hid_end_parse(struct hid_data *s)
 
 	while (s->cur.next != NULL) {
 		struct hid_item *hi = s->cur.next->next;
-		free(s->cur.next, M_TEMP);
+		kmem_free(s->cur.next, sizeof(*s->cur.next));
 		s->cur.next = hi;
 	}
-	free(s, M_TEMP);
+	kmem_free(s, sizeof(*s));
 }
 
 int
@@ -289,7 +291,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				c->loc.count = dval;
 				break;
 			case 10: /* Push */
-				hi = malloc(sizeof *hi, M_TEMP, M_WAITOK);
+				hi = kmem_alloc(sizeof(*hi), KM_SLEEP);
 				*hi = *c;
 				c->next = hi;
 				break;
@@ -298,7 +300,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				oldpos = c->loc.pos;
 				*c = *hi;
 				c->loc.pos = oldpos;
-				free(hi, M_TEMP);
+				kmem_free(hi, sizeof(*hi));
 				break;
 			default:
 				printf("Global bTag=%d\n", bTag);
