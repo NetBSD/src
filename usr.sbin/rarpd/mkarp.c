@@ -1,4 +1,4 @@
-/*	$NetBSD: mkarp.c,v 1.9 2011/08/30 20:25:18 joerg Exp $ */
+/*	$NetBSD: mkarp.c,v 1.10 2014/12/03 03:44:45 christos Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: mkarp.c,v 1.9 2011/08/30 20:25:18 joerg Exp $");
+__RCSID("$NetBSD: mkarp.c,v 1.10 2014/12/03 03:44:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,9 +94,13 @@ int
 mkarp(u_char *haddr, u_int32_t ipaddr)
 {
 	static struct sockaddr_inarp blank_sin = {
-		sizeof(blank_sin), AF_INET, 0, { 0 }, { 0 }, 0, 0  };
+		.sin_len = sizeof(blank_sin),
+		.sin_family = AF_INET,
+	};
 	static struct sockaddr_dl blank_sdl = {
-		sizeof(blank_sdl), AF_LINK, 0, 0, 0, 0, 0, { 0 } };
+		.sdl_len = sizeof(blank_sdl),
+		.sdl_family = AF_LINK,
+	};
 
 	struct sockaddr_inarp *sin;
 	struct sockaddr_dl *sdl;
