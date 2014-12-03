@@ -1,4 +1,4 @@
-/*	$NetBSD: t_print.c,v 1.1 2014/12/02 19:48:21 christos Exp $	*/
+/*	$NetBSD: t_print.c,v 1.2 2014/12/03 13:10:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_print.c,v 1.1 2014/12/02 19:48:21 christos Exp $");
+__RCSID("$NetBSD: t_print.c,v 1.2 2014/12/03 13:10:49 christos Exp $");
 
 #include "netinet6/in6_print.c"
 #include "netinet/in_print.c"
@@ -118,7 +118,7 @@ ATF_TC_BODY(sin6_print, tc)
 
 	for (size_t i = 0; i < __arraycount(tst); i++) {
 		sin6.sin6_addr = tst[i].ia;
-		sin6.sin6_port = htons(i);
+		sin6.sin6_port = (in_port_t)htons(i);
 		r = sin6_print(buf, l, &sin6);
 		if (i == 0)
 			e = snprintf(res, sizeof(res), "%s", tst[i].str);
@@ -133,7 +133,7 @@ ATF_TC_BODY(sin6_print, tc)
 	l = 14;
 	for (size_t i = 0; i < __arraycount(tst); i++) {
 		sin6.sin6_addr = tst[i].ia;
-		sin6.sin6_port = htons(i);
+		sin6.sin6_port = (in_port_t)htons(i);
 		r = sin6_print(buf, l, &sin6);
 		if (i == 0)
 			e = snprintf(res, l, "%s", tst[i].str);
