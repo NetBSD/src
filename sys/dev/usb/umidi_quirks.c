@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.c,v 1.18.16.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: umidi_quirks.c,v 1.18.16.2 2014/12/03 22:33:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.18.16.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.18.16.2 2014/12/03 22:33:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>

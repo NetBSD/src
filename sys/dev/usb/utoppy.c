@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.24.4.3 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.24.4.4 2014/12/03 22:33:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.3 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.4 2014/12/03 22:33:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.3 2014/12/03 14:18:07 skrll Exp $"
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <sys/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.6.6.1 2014/12/02 09:00:33 skrll Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.6.6.2 2014/12/03 22:33:56 skrll Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.1 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.2 2014/12/03 22:33:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -28,7 +28,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.1 2014/12/02 09:00:33 skrll Exp $"
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/callout.h>
 #include <sys/conf.h>
 #include <sys/device.h>

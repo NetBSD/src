@@ -1,4 +1,4 @@
-/*	$NetBSD: uipad.c,v 1.1.28.1 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: uipad.c,v 1.1.28.2 2014/12/03 22:33:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.1.28.1 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.1.28.2 2014/12/03 22:33:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>

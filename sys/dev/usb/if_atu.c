@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.50.2.3 2014/12/03 12:52:07 skrll Exp $ */
+/*	$NetBSD: if_atu.c,v 1.50.2.4 2014/12/03 22:33:56 skrll Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.3 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.4 2014/12/03 22:33:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.3 2014/12/03 12:52:07 skrll Exp $"
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/kthread.h>
 #include <sys/queue.h>
 #include <sys/device.h>

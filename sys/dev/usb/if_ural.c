@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.44.14.1 2014/12/02 09:00:33 skrll Exp $ */
+/*	$NetBSD: if_ural.c,v 1.44.14.2 2014/12/03 22:33:56 skrll Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.14.1 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.14.2 2014/12/03 22:33:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -33,7 +33,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.14.1 2014/12/02 09:00:33 skrll Exp 
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 

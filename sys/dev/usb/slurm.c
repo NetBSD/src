@@ -1,4 +1,4 @@
-/*	$NetBSD: slurm.c,v 1.1 2013/01/13 01:15:02 jakllsch Exp $ */
+/*	$NetBSD: slurm.c,v 1.1.18.1 2014/12/03 22:33:56 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,13 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slurm.c,v 1.1 2013/01/13 01:15:02 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slurm.c,v 1.1.18.1 2014/12/03 22:33:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 
