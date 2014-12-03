@@ -1,4 +1,4 @@
-/*	$NetBSD: epohci.c,v 1.7 2012/11/12 18:00:36 skrll Exp $ */
+/*	$NetBSD: epohci.c,v 1.7.14.1 2014/12/03 11:24:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.7 2012/11/12 18:00:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.7.14.1 2014/12/03 11:24:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ epohci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_intr = sa->sa_intr;
 
 	/* Map I/O space */
-	if (bus_space_map(sc->sc.iot, sa->sa_addr, sa->sa_size, 
+	if (bus_space_map(sc->sc.iot, sa->sa_addr, sa->sa_size,
 	    0, &sc->sc.ioh)) {
 		printf(": cannot map mem space\n");
 		return;
@@ -120,7 +120,7 @@ epohci_attach(device_t parent, device_t self, void *aux)
 	 */
 
 	do {
-		i = bus_space_read_4(sc->sc.iot, syscon_ioh, 
+		i = bus_space_read_4(sc->sc.iot, syscon_ioh,
 			EP93XX_SYSCON_PwrSts);
 	} while ((i & 0x100) == 0);
 	bus_space_unmap(sc->sc.iot, syscon_ioh, EP93XX_APB_SYSCON_SIZE);
@@ -143,7 +143,7 @@ epohci_callback(device_t self)
 
 	strlcpy(sc->sc.sc_vendor, "Cirrus Logic", sizeof sc->sc.sc_vendor);
 
-	sc->sc_ih = ep93xx_intr_establish(sc->sc_intr, IPL_USB, 
+	sc->sc_ih = ep93xx_intr_establish(sc->sc_intr, IPL_USB,
 		ohci_intr, sc);
 	r = ohci_init(&sc->sc);
 

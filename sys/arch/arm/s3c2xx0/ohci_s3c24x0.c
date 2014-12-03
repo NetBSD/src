@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_s3c24x0.c,v 1.8 2011/07/01 20:31:39 dyoung Exp $ */
+/*	$NetBSD: ohci_s3c24x0.c,v 1.8.30.1 2014/12/03 11:24:44 skrll Exp $ */
 
 /* derived from ohci_pci.c */
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.8 2011/07/01 20:31:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.8.30.1 2014/12/03 11:24:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ ohci_ssio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	strlcpy(sc->sc.sc_vendor, "Samsung", sizeof sc->sc.sc_vendor);
-	
+
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(self, "init failed, error=%d\n", r);

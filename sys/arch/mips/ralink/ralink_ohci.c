@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_ohci.c,v 1.3 2014/04/29 17:10:07 matt Exp $	*/
+/*	$NetBSD: ralink_ohci.c,v 1.3.4.1 2014/12/03 11:24:44 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "ehci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_ohci.c,v 1.3 2014/04/29 17:10:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_ohci.c,v 1.3.4.1 2014/12/03 11:24:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,7 +105,7 @@ ralink_ohci_attach(device_t parent, device_t self, void *aux)
 			"error=%d\n", error);
 		return;
 	}
-	
+
 	sc->sc_ohci.sc_size = RA_USB_BLOCK_SIZE;
 
 #ifdef RALINK_OHCI_DEBUG
