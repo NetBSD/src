@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.100 2014/11/30 04:11:03 dennis Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.101 2014/12/03 01:30:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.100 2014/11/30 04:11:03 dennis Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.101 2014/12/03 01:30:32 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -102,39 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.100 2014/11/30 04:11:03 dennis Exp $
  */
 
 /*
- * The locking in this subsystem works as follows:
- *
- * When an entry is added to the cache, via cache_enter(),
- * namecache_lock is taken to exclude other writers.  The new
- * entry is added to the hash list in a way which permits
- * concurrent lookups and invalidations in the cache done on
- * other CPUs to continue in parallel.
- *
- * When a lookup is done in the cache, via cache_lookup() or
- * cache_lookup_raw(), the per-cpu lock below is taken.  This
- * protects calls to cache_lookup_entry() and cache_invalidate()
- * against cache_reclaim(), and protects the per-cpu stats against
- * modification in both cache_reclaim() and cache_stat_sysctl(),
- * but allows lookups to continue in parallel with cache_enter().
- *
- * cache_revlookup() takes namecache_lock to exclude cache_enter()
- * and cache_reclaim() since the list it operates on is not
- * maintained to allow concurrent reads.
- *
- * When cache_reclaim() is called namecache_lock is held to hold
- * off calls to cache_enter() and each of the per-cpu locks is
- * taken to hold off lookups.  Holding all these locks essentially
- * idles the subsystem, ensuring there are no concurrent references
- * to the cache entries being freed.  As a side effect, once the
- * per-cpu locks are held, the per-cpu stats are added to the
- * subsystem totals and then zeroed.  cache_stat_sysctl() similarly
- * takes all locks to collect the per-cpu stats (though it perhaps
- * could avoid this by living with stats that were a second out
- * of date?).
- *
- * The per-cpu namecache data is defined below.  cpu_lock is used
- * to protect cpu_stats updates and to exclude cache_reclaim()
- * during lookups.
+ * Per-cpu namecache data.
  */
 struct nchcpu {
 	kmutex_t	cpu_lock;
@@ -219,8 +187,6 @@ cache_hash(const char *name, size_t namelen)
 
 /*
  * Invalidate a cache entry and enqueue it for garbage collection.
- * The caller needs to hold namecache_lock or a per-cpu lock to hold
- * off cache_reclaim().
  */
 static void
 cache_invalidate(struct namecache *ncp)
@@ -321,8 +287,6 @@ cache_unlock_cpus(void)
 
 /*
  * Find a single cache entry and return it locked.
- * The caller needs to hold namecache_lock or a per-cpu lock to hold
- * off cache_reclaim().
  */
 static struct namecache *
 cache_lookup_entry(const struct vnode *dvp, const char *name, size_t namelen)
@@ -332,11 +296,11 @@ cache_lookup_entry(const struct vnode *dvp, const char *name, size_t namelen)
 	nchash_t hash;
 
 	KASSERT(dvp != NULL);
+	KASSERT(mutex_owned(namecache_lock));
 	hash = cache_hash(name, namelen);
 	ncpp = &nchashtbl[NCHASH2(hash, dvp)];
 
 	LIST_FOREACH(ncp, ncpp, nc_hash) {
-		/* XXX Needs barrier for Alpha here */
 		if (ncp->nc_dvp != dvp ||
 		    ncp->nc_nlen != namelen ||
 		    memcmp(ncp->nc_name, name, (u_int)ncp->nc_nlen))
@@ -411,8 +375,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	struct namecache *ncp;
 	struct vnode *vp;
 	struct nchcpu *cpup;
-	int error, ret_value;
-
+	int error;
 
 	/* Establish default result values */
 	if (iswht_ret != NULL) {
@@ -425,23 +388,27 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	}
 
 	cpup = curcpu()->ci_data.cpu_nch;
-	mutex_enter(&cpup->cpu_lock);
 	if (__predict_false(namelen > NCHNAMLEN)) {
+		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_long);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
 		return 0;
 	}
-
+	mutex_enter(namecache_lock);
 	ncp = cache_lookup_entry(dvp, name, namelen);
+	mutex_exit(namecache_lock);
 	if (__predict_false(ncp == NULL)) {
+		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_miss);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
 		return 0;
 	}
 	if ((cnflags & MAKEENTRY) == 0) {
+		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_badhits);
+		mutex_exit(&cpup->cpu_lock);
 		/*
 		 * Last component and we are renaming or deleting,
 		 * the cache entry is invalid, or otherwise don't
@@ -449,7 +416,6 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		 */
 		cache_invalidate(ncp);
 		mutex_exit(&ncp->nc_lock);
-		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
 		return 0;
 	}
@@ -466,11 +432,16 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 
 		if (__predict_true(nameiop != CREATE ||
 		    (cnflags & ISLASTCN) == 0)) {
+			mutex_enter(&cpup->cpu_lock);
 			COUNT(cpup->cpu_stats, ncs_neghits);
+			mutex_exit(&cpup->cpu_lock);
+			mutex_exit(&ncp->nc_lock);
 			/* found neg entry; vn is already null from above */
-			ret_value = 1;
+			return 1;
 		} else {
+			mutex_enter(&cpup->cpu_lock);
 			COUNT(cpup->cpu_stats, ncs_badhits);
+			mutex_exit(&cpup->cpu_lock);
 			/*
 			 * Last component and we are renaming or
 			 * deleting, the cache entry is invalid,
@@ -478,49 +449,47 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 			 * exist.
 			 */
 			cache_invalidate(ncp);
+			mutex_exit(&ncp->nc_lock);
 			/* found nothing */
-			ret_value = 0;
+			return 0;
 		}
-		mutex_exit(&ncp->nc_lock);
-		mutex_exit(&cpup->cpu_lock);
-		return ret_value;
 	}
 
 	vp = ncp->nc_vp;
 	mutex_enter(vp->v_interlock);
 	mutex_exit(&ncp->nc_lock);
-
-	/*
-	 * Drop per-cpu lock across the call to vget(), take it
-	 * again for the sake of the stats update.
-	 */
-	mutex_exit(&cpup->cpu_lock);
 	error = vget(vp, LK_NOWAIT);
-	mutex_enter(&cpup->cpu_lock);
 	if (error) {
 		KASSERT(error == EBUSY);
 		/*
 		 * This vnode is being cleaned out.
 		 * XXX badhits?
 		 */
+		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_falsehits);
+		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
-		ret_value = 0;
-	} else {
-		COUNT(cpup->cpu_stats, ncs_goodhits);
-		/* found it */
-		*vn_ret = vp;
-		ret_value = 1;
+		return 0;
 	}
+
+#ifdef DEBUG
+	/*
+	 * since we released nb->nb_lock,
+	 * we can't use this pointer any more.
+	 */
+	ncp = NULL;
+#endif /* DEBUG */
+
+	/* We don't have the right lock, but this is only for stats. */
+	mutex_enter(&cpup->cpu_lock);
+	COUNT(cpup->cpu_stats, ncs_goodhits);
 	mutex_exit(&cpup->cpu_lock);
 
-	return ret_value;
+	/* found it */
+	*vn_ret = vp;
+	return 1;
 }
 
-
-/*
- * Cut-'n-pasted version of the above without the nameiop argument.
- */
 int
 cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 		 uint32_t cnflags,
@@ -529,7 +498,7 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 	struct namecache *ncp;
 	struct vnode *vp;
 	struct nchcpu *cpup;
-	int error, ret_value;
+	int error;
 
 	/* Establish default results. */
 	if (iswht_ret != NULL) {
@@ -543,15 +512,18 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 	}
 
 	cpup = curcpu()->ci_data.cpu_nch;
-	mutex_enter(&cpup->cpu_lock);
 	if (__predict_false(namelen > NCHNAMLEN)) {
+		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_long);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
 		return 0;
 	}
+	mutex_enter(namecache_lock);
 	ncp = cache_lookup_entry(dvp, name, namelen);
+	mutex_exit(namecache_lock);
 	if (__predict_false(ncp == NULL)) {
+		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_miss);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
@@ -567,40 +539,37 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 			/*cnp->cn_flags |= ncp->nc_flags;*/
 			*iswht_ret = (ncp->nc_flags & ISWHITEOUT) != 0;
 		}
+		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_neghits);
-		mutex_exit(&ncp->nc_lock);
 		mutex_exit(&cpup->cpu_lock);
+		mutex_exit(&ncp->nc_lock);
 		/* found negative entry; vn is already null from above */
 		return 1;
 	}
 	mutex_enter(vp->v_interlock);
 	mutex_exit(&ncp->nc_lock);
-
-	/*
-	 * Drop per-cpu lock across the call to vget(), take it
-	 * again for the sake of the stats update.
-	 */
-	mutex_exit(&cpup->cpu_lock);
 	error = vget(vp, LK_NOWAIT);
-	mutex_enter(&cpup->cpu_lock);
 	if (error) {
 		KASSERT(error == EBUSY);
 		/*
 		 * This vnode is being cleaned out.
 		 * XXX badhits?
 		 */
+		mutex_enter(&cpup->cpu_lock);
 		COUNT(cpup->cpu_stats, ncs_falsehits);
+		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
-		ret_value = 0;
-	} else {
-		COUNT(cpup->cpu_stats, ncs_goodhits); /* XXX can be "badhits" */
-		/* found it */
-		*vn_ret = vp;
-		ret_value = 1;
+		return 0;
 	}
+
+	/* Unlocked, but only for stats. */
+	mutex_enter(&cpup->cpu_lock);
+	COUNT(cpup->cpu_stats, ncs_goodhits); /* XXX can be "badhits" */
 	mutex_exit(&cpup->cpu_lock);
 
-	return ret_value;
+	/* found it */
+	*vn_ret = vp;
+	return 1;
 }
 
 /*
