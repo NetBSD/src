@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.31.2.3 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: u3g.c,v 1.31.2.4 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,12 +50,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.3 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.4 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
@@ -129,6 +129,7 @@ struct u3g_softc {
 
 	usbd_pipe_handle	sc_intr_pipe;	/* Interrupt pipe */
 	u_char			*sc_intr_buff;	/* Interrupt buffer */
+	size_t			sc_intr_size;	/* buffer size */
 };
 
 /*
@@ -816,7 +817,8 @@ u3g_attach(device_t parent, device_t self, void *aux)
 	 * the tty(4) device is open or not.
 	 */
 	if (intr_address != -1) {
-		sc->sc_intr_buff = malloc(intr_size, M_USBDEV, M_WAITOK);
+		sc->sc_intr_size = intr_size;
+		sc->sc_intr_buff = kmem_alloc(intr_size, KM_SLEEP);
 		error = usbd_open_pipe_intr(iface, intr_address,
 		    USBD_SHORT_XFER_OK, &sc->sc_intr_pipe, sc, sc->sc_intr_buff,
 		    intr_size, u3g_intr, 100);
@@ -860,7 +862,7 @@ u3g_detach(device_t self, int flags)
 		sc->sc_intr_pipe = NULL;
 	}
 	if (sc->sc_intr_buff != NULL) {
-		free(sc->sc_intr_buff, M_USBDEV);
+		kmem_free(sc->sc_intr_buff, sc->sc_intr_size);
 		sc->sc_intr_buff = NULL;
 	}
 

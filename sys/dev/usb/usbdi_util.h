@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.45.6.2 2014/12/01 13:03:05 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.45.6.3 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ usbd_status	usbd_get_report(usbd_interface_handle iface, int type, int id,
 				void *data, int len);
 usbd_status	usbd_set_idle(usbd_interface_handle iface, int duration,int id);
 usbd_status	usbd_read_report_desc(usbd_interface_handle ifc, void **descp,
-				      int *sizep, struct malloc_type *mem);
+				      int *sizep);
 usbd_status	usbd_get_config(usbd_device_handle dev, uint8_t *conf);
 usbd_status	usbd_get_string_desc(usbd_device_handle dev, int sindex,
 				     int langid,usb_string_descriptor_t *sdesc,

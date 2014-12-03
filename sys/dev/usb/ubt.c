@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.51.4.1 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: ubt.c,v 1.51.4.2 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,13 +67,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.1 2014/12/02 09:00:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.2 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
@@ -769,7 +769,7 @@ ubt_abortdealloc(struct ubt_softc *sc)
 
 	/* Free event buffer */
 	if (sc->sc_evt_buf != NULL) {
-		free(sc->sc_evt_buf, M_USBDEV);
+		kmem_free(sc->sc_evt_buf, UBT_BUFSIZ_EVENT);
 		sc->sc_evt_buf = NULL;
 	}
 
@@ -843,7 +843,7 @@ ubt_enable(device_t self)
 	s = splusb();
 
 	/* Events */
-	sc->sc_evt_buf = malloc(UBT_BUFSIZ_EVENT, M_USBDEV, M_NOWAIT);
+	sc->sc_evt_buf = kmem_alloc(UBT_BUFSIZ_EVENT, KM_SLEEP);
 	if (sc->sc_evt_buf == NULL) {
 		error = ENOMEM;
 		goto bad;

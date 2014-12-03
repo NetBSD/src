@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.111.2.3 2014/12/03 13:30:51 skrll Exp $	*/
+/*	$NetBSD: usb.h,v 1.111.2.4 2014/12/03 14:18:07 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -41,10 +41,6 @@
 #include <sys/ioctl.h>
 
 #if defined(_KERNEL)
-#include <sys/mallocvar.h>
-
-MALLOC_DECLARE(M_USB);
-MALLOC_DECLARE(M_USBDEV);
 
 #include <sys/device.h>
 

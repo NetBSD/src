@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.7 2014/12/03 13:19:38 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.8 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.7 2014/12/03 13:19:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.8 2014/12/03 14:18:07 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1438,7 +1438,7 @@ xhci_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	DPRINTFN(4, "port=%d depth=%d speed=%d upport %d",
 		 port, depth, speed, up->up_portno);
 
-	dev = malloc(sizeof *dev, M_USB, M_NOWAIT|M_ZERO);
+	dev = kmem_zalloc(sizeof(*dev), KM_SLEEP);
 	if (dev == NULL)
 		return USBD_NOMEM;
 

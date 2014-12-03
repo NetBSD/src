@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.81.4.1 2014/12/02 09:00:33 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.81.4.2 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.1 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.2 2014/12/03 14:18:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.1 2014/12/02 09:00:33 skrll Exp $"
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
@@ -475,8 +475,8 @@ kue_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->kue_mcfilters = malloc(KUE_MCFILTCNT(sc) * ETHER_ADDR_LEN,
-	    M_USBDEV, M_NOWAIT);
+	sc->kue_mcfilters = kmem_alloc(KUE_MCFILTCNT(sc) * ETHER_ADDR_LEN,
+	    KM_SLEEP);
 	if (sc->kue_mcfilters == NULL) {
 		aprint_error_dev(self,
 		    "no memory for multicast filter buffer\n");
@@ -528,7 +528,8 @@ kue_detach(device_t self, int flags)
 	s = splusb();		/* XXX why? */
 
 	if (sc->kue_mcfilters != NULL) {
-		free(sc->kue_mcfilters, M_USBDEV);
+		kmem_free(sc->kue_mcfilters,
+		    KUE_MCFILTCNT(sc) * ETHER_ADDR_LEN);
 		sc->kue_mcfilters = NULL;
 	}
 

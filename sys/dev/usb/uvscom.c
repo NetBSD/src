@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.28 2012/02/24 06:48:28 mrg Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.28.16.1 2014/12/03 14:18:07 skrll Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,12 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.28 2012/02/24 06:48:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.28.16.1 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
@@ -388,7 +388,7 @@ uvscom_detach(device_t self, int flags)
 	if (sc->sc_intr_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_intr_pipe);
 		usbd_close_pipe(sc->sc_intr_pipe);
-		free(sc->sc_intr_buf, M_USBDEV);
+		kmem_free(sc->sc_intr_buf, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
 	}
 
@@ -733,7 +733,7 @@ uvscom_open(void *addr, int portno)
 			return (EIO);
 		}
 
-		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
+		sc->sc_intr_buf = kmem_alloc(sc->sc_isize, KM_SLEEP);
 		err = usbd_open_pipe_intr(sc->sc_iface,
 					  sc->sc_intr_number,
 					  USBD_SHORT_XFER_OK,
@@ -802,7 +802,7 @@ uvscom_close(void *addr, int portno)
 			aprint_error_dev(sc->sc_dev,
 			    "lose interrupt pipe failed: %s\n",
 			    usbd_errstr(err));
-		free(sc->sc_intr_buf, M_USBDEV);
+		kmem_free(sc->sc_intr_buf, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
 	}
 }

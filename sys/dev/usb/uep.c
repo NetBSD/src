@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.19.6.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: uep.c,v 1.19.6.2 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,12 +33,12 @@
  *  eGalax USB touchpanel controller driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.19.6.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.19.6.2 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/vnode.h>
@@ -285,12 +285,12 @@ uep_enable(void *v)
 	if (sc->sc_isize == 0)
 		return 0;
 
-	sc->sc_ibuf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
+	sc->sc_ibuf = kmem_alloc(sc->sc_isize, KM_SLEEP);
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_intr_number,
 		USBD_SHORT_XFER_OK, &sc->sc_intr_pipe, sc, sc->sc_ibuf,
 		sc->sc_isize, uep_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
-		free(sc->sc_ibuf, M_USBDEV);
+		kmem_free(sc->sc_ibuf, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
 		return EIO;
 	}
@@ -318,7 +318,7 @@ uep_disable(void *v)
 	}
 
 	if (sc->sc_ibuf != NULL) {
-		free(sc->sc_ibuf, M_USBDEV);
+		kmem_free(sc->sc_ibuf, sc->sc_isize);
 		sc->sc_ibuf = NULL;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa_common.c,v 1.9.14.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: ubsa_common.c,v 1.9.14.2 2014/12/03 14:18:07 skrll Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,12 +54,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.9.14.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.9.14.2 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/ioccom.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
@@ -345,7 +345,7 @@ ubsa_open(void *addr, int portno)
 		return (ENXIO);
 
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
-		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
+		sc->sc_intr_buf = kmem_alloc(sc->sc_isize, KM_SLEEP);
 		/* XXX only iface# = 0 has intr line */
 		/* XXX E220 specific? need to check */
 		err = usbd_open_pipe_intr(sc->sc_iface[0],
@@ -390,7 +390,7 @@ ubsa_close(void *addr, int portno)
 			printf("%s: close interrupt pipe failed: %s\n",
 			    device_xname(sc->sc_dev),
 			    usbd_errstr(err));
-		free(sc->sc_intr_buf, M_USBDEV);
+		kmem_free(sc->sc_intr_buf, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
 	}
 }
