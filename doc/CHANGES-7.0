@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.117 2014/12/03 13:59:18 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.118 2014/12/03 23:03:40 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3165,4 +3165,20 @@ external/gpl3/binutils/dist/gas/config/tc-arm.c	1.7
 	Avoid undefined behaviour (merged from upstream commit
 	d840c081f8082e8b9e63fead5306643975a97bb3).
 	[joerg, ticket #289]
+
+sys/external/bsd/drm2/radeon/radeondrmkmsfb.c	1.4
+
+	 - provide a setmode callback for genfb
+	 - add a pmf shutdown handler to switch genfb into polling mode
+	 - no need to call drm_fb_helper_set_config after genfb attaches,
+	   as the setmode callback is called by genfb_attach
+	[chs, ticket #290]
+
+sys/arch/macppc/macppc/locore.S			1.72
+sys/arch/ofppc/ofppc/locore.S			1.49
+
+	in the initial asm code, save the interesting caller-saved
+	registers (containing "arg" and "len") across function calls
+	to C code.  fixes kernels built with gcc 4.8.
+	[chs, ticket #291]
 
