@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.10 2014/12/03 22:40:55 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.11 2014/12/03 23:05:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.10 2014/12/03 22:40:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.11 2014/12/03 23:05:06 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.10 2014/12/03 22:40:55 skrll Exp $")
 
 #include <dev/usb/xhcireg.h>
 #include <dev/usb/xhcivar.h>
-#include <dev/usb/usbroothub_subr.h>
+#include <dev/usb/usbroothub.h>
 
 
 #ifdef USB_DEBUG

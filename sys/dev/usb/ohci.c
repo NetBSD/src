@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.10 2014/12/03 22:40:55 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.11 2014/12/03 23:05:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.10 2014/12/03 22:40:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.11 2014/12/03 23:05:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.10 2014/12/03 22:40:55 skrll Exp $"
 
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
-#include <dev/usb/usbroothub_subr.h>
+#include <dev/usb/usbroothub.h>
 
 
 

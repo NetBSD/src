@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.7 2014/12/03 22:40:55 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.8 2014/12/03 23:05:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.7 2014/12/03 22:40:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.8 2014/12/03 23:05:06 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.7 2014/12/03 22:40:55 skrll Exp $");
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 
-#include <dev/usb/usbroothub_subr.h>
+#include <dev/usb/usbroothub.h>
 
 #include <dwc2/dwc2.h>
 #include <dwc2/dwc2var.h>

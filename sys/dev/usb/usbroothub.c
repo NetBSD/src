@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub_subr.c,v 1.1 2008/02/03 10:57:13 drochner Exp $ */
+/* $NetBSD: usbroothub.c,v 1.1.2.1 2014/12/03 23:05:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2008
@@ -27,7 +27,7 @@
  */
 
 #include <dev/usb/usb.h>
-#include <dev/usb/usbroothub_subr.h>
+#include <dev/usb/usbroothub.h>
 
 /* helper functions for USB root hub emulation */
 
