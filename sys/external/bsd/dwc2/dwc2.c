@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.4 2014/12/03 11:24:44 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.5 2014/12/03 11:25:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.4 2014/12/03 11:24:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.5 2014/12/03 11:25:51 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -84,9 +84,6 @@ Static usbd_status	dwc2_open(usbd_pipe_handle);
 Static void		dwc2_poll(struct usbd_bus *);
 Static void		dwc2_softintr(void *);
 Static void		dwc2_waitintr(struct dwc2_softc *, usbd_xfer_handle);
-
-Static usbd_status	dwc2_allocm(struct usbd_bus *, usb_dma_t *, uint32_t);
-Static void		dwc2_freem(struct usbd_bus *, usb_dma_t *);
 
 Static usbd_xfer_handle	dwc2_allocx(struct usbd_bus *);
 Static void		dwc2_freex(struct usbd_bus *, usbd_xfer_handle);
