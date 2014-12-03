@@ -1,4 +1,4 @@
-/* $NetBSD: tiotg.c,v 1.2 2014/07/17 19:58:18 bouyer Exp $ */
+/* $NetBSD: tiotg.c,v 1.2.8.1 2014/12/03 11:24:44 skrll Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2 2014/07/17 19:58:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.8.1 2014/12/03 11:24:44 skrll Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -212,7 +212,7 @@ tiotg_childdet(device_t self, device_t child)
 {
 	struct tiotg_softc *sc = device_private(self);
 	int i;
-	
+
 	for (i = 0; TI_OTG_NPORTS; i++) {
 		if (child == sc->sc_motgdev[i]) {
 			sc->sc_motgdev[i] = NULL;
@@ -293,7 +293,7 @@ ti_motg_attach(device_t parent, device_t self, void *aux)
 	sc->sc_motg.sc_bus.dmatag = aa->aa_dmat;
 
 	val = TIOTG_USBC_READ4(sc, USBCTRL_REV);
-	aprint_normal(": 0x%x version v%d.%d.%d", val, 
+	aprint_normal(": 0x%x version v%d.%d.%d", val,
 	    (val >> 8) & 7, (val >> 6) & 3, val & 63);
 
 #ifdef TI_AM335X
@@ -343,7 +343,7 @@ ti_motg_attach(device_t parent, device_t self, void *aux)
 		val |= USBCTRL_MODE_IDDIG;
 		TIOTG_USBC_WRITE4(sc, USBCTRL_MODE, val);
 	}
-	
+
 	aprint_normal("\n");
 	if (bus_space_subregion(sc->sc_ctrliot, sc->sc_ctrlioh,
 	    USB_CORE_OFFSET, USB_CORE_SIZE, &sc->sc_motg.sc_ioh) < 0) {

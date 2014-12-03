@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.3 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.4 2014/12/03 11:24:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.3 2014/12/02 09:00:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.4 2014/12/03 11:24:44 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -313,7 +313,7 @@ dwc2_softintr(void *v)
 	mutex_spin_enter(&hsotg->lock);
 	while ((dxfer = TAILQ_FIRST(&sc->sc_complete)) != NULL) {
 
-    		KASSERTMSG(!callout_pending(&dxfer->xfer.timeout_handle), 
+    		KASSERTMSG(!callout_pending(&dxfer->xfer.timeout_handle),
 		    "xfer %p pipe %p\n", dxfer, dxfer->xfer.pipe);
 
 		/*

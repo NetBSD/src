@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_ehci.c,v 1.5 2012/07/20 02:14:01 matt Exp $	*/
+/*	$NetBSD: rmixl_ehci.c,v 1.5.16.1 2014/12/03 11:24:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.5 2012/07/20 02:14:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.5.16.1 2014/12/03 11:24:44 skrll Exp $");
 
 #include "locators.h"
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.5 2012/07/20 02:14:01 matt Exp $");
 #include <mips/rmi/rmixl_intr.h>
 #include <mips/rmi/rmixl_usbivar.h>
 
-#include <dev/usb/usb.h>   
+#include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
