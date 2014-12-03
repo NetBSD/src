@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.18 2011/05/13 22:35:51 rmind Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.18.16.1 2014/12/03 13:00:39 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.18 2011/05/13 22:35:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.18.16.1 2014/12/03 13:00:39 msaitoh Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h"
@@ -537,7 +537,7 @@ ppbus_pnp_detect(device_t dev)
 	}
 
 #ifdef DEBUG_1284
-	printf("%s: <PnP> %d characters: ", device_xname(dev), len);
+	printf("%s: <PnP> %zu characters: ", device_xname(dev), len);
 	for (i = 0; i < len; i++)
 		printf("%c(0x%x) ", str[i], str[i]);
 	printf("\n");
