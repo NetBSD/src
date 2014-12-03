@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.16 2014/12/02 01:59:16 pooka Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.17 2014/12/03 00:19:04 christos Exp $
 #
 
 LIB=		rumpnet
@@ -6,6 +6,9 @@ LIB=		rumpnet
 .PATH:	${RUMPTOP}/librump/rumpnet				\
 	${RUMPTOP}/../kern					\
 	${RUMPTOP}/../net					\
+	${RUMPTOP}/../netatalk					\
+	${RUMPTOP}/../netinet					\
+	${RUMPTOP}/../netinet6					\
 	${RUMPTOP}/../compat/common
 
 SRCS=	net_stub.c netisr.c rump_net.c
@@ -20,6 +23,9 @@ SRCS+=	sys_socket.c uipc_accf.c uipc_domain.c uipc_mbuf.c uipc_mbuf2.c	\
 
 # sys/net
 SRCS+=	pktqueue.c
+
+# formatters
+SRCS+= at_print.c dl_print.c in_print.c in6_print.c
 
 # radix trie support
 SRCS+=	radix.c
