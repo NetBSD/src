@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.94 2014/07/29 15:48:22 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.95 2014/12/03 21:37:55 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.94 2014/07/29 15:48:22 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.95 2014/12/03 21:37:55 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1740,8 +1740,8 @@ udf_symlink(void *v)
 		error = udf_do_symlink(udf_node, ap->a_target);
 		if (error) {
 			/* remove node */
-			udf_shrink_node(udf_node, 0);
 			udf_dir_detach(udf_node->ump, dir_node, udf_node, cnp);
+			udf_delete_node(udf_node);
 		}
 	}
 	return error;
