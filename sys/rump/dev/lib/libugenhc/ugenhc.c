@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.22.4.4 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.22.4.5 2014/12/03 22:40:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.4 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.5 2014/12/03 22:40:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -149,9 +149,10 @@ static const usb_device_descriptor_t rumphub_udd = {
 static const usb_config_descriptor_t rumphub_ucd = {
 	.bLength		= USB_CONFIG_DESCRIPTOR_SIZE,
 	.bDescriptorType	= UDESC_CONFIG,
-	.wTotalLength		= { USB_CONFIG_DESCRIPTOR_SIZE
-				  + USB_INTERFACE_DESCRIPTOR_SIZE
-				  + USB_ENDPOINT_DESCRIPTOR_SIZE },
+	.wTotalLength		= USETWD(
+	    USB_CONFIG_DESCRIPTOR_SIZE +
+	    USB_INTERFACE_DESCRIPTOR_SIZE +
+	    USB_ENDPOINT_DESCRIPTOR_SIZE),
 	.bNumInterface		= 1,
 	.bmAttributes		= UC_SELF_POWERED | UC_ATTR_MBO,
 };
@@ -170,7 +171,7 @@ static const usb_endpoint_descriptor_t rumphub_epd = {
 	.bLength		= USB_ENDPOINT_DESCRIPTOR_SIZE,
 	.bDescriptorType	= UDESC_ENDPOINT,
 	.bmAttributes		= UE_INTERRUPT,
-	.wMaxPacketSize		= {64, 0},
+	.wMaxPacketSize		= USETWD(64),
 };
 
 static const usb_hub_descriptor_t rumphub_hdd = {
