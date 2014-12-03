@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.41.2.2 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.41.2.3 2014/12/03 12:52:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.2 2014/12/02 09:00:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.3 2014/12/03 12:52:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -508,7 +508,7 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 	sc->sc_state = UVIDEO_STATE_CLOSED;
 	SLIST_INIT(&sc->sc_stream_list);
 	snprintf(sc->sc_businfo, sizeof(sc->sc_businfo), "usb:%08x",
-	    sc->sc_udev->cookie.cookie);
+	    sc->sc_udev->ud_cookie.cookie);
 
 #ifdef UVIDEO_DEBUG
 	/* Debugging dump of descriptors. TODO: move this to userspace

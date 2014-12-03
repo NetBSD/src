@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2var.h,v 1.3.12.1 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: dwc2var.h,v 1.3.12.2 2014/12/03 12:52:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -59,14 +59,14 @@ struct dwc2_pipe {
 };
 
 
-#define	DWC2_BUS2SC(bus)	((bus)->hci_private)
-#define	DWC2_PIPE2SC(pipe)	DWC2_BUS2SC((pipe)->device->bus)
-#define	DWC2_XFER2SC(xfer)	DWC2_PIPE2SC((xfer)->pipe)
-#define	DWC2_DPIPE2SC(d)	DWC2_BUS2SC((d)->pipe.device->bus)
+#define	DWC2_BUS2SC(bus)	((bus)->ub_hcpriv)
+#define	DWC2_PIPE2SC(pipe)	DWC2_BUS2SC((pipe)->up_dev->ud_bus)
+#define	DWC2_XFER2SC(xfer)	DWC2_PIPE2SC((xfer)->ux_pipe)
+#define	DWC2_DPIPE2SC(d)	DWC2_BUS2SC((d)->pipe.up_dev->ud_bus)
 
 #define	DWC2_XFER2DXFER(x)	(struct dwc2_xfer *)(x)
 
-#define	DWC2_XFER2DPIPE(x)	(struct dwc2_pipe *)(x)->pipe;
+#define	DWC2_XFER2DPIPE(x)	(struct dwc2_pipe *)(x)->ux_pipe;
 #define	DWC2_PIPE2DPIPE(p)	(struct dwc2_pipe *)(p)
 
 

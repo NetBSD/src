@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.1 2014/12/02 09:00:33 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.2 2014/12/03 12:52:07 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -813,7 +813,7 @@ smsc_chip_init(struct smsc_softc *sc)
 	 * data/ethernet frames.
 	 */
 
-	if (sc->sc_udev->speed == USB_SPEED_HIGH)
+	if (sc->sc_udev->ud_speed == USB_SPEED_HIGH)
 		burst_cap = 37;
 	else
 		burst_cap = 128;
@@ -1016,7 +1016,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 
-	if (sc->sc_udev->speed >= USB_SPEED_HIGH)
+	if (sc->sc_udev->ud_speed >= USB_SPEED_HIGH)
 		sc->sc_bufsz = SMSC_MAX_BUFSZ;
 	else
 		sc->sc_bufsz = SMSC_MIN_BUFSZ;

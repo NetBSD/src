@@ -1,4 +1,4 @@
-/* $NetBSD: awin_otg.c,v 1.5 2014/10/16 00:02:47 jmcneill Exp $ */
+/* $NetBSD: awin_otg.c,v 1.5.4.1 2014/12/03 12:52:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_otg.c,v 1.5 2014/10/16 00:02:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_otg.c,v 1.5.4.1 2014/12/03 12:52:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -125,7 +125,7 @@ awin_otg_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_motg.sc_dev = self;
-	sc->sc_motg.sc_bus.dmatag = aio->aio_dmat;
+	sc->sc_motg.sc_bus.ub_dmatag = aio->aio_dmat;
 	sc->sc_motg.sc_iot = aio->aio_core_bst;
 	bus_space_subregion(sc->sc_motg.sc_iot, aio->aio_core_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_motg.sc_ioh);

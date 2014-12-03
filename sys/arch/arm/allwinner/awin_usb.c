@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.17.2.1 2014/12/03 11:24:43 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.17.2.2 2014/12/03 12:52:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -130,8 +130,8 @@ ohci_awinusb_attach(device_t parent, device_t self, void *aux)
 	sc->iot = usbaa->usbaa_bst;
 	sc->ioh = usbaa->usbaa_bsh;
 	sc->sc_size = usbaa->usbaa_size;
-	sc->sc_bus.dmatag = usbaa->usbaa_dmat;
-	sc->sc_bus.hci_private = sc;
+	sc->sc_bus.ub_dmatag = usbaa->usbaa_dmat;
+	sc->sc_bus.ub_hcpriv = sc;
 
 	//sc->sc_id_vendor = PCI_VENDOR_ALLWINNER;
 	strlcpy(sc->sc_vendor, "Allwinner", sizeof(sc->sc_vendor));
@@ -203,9 +203,9 @@ ehci_awinusb_attach(device_t parent, device_t self, void *aux)
 	sc->iot = usbaa->usbaa_bst;
 	sc->ioh = usbaa->usbaa_bsh;
 	sc->sc_size = usbaa->usbaa_size;
-	sc->sc_bus.dmatag = usbaa->usbaa_dmat;
-	sc->sc_bus.hci_private = sc;
-	sc->sc_bus.usbrev = USBREV_2_0;
+	sc->sc_bus.ub_dmatag = usbaa->usbaa_dmat;
+	sc->sc_bus.ub_hcpriv = sc;
+	sc->sc_bus.ub_revision = USBREV_2_0;
 	sc->sc_ncomp = 0;
 	if (usbsc->usbsc_ohci_dev != NULL) {
 		sc->sc_comps[sc->sc_ncomp++] = usbsc->usbsc_ohci_dev;

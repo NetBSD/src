@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_zbus.c,v 1.1 2013/04/27 22:27:33 rkujawa Exp $ */
+/*	$NetBSD: slhci_zbus.c,v 1.1.16.1 2014/12/03 12:52:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_zbus.c,v 1.1 2013/04/27 22:27:33 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_zbus.c,v 1.1.16.1 2014/12/03 12:52:04 skrll Exp $");
 
 /*
  * Thylacine driver.
@@ -100,7 +100,7 @@ slhci_zbus_attach(device_t parent, device_t self, void *aux)
 	zsc = device_private(self);
 	sc = &zsc->sc_sc;
 	sc->sc_dev = self;
-	sc->sc_bus.hci_private = sc;
+	sc->sc_bus.ub_hcpriv = sc;
 
 	zsc->sc_bst.base = (bus_addr_t)zap->va;
 	zsc->sc_bst.absm = &amiga_bus_stride_1;

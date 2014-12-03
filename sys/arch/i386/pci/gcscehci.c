@@ -1,4 +1,4 @@
-/* $NetBSD: gcscehci.c,v 1.11 2014/09/21 17:59:52 christos Exp $ */
+/* $NetBSD: gcscehci.c,v 1.11.2.1 2014/12/03 12:52:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.11 2014/09/21 17:59:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.11.2.1 2014/12/03 12:52:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ gcscehci_attach(device_t parent, device_t self, void *aux)
 	char buf[PCI_INTRSTR_LEN];
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	aprint_naive(": USB controller\n");
 
@@ -124,7 +124,7 @@ gcscehci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
-	sc->sc.sc_bus.dmatag = pa->pa_dmat;
+	sc->sc.sc_bus.ub_dmatag = pa->pa_dmat;
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
@@ -147,7 +147,7 @@ gcscehci_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal("%s: interrupting at %s\n", devname, intrstr);
 
-	sc->sc.sc_bus.usbrev = USBREV_2_0;
+	sc->sc.sc_bus.ub_revision = USBREV_2_0;
 
 	/* Figure out vendor for root hub descriptor. */
 	sc->sc.sc_id_vendor = PCI_VENDOR(pa->pa_id);
