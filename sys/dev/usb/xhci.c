@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.6 2014/12/03 13:09:00 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.7 2014/12/03 13:19:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.6 2014/12/03 13:09:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.7 2014/12/03 13:19:38 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2018,60 +2018,61 @@ static const usb_device_descriptor_t xhci_devd = {
 };
 
 static const usb_device_qualifier_t xhci_odevd = {
-	USB_DEVICE_DESCRIPTOR_SIZE,
-	UDESC_DEVICE_QUALIFIER,	/* type */
-	{0x00, 0x02},		/* USB version */
-	UDCLASS_HUB,		/* class */
-	UDSUBCLASS_HUB,		/* subclass */
-	UDPROTO_FSHUB,		/* protocol */
-	64,                     /* max packet */
-	1,                      /* # of configurations */
-	0
+	.bLength = USB_DEVICE_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_DEVICE_QUALIFIER,
+	.bcdUSB = {0x00, 0x02},
+	.bDeviceClass = UDCLASS_HUB,
+	.bDeviceSubClass = UDSUBCLASS_HUB,
+	.bDeviceProtocol = UDPROTO_FSHUB,
+	.bMaxPacketSize0 = 64,
+	.bNumConfigurations = 1,
 };
 
 static const usb_config_descriptor_t xhci_confd = {
-	USB_CONFIG_DESCRIPTOR_SIZE,
-	UDESC_CONFIG,
-	{USB_CONFIG_DESCRIPTOR_SIZE +
-	 USB_INTERFACE_DESCRIPTOR_SIZE +
-	 USB_ENDPOINT_DESCRIPTOR_SIZE},
-	1,
-	1,
-	0,
-	UC_ATTR_MBO | UC_SELF_POWERED,
-	0                      /* max power */
+	.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_CONFIG,
+	.wTotalLength = {
+		USB_CONFIG_DESCRIPTOR_SIZE +
+		USB_INTERFACE_DESCRIPTOR_SIZE +
+		USB_ENDPOINT_DESCRIPTOR_SIZE
+	},
+	.bNumInterface = 1,
+	.bConfigurationValue = 1,
+	.iConfiguration = 0,
+	.bmAttributes = UC_ATTR_MBO | UC_SELF_POWERED,
+	.bMaxPower = 0
 };
 
 static const usb_interface_descriptor_t xhci_ifcd = {
-	USB_INTERFACE_DESCRIPTOR_SIZE,
-	UDESC_INTERFACE,
-	0,
-	0,
-	1,
-	UICLASS_HUB,
-	UISUBCLASS_HUB,
-	UIPROTO_HSHUBSTT,
-	0
+	.bLength = USB_INTERFACE_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_INTERFACE,
+	.bInterfaceNumber = 0,
+	.bAlternateSetting = 0,
+	.bNumEndpoints = 1,
+	.bInterfaceClass = UICLASS_HUB,
+	.bInterfaceSubClass = UISUBCLASS_HUB,
+	.bInterfaceProtocol = UIPROTO_HSHUBSTT,
+	.iInterface = 0
 };
 
 static const usb_endpoint_descriptor_t xhci_endpd = {
-	USB_ENDPOINT_DESCRIPTOR_SIZE,
-	UDESC_ENDPOINT,
-	UE_DIR_IN | XHCI_INTR_ENDPT,
-	UE_INTERRUPT,
-	{8, 0},                 /* max packet */
-	12
+	.bLength = USB_ENDPOINT_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_ENDPOINT,
+	.bEndpointAddress = UE_DIR_IN | XHCI_INTR_ENDPT,
+	.bmAttributes = UE_INTERRUPT,
+	.wMaxPacketSize = {8, 0},
+	.bInterval = 12
 };
 
 static const usb_hub_descriptor_t xhci_hubd = {
-	USB_HUB_DESCRIPTOR_SIZE,
-	UDESC_HUB,
-	0,
-	{0,0},
-	0,
-	0,
-	{""},
-	{""},
+	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_HUB,
+	.bNbrPorts = 0,
+	.wHubCharacteristics = {0,0},
+	.bPwrOn2PwrGood = 0,
+	.bHubContrCurrent = 0,
+	.DeviceRemovable = {""},
+	.PortPowerCtrlMask = {""},
 };
 
 /* root hub control */

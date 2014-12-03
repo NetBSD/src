@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.8 2014/12/03 13:09:00 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.9 2014/12/03 13:19:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.8 2014/12/03 13:09:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.9 2014/12/03 13:19:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3344,48 +3344,53 @@ usb_device_descriptor_t uhci_devd = {
 };
 
 const usb_config_descriptor_t uhci_confd = {
-	USB_CONFIG_DESCRIPTOR_SIZE,
-	UDESC_CONFIG,
-	{USB_CONFIG_DESCRIPTOR_SIZE +
-	 USB_INTERFACE_DESCRIPTOR_SIZE +
-	 USB_ENDPOINT_DESCRIPTOR_SIZE},
-	1,
-	1,
-	0,
-	UC_ATTR_MBO | UC_SELF_POWERED,
-	0			/* max power */
+	.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_CONFIG,
+	.wTotalLength = {
+		USB_CONFIG_DESCRIPTOR_SIZE +
+		USB_INTERFACE_DESCRIPTOR_SIZE +
+		USB_ENDPOINT_DESCRIPTOR_SIZE
+	},
+	.bNumInterface = 1,
+	.bConfigurationValue = 1,
+	.iConfiguration = 0,
+	.bmAttributes = UC_ATTR_MBO | UC_SELF_POWERED,
+	.bMaxPower = 0
 };
 
 const usb_interface_descriptor_t uhci_ifcd = {
-	USB_INTERFACE_DESCRIPTOR_SIZE,
-	UDESC_INTERFACE,
-	0,
-	0,
-	1,
-	UICLASS_HUB,
-	UISUBCLASS_HUB,
-	UIPROTO_FSHUB,
-	0
+	.bLength = USB_INTERFACE_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_INTERFACE,
+	.bInterfaceNumber = 0,
+	.bAlternateSetting = 0,
+	.bNumEndpoints = 1,
+	.bInterfaceClass = UICLASS_HUB,
+	.bInterfaceSubClass = UISUBCLASS_HUB,
+	.bInterfaceProtocol = UIPROTO_FSHUB,
+	.iInterface = 0
 };
 
 const usb_endpoint_descriptor_t uhci_endpd = {
-	USB_ENDPOINT_DESCRIPTOR_SIZE,
-	UDESC_ENDPOINT,
-	UE_DIR_IN | UHCI_INTR_ENDPT,
-	UE_INTERRUPT,
-	{8},
-	255
+	.bLength = USB_ENDPOINT_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_ENDPOINT,
+	.bEndpointAddress = UE_DIR_IN | UHCI_INTR_ENDPT,
+	.bmAttributes = UE_INTERRUPT,
+	.wMaxPacketSize = {8},
+	.bInterval = 255
 };
 
 const usb_hub_descriptor_t uhci_hubd_piix = {
-	USB_HUB_DESCRIPTOR_SIZE,
-	UDESC_HUB,
-	2,
-	{ UHD_PWR_NO_SWITCH | UHD_OC_INDIVIDUAL, 0 },
-	50,			/* power on to power good */
-	0,
-	{ 0x00 },		/* both ports are removable */
-	{ 0 },
+	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_HUB,
+	.bNbrPorts = 2,
+	.wHubCharacteristics = {
+		UHD_PWR_NO_SWITCH | UHD_OC_INDIVIDUAL,
+		0
+	},
+	.bPwrOn2PwrGood = 50,
+	.bHubContrCurrent = 0,
+	.DeviceRemovable = { 0x00 },
+	.PortPowerCtrlMask = { 0 },
 };
 
 /*

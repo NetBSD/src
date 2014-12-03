@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.12.6.6 2014/12/03 13:08:59 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.12.6.7 2014/12/03 13:19:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.6 2014/12/03 13:08:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.7 2014/12/03 13:19:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,7 +540,7 @@ usb_device_descriptor_t ahci_devd = {
 	.bDeviceProtocol = 0,
 	.bMaxPacketSize = 64,
 	.idVendor = {
-		USB_VENDOR_SCANLOGIC & 0xff,	/* vendor ID (low)  */
+		USB_VENDOR_SCANLOGIC & 0xff,
 		USB_VENDOR_SCANLOGIC >> 8
 	},
 	.idProduct = {0},
@@ -552,48 +552,50 @@ usb_device_descriptor_t ahci_devd = {
 };
 
 usb_config_descriptor_t ahci_confd = {
-	USB_CONFIG_DESCRIPTOR_SIZE,
-	UDESC_CONFIG,
-	{USB_CONFIG_DESCRIPTOR_SIZE +
-	 USB_INTERFACE_DESCRIPTOR_SIZE +
-	 USB_ENDPOINT_DESCRIPTOR_SIZE},
-	1,			/* number of interfaces */
-	1,			/* configuration value */
-	0,			/* index to configuration */
-	UC_SELF_POWERED,	/* attributes */
-	250			/* max current is 500mA... */
+	.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_CONFIG,
+	.wTotalLength = {
+		USB_CONFIG_DESCRIPTOR_SIZE +
+		USB_INTERFACE_DESCRIPTOR_SIZE +
+		USB_ENDPOINT_DESCRIPTOR_SIZE,
+	},
+	.bNumInterface = 1,
+	.bConfigurationValue = 1,
+	.iConfiguration = 0,
+	.bmAttributes = UC_SELF_POWERED,
+	.bMaxPower = 250
 };
 
 usb_interface_descriptor_t ahci_ifcd = {
-	USB_INTERFACE_DESCRIPTOR_SIZE,
-	UDESC_INTERFACE,
-	0,			/* interface number */
-	0,			/* alternate setting */
-	1,			/* number of endpoint */
-	UICLASS_HUB,		/* class */
-	UISUBCLASS_HUB,		/* subclass */
-	0,			/* protocol */
-	0			/* index to interface */
+	.bLength = USB_INTERFACE_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_INTERFACE,
+	.bInterfaceNumber = 0,
+	.bAlternateSetting = 0,
+	.bNumEndpoints = 1,
+	.bInterfaceClass = UICLASS_HUB,
+	.bInterfaceSubClass = UISUBCLASS_HUB,
+	.bInterfaceProtocol = 0,
+	.iInterface = 0
 };
 
 usb_endpoint_descriptor_t ahci_endpd = {
-	USB_ENDPOINT_DESCRIPTOR_SIZE,
-	UDESC_ENDPOINT,
-	UE_DIR_IN | AHCI_INTR_ENDPT,	/* endpoint address */
-	UE_INTERRUPT,		/* attributes */
-	{8},			/* max packet size */
-	255			/* interval */
+	.bLength = USB_ENDPOINT_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_ENDPOINT,
+	.bEndpointAddress = UE_DIR_IN | AHCI_INTR_ENDPT,
+	.bmAttributes = UE_INTERRUPT,
+	.wMaxPacketSize = {8},
+	.bInterval = 255
 };
 
 usb_hub_descriptor_t ahci_hubd = {
-	USB_HUB_DESCRIPTOR_SIZE,
-	UDESC_HUB,
-	2,			/* number of ports */
-	{ 0, 0},    		/* hub characteristics */
-	0,			/* 5:power on to power good */
-	0,			/* 6:maximum current */
-	{ 0x00 },		/* both ports are removable */
-	{ 0x00 }		/* port power control mask */
+	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_HUB,
+	.bNbrPorts = 2,
+	.wHubCharacteristics = { 0, 0 },
+	.bPwrOn2PwrGood = 0,
+	.bHubContrCurrent = 0,
+	.DeviceRemovable = { 0x00 },
+	.PortPowerCtrlMask = { 0x00 }
 };
 
 static int
