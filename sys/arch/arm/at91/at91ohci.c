@@ -1,11 +1,11 @@
-/*	$Id: at91ohci.c,v 1.5 2011/11/04 17:13:15 aymeric Exp $	*/
-/*	$NetBSD: at91ohci.c,v 1.5 2011/11/04 17:13:15 aymeric Exp $	*/
+/*	$Id: at91ohci.c,v 1.5.28.1 2014/12/03 11:24:43 skrll Exp $	*/
+/*	$NetBSD: at91ohci.c,v 1.5.28.1 2014/12/03 11:24:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy.
  * All rights reserved.
  *
- * Based on arch/arm/ep93xx/epohci.c, 
+ * Based on arch/arm/ep93xx/epohci.c,
  * Copyright (c) 2004 Jesse Off
  * All rights reserved.
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91ohci.c,v 1.5 2011/11/04 17:13:15 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91ohci.c,v 1.5.28.1 2014/12/03 11:24:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ at91ohci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pid = sa->sa_pid;
 
 	/* Map I/O space */
-	if (bus_space_map(sc->sc.iot, sa->sa_addr, sa->sa_size, 
+	if (bus_space_map(sc->sc.iot, sa->sa_addr, sa->sa_size,
 			  0, &sc->sc.ioh)) {
 		printf(": cannot map mem space\n");
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.15 2011/07/01 18:39:29 dyoung Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.15.30.1 2014/12/03 11:24:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.15 2011/07/01 18:39:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.15.30.1 2014/12/03 11:24:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.15 2011/07/01 18:39:29 dyoung Exp $
 #include <mips/alchemy/include/aubusvar.h>
 #include <mips/alchemy/dev/ohcireg.h>
 
-#include <dev/usb/usb.h>   
+#include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_sbus.c,v 1.11 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: ohci_sbus.c,v 1.11.8.1 2014/12/03 11:24:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.11 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.11.8.1 2014/12/03 11:24:44 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -141,7 +141,7 @@ ohci_sbus_attach(struct device *parent, struct device *self, void *aux)
 	LIST_INIT(&sc->sc_dmaseg_head);
 
 	result = ohci_init(&sc->sc);
-	
+
 	if (result != USBD_NORMAL_COMPLETION) {
 		printf(": init failed. error=%d\n", result);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_mv.c,v 1.5 2014/03/15 13:33:48 kiyohara Exp $	*/
+/*	$NetBSD: ehci_mv.c,v 1.5.6.1 2014/12/03 11:24:44 skrll Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.5 2014/03/15 13:33:48 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.5.6.1 2014/12/03 11:24:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -316,7 +316,7 @@ mvusb_init(struct mvusb_softc *sc, enum marvell_tags *tags)
 		/* bits[8:9] - (DISCON_THRESHOLD ) */
 		/*
 		 * Orion1-A0/A1/B0=11, Orion2-A0=10,
-		 * Orion1-B1 and Orion2-B0 later=00 
+		 * Orion1-B1 and Orion2-B0 later=00
 		 */
 		reg &= ~(3 << 8);
 		if (sc->sc_model == MARVELL_ORION_1_88F5181 && sc->sc_rev <= 2)

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.14 2012/10/27 17:17:53 chs Exp $ */
+/*	$NetBSD: plumohci.c,v 1.14.14.1 2014/12/03 11:24:44 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.14 2012/10/27 17:17:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.14.14.1 2014/12/03 11:24:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ struct plumohci_shm {
 struct plumohci_softc {
 	struct ohci_softc sc;
 	void *sc_ih;
-	void *sc_wakeih;		
+	void *sc_wakeih;
 
 	LIST_HEAD(, plumohci_shm) sc_shm_head;
 };
@@ -142,14 +142,14 @@ plumohci_attach(device_t parent, device_t self, void *aux)
 	plumohci_bus_dma_tag._dmamap_chipset_v = sc;
 
 	/* Map I/O space */
-	if (bus_space_map(sc->sc.iot, PLUM_OHCI_REGBASE, OHCI_PAGE_SIZE, 
+	if (bus_space_map(sc->sc.iot, PLUM_OHCI_REGBASE, OHCI_PAGE_SIZE,
 	    0, &sc->sc.ioh)) {
 		printf(": cannot map mem space\n");
 		return;
 	}
 
 	/* power up */
-	/* 
+	/*
 	 * in the case of PLUM2, UHOSTC uses the VRAM as the shared RAM
 	 * so establish power/clock of Video contoroller
 	 */
@@ -164,12 +164,12 @@ plumohci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = plum_intr_establish(pa->pa_pc, PLUM_INT_USB, IST_EDGE,
 	    IPL_USB, ohci_intr, sc);
 #if 0
-	/* 
-	 *  enable the clock restart request interrupt 
+	/*
+	 *  enable the clock restart request interrupt
 	 *  (for USBSUSPEND state)
 	 */
-	sc->sc_wakeih = plum_intr_establish(pa->pa_pc, PLUM_INT_USBWAKE, 
-	    IST_EDGE, IPL_USB, 
+	sc->sc_wakeih = plum_intr_establish(pa->pa_pc, PLUM_INT_USBWAKE,
+	    IST_EDGE, IPL_USB,
 	    plumohci_intr, sc);
 #endif
 	/*
@@ -203,7 +203,7 @@ plumohci_intr(void *arg)
 
 /*
  * Plum2 OHCI specific busdma routines.
- *	Plum2 OHCI shared buffer can't allocate on memory 
+ *	Plum2 OHCI shared buffer can't allocate on memory
  *	but V-RAM (busspace).
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.59 2014/09/21 14:30:22 christos Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.59.2.1 2014/12/03 11:24:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.59 2014/09/21 14:30:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.59.2.1 2014/12/03 11:24:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,7 +463,7 @@ static int
 ehci_apply_amd_quirks(struct ehci_pci_softc *sc)
 {
 	pcireg_t value;
- 
+
 	aprint_normal_dev(sc->sc.sc_dev,
 	    "applying AMD SB600/SB700 USB freeze workaround\n");
 	value = pci_conf_read(sc->sc_pc, sc->sc_tag, EHCI_SBx00_WORKAROUND_REG);

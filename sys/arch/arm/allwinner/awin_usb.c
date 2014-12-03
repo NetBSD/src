@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.17 2014/11/14 08:20:22 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.17.2.1 2014/12/03 11:24:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -359,7 +359,7 @@ awinusb_match(device_t parent, cfdata_t cf, void *aux)
 
 	KASSERT(loc->loc_port != AWINIOCF_PORT_DEFAULT);
 	KASSERT(!strcmp(cf->cf_name, loc->loc_name));
-	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT 
+	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT
 	    || cf->cf_loc[AWINIOCF_PORT] == loc->loc_port);
 	KASSERT((awinusb_ports & __BIT(loc->loc_port)) == 0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_ohci.c,v 1.4 2011/07/01 19:01:31 dyoung Exp $	*/
+/*	$NetBSD: rmixl_ohci.c,v 1.4.30.1 2014/12/03 11:24:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_ohci.c,v 1.4 2011/07/01 19:01:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_ohci.c,v 1.4.30.1 2014/12/03 11:24:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_ohci.c,v 1.4 2011/07/01 19:01:31 dyoung Exp $"
 #include <mips/rmi/rmixl_intr.h>
 #include <mips/rmi/rmixl_usbivar.h>
 
-#include <dev/usb/usb.h>   
+#include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
