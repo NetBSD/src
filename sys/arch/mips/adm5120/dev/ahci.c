@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.12.6.5 2014/12/03 12:52:05 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.12.6.6 2014/12/03 13:08:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.5 2014/12/03 12:52:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.6 2014/12/03 13:08:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -532,21 +532,23 @@ ahci_noop(usbd_pipe_handle pipe)
  * Data structures and routines to emulate the root hub.
  */
 usb_device_descriptor_t ahci_devd = {
-	USB_DEVICE_DESCRIPTOR_SIZE,
-	UDESC_DEVICE,		/* type */
-	{0x01, 0x01},			/* USB version */
-	UDCLASS_HUB,		/* class */
-	UDSUBCLASS_HUB,		/* subclass */
-	0,			/* protocol */
-	64,			/* max packet */
-	{USB_VENDOR_SCANLOGIC & 0xff,	/* vendor ID (low)  */
-	 USB_VENDOR_SCANLOGIC >> 8  },	/* vendor ID (high) */
-	{0} /* ? */,		/* product ID */
-	{0},			/* device */
-	1,			/* index to manufacturer */
-	2,			/* index to product */
-	0,			/* index to serial number */
-	1			/* number of configurations */
+	.bLength = USB_DEVICE_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_DEVICE,
+	.bcdUSB = {0x01, 0x01},
+	.bDeviceClass = UDCLASS_HUB,
+	.bDeviceSubClass = UDSUBCLASS_HUB,
+	.bDeviceProtocol = 0,
+	.bMaxPacketSize = 64,
+	.idVendor = {
+		USB_VENDOR_SCANLOGIC & 0xff,	/* vendor ID (low)  */
+		USB_VENDOR_SCANLOGIC >> 8
+	},
+	.idProduct = {0},
+	.bcdDevice = {0},
+	.iManufacturer = 1,
+	.iProduct = 2,
+	.iSerialNumber = 0,
+	.bNumConfigurations = 1
 };
 
 usb_config_descriptor_t ahci_confd = {

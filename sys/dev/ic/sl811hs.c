@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47.6.4 2014/12/03 12:52:06 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.5 2014/12/03 13:09:00 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.4 2014/12/03 12:52:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.5 2014/12/03 13:09:00 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -2930,21 +2930,23 @@ slhci_insert(struct slhci_softc *sc)
  * Data structures and routines to emulate the root hub.
  */
 static const usb_device_descriptor_t slhci_devd = {
-	USB_DEVICE_DESCRIPTOR_SIZE,
-	UDESC_DEVICE,		/* type */
-	{0x01, 0x01},		/* USB version */
-	UDCLASS_HUB,		/* class */
-	UDSUBCLASS_HUB,		/* subclass */
-	0,			/* protocol */
-	64,			/* max packet */
-	{USB_VENDOR_SCANLOGIC & 0xff,	/* vendor ID (low)  */
-	 USB_VENDOR_SCANLOGIC >> 8  },	/* vendor ID (high) */
-	{0} /* ? */,		/* product ID */
-	{0},			/* device */
-	1,			/* index to manufacturer */
-	2,			/* index to product */
-	0,			/* index to serial number */
-	1			/* number of configurations */
+	.bLength = USB_DEVICE_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_DEVICE,
+	.bcdUSB = {0x01, 0x01},
+	.bDeviceClass = UDCLASS_HUB,
+	.bDeviceSubClass = UDSUBCLASS_HUB,
+	.bDeviceProtocol = 0,
+	.bMaxPacketSize = 64,
+	.idVendor = {
+		USB_VENDOR_SCANLOGIC & 0xff,	/* vendor ID (low)  */
+	 	USB_VENDOR_SCANLOGIC >> 8
+	},
+	.idProduct = {0},
+	.bcdDevice = {0},
+	.iManufacturer = 1,
+	.iProduct = 2,
+	.iSerialNumber = 0,
+	.bNumConfigurations = 1
 };
 
 static const struct slhci_confd_t {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.7 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.8 2014/12/03 13:09:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.7 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.8 2014/12/03 13:09:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2395,16 +2395,20 @@ done:
  * Data structures and routines to emulate the root hub.
  */
 Static usb_device_descriptor_t ohci_devd = {
-	USB_DEVICE_DESCRIPTOR_SIZE,
-	UDESC_DEVICE,		/* type */
-	{0x00, 0x01},		/* USB version */
-	UDCLASS_HUB,		/* class */
-	UDSUBCLASS_HUB,		/* subclass */
-	UDPROTO_FSHUB,		/* protocol */
-	64,			/* max packet */
-	{0},{0},{0x00,0x01},	/* device id */
-	1,2,0,			/* string indicies */
-	1			/* # of configurations */
+	.bLength = USB_DEVICE_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_DEVICE,
+	.bcdUSB = {0x00, 0x01},
+	.bDeviceClass = UDCLASS_HUB,
+	.bDeviceSubClass = UDSUBCLASS_HUB,
+	.bDeviceProtocol = UDPROTO_FSHUB,
+	.bMaxPacketSize = 64,
+	.idVendor = {0},
+	.idProduct = {0},
+	.bcdDevice = {0x00,0x01},
+	.iManufacturer = 1,
+	.iProduct = 2,
+	.iSerialNumber = 0,
+	.bNumConfigurations = 1
 };
 
 Static const usb_config_descriptor_t ohci_confd = {
