@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.8 2014/12/03 13:09:00 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.9 2014/12/03 13:19:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.8 2014/12/03 13:09:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.9 2014/12/03 13:19:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2412,28 +2412,30 @@ Static usb_device_descriptor_t ohci_devd = {
 };
 
 Static const usb_config_descriptor_t ohci_confd = {
-	USB_CONFIG_DESCRIPTOR_SIZE,
-	UDESC_CONFIG,
-	{USB_CONFIG_DESCRIPTOR_SIZE +
-	 USB_INTERFACE_DESCRIPTOR_SIZE +
-	 USB_ENDPOINT_DESCRIPTOR_SIZE},
-	1,
-	1,
-	0,
-	UC_ATTR_MBO | UC_SELF_POWERED,
-	0			/* max power */
+	.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_CONFIG,
+	.wTotalLength = {
+		USB_CONFIG_DESCRIPTOR_SIZE +
+		USB_INTERFACE_DESCRIPTOR_SIZE +
+		USB_ENDPOINT_DESCRIPTOR_SIZE
+	},
+	.bNumInterface = 1,
+	.bConfigurationValue = 1,
+	.iConfiguration = 0,
+	.bmAttributes = UC_ATTR_MBO | UC_SELF_POWERED,
+	.bMaxPower = 0
 };
 
 Static const usb_interface_descriptor_t ohci_ifcd = {
-	USB_INTERFACE_DESCRIPTOR_SIZE,
-	UDESC_INTERFACE,
-	0,
-	0,
-	1,
-	UICLASS_HUB,
-	UISUBCLASS_HUB,
-	UIPROTO_FSHUB,
-	0
+	.bLength = USB_INTERFACE_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_INTERFACE,
+	.bInterfaceNumber = 0,
+	.bAlternateSetting = 0,
+	.bNumEndpoints = 1,
+	.bInterfaceClass = UICLASS_HUB,
+	.bInterfaceSubClass = UISUBCLASS_HUB,
+	.bInterfaceProtocol = UIPROTO_FSHUB,
+	.iInterface = 0
 };
 
 Static const usb_endpoint_descriptor_t ohci_endpd = {
@@ -2441,7 +2443,7 @@ Static const usb_endpoint_descriptor_t ohci_endpd = {
 	.bDescriptorType = UDESC_ENDPOINT,
 	.bEndpointAddress = UE_DIR_IN | OHCI_INTR_ENDPT,
 	.bmAttributes = UE_INTERRUPT,
-	.wMaxPacketSize = {8, 0},			/* max packet */
+	.wMaxPacketSize = {8, 0},
 	.bInterval = 255,
 };
 
