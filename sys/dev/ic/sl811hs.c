@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47.6.5 2014/12/03 13:09:00 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.6 2014/12/03 13:19:38 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.5 2014/12/03 13:09:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.6 2014/12/03 13:19:38 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -2954,46 +2954,53 @@ static const struct slhci_confd_t {
 	const usb_interface_descriptor_t ifcd;
 	const usb_endpoint_descriptor_t endpd;
 } UPACKED slhci_confd = {
-	{ /* Configuration */
-		USB_CONFIG_DESCRIPTOR_SIZE,
-		UDESC_CONFIG,
-		{USB_CONFIG_DESCRIPTOR_SIZE +
-		 USB_INTERFACE_DESCRIPTOR_SIZE +
-		 USB_ENDPOINT_DESCRIPTOR_SIZE},
-		1,			/* number of interfaces */
-		1,			/* configuration value */
-		0,			/* index to configuration */
-		UC_SELF_POWERED,	/* attributes */
-		0			/* max current, filled in later */
-	}, { /* Interface */
-		USB_INTERFACE_DESCRIPTOR_SIZE,
-		UDESC_INTERFACE,
-		0,			/* interface number */
-		0,			/* alternate setting */
-		1,			/* number of endpoint */
-		UICLASS_HUB,		/* class */
-		UISUBCLASS_HUB,		/* subclass */
-		0,			/* protocol */
-		0			/* index to interface */
-	}, { /* Endpoint */
-		USB_ENDPOINT_DESCRIPTOR_SIZE,
-		UDESC_ENDPOINT,
-		UE_DIR_IN | ROOT_INTR_ENDPT,	/* endpoint address */
-		UE_INTERRUPT,			/* attributes */
-		{240, 0},			/* max packet size */
-		255				/* interval */
+	.confd = {
+		.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
+		.bDescriptorType = UDESC_CONFIG,
+		.wTotalLength = {
+			USB_CONFIG_DESCRIPTOR_SIZE +
+			USB_INTERFACE_DESCRIPTOR_SIZE +
+			USB_ENDPOINT_DESCRIPTOR_SIZE
+		},
+		.bNumInterface = 1,
+		.bConfigurationValue = 1,
+		.iConfiguration = 0,
+		.bmAttributes = UC_SELF_POWERED,
+		.bMaxPower = 0
+	},
+	.ifcd = {
+		.bLength = USB_INTERFACE_DESCRIPTOR_SIZE,
+		.bDescriptorType = UDESC_INTERFACE,
+		.bInterfaceNumber = 0,
+		.bAlternateSetting = 0,
+		.bNumEndpoints = 1,
+		.bInterfaceClass = UICLASS_HUB,	
+		.bInterfaceSubClass = UISUBCLASS_HUB,
+		.bInterfaceProtocol = 0,
+		.iInterface = 0
+	},
+	.endpd = {
+		.bLength = USB_ENDPOINT_DESCRIPTOR_SIZE,
+		.bDescriptorType = UDESC_ENDPOINT,
+		.bEndpointAddress = UE_DIR_IN | ROOT_INTR_ENDPT,
+		.bmAttributes = UE_INTERRUPT,
+		.wMaxPacketSize = {240, 0},
+		.bInterval = 255
 	}
 };
 
 static const usb_hub_descriptor_t slhci_hubd = {
-	USB_HUB_DESCRIPTOR_SIZE,
-	UDESC_HUB,
-	1,			/* number of ports */
-	{UHD_PWR_INDIVIDUAL | UHD_OC_NONE, 0},	/* hub characteristics */
-	50,			/* 5:power on to power good, units of 2ms */
-	0,			/* 6:maximum current, filled in later */
-	{ 0x00 },		/* port is removable */
-	{ 0x00 }		/* port power control mask */
+	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_HUB,
+	.bNbrPorts = 1,
+	.wHubCharacteristics = {
+		UHD_PWR_INDIVIDUAL | UHD_OC_NONE,
+		0
+	},
+	.bPwrOn2PwrGood = 50,
+	.bHubContrCurrent = 0,
+	.DeviceRemovable = { 0x00 },
+	.PortPowerCtrlMask = { 0x00 }
 };
 
 static usbd_status
