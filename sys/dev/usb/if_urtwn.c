@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.34.4.2 2014/12/03 11:24:44 skrll Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.34.4.3 2014/12/03 22:33:56 skrll Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.2 2014/12/03 11:24:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.3 2014/12/03 22:33:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.2 2014/12/03 11:24:44 skrll Exp 
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/conf.h>
 #include <sys/device.h>

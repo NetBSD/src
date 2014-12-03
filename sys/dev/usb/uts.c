@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.3.14.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: uts.c,v 1.3.14.2 2014/12/03 22:33:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,12 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.3.14.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.3.14.2 2014/12/03 22:33:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/vnode.h>

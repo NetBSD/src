@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.41.2.3 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.41.2.4 2014/12/03 22:33:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.3 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.4 2014/12/03 22:33:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.3 2014/12/03 12:52:07 skrll Exp $"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-/* #include <sys/malloc.h> */
 #include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.8 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.9 2014/12/03 22:33:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.8 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.9 2014/12/03 22:33:56 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.8 2014/12/03 14:18:07 skrll Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/select.h>
 #include <sys/proc.h>
