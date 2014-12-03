@@ -1,4 +1,4 @@
-/*	$NetBSD: epohci.c,v 1.7.14.1 2014/12/03 11:24:43 skrll Exp $ */
+/*	$NetBSD: epohci.c,v 1.7.14.2 2014/12/03 12:52:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.7.14.1 2014/12/03 11:24:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.7.14.2 2014/12/03 12:52:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,10 +91,10 @@ epohci_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t syscon_ioh;
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	sc->sc.iot = sa->sa_iot;
-	sc->sc.sc_bus.dmatag = sa->sa_dmat;
+	sc->sc.sc_bus.ub_dmatag = sa->sa_dmat;
 	sc->sc_intr = sa->sa_intr;
 
 	/* Map I/O space */

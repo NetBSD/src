@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_ohci.c,v 1.3.4.1 2014/12/03 11:24:44 skrll Exp $	*/
+/*	$NetBSD: ralink_ohci.c,v 1.3.4.2 2014/12/03 12:52:06 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "ehci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_ohci.c,v 1.3.4.1 2014/12/03 11:24:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_ohci.c,v 1.3.4.2 2014/12/03 12:52:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -94,9 +94,9 @@ ralink_ohci_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": OHCI USB controller\n");
 
 	sc->sc_ohci.sc_dev = self;
-	sc->sc_ohci.sc_bus.hci_private = sc;
+	sc->sc_ohci.sc_bus.ub_hcpriv = sc;
 	sc->sc_ohci.iot = ma->ma_memt;
-	sc->sc_ohci.sc_bus.dmatag = ma->ma_dmat;
+	sc->sc_ohci.sc_bus.ub_dmatag = ma->ma_dmat;
 
 	/* Map I/O registers */
 	if ((error = bus_space_map(sc->sc_ohci.iot, RA_USB_OHCI_BASE,

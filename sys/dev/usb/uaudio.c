@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.140.2.2 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.140.2.3 2014/12/03 12:52:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.2 2014/12/02 09:00:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.3 2014/12/03 12:52:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,7 +427,7 @@ uaudio_attach(device_t parent, device_t self, void *aux)
 	strlcpy(sc->sc_adev.name, "USB audio", sizeof(sc->sc_adev.name));
 	strlcpy(sc->sc_adev.version, "", sizeof(sc->sc_adev.version));
 	snprintf(sc->sc_adev.config, sizeof(sc->sc_adev.config), "usb:%08x",
-	    sc->sc_udev->cookie.cookie);
+	    sc->sc_udev->ud_cookie.cookie);
 
 	aprint_naive("\n");
 	aprint_normal("\n");

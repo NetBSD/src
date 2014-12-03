@@ -1,5 +1,5 @@
-/*	$Id: at91ohci.c,v 1.5.28.1 2014/12/03 11:24:43 skrll Exp $	*/
-/*	$NetBSD: at91ohci.c,v 1.5.28.1 2014/12/03 11:24:43 skrll Exp $	*/
+/*	$Id: at91ohci.c,v 1.5.28.2 2014/12/03 12:52:05 skrll Exp $	*/
+/*	$NetBSD: at91ohci.c,v 1.5.28.2 2014/12/03 12:52:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91ohci.c,v 1.5.28.1 2014/12/03 11:24:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91ohci.c,v 1.5.28.2 2014/12/03 12:52:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,8 @@ at91ohci_attach(device_t parent, device_t self, void *aux)
 	struct at91bus_attach_args *sa = aux;
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
-	sc->sc.sc_bus.dmatag = sa->sa_dmat;
+	sc->sc.sc_bus.ub_hcpriv = sc;
+	sc->sc.sc_bus.ub_dmatag = sa->sa_dmat;
 	sc->sc.iot = sa->sa_iot;
 	sc->sc_pid = sa->sa_pid;
 

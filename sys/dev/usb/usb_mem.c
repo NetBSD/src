@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.65.2.2 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.65.2.3 2014/12/03 12:52:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.2 2014/12/02 09:00:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.3 2014/12/03 12:52:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -80,9 +80,9 @@ extern int usbdebug;
 
 /* This struct is overlayed on free fragments. */
 struct usb_frag_dma {
-	usb_dma_block_t *block;
-	u_int offs;
-	LIST_ENTRY(usb_frag_dma) next;
+	usb_dma_block_t		*ufd_block;
+	u_int			ufd_offs;
+	LIST_ENTRY(usb_frag_dma) ufd_next;
 };
 
 Static usbd_status	usb_block_allocmem(bus_dma_tag_t, size_t, size_t,
@@ -266,7 +266,7 @@ usbd_status
 usb_allocmem_flags(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p,
 		   int flags)
 {
-	bus_dma_tag_t tag = bus->dmatag;
+	bus_dma_tag_t tag = bus->ub_dmatag;
 	usbd_status err;
 	struct usb_frag_dma *f;
 	usb_dma_block_t *b;
@@ -285,13 +285,13 @@ usb_allocmem_flags(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p,
 		DPRINTFN(1, ("usb_allocmem: large alloc %d\n", (int)size));
 		size = (size + USB_MEM_BLOCK - 1) & ~(USB_MEM_BLOCK - 1);
 		mutex_enter(&usb_blk_lock);
-		err = usb_block_allocmem(tag, size, align, &p->block, frag);
+		err = usb_block_allocmem(tag, size, align, &p->udma_block, frag);
 		if (!err) {
 #ifdef DEBUG
-			LIST_INSERT_HEAD(&usb_blk_fulllist, p->block, next);
+			LIST_INSERT_HEAD(&usb_blk_fulllist, p->udma_block, next);
 #endif
-			p->block->flags = USB_DMA_FULLBLOCK;
-			p->offs = 0;
+			p->udma_block->flags = USB_DMA_FULLBLOCK;
+			p->udma_offs = 0;
 		}
 		mutex_exit(&usb_blk_lock);
 		return (err);
@@ -299,11 +299,11 @@ usb_allocmem_flags(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p,
 
 	mutex_enter(&usb_blk_lock);
 	/* Check for free fragments. */
-	LIST_FOREACH(f, &usb_frag_freelist, next) {
-		KDASSERTMSG(usb_valid_block_p(f->block, &usb_blk_fraglist),
+	LIST_FOREACH(f, &usb_frag_freelist, ufd_next) {
+		KDASSERTMSG(usb_valid_block_p(f->ufd_block, &usb_blk_fraglist),
 		    "%s: usb frag %p: unknown block pointer %p",
-		     __func__, f, f->block);
-		if (f->block->tag == tag)
+		     __func__, f, f->ufd_block);
+		if (f->ufd_block->tag == tag)
 			break;
 	}
 	if (f == NULL) {
@@ -320,21 +320,21 @@ usb_allocmem_flags(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p,
 		b->flags = 0;
 		for (i = 0; i < USB_MEM_BLOCK; i += USB_MEM_SMALL) {
 			f = (struct usb_frag_dma *)((char *)b->kaddr + i);
-			f->block = b;
-			f->offs = i;
-			LIST_INSERT_HEAD(&usb_frag_freelist, f, next);
+			f->ufd_block = b;
+			f->ufd_offs = i;
+			LIST_INSERT_HEAD(&usb_frag_freelist, f, ufd_next);
 #ifdef USB_FRAG_DMA_WORKAROUND
 			i += 1 * USB_MEM_SMALL;
 #endif
 		}
 		f = LIST_FIRST(&usb_frag_freelist);
 	}
-	p->block = f->block;
-	p->offs = f->offs;
+	p->udma_block = f->ufd_block;
+	p->udma_offs = f->ufd_offs;
 #ifdef USB_FRAG_DMA_WORKAROUND
 	p->offs += USB_MEM_SMALL;
 #endif
-	LIST_REMOVE(f, next);
+	LIST_REMOVE(f, ufd_next);
 	mutex_exit(&usb_blk_lock);
 	DPRINTFN(5, ("usb_allocmem: use frag=%p size=%d\n", f, (int)size));
 
@@ -347,29 +347,29 @@ usb_freemem(usbd_bus_handle bus, usb_dma_t *p)
 	struct usb_frag_dma *f;
 
 	mutex_enter(&usb_blk_lock);
-	if (p->block->flags & USB_DMA_FULLBLOCK) {
-		KDASSERTMSG(usb_valid_block_p(p->block, &usb_blk_fulllist),
+	if (p->udma_block->flags & USB_DMA_FULLBLOCK) {
+		KDASSERTMSG(usb_valid_block_p(p->udma_block, &usb_blk_fulllist),
 		    "%s: dma %p: invalid block pointer %p",
-		     __func__, p, p->block);
+		     __func__, p, p->udma_block);
 		DPRINTFN(1, ("usb_freemem: large free\n"));
-		usb_block_freemem(p->block);
+		usb_block_freemem(p->udma_block);
 		mutex_exit(&usb_blk_lock);
 		return;
 	}
-	KDASSERTMSG(usb_valid_block_p(p->block, &usb_blk_fraglist),
+	KDASSERTMSG(usb_valid_block_p(p->udma_block, &usb_blk_fraglist),
 	    "%s: dma %p: invalid block pointer %p",
-	     __func__, p, p->block);
+	     __func__, p, p->udma_block);
 	//usb_syncmem(p, 0, USB_MEM_SMALL, BUS_DMASYNC_POSTREAD);
 	f = KERNADDR(p, 0);
 #ifdef USB_FRAG_DMA_WORKAROUND
 	f = (void *)((uintptr_t)f - USB_MEM_SMALL);
 #endif
-	f->block = p->block;
-	f->offs = p->offs;
+	f->ufd_block = p->udma_block;
+	f->ufd_offs = p->udma_offs;
 #ifdef USB_FRAG_DMA_WORKAROUND
 	f->offs -= USB_MEM_SMALL;
 #endif
-	LIST_INSERT_HEAD(&usb_frag_freelist, f, next);
+	LIST_INSERT_HEAD(&usb_frag_freelist, f, ufd_next);
 	mutex_exit(&usb_blk_lock);
 	DPRINTFN(5, ("usb_freemem: frag=%p\n", f));
 }
@@ -380,13 +380,13 @@ usb_dmaaddr(usb_dma_t *dma, unsigned int offset)
 	unsigned int i;
 	bus_size_t seg_offs;
 
-	offset += dma->offs;
+	offset += dma->udma_offs;
 
-	KASSERT(offset < dma->block->size);
+	KASSERT(offset < dma->udma_block->size);
 
-	if (dma->block->nsegs == 1) {
-		KASSERT(dma->block->map->dm_segs[0].ds_len > offset);
-		return dma->block->map->dm_segs[0].ds_addr + offset;
+	if (dma->udma_block->nsegs == 1) {
+		KASSERT(dma->udma_block->map->dm_segs[0].ds_len > offset);
+		return dma->udma_block->map->dm_segs[0].ds_addr + offset;
 	}
 
 	/* Search for a bus_segment_t corresponding to this offset. With no
@@ -394,21 +394,21 @@ usb_dmaaddr(usb_dma_t *dma, unsigned int offset)
 	 * have to iterate from the start of the list each time. Could be
 	 * improved */
 	seg_offs = 0;
-	for (i = 0; i < dma->block->nsegs; i++) {
-		if (seg_offs + dma->block->map->dm_segs[i].ds_len > offset)
+	for (i = 0; i < dma->udma_block->nsegs; i++) {
+		if (seg_offs + dma->udma_block->map->dm_segs[i].ds_len > offset)
 			break;
 
-		seg_offs += dma->block->map->dm_segs[i].ds_len;
+		seg_offs += dma->udma_block->map->dm_segs[i].ds_len;
 	}
 
-	KASSERT(i != dma->block->nsegs);
+	KASSERT(i != dma->udma_block->nsegs);
 	offset -= seg_offs;
-	return dma->block->map->dm_segs[i].ds_addr + offset;
+	return dma->udma_block->map->dm_segs[i].ds_addr + offset;
 }
 
 void
 usb_syncmem(usb_dma_t *p, bus_addr_t offset, bus_size_t len, int ops)
 {
-	bus_dmamap_sync(p->block->tag, p->block->map, p->offs + offset,
+	bus_dmamap_sync(p->udma_block->tag, p->udma_block->map, p->udma_offs + offset,
 	    len, ops);
 }

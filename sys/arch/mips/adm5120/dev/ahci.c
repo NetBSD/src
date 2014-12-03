@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.12.6.4 2014/12/02 09:00:33 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.12.6.5 2014/12/03 12:52:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.4 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.5 2014/12/03 12:52:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,11 +272,11 @@ ahci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_st = aa->oba_st;
 
 	/* Initialize sc */
-	sc->sc_bus.usbrev = USBREV_1_1;
-	sc->sc_bus.methods = &ahci_bus_methods;
-	sc->sc_bus.pipe_size = sizeof(struct ahci_pipe);
-	sc->sc_bus.dmatag = sc->sc_dmat;
-	sc->sc_bus.usedma = true;
+	sc->sc_bus.ub_revision = USBREV_1_1;
+	sc->sc_bus.ub_methods = &ahci_bus_methods;
+	sc->sc_bus.ub_pipesize = sizeof(struct ahci_pipe);
+	sc->sc_bus.ub_dmatag = sc->sc_dmat;
+	sc->sc_bus.ub_usedma = true;
 
 	/* Map the device. */
 	if (bus_space_map(sc->sc_st, aa->oba_addr,
@@ -367,23 +367,23 @@ ahci_intr(void *arg)
 usbd_status
 ahci_open(usbd_pipe_handle pipe)
 {
-	usbd_device_handle dev = pipe->device;
-	struct ahci_softc *sc = (struct ahci_softc *)dev->bus;
+	usbd_device_handle dev = pipe->up_dev;
+	struct ahci_softc *sc = (struct ahci_softc *)dev->ud_bus;
 	struct ahci_pipe *apipe = (struct ahci_pipe *)pipe;
-	usb_endpoint_descriptor_t *ed = pipe->endpoint->edesc;
+	usb_endpoint_descriptor_t *ed = pipe->up_endpoint->ue_edesc;
 
 	DPRINTF(D_TRACE, ("ahci_open(addr=%d,ep=%d,scaddr=%d)",
-		dev->address, ed->bEndpointAddress, sc->sc_addr));
+		dev->ud_addr, ed->bEndpointAddress, sc->sc_addr));
 
 	apipe->toggle=0;
 
-	if (dev->address == sc->sc_addr) {
+	if (dev->ud_addr == sc->sc_addr) {
 		switch (ed->bEndpointAddress) {
 		case USB_CONTROL_ENDPOINT:
-			pipe->methods = &ahci_root_ctrl_methods;
+			pipe->up_methods = &ahci_root_ctrl_methods;
 			break;
 		case UE_DIR_IN | AHCI_INTR_ENDPT:
-			pipe->methods = &ahci_root_intr_methods;
+			pipe->up_methods = &ahci_root_intr_methods;
 			break;
 		default:
 			printf("open:endpointErr!\n");
@@ -393,19 +393,19 @@ ahci_open(usbd_pipe_handle pipe)
 		switch (ed->bmAttributes & UE_XFERTYPE) {
 		case UE_CONTROL:
 			DPRINTF(D_MSG, ("control "));
-			pipe->methods = &ahci_device_ctrl_methods;
+			pipe->up_methods = &ahci_device_ctrl_methods;
 			break;
 		case UE_INTERRUPT:
 			DPRINTF(D_MSG, ("interrupt "));
-			pipe->methods = &ahci_device_intr_methods;
+			pipe->up_methods = &ahci_device_intr_methods;
 			break;
 		case UE_ISOCHRONOUS:
 			DPRINTF(D_MSG, ("isochronous "));
-			pipe->methods = &ahci_device_isoc_methods;
+			pipe->up_methods = &ahci_device_isoc_methods;
 			break;
 		case UE_BULK:
 			DPRINTF(D_MSG, ("bluk "));
-			pipe->methods = &ahci_device_bulk_methods;
+			pipe->up_methods = &ahci_device_bulk_methods;
 			break;
 		}
 	}
@@ -432,8 +432,8 @@ void
 ahci_poll_hub(void *arg)
 {
 	usbd_xfer_handle xfer = arg;
-	usbd_pipe_handle pipe = xfer->pipe;
-	struct ahci_softc *sc = (struct ahci_softc *)pipe->device->bus;
+	usbd_pipe_handle pipe = xfer->ux_pipe;
+	struct ahci_softc *sc = (struct ahci_softc *)pipe->up_dev->ud_bus;
 	u_char *p;
 	static int p0_state=0;
 	static int p1_state=0;
@@ -441,7 +441,7 @@ ahci_poll_hub(void *arg)
 	callout_reset(&sc->sc_poll_handle, sc->sc_interval, ahci_poll_hub, xfer);
 
 	/* USB spec 11.13.3 (p.260) */
-	p = KERNADDR(&xfer->dmabuf, 0);
+	p = KERNADDR(&xfer->ux_dmabuf, 0);
 	p[0] = 0;
 	if ((REG_READ(ADMHCD_REG_PORTSTATUS0) & ADMHCD_CCS) != p0_state) {
 		p[0] = 2;
@@ -458,8 +458,8 @@ ahci_poll_hub(void *arg)
 	if (p[0] == 0)
 		return;
 
-	xfer->actlen = 1;
-	xfer->status = USBD_NORMAL_COMPLETION;
+	xfer->ux_actlen = 1;
+	xfer->ux_status = USBD_NORMAL_COMPLETION;
 	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
 	mutex_exit(&sc->sc_lock);
@@ -475,11 +475,11 @@ ahci_allocx(struct usbd_bus *bus)
 
 	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
 	if (xfer) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, ux_next);
 #ifdef DIAGNOSTIC
-		if (xfer->busy_free != XFER_FREE) {
+		if (xfer->ux_state != XFER_FREE) {
 			printf("ahci_allocx: xfer=%p not free, 0x%08x\n",
-				xfer, xfer->busy_free);
+				xfer, xfer->ux_state);
 		}
 #endif
 	} else {
@@ -489,7 +489,7 @@ ahci_allocx(struct usbd_bus *bus)
 	if (xfer) {
 		memset(xfer, 0, sizeof(*xfer));
 #ifdef DIAGNOSTIC
-		xfer->busy_free = XFER_BUSY;
+		xfer->ux_state = XFER_BUSY;
 #endif
 	}
 
@@ -504,20 +504,20 @@ ahci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 	DPRINTF(D_MEM, ("SLfreex"));
 
 #ifdef DIAGNOSTIC
-	if (xfer->busy_free != XFER_BUSY) {
+	if (xfer->ux_state != XFER_BUSY) {
 		printf("ahci_freex: xfer=%p not busy, 0x%08x\n",
-			xfer, xfer->busy_free);
+			xfer, xfer->ux_state);
 		return;
 	}
-	xfer->busy_free = XFER_FREE;
+	xfer->ux_state = XFER_FREE;
 #endif
-	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
+	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, ux_next);
 }
 
 static void
 ahci_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 {
-	struct ahci_softc *sc = bus->hci_private;
+	struct ahci_softc *sc = bus->ub_hcpriv;
 
 	*lock = &sc->sc_lock;
 }
@@ -614,7 +614,7 @@ ahci_str(usb_string_descriptor_t *p, int l, const char *s)
 usbd_status
 ahci_root_ctrl_transfer(usbd_xfer_handle xfer)
 {
-	struct ahci_softc *sc = (struct ahci_softc *)xfer->pipe->device->bus;
+	struct ahci_softc *sc = (struct ahci_softc *)xfer->ux_pipe->up_dev->ud_bus;
 	usbd_status error;
 
 	DPRINTF(D_TRACE, ("SLRCtrans "));
@@ -632,13 +632,13 @@ ahci_root_ctrl_transfer(usbd_xfer_handle xfer)
 	 * Pipe isn't running (otherwise error would be USBD_INPROG),
 	 * so start it first.
 	 */
-	return ahci_root_ctrl_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
+	return ahci_root_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 usbd_status
 ahci_root_ctrl_start(usbd_xfer_handle xfer)
 {
-	struct ahci_softc *sc = (struct ahci_softc *)xfer->pipe->device->bus;
+	struct ahci_softc *sc = (struct ahci_softc *)xfer->ux_pipe->up_dev->ud_bus;
 	usb_device_request_t *req;
 	int len, value, index, l, status;
 	int totlen = 0;
@@ -649,14 +649,14 @@ ahci_root_ctrl_start(usbd_xfer_handle xfer)
 
 	DPRINTF(D_TRACE, ("SLRCstart "));
 
-	req = &xfer->request;
+	req = &xfer->ux_request;
 
 	len = UGETW(req->wLength);
 	value = UGETW(req->wValue);
 	index = UGETW(req->wIndex);
 
 	if (len)
-		buf = KERNADDR(&xfer->dmabuf, 0);
+		buf = KERNADDR(&xfer->ux_dmabuf, 0);
 
 #ifdef AHCI_DEBUG
 	if ((ahci_debug & D_TRACE))
@@ -932,10 +932,10 @@ ahci_root_ctrl_start(usbd_xfer_handle xfer)
 		error = USBD_IOERROR;
 		goto ret;
 	}
-	xfer->actlen = totlen;
+	xfer->ux_actlen = totlen;
 	error = USBD_NORMAL_COMPLETION;
  ret:
-	xfer->status = error;
+	xfer->ux_status = error;
 	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
 	mutex_exit(&sc->sc_lock);
@@ -963,7 +963,7 @@ ahci_root_ctrl_done(usbd_xfer_handle xfer)
 static usbd_status
 ahci_root_intr_transfer(usbd_xfer_handle xfer)
 {
-	struct ahci_softc *sc = (struct ahci_softc *)xfer->pipe->device->bus;
+	struct ahci_softc *sc = (struct ahci_softc *)xfer->ux_pipe->up_dev->ud_bus;
 	usbd_status error;
 
 	DPRINTF(D_TRACE, ("SLRItransfer "));
@@ -979,18 +979,18 @@ ahci_root_intr_transfer(usbd_xfer_handle xfer)
 	 * Pipe isn't running (otherwise error would be USBD_INPROG),
 	 * start first.
 	 */
-	return ahci_root_intr_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
+	return ahci_root_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 static usbd_status
 ahci_root_intr_start(usbd_xfer_handle xfer)
 {
-	usbd_pipe_handle pipe = xfer->pipe;
-	struct ahci_softc *sc = (struct ahci_softc *)pipe->device->bus;
+	usbd_pipe_handle pipe = xfer->ux_pipe;
+	struct ahci_softc *sc = (struct ahci_softc *)pipe->up_dev->ud_bus;
 
 	DPRINTF(D_TRACE, ("SLRIstart "));
 
-	sc->sc_interval = MS_TO_TICKS(xfer->pipe->endpoint->edesc->bInterval);
+	sc->sc_interval = MS_TO_TICKS(xfer->ux_pipe->up_endpoint->ue_edesc->bInterval);
 	callout_reset(&sc->sc_poll_handle, sc->sc_interval, ahci_poll_hub, xfer);
 	sc->sc_intr_xfer = xfer;
 	return USBD_IN_PROGRESS;
@@ -1005,7 +1005,7 @@ ahci_root_intr_abort(usbd_xfer_handle xfer)
 static void
 ahci_root_intr_close(usbd_pipe_handle pipe)
 {
-	struct ahci_softc *sc = (struct ahci_softc *)pipe->device->bus;
+	struct ahci_softc *sc = (struct ahci_softc *)pipe->up_dev->ud_bus;
 
 	DPRINTF(D_TRACE, ("SLRIclose "));
 
@@ -1022,7 +1022,7 @@ ahci_root_intr_done(usbd_xfer_handle xfer)
 static usbd_status
 ahci_device_ctrl_transfer(usbd_xfer_handle xfer)
 {
-	struct ahci_softc *sc = (struct ahci_softc *)xfer->pipe->device->bus;
+	struct ahci_softc *sc = (struct ahci_softc *)xfer->ux_pipe->up_dev->ud_bus;
 	usbd_status error;
 
 	DPRINTF(D_TRACE, ("C"));
@@ -1033,7 +1033,7 @@ ahci_device_ctrl_transfer(usbd_xfer_handle xfer)
 	if (error)
 		return error;
 
-	return ahci_device_ctrl_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
+	return ahci_device_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 static usbd_status
@@ -1044,20 +1044,20 @@ ahci_device_ctrl_start(usbd_xfer_handle xfer)
 	static struct admhcd_ed ep_v __attribute__((aligned(16))), *ep;
 	static struct admhcd_td td_v[4] __attribute__((aligned(16))), *td, *td1, *td2, *td3;
 	static usb_dma_t reqdma;
-	usbd_pipe_handle pipe = xfer->pipe;
-	usb_device_request_t *req = &xfer->request;
-	struct ahci_softc *sc = (struct ahci_softc *)pipe->device->bus;
+	usbd_pipe_handle pipe = xfer->ux_pipe;
+	usb_device_request_t *req = &xfer->ux_request;
+	struct ahci_softc *sc = (struct ahci_softc *)pipe->up_dev->ud_bus;
 	int len, isread;
 
 
 #if 0
-	struct ahci_pipe *apipe = (struct ahci_pipe *)xfer->pipe;
+	struct ahci_pipe *apipe = (struct ahci_pipe *)xfer->ux_pipe;
 #endif
 	mutex_enter(&sc->sc_lock);
 /*	printf("ctrl_start>>>\n"); */
 
 #ifdef DIAGNOSTIC
-	if (!(xfer->rqflags & URQ_REQUEST)) {
+	if (!(xfer->ux_rqflags & URQ_REQUEST)) {
 		/* XXX panic */
 		printf("ahci_device_ctrl_transfer: not a request\n");
 		return (USBD_INVAL);
@@ -1081,15 +1081,15 @@ ahci_device_ctrl_start(usbd_xfer_handle xfer)
 		/* printf("ep: %p\n",ep); */
 	};
 
-	ep->control =  pipe->device->address | \
-		((pipe->device->speed==USB_SPEED_FULL)?ADMHCD_ED_SPEED:0) | \
-		((UGETW(pipe->endpoint->edesc->wMaxPacketSize))<<ADMHCD_ED_MAXSHIFT);
+	ep->control =  pipe->up_dev->ud_addr | \
+		((pipe->up_dev->ud_speed==USB_SPEED_FULL)?ADMHCD_ED_SPEED:0) | \
+		((UGETW(pipe->up_endpoint->ue_edesc->wMaxPacketSize))<<ADMHCD_ED_MAXSHIFT);
 	memcpy(KERNADDR(&reqdma, 0), req, sizeof *req);
 /* 	printf("status: %x\n",REG_READ(ADMHCD_REG_PORTSTATUS0));
 	printf("ep_control: %x\n",ep->control);
-	printf("speed: %x\n",pipe->device->speed);
+	printf("speed: %x\n",pipe->up_dev->ud_speed);
 	printf("req: %p\n",req);
-	printf("dmabuf: %p\n",xfer->dmabuf.block); */
+	printf("dmabuf: %p\n",xfer->ux_dmabuf.block); */
 
 	isread = req->bmRequestType & UT_READ;
 	len = UGETW(req->wLength);
@@ -1103,7 +1103,7 @@ ahci_device_ctrl_start(usbd_xfer_handle xfer)
 	if (len) {
 		td->next = td1;
 
-		td1->buffer = DMAADDR(&xfer->dmabuf,0) | 0xa0000000;
+		td1->buffer = DMAADDR(&xfer->ux_dmabuf,0) | 0xa0000000;
 		td1->buflen = len;
 		td1->next = td2;
 		td1->control= (isread?ADMHCD_TD_IN:ADMHCD_TD_OUT) | ADMHCD_TD_DATA1 | ADMHCD_TD_R | ADMHCD_TD_OWN;
@@ -1177,8 +1177,8 @@ ahci_device_ctrl_start(usbd_xfer_handle xfer)
 	};
 	REG_WRITE(ADMHCD_REG_HOSTCONTROL, ADMHCD_STATE_OP);
 
-	xfer->actlen = len;
-	xfer->status = status;
+	xfer->ux_actlen = len;
+	xfer->ux_status = status;
 
 /* 	printf("ctrl_start<<<\n"); */
 
@@ -1209,7 +1209,7 @@ ahci_device_ctrl_done(usbd_xfer_handle xfer)
 static usbd_status
 ahci_device_intr_transfer(usbd_xfer_handle xfer)
 {
-	struct ahci_softc *sc = (struct ahci_softc *)xfer->pipe->device->bus;
+	struct ahci_softc *sc = (struct ahci_softc *)xfer->ux_pipe->up_dev->ud_bus;
 	usbd_status error;
 
 	DPRINTF(D_TRACE, ("INTRtrans "));
@@ -1220,13 +1220,13 @@ ahci_device_intr_transfer(usbd_xfer_handle xfer)
 	if (error)
 		return error;
 
-	return ahci_device_intr_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
+	return ahci_device_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 static usbd_status
 ahci_device_intr_start(usbd_xfer_handle xfer)
 {
-	usbd_pipe_handle pipe = xfer->pipe;
+	usbd_pipe_handle pipe = xfer->ux_pipe;
 	struct ahci_xfer *sx;
 
 	DPRINTF(D_TRACE, ("INTRstart "));
@@ -1236,12 +1236,12 @@ ahci_device_intr_start(usbd_xfer_handle xfer)
 		goto reterr;
 	memset(sx, 0, sizeof(*sx));
 	sx->sx_xfer  = xfer;
-	xfer->hcpriv = sx;
+	xfer->ux_hcpriv = sx;
 
 	/* initialize callout */
 	callout_init(&sx->sx_callout_t, 0);
 	callout_reset(&sx->sx_callout_t,
-		MS_TO_TICKS(pipe->endpoint->edesc->bInterval),
+		MS_TO_TICKS(pipe->up_endpoint->ue_edesc->bInterval),
 		ahci_poll_device, sx);
 
 	/* ACK */
@@ -1256,8 +1256,8 @@ ahci_poll_device(void *arg)
 {
 	struct ahci_xfer *sx = (struct ahci_xfer *)arg;
 	usbd_xfer_handle xfer = sx->sx_xfer;
-	usbd_pipe_handle pipe = xfer->pipe;
-	struct ahci_softc *sc = (struct ahci_softc *)pipe->device->bus;
+	usbd_pipe_handle pipe = xfer->ux_pipe;
+	struct ahci_softc *sc = (struct ahci_softc *)pipe->up_dev->ud_bus;
 	void *buf;
 	int pid;
 	int r;
@@ -1265,15 +1265,15 @@ ahci_poll_device(void *arg)
 	DPRINTF(D_TRACE, ("pldev"));
 
 	callout_reset(&sx->sx_callout_t,
-		MS_TO_TICKS(pipe->endpoint->edesc->bInterval),
+		MS_TO_TICKS(pipe->up_endpoint->ue_edesc->bInterval),
 		ahci_poll_device, sx);
 
 	/* interrupt transfer */
-	pid = (UE_GET_DIR(pipe->endpoint->edesc->bEndpointAddress) == UE_DIR_IN)
+	pid = (UE_GET_DIR(pipe->up_endpoint->ue_edesc->bEndpointAddress) == UE_DIR_IN)
 	    ? ADMHCD_TD_IN : ADMHCD_TD_OUT;
-	buf = KERNADDR(&xfer->dmabuf, 0);
+	buf = KERNADDR(&xfer->ux_dmabuf, 0);
 
-	r = ahci_transaction(sc, pipe, pid, xfer->length, buf, 0/*toggle*/);
+	r = ahci_transaction(sc, pipe, pid, xfer->ux_length, buf, 0/*toggle*/);
 	if (r < 0) {
 		DPRINTF(D_MSG, ("%s error", __func__));
 		return;
@@ -1282,7 +1282,7 @@ ahci_poll_device(void *arg)
 	if (r == 0)
 		return;
 
-	xfer->status = USBD_NORMAL_COMPLETION;
+	xfer->ux_status = USBD_NORMAL_COMPLETION;
 	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
 	mutex_exit(&sc->sc_lock);
@@ -1295,11 +1295,11 @@ ahci_device_intr_abort(usbd_xfer_handle xfer)
 
 	DPRINTF(D_TRACE, ("INTRabort "));
 
-	sx = xfer->hcpriv;
+	sx = xfer->ux_hcpriv;
 	if (sx) {
 		callout_stop(&sx->sx_callout_t);
 		free(sx, M_USB);
-		xfer->hcpriv = NULL;
+		xfer->ux_hcpriv = NULL;
 	} else {
 		printf("%s: sx == NULL!\n", __func__);
 	}
@@ -1353,7 +1353,7 @@ ahci_device_isoc_done(usbd_xfer_handle xfer)
 static usbd_status
 ahci_device_bulk_transfer(usbd_xfer_handle xfer)
 {
-	struct ahci_softc *sc = (struct ahci_softc *)xfer->pipe->device->bus;
+	struct ahci_softc *sc = (struct ahci_softc *)xfer->ux_pipe->up_dev->ud_bus;
 	usbd_status error;
 
 	DPRINTF(D_TRACE, ("B"));
@@ -1364,7 +1364,7 @@ ahci_device_bulk_transfer(usbd_xfer_handle xfer)
 	if (error)
 		return error;
 
-	return ahci_device_bulk_start(SIMPLEQ_FIRST(&xfer->pipe->queue));
+	return ahci_device_bulk_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 static usbd_status
@@ -1376,16 +1376,16 @@ ahci_device_bulk_start(usbd_xfer_handle xfer)
 	int s, err;
 	static struct admhcd_ed ep_v __attribute__((aligned(16))), *ep;
 	static struct admhcd_td td_v[NBULK_TDS] __attribute__((aligned(16))), *td[NBULK_TDS];
-	usbd_pipe_handle pipe = xfer->pipe;
-	struct ahci_softc *sc = (struct ahci_softc *)pipe->device->bus;
+	usbd_pipe_handle pipe = xfer->ux_pipe;
+	struct ahci_softc *sc = (struct ahci_softc *)pipe->up_dev->ud_bus;
 	int endpt, i, len, tlen, segs, offset, isread, toggle, short_ok;
-	struct ahci_pipe *apipe = (struct ahci_pipe *)xfer->pipe;
+	struct ahci_pipe *apipe = (struct ahci_pipe *)xfer->ux_pipe;
 
 #define KSEG1ADDR(x) (0xa0000000 | (((uint32_t)x) & 0x1fffffff))
 	DPRINTF(D_TRACE, ("st "));
 
 #ifdef DIAGNOSTIC
-	if (xfer->rqflags & URQ_REQUEST) {
+	if (xfer->ux_rqflags & URQ_REQUEST) {
 		/* XXX panic */
 		printf("ohci_device_bulk_start: a request\n");
 		return (USBD_INVAL);
@@ -1409,20 +1409,20 @@ ahci_device_bulk_start(usbd_xfer_handle xfer)
 		toggle = apipe->toggle;
 	};
 
-	endpt = pipe->endpoint->edesc->bEndpointAddress;
-	ep->control = pipe->device->address | ((endpt & 0xf) << ADMHCD_ED_EPSHIFT)|\
-		((pipe->device->speed==USB_SPEED_FULL)?ADMHCD_ED_SPEED:0) | \
-		((UGETW(pipe->endpoint->edesc->wMaxPacketSize))<<ADMHCD_ED_MAXSHIFT);
+	endpt = pipe->up_endpoint->ue_edesc->bEndpointAddress;
+	ep->control = pipe->up_dev->ud_addr | ((endpt & 0xf) << ADMHCD_ED_EPSHIFT)|\
+		((pipe->up_dev->ud_speed==USB_SPEED_FULL)?ADMHCD_ED_SPEED:0) | \
+		((UGETW(pipe->up_endpoint->ue_edesc->wMaxPacketSize))<<ADMHCD_ED_MAXSHIFT);
 
-	short_ok = xfer->flags & USBD_SHORT_XFER_OK?ADMHCD_TD_R:0;
+	short_ok = xfer->ux_flags & USBD_SHORT_XFER_OK?ADMHCD_TD_R:0;
 /*	printf("level: %d\n",level);
 	printf("short_xfer: %x\n",short_ok);
 	printf("ep_control: %x\n",ep->control);
-	printf("speed: %x\n",pipe->device->speed);
-	printf("dmabuf: %p\n",xfer->dmabuf.block); */
+	printf("speed: %x\n",pipe->up_dev->ud_speed);
+	printf("dmabuf: %p\n",xfer->ux_dmabuf.block); */
 
 	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
-	len = xfer->length;
+	len = xfer->ux_length;
 
 	ep->next = ep;
 
@@ -1430,7 +1430,7 @@ ahci_device_bulk_start(usbd_xfer_handle xfer)
 	offset = 0;
 	while ((len>0) || (i==0)) {
 		tlen = min(len,4096);
-		td[i]->buffer = DMAADDR(&xfer->dmabuf,offset) | 0xa0000000;
+		td[i]->buffer = DMAADDR(&xfer->ux_dmabuf,offset) | 0xa0000000;
 		td[i]->buflen=tlen;
 		td[i]->control=(isread?ADMHCD_TD_IN:ADMHCD_TD_OUT) | toggle | ADMHCD_TD_OWN | short_ok;
 		td[i]->len=tlen;
@@ -1503,8 +1503,8 @@ ahci_device_bulk_start(usbd_xfer_handle xfer)
 /*		printf("bulk_transfer_done: short_transfer fix\n"); */
 		status = USBD_NORMAL_COMPLETION;
 	};
-	xfer->actlen = len;
-	xfer->status = status;
+	xfer->ux_actlen = len;
+	xfer->ux_status = status;
 
 	level--;
 /*	printf("bulk_start<<<\n"); */
@@ -1557,8 +1557,8 @@ ahci_transaction(struct ahci_softc *sc, usbd_pipe_handle pipe,
 	int pl;
 	uint8_t isr;
 	uint8_t result = 0;
-	uint8_t devaddr = pipe->device->address;
-	uint8_t endpointaddr = pipe->endpoint->edesc->bEndpointAddress;
+	uint8_t devaddr = pipe->up_dev->ud_addr;
+	uint8_t endpointaddr = pipe->up_endpoint->ue_edesc->bEndpointAddress;
 	uint8_t endpoint;
 	uint8_t cmd = DATA0_RD;
 
@@ -1584,7 +1584,7 @@ ahci_transaction(struct ahci_softc *sc, usbd_pipe_handle pipe,
 
 	/* Low speed device via HUB */
 	/* XXX does not work... */
-	if ((sc->sc_fullspeed) && pipe->device->speed == USB_SPEED_LOW) {
+	if ((sc->sc_fullspeed) && pipe->up_dev->ud_speed == USB_SPEED_LOW) {
 		pl = len + 16;
 		cmd |= SL11_EPCTRL_PREAMBLE;
 
@@ -1652,7 +1652,7 @@ ahci_transaction(struct ahci_softc *sc, usbd_pipe_handle pipe,
 void
 ahci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 {
-	xfer->status = status;
+	xfer->ux_status = status;
 	usb_transfer_complete(xfer);
 }
 
@@ -1753,9 +1753,9 @@ void
 print_xfer(usbd_xfer_handle xfer)
 {
 	printf("xfer: length=%d, actlen=%d, flags=%x, timeout=%d,",
-		xfer->length, xfer->actlen, xfer->flags, xfer->timeout);
+		xfer->ux_length, xfer->ux_actlen, xfer->ux_flags, xfer->ux_timeout);
 	printf("request{ ");
-	print_req_hub(&xfer->request);
+	print_req_hub(&xfer->ux_request);
 	printf("} ");
 }
 #endif /* AHCI_DEBUG */

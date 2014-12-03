@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.3.6.1 2014/12/02 09:00:33 skrll Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.3.6.2 2014/12/03 12:52:07 skrll Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.1 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.2 2014/12/03 12:52:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -690,7 +690,7 @@ axen_attach(device_t parent, device_t self, void *aux)
 
 	/* XXX fix when USB3.0 HC is supported */
 	/* decide on what our bufsize will be */
-	sc->axen_bufsz = (sc->axen_udev->speed == USB_SPEED_HIGH) ?
+	sc->axen_bufsz = (sc->axen_udev->ud_speed == USB_SPEED_HIGH) ?
 	    AXEN_BUFSZ_HS * 1024 : AXEN_BUFSZ_LS * 1024;
 
 	/* Find endpoints. */
@@ -1236,7 +1236,7 @@ axen_encap(struct axen_softc *sc, struct mbuf *m, int idx)
 
 	c = &sc->axen_cdata.axen_tx_chain[idx];
 
-	boundary = (sc->axen_udev->speed == USB_SPEED_HIGH) ? 512 : 64;
+	boundary = (sc->axen_udev->ud_speed == USB_SPEED_HIGH) ? 512 : 64;
 
 	hdr.plen = htole32(m->m_pkthdr.len);
 	hdr.gso = 0; /* disable segmentation offloading */

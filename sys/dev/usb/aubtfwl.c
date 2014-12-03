@@ -1,4 +1,4 @@
-/* $NetBSD: aubtfwl.c,v 1.5.10.2 2014/12/02 09:00:33 skrll Exp $ */
+/* $NetBSD: aubtfwl.c,v 1.5.10.3 2014/12/03 12:52:07 skrll Exp $ */
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.5.10.2 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.5.10.3 2014/12/03 12:52:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <dev/usb/usb.h>
@@ -71,7 +71,7 @@ aubtfwl_match(device_t parent, cfdata_t match, void *aux)
 		return UMATCH_VENDOR_PRODUCT;
 
 	if (usb_lookup(ar3k12_devs, uaa->vendor, uaa->product)) {
-		return (UGETW(uaa->device->ddesc.bcdDevice) > 1)?
+		return (UGETW(uaa->device->ud_ddesc.bcdDevice) > 1)?
 			UMATCH_NONE : UMATCH_VENDOR_PRODUCT;
 	}
 

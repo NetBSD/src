@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.50.2.2 2014/12/02 09:00:33 skrll Exp $ */
+/*	$NetBSD: if_atu.c,v 1.50.2.3 2014/12/03 12:52:07 skrll Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.2 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.3 2014/12/03 12:52:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1365,7 +1365,7 @@ atu_complete_attach(struct atu_softc *sc)
 		ed = usbd_interface2endpoint_descriptor(sc->atu_iface, i);
 		if (!ed) {
 			DPRINTF(("%s: num_endp:%d\n", device_xname(sc->atu_dev),
-			    sc->atu_iface->idesc->bNumEndpoints));
+			    sc->atu_iface->ui_idesc->bNumEndpoints));
 			DPRINTF(("%s: couldn't get ep %d\n",
 			    device_xname(sc->atu_dev), i));
 			return;

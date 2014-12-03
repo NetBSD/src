@@ -1,4 +1,4 @@
-/*	$NetBSD: uberry.c,v 1.9 2012/12/27 16:42:32 skrll Exp $	*/
+/*	$NetBSD: uberry.c,v 1.9.14.1 2014/12/03 12:52:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.9 2012/12/27 16:42:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.9.14.1 2014/12/03 12:52:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ uberry_charge(struct uberry_softc *sc)
 	char dummy[2];
 	usbd_status err;
 
-	if (sc->sc_udev->power != USB_MAX_POWER) {
+	if (sc->sc_udev->ud_power != USB_MAX_POWER) {
 		uberry_cmd(sc, UT_READ | UT_VENDOR, 0xa5, 0, 1, dummy, 2);
 		uberry_cmd(sc, UT_WRITE | UT_VENDOR, 0xa2, 0, 1, dummy, 0);
 	}

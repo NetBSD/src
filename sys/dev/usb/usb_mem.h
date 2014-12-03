@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.30.14.3 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.30.14.4 2014/12/03 12:52:07 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -57,4 +57,4 @@ bus_addr_t	usb_dmaaddr(usb_dma_t *, unsigned int);
 
 #define DMAADDR(dma, o) usb_dmaaddr((dma), (o))
 #define KERNADDR(dma, o) \
-	((void *)((char *)(dma)->block->kaddr + (dma)->offs + (o)))
+	((void *)((char *)(dma)->udma_block->kaddr + (dma)->udma_offs + (o)))

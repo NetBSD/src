@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.4 2014/09/21 14:30:22 christos Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.4.2.1 2014/12/03 12:52:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.4 2014/09/21 14:30:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.4.2.1 2014/12/03 12:52:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
-	sc->sc_bus.hci_private = sc;
+	sc->sc_bus.ub_hcpriv = sc;
 
 	pci_aprint_devinfo(pa, "USB Controller");
 
@@ -126,9 +126,9 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	hccparams = bus_space_read_4(sc->sc_iot, sc->sc_ioh, 0x10);
 
 	if (pci_dma64_available(pa) && ((hccparams&1)==1))
-		sc->sc_bus.dmatag = pa->pa_dmat64;
+		sc->sc_bus.ub_dmatag = pa->pa_dmat64;
 	else
-		sc->sc_bus.dmatag = pa->pa_dmat;
+		sc->sc_bus.ub_dmatag = pa->pa_dmat;
 
 	/* Enable the device. */
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,

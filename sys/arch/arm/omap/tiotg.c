@@ -1,4 +1,4 @@
-/* $NetBSD: tiotg.c,v 1.2.8.1 2014/12/03 11:24:44 skrll Exp $ */
+/* $NetBSD: tiotg.c,v 1.2.8.2 2014/12/03 12:52:05 skrll Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.8.1 2014/12/03 11:24:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.8.2 2014/12/03 12:52:05 skrll Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -290,7 +290,7 @@ ti_motg_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ctrlih = intr_establish(aa->aa_intr, IPL_USB, IST_LEVEL,
 	    ti_motg_intr, sc);
 	sc->sc_ctrlport = aa->aa_port;
-	sc->sc_motg.sc_bus.dmatag = aa->aa_dmat;
+	sc->sc_motg.sc_bus.ub_dmatag = aa->aa_dmat;
 
 	val = TIOTG_USBC_READ4(sc, USBCTRL_REV);
 	aprint_normal(": 0x%x version v%d.%d.%d", val,

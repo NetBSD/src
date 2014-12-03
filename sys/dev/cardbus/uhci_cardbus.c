@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_cardbus.c,v 1.21 2014/09/21 15:07:19 christos Exp $	*/
+/*	$NetBSD: uhci_cardbus.c,v 1.21.2.1 2014/12/03 12:52:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.21 2014/09/21 15:07:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.21.2.1 2014/12/03 12:52:06 skrll Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -103,7 +103,7 @@ uhci_cardbus_attach(device_t parent, device_t self,
 	usbd_status r;
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(ca->ca_class));
@@ -119,7 +119,7 @@ uhci_cardbus_attach(device_t parent, device_t self,
 	sc->sc_cf = cf;
 	sc->sc_ct = ct;
 	sc->sc_tag = tag;
-	sc->sc.sc_bus.dmatag = ca->ca_dmat;
+	sc->sc.sc_bus.ub_dmatag = ca->ca_dmat;
 
 	/* Enable the device. */
 	csr = Cardbus_conf_read(ct, tag, PCI_COMMAND_STATUS_REG);
@@ -141,16 +141,16 @@ uhci_cardbus_attach(device_t parent, device_t self,
 
 	switch(Cardbus_conf_read(ct, tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:
-		sc->sc.sc_bus.usbrev = USBREV_PRE_1_0;
+		sc->sc.sc_bus.ub_revision = USBREV_PRE_1_0;
 		break;
 	case PCI_USBREV_1_0:
-		sc->sc.sc_bus.usbrev = USBREV_1_0;
+		sc->sc.sc_bus.ub_revision = USBREV_1_0;
 		break;
 	case PCI_USBREV_1_1:
-		sc->sc.sc_bus.usbrev = USBREV_1_1;
+		sc->sc.sc_bus.ub_revision = USBREV_1_1;
 		break;
 	default:
-		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
+		sc->sc.sc_bus.ub_revision = USBREV_UNKNOWN;
 		break;
 	}
 
