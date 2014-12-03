@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.9 2014/12/03 13:19:38 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.10 2014/12/03 22:40:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.9 2014/12/03 13:19:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.10 2014/12/03 22:40:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2414,11 +2414,10 @@ Static usb_device_descriptor_t ohci_devd = {
 Static const usb_config_descriptor_t ohci_confd = {
 	.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
 	.bDescriptorType = UDESC_CONFIG,
-	.wTotalLength = {
-		USB_CONFIG_DESCRIPTOR_SIZE +
-		USB_INTERFACE_DESCRIPTOR_SIZE +
-		USB_ENDPOINT_DESCRIPTOR_SIZE
-	},
+	.wTotalLength = USETWD(
+	    USB_CONFIG_DESCRIPTOR_SIZE +
+	    USB_INTERFACE_DESCRIPTOR_SIZE +
+	    USB_ENDPOINT_DESCRIPTOR_SIZE),
 	.bNumInterface = 1,
 	.bConfigurationValue = 1,
 	.iConfiguration = 0,
@@ -2443,7 +2442,7 @@ Static const usb_endpoint_descriptor_t ohci_endpd = {
 	.bDescriptorType = UDESC_ENDPOINT,
 	.bEndpointAddress = UE_DIR_IN | OHCI_INTR_ENDPT,
 	.bmAttributes = UE_INTERRUPT,
-	.wMaxPacketSize = {8, 0},
+	.wMaxPacketSize = USETWD(8),
 	.bInterval = 255,
 };
 

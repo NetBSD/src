@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.6 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.7 2014/12/03 22:40:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.6 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.7 2014/12/03 22:40:55 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -605,7 +605,7 @@ Static const struct dwc2_config_desc dwc2_confd = {
 	.confd = {
 		.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
 		.bDescriptorType = UDESC_CONFIG,
-		.wTotalLength[0] = sizeof(dwc2_confd),
+		.wTotalLength = USETWD(sizeof(dwc2_confd)),
 		.bNumInterface = 1,
 		.bConfigurationValue = 1,
 		.iConfiguration = 0,
@@ -628,19 +628,18 @@ Static const struct dwc2_config_desc dwc2_confd = {
 		.bDescriptorType = UDESC_ENDPOINT,
 		.bEndpointAddress = UE_DIR_IN | DWC2_INTR_ENDPT,
 		.bmAttributes = UE_INTERRUPT,
-		.wMaxPacketSize = {8, 0},			/* max packet */
+		.wMaxPacketSize = USETWD(8),			/* max packet */
 		.bInterval = 255,
 	},
 };
 
-#define	HSETW(ptr, val) ptr = { (uint8_t)(val), (uint8_t)((val) >> 8) }
 #if 0
 /* appears to be unused */
 Static const usb_hub_descriptor_t dwc2_hubd = {
 	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
 	.bDescriptorType = UDESC_HUB,
 	.bNbrPorts = 1,
-	HSETW(.wHubCharacteristics, (UHD_PWR_NO_SWITCH | UHD_OC_INDIVIDUAL)),
+	.wHubCharacteristics = USETWD(UHD_PWR_NO_SWITCH | UHD_OC_INDIVIDUAL),
 	.bPwrOn2PwrGood = 50,
 	.bHubContrCurrent = 0,
 	.DeviceRemovable = {0},		/* port is removable */

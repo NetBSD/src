@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.12.6.8 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.12.6.9 2014/12/03 22:40:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.8 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.9 2014/12/03 22:40:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,11 +554,10 @@ usb_device_descriptor_t ahci_devd = {
 usb_config_descriptor_t ahci_confd = {
 	.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
 	.bDescriptorType = UDESC_CONFIG,
-	.wTotalLength = {
-		USB_CONFIG_DESCRIPTOR_SIZE +
-		USB_INTERFACE_DESCRIPTOR_SIZE +
-		USB_ENDPOINT_DESCRIPTOR_SIZE,
-	},
+	.wTotalLength = USETWD(
+	    USB_CONFIG_DESCRIPTOR_SIZE +
+	    USB_INTERFACE_DESCRIPTOR_SIZE +
+	    USB_ENDPOINT_DESCRIPTOR_SIZE),
 	.bNumInterface = 1,
 	.bConfigurationValue = 1,
 	.iConfiguration = 0,
@@ -583,7 +582,7 @@ usb_endpoint_descriptor_t ahci_endpd = {
 	.bDescriptorType = UDESC_ENDPOINT,
 	.bEndpointAddress = UE_DIR_IN | AHCI_INTR_ENDPT,
 	.bmAttributes = UE_INTERRUPT,
-	.wMaxPacketSize = {8},
+	.wMaxPacketSize = USETWD(8),
 	.bInterval = 255
 };
 
@@ -591,7 +590,7 @@ usb_hub_descriptor_t ahci_hubd = {
 	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
 	.bDescriptorType = UDESC_HUB,
 	.bNbrPorts = 2,
-	.wHubCharacteristics = { 0, 0 },
+	.wHubCharacteristics = USETWD(0),
 	.bPwrOn2PwrGood = 0,
 	.bHubContrCurrent = 0,
 	.DeviceRemovable = { 0x00 },
