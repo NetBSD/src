@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/01/31 00:10:06 christos Exp $
+#	$NetBSD: Makefile,v 1.6.32.1 2014/12/03 23:05:07 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb
@@ -9,7 +9,7 @@ LIB=	rumpdev_usb
 IOCONF= USB.ioconf
 
 SRCS=	usb.c usbdi.c usbdi_util.c usb_mem.c usb_subr.c usb_quirks.c	\
-	uhub.c usbroothub_subr.c usb_verbose.c
+	uhub.c usbroothub.c usb_verbose.c
 SRCS+=	usb_at_ugenhc.c
 .else
 SRCS=	dummy.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.11 2014/12/03 22:40:55 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.12 2014/12/03 23:05:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.11 2014/12/03 22:40:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.12 2014/12/03 23:05:06 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.11 2014/12/03 22:40:55 skrll Exp $"
 #include <dev/usb/usbhist.h>
 #include <dev/usb/usb_mem.h>
 #include <dev/usb/usb_quirks.h>
-#include <dev/usb/usbroothub_subr.h>
+#include <dev/usb/usbroothub.h>
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>

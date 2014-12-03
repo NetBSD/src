@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.7 2014/12/03 22:42:41 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.8 2014/12/03 23:05:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.7 2014/12/03 22:42:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.8 2014/12/03 23:05:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.7 2014/12/03 22:42:41 skrll Exp $");
 #endif
 
 #include <dev/usb/motgvar.h>
-#include <dev/usb/usbroothub_subr.h>
+#include <dev/usb/usbroothub.h>
 
 #define MOTG_DEBUG
 #ifdef MOTG_DEBUG

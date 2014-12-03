@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.22.4.5 2014/12/03 22:40:55 skrll Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.22.4.6 2014/12/03 23:05:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.5 2014/12/03 22:40:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.6 2014/12/03 23:05:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.5 2014/12/03 22:40:55 skrll Exp $"
 #include <dev/usb/usbhid.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
-#include <dev/usb/usbroothub_subr.h>
+#include <dev/usb/usbroothub.h>
 
 #include <rump/rumpuser.h>
 
