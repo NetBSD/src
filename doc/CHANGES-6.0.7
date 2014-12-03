@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.11 2014/12/02 22:23:14 snj Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.12 2014/12/03 13:04:48 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -233,3 +233,8 @@ share/zoneinfo/zone1970.tab			patch
         * Changes to historical data.
 	[apb, ticket #1195]
 
+sys/dev/ppbus/ppbus_base.c			1.20
+
+	Fix debugging format in ppbus(4) reported by John D. Baker.
+	Fixes PR/49281.
+	[snj, ticket #1190]
