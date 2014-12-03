@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47.6.7 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.8 2014/12/03 22:40:55 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.7 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.8 2014/12/03 22:40:55 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -2957,11 +2957,10 @@ static const struct slhci_confd_t {
 	.confd = {
 		.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
 		.bDescriptorType = UDESC_CONFIG,
-		.wTotalLength = {
-			USB_CONFIG_DESCRIPTOR_SIZE +
-			USB_INTERFACE_DESCRIPTOR_SIZE +
-			USB_ENDPOINT_DESCRIPTOR_SIZE
-		},
+		.wTotalLength = USETWD(
+		    USB_CONFIG_DESCRIPTOR_SIZE +
+		    USB_INTERFACE_DESCRIPTOR_SIZE +
+		    USB_ENDPOINT_DESCRIPTOR_SIZE),
 		.bNumInterface = 1,
 		.bConfigurationValue = 1,
 		.iConfiguration = 0,
@@ -2984,7 +2983,7 @@ static const struct slhci_confd_t {
 		.bDescriptorType = UDESC_ENDPOINT,
 		.bEndpointAddress = UE_DIR_IN | ROOT_INTR_ENDPT,
 		.bmAttributes = UE_INTERRUPT,
-		.wMaxPacketSize = {240, 0},
+		.wMaxPacketSize = USETWD(240),
 		.bInterval = 255
 	}
 };
@@ -2993,10 +2992,7 @@ static const usb_hub_descriptor_t slhci_hubd = {
 	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
 	.bDescriptorType = UDESC_HUB,
 	.bNbrPorts = 1,
-	.wHubCharacteristics = {
-		UHD_PWR_INDIVIDUAL | UHD_OC_NONE,
-		0
-	},
+	.wHubCharacteristics = USETWD(UHD_PWR_INDIVIDUAL | UHD_OC_NONE),
 	.bPwrOn2PwrGood = 50,
 	.bHubContrCurrent = 0,
 	.DeviceRemovable = { 0x00 },

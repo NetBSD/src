@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.9 2014/12/03 13:19:38 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.10 2014/12/03 22:40:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.9 2014/12/03 13:19:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.10 2014/12/03 22:40:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3346,11 +3346,10 @@ usb_device_descriptor_t uhci_devd = {
 const usb_config_descriptor_t uhci_confd = {
 	.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
 	.bDescriptorType = UDESC_CONFIG,
-	.wTotalLength = {
-		USB_CONFIG_DESCRIPTOR_SIZE +
-		USB_INTERFACE_DESCRIPTOR_SIZE +
-		USB_ENDPOINT_DESCRIPTOR_SIZE
-	},
+	.wTotalLength = USETWD(
+	    USB_CONFIG_DESCRIPTOR_SIZE +
+	    USB_INTERFACE_DESCRIPTOR_SIZE +
+	    USB_ENDPOINT_DESCRIPTOR_SIZE),
 	.bNumInterface = 1,
 	.bConfigurationValue = 1,
 	.iConfiguration = 0,
@@ -3375,7 +3374,7 @@ const usb_endpoint_descriptor_t uhci_endpd = {
 	.bDescriptorType = UDESC_ENDPOINT,
 	.bEndpointAddress = UE_DIR_IN | UHCI_INTR_ENDPT,
 	.bmAttributes = UE_INTERRUPT,
-	.wMaxPacketSize = {8},
+	.wMaxPacketSize = USETWD(8),
 	.bInterval = 255
 };
 
@@ -3383,10 +3382,7 @@ const usb_hub_descriptor_t uhci_hubd_piix = {
 	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
 	.bDescriptorType = UDESC_HUB,
 	.bNbrPorts = 2,
-	.wHubCharacteristics = {
-		UHD_PWR_NO_SWITCH | UHD_OC_INDIVIDUAL,
-		0
-	},
+	.wHubCharacteristics = USETWD(UHD_PWR_NO_SWITCH | UHD_OC_INDIVIDUAL),
 	.bPwrOn2PwrGood = 50,
 	.bHubContrCurrent = 0,
 	.DeviceRemovable = { 0x00 },
