@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.41.2.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.41.2.2 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,13 +38,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.41.2.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.41.2.2 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/sysctl.h>
 #include <sys/tty.h>
@@ -380,7 +380,7 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		ttsetwater(tp);
 
 		/* Allocate an output report buffer */
-		sc->sc_obuf = malloc(sc->sc_olen, M_USBDEV, M_WAITOK);
+		sc->sc_obuf = kmem_alloc(sc->sc_olen, KM_SLEEP);
 
 		DPRINTF(("ucycomopen: sc->sc_obuf=%p\n", sc->sc_obuf));
 
@@ -1127,6 +1127,6 @@ ucycom_cleanup(struct ucycom_softc *sc)
 	DPRINTF(("ucycom_cleanup: closing uhidev\n"));
 
 	if (sc->sc_obuf !=NULL)
-		free (sc->sc_obuf, M_USBDEV);
+		kmem_free(sc->sc_obuf, sc->sc_olen);
 	uhidev_close(&sc->sc_hdev);
 }

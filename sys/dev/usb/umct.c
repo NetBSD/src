@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.32.24.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: umct.c,v 1.32.24.3 2014/12/03 14:18:07 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.2 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.3 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ umct_detach(device_t self, int flags)
 	if (sc->sc_intr_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_intr_pipe);
 		usbd_close_pipe(sc->sc_intr_pipe);
-		free(sc->sc_intr_buf, M_USBDEV);
+		kmem_free(sc->sc_intr_buf, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
 	}
 
@@ -552,7 +552,7 @@ umct_open(void *addr, int portno)
 
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
 		sc->sc_status = 0; /* clear status bit */
-		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
+		sc->sc_intr_buf = kmem_alloc(sc->sc_isize, KM_SLEEP);
 		err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_intr_number,
 			USBD_SHORT_XFER_OK, &sc->sc_intr_pipe, sc,
 			sc->sc_intr_buf, sc->sc_isize,
@@ -587,7 +587,7 @@ umct_close(void *addr, int portno)
 		if (err)
 			printf("%s: close interrupt pipe failed: %s\n",
 				device_xname(sc->sc_dev), usbd_errstr(err));
-		free(sc->sc_intr_buf, M_USBDEV);
+		kmem_free(sc->sc_intr_buf, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
 	}
 }

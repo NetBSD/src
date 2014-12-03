@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.25.6.1 2014/12/02 09:00:33 skrll Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.25.6.2 2014/12/03 14:18:07 skrll Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,12 +23,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25.6.1 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25.6.2 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -973,7 +974,7 @@ Static int
 otus_open_pipes(struct otus_softc *sc)
 {
 	usb_endpoint_descriptor_t *ed;
-	int i, isize, error;
+	int i, error;
 
 	DPRINTFN(DBG_FN, sc, "\n");
 
@@ -990,21 +991,21 @@ otus_open_pipes(struct otus_softc *sc)
 		    "could not retrieve Rx intr pipe descriptor\n");
 		goto fail;
 	}
-	isize = UGETW(ed->wMaxPacketSize);
-	if (isize == 0) {
+	sc->sc_ibuf_size = UGETW(ed->wMaxPacketSize);
+	if (sc->sc_ibuf_size == 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "invalid Rx intr pipe descriptor\n");
 		goto fail;
 	}
-	sc->sc_ibuf = malloc(isize, M_USBDEV, M_NOWAIT);
+	sc->sc_ibuf = kmem_alloc(sc->sc_ibuf_size, KM_SLEEP);
 	if (sc->sc_ibuf == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not allocate Rx intr buffer\n");
 		goto fail;
 	}
 	error = usbd_open_pipe_intr(sc->sc_iface, AR_EPT_INTR_RX_NO,
-	    USBD_SHORT_XFER_OK, &sc->sc_cmd_rx_pipe, sc, sc->sc_ibuf, isize,
-	    otus_intr, USBD_DEFAULT_INTERVAL);
+	    USBD_SHORT_XFER_OK, &sc->sc_cmd_rx_pipe, sc, sc->sc_ibuf,
+	    sc->sc_ibuf_size, otus_intr, USBD_DEFAULT_INTERVAL);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev, "could not open Rx intr pipe\n");
 		goto fail;
@@ -1077,7 +1078,7 @@ otus_close_pipes(struct otus_softc *sc)
 		usbd_close_pipe(sc->sc_cmd_rx_pipe);
 	}
 	if (sc->sc_ibuf != NULL)
-		free(sc->sc_ibuf, M_USBDEV);
+		kmem_free(sc->sc_ibuf, sc->sc_ibuf_size);
 	if (sc->sc_data_tx_pipe != NULL)
 		usbd_close_pipe(sc->sc_data_tx_pipe);
 	if (sc->sc_cmd_tx_pipe != NULL)

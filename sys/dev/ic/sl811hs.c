@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47.6.6 2014/12/03 13:19:38 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.7 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.6 2014/12/03 13:19:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.7 2014/12/03 14:18:07 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.6 2014/12/03 13:19:38 skrll Exp $
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/gcq.h>
 #include <sys/intr.h>
@@ -761,7 +761,7 @@ slhci_allocx(struct usbd_bus *bus)
 {
 	struct usbd_xfer *xfer;
 
-	xfer = malloc(sizeof(*xfer), M_USB, M_NOWAIT|M_ZERO);
+	xfer = kmem_zalloc(sizeof(*xfer), KM_SLEEP);
 
 	DLOG(D_MEM, "allocx %p", xfer, 0,0,0);
 
@@ -796,7 +796,7 @@ slhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	xfer->ux_state = XFER_FREE;
 #endif
 
-	free(xfer, M_USB);
+	kmem_free(xfer, sizeof(*xfer));
 }
 
 static void

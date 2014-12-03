@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.42.4.3 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: urio.c,v 1.42.4.4 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,12 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.42.4.3 2014/12/02 09:00:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.42.4.4 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
@@ -511,7 +511,7 @@ urioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		uio.uio_rw = req.bmRequestType & UT_READ ?
 			     UIO_READ : UIO_WRITE;
 		uio.uio_vmspace = l->l_proc->p_vmspace;
-		ptr = malloc(len, M_TEMP, M_WAITOK);
+		ptr = kmem_alloc(len, KM_SLEEP);
 		if (uio.uio_rw == UIO_WRITE) {
 			error = uiomove(ptr, len, &uio);
 			if (error)
@@ -536,6 +536,6 @@ urioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 ret:
 	if (ptr != NULL)
-		free(ptr, M_TEMP);
+		kmem_free(ptr, len);
 	return (error);
 }

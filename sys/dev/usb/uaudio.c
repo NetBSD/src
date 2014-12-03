@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.140.2.3 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.140.2.4 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.3 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.4 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,7 +543,8 @@ uaudio_detach(device_t self, int flags)
 			   sc->sc_dev);
 
 	if (sc->sc_formats != NULL)
-		free(sc->sc_formats, M_USBDEV);
+		kmem_free(sc->sc_formats,
+		    sizeof(struct audio_format) * sc->sc_nformats);
 	auconv_delete_encodings(sc->sc_encodings);
 
 	mutex_destroy(&sc->sc_lock);
@@ -598,7 +599,7 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 		DPRINTF("adding %s\n", mc->ctlname);
 	}
 	len = sizeof(*mc) * (sc->sc_nctls + 1);
-	nmc = malloc(len, M_USBDEV, M_NOWAIT);
+	nmc = kmem_alloc(len, KM_SLEEP);
 	if (nmc == NULL) {
 		aprint_error("uaudio_mixer_add_ctl: no memory\n");
 		return;
@@ -606,7 +607,7 @@ uaudio_mixer_add_ctl(struct uaudio_softc *sc, struct mixerctl *mc)
 	/* Copy old data, if there was any */
 	if (sc->sc_nctls != 0) {
 		memcpy(nmc, sc->sc_ctls, sizeof(*mc) * (sc->sc_nctls));
-		free(sc->sc_ctls, M_USBDEV);
+		kmem_free(sc->sc_ctls, sizeof(*mc) * sc->sc_nctls);
 	}
 	sc->sc_ctls = nmc;
 
@@ -1531,7 +1532,7 @@ uaudio_add_alt(struct uaudio_softc *sc, const struct as_info *ai)
 	struct as_info *nai;
 
 	len = sizeof(*ai) * (sc->sc_nalts + 1);
-	nai = malloc(len, M_USBDEV, M_NOWAIT);
+	nai = kmem_alloc(len, KM_SLEEP);
 	if (nai == NULL) {
 		aprint_error("uaudio_add_alt: no memory\n");
 		return;
@@ -1539,7 +1540,8 @@ uaudio_add_alt(struct uaudio_softc *sc, const struct as_info *ai)
 	/* Copy old data, if there was any */
 	if (sc->sc_nalts != 0) {
 		memcpy(nai, sc->sc_alts, sizeof(*ai) * (sc->sc_nalts));
-		free(sc->sc_alts, M_USBDEV);
+		kmem_free(sc->sc_alts,
+		    sizeof(struct audio_format) * sc->sc_nalts);
 	}
 	sc->sc_alts = nai;
 	DPRINTFN(2,"adding alt=%d, enc=%d\n",
@@ -1820,8 +1822,8 @@ uaudio_identify_as(struct uaudio_softc *sc,
 	}
 
 	/* build audio_format array */
-	sc->sc_formats = malloc(sizeof(struct audio_format) * sc->sc_nalts,
-				M_USBDEV, M_NOWAIT);
+	sc->sc_formats = kmem_alloc(sizeof(struct audio_format) * sc->sc_nalts,
+	    KM_SLEEP);
 	if (sc->sc_formats == NULL)
 		return USBD_NOMEM;
 	sc->sc_nformats = sc->sc_nalts;
@@ -1860,7 +1862,8 @@ uaudio_identify_as(struct uaudio_softc *sc,
 
 	if (0 != auconv_create_encodings(sc->sc_formats, sc->sc_nformats,
 					 &sc->sc_encodings)) {
-		free(sc->sc_formats, M_DEVBUF);
+		kmem_free(sc->sc_formats,
+		    sizeof(struct audio_format) * sc->sc_nformats);
 		sc->sc_formats = NULL;
 		return ENOMEM;
 	}

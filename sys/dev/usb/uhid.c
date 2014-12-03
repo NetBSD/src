@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.92.4.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: uhid.c,v 1.92.4.3 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.2 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.3 2014/12/03 14:18:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.2 2014/11/30 13:14:11 skrll Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/signalvar.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
@@ -330,7 +330,7 @@ uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
 		mutex_exit(&sc->sc_access_lock);
 		return (ENOMEM);
 	}
-	sc->sc_obuf = malloc(sc->sc_osize, M_USBDEV, M_WAITOK);
+	sc->sc_obuf = kmem_alloc(sc->sc_osize, KM_SLEEP);
 	sc->sc_state &= ~UHID_IMMED;
 
 	mutex_enter(proc_lock);
@@ -350,7 +350,7 @@ uhidclose(dev_t dev, int flag, int mode, struct lwp *l)
 	DPRINTF(("uhidclose: sc=%p\n", sc));
 
 	clfree(&sc->sc_q);
-	free(sc->sc_obuf, M_USBDEV);
+	kmem_free(sc->sc_obuf, sc->sc_osize);
 
 	mutex_enter(proc_lock);
 	sc->sc_async = NULL;

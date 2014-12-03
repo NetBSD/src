@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.126.2.3 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.126.2.4 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.3 2014/12/02 09:00:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.4 2014/12/03 14:18:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.3 2014/12/02 09:00:34 skrll Exp $")
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
@@ -409,11 +409,11 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 			isize = UGETW(edesc->wMaxPacketSize);
 			if (isize == 0)	/* shouldn't happen */
 				return (EINVAL);
-			sce->ibuf = malloc(isize, M_USBDEV, M_WAITOK);
+			sce->ibuf = kmem_alloc(isize, KM_SLEEP);
 			DPRINTFN(5, ("ugenopen: intr endpt=%d,isize=%d\n",
 				     endpt, isize));
 			if (clalloc(&sce->q, UGEN_IBSIZE, 0) == -1) {
-				free(sce->ibuf, M_USBDEV);
+				kmem_free(sce->ibuf, isize);
 				sce->ibuf = NULL;
 				return (ENOMEM);
 			}
@@ -424,7 +424,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 				  USBD_DEFAULT_INTERVAL);
 			if (err) {
 				clfree(&sce->q);
-				free(sce->ibuf, M_USBDEV);
+				kmem_free(sce->ibuf, isize);
 				sce->ibuf = NULL;
 				return (EIO);
 			}
@@ -448,8 +448,8 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 			isize = UGETW(edesc->wMaxPacketSize);
 			if (isize == 0)	/* shouldn't happen */
 				return (EINVAL);
-			sce->ibuf = malloc(isize * UGEN_NISOFRAMES,
-				M_USBDEV, M_WAITOK);
+			sce->ibuf = kmem_alloc(isize * UGEN_NISOFRAMES,
+				KM_SLEEP);
 			sce->cur = sce->fill = sce->ibuf;
 			sce->limit = sce->ibuf + isize * UGEN_NISOFRAMES;
 			DPRINTFN(5, ("ugenopen: isoc endpt=%d, isize=%d\n",
@@ -457,7 +457,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 			err = usbd_open_pipe(sce->iface,
 				  edesc->bEndpointAddress, 0, &sce->pipeh);
 			if (err) {
-				free(sce->ibuf, M_USBDEV);
+				kmem_free(sce->ibuf, isize * UGEN_NISOFRAMES);
 				sce->ibuf = NULL;
 				return (EIO);
 			}
@@ -490,7 +490,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 				usbd_free_xfer(sce->isoreqs[i].xfer);
 			usbd_close_pipe(sce->pipeh);
 			sce->pipeh = NULL;
-			free(sce->ibuf, M_USBDEV);
+			kmem_free(sce->ibuf, isize * UGEN_NISOFRAMES);
 			sce->ibuf = NULL;
 			return (ENOMEM);
 		case UE_CONTROL:
@@ -544,26 +544,31 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 		usbd_close_pipe(sce->pipeh);
 		sce->pipeh = NULL;
 
+		int isize = UGETW(sce->edesc->wMaxPacketSize);
+		int msize = 0;
+
 		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 		case UE_INTERRUPT:
 			ndflush(&sce->q, sce->q.c_cc);
 			clfree(&sce->q);
+			msize = isize;
 			break;
 		case UE_ISOCHRONOUS:
 			for (i = 0; i < UGEN_NISOREQS; ++i)
 				usbd_free_xfer(sce->isoreqs[i].xfer);
+			msize = isize * UGEN_NISOFRAMES;
 			break;
 		case UE_BULK:
-			if (sce->state & (UGEN_BULK_RA | UGEN_BULK_WB))
-				/* ibuf freed below */
+			if (sce->state & (UGEN_BULK_RA | UGEN_BULK_WB)) {
 				usbd_free_xfer(sce->ra_wb_xfer);
+				msize = sce->ra_wb_bufsize;
+			}
 			break;
 		default:
 			break;
 		}
-
 		if (sce->ibuf != NULL) {
-			free(sce->ibuf, M_USBDEV);
+			kmem_free(sce->ibuf, msize);
 			sce->ibuf = NULL;
 		}
 	}
@@ -1381,7 +1386,7 @@ ugen_get_cdesc(struct ugen_softc *sc, int index, int *lenp)
 		len = UGETW(tdesc->wTotalLength);
 		if (lenp)
 			*lenp = len;
-		cdesc = malloc(len, M_TEMP, M_WAITOK);
+		cdesc = kmem_alloc(len, KM_SLEEP);
 		memcpy(cdesc, tdesc, len);
 		DPRINTFN(5,("ugen_get_cdesc: current, len=%d\n", len));
 	} else {
@@ -1392,10 +1397,10 @@ ugen_get_cdesc(struct ugen_softc *sc, int index, int *lenp)
 		DPRINTFN(5,("ugen_get_cdesc: index=%d, len=%d\n", index, len));
 		if (lenp)
 			*lenp = len;
-		cdesc = malloc(len, M_TEMP, M_WAITOK);
+		cdesc = kmem_alloc(len, KM_SLEEP);
 		err = usbd_get_config_desc_full(sc->sc_udev, index, cdesc, len);
 		if (err) {
-			free(cdesc, M_TEMP);
+			kmem_free(cdesc, len);
 			return (0);
 		}
 	}
@@ -1430,6 +1435,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 	struct usb_alt_interface *ai;
 	struct usb_string_desc *si;
 	uint8_t conf, alt;
+	int cdesclen;
 
 	DPRINTFN(5, ("ugenioctl: cmd=%08lx\n", cmd));
 	if (sc->sc_dying)
@@ -1492,8 +1498,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 				usbd_free_xfer(sce->ra_wb_xfer);
 				return (ENOMEM);
 			}
-			sce->ibuf = malloc(sce->ra_wb_bufsize,
-					   M_USBDEV, M_WAITOK);
+			sce->ibuf = kmem_alloc(sce->ra_wb_bufsize, KM_SLEEP);
 			sce->fill = sce->cur = sce->ibuf;
 			sce->limit = sce->ibuf + sce->ra_wb_bufsize;
 			sce->ra_wb_used = 0;
@@ -1508,7 +1513,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			err = usbd_transfer(sce->ra_wb_xfer);
 			if (err != USBD_IN_PROGRESS) {
 				sce->state &= ~UGEN_BULK_RA;
-				free(sce->ibuf, M_USBDEV);
+				kmem_free(sce->ibuf, sce->ra_wb_bufsize);
 				sce->ibuf = NULL;
 				usbd_free_xfer(sce->ra_wb_xfer);
 				return (EIO);
@@ -1526,7 +1531,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			 * should keep it around and drain the buffer
 			 * instead.
 			 */
-			free(sce->ibuf, M_USBDEV);
+			kmem_free(sce->ibuf, sce->ra_wb_bufsize);
 			sce->ibuf = NULL;
 		}
 		return (0);
@@ -1561,8 +1566,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 				usbd_free_xfer(sce->ra_wb_xfer);
 				return (ENOMEM);
 			}
-			sce->ibuf = malloc(sce->ra_wb_bufsize,
-					   M_USBDEV, M_WAITOK);
+			sce->ibuf = kmem_alloc(sce->ra_wb_bufsize, KM_SLEEP);
 			sce->fill = sce->cur = sce->ibuf;
 			sce->limit = sce->ibuf + sce->ra_wb_bufsize;
 			sce->ra_wb_used = 0;
@@ -1580,7 +1584,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			 */
 			usbd_abort_pipe(sce->pipeh);
 			usbd_free_xfer(sce->ra_wb_xfer);
-			free(sce->ibuf, M_USBDEV);
+			kmem_free(sce->ibuf, sce->ra_wb_bufsize);
 			sce->ibuf = NULL;
 		}
 		return (0);
@@ -1670,17 +1674,17 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		break;
 	case USB_GET_NO_ALT:
 		ai = (struct usb_alt_interface *)addr;
-		cdesc = ugen_get_cdesc(sc, ai->uai_config_index, 0);
+		cdesc = ugen_get_cdesc(sc, ai->uai_config_index, &cdesclen);
 		if (cdesc == NULL)
 			return (EINVAL);
 		idesc = usbd_find_idesc(cdesc, ai->uai_interface_index, 0);
 		if (idesc == NULL) {
-			free(cdesc, M_TEMP);
+			kmem_free(cdesc, cdesclen);
 			return (EINVAL);
 		}
 		ai->uai_alt_no = usbd_get_no_alts(cdesc,
 		    idesc->bInterfaceNumber);
-		free(cdesc, M_TEMP);
+		kmem_free(cdesc, cdesclen);
 		break;
 	case USB_GET_DEVICE_DESC:
 		*(usb_device_descriptor_t *)addr =
@@ -1688,15 +1692,15 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		break;
 	case USB_GET_CONFIG_DESC:
 		cd = (struct usb_config_desc *)addr;
-		cdesc = ugen_get_cdesc(sc, cd->ucd_config_index, 0);
+		cdesc = ugen_get_cdesc(sc, cd->ucd_config_index, &cdesclen);
 		if (cdesc == NULL)
 			return (EINVAL);
 		cd->ucd_desc = *cdesc;
-		free(cdesc, M_TEMP);
+		kmem_free(cdesc, cdesclen);
 		break;
 	case USB_GET_INTERFACE_DESC:
 		id = (struct usb_interface_desc *)addr;
-		cdesc = ugen_get_cdesc(sc, id->uid_config_index, 0);
+		cdesc = ugen_get_cdesc(sc, id->uid_config_index, &cdesclen);
 		if (cdesc == NULL)
 			return (EINVAL);
 		if (id->uid_config_index == USB_CURRENT_CONFIG_INDEX &&
@@ -1706,15 +1710,15 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			alt = id->uid_alt_index;
 		idesc = usbd_find_idesc(cdesc, id->uid_interface_index, alt);
 		if (idesc == NULL) {
-			free(cdesc, M_TEMP);
+			kmem_free(cdesc, cdesclen);
 			return (EINVAL);
 		}
 		id->uid_desc = *idesc;
-		free(cdesc, M_TEMP);
+		kmem_free(cdesc, cdesclen);
 		break;
 	case USB_GET_ENDPOINT_DESC:
 		ed = (struct usb_endpoint_desc *)addr;
-		cdesc = ugen_get_cdesc(sc, ed->ued_config_index, 0);
+		cdesc = ugen_get_cdesc(sc, ed->ued_config_index, &cdesclen);
 		if (cdesc == NULL)
 			return (EINVAL);
 		if (ed->ued_config_index == USB_CURRENT_CONFIG_INDEX &&
@@ -1725,11 +1729,11 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		edesc = usbd_find_edesc(cdesc, ed->ued_interface_index,
 					alt, ed->ued_endpoint_index);
 		if (edesc == NULL) {
-			free(cdesc, M_TEMP);
+			kmem_free(cdesc, cdesclen);
 			return (EINVAL);
 		}
 		ed->ued_desc = *edesc;
-		free(cdesc, M_TEMP);
+		kmem_free(cdesc, cdesclen);
 		break;
 	case USB_GET_FULL_DESC:
 	{
@@ -1739,9 +1743,10 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		struct usb_full_desc *fd = (struct usb_full_desc *)addr;
 		int error;
 
-		cdesc = ugen_get_cdesc(sc, fd->ufd_config_index, &len);
+		cdesc = ugen_get_cdesc(sc, fd->ufd_config_index, &cdesclen);
 		if (cdesc == NULL)
 			return (EINVAL);
+		len = cdesclen;
 		if (len > fd->ufd_size)
 			len = fd->ufd_size;
 		iov.iov_base = (void *)fd->ufd_data;
@@ -1753,7 +1758,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		uio.uio_rw = UIO_READ;
 		uio.uio_vmspace = l->l_proc->p_vmspace;
 		error = uiomove((void *)cdesc, len, &uio);
-		free(cdesc, M_TEMP);
+		kmem_free(cdesc, cdesclen);
 		return (error);
 	}
 	case USB_GET_STRING_DESC: {
@@ -1799,7 +1804,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 				ur->ucr_request.bmRequestType & UT_READ ?
 				UIO_READ : UIO_WRITE;
 			uio.uio_vmspace = l->l_proc->p_vmspace;
-			ptr = malloc(len, M_TEMP, M_WAITOK);
+			ptr = kmem_alloc(len, KM_SLEEP);
 			if (uio.uio_rw == UIO_WRITE) {
 				error = uiomove(ptr, len, &uio);
 				if (error)
@@ -1815,14 +1820,15 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		}
 		if (len != 0) {
 			if (uio.uio_rw == UIO_READ) {
-				error = uiomove(ptr, len, &uio);
+				size_t alen = min(len, ur->ucr_actlen);
+				error = uiomove(ptr, alen, &uio);
 				if (error)
 					goto ret;
 			}
 		}
 	ret:
 		if (ptr)
-			free(ptr, M_TEMP);
+			kmem_free(ptr, len);
 		return (error);
 	}
 	case USB_GET_DEVICEINFO:

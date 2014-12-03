@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.75.4.3 2014/12/01 13:03:05 skrll Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.75.4.4 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,12 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.3 2014/12/01 13:03:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.4 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/file.h>
 #include <sys/select.h>
@@ -384,8 +384,8 @@ uscanneropen(dev_t dev, int flag, int mode,
 
 	sc->sc_state |= USCANNER_OPEN;
 
-	sc->sc_bulkin_buffer = malloc(USCANNER_BUFFERSIZE, M_USBDEV, M_WAITOK);
-	sc->sc_bulkout_buffer = malloc(USCANNER_BUFFERSIZE, M_USBDEV, M_WAITOK);
+	sc->sc_bulkin_buffer = kmem_alloc(USCANNER_BUFFERSIZE, KM_SLEEP);
+	sc->sc_bulkout_buffer = kmem_alloc(USCANNER_BUFFERSIZE, KM_SLEEP);
 	/* No need to check buffers for NULL since we have WAITOK */
 
 	sc->sc_bulkin_bufferlen = USCANNER_BUFFERSIZE;
@@ -476,11 +476,11 @@ uscanner_do_close(struct uscanner_softc *sc)
 	}
 
 	if (sc->sc_bulkin_buffer) {
-		free(sc->sc_bulkin_buffer, M_USBDEV);
+		kmem_free(sc->sc_bulkin_buffer, sc->sc_bulkin_bufferlen);
 		sc->sc_bulkin_buffer = NULL;
 	}
 	if (sc->sc_bulkout_buffer) {
-		free(sc->sc_bulkout_buffer, M_USBDEV);
+		kmem_free(sc->sc_bulkout_buffer, sc->sc_bulkin_bufferlen);
 		sc->sc_bulkout_buffer = NULL;
 	}
 

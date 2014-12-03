@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.9 2013/01/05 23:34:21 christos Exp $ */
+/*	$NetBSD: uyurex.c,v 1.9.14.1 2014/12/03 14:18:07 skrll Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -22,13 +22,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.9 2013/01/05 23:34:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyurex.c,v 1.9.14.1 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/envsys.h>
@@ -155,7 +155,7 @@ uyurex_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "uyurex_open: uhidev_open %d\n", err);
 		return;
 	}
-	sc->sc_ibuf = malloc(sc->sc_ilen, M_USBDEV, M_WAITOK);
+	sc->sc_ibuf = kmem_alloc(sc->sc_ilen, KM_SLEEP);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    sc->sc_hdev.sc_dev);
@@ -211,7 +211,7 @@ uyurex_detach(device_t self, int flags)
 	sysmon_envsys_unregister(sc->sc_sme);
 
 	if (sc->sc_ibuf != NULL) {
-		free(sc->sc_ibuf, M_USBDEV);
+		kmem_free(sc->sc_ibuf, sc->sc_ilen);
 		sc->sc_ibuf = NULL;
 	}
 

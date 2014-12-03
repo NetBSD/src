@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otusvar.h,v 1.7.12.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: if_otusvar.h,v 1.7.12.2 2014/12/03 14:18:07 skrll Exp $	*/
 /*	$OpenBSD: if_otusreg.h,v 1.6 2009/04/06 18:17:01 damien Exp $	*/
 
 /*-
@@ -182,6 +182,7 @@ struct otus_softc {
 	usbd_pipe_handle		sc_cmd_tx_pipe;
 	usbd_pipe_handle		sc_cmd_rx_pipe;
 	uint8_t 			*sc_ibuf;
+	size_t				sc_ibuf_size;
 
 	int				sc_if_flags;
 	int				sc_tx_timer;

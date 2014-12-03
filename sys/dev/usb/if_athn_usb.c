@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.6.8.1 2014/12/02 09:00:33 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.6.8.2 2014/12/03 14:18:07 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.1 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.2 2014/12/03 14:18:07 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.1 2014/12/02 09:00:33 skrll Ex
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
+#include <sys/kmem.h>
 
 #include <sys/bus.h>
 #include <sys/endian.h>
@@ -481,7 +482,7 @@ Static int
 athn_usb_open_pipes(struct athn_usb_softc *usc)
 {
 	usb_endpoint_descriptor_t *ed;
-	int isize, error;
+	int error;
 
 	DPRINTFN(DBG_FN, usc, "\n");
 
@@ -507,21 +508,22 @@ athn_usb_open_pipes(struct athn_usb_softc *usc)
 		    "could not retrieve Rx intr pipe descriptor\n");
 		goto fail;
 	}
-	isize = UGETW(ed->wMaxPacketSize);
-	if (isize == 0) {
+	usc->usc_ibufsize = UGETW(ed->wMaxPacketSize);
+	if (usc->usc_ibufsize == 0) {
 		aprint_error_dev(usc->usc_dev,
 		    "invalid Rx intr pipe descriptor\n");
 		goto fail;
 	}
-	usc->usc_ibuf = malloc(isize, M_USBDEV, M_NOWAIT);
+	usc->usc_ibuf = kmem_alloc(usc->usc_ibufsize, KM_SLEEP);
 	if (usc->usc_ibuf == NULL) {
 		aprint_error_dev(usc->usc_dev,
 		    "could not allocate Rx intr buffer\n");
 		goto fail;
 	}
+
 	error = usbd_open_pipe_intr(usc->usc_iface, AR_PIPE_RX_INTR,
-	    USBD_SHORT_XFER_OK, &usc->usc_rx_intr_pipe, usc, usc->usc_ibuf, isize,
-	    athn_usb_intr, USBD_DEFAULT_INTERVAL);
+	    USBD_SHORT_XFER_OK, &usc->usc_rx_intr_pipe, usc, usc->usc_ibuf,
+	    usc->usc_ibufsize, athn_usb_intr, USBD_DEFAULT_INTERVAL);
 	if (error != 0) {
 		aprint_error_dev(usc->usc_dev,
 		    "could not open Rx intr pipe\n");
@@ -566,7 +568,7 @@ athn_usb_close_pipes(struct athn_usb_softc *usc)
 	athn_usb_kill_pipe(&usc->usc_rx_intr_pipe);
 	ibuf = atomic_swap_ptr(&usc->usc_ibuf, NULL);
 	if (ibuf != NULL)
-		free(ibuf, M_USBDEV);
+		kmem_free(ibuf, usc->usc_ibufsize);
 }
 
 Static int

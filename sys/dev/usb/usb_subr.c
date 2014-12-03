@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.3 2014/12/03 13:30:51 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.4 2014/12/03 14:18:07 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.3 2014/12/03 13:30:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.4 2014/12/03 14:18:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.3 2014/12/03 13:30:51 skrll Exp
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/select.h>
 #include <sys/proc.h>
@@ -70,9 +70,6 @@ extern int usbdebug;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-MALLOC_DEFINE(M_USB, "USB", "USB misc. memory");
-MALLOC_DEFINE(M_USBDEV, "USB device", "USB device driver");
 
 Static usbd_status usbd_set_config(usbd_device_handle, int);
 Static void usbd_devinfo(usbd_device_handle, int, char *, size_t);
@@ -212,7 +209,7 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *cp, size_t l)
 	int bcdDevice, bcdUSB;
 	char *ep;
 
-	vendor = malloc(USB_MAX_ENCODED_STRING_LEN * 2, M_USB, M_NOWAIT);
+	vendor = kmem_alloc(USB_MAX_ENCODED_STRING_LEN * 2, KM_SLEEP);
 	if (vendor == NULL) {
 		*cp = '\0';
 		return;
@@ -235,7 +232,7 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *cp, size_t l)
 	cp += usbd_printBCD(cp, ep - cp, bcdDevice);
 	cp += snprintf(cp, ep - cp, ", addr %d", dev->ud_addr);
 	*cp = 0;
-	free(vendor, M_USB);
+	kmem_free(vendor, USB_MAX_ENCODED_STRING_LEN * 2);
 }
 
 char *
@@ -243,7 +240,7 @@ usbd_devinfo_alloc(usbd_device_handle dev, int showclass)
 {
 	char *devinfop;
 
-	devinfop = malloc(DEVINFOSIZE, M_TEMP, M_WAITOK);
+	devinfop = kmem_alloc(DEVINFOSIZE, KM_SLEEP);
 	usbd_devinfo(dev, showclass, devinfop, DEVINFOSIZE);
 	return devinfop;
 }
@@ -251,7 +248,7 @@ usbd_devinfo_alloc(usbd_device_handle dev, int showclass)
 void
 usbd_devinfo_free(char *devinfop)
 {
-	free(devinfop, M_TEMP);
+	kmem_free(devinfop, DEVINFOSIZE);
 }
 
 /* Delay for a certain number of ms */
@@ -414,8 +411,8 @@ usbd_fill_iface_data(usbd_device_handle dev, int ifaceidx, int altidx)
 	nendpt = ifc->ui_idesc->bNumEndpoints;
 	DPRINTFN(4,("usbd_fill_iface_data: found idesc nendpt=%d\n", nendpt));
 	if (nendpt != 0) {
-		ifc->ui_endpoints = malloc(nendpt * sizeof(struct usbd_endpoint),
-					M_USB, M_NOWAIT);
+		ifc->ui_endpoints = kmem_alloc(nendpt * sizeof(struct usbd_endpoint),
+				KM_SLEEP);
 		if (ifc->ui_endpoints == NULL)
 			return (USBD_NOMEM);
 	} else
@@ -477,7 +474,7 @@ usbd_fill_iface_data(usbd_device_handle dev, int ifaceidx, int altidx)
 
  bad:
 	if (ifc->ui_endpoints != NULL) {
-		free(ifc->ui_endpoints, M_USB);
+		kmem_free(ifc->ui_endpoints, nendpt * sizeof(struct usbd_endpoint));
 		ifc->ui_endpoints = NULL;
 	}
 	return (USBD_INVAL);
@@ -487,8 +484,11 @@ void
 usbd_free_iface_data(usbd_device_handle dev, int ifcno)
 {
 	usbd_interface_handle ifc = &dev->ud_ifaces[ifcno];
-	if (ifc->ui_endpoints)
-		free(ifc->ui_endpoints, M_USB);
+	if (ifc->ui_endpoints) {
+		int nendpt = ifc->ui_idesc->bNumEndpoints;
+		size_t sz = nendpt * sizeof(struct usbd_endpoint);
+		kmem_free(ifc->ui_endpoints, sz);
+	}
 }
 
 Static usbd_status
@@ -549,8 +549,8 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 		nifc = dev->ud_cdesc->bNumInterface;
 		for (ifcidx = 0; ifcidx < nifc; ifcidx++)
 			usbd_free_iface_data(dev, ifcidx);
-		free(dev->ud_ifaces, M_USB);
-		free(dev->ud_cdesc, M_USB);
+		kmem_free(dev->ud_ifaces, nifc * sizeof(struct usbd_interface));
+		kmem_free(dev->ud_cdesc, UGETW(dev->ud_cdesc->wTotalLength));
 		dev->ud_ifaces = NULL;
 		dev->ud_cdesc = NULL;
 		dev->ud_config = USB_UNCONFIG_NO;
@@ -574,7 +574,7 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 		return (err);
 	}
 	len = UGETW(cd.wTotalLength);
-	cdp = malloc(len, M_USB, M_NOWAIT);
+	cdp = kmem_alloc(len, KM_SLEEP);
 	if (cdp == NULL)
 		return (USBD_NOMEM);
 
@@ -666,8 +666,8 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 
 	/* Allocate and fill interface data. */
 	nifc = cdp->bNumInterface;
-	dev->ud_ifaces = malloc(nifc * sizeof(struct usbd_interface),
-			     M_USB, M_NOWAIT);
+	dev->ud_ifaces = kmem_alloc(nifc * sizeof(struct usbd_interface),
+			     KM_SLEEP);
 	if (dev->ud_ifaces == NULL) {
 		err = USBD_NOMEM;
 		goto bad;
@@ -687,7 +687,7 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 	return (USBD_NORMAL_COMPLETION);
 
  bad:
-	free(cdp, M_USB);
+	kmem_free(cdp, len);
 	return (err);
 }
 
@@ -707,7 +707,7 @@ usbd_setup_pipe_flags(usbd_device_handle dev, usbd_interface_handle iface,
 	usbd_pipe_handle p;
 	usbd_status err;
 
-	p = malloc(dev->ud_bus->ub_pipesize, M_USB, M_NOWAIT);
+	p = kmem_alloc(dev->ud_bus->ub_pipesize, KM_SLEEP);
 	DPRINTFN(1,("usbd_setup_pipe: dev=%p iface=%p ep=%p pipe=%p\n",
 		    dev, iface, ep, p));
 	if (p == NULL)
@@ -729,7 +729,7 @@ usbd_setup_pipe_flags(usbd_device_handle dev, usbd_interface_handle iface,
 		DPRINTFN(-1,("usbd_setup_pipe: endpoint=0x%x failed, error="
 			 "%s\n",
 			 ep->ue_edesc->bEndpointAddress, usbd_errstr(err)));
-		free(p, M_USB);
+		kmem_intr_free(p, dev->ud_bus->ub_pipesize);
 		return (err);
 	}
 	usb_init_task(&p->up_async_task, usbd_clear_endpoint_stall_task, p,
@@ -748,7 +748,7 @@ usbd_kill_pipe(usbd_pipe_handle pipe)
 	usbd_unlock_pipe(pipe);
 	usb_rem_task(pipe->up_dev, &pipe->up_async_task);
 	pipe->up_endpoint->ue_refcnt--;
-	free(pipe, M_USB);
+	kmem_free(pipe, pipe->up_dev->ud_bus->ub_pipesize);
 }
 
 int
@@ -781,7 +781,7 @@ usbd_attach_roothub(device_t parent, usbd_device_handle dev)
 
 	dv = config_found_ia(parent, "usbroothubif", &uaa, 0);
 	if (dv) {
-		dev->ud_subdevs = malloc(sizeof dv, M_USB, M_NOWAIT);
+		dev->ud_subdevs = kmem_alloc(sizeof(dv), KM_SLEEP);
 		if (dev->ud_subdevs == NULL)
 			return (USBD_NOMEM);
 		dev->ud_subdevs[0] = dv;
@@ -820,7 +820,7 @@ usbd_attachwholedevice(device_t parent, usbd_device_handle dev, int port,
 	dv = config_found_sm_loc(parent, "usbdevif", dlocs, &uaa, usbd_print,
 				 config_stdsubmatch);
 	if (dv) {
-		dev->ud_subdevs = malloc(sizeof dv, M_USB, M_NOWAIT);
+		dev->ud_subdevs = kmem_alloc(sizeof(dv), KM_SLEEP);
 		if (dev->ud_subdevs == NULL)
 			return (USBD_NOMEM);
 		dev->ud_subdevs[0] = dv;
@@ -843,7 +843,7 @@ usbd_attachinterfaces(device_t parent, usbd_device_handle dev,
 	device_t dv;
 
 	nifaces = dev->ud_cdesc->bNumInterface;
-	ifaces = malloc(nifaces * sizeof(*ifaces), M_USB, M_NOWAIT|M_ZERO);
+	ifaces = kmem_zalloc(nifaces * sizeof(*ifaces), KM_SLEEP);
 	if (!ifaces)
 		return (USBD_NOMEM);
 	for (i = 0; i < nifaces; i++)
@@ -896,7 +896,7 @@ usbd_attachinterfaces(device_t parent, usbd_device_handle dev,
 		}
 	}
 
-	free(ifaces, M_USB);
+	kmem_free(ifaces, nifaces * sizeof(*ifaces));
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -933,8 +933,8 @@ usbd_probe_and_attach(device_t parent, usbd_device_handle dev,
 			return (err);
 		}
 		nifaces = dev->ud_cdesc->bNumInterface;
-		dev->ud_subdevs = malloc(nifaces * sizeof(device_t), M_USB,
-				      M_NOWAIT|M_ZERO);
+		dev->ud_subdevs = kmem_zalloc(nifaces * sizeof(device_t), 
+		    KM_SLEEP);
 		if (dev->ud_subdevs == NULL)
 			return (USBD_NOMEM);
 		dev->ud_subdevlen = nifaces;
@@ -942,7 +942,8 @@ usbd_probe_and_attach(device_t parent, usbd_device_handle dev,
 		err = usbd_attachinterfaces(parent, dev, port, NULL);
 
 		if (!dev->ud_nifaces_claimed) {
-			free(dev->ud_subdevs, M_USB);
+			kmem_free(dev->ud_subdevs,
+			    dev->ud_subdevlen * sizeof(device_t));
 			dev->ud_subdevs = 0;
 			dev->ud_subdevlen = 0;
 		}
@@ -1075,7 +1076,7 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 		return (USBD_NO_ADDR);
 	}
 
-	dev = malloc(sizeof *dev, M_USB, M_NOWAIT|M_ZERO);
+	dev = kmem_zalloc(sizeof(*dev), KM_SLEEP);
 	if (dev == NULL)
 		return (USBD_NOMEM);
 
@@ -1293,7 +1294,7 @@ usbd_remove_device(usbd_device_handle dev, struct usbd_port *up)
 	up->up_dev = NULL;
 	dev->ud_bus->ub_devices[dev->ud_addr] = NULL;
 
-	free(dev, M_USB);
+	kmem_free(dev, sizeof(*dev));
 }
 
 int
@@ -1307,10 +1308,10 @@ usbd_print(void *aux, const char *pnp)
 		char *devinfo;
 		if (!uaa->usegeneric)
 			return (QUIET);
-		devinfo = malloc(USB_DEVINFO, M_TEMP, M_WAITOK);
+		devinfo = kmem_alloc(USB_DEVINFO, KM_SLEEP);
 		usbd_devinfo(uaa->device, 1, devinfo, USB_DEVINFO);
 		aprint_normal("%s, %s", devinfo, pnp);
-		free(devinfo, M_TEMP);
+		kmem_free(devinfo, USB_DEVINFO);
 	}
 	aprint_normal(" port %d", uaa->port);
 #if 0
@@ -1506,15 +1507,17 @@ usb_free_device(usbd_device_handle dev)
 		nifc = dev->ud_cdesc->bNumInterface;
 		for (ifcidx = 0; ifcidx < nifc; ifcidx++)
 			usbd_free_iface_data(dev, ifcidx);
-		free(dev->ud_ifaces, M_USB);
+		kmem_free(dev->ud_ifaces, 
+		    nifc * sizeof(struct usbd_interface));
 	}
 	if (dev->ud_cdesc != NULL)
-		free(dev->ud_cdesc, M_USB);
+		kmem_free(dev->ud_cdesc, UGETW(dev->ud_cdesc->wTotalLength));
 	if (dev->ud_subdevlen > 0) {
-		free(dev->ud_subdevs, M_USB);
+		kmem_free(dev->ud_subdevs,
+		    dev->ud_subdevlen * sizeof(device_t));
 		dev->ud_subdevlen = 0;
 	}
-	free(dev, M_USB);
+	kmem_free(dev, sizeof(*dev));
 }
 
 /*

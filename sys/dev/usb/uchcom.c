@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.13 2014/03/15 19:20:27 martin Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.13.6.1 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.13 2014/03/15 19:20:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.13.6.1 2014/12/03 14:18:07 skrll Exp $");
 
 /*
  * driver for WinChipHead CH341/340, the worst USB-serial chip in the world.
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.13 2014/03/15 19:20:27 martin Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
@@ -872,7 +872,7 @@ setup_intr_pipe(struct uchcom_softc *sc)
 	usbd_status err;
 
 	if (sc->sc_intr_endpoint != -1 && sc->sc_intr_pipe == NULL) {
-		sc->sc_intr_buf = malloc(sc->sc_intr_size, M_USBDEV, M_WAITOK);
+		sc->sc_intr_buf = kmem_alloc(sc->sc_intr_size, KM_SLEEP);
 		err = usbd_open_pipe_intr(sc->sc_iface,
 					  sc->sc_intr_endpoint,
 					  USBD_SHORT_XFER_OK,
@@ -909,7 +909,7 @@ close_intr_pipe(struct uchcom_softc *sc)
 			aprint_error_dev(sc->sc_dev,
 			    "close interrupt pipe failed: %s\n",
 			    usbd_errstr(err));
-		free(sc->sc_intr_buf, M_USBDEV);
+		kmem_free(sc->sc_intr_buf, sc->sc_intr_size);
 		sc->sc_intr_pipe = NULL;
 	}
 }

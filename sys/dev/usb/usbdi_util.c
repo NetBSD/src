@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.63.2.3 2014/12/01 13:03:05 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.63.2.4 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.3 2014/12/01 13:03:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.4 2014/12/03 14:18:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.3 2014/12/01 13:03:05 skrll Ex
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/bus.h>
@@ -357,8 +357,7 @@ usbd_get_hid_descriptor(usbd_interface_handle ifc)
 }
 
 usbd_status
-usbd_read_report_desc(usbd_interface_handle ifc, void **descp, int *sizep,
-		       struct malloc_type * mem)
+usbd_read_report_desc(usbd_interface_handle ifc, void **descp, int *sizep)
 {
 	usb_interface_descriptor_t *id;
 	usb_hid_descriptor_t *hid;
@@ -373,13 +372,13 @@ usbd_read_report_desc(usbd_interface_handle ifc, void **descp, int *sizep,
 	if (hid == NULL)
 		return (USBD_IOERROR);
 	*sizep = UGETW(hid->descrs[0].wDescriptorLength);
-	*descp = malloc(*sizep, mem, M_NOWAIT);
+	*descp = kmem_alloc(*sizep, KM_SLEEP);
 	if (*descp == NULL)
 		return (USBD_NOMEM);
 	err = usbd_get_report_descriptor(dev, id->bInterfaceNumber,
 					 *sizep, *descp);
 	if (err) {
-		free(*descp, mem);
+		kmem_free(*descp, *sizep);
 		*descp = NULL;
 		return (err);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.13.24.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.13.24.3 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,12 +71,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.24.2 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.24.3 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/ioccom.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
@@ -406,7 +406,7 @@ uhmodem_detach(device_t self, int flags)
 	if (sc->sc_ubsa.sc_intr_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_ubsa.sc_intr_pipe);
 		usbd_close_pipe(sc->sc_ubsa.sc_intr_pipe);
-		free(sc->sc_ubsa.sc_intr_buf, M_USBDEV);
+		kmem_free(sc->sc_ubsa.sc_intr_buf, sc->sc_ubsa.sc_isize);
 		sc->sc_ubsa.sc_intr_pipe = NULL;
 	}
 
@@ -470,7 +470,7 @@ uhmodem_open(void *addr, int portno)
 	}
 #endif
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
-		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
+		sc->sc_intr_buf = kmem_alloc(sc->sc_isize, KM_SLEEP);
 		/* XXX only iface# = 0 has intr line */
 		/* XXX E220 specific? need to check */
 		err = usbd_open_pipe_intr(sc->sc_iface[0],

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.30 2012/02/24 06:48:24 mrg Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.30.16.1 2014/12/03 14:18:07 skrll Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,12 +54,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.30 2012/02/24 06:48:24 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.30.16.1 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/ioccom.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
@@ -326,7 +326,7 @@ ubsa_detach(device_t self, int flags)
 	if (sc->sc_intr_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_intr_pipe);
 		usbd_close_pipe(sc->sc_intr_pipe);
-		free(sc->sc_intr_buf, M_USBDEV);
+		kmem_free(sc->sc_intr_buf, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
 	}
 

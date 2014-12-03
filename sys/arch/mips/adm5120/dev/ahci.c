@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.12.6.7 2014/12/03 13:19:38 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.12.6.8 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,14 +64,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.7 2014/12/03 13:19:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.8 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <sys/bus.h>
 #include <machine/cpu.h>
@@ -483,7 +483,7 @@ ahci_allocx(struct usbd_bus *bus)
 		}
 #endif
 	} else {
-		xfer = malloc(sizeof(*xfer), M_USB, M_NOWAIT);
+		xfer = kmem_alloc(sizeof(*xfer), KM_SLEEP);
 	}
 
 	if (xfer) {
@@ -1235,7 +1235,7 @@ ahci_device_intr_start(usbd_xfer_handle xfer)
 
 	DPRINTF(D_TRACE, ("INTRstart "));
 
-	sx = malloc(sizeof(*sx), M_USB, M_NOWAIT);
+	sx = kmem_intr_alloc(sizeof(*sx), KM_NOSLEEP);
 	if (sx == NULL)
 		goto reterr;
 	memset(sx, 0, sizeof(*sx));
@@ -1302,7 +1302,7 @@ ahci_device_intr_abort(usbd_xfer_handle xfer)
 	sx = xfer->ux_hcpriv;
 	if (sx) {
 		callout_stop(&sx->sx_callout_t);
-		free(sx, M_USB);
+		kmem_intr_free(sx, sizeof(*sx));
 		xfer->ux_hcpriv = NULL;
 	} else {
 		printf("%s: sx == NULL!\n", __func__);

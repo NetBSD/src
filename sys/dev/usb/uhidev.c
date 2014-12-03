@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.61.4.2 2014/12/01 13:03:05 skrll Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.61.4.3 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,12 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.2 2014/12/01 13:03:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.3 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/signalvar.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
@@ -226,7 +226,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (descptr) {
-		desc = malloc(size, M_USBDEV, M_NOWAIT);
+		desc = kmem_alloc(size, KM_SLEEP);
 		if (desc == NULL)
 			err = USBD_NOMEM;
 		else {
@@ -235,8 +235,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 		}
 	} else {
 		desc = NULL;
-		err = usbd_read_report_desc(uaa->iface, &desc, &size,
-		    M_USBDEV);
+		err = usbd_read_report_desc(uaa->iface, &desc, &size);
 	}
 	if (err) {
 		aprint_error_dev(self, "no report descriptor\n");
@@ -301,13 +300,13 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 	if (nrepid > 0)
 		aprint_normal_dev(self, "%d report ids\n", nrepid);
 	nrepid++;
-	repsizes = malloc(nrepid * sizeof(*repsizes), M_TEMP, M_NOWAIT);
+	repsizes = kmem_alloc(nrepid * sizeof(*repsizes), KM_SLEEP);
 	if (repsizes == NULL)
 		goto nomem;
-	sc->sc_subdevs = malloc(nrepid * sizeof(device_t),
-				M_USBDEV, M_NOWAIT | M_ZERO);
+	sc->sc_subdevs = kmem_zalloc(nrepid * sizeof(device_t),
+	    KM_SLEEP);
 	if (sc->sc_subdevs == NULL) {
-		free(repsizes, M_TEMP);
+		kmem_free(repsizes, nrepid * sizeof(*repsizes));
 nomem:
 		aprint_error_dev(self, "no memory\n");
 		return;
@@ -350,7 +349,8 @@ nomem:
 				DPRINTF(("uhidev_match: repid=%d dev=%p\n",
 					 repid, dev));
 				if (csc->sc_intr == NULL) {
-					free(repsizes, M_TEMP);
+					kmem_free(repsizes,
+					    nrepid * sizeof(*repsizes));
 					aprint_error_dev(self,
 					    "sc_intr == NULL\n");
 					return;
@@ -363,7 +363,7 @@ nomem:
 			}
 		}
 	}
-	free(repsizes, M_TEMP);
+	kmem_free(repsizes, nrepid * sizeof(*repsizes));
 
 	return;
 }
@@ -438,7 +438,7 @@ uhidev_detach(device_t self, int flags)
 		usbd_abort_pipe(sc->sc_ipipe);
 
 	if (sc->sc_repdesc != NULL)
-		free(sc->sc_repdesc, M_USBDEV);
+		kmem_free(sc->sc_repdesc, sc->sc_repdesc_size);
 
 	rv = 0;
 	for (i = 0; i < sc->sc_nrepid; i++) {
@@ -555,7 +555,7 @@ uhidev_open(struct uhidev *scd)
 	if (sc->sc_isize == 0)
 		return (0);
 
-	sc->sc_ibuf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
+	sc->sc_ibuf = kmem_alloc(sc->sc_isize, KM_SLEEP);
 
 	/* Set up input interrupt pipe. */
 	DPRINTF(("uhidev_open: isize=%d, ep=0x%02x\n", sc->sc_isize,
@@ -606,7 +606,7 @@ out2:
 	usbd_close_pipe(sc->sc_ipipe);
 out1:
 	DPRINTF(("uhidev_open: failed in someway"));
-	free(sc->sc_ibuf, M_USBDEV);
+	kmem_free(sc->sc_ibuf, sc->sc_isize);
 	mutex_enter(&sc->sc_lock);
 	scd->sc_state &= ~UHIDEV_OPEN;
 	sc->sc_refcnt = 0;
@@ -656,7 +656,7 @@ uhidev_close(struct uhidev *scd)
 	}
 
 	if (sc->sc_ibuf != NULL) {
-		free(sc->sc_ibuf, M_USBDEV);
+		kmem_free(sc->sc_ibuf, sc->sc_isize);
 		sc->sc_ibuf = NULL;
 	}
 }
@@ -671,14 +671,14 @@ uhidev_set_report(struct uhidev *scd, int type, void *data, int len)
 		return usbd_set_report(scd->sc_parent->sc_iface, type,
 				       scd->sc_report_id, data, len);
 
-	buf = malloc(len + 1, M_TEMP, M_WAITOK);
+	buf = kmem_alloc(len + 1, KM_SLEEP);
 	buf[0] = scd->sc_report_id;
 	memcpy(buf+1, data, len);
 
 	retstat = usbd_set_report(scd->sc_parent->sc_iface, type,
 				  scd->sc_report_id, buf, len + 1);
 
-	free(buf, M_TEMP);
+	kmem_free(buf, len + 1);
 
 	return retstat;
 }

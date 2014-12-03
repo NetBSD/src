@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.1.14.2 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: udsir.c,v 1.1.14.3 2014/12/03 14:18:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.2 2014/12/02 09:00:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.3 2014/12/03 14:18:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/poll.h>
@@ -349,7 +349,7 @@ udsir_open(void *h, int flag, int mode, struct lwp *l)
 		error = ENOMEM;
 		goto bad5;
 	}
-	sc->sc_ur_buf = malloc(IRDA_MAX_FRAME_SIZE, M_USBDEV, M_NOWAIT);
+	sc->sc_ur_buf = kmem_alloc(IRDA_MAX_FRAME_SIZE, KM_SLEEP);
 	if (sc->sc_ur_buf == NULL) {
 		error = ENOMEM;
 		goto bad5;
@@ -436,7 +436,7 @@ udsir_close(void *h, int flag, int mode, struct lwp *l)
 		sc->sc_wr_buf = NULL;
 	}
 	if (sc->sc_ur_buf != NULL) {
-		free(sc->sc_ur_buf, M_USBDEV);
+		kmem_free(sc->sc_ur_buf, IRDA_MAX_FRAME_SIZE);
 		sc->sc_ur_buf = NULL;
 	}
 
