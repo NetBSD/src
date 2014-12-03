@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.154 2014/10/18 08:33:29 snj Exp $	*/
+/*	$NetBSD: nd6.c,v 1.155 2014/12/03 01:32:11 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.154 2014/10/18 08:33:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.155 2014/12/03 01:32:11 christos Exp $");
 
 #include "bridge.h"
 #include "carp.h"
@@ -2380,10 +2380,13 @@ nd6_storelladdr(const struct ifnet *ifp, const struct rtentry *rt,
 	}
 	sdl = satocsdl(rt->rt_gateway);
 	if (sdl->sdl_alen == 0 || sdl->sdl_alen > dstsize) {
+		char sbuf[INET6_ADDRSTRLEN];
+		char dbuf[LINK_ADDRSTRLEN];
 		/* this should be impossible, but we bark here for debugging */
-		printf("%s: sdl_alen == %" PRIu8 ", dst=%s, if=%s\n", __func__,
-		    sdl->sdl_alen, ip6_sprintf(&satocsin6(dst)->sin6_addr),
-		    if_name(ifp));
+		printf("%s: sdl_alen == %" PRIu8 ", if=%s, dst=%s, sdl=%s\n",
+		    __func__, sdl->sdl_alen, if_name(ifp),
+		    IN6_PRINT(sbuf, &satocsin6(dst)->sin6_addr),
+		    DL_PRINT(dbuf, &sdl->sdl_addr));
 		m_freem(m);
 		return 0;
 	}
