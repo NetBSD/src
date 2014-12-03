@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.6 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.7 2014/12/03 22:42:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.6 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.7 2014/12/03 22:42:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -759,61 +759,65 @@ motg_get_lock(struct usbd_bus *bus, kmutex_t **lock)
  * Data structures and routines to emulate the root hub.
  */
 usb_device_descriptor_t motg_devd = {
-	USB_DEVICE_DESCRIPTOR_SIZE,
-	UDESC_DEVICE,		/* type */
-	{0x00, 0x01},		/* USB version */
-	UDCLASS_HUB,		/* class */
-	UDSUBCLASS_HUB,		/* subclass */
-	UDPROTO_FSHUB,		/* protocol */
-	64,			/* max packet */
-	{0},{0},{0x00,0x01},	/* device id */
-	1,2,0,			/* string indicies */
-	1			/* # of configurations */
+	.bLength = USB_DEVICE_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_DEVICE,
+	.bcdUSB = {0x00, 0x01},
+	.bDeviceClass = UDCLASS_HUB,
+	.bDeviceSubClass = UDSUBCLASS_HUB,
+	.bDeviceProtocol = UDPROTO_FSHUB,
+	.bMaxPacketSize = 64,
+	.idVendor = {0},
+	.idProduct = {0},
+	.bcdDevice = {0x00,0x01},
+	.iManufacturer = 1,
+	.iProduct = 2,
+	.iSerialNumber = 0,
+	.bNumConfigurations = 1
 };
 
 const usb_config_descriptor_t motg_confd = {
-	USB_CONFIG_DESCRIPTOR_SIZE,
-	UDESC_CONFIG,
-	{USB_CONFIG_DESCRIPTOR_SIZE +
-	 USB_INTERFACE_DESCRIPTOR_SIZE +
-	 USB_ENDPOINT_DESCRIPTOR_SIZE},
-	1,
-	1,
-	0,
-	UC_ATTR_MBO | UC_SELF_POWERED,
-	0			/* max power */
+	.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_CONFIG,
+	.wTotalLength = USETWD(
+		USB_CONFIG_DESCRIPTOR_SIZE +
+		USB_INTERFACE_DESCRIPTOR_SIZE +
+		USB_ENDPOINT_DESCRIPTOR_SIZE),
+	.bNumInterface = 1,
+	.bConfigurationValue = 1,
+	.iConfiguration = 0,
+	.bmAttributes = UC_ATTR_MBO | UC_SELF_POWERED,
+	.bMaxPower = 0
 };
 
 const usb_interface_descriptor_t motg_ifcd = {
-	USB_INTERFACE_DESCRIPTOR_SIZE,
-	UDESC_INTERFACE,
-	0,
-	0,
-	1,
-	UICLASS_HUB,
-	UISUBCLASS_HUB,
-	UIPROTO_FSHUB,
-	0
+	.bLength = USB_INTERFACE_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_INTERFACE,
+	.bInterfaceNumber = 0,
+	.bAlternateSetting = 0,
+	.bNumEndpoints = 1,
+	.bInterfaceClass = UICLASS_HUB,
+	.bInterfaceSubClass = UISUBCLASS_HUB,
+	.bInterfaceProtocol = 	UIPROTO_FSHUB,
 };
 
 const usb_endpoint_descriptor_t motg_endpd = {
-	USB_ENDPOINT_DESCRIPTOR_SIZE,
-	UDESC_ENDPOINT,
-	UE_DIR_IN | MOTG_INTR_ENDPT,
-	UE_INTERRUPT,
-	{8},
-	255
+	.bLength = USB_ENDPOINT_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_ENDPOINT,
+	.bEndpointAddress = UE_DIR_IN | MOTG_INTR_ENDPT,
+	.bmAttributes = UE_INTERRUPT,
+	.wMaxPacketSize = USETWD(8),
+	.bInterval = 255
 };
 
 const usb_hub_descriptor_t motg_hubd = {
-	USB_HUB_DESCRIPTOR_SIZE,
-	UDESC_HUB,
-	1,
-	{ UHD_PWR_NO_SWITCH | UHD_OC_INDIVIDUAL, 0 },
-	50,			/* power on to power good */
-	0,
-	{ 0x00 },		/* port is removable */
-	{ 0 },
+	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_HUB,
+	.bNbrPorts = 1,
+	.wHubCharacteristics = USETWD(UHD_PWR_NO_SWITCH | UHD_OC_INDIVIDUAL),
+	.bPwrOn2PwrGood = 50,
+	.bHubContrCurrent = 0,
+	.DeviceRemovable = { 0 },
+	.PortPowerCtrlMask = { 0 },
 };
 
 /*
