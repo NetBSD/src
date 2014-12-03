@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.116 2014/12/01 21:18:23 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.117 2014/12/03 13:59:18 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3159,4 +3159,10 @@ etc/root/dot.profile				1.27
 
 	Freshen up the commented-out suggested PKG_PATH a bit.
 	[riz, ticket #288]
+
+external/gpl3/binutils/dist/gas/config/tc-arm.c	1.7
+
+	Avoid undefined behaviour (merged from upstream commit
+	d840c081f8082e8b9e63fead5306643975a97bb3).
+	[joerg, ticket #289]
 
