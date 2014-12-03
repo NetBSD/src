@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.113 2014/12/03 00:52:52 christos Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.114 2014/12/03 01:29:33 christos Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -145,6 +145,11 @@
 ./usr/libdata/debug/usr/tests/rump/rumpvfs
 ./usr/libdata/debug/usr/tests/sbin
 ./usr/libdata/debug/usr/tests/sbin/resize_ffs
+./usr/libdata/debug/usr/tests/sys
+./usr/libdata/debug/usr/tests/sys/net
+./usr/libdata/debug/usr/tests/sys/netatalk
+./usr/libdata/debug/usr/tests/sys/netinet
+./usr/libdata/debug/usr/tests/sys/netinet6
 ./usr/libdata/debug/usr/tests/usr.bin
 ./usr/libdata/debug/usr/tests/usr.bin/id
 ./usr/libdata/debug/usr/tests/usr.bin/netpgpverify
