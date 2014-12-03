@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.5 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.6 2014/12/03 22:19:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -141,17 +141,6 @@ struct usbd_hub {
 struct usbd_bus {
 	/* Filled by HC driver */
 	void			*ub_hcpriv;
-	const struct usbd_bus_methods *ub_methods;
-	uint32_t		ub_pipesize;	/* size of a pipe struct */
-	/* Filled by usb driver */
-	kmutex_t		*ub_lock;
-	struct usbd_device      *ub_roothub;
-	usbd_device_handle	ub_devices[USB_MAX_DEVICES];
-	kcondvar_t              ub_needsexplore_cv;
-	char			ub_needsexplore;/* a hub a signalled a change */
-	char			ub_usepolling;
-	device_t		ub_usbctl;
-	struct usb_device_stats	ub_stats;
 	int			ub_revision;	/* USB revision */
 #define USBREV_UNKNOWN	0
 #define USBREV_PRE_1_0	1
@@ -161,11 +150,23 @@ struct usbd_bus {
 #define USBREV_3_0	5
 #define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1", "2.0", "3.0" }
 
-	void		       *ub_soft; /* soft interrupt cookie */
-
-	bool			ub_usedma;		/* Does this HC support DMA */
+	const struct usbd_bus_methods *ub_methods;
+	uint32_t		ub_pipesize;	/* size of a pipe struct */
+	bool			ub_usedma;	/* Does this HC support DMA */
 	int			ub_dmaflags;
 	bus_dma_tag_t		ub_dmatag;	/* DMA tag */
+
+	/* Filled by usb driver */
+	kmutex_t		*ub_lock;
+	struct usbd_device      *ub_roothub;
+	usbd_device_handle	ub_devices[USB_MAX_DEVICES];
+	kcondvar_t              ub_needsexplore_cv;
+	char			ub_needsexplore;/* a hub a signalled a change */
+	char			ub_usepolling;
+	device_t		ub_usbctl;
+	struct usb_device_stats	ub_stats;
+
+	void		       *ub_soft; /* soft interrupt cookie */
 };
 
 struct usbd_device {
