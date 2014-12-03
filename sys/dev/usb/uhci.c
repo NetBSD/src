@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.7 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.8 2014/12/03 13:09:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.7 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.8 2014/12/03 13:09:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3327,16 +3327,20 @@ uhci_open(usbd_pipe_handle pipe)
  * Data structures and routines to emulate the root hub.
  */
 usb_device_descriptor_t uhci_devd = {
-	USB_DEVICE_DESCRIPTOR_SIZE,
-	UDESC_DEVICE,		/* type */
-	{0x00, 0x01},		/* USB version */
-	UDCLASS_HUB,		/* class */
-	UDSUBCLASS_HUB,		/* subclass */
-	UDPROTO_FSHUB,		/* protocol */
-	64,			/* max packet */
-	{0},{0},{0x00,0x01},	/* device id */
-	1,2,0,			/* string indicies */
-	1			/* # of configurations */
+	.bLength = USB_DEVICE_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_DEVICE,
+	.bcdUSB = {0x00, 0x01},
+	.bDeviceClass = UDCLASS_HUB,
+	.bDeviceSubClass = UDSUBCLASS_HUB,
+	.bDeviceProtocol = UDPROTO_FSHUB,
+	.bMaxPacketSize = 64,
+	.idVendor = {0},
+	.idProduct = {0},
+	.bcdDevice = {0x00,0x01},
+	.iManufacturer = 1,
+	.iProduct = 2,
+	.iSerialNumber = 0,
+	.bNumConfigurations = 1
 };
 
 const usb_config_descriptor_t uhci_confd = {

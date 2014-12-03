@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.5 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.6 2014/12/03 13:09:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.5 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.6 2014/12/03 13:09:00 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2001,16 +2001,20 @@ xhci_noop(usbd_pipe_handle pipe)
 /* root hub descriptors */
 
 static const usb_device_descriptor_t xhci_devd = {
-	USB_DEVICE_DESCRIPTOR_SIZE,
-	UDESC_DEVICE,		/* type */
-	{0x00, 0x02},		/* USB version */
-	UDCLASS_HUB,		/* class */
-	UDSUBCLASS_HUB,		/* subclass */
-	UDPROTO_HSHUBSTT,	/* protocol */
-	64,			/* max packet */
-	{0},{0},{0x00,0x01},	/* device id */
-	1,2,0,			/* string indexes */
-	1			/* # of configurations */
+	.bLength = USB_DEVICE_DESCRIPTOR_SIZE,
+	.bDescriptorType = UDESC_DEVICE,
+	.bcdUSB = {0x00, 0x02},
+	.bDeviceClass = UDCLASS_HUB,
+	.bDeviceSubClass = UDSUBCLASS_HUB,
+	.bDeviceProtocol = UDPROTO_HSHUBSTT,
+	.bMaxPacketSize = 64,
+	.idVendor = {0},
+	.idProduct = {0},
+	.bcdDevice = {0x00,0x01},
+	.iManufacturer = 1,
+	.iProduct = 2,
+	.iSerialNumber = 0,
+	.bNumConfigurations = 1
 };
 
 static const usb_device_qualifier_t xhci_odevd = {
