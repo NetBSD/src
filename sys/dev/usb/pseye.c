@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.21.34.3 2014/12/03 12:52:07 skrll Exp $ */
+/* $NetBSD: pseye.c,v 1.21.34.4 2014/12/03 22:33:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.3 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.4 2014/12/03 22:33:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
 #include <sys/poll.h>

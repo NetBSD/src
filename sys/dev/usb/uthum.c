@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.10 2013/01/05 23:34:21 christos Exp $   */
+/*	$NetBSD: uthum.c,v 1.10.14.1 2014/12/03 22:33:56 skrll Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,13 +22,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10 2013/01/05 23:34:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10.14.1 2014/12/03 22:33:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 
