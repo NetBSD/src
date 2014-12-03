@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47.6.8 2014/12/03 22:40:55 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.9 2014/12/03 23:05:06 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.8 2014/12/03 22:40:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.9 2014/12/03 23:05:06 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.8 2014/12/03 22:40:55 skrll Exp $
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 #include <dev/usb/usbdevs.h>
-#include <dev/usb/usbroothub_subr.h>
+#include <dev/usb/usbroothub.h>
 
 #include <dev/ic/sl811hsreg.h>
 #include <dev/ic/sl811hsvar.h>
