@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.112 2014/11/14 09:03:39 uebayasi Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.113 2014/12/03 00:52:52 christos Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -336,6 +336,10 @@
 ./usr/tests/share/examples/lutok
 ./usr/tests/share/mk
 ./usr/tests/sys
+./usr/tests/sys/net
+./usr/tests/sys/netatalk
+./usr/tests/sys/netinet
+./usr/tests/sys/netinet6
 ./usr/tests/sys/rc
 ./usr/tests/usr.bin
 ./usr/tests/usr.bin/awk
