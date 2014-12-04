@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.118 2014/12/03 23:03:40 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.119 2014/12/04 07:44:57 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3181,4 +3181,14 @@ sys/arch/ofppc/ofppc/locore.S			1.49
 	registers (containing "arg" and "len") across function calls
 	to C code.  fixes kernels built with gcc 4.8.
 	[chs, ticket #291]
+
+usr.bin/mktemp/mktemp.1				1.22
+
+	Minor wording nits and a typo fix.
+	[snj, ticket #292]
+
+share/man/man3/queue.3				1.50
+
+	Fix some grammar and punctuation issues.  Remove a pasto.
+	[snj, ticket #293]
 
