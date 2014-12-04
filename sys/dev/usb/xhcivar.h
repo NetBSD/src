@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.4 2014/03/10 13:12:02 skrll Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.4.12.1 2014/12/04 06:57:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -102,8 +102,6 @@ struct xhci_softc {
 	usb_dma_t sc_dcbaa_dma;
 	usb_dma_t sc_spbufarray_dma;
 	usb_dma_t *sc_spbuf_dma;
-
-	//struct usb_dma_reserve sc_dma_reserve;
 
 	kcondvar_t sc_command_cv;
 	bus_addr_t sc_command_addr;
