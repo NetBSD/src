@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2var.h,v 1.3.12.2 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: dwc2var.h,v 1.3.12.3 2014/12/04 08:04:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -95,13 +95,8 @@ typedef struct dwc2_softc {
 	device_t sc_child;		/* /dev/usb# device */
 	char sc_dying;
 
-	char sc_vendor[32];		/* vendor string for root hub */
-	int sc_id_vendor;		/* vendor ID for root hub */
-
 	TAILQ_HEAD(, dwc2_xfer) sc_complete;	/* complete transfers */
 
-	uint8_t sc_addr;		/* device address */
-	uint8_t sc_conf;		/* device configuration */
 
 	pool_cache_t sc_xferpool;
 	pool_cache_t sc_qhpool;
