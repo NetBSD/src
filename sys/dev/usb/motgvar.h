@@ -1,4 +1,4 @@
-/*	$NetBSD: motgvar.h,v 1.4.2.2 2014/12/02 09:00:33 skrll Exp $	*/
+/*	$NetBSD: motgvar.h,v 1.4.2.3 2014/12/04 08:04:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,8 +93,6 @@ struct motg_softc {
 
 	/* Info for the root hub interrupt "pipe". */
 	usbd_xfer_handle sc_intr_xfer;	/* root hub interrupt transfer */
-	uint8_t sc_root_addr;		/* address of the root hub */
-	uint8_t sc_root_conf;		/* configuration of the root hub */
 
 	char sc_vendor[32];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */

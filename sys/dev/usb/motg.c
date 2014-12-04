@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.8 2014/12/03 23:05:06 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.9 2014/12/04 08:04:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.8 2014/12/03 23:05:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.9 2014/12/04 08:04:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,11 +101,6 @@ int motgdebug = 0;
 #define NAK_TO_BULK_HIGH 0
 
 static void 		motg_hub_change(struct motg_softc *);
-static usbd_status	motg_root_ctrl_transfer(usbd_xfer_handle);
-static usbd_status	motg_root_ctrl_start(usbd_xfer_handle);
-static void		motg_root_ctrl_abort(usbd_xfer_handle);
-static void		motg_root_ctrl_close(usbd_pipe_handle);
-static void		motg_root_ctrl_done(usbd_xfer_handle);
 
 static usbd_status	motg_root_intr_transfer(usbd_xfer_handle);
 static usbd_status	motg_root_intr_start(usbd_xfer_handle);
@@ -119,6 +114,9 @@ static void		motg_softintr(void *);
 static usbd_xfer_handle	motg_allocx(struct usbd_bus *);
 static void		motg_freex(struct usbd_bus *, usbd_xfer_handle);
 static void		motg_get_lock(struct usbd_bus *, kmutex_t **);
+static int		motg_roothub_ctrl(struct usbd_bus *, usb_device_request_t *,
+    void *, int);
+
 static void		motg_noop(usbd_pipe_handle pipe);
 static usbd_status	motg_portreset(struct motg_softc*);
 
@@ -148,7 +146,6 @@ static void		motg_waitintr(struct motg_softc *, usbd_xfer_handle);
 static void		motg_device_clear_toggle(usbd_pipe_handle);
 static void		motg_device_xfer_abort(usbd_xfer_handle);
 
-#define MOTG_INTR_ENDPT 1
 #define UBARR(sc) bus_space_barrier((sc)->sc_iot, (sc)->sc_ioh, 0, (sc)->sc_size, \
 			BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE)
 #define UWRITE1(sc, r, x) \
@@ -207,16 +204,7 @@ const struct usbd_bus_methods motg_bus_methods = {
 	.ubm_allocx =	motg_allocx,
 	.ubm_freex =	motg_freex,
 	.ubm_getlock =	motg_get_lock,
-	.ubm_newdev =	NULL,
-};
-
-const struct usbd_pipe_methods motg_root_ctrl_methods = {
-	.upm_transfer =	motg_root_ctrl_transfer,
-	.upm_start =	motg_root_ctrl_start,
-	.upm_abort =	motg_root_ctrl_abort,
-	.upm_close =	motg_root_ctrl_close,
-	.upm_cleartoggle =	motg_noop,
-	.upm_done =	motg_root_ctrl_done,
+	.ubm_rhctrl =	motg_roothub_ctrl,
 };
 
 const struct usbd_pipe_methods motg_root_intr_methods = {
@@ -496,10 +484,11 @@ motg_open(usbd_pipe_handle pipe)
 	struct motg_softc *sc = pipe->up_dev->ud_bus->ub_hcpriv;
 	struct motg_pipe *otgpipe = (struct motg_pipe *)pipe;
 	usb_endpoint_descriptor_t *ed = pipe->up_endpoint->ue_edesc;
+	uint8_t rhaddr = pipe->up_dev->ud_bus->ub_rhaddr;
 
 	DPRINTF(("motg_open: pipe=%p, addr=%d, endpt=%d (%d)\n",
 		     pipe, pipe->up_dev->ud_addr,
-		     ed->bEndpointAddress, sc->sc_root_addr));
+		     ed->bEndpointAddress, rhaddr));
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
@@ -507,12 +496,12 @@ motg_open(usbd_pipe_handle pipe)
 	/* toggle state needed for bulk endpoints */
 	otgpipe->nexttoggle = pipe->up_endpoint->ue_toggle;
 
-	if (pipe->up_dev->ud_addr == sc->sc_root_addr) {
+	if (pipe->up_dev->ud_addr == rhaddr) {
 		switch (ed->bEndpointAddress) {
 		case USB_CONTROL_ENDPOINT:
-			pipe->up_methods = &motg_root_ctrl_methods;
+			pipe->up_methods = &roothub_ctrl_methods;
 			break;
-		case UE_DIR_IN | MOTG_INTR_ENDPT:
+		case UE_DIR_IN | USBROOTHUB_INTR_ENDPT:
 			pipe->up_methods = &motg_root_intr_methods;
 			break;
 		default:
@@ -756,250 +745,69 @@ motg_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 }
 
 /*
- * Data structures and routines to emulate the root hub.
+ * Routines to emulate the root hub.
  */
-usb_device_descriptor_t motg_devd = {
-	.bLength = USB_DEVICE_DESCRIPTOR_SIZE,
-	.bDescriptorType = UDESC_DEVICE,
-	.bcdUSB = {0x00, 0x01},
-	.bDeviceClass = UDCLASS_HUB,
-	.bDeviceSubClass = UDSUBCLASS_HUB,
-	.bDeviceProtocol = UDPROTO_FSHUB,
-	.bMaxPacketSize = 64,
-	.idVendor = {0},
-	.idProduct = {0},
-	.bcdDevice = {0x00,0x01},
-	.iManufacturer = 1,
-	.iProduct = 2,
-	.iSerialNumber = 0,
-	.bNumConfigurations = 1
-};
-
-const usb_config_descriptor_t motg_confd = {
-	.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
-	.bDescriptorType = UDESC_CONFIG,
-	.wTotalLength = USETWD(
-		USB_CONFIG_DESCRIPTOR_SIZE +
-		USB_INTERFACE_DESCRIPTOR_SIZE +
-		USB_ENDPOINT_DESCRIPTOR_SIZE),
-	.bNumInterface = 1,
-	.bConfigurationValue = 1,
-	.iConfiguration = 0,
-	.bmAttributes = UC_ATTR_MBO | UC_SELF_POWERED,
-	.bMaxPower = 0
-};
-
-const usb_interface_descriptor_t motg_ifcd = {
-	.bLength = USB_INTERFACE_DESCRIPTOR_SIZE,
-	.bDescriptorType = UDESC_INTERFACE,
-	.bInterfaceNumber = 0,
-	.bAlternateSetting = 0,
-	.bNumEndpoints = 1,
-	.bInterfaceClass = UICLASS_HUB,
-	.bInterfaceSubClass = UISUBCLASS_HUB,
-	.bInterfaceProtocol = 	UIPROTO_FSHUB,
-};
-
-const usb_endpoint_descriptor_t motg_endpd = {
-	.bLength = USB_ENDPOINT_DESCRIPTOR_SIZE,
-	.bDescriptorType = UDESC_ENDPOINT,
-	.bEndpointAddress = UE_DIR_IN | MOTG_INTR_ENDPT,
-	.bmAttributes = UE_INTERRUPT,
-	.wMaxPacketSize = USETWD(8),
-	.bInterval = 255
-};
-
-const usb_hub_descriptor_t motg_hubd = {
-	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
-	.bDescriptorType = UDESC_HUB,
-	.bNbrPorts = 1,
-	.wHubCharacteristics = USETWD(UHD_PWR_NO_SWITCH | UHD_OC_INDIVIDUAL),
-	.bPwrOn2PwrGood = 50,
-	.bHubContrCurrent = 0,
-	.DeviceRemovable = { 0 },
-	.PortPowerCtrlMask = { 0 },
-};
-
-/*
- * Simulate a hardware hub by handling all the necessary requests.
- */
-usbd_status
-motg_root_ctrl_transfer(usbd_xfer_handle xfer)
+Static int
+motg_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
+    void *buf, int buflen)
 {
-	struct motg_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
-	usbd_status err;
-
-	/* Insert last in queue. */
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return (err);
-
-	/*
-	 * Pipe isn't running (otherwise err would be USBD_INPROG),
-	 * so start it first.
-	 */
-	return (motg_root_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue)));
-}
-
-usbd_status
-motg_root_ctrl_start(usbd_xfer_handle xfer)
-{
-	struct motg_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
-	usb_device_request_t *req;
-	void *buf = NULL;
-	int len, value, index, status, change, l, totlen = 0;
+	struct motg_softc *sc = bus->ub_hcpriv;
+	int status, change, totlen = 0;
+	uint16_t len, value, index;
 	usb_port_status_t ps;
 	usbd_status err;
 	uint32_t val;
 
 	if (sc->sc_dying)
-		return (USBD_IOERROR);
+		return -1;
 
-#ifdef DIAGNOSTIC
-	if (!(xfer->ux_rqflags & URQ_REQUEST))
-		panic("motg_root_ctrl_start: not a request");
-#endif
-	req = &xfer->ux_request;
-
-	DPRINTFN(MD_ROOT,("motg_root_ctrl_control type=0x%02x request=%02x\n",
+	DPRINTFN(MD_ROOT,("%s type=0x%02x request=%02x\n", __func__,
 		    req->bmRequestType, req->bRequest));
 
 	len = UGETW(req->wLength);
 	value = UGETW(req->wValue);
 	index = UGETW(req->wIndex);
 
-	if (len != 0)
-		buf = xfer->ux_buf;
-
 #define C(x,y) ((x) | ((y) << 8))
-	switch(C(req->bRequest, req->bmRequestType)) {
-	case C(UR_CLEAR_FEATURE, UT_WRITE_DEVICE):
-	case C(UR_CLEAR_FEATURE, UT_WRITE_INTERFACE):
-	case C(UR_CLEAR_FEATURE, UT_WRITE_ENDPOINT):
-		/*
-		 * DEVICE_REMOTE_WAKEUP and ENDPOINT_HALT are no-ops
-		 * for the integrated root hub.
-		 */
-		break;
-	case C(UR_GET_CONFIG, UT_READ_DEVICE):
-		if (len > 0) {
-			*(uint8_t *)buf = sc->sc_root_conf;
-			totlen = 1;
-		}
-		break;
+	switch (C(req->bRequest, req->bmRequestType)) {
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
-		DPRINTFN(MD_ROOT,("motg_root_ctrl_control wValue=0x%04x\n", value));
-		if (len == 0)
+		DPRINTFN(MD_ROOT,("%s wValue=0x%04x\n", __func__, value));
+		switch (value) {
+		case C(0, UDESC_DEVICE): {
+			usb_device_descriptor_t devd;
+
+			totlen = min(buflen, sizeof(devd));
+			memcpy(&devd, buf, totlen);
+			USETW(devd.idVendor, sc->sc_id_vendor);
+			memcpy(buf, &devd, totlen);
 			break;
-		switch(value >> 8) {
-		case UDESC_DEVICE:
-			if ((value & 0xff) != 0) {
-				err = USBD_IOERROR;
-				goto ret;
-			}
-			totlen = l = min(len, USB_DEVICE_DESCRIPTOR_SIZE);
-			USETW(motg_devd.idVendor, sc->sc_id_vendor);
-			memcpy(buf, &motg_devd, l);
-			break;
-		case UDESC_CONFIG:
-			if ((value & 0xff) != 0) {
-				err = USBD_IOERROR;
-				goto ret;
-			}
-			totlen = l = min(len, USB_CONFIG_DESCRIPTOR_SIZE);
-			memcpy(buf, &motg_confd, l);
-			buf = (char *)buf + l;
-			len -= l;
-			l = min(len, USB_INTERFACE_DESCRIPTOR_SIZE);
-			totlen += l;
-			memcpy(buf, &motg_ifcd, l);
-			buf = (char *)buf + l;
-			len -= l;
-			l = min(len, USB_ENDPOINT_DESCRIPTOR_SIZE);
-			totlen += l;
-			memcpy(buf, &motg_endpd, l);
-			break;
-		case UDESC_STRING:
+		}
+		case C(1, UDESC_STRING):
 #define sd ((usb_string_descriptor_t *)buf)
-			switch (value & 0xff) {
-			case 0: /* Language table */
-				totlen = usb_makelangtbl(sd, len);
-				break;
-			case 1: /* Vendor */
-				totlen = usb_makestrdesc(sd, len,
-							 sc->sc_vendor);
-				break;
-			case 2: /* Product */
-				totlen = usb_makestrdesc(sd, len,
-							 "MOTG root hub");
-				break;
-			}
-#undef sd
+			/* Vendor */
+			totlen = usb_makestrdesc(sd, len, sc->sc_vendor);
 			break;
+		case C(2, UDESC_STRING):
+			/* Product */
+			totlen = usb_makestrdesc(sd, len, "MOTG root hub");
+			break;
+#undef sd
 		default:
-			err = USBD_IOERROR;
-			goto ret;
+			/* default from usbroothub */
+			return buflen;
 		}
-		break;
-	case C(UR_GET_INTERFACE, UT_READ_INTERFACE):
-		if (len > 0) {
-			*(uint8_t *)buf = 0;
-			totlen = 1;
-		}
-		break;
-	case C(UR_GET_STATUS, UT_READ_DEVICE):
-		if (len > 1) {
-			USETW(((usb_status_t *)buf)->wStatus,UDS_SELF_POWERED);
-			totlen = 2;
-		}
-		break;
-	case C(UR_GET_STATUS, UT_READ_INTERFACE):
-	case C(UR_GET_STATUS, UT_READ_ENDPOINT):
-		if (len > 1) {
-			USETW(((usb_status_t *)buf)->wStatus, 0);
-			totlen = 2;
-		}
-		break;
-	case C(UR_SET_ADDRESS, UT_WRITE_DEVICE):
-		if (value >= USB_MAX_DEVICES) {
-			err = USBD_IOERROR;
-			goto ret;
-		}
-		sc->sc_root_addr = value;
-		break;
-	case C(UR_SET_CONFIG, UT_WRITE_DEVICE):
-		if (value != 0 && value != 1) {
-			err = USBD_IOERROR;
-			goto ret;
-		}
-		sc->sc_root_conf = value;
-		break;
-	case C(UR_SET_DESCRIPTOR, UT_WRITE_DEVICE):
-		break;
-	case C(UR_SET_FEATURE, UT_WRITE_DEVICE):
-	case C(UR_SET_FEATURE, UT_WRITE_INTERFACE):
-	case C(UR_SET_FEATURE, UT_WRITE_ENDPOINT):
-		err = USBD_IOERROR;
-		goto ret;
-	case C(UR_SET_INTERFACE, UT_WRITE_INTERFACE):
-		break;
-	case C(UR_SYNCH_FRAME, UT_WRITE_ENDPOINT):
 		break;
 	/* Hub requests */
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_DEVICE):
 		break;
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER):
 		DPRINTFN(MD_ROOT,
-		    ("motg_root_ctrl_control: UR_CLEAR_PORT_FEATURE "
-			     "port=%d feature=%d\n",
-			     index, value));
+		    ("%s: UR_CLEAR_PORT_FEATURE port=%d feature=%d\n",
+		    __func__, index, value));
 		if (index != 1) {
-			err = USBD_IOERROR;
-			goto ret;
+			return -1;
 		}
-		switch(value) {
+		switch (value) {
 		case UHF_PORT_ENABLE:
 			sc->sc_port_enabled = 0;
 			break;
@@ -1028,8 +836,7 @@ motg_root_ctrl_start(usbd_xfer_handle xfer)
 			break;
 		case UHF_C_PORT_RESET:
 			sc->sc_isreset = 0;
-			err = USBD_NORMAL_COMPLETION;
-			goto ret;
+			break;
 		case UHF_PORT_POWER:
 			/* XXX todo */
 			break;
@@ -1038,40 +845,32 @@ motg_root_ctrl_start(usbd_xfer_handle xfer)
 		case UHF_PORT_LOW_SPEED:
 		case UHF_C_PORT_SUSPEND:
 		default:
-			err = USBD_IOERROR;
-			goto ret;
+			return -1;
 		}
 		break;
 	case C(UR_GET_BUS_STATE, UT_READ_CLASS_OTHER):
-		err = USBD_IOERROR;
-		goto ret;
+		return -1;
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
 		if (len == 0)
 			break;
 		if ((value & 0xff) != 0) {
-			err = USBD_IOERROR;
-			goto ret;
+			return -1;
 		}
-		l = min(len, USB_HUB_DESCRIPTOR_SIZE);
-		totlen = l;
-		memcpy(buf, &motg_hubd, l);
+		totlen = buflen;
 		break;
 	case C(UR_GET_STATUS, UT_READ_CLASS_DEVICE):
 		if (len != 4) {
-			err = USBD_IOERROR;
-			goto ret;
+			return -1;
 		}
 		memset(buf, 0, len);
 		totlen = len;
 		break;
 	case C(UR_GET_STATUS, UT_READ_CLASS_OTHER):
 		if (index != 1) {
-			err = USBD_IOERROR;
-			goto ret;
+			return -1;
 		}
 		if (len != 4) {
-			err = USBD_IOERROR;
-			goto ret;
+			return -1;
 		}
 		status = change = 0;
 		if (sc->sc_connected)
@@ -1095,19 +894,16 @@ motg_root_ctrl_start(usbd_xfer_handle xfer)
 			change |= UPS_C_PORT_RESET;
 		USETW(ps.wPortStatus, status);
 		USETW(ps.wPortChange, change);
-		l = min(len, sizeof ps);
-		memcpy(buf, &ps, l);
-		totlen = l;
+		totlen = min(len, sizeof(ps));
+		memcpy(buf, &ps, totlen);
 		break;
 	case C(UR_SET_DESCRIPTOR, UT_WRITE_CLASS_DEVICE):
-		err = USBD_IOERROR;
-		goto ret;
+		return -1;
 	case C(UR_SET_FEATURE, UT_WRITE_CLASS_DEVICE):
 		break;
 	case C(UR_SET_FEATURE, UT_WRITE_CLASS_OTHER):
 		if (index != 1) {
-			err = USBD_IOERROR;
-			goto ret;
+			return -1;
 		}
 		switch(value) {
 		case UHF_PORT_ENABLE:
@@ -1126,11 +922,12 @@ motg_root_ctrl_start(usbd_xfer_handle xfer)
 			break;
 		case UHF_PORT_RESET:
 			err = motg_portreset(sc);
-			goto ret;
+			if (err != USBD_NORMAL_COMPLETION)
+				return -1;
+			return 0;
 		case UHF_PORT_POWER:
 			/* XXX todo */
-			err = USBD_NORMAL_COMPLETION;
-			goto ret;
+			return 0;
 		case UHF_C_PORT_CONNECTION:
 		case UHF_C_PORT_ENABLE:
 		case UHF_C_PORT_OVER_CURRENT:
@@ -1140,41 +937,15 @@ motg_root_ctrl_start(usbd_xfer_handle xfer)
 		case UHF_C_PORT_SUSPEND:
 		case UHF_C_PORT_RESET:
 		default:
-			err = USBD_IOERROR;
-			goto ret;
+			return -1;
 		}
 		break;
 	default:
-		err = USBD_IOERROR;
-		goto ret;
+		/* default from usbroothub */
+		return buflen;
 	}
-	xfer->ux_actlen = totlen;
-	err = USBD_NORMAL_COMPLETION;
- ret:
-	xfer->ux_status = err;
-	mutex_enter(&sc->sc_lock);
-	usb_transfer_complete(xfer);
-	mutex_exit(&sc->sc_lock);
-	return (USBD_IN_PROGRESS);
-}
 
-/* Abort a root control request. */
-void
-motg_root_ctrl_abort(usbd_xfer_handle xfer)
-{
-	/* Nothing to do, all transfers are synchronous. */
-}
-
-/* Close the root pipe. */
-void
-motg_root_ctrl_close(usbd_pipe_handle pipe)
-{
-	DPRINTFN(MD_ROOT, ("motg_root_ctrl_close\n"));
-}
-
-void
-motg_root_ctrl_done(usbd_xfer_handle xfer)
-{
+	return totlen;
 }
 
 /* Abort a root interrupt request. */

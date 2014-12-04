@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.52.14.2 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.52.14.3 2014/12/04 08:04:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -158,9 +158,6 @@ typedef struct uhci_softc {
 	uhci_soft_qh_t *sc_freeqhs;	/* QH free list */
 
 	pool_cache_t sc_xferpool;	/* free xfer pool */
-
-	uint8_t sc_addr;		/* device address */
-	uint8_t sc_conf;		/* device configuration */
 
 	uint8_t sc_saved_sof;
 	uint16_t sc_saved_frnum;

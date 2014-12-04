@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.4.12.1 2014/12/04 06:57:29 skrll Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.4.12.2 2014/12/04 08:04:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -109,9 +109,6 @@ struct xhci_softc {
 
 	bool sc_ac64;
 	bool sc_dying;
-
-	uint8_t sc_addr;
-	uint8_t sc_conf;
 };
 
 int	xhci_init(struct xhci_softc *);

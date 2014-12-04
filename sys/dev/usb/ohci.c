@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.11 2014/12/03 23:05:06 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.12 2014/12/04 08:04:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.11 2014/12/03 23:05:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.12 2014/12/04 08:04:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,12 +130,8 @@ Static void		ohci_device_isoc_enter(usbd_xfer_handle);
 Static usbd_xfer_handle	ohci_allocx(struct usbd_bus *);
 Static void		ohci_freex(struct usbd_bus *, usbd_xfer_handle);
 Static void		ohci_get_lock(struct usbd_bus *, kmutex_t **);
-
-Static usbd_status	ohci_root_ctrl_transfer(usbd_xfer_handle);
-Static usbd_status	ohci_root_ctrl_start(usbd_xfer_handle);
-Static void		ohci_root_ctrl_abort(usbd_xfer_handle);
-Static void		ohci_root_ctrl_close(usbd_pipe_handle);
-Static void		ohci_root_ctrl_done(usbd_xfer_handle);
+Static int		ohci_roothub_ctrl(struct usbd_bus *, 
+    usb_device_request_t *, void *, int);
 
 Static usbd_status	ohci_root_intr_transfer(usbd_xfer_handle);
 Static usbd_status	ohci_root_intr_start(usbd_xfer_handle);
@@ -245,8 +241,6 @@ struct ohci_pipe {
 	} u;
 };
 
-#define OHCI_INTR_ENDPT 1
-
 Static const struct usbd_bus_methods ohci_bus_methods = {
 	.ubm_open =	ohci_open,
 	.ubm_softint =	ohci_softintr,
@@ -254,16 +248,7 @@ Static const struct usbd_bus_methods ohci_bus_methods = {
 	.ubm_allocx =	ohci_allocx,
 	.ubm_freex =	ohci_freex,
 	.ubm_getlock =	ohci_get_lock,
-	.ubm_newdev =	NULL,
-};
-
-Static const struct usbd_pipe_methods ohci_root_ctrl_methods = {
-	.upm_transfer =	ohci_root_ctrl_transfer,
-	.upm_start =	ohci_root_ctrl_start,
-	.upm_abort =	ohci_root_ctrl_abort,
-	.upm_close =	ohci_root_ctrl_close,
-	.upm_cleartoggle =	ohci_noop,
-	.upm_done =	ohci_root_ctrl_done,
+	.ubm_rhctrl =	ohci_roothub_ctrl,
 };
 
 Static const struct usbd_pipe_methods ohci_root_intr_methods = {
@@ -1588,11 +1573,6 @@ ohci_root_intr_done(usbd_xfer_handle xfer)
 {
 }
 
-void
-ohci_root_ctrl_done(usbd_xfer_handle xfer)
-{
-}
-
 /*
  * Wait here until controller claims to have an interrupt.
  * Then call ohci_intr and return.  Use timeout to avoid waiting
@@ -2076,6 +2056,7 @@ usbd_status
 ohci_open(usbd_pipe_handle pipe)
 {
 	usbd_device_handle dev = pipe->up_dev;
+	struct usbd_bus *bus = dev->ud_bus;
 	ohci_softc_t *sc = dev->ud_bus->ub_hcpriv;
 	usb_endpoint_descriptor_t *ed = pipe->up_endpoint->ue_edesc;
 	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
@@ -2090,7 +2071,7 @@ ohci_open(usbd_pipe_handle pipe)
 	int ival;
 
 	DPRINTFN(1, ("ohci_open: pipe=%p, addr=%d, endpt=%d (%d)\n",
-		     pipe, addr, ed->bEndpointAddress, sc->sc_addr));
+		     pipe, addr, ed->bEndpointAddress, bus->ub_rhaddr));
 
 	if (sc->sc_dying) {
 		return USBD_IOERROR;
@@ -2099,12 +2080,12 @@ ohci_open(usbd_pipe_handle pipe)
 	std = NULL;
 	sed = NULL;
 
-	if (addr == sc->sc_addr) {
+	if (addr == bus->ub_rhaddr) {
 		switch (ed->bEndpointAddress) {
 		case USB_CONTROL_ENDPOINT:
-			pipe->up_methods = &ohci_root_ctrl_methods;
+			pipe->up_methods = &roothub_ctrl_methods;
 			break;
-		case UE_DIR_IN | OHCI_INTR_ENDPT:
+		case UE_DIR_IN | USBROOTHUB_INTR_ENDPT:
 			pipe->up_methods = &ohci_root_intr_methods;
 			break;
 		default:
@@ -2394,240 +2375,68 @@ done:
 /*
  * Data structures and routines to emulate the root hub.
  */
-Static usb_device_descriptor_t ohci_devd = {
-	.bLength = USB_DEVICE_DESCRIPTOR_SIZE,
-	.bDescriptorType = UDESC_DEVICE,
-	.bcdUSB = {0x00, 0x01},
-	.bDeviceClass = UDCLASS_HUB,
-	.bDeviceSubClass = UDSUBCLASS_HUB,
-	.bDeviceProtocol = UDPROTO_FSHUB,
-	.bMaxPacketSize = 64,
-	.idVendor = {0},
-	.idProduct = {0},
-	.bcdDevice = {0x00,0x01},
-	.iManufacturer = 1,
-	.iProduct = 2,
-	.iSerialNumber = 0,
-	.bNumConfigurations = 1
-};
-
-Static const usb_config_descriptor_t ohci_confd = {
-	.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
-	.bDescriptorType = UDESC_CONFIG,
-	.wTotalLength = USETWD(
-	    USB_CONFIG_DESCRIPTOR_SIZE +
-	    USB_INTERFACE_DESCRIPTOR_SIZE +
-	    USB_ENDPOINT_DESCRIPTOR_SIZE),
-	.bNumInterface = 1,
-	.bConfigurationValue = 1,
-	.iConfiguration = 0,
-	.bmAttributes = UC_ATTR_MBO | UC_SELF_POWERED,
-	.bMaxPower = 0
-};
-
-Static const usb_interface_descriptor_t ohci_ifcd = {
-	.bLength = USB_INTERFACE_DESCRIPTOR_SIZE,
-	.bDescriptorType = UDESC_INTERFACE,
-	.bInterfaceNumber = 0,
-	.bAlternateSetting = 0,
-	.bNumEndpoints = 1,
-	.bInterfaceClass = UICLASS_HUB,
-	.bInterfaceSubClass = UISUBCLASS_HUB,
-	.bInterfaceProtocol = UIPROTO_FSHUB,
-	.iInterface = 0
-};
-
-Static const usb_endpoint_descriptor_t ohci_endpd = {
-	.bLength = USB_ENDPOINT_DESCRIPTOR_SIZE,
-	.bDescriptorType = UDESC_ENDPOINT,
-	.bEndpointAddress = UE_DIR_IN | OHCI_INTR_ENDPT,
-	.bmAttributes = UE_INTERRUPT,
-	.wMaxPacketSize = USETWD(8),
-	.bInterval = 255,
-};
-
-Static const usb_hub_descriptor_t ohci_hubd = {
-	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
-	.bDescriptorType = UDESC_HUB,
-};
-
-/*
- * Simulate a hardware hub by handling all the necessary requests.
- */
-Static usbd_status
-ohci_root_ctrl_transfer(usbd_xfer_handle xfer)
+Static int
+ohci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
+    void *buf, int buflen)
 {
-	ohci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
-	usbd_status err;
-
-	/* Insert last in queue. */
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return (err);
-
-	/* Pipe isn't running, start first */
-	return (ohci_root_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue)));
-}
-
-Static usbd_status
-ohci_root_ctrl_start(usbd_xfer_handle xfer)
-{
-	ohci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
-	usb_device_request_t *req;
-	void *buf = NULL;
-	int port, i;
-	int len, value, index, l, totlen = 0;
+	ohci_softc_t *sc = bus->ub_hcpriv;
 	usb_port_status_t ps;
-	usb_hub_descriptor_t hubd;
-	usbd_status err;
+	uint16_t len, value, index;
+	int l, totlen = 0;
+	int port, i;
 	uint32_t v;
 
 	if (sc->sc_dying)
-		return (USBD_IOERROR);
+		return -1;
 
-#ifdef DIAGNOSTIC
-	if (!(xfer->ux_rqflags & URQ_REQUEST))
-		/* XXX panic */
-		return (USBD_INVAL);
-#endif
-	req = &xfer->ux_request;
-
-	DPRINTFN(4,("ohci_root_ctrl_control type=0x%02x request=%02x\n",
-		    req->bmRequestType, req->bRequest));
+	DPRINTFN(4,("%s: type=0x%02x request=%02x\n", __func__,
+	    req->bmRequestType, req->bRequest));
 
 	len = UGETW(req->wLength);
 	value = UGETW(req->wValue);
 	index = UGETW(req->wIndex);
 
-	if (len != 0)
-		buf = xfer->ux_buf;
-
 #define C(x,y) ((x) | ((y) << 8))
-	switch(C(req->bRequest, req->bmRequestType)) {
-	case C(UR_CLEAR_FEATURE, UT_WRITE_DEVICE):
-	case C(UR_CLEAR_FEATURE, UT_WRITE_INTERFACE):
-	case C(UR_CLEAR_FEATURE, UT_WRITE_ENDPOINT):
-		/*
-		 * DEVICE_REMOTE_WAKEUP and ENDPOINT_HALT are no-ops
-		 * for the integrated root hub.
-		 */
-		break;
-	case C(UR_GET_CONFIG, UT_READ_DEVICE):
-		if (len > 0) {
-			*(uint8_t *)buf = sc->sc_conf;
-			totlen = 1;
-		}
-		break;
+	switch (C(req->bRequest, req->bmRequestType)) {
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
-		DPRINTFN(8,("ohci_root_ctrl_control wValue=0x%04x\n", value));
+		DPRINTFN(8,("%s: wValue=0x%04x\n", __func__, value));
 		if (len == 0)
 			break;
-		switch(value >> 8) {
-		case UDESC_DEVICE:
-			if ((value & 0xff) != 0) {
-				err = USBD_IOERROR;
-				goto ret;
-			}
-			totlen = l = min(len, USB_DEVICE_DESCRIPTOR_SIZE);
-			USETW(ohci_devd.idVendor, sc->sc_id_vendor);
-			memcpy(buf, &ohci_devd, l);
+		switch (value) {
+		case C(0, UDESC_DEVICE): {
+			usb_device_descriptor_t devd;
+
+			totlen = min(buflen, sizeof(devd));
+			memcpy(&devd, buf, totlen);
+			USETW(devd.idVendor, sc->sc_id_vendor);
+			memcpy(buf, &devd, totlen);
 			break;
-		case UDESC_CONFIG:
-			if ((value & 0xff) != 0) {
-				err = USBD_IOERROR;
-				goto ret;
-			}
-			totlen = l = min(len, USB_CONFIG_DESCRIPTOR_SIZE);
-			memcpy(buf, &ohci_confd, l);
-			buf = (char *)buf + l;
-			len -= l;
-			l = min(len, USB_INTERFACE_DESCRIPTOR_SIZE);
-			totlen += l;
-			memcpy(buf, &ohci_ifcd, l);
-			buf = (char *)buf + l;
-			len -= l;
-			l = min(len, USB_ENDPOINT_DESCRIPTOR_SIZE);
-			totlen += l;
-			memcpy(buf, &ohci_endpd, l);
-			break;
-		case UDESC_STRING:
+		}
+		case C(1, UDESC_STRING):
 #define sd ((usb_string_descriptor_t *)buf)
-			switch (value & 0xff) {
-			case 0: /* Language table */
-				totlen = usb_makelangtbl(sd, len);
-				break;
-			case 1: /* Vendor */
-				totlen = usb_makestrdesc(sd, len,
-							 sc->sc_vendor);
-				break;
-			case 2: /* Product */
-				totlen = usb_makestrdesc(sd, len,
-							 "OHCI root hub");
-				break;
-			}
-#undef sd
+			/* Vendor */
+			totlen = usb_makestrdesc(sd, len, sc->sc_vendor);
 			break;
+		case C(2, UDESC_STRING):
+			/* Product */
+			totlen = usb_makestrdesc(sd, len, "OHCI root hub");
+			break;
+#undef sd
 		default:
-			err = USBD_IOERROR;
-			goto ret;
+			/* default from usbroothub */
+			return buflen;
 		}
 		break;
-	case C(UR_GET_INTERFACE, UT_READ_INTERFACE):
-		if (len > 0) {
-			*(uint8_t *)buf = 0;
-			totlen = 1;
-		}
-		break;
-	case C(UR_GET_STATUS, UT_READ_DEVICE):
-		if (len > 1) {
-			USETW(((usb_status_t *)buf)->wStatus,UDS_SELF_POWERED);
-			totlen = 2;
-		}
-		break;
-	case C(UR_GET_STATUS, UT_READ_INTERFACE):
-	case C(UR_GET_STATUS, UT_READ_ENDPOINT):
-		if (len > 1) {
-			USETW(((usb_status_t *)buf)->wStatus, 0);
-			totlen = 2;
-		}
-		break;
-	case C(UR_SET_ADDRESS, UT_WRITE_DEVICE):
-		if (value >= USB_MAX_DEVICES) {
-			err = USBD_IOERROR;
-			goto ret;
-		}
-		sc->sc_addr = value;
-		break;
-	case C(UR_SET_CONFIG, UT_WRITE_DEVICE):
-		if (value != 0 && value != 1) {
-			err = USBD_IOERROR;
-			goto ret;
-		}
-		sc->sc_conf = value;
-		break;
-	case C(UR_SET_DESCRIPTOR, UT_WRITE_DEVICE):
-		break;
-	case C(UR_SET_FEATURE, UT_WRITE_DEVICE):
-	case C(UR_SET_FEATURE, UT_WRITE_INTERFACE):
-	case C(UR_SET_FEATURE, UT_WRITE_ENDPOINT):
-		err = USBD_IOERROR;
-		goto ret;
-	case C(UR_SET_INTERFACE, UT_WRITE_INTERFACE):
-		break;
-	case C(UR_SYNCH_FRAME, UT_WRITE_ENDPOINT):
-		break;
+
 	/* Hub requests */
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_DEVICE):
 		break;
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER):
-		DPRINTFN(8, ("ohci_root_ctrl_control: UR_CLEAR_PORT_FEATURE "
-			     "port=%d feature=%d\n",
+		DPRINTFN(8, ("%s: UR_CLEAR_PORT_FEATURE "
+			     "port=%d feature=%d\n", __func__,
 			     index, value));
 		if (index < 1 || index > sc->sc_noport) {
-			err = USBD_IOERROR;
-			goto ret;
+			return -1;
 		}
 		port = OHCI_RH_PORT_STATUS(index);
 		switch(value) {
@@ -2657,8 +2466,7 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 			OWRITE4(sc, port, UPS_C_PORT_RESET << 16);
 			break;
 		default:
-			err = USBD_IOERROR;
-			goto ret;
+			return -1;
 		}
 		switch(value) {
 		case UHF_C_PORT_CONNECTION:
@@ -2678,11 +2486,14 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 		if (len == 0)
 			break;
 		if ((value & 0xff) != 0) {
-			err = USBD_IOERROR;
-			goto ret;
+			return -1;
 		}
+		usb_hub_descriptor_t hubd;
+
+		totlen = min(buflen, sizeof(hubd));
+		memcpy(&hubd, buf, totlen);
+
 		v = OREAD4(sc, OHCI_RH_DESCRIPTOR_A);
-		hubd = ohci_hubd;
 		hubd.bNbrPorts = sc->sc_noport;
 		USETW(hubd.wHubCharacteristics,
 		      (v & OHCI_NPS ? UHD_PWR_NO_SWITCH :
@@ -2694,47 +2505,40 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 		for (i = 0, l = sc->sc_noport; l > 0; i++, l -= 8, v >>= 8)
 			hubd.DeviceRemovable[i++] = (uint8_t)v;
 		hubd.bDescLength = USB_HUB_DESCRIPTOR_SIZE + i;
-		l = min(len, hubd.bDescLength);
-		totlen = l;
-		memcpy(buf, &hubd, l);
+		totlen = min(totlen, hubd.bDescLength);
+		memcpy(buf, &hubd, totlen);
 		break;
 	case C(UR_GET_STATUS, UT_READ_CLASS_DEVICE):
 		if (len != 4) {
-			err = USBD_IOERROR;
-			goto ret;
+			return -1;
 		}
 		memset(buf, 0, len); /* ? XXX */
 		totlen = len;
 		break;
 	case C(UR_GET_STATUS, UT_READ_CLASS_OTHER):
-		DPRINTFN(8,("ohci_root_ctrl_transfer: get port status i=%d\n",
+		DPRINTFN(8,("%s: get port status i=%d\n", __func__,
 			    index));
 		if (index < 1 || index > sc->sc_noport) {
-			err = USBD_IOERROR;
-			goto ret;
+			return -1;
 		}
 		if (len != 4) {
-			err = USBD_IOERROR;
-			goto ret;
-		}
+			return -1;
+			}
 		v = OREAD4(sc, OHCI_RH_PORT_STATUS(index));
-		DPRINTFN(8,("ohci_root_ctrl_transfer: port status=0x%04x\n",
+		DPRINTFN(8,("%s: port status=0x%04x\n", __func__,
 			    v));
 		USETW(ps.wPortStatus, v);
 		USETW(ps.wPortChange, v >> 16);
-		l = min(len, sizeof ps);
-		memcpy(buf, &ps, l);
-		totlen = l;
+		totlen = min(len, sizeof(ps));
+		memcpy(buf, &ps, totlen);
 		break;
 	case C(UR_SET_DESCRIPTOR, UT_WRITE_CLASS_DEVICE):
-		err = USBD_IOERROR;
-		goto ret;
+		return -1;
 	case C(UR_SET_FEATURE, UT_WRITE_CLASS_DEVICE):
 		break;
 	case C(UR_SET_FEATURE, UT_WRITE_CLASS_OTHER):
 		if (index < 1 || index > sc->sc_noport) {
-			err = USBD_IOERROR;
-			goto ret;
+			return -1;
 		}
 		port = OHCI_RH_PORT_STATUS(index);
 		switch(value) {
@@ -2745,15 +2549,14 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 			OWRITE4(sc, port, UPS_SUSPEND);
 			break;
 		case UHF_PORT_RESET:
-			DPRINTFN(5,("ohci_root_ctrl_transfer: reset port %d\n",
+			DPRINTFN(5,("%s: reset port %d\n", __func__,
 				    index));
 			OWRITE4(sc, port, UPS_RESET);
 			for (i = 0; i < 5; i++) {
 				usb_delay_ms(&sc->sc_bus,
 					     USB_PORT_ROOT_RESET_DELAY);
 				if (sc->sc_dying) {
-					err = USBD_IOERROR;
-					goto ret;
+					return -1;
 				}
 				if ((OREAD4(sc, port) & UPS_RESET) == 0)
 					break;
@@ -2762,42 +2565,20 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 				    index, OREAD4(sc, port)));
 			break;
 		case UHF_PORT_POWER:
-			DPRINTFN(2,("ohci_root_ctrl_transfer: set port power "
-				    "%d\n", index));
+			DPRINTFN(2,("%s: set port power "
+				    "%d\n", __func__, index));
 			OWRITE4(sc, port, UPS_PORT_POWER);
 			break;
 		default:
-			err = USBD_IOERROR;
-			goto ret;
+			return -1;
 		}
 		break;
 	default:
-		err = USBD_IOERROR;
-		goto ret;
+		/* default from usbroothub */
+		return buflen;
 	}
-	xfer->ux_actlen = totlen;
-	err = USBD_NORMAL_COMPLETION;
- ret:
-	xfer->ux_status = err;
-	mutex_enter(&sc->sc_lock);
-	usb_transfer_complete(xfer);
-	mutex_exit(&sc->sc_lock);
-	return (USBD_IN_PROGRESS);
-}
 
-/* Abort a root control request. */
-Static void
-ohci_root_ctrl_abort(usbd_xfer_handle xfer)
-{
-	/* Nothing to do, all transfers are synchronous. */
-}
-
-/* Close the root pipe. */
-Static void
-ohci_root_ctrl_close(usbd_pipe_handle pipe)
-{
-	DPRINTF(("ohci_root_ctrl_close\n"));
-	/* Nothing to do. */
+	return totlen;
 }
 
 Static usbd_status

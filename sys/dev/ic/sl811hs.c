@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47.6.9 2014/12/03 23:05:06 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.10 2014/12/04 08:04:31 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.9 2014/12/03 23:05:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.10 2014/12/04 08:04:31 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -252,9 +252,6 @@ static const struct timeval overflow_warn_rate = SLHCI_OVERFLOW_WARNING_RATE;
 #endif
 const int slhci_wait_time = SLHCI_WAIT_TIME;
 
-/* Root hub intr endpoint */
-#define ROOT_INTR_ENDPT        1
-
 #ifndef SLHCI_MAX_RETRIES
 #define SLHCI_MAX_RETRIES 3
 #endif
@@ -431,6 +428,9 @@ usbd_status slhci_transfer(struct usbd_xfer *);
 usbd_status slhci_start(struct usbd_xfer *);
 usbd_status slhci_root_start(struct usbd_xfer *);
 usbd_status slhci_open(struct usbd_pipe *);
+
+static int slhci_roothub_ctrl(struct usbd_bus *, usb_device_request_t *,
+    void *, int);
 
 /*
  * slhci_supported_rev, slhci_preinit, slhci_attach, slhci_detach,
@@ -684,6 +684,7 @@ const struct usbd_bus_methods slhci_bus_methods = {
 	.ubm_allocx = slhci_allocx,
 	.ubm_freex = slhci_freex,
 	.ubm_getlock = slhci_get_lock,
+	.ubm_rhctrl = slhci_roothub_ctrl,
 };
 
 const struct usbd_pipe_methods slhci_pipe_methods = {
@@ -992,17 +993,17 @@ slhci_open(struct usbd_pipe *pipe)
 	struct slhci_softc *sc;
 	struct slhci_pipe *spipe;
 	usb_endpoint_descriptor_t *ed;
-	struct slhci_transfers *t;
 	unsigned int max_packet, pmaxpkt;
+	uint8_t rhaddr;
 
 	dev = pipe->up_dev;
 	sc = dev->ud_bus->ub_hcpriv;
 	spipe = (struct slhci_pipe *)pipe;
 	ed = pipe->up_endpoint->ue_edesc;
-	t = &sc->sc_transfers;
+	rhaddr = dev->ud_bus->ub_rhaddr;
 
 	DLOG(D_TRACE, "slhci_open(addr=%d,ep=%d,rootaddr=%d)",
-		dev->ud_addr, ed->bEndpointAddress, t->rootaddr, 0);
+		dev->ud_addr, ed->bEndpointAddress, rhaddr, 0);
 
 	spipe->pflags = 0;
 	spipe->frame = 0;
@@ -1024,7 +1025,7 @@ slhci_open(struct usbd_pipe *pipe)
 
 	if (dev->ud_speed == USB_SPEED_LOW) {
 		spipe->pflags |= PF_LS;
-		if (dev->ud_myhub->ud_addr != t->rootaddr) {
+		if (dev->ud_myhub->ud_addr != rhaddr) {
 			spipe->pflags |= PF_PREAMBLE;
 			if (!slhci_try_lsvh)
 				return slhci_lock_call(sc, &slhci_lsvh_warn,
@@ -1040,15 +1041,17 @@ slhci_open(struct usbd_pipe *pipe)
 		return USBD_INVAL;
 	}
 
-	if (dev->ud_addr == t->rootaddr) {
+	if (dev->ud_addr == rhaddr) {
 		switch (ed->bEndpointAddress) {
 		case USB_CONTROL_ENDPOINT:
 			spipe->ptype = PT_ROOT_CTRL;
 			pipe->up_interval = 0;
+			pipe->up_methods = &roothub_ctrl_methods;
 			break;
-		case UE_DIR_IN | ROOT_INTR_ENDPT:
+		case UE_DIR_IN | USBROOTHUB_INTR_ENDPT:
 			spipe->ptype = PT_ROOT_INTR;
 			pipe->up_interval = 1;
+			pipe->up_methods = &slhci_root_methods;
 			break;
 		default:
 			printf("%s: Invalid root endpoint!\n", SC_NAME(sc));
@@ -1056,7 +1059,6 @@ slhci_open(struct usbd_pipe *pipe)
 			    0,0,0);
 			return USBD_INVAL;
 		}
-		pipe->up_methods = __UNCONST(&slhci_root_methods);
 		return USBD_NORMAL_COMPLETION;
 	} else {
 		switch (ed->bmAttributes & UE_XFERTYPE) {
@@ -2929,64 +2931,6 @@ slhci_insert(struct slhci_softc *sc)
 /*
  * Data structures and routines to emulate the root hub.
  */
-static const usb_device_descriptor_t slhci_devd = {
-	.bLength = USB_DEVICE_DESCRIPTOR_SIZE,
-	.bDescriptorType = UDESC_DEVICE,
-	.bcdUSB = {0x01, 0x01},
-	.bDeviceClass = UDCLASS_HUB,
-	.bDeviceSubClass = UDSUBCLASS_HUB,
-	.bDeviceProtocol = 0,
-	.bMaxPacketSize = 64,
-	.idVendor = {
-		USB_VENDOR_SCANLOGIC & 0xff,	/* vendor ID (low)  */
-	 	USB_VENDOR_SCANLOGIC >> 8
-	},
-	.idProduct = {0},
-	.bcdDevice = {0},
-	.iManufacturer = 1,
-	.iProduct = 2,
-	.iSerialNumber = 0,
-	.bNumConfigurations = 1
-};
-
-static const struct slhci_confd_t {
-	const usb_config_descriptor_t confd;
-	const usb_interface_descriptor_t ifcd;
-	const usb_endpoint_descriptor_t endpd;
-} UPACKED slhci_confd = {
-	.confd = {
-		.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
-		.bDescriptorType = UDESC_CONFIG,
-		.wTotalLength = USETWD(
-		    USB_CONFIG_DESCRIPTOR_SIZE +
-		    USB_INTERFACE_DESCRIPTOR_SIZE +
-		    USB_ENDPOINT_DESCRIPTOR_SIZE),
-		.bNumInterface = 1,
-		.bConfigurationValue = 1,
-		.iConfiguration = 0,
-		.bmAttributes = UC_SELF_POWERED,
-		.bMaxPower = 0
-	},
-	.ifcd = {
-		.bLength = USB_INTERFACE_DESCRIPTOR_SIZE,
-		.bDescriptorType = UDESC_INTERFACE,
-		.bInterfaceNumber = 0,
-		.bAlternateSetting = 0,
-		.bNumEndpoints = 1,
-		.bInterfaceClass = UICLASS_HUB,	
-		.bInterfaceSubClass = UISUBCLASS_HUB,
-		.bInterfaceProtocol = 0,
-		.iInterface = 0
-	},
-	.endpd = {
-		.bLength = USB_ENDPOINT_DESCRIPTOR_SIZE,
-		.bDescriptorType = UDESC_ENDPOINT,
-		.bEndpointAddress = UE_DIR_IN | ROOT_INTR_ENDPT,
-		.bmAttributes = UE_INTERRUPT,
-		.wMaxPacketSize = USETWD(240),
-		.bInterval = 255
-	}
-};
 
 static const usb_hub_descriptor_t slhci_hubd = {
 	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
@@ -3149,13 +3093,8 @@ slhci_root(struct slhci_softc *sc, struct slhci_pipe *spipe, struct usbd_xfer
     *xfer)
 {
 	struct slhci_transfers *t;
-	usb_device_request_t *req;
-	unsigned int len, value, index, actlen, type;
-	uint8_t *buf;
-	usbd_status error;
 
 	t = &sc->sc_transfers;
-	buf = NULL;
 
 	LK_SLASSERT(spipe != NULL && xfer != NULL, sc, spipe, xfer, return
 	    USBD_CANCELLED);
@@ -3163,27 +3102,31 @@ slhci_root(struct slhci_softc *sc, struct slhci_pipe *spipe, struct usbd_xfer
 	DLOG(D_TRACE, "%s start", pnames(SLHCI_XFER_TYPE(xfer)), 0,0,0);
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
-	if (spipe->ptype == PT_ROOT_INTR) {
-		LK_SLASSERT(t->rootintr == NULL, sc, spipe, xfer, return
-		    USBD_CANCELLED);
-		t->rootintr = xfer;
-		if (t->flags & F_CHANGE)
-			t->flags |= F_ROOTINTR;
-		return USBD_IN_PROGRESS;
-	}
+	KASSERT(spipe->ptype == PT_ROOT_INTR);
+	LK_SLASSERT(t->rootintr == NULL, sc, spipe, xfer, return
+	    USBD_CANCELLED);
+	t->rootintr = xfer;
+	if (t->flags & F_CHANGE)
+		t->flags |= F_ROOTINTR;
+	return USBD_IN_PROGRESS;
+}
 
-	error = USBD_IOERROR; /* XXX should be STALL */
-	actlen = 0;
-	req = &xfer->ux_request;
+static int
+slhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
+    void *buf, int buflen)
+{
+	struct slhci_softc *sc = bus->ub_hcpriv;
+	struct slhci_transfers *t = &sc->sc_transfers;
+	usbd_status error = USBD_IOERROR; /* XXX should be STALL */
+	uint16_t len, value, index;
+	uint8_t type;
+	int actlen = 0;
 
 	len = UGETW(req->wLength);
 	value = UGETW(req->wValue);
 	index = UGETW(req->wIndex);
 
 	type = req->bmRequestType;
-
-	if (len)
-		buf = xfer->ux_buf;
 
 	SLHCI_DEXEC(D_TRACE, slhci_log_req_hub(req));
 
@@ -3244,24 +3187,7 @@ slhci_root(struct slhci_softc *sc, struct slhci_pipe *spipe, struct usbd_xfer
 			    "ENDPOINT_HALT or DEVICE_REMOTE_WAKEUP "
 			    "not supported", 0,0,0,0);
 		break;
-	case UR_SET_ADDRESS:
-		if (type == UT_WRITE_DEVICE) {
-			DLOG(D_ROOT, "Set Address %#.4x", value, 0,0,0);
-			if (value < USB_MAX_DEVICES) {
-				t->rootaddr = value;
-				error = USBD_NORMAL_COMPLETION;
-			}
-		}
-		break;
-	case UR_SET_CONFIG:
-		if (type == UT_WRITE_DEVICE) {
-			DLOG(D_ROOT, "Set Config %#.4x", value, 0,0,0);
-			if (value == 0 || value == 1) {
-				t->rootconf = value;
-				error = USBD_NORMAL_COMPLETION;
-			}
-		}
-		break;
+
 	/* Read Requests */
 	case UR_GET_STATUS:
 		if (type == UT_READ_CLASS_OTHER) {
@@ -3284,57 +3210,29 @@ slhci_root(struct slhci_softc *sc, struct slhci_pipe *spipe, struct usbd_xfer
 			} else
 				DLOG(D_ROOT, "Get Hub Status bad len %#.4x",
 				    len, 0,0,0);
-		} else if (type == UT_READ_DEVICE) {
-			if (len >= 2) {
-				USETW(((usb_status_t *)buf)->wStatus, UDS_SELF_POWERED);
-				actlen = 2;
-				error = USBD_NORMAL_COMPLETION;
-			}
-		} else if (type == (UT_READ_INTERFACE|UT_READ_ENDPOINT)) {
-			if (len >= 2) {
-				USETW(((usb_status_t *)buf)->wStatus, 0);
-				actlen = 2;
-				error = USBD_NORMAL_COMPLETION;
-			}
-		}
-		break;
-	case UR_GET_CONFIG:
-		if (type == UT_READ_DEVICE) {
-			DLOG(D_ROOT, "Get Config", 0,0,0,0);
-			if (len > 0) {
-				*buf = t->rootconf;
-				actlen = 1;
-				error = USBD_NORMAL_COMPLETION;
-			}
-		}
-		break;
-	case UR_GET_INTERFACE:
-		if (type == UT_READ_INTERFACE) {
-			if (len > 0) {
-				*buf = 0;
-				actlen = 1;
-				error = USBD_NORMAL_COMPLETION;
-			}
 		}
 		break;
 	case UR_GET_DESCRIPTOR:
 		if (type == UT_READ_DEVICE) {
 			/* value is type (&0xff00) and index (0xff) */
 			if (value == (UDESC_DEVICE<<8)) {
-				actlen = min(len, sizeof(slhci_devd));
-				memcpy(buf, &slhci_devd, actlen);
+				usb_device_descriptor_t devd;
+
+				actlen = min(buflen, sizeof(devd));
+				memcpy(&devd, buf, actlen);
+				USETW(devd.idVendor, USB_VENDOR_SCANLOGIC);
+				memcpy(buf, &devd, actlen);
 				error = USBD_NORMAL_COMPLETION;
 			} else if (value == (UDESC_CONFIG<<8)) {
-				actlen = min(len, sizeof(slhci_confd));
-				memcpy(buf, &slhci_confd, actlen);
-				if (actlen > offsetof(usb_config_descriptor_t,
-				    bMaxPower))
-					((usb_config_descriptor_t *)
-					    buf)->bMaxPower = t->max_current;
-					    /* 2 mA units */
+				struct usb_roothub_descriptors confd;
+
+				actlen = min(buflen, sizeof(confd));
+				memcpy(&confd, buf, actlen);
+
+				/* 2 mA units */
+				confd.urh_confd.bMaxPower = t->max_current;
+				memcpy(buf, &confd, actlen);
 				error = USBD_NORMAL_COMPLETION;
-			} else if (value == (UDESC_STRING<<8)) {
-				/* language table XXX */
 			} else if (value == ((UDESC_STRING<<8)|1)) {
 				/* Vendor */
 				actlen = usb_makestrdesc((usb_string_descriptor_t *)
@@ -3351,29 +3249,28 @@ slhci_root(struct slhci_softc *sc, struct slhci_pipe *spipe, struct usbd_xfer
 		} else if (type == UT_READ_CLASS_DEVICE) {
 			/* Descriptor number is 0 */
 			if (value == (UDESC_HUB<<8)) {
-				actlen = min(len, sizeof(slhci_hubd));
-				memcpy(buf, &slhci_hubd, actlen);
-				if (actlen > offsetof(usb_config_descriptor_t,
-				    bMaxPower))
-					((usb_hub_descriptor_t *)
-					    buf)->bHubContrCurrent = 500 -
-					    t->max_current;
+				usb_hub_descriptor_t hubd;
+
+				actlen = min(buflen, sizeof(hubd));
+				memcpy(&hubd, buf, actlen);
+				hubd.bHubContrCurrent =
+				    500 - t->max_current;
+				memcpy(buf, &hubd, actlen);
 				error = USBD_NORMAL_COMPLETION;
 			} else
 				DDOLOG("Unknown Get Hub Descriptor %#.4x",
 				    value, 0,0,0);
 		}
 		break;
+	default:
+		/* default from usbroothub */
+		return buflen;
 	}
 
 	if (error == USBD_NORMAL_COMPLETION)
-		xfer->ux_actlen = actlen;
-	xfer->ux_status = error;
-	KASSERT(spipe->xfer == NULL);
-	spipe->xfer = xfer;
-	enter_callback(t, spipe);
+		return actlen;
 
-	return USBD_IN_PROGRESS;
+	return -1;
 }
 
 /* End in lock functions. Start debug functions. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.22.4.6 2014/12/03 23:05:07 skrll Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.22.4.7 2014/12/04 08:04:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.6 2014/12/03 23:05:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.7 2014/12/04 08:04:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -99,8 +99,6 @@ struct ugenhc_softc {
 
 	int sc_port_status;
 	int sc_port_change;
-	int sc_addr;
-	int sc_conf;
 
 	struct lwp *sc_rhintr;
 	usbd_xfer_handle sc_intrxfer;
@@ -130,144 +128,45 @@ makeugendevstr(int devnum, int endpoint, char *buf, size_t len)
 	snprintf(buf, len, "%s%d.%02d", UGENDEV_BASESTR, devnum, endpoint);
 }
 
-/*
- * Our fictional hubbie.
- */
-
-static const usb_device_descriptor_t rumphub_udd = {
-	.bLength		= USB_DEVICE_DESCRIPTOR_SIZE,
-	.bDescriptorType	= UDESC_DEVICE,
-	.bDeviceClass		= UDCLASS_HUB,
-	.bDeviceSubClass	= UDSUBCLASS_HUB,
-	.bDeviceProtocol	= UDPROTO_FSHUB,
-	.bMaxPacketSize		= 64,
-	.idVendor		= { 0x75, 0x72 },
-	.idProduct		= { 0x70, 0x6d },
-	.bNumConfigurations	= 1,
-};
-
-static const usb_config_descriptor_t rumphub_ucd = {
-	.bLength		= USB_CONFIG_DESCRIPTOR_SIZE,
-	.bDescriptorType	= UDESC_CONFIG,
-	.wTotalLength		= USETWD(
-	    USB_CONFIG_DESCRIPTOR_SIZE +
-	    USB_INTERFACE_DESCRIPTOR_SIZE +
-	    USB_ENDPOINT_DESCRIPTOR_SIZE),
-	.bNumInterface		= 1,
-	.bmAttributes		= UC_SELF_POWERED | UC_ATTR_MBO,
-};
-
-static const usb_interface_descriptor_t rumphub_uid = {
-	.bLength		= USB_INTERFACE_DESCRIPTOR_SIZE,
-	.bDescriptorType	= UDESC_INTERFACE,
-	.bInterfaceNumber	= 0,
-	.bNumEndpoints		= 1,
-	.bInterfaceClass	= UICLASS_HUB,
-	.bInterfaceSubClass	= UISUBCLASS_HUB,
-	.bInterfaceProtocol	= UIPROTO_FSHUB,
-};
-
-static const usb_endpoint_descriptor_t rumphub_epd = {
-	.bLength		= USB_ENDPOINT_DESCRIPTOR_SIZE,
-	.bDescriptorType	= UDESC_ENDPOINT,
-	.bmAttributes		= UE_INTERRUPT,
-	.wMaxPacketSize		= USETWD(64),
-};
-
-static const usb_hub_descriptor_t rumphub_hdd = {
-	.bDescLength		= USB_HUB_DESCRIPTOR_SIZE,
-	.bDescriptorType	= UDESC_HUB,
-	.bNbrPorts		= 1,
-};
-
-static usbd_status
-rumpusb_root_ctrl_start(usbd_xfer_handle xfer)
+static int
+ugenhc_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
+    void *buf, int buflen)
 {
-	usb_device_request_t *req = &xfer->ux_request;
-	struct ugenhc_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
-	int len, totlen, value, curlen, err;
-	uint8_t *buf = NULL;
+	struct ugenhc_softc *sc = bus->ub_hcpriv;
+	int totlen = 0;
+	uint16_t len, value;
 
-	len = totlen = UGETW(req->wLength);
-	if (len)
-		buf = KERNADDR(&xfer->ux_dmabuf, 0);
+	len = UGETW(req->wLength);
 	value = UGETW(req->wValue);
 
 #define C(x,y) ((x) | ((y) << 8))
-	switch(C(req->bRequest, req->bmRequestType)) {
-
-	case C(UR_GET_CONFIG, UT_READ_DEVICE):
-		if (len > 0) {
-			*buf = sc->sc_conf;
-			totlen = 1;
-		}
-		break;
-
+	switch (C(req->bRequest, req->bmRequestType)) {
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
-		switch (value >> 8) {
-		case UDESC_DEVICE:
-			totlen = min(len, USB_DEVICE_DESCRIPTOR_SIZE);
-			memcpy(buf, &rumphub_udd, totlen);
+		switch (value) {
+		case C(0, UDESC_DEVICE): {
+			usb_device_descriptor_t devd;
+
+			totlen = min(buflen, sizeof(devd));
+			memcpy(&devd, buf, totlen);
+			USETW(devd.idVendor, 0x7275);
+			USETW(devd.idProduct, 0x6d72);
+			memcpy(buf, &devd, totlen);
 			break;
-
-		case UDESC_CONFIG:
-			totlen = 0;
-			curlen = min(len, USB_CONFIG_DESCRIPTOR_SIZE);
-			memcpy(buf, &rumphub_ucd, curlen);
-			len -= curlen;
-			buf += curlen;
-			totlen += curlen;
-
-			curlen = min(len, USB_INTERFACE_DESCRIPTOR_SIZE);
-			memcpy(buf, &rumphub_uid, curlen);
-			len -= curlen;
-			buf += curlen;
-			totlen += curlen;
-
-			curlen = min(len, USB_ENDPOINT_DESCRIPTOR_SIZE);
-			memcpy(buf, &rumphub_epd, curlen);
-			len -= curlen;
-			buf += curlen;
-			totlen += curlen;
-			break;
-
-		case UDESC_STRING:
+		}
 #define sd ((usb_string_descriptor_t *)buf)
-			switch (value & 0xff) {
-			case 0: /* Language table */
-				totlen = usb_makelangtbl(sd, len);
-				break;
-			case 1: /* Vendor */
-				totlen = usb_makestrdesc(sd, len, "rod nevada");
-				break;
-			case 2: /* Product */
-				totlen = usb_makestrdesc(sd, len,
-				    "RUMPUSBHC root hub");
-				break;
-			}
+		case C(1, UDESC_STRING):
+			/* Vendor */
+			totlen = usb_makestrdesc(sd, len, "rod nevada");
+			break;
+		case C(2, UDESC_STRING):
+			/* Product */
+			totlen = usb_makestrdesc(sd, len, "RUMPUSBHC root hub");
+			break;
 #undef sd
-			break;
-
 		default:
-			panic("unhandled read device request");
-			break;
+			/* default from usbroothub */
+			return buflen;
 		}
-		break;
-
-	case C(UR_SET_ADDRESS, UT_WRITE_DEVICE):
-		if (value >= USB_MAX_DEVICES) {
-			err = USBD_IOERROR;
-			goto ret;
-		}
-		sc->sc_addr = value;
-		break;
-
-	case C(UR_SET_CONFIG, UT_WRITE_DEVICE):
-		if (value != 0 && value != 1) {
-			err = USBD_IOERROR;
-			goto ret;
-		}
-		sc->sc_conf = value;
 		break;
 
 	case C(UR_SET_FEATURE, UT_WRITE_CLASS_OTHER):
@@ -278,7 +177,7 @@ rumpusb_root_ctrl_start(usbd_xfer_handle xfer)
 		case UHF_PORT_POWER:
 			break;
 		default:
-			panic("unhandled");
+			return -1;
 		}
 		break;
 
@@ -287,8 +186,7 @@ rumpusb_root_ctrl_start(usbd_xfer_handle xfer)
 		break;
 
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
-		totlen = min(len, USB_HUB_DESCRIPTOR_SIZE);
-		memcpy(buf, &rumphub_hdd, totlen);
+		totlen = buflen;
 		break;
 
 	case C(UR_GET_STATUS, UT_READ_CLASS_DEVICE):
@@ -297,8 +195,7 @@ rumpusb_root_ctrl_start(usbd_xfer_handle xfer)
 		totlen = len;
 		break;
 
-	case C(UR_GET_STATUS, UT_READ_CLASS_OTHER):
-		{
+	case C(UR_GET_STATUS, UT_READ_CLASS_OTHER): {
 		usb_port_status_t ps;
 
 		USETW(ps.wPortStatus, sc->sc_port_status);
@@ -306,71 +203,14 @@ rumpusb_root_ctrl_start(usbd_xfer_handle xfer)
 		totlen = min(len, sizeof(ps));
 		memcpy(buf, &ps, totlen);
 		break;
-		}
-
-	default:
-		panic("unhandled request");
-		break;
 	}
-	err = USBD_NORMAL_COMPLETION;
-	xfer->ux_actlen = totlen;
+	default:
+		/* default from usbroothub */
+		return buflen;
+	}
 
-ret:
-	xfer->ux_status = err;
-	mutex_enter(&sc->sc_lock);
-	usb_transfer_complete(xfer);
-	mutex_exit(&sc->sc_lock);
-
-	return (USBD_IN_PROGRESS);
+	return totlen;
 }
-
-static usbd_status
-rumpusb_root_ctrl_transfer(usbd_xfer_handle xfer)
-{
-	struct ugenhc_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
-	usbd_status err;
-
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return (err);
-
-	return (rumpusb_root_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue)));
-}
-
-static void
-rumpusb_root_ctrl_abort(usbd_xfer_handle xfer)
-{
-
-}
-
-static void
-rumpusb_root_ctrl_close(usbd_pipe_handle pipe)
-{
-
-}
-
-static void
-rumpusb_root_ctrl_cleartoggle(usbd_pipe_handle pipe)
-{
-
-}
-
-static void
-rumpusb_root_ctrl_done(usbd_xfer_handle xfer)
-{
-
-}
-
-static const struct usbd_pipe_methods rumpusb_root_ctrl_methods = {
-	.upm_transfer =	rumpusb_root_ctrl_transfer,
-	.upm_start =	rumpusb_root_ctrl_start,
-	.upm_abort =	rumpusb_root_ctrl_abort,
-	.upm_close =	rumpusb_root_ctrl_close,
-	.upm_cleartoggle =	rumpusb_root_ctrl_cleartoggle,
-	.upm_done =	rumpusb_root_ctrl_done,
-};
 
 static usbd_status
 rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
@@ -385,7 +225,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 
 	len = totlen = UGETW(req->wLength);
 	if (len)
-		buf = KERNADDR(&xfer->ux_dmabuf, 0);
+		buf = xfer->ux_buf;
 	value = UGETW(req->wValue);
 
 #define C(x,y) ((x) | ((y) << 8))
@@ -955,16 +795,17 @@ ugenhc_open(struct usbd_pipe *pipe)
 	usbd_device_handle dev = pipe->up_dev;
 	struct ugenhc_softc *sc = dev->ud_bus->ub_hcpriv;
 	usb_endpoint_descriptor_t *ed = pipe->up_endpoint->ue_edesc;
+	uint8_t rhaddr = dev->ud_bus->ub_rhaddr;
 	uint8_t addr = dev->ud_addr;
 	uint8_t xfertype = ed->bmAttributes & UE_XFERTYPE;
 	char buf[UGENDEV_BUFSIZE];
 	int endpt, oflags, error;
 	int fd, val;
 
-	if (addr == sc->sc_addr) {
+	if (addr == rhaddr) {
 		switch (xfertype) {
 		case UE_CONTROL:
-			pipe->up_methods = &rumpusb_root_ctrl_methods;
+			pipe->up_methods = &roothub_ctrl_methods;
 			break;
 		case UE_INTERRUPT:
 			pipe->up_methods = &rumpusb_root_intr_methods;
@@ -1077,7 +918,8 @@ static const struct usbd_bus_methods ugenhc_bus_methods = {
 	.ubm_dopoll =	ugenhc_poll,
 	.ubm_allocx = 	ugenhc_allocx,
 	.ubm_freex =	ugenhc_freex,
-	.ubm_getlock =	ugenhc_getlock
+	.ubm_getlock =	ugenhc_getlock,
+	.ubm_rhctrl =	ugenhc_roothub_ctrl,
 };
 
 static int

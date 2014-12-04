@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.6 2014/12/03 22:19:50 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.7 2014/12/04 08:04:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -98,6 +98,9 @@ struct usbd_bus_methods {
 	void		      (*ubm_getlock)(struct usbd_bus *, kmutex_t **);
 	usbd_status	      (*ubm_newdev)(device_t, usbd_bus_handle, int,
 					    int, int, struct usbd_port *);
+
+	int			(*ubm_rhctrl)(struct usbd_bus *,
+				    usb_device_request_t *, void *, int);
 };
 
 struct usbd_pipe_methods {
@@ -159,6 +162,8 @@ struct usbd_bus {
 	/* Filled by usb driver */
 	kmutex_t		*ub_lock;
 	struct usbd_device      *ub_roothub;
+	uint8_t			ub_rhaddr;	/* roothub address */
+	uint8_t			ub_rhconf;	/* roothub configuration */
 	usbd_device_handle	ub_devices[USB_MAX_DEVICES];
 	kcondvar_t              ub_needsexplore_cv;
 	char			ub_needsexplore;/* a hub a signalled a change */

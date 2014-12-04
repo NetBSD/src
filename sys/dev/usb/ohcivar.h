@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.55.6.2 2014/12/02 09:00:33 skrll Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.55.6.3 2014/12/04 08:04:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,8 +109,6 @@ typedef struct ohci_softc {
 	LIST_HEAD(, ohci_soft_itd) sc_hash_itds[OHCI_HASH_SIZE];
 
 	int sc_noport;
-	uint8_t sc_addr;		/* device address */
-	uint8_t sc_conf;		/* device configuration */
 
 	int sc_endian;
 #define	OHCI_LITTLE_ENDIAN	0	/* typical (uninitialized default) */
