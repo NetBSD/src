@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.159 2014/12/03 12:53:26 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.160 2014/12/04 06:12:16 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4430,9 +4430,133 @@ share/zoneinfo/zone1970.tab                     patch
         * Changes to historical data.
         [apb, ticket #1195]
 
-
 sys/dev/ppbus/ppbus_base.c			1.20
 
 	Fix debugging format in ppbus(4) reported by John D. Baker.
 	Fixes PR/49281.
 	[snj, ticket #1190]
+
+sys/kern/vfs_mount.c				1.31
+sys/ufs/ffs/ffs_vfsops.c			1.302
+sys/ufs/ufs/ufs_extattr.c			1.44
+
+	Fix use-after-free on failed unmount with extended attributes
+	enabled.  As a side effect, extended attribute structures are
+	now only initialized when extended attributes are started for
+	the filesystem.
+	[manu, ticket #1196]
+
+sys/ufs/ufs/ufs_extattr.c			1.41, 1.45
+
+	Fix UFS1 extended attribute backend autocreation deadlock.
+	[manu, ticket #1197]
+
+sys/ufs/ufs/ufs_extattr.c			1.46 via patch
+
+	Fix uninitialized mutex usage.
+	[manu, ticket #1199]
+
+sys/dev/pci/pcidevs				1.1160-1.1161, 1.1163-1.1171, 1.1173-1.1177, 1.1183-1.1194, 1.1196, 1.1198-1.1205 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add some PCI devices to pcidevs:
+	- PR/48180: Christian Groessler: Add Oxford Semi OXuPCI952 dual serial
+	  PCI card.
+	- Add DIGI Neo 8-port serial(PCIe) and OXFORD OXPCIe952 Parallel.
+	- Add some Intel devices mainly taken from "Mobile 4th Generation Intel
+	  Core Processor Family I/O" datasheet.
+	- Add some Intel Core internal devices.
+	- Add Intel Quark X1000 devices.
+	- Add devices of Intel Atom S1200 series from the datasheet.
+	- Add some Intel E600 and EG20T devices.
+	- Add some Intel X38 devices.
+	- Add some Intel devices (Sandy Bridge, 6702PXH, X38 and Pineview)
+	- Add some Intel Ivy Bridge devices.
+	- Add Intel 3200 Host and PCIe.
+	- Add Intel EP80579 devices from OpenBSD.
+	- Add Intel Bay Trail devices.
+	- Add Intel Atom Z36xx and Z37xx devices.
+	- Add Intel Xeon E3-1200 v3 Host Bridge, DRAM.
+	- Add Intel DH89xx's SMBus controller.
+	- Add Intel Z68 LPC.
+	- Add yet another Intel 82599 device.
+	- Add Intel X540-AT2.
+	- Add some Intel gigabit Ethernet devices.
+	- PR/48150: Noriyuki Koizumi: Add Intel Centrino Advanced-N 6235 Wi-Fi
+	  controller.
+	- Add some Intel Wi-Fi devices.
+	- Add entries for Atheros AR9462 and a new flavour of Intel Haswell
+	  Integrated Graphics Device.
+	- Add Radeon HD6320 Graphics.
+	- Add ASMedia ASM1042 xHCI USB3 controller.
+	- Add Realtek RTL8402 PCI-E Card Reader.
+	- Add some Realtek devices.
+	- Add DIGI Neo 8-port serial(PCIe) and OXFORD OXPCIe952 Parallel.
+	- Add ASPEED Graphics family.
+	- Add ASPEED AST1150 PCIe-to-PCI bridge.
+	- Add GeForce 210 High Definition Audio Controller.
+	- Add GeForce GT 640M.
+	- Add some Armada 370 IDs.
+	- Add some new Attansic ethernet devices.
+	- Add ITE IT8213.
+	- Add some HP iLO devices.
+	- Add Matrox MGA G200eH.
+	- Add Samsung Electronics XP941 M.2 SSD.
+	[msaitoh, ticket #1202]
+
+sys/dev/pci/if_wm.c				1.271, 1.273-1.274, 1.277-1.278, 1.280, 1.282,1.284-1.285, 1.287, 1.293-1.294, 1.297-1.298, 1.300-1.301, 1.305-1.307 via patch
+sys/dev/pci/if_wmreg.h				1.57-1.62, 1.64-1.65 via patch
+sys/dev/pci/if_wmvar.h				1.19, 1.21 via patch
+
+	- Acquire SW semaphore in wm_get_swsm_semaphore().
+	- Fix some bugs realted to semaphore. This change fixes a problem which
+	  was exposed in if_wm.c rev. 1.271. Tested by riastradh@.
+	  - Clear the SMBI bit in SWSM register before accessing NVM and PHY in
+	    wm_attach(). Same as FreeBSD.
+	  - Fix a bug that 82573 doesn't put the hardware semaphore. Same as
+	    FreeBSD r256200.
+	- Call wm_set_pcie_completion_timeout() on I350, I354, I210 and I211,
+	  too.  Same as FreeBSD and OpenBSD.
+	- Drop PHPM_GO_LINK_D bit in WMREG_PHPM on some chips. From FreeBSD.
+	- Fix fiber link problem (PR#44776 and PR#30880). Tested with 82543GC,
+	  82544EI, 82545EM, 82546GB 82571EB and 82572EI fiber cards.
+	  - Don't use the RXCFG interrupt. It's not required and the interrupt
+	    is very heavy (a lot of interrupts). Same as {Free,Open}BSD.
+	  - Modify wm_tbi_mediachange() to be close to
+	    em_setup_fiber_serdes_link() of {Free,Open}BSD. At least, don't
+	    forget to set duplex setting.
+	  - WM_T_82545 is not 1000base-SX but 1000base-LX. Same as FreeBSD.
+	- Don't check SWSM_SMBI bit if WM_F_LOCK_SWSM isn't set. Fix a problem
+	  when using vmware with e1000"e". With e1000e which is regarded as
+	  82574L, wm_gmii_init() fails with "could not acquire SWSM SMBI"
+	  message without this change. This problem doesn't occur with real
+	  82574L card.
+	- Fix a bug that wm_get_swsm_semaphore() timed out when attaching
+	  device on some machines.
+	  - Calculate NVM word size correctly.
+	  - Determine timeout value based on the NVM word size.
+	- It's not required to print "failed to detect NVM bank" message.
+	  Only print while debugging. Same as {Free,Open}BSD.
+	- Add some new I218 devices.
+	- Delete 82580ER related code. It was from FreeBSD and was removed in
+	  r203049.
+	- Fix a bug that the offset of alt MAC address is wrongly calculated to
+	  0 when alt MAC address function is really used. This bug does not
+	  appear as real bug if the same MAC address is written in the default
+	  location and alt MAC address's location.
+	- Move some NVM related macros from if_wm.c to if_wmreg.h.
+	- Sort definitions in if_wmreg.h
+	  - move NVM related values to the bottom.
+	  - sort in register's address' order.
+	- Simplify wm_read_mac_addr().
+	- Fix debug message.
+	- Add missing prototypes.
+	- Rename some functions for consistency and clarify.
+	- Rename some macros for consistency.
+	- Remove a duplicated error message.
+	- Fix typo in comment.
+	- Cleanup comments.
+	- KNF.
+	[msaitoh, ticket #1203]
+
