@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.49 2014/05/18 15:45:08 wiz Exp $
+.\"	$NetBSD: queue.3,v 1.49.2.1 2014/12/04 07:44:00 martin Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -368,7 +368,7 @@ using the macros
 .Li SIMPLEQ_HEAD ,
 .Li SLIST_HEAD ,
 or
-.Li TAILQ_HEAD ,
+.Li TAILQ_HEAD .
 See the examples below for further explanation of how these
 macros are used.
 .Ss Summary of Operations
@@ -452,8 +452,6 @@ The macro
 returns the first element in the list or NULL if the list is empty.
 .Pp
 The macro
-.Pp
-The macro
 .Nm SLIST_EMPTY
 evaluates to true if there are no elements in the list.
 .Pp
@@ -507,7 +505,7 @@ this macro instead of the generic
 .Nm SLIST_REMOVE
 macro.
 .Pp
-The macros
+The macro
 .Nm SLIST_REMOVE_AFTER
 removes the element after the one specified.
 For optimum efficiency,
@@ -603,7 +601,7 @@ returns the first element of the list
 .Pp
 The macro
 .Nm LIST_EMPTY
-return true if the list
+returns true if the list
 .Fa head
 has no elements.
 .Pp
@@ -755,7 +753,7 @@ returns the first element of the simple queue
 .Pp
 The macro
 .Nm SIMPLEQ_EMPTY
-return true if the simple queue
+returns true if the simple queue
 .Fa head
 has no elements.
 .Pp
@@ -837,7 +835,7 @@ The macro
 concatenates the tail queue headed by
 .Fa head2
 onto the end of the one headed by
-.Fa head1
+.Fa head1 ,
 removing all entries from the former.
 .Sh SIMPLE QUEUE EXAMPLE
 .Bd -literal
@@ -941,7 +939,7 @@ If the tail queue is empty the return value is
 .Pp
 The macro
 .Nm TAILQ_EMPTY
-return true if the tail queue
+returns true if the tail queue
 .Fa head
 has no elements.
 .Pp
@@ -1001,7 +999,7 @@ from the tail queue.
 .Pp
 The macro
 .Nm TAILQ_REPLACE
-replace the element
+replaces the element
 .Fa elm
 with the
 .Fa new
@@ -1012,7 +1010,7 @@ The macro
 concatenates the tail queue headed by
 .Fa head2
 onto the end of the one headed by
-.Fa head1
+.Fa head1 ,
 removing all entries from the former.
 .Sh TAIL QUEUE EXAMPLE
 .Bd -literal
