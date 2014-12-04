@@ -1,4 +1,4 @@
-/* $NetBSD: awin_intr.h,v 1.9 2014/11/02 23:55:06 jmcneill Exp $ */
+/* $NetBSD: awin_intr.h,v 1.10 2014/12/04 11:16:38 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -161,6 +161,7 @@
 #define AWIN_A31_IRQ_USB3	106
 #define AWIN_A31_IRQ_USB4	108
 #define AWIN_A31_IRQ_GMAC	114
+#define AWIN_A31_IRQ_MP		115
 #define AWIN_A31_IRQ_HDMI	120
 
 #endif /* _ARM_ALLWINNER_AWIN_INTR_H_ */

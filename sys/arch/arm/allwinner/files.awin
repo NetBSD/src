@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.26 2014/11/18 01:53:53 jmcneill Exp $
+#	$NetBSD: files.awin,v 1.27 2014/12/04 11:16:38 jmcneill Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -157,6 +157,11 @@ file	arch/arm/allwinner/awin_tcon.c		awin_tcon | awin_hdmi
 device	awindebe { }
 attach	awindebe at awinio with awin_debe
 file	arch/arm/allwinner/awin_debe.c		awin_debe | awin_hdmi
+
+# A10/A20/A31 Mixer processor (MP)
+device	awinmp
+attach	awinmp at awinio with awin_mp
+file	arch/arm/allwinner/awin_mp.c		awin_mp		needs-flag
 
 # Framebuffer
 attach	genfb at awindebe with awin_fb: edid
