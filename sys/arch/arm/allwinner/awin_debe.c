@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.10 2014/11/30 20:04:57 jmcneill Exp $ */
+/* $NetBSD: awin_debe.c,v 1.11 2014/12/04 11:16:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,7 @@
 
 #include "opt_allwinner.h"
 #include "genfb.h"
+#include "awin_mp.h"
 
 #ifndef AWIN_DEBE_VIDEOMEM
 #define AWIN_DEBE_VIDEOMEM	(16 * 1024 * 1024)
@@ -36,7 +37,7 @@
 #define AWIN_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.10 2014/11/30 20:04:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.11 2014/12/04 11:16:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -114,6 +115,9 @@ awin_debe_attach(device_t parent, device_t self, void *aux)
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
 	prop_dictionary_t cfg = device_properties(self);
+#if NAWIN_MP > 0
+	device_t mpdev;
+#endif
 	int error;
 
 	sc->sc_dev = self;
@@ -197,6 +201,16 @@ awin_debe_attach(device_t parent, device_t self, void *aux)
 		    "couldn't allocate video memory, error = %d\n", error);
 		return;
 	}
+
+#if NAWIN_MP > 0
+	mpdev = device_find_by_driver_unit("awinmp", 0);
+	if (mpdev) {
+		paddr_t pa = sc->sc_dmamap->dm_segs[0].ds_addr;
+		if (pa >= AWIN_SDRAM_PBASE)
+			pa -= AWIN_SDRAM_PBASE;
+		awin_mp_setbase(mpdev, pa, sc->sc_dmasize);
+	}
+#endif
 }
 
 static int
