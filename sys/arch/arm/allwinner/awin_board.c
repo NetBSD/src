@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.14.6.3 2014/11/14 13:37:39 martin Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.14.6.4 2014/12/04 11:08:38 martin Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.14.6.3 2014/11/14 13:37:39 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.14.6.4 2014/12/04 11:08:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -345,6 +345,13 @@ awin_pll6_enable(void)
 	if (ncfg != ocfg) {
 		bus_space_write_4(bst, bsh,
 		    AWIN_CCM_OFFSET + AWIN_PLL6_CFG_REG, ncfg);
+
+		if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+			do {
+				ncfg = bus_space_read_4(bst, bsh,
+				    AWIN_CCM_OFFSET + AWIN_PLL6_CFG_REG);
+			} while ((ncfg & AWIN_A31_PLL6_CFG_LOCK) == 0);
+		}
 	}
 #if 0
 	printf(" [pll6=%#x->%#x:n=%ju k=%ju m=%ju] ",
@@ -390,6 +397,13 @@ awin_pll2_enable(void)
 	if (ncfg != ocfg) {
 		bus_space_write_4(bst, bsh,
 		    AWIN_CCM_OFFSET + AWIN_PLL2_CFG_REG, ncfg);
+
+		if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+			do {
+				ncfg = bus_space_read_4(bst, bsh,
+				    AWIN_CCM_OFFSET + AWIN_PLL2_CFG_REG);
+			} while ((ncfg & AWIN_A31_PLL2_CFG_LOCK) == 0);
+		}
 	}
 }
 
@@ -459,6 +473,13 @@ awin_pll7_enable(void)
 	if (ncfg != ocfg) {
 		bus_space_write_4(bst, bsh,
 		    AWIN_CCM_OFFSET + AWIN_PLL7_CFG_REG, ncfg);
+
+		if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+			do {
+				ncfg = bus_space_read_4(bst, bsh,
+				    AWIN_CCM_OFFSET + AWIN_PLL7_CFG_REG);
+			} while ((ncfg & AWIN_A31_PLL7_CFG_LOCK) == 0);
+		}
 	}
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.3.10.2 2014/11/09 14:42:33 martin Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.3.10.3 2014/12/04 11:08:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.3.10.2 2014/11/09 14:42:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.3.10.3 2014/12/04 11:08:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -97,13 +97,10 @@ struct awin_mmc_softc {
 	kcondvar_t sc_intr_cv;
 	kcondvar_t sc_idst_cv;
 
-	int sc_mmc_number;
 	int sc_mmc_width;
 	int sc_mmc_present;
 
 	device_t sc_sdmmc_dev;
-	unsigned int sc_pll_freq;
-	unsigned int sc_mod_clk;
 
 	uint32_t sc_fifo_reg;
 
@@ -149,53 +146,6 @@ awin_mmc_match(device_t parent, cfdata_t cf, void *aux)
 		return 0;
 
 	return 1;
-}
-
-static void
-awin_mmc_probe_clocks(struct awin_mmc_softc *sc, struct awinio_attach_args *aio)
-{
-	uint32_t val, freq;
-	int n, k, p, div;
-
-	val = bus_space_read_4(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_PLL6_CFG_REG);
-
-	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
-		n = ((val >> 8) & 0x1f) + 1;
-		k = ((val >> 4) & 3) + 1;
-		freq = 24000000 * n * k / 2;
-#ifdef AWIN_MMC_DEBUG
-		device_printf(sc->sc_dev, "n = %d k = %d freq = %u\n",
-		    n, k, freq);
-#endif
-	} else {
-		n = (val >> 8) & 0x1f;
-		k = ((val >> 4) & 3) + 1;
-		p = 1 << ((val >> 16) & 3);
-		freq = 24000000 * n * k / p;
-#ifdef AWIN_MMC_DEBUG
-		device_printf(sc->sc_dev, "n = %d k = %d p = %d freq = %u\n",
-		    n, k, p, freq);
-#endif
-	}
-
-	sc->sc_pll_freq = freq;
-	div = ((sc->sc_pll_freq + 99999999) / 100000000) - 1;
-	sc->sc_mod_clk = sc->sc_pll_freq / (div + 1);
-
-	bus_space_write_4(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_SD0_CLK_REG + (sc->sc_mmc_number * 4),
-	    AWIN_PLL_CFG_ENABLE | AWIN_PLL_CFG_PLL6 | div);
-
-	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
-		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-		    AWIN_A31_AHB_RESET0_REG,
-		    AWIN_A31_AHB_RESET0_SD0_RST << sc->sc_mmc_number, 0);
-	}
-
-#ifdef AWIN_MMC_DEBUG
-	aprint_normal_dev(sc->sc_dev, "PLL6 @ %u Hz\n", freq);
-#endif
 }
 
 static int
@@ -253,7 +203,6 @@ awin_mmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bst = aio->aio_core_bst;
 	sc->sc_dmat = aio->aio_dmat;
-	sc->sc_mmc_number = loc->loc_port;
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_intr_cv, "awinmmcirq");
 	cv_init(&sc->sc_idst_cv, "awinmmcdma");
@@ -268,7 +217,16 @@ awin_mmc_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": SD3.0 (%s)\n", sc->sc_use_dma ? "DMA" : "PIO");
 
-	awin_mmc_probe_clocks(sc, aio);
+	awin_pll6_enable();
+
+	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+	    AWIN_AHB_GATING0_REG,
+	    AWIN_AHB_GATING0_SDMMC0 << loc->loc_port, 0);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_A31_AHB_RESET0_REG,
+		    AWIN_A31_AHB_RESET0_SD0_RST << loc->loc_port, 0);
+	}
 
 	if (prop_dictionary_get_cstring_nocopy(cfg, "detect-gpio", &pin_name)) {
 		if (!awin_gpio_pin_reserve(pin_name, &sc->sc_gpio_detect)) {
@@ -539,7 +497,9 @@ static int
 awin_mmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 {
 	struct awin_mmc_softc *sc = sch;
-	uint32_t odly, sdly, clkcr;
+	uint32_t odly, sdly, clkcr, clksrc, n, m;
+	u_int pll_freq = awin_pll6_get_rate() / 1000;
+	u_int osc24m_freq = AWIN_REF_FREQ / 1000;
 
 #ifdef AWIN_MMC_DEBUG
 	aprint_normal_dev(sc->sc_dev, "freq = %d\n", freq);
@@ -547,13 +507,22 @@ awin_mmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 
 	if (freq <= 400) {
 		odly = 0;
-		sdly = 7;
+		sdly = awin_chip_id() == AWIN_CHIP_ID_A31 ? 0 : 7;
+		clksrc = AWIN_SD_CLK_SRC_SEL_OSC24M;
+		n = 2;
+		m = ((osc24m_freq / (1 << n)) / freq) - 1;
 	} else if (freq <= 25000) {
 		odly = 0;
 		sdly = 5;
+		clksrc = AWIN_SD_CLK_SRC_SEL_PLL6;
+		n = 0;
+		m = (pll_freq / freq) - 1;
 	} else if (freq <= 50000) {
 		odly = 3;
 		sdly = 5;
+		clksrc = AWIN_SD_CLK_SRC_SEL_PLL6;
+		n = 0;
+		m = (pll_freq / freq) - 1;
 	} else {
 		/* UHS speeds not implemented yet */
 		return 1;
@@ -573,10 +542,17 @@ awin_mmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 			return 1;
 
 		uint32_t clk = bus_space_read_4(sc->sc_bst, sc->sc_clk_bsh, 0);
+		clk &= ~AWIN_SD_CLK_SRC_SEL;
+		clk |= __SHIFTIN(clksrc, AWIN_SD_CLK_SRC_SEL);
+		clk &= ~AWIN_SD_CLK_DIV_RATIO_N;
+		clk |= __SHIFTIN(n, AWIN_SD_CLK_DIV_RATIO_N);
+		clk &= ~AWIN_SD_CLK_DIV_RATIO_M;
+		clk |= __SHIFTIN(m, AWIN_SD_CLK_DIV_RATIO_M);
 		clk &= ~AWIN_SD_CLK_OUTPUT_PHASE_CTR;
 		clk |= __SHIFTIN(odly, AWIN_SD_CLK_OUTPUT_PHASE_CTR);
 		clk &= ~AWIN_SD_CLK_PHASE_CTR;
 		clk |= __SHIFTIN(sdly, AWIN_SD_CLK_PHASE_CTR);
+	    	clk |= AWIN_PLL_CFG_ENABLE;
 		bus_space_write_4(sc->sc_bst, sc->sc_clk_bsh, 0, clk);
 
 		clkcr |= AWIN_MMC_CLKCR_CARDCLKON;
