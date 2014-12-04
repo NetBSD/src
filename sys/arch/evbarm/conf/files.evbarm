@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.23 2013/08/12 21:19:09 matt Exp $
+#	$NetBSD: files.evbarm,v 1.24 2014/12/04 17:05:55 joerg Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -15,7 +15,8 @@ file	dev/md_root.c				md & memory_disk_hooks
 # Generic MD files
 file	arch/evbarm/evbarm/autoconf.c
 
-file	arch/arm/arm/disksubr.c
+file	kern/subr_disk_mbr.c			disk
+
 file	arch/arm/arm/disksubr_acorn.c
 file	arch/arm/arm/disksubr_mbr.c
 
