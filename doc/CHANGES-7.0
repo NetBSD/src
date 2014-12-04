@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.120 2014/12/04 11:09:28 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.121 2014/12/04 19:20:39 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3198,4 +3198,18 @@ sys/arch/arm/allwinner/awin_reg.h		1.55,1.57
 
 	Fix clock setup for the SD/MMC controller on Allwinner boards.
 	[jmcneill, ticket #294]
+
+etc/etc.amd64/Makefile.inc			patch
+etc/etc.i386/Makefile.inc 			patch
+usr.sbin/sysinst/arch/amd64/md.h 		patch
+usr.sbin/sysinst/arch/i386/md.h 		patch
+usr.sbin/sysinst/arch/i386/msg.md.de 		patch
+usr.sbin/sysinst/arch/i386/msg.md.en 		patch
+usr.sbin/sysinst/arch/i386/msg.md.es 		patch
+usr.sbin/sysinst/arch/i386/msg.md.fr 		patch
+usr.sbin/sysinst/arch/i386/msg.md.pl 		patch
+
+	Build the DRMKMS kernel on x86, and provide a sysinst option to
+	install it.
+	[bouyer, ticket #295]
 
