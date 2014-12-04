@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.3 2014/12/02 09:00:33 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.4 2014/12/04 08:04:31 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -170,8 +170,6 @@ typedef struct ehci_softc {
 
 	int sc_noport;
 	uint8_t sc_hasppc;		/* has Port Power Control */
-	uint8_t sc_addr;		/* device address */
-	uint8_t sc_conf;		/* device configuration */
 	usbd_xfer_handle sc_intrxfer;
 	char sc_isreset[EHCI_MAX_PORTS];
 	char sc_softwake;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.8 2014/12/03 23:05:06 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.9 2014/12/04 08:04:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.8 2014/12/03 23:05:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.9 2014/12/04 08:04:32 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.8 2014/12/03 23:05:06 skrll Exp $");
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
-
 #include <dev/usb/usbroothub.h>
 
 #include <dwc2/dwc2.h>
@@ -88,12 +87,8 @@ Static void		dwc2_waitintr(struct dwc2_softc *, usbd_xfer_handle);
 Static usbd_xfer_handle	dwc2_allocx(struct usbd_bus *);
 Static void		dwc2_freex(struct usbd_bus *, usbd_xfer_handle);
 Static void		dwc2_get_lock(struct usbd_bus *, kmutex_t **);
-
-Static usbd_status	dwc2_root_ctrl_transfer(usbd_xfer_handle);
-Static usbd_status	dwc2_root_ctrl_start(usbd_xfer_handle);
-Static void		dwc2_root_ctrl_abort(usbd_xfer_handle);
-Static void		dwc2_root_ctrl_close(usbd_pipe_handle);
-Static void		dwc2_root_ctrl_done(usbd_xfer_handle);
+Static int		dwc2_roothub_ctrl(struct usbd_bus *, usb_device_request_t *,
+    void *, int);
 
 Static usbd_status	dwc2_root_intr_transfer(usbd_xfer_handle);
 Static usbd_status	dwc2_root_intr_start(usbd_xfer_handle);
@@ -153,8 +148,6 @@ dwc2_free_bus_bandwidth(struct dwc2_hsotg *hsotg, u16 bw,
 {
 }
 
-#define DWC2_INTR_ENDPT 1
-
 Static const struct usbd_bus_methods dwc2_bus_methods = {
 	.ubm_open =	dwc2_open,
 	.ubm_softint =	dwc2_softintr,
@@ -162,15 +155,7 @@ Static const struct usbd_bus_methods dwc2_bus_methods = {
 	.ubm_allocx =	dwc2_allocx,
 	.ubm_freex =	dwc2_freex,
 	.ubm_getlock =	dwc2_get_lock,
-};
-
-Static const struct usbd_pipe_methods dwc2_root_ctrl_methods = {
-	.upm_transfer =	dwc2_root_ctrl_transfer,
-	.upm_start =	dwc2_root_ctrl_start,
-	.upm_abort =	dwc2_root_ctrl_abort,
-	.upm_close =	dwc2_root_ctrl_close,
-	.upm_cleartoggle =	dwc2_noop,
-	.upm_done =	dwc2_root_ctrl_done,
+	.ubm_rhctrl =	dwc2_roothub_ctrl,
 };
 
 Static const struct usbd_pipe_methods dwc2_root_intr_methods = {
@@ -421,12 +406,12 @@ dwc2_open(usbd_pipe_handle pipe)
 		return USBD_IOERROR;
 	}
 
-	if (addr == sc->sc_addr) {
+	if (addr == dev->ud_bus->ub_rhaddr) {
 		switch (ed->bEndpointAddress) {
 		case USB_CONTROL_ENDPOINT:
-			pipe->up_methods = &dwc2_root_ctrl_methods;
+			pipe->up_methods = &roothub_ctrl_methods;
 			break;
-		case UE_DIR_IN | DWC2_INTR_ENDPT:
+		case UE_DIR_IN | USBROOTHUB_INTR_ENDPT:
 			pipe->up_methods = &dwc2_root_intr_methods;
 			break;
 		default:
@@ -577,104 +562,17 @@ dwc2_device_clear_toggle(usbd_pipe_handle pipe)
 
 /***********************************************************************/
 
-/*
- * Data structures and routines to emulate the root hub.
- */
-
-Static const usb_device_descriptor_t dwc2_devd = {
-	.bLength = sizeof(usb_device_descriptor_t),
-	.bDescriptorType = UDESC_DEVICE,
-	.bcdUSB = {0x00, 0x02},
-	.bDeviceClass = UDCLASS_HUB,
-	.bDeviceSubClass = UDSUBCLASS_HUB,
-	.bDeviceProtocol = UDPROTO_HSHUBSTT,
-	.bMaxPacketSize = 64,
-	.bcdDevice = {0x00, 0x01},
-	.iManufacturer = 1,
-	.iProduct = 2,
-	.bNumConfigurations = 1,
-};
-
-struct dwc2_config_desc {
-	usb_config_descriptor_t confd;
-	usb_interface_descriptor_t ifcd;
-	usb_endpoint_descriptor_t endpd;
-} __packed;
-
-Static const struct dwc2_config_desc dwc2_confd = {
-	.confd = {
-		.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
-		.bDescriptorType = UDESC_CONFIG,
-		.wTotalLength = USETWD(sizeof(dwc2_confd)),
-		.bNumInterface = 1,
-		.bConfigurationValue = 1,
-		.iConfiguration = 0,
-		.bmAttributes = UC_SELF_POWERED,
-		.bMaxPower = 0,
-	},
-	.ifcd = {
-		.bLength = USB_INTERFACE_DESCRIPTOR_SIZE,
-		.bDescriptorType = UDESC_INTERFACE,
-		.bInterfaceNumber = 0,
-		.bAlternateSetting = 0,
-		.bNumEndpoints = 1,
-		.bInterfaceClass = UICLASS_HUB,
-		.bInterfaceSubClass = UISUBCLASS_HUB,
-		.bInterfaceProtocol = UIPROTO_HSHUBSTT,
-		.iInterface = 0
-	},
-	.endpd = {
-		.bLength = USB_ENDPOINT_DESCRIPTOR_SIZE,
-		.bDescriptorType = UDESC_ENDPOINT,
-		.bEndpointAddress = UE_DIR_IN | DWC2_INTR_ENDPT,
-		.bmAttributes = UE_INTERRUPT,
-		.wMaxPacketSize = USETWD(8),			/* max packet */
-		.bInterval = 255,
-	},
-};
-
-#if 0
-/* appears to be unused */
-Static const usb_hub_descriptor_t dwc2_hubd = {
-	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
-	.bDescriptorType = UDESC_HUB,
-	.bNbrPorts = 1,
-	.wHubCharacteristics = USETWD(UHD_PWR_NO_SWITCH | UHD_OC_INDIVIDUAL),
-	.bPwrOn2PwrGood = 50,
-	.bHubContrCurrent = 0,
-	.DeviceRemovable = {0},		/* port is removable */
-};
-#endif
-
-Static usbd_status
-dwc2_root_ctrl_transfer(usbd_xfer_handle xfer)
+Static int
+dwc2_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
+    void *buf, int buflen)
 {
-	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
-	usbd_status err;
-
-	mutex_enter(&sc->sc_lock);
-	err = usb_insert_transfer(xfer);
-	mutex_exit(&sc->sc_lock);
-	if (err)
-		return err;
-
-	return dwc2_root_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
-}
-
-Static usbd_status
-dwc2_root_ctrl_start(usbd_xfer_handle xfer)
-{
-	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
-	usb_device_request_t *req;
-	uint8_t *buf;
-	uint16_t len;
-	int value, index, l, totlen;
+	struct dwc2_softc *sc = bus->ub_hcpriv;
 	usbd_status err = USBD_IOERROR;
+	uint16_t len, value, index;
+	int totlen = 0;
 
 	if (sc->sc_dying)
-		return USBD_IOERROR;
-
-	req = &xfer->ux_request;
+		return -1;
 
 	DPRINTFN(4, "type=0x%02x request=%02x\n",
 	    req->bmRequestType, req->bRequest);
@@ -683,153 +581,41 @@ dwc2_root_ctrl_start(usbd_xfer_handle xfer)
 	value = UGETW(req->wValue);
 	index = UGETW(req->wIndex);
 
-	buf = len ? KERNADDR(&xfer->ux_dmabuf, 0) : NULL;
-
-	totlen = 0;
-
 #define C(x,y) ((x) | ((y) << 8))
 	switch (C(req->bRequest, req->bmRequestType)) {
-	case C(UR_CLEAR_FEATURE, UT_WRITE_DEVICE):
-	case C(UR_CLEAR_FEATURE, UT_WRITE_INTERFACE):
-	case C(UR_CLEAR_FEATURE, UT_WRITE_ENDPOINT):
-		/*
-		 * DEVICE_REMOTE_WAKEUP and ENDPOINT_HALT are no-ops
-		 * for the integrated root hub.
-		 */
-		break;
-	case C(UR_GET_CONFIG, UT_READ_DEVICE):
-		if (len > 0) {
-			*buf = sc->sc_conf;
-			totlen = 1;
-		}
-		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
 		DPRINTFN(8, "wValue=0x%04x\n", value);
 
 		if (len == 0)
 			break;
 		switch (value) {
-		case C(0, UDESC_DEVICE):
-			l = min(len, USB_DEVICE_DESCRIPTOR_SIZE);
-// 			USETW(dwc2_devd.idVendor, sc->sc_id_vendor);
-			memcpy(buf, &dwc2_devd, l);
-			buf += l;
-			len -= l;
-			totlen += l;
-
-			break;
-		case C(0, UDESC_CONFIG):
-			l = min(len, sizeof(dwc2_confd));
-			memcpy(buf, &dwc2_confd, l);
-			buf += l;
-			len -= l;
-			totlen += l;
-
-			break;
 #define sd ((usb_string_descriptor_t *)buf)
-		case C(0, UDESC_STRING):
-			totlen = usb_makelangtbl(sd, len);
-			break;
 		case C(1, UDESC_STRING):
-			totlen = usb_makestrdesc(sd, len, sc->sc_vendor);
+			/* Vendor */
+			//totlen = usb_makestrdesc(sd, len, sc->sc_vendor);
 			break;
 		case C(2, UDESC_STRING):
+			/* Product */
 			totlen = usb_makestrdesc(sd, len, "DWC2 root hub");
 			break;
 #undef sd
 		default:
-			goto fail;
+			/* default from usbroothub */
+			return buflen;
 		}
-		break;
-	case C(UR_GET_INTERFACE, UT_READ_INTERFACE):
-		if (len > 0) {
-			*buf = 0;
-			totlen = 1;
-		}
-		break;
-	case C(UR_GET_STATUS, UT_READ_DEVICE):
-		if (len > 1) {
-			USETW(((usb_status_t *)buf)->wStatus,UDS_SELF_POWERED);
-			totlen = 2;
-		}
-		break;
-	case C(UR_GET_STATUS, UT_READ_INTERFACE):
-	case C(UR_GET_STATUS, UT_READ_ENDPOINT):
-		if (len > 1) {
-			USETW(((usb_status_t *)buf)->wStatus, 0);
-			totlen = 2;
-		}
-		break;
-	case C(UR_SET_ADDRESS, UT_WRITE_DEVICE):
-		DPRINTF("UR_SET_ADDRESS, UT_WRITE_DEVICE: addr %d\n",
-		    value);
-		if (value >= USB_MAX_DEVICES)
-			goto fail;
-
-		sc->sc_addr = value;
-		break;
-	case C(UR_SET_CONFIG, UT_WRITE_DEVICE):
-		if (value != 0 && value != 1)
-			goto fail;
-
-		sc->sc_conf = value;
-		break;
-	case C(UR_SET_DESCRIPTOR, UT_WRITE_DEVICE):
-		break;
-	case C(UR_SET_FEATURE, UT_WRITE_DEVICE):
-	case C(UR_SET_FEATURE, UT_WRITE_INTERFACE):
-	case C(UR_SET_FEATURE, UT_WRITE_ENDPOINT):
-		err = USBD_IOERROR;
-		goto fail;
-	case C(UR_SET_INTERFACE, UT_WRITE_INTERFACE):
-		break;
-	case C(UR_SYNCH_FRAME, UT_WRITE_ENDPOINT):
 		break;
 	default:
-	    	/* Hub requests - XXXNH len check? */
+		/* Hub requests */
 		err = dwc2_hcd_hub_control(sc->sc_hsotg,
 		    C(req->bRequest, req->bmRequestType), value, index,
 		    buf, len);
 		if (err) {
-			err = USBD_IOERROR;
-			goto fail;
+			return -1;
 		}
 		totlen = len;
 	}
-	xfer->ux_actlen = totlen;
-	err = USBD_NORMAL_COMPLETION;
 
-fail:
-	mutex_enter(&sc->sc_lock);
-	xfer->ux_status = err;
-	usb_transfer_complete(xfer);
-	mutex_exit(&sc->sc_lock);
-
-	return USBD_IN_PROGRESS;
-}
-
-Static void
-dwc2_root_ctrl_abort(usbd_xfer_handle xfer)
-{
-	DPRINTFN(10, "\n");
-
-	/* Nothing to do, all transfers are synchronous. */
-}
-
-Static void
-dwc2_root_ctrl_close(usbd_pipe_handle pipe)
-{
-	DPRINTFN(10, "\n");
-
-	/* Nothing to do. */
-}
-
-Static void
-dwc2_root_ctrl_done(usbd_xfer_handle xfer)
-{
-	DPRINTFN(10, "\n");
-
-	/* Nothing to do. */
+	return totlen;
 }
 
 Static usbd_status
