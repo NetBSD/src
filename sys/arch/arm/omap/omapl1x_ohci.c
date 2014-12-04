@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_ohci.c,v 1.1.12.2 2014/12/03 12:52:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_ohci.c,v 1.1.12.3 2014/12/04 07:53:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,6 @@ omapl1xohci_attach (struct device *parent, struct device *self, void *aux)
 	sc->sc.sc_bus.ub_hcpriv = sc;
 	sc->sc_intr = tipb->tipb_intr;
 	sc->sc.iot = tipb->tipb_iot;
-	sc->sc.sc_addr = tipb->tipb_addr;
 	sc->sc.sc_size = tipb->tipb_size;
 	sc->sc.sc_bus.ub_dmatag = tipb->tipb_dmac;
 
