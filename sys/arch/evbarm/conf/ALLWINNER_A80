@@ -1,4 +1,4 @@
-#	$NetBSD: ALLWINNER_A80,v 1.4 2014/12/05 17:32:08 jmcneill Exp $
+#	$NetBSD: ALLWINNER_A80,v 1.5 2014/12/05 18:42:02 jmcneill Exp $
 #
 #	ALLWINNER_A80 - Allwinner A80 boards (Cubieboard4, OptimusBoard, etc)
 #
@@ -220,6 +220,7 @@ gpio*		at awingpio?
 # I2C Controllers
 awiniic0	at awinio? port 0
 iic0		at awiniic0
+axp22x0		at iic0 addr 0x34	# AXP221 Power Management Unit	
 
 awiniic1	at awinio? port 1
 iic1		at awiniic1
@@ -230,7 +231,6 @@ iic2		at awiniic2
 # P2WI
 #awinp2wi0	at awinio0
 #iic1		at awinp2wi0
-#axp22x0		at iic1 addr 0x34	# AXP221 Power Management Unit	
 
 # On-board 16550 UARTs
 com0		at awinio? port 0			# UART0 (console)
@@ -251,7 +251,7 @@ options 	CONADDR=0x07000000, CONSPEED=115200
 #audio0		at awinac0
 
 # GMAC Ethernet
-#awge0		at awinio0 port ?
+awge0		at awinio0 port ?
 
 # HDMI
 #awinhdmi0	at awinio0
