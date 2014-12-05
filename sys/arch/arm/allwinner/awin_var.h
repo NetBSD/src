@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.27 2014/12/04 11:16:38 jmcneill Exp $ */
+/* $NetBSD: awin_var.h,v 1.28 2014/12/05 01:13:11 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -47,6 +47,7 @@ struct awin_locators {
 	int loc_flags;
 #define	AWINIO_REQUIRED		__BIT(8)
 #define	AWINIO_ONLY		__BITS(7,0)
+#define	AWINIO_ONLY_A80		__BIT(3)
 #define	AWINIO_ONLY_A31		__BIT(2)
 #define	AWINIO_ONLY_A20		__BIT(1)
 #define	AWINIO_ONLY_A10		__BIT(0)
@@ -109,6 +110,7 @@ void	awin_cpu_hatch(struct cpu_info *);
 #define AWIN_CHIP_ID_A31	AWIN_SRAM_VER_KEY_A31
 #define AWIN_CHIP_ID_A23	AWIN_SRAM_VER_KEY_A23
 #define AWIN_CHIP_ID_A20	AWIN_SRAM_VER_KEY_A20
+#define AWIN_CHIP_ID_A80	0xff80	/* fake; no chip ID register */
 uint16_t awin_chip_id(void);
 const char *awin_chip_name(void);
 

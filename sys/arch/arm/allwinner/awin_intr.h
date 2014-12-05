@@ -1,4 +1,4 @@
-/* $NetBSD: awin_intr.h,v 1.10 2014/12/04 11:16:38 jmcneill Exp $ */
+/* $NetBSD: awin_intr.h,v 1.11 2014/12/05 01:13:11 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,8 +31,15 @@
 #ifndef _ARM_ALLWINNER_AWIN_INTR_H_
 #define _ARM_ALLWINNER_AWIN_INTR_H_ 
 
+#include "opt_allwinner.h"
+
+#if defined(ALLWINNER_A80)
+#define	PIC_MAXSOURCES			224
+#define	PIC_MAXMAXSOURCES		256
+#else
 #define	PIC_MAXSOURCES			160
 #define	PIC_MAXMAXSOURCES		192
+#endif
 
 /*
  * The Allwinner can use a generic interrupt controller so pull in that stuff.
@@ -163,5 +170,20 @@
 #define AWIN_A31_IRQ_GMAC	114
 #define AWIN_A31_IRQ_MP		115
 #define AWIN_A31_IRQ_HDMI	120
+
+/*
+ * A80
+ */
+#define AWIN_A80_IRQ_UART0	32
+#define AWIN_A80_IRQ_UART1	33
+#define AWIN_A80_IRQ_UART2	34
+#define AWIN_A80_IRQ_UART3	35
+#define AWIN_A80_IRQ_UART4	36
+#define AWIN_A80_IRQ_UART5	37
+#define AWIN_A80_IRQ_TWI0	38
+#define AWIN_A80_IRQ_TWI1	39
+#define AWIN_A80_IRQ_TWI2	40
+#define AWIN_A80_IRQ_TWI3	41
+#define AWIN_A80_IRQ_TWI4	42
 
 #endif /* _ARM_ALLWINNER_AWIN_INTR_H_ */

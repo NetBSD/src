@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.29 2014/12/04 11:16:38 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.30 2014/12/05 01:13:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -89,12 +89,13 @@ awinio_print(void *aux, const char *pnp)
 #define	A10	AWINIO_ONLY_A10
 #define	A20	AWINIO_ONLY_A20
 #define	A31	AWINIO_ONLY_A31
+#define	A80	AWINIO_ONLY_A80
 #define	REQ	AWINIO_REQUIRED
 
 static const struct awin_locators awin_locators[] = {
 	{ "awinicu", OFFANDSIZE(INTC), NOPORT, NOINTR, A10|REQ },
 	{ "awingpio", OFFANDSIZE(PIO), NOPORT, NOINTR, AANY|REQ },
-	{ "awindma", OFFANDSIZE(DMA), NOPORT, AWIN_IRQ_DMA, A10|A20|REQ },
+	{ "awindma", OFFANDSIZE(DMA), NOPORT, AWIN_IRQ_DMA, A10|A20 },
 	{ "awindma", OFFANDSIZE(DMA), NOPORT, AWIN_A31_IRQ_DMA, A31 },
 	{ "awintmr", OFFANDSIZE(TMR), NOPORT, AWIN_IRQ_TMR0, A10 },
 	{ "awincnt", OFFANDSIZE(CPUCFG), NOPORT, NOINTR, A20 },
@@ -108,14 +109,15 @@ static const struct awin_locators awin_locators[] = {
 	{ "com", OFFANDSIZE(UART6), 6, AWIN_IRQ_UART6, A10|A20 },
 	{ "com", OFFANDSIZE(UART7), 7, AWIN_IRQ_UART7, A10|A20 },
 	{ "com", OFFANDSIZE(UART0), 0, AWIN_A31_IRQ_UART0, A31 },
+	{ "com", OFFANDSIZE(A80_UART0), 0, AWIN_A80_IRQ_UART0, A80 },
 	{ "awinmp", OFFANDSIZE(MP), NOPORT, AWIN_A31_IRQ_MP, A31 },
-	{ "awindebe", AWIN_DE_BE0_OFFSET, 0x1000, 0, NOINTR, AANY },
-	{ "awindebe", AWIN_DE_BE1_OFFSET, 0x1000, 1, NOINTR, AANY },
-	{ "awintcon", OFFANDSIZE(LCD0), 0, NOINTR, AANY },
-	{ "awintcon", OFFANDSIZE(LCD1), 1, NOINTR, AANY },
+	{ "awindebe", AWIN_DE_BE0_OFFSET, 0x1000, 0, NOINTR, A20|A31 },
+	{ "awindebe", AWIN_DE_BE1_OFFSET, 0x1000, 1, NOINTR, A20|A31 },
+	{ "awintcon", OFFANDSIZE(LCD0), 0, NOINTR, A20|A31 },
+	{ "awintcon", OFFANDSIZE(LCD1), 1, NOINTR, A20|A31 },
 	{ "awinhdmi", OFFANDSIZE(HDMI), NOPORT, AWIN_IRQ_HDMI0, A20 },
 	{ "awinhdmi", OFFANDSIZE(HDMI), NOPORT, AWIN_A31_IRQ_HDMI, A31 },
-	{ "awinwdt", OFFANDSIZE(TMR), NOPORT, NOINTR, AANY },
+	{ "awinwdt", OFFANDSIZE(TMR), NOPORT, NOINTR, A10|A20|A31 },
 	{ "awinrtc", OFFANDSIZE(TMR), NOPORT, NOINTR, A10|A20 },
 	{ "awinrtc", OFFANDSIZE(A31_RTC), NOPORT, NOINTR, A31 },
 	{ "awinusb", OFFANDSIZE(USB1), 0, NOINTR, A10|A20 },
@@ -185,6 +187,7 @@ awinio_attach(device_t parent, device_t self, void *aux)
 	const bool a10_p = chip_id == AWIN_CHIP_ID_A10;
 	const bool a20_p = chip_id == AWIN_CHIP_ID_A20;
 	const bool a31_p = chip_id == AWIN_CHIP_ID_A31;
+	const bool a80_p = chip_id == AWIN_CHIP_ID_A80;
 	prop_dictionary_t dict = device_properties(self);
 
 	sc->sc_dev = self;
@@ -222,6 +225,8 @@ awinio_attach(device_t parent, device_t self, void *aux)
 			if (a20_p && !(loc->loc_flags & AWINIO_ONLY_A20))
 				continue;
 			if (a31_p && !(loc->loc_flags & AWINIO_ONLY_A31))
+				continue;
+			if (a80_p && !(loc->loc_flags & AWINIO_ONLY_A80))
 				continue;
 		}
 

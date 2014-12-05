@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.29 2014/12/04 02:12:07 jmcneill Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.30 2014/12/05 01:13:11 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.29 2014/12/04 02:12:07 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.30 2014/12/05 01:13:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -124,6 +124,15 @@ static void
 awin_cpu_clk(void)
 {
 	struct cpu_info * const ci = curcpu();
+
+#if defined(ALLWINNER_A80)
+	const uint32_t c0cpux = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
+	    AWIN_A80_CCU_OFFSET + AWIN_A80_CCU_PLL_C0CPUX_CTRL_REG);
+	const u_int p = (c0cpux & AWIN_A80_CCU_PLL_OUT_EXT_DIVP) ? 4 : 1;
+	const u_int n = __SHIFTOUT(c0cpux, AWIN_A80_CCU_PLL_FACTOR_N);
+
+	ci->ci_data.cpu_cc_freq = ((uint64_t)AWIN_REF_FREQ * n) / p;
+#else
 	u_int reg = awin_chip_id() == AWIN_CHIP_ID_A31 ?
 				      AWIN_A31_CPU_AXI_CFG_REG :
 				      AWIN_CPU_AHB_APB0_CFG_REG;
@@ -160,6 +169,7 @@ awin_cpu_clk(void)
 		ci->ci_data.cpu_cc_freq = 200000000;
 		break;
 	}
+#endif
 }
 
 void
@@ -279,6 +289,9 @@ awin_memprobe(void)
 uint16_t
 awin_chip_id(void)
 {
+#if defined(ALLWINNER_A80)
+	return AWIN_CHIP_ID_A80;
+#else
 	static uint16_t chip_id = 0;
 	uint32_t ver;
 
@@ -295,6 +308,7 @@ awin_chip_id(void)
 	}
 
 	return chip_id;
+#endif
 }
 
 const char *
@@ -308,6 +322,7 @@ awin_chip_name(void)
 	case AWIN_CHIP_ID_A20: return "A20";
 	case AWIN_CHIP_ID_A23: return "A23";
 	case AWIN_CHIP_ID_A31: return "A31";
+	case AWIN_CHIP_ID_A80: return "A80";
 	default: return "unknown chip";
 	}
 }
