@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.53 2013/08/18 09:31:38 martin Exp $ */
+/*	$NetBSD: psl.h,v 1.54 2014/12/05 11:31:50 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -287,6 +287,13 @@
 /*
  * Inlines for manipulating privileged and ancillary state registers
  */
+#define SPARC64_RDCONST_DEF(rd, name, reg, type)			\
+static __inline __constfunc type get##name(void)			\
+{									\
+	type _val;							\
+	__asm(#rd " %" #reg ",%0" : "=r" (_val));			\
+	return _val;							\
+}
 #define SPARC64_RD_DEF(rd, name, reg, type)				\
 static __inline type get##name(void)					\
 {									\
@@ -301,9 +308,19 @@ static __inline void set##name(type _val)				\
 }
 
 #ifdef __arch64__
+#define SPARC64_RDCONST64_DEF(rd, name, reg) \
+	SPARC64_RDCONST_DEF(rd, name, reg, uint64_t)
 #define SPARC64_RD64_DEF(rd, name, reg) SPARC64_RD_DEF(rd, name, reg, uint64_t)
 #define SPARC64_WR64_DEF(wr, name, reg) SPARC64_WR_DEF(wr, name, reg, uint64_t)
 #else
+#define SPARC64_RDCONST64_DEF(rd, name, reg)				\
+static __inline __constfunc uint64_t get##name(void)			\
+{									\
+	uint32_t _hi, _lo;						\
+	__asm(#rd " %" #reg ",%0; srl %0,0,%1; srlx %0,32,%0"		\
+		: "=r" (_hi), "=r" (_lo));				\
+	return ((uint64_t)_hi << 32) | _lo;				\
+}
 #define SPARC64_RD64_DEF(rd, name, reg)					\
 static __inline uint64_t get##name(void)				\
 {									\
@@ -345,7 +362,7 @@ SPARC64_RDPR_DEF(cwp, %cwp, int)		/* getcwp() */
 SPARC64_WRPR_DEF(cwp, %cwp, int)		/* setcwp() */
 
 /* Version Register (PR 31) */
-SPARC64_RDPR64_DEF(ver, %ver)			/* getver() */
+SPARC64_RDCONST64_DEF(rdpr, ver, %ver)		/* getver() */
 
 /* System Tick Register (ASR 24) */
 SPARC64_RDASR64_DEF(stick, STICK)		/* getstick() */
