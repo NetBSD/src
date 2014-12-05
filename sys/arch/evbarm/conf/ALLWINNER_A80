@@ -1,4 +1,4 @@
-#	$NetBSD: ALLWINNER_A80,v 1.1 2014/12/05 01:13:12 jmcneill Exp $
+#	$NetBSD: ALLWINNER_A80,v 1.2 2014/12/05 14:36:44 jmcneill Exp $
 #
 #	ALLWINNER_A80 - Allwinner A80 boards (Cubieboard4, OptimusBoard, etc)
 #
@@ -195,9 +195,13 @@ armgtmr0	at armperiph?				# ARM Generic Timer
 awinio0		at mainbus?
 
 # SD/MMC controllers
-#awinmmc0	at awinio0 port 0
-#sdmmc*		at awinmmc?
-#ld*		at sdmmc?
+awinmmc0	at awinio0 port 0
+sdmmc0		at awinmmc0
+ld0		at sdmmc0
+
+#awinmmc2	at awinio0 port 2
+#sdmmc2		at awinmmc2
+#ld2		at sdmmc2
 
 # Interrupt Controller
 awinicu0	at awinio0 
