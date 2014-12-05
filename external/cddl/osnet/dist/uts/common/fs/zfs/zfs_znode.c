@@ -121,6 +121,8 @@ zfs_znode_cache_constructor(void *buf, void *arg, int kmflags)
 
 	ASSERT(!POINTER_IS_VALID(zp->z_zfsvfs));
 
+	zp->z_vnode = NULL;
+
 	list_link_init(&zp->z_link_node);
 
 	mutex_init(&zp->z_lock, NULL, MUTEX_DEFAULT, NULL);
@@ -468,7 +470,6 @@ zfs_create_share_dir(zfsvfs_t *zfsvfs, dmu_tx_t *tx)
 	zfs_acl_ids_t acl_ids;
 	vattr_t vattr;
 	znode_t *sharezp;
-	vnode_t *vp;
 	znode_t *zp;
 	int error;
 
@@ -482,15 +483,6 @@ zfs_create_share_dir(zfsvfs_t *zfsvfs, dmu_tx_t *tx)
 	sharezp->z_unlinked = 0;
 	sharezp->z_atime_dirty = 0;
 	sharezp->z_zfsvfs = zfsvfs;
-
-	vp = ZTOV(sharezp);
-	error = getnewvnode(VT_ZFS, zfsvfs->z_parent->z_vfs,
-	    zfs_vnodeop_p, NULL, &sharezp->z_vnode);
-	if (error) {
-		kmem_cache_free(znode_cache, sharezp);
-		return error;
-	}
-	vp->v_type = VDIR;
 
 	VERIFY(0 == zfs_acl_ids_create(sharezp, IS_ROOT_NODE, &vattr,
 	    kcred, NULL, &acl_ids));
@@ -506,7 +498,6 @@ zfs_create_share_dir(zfsvfs_t *zfsvfs, dmu_tx_t *tx)
 	zfsvfs->z_shares_dir = sharezp->z_id;
 
 	zfs_acl_ids_free(&acl_ids);
-	ZTOV(sharezp)->v_count = 0;
 	dmu_buf_rele(sharezp->z_dbuf, NULL);
 	sharezp->z_dbuf = NULL;
 	kmem_cache_free(znode_cache, sharezp);
@@ -1489,7 +1480,6 @@ zfs_create_fs(objset_t *os, cred_t *cr, nvlist_t *zplprops, dmu_tx_t *tx)
 	int		error;
 	int		i;
 	znode_t		*rootzp = NULL;
-	vnode_t		*vp;
 	vattr_t		vattr;
 	znode_t		*zp;
 	zfs_acl_ids_t	acl_ids;
@@ -1562,19 +1552,6 @@ zfs_create_fs(objset_t *os, cred_t *cr, nvlist_t *zplprops, dmu_tx_t *tx)
 	rootzp->z_unlinked = 0;
 	rootzp->z_atime_dirty = 0;
 
-	for (;;) {
-		error = getnewvnode(VT_ZFS, NULL, zfs_vnodeop_p,
-		    NULL, &rootzp->z_vnode);
-		if (error == 0)
-			break;
-		printf("WARNING: zfs_create_fs: unable to get vnode, "
-		    "error=%d\n", error);
-		kpause("zfsvn", false, hz, NULL);
-	}
-	
-	vp = ZTOV(rootzp);
-	vp->v_type = VDIR;
-
 	bzero(&zfsvfs, sizeof (zfsvfs_t));
 
 	zfsvfs.z_os = os;
@@ -1609,7 +1586,6 @@ zfs_create_fs(objset_t *os, cred_t *cr, nvlist_t *zplprops, dmu_tx_t *tx)
 
 	dmu_buf_rele(rootzp->z_dbuf, NULL);
 	rootzp->z_dbuf = NULL;
-	ungetnewvnode(vp);
 	kmem_cache_free(znode_cache, rootzp);
 
 	/*
