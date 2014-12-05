@@ -2684,4 +2684,13 @@ struct awin_a31_dma_desc {
 #define AWIN_A80_CCU_PLL_FACTOR_N	__BITS(15,8)
 #define AWIN_A80_CCU_PLL_POSTDIV_M	__BITS(1,0)
 
+#define AWIN_A80_PIO_PA_PINS		18
+#define AWIN_A80_PIO_PB_PINS		20
+#define AWIN_A80_PIO_PC_PINS		20
+#define AWIN_A80_PIO_PD_PINS		28
+#define AWIN_A80_PIO_PE_PINS		21
+#define AWIN_A80_PIO_PF_PINS		6
+#define AWIN_A80_PIO_PG_PINS		16
+#define AWIN_A80_PIO_PH_PINS		22
+
 #endif /* _ARM_ALLWINNER_AWIN_REG_H_ */
