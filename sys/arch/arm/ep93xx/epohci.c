@@ -1,4 +1,4 @@
-/*	$NetBSD: epohci.c,v 1.7.14.2 2014/12/03 12:52:05 skrll Exp $ */
+/*	$NetBSD: epohci.c,v 1.7.14.3 2014/12/05 09:37:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.7.14.2 2014/12/03 12:52:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epohci.c,v 1.7.14.3 2014/12/05 09:37:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ epohci_match(device_t parent, cfdata_t match, void *aux)
 {
 	/* EP93xx builtin OHCI module */
 
-	return (1);
+	return 1;
 }
 
 void

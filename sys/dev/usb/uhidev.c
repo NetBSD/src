@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.61.4.3 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.61.4.4 2014/12/05 09:37:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.3 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.4 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,10 +96,10 @@ uhidev_match(device_t parent, cfdata_t match, void *aux)
 	if (USBIF_IS_XINPUT(uaa))
 		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 	if (uaa->class != UICLASS_HID)
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 	if (usbd_get_quirks(uaa->device)->uq_flags & UQ_HID_IGNORE)
-		return (UMATCH_NONE);
-	return (UMATCH_IFACECLASS_GENERIC);
+		return UMATCH_NONE;
+	return UMATCH_IFACECLASS_GENERIC;
 }
 
 void
@@ -381,7 +381,7 @@ uhidev_maxrepid(void *buf, int len)
 		if (h.report_ID > maxid)
 			maxid = h.report_ID;
 	hid_end_parse(d);
-	return (maxid);
+	return maxid;
 }
 
 int
@@ -393,7 +393,7 @@ uhidevprint(void *aux, const char *pnp)
 		aprint_normal("uhid at %s", pnp);
 	if (uha->reportid != 0)
 		aprint_normal(" reportid %d", uha->reportid);
-	return (UNCONF);
+	return UNCONF;
 }
 
 int
@@ -455,7 +455,7 @@ uhidev_detach(device_t self, int flags)
 	pmf_device_deregister(self);
 	mutex_destroy(&sc->sc_lock);
 
-	return (rv);
+	return rv;
 }
 
 void
@@ -543,17 +543,17 @@ uhidev_open(struct uhidev *scd)
 	mutex_enter(&sc->sc_lock);
 	if (scd->sc_state & UHIDEV_OPEN) {
 		mutex_exit(&sc->sc_lock);
-		return (EBUSY);
+		return EBUSY;
 	}
 	scd->sc_state |= UHIDEV_OPEN;
 	if (sc->sc_refcnt++) {
 		mutex_exit(&sc->sc_lock);
-		return (0);
+		return 0;
 	}
 	mutex_exit(&sc->sc_lock);
 
 	if (sc->sc_isize == 0)
-		return (0);
+		return 0;
 
 	sc->sc_ibuf = kmem_alloc(sc->sc_isize, KM_SLEEP);
 
@@ -597,7 +597,7 @@ uhidev_open(struct uhidev *scd)
 		}
 	}
 
-	return (0);
+	return 0;
 out3:
 	/* Abort output pipe */
 	usbd_close_pipe(sc->sc_opipe);

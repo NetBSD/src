@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_dtv.c,v 1.6.14.1 2014/12/02 09:00:33 skrll Exp $ */
+/* $NetBSD: auvitek_dtv.c,v 1.6.14.2 2014/12/05 09:37:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.6.14.1 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.6.14.2 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ auvitek_dtv_attach(struct auvitek_softc *sc)
 
 	auvitek_dtv_rescan(sc, NULL, NULL);
 
-	return (sc->sc_dtvdev != NULL);
+	return sc->sc_dtvdev != NULL;
 }
 
 int

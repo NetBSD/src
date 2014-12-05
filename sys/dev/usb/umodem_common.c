@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.22.38.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.22.38.2 2014/12/05 09:37:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.22.38.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.22.38.2 2014/12/05 09:37:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,9 +467,9 @@ umodem_param(void *addr, int portno, struct termios *t)
 	err = umodem_set_line_coding(sc, &ls);
 	if (err) {
 		DPRINTF(("umodem_param: err=%s\n", usbd_errstr(err)));
-		return (EPASSTHROUGH);
+		return EPASSTHROUGH;
 	}
-	return (0);
+	return 0;
 }
 
 int
@@ -480,7 +480,7 @@ umodem_ioctl(void *addr, int portno, u_long cmd, void *data,
 	int error = 0;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	DPRINTF(("umodem_ioctl: cmd=0x%08lx\n", cmd));
 
@@ -501,7 +501,7 @@ umodem_ioctl(void *addr, int portno, u_long cmd, void *data,
 		break;
 	}
 
-	return (error);
+	return error;
 }
 
 void
@@ -597,7 +597,7 @@ umodem_set_line_coding(struct umodem_softc *sc, usb_cdc_line_state_t *state)
 
 	if (memcmp(state, &sc->sc_line_state, UCDC_LINE_STATE_LENGTH) == 0) {
 		DPRINTF(("umodem_set_line_coding: already set\n"));
-		return (USBD_NORMAL_COMPLETION);
+		return USBD_NORMAL_COMPLETION;
 	}
 
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
@@ -610,12 +610,12 @@ umodem_set_line_coding(struct umodem_softc *sc, usb_cdc_line_state_t *state)
 	if (err) {
 		DPRINTF(("umodem_set_line_coding: failed, err=%s\n",
 			 usbd_errstr(err)));
-		return (err);
+		return err;
 	}
 
 	sc->sc_line_state = *state;
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 usbd_status
@@ -639,10 +639,10 @@ umodem_set_comm_feature(struct umodem_softc *sc, int feature, int state)
 	if (err) {
 		DPRINTF(("umodem_set_comm_feature: feature=%d, err=%s\n",
 			 feature, usbd_errstr(err)));
-		return (err);
+		return err;
 	}
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 int
@@ -679,5 +679,5 @@ umodem_common_detach(struct umodem_softc *sc, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
 
-	return (rv);
+	return rv;
 }

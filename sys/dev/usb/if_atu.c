@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.50.2.4 2014/12/03 22:33:56 skrll Exp $ */
+/*	$NetBSD: if_atu.c,v 1.50.2.5 2014/12/05 09:37:49 skrll Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.4 2014/12/03 22:33:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.5 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -448,7 +448,7 @@ atu_send_mib(struct atu_softc *sc, uint8_t type, uint8_t size,
 	err = atu_usb_request(sc, UT_WRITE_VENDOR_DEVICE, 0x0e, 0x0000,
 	    0x0000, size+8, (uByte *)&request);
 	if (err)
-		return (err);
+		return err;
 
 	DPRINTFN(15, ("%s: sendmib : waitcompletion...\n",
 	    device_xname(sc->atu_dev)));
@@ -1123,7 +1123,7 @@ atu_media_change(struct ifnet *ifp)
 		err = 0;
 	}
 
-	return (err);
+	return err;
 }
 
 void
@@ -1206,7 +1206,7 @@ atu_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		/* handle this ourselves */
 		ic->ic_state = nstate;
-		return (0);
+		return 0;
 
 	case IEEE80211_S_AUTH:
 	case IEEE80211_S_RUN:
@@ -1551,16 +1551,16 @@ atu_rx_list_init(struct atu_softc *sc)
 		if (c->atu_xfer == NULL) {
 			c->atu_xfer = usbd_alloc_xfer(sc->atu_udev);
 			if (c->atu_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->atu_buf = usbd_alloc_buffer(c->atu_xfer,
 			    ATU_RX_BUFSZ);
 			if (c->atu_buf == NULL) /* XXX free xfer */
-				return (ENOBUFS);
+				return ENOBUFS;
 			if (atu_newbuf(sc, c, NULL) == ENOBUFS) /* XXX free? */
 				return(ENOBUFS);
 		}
 	}
-	return (0);
+	return 0;
 }
 
 int
@@ -1783,10 +1783,10 @@ atu_calculate_padding(int size)
 	size %= 64;
 
 	if (size < 50)
-		return (50 - size);
+		return 50 - size;
 	if (size >=61)
-		return (64 + 50 - size);
-	return (0);
+		return 64 + 50 - size;
+	return 0;
 }
 
 int
@@ -1842,7 +1842,7 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 		return(EIO);
 	}
 
-	return (0);
+	return 0;
 }
 
 void
@@ -2178,7 +2178,7 @@ atu_ioctl(struct ifnet *ifp, u_long command, void *data)
 	}
 
 	splx(s);
-	return (err);
+	return err;
 }
 
 void

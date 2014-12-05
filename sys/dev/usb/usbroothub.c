@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.1.2.2 2014/12/04 08:04:31 skrll Exp $ */
+/* $NetBSD: usbroothub.c,v 1.1.2.3 2014/12/05 09:37:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 /*
  * Copyright (c) 2008
  *	Matthias Drochner.  All rights reserved.
@@ -100,16 +100,16 @@ usb_makestrdesc(usb_string_descriptor_t *p, int l, const char *s)
 	int i;
 
 	if (l == 0)
-		return (0);
+		return 0;
 	p->bLength = 2 * strlen(s) + 2;
 	if (l == 1)
-		return (1);
+		return 1;
 	p->bDescriptorType = UDESC_STRING;
 	l -= 2;
 	/* poor man's utf-16le conversion */
 	for (i = 0; s[i] && l > 1; i++, l -= 2)
 		USETW2(p->bString[i], 0, s[i]);
-	return (2 * i + 2);
+	return 2 * i + 2;
 }
 
 int
@@ -117,15 +117,15 @@ usb_makelangtbl(usb_string_descriptor_t *p, int l)
 {
 
 	if (l == 0)
-		return (0);
+		return 0;
 	p->bLength = 4;
 	if (l == 1)
-		return (1);
+		return 1;
 	p->bDescriptorType = UDESC_STRING;
 	if (l < 4)
-		return (2);
+		return 2;
 	USETW(p->bString[0], 0x0409); /* english/US */
-	return (4);
+	return 4;
 }
 
 /*
@@ -249,7 +249,7 @@ static const usb_hub_descriptor_t usbroothub_hubd = {
 	.bHubContrCurrent = 0,
 	.DeviceRemovable = {0},		/* port is removable */
 };
-  
+
 /*
  * Simulate a hardware hub by handling all the necessary requests.
  */
@@ -265,7 +265,7 @@ roothub_ctrl_transfer(usbd_xfer_handle xfer)
 	err = usb_insert_transfer(xfer);
 	mutex_exit(bus->ub_lock);
 	if (err)
-		return (err);
+		return err;
 
 	/* Pipe isn't running, start first */
 	return roothub_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
@@ -360,7 +360,7 @@ roothub_ctrl_start(usbd_xfer_handle xfer)
 				confd.urh_confd.bDescriptorType =
 				    UDESC_OTHER_SPEED_CONFIGURATION;
 				memcpy(buf, &confd, buflen);
-			} else 
+			} else
 				goto fail;
 			break;
 #define sd ((usb_string_descriptor_t *)buf)

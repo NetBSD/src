@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.12 2014/12/04 08:04:31 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.13 2014/12/05 09:37:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.12 2014/12/04 08:04:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.13 2014/12/05 09:37:50 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -490,7 +490,7 @@ xhci_detach(struct xhci_softc *sc, int flags)
 		rv = config_detach(sc->sc_child, flags);
 
 	if (rv != 0)
-		return (rv);
+		return rv;
 
 	/* XXX unconfigure/free slots */
 
@@ -1492,7 +1492,7 @@ xhci_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	    &dev->ud_pipe0);
 	if (err) {
 		usbd_remove_device(dev, up);
-		return (err);
+		return err;
 	}
 
 	dd = &dev->ud_ddesc;
@@ -1570,7 +1570,7 @@ xhci_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	err = usbd_probe_and_attach(parent, dev, port, dev->ud_addr);
 	if (err) {
 		usbd_remove_device(dev, up);
-		return (err);
+		return err;
 	}
 
 	return USBD_NORMAL_COMPLETION;
@@ -2207,7 +2207,7 @@ xhci_root_intr_transfer(usbd_xfer_handle xfer)
 		return err;
 
 	/* Pipe isn't running, start first */
-	return (xhci_root_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue)));
+	return xhci_root_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 static usbd_status
@@ -2281,10 +2281,10 @@ xhci_device_ctrl_transfer(usbd_xfer_handle xfer)
 	err = usb_insert_transfer(xfer);
 	mutex_exit(&sc->sc_lock);
 	if (err)
-		return (err);
+		return err;
 
 	/* Pipe isn't running, start first */
-	return (xhci_device_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue)));
+	return xhci_device_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 static usbd_status
@@ -2433,7 +2433,7 @@ xhci_device_bulk_transfer(usbd_xfer_handle xfer)
 	 * Pipe isn't running (otherwise err would be USBD_INPROG),
 	 * so start it first.
 	 */
-	return (xhci_device_bulk_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue)));
+	return xhci_device_bulk_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 static usbd_status
@@ -2550,7 +2550,7 @@ xhci_device_intr_transfer(usbd_xfer_handle xfer)
 	 * Pipe isn't running (otherwise err would be USBD_INPROG),
 	 * so start it first.
 	 */
-	return (xhci_device_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue)));
+	return xhci_device_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 static usbd_status

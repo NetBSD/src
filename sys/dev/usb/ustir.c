@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.33.10.4 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: ustir.c,v 1.33.10.5 2014/12/05 09:37:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33.10.4 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33.10.5 2014/12/05 09:37:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1058,7 +1058,7 @@ filt_ustirread(struct knote *kn, long hint)
 	struct ustir_softc *sc = kn->kn_hook;
 
 	kn->kn_data = sc->sc_ur_framelen;
-	return (kn->kn_data > 0);
+	return kn->kn_data > 0;
 }
 
 static void
@@ -1079,7 +1079,7 @@ filt_ustirwrite(struct knote *kn, long hint)
 	struct ustir_softc *sc = kn->kn_hook;
 
 	kn->kn_data = 0;
-	return (sc->sc_direction != udir_input);
+	return sc->sc_direction != udir_input;
 }
 
 static const struct filterops ustirread_filtops =
@@ -1104,7 +1104,7 @@ ustir_kqfilter(void *h, struct knote *kn)
 		kn->kn_fop = &ustirwrite_filtops;
 		break;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	kn->kn_hook = sc;
@@ -1113,7 +1113,7 @@ ustir_kqfilter(void *h, struct knote *kn)
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	splx(s);
 
-	return (0);
+	return 0;
 }
 
 #ifdef USTIR_DEBUG_IOCTLS

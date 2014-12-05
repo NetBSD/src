@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.15.30.2 2014/12/03 12:52:06 skrll Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.15.30.3 2014/12/05 09:37:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.15.30.2 2014/12/03 12:52:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.15.30.3 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,9 +64,9 @@ ohci_aubus_match(device_t parent, cfdata_t match, void *aux)
 	struct aubus_attach_args *aa = aux;
 
 	if (strcmp(aa->aa_name, match->cf_name) == 0)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 void

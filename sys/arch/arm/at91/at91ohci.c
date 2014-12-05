@@ -1,5 +1,5 @@
-/*	$Id: at91ohci.c,v 1.5.28.2 2014/12/03 12:52:05 skrll Exp $	*/
-/*	$NetBSD: at91ohci.c,v 1.5.28.2 2014/12/03 12:52:05 skrll Exp $	*/
+/*	$Id: at91ohci.c,v 1.5.28.3 2014/12/05 09:37:48 skrll Exp $	*/
+/*	$NetBSD: at91ohci.c,v 1.5.28.3 2014/12/05 09:37:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91ohci.c,v 1.5.28.2 2014/12/03 12:52:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91ohci.c,v 1.5.28.3 2014/12/05 09:37:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ at91ohci_match(device_t parent, cfdata_t match, void *aux)
 {
 	/* AT91X builtin OHCI module */
 	if (strcmp(match->cf_name, "ohci") == 0 && strcmp(match->cf_atname, "at91ohci") == 0)
-		return (2);
+		return 2;
 	return(0);
 }
 

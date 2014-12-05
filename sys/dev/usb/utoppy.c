@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.24.4.4 2014/12/03 22:33:56 skrll Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.24.4.5 2014/12/05 09:37:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.4 2014/12/03 22:33:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.5 2014/12/05 09:37:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,9 +208,9 @@ utoppy_match(device_t parent, cfdata_t match, void *aux)
 
 	if (uaa->vendor == USB_VENDOR_TOPFIELD &&
 	    uaa->product == USB_PRODUCT_TOPFIELD_TF5000PVR)
-		return (UMATCH_VENDOR_PRODUCT);
+		return UMATCH_VENDOR_PRODUCT;
 
-	return (UMATCH_NONE);
+	return UMATCH_NONE;
 }
 
 void
@@ -367,7 +367,7 @@ utoppy_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
 
-	return (0);
+	return 0;
 }
 
 static const uint16_t utoppy_crc16_lookup[] = {
@@ -435,8 +435,8 @@ utoppy_usbd_status2errno(usbd_status err)
 {
 
 	if (err >= USBD_ERROR_MAX)
-		return (EFAULT);
-	return (utoppy_usbdstatus_lookup[err]);
+		return EFAULT;
+	return utoppy_usbdstatus_lookup[err];
 }
 
 #ifdef UTOPPY_DEBUG
@@ -469,7 +469,7 @@ utoppy_state_string(enum utoppy_state state)
 		break;
 	}
 
-	return (str);
+	return str;
 }
 
 static void
@@ -533,7 +533,7 @@ utoppy_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 	err = usbd_sync_transfer_sig(xfer);
 
 	usbd_get_xfer_status(xfer, NULL, NULL, size, NULL);
-	return (err);
+	return err;
 }
 
 static int
@@ -561,7 +561,7 @@ utoppy_send_packet(struct utoppy_softc *sc, uint16_t cmd, uint32_t timeout)
 	if (len >= UTOPPY_BSIZE) {
 		DPRINTF(UTOPPY_DBG_SEND_PACKET, ("%s: utoppy_send_packet: "
 		    "packet too big (%d)\n", device_xname(sc->sc_dev), (int)len));
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	h->h_len = htole16(dlen + UTOPPY_HEADER_SIZE);
@@ -631,7 +631,7 @@ utoppy_send_packet(struct utoppy_softc *sc, uint16_t cmd, uint32_t timeout)
 	DPRINTF(UTOPPY_DBG_SEND_PACKET, ("%s: utoppy_send_packet: "
 	    "usbd_bulk_transfer() returned %d.\n", device_xname(sc->sc_dev),err));
 
-	return (err ? utoppy_usbd_status2errno(err) : 0);
+	return err ? utoppy_usbd_status2errno(err) : 0;
 }
 
 static int
@@ -671,7 +671,7 @@ utoppy_recv_packet(struct utoppy_softc *sc, uint16_t *respp, uint32_t timeout)
 	} while (err == 0 && bytesleft && thislen == requested);
 
 	if (err)
-		return (utoppy_usbd_status2errno(err));
+		return utoppy_usbd_status2errno(err);
 
 	h = sc->sc_in_data;
 
@@ -683,7 +683,7 @@ utoppy_recv_packet(struct utoppy_softc *sc, uint16_t *respp, uint32_t timeout)
 		DPRINTF(UTOPPY_DBG_RECV_PACKET, ("%s: utoppy_recv_packet: bad "
 		    " length (len %d, h_len %d)\n", device_xname(sc->sc_dev),
 		    (int)len, le16toh(h->h_len)));
-		return (EIO);
+		return EIO;
 	}
 
 	len = h->h_len = le16toh(h->h_len);
@@ -707,7 +707,7 @@ utoppy_recv_packet(struct utoppy_softc *sc, uint16_t *respp, uint32_t timeout)
 			DPRINTF(UTOPPY_DBG_RECV_PACKET, ("%s: "
 			    "utoppy_recv_packet: failed to ACK file data: %d\n",
 			    device_xname(sc->sc_dev), err));
-			return (err);
+			return err;
 		}
 	}
 
@@ -749,7 +749,7 @@ utoppy_recv_packet(struct utoppy_softc *sc, uint16_t *respp, uint32_t timeout)
 	    (int)len, crc, h->h_crc));
 	DDUMP_PACKET(h, len);
 
-	return ((crc == h->h_crc) ? 0 : EBADMSG);
+	return (crc == h->h_crc) ? 0 : EBADMSG;
 }
 
 static __inline void *
@@ -757,7 +757,7 @@ utoppy_current_ptr(void *b)
 {
 	struct utoppy_header *h = b;
 
-	return (&h->h_data[h->h_len]);
+	return &h->h_data[h->h_len];
 }
 
 static __inline void
@@ -853,10 +853,10 @@ utoppy_add_path(struct utoppy_softc *sc, const char *path, int putlen)
 	    err, (int)len));
 
 	if (err)
-		return (err);
+		return err;
 
 	if (len < 2)
-		return (EINVAL);
+		return EINVAL;
 
 	/*
 	 * copyinstr(9) has already copied the terminating NUL character,
@@ -884,7 +884,7 @@ utoppy_add_path(struct utoppy_softc *sc, const char *path, int putlen)
 	DPRINTF(UTOPPY_DBG_ADDPATH, ("utoppy_add_path: final len %d\n",
 	    (u_int)len));
 
-	return (0);
+	return 0;
 }
 
 static __inline int
@@ -893,13 +893,13 @@ utoppy_get_8(struct utoppy_softc *sc, uint8_t *vp)
 	uint8_t *p;
 
 	if (sc->sc_in_len < sizeof(*vp))
-		return (1);
+		return 1;
 
 	p = UTOPPY_IN_DATA(sc);
 	*vp = *p;
 	sc->sc_in_offset += sizeof(*vp);
 	sc->sc_in_len -= sizeof(*vp);
-	return (0);
+	return 0;
 }
 
 static __inline int
@@ -909,7 +909,7 @@ utoppy_get_16(struct utoppy_softc *sc, uint16_t *vp)
 	uint8_t *p;
 
 	if (sc->sc_in_len < sizeof(v))
-		return (1);
+		return 1;
 
 	p = UTOPPY_IN_DATA(sc);
 	v = *p++;
@@ -917,7 +917,7 @@ utoppy_get_16(struct utoppy_softc *sc, uint16_t *vp)
 	*vp = v;
 	sc->sc_in_offset += sizeof(v);
 	sc->sc_in_len -= sizeof(v);
-	return (0);
+	return 0;
 }
 
 static __inline int
@@ -927,7 +927,7 @@ utoppy_get_32(struct utoppy_softc *sc, uint32_t *vp)
 	uint8_t *p;
 
 	if (sc->sc_in_len < sizeof(v))
-		return (1);
+		return 1;
 
 	p = UTOPPY_IN_DATA(sc);
 	v = *p++;
@@ -937,7 +937,7 @@ utoppy_get_32(struct utoppy_softc *sc, uint32_t *vp)
 	*vp = v;
 	sc->sc_in_offset += sizeof(v);
 	sc->sc_in_len -= sizeof(v);
-	return (0);
+	return 0;
 }
 
 static __inline int
@@ -947,7 +947,7 @@ utoppy_get_64(struct utoppy_softc *sc, uint64_t *vp)
 	uint8_t *p;
 
 	if (sc->sc_in_len < sizeof(v))
-		return (1);
+		return 1;
 
 	p = UTOPPY_IN_DATA(sc);
 	v = *p++;
@@ -961,7 +961,7 @@ utoppy_get_64(struct utoppy_softc *sc, uint64_t *vp)
 	*vp = v;
 	sc->sc_in_offset += sizeof(v);
 	sc->sc_in_len -= sizeof(v);
-	return (0);
+	return 0;
 }
 
 static __inline int
@@ -970,14 +970,14 @@ utoppy_get_string(struct utoppy_softc *sc, char *str, size_t len)
 	char *p;
 
 	if (sc->sc_in_len < len)
-		return (1);
+		return 1;
 
 	memset(str, 0, len);
 	p = UTOPPY_IN_DATA(sc);
 	strncpy(str, p, len);
 	sc->sc_in_offset += len;
 	sc->sc_in_len -= len;
-	return (0);
+	return 0;
 }
 
 static int
@@ -988,7 +988,7 @@ utoppy_command(struct utoppy_softc *sc, uint16_t cmd, int timeout,
 
 	err = utoppy_send_packet(sc, cmd, timeout);
 	if (err)
-		return (err);
+		return err;
 
 	err = utoppy_recv_packet(sc, presp, timeout);
 	if (err == EBADMSG) {
@@ -996,7 +996,7 @@ utoppy_command(struct utoppy_softc *sc, uint16_t cmd, int timeout,
 		utoppy_send_packet(sc, UTOPPY_RESP_ERROR, timeout);
 	}
 
-	return (err);
+	return err;
 }
 
 static int
@@ -1008,11 +1008,11 @@ utoppy_timestamp_decode(struct utoppy_softc *sc, time_t *tp)
 
 	if (utoppy_get_16(sc, &mjd) || utoppy_get_8(sc, &hour) ||
 	    utoppy_get_8(sc, &minute) || utoppy_get_8(sc, &sec))
-		return (1);
+		return 1;
 
 	if (mjd == 0xffffu && hour == 0xffu && minute == 0xffu && sec == 0xffu){
 		*tp = 0;
-		return (0);
+		return 0;
 	}
 
 	rv = (mjd < UTOPPY_MJD_1970) ? UTOPPY_MJD_1970 : (uint32_t) mjd;
@@ -1026,7 +1026,7 @@ utoppy_timestamp_decode(struct utoppy_softc *sc, time_t *tp)
 	rv += sec;
 	*tp = (time_t)rv;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -1060,9 +1060,9 @@ utoppy_turbo_mode(struct utoppy_softc *sc, int state)
 
 	err = utoppy_command(sc, UTOPPY_CMD_TURBO, UTOPPY_SHORT_TIMEOUT, &r);
 	if (err)
-		return (err);
+		return err;
 
-	return ((r == UTOPPY_RESP_SUCCESS) ? 0 : EIO);
+	return (r == UTOPPY_RESP_SUCCESS) ? 0 : EIO;
 }
 
 static int
@@ -1075,9 +1075,9 @@ utoppy_check_ready(struct utoppy_softc *sc)
 
 	err = utoppy_command(sc, UTOPPY_CMD_READY, UTOPPY_LONG_TIMEOUT, &r);
 	if (err)
-		return (err);
+		return err;
 
-	return ((r == UTOPPY_RESP_SUCCESS) ? 0 : EIO);
+	return (r == UTOPPY_RESP_SUCCESS) ? 0 : EIO;
 }
 
 static int
@@ -1100,7 +1100,7 @@ utoppy_cancel(struct utoppy_softc *sc)
 	}
 
 	if (err)
-		return (err);
+		return err;
 
 	/*
 	 * Make sure turbo mode is off, otherwise the Toppy will not
@@ -1109,7 +1109,7 @@ utoppy_cancel(struct utoppy_softc *sc)
 	(void) utoppy_turbo_mode(sc, 0);
 
 	sc->sc_state = UTOPPY_STATE_IDLE;
-	return (0);
+	return 0;
 }
 
 static int
@@ -1122,20 +1122,20 @@ utoppy_stats(struct utoppy_softc *sc, struct utoppy_stats *us)
 	UTOPPY_OUT_INIT(sc);
 	err = utoppy_command(sc, UTOPPY_CMD_STATS, UTOPPY_LONG_TIMEOUT, &r);
 	if (err)
-		return (err);
+		return err;
 
 	if (r != UTOPPY_RESP_STATS_DATA)
-		return (EIO);
+		return EIO;
 
 	if (utoppy_get_32(sc, &hsize) || utoppy_get_32(sc, &hfree))
-		return (EIO);
+		return EIO;
 
 	us->us_hdd_size = hsize;
 	us->us_hdd_size *= 1024;
 	us->us_hdd_free = hfree;
 	us->us_hdd_free *= 1024;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -1161,7 +1161,7 @@ utoppy_readdir_next(struct utoppy_softc *sc)
 			    UTOPPY_LONG_TIMEOUT);
 		}
 		utoppy_cancel(sc);
-		return (err);
+		return err;
 	}
 
 	DPRINTF(UTOPPY_DBG_READDIR, ("%s: utoppy_readdir_next: "
@@ -1181,7 +1181,7 @@ utoppy_readdir_next(struct utoppy_softc *sc)
 			    "utoppy_send_packet(ACK) returned %d\n",
 			    device_xname(sc->sc_dev), err));
 			utoppy_cancel(sc);
-			return (err);
+			return err;
 		}
 		sc->sc_state = UTOPPY_STATE_READDIR;
 		sc->sc_in_offset = 0;
@@ -1202,10 +1202,10 @@ utoppy_readdir_next(struct utoppy_softc *sc)
 		    "bad response: 0x%x\n", device_xname(sc->sc_dev), resp));
 		sc->sc_state = UTOPPY_STATE_IDLE;
 		sc->sc_in_len = 0;
-		return (EIO);
+		return EIO;
 	}
 
-	return (0);
+	return 0;
 }
 
 static size_t
@@ -1222,7 +1222,7 @@ utoppy_readdir_decode(struct utoppy_softc *sc, struct utoppy_dirent *ud)
 	    utoppy_get_32(sc, &ud->ud_attributes)) {
 		DPRINTF(UTOPPY_DBG_READDIR, ("%s: utoppy_readdir_decode: no "
 		    "more to decode\n", device_xname(sc->sc_dev)));
-		return (0);
+		return 0;
 	}
 
 	switch (ftype) {
@@ -1243,7 +1243,7 @@ utoppy_readdir_decode(struct utoppy_softc *sc, struct utoppy_dirent *ud)
 	    ((ftype == UTOPPY_FTYPE_FILE) ? "FILE" : "UNKNOWN"), ud->ud_path,
 	    ud->ud_size, (u_long)ud->ud_mtime, ud->ud_attributes));
 
-	return (1);
+	return 1;
 }
 
 static int
@@ -1259,7 +1259,7 @@ utoppy_readfile_next(struct utoppy_softc *sc)
 		    "utoppy_recv_packet() returned %d\n",
 		    device_xname(sc->sc_dev), err));
 		utoppy_cancel(sc);
-		return (err);
+		return err;
 	}
 
 	switch (resp) {
@@ -1273,7 +1273,7 @@ utoppy_readfile_next(struct utoppy_softc *sc)
 			    "utoppy_send_packet(UTOPPY_CMD_ACK) returned %d\n",
 			    device_xname(sc->sc_dev), err));
 			utoppy_cancel(sc);
-			return (err);
+			return err;
 		}
 
 		sc->sc_in_len = 0;
@@ -1288,7 +1288,7 @@ utoppy_readfile_next(struct utoppy_softc *sc)
 			    "UTOPPY_RESP_FILE_DATA did not provide offset\n",
 			    device_xname(sc->sc_dev)));
 			utoppy_cancel(sc);
-			return (EBADMSG);
+			return EBADMSG;
 		}
 
 		DPRINTF(UTOPPY_DBG_READ, ("%s: utoppy_readfile_next: "
@@ -1316,10 +1316,10 @@ utoppy_readfile_next(struct utoppy_softc *sc)
 		DPRINTF(UTOPPY_DBG_READ, ("%s: utoppy_readfile_next: bad "
 		    "response code 0x%0x\n", device_xname(sc->sc_dev), resp));
 		utoppy_cancel(sc);
-		return (EIO);
+		return EIO;
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -1334,12 +1334,12 @@ utoppyopen(dev_t dev, int flag, int mode,
 		return ENXIO;
 
 	if (sc == NULL || sc->sc_iface == NULL || sc->sc_dying)
-		return (ENXIO);
+		return ENXIO;
 
 	if (sc->sc_state != UTOPPY_STATE_CLOSED) {
 		DPRINTF(UTOPPY_DBG_OPEN, ("%s: utoppyopen: already open\n",
 		    device_xname(sc->sc_dev)));
-		return (EBUSY);
+		return EBUSY;
 	}
 
 	DPRINTF(UTOPPY_DBG_OPEN, ("%s: utoppyopen: opening...\n",
@@ -1406,7 +1406,7 @@ utoppyopen(dev_t dev, int flag, int mode,
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
 
-	return (error);
+	return error;
 }
 
 int
@@ -1426,7 +1426,7 @@ utoppyclose(dev_t dev, int flag, int mode,
 		DPRINTF(UTOPPY_DBG_CLOSE, ("%s: utoppyclose: not properly open:"
 		    " %s\n", device_xname(sc->sc_dev),
 		    utoppy_state_string(sc->sc_state)));
-		return (0);
+		return 0;
 	}
 
 	if (sc->sc_out_data)
@@ -1463,7 +1463,7 @@ utoppyclose(dev_t dev, int flag, int mode,
 	DPRINTF(UTOPPY_DBG_CLOSE, ("%s: utoppyclose: done.\n",
 	    device_xname(sc->sc_dev)));
 
-	return (0);
+	return 0;
 }
 
 int
@@ -1477,7 +1477,7 @@ utoppyread(dev_t dev, struct uio *uio, int flags)
 	sc = device_lookup_private(&utoppy_cd, UTOPPYUNIT(dev));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	sc->sc_refcnt++;
 
@@ -1544,7 +1544,7 @@ utoppyread(dev_t dev, struct uio *uio, int flags)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
 
-	return (err);
+	return err;
 }
 
 int
@@ -1558,17 +1558,17 @@ utoppywrite(dev_t dev, struct uio *uio, int flags)
 	sc = device_lookup_private(&utoppy_cd, UTOPPYUNIT(dev));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	switch(sc->sc_state) {
 	case UTOPPY_STATE_WRITEFILE:
 		break;
 
 	case UTOPPY_STATE_IDLE:
-		return (0);
+		return 0;
 
 	default:
-		return (EIO);
+		return EIO;
 	}
 
 	sc->sc_refcnt++;
@@ -1647,7 +1647,7 @@ utoppywrite(dev_t dev, struct uio *uio, int flags)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
 
-	return (err);
+	return err;
 }
 
 int
@@ -1665,7 +1665,7 @@ utoppyioctl(dev_t dev, u_long cmd, void *data, int flag,
 	sc = device_lookup_private(&utoppy_cd, UTOPPYUNIT(dev));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	DPRINTF(UTOPPY_DBG_IOCTL, ("%s: utoppyioctl: cmd 0x%08lx, state '%s'\n",
 	    device_xname(sc->sc_dev), cmd, utoppy_state_string(sc->sc_state)));
@@ -1673,7 +1673,7 @@ utoppyioctl(dev_t dev, u_long cmd, void *data, int flag,
 	if (sc->sc_state != UTOPPY_STATE_IDLE && cmd != UTOPPYIOCANCEL) {
 		DPRINTF(UTOPPY_DBG_IOCTL, ("%s: utoppyioctl: still busy.\n",
 		    device_xname(sc->sc_dev)));
-		return (EBUSY);
+		return EBUSY;
 	}
 
 	sc->sc_refcnt++;
@@ -1912,5 +1912,5 @@ utoppyioctl(dev_t dev, u_long cmd, void *data, int flag,
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
 
-	return (err);
+	return err;
 }

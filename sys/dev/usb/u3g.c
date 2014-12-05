@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.31.2.4 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: u3g.c,v 1.31.2.5 2014/12/05 09:37:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.4 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.5 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,7 @@ send_bulkmsg(usbd_device_handle dev, void *cmd, size_t cmdlen)
 	usbd_abort_pipe(pipe);
 	usbd_close_pipe(pipe);
 
-	return (err == USBD_NORMAL_COMPLETION ? UMATCH_HIGHEST : UMATCH_NONE);
+	return err == USBD_NORMAL_COMPLETION ? UMATCH_HIGHEST : UMATCH_NONE;
 }
 
 /* Byte 0..3: Command Block Wrapper (CBW) signature */
@@ -419,18 +419,18 @@ u3g_huawei_reinit(usbd_device_handle dev)
 		usb_device_descriptor_t dd;
 
 		if (usbd_get_device_desc(dev, &dd) != 0)
-			return (UMATCH_NONE);
+			return UMATCH_NONE;
 
 		if (dd.bNumConfigurations != 1)
-			return (UMATCH_NONE);
+			return UMATCH_NONE;
 
 		if (usbd_set_config_index(dev, 0, 1) != 0)
-			return (UMATCH_NONE);
+			return UMATCH_NONE;
 
 		cdesc = usbd_get_config_descriptor(dev);
 
 		if (cdesc == NULL)
-			return (UMATCH_NONE);
+			return UMATCH_NONE;
 	}
 
 	/*
@@ -441,7 +441,7 @@ u3g_huawei_reinit(usbd_device_handle dev)
 	 * it needs a mode-switch.
 	 */
 	if (cdesc->bNumInterface > 1)
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 
 	req.bmRequestType = UT_WRITE_DEVICE;
 	req.bRequest = UR_SET_FEATURE;
@@ -451,7 +451,7 @@ u3g_huawei_reinit(usbd_device_handle dev)
 
 	(void) usbd_do_request(dev, &req, 0);
 
-	return (UMATCH_HIGHEST); /* Prevent umass from attaching */
+	return UMATCH_HIGHEST; /* Prevent umass from attaching */
 }
 
 static int
@@ -526,7 +526,7 @@ u3g_sierra_reinit(usbd_device_handle dev)
 
 	(void) usbd_do_request(dev, &req, 0);
 
-	return (UMATCH_HIGHEST); /* Match to prevent umass from attaching */
+	return UMATCH_HIGHEST; /* Match to prevent umass from attaching */
 }
 
 static int
@@ -665,7 +665,7 @@ static int
 u3ginit_detach(device_t self, int flags)
 {
 
-	return (0);
+	return 0;
 }
 
 
@@ -684,19 +684,19 @@ u3g_match(device_t parent, cfdata_t match, void *aux)
 	usbd_status error;
 
 	if (!usb_lookup(u3g_devs, uaa->vendor, uaa->product))
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 
 	error = usbd_device2interface_handle(uaa->device, uaa->ifaceno, &iface);
 	if (error) {
 		printf("u3g_match: failed to get interface, err=%s\n",
 		    usbd_errstr(error));
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 	}
 
 	id = usbd_get_interface_descriptor(iface);
 	if (id == NULL) {
 		printf("u3g_match: failed to get interface descriptor\n");
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 	}
 
 	/*
@@ -705,15 +705,15 @@ u3g_match(device_t parent, cfdata_t match, void *aux)
 	 */
 	if (uaa->vendor == USB_VENDOR_HUAWEI && id->bInterfaceSubClass == 2 &&
 	    (id->bInterfaceProtocol & 0xf) == 6)	/* 0x16, 0x46, 0x76 */
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 
 	/*
 	 * 3G modems generally report vendor-specific class
 	 *
 	 * XXX: this may be too generalised.
 	 */
-	return ((id->bInterfaceClass == UICLASS_VENDOR) ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return (id->bInterfaceClass == UICLASS_VENDOR) ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 static void
@@ -866,7 +866,7 @@ u3g_detach(device_t self, int flags)
 		sc->sc_intr_buff = NULL;
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -1013,18 +1013,18 @@ u3g_open(void *arg, int portno)
 	int i, nin;
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
 	err = usbd_device2interface_handle(sc->sc_udev, sc->sc_ifaceno, &ih);
 	if (err)
-		return (EIO);
+		return EIO;
 
 	id = usbd_get_interface_descriptor(ih);
 
 	for (nin = i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(ih, i);
 		if (ed == NULL)
-			return (EIO);
+			return EIO;
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK &&
@@ -1037,7 +1037,7 @@ u3g_open(void *arg, int portno)
 			USETW(req.wLength, 0);
 			err = usbd_do_request(sc->sc_udev, &req, 0);
 			if (err)
-				return (EIO);
+				return EIO;
 		}
 	}
 
@@ -1045,7 +1045,7 @@ u3g_open(void *arg, int portno)
 	com->c_purging = true;
 	getmicrotime(&com->c_purge_start);
 
-	return (0);
+	return 0;
 }
 
 /*ARGSUSED*/

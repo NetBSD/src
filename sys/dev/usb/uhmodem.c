@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.13.24.3 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.13.24.4 2014/12/05 09:37:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.24.3 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.24.4 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,8 +183,8 @@ uhmodem_match(device_t parent, cfdata_t match, void *aux)
 		/* XXX interface# 0,1 provide modem function, but this driver
 		   handles all modem in single device.  */
 		if (uaa->ifaceno == 0)
-			return (UMATCH_VENDOR_PRODUCT);
-	return (UMATCH_NONE);
+			return UMATCH_VENDOR_PRODUCT;
+	return UMATCH_NONE;
 }
 
 void
@@ -419,7 +419,7 @@ uhmodem_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_ubsa.sc_udev,
 			   sc->sc_ubsa.sc_dev);
 
-	return (rv);
+	return rv;
 }
 
 int
@@ -443,7 +443,7 @@ uhmodem_open(void *addr, int portno)
 	usbd_status err;
 
 	if (sc->sc_dying)
-		return (ENXIO);
+		return ENXIO;
 
 	DPRINTF(("%s: sc = %p\n", __func__, sc));
 
@@ -486,11 +486,11 @@ uhmodem_open(void *addr, int portno)
 			aprint_error_dev(sc->sc_dev,
 			    "cannot open interrupt pipe (addr %d)\n",
 			    sc->sc_intr_number);
-			return (EIO);
+			return EIO;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -514,10 +514,10 @@ e220_modechange_request(usbd_device_handle dev)
 	err = usbd_do_request(dev, &req, 0);
 	if (err) {
 		DPRINTF(("%s: E220 mode change fail\n", __func__));
-		return (EIO);
+		return EIO;
 	}
 
-	return (0);
+	return 0;
 #undef E220_MODE_CHANGE_REQUEST
 }
 
@@ -536,7 +536,7 @@ uhmodem_endpointhalt(struct ubsa_softc *sc, int iface)
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface[iface], i);
 		if (ed == NULL)
-			return (EIO);
+			return EIO;
 
 		if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 			/* issue ENDPOINT_HALT request */
@@ -549,13 +549,13 @@ uhmodem_endpointhalt(struct ubsa_softc *sc, int iface)
 			if (err) {
 				DPRINTF(("%s: ENDPOINT_HALT to EP:%d fail\n",
 					__func__, ed->bEndpointAddress));
-				return (EIO);
+				return EIO;
 			}
 
 		}
 	} /* end of Endpoint loop */
 
-	return (0);
+	return 0;
 }
 
 Static usbd_status
@@ -696,10 +696,10 @@ e220_init(usbd_device_handle dev)
 	if (uhmodem_regsetup(dev, 0x3))
 		goto error;
 
-	return (0);
+	return 0;
 error:
 	DPRINTF(("%s: E220 init request fail\n", __func__));
-	return (EIO);
+	return EIO;
 }
 #endif
 

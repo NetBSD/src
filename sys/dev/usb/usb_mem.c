@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.65.2.3 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.65.2.4 2014/12/05 09:37:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.3 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.4 2014/12/05 09:37:50 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -139,14 +139,14 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 			*dmap = b;
 			DPRINTFN(6,("usb_block_allocmem: free list size=%zu\n",
 			    b->size));
-			return (USBD_NORMAL_COMPLETION);
+			return USBD_NORMAL_COMPLETION;
 		}
 	}
 
 	DPRINTFN(6, ("usb_block_allocmem: no free\n"));
 	b = kmem_zalloc(sizeof *b, KM_SLEEP);
 	if (b == NULL)
-		return (USBD_NOMEM);
+		return USBD_NOMEM;
 
 	b->tag = tag;
 	b->size = size;
@@ -191,7 +191,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	memset(b->kaddr, 0, b->size);
 #endif
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 
  destroy:
 	bus_dmamap_destroy(tag, b->map);
@@ -202,7 +202,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
  free0:
 	kmem_free(b->segs, b->nsegs_alloc * sizeof(*b->segs));
 	kmem_free(b, sizeof *b);
-	return (USBD_NOMEM);
+	return USBD_NOMEM;
 }
 
 #if 0
@@ -294,7 +294,7 @@ usb_allocmem_flags(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p,
 			p->udma_offs = 0;
 		}
 		mutex_exit(&usb_blk_lock);
-		return (err);
+		return err;
 	}
 
 	mutex_enter(&usb_blk_lock);
@@ -312,7 +312,7 @@ usb_allocmem_flags(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p,
 					 false);
 		if (err) {
 			mutex_exit(&usb_blk_lock);
-			return (err);
+			return err;
 		}
 #ifdef DEBUG
 		LIST_INSERT_HEAD(&usb_blk_fraglist, b, next);
@@ -338,7 +338,7 @@ usb_allocmem_flags(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p,
 	mutex_exit(&usb_blk_lock);
 	DPRINTFN(5, ("usb_allocmem: use frag=%p size=%d\n", f, (int)size));
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 void

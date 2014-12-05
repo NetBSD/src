@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.14.14.2 2014/12/03 12:52:05 skrll Exp $ */
+/*	$NetBSD: plumohci.c,v 1.14.14.3 2014/12/05 09:37:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.14.14.2 2014/12/03 12:52:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.14.14.3 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ plumohci_match(device_t parent, cfdata_t match, void *aux)
 {
 	/* PLUM2 builtin OHCI module */
 
-	return (1);
+	return 1;
 }
 
 void
@@ -244,13 +244,13 @@ __plumohci_dmamem_alloc(bus_dma_tag_t tx, bus_size_t size,
 	    size, OHCI_PAGE_SIZE, 0, 0,
 	    (bus_addr_t *)(void *)&caddr, &bsh);
 	if (error)
-		return (1);
+		return 1;
 
 	pmap_extract(pmap_kernel(), (vaddr_t)caddr, &paddr);
 
 	ps = malloc(sizeof(struct plumohci_shm), M_DEVBUF, M_NOWAIT);
 	if (ps == 0)
-		return (1);
+		return 1;
 
 	ps->ps_bsh = bsh;
 	ps->ps_size = segs[0].ds_len = size;
@@ -261,7 +261,7 @@ __plumohci_dmamem_alloc(bus_dma_tag_t tx, bus_size_t size,
 
 	*rsegs = 1;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -301,11 +301,11 @@ __plumohci_dmamem_map(bus_dma_tag_t tx, bus_dma_segment_t *segs, int nsegs,
 
 			*kvap = ps->ps_caddr;
 
-			return (0);
+			return 0;
 		}
 	}
 
-	return (1);
+	return 1;
 }
 
 void

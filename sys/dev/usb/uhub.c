@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.3 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.4 2014/12/05 09:37:49 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.3 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.4 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,8 +129,8 @@ uhub_match(device_t parent, cfdata_t match, void *aux)
 	 * so we just ignore the subclass.
 	 */
 	if (uaa->class == UDCLASS_HUB)
-		return (matchvalue);
-	return (UMATCH_NONE);
+		return matchvalue;
+	return UMATCH_NONE;
 }
 
 void
@@ -380,11 +380,11 @@ uhub_explore(usbd_device_handle dev)
 	DPRINTFN(10, ("uhub_explore dev=%p addr=%d\n", dev, dev->ud_addr));
 
 	if (!sc->sc_running)
-		return (USBD_NOT_STARTED);
+		return USBD_NOT_STARTED;
 
 	/* Ignore hubs that are too deep. */
 	if (dev->ud_depth > USB_HUB_MAX_DEPTH)
-		return (USBD_TOO_DEEP);
+		return USBD_TOO_DEEP;
 
 	if (PORTSTAT_ISSET(sc, 0)) { /* hub status change */
 		usb_hub_status_t hs;
@@ -582,7 +582,7 @@ uhub_explore(usbd_device_handle dev)
 	if (!sc->sc_isehciroothub)
 		memset(sc->sc_status, 0, sc->sc_statuslen);
 	sc->sc_explorepending = 0;
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 /*
@@ -600,7 +600,7 @@ uhub_detach(device_t self, int flags)
 	DPRINTF(("uhub_detach: sc=%p flags=%d\n", sc, flags));
 
 	if (hub == NULL)		/* Must be partially working */
-		return (0);
+		return 0;
 
 	/* XXXSMP usb */
 	KERNEL_LOCK(1, curlwp);
@@ -641,7 +641,7 @@ uhub_detach(device_t self, int flags)
 	/* XXXSMP usb */
 	KERNEL_UNLOCK_ONE(curlwp);
 
-	return (0);
+	return 0;
 }
 
 int

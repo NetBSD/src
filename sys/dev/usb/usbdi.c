@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.8 2014/12/03 22:33:56 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.9 2014/12/05 09:37:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.8 2014/12/03 22:33:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.9 2014/12/05 09:37:50 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -71,7 +71,7 @@ static inline int
 usbd_xfer_isread(usbd_xfer_handle xfer)
 {
 	if (xfer->ux_rqflags & URQ_REQUEST)
-		return (xfer->ux_request.bmRequestType & UT_READ);
+		return xfer->ux_request.bmRequestType & UT_READ;
 	else
 		return (xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress &
 			UE_DIR_IN);
@@ -181,20 +181,20 @@ usbd_open_pipe_ival(usbd_interface_handle iface, uint8_t address,
 	for (i = 0; i < iface->ui_idesc->bNumEndpoints; i++) {
 		ep = &iface->ui_endpoints[i];
 		if (ep->ue_edesc == NULL)
-			return (USBD_IOERROR);
+			return USBD_IOERROR;
 		if (ep->ue_edesc->bEndpointAddress == address)
 			goto found;
 	}
-	return (USBD_BAD_ADDRESS);
+	return USBD_BAD_ADDRESS;
  found:
 	if ((flags & USBD_EXCLUSIVE_USE) && ep->ue_refcnt != 0)
-		return (USBD_IN_USE);
+		return USBD_IN_USE;
 	err = usbd_setup_pipe_flags(iface->ui_dev, iface, ep, ival, &p, flags);
 	if (err)
-		return (err);
+		return err;
 	LIST_INSERT_HEAD(&iface->ui_pipes, p, up_next);
 	*pipe = p;
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 usbd_status
@@ -216,7 +216,7 @@ usbd_open_pipe_intr(usbd_interface_handle iface, uint8_t address,
 				  USBD_EXCLUSIVE_USE | (flags & USBD_MPSAFE),
 				  &ipipe, ival);
 	if (err)
-		return (err);
+		return err;
 	xfer = usbd_alloc_xfer(iface->ui_dev);
 	if (xfer == NULL) {
 		err = USBD_NOMEM;
@@ -230,7 +230,7 @@ usbd_open_pipe_intr(usbd_interface_handle iface, uint8_t address,
 	*pipe = ipipe;
 	if (err != USBD_IN_PROGRESS)
 		goto bad2;
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 
  bad2:
 	ipipe->up_intrxfer = NULL;
@@ -238,7 +238,7 @@ usbd_open_pipe_intr(usbd_interface_handle iface, uint8_t address,
 	usbd_free_xfer(xfer);
  bad1:
 	usbd_close_pipe(ipipe);
-	return (err);
+	return err;
 }
 
 usbd_status
@@ -250,18 +250,18 @@ usbd_close_pipe(usbd_pipe_handle pipe)
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
 		USBHIST_LOG(usbdebug, "pipe == NULL", 0, 0, 0, 0);
-		return (USBD_NORMAL_COMPLETION);
+		return USBD_NORMAL_COMPLETION;
 	}
 #endif
 
 	usbd_lock_pipe(pipe);
 	if (--pipe->up_refcnt != 0) {
 		usbd_unlock_pipe(pipe);
-		return (USBD_NORMAL_COMPLETION);
+		return USBD_NORMAL_COMPLETION;
 	}
 	if (! SIMPLEQ_EMPTY(&pipe->up_queue)) {
 		usbd_unlock_pipe(pipe);
-		return (USBD_PENDING_REQUESTS);
+		return USBD_PENDING_REQUESTS;
 	}
 	LIST_REMOVE(pipe, up_next);
 	pipe->up_endpoint->ue_refcnt--;
@@ -270,7 +270,7 @@ usbd_close_pipe(usbd_pipe_handle pipe)
 	if (pipe->up_intrxfer != NULL)
 		usbd_free_xfer(pipe->up_intrxfer);
 	kmem_free(pipe, pipe->up_dev->ud_bus->ub_pipesize);
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 usbd_status
@@ -295,7 +295,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 	if (pipe->up_aborting) {
 		USBHIST_LOG(usbdebug, "<- done xfer %p, aborting", xfer, 0, 0,
 		    0);
-		return (USBD_CANCELLED);
+		return USBD_CANCELLED;
 	}
 
 	struct usbd_bus *bus = pipe->up_dev->ud_bus;
@@ -352,14 +352,14 @@ usbd_transfer(usbd_xfer_handle xfer)
 	if (!(flags & USBD_SYNCHRONOUS)) {
 		USBHIST_LOG(usbdebug, "<- done xfer %p, not sync", xfer, 0, 0,
 		    0);
-		return (err);
+		return err;
 	}
 
 	/* Sync transfer, wait for completion. */
 	if (err != USBD_IN_PROGRESS) {
 		USBHIST_LOG(usbdebug, "<- done xfer %p, not in progress", xfer,
 		    0, 0, 0);
-		return (err);
+		return err;
 	}
 	usbd_lock_pipe(pipe);
 	while (!xfer->ux_done) {
@@ -380,7 +380,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 		}
 	}
 	usbd_unlock_pipe(pipe);
-	return (xfer->ux_status);
+	return xfer->ux_status;
 }
 
 /* Like usbd_transfer(), but waits for completion. */
@@ -388,7 +388,7 @@ usbd_status
 usbd_sync_transfer(usbd_xfer_handle xfer)
 {
 	xfer->ux_flags |= USBD_SYNCHRONOUS;
-	return (usbd_transfer(xfer));
+	return usbd_transfer(xfer);
 }
 
 /* Like usbd_transfer(), but waits for completion and listens for signals. */
@@ -396,7 +396,7 @@ usbd_status
 usbd_sync_transfer_sig(usbd_xfer_handle xfer)
 {
 	xfer->ux_flags |= USBD_SYNCHRONOUS | USBD_SYNCHRONOUS_SIG;
-	return (usbd_transfer(xfer));
+	return usbd_transfer(xfer);
 }
 
 void *
@@ -480,7 +480,7 @@ usbd_alloc_xfer(usbd_device_handle dev)
 
 	xfer = dev->ud_bus->ub_methods->ubm_allocx(dev->ud_bus);
 	if (xfer == NULL)
-		return (NULL);
+		return NULL;
 	xfer->ux_dev = dev;
 	callout_init(&xfer->ux_callout, CALLOUT_MPSAFE);
 	cv_init(&xfer->ux_cv, "usbxfer");
@@ -488,7 +488,7 @@ usbd_alloc_xfer(usbd_device_handle dev)
 
 	USBHIST_LOG(usbdebug, "returns %p", xfer, 0, 0, 0);
 
-	return (xfer);
+	return xfer;
 }
 
 usbd_status
@@ -509,7 +509,7 @@ usbd_free_xfer(usbd_xfer_handle xfer)
 	cv_destroy(&xfer->ux_cv);
 	cv_destroy(&xfer->ux_hccv);
 	xfer->ux_dev->ud_bus->ub_methods->ubm_freex(xfer->ux_dev->ud_bus, xfer);
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 void
@@ -591,10 +591,10 @@ usbd_get_config_descriptor(usbd_device_handle dev)
 #ifdef DIAGNOSTIC
 	if (dev == NULL) {
 		printf("usbd_get_config_descriptor: dev == NULL\n");
-		return (NULL);
+		return NULL;
 	}
 #endif
-	return (dev->ud_cdesc);
+	return dev->ud_cdesc;
 }
 
 usb_interface_descriptor_t *
@@ -603,24 +603,24 @@ usbd_get_interface_descriptor(usbd_interface_handle iface)
 #ifdef DIAGNOSTIC
 	if (iface == NULL) {
 		printf("usbd_get_interface_descriptor: dev == NULL\n");
-		return (NULL);
+		return NULL;
 	}
 #endif
-	return (iface->ui_idesc);
+	return iface->ui_idesc;
 }
 
 usb_device_descriptor_t *
 usbd_get_device_descriptor(usbd_device_handle dev)
 {
-	return (&dev->ud_ddesc);
+	return &dev->ud_ddesc;
 }
 
 usb_endpoint_descriptor_t *
 usbd_interface2endpoint_descriptor(usbd_interface_handle iface, uint8_t index)
 {
 	if (index >= iface->ui_idesc->bNumEndpoints)
-		return (NULL);
-	return (iface->ui_endpoints[index].ue_edesc);
+		return NULL;
+	return iface->ui_endpoints[index].ue_edesc;
 }
 
 /* Some drivers may wish to abort requests on the default pipe, *
@@ -640,13 +640,13 @@ usbd_abort_pipe(usbd_pipe_handle pipe)
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
 		printf("usbd_abort_pipe: pipe==NULL\n");
-		return (USBD_NORMAL_COMPLETION);
+		return USBD_NORMAL_COMPLETION;
 	}
 #endif
 	usbd_lock_pipe(pipe);
 	err = usbd_ar_pipe(pipe);
 	usbd_unlock_pipe(pipe);
-	return (err);
+	return err;
 }
 
 usbd_status
@@ -677,7 +677,7 @@ XXX should we do this?
 		/* XXX activate pipe */
 	}
 #endif
-	return (err);
+	return err;
 }
 
 void
@@ -716,20 +716,20 @@ usbd_endpoint_count(usbd_interface_handle iface, uint8_t *count)
 #ifdef DIAGNOSTIC
 	if (iface == NULL || iface->ui_idesc == NULL) {
 		printf("usbd_endpoint_count: NULL pointer\n");
-		return (USBD_INVAL);
+		return USBD_INVAL;
 	}
 #endif
 	*count = iface->ui_idesc->bNumEndpoints;
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 usbd_status
 usbd_interface_count(usbd_device_handle dev, uint8_t *count)
 {
 	if (dev->ud_cdesc == NULL)
-		return (USBD_NOT_CONFIGURED);
+		return USBD_NOT_CONFIGURED;
 	*count = dev->ud_cdesc->bNumInterface;
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 void
@@ -744,17 +744,17 @@ usbd_device2interface_handle(usbd_device_handle dev,
 			     uint8_t ifaceno, usbd_interface_handle *iface)
 {
 	if (dev->ud_cdesc == NULL)
-		return (USBD_NOT_CONFIGURED);
+		return USBD_NOT_CONFIGURED;
 	if (ifaceno >= dev->ud_cdesc->bNumInterface)
-		return (USBD_INVAL);
+		return USBD_INVAL;
 	*iface = &dev->ud_ifaces[ifaceno];
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 usbd_device_handle
 usbd_pipe2device_handle(usbd_pipe_handle pipe)
 {
-	return (pipe->up_dev);
+	return pipe->up_dev;
 }
 
 /* XXXX use altno */
@@ -766,12 +766,12 @@ usbd_set_interface(usbd_interface_handle iface, int altidx)
 	void *endpoints;
 
 	if (LIST_FIRST(&iface->ui_pipes) != 0)
-		return (USBD_IN_USE);
+		return USBD_IN_USE;
 
 	endpoints = iface->ui_endpoints;
 	err = usbd_fill_iface_data(iface->ui_dev, iface->ui_index, altidx);
 	if (err)
-		return (err);
+		return err;
 
 	/* new setting works, we can free old endpoints */
 	if (endpoints != NULL) {
@@ -782,7 +782,7 @@ usbd_set_interface(usbd_interface_handle iface, int altidx)
 #ifdef DIAGNOSTIC
 	if (iface->ui_idesc == NULL) {
 		printf("usbd_set_interface: NULL pointer\n");
-		return (USBD_INVAL);
+		return USBD_INVAL;
 	}
 #endif
 
@@ -791,7 +791,7 @@ usbd_set_interface(usbd_interface_handle iface, int altidx)
 	USETW(req.wValue, iface->ui_idesc->bAlternateSetting);
 	USETW(req.wIndex, iface->ui_idesc->bInterfaceNumber);
 	USETW(req.wLength, 0);
-	return (usbd_do_request(iface->ui_dev, &req, 0));
+	return usbd_do_request(iface->ui_dev, &req, 0);
 }
 
 int
@@ -809,13 +809,13 @@ usbd_get_no_alts(usb_config_descriptor_t *cdesc, int ifaceno)
 		    d->bInterfaceNumber == ifaceno)
 			n++;
 	}
-	return (n);
+	return n;
 }
 
 int
 usbd_get_interface_altindex(usbd_interface_handle iface)
 {
-	return (iface->ui_altindex);
+	return iface->ui_altindex;
 }
 
 usbd_status
@@ -828,7 +828,7 @@ usbd_get_interface(usbd_interface_handle iface, uint8_t *aiface)
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, iface->ui_idesc->bInterfaceNumber);
 	USETW(req.wLength, 1);
-	return (usbd_do_request(iface->ui_dev, &req, aiface));
+	return usbd_do_request(iface->ui_dev, &req, aiface);
 }
 
 /*** Internal routines ***/
@@ -858,7 +858,7 @@ usbd_ar_pipe(usbd_pipe_handle pipe)
 		/* XXX only for non-0 usbd_clear_endpoint_stall(pipe); */
 	}
 	pipe->up_aborting = 0;
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 /* Called with USB lock held. */
@@ -1019,7 +1019,7 @@ usb_insert_transfer(usbd_xfer_handle xfer)
 		    0);
 		printf("usb_insert_transfer: xfer=%p not busy 0x%08x\n",
 		       xfer, xfer->ux_state);
-		return (USBD_INVAL);
+		return USBD_INVAL;
 	}
 	xfer->ux_state = XFER_ONQU;
 #endif
@@ -1031,7 +1031,7 @@ usb_insert_transfer(usbd_xfer_handle xfer)
 		err = USBD_NORMAL_COMPLETION;
 	}
 	USBHIST_LOG(usbdebug, "<- done xfer %p, err %d", xfer, err, 0, 0);
-	return (err);
+	return err;
 }
 
 /* Called with USB lock held. */
@@ -1105,7 +1105,7 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 
 	xfer = usbd_alloc_xfer(dev);
 	if (xfer == NULL)
-		return (USBD_NOMEM);
+		return USBD_NOMEM;
 	usbd_setup_default_xfer(xfer, dev, 0, timeout, req,
 				data, UGETW(req->wLength), flags, 0);
 	xfer->ux_pipe = pipe;
@@ -1168,7 +1168,7 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 		    usbd_errstr(err), 0, 0, 0);
 	}
 	usbd_free_xfer(xfer);
-	return (err);
+	return err;
 }
 
 const struct usbd_quirks *
@@ -1180,7 +1180,7 @@ usbd_get_quirks(usbd_device_handle dev)
 		return 0;
 	}
 #endif
-	return (dev->ud_quirks);
+	return dev->ud_quirks;
 }
 
 /* XXX do periodic free() of free list */
@@ -1221,9 +1221,9 @@ usbd_get_endpoint_descriptor(usbd_interface_handle iface, uint8_t address)
 	for (i = 0; i < iface->ui_idesc->bNumEndpoints; i++) {
 		ep = &iface->ui_endpoints[i];
 		if (ep->ue_edesc->bEndpointAddress == address)
-			return (iface->ui_endpoints[i].ue_edesc);
+			return iface->ui_endpoints[i].ue_edesc;
 	}
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -1237,7 +1237,7 @@ usbd_ratecheck(struct timeval *last)
 {
 	static struct timeval errinterval = { 0, 250000 }; /* 0.25 s*/
 
-	return (ratecheck(last, &errinterval));
+	return ratecheck(last, &errinterval);
 }
 
 /*
@@ -1252,10 +1252,10 @@ usb_match_device(const struct usb_devno *tbl, u_int nentries, u_int sz,
 		uint16_t tproduct = tbl->ud_product;
 		if (tbl->ud_vendor == vendor &&
 		    (tproduct == product || tproduct == USB_PRODUCT_ANY))
-			return (tbl);
+			return tbl;
 		tbl = (const struct usb_devno *)((const char *)tbl + sz);
 	}
-	return (NULL);
+	return NULL;
 }
 
 
@@ -1312,9 +1312,9 @@ usbd_get_string0(usbd_device_handle dev, int si, char *buf, int unicode)
 
 	buf[0] = '\0';
 	if (si == 0)
-		return (USBD_INVAL);
+		return USBD_INVAL;
 	if (dev->ud_quirks->uq_flags & UQ_NO_STRINGS)
-		return (USBD_STALLED);
+		return USBD_STALLED;
 	if (dev->ud_langid == USBD_NOLANG) {
 		/* Set up default language */
 		err = usbd_get_string_desc(dev, USB_LANGUAGE_TABLE, 0, &us,
@@ -1330,7 +1330,7 @@ usbd_get_string0(usbd_device_handle dev, int si, char *buf, int unicode)
 	}
 	err = usbd_get_string_desc(dev, si, dev->ud_langid, &us, &size);
 	if (err)
-		return (err);
+		return err;
 	s = buf;
 	n = size / 2 - 1;
 	if (unicode) {
@@ -1353,5 +1353,5 @@ usbd_get_string0(usbd_device_handle dev, int si, char *buf, int unicode)
 		*s++ = 0;
 	}
 #endif
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }

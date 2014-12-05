@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.48.4.2 2014/12/02 09:00:33 skrll Exp $	*/
+/*	$NetBSD: if_url.c,v 1.48.4.3 2014/12/05 09:37:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.4.2 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.4.3 2014/12/05 09:37:49 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -172,8 +172,8 @@ url_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (url_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return url_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 /* Attach */
 void
@@ -342,7 +342,7 @@ url_detach(device_t self, int flags)
 
 	/* Detached before attached finished */
 	if (!sc->sc_attached)
-		return (0);
+		return 0;
 
 	callout_stop(&sc->sc_stat_ch);
 
@@ -383,7 +383,7 @@ url_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
 
-	return (0);
+	return 0;
 }
 
 /* read/write memory */
@@ -394,13 +394,13 @@ url_mem(struct url_softc *sc, int cmd, int offset, void *buf, int len)
 	usbd_status err;
 
 	if (sc == NULL)
-		return (0);
+		return 0;
 
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
 	if (cmd == URL_CMD_READMEM)
 		req.bmRequestType = UT_READ_VENDOR_DEVICE;
@@ -422,7 +422,7 @@ url_mem(struct url_softc *sc, int cmd, int offset, void *buf, int len)
 			 offset, err));
 	}
 
-	return (err);
+	return err;
 }
 
 /* read 1byte from register */
@@ -435,9 +435,9 @@ url_csr_read_1(struct url_softc *sc, int reg)
 		 ("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
-	return (url_mem(sc, URL_CMD_READMEM, reg, &val, 1) ? 0 : val);
+	return url_mem(sc, URL_CMD_READMEM, reg, &val, 1) ? 0 : val;
 }
 
 /* read 2bytes from register */
@@ -450,10 +450,10 @@ url_csr_read_2(struct url_softc *sc, int reg)
 		 ("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
 	USETW(val, 0);
-	return (url_mem(sc, URL_CMD_READMEM, reg, &val, 2) ? 0 : UGETW(val));
+	return url_mem(sc, URL_CMD_READMEM, reg, &val, 2) ? 0 : UGETW(val);
 }
 
 /* write 1byte to register */
@@ -466,9 +466,9 @@ url_csr_write_1(struct url_softc *sc, int reg, int aval)
 		 ("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
-	return (url_mem(sc, URL_CMD_WRITEMEM, reg, &val, 1) ? -1 : 0);
+	return url_mem(sc, URL_CMD_WRITEMEM, reg, &val, 1) ? -1 : 0;
 }
 
 /* write 2bytes to register */
@@ -483,9 +483,9 @@ url_csr_write_2(struct url_softc *sc, int reg, int aval)
 	USETW(val, aval);
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
-	return (url_mem(sc, URL_CMD_WRITEMEM, reg, &val, 2) ? -1 : 0);
+	return url_mem(sc, URL_CMD_WRITEMEM, reg, &val, 2) ? -1 : 0;
 }
 
 /* write 4bytes to register */
@@ -500,9 +500,9 @@ url_csr_write_4(struct url_softc *sc, int reg, int aval)
 	USETDW(val, aval);
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
-	return (url_mem(sc, URL_CMD_WRITEMEM, reg, &val, 4) ? -1 : 0);
+	return url_mem(sc, URL_CMD_WRITEMEM, reg, &val, 4) ? -1 : 0;
 }
 
 Static int
@@ -516,7 +516,7 @@ url_init(struct ifnet *ifp)
 	DPRINTF(("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	s = splnet();
 
@@ -551,14 +551,14 @@ url_init(struct ifnet *ifp)
 	if (url_tx_list_init(sc) == ENOBUFS) {
 		printf("%s: tx list init failed\n", device_xname(sc->sc_dev));
 		splx(s);
-		return (EIO);
+		return EIO;
 	}
 
 	/* Initialize receive ring */
 	if (url_rx_list_init(sc) == ENOBUFS) {
 		printf("%s: rx list init failed\n", device_xname(sc->sc_dev));
 		splx(s);
-		return (EIO);
+		return EIO;
 	}
 
 	/* Load the multicast filter */
@@ -575,7 +575,7 @@ url_init(struct ifnet *ifp)
 	if (sc->sc_pipe_tx == NULL || sc->sc_pipe_rx == NULL) {
 		if (url_openpipes(sc)) {
 			splx(s);
-			return (EIO);
+			return EIO;
 		}
 	}
 
@@ -701,7 +701,7 @@ url_openpipes(struct url_softc *sc)
 	int error = 0;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	sc->sc_refcnt++;
 
@@ -757,7 +757,7 @@ url_openpipes(struct url_softc *sc)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
 
-	return (error);
+	return error;
 }
 
 Static int
@@ -772,14 +772,14 @@ url_newbuf(struct url_softc *sc, struct url_chain *c, struct mbuf *m)
 		if (m_new == NULL) {
 			printf("%s: no memory for rx list "
 			       "-- packet dropped!\n", device_xname(sc->sc_dev));
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
 			printf("%s: no memory for rx list "
 			       "-- packet dropped!\n", device_xname(sc->sc_dev));
 			m_freem(m_new);
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 	} else {
@@ -791,7 +791,7 @@ url_newbuf(struct url_softc *sc, struct url_chain *c, struct mbuf *m)
 	m_adj(m_new, ETHER_ALIGN);
 	c->url_mbuf = m_new;
 
-	return (0);
+	return 0;
 }
 
 
@@ -810,20 +810,20 @@ url_rx_list_init(struct url_softc *sc)
 		c->url_sc = sc;
 		c->url_idx = i;
 		if (url_newbuf(sc, c, NULL) == ENOBUFS)
-			return (ENOBUFS);
+			return ENOBUFS;
 		if (c->url_xfer == NULL) {
 			c->url_xfer = usbd_alloc_xfer(sc->sc_udev);
 			if (c->url_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->url_buf = usbd_alloc_buffer(c->url_xfer, URL_BUFSZ);
 			if (c->url_buf == NULL) {
 				usbd_free_xfer(c->url_xfer);
-				return (ENOBUFS);
+				return ENOBUFS;
 			}
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 Static int
@@ -844,16 +844,16 @@ url_tx_list_init(struct url_softc *sc)
 		if (c->url_xfer == NULL) {
 			c->url_xfer = usbd_alloc_xfer(sc->sc_udev);
 			if (c->url_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->url_buf = usbd_alloc_buffer(c->url_xfer, URL_BUFSZ);
 			if (c->url_buf == NULL) {
 				usbd_free_xfer(c->url_xfer);
-				return (ENOBUFS);
+				return ENOBUFS;
 			}
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 Static void
@@ -929,7 +929,7 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 		/* Stop the interface */
 		usb_add_task(sc->sc_udev, &sc->sc_stop_task,
 		    USB_TASKQ_DRIVER);
-		return (EIO);
+		return EIO;
 	}
 
 	DPRINTF(("%s: %s: send %d bytes\n", device_xname(sc->sc_dev),
@@ -937,7 +937,7 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 
 	sc->sc_cdata.url_tx_cnt++;
 
-	return (0);
+	return 0;
 }
 
 Static void
@@ -1098,7 +1098,7 @@ url_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	DPRINTF(("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	s = splnet();
 
@@ -1111,7 +1111,7 @@ url_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	splx(s);
 
-	return (error);
+	return error;
 }
 
 Static void
@@ -1241,7 +1241,7 @@ url_ifmedia_change(struct ifnet *ifp)
 	DPRINTF(("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
 	sc->sc_link = 0;
 	if ((rc = mii_mediachg(mii)) == ENXIO)
@@ -1353,7 +1353,7 @@ url_int_miibus_readreg(device_t dev, int phy, int reg)
 	uint16_t val;
 
 	if (dev == NULL)
-		return (0);
+		return 0;
 
 	sc = device_private(dev);
 
@@ -1365,14 +1365,14 @@ url_int_miibus_readreg(device_t dev, int phy, int reg)
 		printf("%s: %s: dying\n", device_xname(sc->sc_dev),
 		       __func__);
 #endif
-		return (0);
+		return 0;
 	}
 
 	/* XXX: one PHY only for the RTL8150 internal PHY */
 	if (phy != 0) {
 		DPRINTFN(0xff, ("%s: %s: phy=%d is not supported\n",
 			 device_xname(sc->sc_dev), __func__, phy));
-		return (0);
+		return 0;
 	}
 
 	url_lock_mii(sc);
@@ -1416,7 +1416,7 @@ url_int_miibus_readreg(device_t dev, int phy, int reg)
 		 device_xname(sc->sc_dev), __func__, phy, reg, val));
 
 	url_unlock_mii(sc);
-	return (val);
+	return val;
 }
 
 Static void
@@ -1516,7 +1516,7 @@ url_ext_miibus_redreg(device_t dev, int phy, int reg)
 		printf("%s: %s: dying\n", device_xname(sc->sc_dev),
 		       __func__);
 #endif
-		return (0);
+		return 0;
 	}
 
 	url_lock_mii(sc);
@@ -1543,7 +1543,7 @@ url_ext_miibus_redreg(device_t dev, int phy, int reg)
 		 device_xname(sc->sc_dev), __func__, phy, reg, val));
 
 	url_unlock_mii(sc);
-	return (val);
+	return val;
 }
 
 Static void

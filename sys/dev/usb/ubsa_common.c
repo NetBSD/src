@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa_common.c,v 1.9.14.2 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: ubsa_common.c,v 1.9.14.3 2014/12/05 09:37:49 skrll Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.9.14.2 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.9.14.3 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ ubsa_request(struct ubsa_softc *sc, int portno, uint8_t request, uint16_t value)
 	if (err)
 		printf("%s: ubsa_request: %s\n",
 		    device_xname(sc->sc_dev), usbd_errstr(err));
-	return (err);
+	return err;
 }
 
 void
@@ -332,7 +332,7 @@ ubsa_param(void *addr, int portno, struct termios *ti)
 		ubsa_flow(sc, portno, ti->c_cflag, ti->c_iflag);
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -342,7 +342,7 @@ ubsa_open(void *addr, int portno)
 	int err;
 
 	if (sc->sc_dying)
-		return (ENXIO);
+		return ENXIO;
 
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
 		sc->sc_intr_buf = kmem_alloc(sc->sc_isize, KM_SLEEP);
@@ -361,11 +361,11 @@ ubsa_open(void *addr, int portno)
 			printf("%s: cannot open interrupt pipe (addr %d)\n",
 			    device_xname(sc->sc_dev),
 			    sc->sc_intr_number);
-			return (EIO);
+			return EIO;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 void

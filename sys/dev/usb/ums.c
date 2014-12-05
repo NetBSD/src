@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.87.6.3 2014/12/03 22:33:56 skrll Exp $	*/
+/*	$NetBSD: ums.c,v 1.87.6.4 2014/12/05 09:37:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.87.6.3 2014/12/03 22:33:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.87.6.4 2014/12/05 09:37:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ ums_match(device_t parent, cfdata_t match, void *aux)
 	 */
 	if (uha->uaa->vendor == USB_VENDOR_GRIFFIN &&
 	    uha->uaa->product == USB_PRODUCT_GRIFFIN_POWERMATE)
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	if (!hid_is_collection(desc, size, uha->reportid,
@@ -163,9 +163,9 @@ ums_match(device_t parent, cfdata_t match, void *aux)
 			       HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_POINTER)) &&
 	    !hid_is_collection(desc, size, uha->reportid,
 			       HID_USAGE2(HUP_DIGITIZERS, 0x0002)))
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 
-	return (UMATCH_IFACECLASS);
+	return UMATCH_IFACECLASS;
 }
 
 void
@@ -409,7 +409,7 @@ ums_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	return (rv);
+	return rv;
 }
 
 void
@@ -462,10 +462,10 @@ ums_enable(void *v)
 	DPRINTFN(1,("ums_enable: sc=%p\n", sc));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	if (sc->sc_enabled)
-		return (EBUSY);
+		return EBUSY;
 
 	sc->sc_enabled = 1;
 	sc->sc_buttons = 0;
@@ -509,8 +509,8 @@ ums_ioctl(void *v, u_long cmd, void *data, int flag,
 			*(u_int *)data = WSMOUSE_TYPE_TPANEL;
 		else
 			*(u_int *)data = WSMOUSE_TYPE_USB;
-		return (0);
+		return 0;
 	}
 
-	return (EPASSTHROUGH);
+	return EPASSTHROUGH;
 }

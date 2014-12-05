@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.30.2.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.30.2.3 2014/12/05 09:37:50 skrll Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.30.2.2 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.30.2.3 2014/12/05 09:37:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ umass_isdata_attach(struct umass_softc *sc)
 
 	err = usbd_do_request(sc->sc_udev, &req, cf);
 	if (err)
-		return (EIO);
+		return EIO;
 	DPRINTF(("umass_wd_attach info:\n  EventNotification=0x%02x "
 		 "ExternalClock=0x%02x ATAInitTimeout=0x%02x\n"
 		 "  ATAMisc1=0x%02x ATAMajorCommand=0x%02x "
@@ -215,7 +215,7 @@ umass_isdata_attach(struct umass_softc *sc)
 	scbus->sc_drv_data.chnl_softc = sc;
 	scbus->base.sc_child = config_found(sc->sc_dev, &adev, uwdprint);
 
-	return (0);
+	return 0;
 }
 
 
@@ -265,7 +265,7 @@ uisdata_bio(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 	struct uisdata_softc *scbus = (struct uisdata_softc *)sc->bus;
 
 	scbus->sc_skip = 0;
-	return (uisdata_bio1(drv, ata_bio));
+	return uisdata_bio1(drv, ata_bio);
 }
 
 int
@@ -288,12 +288,12 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 		printf("%s: ATA_POLL not supported\n", __func__);
 		ata_bio->error = TIMEOUT;
 		ata_bio->flags |= ATA_ITSDONE;
-		return (ATACMD_COMPLETE);
+		return ATACMD_COMPLETE;
 	}
 
 	if (scbus->sc_ata_bio != NULL) {
 		printf("%s: multiple uisdata_bio\n", __func__);
-		return (ATACMD_TRY_AGAIN);
+		return ATACMD_TRY_AGAIN;
 	} else
 		scbus->sc_ata_bio = ata_bio;
 
@@ -364,11 +364,11 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 		if (tsleep(ata_bio, PZERO, "uisdatabl", 0)) {
 			ata_bio->error = TIMEOUT;
 			ata_bio->flags |= ATA_ITSDONE;
-			return (ATACMD_COMPLETE);
+			return ATACMD_COMPLETE;
 		}
 	}
 
-	return (ata_bio->flags & ATA_ITSDONE) ? ATACMD_COMPLETE : ATACMD_QUEUED;
+	return ata_bio->flags & ATA_ITSDONE ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }
 
 void
@@ -466,7 +466,7 @@ uisdata_exec_command(struct ata_drive_datas *drv, struct ata_command *cmd)
 	}
 
 done:
-	return (ATACMD_COMPLETE);
+	return ATACMD_COMPLETE;
 }
 
 int
@@ -474,7 +474,7 @@ uisdata_addref(struct ata_drive_datas *drv)
 {
 	DPRINTF(("%s\n", __func__));
 	/* Nothing to do */
-	return (0);
+	return 0;
 }
 
 void
@@ -527,12 +527,12 @@ uisdata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 	ata_c.bcount = DEV_BSIZE;
 	if (uisdata_exec_command(drvp, &ata_c) != ATACMD_COMPLETE) {
 		DPRINTF(("uisdata_get_parms: wdc_exec_command failed\n"));
-		return (CMD_AGAIN);
+		return CMD_AGAIN;
 	}
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		DPRINTF(("uisdata_get_parms: ata_c.flags=0x%x\n",
 			 ata_c.flags));
-		return (CMD_ERR);
+		return CMD_ERR;
 	} else {
 		/* Read in parameter block. */
 		memcpy(prms, tb, sizeof(struct ataparams));
@@ -578,7 +578,7 @@ uwdprint(void *aux, const char *pnp)
 	aprint_normal(" channel %d drive %d", adev->adev_channel,
 	    adev->adev_drv_data->drive);
 #endif
-	return (UNCONF);
+	return UNCONF;
 }
 
 
@@ -588,7 +588,7 @@ int umass_wd_attach(struct umass_softc *);
 
 #if NWD > 0
 	case UMASS_CPROTO_ISD_ATA:
-		return (umass_wd_attach(sc));
+		return umass_wd_attach(sc);
 #endif
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.96.2.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.96.2.2 2014/12/05 09:37:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.96.2.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.96.2.2 2014/12/05 09:37:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,8 +345,8 @@ Static const struct umass_quirk umass_quirks[] = {
 const struct umass_quirk *
 umass_lookup(uint16_t vendor, uint16_t product)
 {
-	return ((const struct umass_quirk *)
-		usb_lookup(umass_quirks, vendor, product));
+	return (const struct umass_quirk *)
+		usb_lookup(umass_quirks, vendor, product);
 }
 
 Static usbd_status
@@ -359,10 +359,10 @@ umass_init_insystem(struct umass_softc *sc)
 		DPRINTF(UDMASS_USB,
 			("%s: could not switch to Alt Interface 1\n",
 			device_xname(sc->sc_dev)));
-		return (err);
+		return err;
 	}
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 Static usbd_status
@@ -378,7 +378,7 @@ umass_init_shuttle(struct umass_softc *sc)
 	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, sizeof(status));
 
-	return (usbd_do_request(sc->sc_udev, &req, &status));
+	return usbd_do_request(sc->sc_udev, &req, &status);
 }
 
 Static void

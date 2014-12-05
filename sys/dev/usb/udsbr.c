@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.22.14.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.22.14.3 2014/12/05 09:37:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.22.14.2 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.22.14.3 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,8 +115,8 @@ udsbr_match(device_t parent, cfdata_t match, void *aux)
 
 	if (uaa->vendor != USB_VENDOR_CYPRESS ||
 	    uaa->product != USB_PRODUCT_CYPRESS_FMRADIO)
-		return (UMATCH_NONE);
-	return (UMATCH_VENDOR_PRODUCT);
+		return UMATCH_NONE;
+	return UMATCH_VENDOR_PRODUCT;
 }
 
 void
@@ -175,7 +175,7 @@ udsbr_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
 
-	return (rv);
+	return rv;
 }
 
 int
@@ -247,7 +247,7 @@ udsbr_setfreq(struct udsbr_softc *sc, int freq)
 int
 udsbr_status(struct udsbr_softc *sc)
 {
-	return (udsbr_req(sc, 0x00, 0x0000, 0x0024));
+	return udsbr_req(sc, 0x00, 0x0000, 0x0024);
 }
 
 
@@ -264,7 +264,7 @@ udsbr_get_info(void *v, struct radio_info *ri)
 	ri->freq = sc->sc_freq;
 	ri->info = udsbr_status(sc) ? RADIO_INFO_STEREO : 0;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -282,5 +282,5 @@ udsbr_set_info(void *v, struct radio_info *ri)
 	else
 		udsbr_start(sc);
 
-	return (0);
+	return 0;
 }

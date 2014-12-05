@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.38.6.4 2014/12/03 22:33:56 skrll Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.38.6.5 2014/12/05 09:37:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.4 2014/12/03 22:33:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.5 2014/12/05 09:37:50 skrll Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -164,9 +164,9 @@ usscanner_match(device_t parent, cfdata_t match, void *aux)
 
 	if (uaa->vendor == USB_VENDOR_HP &&
 	    uaa->product == USB_PRODUCT_HP_5300C)
-		return (UMATCH_VENDOR_PRODUCT);
+		return UMATCH_VENDOR_PRODUCT;
 	else
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 }
 
 void
@@ -384,7 +384,7 @@ usscanner_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
 
-	return (rv);
+	return rv;
 }
 
 Static void

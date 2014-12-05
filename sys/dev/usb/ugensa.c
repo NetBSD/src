@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.31.6.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.31.6.3 2014/12/05 09:37:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.31.6.2 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.31.6.3 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,8 +130,8 @@ ugensa_match(device_t parent, cfdata_t match, void *aux)
 	DPRINTFN(20,("ugensa: vendor=0x%x, product=0x%x\n",
 		     uaa->vendor, uaa->product));
 
-	return (ugensa_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return ugensa_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 void
@@ -292,5 +292,5 @@ ugensa_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
 
-	return (rv);
+	return rv;
 }

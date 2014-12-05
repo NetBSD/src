@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.16.2.3 2014/12/02 09:00:33 skrll Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.16.2.4 2014/12/05 09:37:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16.2.3 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16.2.4 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -111,9 +111,9 @@ stuirda_match(device_t parent, cfdata_t match, void *aux)
 	DPRINTFN(50,("stuirda_match\n"));
 
 	if (stuirda_lookup(uaa->vendor, uaa->product) != NULL)
-		return (UMATCH_VENDOR_PRODUCT);
+		return UMATCH_VENDOR_PRODUCT;
 
-	return (UMATCH_NONE);
+	return UMATCH_NONE;
 }
 
 void uirda_attach(device_t, device_t, void *);
@@ -284,16 +284,16 @@ stuirda_write(void *h, struct uio *uio, int flag)
 	DPRINTFN(1,("%s: sc=%p\n", __func__, sc));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_wr_buf == NULL)
-		return (EINVAL);
+		return EINVAL;
 #endif
 
 	n = uio->uio_resid;
 	if (n > sc->sc_params.maxsize)
-		return (EINVAL);
+		return EINVAL;
 
 	sc->sc_refcnt++;
 	mutex_enter(&sc->sc_wr_buf_lk);
@@ -331,5 +331,5 @@ stuirda_write(void *h, struct uio *uio, int flag)
 		usb_detach_wakeupold(sc->sc_dev);
 
 	DPRINTFN(1,("%s: sc=%p done\n", __func__, sc));
-	return (error);
+	return error;
 }

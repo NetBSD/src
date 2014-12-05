@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.38.6.3 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: uirda.c,v 1.38.6.4 2014/12/05 09:37:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.6.3 2014/12/02 09:00:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.6.4 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,13 +159,13 @@ uirda_match(device_t parent, cfdata_t match, void *aux)
 	DPRINTFN(50,("uirda_match\n"));
 
 	if (uirda_lookup(uaa->vendor, uaa->product) != NULL)
-		return (UMATCH_VENDOR_PRODUCT);
+		return UMATCH_VENDOR_PRODUCT;
 
 	if (uaa->class == UICLASS_APPL_SPEC &&
 	    uaa->subclass == UISUBCLASS_IRDA &&
 	    uaa->proto == UIPROTO_IRDA)
-		return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
-	return (UMATCH_NONE);
+		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
+	return UMATCH_NONE;
 }
 
 void
@@ -332,7 +332,7 @@ uirda_detach(device_t self, int flags)
 	seldestroy(&sc->sc_rd_sel);
 	seldestroy(&sc->sc_wr_sel);
 
-	return (rv);
+	return rv;
 }
 
 void
@@ -411,7 +411,7 @@ uirda_open(void *h, int flag, int mode,
 	err = uirda_start_read(sc);
 	/* XXX check err */
 
-	return (0);
+	return 0;
 
 bad5:
 	usbd_free_xfer(sc->sc_wr_xfer);
@@ -426,7 +426,7 @@ bad2:
 	usbd_close_pipe(sc->sc_rd_pipe);
 	sc->sc_rd_pipe = NULL;
 bad1:
-	return (error);
+	return error;
 }
 
 int
@@ -458,7 +458,7 @@ uirda_close(void *h, int flag, int mode,
 		sc->sc_wr_buf = NULL;
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -472,11 +472,11 @@ uirda_read(void *h, struct uio *uio, int flag)
 	DPRINTFN(1,("%s: sc=%p\n", __func__, sc));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_rd_buf == NULL)
-		return (EINVAL);
+		return EINVAL;
 #endif
 
 	sc->sc_refcnt++;
@@ -518,7 +518,7 @@ uirda_read(void *h, struct uio *uio, int flag)
  ret:
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
-	return (error);
+	return error;
 }
 
 int
@@ -532,16 +532,16 @@ uirda_write(void *h, struct uio *uio, int flag)
 	DPRINTFN(1,("%s: sc=%p\n", __func__, sc));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_wr_buf == NULL)
-		return (EINVAL);
+		return EINVAL;
 #endif
 
 	n = uio->uio_resid;
 	if (n > sc->sc_params.maxsize)
-		return (EINVAL);
+		return EINVAL;
 
 	sc->sc_refcnt++;
 	mutex_enter(&sc->sc_wr_buf_lk);
@@ -572,7 +572,7 @@ uirda_write(void *h, struct uio *uio, int flag)
 		usb_detach_wakeupold(sc->sc_dev);
 
 	DPRINTFN(1,("%s: sc=%p done\n", __func__, sc));
-	return (error);
+	return error;
 }
 
 int
@@ -598,7 +598,7 @@ uirda_poll(void *h, int events, struct lwp *l)
 	}
 	splx(s);
 
-	return (revents);
+	return revents;
 }
 
 static void
@@ -618,7 +618,7 @@ filt_uirdaread(struct knote *kn, long hint)
 	struct uirda_softc *sc = kn->kn_hook;
 
 	kn->kn_data = sc->sc_rd_count;
-	return (kn->kn_data > 0);
+	return kn->kn_data > 0;
 }
 
 static void
@@ -654,7 +654,7 @@ uirda_kqfilter(void *h, struct knote *kn)
 		kn->kn_fop = &uirdawrite_filtops;
 		break;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	kn->kn_hook = sc;
@@ -663,7 +663,7 @@ uirda_kqfilter(void *h, struct knote *kn)
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	splx(s);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -680,7 +680,7 @@ uirda_set_params(void *h, struct irda_params *p)
 		 sc, p->speed, p->ebofs, p->maxsize));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	hdr = 0;
 	if (p->ebofs != sc->sc_params.ebofs) {
@@ -706,7 +706,7 @@ uirda_set_params(void *h, struct irda_params *p)
 			}
 		}
 		/* no good value found */
-		return (EINVAL);
+		return EINVAL;
 	found1:
 		DPRINTF(("uirda_set_params: ebofs hdr=0x%02x\n", hdr));
 		;
@@ -723,20 +723,20 @@ uirda_set_params(void *h, struct irda_params *p)
 			}
 		}
 		/* no good value found */
-		return (EINVAL);
+		return EINVAL;
 	found2:
 		DPRINTF(("uirda_set_params: speed hdr=0x%02x\n", hdr));
 		;
 	}
 	if (p->maxsize != sc->sc_params.maxsize) {
 		if (p->maxsize > IRDA_MAX_FRAME_SIZE)
-			return (EINVAL);
+			return EINVAL;
 		sc->sc_params.maxsize = p->maxsize;
 #if 0
 		DPRINTF(("%s: new buffers, old size=%d\n", __func__,
 			 sc->sc_params.maxsize));
 		if (p->maxsize > 10000 || p < 0) /* XXX */
-			return (EINVAL);
+			return EINVAL;
 
 		/* Change the write buffer */
 		mutex_enter(&sc->sc_wr_buf_lk);
@@ -745,7 +745,7 @@ uirda_set_params(void *h, struct irda_params *p)
 		sc->sc_wr_buf = usbd_alloc_buffer(sc->sc_wr_xfer, p->maxsize+1);
 		mutex_exit(&sc->sc_wr_buf_lk);
 		if (sc->sc_wr_buf == NULL)
-			return (ENOMEM);
+			return ENOMEM;
 
 		/* Change the read buffer */
 		mutex_enter(&sc->sc_rd_buf_lk);
@@ -756,7 +756,7 @@ uirda_set_params(void *h, struct irda_params *p)
 		sc->sc_rd_count = 0;
 		if (sc->sc_rd_buf == NULL) {
 			mutex_exit(&sc->sc_rd_buf_lk);
-			return (ENOMEM);
+			return ENOMEM;
 		}
 		sc->sc_params.maxsize = p->maxsize;
 		err = uirda_start_read(sc); /* XXX check */
@@ -788,7 +788,7 @@ uirda_set_params(void *h, struct irda_params *p)
 
 	sc->sc_params = *p;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -801,7 +801,7 @@ uirda_get_speeds(void *h, int *speeds)
 	DPRINTF(("%s: sc=%p\n", __func__, sc));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	usp = UGETW(sc->sc_irdadesc.wBaudRate);
 	isp = 0;
@@ -816,7 +816,7 @@ uirda_get_speeds(void *h, int *speeds)
 	if (usp & UI_BR_2400)    isp |= IRDA_SPEED_2400;
 	*speeds = isp;
 	DPRINTF(("%s: speeds = 0x%x\n", __func__, isp));
-	return (0);
+	return 0;
 }
 
 int
@@ -829,7 +829,7 @@ uirda_get_turnarounds(void *h, int *turnarounds)
 	DPRINTF(("%s: sc=%p\n", __func__, sc));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	uta = sc->sc_irdadesc.bmMinTurnaroundTime;
 	ita = 0;
@@ -842,7 +842,7 @@ uirda_get_turnarounds(void *h, int *turnarounds)
 	if (uta & UI_TA_5000)  ita |= IRDA_TURNT_5000;
 	if (uta & UI_TA_10000) ita |= IRDA_TURNT_10000;
 	*turnarounds = ita;
-	return (0);
+	return 0;
 }
 
 void
@@ -878,7 +878,7 @@ uirda_start_read(struct uirda_softc *sc)
 		    sc->sc_params.maxsize + UIRDA_INPUT_HEADER_SIZE));
 
 	if (sc->sc_dying)
-		return (USBD_IOERROR);
+		return USBD_IOERROR;
 
 	if (sc->sc_rd_err) {
 		sc->sc_rd_err = 0;
@@ -893,9 +893,9 @@ uirda_start_read(struct uirda_softc *sc)
 	err = usbd_transfer(sc->sc_rd_xfer);
 	if (err != USBD_IN_PROGRESS) {
 		DPRINTF(("uirda_start_read: err=%d\n", err));
-		return (err);
+		return err;
 	}
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 usbd_status
@@ -911,5 +911,5 @@ usbd_get_class_desc(usbd_device_handle dev, int type, int index, int len, void *
 	USETW2(req.wValue, type, index);
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, len);
-	return (usbd_do_request(dev, &req, desc));
+	return usbd_do_request(dev, &req, desc);
 }

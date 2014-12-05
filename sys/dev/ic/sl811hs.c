@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47.6.10 2014/12/04 08:04:31 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.11 2014/12/05 09:37:49 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.10 2014/12/04 08:04:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.11 2014/12/05 09:37:49 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -1092,7 +1092,7 @@ slhci_open(struct usbd_pipe *pipe)
 int
 slhci_supported_rev(uint8_t rev)
 {
-	return (rev >= SLTYPE_SL811HS_R12 && rev <= SLTYPE_SL811HS_R15);
+	return rev >= SLTYPE_SL811HS_R12 && rev <= SLTYPE_SL811HS_R15;
 }
 
 /*
