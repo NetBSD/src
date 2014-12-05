@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.135.2.1 2014/12/02 09:00:33 skrll Exp $
+#	$NetBSD: files.usb,v 1.135.2.2 2014/12/05 14:55:14 skrll Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -99,7 +99,7 @@ define	usbifif { [port = -1], [configuration = -1], [interface = -1],
 
 device	usb: usbroothubif
 attach	usb at usbus
-file	dev/usb/usb.c			usb			needs-flag
+file	dev/usb/usb.c			usb
 file	dev/usb/usbdi.c			usb
 file	dev/usb/usbdi_util.c		usb
 file	dev/usb/usb_subr.c		usb
