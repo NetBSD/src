@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.30 2014/12/05 01:13:11 jmcneill Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.31 2014/12/05 01:20:48 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.30 2014/12/05 01:13:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.31 2014/12/05 01:20:48 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -582,11 +582,12 @@ awin_device_register(device_t self, void *aux)
 #if defined(ALLWINNER_A80)
 		/* XXX Cubie4 SDK u-boot wrongly sets cbar to 0x01c80000 */
 		if (armreg_cbar_read() != AWIN_A80_GIC_BASE) {
+			aprint_normal("fixup: cbar %#x -> %#x\n",
+			    armreg_cbar_read(), AWIN_A80_GIC_BASE);
 			prop_dictionary_set_uint32(dict, "cbar",
 			    AWIN_A80_GIC_BASE);
 		}
 #endif
-
 
 		/*
 		 * XXX KLUDGE ALERT XXX
