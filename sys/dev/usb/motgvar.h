@@ -1,4 +1,4 @@
-/*	$NetBSD: motgvar.h,v 1.4.2.3 2014/12/04 08:04:31 skrll Exp $	*/
+/*	$NetBSD: motgvar.h,v 1.4.2.4 2014/12/05 13:23:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ struct motg_xfer {
 #define UXFER(xfer) ((struct motg_xfer *)(xfer))
 
 
-usbd_status	motg_init(struct motg_softc *);
+int		motg_init(struct motg_softc *);
 int		motg_intr(struct motg_softc *, uint16_t, uint16_t, uint8_t);
 int		motg_intr_vbus(struct motg_softc *, int);
 int		motg_detach(struct motg_softc *, int);

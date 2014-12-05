@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_arbus.c,v 1.2.16.2 2014/12/03 12:52:06 skrll Exp $	*/
+/*	$NetBSD: ehci_arbus.c,v 1.2.16.3 2014/12/05 13:23:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.2.16.2 2014/12/03 12:52:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.2.16.3 2014/12/05 13:23:38 skrll Exp $");
 
 #include "locators.h"
 
@@ -77,7 +77,6 @@ ehci_arbus_attach(device_t parent, device_t self, void *aux)
 	struct arbus_attach_args * const aa = aux;
 	void *ih = NULL;
 	int error;
-	int status;
 
 	sc->iot = aa->aa_bst_le;
 	sc->sc_size = aa->aa_size;
@@ -123,10 +122,10 @@ ehci_arbus_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_ncomp = 0;
 
-	status = ehci_init(sc);
-	if (status != USBD_NORMAL_COMPLETION) {
+	error = ehci_init(sc);
+	if (error) {
 		aprint_error("%s: init failed, error=%d\n", device_xname(self),
-		    status);
+		    error);
 		if (ih != NULL)
 			arbus_intr_disestablish(ih);
 		return;

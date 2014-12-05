@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.14 2014/12/05 09:37:49 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.15 2014/12/05 13:23:38 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.14 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.15 2014/12/05 13:23:38 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -356,7 +356,7 @@ static const uint8_t revbits[EHCI_MAX_POLLRATE] = {
 0x07,0x47,0x27,0x67,0x17,0x57,0x37,0x77,0x0f,0x4f,0x2f,0x6f,0x1f,0x5f,0x3f,0x7f,
 };
 
-usbd_status
+int
 ehci_init(ehci_softc_t *sc)
 {
 	uint32_t vers, sparams, cparams, hcr;
@@ -442,7 +442,7 @@ ehci_init(ehci_softc_t *sc)
 	}
 	if (hcr) {
 		aprint_error("%s: reset timeout\n", device_xname(sc->sc_dev));
-		return USBD_IOERROR;
+		return EIO;
 	}
 	if (sc->sc_vendor_init)
 		sc->sc_vendor_init(sc);
@@ -466,7 +466,7 @@ ehci_init(ehci_softc_t *sc)
 	case 0: sc->sc_flsize = 1024; break;
 	case 1: sc->sc_flsize = 512; break;
 	case 2: sc->sc_flsize = 256; break;
-	case 3: return USBD_IOERROR;
+	case 3: return EIO;
 	}
 	err = usb_allocmem(&sc->sc_bus, sc->sc_flsize * sizeof(ehci_link_t),
 	    EHCI_FLALIGN_ALIGN, &sc->sc_fldma);
@@ -502,7 +502,7 @@ ehci_init(ehci_softc_t *sc)
 	for (i = 0; i < EHCI_INTRQHS; i++) {
 		sqh = ehci_alloc_sqh(sc);
 		if (sqh == NULL) {
-			err = USBD_NOMEM;
+			err = ENOMEM;
 			goto bad1;
 		}
 		sc->sc_islots[i].sqh = sqh;
@@ -545,7 +545,7 @@ ehci_init(ehci_softc_t *sc)
 	/* Allocate dummy QH that starts the async list. */
 	sqh = ehci_alloc_sqh(sc);
 	if (sqh == NULL) {
-		err = USBD_NOMEM;
+		err = ENOMEM;
 		goto bad1;
 	}
 	/* Fill the QH */
@@ -591,14 +591,14 @@ ehci_init(ehci_softc_t *sc)
 	}
 	if (hcr) {
 		aprint_error("%s: run timeout\n", device_xname(sc->sc_dev));
-		return USBD_IOERROR;
+		return EIO;
 	}
 
 	/* Enable interrupts */
 	USBHIST_LOG(ehcidebug, "enabling interupts", 0, 0, 0, 0);
 	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 
 #if 0
  bad2:

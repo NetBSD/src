@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.53.2.1 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.53.2.2 2014/12/05 13:23:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.53.2.1 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.53.2.2 2014/12/05 13:23:38 skrll Exp $");
 
 #include "ehci.h"
 
@@ -89,7 +89,6 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
-	usbd_status r;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc.sc_dev = self;
@@ -156,9 +155,9 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_id_vendor = PCI_VENDOR(pa->pa_id);
 	pci_findvendor(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
 	    sc->sc.sc_id_vendor);
-	r = ohci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	int err = ohci_init(&sc->sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		goto fail;
 	}
 

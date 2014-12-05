@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.13 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.14 2014/12/05 13:23:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.13 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.14 2014/12/05 13:23:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -611,7 +611,7 @@ ohci_free_sitd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 	sc->sc_freeitds = sitd;
 }
 
-usbd_status
+int
 ohci_init(ohci_softc_t *sc)
 {
 	ohci_soft_ed_t *sed, *psed;
@@ -648,7 +648,7 @@ ohci_init(ohci_softc_t *sc)
 	if (OHCI_REV_HI(rev) != 1 || OHCI_REV_LO(rev) != 0) {
 		aprint_error_dev(sc->sc_dev, "unsupported OHCI revision\n");
 		sc->sc_bus.ub_revision = USBREV_UNKNOWN;
-		return USBD_INVAL;
+		return -1;
 	}
 	sc->sc_bus.ub_revision = USBREV_1_0;
 	sc->sc_bus.ub_usedma = true;
@@ -669,7 +669,7 @@ ohci_init(ohci_softc_t *sc)
 	/* Allocate dummy ED that starts the control list. */
 	sc->sc_ctrl_head = ohci_alloc_sed(sc);
 	if (sc->sc_ctrl_head == NULL) {
-		err = USBD_NOMEM;
+		err = ENOMEM;
 		goto bad1;
 	}
 	sc->sc_ctrl_head->ed.ed_flags |= HTOO32(OHCI_ED_SKIP);
@@ -677,7 +677,7 @@ ohci_init(ohci_softc_t *sc)
 	/* Allocate dummy ED that starts the bulk list. */
 	sc->sc_bulk_head = ohci_alloc_sed(sc);
 	if (sc->sc_bulk_head == NULL) {
-		err = USBD_NOMEM;
+		err = ENOMEM;
 		goto bad2;
 	}
 	sc->sc_bulk_head->ed.ed_flags |= HTOO32(OHCI_ED_SKIP);
@@ -688,7 +688,7 @@ ohci_init(ohci_softc_t *sc)
 	/* Allocate dummy ED that starts the isochronous list. */
 	sc->sc_isoc_head = ohci_alloc_sed(sc);
 	if (sc->sc_isoc_head == NULL) {
-		err = USBD_NOMEM;
+		err = ENOMEM;
 		goto bad3;
 	}
 	sc->sc_isoc_head->ed.ed_flags |= HTOO32(OHCI_ED_SKIP);
@@ -702,7 +702,7 @@ ohci_init(ohci_softc_t *sc)
 		if (sed == NULL) {
 			while (--i >= 0)
 				ohci_free_sed(sc, sc->sc_eds[i]);
-			err = USBD_NOMEM;
+			err = ENOMEM;
 			goto bad4;
 		}
 		/* All ED fields are set to 0. */
@@ -802,7 +802,7 @@ ohci_init(ohci_softc_t *sc)
 	}
 	if (hcr) {
 		aprint_error_dev(sc->sc_dev, "reset timeout\n");
-		err = USBD_IOERROR;
+		err = EIO;
 		goto bad5;
 	}
 #ifdef OHCI_DEBUG
@@ -881,7 +881,7 @@ ohci_init(ohci_softc_t *sc)
 	DPRINTFN(1,("ohci_init: enabling %#x\n", sc->sc_eintrs | OHCI_MIE));
 	OWRITE4(sc, OHCI_INTERRUPT_ENABLE, sc->sc_eintrs | OHCI_MIE);
 
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 
  bad5:
 	for (i = 0; i < OHCI_NO_EDS; i++)

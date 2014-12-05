@@ -1,7 +1,7 @@
-/*	$Id: obio_ohci.c,v 1.10.6.1 2014/12/03 12:52:05 skrll Exp $	*/
+/*	$Id: obio_ohci.c,v 1.10.6.2 2014/12/05 13:23:37 skrll Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: obio_ohci.c,v 1.10.6.1 2014/12/03 12:52:05 skrll Exp $	*/
+/*	$NetBSD: obio_ohci.c,v 1.10.6.2 2014/12/05 13:23:37 skrll Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.10.6.1 2014/12/03 12:52:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.10.6.2 2014/12/05 13:23:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,6 @@ obioohci_attach(device_t parent, device_t self, void *aux)
 	struct obio_softc *psc = device_private(parent);
 	struct obioohci_softc *sc = device_private(self);
 	struct obio_attach_args *obio = aux;
-	usbd_status r;
 
 	KASSERT(psc->sc_obio_dev == NULL);
 	psc->sc_obio_dev = self;
@@ -150,9 +149,9 @@ obioohci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	strlcpy(sc->sc.sc_vendor, "OMAP", sizeof(sc->sc.sc_vendor));
-	r = ohci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	int err = ohci_init(&sc->sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		goto free_intr;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.10 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.11 2014/12/05 13:23:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.10 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.11 2014/12/05 13:23:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ const struct usbd_pipe_methods motg_device_data_methods = {
 	.upm_done =	motg_device_data_done,
 };
 
-usbd_status
+int
 motg_init(struct motg_softc *sc)
 {
 	uint32_t nrx, ntx, val;
@@ -242,7 +242,7 @@ motg_init(struct motg_softc *sc)
 	int offset, i;
 
 	if (sc->sc_mode == MOTG_MODE_DEVICE)
-		return USBD_NORMAL_COMPLETION; /* not supported */
+		return ENOTSUP; /* not supported */
 
 	/* disable all interrupts */
 	UWRITE1(sc, MUSB2_REG_INTUSBE, 0);
@@ -307,7 +307,7 @@ motg_init(struct motg_softc *sc)
 	}
 	if (sc->sc_ep_max == 0) {
 		aprint_error_dev(sc->sc_dev, " no endpoints\n");
-		return USBD_INVAL;
+		return -1;
 	}
 	KASSERT(sc->sc_ep_max <= MOTG_MAX_HW_EP);
 	/* read out configuration data */
@@ -438,7 +438,7 @@ motg_init(struct motg_softc *sc)
 	snprintf(sc->sc_vendor, sizeof(sc->sc_vendor),
 	    "Mentor Graphics");
 	sc->sc_child = config_found(sc->sc_dev, &sc->sc_bus, usbctlprint);
-	return USBD_NORMAL_COMPLETION;
+	return 0;
 }
 
 static int

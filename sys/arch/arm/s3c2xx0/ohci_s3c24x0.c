@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_s3c24x0.c,v 1.8.30.3 2014/12/05 09:37:49 skrll Exp $ */
+/*	$NetBSD: ohci_s3c24x0.c,v 1.8.30.4 2014/12/05 13:23:37 skrll Exp $ */
 
 /* derived from ohci_pci.c */
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.8.30.3 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.8.30.4 2014/12/05 13:23:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +89,6 @@ ohci_ssio_attach(device_t parent, device_t self, void *aux)
 	struct ohci_ssio_softc *sc = device_private(self);
 	struct s3c2xx0_attach_args *sa = (struct s3c2xx0_attach_args *)aux;
 
-	usbd_status r;
-
 	aprint_normal("\n");
 	aprint_naive("\n");
 
@@ -124,9 +122,9 @@ ohci_ssio_attach(device_t parent, device_t self, void *aux)
 
 	strlcpy(sc->sc.sc_vendor, "Samsung", sizeof sc->sc.sc_vendor);
 
-	r = ohci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	int err = ohci_init(&sc->sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		return;
 	}
 

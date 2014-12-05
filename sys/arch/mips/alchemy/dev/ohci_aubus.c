@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.15.30.3 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.15.30.4 2014/12/05 13:23:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.15.30.3 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.15.30.4 2014/12/05 13:23:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,12 +74,9 @@ ohci_aubus_attach(device_t parent, device_t self, void *aux)
 {
 	ohci_softc_t *sc = device_private(self);
 	void *ih;
-	usbd_status r;
 	uint32_t x, tmp;
 	bus_addr_t usbh_base, usbh_enable;
 	struct aubus_attach_args *aa = aux;
-
-	r = 0;
 
 	usbh_base = aa->aa_addrs[0];
 	usbh_enable = aa->aa_addrs[1];
@@ -127,6 +124,12 @@ ohci_aubus_attach(device_t parent, device_t self, void *aux)
 			break;
 		delay(1000);
 	}
+
+	if (x == 0) {
+		aprint_error_dev(self, "device not ready\n");
+		return;
+	}
+
 	printf(": Alchemy OHCI\n");
 
 	/* Disable OHCI interrupts */
@@ -141,10 +144,9 @@ ohci_aubus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_endian = OHCI_HOST_ENDIAN;
 
-	if (x)
-		r = ohci_init(sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	int err = ohci_init(sc);
+	if (err != USBD_NORMAL_COMPLETION) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		au_intr_disestablish(ih);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.4 2014/12/04 08:04:31 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.5 2014/12/05 13:23:38 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -202,7 +202,7 @@ typedef struct ehci_softc {
 #define EOWRITE2(sc, a, x) bus_space_write_2((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a), (x))
 #define EOWRITE4(sc, a, x) bus_space_write_4((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a), (x))
 
-usbd_status	ehci_init(ehci_softc_t *);
+int		ehci_init(ehci_softc_t *);
 int		ehci_intr(void *);
 int		ehci_detach(ehci_softc_t *, int);
 int		ehci_activate(device_t, enum devact);

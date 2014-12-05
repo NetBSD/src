@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ohci.c,v 1.9.14.1 2014/12/03 12:52:05 skrll Exp $	*/
+/*	$NetBSD: pxa2x0_ohci.c,v 1.9.14.2 2014/12/05 13:23:37 skrll Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -70,7 +70,6 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pxaohci_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = aux;
-	usbd_status r;
 
 #ifdef USB_DEBUG
 	{
@@ -118,9 +117,9 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	strlcpy(sc->sc.sc_vendor, "PXA27x", sizeof(sc->sc.sc_vendor));
-	r = ohci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(sc->sc.sc_dev, "init failed, error=%d\n", r);
+	int err = ohci_init(&sc->sc);
+	if (err) {
+		aprint_error_dev(sc->sc.sc_dev, "init failed, error=%d\n", err);
 		goto free_intr;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.55.6.3 2014/12/04 08:04:31 skrll Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.55.6.4 2014/12/05 13:23:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ struct ohci_xfer {
 	struct usb_task	abort_task;
 };
 
-usbd_status	ohci_init(ohci_softc_t *);
+int		ohci_init(ohci_softc_t *);
 int		ohci_intr(void *);
 int		ohci_detach(ohci_softc_t *, int);
 bool		ohci_shutdown(device_t, int);

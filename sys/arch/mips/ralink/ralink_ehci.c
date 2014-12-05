@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_ehci.c,v 1.5.4.1 2014/12/03 12:52:06 skrll Exp $	*/
+/*	$NetBSD: ralink_ehci.c,v 1.5.4.2 2014/12/05 13:23:38 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_ehci.c -- Ralink EHCI USB Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.5.4.1 2014/12/03 12:52:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.5.4.2 2014/12/05 13:23:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,7 +86,6 @@ ralink_ehci_attach(device_t parent, device_t self, void *aux)
 	struct ralink_ehci_softc * const sc = device_private(self);
 	const struct mainbus_attach_args *ma = aux;
 	struct ralink_usb_hc *ruh;
-	usbd_status status;
 	int error;
 
 	aprint_naive(": EHCI USB controller\n");
@@ -159,9 +158,9 @@ ralink_ehci_attach(device_t parent, device_t self, void *aux)
 	strlcpy(sc->sc_ehci.sc_vendor, "Ralink", sizeof(sc->sc_ehci.sc_vendor));
 
 	/* Initialize EHCI */
-	status = ehci_init(&sc->sc_ehci);
-	if (status != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", status);
+	int err = ehci_init(&sc->sc_ehci);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		goto fail_1;
 	}
 

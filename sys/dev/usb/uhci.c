@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.13 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.14 2014/12/05 13:23:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.13 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.14 2014/12/05 13:23:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,7 +365,7 @@ uhci_globalreset(uhci_softc_t *sc)
 	UHCICMD(sc, 0);			/* do nothing */
 }
 
-usbd_status
+int
 uhci_init(uhci_softc_t *sc)
 {
 	usbd_status err;
@@ -405,7 +405,7 @@ uhci_init(uhci_softc_t *sc)
 	 */
 	std = uhci_alloc_std(sc);
 	if (std == NULL)
-		return USBD_NOMEM;
+		return ENOMEM;
 	std->link.std = NULL;
 	std->td.td_link = htole32(UHCI_PTR_T);
 	std->td.td_status = htole32(0); /* inactive */
@@ -417,7 +417,7 @@ uhci_init(uhci_softc_t *sc)
 	/* Allocate the dummy QH marking the end and used for looping the QHs.*/
 	lsqh = uhci_alloc_sqh(sc);
 	if (lsqh == NULL)
-		return USBD_NOMEM;
+		return ENOMEM;
 	lsqh->hlink = NULL;
 	lsqh->qh.qh_hlink = htole32(UHCI_PTR_T);	/* end of QH chain */
 	lsqh->elink = std;
@@ -429,7 +429,7 @@ uhci_init(uhci_softc_t *sc)
 	/* Allocate the dummy QH where bulk traffic will be queued. */
 	bsqh = uhci_alloc_sqh(sc);
 	if (bsqh == NULL)
-		return USBD_NOMEM;
+		return ENOMEM;
 	bsqh->hlink = lsqh;
 	bsqh->qh.qh_hlink = htole32(lsqh->physaddr | UHCI_PTR_QH);
 	bsqh->elink = NULL;
@@ -441,7 +441,7 @@ uhci_init(uhci_softc_t *sc)
 	/* Allocate dummy QH where high speed control traffic will be queued. */
 	chsqh = uhci_alloc_sqh(sc);
 	if (chsqh == NULL)
-		return USBD_NOMEM;
+		return ENOMEM;
 	chsqh->hlink = bsqh;
 	chsqh->qh.qh_hlink = htole32(bsqh->physaddr | UHCI_PTR_QH);
 	chsqh->elink = NULL;
@@ -453,7 +453,7 @@ uhci_init(uhci_softc_t *sc)
 	/* Allocate dummy QH where control traffic will be queued. */
 	clsqh = uhci_alloc_sqh(sc);
 	if (clsqh == NULL)
-		return USBD_NOMEM;
+		return ENOMEM;
 	clsqh->hlink = chsqh;
 	clsqh->qh.qh_hlink = htole32(chsqh->physaddr | UHCI_PTR_QH);
 	clsqh->elink = NULL;

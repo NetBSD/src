@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.52.14.3 2014/12/04 08:04:31 skrll Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.52.14.4 2014/12/05 13:23:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ typedef struct uhci_softc {
 	device_t sc_child;		/* /dev/usb# device */
 } uhci_softc_t;
 
-usbd_status	uhci_init(uhci_softc_t *);
+int		uhci_init(uhci_softc_t *);
 int		uhci_intr(void *);
 int		uhci_detach(uhci_softc_t *, int);
 void		uhci_childdet(device_t, device_t);

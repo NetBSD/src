@@ -1,5 +1,5 @@
-/*	$Id: at91ohci.c,v 1.5.28.3 2014/12/05 09:37:48 skrll Exp $	*/
-/*	$NetBSD: at91ohci.c,v 1.5.28.3 2014/12/05 09:37:48 skrll Exp $	*/
+/*	$Id: at91ohci.c,v 1.5.28.4 2014/12/05 13:23:37 skrll Exp $	*/
+/*	$NetBSD: at91ohci.c,v 1.5.28.4 2014/12/05 13:23:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91ohci.c,v 1.5.28.3 2014/12/05 09:37:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91ohci.c,v 1.5.28.4 2014/12/05 13:23:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,6 @@ void
 at91ohci_callback(device_t self)
 {
 	struct at91ohci_softc *sc = device_private(self);
-	usbd_status r;
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
@@ -130,10 +129,10 @@ at91ohci_callback(device_t self)
 	strlcpy(sc->sc.sc_vendor, "Atmel", sizeof sc->sc.sc_vendor);
 
 	sc->sc_ih = at91_intr_establish(sc->sc_pid, IPL_USB, INTR_HIGH_LEVEL, ohci_intr, sc);
-	r = ohci_init(&sc->sc);
+	int err = ohci_init(&sc->sc);
 
-	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: init failed, error=%d\n", device_xname(self), r);
+	if (err) {
+		printf("%s: init failed, error=%d\n", device_xname(self), err);
 
 		at91_intr_disestablish(sc->sc_ih);
 		return;
