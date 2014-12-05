@@ -596,95 +596,6 @@ zfs_znode_dmu_fini(znode_t *zp)
 }
 
 /*
- * Construct a new znode/vnode and intialize.
- *
- * This does not do a call to dmu_set_user() that is
- * up to the caller to do, in case you don't want to
- * return the znode
- */
-
-static znode_t *
-zfs_znode_alloc(zfsvfs_t *zfsvfs, dmu_buf_t *db, int blksz)
-{
-	znode_t	*zp;
-	vnode_t *vp;
-	int error;
-
-	zp = kmem_cache_alloc(znode_cache, KM_SLEEP);
-
-	for (;;) {
-		error = getnewvnode(VT_ZFS, zfsvfs->z_parent->z_vfs,
-		    zfs_vnodeop_p, NULL, &zp->z_vnode);
-		if (__predict_true(error == 0))
-			break;
-		printf("WARNING: zfs_znode_alloc: unable to get vnode, "
-		    "error=%d\n", error);
-		(void)kpause("zfsnewvn", false, hz, NULL);
-	}
-
-	ASSERT(zp->z_dirlocks == NULL);
-	ASSERT(zp->z_dbuf == NULL);
-	ASSERT(!POINTER_IS_VALID(zp->z_zfsvfs));
-
-	/*
-	 * Defer setting z_zfsvfs until the znode is ready to be a candidate for
-	 * the zfs_znode_move() callback.
-	 */
-	zp->z_phys = NULL;
-	zp->z_unlinked = 0;
-	zp->z_atime_dirty = 0;
-	zp->z_mapcnt = 0;
-	zp->z_last_itx = 0;
-	zp->z_id = db->db_object;
-	zp->z_blksz = blksz;
-	zp->z_seq = 0x7A4653;
-	zp->z_sync_cnt = 0;
-
-	vp = ZTOV(zp);
-
-	zfs_znode_dmu_init(zfsvfs, zp, db);
-
-	zp->z_gen = zp->z_phys->zp_gen;
-
-	vp->v_vfsp = zfsvfs->z_parent->z_vfs;
-	vp->v_type = IFTOVT((mode_t)zp->z_phys->zp_mode);
-	vp->v_data = zp;
-	genfs_node_init(vp, &zfs_genfsops);
-	switch (vp->v_type) {
-	case VDIR:
-		zp->z_zn_prefetch = B_TRUE; /* z_prefetch default is enabled */
-		break;
-	case VBLK:
-	case VCHR:
-	/* XXX NetBSD	vp->v_op = zfs_specop_p; */
-		spec_node_init(vp, zfs_cmpldev(zp->z_phys->zp_rdev));
-		break;
-	case VFIFO:
-		/* XXX NetBSD vp->v_op = zfs_fifoop_p; */
-		break;
-	}
-
-	dprintf("zfs_znode_alloc znode %p -- vnode %p\n", zp, vp);
-	dprintf("zfs_znode_alloc z_id %ld\n", zp->z_id);
-	//cpu_Debugger();
-	
-	uvm_vnp_setsize(vp, zp->z_phys->zp_size);
-
-	mutex_enter(&zfsvfs->z_znodes_lock);
-	list_insert_tail(&zfsvfs->z_all_znodes, zp);
-	membar_producer();
-	/*
-	 * Everything else must be valid before assigning z_zfsvfs makes the
-	 * znode eligible for zfs_znode_move().
-	 */
-	zp->z_zfsvfs = zfsvfs;
-	mutex_exit(&zfsvfs->z_znodes_lock);
-
-	VFS_HOLD(zfsvfs->z_vfs);
-	return (zp);
-}
-
-/*
  * Create a new DMU object to hold a zfs znode.
  *
  *	IN:	dzp	- parent directory for new znode
@@ -820,7 +731,12 @@ zfs_mknode(znode_t *dzp, vattr_t *vap, dmu_tx_t *tx, cred_t *cr,
 	pzp->zp_gid = acl_ids->z_fgid;
 	pzp->zp_mode = acl_ids->z_mode;
 	if (!(flag & IS_ROOT_NODE)) {
-		*zpp = zfs_znode_alloc(zfsvfs, db, 0);
+		struct vnode *vp;
+
+		err = vcache_get(zfsvfs->z_vfs, &obj, sizeof(obj), &vp);
+		ASSERT3U(err, ==, 0);
+		*zpp = VTOZ(vp);
+		dmu_buf_rele(db, NULL);
 	} else {
 		/*
 		 * If we are creating the root node, the "parent" we
@@ -905,84 +821,36 @@ zfs_xvattr_set(znode_t *zp, xvattr_t *xvap)
 }
 
 int
-zfs_zget(zfsvfs_t *zfsvfs, uint64_t obj_num, znode_t **zpp)
+zfs_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
 {
+	uint64_t obj_num;
+	zfsvfs_t *zfsvfs;
 	dmu_object_info_t doi;
-	dmu_buf_t   *db;
-	znode_t     *zp;
-	vnode_t     *vp;
-	int err, first = 1;
+	dmu_buf_t *db;
+	znode_t *zp;
+	int err;
 
-	*zpp = NULL;
-again:
-	ZFS_OBJ_HOLD_ENTER(zfsvfs, obj_num);
+	KASSERT(key_len == sizeof(obj_num));
+	memcpy(&obj_num, key, key_len);
+
+	zfsvfs = mp->mnt_data;
 
 	err = dmu_bonus_hold(zfsvfs->z_os, obj_num, NULL, &db);
 	if (err) {
-		ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
-		return (err);
+		return err;
 	}
 
 	dmu_object_info_from_db(db, &doi);
 	if (doi.doi_bonus_type != DMU_OT_ZNODE ||
 	    doi.doi_bonus_size < sizeof (znode_phys_t)) {
 		dmu_buf_rele(db, NULL);
-		ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
-		return (EINVAL);
+		return EINVAL;
 	}
 
-	zp = dmu_buf_get_user(db);
-	if (zp != NULL) {
-		mutex_enter(&zp->z_lock);
-
-		/*
-		 * Since we do immediate eviction of the z_dbuf, we
-		 * should never find a dbuf with a znode that doesn't
-		 * know about the dbuf.
-		 */
-		ASSERT3P(zp->z_dbuf, ==, db);
-		ASSERT3U(zp->z_id, ==, obj_num);
-		if (zp->z_unlinked) {
-			err = ENOENT;
-		} else {
-			if ((vp = ZTOV(zp)) != NULL) {
-				mutex_enter(vp->v_interlock);
-				mutex_exit(&zp->z_lock);
-				if (vget(vp, 0) != 0) {
-					dmu_buf_rele(db, NULL);
-					mutex_exit(vp->v_interlock);
-					goto again;
-				}
-				mutex_enter(&zp->z_lock);
-			} else {
-				if (first) {
-					ZFS_LOG(1, "dying znode detected (zp=%p)", zp);
-					first = 0;
-				}
-				/*
-				 * znode is dying so we can't reuse it, we must
-				 * wait until destruction is completed.
-				 */
-				dmu_buf_rele(db, NULL);
-				mutex_exit(&zp->z_lock);
-				ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
-				kpause("zcollide", 0, 1, NULL);
-				goto again;
-			}
-			*zpp = zp;
-			err = 0;
-		}
-		
-		dmu_buf_rele(db, NULL);
-		mutex_exit(&zp->z_lock);
-		ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
-		return (err);
-	}
+	KASSERT(dmu_buf_get_user(db) == NULL);
 
 	/*
-	 * Not found create new znode/vnode
-	 * but only if file exists.
-	 *
 	 * There is a small window where zfs_vget() could
 	 * find this object while a file create is still in
 	 * progress.  Since a gen number can never be zero
@@ -990,16 +858,98 @@ again:
 	 * file.
 	 */
 
-	if (((znode_phys_t *)db->db_data)->zp_gen != 0) {
-		zp = zfs_znode_alloc(zfsvfs, db, doi.doi_data_block_size);
-		*zpp = zp;
-		err = 0;
-	} else {
+	if (((znode_phys_t *)db->db_data)->zp_gen == 0) {
 		dmu_buf_rele(db, NULL);
-		err = ENOENT;
+		return ENOENT;
 	}
+
+	zp = kmem_cache_alloc(znode_cache, KM_SLEEP);
+
+	ASSERT(zp->z_dirlocks == NULL);
+	ASSERT(zp->z_dbuf == NULL);
+	ASSERT(!POINTER_IS_VALID(zp->z_zfsvfs));
+
+	/*
+	 * Defer setting z_zfsvfs until the znode is ready to be a candidate for
+	 * the zfs_znode_move() callback.
+	 */
+	zp->z_phys = NULL;
+	zp->z_unlinked = 0;
+	zp->z_atime_dirty = 0;
+	zp->z_mapcnt = 0;
+	zp->z_last_itx = 0;
+	zp->z_id = db->db_object;
+	zp->z_blksz = doi.doi_data_block_size;
+	zp->z_seq = 0x7A4653;
+	zp->z_sync_cnt = 0;
+	zp->z_vnode = vp;
+
+	zfs_znode_dmu_init(zfsvfs, zp, db);
+
+	zp->z_gen = zp->z_phys->zp_gen;
+
+	vp->v_op = zfs_vnodeop_p;
+	vp->v_tag = VT_ZFS;
+	vp->v_type = IFTOVT((mode_t)zp->z_phys->zp_mode);
+	vp->v_data = zp;
+	genfs_node_init(vp, &zfs_genfsops);
+	switch (vp->v_type) {
+	case VDIR:
+		zp->z_zn_prefetch = B_TRUE; /* z_prefetch default is enabled */
+		break;
+	case VBLK:
+	case VCHR:
+	/* XXX NetBSD	vp->v_op = zfs_specop_p; */
+		spec_node_init(vp, zfs_cmpldev(zp->z_phys->zp_rdev));
+		break;
+	case VFIFO:
+		/* XXX NetBSD vp->v_op = zfs_fifoop_p; */
+		break;
+	}
+
+	dprintf("zfs_loadvnode znode %p -- vnode %p\n", zp, vp);
+	dprintf("zfs_loadvnode z_id %ld\n", zp->z_id);
+	
+	uvm_vnp_setsize(vp, zp->z_phys->zp_size);
+
+	mutex_enter(&zfsvfs->z_znodes_lock);
+	list_insert_tail(&zfsvfs->z_all_znodes, zp);
+	membar_producer();
+	/*
+	 * Everything else must be valid before assigning z_zfsvfs makes the
+	 * znode eligible for zfs_znode_move().
+	 */
+	zp->z_zfsvfs = zfsvfs;
+	mutex_exit(&zfsvfs->z_znodes_lock);
+
+	VFS_HOLD(zfsvfs->z_vfs);
+
+	*new_key = &zp->z_id;
+
+	return 0;
+}
+
+int
+zfs_zget(zfsvfs_t *zfsvfs, uint64_t obj_num, znode_t **zpp)
+{
+	struct vnode *vp;
+	int error;
+
+	ZFS_OBJ_HOLD_ENTER(zfsvfs, obj_num);
+
+	error = vcache_get(zfsvfs->z_vfs, &obj_num, sizeof(obj_num), &vp);
+	if (error == 0 && VTOZ(vp)->z_unlinked) {
+		vrele(vp);
+		error = ENOENT;
+	}
+	if (error)
+		*zpp = NULL;
+	else
+		*zpp = VTOZ(vp);
+
 	ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
-	return (err);
+
+	return error;
 }
 
 int
@@ -1102,14 +1052,21 @@ void
 zfs_znode_free(znode_t *zp)
 {
 	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
-	struct vnode *vp = ZTOV(zp);
+	struct vnode *vp;
 
-	/* XXX Not all callers are from VOP_RECLAIM.  What to do?  */
-	KASSERT(vp != NULL);
-	mutex_enter(vp->v_interlock); /* XXX Necessary?  */
-	genfs_node_destroy(vp);
-	vp->v_data = NULL;
-	mutex_exit(vp->v_interlock);
+	mutex_enter(&zp->z_lock);
+	vp = ZTOV(zp);
+	if (vp != NULL) {
+		vcache_remove(vp->v_mount, &zp->z_id, sizeof(zp->z_id));
+		genfs_node_destroy(vp);
+		/*
+		 * To interlock with zfs_sync().
+		 */
+        	mutex_enter(vp->v_interlock);
+		vp->v_data = NULL;
+		mutex_exit(vp->v_interlock);
+	}
+	mutex_exit(&zp->z_lock);
 
 	dprintf("destroying znode %p\n", zp);
 	//cpu_Debugger();
