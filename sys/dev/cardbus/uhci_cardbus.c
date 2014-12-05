@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_cardbus.c,v 1.21.2.2 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: uhci_cardbus.c,v 1.21.2.3 2014/12/05 13:23:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.21.2.2 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.21.2.3 2014/12/05 13:23:38 skrll Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -100,7 +100,6 @@ uhci_cardbus_attach(device_t parent, device_t self,
 	pcireg_t csr;
 	const char *devname = device_xname(self);
 	char devinfo[256];
-	usbd_status r;
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_bus.ub_hcpriv = sc;
@@ -159,9 +158,9 @@ uhci_cardbus_attach(device_t parent, device_t self,
 	pci_findvendor(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
 	    sc->sc.sc_id_vendor);
 
-	r = uhci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: init failed, error=%d\n", devname, r);
+	int err = uhci_init(&sc->sc);
+	if (err) {
+		printf("%s: init failed, error=%d\n", devname, err);
 
 		/* Avoid spurious interrupts. */
 		Cardbus_intr_disestablish(ct, sc->sc_ih);

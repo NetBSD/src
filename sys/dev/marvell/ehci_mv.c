@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_mv.c,v 1.5.6.2 2014/12/03 12:52:06 skrll Exp $	*/
+/*	$NetBSD: ehci_mv.c,v 1.5.6.3 2014/12/05 13:23:38 skrll Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.5.6.2 2014/12/03 12:52:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.5.6.3 2014/12/05 13:23:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -198,7 +198,6 @@ mvusb_attach(device_t parent, device_t self, void *aux)
 {
 	struct mvusb_softc *sc = device_private(self);
 	struct marvell_attach_args *mva = aux;
-	usbd_status r;
 
 	aprint_normal(": Marvell USB 2.0 Interface\n");
 	aprint_naive("\n");
@@ -243,9 +242,9 @@ mvusb_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_vendor_init = mvusb_vendor_init;
 	sc->sc.sc_vendor_port_status = mvusb_vendor_port_status;
 
-	r = ehci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	int err = ehci_init(&sc->sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.32.2.2 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.32.2.3 2014/12/05 13:23:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.32.2.2 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.32.2.3 2014/12/05 13:23:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,6 @@ ehci_cardbus_attach(device_t parent, device_t self, void *aux)
 	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t csr;
 	char devinfo[256];
-	usbd_status r;
 	u_int ncomp;
 	const char *devname = device_xname(self);
 	struct usb_cardbus *up;
@@ -190,9 +189,9 @@ ehci_cardbus_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc.sc_ncomp = ncomp;
 
-	r = ehci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: init failed, error=%d\n", devname, r);
+	int err = ehci_init(&sc->sc);
+	if (err) {
+		printf("%s: init failed, error=%d\n", devname, err);
 
 		/* Avoid spurious interrupts. */
 		Cardbus_intr_disestablish(ct, sc->sc_ih);

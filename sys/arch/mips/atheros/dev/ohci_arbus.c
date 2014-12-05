@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_arbus.c,v 1.1.30.2 2014/12/03 12:52:06 skrll Exp $	*/
+/*	$NetBSD: ohci_arbus.c,v 1.1.30.3 2014/12/05 13:23:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_arbus.c,v 1.1.30.2 2014/12/03 12:52:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_arbus.c,v 1.1.30.3 2014/12/05 13:23:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,6 @@ ohci_arbus_attach(device_t parent, device_t self, void *aux)
 	ohci_softc_t * const sc = device_private(self);
 	struct arbus_attach_args * const aa = aux;
 	void *ih = NULL;
-	usbd_status status;
 
 	sc->sc_dev = self;
 	sc->iot = aa->aa_bst;
@@ -110,9 +109,9 @@ ohci_arbus_attach(device_t parent, device_t self, void *aux)
 	/* we don't handle endianess in bus space */
 	sc->sc_endian = OHCI_LITTLE_ENDIAN;
 
-	status = ohci_init(sc);
-	if (status != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", status);
+	int err = ohci_init(sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		if (ih != NULL)
 			arbus_intr_disestablish(ih);
 		return;

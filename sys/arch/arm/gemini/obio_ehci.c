@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_ehci.c,v 1.3.16.1 2014/12/03 12:52:05 skrll Exp $	*/
+/*	$NetBSD: obio_ehci.c,v 1.3.16.2 2014/12/05 13:23:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ehci.c,v 1.3.16.1 2014/12/03 12:52:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ehci.c,v 1.3.16.2 2014/12/05 13:23:37 skrll Exp $");
 
 #include "locators.h"
 
@@ -101,7 +101,6 @@ ehci_obio_attach(device_t parent, device_t self, void *aux)
 	struct ehci_softc * const sc = device_private(self);
 	struct obio_attach_args * const obio = aux;
 	const char * const devname = device_xname(self);
-	usbd_status r;
 
 	sc->sc_dev = self;
 	sc->sc_bus.ub_hcpriv = sc;
@@ -137,9 +136,9 @@ ehci_obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_id_vendor = PCI_VENDOR_FARADAY;
 	strlcpy(sc->sc_vendor, "SL351x", sizeof(sc->sc_vendor));
 
-	r = ehci_init(sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error("%s: init failed, error=%d\n", devname, r);
+	int err = ehci_init(sc);
+	if (err) {
+		aprint_error("%s: init failed, error=%d\n", devname, err);
 		return;
 	}
 

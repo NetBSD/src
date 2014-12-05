@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusb.c,v 1.7.2.2 2014/12/03 12:52:05 skrll Exp $	*/
+/*	$NetBSD: imxusb.c,v 1.7.2.3 2014/12/05 13:23:37 skrll Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi and Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.7.2.2 2014/12/03 12:52:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.7.2.3 2014/12/05 13:23:37 skrll Exp $");
 
 #include "opt_imx.h"
 
@@ -88,7 +88,6 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	ehci_softc_t *hsc = &sc->sc_hsc;
 	bus_space_tag_t iot;
 	uint16_t hcirev;
-	usbd_status r;
 	uint32_t id, hwhost, hwdevice;
 	const char *comma;
 
@@ -204,9 +203,9 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	/* Figure out vendor for root hub descriptor. */
 	strlcpy(hsc->sc_vendor, "i.MX", sizeof(hsc->sc_vendor));
 
-	r = ehci_init(hsc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	int err = ehci_init(hsc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		return;
 	}
 

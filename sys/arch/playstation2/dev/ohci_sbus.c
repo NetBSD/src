@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_sbus.c,v 1.11.8.3 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: ohci_sbus.c,v 1.11.8.4 2014/12/05 13:23:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.11.8.3 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.11.8.4 2014/12/05 13:23:38 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -117,7 +117,6 @@ void
 ohci_sbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ohci_sbus_softc *sc = device_private(self);
-	usbd_status result;
 
 	printf("\n");
 
@@ -140,10 +139,10 @@ ohci_sbus_attach(struct device *parent, struct device *self, void *aux)
 	/* IOP/EE DMA relay segment list */
 	LIST_INIT(&sc->sc_dmaseg_head);
 
-	result = ohci_init(&sc->sc);
+	int err = ohci_init(&sc->sc);
 
-	if (result != USBD_NORMAL_COMPLETION) {
-		printf(": init failed. error=%d\n", result);
+	if (err) {
+		printf(": init failed. error=%d\n", err);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.59.2.2 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.59.2.3 2014/12/05 13:23:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.59.2.2 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.59.2.3 2014/12/05 13:23:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,6 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
-	usbd_status r;
 	int ncomp;
 	struct usb_pci *up;
 	int quirk;
@@ -239,9 +238,9 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 
 	ehci_get_ownership(&sc->sc, pc, tag);
 
-	r = ehci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	int err = ehci_init(&sc->sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		goto fail;
 	}
 
