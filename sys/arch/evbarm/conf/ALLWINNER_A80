@@ -1,4 +1,4 @@
-#	$NetBSD: ALLWINNER_A80,v 1.5 2014/12/05 18:42:02 jmcneill Exp $
+#	$NetBSD: ALLWINNER_A80,v 1.6 2014/12/05 18:54:35 jmcneill Exp $
 #
 #	ALLWINNER_A80 - Allwinner A80 boards (Cubieboard4, OptimusBoard, etc)
 #
@@ -207,7 +207,7 @@ ld0		at sdmmc0
 awinicu0	at awinio0 
 
 # DMA Controller
-#awindma0	at awinio0
+awindma0	at awinio0
 
 # 64-bit counter
 #awincnt0	at awinio0
