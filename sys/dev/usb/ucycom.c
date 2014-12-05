@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.41.2.2 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.41.2.3 2014/12/05 09:37:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.41.2.2 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.41.2.3 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,8 +198,8 @@ ucycom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 
-	return (ucycom_lookup(uha->uaa->vendor, uha->uaa->product) != NULL ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return ucycom_lookup(uha->uaa->vendor, uha->uaa->product) != NULL ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 void
@@ -328,20 +328,20 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	DPRINTF(("ucycomopen: sc=%p\n", sc));
 
 	if (sc == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	if (!device_is_active(sc->sc_hdev.sc_dev))
-		return (ENXIO);
+		return ENXIO;
 
 	tp = sc->sc_tty;
 
 	DPRINTF(("ucycomopen: tp=%p\n", tp));
 
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
-		return (EBUSY);
+		return EBUSY;
 
 	s = spltty();
 
@@ -354,7 +354,7 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		if (err) {
 			/* Any cleanup? */
 			splx(s);
-			return (err);
+			return err;
 		}
 
 		/*
@@ -415,7 +415,7 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (err)
 		goto bad;
 
-	return (0);
+	return 0;
 
 bad:
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
@@ -426,7 +426,7 @@ bad:
 		ucycom_cleanup(sc);
 	}
 
-	return (err);
+	return err;
 
 }
 
@@ -440,7 +440,7 @@ ucycomclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	DPRINTF(("ucycomclose: unit=%d\n", UCYCOMUNIT(dev)));
 	if (!ISSET(tp->t_state, TS_ISOPEN))
-		return (0);
+		return 0;
 
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
@@ -454,7 +454,7 @@ ucycomclose(dev_t dev, int flag, int mode, struct lwp *l)
 		ucycom_cleanup(sc);
 	}
 
-	return (0);
+	return 0;
 }
 
 Static void
@@ -647,12 +647,12 @@ ucycomparam(struct tty *tp, struct termios *t)
 
 	if (t->c_ospeed < 0) {
 		DPRINTF(("ucycomparam: c_ospeed < 0\n"));
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	/* Check requested parameters. */
 	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
-		return (EINVAL);
+		return EINVAL;
 
 	/*
 	 * For the console, always force CLOCAL and !HUPCL, so that the port
@@ -670,7 +670,7 @@ ucycomparam(struct tty *tp, struct termios *t)
 	 */
 	if (tp->t_ospeed == t->c_ospeed &&
 	    tp->t_cflag == t->c_cflag)
-		return (0);
+		return 0;
 
 	/* XXX lcr = ISSET(sc->sc_lcr, LCR_SBREAK) | cflag2lcr(t->c_cflag); */
 
@@ -700,7 +700,7 @@ ucycomparam(struct tty *tp, struct termios *t)
 			cfg |= UCYCOM_DATA_BITS_5;
 			break;
 		default:
-			return (EINVAL);
+			return EINVAL;
 		}
 		cfg |= ISSET(t->c_cflag, CSTOPB) ?
 		    UCYCOM_STOP_BITS_2 : UCYCOM_STOP_BITS_1;
@@ -719,7 +719,7 @@ ucycomparam(struct tty *tp, struct termios *t)
 	(void) (*tp->t_linesw->l_modem)(tp, 1 /* XXX carrier */ );
 
 	err = ucycom_configure(sc, baud, cfg);
-	return (err);
+	return err;
 }
 
 void
@@ -739,10 +739,10 @@ ucycomread(dev_t dev, struct uio *uio, int flag)
 	DPRINTF(("ucycomread: sc=%p, tp=%p, uio=%p, flag=%d\n", sc, tp, uio,
 	    flag));
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	err = ((*tp->t_linesw->l_read)(tp, uio, flag));
-	return (err);
+	return err;
 }
 
 
@@ -757,10 +757,10 @@ ucycomwrite(dev_t dev, struct uio *uio, int flag)
 	DPRINTF(("ucycomwrite: sc=%p, tp=%p, uio=%p, flag=%d\n", sc, tp, uio,
 	    flag));
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	err = ((*tp->t_linesw->l_write)(tp, uio, flag));
-	return (err);
+	return err;
 }
 
 struct tty *
@@ -772,7 +772,7 @@ ucycomtty(dev_t dev)
 
 	DPRINTF(("ucycomtty: sc=%p, tp=%p\n", sc, tp));
 
-	return (tp);
+	return tp;
 }
 
 int
@@ -785,17 +785,17 @@ ucycomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int s;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	DPRINTF(("ucycomioctl: sc=%p, tp=%p, data=%p\n", sc, tp, data));
 
 	err = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (err != EPASSTHROUGH)
-		return (err);
+		return err;
 
 	err = ttioctl(tp, cmd, data, flag, l);
 	if (err != EPASSTHROUGH)
-		return (err);
+		return err;
 
 	err = 0;
 
@@ -848,7 +848,7 @@ ucycomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	splx(s);
 
-	return (err);
+	return err;
 }
 
 int
@@ -863,10 +863,10 @@ ucycompoll(dev_t dev, int events, struct lwp *l)
 	    events, l));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	err = ((*tp->t_linesw->l_poll)(tp, events, l));
-	return (err);
+	return err;
 }
 
 Static int
@@ -895,7 +895,7 @@ ucycom_configure(struct ucycom_softc *sc, uint32_t baud, uint8_t cfg)
 #endif
 		break;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	DPRINTF(("ucycom_configure: setting %d baud, %d-%c-%d (%d)\n", baud,
@@ -1040,7 +1040,7 @@ ucycom_to_tiocm(struct ucycom_softc *sc)
 	if (ISSET(combits, UCYCOM_RI))
 		SET(ttybits, TIOCM_RI);
 
-	return (ttybits);
+	return ttybits;
 }
 
 Static void

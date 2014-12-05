@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.59.6.2 2014/11/30 13:14:11 skrll Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.59.6.3 2014/12/05 09:37:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.59.6.2 2014/11/30 13:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.59.6.3 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,8 +188,8 @@ uftdi_match(device_t parent, cfdata_t match, void *aux)
 	DPRINTFN(20,("uftdi: vendor=0x%x, product=0x%x\n",
 		     uaa->vendor, uaa->product));
 
-	return (uftdi_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return uftdi_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 void
@@ -389,7 +389,7 @@ uftdi_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
 
-	return (0);
+	return 0;
 }
 
 Static int
@@ -403,7 +403,7 @@ uftdi_open(void *vsc, int portno)
 	DPRINTF(("uftdi_open: sc=%p\n", sc));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	/* Perform a full reset on the device */
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -413,7 +413,7 @@ uftdi_open(void *vsc, int portno)
 	USETW(req.wLength, 0);
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
-		return (EIO);
+		return EIO;
 
 	/* Set 9600 baud, 2 stop bits, no parity, 8 bits */
 	t.c_ospeed = 9600;
@@ -428,9 +428,9 @@ uftdi_open(void *vsc, int portno)
 	USETW(req.wLength, 0);
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
-		return (EIO);
+		return EIO;
 
-	return (0);
+	return 0;
 }
 
 Static void
@@ -526,7 +526,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 	DPRINTF(("uftdi_param: sc=%p\n", sc));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = FTDI_SIO_SET_BITMODE;
@@ -535,7 +535,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 	USETW(req.wLength, 0);
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
-		return (EIO);
+		return EIO;
 
 	switch (sc->sc_type) {
 	case UFTDI_TYPE_SIO:
@@ -551,7 +551,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 		case 57600: rate = ftdi_sio_b57600; break;
 		case 115200: rate = ftdi_sio_b115200; break;
 		default:
-			return (EINVAL);
+			return EINVAL;
 		}
 		break;
 
@@ -571,12 +571,12 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 		case 460800: rate = ftdi_8u232am_b460800; break;
 		case 921600: rate = ftdi_8u232am_b921600; break;
 		default:
-			return (EINVAL);
+			return EINVAL;
 		}
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = FTDI_SIO_SET_BAUD_RATE;
@@ -588,7 +588,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 		    UGETW(req.wValue), UGETW(req.wIndex), UGETW(req.wLength)));
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
-		return (EIO);
+		return EIO;
 
 	if (ISSET(t->c_cflag, CSTOPB))
 		data = FTDI_SIO_SET_DATA_STOP_BITS_2;
@@ -627,7 +627,7 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 		    UGETW(req.wValue), UGETW(req.wIndex), UGETW(req.wLength)));
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
-		return (EIO);
+		return EIO;
 
 	if (ISSET(t->c_cflag, CRTSCTS)) {
 		flow = FTDI_SIO_RTS_CTS_HS;
@@ -645,9 +645,9 @@ uftdi_param(void *vsc, int portno, struct termios *t)
 	USETW(req.wLength, 0);
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
-		return (EIO);
+		return EIO;
 
-	return (0);
+	return 0;
 }
 
 void

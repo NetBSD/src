@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.40.2.1 2014/12/03 12:52:06 skrll Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.40.2.2 2014/12/05 09:37:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.40.2.1 2014/12/03 12:52:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.40.2.2 2014/12/05 09:37:49 skrll Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -93,9 +93,9 @@ ohci_cardbus_match(device_t parent, cfdata_t match, void *aux)
 	if (PCI_CLASS(ca->ca_class) == PCI_CLASS_SERIALBUS &&
 	    PCI_SUBCLASS(ca->ca_class) == PCI_SUBCLASS_SERIALBUS_USB &&
 	    PCI_INTERFACE(ca->ca_class) == PCI_INTERFACE_OHCI)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -184,7 +184,7 @@ ohci_cardbus_detach(device_t self, int flags)
 
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
-		return (rv);
+		return rv;
 	if (sc->sc_ih != NULL) {
 		Cardbus_intr_disestablish(ct, sc->sc_ih);
 		sc->sc_ih = NULL;
@@ -197,5 +197,5 @@ ohci_cardbus_detach(device_t self, int flags)
 #if NEHCI_CARDBUS > 0
 	usb_cardbus_rem(&sc->sc_cardbus);
 #endif
-	return (0);
+	return 0;
 }

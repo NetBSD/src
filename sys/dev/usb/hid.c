@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.35.16.2 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: hid.c,v 1.35.16.3 2014/12/05 09:37:49 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.35.16.2 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.35.16.3 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ hid_start_parse(const void *d, int len, enum hid_kind kind)
 	s->start = s->p = d;
 	s->end = (const char *)d + len;
 	s->kind = kind;
-	return (s);
+	return s;
 }
 
 void
@@ -136,7 +136,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 			c->loc.pos += c->loc.size;
 			h->next = NULL;
 			DPRINTFN(5,("return multi\n"));
-			return (1);
+			return 1;
 		} else {
 			c->loc.count = s->multimax;
 			s->multimax = 0;
@@ -147,7 +147,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 	for (;;) {
 		p = s->p;
 		if (p >= s->end)
-			return (0);
+			return 0;
 
 		bSize = *p++;
 		if (bSize == 0xfe) {
@@ -230,7 +230,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 					s->minset = 0;
 					s->nu = 0;
 					hid_clear_local(c);
-					return (1);
+					return 1;
 				}
 			case 9:		/* Output */
 				retkind = hid_output;
@@ -242,7 +242,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				*h = *c;
 				hid_clear_local(c);
 				s->nu = 0;
-				return (1);
+				return 1;
 			case 11:	/* Feature */
 				retkind = hid_feature;
 				goto ret;
@@ -251,7 +251,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				c->collevel--;
 				*h = *c;
 				s->nu = 0;
-				return (1);
+				return 1;
 			default:
 				printf("Main bTag=%d\n", bTag);
 				break;
@@ -396,7 +396,7 @@ hid_report_size(const void *buf, int len, enum hid_kind k, uint8_t id)
 		}
 	}
 	hid_end_parse(d);
-	return ((hi - lo + 7) / 8);
+	return (hi - lo + 7) / 8;
 }
 
 int
@@ -418,12 +418,12 @@ hid_locate(const void *desc, int size, uint32_t u, uint8_t id, enum hid_kind k,
 			if (flags != NULL)
 				*flags = h.flags;
 			hid_end_parse(d);
-			return (1);
+			return 1;
 		}
 	}
 	hid_end_parse(d);
 	loc->size = 0;
-	return (0);
+	return 0;
 }
 
 long
@@ -433,11 +433,11 @@ hid_get_data(const u_char *buf, const struct hid_location *loc)
 	u_long data;
 
 	if (hsize == 0)
-		return (0);
+		return 0;
 
 	data = hid_get_udata(buf, loc);
 	if (data < (1 << (hsize - 1)))
-		return (data);
+		return data;
 	return data - (1 << hsize);
 }
 
@@ -450,7 +450,7 @@ hid_get_udata(const u_char *buf, const struct hid_location *loc)
 	u_long data;
 
 	if (hsize == 0)
-		return (0);
+		return 0;
 
 	data = 0;
 	off = hpos / 8;
@@ -463,7 +463,7 @@ hid_get_udata(const u_char *buf, const struct hid_location *loc)
 	data &= (1 << hsize) - 1;
 
 	DPRINTFN(10,("hid_get_udata: loc %d/%d = %lu\n", hpos, hsize, data));
-	return (data);
+	return data;
 }
 
 /*
@@ -494,7 +494,7 @@ hid_is_collection(const void *desc, int size, uint8_t id, uint32_t usage)
 
 	hd = hid_start_parse(desc, size, hid_input);
 	if (hd == NULL)
-		return (0);
+		return 0;
 
 	DPRINTFN(2,("hid_is_collection: id=%d usage=0x%x\n", id, usage));
 	while (hid_get_item(hd, &hi)) {
@@ -514,10 +514,10 @@ hid_is_collection(const void *desc, int size, uint8_t id, uint32_t usage)
 		    hi.report_ID == id) {
 			DPRINTFN(2,("hid_is_collection: found\n"));
 			hid_end_parse(hd);
-			return (1);
+			return 1;
 		}
 	}
 	DPRINTFN(2,("hid_is_collection: not found\n"));
 	hid_end_parse(hd);
-	return (0);
+	return 0;
 }

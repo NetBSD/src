@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.43.4.2 2014/12/02 09:00:33 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.43.4.3 2014/12/05 09:37:49 skrll Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.2 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.3 2014/12/05 09:37:49 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -177,8 +177,8 @@ udav_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (udav_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return udav_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 /* Attach */
@@ -346,7 +346,7 @@ udav_detach(device_t self, int flags)
 
 	/* Detached before attached finished */
 	if (!sc->sc_attached)
-		return (0);
+		return 0;
 
 	callout_stop(&sc->sc_stat_ch);
 
@@ -386,7 +386,7 @@ udav_detach(device_t self, int flags)
 
 	mutex_destroy(&sc->sc_mii_lock);
 
-	return (0);
+	return 0;
 }
 
 #if 0
@@ -398,13 +398,13 @@ udav_mem_read(struct udav_softc *sc, int offset, void *buf, int len)
 	usbd_status err;
 
 	if (sc == NULL)
-		return (0);
+		return 0;
 
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
 	offset &= 0xffff;
 	len &= 0xff;
@@ -424,7 +424,7 @@ udav_mem_read(struct udav_softc *sc, int offset, void *buf, int len)
 			 device_xname(sc->sc_dev), __func__, offset, err));
 	}
 
-	return (err);
+	return err;
 }
 
 /* write memory */
@@ -435,13 +435,13 @@ udav_mem_write(struct udav_softc *sc, int offset, void *buf, int len)
 	usbd_status err;
 
 	if (sc == NULL)
-		return (0);
+		return 0;
 
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
 	offset &= 0xffff;
 	len &= 0xff;
@@ -461,7 +461,7 @@ udav_mem_write(struct udav_softc *sc, int offset, void *buf, int len)
 			 device_xname(sc->sc_dev), __func__, offset, err));
 	}
 
-	return (err);
+	return err;
 }
 
 /* write memory */
@@ -472,13 +472,13 @@ udav_mem_write1(struct udav_softc *sc, int offset, unsigned char ch)
 	usbd_status err;
 
 	if (sc == NULL)
-		return (0);
+		return 0;
 
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
 	offset &= 0xffff;
 
@@ -497,7 +497,7 @@ udav_mem_write1(struct udav_softc *sc, int offset, unsigned char ch)
 			 device_xname(sc->sc_dev), __func__, offset, err));
 	}
 
-	return (err);
+	return err;
 }
 #endif
 
@@ -509,13 +509,13 @@ udav_csr_read(struct udav_softc *sc, int offset, void *buf, int len)
 	usbd_status err;
 
 	if (sc == NULL)
-		return (0);
+		return 0;
 
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
 	offset &= 0xff;
 	len &= 0xff;
@@ -535,7 +535,7 @@ udav_csr_read(struct udav_softc *sc, int offset, void *buf, int len)
 			 device_xname(sc->sc_dev), __func__, offset, err));
 	}
 
-	return (err);
+	return err;
 }
 
 /* write register(s) */
@@ -546,13 +546,13 @@ udav_csr_write(struct udav_softc *sc, int offset, void *buf, int len)
 	usbd_status err;
 
 	if (sc == NULL)
-		return (0);
+		return 0;
 
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
 	offset &= 0xff;
 	len &= 0xff;
@@ -572,7 +572,7 @@ udav_csr_write(struct udav_softc *sc, int offset, void *buf, int len)
 			 device_xname(sc->sc_dev), __func__, offset, err));
 	}
 
-	return (err);
+	return err;
 }
 
 Static int
@@ -581,15 +581,15 @@ udav_csr_read1(struct udav_softc *sc, int offset)
 	uint8_t val = 0;
 
 	if (sc == NULL)
-		return (0);
+		return 0;
 
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
-	return (udav_csr_read(sc, offset, &val, 1) ? 0 : val);
+	return udav_csr_read(sc, offset, &val, 1) ? 0 : val;
 }
 
 /* write a register */
@@ -600,13 +600,13 @@ udav_csr_write1(struct udav_softc *sc, int offset, unsigned char ch)
 	usbd_status err;
 
 	if (sc == NULL)
-		return (0);
+		return 0;
 
 	DPRINTFN(0x200,
 		("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
 	offset &= 0xff;
 
@@ -625,7 +625,7 @@ udav_csr_write1(struct udav_softc *sc, int offset, unsigned char ch)
 			 device_xname(sc->sc_dev), __func__, offset, err));
 	}
 
-	return (err);
+	return err;
 }
 
 Static int
@@ -639,7 +639,7 @@ udav_init(struct ifnet *ifp)
 	DPRINTF(("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	s = splnet();
 
@@ -666,14 +666,14 @@ udav_init(struct ifnet *ifp)
 	if (udav_tx_list_init(sc) == ENOBUFS) {
 		printf("%s: tx list init failed\n", device_xname(sc->sc_dev));
 		splx(s);
-		return (EIO);
+		return EIO;
 	}
 
 	/* Initialize receive ring */
 	if (udav_rx_list_init(sc) == ENOBUFS) {
 		printf("%s: rx list init failed\n", device_xname(sc->sc_dev));
 		splx(s);
-		return (EIO);
+		return EIO;
 	}
 
 	/* Load the multicast filter */
@@ -694,7 +694,7 @@ udav_init(struct ifnet *ifp)
 	if (sc->sc_pipe_tx == NULL || sc->sc_pipe_rx == NULL) {
 		if (udav_openpipes(sc)) {
 			splx(s);
-			return (EIO);
+			return EIO;
 		}
 	}
 
@@ -832,7 +832,7 @@ udav_openpipes(struct udav_softc *sc)
 	int error = 0;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	sc->sc_refcnt++;
 
@@ -888,7 +888,7 @@ udav_openpipes(struct udav_softc *sc)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
 
-	return (error);
+	return error;
 }
 
 Static int
@@ -903,14 +903,14 @@ udav_newbuf(struct udav_softc *sc, struct udav_chain *c, struct mbuf *m)
 		if (m_new == NULL) {
 			printf("%s: no memory for rx list "
 			       "-- packet dropped!\n", device_xname(sc->sc_dev));
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
 			printf("%s: no memory for rx list "
 			       "-- packet dropped!\n", device_xname(sc->sc_dev));
 			m_freem(m_new);
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 	} else {
@@ -922,7 +922,7 @@ udav_newbuf(struct udav_softc *sc, struct udav_chain *c, struct mbuf *m)
 	m_adj(m_new, ETHER_ALIGN);
 	c->udav_mbuf = m_new;
 
-	return (0);
+	return 0;
 }
 
 
@@ -941,20 +941,20 @@ udav_rx_list_init(struct udav_softc *sc)
 		c->udav_sc = sc;
 		c->udav_idx = i;
 		if (udav_newbuf(sc, c, NULL) == ENOBUFS)
-			return (ENOBUFS);
+			return ENOBUFS;
 		if (c->udav_xfer == NULL) {
 			c->udav_xfer = usbd_alloc_xfer(sc->sc_udev);
 			if (c->udav_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->udav_buf = usbd_alloc_buffer(c->udav_xfer, UDAV_BUFSZ);
 			if (c->udav_buf == NULL) {
 				usbd_free_xfer(c->udav_xfer);
-				return (ENOBUFS);
+				return ENOBUFS;
 			}
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 Static int
@@ -975,16 +975,16 @@ udav_tx_list_init(struct udav_softc *sc)
 		if (c->udav_xfer == NULL) {
 			c->udav_xfer = usbd_alloc_xfer(sc->sc_udev);
 			if (c->udav_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->udav_buf = usbd_alloc_buffer(c->udav_xfer, UDAV_BUFSZ);
 			if (c->udav_buf == NULL) {
 				usbd_free_xfer(c->udav_xfer);
-				return (ENOBUFS);
+				return ENOBUFS;
 			}
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 Static void
@@ -1066,7 +1066,7 @@ udav_send(struct udav_softc *sc, struct mbuf *m, int idx)
 		/* Stop the interface */
 		usb_add_task(sc->sc_udev, &sc->sc_stop_task,
 		    USB_TASKQ_DRIVER);
-		return (EIO);
+		return EIO;
 	}
 
 	DPRINTF(("%s: %s: send %d bytes\n", device_xname(sc->sc_dev),
@@ -1074,7 +1074,7 @@ udav_send(struct udav_softc *sc, struct mbuf *m, int idx)
 
 	sc->sc_cdata.udav_tx_cnt++;
 
-	return (0);
+	return 0;
 }
 
 Static void
@@ -1236,7 +1236,7 @@ udav_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	DPRINTF(("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	s = splnet();
 
@@ -1249,7 +1249,7 @@ udav_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	splx(s);
 
-	return (error);
+	return error;
 }
 
 Static void
@@ -1380,7 +1380,7 @@ udav_ifmedia_change(struct ifnet *ifp)
 	DPRINTF(("%s: %s: enter\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
 	sc->sc_link = 0;
 	if ((rc = mii_mediachg(mii)) == ENXIO)
@@ -1494,7 +1494,7 @@ udav_miibus_readreg(device_t dev, int phy, int reg)
 	uint16_t data16;
 
 	if (dev == NULL)
-		return (0);
+		return 0;
 
 	sc = device_private(dev);
 
@@ -1506,14 +1506,14 @@ udav_miibus_readreg(device_t dev, int phy, int reg)
 		printf("%s: %s: dying\n", device_xname(sc->sc_dev),
 		       __func__);
 #endif
-		return (0);
+		return 0;
 	}
 
 	/* XXX: one PHY only for the internal PHY */
 	if (phy != 0) {
 		DPRINTFN(0xff, ("%s: %s: phy=%d is not supported\n",
 			 device_xname(sc->sc_dev), __func__, phy));
-		return (0);
+		return 0;
 	}
 
 	udav_lock_mii(sc);
@@ -1540,7 +1540,7 @@ udav_miibus_readreg(device_t dev, int phy, int reg)
 	DPRINTFN(0xff, ("%s: %s: phy=%d reg=0x%04x => 0x%04x\n",
 		 device_xname(sc->sc_dev), __func__, phy, reg, data16));
 
-	return (data16);
+	return data16;
 }
 
 Static void

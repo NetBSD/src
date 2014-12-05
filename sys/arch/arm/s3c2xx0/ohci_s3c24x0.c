@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_s3c24x0.c,v 1.8.30.2 2014/12/03 12:52:05 skrll Exp $ */
+/*	$NetBSD: ohci_s3c24x0.c,v 1.8.30.3 2014/12/05 09:37:49 skrll Exp $ */
 
 /* derived from ohci_pci.c */
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.8.30.2 2014/12/03 12:52:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.8.30.3 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,5 +137,5 @@ ohci_ssio_attach(device_t parent, device_t self, void *aux)
 int
 ohci_ssio_detach(device_t self, int flags)
 {
-	return (0);
+	return 0;
 }

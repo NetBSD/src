@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.45.24.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.45.24.2 2014/12/05 09:37:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.45.24.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.45.24.2 2014/12/05 09:37:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,8 +206,8 @@ uvisor_match(device_t parent, cfdata_t match, void *aux)
 	DPRINTFN(20,("uvisor: vendor=0x%x, product=0x%x\n",
 		     uaa->vendor, uaa->product));
 
-	return (uvisor_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return uvisor_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 void
@@ -423,7 +423,7 @@ uvisor_detach(device_t self, int flags)
 				   sc->sc_dev);
 
 
-	return (rv);
+	return rv;
 }
 
 usbd_status
@@ -445,7 +445,7 @@ uvisor_init(struct uvisor_softc *sc, struct uvisor_connection_info *ci,
 		err = usbd_do_request_flags(sc->sc_udev, &req, ci,
 		    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
 		if (err)
-			return (err);
+			return err;
 	}
 
 	if (sc->sc_flags & PALM4) {
@@ -458,7 +458,7 @@ uvisor_init(struct uvisor_softc *sc, struct uvisor_connection_info *ci,
 		err = usbd_do_request_flags(sc->sc_udev, &req, cpi,
 		    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
 		if (err)
-			return (err);
+			return err;
 	}
 
 	DPRINTF(("uvisor_init: getting available bytes\n"));
@@ -469,11 +469,11 @@ uvisor_init(struct uvisor_softc *sc, struct uvisor_connection_info *ci,
 	USETW(req.wLength, sizeof avail);
 	err = usbd_do_request(sc->sc_udev, &req, &avail);
 	if (err)
-		return (err);
+		return err;
 	DPRINTF(("uvisor_init: avail=%d\n", UGETW(avail)));
 
 	DPRINTF(("uvisor_init: done\n"));
-	return (err);
+	return err;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.13 2014/12/04 08:04:31 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.14 2014/12/05 09:37:49 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.13 2014/12/04 08:04:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.14 2014/12/05 09:37:49 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -442,7 +442,7 @@ ehci_init(ehci_softc_t *sc)
 	}
 	if (hcr) {
 		aprint_error("%s: reset timeout\n", device_xname(sc->sc_dev));
-		return (USBD_IOERROR);
+		return USBD_IOERROR;
 	}
 	if (sc->sc_vendor_init)
 		sc->sc_vendor_init(sc);
@@ -466,12 +466,12 @@ ehci_init(ehci_softc_t *sc)
 	case 0: sc->sc_flsize = 1024; break;
 	case 1: sc->sc_flsize = 512; break;
 	case 2: sc->sc_flsize = 256; break;
-	case 3: return (USBD_IOERROR);
+	case 3: return USBD_IOERROR;
 	}
 	err = usb_allocmem(&sc->sc_bus, sc->sc_flsize * sizeof(ehci_link_t),
 	    EHCI_FLALIGN_ALIGN, &sc->sc_fldma);
 	if (err)
-		return (err);
+		return err;
 	USBHIST_LOG(ehcidebug, "flsize=%d", sc->sc_flsize, 0, 0, 0);
 	sc->sc_flist = KERNADDR(&sc->sc_fldma, 0);
 
@@ -591,14 +591,14 @@ ehci_init(ehci_softc_t *sc)
 	}
 	if (hcr) {
 		aprint_error("%s: run timeout\n", device_xname(sc->sc_dev));
-		return (USBD_IOERROR);
+		return USBD_IOERROR;
 	}
 
 	/* Enable interrupts */
 	USBHIST_LOG(ehcidebug, "enabling interupts", 0, 0, 0, 0);
 	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 
 #if 0
  bad2:
@@ -606,7 +606,7 @@ ehci_init(ehci_softc_t *sc)
 #endif
  bad1:
 	usb_freemem(&sc->sc_bus, &sc->sc_fldma);
-	return (err);
+	return err;
 }
 
 int
@@ -657,20 +657,20 @@ ehci_intr1(ehci_softc_t *sc)
 #ifdef DIAGNOSTIC
 		printf("ehci_intr1: sc == NULL\n");
 #endif
-		return (0);
+		return 0;
 	}
 
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	intrs = EHCI_STS_INTRS(EOREAD4(sc, EHCI_USBSTS));
 	if (!intrs)
-		return (0);
+		return 0;
 
 	eintrs = intrs & sc->sc_eintrs;
 	USBHIST_LOG(ehcidebug, "sc=%p intrs=%#x(%#x) eintrs=%#x",
 	    sc, intrs, EOREAD4(sc, EHCI_USBSTS), eintrs);
 	if (!eintrs)
-		return (0);
+		return 0;
 
 	EOWRITE4(sc, EHCI_USBSTS, intrs); /* Acknowledge */
 	if (eintrs & EHCI_STS_IAA) {
@@ -709,7 +709,7 @@ ehci_intr1(ehci_softc_t *sc)
 		       device_xname(sc->sc_dev), eintrs);
 	}
 
-	return (1);
+	return 1;
 }
 
 Static void
@@ -1312,7 +1312,7 @@ ehci_detach(struct ehci_softc *sc, int flags)
 		rv = config_detach(sc->sc_child, flags);
 
 	if (rv != 0)
-		return (rv);
+		return rv;
 
 	callout_halt(&sc->sc_tmo_intrlist, NULL);
 	callout_destroy(&sc->sc_tmo_intrlist);
@@ -1338,7 +1338,7 @@ ehci_detach(struct ehci_softc *sc, int flags)
 
 	EOWRITE4(sc, EHCI_CONFIGFLAG, 0);
 
-	return (rv);
+	return rv;
 }
 
 
@@ -1506,7 +1506,7 @@ ehci_allocx(struct usbd_bus *bus)
 		xfer->ux_state = XFER_BUSY;
 #endif
 	}
-	return (xfer);
+	return xfer;
 }
 
 Static void
@@ -1858,7 +1858,7 @@ ehci_open(usbd_pipe_handle pipe)
 	}
 
 	if (sc->sc_dying)
-		return (USBD_IOERROR);
+		return USBD_IOERROR;
 
 	/* toggle state needed for bulk endpoints */
 	epipe->nexttoggle = pipe->up_endpoint->ue_toggle;
@@ -1875,9 +1875,9 @@ ehci_open(usbd_pipe_handle pipe)
 			USBHIST_LOG(ehcidebug,
 			    "bad bEndpointAddress 0x%02x",
 			    ed->bEndpointAddress, 0, 0, 0);
-			return (USBD_INVAL);
+			return USBD_INVAL;
 		}
-		return (USBD_NORMAL_COMPLETION);
+		return USBD_NORMAL_COMPLETION;
 	}
 
 	/* XXX All this stuff is only valid for async. */
@@ -1905,7 +1905,7 @@ ehci_open(usbd_pipe_handle pipe)
 	if (xfertype != UE_ISOCHRONOUS) {
 		sqh = ehci_alloc_sqh(sc);
 		if (sqh == NULL)
-			return (USBD_NOMEM);
+			return USBD_NOMEM;
 		/* qh_link filled when the QH is added */
 		sqh->qh.qh_endp = htole32(
 		    EHCI_QH_SET_ADDR(addr) |
@@ -2005,12 +2005,12 @@ ehci_open(usbd_pipe_handle pipe)
 		err = USBD_INVAL;
 		goto bad;
 	}
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 
  bad:
 	if (sqh != NULL)
 		ehci_free_sqh(sc, sqh);
-	return (err);
+	return err;
 }
 
 /*
@@ -2273,7 +2273,7 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			USETW(devd.idVendor, sc->sc_id_vendor);
 			memcpy(buf, &devd, totlen);
 			break;
-		
+
 		}
 #define sd ((usb_string_descriptor_t *)buf)
 		case C(1, UDESC_STRING):
@@ -2496,7 +2496,7 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			if (v & EHCI_PS_PR) {
 				printf("%s: port reset timeout\n",
 				       device_xname(sc->sc_dev));
-				return (USBD_TIMEOUT);
+				return USBD_TIMEOUT;
 			}
 			if (!(v & EHCI_PS_PE)) {
 				/* Not a high speed device, give up ownership.*/
@@ -2582,10 +2582,10 @@ ehci_root_intr_transfer(usbd_xfer_handle xfer)
 	err = usb_insert_transfer(xfer);
 	mutex_exit(&sc->sc_lock);
 	if (err)
-		return (err);
+		return err;
 
 	/* Pipe isn't running, start first */
-	return (ehci_root_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue)));
+	return ehci_root_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 Static usbd_status
@@ -2595,13 +2595,13 @@ ehci_root_intr_start(usbd_xfer_handle xfer)
 	ehci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
 
 	if (sc->sc_dying)
-		return (USBD_IOERROR);
+		return USBD_IOERROR;
 
 	mutex_enter(&sc->sc_lock);
 	sc->sc_intrxfer = xfer;
 	mutex_exit(&sc->sc_lock);
 
-	return (USBD_IN_PROGRESS);
+	return USBD_IN_PROGRESS;
 }
 
 /* Abort a root interrupt request. */
@@ -2659,7 +2659,7 @@ ehci_alloc_sqh(ehci_softc_t *sc)
 			printf("ehci_alloc_sqh: usb_allocmem()=%d\n", err);
 #endif
 		if (err)
-			return (NULL);
+			return NULL;
 		for(i = 0; i < EHCI_SQH_CHUNK; i++) {
 			offs = i * EHCI_SQH_SIZE;
 			sqh = KERNADDR(&dma, offs);
@@ -2674,7 +2674,7 @@ ehci_alloc_sqh(ehci_softc_t *sc)
 	sc->sc_freeqhs = sqh->next;
 	memset(&sqh->qh, 0, sizeof(ehci_qh_t));
 	sqh->next = NULL;
-	return (sqh);
+	return sqh;
 }
 
 Static void
@@ -2725,7 +2725,7 @@ ehci_alloc_sqtd(ehci_softc_t *sc)
 	sqtd->xfer = NULL;
 
 done:
-	return (sqtd);
+	return sqtd;
 }
 
 Static void
@@ -2868,12 +2868,12 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 	USBHIST_LOG(ehcidebug, "return sqtd=%p sqtdend=%p",
 	    *sp, *ep, 0, 0);
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 
  nomem:
 	/* XXX free chain */
 	USBHIST_LOG(ehcidebug, "no memory", 0, 0, 0, 0);
-	return (USBD_NOMEM);
+	return USBD_NOMEM;
 }
 
 Static void
@@ -3382,10 +3382,10 @@ ehci_device_ctrl_transfer(usbd_xfer_handle xfer)
 	err = usb_insert_transfer(xfer);
 	mutex_exit(&sc->sc_lock);
 	if (err)
-		return (err);
+		return err;
 
 	/* Pipe isn't running, start first */
-	return (ehci_device_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue)));
+	return ehci_device_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 Static usbd_status
@@ -3395,25 +3395,25 @@ ehci_device_ctrl_start(usbd_xfer_handle xfer)
 	usbd_status err;
 
 	if (sc->sc_dying)
-		return (USBD_IOERROR);
+		return USBD_IOERROR;
 
 #ifdef DIAGNOSTIC
 	if (!(xfer->ux_rqflags & URQ_REQUEST)) {
 		/* XXX panic */
 		printf("ehci_device_ctrl_transfer: not a request\n");
-		return (USBD_INVAL);
+		return USBD_INVAL;
 	}
 #endif
 
 	err = ehci_device_request(xfer);
 	if (err) {
-		return (err);
+		return err;
 	}
 
 	if (sc->sc_bus.ub_usepolling)
 		ehci_waitintr(sc, xfer);
 
-	return (USBD_IN_PROGRESS);
+	return USBD_IN_PROGRESS;
 }
 
 Static void
@@ -3619,7 +3619,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	ehci_dump_sqtds(setup);
 #endif
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 
  bad3:
 	mutex_exit(&sc->sc_lock);
@@ -3632,7 +3632,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	xfer->ux_status = err;
 	usb_transfer_complete(xfer);
 	mutex_exit(&sc->sc_lock);
-	return (err);
+	return err;
 #undef exfer
 }
 
@@ -3670,10 +3670,10 @@ ehci_device_bulk_transfer(usbd_xfer_handle xfer)
 	err = usb_insert_transfer(xfer);
 	mutex_exit(&sc->sc_lock);
 	if (err)
-		return (err);
+		return err;
 
 	/* Pipe isn't running, start first */
-	return (ehci_device_bulk_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue)));
+	return ehci_device_bulk_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 Static usbd_status
@@ -3694,7 +3694,7 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 	    xfer, xfer->ux_length, xfer->ux_flags, 0);
 
 	if (sc->sc_dying)
-		return (USBD_IOERROR);
+		return USBD_IOERROR;
 
 #ifdef DIAGNOSTIC
 	if (xfer->ux_rqflags & URQ_REQUEST)
@@ -3717,7 +3717,7 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 		xfer->ux_status = err;
 		usb_transfer_complete(xfer);
 		mutex_exit(&sc->sc_lock);
-		return (err);
+		return err;
 	}
 
 #ifdef EHCI_DEBUG
@@ -3762,7 +3762,7 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 	if (sc->sc_bus.ub_usepolling)
 		ehci_waitintr(sc, xfer);
 
-	return (USBD_IN_PROGRESS);
+	return USBD_IN_PROGRESS;
 #undef exfer
 }
 
@@ -3843,7 +3843,7 @@ ehci_device_setintr(ehci_softc_t *sc, ehci_soft_qh_t *sqh, int ival)
 	ehci_add_qh(sc, sqh, isp->sqh);
 	mutex_exit(&sc->sc_lock);
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 Static usbd_status
@@ -3857,13 +3857,13 @@ ehci_device_intr_transfer(usbd_xfer_handle xfer)
 	err = usb_insert_transfer(xfer);
 	mutex_exit(&sc->sc_lock);
 	if (err)
-		return (err);
+		return err;
 
 	/*
 	 * Pipe isn't running (otherwise err would be USBD_INPROG),
 	 * so start it first.
 	 */
-	return (ehci_device_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue)));
+	return ehci_device_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 Static usbd_status
@@ -3884,7 +3884,7 @@ ehci_device_intr_start(usbd_xfer_handle xfer)
 	    xfer, xfer->ux_length, xfer->ux_flags, 0);
 
 	if (sc->sc_dying)
-		return (USBD_IOERROR);
+		return USBD_IOERROR;
 
 #ifdef DIAGNOSTIC
 	if (xfer->ux_rqflags & URQ_REQUEST)
@@ -3907,7 +3907,7 @@ ehci_device_intr_start(usbd_xfer_handle xfer)
 		xfer->ux_status = err;
 		usb_transfer_complete(xfer);
 		mutex_exit(&sc->sc_lock);
-		return (err);
+		return err;
 	}
 
 #ifdef EHCI_DEBUG
@@ -3948,7 +3948,7 @@ ehci_device_intr_start(usbd_xfer_handle xfer)
 	if (sc->sc_bus.ub_usepolling)
 		ehci_waitintr(sc, xfer);
 
-	return (USBD_IN_PROGRESS);
+	return USBD_IN_PROGRESS;
 #undef exfer
 }
 

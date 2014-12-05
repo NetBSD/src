@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.156.2.3 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.156.2.4 2014/12/05 09:37:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.3 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.4 2014/12/05 09:37:50 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -224,7 +224,7 @@ int
 usb_match(device_t parent, cfdata_t match, void *aux)
 {
 	DPRINTF(("usbd_match\n"));
-	return (UMATCH_GENERIC);
+	return UMATCH_GENERIC;
 }
 
 void
@@ -528,7 +528,7 @@ usbctlprint(void *aux, const char *pnp)
 	if (pnp)
 		aprint_normal("usb at %s", pnp);
 
-	return (UNCONF);
+	return UNCONF;
 }
 
 int
@@ -539,22 +539,22 @@ usbopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (unit == USB_DEV_MINOR) {
 		if (usb_dev_open)
-			return (EBUSY);
+			return EBUSY;
 		usb_dev_open = 1;
 		mutex_enter(proc_lock);
 		usb_async_proc = 0;
 		mutex_exit(proc_lock);
-		return (0);
+		return 0;
 	}
 
 	sc = device_lookup_private(&usb_cd, unit);
 	if (!sc)
-		return (ENXIO);
+		return ENXIO;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -568,7 +568,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 	int error, n;
 
 	if (minor(dev) != USB_DEV_MINOR)
-		return (ENXIO);
+		return ENXIO;
 
 	switch (uio->uio_resid) {
 #ifdef COMPAT_30
@@ -581,7 +581,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 		ue = usb_alloc_event();
 		break;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	error = 0;
@@ -638,7 +638,7 @@ usbread(dev_t dev, struct uio *uio, int flag)
 		kmem_free(ueo, sizeof(struct usb_event_old));
 #endif
 
-	return (error);
+	return error;
 }
 
 int
@@ -654,7 +654,7 @@ usbclose(dev_t dev, int flag, int mode,
 		usb_dev_open = 0;
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -667,7 +667,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		switch (cmd) {
 		case FIONBIO:
 			/* All handled in the upper FS layer. */
-			return (0);
+			return 0;
 
 		case FIOASYNC:
 			mutex_enter(proc_lock);
@@ -676,23 +676,23 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			else
 				usb_async_proc = 0;
 			mutex_exit(proc_lock);
-			return (0);
+			return 0;
 
 		default:
-			return (EINVAL);
+			return EINVAL;
 		}
 	}
 
 	sc = device_lookup_private(&usb_cd, unit);
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	switch (cmd) {
 #ifdef USB_DEBUG
 	case USB_SETDEBUG:
 		if (!(flag & FWRITE))
-			return (EBADF);
+			return EBADF;
 		usbdebug  = ((*(int *)data) & 0x000000ff);
 		break;
 #endif /* USB_DEBUG */
@@ -708,14 +708,14 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		int error = 0;
 
 		if (!(flag & FWRITE))
-			return (EBADF);
+			return EBADF;
 
 		DPRINTF(("usbioctl: USB_REQUEST addr=%d len=%d\n", addr, len));
 		if (len < 0 || len > 32768)
-			return (EINVAL);
+			return EINVAL;
 		if (addr < 0 || addr >= USB_MAX_DEVICES ||
 		    sc->sc_bus->ub_devices[addr] == NULL)
-			return (EINVAL);
+			return EINVAL;
 		if (len != 0) {
 			iov.iov_base = (void *)ur->ucr_data;
 			iov.iov_len = len;
@@ -755,7 +755,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			len = UGETW(ur->ucr_request.wLength);
 			kmem_free(ptr, len);
 		}
-		return (error);
+		return error;
 	}
 
 	case USB_DEVICEINFO:
@@ -793,9 +793,9 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
-	return (0);
+	return 0;
 }
 
 int
@@ -814,9 +814,9 @@ usbpoll(dev_t dev, int events, struct lwp *l)
 			selrecord(l, &usb_selevent);
 		mutex_exit(&usb_event_lock);
 
-		return (revents);
+		return revents;
 	} else {
-		return (0);
+		return 0;
 	}
 }
 
@@ -834,10 +834,10 @@ filt_usbread(struct knote *kn, long hint)
 {
 
 	if (usb_nevents == 0)
-		return (0);
+		return 0;
 
 	kn->kn_data = sizeof(struct usb_event);
-	return (1);
+	return 1;
 }
 
 static const struct filterops usbread_filtops =
@@ -851,13 +851,13 @@ usbkqfilter(dev_t dev, struct knote *kn)
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		if (minor(dev) != USB_DEV_MINOR)
-			return (1);
+			return 1;
 		klist = &usb_selevent.sel_klist;
 		kn->kn_fop = &usbread_filtops;
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	kn->kn_hook = NULL;
@@ -866,7 +866,7 @@ usbkqfilter(dev_t dev, struct knote *kn)
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	mutex_exit(&usb_event_lock);
 
-	return (0);
+	return 0;
 }
 
 /* Explore device tree from the root. */
@@ -924,13 +924,13 @@ usb_get_next_event(struct usb_event *ue)
 	KASSERT(mutex_owned(&usb_event_lock));
 
 	if (usb_nevents <= 0)
-		return (0);
+		return 0;
 	ueq = SIMPLEQ_FIRST(&usb_events);
 #ifdef DIAGNOSTIC
 	if (ueq == NULL) {
 		printf("usb: usb_nevents got out of sync! %d\n", usb_nevents);
 		usb_nevents = 0;
-		return (0);
+		return 0;
 	}
 #endif
 	if (ue)
@@ -938,7 +938,7 @@ usb_get_next_event(struct usb_event *ue)
 	SIMPLEQ_REMOVE_HEAD(&usb_events, next);
 	usb_free_event((struct usb_event *)(void *)ueq);
 	usb_nevents--;
-	return (1);
+	return 1;
 }
 
 void
@@ -1106,7 +1106,7 @@ usb_detach(device_t self, int flags)
 
 	cv_destroy(&sc->sc_bus->ub_needsexplore_cv);
 
-	return (0);
+	return 0;
 }
 
 #ifdef COMPAT_30

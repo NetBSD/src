@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.6.6.2 2014/12/03 22:33:56 skrll Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.6.6.3 2014/12/05 09:37:49 skrll Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.2 2014/12/03 22:33:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.3 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -591,8 +591,8 @@ urtw_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return ((urtw_lookup(uaa->vendor, uaa->product) != NULL) ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return (urtw_lookup(uaa->vendor, uaa->product) != NULL) ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 void
@@ -788,7 +788,7 @@ urtw_detach(device_t self, int flags)
 
 	splx(s);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -802,7 +802,7 @@ urtw_activate(device_t self, enum devact act)
 		break;
 	}
 
-	return (0);
+	return 0;
 }
 
 usbd_status
@@ -829,7 +829,7 @@ urtw_close_pipes(struct urtw_softc *sc)
 		sc->sc_txpipe_normal = NULL;
 	}
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -879,10 +879,10 @@ urtw_open_pipes(struct urtw_softc *sc)
 		goto fail;
 	}
 
-	return (0);
+	return 0;
 fail:
 	(void)urtw_close_pipes(sc);
-	return (error);
+	return error;
 }
 
 int
@@ -927,11 +927,11 @@ urtw_alloc_rx_data_list(struct urtw_softc *sc)
 		data->buf = mtod(data->m, uint8_t *);
 	}
 
-	return (0);
+	return 0;
 
 fail:
 	urtw_free_rx_data_list(sc);
-	return (error);
+	return error;
 }
 
 void
@@ -989,11 +989,11 @@ urtw_alloc_tx_data_list(struct urtw_softc *sc)
 			    device_xname(sc->sc_dev), data->buf);
 	}
 
-	return (0);
+	return 0;
 
 fail:
 	urtw_free_tx_data_list(sc);
-	return (error);
+	return error;
 }
 
 void
@@ -1028,13 +1028,13 @@ urtw_media_change(struct ifnet *ifp)
 
 	error = ieee80211_media_change(ifp);
 	if (error != ENETRESET)
-		return (error);
+		return error;
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 	    (IFF_UP | IFF_RUNNING))
 		ifp->if_init(ifp);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -1050,7 +1050,7 @@ urtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	sc->sc_arg = arg;
 	usb_add_task(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER);
 
-	return (0);
+	return 0;
 }
 
 usbd_status
@@ -1084,7 +1084,7 @@ urtw_led_init(struct urtw_softc *sc)
 	sc->sc_gpio_ledpin = URTW_LED_PIN_GPIO0;
 
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1099,7 +1099,7 @@ urtw_8225_write_s16(struct urtw_softc *sc, uint8_t addr, int index,
 	USETW(req.wIndex, index);
 	USETW(req.wLength, sizeof(uint16_t));
 
-	return (usbd_do_request(sc->sc_udev, &req, &data));
+	return usbd_do_request(sc->sc_udev, &req, &data);
 }
 
 usbd_status
@@ -1189,7 +1189,7 @@ urtw_8225_read(struct urtw_softc *sc, uint8_t addr, uint32_t *data)
 	if (data != NULL)
 		*data = value;
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1222,7 +1222,7 @@ urtw_8225_write_c(struct urtw_softc *sc, uint8_t addr, uint16_t data)
 	urtw_write16_m(sc, URTW_RF_PINS_SELECT, d84);
 	usbd_delay_ms(sc->sc_udev, 2);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1255,7 +1255,7 @@ urtw_8225_isv2(struct urtw_softc *sc, int *ret)
 
 	urtw_8225_write(sc, 0x0, 0xb7);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1302,7 +1302,7 @@ urtw_get_rfchip(struct urtw_softc *sc)
 	rf->max_sens = URTW_8225_RF_MAX_SENS;
 	rf->sens = URTW_8225_RF_DEF_SENS;
 
-	return (0);
+	return 0;
 
 fail:
 	panic("unsupported RF chip %d", data & 0xff);
@@ -1377,7 +1377,7 @@ urtw_get_txpwr(struct urtw_softc *sc)
 		sc->sc_txpwr_ofdm[14] = (data & 0xf000) >> 12;
 	}
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1403,7 +1403,7 @@ urtw_get_macaddr(struct urtw_softc *sc)
 	ic->ic_myaddr[4] = data & 0xff;
 	ic->ic_myaddr[5] = (data & 0xff00) >> 8;
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1478,7 +1478,7 @@ urtw_eprom_read32(struct urtw_softc *sc, uint32_t addr, uint32_t *data)
 	/* now disable EPROM programming */
 	urtw_write8_m(sc, URTW_EPROM_CMD, URTW_EPROM_CMD_NORMAL_MODE);
 fail:
-	return (error);
+	return error;
 #undef URTW_READCMD_LEN
 }
 
@@ -1493,7 +1493,7 @@ urtw_eprom_readbit(struct urtw_softc *sc, int16_t *data)
 	DELAY(URTW_EPROM_DELAY);
 
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1511,7 +1511,7 @@ urtw_eprom_sendbits(struct urtw_softc *sc, int16_t *buf, int buflen)
 			goto fail;
 	}
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1527,7 +1527,7 @@ urtw_eprom_writebit(struct urtw_softc *sc, int16_t bit)
 		urtw_write8_m(sc, URTW_EPROM_CMD, data & ~URTW_EPROM_WRITEBIT);
 	DELAY(URTW_EPROM_DELAY);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1545,7 +1545,7 @@ urtw_eprom_ck(struct urtw_softc *sc)
 	urtw_write8_m(sc, URTW_EPROM_CMD, data & ~URTW_EPROM_CK);
 	DELAY(URTW_EPROM_DELAY);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1561,7 +1561,7 @@ urtw_eprom_cs(struct urtw_softc *sc, int able)
 		urtw_write8_m(sc, URTW_EPROM_CMD, data & ~URTW_EPROM_CS);
 	DELAY(URTW_EPROM_DELAY);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1577,7 +1577,7 @@ urtw_read8_c(struct urtw_softc *sc, int val, uint8_t *data, uint8_t idx)
 	USETW(req.wLength, sizeof(uint8_t));
 
 	error = usbd_do_request(sc->sc_udev, &req, data);
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1593,7 +1593,7 @@ urtw_read8e(struct urtw_softc *sc, int val, uint8_t *data)
 	USETW(req.wLength, sizeof(uint8_t));
 
 	error = usbd_do_request(sc->sc_udev, &req, data);
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1609,7 +1609,7 @@ urtw_read16_c(struct urtw_softc *sc, int val, uint16_t *data, uint8_t idx)
 	USETW(req.wLength, sizeof(uint16_t));
 
 	error = usbd_do_request(sc->sc_udev, &req, data);
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1625,7 +1625,7 @@ urtw_read32_c(struct urtw_softc *sc, int val, uint32_t *data, uint8_t idx)
 	USETW(req.wLength, sizeof(uint32_t));
 
 	error = usbd_do_request(sc->sc_udev, &req, data);
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1639,7 +1639,7 @@ urtw_write8_c(struct urtw_softc *sc, int val, uint8_t data, uint8_t idx)
 	USETW(req.wIndex, idx & 0x03);
 	USETW(req.wLength, sizeof(uint8_t));
 
-	return (usbd_do_request(sc->sc_udev, &req, &data));
+	return usbd_do_request(sc->sc_udev, &req, &data);
 }
 
 usbd_status
@@ -1653,7 +1653,7 @@ urtw_write8e(struct urtw_softc *sc, int val, uint8_t data)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, sizeof(uint8_t));
 
-	return (usbd_do_request(sc->sc_udev, &req, &data));
+	return usbd_do_request(sc->sc_udev, &req, &data);
 }
 
 usbd_status
@@ -1667,7 +1667,7 @@ urtw_write16_c(struct urtw_softc *sc, int val, uint16_t data, uint8_t idx)
 	USETW(req.wIndex, idx & 0x03);
 	USETW(req.wLength, sizeof(uint16_t));
 
-	return (usbd_do_request(sc->sc_udev, &req, &data));
+	return usbd_do_request(sc->sc_udev, &req, &data);
 }
 
 usbd_status
@@ -1681,7 +1681,7 @@ urtw_write32_c(struct urtw_softc *sc, int val, uint32_t data, uint8_t idx)
 	USETW(req.wIndex, idx & 0x03);
 	USETW(req.wLength, sizeof(uint32_t));
 
-	return (usbd_do_request(sc->sc_udev, &req, &data));
+	return usbd_do_request(sc->sc_udev, &req, &data);
 }
 
 static usbd_status
@@ -1695,7 +1695,7 @@ urtw_set_mode(struct urtw_softc *sc, uint32_t mode)
 	data = data & ~(URTW_EPROM_CS | URTW_EPROM_CK);
 	urtw_write8_m(sc, URTW_EPROM_CMD, data);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1718,7 +1718,7 @@ urtw_8180_set_anaparam(struct urtw_softc *sc, uint32_t val)
 	if (error)
 		goto fail;
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1741,7 +1741,7 @@ urtw_8185_set_anaparam2(struct urtw_softc *sc, uint32_t val)
 	if (error)
 		goto fail;
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1752,7 +1752,7 @@ urtw_intr_disable(struct urtw_softc *sc)
 	urtw_write16_m(sc, URTW_INTR_MASK, 0);
 
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1807,7 +1807,7 @@ urtw_reset(struct urtw_softc *sc)
 	if (error)
 		goto fail;
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1833,7 +1833,7 @@ urtw_led_on(struct urtw_softc *sc, int type)
 
 	sc->sc_gpio_ledon = 1;
 fail:
-	return (error);
+	return error;
 }
 
 static usbd_status
@@ -1860,7 +1860,7 @@ urtw_led_off(struct urtw_softc *sc, int type)
 	sc->sc_gpio_ledon = 0;
 
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -1872,7 +1872,7 @@ urtw_led_mode0(struct urtw_softc *sc, int mode)
 		break;
 	case URTW_LED_CTL_TX:
 		if (sc->sc_gpio_ledinprogress == 1)
-			return (0);
+			return 0;
 
 		sc->sc_gpio_ledstate = URTW_LED_BLINK_NORMAL;
 		sc->sc_gpio_blinktime = 2;
@@ -1909,25 +1909,25 @@ urtw_led_mode0(struct urtw_softc *sc, int mode)
 		panic("unknown LED status 0x%x", sc->sc_gpio_ledstate);
 		/* NOTREACHED */
 	}
-	return (0);
+	return 0;
 }
 
 usbd_status
 urtw_led_mode1(struct urtw_softc *sc, int mode)
 {
-	return (USBD_INVAL);
+	return USBD_INVAL;
 }
 
 usbd_status
 urtw_led_mode2(struct urtw_softc *sc, int mode)
 {
-	return (USBD_INVAL);
+	return USBD_INVAL;
 }
 
 usbd_status
 urtw_led_mode3(struct urtw_softc *sc, int mode)
 {
-	return (USBD_INVAL);
+	return USBD_INVAL;
 }
 
 void
@@ -1976,7 +1976,7 @@ urtw_led_ctl(struct urtw_softc *sc, int mode)
 		/* NOTREACHED */
 	}
 
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -2007,7 +2007,7 @@ urtw_led_blink(struct urtw_softc *sc)
 
 		sc->sc_gpio_blinktime = 0;
 		sc->sc_gpio_ledinprogress = 0;
-		return (0);
+		return 0;
 	}
 
 	sc->sc_gpio_blinkstate = (sc->sc_gpio_blinkstate != URTW_LED_ON) ?
@@ -2022,7 +2022,7 @@ urtw_led_blink(struct urtw_softc *sc)
 		panic("unknown LED status 0x%x", sc->sc_gpio_ledstate);
 		/* NOTREACHED */
 	}
-	return (0);
+	return 0;
 }
 
 usbd_status
@@ -2055,7 +2055,7 @@ urtw_update_msr(struct urtw_softc *sc)
 
 	urtw_write8_m(sc, URTW_MSR, data);
 fail:
-	return (error);
+	return error;
 }
 
 uint16_t
@@ -2065,10 +2065,10 @@ urtw_rate2rtl(int rate)
 
 	for (i = 0; i < __arraycount(urtw_ratetable); i++) {
 		if (rate == urtw_ratetable[i].reg)
-			return (urtw_ratetable[i].val);
+			return urtw_ratetable[i].val;
 	}
 
-	return (3);
+	return 3;
 }
 
 uint16_t
@@ -2078,10 +2078,10 @@ urtw_rtl2rate(int rate)
 
 	for (i = 0; i < __arraycount(urtw_ratetable); i++) {
 		if (rate == urtw_ratetable[i].val)
-			return (urtw_ratetable[i].reg);
+			return urtw_ratetable[i].reg;
 	}
 
-	return (0);
+	return 0;
 }
 
 usbd_status
@@ -2107,7 +2107,7 @@ urtw_set_rate(struct urtw_softc *sc)
 
 	urtw_write16_m(sc, URTW_8187_BRSR, data);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -2117,7 +2117,7 @@ urtw_intr_enable(struct urtw_softc *sc)
 
 	urtw_write16_m(sc, URTW_INTR_MASK, 0xffff);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -2158,7 +2158,7 @@ urtw_rx_setconf(struct urtw_softc *sc)
 
 	urtw_write32_m(sc, URTW_RX, data);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -2193,7 +2193,7 @@ urtw_rx_enable(struct urtw_softc *sc)
 	urtw_read8_m(sc, URTW_CMD, &data);
 	urtw_write8_m(sc, URTW_CMD, data | URTW_CMD_RX_ENABLE);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -2236,7 +2236,7 @@ urtw_tx_enable(struct urtw_softc *sc)
 	urtw_read8_m(sc, URTW_CMD, &data8);
 	urtw_write8_m(sc, URTW_CMD, data8 | URTW_CMD_TX_ENABLE);
 fail:
-	return (error);
+	return error;
 }
 
 int
@@ -2349,9 +2349,9 @@ urtw_init(struct ifnet *ifp)
 	else
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 
-	return (0);
+	return 0;
 fail:
-	return (error);
+	return error;
 }
 
 int
@@ -2365,7 +2365,7 @@ urtw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	int s, error = 0;
 
 	if (sc->sc_dying)
-		return (ENXIO);
+		return ENXIO;
 
 	s = splnet();
 
@@ -2407,7 +2407,7 @@ urtw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	splx(s);
 
-	return (error);
+	return error;
 #undef IS_RUNNING
 }
 
@@ -2599,7 +2599,7 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 		k = ieee80211_crypto_encap(ic, ni, m0);
 		if (k == NULL) {
 			m_freem(m0);
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 		/* packet header may have moved, reset our local pointer */
 		wh = mtod(m0, struct ieee80211_frame *);
@@ -2681,7 +2681,7 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 	if (error != USBD_IN_PROGRESS && error != USBD_NORMAL_COMPLETION) {
 		printf("%s: could not send frame: %s\n",
 		    device_xname(sc->sc_dev), usbd_errstr(error));
-		return (EIO);
+		return EIO;
 	}
 
 	error = urtw_led_ctl(sc, URTW_LED_CTL_TX);
@@ -2694,7 +2694,7 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 	else
 		sc->sc_tx_normal_queued++;
 
-	return (0);
+	return 0;
 }
 
 usbd_status
@@ -2721,7 +2721,7 @@ urtw_8225_usb_init(struct urtw_softc *sc)
 
 	usbd_delay_ms(sc->sc_udev, 500);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -2731,7 +2731,7 @@ urtw_8185_rf_pins_enable(struct urtw_softc *sc)
 
 	urtw_write16_m(sc, URTW_RF_PINS_ENABLE, 0x1ff7);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -2750,21 +2750,21 @@ urtw_8187_write_phy(struct urtw_softc *sc, uint8_t addr, uint32_t data)
 	 * usbd_delay_ms(sc->sc_udev, 1);
 	 */
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
 urtw_8187_write_phy_ofdm_c(struct urtw_softc *sc, uint8_t addr, uint32_t data)
 {
 	data = data & 0xff;
-	return (urtw_8187_write_phy(sc, addr, data));
+	return urtw_8187_write_phy(sc, addr, data);
 }
 
 usbd_status
 urtw_8187_write_phy_cck_c(struct urtw_softc *sc, uint8_t addr, uint32_t data)
 {
 	data = data & 0xff;
-	return (urtw_8187_write_phy(sc, addr, data | 0x10000));
+	return urtw_8187_write_phy(sc, addr, data | 0x10000);
 }
 
 usbd_status
@@ -2777,7 +2777,7 @@ urtw_8225_setgain(struct urtw_softc *sc, int16_t gain)
 	urtw_8187_write_phy_ofdm(sc, 0x1d, urtw_8225_gain[gain * 4 + 3]);
 	urtw_8187_write_phy_ofdm(sc, 0x23, urtw_8225_gain[gain * 4 + 1]);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -2830,7 +2830,7 @@ urtw_8225_set_txpwrlvl(struct urtw_softc *sc, int chan)
 	urtw_8187_write_phy_ofdm(sc, 0x7, urtw_8225_txpwr_ofdm[idx]);
 	usbd_delay_ms(sc->sc_udev, 1);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -2841,7 +2841,7 @@ urtw_8185_tx_antenna(struct urtw_softc *sc, uint8_t ant)
 	urtw_write8_m(sc, URTW_TX_ANTENNA, ant);
 	usbd_delay_ms(sc->sc_udev, 1);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -2938,7 +2938,7 @@ urtw_8225_rf_init(struct urtw_rf *rf)
 
 	error = urtw_8225_rf_set_chan(rf, 1);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -2974,7 +2974,7 @@ urtw_8225_rf_set_chan(struct urtw_rf *rf, int chan)
 	}
 
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -2984,7 +2984,7 @@ urtw_8225_rf_set_sens(struct urtw_rf *rf)
 	usbd_status error;
 
 	if (rf->sens > 6)
-		return (-1);
+		return -1;
 
 	if (rf->sens > 4)
 		urtw_8225_write(sc, 0x0c, 0x850);
@@ -2999,7 +2999,7 @@ urtw_8225_rf_set_sens(struct urtw_rf *rf)
 	urtw_8187_write_phy_cck(sc, 0x41, urtw_8225_threshold[rf->sens]);
 
 fail:
-	return (error);
+	return error;
 }
 
 void
@@ -3041,8 +3041,8 @@ urtw_isbmode(uint16_t rate)
 {
 	rate = urtw_rtl2rate(rate);
 
-	return (((rate <= 22 && rate != 12 && rate != 18) ||
-	    rate == 44) ? (1) : (0));
+	return ((rate <= 22 && rate != 12 && rate != 18) ||
+	    rate == 44) ? 1 : 0;
 }
 
 void
@@ -3189,7 +3189,7 @@ urtw_8225v2_setgain(struct urtw_softc *sc, int16_t gain)
 	urtw_8187_write_phy_ofdm(sc, 0x21, 0x17);
 	usbd_delay_ms(sc->sc_udev, 1);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -3236,7 +3236,7 @@ urtw_8225v2_set_txpwrlvl(struct urtw_softc *sc, int chan)
 	    urtw_8225v2_tx_gain_cck_ofdm[ofdm_pwrlvl]);
 	usbd_delay_ms(sc->sc_udev, 1);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -3354,7 +3354,7 @@ urtw_8225v2_rf_init(struct urtw_rf *rf)
 
 	error = urtw_8225_rf_set_chan(rf, 1);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -3391,7 +3391,7 @@ urtw_8225v2_rf_set_chan(struct urtw_rf *rf, int chan)
 	}
 
 fail:
-	return (error);
+	return error;
 }
 
 void
@@ -3535,7 +3535,7 @@ urtw_8187b_update_wmm(struct urtw_softc *sc)
 	urtw_write32_m(sc, URTW_AC_BK, data);
 
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -3580,7 +3580,7 @@ urtw_8187b_reset(struct urtw_softc *sc)
 	}
 
 fail:
-	return (error);
+	return error;
 }
 
 int
@@ -3717,7 +3717,7 @@ urtw_8187b_init(struct ifnet *ifp)
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -3741,7 +3741,7 @@ urtw_8225v2_b_config_mac(struct urtw_softc *sc)
 	urtw_write32_m(sc, URTW_RF_TIMING, 0x00004001);
 
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -3755,7 +3755,7 @@ urtw_8225v2_b_init_rfe(struct urtw_softc *sc)
 	usbd_delay_ms(sc->sc_udev, 100);
 
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -3791,7 +3791,7 @@ urtw_8225v2_b_update_chan(struct urtw_softc *sc)
 	urtw_write8_m(sc, URTW_8187B_EIFS, eifs);
 
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -3887,7 +3887,7 @@ urtw_8225v2_b_rf_init(struct urtw_rf *rf)
 
 	error = urtw_8225v2_b_rf_set_chan(rf, 1);
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -3912,7 +3912,7 @@ urtw_8225v2_b_rf_set_chan(struct urtw_rf *rf, int chan)
 	urtw_write16_m(sc, URTW_AC_BK, 0x5114);
 
 fail:
-	return (error);
+	return error;
 }
 
 usbd_status
@@ -4015,7 +4015,7 @@ urtw_8225v2_b_set_txpwrlvl(struct urtw_softc *sc, int chan)
 	 * usbd_delay_ms(sc->sc_udev, 1);
 	 */
 fail:
-	return (error);
+	return error;
 }
 
 int

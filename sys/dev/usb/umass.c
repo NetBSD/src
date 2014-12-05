@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.149.2.2 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.149.2.3 2014/12/05 09:37:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.2 2014/12/02 09:00:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.3 2014/12/05 09:37:50 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -289,10 +289,10 @@ umass_match(device_t parent, cfdata_t match, void *aux)
 
 	quirk = umass_lookup(uaa->vendor, uaa->product);
 	if (quirk != NULL && quirk->uq_match != UMASS_QUIRK_USE_DEFAULTMATCH)
-		return (quirk->uq_match);
+		return quirk->uq_match;
 
 	if (uaa->class != UICLASS_MASS)
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 
 	switch (uaa->subclass) {
 	case UISUBCLASS_RBC:
@@ -303,7 +303,7 @@ umass_match(device_t parent, cfdata_t match, void *aux)
 	case UISUBCLASS_SCSI:
 		break;
 	default:
-		return (UMATCH_IFACECLASS);
+		return UMATCH_IFACECLASS;
 	}
 
 	switch (uaa->proto) {
@@ -313,10 +313,10 @@ umass_match(device_t parent, cfdata_t match, void *aux)
 	case UIPROTO_MASS_BBB:
 		break;
 	default:
-		return (UMATCH_IFACECLASS_IFACESUBCLASS);
+		return UMATCH_IFACECLASS_IFACESUBCLASS;
 	}
 
-	return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
+	return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 }
 
 void
@@ -746,7 +746,7 @@ umass_detach(device_t self, int flags)
 	}
 
 	if (rv != 0)
-		return (rv);
+		return rv;
 
 	umass_disco(sc);
 
@@ -756,7 +756,7 @@ umass_detach(device_t self, int flags)
 	mutex_destroy(&sc->sc_lock);
 	cv_destroy(&sc->sc_detach_cv);
 
-	return (rv);
+	return rv;
 }
 
 int
@@ -817,7 +817,7 @@ umass_setup_transfer(struct umass_softc *sc, usbd_pipe_handle pipe,
 	USBHIST_FUNC(); USBHIST_CALLED(umassdebug);
 
 	if (sc->sc_dying)
-		return (USBD_IOERROR);
+		return USBD_IOERROR;
 
 	/* Initialiase a USB transfer and then schedule it */
 
@@ -833,10 +833,10 @@ umass_setup_transfer(struct umass_softc *sc, usbd_pipe_handle pipe,
 	if (err && err != USBD_IN_PROGRESS) {
 		DPRINTF(UDMASS_BBB, ("%s: failed to setup transfer, %s\n",
 			device_xname(sc->sc_dev), usbd_errstr(err)));
-		return (err);
+		return err;
 	}
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 
@@ -847,7 +847,7 @@ umass_setup_ctrl_transfer(struct umass_softc *sc, usb_device_request_t *req,
 	usbd_status err;
 
 	if (sc->sc_dying)
-		return (USBD_IOERROR);
+		return USBD_IOERROR;
 
 	/* Initialiase a USB control transfer and then schedule it */
 
@@ -860,10 +860,10 @@ umass_setup_ctrl_transfer(struct umass_softc *sc, usb_device_request_t *req,
 			 device_xname(sc->sc_dev), usbd_errstr(err)));
 
 		/* do not reset, as this would make us loop */
-		return (err);
+		return err;
 	}
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 Static void
@@ -1860,7 +1860,7 @@ umass_bbb_get_max_lun(struct umass_softc *sc, uint8_t *maxlun)
 		break;
 	}
 
-	return (err);
+	return err;
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.22.4.7 2014/12/04 08:04:32 skrll Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.22.4.8 2014/12/05 09:37:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.7 2014/12/04 08:04:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.8 2014/12/05 09:37:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -391,7 +391,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 	usb_transfer_complete(xfer);
 	mutex_exit(&sc->sc_lock);
 
-	return (USBD_IN_PROGRESS);
+	return USBD_IN_PROGRESS;
 }
 
 static usbd_status
@@ -404,9 +404,9 @@ rumpusb_device_ctrl_transfer(usbd_xfer_handle xfer)
 	err = usb_insert_transfer(xfer);
 	mutex_exit(&sc->sc_lock);
 	if (err)
-		return (err);
+		return err;
 
-	return (rumpusb_device_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue)));
+	return rumpusb_device_ctrl_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 static void
@@ -530,7 +530,7 @@ rumpusb_root_intr_start(usbd_xfer_handle xfer)
 	}
 	mutex_exit(&sc->sc_lock);
 
-	return (USBD_IN_PROGRESS);
+	return USBD_IN_PROGRESS;
 }
 
 static usbd_status
@@ -543,9 +543,9 @@ rumpusb_root_intr_transfer(usbd_xfer_handle xfer)
 	err = usb_insert_transfer(xfer);
 	mutex_exit(&sc->sc_lock);
 	if (err)
-		return (err);
+		return err;
 
-	return (rumpusb_root_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue)));
+	return rumpusb_root_intr_start(SIMPLEQ_FIRST(&xfer->ux_pipe->up_queue));
 }
 
 static void
@@ -682,7 +682,7 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
 	mutex_exit(&sc->sc_lock);
-	return (USBD_IN_PROGRESS);
+	return USBD_IN_PROGRESS;
 }
 
 static void

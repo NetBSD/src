@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.95.4.3 2014/12/02 09:00:34 skrll Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.95.4.4 2014/12/05 09:37:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.4.3 2014/12/02 09:00:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.4.4 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,8 +185,8 @@ ulpt_match(device_t parent, cfdata_t match, void *aux)
 	    (uaa->proto == UIPROTO_PRINTER_UNI ||
 	     uaa->proto == UIPROTO_PRINTER_BI ||
 	     uaa->proto == UIPROTO_PRINTER_1284))
-		return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
-	return (UMATCH_NONE);
+		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
+	return UMATCH_NONE;
 }
 
 void
@@ -375,7 +375,7 @@ ulpt_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -393,9 +393,9 @@ ulpt_status(struct ulpt_softc *sc)
 	err = usbd_do_request(sc->sc_udev, &req, &status);
 	DPRINTFN(2, ("ulpt_status: status=0x%02x err=%d\n", status, err));
 	if (!err)
-		return (status);
+		return status;
 	else
-		return (0);
+		return 0;
 }
 
 void
@@ -440,10 +440,10 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 		return ENXIO;
 
 	if (sc == NULL || sc->sc_iface == NULL || sc->sc_dying)
-		return (ENXIO);
+		return ENXIO;
 
 	if (sc->sc_state)
-		return (EBUSY);
+		return EBUSY;
 
 	sc->sc_state = ULPT_INIT;
 	sc->sc_flags = flags;
@@ -543,7 +543,7 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 		usb_detach_wakeupold(sc->sc_dev);
 
 	DPRINTFN(2, ("ulptopen: done, error=%d\n", error));
-	return (error);
+	return error;
 }
 
 /*
@@ -565,7 +565,7 @@ ulpt_statusmsg(u_char status, struct ulpt_softc *sc)
 	if (new & LPS_NERR)
 		log(LOG_NOTICE, "%s: output error\n", device_xname(sc->sc_dev));
 
-	return (status);
+	return status;
 }
 
 int
@@ -578,7 +578,7 @@ ulptclose(dev_t dev, int flag, int mode,
 
 	if (sc->sc_state != ULPT_OPEN)
 		/* We are being forced to close before the open completed. */
-		return (0);
+		return 0;
 
 	if (sc->sc_has_callout) {
 		DPRINTFN(2, ("ulptclose: stopping read callout\n"));
@@ -610,7 +610,7 @@ ulptclose(dev_t dev, int flag, int mode,
 	sc->sc_state = 0;
 
 	DPRINTFN(2, ("ulptclose: closed\n"));
-	return (0);
+	return 0;
 }
 
 int
@@ -640,7 +640,7 @@ ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 		}
 	}
 
-	return (error);
+	return error;
 }
 
 int
@@ -652,13 +652,13 @@ ulptwrite(dev_t dev, struct uio *uio, int flags)
 	sc = device_lookup_private(&ulpt_cd, ULPTUNIT(dev));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	sc->sc_refcnt++;
 	error = ulpt_do_write(sc, uio, flags);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
-	return (error);
+	return error;
 }
 
 /*
@@ -822,7 +822,7 @@ ulpt_do_read(struct ulpt_softc *sc, struct uio *uio, int flags)
 done:
 	DPRINTFN(3, ("ulptread: finished n %d nread %d err %d error %d\n",
 			     n, nread, err, error));
-	return (error);
+	return error;
 }
 
 int
@@ -834,13 +834,13 @@ ulptread(dev_t dev, struct uio *uio, int flags)
 	sc = device_lookup_private(&ulpt_cd, ULPTUNIT(dev));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	sc->sc_refcnt++;
 	error = ulpt_do_read(sc, uio, flags);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
-	return (error);
+	return error;
 }
 
 void

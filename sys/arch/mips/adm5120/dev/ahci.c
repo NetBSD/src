@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.12.6.10 2014/12/04 08:04:31 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.12.6.11 2014/12/05 09:37:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.10 2014/12/04 08:04:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.11 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,9 +234,9 @@ ahci_match(device_t parent, struct cfdata *cf, void *aux)
 	struct obio_attach_args *aa = aux;
 
 	if (strcmp(aa->oba_name, cf->cf_name) == 0)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 #define	REG_READ(o)	bus_space_read_4(sc->sc_st, sc->sc_ioh, (o))
@@ -796,7 +796,7 @@ ahci_device_ctrl_start(usbd_xfer_handle xfer)
 	if (!(xfer->ux_rqflags & URQ_REQUEST)) {
 		/* XXX panic */
 		printf("ahci_device_ctrl_transfer: not a request\n");
-		return (USBD_INVAL);
+		return USBD_INVAL;
 	}
 #endif
 
@@ -812,7 +812,7 @@ ahci_device_ctrl_start(usbd_xfer_handle xfer)
 			sizeof(usb_device_request_t),
 			0, &reqdma);
 		if (err)
-			return (USBD_NOMEM);
+			return USBD_NOMEM;
 
 		/* printf("ep: %p\n",ep); */
 	};
@@ -1124,7 +1124,7 @@ ahci_device_bulk_start(usbd_xfer_handle xfer)
 	if (xfer->ux_rqflags & URQ_REQUEST) {
 		/* XXX panic */
 		printf("ohci_device_bulk_start: a request\n");
-		return (USBD_INVAL);
+		return USBD_INVAL;
 	}
 #endif
 
