@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.36 2014/12/05 18:54:35 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.37 2014/12/05 19:06:41 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -217,6 +217,7 @@ awinio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_coherent_dmat = &awin_coherent_dma_tag;
 
 	switch (awin_chip_id()) {
+#ifdef ALLWINNER_A80
 	case AWIN_CHIP_ID_A80:
 		bus_space_subregion(sc->sc_bst, sc->sc_bsh,
 		    AWIN_A80_CCU_SCLK_OFFSET, 0x1000, &sc->sc_ccm_bsh);
@@ -225,6 +226,7 @@ awinio_attach(device_t parent, device_t self, void *aux)
 		bus_space_map(sc->sc_bst, AWIN_A80_CORE2_PBASE,
 		    AWIN_A80_CORE2_SIZE, 0, &sc->sc_a80_core2_bsh);
 		break;
+#endif
 	default:
 		bus_space_subregion(sc->sc_bst, sc->sc_bsh, AWIN_CCM_OFFSET,
 		    0x1000, &sc->sc_ccm_bsh);
