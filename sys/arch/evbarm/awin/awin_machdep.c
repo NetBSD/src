@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.29 2014/11/17 00:50:40 jmcneill Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.30 2014/12/05 01:13:11 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.29 2014/11/17 00:50:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.30 2014/12/05 01:13:11 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -139,6 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.29 2014/11/17 00:50:40 jmcneill E
 #include "com.h"
 #include "ukbd.h"
 #include "genfb.h"
+#include "ether.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,8 +482,13 @@ initarm(void *arg)
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB | HUPCL)) | CS8) /* 8N1 */
 #endif
 
+#ifdef ALLWINNER_A80
+__CTASSERT(AWIN_CORE_PBASE + AWIN_A80_UART0_OFFSET <= CONADDR);
+__CTASSERT(CONADDR <= AWIN_CORE_PBASE + AWIN_A80_UART5_OFFSET);
+#else
 __CTASSERT(AWIN_CORE_PBASE + AWIN_UART0_OFFSET <= CONADDR);
 __CTASSERT(CONADDR <= AWIN_CORE_PBASE + AWIN_UART7_OFFSET);
+#endif
 __CTASSERT(CONADDR % AWIN_UART_SIZE == 0);
 static const bus_addr_t conaddr = CONADDR;
 static const int conspeed = CONSPEED;
@@ -572,6 +578,16 @@ awin_device_register(device_t self, void *aux)
 
 	if (device_is_a(self, "armperiph")
 	    && device_is_a(device_parent(self), "mainbus")) {
+
+#if defined(ALLWINNER_A80)
+		/* XXX Cubie4 SDK u-boot wrongly sets cbar to 0x01c80000 */
+		if (armreg_cbar_read() != AWIN_A80_GIC_BASE) {
+			prop_dictionary_set_uint32(dict, "cbar",
+			    AWIN_A80_GIC_BASE);
+		}
+#endif
+
+
 		/*
 		 * XXX KLUDGE ALERT XXX
 		 * The iot mainbus supplies is completely wrong since it scales
@@ -717,6 +733,7 @@ awin_device_register(device_t self, void *aux)
 	}
 
 	if (device_is_a(self, "awge")) {
+#if NETHER > 0
 		/*
 		 * Get the GMAC MAC address from cmdline.
 		 */
@@ -738,6 +755,7 @@ awin_device_register(device_t self, void *aux)
 				prop_object_release(pd);
 			}
 		}
+#endif
 
 #if AWIN_board == AWIN_cubieboard
 		if (awin_chip_id() == AWIN_CHIP_ID_A20) {
