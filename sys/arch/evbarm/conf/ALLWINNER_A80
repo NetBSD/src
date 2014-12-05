@@ -1,4 +1,4 @@
-#	$NetBSD: ALLWINNER_A80,v 1.2 2014/12/05 14:36:44 jmcneill Exp $
+#	$NetBSD: ALLWINNER_A80,v 1.3 2014/12/05 15:25:27 jmcneill Exp $
 #
 #	ALLWINNER_A80 - Allwinner A80 boards (Cubieboard4, OptimusBoard, etc)
 #
@@ -218,12 +218,14 @@ awingpio0	at awinio0
 gpio*		at awingpio?
 
 # I2C Controllers
-#awiniic0	at awinio? port 0
-#iic0		at awiniic0
+awiniic0	at awinio? port 0
+iic0		at awiniic0
 
-#awiniic2	at awinio? port 2
-#iic2		at awiniic2
-#pcf8563rtc0	at iic2 addr 0x51	# PCF8563 RTC
+awiniic1	at awinio? port 1
+iic1		at awiniic1
+
+awiniic2	at awinio? port 2
+iic2		at awiniic2
 
 # P2WI
 #awinp2wi0	at awinio0
