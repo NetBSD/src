@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2014/03/09 00:39:31 agc Exp $
+# $NetBSD: Makefile,v 1.3 2014/12/05 04:52:01 agc Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ PROG=hkpc
 BINDIR=/usr/bin
 SRCS=hkpc.c main.c
 
-LIBNETPGPDIR!=	cd ${.CURDIR}/../../lib && ${PRINTOBJDIR}
+LIBNETPGPDIR!=	cd ${.CURDIR}/../../lib/netpgp && ${PRINTOBJDIR}
 LDADD+=		-L${LIBNETPGPDIR} -lnetpgp
 DPADD+=		${LIBNETPGPDIR}/libnetpgp.a
 
