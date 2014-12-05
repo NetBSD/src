@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.31 2014/12/05 11:53:43 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.32 2014/12/05 14:36:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -204,11 +204,23 @@ awinio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = &awin_dma_tag;
 	sc->sc_coherent_dmat = &awin_coherent_dma_tag;
 
-	bus_space_subregion(sc->sc_bst, sc->sc_bsh, AWIN_CCM_OFFSET, 0x1000,
-	    &sc->sc_ccm_bsh);
+	switch (awin_chip_id()) {
+	case AWIN_CHIP_ID_A80:
+		bus_space_subregion(sc->sc_bst, sc->sc_bsh,
+		    AWIN_A80_CCU_SCLK_OFFSET, 0x1000, &sc->sc_ccm_bsh);
+		break;
+	default:
+		bus_space_subregion(sc->sc_bst, sc->sc_bsh, AWIN_CCM_OFFSET,
+		    0x1000, &sc->sc_ccm_bsh);
+		break;
+	}
 
 	aprint_naive("\n");
-	aprint_normal(": %s (0x%04x)\n", chip_name, chip_id);
+	aprint_normal(": %s", chip_name);
+	if ((chip_id & 0xff00) != 0xff00) {
+		aprint_normal(" (0x%04x)\n", chip_id);
+	}
+	aprint_normal("\n");
 
 	const struct awin_locators * const eloc =
 	    awin_locators + __arraycount(awin_locators);
