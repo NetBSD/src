@@ -104,6 +104,7 @@ static struct vfsops zfs_vfsops_template = {
 	.vfs_statvfs = zfs_statvfs,
 	.vfs_sync = zfs_sync,
 	.vfs_vget = zfs_vget,
+	.vfs_loadvnode = zfs_loadvnode,
 	.vfs_fhtovp = zfs_fhtovp,
 	.vfs_init = zfs_init,
 	.vfs_done = zfs_fini,

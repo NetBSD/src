@@ -318,6 +318,8 @@ extern void	zfs_grow_blocksize(znode_t *, uint64_t, dmu_tx_t *);
 extern int	zfs_freesp(znode_t *, uint64_t, uint64_t, int, boolean_t);
 extern void	zfs_znode_init(void);
 extern void	zfs_znode_fini(void);
+extern int	zfs_loadvnode(struct mount *, struct vnode *,
+    const void *, size_t, const void **);
 extern int	zfs_zget(zfsvfs_t *, uint64_t, znode_t **);
 extern int	zfs_rezget(znode_t *);
 extern void	zfs_zinactive(znode_t *);
