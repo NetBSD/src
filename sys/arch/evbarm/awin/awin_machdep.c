@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.31 2014/12/05 01:20:48 jmcneill Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.32 2014/12/05 14:46:04 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.31 2014/12/05 01:20:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.32 2014/12/05 14:46:04 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -668,6 +668,10 @@ awin_device_register(device_t self, void *aux)
 #if AWIN_board == AWIN_cubietruck
 		prop_dictionary_set_cstring(dict, "usb0restrict", ">PH0");
 #endif
+#if AWIN_board == AWIN_allwinner_a80
+		prop_dictionary_set_cstring(dict, "status-led1", ">PH06");
+		prop_dictionary_set_cstring(dict, "status-led2", ">PH17");
+#else
 		prop_dictionary_set_cstring(dict, "status-led1", ">PH21");
 		prop_dictionary_set_cstring(dict, "status-led2", ">PH20");
 		if (cubietruck_p) {
@@ -677,12 +681,15 @@ awin_device_register(device_t self, void *aux)
 			prop_dictionary_set_cstring(dict, "hdd5ven", ">PH17");
 			prop_dictionary_set_cstring(dict, "emacpwren", ">PH19");
 		}
+#endif
 #if AWIN_board == AWIN_cubieboard || AWIN_board == AWIN_cubietruck
 		prop_dictionary_set_cstring(dict, "mmc0detect", "<PH1");
 #elif AWIN_board == AWIN_bpi
 		prop_dictionary_set_cstring(dict, "mmc0detect", "<PH10");
 #elif AWIN_board == AWIN_hummingbird_a31
 		prop_dictionary_set_cstring(dict, "mmc0detect", "<PH8");
+#elif AWIN_board == AWIN_allwinner_a80
+		prop_dictionary_set_cstring(dict, "mmc0detect", "<PH18");
 #endif
 
 #if AWIN_board == AWIN_hummingbird_a31
