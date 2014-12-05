@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.28 2014/12/05 01:13:11 jmcneill Exp $ */
+/* $NetBSD: awin_var.h,v 1.29 2014/12/05 14:36:44 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -103,6 +103,7 @@ void	awin_pll7_enable(void);
 void	awin_pll3_set_rate(uint32_t);
 uint32_t awin_pll5x_get_rate(void);
 uint32_t awin_pll6_get_rate(void);
+uint32_t awin_periph0_get_rate(void);
 void	awin_cpu_hatch(struct cpu_info *);
 
 #define AWIN_CHIP_ID_A10	AWIN_SRAM_VER_KEY_A10
