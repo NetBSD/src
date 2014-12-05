@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.74.4.3 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.74.4.4 2014/12/05 09:37:50 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.4.3 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.4.4 2014/12/05 09:37:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,8 +210,8 @@ uplcom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (uplcom_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return uplcom_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 void
@@ -452,7 +452,7 @@ uplcom_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
 
-	return (rv);
+	return rv;
 }
 
 int
@@ -483,9 +483,9 @@ uplcom_reset(struct uplcom_softc *sc)
 
 	err = usbd_do_request(sc->sc_udev, &req, 0);
 	if (err)
-		return (EIO);
+		return EIO;
 
-	return (0);
+	return 0;
 }
 
 struct pl2303x_init {
@@ -530,11 +530,11 @@ uplcom_pl2303x_init(struct uplcom_softc *sc)
 			aprint_error_dev(sc->sc_dev,
 			    "uplcom_pl2303x_init failed: %s\n",
 			    usbd_errstr(err));
-			return (EIO);
+			return EIO;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 void
@@ -645,10 +645,10 @@ uplcom_set_crtscts(struct uplcom_softc *sc)
 	if (err) {
 		DPRINTF(("uplcom_set_crtscts: failed, err=%s\n",
 			usbd_errstr(err)));
-		return (err);
+		return err;
 	}
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 usbd_status
@@ -663,7 +663,7 @@ uplcom_set_line_coding(struct uplcom_softc *sc, usb_cdc_line_state_t *state)
 
 	if (memcmp(state, &sc->sc_line_state, UCDC_LINE_STATE_LENGTH) == 0) {
 		DPRINTF(("uplcom_set_line_coding: already set\n"));
-		return (USBD_NORMAL_COMPLETION);
+		return USBD_NORMAL_COMPLETION;
 	}
 
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
@@ -676,12 +676,12 @@ uplcom_set_line_coding(struct uplcom_softc *sc, usb_cdc_line_state_t *state)
 	if (err) {
 		DPRINTF(("uplcom_set_line_coding: failed, err=%s\n",
 			usbd_errstr(err)));
-		return (err);
+		return err;
 	}
 
 	sc->sc_line_state = *state;
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 int
@@ -723,7 +723,7 @@ uplcom_param(void *addr, int portno, struct termios *t)
 	err = uplcom_set_line_coding(sc, &ls);
 	if (err) {
 		DPRINTF(("uplcom_param: err=%s\n", usbd_errstr(err)));
-		return (EIO);
+		return EIO;
 	}
 
 	if (ISSET(t->c_cflag, CRTSCTS))
@@ -734,10 +734,10 @@ uplcom_param(void *addr, int portno, struct termios *t)
 
 	if (err) {
 		DPRINTF(("uplcom_param: err=%s\n", usbd_errstr(err)));
-		return (EIO);
+		return EIO;
 	}
 
-	return (0);
+	return 0;
 }
 
 Static usbd_status
@@ -769,7 +769,7 @@ uplcom_open(void *addr, int portno)
 	usbd_status err;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	DPRINTF(("uplcom_open: sc=%p\n", sc));
 
@@ -788,14 +788,14 @@ uplcom_open(void *addr, int portno)
 		if (err) {
 			DPRINTF(("%s: cannot open interrupt pipe (addr %d)\n",
 				device_xname(sc->sc_dev), sc->sc_intr_number));
-					return (EIO);
+					return EIO;
 		}
 	}
 
 	if (sc->sc_type == UPLCOM_TYPE_HX)
-		return (uplcom_pl2303x_init(sc));
+		return uplcom_pl2303x_init(sc);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -881,7 +881,7 @@ uplcom_ioctl(void *addr, int portno, u_long cmd, void *data, int flag,
 	int error = 0;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	DPRINTF(("uplcom_ioctl: cmd=0x%08lx\n", cmd));
 
@@ -899,6 +899,6 @@ uplcom_ioctl(void *addr, int portno, u_long cmd, void *data, int flag,
 		break;
 	}
 
-	return (error);
+	return error;
 }
 #endif

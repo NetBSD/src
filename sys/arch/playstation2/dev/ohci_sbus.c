@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_sbus.c,v 1.11.8.2 2014/12/03 12:52:06 skrll Exp $	*/
+/*	$NetBSD: ohci_sbus.c,v 1.11.8.3 2014/12/05 09:37:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.11.8.2 2014/12/03 12:52:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.11.8.3 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -110,7 +110,7 @@ int
 ohci_sbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	return (1);
+	return 1;
 }
 
 void
@@ -172,7 +172,7 @@ _ohci_sbus_mem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	KDASSERT(sc);
 	ds = malloc(sizeof(struct ohci_dma_segment), M_DEVBUF, M_NOWAIT);
 	if (ds == NULL)
-		return (1);
+		return 1;
 	/*
 	 * Allocate DMA Area (IOP DMA Area <-> SIF DMA <-> EE DMA Area)
 	 */
@@ -181,7 +181,7 @@ _ohci_sbus_mem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	if (error) {
 		free(ds, M_DEVBUF);
-		return (1);
+		return 1;
 	}
 
 	segs[0].ds_len	  = iopdma_seg->size;
@@ -192,7 +192,7 @@ _ohci_sbus_mem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 
 	*rsegs = 1;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -231,11 +231,11 @@ _ohci_sbus_mem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t s
 
 			*kvap = (void *)ds->ds_iopdma_seg.ee_vaddr;
 
-			return (0);
+			return 0;
 		}
 	}
 
-	return (1);
+	return 1;
 }
 
 void

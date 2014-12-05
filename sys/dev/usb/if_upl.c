@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.47.4.3 2014/12/03 22:33:56 skrll Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.47.4.4 2014/12/05 09:37:49 skrll Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.3 2014/12/03 22:33:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.4 2014/12/05 09:37:49 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -207,9 +207,9 @@ upl_match(device_t parent, cfdata_t match, void *aux)
 
 	for (t = sc_devs; t->upl_vid != 0; t++)
 		if (uaa->vendor == t->upl_vid && uaa->product == t->upl_did)
-			return (UMATCH_VENDOR_PRODUCT);
+			return UMATCH_VENDOR_PRODUCT;
 
-	return (UMATCH_NONE);
+	return UMATCH_NONE;
 }
 
 void
@@ -335,7 +335,7 @@ upl_detach(device_t self, int flags)
 	if (!sc->sc_attached) {
 		/* Detached before attached finished, so just bail out. */
 		splx(s);
-		return (0);
+		return 0;
 	}
 
 	if (ifp->if_flags & IFF_RUNNING)
@@ -359,7 +359,7 @@ upl_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 	    sc->sc_dev);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -395,7 +395,7 @@ upl_newbuf(struct upl_softc *sc, struct upl_chain *c, struct mbuf *m)
 		if (m_new == NULL) {
 			printf("%s: no memory for rx list "
 			    "-- packet dropped!\n", device_xname(sc->sc_dev));
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 
 		MCLGET(m_new, M_DONTWAIT);
@@ -403,7 +403,7 @@ upl_newbuf(struct upl_softc *sc, struct upl_chain *c, struct mbuf *m)
 			printf("%s: no memory for rx list "
 			    "-- packet dropped!\n", device_xname(sc->sc_dev));
 			m_freem(m_new);
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 	} else {
@@ -414,7 +414,7 @@ upl_newbuf(struct upl_softc *sc, struct upl_chain *c, struct mbuf *m)
 
 	c->upl_mbuf = m_new;
 
-	return (0);
+	return 0;
 }
 
 Static int
@@ -432,20 +432,20 @@ upl_rx_list_init(struct upl_softc *sc)
 		c->upl_sc = sc;
 		c->upl_idx = i;
 		if (upl_newbuf(sc, c, NULL) == ENOBUFS)
-			return (ENOBUFS);
+			return ENOBUFS;
 		if (c->upl_xfer == NULL) {
 			c->upl_xfer = usbd_alloc_xfer(sc->sc_udev);
 			if (c->upl_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->upl_buf = usbd_alloc_buffer(c->upl_xfer, UPL_BUFSZ);
 			if (c->upl_buf == NULL) {
 				usbd_free_xfer(c->upl_xfer);
-				return (ENOBUFS);
+				return ENOBUFS;
 			}
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 Static int
@@ -466,16 +466,16 @@ upl_tx_list_init(struct upl_softc *sc)
 		if (c->upl_xfer == NULL) {
 			c->upl_xfer = usbd_alloc_xfer(sc->sc_udev);
 			if (c->upl_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->upl_buf = usbd_alloc_buffer(c->upl_xfer, UPL_BUFSZ);
 			if (c->upl_buf == NULL) {
 				usbd_free_xfer(c->upl_xfer);
-				return (ENOBUFS);
+				return ENOBUFS;
 			}
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -643,12 +643,12 @@ upl_send(struct upl_softc *sc, struct mbuf *m, int idx)
 		printf("%s: upl_send error=%s\n", device_xname(sc->sc_dev),
 		       usbd_errstr(err));
 		upl_stop(sc);
-		return (EIO);
+		return EIO;
 	}
 
 	sc->sc_cdata.upl_tx_cnt++;
 
-	return (0);
+	return 0;
 }
 
 Static void
@@ -747,14 +747,14 @@ upl_openpipes(struct upl_softc *sc)
 	if (err) {
 		printf("%s: open rx pipe failed: %s\n",
 		    device_xname(sc->sc_dev), usbd_errstr(err));
-		return (EIO);
+		return EIO;
 	}
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_ed[UPL_ENDPT_TX],
 	    USBD_EXCLUSIVE_USE, &sc->sc_ep[UPL_ENDPT_TX]);
 	if (err) {
 		printf("%s: open tx pipe failed: %s\n",
 		    device_xname(sc->sc_dev), usbd_errstr(err));
-		return (EIO);
+		return EIO;
 	}
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ed[UPL_ENDPT_INTR],
 	    USBD_EXCLUSIVE_USE, &sc->sc_ep[UPL_ENDPT_INTR], sc,
@@ -763,7 +763,7 @@ upl_openpipes(struct upl_softc *sc)
 	if (err) {
 		printf("%s: open intr pipe failed: %s\n",
 		    device_xname(sc->sc_dev), usbd_errstr(err));
-		return (EIO);
+		return EIO;
 	}
 
 
@@ -779,7 +779,7 @@ upl_openpipes(struct upl_softc *sc)
 	}
 #endif
 
-	return (0);
+	return 0;
 }
 
 Static void
@@ -833,7 +833,7 @@ upl_ioctl(struct ifnet *ifp, u_long command, void *data)
 	int			s, error = 0;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	DPRINTFN(5,("%s: %s: cmd=0x%08lx\n",
 		    device_xname(sc->sc_dev), __func__, command));
@@ -882,7 +882,7 @@ upl_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	splx(s);
 
-	return (error);
+	return error;
 }
 
 Static void
@@ -1018,14 +1018,14 @@ upl_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	if (error) {
 		/* mbuf is already freed */
 		splx(s);
-		return (error);
+		return error;
 	}
 	ifp->if_obytes += len;
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
 	splx(s);
 
-	return (0);
+	return 0;
 }
 
 Static void

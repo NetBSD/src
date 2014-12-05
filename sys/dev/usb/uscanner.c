@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.75.4.4 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.75.4.5 2014/12/05 09:37:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.4 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.5 2014/12/05 09:37:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,8 +273,8 @@ uscanner_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (uscanner_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return uscanner_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 void
@@ -377,10 +377,10 @@ uscanneropen(dev_t dev, int flag, int mode,
 		     flag, mode, unit));
 
 	if (sc->sc_dying)
-		return (ENXIO);
+		return ENXIO;
 
 	if (sc->sc_state & USCANNER_OPEN)
-		return (EBUSY);
+		return EBUSY;
 
 	sc->sc_state |= USCANNER_OPEN;
 
@@ -399,7 +399,7 @@ uscanneropen(dev_t dev, int flag, int mode,
 			printf("%s: cannot open bulk-in pipe (addr %d)\n",
 			       device_xname(sc->sc_dev), sc->sc_bulkin);
 			uscanner_do_close(sc);
-			return (EIO);
+			return EIO;
 		}
 	}
 	if (sc->sc_bulkout_pipe == NULL) {
@@ -409,22 +409,22 @@ uscanneropen(dev_t dev, int flag, int mode,
 			printf("%s: cannot open bulk-out pipe (addr %d)\n",
 			       device_xname(sc->sc_dev), sc->sc_bulkout);
 			uscanner_do_close(sc);
-			return (EIO);
+			return EIO;
 		}
 	}
 
 	sc->sc_bulkin_xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (sc->sc_bulkin_xfer == NULL) {
 		uscanner_do_close(sc);
-		return (ENOMEM);
+		return ENOMEM;
 	}
 	sc->sc_bulkout_xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (sc->sc_bulkout_xfer == NULL) {
 		uscanner_do_close(sc);
-		return (ENOMEM);
+		return ENOMEM;
 	}
 
-	return (0);	/* success */
+	return 0;	/* success */
 }
 
 int
@@ -441,13 +441,13 @@ uscannerclose(dev_t dev, int flag, int mode,
 #ifdef DIAGNOSTIC
 	if (!(sc->sc_state & USCANNER_OPEN)) {
 		printf("uscannerclose: not open\n");
-		return (EINVAL);
+		return EINVAL;
 	}
 #endif
 
 	uscanner_do_close(sc);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -497,7 +497,7 @@ uscanner_do_read(struct uscanner_softc *sc, struct uio *uio, int flag)
 	DPRINTFN(5, ("%s: uscannerread\n", device_xname(sc->sc_dev)));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	while ((n = min(sc->sc_bulkin_bufferlen, uio->uio_resid)) != 0) {
 		DPRINTFN(1, ("uscannerread: start transfer %d bytes\n",n));
@@ -522,7 +522,7 @@ uscanner_do_read(struct uscanner_softc *sc, struct uio *uio, int flag)
 			break;
 	}
 
-	return (error);
+	return error;
 }
 
 int
@@ -538,7 +538,7 @@ uscannerread(dev_t dev, struct uio *uio, int flag)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
 
-	return (error);
+	return error;
 }
 
 Static int
@@ -551,7 +551,7 @@ uscanner_do_write(struct uscanner_softc *sc, struct uio *uio, int flag)
 	DPRINTFN(5, ("%s: uscanner_do_write\n", device_xname(sc->sc_dev)));
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	while ((n = min(sc->sc_bulkout_bufferlen, uio->uio_resid)) != 0) {
 		error = uiomove(sc->sc_bulkout_buffer, n, uio);
@@ -571,7 +571,7 @@ uscanner_do_write(struct uscanner_softc *sc, struct uio *uio, int flag)
 		}
 	}
 
-	return (error);
+	return error;
 }
 
 int
@@ -586,7 +586,7 @@ uscannerwrite(dev_t dev, struct uio *uio, int flag)
 	error = uscanner_do_write(sc, uio, flag);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
-	return (error);
+	return error;
 }
 
 int
@@ -639,7 +639,7 @@ uscanner_detach(device_t self, int flags)
 			   sc->sc_dev);
 	seldestroy(&sc->sc_selq);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -651,7 +651,7 @@ uscannerpoll(dev_t dev, int events, struct lwp *l)
 	sc = device_lookup_private(&uscanner_cd, USCANNERUNIT(dev));
 
 	if (sc->sc_dying)
-		return (POLLHUP);
+		return POLLHUP;
 
 	/*
 	 * We have no easy way of determining if a read will
@@ -661,7 +661,7 @@ uscannerpoll(dev_t dev, int events, struct lwp *l)
 	revents |= events &
 		   (POLLIN | POLLRDNORM | POLLOUT | POLLWRNORM);
 
-	return (revents);
+	return revents;
 }
 
 static void
@@ -684,7 +684,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 	sc = device_lookup_private(&uscanner_cd, USCANNERUNIT(dev));
 
 	if (sc->sc_dying)
-		return (ENXIO);
+		return ENXIO;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -699,19 +699,19 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	kn->kn_hook = sc;
 
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 
-	return (0);
+	return 0;
 }
 
 int
 uscannerioctl(dev_t dev, u_long cmd, void *addr,
     int flag, struct lwp *l)
 {
-	return (EINVAL);
+	return EINVAL;
 }

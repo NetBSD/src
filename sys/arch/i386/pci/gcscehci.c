@@ -1,4 +1,4 @@
-/* $NetBSD: gcscehci.c,v 1.11.2.1 2014/12/03 12:52:05 skrll Exp $ */
+/* $NetBSD: gcscehci.c,v 1.11.2.2 2014/12/05 09:37:49 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.11.2.1 2014/12/03 12:52:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.11.2.2 2014/12/05 09:37:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,9 +82,9 @@ gcscehci_match(device_t parent, cfdata_t match, void *aux)
 	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_EHCI &&
 	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_CS5536_EHCI)
-		return (10);	/* beat ehci_pci */
+		return 10;	/* beat ehci_pci */
 
-	return (0);
+	return 0;
 }
 
 static void

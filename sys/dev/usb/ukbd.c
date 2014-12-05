@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.129.6.1 2014/11/30 12:18:58 skrll Exp $        */
+/*      $NetBSD: ukbd.c,v 1.129.6.2 2014/12/05 09:37:49 skrll Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.129.6.1 2014/11/30 12:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.129.6.2 2014/12/05 09:37:49 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ukbd.h"
@@ -389,9 +389,9 @@ ukbd_match(device_t parent, cfdata_t match, void *aux)
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	if (!hid_is_collection(desc, size, uha->reportid,
 			       HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_KEYBOARD)))
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 
-	return (UMATCH_IFACECLASS);
+	return UMATCH_IFACECLASS;
 }
 
 void
@@ -498,7 +498,7 @@ ukbd_enable(void *v, int on)
 	struct ukbd_softc *sc = v;
 
 	if (on && sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	/* Should only be called to change state */
 	if ((sc->sc_flags & FLAG_ENABLED) != 0 && on != 0) {
@@ -506,17 +506,17 @@ ukbd_enable(void *v, int on)
 		printf("ukbd_enable: %s: bad call on=%d\n",
 		       device_xname(sc->sc_hdev.sc_dev), on);
 #endif
-		return (EBUSY);
+		return EBUSY;
 	}
 
 	DPRINTF(("ukbd_enable: sc=%p on=%d\n", sc, on));
 	if (on) {
 		sc->sc_flags |= FLAG_ENABLED;
-		return (uhidev_open(&sc->sc_hdev));
+		return uhidev_open(&sc->sc_hdev);
 	} else {
 		sc->sc_flags &= ~FLAG_ENABLED;
 		uhidev_close(&sc->sc_hdev);
-		return (0);
+		return 0;
 	}
 }
 
@@ -587,7 +587,7 @@ ukbd_detach(device_t self, int flags)
 	if (sc->sc_hdev.sc_state & UHIDEV_OPEN)
 		uhidev_close(&sc->sc_hdev);
 
-	return (rv);
+	return rv;
 }
 
 static void
@@ -948,13 +948,13 @@ ukbd_ioctl(void *v, u_long cmd, void *data, int flag,
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_USB;
-		return (0);
+		return 0;
 	case WSKBDIO_SETLEDS:
 		ukbd_set_leds(v, *(int *)data);
-		return (0);
+		return 0;
 	case WSKBDIO_GETLEDS:
 		*(int *)data = sc->sc_leds;
-		return (0);
+		return 0;
 #if defined(WSDISPLAY_COMPAT_RAWKBD)
 	case WSKBDIO_SETMODE:
 		DPRINTF(("ukbd_ioctl: set raw = %d\n", *(int *)data));
@@ -962,10 +962,10 @@ ukbd_ioctl(void *v, u_long cmd, void *data, int flag,
 #if defined(UKBD_REPEAT)
 		callout_stop(&sc->sc_rawrepeat_ch);
 #endif
-		return (0);
+		return 0;
 #endif
 	}
-	return (EPASSTHROUGH);
+	return EPASSTHROUGH;
 }
 
 /*
@@ -1039,7 +1039,7 @@ ukbd_cnattach(void)
 	 * XXX keyboard until autconfiguration has run its course.
 	 */
 	ukbd_is_console = 1;
-	return (0);
+	return 0;
 }
 
 const char *
@@ -1076,7 +1076,7 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 			 h.usage, h.flags, h.loc.pos, h.loc.size, h.loc.count));
 		if (h.flags & HIO_VARIABLE) {
 			if (h.loc.size != 1)
-				return ("bad modifier size");
+				return "bad modifier size";
 			/* Single item */
 			if (imod < MAXMOD) {
 				sc->sc_modloc[imod] = h.loc;
@@ -1084,17 +1084,17 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 				sc->sc_mods[imod].key = HID_GET_USAGE(h.usage);
 				imod++;
 			} else
-				return ("too many modifier keys");
+				return "too many modifier keys";
 		} else {
 			/* Array */
 			if (h.loc.size != 8)
-				return ("key code size != 8");
+				return "key code size != 8";
 			if (h.loc.count > MAXKEYCODE)
 				h.loc.count = MAXKEYCODE;
 			if (h.loc.pos % 8 != 0)
-				return ("key codes not on byte boundary");
+				return "key codes not on byte boundary";
 			if (sc->sc_nkeycode != 0)
-				return ("multiple key code arrays\n");
+				return "multiple key code arrays";
 			sc->sc_keycodeloc = h.loc;
 			sc->sc_nkeycode = h.loc.count;
 		}
@@ -1111,5 +1111,5 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 	hid_locate(desc, size, HID_USAGE2(HUP_LEDS, HUD_LED_COMPOSE),
 		   sc->sc_hdev.sc_report_id, hid_output, &sc->sc_compose, NULL);
 
-	return (NULL);
+	return NULL;
 }

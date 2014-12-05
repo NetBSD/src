@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.32.24.4 2014/12/03 22:33:56 skrll Exp $	*/
+/*	$NetBSD: umct.c,v 1.32.24.5 2014/12/05 09:37:50 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.4 2014/12/03 22:33:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.5 2014/12/05 09:37:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,8 +160,8 @@ umct_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (umct_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return umct_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 void
@@ -338,7 +338,7 @@ umct_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
 
-	return (rv);
+	return rv;
 }
 
 int
@@ -530,7 +530,7 @@ umct_param(void *addr, int portno, struct termios *t)
 	sc->last_lcr = data;
 	umct_set_lcr(sc, data);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -540,7 +540,7 @@ umct_open(void *addr, int portno)
 	int err, lcr_data;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	DPRINTF(("umct_open: sc=%p\n", sc));
 
@@ -559,11 +559,11 @@ umct_open(void *addr, int portno)
 		if (err) {
 			DPRINTF(("%s: cannot open interrupt pipe (addr %d)\n",
 				device_xname(sc->sc_dev), sc->sc_intr_number));
-					return (EIO);
+					return EIO;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 void
