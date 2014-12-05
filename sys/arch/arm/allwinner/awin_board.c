@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.30 2014/12/05 01:13:11 jmcneill Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.31 2014/12/05 14:36:44 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.30 2014/12/05 01:13:11 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.31 2014/12/05 14:36:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -128,8 +128,8 @@ awin_cpu_clk(void)
 #if defined(ALLWINNER_A80)
 	const uint32_t c0cpux = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
 	    AWIN_A80_CCU_OFFSET + AWIN_A80_CCU_PLL_C0CPUX_CTRL_REG);
-	const u_int p = (c0cpux & AWIN_A80_CCU_PLL_OUT_EXT_DIVP) ? 4 : 1;
-	const u_int n = __SHIFTOUT(c0cpux, AWIN_A80_CCU_PLL_FACTOR_N);
+	const u_int p = (c0cpux & AWIN_A80_CCU_PLL_CxCPUX_OUT_EXT_DIVP) ? 4 : 1;
+	const u_int n = __SHIFTOUT(c0cpux, AWIN_A80_CCU_PLL_CxCPUX_FACTOR_N);
 
 	ci->ci_data.cpu_cc_freq = ((uint64_t)AWIN_REF_FREQ * n) / p;
 #else
@@ -332,6 +332,8 @@ awin_pll6_enable(void)
 {
 	bus_space_tag_t bst = &awin_bs_tag;
 	bus_space_handle_t bsh = awin_core_bsh;
+
+	KASSERT(awin_chip_id() != AWIN_CHIP_ID_A80);
 
 	/*
 	 * SATA needs PLL6 to be a 100MHz clock.
@@ -549,6 +551,7 @@ awin_pll5x_get_rate(void)
 	unsigned int n, k, p;
 
 	KASSERT(awin_chip_id() != AWIN_CHIP_ID_A31);
+	KASSERT(awin_chip_id() != AWIN_CHIP_ID_A80);
 
 	const uint32_t cfg = bus_space_read_4(bst, bsh,
 	    AWIN_CCM_OFFSET + AWIN_PLL5_CFG_REG);
@@ -567,6 +570,8 @@ awin_pll6_get_rate(void)
 	bus_space_handle_t bsh = awin_core_bsh;
 	unsigned int n, k, m;
 
+	KASSERT(awin_chip_id() != AWIN_CHIP_ID_A80);
+
 	const uint32_t cfg = bus_space_read_4(bst, bsh,
 	    AWIN_CCM_OFFSET + AWIN_PLL6_CFG_REG);
 
@@ -581,4 +586,23 @@ awin_pll6_get_rate(void)
 	}
 
 	return (AWIN_REF_FREQ * n * k) / m;
+}
+
+uint32_t
+awin_periph0_get_rate(void)
+{
+	bus_space_tag_t bst = &awin_bs_tag;
+	bus_space_handle_t bsh = awin_core_bsh;
+	unsigned int n, idiv, odiv;
+
+	KASSERT(awin_chip_id() == AWIN_CHIP_ID_A80);
+
+	const uint32_t cfg = bus_space_read_4(bst, bsh,
+	    AWIN_A80_CCU_OFFSET + AWIN_A80_CCU_PLL_PERIPH0_CTRL_REG);
+
+	n = __SHIFTOUT(cfg, AWIN_A80_CCU_PLL_PERIPH0_FACTOR_N);
+	idiv = __SHIFTOUT(cfg, AWIN_A80_CCU_PLL_PERIPH0_INPUT_DIV) + 1;
+	odiv = __SHIFTOUT(cfg, AWIN_A80_CCU_PLL_PERIPH0_OUTPUT_DIV) + 1;
+
+	return ((AWIN_REF_FREQ * n) / idiv) / odiv;
 }
