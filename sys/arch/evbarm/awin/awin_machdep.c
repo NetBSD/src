@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.32 2014/12/05 14:46:04 jmcneill Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.33 2014/12/05 17:32:08 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.32 2014/12/05 14:46:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.33 2014/12/05 17:32:08 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -287,6 +287,28 @@ static const struct pmap_devmap devmap[] = {
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
+#if defined(ALLWINNER_A80)
+	{
+		/*
+		 * A80 SYS_CTRL, HS TIMER, DMA, MSG-BOX, SPINLOCK
+		 */
+		.pd_va = _A(AWIN_A80_CORE2_VBASE),
+		.pd_pa = _A(AWIN_A80_CORE2_PBASE),
+		.pd_size = _S(AWIN_A80_CORE2_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+	{
+		/*
+		 * A80 USB-EHCI0/OHCI0, USB-EHCI1, USB-EHCI2/OHCI2
+		 */
+		.pd_va = _A(AWIN_A80_USB_VBASE),
+		.pd_pa = _A(AWIN_A80_USB_PBASE),
+		.pd_size = _S(AWIN_A80_USB_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+#endif
 	{
 		/*
 		 * Map all 1MB of SRAM area.
@@ -640,15 +662,6 @@ awin_device_register(device_t self, void *aux)
 		 */
 		prop_dictionary_set_cstring(dict, "satapwren",
 		    (cubietruck_p ? ">PH12" : ">PB8"));
-#if AWIN_board == AWIN_cubieboard || AWIN_board == AWIN_cubietruck || AWIN_board == AWIN_bpi
-		if (cubietruck_p) {
-			prop_dictionary_set_cstring(dict, "usb0drv", ">PH17");
-		} else if (awin_chip_id() == AWIN_CHIP_ID_A20) {
-			prop_dictionary_set_cstring(dict, "usb0drv", ">PB9");
-		} else {
-			prop_dictionary_set_cstring(dict, "usb0drv", ">PB2");
-		}
-#endif
 #if AWIN_board == AWIN_hummingbird_a31
 		prop_dictionary_set_cstring(dict, "usb0iddet", "<PA15");
 		prop_dictionary_set_cstring(dict, "usb0vbusdet", "<PA16");
@@ -657,7 +670,17 @@ awin_device_register(device_t self, void *aux)
 		prop_dictionary_set_cstring(dict, "usb1drv", ">PH27");
 		prop_dictionary_set_cstring(dict, "usb1restrict", ">PH26");
 		prop_dictionary_set_cstring(dict, "usb2drv", ">PH24");
+#elif AWIN_board == AWIN_allwinner_a80
+		prop_dictionary_set_cstring(dict, "usb1drv", ">PH14");
+		prop_dictionary_set_cstring(dict, "usb2drv", ">PH15");
 #else
+		if (cubietruck_p) {
+			prop_dictionary_set_cstring(dict, "usb0drv", ">PH17");
+		} else if (awin_chip_id() == AWIN_CHIP_ID_A20) {
+			prop_dictionary_set_cstring(dict, "usb0drv", ">PB9");
+		} else {
+			prop_dictionary_set_cstring(dict, "usb0drv", ">PB2");
+		}
 		prop_dictionary_set_cstring(dict, "usb2drv", ">PH3");
 		prop_dictionary_set_cstring(dict, "usb0iddet",
 		    (cubietruck_p ? "<PH19" : "<PH4"));

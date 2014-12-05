@@ -1,4 +1,4 @@
-#	$NetBSD: ALLWINNER_A80,v 1.3 2014/12/05 15:25:27 jmcneill Exp $
+#	$NetBSD: ALLWINNER_A80,v 1.4 2014/12/05 17:32:08 jmcneill Exp $
 #
 #	ALLWINNER_A80 - Allwinner A80 boards (Cubieboard4, OptimusBoard, etc)
 #
@@ -278,24 +278,25 @@ options 	CONADDR=0x07000000, CONSPEED=115200
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 
 # On-board USB
-#awinusb0	at awinio0 port 0
-#awinusb1	at awinio0 port 1
-#ohci*		at awinusb?
-#ehci*		at awinusb?
-#usb*		at ohci?
-#usb*		at ehci?
+awinusb0	at awinio0 port 0
+awinusb1	at awinio0 port 1
+awinusb2	at awinio0 port 2
+ohci*		at awinusb?
+ehci*		at awinusb?
+usb*		at ohci?
+usb*		at ehci?
 
 # USB OTG
 #motg0		at awinio0
 #usb*		at motg?
 
-#include "dev/usb/usbdevices.config"
+include "dev/usb/usbdevices.config"
 
-#midi*		at midibus?
+midi*		at midibus?
 
-#rlphy*		at mii? phy ?
-#rgephy* 	at mii? phy ?
-#ukphy*		at mii? phy ?
+rlphy*		at mii? phy ?
+rgephy* 	at mii? phy ?
+ukphy*		at mii? phy ?
 
 # Pseudo-Devices
 
