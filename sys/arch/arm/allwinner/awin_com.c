@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_com.c,v 1.7 2014/10/29 10:47:46 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_com.c,v 1.8 2014/12/05 01:13:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -103,8 +103,13 @@ awin_com_match(device_t parent, cfdata_t cf, void *aux)
 	}
 
 	KASSERT(!strcmp(cf->cf_name, loc->loc_name));
+#if defined(ALLWINNER_A80)
+	KASSERT(loc->loc_offset >= AWIN_A80_UART0_OFFSET);
+	KASSERT(loc->loc_offset <= AWIN_A80_UART5_OFFSET);
+#else
 	KASSERT(loc->loc_offset >= AWIN_UART0_OFFSET);
 	KASSERT(loc->loc_offset <= AWIN_UART7_OFFSET);
+#endif
 	KASSERT((loc->loc_offset & 0x3ff) == 0);
 	KASSERT((awin_com_ports & __BIT(loc->loc_port)) == 0);
 	KASSERT(cf->cf_loc[AWINIOCF_PORT] == AWINIOCF_PORT_DEFAULT
