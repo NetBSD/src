@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.54 2014/12/05 11:31:50 nakayama Exp $ */
+/*	$NetBSD: psl.h,v 1.55 2014/12/05 11:34:00 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -369,6 +369,7 @@ SPARC64_RDASR64_DEF(stick, STICK)		/* getstick() */
 SPARC64_WRASR64_DEF(stick, STICK)		/* setstick() */
 
 /* Some simple macros to check the cpu type. */
+#define GETVER_CPU_MASK()	((getver() & VER_MASK) >> VER_MASK_SHIFT)
 #define GETVER_CPU_IMPL()	((getver() & VER_IMPL) >> VER_IMPL_SHIFT)
 #define GETVER_CPU_MANUF()	((getver() & VER_MANUF) >> VER_MANUF_SHIFT)
 #define CPU_IS_SPITFIRE()	(GETVER_CPU_IMPL() == IMPL_SPITFIRE)
