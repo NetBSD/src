@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.30 2014/12/05 01:13:11 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.31 2014/12/05 11:53:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -94,7 +94,8 @@ awinio_print(void *aux, const char *pnp)
 
 static const struct awin_locators awin_locators[] = {
 	{ "awinicu", OFFANDSIZE(INTC), NOPORT, NOINTR, A10|REQ },
-	{ "awingpio", OFFANDSIZE(PIO), NOPORT, NOINTR, AANY|REQ },
+	{ "awingpio", OFFANDSIZE(PIO), NOPORT, NOINTR, A10|A20|A31|REQ },
+	{ "awingpio", OFFANDSIZE(A80_PIO), NOPORT, NOINTR, A80|REQ },
 	{ "awindma", OFFANDSIZE(DMA), NOPORT, AWIN_IRQ_DMA, A10|A20 },
 	{ "awindma", OFFANDSIZE(DMA), NOPORT, AWIN_A31_IRQ_DMA, A31 },
 	{ "awintmr", OFFANDSIZE(TMR), NOPORT, AWIN_IRQ_TMR0, A10 },
@@ -118,6 +119,7 @@ static const struct awin_locators awin_locators[] = {
 	{ "awinhdmi", OFFANDSIZE(HDMI), NOPORT, AWIN_IRQ_HDMI0, A20 },
 	{ "awinhdmi", OFFANDSIZE(HDMI), NOPORT, AWIN_A31_IRQ_HDMI, A31 },
 	{ "awinwdt", OFFANDSIZE(TMR), NOPORT, NOINTR, A10|A20|A31 },
+	{ "awinwdt", OFFANDSIZE(A80_TIMER), NOPORT, NOINTR, A80 },
 	{ "awinrtc", OFFANDSIZE(TMR), NOPORT, NOINTR, A10|A20 },
 	{ "awinrtc", OFFANDSIZE(A31_RTC), NOPORT, NOINTR, A31 },
 	{ "awinusb", OFFANDSIZE(USB1), 0, NOINTR, A10|A20 },
@@ -135,6 +137,10 @@ static const struct awin_locators awin_locators[] = {
 	{ "awinmmc", OFFANDSIZE(SDMMC1), 1, AWIN_A31_IRQ_SDMMC1, A31 },
 	{ "awinmmc", OFFANDSIZE(SDMMC2), 2, AWIN_A31_IRQ_SDMMC2, A31 },
 	{ "awinmmc", OFFANDSIZE(SDMMC3), 3, AWIN_A31_IRQ_SDMMC3, A31 },
+	{ "awinmmc", OFFANDSIZE(SDMMC0), 0, AWIN_A80_IRQ_SDMMC0, A80 },
+	{ "awinmmc", OFFANDSIZE(SDMMC1), 1, AWIN_A80_IRQ_SDMMC1, A80 },
+	{ "awinmmc", OFFANDSIZE(SDMMC2), 2, AWIN_A80_IRQ_SDMMC2, A80 },
+	{ "awinmmc", OFFANDSIZE(SDMMC3), 3, AWIN_A80_IRQ_SDMMC3, A80 },
 	{ "ahcisata", OFFANDSIZE(SATA), NOPORT, AWIN_IRQ_SATA, A10|A20 },
 	{ "awiniic", OFFANDSIZE(TWI0), 0, AWIN_IRQ_TWI0, A10|A20 },
 	{ "awiniic", OFFANDSIZE(TWI1), 1, AWIN_IRQ_TWI1, A10|A20 },

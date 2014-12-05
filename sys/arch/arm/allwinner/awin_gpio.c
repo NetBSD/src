@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.14 2014/11/23 23:04:58 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.15 2014/12/05 11:53:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -448,6 +448,41 @@ awin_gpio_init(void)
 		pin_groups[12].grp_offset = AWIN_A31_CPUPIO_OFFSET +
 					    1 * AWIN_PIO_GRP_SIZE;
 		pin_groups[12].grp_pin_mask = __BIT(AWIN_A31_PIO_PM_PINS) - 1;
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A80) {
+		pin_groups[0].grp_pin_mask = __BIT(AWIN_A80_PIO_PA_PINS) - 1;
+		pin_groups[0].grp_offset = AWIN_A80_PIO_OFFSET + 
+					   0 * AWIN_PIO_GRP_SIZE;
+		pin_groups[1].grp_pin_mask = __BIT(AWIN_A80_PIO_PB_PINS) - 1;
+		pin_groups[1].grp_offset = AWIN_A80_PIO_OFFSET + 
+					   1 * AWIN_PIO_GRP_SIZE;
+		pin_groups[2].grp_pin_mask = __BIT(AWIN_A80_PIO_PC_PINS) - 1;
+		pin_groups[2].grp_offset = AWIN_A80_PIO_OFFSET + 
+					   2 * AWIN_PIO_GRP_SIZE;
+		pin_groups[3].grp_pin_mask = __BIT(AWIN_A80_PIO_PD_PINS) - 1;
+		pin_groups[3].grp_offset = AWIN_A80_PIO_OFFSET + 
+					   3 * AWIN_PIO_GRP_SIZE;
+		pin_groups[4].grp_pin_mask = __BIT(AWIN_A80_PIO_PE_PINS) - 1;
+		pin_groups[4].grp_offset = AWIN_A80_PIO_OFFSET + 
+					   4 * AWIN_PIO_GRP_SIZE;
+		pin_groups[5].grp_pin_mask = __BIT(AWIN_A80_PIO_PF_PINS) - 1;
+		pin_groups[5].grp_offset = AWIN_A80_PIO_OFFSET + 
+					   5 * AWIN_PIO_GRP_SIZE;
+		pin_groups[6].grp_pin_mask = __BIT(AWIN_A80_PIO_PG_PINS) - 1;
+		pin_groups[6].grp_offset = AWIN_A80_PIO_OFFSET + 
+					   6 * AWIN_PIO_GRP_SIZE;
+		pin_groups[7].grp_pin_mask = __BIT(AWIN_A80_PIO_PH_PINS) - 1;
+		pin_groups[7].grp_offset = AWIN_A80_PIO_OFFSET + 
+					   7 * AWIN_PIO_GRP_SIZE;
+		pin_groups[8].grp_offset = 0;		/* PI */
+		pin_groups[8].grp_pin_mask = 0;		/* PI */
+		pin_groups[9].grp_offset = 0;		/* PJ */
+		pin_groups[9].grp_pin_mask = 0;		/* PJ */
+		pin_groups[10].grp_offset = 0;		/* PK */
+		pin_groups[10].grp_pin_mask = 0;	/* PK */
+		pin_groups[11].grp_offset = 0;		/* PL */
+		pin_groups[11].grp_pin_mask = 0;	/* PL */
+		pin_groups[12].grp_offset = 0;		/* PM */
+		pin_groups[12].grp_pin_mask = 0;	/* PM */
 	}
 
 	for (u_int i = 0; i < __arraycount(pin_groups); i++) {
