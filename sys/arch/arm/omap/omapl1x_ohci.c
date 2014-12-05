@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_ohci.c,v 1.1.12.3 2014/12/04 07:53:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_ohci.c,v 1.1.12.4 2014/12/05 13:23:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,6 @@ omapl1xohci_attach (struct device *parent, struct device *self, void *aux)
 {
 	struct omapl1xohci_softc *sc = device_private(self);
 	struct tipb_attach_args *tipb = aux;
-	usbd_status r;
 
 	/* Map OHCI registers */
 	if (bus_space_map(tipb->tipb_iot, tipb->tipb_addr, tipb->tipb_size, 0,
@@ -150,9 +149,9 @@ omapl1xohci_attach (struct device *parent, struct device *self, void *aux)
 
 	strlcpy(sc->sc.sc_vendor, "OMAPL1X", sizeof sc->sc.sc_vendor);
 
-	r = ohci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", r);
+	int err = ohci_init(&sc->sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		return;
 	}
 

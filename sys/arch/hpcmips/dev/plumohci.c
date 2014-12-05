@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.14.14.3 2014/12/05 09:37:49 skrll Exp $ */
+/*	$NetBSD: plumohci.c,v 1.14.14.4 2014/12/05 13:23:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.14.14.3 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.14.14.4 2014/12/05 13:23:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,6 @@ plumohci_attach(device_t parent, device_t self, void *aux)
 {
 	struct plumohci_softc *sc = device_private(self);
 	struct plum_attach_args *pa = aux;
-	usbd_status r;
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_bus.ub_hcpriv = sc;
@@ -179,10 +178,10 @@ plumohci_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
-	r = ohci_init(&sc->sc);
+	int err = ohci_init(&sc->sc);
 
-	if (r != USBD_NORMAL_COMPLETION) {
-		printf(": init failed, error=%d\n", r);
+	if (err) {
+		printf(": init failed, error=%d\n", err);
 
 		plum_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		plum_intr_disestablish(pa->pa_pc, sc->sc_wakeih);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_ehci.c,v 1.5.16.2 2014/12/03 12:52:06 skrll Exp $	*/
+/*	$NetBSD: rmixl_ehci.c,v 1.5.16.3 2014/12/05 13:23:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.5.16.2 2014/12/03 12:52:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.5.16.3 2014/12/05 13:23:38 skrll Exp $");
 
 #include "locators.h"
 
@@ -81,7 +81,6 @@ rmixl_ehci_attach(device_t parent, device_t self, void *aux)
 	struct rmixl_usbi_attach_args * const usbi = aux;
 	void *ih = NULL;
 	uint32_t r;
-	usbd_status status;
 
 	/* check state of IO_AD9 signal latched in GPIO Reset Config reg */
 	r = RMIXL_IOREG_READ(RMIXL_IO_DEV_GPIO + RMIXL_GPIO_RESET_CFG);
@@ -130,9 +129,9 @@ rmixl_ehci_attach(device_t parent, device_t self, void *aux)
 				device_xname(self));
 	}
 
-	status = ehci_init(sc);
-	if (status != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error=%d\n", status);
+	int err = ehci_init(sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error=%d\n", err);
 		if (ih != NULL)
 			rmixl_intr_disestablish(ih);
 		return;

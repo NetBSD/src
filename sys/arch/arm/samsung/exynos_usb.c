@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_usb.c,v 1.13.2.1 2014/12/03 12:52:05 skrll Exp $	*/
+/*	$NetBSD: exynos_usb.c,v 1.13.2.2 2014/12/05 13:23:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.13.2.1 2014/12/03 12:52:05 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.13.2.2 2014/12/05 13:23:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,6 @@ exynos_ohci_attach(device_t parent, device_t self, void *aux)
 {
 	struct exynos_usb_softc *usbsc = &exynos_usb_sc;
 	struct ohci_softc *sc = device_private(self);
-	int r;
 
 	sc->sc_dev = self;
 	sc->iot = usbsc->sc_bst;
@@ -282,9 +281,9 @@ exynos_ohci_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": OHCI USB controller\n");
 
 	/* attach */
-	r = ohci_init(sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error = %d\n", r);
+	int err = ohci_init(sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error = %d\n", err);
 		/* disable : TBD */
 		return;
 	}
@@ -320,7 +319,6 @@ exynos_ehci_attach(device_t parent, device_t self, void *aux)
 {
 	struct exynos_usb_softc *usbsc = &exynos_usb_sc;
 	struct ehci_softc *sc = device_private(self);
-	int r;
 
 	sc->sc_dev = self;
 	sc->iot = usbsc->sc_bst;
@@ -339,9 +337,9 @@ exynos_ehci_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": EHCI USB controller\n");
 
 	/* attach */
-	r = ehci_init(sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(self, "init failed, error = %d\n", r);
+	int err = ehci_init(sc);
+	if (err) {
+		aprint_error_dev(self, "init failed, error = %d\n", err);
 		/* disable : TBD */
 		return;
 	}

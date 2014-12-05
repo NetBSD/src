@@ -1,4 +1,4 @@
-/* $NetBSD: gcscehci.c,v 1.11.2.2 2014/12/05 09:37:49 skrll Exp $ */
+/* $NetBSD: gcscehci.c,v 1.11.2.3 2014/12/05 13:23:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.11.2.2 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.11.2.3 2014/12/05 13:23:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,6 @@ gcscehci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *devname = device_xname(self);
 	char devinfo[256];
-	usbd_status r;
 	bus_addr_t ehcibase;
 	int ncomp;
 	struct usb_pci *up;
@@ -170,9 +169,9 @@ gcscehci_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc.sc_ncomp = ncomp;
 
-	r = ehci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error("%s: init failed, error=%d\n", devname, r);
+	int err = ehci_init(&sc->sc);
+	if (err != USBD_NORMAL_COMPLETION) {
+		aprint_error("%s: init failed, error=%d\n", devname, err);
 		return;
 	}
 
