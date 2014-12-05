@@ -2597,6 +2597,16 @@ match_sig_id(pgpv_cursor_t *cursor, pgpv_signature_t *signature, pgpv_litdata_t 
 	return match_sig(cursor, signature, pubkey, data, insize);
 }
 
+/* get an element from the found array */
+int
+pgpv_get_cursor_element(pgpv_cursor_t *cursor, size_t element)
+{
+	if (cursor && element < ARRAY_COUNT(cursor->found)) {
+		return (int)ARRAY_ELEMENT(cursor->found, element);
+	}
+	return -1;
+}
+
 /* verify the signed packets we have */
 size_t
 pgpv_verify(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
