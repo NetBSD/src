@@ -65,18 +65,3 @@ netpgp_deallocate(void *ptr, size_t size)
 	free(ptr);
 #endif
 }
-
-#ifndef _KERNEL
-void
-logmessage(const int level, const char *fmt, ...)
-{
-	va_list	args;
-
-	USE_ARG(level);
-	if (fmt != NULL) {
-		va_start(args, fmt);
-		vfprintf(stderr, fmt, args);
-		va_end(args);
-	}
-}
-#endif
