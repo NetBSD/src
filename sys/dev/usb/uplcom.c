@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.74.4.5 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.74.4.6 2014/12/06 08:37:30 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.4.5 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.4.6 2014/12/06 08:37:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,14 +136,14 @@ Static	void uplcom_close(void *, int);
 Static usbd_status uplcom_vendor_control_write(usbd_device_handle, uint16_t, uint16_t);
 
 struct	ucom_methods uplcom_methods = {
-	uplcom_get_status,
-	uplcom_set,
-	uplcom_param,
-	NULL, /* uplcom_ioctl, TODO */
-	uplcom_open,
-	uplcom_close,
-	NULL,
-	NULL,
+	.ucom_get_status = uplcom_get_status,
+	.ucom_set = uplcom_set,
+	.ucom_param = uplcom_param,
+	.ucom_ioctl = NULL,	/* TODO */
+	.ucom_open = uplcom_open,
+	.ucom_close = uplcom_close,
+	.ucom_read = NULL,
+	.ucom_write = NULL,
 };
 
 static const struct usb_devno uplcom_devs[] = {

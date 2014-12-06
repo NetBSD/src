@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.28.16.1 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.28.16.2 2014/12/06 08:37:30 skrll Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.28.16.1 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.28.16.2 2014/12/06 08:37:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,14 +185,14 @@ Static	int  uvscom_open(void *, int);
 Static	void uvscom_close(void *, int);
 
 struct ucom_methods uvscom_methods = {
-	uvscom_get_status,
-	uvscom_set,
-	uvscom_param,
-	NULL, /* uvscom_ioctl, TODO */
-	uvscom_open,
-	uvscom_close,
-	NULL,
-	NULL
+	.ucom_get_status = uvscom_get_status,
+	.ucom_set = uvscom_set,
+	.ucom_param = uvscom_param,
+	.ucom_ioctl = NULL,		/* TODO */
+	.ucom_open = uvscom_open,
+	.ucom_close = uvscom_close,
+	.ucom_read = NULL,
+	.ucom_write = NULL
 };
 
 static const struct usb_devno uvscom_devs [] = {

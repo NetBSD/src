@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.16.16.1 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.16.16.2 2014/12/06 08:37:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.16.16.1 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.16.16.2 2014/12/06 08:37:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,14 +86,14 @@ Static void	ukyopon_get_status(void *, int, u_char *, u_char *);
 Static int	ukyopon_ioctl(void *, int, u_long, void *, int, proc_t *);
 
 Static struct ucom_methods ukyopon_methods = {
-	ukyopon_get_status,
-	umodem_set,
-	umodem_param,
-	ukyopon_ioctl,
-	umodem_open,
-	umodem_close,
-	NULL,
-	NULL,
+	.ucom_get_status = ukyopon_get_status,
+	.ucom_set = umodem_set,
+	.ucom_param = umodem_param,
+	.ucom_ioctl = ukyopon_ioctl,
+	.ucom_open = umodem_open,
+	.ucom_close = umodem_close,
+	.ucom_read = NULL,
+	.ucom_write = NULL,
 };
 
 int             ukyopon_match(device_t, cfdata_t, void *);

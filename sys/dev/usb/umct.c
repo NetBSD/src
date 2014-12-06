@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.32.24.6 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: umct.c,v 1.32.24.7 2014/12/06 08:37:30 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.6 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.7 2014/12/06 08:37:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,14 +124,14 @@ Static	int  umct_open(void *, int);
 Static	void umct_close(void *, int);
 
 struct	ucom_methods umct_methods = {
-	umct_get_status,
-	umct_set,
-	umct_param,
-	NULL,
-	umct_open,
-	umct_close,
-	NULL,
-	NULL,
+	.ucom_get_status = umct_get_status,
+	.ucom_set = umct_set,
+	.ucom_param = umct_param,
+	.ucom_ioctl = NULL,
+	.ucom_open = umct_open,
+	.ucom_close = umct_close,
+	.ucom_read = NULL,
+	.ucom_write = NULL,
 };
 
 static const struct usb_devno umct_devs[] = {
