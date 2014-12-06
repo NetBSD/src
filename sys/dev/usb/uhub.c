@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.5 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.6 2014/12/06 08:39:57 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.5 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.6 2014/12/06 08:39:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,7 +356,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 
  bad:
 	if (sc->sc_status)
-		kmem_free(sc->sc_statusbuf, sc->sc_statuslen);
+		kmem_free(sc->sc_status, sc->sc_statuslen);
 	if (sc->sc_statusbuf)
 		kmem_free(sc->sc_statusbuf, sc->sc_statuslen);
 	if (hub)
@@ -634,7 +634,7 @@ uhub_detach(device_t self, int flags)
 	    sizeof(*hub) + (nports-1) * sizeof(struct usbd_port));
 	sc->sc_hub->ud_hub = NULL;
 	if (sc->sc_status)
-		kmem_free(sc->sc_statusbuf, sc->sc_statuslen);
+		kmem_free(sc->sc_status, sc->sc_statuslen);
 	if (sc->sc_statusbuf)
 		kmem_free(sc->sc_statusbuf, sc->sc_statuslen);
 
