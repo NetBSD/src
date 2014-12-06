@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.59.6.4 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.59.6.5 2014/12/06 08:37:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.59.6.4 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.59.6.5 2014/12/06 08:37:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,14 +107,14 @@ Static void	uftdi_write(void *, int, u_char *, u_char *,
 Static void	uftdi_break(void *, int, int);
 
 struct ucom_methods uftdi_methods = {
-	uftdi_get_status,
-	uftdi_set,
-	uftdi_param,
-	NULL,
-	uftdi_open,
-	NULL,
-	uftdi_read,
-	uftdi_write,
+	.ucom_get_status = uftdi_get_status,
+	.ucom_set = uftdi_set,
+	.ucom_param = uftdi_param,
+	.ucom_ioctl = NULL,
+	.ucom_open = uftdi_open,
+	.ucom_close = NULL,
+	.ucom_read = uftdi_read,
+	.ucom_write = uftdi_write,
 };
 
 /*

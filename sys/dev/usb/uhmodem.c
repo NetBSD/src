@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.13.24.4 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.13.24.5 2014/12/06 08:37:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.24.4 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.13.24.5 2014/12/06 08:37:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,14 +135,14 @@ struct	uhmodem_softc {
 };
 
 struct	ucom_methods uhmodem_methods = {
-	ubsa_get_status,
-	ubsa_set,
-	ubsa_param,
-	NULL,
-	uhmodem_open,
-	ubsa_close,
-	NULL,
-	NULL
+	.ucom_get_status = ubsa_get_status,
+	.ucom_set = ubsa_set,
+	.ucom_param = ubsa_param,
+	.ucom_ioctl = NULL,
+	.ucom_open = uhmodem_open,
+	.ucom_close = ubsa_close,
+	.ucom_read = NULL,
+	.ucom_write = NULL
 };
 
 struct uhmodem_type {

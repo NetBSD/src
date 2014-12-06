@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.31.2.5 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: u3g.c,v 1.31.2.6 2014/12/06 08:37:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.5 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.6 2014/12/06 08:37:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,14 +170,14 @@ static void u3g_read(void *, int, u_char **, uint32_t *);
 static void u3g_write(void *, int, u_char *, u_char *, uint32_t *);
 
 struct ucom_methods u3g_methods = {
-	u3g_get_status,
-	u3g_set,
-	NULL,
-	NULL,
-	u3g_open,
-	u3g_close,
-	u3g_read,
-	u3g_write,
+	.ucom_get_status = u3g_get_status,
+	.ucom_set = u3g_set,
+	.ucom_param = NULL,
+	.ucom_ioctl = NULL,
+	.ucom_open = u3g_open,
+	.ucom_close = u3g_close,
+	.ucom_read = u3g_read,
+	.ucom_write = u3g_write,
 };
 
 /*

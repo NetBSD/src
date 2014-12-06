@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.19.14.3 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.19.14.4 2014/12/06 08:37:30 skrll Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.19.14.3 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.19.14.4 2014/12/06 08:37:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,14 +101,14 @@ Static void	uipaq_break(struct uipaq_softc *, int);
 
 
 struct ucom_methods uipaq_methods = {
-	NULL,
-	uipaq_set,
-	NULL,
-	NULL,
-	NULL,	/*open*/
-	NULL,	/*close*/
-	NULL,
-	NULL
+	.ucom_get_status = NULL,
+	.ucom_set = uipaq_set,
+	.ucom_param = NULL,
+	.ucom_ioctl = NULL,
+	.ucom_open = NULL,
+	.ucom_close = NULL,
+	.ucom_read = NULL,
+	.ucom_write = NULL,
 };
 
 struct uipaq_type {

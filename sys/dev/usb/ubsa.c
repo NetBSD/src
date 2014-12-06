@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.30.16.1 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.30.16.2 2014/12/06 08:37:30 skrll Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.30.16.1 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.30.16.2 2014/12/06 08:37:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,14 +95,14 @@ int		ubsadebug = 0;
 #define	DPRINTF(x) DPRINTFN(0, x)
 
 struct	ucom_methods ubsa_methods = {
-	ubsa_get_status,
-	ubsa_set,
-	ubsa_param,
-	NULL,
-	ubsa_open,
-	ubsa_close,
-	NULL,
-	NULL
+	.ucom_get_status = ubsa_get_status,
+	.ucom_set = ubsa_set,
+	.ucom_param = ubsa_param,
+	.ucom_ioctl = NULL,
+	.ucom_open = ubsa_open,
+	.ucom_close = ubsa_close,
+	.ucom_read = NULL,
+	.ucom_write = NULL
 };
 
 Static const struct usb_devno ubsa_devs[] = {

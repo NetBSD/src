@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.6 2012/10/27 17:18:38 chs Exp $	*/
+/*	$NetBSD: uark.c,v 1.6.14.1 2014/12/06 08:37:30 skrll Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -78,14 +78,14 @@ void	uark_break(void *, int, int);
 int	uark_cmd(struct uark_softc *, uint16_t, uint16_t);
 
 struct ucom_methods uark_methods = {
-	uark_get_status,
-	uark_set,
-	uark_param,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	.ucom_get_status = uark_get_status,
+	.ucom_set = uark_set,
+	.ucom_param = uark_param,
+	.ucom_ioctl = NULL,
+	.ucom_open = NULL,
+	.ucom_close = NULL,
+	.ucom_read = NULL,
+	.ucom_write = NULL,
 };
 
 static const struct usb_devno uark_devs[] = {

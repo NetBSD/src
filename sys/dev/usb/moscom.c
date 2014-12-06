@@ -1,4 +1,4 @@
-/*	$NetBSD: moscom.c,v 1.8 2012/09/23 01:08:17 chs Exp $	*/
+/*	$NetBSD: moscom.c,v 1.8.14.1 2014/12/06 08:37:30 skrll Exp $	*/
 /*	$OpenBSD: moscom.c,v 1.11 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.8 2012/09/23 01:08:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.8.14.1 2014/12/06 08:37:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,14 +156,14 @@ int	moscom_open(void *, int);
 int	moscom_cmd(struct moscom_softc *, int, int);	
 
 struct ucom_methods moscom_methods = {
-	NULL,
-	moscom_set,
-	moscom_param,
-	NULL,
-	moscom_open,
-	NULL,
-	NULL,
-	NULL,
+	.ucom_get_status = NULL,
+	.ucom_set = moscom_set,
+	.ucom_param = moscom_param,
+	.ucom_ioctl = NULL,
+	.ucom_open = moscom_open,
+	.ucom_close = NULL,
+	.ucom_read = NULL,
+	.ucom_write = NULL,
 };
 
 static const struct usb_devno moscom_devs[] = {

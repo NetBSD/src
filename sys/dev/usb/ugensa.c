@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.31.6.3 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.31.6.4 2014/12/06 08:37:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.31.6.3 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.31.6.4 2014/12/06 08:37:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,14 +71,14 @@ struct ugensa_softc {
 };
 
 struct ucom_methods ugensa_methods = {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	.ucom_get_status = NULL,
+	.ucom_set = NULL,
+	.ucom_param = NULL,
+	.ucom_ioctl = NULL,
+	.ucom_open = NULL,
+	.ucom_close = NULL,
+	.ucom_read = NULL,
+	.ucom_write = NULL,
 };
 
 #define UGENSA_CONFIG_INDEX	0

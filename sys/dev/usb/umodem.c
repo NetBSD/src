@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.66 2014/04/06 02:01:43 christos Exp $	*/
+/*	$NetBSD: umodem.c,v 1.66.4.1 2014/12/06 08:37:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.66 2014/04/06 02:01:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.66.4.1 2014/12/06 08:37:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,14 +71,14 @@ __KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.66 2014/04/06 02:01:43 christos Exp $")
 #include <dev/usb/umodemvar.h>
 
 Static struct ucom_methods umodem_methods = {
-	umodem_get_status,
-	umodem_set,
-	umodem_param,
-	umodem_ioctl,
-	umodem_open,
-	umodem_close,
-	NULL,
-	NULL,
+	.ucom_get_status = umodem_get_status,
+	.ucom_set = umodem_set,
+	.ucom_param = umodem_param,
+	.ucom_ioctl = umodem_ioctl,
+	.ucom_open = umodem_open,
+	.ucom_close = umodem_close,
+	.ucom_read = NULL,
+	.ucom_write = NULL,
 };
 
 int             umodem_match(device_t, cfdata_t, void *);

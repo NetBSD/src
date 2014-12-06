@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.19 2014/03/10 19:55:18 reinoud Exp $ */
+/* $NetBSD: uslsa.c,v 1.19.6.1 2014/12/06 08:37:30 skrll Exp $ */
 
 /* from ugensa.c */
 
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.19 2014/03/10 19:55:18 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.19.6.1 2014/12/06 08:37:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,14 +108,14 @@ static int uslsa_request_set(struct uslsa_softc *, uint8_t, uint16_t);
 static int uslsa_set_flow(struct uslsa_softc *, tcflag_t, tcflag_t);
 
 static const struct ucom_methods uslsa_methods = {
-	uslsa_get_status,
-	uslsa_set,
-	uslsa_param,
-	uslsa_ioctl,
-	uslsa_open,
-	uslsa_close,
-	NULL,
-	NULL,
+	.ucom_get_status = uslsa_get_status,
+	.ucom_set = uslsa_set,
+	.ucom_param = uslsa_param,
+	.ucom_ioctl = uslsa_ioctl,
+	.ucom_open = uslsa_open,
+	.ucom_close = uslsa_close,
+	.ucom_read = NULL,
+	.ucom_write = NULL,
 };
 
 #define USLSA_CONFIG_INDEX	0
