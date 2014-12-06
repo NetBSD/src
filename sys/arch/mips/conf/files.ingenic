@@ -1,6 +1,18 @@
-#	$NetBSD: files.ingenic,v 1.1 2014/11/22 15:17:01 macallan Exp $
+#	$NetBSD: files.ingenic,v 1.2 2014/12/06 14:36:52 macallan Exp $
+
+include "dev/scsipi/files.scsipi"		# SCSI devices
+include "dev/ata/files.ata"			# ATA devices
+include "dev/usb/files.usb"			# USB devices
 
 # On-chip UART device
 attach	com at mainbus with com_mainbus
 file	arch/mips/ingenic/ingenic_com.c	com_mainbus
 
+# Ingenic system bus
+device	apbus { [addr=-1] }
+attach	apbus at mainbus
+file	arch/mips/ingenic/apbus.c		apbus
+
+# USB
+attach dwctwo at apbus with ingenic_dwctwo
+file	arch/mips/ingenic/ingenic_dwctwo.c	ingenic_dwctwo	needs-flag
