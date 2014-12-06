@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.50.2.5 2014/12/05 09:37:49 skrll Exp $ */
+/*	$NetBSD: if_atu.c,v 1.50.2.6 2014/12/06 08:27:23 skrll Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.5 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.6 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -236,39 +236,39 @@ int	atu_ioctl(struct ifnet *, u_long, void *);
 int	atu_init(struct ifnet *);
 void	atu_stop(struct ifnet *, int);
 void	atu_watchdog(struct ifnet *);
-usbd_status atu_usb_request(struct atu_softc *sc, uint8_t type,
-	    uint8_t request, uint16_t value, uint16_t index,
-	    uint16_t length, uint8_t *data);
-int	atu_send_command(struct atu_softc *sc, uint8_t *command, int size);
-int	atu_get_cmd_status(struct atu_softc *sc, uint8_t cmd,
-	    uint8_t *status);
-int	atu_wait_completion(struct atu_softc *sc, uint8_t cmd,
-	    uint8_t *status);
-int	atu_send_mib(struct atu_softc *sc, uint8_t type,
-	    uint8_t size, uint8_t index, void *data);
-int	atu_get_mib(struct atu_softc *sc, uint8_t type,
-	    uint8_t size, uint8_t index, uint8_t *buf);
+usbd_status atu_usb_request(struct atu_softc *, uint8_t,
+	    uint8_t, uint16_t, uint16_t,
+	    uint16_t, uint8_t *);
+int	atu_send_command(struct atu_softc *, uint8_t *, int);
+int	atu_get_cmd_status(struct atu_softc *, uint8_t,
+	    uint8_t *);
+int	atu_wait_completion(struct atu_softc *, uint8_t,
+	    uint8_t *);
+int	atu_send_mib(struct atu_softc *, uint8_t,
+	    uint8_t, uint8_t, void *);
+int	atu_get_mib(struct atu_softc *, uint8_t,
+	    uint8_t, uint8_t, uint8_t *);
 #if 0
-int	atu_start_ibss(struct atu_softc *sc);
+int	atu_start_ibss(struct atu_softc *);
 #endif
-int	atu_start_scan(struct atu_softc *sc);
-int	atu_switch_radio(struct atu_softc *sc, int state);
-int	atu_initial_config(struct atu_softc *sc);
-int	atu_join(struct atu_softc *sc, struct ieee80211_node *node);
-int8_t	atu_get_dfu_state(struct atu_softc *sc);
-uint8_t atu_get_opmode(struct atu_softc *sc, uint8_t *mode);
+int	atu_start_scan(struct atu_softc *);
+int	atu_switch_radio(struct atu_softc *, int);
+int	atu_initial_config(struct atu_softc *);
+int	atu_join(struct atu_softc *, struct ieee80211_node *);
+int8_t	atu_get_dfu_state(struct atu_softc *);
+uint8_t atu_get_opmode(struct atu_softc *, uint8_t *);
 void	atu_internal_firmware(device_t);
 void	atu_external_firmware(device_t);
-int	atu_get_card_config(struct atu_softc *sc);
-int	atu_media_change(struct ifnet *ifp);
-void	atu_media_status(struct ifnet *ifp, struct ifmediareq *req);
+int	atu_get_card_config(struct atu_softc *);
+int	atu_media_change(struct ifnet *);
+void	atu_media_status(struct ifnet *, struct ifmediareq *);
 int	atu_tx_list_init(struct atu_softc *);
 int	atu_rx_list_init(struct atu_softc *);
-void	atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
-	    int listlen);
+void	atu_xfer_list_free(struct atu_softc *, struct atu_chain *,
+	    int);
 
 #ifdef ATU_DEBUG
-void	atu_debug_print(struct atu_softc *sc);
+void	atu_debug_print(struct atu_softc *);
 #endif
 
 void atu_task(void *);

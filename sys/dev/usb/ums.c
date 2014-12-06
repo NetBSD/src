@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.87.6.4 2014/12/05 09:37:50 skrll Exp $	*/
+/*	$NetBSD: ums.c,v 1.87.6.5 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.87.6.4 2014/12/05 09:37:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.87.6.5 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,11 +120,11 @@ static const struct {
 
 #define MOUSE_FLAGS_MASK (HIO_CONST|HIO_RELATIVE)
 
-Static void ums_intr(struct uhidev *addr, void *ibuf, u_int len);
+Static void ums_intr(struct uhidev *, void *, u_int);
 
 Static int	ums_enable(void *);
 Static void	ums_disable(void *);
-Static int	ums_ioctl(void *, u_long, void *, int, struct lwp * );
+Static int	ums_ioctl(void *, u_long, void *, int, struct lwp *);
 
 const struct wsmouse_accessops ums_accessops = {
 	ums_enable,

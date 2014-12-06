@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.41.2.4 2014/12/03 22:33:56 skrll Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.41.2.5 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.4 2014/12/03 22:33:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.5 2014/12/06 08:27:23 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -323,14 +323,14 @@ static struct uvideo_format *	uvideo_stream_guess_format(
 	enum video_pixel_format, uint32_t, uint32_t);
 static struct uvideo_stream *	uvideo_stream_alloc(void);
 static usbd_status		uvideo_stream_init(
-	struct uvideo_stream *stream,
-	struct uvideo_softc *sc,
-	const usb_interface_descriptor_t *ifdesc,
-	uint8_t idx);
+	struct uvideo_stream *,
+	struct uvideo_softc *,
+	const usb_interface_descriptor_t *,
+	uint8_t);
 static usbd_status		uvideo_stream_init_desc(
 	struct uvideo_stream *,
-	const usb_interface_descriptor_t *ifdesc,
-	usbd_desc_iter_t *iter);
+	const usb_interface_descriptor_t *,
+	usbd_desc_iter_t *);
 static usbd_status		uvideo_stream_init_frame_based_format(
 	struct uvideo_stream *,
 	const uvideo_descriptor_t *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.126.2.5 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.126.2.6 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.5 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.6 2014/12/06 08:27:23 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -158,23 +158,23 @@ const struct cdevsw ugen_cdevsw = {
 	.d_flag = D_OTHER,
 };
 
-Static void ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr,
-		     usbd_status status);
-Static void ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
-			    usbd_status status);
-Static void ugen_bulkra_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
-			     usbd_status status);
-Static void ugen_bulkwb_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
-			     usbd_status status);
+Static void ugenintr(usbd_xfer_handle, usbd_private_handle,
+		     usbd_status);
+Static void ugen_isoc_rintr(usbd_xfer_handle, usbd_private_handle,
+			    usbd_status);
+Static void ugen_bulkra_intr(usbd_xfer_handle, usbd_private_handle,
+			     usbd_status);
+Static void ugen_bulkwb_intr(usbd_xfer_handle, usbd_private_handle,
+			     usbd_status);
 Static int ugen_do_read(struct ugen_softc *, int, struct uio *, int);
 Static int ugen_do_write(struct ugen_softc *, int, struct uio *, int);
 Static int ugen_do_ioctl(struct ugen_softc *, int, u_long,
 			 void *, int, struct lwp *);
-Static int ugen_set_config(struct ugen_softc *sc, int configno);
-Static usb_config_descriptor_t *ugen_get_cdesc(struct ugen_softc *sc,
-					       int index, int *lenp);
+Static int ugen_set_config(struct ugen_softc *, int);
+Static usb_config_descriptor_t *ugen_get_cdesc(struct ugen_softc *,
+					       int, int *);
 Static usbd_status ugen_set_interface(struct ugen_softc *, int, int);
-Static int ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx);
+Static int ugen_get_alt_index(struct ugen_softc *, int);
 
 #define UGENUNIT(n) ((minor(n) >> 4) & 0xf)
 #define UGENENDPOINT(n) (minor(n) & 0xf)

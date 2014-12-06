@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.3.6.2 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.3.6.3 2014/12/06 08:27:23 skrll Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.2 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.3 2014/12/06 08:27:23 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -110,14 +110,14 @@ static void	axen_miibus_statchg(struct ifnet *);
 static int	axen_cmd(struct axen_softc *, int, int, int, void *);
 static int	axen_ifmedia_upd(struct ifnet *);
 static void	axen_ifmedia_sts(struct ifnet *, struct ifmediareq *);
-static void	axen_reset(struct axen_softc *sc);
+static void	axen_reset(struct axen_softc *);
 #if 0
 static int	axen_ax88179_eeprom(struct axen_softc *, void *);
 #endif
 
 static void	axen_iff(struct axen_softc *);
-static void	axen_lock_mii(struct axen_softc *sc);
-static void	axen_unlock_mii(struct axen_softc *sc);
+static void	axen_lock_mii(struct axen_softc *);
+static void	axen_unlock_mii(struct axen_softc *);
 
 static void	axen_ax88179_init(struct axen_softc *);
 

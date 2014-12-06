@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.67.4.2 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.67.4.3 2014/12/06 08:27:23 skrll Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.2 2014/12/03 12:52:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.3 2014/12/06 08:27:23 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -201,13 +201,13 @@ static void	axe_miibus_writereg_locked(device_t, int, int, int);
 static void	axe_miibus_writereg(device_t, int, int, int);
 static void	axe_miibus_statchg(struct ifnet *);
 static int	axe_cmd(struct axe_softc *, int, int, int, void *);
-static void	axe_reset(struct axe_softc *sc);
+static void	axe_reset(struct axe_softc *);
 static int	axe_ifmedia_upd(struct ifnet *);
 static void	axe_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 static void	axe_setmulti(struct axe_softc *);
-static void	axe_lock_mii(struct axe_softc *sc);
-static void	axe_unlock_mii(struct axe_softc *sc);
+static void	axe_lock_mii(struct axe_softc *);
+static void	axe_unlock_mii(struct axe_softc *);
 
 static void	axe_ax88178_init(struct axe_softc *);
 static void	axe_ax88772_init(struct axe_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.95.4.4 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.95.4.5 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.4.4 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.4.5 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,13 +146,13 @@ const struct cdevsw ulpt_cdevsw = {
 
 void ulpt_disco(void *);
 
-int ulpt_do_write(struct ulpt_softc *, struct uio *uio, int);
-int ulpt_do_read(struct ulpt_softc *, struct uio *uio, int);
+int ulpt_do_write(struct ulpt_softc *, struct uio *, int);
+int ulpt_do_read(struct ulpt_softc *, struct uio *, int);
 int ulpt_status(struct ulpt_softc *);
 void ulpt_reset(struct ulpt_softc *);
 int ulpt_statusmsg(u_char, struct ulpt_softc *);
-void ulpt_read_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
-		  usbd_status status);
+void ulpt_read_cb(usbd_xfer_handle, usbd_private_handle,
+		  usbd_status);
 void ulpt_tick(void *xsc);
 
 #if 0
