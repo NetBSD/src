@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.38.6.5 2014/12/05 09:37:50 skrll Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.38.6.6 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.5 2014/12/05 09:37:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.6 2014/12/06 08:27:23 skrll Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -132,12 +132,12 @@ struct usscanner_softc {
 };
 
 
-Static void usscanner_cleanup(struct usscanner_softc *sc);
-Static void usscanner_scsipi_request(struct scsipi_channel *chan,
-				scsipi_adapter_req_t req, void *arg);
-Static void usscanner_scsipi_minphys(struct buf *bp);
-Static void usscanner_done(struct usscanner_softc *sc);
-Static void usscanner_sense(struct usscanner_softc *sc);
+Static void usscanner_cleanup(struct usscanner_softc *);
+Static void usscanner_scsipi_request(struct scsipi_channel *,
+				scsipi_adapter_req_t, void *);
+Static void usscanner_scsipi_minphys(struct buf *);
+Static void usscanner_done(struct usscanner_softc *);
+Static void usscanner_sense(struct usscanner_softc *);
 typedef void callback(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static callback usscanner_intr_cb;
 Static callback usscanner_cmd_cb;

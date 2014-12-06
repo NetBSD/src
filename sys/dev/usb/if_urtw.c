@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.6.6.3 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.6.6.4 2014/12/06 08:27:23 skrll Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.3 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.4 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -499,7 +499,7 @@ int		urtw_newstate(struct ieee80211com *, enum ieee80211_state, int);
 void		urtw_watchdog(struct ifnet *);
 void		urtw_set_chan(struct urtw_softc *, struct ieee80211_channel *);
 int		urtw_isbmode(uint16_t);
-uint16_t	urtw_rate2rtl(int rate);
+uint16_t	urtw_rate2rtl(int);
 uint16_t	urtw_rtl2rate(int);
 usbd_status	urtw_set_rate(struct urtw_softc *);
 usbd_status	urtw_update_msr(struct urtw_softc *);

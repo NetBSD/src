@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.32.24.5 2014/12/05 09:37:50 skrll Exp $	*/
+/*	$NetBSD: umct.c,v 1.32.24.6 2014/12/06 08:27:23 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.5 2014/12/05 09:37:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.6 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ Static	void umct_dtr(struct umct_softc *, int);
 Static	void umct_rts(struct umct_softc *, int);
 Static	void umct_break(struct umct_softc *, int);
 Static	void umct_set_line_state(struct umct_softc *);
-Static	void umct_get_status(void *, int portno, u_char *lsr, u_char *msr);
+Static	void umct_get_status(void *, int, u_char *, u_char *);
 Static	int  umct_param(void *, int, struct termios *);
 Static	int  umct_open(void *, int);
 Static	void umct_close(void *, int);

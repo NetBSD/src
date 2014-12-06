@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.22.38.2 2014/12/05 09:37:50 skrll Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.22.38.3 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.22.38.2 2014/12/05 09:37:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.22.38.3 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,10 +90,10 @@ int	umodemdebug = 0;
 #define UMODEMIBUFSIZE 4096
 #define UMODEMOBUFSIZE 4096
 
-Static usbd_status umodem_set_comm_feature(struct umodem_softc *sc,
-					   int feature, int state);
-Static usbd_status umodem_set_line_coding(struct umodem_softc *sc,
-					  usb_cdc_line_state_t *state);
+Static usbd_status umodem_set_comm_feature(struct umodem_softc *,
+					   int, int);
+Static usbd_status umodem_set_line_coding(struct umodem_softc *,
+					  usb_cdc_line_state_t *);
 
 Static void	umodem_dtr(struct umodem_softc *, int);
 Static void	umodem_rts(struct umodem_softc *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.22.14.3 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.22.14.4 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.22.14.3 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.22.14.4 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,12 +90,12 @@ struct udsbr_softc {
 	char			sc_dying;
 };
 
-Static	int	udsbr_req(struct udsbr_softc *sc, int ureq, int value,
-			  int index);
-Static	void	udsbr_start(struct udsbr_softc *sc);
-Static	void	udsbr_stop(struct udsbr_softc *sc);
-Static	void	udsbr_setfreq(struct udsbr_softc *sc, int freq);
-Static	int	udsbr_status(struct udsbr_softc *sc);
+Static	int	udsbr_req(struct udsbr_softc *, int, int,
+			  int);
+Static	void	udsbr_start(struct udsbr_softc *);
+Static	void	udsbr_stop(struct udsbr_softc *);
+Static	void	udsbr_setfreq(struct udsbr_softc *, int);
+Static	int	udsbr_status(struct udsbr_softc *);
 
 int udsbr_match(device_t, cfdata_t, void *);
 void udsbr_attach(device_t, device_t, void *);

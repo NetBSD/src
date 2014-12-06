@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.3.14.2 2014/12/03 22:33:56 skrll Exp $	*/
+/*	$NetBSD: uts.c,v 1.3.14.3 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.3.14.2 2014/12/03 22:33:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.3.14.3 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ struct uts_softc {
 
 #define TSCREEN_FLAGS_MASK (HIO_CONST|HIO_RELATIVE)
 
-Static void	uts_intr(struct uhidev *addr, void *ibuf, u_int len);
+Static void	uts_intr(struct uhidev *, void *, u_int);
 
 Static int	uts_enable(void *);
 Static void	uts_disable(void *);

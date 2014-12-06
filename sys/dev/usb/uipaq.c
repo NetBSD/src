@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.19.14.2 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.19.14.3 2014/12/06 08:27:23 skrll Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.19.14.2 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.19.14.3 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,9 +95,9 @@ Static void	uipaq_set(void *, int, int, int);
 
 /* Support routines. */
 /* based on uppc module by Sam Lawrance */
-Static void	uipaq_dtr(struct uipaq_softc *sc, int onoff);
-Static void	uipaq_rts(struct uipaq_softc *sc, int onoff);
-Static void	uipaq_break(struct uipaq_softc* sc, int onoff);
+Static void	uipaq_dtr(struct uipaq_softc *, int);
+Static void	uipaq_rts(struct uipaq_softc *, int);
+Static void	uipaq_break(struct uipaq_softc *, int);
 
 
 struct ucom_methods uipaq_methods = {

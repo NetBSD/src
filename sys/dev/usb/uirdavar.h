@@ -1,4 +1,4 @@
-/*	$NetBSD: uirdavar.h,v 1.5.38.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: uirdavar.h,v 1.5.38.2 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -150,15 +150,14 @@ struct uirda_softc {
 	struct irframe_methods	*sc_irm;
 };
 
-usbd_status usbd_get_class_desc(usbd_device_handle, int type, int index,
-	int len, void *desc);
+usbd_status usbd_get_class_desc(usbd_device_handle, int, int, int, void *);
 
-int uirda_open(void *h, int flag, int mode, struct lwp *l);
-int uirda_close(void *h, int flag, int mode, struct lwp *l);
-int uirda_read(void *h, struct uio *uio, int flag);
-int uirda_write(void *h, struct uio *uio, int flag);
-int uirda_set_params(void *h, struct irda_params *params);
-int uirda_get_speeds(void *h, int *speeds);
-int uirda_get_turnarounds(void *h, int *times);
-int uirda_poll(void *h, int events, struct lwp *l);
-int uirda_kqfilter(void *h, struct knote *kn);
+int uirda_open(void *, int, int, struct lwp *);
+int uirda_close(void *, int, int, struct lwp *);
+int uirda_read(void *, struct uio *, int);
+int uirda_write(void *, struct uio *, int);
+int uirda_set_params(void *, struct irda_params *);
+int uirda_get_speeds(void *, int *);
+int uirda_get_turnarounds(void *, int *);
+int uirda_poll(void *, int, struct lwp *);
+int uirda_kqfilter(void *, struct knote *);

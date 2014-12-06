@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.49 2014/09/12 16:40:38 skrll Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.49.2.1 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.49 2014/09/12 16:40:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.49.2.1 2014/12/06 08:27:23 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -93,18 +93,18 @@ struct umass_scsipi_softc {
 
 Static void umass_scsipi_request(struct scsipi_channel *,
 				 scsipi_adapter_req_t, void *);
-Static void umass_scsipi_minphys(struct buf *bp);
+Static void umass_scsipi_minphys(struct buf *);
 Static int umass_scsipi_ioctl(struct scsipi_channel *, u_long,
 			      void *, int, proc_t *);
-Static int umass_scsipi_getgeom(struct scsipi_periph *periph,
-				struct disk_parms *, u_long sectors);
+Static int umass_scsipi_getgeom(struct scsipi_periph *,
+				struct disk_parms *, u_long);
 
-Static void umass_scsipi_cb(struct umass_softc *sc, void *priv,
-			    int residue, int status);
-Static void umass_scsipi_sense_cb(struct umass_softc *sc, void *priv,
-				  int residue, int status);
+Static void umass_scsipi_cb(struct umass_softc *, void *,
+			    int, int);
+Static void umass_scsipi_sense_cb(struct umass_softc *, void *,
+				  int, int);
 
-Static struct umass_scsipi_softc *umass_scsipi_setup(struct umass_softc *sc);
+Static struct umass_scsipi_softc *umass_scsipi_setup(struct umass_softc *);
 
 #if NATAPIBUS > 0
 Static void umass_atapi_probe_device(struct atapibus_softc *, int);

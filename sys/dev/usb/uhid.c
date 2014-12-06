@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.92.4.4 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: uhid.c,v 1.92.4.5 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.4 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.5 2014/12/06 08:27:23 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -130,11 +130,11 @@ const struct cdevsw uhid_cdevsw = {
 	.d_flag = D_OTHER | D_MPSAFE
 };
 
-Static void uhid_intr(struct uhidev *, void *, u_int len);
+Static void uhid_intr(struct uhidev *, void *, u_int);
 Static void uhid_softintr(void *);
 
-Static int uhid_do_read(struct uhid_softc *, struct uio *uio, int);
-Static int uhid_do_write(struct uhid_softc *, struct uio *uio, int);
+Static int uhid_do_read(struct uhid_softc *, struct uio *, int);
+Static int uhid_do_write(struct uhid_softc *, struct uio *, int);
 Static int uhid_do_ioctl(struct uhid_softc*, u_long, void *, int, struct lwp *);
 
 int             uhid_match(device_t, cfdata_t, void *);

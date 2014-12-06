@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.12.4.2 2014/12/02 09:00:33 skrll Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.12.4.3 2014/12/06 08:27:23 skrll Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.2 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.3 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -123,7 +123,7 @@ static void	upgt_rx_cb(usbd_xfer_handle, usbd_private_handle, usbd_status);
 static void	upgt_rx(struct upgt_softc *, uint8_t *, int);
 static void	upgt_setup_rates(struct upgt_softc *);
 static uint8_t	upgt_rx_rate(struct upgt_softc *, const int);
-static int	upgt_set_macfilter(struct upgt_softc *, uint8_t state);
+static int	upgt_set_macfilter(struct upgt_softc *, uint8_t);
 static int	upgt_set_channel(struct upgt_softc *, unsigned);
 static void	upgt_set_led(struct upgt_softc *, int);
 static void	upgt_set_led_blink(void *);
