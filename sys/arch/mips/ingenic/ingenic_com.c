@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_com.c,v 1.1 2014/11/22 15:17:01 macallan Exp $ */
+/*	$NetBSD: ingenic_com.c,v 1.2 2014/12/06 14:33:18 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_com.c,v 1.1 2014/11/22 15:17:01 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_com.c,v 1.2 2014/12/06 14:33:18 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,8 @@ void	ingenic_putchar(char);
 #endif
 
 
-struct mips_bus_space	ingenic_com_mbst;
-int			mbst_valid = 0;
+static struct mips_bus_space	ingenic_com_mbst;
+static int	mbst_valid = 0;
 static void	ingenic_com_bus_mem_init(bus_space_tag_t, void *);
 void		ingenic_com_cnattach(void);
 
