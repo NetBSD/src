@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.9 2014/10/04 11:23:35 riastradh Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.10 2014/12/06 12:24:22 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.9 2014/10/04 11:23:35 riastradh Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.10 2014/12/06 12:24:22 mlelstv Exp $");
 #endif
 
 #include <err.h>
@@ -65,6 +65,7 @@ static const struct {
 	const char *d;
 } gpt_nv[] = {
 	{ GPT_ENT_TYPE_APPLE_HFS, "apple", "Apple HFS" },
+	{ GPT_ENT_TYPE_APPLE_UFS, "apple-ufs", "Apple UFS" },
 	{ GPT_ENT_TYPE_BIOS, "bios", "BIOS Boot" },
 	{ GPT_ENT_TYPE_EFI, "efi", "EFI System" },
 	{ GPT_ENT_TYPE_FREEBSD, "fbsd-legacy", "FreeBSD legacy" },
@@ -73,7 +74,9 @@ static const struct {
 	{ GPT_ENT_TYPE_FREEBSD_VINUM, "fbsd-vinum", "FreeBSD vinum" },
 	{ GPT_ENT_TYPE_FREEBSD_ZFS, "fbsd-zfs", "FreeBSD ZFS" },
 	{ GPT_ENT_TYPE_LINUX_DATA, "linux-data", "Linux data" },
+	{ GPT_ENT_TYPE_LINUX_RAID, "linux-raid", "Linux RAID" },
 	{ GPT_ENT_TYPE_LINUX_SWAP, "linux-swap", "Linux swap" },
+	{ GPT_ENT_TYPE_LINUX_LVM, "linux-lvm", "Linux LVM" },
 	{ GPT_ENT_TYPE_MS_BASIC_DATA, "windows", "Windows basic data" },
 	{ GPT_ENT_TYPE_MS_RESERVED, "windows-reserved", "Windows reserved" },
 	{ GPT_ENT_TYPE_NETBSD_CCD, "ccd", "NetBSD ccd component" },
