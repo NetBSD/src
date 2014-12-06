@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.45.24.2 2014/12/05 09:37:50 skrll Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.45.24.3 2014/12/06 08:37:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.45.24.2 2014/12/05 09:37:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.45.24.3 2014/12/06 08:37:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,14 +149,14 @@ Static void uvisor_close(void *, int);
 
 
 struct ucom_methods uvisor_methods = {
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	uvisor_close,
-	NULL,
-	NULL,
+	.ucom_param = NULL,
+	.ucom_ioctl = NULL,
+	.ucom_open = NULL,
+	.ucom_close = uvisor_close,
+	.ucom_read = NULL,
+	.ucom_write = NULL,
+	.ucom_get_status = NULL,
+	.ucom_set = NULL,
 };
 
 struct uvisor_type {
