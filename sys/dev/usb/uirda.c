@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.38.6.4 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: uirda.c,v 1.38.6.5 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.6.4 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.6.5 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,15 +107,15 @@ static struct {
 
 
 
-int uirda_open(void *h, int flag, int mode, struct lwp *l);
-int uirda_close(void *h, int flag, int mode, struct lwp *l);
-int uirda_read(void *h, struct uio *uio, int flag);
-int uirda_write(void *h, struct uio *uio, int flag);
-int uirda_set_params(void *h, struct irda_params *params);
-int uirda_get_speeds(void *h, int *speeds);
-int uirda_get_turnarounds(void *h, int *times);
-int uirda_poll(void *h, int events, struct lwp *l);
-int uirda_kqfilter(void *h, struct knote *kn);
+int uirda_open(void *, int, int, struct lwp *);
+int uirda_close(void *, int, int, struct lwp *);
+int uirda_read(void *, struct uio *, int);
+int uirda_write(void *, struct uio *, int);
+int uirda_set_params(void *, struct irda_params *);
+int uirda_get_speeds(void *, int *);
+int uirda_get_turnarounds(void *, int *);
+int uirda_poll(void *, int, struct lwp *);
+int uirda_kqfilter(void *, struct knote *);
 
 struct irframe_methods uirda_methods = {
 	uirda_open, uirda_close, uirda_read, uirda_write, uirda_poll,

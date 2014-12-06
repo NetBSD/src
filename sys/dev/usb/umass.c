@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.149.2.3 2014/12/05 09:37:50 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.149.2.4 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.3 2014/12/05 09:37:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.4 2014/12/06 08:27:23 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -224,18 +224,18 @@ CFATTACH_DECL2_NEW(umass, sizeof(struct umass_softc), umass_match, umass_attach,
 Static void umass_disco(struct umass_softc *sc);
 
 /* generic transfer functions */
-Static usbd_status umass_setup_transfer(struct umass_softc *sc,
-				usbd_pipe_handle pipe,
-				void *buffer, int buflen, int flags,
-				usbd_xfer_handle xfer);
-Static usbd_status umass_setup_ctrl_transfer(struct umass_softc *sc,
-				usb_device_request_t *req,
-				void *buffer, int buflen, int flags,
-				usbd_xfer_handle xfer);
-Static void umass_clear_endpoint_stall(struct umass_softc *sc, int endpt,
-				usbd_xfer_handle xfer);
+Static usbd_status umass_setup_transfer(struct umass_softc *,
+				usbd_pipe_handle,
+				void *, int, int,
+				usbd_xfer_handle);
+Static usbd_status umass_setup_ctrl_transfer(struct umass_softc *,
+				usb_device_request_t *,
+				void *, int, int,
+				usbd_xfer_handle);
+Static void umass_clear_endpoint_stall(struct umass_softc *, int,
+				usbd_xfer_handle);
 #if 0
-Static void umass_reset(struct umass_softc *sc,	transfer_cb_f cb, void *priv);
+Static void umass_reset(struct umass_softc *, transfer_cb_f, void *);
 #endif
 
 /* Bulk-Only related functions */

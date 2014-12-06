@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsavar.h,v 1.9.24.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: ubsavar.h,v 1.9.24.2 2014/12/06 08:27:23 skrll Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -147,7 +147,7 @@ int  ubsa_param(void *, int, struct termios *);
 int  ubsa_open(void *, int);
 void ubsa_close(void *, int);
 
-void ubsa_break(struct ubsa_softc *sc, int, int onoff);
+void ubsa_break(struct ubsa_softc *, int, int);
 int  ubsa_request(struct ubsa_softc *, int, uint8_t, uint16_t);
 void ubsa_dtr(struct ubsa_softc *, int, int);
 void ubsa_quadumts_dtr(struct ubsa_softc *, int, int);

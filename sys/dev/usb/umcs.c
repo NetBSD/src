@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.8 2014/08/23 21:37:56 martin Exp $ */
+/* $NetBSD: umcs.c,v 1.8.2.1 2014/12/06 08:27:23 skrll Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.8 2014/08/23 21:37:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.8.2.1 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,28 +99,28 @@ struct umcs7840_softc {
 	bool sc_dying;			/* we have been deactivated */
 };
 
-static int umcs7840_get_reg(struct umcs7840_softc *sc, uint8_t reg, uint8_t *data);
-static int umcs7840_set_reg(struct umcs7840_softc *sc, uint8_t reg, uint8_t data);
-static int umcs7840_get_UART_reg(struct umcs7840_softc *sc, uint8_t portno, uint8_t reg, uint8_t *data);
-static int umcs7840_set_UART_reg(struct umcs7840_softc *sc, uint8_t portno, uint8_t reg, uint8_t data);
-static int umcs7840_calc_baudrate(uint32_t rate, uint16_t *divisor, uint8_t *clk);
-static void umcs7840_dtr(struct umcs7840_softc *sc, int portno, bool onoff);
-static void umcs7840_rts(struct umcs7840_softc *sc, int portno, bool onoff);
-static void umcs7840_break(struct umcs7840_softc *sc, int portno, bool onoff);
+static int umcs7840_get_reg(struct umcs7840_softc *, uint8_t, uint8_t *);
+static int umcs7840_set_reg(struct umcs7840_softc *, uint8_t, uint8_t);
+static int umcs7840_get_UART_reg(struct umcs7840_softc *, uint8_t, uint8_t, uint8_t *);
+static int umcs7840_set_UART_reg(struct umcs7840_softc *, uint8_t, uint8_t, uint8_t );
+static int umcs7840_calc_baudrate(uint32_t, uint16_t *, uint8_t *);
+static void umcs7840_dtr(struct umcs7840_softc *, int, bool);
+static void umcs7840_rts(struct umcs7840_softc *, int, bool);
+static void umcs7840_break(struct umcs7840_softc *, int, bool );
 
 static int umcs7840_match(device_t, cfdata_t, void *);
 static void umcs7840_attach(device_t, device_t, void *);
 static int umcs7840_detach(device_t, int);
-static void umcs7840_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status);
+static void umcs7840_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 static void umcs7840_change_task(void *arg);
-static int umcs7840_activate(device_t, enum devact); 
+static int umcs7840_activate(device_t, enum devact);
 static void umcs7840_childdet(device_t, device_t);
 
 static void umcs7840_get_status(void *, int, u_char *, u_char *);
 static void umcs7840_set(void *, int, int, int);
 static int umcs7840_param(void *, int, struct termios *);
-static int umcs7840_port_open(void *sc, int portno);
-static void umcs7840_port_close(void *sc, int portno);
+static int umcs7840_port_open(void *, int);
+static void umcs7840_port_close(void *, int);
 
 struct ucom_methods umcs7840_methods = {
 	.ucom_get_status = umcs7840_get_status,
@@ -495,7 +495,7 @@ umcs7840_calc_baudrate(uint32_t rate, uint16_t *divisor, uint8_t *clk)
 	return (0);
 }
 
-static int 
+static int
 umcs7840_detach(device_t self, int flags)
 {
 	struct umcs7840_softc *sc = device_private(self);

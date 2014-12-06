@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.20.24.1 2014/11/30 12:18:58 skrll Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.20.24.2 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,27 +37,30 @@
 struct	ucom_softc;
 
 struct ucom_methods {
-	void (*ucom_get_status)(void *sc, int portno, u_char *lsr, u_char *msr);
-	void (*ucom_set)(void *sc, int portno, int reg, int onoff);
+	void (*ucom_get_status)(void *, int, u_char *, u_char *);
+	void (*ucom_set)(void *, int, int, int);
 #define UCOM_SET_DTR 1
 #define UCOM_SET_RTS 2
 #define UCOM_SET_BREAK 3
-	int (*ucom_param)(void *sc, int portno, struct termios *);
-	int (*ucom_ioctl)(void *sc, int portno, u_long cmd,
-			  void *data, int flag, proc_t *p);
-	int (*ucom_open)(void *sc, int portno);
-	void (*ucom_close)(void *sc, int portno);
+	int (*ucom_param)(void *, int, struct termios *);
+	int (*ucom_ioctl)(void *, int, u_long, void *, int, proc_t *);
+	int (*ucom_open)(void *, int);
+	void (*ucom_close)(void *, int);
 	/*
-	 * Note: The 'ptr' and 'count' pointers can be adjusted as follows:
-	 *  ptr: If consuming characters from the start of the buffer,
-	 *       advance '*ptr' to skip the data consumed.
-	 *  count: If consuming characters at the end of the buffer,
-	 *         decrement '*count' by the number of characters consumed.
+	 * Note: The 'ptr' (2nd arg) and 'count' (3rd arg) pointers can be
+	 * adjusted as follows:
+	 *
+	 *  ptr:	If consuming characters from the start of the buffer,
+	 *		advance '*ptr' to skip the data consumed.
+	 *
+	 *  count:	If consuming characters at the end of the buffer,
+	 *		decrement '*count' by the number of characters
+	 *		consumed.
+	 *
 	 * If consuming all characters, set '*count' to zero.
 	 */
-	void (*ucom_read)(void *sc, int portno, u_char **ptr, uint32_t *count);
-	void (*ucom_write)(void *sc, int portno, u_char *to, u_char *from,
-			   uint32_t *count);
+	void (*ucom_read)(void *, int, u_char **, uint32_t *);
+	void (*ucom_write)(void *, int, u_char *, u_char *, uint32_t *);
 };
 
 /* modem control register */

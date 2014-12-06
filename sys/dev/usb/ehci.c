@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.15 2014/12/05 13:23:38 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.16 2014/12/06 08:27:23 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.15 2014/12/05 13:23:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.16 2014/12/06 08:27:23 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -212,8 +212,8 @@ Static void		ehci_device_fs_isoc_abort(usbd_xfer_handle);
 Static void		ehci_device_fs_isoc_close(usbd_pipe_handle);
 Static void		ehci_device_fs_isoc_done(usbd_xfer_handle);
 
-Static void		ehci_device_clear_toggle(usbd_pipe_handle pipe);
-Static void		ehci_noop(usbd_pipe_handle pipe);
+Static void		ehci_device_clear_toggle(usbd_pipe_handle);
+Static void		ehci_noop(usbd_pipe_handle);
 
 Static void		ehci_disown(ehci_softc_t *, int, int);
 
@@ -228,21 +228,21 @@ Static usbd_status	ehci_alloc_sqtd_chain(struct ehci_pipe *,
 Static void		ehci_free_sqtd_chain(ehci_softc_t *, ehci_soft_qtd_t *,
 					    ehci_soft_qtd_t *);
 
-Static ehci_soft_itd_t	*ehci_alloc_itd(ehci_softc_t *sc);
-Static ehci_soft_sitd_t *ehci_alloc_sitd(ehci_softc_t *sc);
-Static void		ehci_free_itd(ehci_softc_t *sc, ehci_soft_itd_t *itd);
-Static void		ehci_free_sitd(ehci_softc_t *sc, ehci_soft_sitd_t *);
-Static void 		ehci_rem_free_itd_chain(ehci_softc_t *sc,
-						struct ehci_xfer *exfer);
-Static void		ehci_rem_free_sitd_chain(ehci_softc_t *sc,
-						 struct ehci_xfer *exfer);
-Static void 		ehci_abort_isoc_xfer(usbd_xfer_handle xfer,
-						usbd_status status);
+Static ehci_soft_itd_t	*ehci_alloc_itd(ehci_softc_t *);
+Static ehci_soft_sitd_t *ehci_alloc_sitd(ehci_softc_t *);
+Static void		ehci_free_itd(ehci_softc_t *, ehci_soft_itd_t *);
+Static void		ehci_free_sitd(ehci_softc_t *, ehci_soft_sitd_t *);
+Static void 		ehci_rem_free_itd_chain(ehci_softc_t *,
+						struct ehci_xfer *);
+Static void		ehci_rem_free_sitd_chain(ehci_softc_t *,
+						 struct ehci_xfer *);
+Static void 		ehci_abort_isoc_xfer(usbd_xfer_handle,
+						usbd_status);
 
-Static usbd_status	ehci_device_request(usbd_xfer_handle xfer);
+Static usbd_status	ehci_device_request(usbd_xfer_handle);
 
 Static usbd_status	ehci_device_setintr(ehci_softc_t *, ehci_soft_qh_t *,
-			    int ival);
+			    int);
 
 Static void		ehci_add_qh(ehci_softc_t *, ehci_soft_qh_t *,
 				    ehci_soft_qh_t *);
@@ -265,7 +265,7 @@ Static void		ehci_dump_sqtds(ehci_soft_qtd_t *);
 Static void		ehci_dump_sqtd(ehci_soft_qtd_t *);
 Static void		ehci_dump_qtd(ehci_qtd_t *);
 Static void		ehci_dump_sqh(ehci_soft_qh_t *);
-Static void		ehci_dump_sitd(struct ehci_soft_itd *itd);
+Static void		ehci_dump_sitd(struct ehci_soft_itd *);
 Static void		ehci_dump_itd(struct ehci_soft_itd *);
 Static void		ehci_dump_exfer(struct ehci_xfer *);
 #endif

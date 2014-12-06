@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.4 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.5 2014/12/06 08:27:23 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.4 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.5 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,8 +83,8 @@ struct uhub_softc {
 #define PORTSTAT_ISSET(sc, port) \
 	((sc)->sc_status[(port) / 8] & (1 << ((port) % 8)))
 
-Static usbd_status uhub_explore(usbd_device_handle hub);
-Static void uhub_intr(usbd_xfer_handle, usbd_private_handle,usbd_status);
+Static usbd_status uhub_explore(usbd_device_handle);
+Static void uhub_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
 
 /*

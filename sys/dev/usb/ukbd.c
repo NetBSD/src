@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.129.6.2 2014/12/05 09:37:49 skrll Exp $        */
+/*      $NetBSD: ukbd.c,v 1.129.6.3 2014/12/06 08:27:23 skrll Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.129.6.2 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.129.6.3 2014/12/06 08:27:23 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ukbd.h"
@@ -334,11 +334,11 @@ const struct wskbd_consops ukbd_consops = {
 	.bell =  NULL,
 };
 
-Static const char *ukbd_parse_desc(struct ukbd_softc *sc);
+Static const char *ukbd_parse_desc(struct ukbd_softc *);
 
-Static void	ukbd_intr(struct uhidev *addr, void *ibuf, u_int len);
-Static void	ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud);
-Static void	ukbd_delayed_decode(void *addr);
+Static void	ukbd_intr(struct uhidev *, void *, u_int);
+Static void	ukbd_decode(struct ukbd_softc *, struct ukbd_data *);
+Static void	ukbd_delayed_decode(void *);
 
 Static int	ukbd_enable(void *, int);
 Static void	ukbd_set_leds(void *, int);

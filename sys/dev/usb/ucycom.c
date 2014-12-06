@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.41.2.3 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.41.2.4 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.41.2.3 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.41.2.4 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ Static void ucycom_dtr(struct ucycom_softc *, int);
 #if 0
 Static void ucycom_rts(struct ucycom_softc *, int);
 #endif
-Static void ucycom_cleanup(struct ucycom_softc *sc);
+Static void ucycom_cleanup(struct ucycom_softc *);
 
 #ifdef UCYCOM_DEBUG
 Static void ucycom_get_cfg(struct ucycom_softc *);

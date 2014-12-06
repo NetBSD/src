@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.74.4.4 2014/12/05 09:37:50 skrll Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.74.4.5 2014/12/06 08:27:23 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.4.4 2014/12/05 09:37:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.4.5 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,8 +116,8 @@ struct	uplcom_softc {
 #define UPLCOMOBUFSIZE 256
 
 Static	usbd_status uplcom_reset(struct uplcom_softc *);
-Static	usbd_status uplcom_set_line_coding(struct uplcom_softc *sc,
-					   usb_cdc_line_state_t *state);
+Static	usbd_status uplcom_set_line_coding(struct uplcom_softc *,
+					   usb_cdc_line_state_t *);
 Static	usbd_status uplcom_set_crtscts(struct uplcom_softc *);
 Static	void uplcom_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
@@ -126,7 +126,7 @@ Static	void uplcom_dtr(struct uplcom_softc *, int);
 Static	void uplcom_rts(struct uplcom_softc *, int);
 Static	void uplcom_break(struct uplcom_softc *, int);
 Static	void uplcom_set_line_state(struct uplcom_softc *);
-Static	void uplcom_get_status(void *, int portno, u_char *lsr, u_char *msr);
+Static	void uplcom_get_status(void *, int, u_char *, u_char *);
 #if TODO
 Static	int  uplcom_ioctl(void *, int, u_long, void *, int, proc_t *);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.14 2014/12/05 13:23:38 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.15 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.14 2014/12/05 13:23:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.15 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ struct uhci_pipe {
 Static void		uhci_globalreset(uhci_softc_t *);
 Static usbd_status	uhci_portreset(uhci_softc_t*, int);
 Static void		uhci_reset(uhci_softc_t *);
-Static usbd_status	uhci_run(uhci_softc_t *, int run, int locked);
+Static usbd_status	uhci_run(uhci_softc_t *, int, int);
 Static uhci_soft_td_t  *uhci_alloc_std(uhci_softc_t *);
 Static void		uhci_free_std(uhci_softc_t *, uhci_soft_td_t *);
 Static uhci_soft_qh_t  *uhci_alloc_sqh(uhci_softc_t *);
@@ -149,7 +149,7 @@ Static void		uhci_waitintr(uhci_softc_t *, usbd_xfer_handle);
 Static void		uhci_check_intr(uhci_softc_t *, uhci_intr_info_t *);
 Static void		uhci_idone(uhci_intr_info_t *);
 
-Static void		uhci_abort_xfer(usbd_xfer_handle, usbd_status status);
+Static void		uhci_abort_xfer(usbd_xfer_handle, usbd_status);
 
 Static void		uhci_timeout(void *);
 Static void		uhci_timeout_task(void *);
@@ -159,10 +159,10 @@ Static void		uhci_add_bulk(uhci_softc_t *, uhci_soft_qh_t *);
 Static void		uhci_remove_ls_ctrl(uhci_softc_t *,uhci_soft_qh_t *);
 Static void		uhci_remove_hs_ctrl(uhci_softc_t *,uhci_soft_qh_t *);
 Static void		uhci_remove_bulk(uhci_softc_t *,uhci_soft_qh_t *);
-Static void		uhci_add_loop(uhci_softc_t *sc);
-Static void		uhci_rem_loop(uhci_softc_t *sc);
+Static void		uhci_add_loop(uhci_softc_t *);
+Static void		uhci_rem_loop(uhci_softc_t *);
 
-Static usbd_status	uhci_setup_isoc(usbd_pipe_handle pipe);
+Static usbd_status	uhci_setup_isoc(usbd_pipe_handle);
 Static void		uhci_device_isoc_enter(usbd_xfer_handle);
 
 Static usbd_xfer_handle	uhci_allocx(struct usbd_bus *);
@@ -205,15 +205,15 @@ Static usbd_status	uhci_open(usbd_pipe_handle);
 Static void		uhci_poll(struct usbd_bus *);
 Static void		uhci_softintr(void *);
 
-Static usbd_status	uhci_device_request(usbd_xfer_handle xfer);
+Static usbd_status	uhci_device_request(usbd_xfer_handle);
 
 Static void		uhci_add_intr(uhci_softc_t *, uhci_soft_qh_t *);
 Static void		uhci_remove_intr(uhci_softc_t *, uhci_soft_qh_t *);
-Static usbd_status	uhci_device_setintr(uhci_softc_t *sc,
-			    struct uhci_pipe *pipe, int ival);
+Static usbd_status	uhci_device_setintr(uhci_softc_t *,
+			    struct uhci_pipe *, int);
 
-Static void		uhci_device_clear_toggle(usbd_pipe_handle pipe);
-Static void		uhci_noop(usbd_pipe_handle pipe);
+Static void		uhci_device_clear_toggle(usbd_pipe_handle);
+Static void		uhci_noop(usbd_pipe_handle);
 
 static inline uhci_soft_qh_t *uhci_find_prev_qh(uhci_soft_qh_t *,
 						    uhci_soft_qh_t *);
@@ -225,7 +225,7 @@ Static void		uhci_dump_qhs(uhci_soft_qh_t *);
 Static void		uhci_dump_qh(uhci_soft_qh_t *);
 Static void		uhci_dump_tds(uhci_soft_td_t *);
 Static void		uhci_dump_td(uhci_soft_td_t *);
-Static void		uhci_dump_ii(uhci_intr_info_t *ii);
+Static void		uhci_dump_ii(uhci_intr_info_t *);
 void			uhci_dump(void);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.132.4.4 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.132.4.5 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.4 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.5 2014/12/06 08:27:23 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -218,7 +218,7 @@ CFATTACH_DECL_NEW(aue, sizeof(struct aue_softc), aue_match, aue_attach,
 
 Static void aue_multithread(void *);
 
-Static void aue_reset_pegasus_II(struct aue_softc *sc);
+Static void aue_reset_pegasus_II(struct aue_softc *);
 Static int aue_tx_list_init(struct aue_softc *);
 Static int aue_rx_list_init(struct aue_softc *);
 Static int aue_newbuf(struct aue_softc *, struct aue_chain *, struct mbuf *);

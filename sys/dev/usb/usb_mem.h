@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.30.14.4 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.30.14.5 2014/12/06 08:27:23 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ usbd_status	usb_allocmem(usbd_bus_handle, size_t, size_t, usb_dma_t *);
 usbd_status	usb_allocmem_flags(usbd_bus_handle, size_t, size_t, usb_dma_t *,
 			int);
 void		usb_freemem(usbd_bus_handle, usb_dma_t *);
-void		usb_syncmem(usb_dma_t *, bus_addr_t, bus_size_t, int ops);
+void		usb_syncmem(usb_dma_t *, bus_addr_t, bus_size_t, int);
 
 bus_addr_t	usb_dmaaddr(usb_dma_t *, unsigned int);
 

@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.48.6.2 2014/12/03 22:33:56 skrll Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.48.6.3 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.2 2014/12/03 22:33:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.3 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -200,7 +200,7 @@ static void		rum_amrr_start(struct rum_softc *,
 			    struct ieee80211_node *);
 static void		rum_amrr_timeout(void *);
 static void		rum_amrr_update(usbd_xfer_handle, usbd_private_handle,
-			    usbd_status status);
+			    usbd_status);
 
 /*
  * Supported rates for 802.11a/b/g modes (in 500Kbps unit).

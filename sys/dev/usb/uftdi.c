@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.59.6.3 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.59.6.4 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.59.6.3 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.59.6.4 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,14 +97,14 @@ struct uftdi_softc {
 
 };
 
-Static void	uftdi_get_status(void *, int portno, u_char *lsr, u_char *msr);
+Static void	uftdi_get_status(void *, int, u_char *, u_char *);
 Static void	uftdi_set(void *, int, int, int);
 Static int	uftdi_param(void *, int, struct termios *);
-Static int	uftdi_open(void *sc, int portno);
-Static void	uftdi_read(void *sc, int portno, u_char **ptr,uint32_t *count);
-Static void	uftdi_write(void *sc, int portno, u_char *to, u_char *from,
-			    uint32_t *count);
-Static void	uftdi_break(void *sc, int portno, int onoff);
+Static int	uftdi_open(void *, int);
+Static void	uftdi_read(void *, int, u_char **, uint32_t *);
+Static void	uftdi_write(void *, int, u_char *, u_char *,
+			    uint32_t *);
+Static void	uftdi_break(void *, int, int);
 
 struct ucom_methods uftdi_methods = {
 	uftdi_get_status,

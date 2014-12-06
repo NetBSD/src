@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.7 2014/12/04 08:04:31 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.8 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ struct usbd_endpoint {
 };
 
 struct usbd_bus_methods {
-	usbd_status	      (*ubm_open)(struct usbd_pipe *pipe);
+	usbd_status	      (*ubm_open)(struct usbd_pipe *);
 	void		      (*ubm_softint)(void *);
 	void		      (*ubm_dopoll)(struct usbd_bus *);
 	struct usbd_xfer *    (*ubm_allocx)(struct usbd_bus *);
@@ -281,11 +281,11 @@ void usbd_init(void);
 void usbd_finish(void);
 
 #if defined(USB_DEBUG) || defined(EHCI_DEBUG) || defined(OHCI_DEBUG)
-void usbd_dump_iface(struct usbd_interface *iface);
-void usbd_dump_device(struct usbd_device *dev);
-void usbd_dump_endpoint(struct usbd_endpoint *endp);
-void usbd_dump_queue(usbd_pipe_handle pipe);
-void usbd_dump_pipe(usbd_pipe_handle pipe);
+void usbd_dump_iface(struct usbd_interface *);
+void usbd_dump_device(struct usbd_device *);
+void usbd_dump_endpoint(struct usbd_endpoint *);
+void usbd_dump_queue(usbd_pipe_handle);
+void usbd_dump_pipe(usbd_pipe_handle);
 #endif
 
 /* Routines from usb_subr.c */
@@ -295,15 +295,15 @@ void		usb_delay_ms(usbd_bus_handle, u_int);
 void		usbd_delay_ms_locked(usbd_device_handle, u_int, kmutex_t *);
 void		usbd_delay_ms(usbd_device_handle, u_int);
 usbd_status	usbd_reset_port(usbd_device_handle, int, usb_port_status_t *);
-usbd_status	usbd_setup_pipe(usbd_device_handle dev,
-				usbd_interface_handle iface,
+usbd_status	usbd_setup_pipe(usbd_device_handle,
+				usbd_interface_handle,
 				struct usbd_endpoint *, int,
-				usbd_pipe_handle *pipe);
-usbd_status	usbd_setup_pipe_flags(usbd_device_handle dev,
-				      usbd_interface_handle iface,
+				usbd_pipe_handle *);
+usbd_status	usbd_setup_pipe_flags(usbd_device_handle,
+				      usbd_interface_handle,
 				      struct usbd_endpoint *, int,
-				      usbd_pipe_handle *pipe,
-				      uint8_t flags);
+				      usbd_pipe_handle *,
+				      uint8_t);
 usbd_status	usbd_new_device(device_t, usbd_bus_handle, int, int, int,
 				struct usbd_port *);
 usbd_status	usbd_reattach_device(device_t, usbd_device_handle,

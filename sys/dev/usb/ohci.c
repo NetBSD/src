@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.14 2014/12/05 13:23:38 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.15 2014/12/06 08:27:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.14 2014/12/05 13:23:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.15 2014/12/06 08:27:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ Static void		ohci_poll(struct usbd_bus *);
 Static void		ohci_softintr(void *);
 Static void		ohci_waitintr(ohci_softc_t *, usbd_xfer_handle);
 Static void		ohci_rhsc(ohci_softc_t *, usbd_xfer_handle);
-Static void		ohci_rhsc_softint(void *arg);
+Static void		ohci_rhsc_softint(void *);
 
 Static usbd_status	ohci_device_request(usbd_xfer_handle xfer);
 Static void		ohci_add_ed(ohci_softc_t *, ohci_soft_ed_t *,
@@ -124,7 +124,7 @@ Static void		ohci_hash_add_itd(ohci_softc_t *, ohci_soft_itd_t *);
 Static void		ohci_hash_rem_itd(ohci_softc_t *, ohci_soft_itd_t *);
 Static ohci_soft_itd_t  *ohci_hash_find_itd(ohci_softc_t *, ohci_physaddr_t);
 
-Static usbd_status	ohci_setup_isoc(usbd_pipe_handle pipe);
+Static usbd_status	ohci_setup_isoc(usbd_pipe_handle);
 Static void		ohci_device_isoc_enter(usbd_xfer_handle);
 
 Static usbd_xfer_handle	ohci_allocx(struct usbd_bus *);
@@ -163,8 +163,8 @@ Static void		ohci_device_isoc_abort(usbd_xfer_handle);
 Static void		ohci_device_isoc_close(usbd_pipe_handle);
 Static void		ohci_device_isoc_done(usbd_xfer_handle);
 
-Static usbd_status	ohci_device_setintr(ohci_softc_t *sc,
-			    struct ohci_pipe *pipe, int ival);
+Static usbd_status	ohci_device_setintr(ohci_softc_t *,
+			    struct ohci_pipe *, int);
 
 Static void		ohci_timeout(void *);
 Static void		ohci_timeout_task(void *);
@@ -173,8 +173,8 @@ Static void		ohci_rhsc_enable(void *);
 Static void		ohci_close_pipe(usbd_pipe_handle, ohci_soft_ed_t *);
 Static void		ohci_abort_xfer(usbd_xfer_handle, usbd_status);
 
-Static void		ohci_device_clear_toggle(usbd_pipe_handle pipe);
-Static void		ohci_noop(usbd_pipe_handle pipe);
+Static void		ohci_device_clear_toggle(usbd_pipe_handle);
+Static void		ohci_noop(usbd_pipe_handle);
 
 #ifdef OHCI_DEBUG
 Static void		ohci_dumpregs(ohci_softc_t *);
