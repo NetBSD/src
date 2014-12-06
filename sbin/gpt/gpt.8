@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.34 2014/10/04 07:15:54 wiz Exp $
+.\" $NetBSD: gpt.8,v 1.35 2014/12/06 12:24:22 mlelstv Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -158,11 +158,50 @@ option allows the user to specify the partition type.
 The type is given as an UUID, but
 .Nm
 accepts
-.Cm efi , swap , ufs , hfs , linux ,
-.Cm raid , lfs , ccd , cgd , bios ,
-.Cm ffs ,
-and
-.Cm windows
+.Bl -tag -width "windows-reserved" -compact -offset indent
+.It Cm apple
+Apple HFS
+.It Cm apple-ufs
+Apple UFS
+.It Cm bios
+BIOS Boot
+.It Cm efi
+EFI System
+.It Cm fbsd-legacy
+FreeBSD legacy
+.It Cm fbsd-swap
+FreeBSD swap
+.It Cm fbsd-ufs
+FreeBSD UFS/UFS2
+.It Cm fbsd-vinum
+FreeBSD vinum
+.It Cm fbsd-zfs
+FreeBSD ZFS
+.It Cm linux-data
+Linux data
+.It Cm linux-raid
+Linux RAID
+.It Cm linux-swap
+Linux swap
+.It Cm linux-lvm
+Linux LVM
+.It Cm windows
+Windows basic data
+.It Cm windows-reserved
+Windows reserved
+.It Cm ccd
+NetBSD ccd component
+.It Cm cgd
+NetBSD Cryptographic Disk
+.It Cm ffs
+NetBSD FFSv1/FFSv2
+.It Cm lfs
+NetBSD LFS
+.It Cm raid
+NetBSD RAIDFrame component
+.It Cm swap
+NetBSD swap
+.El
 as aliases for the most commonly used partition types.
 .\" ==== backup ====
 .It Nm Ic backup Ar device ...
