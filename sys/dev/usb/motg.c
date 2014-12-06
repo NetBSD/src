@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.11 2014/12/05 13:23:38 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.12 2014/12/06 09:07:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.11 2014/12/05 13:23:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.12 2014/12/06 09:07:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,6 +434,7 @@ motg_init(struct motg_softc *sc)
 	sc->sc_bus.ub_methods = &motg_bus_methods;
 	sc->sc_bus.ub_pipesize= sizeof(struct motg_pipe);
 	sc->sc_bus.ub_revision = USBREV_2_0;
+	sc->sc_bus.ub_usedma = false;
 	sc->sc_bus.ub_hcpriv = sc;
 	snprintf(sc->sc_vendor, sizeof(sc->sc_vendor),
 	    "Mentor Graphics");
