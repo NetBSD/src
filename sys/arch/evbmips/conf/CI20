@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.3 2014/11/25 04:55:13 macallan Exp $
+#	$NetBSD: CI20,v 1.4 2014/12/06 14:31:27 macallan Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.3 $"
+#ident 		"CI20-$Revision: 1.4 $"
 
 maxusers	32
 
@@ -133,10 +133,10 @@ mainbus0 	at root
 cpu0 		at mainbus?
 #wdog0		at mainbus?
 com*		at mainbus?
-#apbus0 	at mainbus?
+apbus0		at mainbus?
 
 # On-board USB
-#dwctwo* 	at apbus?
+#dwctwo* 	at apbus? addr 0x13500000
 #usb* 		at dwctwo?
 #uhub*		at usb?
 #uhub*		at uhub? port ?
