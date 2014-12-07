@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.121 2014/12/04 19:20:39 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.122 2014/12/07 14:34:38 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3212,4 +3212,13 @@ usr.sbin/sysinst/arch/i386/msg.md.pl 		patch
 	Build the DRMKMS kernel on x86, and provide a sysinst option to
 	install it.
 	[bouyer, ticket #295]
+
+tests/lib/libm/t_exp.c				1.8
+
+	In the exp2_values test case, provide separate expected return values
+	for the float case, reflecting the actual exp2f() argument value after
+	rounding to float precision.  Fixes PR lib/49256.  Thanks to Makoto
+	Kamada and Tetsuya Isaki for the analysis.
+	[gson, ticket #296]
+
 
