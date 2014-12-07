@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.31 2014/03/19 15:26:42 nonaka Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.32 2014/12/07 20:07:25 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.31 2014/03/19 15:26:42 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.32 2014/12/07 20:07:25 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -170,6 +170,9 @@ mmc_mode:
 
 	/* Tell the card(s) to enter the idle state (again). */
 	sdmmc_go_idle_state(sc);
+
+	DPRINTF(("%s: host_ocr 0x%08x\n", SDMMCDEVNAME(sc), host_ocr));
+	DPRINTF(("%s: card_ocr 0x%08x\n", SDMMCDEVNAME(sc), card_ocr));
 
 	host_ocr &= card_ocr; /* only allow the common voltages */
 	if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
@@ -493,6 +496,9 @@ sdmmc_mem_send_op_cond(struct sdmmc_softc *sc, uint32_t ocr, uint32_t *ocrp)
 
 	/* Don't lock */
 
+	DPRINTF(("%s: sdmmc_mem_send_op_cond: ocr=%#x\n",
+	    SDMMCDEVNAME(sc), ocr));
+
 	/*
 	 * If we change the OCR value, retry the command until the OCR
 	 * we receive in response has the "CARD BUSY" bit set, meaning
@@ -719,6 +725,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
 	int width, value, hs_timing, bus_clock, error;
 	char ext_csd[512];
+	uint32_t sectors = 0;
 
 	/* change bus clock */
 	bus_clock = min(sc->sc_busclk, sf->csd.tran_speed);
@@ -743,21 +750,14 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 				ext_csd[EXT_CSD_STRUCTURE]);
 			return error;
 		}
-		hs_timing = 0;
-		switch (ext_csd[EXT_CSD_CARD_TYPE]) {
-		case EXT_CSD_CARD_TYPE_26M:
-			sf->csd.tran_speed = 26000;	/* 26MHz */
-			break;
 
-		case EXT_CSD_CARD_TYPE_52M:
-		case EXT_CSD_CARD_TYPE_52M_V18:
-		case EXT_CSD_CARD_TYPE_52M_V12:
-		case EXT_CSD_CARD_TYPE_52M_V12_18:
+		if (ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_52M) {
 			sf->csd.tran_speed = 52000;	/* 52MHz */
 			hs_timing = 1;
-			break;
-
-		default:
+		} else if (ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_26M) {
+			sf->csd.tran_speed = 26000;	/* 26MHz */
+			hs_timing = 0;
+		} else {
 			aprint_error_dev(sc->sc_dev,
 			    "unknown CARD_TYPE: 0x%x\n",
 			    ext_csd[EXT_CSD_CARD_TYPE]);
@@ -802,6 +802,15 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 				    "HS_TIMING set failed\n");
 				return EINVAL;
 			}
+		}
+
+		sectors = ext_csd[EXT_CSD_SEC_COUNT + 0] << 0 |
+		    ext_csd[EXT_CSD_SEC_COUNT + 1] << 8  |
+		    ext_csd[EXT_CSD_SEC_COUNT + 2] << 16 |
+		    ext_csd[EXT_CSD_SEC_COUNT + 3] << 24;
+		if (sectors > (2u * 1024 * 1024 * 1024) / 512) {
+			SET(sf->flags, SFF_SDHC);
+			sf->csd.capacity = sectors;
 		}
 
 		if (ISSET(sc->sc_caps, SMC_CAPS_8BIT_MODE)) {
