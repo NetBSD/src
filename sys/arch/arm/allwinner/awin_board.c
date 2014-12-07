@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.31 2014/12/05 14:36:44 jmcneill Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.32 2014/12/07 15:00:37 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.31 2014/12/05 14:36:44 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.32 2014/12/07 15:00:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -217,7 +217,7 @@ awin_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 		}
 		printf("%s: cpu status: 0=%#x 1=%#x 2=%#x 3=%#x\n", __func__,
 		    s[0], s[1], s[2], s[3]);
-	} else {
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A20) {
 		uint32_t s0 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
 		    AWIN_CPUCFG_OFFSET + AWIN_CPUCFG_CPU0_STATUS_REG);
 		uint32_t s1 = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
