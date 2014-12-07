@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.3 2014/12/05 17:32:08 jmcneill Exp $	*/
+/*	$NetBSD: platform.h,v 1.4 2014/12/07 00:36:26 jmcneill Exp $	*/
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -55,7 +55,8 @@
 #if defined(ALLWINNER_A80)
 #define AWIN_A80_CORE2_VBASE	(AWIN_SRAM_VBASE + AWIN_SRAM_SIZE)
 #define AWIN_A80_USB_VBASE	(AWIN_A80_CORE2_VBASE + AWIN_A80_CORE2_SIZE)
-#define AWIN_KERNEL_IO_VEND	(AWIN_A80_USB_VBASE + AWIN_A80_USB_SIZE)
+#define AWIN_A80_RCPUS_VBASE	(AWIN_A80_USB_VBASE + AWIN_A80_USB_SIZE)
+#define AWIN_KERNEL_IO_VEND	(AWIN_A80_RCPUS_VBASE + AWIN_A80_RCPUS_SIZE)
 #else
 #define AWIN_KERNEL_IO_VEND	(AWIN_SRAM_VBASE + AWIN_SRAM_SIZE)
 #endif
