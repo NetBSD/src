@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.31 2014/12/05 18:41:41 jmcneill Exp $ */
+/* $NetBSD: awin_var.h,v 1.32 2014/12/07 00:36:26 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -61,6 +61,7 @@ struct awinio_attach_args {
 	bus_space_handle_t aio_ccm_bsh;
 	bus_space_handle_t aio_a80_usb_bsh;
 	bus_space_handle_t aio_a80_core2_bsh;
+	bus_space_handle_t aio_a80_rcpus_bsh;
 	bus_dma_tag_t aio_dmat;
 	bus_dma_tag_t aio_coherent_dmat;
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: awin_intr.h,v 1.12 2014/12/05 11:53:22 jmcneill Exp $ */
+/* $NetBSD: awin_intr.h,v 1.13 2014/12/07 00:36:26 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -198,6 +198,7 @@
 #define AWIN_A80_IRQ_WATCHDOG	56
 #define AWIN_A80_IRQ_KEYADC	62
 #define AWIN_A80_IRQ_NMI	64
+#define AWIN_A80_IRQ_R_RSB	71
 #define AWIN_A80_IRQ_DMA	82
 #define AWIN_A80_IRQ_HSTIMER0	83
 #define AWIN_A80_IRQ_HSTIMER1	84

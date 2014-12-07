@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.37 2014/12/05 19:06:41 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.38 2014/12/07 00:36:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,6 +57,7 @@ static struct awinio_softc {
 	bus_space_handle_t sc_ccm_bsh;
 	bus_space_handle_t sc_a80_usb_bsh;
 	bus_space_handle_t sc_a80_core2_bsh;
+	bus_space_handle_t sc_a80_rcpus_bsh;
 	bus_dma_tag_t sc_dmat;
 	bus_dma_tag_t sc_coherent_dmat;
 } awinio_sc;
@@ -163,6 +164,7 @@ static const struct awin_locators awin_locators[] = {
 	{ "awiniic", OFFANDSIZE(A80_TWI3), 3, AWIN_A80_IRQ_TWI3, A80 },
 	{ "awiniic", OFFANDSIZE(A80_TWI4), 4, AWIN_A80_IRQ_TWI4, A80 },
 	{ "awinp2wi", OFFANDSIZE(A31_P2WI), NOPORT, AWIN_A31_IRQ_P2WI, A31 },
+	{ "awinp2wi", OFFANDSIZE(A80_RSB), NOPORT, AWIN_A80_IRQ_R_RSB, A80 },
 	{ "spi", OFFANDSIZE(SPI0), 0, AWIN_IRQ_SPI0, AANY },
 	{ "spi", OFFANDSIZE(SPI1), 1, AWIN_IRQ_SPI1, AANY },
 	{ "spi", OFFANDSIZE(SPI2), 1, AWIN_IRQ_SPI2, AANY },
@@ -225,6 +227,8 @@ awinio_attach(device_t parent, device_t self, void *aux)
 		    AWIN_A80_USB_SIZE, 0, &sc->sc_a80_usb_bsh);
 		bus_space_map(sc->sc_bst, AWIN_A80_CORE2_PBASE,
 		    AWIN_A80_CORE2_SIZE, 0, &sc->sc_a80_core2_bsh);
+		bus_space_map(sc->sc_bst, AWIN_A80_RCPUS_PBASE,
+		    AWIN_A80_RCPUS_SIZE, 0, &sc->sc_a80_rcpus_bsh);
 		break;
 #endif
 	default:
@@ -274,6 +278,7 @@ awinio_attach(device_t parent, device_t self, void *aux)
 			.aio_ccm_bsh = sc->sc_ccm_bsh,
 			.aio_a80_usb_bsh = sc->sc_a80_usb_bsh,
 			.aio_a80_core2_bsh = sc->sc_a80_core2_bsh,
+			.aio_a80_rcpus_bsh = sc->sc_a80_rcpus_bsh,
 			.aio_dmat = sc->sc_dmat,
 			.aio_coherent_dmat = sc->sc_coherent_dmat,
 		};
