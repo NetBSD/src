@@ -1,4 +1,4 @@
-#	$NetBSD: ALLWINNER_A80,v 1.9 2014/12/07 02:41:07 jmcneill Exp $
+#	$NetBSD: ALLWINNER_A80,v 1.10 2014/12/07 14:25:09 jmcneill Exp $
 #
 #	ALLWINNER_A80 - Allwinner A80 boards (Cubieboard4, OptimusBoard, etc)
 #
@@ -232,6 +232,7 @@ awinp2wi0	at awinio0
 iic4		at awinp2wi0
 axp806pm0	at iic4 addr 0x745	# AXP806 Power Management Unit
 axp809pm0	at iic4 addr 0x3a3	# AXP809 Power Management Unit
+ac100ic0	at iic4 addr 0xe89	# AC100 CODEC/RTC
 
 options 	I2C_MAX_ADDR=0xfff
 
@@ -245,13 +246,6 @@ options 	CONADDR=0x07000000, CONSPEED=115200
 
 # Watchdog timers
 awinwdt*	at awinio?
-
-# RTC (not battery backed on this board; use PCF8563 instead)
-#awinrtc*	at awinio?
-
-# onboard audio codec
-#awinac0		at awinio0
-#audio0		at awinac0
 
 # GMAC Ethernet
 awge0		at awinio0 port ?
