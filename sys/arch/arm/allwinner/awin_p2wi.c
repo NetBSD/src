@@ -1,4 +1,4 @@
-/* $NetBSD: awin_p2wi.c,v 1.3 2014/12/07 13:06:39 jmcneill Exp $ */
+/* $NetBSD: awin_p2wi.c,v 1.4 2014/12/07 14:22:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_p2wi.c,v 1.3 2014/12/07 13:06:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_p2wi.c,v 1.4 2014/12/07 14:22:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -283,7 +283,7 @@ awin_p2wi_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	if (cmdlen != 1 || len != 1)
+	if (cmdlen != 1 || (len != 1 && len != 2 && len != 4))
 		return EINVAL;
 
 	if (sc->sc_rsb_p && sc->sc_rsb_last_da != addr) {
@@ -316,13 +316,45 @@ awin_p2wi_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	P2WI_WRITE(sc, AWIN_A31_P2WI_DADDR0_REG, *(const uint8_t *)cmdbuf);
 
 	if (I2C_OP_WRITE_P(op)) {
-		/* Write data byte */
-		P2WI_WRITE(sc, AWIN_A31_P2WI_DATA0_REG, *(uint8_t *)buf);
+		uint8_t *pbuf = buf;
+		uint32_t data;
+		/* Write data */
+		switch (len) {
+		case 1:
+			data = pbuf[0];
+			break;
+		case 2:
+			data = pbuf[0] | (pbuf[1] << 8);
+			break;
+		case 4:
+			data = pbuf[0] | (pbuf[1] << 8) |
+			    (pbuf[2] << 16) | (pbuf[3] << 24);
+			break;
+		default:
+			return EINVAL;
+		}
+		device_printf(sc->sc_dev, "writing 0x%x to 0x%x\n",
+		    data, *(const uint8_t *)cmdbuf);
+		P2WI_WRITE(sc, AWIN_A31_P2WI_DATA0_REG, data);
 	}
 
 	if (sc->sc_rsb_p) {
-		uint8_t cmd = I2C_OP_WRITE_P(op) ? AWIN_A80_RSB_CMD_IDX_WR8 :
-						   AWIN_A80_RSB_CMD_IDX_RD8;
+		uint8_t cmd;
+		if (I2C_OP_WRITE_P(op)) {
+			switch (len) {
+			case 1:	cmd = AWIN_A80_RSB_CMD_IDX_WR8; break;
+			case 2: cmd = AWIN_A80_RSB_CMD_IDX_WR16; break;
+			case 4: cmd = AWIN_A80_RSB_CMD_IDX_WR32; break;
+			default: return EINVAL;
+			}
+		} else {
+			switch (len) {
+			case 1:	cmd = AWIN_A80_RSB_CMD_IDX_RD8; break;
+			case 2: cmd = AWIN_A80_RSB_CMD_IDX_RD16; break;
+			case 4: cmd = AWIN_A80_RSB_CMD_IDX_RD32; break;
+			default: return EINVAL;
+			}
+		}
 		P2WI_WRITE(sc, AWIN_A80_RSB_CMD_REG, cmd);
 	}
 
@@ -350,7 +382,20 @@ awin_p2wi_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	}
 
 	if (I2C_OP_READ_P(op)) {
-		*(uint8_t *)buf = P2WI_READ(sc, AWIN_A31_P2WI_DATA0_REG) & 0xff;
+		uint32_t data = P2WI_READ(sc, AWIN_A31_P2WI_DATA0_REG);
+		switch (len) {
+		case 4:
+			*(uint32_t *)buf = data;
+			break;
+		case 2:
+			*(uint16_t *)buf = data & 0xffff;
+			break;
+		case 1:
+			*(uint8_t *)buf = data & 0xff;
+			break;
+		default:
+			return EINVAL;
+		}
 	}
 
 	return 0;
