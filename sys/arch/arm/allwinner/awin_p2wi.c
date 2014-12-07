@@ -1,4 +1,4 @@
-/* $NetBSD: awin_p2wi.c,v 1.4 2014/12/07 14:22:08 jmcneill Exp $ */
+/* $NetBSD: awin_p2wi.c,v 1.5 2014/12/07 14:22:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_p2wi.c,v 1.4 2014/12/07 14:22:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_p2wi.c,v 1.5 2014/12/07 14:22:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -333,8 +333,6 @@ awin_p2wi_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 		default:
 			return EINVAL;
 		}
-		device_printf(sc->sc_dev, "writing 0x%x to 0x%x\n",
-		    data, *(const uint8_t *)cmdbuf);
 		P2WI_WRITE(sc, AWIN_A31_P2WI_DATA0_REG, data);
 	}
 
