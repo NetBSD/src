@@ -29,9 +29,12 @@
 
 #include "locators.h"
 
+#include "axp806pm.h"
+#include "axp809pm.h"
+
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.20 2014/12/05 18:41:41 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.21 2014/12/07 00:37:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +44,13 @@ __KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.20 2014/12/05 18:41:41 jmcneill Exp 
 
 #include <arm/allwinner/awin_reg.h>
 #include <arm/allwinner/awin_var.h>
+
+#if NAXP806PM > 0
+#include <dev/i2c/axp806.h>
+#endif
+#if NAXP809PM > 0
+#include <dev/i2c/axp809.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -53,6 +63,7 @@ __KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.20 2014/12/05 18:41:41 jmcneill Exp 
 
 static int awin_gige_match(device_t, cfdata_t, void *);
 static void awin_gige_attach(device_t, device_t, void *);
+static void awin_gige_pmu_init(device_t);
 static int awin_gige_intr(void*);
 
 struct awin_gige_softc {
@@ -138,6 +149,8 @@ awin_gige_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": Gigabit Ethernet Controller\n");
+
+	awin_gige_pmu_init(self);
 
 	/*
 	 * Interrupt handler
@@ -233,4 +246,33 @@ awin_gige_intr(void *arg)
 	struct awin_gige_softc *sc = arg;
 
 	return dwc_gmac_intr(&sc->sc_core);
+}
+
+static void
+awin_gige_pmu_init(device_t dev)
+{
+	if (awin_chip_id() == AWIN_CHIP_ID_A80) {
+#if NAXP806PM > 0
+		device_t axp806 = device_find_by_driver_unit("axp806pm", 0);
+		if (axp806) {
+			struct axp806_ctrl *c = axp806_lookup(axp806, "CLDO1");
+			if (c) {
+				axp806_set_voltage(c, 3000, 3000);
+				axp806_enable(c);
+				delay(3000);
+			}
+		}
+#endif
+#if NAXP809PM > 0
+		device_t axp809 = device_find_by_driver_unit("axp809pm", 0);
+		if (axp809) {
+			struct axp809_ctrl *c = axp809_lookup(axp809, "GPIO1");
+			if (c) {
+				axp809_enable(c);
+				delay(3000);
+			}
+		}
+#endif
+		delay(100000);
+	}
 }
