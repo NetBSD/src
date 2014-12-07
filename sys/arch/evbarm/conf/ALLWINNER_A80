@@ -1,4 +1,4 @@
-#	$NetBSD: ALLWINNER_A80,v 1.8 2014/12/07 00:54:51 jmcneill Exp $
+#	$NetBSD: ALLWINNER_A80,v 1.9 2014/12/07 02:41:07 jmcneill Exp $
 #
 #	ALLWINNER_A80 - Allwinner A80 boards (Cubieboard4, OptimusBoard, etc)
 #
@@ -244,7 +244,7 @@ options 	CONADDR=0x07000000, CONSPEED=115200
 #cir0		at awinir0
 
 # Watchdog timers
-#awinwdt*	at awinio?
+awinwdt*	at awinio?
 
 # RTC (not battery backed on this board; use PCF8563 instead)
 #awinrtc*	at awinio?
