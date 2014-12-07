@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.28 2014/11/28 09:22:02 martin Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.29 2014/12/07 02:23:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28 2014/11/28 09:22:02 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.29 2014/12/07 02:23:14 jmcneill Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28 2014/11/28 09:22:02 martin Exp $")
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
+#include <sys/cprng.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -162,9 +163,9 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 		    AWIN_GMAC_MAC_ADDR0HI);
 
 		if (maclo == 0xffffffff && (machi & 0xffff) == 0xffff) {
-			aprint_error_dev(sc->sc_dev,
-			    "couldn't read MAC address\n");
-			return;
+			/* fake MAC address */
+			maclo = 0x00f2 | (cprng_strong32() << 16);
+			machi = cprng_strong32();
 		}
 
 		enaddr[0] = maclo & 0x0ff;
