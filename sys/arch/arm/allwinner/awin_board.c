@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.32 2014/12/07 15:00:37 jmcneill Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.33 2014/12/07 18:32:13 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.32 2014/12/07 15:00:37 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.33 2014/12/07 18:32:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,6 +58,9 @@ __KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.32 2014/12/07 15:00:37 jmcneill Exp
 #include <arm/cortex/gtmr_var.h>
 
 bus_space_handle_t awin_core_bsh;
+#if defined(ALLWINNER_A80)
+bus_space_handle_t awin_rcpus_bsh;
+#endif
 
 struct arm32_bus_dma_tag awin_dma_tag = {
 	_BUS_DMAMAP_FUNCS,
@@ -189,6 +192,14 @@ awin_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 		panic("%s: failed to map awin %s registers: %d",
 		    __func__, "io", error);
 	KASSERT(awin_core_bsh == iobase);
+
+#ifdef ALLWINNER_A80
+	error = bus_space_map(&awin_bs_tag, AWIN_A80_RCPUS_PBASE,
+	    AWIN_A80_RCPUS_SIZE, 0, &awin_rcpus_bsh);
+	if (error)
+		panic("%s: failed to map awin %s registers: %d",
+		    __func__, "rcpus", error);
+#endif
 
 #ifdef VERBOSE_INIT_ARM
 	printf("CPU Speed is");

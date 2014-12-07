@@ -41,7 +41,7 @@
 #include <arm/allwinner/awin_reg.h>
 #include <evbarm/awin/platform.h>  
 
-RCSID("$NetBSD: awin_start.S,v 1.6 2014/11/05 17:46:51 matt Exp $")
+RCSID("$NetBSD: awin_start.S,v 1.7 2014/12/07 18:32:13 jmcneill Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -462,6 +462,18 @@ ASEND(a31_mpinit)
 	MMU_INIT(AWIN_CORE_PBASE, AWIN_CORE_PBASE,
 		(AWIN_CORE_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
 		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+#if defined(ALLWINNER_A80)
+	/* Map AWIN RCPUS (for PIO L-N) */
+	MMU_INIT(AWIN_A80_RCPUS_VBASE, AWIN_A80_RCPUS_PBASE,
+		(AWIN_A80_RCPUS_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+
+	/* Map AWIN RCPUS (for PIO L-N) */
+	MMU_INIT(AWIN_A80_RCPUS_PBASE, AWIN_A80_RCPUS_PBASE,
+		(AWIN_A80_RCPUS_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
+		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
+#endif
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)

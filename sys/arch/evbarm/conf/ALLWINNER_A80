@@ -1,4 +1,4 @@
-#	$NetBSD: ALLWINNER_A80,v 1.10 2014/12/07 14:25:09 jmcneill Exp $
+#	$NetBSD: ALLWINNER_A80,v 1.11 2014/12/07 18:32:13 jmcneill Exp $
 #
 #	ALLWINNER_A80 - Allwinner A80 boards (Cubieboard4, OptimusBoard, etc)
 #
@@ -241,8 +241,8 @@ com0		at awinio? port 0			# UART0 (console)
 options 	CONADDR=0x07000000, CONSPEED=115200
 
 # Consumer IR
-#awinir0		at awinio?
-#cir0		at awinir0
+awinir0		at awinio?
+cir0		at awinir0
 
 # Watchdog timers
 awinwdt*	at awinio?
