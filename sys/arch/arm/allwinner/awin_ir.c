@@ -1,6 +1,4 @@
-/* $NetBSD: awin_ir.c,v 1.5 2014/12/07 18:32:13 jmcneill Exp $ */
-
-#define AWIN_IR_DEBUG
+/* $NetBSD: awin_ir.c,v 1.6 2014/12/07 18:34:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_ir.c,v 1.5 2014/12/07 18:32:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_ir.c,v 1.6 2014/12/07 18:34:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
