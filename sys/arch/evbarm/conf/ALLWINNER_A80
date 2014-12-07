@@ -1,4 +1,4 @@
-#	$NetBSD: ALLWINNER_A80,v 1.6 2014/12/05 18:54:35 jmcneill Exp $
+#	$NetBSD: ALLWINNER_A80,v 1.7 2014/12/07 00:37:08 jmcneill Exp $
 #
 #	ALLWINNER_A80 - Allwinner A80 boards (Cubieboard4, OptimusBoard, etc)
 #
@@ -228,9 +228,13 @@ iic1		at awiniic1
 awiniic2	at awinio? port 2
 iic2		at awiniic2
 
-# P2WI
-#awinp2wi0	at awinio0
-#iic1		at awinp2wi0
+# Reduced serial bus (RSB)
+awinp2wi0	at awinio0
+iic4		at awinp2wi0
+axp806pm0	at iic4 addr 0x745	# AXP806 Power Management Unit
+axp809pm0	at iic4 addr 0x3a3	# AXP809 Power Management Unit
+
+options 	I2C_MAX_ADDR=0xfff
 
 # On-board 16550 UARTs
 com0		at awinio? port 0			# UART0 (console)
