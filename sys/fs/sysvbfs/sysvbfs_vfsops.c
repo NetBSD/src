@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.43 2014/04/16 18:55:19 maxv Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.44 2014/12/07 23:48:04 justin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.43 2014/04/16 18:55:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.44 2014/12/07 23:48:04 justin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -168,7 +168,6 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	kauth_cred_t cred = l->l_cred;
 	struct sysvbfs_mount *bmp;
 	int error, oflags;
-	bool devopen = false;
 
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, cred, l, 0, 0);
@@ -181,13 +180,13 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		oflags |= FWRITE;
 	if ((error = VOP_OPEN(devvp, oflags, NOCRED)) != 0)
 		goto out;
-	devopen = true;
 
 	bmp = malloc(sizeof(*bmp), M_SYSVBFS_VFS, M_WAITOK | M_ZERO);
 	bmp->devvp = devvp;
 	bmp->mountp = mp;
 	if ((error = sysvbfs_bfs_init(&bmp->bfs, devvp)) != 0) {
 		free(bmp, M_SYSVBFS_VFS);
+		VOP_CLOSE(devvp, oflags, NOCRED);
 		goto out;
 	}
 	LIST_INIT(&bmp->bnode_head);
@@ -202,8 +201,6 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_fs_bshift = BFS_BSHIFT;
 
  out:
-	if (devopen && error)
-		VOP_CLOSE(devvp, oflags, NOCRED);
 	VOP_UNLOCK(devvp);
 	return error;
 }
