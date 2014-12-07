@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_com.c,v 1.8 2014/12/05 01:13:11 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_com.c,v 1.9 2014/12/07 12:44:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,6 +81,10 @@ static const struct awin_gpio_pinset awin_com_pinsets_a31[] = {
 	{ 'H', AWIN_A31_PIO_PH_UART0_FUNC, AWIN_A31_PIO_PH_UART0_PINS },
 };
 
+static const struct awin_gpio_pinset awin_com_pinsets_a80[] = {
+	{ 'H', AWIN_A80_PIO_PH_UART0_FUNC, AWIN_A80_PIO_PH_UART0_PINS },
+};
+
 CFATTACH_DECL_NEW(awin_com, sizeof(struct awin_com_softc),
 	awin_com_match, awin_com_attach, NULL, NULL);
 
@@ -97,6 +101,8 @@ awin_com_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
 		pinset = awin_com_pinsets_a31;
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A80) {
+		pinset = awin_com_pinsets_a80;
 	} else {
 		pinset = loc->loc_port + ((cf->cf_flags & 1) ?
 		    awin_com_alt_pinsets : awin_com_pinsets);
@@ -148,6 +154,8 @@ awin_com_attach(device_t parent, device_t self, void *aux)
 
 	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
 		pinset = awin_com_pinsets_a31;
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A80) {
+		pinset = awin_com_pinsets_a80;
 	} else {
 		pinset = loc->loc_port + ((cf->cf_flags & 1) ?
 		    awin_com_alt_pinsets : awin_com_pinsets);

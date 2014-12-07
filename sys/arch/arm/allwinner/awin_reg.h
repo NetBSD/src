@@ -2861,5 +2861,7 @@ struct awin_a31_dma_desc {
 #define AWIN_A80_PIO_PH_TWI1_PINS	0x0000000c /* PH pins 3-2 */
 #define AWIN_A80_PIO_PH_TWI2_FUNC	2
 #define AWIN_A80_PIO_PH_TWI2_PINS	0x00000030 /* PH pins 5-4 */
+#define AWIN_A80_PIO_PH_UART0_FUNC	2
+#define AWIN_A80_PIO_PH_UART0_PINS	0x00003000 /* PH pins 13-12 */
 
 #endif /* _ARM_ALLWINNER_AWIN_REG_H_ */
