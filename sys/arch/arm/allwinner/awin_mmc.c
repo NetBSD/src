@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.18 2014/12/05 23:22:40 jmcneill Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.19 2014/12/07 20:09:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.18 2014/12/05 23:22:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.19 2014/12/07 20:09:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,9 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.18 2014/12/05 23:22:40 jmcneill Exp $
 #define AWIN_MMC_DMA_FTRGLEVEL_A80	0x200f0010
 
 static const struct awin_gpio_pinset awin_mmc_pinsets_a80[4] = {
-	[0] = { 'F', AWIN_A80_PIO_PF_SDMMC0_FUNC, AWIN_A80_PIO_PF_SDMMC0_PINS },
-	[1] = { 'G', AWIN_A80_PIO_PG_SDMMC1_FUNC, AWIN_A80_PIO_PG_SDMMC1_PINS },
-	[2] = { 'C', AWIN_A80_PIO_PC_SDMMC2_FUNC, AWIN_A80_PIO_PC_SDMMC2_PINS },
+	[0] = { 'F', AWIN_A80_PIO_PF_SDMMC0_FUNC, AWIN_A80_PIO_PF_SDMMC0_PINS,
+		GPIO_PIN_PULLUP, 2 },
+	[1] = { 'G', AWIN_A80_PIO_PG_SDMMC1_FUNC, AWIN_A80_PIO_PG_SDMMC1_PINS,
+		GPIO_PIN_PULLUP, 2 },
+	[2] = { 'C', AWIN_A80_PIO_PC_SDMMC2_FUNC, AWIN_A80_PIO_PC_SDMMC2_PINS,
+		GPIO_PIN_PULLUP, 2 },
 };
 
 static int	awin_mmc_match(device_t, cfdata_t, void *);
@@ -517,6 +520,8 @@ awin_mmc_host_reset(sdmmc_chipset_handle_t sch)
 		delay(100);
 	}
 
+	MMC_WRITE(sc, AWIN_MMC_TIMEOUT, 0xffffffff);
+
 	MMC_WRITE(sc, AWIN_MMC_IMASK,
 	    AWIN_MMC_INT_CMD_DONE | AWIN_MMC_INT_ERROR |
 	    AWIN_MMC_INT_DATA_OVER | AWIN_MMC_INT_AUTO_CMD_DONE);
@@ -531,7 +536,7 @@ awin_mmc_host_reset(sdmmc_chipset_handle_t sch)
 static uint32_t
 awin_mmc_host_ocr(sdmmc_chipset_handle_t sch)
 {
-	return MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V;
+	return MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V | MMC_OCR_HSC;
 }
 
 static int
@@ -907,8 +912,13 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 	cmd->c_error = awin_mmc_wait_rint(sc,
 	    AWIN_MMC_INT_ERROR|AWIN_MMC_INT_CMD_DONE, hz * 10);
-	if (cmd->c_error == 0 && (sc->sc_intr_rint & AWIN_MMC_INT_ERROR))
-		cmd->c_error = EIO;
+	if (cmd->c_error == 0 && (sc->sc_intr_rint & AWIN_MMC_INT_ERROR)) {
+		if (sc->sc_intr_rint & AWIN_MMC_INT_RESP_TIMEOUT) {
+			cmd->c_error = ETIMEDOUT;
+		} else {
+			cmd->c_error = EIO;
+		}
+	}
 	if (cmd->c_error) {
 #ifdef AWIN_MMC_DEBUG
 		aprint_error_dev(sc->sc_dev,
@@ -932,22 +942,6 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			aprint_error_dev(sc->sc_dev,
 			    "data timeout, rint = %08x\n",
 			    sc->sc_intr_rint);
-#endif
-			cmd->c_error = ETIMEDOUT;
-			goto done;
-		}
-	} else if (cmd->c_flags & SCF_RSP_BSY) {
-		uint32_t status;
-		int retry = 0xfffff;
-		while (--retry > 0) {
-			status = MMC_READ(sc, AWIN_MMC_STATUS);
-			if (status & AWIN_MMC_STATUS_CARD_DATA_BUSY)
-				break;
-		}
-		if (retry == 0) {
-#ifdef AWIN_MMC_DEBUG
-			aprint_error_dev(sc->sc_dev,
-			    "BSY timeout, status = %08x\n", status);
 #endif
 			cmd->c_error = ETIMEDOUT;
 			goto done;
