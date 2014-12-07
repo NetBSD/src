@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.38 2014/12/07 00:36:26 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.39 2014/12/07 18:32:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -182,6 +182,7 @@ static const struct awin_locators awin_locators[] = {
 	{ "awinir", OFFANDSIZE(IR0), 0, AWIN_IRQ_IR0, A10|A20 },
 	{ "awinir", OFFANDSIZE(IR1), 1, AWIN_IRQ_IR1, A10|A20 },
 	{ "awinir", OFFANDSIZE(A31_CIR), NOPORT, AWIN_A31_IRQ_CIR, A31 },
+	{ "awinir", OFFANDSIZE(A80_CIR), NOPORT, AWIN_A80_IRQ_R_CIR, A80 },
 };
 
 static int
@@ -221,14 +222,13 @@ awinio_attach(device_t parent, device_t self, void *aux)
 	switch (awin_chip_id()) {
 #ifdef ALLWINNER_A80
 	case AWIN_CHIP_ID_A80:
+		sc->sc_a80_rcpus_bsh = awin_rcpus_bsh;
 		bus_space_subregion(sc->sc_bst, sc->sc_bsh,
 		    AWIN_A80_CCU_SCLK_OFFSET, 0x1000, &sc->sc_ccm_bsh);
 		bus_space_map(sc->sc_bst, AWIN_A80_USB_PBASE,
 		    AWIN_A80_USB_SIZE, 0, &sc->sc_a80_usb_bsh);
 		bus_space_map(sc->sc_bst, AWIN_A80_CORE2_PBASE,
 		    AWIN_A80_CORE2_SIZE, 0, &sc->sc_a80_core2_bsh);
-		bus_space_map(sc->sc_bst, AWIN_A80_RCPUS_PBASE,
-		    AWIN_A80_RCPUS_SIZE, 0, &sc->sc_a80_rcpus_bsh);
 		break;
 #endif
 	default:
