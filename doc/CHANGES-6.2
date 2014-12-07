@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.160 2014/12/04 06:12:16 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.161 2014/12/07 16:44:14 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4560,3 +4560,120 @@ sys/dev/pci/if_wmvar.h				1.19, 1.21 via patch
 	- KNF.
 	[msaitoh, ticket #1203]
 
+usr.bin/vndcompress/Makefile			1.3-1.13
+usr.bin/vndcompress/common.h			1.1-1.6
+usr.bin/vndcompress/main.c			1.1-1.3
+usr.bin/vndcompress/offtab.c			1.1-1.13
+usr.bin/vndcompress/offtab.h			1.1-1.2
+usr.bin/vndcompress/utils.c			1.1-1.4
+usr.bin/vndcompress/utils.h			1.1-1.3
+usr.bin/vndcompress/vndcompress.1		1.7-1.14
+usr.bin/vndcompress/vndcompress.c		1.8-1.24
+usr.bin/vndcompress/vndcompress.h		delete
+usr.bin/vndcompress/vnduncompress.c		1.1-1.11
+
+	Rewrite vndcompress to support SIGINFO and restart after interrupt.
+	[riastradh, ticket #1138]
+
+
+share/man/man9/callout.9			1.28 (via patch)
+sys/arch/x86/pci/fwhrng.c			1.8
+sys/arch/x86/x86/via_padlock.c			1.23
+sys/dev/bluetooth/bcsp.c			1.25
+sys/dev/bluetooth/btkbd.c			1.17
+sys/dev/ic/nslm7x.c				1.61
+sys/dev/ir/irframe_tty.c			1.60
+sys/dev/isa/aps.c				1.16
+sys/dev/pci/pccbb.c				1.207
+sys/dev/pcmcia/btbc.c				1.17
+sys/dev/sdmmc/sdmmc.c				1.23 (via patch)
+sys/dev/sysmon/sysmon_envsys_events.c		1.111-1.112 (via patch)
+sys/dev/sysmon/sysmonvar.h			1.45
+sys/dev/usb/ohci.c				1.254
+sys/dev/wscons/wskbd.c				1.135
+sys/kern/kern_ktrace.c				1.166
+sys/net/if_ecosubr.c				1.41
+
+	Replace callout_stop with callout_halt and ensure the callout
+	is not running before destroying it.
+	[ozaki-r, ticket #1201]
+
+
+sys/dev/mii/miidevs				1.110-1.111, 1.114-1.118, 1.120-1.122
+sys/dev/mii/miidevs.h				regen
+sys/dev/mii/miidevs_data.h			regen
+
+	Add some PHYs into miidevs:
+	- Add SMSC OUI and LAN8700 and LAN8710/LAN8720 PHY IDs.
+	- Add Intel I210 internal PHY.
+	- Add Intel I217 PHY.
+	- Add some IC Plus Corp. devices.
+	- Add Marvell 88E1543 Quad Port Gb PHY.
+	- Add Micrel KSZ9021RN.
+	- Add BCM5706 1000BASE-T/SX.
+	- BCM5714 and BCM5780 are used for both copper and fiber, so modify the
+	  descriptions.
+	- Add Realtek RTL8251.
+	[msaitoh, #1204]
+
+src/bin/sh/jobs.c				1.73
+	Avoid negative index in array referenz.
+	[spz, #1205]
+
+sbin/atactl/atactl.c				1.70,1.74
+	Don't use \t to align text columns.
+	Add a few attribute descriptions.
+	Add various S.M.A.R.T. status attributes.
+	[mrg, ticket #1206]
+
+sys/dev/pci/pcidevs				1.1148-1.1149 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/mii/brgphy.c				1.69, 1.71-1.76 via patch
+sys/dev/mii/brgphyreg.h				1.6-1.7, 1.9
+sys/dev/pci/if_bge.c				1.259,1.267-1.276 via patch
+sys/dev/pci/if_bgereg.h				1.87-1.88
+sys/dev/pci/if_bnx.c				1.48, 1.49, 1.52-1.57 via patch
+sys/dev/pci/if_bnxreg.h				1.15-1.18
+sys/dev/pci/if_bnxvar.h				1.4-1.6
+	Changes for bge(4), bnx(4) and brgphy(4):
+	- Add device IDs for Broadcom BCM57710, BCM57711(E), BCM57712(E) and
+	  BCM5719 into pcidevs.
+	- Change BCM5720's device ID from 0x1658 to 0x165f. 0x1658 is only for
+	  the pre-product and not released to public.
+	- Fix detection of BGEPHYF_FIBER_{MII|TBI}
+	- Fix typo in comment.
+	- KNF
+	- brgphy(4):
+	  - Add BCM5708S support.
+	  - Add 2500SX support.
+	  - Fix bit definition of BRGPHY_MRBE_MSG_PG5_NP_T2 from FreeBSD.
+	  - Remove extra delay in brgphy_mii_phy_auto. Same as {Free,Open}BSD.
+	  - Fix media detect on some Fiber chips.
+	  - Add BCM5706.
+	- bge(4):
+	  - Print yet another hardware config word in SRAM(BGE_SRAM_DATA_CFG_5)
+	    for BCM5717 and newer devices.
+	  - Fix a trivial bug in #ifdef NOTYET.
+	  - Add BGEPHYF_NO_WIRESPEED flag for fiber devices.
+	  - Print APE firmware correctly.
+	  - Don't use the PHY Auto Poll Mode on many chips. This fixes a bug
+	    that MII Fiber NIC drop packets about 50%. Same as {Free,Open}BSD.
+	    Tested on HP Moonshot.
+	  - Add workaround for PR#48451. Some BCM5717-5720 based systems get
+	    NMI on boot. This problem doesn't occur when we don't use
+	    prefetchable memory in the APE area. I don't know the reason...
+	    Tested with HP MicroServer Gen8.
+	  - Fix a bug that bge can't be initialized correctly on some sparc64
+	    systems (PR#49018).
+	  - Change initializaton order as the same as the document, Linux tg3
+	    and FreeBSD (part of r241436).
+	  - In the BCM5703, the DMA read watermark should be set to less than
+	    or equal to the maximum memory read byte count of the PCI-X command
+	    register. Same as FreeBSD r204978 and Linux tg3 driver.
+	- bnx(4):
+	  - Enclose #ifdef BNX_DEBUG correctly.
+	  - Add 2500SX support.
+	  - Print some information (ASCI revision, PCI status, etc).
+	    From FreeBSD.
+	[msaitoh, #1207]
