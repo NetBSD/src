@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.140.2.4 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.140.2.5 2014/12/07 20:42:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.4 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.5 2014/12/07 20:42:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1540,8 +1540,7 @@ uaudio_add_alt(struct uaudio_softc *sc, const struct as_info *ai)
 	/* Copy old data, if there was any */
 	if (sc->sc_nalts != 0) {
 		memcpy(nai, sc->sc_alts, sizeof(*ai) * (sc->sc_nalts));
-		kmem_free(sc->sc_alts,
-		    sizeof(struct audio_format) * sc->sc_nalts);
+		kmem_free(sc->sc_alts, sizeof(*ai) * sc->sc_nalts);
 	}
 	sc->sc_alts = nai;
 	DPRINTFN(2,"adding alt=%d, enc=%d\n",
