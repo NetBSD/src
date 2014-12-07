@@ -1,4 +1,4 @@
-/* $NetBSD: awin_p2wi.c,v 1.2 2014/12/07 00:36:26 jmcneill Exp $ */
+/* $NetBSD: awin_p2wi.c,v 1.3 2014/12/07 13:06:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_p2wi.c,v 1.2 2014/12/07 00:36:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_p2wi.c,v 1.3 2014/12/07 13:06:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,9 +45,11 @@ __KERNEL_RCSID(0, "$NetBSD: awin_p2wi.c,v 1.2 2014/12/07 00:36:26 jmcneill Exp $
 
 #define AWIN_RSB_ADDR_AXP809	0x3a3
 #define AWIN_RSB_ADDR_AXP806	0x745
+#define AWIN_RSB_ADDR_AC100	0xe89
 
 #define AWIN_RSB_RTA_AXP809	0x2d
 #define AWIN_RSB_RTA_AXP806	0x3a
+#define AWIN_RSB_RTA_AC100	0x4e
 
 struct awin_p2wi_softc {
 	device_t sc_dev;
@@ -61,6 +63,7 @@ struct awin_p2wi_softc {
 	uint32_t sc_stat;
 
 	bool sc_rsb_p;
+	uint16_t sc_rsb_last_da;
 };
 
 #define P2WI_READ(sc, reg) \
@@ -283,13 +286,16 @@ awin_p2wi_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	if (cmdlen != 1 || len != 1)
 		return EINVAL;
 
-	if (sc->sc_rsb_p) {
+	if (sc->sc_rsb_p && sc->sc_rsb_last_da != addr) {
 		switch (addr) {
 		case AWIN_RSB_ADDR_AXP809:
 			rta = AWIN_RSB_RTA_AXP809;
 			break;
 		case AWIN_RSB_ADDR_AXP806:
 			rta = AWIN_RSB_RTA_AXP806;
+			break;
+		case AWIN_RSB_ADDR_AC100:
+			rta = AWIN_RSB_RTA_AC100;
 			break;
 		default:
 			return ENXIO;
@@ -299,8 +305,11 @@ awin_p2wi_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 			device_printf(sc->sc_dev,
 			    "SRTA failed, flags = %x, error = %d\n",
 			    flags, error);
+			sc->sc_rsb_last_da = 0;
 			return error;
 		}
+
+		sc->sc_rsb_last_da = addr;
 	}
 
 	/* Data byte register */
