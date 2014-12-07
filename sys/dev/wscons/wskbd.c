@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.130 2010/10/26 05:12:34 jruoho Exp $ */
+/* $NetBSD: wskbd.c,v 1.130.14.1 2014/12/07 15:09:31 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.130 2010/10/26 05:12:34 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.130.14.1 2014/12/07 15:09:31 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -618,7 +618,7 @@ wskbd_detach(device_t self, int flags)
 		wsmux_detach_sc(&sc->sc_base);
 #endif
 
-	callout_stop(&sc->sc_repeat_ch);
+	callout_halt(&sc->sc_repeat_ch, NULL);
 	callout_destroy(&sc->sc_repeat_ch);
 
 	if (sc->sc_isconsole) {
