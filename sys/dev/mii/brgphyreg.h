@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphyreg.h,v 1.5.14.1 2014/11/09 12:13:16 martin Exp $	*/
+/*	$NetBSD: brgphyreg.h,v 1.5.14.2 2014/12/07 16:39:55 martin Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -41,6 +41,14 @@
  * Broadcom BCM5400 registers
  */
 
+#define BRGPHY_MII_1000CTL	0x09	/* 1000baseT control */
+#define	BRGPHY_1000CTL_TST	0xE000	/* Test modes */
+#define	BRGPHY_1000CTL_MSE	0x1000	/* Master/Slave enable */
+#define	BRGPHY_1000CTL_MSC	0x0800	/* Master/Slave configuration */
+#define	BRGPHY_1000CTL_RD	0x0400	/* Repeater/DTE */
+#define	BRGPHY_1000CTL_AFD	0x0200	/* Advertise full duplex */
+#define	BRGPHY_1000CTL_AHD	0x0100	/* Advertise half duplex */
+
 #define BRGPHY_MII_PHY_EXTCTL	0x10	/* PHY extended control */
 #define BRGPHY_PHY_EXTCTL_MAC_PHY	0x8000	/* 10BIT/GMI-interface */
 #define BRGPHY_PHY_EXTCTL_DIS_CROSS	0x4000	/* Disable MDI crossover */
@@ -74,14 +82,6 @@
 #define BRGPHY_PHY_EXTSTS_TX_ER		0x0004	/* TX error */
 #define BRGPHY_PHY_EXTSTS_LOCK_ER	0x0002	/* Lock error */
 #define BRGPHY_PHY_EXTSTS_MLT3_ER	0x0001	/* MLT3 code error */
-
-#define BRGPHY_MII_1000CTL	0x09	/* 1000baseT control */
-#define	BRGPHY_1000CTL_TST	0xE000	/* Test modes */
-#define	BRGPHY_1000CTL_MSE	0x1000	/* Master/Slave enable */
-#define	BRGPHY_1000CTL_MSC	0x0800	/* Master/Slave configuration */
-#define	BRGPHY_1000CTL_RD	0x0400	/* Repeater/DTE */
-#define	BRGPHY_1000CTL_AFD	0x0200	/* Advertise full duplex */
-#define	BRGPHY_1000CTL_AHD	0x0100	/* Advertise half duplex */
 
 #define BRGPHY_MII_RXERRCNT	0x12	/* RX error counter */
 
@@ -197,25 +197,6 @@
 #define BRGPHY_IMR_CRCERR	0x0001	/* CRC error */
 
 /*******************************************************/
-/* Begin: Shared SerDes PHY register definitions       */
-/*******************************************************/
-
-/* SerDes autoneg is different from copper */
-#define BRGPHY_SERDES_ANAR_NO_PAUSE	(0x0 << 7)
-#define BRGPHY_SERDES_ANAR_SYM_PAUSE	(0x1 << 7)
-#define BRGPHY_SERDES_ANAR_ASYM_PAUSE	(0x2 << 7)
-#define BRGPHY_SERDES_ANAR_BOTH_PAUSE	(0x3 << 7)
-
-#define BRGPHY_SERDES_ANLPAR_NO_PAUSE	(0x0 << 7)
-#define BRGPHY_SERDES_ANLPAR_SYM_PAUSE	(0x1 << 7)
-#define BRGPHY_SERDES_ANLPAR_ASYM_PAUSE	(0x2 << 7)
-#define BRGPHY_SERDES_ANLPAR_BOTH_PAUSE	(0x3 << 7)
-
-/*******************************************************/
-/* End: Shared SerDes PHY register definitions         */
-/*******************************************************/
-
-/*******************************************************/
 /* Begin: PHY register values for the 5706 PHY         */
 /*******************************************************/
 
@@ -263,6 +244,9 @@
 #define BRGPHY_5708S_PG0_1000X_CTL1_FIBER_MODE	0x0001
 #define BRGPHY_5708S_PG0_1000X_CTL1_AUTODET_EN	0x0010
 
+#define BRGPHY_5708S_PG0_1000X_CTL2		0x11
+#define BRGPHY_5708S_PG0_1000X_CTL2_PAR_DET_EN	0x0001
+
 #define BRGPHY_5708S_PG0_1000X_STAT1		0x14
 #define BRGPHY_5708S_PG0_1000X_STAT1_SGMII	0x0001
 #define BRGPHY_5708S_PG0_1000X_STAT1_LINK	0x0002
@@ -272,9 +256,8 @@
 #define BRGPHY_5708S_PG0_1000X_STAT1_SPEED_100	(0x1 << 3)
 #define BRGPHY_5708S_PG0_1000X_STAT1_SPEED_1G	(0x2 << 3)
 #define BRGPHY_5708S_PG0_1000X_STAT1_SPEED_25G	(0x3 << 3)
-
-#define BRGPHY_5708S_PG0_1000X_CTL2		0x11
-#define BRGPHY_5708S_PG0_1000X_CTL2_PAR_DET_EN	0x0001
+#define BRGPHY_5708S_PG0_1000X_STAT1_TX_PAUSE	0x0020
+#define BRGPHY_5708S_PG0_1000X_STAT1_RX_PAUSE	0x0040
 
 /* 5708S SerDes "Digital 3" Registers (page 2) */
 #define BRGPHY_5708S_PG2_DIGCTL_3_0		0x10
@@ -323,7 +306,7 @@
 #define BRGPHY_BLOCK_ADDR_MRBE			0x8350
 #define BRGPHY_MRBE_MSG_PG5_NP			0x10
 #define BRGPHY_MRBE_MSG_PG5_NP_MBRE		0x0001
-#define BRGPHY_MRBE_MSG_PG5_NP_T2		0x0001
+#define BRGPHY_MRBE_MSG_PG5_NP_T2		0x0002
 
 /* 5709S SerDes "IEEE Clause 73 User B0" Registers */
 #define BRGPHY_BLOCK_ADDR_CL73_USER_B0		0x8370

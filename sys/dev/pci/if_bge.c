@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.200.2.3 2013/11/17 18:24:05 bouyer Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.200.2.4 2014/12/07 16:39:55 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.200.2.3 2013/11/17 18:24:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.200.2.4 2014/12/07 16:39:55 martin Exp $");
 
 #include "vlan.h"
 
@@ -977,7 +977,7 @@ bge_ape_read_fw_ver(struct bge_softc *sc)
 		fwtype = "UNKN";
 
 	/* Print the APE firmware version. */
-	printf(", APE firmware %s %d.%d.%d.%d", fwtype,
+	aprint_normal_dev(sc->bge_dev, "APE firmware %s %d.%d.%d.%d\n", fwtype,
 	    (apedata & BGE_APE_FW_VERSION_MAJMSK) >> BGE_APE_FW_VERSION_MAJSFT,
 	    (apedata & BGE_APE_FW_VERSION_MINMSK) >> BGE_APE_FW_VERSION_MINSFT,
 	    (apedata & BGE_APE_FW_VERSION_REVMSK) >> BGE_APE_FW_VERSION_REVSFT,
@@ -2178,7 +2178,7 @@ bge_poll_fw(struct bge_softc *sc)
 			aprint_error_dev(sc->bge_dev, "reset timed out\n");
 			return -1;
 		}
-	} else if ((sc->bge_flags & BGEF_NO_EEPROM) == 0) {
+	} else {
 		/*
 		 * Poll the value location we just wrote until
 		 * we see the 1's complement of the magic number.
@@ -2193,7 +2193,8 @@ bge_poll_fw(struct bge_softc *sc)
 			DELAY(10);
 		}
 
-		if (i >= BGE_TIMEOUT) {
+		if ((i >= BGE_TIMEOUT)
+		    && ((sc->bge_flags & BGEF_NO_EEPROM) == 0)) {
 			aprint_error_dev(sc->bge_dev,
 			    "firmware handshake timed out, val = %x\n", val);
 			return -1;
@@ -2370,6 +2371,15 @@ bge_chipinit(struct bge_softc *sc)
 				dma_rw_ctl |= BGE_PCIDMARWCTL_ONEDMA_ATONCE_GLOBAL;
 			else
 				dma_rw_ctl |= BGE_PCIDMARWCTL_ONEDMA_ATONCE_LOCAL;
+		} else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5703) {
+			/*
+			 * In the BCM5703, the DMA read watermark should
+			 * be set to less than or equal to the maximum
+			 * memory read byte count of the PCI-X command
+			 * register.
+			 */
+			dma_rw_ctl |= BGE_PCIDMARWCTL_RD_WAT_SHIFT(4) |
+			    BGE_PCIDMARWCTL_WR_WAT_SHIFT(3);
 		} else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704) {
 			/* 1536 bytes for read, 384 bytes for write. */
 			dma_rw_ctl |= BGE_PCIDMARWCTL_RD_WAT_SHIFT(7) |
@@ -2503,7 +2513,7 @@ bge_blockinit(struct bge_softc *sc)
 	bus_size_t rcb_addr;
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 	bge_hostaddr taddr;
-	uint32_t	dmactl, val;
+	uint32_t	dmactl, mimode, val;
 	int		i, limit;
 
 	/*
@@ -3168,10 +3178,18 @@ bge_blockinit(struct bge_softc *sc)
 	if (sc->bge_flags & BGEF_FIBER_TBI) {
 		CSR_WRITE_4(sc, BGE_MI_STS, BGE_MISTS_LINK);
 	} else {
-		/* 5718 step 68 */
-		BGE_STS_SETBIT(sc, BGE_STS_AUTOPOLL);
-		/* 5718 step 69 (optionally) */
-		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL | (10 << 16));
+		if ((sc->bge_flags & BGEF_CPMU_PRESENT) != 0)
+			mimode = BGE_MIMODE_500KHZ_CONST;
+		else
+			mimode = BGE_MIMODE_BASE;
+		/* 5718 step 68. 5718 step 69 (optionally). */
+		if (BGE_IS_5700_FAMILY(sc) ||
+		    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5705) {
+			mimode |= BGE_MIMODE_AUTOPOLL;
+			BGE_STS_SETBIT(sc, BGE_STS_AUTOPOLL);
+		}
+		mimode |= BGE_MIMODE_PHYADDR(sc->bge_phy_addr);
+		CSR_WRITE_4(sc, BGE_MI_MODE, mimode);
 		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700)
 			CSR_WRITE_4(sc, BGE_MAC_EVT_ENB,
 			    BGE_EVTENB_MI_INTERRUPT);
@@ -3295,7 +3313,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t	pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
-	uint32_t 		hwcfg, hwcfg2, hwcfg3, hwcfg4;
+	uint32_t 		hwcfg, hwcfg2, hwcfg3, hwcfg4, hwcfg5;
 	uint32_t		command;
 	struct ifnet		*ifp;
 	uint32_t		misccfg, mimode;
@@ -3306,6 +3324,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	uint32_t		pm_ctl;
 	bool			no_seeprom;
 	int			capmask;
+	int			mii_flags;
+	int			map_flags;
 
 	bp = bge_lookup(pa);
 	KASSERT(bp != NULL);
@@ -3341,10 +3361,28 @@ bge_attach(device_t parent, device_t self, void *aux)
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+#if 0
 		if (pci_mapreg_map(pa, BGE_PCI_BAR0,
 		    memtype, 0, &sc->bge_btag, &sc->bge_bhandle,
 		    &memaddr, &sc->bge_bsize) == 0)
 			break;
+#else
+		/*
+		 * Workaround for PCI prefetchable bit. Some BCM5717-5720 based
+		 * system get NMI on boot (PR#48451). This problem might not be
+		 * the driver's bug but our PCI common part's bug. Until we
+		 * find a real reason, we ignore the prefetchable bit.
+		 */
+		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, BGE_PCI_BAR0,
+		    memtype, &memaddr, &sc->bge_bsize, &map_flags) == 0) {
+			map_flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
+			if (bus_space_map(pa->pa_memt, memaddr, sc->bge_bsize,
+			    map_flags, &sc->bge_bhandle) == 0) {
+				sc->bge_btag = pa->pa_memt;
+				break;
+			}
+		}
+#endif
 	default:
 		aprint_error_dev(sc->bge_dev, "can't find mem space\n");
 		return;
@@ -3482,6 +3520,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	/* Chips with APE need BAR2 access for APE registers/memory. */
 	if ((sc->bge_flags & BGEF_APE) != 0) {
 		memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BGE_PCI_BAR2);
+#if 0
 		if (pci_mapreg_map(pa, BGE_PCI_BAR2, memtype, 0,
 			&sc->bge_apetag, &sc->bge_apehandle, NULL,
 			&sc->bge_apesize)) {
@@ -3489,6 +3528,29 @@ bge_attach(device_t parent, device_t self, void *aux)
 			    "couldn't map BAR2 memory\n");
 			return;
 		}
+#else
+		/*
+		 * Workaround for PCI prefetchable bit. Some BCM5717-5720 based
+		 * system get NMI on boot (PR#48451). This problem might not be
+		 * the driver's bug but our PCI common part's bug. Until we
+		 * find a real reason, we ignore the prefetchable bit.
+		 */
+		if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, BGE_PCI_BAR2,
+		    memtype, &memaddr, &sc->bge_apesize, &map_flags) != 0) {
+			aprint_error_dev(sc->bge_dev,
+			    "couldn't map BAR2 memory\n");
+			return;
+		}
+
+		map_flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
+		if (bus_space_map(pa->pa_memt, memaddr,
+		    sc->bge_apesize, map_flags, &sc->bge_apehandle) != 0) {
+			aprint_error_dev(sc->bge_dev,
+			    "couldn't map BAR2 memory\n");
+			return;
+		}
+		sc->bge_apetag = pa->pa_memt;
+#endif
 
 		/* Enable APE register/memory access by host driver. */
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_PCISTATE);
@@ -3578,6 +3640,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57791 ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_BCM57795 ||
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
+		/* These chips are 10/100 only. */
 		capmask &= ~BMSR_EXTSTAT;
 		sc->bge_phy_flags |= BGEPHYF_NO_WIRESPEED;
 	}
@@ -3668,7 +3731,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * memory, or fall back to the config word in the EEPROM.
 	 * Note: on some BCM5700 cards, this value appears to be unset.
 	 */
-	hwcfg = hwcfg2 = hwcfg3 = hwcfg4 = 0;
+	hwcfg = hwcfg2 = hwcfg3 = hwcfg4 = hwcfg5 = 0;
 	if (bge_readmem_ind(sc, BGE_SRAM_DATA_SIG) ==
 	    BGE_SRAM_DATA_SIG_MAGIC) {
 		uint32_t tmp;
@@ -3682,13 +3745,16 @@ bge_attach(device_t parent, device_t self, void *aux)
 			hwcfg3 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_3);
 		if (BGE_ASICREV(sc->bge_chipid == BGE_ASICREV_BCM5785))
 			hwcfg4 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_4);
+		if (BGE_IS_5717_PLUS(sc))
+			hwcfg5 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_5);
 	} else if (!(sc->bge_flags & BGEF_NO_EEPROM)) {
 		bge_read_eeprom(sc, (void *)&hwcfg,
 		    BGE_EE_HWCFG_OFFSET, sizeof(hwcfg));
 		hwcfg = be32toh(hwcfg);
 	}
-	aprint_normal_dev(sc->bge_dev, "HW config %08x, %08x, %08x, %08x\n",
-	    hwcfg, hwcfg2, hwcfg3, hwcfg4);
+	aprint_normal_dev(sc->bge_dev,
+	    "HW config %08x, %08x, %08x, %08x %08x\n",
+	    hwcfg, hwcfg2, hwcfg3, hwcfg4, hwcfg5);
 
 	bge_sig_legacy(sc, BGE_RESET_START);
 	bge_sig_post_reset(sc, BGE_RESET_START);
@@ -3862,10 +3928,11 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (PCI_PRODUCT(pa->pa_id) == SK_SUBSYSID_9D41 ||
 	    (hwcfg & BGE_HWCFG_MEDIA) == BGE_MEDIA_FIBER) {
-		if (BGE_IS_5714_FAMILY(sc))
-		    sc->bge_flags |= BGEF_FIBER_MII;
-		else
-		    sc->bge_flags |= BGEF_FIBER_TBI;
+		if (BGE_IS_5705_PLUS(sc)) {
+			sc->bge_flags |= BGEF_FIBER_MII;
+			sc->bge_phy_flags |= BGEPHYF_NO_WIRESPEED;
+		} else
+			sc->bge_flags |= BGEF_FIBER_TBI;
 	}
 
 	/* Set bge_phy_flags before prop_dictionary_set_uint32() */
@@ -3900,9 +3967,11 @@ bge_attach(device_t parent, device_t self, void *aux)
 
 		ifmedia_init(&sc->bge_mii.mii_media, 0, bge_ifmedia_upd,
 			     bge_ifmedia_sts);
-		mii_attach(sc->bge_dev, &sc->bge_mii, capmask,
-			   sc->bge_phy_addr, MII_OFFSET_ANY,
-			   MIIF_DOPAUSE);
+		mii_flags = MIIF_DOPAUSE;
+		if (sc->bge_flags & BGEF_FIBER_MII)
+			mii_flags |= MIIF_HAVEFIBER;
+		mii_attach(sc->bge_dev, &sc->bge_mii, capmask, sc->bge_phy_addr,
+		    MII_OFFSET_ANY, mii_flags);
 
 		if (LIST_EMPTY(&sc->bge_mii.mii_phys)) {
 			aprint_error_dev(sc->bge_dev, "no PHY found!\n");
@@ -4233,13 +4302,13 @@ bge_reset(struct bge_softc *sc)
 		BGE_SETBIT(sc, BGE_TLP_CONTROL_REG, BGE_TLP_DATA_FIFO_PROTECT);
 	}
 
-	/* 5718 reset step 13, 57XX step 17 */
-	/* Poll until the firmware initialization is complete */
-	bge_poll_fw(sc);
-
 	/* 5718 reset step 12, 57XX step 15 and 16 */
 	/* Fix up byte swapping */
 	CSR_WRITE_4(sc, BGE_MODE_CTL, BGE_DMA_SWAP_OPTIONS);
+
+	/* 5718 reset step 13, 57XX step 17 */
+	/* Poll until the firmware initialization is complete */
+	bge_poll_fw(sc);
 
 	/* 57XX step 21 */
 	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_BX) {
@@ -4618,15 +4687,14 @@ bge_intr(void *xsc)
 		if (sc->bge_pending_rxintr_change) {
 			uint32_t rx_ticks = sc->bge_rx_coal_ticks;
 			uint32_t rx_bds = sc->bge_rx_max_coal_bds;
-			uint32_t junk;
 
 			CSR_WRITE_4(sc, BGE_HCC_RX_COAL_TICKS, rx_ticks);
 			DELAY(10);
-			junk = CSR_READ_4(sc, BGE_HCC_RX_COAL_TICKS);
+			(void)CSR_READ_4(sc, BGE_HCC_RX_COAL_TICKS);
 
 			CSR_WRITE_4(sc, BGE_HCC_RX_MAX_COAL_BDS, rx_bds);
 			DELAY(10);
-			junk = CSR_READ_4(sc, BGE_HCC_RX_MAX_COAL_BDS);
+			(void)CSR_READ_4(sc, BGE_HCC_RX_MAX_COAL_BDS);
 
 			sc->bge_pending_rxintr_change = 0;
 		}
@@ -4822,11 +4890,10 @@ static inline int
 bge_compact_dma_runt(struct mbuf *pkt)
 {
 	struct mbuf	*m, *prev;
-	int 		totlen, prevlen;
+	int 		totlen;
 
 	prev = NULL;
 	totlen = 0;
-	prevlen = -1;
 
 	for (m = pkt; m != NULL; prev = m,m = m->m_next) {
 		int mlen = m->m_len;
@@ -4923,7 +4990,6 @@ bge_compact_dma_runt(struct mbuf *pkt)
 				m = n;	/* for continuing loop */
 			}
 		}
-		prevlen = m->m_len;
 	}
 	return 0;
 }
@@ -5044,7 +5110,7 @@ doit:
 			 * XXX jonathan@NetBSD.org: untested.
 			 * how to force  this branch to be taken?
 			 */
-			BGE_EVCNT_INCR(&sc->sc_ev_txtsopain);
+			BGE_EVCNT_INCR(sc->bge_ev_txtsopain);
 
 			m_copydata(m0, offset, sizeof(ip), &ip);
 			m_copydata(m0, hlen, sizeof(th), &th);
