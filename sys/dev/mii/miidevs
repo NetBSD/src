@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.105.4.2 2013/09/07 16:39:32 bouyer Exp $
+$NetBSD: miidevs,v 1.105.4.3 2014/12/07 15:20:59 martin Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@ oui INTEL			0x00aa00	Intel
 oui JMICRON			0x00d831	JMicron
 oui LEVEL1			0x00207b	Level 1
 oui MARVELL			0x005043	Marvell Semiconductor
+oui MICREL			0x0010a1	Micrel
 oui MYSON			0x00c0b4	Myson Technology
 oui NATSEMI			0x080017	National Semiconductor
 oui PMCSIERRA			0x00e004	PMC-Sierra
@@ -74,6 +75,7 @@ oui REALTEK			0x00e04c	RealTek
 oui QUALSEMI			0x006051	Quality Semiconductor
 oui SEEQ			0x00a07d	Seeq
 oui SIS				0x00e006	Silicon Integrated Systems
+oui SMSC			0x00800f	SMSC
 oui TI				0x080028	Texas Instruments
 oui TSC				0x00c039	TDK Semiconductor
 oui XAQTI			0x00e0ae	XaQti Corp.
@@ -159,13 +161,14 @@ model BROADCOM BCM5462		0x000d BCM5462 1000BASE-T media interface
 model BROADCOM BCM5421		0x000e BCM5421 1000BASE-T media interface
 model BROADCOM BCM5752		0x0010 BCM5752 1000BASE-T media interface
 model BROADCOM BCM5701		0x0011 BCM5701 1000BASE-T media interface
+model BROADCOM BCM5706		0x0015 BCM5706 1000BASE-T/SX media interface
 model BROADCOM BCM5703		0x0016 BCM5703 1000BASE-T media interface
 model BROADCOM BCM5750		0x0018 BCM5750 1000BASE-T media interface
 model BROADCOM BCM5704		0x0019 BCM5704 1000BASE-T media interface
 model BROADCOM BCM5705		0x001a BCM5705 1000BASE-T media interface
 model BROADCOM BCM54K2		0x002e BCM54K2 1000BASE-T media interface
-model BROADCOM BCM5714		0x0034 BCM5714 1000BASE-T media interface
-model BROADCOM BCM5780		0x0035 BCM5780 1000BASE-T media interface
+model BROADCOM BCM5714		0x0034 BCM5714 1000BASE-T/X media interface
+model BROADCOM BCM5780		0x0035 BCM5780 1000BASE-T/X media interface
 model BROADCOM BCM5708C		0x0036 BCM5708C 1000BASE-T media interface
 model BROADCOM2 BCM5325		0x0003 BCM5325 10/100 5-port PHY switch
 model BROADCOM2 BCM5906		0x0004 BCM5906 10/100baseTX media interface
@@ -205,7 +208,10 @@ model xxDAVICOM DM9101		0x0000 DM9101 (AMD Am79C873) 10/100 media interface
 model xxDAVICOM DM9102		0x0004 DM9102 10/100 media interface
 
 /* IC Plus Corp. PHYs */
+model ICPLUS IP100		0x0004 IP100 10/100 PHY
 model ICPLUS IP101		0x0005 IP101 10/100 PHY
+model ICPLUS IP1000A		0x0008 IP1000A 10/100/1000 PHY
+model ICPLUS IP1001		0x0019 IP1001 10/100/1000 PHY
 
 /* Integrated Circuit Systems PHYs */
 model ICS 1889			0x0001 ICS1889 10/100 media interface
@@ -224,6 +230,8 @@ model yyINTEL I82553		0x0035 i82553 10/100 media interface
 model yyINTEL I82566		0x0039 i82566 10/100/1000 media interface
 model INTEL I82577		0x0005 i82577 10/100/1000 media interface
 model INTEL I82579		0x0009 i82579 10/100/1000 media interface
+model INTEL I217		0x000a i217 10/100/1000 media interface
+model xxMARVELL I210		0x0000 I210 10/100/1000 media interface
 model xxMARVELL I82563		0x000a i82563 10/100/1000 media interface
 
 model yyINTEL IGP01E1000	0x0038 Intel IGP01E1000 Gigabit PHY
@@ -252,6 +260,10 @@ model xxMARVELL E1145		0x000d Marvell 88E1145 Quad Gigabit PHY
 model xxMARVELL E1116		0x0021 Marvell 88E1116 Gigabit PHY
 model xxMARVELL E1116R		0x0024 Marvell 88E1116R Gigabit PHY
 model xxMARVELL E1116R_29	0x0029 Marvell 88E1116R Gigabit PHY
+model xxMARVELL E1543		0x002a Marvell 88E1543 Alaska Quad Port Gb PHY
+
+/* Micrel PHYs */
+model MICREL KSZ9021RNI		0x0021 Micrel KSZ9021RNI 10/100/1000 PHY
 
 /* Myson Technology PHYs */
 model xxMYSON MTD972		0x0000 MTD972 10/100 media interface
@@ -281,6 +293,7 @@ model RDC R6040			0x0003 R6040 10/100 media interface
 /* RealTek PHYs */
 model yyREALTEK RTL8201L	0x0020 RTL8201L 10/100 media interface
 model xxREALTEK RTL8169S	0x0011 RTL8169S/8110S/8211 1000BASE-T media interface
+model REALTEK RTL8251		0x0000 RTL8251 1000BASE-T media interface
 model REALTEK RTL8169S		0x0011 RTL8169S/8110S/8211 1000BASE-T media interface
 
 /* Seeq PHYs */
@@ -290,6 +303,10 @@ model SEEQ 80225		0x0008 Seeq 80225 10/100 media interface
 
 /* Silicon Integrated Systems PHYs */
 model SIS 900			0x0000 SiS 900 10/100 media interface
+
+/* SMSC PHYs */
+model SMSC LAN8700		0x000c SMSC LAN8700 10/100 Ethernet Transceiver
+model SMSC LAN8710_LAN8720	0x000f SMSC LAN8710/LAN8720 10/100 Ethernet Transceiver
 
 /* Texas Instruments PHYs */
 model TI TLAN10T		0x0001 ThunderLAN 10BASE-T media interface
