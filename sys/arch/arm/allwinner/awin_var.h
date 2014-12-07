@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.32 2014/12/07 00:36:26 jmcneill Exp $ */
+/* $NetBSD: awin_var.h,v 1.33 2014/12/07 18:32:13 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -93,6 +93,9 @@ struct awin_dma_channel;
 extern struct bus_space awin_bs_tag;
 extern struct bus_space awin_a4x_bs_tag;
 extern bus_space_handle_t awin_core_bsh;
+#if defined(ALLWINNER_A80)
+extern bus_space_handle_t awin_rcpus_bsh;
+#endif
 extern struct arm32_bus_dma_tag awin_dma_tag;
 extern struct arm32_bus_dma_tag awin_coherent_dma_tag;
 
