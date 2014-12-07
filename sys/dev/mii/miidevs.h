@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.108.4.2 2013/09/07 16:41:08 bouyer Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.108.4.3 2014/12/07 15:21:37 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.105.4.2 2013/09/07 16:39:32 bouyer Exp
+ *	NetBSD: miidevs,v 1.105.4.3 2014/12/07 15:20:59 martin Exp
  */
 
 /*-
@@ -73,6 +73,7 @@
 #define	MII_OUI_JMICRON	0x00d831	/* JMicron */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
 #define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
+#define	MII_OUI_MICREL	0x0010a1	/* Micrel */
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
@@ -81,6 +82,7 @@
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
+#define	MII_OUI_SMSC	0x00800f	/* SMSC */
 #define	MII_OUI_TI	0x080028	/* Texas Instruments */
 #define	MII_OUI_TSC	0x00c039	/* TDK Semiconductor */
 #define	MII_OUI_XAQTI	0x00e0ae	/* XaQti Corp. */
@@ -199,6 +201,8 @@
 #define	MII_STR_BROADCOM_BCM5752	"BCM5752 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5701	0x0011
 #define	MII_STR_BROADCOM_BCM5701	"BCM5701 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM_BCM5706	0x0015
+#define	MII_STR_BROADCOM_BCM5706	"BCM5706 1000BASE-T/SX media interface"
 #define	MII_MODEL_BROADCOM_BCM5703	0x0016
 #define	MII_STR_BROADCOM_BCM5703	"BCM5703 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5750	0x0018
@@ -210,9 +214,9 @@
 #define	MII_MODEL_BROADCOM_BCM54K2	0x002e
 #define	MII_STR_BROADCOM_BCM54K2	"BCM54K2 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5714	0x0034
-#define	MII_STR_BROADCOM_BCM5714	"BCM5714 1000BASE-T media interface"
+#define	MII_STR_BROADCOM_BCM5714	"BCM5714 1000BASE-T/X media interface"
 #define	MII_MODEL_BROADCOM_BCM5780	0x0035
-#define	MII_STR_BROADCOM_BCM5780	"BCM5780 1000BASE-T media interface"
+#define	MII_STR_BROADCOM_BCM5780	"BCM5780 1000BASE-T/X media interface"
 #define	MII_MODEL_BROADCOM_BCM5708C	0x0036
 #define	MII_STR_BROADCOM_BCM5708C	"BCM5708C 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM2_BCM5325	0x0003
@@ -284,8 +288,14 @@
 #define	MII_STR_xxDAVICOM_DM9102	"DM9102 10/100 media interface"
 
 /* IC Plus Corp. PHYs */
+#define	MII_MODEL_ICPLUS_IP100	0x0004
+#define	MII_STR_ICPLUS_IP100	"IP100 10/100 PHY"
 #define	MII_MODEL_ICPLUS_IP101	0x0005
 #define	MII_STR_ICPLUS_IP101	"IP101 10/100 PHY"
+#define	MII_MODEL_ICPLUS_IP1000A	0x0008
+#define	MII_STR_ICPLUS_IP1000A	"IP1000A 10/100/1000 PHY"
+#define	MII_MODEL_ICPLUS_IP1001	0x0019
+#define	MII_STR_ICPLUS_IP1001	"IP1001 10/100/1000 PHY"
 
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_ICS_1889	0x0001
@@ -318,6 +328,10 @@
 #define	MII_STR_INTEL_I82577	"i82577 10/100/1000 media interface"
 #define	MII_MODEL_INTEL_I82579	0x0009
 #define	MII_STR_INTEL_I82579	"i82579 10/100/1000 media interface"
+#define	MII_MODEL_INTEL_I217	0x000a
+#define	MII_STR_INTEL_I217	"i217 10/100/1000 media interface"
+#define	MII_MODEL_xxMARVELL_I210	0x0000
+#define	MII_STR_xxMARVELL_I210	"I210 10/100/1000 media interface"
 #define	MII_MODEL_xxMARVELL_I82563	0x000a
 #define	MII_STR_xxMARVELL_I82563	"i82563 10/100/1000 media interface"
 
@@ -367,6 +381,12 @@
 #define	MII_STR_xxMARVELL_E1116R	"Marvell 88E1116R Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1116R_29	0x0029
 #define	MII_STR_xxMARVELL_E1116R_29	"Marvell 88E1116R Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1543	0x002a
+#define	MII_STR_xxMARVELL_E1543	"Marvell 88E1543 Alaska Quad Port Gb PHY"
+
+/* Micrel PHYs */
+#define	MII_MODEL_MICREL_KSZ9021RNI	0x0021
+#define	MII_STR_MICREL_KSZ9021RNI	"Micrel KSZ9021RNI 10/100/1000 PHY"
 
 /* Myson Technology PHYs */
 #define	MII_MODEL_xxMYSON_MTD972	0x0000
@@ -414,6 +434,8 @@
 #define	MII_STR_yyREALTEK_RTL8201L	"RTL8201L 10/100 media interface"
 #define	MII_MODEL_xxREALTEK_RTL8169S	0x0011
 #define	MII_STR_xxREALTEK_RTL8169S	"RTL8169S/8110S/8211 1000BASE-T media interface"
+#define	MII_MODEL_REALTEK_RTL8251	0x0000
+#define	MII_STR_REALTEK_RTL8251	"RTL8251 1000BASE-T media interface"
 #define	MII_MODEL_REALTEK_RTL8169S	0x0011
 #define	MII_STR_REALTEK_RTL8169S	"RTL8169S/8110S/8211 1000BASE-T media interface"
 
@@ -428,6 +450,12 @@
 /* Silicon Integrated Systems PHYs */
 #define	MII_MODEL_SIS_900	0x0000
 #define	MII_STR_SIS_900	"SiS 900 10/100 media interface"
+
+/* SMSC PHYs */
+#define	MII_MODEL_SMSC_LAN8700	0x000c
+#define	MII_STR_SMSC_LAN8700	"SMSC LAN8700 10/100 Ethernet Transceiver"
+#define	MII_MODEL_SMSC_LAN8710_LAN8720	0x000f
+#define	MII_STR_SMSC_LAN8710_LAN8720	"SMSC LAN8710/LAN8720 10/100 Ethernet Transceiver"
 
 /* Texas Instruments PHYs */
 #define	MII_MODEL_TI_TLAN10T	0x0001
