@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.69 2011/06/18 21:18:46 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.69.4.1 2014/12/07 15:58:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.69 2011/06/18 21:18:46 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.69.4.1 2014/12/07 15:58:27 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -636,7 +636,7 @@ waitcmd(int argc, char **argv)
 			if (dowait(WBLOCK|WNOFREE, job) == -1)
 			       return 128 + SIGINT;
 		}
-		status = job->ps[job->nprocs - 1].status;
+		status = job->ps[job->nprocs ? job->nprocs - 1 : 0].status;
 		if (WIFEXITED(status))
 			retval = WEXITSTATUS(status);
 #if JOBS
