@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.19 2014/12/07 20:09:35 jmcneill Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.20 2014/12/07 20:10:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.19 2014/12/07 20:09:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.20 2014/12/07 20:10:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -536,7 +536,7 @@ awin_mmc_host_reset(sdmmc_chipset_handle_t sch)
 static uint32_t
 awin_mmc_host_ocr(sdmmc_chipset_handle_t sch)
 {
-	return MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V | MMC_OCR_HSC;
+	return MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V | MMC_OCR_HCS;
 }
 
 static int
