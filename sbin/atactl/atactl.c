@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.66.4.1 2013/02/18 19:06:10 riz Exp $	*/
+/*	$NetBSD: atactl.c,v 1.66.4.2 2014/12/07 16:25:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.66.4.1 2013/02/18 19:06:10 riz Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.66.4.2 2014/12/07 16:25:40 martin Exp $");
 #endif
 
 
@@ -187,9 +187,9 @@ static const struct bitinfo ata_cmd_set1[] = {
 	{ WDC_CMD1_HPA, "Host Protected Area feature set" },
 	{ WDC_CMD1_DVRST, "DEVICE RESET command" },
 	{ WDC_CMD1_SRV, "SERVICE interrupt" },
-	{ WDC_CMD1_RLSE, "release interrupt" },
-	{ WDC_CMD1_AHEAD, "look-ahead" },
-	{ WDC_CMD1_CACHE, "write cache" },
+	{ WDC_CMD1_RLSE, "Release interrupt" },
+	{ WDC_CMD1_AHEAD, "Look-ahead" },
+	{ WDC_CMD1_CACHE, "Write cache" },
 	{ WDC_CMD1_PKT, "PACKET command feature set" },
 	{ WDC_CMD1_PM, "Power Management feature set" },
 	{ WDC_CMD1_REMOV, "Removable Media feature set" },
@@ -269,7 +269,27 @@ static const struct {
 	{  11,		"Calibration retry count", NULL },
 	{  12,		"Device power cycle count", NULL },
 	{  13,		"Soft read error rate", NULL },
+	{ 100,          "Erase/Program Cycles", NULL },
+	{ 103,          "Translation Table Rebuild", NULL },
+	{ 170,          "Reserved Block Count", NULL },
+	{ 171,          "Program Fail Count", NULL },
+	{ 172,          "Erase Fail Count", NULL },
+	{ 173,          "Wear Leveller Worst Case Erase Count", NULL },
+	{ 174,          "Unexpected Power Loss", NULL },
+	{ 175,          "Program Fail Count", NULL },
+	{ 176,          "Erase Fail Count", NULL },
+	{ 177,          "Wear Leveling Count", NULL },
+	{ 178,          "Used Reserved Block Count", NULL },
+	{ 179,          "Used Reserved Block Count", NULL },
+	{ 180,          "Unused Reserved Block Count", NULL },
+	{ 181,          "Program Fail Count", NULL },
+	{ 182,          "Erase Fail Count", NULL },
+	{ 183,          "SATA Downshift Error Count", NULL },
+	{ 184,          "End-to-end error", NULL },
+	{ 185,          "Head Stability", NULL },
+	{ 186,          "Induced Op-Vibration Detection", NULL },
 	{ 187,          "Reported uncorrect", NULL },
+	{ 188,          "Command Timeout", NULL },
 	{ 189,          "High Fly Writes", NULL },
 	{ 190,          "Airflow Temperature",		device_smart_temp },
 	{ 191,		"G-sense error rate", NULL },
@@ -302,8 +322,13 @@ static const struct {
 	{ 228,		"Power-off retract count", NULL },
 	{ 230,		"GMR head amplitude", NULL },
 	{ 231,		"Temperature",			device_smart_temp },
+	{ 232,		"Available reserved space", NULL },
+	{ 233,		"Media wearout indicator", NULL },
 	{ 240,		"Head flying hours", NULL },
+	{ 241,		"Total LBAs Written", NULL },
+	{ 242,		"Total LBAs Read", NULL },
 	{ 250,		"Read error retry rate", NULL },
+	{ 254,		"Free Fall Sensor", NULL },
 	{   0,		"Unknown", NULL },
 };
 
@@ -514,7 +539,7 @@ print_smart_status(void *vbuf, void *tbuf)
 	}
 
 	printf("id value thresh crit collect reliability description"
-	    "\t\t\traw\n");
+	    "                 raw\n");
 	for (i = 0; i < 256; i++) {
 		int thresh = 0;
 
@@ -542,7 +567,7 @@ print_smart_status(void *vbuf, void *tbuf)
 
 		flags = le16toh(attr->flags);
 
-		printf("%3d %3d  %3d     %-3s %-7s %stive    %-24s\t",
+		printf("%3d %3d  %3d     %-3s %-7s %stive    %-27s ",
 		    i, attr->value, thresh,
 		    flags & WDSM_ATTR_ADVISORY ? "yes" : "no",
 		    flags & WDSM_ATTR_COLLECTIVE ? "online" : "offline",
