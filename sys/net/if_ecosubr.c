@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.36 2011/11/20 12:15:38 kiyohara Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.36.4.1 2014/12/07 15:09:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.36 2011/11/20 12:15:38 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.36.4.1 2014/12/07 15:09:32 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -852,7 +852,7 @@ eco_retry_free(struct eco_retry *er)
 {
 	int s;
 
-	callout_stop(&er->er_callout);
+	callout_halt(&er->er_callout, NULL);
 	m_freem(er->er_packet);
 	s = splnet();
 	LIST_REMOVE(er, er_link);

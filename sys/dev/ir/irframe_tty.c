@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.58 2009/05/12 14:29:42 cegger Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.58.18.1 2014/12/07 15:09:31 martin Exp $	*/
 
 /*
  * TODO
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.58 2009/05/12 14:29:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.58.18.1 2014/12/07 15:09:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -245,7 +245,7 @@ irframet_detach(device_t dev, int flags)
 	struct irframet_softc *sc = device_private(dev);
 	int rc;
 
-	callout_stop(&sc->sc_timeout);
+	callout_halt(&sc->sc_timeout, NULL);
 
 	rc = irframe_detach(dev, flags);
 
