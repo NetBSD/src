@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.18 2014/12/05 17:32:08 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_usb.c,v 1.19 2014/12/07 16:20:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -473,10 +473,6 @@ awinusb_attach(device_t parent, device_t self, void *aux)
 		awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_ccm_bsh,
 		    AWIN_A80_CCU_SCLK_BUS_CLK_GATING1_REG,
 		    AWIN_A80_CCU_SCLK_BUS_CLK_GATING1_USB_HOST, 0);
-		/* Soft reset */
-		awin_reg_set_clear(usbsc->usbsc_bst, aio->aio_ccm_bsh,
-		    AWIN_A80_CCU_SCLK_BUS_SOFT_RST1_REG,
-		    AWIN_A80_CCU_SCLK_BUS_SOFT_RST1_USB_HOST, 0);
 
 		/* Enable USB PHY */
 		awin_reg_set_clear(usbsc->usbsc_bst, usb_bsh,
