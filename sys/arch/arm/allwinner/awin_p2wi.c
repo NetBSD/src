@@ -1,4 +1,4 @@
-/* $NetBSD: awin_p2wi.c,v 1.1 2014/10/12 23:57:58 jmcneill Exp $ */
+/* $NetBSD: awin_p2wi.c,v 1.2 2014/12/07 00:36:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_p2wi.c,v 1.1 2014/10/12 23:57:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_p2wi.c,v 1.2 2014/12/07 00:36:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +43,12 @@ __KERNEL_RCSID(0, "$NetBSD: awin_p2wi.c,v 1.1 2014/10/12 23:57:58 jmcneill Exp $
 
 #include <dev/i2c/i2cvar.h>
 
+#define AWIN_RSB_ADDR_AXP809	0x3a3
+#define AWIN_RSB_ADDR_AXP806	0x745
+
+#define AWIN_RSB_RTA_AXP809	0x2d
+#define AWIN_RSB_RTA_AXP806	0x3a
+
 struct awin_p2wi_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_bst;
@@ -53,6 +59,8 @@ struct awin_p2wi_softc {
 	device_t sc_i2cdev;
 	void *sc_ih;
 	uint32_t sc_stat;
+
+	bool sc_rsb_p;
 };
 
 #define P2WI_READ(sc, reg) \
@@ -66,6 +74,9 @@ static int	awin_p2wi_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 			       size_t, void *, size_t, int);
 
 static int	awin_p2wi_intr(void *);
+static int	awin_p2wi_wait(struct awin_p2wi_softc *, int);
+static int	awin_p2wi_rsb_config(struct awin_p2wi_softc *,
+				     uint8_t, i2c_addr_t, int);
 
 static int	awin_p2wi_match(device_t, cfdata_t, void *);
 static void	awin_p2wi_attach(device_t, device_t, void *);
@@ -95,13 +106,15 @@ awin_p2wi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bst = aio->aio_core_bst;
+	sc->sc_rsb_p = awin_chip_id() == AWIN_CHIP_ID_A80;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SCHED);
 	cv_init(&sc->sc_cv, "awinp2wi");
-	bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
+	bus_space_subregion(sc->sc_bst,
+	    sc->sc_rsb_p ? aio->aio_a80_rcpus_bsh : aio->aio_core_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 
 	aprint_naive("\n");
-	aprint_normal(": P2WI\n");
+	aprint_normal(": %s\n", sc->sc_rsb_p ? "RSB" : "P2WI");
 
 	sc->sc_ih = intr_establish(loc->loc_intr, IPL_SCHED, IST_LEVEL,
 	    awin_p2wi_intr, sc);
@@ -151,6 +164,89 @@ awin_p2wi_intr(void *priv)
 }
 
 static int
+awin_p2wi_wait(struct awin_p2wi_softc *sc, int flags)
+{
+	int error = 0, retry;
+
+	/* Wait up to 5 seconds for a transfer to complete */
+	sc->sc_stat = 0;
+	for (retry = (flags & I2C_F_POLL) ? 100 : 5; retry > 0; retry--) {
+		if (flags & I2C_F_POLL) {
+			sc->sc_stat |= P2WI_READ(sc, AWIN_A31_P2WI_STAT_REG);
+		} else {
+			error = cv_timedwait(&sc->sc_cv, &sc->sc_lock, hz);
+			if (error && error != EWOULDBLOCK) {
+				break;
+			}
+		}
+		if (sc->sc_stat & AWIN_A31_P2WI_STAT_MASK) {
+			break;
+		}
+		if (flags & I2C_F_POLL) {
+			delay(10000);
+		}
+	}
+	if (retry == 0)
+		error = EAGAIN;
+
+	if (flags & I2C_F_POLL) {
+		P2WI_WRITE(sc, AWIN_A31_P2WI_STAT_REG,
+		    sc->sc_stat & AWIN_A31_P2WI_STAT_MASK);
+	}
+
+	if (error) {
+		/* Abort transaction */
+		device_printf(sc->sc_dev, "transfer timeout, error = %d\n",
+		    error);
+		P2WI_WRITE(sc, AWIN_A31_P2WI_CTRL_REG,
+		    AWIN_A31_P2WI_CTRL_ABORT_TRANS);
+		return error;
+	}
+
+	if (sc->sc_stat & AWIN_A31_P2WI_STAT_LOAD_BSY) {
+		device_printf(sc->sc_dev, "transfer busy\n");
+		return EBUSY;
+	}
+	if (sc->sc_stat & AWIN_A31_P2WI_STAT_TRANS_ERR) {
+		device_printf(sc->sc_dev, "transfer error, id 0x%02llx\n",
+		    __SHIFTOUT(sc->sc_stat, AWIN_A31_P2WI_STAT_TRANS_ERR_ID));
+		return EIO;
+	}
+
+	return 0;
+}
+
+static int
+awin_p2wi_rsb_config(struct awin_p2wi_softc *sc, uint8_t rta, i2c_addr_t da,
+    int flags)
+{
+	uint32_t dar, ctrl;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	P2WI_WRITE(sc, AWIN_A31_P2WI_STAT_REG,
+	    P2WI_READ(sc, AWIN_A31_P2WI_STAT_REG) & AWIN_A31_P2WI_STAT_MASK);
+
+	dar = __SHIFTIN(rta, AWIN_A80_RSB_DAR_RTA);
+	dar |= __SHIFTIN(da, AWIN_A80_RSB_DAR_DA);
+	P2WI_WRITE(sc, AWIN_A80_RSB_DAR_REG, dar);
+	P2WI_WRITE(sc, AWIN_A80_RSB_CMD_REG, AWIN_A80_RSB_CMD_IDX_SRTA);
+
+	/* Make sure the controller is idle */
+	ctrl = P2WI_READ(sc, AWIN_A31_P2WI_CTRL_REG);
+	if (ctrl & AWIN_A31_P2WI_CTRL_START_TRANS) {
+		device_printf(sc->sc_dev, "device is busy\n");
+		return EBUSY;
+	}
+
+	/* Start the transfer */
+	P2WI_WRITE(sc, AWIN_A31_P2WI_CTRL_REG,
+	    ctrl | AWIN_A31_P2WI_CTRL_START_TRANS);
+
+	return awin_p2wi_wait(sc, flags);
+}
+
+static int
 awin_p2wi_acquire_bus(void *priv, int flags)
 {
 	struct awin_p2wi_softc *sc = priv;
@@ -179,12 +275,33 @@ awin_p2wi_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 {
 	struct awin_p2wi_softc *sc = priv;
 	uint32_t dlen, ctrl;
-	int error, retry;
+	uint8_t rta;
+	int error;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	if (cmdlen != 1 || len != 1)
 		return EINVAL;
+
+	if (sc->sc_rsb_p) {
+		switch (addr) {
+		case AWIN_RSB_ADDR_AXP809:
+			rta = AWIN_RSB_RTA_AXP809;
+			break;
+		case AWIN_RSB_ADDR_AXP806:
+			rta = AWIN_RSB_RTA_AXP806;
+			break;
+		default:
+			return ENXIO;
+		}
+		error = awin_p2wi_rsb_config(sc, rta, addr, flags);
+		if (error) {
+			device_printf(sc->sc_dev,
+			    "SRTA failed, flags = %x, error = %d\n",
+			    flags, error);
+			return error;
+		}
+	}
 
 	/* Data byte register */
 	P2WI_WRITE(sc, AWIN_A31_P2WI_DADDR0_REG, *(const uint8_t *)cmdbuf);
@@ -192,6 +309,12 @@ awin_p2wi_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	if (I2C_OP_WRITE_P(op)) {
 		/* Write data byte */
 		P2WI_WRITE(sc, AWIN_A31_P2WI_DATA0_REG, *(uint8_t *)buf);
+	}
+
+	if (sc->sc_rsb_p) {
+		uint8_t cmd = I2C_OP_WRITE_P(op) ? AWIN_A80_RSB_CMD_IDX_WR8 :
+						   AWIN_A80_RSB_CMD_IDX_RD8;
+		P2WI_WRITE(sc, AWIN_A80_RSB_CMD_REG, cmd);
 	}
 
 	/* Program data length register; if reading, set read/write bit */
@@ -212,35 +335,9 @@ awin_p2wi_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	P2WI_WRITE(sc, AWIN_A31_P2WI_CTRL_REG,
 	    ctrl | AWIN_A31_P2WI_CTRL_START_TRANS);
 
-	/* Wait up to 5 seconds for an interrupt */
-	sc->sc_stat = 0;
-	for (retry = 5; retry > 0; retry--) {
-		error = cv_timedwait(&sc->sc_cv, &sc->sc_lock, hz);
-		if (error && error != EWOULDBLOCK) {
-			break;
-		}
-		if (sc->sc_stat & AWIN_A31_P2WI_STAT_MASK) {
-			break;
-		}
-	}
-
+	error = awin_p2wi_wait(sc, flags);
 	if (error) {
-		/* Abort transaction */
-		device_printf(sc->sc_dev, "transfer timeout, error = %d\n",
-		    error);
-		P2WI_WRITE(sc, AWIN_A31_P2WI_CTRL_REG,
-		    AWIN_A31_P2WI_CTRL_ABORT_TRANS);
 		return error;
-	}
-
-	if (sc->sc_stat & AWIN_A31_P2WI_STAT_LOAD_BSY) {
-		device_printf(sc->sc_dev, "transfer busy\n");
-		return EBUSY;
-	}
-	if (sc->sc_stat & AWIN_A31_P2WI_STAT_TRANS_ERR) {
-		device_printf(sc->sc_dev, "transfer error, id 0x%02llx\n",
-		    __SHIFTOUT(sc->sc_stat, AWIN_A31_P2WI_STAT_TRANS_ERR_ID));
-		return EIO;
 	}
 
 	if (I2C_OP_READ_P(op)) {
