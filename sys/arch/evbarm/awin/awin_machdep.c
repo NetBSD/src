@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.33 2014/12/05 17:32:08 jmcneill Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.34 2014/12/07 00:36:26 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.33 2014/12/05 17:32:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.34 2014/12/07 00:36:26 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -305,6 +305,16 @@ static const struct pmap_devmap devmap[] = {
 		.pd_va = _A(AWIN_A80_USB_VBASE),
 		.pd_pa = _A(AWIN_A80_USB_PBASE),
 		.pd_size = _S(AWIN_A80_USB_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+	{
+		/*
+		 * A80 RSB, RPRCM
+		 */
+		.pd_va = _A(AWIN_A80_RCPUS_VBASE),
+		.pd_pa = _A(AWIN_A80_RCPUS_PBASE),
+		.pd_size = _S(AWIN_A80_RCPUS_SIZE),
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
