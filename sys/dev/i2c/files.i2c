@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.58 2014/10/15 05:11:36 uebayasi Exp $
+#	$NetBSD: files.i2c,v 1.59 2014/12/07 00:32:35 jmcneill Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -9,6 +9,7 @@ attach	iic at i2cbus
 file	dev/i2c/i2c.c				iic
 file	dev/i2c/i2c_exec.c			iic | i2cbus | i2cexec
 file	dev/i2c/i2c_subr.c			iic | i2cbus
+defparam opt_i2c.h				I2C_MAX_ADDR
 
 # Common module for bit-bang'ing an I2C bus
 define	i2c_bitbang

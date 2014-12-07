@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.44 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: i2c.c,v 1.45 2014/12/07 00:32:35 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -35,8 +35,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_i2c.h"
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.44 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.45 2014/12/07 00:32:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.44 2014/07/25 08:10:37 dholland Exp $");
 
 #include "locators.h"
 
+#ifndef I2C_MAX_ADDR
 #define I2C_MAX_ADDR	0x3ff	/* 10-bit address, max */
+#endif
 
 struct iic_softc {
 	i2c_tag_t sc_tag;
