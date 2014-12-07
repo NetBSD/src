@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.8.2 2013/04/20 09:52:19 bouyer Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.8.3 2014/12/07 15:09:31 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.8.2 2013/04/20 09:52:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.8.3 2014/12/07 15:09:31 martin Exp $");
 
 #include "opt_usb.h"
 
@@ -363,7 +363,7 @@ ohci_detach(struct ohci_softc *sc, int flags)
 	if (rv != 0)
 		return (rv);
 
-	callout_stop(&sc->sc_tmo_rhsc);
+	callout_halt(&sc->sc_tmo_rhsc, NULL);
 
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 	callout_destroy(&sc->sc_tmo_rhsc);

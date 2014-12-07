@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.41 2011/06/04 13:24:33 pgoyette Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.41.8.1 2014/12/07 15:09:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -186,7 +186,6 @@ struct sysmon_envsys {
 	 * Locking/synchronization.
 	 */
 	kmutex_t sme_mtx;
-	kmutex_t sme_callout_mtx;
 	kcondvar_t sme_condvar;
 };
 
