@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.36 2014/11/20 20:31:22 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.37 2014/12/08 00:44:45 justin Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.36 2014/11/20 20:31:22 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.37 2014/12/08 00:44:45 justin Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.36 2014/11/20 20:31:22 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.37 2014/12/08 00:44:45 justin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1225,7 +1225,7 @@ static bool
 read_pkt_insn(const struct bpf_insn *pc, bpfjit_abc_length_t *length)
 {
 	bool rv;
-	bpfjit_abc_length_t width;
+	bpfjit_abc_length_t width = 0; /* XXXuninit */
 
 	switch (BPF_CLASS(pc->code)) {
 	default:
