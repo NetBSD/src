@@ -1,23 +1,30 @@
-# $NetBSD: Makefile,v 1.6 2013/09/11 09:57:09 joerg Exp $
+# $NetBSD: Makefile,v 1.6.4.1 2014/12/08 20:22:07 martin Exp $
 
 LIB=netpgpverify
-SRCS=libverify.c b64.c pgpsum.c
-SRCS+=digest.c tiger.c
-SRCS+=bignum.c misc.c
-CPPFLAGS+=-I${EXTDIST}/src/libbn
-CPPFLAGS+=-I${EXTDIST}/src/libdigest
-CPPFLAGS+=-I${EXTDIST}/src/librsa
+SRCS+=b64.c
+SRCS+=bignum.c
+SRCS+=bufgap.c
+SRCS+=digest.c
+SRCS+=libverify.c
+SRCS+=misc.c
+SRCS+=pgpsum.c
+SRCS+=rsa.c
+SRCS+=bzlib.c
+SRCS+=zlib.c
+SRCS+=sha1.c
+SRCS+=sha2.c
+SRCS+=md5c.c
+SRCS+=rmd160.c
+SRCS+=tiger.c
+CPPFLAGS+=-I${.CURDIR} -I${EXTDIST}/src/netpgpverify
 MAN=libnetpgpverify.3
 WARNS=5
 
 EXTDIST=${.CURDIR}/../../dist
-.PATH: ${EXTDIST}/src/libverify ${EXTDIST}/src/libdigest ${EXTDIST}/src/libbn ${EXTDIST}/src/librsa
+.PATH: ${EXTDIST}/src/netpgpverify
 
 INCS=verify.h
 INCSDIR=/usr/include/netpgp
-
-LIBDPLIBS+=	z		${NETBSDSRCDIR}/lib/libz
-LIBDPLIBS+=	bz2		${NETBSDSRCDIR}/lib/libbz2
 
 .include <bsd.lib.mk>
 

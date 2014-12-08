@@ -29,7 +29,6 @@
 
 #ifdef _KERNEL
 # include <sys/kmem.h>
-# define logmessage	log
 #else
 # include <stdio.h>
 # include <stdlib.h>
