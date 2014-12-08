@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2014/03/09 00:39:31 agc Exp $
+#	$NetBSD: Makefile,v 1.8.4.1 2014/12/08 20:54:52 martin Exp $
 
 SUBDIR+=	libmj .WAIT
-SUBDIR+=	lib/verify .WAIT
 SUBDIR+=	lib .WAIT
 SUBDIR+=	bin
 
