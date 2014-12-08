@@ -1,4 +1,4 @@
-/* $NetBSD: aout_mids.h,v 1.5 2014/12/08 20:44:59 christos Exp $ */
+/* $NetBSD: aout_mids.h,v 1.6 2014/12/08 20:51:02 christos Exp $ */
 
 /*
  * Copyright (c) 2009, The NetBSD Foundation, Inc.
@@ -52,20 +52,22 @@
 #define	MID_ARM6	0x08f	/* ARM6 */
 #define	MID_M680002K	0x090	/* m68000 with 2K page sizes */
 #define	MID_SH3		0x091	/* SH3 */
-#define	MID_POWERPC	0x092	/* big-endian PowerPC */
-#define	MID_VAX		0x093	/* VAX */
-#define	MID_MIPS1	0x094	/* MIPS1 */
-#define	MID_MIPS2	0x095	/* MIPS2 */
-#define	MID_M88K	0x096	/* m88k BSD */
-#define	MID_HPPA	0x097	/* HP PARISC */
-#define	MID_SH5_64	0x098	/* LP64 SH5 */
-#define	MID_SPARC64	0x099	/* LP64 sparc */
-#define	MID_X86_64	0x09a	/* AMD x86-64 */
-#define	MID_SH5_32	0x09b	/* ILP32 SH5 */
-#define	MID_IA64	0x09c	/* Itanium */
-#define	MID_AARCH64	0x09d	/* ARM AARCH64 */
-#define	MID_OR1K	0x09e	/* OpenRISC 1000 */
-#define	MID_RISCV	0x09f	/* Risc-V */
+
+#define	MID_POWERPC	0x095	/* big-endian PowerPC */
+#define	MID_VAX		0x096	/* VAX */
+#define	MID_MIPS1	0x097	/* MIPS1 */
+#define	MID_MIPS2	0x098	/* MIPS2 */
+#define	MID_M88K	0x099	/* m88k BSD */
+#define	MID_HPPA	0x09a	/* HP PARISC */
+#define	MID_SH5_64	0x09b	/* LP64 SH5 */
+#define	MID_SPARC64	0x09c	/* LP64 sparc */
+#define	MID_X86_64	0x09d	/* AMD x86-64 */
+#define	MID_SH5_32	0x09e	/* ILP32 SH5 */
+#define	MID_IA64	0x09f	/* Itanium */
+
+#define	MID_AARCH64	0x0b7	/* ARM AARCH64 */
+#define	MID_OR1K	0x0b8	/* OpenRISC 1000 */
+#define	MID_RISCV	0x0b9	/* Risc-V */
 
 #define	MID_HP200	0x0c8	/* hp200 (68010) BSD binary */
 
