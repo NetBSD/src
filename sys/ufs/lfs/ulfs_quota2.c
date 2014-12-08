@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.16 2014/06/28 22:27:51 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.17 2014/12/08 00:16:44 justin Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp  */
 /*  from NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp  */
 
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.16 2014/06/28 22:27:51 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.17 2014/12/08 00:16:44 justin Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -1274,7 +1274,7 @@ lfsquota2_handle_cmd_cursorget(struct ulfsmount *ump, struct quotakcursor *qkc,
 	struct q2cursor_state state;
 	struct quota2_entry default_q2e;
 	int idtype;
-	int quota2_hash_size;
+	int quota2_hash_size = 0; /* XXXuninit */
 
 	/*
 	 * Convert and validate the cursor.
