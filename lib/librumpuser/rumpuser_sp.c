@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.67 2014/08/25 14:58:48 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.68 2014/12/08 00:12:03 justin Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.67 2014/08/25 14:58:48 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.68 2014/12/08 00:12:03 justin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -862,7 +862,7 @@ int
 rumpuser_sp_anonmmap(void *arg, size_t howmuch, void **addr)
 {
 	struct spclient *spc = arg;
-	void *resp, *rdata;
+	void *resp, *rdata = NULL; /* XXXuninit */
 	int nlocks, rv;
 
 	rumpkern_unsched(&nlocks, NULL);
