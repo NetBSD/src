@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.95 2014/12/04 04:35:13 htodd Exp $
+# $NetBSD: mi,v 1.96 2014/12/08 04:23:03 ozaki-r Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -2154,6 +2154,7 @@
 ./usr/libdata/debug/usr/tests/net/fdpass/fdpass64.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/icmp/t_forward.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/icmp/t_ping.debug		tests-net-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/net/if/ifconf.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/if/t_compat.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/if_loop/t_pr.debug		tests-net-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/net/mcast/t_mcast.debug		tests-net-debug		debug,atf
