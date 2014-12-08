@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/03/09 00:33:50 agc Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2014/12/08 20:54:52 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ PROG=		netpgpkeys
 SRCS=		netpgpkeys.c
 BINDIR=		/usr/bin
 
-LIBNETPGPDIR!=	cd ${.CURDIR}/../../lib && ${PRINTOBJDIR}
+LIBNETPGPDIR!=	cd ${.CURDIR}/../../lib/netpgp && ${PRINTOBJDIR}
 LDADD+=		-L${LIBNETPGPDIR} -lnetpgp
 DPADD+=		${LIBNETPGPDIR}/libnetpgp.a
 
