@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.111 2014/05/12 11:56:02 joerg Exp $	*/
+/*	$NetBSD: cpu.c,v 1.112 2014/12/08 15:22:47 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.111 2014/05/12 11:56:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.112 2014/12/08 15:22:47 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -357,6 +357,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	ci->ci_acpiid = caa->cpu_id;
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_func = caa->cpu_func;
+	aprint_normal("\n");
 
 	/* Must be before mi_cpu_attach(). */
 	cpu_vm_init(ci);
@@ -366,7 +367,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 		error = mi_cpu_attach(ci);
 		if (error != 0) {
-			aprint_normal("\n");
 			aprint_error_dev(self,
 			    "mi_cpu_attach failed with %d\n", error);
 			return;
@@ -446,7 +446,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	default:
-		aprint_normal("\n");
 		panic("unknown processor type??\n");
 	}
 
