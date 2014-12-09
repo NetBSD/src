@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.24 2014/11/26 13:43:06 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.25 2014/12/09 20:21:05 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -3077,11 +3077,14 @@ dhcp_start1(void *arg)
 	if (ifp->ctx->udp_fd == -1) {
 		ifp->ctx->udp_fd = dhcp_openudp(NULL);
 		if (ifp->ctx->udp_fd == -1) {
-			syslog(LOG_ERR, "dhcp_openudp: %m");
-			return;
-		}
-		eloop_event_add(ifp->ctx->eloop,
-		    ifp->ctx->udp_fd, dhcp_handleudp, ifp->ctx, NULL, NULL);
+			/* Don't log an error if some other process
+			 * is handling this. */
+			if (errno != EADDRINUSE)
+				syslog(LOG_ERR, "dhcp_openudp: %m");
+		} else
+			eloop_event_add(ifp->ctx->eloop,
+			    ifp->ctx->udp_fd, dhcp_handleudp,
+			    ifp->ctx, NULL, NULL);
 	}
 
 	if (dhcp_init(ifp) == -1) {
