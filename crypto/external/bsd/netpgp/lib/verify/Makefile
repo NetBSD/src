@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6.4.1 2014/12/08 20:22:07 martin Exp $
+# $NetBSD: Makefile,v 1.6.4.2 2014/12/09 18:59:42 martin Exp $
 
 LIB=netpgpverify
 SRCS+=b64.c
@@ -18,7 +18,7 @@ SRCS+=rmd160.c
 SRCS+=tiger.c
 CPPFLAGS+=-I${.CURDIR} -I${EXTDIST}/src/netpgpverify
 MAN=libnetpgpverify.3
-WARNS=5
+WARNS=4
 
 EXTDIST=${.CURDIR}/../../dist
 .PATH: ${EXTDIST}/src/netpgpverify
