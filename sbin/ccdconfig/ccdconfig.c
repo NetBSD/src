@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.53.6.1 2014/08/18 12:40:36 martin Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.53.6.2 2014/12/09 20:18:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996, 1997\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.53.6.1 2014/08/18 12:40:36 martin Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.53.6.2 2014/12/09 20:18:47 martin Exp $");
 #endif
 
 #include <sys/param.h>
@@ -164,8 +164,10 @@ do_single(int argc, char **argv, int action)
 {
 	struct ccd_ioctl ccio;
 	char *ccd, *cp, *cp2, **disks;
+	char buf[MAXPATHLEN];
 	int noflags = 0, i, ileave, flags, j;
-	unsigned int ui;
+	unsigned int ndisks, ui;
+	int ret = 1;
 
 	flags = 0;
 	memset(&ccio, 0, sizeof(ccio));
@@ -235,29 +237,34 @@ do_single(int argc, char **argv, int action)
 
 	/* Next is the list of disks to make the ccd from. */
 	disks = emalloc(argc * sizeof(char *));
-	for (ui = 0; argc != 0; ) {
-		cp = *argv++; --argc;
+	for (ndisks = 0; argc != 0; ++argv, --argc) {
+		if (getfsspecname(buf, sizeof(buf), *argv) == NULL) {
+			warn("%s", *argv);
+			goto error;
+		}
+
+		cp = strdup(buf);
+		if (cp == NULL) {
+			warn("%s", cp);
+			goto error;
+		}
+
 		if ((j = checkdev(cp)) == 0)
-			disks[ui++] = cp;
+			disks[ndisks++] = cp;
 		else {
 			warnx("%s: %s", cp, strerror(j));
-			free(ccd);
-			free(disks);
-			return (1);
+			goto error;
 		}
 	}
 
 	/* Fill in the ccio. */
 	ccio.ccio_disks = disks;
-	ccio.ccio_ndisks = ui;
+	ccio.ccio_ndisks = ndisks;
 	ccio.ccio_ileave = ileave;
 	ccio.ccio_flags = flags;
 
-	if (do_io(ccd, CCDIOCSET, &ccio)) {
-		free(ccd);
-		free(disks);
-		return (1);
-	}
+	if (do_io(ccd, CCDIOCSET, &ccio))
+		goto error;
 
 	if (verbose) {
 		printf("ccd%d: %d components ", ccio.ccio_unit,
@@ -278,9 +285,14 @@ do_single(int argc, char **argv, int action)
 			printf("concatenated\n");
 	}
 
+	ret = 0;
+
+error:
 	free(ccd);
+	while (ndisks > 0)
+		free(disks[--ndisks]);
 	free(disks);
-	return (0);
+	return (ret);
 }
 
 static int
