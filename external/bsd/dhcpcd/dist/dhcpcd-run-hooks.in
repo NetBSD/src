@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: dhcpcd-run-hooks.in,v 1.7 2014/11/26 16:05:14 roy Exp $
+# $NetBSD: dhcpcd-run-hooks.in,v 1.8 2014/12/09 20:21:05 roy Exp $
 
 # dhcpcd client configuration script 
 
@@ -9,8 +9,6 @@ case "$reason" in
 		ifsuffix=":ra";;
 	INFORM6|BOUND6|RENEW6|REBIND6|REBOOT6|EXPIRE6|RELEASE6|STOP6)
 		ifsuffix=":dhcp6";;
-	STOPPED) # This reason should never be processed
-		exit 0;;
 	*)
 		ifsuffix=;;
 esac
