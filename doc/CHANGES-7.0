@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.123 2014/12/09 19:31:06 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.124 2014/12/09 19:39:58 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3277,4 +3277,79 @@ external/gpl3/gdb/dist/gdb/amd64nbsd-tdep.c	1.11
 	- end the backtrace when encountering a soft interrupt, since they
 	  live in their own lwp
 	[chs, ticket #302]
+
+xsrc/external/mit/xorg-server/dist/configure    patch
+xsrc/external/mit/xorg-server/dist/configure.ac patch
+xsrc/external/mit/xorg-server/dist/Xext/xcmisc.c patch
+xsrc/external/mit/xorg-server/dist/Xext/xvdisp.c patch
+xsrc/external/mit/xorg-server/dist/Xi/chgdctl.c patch
+xsrc/external/mit/xorg-server/dist/Xi/chgfctl.c patch
+xsrc/external/mit/xorg-server/dist/Xi/sendexev.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xiallowev.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xichangecursor.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xichangehierarchy.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xigetclientpointer.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xigrabdev.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xipassivegrab.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xiproperty.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xiquerydevice.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xiquerypointer.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xiselectev.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xisetclientpointer.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xisetdevfocus.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xiwarppointer.c patch
+xsrc/external/mit/xorg-server/dist/dbe/dbe.c    patch
+xsrc/external/mit/xorg-server/dist/dix/dispatch.c patch
+xsrc/external/mit/xorg-server/dist/dix/region.c patch
+xsrc/external/mit/xorg-server/dist/glx/glxcmds.c patch
+xsrc/external/mit/xorg-server/dist/glx/glxcmdsswap.c patch
+xsrc/external/mit/xorg-server/dist/glx/glxserver.h patch
+xsrc/external/mit/xorg-server/dist/glx/indirect_program.c patch
+xsrc/external/mit/xorg-server/dist/glx/indirect_reqsize.c patch
+xsrc/external/mit/xorg-server/dist/glx/indirect_reqsize.h patch
+xsrc/external/mit/xorg-server/dist/glx/indirect_texture_compression.c patch
+xsrc/external/mit/xorg-server/dist/glx/indirect_util.c patch
+xsrc/external/mit/xorg-server/dist/glx/rensize.c patch
+xsrc/external/mit/xorg-server/dist/glx/single2.c patch
+xsrc/external/mit/xorg-server/dist/glx/single2swap.c patch
+xsrc/external/mit/xorg-server/dist/glx/singlepix.c patch
+xsrc/external/mit/xorg-server/dist/glx/singlepixswap.c patch
+xsrc/external/mit/xorg-server/dist/glx/swap_interval.c patch
+xsrc/external/mit/xorg-server/dist/glx/unpack.h patch
+xsrc/external/mit/xorg-server/dist/hw/xfree86/dri2/dri2ext.c patch
+xsrc/external/mit/xorg-server/dist/include/dix.h patch
+xsrc/external/mit/xorg-server/dist/include/regionstr.h patch
+xsrc/external/mit/xorg-server/dist/os/access.c patch
+xsrc/external/mit/xorg-server/dist/os/rpcauth.c patch
+xsrc/external/mit/xorg-server/dist/randr/rrsdispatch.c patch
+xsrc/external/mit/xorg-server/dist/render/render.c patch
+xsrc/external/mit/xorg-server/dist/test/Makefile.am patch
+xsrc/external/mit/xorg-server/dist/test/xi1/Makefile.am patch
+xsrc/external/mit/xorg-server/dist/test/xi1/protocol-xchangedevicecontrol.c patch
+xsrc/external/mit/xorg-server/dist/test/xi2/protocol-xigetclientpointer.c patch
+xsrc/external/mit/xorg-server/dist/test/xi2/protocol-xiquerypointer.c patch
+xsrc/external/mit/xorg-server/dist/test/xi2/protocol-xiwarppointer.c patch
+xsrc/external/mit/xorg-server/dist/xfixes/select.c patch
+
+	apply fixes for X.Org Security Advisory:  Dec. 9, 2014
+	Protocol handling issues in X Window System servers
+	included are fixes for:
+	denial of service due to unchecked malloc in client authentication
+	CVE-2014-8091
+	integer overflows calculating memory needs for requests
+	CVE-2014-8092
+	CVE-2014-8093
+	CVE-2014-8094
+	out of bounds access due to not validating length or offset values
+	in requests
+	CVE-2014-8095
+	CVE-2014-8096
+	CVE-2014-8097
+	CVE-2014-8098
+	CVE-2014-8099
+	CVE-2014-8100
+	CVE-2014-8101
+	CVE-2014-8102
+	CVE-2014-8103
+	[mrg, ticket #308]
 
