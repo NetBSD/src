@@ -7,8 +7,6 @@ case "$reason" in
 		ifsuffix=":ra";;
 	INFORM6|BOUND6|RENEW6|REBIND6|REBOOT6|EXPIRE6|RELEASE6|STOP6)
 		ifsuffix=":dhcp6";;
-	STOPPED) # This reason should never be processed
-		exit 0;;
 	*)
 		ifsuffix=;;
 esac
