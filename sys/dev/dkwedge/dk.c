@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.72.2.2 2014/11/11 10:36:41 martin Exp $	*/
+/*	$NetBSD: dk.c,v 1.72.2.3 2014/12/09 20:17:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.72.2.2 2014/11/11 10:36:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.72.2.3 2014/12/09 20:17:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -217,10 +217,10 @@ dkwedge_compute_pdev(const char *pname, dev_t *pdevp, enum vtype type)
 		pmaj = devsw_name2chr(name, devname, sizeof(devname));
 		break;
 	default:
-		pmaj = -1;
+		pmaj = NODEVMAJOR;
 		break;
 	}
-	if (pmaj == -1)
+	if (pmaj == NODEVMAJOR)
 		return (ENODEV);
 
 	name += strlen(devname);
@@ -258,20 +258,22 @@ dkwedge_array_expand(void)
 }
 
 static void
-dkgetproperties(struct disk *disk, struct dkwedge_info *dkw)
+dk_set_geometry(struct dkwedge_softc *sc)
 {
+	struct disk *disk = &sc->sc_dk;
 	struct disk_geom *dg = &disk->dk_geom;
 
 	memset(dg, 0, sizeof(*dg));
 
-	dg->dg_secperunit = dkw->dkw_size >> disk->dk_blkshift;
+	dg->dg_secperunit = sc->sc_size >> disk->dk_blkshift;
 	dg->dg_secsize = DEV_BSIZE << disk->dk_blkshift;
+
+	/* fake numbers, 1 cylinder is 1 MB with default sector size */
 	dg->dg_nsectors = 32;
 	dg->dg_ntracks = 64;
-	/* XXX: why is that dkw->dkw_size instead of secperunit?!?! */
-	dg->dg_ncylinders = dkw->dkw_size / (dg->dg_nsectors * dg->dg_ntracks);
+	dg->dg_ncylinders = dg->dg_secperunit / (dg->dg_nsectors * dg->dg_ntracks);
 
-	disk_set_info(NULL, disk, "ESDI");
+	disk_set_info(sc->sc_dev, disk, NULL);
 }
 
 /*
@@ -454,7 +456,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 
 	disk_init(&sc->sc_dk, device_xname(sc->sc_dev), NULL);
 	disk_blocksize(&sc->sc_dk, DEV_BSIZE << pdk->dk_blkshift);
-	dkgetproperties(&sc->sc_dk, dkw);
+	dk_set_geometry(sc);
 	disk_attach(&sc->sc_dk);
 
 	/* Disk wedge is ready for use! */
@@ -927,6 +929,7 @@ dkwedge_discover(struct disk *pdk)
 		    pdk->dk_name, error);
 		/* We'll just assume the vnode has been cleaned up. */
 	}
+
  out:
 	rw_exit(&dkwedge_discovery_methods_lock);
 }
@@ -957,9 +960,10 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
 	bp->b_cflags = BC_BUSY;
 	bp->b_dev = devsw_chr2blk(vp->v_rdev);
 	bp->b_data = tbuf;
-	bp->b_bufsize = bp->b_resid = bp->b_bcount = len;
-	bp->b_lblkno = 0;
+	bp->b_bufsize = bp->b_bcount = len;
 	bp->b_blkno = blkno;
+	bp->b_cylinder = 0;
+	bp->b_error = 0;
 
 	error = bdev_open(bp->b_dev, FREAD, S_IFBLK, curlwp);
 	if (error)
@@ -1570,3 +1574,4 @@ dkwedge_get_parent_name(dev_t dev)
 		return NULL;
 	return sc->sc_parent->dk_name;
 }
+
