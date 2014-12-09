@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.25 2013/10/09 17:18:23 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.26 2014/12/09 07:42:50 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.25 2013/10/09 17:18:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.26 2014/12/09 07:42:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ static void	pm2fb_init_screen(void *, struct vcons_screen *, int, long *);
 
 static int	pm2fb_putcmap(struct pm2fb_softc *, struct wsdisplay_cmap *);
 static int 	pm2fb_getcmap(struct pm2fb_softc *, struct wsdisplay_cmap *);
-static void	pm2fb_restore_palette(struct pm2fb_softc *);
+static void	pm2fb_init_palette(struct pm2fb_softc *);
 static int 	pm2fb_putpalreg(struct pm2fb_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
 
@@ -283,9 +283,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
 	bool			is_console;
-	int 			i, j;
 	uint32_t		flags;
-	uint8_t			cmap[768];
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -359,7 +357,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &pm2fb_accessops);
 	sc->vd.init_screen = pm2fb_init_screen;
-	
+
 	/* init engine here */
 	pm2fb_init(sc);
 
@@ -416,16 +414,8 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 			   defattr);
 	}
 
-	j = 0;
-	rasops_get_cmap(ri, cmap, sizeof(cmap));
-	for (i = 0; i < 256; i++) {
-		sc->sc_cmap_red[i] = cmap[j];
-		sc->sc_cmap_green[i] = cmap[j + 1];
-		sc->sc_cmap_blue[i] = cmap[j + 2];
-		pm2fb_putpalreg(sc, i, cmap[j], cmap[j + 1], cmap[j + 2]);
-		j += 3;
-	}
-
+	pm2fb_init_palette(sc);
+	
 	aa.console = is_console;
 	aa.scrdata = &sc->sc_screenlist;
 	aa.accessops = &pm2fb_accessops;
@@ -509,7 +499,7 @@ pm2fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 				/* then initialize the drawing engine */
 				pm2fb_init(sc);
-				pm2fb_restore_palette(sc);
+				pm2fb_init_palette(sc);
 				/* clean out the glyph cache */
 				glyphcache_wipe(&sc->sc_gc);
 				/* and redraw everything */
@@ -685,13 +675,19 @@ pm2fb_getcmap(struct pm2fb_softc *sc, struct wsdisplay_cmap *cm)
 }
 
 static void
-pm2fb_restore_palette(struct pm2fb_softc *sc)
+pm2fb_init_palette(struct pm2fb_softc *sc)
 {
-	int i;
+	struct rasops_info *ri = &sc->sc_console_screen.scr_ri;
+	int i, j = 0;
+	uint8_t cmap[768];
 
-	for (i = 0; i < (1 << sc->sc_depth); i++) {
-		pm2fb_putpalreg(sc, i, sc->sc_cmap_red[i],
-		    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
+	rasops_get_cmap(ri, cmap, sizeof(cmap));
+	for (i = 0; i < 256; i++) {
+		sc->sc_cmap_red[i] = cmap[j];
+		sc->sc_cmap_green[i] = cmap[j + 1];
+		sc->sc_cmap_blue[i] = cmap[j + 2];
+		pm2fb_putpalreg(sc, i, cmap[j], cmap[j + 1], cmap[j + 2]);
+		j += 3;
 	}
 }
 
@@ -748,8 +744,15 @@ pm2fb_init(struct pm2fb_softc *sc)
 {
 	pm2fb_flush_engine(sc);
 
-	pm2fb_wait(sc, 8);
+	pm2fb_wait(sc, 9);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_SCREEN_BASE, 0);
+	/* set aperture endianness */
+#if BYTE_ORDER == BIG_ENDIAN
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_APERTURE1_CONTROL,
+		PM2_AP_BYTESWAP | PM2_AP_HALFWORDSWAP);	
+#else
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_APERTURE1_CONTROL, 0);
+#endif	
 #if 0
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_BYPASS_MASK, 
 		0xffffffff);
