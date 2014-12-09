@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.12 2014/12/03 13:04:32 msaitoh Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.13 2014/12/09 19:50:52 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -238,3 +238,79 @@ sys/dev/ppbus/ppbus_base.c			1.20
 	Fix debugging format in ppbus(4) reported by John D. Baker.
 	Fixes PR/49281.
 	[snj, ticket #1190]
+
+xsrc/external/mit/xorg-server/dist/configure    patch
+xsrc/external/mit/xorg-server/dist/configure.ac patch
+xsrc/external/mit/xorg-server/dist/Xext/xcmisc.c patch
+xsrc/external/mit/xorg-server/dist/Xext/xvdisp.c patch
+xsrc/external/mit/xorg-server/dist/Xi/chgdctl.c patch
+xsrc/external/mit/xorg-server/dist/Xi/chgfctl.c patch
+xsrc/external/mit/xorg-server/dist/Xi/sendexev.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xiallowev.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xichangecursor.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xichangehierarchy.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xigetclientpointer.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xigrabdev.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xipassivegrab.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xiproperty.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xiquerydevice.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xiquerypointer.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xiselectev.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xisetclientpointer.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xisetdevfocus.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xiwarppointer.c patch
+xsrc/external/mit/xorg-server/dist/dbe/dbe.c    patch
+xsrc/external/mit/xorg-server/dist/dix/dispatch.c patch
+xsrc/external/mit/xorg-server/dist/dix/region.c patch
+xsrc/external/mit/xorg-server/dist/glx/glxcmds.c patch
+xsrc/external/mit/xorg-server/dist/glx/glxcmdsswap.c patch
+xsrc/external/mit/xorg-server/dist/glx/glxserver.h patch
+xsrc/external/mit/xorg-server/dist/glx/indirect_program.c patch
+xsrc/external/mit/xorg-server/dist/glx/indirect_reqsize.c patch
+xsrc/external/mit/xorg-server/dist/glx/indirect_reqsize.h patch
+xsrc/external/mit/xorg-server/dist/glx/indirect_texture_compression.c patch
+xsrc/external/mit/xorg-server/dist/glx/indirect_util.c patch
+xsrc/external/mit/xorg-server/dist/glx/rensize.c patch
+xsrc/external/mit/xorg-server/dist/glx/single2.c patch
+xsrc/external/mit/xorg-server/dist/glx/single2swap.c patch
+xsrc/external/mit/xorg-server/dist/glx/singlepix.c patch
+xsrc/external/mit/xorg-server/dist/glx/singlepixswap.c patch
+xsrc/external/mit/xorg-server/dist/glx/swap_interval.c patch
+xsrc/external/mit/xorg-server/dist/glx/unpack.h patch
+xsrc/external/mit/xorg-server/dist/hw/xfree86/dri2/dri2ext.c patch
+xsrc/external/mit/xorg-server/dist/include/dix.h patch
+xsrc/external/mit/xorg-server/dist/include/regionstr.h patch
+xsrc/external/mit/xorg-server/dist/os/access.c patch
+xsrc/external/mit/xorg-server/dist/os/rpcauth.c patch
+xsrc/external/mit/xorg-server/dist/randr/rrsdispatch.c patch
+xsrc/external/mit/xorg-server/dist/render/render.c patch
+xsrc/external/mit/xorg-server/dist/test/Makefile.am patch
+xsrc/external/mit/xorg-server/dist/test/xi1/Makefile.am patch
+xsrc/external/mit/xorg-server/dist/test/xi1/protocol-xchangedevicecontrol.c patch
+xsrc/external/mit/xorg-server/dist/test/xi2/protocol-xigetclientpointer.c patch
+xsrc/external/mit/xorg-server/dist/test/xi2/protocol-xiquerypointer.c patch
+xsrc/external/mit/xorg-server/dist/test/xi2/protocol-xiwarppointer.c patch
+xsrc/external/mit/xorg-server/dist/xfixes/select.c patch
+
+	apply fixes for X.Org Security Advisory:  Dec. 9, 2014
+	Protocol handling issues in X Window System servers
+	included are fixes for:
+	denial of service due to unchecked malloc in client authentication
+	CVE-2014-8091
+	integer overflows calculating memory needs for requests
+	CVE-2014-8092
+	CVE-2014-8093
+	CVE-2014-8094
+	out of bounds access due to not validating length or offset values
+	in requests
+	CVE-2014-8095
+	CVE-2014-8096
+	CVE-2014-8097
+	CVE-2014-8098
+	CVE-2014-8099
+	CVE-2014-8100
+	CVE-2014-8101
+	CVE-2014-8102
+	CVE-2014-8103
+	[mrg, ticket #1208]
+
