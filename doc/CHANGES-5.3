@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.82 2014/11/23 04:52:53 snj Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.83 2014/12/09 19:59:09 snj Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -1188,4 +1188,58 @@ share/zoneinfo/zone1970.tab			patch
 	  at various times in 2014.
 	* Changes to historical data.
 	[apb, ticket #1934]
+
+xsrc/external/mit/xorg-server/dist/Xext/xcmisc.c patch
+xsrc/external/mit/xorg-server/dist/Xext/xvdisp.c patch
+xsrc/external/mit/xorg-server/dist/Xi/chgdctl.c patch
+xsrc/external/mit/xorg-server/dist/Xi/chgfctl.c patch
+xsrc/external/mit/xorg-server/dist/Xi/sendexev.c patch
+xsrc/external/mit/xorg-server/dist/Xi/xiproperty.c patch
+xsrc/external/mit/xorg-server/dist/dbe/dbe.c    patch
+xsrc/external/mit/xorg-server/dist/dix/dispatch.c patch
+xsrc/external/mit/xorg-server/dist/glx/glxcmds.c patch
+xsrc/external/mit/xorg-server/dist/glx/glxcmdsswap.c patch
+xsrc/external/mit/xorg-server/dist/glx/glxserver.h patch
+xsrc/external/mit/xorg-server/dist/glx/indirect_program.c patch
+xsrc/external/mit/xorg-server/dist/glx/indirect_reqsize.c patch
+xsrc/external/mit/xorg-server/dist/glx/indirect_reqsize.h patch
+xsrc/external/mit/xorg-server/dist/glx/indirect_texture_compression.c patch
+xsrc/external/mit/xorg-server/dist/glx/indirect_util.c patch
+xsrc/external/mit/xorg-server/dist/glx/rensize.c patch
+xsrc/external/mit/xorg-server/dist/glx/single2.c patch
+xsrc/external/mit/xorg-server/dist/glx/single2swap.c patch
+xsrc/external/mit/xorg-server/dist/glx/singlepix.c patch
+xsrc/external/mit/xorg-server/dist/glx/singlepixswap.c patch
+xsrc/external/mit/xorg-server/dist/glx/swap_interval.c patch
+xsrc/external/mit/xorg-server/dist/glx/unpack.h patch
+xsrc/external/mit/xorg-server/dist/hw/xfree86/dri2/dri2ext.c patch
+xsrc/external/mit/xorg-server/dist/include/dix.h patch
+xsrc/external/mit/xorg-server/dist/include/misc.h patch
+xsrc/external/mit/xorg-server/dist/os/access.c  patch
+xsrc/external/mit/xorg-server/dist/os/rpcauth.c patch
+xsrc/external/mit/xorg-server/dist/randr/rrsdispatch.c patch
+xsrc/external/mit/xorg-server/dist/render/render.c patch
+xsrc/external/mit/xorg-server/dist/xfixes/select.c patch
+
+	apply fixes for X.Org Security Advisory:  Dec. 9, 2014
+	Protocol handling issues in X Window System servers
+	included are fixes for:
+	denial of service due to unchecked malloc in client authentication
+	CVE-2014-8091
+	integer overflows calculating memory needs for requests
+	CVE-2014-8092
+	CVE-2014-8093
+	CVE-2014-8094
+	out of bounds access due to not validating length or offset values
+	in requests
+	CVE-2014-8095
+	CVE-2014-8096
+	CVE-2014-8097
+	CVE-2014-8098
+	CVE-2014-8099
+	CVE-2014-8100
+	CVE-2014-8101
+	CVE-2014-8102
+	CVE-2014-8103
+	[mrg, ticket #1935]
 
