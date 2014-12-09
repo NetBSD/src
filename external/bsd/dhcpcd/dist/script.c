@@ -335,7 +335,13 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 		}
 	}
 	*--p = '\0';
-	if (strcmp(reason, "TEST") == 0 ||
+	if (strcmp(reason, "STOPPED") == 0) {
+		env[9] = strdup("if_up=false");
+		if (ifo->options & DHCPCD_RELEASE)
+			env[10] = strdup("if_down=true");
+		else
+			env[10] = strdup("if_down=false");
+	} else if (strcmp(reason, "TEST") == 0 ||
 	    strcmp(reason, "PREINIT") == 0 ||
 	    strcmp(reason, "CARRIER") == 0 ||
 	    strcmp(reason, "UNKNOWN") == 0)
