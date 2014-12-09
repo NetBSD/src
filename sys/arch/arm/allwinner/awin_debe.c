@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.6.2.5 2014/12/01 13:23:49 martin Exp $ */
+/* $NetBSD: awin_debe.c,v 1.6.2.6 2014/12/09 19:21:09 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
 #define AWIN_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.6.2.5 2014/12/01 13:23:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.6.2.6 2014/12/09 19:21:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -473,6 +473,13 @@ awin_debe_set_videomode(const struct videomode *mode)
 				 AWIN_DEBE_ATTCTL1_LAY_FBFMT);
 		val &= ~AWIN_DEBE_ATTCTL1_LAY_BRSWAPEN;
 		val &= ~AWIN_DEBE_ATTCTL1_LAY_FBPS;
+#if __ARMEB__
+		val |= __SHIFTIN(AWIN_DEBE_ATTCTL1_LAY_FBPS_32BPP_BGRA,
+				 AWIN_DEBE_ATTCTL1_LAY_FBPS);
+#else
+		val |= __SHIFTIN(AWIN_DEBE_ATTCTL1_LAY_FBPS_32BPP_ARGB,
+				 AWIN_DEBE_ATTCTL1_LAY_FBPS);
+#endif
 		DEBE_WRITE(sc, AWIN_DEBE_ATTCTL1_REG, val);
 
 		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
