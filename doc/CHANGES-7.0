@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.125 2014/12/09 20:24:40 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.126 2014/12/10 17:37:26 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3317,9 +3317,9 @@ xsrc/external/mit/xorg-server/dist/glx/singlepixswap.c patch
 xsrc/external/mit/xorg-server/dist/glx/swap_interval.c patch
 xsrc/external/mit/xorg-server/dist/glx/unpack.h patch
 xsrc/external/mit/xorg-server/dist/hw/xfree86/dri2/dri2ext.c patch
-xsrc/external/mit/xorg-server/dist/include/dix.h patch
+xsrc/external/mit/xorg-server/dist/include/dix.h patch, 1.3
 xsrc/external/mit/xorg-server/dist/include/regionstr.h patch
-xsrc/external/mit/xorg-server/dist/os/access.c patch
+xsrc/external/mit/xorg-server/dist/os/access.c patch, 1.3
 xsrc/external/mit/xorg-server/dist/os/rpcauth.c patch
 xsrc/external/mit/xorg-server/dist/randr/rrsdispatch.c patch
 xsrc/external/mit/xorg-server/dist/render/render.c patch
