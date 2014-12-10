@@ -1,7 +1,7 @@
-/*	$NetBSD: gpos_27.c,v 1.1.1.4 2012/06/04 17:56:35 christos Exp $	*/
+/*	$NetBSD: gpos_27.c,v 1.1.1.5 2014/12/10 02:25:30 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -63,7 +63,7 @@ totext_gpos(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 
 	for (i = 0; i < 3; i++) {
-		RETERR(txt_totext(&region, target));
+		RETERR(txt_totext(&region, ISC_TRUE, target));
 		if (i != 2)
 			RETERR(str_totext(" ", target));
 	}

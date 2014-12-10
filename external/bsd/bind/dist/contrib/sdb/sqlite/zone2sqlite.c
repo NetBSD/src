@@ -1,4 +1,4 @@
-/*	$NetBSD: zone2sqlite.c,v 1.1.1.6 2013/07/27 15:23:02 christos Exp $	*/
+/*	$NetBSD: zone2sqlite.c,v 1.1.1.7 2014/12/10 02:25:22 christos Exp $	*/
 
 /*
  * Copyright (C) 2007  Internet Software Consortium.
@@ -139,7 +139,7 @@ addrdata(dns_name_t *name, dns_ttl_t ttl, dns_rdata_t *rdata)
     res = sqlite3_exec(dbi.db, sql, add_rdata_cb, NULL, &errmsg);
     sqlite3_free(sql);
 
-    if (result != SQLITE_OK) {
+    if (res != SQLITE_OK) {
 	fprintf(stderr, "INSERT failed: %s\n", errmsg);
 	closeandexit(1);
     }

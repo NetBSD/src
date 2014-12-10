@@ -1,4 +1,4 @@
-/*	$NetBSD: acconfig.h,v 1.1.1.6 2014/02/28 17:40:04 christos Exp $	*/
+/*	$NetBSD: acconfig.h,v 1.1.1.7 2014/12/10 02:25:10 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -74,6 +74,9 @@
 
 /** define if arc4random() exists */
 #undef HAVE_ARC4RANDOM
+
+/** define if arc4random_addrandom() exists */
+#undef HAVE_ARC4RANDOM_ADDRANDOM
 
 /**
  * define if pthread_setconcurrency() should be called to tell the

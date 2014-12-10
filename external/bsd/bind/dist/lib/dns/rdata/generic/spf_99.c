@@ -1,4 +1,4 @@
-/*	$NetBSD: spf_99.c,v 1.1.1.5 2014/02/28 17:40:15 christos Exp $	*/
+/*	$NetBSD: spf_99.c,v 1.1.1.6 2014/12/10 02:25:30 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -66,7 +66,7 @@ totext_spf(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 
 	while (region.length > 0) {
-		RETERR(txt_totext(&region, target));
+		RETERR(txt_totext(&region, ISC_TRUE, target));
 		if (region.length > 0)
 			RETERR(str_totext(" ", target));
 	}

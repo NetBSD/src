@@ -1,4 +1,4 @@
-/*	$NetBSD: host.c,v 1.1.1.9 2014/07/08 04:45:08 spz Exp $	*/
+/*	$NetBSD: host.c,v 1.1.1.10 2014/12/10 02:25:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -767,6 +767,9 @@ parse_args(isc_boolean_t is_batchfile, int argc, char **argv) {
 			if (!lookup->rdtypeset ||
 			    lookup->rdtype != dns_rdatatype_axfr)
 				lookup->rdtype = dns_rdatatype_any;
+#ifdef WITH_IDN
+			idnoptions = 0;
+#endif
 			list_type = dns_rdatatype_any;
 			list_addresses = ISC_FALSE;
 			lookup->rdtypeset = ISC_TRUE;

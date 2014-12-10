@@ -14,8 +14,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.13 2012/01/04 23:46:49 tbox Exp 
-
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
@@ -45,13 +43,14 @@ if $test_fixed; then
 else
     echo "I: Checking order fixed behaves as cyclic when disabled (master)"
     ret=0
+    matches=0
     for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
     do
         j=`expr $i % 4`
         $DIG +nosea +nocomm +nocmd +noquest +noadd +noauth +nocomm +nostat +short \
                 -p 5300 @10.53.0.1 fixed.example > dig.out.fixed  || ret=1
         if [ $i -le 4 ]; then
-            cp dig.out.fixed  dig.out.$j
+            cp dig.out.fixed dig.out.$j
         else
             cmp -s dig.out.fixed dig.out.$j && matches=`expr $matches + 1`
         fi
@@ -248,7 +247,7 @@ status=`expr $status + $ret`
 
 echo "I: Shutting down slave"
 
-(cd ..; sh stop.sh rrsetorder ns2 )
+(cd ..; $SHELL stop.sh rrsetorder ns2 )
 
 echo "I: Checking for slave's on disk copy of zone"
 
@@ -260,7 +259,7 @@ fi
 
 echo "I: Re-starting slave"
 
-(cd ..; sh start.sh --noclean rrsetorder ns2 )
+(cd ..; $SHELL start.sh --noclean rrsetorder ns2 )
 
 #
 #

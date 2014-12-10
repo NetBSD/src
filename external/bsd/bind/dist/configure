@@ -732,6 +732,7 @@ ISC_PLATFORM_NEEDSPRINTF
 READLINE_LIB
 ISC_PLATFORM_NEEDSTRCASESTR
 ISC_PLATFORM_NEEDSTRLCAT
+LWRES_PLATFORM_NEEDSTRLCPY
 ISC_PLATFORM_NEEDSTRLCPY
 GENRANDOMLIB
 LWRES_PLATFORM_NEEDSTRTOUL
@@ -830,6 +831,7 @@ OPENSSLGOSTLINKOBJS
 DST_OPENSSL_INC
 HAVE_SIT
 ISC_PLATFORM_USESIT
+INSTALL_LIBRARY
 ISC_THREAD_DIR
 THREADOPTSRCS
 THREADOPTOBJS
@@ -972,7 +974,9 @@ with_gnu_ld
 with_sysroot
 enable_libtool_lock
 enable_libbind
+enable_warn_error
 enable_developer
+enable_seccomp
 with_python
 enable_kqueue
 enable_epoll
@@ -1661,7 +1665,10 @@ Optional Features:
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-libbind	  deprecated
+  --enable-warn-error	  turn on -Werror when compiling
   --enable-developer      enable developer build settings
+  --enable-seccomp        enable support for libseccomp sysstem call filtering
+                          [default=no]
   --enable-kqueue         use BSD kqueue when available [default=yes]
   --enable-epoll          use Linux epoll when available [default=auto]
   --enable-devpoll        use /dev/poll when available [default=yes]
@@ -1754,10 +1761,12 @@ Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
 
 Professional support for BIND is provided by Internet Systems Consortium,
-Inc., doing business as DNSco.  Information about paid support options is
-available at http://www.dns-co.com/solutions/.  Free support is provided by
-our user community via a mailing list.  Information on public email lists
-is available at https://www.isc.org/community/mailing-list/.
+Inc.  Information about paid support and training options is available at
+https://www.isc.org/support.
+
+Help can also often be found on the BIND Users mailing list
+(https://lists.isc.org/mailman/listinfo/bind-users) or in the #bind
+channel of the Freenode IRC service.
 
 Report bugs to <bind9-bugs@isc.org>.
 BIND home page: <https://www.isc.org/downloads/BIND/>.
@@ -11398,6 +11407,12 @@ It is available from http://www.isc.org as a separate download." "$LINENO" 5
 		;;
 esac
 
+# Check whether --enable-warn_error was given.
+if test "${enable_warn_error+set}" = set; then :
+  enableval=$enable_warn_error;
+fi
+
+
 # Check whether --enable-developer was given.
 if test "${enable_developer+set}" = set; then :
   enableval=$enable_developer;
@@ -11412,8 +11427,147 @@ yes)
 	test "${with_dlz_filesystem+set}" = set || with_dlz_filesystem=yes
 	test "${enable_symtable+set}" = set || enable_symtable=all
 	test "${enable_sit+set}" = set || enable_sit=yes
+	test "${enable_warn_error+set}" = set || enable_warn_error=yes
 	;;
 esac
+
+#libseccomp sandboxing
+# Check whether --enable-seccomp was given.
+if test "${enable_seccomp+set}" = set; then :
+  enableval=$enable_seccomp;
+fi
+
+case "$enable_seccomp" in
+	yes)
+	case $host_os in
+	linux*)
+		;;
+	*)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: seccomp is not supported on non-linux platforms; disabling it" >&5
+$as_echo "$as_me: WARNING: seccomp is not supported on non-linux platforms; disabling it" >&2;}
+		enable_seccomp=no
+		;;
+	esac
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing seccomp_init" >&5
+$as_echo_n "checking for library containing seccomp_init... " >&6; }
+if ${ac_cv_search_seccomp_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char seccomp_init ();
+int
+main ()
+{
+return seccomp_init ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' seccomp; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_seccomp_init=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_seccomp_init+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_seccomp_init+:} false; then :
+
+else
+  ac_cv_search_seccomp_init=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_seccomp_init" >&5
+$as_echo "$ac_cv_search_seccomp_init" >&6; }
+ac_res=$ac_cv_search_seccomp_init
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+	if test "$ac_cv_search_seccomp_init" = "-lseccomp" ; then
+		if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+		#include <stdio.h>
+		#include <stdlib.h>
+		#include <errno.h>
+		#include <sys/prctl.h>
+		#include <linux/seccomp.h>
+
+		int main(void)
+		{
+			int ret;
+
+			ret = prctl(PR_GET_SECCOMP, 0, 0, 0, 0);
+			if (ret < 0) {
+				switch (errno) {
+				case ENOSYS:
+					return 1;
+				case EINVAL:
+					return 1;
+				default:
+					return 1;
+				}
+			}
+			ret =
+			prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, NULL, 0, 0);
+			if (ret < 0) {
+				switch (errno) {
+				case EINVAL:
+					return 1;
+				case EFAULT:
+					return 0;
+				default:
+					return 1;
+			}
+		}
+	return 1;
+	}
+
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+
+$as_echo "#define HAVE_LIBSECCOMP 1" >>confdefs.h
+
+
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+	fi
+		;;
+	*)
+		;;
+esac
+
 #
 # Make very sure that these are the first files processed by
 # config.status, since we use the processed output as the input for
@@ -11613,15 +11767,22 @@ else
 fi
 
 
+python="python python3 python3.4 python3.3 python3.2 python3.1 python3.0 python2 python2.7 python2.6 python2.5 python2.4"
+testscript='try: import argparse
+except: exit(1)'
 case "$use_python" in
 	no)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for python support" >&5
+$as_echo_n "checking for python support... " >&6; }
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
 $as_echo "disabled" >&6; }
 		;;
 	unspec|yes|*)
 		case "$use_python" in
 		unspec|yes|'')
-			for ac_prog in python
+			for p in $python
+			do
+				for ac_prog in $p
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -11666,9 +11827,43 @@ fi
   test -n "$PYTHON" && break
 done
 
+				if test "X$PYTHON" == "X"; then
+					continue;
+				fi
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking python module 'argparse'" >&5
+$as_echo_n "checking python module 'argparse'... " >&6; }
+				if ${PYTHON:-false} -c "$testscript"; then
+					{ $as_echo "$as_me:${as_lineno-$LINENO}: result: found, using $PYTHON" >&5
+$as_echo "found, using $PYTHON" >&6; }
+					break
+				fi
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+				unset ac_cv_path_PYTHON
+				unset PYTHON
+			done
+			if test "X$PYTHON" == "X"
+			then
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for python support" >&5
+$as_echo_n "checking for python support... " >&6; }
+				case "$use_python" in
+				unspec)
+					{ $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
+$as_echo "disabled" >&6; }
+					;;
+				yes)
+					as_fn_error $? "missing python" "$LINENO" 5
+					;;
+				esac
+			fi
 			;;
 		*)
-			for ac_prog in $use_python
+			case "$use_python" in
+			/*)
+				PYTHON="$use_python"
+				;;
+			*)
+				for ac_prog in $use_python
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -11713,44 +11908,19 @@ fi
   test -n "$PYTHON" && break
 done
 
+				;;
+			esac
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking python module 'argparse'" >&5
+$as_echo_n "checking python module 'argparse'... " >&6; }
+			if ${PYTHON:-false} -c "$testscript"; then
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: found, using $PYTHON" >&5
+$as_echo "found, using $PYTHON" >&6; }
+				break
+			else
+				as_fn_error $? "not found" "$LINENO" 5
+			fi
 			;;
 		esac
-		if test "X$PYTHON" == "X"
-		then
-			case "$use_python" in
-			unspec)
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: disabled" >&5
-$as_echo "disabled" >&6; }
-				;;
-			yes|*)
-				as_fn_error $? "missing python" "$LINENO" 5
-				;;
-			esac
-			break
-		fi
-		testscript='try: import argparse
-except: exit(1)'
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking python module 'argparse'" >&5
-$as_echo_n "checking python module 'argparse'... " >&6; }
-		if $PYTHON -c "$testscript"; then
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: found, using $PYTHON" >&5
-$as_echo "found, using $PYTHON" >&6; }
-		else
-			case "$use_python" in
-			unspec)
-				PYTHON=""
-
-
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: not found, python disabled" >&5
-$as_echo "not found, python disabled" >&6; }
-				;;
-			yes)
-			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no found" >&5
-$as_echo "no found" >&6; }
-			as_fn_error $? "python 'argparse' module not supported" "$LINENO" 5
-				;;
-			esac
-		fi
 		;;
 esac
 
@@ -12450,7 +12620,7 @@ case "$host" in
 	# as it breaks how the two halves (Basic and Advanced) of the IPv6
 	# Socket API were designed to be used but we have to live with it.
 	# Define _GNU_SOURCE to pull in the IPv6 Advanced Socket API.
-	*-linux* | *-kfreebsd*-gnu)
+	*-linux* | *-kfreebsd*-gnu*)
 		STD_CDEFINES="$STD_CDEFINES -D_GNU_SOURCE"
 		CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
 		;;
@@ -14113,11 +14283,18 @@ fi
 
 
 #
-# Do we have arc4random() ?
+# Do we have arc4random(), etc ? arc4random_addrandom() has been removed
+# from OpenBSD 5.5 onwards.
 #
 ac_fn_c_check_func "$LINENO" "arc4random" "ac_cv_func_arc4random"
 if test "x$ac_cv_func_arc4random" = xyes; then :
   $as_echo "#define HAVE_ARC4RANDOM 1" >>confdefs.h
+
+fi
+
+ac_fn_c_check_func "$LINENO" "arc4random_addrandom" "ac_cv_func_arc4random_addrandom"
+if test "x$ac_cv_func_arc4random_addrandom" = xyes; then :
+  $as_echo "#define HAVE_ARC4RANDOM_ADDRANDOM 1" >>confdefs.h
 
 fi
 
@@ -15162,6 +15339,7 @@ $as_echo "yes" >&6; }
 		LIBTOOL_MODE_COMPILE='--mode=compile --tag=CC'
 		LIBTOOL_MODE_INSTALL='--mode=install --tag=CC'
 		LIBTOOL_MODE_LINK='--mode=link --tag=CC'
+		INSTALL_LIBRARY='${INSTALL_PROGRAM}'
 		case "$host" in
 		*) LIBTOOL_ALLOW_UNDEFINED= ;;
 		esac
@@ -15183,8 +15361,10 @@ $as_echo "no" >&6; }
 		LIBTOOL_MODE_LINK=
 		LIBTOOL_ALLOW_UNDEFINED=
 		LIBTOOL_IN_MAIN=
+		INSTALL_LIBRARY='${INSTALL_DATA}'
 		;;
 esac
+
 
 #
 # was --enable-native-pkcs11 specified?
@@ -16300,10 +16480,30 @@ esac
 
 if test "X$libxml2_libs" != "X"
 then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
 	CFLAGS="$CFLAGS $libxml2_cflags"
 	LIBS="$LIBS $libxml2_libs"
+	#
+	# Sanity check xml2-config output.
+	#
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <libxml/xmlwriter.h>
+int
+main ()
+{
+return(xmlTextWriterStartElement(NULL, NULL));
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+  as_fn_error $? "xml2-config returns badness" "$LINENO" 5
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
 
 $as_echo "#define HAVE_LIBXML2 1" >>confdefs.h
 
@@ -16332,15 +16532,26 @@ case "$use_libjson" in
 		libjson_libs=""
 		;;
 	auto|yes)
-		if test -f "/usr/include/json/json.h"
-		then
-			libjson_cflags="-I /usr/include/json"
-			have_libjson="yes"
-		elif test -f "/usr/include/json-c/json.h"
-		then
-			libjson_cflags="-I /usr/include/json-c"
-			have_libjson="yes"
-		fi
+		for d in /usr /usr/local /opt/local
+		do
+			if test -f "${d}/include/json/json.h"
+			then
+				libjson_cflags="-I ${d}/include/json"
+				if test ${d} != /usr
+				then
+					LIBS="$LIBS -L${d}/lib"
+				fi
+				have_libjson="yes"
+			elif test -f "${d}/include/json-c/json.h"
+			then
+				libjson_cflags="-I ${d}/include/json-c"
+				if test ${d} != /usr
+				then
+					LIBS="$LIBS -L${d}/lib"
+				fi
+				have_libjson="yes"
+			fi
+		done
 		;;
 	*)
 		if test -f "${use_libjson}/include/json/json.h"
@@ -16418,11 +16629,13 @@ if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: found libjson include but not library." >&5
-$as_echo "$as_me: WARNING: found libjson include but not library." >&2;}
+  as_fn_error $? "found libjson include but not library." "$LINENO" 5
 			have_libjson=""
 fi
 
+elif test "X$use_libjson" = Xyes
+then
+	as_fn_error $? "include/json{,-c}/json.h not found." "$LINENO" 5
 else
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
@@ -16616,6 +16829,9 @@ $as_echo "no" >&6; }
 		BACKTRACECFLAGS="$BACKTRACECFLAGS -Wl,+vnocompatwarnings"
 		;;
 	esac
+	if test "X$enable_warn_error" = Xyes; then
+		STD_CWARNINGS="$STD_CWARNINGS -Werror"
+	fi
 else
 	case $host in
 	*-dec-osf*)
@@ -18100,9 +18316,12 @@ fi
 ac_fn_c_check_func "$LINENO" "strlcpy" "ac_cv_func_strlcpy"
 if test "x$ac_cv_func_strlcpy" = xyes; then :
   ISC_PLATFORM_NEEDSTRLCPY="#undef ISC_PLATFORM_NEEDSTRLCPY"
+         LWRES_PLATFORM_NEEDSTRLCPY="#undef LWRES_PLATFORM_NEEDSTRLCPY"
 else
   ISC_PLATFORM_NEEDSTRLCPY="#define ISC_PLATFORM_NEEDSTRLCPY 1"
+         LWRES_PLATFORM_NEEDSTRLCPY="#define LWRES_PLATFORM_NEEDSTRLCPY 1"
 fi
+
 
 
 
@@ -18888,6 +19107,8 @@ esac
 case $ac_cv_have_if_nametoindex in
 yes)
 	ISC_PLATFORM_HAVEIFNAMETOINDEX="#define ISC_PLATFORM_HAVEIFNAMETOINDEX 1"
+	$as_echo "#define HAVE_IF_NAMETOINDEX 1" >>confdefs.h
+
 	;;
 *)
 	ISC_PLATFORM_HAVEIFNAMETOINDEX="#undef ISC_PLATFORM_HAVEIFNAMETOINDEX"
@@ -20222,7 +20443,7 @@ if test -f "${srcdir}/srcid"; then
 	. "${srcdir}/srcid"
 	BIND9_SRCID="SRCID=$SRCID"
 elif test -d "${srcdir}/.git"; then
-	BIND9_SRCID="SRCID="`(cd "${srcdir}";git log -n 1 --format=%h)`
+	BIND9_SRCID="SRCID="`(cd "${srcdir}";git rev-parse --short HEAD)`
 fi
 
 
@@ -20373,7 +20594,7 @@ fi
 
 if test "$dlopen" = "yes"; then
 	case $host in
-		*-linux*)
+		*-linux*|*-gnu*)
 			SO_CFLAGS="-fPIC"
 			SO_LDFLAGS=""
 			if test "$have_dl" = "yes"
@@ -20601,7 +20822,7 @@ test -n "$PG_CONFIG" || PG_CONFIG="not found"
 	fi
 fi
 
-if test "$use_dlz_postgres" = "yes"
+if test "$use_dlz_postgres" = "yes/include"
 then
 	# User did not specify path and Postgres didn't say - guess it
 	pgdirs="/usr /usr/local /usr/local/pgsql /usr/pkg"
@@ -20616,7 +20837,7 @@ then
 	done
 fi
 
-if test "$use_dlz_postgres" = "yes"
+if test "$use_dlz_postgres" = "yes/include"
 then
 	# Still no joy, give up
 
@@ -21424,7 +21645,7 @@ ac_config_commands="$ac_config_commands chmod"
 # elsewhere if there's a good reason for doing so.
 #
 
-ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/check/Makefile bin/confgen/Makefile bin/confgen/unix/Makefile bin/delv/Makefile bin/dig/Makefile bin/dnssec/Makefile bin/named/Makefile bin/named/unix/Makefile bin/nsupdate/Makefile bin/pkcs11/Makefile bin/python/Makefile bin/python/dnssec-checkds.py bin/python/dnssec-coverage.py bin/rndc/Makefile bin/tests/Makefile bin/tests/atomic/Makefile bin/tests/db/Makefile bin/tests/dst/Makefile bin/tests/dst/Kdh.+002+18602.key bin/tests/dst/Kdh.+002+18602.private bin/tests/dst/Kdh.+002+48957.key bin/tests/dst/Kdh.+002+48957.private bin/tests/dst/Ktest.+001+00002.key bin/tests/dst/Ktest.+001+54622.key bin/tests/dst/Ktest.+001+54622.private bin/tests/dst/Ktest.+003+23616.key bin/tests/dst/Ktest.+003+23616.private bin/tests/dst/Ktest.+003+49667.key bin/tests/dst/dst_2_data bin/tests/dst/t2_data_1 bin/tests/dst/t2_data_2 bin/tests/dst/t2_dsasig bin/tests/dst/t2_rsasig bin/tests/hashes/Makefile bin/tests/headerdep_test.sh bin/tests/master/Makefile bin/tests/mem/Makefile bin/tests/names/Makefile bin/tests/net/Makefile bin/tests/pkcs11/Makefile bin/tests/pkcs11/benchmarks/Makefile bin/tests/rbt/Makefile bin/tests/resolver/Makefile bin/tests/sockaddr/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/dlz/prereq.sh bin/tests/system/dlzexternal/Makefile bin/tests/system/dlzexternal/ns1/named.conf bin/tests/system/dlzredir/prereq.sh bin/tests/system/filter-aaaa/Makefile bin/tests/system/geoip/Makefile bin/tests/system/inline/checkdsa.sh bin/tests/system/lwresd/Makefile bin/tests/system/sit/prereq.sh bin/tests/system/rpz/Makefile bin/tests/system/rsabigexponent/Makefile bin/tests/system/tkey/Makefile bin/tests/system/tsiggss/Makefile bin/tests/tasks/Makefile bin/tests/timers/Makefile bin/tests/virtual-time/Makefile bin/tests/virtual-time/conf.sh bin/tools/Makefile contrib/scripts/check-secure-delegation.pl contrib/scripts/zone-edit.sh doc/Makefile doc/arm/Makefile doc/doxygen/Doxyfile doc/doxygen/Makefile doc/doxygen/doxygen-input-filter doc/misc/Makefile doc/xsl/Makefile doc/xsl/isc-docbook-chunk.xsl doc/xsl/isc-docbook-html.xsl doc/xsl/isc-docbook-latex.xsl doc/xsl/isc-manpage.xsl isc-config.sh lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/dns/tests/Makefile lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/tests/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/tests/Makefile lib/tests/include/Makefile lib/tests/include/tests/Makefile lib/samples/Makefile lib/samples/Makefile-postinstall unit/Makefile unit/unittest.sh"
+ac_config_files="$ac_config_files make/Makefile make/mkdep Makefile bin/Makefile bin/check/Makefile bin/confgen/Makefile bin/confgen/unix/Makefile bin/delv/Makefile bin/dig/Makefile bin/dnssec/Makefile bin/named/Makefile bin/named/unix/Makefile bin/nsupdate/Makefile bin/pkcs11/Makefile bin/python/Makefile bin/python/dnssec-checkds.py bin/python/dnssec-coverage.py bin/rndc/Makefile bin/tests/Makefile bin/tests/atomic/Makefile bin/tests/db/Makefile bin/tests/dst/Makefile bin/tests/dst/Kdh.+002+18602.key bin/tests/dst/Kdh.+002+18602.private bin/tests/dst/Kdh.+002+48957.key bin/tests/dst/Kdh.+002+48957.private bin/tests/dst/Ktest.+001+00002.key bin/tests/dst/Ktest.+001+54622.key bin/tests/dst/Ktest.+001+54622.private bin/tests/dst/Ktest.+003+23616.key bin/tests/dst/Ktest.+003+23616.private bin/tests/dst/Ktest.+003+49667.key bin/tests/dst/dst_2_data bin/tests/dst/t2_data_1 bin/tests/dst/t2_data_2 bin/tests/dst/t2_dsasig bin/tests/dst/t2_rsasig bin/tests/hashes/Makefile bin/tests/headerdep_test.sh bin/tests/master/Makefile bin/tests/mem/Makefile bin/tests/names/Makefile bin/tests/net/Makefile bin/tests/pkcs11/Makefile bin/tests/pkcs11/benchmarks/Makefile bin/tests/rbt/Makefile bin/tests/resolver/Makefile bin/tests/sockaddr/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/builtin/Makefile bin/tests/system/dlz/prereq.sh bin/tests/system/dlzexternal/Makefile bin/tests/system/dlzexternal/ns1/named.conf bin/tests/system/dlzredir/prereq.sh bin/tests/system/filter-aaaa/Makefile bin/tests/system/geoip/Makefile bin/tests/system/inline/checkdsa.sh bin/tests/system/lwresd/Makefile bin/tests/system/sit/prereq.sh bin/tests/system/rpz/Makefile bin/tests/system/rsabigexponent/Makefile bin/tests/system/tkey/Makefile bin/tests/system/tsiggss/Makefile bin/tests/tasks/Makefile bin/tests/timers/Makefile bin/tests/virtual-time/Makefile bin/tests/virtual-time/conf.sh bin/tools/Makefile contrib/scripts/check-secure-delegation.pl contrib/scripts/zone-edit.sh doc/Makefile doc/arm/Makefile doc/doxygen/Doxyfile doc/doxygen/Makefile doc/doxygen/doxygen-input-filter doc/misc/Makefile doc/xsl/Makefile doc/xsl/isc-docbook-chunk.xsl doc/xsl/isc-docbook-html.xsl doc/xsl/isc-docbook-latex.xsl doc/xsl/isc-manpage.xsl isc-config.sh lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/dns/tests/Makefile lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/isc/$arch/Makefile lib/isc/$arch/include/Makefile lib/isc/$arch/include/isc/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/tests/Makefile lib/isc/nls/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/unix/include/pkcs11/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/tests/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/tests/Makefile lib/tests/include/Makefile lib/tests/include/tests/Makefile lib/samples/Makefile lib/samples/Makefile-postinstall unit/Makefile unit/unittest.sh"
 
 
 #
@@ -22468,6 +22689,7 @@ do
     "bin/tests/sockaddr/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/sockaddr/Makefile" ;;
     "bin/tests/system/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/Makefile" ;;
     "bin/tests/system/conf.sh") CONFIG_FILES="$CONFIG_FILES bin/tests/system/conf.sh" ;;
+    "bin/tests/system/builtin/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/builtin/Makefile" ;;
     "bin/tests/system/dlz/prereq.sh") CONFIG_FILES="$CONFIG_FILES bin/tests/system/dlz/prereq.sh" ;;
     "bin/tests/system/dlzexternal/Makefile") CONFIG_FILES="$CONFIG_FILES bin/tests/system/dlzexternal/Makefile" ;;
     "bin/tests/system/dlzexternal/ns1/named.conf") CONFIG_FILES="$CONFIG_FILES bin/tests/system/dlzexternal/ns1/named.conf" ;;
@@ -22544,6 +22766,7 @@ do
     "lib/lwres/include/lwres/netdb.h") CONFIG_FILES="$CONFIG_FILES lib/lwres/include/lwres/netdb.h" ;;
     "lib/lwres/include/lwres/platform.h") CONFIG_FILES="$CONFIG_FILES lib/lwres/include/lwres/platform.h" ;;
     "lib/lwres/man/Makefile") CONFIG_FILES="$CONFIG_FILES lib/lwres/man/Makefile" ;;
+    "lib/lwres/tests/Makefile") CONFIG_FILES="$CONFIG_FILES lib/lwres/tests/Makefile" ;;
     "lib/lwres/unix/Makefile") CONFIG_FILES="$CONFIG_FILES lib/lwres/unix/Makefile" ;;
     "lib/lwres/unix/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/lwres/unix/include/Makefile" ;;
     "lib/lwres/unix/include/lwres/Makefile") CONFIG_FILES="$CONFIG_FILES lib/lwres/unix/include/lwres/Makefile" ;;
@@ -23898,6 +24121,8 @@ test "$enable_fixed" = "yes" && \
     echo "    Allow 'fixed' rrset-order (--enable-fixed-rrset)"
 test "$enable_filter" = "yes" && \
     echo "    AAAA filtering (--enable-filter-aaaa)"
+test "$enable_seccomp" = yes && \
+    echo "    Use libseccomp system call filtering (--enable-seccomp)"
 test "$want_backtrace" = "yes" && \
     echo "    Print backtrace on crash (--enable-backtrace)"
 test "$want_symtable" = "minimal" && \
@@ -23951,6 +24176,8 @@ test "X$CRYPTO" = "X" -o "$OPENSSL_GOST" = "yes" -o "$PKCS11_GOST" = "yes" || \
 test "X$CRYPTO" = "X" -o "$OPENSSL_ECDSA" = "yes" -o "$PKCS11_ECDSA" = "yes" || \
     echo "    ECDSA algorithm support (--with-ecdsa)"
 
+test "$enable_seccomp" = yes || \
+    echo "    Use libseccomp system call filtering (--enable-seccomp)"
 test "$want_backtrace" = "yes" || \
     echo "    Print backtrace on crash (--enable-backtrace)"
 test "$use_libtool" = "yes" || echo "    Use GNU libtool (--with-libtool)"
@@ -23960,6 +24187,11 @@ test "X$PYTHON" = "X" && echo "    Python tools (--with-python)"
 test "X$libxml2_libs" = "X" && echo "    XML statistics (--with-libxml2)"
 test "X$have_libjson" = "X" && echo "    JSON statistics (--with-libjson)"
 
+if test "X$ac_unrecognized_opts" != "X"; then
+    echo
+    echo "Unrecognized options:"
+    echo "    $ac_unrecognized_opts"
+fi
 echo "========================================================================"
 
 if test "X$CRYPTO" = "X"; then

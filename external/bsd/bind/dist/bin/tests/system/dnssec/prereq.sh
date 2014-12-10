@@ -15,4 +15,21 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-exec sh ../testcrypto.sh
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
+
+if $PERL -e 'use Net::DNS;' 2>/dev/null
+then
+    if $PERL -e 'use Net::DNS; die if ($Net::DNS::VERSION >= 0.69 && $Net::DNS::VERSION <= 0.70);' 2>/dev/null
+    then
+        :
+    else
+        echo "I:Net::DNS versions 0.69 to 0.70 have bugs that cause this test to fail: please update." >&2
+        exit 1
+    fi
+else
+    echo "I:This test requires the Net::DNS library." >&2
+    exit 1
+fi
+
+exec $SHELL ../testcrypto.sh

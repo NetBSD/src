@@ -1,4 +1,4 @@
-/*	$NetBSD: bdb.c,v 1.1.1.3 2012/06/04 17:55:19 christos Exp $	*/
+/*	$NetBSD: bdb.c,v 1.1.1.4 2014/12/10 02:25:22 christos Exp $	*/
 
 /*
  * Copyright (C) 2002  Nuno M. Rodrigues.
@@ -231,7 +231,8 @@ bdb_init(void)
 		NULL,
 		bdb_allnodes,
 		bdb_create,
-		bdb_destroy
+		bdb_destroy,
+		NULL /* lookup2 */
 	};
 
 	return dns_sdb_register(DRIVERNAME, &bdb_methods, NULL, 0, ns_g_mctx,

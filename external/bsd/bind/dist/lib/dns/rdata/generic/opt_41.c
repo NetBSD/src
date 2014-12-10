@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_41.c,v 1.1.1.7 2014/02/28 17:40:14 christos Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.1.1.8 2014/12/10 02:25:30 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -153,13 +153,14 @@ fromwire_opt(ARGS_FROMWIRE) {
 			isc_region_consume(&sregion, addrbytes);
 			break;
 		}
-#ifdef notyet
 		case DNS_OPT_EXPIRE:
+			/*
+			 * Request has zero length.  Response is 32 bits.
+			 */
 			if (length != 0 && length != 4)
 				return (DNS_R_FORMERR);
 			isc_region_consume(&sregion, length);
 			break;
-#endif
 		default:
 			isc_region_consume(&sregion, length);
 			break;

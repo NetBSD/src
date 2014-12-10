@@ -1,7 +1,7 @@
-/*	$NetBSD: lwres.h,v 1.1.1.3 2012/06/04 17:57:04 christos Exp $	*/
+/*	$NetBSD: lwres.h,v 1.1.1.4 2014/12/10 02:25:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -123,6 +123,7 @@ struct lwres_addr {
 	lwres_uint32_t			family;
 	lwres_uint16_t			length;
 	unsigned char			address[LWRES_ADDR_MAXLEN];
+	lwres_uint32_t			zone;
 	LWRES_LINK(lwres_addr_t)	link;
 };
 

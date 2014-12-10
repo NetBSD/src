@@ -1,7 +1,7 @@
-/*	$NetBSD: iterated_hash.h,v 1.1.1.3 2012/06/04 17:56:49 christos Exp $	*/
+/*	$NetBSD: iterated_hash.h,v 1.1.1.4 2014/12/10 02:25:32 christos Exp $	*/
 
 /*
- * Copyright (C) 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,7 +25,7 @@
 #include <isc/sha1.h>
 
 /*
- * The maximal hash length that can be encoded it a name
+ * The maximal hash length that can be encoded in a name
  * using base32hex.  floor(255/8)*5
  */
 #define NSEC3_MAX_HASH_LENGTH 155

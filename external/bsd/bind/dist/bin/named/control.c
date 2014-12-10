@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.1.1.10 2014/02/28 17:40:06 christos Exp $	*/
+/*	$NetBSD: control.c,v 1.1.1.11 2014/12/10 02:25:12 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -208,7 +208,7 @@ ns_control_docommand(isccc_sexpr_t *message, isc_buffer_t *text) {
 		   command_compare(command, NS_COMMAND_LOADKEYS)) {
 		result = ns_server_rekey(ns_g_server, command, text);
 	} else if (command_compare(command, NS_COMMAND_ADDZONE)) {
-		result = ns_server_add_zone(ns_g_server, command);
+		result = ns_server_add_zone(ns_g_server, command, text);
 	} else if (command_compare(command, NS_COMMAND_DELZONE)) {
 		result = ns_server_del_zone(ns_g_server, command, text);
 	} else if (command_compare(command, NS_COMMAND_SIGNING)) {

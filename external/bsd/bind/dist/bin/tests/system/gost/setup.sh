@@ -19,4 +19,4 @@ SYSTEMTESTTOP=..
 
 test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
-cd ns1 && sh sign.sh
+cd ns1 && $SHELL sign.sh
