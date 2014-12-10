@@ -1,5 +1,3 @@
-/*	$NetBSD: genrsa.c,v 1.1.1.2 2014/07/08 04:46:08 spz Exp $	*/
-
 /*
  * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
  *

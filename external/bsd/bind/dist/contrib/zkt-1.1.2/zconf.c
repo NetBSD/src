@@ -1,5 +1,3 @@
-/*	$NetBSD: zconf.c,v 1.1.1.1 2014/02/28 17:40:11 christos Exp $	*/
-
 /****************************************************************
 **
 **	@(#) zconf.c -- configuration file parser for dnssec.conf
