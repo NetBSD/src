@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.c,v 1.4 2014/07/08 05:43:40 spz Exp $	*/
+/*	$NetBSD: mutex.c,v 1.5 2014/12/10 04:38:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")

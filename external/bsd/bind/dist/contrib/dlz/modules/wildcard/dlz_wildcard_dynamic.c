@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_wildcard_dynamic.c,v 1.2 2014/07/08 05:43:39 spz Exp $	*/
+/*	$NetBSD: dlz_wildcard_dynamic.c,v 1.3 2014/12/10 04:37:55 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.

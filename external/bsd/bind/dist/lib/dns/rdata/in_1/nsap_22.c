@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_22.c,v 1.4 2013/07/27 19:23:12 christos Exp $	*/
+/*	$NetBSD: nsap_22.c,v 1.5 2014/12/10 04:37:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
