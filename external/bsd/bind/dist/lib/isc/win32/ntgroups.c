@@ -1,4 +1,4 @@
-/*	$NetBSD: ntgroups.c,v 1.4 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: ntgroups.c,v 1.5 2014/12/10 04:38:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2006, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")

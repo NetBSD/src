@@ -1,4 +1,4 @@
-/*	$NetBSD: StdAfx.h,v 1.4 2013/12/31 20:24:41 christos Exp $	*/
+/*	$NetBSD: StdAfx.h,v 1.5 2014/12/10 04:37:55 christos Exp $	*/
 
 // stdafx.h : include file for standard system include files,
 //  or project specific include files that are used frequently, but

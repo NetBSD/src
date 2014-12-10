@@ -1,4 +1,4 @@
-/*	$NetBSD: t_names.c,v 1.8 2014/03/01 03:24:33 christos Exp $	*/
+/*	$NetBSD: t_names.c,v 1.9 2014/12/10 04:37:53 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")

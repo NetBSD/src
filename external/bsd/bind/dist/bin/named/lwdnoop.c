@@ -1,4 +1,4 @@
-/*	$NetBSD: lwdnoop.c,v 1.3 2012/06/05 00:39:01 christos Exp $	*/
+/*	$NetBSD: lwdnoop.c,v 1.4 2014/12/10 04:37:51 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
