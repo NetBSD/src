@@ -1,3 +1,5 @@
+/*	$NetBSD: soaserial.c,v 1.1.1.3 2014/12/10 03:34:35 christos Exp $	*/
+
 /*****************************************************************
 **
 **	@(#) soaserial.c -- helper function for the dnssec zone key tools
