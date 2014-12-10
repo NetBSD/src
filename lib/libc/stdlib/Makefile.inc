@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.82 2014/07/20 13:34:17 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.83 2014/12/10 16:55:54 pooka Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -24,10 +24,12 @@ SRCS+=	div.c ldiv.c imaxdiv.c
 # This might be replaced by erand48.c
 SRCS+= erand48_ieee754.c
 
+.if ${RUMPRUN} != "yes"
 .if (${USE_JEMALLOC} != "no")
 SRCS+=	jemalloc.c
 .else
 SRCS+=	malloc.c
+.endif
 .endif
 
 CPPFLAGS.strtol.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
