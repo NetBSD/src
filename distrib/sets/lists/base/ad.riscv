@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv,v 1.9 2014/10/25 15:02:12 joerg Exp $
+# $NetBSD: ad.riscv,v 1.10 2014/12/10 04:42:25 christos Exp $
 ./lib/rv32					base-compat-shlib	compat,arch64
 ./lib/rv32/npf					base-npf-shlib		compat,arch64
 ./lib/rv32/npf/ext_log.so			base-npf-shlib		compat,pic,arch64
@@ -74,7 +74,7 @@
 ./usr/lib/rv32/libbfd.so.13			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/rv32/libbfd.so.13.0			base-compat-shlib	compat,pic,binutils,arch64
 ./usr/lib/rv32/libbind9.so.8			base-compat-shlib	compat,pic,arch64
-./usr/lib/rv32/libbind9.so.8.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/rv32/libbind9.so.8.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libbluetooth.so.4		base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libbluetooth.so.4.2		base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libbsdmalloc.so.0		base-compat-shlib	compat,pic,arch64
@@ -102,7 +102,7 @@
 ./usr/lib/rv32/libdm.so.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libdm.so.0.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libdns.so.8			base-compat-shlib	compat,pic,arch64
-./usr/lib/rv32/libdns.so.8.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/rv32/libdns.so.8.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns,arch64
 ./usr/lib/rv32/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns,arch64
 ./usr/lib/rv32/libdwarf.so.1			base-compat-shlib	compat,pic,arch64
@@ -146,11 +146,11 @@
 ./usr/lib/rv32/libipsec.so.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libipsec.so.3.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libirs.so.8			base-compat-shlib	compat,pic,arch64
-./usr/lib/rv32/libirs.so.8.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/rv32/libirs.so.8.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libisc.so.8			base-compat-shlib	compat,pic,arch64
-./usr/lib/rv32/libisc.so.8.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/rv32/libisc.so.8.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libisccc.so.8			base-compat-shlib	compat,pic,arch64
-./usr/lib/rv32/libisccc.so.8.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/rv32/libisccc.so.8.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libisccfg.so.8			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libisccfg.so.8.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi,arch64
@@ -180,7 +180,7 @@
 ./usr/lib/rv32/liblutok.so.2			base-compat-shlib	compat,pic,kyua,arch64
 ./usr/lib/rv32/liblutok.so.2.0			base-compat-shlib	compat,pic,kyua,arch64
 ./usr/lib/rv32/liblwres.so.8			base-compat-shlib	compat,pic,arch64
-./usr/lib/rv32/liblwres.so.8.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/rv32/liblwres.so.8.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/liblzf.so.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/liblzf.so.1.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/liblzma.so.1			base-compat-shlib	compat,pic,arch64
