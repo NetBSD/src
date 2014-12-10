@@ -1,5 +1,3 @@
-/*	$NetBSD: gnuc.h,v 1.1.1.1 2014/02/28 17:40:10 christos Exp $	*/
-
 /* @(#) Id: gnuc.h,v 1.4 2006/04/30 03:58:45 leres Exp  (LBL) */
 
 /* Define __P() macro, if necessary */

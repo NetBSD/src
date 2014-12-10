@@ -1,5 +1,3 @@
-/*	$NetBSD: zkt-soaserial.c,v 1.1.1.1 2014/02/28 17:40:11 christos Exp $	*/
-
 /*****************************************************************
 **
 **	@(#) zkt-soaserial.c  (c) Oct 2007  Holger Zuleger  hznet.de

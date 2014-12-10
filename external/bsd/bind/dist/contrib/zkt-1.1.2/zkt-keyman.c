@@ -1,5 +1,3 @@
-/*	$NetBSD: zkt-keyman.c,v 1.1.1.1 2014/02/28 17:40:11 christos Exp $	*/
-
 /*****************************************************************
 **
 **	@(#) zkt-keyman.c (c) Jan 2005 - Apr 2010  Holger Zuleger  hznet.de

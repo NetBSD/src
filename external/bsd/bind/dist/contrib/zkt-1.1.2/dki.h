@@ -1,5 +1,3 @@
-/*	$NetBSD: dki.h,v 1.1.1.1 2014/02/28 17:40:10 christos Exp $	*/
-
 /*****************************************************************
 **
 **	@(#) dki.h -- Header file for DNSsec Key info/manipulation

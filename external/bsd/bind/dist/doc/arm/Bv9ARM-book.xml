@@ -4943,6 +4943,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
     <optional> max-acache-size <replaceable>size_spec</replaceable> ; </optional>
     <optional> clients-per-query <replaceable>number</replaceable> ; </optional>
     <optional> max-clients-per-query <replaceable>number</replaceable> ; </optional>
+    <optional> max-recursion-depth <replaceable>number</replaceable> ; </optional>
+    <optional> max-recursion-queries <replaceable>number</replaceable> ; </optional>
     <optional> masterfile-format
 	    (<constant>text</constant>|<constant>raw</constant>|<constant>map</constant>) ; </optional>
     <optional> empty-server <replaceable>name</replaceable> ; </optional>
@@ -8935,6 +8937,35 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  If <command>max-clients-per-query</command> is set to zero,
 		  then there is no upper bound other than imposed by
 		  <command>recursive-clients</command>.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry id="max-recursion-depth">
+	      <term><command>max-recursion-depth</command></term>
+	      <listitem>
+		<para>
+		  Sets the maximum number of levels of recursion
+		  that are permitted at any one time while servicing
+		  a recursive query. Resolving a name may require
+		  looking up a name server address, which in turn
+		  requires resolving another name, etc; if the number
+		  of indirections exceeds this value, the recursive
+		  query is terminated and returns SERVFAIL.  The
+		  default is 7.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry id="max-recursion-queries">
+	      <term><command>max-recursion-queries</command></term>
+	      <listitem>
+		<para>
+		  Sets the maximum number of iterative queries that
+		  may be sent while servicing a recursive query.
+		  If more queries are sent, the recursive query
+		  is terminated and returns SERVFAIL. The default
+		  is 50.
 		</para>
 	      </listitem>
 	    </varlistentry>

@@ -1,5 +1,3 @@
-/*	$NetBSD: ncparse.h,v 1.1.1.1 2014/02/28 17:40:11 christos Exp $	*/
-
 /*****************************************************************
 **
 **	@(#) ncparse.h -- headerfile for a simple named.conf parser

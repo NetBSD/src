@@ -1,5 +1,3 @@
-/*	$NetBSD: nslint.c,v 1.1.1.1 2014/02/28 17:40:10 christos Exp $	*/
-
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2006, 2007, 2008, 2009
  *	The Regents of the University of California.  All rights reserved.

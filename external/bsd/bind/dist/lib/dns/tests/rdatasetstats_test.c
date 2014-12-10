@@ -1,5 +1,3 @@
-/*	$NetBSD: rdatasetstats_test.c,v 1.1.1.1 2014/02/28 17:40:15 christos Exp $	*/
-
 /*
  * Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
  *

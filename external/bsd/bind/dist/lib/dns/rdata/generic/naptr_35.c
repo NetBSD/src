@@ -1,5 +1,3 @@
-/*	$NetBSD: naptr_35.c,v 1.1.1.4 2014/12/10 02:25:30 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.

@@ -1,5 +1,3 @@
-/*	$NetBSD: zkt.c,v 1.1.1.1 2014/02/28 17:40:11 christos Exp $	*/
-
 /*****************************************************************
 **
 **	@(#) zkt.c  -- A library for managing a list of dns zone files. 

@@ -1,5 +1,3 @@
-/*	$NetBSD: driver.h,v 1.1.1.2 2012/06/04 17:54:23 christos Exp $	*/
-
 /*
  * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
  *

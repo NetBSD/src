@@ -1,5 +1,3 @@
-/*	$NetBSD: regex_test.c,v 1.1.1.1 2013/07/27 15:23:20 christos Exp $	*/
-
 /*
  * Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
  *
