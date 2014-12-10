@@ -1,4 +1,4 @@
-/*	$NetBSD: keyvalues.h,v 1.4 2012/12/04 23:38:43 spz Exp $	*/
+/*	$NetBSD: keyvalues.h,v 1.5 2014/12/10 04:37:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010, 2012  Internet Systems Consortium, Inc. ("ISC")

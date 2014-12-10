@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.3 2012/06/05 00:39:13 christos Exp $	*/
+/*	$NetBSD: os.h,v 1.4 2014/12/10 04:37:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")

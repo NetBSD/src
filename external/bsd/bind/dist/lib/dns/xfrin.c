@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.9 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.10 2014/12/10 04:37:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008, 2011-2013  Internet Systems Consortium, Inc. ("ISC")

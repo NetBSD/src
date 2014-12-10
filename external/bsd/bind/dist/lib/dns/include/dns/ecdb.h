@@ -1,4 +1,4 @@
-/*	$NetBSD: ecdb.h,v 1.3 2012/06/05 00:41:48 christos Exp $	*/
+/*	$NetBSD: ecdb.h,v 1.4 2014/12/10 04:37:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2012  Internet Systems Consortium, Inc. ("ISC")

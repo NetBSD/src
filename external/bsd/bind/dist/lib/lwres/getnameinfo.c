@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.6 2014/07/08 05:43:40 spz Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.7 2014/12/10 04:38:02 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")

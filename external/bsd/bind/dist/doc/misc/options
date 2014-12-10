@@ -173,6 +173,8 @@ options {
         max-ixfr-log-size <size>; // obsolete
         max-journal-size <size_no_default>;
         max-ncache-ttl <integer>;
+        max-recursion-depth <integer>;
+        max-recursion-queries <integer>;
         max-refresh-time <integer>;
         max-retry-time <integer>;
         max-rsa-exponent-size <integer>;
@@ -232,7 +234,6 @@ options {
         recursing-file <quoted_string>;
         recursion <boolean>;
         recursive-clients <integer>;
-        request-ixfr <boolean>;
         request-ixfr <boolean>;
         request-nsid <boolean>;
         request-sit <boolean>; // not configured
@@ -367,7 +368,6 @@ view <string> <optional_class> {
         check-wildcard <boolean>;
         cleaning-interval <integer>;
         clients-per-query <integer>;
-        database <string>;
         deny-answer-addresses { <address_match_element>; ... } [
             except-from { <quoted_string>; ... } ];
         deny-answer-aliases { <quoted_string>; ... } [ except-from {
@@ -436,6 +436,8 @@ view <string> <optional_class> {
         max-ixfr-log-size <size>; // obsolete
         max-journal-size <size_no_default>;
         max-ncache-ttl <integer>;
+        max-recursion-depth <integer>;
+        max-recursion-queries <integer>;
         max-refresh-time <integer>;
         max-retry-time <integer>;
         max-transfer-idle-in <integer>;
@@ -485,7 +487,6 @@ view <string> <optional_class> {
         };
         recursion <boolean>;
         request-ixfr <boolean>;
-        request-ixfr <boolean>;
         request-nsid <boolean>;
         request-sit <boolean>; // not configured
         resolver-query-timeout <integer>;
@@ -499,7 +500,6 @@ view <string> <optional_class> {
         root-delegation-only [ exclude { <quoted_string>; ... } ];
         rrset-order { [ class <string> ] [ type <string> ] [ name
             <quoted_string> ] <string> <string>; ... };
-        search <boolean>;
         serial-update-method ( increment | unixtime );
         server <netprefix> {
                 bogus <boolean>;

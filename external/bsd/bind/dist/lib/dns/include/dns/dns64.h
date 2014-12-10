@@ -1,4 +1,4 @@
-/*	$NetBSD: dns64.h,v 1.4 2014/07/08 05:43:39 spz Exp $	*/
+/*	$NetBSD: dns64.h,v 1.5 2014/12/10 04:37:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")

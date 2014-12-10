@@ -1,4 +1,4 @@
-/*	$NetBSD: lwconfig.c,v 1.4 2013/07/27 19:23:14 christos Exp $	*/
+/*	$NetBSD: lwconfig.c,v 1.5 2014/12/10 04:38:02 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2006, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")

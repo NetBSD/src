@@ -1,4 +1,4 @@
-/*	$NetBSD: t_atomic.c,v 1.4 2013/12/31 20:24:40 christos Exp $	*/
+/*	$NetBSD: t_atomic.c,v 1.5 2014/12/10 04:37:53 christos Exp $	*/
 
 /*
  * Copyright (C) 2011, 2013  Internet Systems Consortium, Inc. ("ISC")

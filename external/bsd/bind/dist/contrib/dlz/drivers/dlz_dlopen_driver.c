@@ -1,2 +1,2 @@
-/*	$NetBSD: dlz_dlopen_driver.c,v 1.4 2012/12/04 23:38:40 spz Exp $	*/
+/*	$NetBSD: dlz_dlopen_driver.c,v 1.5 2014/12/10 04:37:55 christos Exp $	*/
 

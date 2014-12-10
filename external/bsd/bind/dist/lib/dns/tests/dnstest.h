@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstest.h,v 1.2 2012/12/04 23:38:44 spz Exp $	*/
+/*	$NetBSD: dnstest.h,v 1.3 2014/12/10 04:37:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
