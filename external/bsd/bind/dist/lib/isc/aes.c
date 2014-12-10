@@ -1,5 +1,3 @@
-/*	$NetBSD: aes.c,v 1.1.1.2 2014/07/08 04:49:26 spz Exp $	*/
-
 /*
  * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
  *

@@ -1,5 +1,3 @@
-/*	$NetBSD: clientinfo.c,v 1.1.1.1 2012/06/04 17:56:04 christos Exp $	*/
-
 /*
  * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
  *

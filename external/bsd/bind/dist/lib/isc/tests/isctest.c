@@ -1,5 +1,3 @@
-/*	$NetBSD: isctest.c,v 1.1.1.5 2014/07/08 04:49:42 spz Exp $	*/
-
 /*
  * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  *

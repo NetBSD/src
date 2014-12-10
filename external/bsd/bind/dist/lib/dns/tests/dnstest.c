@@ -1,5 +1,3 @@
-/*	$NetBSD: dnstest.c,v 1.1.1.4 2014/07/08 04:49:20 spz Exp $	*/
-
 /*
  * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  *

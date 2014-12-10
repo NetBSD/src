@@ -1,5 +1,3 @@
-/*	$NetBSD: gssapi_krb.c,v 1.1.1.2 2012/06/04 17:54:38 christos Exp $	*/
-
 /*
  * Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
  *
