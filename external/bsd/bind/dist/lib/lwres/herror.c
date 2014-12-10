@@ -1,4 +1,4 @@
-/*	$NetBSD: herror.c,v 1.5 2014/03/01 03:24:40 christos Exp $	*/
+/*	$NetBSD: herror.c,v 1.6 2014/12/10 04:38:02 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2007, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")

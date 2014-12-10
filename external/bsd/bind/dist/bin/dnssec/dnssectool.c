@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssectool.c,v 1.7 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: dnssectool.c,v 1.8 2014/12/10 04:37:51 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: dnssectool.c,v 1.63 2011/10/21 03:55:33 marka Exp  */
 
 /*! \file */
 
@@ -121,6 +119,12 @@ vbprintf(int level, const char *fmt, ...) {
 	fprintf(stderr, "%s: ", program);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
+}
+
+void
+version(const char *program) {
+	fprintf(stderr, "%s %s\n", program, VERSION);
+	exit(0);
 }
 
 void

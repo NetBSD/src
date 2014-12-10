@@ -1,4 +1,4 @@
-/*	$NetBSD: callbacks.c,v 1.4 2014/03/01 03:24:36 christos Exp $	*/
+/*	$NetBSD: callbacks.c,v 1.5 2014/12/10 04:37:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")

@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoul.c,v 1.4 2014/03/01 03:24:39 christos Exp $	*/
+/*	$NetBSD: strtoul.c,v 1.5 2014/12/10 04:37:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")

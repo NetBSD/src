@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.c,v 1.5 2013/12/31 20:24:42 christos Exp $	*/
+/*	$NetBSD: stdio.c,v 1.6 2014/12/10 04:38:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")

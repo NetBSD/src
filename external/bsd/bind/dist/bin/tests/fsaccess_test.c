@@ -1,4 +1,4 @@
-/*	$NetBSD: fsaccess_test.c,v 1.7 2014/03/01 22:52:19 christos Exp $	*/
+/*	$NetBSD: fsaccess_test.c,v 1.8 2014/12/10 04:37:53 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
