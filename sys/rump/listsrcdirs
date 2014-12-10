@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.23 2014/12/05 01:49:51 pooka Exp $
+#	$NetBSD: listsrcdirs,v 1.24 2014/12/10 16:54:58 pooka Exp $
 #
 
 #
@@ -89,6 +89,7 @@ lsrc posix /lib/lib		rumpuser rumpclient rumphijack
 lsrc posix /usr.bin/		rump_server rump_allserver shmif_dumpbus
 
 # assorted userspace sources, mostly for configuration & diagnostics
+lsrc usr /lib/			i18n_module
 lsrc usr /lib/lib		crypt ipsec m npf pci prop
 lsrc usr /lib/lib		pthread rmt y z
 lsrc usr /libexec/		ld.elf_so
