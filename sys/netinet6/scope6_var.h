@@ -57,6 +57,7 @@ int	sa6_recoverscope(struct sockaddr_in6 *);
 int	in6_setzoneid(struct in6_addr *, uint32_t);
 int	in6_setscope(struct in6_addr *, const struct ifnet *, u_int32_t *);
 int	in6_clearscope(struct in6_addr *);
+const char *in6_getscopename(const struct in6_addr *);
 #endif /* _KERNEL */
 
 #endif /* _NETINET6_SCOPE6_VAR_H_ */
