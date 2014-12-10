@@ -1,3 +1,5 @@
+/*	$NetBSD: portlist.c,v 1.1.1.6 2014/12/10 03:34:40 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.

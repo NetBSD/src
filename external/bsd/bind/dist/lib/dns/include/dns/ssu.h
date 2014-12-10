@@ -1,3 +1,5 @@
+/*	$NetBSD: ssu.h,v 1.1.1.5 2014/12/10 03:34:42 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2008, 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.

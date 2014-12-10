@@ -1,3 +1,5 @@
+/*	$NetBSD: rrsig_46.h,v 1.1.1.5 2014/12/10 03:34:42 christos Exp $	*/
+
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.

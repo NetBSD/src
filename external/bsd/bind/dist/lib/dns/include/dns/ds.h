@@ -1,3 +1,5 @@
+/*	$NetBSD: ds.h,v 1.1.1.7 2014/12/10 03:34:42 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2007, 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.

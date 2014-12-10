@@ -1,3 +1,5 @@
+/*	$NetBSD: utf8.c,v 1.1.1.5 2014/12/10 03:34:33 christos Exp $	*/
+
 #ifndef lint
 static char *rcsid = "Id: utf8.c,v 1.1 2003/06/04 00:26:44 marka Exp ";
 #endif

@@ -1,3 +1,5 @@
+/*	$NetBSD: unormalize.h,v 1.1.1.5 2014/12/10 03:34:32 christos Exp $	*/
+
 /* Id: unormalize.h,v 1.1 2003/06/04 00:25:44 marka Exp  */
 /*
  * Copyright (c) 2000,2001 Japan Network Information Center.

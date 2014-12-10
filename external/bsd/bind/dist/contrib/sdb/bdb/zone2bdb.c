@@ -1,3 +1,5 @@
+/*	$NetBSD: zone2bdb.c,v 1.1.1.6 2014/12/10 03:34:34 christos Exp $	*/
+
 /*
  * Copyright (C) 2002  Nuno M. Rodrigues.
  *

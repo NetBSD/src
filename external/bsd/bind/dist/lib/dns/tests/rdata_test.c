@@ -1,3 +1,5 @@
+/*	$NetBSD: rdata_test.c,v 1.1.1.4 2014/12/10 03:34:43 christos Exp $	*/
+
 /*
  * Copyright (C) 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
  *

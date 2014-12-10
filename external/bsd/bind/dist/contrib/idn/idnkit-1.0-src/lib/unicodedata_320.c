@@ -1,3 +1,5 @@
+/*	$NetBSD: unicodedata_320.c,v 1.1.1.5 2014/12/10 03:34:33 christos Exp $	*/
+
 /* Id: unicodedata_320.c,v 1.1 2003/06/04 00:26:43 marka Exp  */
 /* $-Id: generate_normalize_data.pl,v 1.8 2001/10/31 08:51:30 m-kasahr Exp -$ */
 /*

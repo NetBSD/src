@@ -1,3 +1,5 @@
+/*	$NetBSD: name.h,v 1.1.1.9 2014/12/10 03:34:42 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2007, 2009-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.

@@ -1,3 +1,5 @@
+/*	$NetBSD: ddns-confgen.c,v 1.1.1.8 2014/12/10 03:34:23 christos Exp $	*/
+
 /*
  * Copyright (C) 2009, 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
  *

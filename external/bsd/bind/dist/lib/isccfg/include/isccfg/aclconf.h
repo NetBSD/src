@@ -1,3 +1,5 @@
+/*	$NetBSD: aclconf.h,v 1.1.1.9 2014/12/10 03:34:45 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2007, 2010-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.

@@ -1,3 +1,5 @@
+/*	$NetBSD: normalizer.c,v 1.1.1.5 2014/12/10 03:34:32 christos Exp $	*/
+
 #ifndef lint
 static char *rcsid = "Id: normalizer.c,v 1.1 2003/06/04 00:26:05 marka Exp ";
 #endif

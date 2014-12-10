@@ -1,3 +1,5 @@
+/*	$NetBSD: app_api.c,v 1.1.1.8 2014/12/10 03:34:43 christos Exp $	*/
+
 /*
  * Copyright (C) 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: zone2ldap.c,v 1.1.1.5 2014/12/10 03:34:34 christos Exp $	*/
+
 /*
  * Copyright (C) 2001 Jeff McNeil <jeff@snapcase.g-rock.net>
  *

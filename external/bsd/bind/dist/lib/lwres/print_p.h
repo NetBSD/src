@@ -1,3 +1,5 @@
+/*	$NetBSD: print_p.h,v 1.1.1.6 2014/12/10 03:34:45 christos Exp $	*/
+
 /*
  * Copyright (C) 2004, 2007, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.

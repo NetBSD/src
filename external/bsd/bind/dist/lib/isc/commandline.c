@@ -1,3 +1,5 @@
+/*	$NetBSD: commandline.c,v 1.1.1.6 2014/12/10 03:34:43 christos Exp $	*/
+
 /*
  * Portions Copyright (C) 2004, 2005, 2007, 2008, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.

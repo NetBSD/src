@@ -1,3 +1,5 @@
+/*	$NetBSD: lwtest.c,v 1.1.1.7 2014/12/10 03:34:30 christos Exp $	*/
+
 /*
  * Copyright (C) 2004, 2007, 2008, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.

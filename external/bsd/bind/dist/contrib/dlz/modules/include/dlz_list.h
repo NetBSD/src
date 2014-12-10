@@ -1,3 +1,5 @@
+/*	$NetBSD: dlz_list.h,v 1.1.1.3 2014/12/10 03:34:31 christos Exp $	*/
+
 /*
  * Copyright (C) 2004, 2006, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2002  Internet Software Consortium.

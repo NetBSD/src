@@ -1,3 +1,5 @@
+/*	$NetBSD: test_helpers.h,v 1.1.1.4 2014/12/10 03:34:48 christos Exp $	*/
+
 /*
  * Automated Testing Framework (atf)
  *

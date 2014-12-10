@@ -1,3 +1,5 @@
+/*	$NetBSD: unicode_template.c,v 1.1.1.5 2014/12/10 03:34:32 christos Exp $	*/
+
 /* Id: unicode_template.c,v 1.1 2003/06/04 00:26:16 marka Exp  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: private.c,v 1.1.1.7 2014/12/10 03:34:40 christos Exp $	*/
+
 /*
  * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *

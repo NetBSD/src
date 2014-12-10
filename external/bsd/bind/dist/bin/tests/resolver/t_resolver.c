@@ -1,3 +1,5 @@
+/*	$NetBSD: t_resolver.c,v 1.1.1.11 2014/12/10 03:34:28 christos Exp $	*/
+
 /*
  * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  *

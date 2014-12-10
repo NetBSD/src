@@ -1,3 +1,5 @@
+/*	$NetBSD: inet_pton.c,v 1.1.1.7 2014/12/10 03:34:43 christos Exp $	*/
+
 /*
  * Copyright (C) 2004, 2005, 2007, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2003  Internet Software Consortium.

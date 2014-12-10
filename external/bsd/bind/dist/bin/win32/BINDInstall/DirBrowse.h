@@ -1,3 +1,5 @@
+/*	$NetBSD: DirBrowse.h,v 1.1.1.5 2014/12/10 03:34:31 christos Exp $	*/
+
 /*
  * Portions Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.

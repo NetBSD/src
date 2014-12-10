@@ -1,3 +1,5 @@
+/*	$NetBSD: stat.h,v 1.1.1.7 2014/12/10 03:34:45 christos Exp $	*/
+
 /*
  * Copyright (C) 2004, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.

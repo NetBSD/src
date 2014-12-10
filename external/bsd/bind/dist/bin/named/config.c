@@ -1,3 +1,5 @@
+/*	$NetBSD: config.c,v 1.1.1.16 2014/12/10 03:34:24 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.

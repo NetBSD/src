@@ -1,3 +1,5 @@
+/*	$NetBSD: zone2sqlite.c,v 1.1.1.9 2014/12/10 03:34:34 christos Exp $	*/
+
 /*
  * Copyright (C) 2007  Internet Software Consortium.
  *

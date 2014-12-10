@@ -1,3 +1,5 @@
+/*	$NetBSD: getnameinfo.c,v 1.1.1.7 2014/12/10 03:34:43 christos Exp $	*/
+
 /*
  * Copyright (C) 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *

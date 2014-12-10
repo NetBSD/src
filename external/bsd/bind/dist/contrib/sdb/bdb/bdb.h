@@ -1,3 +1,5 @@
+/*	$NetBSD: bdb.h,v 1.1.1.5 2014/12/10 03:34:34 christos Exp $	*/
+
 /*
  * Copyright (C) 2002  Nuno M. Rodrigues.
  *

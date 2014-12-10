@@ -1,3 +1,5 @@
+/*	$NetBSD: dns64.c,v 1.1.1.6 2014/12/10 03:34:39 christos Exp $	*/
+
 /*
  * Copyright (C) 2010, 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
  *

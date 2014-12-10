@@ -1,3 +1,5 @@
+/*	$NetBSD: sdlz.c,v 1.1.1.12 2014/12/10 03:34:41 christos Exp $	*/
+
 /*
  * Portions Copyright (C) 2005-2013  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.

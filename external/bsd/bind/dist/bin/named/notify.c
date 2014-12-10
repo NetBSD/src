@@ -1,3 +1,5 @@
+/*	$NetBSD: notify.c,v 1.1.1.5 2014/12/10 03:34:24 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.

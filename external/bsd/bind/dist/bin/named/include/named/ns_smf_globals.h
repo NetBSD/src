@@ -1,3 +1,5 @@
+/*	$NetBSD: ns_smf_globals.h,v 1.1.1.5 2014/12/10 03:34:25 christos Exp $	*/
+
 /*
  * Copyright (C) 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  *

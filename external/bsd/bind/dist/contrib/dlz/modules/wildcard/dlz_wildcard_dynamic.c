@@ -1,3 +1,5 @@
+/*	$NetBSD: dlz_wildcard_dynamic.c,v 1.1.1.3 2014/12/10 03:34:31 christos Exp $	*/
+
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
  * Copyright (C) 2012 Vadim Goncharov, Russia, vadim_nuclight@mail.ru.
