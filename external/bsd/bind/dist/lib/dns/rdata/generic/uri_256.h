@@ -1,3 +1,5 @@
+/*	$NetBSD: uri_256.h,v 1.1.1.4 2014/12/10 03:34:42 christos Exp $	*/
+
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *

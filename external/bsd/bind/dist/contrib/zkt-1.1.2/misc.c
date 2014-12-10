@@ -1,3 +1,5 @@
+/*	$NetBSD: misc.c,v 1.1.1.3 2014/12/10 03:34:35 christos Exp $	*/
+
 /*****************************************************************
 **
 **	@(#) misc.c -- helper functions for the dnssec zone key tools

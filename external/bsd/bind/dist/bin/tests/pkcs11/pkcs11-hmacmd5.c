@@ -1,3 +1,5 @@
+/*	$NetBSD: pkcs11-hmacmd5.c,v 1.1.1.4 2014/12/10 03:34:28 christos Exp $	*/
+
 /*
  * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: config_zkt.h,v 1.1.1.3 2014/12/10 03:34:34 christos Exp $	*/
+
 /*****************************************************************
 **
 **	@(#) config_zkt.h -- config options for ZKT

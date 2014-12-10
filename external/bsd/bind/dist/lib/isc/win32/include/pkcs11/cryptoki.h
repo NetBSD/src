@@ -1,3 +1,5 @@
+/*	$NetBSD: cryptoki.h,v 1.1.1.3 2014/12/10 03:34:45 christos Exp $	*/
+
 /* cryptoki.h include file for PKCS #11. */
 /* Revision: 1.2  */
 
