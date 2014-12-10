@@ -19,5 +19,5 @@ then
     :
 else
     echo "I:This test requires --enable-filter-aaaa at compile time." >&2
-    exit 1
+    exit 255
 fi

@@ -553,7 +553,8 @@ dns_rbt_fullnamefromnode
 dns_rbt_hashsize
 dns_rbt_namefromnode
 dns_rbt_nodecount
-dns_rbt_printall
+dns_rbt_printtext
+dns_rbt_printdot
 dns_rbt_printnodeinfo
 dns_rbt_serialize_align
 dns_rbt_serialize_tree

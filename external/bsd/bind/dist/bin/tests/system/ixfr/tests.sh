@@ -249,5 +249,21 @@ test ${lines:-0} -eq 2 || { echo "I:failed"; status=1; }
 messages=`sed -n 's/^;;.*messages \([0-9]*\),.*/\1/p' dig.out`
 test ${messages:-0} -gt 1 || { echo "I:failed"; status=1; }
 
+echo "I:test 'dig +notcp ixfr=<value>' vs 'dig ixfr=<value> +notcp' vs 'dig ixfr=<value>'"
+ret=0
+# Should be "switch to TCP" response
+$DIG +notcp ixfr=1 test -p 5300 @10.53.0.4 > dig.out1 || ret=1
+$DIG ixfr=1 +notcp test -p 5300 @10.53.0.4 > dig.out2 || ret=1
+$PERL ../digcomp.pl dig.out1 dig.out2 || ret=1
+awk '$4 == "SOA" { soacnt++} END {if (soacnt == 1) exit(0); else exit(1);}' dig.out1 || ret=1
+awk '$4 == "SOA" { if ($7 == 4) exit(0); else exit(1);}' dig.out1 || ret=1
+# Should be incremental transfer.
+$DIG ixfr=1 test -p 5300 @10.53.0.4 > dig.out3 || ret=1
+awk '$4 == "SOA" { soacnt++} END { if (soacnt == 6) exit(0); else exit(1);}' dig.out3 || ret=1
+if [ ${ret} != 0 ]; then
+	echo "I:failed";
+	status=1;
+fi
+
 echo "I:exit status: $status"
 exit $status

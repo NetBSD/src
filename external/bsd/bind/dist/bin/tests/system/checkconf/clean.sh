@@ -16,3 +16,4 @@
 
 rm -f good.conf.in good.conf.out badzero.conf *.out
 rm -rf test.keydir
+rm -f checkconf.out*

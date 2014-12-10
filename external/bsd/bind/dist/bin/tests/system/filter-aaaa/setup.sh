@@ -14,10 +14,10 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-sh clean.sh
-
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
+
+$SHELL clean.sh
 
 test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
@@ -26,5 +26,12 @@ cp ns2/named1.conf ns2/named.conf
 cp ns3/named1.conf ns3/named.conf
 cp ns4/named1.conf ns4/named.conf
 
-(cd ns1 && sh -e sign.sh)
-(cd ns4 && sh -e sign.sh)
+if $SHELL ../testcrypto.sh -q
+then
+	(cd ns1 && $SHELL -e sign.sh)
+	(cd ns4 && $SHELL -e sign.sh)
+else
+	echo "I:using pre-signed zones"
+	cp -f ns1/signed.db.presigned ns1/signed.db.signed
+	cp -f ns4/signed.db.presigned ns4/signed.db.signed
+fi

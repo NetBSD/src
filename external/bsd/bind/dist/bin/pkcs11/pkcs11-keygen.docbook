@@ -17,13 +17,13 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<refentry id="man.pkcs11-ecgen">
+<refentry id="man.pkcs11-keygen">
   <refentryinfo>
     <date>January 15, 2014</date>
   </refentryinfo>
 
   <refmeta>
-    <refentrytitle><application>pkcs11-ecgen</application></refentrytitle>
+    <refentrytitle><application>pkcs11-keygen</application></refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo>BIND9</refmiscinfo>
   </refmeta>
@@ -142,14 +142,14 @@
         <listitem>
           <para>
             Specify the PIN for the device.  If no PIN is provided on
-            the command line, <command>pkcs11-ecgen</command> will
+            the command line, <command>pkcs11-keygen</command> will
             prompt for it.
           </para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
-        <term>-e</term>
+        <term>-q</term>
         <listitem>
           <para>
             Quiet mode: suppress unnecessary output.
@@ -185,20 +185,17 @@
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
-        <refentrytitle>pkcs11-rsagen</refentrytitle><manvolnum>3</manvolnum>
+        <refentrytitle>pkcs11-destroy</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>pkcs11-dsagen</refentrytitle><manvolnum>3</manvolnum>
+        <refentrytitle>pkcs11-list</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>pkcs11-list</refentrytitle><manvolnum>3</manvolnum>
+        <refentrytitle>pkcs11-tokens</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>pkcs11-destroy</refentrytitle><manvolnum>3</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>dnssec-keyfromlabel</refentrytitle><manvolnum>3</manvolnum>
-      </citerefentry>,
+        <refentrytitle>dnssec-keyfromlabel</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>
     </para>
   </refsect1>
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001, 2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,18 +15,16 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.9 2011/12/01 00:53:58 marka Exp 
-
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-sh clean.sh
+$SHELL clean.sh
 
-sh ../genzone.sh 1 6 7 >ns1/slave.db
-sh ../genzone.sh 2 3 >ns2/example.db
-sh ../genzone.sh 2 3 >ns2/tsigzone.db
-sh ../genzone.sh 6 3 >ns6/master.db
-sh ../genzone.sh 7 >ns7/master2.db
+$SHELL ../genzone.sh 1 6 7 >ns1/slave.db
+$SHELL ../genzone.sh 2 3 >ns2/example.db
+$SHELL ../genzone.sh 2 3 >ns2/tsigzone.db
+$SHELL ../genzone.sh 6 3 >ns6/master.db
+$SHELL ../genzone.sh 7 >ns7/master2.db
 
 rm -f ns4/*.db ns4/*.jnl
 cp -f ns4/root.db.in ns4/root.db

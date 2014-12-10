@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2008, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,8 +14,9 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.3 2008/01/10 23:47:01 tbox Exp 
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
 
-sh ../genzone.sh 2 3 >ns2/example.db
-sh ../genzone.sh 2 3 >ns2/tsigzone.db
+$SHELL ../genzone.sh 2 3 >ns2/example.db
+$SHELL ../genzone.sh 2 3 >ns2/tsigzone.db
 cp -f ns2/named1.conf ns2/named.conf
