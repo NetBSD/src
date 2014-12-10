@@ -1,5 +1,3 @@
-/*	$NetBSD: zfparse.h,v 1.1.1.1 2014/02/28 17:40:11 christos Exp $	*/
-
 /*****************************************************************
 **
 **	@(#) zfparse.h -- headerfile for a zone file parser

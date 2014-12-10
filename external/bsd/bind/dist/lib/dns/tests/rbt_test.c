@@ -1,5 +1,3 @@
-/*	$NetBSD: rbt_test.c,v 1.1.1.2 2014/12/10 02:25:31 christos Exp $	*/
-
 /*
  * Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  *

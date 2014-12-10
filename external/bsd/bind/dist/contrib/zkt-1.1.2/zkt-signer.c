@@ -1,5 +1,3 @@
-/*	$NetBSD: zkt-signer.c,v 1.1.1.1 2014/02/28 17:40:11 christos Exp $	*/
-
 /*****************************************************************
 **
 **	@(#) zkt-signer.c  (c) Jan 2005 - Jan 2010  Holger Zuleger hznet.de
