@@ -1,4 +1,4 @@
-/*	$NetBSD: context.h,v 1.3 2012/06/05 00:43:06 christos Exp $	*/
+/*	$NetBSD: context.h,v 1.4 2014/12/10 04:38:02 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")

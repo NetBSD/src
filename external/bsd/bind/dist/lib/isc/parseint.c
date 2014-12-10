@@ -1,4 +1,4 @@
-/*	$NetBSD: parseint.c,v 1.4 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: parseint.c,v 1.5 2014/12/10 04:37:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")

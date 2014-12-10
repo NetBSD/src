@@ -1,4 +1,4 @@
-/*	$NetBSD: iterated_hash.c,v 1.3 2012/06/05 00:42:28 christos Exp $	*/
+/*	$NetBSD: iterated_hash.c,v 1.4 2014/12/10 04:37:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")

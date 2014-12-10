@@ -1,4 +1,4 @@
-/*	$NetBSD: refcount.h,v 1.5 2012/06/05 00:42:39 christos Exp $	*/
+/*	$NetBSD: refcount.h,v 1.6 2014/12/10 04:38:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
