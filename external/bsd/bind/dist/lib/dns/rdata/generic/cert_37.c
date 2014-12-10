@@ -1,4 +1,4 @@
-/*	$NetBSD: cert_37.c,v 1.4 2012/06/05 00:42:07 christos Exp $	*/
+/*	$NetBSD: cert_37.c,v 1.5 2014/12/10 04:37:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")

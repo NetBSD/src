@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_mysql_driver.c,v 1.5 2014/03/01 03:24:34 christos Exp $	*/
+/*	$NetBSD: dlz_mysql_driver.c,v 1.6 2014/12/10 04:37:55 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.

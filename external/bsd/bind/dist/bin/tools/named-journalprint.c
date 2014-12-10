@@ -1,4 +1,4 @@
-/*	$NetBSD: named-journalprint.c,v 1.5 2014/03/01 22:43:35 christos Exp $	*/
+/*	$NetBSD: named-journalprint.c,v 1.6 2014/12/10 04:37:54 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")

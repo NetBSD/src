@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_parse.h,v 1.5 2014/03/01 03:24:36 christos Exp $	*/
+/*	$NetBSD: dst_parse.h,v 1.6 2014/12/10 04:37:58 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")

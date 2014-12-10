@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_postgres_driver.c,v 1.4 2014/03/01 03:24:34 christos Exp $	*/
+/*	$NetBSD: dlz_postgres_driver.c,v 1.5 2014/12/10 04:37:55 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -579,6 +579,7 @@ postgres_get_resultset(const char *zone, const char *record,
 #endif
 			PQclear(*rs);	/* get rid of it */
 			/* in case this was the last attempt */
+			*rs = NULL;
 			result = ISC_R_FAILURE;
 		}
 	}

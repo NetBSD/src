@@ -1,4 +1,4 @@
-/*	$NetBSD: logconf.c,v 1.6 2013/12/31 20:24:39 christos Exp $	*/
+/*	$NetBSD: logconf.c,v 1.7 2014/12/10 04:37:51 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")

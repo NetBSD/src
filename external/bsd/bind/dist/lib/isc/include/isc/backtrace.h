@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace.h,v 1.3 2012/06/05 00:42:34 christos Exp $	*/
+/*	$NetBSD: backtrace.h,v 1.4 2014/12/10 04:38:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")

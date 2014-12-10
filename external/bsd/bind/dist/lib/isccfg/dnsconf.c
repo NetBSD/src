@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsconf.c,v 1.3 2012/06/05 00:43:01 christos Exp $	*/
+/*	$NetBSD: dnsconf.c,v 1.4 2014/12/10 04:38:02 christos Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")

@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_internal.h,v 1.9 2014/07/08 05:43:39 spz Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.10 2014/12/10 04:37:58 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")

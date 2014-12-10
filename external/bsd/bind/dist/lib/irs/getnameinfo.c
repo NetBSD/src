@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.5 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.6 2014/12/10 04:37:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")

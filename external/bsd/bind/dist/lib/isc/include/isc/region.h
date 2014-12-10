@@ -1,4 +1,4 @@
-/*	$NetBSD: region.h,v 1.5 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: region.h,v 1.6 2014/12/10 04:38:00 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2013  Internet Systems Consortium, Inc. ("ISC")

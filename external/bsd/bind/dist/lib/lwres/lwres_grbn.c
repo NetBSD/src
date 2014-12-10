@@ -1,4 +1,4 @@
-/*	$NetBSD: lwres_grbn.c,v 1.4 2013/12/31 20:24:43 christos Exp $	*/
+/*	$NetBSD: lwres_grbn.c,v 1.5 2014/12/10 04:38:02 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")

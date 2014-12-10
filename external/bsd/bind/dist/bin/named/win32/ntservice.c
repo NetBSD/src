@@ -1,4 +1,4 @@
-/*	$NetBSD: ntservice.c,v 1.5 2014/07/08 05:43:37 spz Exp $	*/
+/*	$NetBSD: ntservice.c,v 1.6 2014/12/10 04:37:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2006, 2007, 2009, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")

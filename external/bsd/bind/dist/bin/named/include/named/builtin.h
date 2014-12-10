@@ -1,4 +1,4 @@
-/*	$NetBSD: builtin.h,v 1.3 2012/06/05 00:39:07 christos Exp $	*/
+/*	$NetBSD: builtin.h,v 1.4 2014/12/10 04:37:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")

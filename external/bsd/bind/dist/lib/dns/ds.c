@@ -1,4 +1,4 @@
-/*	$NetBSD: ds.c,v 1.6 2014/07/08 05:43:39 spz Exp $	*/
+/*	$NetBSD: ds.c,v 1.7 2014/12/10 04:37:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")

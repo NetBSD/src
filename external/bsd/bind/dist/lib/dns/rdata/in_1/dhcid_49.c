@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcid_49.c,v 1.4 2012/06/05 00:42:20 christos Exp $	*/
+/*	$NetBSD: dhcid_49.c,v 1.5 2014/12/10 04:37:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2006, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")

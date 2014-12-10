@@ -1,4 +1,4 @@
-/*	$NetBSD: journal.h,v 1.4 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: journal.h,v 1.5 2014/12/10 04:37:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")

@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.2 2013/12/31 20:24:43 christos Exp $	*/
+/*	$NetBSD: utils.c,v 1.3 2014/12/10 04:38:03 christos Exp $	*/
 
 /*
  * Automated Testing Framework (atf)

@@ -1,4 +1,4 @@
-/*	$NetBSD: alist.c,v 1.3 2012/06/05 00:42:58 christos Exp $	*/
+/*	$NetBSD: alist.c,v 1.4 2014/12/10 04:38:01 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")

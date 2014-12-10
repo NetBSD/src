@@ -1,4 +1,4 @@
-/*	$NetBSD: sqlitedb.c,v 1.3 2012/06/05 00:40:04 christos Exp $	*/
+/*	$NetBSD: sqlitedb.c,v 1.4 2014/12/10 04:37:57 christos Exp $	*/
 
 /*
  * Copyright (C) 2007  Internet Software Consortium.
@@ -308,7 +308,8 @@ static dns_sdbmethods_t sqlitedb_methods = {
     NULL, /* authority */
     sqlitedb_allnodes,
     sqlitedb_create,
-    sqlitedb_destroy
+    sqlitedb_destroy,
+    NULL /* lookup2 */
 };
 
 

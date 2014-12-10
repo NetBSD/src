@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatastructpre.h,v 1.4 2012/06/05 00:42:06 christos Exp $	*/
+/*	$NetBSD: rdatastructpre.h,v 1.5 2014/12/10 04:37:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")

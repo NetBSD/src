@@ -1,4 +1,4 @@
-/*	$NetBSD: isctest.h,v 1.3 2013/07/27 19:23:13 christos Exp $	*/
+/*	$NetBSD: isctest.h,v 1.4 2014/12/10 04:38:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")

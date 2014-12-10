@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.4 2012/12/04 23:38:55 spz Exp $	*/
+/*	$NetBSD: stat.h,v 1.5 2014/12/10 04:38:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")

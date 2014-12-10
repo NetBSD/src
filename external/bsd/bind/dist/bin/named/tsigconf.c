@@ -1,4 +1,4 @@
-/*	$NetBSD: tsigconf.c,v 1.4 2013/07/27 19:23:10 christos Exp $	*/
+/*	$NetBSD: tsigconf.c,v 1.5 2014/12/10 04:37:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")

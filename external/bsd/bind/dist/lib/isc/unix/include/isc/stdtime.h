@@ -1,4 +1,4 @@
-/*	$NetBSD: stdtime.h,v 1.4 2012/06/05 00:42:50 christos Exp $	*/
+/*	$NetBSD: stdtime.h,v 1.5 2014/12/10 04:38:01 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")

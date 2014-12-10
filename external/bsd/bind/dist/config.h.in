@@ -73,6 +73,9 @@
 /** define if arc4random() exists */
 #undef HAVE_ARC4RANDOM
 
+/** define if arc4random_addrandom() exists */
+#undef HAVE_ARC4RANDOM_ADDRANDOM
+
 /**
  * define if pthread_setconcurrency() should be called to tell the
  * OS how many threads we might want to run.
@@ -239,6 +242,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <gssapi_krb5.h> header file. */
 #undef HAVE_GSSAPI_KRB5_H
 
+/* Define to 1 if you have the `if_nametoindex' function. */
+#undef HAVE_IF_NAMETOINDEX
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -277,6 +283,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the `scf' library (-lscf). */
 #undef HAVE_LIBSCF
+
+/* Define to use libseccomp system call filtering. */
+#undef HAVE_LIBSECCOMP
 
 /* Define to 1 if you have the `socket' library (-lsocket). */
 #undef HAVE_LIBSOCKET

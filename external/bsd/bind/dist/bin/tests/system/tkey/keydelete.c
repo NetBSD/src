@@ -1,4 +1,4 @@
-/*	$NetBSD: keydelete.c,v 1.5 2014/03/01 03:24:34 christos Exp $	*/
+/*	$NetBSD: keydelete.c,v 1.6 2014/12/10 04:37:54 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009-2011, 2014  Internet Systems Consortium, Inc. ("ISC")

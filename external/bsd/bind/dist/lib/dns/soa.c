@@ -1,4 +1,4 @@
-/*	$NetBSD: soa.c,v 1.3 2012/06/05 00:41:40 christos Exp $	*/
+/*	$NetBSD: soa.c,v 1.4 2014/12/10 04:37:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")

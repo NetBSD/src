@@ -81,6 +81,9 @@
 /** define if arc4random() exists */
 #define HAVE_ARC4RANDOM 1
 
+/** define if arc4random_addrandom() exists */
+#define HAVE_ARC4RANDOM_ADDRANDOM 1
+
 /**
  * define if pthread_setconcurrency() should be called to tell the
  * OS how many threads we might want to run.
@@ -132,7 +135,7 @@ int sigwait(const unsigned int *set, int *sig);
 #endif /** SHUTUP_STDARG_CAST && __GNUC__ */
 
 /** define if the system has a random number generating device */
-#define PATH_RANDOMDEV "/dev/urandom"
+#define PATH_RANDOMDEV "/dev/random"
 
 /** define if pthread_attr_getstacksize() is available */
 #define HAVE_PTHREAD_ATTR_GETSTACKSIZE 1
@@ -236,13 +239,13 @@ int sigwait(const unsigned int *set, int *sig);
 #define HAVE_FCNTL_H 1
 
 /* Build with GeoIP support */
-/* #undef HAVE_GEOIP 1 */
+/* #undef HAVE_GEOIP */
 
 /* Build with GeoIP City IPv6 support */
-/* #undef HAVE_GEOIP_CITY_V6 1 */
+/* #undef HAVE_GEOIP_CITY_V6 */
 
 /* Build with GeoIP Country IPv6 support */
-/* #undef HAVE_GEOIP_V6 1 */
+/* #undef HAVE_GEOIP_V6 */
 
 /* Define to 1 if you have the <gssapi/gssapi.h> header file. */
 #define HAVE_GSSAPI_GSSAPI_H 1
@@ -255,6 +258,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the <gssapi_krb5.h> header file. */
 /* #undef HAVE_GSSAPI_KRB5_H */
+
+/* Define to 1 if you have the `if_nametoindex' function. */
+#define HAVE_IF_NAMETOINDEX 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -295,6 +301,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the `scf' library (-lscf). */
 /* #undef HAVE_LIBSCF */
 
+/* Define to use libseccomp system call filtering. */
+/* #undef HAVE_LIBSECCOMP */
+
 /* Define to 1 if you have the `socket' library (-lsocket). */
 /* #undef HAVE_LIBSOCKET */
 
@@ -302,7 +311,7 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef HAVE_LIBTHR */
 
 /* Define if libxml2 was found */
-/* #undef HAVE_LIBXML2 1 */
+/* #undef HAVE_LIBXML2 */
 
 /* Define to 1 if you have the <linux/capability.h> header file. */
 /* #undef HAVE_LINUX_CAPABILITY_H */
@@ -347,10 +356,13 @@ int sigwait(const unsigned int *set, int *sig);
 #define HAVE_OPENSSL_GOST 1
 
 /* Define if your PKCS11 provider supports ECDSA. */
-/* #undef HAVE_PKCS11_ECDSA 1 */
+/* #undef HAVE_PKCS11_ECDSA */
 
 /* Define if your PKCS11 provider supports GOST. */
-/* #undef HAVE_PKCS11_GOST 1 */
+/* #undef HAVE_PKCS11_GOST */
+
+/* Support for PTHREAD_MUTEX_ADAPTIVE_NP */
+/* #undef HAVE_PTHREAD_MUTEX_ADAPTIVE_NP */
 
 /* Define to 1 if you have the `pthread_yield' function. */
 /* #undef HAVE_PTHREAD_YIELD */
@@ -478,22 +490,22 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef NEED_SECURE_DIRECTORY */
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT ""
+#define PACKAGE_BUGREPORT "bind9-bugs@isc.org"
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME ""
+#define PACKAGE_NAME "BIND"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING ""
+#define PACKAGE_STRING "BIND 9.10"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME ""
+#define PACKAGE_TARNAME "bind"
 
 /* Define to the home page for this package. */
-#define PACKAGE_URL ""
+#define PACKAGE_URL "https://www.isc.org/downloads/BIND/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION ""
+#define PACKAGE_VERSION "9.10"
 
 /* Sets which flag to pass to open/fcntl to make non-blocking
    (O_NDELAY/O_NONBLOCK). */
@@ -534,11 +546,6 @@ int sigwait(const unsigned int *set, int *sig);
 /* #  undef WORDS_BIGENDIAN */
 # endif
 #endif
-#else
-# include <sys/endian.h>
-# if _BYTE_ORDER == _BIG_ENDIAN
-#  define WORDS_BIGENDIAN 1
-# endif
 #endif
 
 /* Define to empty if `const' does not conform to ANSI C. */

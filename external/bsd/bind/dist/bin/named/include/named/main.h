@@ -1,4 +1,4 @@
-/*	$NetBSD: main.h,v 1.4 2013/12/31 20:24:39 christos Exp $	*/
+/*	$NetBSD: main.h,v 1.5 2014/12/10 04:37:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")

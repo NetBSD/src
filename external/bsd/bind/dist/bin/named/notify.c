@@ -1,4 +1,4 @@
-/*	$NetBSD: notify.c,v 1.3 2012/06/05 00:39:03 christos Exp $	*/
+/*	$NetBSD: notify.c,v 1.4 2014/12/10 04:37:51 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")

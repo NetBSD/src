@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.7 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: globals.h,v 1.8 2014/12/10 04:37:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")

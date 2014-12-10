@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.c,v 1.9 2014/03/01 23:02:14 christos Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.10 2014/12/10 04:37:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")

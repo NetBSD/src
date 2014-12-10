@@ -1,4 +1,4 @@
-/*	$NetBSD: logmacro.h,v 1.4 2012/06/05 00:39:43 christos Exp $	*/
+/*	$NetBSD: logmacro.h,v 1.5 2014/12/10 04:37:55 christos Exp $	*/
 
 /* Id: logmacro.h,v 1.1 2003/06/04 00:25:38 marka Exp  */
 /*

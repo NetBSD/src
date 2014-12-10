@@ -1,4 +1,4 @@
-/*	$NetBSD: sdb.h,v 1.3 2012/06/05 00:41:53 christos Exp $	*/
+/*	$NetBSD: sdb.h,v 1.4 2014/12/10 04:37:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")

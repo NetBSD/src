@@ -1,4 +1,4 @@
-/*	$NetBSD: assert_p.h,v 1.4 2012/06/05 00:43:03 christos Exp $	*/
+/*	$NetBSD: assert_p.h,v 1.5 2014/12/10 04:38:02 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
