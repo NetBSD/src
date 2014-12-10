@@ -131,7 +131,7 @@ $ <userinput>./configure --enable-native-pkcs11 \
     </itemizedlist>
     <para>
       The modified OpenSSL code is included in the BIND 9 release,
-      in the form of a context diff against the latest verions of
+      in the form of a context diff against the latest versions of
       OpenSSL.  OpenSSL 0.9.8, 1.0.0, and 1.0.1 are supported; there are
       separate diffs for each version.  In the examples to follow,
       we use OpenSSL 0.9.8, but the same methods work with OpenSSL

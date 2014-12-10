@@ -69,6 +69,7 @@
       <arg><option>-S <replaceable class="parameter">key</replaceable></option></arg>
       <arg><option>-t <replaceable class="parameter">type</replaceable></option></arg>
       <arg><option>-v <replaceable class="parameter">level</replaceable></option></arg>
+      <arg><option>-V</option></arg>
       <arg><option>-y</option></arg>
       <arg choice="req">name</arg>
     </cmdsynopsis>
@@ -331,6 +332,15 @@
           <para>
             Sets the debugging level.
           </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-V</term>
+        <listitem>
+	  <para>
+	    Prints version information.
+	  </para>
         </listitem>
       </varlistentry>
 

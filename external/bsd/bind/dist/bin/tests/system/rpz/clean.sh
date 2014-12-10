@@ -16,6 +16,8 @@
 
 rm -f proto.* dsset-* trusted.conf dig.out* nsupdate.tmp ns*/*tmp
 rm -f ns*/*.key ns*/*.private ns2/tld2s.db ns2/bl.tld2.db
-rm -f ns3/bl*.db ns*/*switch ns5/requests ns5/example.db ns5/bl.db ns5/*.perf
+rm -f ns3/bl*.db ns*/*switch ns*/empty.db ns*/empty.db.jnl
+rm -f ns5/requests ns5/example.db ns5/bl.db ns5/*.perf
 rm -f */named.memstats */named.run */named.stats */session.key
 rm -f */*.jnl */*.core */*.pid
+rm -f */policy2.db

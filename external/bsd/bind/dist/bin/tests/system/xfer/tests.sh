@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2005, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2005, 2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -27,7 +27,7 @@ status=0
 echo "I:testing basic zone transfer functionality"
 $DIG $DIGOPTS example. \
 	@10.53.0.2 axfr -p 5300 > dig.out.ns2 || status=1
-grep ";" dig.out.ns2
+grep "^;" dig.out.ns2
 
 #
 # Spin to allow the zone to tranfer.
@@ -37,13 +37,13 @@ do
 tmp=0
 $DIG $DIGOPTS example. \
 	@10.53.0.3 axfr -p 5300 > dig.out.ns3 || tmp=1
-	grep ";" dig.out.ns3 > /dev/null
+	grep "^;" dig.out.ns3 > /dev/null
 	if test $? -ne 0 ; then break; fi
 	echo "I: plain zone re-transfer"
 	sleep 5
 done
 if test $tmp -eq 1 ; then status=1; fi
-grep ";" dig.out.ns3
+grep "^;" dig.out.ns3
 
 $PERL ../digcomp.pl dig1.good dig.out.ns2 || status=1
 
@@ -53,7 +53,7 @@ echo "I:testing TSIG signed zone transfers"
 $DIG $DIGOPTS tsigzone. \
     	@10.53.0.2 axfr -y tsigzone.:1234abcd8765 -p 5300 \
 	> dig.out.ns2 || status=1
-grep ";" dig.out.ns2
+grep "^;" dig.out.ns2
 
 #
 # Spin to allow the zone to tranfer.
@@ -64,13 +64,13 @@ tmp=0
 $DIG $DIGOPTS tsigzone. \
     	@10.53.0.3 axfr -y tsigzone.:1234abcd8765 -p 5300 \
 	> dig.out.ns3 || tmp=1
-	grep ";" dig.out.ns3 > /dev/null
+	grep "^;" dig.out.ns3 > /dev/null
 	if test $? -ne 0 ; then break; fi
 	echo "I: plain zone re-transfer"
 	sleep 5
 done
 if test $tmp -eq 1 ; then status=1; fi
-grep ";" dig.out.ns3
+grep "^;" dig.out.ns3
 
 $PERL ../digcomp.pl dig.out.ns2 dig.out.ns3 || status=1
 
@@ -135,7 +135,7 @@ done
 
 $DIG $DIGOPTS example. \
 	@10.53.0.3 axfr -p 5300 > dig.out.ns3 || tmp=1
-grep ";" dig.out.ns3
+grep "^;" dig.out.ns3
 
 $PERL ../digcomp.pl dig2.good dig.out.ns3 || tmp=1
 
@@ -151,11 +151,11 @@ tmp=0
 
 $DIG $DIGOPTS master. \
 	@10.53.0.6 axfr -p 5300 > dig.out.ns6 || tmp=1
-grep ";" dig.out.ns6
+grep "^;" dig.out.ns6
 
 $DIG $DIGOPTS master. \
 	@10.53.0.3 axfr -p 5300 > dig.out.ns3 || tmp=1
-grep ";" dig.out.ns3 && cat dig.out.ns3
+grep "^;" dig.out.ns3 && cat dig.out.ns3
 
 $PERL ../digcomp.pl dig.out.ns6 dig.out.ns3 || tmp=1
 
@@ -171,11 +171,11 @@ tmp=0
 
 $DIG $DIGOPTS slave. \
 	@10.53.0.6 axfr -p 5300 > dig.out.ns6 || tmp=1
-grep ";" dig.out.ns6
+grep "^;" dig.out.ns6
 
 $DIG $DIGOPTS slave. \
 	@10.53.0.1 axfr -p 5300 > dig.out.ns1 || tmp=1
-grep ";" dig.out.ns1
+grep "^;" dig.out.ns1
 
 $PERL ../digcomp.pl dig.out.ns6 dig.out.ns1 || tmp=1
 
@@ -200,11 +200,11 @@ tmp=0
 
 $DIG $DIGOPTS slave. \
 	@10.53.0.1 axfr -p 5300 > dig.out.ns1 || tmp=1
-grep ";" dig.out.ns1
+grep "^;" dig.out.ns1
 
 $DIG $DIGOPTS slave. \
 	@10.53.0.7 axfr -p 5300 > dig.out.ns7 || tmp=1
-grep ";" dig.out.ns1
+grep "^;" dig.out.ns1
 
 $PERL ../digcomp.pl dig.out.ns7 dig.out.ns1 || tmp=1
 

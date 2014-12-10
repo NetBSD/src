@@ -14,8 +14,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.3 2010/12/17 00:57:39 marka Exp 
-
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
 
@@ -23,7 +21,7 @@ zone=example.
 infile=example.db.in
 zonefile=example.db
 
-(cd ../ns4 && sh -e sign.sh )
+(cd ../ns4 && $SHELL -e sign.sh )
 
 cp ../ns4/dsset-sub.example. .
 

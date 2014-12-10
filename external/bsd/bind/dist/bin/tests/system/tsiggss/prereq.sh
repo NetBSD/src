@@ -14,6 +14,9 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
+
 # enable the tsiggss test only if gssapi was enabled
 ./gssapi_krb ||  {
         echo "I:gssapi and krb5 not supported - skipping tsiggss test"
@@ -21,4 +24,4 @@
 }
 
 # ... and crypto
-exec sh ../testcrypto.sh
+exec $SHELL ../testcrypto.sh

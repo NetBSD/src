@@ -38,16 +38,16 @@ OBJS =		isctest.@O@
 SRCS =		isctest.c taskpool_test.c socket_test.c hash_test.c \
 		lex_test.c \
 		sockaddr_test.c symtab_test.c task_test.c queue_test.c \
-		parse_test.c pool_test.c regex_test.c socket_test.c \
-		safe_test.c time_test.c aes_test.c
+		parse_test.c pool_test.c print_test.c regex_test.c \
+		socket_test.c safe_test.c time_test.c aes_test.c
 
 SUBDIRS =
 TARGETS =	taskpool_test@EXEEXT@ socket_test@EXEEXT@ hash_test@EXEEXT@ \
 		lex_test@EXEEXT@ \
 		sockaddr_test@EXEEXT@ symtab_test@EXEEXT@ task_test@EXEEXT@ \
 		queue_test@EXEEXT@ parse_test@EXEEXT@ pool_test@EXEEXT@ \
-		regex_test@EXEEXT@ socket_test@EXEEXT@ safe_test@EXEEXT@ \
-		time_test@EXEEXT@ aes_test@EXEEXT@
+		print_test@EXEEXT@ regex_test@EXEEXT@ socket_test@EXEEXT@ \
+		safe_test@EXEEXT@ time_test@EXEEXT@ aes_test@EXEEXT@
 
 @BIND9_MAKE_RULES@
 
@@ -86,6 +86,10 @@ parse_test@EXEEXT@: parse_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 sockaddr_test@EXEEXT@: sockaddr_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 			sockaddr_test.@O@ isctest.@O@ ${ISCLIBS} ${LIBS}
+
+print_test@EXEEXT@: print_test.@O@ ${ISCDEPLIBS} ${top_srcdir}/lib/isc/print.c
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			print_test.@O@ ${ISCLIBS} ${LIBS}
 
 pool_test@EXEEXT@: pool_test.@O@ isctest.@O@ ${ISCDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
