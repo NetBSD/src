@@ -1,4 +1,4 @@
-/*	$NetBSD: codeset.h,v 1.3 2012/06/05 00:39:56 christos Exp $	*/
+/*	$NetBSD: codeset.h,v 1.4 2014/12/10 04:37:56 christos Exp $	*/
 
 /* Id: codeset.h,v 1.1 2003/06/04 00:26:51 marka Exp  */
 /*

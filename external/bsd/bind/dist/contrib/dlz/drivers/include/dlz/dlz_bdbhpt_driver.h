@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_bdbhpt_driver.h,v 1.2 2011/02/16 03:46:55 christos Exp $	*/
+/*	$NetBSD: dlz_bdbhpt_driver.h,v 1.3 2014/12/10 04:37:55 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.

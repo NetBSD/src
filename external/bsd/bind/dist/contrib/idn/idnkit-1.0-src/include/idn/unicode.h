@@ -1,4 +1,4 @@
-/*	$NetBSD: unicode.h,v 1.3 2012/06/05 00:39:44 christos Exp $	*/
+/*	$NetBSD: unicode.h,v 1.4 2014/12/10 04:37:55 christos Exp $	*/
 
 /* Id: unicode.h,v 1.1 2003/06/04 00:25:43 marka Exp  */
 /*
