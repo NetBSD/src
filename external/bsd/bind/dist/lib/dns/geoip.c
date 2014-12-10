@@ -1,4 +1,4 @@
-/*	$NetBSD: geoip.c,v 1.1.1.2 2014/07/08 04:48:38 spz Exp $	*/
+/*	$NetBSD: geoip.c,v 1.1.1.3 2014/12/10 02:25:27 christos Exp $	*/
 
 /*
  * Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -617,7 +617,7 @@ dns_geoip_match(const isc_netaddr_t *reqaddr,
 	GeoIPRegion *region;
 	dns_geoip_subtype_t subtype;
 	isc_uint32_t ipnum = 0;
-	int maxlen = 0, id;
+	int maxlen = 0, id, family;
 	const char *cs;
 	char *s;
 #ifdef HAVE_GEOIP_V6
@@ -628,7 +628,8 @@ dns_geoip_match(const isc_netaddr_t *reqaddr,
 
 	INSIST(geoip != NULL);
 
-	switch (reqaddr->family) {
+	family = reqaddr->family;
+	switch (family) {
 	case AF_INET:
 		ipnum = ntohl(reqaddr->type.in.s_addr);
 		break;
@@ -663,8 +664,7 @@ dns_geoip_match(const isc_netaddr_t *reqaddr,
 
 		INSIST(elt->as_string != NULL);
 
-		cs = country_lookup(db, subtype, reqaddr->family,
-				    ipnum, ipnum6);
+		cs = country_lookup(db, subtype, family, ipnum, ipnum6);
 		if (cs != NULL && strncasecmp(elt->as_string, cs, maxlen) == 0)
 			return (ISC_TRUE);
 		break;
@@ -684,8 +684,7 @@ dns_geoip_match(const isc_netaddr_t *reqaddr,
 		if (db == NULL)
 			return (ISC_FALSE);
 
-		record = city_lookup(db, subtype,
-				     reqaddr->family, ipnum, ipnum6);
+		record = city_lookup(db, subtype, family, ipnum, ipnum6);
 		if (record == NULL)
 			break;
 
@@ -700,8 +699,7 @@ dns_geoip_match(const isc_netaddr_t *reqaddr,
 		if (db == NULL)
 			return (ISC_FALSE);
 
-		record = city_lookup(db, subtype,
-				     reqaddr->family, ipnum, ipnum6);
+		record = city_lookup(db, subtype, family, ipnum, ipnum6);
 		if (record == NULL)
 			break;
 
@@ -714,8 +712,7 @@ dns_geoip_match(const isc_netaddr_t *reqaddr,
 		if (db == NULL)
 			return (ISC_FALSE);
 
-		record = city_lookup(db, subtype,
-				     reqaddr->family, ipnum, ipnum6);
+		record = city_lookup(db, subtype, family, ipnum, ipnum6);
 		if (record == NULL)
 			break;
 
@@ -733,7 +730,7 @@ dns_geoip_match(const isc_netaddr_t *reqaddr,
 		INSIST(elt->as_string != NULL);
 
 		/* Region DB is not supported for IPv6 */
-		if (reqaddr->family == AF_INET6)
+		if (family == AF_INET6)
 			return (ISC_FALSE);
 
 		region = region_lookup(geoip->region, subtype, ipnum);
@@ -767,19 +764,32 @@ dns_geoip_match(const isc_netaddr_t *reqaddr,
 
 		INSIST(elt->as_string != NULL);
 		/* ISP, Org, AS, and Domain are not supported for IPv6 */
-		if (reqaddr->family == AF_INET6)
+		if (family == AF_INET6)
 			return (ISC_FALSE);
 
 		s = name_lookup(db, subtype, ipnum);
-		if (s != NULL && strcasecmp(elt->as_string, s) == 0)
-			return (ISC_TRUE);
+		if (s != NULL) {
+			size_t l;
+			if (strcasecmp(elt->as_string, s) == 0)
+				return (ISC_TRUE);
+			if (subtype != dns_geoip_as_asnum)
+				break;
+			/*
+			 * Just check if the ASNNNN value matches.
+			 */
+			l = strlen(elt->as_string);
+			if (l > 0U && strchr(elt->as_string, ' ') == NULL &&
+			    strncasecmp(elt->as_string, s, l) == 0 &&
+			    s[l] == ' ')
+				return (ISC_TRUE);
+		}
 		break;
 
 	case dns_geoip_netspeed_id:
 		INSIST(geoip->netspeed != NULL);
 
 		/* Netspeed DB is not supported for IPv6 */
-		if (reqaddr->family == AF_INET6)
+		if (family == AF_INET6)
 			return (ISC_FALSE);
 
 		id = netspeed_lookup(geoip->netspeed, subtype, ipnum);

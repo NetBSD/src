@@ -15,8 +15,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.37 2011/05/03 16:07:44 marka Exp 
-
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
 
@@ -24,11 +22,14 @@ zone=.
 infile=root.db.in
 zonefile=root.db
 
-(cd ../ns2 && sh sign.sh )
-(cd ../ns6 && sh sign.sh )
+(cd ../ns2 && $SHELL sign.sh )
+(cd ../ns6 && $SHELL sign.sh )
+(cd ../ns7 && $SHELL sign.sh )
 
 cp ../ns2/dsset-example. .
 cp ../ns2/dsset-dlv. .
+cp ../ns2/dsset-in-addr.arpa. .
+
 grep "8 [12] " ../ns2/dsset-algroll. > dsset-algroll.
 cp ../ns6/dsset-optout-tld. .
 

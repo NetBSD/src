@@ -33,7 +33,7 @@ showprivate () {
     echo "-- $@ --"
     $DIG $DIGOPTS +nodnssec +short @$2 -t type65534 $1 | cut -f3 -d' ' |
         while read record; do
-            perl -e 'my $rdata = pack("H*", @ARGV[0]);
+            $PERL -e 'my $rdata = pack("H*", @ARGV[0]);
                 die "invalid record" unless length($rdata) == 5;
                 my ($alg, $key, $remove, $complete) = unpack("CnCC", $rdata);
                 my $action = "signing";
@@ -58,7 +58,7 @@ checkprivate () {
 
 # check that a zone file is raw format, version 0
 israw0 () {
-    cat $1 | perl -e 'binmode STDIN;
+    cat $1 | $PERL -e 'binmode STDIN;
 		      read(STDIN, $input, 8);
                       ($style, $version) = unpack("NN", $input);
                       exit 1 if ($style != 2 || $version != 0);'
@@ -67,7 +67,7 @@ israw0 () {
 
 # check that a zone file is raw format, version 1
 israw1 () {
-    cat $1 | perl -e 'binmode STDIN;
+    cat $1 | $PERL -e 'binmode STDIN;
 		      read(STDIN, $input, 8);
                       ($style, $version) = unpack("NN", $input);
                       exit 1 if ($style != 2 || $version != 1);'
@@ -271,7 +271,7 @@ $DIG $DIGOPTS a.wild.optout.example. \
 stripns dig.out.ns3.test$n > dig.out.ns3.stripped.test$n
 stripns dig.out.ns4.test$n > dig.out.ns4.stripped.test$n
 $PERL ../digcomp.pl dig.out.ns3.stripped.test$n dig.out.ns4.stripped.test$n || ret=1
-grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null && ret=1
 grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -1727,6 +1727,16 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking that DS at a RFC 1918 empty zone lookup succeeds ($n)"
+ret=0
+$DIG $DIGOPTS +noauth 10.in-addr.arpa ds @10.53.0.2 >dig.out.ns2.test$n || ret=1
+$DIG $DIGOPTS +noauth 10.in-addr.arpa ds @10.53.0.6 >dig.out.ns6.test$n || ret=1
+$PERL ../digcomp.pl dig.out.ns2.test$n dig.out.ns6.test$n || ret=1
+grep "status: NOERROR" dig.out.ns6.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 echo "I:checking expired signatures remain with "'"allow-update { none; };"'" and no keys available ($n)"
 ret=0
 $DIG $DIGOPTS +noauth expired.example. +dnssec @10.53.0.3 soa > dig.out.ns3.test$n || ret=1
@@ -2455,6 +2465,14 @@ $DIG $DIGOPTS +noall +answer $name @10.53.0.3 -p 5300 > dig.out.test$n
 expire=`awk '$4 == "RRSIG" { print $9 }' dig.out.test$n`
 inception=`awk '$4 == "RRSIG" { print $10 }' dig.out.test$n`
 $PERL -e 'exit(0) if ("'"$time"'" lt "'"$expire"'" && "'"$time"'" gt "'"$inception"'"); exit(1);' || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:check that split rrsigs are handled ($n)"
+ret=0
+$DIG $DIGOPTS split-rrsig soa @10.53.0.7 > dig.out.test$n || ret=1
+awk 'BEGIN { ok=0; } $4 == "SOA" { if ($7 > 1) ok=1; } END { if (!ok) exit(1); }' dig.out.test$n || ret=1 
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

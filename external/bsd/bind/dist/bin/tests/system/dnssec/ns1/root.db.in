@@ -1,4 +1,4 @@
-; Copyright (C) 2004, 2007, 2010, 2013  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2004, 2007, 2010, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
 ; Copyright (C) 2000, 2001  Internet Software Consortium.
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
@@ -34,3 +34,4 @@ algroll			NS	ns2.algroll
 ns2.algroll.		A	10.53.0.2
 optout-tld		NS	ns6.optout-tld.
 ns6.optout-tld.		A	10.53.0.6
+in-addr.arpa.		NS	ns2.example.

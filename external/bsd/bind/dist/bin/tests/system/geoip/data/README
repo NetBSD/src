@@ -1,9 +1,9 @@
-Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
 See COPYRIGHT in the source root or http://isc.org/copyright.html for terms.
 
 The data data files in this directory are sample GeoIP databases,
 generated from the corresponding CSV files.  Thanks to MaxMind, Inc.
-for assitance with producing these files.
+for assistance with producing these files.
 
 Unless otherwise noted, the databases only support IPv4:
 
@@ -18,7 +18,7 @@ GeoIPDoain.dat: Domain Name
 GeoIPASNum.dat: AS Number
 GeoIPNetSpeed.dat: Net Speed
 
-GeoIP.dat can also be egenerated using the open source 'geoip-csv-to-dat'
+GeoIP.dat can also be generated using the open source 'geoip-csv-to-dat'
 utility:
 
 $ geoip-csv-to-dat -i "BIND9 geoip test data v1" -o GeoIP.dat << EOF

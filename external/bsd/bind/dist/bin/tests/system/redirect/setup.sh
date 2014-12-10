@@ -14,14 +14,13 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.3 2011/03/01 23:48:06 tbox Exp 
-
 SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
 
-sh clean.sh
+$SHELL clean.sh
 
 test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
 cp ns2/redirect.db.in ns2/redirect.db
 cp ns2/example.db.in ns2/example.db
-cd ns1 && sh sign.sh
+cd ns1 && $SHELL sign.sh

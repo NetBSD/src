@@ -15,8 +15,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.50 2011/11/04 05:36:28 each Exp 
-
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
 
@@ -26,7 +24,7 @@ zonefile=example.db
 
 # Have the child generate a zone key and pass it to us.
 
-( cd ../ns3 && sh sign.sh )
+( cd ../ns3 && $SHELL sign.sh )
 
 for subdomain in secure bogus dynamic keyless nsec3 optout nsec3-unknown \
     optout-unknown multiple rsasha256 rsasha512 kskonly update-nsec3 \
@@ -90,6 +88,18 @@ tolower($1) == "bad-dname.example." && $4 == "RRSIG" && $5 == "DNAME" {
 
 { print; }' > $zonefile.signed++ && mv $zonefile.signed++ $zonefile.signed
 
+#
+# signed in-addr.arpa w/ a delegation for 10.in-addr.arpa which is unsigned.
+#
+zone=in-addr.arpa.
+infile=in-addr.arpa.db.in
+zonefile=in-addr.arpa.db
+
+keyname1=`$KEYGEN -q -r $RANDFILE -a DSA -b 768 -n zone $zone`
+keyname2=`$KEYGEN -q -r $RANDFILE -a DSA -b 768 -n zone $zone`
+
+cat $infile $keyname1.key $keyname2.key >$zonefile
+$SIGNER -P -g -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
 
 # Sign the privately secure file
 

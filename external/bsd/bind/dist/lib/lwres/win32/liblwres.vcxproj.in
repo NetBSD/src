@@ -105,6 +105,7 @@
     <None Include="liblwres.def" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\compat.c" />
     <ClCompile Include="..\context.c" />
     <ClCompile Include="..\gai_strerror.c" />
     <ClCompile Include="..\getaddrinfo.c" />
@@ -137,6 +138,8 @@
     <ClInclude Include="..\include\lwres\lwpacket.h" />
     <ClInclude Include="..\include\lwres\lwres.h" />
     <ClInclude Include="..\include\lwres\result.h" />
+    <ClInclude Include="..\include\lwres\stdlib.h" />
+    <ClInclude Include="..\include\lwres\string.h" />
     <ClInclude Include="include\lwres\int.h" />
     <ClInclude Include="include\lwres\net.h" />
     <ClInclude Include="include\lwres\netdb.h" />

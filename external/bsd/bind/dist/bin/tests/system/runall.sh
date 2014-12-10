@@ -27,7 +27,7 @@ status=0
 {
     for d in $SUBDIRS
     do
-            sh run.sh $d || status=1
+            $SHELL run.sh $d || status=1
     done
 } 2>&1 | tee "systests.output"
 

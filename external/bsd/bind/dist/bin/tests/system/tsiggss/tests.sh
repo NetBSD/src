@@ -39,8 +39,9 @@ update add $host $cmd
 send
 EOF
     echo "I:testing update for $host $type $cmd"
-    $NSUPDATE -g ns1/update.txt > /dev/null 2>&1 || {
+    $NSUPDATE -g -d ns1/update.txt > nsupdate.out 2>&1 || {
 	echo "I:update failed for $host $type $cmd"
+	sed "s/^/I:/" nsupdate.out
 	return 1
     }
 
@@ -59,21 +60,21 @@ export KRB5CCNAME
 
 test_update testdc1.example.nil. A "86400 A 10.53.0.10" "10.53.0.10" || status=1
 test_update testdc2.example.nil. A "86400 A 10.53.0.11" "10.53.0.11" || status=1
-test_update denied.example.nil. TXT "86400 TXT helloworld" "helloworld" && status=1
+test_update denied.example.nil. TXT "86400 TXT helloworld" "helloworld" > /dev/null && status=1
 
 echo "I:testing updates as a user"
 KRB5CCNAME="FILE:"`pwd`/ns1/testdenied.ccache
 export KRB5CCNAME
 
-test_update testdenied.example.nil. A "86400 A 10.53.0.12" "10.53.0.12" && status=1
+test_update testdenied.example.nil. A "86400 A 10.53.0.12" "10.53.0.12" > /dev/null && status=1
 test_update testdenied.example.nil. TXT "86400 TXT helloworld" "helloworld" || status=1
 
 echo "I:testing external update policy"
-test_update testcname.example.nil. TXT "86400 CNAME testdenied.example.nil" "testdenied" && status=1
-perl ./authsock.pl --type=CNAME --path=ns1/auth.sock --pidfile=authsock.pid --timeout=120 > /dev/null 2>&1 &
+test_update testcname.example.nil. TXT "86400 CNAME testdenied.example.nil" "testdenied" > /dev/null && status=1
+$PERL ./authsock.pl --type=CNAME --path=ns1/auth.sock --pidfile=authsock.pid --timeout=120 > /dev/null 2>&1 &
 sleep 1
 test_update testcname.example.nil. TXT "86400 CNAME testdenied.example.nil" "testdenied" || status=1
-test_update testcname.example.nil. TXT "86400 A 10.53.0.13" "10.53.0.13" && status=1
+test_update testcname.example.nil. TXT "86400 A 10.53.0.13" "10.53.0.13" > /dev/null && status=1
 
 echo "I:testing external policy with SIG(0) key"
 ret=0

@@ -127,7 +127,7 @@ void
       There are four main functions for the no-op opcode.
       One render function converts a no-op request structure &mdash;
       <type>lwres_nooprequest_t</type> &mdash;
-      to the lighweight resolver's canonical format.
+      to the lightweight resolver's canonical format.
       It is complemented by a parse function that converts a packet in this
       canonical format to a no-op request structure.
       Another render function converts the no-op response structure &mdash;

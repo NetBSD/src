@@ -14,17 +14,14 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id
-
-
 set -e
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-QPERF=`sh qperf.sh`
+QPERF=`$SHELL qperf.sh`
 
-sh clean.sh
+$SHELL clean.sh
 
 # set up test policy zones.
 #   bl is the main test zone
@@ -118,3 +115,5 @@ $PERL -e 'for ($cnt = $val = 1; $cnt <= 3000; ++$cnt) {
 	}' >ns5/requests
 
 cp ns2/bl.tld2.db.in ns2/bl.tld2.db
+cp ns5/empty.db.in ns5/empty.db
+cp ns5/empty.db.in ns5/policy2.db

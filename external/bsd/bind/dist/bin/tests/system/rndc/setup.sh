@@ -14,18 +14,16 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.2 2011/03/21 18:06:06 each Exp 
-
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-sh clean.sh
+$SHELL clean.sh
 
 test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
-sh ../genzone.sh 2 >ns2/nil.db
-sh ../genzone.sh 2 >ns2/other.db
-sh ../genzone.sh 2 >ns2/static.db
+$SHELL ../genzone.sh 2 >ns2/nil.db
+$SHELL ../genzone.sh 2 >ns2/other.db
+$SHELL ../genzone.sh 2 >ns2/static.db
 
 cat ns4/named.conf.in > ns4/named.conf
 

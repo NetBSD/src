@@ -47,6 +47,7 @@
       <command>dnssec-revoke</command>
       <arg><option>-hr</option></arg>
       <arg><option>-v <replaceable class="parameter">level</replaceable></option></arg>
+      <arg><option>-V</option></arg>
       <arg><option>-K <replaceable class="parameter">directory</replaceable></option></arg>
       <arg><option>-E <replaceable class="parameter">engine</replaceable></option></arg>
       <arg><option>-f</option></arg>
@@ -102,6 +103,15 @@
           <para>
             Sets the debugging level.
           </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>-V</term>
+        <listitem>
+	  <para>
+	    Prints version information.
+	  </para>
         </listitem>
       </varlistentry>
 

@@ -16,11 +16,11 @@
 
 if $PERL -e 'use Net::DNS;' 2>/dev/null
 then
-    if $PERL -e 'use Net::DNS; die if $Net::DNS::VERSION == 0.73;' 2>/dev/null
+    if $PERL -e 'use Net::DNS; die if ($Net::DNS::VERSION >= 0.69 && $Net::DNS::VERSION <= 0.74);' 2>/dev/null
     then
         :
     else
-        echo "I:Net::DNS version 0.73 has a bug that causes this test to fail: please update." >&2
+        echo "I:Net::DNS versions 0.69 to 0.74 have bugs that cause this test to fail: please update." >&2
         exit 1
     fi
 else

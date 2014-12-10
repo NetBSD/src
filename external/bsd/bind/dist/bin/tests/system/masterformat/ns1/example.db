@@ -1,4 +1,4 @@
-; Copyright (C) 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -43,6 +43,15 @@ dnskey			300	DNSKEY	256 3 1 (
 					b9VIE5x7KNHAYTvTO5d4S8M=
 					)
 ds			300	DS	30795 1 1 (
+					310D27F4D82C1FC2400704EA9939FE6E1CEA
+					A3B9 )
+cdnskey			300	CDNSKEY	256 3 1 (
+					AQPTpWyReB/e9Ii6mVGnakS8hX2zkh/iUYAg
+					+Ge4noWROpTWOIBvm76zeJPWs4Zfqa1IsswD
+					Ix5Mqeg0zwclz59uecKsKyx5w9IhtZ8plc4R
+					b9VIE5x7KNHAYTvTO5d4S8M=
+					)
+cds			300	CDS	30795 1 1 (
 					310D27F4D82C1FC2400704EA9939FE6E1CEA
 					A3B9 )
 nsec			600	NSEC	nsecnext NS DS RRSIG NSEC

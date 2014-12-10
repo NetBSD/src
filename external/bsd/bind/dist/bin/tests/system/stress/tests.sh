@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -14,8 +14,6 @@
 # LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
-
-# Id: tests.sh,v 1.5 2007/06/19 23:47:05 tbox Exp 
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -31,7 +29,7 @@ else
 fi
 
 (
-sh -c "while true
+$SHELL -c "while true
            do $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 reload 2>&1 |
 	       sed 's/^/I:ns3 /';
 	   sleep 1

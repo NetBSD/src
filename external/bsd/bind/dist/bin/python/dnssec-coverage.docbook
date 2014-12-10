@@ -150,7 +150,7 @@
           <para>
             This option is mandatory unless the <option>-f</option> has
             been used to specify a zone file.  (If <option>-f</option> has
-            been specified, this option may still be used; it will overrde
+            been specified, this option may still be used; it will override
             the value found in the file.)
           </para>
         </listitem>
@@ -179,7 +179,7 @@
             been used to specify a zone file, or a default key TTL was
             set with the <option>-L</option> to
             <command>dnssec-keygen</command>.  (If either of those is true,
-            this option may still be used; it will overrde the value found
+            this option may still be used; it will override the value found
             in the zone or key file.)
           </para>
         </listitem>
