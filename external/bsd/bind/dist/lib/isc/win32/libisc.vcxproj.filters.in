@@ -61,6 +61,9 @@
     <ClInclude Include="..\include\isc\commandline.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\isc\counter.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\isc\crc64.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
@@ -490,6 +493,9 @@
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\commandline.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\counter.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\crc64.c">
