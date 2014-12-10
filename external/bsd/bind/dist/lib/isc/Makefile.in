@@ -138,7 +138,7 @@ installdirs:
 	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${libdir}
 
 install:: timestamp installdirs
-	${LIBTOOL_MODE_INSTALL} ${INSTALL_DATA} libisc.@A@ ${DESTDIR}${libdir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_LIBRARY} libisc.@A@ ${DESTDIR}${libdir}
 
 clean distclean::
 	rm -f libisc.@A@ libisc-nosymtbl.@A@ libisc.la \

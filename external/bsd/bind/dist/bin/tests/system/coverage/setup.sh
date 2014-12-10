@@ -19,7 +19,7 @@ SYSTEMTESTTOP=..
 
 KEYGEN="$KEYGEN -qr $RANDFILE"
 
-sh clean.sh
+$SHELL clean.sh
 
 ln -s $CHECKZONE named-compilezone
 

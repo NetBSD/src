@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -338,6 +338,36 @@ for i in 1 2 3 4 5
 do
         $RNDC -s 10.53.0.4 -p 9956 -c ns4/key${i}.conf status > /dev/null 2>&1 2>&1 && ret=1
 done
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing rndc with null command"
+ret=0
+$RNDC -s 10.53.0.4 -p 9956 -c ns4/key6.conf null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing rndc with unknown control channel command"
+ret=0
+$RNDC -s 10.53.0.4 -p 9956 -c ns4/key6.conf obviouslynotacommand >/dev/null 2>&1 && ret=1
+# rndc: 'obviouslynotacommand' failed: unknown command
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:testing rndc with querylog command"
+ret=0
+# first enable it with querylog on option
+$RNDC -s 10.53.0.4 -p 9956 -c ns4/key6.conf querylog on >/dev/null 2>&1 || ret=1
+# query for builtin and check if query was logged
+$DIG @10.53.0.4 -p 5300 -c ch -t txt foo12345.bind > /dev/null || ret 1
+grep "query logging is now on" ns4/named.run > /dev/null || ret=1
+grep "query: foo12345.bind CH TXT" ns4/named.run > /dev/null || ret=1
+# toggle query logging and check again
+$RNDC -s 10.53.0.4 -p 9956 -c ns4/key6.conf querylog > /dev/null 2>&1 || ret=1
+# query for another builtin zone and check if query was logged
+$DIG @10.53.0.4 -p 5300 -c ch -t txt foo9876.bind > /dev/null || ret 1
+grep "query logging is now off" ns4/named.run > /dev/null || ret=1
+grep "query: foo9876.bind CH TXT" ns4/named.run > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

@@ -55,6 +55,7 @@
       <arg><option>-I <replaceable class="parameter">date/offset</replaceable></option></arg>
       <arg><option>-D <replaceable class="parameter">date/offset</replaceable></option></arg>
       <arg><option>-h</option></arg>
+      <arg><option>-V</option></arg>
       <arg><option>-v <replaceable class="parameter">level</replaceable></option></arg>
       <arg><option>-E <replaceable class="parameter">engine</replaceable></option></arg>
       <arg choice="req">keyfile</arg>
@@ -140,6 +141,15 @@
         </listitem>
       </varlistentry>
   
+      <varlistentry>
+	<term>-V</term>
+        <listitem>
+	  <para>
+	    Prints version information.
+	  </para>
+        </listitem>
+      </varlistentry>
+
       <varlistentry>
         <term>-v <replaceable class="parameter">level</replaceable></term>
         <listitem>

@@ -144,6 +144,10 @@ isc_base32hex_decoderegion
 isc_base32hex_decodestring
 isc_base32hex_tobuffer
 isc_base32hex_totext
+isc_base32hexnp_decoderegion
+isc_base32hexnp_decodestring
+isc_base32hexnp_tobuffer
+isc_base32hexnp_totext
 isc_base64_decodestring
 isc_base64_tobuffer
 isc_base64_totext

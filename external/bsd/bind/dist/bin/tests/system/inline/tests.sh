@@ -29,7 +29,7 @@ $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 signing -nsec3param 1 0 0 - ns
 for i in 1 2 3 4 5 6 7 8 9 0
 do
 	nsec3param=`$DIG +short @10.53.0.3 -p 5300 nsec3param nsec3.`
-	test -n "$nsec3param" && break
+	test "$nsec3param" = "1 0 0 -" && break
 	sleep 1
 done
 
@@ -44,7 +44,7 @@ done
 for i in 1 2 3 4 5 6 7 8 9 0
 do
 	nsec3param=`$DIG +short @10.53.0.3 -p 5300 nsec3param retransfer3.`
-	test -n "$nsec3param" && break
+	test "$nsec3param" = "1 0 0 -" && break
 	sleep 1
 done
 

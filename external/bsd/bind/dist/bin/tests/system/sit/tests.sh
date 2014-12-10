@@ -32,6 +32,15 @@ havetc() {
 	grep 'flags:.* tc[^;]*;' $1 > /dev/null
 }
 
+for bad in bad*.conf
+do
+        ret=0
+        echo "I:checking that named-checkconf detects error in $bad"
+        $CHECKCONF $bad > /dev/null 2>&1
+        if [ $? != 1 ]; then echo "I:failed"; ret=1; fi
+        status=`expr $status + $ret`
+done
+
 n=`expr $n + 1`
 echo "I:checking SIT token returned to empty SIT option ($n)"
 ret=0

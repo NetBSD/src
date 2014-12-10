@@ -49,7 +49,7 @@ dst_test@EXEEXT@: dst_test.@O@ ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 		dst_test.@O@ ${LIBS}
 
-t_dst@EXEEXT@: t_dst.@O@ ${DEPLIBS} ${TLIB} randomfile
+t_dst@EXEEXT@: t_dst.@O@ ${DEPLIBS} ${TLIB}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 		t_dst.@O@ ${TLIB} ${LIBS}
 
