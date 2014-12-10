@@ -138,10 +138,13 @@
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
-        <refentrytitle>pkcs11-list</refentrytitle><manvolnum>3</manvolnum>
+        <refentrytitle>pkcs11-keygen</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>pkcs11-keygen</refentrytitle><manvolnum>3</manvolnum>
+        <refentrytitle>pkcs11-list</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkcs11-tokens</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>
     </para>
   </refsect1>

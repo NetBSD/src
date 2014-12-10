@@ -26,6 +26,8 @@ ns2=$ns.2		# authoritative server whose records are rewritten
 ns3=$ns.3		# main rewriting resolver
 ns4=$ns.4		# another authoritative server that is rewritten
 ns5=$ns.5		# another rewriting resolver
+ns6=$ns.6		# a forwarding server
+ns7=$ns.7		# another rewriting resolver
 
 HAVE_CORE=
 SAVE_RESULTS=
@@ -157,6 +159,23 @@ ckstats () {
     eval "${NSDIR}_CNT=$NEW_CNT"
 }
 
+ckstatsrange () {
+    HOST=$1
+    LABEL="$2"
+    NSDIR="$3"
+    MIN="$4"
+    MAX="$5"
+    $RNDCCMD $HOST stats
+    NEW_CNT=0`sed -n -e 's/[	 ]*\([0-9]*\).response policy.*/\1/p'  \
+		    $NSDIR/named.stats | tail -1`
+    eval "OLD_CNT=0\$${NSDIR}_CNT"
+    GOT=`expr $NEW_CNT - $OLD_CNT`
+    if test "$GOT" -lt "$MIN" -o "$GOT" -gt "$MAX"; then
+	setret "I:wrong $LABEL $NSDIR statistics of $GOT instead of ${MIN}..${MAX}"
+    fi
+    eval "${NSDIR}_CNT=$NEW_CNT"
+}
+
 # $1=message  $2=optional test file name
 start_group () {
     ret=0
@@ -190,6 +209,11 @@ clean_result () {
 # $1=dig args $2=other dig output file
 ckresult () {
     #ckalive "$1" "I:server crashed by 'dig $1'" || return 1
+    if grep "flags:.* aa .*ad;" $DIGNM; then
+	setret "I:'dig $1' AA and AD set;"
+    elif grep "flags:.* aa .*ad;" $DIGNM; then
+	setret "I:'dig $1' AD set;"
+    fi
     if $PERL $SYSTEMTESTTOP/digcomp.pl $DIGNM $2 >/dev/null; then
 	NEED_TCP=`echo "$1" | sed -n -e 's/[Tt][Cc][Pp].*/TCP/p'`
 	RESULT_TCP=`sed -n -e 's/.*Truncated, retrying in TCP.*/TCP/p' $DIGNM`
@@ -334,6 +358,34 @@ addr 35.35.35.35 "x.servfail @$ns5"	# 35 qname-wait-recurse no
 end_group
 ckstats $ns3 test1 ns3 22
 ckstats $ns5 test1 ns5 1
+ckstats $ns6 test1 ns6 0
+
+start_group "NXDOMAIN/NODATA action on QNAME trigger" test1
+nxdomain a0-1.tld2 @$ns6                   # 1
+nodata a3-1.tld2 @$ns6                     # 2
+nodata a3-2.tld2 @$ns6                     # 3 nodata at DNAME itself
+nxdomain a4-2.tld2 @$ns6                   # 4 rewrite based on CNAME target
+nxdomain a4-2-cname.tld2 @$ns6             # 5
+nodata a4-3-cname.tld2 @$ns6               # 6
+addr 12.12.12.12  "a4-1.sub1.tld2 @$ns6"   # 7 A replacement
+addr 12.12.12.12  "a4-1.sub2.tld2 @$ns6"   # 8 A replacement with wildcard
+addr 127.4.4.1    "a4-4.tld2 @$ns6"        # 9 prefer 1st conflicting QNAME zone
+addr 12.12.12.12  "nxc1.sub1.tld2 @$ns6"   # 10 replace NXDOMAIN w/ CNAME
+addr 12.12.12.12  "nxc2.sub1.tld2 @$ns6"   # 11 replace NXDOMAIN w/ CNAME chain
+addr 127.6.2.1    "a6-2.tld2 @$ns6"        # 12
+addr 56.56.56.56  "a3-6.tld2 @$ns6"        # 13 wildcard CNAME
+addr 57.57.57.57  "a3-7.sub1.tld2 @$ns6"   # 14 wildcard CNAME
+addr 127.0.0.16   "a4-5-cname3.tld2 @$ns6" # 15 CNAME chain
+addr 127.0.0.17   "a4-6-cname3.tld2 @$ns6" # 16 stop short in CNAME chain
+nxdomain c1.crash2.tld3 @$ns6              # 17 assert in rbtdb.c
+nxdomain a0-1.tld2 +dnssec @$ns6           # 18 simple DO=1 without sigs
+nxdomain a0-1s-cname.tld2s  +dnssec @$ns6  # 19
+drop a3-8.tld2 any @$ns6                   # 20 drop
+
+end_group
+ckstatsrange $ns3 test1 ns3 22 24
+ckstats $ns5 test1 ns5 0
+ckstats $ns6 test1 ns6 0
 
 start_group "IP rewrites" test2
 nodata a3-1.tld2			# 1 NODATA
@@ -559,6 +611,36 @@ echo "I:checking that ttl values are not zeroed when qtype is '*'"
 $DIG +noall +answer -p 5300 @$ns3 any a3-2.tld2 > dig.out.any
 ttl=`awk '/a3-2 tld2 text/ {print $2}' dig.out.any`
 if test ${ttl:=0} -eq 0; then setret I:failed; fi
+
+echo "I:checking rpz updates/transfers with parent nodes added after children"
+# regression test for RT #36272: the success condition
+# is the slave server not crashing.
+nsd() {
+    $NSUPDATE -p 5300 << EOF
+server $1
+ttl 300
+update $2 $3 IN CNAME .
+update $2 $4 IN CNAME .
+send
+EOF
+    sleep 2
+}
+
+for i in 1 2 3 4 5; do
+    nsd $ns5 add example.com.policy1. '*.example.com.policy1.'
+    nsd $ns5 delete example.com.policy1. '*.example.com.policy1.'
+done
+for i in 1 2 3 4 5; do
+    nsd $ns5 add '*.example.com.policy1.' example.com.policy1.
+    nsd $ns5 delete '*.example.com.policy1.' example.com.policy1.
+done
+
+echo "I:checking checking that going from a empty policy zone works"
+nsd $ns5 add '*.x.servfail.policy2.' x.servfail.policy2.
+sleep 1
+$RNDCCMD $ns7 reload policy2
+$DIG z.x.servfail -p 5300 @$ns7 > dig.out.ns7
+grep NXDOMAIN dig.out.ns7 > /dev/null || setret I:failed;
 
 echo "I:exit status: $status"
 exit $status

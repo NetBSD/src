@@ -14,4 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-exec sh ../testcrypto.sh gost
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
+
+exec $SHELL ../testcrypto.sh gost

@@ -15,8 +15,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: run.sh,v 1.45 2010/12/20 21:35:45 each Exp 
-
 #
 # Run a system test.
 #
@@ -41,7 +39,7 @@ echo "S:$test:`date`" >&2
 echo "T:$test:1:A" >&2
 echo "A:System test $test" >&2
 
-if [ x$PERL = x ]
+if [ x${PERL:+set} = x ]
 then
     echo "I:Perl not available.  Skipping test." >&2
     echo "R:UNTESTED" >&2
@@ -58,7 +56,7 @@ $PERL testsock.pl || {
 
 
 # Check for test-specific prerequisites.
-test ! -f $test/prereq.sh || ( cd $test && sh prereq.sh "$@" )
+test ! -f $test/prereq.sh || ( cd $test && $SHELL prereq.sh "$@" )
 result=$?
 
 if [ $result -eq 0 ]; then
@@ -72,7 +70,7 @@ fi
 
 # Check for PKCS#11 support
 if
-    test ! -f $test/usepkcs11 || sh cleanpkcs11.sh
+    test ! -f $test/usepkcs11 || $SHELL cleanpkcs11.sh
 then
     : pkcs11 ok
 else
@@ -85,14 +83,14 @@ fi
 # Set up any dynamically generated test data
 if test -f $test/setup.sh
 then
-   ( cd $test && sh setup.sh "$@" )
+   ( cd $test && $SHELL setup.sh "$@" )
 fi
 
 # Start name servers running
 $PERL start.pl $test || exit 1
 
 # Run the tests
-( cd $test ; sh tests.sh )
+( cd $test ; $SHELL tests.sh )
 
 status=$?
 
@@ -119,7 +117,7 @@ else
         rm -f $SYSTEMTESTTOP/random.data
 	if test -f $test/clean.sh
 	then
-	   ( cd $test && sh clean.sh "$@" )
+	   ( cd $test && $SHELL clean.sh "$@" )
 	fi
 fi
 
