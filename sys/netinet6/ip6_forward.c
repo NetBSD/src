@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.75 2014/12/08 00:19:37 christos Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.76 2014/12/10 01:10:14 christos Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.75 2014/12/08 00:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.76 2014/12/10 01:10:14 christos Exp $");
 
 #include "opt_gateway.h"
 #include "opt_ipsec.h"
@@ -74,7 +74,7 @@ struct	route ip6_forward_rt;
 
 extern pfil_head_t *inet6_pfil_hook;	/* XXX */
 
-static void
+static void __printflike(4, 5)
 ip6_cantforward(const struct ip6_hdr *ip6, const struct ifnet *srcifp,
     const struct ifnet *dstifp, const char *fmt, ...)
 {
@@ -98,7 +98,7 @@ ip6_cantforward(const struct ip6_hdr *ip6, const struct ifnet *srcifp,
 	ip6_log_time = time_second;
 
 	va_start(ap, fmt);
-	snprintf(reason, sizeof(reason), fmt, ap);
+	vsnprintf(reason, sizeof(reason), fmt, ap);
 	va_end(ap);
 
 	log(LOG_DEBUG, "Cannot forward from %s@%s to %s@%s nxt %d (%s)\n",
@@ -245,7 +245,8 @@ ip6_forward(struct mbuf *m, int srcrt)
 	    in6_setscope(&src_in6, m->m_pkthdr.rcvif, &inzone) != 0 ||
 	    inzone != outzone) {
 		ip6_cantforward(ip6, m->m_pkthdr.rcvif, rt->rt_ifp,
-		    "src inzone %d outzone %d", inzone, outzone);
+		    "src[%s] inzone %d outzone %d", 
+		    in6_getscopename(&ip6->ip6_src), inzone, outzone);
 		if (mcopy)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_BEYONDSCOPE, 0);
@@ -280,7 +281,8 @@ ip6_forward(struct mbuf *m, int srcrt)
 	    in6_setscope(&dst_in6, rt->rt_ifp, &outzone) != 0 ||
 	    inzone != outzone) {
 		ip6_cantforward(ip6, m->m_pkthdr.rcvif, rt->rt_ifp,
-		    "dst inzone %d outzone %d", inzone, outzone);
+		    "dst[%s] inzone %d outzone %d",
+		    in6_getscopename(&ip6->ip6_dst), inzone, outzone);
 		if (mcopy)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_BEYONDSCOPE, 0);
