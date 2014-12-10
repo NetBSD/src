@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.166 2014/08/10 23:39:08 matt Exp $
+#	$NetBSD: Makefile,v 1.167 2014/12/10 00:37:30 pooka Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -41,6 +41,7 @@ assym.h: ${ARCHDIR}/genassym.cf
 	mv -f assym.h.tmp assym.h
 .endif
 
+.if ${RUMPRUN} != "yes"
 # The following controls how to build compatibility code for old NetBSD
 # binaries. If BUILD_LEGACY is yes, then we build a separate library; otherwise
 # we include the code in libc.
@@ -53,6 +54,7 @@ COMPATDIR=${.CURDIR}/compat
 .include "${.CURDIR}/compat/Makefile.inc"
 # Marker for compat code that can't be easily isolated
 CPPFLAGS+=	-D__BUILD_LEGACY
+.endif
 .endif
 
 .include "${.CURDIR}/../../common/lib/libc/Makefile.inc"
@@ -90,7 +92,9 @@ CPPFLAGS+=	-D__BUILD_LEGACY
 .include "${.CURDIR}/termios/Makefile.inc"
 .include "${.CURDIR}/thread-stub/Makefile.inc"
 .include "${.CURDIR}/time/Makefile.inc"
+.if ${RUMPRUN} != "yes"
 .include "${.CURDIR}/tls/Makefile.inc"
+.endif
 .include "${.CURDIR}/sys/Makefile.inc"
 .if ${HAVE_LIBGCC_EH} == "no"
 .include "${NETBSDSRCDIR}/sys/lib/libunwind/Makefile.inc"
@@ -128,6 +132,7 @@ REGEX_SPECIALS=[][)(^$$.?*\\;]
 MKREPRO_SED=   -e 's;${NETBSDSRCDIR:C/${REGEX_SPECIALS}/\\\\&/g};/usr/src;'
 .endif
 
+.if ${RUMPRUN} != "yes"
 realall: tags
 tags: ${SRCS}
 	${_MKTARGET_CREATE}
@@ -145,6 +150,7 @@ tags: ${SRCS}
 FILES=		tags
 FILESNAME=	libc.tags
 FILESDIR=	/var/db
+.endif
 
 
 # workaround for I18N stuffs: build singlebyte setlocale() for libc.a,
