@@ -1,5 +1,3 @@
-/*	$NetBSD: ntgroups.c,v 1.1.1.5 2013/07/27 15:23:21 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2006, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.

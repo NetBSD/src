@@ -1,5 +1,3 @@
-/*	$NetBSD: netscope.c,v 1.1.1.3 2012/06/04 17:56:46 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.

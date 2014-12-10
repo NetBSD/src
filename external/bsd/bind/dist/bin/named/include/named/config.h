@@ -1,5 +1,3 @@
-/*	$NetBSD: config.h,v 1.1.1.5 2014/02/28 17:40:06 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001, 2002  Internet Software Consortium.

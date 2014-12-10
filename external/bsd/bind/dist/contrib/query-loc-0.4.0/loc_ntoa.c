@@ -1,5 +1,3 @@
-/*	$NetBSD: loc_ntoa.c,v 1.1.1.2 2014/02/28 17:40:10 christos Exp $	*/
-
 /* Stolen from BIND */
 
 /*

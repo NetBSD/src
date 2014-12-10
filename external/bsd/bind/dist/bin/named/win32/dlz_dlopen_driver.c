@@ -1,5 +1,3 @@
-/*	$NetBSD: dlz_dlopen_driver.c,v 1.1.1.5 2014/12/10 02:25:13 christos Exp $	*/
-
 /*
  * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  *

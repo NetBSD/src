@@ -1,5 +1,3 @@
-/*	$NetBSD: dhcid_49.h,v 1.1.1.3 2012/06/04 17:56:38 christos Exp $	*/
-
 /*
  * Copyright (C) 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
  *

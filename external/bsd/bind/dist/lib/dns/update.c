@@ -1,5 +1,3 @@
-/*	$NetBSD: update.c,v 1.1.1.3 2013/12/31 20:11:16 christos Exp $	*/
-
 /*
  * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *

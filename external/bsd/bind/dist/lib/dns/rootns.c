@@ -1,5 +1,3 @@
-/*	$NetBSD: rootns.c,v 1.1.1.8 2014/07/08 04:48:54 spz Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.

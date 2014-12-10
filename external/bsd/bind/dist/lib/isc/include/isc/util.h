@@ -1,5 +1,3 @@
-/*	$NetBSD: util.h,v 1.1.1.5 2012/06/04 17:56:51 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.

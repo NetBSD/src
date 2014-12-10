@@ -1,5 +1,3 @@
-/*	$NetBSD: sqlitedb.h,v 1.1.1.3 2012/06/04 17:55:19 christos Exp $	*/
-
 /*
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *

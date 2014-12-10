@@ -1,5 +1,3 @@
-/*	$NetBSD: zone_test.c,v 1.1.1.6 2014/07/08 04:46:01 spz Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.

@@ -1,5 +1,3 @@
-/*	$NetBSD: lwconfig.c,v 1.1.1.4 2013/07/27 15:23:23 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2006, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.

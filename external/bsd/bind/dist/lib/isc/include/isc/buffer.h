@@ -1,5 +1,3 @@
-/*	$NetBSD: buffer.h,v 1.1.1.6 2014/07/08 04:49:36 spz Exp $	*/
-
 /*
  * Copyright (C) 2004-2008, 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.

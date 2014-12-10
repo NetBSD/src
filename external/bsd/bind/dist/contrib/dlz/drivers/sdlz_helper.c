@@ -1,5 +1,3 @@
-/*	$NetBSD: sdlz_helper.c,v 1.1.1.4 2013/07/27 15:22:56 christos Exp $	*/
-
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
  *

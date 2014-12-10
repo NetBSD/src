@@ -1,5 +1,3 @@
-/*	$NetBSD: keyvalues.h,v 1.1.1.7 2012/12/04 19:25:21 spz Exp $	*/
-
 /*
  * Copyright (C) 2004-2010, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.

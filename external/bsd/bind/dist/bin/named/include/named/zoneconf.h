@@ -1,5 +1,3 @@
-/*	$NetBSD: zoneconf.h,v 1.1.1.3 2012/06/04 17:53:47 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007, 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.

@@ -1,5 +1,3 @@
-/*	$NetBSD: dbiterator_test.c,v 1.1.1.3 2013/07/27 15:23:17 christos Exp $	*/
-
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *

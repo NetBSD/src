@@ -1,5 +1,3 @@
-/*	$NetBSD: stats.h,v 1.1.1.5 2014/02/28 17:40:15 christos Exp $	*/
-
 /*
  * Copyright (C) 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  *

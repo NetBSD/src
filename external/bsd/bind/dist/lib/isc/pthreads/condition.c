@@ -1,5 +1,3 @@
-/*	$NetBSD: condition.c,v 1.1.1.4 2012/12/04 19:25:59 spz Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.

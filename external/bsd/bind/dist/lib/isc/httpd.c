@@ -1,5 +1,3 @@
-/*	$NetBSD: httpd.c,v 1.1.1.6 2014/02/28 17:40:15 christos Exp $	*/
-
 /*
  * Copyright (C) 2006-2008, 2010-2014  Internet Systems Consortium, Inc. ("ISC")
  *

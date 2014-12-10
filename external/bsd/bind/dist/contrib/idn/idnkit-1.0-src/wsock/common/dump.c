@@ -1,5 +1,3 @@
-/*	$NetBSD: dump.c,v 1.1.1.1 2009/03/22 14:57:51 christos Exp $	*/
-
 /*
  * dump.c - dump data
  */

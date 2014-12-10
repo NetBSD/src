@@ -1,5 +1,3 @@
-/*	$NetBSD: gsstest.c,v 1.1.1.7 2014/12/10 02:25:15 christos Exp $	*/
-
 /*
  * Copyright (C) 2006, 2007, 2009-2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  *

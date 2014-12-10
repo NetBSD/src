@@ -1,5 +1,3 @@
-/*	$NetBSD: dst_openssl.h,v 1.1.1.7 2013/07/27 15:23:11 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.

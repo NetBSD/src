@@ -1,5 +1,3 @@
-/*	$NetBSD: dllstub.c,v 1.1.1.3 2012/06/04 17:55:12 christos Exp $	*/
-
 /* Id: dllstub.c,v 1.1 2003/06/04 00:27:45 marka Exp  */
 
 SOCKET   PASCAL

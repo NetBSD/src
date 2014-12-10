@@ -1,5 +1,3 @@
-/*	$NetBSD: dir.c,v 1.1.1.6 2013/07/27 15:23:20 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2007-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.

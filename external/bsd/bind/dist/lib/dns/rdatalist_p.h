@@ -1,5 +1,3 @@
-/*	$NetBSD: rdatalist_p.h,v 1.1.1.3 2012/06/04 17:56:16 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.

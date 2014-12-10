@@ -1,5 +1,3 @@
-/*	$NetBSD: rdataslab.c,v 1.1.1.11 2014/07/08 04:48:50 spz Exp $	*/
-
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.

@@ -1,5 +1,3 @@
-/*	$NetBSD: dllmain.c,v 1.1.1.1 2009/03/22 14:57:53 christos Exp $	*/
-
 /*
  * dllmain.c - entry for DLL
  */

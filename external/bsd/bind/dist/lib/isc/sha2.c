@@ -1,5 +1,3 @@
-/*	$NetBSD: sha2.c,v 1.1.1.8 2014/07/08 04:49:34 spz Exp $	*/
-
 /*
  * Copyright (C) 2005-2007, 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *

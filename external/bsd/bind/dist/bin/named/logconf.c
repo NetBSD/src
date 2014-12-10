@@ -1,5 +1,3 @@
-/*	$NetBSD: logconf.c,v 1.1.1.6 2013/12/31 20:09:55 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007, 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.

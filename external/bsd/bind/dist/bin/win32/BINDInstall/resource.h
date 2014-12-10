@@ -1,5 +1,3 @@
-/*	$NetBSD: resource.h,v 1.1.1.2 2009/10/25 00:01:38 christos Exp $	*/
-
 //{{NO_DEPENDENCIES}}
 // Microsoft Developer Studio generated include file.
 // Used by BINDInstall.rc

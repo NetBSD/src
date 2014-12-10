@@ -1,5 +1,3 @@
-/*	$NetBSD: backtrace_test.c,v 1.1.1.4 2013/12/31 20:10:09 christos Exp $	*/
-
 /*
  * Copyright (C) 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  *

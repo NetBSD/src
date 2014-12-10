@@ -1,5 +1,3 @@
-/*	$NetBSD: hinfo_13.h,v 1.1.1.3 2012/06/04 17:56:35 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.

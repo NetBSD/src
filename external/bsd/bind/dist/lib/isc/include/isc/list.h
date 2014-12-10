@@ -1,5 +1,3 @@
-/*	$NetBSD: list.h,v 1.1.1.4 2013/07/27 15:23:19 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2006, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2002  Internet Software Consortium.

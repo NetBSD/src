@@ -1,5 +1,3 @@
-/*	$NetBSD: opensslgost_link.c,v 1.1.1.7 2014/07/08 04:48:44 spz Exp $	*/
-
 /*
  * Copyright (C) 2010-2014  Internet Systems Consortium, Inc. ("ISC")
  *

@@ -1,5 +1,3 @@
-/*	$NetBSD: spnego_asn1.c,v 1.1.1.5 2013/12/31 20:11:13 christos Exp $	*/
-
 /*
  * Copyright (C) 2006, 2007, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
  *

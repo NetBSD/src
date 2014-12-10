@@ -1,5 +1,3 @@
-/*	$NetBSD: filter-aaaa.c,v 1.1.1.5 2014/02/28 17:40:08 christos Exp $	*/
-
 /*
  * Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  *

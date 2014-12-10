@@ -1,5 +1,3 @@
-/*	$NetBSD: errno2result.c,v 1.1.1.4 2014/02/28 17:40:16 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.

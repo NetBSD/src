@@ -1,5 +1,3 @@
-/*	$NetBSD: filemapper.h,v 1.1.1.3 2012/06/04 17:54:54 christos Exp $	*/
-
 /* Id: filemapper.h,v 1.1 2003/06/04 00:25:38 marka Exp  */
 /*
  * Copyright (c) 2001 Japan Network Information Center.  All rights reserved.

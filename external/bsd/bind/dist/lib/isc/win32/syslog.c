@@ -1,5 +1,3 @@
-/*	$NetBSD: syslog.c,v 1.1.1.4 2014/07/08 04:49:51 spz Exp $	*/
-
 /*
  * Copyright (C) 2004, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.

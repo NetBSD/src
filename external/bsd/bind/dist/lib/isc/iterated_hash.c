@@ -1,5 +1,3 @@
-/*	$NetBSD: iterated_hash.c,v 1.1.1.4 2012/06/04 17:56:44 christos Exp $	*/
-
 /*
  * Copyright (C) 2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
  *

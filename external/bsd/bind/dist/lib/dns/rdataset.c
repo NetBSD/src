@@ -1,5 +1,3 @@
-/*	$NetBSD: rdataset.c,v 1.1.1.8 2012/12/04 19:25:07 spz Exp $	*/
-
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.

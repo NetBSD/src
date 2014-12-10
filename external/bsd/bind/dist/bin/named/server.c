@@ -1,5 +1,3 @@
-/*	$NetBSD: server.c,v 1.1.1.15 2014/12/10 02:25:13 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
@@ -3439,6 +3437,16 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist,
 	dns_resolver_setclientsperquery(view->resolver,
 					cfg_obj_asuint32(obj),
 					max_clients_per_query);
+
+	obj = NULL;
+	result = ns_config_get(maps, "max-recursion-depth", &obj);
+	INSIST(result == ISC_R_SUCCESS);
+	dns_resolver_setmaxdepth(view->resolver, cfg_obj_asuint32(obj));
+
+	obj = NULL;
+	result = ns_config_get(maps, "max-recursion-queries", &obj);
+	INSIST(result == ISC_R_SUCCESS);
+	dns_resolver_setmaxqueries(view->resolver, cfg_obj_asuint32(obj));
 
 #ifdef ALLOW_FILTER_AAAA
 	obj = NULL;

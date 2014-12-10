@@ -1,5 +1,3 @@
-/*	$NetBSD: build.c,v 1.1.1.1 2011/09/11 17:20:26 christos Exp $	*/
-
 /*
  * Automated Testing Framework (atf)
  *

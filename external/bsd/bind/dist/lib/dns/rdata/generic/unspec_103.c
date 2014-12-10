@@ -1,5 +1,3 @@
-/*	$NetBSD: unspec_103.c,v 1.1.1.4 2012/06/04 17:56:38 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.

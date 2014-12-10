@@ -1,5 +1,3 @@
-/*	$NetBSD: namedconf.h,v 1.1.1.6 2012/06/04 17:57:01 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.

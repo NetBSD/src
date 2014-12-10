@@ -1,5 +1,3 @@
-/*	$NetBSD: control.h,v 1.1.1.8 2014/02/28 17:40:06 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007, 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.

@@ -1,5 +1,3 @@
-/*	$NetBSD: lfsr.c,v 1.1.1.3 2012/06/04 17:56:44 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.

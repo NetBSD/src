@@ -1,5 +1,3 @@
-/*	$NetBSD: rpz.c,v 1.1.1.4 2013/07/27 15:22:52 christos Exp $	*/
-
 /*
  * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *

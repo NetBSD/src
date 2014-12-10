@@ -1,5 +1,3 @@
-/*	$NetBSD: nxt_30.c,v 1.1.1.4 2012/06/04 17:56:37 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.

@@ -1,5 +1,3 @@
-/*	$NetBSD: socket.c,v 1.1.1.3 2012/06/04 17:57:09 christos Exp $	*/
-
 /*
  * Copyright (C) 2007  Internet Systems Consortium, Inc. ("ISC")
  *

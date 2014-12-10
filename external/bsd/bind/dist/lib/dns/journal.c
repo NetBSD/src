@@ -1,5 +1,3 @@
-/*	$NetBSD: journal.c,v 1.1.1.10 2014/02/28 17:40:13 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007-2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.

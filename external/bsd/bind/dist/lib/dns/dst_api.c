@@ -1,5 +1,3 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.12 2014/07/08 04:48:37 spz Exp $	*/
-
 /*
  * Portions Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.

@@ -1,5 +1,3 @@
-/*	$NetBSD: statschannel.h,v 1.1.1.3 2012/06/04 17:53:47 christos Exp $	*/
-
 /*
  * Copyright (C) 2008  Internet Systems Consortium, Inc. ("ISC")
  *

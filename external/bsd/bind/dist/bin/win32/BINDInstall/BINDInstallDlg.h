@@ -1,5 +1,3 @@
-/*	$NetBSD: BINDInstallDlg.h,v 1.1.1.4 2012/06/04 17:54:44 christos Exp $	*/
-
 /*
  * Portions Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.

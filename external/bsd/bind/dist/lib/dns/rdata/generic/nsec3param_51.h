@@ -1,5 +1,3 @@
-/*	$NetBSD: nsec3param_51.h,v 1.1.1.3 2012/06/04 17:56:36 christos Exp $	*/
-
 /*
  * Copyright (C) 2008  Internet Systems Consortium, Inc. ("ISC")
  *

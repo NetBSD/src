@@ -265,6 +265,10 @@ SOURCE=..\include\isc\commandline.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\isc\counter.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\include\isc\condition.h
 # End Source File
 # Begin Source File
@@ -690,6 +694,10 @@ SOURCE=..\bufferlist.c
 # Begin Source File
 
 SOURCE=..\commandline.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\counter.c
 # End Source File
 # Begin Source File
 

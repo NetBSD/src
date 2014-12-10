@@ -1,5 +1,3 @@
-/*	$NetBSD: controlconf.c,v 1.1.1.8 2014/07/08 04:45:20 spz Exp $	*/
-
 /*
  * Copyright (C) 2004-2008, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.

@@ -1,5 +1,3 @@
-/*	$NetBSD: iptable.c,v 1.1.1.5 2013/07/27 15:23:11 christos Exp $	*/
-
 /*
  * Copyright (C) 2007-2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  *

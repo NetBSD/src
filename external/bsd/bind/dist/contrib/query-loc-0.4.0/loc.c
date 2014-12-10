@@ -1,5 +1,3 @@
-/*	$NetBSD: loc.c,v 1.1.1.4 2013/07/27 15:23:01 christos Exp $	*/
-
 #include "loc.h"
 
 /* Id: loc.c,v 1.1 2008/02/15 01:47:15 marka Exp  */

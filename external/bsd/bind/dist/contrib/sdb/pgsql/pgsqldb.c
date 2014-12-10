@@ -1,5 +1,3 @@
-/*	$NetBSD: pgsqldb.c,v 1.1.1.4 2014/12/10 02:25:22 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2007, 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.

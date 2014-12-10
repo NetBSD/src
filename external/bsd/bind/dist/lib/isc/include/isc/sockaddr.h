@@ -1,5 +1,3 @@
-/*	$NetBSD: sockaddr.h,v 1.1.1.5 2013/07/27 15:23:19 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.

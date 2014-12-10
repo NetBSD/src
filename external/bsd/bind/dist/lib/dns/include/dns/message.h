@@ -1,5 +1,3 @@
-/*	$NetBSD: message.h,v 1.1.1.9 2014/07/08 04:49:10 spz Exp $	*/
-
 /*
  * Copyright (C) 2004-2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.

@@ -1,5 +1,3 @@
-/*	$NetBSD: iptable.h,v 1.1.1.4 2012/12/04 19:25:21 spz Exp $	*/
-
 /*
  * Copyright (C) 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
  *

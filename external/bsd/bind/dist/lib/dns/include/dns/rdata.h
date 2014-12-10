@@ -1,5 +1,3 @@
-/*	$NetBSD: rdata.h,v 1.1.1.9 2013/12/31 20:11:21 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.

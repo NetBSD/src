@@ -1,5 +1,3 @@
-/*	$NetBSD: testsuite.c,v 1.1.1.1 2009/03/22 14:57:42 christos Exp $	*/
-
 #ifndef lint
 static char *rcsid = "$Id";
 #endif

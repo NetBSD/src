@@ -1,5 +1,3 @@
-/*	$NetBSD: byaddr.h,v 1.1.1.3 2012/06/04 17:56:28 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.

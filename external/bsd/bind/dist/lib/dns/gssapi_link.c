@@ -1,5 +1,3 @@
-/*	$NetBSD: gssapi_link.c,v 1.1.1.8 2014/02/28 17:40:13 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.

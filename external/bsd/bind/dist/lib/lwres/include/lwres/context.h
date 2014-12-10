@@ -1,5 +1,3 @@
-/*	$NetBSD: context.h,v 1.1.1.4 2012/06/04 17:57:04 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.

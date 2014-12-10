@@ -1,5 +1,3 @@
-/*	$NetBSD: genrandom.c,v 1.1.1.6 2014/12/10 02:25:19 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.

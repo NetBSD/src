@@ -1,5 +1,3 @@
-/*	$NetBSD: client.c,v 1.1.1.10 2014/07/08 04:48:34 spz Exp $	*/
-
 /*
  * Copyright (C) 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  *

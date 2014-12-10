@@ -1,5 +1,3 @@
-/*	$NetBSD: types.h,v 1.1.1.9 2014/02/28 17:40:14 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.

@@ -1,5 +1,3 @@
-/*	$NetBSD: dlz_postgres_driver.c,v 1.1.1.5 2014/12/10 02:25:19 christos Exp $	*/
-
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
  *

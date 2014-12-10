@@ -1,5 +1,3 @@
-/*	$NetBSD: file.h,v 1.1.1.10 2014/12/10 02:25:32 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007, 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.

@@ -1,5 +1,3 @@
-/*	$NetBSD: several_tcs_helper.c,v 1.1.1.2 2013/12/31 20:11:54 christos Exp $	*/
-
 /*
  * Automated Testing Framework (atf)
  *

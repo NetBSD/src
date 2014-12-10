@@ -1,5 +1,3 @@
-/*	$NetBSD: sdb.c,v 1.1.1.10 2014/02/28 17:40:14 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.

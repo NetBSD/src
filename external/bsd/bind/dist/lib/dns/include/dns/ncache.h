@@ -1,5 +1,3 @@
-/*	$NetBSD: ncache.h,v 1.1.1.5 2013/07/27 15:23:15 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2010, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.

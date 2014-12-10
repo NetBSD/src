@@ -1,5 +1,3 @@
-/*	$NetBSD: acache.c,v 1.1.1.5 2013/12/31 20:11:05 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2008, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
  *

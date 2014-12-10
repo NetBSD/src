@@ -1,5 +1,3 @@
-/*	$NetBSD: t_names.c,v 1.1.1.9 2014/02/28 17:40:07 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.

@@ -1,5 +1,3 @@
-/*	$NetBSD: ldapdb.c,v 1.1.1.3 2014/12/10 02:25:22 christos Exp $	*/
-
 /*
  * ldapdb.c version 1.0-beta
  *

@@ -1,5 +1,3 @@
-/*	$NetBSD: listenlist.h,v 1.1.1.4 2014/02/28 17:40:06 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.

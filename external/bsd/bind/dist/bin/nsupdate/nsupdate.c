@@ -1,5 +1,3 @@
-/*	$NetBSD: nsupdate.c,v 1.1.1.14 2014/12/10 02:25:13 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.

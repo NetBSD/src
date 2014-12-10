@@ -1,5 +1,3 @@
-/*	$NetBSD: main.h,v 1.1.1.5 2013/12/31 20:09:59 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.

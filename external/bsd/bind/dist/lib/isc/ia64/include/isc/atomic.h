@@ -1,5 +1,3 @@
-/*	$NetBSD: atomic.h,v 1.1.1.5 2012/12/04 19:25:49 spz Exp $	*/
-
 /*
  * Copyright (C) 2006, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  *

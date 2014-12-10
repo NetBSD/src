@@ -1,5 +1,3 @@
-/*	$NetBSD: entropy.c,v 1.1.1.6 2013/12/31 20:11:34 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.

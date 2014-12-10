@@ -1,5 +1,3 @@
-/*	$NetBSD: check.c,v 1.1.1.2 2013/12/31 20:11:50 christos Exp $	*/
-
 /*
  * Automated Testing Framework (atf)
  *

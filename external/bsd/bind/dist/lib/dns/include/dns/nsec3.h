@@ -1,5 +1,3 @@
-/*	$NetBSD: nsec3.h,v 1.1.1.7 2013/12/31 20:11:20 christos Exp $	*/
-
 /*
  * Copyright (C) 2008-2013  Internet Systems Consortium, Inc. ("ISC")
  *

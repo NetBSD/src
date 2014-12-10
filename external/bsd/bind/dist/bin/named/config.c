@@ -1,5 +1,3 @@
-/*	$NetBSD: config.c,v 1.1.1.14 2014/02/28 17:40:06 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
@@ -16,8 +14,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: config.c,v 1.123 2012/01/06 23:46:41 tbox Exp  */
 
 /*! \file */
 
@@ -172,6 +168,8 @@ options {\n\
 	dnssec-accept-expired no;\n\
 	clients-per-query 10;\n\
 	max-clients-per-query 100;\n\
+	max-recursion-depth 7;\n\
+	max-recursion-queries 50;\n\
 	zero-no-soa-ttl-cache no;\n\
 	nsec3-test-zone no;\n\
 	allow-new-zones no;\n\

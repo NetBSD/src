@@ -1,5 +1,3 @@
-/*	$NetBSD: rriterator.c,v 1.1.1.3 2012/06/04 17:56:20 christos Exp $	*/
-
 /*
  * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *

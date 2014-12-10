@@ -1,5 +1,3 @@
-/*	$NetBSD: keydata.c,v 1.1.1.4 2014/02/28 17:40:13 christos Exp $	*/
-
 /*
  * Copyright (C) 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  *

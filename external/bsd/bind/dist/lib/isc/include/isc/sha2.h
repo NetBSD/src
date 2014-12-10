@@ -1,5 +1,3 @@
-/*	$NetBSD: sha2.h,v 1.1.1.6 2014/02/28 17:40:15 christos Exp $	*/
-
 /*
  * Copyright (C) 2005-2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  *

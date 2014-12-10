@@ -1,5 +1,3 @@
-/*	$NetBSD: filechecker.c,v 1.1.1.3 2012/06/04 17:54:56 christos Exp $	*/
-
 #ifndef lint
 static char *rcsid = "Id: filechecker.c,v 1.1 2003/06/04 00:25:52 marka Exp ";
 #endif

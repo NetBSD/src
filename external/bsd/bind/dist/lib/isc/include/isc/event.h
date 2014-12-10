@@ -1,5 +1,3 @@
-/*	$NetBSD: event.h,v 1.1.1.5 2014/12/10 02:25:32 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.

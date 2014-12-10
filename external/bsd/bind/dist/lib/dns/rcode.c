@@ -1,5 +1,3 @@
-/*	$NetBSD: rcode.c,v 1.1.1.10 2014/12/10 02:25:28 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.

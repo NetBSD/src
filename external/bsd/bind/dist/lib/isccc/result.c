@@ -1,5 +1,3 @@
-/*	$NetBSD: result.c,v 1.1.1.3 2012/06/04 17:56:59 christos Exp $	*/
-
 /*
  * Portions Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001, 2003  Internet Software Consortium.

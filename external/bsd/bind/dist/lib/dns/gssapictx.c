@@ -1,5 +1,3 @@
-/*	$NetBSD: gssapictx.c,v 1.1.1.9 2014/07/08 04:48:38 spz Exp $	*/
-
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.

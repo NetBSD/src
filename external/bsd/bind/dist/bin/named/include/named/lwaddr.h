@@ -1,5 +1,3 @@
-/*	$NetBSD: lwaddr.h,v 1.1.1.3 2012/06/04 17:53:46 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.

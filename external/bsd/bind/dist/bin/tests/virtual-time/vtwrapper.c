@@ -1,5 +1,3 @@
-/*	$NetBSD: vtwrapper.c,v 1.1.1.3 2012/06/04 17:54:42 christos Exp $	*/
-
 /*
  * Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
  *

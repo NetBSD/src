@@ -1,5 +1,3 @@
-/*	$NetBSD: hash.h,v 1.1.1.6 2014/12/10 02:25:32 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.

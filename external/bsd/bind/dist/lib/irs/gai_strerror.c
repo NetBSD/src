@@ -1,5 +1,3 @@
-/*	$NetBSD: gai_strerror.c,v 1.1.1.4 2014/07/08 04:49:25 spz Exp $	*/
-
 /*
  * Copyright (C) 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  *

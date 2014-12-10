@@ -1,5 +1,3 @@
-/*	$NetBSD: private.h,v 1.1.1.4 2012/12/04 19:25:22 spz Exp $	*/
-
 /*
  * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  *

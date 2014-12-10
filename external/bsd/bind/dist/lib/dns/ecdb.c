@@ -1,5 +1,3 @@
-/*	$NetBSD: ecdb.c,v 1.1.1.8 2014/07/08 04:48:37 spz Exp $	*/
-
 /*
  * Copyright (C) 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  *

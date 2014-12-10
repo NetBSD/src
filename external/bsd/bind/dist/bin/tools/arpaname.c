@@ -1,5 +1,3 @@
-/*	$NetBSD: arpaname.c,v 1.1.1.4 2012/06/04 17:54:43 christos Exp $	*/
-
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
  *

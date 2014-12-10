@@ -1,5 +1,3 @@
-/*	$NetBSD: t_resolver.c,v 1.1.1.9 2014/07/08 04:46:09 spz Exp $	*/
-
 /*
  * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  *

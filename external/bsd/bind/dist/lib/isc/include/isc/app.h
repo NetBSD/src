@@ -1,5 +1,3 @@
-/*	$NetBSD: app.h,v 1.1.1.7 2014/07/08 04:49:36 spz Exp $	*/
-
 /*
  * Copyright (C) 2004-2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.

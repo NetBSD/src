@@ -1,5 +1,3 @@
-/*	$NetBSD: ifiter_sysctl.c,v 1.1.1.4 2014/02/28 17:40:15 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.

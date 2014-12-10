@@ -1,5 +1,3 @@
-/*	$NetBSD: inter_test.c,v 1.1.1.3 2012/06/04 17:54:08 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.

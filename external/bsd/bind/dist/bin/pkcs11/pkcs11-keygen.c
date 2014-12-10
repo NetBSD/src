@@ -1,5 +1,3 @@
-/*	$NetBSD: pkcs11-keygen.c,v 1.1.1.6 2014/07/08 04:45:55 spz Exp $	*/
-
 /*
  * Copyright (C) 2009,2012 Internet Systems Consortium, Inc. ("ISC")
  *

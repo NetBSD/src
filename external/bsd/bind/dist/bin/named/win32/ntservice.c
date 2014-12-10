@@ -1,5 +1,3 @@
-/*	$NetBSD: ntservice.c,v 1.1.1.6 2014/07/08 04:45:38 spz Exp $	*/
-
 /*
  * Copyright (C) 2004, 2006, 2007, 2009, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.

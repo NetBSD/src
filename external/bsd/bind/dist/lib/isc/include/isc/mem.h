@@ -1,5 +1,3 @@
-/*	$NetBSD: mem.h,v 1.1.1.9 2014/02/28 17:40:15 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.

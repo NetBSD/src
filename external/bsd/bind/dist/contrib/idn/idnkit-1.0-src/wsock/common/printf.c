@@ -1,5 +1,3 @@
-/*	$NetBSD: printf.c,v 1.1.1.1 2009/03/22 14:57:51 christos Exp $	*/
-
 /*
  * printf.c - printf like debug print function
  */

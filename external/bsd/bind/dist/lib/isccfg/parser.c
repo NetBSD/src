@@ -1,5 +1,3 @@
-/*	$NetBSD: parser.c,v 1.1.1.10 2014/07/08 04:49:55 spz Exp $	*/
-
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
