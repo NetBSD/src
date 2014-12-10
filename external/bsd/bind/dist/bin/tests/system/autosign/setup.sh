@@ -22,4 +22,4 @@ SYSTEMTESTTOP=..
 test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
 echo "I:generating keys and preparing zones"
-cd ns1 && sh keygen.sh
+cd ns1 && $SHELL keygen.sh

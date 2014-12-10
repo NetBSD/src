@@ -9,7 +9,9 @@ m4_divert_text(HELP_CANON, [[
   and --localstatedir are /etc and /var, respectively.]])
 m4_divert_text(HELP_END, [[
 Professional support for BIND is provided by Internet Systems Consortium,
-Inc., doing business as DNSco.  Information about paid support options is
-available at http://www.dns-co.com/solutions/.  Free support is provided by
-our user community via a mailing list.  Information on public email lists
-is available at https://www.isc.org/community/mailing-list/.]])
+Inc.  Information about paid support and training options is available at
+https://www.isc.org/support.
+
+Help can also often be found on the BIND Users mailing list
+(https://lists.isc.org/mailman/listinfo/bind-users) or in the #bind
+channel of the Freenode IRC service.]])

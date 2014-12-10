@@ -94,10 +94,10 @@ $(PROG_CNF):	$(OBJ_CNF) $(OBJ_ALL) Makefile
 	$(CC) $(LDFLAGS) $(OBJ_CNF) $(OBJ_ALL) -o $(PROG_CNF)
 
 $(PROG_KEY):	$(OBJ_KEY) $(OBJ_ALL) Makefile
-	$(CC) $(LDFLAGS) $(LIBS) $(OBJ_KEY) $(OBJ_ALL) -o $(PROG_KEY)
+	$(CC) $(LDFLAGS) $(OBJ_KEY) $(OBJ_ALL) $(LIBS) -o $(PROG_KEY)
 
 $(PROG_LS):	$(OBJ_LS) $(OBJ_ALL) Makefile
-	$(CC) $(LDFLAGS) $(LIBS) $(OBJ_LS) $(OBJ_ALL) -o $(PROG_LS)
+	$(CC) $(LDFLAGS) $(OBJ_LS) $(OBJ_ALL) $(LIBS) -o $(PROG_LS)
 
 $(PROG_SER):	$(OBJ_SER) Makefile
 	$(CC) $(LDFLAGS) $(OBJ_SER) -o $(PROG_SER)
