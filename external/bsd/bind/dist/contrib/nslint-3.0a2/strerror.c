@@ -1,3 +1,5 @@
+/*	$NetBSD: strerror.c,v 1.1.1.3 2014/12/10 03:34:34 christos Exp $	*/
+
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
