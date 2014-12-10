@@ -1,17 +1,21 @@
-#	$NetBSD: Makefile.inc,v 1.225 2014/09/25 15:08:29 manu Exp $
+#	$NetBSD: Makefile.inc,v 1.226 2014/12/10 00:37:30 pooka Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
 .PATH: ${ARCHDIR}/sys ${.CURDIR}/sys
 
+# other sources shared with the kernel, used in syscalls
+SRCS+=	cpuset.c
+# glue to offer userland wrappers for some syscalls
+SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigqueue.c sigtimedwait.c \
+	sigwait.c sigwaitinfo.c statvfs.c swapon.c semctl.c 
+
+.if ${RUMPRUN} != "yes"
 # modules with non-default implementations on at least one architecture:
 SRCS+=	__clone.S __vfork14.S brk.S exect.S fork.S pipe.S \
 	getcontext.S \
 	ptrace.S sbrk.S shmat.S \
 	syscall.S __syscall.S __clone.S cerror.S
-
-# other sources shared with the kernel, used in syscalls
-SRCS+=	cpuset.c
 
 _LSRC+=	Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
 	Lint_getcontext.c Lint_exect.c Lint_pipe.c Lint_ptrace.c \
@@ -23,10 +27,6 @@ LSRCS+=		${_LSRC}
 DPSRCS+=	${_LSRC:MLintSys*.c}
 CLEANFILES+=	${_LSRC:MLintSys*.c}
 .endif
-
-# glue to offer userland wrappers for some syscalls
-SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigqueue.c sigtimedwait.c \
-	sigwait.c sigwaitinfo.c statvfs.c swapon.c semctl.c 
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
@@ -170,6 +170,7 @@ ASMDEPS=	${.CURDIR}/sys/Makefile.inc ${ARCHDIR}/SYS.h \
 		${DESTDIR}/usr/include/sys/syscall.h
 
 _LINTASM=	${ASM:Nsa_*.S} ${WEAKASM:Nsa_*.S}
+.endif # RUMPRUN != yes
 
 ${ASM}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
