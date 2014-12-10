@@ -1,3 +1,5 @@
+/*	$NetBSD: dlz_perl_driver.c,v 1.1.1.3 2014/12/10 03:34:31 christos Exp $	*/
+
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
  *
