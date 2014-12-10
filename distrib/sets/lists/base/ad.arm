@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.63 2014/12/10 04:42:24 christos Exp $
+# $NetBSD: ad.arm,v 1.64 2014/12/10 13:34:41 christos Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -172,7 +172,6 @@
 ./usr/lib/oabi/libisccc.so.8			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libisccc.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libisccfg.so.8			base-compat-shlib	compat,pic
-./usr/lib/oabi/libisccfg.so.8.1			base-compat-shlib	obsolete
 ./usr/lib/oabi/libisccfg.so.8.1			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi
 ./usr/lib/oabi/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi
