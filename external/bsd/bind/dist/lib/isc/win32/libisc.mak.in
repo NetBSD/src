@@ -127,6 +127,7 @@ CLEAN :
 	-@erase "$(INTDIR)\buffer.obj"
 	-@erase "$(INTDIR)\bufferlist.obj"
 	-@erase "$(INTDIR)\commandline.obj"
+	-@erase "$(INTDIR)\counter.obj"
 	-@erase "$(INTDIR)\condition.obj"
 	-@erase "$(INTDIR)\crc64.obj"
 	-@erase "$(INTDIR)\dir.obj"
@@ -269,6 +270,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\buffer.obj" \
 	"$(INTDIR)\bufferlist.obj" \
 	"$(INTDIR)\commandline.obj" \
+	"$(INTDIR)\counter.obj" \
 	"$(INTDIR)\crc64.obj" \
 	"$(INTDIR)\error.obj" \
 	"$(INTDIR)\event.obj" \
@@ -363,6 +365,8 @@ CLEAN :
 	-@erase "$(INTDIR)\bufferlist.sbr"
 	-@erase "$(INTDIR)\commandline.obj"
 	-@erase "$(INTDIR)\commandline.sbr"
+	-@erase "$(INTDIR)\counter.obj"
+	-@erase "$(INTDIR)\counter.sbr"
 	-@erase "$(INTDIR)\condition.obj"
 	-@erase "$(INTDIR)\condition.sbr"
 	-@erase "$(INTDIR)\crc64.obj"
@@ -576,6 +580,7 @@ BSC32_SBRS= \
 	"$(INTDIR)\buffer.sbr" \
 	"$(INTDIR)\bufferlist.sbr" \
 	"$(INTDIR)\commandline.sbr" \
+	"$(INTDIR)\counter.sbr" \
 	"$(INTDIR)\crc64.sbr" \
 	"$(INTDIR)\error.sbr" \
 	"$(INTDIR)\event.sbr" \
@@ -679,6 +684,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\buffer.obj" \
 	"$(INTDIR)\bufferlist.obj" \
 	"$(INTDIR)\commandline.obj" \
+	"$(INTDIR)\counter.obj" \
 	"$(INTDIR)\crc64.obj" \
 	"$(INTDIR)\error.obj" \
 	"$(INTDIR)\event.obj" \
@@ -1374,6 +1380,24 @@ SOURCE=..\commandline.c
 
 
 "$(INTDIR)\commandline.obj"	"$(INTDIR)\commandline.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
+SOURCE=..\counter.c
+
+!IF  "$(CFG)" == "libisc - @PLATFORM@ Release"
+
+
+"$(INTDIR)\counter.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "libisc - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\counter.obj"	"$(INTDIR)\counter.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
