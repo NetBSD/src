@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.58 2014/12/10 04:42:24 christos Exp $
+# $NetBSD: ad.mips,v 1.59 2014/12/10 13:34:41 christos Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -172,7 +172,6 @@
 ./usr/lib/64/libisccc.so.8			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libisccc.so.8.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libisccfg.so.8			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libisccfg.so.8.1			base-compat-shlib	obsolete
 ./usr/lib/64/libisccfg.so.8.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi,arch64
 ./usr/lib/64/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi,arch64
@@ -515,7 +514,6 @@
 ./usr/lib/o32/libisccc.so.8			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libisccc.so.8.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libisccfg.so.8			base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libisccfg.so.8.1			base-compat-shlib	obsolete
 ./usr/lib/o32/libisccfg.so.8.1			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libiscsi.so.2			base-compat-shlib	compat,pic,iscsi,arch64
 ./usr/lib/o32/libiscsi.so.2.0			base-compat-shlib	compat,pic,iscsi,arch64

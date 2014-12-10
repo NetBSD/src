@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.73 2014/12/10 04:42:25 christos Exp $
+# $NetBSD: md.amd64,v 1.74 2014/12/10 13:34:41 christos Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-debuglib		compat,debuglib
@@ -246,7 +246,6 @@
 ./usr/libdata/debug/usr/lib/i386/libisccc.so.6.0.debug	comp-compat-shlib	compat,pic,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libisccc.so.8.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libisccfg.so.6.0.debug	comp-compat-shlib	compat,pic,debug,obsolete
-./usr/libdata/debug/usr/lib/i386/libisccfg.so.8.1.debug	comp-compat-shlib	compat,pic,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libisccfg.so.8.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libiscsi.so.2.0.debug	comp-compat-shlib	compat,pic,debug,iscsi
 ./usr/libdata/debug/usr/lib/i386/libisns.so.0.0.debug	comp-compat-shlib	compat,pic,debug

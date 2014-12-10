@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.28 2014/12/10 04:42:25 christos Exp $
+# $NetBSD: ad.powerpc,v 1.29 2014/12/10 13:34:41 christos Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasan_g.a			comp-c-debuglib		compat,arch64,debuglib,gcc=48
@@ -191,7 +191,6 @@
 ./usr/libdata/debug/usr/lib/powerpc/libirs.so.8.1.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libisc.so.8.1.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libisccc.so.8.1.debug			comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/libisccfg.so.8.1.debug		comp-compat-shlib	compat,arch64,debug,pic,obsolete
 ./usr/libdata/debug/usr/lib/powerpc/libisccfg.so.8.1.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libiscsi.so.2.0.debug			comp-compat-shlib	compat,arch64,debug,pic,iscsi
 ./usr/libdata/debug/usr/lib/powerpc/libisns.so.0.0.debug			comp-compat-shlib	compat,arch64,debug,pic
