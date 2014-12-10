@@ -153,7 +153,7 @@ typedef struct {
     <para>
       The lightweight resolver uses
       <function>lwres_getaddrsbyname()</function> to perform
-      foward lookups.
+      forward lookups.
       Hostname <parameter>name</parameter> is looked up using the
       resolver
       context <parameter>ctx</parameter> for memory allocation.

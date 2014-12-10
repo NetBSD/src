@@ -14,14 +14,12 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.3 2011/05/26 23:47:28 tbox Exp 
-
-(cd ../ns2 && sh -e ./sign.sh || exit 1)
-
-echo "I:dlv/ns1/sign.sh"
-
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
+
+(cd ../ns2 && $SHELL -e ./sign.sh || exit 1)
+
+echo "I:dlv/ns1/sign.sh"
 
 zone=.
 infile=root.db.in

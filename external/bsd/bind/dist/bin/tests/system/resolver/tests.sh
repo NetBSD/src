@@ -441,12 +441,13 @@ ttl1=`awk '/"A" "short" "ttl"/ { print $2 - 1 }' dig.out.1.${n}`
 # sleep so we are in expire range
 sleep ${ttl1:-0}
 # look for zero ttl, allow for one miss at getting zero ttl
-for i in 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9
+zerotonine="0 1 2 3 4 5 6 7 8 9"
+for i in $zerotonine $zerotonine $zerotonine $zerotonine
 do 
 	$DIG @10.53.0.7 -p 5300 fetch.example.net txt > dig.out.2.${n} || ret=1
 	ttl2=`awk '/"A" "short" "ttl"/ { print $2 }' dig.out.2.${n}`
 	test ${ttl2:-1} -eq 0 && break
-	sleep 1
+	$PERL -e 'select(undef, undef, undef, 0.05);' 
 done
 test ${ttl2:-1} -eq 0 || ret=1
 # delay so that any prefetched record will have a lower ttl than expected
@@ -471,6 +472,31 @@ ttl2=`awk '/"A" "short" "ttl"/ { print $2 }' dig.out.2.${n}`
 sleep 1
 # check that the nameserver is still alive
 $DIG @10.53.0.5 -p 5300 fetchall.tld any > dig.out.3.${n} || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that E was logged on EDNS queries in the query log (${n})"
+ret=0
+$DIG @10.53.0.5 -p 5300 +edns edns.fetchall.tld any > dig.out.2.${n} || ret=1
+grep "query: edns.fetchall.tld IN ANY +E" ns5/named.run > /dev/null || ret=1
+$DIG @10.53.0.5 -p 5300 +noedns noedns.fetchall.tld any > dig.out.2.${n} || ret=1
+grep "query: noedns.fetchall.tld IN ANY" ns5/named.run > /dev/null || ret=1
+grep "query: noedns.fetchall.tld IN ANY +E" ns5/named.run > /dev/null && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that '-t aaaa' in .digrc does not have unexpected side effects ($n)"
+ret=0
+echo "-t aaaa" > .digrc
+env HOME=`pwd` $DIG @10.53.0.4 -p 5300 . > dig.out.1.${n} || ret=1
+env HOME=`pwd` $DIG @10.53.0.4 -p 5300 . A > dig.out.2.${n} || ret=1
+env HOME=`pwd` $DIG @10.53.0.4 -p 5300 -x 127.0.0.1 > dig.out.3.${n} || ret=1
+grep ';\..*IN.*AAAA$' dig.out.1.${n} > /dev/null || ret=1
+grep ';\..*IN.*A$' dig.out.2.${n} > /dev/null || ret=1
+grep 'extra type option' dig.out.2.${n} > /dev/null && ret=1
+grep ';1\.0\.0\.127\.in-addr\.arpa\..*IN.*PTR$' dig.out.3.${n} > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

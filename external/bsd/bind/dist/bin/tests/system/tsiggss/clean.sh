@@ -24,3 +24,4 @@ rm -f ns1/_default.tsigkeys
 rm -f */named.memstats
 rm -f authsock.pid
 rm -f ns1/core
+rm -f nsupdate.out
