@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.304 2014/12/08 04:55:47 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.305 2014/12/11 14:33:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.304 2014/12/08 04:55:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.305 2014/12/11 14:33:22 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -745,6 +745,7 @@ if_detach(struct ifnet *ifp)
 	s = splnet();
 
 	if (ifp->if_slowtimo != NULL) {
+		ifp->if_slowtimo = NULL;
 		callout_halt(ifp->if_slowtimo_ch, NULL);
 		callout_destroy(ifp->if_slowtimo_ch);
 		kmem_free(ifp->if_slowtimo_ch, sizeof(*ifp->if_slowtimo_ch));
@@ -1515,15 +1516,19 @@ static void
 if_slowtimo(void *arg)
 {
 	struct ifnet *ifp = arg;
-	int s = splnet();
+	int s;
 
-	KASSERT(ifp->if_slowtimo != NULL);
+	if (__predict_false(ifp->if_slowtimo == NULL))
+		return;
 
+	s = splnet();
 	if (ifp->if_timer != 0 && --ifp->if_timer == 0)
 		(*ifp->if_slowtimo)(ifp);
 
 	splx(s);
-	callout_schedule(ifp->if_slowtimo_ch, hz / IFNET_SLOWHZ);
+
+	if (__predict_true(ifp->if_slowtimo != NULL))
+		callout_schedule(ifp->if_slowtimo_ch, hz / IFNET_SLOWHZ);
 }
 
 /*
