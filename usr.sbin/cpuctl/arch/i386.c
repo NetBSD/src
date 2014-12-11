@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.62 2014/11/20 10:31:10 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.63 2014/12/11 10:07:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.62 2014/11/20 10:31:10 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.63 2014/12/11 10:07:45 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1836,9 +1836,10 @@ identifycpu(int fd, const char *cpuname)
 	aprint_normal(" (%s-class)", classnames[class]);
 
 	if (ci->ci_tsc_freq != 0)
-		aprint_normal(", %ju.%02ju MHz\n",
+		aprint_normal(", %ju.%02ju MHz",
 		    ((uintmax_t)ci->ci_tsc_freq + 4999) / 1000000,
 		    (((uintmax_t)ci->ci_tsc_freq + 4999) / 10000) % 100);
+	aprint_normal("\n");
 
 	aprint_normal_dev(ci->ci_dev, "family %#x model %#x stepping %#x",
 	    ci->ci_family, ci->ci_model, CPUID_TO_STEPPING(ci->ci_signature));
