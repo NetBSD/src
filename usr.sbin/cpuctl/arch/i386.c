@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.63 2014/12/11 10:07:45 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.64 2014/12/11 12:21:44 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.63 2014/12/11 10:07:45 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.64 2014/12/11 12:21:44 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1995,6 +1995,8 @@ identifycpu(int fd, const char *cpuname)
 		ucode_64.loader_version = ucode.loader_version;
 		if (ioctl(fd, IOC_CPU_UCODE_GET_VERSION_64, &ucode_64) < 0)
 			return;
+#else
+		return;
 #endif
 	}
 
