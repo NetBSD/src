@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.49 2014/11/16 18:33:19 riastradh Exp $
+# $NetBSD: md.amd64,v 1.50 2014/12/11 22:14:13 riastradh Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -256,8 +256,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/des/des.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dk_subr				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/dk_subr/dk_subr.kmod		base-kernel-modules	kmod,compatmodules
-./stand/amd64-xen/@OSRELEASE@/modules/dm				base-kernel-modules	kmod,compatmodules
-./stand/amd64-xen/@OSRELEASE@/modules/dm/dm.kmod			base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/dm				base-kernel-modules	kmod,compatmodules,lvm
+./stand/amd64-xen/@OSRELEASE@/modules/dm/dm.kmod			base-kernel-modules	kmod,compatmodules,lvm
 ./stand/amd64-xen/@OSRELEASE@/modules/drm				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/drm/drm.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/drmkms				base-kernel-modules	kmod,compatmodules
@@ -466,8 +466,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/sljit/sljit.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/smbfs				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/smbfs/smbfs.kmod			base-kernel-modules	kmod,compatmodules
-./stand/amd64-xen/@OSRELEASE@/modules/solaris				base-kernel-modules	kmod,compatmodules
-./stand/amd64-xen/@OSRELEASE@/modules/solaris/solaris.kmod		base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/solaris				base-kernel-modules	kmod,compatmodules,solaris
+./stand/amd64-xen/@OSRELEASE@/modules/solaris/solaris.kmod		base-kernel-modules	kmod,compatmodules,solaris
 ./stand/amd64-xen/@OSRELEASE@/modules/spdmem				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/spdmem/spdmem.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/suser				base-kernel-modules	kmod,compatmodules
@@ -526,8 +526,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/xc3028/xc3028.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/xc5k				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/xc5k/xc5k.kmod			base-kernel-modules	kmod,compatmodules
-./stand/amd64-xen/@OSRELEASE@/modules/zfs				base-kernel-modules	kmod,compatmodules
-./stand/amd64-xen/@OSRELEASE@/modules/zfs/zfs.kmod			base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/zfs				base-kernel-modules	kmod,compatmodules,zfs
+./stand/amd64-xen/@OSRELEASE@/modules/zfs/zfs.kmod			base-kernel-modules	kmod,compatmodules,zfs
 ./stand/amd64-xen/@OSRELEASE@/modules/zl10353				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/zl10353/zl10353.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/zlib				base-kernel-modules	kmod,compatmodules
