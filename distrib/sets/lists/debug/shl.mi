@@ -1,9 +1,9 @@
-# $NetBSD: shl.mi,v 1.71.2.3 2014/12/11 23:44:13 htodd Exp $
+# $NetBSD: shl.mi,v 1.71.2.4 2014/12/11 23:53:34 htodd Exp $
 ./usr/libdata/debug/lib/libc.so.12.193.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.3.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libdevmapper.so.1.0.debug	comp-sys-debug	debug
-./usr/libdata/debug/lib/libdm.so.0.0.debug 		comp-sys-debug	debug,obsolete
+./usr/libdata/debug/lib/libdm.so.0.0.debug 		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libedit.so.3.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libevent.so.4.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libgcc_s.so.1.0.debug		comp-sys-debug	gcc,debug
