@@ -1,4 +1,4 @@
-#	$NetBSD: ALLWINNER_A80,v 1.12 2014/12/07 20:10:08 jmcneill Exp $
+#	$NetBSD: ALLWINNER_A80,v 1.13 2014/12/11 23:35:31 jmcneill Exp $
 #
 #	ALLWINNER_A80 - Allwinner A80 boards (Cubieboard4, OptimusBoard, etc)
 #
@@ -180,7 +180,7 @@ config		netbsd		root on ? type ?
 mainbus0	at root
 
 # CPU
-#options 	MULTIPROCESSOR
+options 	MULTIPROCESSOR
 cpu*		at mainbus?
 
 # Specify the memory size in megabytes.
