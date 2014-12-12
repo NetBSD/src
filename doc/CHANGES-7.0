@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.127 2014/12/11 13:38:01 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.128 2014/12/12 19:13:32 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3406,4 +3406,78 @@ tests/lib/librumpclient/h_execthr.c		1.3
 	(since we exec, it's convenient to just assume the values of first
 	4 fds)
 	[gson, ticket #307]
+
+distrib/sets/lists/man/mi			1.1491
+share/man/man7/Makefile				1.31
+
+	Add missing src(7) reported by Patrick Welche.
+	[msaitoh, ticket #309]
+
+sys/arch/x86/include/cacheinfo.h		1.19
+sys/arch/x86/include/specialreg.h		1.79-1.80
+usr.sbin/cpuctl/arch/i386.c			1.59
+
+	Update some cpuid related values:
+	- Add XSAVECC, XGETBV, XSAVES, SMAP and PQE
+	- Change XINUSE to XGETBV
+	- Add new cache descripter value (0xc3)
+	- Update signatures for the follwing CPUs:
+	  - Core M-5xxx
+	  - Core i7 Extreme
+	  - Future Core (0x4e)
+	  - Future Xeon (0x56)
+	[msaitoh, ticket #310]
+
+sys/dev/pci/pcireg.h				1.96
+sys/dev/pci/ppb.c				1.53-1.54
+
+	- Modify message of PCIe capability version. This field
+	  (PCIE_XCAP_VER_MASK) is not specification's version
+	  number but the capability structure's version number.
+	  To avoid confusion, print "PCI Express capability version x".
+	- The max number of PCIe lane is not 16 but 32. Fix the bug
+	   using with macro.
+	- Use macro instead of magic number.
+	- Gb/s -> GT/s
+
+	Rename PCIE_XCAP_VER_* macros to avoid confusion.
+	[msaitoh, ticket #311]
+
+sys/dev/pci/pci_subr.c				1.127-1.132
+sys/dev/pci/pcireg.h				1.97-1.99
+
+	Always print the "Slot implemented" bit in the PCIe Capabilities
+	Register using onoff().
+
+	- Add some PCI subclass and interfaces.
+	- The interface of PCI_SUBCLASS_BRIDGE_RACEWAY is not decoded yet.
+	- Fix typo in a message.
+	- Add/Modify some comments.
+
+	Fix a bug that the specification revision of the Power Management
+	function was incorrectly printed in the output of capability "list".
+
+	- Cleanup pci_conf_print_caplist. Use table. The reason why it loops
+	  twice is that some capabilities appear multiple times (e.g.
+	  HyperTransport cap).
+	- Print the specification revision of Power Management and AGP not in
+	  the capability list part but in the detail part.
+
+	Add some HyperTransport related defines required for MSI.
+	[msaitoh, ticket #312]
+
+sys/arch/amd64/amd64/db_disasm.c		1.17-1.20
+sys/arch/i386/i386/db_disasm.c			1.41-1.44
+
+	Stylistic and comment improvements, fix two bugs:
+	- aaa and daa were reversed. Same as *BSDs.
+	- fix operand order of shld and shrd. Same as *BSDs.
+
+	Add support for sysenter, sysexit, vmptrld, vmptrst and getsec.
+	[msaitoh, ticket #313]
+
+sys/compat/netbsd32/netbsd32_compat_30.c	1.31
+
+	Avoid a user-triggerable kmem_alloc(0).
+	[maxv, ticket #314]
 
