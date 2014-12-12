@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.676 2014/11/22 14:31:53 njoly Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.677 2014/12/12 05:19:01 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.684 2014/11/22 14:30:57 njoly Exp
+ *	NetBSD: usbdevs,v 1.685 2014/12/12 05:18:35 msaitoh Exp
  */
 
 /*
@@ -1307,6 +1307,7 @@
 #define	USB_PRODUCT_DISPLAYLINK_NL571	0x01d7		/* HP USB DVI */
 #define	USB_PRODUCT_DISPLAYLINK_M01061	0x01e2		/* Lenovo DVI */
 #define	USB_PRODUCT_DISPLAYLINK_NBDOCK	0x0215		/* VideoHome NBdock1920 */
+#define	USB_PRODUCT_DISPLAYLINK_GXDVIU2B	0x0223		/* BUFFALO GX-DVI/U2B */
 #define	USB_PRODUCT_DISPLAYLINK_SWDVI	0x024c		/* SUNWEIT DVI */
 #define	USB_PRODUCT_DISPLAYLINK_LUM70	0x02a9		/* Lilliput UM-70 */
 #define	USB_PRODUCT_DISPLAYLINK_LCD8000UD_DVI	0x02b8		/* LCD-8000UD-DVI */
