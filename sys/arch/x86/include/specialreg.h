@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.78 2014/02/25 22:11:11 dsl Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.78.4.1 2014/12/12 16:44:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -87,6 +87,7 @@
 #define CR4_PCIDE	0x00020000 /* enable Process Context IDentifiers */
 #define CR4_OSXSAVE	0x00040000 /* enable xsave and xrestore */
 #define CR4_SMEP	0x00100000 /* enable SMEP support */
+#define CR4_SMAP	0x00200000 /* enable SMAP support */
 
 /*
  * Extended Control Register XCR0
@@ -315,6 +316,7 @@
 #define CPUID_SEF_QM		__BIT(12)
 #define CPUID_SEF_FPUCSDS	__BIT(13)
 #define CPUID_SEF_MPX		__BIT(14)
+#define CPUID_SEF_PQE		__BIT(15)
 #define CPUID_SEF_AVX512F	__BIT(16)
 #define CPUID_SEF_RDSEED	__BIT(18)
 #define CPUID_SEF_ADX		__BIT(19)
@@ -329,7 +331,7 @@
 	"\1" "FSGSBASE"	"\2" "TSCADJUST"		"\4" "BMI1"	\
 	"\5" "HLE"	"\6" "AVX2"			"\10" "SMEP"	\
 	"\11" "BMI2"	"\12" "ERMS"	"\13" "INVPCID"	"\14" "RTM"	\
-	"\15" "QM"	"\16" "FPUCSDS"	"\17" "MPX"    			\
+	"\15" "QM"	"\16" "FPUCSDS"	"\17" "MPX"    	"\20" "PQE"	\
 	"\21" "AVX512F"			"\23" "RDSEED"	"\24" "ADX"	\
 	"\25" "SMAP"							\
 			"\32" "PT"	"\33" "AVX512PF""\34" "AVX512ER"\
@@ -355,9 +357,12 @@
  */
 
 #define	CPUID_PES1_XSAVEOPT	0x00000001	/* xsaveopt instruction */
+#define	CPUID_PES1_XSAVEC	0x00000002	/* xsavec & compacted XRSTOR */
+#define	CPUID_PES1_XGETBV	0x00000004	/* xgetbv with ECX = 1 */
+#define	CPUID_PES1_XSAVES	0x00000008	/* xsaves/xrstors, IA32_XSS */
 
 #define CPUID_PES1_FLAGS	"\20" \
-	"\1" "XSAVEOPT"
+	"\1" "XSAVEOPT"	"\2" "XSAVEC"	"\3" "XGETBV"	"\4" "XSAVES"
 
 /* Intel Fn80000001 extended features - %edx */
 #define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
