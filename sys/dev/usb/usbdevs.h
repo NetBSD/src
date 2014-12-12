@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.677 2014/12/12 05:19:01 msaitoh Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.678 2014/12/12 07:21:28 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.685 2014/12/12 05:18:35 msaitoh Exp
+ *	NetBSD: usbdevs,v 1.686 2014/12/12 07:21:05 msaitoh Exp
  */
 
 /*
@@ -493,6 +493,7 @@
 #define	USB_VENDOR_MOBILITY	0x1342		/* Mobility */
 #define	USB_VENDOR_DICKSMITH	0x1371		/* Dick Smith Electronics */
 #define	USB_VENDOR_NETGEAR3	0x1385		/* Netgear */
+#define	USB_VENDOR_VALIDITY	0x138a		/* Validity Sensors, Inc. */
 #define	USB_VENDOR_BALTECH	0x13ad		/* Baltech */
 #define	USB_VENDOR_CISCOLINKSYS	0x13b1		/* Cisco-Linksys */
 #define	USB_VENDOR_SHARK	0x13d2		/* Shark */
@@ -3240,6 +3241,14 @@
 
 /* GNU Radio USRP */
 #define	USB_PRODUCT_USRP_USRPv2	0x0002		/* USRP Revision 2 */
+
+/* Validity */
+#define	USB_PRODUCT_VALIDITY_VFS101	0x0001		/* VFS101 Fingerprint Reader */
+#define	USB_PRODUCT_VALIDITY_VFS301	0x0005		/* VFS301 Fingerprint Reader */
+#define	USB_PRODUCT_VALIDITY_VFS451	0x0007		/* VFS451 Fingerprint Reader */
+#define	USB_PRODUCT_VALIDITY_VFS300	0x0008		/* VFS300 Fingerprint Reader */
+#define	USB_PRODUCT_VALIDITY_VFS5011	0x0011		/* VFS5011 Fingerprint Reader */
+#define	USB_PRODUCT_VALIDITY_VFS471	0x003c		/* VFS471 Fingerprint Reader */
 
 /* VidzMedia products */
 #define	USB_PRODUCT_VIDZMEDIA_MONSTERTV	0x4fb1		/* MonsterTV P2H */
