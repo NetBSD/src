@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.18 2010/02/11 09:06:47 roy Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2014/12/13 15:51:18 phx Exp $
 
-IMAGESIZE=	6m
+IMAGESIZE=	7m
 MAKEFS_FLAGS=   -o density=4k
 IMAGEENDIAN=	be
 MAKEDEVTARGETS=	floppy
