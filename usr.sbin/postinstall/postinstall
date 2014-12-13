@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.185 2014/12/13 02:30:39 uebayasi Exp $
+# $NetBSD: postinstall,v 1.186 2014/12/13 02:35:02 uebayasi Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1457,20 +1457,20 @@ btcontrol
 btcontrol_devices
 critical_filesystems
 critical_filesystems_beforenet
-defcorename
-ip6forwarding
 mountcritlocal
 mountcritremote
 network
+ip6forwarding
 network
 nfsiod_flags
 sdpd
-sdpd
-sdpd
 sdpd_control
+sdpd
 sdpd_groupname
+sdpd
 sdpd_username
 sysctl
+defcorename
 "
 
 additem rc "/etc/rc* and /etc/rc.d/ being up to date"
