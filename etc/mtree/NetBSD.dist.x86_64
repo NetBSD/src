@@ -1,9 +1,12 @@
-#	$NetBSD: NetBSD.dist.x86_64,v 1.8 2014/07/19 18:38:33 lneto Exp $
+#	$NetBSD: NetBSD.dist.x86_64,v 1.9 2014/12/13 18:55:18 christos Exp $
 
 ./lib/i386
 ./lib/i386/npf
+./usr/include/amd64
 ./usr/include/g++/bits/i386
 ./usr/include/g++/bits/x86_64
+./usr/include/i386
+./usr/include/x86
 ./usr/lib/i386
 ./usr/lib/i386/i18n
 ./usr/lib/i386/lua
