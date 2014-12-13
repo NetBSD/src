@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.116 2014/07/25 18:29:45 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.116.2.1 2014/12/13 19:29:28 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.116 2014/07/25 18:29:45 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.116.2.1 2014/12/13 19:29:28 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -284,7 +284,6 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 	struct cpu_info *ci;
 	const char *sep;
 	register int i, l;
-	uint64_t ver;
 	int bigcache, cachesize;
 	char buf[100];
 	int 	totalsize = 0;
@@ -349,11 +348,10 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 	aprint_normal(": %s, CPU id %d\n", buf, ci->ci_cpuid);
 	aprint_naive("\n");
 	if (CPU_ISSUN4U || CPU_ISSUN4US) {
-		ver = getver();
 		aprint_normal_dev(dev, "manuf %x, impl %x, mask %x\n",
-		    (u_int)((ver & VER_MANUF) >> VER_MANUF_SHIFT),
-		    (u_int)((ver & VER_IMPL) >> VER_IMPL_SHIFT),
-		    (u_int)((ver & VER_MASK) >> VER_MASK_SHIFT));
+		    (u_int)GETVER_CPU_MANUF(),
+		    (u_int)GETVER_CPU_IMPL(),
+		    (u_int)GETVER_CPU_MASK());
 	}
 
 	if (ci->ci_system_clockrate[0] != 0) {
@@ -495,7 +493,6 @@ int
 cpu_myid(void)
 {
 	char buf[32];
-	int impl;
 
 #ifdef SUN4V
 	if (CPU_ISSUN4V) {
@@ -507,8 +504,7 @@ cpu_myid(void)
 	if (OF_getprop(findroot(), "name", buf, sizeof(buf)) > 0 &&
 	    strcmp(buf, "SUNW,Ultra-Enterprise-10000") == 0)
 		return lduwa(0x1fff40000d0UL, ASI_PHYS_NON_CACHED);
-	impl = (getver() & VER_IMPL) >> VER_IMPL_SHIFT;
-	switch (impl) {
+	switch (GETVER_CPU_IMPL()) {
 		case IMPL_OLYMPUS_C:
 		case IMPL_JUPITER:
 			return CPU_JUPITERID;
