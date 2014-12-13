@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.169 2014/08/08 14:42:58 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.169.2.1 2014/12/13 19:23:09 martin Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -281,7 +281,7 @@ SYSTEM_LD_TAIL?=true
 SYSTEM_LD_TAIL_DEBUG?=true
 .else
 SYSTEM_LD_TAIL?=@${SYSTEM_LD_TAIL_DBSYM} ; \
-		${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/\\.*//' vers.c; \
+		${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/" "//;s/\\.*//' vers.c; \
 		${SIZE} $@; chmod 755 $@; \
 		${SYSTEM_CTFMERGE}
 SYSTEM_LD_TAIL_DEBUG?=; \
