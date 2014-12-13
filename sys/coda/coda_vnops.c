@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.98 2014/10/18 08:33:27 snj Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.99 2014/12/13 15:57:46 hannken Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.98 2014/10/18 08:33:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.99 2014/12/13 15:57:46 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.98 2014/10/18 08:33:27 snj Exp $");
 #include <sys/kauth.h>
 
 #include <miscfs/genfs/genfs.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <coda/coda.h>
 #include <coda/cnode.h>
@@ -836,6 +837,7 @@ coda_inactive(void *v)
 
     if (IS_CTL_VP(vp)) {
 	MARK_INT_SAT(CODA_INACTIVE_STATS);
+	VOP_UNLOCK(vp);
 	return 0;
     }
 
@@ -1844,6 +1846,8 @@ make_coda_node(CodaFid *fid, struct mount *fvsp, short type)
 	vp->v_data = cp;
 	vp->v_type = type;
 	cp->c_vnode = vp;
+	if (type == VCHR || type == VBLK)
+		spec_node_init(vp, NODEV);
 	uvm_vnp_setsize(vp, 0);
 	coda_save(cp);
 
@@ -2014,7 +2018,7 @@ coda_putpages(void *v)
 #ifdef CODA_VERBOSE
 		printf("%s: control object %p\n", __func__, vp);
 #endif
-		return(EINVAL);
+		return 0;
 	}
 
 	/*
