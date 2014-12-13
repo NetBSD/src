@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.27 2012/08/02 16:06:58 christos Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.28 2014/12/13 15:57:46 hannken Exp $	*/
 
 /*
  *
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.27 2012/08/02 16:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.28 2014/12/13 15:57:46 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,6 +228,8 @@ coda_kill(struct mount *whoIam, enum dc_status dcstat)
 
 	for (hash = 0; hash < CODA_CACHESIZE; hash++) {
 		for (cp = coda_cache[hash]; cp != NULL; cp = CNODE_NEXT(cp)) {
+			if (IS_CTL_VP(CTOV(cp)))
+				continue;
 			if (CTOV(cp)->v_mount == whoIam) {
 #ifdef	DEBUG
 				printf("coda_kill: vp %p, cp %p\n", CTOV(cp), cp);
@@ -302,11 +304,6 @@ coda_unmounting(struct mount *whoIam)
 	for (hash = 0; hash < CODA_CACHESIZE; hash++) {
 		for (cp = coda_cache[hash]; cp != NULL; cp = CNODE_NEXT(cp)) {
 			if (CTOV(cp)->v_mount == whoIam) {
-				if (cp->c_flags & (C_LOCKED|C_WANTED)) {
-					printf("coda_unmounting: Unlocking %p\n", cp);
-					cp->c_flags &= ~(C_LOCKED|C_WANTED);
-					wakeup((void *) cp);
-				}
 				cp->c_flags |= C_UNMOUNTING;
 			}
 		}
