@@ -607,6 +607,15 @@
 #define NT_NETBSD_IDENT		1
 #define NT_NETBSD_MARCH		5
 
+/* Values for NetBSD .note.netbsd.ident notes.  Note name is "PaX".  */
+#define NT_NETBSD_PAX		3
+#define NT_NETBSD_PAX_MPROTECT		0x01	/* Force enable Mprotect */
+#define NT_NETBSD_PAX_NOMPROTECT	0x02	/* Force disable Mprotect */
+#define NT_NETBSD_PAX_GUARD		0x04	/* Force enable Segvguard */
+#define NT_NETBSD_PAX_NOGUARD		0x08    /* Force disable Servguard */
+#define NT_NETBSD_PAX_ASLR		0x10	/* Force enable ASLR */
+#define NT_NETBSD_PAX_NOASLR		0x20	/* Force disable ASLR */
+
 /* Values for OpenBSD .note.openbsd.ident notes.  Note name is "OpenBSD".  */
 
 #define NT_OPENBSD_IDENT	1
