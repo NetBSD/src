@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.129 2014/12/13 18:56:34 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.130 2014/12/13 19:35:02 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3480,4 +3480,33 @@ sys/compat/netbsd32/netbsd32_compat_30.c	1.31
 
 	Avoid a user-triggerable kmem_alloc(0).
 	[maxv, ticket #314]
+
+sys/sys/cdefs_elf.h				1.47
+
+	Add a macro to mark a symbol as weak. Use it to mark the end of a
+	linker set, as empty linker sets otherwise violate the C aliasing
+	rules by presenting zero sized objects.
+	[joerg, ticket #316]
+
+sys/conf/Makefile.kern.inc			1.179
+
+	Trim " " at the beginning of version string to follow the change
+	in rev.1.60 of newvers.sh.
+	[nakayama, ticket #317]
+
+sys/arch/sparc64/include/psl.h			1.54-1.55
+sys/arch/sparc64/sparc64/cpu.c			1.121
+
+	Change getver() into a constant function since Version Register (%ver)
+	is read only and its value is constant. This change reduces multiple
+	%ver reads to one in the functions which uses a number of CPU_IS_*
+	macros.
+
+	Use GETVER_CPU_* macros.
+	[nakayama, ticket #318]
+
+sys/arch/arm/arm32/arm32_boot.c			1.11
+
+	Serialize printing of secondary cpu infos.
+	[jmcneill, ticket #319]
 
