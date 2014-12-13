@@ -185,6 +185,7 @@ static Elf_Internal_Phdr * program_headers;
 static Elf_Internal_Dyn *  dynamic_section;
 static Elf_Internal_Shdr * symtab_shndx_hdr;
 static int show_name;
+static int do_special_files;
 static int do_dynamic;
 static int do_syms;
 static int do_dyn_syms;
@@ -3201,6 +3202,7 @@ static struct option options[] =
   {"relocs",	       no_argument, 0, 'r'},
   {"notes",	       no_argument, 0, 'n'},
   {"dynamic",	       no_argument, 0, 'd'},
+  {"special-files",    no_argument, 0, 'f'},
   {"arch-specific",    no_argument, 0, 'A'},
   {"version-info",     no_argument, 0, 'V'},
   {"use-dynamic",      no_argument, 0, 'D'},
@@ -3246,6 +3248,7 @@ usage (FILE * stream)
   -r --relocs            Display the relocations (if present)\n\
   -u --unwind            Display the unwind info (if present)\n\
   -d --dynamic           Display the dynamic section (if present)\n\
+  -f --special-files     Process non-plain files too\n\
   -V --version-info      Display the version sections (if present)\n\
   -A --arch-specific     Display architecture specific information (if any)\n\
   -c --archive-index     Display the symbol/file index in an archive\n\
@@ -3365,7 +3368,7 @@ parse_args (int argc, char ** argv)
     usage (stderr);
 
   while ((c = getopt_long
-	  (argc, argv, "ADHINR:SVWacdeghi:lnp:rstuvw::x:", options, NULL)) != EOF)
+	  (argc, argv, "ADHINR:SVWacdefghi:lnp:rstuvw::x:", options, NULL)) != EOF)
     {
       switch (c)
 	{
@@ -3414,6 +3417,9 @@ parse_args (int argc, char ** argv)
 	  break;
 	case 'u':
 	  do_unwind++;
+	  break;
+	case 'f':
+	  do_special_files++;
 	  break;
 	case 'h':
 	  do_header++;
@@ -12706,13 +12712,23 @@ process_netbsd_elf_note (Elf_Internal_Note * pnote)
 		(version / 10000) % 100 > 26 ? "Z" : "",
 		'A' + (version / 10000) % 26); 
       else
-	printf ("  NetBSD\t0x%08lx\tIDENT %u (%u.%u.%u)\n", pnote->descsz,
+	printf ("  NetBSD\t\t0x%08lx\tIDENT %u (%u.%u.%u)\n", pnote->descsz,
 	        version, version / 100000000, (version / 1000000) % 100,
 		(version / 100) % 100); 
       return 1;
     case NT_NETBSD_MARCH:
-      printf ("  NetBSD\t0x%08lx\tMARCH <%s>\n", pnote->descsz,
+      printf ("  NetBSD\t\t0x%08lx\tMARCH <%s>\n", pnote->descsz,
 	      pnote->descdata);
+      return 1;
+    case NT_NETBSD_PAX:
+      version = byte_get((unsigned char *)pnote->descdata, sizeof(version));
+      printf ("  NetBSD\t\t0x%08lx\tPaX <%s%s%s%s%s%s>\n", pnote->descsz,
+	      ((version & NT_NETBSD_PAX_MPROTECT) ? "+mprotect" : ""),
+	      ((version & NT_NETBSD_PAX_NOMPROTECT) ? "-mprotect" : ""),
+	      ((version & NT_NETBSD_PAX_GUARD) ? "+guard" : ""),
+	      ((version & NT_NETBSD_PAX_NOGUARD) ? "-guard" : ""),
+	      ((version & NT_NETBSD_PAX_ASLR) ? "+ASLR" : ""),
+	      ((version & NT_NETBSD_PAX_NOASLR) ? "-ASLR" : ""));
       return 1;
     default:
       break;
@@ -13047,6 +13063,10 @@ process_note (Elf_Internal_Note * pnote)
     nt = get_gnu_elf_note_type (pnote->type);
 
   else if (const_strneq (pnote->namedata, "NetBSD"))
+    /* NetBSD-specific core file notes.  */
+    return process_netbsd_elf_note (pnote);
+
+  else if (const_strneq (pnote->namedata, "PaX"))
     /* NetBSD-specific core file notes.  */
     return process_netbsd_elf_note (pnote);
 
@@ -13789,7 +13809,7 @@ process_file (char * file_name)
       return 1;
     }
 
-  if (! S_ISREG (statbuf.st_mode))
+  if (!do_special_files && ! S_ISREG (statbuf.st_mode))
     {
       error (_("'%s' is not an ordinary file\n"), file_name);
       return 1;
