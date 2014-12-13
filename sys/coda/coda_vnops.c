@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.99 2014/12/13 15:57:46 hannken Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.100 2014/12/13 15:59:03 hannken Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.99 2014/12/13 15:57:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.100 2014/12/13 15:59:03 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -844,18 +844,6 @@ coda_inactive(void *v)
     CODADEBUG(CODA_INACTIVE, myprintf(("in inactive, %s, vfsp %p\n",
 				  coda_f2s(&cp->c_fid), vp->v_mount));)
 
-    /* If an array has been allocated to hold the symlink, deallocate it */
-    if ((coda_symlink_cache) && (VALID_SYMLINK(cp))) {
-	if (cp->c_symlink == NULL)
-	    panic("%s: null symlink pointer in cnode", __func__);
-
-	CODA_FREE(cp->c_symlink, cp->c_symlen);
-	cp->c_flags &= ~C_SYMLINK;
-	cp->c_symlen = 0;
-    }
-
-    /* Remove it from the table so it can't be found. */
-    coda_unsave(cp);
     if (vp->v_mount->mnt_data == NULL) {
 	myprintf(("Help! vfsp->vfs_data was NULL, but vnode %p wasn't dying\n", vp));
 	panic("badness in coda_inactive");
@@ -1676,6 +1664,18 @@ coda_reclaim(void *v)
 	}
 #endif
     }
+    /* If an array has been allocated to hold the symlink, deallocate it */
+    if ((coda_symlink_cache) && (VALID_SYMLINK(cp))) {
+	if (cp->c_symlink == NULL)
+	    panic("%s: null symlink pointer in cnode", __func__);
+
+	CODA_FREE(cp->c_symlink, cp->c_symlen);
+	cp->c_flags &= ~C_SYMLINK;
+	cp->c_symlen = 0;
+    }
+
+    /* Remove it from the table so it can't be found. */
+    coda_unsave(cp);
     coda_free(VTOC(vp));
     SET_VTOC(vp) = NULL;
     return (0);
