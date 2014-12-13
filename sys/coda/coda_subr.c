@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.28 2014/12/13 15:57:46 hannken Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.29 2014/12/13 15:58:39 hannken Exp $	*/
 
 /*
  *
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.28 2014/12/13 15:57:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.29 2014/12/13 15:58:39 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,9 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.28 2014/12/13 15:57:46 hannken Exp $
 #include <coda/coda_subr.h>
 #include <coda/coda_namecache.h>
 
-#ifdef _KERNEL_OPT
-#include "opt_coda_compat.h"
-#endif
 
 int coda_active = 0;
 int coda_reuse = 0;
