@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.128 2014/12/12 19:13:32 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.129 2014/12/13 18:56:34 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3394,7 +3394,7 @@ sbin/ccdconfig/ccdconfig.c			1.56
 	[mlelstv, ticket #305]
 
 distrib/sets/lists/base/shl.mi			1.723
-distrib/sets/lists/debug/shl.mi			1.82
+distrib/sets/lists/debug/shl.mi			1.82-1.83
 lib/libdm/Makefile				1.4
 
 	libdm is needed by LVM early in the boot process. Fixes bin/49357.
