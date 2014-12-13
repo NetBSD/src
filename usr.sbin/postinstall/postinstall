@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.184 2014/12/01 02:08:34 uebayasi Exp $
+# $NetBSD: postinstall,v 1.185 2014/12/13 02:30:39 uebayasi Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1305,6 +1305,174 @@ do_pwd_mkdb()
 #
 #	rc
 #
+
+# XXX Generate these from ../../distrib/sets/lists
+rc_644_files="
+rc
+rc.subr
+rc.shutdown
+"
+rc_555_files="
+DAEMON
+DISKS
+LOGIN
+NETWORKING
+SERVERS
+accounting
+altqd
+amd
+apmd
+bluetooth
+bootconf.sh
+bootparams
+ccd
+cgd
+cleartmp
+cron
+devpubd
+dhclient
+dhcpcd
+dhcpd
+dhcrelay
+dmesg
+downinterfaces
+envsys
+fsck
+fsck_root
+ftp_proxy
+ftpd
+gpio
+hostapd
+httpd
+identd
+ifwatchd
+inetd
+ipfilter
+ipfs
+ipmon
+ipnat
+ipsec
+irdaattach
+iscsi_target
+isdnd
+isibootd
+kdc
+ldconfig
+ldpd
+local
+lpd
+lvm
+makemandb
+mdnsd
+mixerctl
+mopd
+motd
+mountall
+mountcritlocal
+mountcritremote
+mountd
+moused
+mrouted
+named
+ndbootd
+network
+newsyslog
+nfsd
+nfslocking
+npf
+ntpd
+ntpdate
+perusertmp
+pf
+pf_boot
+pflogd
+postfix
+powerd
+ppp
+pwcheck
+quota
+racoon
+raidframe
+raidframeparity
+random_seed
+rarpd
+rbootd
+rndctl
+root
+route6d
+routed
+rpcbind
+rtadvd
+rtclocaltime
+rwho
+savecore
+screenblank
+securelevel
+sshd
+staticroute
+swap1
+swap2
+sysctl
+sysdb
+syslogd
+timed
+tpctl
+ttys
+veriexec
+virecover
+wdogctl
+wpa_supplicant
+wscons
+wsmoused
+ypbind
+yppasswdd
+ypserv
+"
+rc_obsolete_files="
+NETWORK
+btattach
+btconfig
+btcontrol
+btdevctl
+bthcid
+btuartd
+daemon
+fsck.sh
+gated
+kerberos
+login
+nfsiod
+poffd
+portmap
+sdpd
+servers
+sunndd
+systemfs
+xntpd
+"
+rc_obsolete_vars="
+amd
+amd_master
+btcontrol
+btcontrol_devices
+critical_filesystems
+critical_filesystems_beforenet
+defcorename
+ip6forwarding
+mountcritlocal
+mountcritremote
+network
+network
+nfsiod_flags
+sdpd
+sdpd
+sdpd
+sdpd_control
+sdpd_groupname
+sdpd_username
+sysctl
+"
+
 additem rc "/etc/rc* and /etc/rc.d/ being up to date"
 do_rc()
 {
@@ -1317,7 +1485,7 @@ do_rc()
 	fi
 
 	compare_dir "${op}" "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
-		rc rc.subr rc.shutdown
+		${rc_644_files}
 	failed=$(( ${failed} + $? ))
 
 	if ! $SOURCEMODE; then
@@ -1327,32 +1495,7 @@ do_rc()
 	fi
 
 	compare_dir "${op}" "${SRC_DIR}/etc/rc.d" "${DEST_DIR}/etc/rc.d" 555 \
-		DAEMON DISKS LOGIN NETWORKING SERVERS \
-		accounting altqd amd apmd \
-		bluetooth bootconf.sh bootparams \
-		ccd cgd cleartmp cron devpubd \
-		dhclient dhcpcd dhcpd dhcrelay dmesg downinterfaces envsys \
-		fsck fsck_root ftp_proxy ftpd \
-		gpio \
-		hostapd httpd \
-		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
-		irdaattach iscsi_target isdnd isibootd \
-		kdc \
-		ldconfig ldpd local lpd lvm \
-		makemandb mdnsd mixerctl mopd motd mountall mountcritlocal \
-		mountcritremote mountd moused mrouted \
-		named ndbootd network newsyslog nfsd nfslocking npf ntpd \
-		ntpdate \
-		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
-		quota \
-		racoon rpcbind raidframe raidframeparity random_seed rarpd \
-		rbootd rndctl root route6d routed rtadvd rtclocaltime \
-		rwho \
-		savecore screenblank securelevel sshd \
-		staticroute swap1 swap2 sysctl sysdb syslogd \
-		timed tpctl ttys \
-		veriexec virecover wdogctl wpa_supplicant wscons wsmoused \
-		ypbind yppasswdd ypserv \
+		${rc_555_files} \
 		${extra_scripts}
 	failed=$(( ${failed} + $? ))
 
@@ -1371,25 +1514,14 @@ do_rc()
 	fi
 
 		# check for obsolete rc.d files
-	for f in NETWORK btattach btconfig btcontrol btdevctl bthcid btuartd \
-	    fsck.sh kerberos nfsiod sdpd servers \
-	    systemfs daemon gated login poffd portmap sunndd xntpd; do
+	for f in ${rc_obsolete_files}; do
 		fd="/etc/rc.d/${f}"
 		[ -e "${DEST_DIR}${fd}" ] && echo "${fd}"
 	done | obsolete_paths "${op}"
 	failed=$(( ${failed} + $? ))
 
 		# check for obsolete rc.conf(5) variables
-	set --	amd amd_master \
-		btcontrol btcontrol_devices \
-		critical_filesystems critical_filesystems_beforenet \
-		mountcritlocal mountcritremote \
-		network ip6forwarding \
-		network nfsiod_flags \
-		sdpd sdpd_control \
-		sdpd sdpd_groupname \
-		sdpd sdpd_username \
-		sysctl defcorename
+	set -- ${rc_obsolete_vars}
 	while [ $# -gt 1 ]; do
 		if rcconf_is_set "${op}" "$1" "$2" 1; then
 			failed=1
