@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.117 2014/11/23 16:36:03 christos Exp $
+#	$NetBSD: security,v 1.118 2014/12/13 02:17:35 uebayasi Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -67,9 +67,9 @@ CHANGEFILES=changefiles.$$
 SPECIALSPEC=specialspec.$$
 
 if [ -n "${pkgdb_dir}" ]; then
-    echo "WARNING: Setting pkgdb_dir in security.conf(5) is deprecated"
-    echo "WARNING: Please define PKG_DBDIR in pkg_install.conf(5) instead"
-    _compat_K_flag="-K ${pkgdb_dir}"
+	echo "WARNING: Setting pkgdb_dir in security.conf(5) is deprecated"
+	echo "WARNING: Please define PKG_DBDIR in pkg_install.conf(5) instead"
+	_compat_K_flag="-K ${pkgdb_dir}"
 fi
 
 have_pkgs() {
@@ -117,7 +117,7 @@ migrate_file()
 
 # backup_and_diff file printdiff
 #	Determine if file needs backing up, and if so, do it.
-#	If printdiff is yes, display the diffs, otherwise 
+#	If printdiff is yes, display the diffs, otherwise
 #	just print a message saying "[changes omitted]".
 #
 backup_and_diff()
@@ -194,8 +194,8 @@ done | mtree -CM -k all > $SPECIALSPEC || exit 1
 # Check the master password file syntax.
 #
 if checkyesno check_passwd; then
-        # XXX: the sense of permit_star is reversed; the code works as
-        # implemented, but usage needs to be negated.
+	# XXX: the sense of permit_star is reversed; the code works as
+	# implemented, but usage needs to be negated.
 	checkyesno check_passwd_permit_star && permit_star=0 || permit_star=1
 	checkyesno check_passwd_permit_nonalpha \
 		 && permit_nonalpha=1 || permit_nonalpha=0
@@ -531,7 +531,7 @@ if checkyesno check_homes; then
 		fi
 	done < $MPBYPATH |
 	awk -v "usergroups=$permit_usergroups" \
-            -v "permit_owners_list=$check_homes_permit_other_owner"  '
+	    -v "permit_owners_list=$check_homes_permit_other_owner"  '
 	     BEGIN {
 		split(permit_owners_list, a);
 		for (i in a) permit_owners[a[i]]++;
@@ -559,7 +559,7 @@ if checkyesno check_homes; then
 		done
 	done < $MPBYPATH |
 	awk -v "usergroups=$permit_usergroups" \
-            -v "permit_owners_list=$check_homes_permit_other_owner"  '
+	    -v "permit_owners_list=$check_homes_permit_other_owner"  '
 	     BEGIN {
 		split(permit_owners_list, a);
 		for (i in a) permit_owners[a[i]]++;
@@ -593,7 +593,7 @@ if checkyesno check_homes; then
 		done
 	done < $MPBYPATH |
 	awk -v "usergroups=$permit_usergroups" \
-            -v "permit_owners_list=$check_homes_permit_other_owner"  '
+	    -v "permit_owners_list=$check_homes_permit_other_owner"  '
 	     BEGIN {
 		split(permit_owners_list, a);
 		for (i in a) permit_owners[a[i]]++;
@@ -915,7 +915,7 @@ if checkyesno check_disklabels; then
 		# nfs and "device" (the header of iostat)
 	for i in $disks; do
 		case $i in
-		[cfm]d[0-9]*|dk[0-9]*|st[0-9]*|nfs|device) 
+		[cfm]d[0-9]*|dk[0-9]*|st[0-9]*|nfs|device)
 			;;
 		*)
 			if disklabel $i > /dev/null 1>&2; then
@@ -960,17 +960,16 @@ if checkyesno check_disklabels; then
 fi
 
 if checkyesno check_lvm; then
-    
-    # generate list of existing LVM elements Physical Volumes, Volume Groups
-    # and Logical Volumes.
-if [ -x /sbin/lvm ]; then
-    lvm pvdisplay -m >"$work_dir/lvm.pv" 2>/dev/null
-    lvm vgdisplay -m >"$work_dir/lvm.vg" 2>/dev/null
-    lvm lvdisplay -m >"$work_dir/lvm.lv" 2>/dev/null
-fi
-    ls -1d $work_dir/lvm.* 2>/dev/null |
-        egrep -v '\.(backup|current)(,v)?$'>> $LVM_LABELS 
-    CHANGELIST="$CHANGELIST $LVM_LABELS"
+		# generate list of existing LVM elements Physical Volumes,
+		# Volume Groups and Logical Volumes.
+	if [ -x /sbin/lvm ]; then
+		lvm pvdisplay -m >"$work_dir/lvm.pv" 2>/dev/null
+		lvm vgdisplay -m >"$work_dir/lvm.vg" 2>/dev/null
+		lvm lvdisplay -m >"$work_dir/lvm.lv" 2>/dev/null
+	fi
+	ls -1d $work_dir/lvm.* 2>/dev/null |
+	    egrep -v '\.(backup|current)(,v)?$'>> $LVM_LABELS
+	CHANGELIST="$CHANGELIST $LVM_LABELS"
 fi
 
 # Check for changes in the list of installed pkgs
@@ -1023,7 +1022,7 @@ if checkyesno check_changelist ; then
 				#
 			ls -1d $(echo $backup_dir/${file}.current) 2>/dev/null \
 			    | sed "s,^$backup_dir/,, ; s,\.current$,,"
-				
+
 				# ... expand possible files
 				#
 			ls -1d $(echo $file) 2>/dev/null
