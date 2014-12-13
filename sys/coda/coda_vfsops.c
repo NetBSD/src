@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.83 2014/12/13 15:58:39 hannken Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.84 2014/12/13 15:59:30 hannken Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.83 2014/12/13 15:58:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.84 2014/12/13 15:59:30 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,7 @@ struct vfsops coda_vfsops = {
 	.vfs_statvfs = coda_nb_statvfs,
 	.vfs_sync = coda_sync,
 	.vfs_vget = coda_vget,
+	.vfs_loadvnode = coda_loadvnode,
 	.vfs_fhtovp = (void *)eopnotsupp,
 	.vfs_vptofh = (void *)eopnotsupp,
 	.vfs_init = coda_init,
@@ -371,13 +372,19 @@ coda_root(struct mount *vfsp, struct vnode **vpp)
     error = venus_root(vftomi(vfsp), l->l_cred, l->l_proc, &VFid);
 
     if (!error) {
+	struct cnode *cp = VTOC(mi->mi_rootvp);
+
 	/*
-	 * Save the new rootfid in the cnode, and rehash the cnode into the
-	 * cnode hash with the new fid key.
+	 * Save the new rootfid in the cnode, and rekey the cnode
+	 * with the new fid key.
 	 */
-	coda_unsave(VTOC(mi->mi_rootvp));
-	VTOC(mi->mi_rootvp)->c_fid = VFid;
-	coda_save(VTOC(mi->mi_rootvp));
+	error = vcache_rekey_enter(vfsp, mi->mi_rootvp,
+	    &invalfid, sizeof(CodaFid), &VFid, sizeof(CodaFid));
+	if (error)
+	        goto exit;
+	cp->c_fid = VFid;
+	vcache_rekey_exit(vfsp, mi->mi_rootvp,
+	    &invalfid, sizeof(CodaFid), &cp->c_fid, sizeof(CodaFid));
 
 	*vpp = mi->mi_rootvp;
 	vref(*vpp);
@@ -473,6 +480,31 @@ coda_vget(struct mount *vfsp, ino_t ino,
 {
     ENTRY;
     return (EOPNOTSUPP);
+}
+
+int
+coda_loadvnode(struct mount *mp, struct vnode *vp,
+    const void *key, size_t key_len, const void **new_key)
+{
+	CodaFid fid;
+	struct cnode *cp;
+	extern int (**coda_vnodeop_p)(void *);
+
+	KASSERT(key_len == sizeof(CodaFid));
+	memcpy(&fid, key, key_len);
+
+	cp = kmem_zalloc(sizeof(*cp), KM_SLEEP);
+	mutex_init(&cp->c_lock, MUTEX_DEFAULT, IPL_NONE);
+	cp->c_fid = fid;
+	cp->c_vnode = vp;
+	vp->v_op = coda_vnodeop_p;
+	vp->v_tag = VT_CODA;
+	vp->v_type = VNON;
+	vp->v_data = cp;
+
+	*new_key = &cp->c_fid;
+
+	return 0;
 }
 
 /*

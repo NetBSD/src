@@ -1,4 +1,4 @@
-/*	$NetBSD: cnode.h,v 1.19 2014/12/13 15:58:13 hannken Exp $	*/
+/*	$NetBSD: cnode.h,v 1.20 2014/12/13 15:59:30 hannken Exp $	*/
 
 /*
  *
@@ -106,7 +106,7 @@ struct cnode {
     u_short		 c_symlen;	/* length of symbolic link */
     dev_t		 c_device;	/* associated vnode device */
     ino_t		 c_inode;	/* associated vnode inode */
-    struct cnode	*c_next;	/* links if on NetBSD machine */
+    kmutex_t		 c_lock;
 };
 #define	VTOC(vp)	((struct cnode *)(vp)->v_data)
 #define	SET_VTOC(vp)	((vp)->v_data)

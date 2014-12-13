@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.29 2014/12/13 15:58:39 hannken Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.30 2014/12/13 15:59:30 hannken Exp $	*/
 
 /*
  *
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.29 2014/12/13 15:58:39 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.30 2014/12/13 15:59:30 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,21 +70,10 @@ __KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.29 2014/12/13 15:58:39 hannken Exp $
 #include <coda/coda_subr.h>
 #include <coda/coda_namecache.h>
 
-
-int coda_active = 0;
-int coda_reuse = 0;
-int coda_new = 0;
-
-struct cnode *coda_freelist = NULL;
-struct cnode *coda_cache[CODA_CACHESIZE];
-MALLOC_DEFINE(M_CODA, "coda", "Coda file system structures and tables");
-
 int codadebug = 0;
 int coda_printf_delay = 0;  /* in microseconds */
 int coda_vnop_print_entry = 0;
 int coda_vfsop_print_entry = 0;
-
-#define	CNODE_NEXT(cp)	((cp)->c_next)
 
 #ifdef CODA_COMPAT_5
 #define coda_hash(fid) \
@@ -99,99 +88,56 @@ int coda_vfsop_print_entry = 0;
 struct vnode *coda_ctlvp;
 
 /*
- * Allocate a cnode.
- */
-struct cnode *
-coda_alloc(void)
-{
-    struct cnode *cp;
-
-    if (coda_freelist) {
-	cp = coda_freelist;
-	coda_freelist = CNODE_NEXT(cp);
-	coda_reuse++;
-    }
-    else {
-	CODA_ALLOC(cp, struct cnode *, sizeof(struct cnode));
-	/* NetBSD vnodes don't have any Pager info in them ('cause there are
-	   no external pagers, duh!) */
-#define VNODE_VM_INFO_INIT(vp)         /* MT */
-	VNODE_VM_INFO_INIT(CTOV(cp));
-	coda_new++;
-    }
-    memset(cp, 0, sizeof (struct cnode));
-
-    return(cp);
-}
-
-/*
- * Deallocate a cnode.
- */
-void
-coda_free(struct cnode *cp)
-{
-
-    CNODE_NEXT(cp) = coda_freelist;
-    coda_freelist = cp;
-}
-
-/*
- * Put a cnode in the hash table
- */
-void
-coda_save(struct cnode *cp)
-{
-	CNODE_NEXT(cp) = coda_cache[coda_hash(&cp->c_fid)];
-	coda_cache[coda_hash(&cp->c_fid)] = cp;
-}
-
-/*
- * Remove a cnode from the hash table
- */
-void
-coda_unsave(struct cnode *cp)
-{
-    struct cnode *ptr;
-    struct cnode *ptrprev = NULL;
-
-    ptr = coda_cache[coda_hash(&cp->c_fid)];
-    while (ptr != NULL) {
-	if (ptr == cp) {
-	    if (ptrprev == NULL) {
-		coda_cache[coda_hash(&cp->c_fid)]
-		    = CNODE_NEXT(ptr);
-	    } else {
-		CNODE_NEXT(ptrprev) = CNODE_NEXT(ptr);
-	    }
-	    CNODE_NEXT(cp) = NULL;
-
-	    return;
-	}
-	ptrprev = ptr;
-	ptr = CNODE_NEXT(ptr);
-    }
-}
-
-/*
  * Lookup a cnode by fid. If the cnode is dying, it is bogus so skip it.
- * NOTE: this allows multiple cnodes with same fid -- dcs 1/25/95
+ * The cnode is returned locked with the vnode referenced.
  */
 struct cnode *
 coda_find(CodaFid *fid)
 {
-    struct cnode *cp;
+	int i;
+	struct vnode *vp;
+	struct cnode *cp;
 
-    cp = coda_cache[coda_hash(fid)];
-    while (cp) {
-    	if (coda_fid_eq(&(cp->c_fid), fid) &&
-	    (!IS_UNMOUNTING(cp)))
-	    {
-		coda_active++;
-		return(cp);
-	    }
-	cp = CNODE_NEXT(cp);
-    }
-    return(NULL);
+	for (i = 0; i < NVCODA; i++) {
+		if (!coda_mnttbl[i].mi_started)
+			continue;
+		if (vcache_get(coda_mnttbl[i].mi_vfsp,
+		    fid, sizeof(CodaFid), &vp) != 0)
+			continue;
+		mutex_enter(vp->v_interlock);
+		cp = VTOC(vp);
+		if (vp->v_type == VNON || cp == NULL || IS_UNMOUNTING(cp)) {
+			mutex_exit(vp->v_interlock);
+			vrele(vp);
+			continue;
+		}
+		mutex_enter(&cp->c_lock);
+		mutex_exit(vp->v_interlock);
+
+		return cp;
+	}
+
+	return NULL;
+}
+
+/*
+ * Iterate over all nodes attached to coda mounts.
+ */
+static void
+coda_iterate(bool (*f)(void *, struct vnode *), void *cl)
+{
+	int i;
+	struct vnode_iterator *marker;
+	struct vnode *vp;
+
+	for (i = 0; i < NVCODA; i++) { 
+		if (coda_mnttbl[i].mi_vfsp == NULL)
+			continue;
+		vfs_vnode_iterator_init(coda_mnttbl[i].mi_vfsp, &marker);
+		while ((vp = vfs_vnode_iterator_next(marker, f, cl)) != NULL)
+			vrele(vp);
+		vfs_vnode_iterator_destroy(marker);
+	}
 }
 
 /*
@@ -203,19 +149,25 @@ coda_find(CodaFid *fid)
  * running, only kill the cnodes for a particular entry in the
  * coda_mnttbl. -- DCS 12/1/94 */
 
+static bool
+coda_kill_selector(void *cl, struct vnode *vp)
+{
+	int *count = cl;
+
+	(*count)++;
+
+	return false;
+}
+
 int
 coda_kill(struct mount *whoIam, enum dc_status dcstat)
 {
-	int hash, count = 0;
-	struct cnode *cp;
+	int count = 0;
+	struct vnode_iterator *marker;
 
 	/*
 	 * Algorithm is as follows:
 	 *     Second, flush whatever vnodes we can from the name cache.
-	 *
-	 *     Finally, step through whatever is left and mark them dying.
-	 *        This prevents any operation at all.
-
 	 */
 
 	/* This is slightly overkill, but should work. Eventually it'd be
@@ -223,23 +175,11 @@ coda_kill(struct mount *whoIam, enum dc_status dcstat)
 	 * reference a vnode in this vfs.  */
 	coda_nc_flush(dcstat);
 
-	for (hash = 0; hash < CODA_CACHESIZE; hash++) {
-		for (cp = coda_cache[hash]; cp != NULL; cp = CNODE_NEXT(cp)) {
-			if (IS_CTL_VP(CTOV(cp)))
-				continue;
-			if (CTOV(cp)->v_mount == whoIam) {
-#ifdef	DEBUG
-				printf("coda_kill: vp %p, cp %p\n", CTOV(cp), cp);
-#endif
-				count++;
-				CODADEBUG(CODA_FLUSH,
-					 myprintf(("Live cnode fid %s flags %d count %d\n",
-						   coda_f2s(&cp->c_fid),
-						   cp->c_flags,
-						   CTOV(cp)->v_usecount)); );
-			}
-		}
-	}
+
+	vfs_vnode_iterator_init(whoIam, &marker);
+	vfs_vnode_iterator_next(marker, coda_kill_selector, &count);
+	vfs_vnode_iterator_destroy(marker);
+
 	return count;
 }
 
@@ -247,43 +187,48 @@ coda_kill(struct mount *whoIam, enum dc_status dcstat)
  * There are two reasons why a cnode may be in use, it may be in the
  * name cache or it may be executing.
  */
+static bool
+coda_flush_selector(void *cl, struct vnode *vp)
+{
+	struct cnode *cp = VTOC(vp);
+
+	if (cp != NULL && !IS_DIR(cp->c_fid)) /* only files can be executed */
+		coda_vmflush(cp);
+
+	return false;
+}
 void
 coda_flush(enum dc_status dcstat)
 {
-    int hash;
-    struct cnode *cp;
 
     coda_clstat.ncalls++;
     coda_clstat.reqs[CODA_FLUSH]++;
 
     coda_nc_flush(dcstat);	    /* flush files from the name cache */
 
-    for (hash = 0; hash < CODA_CACHESIZE; hash++) {
-	for (cp = coda_cache[hash]; cp != NULL; cp = CNODE_NEXT(cp)) {
-	    if (!IS_DIR(cp->c_fid)) /* only files can be executed */
-		coda_vmflush(cp);
-	}
-    }
+    coda_iterate(coda_flush_selector, NULL);
 }
 
 /*
  * As a debugging measure, print out any cnodes that lived through a
  * name cache flush.
  */
+static bool
+coda_testflush_selector(void *cl, struct vnode *vp)
+{
+	struct cnode *cp = VTOC(vp);
+
+	if (cp != NULL)
+		myprintf(("Live cnode fid %s count %d\n",
+		     coda_f2s(&cp->c_fid), CTOV(cp)->v_usecount));
+
+	return false;
+}
 void
 coda_testflush(void)
 {
-    int hash;
-    struct cnode *cp;
 
-    for (hash = 0; hash < CODA_CACHESIZE; hash++) {
-	for (cp = coda_cache[hash];
-	     cp != NULL;
-	     cp = CNODE_NEXT(cp)) {
-	    myprintf(("Live cnode fid %s count %d\n",
-		      coda_f2s(&cp->c_fid), CTOV(cp)->v_usecount));
-	}
-    }
+	coda_iterate(coda_testflush_selector, NULL);
 }
 
 /*
@@ -292,62 +237,66 @@ coda_testflush(void)
  *         is dead, which would be a bad thing.
  *
  */
+static bool
+coda_unmounting_selector(void *cl, struct vnode *vp)
+{
+	struct cnode *cp = VTOC(vp);
+
+	if (cp)
+		cp->c_flags |= C_UNMOUNTING;
+
+	return false;
+}
 void
 coda_unmounting(struct mount *whoIam)
 {
-	int hash;
-	struct cnode *cp;
+	struct vnode_iterator *marker;
 
-	for (hash = 0; hash < CODA_CACHESIZE; hash++) {
-		for (cp = coda_cache[hash]; cp != NULL; cp = CNODE_NEXT(cp)) {
-			if (CTOV(cp)->v_mount == whoIam) {
-				cp->c_flags |= C_UNMOUNTING;
-			}
-		}
-	}
+	vfs_vnode_iterator_init(whoIam, &marker);
+	vfs_vnode_iterator_next(marker, coda_unmounting_selector, NULL);
+	vfs_vnode_iterator_destroy(marker);
 }
 
 #ifdef	DEBUG
+static bool
+coda_checkunmounting_selector(void *cl, struct vnode *vp)
+{
+	struct cnode *cp = VTOC(vp);
+
+	if (cp && !(cp->c_flags & C_UNMOUNTING)) {
+		printf("vp %p, cp %p missed\n", vp, cp);
+		cp->c_flags |= C_UNMOUNTING;
+	}
+
+	return false;
+}
 void
 coda_checkunmounting(struct mount *mp)
 {
-	struct vnode *vp;
-	struct cnode *cp;
-	int count = 0, bad = 0;
-loop:
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-		if (vp->v_mount != mp)
-			goto loop;
-		cp = VTOC(vp);
-		count++;
-		if (!(cp->c_flags & C_UNMOUNTING)) {
-			bad++;
-			printf("vp %p, cp %p missed\n", vp, cp);
-			cp->c_flags |= C_UNMOUNTING;
-		}
-	}
+	struct vnode_iterator *marker;
+
+	vfs_vnode_iterator_init(mp, &marker);
+	vfs_vnode_iterator_next(marker, coda_checkunmounting_selector, NULL);
+	vfs_vnode_iterator_destroy(marker);
 }
 
 void
 coda_cacheprint(struct mount *whoIam)
 {
-	int hash;
-	struct cnode *cp;
+	struct vnode *vp;
+	struct vnode_iterator *marker;
 	int count = 0;
 
 	printf("coda_cacheprint: coda_ctlvp %p, cp %p", coda_ctlvp, VTOC(coda_ctlvp));
 	coda_nc_name(VTOC(coda_ctlvp));
 	printf("\n");
 
-	for (hash = 0; hash < CODA_CACHESIZE; hash++) {
-		for (cp = coda_cache[hash]; cp != NULL; cp = CNODE_NEXT(cp)) {
-			if (CTOV(cp)->v_mount == whoIam) {
-				printf("coda_cacheprint: vp %p, cp %p", CTOV(cp), cp);
-				coda_nc_name(cp);
-				printf("\n");
-				count++;
-			}
-		}
+	vfs_vnode_iterator_init(whoIam, &marker);
+	while ((vp = vfs_vnode_iterator_next(marker, NULL, NULL)) != NULL) {
+		printf("coda_cacheprint: vp %p, cp %p", vp, VTOC(vp));
+		coda_nc_name(VTOC(vp));
+		printf("\n");
+		count++;
 	}
 	printf("coda_cacheprint: count %d\n", count);
 }
@@ -414,8 +363,6 @@ int handleDownCall(int opcode, union outputArgs *out)
 
 	  cp = coda_find(&out->coda_zapfile.Fid);
 	  if (cp != NULL) {
-	      vref(CTOV(cp));
-
 	      cp->c_flags &= ~C_VATTR;
 	      if (CTOV(cp)->v_iflag & VI_TEXT)
 		  error = coda_vmflush(cp);
@@ -425,6 +372,7 @@ int handleDownCall(int opcode, union outputArgs *out)
 	      if (CTOV(cp)->v_usecount == 1) {
 		  cp->c_flags |= C_PURGING;
 	      }
+	      mutex_exit(&cp->c_lock);
 	      vrele(CTOV(cp));
 	  }
 
@@ -439,8 +387,6 @@ int handleDownCall(int opcode, union outputArgs *out)
 
 	  cp = coda_find(&out->coda_zapdir.Fid);
 	  if (cp != NULL) {
-	      vref(CTOV(cp));
-
 	      cp->c_flags &= ~C_VATTR;
 	      coda_nc_zapParentfid(&out->coda_zapdir.Fid, IS_DOWNCALL);
 
@@ -450,6 +396,7 @@ int handleDownCall(int opcode, union outputArgs *out)
 	      if (CTOV(cp)->v_usecount == 1) {
 		  cp->c_flags |= C_PURGING;
 	      }
+	      mutex_exit(&cp->c_lock);
 	      vrele(CTOV(cp));
 	  }
 
@@ -465,7 +412,6 @@ int handleDownCall(int opcode, union outputArgs *out)
 
 	  cp = coda_find(&out->coda_purgefid.Fid);
 	  if (cp != NULL) {
-	      vref(CTOV(cp));
 	      if (IS_DIR(out->coda_purgefid.Fid)) { /* Vnode is a directory */
 		  coda_nc_zapParentfid(&out->coda_purgefid.Fid,
 				     IS_DOWNCALL);
@@ -483,6 +429,7 @@ int handleDownCall(int opcode, union outputArgs *out)
 	      if (CTOV(cp)->v_usecount == 1) {
 		  cp->c_flags |= C_PURGING;
 	      }
+	      mutex_exit(&cp->c_lock);
 	      vrele(CTOV(cp));
 	  }
 	  return(error);
@@ -496,16 +443,24 @@ int handleDownCall(int opcode, union outputArgs *out)
 
 	  cp = coda_find(&out->coda_replace.OldFid);
 	  if (cp != NULL) {
-	      /* remove the cnode from the hash table, replace the fid, and reinsert */
-	      vref(CTOV(cp));
-	      coda_unsave(cp);
+	      error = vcache_rekey_enter(CTOV(cp)->v_mount, CTOV(cp),
+		  &out->coda_replace.OldFid, sizeof(CodaFid),
+		  &out->coda_replace.NewFid, sizeof(CodaFid));
+	      if (error) {
+		  mutex_exit(&cp->c_lock);
+		  vrele(CTOV(cp));
+		  return error;
+	      }
 	      cp->c_fid = out->coda_replace.NewFid;
-	      coda_save(cp);
+	      vcache_rekey_exit(CTOV(cp)->v_mount, CTOV(cp),
+		  &out->coda_replace.OldFid, sizeof(CodaFid),
+		  &cp->c_fid, sizeof(CodaFid));
 
 	      CODADEBUG(CODA_REPLACE, myprintf((
 			"replace: oldfid = %s, newfid = %s, cp = %p\n",
 			coda_f2s(&out->coda_replace.OldFid),
 			coda_f2s(&cp->c_fid), cp));)
+	      mutex_exit(&cp->c_lock);
 	      vrele(CTOV(cp));
 	  }
 	  return (0);
