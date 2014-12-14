@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.130 2014/12/13 19:35:02 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.131 2014/12/14 17:04:18 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3509,4 +3509,68 @@ sys/arch/arm/arm32/arm32_boot.c			1.11
 
 	Serialize printing of secondary cpu infos.
 	[jmcneill, ticket #319]
+
+usr.sbin/sysinst/arch/atari/msg.md.de		1.2
+usr.sbin/sysinst/arch/atari/msg.md.en		1.2
+usr.sbin/sysinst/arch/atari/msg.md.es		1.2
+
+	Terminate messages with a newline so that dialog box won't overwrite
+	messages.
+	[tsutsui, ticket #320]
+
+sys/arch/atari/conf/GENERIC.in			1.109
+sys/arch/atari/conf/ATARITT			(regen)
+sys/arch/atari/conf/FALCON			(regen)
+sys/arch/atari/conf/HADES			(regen)
+sys/arch/atari/conf/MILAN-ISAIDE		(regen)
+sys/arch/atari/conf/MILAN-PCIIDE		(regen)
+sys/arch/atari/conf/SMALL030			(regen)
+
+	Shrink GENERIC and enable options MODULAR instead, as other poor m68k
+	ports.
+
+	This allows all (at least ATARITT and FALCON, which have certain users)
+	gzipped kernel binaries put into 1440KB 2HD floppy so that users can
+	load these kernels on the native TOS using LOADBSD.TTP utility for
+	installation.  Note SMALL030 kernel doesn't include any Ethernet
+	configuration and requires CD-ROM or other removable disks.
+	[tsutsui, ticket #321]
+
+sys/arch/atari/stand/bootxx/bootxx.c		1.16
+
+	Expand heap to 64KB so that bootxx can load bootxxx from 32KB 
+	blocksize ffs.
+	[tsutsui, ticket #322]
+
+usr.sbin/installboot/arch/vax.c			1.18
+
+	Use VAX_LABELOFFSET instead of LABELOFFSET:
+	it needs to be the machine-specific one.
+	[tsutsui, ticket #323]
+
+sys/dev/ic/rtl8169.c				1.142
+
+	RealTek 8139C+ incorrectly identifies UDP checksum 0xffff as bad.
+	Force software recalculation of UDP checksum if bad checksum is
+	reported by the hardware.
+	[uwe, ticket #324]
+
+sys/dev/pci/pci_subr.c				1.133
+sys/dev/pci/pcireg.h				1.100
+
+	Add PCIe CRS Software Visibility bit.
+	[msaitoh, ticket #325]
+
+usr.sbin/cpuctl/arch/i386.c			1.60-1.64
+
+	Add code to detect hypervisor (from FreeBSD, ported by Kengo Nakahara).
+
+	Move some printf()s from cpu_probe_base_features() to identifycpu(),
+	to avoid extra (unintended) output from the "ucode" command.
+
+	Fix output if ci_tsc_freq is 0.
+
+	Don't print garbage if the ioctl to get the microcode version
+	failed.
+	[msaitoh, ticket #326]
 
