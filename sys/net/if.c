@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.305 2014/12/11 14:33:22 martin Exp $	*/
+/*	$NetBSD: if.c,v 1.306 2014/12/14 08:57:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.305 2014/12/11 14:33:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.306 2014/12/14 08:57:14 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -1515,15 +1515,17 @@ if_up(struct ifnet *ifp)
 static void
 if_slowtimo(void *arg)
 {
+	void (*slowtimo)(struct ifnet *);
 	struct ifnet *ifp = arg;
 	int s;
 
-	if (__predict_false(ifp->if_slowtimo == NULL))
+	slowtimo = ifp->if_slowtimo;
+	if (__predict_false(slowtimo == NULL))
 		return;
 
 	s = splnet();
 	if (ifp->if_timer != 0 && --ifp->if_timer == 0)
-		(*ifp->if_slowtimo)(ifp);
+		(*slowtimo)(ifp);
 
 	splx(s);
 
