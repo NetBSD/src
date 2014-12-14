@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.303 2014/12/14 00:36:07 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.304 2014/12/14 01:13:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.303 2014/12/14 00:36:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.304 2014/12/14 01:13:57 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -773,10 +773,11 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		 * EINVAL is most probably a blocksize or alignment problem,
 		 * it is unlikely that this is an Apple UFS filesystem then.
 		 */
-		error = bread(devvp, (daddr_t)(APPLEUFS_LABEL_OFFSET / DEV_BSIZE),
-			APPLEUFS_LABEL_SIZE, cred, 0, &bp);
+		error = bread(devvp,
+		    (daddr_t)(APPLEUFS_LABEL_OFFSET / DEV_BSIZE),
+		    APPLEUFS_LABEL_SIZE, cred, 0, &bp);
 		if (error && error != EINVAL) {
-			return (error);
+			return error;
 		}
 		if (error == 0) {
 			error = ffs_appleufs_validate(fs->fs_fsmnt,
@@ -1153,15 +1154,10 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		}
 		error = ffs_appleufs_validate(fs->fs_fsmnt,
 		    (struct appleufslabel *)bp->b_data, NULL);
-			(struct appleufslabel *)bp->b_data, NULL);
+		if (error == 0)
 			ump->um_flags |= UFS_ISAPPLEUFS;
 		brelse(bp, 0);
 		bp = NULL;
-		if (error) {
-			DPRINTF(("%s: ffs_appleufs_validate %d\n", __func__,
-			    error));
-			goto out;
-		}
 	}
 #else
 	if (ump->um_flags & UFS_ISAPPLEUFS) {
