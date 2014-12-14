@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.147 2014/12/14 21:35:24 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.148 2014/12/14 23:49:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -187,7 +187,6 @@ struct exec_fakearg {
 };
 
 struct exec_package {
-	const char *ep_name;		/* file's name */
 	const char *ep_kname;		/* kernel-side copy of file's name */
 	char *ep_resolvedname;		/* fully resolved path from namei */
 	void	*ep_hdr;		/* file's exec header */
