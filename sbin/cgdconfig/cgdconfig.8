@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.33 2012/12/05 08:56:54 wiz Exp $
+.\" $NetBSD: cgdconfig.8,v 1.34 2014/12/14 12:31:39 mlelstv Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -208,6 +208,10 @@ The following verification methods are supported:
 perform no verification.
 .It disklabel
 scan for a valid disklabel.
+.It mbr
+scan for a valid Master Boot Record.
+.It gpt
+scan for a valid GUUID partition table.
 .It ffs
 scan for a valid FFS file system.
 .It re-enter
