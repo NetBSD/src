@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2reg.h,v 1.8 2012/09/12 12:07:04 macallan Exp $	*/
+/*	$NetBSD: pm2reg.h,v 1.9 2014/12/14 13:58:41 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -146,7 +146,7 @@
 #define		CM_RGB565	0x06
 #define		CM_RGBA8888	0x08
 #define		CM_RGB888	0x09
-#define		CM_GUI_DISABLE	0x10
+#define		CM_GUI_ENABLE	0x10
 #define		CM_RGB		0x20	/* BGR otherwise */
 #define		CM_TRUECOLOR	0x80	/* use palette for gamma correction */
 
