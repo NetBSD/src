@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.164 2014/12/12 07:15:43 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.165 2014/12/14 14:04:50 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4774,4 +4774,9 @@ xsrc/xfree/xc/programs/Xserver/render/render.c	1.4
 	CVE-2014-8102
 	CVE-2014-8103
 	[mrg, ticket #1208]
+
+sys/compat/netbsd32/netbsd32_compat_30.c	1.31
+
+	Prevent a user-triggerable kmem_alloc(0).
+	[maxv, ticket #1209]
 
