@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.35 2013/06/09 18:37:40 christos Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.36 2014/12/14 11:31:39 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.35 2013/06/09 18:37:40 christos Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.36 2014/12/14 11:31:39 mlelstv Exp $");
 #endif
 
 #include <err.h>
@@ -508,16 +508,34 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 	int		 loop = 0;
 	int		 ret;
 	char		 cgdname[PATH_MAX];
+	char		 devname[PATH_MAX];
+	const char	*dev;
+
+	if (argc == 2 || argc == 3) {
+		dev = getfsspecname(devname, sizeof(devname), argv[1]);
+		if (dev == NULL) {
+			warnx("getfsspecname failed: %s", devname);
+			return -1;
+		}
+	}
 
 	if (argc == 2) {
-		char *pfile;
+		char *pfile, *base;
+
+		/* make string writable for basename */
+		base = strdup(dev);
+		if (base == NULL)
+			return -1;
 
 		if (asprintf(&pfile, "%s/%s",
-		    CGDCONFIG_DIR, basename(argv[1])) == -1)
+		    CGDCONFIG_DIR, basename(base)) == -1) {
+			free(base);
 			return -1;
+		}
 
 		p = params_cget(pfile);
 		free(pfile);
+		free(base);
 	} else if (argc == 3) {
 		p = params_cget(argv[2]);
 	} else {
@@ -578,7 +596,7 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 		if (!p->key)
 			goto bail_err;
 
-		ret = configure_params(fd, cgdname, argv[1], p);
+		ret = configure_params(fd, cgdname, dev, p);
 		if (ret)
 			goto bail_err;
 
@@ -611,12 +629,20 @@ bail_err:
 static int
 configure_stdin(struct params *p, int argc, char **argv)
 {
-	int	fd;
-	int	ret;
-	char	cgdname[PATH_MAX];
+	int		 fd;
+	int		 ret;
+	char		 cgdname[PATH_MAX];
+	char		 devname[PATH_MAX];
+	const char	*dev;
 
 	if (argc < 3 || argc > 4)
 		usage();
+
+	dev = getfsspecname(devname, sizeof(devname), argv[1]);
+	if (dev == NULL) {
+		warnx("getfsspecname failed: %s", devname);
+		return -1;
+	}
 
 	p->algorithm = string_fromcharstar(argv[2]);
 	if (argc > 3) {
@@ -643,7 +669,7 @@ configure_stdin(struct params *p, int argc, char **argv)
 		return -1;
 	}
 
-	return configure_params(fd, cgdname, argv[1], p);
+	return configure_params(fd, cgdname, dev, p);
 }
 
 static int
