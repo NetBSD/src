@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.165 2014/12/14 14:04:50 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.166 2014/12/14 15:16:30 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4779,4 +4779,26 @@ sys/compat/netbsd32/netbsd32_compat_30.c	1.31
 
 	Prevent a user-triggerable kmem_alloc(0).
 	[maxv, ticket #1209]
+
+usr.sbin/sysinst/arch/atari/msg.md.de		1.2
+usr.sbin/sysinst/arch/atari/msg.md.en		1.2
+usr.sbin/sysinst/arch/atari/msg.md.es		1.2
+(target files in distrib/utils/sysinst/arch/atari due to source move)
+
+	Terminate messages with a newline so that dialog box won't
+	overwrite messages.
+	[tsutsui, ticket #1210]
+
+sys/arch/atari/stand/bootxx/bootxx.c		1.16
+
+	Expand heap to 64KB so that bootxx can load bootxxx from 32KB
+	blocksize ffs.
+	[tsutsui, ticket #1211]
+
+sys/dev/ic/rtl8169.c				1.142
+
+	RealTek 8139C+ incorrectly identifies UDP checksum 0xffff as bad.
+	Force software recalculation of UDP checksum if bad checksum is
+	reported by the hardware.
+	[uwe, ticket #1212]
 
