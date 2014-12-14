@@ -413,13 +413,12 @@ solib_bfd_fopen (char *pathname, int fd)
 
 /* Find shared library PATHNAME and open a BFD for it.  */
 
-bfd *
-solib_bfd_open (char *pathname)
+static bfd *
+solib_bfd_open1 (char *pathname)
 {
   char *found_pathname;
   int found_file;
   bfd *abfd;
-  const struct bfd_arch_info *b;
 
   /* Search for shared library file.  */
   found_pathname = solib_find (pathname, &found_file);
@@ -443,13 +442,41 @@ solib_bfd_open (char *pathname)
       error (_("`%s': not in executable format: %s"),
 	     bfd_get_filename (abfd), bfd_errmsg (bfd_get_error ()));
     }
+  return abfd;
+}
+
+bfd *
+solib_bfd_open (char *pathname)
+{
+  bfd *abfd, *bbfd;
+  const struct bfd_arch_info *b;
+  char pname[PATH_MAX];
+
+  abfd = solib_bfd_open1 (pathname);
+  if (abfd == NULL)
+    return NULL;
 
   /* Check bfd arch.  */
   b = gdbarch_bfd_arch_info (target_gdbarch ());
-  if (!b->compatible (b, bfd_get_arch_info (abfd)))
-    warning (_("`%s': Shared library architecture %s is not compatible "
-               "with target architecture %s."), bfd_get_filename (abfd),
-             bfd_get_arch_info (abfd)->printable_name, b->printable_name);
+  if (b->compatible (b, bfd_get_arch_info (abfd)))
+     return abfd;
+
+  snprintf (pname, sizeof(pname), "%s-%s", pathname, b->printable_name);
+  bbfd = solib_bfd_open1 (pname);
+  if (bbfd == NULL)
+    goto out;
+
+  gdb_bfd_unref (abfd);
+  abfd = bbfd;
+
+  /* Check bfd arch.  */
+  if (b->compatible (b, bfd_get_arch_info (abfd)))
+    return abfd;
+
+out:
+  warning (_("`%s': Shared library architecture %s is not compatible "
+             "with target architecture %s."), bfd_get_filename (abfd),
+           bfd_get_arch_info (abfd)->printable_name, b->printable_name);
 
   return abfd;
 }
