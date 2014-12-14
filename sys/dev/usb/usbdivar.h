@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.8 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.9 2014/12/14 11:16:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -40,13 +40,14 @@
  *
  *	BUS METHOD		LOCK  NOTES
  *	----------------------- -------	-------------------------
- *	open_pipe		-	might want to take lock?
- *	soft_intr		x
- *	do_poll			-	might want to take lock?
- *	allocx			-
- *	freex			-
- *	get_lock 		-	Called at attach time
- *	new_device
+ *	ubm_open		-	might want to take lock?
+ *	ubm_softint		x
+ *	ubm_dopoll		-	might want to take lock?
+ *	ubm_allocx		-
+ *	ubm_freex		-
+ *	ubm_getlock 		-	Called at attach time
+ *	ubm_newdev		-	Will take lock
+	ubm_rhctrl		
  *
  *	PIPE METHOD		LOCK  NOTES
  *	----------------------- -------	-------------------------
