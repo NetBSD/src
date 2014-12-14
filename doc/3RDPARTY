@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1181 2014/12/10 04:39:56 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1182 2014/12/14 16:05:29 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -802,7 +802,7 @@ Notes:
 
 Package:	mdocml
 Version:	1.12.1
-Current Vers:	1.13.1
+Current Vers:	1.13.2
 Maintainer:	Kristaps Džonsons
 Archive Site:	http://mdocml.bsd.lv/snapshots/
 Home Page:	http://mdocml.bsd.lv/
