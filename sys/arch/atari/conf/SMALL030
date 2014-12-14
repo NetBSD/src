@@ -1,11 +1,11 @@
 #
-# $NetBSD: SMALL030,v 1.17 2014/07/05 09:31:21 tsutsui Exp $
+# $NetBSD: SMALL030,v 1.17.2.1 2014/12/14 15:23:36 martin Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.106 2014/07/05 09:28:48 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.106.2.1 2014/12/14 15:22:28 martin Exp $
 include "arch/atari/conf/std.atari"
 makeoptions COPTS="-Os" # optimize for space
 maxusers 16
@@ -19,6 +19,7 @@ file-system MFS # Memory based filesystem
 file-system MSDOSFS # MSDOS filesystem
 file-system CD9660 # ISO 9660 filesystem with Rock Ridge
 options WAPBL # File system journaling support
+options FFS_NO_SNAPSHOT # No FFS snapshot support
 options PANICWAIT # Require keystroke to dump/reboot
 options COMPAT_16 # Compatibility with NetBSD 1.6
 options COMPAT_20 # Compatibility with NetBSD 2.0
@@ -41,7 +42,6 @@ pseudo-device sl # Slip
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
 pseudo-device md # Boot memory disk
-pseudo-device putter # for puffs and pud
 pseudo-device view 4 # View (graphics mapping)
 ncrscsi0 at mainbus0 # NCR5380 SCSI driver
 zs0 at mainbus0 # Serial support through 8530

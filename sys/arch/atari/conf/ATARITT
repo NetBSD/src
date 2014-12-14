@@ -1,11 +1,11 @@
 #
-# $NetBSD: ATARITT,v 1.113 2014/07/05 09:31:21 tsutsui Exp $
+# $NetBSD: ATARITT,v 1.113.2.1 2014/12/14 15:23:36 martin Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.106 2014/07/05 09:28:48 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.106.2.1 2014/12/14 15:22:28 martin Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 makeoptions COPTS="-O2 -fno-reorder-blocks" # see share/mk/sys.mk
@@ -18,9 +18,6 @@ options INET6 # IPV6
 options PPP_BSDCOMP # BSD-Compress compression support for PPP
 options PPP_DEFLATE # Deflate compression support for PPP
 options PPP_FILTER # Active filter support for PPP (requires bpf)
-options IPFILTER_LOG # ipmon(8) log support
-options IPFILTER_LOOKUP # ippool(8) support
-options IPFILTER_COMPAT # Compat for IP-Filter
 file-system FFS # Berkeley fast file system
 file-system MFS # Memory based filesystem
 file-system MSDOSFS # MSDOS filesystem
@@ -28,16 +25,11 @@ file-system CD9660 # ISO 9660 filesystem with Rock Ridge
 file-system KERNFS # Kernel parameter filesystem
 file-system NFS # Network File System client side code
 file-system PROCFS # Process filesystem
-file-system FDESC # /dev/fd
 file-system NULLFS # Loopback filesystem
-file-system OVERLAY # overlay filesystem
-file-system UNION # union file system
-file-system UMAPFS # null file system (with uid & gid remapping)
-file-system PUFFS # Userspace file systems (e.g. ntfs-3g & sshfs)
-file-system EXT2FS # second extended file system (linux)
 file-system PTYFS # /dev/pts/N support
 file-system TMPFS # Efficient memory file-system
 options WAPBL # File system journaling support
+options FFS_NO_SNAPSHOT # No FFS snapshot support
 options NFSSERVER # Network File System server side code
 options PANICWAIT # Require keystroke to dump/reboot
 options DDB # Kernel debugger
@@ -64,7 +56,7 @@ options SYSVSEM # System V semaphores
 options KTRACE # Add kernel tracing system call
 options USERCONF # userconf(4) support
 options SYSCTL_INCLUDE_DESCR # Include sysctl descriptions in kernel
-options SCSIVERBOSE # human readable SCSI error messages
+options MODULAR # new style module(7) framework
 options ST_POOL_SIZE=24 # smallest that allows TT-HIGH
 options TT_SCSI # SCSI-support for TT
 options TT_VIDEO # Graphics support for TT
@@ -77,20 +69,13 @@ options TRY_SCSI_LINKED_COMMANDS=0x7f
 config netbsd root on ? type ?
 pseudo-device sl # Slip
 pseudo-device ppp # ppp
-pseudo-device pppoe # PPP over Ethernet (RFC 2516)
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
 pseudo-device md # Boot memory disk
-pseudo-device putter # for puffs and pud
 pseudo-device vnd # 3 pseudo disks (see vnconfig)
 pseudo-device bpfilter # berkeley packet filters
-pseudo-device tun # network tunnel
-pseudo-device tap # virtual Ethernet
 pseudo-device gif # IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
-pseudo-device ccd # concatenating disk driver
-pseudo-device fss # file system snapshot device
-pseudo-device ipfilter # IP filtering device
 pseudo-device clockctl # user control of clock subsystem
 pseudo-device ksyms # /dev/ksyms
 pseudo-device view 4 # View (graphics mapping)
@@ -117,8 +102,4 @@ et4k0 at vme0 # Crazy Dots II
 scsibus* at scsi? # SCSI bus
 sd* at scsibus? target ? lun ? # SCSI disk drives
 cd* at scsibus? target ? lun ? # SCSI CD-ROM drives
-st* at scsibus? target ? lun ? # SCSI tape drives
-ch* at scsibus? target ? lun ? # SCSI autochangers
-ss* at scsibus? target ? lun ? # SCSI scanners
 se* at scsibus? target ? lun ? # SCSI ethernet
-uk* at scsibus? target ? lun ? # SCSI unknown
