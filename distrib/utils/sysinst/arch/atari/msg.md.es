@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.5 2011/04/04 08:30:19 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.5.6.1 2014/12/14 14:14:48 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,7 +58,8 @@ particiones a NetBSD antes de que NetBSD pueda usar el disco. Cambie la 'id'
 de todas las particiones en las que quiera usar sistemas de archivos NetBSD
 a 'NBD'. Cambie la 'id' de la partición en la que quiera usar swap a 'SWP'.
 
-Quiere un particionaje compatible con AHDI? }
+Quiere un particionaje compatible con AHDI?
+}
 
 message set_kernel_1
 {Núcleo (ATARITT)}
