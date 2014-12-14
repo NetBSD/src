@@ -10,6 +10,7 @@ extern initialize_file_ftype _initialize_gdbtypes;
 extern initialize_file_ftype _initialize_amd64_tdep;
 extern initialize_file_ftype _initialize_amd64nbsd_tdep;
 extern initialize_file_ftype _initialize_i386_tdep;
+extern initialize_file_ftype _initialize_i386nbsd_tdep;
 extern initialize_file_ftype _initialize_svr4_solib;
 extern initialize_file_ftype _initialize_ser_hardwire;
 extern initialize_file_ftype _initialize_ser_pipe;
@@ -153,6 +154,7 @@ initialize_all_files (void)
   _initialize_amd64_tdep ();
   _initialize_amd64nbsd_tdep ();
   _initialize_i386_tdep ();
+  _initialize_i386nbsd_tdep ();
   _initialize_svr4_solib ();
   _initialize_ser_hardwire ();
   _initialize_ser_pipe ();
