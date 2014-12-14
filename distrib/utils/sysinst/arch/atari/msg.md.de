@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.7 2011/04/04 08:30:19 mbalmer Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.7.6.1 2014/12/14 14:14:48 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,7 +62,8 @@ zu nutzen. Stellen Sie die 'Id' all jener Partitionen, die Sie nutzen
 wollen, auf 'NBD'. Setzen Sie zusätzlich die 'Id' der als Swap zu nutzenden
 Partition auf 'SWP'.
 
-Wünschen Sie eine AHDI-kompatible Partitionierung? }
+Wünschen Sie eine AHDI-kompatible Partitionierung?
+}
 
 message set_kernel_1
 {Kernel (ATARITT)}
