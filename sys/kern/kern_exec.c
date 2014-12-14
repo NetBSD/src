@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.411 2014/12/14 21:35:24 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.412 2014/12/14 23:49:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.411 2014/12/14 21:35:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.412 2014/12/14 23:49:28 chs Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -663,7 +663,6 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	/*
 	 * initialize the fields of the exec package.
 	 */
-	epp->ep_name = path;
 	epp->ep_kname = data->ed_pathstring;
 	epp->ep_resolvedname = data->ed_resolvedpathbuf;
 	epp->ep_hdr = kmem_alloc(exec_maxhdrsz, KM_SLEEP);
@@ -1235,7 +1234,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	kmem_free(epp->ep_hdr, epp->ep_hdrlen);
 
-	SDT_PROBE(proc,,,exec_success, epp->ep_name, 0, 0, 0, 0);
+	SDT_PROBE(proc,,,exec_success, epp->ep_kname, 0, 0, 0, 0);
 
 	emulexec(l, epp);
 
