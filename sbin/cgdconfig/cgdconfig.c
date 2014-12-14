@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.38 2014/12/14 23:25:07 christos Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.39 2014/12/14 23:27:14 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.38 2014/12/14 23:25:07 christos Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.39 2014/12/14 23:27:14 christos Exp $");
 #endif
 
 #include <err.h>
@@ -513,7 +513,7 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 	int		 ret;
 	char		 cgdname[PATH_MAX];
 	char		 devicename[PATH_MAX];
-	const char	*dev;
+	const char	*dev = NULL;	/* XXX: gcc */
 
 	if (argc == 2 || argc == 3) {
 		dev = getfsspecname(devicename, sizeof(devicename), argv[1]);
