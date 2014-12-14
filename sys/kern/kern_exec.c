@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.410 2014/11/09 17:50:01 maxv Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.411 2014/12/14 21:35:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410 2014/11/09 17:50:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.411 2014/12/14 21:35:24 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -673,7 +673,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	epp->ep_emul_arg_free = NULL;
 	memset(&epp->ep_vmcmds, 0, sizeof(epp->ep_vmcmds));
 	epp->ep_vap = &data->ed_attr;
-	epp->ep_flags = 0;
+	epp->ep_flags = (p->p_flag & PK_32) ? EXEC_FROM32 : 0;
 	MD_TOPDOWN_INIT(epp);
 	epp->ep_emul_root = NULL;
 	epp->ep_interp = NULL;
@@ -1335,9 +1335,15 @@ execve1(struct lwp *l, const char *path, char * const *args,
 }
 
 static size_t
+fromptrsz(const struct exec_package *epp)
+{
+	return (epp->ep_flags & EXEC_FROM32) ? sizeof(int) : sizeof(char *);
+}
+
+static size_t
 ptrsz(const struct exec_package *epp)
 {
-	return (epp->ep_flags & EXEC_32) ?  sizeof(int) : sizeof(char *);
+	return (epp->ep_flags & EXEC_32) ? sizeof(int) : sizeof(char *);
 }
 
 static size_t
@@ -1508,7 +1514,7 @@ copyinargs(struct execve_data * restrict data, char * const *args,
 		return EINVAL;
 	}
 	if (epp->ep_flags & EXEC_SKIPARG)
-		args = (const void *)((const char *)args + ptrsz(epp));
+		args = (const void *)((const char *)args + fromptrsz(epp));
 	i = 0;
 	error = copyinargstrs(data, args, fetch_element, &dp, &i, ktr_execarg);
 	if (error != 0) {
