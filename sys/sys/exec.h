@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.146 2014/09/05 05:42:50 matt Exp $	*/
+/*	$NetBSD: exec.h,v 1.147 2014/12/14 21:35:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -230,6 +230,7 @@ struct exec_package {
 #define	EXEC_32		0x0020		/* 32-bit binary emulation */
 #define	EXEC_FORCEAUX	0x0040		/* always use ELF AUX vector */
 #define	EXEC_TOPDOWN_VM	0x0080		/* may use top-down VM layout */
+#define	EXEC_FROM32	0x0100		/* exec'ed from 32-bit binary */
 
 struct exec_vmcmd {
 	int	(*ev_proc)(struct lwp *, struct exec_vmcmd *);
