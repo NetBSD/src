@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.37 2014/12/14 12:31:39 mlelstv Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.38 2014/12/14 23:25:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.37 2014/12/14 12:31:39 mlelstv Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.38 2014/12/14 23:25:07 christos Exp $");
 #endif
 
 #include <err.h>
@@ -512,13 +512,13 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 	int		 loop = 0;
 	int		 ret;
 	char		 cgdname[PATH_MAX];
-	char		 devname[PATH_MAX];
+	char		 devicename[PATH_MAX];
 	const char	*dev;
 
 	if (argc == 2 || argc == 3) {
-		dev = getfsspecname(devname, sizeof(devname), argv[1]);
+		dev = getfsspecname(devicename, sizeof(devicename), argv[1]);
 		if (dev == NULL) {
-			warnx("getfsspecname failed: %s", devname);
+			warnx("getfsspecname failed: %s", devicename);
 			return -1;
 		}
 	}
@@ -636,15 +636,15 @@ configure_stdin(struct params *p, int argc, char **argv)
 	int		 fd;
 	int		 ret;
 	char		 cgdname[PATH_MAX];
-	char		 devname[PATH_MAX];
+	char		 devicename[PATH_MAX];
 	const char	*dev;
 
 	if (argc < 3 || argc > 4)
 		usage();
 
-	dev = getfsspecname(devname, sizeof(devname), argv[1]);
+	dev = getfsspecname(devicename, sizeof(devicename), argv[1]);
 	if (dev == NULL) {
-		warnx("getfsspecname failed: %s", devname);
+		warnx("getfsspecname failed: %s", devicename);
 		return -1;
 	}
 
