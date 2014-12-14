@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.58.2.1 2014/12/12 16:44:35 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.58.2.2 2014/12/14 17:02:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.58.2.1 2014/12/12 16:44:35 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.58.2.2 2014/12/14 17:02:38 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -220,6 +220,7 @@ static void	tmx86_get_longrun_status(u_int *, u_int *, u_int *);
 static void	transmeta_cpu_info(struct cpu_info *);
 /* Common functions */
 static void	cpu_probe_base_features(struct cpu_info *, const char *);
+static void	cpu_probe_hv_features(struct cpu_info *, const char *);
 static void	cpu_probe_features(struct cpu_info *);
 static void	print_bits(const char *, const char *, const char *, uint32_t);
 static void	identifycpu_cpuids(struct cpu_info *);
@@ -1443,39 +1444,16 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	ci->ci_vendor[1] = descs[3];
 	ci->ci_vendor[3] = 0;
 
-	aprint_verbose("%s: highest basic info %08x\n", cpuname,
-	    ci->ci_cpuid_level);
-	if (verbose) {
-		int bf;
-		
-		for (bf = 0; bf <= ci->ci_cpuid_level; bf++) {
-			x86_cpuid(bf, descs);
-			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
-			    bf, descs[0], descs[1], descs[2], descs[3]);
-		}
-	}
-
 	/*
 	 * Fn8000_0000:
 	 * - Get cpuid extended function's max level.
 	 */
 	x86_cpuid(0x80000000, descs);
-	if (descs[0] >=  0x80000000) {
+	if (descs[0] >= 0x80000000)
 		ci->ci_cpuid_extlevel = descs[0];
-		aprint_verbose("%s: highest extended info %08x\n", cpuname,
-		    ci->ci_cpuid_extlevel);
-	} else {
+	else {
 		/* Set lower value than 0x80000000 */
 		ci->ci_cpuid_extlevel = 0;
-	}
-	if (verbose) {
-		unsigned int ef;
-
-		for (ef = 0x80000000; ef <= ci->ci_cpuid_extlevel; ef++) {
-			x86_cpuid(ef, descs);
-			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
-			    ef, descs[0], descs[1], descs[2], descs[3]);
-		}
 	}
 
 	/*
@@ -1543,6 +1521,51 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	/* Additional flags (eg xsaveopt support) */
 	x86_cpuid2(0xd, 1, descs);
 	ci->ci_feat_val[6] = descs[0];   /* Actually 64 bits */
+}
+
+static void
+cpu_probe_hv_features(struct cpu_info *ci, const char *cpuname)
+{
+	uint32_t descs[4];
+	char hv_sig[13];
+	char *p;
+	const char *hv_name;
+	int i;
+
+	/*
+	 * [RFC] CPUID usage for interaction between Hypervisors and Linux.
+	 * http://lkml.org/lkml/2008/10/1/246
+	 *
+	 * KB1009458: Mechanisms to determine if software is running in
+	 * a VMware virtual machine
+	 * http://kb.vmware.com/kb/1009458
+	 */
+	if ((ci->ci_feat_val[1] & CPUID2_RAZ) != 0) {
+		x86_cpuid(0x40000000, descs);
+		for (i = 1, p = hv_sig; i < 4; i++, p += sizeof(descs) / 4)
+			memcpy(p, &descs[i], sizeof(descs[i]));
+		*p = '\0';
+		/*
+		 * HV vendor	ID string
+		 * ------------+--------------
+		 * KVM		"KVMKVMKVM"
+		 * Microsoft	"Microsoft Hv"
+		 * VMware	"VMwareVMware"
+		 * Xen		"XenVMMXenVMM"
+		 */
+		if (strncmp(hv_sig, "KVMKVMKVM", 9) == 0)
+			hv_name = "KVM";
+		else if (strncmp(hv_sig, "Microsoft Hv", 12) == 0)
+			hv_name = "Hyper-V";
+		else if (strncmp(hv_sig, "VMwareVMware", 12) == 0)
+			hv_name = "VMware";
+		else if (strncmp(hv_sig, "XenVMMXenVMM", 12) == 0)
+			hv_name = "Xen";
+		else
+			hv_name = "unknown";
+
+		printf("%s: Running on hypervisor: %s\n", cpuname, hv_name);
+	}
 }
 
 static void
@@ -1660,6 +1683,7 @@ identifycpu(int fd, const char *cpuname)
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	const struct cpu_cpuid_family *cpufam;
 	struct cpu_info *ci, cistore;
+	u_int descs[4];
 	size_t sz;
 	struct cpu_ucode_version ucode;
 	union {
@@ -1669,6 +1693,31 @@ identifycpu(int fd, const char *cpuname)
 
 	ci = &cistore;
 	cpu_probe_base_features(ci, cpuname);
+	aprint_verbose("%s: highest basic info %08x\n", cpuname,
+	    ci->ci_cpuid_level);
+	if (verbose) {
+		int bf;
+		
+		for (bf = 0; bf <= ci->ci_cpuid_level; bf++) {
+			x86_cpuid(bf, descs);
+			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
+			    bf, descs[0], descs[1], descs[2], descs[3]);
+		}
+	}
+	if (ci->ci_cpuid_extlevel >=  0x80000000)
+		aprint_verbose("%s: highest extended info %08x\n", cpuname,
+		    ci->ci_cpuid_extlevel);
+	if (verbose) {
+		unsigned int ef;
+
+		for (ef = 0x80000000; ef <= ci->ci_cpuid_extlevel; ef++) {
+			x86_cpuid(ef, descs);
+			printf("%s: %08x: %08x %08x %08x %08x\n", cpuname,
+			    ef, descs[0], descs[1], descs[2], descs[3]);
+		}
+	}
+
+	cpu_probe_hv_features(ci, cpuname);
 	cpu_probe_features(ci);
 
 	if (ci->ci_cpu_type >= 0) {
@@ -1787,9 +1836,10 @@ identifycpu(int fd, const char *cpuname)
 	aprint_normal(" (%s-class)", classnames[class]);
 
 	if (ci->ci_tsc_freq != 0)
-		aprint_normal(", %ju.%02ju MHz\n",
+		aprint_normal(", %ju.%02ju MHz",
 		    ((uintmax_t)ci->ci_tsc_freq + 4999) / 1000000,
 		    (((uintmax_t)ci->ci_tsc_freq + 4999) / 10000) % 100);
+	aprint_normal("\n");
 
 	aprint_normal_dev(ci->ci_dev, "family %#x model %#x stepping %#x",
 	    ci->ci_family, ci->ci_model, CPUID_TO_STEPPING(ci->ci_signature));
@@ -1945,6 +1995,8 @@ identifycpu(int fd, const char *cpuname)
 		ucode_64.loader_version = ucode.loader_version;
 		if (ioctl(fd, IOC_CPU_UCODE_GET_VERSION_64, &ucode_64) < 0)
 			return;
+#else
+		return;
 #endif
 	}
 
