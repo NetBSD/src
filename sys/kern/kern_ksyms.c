@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.74 2014/12/09 02:30:09 christos Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.75 2014/12/15 13:50:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.74 2014/12/09 02:30:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.75 2014/12/15 13:50:10 christos Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -878,7 +878,7 @@ ksyms_hdr_init(void *hdraddr)
 
 	uint32_t offs = 1;
 	/* First section header ".note.netbsd.ident" */
-	ksyms_hdr.kh_shdr[SHNOTE].sh_name = offs; /* Section 6 offset */
+	ksyms_hdr.kh_shdr[SHNOTE].sh_name = offs;
 	ksyms_hdr.kh_shdr[SHNOTE].sh_type = SHT_NOTE;
 	ksyms_hdr.kh_shdr[SHNOTE].sh_offset = 
 	    offsetof(struct ksyms_hdr, kh_note[0]);
@@ -892,7 +892,7 @@ ksyms_hdr_init(void *hdraddr)
 	ksyms_hdr.kh_shdr[SYMTAB].sh_type = SHT_SYMTAB;
 	ksyms_hdr.kh_shdr[SYMTAB].sh_offset = sizeof(struct ksyms_hdr);
 /*	ksyms_hdr.kh_shdr[SYMTAB].sh_size = filled in at open */
-	ksyms_hdr.kh_shdr[SYMTAB].sh_link = 2; /* Corresponding strtab */
+	ksyms_hdr.kh_shdr[SYMTAB].sh_link = STRTAB; /* Corresponding strtab */
 	ksyms_hdr.kh_shdr[SYMTAB].sh_addralign = sizeof(long);
 	ksyms_hdr.kh_shdr[SYMTAB].sh_entsize = sizeof(Elf_Sym);
 	SHTCOPY(".symtab");
