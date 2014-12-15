@@ -1,4 +1,4 @@
-#	$NetBSD: libmesa.mk,v 1.8 2014/07/09 20:22:56 riastradh Exp $
+#	$NetBSD: libmesa.mk,v 1.9 2014/12/15 00:20:29 mrg Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
 
@@ -338,7 +338,7 @@ CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/${_path_}
 LIBDPLIBS=	m	${NETBSDSRCDIR}/lib/libm
 
 # build the shader headers
-.include "../../tools/glsl/Makefile.glsl"
+#.include "../../tools/glsl/Makefile.glsl"
 
 CPPFLAGS+=	-I.
 CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/include
