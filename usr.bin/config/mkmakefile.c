@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.35 2014/12/15 10:10:24 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.36 2014/12/15 15:41:18 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.35 2014/12/15 10:10:24 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.36 2014/12/15 15:41:18 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -86,6 +86,8 @@ static void emitappmkoptions(FILE *);
 static void emitsubs(FILE *, const char *, const char *, int);
 static int  selectopt(const char *, void *);
 
+int has_build_kernel;
+
 int
 mkmakefile(void)
 {
@@ -95,7 +97,32 @@ mkmakefile(void)
 	char *ifname;
 	char line[BUFSIZ], buf[200];
 
-	/* Try a makefile for the port first.
+	/*
+	 * Check if conf/Makefile.kern.inc defines "build_kernel".
+	 *
+	 * (This is usually done by checking "version" in sys/conf/files;
+	 * unfortunately the "build_kernel" change done around 2014 Aug didn't
+	 * bump that version.  Thus this hack.)
+	 */
+	(void)snprintf(buf, sizeof(buf), "conf/Makefile.kern.inc");
+	ifname = sourcepath(buf);
+	if ((ifp = fopen(ifname, "r")) != NULL) {
+		while (fgets(line, sizeof(line), ifp) != NULL) {
+			fputc('+', stderr);
+			if (strncmp(line, "build_kernel:", 13) == 0) {
+				has_build_kernel = 1;
+				break;
+			}
+		}
+	}
+	if (ifp == NULL) {
+		warn("cannot read %s", ifname);
+		goto bad2;
+	}
+	(void)fclose(ifp);
+
+	/*
+	 * Try a makefile for the port first.
 	 */
 	(void)snprintf(buf, sizeof(buf), "arch/%s/conf/Makefile.%s",
 	    machine, machine);
@@ -579,9 +606,22 @@ emitload(FILE *fp)
 			fprintf(fp, " .WAIT");
 	}
 	fputs("\n\n", fp);
+	/*
+	 * Generate the backward-compatible "build_kernel" rule if
+	 * sys/conf/Makefile.kern.inc doesn't define any (pre-2014 Aug).
+	 */
+	if (has_build_kernel == 0) {
+		fprintf(fp, "build_kernel: .USE\n"
+		    "\t${SYSTEM_LD_HEAD}\n"
+		    "\t${SYSTEM_LD} swap${.TARGET}.o\n"
+		    "\t${SYSTEM_LD_TAIL}\n"
+		    "\n");
+	}
+	/*
+	 * Generate per-kernel rules.
+	 */
 	TAILQ_FOREACH(cf, &allcf, cf_next) {
 		fprintf(fp, "KERNELS+=%s\n", cf->cf_name);
-		fprintf(fp, "build_kernel:\n");
 		fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o vers.o build_kernel\n",
 		    cf->cf_name, cf->cf_name);
 		fprintf(fp, "swap%s.o: swap%s.c\n"
