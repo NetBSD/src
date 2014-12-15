@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1205 2014/10/30 10:50:44 nonaka Exp $
+$NetBSD: pcidevs,v 1.1206 2014/12/15 12:48:42 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2584,7 +2584,7 @@ product INTEL SRCU42E		0x0408	SCSI RAID Controller
 product INTEL SRCS28X		0x0409	SATA RAID Controller
 product INTEL HASWELL_IGD	0x0402	Haswell Integrated Graphics Device
 product INTEL HASWELL_IGD_1	0x0412	Haswell Integrated Graphics Device
-product INTEL DH89XX_QA		0x0434	DH89xx QuiskAssit
+product INTEL DH89XXCC_IQIA	0x0434	DH89xxCC PCIe Endpoint and QuickAssist
 product INTEL DH89XXCC_SGMII	0x0438	DH89XXCC SGMII
 product INTEL DH89XXCC_SERDES	0x043a	DH89XXCC SerDes
 product INTEL DH89XXCC_BPLANE	0x043c	DH89XXCC backplane
