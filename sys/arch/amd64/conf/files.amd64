@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.85 2014/12/14 22:32:46 christos Exp $
+#	$NetBSD: files.amd64,v 1.86 2014/12/15 02:01:41 christos Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -131,8 +131,8 @@ attach	fd at fdc
 # Compatibility modules
 #
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/i386/i386/compat_13_machdep.c	compat_13
-file	arch/i386/i386/compat_16_machdep.c	compat_16
+file	arch/amd64/amd64/compat_13_machdep.c	compat_13
+file	arch/amd64/amd64/compat_16_machdep.c	compat_16
 
 # NetBSD/i386 32-bit binary compatibility (COMPAT_NETBSD32)
 include "compat/netbsd32/files.netbsd32"
