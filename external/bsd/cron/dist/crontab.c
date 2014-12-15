@@ -1,4 +1,4 @@
-/*	$NetBSD: crontab.c,v 1.11 2014/09/07 13:34:12 joerg Exp $	*/
+/*	$NetBSD: crontab.c,v 1.12 2014/12/15 16:45:26 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: crontab.c,v 1.12 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: crontab.c,v 1.11 2014/09/07 13:34:12 joerg Exp $");
+__RCSID("$NetBSD: crontab.c,v 1.12 2014/12/15 16:45:26 christos Exp $");
 #endif
 #endif
 
@@ -169,7 +169,7 @@ compare_time(const struct stat *st, const struct timespec *ts2)
 {
 	struct timespec ts1[2];
 	get_time(st, ts1);
-	
+
 	return ts1[1].tv_sec == ts2[1].tv_sec
 #if defined(HAVE_UTIMENSAT)
 	    && ts1[1].tv_nsec == ts2[1].tv_nsec
@@ -286,7 +286,7 @@ skip_header(int *pch, FILE *f)
 {
 	int ch;
 	int x;
-	
+
 	/* ignore the top few comments since we probably put them there.
 	 */
 	for (x = 0;  x < NHEADER_LINES;  x++) {
@@ -554,50 +554,12 @@ edit_cmd(void) {
 	log_it(RealUser, Pid, "END EDIT", User);
 }
 
-/* returns	0	on success
- *		-1	on syntax error
- *		-2	on install error
- */
-static int
-replace_cmd(void) {
-	char n[MAX_FNAME], n2[MAX_FNAME], envstr[MAX_ENVSTR];
-	int lastch;
-	FILE *tmp, *fmaxtabsize;
-	int ch, eof, fd;
-	int error = 0;
-	entry *e;
-	sig_t oint, oabrt, oquit, ohup;
-	uid_t file_owner;
-	time_t now = time(NULL);
-	char **envp = env_init();
-	size_t	maxtabsize;
-	struct	stat statbuf;
-
-	if (envp == NULL) {
-		warn("Cannot allocate memory.");
-		return (-2);
-	}
-
-	if (!glue_strings(TempFilename, sizeof TempFilename, SPOOL_DIR,
-	    "tmp.XXXXXXXXXX", '/')) {
-		TempFilename[0] = '\0';
-		warnx("path too long");
-		return (-2);
-	}
-	if ((fd = mkstemp(TempFilename)) == -1 || !(tmp = fdopen(fd, "w+"))) {
-		warn("cannot create `%s'", TempFilename);
-		if (fd != -1) {
-			(void)close(fd);
-			(void)unlink(TempFilename);
-		}
-		TempFilename[0] = '\0';
-		return (-2);
-	}
-
-	ohup = signal(SIGHUP, SIG_IGN);
-	oint = signal(SIGINT, SIG_IGN);
-	oquit = signal(SIGQUIT, SIG_IGN);
-	oabrt = signal(SIGABRT, SIG_IGN);
+static size_t
+getmaxtabsize(void)
+{
+	char n2[MAX_FNAME];
+	FILE *fmaxtabsize;
+	size_t maxtabsize;
 
 	/* Make sure that the crontab is not an unreasonable size.
 	 *
@@ -611,43 +573,137 @@ replace_cmd(void) {
 	 */
 	(void)snprintf(n2, sizeof(n2), "%s/%s", CRONDIR, MAXTABSIZE_FILE);
 	if ((fmaxtabsize = fopen(n2, "r")) != NULL)  {
-	    if (fgets(n2, (int)sizeof(n2), fmaxtabsize) == NULL)  {
-		maxtabsize = 0;
-	    } else {
-		maxtabsize = (size_t)atoi(n2);
-	    }
-	    (void)fclose(fmaxtabsize);
+		if (fgets(n2, (int)sizeof(n2), fmaxtabsize) == NULL)  {
+			maxtabsize = 0;
+		} else {
+			maxtabsize = (size_t)atoi(n2);
+		}
+		(void)fclose(fmaxtabsize);
 	} else {
-	    maxtabsize = MAXTABSIZE_DEFAULT;
+		maxtabsize = MAXTABSIZE_DEFAULT;
 	}
+	return maxtabsize;
+}
 
-	if (fstat(fileno(NewCrontab), &statbuf))  {
-	    warn("error stat'ing crontab input");
-	    error = -2;
-	    goto done;
+static int
+checkmaxtabsize(FILE *fp, size_t maxtabsize)
+{
+	struct	stat statbuf;
+
+	if (fstat(fileno(fp), &statbuf))  {
+		warn("error stat'ing crontab input");
+		return 0;
 	}
 	if ((uintmax_t)statbuf.st_size > (uintmax_t)maxtabsize)  {
-	    warnx("%ld bytes is larger than the maximum size of %ld bytes",
-		(long) statbuf.st_size, (long) maxtabsize);
-	    error = -2;
-	    goto done;
+		warnx("%ju bytes is larger than the maximum size of %ju bytes",
+		    (uintmax_t)statbuf.st_size, (uintmax_t)maxtabsize);
+		return 0;
+	}
+	return 1;
+}
+
+static void
+cleanTempFile(void)
+{
+
+	if (TempFilename[0]) {
+		(void) unlink(TempFilename);
+		TempFilename[0] = '\0';
+	}
+}
+
+static void
+bail(int signo)
+{
+
+	cleanTempFile();
+	errx(ERROR_EXIT, "Exiting on signal %d", signo);
+}
+
+/* returns	0	on success
+ *		-1	on syntax error
+ *		-2	on install error
+ */
+static int
+replace_cmd(void) {
+	char n[MAX_FNAME], envstr[MAX_ENVSTR];
+	int lastch;
+	FILE *tmp = NULL;
+	int ch, eof, fd;
+	int error = 0;
+	entry *e;
+	sig_t oint, oabrt, oquit, ohup;
+	uid_t file_owner;
+	time_t now = time(NULL);
+	char **envp = env_init();
+	size_t i, maxtabsize;
+
+	if (envp == NULL) {
+		warn("Cannot allocate memory.");
+		return (-2);
+	}
+
+	if (!glue_strings(TempFilename, sizeof TempFilename, SPOOL_DIR,
+	    "tmp.XXXXXXXXXX", '/')) {
+		TempFilename[0] = '\0';
+		warnx("path too long");
+		return (-2);
+	}
+
+	/* Interruptible while doing I/O */
+	ohup = signal(SIGHUP, bail);
+	oint = signal(SIGINT, bail);
+	oquit = signal(SIGQUIT, bail);
+	oabrt = signal(SIGABRT, bail);
+
+	if ((fd = mkstemp(TempFilename)) == -1 || !(tmp = fdopen(fd, "w+"))) {
+		warn("cannot create `%s'", TempFilename);
+		if (fd != -1)
+			(void)close(fd);
+		error = -2;
+		goto done;
+	}
+
+	maxtabsize = getmaxtabsize();
+
+	/* This does not work for stdin, so we'll also check later */
+	if (!checkmaxtabsize(NewCrontab, maxtabsize)) {
+		error = -2;
+		goto done;
 	}
 
 	/* write a signature at the top of the file.
 	 *
 	 * VERY IMPORTANT: make sure NHEADER_LINES agrees with this code.
 	 */
-	(void)fprintf(tmp, "# DO NOT EDIT THIS FILE - edit the master and reinstall.\n");
-	(void)fprintf(tmp, "# (%s installed on %-24.24s)\n", Filename, ctime(&now));
-	(void)fprintf(tmp, "# (Cron version %s -- %s)\n", CRON_VERSION, "$NetBSD: crontab.c,v 1.11 2014/09/07 13:34:12 joerg Exp $");
+	(void)fprintf(tmp,
+	    "# DO NOT EDIT THIS FILE - edit the master and reinstall.\n");
+	(void)fprintf(tmp,
+	    "# (%s installed on %-24.24s)\n", Filename, ctime(&now));
+	(void)fprintf(tmp,
+	    "# (Cron version %s -- %s)\n", CRON_VERSION,
+	    "$NetBSD: crontab.c,v 1.12 2014/12/15 16:45:26 christos Exp $");
 
 	/* copy the crontab to the tmp
 	 */
 	(void)rewind(NewCrontab);
 	Set_LineNum(1);
 	lastch = EOF;
-	while (EOF != (ch = get_char(NewCrontab)))
+	for (i = 0; i < maxtabsize && EOF != (ch = get_char(NewCrontab)); i++)
 		(void)putc(lastch = (char)ch, tmp);
+
+	/* Non-Interruptible while installing */
+	(void)signal(SIGHUP, SIG_IGN);
+	(void)signal(SIGINT, SIG_IGN);
+	(void)signal(SIGQUIT, SIG_IGN);
+	(void)signal(SIGABRT, SIG_IGN);
+
+	if (i == maxtabsize) {
+		warnx("is larger than the maximum size of %ju bytes",
+		    (uintmax_t)maxtabsize);
+		error = -2;
+		goto done;
+	}
 
 	if (lastch != EOF && lastch != '\n') {
 		warnx("missing trailing newline in `%s'", Filename);
@@ -666,7 +722,6 @@ replace_cmd(void) {
 	(void)fflush(tmp);
 
 	if (ferror(tmp)) {
-		(void)fclose(tmp);
 		warn("error while writing new crontab to `%s'", TempFilename);
 		error = -2;
 		goto done;
@@ -704,7 +759,6 @@ replace_cmd(void) {
 
 	if (CheckErrorCount != 0) {
 		warnx("errors in crontab file, can't install.");
-		(void)fclose(tmp);
 		error = -1;
 		goto done;
 	}
@@ -716,15 +770,17 @@ replace_cmd(void) {
 #else
 	error = chown(TempFilename, file_owner, (gid_t)-1);
 #endif
-	if (error < OK) {
-		warn("cannot chown `%s'", TempFilename);
-		(void)fclose(tmp);
-		error = -2;
-		goto done;
-	}
 
 	if (fclose(tmp) == EOF) {
 		warn("error closing file");
+		error = -2;
+		tmp = NULL;
+		goto done;
+	}
+	tmp = NULL;
+
+	if (error < OK) {
+		warn("cannot chown `%s'", TempFilename);
 		error = -2;
 		goto done;
 	}
@@ -749,10 +805,9 @@ done:
 	(void)signal(SIGINT, oint);
 	(void)signal(SIGQUIT, oquit);
 	(void)signal(SIGABRT, oabrt);
-	if (TempFilename[0]) {
-		(void) unlink(TempFilename);
-		TempFilename[0] = '\0';
-	}
+	if (tmp != NULL)
+		(void)fclose(tmp);
+	cleanTempFile();
 	return (error);
 }
 
