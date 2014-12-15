@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.306 2014/12/14 08:57:14 martin Exp $	*/
+/*	$NetBSD: if.c,v 1.307 2014/12/15 06:52:25 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.306 2014/12/14 08:57:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.307 2014/12/15 06:52:25 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -582,19 +582,21 @@ skip:
 }
 
 /*
- * Attach an interface to the list of "active" interfaces.
+ * Initialize an interface and assign an index for it.
+ *
+ * It must be called prior to a device specific attach routine
+ * (e.g., ether_ifattach and ieee80211_ifattach) or if_alloc_sadl,
+ * and be followed by if_register:
+ *
+ *     if_initialize(ifp);
+ *     ether_ifattach(ifp, enaddr);
+ *     if_register(ifp);
  */
 void
-if_attach(ifnet_t *ifp)
+if_initialize(ifnet_t *ifp)
 {
 	KASSERT(if_indexlim > 0);
 	TAILQ_INIT(&ifp->if_addrlist);
-	TAILQ_INSERT_TAIL(&ifnet_list, ifp, if_list);
-
-	if (ifioctl_attach(ifp) != 0)
-		panic("%s: ifioctl_attach() failed", __func__);
-
-	if_getindex(ifp);
 
 	/*
 	 * Link level name is allocated later by a separate call to
@@ -603,8 +605,6 @@ if_attach(ifnet_t *ifp)
 
 	if (ifp->if_snd.ifq_maxlen == 0)
 		ifp->if_snd.ifq_maxlen = ifqmaxlen;
-
-	sysctl_sndq_setup(&ifp->if_sysctl_log, ifp->if_xname, &ifp->if_snd);
 
 	ifp->if_broadcastaddr = 0; /* reliably crash if used uninitialized */
 
@@ -632,6 +632,20 @@ if_attach(ifnet_t *ifp)
 	(void)pfil_run_hooks(if_pfil,
 	    (struct mbuf **)PFIL_IFNET_ATTACH, ifp, PFIL_IFNET);
 
+	if_getindex(ifp);
+}
+
+/*
+ * Register an interface to the list of "active" interfaces.
+ */
+void
+if_register(ifnet_t *ifp)
+{
+	if (ifioctl_attach(ifp) != 0)
+		panic("%s: ifioctl_attach() failed", __func__);
+
+	sysctl_sndq_setup(&ifp->if_sysctl_log, ifp->if_xname, &ifp->if_snd);
+
 	if (!STAILQ_EMPTY(&domains))
 		if_attachdomain1(ifp);
 
@@ -645,6 +659,19 @@ if_attach(ifnet_t *ifp)
 		callout_setfunc(ifp->if_slowtimo_ch, if_slowtimo, ifp);
 		if_slowtimo(ifp);
 	}
+
+	TAILQ_INSERT_TAIL(&ifnet_list, ifp, if_list);
+}
+
+/*
+ * Deprecated. Use if_initialize and if_register instead.
+ * See the above comment of if_initialize.
+ */
+void
+if_attach(ifnet_t *ifp)
+{
+	if_initialize(ifp);
+	if_register(ifp);
 }
 
 void
