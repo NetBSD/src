@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.36 2014/12/15 15:41:18 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.37 2014/12/15 15:49:25 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.36 2014/12/15 15:41:18 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.37 2014/12/15 15:49:25 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -106,18 +106,15 @@ mkmakefile(void)
 	 */
 	(void)snprintf(buf, sizeof(buf), "conf/Makefile.kern.inc");
 	ifname = sourcepath(buf);
-	if ((ifp = fopen(ifname, "r")) != NULL) {
-		while (fgets(line, sizeof(line), ifp) != NULL) {
-			fputc('+', stderr);
-			if (strncmp(line, "build_kernel:", 13) == 0) {
-				has_build_kernel = 1;
-				break;
-			}
-		}
-	}
-	if (ifp == NULL) {
+	if ((ifp = fopen(ifname, "r")) == NULL) {
 		warn("cannot read %s", ifname);
 		goto bad2;
+	}
+	while (fgets(line, sizeof(line), ifp) != NULL) {
+		if (strncmp(line, "build_kernel:", 13) == 0) {
+			has_build_kernel = 1;
+			break;
+		}
 	}
 	(void)fclose(ifp);
 
