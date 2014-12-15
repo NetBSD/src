@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1199 2014/10/30 10:51:34 nonaka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1200 2014/12/15 12:51:06 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1205 2014/10/30 10:50:44 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1206 2014/12/15 12:48:42 msaitoh Exp
  */
 
 /*
@@ -2591,7 +2591,7 @@
 #define	PCI_PRODUCT_INTEL_SRCS28X	0x0409		/* SATA RAID Controller */
 #define	PCI_PRODUCT_INTEL_HASWELL_IGD	0x0402		/* Haswell Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_HASWELL_IGD_1	0x0412		/* Haswell Integrated Graphics Device */
-#define	PCI_PRODUCT_INTEL_DH89XX_QA	0x0434		/* DH89xx QuiskAssit */
+#define	PCI_PRODUCT_INTEL_DH89XXCC_IQIA	0x0434		/* DH89xxCC PCIe Endpoint and QuickAssist */
 #define	PCI_PRODUCT_INTEL_DH89XXCC_SGMII	0x0438		/* DH89XXCC SGMII */
 #define	PCI_PRODUCT_INTEL_DH89XXCC_SERDES	0x043a		/* DH89XXCC SerDes */
 #define	PCI_PRODUCT_INTEL_DH89XXCC_BPLANE	0x043c		/* DH89XXCC backplane */
