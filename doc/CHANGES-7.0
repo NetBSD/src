@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.131 2014/12/14 17:04:18 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.132 2014/12/15 11:57:50 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3573,4 +3573,17 @@ usr.sbin/cpuctl/arch/i386.c			1.60-1.64
 	Don't print garbage if the ioctl to get the microcode version
 	failed.
 	[msaitoh, ticket #326]
+
+sys/dev/ic/oosiop.c				1.15
+
+	Load the right xfer address into cb[i].xferdma. Fixes disk detection
+	on hp715/50.
+	[skrll, ticket #327]
+
+sys/arch/arm/broadcom/bcm2835_emmc.c		1.21
+
+	Don't pipeline any DMA writes to eMMC.
+	Fixes PR/49463.
+	[mlelstv, ticket #328]
+
 
