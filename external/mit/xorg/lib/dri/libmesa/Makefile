@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2014/07/13 16:35:49 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2014/12/15 00:20:29 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,7 @@ CPPFLAGS+=	${X11FLAGS.THREADLIB} \
 CFLAGS+=	-pthread
 
 .include "../../libOSMesa/libmesa.mk"
-.include "../../../tools/glsl/Makefile.glslsrcs"
+.include "../../libGL/Makefile.glslsrcs"
 
 SRCS+=  ${SRCS.glsl}
 
