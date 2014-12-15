@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.34 2014/11/21 20:46:56 christos Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.35 2014/12/15 10:10:24 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.34 2014/11/21 20:46:56 christos Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.35 2014/12/15 10:10:24 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -581,6 +581,7 @@ emitload(FILE *fp)
 	fputs("\n\n", fp);
 	TAILQ_FOREACH(cf, &allcf, cf_next) {
 		fprintf(fp, "KERNELS+=%s\n", cf->cf_name);
+		fprintf(fp, "build_kernel:\n");
 		fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o vers.o build_kernel\n",
 		    cf->cf_name, cf->cf_name);
 		fprintf(fp, "swap%s.o: swap%s.c\n"
