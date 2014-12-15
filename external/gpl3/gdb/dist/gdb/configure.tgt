@@ -686,8 +686,9 @@ x86_64-*-mingw* | x86_64-*-cygwin*)
         ;;
 x86_64-*-netbsd* | x86_64-*-knetbsd*-gnu)
 	# Target: NetBSD/amd64
-	gdb_target_obs="amd64-tdep.o amd64nbsd-tdep.o i386-tdep.o i387-tdep.o \
-			nbsd-tdep.o solib-svr4.o"
+	gdb_target_obs="amd64-tdep.o amd64nbsd-tdep.o i386-tdep.o \
+			i386bsd-tdep.o i386nbsd-tdep.o \
+			i387-tdep.o nbsd-tdep.o solib-svr4.o"
 	;;
 x86_64-*-openbsd*)
 	# Target: OpenBSD/amd64
