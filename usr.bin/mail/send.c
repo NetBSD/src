@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.37 2012/04/29 23:50:22 christos Exp $	*/
+/*	$NetBSD: send.c,v 1.38 2014/12/16 19:30:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.37 2012/04/29 23:50:22 christos Exp $");
+__RCSID("$NetBSD: send.c,v 1.38 2014/12/16 19:30:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -761,7 +761,7 @@ mail1(struct header *hp, int printheaders)
 				goto out;
 			}
 	}
-	namelist = unpack(cat(hp->h_smopts, to));
+	namelist = unpack(hp->h_smopts, to);
 	mail2(mtf, namelist);
  out:
 	(void)Fclose(mtf);
