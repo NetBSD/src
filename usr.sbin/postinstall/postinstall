@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.186 2014/12/13 02:35:02 uebayasi Exp $
+# $NetBSD: postinstall,v 1.187 2014/12/16 05:30:40 jnemeth Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2142,6 +2142,8 @@ do_obsolete_stand()
 
 	for dir in \
 	    /stand/${MACHINE} \
+	    /stand/${MACHINE}-4xx \
+	    /stand/${MACHINE}-booke \
 	    /stand/${MACHINE}-xen \
 	    /stand/${MACHINE}pae-xen
 	do
