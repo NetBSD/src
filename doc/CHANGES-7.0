@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.132 2014/12/15 11:57:50 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.133 2014/12/16 16:21:35 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3586,4 +3586,14 @@ sys/arch/arm/broadcom/bcm2835_emmc.c		1.21
 	Fixes PR/49463.
 	[mlelstv, ticket #328]
 
+external/gpl3/gdb/dist/gdb/armnbsd-tdep.c	1.2
 
+	Fix byte order selection for breakpoints: on arm the byte order for
+	code might differ from the generic BFD endianess.
+	Fixes PR toolchain/49445.
+	[martin, ticket #315]
+
+sys/dev/bluetooth/btms.c			1.12
+
+	Added quirk for ELECOM M-XG2BB.
+	[nonaka, ticket #330]
