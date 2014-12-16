@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.24 2014/11/20 12:49:13 msaitoh Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.25 2014/12/16 04:07:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.24 2014/11/20 12:49:13 msaitoh Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.25 2014/12/16 04:07:40 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -119,7 +119,7 @@ main(int argc, char **argv)
 	}
 
 	if (ct->label == NULL)
-		errx(EXIT_FAILURE, "unknown command ``%s''", argv[optind]);
+		errx(EXIT_FAILURE, "unknown command ``%s''", argv[0]);
 
 	close(fd);
 	exit(EXIT_SUCCESS);
