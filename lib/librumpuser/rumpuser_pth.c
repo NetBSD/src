@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.43 2014/11/04 19:05:17 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.44 2014/12/16 17:00:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.43 2014/11/04 19:05:17 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.44 2014/12/16 17:00:17 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/queue.h>
@@ -103,6 +103,17 @@ rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
 __dead void
 rumpuser_thread_exit(void)
 {
+
+	/*
+	 * FIXXXME: with glibc on ARM pthread_exit() aborts because
+	 * it fails to unwind the stack.  In the typical case, only
+	 * the mountroothook thread will exit and even that's
+	 * conditional on vfs being present.
+	 */
+#if (defined(__ARMEL__) || defined(__ARMEB__)) && defined(__GLIBC__)
+	for (;;)
+		pause();
+#endif
 
 	pthread_exit(NULL);
 }
