@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.89 2013/03/21 16:49:12 christos Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.90 2014/12/16 20:05:54 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -152,12 +152,6 @@ struct	__pthread_st {
 		void *pts_value;
 		PTQ_ENTRY(pt_specific) pts_next;
 	} pt_specific[PTHREAD_KEYS_MAX];
-
-	/*
-	 * Context for thread creation.  At the end as it's cached
-	 * and then only ever passed to _lwp_create(). 
-	 */
-	ucontext_t	pt_uc;
 };
 
 /* Thread states */
@@ -265,10 +259,16 @@ int	pthread__find(pthread_t) PTHREAD_HIDE;
 #error Either __HAVE_TLS_VARIANT_I or __HAVE_TLS_VARIANT_II must be defined
 #endif
 
+#ifdef _PTHREAD_GETTCB_EXT
+struct tls_tcb *_PTHREAD_GETTCB_EXT(void);
+#endif
+
 static inline pthread_t __constfunc
 pthread__self(void)
 {
-#ifdef __HAVE___LWP_GETTCB_FAST
+#if defined(_PTHREAD_GETTCB_EXT)
+	struct tls_tcb * const tcb = _PTHREAD_GETTCB_EXT();
+#elif defined(__HAVE___LWP_GETTCB_FAST)
 	struct tls_tcb * const tcb = __lwp_gettcb_fast();
 #else
 	struct tls_tcb * const tcb = __lwp_getprivate_fast();

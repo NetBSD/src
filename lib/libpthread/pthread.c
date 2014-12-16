@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.144 2014/01/31 20:44:01 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.145 2014/12/16 20:05:54 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.144 2014/01/31 20:44:01 christos Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.145 2014/12/16 20:05:54 pooka Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: pthread.c,v 1.144 2014/01/31 20:44:01 christos Exp $");
 
 #include "pthread.h"
 #include "pthread_int.h"
+#include "pthread_makelwp.h"
 #include "reentrant.h"
 
 pthread_rwlock_t pthread__alltree_lock = PTHREAD_RWLOCK_INITIALIZER;
@@ -464,10 +465,6 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 			return ENOMEM;
 		}
 
-		/* This is used only when creating the thread. */
-		_INITCONTEXT_U(&newthread->pt_uc);
-		newthread->pt_uc.uc_stack = newthread->pt_stack;
-		newthread->pt_uc.uc_link = NULL;
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 		newthread->pt_tls = NULL;
 #endif
@@ -487,9 +484,6 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 			pthread_mutex_unlock(&pthread__deadqueue_lock);
 			return ENOMEM;
 		}
-		_INITCONTEXT_U(&newthread->pt_uc);
-		newthread->pt_uc.uc_stack = newthread->pt_stack;
-		newthread->pt_uc.uc_link = NULL;
 	}
 
 	/*
@@ -505,15 +499,14 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	private_area = newthread;
 #endif
 
-	_lwp_makecontext(&newthread->pt_uc, pthread__create_tramp,
-	    newthread, private_area, newthread->pt_stack.ss_sp,
-	    newthread->pt_stack.ss_size);
-
 	flag = LWP_DETACHED;
 	if ((newthread->pt_flags & PT_FLAG_SUSPENDED) != 0 ||
 	    (nattr.pta_flags & PT_FLAG_EXPLICIT_SCHED) != 0)
 		flag |= LWP_SUSPENDED;
-	ret = _lwp_create(&newthread->pt_uc, flag, &newthread->pt_lid);
+
+	ret = pthread__makelwp(pthread__create_tramp, newthread, private_area,
+	    newthread->pt_stack.ss_sp, newthread->pt_stack.ss_size,
+	    flag, &newthread->pt_lid);
 	if (ret != 0) {
 		ret = errno;
 		pthread_mutex_lock(&newthread->pt_lock);
@@ -1325,7 +1318,9 @@ pthread__initmain(pthread_t *newt)
 		    4 * pthread__pagesize / 1024);
 
 	*newt = &pthread__main;
-#ifdef __HAVE___LWP_GETTCB_FAST
+#if defined(_PTHREAD_GETTCB_EXT)
+	pthread__main.pt_tls = _PTHREAD_GETTCB_EXT();
+#elif defined(__HAVE___LWP_GETTCB_FAST)
 	pthread__main.pt_tls = __lwp_gettcb_fast();
 #else
 	pthread__main.pt_tls = _lwp_getprivate();
