@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.15 2014/11/07 20:51:02 roy Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.16 2014/12/17 20:50:08 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -49,6 +49,7 @@
 #include <net/route.h>
 #include <netinet/if_ether.h>
 #include <netinet/in.h>
+#include <netinet/in_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
 #ifdef __DragonFly__
@@ -421,40 +422,32 @@ next:
 }
 
 int
-if_address(const struct interface *iface, const struct in_addr *address,
+if_address(const struct interface *ifp, const struct in_addr *address,
     const struct in_addr *netmask, const struct in_addr *broadcast,
     int action)
 {
 	int s, r;
-	struct ifaliasreq ifa;
-	union {
-		struct sockaddr *sa;
-		struct sockaddr_in *sin;
-	} _s;
+	struct in_aliasreq ifra;
 
 	if ((s = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
 		return -1;
 
-	memset(&ifa, 0, sizeof(ifa));
-	strlcpy(ifa.ifra_name, iface->name, sizeof(ifa.ifra_name));
+	memset(&ifra, 0, sizeof(ifra));
+	strlcpy(ifra.ifra_name, ifp->name, sizeof(ifra.ifra_name));
 
-#define ADDADDR(_var, _addr) {						      \
-		_s.sa = &_var;						      \
-		_s.sin->sin_family = AF_INET;				      \
-		_s.sin->sin_len = sizeof(*_s.sin);			      \
-		memcpy(&_s.sin->sin_addr, _addr, sizeof(_s.sin->sin_addr));   \
-	}
-
-	ADDADDR(ifa.ifra_addr, address);
-	ADDADDR(ifa.ifra_mask, netmask);
-	if (action >= 0 && broadcast) {
-		ADDADDR(ifa.ifra_broadaddr, broadcast);
-	}
+#define ADDADDR(var, addr) do {						      \
+		(var)->sin_family = AF_INET;				      \
+		(var)->sin_len = sizeof(*(var));			      \
+		(var)->sin_addr = *(addr);				      \
+	} while (/*CONSTCOND*/0)
+	ADDADDR(&ifra.ifra_addr, address);
+	ADDADDR(&ifra.ifra_mask, netmask);
+	if (action >= 0 && broadcast)
+		ADDADDR(&ifra.ifra_broadaddr, broadcast);
 #undef ADDADDR
 
 	r = ioctl(s,
-	    action < 0 ? SIOCDIFADDR :
-	    action == 2 ? SIOCSIFADDR :  SIOCAIFADDR, &ifa);
+	    action < 0 ? SIOCDIFADDR : SIOCAIFADDR, &ifra);
 	close(s);
 	return r;
 }
@@ -589,6 +582,15 @@ ifa_scope(struct sockaddr_in6 *sin, unsigned int ifindex)
 		sin->sin6_scope_id = 0;
 #endif
 }
+
+#ifdef __KAME__
+#define DESCOPE(ia6) do {						      \
+	if (IN6_IS_ADDR_LINKLOCAL((ia6)))				      \
+		(ia6)->s6_addr[2] = (ia6)->s6_addr[3] = '\0';		      \
+	} while (/*CONSTCOND */0)
+#else
+#define DESCOPE(ia6)
+#endif
 
 int
 if_address6(const struct ipv6_addr *a, int action)
@@ -756,11 +758,6 @@ get_addrs(int type, char *cp, struct sockaddr **sa)
 	for (i = 0; i < RTAX_MAX; i++) {
 		if (type & (1 << i)) {
 			sa[i] = (struct sockaddr *)cp;
-#ifdef DEBUG
-			printf ("got %d %d %s\n", i, sa[i]->sa_family,
-			    inet_ntoa(((struct sockaddr_in *)sa[i])->
-				sin_addr));
-#endif
 			RT_ADVANCE(cp, sa[i]);
 		} else
 			sa[i] = NULL;
@@ -866,16 +863,20 @@ if_managelink(struct dhcpcd_ctx *ctx)
 			dhcpcd_handlecarrier(ctx, len,
 			    (unsigned int)ifm->ifm_flags, ifp->name);
 			break;
+		case RTM_ADD:
+		case RTM_CHANGE:
 		case RTM_DELETE:
-			if (~rtm->rtm_addrs &
-			    (RTA_DST | RTA_GATEWAY | RTA_NETMASK))
-				break;
 			cp = (char *)(void *)(rtm + 1);
 			sa = (struct sockaddr *)(void *)cp;
 			get_addrs(rtm->rtm_addrs, cp, rti_info);
 			switch (sa->sa_family) {
 #ifdef INET
 			case AF_INET:
+				if (rtm->rtm_type != RTM_DELETE)
+					break;
+				if (~rtm->rtm_addrs &
+				    (RTA_DST | RTA_GATEWAY | RTA_NETMASK))
+					break;
 				memset(&rt, 0, sizeof(rt));
 				rt.iface = NULL;
 				COPYOUT(rt.dest, rti_info[RTAX_DST]);
@@ -886,6 +887,37 @@ if_managelink(struct dhcpcd_ctx *ctx)
 #endif
 #ifdef INET6
 			case AF_INET6:
+				if (~rtm->rtm_addrs &
+				    (RTA_DST | RTA_GATEWAY))
+					break;
+				/*
+				 * BSD caches host routes in the
+				 * routing table.
+				 * As such, we should be notified of
+				 * reachability by its existance
+				 * with a hardware address
+				 */
+				if (rtm->rtm_flags & (RTF_HOST)) {
+					COPYOUT6(ia6, rti_info[RTAX_DST]);
+					DESCOPE(&ia6);
+					if (rti_info[RTAX_GATEWAY]->sa_family
+					    == AF_LINK)
+						memcpy(&sdl,
+						    rti_info[RTAX_GATEWAY],
+						    sizeof(sdl));
+					else
+						sdl.sdl_alen = 0;
+					ipv6nd_neighbour(ctx, &ia6,
+					    rtm->rtm_type != RTM_DELETE &&
+					    sdl.sdl_alen ?
+					    IPV6ND_REACHABLE : 0);
+					break;
+				}
+
+				if (rtm->rtm_type != RTM_DELETE)
+					break;
+				if (!(rtm->rtm_addrs & RTA_NETMASK))
+					break;
 				memset(&rt6, 0, sizeof(rt6));
 				rt6.iface = NULL;
 				COPYOUT6(rt6.dest, rti_info[RTAX_DST]);
@@ -895,6 +927,7 @@ if_managelink(struct dhcpcd_ctx *ctx)
 				break;
 #endif
 			}
+			break;
 #ifdef RTM_CHGADDR
 		case RTM_CHGADDR:	/* FALLTHROUGH */
 #endif
@@ -938,10 +971,7 @@ if_managelink(struct dhcpcd_ctx *ctx)
 				sin6 = (struct sockaddr_in6*)(void *)
 				    rti_info[RTAX_IFA];
 				ia6 = sin6->sin6_addr;
-#ifdef __KAME__
-				if (IN6_IS_ADDR_LINKLOCAL(&ia6))
-					ia6.s6_addr[2] = ia6.s6_addr[3] = '\0';
-#endif
+				DESCOPE(&ia6);
 				if (rtm->rtm_type == RTM_NEWADDR) {
 					ifa_flags = if_addrflags6(&ia6, ifp);
 					if (ifa_flags == -1)
@@ -1039,43 +1069,6 @@ if_nd6_flag(const char *ifname, unsigned int flag, int set)
 eexit:
 	close(s);
 	return error;
-}
-
-int
-if_nd6reachable(const char *ifname, struct in6_addr *addr)
-{
-	int s, flags;
-	struct in6_nbrinfo nbi;
-
-	if ((s = socket(PF_INET6, SOCK_DGRAM, 0)) < 0)
-		return -1;
-
-	memset(&nbi, 0, sizeof(nbi));
-	strlcpy(nbi.ifname, ifname, sizeof(nbi.ifname));
-	nbi.addr = *addr;
-	if (ioctl(s, SIOCGNBRINFO_IN6, &nbi) == -1) {
-#ifdef __FreeBSD__
-		/* FreeBSD doesn't support reachable routers? */
-		if (errno == EINVAL)
-			errno = ENOTSUP;
-#endif
-		flags = -1;
-	} else {
-		flags = 0;
-		switch(nbi.state) {
-		case ND6_LLINFO_NOSTATE:	/* just added */
-		case ND6_LLINFO_REACHABLE:
-		case ND6_LLINFO_STALE:
-		case ND6_LLINFO_DELAY:
-		case ND6_LLINFO_PROBE:
-			flags |= IPV6ND_REACHABLE;
-			break;
-		}
-		if (nbi.isrouter)
-			flags |= IPV6ND_ROUTER;
-	}
-	close(s);
-	return flags;
 }
 
 static int
