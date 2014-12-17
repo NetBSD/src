@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6nd.c,v 1.18 2014/11/26 13:43:06 roy Exp $");
+ __RCSID("$NetBSD: ipv6nd.c,v 1.19 2014/12/17 20:50:08 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -32,6 +32,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
@@ -117,8 +118,6 @@ struct nd_opt_dnssl {		/* DNSSL option RFC 6106 */
 #define IPV6_ADDR_INT32_ONE     0x01000000
 #define IPV6_ADDR_INT16_MLL     0x02ff
 #endif
-
-#define ND6REACHABLE_TIMER	1
 
 /* Debugging Neighbor Solicitations is a lot of spam, so disable it */
 //#define DEBUG_NS
@@ -332,8 +331,6 @@ ipv6nd_reachable(struct ra *rap, int flags)
 			script_runreason(rap->iface, "ROUTERADVERT");
 		}
 	} else {
-		/* Any error means it's really gone from the kernel
-		 * neighbour database */
 		if (rap->lifetime && !rap->expired) {
 			syslog(LOG_WARNING,
 			    "%s: %s is unreachable, expiring it",
@@ -346,7 +343,6 @@ ipv6nd_reachable(struct ra *rap, int flags)
 	}
 }
 
-#ifdef HAVE_RTM_GETNEIGH
 void
 ipv6nd_neighbour(struct dhcpcd_ctx *ctx, struct in6_addr *addr, int flags)
 {
@@ -361,33 +357,6 @@ ipv6nd_neighbour(struct dhcpcd_ctx *ctx, struct in6_addr *addr, int flags)
 		}
 	}
 }
-
-#else
-
-static void
-ipv6nd_checkreachablerouters(void *arg)
-{
-	struct dhcpcd_ctx *ctx = arg;
-	struct ra *rap;
-	int flags;
-
-	TAILQ_FOREACH(rap, ctx->ipv6->ra_routers, next) {
-		flags = if_nd6reachable(rap->iface->name, &rap->from);
-		if (flags == -1) {
-			if (errno == ENOTSUP)
-				/* Unsupported? We have to assume reachable */
-				flags = IPV6ND_REACHABLE;
-			else
-				/* An error occured, so it's unreachable */
-				flags = 0;
-		}
-		ipv6nd_reachable(rap, flags);
-	}
-
-	eloop_timeout_add_sec(ctx->eloop, ND6REACHABLE_TIMER,
-	    ipv6nd_checkreachablerouters, ctx);
-}
-#endif
 
 static void
 ipv6nd_free_opts(struct ra *rap)
@@ -434,11 +403,6 @@ void ipv6nd_freedrop_ra(struct ra *rap, int drop)
 	eloop_timeout_delete(rap->iface->ctx->eloop, NULL, rap);
 	if (!drop)
 		TAILQ_REMOVE(rap->iface->ctx->ipv6->ra_routers, rap, next);
-#ifndef HAVE_RTM_GETNEIGH
-	if (TAILQ_FIRST(rap->iface->ctx->ipv6->ra_routers) == NULL)
-		eloop_timeout_delete(rap->iface->ctx->eloop,
-		    ipv6nd_checkreachablerouters, rap->iface->ctx);
-#endif
 	ipv6_freedrop_addrs(&rap->addrs, drop, NULL);
 	ipv6nd_free_opts(rap);
 	free(rap->data);
@@ -588,7 +552,7 @@ ipv6nd_addaddr(void *arg)
 {
 	struct ipv6_addr *ap = arg;
 
-	ipv6_addaddr(ap);
+	ipv6_addaddr(ap, NULL);
 }
 
 int
@@ -935,6 +899,7 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 			if (pi->nd_opt_pi_flags_reserved &
 			    ND_OPT_PI_FLAG_ONLINK)
 				ap->flags |= IPV6_AF_ONLINK;
+			ap->acquired = rap->received;
 			ap->prefix_vltime =
 			    ntohl(pi->nd_opt_pi_valid_time);
 			ap->prefix_pltime =
@@ -1130,12 +1095,6 @@ nodhcp6:
 
 	/* Expire should be called last as the rap object could be destroyed */
 	ipv6nd_expirera(ifp);
-
-#ifndef HAVE_RTM_GETNEIGH
-	/* Start our reachability tests now */
-	eloop_timeout_add_sec(ifp->ctx->eloop, ND6REACHABLE_TIMER,
-	    ipv6nd_checkreachablerouters, ifp->ctx);
-#endif
 }
 
 int
@@ -1423,11 +1382,8 @@ ipv6nd_handlena(struct ipv6_ctx *ctx, struct interface *ifp,
 	struct nd_neighbor_advert *nd_na;
 	struct ra *rap;
 	int is_router, is_solicited;
-
-	if ((size_t)len < sizeof(struct nd_neighbor_advert)) {
-		syslog(LOG_ERR, "IPv6 NA packet too short from %s", ctx->sfrom);
-		return;
-	}
+	char buf[INET6_ADDRSTRLEN];
+	const char *taddr;
 
 	if (ifp == NULL) {
 #ifdef DEBUG_NS
@@ -1437,13 +1393,21 @@ ipv6nd_handlena(struct ipv6_ctx *ctx, struct interface *ifp,
 		return;
 	}
 
+	if ((size_t)len < sizeof(struct nd_neighbor_advert)) {
+		syslog(LOG_ERR, "%s: IPv6 NA too short from %s",
+		    ifp->name, ctx->sfrom);
+		return;
+	}
+
 	nd_na = (struct nd_neighbor_advert *)icp;
 	is_router = nd_na->nd_na_flags_reserved & ND_NA_FLAG_ROUTER;
 	is_solicited = nd_na->nd_na_flags_reserved & ND_NA_FLAG_SOLICITED;
+	taddr = inet_ntop(AF_INET6, &nd_na->nd_na_target,
+	    buf, INET6_ADDRSTRLEN);
 
 	if (IN6_IS_ADDR_MULTICAST(&nd_na->nd_na_target)) {
-		syslog(LOG_ERR, "%s: NA for multicast address from %s",
-		    ifp->name, ctx->sfrom);
+		syslog(LOG_ERR, "%s: NA multicast address %s (%s)",
+		    ifp->name, taddr, ctx->sfrom);
 		return;
 	}
 
@@ -1454,21 +1418,21 @@ ipv6nd_handlena(struct ipv6_ctx *ctx, struct interface *ifp,
 	}
 	if (rap == NULL) {
 #ifdef DEBUG_NS
-		syslog(LOG_DEBUG, "%s: unexpected NA from s",
-		    ifp->name, ctx->sfrom);
+		syslog(LOG_DEBUG, "%s: unexpected NA from %s for %s",
+		    ifp->name, ctx->sfrom, taddr);
 #endif
 		return;
 	}
 
 #ifdef DEBUG_NS
-	syslog(LOG_DEBUG, "%s: %sNA from %s",
-	    ifp->name, is_solicited ? "solicited " : "", ctx->sfrom);
+	syslog(LOG_DEBUG, "%s: %sNA for %s from %s",
+	    ifp->name, is_solicited ? "solicited " : "", taddr, ctx->sfrom);
 #endif
 
 	/* Node is no longer a router, so remove it from consideration */
 	if (!is_router && !rap->expired) {
-		syslog(LOG_INFO, "%s: %s is no longer a router",
-		    ifp->name, ctx->sfrom);
+		syslog(LOG_INFO, "%s: %s not a router (%s)",
+		    ifp->name, taddr, ctx->sfrom);
 		rap->expired = 1;
 		ipv6_buildroutes(ifp->ctx);
 		script_runreason(ifp, "ROUTERADVERT");
@@ -1478,8 +1442,8 @@ ipv6nd_handlena(struct ipv6_ctx *ctx, struct interface *ifp,
 	if (is_solicited && is_router && rap->lifetime) {
 		if (rap->expired) {
 			rap->expired = 0;
-			syslog(LOG_INFO, "%s: %s is reachable again",
-			    ifp->name, ctx->sfrom);
+			syslog(LOG_INFO, "%s: %s reachable (%s)",
+			    ifp->name, taddr, ctx->sfrom);
 			ipv6_buildroutes(ifp->ctx);
 			script_runreason(rap->iface, "ROUTERADVERT"); /* XXX */
 		}
