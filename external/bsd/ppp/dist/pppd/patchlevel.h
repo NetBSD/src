@@ -1,4 +1,4 @@
-/*	$NetBSD: patchlevel.h,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+/*	$NetBSD: patchlevel.h,v 1.2.6.1 2014/12/17 19:25:40 martin Exp $	*/
 
-#define VERSION		"2.4.5"
-#define DATE		"17 November 2009"
+#define VERSION		"2.4.7"
+#define DATE		"9 August 2014"
