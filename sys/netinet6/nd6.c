@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.152.2.1 2014/10/27 13:39:11 martin Exp $	*/
+/*	$NetBSD: nd6.c,v 1.152.2.2 2014/12/17 18:43:47 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.152.2.1 2014/10/27 13:39:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.152.2.2 2014/12/17 18:43:47 martin Exp $");
 
 #include "bridge.h"
 #include "carp.h"
@@ -1037,6 +1037,7 @@ nd6_free(struct rtentry *rt, int gc)
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo, *next;
 	struct in6_addr in6 = satocsin6(rt_getkey(rt))->sin6_addr;
 	struct nd_defrouter *dr;
+	struct rtentry *oldrt;
 
 	/*
 	 * we used to have pfctlinput(PRC_HOSTDEAD) here.
@@ -1129,7 +1130,15 @@ nd6_free(struct rtentry *rt, int gc)
 	 * caches, and disable the route entry not to be used in already
 	 * cached routes.
 	 */
-	rtrequest(RTM_DELETE, rt_getkey(rt), NULL, rt_mask(rt), 0, NULL);
+	oldrt = NULL;
+	rtrequest(RTM_DELETE, rt_getkey(rt), NULL, rt_mask(rt), 0, &oldrt);
+	if (oldrt) {
+		nd6_rtmsg(RTM_DELETE, oldrt); /* tell user process */
+		if (oldrt->rt_refcnt <= 0) {
+			oldrt->rt_refcnt++;
+			rtfree(oldrt);
+		}
+	}
 
 	return next;
 }
@@ -2058,6 +2067,9 @@ fail:
 		}
 		break;
 	}
+
+	if (do_update)
+		nd6_rtmsg(RTM_CHANGE, rt);  /* tell user process */
 
 	/*
 	 * When the link-layer address of a router changes, select the
