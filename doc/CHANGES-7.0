@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.133 2014/12/16 16:21:35 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.134 2014/12/17 19:27:37 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3597,3 +3597,50 @@ sys/dev/bluetooth/btms.c			1.12
 
 	Added quirk for ELECOM M-XG2BB.
 	[nonaka, ticket #330]
+
+sys/uvm/uvm_meter.c				1.64-1.65
+
+	Fix a bug that "vmstat -s" prints uvmexp.ncolors incorrectly.
+	Sort in uvmexp_sysctl's order for readability.
+	[msaitoh, ticket #329]
+
+sys/netinet6/nd6.c				1.156
+sys/netinet6/nd6.h				1.61
+sys/netinet6/nd6_nbr.c				1.103
+sys/netinet6/nd6_rtr.c				1.95
+
+	Report route additions/changes/deletions for cached neighbours to
+	userland.
+	[roy, ticket #332]
+
+sys/arch/arm/broadcom/bcm2835_tmr.c		1.4
+
+	Clear status of BCM2835_STIMER_M3 only as timer comparison reg 0 and 2
+	are used by the VideoCore on Raspberry Pi.  This fixes audio playback.
+	Addresses PR 48805.
+	[nat, ticket #333]
+
+external/bsd/ppp/ppp2netbsd				(patch)
+external/bsd/ppp/dist/README				(patch)
+external/bsd/ppp/dist/pppd/chap_ms.c			(patch)
+external/bsd/ppp/dist/pppd/ipcp.c			(patch)
+external/bsd/ppp/dist/pppd/ipv6cp.c			(patch)
+external/bsd/ppp/dist/pppd/ipv6cp.h			(patch)
+external/bsd/ppp/dist/pppd/options.c			(patch)
+external/bsd/ppp/dist/pppd/patchlevel.h			(patch)
+external/bsd/ppp/dist/pppd/pppd.h			(patch)
+external/bsd/ppp/dist/pppd/tty.c			(patch)
+external/bsd/ppp/dist/pppd/utils.c			(patch)
+external/bsd/ppp/dist/pppd/plugins/pppol2tp/pppol2tp.c	(patch)
+external/bsd/ppp/usr.sbin/pppd/sys-bsd.c		(patch)
+doc/3RDPARTY						1.1165
+
+	Import pppd 2.4.7:
+	* Fixed a potential security issue in parsing option files
+	  (CVE-2014-3158).
+	* There is a new "stop-bits" option, which takes an argument of
+	  1 or 2, indicating the number of stop bits to use for async
+	  serial ports.
+	* Various bug fixes.
+	[christos, #331]
+
