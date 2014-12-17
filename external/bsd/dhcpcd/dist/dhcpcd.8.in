@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.8.in,v 1.38 2014/12/09 20:21:05 roy Exp $
+.\"     $NetBSD: dhcpcd.8.in,v 1.39 2014/12/17 20:50:08 roy Exp $
 .\" Copyright (c) 2006-2014 Roy Marples
 .\" All rights reserved
 .\"
@@ -426,10 +426,6 @@ is working on a single interface then
 will exit when a timeout occurs, otherwise
 .Nm
 will fork into the background.
-If using IPv4LL then
-.Nm
-start the IPv4LL process after the timeout and then wait a little longer
-before really timing out.
 .It Fl u , Fl Fl userclass Ar class
 Tags the DHCPv4 message with the userclass
 .Ar class .
@@ -481,10 +477,17 @@ then waits until this process has exited.
 Allow
 .Ar reboot
 seconds before moving to the discover phase if we have an old lease to use.
+Allow
+.Ar reboot
+seconds before starting fallback states from the discover phase.
+IPv4LL is started when the first
+.Ar reboot
+timeout is reached.
 The default is 5 seconds.
 A setting of 0 seconds causes
 .Nm
 to skip the reboot phase and go straight into discover.
+This has no effect on DHCPv6 other than skipping the reboot phase.
 .El
 .Ss Restricting behaviour
 .Nm

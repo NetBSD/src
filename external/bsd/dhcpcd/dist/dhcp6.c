@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.7 2014/11/26 13:43:06 roy Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.8 2014/12/17 20:50:08 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1698,7 +1698,7 @@ dhcp6_findaddr(struct dhcpcd_ctx *ctx, const struct in6_addr *addr,
 
 static int
 dhcp6_findna(struct interface *ifp, uint16_t ot, const uint8_t *iaid,
-    const uint8_t *d, size_t l)
+    const uint8_t *d, size_t l, const struct timeval *acquired)
 {
 	struct dhcp6_state *state;
 	const struct dhcp6_option *o;
@@ -1760,6 +1760,7 @@ dhcp6_findna(struct interface *ifp, uint16_t ot, const uint8_t *iaid,
 				a->flags |= IPV6_AF_ONLINK | IPV6_AF_NEW;
 			a->flags &= ~IPV6_AF_STALE;
 		}
+		a->acquired = *acquired;
 		a->prefix_pltime = ntohl(iap->pltime);
 		u32 = ntohl(iap->vltime);
 		if (a->prefix_vltime != u32) {
@@ -1777,7 +1778,7 @@ dhcp6_findna(struct interface *ifp, uint16_t ot, const uint8_t *iaid,
 
 static int
 dhcp6_findpd(struct interface *ifp, const uint8_t *iaid,
-    const uint8_t *d, size_t l)
+    const uint8_t *d, size_t l, const struct timeval *acquired)
 {
 	struct dhcp6_state *state;
 	const struct dhcp6_option *o, *ex;
@@ -1838,6 +1839,7 @@ dhcp6_findpd(struct interface *ifp, const uint8_t *iaid,
 				a->flags |= IPV6_AF_NEW;
 		}
 
+		a->acquired = *acquired;
 		a->prefix_pltime = ntohl(pdp->pltime);
 		a->prefix_vltime = ntohl(pdp->vltime);
 
@@ -1901,7 +1903,7 @@ dhcp6_findpd(struct interface *ifp, const uint8_t *iaid,
 
 static int
 dhcp6_findia(struct interface *ifp, const struct dhcp6_message *m, size_t l,
-    const char *sfrom)
+    const char *sfrom, const struct timeval *acquired)
 {
 	struct dhcp6_state *state;
 	const struct if_options *ifo;
@@ -1995,7 +1997,7 @@ dhcp6_findia(struct interface *ifp, const struct dhcp6_message *m, size_t l,
 		}
 		if (code == D6_OPTION_IA_PD) {
 			if (!(ifo->options & DHCPCD_NOPFXDLG) &&
-			    dhcp6_findpd(ifp, iaid, p, ol) == 0)
+			    dhcp6_findpd(ifp, iaid, p, ol, acquired) == 0)
 			{
 				syslog(LOG_WARNING,
 				    "%s: %s: DHCPv6 REPLY missing Prefix",
@@ -2003,7 +2005,8 @@ dhcp6_findia(struct interface *ifp, const struct dhcp6_message *m, size_t l,
 				continue;
 			}
 		} else if (!(ifo->options & DHCPCD_PFXDLGONLY)) {
-			if (dhcp6_findna(ifp, code, iaid, p, ol) == 0) {
+			if (dhcp6_findna(ifp, code, iaid, p, ol, acquired) == 0)
+			{
 				syslog(LOG_WARNING,
 				    "%s: %s: DHCPv6 REPLY missing IA Address",
 				    ifp->name, sfrom);
@@ -2049,10 +2052,11 @@ dhcp6_findia(struct interface *ifp, const struct dhcp6_message *m, size_t l,
 static int
 dhcp6_validatelease(struct interface *ifp,
     const struct dhcp6_message *m, size_t len,
-    const char *sfrom)
+    const char *sfrom, const struct timeval *acquired)
 {
 	struct dhcp6_state *state;
 	int nia;
+	struct timeval aq;
 
 	if (len <= sizeof(*m)) {
 		syslog(LOG_ERR, "%s: DHCPv6 lease truncated", ifp->name);
@@ -2065,7 +2069,11 @@ dhcp6_validatelease(struct interface *ifp,
 
 	state->renew = state->rebind = state->expire = 0;
 	state->lowpl = ND6_INFINITE_LIFETIME;
-	nia = dhcp6_findia(ifp, m, len, sfrom);
+	if (!acquired) {
+		get_monotonic(&aq);
+		acquired = &aq;
+	}
+	nia = dhcp6_findia(ifp, m, len, sfrom, acquired);
 	if (nia == 0) {
 		syslog(LOG_ERR, "%s: no useable IA found in lease",
 		    ifp->name);
@@ -2104,6 +2112,7 @@ dhcp6_readlease(struct interface *ifp)
 	ssize_t bytes;
 	struct timeval now;
 	const struct dhcp6_option *o;
+	struct timeval acquired;
 
 	state = D6_STATE(ifp);
 	if (stat(state->leasefile, &st) == -1) {
@@ -2137,15 +2146,19 @@ dhcp6_readlease(struct interface *ifp)
 		goto ex;
 	}
 
+	gettimeofday(&now, NULL);
+	get_monotonic(&acquired);
+	acquired.tv_sec -= now.tv_sec - st.st_mtime;
+
 	/* Check to see if the lease is still valid */
-	fd = dhcp6_validatelease(ifp, state->new, state->new_len, NULL);
+	fd = dhcp6_validatelease(ifp, state->new, state->new_len, NULL,
+	    &acquired);
 	if (fd == -1)
 		goto ex;
 
 	if (!(ifp->ctx->options & DHCPCD_DUMPLEASE) &&
 	    state->expire != ND6_INFINITE_LIFETIME)
 	{
-		gettimeofday(&now, NULL);
 		if ((time_t)state->expire < now.tv_sec - st.st_mtime) {
 			syslog(LOG_DEBUG,"%s: discarding expired lease",
 			    ifp->name);
@@ -2274,6 +2287,7 @@ dhcp6_ifdelegateaddr(struct interface *ifp, struct ipv6_addr *prefix,
 	a->dadcallback = dhcp6_dadcallback;
 	a->delegating_iface = ifs;
 	memcpy(&a->iaid, &prefix->iaid, sizeof(a->iaid));
+	a->acquired = prefix->acquired;
 	a->prefix_pltime = prefix->prefix_pltime;
 	a->prefix_vltime = prefix->prefix_vltime;
 	a->prefix = addr;
@@ -2726,7 +2740,8 @@ dhcp6_handledata(void *arg)
 			if (error == 1)
 				goto recv;
 			if (error == -1 ||
-			    dhcp6_validatelease(ifp, r, len, ctx->sfrom) == -1)
+			    dhcp6_validatelease(ifp, r, len,
+			    ctx->sfrom, NULL) == -1)
 			{
 				dhcp6_startdiscover(ifp);
 				return;
@@ -2742,7 +2757,9 @@ dhcp6_handledata(void *arg)
 		case DH6S_REQUEST: /* FALLTHROUGH */
 		case DH6S_RENEW: /* FALLTHROUGH */
 		case DH6S_REBIND:
-			if (dhcp6_validatelease(ifp, r, len, ctx->sfrom) == -1){
+			if (dhcp6_validatelease(ifp, r, len,
+			    ctx->sfrom, NULL) == -1)
+			{
 				/* PD doesn't use CONFIRM, so REBIND could
 				 * throw up an invalid prefix if we
 				 * changed link */
@@ -2787,7 +2804,7 @@ dhcp6_handledata(void *arg)
 				syslog(LOG_ERR, "%s: invalid INF_MAX_RT %d",
 				    ifp->name, u32);
 		}
-		if (dhcp6_validatelease(ifp, r, len, ctx->sfrom) == -1)
+		if (dhcp6_validatelease(ifp, r, len, ctx->sfrom, NULL) == -1)
 			return;
 		break;
 	case DHCP6_RECONFIGURE:
