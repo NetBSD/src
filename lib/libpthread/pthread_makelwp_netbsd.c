@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_makelwp_netbsd.c,v 1.1 2014/12/16 20:05:54 pooka Exp $	*/
+/*	$NetBSD: pthread_makelwp_netbsd.c,v 1.2 2014/12/17 01:49:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_makelwp_netbsd.c,v 1.1 2014/12/16 20:05:54 pooka Exp $");
+__RCSID("$NetBSD: pthread_makelwp_netbsd.c,v 1.2 2014/12/17 01:49:08 pooka Exp $");
 
 #include <sys/param.h>
 
 #include <lwp.h>
 #include <pthread.h>
+#include <string.h>
 
 #include "pthread_int.h"
 #include "pthread_makelwp.h"
