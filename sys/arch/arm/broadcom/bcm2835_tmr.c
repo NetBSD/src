@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_tmr.c,v 1.4 2014/12/16 13:09:33 nat Exp $	*/
+/*	$NetBSD: bcm2835_tmr.c,v 1.5 2014/12/17 06:54:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.4 2014/12/16 13:09:33 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.5 2014/12/17 06:54:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,8 @@ clockhandler(void *arg)
 	if (!(status & BCM2835_STIMER_M3))
 		return 0;
 
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCM2835_STIMER_CS, BCM2835_STIMER_M3);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCM2835_STIMER_CS,
+	    BCM2835_STIMER_M3);
 
 	hardclock(frame);
 
