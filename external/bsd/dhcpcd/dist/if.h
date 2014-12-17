@@ -48,13 +48,6 @@
 # endif
 #endif
 
-/* Neighbour reachability and router updates */
-#ifndef HAVE_RTM_GETNEIGH
-# ifdef __linux__
-#  define HAVE_RTM_GETNEIGH
-# endif
-#endif
-
 #define EUI64_ADDR_LEN			8
 #define INFINIBAND_ADDR_LEN		20
 
@@ -118,12 +111,10 @@ ssize_t if_readrawpacket(struct interface *, int, void *, size_t, int *);
 int if_address(const struct interface *,
     const struct in_addr *, const struct in_addr *,
     const struct in_addr *, int);
-#define if_addaddress(iface, addr, net, brd)				      \
-	if_address(iface, addr, net, brd, 1)
-#define if_setaddress(iface, addr, net, brd)				      \
-	if_address(iface, addr, net, brd, 2)
-#define if_deladdress(iface, addr, net)				      \
-	if_address(iface, addr, net, NULL, -1)
+#define if_addaddress(ifp, addr, net, brd)	\
+	if_address(ifp, addr, net, brd, 1)
+#define if_deladdress(ifp, addr, net)		\
+	if_address(ifp, addr, net, NULL, -1)
 
 int if_route(const struct rt *rt, int);
 #define if_addroute(rt) if_route(rt, 1)
@@ -133,11 +124,11 @@ int if_route(const struct rt *rt, int);
 
 #ifdef INET6
 int if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *, int);
-int if_nd6reachable(const char *ifname, struct in6_addr *addr);
 
 int if_address6(const struct ipv6_addr *, int);
 #define if_addaddress6(a) if_address6(a, 1)
 #define if_deladdress6(a) if_address6(a, -1)
+
 int if_addrflags6(const struct in6_addr *, const struct interface *);
 
 int if_route6(const struct rt6 *rt, int);

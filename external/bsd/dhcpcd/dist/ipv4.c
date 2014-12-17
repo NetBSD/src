@@ -32,11 +32,6 @@
 #include <arpa/inet.h>
 #include <net/route.h>
 
-#ifdef __linux__
-#  include <asm/types.h> /* for systems with broken headers */
-#  include <linux/rtnetlink.h>
-#endif
-
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -734,19 +729,25 @@ ipv4_getstate(struct interface *ifp)
 }
 
 static int
-ipv4_addaddr(const struct interface *ifp, const struct dhcp_lease *lease)
+ipv4_addaddr(struct interface *ifp, const struct dhcp_lease *lease)
 {
 	int r;
+
+	if (ifp->options->options & DHCPCD_NOALIAS) {
+		struct ipv4_state *state;
+		struct ipv4_addr *ap, *apn;
+
+		state = IPV4_STATE(ifp);
+		TAILQ_FOREACH_SAFE(ap, &state->addrs, next, apn) {
+			if (ap->addr.s_addr != lease->addr.s_addr)
+				delete_address1(ifp, &ap->addr, &ap->net);
+		}
+	}
 
 	syslog(LOG_DEBUG, "%s: adding IP address %s/%d",
 	    ifp->name, inet_ntoa(lease->addr),
 	    inet_ntocidr(lease->net));
-	if (ifp->options->options & DHCPCD_NOALIAS)
-		r = if_setaddress(ifp,
-		    &lease->addr, &lease->net, &lease->brd);
-	else
-		r = if_addaddress(ifp,
-		    &lease->addr, &lease->net, &lease->brd);
+	r = if_addaddress(ifp, &lease->addr, &lease->net, &lease->brd);
 	if (r == -1 && errno != EEXIST)
 		syslog(LOG_ERR, "%s: if_addaddress: %m", __func__);
 	return r;
@@ -873,7 +874,8 @@ ipv4_applyaddr(void *arg)
 
 	/* Now delete the old address if different */
 	if (state->addr.s_addr != lease->addr.s_addr &&
-	    state->addr.s_addr != 0)
+	    state->addr.s_addr != 0 &&
+	    ipv4_iffindaddr(ifp, &lease->addr, NULL))
 		delete_address(ifp);
 
 	state->added = STATE_ADDED;
