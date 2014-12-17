@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.93 2014/07/31 06:35:47 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.93.2.1 2014/12/17 18:43:47 martin Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.93 2014/07/31 06:35:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.93.2.1 2014/12/17 18:43:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,6 @@ static void pfxrtr_del(struct nd_pfxrouter *);
 static struct nd_pfxrouter *find_pfxlist_reachable_router
 	(struct nd_prefix *);
 static void defrouter_delreq(struct nd_defrouter *);
-static void nd6_rtmsg(int, struct rtentry *);
 
 static int in6_init_prefix_ltimes(struct nd_prefix *);
 static void in6_init_address_ltimes(struct nd_prefix *,
@@ -416,7 +415,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
  */
 
 /* tell the change to user processes watching the routing socket. */
-static void
+void
 nd6_rtmsg(int cmd, struct rtentry *rt)
 {
 	struct rt_addrinfo info;

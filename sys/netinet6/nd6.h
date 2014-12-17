@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.59 2014/06/05 16:06:49 roy Exp $	*/
+/*	$NetBSD: nd6.h,v 1.59.2.1 2014/12/17 18:43:47 martin Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -408,6 +408,7 @@ void nd6_option_init(void *, int, union nd_opts *);
 struct nd_opt_hdr *nd6_option(union nd_opts *);
 int nd6_options(union nd_opts *);
 struct	rtentry *nd6_lookup(const struct in6_addr *, int, struct ifnet *);
+void nd6_rtmsg(int, struct rtentry *);
 void nd6_setmtu(struct ifnet *);
 void nd6_llinfo_settimer(struct llinfo_nd6 *, long);
 void nd6_timer(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.100 2014/07/01 07:51:29 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.100.2.1 2014/12/17 18:43:47 martin Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.100 2014/07/01 07:51:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.100.2.1 2014/12/17 18:43:47 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -567,6 +567,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	struct sockaddr_dl *sdl;
 	union nd_opts ndopts;
 	struct sockaddr_in6 ssin6;
+	int rt_announce;
 
 	if (ip6->ip6_hlim != 255) {
 		nd6log((LOG_ERR,
@@ -669,6 +670,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	   ((sdl = satosdl(rt->rt_gateway)) == NULL))
 		goto freeit;
 
+	rt_announce = 0;
 	if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
 		/*
 		 * If the link-layer has address, and no lladdr option came,
@@ -682,6 +684,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		 */
 		(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, lladdr,
 		    ifp->if_addrlen);
+		rt_announce = 1;
 		if (is_solicited) {
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
@@ -712,11 +715,11 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		else {
 			if (sdl->sdl_alen) {
 				if (memcmp(lladdr, CLLADDR(sdl), ifp->if_addrlen))
-					llchange = 1;
+					llchange = rt_announce = 1;
 				else
 					llchange = 0;
 			} else
-				llchange = 1;
+				llchange = rt_announce = 1;
 		}
 
 		/*
@@ -819,6 +822,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	rt->rt_flags &= ~RTF_REJECT;
 	ln->ln_asked = 0;
 	nd6_llinfo_release_pkts(ln, ifp, rt);
+	if (rt_announce) /* tell user process about any new lladdr */
+		nd6_rtmsg(RTM_CHANGE, rt);
 
  freeit:
 	m_freem(m);
