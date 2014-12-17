@@ -1,4 +1,4 @@
-/*	$NetBSD: chap_ms.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+/*	$NetBSD: chap_ms.c,v 1.2.6.1 2014/12/17 19:25:40 martin Exp $	*/
 
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
@@ -81,7 +81,7 @@
 #define RCSID	"Id: chap_ms.c,v 1.38 2007/12/01 20:10:51 carlsonj Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("$NetBSD: chap_ms.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+__RCSID("$NetBSD: chap_ms.c,v 1.2.6.1 2014/12/17 19:25:40 martin Exp $");
 #endif
 
 #ifdef CHAPMS
@@ -391,7 +391,7 @@ chapms2_make_response(unsigned char *response, int id, char *our_name,
 		      unsigned char *private)
 {
 	const struct chapms2_response_cache_entry *cache_entry;
-	unsigned char auth_response[MS_AUTH_RESPONSE_LENGTH];
+	unsigned char auth_response[MS_AUTH_RESPONSE_LENGTH+1];
 
 	challenge++;	/* skip length, should be 16 */
 	*response++ = MS_CHAP2_RESPONSE_LEN;

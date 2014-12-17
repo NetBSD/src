@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcp.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+/*	$NetBSD: ipcp.c,v 1.2.6.1 2014/12/17 19:25:40 martin Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -47,7 +47,7 @@
 #define RCSID	"Id: ipcp.c,v 1.73 2008/05/26 08:33:22 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("$NetBSD: ipcp.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+__RCSID("$NetBSD: ipcp.c,v 1.2.6.1 2014/12/17 19:25:40 martin Exp $");
 #endif
 
 /*
@@ -969,6 +969,21 @@ ipcp_ackci(f, p, len)
 	    goto bad; \
     }
 
+#define ACKCIWINS(opt, addr) \
+    if (addr) { \
+	u_int32_t l; \
+	if ((len -= CILEN_ADDR) < 0) \
+	    goto bad; \
+	GETCHAR(citype, p); \
+	GETCHAR(cilen, p); \
+	if (cilen != CILEN_ADDR || citype != opt) \
+	    goto bad; \
+	GETLONG(l, p); \
+	cilong = htonl(l); \
+	if (addr != cilong) \
+	    goto bad; \
+    }
+
     ACKCIADDRS(CI_ADDRS, !go->neg_addr && go->old_addrs, go->ouraddr,
 	       go->hisaddr);
 
@@ -980,6 +995,10 @@ ipcp_ackci(f, p, len)
     ACKCIDNS(CI_MS_DNS1, go->req_dns1, go->dnsaddr[0]);
 
     ACKCIDNS(CI_MS_DNS2, go->req_dns2, go->dnsaddr[1]);
+
+    ACKCIWINS(CI_MS_WINS1, go->winsaddr[0]);
+
+    ACKCIWINS(CI_MS_WINS2, go->winsaddr[1]);
 
     /*
      * If there are any remaining CIs, then this packet is bad.

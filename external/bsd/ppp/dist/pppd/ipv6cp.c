@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6cp.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+/*	$NetBSD: ipv6cp.c,v 1.2.6.1 2014/12/17 19:25:40 martin Exp $	*/
 
 /*
  * ipv6cp.c - PPP IPV6 Control Protocol.
@@ -145,7 +145,7 @@
 #define RCSID	"Id: ipv6cp.c,v 1.21 2005/08/25 23:59:34 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("$NetBSD: ipv6cp.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+__RCSID("$NetBSD: ipv6cp.c,v 1.2.6.1 2014/12/17 19:25:40 martin Exp $");
 #endif
 
 /*
@@ -257,10 +257,8 @@ static option_t ipv6cp_option_list[] = {
     { "ipv6cp-use-ipaddr", o_bool, &ipv6cp_allowoptions[0].use_ip,
       "Use (default) IPv4 address as interface identifier", 1 },
 
-#if defined(SOL2) || defined(__linux__)
     { "ipv6cp-use-persistent", o_bool, &ipv6cp_wantoptions[0].use_persistent,
       "Use uniquely-available persistent value for link local address", 1 },
-#endif /* defined(SOL2) */
 
     { "ipv6cp-restart", o_int, &ipv6cp_fsm[0].timeouttime,
       "Set timeout for IPv6CP", OPT_PRIO },
@@ -1096,7 +1094,6 @@ ipv6_check_options()
     if (!ipv6cp_protent.enabled_flag)
 	return;
 
-#if defined(SOL2) || defined(__linux__)
     /*
      * Persistent link-local id is only used when user has not explicitly
      * configure/hard-code the id
@@ -1116,7 +1113,6 @@ ipv6_check_options()
 	    wo->opt_local = 1;
 	}
     }
-#endif
 
     if (!wo->opt_local) {	/* init interface identifier */
 	if (wo->use_ip && eui64_iszero(wo->ourid)) {
@@ -1154,15 +1150,8 @@ ipv6_demand_conf(u)
 {
     ipv6cp_options *wo = &ipv6cp_wantoptions[u];
 
-#if defined(__linux__) || defined(SOL2) || (defined(SVR4) && (defined(SNI) || defined(__USLC__)))
-#if defined(SOL2)
     if (!sif6up(u))
 	return 0;
-#else
-    if (!sifup(u))
-	return 0;
-#endif /* defined(SOL2) */
-#endif    
     if (!sif6addr(u, wo->ourid, wo->hisid))
 	return 0;
 #if !defined(__linux__) && !(defined(SVR4) && (defined(SNI) || defined(__USLC__)))
@@ -1255,43 +1244,20 @@ ipv6cp_up(f)
 	sifnpmode(f->unit, PPP_IPV6, NPMODE_PASS);
 
     } else {
-	/*
-	 * Set LL addresses
-	 */
-#if !defined(__linux__) && !defined(SOL2) && !(defined(SVR4) && (defined(SNI) || defined(__USLC__)))
-	if (!sif6addr(f->unit, go->ourid, ho->hisid)) {
-	    if (debug)
-		warn("sif6addr failed");
-	    ipv6cp_close(f->unit, "Interface configuration failed");
-	    return;
-	}
-#endif
-
 	/* bring the interface up for IPv6 */
-#if defined(SOL2)
 	if (!sif6up(f->unit)) {
 	    if (debug)
-		warn("sifup failed (IPV6)");
+		warn("sif6up failed (IPV6)");
 	    ipv6cp_close(f->unit, "Interface configuration failed");
 	    return;
 	}
-#else
-	if (!sifup(f->unit)) {
-	    if (debug)
-		warn("sifup failed (IPV6)");
-	    ipv6cp_close(f->unit, "Interface configuration failed");
-	    return;
-	}
-#endif /* defined(SOL2) */
 
-#if defined(__linux__) || defined(SOL2) || (defined(SVR4) && (defined(SNI) || defined(__USLC__)))
 	if (!sif6addr(f->unit, go->ourid, ho->hisid)) {
 	    if (debug)
 		warn("sif6addr failed");
 	    ipv6cp_close(f->unit, "Interface configuration failed");
 	    return;
 	}
-#endif
 	sifnpmode(f->unit, PPP_IPV6, NPMODE_PASS);
 
 	notice("local  LL address %s", llv6_ntoa(go->ourid));
@@ -1348,16 +1314,14 @@ ipv6cp_down(f)
     } else {
 	sifnpmode(f->unit, PPP_IPV6, NPMODE_DROP);
 #if !defined(__linux__) && !(defined(SVR4) && (defined(SNI) || defined(__USLC)))
-#if defined(SOL2)
 	sif6down(f->unit);
-#else
-	sifdown(f->unit);
-#endif /* defined(SOL2) */
 #endif
 	ipv6cp_clear_addrs(f->unit, 
 			   ipv6cp_gotoptions[f->unit].ourid,
 			   ipv6cp_hisoptions[f->unit].hisid);
-#if defined(__linux__) || (defined(SVR4) && (defined(SNI) || defined(__USLC)))
+#if defined(__linux__)
+	sif6down(f->unit);
+#elif defined(SVR4) && (defined(SNI) || defined(__USLC))
 	sifdown(f->unit);
 #endif
     }

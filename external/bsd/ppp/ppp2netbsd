@@ -38,8 +38,7 @@ UNUSED_DIRS="${UNUSED_DIRS} .git"
 UNUSED_FILES="Changes-2.3 README.linux README.pppoe README.sol2 configure"
 UNUSED_FILES="${UNUSED_FILES} pppd/md[45].* pppd/sha1.* pppd/srp-entry.*"
 UNUSED_FILES="${UNUSED_FILES} pppd/sys-linux.c pppd/sys-solaris.c"
-UNUSED_FILES="${UNUSED_FILES} pppdump/zlib.* pppdump/ppp-comp.h .gitignore"
-UNUSED_FILES="${UNUSED_FILES} pppdump/.gitignore pppdump/bsd-comp.c"
+UNUSED_FILES="${UNUSED_FILES} pppdump/zlib.* pppdump/ppp-comp.h"
 
 # Stuff we don't want
 GPL_DIRS="pppd/plugins/pppoatm pppd/plugins/radius pppd/plugins/rp-pppoe"
@@ -67,4 +66,10 @@ find . -type f -name 'Makefile*' | while read m; do
 done
 echo; echo
 
+echo -n "Removing .gitignore... "
+find . -type f -name '.gitignore' | while read m; do
+	rm -f ${m}
+	echo -n "${m} "
+done
+echo; echo
 cleantags .

@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.2.6.1 2014/12/17 19:25:40 martin Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -47,7 +47,7 @@
 #define RCSID	"Id: options.c,v 1.102 2008/06/15 06:53:06 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("$NetBSD: options.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.2.6.1 2014/12/17 19:25:40 martin Exp $");
 #endif
 
 #include <ctype.h>
@@ -792,10 +792,13 @@ process_option(opt, cmd, argv)
 	if (opt->flags & OPT_STATIC) {
 	    strlcpy((char *)(opt->addr), *argv, opt->upper_limit);
 	} else {
+	    char **optptr = (char **)(opt->addr);
 	    sv = strdup(*argv);
 	    if (sv == NULL)
 		novm("option argument");
-	    *(char **)(opt->addr) = sv;
+	    if (*optptr)
+		free(*optptr);
+	    *optptr = sv;
 	}
 	break;
 
@@ -1299,9 +1302,10 @@ getword(f, word, newlinep, filename)
 	    /*
 	     * Store the resulting character for the escape sequence.
 	     */
-	    if (len < MAXWORDLEN-1)
+	    if (len < MAXWORDLEN) {
 		word[len] = value;
-	    ++len;
+		++len;
+	    }
 
 	    if (!got)
 		c = getc(f);
@@ -1339,9 +1343,10 @@ getword(f, word, newlinep, filename)
 	/*
 	 * An ordinary character: store it in the word and get another.
 	 */
-	if (len < MAXWORDLEN-1)
+	if (len < MAXWORDLEN) {
 	    word[len] = c;
-	++len;
+	    ++len;
+	}
 
 	c = getc(f);
     }

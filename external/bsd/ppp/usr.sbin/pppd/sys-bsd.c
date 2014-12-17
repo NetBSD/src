@@ -189,6 +189,7 @@ static fd_set in_fds;		/* set of fds that wait_input waits for */
 static int max_in_fd;		/* highest fd set in in_fds */
 
 static int if_is_up;		/* the interface is currently up */
+static int if6_is_up;		/* the interface is currently up */
 static u_int32_t ifaddrs[2];	/* local and remote addresses we set */
 static u_int32_t default_route_gateway;	/* gateway addr for default route */
 static u_int32_t proxy_arp_addr;	/* remote addr for proxy arp */
@@ -199,6 +200,7 @@ static void set_flags(int, int);
 static int dodefaultroute(u_int32_t, int);
 static int get_ether_addr(u_int32_t, struct sockaddr_dl *);
 static void restore_loop(void);	/* Transfer ppp unit back to loopback */
+static int setifstate(int, int);
 
 
 static void
@@ -1400,11 +1402,79 @@ sifvjcomp(int u, int vjcomp, int cidcomp, int maxcid)
     return 1;
 }
 
-/*
+/********************************************************************
+ *
  * sifup - Config the interface up and enable IP packets to pass.
  */
-int
-sifup(int u)
+
+int sifup(int u)
+{
+    int ret;
+
+    if ((ret = setifstate(u, 1)))
+	if_is_up++;
+
+    return ret;
+}
+
+/********************************************************************
+ *
+ * sifdown - Disable the indicated protocol and config the interface
+ *	     down if there are no remaining protocols.
+ */
+
+int sifdown (int u)
+{
+    if (if_is_up && --if_is_up > 0)
+	return 1;
+
+#ifdef INET6
+    if (if6_is_up)
+	return 1;
+#endif /* INET6 */
+
+    return setifstate(u, 0);
+}
+
+#ifdef INET6
+/********************************************************************
+ *
+ * sif6up - Config the interface up for IPv6
+ */
+
+int sif6up(int u)
+{
+    int ret;
+
+    if ((ret = setifstate(u, 1)))
+	if6_is_up = 1;
+
+    return ret;
+}
+
+/********************************************************************
+ *
+ * sif6down - Disable the IPv6CP protocol and config the interface
+ *	      down if there are no remaining protocols.
+ */
+
+int sif6down (int u)
+{
+    if6_is_up = 0;
+
+    if (if_is_up)
+	return 1;
+
+    return setifstate(u, 0);
+}
+#endif /* INET6 */
+
+/********************************************************************
+ *
+ * setifstate - Config the interface up or down
+ */
+
+static int setifstate (int u, int state)
 {
     struct ifreq ifr;
 
@@ -1413,7 +1483,10 @@ sifup(int u)
 	error("%s: ioctl (SIOCGIFFLAGS): %m", __func__);
 	return 0;
     }
-    ifr.ifr_flags |= IFF_UP;
+    if (state)
+	ifr.ifr_flags |= IFF_UP;
+    else
+	ifr.ifr_flags &= ~IFF_UP;
     if (ioctl(sock_fd, SIOCSIFFLAGS, (caddr_t) &ifr) < 0) {
 	error("%s: ioctl(SIOCSIFFLAGS): %m", __func__);
 	return 0;
@@ -1437,37 +1510,6 @@ sifnpmode(int u, int proto, enum NPmode mode)
 	return 0;
     }
     return 1;
-}
-
-/*
- * sifdown - Config the interface down and disable IP.
- */
-int
-sifdown(int u)
-{
-    struct ifreq ifr;
-    int rv;
-    struct npioctl npi;
-
-    rv = 1;
-    npi.protocol = PPP_IP;
-    npi.mode = NPMODE_ERROR;
-    ioctl(ppp_fd, PPPIOCSNPMODE, (caddr_t) &npi);
-    /* ignore errors, because ppp_fd might have been closed by now. */
-
-    strlcpy(ifr.ifr_name, ifname, sizeof (ifr.ifr_name));
-    if (ioctl(sock_fd, SIOCGIFFLAGS, (caddr_t) &ifr) < 0) {
-	error("%s: ioctl (SIOCGIFFLAGS): %m", __func__);
-	rv = 0;
-    } else {
-	ifr.ifr_flags &= ~IFF_UP;
-	if (ioctl(sock_fd, SIOCSIFFLAGS, (caddr_t) &ifr) < 0) {
-	    error("%s: ioctl(SIOCSIFFLAGS): %m", __func__);
-	    rv = 0;
-	} else
-	    if_is_up = 0;
-    }
-    return rv;
 }
 
 /*
@@ -2067,5 +2109,56 @@ unlock(void)
 	free(lock_file);
 	lock_file = NULL;
     }
+}
+#endif
+
+#ifdef INET6
+/*
+ * ether_to_eui64 - Convert 48-bit Ethernet address into 64-bit EUI
+ *
+ * convert the 48-bit MAC address of eth0 into EUI 64. caller also assumes
+ * that the system has a properly configured Ethernet interface for this
+ * function to return non-zero.
+ */
+int
+ether_to_eui64(eui64_t *p_eui64)
+{
+    struct ifaddrs *ifap, *ifa;
+
+    if (getifaddrs(&ifap) != 0) {
+	warn("%s: getifaddrs: %m", __func__);
+	return 0;
+    }
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+	/*
+	 * Check the interface's internet address.
+	 */
+	if (ifa->ifa_addr->sa_family != AF_LINK)
+	    continue;
+	/*
+	 * Check that the interface is up, and not point-to-point or loopback.
+	 */
+	if ((ifa->ifa_flags & (IFF_UP|IFF_POINTOPOINT|IFF_LOOPBACK)) == IFF_UP)
+	{
+	    /*
+	     * And convert the EUI-48 into EUI-64, per RFC 2472 [sec 4.1]
+	     */
+	    unsigned char *ptr = (void *)ifa->ifa_addr;
+	    p_eui64->e8[0] = ptr[0] | 0x02;
+	    p_eui64->e8[1] = ptr[1];
+	    p_eui64->e8[2] = ptr[2];
+	    p_eui64->e8[3] = 0xFF;
+	    p_eui64->e8[4] = 0xFE;
+	    p_eui64->e8[5] = ptr[3];
+	    p_eui64->e8[6] = ptr[4];
+	    p_eui64->e8[7] = ptr[5];
+	    freeifaddrs(ifap);
+	    return 1;
+	}
+    }
+    warn("%s: can't find a link address", __func__);
+    freeifaddrs(ifap);
+
+    return 0;
 }
 #endif

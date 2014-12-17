@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6cp.h,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+/*	$NetBSD: ipv6cp.h,v 1.2.6.1 2014/12/17 19:25:40 martin Exp $	*/
 
 /*
  * ipv6cp.h - PPP IPV6 Control Protocol.
@@ -156,9 +156,7 @@ typedef struct ipv6cp_options {
     int opt_local;		/* ourtoken set by option */
     int opt_remote;		/* histoken set by option */
     int use_ip;			/* use IP as interface identifier */
-#if defined(SOL2) || defined(__linux__)
     int use_persistent;		/* use uniquely persistent value for address */
-#endif /* defined(SOL2) */
     int neg_vj;			/* Van Jacobson Compression? */
     u_short vj_protocol;	/* protocol value to use in VJ option */
     eui64_t ourid, hisid;	/* Interface identifiers */
