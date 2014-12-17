@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if.c,v 1.9 2014/12/09 20:21:05 roy Exp $");
+ __RCSID("$NetBSD: if.c,v 1.10 2014/12/17 20:50:08 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -50,12 +50,7 @@
 #ifdef SIOCGIFMEDIA
 #  include <net/if_media.h>
 #endif
-
 #include <net/route.h>
-#ifdef __linux__
-#  include <asm/types.h> /* for systems with broken headers */
-#  include <linux/rtnetlink.h>
-#endif
 
 #include <ctype.h>
 #include <errno.h>
