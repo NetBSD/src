@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.678 2014/12/12 07:21:28 msaitoh Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.679 2014/12/17 10:02:46 jnemeth Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.686 2014/12/12 07:21:05 msaitoh Exp
+ *	NetBSD: usbdevs,v 1.687 2014/12/17 10:02:01 jnemeth Exp
  */
 
 /*
@@ -2988,10 +2988,14 @@
 
 /* SMSC products */
 #define	USB_PRODUCT_SMSC_2020HUB	0x2020		/* USB Hub */
+#define	USB_PRODUCT_SMSC_2512HUB	0x2512		/* USB 2.0 2-Port Hub */
+#define	USB_PRODUCT_SMSC_2513HUB	0x2513		/* USB 2.0 3-Port Hub */
+#define	USB_PRODUCT_SMSC_2514HUB	0x2514		/* USB 2.0 4-Port Hub */
 #define	USB_PRODUCT_SMSC_LAN7500	0x7500		/* LAN7500 USB 2.0 gigabit ethernet device */
 #define	USB_PRODUCT_SMSC_SMSC9500	0x9500		/* SMSC9500 Ethernet device */
 #define	USB_PRODUCT_SMSC_SMSC9505	0x9505		/* SMSC9505 Ethernet device */
-#define	USB_PRODUCT_SMSC_SMSC9512	0x9512		/* SMSC9512 USB Hub */
+#define	USB_PRODUCT_SMSC_SMSC9512	0x9512		/* SMSC9512 USB Hub & Ethernet device */
+#define	USB_PRODUCT_SMSC_SMSC9514	0x9514		/* SMSC9514 USB Hub & Ethernet device */
 #define	USB_PRODUCT_SMSC_LAN9530	0x9530		/* LAN9530 Ethernet Device */
 #define	USB_PRODUCT_SMSC_LAN9730	0x9730		/* LAN9730 Ethernet Device */
 #define	USB_PRODUCT_SMSC_SMSC9500_SAL10	0x9900		/* SMSC9500 Ethernet device (SAL10) */
