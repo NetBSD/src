@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.686 2014/12/12 07:21:05 msaitoh Exp $
+$NetBSD: usbdevs,v 1.687 2014/12/17 10:02:01 jnemeth Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2981,10 +2981,14 @@ product SMK MCE_IR		0x031d	eHome Infrared Transceiver
 
 /* SMSC products */
 product SMSC 2020HUB		0x2020	USB Hub
+product SMSC 2512HUB		0x2512	USB 2.0 2-Port Hub
+product SMSC 2513HUB		0x2513	USB 2.0 3-Port Hub
+product SMSC 2514HUB		0x2514	USB 2.0 4-Port Hub
 product SMSC LAN7500		0x7500	LAN7500 USB 2.0 gigabit ethernet device
 product SMSC SMSC9500		0x9500	SMSC9500 Ethernet device
 product SMSC SMSC9505		0x9505	SMSC9505 Ethernet device
-product SMSC SMSC9512		0x9512	SMSC9512 USB Hub
+product SMSC SMSC9512		0x9512	SMSC9512 USB Hub & Ethernet device
+product SMSC SMSC9514		0x9514	SMSC9514 USB Hub & Ethernet device
 product SMSC LAN9530		0x9530	LAN9530 Ethernet Device
 product SMSC LAN9730		0x9730	LAN9730 Ethernet Device
 product SMSC SMSC9500_SAL10	0x9900	SMSC9500 Ethernet device (SAL10)
