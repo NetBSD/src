@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.9 2014/12/18 06:24:28 mrg Exp $
+# $NetBSD: mi,v 1.10 2014/12/18 10:02:17 martin Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R6/lib/libFS_g.a				-unknown-	debuglib,x11
 ./usr/X11R6/lib/libGLU_g.a				-unknown-	debuglib,x11
@@ -408,4 +408,3 @@
 ./usr/libdata/debug/usr/X11R7/bin/xwud.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/libexec/chooser.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/gallium_dri.so.0.debug	-unknown-		debug,xorg
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/kms_swrast_dri.so.0.debug	-unknown-		debug,xorg
