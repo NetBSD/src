@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile,v 1.29 2014/07/13 18:28:13 martin Exp $
+#	$NetBSD: Makefile,v 1.30 2014/12/18 06:24:28 mrg Exp $
 
 # build libraries for xorg
 
-SUBDIR=	libfontenc freetype libFS libICE libOSMesa \
+SUBDIR=	libfontenc freetype libFS libICE libglapi \
 	libXau libXdmcp libdrm libpciaccess libpthread-stubs .WAIT
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=libdrm_intel
 .endif
 SUBDIR+=libdrm_radeon pixman xkeyboard-config libxcb \
-	.WAIT \
-	dri fontconfig libSM libX11 \
+	.WAIT
+SUBDIR+=dri gallium fontconfig libSM libX11 \
 	.WAIT \
 	libXcomposite libXdamage libXext libXfixes libXt \
 	libxkbfile \
