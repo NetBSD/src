@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2014/12/18 06:24:28 mrg Exp $
+# $NetBSD: Makefile,v 1.20 2014/12/18 10:08:52 mrg Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -295,13 +295,15 @@ R200_RADEON_FILES= \
 	radeon_screen.c
 
 .for _f in ${R200_RADEON_FILES}
-BUILDSYMLINKS+=		${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/r200/${_f} r200_${_f}
+BUILDSYMLINKS+=		${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/radeon/${_f} r200_${_f}
 DRI_SOURCES.r200+=	r200_${_f}
 .endfor
 
 .for _f in ${DRI_SOURCES.r200}
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/r200/server \
 			-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/r200 \
+			-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/radeon/server \
+			-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/radeon \
 			-DRADEON_R200
 .endfor
 
