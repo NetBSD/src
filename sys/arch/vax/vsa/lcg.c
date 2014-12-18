@@ -1,4 +1,4 @@
-/*	$NetBSD: lcg.c,v 1.1 2014/12/16 11:34:17 jklos Exp $ */
+/*	$NetBSD: lcg.c,v 1.2 2014/12/18 22:46:53 jklos Exp $ */
 /*
  * LCG accelerated framebuffer driver
  * Copyright (c) 2003, 2004 Blaz Antonic
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.1 2014/12/16 11:34:17 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcg.c,v 1.2 2014/12/18 22:46:53 jklos Exp $");
 
 #define LCG_NO_ACCEL
 
@@ -708,6 +708,10 @@ lcg_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		fb->width = lcg_xsize;
 		fb->depth = lcg_depth;
 		fb->cmsize = 1 << lcg_depth;
+		break;
+
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = lcg_xsize;
 		break;
 
 	case WSDISPLAYIO_GETCMAP:
