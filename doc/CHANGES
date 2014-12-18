@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2026 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2027 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -112,3 +112,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	dhcpcd(8): Import dhcpcd-6.6.5. [roy 20141209]
 	bind: Import version 9.10.1-P1. [christos 20141209]
 	dhcpcd(8): Import dhcpcd-6.6.6. [roy 20141217]
+	powerpc: Switch to GCC 4.8. [matt 20141218]
