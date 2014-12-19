@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.116 2014/12/19 21:43:11 christos Exp $
+#	$NetBSD: bsd.man.mk,v 1.117 2014/12/19 22:25:39 christos Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -14,10 +14,10 @@ realinstall:	${MANINSTALL}
 # we always refresh the target when needed. In general we don't
 # want to do this, otherwise things like _exit.2 -> _Exit.2 get
 # installed on each build even when they don't need to. Note that
-# the CASE_INSENSITIVE_DEST macro is currently not defined anywhere.
-
+# the CASE_INSENSITIVE_DEST macro is currently not defined anywhere,
+# and the expansion does not really work because of make(1).
 .if defined(CASE_INSENSITIVE_DEST)
-FLATTEN?=	:tl
+_FLATTEN?=tl:
 .endif
 
 ##### Default values
@@ -120,7 +120,7 @@ _t:=${DESTDIR}${MANDIR}/man${_dst:T:E}${MANSUBDIR}/${_dst}${MANSUFFIX}
 
 # Handle case conflicts carefully, when _dst occurs
 # more than once after case flattening
-.if ${MKUPDATE} == "no" || ${MLINKS:${FLATTEN}M${_dst:${FLATTEN}Q}:[\#]} > 1
+.if ${MKUPDATE} == "no" || ${MLINKS:${_FLATTEN}M${_dst:${_FLATTEN}Q}:[\#]} > 1
 ${_t}!		${_l} __linkinstallpage
 .else
 ${_t}:		${_l} __linkinstallpage
@@ -188,7 +188,7 @@ _t:=${DESTDIR}${MANDIR}/cat${_dst:T:E}${MANSUBDIR}/${_dst:R}.0${MANSUFFIX}
 
 # Handle case conflicts carefully, when _dst occurs
 # more than once after case flattening
-.if ${MKUPDATE} == "no" || ${MLINKS:${FLATTEN}M${_dst:${FLATTEN}Q}:[\#]} > 1
+.if ${MKUPDATE} == "no" || ${MLINKS:${_FLATTEN}M${_dst:${_FLATTEN}Q}:[\#]} > 1
 ${_t}!		${_l} __linkinstallpage
 .else
 ${_t}:		${_l} __linkinstallpage
@@ -260,7 +260,7 @@ _t:=${HTMLDIR}/html${_dst:T:E}${MANSUBDIR}/${_dst:R:S-/index$-/x&-}.html
 
 # Handle case conflicts carefully, when _dst occurs
 # more than once after case flattening
-.if ${MKUPDATE} == "no" || ${MLINKS:${FLATTEN}M${_dst:${FLATTEN}Q}:[\#]} > 1
+.if ${MKUPDATE} == "no" || ${MLINKS:${_FLATTEN}M${_dst:${_FLATTEN}Q}:[\#]} > 1
 ${_t}!		${_l} __linkinstallpage
 .else
 ${_t}:		${_l} __linkinstallpage
