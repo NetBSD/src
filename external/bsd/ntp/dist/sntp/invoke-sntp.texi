@@ -6,7 +6,7 @@
 #
 # EDIT THIS FILE WITH CAUTION  (invoke-sntp.texi)
 #
-# It has been AutoGen-ed  December 24, 2013 at 11:40:00 AM by AutoGen 5.18.3pre5
+# It has been AutoGen-ed  December 19, 2014 at 07:51:36 AM by AutoGen 5.18.5pre4
 # From the definitions    sntp-opts.def
 # and the template file   agtexi-cmd.tpl
 @end ignore
@@ -82,7 +82,6 @@ This software is released under the NTP license, <http://ntp.org/license>.
 * sntp exit status::            exit status
 * sntp Usage::                  Usage
 * sntp Authors::                Authors
-* sntp Notes::                  Notes
 @end menu
 
 @node sntp usage
@@ -101,7 +100,7 @@ with a status code of 0.
 
 @exampleindent 0
 @example
-sntp - standard Simple Network Time Protocol client program - Ver. 4.2.7p404
+sntp - standard Simple Network Time Protocol client program - Ver. 4.2.8
 Usage:  sntp [ -<flag> [<val>] | --<name>[@{=| @}<val>] ]... \
                 [ hostname-or-IP ...]
   Flg Arg Option-Name    Description
@@ -153,8 +152,6 @@ The following option preset mechanisms are supported:
  - examining environment variables named SNTP_*
 
 Please send bug reports to:  <http://bugs.ntp.org, bugs@@ntp.org>
-
-exit 0
 @end example
 @exampleindent 4
 
@@ -257,7 +254,8 @@ milliseconds.
 This is the ``kod history filename'' option.
 This option takes a file argument @file{file-name}.
 Specifies the filename to be used for the persistent history of KoD
-responses received from servers.
+responses received from servers.  If the file does not exist, a
+warning message will be displayed.  The file will not be created.
 @node sntp keyfile
 @subsection keyfile option (-k)
 @cindex sntp-keyfile
@@ -427,5 +425,3 @@ it to autogen-users@@lists.sourceforge.net.  Thank you.
 @subsection sntp Usage
 @node sntp Authors
 @subsection sntp Authors
-@node sntp Notes
-@subsection sntp Notes

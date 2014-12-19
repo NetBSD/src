@@ -1,13 +1,24 @@
 NULL=
-run_ag=		cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)"	\
+run_ag=		cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)" AUTOGEN_DNE_DATE=-D	\
 		autogen -L ../../sntp/include -L ../../sntp/ag-tpl \
 		--writable
+std_def_list =							\
+	$(top_srcdir)/sntp/include/debug-opt.def		\
+	$(top_srcdir)/sntp/include/autogen-version.def 		\
+	$(top_srcdir)/sntp/include/copyright.def 		\
+	$(top_srcdir)/sntp/include/homerc.def 			\
+	$(top_srcdir)/sntp/include/ntp.lic 			\
+	$(top_srcdir)/sntp/include/version.def			\
+	$(NULL)
+
 
 bin_SCRIPTS=	$(CALC_TICKADJ_DB)
 libexec_SCRIPTS=	$(CALC_TICKADJ_DL)
 sbin_SCRIPTS=	$(CALC_TICKADJ_DS)
 EXTRA_SCRIPTS=	calc_tickadj
 
+man1_MANS=
+man8_MANS=
 manpage_HACK=
 if WANT_CALC_TICKADJ_MS
 man_MANS=	calc_tickadj.$(CALC_TICKADJ_MS)
@@ -18,6 +29,8 @@ manpage_HACK+=	calc_tickadj.
 # they are general prerequisites.
 # The manpage_HACK is listed in noinst_DATA so that takes care of these.
 endif
+
+DISTCLEANFILES =	config.log $(man_MANS) calc_tickadj.
 
 EXTRA_DIST =				\
 	calc_tickadj.in 		\
@@ -36,6 +49,8 @@ EXTRA_DIST =				\
 noinst_DATA = 				\
 	calc_tickadj.1calc_tickadjman	\
 	calc_tickadj.1calc_tickadjmdoc	\
+	calc_tickadj.man.in		\
+	calc_tickadj.mdoc.in		\
 	calc_tickadj.texi		\
 	calc_tickadj.html		\
 	calc_tickadj-opts.def		\
@@ -47,7 +62,7 @@ noinst_DATA = 				\
 
 calc_tickadj: $(srcdir)/calc_tickadj-opts
 
-$(srcdir)/calc_tickadj-opts: $(srcdir)/calc_tickadj-opts.def $(srcdir)/../../sntp/ag-tpl/perlopt.tpl
+$(srcdir)/calc_tickadj-opts: $(srcdir)/calc_tickadj-opts.def
 	$(run_ag) calc_tickadj-opts.def
 
 ### Nroff

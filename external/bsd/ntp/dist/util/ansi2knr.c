@@ -1,8 +1,8 @@
-/*	$NetBSD: ansi2knr.c,v 1.1.1.1 2009/12/13 16:57:28 kardel Exp $	*/
+/*	$NetBSD: ansi2knr.c,v 1.1.1.2 2014/12/19 20:37:49 christos Exp $	*/
 
 /* Copyright (C) 1989, 2000 Aladdin Enterprises.  All rights reserved. */
 
-/*Id: ansi2knr.c,v 1.3 2000/04/13 03:41:48 lpd Exp*/
+/*Id: ansi2knr.c,v 1.3 2000/04/13 03:41:48 lpd Exp */
 /* Convert ANSI C function definitions to K&R ("traditional C") syntax */
 
 /*

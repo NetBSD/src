@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.3 2013/12/27 23:31:11 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.4 2014/12/19 20:37:44 christos Exp $	*/
 
 #include <config.h>
 
@@ -87,7 +87,7 @@ sent_pkt *	fam_listheads[2];
 
 static union {
 	struct pkt pkt;
-	char   buf[1500];
+	char   buf[LEN_PKT_NOMAC + NTP_MAXEXTEN + MAX_MAC_LEN];
 } rbuf;
 
 #define r_pkt  rbuf.pkt
@@ -297,9 +297,7 @@ open_sockets(
 	)
 {
 	sockaddr_u	name;
-	int		one_fam_works;
 
-	one_fam_works = FALSE;
 	if (-1 == sock4) {
 		sock4 = socket(PF_INET, SOCK_DGRAM, 0);
 		if (-1 == sock4) {
@@ -330,7 +328,6 @@ open_sockets(
 			msyslog(LOG_ERR,
 				"open_sockets: event_new(base, sock4) failed!");
 		} else {
-			one_fam_works = TRUE;
 			event_add(ev_sock4, &wakeup_tv);
 		}
 	}
@@ -365,7 +362,6 @@ open_sockets(
 			msyslog(LOG_ERR,
 				"open_sockets: event_new(base, sock6) failed!");
 		} else {
-			one_fam_works = TRUE;
 			event_add(ev_sock6, &wakeup_tv);
 		}
 	}

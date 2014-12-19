@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq-subs.c,v 1.1.1.3 2013/12/27 23:31:06 christos Exp $	*/
+/*	$NetBSD: ntpq-subs.c,v 1.1.1.4 2014/12/19 20:37:42 christos Exp $	*/
 
 /*
  * ntpq-subs.c - subroutines which are called to perform ntpq commands.
@@ -212,7 +212,7 @@ struct xcmd opcmds[] = {
  * Variable list data space
  */
 #define MAXLINE		512	/* maximum length of a line */
-#define MAXLIST		64	/* maximum variables in list */
+#define MAXLIST		128	/* maximum variables in list */
 #define LENHOSTNAME	256	/* host name limit */
 
 #define MRU_GOT_COUNT	0x1
@@ -279,6 +279,7 @@ struct varlist {
  * Imported from ntpq.c
  */
 extern int showhostnames;
+extern int wideremote;
 extern int rawmode;
 extern struct servent *server_entry;
 extern struct association *assoc_cache;
@@ -538,8 +539,12 @@ makequerydata(
 		else
 			valuelen = strlen(vl->value);
 		totallen = namelen + valuelen + (valuelen != 0) + (cp != data);
-		if (cp + totallen > cpend)
-			break;
+		if (cp + totallen > cpend) {
+		    fprintf(stderr, 
+			    "***Ignoring variables starting with `%s'\n",
+			    vl->name);
+		    break;
+		}
 
 		if (cp != data)
 			*cp++ = ',';
@@ -1027,8 +1032,8 @@ mreadvar(
 				&from, &to, fp))
 		return;
 
+	ZERO(tmplist);
 	if (pcmd->nargs >= 3) {
-		ZERO(tmplist);
 		doaddvlist(tmplist, pcmd->argval[2].string);
 		pvars = tmplist;
 	} else {
@@ -1766,7 +1771,10 @@ doprintpeers(
 		if (!have_srchost)
 			strlcpy(clock_name, nntohost(&srcadr),
 				sizeof(clock_name));
-		fprintf(fp, "%c%-15.15s ", c, clock_name);
+		if (wideremote && 15 < strlen(clock_name))
+			fprintf(fp, "%c%s\n                 ", c, clock_name);
+		else
+			fprintf(fp, "%c%-15.15s ", c, clock_name);
 		if (!have_da_rid) {
 			drlen = 0;
 		} else {

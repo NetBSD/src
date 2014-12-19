@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.1.1.3 2013/12/27 23:31:01 christos Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.1.1.4 2014/12/19 20:37:40 christos Exp $	*/
 
 /*
  * ntp_control.c - respond to mode 6 control messages and send async
@@ -733,6 +733,7 @@ static const u_char clocktypes[] = {
 	CTL_SST_TS_UHF,		/* REFCLK_RIPENCC (43) */
 	CTL_SST_TS_UHF,		/* REFCLK_NEOCLOCK4X (44) */
 	CTL_SST_TS_UHF,		/* REFCLK_TSYNCPCI (45) */
+	CTL_SST_TS_UHF		/* REFCLK_GPSDJSON (46) */
 };
 #endif  /* REFCLOCK */
 
@@ -801,6 +802,10 @@ static u_char	res_async;	/* sending async trap response? */
  */
 static	char *reqpt;
 static	char *reqend;
+
+#ifndef MIN
+#define MIN(a, b) (((a) <= (b)) ? (a) : (b))
+#endif
 
 /*
  * init_control - initialize request data
@@ -1317,6 +1322,7 @@ ctl_putdata(
 	)
 {
 	int overhead;
+	unsigned int currentlen;
 
 	overhead = 0;
 	if (!bin) {
@@ -1339,12 +1345,22 @@ ctl_putdata(
 	/*
 	 * Save room for trailing junk
 	 */
-	if (dlen + overhead + datapt > dataend) {
+	while (dlen + overhead + datapt > dataend) {
 		/*
 		 * Not enough room in this one, flush it out.
 		 */
+		currentlen = MIN(dlen, dataend - datapt);
+
+		memcpy(datapt, dp, currentlen);
+
+		datapt += currentlen;
+		dp += currentlen;
+		dlen -= currentlen;
+		datalinelen += currentlen;
+
 		ctl_flushpkt(CTL_MORE);
 	}
+
 	memcpy(datapt, dp, dlen);
 	datapt += dlen;
 	datalinelen += dlen;
@@ -2320,11 +2336,14 @@ ctl_putsys(
 
 	case CS_CERTIF:
 		for (cp = cinfo; cp != NULL; cp = cp->link) {
+			tstamp_t tstamp;
+
 			snprintf(str, sizeof(str), "%s %s 0x%x",
 			    cp->subject, cp->issuer, cp->flags);
 			ctl_putstr(sys_var[CS_CERTIF].text, str,
 			    strlen(str));
-			ctl_putfs(sys_var[CS_REVTIME].text, cp->last);
+			tstamp = caltontp(&(cp->last)); /* XXX too small to hold some values, but that's what ctl_putfs requires */
+			ctl_putfs(sys_var[CS_REVTIME].text, tstamp);
 		}
 		break;
 
@@ -3273,6 +3292,20 @@ static void configure(
 
 	/* Initialize the remote config buffer */
 	data_count = reqend - reqpt;
+
+	if (data_count > sizeof(remote_config.buffer) - 2) {
+		snprintf(remote_config.err_msg,
+			 sizeof(remote_config.err_msg),
+			 "runtime configuration failed: request too long");
+		ctl_putdata(remote_config.err_msg,
+			    strlen(remote_config.err_msg), 0);
+		ctl_flushpkt(0);
+		msyslog(LOG_NOTICE,
+			"runtime config from %s rejected: request too long",
+			stoa(&rbufp->recv_srcadr));
+		return;
+	}
+
 	memcpy(remote_config.buffer, reqpt, data_count);
 	if (data_count > 0
 	    && '\n' != remote_config.buffer[data_count - 1])
@@ -3337,7 +3370,8 @@ static u_int32 derive_nonce(
 	u_int32		ts_f
 	)
 {
-	static u_int32	salt[2];
+	static u_int32	salt[4];
+	static u_long	last_salt_update;
 	union d_tag {
 		u_char	digest[EVP_MAX_MD_SIZE];
 		u_int32 extract;
@@ -3345,9 +3379,13 @@ static u_int32 derive_nonce(
 	EVP_MD_CTX	ctx;
 	u_int		len;
 
-	while (!salt[0])
+	while (!salt[0] || current_time - last_salt_update >= 3600) {
 		salt[0] = ntp_random();
-	salt[1] = conf_file_sum;
+		salt[1] = ntp_random();
+		salt[2] = ntp_random();
+		salt[3] = ntp_random();
+		last_salt_update = current_time;
+	}
 
 	EVP_DigestInit(&ctx, EVP_get_digestbynid(NID_md5));
 	EVP_DigestUpdate(&ctx, salt, sizeof(salt));

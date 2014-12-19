@@ -4,6 +4,7 @@
 <meta http-equiv="content-type" content="text/html;charset=iso-8859-1">
 <meta name="generator" content="HTML Tidy, see www.w3.org">
 <title>Access Control Commands and Options</title>
+<!-- Changed by: Harlan &, 13-Nov-2014 -->
 <link href="scripts/style.css" type="text/css" rel="stylesheet">
 <style type="text/css">
 <!--
@@ -19,7 +20,7 @@ color: #FF0000;
 <img src="pic/pogo6.gif" alt="gif" align="left"><a href="http://www.eecis.udel.edu/~mills/pictures.html">from <i>Pogo</i>, Walt Kelly</a>
 <p>The skunk watches for intruders and sprays.</p>
 <p>Last update:
-  <!-- #BeginDate format:En2m -->14-Oct-2011  18:37<!-- #EndDate -->
+  <!-- #BeginDate format:En2m -->13-Nov-2014  03:00<!-- #EndDate -->
   UTC</p>
 <br clear="left">
 <h4>Related Links</h4>
@@ -59,13 +60,13 @@ color: #FF0000;
       <dt><tt>lowpriotrap</tt></dt>
       <dd>Declare traps set by matching hosts to be low priority. The number of traps a server can maintain is limited (the current limit is 3). Traps are usually assigned on a first come, first served basis, with later trap requestors being denied service. This flag modifies the assignment algorithm by allowing low priority traps to be overridden by later requests for normal priority traps.</dd>
       <dt><tt>mssntp</tt></dt>
-      <dd>Enable Microsoft Windows MS-SNTP authentication using Active Directory services. <span class="style1">Note: Potential users should be aware that these services involve a TCP connection to another process that could potentially block, denying services to other users. Therefore, this flag should be used only for a dedicated  server with no clients other than MS-SNTP.</span></dd>
+      <dd>Enable Microsoft Windows MS-SNTP authentication using Active Directory services. <span class="style1"><b>Note: Potential users should be aware that these services involve a TCP connection to another process that could potentially block, denying services to other users. Therefore, this flag should be used only for a dedicated  server with no clients other than MS-SNTP.</b></span></dd>
       <dt><tt>nomodify</tt></dt>
       <dd>Deny <tt>ntpq</tt> and <tt>ntpdc</tt> queries which attempt to modify the state of the server (i.e., run time reconfiguration). Queries which return information are permitted.</dd>
       <dt><tt>noquery</tt></dt>
       <dd>Deny <tt>ntpq</tt> and <tt>ntpdc</tt> queries. Time service is not affected.</dd>
       <dt><tt>nopeer</tt></dt>
-      <dd>Deny packets that might  mobilize an  association unless authenticated. This includes broadcast, symmetric-active and manycast server packets when a configured association does not exist. Note that this flag does not apply to packets that do not attempt to mobilize an association. </dd>
+      <dd>Deny packets that might mobilize an association unless authenticated. This includes broadcast, symmetric-active and manycast server packets when a configured association does not exist. It also includes <tt>pool</tt> associations, so if you want to use servers from a <tt>pool</tt> directive and also want to use <tt>nopeer</tt> by default, you'll want a <tt>"restrict source ..."</tt> line as well that does <i>not</i> include the <tt>nopeer</tt> directive.  Note that this flag does not apply to packets that do not attempt to mobilize an association. </dd>
       <dt><tt>noserve</tt></dt>
       <dd>Deny all packets except <tt>ntpq</tt> and <tt>ntpdc</tt> queries.</dd>
       <dt><tt>notrap</tt></dt>

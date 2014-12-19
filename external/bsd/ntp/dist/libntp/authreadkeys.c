@@ -1,4 +1,4 @@
-/*	$NetBSD: authreadkeys.c,v 1.1.1.2 2013/12/27 23:30:48 christos Exp $	*/
+/*	$NetBSD: authreadkeys.c,v 1.1.1.3 2014/12/19 20:37:39 christos Exp $	*/
 
 /*
  * authreadkeys.c - routines to support the reading of the key file
@@ -78,7 +78,7 @@ authreadkeys(
 	keyid_t	keyno;
 	int	keytype;
 	char	buf[512];		/* lots of room for line */
-	u_char	keystr[20];
+	u_char	keystr[32];		/* Bug 2537 */
 	int	len;
 	int	j;
 
@@ -177,7 +177,7 @@ authreadkeys(
 			continue;
 		}
 		len = strlen(token);
-		if (len <= sizeof(keystr)) {
+		if (len <= 20) {	/* Bug 2537 */
 			MD5auth_setkey(keyno, keytype, (u_char *)token, len);
 		} else {
 			char	hex[] = "0123456789abcdef";

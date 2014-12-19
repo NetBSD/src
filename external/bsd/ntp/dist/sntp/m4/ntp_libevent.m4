@@ -49,18 +49,34 @@ AC_SUBST([LDADD_LIBEVENT])
 case "$ntp_use_local_libevent" in
  yes)
     ;;
- no)
-    ;;
  *) # If we have (a good enough) pkg-config, see if it can find libevent
     case "$PKG_CONFIG" in
      /*)
-	AC_MSG_CHECKING([if libevent 2.0.9 or later is installed])
+	AC_MSG_CHECKING([if libevent $ntp_libevent_min_version or later is installed])
 	if $PKG_CONFIG --atleast-version=$ntp_libevent_min_version libevent
 	then
 	    ntp_use_local_libevent=no
 	    AC_MSG_NOTICE([Using the installed libevent])
 	    CPPFLAGS_LIBEVENT=`$PKG_CONFIG --cflags-only-I libevent`
-	    LDADD_LIBEVENT=`$PKG_CONFIG --libs libevent | sed 's:-levent::'`
+	    # HMS: I hope the following is accurate.
+	    # We don't need -levent, we only need  -levent_core.
+	    # While we could grab only the -L stuff, there *might* be
+	    # other flags there we want.  Originally we just removed -levent
+	    # but then somebody decided to install -levent-2.0
+	    # LDADD_LIBEVENT=`$PKG_CONFIG --libs libevent | sed 's:-levent::'`
+	    # So now we dance...
+	    LDADD_LIBEVENT=
+	    for i in `$PKG_CONFIG --libs libevent`
+	    do
+		case "$i" in
+		 -levent*) ;;
+		 *) case "$LDADD_LIBEVENT" in
+		     '') LDADD_LIBEVENT="$i" ;;
+		     *) LDADD_LIBEVENT="$LDADD_LIBEVENT $i" ;;
+		    esac
+		    ;;
+		esac
+	    done
 	    case "$LIBISC_PTHREADS_NOTHREADS" in
 	     pthreads)
 		LDADD_LIBEVENT="$LDADD_LIBEVENT -levent_pthreads"

@@ -10,11 +10,11 @@
 .ds B-Font B
 .ds I-Font I
 .ds R-Font R
-.TH ntp-keygen @NTP_KEYGEN_MS@ "24 Dec 2013" "ntp (4.2.7p404)" "User Commands"
+.TH ntp-keygen @NTP_KEYGEN_MS@ "19 Dec 2014" "ntp (4.2.8)" "User Commands"
 .\"
-.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-jqaq9V/ag-vqaq8V)
+.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-6fayVi/ag-hgaqUi)
 .\"
-.\" It has been AutoGen-ed December 24, 2013 at 11:39:31 AM by AutoGen 5.18.3pre5
+.\" It has been AutoGen-ed December 19, 2014 at 07:50:51 AM by AutoGen 5.18.5pre4
 .\" From the definitions ntp-keygen-opts.def
 .\" and the template file agman-cmd.tpl
 .SH NAME
@@ -1068,16 +1068,23 @@ generate PC private certificate.
 Generate a private certificate.  By default, the program generates
 public certificates.
 .TP
-.NOP \f\*[B-Font]\-p\f[] \f\*[I-Font]passwd\f[], \f\*[B-Font]\-\-pvt\-passwd\f[]=\f\*[I-Font]passwd\f[]
-output private password.
+.NOP \f\*[B-Font]\-p\f[] \f\*[I-Font]passwd\f[], \f\*[B-Font]\-\-password\f[]=\f\*[I-Font]passwd\f[]
+local private password.
 .sp
-Encrypt generated files containing private data with the specified
-password and the cipher selected with \fB-C/--cipher\fP.
+Local files containing private data are encrypted with the
+DES-CBC algorithm and the specified password.  The same password
+must be specified to the local ntpd via the "crypto pw password"
+configuration command.  The default password is the local
+hostname.
 .TP
-.NOP \f\*[B-Font]\-q\f[] \f\*[I-Font]passwd\f[], \f\*[B-Font]\-\-get\-pvt\-passwd\f[]=\f\*[I-Font]passwd\f[]
-input private password.
+.NOP \f\*[B-Font]\-q\f[] \f\*[I-Font]passwd\f[], \f\*[B-Font]\-\-export\-passwd\f[]=\f\*[I-Font]passwd\f[]
+export IFF or GQ group keys with password.
 .sp
-Set the password for reading files to the specified password.
+Export IFF or GQ identity group keys to the standard output,
+encrypted with the DES-CBC algorithm and the specified password.
+The same password must be specified to the remote ntpd via the
+"crypto pw password" configuration command.  See also the option
+--id-key (-e) for unencrypted exports.
 .TP
 .NOP \f\*[B-Font]\-S\f[] \f\*[I-Font]sign\f[], \f\*[B-Font]\-\-sign\-key\f[]=\f\*[I-Font]sign\f[]
 generate sign key (RSA or DSA).
@@ -1154,35 +1161,6 @@ the configuration files.
 The \fIhomerc\fP files are "\fI$HOME\fP", and "\fI.\fP".
 If any of these are directories, then the file \fI.ntprc\fP
 is searched for within those directories.
-.TH ntp-keygen @NTP_KEYGEN_MS@ "24 Dec 2013" "ntp (4.2.7p404)" "User Commands"
-.\"
-.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-jqaq9V/ag-vqaq8V)
-.\"
-.\" It has been AutoGen-ed December 24, 2013 at 11:39:31 AM by AutoGen 5.18.3pre5
-.\" From the definitions ntp-keygen-opts.def
-.\" and the template file agman-cmd.tpl
-.SH NAME
-\f\*[B-Font]ntp-keygen\fP ntp-keygen
-\- Create a NTP host key
-cvt_prog='/usr/local/gnu/share/autogen/texi2man'
-cvt_prog=`cd \`dirname "$cvt_prog"\` >/dev/null && pwd
-         `/`basename "$cvt_prog"`
-cd $tmp_dir
-test \-x "$cvt_prog" || die "'$cvt_prog' is not executable"
-{
-    list='synopsis description options option-presets'
-    for f in $list ; do cat $f ; echo ; done
-    rm \-f $list name
-    list='implementation-notes environment files examples exit-status errors
-        compatibility see-also conforming-to history authors copyright bugs
-        notes'
-    for f in $list ; do cat $f ; echo ; done > .end-doc
-    rm \-f $list
-    list=`ls \-1 *`' .end-doc'
-    for f in $list ; do cat $f ; echo ; done
-    rm \-f $list
-} 1>.doc 2>/dev/null
-sed \-f .cmds .doc | /usr/local/gnu/bin/grep \-E \-v '^[ 	]*$' | $cvt_prog
 .SH USAGE
 The
 \f\*[B-Font]\-p\f[] \f\*[I-Font]password\f[]
@@ -1219,7 +1197,7 @@ it to autogen-users@lists.sourceforge.net.  Thank you.
 .SH "AUTHORS"
 The University of Delaware
 .SH "COPYRIGHT"
-Copyright (C) 1970-2013 The University of Delaware all rights reserved.
+Copyright (C) 1970-2014 The University of Delaware all rights reserved.
 This program is released under the terms of the NTP license, <http://ntp.org/license>.
 .SH BUGS
 It can take quite a while to generate some cryptographic values,
@@ -1235,7 +1213,6 @@ Please report bugs to http://bugs.ntp.org .
 
 Please send bug reports to: http://bugs.ntp.org, bugs@ntp.org
 .SH NOTES
-This document corresponds to version 4.2.7p404 of NTP.
 Portions of this document came from FreeBSD.
 .sp \n(Ppu
 .ne 2

@@ -4,6 +4,7 @@
 <meta http-equiv="content-type" content="text/html;charset=iso-8859-1">
 <meta name="generator" content="HTML Tidy, see www.w3.org">
 <title>ntpd - Network Time Protocol (NTP) daemon</title>
+<!-- Changed by: Harlan &, 10-Feb-2014 -->
 <link href="scripts/style.css" type="text/css" rel="stylesheet">
 </head>
 <body>
@@ -11,8 +12,8 @@
 <img src="pic/wingdorothy.gif" alt="gif" align="left"><a href="http://www.eecis.udel.edu/~mills/pictures.html">from <i>The Wizard of Oz</i>, L. Frank Baum</a>
 <p>You need help from the monkeys.</p>
 <p>Last update:
-  <!-- #BeginDate format:En2m -->29-Nov-2012  16:44<!-- #EndDate -->
-  UTC</p>
+  <!-- #BeginDate format:En2m -->10-Mar-2014  05:14<!-- #EndDate -->
+    UTC</p>
 <br clear="left">
 <h4>Related Links</h4>
 <script type="text/javascript" language="javascript" src="scripts/command.txt"></script>
@@ -26,13 +27,17 @@
 </ul>
 <hr>
 <h4 id="synop">Synopsis</h4>
-<tt>ntpd [ -46aAbdDgLmnNqx ] [ -c <i>conffile</i> ] [ -f <i>driftfile</i> ] [ -i <i>jaildir</i> ] [ -k <i>keyfile</i> ] [ -l <i>logfile</i> ] [ -p <i>pidfile</i> ] [ -P <i>priority</i> ] [ -r <i>broadcastdelay</i> ] [ -s <i>statsdir</i> ] [ -t <i>key</i> ] [ -u <i>user</i>[:<i>group</i>] ] [ -U <i>interface_update_interval</i> ] [ -v <i>variable</i> ] [ -V <i>variable</i> ]</tt>
+<tt>ntpd [ -46aAbdDgLmnNqx ] [ -c <i>conffile</i> ] [ -f <i>driftfile</i> ] [ -i <i>jaildir</i> ] [ -I <i>InterfaceOrAddress</i> ] [ -k <i>keyfile</i> ] [ -l <i>logfile</i> ] [ -p <i>pidfile</i> ] [ -P <i>priority</i> ] [ -r <i>broadcastdelay</i> ] [ -s <i>statsdir</i> ] [ -t <i>key</i> ] [ -u <i>user</i>[:<i>group</i>] ] [ -U <i>interface_update_interval</i> ] [ -v <i>variable</i> ] [ -V <i>variable</i> ]</tt>
 <h4 id="descr">Description</h4>
 <p>The <tt>ntpd</tt> program is an operating system daemon that synchronizes the system clock to remote NTP time servers or local reference clocks. It is a complete implementation of  NTP version 4 defined by RFC-5905, but also retains compatible with version 3 defined by RFC-1305 and versions 1 and 2,  defined by RFC-1059 and RFC-1119, respectively. The program can operate in any of several modes, including client/server, symmetric and broadcast modes, and with both symmetric-key and public key-cryptography</p>
 <p>The <tt>ntpd</tt> program ordinarily requires a configuration file described on this page. It contains configuration commands described on the pages listed above. However a client can discover remote servers and configure them automatically. This makes it possible to deploy a fleet of workstations without specifying configuration details specific to the local environment. Further details are on the </p>
 <p>The <tt>ntpd</tt> program normally operates continuously while adjusting the system time and frequency, but in some cases this might not be practical. With the <tt>-q</tt> option <tt>ntpd</tt> operates as in continuous mode, but exits just after setting the clock for the first time. Most applications will probably want to specify the <tt>iburst</tt> option with the <tt>server</tt> command. With this option a volley of messages is exchanged to groom the data and set the clock in about ten seconds. If nothing is heard after a few minutes, the daemon times out and exits without setting the clock.</p>
 <h4 id="cmd">Command Line Options</h4>
 <dl>
+  <dt><tt>-4</tt>
+  <dd>Force DNS resolution of host names to the IPv4 namespace.
+  <dt><tt>-6</tt>
+  <dd>Force DNS resolution of host names to the IPv6 namespace.
   <dt><tt>-a</tt></dt>
   <dd>Require cryptographic authentication for broadcast client, multicast client and symmetric passive associations. This is the same operation as the <tt>enable auth</tt> command and is the default.</dd>
   <dt><tt>-A</tt></dt>
@@ -46,7 +51,7 @@
   <dt><tt>-D <i>level</i></tt></dt>
   <dd>Specify debugging level directly, with <tt>level</tt> corresponding to the numbe of <tt>-d</tt> options..</dd>
   <dt><tt>-f <i>driftfile</i></tt></dt>
-  <dd>Specify the name and path of the frequency file. This is the same operation as the <tt>driftfile</tt> command.</dd>
+  <dd>Specify the name and path of the frequency file. This is the same operation as the <tt>driftfile <i>driftfile</i></tt> configuration command.
   <dt><tt>-g</tt></dt>
   <dd>Normally, <tt>ntpd</tt> exits with a message to the system log if the offset exceeds the panic threshold, which is 1000 s by default. This option allows the time to be set to any value without restriction; however, this can happen only once. If the threshold is exceeded after that, <tt>ntpd</tt> will exit with a message to the system log. This option can be used with the <tt>-q</tt> and <tt>-x</tt> options. See the <tt>tinker</tt> command for other options.</dd>
   <dt><tt>-i <i>jaildir</i></tt></dt>
@@ -54,7 +59,7 @@
   <dt id="--interface"><tt>-I [<i>address</i> | <i>interface name</i>]</tt></dt>
   <dd>Open the network address given, or all the addresses associated with the given interface name. This option may appear multiple times. This option also implies not opening other addresses, except wildcard and localhost. This option is deprecated. Please consider using the configuration file <a href="miscopt.html#interface">interface</a> command, which is more versatile.</dd>
   <dt><tt>-k <i>keyfile</i></tt></dt>
-  <dd>Specify the name and path of the symmetric key file, default <tt>/etc/ntp.keys</tt>. This is the same operation as the <tt>keys <i>keyfile</i></tt> command.</dd>
+  <dd>Specify the name and path of the symmetric key file. This is the same operation as the <tt>keys <i>keyfile</i></tt> command.</dd>
   <dt><tt>-l <i>logfile</i></tt></dt>
   <dd>Specify the name and path of the log file. The default is the system log file. This is the same operation as the <tt>logfile <i>logfile</i></tt> command.</dd>
   <dt id="--mdns"><tt>-m</tt></dt>
@@ -161,7 +166,7 @@
   <tr>
     <td width="30%">keys path</td>
     <td width="30%"><tt>/usr/local/etc</tt></td>
-    <td width="20%"><tt>-k</tt></td>
+    <td width="20%">none</td>
     <td width="20%"><tt>keysdir</tt></td>
   </tr>
 </table>
