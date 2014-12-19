@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.19 2014/12/09 20:21:05 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.20 2014/12/19 10:54:08 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -373,7 +373,8 @@ configure_interface1(struct interface *ifp)
 	if (!(ifo->options & DHCPCD_IPV6))
 		ifo->options &= ~(DHCPCD_IPV6RS | DHCPCD_DHCP6);
 
-	if (ifo->options & DHCPCD_SLAACPRIVATE)
+	if (ifo->options & DHCPCD_SLAACPRIVATE &&
+	    !(ifp->ctx->options & DHCPCD_TEST))
 		ifo->options |= DHCPCD_IPV6RA_OWN;
 
 	/* We want to disable kernel interface RA as early as possible. */
