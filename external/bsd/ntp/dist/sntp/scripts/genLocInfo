@@ -166,9 +166,10 @@ do
 	esac
 
 	case "$c,$d,$s" in
-	 *,bin,*)  DB=bin ; DL= ; DS= ;;
-	 *,libexec,*)  DB= ; DL=libexec ; DS= ;;
-	 *,sbin,*) DB= ; DL= ; DS=sbin ;;
+	 *,bin,*)  DB=bin ; DL= ; DS= ; NI= ;;
+	 *,libexec,*)  DB= ; DL=libexec ; DS= ; NI= ;;
+	 *,noinst,*)  DB= ; DL= ; DS= ; NI=noinst ;;
+	 *,sbin,*) DB= ; DL= ; DS=sbin ; NI= ;;
 	 *) echo "Unrecognized input: <$c,$d,$s>" >&2
 	    touch $sdir/genLocInfo.rc1
 	    continue
@@ -194,18 +195,27 @@ do
 	    eval ${C}_DB=$c
 	    eval ${C}_DL=
 	    eval ${C}_DS=
+	    eval ${C}_NI=
 	    ;;
 	 libexec)
 	    eval ${C}_DB=
 	    eval ${C}_DL=$c
 	    eval ${C}_DS=
+	    eval ${C}_NI=
+	    ;;
+	 noinst)
+	    eval ${C}_DB=
+	    eval ${C}_DL=
+	    eval ${C}_DS=
+	    eval ${C}_NI=$c
 	    ;;
 	 sbin)
 	    eval ${C}_DB=
 	    eval ${C}_DL=
 	    eval ${C}_DS=$c
+	    eval ${C}_NI=
 	    ;;
-	 *) echo "$0: installdir <$d> must be bin, sbin, or libexec" >&2
+	 *) echo "$0: installdir <$d> must be bin, sbin, libexec, or noinst" >&2
 	    exit 1
 	    ;;
 	esac
@@ -215,10 +225,12 @@ do
 	# echo "${C}_DB is <`eval echo '$'${C}_DB`>" >&2
 	# echo "${C}_DL is <`eval echo '$'${C}_DL`>" >&2
 	# echo "${C}_DS is <`eval echo '$'${C}_DS`>" >&2
+	# echo "${C}_NI is <`eval echo '$'${C}_NI`>" >&2
 	# echo "${C}_MS is <`eval echo '$'${C}_MS`>" >&2
 	echo "${C}_DB=`eval echo '$'${C}_DB`"
 	echo "${C}_DL=`eval echo '$'${C}_DL`"
 	echo "${C}_DS=`eval echo '$'${C}_DS`"
+	echo "${C}_NI=`eval echo '$'${C}_NI`"
 	echo "${C}_MS=`eval echo '$'${C}_MS`"
 
 	touch $sdir/genLocInfo.rc0

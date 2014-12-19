@@ -11,8 +11,6 @@ argument       = '[ host ...]';
 
 #include homerc.def
 
-test-main;
-
 flag = {
     name      = ipv4;
     value     = 4;
@@ -114,6 +112,13 @@ doc-section	= {
   ds-type	= 'DESCRIPTION';
   ds-format	= 'mdoc';
   ds-text	= <<-  _END_PROG_MDOC_DESCRIP
+.Nm
+is deprecated.
+Please use
+.Xr ntpq 1ntpqmdoc instead - it can do everything
+.Nm
+used to do, and it does so using a much more sane interface.
+.Pp
 .Nm
 is a utility program used to query
 .Xr ntpd 1ntpdmdoc
@@ -374,7 +379,7 @@ Version 2 specification.
 .It Ic pstats Ar peer_address Oo Ar ... Oc
 Show per-peer statistic counters associated with the specified
 peer(s).
-.It Ic clockinfo Ar clock_peer_address Oo Ar ... Oc
+.It Ic clockstat Ar clock_peer_address Oo Ar ... Oc
 Obtain and print information concerning a peer clock.
 The
 values obtained provide information on the setting of fudge factors

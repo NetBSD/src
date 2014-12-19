@@ -4,6 +4,7 @@
 <meta http-equiv="content-type" content="text/html;charset=iso-8859-1">
 <meta name="generator" content="HTML Tidy, see www.w3.org">
 <title>Server Commands and Options</title>
+<!-- Changed by: Harlan &, 31-Jan-2014 -->
 <link href="scripts/style.css" type="text/css" rel="stylesheet">
 </head>
 <body>
@@ -12,8 +13,8 @@
 Walt Kelly</a>
 <p>The chicken is getting configuration advice.</p>
 <p>Last update:
-	<!-- #BeginDate format:En2m -->14-Oct-2011  19:30<!-- #EndDate -->
-</p>
+  <!-- #BeginDate format:En2m -->10-Mar-2014  05:01<!-- #EndDate -->
+    UTC</p>
 <br clear="left">
 <h4>Related Links</h4>
 <script type="text/javascript" language="javascript" src="scripts/command.txt"></script>
@@ -62,7 +63,7 @@ Walt Kelly</a>
 	<dt id="burst"><tt>burst</tt></dt>
 	<dd>When the server is reachable, send a burst of  packets instead of the usual one.  This option is valid only with  the <tt>server</tt> command and type s addresses. It is a recommended option when the <tt>maxpoll</tt> option is greater than	10 (1024 s). Additional information about this option is on the <a href="poll.html">Poll Program</a> page.</dd>
   <dt><tt>iburst</tt></dt>
-	<dd>When the server is unreachable, send a burst of  packets instead of the usual one.  This option is valid only with the <tt>server</tt> command and type s addresses. It is a recommended option with this command. Additional information about this option is on the <a href="poll.html">Poll Program</a> page.</dd>
+	<dd>When the server is unreachable, send a burst of  packets instead of the usual one.  This option is valid only with the <tt>server</tt> command and type <tt>s</tt> addresses. It is a recommended option with this command. Additional information about this option is on the <a href="poll.html">Poll Program</a> page.</dd>
     <dt><tt>ident</tt> <em><tt>group</tt></em></dt>
     <dd>Specify the group name for the association.  See the <a href="autokey.html">Autokey Public-Key Authentication</a> page for further information.</dd>
   <dt><tt>key</tt> <i><tt>key</tt></i></dt>
@@ -82,8 +83,8 @@ Walt Kelly</a>
 	<dt><tt>ttl <i>ttl</i></tt></dt>
 	<dd>This option specifies the time-to-live <i><tt>ttl</tt></i> for the <tt>broadcast</tt> command and the maximum <i><tt>ttl</tt></i> for the expanding ring search used by the <tt>manycastclient</tt> command. Selection of the proper value, which defaults to 127, is something of a black art and should be coordinated with the network administrator. This option is invalid with type r addresses.</dd>
 	<dt><tt>version <i>version</i></tt></dt>
-	<dd>Specifies the version number to be used of
-or outgoing NTP packets. Versions 1-4 are the choices, with version 4 the default.</dd>
+	<dd>Specifies the version number to be used for
+outgoing NTP packets. Versions 1-4 are the choices, with version 4 the default.</dd>
 	<dt><tt>xleave</tt></dt>
 	<dd>Operate in interleaved mode (symmetric and broadcast modes only). Further information is on the <a href="xleave.html">NTP Interleaved Modes</a> page.</dd>
 </dl>

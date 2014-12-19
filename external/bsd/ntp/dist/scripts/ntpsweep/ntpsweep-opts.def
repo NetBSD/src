@@ -1,10 +1,13 @@
 /* -*- Mode: Text -*- */
 autogen definitions perlopt;
+
 #include autogen-version.def
 
 prog-name      = 'ntpsweep';
 prog-title     = 'Print various informations about given ntp servers';
 package        = ntp;
+#include       version.def
+
 argument       = '[hostfile]';
 long-opts;
 gnu-usage;

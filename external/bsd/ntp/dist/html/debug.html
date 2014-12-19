@@ -11,7 +11,7 @@
 <img src="pic/pogo.gif" alt="gif" align="left"><a href="http://www.eecis.udel.edu/%7emills/pictures.html">from <i>Pogo</i>, Walt Kelly</a>
 <p>We make house calls and bring our own bugs.</p>
 <p>Last update:
-  <!-- #BeginDate format:En2m -->02-Oct-2010  23:54<!-- #EndDate -->
+  <!-- #BeginDate format:En2m -->16-Jul-2014  08:38<!-- #EndDate -->
   UTC</p>
   <br clear="left">
   <h4>More Help</h4>
@@ -58,10 +58,10 @@
 <p>The frequency tolerance of computer clock oscillators varies widely, sometimes above 500 PPM. While the daemon can handle frequency errors up to 500 PPM, or 43 seconds per day, values much above 100 PPM reduce the headroom, especially at the lowest poll intervals. To determine the particular oscillator frequency, start <tt>ntpd</tt> using the <tt>noselect</tt> option with the <tt>server</tt> configuration command.</p>
 <p>Record the time of day and offset displayed by the <tt>ntpq</tt> <a href="ntpq.html#pe"><tt>pe</tt></a> command. Wait for an hour or so and record the time of day and offset. Calculate the frequency as the offset difference divided by the time difference. If the frequency is much above 100 PPM, the <a href="tickadj.html">tickadj</a> program might be useful to adjust the kernel clock frequency below that value. For systems that do not support this program, this might be one using a command in the system startup file.</p>
 <h4>Access Controls</h4>
-<p>Provisions are included in <tt>ntpd</tt> for access controls which deflect unwanted traffic from selected hosts or networks. The controls described on the <a href="accopt.html">Access Control Options</a> include detailed packet filter operations based on source address and address mask. Normally, filtered packets are dropped without notice other than to increment tally counters. However, the server can be configured to send a &quot;kiss-o'-death&quot; (KOD) packet to the client either when explicitly configured or when cryptographic authentication fails for some reason. The client association is permanently disabled, the access denied bit (TEST4) is set in the flash variable and a message is sent to the system log.</p>
+<p>Provisions are included in <tt>ntpd</tt> for access controls which deflect unwanted traffic from selected hosts or networks. The controls described on the <a href="accopt.html">Access Control Options</a> include detailed packet filter operations based on source address and address mask. Normally, filtered packets are dropped without notice other than to increment tally counters. However, the server can be configured to send a &quot;kiss-o'-death&quot; (KoD) packet to the client either when explicitly configured or when cryptographic authentication fails for some reason. The client association is permanently disabled, the access denied bit (TEST4) is set in the flash variable and a message is sent to the system log.</p>
 <p>The access control provisions include a limit on the packet rate from a
   host or network. If an incoming packet exceeds the limit, it is dropped and
-  a KOD sent to the source. If this occurs after the client association has
+  a KoD sent to the source. If this occurs after the client association has
   synchronized, the association is not disabled, but a message is sent to the
   system log. See the <a href="accopt.html">Access Control Options</a> page
   for further information.</p>

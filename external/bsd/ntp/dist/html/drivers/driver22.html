@@ -4,13 +4,14 @@
 <meta http-equiv="content-type" content="text/html;charset=iso-8859-1">
 <meta name="generator" content="HTML Tidy, see www.w3.org">
 <title>PPS Clock Discipline</title>
+<!-- Changed by: Harlan &, 31-Mar-2014 -->
 <link href="scripts/style.css" type="text/css" rel="stylesheet">
 </head>
 <body>
 <h3>PPS Clock Discipline</h3>
 <p>Author: David L. Mills (mills@udel.edu)<br>
   Last change:
-  <!-- #BeginDate format:En2m -->26-Oct-2011  13:39<!-- #EndDate -->
+  <!-- #BeginDate format:En2m -->31-Mar-2014  07:46<!-- #EndDate -->
   UTC</p>
   <hr>
 <h4>Synopsis</h4>
@@ -77,9 +78,9 @@
   <dd>Not used by this driver.</dd>
   <dt><tt>flag2 0 | 1</tt></dt>
   <dd>Specifies PPS  capture on the rising (assert) pulse edge if 0 (default) or falling
-    (clear) pulse edge if 1.</dd>
+    (clear) pulse edge if 1.  Not used under Windows - if the special <tt>serialpps.sys</tt> serial port driver is installed then the leading edge will <i>always</i> be used.</dd>
   <dt><tt>flag3 0 | 1</tt></dt>
-  <dd>Controls the kernel PPS discipline: 0 for disable (default), 1 for enable.</dd>
+  <dd>Controls the kernel PPS discipline: 0 for disable (default), 1 for enable.  Not used under Windows - if the special <tt>serialpps.sys<\tt> serial port driver is used then kernel PPS will be available and used.</dd>
   <dt><tt>flag4 0 | 1</tt></dt>
   <dd>Record a timestamp once for each second if 1. Useful for constructing
     Allan deviation plots.</dd>

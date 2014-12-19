@@ -76,7 +76,9 @@ fi
 dnl ----------------------------------------------------------------
 dnl Threads?
 ol_link_threads=no
-ol_with_yielding_select=${ol_with_yielding_select-auto}
+dnl ol_with_yielding_select=${ol_with_yielding_select:-auto}
+OL_ARG_WITH(yielding_select,[  --with-yielding-select  with yielding select],
+	auto, [auto yes no manual] )
 
 case $ol_with_threads in auto | yes | nt)
 
@@ -388,7 +390,7 @@ int main(argc, argv)
 }]])],[ol_cv_pthread_select_yields=no],[ol_cv_pthread_select_yields=yes],[ol_cv_pthread_select_yields=cross])])
 
 				if test $ol_cv_pthread_select_yields = cross ; then
-					AC_MSG_ERROR([crossing compiling: use --with-yielding_select=yes|no|manual])
+					AC_MSG_ERROR([crossing compiling: use --with-yielding-select=yes|no|manual])
 				fi
 
 				if test $ol_cv_pthread_select_yields = yes ; then
