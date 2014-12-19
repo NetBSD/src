@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.11 2014/10/09 04:58:42 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.12 2014/12/19 06:54:40 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.11 2014/10/09 04:58:42 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.12 2014/12/19 06:54:40 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.11 2014/10/09 04:58:42 ozaki-r Exp $"
 #include <sys/mbuf.h>
 #include <sys/mutex.h>
 #include <sys/sockio.h>
+#include <sys/cpu.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
@@ -55,6 +56,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.11 2014/10/09 04:58:42 ozaki-r Exp $"
 
 #ifdef NET_MPSAFE
 #define VIOIF_MPSAFE	1
+#endif
+
+#ifdef SOFTINT_INTR
+#define VIOIF_SOFTINT_INTR	1
 #endif
 
 /*
@@ -220,6 +225,7 @@ static void	vioif_watchdog(struct ifnet *);
 static int	vioif_add_rx_mbuf(struct vioif_softc *, int);
 static void	vioif_free_rx_mbuf(struct vioif_softc *, int);
 static void	vioif_populate_rx_mbufs(struct vioif_softc *);
+static void	vioif_populate_rx_mbufs_locked(struct vioif_softc *);
 static int	vioif_rx_deq(struct vioif_softc *);
 static int	vioif_rx_deq_locked(struct vioif_softc *);
 static int	vioif_rx_vq_done(struct virtqueue *);
@@ -497,6 +503,9 @@ vioif_attach(device_t parent, device_t self, void *aux)
 
 #ifdef VIOIF_MPSAFE
 	vsc->sc_flags |= VIRTIO_F_PCI_INTR_MPSAFE;
+#endif
+#ifdef VIOIF_SOFTINT_INTR
+	vsc->sc_flags |= VIRTIO_F_PCI_INTR_SOFTINT;
 #endif
 
 	features = virtio_negotiate_features(vsc,
@@ -883,14 +892,22 @@ vioif_free_rx_mbuf(struct vioif_softc *sc, int i)
 static void
 vioif_populate_rx_mbufs(struct vioif_softc *sc)
 {
+	VIOIF_RX_LOCK(sc);
+	vioif_populate_rx_mbufs_locked(sc);
+	VIOIF_RX_UNLOCK(sc);
+}
+
+static void
+vioif_populate_rx_mbufs_locked(struct vioif_softc *sc)
+{
 	struct virtio_softc *vsc = sc->sc_virtio;
 	int i, r, ndone = 0;
 	struct virtqueue *vq = &sc->sc_vq[0]; /* rx vq */
 
-	VIOIF_RX_LOCK(sc);
+	KASSERT(VIOIF_RX_LOCKED(sc));
 
 	if (sc->sc_stopping)
-		goto out;
+		return;
 
 	for (i = 0; i < vq->vq_num; i++) {
 		int slot;
@@ -925,9 +942,6 @@ vioif_populate_rx_mbufs(struct vioif_softc *sc)
 	}
 	if (ndone > 0)
 		virtio_enqueue_commit(vsc, vq, -1, true);
-
-out:
-	VIOIF_RX_UNLOCK(sc);
 }
 
 /* dequeue recieved packets */
@@ -996,6 +1010,10 @@ vioif_rx_vq_done(struct virtqueue *vq)
 	struct vioif_softc *sc = device_private(vsc->sc_child);
 	int r = 0;
 
+#ifdef VIOIF_SOFTINT_INTR
+	KASSERT(!cpu_intr_p());
+#endif
+
 	VIOIF_RX_LOCK(sc);
 
 	if (sc->sc_stopping)
@@ -1003,7 +1021,11 @@ vioif_rx_vq_done(struct virtqueue *vq)
 
 	r = vioif_rx_deq_locked(sc);
 	if (r)
+#ifdef VIOIF_SOFTINT_INTR
+		vioif_populate_rx_mbufs_locked(sc);
+#else
 		softint_schedule(sc->sc_rx_softint);
+#endif
 
 out:
 	VIOIF_RX_UNLOCK(sc);
