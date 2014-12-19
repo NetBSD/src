@@ -6,7 +6,7 @@
 #
 # EDIT THIS FILE WITH CAUTION  (invoke-summary.texi)
 #
-# It has been AutoGen-ed  December 24, 2013 at 11:36:03 AM by AutoGen 5.18.3pre5
+# It has been AutoGen-ed  December 19, 2014 at 07:45:21 AM by AutoGen 5.18.5pre4
 # From the definitions    summary-opts.def
 # and the template file   agtexi-cmd.tpl
 @end ignore
@@ -42,17 +42,17 @@ with a status code of 0.
 
 @exampleindent 0
 @example
-summary - compute various stastics from NTP stat files
+summary - compute various stastics from NTP stat files - Ver. 4.2.8
 USAGE: summary [ -<flag> [<val>] | --<name>[@{=| @}<val>] ]... 
 
-      , --directory=str          Directory containing stat files
-      , --end-date=num           End date
-      , --output-directory=str   Output directory
-      , --peer-dist-limit=float  Peer dist limit
-      , --skip-time-steps=float  Ignore time offsets larger that this
-      , --start-date=num         Start date
+        --directory=str          Directory containing stat files
+        --end-date=num           End date
+        --output-directory=str   Output directory
+        --peer-dist-limit=float  Peer dist limit
+        --skip-time-steps=float  Ignore time offsets larger that this
+        --start-date=num         Start date
     -?, --help                   Display usage information and exit
-      , --more-help              Pass the extended usage information through a pager
+        --more-help              Pass the extended usage text through a pager
 
 Options are specified by doubled hyphens and their name or by a single
 hyphen and the flag character.

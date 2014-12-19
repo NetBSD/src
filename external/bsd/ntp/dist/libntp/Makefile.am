@@ -34,6 +34,7 @@ libisc_SRCS =								\
 	$(srcdir)/../lib/isc/task.c					\
 	$(srcdir)/../lib/isc/$(LIBISC_PTHREADS_NOTHREADS)/thread.c	\
 	$(srcdir)/../lib/isc/unix/time.c				\
+	$(srcdir)/../lib/isc/sha1.c					\
 	$(srcdir)/../lib/isc/sockaddr.c					\
 	$(NULL)
 
@@ -77,16 +78,17 @@ libntp_a_SRCS =						\
 	msyslog.c					\
 	netof.c						\
 	ntp_calendar.c					\
+	ntp_crypto_rnd.c				\
 	ntp_intres.c					\
 	ntp_libopts.c					\
 	ntp_lineedit.c					\
+	ntp_random.c					\
 	ntp_rfc2553.c					\
 	ntp_worker.c					\
 	numtoa.c					\
 	numtohost.c					\
 	octtoint.c					\
 	prettydate.c					\
-	ntp_random.c					\
 	recvbuff.c					\
 	refnumtoa.c					\
 	snprintf.c					\
@@ -101,6 +103,7 @@ libntp_a_SRCS =						\
 	timetoa.c					\
 	timevalops.c					\
 	uglydate.c					\
+	vint64ops.c					\
 	work_fork.c					\
 	work_thread.c					\
 	ymd2yd.c					\

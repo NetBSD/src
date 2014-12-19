@@ -10,8 +10,6 @@ prog-name      = "ntp-keygen";
 prog-title     = "Create a NTP host key";
 package        = ntp;
 
-test-main;
-
 include        = '#include <stdlib.h>';
 #include       version.def
 
@@ -174,26 +172,33 @@ flag = {
 
 flag = {
     value     = p;
-    name      = pvt-passwd;
+    name      = password;	// was: pvt-passwd;
     ifdef     = AUTOKEY;
     arg-type  = string;
     arg-name  = passwd;
-    descrip   = "output private password";
+    descrip   = "local private password";
     doc = <<-  _EndOfDoc_
-	Encrypt generated files containing private data with the specified
-	password and the cipher selected with @code{-C/--cipher}.
+	Local files containing private data are encrypted with the
+	DES-CBC algorithm and the specified password.  The same password
+	must be specified to the local ntpd via the "crypto pw password"
+	configuration command.  The default password is the local
+	hostname.
 	_EndOfDoc_;
 };
 
 flag = {
     value     = q;
-    name      = get-pvt-passwd;
+    name      = export-passwd;	// Was: get-pvt-passwd;
     ifdef     = AUTOKEY;
     arg-type  = string;
     arg-name  = passwd;
-    descrip   = "input private password";
+    descrip   = "export IFF or GQ group keys with password";
     doc = <<-  _EndOfDoc_
-	Set the password for reading files to the specified password.
+	Export IFF or GQ identity group keys to the standard output,
+	encrypted with the DES-CBC algorithm and the specified password.
+	The same password must be specified to the remote ntpd via the
+	"crypto pw password" configuration command.  See also the option
+	--id-key (-e) for unencrypted exports.
 	_EndOfDoc_;
 };
 
@@ -1121,7 +1126,6 @@ doc-section	= {
   ds-type	= 'NOTES';
   ds-format	= 'mdoc';
   ds-text	= <<- _END_MDOC_NOTES
-This document corresponds to version #VERSION# of NTP.
 Portions of this document came from FreeBSD.
 	_END_MDOC_NOTES;
 };

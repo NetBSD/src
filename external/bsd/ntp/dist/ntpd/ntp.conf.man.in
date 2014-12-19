@@ -10,11 +10,11 @@
 .ds B-Font B
 .ds I-Font I
 .ds R-Font R
-.TH ntp.conf 5 "24 Dec 2013" "4.2.7p404" "File Formats"
+.TH ntp.conf 5 "19 Dec 2014" "4.2.8" "File Formats"
 .\"
-.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-0vaqXO/ag-bwaqWO)
+.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-eCaa6b/ag-rCai4b)
 .\"
-.\" It has been AutoGen-ed December 24, 2013 at 11:38:02 AM by AutoGen 5.18.3pre5
+.\" It has been AutoGen-ed December 19, 2014 at 07:48:49 AM by AutoGen 5.18.5pre4
 .\" From the definitions ntp.conf.def
 .\" and the template file agman-cmd.tpl
 .SH NAME
@@ -1114,7 +1114,7 @@ automatically summarized and archived for retrospective analysis.
 .TP 7
 .NOP \f\*[B-Font]statistics\f[] \f\*[I-Font]name\f[] \f\*[I-Font]...\f[]
 Enables writing of statistics records.
-Currently, four kinds of
+Currently, eight kinds of
 \f\*[I-Font]name\f[]
 statistics are supported.
 .RS
@@ -1715,6 +1715,19 @@ Deny packets which would result in mobilizing a new association.
 This
 includes broadcast and symmetric active packets when a configured
 association does not exist.
+It also includes
+\f\*[B-Font]pool\f[]
+associations, so if you want to use servers from a 
+\f\*[B-Font]pool\f[]
+directive and also want to use
+\f\*[B-Font]nopeer\f[]
+by default, you'll want a
+\f\*[B-Font]restrict source ...\f[] \f\*[B-Font]line\f[] \f\*[B-Font]as\f[] \f\*[B-Font]well\f[] \f\*[B-Font]that\f[] \f\*[B-Font]does\f[]
+.TP 7
+.NOP not
+include the
+\f\*[B-Font]nopeer\f[]
+directive.
 .TP 7
 .NOP \f\*[B-Font]noserve\f[]
 Deny all packets except
@@ -2541,9 +2554,9 @@ must have write permission for the directory the
 drift file is located in, and that file system links, symbolic or
 otherwise, should be avoided.
 .TP 7
-.NOP \f\*[B-Font]enable\f[] [\f\*[B-Font]auth\f[] | \f\*[B-Font]bclient\f[] | \f\*[B-Font]calibrate\f[] | \f\*[B-Font]kernel\f[] | \f\*[B-Font]monitor\f[] | \f\*[B-Font]ntp\f[] | \f\*[B-Font]pps\f[] | \f\*[B-Font]stats\f[]]
+.NOP \f\*[B-Font]enable\f[] [\f\*[B-Font]auth\f[] | \f\*[B-Font]bclient\f[] | \f\*[B-Font]calibrate\f[] | \f\*[B-Font]kernel\f[] | \f\*[B-Font]mode7\f[] | \f\*[B-Font]monitor\f[] | \f\*[B-Font]ntp\f[] | \f\*[B-Font]stats\f[]]
 .TP 7
-.NOP \f\*[B-Font]disable\f[] [\f\*[B-Font]auth\f[] | \f\*[B-Font]bclient\f[] | \f\*[B-Font]calibrate\f[] | \f\*[B-Font]kernel\f[] | \f\*[B-Font]monitor\f[] | \f\*[B-Font]ntp\f[] | \f\*[B-Font]pps\f[] | \f\*[B-Font]stats\f[]]
+.NOP \f\*[B-Font]disable\f[] [\f\*[B-Font]auth\f[] | \f\*[B-Font]bclient\f[] | \f\*[B-Font]calibrate\f[] | \f\*[B-Font]kernel\f[] | \f\*[B-Font]mode7\f[] | \f\*[B-Font]monitor\f[] | \f\*[B-Font]ntp\f[] | \f\*[B-Font]stats\f[]]
 Provides a way to enable or disable various server options.
 Flags not mentioned are unaffected.
 Note that all of these flags
@@ -2582,6 +2595,20 @@ flag is
 if support is available, otherwise
 \f\*[B-Font]disable\f[].
 .TP 7
+.NOP \f\*[B-Font]mode7\f[]
+Enables processing of NTP mode 7 implementation-specific requests
+which are used by the deprecated
+\fCntpdc\fR(@NTPDC_MS@)\f[]
+program.
+The default for this flag is disable.
+This flag is excluded from runtime configuration using
+\fCntpq\fR(@NTPQ_MS@)\f[].
+The
+\fCntpq\fR(@NTPQ_MS@)\f[]
+program provides the same capabilities as
+\fCntpdc\fR(@NTPDC_MS@)\f[]
+using standard mode 6 requests.
+.TP 7
 .NOP \f\*[B-Font]monitor\f[]
 Enables the monitoring facility.
 See the
@@ -2601,18 +2628,6 @@ closes the feedback loop, which is useful for testing.
 The default for
 this flag is
 \f\*[B-Font]enable\f[].
-.TP 7
-.NOP \f\*[B-Font]pps\f[]
-Enables the pulse-per-second (PPS) signal when frequency and time is
-disciplined by the precision time kernel modifications.
-See the
-"A Kernel Model for Precision Timekeeping"
-(available as part of the HTML documentation
-provided in
-\fI/usr/share/doc/ntp\f[])
-page for further information.
-The default for this flag is
-\f\*[B-Font]disable\f[].
 .TP 7
 .NOP \f\*[B-Font]stats\f[]
 Enables the statistics facility.
@@ -2900,35 +2915,6 @@ by loading values from environment variables named:
   \fBNTP_CONF_<option-name>\fP or \fBNTP_CONF\fP
 .fi
 .ad
-.TH ntp.conf 5 "24 Dec 2013" "4.2.7p404" "File Formats"
-.\"
-.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-0vaqXO/ag-bwaqWO)
-.\"
-.\" It has been AutoGen-ed December 24, 2013 at 11:38:02 AM by AutoGen 5.18.3pre5
-.\" From the definitions ntp.conf.def
-.\" and the template file agman-cmd.tpl
-.SH NAME
-\f\*[B-Font]ntp.conf\fP ntp.conf
-\- Network Time Protocol (NTP) daemon configuration file format
-cvt_prog='/usr/local/gnu/share/autogen/texi2man'
-cvt_prog=`cd \`dirname "$cvt_prog"\` >/dev/null && pwd
-         `/`basename "$cvt_prog"`
-cd $tmp_dir
-test \-x "$cvt_prog" || die "'$cvt_prog' is not executable"
-{
-    list='synopsis description options option-presets'
-    for f in $list ; do cat $f ; echo ; done
-    rm \-f $list name
-    list='implementation-notes environment files examples exit-status errors
-        compatibility see-also conforming-to history authors copyright bugs
-        notes'
-    for f in $list ; do cat $f ; echo ; done > .end-doc
-    rm \-f $list
-    list=`ls \-1 *`' .end-doc'
-    for f in $list ; do cat $f ; echo ; done
-    rm \-f $list
-} 1>.doc 2>/dev/null
-sed \-f .cmds .doc | /usr/local/gnu/bin/grep \-E \-v '^[ 	]*$' | $cvt_prog
 .SH "ENVIRONMENT"
 See \fBOPTION PRESETS\fP for configuration environment variables.
 .SH FILES
@@ -2990,7 +2976,7 @@ RFC5905
 .SH "AUTHORS"
 The University of Delaware
 .SH "COPYRIGHT"
-Copyright (C) 1970-2013 The University of Delaware all rights reserved.
+Copyright (C) 1970-2014 The University of Delaware all rights reserved.
 This program is released under the terms of the NTP license, <http://ntp.org/license>.
 .SH BUGS
 The syntax checking is not picky; some combinations of
@@ -3010,7 +2996,6 @@ services when they become universally available.
 
 Please send bug reports to: http://bugs.ntp.org, bugs@ntp.org
 .SH NOTES
-This document corresponds to version 4.2.7p404 of NTP.
 This document was derived from FreeBSD.
 .sp \n(Ppu
 .ne 2

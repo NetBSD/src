@@ -33,7 +33,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 <p>This document describes the configuration file for the NTP Project's
 <code>ntpd</code> program.
 
-  <p>This document applies to version 4.2.7p404 of <code>ntp.conf</code>.
+  <p>This document applies to version 4.2.8 of <code>ntp.conf</code>.
 
   <div class="shortcontents">
 <h2>Short Contents</h2>
@@ -1021,7 +1021,7 @@ automatically summarized and archived for retrospective analysis.
 
      <dl>
 <dt><code>statistics</code> <kbd>name</kbd> <kbd>...</kbd><dd>Enables writing of statistics records. 
-Currently, four kinds of
+Currently, eight kinds of
 <kbd>name</kbd>
 statistics are supported.
           <dl>
@@ -1512,6 +1512,17 @@ Time service is not affected.
 This
 includes broadcast and symmetric active packets when a configured
 association does not exist. 
+It also includes
+<code>pool</code>
+associations, so if you want to use servers from a
+<code>pool</code>
+directive and also want to use
+<code>nopeer</code>
+by default, you'll want a
+<code>restrict source ...</code> <code>line</code> <code>as</code> <code>well</code> <code>that</code> <code>does</code>
+<br><dt>not<dd>include the
+<code>nopeer</code>
+directive. 
 <br><dt><code>noserve</code><dd>Deny all packets except
 <code>ntpq(1ntpqmdoc)</code>
 and
@@ -2262,7 +2273,7 @@ This implies that
 must have write permission for the directory the
 drift file is located in, and that file system links, symbolic or
 otherwise, should be avoided. 
-<br><dt><code>enable</code> <code>[auth | bclient | calibrate | kernel | monitor | ntp | pps | stats]</code><br><dt><code>disable</code> <code>[auth | bclient | calibrate | kernel | monitor | ntp | pps | stats]</code><dd>Provides a way to enable or disable various server options. 
+<br><dt><code>enable</code> <code>[auth | bclient | calibrate | kernel | mode7 | monitor | ntp | stats]</code><br><dt><code>disable</code> <code>[auth | bclient | calibrate | kernel | mode7 | monitor | ntp | stats]</code><dd>Provides a way to enable or disable various server options. 
 Flags not mentioned are unaffected. 
 Note that all of these flags
 can be controlled remotely using the
@@ -2291,6 +2302,18 @@ flag is
 <code>enable</code>
 if support is available, otherwise
 <code>disable</code>. 
+<br><dt><code>mode7</code><dd>Enables processing of NTP mode 7 implementation-specific requests
+which are used by the deprecated
+<code>ntpdc(1ntpdcmdoc)</code>
+program. 
+The default for this flag is disable. 
+This flag is excluded from runtime configuration using
+<code>ntpq(1ntpqmdoc)</code>. 
+The
+<code>ntpq(1ntpqmdoc)</code>
+program provides the same capabilities as
+<code>ntpdc(1ntpdcmdoc)</code>
+using standard mode 6 requests. 
 <br><dt><code>monitor</code><dd>Enables the monitoring facility. 
 See the
 <code>ntpdc(1ntpdcmdoc)</code>
@@ -2307,16 +2330,6 @@ closes the feedback loop, which is useful for testing.
 The default for
 this flag is
 <code>enable</code>. 
-<br><dt><code>pps</code><dd>Enables the pulse-per-second (PPS) signal when frequency and time is
-disciplined by the precision time kernel modifications. 
-See the
-"A Kernel Model for Precision Timekeeping"
-(available as part of the HTML documentation
-provided in
-<span class="file">/usr/share/doc/ntp</span>)
-page for further information. 
-The default for this flag is
-<code>disable</code>. 
 <br><dt><code>stats</code><dd>Enables the statistics facility. 
 See the
 <a href="#Monitoring-Options">Monitoring Options</a>
@@ -2606,8 +2619,7 @@ services when they become universally available.
 
 <h4 class="subsection">ntp.conf Notes</h4>
 
-<p>This document corresponds to version #VERSION# of NTP. 
-This document was derived from FreeBSD.
+<p>This document was derived from FreeBSD.
 
 </body></html>
 

@@ -10,11 +10,11 @@
 .ds B-Font B
 .ds I-Font I
 .ds R-Font R
-.TH ntpd 1ntpdman "24 Dec 2013" "4.2.7p404" "User Commands"
+.TH ntpd 1ntpdman "19 Dec 2014" "4.2.8" "User Commands"
 .\"
-.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-3Ba4gQ/ag-eCa4fQ)
+.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-WBaqpd/ag-9Baiod)
 .\"
-.\" It has been AutoGen-ed December 24, 2013 at 11:38:10 AM by AutoGen 5.18.3pre5
+.\" It has been AutoGen-ed December 19, 2014 at 07:48:58 AM by AutoGen 5.18.5pre4
 .\" From the definitions ntpd-opts.def
 .\" and the template file agman-cmd.tpl
 .SH NAME
@@ -434,35 +434,6 @@ by loading values from environment variables named:
   \fBNTPD_<option-name>\fP or \fBNTPD\fP
 .fi
 .ad
-.TH ntpd 1ntpdman "24 Dec 2013" "4.2.7p404" "User Commands"
-.\"
-.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-3Ba4gQ/ag-eCa4fQ)
-.\"
-.\" It has been AutoGen-ed December 24, 2013 at 11:38:10 AM by AutoGen 5.18.3pre5
-.\" From the definitions ntpd-opts.def
-.\" and the template file agman-cmd.tpl
-.SH NAME
-\f\*[B-Font]ntpd\fP ntpd
-\- NTP daemon program
-cvt_prog='/usr/local/gnu/share/autogen/texi2man'
-cvt_prog=`cd \`dirname "$cvt_prog"\` >/dev/null && pwd
-         `/`basename "$cvt_prog"`
-cd $tmp_dir
-test \-x "$cvt_prog" || die "'$cvt_prog' is not executable"
-{
-    list='synopsis description options option-presets'
-    for f in $list ; do cat $f ; echo ; done
-    rm \-f $list name
-    list='implementation-notes environment files examples exit-status errors
-        compatibility see-also conforming-to history authors copyright bugs
-        notes'
-    for f in $list ; do cat $f ; echo ; done > .end-doc
-    rm \-f $list
-    list=`ls \-1 *`' .end-doc'
-    for f in $list ; do cat $f ; echo ; done
-    rm \-f $list
-} 1>.doc 2>/dev/null
-sed \-f .cmds .doc | /usr/local/gnu/bin/grep \-E \-v '^[ 	]*$' | $cvt_prog
 .SH USAGE
 .SS "How NTP Operates"
 The
@@ -620,6 +591,13 @@ in the past many startup scripts would run
 to get the system clock close to correct before starting
 \fCntpd\fR(1ntpdmdoc)\f[],
 but this was never more than a mediocre hack and is no longer needed.
+If you are following the instructions in
+\fIStarting NTP (Best Current Practice)\f[]
+and you still need to set the system time before starting
+\f\*[B-Font]ntpd\fP,
+please open a bug report and document what is going on,
+and then look at using
+\fCsntp\fR(1sntpmdoc)\f[].
 .sp \n(Ppu
 .ne 2
 
@@ -755,16 +733,17 @@ to 1024s in order to reduce network overhead.
 
 In some cases it may not be practical for
 \f\*[B-Font]ntpd\fP
-to run
-continuously.
+to run continuously.
 A common workaround has been to run the
 \fCntpdate\fR(1ntpdatemdoc)\f[]
-program from a
+or
+\fCsntp\fR(1sntpmdoc)\f[]
+programs from a
 \fCcron\fR(8)\f[]
 job at designated
 times.
-However, this program does not have the crafted signal
-processing, error checking and mitigation algorithms of
+However, these programs do not have the crafted signal
+processing, error checking or mitigation algorithms of
 \f\*[B-Font]ntpd\fP.
 The
 \f\*[B-Font]\-q\f[]
@@ -788,7 +767,7 @@ couple of minutes, the daemon times out and exits.
 After a suitable
 period of mourning, the
 \fCntpdate\fR(1ntpdatemdoc)\f[]
-program may be
+program will be
 retired.
 .sp \n(Ppu
 .ne 2
@@ -933,7 +912,8 @@ it to autogen-users@lists.sourceforge.net.  Thank you.
 \fCntp.conf\fR(5)\f[],
 \fCntpdate\fR(1ntpdatemdoc)\f[],
 \fCntpdc\fR(1ntpdcmdoc)\f[],
-\fCntpq\fR(1ntpqmdoc)\f[]
+\fCntpq\fR(1ntpqmdoc)\f[],
+\fCsntp\fR(1sntpmdoc)\f[]
 .sp \n(Ppu
 .ne 2
 
@@ -981,7 +961,7 @@ RFC5908
 .SH "AUTHORS"
 The University of Delaware
 .SH "COPYRIGHT"
-Copyright (C) 1970-2013 The University of Delaware all rights reserved.
+Copyright (C) 1970-2014 The University of Delaware all rights reserved.
 This program is released under the terms of the NTP license, <http://ntp.org/license>.
 .SH BUGS
 The
@@ -999,7 +979,6 @@ mind.
 
 Please send bug reports to: http://bugs.ntp.org, bugs@ntp.org
 .SH NOTES
-This document corresponds to version 4.2.7p404 of NTP.
 Portions of this document came from FreeBSD.
 .sp \n(Ppu
 .ne 2

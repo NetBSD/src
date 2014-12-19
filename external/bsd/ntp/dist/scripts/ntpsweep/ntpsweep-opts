@@ -1,7 +1,8 @@
-
-# DO NOT EDIT THE FOLLOWING
+# EDIT THIS FILE WITH CAUTION  (ntpsweep-opts)
 #
-# It's auto generated option handling code  
+# It has been AutoGen-ed  December 19, 2014 at 07:44:53 AM by AutoGen 5.18.5pre4
+# From the definitions    ntpsweep-opts.def
+# and the template file   perlopt
 
 use Getopt::Long qw(GetOptionsFromArray);
 Getopt::Long::Configure(qw(no_auto_abbrev no_ignore_case_always));
@@ -42,7 +43,7 @@ sub processOptions {
         'help|?', 'more-help'));
 
     $usage = <<'USAGE';
-ntpsweep - Print various informations about given ntp servers
+ntpsweep - Print various informations about given ntp servers - Ver. 4.2.8
 USAGE: ntpsweep [ -<flag> [<val>] | --<name>[{=| }<val>] ]... [hostfile]
 
     -l, --host-list=str          Host to execute actions on
@@ -51,7 +52,7 @@ USAGE: ntpsweep [ -<flag> [<val>] | --<name>[{=| }<val>] ]... [hostfile]
     -m, --maxlevel=num           Traverse peers up to this level (4 is a reasonable number)
     -s, --strip=str              Strip this string from hostnames
     -?, --help                   Display usage information and exit
-      , --more-help              Pass the extended usage information through a pager
+        --more-help              Pass the extended usage text through a pager
 
 Options are specified by doubled hyphens and their name or by a single
 hyphen and the flag character.
@@ -59,14 +60,8 @@ USAGE
 
     usage(0)       if $opts->{'help'};
     paged_usage(0) if $opts->{'more-help'};
-
-    if ($argument && $argument =~ /^[^\[]/ && !@$args) {
-        print STDERR "Not enough arguments supplied (See --help/-?)\n";
-        exit 1;
-    }
     $_[0] = $opts;
     return $ret;
 }
 
 END { close STDOUT };
-

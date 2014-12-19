@@ -6,12 +6,19 @@
 #
 # EDIT THIS FILE WITH CAUTION  (invoke-ntpdc.texi)
 #
-# It has been AutoGen-ed  December 24, 2013 at 11:38:45 AM by AutoGen 5.18.3pre5
+# It has been AutoGen-ed  December 19, 2014 at 07:49:42 AM by AutoGen 5.18.5pre4
 # From the definitions    ntpdc-opts.def
 # and the template file   agtexi-cmd.tpl
 @end ignore
 
 
+
+@code{ntpdc}
+is deprecated.
+Please use
+@code{ntpq(1ntpqmdoc)} instead - it can do everything
+@code{ntpdc}
+used to do, and it does so using a much more sane interface.
 
 @code{ntpdc}
 is a utility program used to query
@@ -69,7 +76,7 @@ with a status code of 0.
 
 @exampleindent 0
 @example
-ntpdc - vendor-specific NTPD control program - Ver. 4.2.7p404
+ntpdc - vendor-specific NTPD control program - Ver. 4.2.8
 Usage:  ntpdc [ -<flag> [<val>] | --<name>[@{=| @}<val>] ]... [ host ...]
   Flg Arg Option-Name    Description
    -4 no  ipv4           Force IPv4 DNS name resolution
@@ -113,8 +120,6 @@ The following option preset mechanisms are supported:
  - examining environment variables named NTPDC_*
 
 Please send bug reports to:  <http://bugs.ntp.org, bugs@@ntp.org>
-
-exit 0
 @end example
 @exampleindent 4
 

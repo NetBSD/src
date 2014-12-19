@@ -3,6 +3,7 @@
 <head>
 <meta http-equiv="content-type" content="text/html;charset=iso-8859-1">
 <title>sntp - Simple Network Time Protocol (SNTP) Client</title>
+<!-- Changed by: Harlan &, 07-Dec-2014 -->
 <link href="scripts/style.css" type="text/css" rel="stylesheet">
 </head>
 <body>
@@ -10,7 +11,7 @@
 <img src="pic/dogsnake.gif" alt="gif" align="left"><a href="http://www.eecis.udel.edu/~mills/pictures.html">from <i>Alice's Adventures in Wonderland</i>, Lewis Carroll</a>
 <p>S is for snakeoil.</p>
 <p>Last update:
-  <!-- #BeginDate format:En2m -->03-Oct-2011  5:33<!-- #EndDate -->
+  <!-- #BeginDate format:En2m -->7-Dec-2014  11:09<!-- #EndDate -->
   UTC</p>
 <br clear="left">
 <hr>
@@ -46,7 +47,7 @@
   <dt><tt>-g <i>delay</i>, --gap <i>delay</i></tt></dt>
   <dd>Specify the <i>delay</i> in milliseconds between outgoing queries, defaulting to 50.  <tt>sntp</tt> sends queries to all provided hostnames/addresses in short succession, and by default terminates once the first valid response is received.  With multiple time sources provided, all but one will not be used.  To limit the number of queries whose responses will not be used, each query is separated from the preceding one by <i>delay</i> milliseconds, to allow time for responses to earlier queries to be received.  A larger <i>delay</i> reduces the query load on the time sources, increasing the time to receive a valid response if the first source attempted is slow or unreachable.</dd>
   <dt><tt>-K <i>kodfile</i>, --kod <i>kodfile</i></tt></dt>
-  <dd>Specifies the filename <i>kodfile</i> to be used for the persistent history of KoD (Kiss Of Death, or rate-limiting) responses received from servers.  The default is <tt>/var/db/ntp-kod</tt>.  Note that the short option is <tt>-K</tt>, an uppercase letter K.</dd>
+  <dd>Specifies the filename <i>kodfile</i> to be used for the persistent history of KoD (Kiss Of Death, or rate-limiting) responses received from servers.  The default is <tt>/var/db/ntp-kod</tt>.  If the file does not exist, a warning message will be displayed.  The file will not be created.  Note that the short option is <tt>-K</tt>, an uppercase letter K.</dd>
   <dt><tt>-k <i>keyfile</i>, --keyfile <i>keyfile</i></tt></dt>
   <dd>Specifies the filename <i>keyfile</i> used with the <tt>-a</tt>/<tt>--authentication</tt> option.  The format of the file is described on the <a href="keygen.html"><tt>ntp-keygen</tt> page</a>.</dd>
   <dt><tt>-l <i>logfile</i>, --filelog <i>logfile</i></tt></dt>

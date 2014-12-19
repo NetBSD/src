@@ -19,6 +19,8 @@ LIBS=
 dnl The contents of NTP_PROG_CC used to be here...
 
 AC_PROG_INSTALL
+# [Bug 2332] because we need to know if we are using GNU ld...
+LT_PATH_LD
 
 NTP_DIR_SEP
 NTP_LINEEDITLIBS
@@ -338,6 +340,18 @@ case "$enable_thread_support" in
 	 yes)
 	    PTHREAD_LIBS="$LTHREAD_LIBS"
 	    have_pthreads=yes
+	    # Bug 2332: With GCC we need to force a reference to libgcc_s
+	    # (if libgcc_s exists) or the combination of
+	    # threads + setuid + mlockall does not work on linux because
+	    # thread cancellation fails to load libgcc_s with dlopen().
+	    # We have to pass this all as linker options to avoid argument
+	    # reordering by libtool.
+	    case "$GCC$with_gnu_ld" in
+	    yesyes)
+		AC_CHECK_LIB([gcc_s], [exit],
+			[PTHREAD_LIBS="$LTHREAD_LIBS -Wl,--no-as-needed,-lgcc_s,--as-needed"])
+		;;
+	    esac
 	esac
     esac
 esac
@@ -857,13 +871,12 @@ AC_CHECK_FUNCS([MD5Init sysconf getdtablesize sigaction sigset sigvec])
 AC_CACHE_CHECK(
     [for SIGIO],
     [ntp_cv_hdr_def_sigio],
-    [AC_EGREP_CPP(
-	[yes],
+    [AC_PREPROC_IFELSE(
 	[
 	    #include <signal.h>
 
-	    #ifdef SIGIO
-		yes
+	    #ifndef SIGIO
+	    # error
 	    #endif
 	],
 	[ntp_cv_hdr_def_sigio=yes],
@@ -927,13 +940,12 @@ AC_MSG_RESULT([$ans])
 AC_CACHE_CHECK(
     [for SIGPOLL],
     [ntp_cv_hdr_def_sigpoll],
-    [AC_EGREP_CPP(
-	[yes],
+    [AC_PREPROC_IFELSE(
 	[
 	    #include <signal.h>
 	    
-	    #ifdef SIGPOLL
-		yes
+	    #ifndef SIGPOLL
+	    # error
 	    #endif
 	],
 	[ntp_cv_hdr_def_sigpoll=yes],

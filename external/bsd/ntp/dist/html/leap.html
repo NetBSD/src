@@ -9,8 +9,8 @@
 <body>
 <h3>Leap Second Processing</h3>
 <p>Last update:
-  <!-- #BeginDate format:En2m -->29-Nov-2012  16:43<!-- #EndDate -->
-  UTC</p>
+  <!-- #BeginDate format:En2m -->10-Mar-2014  05:11<!-- #EndDate -->
+    UTC</p>
 <hr>
 <p>About every eighteen months the International Earth Rotation Service (IERS) issues a bulletin announcing the insertion of a leap second in the Universal Coordinated Time (UTC) timescale. Ordinarily, this happens at the end of the last day of June or December; but, in principle, it could happen at the end of any month. While these bulletins are available on the Internet at <a href="http://www.iers.org">www.iers.org</a>, advance notice of leap seconds is also available in signals broadcast from national time and frequency stations, in GPS signals and in telephone modem services. Many, but not all, reference clocks recognize these signals and many, but not all, drivers for them can decode the signals and set the leap bits in the timecode accordingly. This means that many, but not all, primary servers can pass on these bits in the NTP packet heard to dependent secondary servers and clients. Secondary servers can pass these bits to their dependents and so on throughout the NTP subnet.</p>
 <p> A leap second is inserted following second 59 of the last minute of the day and becomes second 60 of that day. A leap second is deleted by omitting second 59 of the last minute of the day, although this has never happened and is highly unlikely to happen in future. So far as is known, there are no provisions in the Unix or Windows libraries to account for this occasion other than to affect the conversion of an NTP datestamp or timestamp to conventional civil time.</p>

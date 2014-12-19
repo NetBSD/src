@@ -10,7 +10,7 @@
 <h3>Undisciplined Local Clock</h3>
 <p>Author: David L. Mills (mills@udel.edu)<br>
 Last update:
-  <!-- #BeginDate format:En2m -->29-Nov-2012  16:51<!-- #EndDate -->
+  <!-- #BeginDate format:En2m -->9-May-2014  08:34<!-- #EndDate -->
   UTC</p>
 <hr>
 <h4>Synopsis</h4>
@@ -18,8 +18,8 @@ Last update:
   Reference ID: <tt>LOCL</tt><br>
   Driver ID: <tt>LOCAL</tt></p>
 <h4>Description</h4>
-<p>Not: This driver is not recommended for new installations. A much more flexible replacement is described on the <a href="../orphan.html">Orphan Mode</a> page.</p>
-<p>This driver is intended for use in an isolated network where no external source of synchronization such as a radio clock or modem is available. It allows a designated time server to act as a primary server to provide synchronization to other clients on the network. Pick a machine that has a good clock oscillator (Digital machines are good, Sun machines are not) and configure it with this driver. Set the clock using the best means available, like eyeball-and-wristwatch. Then, point all the other machines at this one or use broadcast mode to distribute time.</p>
+<p>Note: <strong>We recommend against using this driver.</strong> A much more flexible replacement is described on the <a href="../orphan.html">Orphan Mode</a> page.</p>
+<p>This driver was intended for use in an isolated network where no external source of synchronization such as a radio clock or modem is available. It allows a designated time server to act as a primary server to provide synchronization to other clients on the network. Pick a machine that has a good clock oscillator and configure it with this driver. Set the clock using the best means available, like eyeball-and-wristwatch. Then, point all the other machines at this one or use broadcast mode to distribute time.</p>
 <p>Another application for this driver is if a particular server clock is to be used as the clock of last resort when all other normal synchronization sources have gone away. This is especially useful if that server has an ovenized oscillator. For this you would usually, but not necessarily, configure this driver at a stratum greater than any other likely sources of time, such as the default 5 for this driver, to prevent this driver taking over when legitimate sources elsewhere in the network are  available. To further protect the Internet infrastructure from accidental or malicious exposure to this driver, the driver is disabled if another source is available and operating.</p>
 <h4>Monitor Data</h4>
 <p>No <tt>filegen clockstats</tt> monitor data are produced by this driver.</p>

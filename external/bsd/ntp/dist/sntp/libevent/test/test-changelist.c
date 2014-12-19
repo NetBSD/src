@@ -1,4 +1,4 @@
-/*	$NetBSD: test-changelist.c,v 1.1.1.1 2013/12/27 23:31:30 christos Exp $	*/
+/*	$NetBSD: test-changelist.c,v 1.1.1.2 2014/12/19 20:37:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2010-2012 Niels Provos and Nick Mathewson
@@ -185,7 +185,8 @@ main(int argc, char **argv)
 		return (1);
 
 	/* Initalize the event library */
-	base = event_base_new();
+	if (!(base = event_base_new()))
+		return (1);
 
 	/* Initalize a timeout to terminate the test */
 	timeout = evtimer_new(base,timeout_cb,&timeout);

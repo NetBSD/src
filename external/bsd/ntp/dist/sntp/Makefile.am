@@ -21,7 +21,7 @@ LDADD += ../libntp/libntp.a $(LDADD_LIBNTP) $(LIBM)
 LDADD += $(PTHREAD_LIBS)
 LDADD += $(LDADD_NTP)
 
-run_ag =	cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)"	\
+run_ag =	cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)" AUTOGEN_DNE_DATE=-D	\
 		autogen -L include -L ag-tpl --writable
 std_def_list =						\
 	$(srcdir)/include/debug-opt.def			\

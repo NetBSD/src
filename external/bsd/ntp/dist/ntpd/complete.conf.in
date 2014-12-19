@@ -1,11 +1,12 @@
 saveconfigdir "/etc/ntp/conf"
 driftfile "/etc/ntp.drift" 1e-7
 logfile "/var/log/ntp.log"
+leapfile "/etc/ntp.leapseconds"
 nonvolatile 1e-7
 ident "udent"
 logconfig =allall -allinfo -allevents -allstatistics -allstatus +allall -clockinfo -clockevents -clockstatistics -clockstatus +clockall -syncinfo -syncevents -syncstatistics -syncstatus +syncall -sysinfo -sysevents -sysstatistics -sysstatus +sysall
 statsdir "/etc/ntp/stats"
-statistics loopstats peerstats
+statistics clockstats cryptostats loopstats peerstats protostats rawstats sysstats timingstats
 filegen clockstats file clockstats type none enable
 filegen cryptostats file cryptostats type pid link disable
 filegen loopstats file loopstats type day nolink enable
@@ -21,7 +22,7 @@ keys "/etc/ntp.keys"
 trustedkey 1 2 3 4 5 6 7 8 9 10 11 12 (14 ... 16) 18 (32768 ... 65534)
 controlkey 12
 requestkey 12
-enable auth ntp monitor
+enable auth ntp monitor stats
 disable bclient calibrate kernel mode7
 tos beacon 3600 ceiling 16 cohort 0 floor 1 maxclock 10 maxdist 1.5 minclock 3 mindist 0.001 minsane 1 orphan 16 orphanwait 300
 rlimit@HAVE_RLIMIT_MEMLOCK@@HAVE_RLIMIT_STACK@

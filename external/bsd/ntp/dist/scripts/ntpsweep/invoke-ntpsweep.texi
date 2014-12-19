@@ -6,7 +6,7 @@
 #
 # EDIT THIS FILE WITH CAUTION  (invoke-ntpsweep.texi)
 #
-# It has been AutoGen-ed  December 19, 2013 at 11:28:40 AM by AutoGen 5.18.3pre7
+# It has been AutoGen-ed  December 19, 2014 at 07:44:55 AM by AutoGen 5.18.5pre4
 # From the definitions    ntpsweep-opts.def
 # and the template file   agtexi-cmd.tpl
 @end ignore
@@ -45,7 +45,7 @@ with a status code of 0.
 
 @exampleindent 0
 @example
-ntpsweep - Print various informations about given ntp servers
+ntpsweep - Print various informations about given ntp servers - Ver. 4.2.8
 USAGE: ntpsweep [ -<flag> [<val>] | --<name>[@{=| @}<val>] ]... [hostfile]
 
     -l, --host-list=str          Host to execute actions on
@@ -54,7 +54,7 @@ USAGE: ntpsweep [ -<flag> [<val>] | --<name>[@{=| @}<val>] ]... [hostfile]
     -m, --maxlevel=num           Traverse peers up to this level (4 is a reasonable number)
     -s, --strip=str              Strip this string from hostnames
     -?, --help                   Display usage information and exit
-      , --more-help              Pass the extended usage information through a pager
+        --more-help              Pass the extended usage text through a pager
 
 Options are specified by doubled hyphens and their name or by a single
 hyphen and the flag character.
