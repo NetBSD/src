@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2014/12/18 10:08:52 mrg Exp $
+# $NetBSD: Makefile,v 1.21 2014/12/19 05:03:30 christos Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -25,6 +25,8 @@ CPPFLAGS+= \
 #CPPFLAGS+=	-D_NETBSD_SOURCE -DPTHREADS
 
 # We don't actually build this on non-x86 at all, currently.
+# The following if statements are not effective since we only
+# get here for x86
 .if ${MACHINE_ARCH} == "alpha"
 DRIVERS=	r200 radeon
 .elif ${MACHINE} == "macppc" || ${MACHINE} == "ofppc"
@@ -359,7 +361,7 @@ MESA_SRC_MODULES=  main math math_xform vbo tnl swrast ss common asm_c program a
 .include "../libmesa.mk"
 .include "../libglsl.mk"
 
-.if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SRCS+=	streaming-load-memcpy.c
 CPPFLAGS.streaming-load-memcpy.c+= -msse4.1
 .endif
@@ -389,6 +391,8 @@ FILES=		drirc
 .PATH:          ${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/common
 
 .include <bsd.x11.mk>
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 LIBDIR=		${X11USRLIBDIR}/modules/dri
 
 .include <bsd.lib.mk>
+.endif
