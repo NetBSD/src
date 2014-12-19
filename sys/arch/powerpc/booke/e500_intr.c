@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.24 2014/05/19 22:47:53 rmind Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.25 2014/12/19 03:51:38 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.24 2014/05/19 22:47:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.25 2014/12/19 03:51:38 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -713,8 +713,10 @@ e500_intr_cpu_establish(struct cpu_info *ci, int irq, int ipl, int ist,
 
 	struct intr_source * const is = &e500_intr_sources[ii.irq_vector];
 	mutex_enter(&e500_intr_lock);
-	if (is->is_ipl != IPL_NONE)
+	if (is->is_ipl != IPL_NONE) {
+		mutex_exit(&e500_intr_lock);
 		return NULL;
+	}
 
 	is->is_func = handler;
 	is->is_arg = arg;
