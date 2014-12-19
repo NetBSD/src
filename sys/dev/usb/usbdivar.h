@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.9 2014/12/14 11:16:29 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.10 2014/12/19 09:52:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  * List of hardware interface methods, and whether the lock is held
  * when each is called by this module:
  *
- *	BUS METHOD		LOCK  NOTES
+ *	BUS METHOD		LOCK	NOTES
  *	----------------------- -------	-------------------------
  *	ubm_open		-	might want to take lock?
  *	ubm_softint		x
@@ -49,14 +49,14 @@
  *	ubm_newdev		-	Will take lock
 	ubm_rhctrl		
  *
- *	PIPE METHOD		LOCK  NOTES
+ *	PIPE METHOD		LOCK	NOTES
  *	----------------------- -------	-------------------------
- *	transfer		-
- *	start			-	might want to take lock?
- *	abort			x
- *	close			x
- *	cleartoggle		-
- *	done			x
+ *	upm_transfer		-
+ *	upm_start		-	might want to take lock?
+ *	upm_abort		x
+ *	upm_close		x
+ *	upm_cleartoggle		-
+ *	upm_done		x
  *
  * The above semantics are likely to change.  Little performance
  * evaluation has been done on this code and the locking strategy.
