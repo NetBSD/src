@@ -1,4 +1,4 @@
-/*	$NetBSD: autoopts.h,v 1.6 2014/12/19 20:43:19 christos Exp $	*/
+/*	$NetBSD: autoopts.h,v 1.7 2014/12/19 20:48:55 christos Exp $	*/
 
 
 /*
@@ -34,7 +34,11 @@
 
 #ifndef AUTOGEN_AUTOOPTS_H
 #define AUTOGEN_AUTOOPTS_H
+#if 0
 #include <stdnoreturn.h>
+#else
+#define noreturn __dead
+#endif
 
 #define AO_NAME_LIMIT           127
 #define AO_NAME_SIZE            ((size_t)(AO_NAME_LIMIT + 1))
