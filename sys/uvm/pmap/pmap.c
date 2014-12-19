@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 2014/02/25 15:20:29 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 2014/12/19 04:25:52 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4 2014/02/25 15:20:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.5 2014/12/19 04:25:52 nonaka Exp $");
 
 /*
  *	Manages physical address maps.
@@ -510,6 +510,11 @@ pmap_create(void)
 	pmap->pm_maxaddr = VM_MAXUSER_ADDRESS;
 
 	pmap_segtab_init(pmap);
+
+#ifdef MULTIPROCESSOR
+	kcpuset_create(&pmap->pm_active, true);
+	kcpuset_create(&pmap->pm_onproc, true);
+#endif
 
 	UVMHIST_LOG(pmaphist, "<- pmap %p", pmap,0,0,0);
 	return pmap;
