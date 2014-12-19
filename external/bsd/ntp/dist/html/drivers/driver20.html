@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html><head>
     <meta http-equiv="Content-Type" content="text/html;charset=iso-8859-1"><title>Generic NMEA GPS Receiver</title>
-    
+    <!-- Changed by: Harlan &, 31-Mar-2014 -->
     <link href="scripts/style.css" type="text/css" rel="stylesheet">
     <style type="text/css">
       table.dlstable { font-size:85%; }
@@ -12,6 +12,9 @@
 
   <body>
     <h3>Generic NMEA GPS Receiver</h3>
+<p>Last update:
+  <!-- #BeginDate format:En2m -->31-Mar-2014  03:55<!-- #EndDate -->
+  UTC</p>
     <hr>
     <h4>Synopsis</h4>
 
@@ -190,53 +193,82 @@
       <caption>mode byte bits and bit groups</caption>
       <tbody><tr>
 	<th align="center">Bit</th>
-	<th align="center">Dec.</th>
+	<th align="center">Decimal</th>
+	<th align="center">Hex</th>
 	<th align="left">Meaning</th>
       </tr>
       
       <tr>
 	<td align="center">0</td>
 	<td align="center">1</td>
+	<td align="center">1</td>
 	<td>process <tt>$GPMRC</tt></td>
       </tr><tr>
 	<td align="center">1</td>
+	<td align="center">2</td>
 	<td align="center">2</td>
 	<td>process <tt>$GPGGA</tt></td>
       </tr><tr>
 	<td align="center">2</td>
 	<td align="center">4</td>
+	<td align="center">4</td>
 	<td>process <tt>$GPGLL</tt></td>
       </tr><tr>
 	<td align="center">3</td>
+	<td align="center">8</td>
 	<td align="center">8</td>
 	<td>process <tt>$GPZDA</tt> or <tt>$GPZDG</tt></td>
       </tr><tr>
 	<td rowspan="6" align="center">4-6</td>
 	<td align="center">0</td>
+	<td align="center">0</td>
 	<td>linespeed 4800 bps</td>
       </tr><tr>
 	<td align="center">16</td>
+	<td align="center">0x10</td>
 	<td>linespeed 9600 bps</td>
       </tr><tr>
 	<td align="center">32</td>
+	<td align="center">0x20</td>
 	<td>linespeed 19200 bps</td>
       </tr><tr>
 	<td align="center">48</td>
+	<td align="center">0x30</td>
 	<td>linespeed 38400 bps</td>
       </tr><tr>
 	<td align="center">64</td>
+	<td align="center">0x40</td>
 	<td>linespeed 57600 bps</td>
       </tr><tr>
 	<td align="center">80</td>
+	<td align="center">0x50</td>
 	<td>linespeed 115200 bps</td>
       </tr><tr>
 	<td align="center">7</td>
 	<td align="center">128</td>
+	<td align="center">0x80</td>
 	<td>Write the sub-second fraction of the receive time stamp to the
 	clockstat file for all recognised NMEA sentences. This can be used to
 	get a useful value for fudge time2.<br><strong>Caveat:</strong> This
 	will fill your clockstat file rather fast. Use it only temporarily to
 	get the numbers for the NMEA sentence of your choice.</td>
+      </tr>
+      </tr><tr>
+        <td align="center">8</td>
+        <td align="center">256</td>
+        <td align="center">0x100</td>
+	<td>process <tt>$PGRMF</tt></td>
+      </tr><tr>
+        <td align="center">9-15</td>
+        <td align="center"></td>
+        <td align="center">0xFE00</td>
+	<td>reserved - leave 0</td>
+      </tr><tr>
+        <td align="center">16</td>
+        <td align="center">65536</td>
+        <td align="center">0x10000</td>
+        <td>Append extra statistics to the clockstats line.
+        Details below.</td>
       </tr>
     </tbody></table> 
 
@@ -274,6 +306,76 @@
       linespeed of 4800 bps or 9600 bps.
     </p>
 
+    <h4>Monitor Data</h4>
+
+    <p>The last GPS sentence that is accepted or rejected is written to the
+    clockstats file and available with <code>ntpq -c clockvar</code>.
+    (Logging the rejected sentences lets you see/debug why they were rejected.)
+    Filtered sentences are not logged.</p>
+
+    <p>
+      If the 0x10000 mode bit is on and clockstats is enabled, several extra
+      counters will be appended to the NMEA sentence that gets logged.
+      For example:
+<pre>
+56299 76876.691 127.127.20.20 $GPGGA,212116.000,3726.0785,N,12212.2605,W,1,05,2.0,17.0,M,-25.7,M,,0000*5C  228 64 0 0 64 0
+</pre>
+    </p>
+
+    <table border="1">
+      <caption>Clockstats</caption>
+      <tbody><tr>
+	<th align="center">Column</th>
+	<th align="center">Sample</th>
+	<th align="left">Meaning</th>
+      </tr>
+      
+      <tr>
+	<td align="center">1</td>
+	<td align="center">56299</td>
+	<td>MJD</td>
+      </tr><tr>
+	<td align="center">2</td>
+	<td align="center">76876.691</td>
+	<td>Time of day in seconds</td>
+      </tr><tr>
+	<td align="center">3</td>
+	<td align="center">127.127.20.20</td>
+	<td>IP Address from server config line</td>
+      </tr><tr>
+	<td align="center">4</td>
+	<td align="center">$GPGGA,...0*5C</td>
+	<td>NMEA Sentence</td>
+      </tr><tr>
+        <td align="center">5</td>
+        <td align="center">228</td>
+        <td>Number of sentences received</td>
+      </tr><tr>
+        <td align="center">6</td>
+        <td align="center">64</td>
+        <td>Number of sentences accepted and used for timekeeping</td>
+      </tr><tr>
+        <td align="center">7</td>
+        <td align="center">0</td>
+        <td>Number of sentences rejected because they were marked invalid (poor signal)</td>
+      </tr><tr>
+        <td align="center">8</td>
+        <td align="center">0</td>
+        <td>Number of sentences rejected because of bad checksum or invalid date/time</td>
+      </tr><tr>
+        <td align="center">9</td>
+        <td align="center">64</td>
+        <td>Number of sentences filtered by mode bits or same second</td>
+      </tr><tr>
+        <td align="center">10</td>
+        <td align="center">0</td>
+        <td>Number of PPS pulses used, overrides NMEA sentences</td>
+      </tr>
+    </tbody></table>
+
+    Sentences like $GPGSV that don't contain the time will get
+    counted in the total but otherwise ignored.
+
     <p>
       <a href="https://support.ntp.org/bin/view/Support/ConfiguringNMEARefclocks">Configuring
       NMEA Refclocks</a> might give further useful hints for specific hardware
@@ -296,11 +398,6 @@
     <p>On some systems the PPS signal isn't switched on by default. It can be
     switched on by sending the following string.</p>
     <pre>"$PGRMC,,,,,,,,,,,,2&lt;cr&gt;&lt;lf&gt;"</pre>
-
-    <h4>Monitor Data</h4>
-
-    <p>The GPS sentence that is used is written to the clockstats file and
-    available with ntpq -c clockvar.</p>
 
     <h4>Fudge Factors</h4>
 
@@ -328,6 +425,7 @@
     </dl>
 
     <p>Additional Information</p>
+    <p><tt>flag1</tt>, <tt>flag2</tt>, and <tt>flag3</tt> are ignored under Windows.</p>
     <p><a href="../refclock.html">Reference Clock Drivers</a></p>
     <hr>
     <script type="text/javascript" language="javascript" src="scripts/footer.txt"></script>

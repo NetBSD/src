@@ -4,14 +4,25 @@ bin_SCRIPTS =	$(NTP_WAIT_DB)
 libexec_SCRIPTS =	$(NTP_WAIT_DL)
 sbin_SCRIPTS =	$(NTP_WAIT_DS)
 
+man1_MANS=
+man8_MANS=
 man_MANS=	ntp-wait.$(NTP_WAIT_MS)
 
-run_ag=		cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)" PERL5LIB="$(abs_top_srcdir)/scripts/lib"	\
+run_ag=		cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)" PERL5LIB="$(abs_top_srcdir)/scripts/lib" AUTOGEN_DNE_DATE=-D	\
 		autogen -L ../../sntp/include -L ../../sntp/ag-tpl \
 		--writable
+std_def_list =							\
+	$(top_srcdir)/sntp/include/debug-opt.def		\
+	$(top_srcdir)/sntp/include/autogen-version.def 		\
+	$(top_srcdir)/sntp/include/copyright.def 		\
+	$(top_srcdir)/sntp/include/homerc.def 			\
+	$(top_srcdir)/sntp/include/ntp.lic 			\
+	$(top_srcdir)/sntp/include/version.def			\
+	$(NULL)
 
 EXTRA_SCRIPTS = ntp-wait
 
+DISTCLEANFILES =	config.log $(man_MANS)
 EXTRA_DIST =			\
 	ntp-wait.in		\
 	ntp-wait.1ntp-waitman	\
@@ -43,7 +54,7 @@ noinst_DATA =			\
 
 ntp-wait: $(srcdir)/ntp-wait-opts
 
-$(srcdir)/ntp-wait-opts: $(srcdir)/ntp-wait-opts.def ../../sntp/ag-tpl/perlopt.tpl
+$(srcdir)/ntp-wait-opts: $(srcdir)/ntp-wait-opts.def $(std_def_list)
 	$(run_ag) ntp-wait-opts.def
 
 ### Nroff

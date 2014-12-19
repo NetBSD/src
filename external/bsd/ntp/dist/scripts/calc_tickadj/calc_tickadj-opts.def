@@ -1,8 +1,13 @@
+/* -*- Mode: Text -*- */
 AutoGen Definitions perlopt;
+
 #include autogen-version.def
 
-prog-name  = calc_tickadj;
-prog-title = 'Calculates "optimal" value for tick given ntp drift file.';
+prog-name	= calc_tickadj;
+prog-title	= 'Calculates "optimal" value for tick given ntp drift file.';
+package		= ntp;
+#include	version.def
+
 long-opts;
 gnu-usage;
 

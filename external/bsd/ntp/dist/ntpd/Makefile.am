@@ -180,7 +180,7 @@ noinst_HEADERS =			\
 
 install-data-local: install-html
 
-run_ag=		cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)"	\
+run_ag=		cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)" AUTOGEN_DNE_DATE=-D	\
 		autogen -L ../sntp/include -L ../sntp/ag-tpl --writable
 std_def_list =							\
 	$(top_srcdir)/sntp/include/debug-opt.def		\
@@ -244,6 +244,7 @@ libntpd_a_SOURCES =		\
 	refclock_datum.c	\
 	refclock_dumbclock.c	\
 	refclock_fg.c		\
+	refclock_gpsdjson.c	\
 	refclock_gpsvme.c	\
 	refclock_heath.c	\
 	refclock_hopfser.c	\

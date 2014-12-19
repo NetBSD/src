@@ -1131,6 +1131,7 @@ AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
 m4_include([libopts/m4/libopts.m4])
+m4_include([libopts/m4/stdnoreturn.m4])
 m4_include([libevent/m4/openldap-thread-check.m4])
 m4_include([libevent/m4/openldap.m4])
 m4_include([m4/hms_search_lib.m4])

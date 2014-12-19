@@ -9,8 +9,8 @@
 <body>
 <h3>Poll Process</h3>
 <p>Last update:
-  <!-- #BeginDate format:En2m -->20-Apr-2012  19:21<!-- #EndDate -->
-  UTC</p>
+  <!-- #BeginDate format:En2m -->10-Mar-2014  05:17<!-- #EndDate -->
+    UTC</p>
 <hr>
 <p>The   poll process sends  NTP packets at intervals determined by the clock discipline algorithm.  The process is designed to provide a sufficient update rate to maximize accuracy while minimizing network overhead. The  process is designed to operate over a poll exponent range between 3 (8 s) and 17 (36 hr). The minimum and  maximum poll exponent within this range  can be set using the <tt>minpoll</tt> and <tt>maxpoll</tt> options of the <a href="confopt.html#option"><tt>server</tt></a> command, with default 6 (64 s) and 10 (1024 s), respectively.</p>
 <p> The poll interval is managed by a heuristic algorithm developed over several years of experimentation. It depends on an exponentially weighted  average of clock offset differences, called <em>clock jitter</em>, and a jiggle counter, which is initially set to zero.  When a clock update is received and the offset exceeds the clock jitter by a factor of 4,   the jiggle counter is increased by the poll exponent; otherwise, it is decreased by twice the poll exponent. If the jiggle counter is greater than an arbitrary threshold of 30,  it is reset to 0 and the the poll exponent is increased by 1.  If the jiggle counter is less than -30, it is set to 0 and the  poll exponent  decreased by 1. In effect, the algorithm has a relatively slow reaction to good news, but a relatively fast reaction to bad news.</p>

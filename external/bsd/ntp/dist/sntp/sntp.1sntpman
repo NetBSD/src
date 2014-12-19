@@ -10,11 +10,11 @@
 .ds B-Font B
 .ds I-Font I
 .ds R-Font R
-.TH sntp 1sntpman "24 Dec 2013" "4.2.7p404" "User Commands"
+.TH sntp 1sntpman "19 Dec 2014" "4.2.8" "User Commands"
 .\"
-.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-ava45X/ag-mva44X)
+.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-4dayXk/ag-feaqWk)
 .\"
-.\" It has been AutoGen-ed December 24, 2013 at 11:39:56 AM by AutoGen 5.18.3pre5
+.\" It has been AutoGen-ed December 19, 2014 at 07:51:32 AM by AutoGen 5.18.5pre4
 .\" From the definitions sntp-opts.def
 .\" and the template file agman-cmd.tpl
 .SH NAME
@@ -156,7 +156,8 @@ for this option is:
  /var/db/ntp-kod
 .sp
 Specifies the filename to be used for the persistent history of KoD
-responses received from servers.
+responses received from servers.  If the file does not exist, a
+warning message will be displayed.  The file will not be created.
 .TP
 .NOP \f\*[B-Font]\-k\f[] \f\*[I-Font]file\-name\f[], \f\*[B-Font]\-\-keyfile\f[]=\f\*[I-Font]file\-name\f[]
 Look in this file for the key specified with \fB-a\fP.
@@ -281,35 +282,6 @@ the configuration files.
 The \fIhomerc\fP files are "\fI$HOME\fP", and "\fI.\fP".
 If any of these are directories, then the file \fI.ntprc\fP
 is searched for within those directories.
-.TH sntp 1sntpman "24 Dec 2013" "4.2.7p404" "User Commands"
-.\"
-.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-ava45X/ag-mva44X)
-.\"
-.\" It has been AutoGen-ed December 24, 2013 at 11:39:56 AM by AutoGen 5.18.3pre5
-.\" From the definitions sntp-opts.def
-.\" and the template file agman-cmd.tpl
-.SH NAME
-\f\*[B-Font]sntp\fP sntp
-\- standard Simple Network Time Protocol client program
-cvt_prog='/usr/local/gnu/share/autogen/texi2man'
-cvt_prog=`cd \`dirname "$cvt_prog"\` >/dev/null && pwd
-         `/`basename "$cvt_prog"`
-cd $tmp_dir
-test \-x "$cvt_prog" || die "'$cvt_prog' is not executable"
-{
-    list='synopsis description options option-presets'
-    for f in $list ; do cat $f ; echo ; done
-    rm \-f $list name
-    list='implementation-notes environment files examples exit-status errors
-        compatibility see-also conforming-to history authors copyright bugs
-        notes'
-    for f in $list ; do cat $f ; echo ; done > .end-doc
-    rm \-f $list
-    list=`ls \-1 *`' .end-doc'
-    for f in $list ; do cat $f ; echo ; done
-    rm \-f $list
-} 1>.doc 2>/dev/null
-sed \-f .cmds .doc | /usr/local/gnu/bin/grep \-E \-v '^[ 	]*$' | $cvt_prog
 .SH USAGE
 .TP 7
 .NOP \f[C]sntp ntpserver.somewhere\f[]
@@ -359,15 +331,10 @@ it to autogen-users@lists.sourceforge.net.  Thank you.
 .NOP  "Dave Hart" 
 .br
 .SH "COPYRIGHT"
-Copyright (C) 1970-2013 The University of Delaware all rights reserved.
+Copyright (C) 1970-2014 The University of Delaware all rights reserved.
 This program is released under the terms of the NTP license, <http://ntp.org/license>.
 .SH "BUGS"
 Please send bug reports to: http://bugs.ntp.org, bugs@ntp.org
-.SH NOTES
-This document corresponds to version 4.2.7p404 of
-\f\*[B-Font]sntp\fP.
-.sp \n(Ppu
-.ne 2
-
+.SH "NOTES"
 This manual page was \fIAutoGen\fP-erated from the \fBsntp\fP
 option definitions.
