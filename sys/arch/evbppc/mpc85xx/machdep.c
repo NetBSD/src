@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 2014/12/19 04:07:13 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 2014/12/19 04:15:36 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -983,6 +983,7 @@ e500_cpu_hatch(struct cpu_info *ci)
 
 	intr_cpu_hatch(ci);
 
+	cpu_probe_cache();
 	cpu_print_info(ci);
 
 /*
