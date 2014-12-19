@@ -11,8 +11,8 @@
 <img src="pic/alice51.gif" alt="gif" align="left"><a href="http://www.eecis.udel.edu/~mills/pictures.html">from <i>Alice's Adventures in Wonderland</i>, Lewis Carroll</a>
 <p>Make sure who your friends are.</p>
 <p>Last update:
-  <!-- #BeginDate format:En2m -->14-Oct-2011  19:22<!-- #EndDate -->
-  UTC</p>
+  <!-- #BeginDate format:En2m -->31-Jan-2014  06:54<!-- #EndDate -->
+    UTC</p>
 <br clear="left">
 <h4>Related Links</h4>
 <script type="text/javascript" language="javascript" src="scripts/hand.txt"></script>
@@ -53,7 +53,7 @@
 <p>As symmetric modes are most often used as root servers for moderate to large subnets where rapid response is required, it is generally best to set the minimum and maximum poll intervals of each root server to the same value using the <tt>minpoll</tt> and <tt>maxpoll</tt> options.</p>
 <h4 id="broad">Broadcast/Multicast Modes</h4>
 <p>NTP broadcast and multicast modes are intended for configurations involving one or a few servers and a possibly very large client population. Broadcast mode can be used with Ethernet, FDDI and WiFi spans interconnected by hubs or switches. Ordinarily, broadcast packets do not extend beyond a level-3 router. Where service is intended beyond a level-3 router, multicast mode can be used. Additional information is on the <a href="discover.html">Automatic NTP Configuration Options</a> page.</p>
-<p>A server is configured to send broadcast or multicast messages  using the <tt>broadcast</tt> command and specifying the subnet address for broadcast  or the multicast group address for multicast. A broadcast client is enabled using the <a href="confopt.html#broadcastclient.html"><tt>broadcastclient</tt></a> command, while a multicast client is enabled using the <a href="confopt.html#multicastclient"><tt>multicastclient</tt></a> command and specifying the multicast group address. Multiple commands of either type can be used. However,  the association is not mobilized until the first broadcast or multicast message is actually received.</p>
+<p>A server is configured to send broadcast or multicast messages  using the <tt>broadcast</tt> command and specifying the subnet address for broadcast  or the multicast group address for multicast. A broadcast client is enabled using the <a href="confopt.html#broadcastclient"><tt>broadcastclient</tt></a> command, while a multicast client is enabled using the <a href="confopt.html#multicastclient"><tt>multicastclient</tt></a> command and specifying the multicast group address. Multiple commands of either type can be used. However,  the association is not mobilized until the first broadcast or multicast message is actually received.</p>
 <h4 id="many">Manycast and Pool Modes</h4>
 <p>Manycast and pool modes are automatic discovery and configuration paradigms new to NTPv4. They are intended as a means for a  client to troll the nearby network neighborhood to find cooperating willing servers, validate them using cryptographic means and evaluate their time values with respect to other servers that might be lurking in the vicinity. The intended result is that each  client mobilizes ephemeral client associations with some number of the &quot;best&quot; of the nearby  servers, yet automatically reconfigures to sustain this number of servers should one or another fail. Additional information is on the <a href="discover.html">Automatic Server Discovery Schemes</a> page.</p>
 <h4 id="poll">Poll Interval Management</h4>

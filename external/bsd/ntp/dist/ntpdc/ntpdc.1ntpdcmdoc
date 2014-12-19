@@ -1,9 +1,9 @@
-.Dd December 24 2013
+.Dd December 19 2014
 .Dt NTPDC 1ntpdcmdoc User Commands
-.Os SunOS 5.10
+.Os
 .\"  EDIT THIS FILE WITH CAUTION  (ntpdc-opts.mdoc)
 .\"
-.\"  It has been AutoGen-ed  December 24, 2013 at 11:38:47 AM by AutoGen 5.18.3pre5
+.\"  It has been AutoGen-ed  December 19, 2014 at 07:49:44 AM by AutoGen 5.18.5pre4
 .\"  From the definitions    ntpdc-opts.def
 .\"  and the template file   agmdoc-cmd.tpl
 .Sh NAME
@@ -18,6 +18,13 @@
 [ host ...]
 .Pp
 .Sh DESCRIPTION
+.Nm
+is deprecated.
+Please use
+.Xr ntpq 1ntpqmdoc instead \- it can do everything
+.Nm
+used to do, and it does so using a much more sane interface.
+.Pp
 .Nm
 is a utility program used to query
 .Xr ntpd 1ntpdmdoc
@@ -131,25 +138,6 @@ the configuration files.
 The \fIhomerc\fP files are "\fI$HOME\fP", and "\fI.\fP".
 If any of these are directories, then the file \fI.ntprc\fP
 is searched for within those directories.
-cvt_prog='/usr/local/gnu/share/autogen/texi2mdoc'
-cvt_prog=`cd \`dirname "$cvt_prog"\` >/dev/null && pwd
-         `/`basename "$cvt_prog"`
-cd $tmp_dir
-test \-x "$cvt_prog" || die "'$cvt_prog' is not executable"
-{
-    list='synopsis description options option\-presets'
-    for f in $list ; do cat $f ; echo ; done
-    rm \-f $list name
-    list='implementation\-notes environment files examples exit\-status errors
-        compatibility see\-also conforming\-to history authors copyright bugs
-        notes'
-    for f in $list ; do cat $f ; echo ; done > .end\-doc
-    rm \-f $list
-    list=`ls \-1 *`' .end\-doc'
-    for f in $list ; do cat $f ; echo ; done
-    rm \-f $list
-} 1>.doc 2>/dev/null
-sed \-f .cmds .doc | /usr/local/gnu/bin/grep \-E \-v '^[ 	]*$' | $cvt_prog
 .Sh USAGE
 If one or more request options are included on the command line
 when
@@ -386,7 +374,7 @@ Version 2 specification.
 .It Ic pstats Ar peer_address Oo Ar ... Oc
 Show per\-peer statistic counters associated with the specified
 peer(s).
-.It Ic clockinfo Ar clock_peer_address Oo Ar ... Oc
+.It Ic clockstat Ar clock_peer_address Oo Ar ... Oc
 Obtain and print information concerning a peer clock.
 The
 values obtained provide information on the setting of fudge factors
@@ -799,7 +787,7 @@ it to autogen\-users@lists.sourceforge.net.  Thank you.
 .Sh AUTHORS
 The formatting directives in this document came from FreeBSD.
 .Sh "COPYRIGHT"
-Copyright (C) 1970\-2013 The University of Delaware all rights reserved.
+Copyright (C) 1970\-2014 The University of Delaware all rights reserved.
 This program is released under the terms of the NTP license, <http://ntp.org/license>.
 .Sh BUGS
 The
