@@ -8,8 +8,6 @@ include = <<- _EOF_
 	#endif
 	_EOF_;
 
-test-main;
-
 flag = {
     name      = ipv4;
     value     = 4;

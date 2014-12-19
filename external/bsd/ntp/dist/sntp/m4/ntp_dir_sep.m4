@@ -7,7 +7,7 @@ AC_CACHE_CHECK(
     [
 	case "$ntp_cv_dir_sep" in
 	 '')
-	    case "$target_os" in
+	    case "$host_os" in
 	     *djgpp | *mingw32* | *emx*)
 		ntp_cv_dir_sep="'\\'"
 		;;

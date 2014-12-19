@@ -9,6 +9,7 @@ ntpdc,bin,1
 ntpdsim,bin,1
 ntpq,bin,1
 ntpsnmpd,bin,1
+ntpsweep,noinst,1
 ntptime,bin,1
 ntptrace,bin,1
 sntp,bin,1

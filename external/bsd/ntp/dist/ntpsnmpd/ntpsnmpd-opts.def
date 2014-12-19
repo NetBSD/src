@@ -9,8 +9,6 @@ autogen definitions options;
 prog-name      = "ntpsnmpd";
 prog-title     = "NTP SNMP MIB agent";
 
-test-main;
-
 flag = {
     name      = nofork;
     value     = n;
@@ -111,8 +109,6 @@ please fill me in...
 .It Li ntpEntTimeDistance
 please fill me in...
 .El
-.Pp
-This document corresponds to version #VERSION# of NTP.
 	_END_MDOC_NOTES;
 };
 

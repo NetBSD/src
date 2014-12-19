@@ -1,7 +1,7 @@
 #!/bin/sh
 
 BACKENDS="EVPORT KQUEUE EPOLL DEVPOLL POLL SELECT WIN32"
-TESTS="test-eof test-weof test-time test-changelist test-fdleak"
+TESTS="test-eof test-closed test-weof test-time test-changelist test-fdleak"
 FAILED=no
 TEST_OUTPUT_FILE=${TEST_OUTPUT_FILE:-/dev/null}
 REGRESS_ARGS=${REGRESS_ARGS:-}
@@ -28,7 +28,7 @@ fi
 TEST_DIR=.
 TEST_SRC_DIR=.
 
-T=`echo "$0" | sed -e 's/test.sh$//'`
+T=`echo "$0" | sed -e 's/test.sh$//' | sed -e 's/test-script.sh//' `
 if test -x "$T/test-init"
 then
 	TEST_DIR="$T"
@@ -42,11 +42,6 @@ then
 elif test -f "./test/check-dumpevents.py"
 then
         TEST_SRC_DIR="./test"
-elif test -f "../../../sntp/libevent/test/check-dumpevents.py"
-then    
-        TEST_SRC_DIR="../../../sntp/libevent/test"
-else
-        echo "### Can't find check-dumpevents.py"
 fi
 
 setup () {
@@ -87,13 +82,12 @@ run_tests () {
 		fi
 	done
 	announce_n " test-dumpevents: "
-	if python2 -c 'import sys; assert(sys.version_info >= (2, 4))' 2>/dev/null; then
+	if python2 -c 'import sys; assert(sys.version_info >= (2, 4))' 2>/dev/null && test -f $TEST_SRC_DIR/check-dumpevents.py; then
 	    if $TEST_DIR/test-dumpevents | python2 $TEST_SRC_DIR/check-dumpevents.py >> "$TEST_OUTPUT_FILE" ;
 	    then
 	        announce OKAY ;
 	    else
 	        announce FAILED ;
-		FAILED=yes
 	    fi
 	else
 	    # no python
@@ -101,7 +95,6 @@ run_tests () {
 	        announce "OKAY (output not checked)" ;
 	    else
 	        announce "FAILED (output not checked)" ;
-		FAILED=yes
 	    fi
 	fi
 	test -x $TEST_DIR/regress || return

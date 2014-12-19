@@ -1,7 +1,7 @@
 /* -*- Mode: Text -*- */
 
 copyright = {
-    date  = "1970-2013";
+    date  = "1970-2014";
     owner = "The University of Delaware";
     eaddr = "http://bugs.ntp.org, bugs@ntp.org";
     type  = ntp;
@@ -20,7 +20,11 @@ echo $VERSION`;
 
 version-value = '';	/* Don't use -v as a shortcut for --version */
 
-doc-sub = {
-    sub-name = version;
-    sub-text = 's/#VERSION#/<<version>>/g';
-};
+/*
+ * HMS: man pages already have this, and texi pages can use the
+ * values in sntp/include/version.texi .
+ */
+// doc-sub = {
+//     sub-name = version;
+//     sub-text = 's/#VERSION#/<<version>>/g';
+// };

@@ -9,7 +9,8 @@ ntpdc,sbin,1m
 ntpdsim,sbin,1m
 ntpq,sbin,1m
 ntpsnmpd,libexec,1m
+ntpsweep,noinst,1m
 ntptime,sbin,1m
 ntptrace,sbin,1m
-sntp,libexec,1m
+sntp,sbin,1m
 tickadj,sbin,1m

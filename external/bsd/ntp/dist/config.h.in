@@ -51,6 +51,9 @@
 /* Forum Graphic GPS datating station driver? */
 #undef CLOCK_FG
 
+/* GPSD JSON receiver */
+#undef CLOCK_GPSDJSON
+
 /* TrueTime GPS receiver/VME interface? */
 #undef CLOCK_GPSVME
 
@@ -389,6 +392,12 @@
 /* Define to 1 if you have the `finite' function. */
 #undef HAVE_FINITE
 
+/* Define to 1 if you have the `fnmatch' function. */
+#undef HAVE_FNMATCH
+
+/* Define to 1 if you have the <fnmatch.h> header file. */
+#undef HAVE_FNMATCH_H
+
 /* Define to 1 if you have the `fork' function. */
 #undef HAVE_FORK
 
@@ -692,6 +701,12 @@
 /* Define to 1 if you have the `pututxline' function. */
 #undef HAVE_PUTUTXLINE
 
+/* Define to 1 if you have the `RAND_bytes' function. */
+#undef HAVE_RAND_BYTES
+
+/* Define to 1 if you have the `RAND_poll' function. */
+#undef HAVE_RAND_POLL
+
 /* Define to 1 if you have the <readline.h> header file. */
 #undef HAVE_READLINE_H
 
@@ -850,6 +865,9 @@
 
 /* Define to 1 if you have the `strsignal' function. */
 #undef HAVE_STRSIGNAL
+
+/* Define to 1 if you have the `strtoll' function. */
+#undef HAVE_STRTOLL
 
 /* Define to 1 if `decimal_point' is a member of `struct lconv'. */
 #undef HAVE_STRUCT_LCONV_DECIMAL_POINT
@@ -1276,6 +1294,9 @@
 /* Does the kernel support precision time discipline? */
 #undef KERNEL_PLL
 
+/* Define to use libseccomp system call filtering. */
+#undef KERN_SECCOMP
+
 /* What is (probably) the name of DOSYNCTODR in the kernel? */
 #undef K_DOSYNCTODR_NAME
 
@@ -1290,6 +1311,9 @@
 
 /* define to 1 if library is thread safe */
 #undef LDAP_API_FEATURE_X_OPENLDAP_THREAD_SAFE
+
+/* Define to any value to include libseccomp sandboxing. */
+#undef LIBSECCOMP
 
 /* Should we align with the NIST lockclock scheme? */
 #undef LOCKCLOCK
@@ -1530,6 +1554,9 @@ typedef unsigned int	uintptr_t;
 
 /* Must we have a CTTY for fsetown? */
 #undef USE_FSETOWNCTTY
+
+/* Use OpenSSL's crypto random functions */
+#undef USE_OPENSSL_CRYPTO_RAND
 
 /* Can we use SIGPOLL for tty IO? */
 #undef USE_TTY_SIGPOLL

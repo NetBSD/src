@@ -70,7 +70,7 @@ All other files are in PEM-encoded
 printable ASCII format so they can be embedded as MIME attachments in
 mail to other sites.
 
-  <p>This document applies to version 4.2.7p404 of <code>ntp-keygen</code>.
+  <p>This document applies to version 4.2.8 of <code>ntp-keygen</code>.
 
 <div class="node">
 <p><hr>
@@ -1051,8 +1051,8 @@ This software is released under the NTP license, &lt;http://ntp.org/license&gt;.
 <li><a href="#ntp_002dkeygen-md5key">ntp-keygen md5key</a>:                  md5key option (-M)
 <li><a href="#ntp_002dkeygen-modulus">ntp-keygen modulus</a>:                 modulus option (-m)
 <li><a href="#ntp_002dkeygen-pvt_002dcert">ntp-keygen pvt-cert</a>:                pvt-cert option (-P)
-<li><a href="#ntp_002dkeygen-pvt_002dpasswd">ntp-keygen pvt-passwd</a>:              pvt-passwd option (-p)
-<li><a href="#ntp_002dkeygen-get_002dpvt_002dpasswd">ntp-keygen get-pvt-passwd</a>:          get-pvt-passwd option (-q)
+<li><a href="#ntp_002dkeygen-password">ntp-keygen password</a>:                password option (-p)
+<li><a href="#ntp_002dkeygen-export_002dpasswd">ntp-keygen export-passwd</a>:           export-passwd option (-q)
 <li><a href="#ntp_002dkeygen-sign_002dkey">ntp-keygen sign-key</a>:                sign-key option (-S)
 <li><a href="#ntp_002dkeygen-subject_002dname">ntp-keygen subject-name</a>:            subject-name option (-s)
 <li><a href="#ntp_002dkeygen-trusted_002dcert">ntp-keygen trusted-cert</a>:            trusted-cert option (-T)
@@ -1085,7 +1085,7 @@ the usage text by passing it through a pager program.
 used to select the program, defaulting to <span class="file">more</span>.  Both will exit
 with a status code of 0.
 
-<pre class="example">ntp-keygen (ntp) - Create a NTP host key - Ver. 4.2.7p403
+<pre class="example">ntp-keygen (ntp) - Create a NTP host key - Ver. 4.2.7p486-RC
 Usage:  ntp-keygen [ -&lt;flag&gt; [&lt;val&gt;] | --&lt;name&gt;[{=| }&lt;val&gt;] ]...
   Flg Arg Option-Name    Description
    -b Num imbits         identity modulus bits
@@ -1108,8 +1108,8 @@ Usage:  ntp-keygen [ -&lt;flag&gt; [&lt;val&gt;] | --&lt;name&gt;[{=| }&lt;val&g
                                 - it must be in the range:
                                   256 to 2048
    -P no  pvt-cert       generate PC private certificate
-   -p Str pvt-passwd     output private password
-   -q Str get-pvt-passwd input private password
+   -p Str password       local private password
+   -q Str export-passwd  export IFF or GQ group keys with password
    -S Str sign-key       generate sign key (RSA or DSA)
    -s Str subject-name   set host and optionally group name
    -T no  trusted-cert   trusted certificate (TC scheme)
@@ -1133,8 +1133,6 @@ The following option preset mechanisms are supported:
  - examining environment variables named NTP_KEYGEN_*
 
 Please send bug reports to:  &lt;http://bugs.ntp.org, bugs@ntp.org&gt;
-
-exit 0
 </pre>
   <div class="node">
 <p><hr>
@@ -1368,7 +1366,7 @@ This option takes a number argument <span class="file">modulus</span>.
   <p>The number of bits in the prime modulus.  The default is 512. 
 <div class="node">
 <p><hr>
-<a name="ntp_002dkeygen-pvt_002dcert"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntp_002dkeygen-pvt_002dpasswd">ntp-keygen pvt-passwd</a>,
+<a name="ntp_002dkeygen-pvt_002dcert"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntp_002dkeygen-password">ntp-keygen password</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntp_002dkeygen-modulus">ntp-keygen modulus</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#ntp_002dkeygen-Invocation">ntp-keygen Invocation</a>
 <br>
@@ -1388,16 +1386,16 @@ This is the ``generate pc private certificate'' option.
 public certificates. 
 <div class="node">
 <p><hr>
-<a name="ntp_002dkeygen-pvt_002dpasswd"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntp_002dkeygen-get_002dpvt_002dpasswd">ntp-keygen get-pvt-passwd</a>,
+<a name="ntp_002dkeygen-password"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntp_002dkeygen-export_002dpasswd">ntp-keygen export-passwd</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntp_002dkeygen-pvt_002dcert">ntp-keygen pvt-cert</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#ntp_002dkeygen-Invocation">ntp-keygen Invocation</a>
 <br>
 </div>
 
-<h4 class="subsection">pvt-passwd option (-p)</h4>
+<h4 class="subsection">password option (-p)</h4>
 
-<p><a name="index-ntp_002dkeygen_002dpvt_002dpasswd-16"></a>
-This is the ``output private password'' option. 
+<p><a name="index-ntp_002dkeygen_002dpassword-16"></a>
+This is the ``local private password'' option. 
 This option takes a string argument <span class="file">passwd</span>.
 
 <p class="noindent">This option has some usage constraints.  It:
@@ -1405,20 +1403,23 @@ This option takes a string argument <span class="file">passwd</span>.
 <li>must be compiled in by defining <code>AUTOKEY</code> during the compilation. 
 </ul>
 
-  <p>Encrypt generated files containing private data with the specified
-password and the cipher selected with <code>-C/--cipher</code>. 
+  <p>Local files containing private data are encrypted with the
+DES-CBC algorithm and the specified password.  The same password
+must be specified to the local ntpd via the "crypto pw password"
+configuration command.  The default password is the local
+hostname. 
 <div class="node">
 <p><hr>
-<a name="ntp_002dkeygen-get_002dpvt_002dpasswd"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntp_002dkeygen-sign_002dkey">ntp-keygen sign-key</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntp_002dkeygen-pvt_002dpasswd">ntp-keygen pvt-passwd</a>,
+<a name="ntp_002dkeygen-export_002dpasswd"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntp_002dkeygen-sign_002dkey">ntp-keygen sign-key</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntp_002dkeygen-password">ntp-keygen password</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#ntp_002dkeygen-Invocation">ntp-keygen Invocation</a>
 <br>
 </div>
 
-<h4 class="subsection">get-pvt-passwd option (-q)</h4>
+<h4 class="subsection">export-passwd option (-q)</h4>
 
-<p><a name="index-ntp_002dkeygen_002dget_002dpvt_002dpasswd-17"></a>
-This is the ``input private password'' option. 
+<p><a name="index-ntp_002dkeygen_002dexport_002dpasswd-17"></a>
+This is the ``export iff or gq group keys with password'' option. 
 This option takes a string argument <span class="file">passwd</span>.
 
 <p class="noindent">This option has some usage constraints.  It:
@@ -1426,11 +1427,15 @@ This option takes a string argument <span class="file">passwd</span>.
 <li>must be compiled in by defining <code>AUTOKEY</code> during the compilation. 
 </ul>
 
-  <p>Set the password for reading files to the specified password. 
+  <p>Export IFF or GQ identity group keys to the standard output,
+encrypted with the DES-CBC algorithm and the specified password. 
+The same password must be specified to the remote ntpd via the
+"crypto pw password" configuration command.  See also the option
+--id-key (-e) for unencrypted exports. 
 <div class="node">
 <p><hr>
 <a name="ntp_002dkeygen-sign_002dkey"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntp_002dkeygen-subject_002dname">ntp-keygen subject-name</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntp_002dkeygen-get_002dpvt_002dpasswd">ntp-keygen get-pvt-passwd</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntp_002dkeygen-export_002dpasswd">ntp-keygen export-passwd</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#ntp_002dkeygen-Invocation">ntp-keygen Invocation</a>
 <br>
 </div>
