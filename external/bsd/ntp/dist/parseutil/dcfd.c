@@ -1,4 +1,4 @@
-/*	$NetBSD: dcfd.c,v 1.1.1.2 2013/12/27 23:31:07 christos Exp $	*/
+/*	$NetBSD: dcfd.c,v 1.2 2014/12/19 20:43:18 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/parseutil/dcfd.c,v 4.18 2005/10/07 22:08:18 kardel RELEASE_20051008_A

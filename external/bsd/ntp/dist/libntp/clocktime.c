@@ -1,4 +1,4 @@
-/*	$NetBSD: clocktime.c,v 1.1.1.2 2013/12/27 23:30:48 christos Exp $	*/
+/*	$NetBSD: clocktime.c,v 1.2 2014/12/19 20:43:17 christos Exp $	*/
 
 /*
  * clocktime - compute the NTP date from a day of year, hour, minute

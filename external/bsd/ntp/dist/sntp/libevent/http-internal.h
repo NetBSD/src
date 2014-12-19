@@ -1,4 +1,4 @@
-/*	$NetBSD: http-internal.h,v 1.1.1.2 2014/12/19 20:37:45 christos Exp $	*/
+/*	$NetBSD: http-internal.h,v 1.2 2014/12/19 20:43:18 christos Exp $	*/
 
 /*
  * Copyright 2001-2007 Niels Provos <provos@citi.umich.edu>

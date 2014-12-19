@@ -1,4 +1,4 @@
-/*	$NetBSD: hello-world.c,v 1.1.1.1 2013/12/27 23:31:31 christos Exp $	*/
+/*	$NetBSD: hello-world.c,v 1.2 2014/12/19 20:43:19 christos Exp $	*/
 
 /*
   This exmple program provides a trivial server program that listens for TCP

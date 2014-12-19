@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_palisade.h,v 1.1.1.2 2013/12/27 23:30:50 christos Exp $	*/
+/*	$NetBSD: refclock_palisade.h,v 1.2 2014/12/19 20:43:17 christos Exp $	*/
 
 /*
  * This software was developed by the Software and Component Technologies

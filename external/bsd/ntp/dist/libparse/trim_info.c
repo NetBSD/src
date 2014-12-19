@@ -1,4 +1,4 @@
-/*	$NetBSD: trim_info.c,v 1.1.1.2 2013/12/27 23:30:49 christos Exp $	*/
+/*	$NetBSD: trim_info.c,v 1.2 2014/12/19 20:43:17 christos Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/trim_info.c,v 4.5 2005/04/16 17:32:10 kardel RELEASE_20050508_A

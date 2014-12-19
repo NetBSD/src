@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto_rnd.c,v 1.1.1.1 2014/12/19 20:37:39 christos Exp $	*/
+/*	$NetBSD: ntp_crypto_rnd.c,v 1.2 2014/12/19 20:43:17 christos Exp $	*/
 
 /*
  * Crypto-quality random number functions
@@ -87,6 +87,7 @@ ntp_crypto_random_buf(
 		err = ERR_get_error();
 		err_str = ERR_error_string(err, NULL);
 		/* XXX: Log the error */
+		(void)&err_str;
 
 		return -1;
 	}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2014/01/20 01:52:54 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2014/12/19 20:43:14 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -41,6 +41,7 @@ SRCS=	cmd_args.c				\
 	refclock_datum.c			\
 	refclock_dumbclock.c			\
 	refclock_fg.c				\
+	refclock_gpsdjson.c			\
 	refclock_gpsvme.c			\
 	refclock_heath.c			\
 	refclock_hopfpci.c			\

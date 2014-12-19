@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2014/06/14 20:49:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2014/12/19 20:43:20 christos Exp $
 
 LIBISPRIVATE=yes
 
@@ -35,6 +35,7 @@ SRCS=   assertions.c               \
         ondestroy.c                \
         random.c                   \
         result.c                   \
+	sha1.c			   \
         stdio.c                    \
         stdtime.c                  \
         strerror.c                 \

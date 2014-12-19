@@ -1,4 +1,4 @@
-/*	$NetBSD: jsmn.c,v 1.1.1.1 2014/12/19 20:37:38 christos Exp $	*/
+/*	$NetBSD: jsmn.c,v 1.2 2014/12/19 20:43:17 christos Exp $	*/
 
 #include <stdlib.h>
 #include <string.h>
@@ -11,7 +11,7 @@
 static jsmntok_t *jsmn_alloc_token(jsmn_parser *parser, 
 		jsmntok_t *tokens, size_t num_tokens) {
 	jsmntok_t *tok;
-	if (parser->toknext >= num_tokens) {
+	if ((size_t)parser->toknext >= num_tokens) {
 		return NULL;
 	}
 	tok = &tokens[parser->toknext++];

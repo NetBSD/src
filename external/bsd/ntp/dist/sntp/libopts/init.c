@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.3 2014/11/23 01:47:59 joerg Exp $	*/
+/*	$NetBSD: init.c,v 1.4 2014/12/19 20:43:19 christos Exp $	*/
 
 /**
  * \file initialize.c
@@ -11,7 +11,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2013 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control

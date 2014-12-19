@@ -1,4 +1,4 @@
-/*	$NetBSD: libntptest.h,v 1.1.1.1 2013/12/27 23:31:38 christos Exp $	*/
+/*	$NetBSD: libntptest.h,v 1.2 2014/12/19 20:43:20 christos Exp $	*/
 
 #include "tests_main.h"
 

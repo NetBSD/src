@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.h,v 1.3 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: ntpdc.h,v 1.4 2014/12/19 20:43:18 christos Exp $	*/
 
 /*
  * ntpdc.h - definitions of interest to ntpdc

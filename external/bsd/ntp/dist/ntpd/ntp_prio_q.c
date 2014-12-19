@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_prio_q.c,v 1.1.1.1 2013/12/27 23:30:58 christos Exp $	*/
+/*	$NetBSD: ntp_prio_q.c,v 1.2 2014/12/19 20:43:17 christos Exp $	*/
 
 /* ntp_prio_q.c
  *

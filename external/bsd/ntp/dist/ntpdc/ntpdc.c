@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.7 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.8 2014/12/19 20:43:18 christos Exp $	*/
 
 /*
  * ntpdc - control and monitor your ntpd daemon

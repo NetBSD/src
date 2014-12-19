@@ -1,4 +1,4 @@
-/*	$NetBSD: defer-internal.h,v 1.1.1.1 2013/12/27 23:31:17 christos Exp $	*/
+/*	$NetBSD: defer-internal.h,v 1.2 2014/12/19 20:43:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson

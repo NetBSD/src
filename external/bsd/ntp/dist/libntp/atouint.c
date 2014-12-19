@@ -1,4 +1,4 @@
-/*	$NetBSD: atouint.c,v 1.4 2014/04/01 17:34:44 kardel Exp $	*/
+/*	$NetBSD: atouint.c,v 1.5 2014/12/19 20:43:17 christos Exp $	*/
 
 #include <config.h>
 #include <sys/types.h>

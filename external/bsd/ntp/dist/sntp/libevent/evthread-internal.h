@@ -1,4 +1,4 @@
-/*	$NetBSD: evthread-internal.h,v 1.1.1.1 2013/12/27 23:31:24 christos Exp $	*/
+/*	$NetBSD: evthread-internal.h,v 1.2 2014/12/19 20:43:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2008-2012 Niels Provos, Nick Mathewson
