@@ -370,7 +370,8 @@ configure_interface1(struct interface *ifp)
 	if (!(ifo->options & DHCPCD_IPV6))
 		ifo->options &= ~(DHCPCD_IPV6RS | DHCPCD_DHCP6);
 
-	if (ifo->options & DHCPCD_SLAACPRIVATE)
+	if (ifo->options & DHCPCD_SLAACPRIVATE &&
+	    !(ifp->ctx->options & DHCPCD_TEST))
 		ifo->options |= DHCPCD_IPV6RA_OWN;
 
 	/* We want to disable kernel interface RA as early as possible. */
