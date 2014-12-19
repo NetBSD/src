@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_stdlib.h,v 1.6 2013/12/28 03:20:13 christos Exp $	*/
+/*	$NetBSD: ntp_stdlib.h,v 1.7 2014/12/19 20:43:14 christos Exp $	*/
 
 /*
  * ntp_stdlib.h - Prototypes for NTP lib.

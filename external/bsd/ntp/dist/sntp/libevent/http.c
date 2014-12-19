@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.1.1.2 2014/12/19 20:37:46 christos Exp $	*/
+/*	$NetBSD: http.c,v 1.2 2014/12/19 20:43:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Niels Provos <provos@citi.umich.edu>
