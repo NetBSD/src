@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.25 2014/12/19 03:51:38 nonaka Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.26 2014/12/19 04:00:35 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.25 2014/12/19 03:51:38 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.26 2014/12/19 04:00:35 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1205,7 +1205,7 @@ e500_intr_cpu_send_ipi(cpuid_t target, uint32_t ipimsg)
 			atomic_or_32(&dst_ci->ci_pending_ipis, ipimsg);
 	}
 
-	openpic_write(cpu, OPENPIC_IPIDR(0), dstmask);
+	openpic_write(cpu, OPENPIC_IPIDR(target), dstmask);
 }
 
 typedef void (*ipifunc_t)(void);
@@ -1260,8 +1260,8 @@ e500_intr_cpu_hatch(struct cpu_info *ci)
 	/*
 	 * Establish the IPI interrupts for this CPU.
 	 */
-	if (e500_intr_cpu_establish(ci, 0, IPL_VM, IST_IPI, e500_ipi_intr,
-	    NULL) == NULL)
+	if (e500_intr_cpu_establish(ci, ci->ci_cpuid, IPL_VM, IST_IPI,
+	    e500_ipi_intr, NULL) == NULL)
 		panic("%s: failed to establish ipi interrupt!", __func__);
 
 	/*
