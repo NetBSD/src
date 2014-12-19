@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_leapsec.c,v 1.1.1.2 2014/12/19 20:37:41 christos Exp $	*/
+/*	$NetBSD: ntp_leapsec.c,v 1.2 2014/12/19 20:43:17 christos Exp $	*/
 
 /*
  * ntp_leapsec.c - leap second processing for NTPD
@@ -974,7 +974,7 @@ leapsec_validate(
 			do_hash_data(&mdctx, line+2);
 		else if (!strncmp(line, "#$", 2))
 			do_hash_data(&mdctx, line+2);
-		else if (isdigit(line[0]))
+		else if (isdigit((unsigned char)line[0]))
 			do_hash_data(&mdctx, line);
 	}
 	isc_sha1_final(&mdctx, ldig.hv);

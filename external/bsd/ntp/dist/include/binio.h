@@ -1,4 +1,4 @@
-/*	$NetBSD: binio.h,v 1.1.1.2 2013/12/27 23:30:45 christos Exp $	*/
+/*	$NetBSD: binio.h,v 1.2 2014/12/19 20:43:14 christos Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/include/binio.h,v 4.5 2005/04/16 17:32:10 kardel RELEASE_20050508_A
