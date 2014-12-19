@@ -1443,7 +1443,7 @@
 #define PERLLIBDIR "/usr/local/share/ntp/lib"
 
 /* define to a working POSIX compliant shell */
-#define POSIX_SHELL "/usr/pkg/bin/bash"
+#define POSIX_SHELL "/bin/sh"
 
 /* PARSE kernel PLL PPS support */
 /* #undef PPS_SYNC */
