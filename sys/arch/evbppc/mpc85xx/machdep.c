@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2014/08/04 23:31:36 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 2014/12/19 04:07:13 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -939,15 +939,15 @@ e500_cpu_spinup(device_t self, struct cpu_info *ci)
 				+ (uint64_t)h->hatch_tbl),
 			    h->hatch_running);
 			/*
-			 * Now we wait for the hatching to complete.  10ms
+			 * Now we wait for the hatching to complete.  30ms
 			 * should be long enough.
 			 */
-			for (u_int timo = 10000; timo-- > 0; ) {
+			for (u_int timo = 30000; timo-- > 0; ) {
 				if (kcpuset_isset(hatchlings, id)) {
 					aprint_normal_dev(self,
 					    "hatch successful (%u spins, "
 					    "timebase adjusted by %"PRId64")\n",
-					    10000 - timo,
+					    30000 - timo,
 					    (int64_t)
 						(((uint64_t)h->hatch_tbu << 32)
 						+ (uint64_t)h->hatch_tbl));
