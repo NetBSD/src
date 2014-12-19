@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_tpro.c,v 1.1.1.3 2013/12/27 23:30:53 christos Exp $	*/
+/*	$NetBSD: refclock_tpro.c,v 1.2 2014/12/19 20:43:17 christos Exp $	*/
 
 /*
  * refclock_tpro - clock driver for the KSI/Odetics TPRO-S IRIG-B reader

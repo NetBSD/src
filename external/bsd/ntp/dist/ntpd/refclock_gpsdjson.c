@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_gpsdjson.c,v 1.1.1.1 2014/12/19 20:37:41 christos Exp $	*/
+/*	$NetBSD: refclock_gpsdjson.c,v 1.2 2014/12/19 20:43:17 christos Exp $	*/
 
 /*
  * refclock_gpsdjson.c - clock driver as GPSD JSON client
@@ -206,8 +206,8 @@ static int  syslogok(clockprocT * const pp, gpsd_unitT * const up);
  * data and selecting the GPS device name we created from our unit
  * number. [Note: This is a format string!]
  */
-static const char * s_logon =
-    "?WATCH={\"enable\":true,\"json\":true,\"device\":\"%s\"};\r\n";
+#define s_logon \
+    "?WATCH={\"enable\":true,\"json\":true,\"device\":\"%s\"};\r\n"
 
 /* We keep a static list of network addresses for 'localhost:gpsd', and
  * we try to connect to them in round-robin fashion.
@@ -1272,7 +1272,7 @@ convert_ascii_time(
 	ep = strptime(gps_time, "%Y-%m-%dT%H:%M:%S", &gd);
 	if (*ep == '.') {
 		dw = 100000000;
-		while (isdigit(*++ep)) {
+		while (isdigit((unsigned char)*++ep)) {
 			ts.tv_nsec += (*ep - '0') * dw;
 			dw /= 10;
 		}
