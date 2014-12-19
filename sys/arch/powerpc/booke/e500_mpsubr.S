@@ -278,8 +278,8 @@ ENTRY_NOPROFILE(e500_spinup_trampoline)
 	/*
 	 * Now we can use our stack...
 	 */
-	lwz	%r0, CI_CURPCB(%r21)
-	lwz	%r1, PCB_SP(%r0)
+	lwz	%r3, CI_CURPCB(%r21)
+	lwz	%r1, PCB_SP(%r3)
 
 	li	%r0, 12
 	stw	%r0, HATCH_RUNNING(%r20)	/* progress */
