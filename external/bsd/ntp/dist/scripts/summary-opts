@@ -1,7 +1,8 @@
-
-# DO NOT EDIT THE FOLLOWING
+# EDIT THIS FILE WITH CAUTION  (summary-opts)
 #
-# It's auto generated option handling code  
+# It has been AutoGen-ed  December 19, 2014 at 07:45:13 AM by AutoGen 5.18.5pre4
+# From the definitions    summary-opts.def
+# and the template file   perlopt
 
 use Getopt::Long qw(GetOptionsFromArray);
 Getopt::Long::Configure(qw(no_auto_abbrev no_ignore_case_always));
@@ -43,17 +44,17 @@ sub processOptions {
         'help|?', 'more-help'));
 
     $usage = <<'USAGE';
-summary - compute various stastics from NTP stat files
+summary - compute various stastics from NTP stat files - Ver. 4.2.8
 USAGE: summary [ -<flag> [<val>] | --<name>[{=| }<val>] ]... 
 
-      , --directory=str          Directory containing stat files
-      , --end-date=num           End date
-      , --output-directory=str   Output directory
-      , --peer-dist-limit=float  Peer dist limit
-      , --skip-time-steps=float  Ignore time offsets larger that this
-      , --start-date=num         Start date
+        --directory=str          Directory containing stat files
+        --end-date=num           End date
+        --output-directory=str   Output directory
+        --peer-dist-limit=float  Peer dist limit
+        --skip-time-steps=float  Ignore time offsets larger that this
+        --start-date=num         Start date
     -?, --help                   Display usage information and exit
-      , --more-help              Pass the extended usage information through a pager
+        --more-help              Pass the extended usage text through a pager
 
 Options are specified by doubled hyphens and their name or by a single
 hyphen and the flag character.
@@ -66,4 +67,3 @@ USAGE
 }
 
 END { close STDOUT };
-

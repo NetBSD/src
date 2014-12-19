@@ -147,7 +147,6 @@ doc-section	= {
   ds-type	= 'NOTES';
   ds-format	= 'mdoc';
   ds-text	= <<- _END_MDOC_NOTES
-This document corresponds to version #VERSION# of NTP.
 This document was derived from FreeBSD.
 	_END_MDOC_NOTES;
 };

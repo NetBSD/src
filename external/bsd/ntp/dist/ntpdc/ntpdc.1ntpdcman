@@ -10,11 +10,11 @@
 .ds B-Font B
 .ds I-Font I
 .ds R-Font R
-.TH ntpdc 1ntpdcman "24 Dec 2013" "4.2.7p404" "User Commands"
+.TH ntpdc 1ntpdcman "19 Dec 2014" "4.2.8" "User Commands"
 .\"
-.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-W0aqdS/ag-80aqcS)
+.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-Fraief/ag-Rraadf)
 .\"
-.\" It has been AutoGen-ed December 24, 2013 at 11:38:40 AM by AutoGen 5.18.3pre5
+.\" It has been AutoGen-ed December 19, 2014 at 07:49:38 AM by AutoGen 5.18.5pre4
 .\" From the definitions ntpdc-opts.def
 .\" and the template file agman-cmd.tpl
 .SH NAME
@@ -31,6 +31,15 @@
 .ne 2
 
 .SH DESCRIPTION
+\f\*[B-Font]ntpdc\fP
+is deprecated.
+Please use
+\fCntpq\fR(1ntpqmdoc)\f[] instead \- it can do everything
+\f\*[B-Font]ntpdc\fP
+used to do, and it does so using a much more sane interface.
+.sp \n(Ppu
+.ne 2
+
 \f\*[B-Font]ntpdc\fP
 is a utility program used to query
 \fCntpd\fR(1ntpdmdoc)\f[]
@@ -158,35 +167,6 @@ the configuration files.
 The \fIhomerc\fP files are "\fI$HOME\fP", and "\fI.\fP".
 If any of these are directories, then the file \fI.ntprc\fP
 is searched for within those directories.
-cvt_prog='/usr/local/gnu/share/autogen/texi2man'
-cvt_prog=`cd \`dirname "$cvt_prog"\` >/dev/null && pwd
-         `/`basename "$cvt_prog"`
-cd $tmp_dir
-test \-x "$cvt_prog" || die "'$cvt_prog' is not executable"
-{
-    list='synopsis description options option-presets'
-    for f in $list ; do cat $f ; echo ; done
-    rm \-f $list name
-    list='implementation-notes environment files examples exit-status errors
-        compatibility see-also conforming-to history authors copyright bugs
-        notes'
-    for f in $list ; do cat $f ; echo ; done > .end-doc
-    rm \-f $list
-    list=`ls \-1 *`' .end-doc'
-    for f in $list ; do cat $f ; echo ; done
-    rm \-f $list
-} 1>.doc 2>/dev/null
-sed \-f .cmds .doc | /usr/local/gnu/bin/grep \-E \-v '^[ 	]*$' | $cvt_prog
-.TH ntpdc 1ntpdcman "24 Dec 2013" "4.2.7p404" "User Commands"
-.\"
-.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-W0aqdS/ag-80aqcS)
-.\"
-.\" It has been AutoGen-ed December 24, 2013 at 11:38:40 AM by AutoGen 5.18.3pre5
-.\" From the definitions ntpdc-opts.def
-.\" and the template file agman-cmd.tpl
-.SH NAME
-\f\*[B-Font]ntpdc\fP ntpdc
-\- vendor-specific NTPD control program
 .SH USAGE
 If one or more request options are included on the command line
 when
@@ -448,7 +428,7 @@ Version 2 specification.
 Show per-peer statistic counters associated with the specified
 peer(s).
 .TP 7
-.NOP \f\*[B-Font]clockinfo\f[] \f\*[I-Font]clock_peer_address\f[] [\f\*[I-Font]...\f[]]
+.NOP \f\*[B-Font]clockstat\f[] \f\*[I-Font]clock_peer_address\f[] [\f\*[I-Font]...\f[]]
 Obtain and print information concerning a peer clock.
 The
 values obtained provide information on the setting of fudge factors
@@ -868,7 +848,7 @@ RFC1305
 .SH AUTHORS
 The formatting directives in this document came from FreeBSD.
 .SH "COPYRIGHT"
-Copyright (C) 1970-2013 The University of Delaware all rights reserved.
+Copyright (C) 1970-2014 The University of Delaware all rights reserved.
 This program is released under the terms of the NTP license, <http://ntp.org/license>.
 .SH BUGS
 The

@@ -6,7 +6,7 @@
 #
 # EDIT THIS FILE WITH CAUTION  (invoke-ntp.conf.texi)
 #
-# It has been AutoGen-ed  December 24, 2013 at 11:38:14 AM by AutoGen 5.18.3pre5
+# It has been AutoGen-ed  December 19, 2014 at 07:49:02 AM by AutoGen 5.18.5pre4
 # From the definitions    ntp.conf.def
 # and the template file   agtexi-file.tpl
 @end ignore
@@ -987,7 +987,7 @@ automatically summarized and archived for retrospective analysis.
 @table @asis
 @item @code{statistics} @kbd{name} @kbd{...}
 Enables writing of statistics records.
-Currently, four kinds of
+Currently, eight kinds of
 @kbd{name}
 statistics are supported.
 @table @asis
@@ -1510,6 +1510,18 @@ Deny packets which would result in mobilizing a new association.
 This
 includes broadcast and symmetric active packets when a configured
 association does not exist.
+It also includes
+@code{pool}
+associations, so if you want to use servers from a 
+@code{pool}
+directive and also want to use
+@code{nopeer}
+by default, you'll want a
+@code{restrict source ...} @code{line} @code{as} @code{well} @code{that} @code{does}
+@item not
+include the
+@code{nopeer}
+directive.
 @item @code{noserve}
 Deny all packets except
 @code{ntpq(1ntpqmdoc)}
@@ -2265,8 +2277,8 @@ This implies that
 must have write permission for the directory the
 drift file is located in, and that file system links, symbolic or
 otherwise, should be avoided.
-@item @code{enable} @code{[@code{auth} | @code{bclient} | @code{calibrate} | @code{kernel} | @code{monitor} | @code{ntp} | @code{pps} | @code{stats}]}
-@item @code{disable} @code{[@code{auth} | @code{bclient} | @code{calibrate} | @code{kernel} | @code{monitor} | @code{ntp} | @code{pps} | @code{stats}]}
+@item @code{enable} @code{[@code{auth} | @code{bclient} | @code{calibrate} | @code{kernel} | @code{mode7} | @code{monitor} | @code{ntp} | @code{stats}]}
+@item @code{disable} @code{[@code{auth} | @code{bclient} | @code{calibrate} | @code{kernel} | @code{mode7} | @code{monitor} | @code{ntp} | @code{stats}]}
 Provides a way to enable or disable various server options.
 Flags not mentioned are unaffected.
 Note that all of these flags
@@ -2300,6 +2312,19 @@ flag is
 @code{enable}
 if support is available, otherwise
 @code{disable}.
+@item @code{mode7}
+Enables processing of NTP mode 7 implementation-specific requests
+which are used by the deprecated
+@code{ntpdc(1ntpdcmdoc)}
+program.
+The default for this flag is disable.
+This flag is excluded from runtime configuration using
+@code{ntpq(1ntpqmdoc)}.
+The
+@code{ntpq(1ntpqmdoc)}
+program provides the same capabilities as
+@code{ntpdc(1ntpdcmdoc)}
+using standard mode 6 requests.
 @item @code{monitor}
 Enables the monitoring facility.
 See the
@@ -2318,17 +2343,6 @@ closes the feedback loop, which is useful for testing.
 The default for
 this flag is
 @code{enable}.
-@item @code{pps}
-Enables the pulse-per-second (PPS) signal when frequency and time is
-disciplined by the precision time kernel modifications.
-See the
-"A Kernel Model for Precision Timekeeping"
-(available as part of the HTML documentation
-provided in
-@file{/usr/share/doc/ntp})
-page for further information.
-The default for this flag is
-@code{disable}.
 @item @code{stats}
 Enables the statistics facility.
 See the
@@ -2617,5 +2631,4 @@ These should be obtained via secure directory
 services when they become universally available.
 @node ntp.conf Notes
 @subsection ntp.conf Notes
-This document corresponds to version #VERSION# of NTP.
 This document was derived from FreeBSD.
