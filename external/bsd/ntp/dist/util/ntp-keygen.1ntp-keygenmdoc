@@ -1,9 +1,9 @@
-.Dd December 24 2013
+.Dd December 19 2014
 .Dt NTP_KEYGEN 1ntp-keygenmdoc User Commands
-.Os SunOS 5.10
+.Os
 .\"  EDIT THIS FILE WITH CAUTION  (ntp-keygen-opts.mdoc)
 .\"
-.\"  It has been AutoGen-ed  December 24, 2013 at 11:39:38 AM by AutoGen 5.18.3pre5
+.\"  It has been AutoGen-ed  December 19, 2014 at 07:50:58 AM by AutoGen 5.18.5pre4
 .\"  From the definitions    ntp-keygen-opts.def
 .\"  and the template file   agmdoc-cmd.tpl
 .Sh NAME
@@ -938,15 +938,22 @@ generate PC private certificate.
 .sp
 Generate a private certificate.  By default, the program generates
 public certificates.
-.It  Fl p Ar passwd , Fl \-pvt\-passwd Ns = Ns Ar passwd 
-output private password.
+.It  Fl p Ar passwd , Fl \-password Ns = Ns Ar passwd 
+local private password.
 .sp
-Encrypt generated files containing private data with the specified
-password and the cipher selected with \fB\-C/\-\-cipher\fP.
-.It  Fl q Ar passwd , Fl \-get\-pvt\-passwd Ns = Ns Ar passwd 
-input private password.
+Local files containing private data are encrypted with the
+DES\-CBC algorithm and the specified password.  The same password
+must be specified to the local ntpd via the "crypto pw password"
+configuration command.  The default password is the local
+hostname.
+.It  Fl q Ar passwd , Fl \-export\-passwd Ns = Ns Ar passwd 
+export IFF or GQ group keys with password.
 .sp
-Set the password for reading files to the specified password.
+Export IFF or GQ identity group keys to the standard output,
+encrypted with the DES\-CBC algorithm and the specified password.
+The same password must be specified to the remote ntpd via the
+"crypto pw password" configuration command.  See also the option
+-\-id\-key (\-e) for unencrypted exports.
 .It  Fl S Ar sign , Fl \-sign\-key Ns = Ns Ar sign 
 generate sign key (RSA or DSA).
 .sp
@@ -1013,25 +1020,6 @@ the configuration files.
 The \fIhomerc\fP files are "\fI$HOME\fP", and "\fI.\fP".
 If any of these are directories, then the file \fI.ntprc\fP
 is searched for within those directories.
-cvt_prog='/usr/local/gnu/share/autogen/texi2mdoc'
-cvt_prog=`cd \`dirname "$cvt_prog"\` >/dev/null && pwd
-         `/`basename "$cvt_prog"`
-cd $tmp_dir
-test \-x "$cvt_prog" || die "'$cvt_prog' is not executable"
-{
-    list='synopsis description options option\-presets'
-    for f in $list ; do cat $f ; echo ; done
-    rm \-f $list name
-    list='implementation\-notes environment files examples exit\-status errors
-        compatibility see\-also conforming\-to history authors copyright bugs
-        notes'
-    for f in $list ; do cat $f ; echo ; done > .end\-doc
-    rm \-f $list
-    list=`ls \-1 *`' .end\-doc'
-    for f in $list ; do cat $f ; echo ; done
-    rm \-f $list
-} 1>.doc 2>/dev/null
-sed \-f .cmds .doc | /usr/local/gnu/bin/grep \-E \-v '^[ 	]*$' | $cvt_prog
 .Sh USAGE
 The
 .Fl p Ar password
@@ -1065,7 +1053,7 @@ it to autogen\-users@lists.sourceforge.net.  Thank you.
 .Sh "AUTHORS"
 The University of Delaware
 .Sh "COPYRIGHT"
-Copyright (C) 1970\-2013 The University of Delaware all rights reserved.
+Copyright (C) 1970\-2014 The University of Delaware all rights reserved.
 This program is released under the terms of the NTP license, <http://ntp.org/license>.
 .Sh BUGS
 It can take quite a while to generate some cryptographic values,
@@ -1077,7 +1065,6 @@ Please report bugs to http://bugs.ntp.org .
 .Pp
 Please send bug reports to: http://bugs.ntp.org, bugs@ntp.org
 .Sh NOTES
-This document corresponds to version 4.2.7p404 of NTP.
 Portions of this document came from FreeBSD.
 .Pp
 This manual page was \fIAutoGen\fP\-erated from the \fBntp\-keygen\fP

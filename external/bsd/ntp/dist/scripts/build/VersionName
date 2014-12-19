@@ -21,7 +21,13 @@ esac
 NAME="$version"
 case $point in
  [1-9]*)
-    NAME="${NAME}p${point}"
+    case "${proto}.${major}" in
+     4.[012])
+	NAME="${NAME}p${point}"
+        ;;
+     *) NAME="${NAME}.${point}"
+        ;;
+    esac
     ;;
  NEW) ;;
  '') ;;
