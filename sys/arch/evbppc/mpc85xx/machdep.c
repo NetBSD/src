@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2014/12/19 04:15:36 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2014/12/19 04:31:41 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -639,6 +639,7 @@ cpu_probe_cache(void)
 {
 	struct cpu_info * const ci = curcpu();
 	const uint32_t l1cfg0 = mfspr(SPR_L1CFG0);
+	const int dcache_assoc = L1CFG_CNWAY_GET(l1cfg0);
 
 	ci->ci_ci.dcache_size = L1CFG_CSIZE_GET(l1cfg0);
 	ci->ci_ci.dcache_line_size = 32 << L1CFG_CBSIZE_GET(l1cfg0);
@@ -652,6 +653,11 @@ cpu_probe_cache(void)
 		ci->ci_ci.icache_size = ci->ci_ci.dcache_size;
 		ci->ci_ci.icache_line_size = ci->ci_ci.dcache_line_size;
 	}
+
+	/*
+	 * Possibly recolor.
+	 */
+	uvm_page_recolor(atop(curcpu()->ci_ci.dcache_size / dcache_assoc));
 
 #ifdef DEBUG
 	uint32_t l1csr0 = mfspr(SPR_L1CSR0);
