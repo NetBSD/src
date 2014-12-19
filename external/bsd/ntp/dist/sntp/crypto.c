@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.5 2013/12/28 03:20:15 christos Exp $	*/
+/*	$NetBSD: crypto.c,v 1.6 2014/12/19 20:43:18 christos Exp $	*/
 
 #include <config.h>
 #include "crypto.h"

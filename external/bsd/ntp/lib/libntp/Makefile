@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/06/14 20:49:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2014/12/19 20:43:20 christos Exp $
 
 LIBISPRIVATE=yes
 
@@ -48,6 +48,7 @@ mstolfp.c \
 msyslog.c \
 netof.c \
 ntp_calendar.c \
+ntp_crypto_rnd.c \
 ntp_intres.c \
 ntp_libopts.c \
 ntp_lineedit.c \
@@ -71,6 +72,7 @@ syssignal.c \
 systime.c \
 timetoa.c \
 uglydate.c \
+vint64ops.c \
 work_fork.c \
 work_thread.c \
 ymd2yd.c
