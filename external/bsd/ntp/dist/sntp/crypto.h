@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.h,v 1.1.1.3 2013/12/27 23:31:14 christos Exp $	*/
+/*	$NetBSD: crypto.h,v 1.2 2014/12/19 20:43:18 christos Exp $	*/
 
 #ifndef CRYPTO_H
 #define CRYPTO_H

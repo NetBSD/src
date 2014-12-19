@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpsim.c,v 1.1.1.2 2013/12/27 23:30:58 christos Exp $	*/
+/*	$NetBSD: ntpsim.c,v 1.2 2014/12/19 20:43:17 christos Exp $	*/
 
 /* ntpdsim.c
  *

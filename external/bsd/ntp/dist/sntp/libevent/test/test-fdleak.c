@@ -1,4 +1,4 @@
-/*	$NetBSD: test-fdleak.c,v 1.1.1.1 2013/12/27 23:31:28 christos Exp $	*/
+/*	$NetBSD: test-fdleak.c,v 1.2 2014/12/19 20:43:19 christos Exp $	*/
 
 /*
  * Copyright (c) 2012 Ross Lagerwall <rosslagerwall@gmail.com>

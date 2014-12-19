@@ -1,4 +1,4 @@
-/*	$NetBSD: evthread_pthread.c,v 1.1.1.1 2013/12/27 23:31:19 christos Exp $	*/
+/*	$NetBSD: evthread_pthread.c,v 1.2 2014/12/19 20:43:18 christos Exp $	*/
 
 /*
  * Copyright 2009-2012 Niels Provos and Nick Mathewson
