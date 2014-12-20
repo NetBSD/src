@@ -718,7 +718,7 @@ mDNSlocal int SetupSocket(struct sockaddr *intfAddr, mDNSIPPort port, int interf
 				err = setsockopt(*sktPtr, IPPROTO_IPV6, IPV6_RECVPKTINFO, &kOn, sizeof(kOn));
 				if (err < 0) { err = errno; perror("setsockopt - IPV6_RECVPKTINFO"); }
 			}
-#elif defined(IPV6_PKTINFO)
+	#elif defined(IPV6_PKTINFO)
 		if (err == 0)
 			{
 				err = setsockopt(*sktPtr, IPPROTO_IPV6, IPV6_PKTINFO, &kOn, sizeof(kOn));
