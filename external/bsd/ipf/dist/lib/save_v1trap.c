@@ -1,4 +1,4 @@
-/*	$NetBSD: save_v1trap.c,v 1.1.1.2 2012/07/22 13:44:42 darrenr Exp $	*/
+/*	$NetBSD: save_v1trap.c,v 1.2 2014/12/20 13:15:48 prlw1 Exp $	*/
 
 #include "ipf.h"
 #include "netinet/ipl.h"
@@ -180,7 +180,7 @@ snmpv1_parse(char **strings)
 		if (ctx->fd >= 0) {
 			ctx->sin.sin_family = AF_INET;
 			ctx->sin.sin_port = htons(162);
-			if (connect(ctx->fd, &ctx->sin,
+			if (connect(ctx->fd, (struct sockaddr *)&ctx->sin,
 				    sizeof(ctx->sin)) != 0) {
 					snmpv1_destroy(ctx);
 					return NULL;
