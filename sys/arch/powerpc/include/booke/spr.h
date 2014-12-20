@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.11 2012/08/01 00:45:18 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.12 2014/12/20 16:34:47 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -72,9 +72,11 @@
 #define	SVR_P1013v2		  0x80e70020
 #define	SVR_P1015v1		  0x80e50210
 #define	SVR_P1016v1		  0x80e50310
+#define	SVR_P1017v1		  0x80f70011
 #define	SVR_P1020v2		  0x80e40020
 #define	SVR_P1021v2		  0x80e40120
 #define	SVR_P1022v2		  0x80e60020
+#define	SVR_P1023v1		  0x80f60011
 #define	SVR_P1024v2		  0x80e40210
 #define	SVR_P1025v1		  0x80e40310
 
