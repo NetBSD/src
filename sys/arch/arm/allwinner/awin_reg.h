@@ -1,4 +1,5 @@
-/* $NetBSD */
+/* $NetBSD: awin_reg.h,v 1.74 2014/12/20 16:22:17 skrll Exp $ */
+
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
