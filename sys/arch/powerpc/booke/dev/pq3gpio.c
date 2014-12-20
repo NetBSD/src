@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3gpio.c,v 1.8 2012/07/15 08:44:56 matt Exp $	*/
+/*	$NetBSD: pq3gpio.c,v 1.9 2014/12/20 17:55:08 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3gpio.c,v 1.8 2012/07/15 08:44:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3gpio.c,v 1.9 2014/12/20 17:55:08 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -161,7 +161,7 @@ pq3gpio_pin_ctl(void *v, int num, int ctl)
 }
 #endif
 
-#if defined(MPC8536) || defined(P2020)
+#if defined(MPC8536) || defined(P2020) || defined(P1023)
 /*
  * MPC8536 / P20x0 have controllable input/output pins
  */
@@ -379,6 +379,43 @@ pq3gpio_mpc8548_attach(device_t self, bus_space_tag_t bst,
 }
 #endif /* MPC8548 */
 
+#ifdef P1023
+static void
+pq3gpio_p1023_attach(device_t self, bus_space_tag_t bst,
+	bus_space_handle_t bsh, u_int svr)
+{
+	static const uint32_t gpio2pmuxcr_map[][2] = {
+		{ __BIT(8), PMUXCR_SDHC_CD },
+		{ __BIT(9), PMUXCR_SDHC_WP },
+		/*
+		 * These are really two bits but the low bit MBZ so we ignore
+		 * it.
+		 */
+		{ __BIT(10), PMUXCR_TSEC3_TS },
+		{ __BIT(11), PMUXCR_TSEC3_TS },
+	};
+	
+	uint32_t pinmask = 0xffff0000;	/* assume all bits are valid */
+	size_t pincnt = 16;
+	const uint32_t pmuxcr = cpu_read_4(GLOBAL_BASE + PMUXCR);
+	for (size_t i = 0; i < __arraycount(gpio2pmuxcr_map); i++) {
+		if (pmuxcr & gpio2pmuxcr_map[i][1]) {
+			pinmask &= ~gpio2pmuxcr_map[i][0];
+			pincnt--;
+		}
+	}
+
+	/*
+	 * Create GPIO pin groups
+	 */
+	aprint_normal_dev(self, "%zu input/output/opendrain pins\n",
+	    pincnt);
+	pq3gpio_group_create(self, bst, bsh, GPDAT, pinmask,
+	    GPIO_PIN_INPUT|GPIO_PIN_OUTPUT|GPIO_PIN_OPENDRAIN,
+	    pq3gpio_pin_ctl);
+}
+#endif /* P1023 */
+
 #ifdef P1025
 static void
 pq3gpio_p1025_attach(device_t self, bus_space_tag_t bst,
@@ -485,6 +522,10 @@ static const struct pq3gpio_svr_info {
 #endif
 #ifdef MPC8536
 	{ SVR_MPC8536v1 >> 16, pq3gpio_mpc8536_attach,
+	    GPIO_BASE, GPIO_SIZE },
+#endif
+#ifdef P1023
+	{ SVR_P1023v1 >> 16, pq3gpio_p1023_attach,
 	    GPIO_BASE, GPIO_SIZE },
 #endif
 #ifdef P1025
