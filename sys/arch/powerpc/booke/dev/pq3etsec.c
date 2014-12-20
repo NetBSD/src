@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.16 2012/07/22 23:46:10 matt Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.17 2014/12/20 17:55:08 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.16 2012/07/22 23:46:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.17 2014/12/20 17:55:08 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -330,9 +330,11 @@ pq3mdio_match(device_t parent, cfdata_t cf, void *aux)
 	const uint16_t svr = (mfspr(SPR_SVR) & ~0x80000) >> 16;
 	const bool p1025_p = (svr == (SVR_P1025v1 >> 16)
 	    || svr == (SVR_P1016v1 >> 16));
+	const bool p1023_p = (svr == (SVR_P1023v1 >> 16)
+	    || svr == (SVR_P1017v1 >> 16));
 
 	if (device_is_a(parent, "cpunode")) {
-		if (!p1025_p
+		if ((!p1025_p && !p1023_p)
 		    || !e500_cpunode_submatch(parent, cf, cf->cf_name, aux))
 			return 0;
 
@@ -340,7 +342,7 @@ pq3mdio_match(device_t parent, cfdata_t cf, void *aux)
 	}
 
 	if (device_is_a(parent, "tsec")) {
-		if (p1025_p
+		if ((p1025_p || p1023_p)
 		    || !e500_cpunode_submatch(parent, cf, cf->cf_name, aux))
 			return 0;
 
