@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2014/12/19 20:43:14 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2014/12/20 16:52:21 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ SRCS=	cmd_args.c				\
 	ntp_leapsec.c				\
 	ntp_loopfilter.c			\
 	ntp_monitor.c				\
-	ntp_parser.c				\
+	ntp_parser.y				\
 	ntp_peer.c				\
 	ntp_prio_q.c				\
 	ntp_proto.c				\
@@ -80,12 +80,9 @@ COPTS.ntp_control.c+=	${${ACTIVE_CC} == "gcc":? -Wno-format-nonliteral :}
 
 DIST=${IDIST}/ntpd
 
-CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts -I${IDIST}/ntpd
+CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts -I${IDIST}/ntpd -I.
 
 .PATH: ${DIST}
+YHEADER=1
 
 .include <bsd.prog.mk>
-
-# kill default .y.c rule - to rebuild ntp_parser.c we need bison which is not part of the toolchain
-.y.c:
-
