@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.20 2014/12/19 10:54:08 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.21 2014/12/20 13:15:48 prlw1 Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -745,8 +745,9 @@ dhcpcd_startinterface(void *arg)
 		    !(ifo->options & (DHCPCD_INFORM | DHCPCD_PFXDLGONLY)))
 			ipv6nd_startrs(ifp);
 
-		if (ifo->options & DHCPCD_DHCP6)
+		if (ifo->options & DHCPCD_DHCP6) {
 			dhcp6_find_delegates(ifp);
+		}
 
 		if (!(ifo->options & DHCPCD_IPV6RS) ||
 		    ifo->options & DHCPCD_IA_FORCED)

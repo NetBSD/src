@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.15 2014/12/19 20:43:17 christos Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.16 2014/12/20 13:15:48 prlw1 Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -2356,7 +2356,7 @@ enable_multicast_if(
 #ifdef IP_MULTICAST_LOOP
 	TYPEOF_IP_MULTICAST_LOOP off = 0;
 #endif
-#ifdef IPV6_MULTICAST_LOOP
+#if defined(INCLUDE_IPV6_MULTICAST_SUPPORT) && defined(IPV6_MULTICAST_LOOP)
 	u_int off6 = 0;
 #endif
 
