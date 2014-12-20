@@ -1,4 +1,4 @@
-/*	$NetBSD: networking.c,v 1.8 2014/12/19 20:43:18 christos Exp $	*/
+/*	$NetBSD: networking.c,v 1.9 2014/12/20 08:38:47 uebayasi Exp $	*/
 
 #include <config.h>
 #include "networking.h"
@@ -82,7 +82,7 @@ skip_efields(
 	while ((tail - head) > 6) {
 		nlen = ntohl(*head++) & 0xffff;
 		nlen = (nlen + 3) >> 2;
-		if (nlen > (tail - head) || nlen < 4)
+		if (nlen > (u_int)(tail - head) || nlen < 4)
 			return NULL;	/* Blooper! Inconsistent! */
 		head += nlen;
 	}

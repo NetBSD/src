@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.9 2014/12/19 20:43:17 christos Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.10 2014/12/20 08:38:47 uebayasi Exp $	*/
 
 /*
  * ntp_control.c - respond to mode 6 control messages and send async
@@ -1347,7 +1347,7 @@ ctl_putdata(
 		/*
 		 * Not enough room in this one, flush it out.
 		 */
-		currentlen = MIN(dlen, dataend - datapt);
+		currentlen = MIN(dlen, (unsigned int)(dataend - datapt));
 
 		memcpy(datapt, dp, currentlen);
 
