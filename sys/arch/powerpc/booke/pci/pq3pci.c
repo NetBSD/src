@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.18 2014/12/20 17:55:08 nonaka Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.19 2014/12/20 18:03:17 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.18 2014/12/20 17:55:08 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.19 2014/12/20 18:03:17 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,11 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.18 2014/12/20 17:55:08 nonaka Exp $");
     TRUTH_ENCODE(SVR_P1025v1, inst, PORDEVSR_##field, \
 	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result), \
     TRUTH_ENCODE(SVR_P1016v1, inst, PORDEVSR_##field, \
-	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result)
-#define	PORDEVSR_P1023_TRUTH_ENCODE(inst, field, value, result) \
-    TRUTH_ENCODE(SVR_P1023v1, inst, PORDEVSR_##field, \
-	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result), \
-    TRUTH_ENCODE(SVR_P1017v1, inst, PORDEVSR_##field, \
 	__SHIFTIN(field##_##P20x0##_##value, PORDEVSR_##field), result)
 
 #define	PORDEVSR_TRUTH_ENCODE(svr, inst, field, value, result) \
@@ -175,22 +170,6 @@ const struct e500_truthtab pq3pci_pcie_lanes[] = {
     PORDEVSR_P1025_TRUTH_ENCODE(1, IOSEL, PCIE1_X2_SGMII23, 2),
 
     PORDEVSR_P1025_TRUTH_ENCODE(2, IOSEL, PCIE12_X1_SGMII23, 1),
-#endif
-
-#ifdef P1023	/* XXX XXXNONAKA FIXME */
-    PORDEVSR_P1023_TRUTH_ENCODE(1, IOSEL, PCIE1_X1, 1),
-    PORDEVSR_P1023_TRUTH_ENCODE(1, IOSEL, PCIE12_X1_3_X2, 1),
-    PORDEVSR_P1023_TRUTH_ENCODE(1, IOSEL, PCIE13_X2, 2),
-    PORDEVSR_P1023_TRUTH_ENCODE(1, IOSEL, PCIE1_X4, 4),
-    PORDEVSR_P1023_TRUTH_ENCODE(1, IOSEL, PCIE1_X1_SRIO2500_1X, 1),
-    PORDEVSR_P1023_TRUTH_ENCODE(1, IOSEL, PCIE12_X1_SGMII23, 1),
-    PORDEVSR_P1023_TRUTH_ENCODE(1, IOSEL, PCIE1_X2_SGMII23, 2),
-
-    PORDEVSR_P1023_TRUTH_ENCODE(2, IOSEL, PCIE12_X1_3_X2, 1),
-    PORDEVSR_P1023_TRUTH_ENCODE(2, IOSEL, PCIE12_X1_SGMII23, 1),
-
-    PORDEVSR_P1023_TRUTH_ENCODE(3, IOSEL, PCIE12_X1_3_X2, 2),
-    PORDEVSR_P1023_TRUTH_ENCODE(3, IOSEL, PCIE13_X2, 2),
 #endif
 };
 
