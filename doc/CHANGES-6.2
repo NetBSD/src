@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.168 2014/12/21 19:13:57 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.169 2014/12/21 20:26:30 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -5603,3 +5603,15 @@ xsrc/external/mit/fontconfig/include/fcftaliastail.h	patch
 
 	Update fontconfig to version 2.11.1.
 	[mrg, ticket #1178]
+
+sys/arch/arm/broadcom/bcm2835_tmr.c		1.4
+
+	Clear status of BCM2835_STIMER_M3 only as timer comparison reg 0 and 2
+	are used by the VideoCore on Raspberry Pi.  This fixes audio playback.
+	Addresses PR 48805.
+	[nat, ticket #1214]
+
+usr.sbin/perfused/perfused.c			1.25
+
+	Survive if filesystem installs a signal handler.
+	[manu, ticket #1215]
