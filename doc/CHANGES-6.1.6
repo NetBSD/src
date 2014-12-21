@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.17 2014/12/21 19:07:11 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.18 2014/12/21 20:28:13 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -238,6 +238,7 @@ sys/dev/ppbus/ppbus_base.c			1.20
 	Fix debugging format in ppbus(4) reported by John D. Baker.
 	Fixes PR/49281.
 	[snj, ticket #1190]
+
 external/mit/xorg/server/xorg-server/Xi/Makefile patch
 xsrc/external/mit/xorg-server/dist/configure    patch
 xsrc/external/mit/xorg-server/dist/configure.ac patch
@@ -341,3 +342,9 @@ sys/compat/netbsd32/netbsd32_compat_30.c	1.31
 	Prevent a user-triggerable kmem_alloc(0).
 	[maxv, ticket #1209]
 
+sys/arch/arm/broadcom/bcm2835_tmr.c		1.4
+
+	Clear status of BCM2835_STIMER_M3 only as timer comparison reg 0 and 2
+	are used by the VideoCore on Raspberry Pi.  This fixes audio playback.
+	Addresses PR 48805.
+	[nat, ticket #1214]
