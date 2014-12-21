@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.134 2014/12/17 19:27:37 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.135 2014/12/21 19:34:13 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3643,4 +3643,31 @@ doc/3RDPARTY						1.1165
 	  serial ports.
 	* Various bug fixes.
 	[christos, #331]
+
+crypto/external/bsd/netpgp/dist/src/netpgpkeys/netpgpkeys.c 1.26
+
+	Make netpgp-keys --export actually export the desired key.
+	[agc, ticket #334]
+
+usr.sbin/perfused/perfused.c			1.25
+
+	Survive if the filesystem installs a signal handler.
+	[manu, ticket #335]
+
+usr.sbin/cpuctl/cpuctl.c			1.25
+
+	Fix a bug that an unknown command is printed as "(null)".
+	[msaitoh, ticket #336]
+
+lib/libpci/pci.3				1.10
+
+	Update documentation to reflect the "int showclass" argument
+	to pci_devinfo().
+	[msaitoh, ticket #337]
+
+sys/dev/pci/if_wpi.c				1.69
+
+	Consistently take the interface down when the radio swicth
+	is off.
+	[bouyer, ticket #338]
 
