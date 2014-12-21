@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.17 2014/12/21 19:05:57 snj Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.18 2014/12/21 20:28:59 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -342,3 +342,9 @@ sys/compat/netbsd32/netbsd32_compat_30.c	1.31
 	Prevent a user-triggerable kmem_alloc(0).
 	[maxv, ticket #1209]
 
+sys/arch/arm/broadcom/bcm2835_tmr.c		1.4
+
+	Clear status of BCM2835_STIMER_M3 only as timer comparison reg 0 and 2
+	are used by the VideoCore on Raspberry Pi.  This fixes audio playback.
+	Addresses PR 48805.
+	[nat, ticket #1214]
