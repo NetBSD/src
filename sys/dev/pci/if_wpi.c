@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.68 2014/08/08 10:17:07 jmcneill Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.68.2.1 2014/12/21 19:32:48 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.68 2014/08/08 10:17:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.68.2.1 2014/12/21 19:32:48 snj Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -3170,6 +3170,7 @@ wpi_init(struct ifnet *ifp)
 	if (wpi_getrfkill(sc)) {
 		aprint_error_dev(sc->sc_dev,
 		    "radio is disabled by hardware switch\n");
+		ifp->if_flags &= ~IFF_UP;
 		error = EBUSY;
 		goto fail1;
 	}
