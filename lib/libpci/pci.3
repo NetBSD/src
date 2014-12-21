@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.3,v 1.9 2014/07/25 10:21:34 wiz Exp $
+.\"	$NetBSD: pci.3,v 1.9.2.1 2014/12/21 19:30:20 snj Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 24, 2014
+.Dd December 16, 2014
 .Dt PCI 3
 .Os
 .Sh NAME
@@ -56,7 +56,7 @@
 .Ft char *
 .Fn pci_findvendor "pcireg_t id_reg"
 .Ft void
-.Fn pci_devinfo "pcireg_t id_reg" "pcireg_t class_reg" "char *devinfo" "size_t len"
+.Fn pci_devinfo "pcireg_t id_reg" "pcireg_t class_reg" "int showclass" "char *devinfo" "size_t len"
 .Ft void
 .Fn pci_conf_print "int pcifd" "u_int bus" "u_int dev" "u_int func"
 .Ft int
@@ -128,6 +128,9 @@ The description is placed into the buffer pointed to by
 .Fa devinfo ;
 the size of that buffer is specified in
 .Fa len .
+If
+.Fa showclass
+is not 0, the class, subclass and interface are added into the buffer.
 .It Fn pci_conf_print
 Print the PCI configuration information for the device located
 at
