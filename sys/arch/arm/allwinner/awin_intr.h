@@ -1,4 +1,4 @@
-/* $NetBSD: awin_intr.h,v 1.14 2014/12/07 18:32:13 jmcneill Exp $ */
+/* $NetBSD: awin_intr.h,v 1.15 2014/12/21 17:38:47 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -200,6 +200,7 @@
 #define AWIN_A80_IRQ_NMI	64
 #define AWIN_A80_IRQ_R_CIR	69
 #define AWIN_A80_IRQ_R_RSB	71
+#define AWIN_A80_IRQ_R_DAUDIO	74
 #define AWIN_A80_IRQ_DMA	82
 #define AWIN_A80_IRQ_HSTIMER0	83
 #define AWIN_A80_IRQ_HSTIMER1	84
