@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.39 2014/12/07 18:32:13 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.40 2014/12/21 17:40:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,10 +118,15 @@ static const struct awin_locators awin_locators[] = {
 	{ "awinmp", OFFANDSIZE(MP), NOPORT, AWIN_A31_IRQ_MP, A31 },
 	{ "awindebe", AWIN_DE_BE0_OFFSET, 0x1000, 0, NOINTR, A20|A31 },
 	{ "awindebe", AWIN_DE_BE1_OFFSET, 0x1000, 1, NOINTR, A20|A31 },
+	{ "awindebe", AWIN_A80_DE_BE0_OFFSET, 0x1000, 0, NOINTR, A80 },
+	{ "awindebe", AWIN_A80_DE_BE1_OFFSET, 0x1000, 1, NOINTR, A80 },
+	{ "awindebe", AWIN_A80_DE_BE2_OFFSET, 0x1000, 2, NOINTR, A80 },
 	{ "awintcon", OFFANDSIZE(LCD0), 0, NOINTR, A20|A31 },
 	{ "awintcon", OFFANDSIZE(LCD1), 1, NOINTR, A20|A31 },
+	{ "awintcon", OFFANDSIZE(A80_LCD0), 0, NOINTR, A80 },
 	{ "awinhdmi", OFFANDSIZE(HDMI), NOPORT, AWIN_IRQ_HDMI0, A20 },
 	{ "awinhdmi", OFFANDSIZE(HDMI), NOPORT, AWIN_A31_IRQ_HDMI, A31 },
+	{ "awinhdmi", OFFANDSIZE(A80_HDMI), NOPORT, AWIN_A80_IRQ_HDMI, A80 },
 	{ "awinwdt", OFFANDSIZE(TMR), NOPORT, NOINTR, A10|A20|A31 },
 	{ "awinwdt", OFFANDSIZE(A80_TIMER), NOPORT, NOINTR, A80 },
 	{ "awinrtc", OFFANDSIZE(TMR), NOPORT, NOINTR, A10|A20 },
@@ -176,6 +181,7 @@ static const struct awin_locators awin_locators[] = {
 	{ "awincrypto", OFFANDSIZE(SS), NOPORT, AWIN_IRQ_SS, AANY },
 	{ "awinac", OFFANDSIZE(AC), NOPORT, AWIN_IRQ_AC, A10|A20 },
 	{ "awinac", OFFANDSIZE(AC), NOPORT, AWIN_A31_IRQ_AC, A31 },
+	{ "awindaudio", OFFANDSIZE(A80_DAUDIO1), 1, AWIN_A80_IRQ_R_DAUDIO, A80 },
 	{ "awinhdmiaudio", OFFANDSIZE(HDMI), NOPORT, NOINTR, A20 },
 	{ "awinhdmiaudio", OFFANDSIZE(HDMI), NOPORT, NOINTR, A31 },
 	{ "awinnand", OFFANDSIZE(NFC), NOPORT, AWIN_IRQ_NAND, A10|A20 },
