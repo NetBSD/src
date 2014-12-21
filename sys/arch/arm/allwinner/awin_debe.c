@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.12 2014/12/08 10:48:22 jmcneill Exp $ */
+/* $NetBSD: awin_debe.c,v 1.13 2014/12/21 17:40:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
 #define AWIN_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.12 2014/12/08 10:48:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.13 2014/12/21 17:40:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,6 +118,9 @@ awin_debe_attach(device_t parent, device_t self, void *aux)
 #if NAWIN_MP > 0
 	device_t mpdev;
 #endif
+#ifdef AWIN_DEBE_FWINIT
+	struct videomode mode;
+#endif
 	int error;
 
 	sc->sc_dev = self;
@@ -139,7 +142,7 @@ awin_debe_attach(device_t parent, device_t self, void *aux)
 		    AWIN_A31_AHB_RESET1_REG,
 		    AWIN_A31_AHB_RESET1_BE0_RST << loc->loc_port,
 		    0);
-	} else {
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A20) {
 		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
 		    AWIN_BE0_SCLK_CFG_REG + (loc->loc_port * 4),
 		    AWIN_BEx_CLK_RST,
@@ -160,7 +163,7 @@ awin_debe_attach(device_t parent, device_t self, void *aux)
 			      AWIN_A31_BEx_CLK_SRC_SEL) |
 		    __SHIFTIN(clk_div - 1, AWIN_BEx_CLK_DIV_RATIO_M),
 		    AWIN_A31_BEx_CLK_SRC_SEL | AWIN_BEx_CLK_DIV_RATIO_M);
-	} else {
+	} else if (awin_chip_id() == AWIN_CHIP_ID_A20) {
 		uint32_t pll5x_freq = awin_pll5x_get_rate();
 		unsigned int clk_div = (pll5x_freq + 299999999) / 300000000;
 
@@ -176,22 +179,54 @@ awin_debe_attach(device_t parent, device_t self, void *aux)
 		    AWIN_BEx_CLK_SRC_SEL | AWIN_BEx_CLK_DIV_RATIO_M);
 	}
 
-	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_AHB_GATING1_REG, AWIN_AHB_GATING1_DE_BE0 << loc->loc_port, 0);
+	if (awin_chip_id() == AWIN_CHIP_ID_A20 ||
+	    awin_chip_id() == AWIN_CHIP_ID_A31) {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_AHB_GATING1_REG,
+		    AWIN_AHB_GATING1_DE_BE0 << loc->loc_port, 0);
 
-	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_DRAM_CLK_REG,
-	    AWIN_DRAM_CLK_BE0_DCLK_ENABLE << loc->loc_port, 0);
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_DRAM_CLK_REG,
+		    AWIN_DRAM_CLK_BE0_DCLK_ENABLE << loc->loc_port, 0);
 
-	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_BE0_SCLK_CFG_REG + (loc->loc_port * 4),
-	    AWIN_CLK_ENABLE, 0);
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_BE0_SCLK_CFG_REG + (loc->loc_port * 4),
+		    AWIN_CLK_ENABLE, 0);
+	}
 
+#ifdef AWIN_DEBE_FWINIT
+	const uint32_t modctl = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
+	const uint32_t dissize = DEBE_READ(sc, AWIN_DEBE_DISSIZE_REG);
+	if ((modctl & AWIN_DEBE_MODCTL_EN) == 0) {
+		aprint_error_dev(sc->sc_dev, "disabled\n");
+		return;
+	}
+	if ((modctl & AWIN_DEBE_MODCTL_START_CTL) == 0) {
+		aprint_error_dev(sc->sc_dev, "stopped\n");
+		return;
+	}
+	memset(&mode, 0, sizeof(mode));
+	mode.hdisplay = (dissize & 0xffff) + 1;
+
+	if (mode.hdisplay == 1 || mode.vdisplay == 1) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't determine video mode\n");
+		return;
+	}
+
+	aprint_verbose_dev(sc->sc_dev, "using %dx%d mode from firmware\n",
+	    mode.hdisplay, mode.vdisplay);
+
+	sc->sc_dmasize = mode.hdisplay * mode.vdisplay * 4;
+#else
 	for (unsigned int reg = 0x800; reg < 0x1000; reg += 4) {
 		DEBE_WRITE(sc, reg, 0);
 	}
 
 	DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, AWIN_DEBE_MODCTL_EN);
+
+	sc->sc_dmasize = AWIN_DEBE_VIDEOMEM;
+#endif
 
 	DEBE_WRITE(sc, AWIN_DEBE_HWC_PALETTE_TABLE, 0);
 
@@ -211,6 +246,11 @@ awin_debe_attach(device_t parent, device_t self, void *aux)
 		awin_mp_setbase(mpdev, pa, sc->sc_dmasize);
 	}
 #endif
+
+#ifdef AWIN_DEBE_FWINIT
+	awin_debe_set_videomode(&mode);
+	awin_debe_enable(true);
+#endif
 }
 
 static int
@@ -218,9 +258,8 @@ awin_debe_alloc_videomem(struct awin_debe_softc *sc)
 {
 	int error, nsegs;
 
-	sc->sc_dmasize = AWIN_DEBE_VIDEOMEM;
-	error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dmasize, 0,
-	    sc->sc_dmasize, sc->sc_dmasegs, 1, &nsegs, BUS_DMA_WAITOK);
+	error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dmasize, 0x1000, 0,
+	    sc->sc_dmasegs, 1, &nsegs, BUS_DMA_WAITOK);
 	if (error)
 		return error;
 	error = bus_dmamem_map(sc->sc_dmat, sc->sc_dmasegs, nsegs,
@@ -461,12 +500,14 @@ awin_debe_set_videomode(const struct videomode *mode)
 		}
 
 		paddr_t pa = sc->sc_dmamap->dm_segs[0].ds_addr;
+#if !defined(ALLWINNER_A80)
 		/*
 		 * On 2GB systems, we need to subtract AWIN_SDRAM_PBASE from
 		 * the phys addr.
 		 */
 		if (pa >= AWIN_SDRAM_PBASE)
 			pa -= AWIN_SDRAM_PBASE;
+#endif
 
 		/* notify fb */
 		awin_debe_setup_fbdev(sc, mode);
