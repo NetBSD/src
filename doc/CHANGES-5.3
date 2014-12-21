@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.86 2014/12/15 07:12:24 snj Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.87 2014/12/21 20:51:04 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -1267,3 +1267,9 @@ xsrc/xfree/xc/programs/Xserver/render/render.c	1.4
 	CVE-2014-8103
 	[mrg, ticket #1935]
 
+sys/dev/ic/rtl8169.c				1.142
+
+	RealTek 8139C+ incorrectly identifies UDP checksum 0xffff as bad.
+	Force software recalculation of UDP checksum if bad checksum is
+	reported by the hardware.
+	[uwe, ticket #1936]
