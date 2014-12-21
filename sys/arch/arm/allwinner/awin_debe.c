@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.13 2014/12/21 17:40:59 jmcneill Exp $ */
+/* $NetBSD: awin_debe.c,v 1.14 2014/12/21 18:36:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
 #define AWIN_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.13 2014/12/21 17:40:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.14 2014/12/21 18:36:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -207,6 +207,7 @@ awin_debe_attach(device_t parent, device_t self, void *aux)
 	}
 	memset(&mode, 0, sizeof(mode));
 	mode.hdisplay = (dissize & 0xffff) + 1;
+	mode.vdisplay = ((dissize >> 16) & 0xffff) + 1;
 
 	if (mode.hdisplay == 1 || mode.vdisplay == 1) {
 		aprint_error_dev(sc->sc_dev,
