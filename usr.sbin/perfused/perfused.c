@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.24 2012/07/21 05:49:42 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.24.10.1 2014/12/21 19:27:11 snj Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -298,7 +298,7 @@ new_mount(int fd, int pmnt_flags)
 		     "could not open \"%s\"",
 		     _PATH_VAR_RUN_PERFUSE_TRACE);
 
-	if (signal(SIGUSR1, sigusr1_handler) != 0)
+	if (signal(SIGUSR1, sigusr1_handler) == SIG_ERR)
 		DERR(EX_OSERR, "signal failed");
 
 	/*
@@ -399,7 +399,7 @@ parse_options(int argc, char **argv)
 			perfuse_diagflags |= parse_debug(optarg);
 			break;
 		case 's':
-			if (signal(SIGINFO, siginfo_handler) != 0)
+			if (signal(SIGINFO, siginfo_handler) == SIG_ERR)
 				DERR(EX_OSERR, "signal failed");
 			break;
 		case 'f':
