@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/08/11 23:15:41 joerg Exp $
+#	$NetBSD: Makefile,v 1.4.16.1 2014/12/21 19:06:33 snj Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -37,6 +37,9 @@ CPPFLAGS+=      -I${DESTDIR}${X11INCDIR}/pixman-1 \
 CPPFLAGS+=      ${X11FLAGS.DIX}
 
 CWARNFLAGS.clang+=	-Wno-tautological-compare
+
+# XXX: uint16 vs INT_MAX
+COPTS.xichangehierarchy.c+=	-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
