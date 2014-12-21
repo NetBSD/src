@@ -1,4 +1,4 @@
-#	$NetBSD: ALLWINNER_A80,v 1.13 2014/12/11 23:35:31 jmcneill Exp $
+#	$NetBSD: ALLWINNER_A80,v 1.14 2014/12/21 17:42:12 jmcneill Exp $
 #
 #	ALLWINNER_A80 - Allwinner A80 boards (Cubieboard4, OptimusBoard, etc)
 #
@@ -260,19 +260,21 @@ awge0		at awinio0 port ?
 
 # DE-BE
 #awindebe0	at awinio0 port 0
+awindebe0	at awinio0 port 1
+options 	AWIN_DEBE_FWINIT
 
 # Framebuffer
-#genfb0		at awindebe0
-#wsdisplay*	at genfb?
-#options 	VCONS_DRAW_INTR
-#options 	WSEMUL_VT100
-#options 	WS_KERNEL_FG=WSCOL_GREEN
-#options 	WS_KERNEL_BG=WSCOL_BLACK
-#options 	WSDISPLAY_COMPAT_PCVT
-#options 	WSDISPLAY_COMPAT_SYSCONS
-#options 	WSDISPLAY_COMPAT_USL
-#options 	WSDISPLAY_COMPAT_RAWKBD
-#options 	WSDISPLAY_DEFAULTSCREENS=4
+genfb0		at awindebe0
+wsdisplay*	at genfb?
+options 	VCONS_DRAW_INTR
+options 	WSEMUL_VT100
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WSDISPLAY_COMPAT_PCVT
+options 	WSDISPLAY_COMPAT_SYSCONS
+options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WSDISPLAY_DEFAULTSCREENS=4
 
 # On-board USB
 awinusb0	at awinio0 port 0
