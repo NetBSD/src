@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_nmea.c,v 1.6 2014/12/19 20:43:17 christos Exp $	*/
+/*	$NetBSD: refclock_nmea.c,v 1.7 2014/12/22 04:23:58 christos Exp $	*/
 
 /*
  * refclock_nmea.c - clock driver for an NMEA GPS CLOCK
@@ -314,7 +314,7 @@ static int	unfold_century	(struct calendar * jd, u_int32 rec_ui);
 static int	gpsfix_century	(struct calendar * jd, const gps_weektm * wd,
 				 u_short * ccentury);
 static l_fp     eval_gps_time	(struct peer * peer, const struct calendar * gpst,
-				 const struct timespec * gpso, const l_fp * recv);
+				 const struct timespec * gpso, const l_fp * xrecv);
 
 static int	nmead_open	(const char * device);
 static void     save_ltc        (struct refclockproc * const, const char * const,
@@ -1782,7 +1782,7 @@ eval_gps_time(
 	struct peer           * peer, /* for logging etc */
 	const struct calendar * gpst, /* GPS time stamp  */
 	const struct timespec * tofs, /* GPS frac second & offset */
-	const l_fp            * recv  /* receive time stamp */
+	const l_fp            * xrecv /* receive time stamp */
 	)
 {
 	struct refclockproc * const pp = peer->procptr;
@@ -1838,7 +1838,7 @@ eval_gps_time(
 	}
 
 	/* - get unfold base: day of full recv time - 512 weeks */
-	vi64 = ntpcal_ntp_to_ntp(recv->l_ui, NULL);
+	vi64 = ntpcal_ntp_to_ntp(xrecv->l_ui, NULL);
 	rs64 = ntpcal_daysplit(&vi64);
 	rcv_sec = rs64.lo;
 	rcv_day = rs64.hi - 512 * 7;
@@ -1848,7 +1848,7 @@ eval_gps_time(
 	 * fractional day of the receive time, we shift the base day for
 	 * the unfold by 1. */
 	if (   gps_sec  < rcv_sec
-	   || (gps_sec == rcv_sec && retv.l_uf < recv->l_uf))
+	   || (gps_sec == rcv_sec && retv.l_uf < xrecv->l_uf))
 		rcv_day += 1;
 
 	/* - don't warp ahead of GPS invention! */
