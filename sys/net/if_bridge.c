@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.91 2014/08/15 15:32:24 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.92 2014/12/22 09:42:45 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91 2014/08/15 15:32:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.92 2014/12/22 09:42:45 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1804,6 +1804,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	if (!(m->m_flags & (M_BCAST|M_MCAST)) &&
 	    !bstp_state_before_learning(bif)) {
 		struct bridge_iflist *_bif;
+		struct ifnet *_ifp = NULL;
 
 		BRIDGE_LOCK(sc);
 		LIST_FOREACH(_bif, &sc->sc_iflist, bif_next) {
@@ -1812,21 +1813,22 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 				if (_bif->bif_flags & IFBIF_LEARNING)
 					(void) bridge_rtupdate(sc,
 					    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
-				m->m_pkthdr.rcvif = _bif->bif_ifp;
-				ether_input(_bif->bif_ifp, m);
+				_ifp = m->m_pkthdr.rcvif = _bif->bif_ifp;
 				break;
 			}
 
 			/* We just received a packet that we sent out. */
-			if (bridge_ourether(_bif, eh, 1)) {
-				m_freem(m);
+			if (bridge_ourether(_bif, eh, 1))
 				break;
-			}
 		}
 		BRIDGE_UNLOCK(sc);
 
 		if (_bif != NULL) {
 			bridge_release_member(sc, bif);
+			if (_ifp != NULL)
+				ether_input(_ifp, m);
+			else
+				m_freem(m);
 			return;
 		}
 	}
@@ -1844,8 +1846,8 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	 * we've done historically. This also prevents some obnoxious behaviour.
 	 */
 	if (bstp_state_before_learning(bif)) {
-		ether_input(ifp, m);
 		bridge_release_member(sc, bif);
+		ether_input(ifp, m);
 		return;
 	}
 
@@ -1908,13 +1910,12 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 
 		bridge_enqueue(sc, dst_if, mc, 1);
 	}
+	BRIDGE_UNLOCK(sc);
 
 	if (bmcast)
 		ether_input(src_if, m);
 	else if (!used)
 		m_freem(m);
-
-	BRIDGE_UNLOCK(sc);
 }
 
 /*
