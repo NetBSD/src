@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.295.6.3 2014/12/02 22:05:14 snj Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.295.6.4 2014/12/22 04:11:38 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.295.6.3 2014/12/02 22:05:14 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.295.6.4 2014/12/22 04:11:38 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -735,6 +735,7 @@ raidopen(dev_t dev, int flags, int fmt,
 	pmask = (1 << part);
 
 	if ((rs->sc_flags & RAIDF_INITED) &&
+	    (rs->sc_dkdev.dk_nwedges == 0) &&
 	    (rs->sc_dkdev.dk_openmask == 0))
 		raidgetdisklabel(dev);
 
