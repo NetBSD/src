@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.16 2014/12/06 08:27:23 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.17 2014/12/22 08:23:35 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.16 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.17 2014/12/22 08:23:35 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2793,10 +2793,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 			curlen -= curlen % mps;
 			USBHIST_LOG(ehcidebug, "multiple QTDs, "
 				    "curlen=%d", curlen, 0, 0, 0);
-#ifdef DIAGNOSTIC
-			if (curlen == 0)
-				panic("ehci_alloc_sqtd_chain: curlen == 0");
-#endif
+			KASSERT(curlen != 0);
 		}
 		USBHIST_LOG(ehcidebug, "len=%d curlen=%d curoffs=%zu",
 			len, curlen, (size_t)curoffs, 0);
