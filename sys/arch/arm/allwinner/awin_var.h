@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.33 2014/12/07 18:32:13 jmcneill Exp $ */
+/* $NetBSD: awin_var.h,v 1.34 2014/12/22 00:07:24 jmcneill Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -94,6 +94,7 @@ extern struct bus_space awin_bs_tag;
 extern struct bus_space awin_a4x_bs_tag;
 extern bus_space_handle_t awin_core_bsh;
 #if defined(ALLWINNER_A80)
+extern bus_space_handle_t awin_core2_bsh;
 extern bus_space_handle_t awin_rcpus_bsh;
 #endif
 extern struct arm32_bus_dma_tag awin_dma_tag;
@@ -117,7 +118,7 @@ void	awin_cpu_hatch(struct cpu_info *);
 #define AWIN_CHIP_ID_A31	AWIN_SRAM_VER_KEY_A31
 #define AWIN_CHIP_ID_A23	AWIN_SRAM_VER_KEY_A23
 #define AWIN_CHIP_ID_A20	AWIN_SRAM_VER_KEY_A20
-#define AWIN_CHIP_ID_A80	0xff80	/* fake; no chip ID register */
+#define AWIN_CHIP_ID_A80	AWIN_SRAM_VER_KEY_A80
 uint16_t awin_chip_id(void);
 const char *awin_chip_name(void);
 

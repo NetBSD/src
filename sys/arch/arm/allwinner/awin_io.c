@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.40 2014/12/21 17:40:17 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.41 2014/12/22 00:07:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -228,13 +228,12 @@ awinio_attach(device_t parent, device_t self, void *aux)
 	switch (awin_chip_id()) {
 #ifdef ALLWINNER_A80
 	case AWIN_CHIP_ID_A80:
+		sc->sc_a80_core2_bsh = awin_core2_bsh;
 		sc->sc_a80_rcpus_bsh = awin_rcpus_bsh;
 		bus_space_subregion(sc->sc_bst, sc->sc_bsh,
 		    AWIN_A80_CCU_SCLK_OFFSET, 0x1000, &sc->sc_ccm_bsh);
 		bus_space_map(sc->sc_bst, AWIN_A80_USB_PBASE,
 		    AWIN_A80_USB_SIZE, 0, &sc->sc_a80_usb_bsh);
-		bus_space_map(sc->sc_bst, AWIN_A80_CORE2_PBASE,
-		    AWIN_A80_CORE2_SIZE, 0, &sc->sc_a80_core2_bsh);
 		break;
 #endif
 	default:
