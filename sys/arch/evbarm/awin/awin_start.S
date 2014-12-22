@@ -41,7 +41,7 @@
 #include <arm/allwinner/awin_reg.h>
 #include <evbarm/awin/platform.h>  
 
-RCSID("$NetBSD: awin_start.S,v 1.9 2014/12/22 00:07:24 jmcneill Exp $")
+RCSID("$NetBSD: awin_start.S,v 1.10 2014/12/22 23:46:50 jmcneill Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -151,7 +151,7 @@ _C_LABEL(awin_start):
 	// Make sure the cache is flushed out to RAM for the other CPUs
 	bl	_C_LABEL(armv7_dcache_wbinv_all)
 
-#if defined(ALLWINNER_A20) + defined(ALLWINNER_A31) > 1
+#if defined(ALLWINNER_A20) || defined(ALLWINNER_A31)
 	// Read SoC ID
 	movw	r5, #:lower16:(AWIN_CORE_PBASE+AWIN_SRAM_OFFSET)
 	movt	r5, #:upper16:(AWIN_CORE_PBASE+AWIN_SRAM_OFFSET)
