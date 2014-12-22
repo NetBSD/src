@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.59 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.60 2014/12/22 07:02:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.59 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.60 2014/12/22 07:02:22 mrg Exp $");
 
 #include "sequencer.h"
 
@@ -174,7 +174,9 @@ static LIST_HEAD(, sequencer_softc) sequencers = LIST_HEAD_INITIALIZER(sequencer
 static kmutex_t sequencer_lock;
 
 static void
-sequencerdestroy(struct sequencer_softc *sc) {
+sequencerdestroy(struct sequencer_softc *sc)
+{
+	callout_halt(&sc->sc_callout, &sc->lock);
 	callout_destroy(&sc->sc_callout);
 	softint_disestablish(sc->sih);
 	cv_destroy(&sc->rchan);
@@ -186,7 +188,8 @@ sequencerdestroy(struct sequencer_softc *sc) {
 }
 
 static struct sequencer_softc *
-sequencercreate(int unit) {
+sequencercreate(int unit)
+{
 	struct sequencer_softc *sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
 	if (sc == NULL) {
 #ifdef DIAGNOSTIC
@@ -212,7 +215,8 @@ sequencercreate(int unit) {
 
 
 static struct sequencer_softc *
-sequencerget(int unit) {
+sequencerget(int unit)
+{
 	struct sequencer_softc *sc;
 	if (unit < 0) {
 #ifdef DIAGNOSTIC
@@ -238,7 +242,8 @@ sequencerget(int unit) {
 
 #ifdef notyet
 static void 
-sequencerput(struct sequencer_softc *sc) {
+sequencerput(struct sequencer_softc *sc)
+{
 	mutex_enter(&sequencer_lock);
 	LIST_REMOVE(sc, sc_link);
 	mutex_exit(&sequencer_lock);
@@ -346,10 +351,14 @@ sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
 
 	/* Only now redirect input from MIDI devices. */
 	for (unit = 0; unit < sc->nmidi; unit++) {
-		msc = sc->devs[unit]->msc;
-		mutex_enter(msc->lock);
-		msc->seqopen = 1;
-		mutex_exit(msc->lock);
+		extern struct cfdriver midi_cd;
+
+		msc = device_lookup_private(&midi_cd, unit);
+		if (msc) {
+			mutex_enter(msc->lock);
+			msc->seqopen = 1;
+			mutex_exit(msc->lock);
+		}
 	}
 
 	seq_reset(sc);
@@ -440,10 +449,14 @@ sequencerclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	}
 	/* Bin input from MIDI devices. */
 	for (unit = 0; unit < sc->nmidi; unit++) {
-		msc = sc->devs[unit]->msc;
-		mutex_enter(msc->lock);
-		msc->seqopen = 0;
-		mutex_exit(msc->lock);
+		extern struct cfdriver midi_cd;
+
+		msc = device_lookup_private(&midi_cd, unit);
+		if (msc) {
+			mutex_enter(msc->lock);
+			msc->seqopen = 0;
+			mutex_exit(msc->lock);
+		}
 	}
 	mutex_exit(&sc->lock);
 
@@ -971,7 +984,7 @@ seq_reset(struct sequencer_softc *sc)
 
 	KASSERT(mutex_owned(&sc->lock));
 
-	if ( !(sc->flags & FWRITE) )
+	if (!(sc->flags & FWRITE))
 	        return;
 	for (i = 0; i < sc->nmidi; i++) {
 		md = sc->devs[i];
@@ -1420,7 +1433,6 @@ midiseq_open(int unit, int flags)
 
 	sc = device_lookup_private(&midi_cd, unit);
 	md = kmem_zalloc(sizeof(*md), KM_SLEEP);
-	md->msc = sc;
 	md->unit = unit;
 	md->name = mi.name;
 	md->subtype = 0;
@@ -1451,8 +1463,8 @@ midiseq_reset(struct midi_dev *md)
 static int
 midiseq_out(struct midi_dev *md, u_char *bf, u_int cc, int chk)
 {
-	DPRINTFN(5, ("midiseq_out: m=%p, unit=%d, bf[0]=0x%02x, cc=%d\n",
-		     md->msc, md->unit, bf[0], cc));
+	DPRINTFN(5, ("midiseq_out: md=%p, unit=%d, bf[0]=0x%02x, cc=%d\n",
+		     md, md->unit, bf[0], cc));
 
 	/* midi(4) does running status compression where appropriate. */
 	return midi_writebytes(md->unit, bf, cc);
