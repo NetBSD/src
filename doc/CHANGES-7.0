@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.135 2014/12/21 19:34:13 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.136 2014/12/22 02:20:35 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -3671,3 +3671,39 @@ sys/dev/pci/if_wpi.c				1.69
 	is off.
 	[bouyer, ticket #338]
 
+usr.bin/shmif_dumpbus/shmif_dumpbus.c		1.12-1.17
+
+	- Support endian-independent operation on all platforms.
+	- Fix tyop in error message.
+	- Make name more descriptive: SWAPME -> FIXENDIAN
+	- Add compat for bus version 2.
+	- Fixes tests.
+	- Might as well byteswap when we assign to local variables instead of
+	  when we use said variables.
+	  [gson, ticket #343]
+
+sys/fs/tmpfs/tmpfs_subr.c			1.97
+sys/fs/tmpfs/tmpfs_vnops.c			1.121
+
+	Store symlinks without a NUL terminator so that lstat(2) returns the
+	correct length.  Fixes the tmpfs part of PR kern/48864.
+	[gson, ticket #344]
+
+tests/lib/libpthread/t_cond.c			1.6
+
+	The cond_timedwait_race test case is no longer expected to fail.
+	[gson, ticket #346]
+
+sys/net/npf/npf_conn.c				1.14
+sys/net/npf/npf_conn.h				1.8
+sys/net/npf/npf_nat.c				1.38
+
+	Set the connection flags atomically in the post-creation logic and
+	fix a tiny race condition window.  Might fix PR/49488.
+	[rmind, ticket #347]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.317
+
+	Stop useless disklabel warning if there are wedges, using GPT
+	partition. Fix PR kern/47989.
+	[taca, ticket #348]
