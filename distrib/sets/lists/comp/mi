@@ -1,7 +1,8 @@
-#	$NetBSD: mi,v 1.1929 2014/11/24 12:51:23 pettai Exp $
+#	$NetBSD: mi,v 1.1930 2014/12/22 18:02:52 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
+#./usr/libdata/lint/llib-ldtrace.ln		comp-c-lintlib		lint,dtrace
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		binutils
 ./usr/bin/ar					comp-util-bin		binutils
@@ -3747,9 +3748,9 @@
 ./usr/lib/librumpcrypto_p.a			comp-obsolete		obsolete
 ./usr/lib/librumpdev.a				comp-c-lib		rump
 ./usr/lib/librumpdev_audio.a			comp-c-lib		rump
-./usr/lib/librumpdev_audio_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpdev_audio_ac97.a			comp-obsolete	obsolete
 ./usr/lib/librumpdev_audio_ac97_p.a			comp-obsolete	obsolete
+./usr/lib/librumpdev_audio_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpdev_bpf.a			comp-c-lib		rump
 ./usr/lib/librumpdev_bpf_p.a			comp-c-proflib		profile,rump
 ./usr/lib/librumpdev_cgd.a			comp-c-lib		rump
@@ -4006,7 +4007,6 @@
 ./usr/libdata/lint/llib-ldm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ldns.ln			comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-ldns_sd.ln		comp-mdns-lintlib	lint,mdns
-#./usr/libdata/lint/llib-ldtrace.ln		comp-c-lintlib		lint,dtrace
 ./usr/libdata/lint/llib-ldwarf.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ledit.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lelf.ln			comp-c-lintlib		lint
@@ -9979,6 +9979,7 @@
 ./usr/share/man/cat9/child_return.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/chooselwp.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/chooseproc.0		comp-obsolete		obsolete
+./usr/share/man/cat9/clock.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/clock_secs_to_ymdhms.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/clock_ymdhms_to_secs.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/closef.0			comp-sys-catman		.cat
@@ -10110,6 +10111,8 @@
 ./usr/share/man/cat9/cv_wait.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cv_wait_sig.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cv_wakeup.0		comp-obsolete		obsolete
+./usr/share/man/cat9/days_in_month.0		comp-sys-catman		.cat
+./usr/share/man/cat9/days_per_year.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/dbtob.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ddc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/delay.0			comp-sys-catman		.cat
@@ -10333,6 +10336,7 @@
 ./usr/share/man/cat9/ipkdbif_init.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ipkdbinit.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ipkdbsbyte.0		comp-sys-catman		.cat
+./usr/share/man/cat9/is_leap_year.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/isa.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/isa_dmaabort.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/isa_dmacascade.0		comp-sys-catman		.cat
@@ -12595,10 +12599,10 @@
 ./usr/share/man/html3/cabsl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/cacos.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/cacosf.html		comp-c-htmlman		complex,html
-./usr/share/man/html3/cacosl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/cacosh.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/cacoshf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/cacoshl.html		comp-c-htmlman		complex,html
+./usr/share/man/html3/cacosl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/calloc.html		comp-c-htmlman		html
 ./usr/share/man/html3/callrpc.html		comp-c-htmlman		html
 ./usr/share/man/html3/can_change_color.html	comp-c-htmlman		html
@@ -12607,16 +12611,16 @@
 ./usr/share/man/html3/cargl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/casin.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/casinf.html		comp-c-htmlman		complex,html
-./usr/share/man/html3/casinl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/casinh.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/casinhf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/casinhl.html		comp-c-htmlman		complex,html
+./usr/share/man/html3/casinl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/catan.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/catanf.html		comp-c-htmlman		complex,html
-./usr/share/man/html3/catanl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/catanh.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/catanhf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/catanhl.html		comp-c-htmlman		complex,html
+./usr/share/man/html3/catanl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/catclose.html		comp-c-htmlman		html
 ./usr/share/man/html3/catgets.html		comp-c-htmlman		html
 ./usr/share/man/html3/catopen.html		comp-c-htmlman		html
@@ -12626,10 +12630,10 @@
 ./usr/share/man/html3/cbrtl.html		comp-c-htmlman		html
 ./usr/share/man/html3/ccos.html			comp-c-htmlman		complex,html
 ./usr/share/man/html3/ccosf.html		comp-c-htmlman		complex,html
-./usr/share/man/html3/ccosl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/ccosh.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/ccoshf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/ccoshl.html		comp-c-htmlman		complex,html
+./usr/share/man/html3/ccosl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/cdbr.html			comp-c-htmlman		html
 ./usr/share/man/html3/cdbr_close.html		comp-c-htmlman		html
 ./usr/share/man/html3/cdbr_entries.html		comp-c-htmlman		html
@@ -12748,19 +12752,19 @@
 ./usr/share/man/html3/crypto.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/csin.html			comp-c-htmlman		complex,html
 ./usr/share/man/html3/csinf.html		comp-c-htmlman		complex,html
-./usr/share/man/html3/csinl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/csinh.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/csinhf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/csinhl.html		comp-c-htmlman		complex,html
+./usr/share/man/html3/csinl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/csqrt.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/csqrtf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/csqrtl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/ctan.html			comp-c-htmlman		complex,html
 ./usr/share/man/html3/ctanf.html		comp-c-htmlman		complex,html
-./usr/share/man/html3/ctanl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/ctanh.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/ctanhf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/ctanhl.html		comp-c-htmlman		complex,html
+./usr/share/man/html3/ctanl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/ctermid.html		comp-c-htmlman		html
 ./usr/share/man/html3/ctime.html		comp-c-htmlman		html
 ./usr/share/man/html3/ctime_r.html		comp-c-htmlman		html
@@ -16739,6 +16743,7 @@
 ./usr/share/man/html9/cdevvp.html		comp-sys-htmlman	html
 ./usr/share/man/html9/checkalias.html		comp-obsolete	obsolete
 ./usr/share/man/html9/child_return.html		comp-sys-htmlman	html
+./usr/share/man/html9/clock.html		comp-sys-htmlman	html
 ./usr/share/man/html9/clock_secs_to_ymdhms.html	comp-sys-htmlman	html
 ./usr/share/man/html9/clock_ymdhms_to_secs.html	comp-sys-htmlman	html
 ./usr/share/man/html9/closef.html		comp-sys-htmlman	html
@@ -16856,6 +16861,8 @@
 ./usr/share/man/html9/cv_wait.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cv_wait_sig.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cv_wakeup.html		comp-obsolete		obsolete
+./usr/share/man/html9/days_in_month.html	comp-sys-htmlman	html
+./usr/share/man/html9/days_per_year.html	comp-sys-htmlman	html
 ./usr/share/man/html9/dbtob.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ddc.html			comp-sys-htmlman	html
 ./usr/share/man/html9/delay.html		comp-sys-htmlman	html
@@ -17075,6 +17082,7 @@
 ./usr/share/man/html9/ipkdbif_init.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ipkdbinit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ipkdbsbyte.html		comp-sys-htmlman	html
+./usr/share/man/html9/is_leap_year.html		comp-sys-htmlman	html
 ./usr/share/man/html9/isa.html			comp-sys-htmlman	html
 ./usr/share/man/html9/isa_dmaabort.html		comp-sys-htmlman	html
 ./usr/share/man/html9/isa_dmacascade.html	comp-sys-htmlman	html
@@ -19327,10 +19335,10 @@
 ./usr/share/man/man3/cabsl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cacos.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cacosf.3			comp-c-man		complex,.man
-./usr/share/man/man3/cacosl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cacosh.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cacoshf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cacoshl.3			comp-c-man		complex,.man
+./usr/share/man/man3/cacosl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/calloc.3			comp-c-man		.man
 ./usr/share/man/man3/callrpc.3			comp-c-man		.man
 ./usr/share/man/man3/can_change_color.3		comp-c-man		.man
@@ -19340,16 +19348,16 @@
 ./usr/share/man/man3/cargl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/casin.3			comp-c-man		complex,.man
 ./usr/share/man/man3/casinf.3			comp-c-man		complex,.man
-./usr/share/man/man3/casinl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/casinh.3			comp-c-man		complex,.man
 ./usr/share/man/man3/casinhf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/casinhl.3			comp-c-man		complex,.man
+./usr/share/man/man3/casinl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/catan.3			comp-c-man		complex,.man
 ./usr/share/man/man3/catanf.3			comp-c-man		complex,.man
-./usr/share/man/man3/catanl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/catanh.3			comp-c-man		complex,.man
 ./usr/share/man/man3/catanhf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/catanhl.3			comp-c-man		complex,.man
+./usr/share/man/man3/catanl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/catclose.3			comp-c-man		.man
 ./usr/share/man/man3/catgets.3			comp-c-man		.man
 ./usr/share/man/man3/catopen.3			comp-c-man		.man
@@ -19359,10 +19367,10 @@
 ./usr/share/man/man3/cbrtl.3			comp-c-man		.man
 ./usr/share/man/man3/ccos.3			comp-c-man		complex,.man
 ./usr/share/man/man3/ccosf.3			comp-c-man		complex,.man
-./usr/share/man/man3/ccosl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/ccosh.3			comp-c-man		complex,.man
 ./usr/share/man/man3/ccoshf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/ccoshl.3			comp-c-man		complex,.man
+./usr/share/man/man3/ccosl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cdbr.3			comp-c-man		.man
 ./usr/share/man/man3/cdbr_close.3		comp-c-man		.man
 ./usr/share/man/man3/cdbr_entries.3		comp-c-man		.man
@@ -19523,19 +19531,19 @@
 ./usr/share/man/man3/crypto.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/csin.3			comp-c-man		complex,.man
 ./usr/share/man/man3/csinf.3			comp-c-man		complex,.man
-./usr/share/man/man3/csinl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/csinh.3			comp-c-man		complex,.man
 ./usr/share/man/man3/csinhf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/csinhl.3			comp-c-man		complex,.man
+./usr/share/man/man3/csinl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/csqrt.3			comp-c-man		complex,.man
 ./usr/share/man/man3/csqrtf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/csqrtl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/ctan.3			comp-c-man		complex,.man
 ./usr/share/man/man3/ctanf.3			comp-c-man		complex,.man
-./usr/share/man/man3/ctanl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/ctanh.3			comp-c-man		complex,.man
 ./usr/share/man/man3/ctanhf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/ctanhl.3			comp-c-man		complex,.man
+./usr/share/man/man3/ctanl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/ctermid.3			comp-c-man		.man
 ./usr/share/man/man3/ctime.3			comp-c-man		.man
 ./usr/share/man/man3/ctime_r.3			comp-c-man		.man
@@ -23616,6 +23624,7 @@
 ./usr/share/man/man9/child_return.9		comp-sys-man		.man
 ./usr/share/man/man9/chooselwp.9		comp-obsolete		obsolete
 ./usr/share/man/man9/chooseproc.9		comp-obsolete		obsolete
+./usr/share/man/man9/clock.9	comp-sys-man		.man
 ./usr/share/man/man9/clock_secs_to_ymdhms.9	comp-sys-man		.man
 ./usr/share/man/man9/clock_ymdhms_to_secs.9	comp-sys-man		.man
 ./usr/share/man/man9/closef.9			comp-sys-man		.man
@@ -23747,6 +23756,8 @@
 ./usr/share/man/man9/cv_wait.9			comp-sys-man		.man
 ./usr/share/man/man9/cv_wait_sig.9		comp-sys-man		.man
 ./usr/share/man/man9/cv_wakeup.9		comp-obsolete		obsolete
+./usr/share/man/man9/days_in_month.9	comp-sys-man		.man
+./usr/share/man/man9/days_per_year.9	comp-sys-man		.man
 ./usr/share/man/man9/dbtob.9			comp-sys-man		.man
 ./usr/share/man/man9/ddc.9			comp-sys-man		.man
 ./usr/share/man/man9/delay.9			comp-sys-man		.man
@@ -23970,6 +23981,7 @@
 ./usr/share/man/man9/ipkdbif_init.9		comp-sys-man		.man
 ./usr/share/man/man9/ipkdbinit.9		comp-sys-man		.man
 ./usr/share/man/man9/ipkdbsbyte.9		comp-sys-man		.man
+./usr/share/man/man9/is_leap_year.9	comp-sys-man		.man
 ./usr/share/man/man9/isa.9			comp-sys-man		.man
 ./usr/share/man/man9/isa_dmaabort.9		comp-sys-man		.man
 ./usr/share/man/man9/isa_dmacascade.9		comp-sys-man		.man
