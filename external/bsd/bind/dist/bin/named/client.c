@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.10 2014/07/08 05:43:37 spz Exp $	*/
+/*	$NetBSD: client.c,v 1.10.2.1 2014/12/22 03:28:33 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -3199,6 +3199,9 @@ ns_client_dumpmessage(ns_client_t *client, const char *reason) {
 	char *buf = NULL;
 	int len = 1024;
 	isc_result_t result;
+
+	if (!isc_log_wouldlog(ns_g_lctx, ISC_LOG_DEBUG(1)))
+		return;
 
 	/*
 	 * Note that these are multiline debug messages.  We want a newline

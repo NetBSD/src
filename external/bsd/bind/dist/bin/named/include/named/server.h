@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.8 2014/07/08 05:43:37 spz Exp $	*/
+/*	$NetBSD: server.h,v 1.8.2.1 2014/12/22 03:28:34 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -39,7 +39,6 @@
 #define NS_EVENTCLASS		ISC_EVENTCLASS(0x4E43)
 #define NS_EVENT_RELOAD		(NS_EVENTCLASS + 0)
 #define NS_EVENT_CLIENTCONTROL	(NS_EVENTCLASS + 1)
-#define NS_EVENT_IFSCAN		(NS_EVENTCLASS + 2)
 
 /*%
  * Name server state.  Better here than in lots of separate global variables.
@@ -227,6 +226,7 @@ void
 ns_server_scan_interfaces(ns_server_t *server);
 /*%<
  * Trigger a interface scan.
+ * Must only be called when running under server->task.
  */
 
 void
@@ -374,7 +374,7 @@ ns_server_validation(ns_server_t *server, char *args, isc_buffer_t *text);
  * Add a zone to a running process
  */
 isc_result_t
-ns_server_add_zone(ns_server_t *server, char *args);
+ns_server_add_zone(ns_server_t *server, char *args, isc_buffer_t *text);
 
 /*%
  * Deletes a zone from a running process

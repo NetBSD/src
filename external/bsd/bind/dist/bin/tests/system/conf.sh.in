@@ -57,6 +57,7 @@ ARPANAME=$TOP/bin/tools/arpaname
 RESOLVE=$TOP/lib/samples/resolve
 RRCHECKER=$TOP/bin/tools/named-rrchecker
 GENRANDOM=$TOP/bin/tools/genrandom
+NSLOOKUP=$TOP/bin/dig/nslookup
 
 RANDFILE=$TOP/bin/tests/system/random.data
 
@@ -66,13 +67,16 @@ RANDFILE=$TOP/bin/tests/system/random.data
 SUBDIRS="acl additional allow_query addzone autosign builtin
 	 cacheclean case checkconf @CHECKDS@ checknames checkzone
 	 @COVERAGE@ database dlv dlvauto dlz dlzexternal dlzredir
-	 dname dns64 dnssec dsdigest dscp ecdsa emptyzones formerr
-	 forward glue gost ixfr inline limits logfileconfig lwresd
-	 masterfile masterformat metadata notify nsupdate pending
-	 @PKCS11_TEST@ redirect resolver rndc rpz rrl rrchecker
+	 dname dns64 dnssec dsdigest dscp ecdsa emptyzones filter-aaaa
+	 formerr forward geoip glue gost ixfr inline limits logfileconfig
+	 lwresd masterfile masterformat metadata notify nslookup nsupdate
+	 pending @PKCS11_TEST@ redirect resolver rndc rpz rrl rrchecker
 	 rrsetorder rsabigexponent sit smartsign sortlist spf staticstub
 	 statistics stub tkey tsig tsiggss unknown upforwd verify
 	 views wildcard xfer xferquota zero zonechecks"
+
+# Use the CONFIG_SHELL detected by configure for tests
+SHELL=@SHELL@
 
 # PERL will be an empty string if no perl interpreter was found.
 PERL=@PERL@
@@ -90,4 +94,4 @@ fi
 
 export NAMED LWRESD DIG NSUPDATE KEYGEN KEYFRLAB SIGNER KEYSIGNER KEYSETTOOL \
        PERL SUBDIRS RNDC CHECKZONE PK11GEN PK11LIST PK11DEL TESTSOCK6 \
-       JOURNALPRINT ARPANAME RESOLVE RRCHECKER
+       JOURNALPRINT ARPANAME RESOLVE RRCHECKER NSLOOKUP

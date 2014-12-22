@@ -30,6 +30,9 @@
     <ClCompile Include="version.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\compat.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\context.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -120,6 +123,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\lwres\result.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\lwres\stdlib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\lwres\string.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

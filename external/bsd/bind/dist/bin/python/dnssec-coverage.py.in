@@ -104,7 +104,7 @@ class Key:
         self.alg = int(alg)
         self.keyid = int(keyid)
 
-        kfp = file(key_file, "r")
+        kfp = open(key_file, "r")
         for line in kfp:
             if line[0] == ';':
                 continue
@@ -132,7 +132,7 @@ class Key:
                 self.sep = False
         kfp.close()
 
-        pfp = file(private_file, "rU")
+        pfp = open(private_file, "rU")
         propDict = dict()
         for propLine in pfp:
             propDef = propLine.strip()

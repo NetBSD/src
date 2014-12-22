@@ -1,4 +1,4 @@
-.\"	$NetBSD: lwres.3,v 1.4 2014/07/08 05:43:40 spz Exp $
+.\"	$NetBSD: lwres.3,v 1.4.2.1 2014/12/22 03:28:47 msaitoh Exp $
 .\"
 .\" Copyright (C) 2004, 2005, 2007, 2014 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001 Internet Software Consortium.
@@ -41,7 +41,7 @@ lwres \- introduction to the lightweight resolver library
 .PP
 The BIND 9 lightweight resolver library is a simple, name service independent stub resolver library. It provides hostname\-to\-address and address\-to\-hostname lookup services to applications by transmitting lookup requests to a resolver daemon
 \fBlwresd\fR
-running on the local host. The resover daemon performs the lookup using the DNS or possibly other name service protocols, and returns the results to the application through the library. The library and resolver daemon communicate using a simple UDP\-based protocol.
+running on the local host. The resolver daemon performs the lookup using the DNS or possibly other name service protocols, and returns the results to the application through the library. The library and resolver daemon communicate using a simple UDP\-based protocol.
 .SH "OVERVIEW"
 .PP
 The lwresd library implements multiple name service APIs. The standard

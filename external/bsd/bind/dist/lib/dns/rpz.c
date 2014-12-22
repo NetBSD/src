@@ -1,4 +1,4 @@
-/*	$NetBSD: rpz.c,v 1.7 2014/07/08 05:43:39 spz Exp $	*/
+/*	$NetBSD: rpz.c,v 1.7.2.1 2014/12/22 03:28:45 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -249,6 +249,9 @@ dns_rpz_policy2str(dns_rpz_policy_t policy) {
 	case DNS_RPZ_POLICY_CNAME:
 	case DNS_RPZ_POLICY_WILDCNAME:
 		str = "CNAME";
+		break;
+	case DNS_RPZ_POLICY_MISS:
+		str = "MISS";
 		break;
 	default:
 		str = "";
@@ -1114,6 +1117,13 @@ add_cidr(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 		char namebuf[DNS_NAME_FORMATSIZE];
 
 		/*
+		 * Do not worry if the radix tree already exists,
+		 * because diff_apply() likes to add nodes before deleting.
+		 */
+		if (result == ISC_R_EXISTS)
+			return (ISC_R_SUCCESS);
+
+		/*
 		 * bin/tests/system/rpz/tests.sh looks for "rpz.*failed".
 		 */
 		dns_name_format(src_name, namebuf, sizeof(namebuf));
@@ -1161,18 +1171,8 @@ add_nm(dns_rpz_zones_t *rpzs, dns_name_t *trig_name,
 	if ((nm_data->set.qname & new_data->set.qname) != 0 ||
 	    (nm_data->set.ns & new_data->set.ns) != 0 ||
 	    (nm_data->wild.qname & new_data->wild.qname) != 0 ||
-	    (nm_data->wild.ns & new_data->wild.ns) != 0) {
-		char namebuf[DNS_NAME_FORMATSIZE];
-
-		/*
-		 * bin/tests/system/rpz/tests.sh looks for "rpz.*failed".
-		 */
-		dns_name_format(trig_name, namebuf, sizeof(namebuf));
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_RPZ,
-			      DNS_LOGMODULE_RBTDB, DNS_RPZ_ERROR_LEVEL,
-			      "rpz add_nm(%s): bits already set", namebuf);
+	    (nm_data->wild.ns & new_data->wild.ns) != 0)
 		return (ISC_R_EXISTS);
-	}
 
 	nm_data->set.qname |= new_data->set.qname;
 	nm_data->set.ns |= new_data->set.ns;
@@ -1190,11 +1190,26 @@ add_name(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 	dns_name_t *trig_name;
 	isc_result_t result;
 
+	/*
+	 * No need for a summary database of names with only 1 policy zone.
+	 */
+	if (rpzs->p.num_zones <= 1) {
+		adj_trigger_cnt(rpzs, rpz_num, rpz_type, NULL, 0, ISC_TRUE);
+		return (ISC_R_SUCCESS);
+	}
+
 	dns_fixedname_init(&trig_namef);
 	trig_name = dns_fixedname_name(&trig_namef);
 	name2data(rpzs, rpz_num, rpz_type, src_name, trig_name, &new_data);
 
 	result = add_nm(rpzs, trig_name, &new_data);
+
+	/*
+	 * Do not worry if the node already exists,
+	 * because diff_apply() likes to add nodes before deleting.
+	 */
+	if (result == ISC_R_EXISTS)
+		return (ISC_R_SUCCESS);
 	if (result == ISC_R_SUCCESS)
 		adj_trigger_cnt(rpzs, rpz_num, rpz_type, NULL, 0, ISC_TRUE);
 	return (result);
@@ -1643,6 +1658,7 @@ dns_rpz_ready(dns_rpz_zones_t *rpzs,
 	load_rpzs->rbt = rbt;
 
 	rpzs->total_triggers = load_rpzs->total_triggers;
+	rpzs->have = load_rpzs->have;
 
 	UNLOCK(&rpzs->search_lock);
 
@@ -1795,10 +1811,6 @@ del_name(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 	dns_rpz_nm_data_t *nm_data, del_data;
 	isc_result_t result;
 
-	dns_fixedname_init(&trig_namef);
-	trig_name = dns_fixedname_name(&trig_namef);
-	name2data(rpzs, rpz_num, rpz_type, src_name, trig_name, &del_data);
-
 	/*
 	 * No need for a summary database of names with only 1 policy zone.
 	 */
@@ -1806,6 +1818,10 @@ del_name(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 		adj_trigger_cnt(rpzs, rpz_num, rpz_type, NULL, 0, ISC_FALSE);
 		return;
 	}
+
+	dns_fixedname_init(&trig_namef);
+	trig_name = dns_fixedname_name(&trig_namef);
+	name2data(rpzs, rpz_num, rpz_type, src_name, trig_name, &del_data);
 
 	nmnode = NULL;
 	result = dns_rbt_findnode(rpzs->rbt, trig_name, NULL, &nmnode, NULL, 0,
@@ -1817,7 +1833,8 @@ del_name(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 		 * that were later added for (often empty) wildcards
 		 * and then to the RBTDB deferred cleanup list.
 		 */
-		if (result == ISC_R_NOTFOUND)
+		if (result == ISC_R_NOTFOUND ||
+		    result == DNS_R_PARTIALMATCH)
 			return;
 		dns_name_format(src_name, namebuf, sizeof(namebuf));
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_RPZ,

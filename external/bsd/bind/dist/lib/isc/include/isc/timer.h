@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.7 2014/07/08 05:43:40 spz Exp $	*/
+/*	$NetBSD: timer.h,v 1.7.2.1 2014/12/22 03:28:46 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -115,7 +115,7 @@ typedef struct {
 				       const isc_interval_t *interval,
 				       isc_task_t *task,
 				       isc_taskaction_t action,
-				       const void *arg,
+				       void *arg,
 				       isc_timer_t **timerp);
 } isc_timermgrmethods_t;
 
@@ -176,7 +176,7 @@ isc_timer_create(isc_timermgr_t *manager,
 		 const isc_interval_t *interval,
 		 isc_task_t *task,
 		 isc_taskaction_t action,
-		 const void *arg,
+		 void *arg,
 		 isc_timer_t **timerp);
 /*%<
  * Create a new 'type' timer managed by 'manager'.  The timers parameters

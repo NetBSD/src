@@ -37,6 +37,7 @@ dns_adb_cancelfind
 dns_adb_changeflags
 dns_adb_create
 dns_adb_createfind
+dns_adb_createfind2
 dns_adb_destroyfind
 dns_adb_detach
 dns_adb_dump
@@ -553,7 +554,8 @@ dns_rbt_fullnamefromnode
 dns_rbt_hashsize
 dns_rbt_namefromnode
 dns_rbt_nodecount
-dns_rbt_printall
+dns_rbt_printtext
+dns_rbt_printdot
 dns_rbt_printnodeinfo
 dns_rbt_serialize_align
 dns_rbt_serialize_tree
@@ -662,6 +664,7 @@ dns_resolver_cancelfetch
 dns_resolver_create
 dns_resolver_createfetch
 dns_resolver_createfetch2
+dns_resolver_createfetch3
 dns_resolver_destroyfetch
 dns_resolver_detach
 dns_resolver_disable_algorithm
@@ -675,6 +678,8 @@ dns_resolver_flushbadnames
 dns_resolver_freeze
 dns_resolver_getbadcache
 dns_resolver_getlamettl
+dns_resolver_getmaxdepth
+dns_resolver_getmaxqueries
 dns_resolver_getoptions
 dns_resolver_gettimeout
 dns_resolver_getudpsize
@@ -689,6 +694,8 @@ dns_resolver_resetmustbesecure
 dns_resolver_setclientsperquery
 dns_resolver_setlamettl
 dns_resolver_setmustbesecure
+dns_resolver_setmaxdepth
+dns_resolver_setmaxqueries
 dns_resolver_setquerydscp4
 dns_resolver_setquerydscp6
 dns_resolver_settimeout

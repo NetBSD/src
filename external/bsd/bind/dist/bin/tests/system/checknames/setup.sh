@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -21,3 +21,5 @@ cp ns1/fail.example.db.in ns1/fail.example.db
 cp ns1/ignore.update.db.in ns1/ignore.update.db
 cp ns1/warn.update.db.in ns1/warn.update.db
 cp ns1/fail.update.db.in ns1/fail.update.db
+
+cp ns4/master-ignore.update.db.in ns4/master-ignore.update.db

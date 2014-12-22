@@ -14,8 +14,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.5 2010/01/07 23:48:53 tbox Exp 
-
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
 
@@ -23,7 +21,7 @@ zone=.
 infile=root.db.in
 zonefile=root.db
 
-(cd ../ns2 && sh -e sign.sh )
+(cd ../ns2 && $SHELL -e sign.sh )
 
 cp ../ns2/dsset-example. .
 cp ../ns2/dsset-example.com. .

@@ -20,6 +20,8 @@
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
 
+#include <sys/atomic.h>
+
 /*! \file */
 
 /*****

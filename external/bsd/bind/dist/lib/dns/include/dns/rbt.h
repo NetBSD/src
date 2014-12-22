@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.h,v 1.9 2014/03/01 12:12:57 dsl Exp $	*/
+/*	$NetBSD: rbt.h,v 1.9.4.1 2014/12/22 03:28:45 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -728,10 +728,14 @@ dns_rbt_deserialize_tree(void *base_address, size_t filesize,
  */
 
 void
-dns_rbt_printall(dns_rbt_t *rbt, void (*data_printer)(FILE *, void *));
+dns_rbt_printtext(dns_rbt_t *rbt,
+		  void (*data_printer)(FILE *, void *), FILE *f);
 /*%<
  * Print an ASCII representation of the internal structure of the red-black
- * tree of trees.
+ * tree of trees to the passed stream.
+ *
+ * data_printer is a callback function that is called to print the data
+ * in a node. It should print it to the passed FILE stream.
  *
  * Notes:
  * \li  The name stored at each node, along with the node's color, is printed.
@@ -741,9 +745,69 @@ dns_rbt_printall(dns_rbt_t *rbt, void (*data_printer)(FILE *, void *));
  */
 
 void
-dns_rbt_printnodeinfo(dns_rbtnode_t *n);
+dns_rbt_printdot(dns_rbt_t *rbt, isc_boolean_t show_pointers, FILE *f);
+/*%<
+ * Print a GraphViz dot representation of the internal structure of the
+ * red-black tree of trees to the passed stream.
+ *
+ * If show_pointers is TRUE, pointers are also included in the generated
+ * graph.
+ *
+ * Notes:
+ * \li	The name stored at each node, along with the node's color is displayed.
+ *	Then the down pointer, left and right pointers are displayed
+ *	recursively in turn.  NULL left, right and down pointers are
+ *	silently omitted.
+ */
+
+void
+dns_rbt_printnodeinfo(dns_rbtnode_t *n, FILE *f);
 /*%<
  * Print out various information about a node
+ *
+ * Requires:
+ *\li	'n' is a valid pointer.
+ *
+ *\li	'f' points to a valid open FILE structure that allows writing.
+ */
+
+
+size_t
+dns__rbt_getheight(dns_rbt_t *rbt);
+/*%<
+ * Return the maximum height of sub-root nodes found in the red-black
+ * forest.
+ *
+ * The height of a node is defined as the number of nodes in the longest
+ * path from the node to a leaf. For each subtree in the forest, this
+ * function determines the height of its root node. Then it returns the
+ * maximum such height in the forest.
+ *
+ * Note: This function exists for testing purposes. Non-test code must
+ * not use it.
+ *
+ * Requires:
+ * \li  rbt is a valid rbt manager.
+ */
+
+isc_boolean_t
+dns__rbt_checkproperties(dns_rbt_t *rbt);
+/*%<
+ * Check red-black properties of the forest.
+ *
+ * Note: This function exists for testing purposes. Non-test code must
+ * not use it.
+ *
+ * Requires:
+ * \li  rbt is a valid rbt manager.
+ */
+
+size_t
+dns__rbtnode_getdistance(dns_rbtnode_t *node);
+/*%<
+ * Return the distance (in nodes) from the node to its upper node of its
+ * subtree. The root node has a distance of 1. A child of the root node
+ * has a distance of 2.
  */
 
 /*****
@@ -1037,6 +1101,12 @@ dns_rbtnode_refdecrement(dns_rbtnode_t *node, unsigned int *refs) {
 	} while (/*CONSTCOND*/0)
 #endif
 #endif /* DNS_RBT_USEISCREFCOUNT */
+
+void
+dns_rbtnode_nodename(dns_rbtnode_t *node, dns_name_t *name);
+
+dns_rbtnode_t *
+dns_rbt_root(dns_rbt_t *rbt);
 
 ISC_LANG_ENDDECLS
 

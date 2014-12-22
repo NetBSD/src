@@ -14,11 +14,14 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
+
 echo "I:(Native PKCS#11)" >&2
 rsafail=0 eccfail=0
 
-sh ../testcrypto.sh -q rsa || rsafail=1
-sh ../testcrypto.sh -q ecdsa || eccfail=1
+$SHELL ../testcrypto.sh -q rsa || rsafail=1
+$SHELL ../testcrypto.sh -q ecdsa || eccfail=1
 
 if [ $rsafail = 0 -a $eccfail = 0 ]; then
 	echo both > supported

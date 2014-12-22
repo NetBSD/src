@@ -1,4 +1,4 @@
-.\"	$NetBSD: rndc.8,v 1.6 2014/07/08 05:43:38 spz Exp $
+.\"	$NetBSD: rndc.8,v 1.6.2.1 2014/12/22 03:28:35 msaitoh Exp $
 .\"
 .\" Copyright (C) 2004, 2005, 2007, 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001 Internet Software Consortium.
@@ -22,11 +22,11 @@
 .\"     Title: rndc
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.71.1 <http://docbook.sf.net/>
-.\"      Date: February 07, 2014
+.\"      Date: August 15, 2014
 .\"    Manual: BIND9
 .\"    Source: BIND9
 .\"
-.TH "RNDC" "8" "February 07, 2014" "BIND9" "BIND9"
+.TH "RNDC" "8" "August 15, 2014" "BIND9" "BIND9"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
@@ -302,7 +302,7 @@ Flushes the server's cache.
 Flushes the given name from the server's DNS cache and, if applicable, from the server's nameserver address database or bad\-server cache.
 .RE
 .PP
-\fBflushtree\fR [\-all] \fIname\fR [\fIview\fR]
+\fBflushtree\fR \fIname\fR [\fIview\fR]
 .RS 4
 Flushes the given name, and all of its subdomains, from the server's DNS cache, the address database, and the bad server cache.
 .RE

@@ -14,8 +14,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.8 2012/02/23 06:53:15 marka Exp 
-
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
 
@@ -106,7 +104,7 @@ for alg in ECCGOST ECDSAP256SHA256 NSEC3RSASHA1 DSA
 do
     case $alg in
         DSA)
-            sh ../checkdsa.sh 2> /dev/null || continue
+            $SHELL ../checkdsa.sh 2> /dev/null || continue
             checkfile=../checkdsa
             touch $checkfile ;;
         ECCGOST) 
@@ -121,7 +119,7 @@ do
             $KEYGEN -q -r $RANDFILE -a ecdsap256sha256 test > /dev/null 2>&1 || fail=1
             rm -f Ktest*
             [ $fail != 0 ] && continue
-            sh ../checkdsa.sh 2> /dev/null || continue
+            $SHELL ../checkdsa.sh 2> /dev/null || continue
             checkfile=../checkecdsa
             touch $checkfile ;;
         *) ;;

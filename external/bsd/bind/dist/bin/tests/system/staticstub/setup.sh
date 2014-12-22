@@ -23,4 +23,4 @@ sed 's/EXAMPLE_ZONE_PLACEHOLDER/zone "example" { type master; file "example.db.s
 
 test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
-cd ns3 && sh -e sign.sh
+cd ns3 && $SHELL -e sign.sh

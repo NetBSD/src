@@ -16,6 +16,7 @@
 
 rm -f */K* */dsset-* */*.signed */trusted.conf */tmp* */*.jnl */*.bk
 rm -f active.key inact.key del.key unpub.key standby.key rev.key
+rm -f activate-now-publish-1day.key
 rm -f nopriv.key vanishing.key del1.key del2.key
 rm -f delayksk.key delayzsk.key autoksk.key autozsk.key
 rm -f missingzsk.key inactivezsk.key

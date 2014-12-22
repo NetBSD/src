@@ -1,4 +1,4 @@
-.\"	$NetBSD: dnssec-verify.8,v 1.4 2014/07/08 05:43:37 spz Exp $
+.\"	$NetBSD: dnssec-verify.8,v 1.4.2.1 2014/12/22 03:28:33 msaitoh Exp $
 .\"
 .\" Copyright (C) 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 .\"
@@ -34,7 +34,7 @@
 dnssec\-verify \- DNSSEC zone verification tool
 .SH "SYNOPSIS"
 .HP 14
-\fBdnssec\-verify\fR [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-I\ \fR\fB\fIinput\-format\fR\fR] [\fB\-o\ \fR\fB\fIorigin\fR\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-x\fR] [\fB\-z\fR] {zonefile}
+\fBdnssec\-verify\fR [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-I\ \fR\fB\fIinput\-format\fR\fR] [\fB\-o\ \fR\fB\fIorigin\fR\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-V\fR] [\fB\-x\fR] [\fB\-z\fR] {zonefile}
 .SH "DESCRIPTION"
 .PP
 \fBdnssec\-verify\fR
@@ -69,6 +69,11 @@ The zone origin. If not specified, the name of the zone file is assumed to be th
 \-v \fIlevel\fR
 .RS 4
 Sets the debugging level.
+.RE
+.PP
+\-V
+.RS 4
+Prints version information.
 .RE
 .PP
 \-x

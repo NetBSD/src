@@ -1,4 +1,4 @@
-/*	$NetBSD: aclconf.c,v 1.7 2014/07/08 05:43:40 spz Exp $	*/
+/*	$NetBSD: aclconf.c,v 1.7.2.1 2014/12/22 03:28:47 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -224,14 +224,16 @@ convert_keyname(const cfg_obj_t *keyobj, isc_log_t *lctx, isc_mem_t *mctx,
  * elements table after all the nested ACLs have been merged in to the
  * parent.
  */
-static int
+static isc_result_t
 count_acl_elements(const cfg_obj_t *caml, const cfg_obj_t *cctx,
-		   isc_boolean_t *has_negative)
+		   isc_log_t *lctx, cfg_aclconfctx_t *ctx, isc_mem_t *mctx,
+		   isc_uint32_t *count, isc_boolean_t *has_negative)
 {
 	const cfg_listelt_t *elt;
-	const cfg_obj_t *cacl = NULL;
 	isc_result_t result;
-	int n = 0;
+	isc_uint32_t n = 0;
+
+	REQUIRE(count != NULL);
 
 	if (has_negative != NULL)
 		*has_negative = ISC_FALSE;
@@ -256,14 +258,19 @@ count_acl_elements(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 			n++;
 		} else if (cfg_obj_islist(ce)) {
 			isc_boolean_t negative;
-			n += count_acl_elements(ce, cctx, &negative);
+			isc_uint32_t sub;
+			result = count_acl_elements(ce, cctx, lctx, ctx, mctx,
+						    &sub, &negative);
+			if (result != ISC_R_SUCCESS)
+				return (result);
+			n += sub;
 			if (negative)
 				n++;
 #ifdef HAVE_GEOIP
 		} else if (cfg_obj_istuple(ce) &&
 			   cfg_obj_isvoid(cfg_tuple_get(ce, "negated")))
 		{
-				n++;
+			n++;
 #endif /* HAVE_GEOIP */
 		} else if (cfg_obj_isstring(ce)) {
 			const char *name = cfg_obj_asstring(ce);
@@ -272,15 +279,27 @@ count_acl_elements(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 				n++;
 			} else if (strcasecmp(name, "any") != 0 &&
 				   strcasecmp(name, "none") != 0) {
-				result = get_acl_def(cctx, name, &cacl);
-				if (result == ISC_R_SUCCESS)
-					n += count_acl_elements(cacl, cctx,
-								NULL) + 1;
+				dns_acl_t *inneracl = NULL;
+				/*
+				 * Convert any named acls we reference now if
+				 * they have not already been converted.
+				 */
+				result = convert_named_acl(ce, cctx, lctx, ctx,
+							   mctx, 0, &inneracl);
+				if (result == ISC_R_SUCCESS) {
+					if (inneracl->has_negatives)
+						n++;
+					else
+						n += inneracl->length;
+					dns_acl_detach(&inneracl);
+				} else
+					return (result);
 			}
 		}
 	}
 
-	return n;
+	*count = n;
+	return (ISC_R_SUCCESS);
 }
 
 #ifdef HAVE_GEOIP
@@ -458,12 +477,18 @@ geoip_can_answer(dns_aclelement_t *elt, cfg_aclconfctx_t *ctx) {
 
 static isc_result_t
 parse_geoip_element(const cfg_obj_t *obj, isc_log_t *lctx,
-		    cfg_aclconfctx_t *ctx, dns_aclelement_t *de)
+		    cfg_aclconfctx_t *ctx, dns_aclelement_t *dep)
 {
 	const cfg_obj_t *ge;
 	const char *dbname = NULL;
 	const char *stype, *search;
 	dns_geoip_subtype_t subtype;
+	dns_aclelement_t de;
+	size_t len;
+
+	REQUIRE(dep != NULL);
+
+	de = *dep;
 
 	ge = cfg_tuple_get(obj, "db");
 	if (!cfg_obj_isvoid(ge))
@@ -471,74 +496,103 @@ parse_geoip_element(const cfg_obj_t *obj, isc_log_t *lctx,
 
 	stype = cfg_obj_asstring(cfg_tuple_get(obj, "subtype"));
 	search = cfg_obj_asstring(cfg_tuple_get(obj, "search"));
+	len = strlen(search);
 
-	if (strcasecmp(stype, "country") == 0 && strlen(search) == 2) {
+	if (len == 0) {
+		cfg_obj_log(obj, lctx, ISC_LOG_ERROR,
+			    "zero-length geoip search field");
+		return (ISC_R_FAILURE);
+	}
+
+	if (strcasecmp(stype, "country") == 0 && len == 2) {
 		/* Two-letter country code */
 		subtype = dns_geoip_countrycode;
-		strncpy(de->geoip_elem.as_string, search, 2);
-	} else if (strcasecmp(stype, "country") == 0 && strlen(search) == 3) {
+		strlcpy(de.geoip_elem.as_string, search,
+			sizeof(de.geoip_elem.as_string));
+	} else if (strcasecmp(stype, "country") == 0 && len == 3) {
 		/* Three-letter country code */
 		subtype = dns_geoip_countrycode3;
-		strncpy(de->geoip_elem.as_string, search, 3);
+		strlcpy(de.geoip_elem.as_string, search,
+			sizeof(de.geoip_elem.as_string));
 	} else if (strcasecmp(stype, "country") == 0) {
 		/* Country name */
 		subtype = dns_geoip_countryname;
-		strncpy(de->geoip_elem.as_string, search, 255);
-	} else if (strcasecmp(stype, "region") == 0 && strlen(search) == 2) {
+		strlcpy(de.geoip_elem.as_string, search,
+			sizeof(de.geoip_elem.as_string));
+	} else if (strcasecmp(stype, "region") == 0 && len == 2) {
 		/* Two-letter region code */
 		subtype = dns_geoip_region;
-		strncpy(de->geoip_elem.as_string, search, 2);
+		strlcpy(de.geoip_elem.as_string, search,
+			sizeof(de.geoip_elem.as_string));
 	} else if (strcasecmp(stype, "region") == 0) {
 		/* Region name */
 		subtype = dns_geoip_regionname;
-		strncpy(de->geoip_elem.as_string, search, 255);
+		strlcpy(de.geoip_elem.as_string, search,
+			sizeof(de.geoip_elem.as_string));
 	} else if (strcasecmp(stype, "city") == 0) {
 		/* City name */
 		subtype = dns_geoip_city_name;
-		strncpy(de->geoip_elem.as_string, search, 255);
-	} else if (strcasecmp(stype, "postal") == 0 && strlen(search) < 7) {
+		strlcpy(de.geoip_elem.as_string, search,
+			sizeof(de.geoip_elem.as_string));
+	} else if (strcasecmp(stype, "postal") == 0 && len < 7) {
 		subtype = dns_geoip_city_postalcode;
-		strncpy(de->geoip_elem.as_string, search, 6);
-		de->geoip_elem.as_string[6] = '\0';
+		strlcpy(de.geoip_elem.as_string, search,
+			sizeof(de.geoip_elem.as_string));
+	} else if (strcasecmp(stype, "postal") == 0) {
+		cfg_obj_log(obj, lctx, ISC_LOG_ERROR,
+			    "geoiop postal code (%s) too long", search);
+		return (ISC_R_FAILURE);
 	} else if (strcasecmp(stype, "metro") == 0) {
 		subtype = dns_geoip_city_metrocode;
-		de->geoip_elem.as_int = atoi(search);
+		de.geoip_elem.as_int = atoi(search);
 	} else if (strcasecmp(stype, "area") == 0) {
 		subtype = dns_geoip_city_areacode;
-		de->geoip_elem.as_int = atoi(search);
+		de.geoip_elem.as_int = atoi(search);
 	} else if (strcasecmp(stype, "tz") == 0) {
 		subtype = dns_geoip_city_timezonecode;
-		strncpy(de->geoip_elem.as_string, search, 255);
-	} else if (strcasecmp(stype, "continent") == 0 && strlen(search) == 2) {
+		strlcpy(de.geoip_elem.as_string, search,
+			sizeof(de.geoip_elem.as_string));
+	} else if (strcasecmp(stype, "continent") == 0 && len == 2) {
 		/* Two-letter continent code */
 		subtype = dns_geoip_city_continentcode;
-		strncpy(de->geoip_elem.as_string, search, 2);
+		strlcpy(de.geoip_elem.as_string, search,
+			sizeof(de.geoip_elem.as_string));
+	} else if (strcasecmp(stype, "continent") == 0) {
+		cfg_obj_log(obj, lctx, ISC_LOG_ERROR,
+			    "geoiop continent code (%s) too long", search);
+		return (ISC_R_FAILURE);
 	} else if (strcasecmp(stype, "isp") == 0) {
 		subtype = dns_geoip_isp_name;
-		strncpy(de->geoip_elem.as_string, search, 255);
+		strlcpy(de.geoip_elem.as_string, search,
+			sizeof(de.geoip_elem.as_string));
 	} else if (strcasecmp(stype, "asnum") == 0) {
 		subtype = dns_geoip_as_asnum;
-		strncpy(de->geoip_elem.as_string, search, 255);
+		strlcpy(de.geoip_elem.as_string, search,
+			sizeof(de.geoip_elem.as_string));
 	} else if (strcasecmp(stype, "org") == 0) {
 		subtype = dns_geoip_org_name;
-		strncpy(de->geoip_elem.as_string, search, 255);
+		strlcpy(de.geoip_elem.as_string, search,
+			sizeof(de.geoip_elem.as_string));
 	} else if (strcasecmp(stype, "domain") == 0) {
 		subtype = dns_geoip_domain_name;
-		strncpy(de->geoip_elem.as_string, search, 255);
+		strlcpy(de.geoip_elem.as_string, search,
+			sizeof(de.geoip_elem.as_string));
 	} else if (strcasecmp(stype, "netspeed") == 0) {
 		subtype = dns_geoip_netspeed_id;
-		de->geoip_elem.as_int = atoi(search);
+		de.geoip_elem.as_int = atoi(search);
 	} else
 		INSIST(0);
 
-	de->geoip_elem.subtype = get_subtype(obj, lctx, subtype, dbname);
+	de.geoip_elem.subtype = get_subtype(obj, lctx, subtype, dbname);
 
-	if (! geoip_can_answer(de, ctx)) {
+	if (! geoip_can_answer(&de, ctx)) {
 		cfg_obj_log(obj, lctx, ISC_LOG_ERROR,
 			    "no GeoIP database installed which can answer "
 			    "queries of type '%s'", stype);
 		return (ISC_R_FAILURE);
 	}
+
+	*dep = de;
 
 	return (ISC_R_SUCCESS);
 }
@@ -589,11 +643,14 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 		 * elements table.  (Note that if nest_level is nonzero,
 		 * *everything* goes in the elements table.)
 		 */
-		int nelem;
+		isc_uint32_t nelem;
 
-		if (nest_level == 0)
-			nelem = count_acl_elements(caml, cctx, NULL);
-		else
+		if (nest_level == 0) {
+			result = count_acl_elements(caml, cctx, lctx, ctx,
+						    mctx, &nelem, NULL);
+			if (result != ISC_R_SUCCESS)
+				return (result);
+		} else
 			nelem = cfg_list_length(caml, ISC_FALSE);
 
 		result = dns_acl_create(mctx, nelem, &dacl);
@@ -607,6 +664,8 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 	     elt = cfg_list_next(elt)) {
 		const cfg_obj_t *ce = cfg_listelt_value(elt);
 		isc_boolean_t neg = ISC_FALSE;
+
+		INSIST(dacl->length <= dacl->alloc);
 
 		if (cfg_obj_istuple(ce)) {
 			/* Might be a negated element */
@@ -662,6 +721,7 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 				goto cleanup;
 
 			if (nest_level > 0) {
+				INSIST(dacl->length < dacl->alloc);
 				de->type = dns_aclelementtype_nestedacl;
 				de->negative = neg;
 			} else
@@ -683,6 +743,7 @@ cfg_acl_fromconfig2(const cfg_obj_t *caml, const cfg_obj_t *cctx,
 				goto cleanup;
 nested_acl:
 			if (nest_level > 0 || inneracl->has_negatives) {
+				INSIST(dacl->length < dacl->alloc);
 				de->type = dns_aclelementtype_nestedacl;
 				de->negative = neg;
 				if (de->nestedacl != NULL)
@@ -692,14 +753,18 @@ nested_acl:
 				dns_acl_detach(&inneracl);
 				/* Fall through. */
 			} else {
+				INSIST(dacl->length + inneracl->length
+				       <= dacl->alloc);
 				dns_acl_merge(dacl, inneracl,
 					      ISC_TF(!neg));
 				de += inneracl->length;  /* elements added */
 				dns_acl_detach(&inneracl);
+				INSIST(dacl->length <= dacl->alloc);
 				continue;
 			}
 		} else if (cfg_obj_istype(ce, &cfg_type_keyref)) {
 			/* Key name. */
+			INSIST(dacl->length < dacl->alloc);
 			de->type = dns_aclelementtype_keyname;
 			de->negative = neg;
 			dns_name_init(&de->keyname, NULL);
@@ -711,6 +776,7 @@ nested_acl:
 		} else if (cfg_obj_istuple(ce) &&
 			   cfg_obj_isvoid(cfg_tuple_get(ce, "negated")))
 		{
+			INSIST(dacl->length < dacl->alloc);
 			result = parse_geoip_element(ce, lctx, ctx, de);
 			if (result != ISC_R_SUCCESS)
 				goto cleanup;
@@ -728,6 +794,7 @@ nested_acl:
 					goto cleanup;
 
 				if (nest_level != 0) {
+					INSIST(dacl->length < dacl->alloc);
 					de->type = dns_aclelementtype_nestedacl;
 					de->negative = neg;
 				} else
@@ -749,19 +816,26 @@ nested_acl:
 					dacl->has_negatives = !neg;
 
 				if (nest_level != 0) {
+					INSIST(dacl->length < dacl->alloc);
 					de->type = dns_aclelementtype_nestedacl;
 					de->negative = !neg;
 				} else
 					continue;
 			} else if (strcasecmp(name, "localhost") == 0) {
+				INSIST(dacl->length < dacl->alloc);
 				de->type = dns_aclelementtype_localhost;
 				de->negative = neg;
 			} else if (strcasecmp(name, "localnets") == 0) {
+				INSIST(dacl->length < dacl->alloc);
 				de->type = dns_aclelementtype_localnets;
 				de->negative = neg;
 			} else {
 				if (inneracl != NULL)
 					dns_acl_detach(&inneracl);
+				/*
+				 * This call should just find the cached
+				 * of the named acl.
+				 */
 				result = convert_named_acl(ce, cctx, lctx, ctx,
 							   mctx, new_nest_level,
 							   &inneracl);

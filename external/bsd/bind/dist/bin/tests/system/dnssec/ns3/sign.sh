@@ -66,7 +66,7 @@ $SIGNER -P -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
 # Change the signer field of the a.b.keyless.example SIG A
 # to point to a provably nonexistent KEY record.
 mv $zonefile.signed $zonefile.tmp
-<$zonefile.tmp perl -p -e 's/ keyless.example/ b.keyless.example/
+<$zonefile.tmp $PERL -p -e 's/ keyless.example/ b.keyless.example/
     if /^a.b.keyless.example/../NXT/;' >$zonefile.signed
 rm -f $zonefile.tmp
 

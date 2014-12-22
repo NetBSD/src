@@ -1,13 +1,13 @@
 Index: openssl/Configure
-diff -u openssl/Configure:1.9.2.1.2.1.4.1.2.1 openssl/Configure:1.11.2.2
---- openssl/Configure:1.9.2.1.2.1.4.1.2.1	Tue Jan  7 09:25:41 2014
-+++ openssl/Configure	Tue Jan  7 09:28:47 2014
+diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1 openssl/Configure:1.15
+--- openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1	Mon Apr 14 12:42:45 2014
++++ openssl/Configure	Mon Apr 14 12:44:20 2014
 @@ -10,7 +10,7 @@
  
  # see INSTALL for instructions.
  
--my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimental-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
-+my $usage="Usage: Configure --pk11-libname=PK11_LIB_LOCATION --pk11-flavor=FLAVOR [no-<cipher> ...] [enable-<cipher> ...] [experimental-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
+-my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimental-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
++my $usage="Usage: Configure --pk11-libname=PK11_LIB_LOCATION --pk11-flavor=FLAVOR [no-<cipher> ...] [enable-<cipher> ...] [experimental-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
  
  # Options:
  #
@@ -24,7 +24,7 @@ diff -u openssl/Configure:1.9.2.1.2.1.4.1.2.1 openssl/Configure:1.11.2.2
  # --with-krb5-dir  Declare where Kerberos 5 lives.  The libraries are expected
  #		to live in the subdirectory lib/ and the header files in
  #		include/.  A value is required.
-@@ -344,7 +350,7 @@
+@@ -352,7 +358,7 @@
  "linux-armv4",	"gcc:-DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
  #### IA-32 targets...
  "linux-ia32-icc",	"icc:-DL_ENDIAN -DTERMIO -O2 -no_cpprt::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -33,16 +33,16 @@ diff -u openssl/Configure:1.9.2.1.2.1.4.1.2.1 openssl/Configure:1.11.2.2
  "linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -march=i486 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_asm}:a.out",
  ####
  "linux-generic64","gcc:-DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-@@ -352,7 +358,7 @@
+@@ -360,7 +366,7 @@
  "linux-ia64",	"gcc:-DL_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_UNROLL DES_INT:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
  "linux-ia64-ecc","ecc:-DL_ENDIAN -DTERMIO -O2 -Wall -no_cpprt::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
  "linux-ia64-icc","icc:-DL_ENDIAN -DTERMIO -O2 -Wall -no_cpprt::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_RISC1 DES_INT:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
--"linux-x86_64",	"gcc:-m64 -DL_ENDIAN -DTERMIO -O3 -Wall -DMD32_REG_T=int::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
-+"linux-x86_64",	"gcc:-m64 -DL_ENDIAN -DTERMIO -O3 -Wall -DMD32_REG_T=int::-D_REENTRANT -pthread::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
- "linux-s390x",	"gcc:-m64 -DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL:${s390x_asm}:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
- #### SPARC Linux setups
- # Ray Miller <ray.miller@computing-services.oxford.ac.uk> has patiently
-@@ -623,6 +629,10 @@
+-"linux-x86_64",	"gcc:-m64 -DL_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
++"linux-x86_64",	"gcc:-m64 -DL_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT -pthread::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
+ "linux64-s390x",	"gcc:-m64 -DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL:${s390x_asm}:64:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
+ #### So called "highgprs" target for z/Architecture CPUs
+ # "Highgprs" is kernel feature first implemented in Linux 2.6.32, see
+@@ -657,6 +663,10 @@
  my $idx_arflags = $idx++;
  my $idx_multilib = $idx++;
  
@@ -53,8 +53,8 @@ diff -u openssl/Configure:1.9.2.1.2.1.4.1.2.1 openssl/Configure:1.11.2.2
  my $prefix="";
  my $libdir="";
  my $openssldir="";
-@@ -825,6 +835,14 @@
- 				{
+@@ -876,6 +886,14 @@
+ 				$_ =~ s/%([0-9a-f]{1,2})/chr(hex($1))/gei;
  				$flags.=$_." ";
  				}
 +			elsif (/^--pk11-libname=(.*)$/)
@@ -68,7 +68,7 @@ diff -u openssl/Configure:1.9.2.1.2.1.4.1.2.1 openssl/Configure:1.11.2.2
  			elsif (/^--prefix=(.*)$/)
  				{
  				$prefix=$1;
-@@ -962,6 +980,22 @@
+@@ -1043,6 +1061,22 @@
  	exit 0;
  }
  
@@ -91,7 +91,7 @@ diff -u openssl/Configure:1.9.2.1.2.1.4.1.2.1 openssl/Configure:1.11.2.2
  if ($target =~ m/^CygWin32(-.*)$/) {
  	$target = "Cygwin".$1;
  }
-@@ -1039,6 +1073,25 @@
+@@ -1120,6 +1154,25 @@
  	$exp_cflags .= " -DOPENSSL_EXPERIMENTAL_$ALGO";
  	}
  
@@ -117,7 +117,7 @@ diff -u openssl/Configure:1.9.2.1.2.1.4.1.2.1 openssl/Configure:1.11.2.2
  my $IsMK1MF=scalar grep /^$target$/,@MK1MF_Builds;
  
  $exe_ext=".exe" if ($target eq "Cygwin" || $target eq "DJGPP" || $target =~ /^mingw/);
-@@ -1126,6 +1179,8 @@
+@@ -1209,6 +1262,8 @@
  if ($flags ne "")	{ $cflags="$flags$cflags"; }
  else			{ $no_user_cflags=1;       }
  
@@ -126,7 +126,7 @@ diff -u openssl/Configure:1.9.2.1.2.1.4.1.2.1 openssl/Configure:1.11.2.2
  # Kerberos settings.  The flavor must be provided from outside, either through
  # the script "config" or manually.
  if (!$no_krb5)
-@@ -1495,6 +1550,7 @@
+@@ -1598,6 +1653,7 @@
  	s/^VERSION=.*/VERSION=$version/;
  	s/^MAJOR=.*/MAJOR=$major/;
  	s/^MINOR=.*/MINOR=$minor/;
@@ -135,9 +135,9 @@ diff -u openssl/Configure:1.9.2.1.2.1.4.1.2.1 openssl/Configure:1.11.2.2
  	s/^SHLIB_VERSION_HISTORY=.*/SHLIB_VERSION_HISTORY=$shlib_version_history/;
  	s/^SHLIB_MAJOR=.*/SHLIB_MAJOR=$shlib_major/;
 Index: openssl/Makefile.org
-diff -u openssl/Makefile.org:1.5.2.1.2.1 openssl/Makefile.org:1.6
---- openssl/Makefile.org:1.5.2.1.2.1	Tue Jun 19 14:46:04 2012
-+++ openssl/Makefile.org	Tue Jun 19 14:49:21 2012
+diff -u openssl/Makefile.org:1.5.2.1.2.1.2.1.2.1.2.1.2.1 openssl/Makefile.org:1.10
+--- openssl/Makefile.org:1.5.2.1.2.1.2.1.2.1.2.1.2.1	Mon Apr 14 12:42:45 2014
++++ openssl/Makefile.org	Mon Apr 14 12:44:20 2014
 @@ -26,6 +26,9 @@
  INSTALL_PREFIX=
  INSTALLTOP=/usr/local/ssl
@@ -149,9 +149,9 @@ diff -u openssl/Makefile.org:1.5.2.1.2.1 openssl/Makefile.org:1.6
  OPENSSLDIR=/usr/local/ssl
  
 Index: openssl/README.pkcs11
-diff -u /dev/null openssl/README.pkcs11:1.7.4.1
---- /dev/null	Tue Jan  7 11:13:25 2014
-+++ openssl/README.pkcs11	Fri Oct  4 14:33:56 2013
+diff -u /dev/null openssl/README.pkcs11:1.8
+--- /dev/null	Thu Jul  3 12:44:12 2014
++++ openssl/README.pkcs11	Fri Oct  4 14:16:43 2013
 @@ -0,0 +1,266 @@
 +ISC modified
 +============
@@ -420,10 +420,10 @@ diff -u /dev/null openssl/README.pkcs11:1.7.4.1
 +Latest version should be always available on http://blogs.sun.com/janp.
 +
 Index: openssl/crypto/opensslconf.h
-diff -u openssl/crypto/opensslconf.h:1.6.2.1 openssl/crypto/opensslconf.h:1.6
---- openssl/crypto/opensslconf.h:1.6.2.1	Sun Jan 15 16:09:43 2012
-+++ openssl/crypto/opensslconf.h	Mon Jun 13 17:13:28 2011
-@@ -29,6 +29,9 @@
+diff -u openssl/crypto/opensslconf.h:1.6.2.1.4.1 openssl/crypto/opensslconf.h:1.7
+--- openssl/crypto/opensslconf.h:1.6.2.1.4.1	Tue Jun 19 15:29:49 2012
++++ openssl/crypto/opensslconf.h	Tue Jun 19 16:17:51 2012
+@@ -35,6 +35,9 @@
  
  #endif /* OPENSSL_DOING_MAKEDEPEND */
  
@@ -433,7 +433,7 @@ diff -u openssl/crypto/opensslconf.h:1.6.2.1 openssl/crypto/opensslconf.h:1.6
  #ifndef OPENSSL_NO_DYNAMIC_ENGINE
  # define OPENSSL_NO_DYNAMIC_ENGINE
  #endif
-@@ -61,6 +64,8 @@
+@@ -73,6 +76,8 @@
  # endif
  #endif
  
@@ -442,7 +442,7 @@ diff -u openssl/crypto/opensslconf.h:1.6.2.1 openssl/crypto/opensslconf.h:1.6
  /* crypto/opensslconf.h.in */
  
  /* Generate 80386 code? */
-@@ -107,7 +112,7 @@
+@@ -119,7 +124,7 @@
   * This enables code handling data aligned at natural CPU word
   * boundary. See crypto/rc4/rc4_enc.c for further details.
   */
@@ -451,7 +451,7 @@ diff -u openssl/crypto/opensslconf.h:1.6.2.1 openssl/crypto/opensslconf.h:1.6
  #endif
  #endif
  
-@@ -115,7 +120,7 @@
+@@ -127,7 +132,7 @@
  /* If this is set to 'unsigned int' on a DEC Alpha, this gives about a
   * %20 speed up (longs are 8 bytes, int's are 4). */
  #ifndef DES_LONG
@@ -460,7 +460,7 @@ diff -u openssl/crypto/opensslconf.h:1.6.2.1 openssl/crypto/opensslconf.h:1.6
  #endif
  #endif
  
-@@ -126,9 +131,9 @@
+@@ -138,9 +143,9 @@
  /* Should we define BN_DIV2W here? */
  
  /* Only one for the following should be defined */
@@ -472,7 +472,7 @@ diff -u openssl/crypto/opensslconf.h:1.6.2.1 openssl/crypto/opensslconf.h:1.6
  #endif
  
  #if defined(HEADER_RC4_LOCL_H) && !defined(CONFIG_HEADER_RC4_LOCL_H)
-@@ -140,7 +145,7 @@
+@@ -152,7 +157,7 @@
  
  #if defined(HEADER_BF_LOCL_H) && !defined(CONFIG_HEADER_BF_LOCL_H)
  #define CONFIG_HEADER_BF_LOCL_H
@@ -481,7 +481,7 @@ diff -u openssl/crypto/opensslconf.h:1.6.2.1 openssl/crypto/opensslconf.h:1.6
  #endif /* HEADER_BF_LOCL_H */
  
  #if defined(HEADER_DES_LOCL_H) && !defined(CONFIG_HEADER_DES_LOCL_H)
-@@ -170,7 +175,7 @@
+@@ -182,7 +187,7 @@
  /* Unroll the inner loop, this sometimes helps, sometimes hinders.
   * Very mucy CPU dependant */
  #ifndef DES_UNROLL
@@ -504,27 +504,28 @@ diff -u openssl/crypto/bio/bss_file.c:1.6.2.1 openssl/crypto/bio/bss_file.c:1.6
  		else
  			BIOerr(BIO_F_BIO_NEW_FILE,ERR_R_SYS_LIB);
 Index: openssl/crypto/engine/Makefile
-diff -u openssl/crypto/engine/Makefile:1.8.2.1 openssl/crypto/engine/Makefile:1.8
---- openssl/crypto/engine/Makefile:1.8.2.1	Sun Jan 15 16:09:46 2012
-+++ openssl/crypto/engine/Makefile	Tue Jun 14 21:51:32 2011
-@@ -21,12 +21,14 @@
- 	eng_table.c eng_pkey.c eng_fat.c eng_all.c \
+diff -u openssl/crypto/engine/Makefile:1.8.2.1.4.1 openssl/crypto/engine/Makefile:1.9
+--- openssl/crypto/engine/Makefile:1.8.2.1.4.1	Tue Jun 19 15:30:00 2012
++++ openssl/crypto/engine/Makefile	Tue Jun 19 16:18:00 2012
+@@ -22,13 +22,15 @@
  	tb_rsa.c tb_dsa.c tb_ecdsa.c tb_dh.c tb_ecdh.c tb_rand.c tb_store.c \
  	tb_cipher.c tb_digest.c tb_pkmeth.c tb_asnmth.c \
--	eng_openssl.c eng_cnf.c eng_dyn.c eng_cryptodev.c
-+	eng_openssl.c eng_cnf.c eng_dyn.c eng_cryptodev.c \
+ 	eng_openssl.c eng_cnf.c eng_dyn.c eng_cryptodev.c \
+-	eng_rsax.c eng_rdrand.c
++	eng_rsax.c eng_rdrand.c \
 +	hw_pk11.c hw_pk11_pub.c hw_pk11so.c hw_pk11so_pub.c
  LIBOBJ= eng_err.o eng_lib.o eng_list.o eng_init.o eng_ctrl.o \
  	eng_table.o eng_pkey.o eng_fat.o eng_all.o \
  	tb_rsa.o tb_dsa.o tb_ecdsa.o tb_dh.o tb_ecdh.o tb_rand.o tb_store.o \
  	tb_cipher.o tb_digest.o tb_pkmeth.o tb_asnmth.o \
--	eng_openssl.o eng_cnf.o eng_dyn.o eng_cryptodev.o
-+	eng_openssl.o eng_cnf.o eng_dyn.o eng_cryptodev.o \
+ 	eng_openssl.o eng_cnf.o eng_dyn.o eng_cryptodev.o \
+-	eng_rsax.o eng_rdrand.o
++	eng_rsax.o eng_rdrand.o \
 +	hw_pk11.o hw_pk11_pub.o hw_pk11so.o hw_pk11so_pub.o
  
  SRC= $(LIBSRC)
  
-@@ -264,6 +266,83 @@
+@@ -294,6 +296,83 @@
  eng_table.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
  eng_table.o: ../../include/openssl/x509_vfy.h ../cryptlib.h eng_int.h
  eng_table.o: eng_table.c
@@ -610,7 +611,7 @@ diff -u openssl/crypto/engine/Makefile:1.8.2.1 openssl/crypto/engine/Makefile:1.
  tb_asnmth.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 Index: openssl/crypto/engine/cryptoki.h
 diff -u /dev/null openssl/crypto/engine/cryptoki.h:1.4
---- /dev/null	Tue Jan  7 11:13:26 2014
+--- /dev/null	Thu Jul  3 12:44:12 2014
 +++ openssl/crypto/engine/cryptoki.h	Thu Dec 18 00:14:12 2008
 @@ -0,0 +1,103 @@
 +/*
@@ -717,10 +718,10 @@ diff -u /dev/null openssl/crypto/engine/cryptoki.h:1.4
 +
 +#endif	/* _CRYPTOKI_H */
 Index: openssl/crypto/engine/eng_all.c
-diff -u openssl/crypto/engine/eng_all.c:1.5.2.1 openssl/crypto/engine/eng_all.c:1.5
---- openssl/crypto/engine/eng_all.c:1.5.2.1	Sun Jan 15 16:09:46 2012
-+++ openssl/crypto/engine/eng_all.c	Mon Jun 13 17:13:35 2011
-@@ -111,6 +111,14 @@
+diff -u openssl/crypto/engine/eng_all.c:1.5.2.1.4.1 openssl/crypto/engine/eng_all.c:1.6
+--- openssl/crypto/engine/eng_all.c:1.5.2.1.4.1	Tue Jun 19 15:30:00 2012
++++ openssl/crypto/engine/eng_all.c	Tue Jun 19 16:18:00 2012
+@@ -119,6 +119,14 @@
  #if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
  	ENGINE_load_capi();
  #endif
@@ -733,13 +734,13 @@ diff -u openssl/crypto/engine/eng_all.c:1.5.2.1 openssl/crypto/engine/eng_all.c:
 +#endif
 +#endif
  #endif
+ 	ENGINE_register_all_complete();
  	}
- 
 Index: openssl/crypto/engine/engine.h
-diff -u openssl/crypto/engine/engine.h:1.5.2.1 openssl/crypto/engine/engine.h:1.5
---- openssl/crypto/engine/engine.h:1.5.2.1	Sun Jan 15 16:09:46 2012
-+++ openssl/crypto/engine/engine.h	Mon Jun 13 17:13:36 2011
-@@ -336,6 +336,12 @@
+diff -u openssl/crypto/engine/engine.h:1.5.2.1.4.1 openssl/crypto/engine/engine.h:1.6
+--- openssl/crypto/engine/engine.h:1.5.2.1.4.1	Tue Jun 19 15:30:00 2012
++++ openssl/crypto/engine/engine.h	Tue Jun 19 16:18:00 2012
+@@ -343,6 +343,12 @@
  void ENGINE_load_ubsec(void);
  void ENGINE_load_padlock(void);
  void ENGINE_load_capi(void);
@@ -753,10 +754,10 @@ diff -u openssl/crypto/engine/engine.h:1.5.2.1 openssl/crypto/engine/engine.h:1.
  void ENGINE_load_gmp(void);
  #endif
 Index: openssl/crypto/engine/hw_pk11.c
-diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
---- /dev/null	Tue Jan  7 11:13:26 2014
-+++ openssl/crypto/engine/hw_pk11.c	Fri Oct  4 14:33:56 2013
-@@ -0,0 +1,4116 @@
+diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.33
+--- /dev/null	Thu Jul  3 12:44:12 2014
++++ openssl/crypto/engine/hw_pk11.c	Fri Oct  4 14:07:41 2013
+@@ -0,0 +1,4010 @@
 +/*
 + * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
 + * Use is subject to license terms.
@@ -901,15 +902,6 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
 +#undef	SOLARIS_HW_SLOT_SELECTION
 +#endif
 +
-+/*
-+ * AES counter mode is not supported in the OpenSSL EVP API yet and neither
-+ * there are official OIDs for mechanisms based on this mode. With our changes,
-+ * an application can define its own EVP calls for AES counter mode and then
-+ * it can make use of hardware acceleration through this engine. However, it's
-+ * better if we keep AES CTR support code under ifdef's.
-+ */
-+#define	SOLARIS_AES_CTR
-+
 +#ifdef OPENSSL_SYS_WIN32
 +#pragma pack(push, cryptoki, 1)
 +#include "cryptoki.h"
@@ -921,16 +913,6 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
 +#endif
 +#include "hw_pk11ca.h"
 +#include "hw_pk11_err.c"
-+
-+#ifdef	SOLARIS_AES_CTR
-+/*
-+ * NIDs for AES counter mode that will be defined during the engine
-+ * initialization.
-+ */
-+static int NID_aes_128_ctr = NID_undef;
-+static int NID_aes_192_ctr = NID_undef;
-+static int NID_aes_256_ctr = NID_undef;
-+#endif	/* SOLARIS_AES_CTR */
 +
 +/*
 + * We use this lock to prevent multiple C_Login()s, guard getpassphrase(),
@@ -1044,10 +1026,6 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
 +
 +/* Symmetric cipher and digest support functions */
 +static int cipher_nid_to_pk11(int nid);
-+#ifdef	SOLARIS_AES_CTR
-+static int pk11_add_NID(char *sn, char *ln);
-+static int pk11_add_aes_ctr_NIDs(void);
-+#endif	/* SOLARIS_AES_CTR */
 +static int pk11_usable_ciphers(const int **nids);
 +static int pk11_usable_digests(const int **nids);
 +static int pk11_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -1112,12 +1090,10 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
 +	PK11_AES_128_ECB,
 +	PK11_AES_192_ECB,
 +	PK11_AES_256_ECB,
-+	PK11_BLOWFISH_CBC,
-+#ifdef	SOLARIS_AES_CTR
 +	PK11_AES_128_CTR,
 +	PK11_AES_192_CTR,
 +	PK11_AES_256_CTR,
-+#endif	/* SOLARIS_AES_CTR */
++	PK11_BLOWFISH_CBC,
 +	PK11_CIPHER_MAX
 +};
 +
@@ -1190,17 +1166,14 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
 +		CKK_AES,	CKM_AES_ECB, },
 +	{ PK11_AES_256_ECB,	NID_aes_256_ecb,	0,	32,  32,
 +		CKK_AES,	CKM_AES_ECB, },
++	{ PK11_AES_128_CTR,	NID_aes_128_ctr,	16,	16,  16,
++		CKK_AES,	CKM_AES_CTR, },
++	{ PK11_AES_192_CTR,	NID_aes_192_ctr,	16,	24,  24,
++		CKK_AES,	CKM_AES_CTR, },
++	{ PK11_AES_256_CTR,	NID_aes_256_ctr,	16,	32,  32,
++		CKK_AES,	CKM_AES_CTR, },
 +	{ PK11_BLOWFISH_CBC,	NID_bf_cbc,		8,	16,  16,
 +		CKK_BLOWFISH,	CKM_BLOWFISH_CBC, },
-+#ifdef	SOLARIS_AES_CTR
-+	/* we don't know the correct NIDs until the engine is initialized */
-+	{ PK11_AES_128_CTR,	NID_undef,		16,	16,  16,
-+		CKK_AES,	CKM_AES_CTR, },
-+	{ PK11_AES_192_CTR,	NID_undef,		16,	24,  24,
-+		CKK_AES,	CKM_AES_CTR, },
-+	{ PK11_AES_256_CTR,	NID_undef,		16,	32,  32,
-+		CKK_AES,	CKM_AES_CTR, },
-+#endif	/* SOLARIS_AES_CTR */
 +	};
 +
 +typedef struct PK11_DIGEST_st
@@ -1390,15 +1363,9 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
 +	NULL
 +	};
 +
-+#ifdef	SOLARIS_AES_CTR
-+/*
-+ * NID_undef's will be changed to the AES counter mode NIDs as soon they are
-+ * created in pk11_library_init(). Note that the need to change these structures
-+ * is the reason why we don't define them with the const keyword.
-+ */
-+static EVP_CIPHER pk11_aes_128_ctr =
++static const EVP_CIPHER pk11_aes_128_ctr =
 +	{
-+	NID_undef,
++	NID_aes_128_ctr,
 +	16, 16, 16,
 +	EVP_CIPH_CBC_MODE,
 +	pk11_cipher_init,
@@ -1410,9 +1377,9 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
 +	NULL
 +	};
 +
-+static EVP_CIPHER pk11_aes_192_ctr =
++static const EVP_CIPHER pk11_aes_192_ctr =
 +	{
-+	NID_undef,
++	NID_aes_192_ctr,
 +	16, 24, 16,
 +	EVP_CIPH_CBC_MODE,
 +	pk11_cipher_init,
@@ -1424,9 +1391,9 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
 +	NULL
 +	};
 +
-+static EVP_CIPHER pk11_aes_256_ctr =
++static const EVP_CIPHER pk11_aes_256_ctr =
 +	{
-+	NID_undef,
++	NID_aes_256_ctr,
 +	16, 32, 16,
 +	EVP_CIPH_CBC_MODE,
 +	pk11_cipher_init,
@@ -1437,7 +1404,6 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
 +	EVP_CIPHER_get_asn1_iv,
 +	NULL
 +	};
-+#endif	/* SOLARIS_AES_CTR */
 +
 +static const EVP_CIPHER pk11_bf_cbc =
 +	{
@@ -2084,15 +2050,6 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
 +		PK11err(PK11_F_LIBRARY_INIT, PK11_R_DSO_FAILURE);
 +		goto err;
 +		}
-+
-+#ifdef	SOLARIS_AES_CTR
-+	/*
-+	 * We must do this before we start working with slots since we need all
-+	 * NIDs there.
-+	 */
-+	if (pk11_add_aes_ctr_NIDs() == 0)
-+		goto err;
-+#endif	/* SOLARIS_AES_CTR */
 +
 +#ifdef	SOLARIS_HW_SLOT_SELECTION
 +	if (check_hw_mechanisms() == 0)
@@ -3290,9 +3247,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
 +	PK11_SESSION *sp, CK_MECHANISM_PTR pmech)
 +	{
 +	CK_RV rv;
-+#ifdef	SOLARIS_AES_CTR
 +	CK_AES_CTR_PARAMS ctr_params;
-+#endif	/* SOLARIS_AES_CTR */
 +
 +	/*
 +	 * We expect pmech->mechanism to be already set and
@@ -3303,7 +3258,6 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
 +	OPENSSL_assert(pmech->pParameter == NULL);
 +	OPENSSL_assert(pmech->ulParameterLen == 0);
 +
-+#ifdef	SOLARIS_AES_CTR
 +	if (ctx->cipher->nid == NID_aes_128_ctr ||
 +	    ctx->cipher->nid == NID_aes_192_ctr ||
 +	    ctx->cipher->nid == NID_aes_256_ctr)
@@ -3323,7 +3277,6 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
 +		(void) memcpy(ctr_params.cb, ctx->iv, AES_BLOCK_SIZE);
 +		}
 +	else
-+#endif	/* SOLARIS_AES_CTR */
 +		{
 +		if (pcipher->iv_len > 0)
 +			{
@@ -3655,20 +3608,16 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
 +		case NID_rc4:
 +			*cipher = &pk11_rc4;
 +			break;
++		case NID_aes_128_ctr:
++			*cipher = &pk11_aes_128_ctr;
++			break;
++		case NID_aes_192_ctr:
++			*cipher = &pk11_aes_192_ctr;
++			break;
++		case NID_aes_256_ctr:
++			*cipher = &pk11_aes_256_ctr;
++			break;
 +		default:
-+#ifdef	SOLARIS_AES_CTR
-+			/*
-+			 * These can't be in separated cases because the NIDs
-+			 * here are not constants.
-+			 */
-+			if (nid == NID_aes_128_ctr)
-+				*cipher = &pk11_aes_128_ctr;
-+			else if (nid == NID_aes_192_ctr)
-+				*cipher = &pk11_aes_192_ctr;
-+			else if (nid == NID_aes_256_ctr)
-+				*cipher = &pk11_aes_256_ctr;
-+			else
-+#endif	/* SOLARIS_AES_CTR */
 +			*cipher = NULL;
 +			break;
 +		}
@@ -4533,60 +4482,6 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
 +	return;
 +	}
 +
-+#ifdef	SOLARIS_AES_CTR
-+/* create a new NID when we have no OID for that mechanism */
-+static int pk11_add_NID(char *sn, char *ln)
-+	{
-+	ASN1_OBJECT *o;
-+	int nid;
-+
-+	if ((o = ASN1_OBJECT_create(OBJ_new_nid(1), (unsigned char *)"",
-+	    1, sn, ln)) == NULL)
-+		{
-+		return (0);
-+		}
-+
-+	/* will return NID_undef on error */
-+	nid = OBJ_add_object(o);
-+	ASN1_OBJECT_free(o);
-+
-+	return (nid);
-+	}
-+
-+/*
-+ * Create new NIDs for AES counter mode. OpenSSL doesn't support them now so we
-+ * have to help ourselves here.
-+ */
-+static int pk11_add_aes_ctr_NIDs(void)
-+	{
-+	/* are we already set? */
-+	if (NID_aes_256_ctr != NID_undef)
-+		return (1);
-+
-+	/*
-+	 * There are no official names for AES counter modes yet so we just
-+	 * follow the format of those that exist.
-+	 */
-+	if ((NID_aes_128_ctr = pk11_add_NID("AES-128-CTR", "aes-128-ctr")) ==
-+	    NID_undef)
-+		goto err;
-+	ciphers[PK11_AES_128_CTR].nid = pk11_aes_128_ctr.nid = NID_aes_128_ctr;
-+	if ((NID_aes_192_ctr = pk11_add_NID("AES-192-CTR", "aes-192-ctr")) ==
-+	    NID_undef)
-+		goto err;
-+	ciphers[PK11_AES_192_CTR].nid = pk11_aes_192_ctr.nid = NID_aes_192_ctr;
-+	if ((NID_aes_256_ctr = pk11_add_NID("AES-256-CTR", "aes-256-ctr")) ==
-+	    NID_undef)
-+		goto err;
-+	ciphers[PK11_AES_256_CTR].nid = pk11_aes_256_ctr.nid = NID_aes_256_ctr;
-+	return (1);
-+
-+err:
-+	PK11err(PK11_F_ADD_AES_CTR_NIDS, PK11_R_ADD_NID_FAILED);
-+	return (0);
-+	}
-+#endif	/* SOLARIS_AES_CTR */
-+
 +/* Find what symmetric ciphers this slot supports. */
 +static void pk11_find_symmetric_ciphers(CK_FUNCTION_LIST_PTR pflist,
 +    CK_SLOT_ID current_slot, int *current_slot_n_cipher, int *local_cipher_nids)
@@ -4875,7 +4770,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.30.4.2
 +#endif	/* OPENSSL_NO_HW */
 Index: openssl/crypto/engine/hw_pk11_err.c
 diff -u /dev/null openssl/crypto/engine/hw_pk11_err.c:1.5
---- /dev/null	Tue Jan  7 11:13:26 2014
+--- /dev/null	Thu Jul  3 12:44:12 2014
 +++ openssl/crypto/engine/hw_pk11_err.c	Tue Jun 14 00:43:26 2011
 @@ -0,0 +1,288 @@
 +/*
@@ -5167,9 +5062,9 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11_err.c:1.5
 +	ERR_add_error_data(2, "PK11 CK_RV=0X", tmp_buf);
 +}
 Index: openssl/crypto/engine/hw_pk11_err.h
-diff -u /dev/null openssl/crypto/engine/hw_pk11_err.h:1.12.4.1
---- /dev/null	Tue Jan  7 11:13:26 2014
-+++ openssl/crypto/engine/hw_pk11_err.h	Fri Oct  4 14:33:56 2013
+diff -u /dev/null openssl/crypto/engine/hw_pk11_err.h:1.13
+--- /dev/null	Thu Jul  3 12:44:12 2014
++++ openssl/crypto/engine/hw_pk11_err.h	Fri Oct  4 14:04:20 2013
 @@ -0,0 +1,440 @@
 +/*
 + * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
@@ -5612,9 +5507,9 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11_err.h:1.12.4.1
 +
 +#endif /* HW_PK11_ERR_H */
 Index: openssl/crypto/engine/hw_pk11_pub.c
-diff -u /dev/null openssl/crypto/engine/hw_pk11_pub.c:1.38.2.3
---- /dev/null	Tue Jan  7 11:13:26 2014
-+++ openssl/crypto/engine/hw_pk11_pub.c	Fri Oct  4 14:33:56 2013
+diff -u /dev/null openssl/crypto/engine/hw_pk11_pub.c:1.42
+--- /dev/null	Thu Jul  3 12:44:12 2014
++++ openssl/crypto/engine/hw_pk11_pub.c	Fri Oct  4 14:27:06 2013
 @@ -0,0 +1,3556 @@
 +/*
 + * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
@@ -9174,7 +9069,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11_pub.c:1.38.2.3
 +#endif	/* OPENSSL_NO_HW */
 Index: openssl/crypto/engine/hw_pk11ca.h
 diff -u /dev/null openssl/crypto/engine/hw_pk11ca.h:1.4
---- /dev/null	Tue Jan  7 11:13:26 2014
+--- /dev/null	Thu Jul  3 12:44:12 2014
 +++ openssl/crypto/engine/hw_pk11ca.h	Wed Jun 15 21:12:20 2011
 @@ -0,0 +1,32 @@
 +/* Redefine all pk11/PK11 external symbols to pk11ca/PK11CA */
@@ -9210,9 +9105,9 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11ca.h:1.4
 +#define pk11_pin			pk11ca_pin
 +#define ENGINE_load_pk11		ENGINE_load_pk11ca
 Index: openssl/crypto/engine/hw_pk11so.c
-diff -u /dev/null openssl/crypto/engine/hw_pk11so.c:1.7.4.1
---- /dev/null	Tue Jan  7 11:13:26 2014
-+++ openssl/crypto/engine/hw_pk11so.c	Fri Oct  4 14:33:56 2013
+diff -u /dev/null openssl/crypto/engine/hw_pk11so.c:1.8
+--- /dev/null	Thu Jul  3 12:44:12 2014
++++ openssl/crypto/engine/hw_pk11so.c	Fri Oct  4 14:05:16 2013
 @@ -0,0 +1,1775 @@
 +/*
 + * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
@@ -10991,7 +10886,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11so.c:1.7.4.1
 +#endif	/* OPENSSL_NO_HW */
 Index: openssl/crypto/engine/hw_pk11so.h
 diff -u /dev/null openssl/crypto/engine/hw_pk11so.h:1.4
---- /dev/null	Tue Jan  7 11:13:26 2014
+--- /dev/null	Thu Jul  3 12:44:12 2014
 +++ openssl/crypto/engine/hw_pk11so.h	Wed Jun 15 21:12:20 2011
 @@ -0,0 +1,32 @@
 +/* Redefine all pk11/PK11 external symbols to pk11so/PK11SO */
@@ -11027,9 +10922,9 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11so.h:1.4
 +#define pk11_pin			pk11so_pin
 +#define ENGINE_load_pk11		ENGINE_load_pk11so
 Index: openssl/crypto/engine/hw_pk11so_pub.c
-diff -u /dev/null openssl/crypto/engine/hw_pk11so_pub.c:1.8.2.2
---- /dev/null	Tue Jan  7 11:13:26 2014
-+++ openssl/crypto/engine/hw_pk11so_pub.c	Fri Oct  4 14:33:56 2013
+diff -u /dev/null openssl/crypto/engine/hw_pk11so_pub.c:1.10
+--- /dev/null	Thu Jul  3 12:44:12 2014
++++ openssl/crypto/engine/hw_pk11so_pub.c	Fri Oct  4 14:05:38 2013
 @@ -0,0 +1,1642 @@
 +/*
 + * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
@@ -12675,11 +12570,11 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11so_pub.c:1.8.2.2
 +#endif	/* OPENSSL_NO_HW */
 Index: openssl/crypto/engine/pkcs11.h
 diff -u /dev/null openssl/crypto/engine/pkcs11.h:1.1.1.1
---- /dev/null	Tue Jan  7 11:13:26 2014
+--- /dev/null	Thu Jul  3 12:44:12 2014
 +++ openssl/crypto/engine/pkcs11.h	Wed Oct 24 23:27:09 2007
 @@ -0,0 +1,299 @@
 +/* pkcs11.h include file for PKCS #11. */
-+/* Revision: 1.1.1.1  */
++/* Revision */
 +
 +/* License to copy and use this software is granted provided that it is
 + * identified as "RSA Security Inc. PKCS #11 Cryptographic Token Interface
@@ -12979,11 +12874,11 @@ diff -u /dev/null openssl/crypto/engine/pkcs11.h:1.1.1.1
 +#endif
 Index: openssl/crypto/engine/pkcs11f.h
 diff -u /dev/null openssl/crypto/engine/pkcs11f.h:1.1.1.1
---- /dev/null	Tue Jan  7 11:13:26 2014
+--- /dev/null	Thu Jul  3 12:44:12 2014
 +++ openssl/crypto/engine/pkcs11f.h	Wed Oct 24 23:27:09 2007
 @@ -0,0 +1,912 @@
 +/* pkcs11f.h include file for PKCS #11. */
-+/* Revision: 1.1.1.1  */
++/* Revision */
 +
 +/* License to copy and use this software is granted provided that it is
 + * identified as "RSA Security Inc. PKCS #11 Cryptographic Token Interface
@@ -13896,11 +13791,11 @@ diff -u /dev/null openssl/crypto/engine/pkcs11f.h:1.1.1.1
 +#endif
 Index: openssl/crypto/engine/pkcs11t.h
 diff -u /dev/null openssl/crypto/engine/pkcs11t.h:1.2
---- /dev/null	Tue Jan  7 11:13:26 2014
+--- /dev/null	Thu Jul  3 12:44:12 2014
 +++ openssl/crypto/engine/pkcs11t.h	Sat Aug 30 11:58:07 2008
 @@ -0,0 +1,1885 @@
 +/* pkcs11t.h include file for PKCS #11. */
-+/* Revision: 1.2  */
++/* Revision */
 +
 +/* License to copy and use this software is granted provided that it is
 + * identified as "RSA Security Inc. PKCS #11 Cryptographic Token Interface
@@ -15785,20 +15680,20 @@ diff -u /dev/null openssl/crypto/engine/pkcs11t.h:1.2
 +
 +#endif
 Index: openssl/util/libeay.num
-diff -u openssl/util/libeay.num:1.8.2.1.6.1 openssl/util/libeay.num:1.9.2.1
---- openssl/util/libeay.num:1.8.2.1.6.1	Tue May 14 15:37:52 2013
-+++ openssl/util/libeay.num	Tue May 14 15:49:08 2013
-@@ -4195,3 +4195,5 @@
- OPENSSL_strncasecmp                     4566	EXIST::FUNCTION:
- OPENSSL_gmtime                          4567	EXIST::FUNCTION:
- OPENSSL_gmtime_adj                      4568	EXIST::FUNCTION:
-+ENGINE_load_pk11ca                      4569	EXIST::FUNCTION:HW_PKCS11CA,ENGINE
-+ENGINE_load_pk11so                      4569	EXIST::FUNCTION:HW_PKCS11SO,ENGINE
+diff -u openssl/util/libeay.num:1.8.2.1.4.1.2.1.4.1 openssl/util/libeay.num:1.12
+--- openssl/util/libeay.num:1.8.2.1.4.1.2.1.4.1	Mon Apr 14 12:42:50 2014
++++ openssl/util/libeay.num	Mon Apr 14 12:44:22 2014
+@@ -4312,3 +4312,5 @@
+ BIO_s_datagram_sctp                     4680	EXIST::FUNCTION:DGRAM,SCTP
+ BIO_dgram_is_sctp                       4681	EXIST::FUNCTION:SCTP
+ BIO_dgram_sctp_notification_cb          4682	EXIST::FUNCTION:SCTP
++ENGINE_load_pk11ca                      4683	EXIST::FUNCTION:HW_PKCS11CA,ENGINE
++ENGINE_load_pk11so                      4683	EXIST::FUNCTION:HW_PKCS11SO,ENGINE
 Index: openssl/util/mk1mf.pl
-diff -u openssl/util/mk1mf.pl:1.9.2.1 openssl/util/mk1mf.pl:1.9
---- openssl/util/mk1mf.pl:1.9.2.1	Sun Jan 15 16:09:52 2012
-+++ openssl/util/mk1mf.pl	Mon Jun 13 17:13:56 2011
-@@ -109,6 +109,8 @@
+diff -u openssl/util/mk1mf.pl:1.9.2.1.4.1 openssl/util/mk1mf.pl:1.10
+--- openssl/util/mk1mf.pl:1.9.2.1.4.1	Tue Jun 19 15:30:18 2012
++++ openssl/util/mk1mf.pl	Tue Jun 19 16:18:10 2012
+@@ -114,6 +114,8 @@
  	no-ecdh					- No ECDH
  	no-engine				- No engine
  	no-hw					- No hw
@@ -15807,16 +15702,16 @@ diff -u openssl/util/mk1mf.pl:1.9.2.1 openssl/util/mk1mf.pl:1.9
  	nasm 					- Use NASM for x86 asm
  	nw-nasm					- Use NASM x86 asm for NetWare
  	nw-mwasm				- Use Metrowerks x86 asm for NetWare
-@@ -270,6 +272,8 @@
+@@ -278,6 +280,8 @@
  $cflags.=" -DOPENSSL_NO_GOST" if $no_gost;
  $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
  $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
 +$cflags.=" -DOPENSSL_NO_HW_PKCS11CA"   if $no_hw_pkcs11ca;
 +$cflags.=" -DOPENSSL_NO_HW_PKCS11SO"   if $no_hw_pkcs11so;
+ $cflags.=" -DOPENSSL_FIPS"    if $fips;
  $cflags.=" -DOPENSSL_NO_JPAKE"    if $no_jpake;
- $cflags.= " -DZLIB" if $zlib_opt;
- $cflags.= " -DZLIB_SHARED" if $zlib_opt == 2;
-@@ -335,6 +339,9 @@
+ $cflags.=" -DOPENSSL_NO_EC2M"    if $no_ec2m;
+@@ -345,6 +349,9 @@
  		$dir=$val;
  		}
  
@@ -15826,20 +15721,20 @@ diff -u openssl/util/mk1mf.pl:1.9.2.1 openssl/util/mk1mf.pl:1.9
  	if ($key eq "KRB5_INCLUDES")
  		{ $cflags .= " $val";}
  
-@@ -1067,6 +1074,8 @@
+@@ -1131,6 +1138,8 @@
  		"no-gost" => \$no_gost,
  		"no-engine" => \$no_engine,
  		"no-hw" => \$no_hw,
 +		"no-hw-pkcs11ca" => \$no_hw_pkcs11ca,
 +		"no-hw-pkcs11so" => \$no_hw_pkcs11so,
+ 		"no-rsax" => 0,
  		"just-ssl" =>
  			[\$no_rc2, \$no_idea, \$no_des, \$no_bf, \$no_cast,
- 			  \$no_md2, \$no_sha, \$no_mdc2, \$no_dsa, \$no_dh,
 Index: openssl/util/mkdef.pl
-diff -u openssl/util/mkdef.pl:1.7.2.1 openssl/util/mkdef.pl:1.8
---- openssl/util/mkdef.pl:1.7.2.1	Sun Jan 15 16:09:52 2012
-+++ openssl/util/mkdef.pl	Sun Jan 15 16:30:10 2012
-@@ -94,7 +94,7 @@
+diff -u openssl/util/mkdef.pl:1.7.2.1.4.1 openssl/util/mkdef.pl:1.9
+--- openssl/util/mkdef.pl:1.7.2.1.4.1	Tue Jun 19 15:30:18 2012
++++ openssl/util/mkdef.pl	Tue Jun 19 16:18:10 2012
+@@ -96,7 +96,7 @@
  			 # External "algorithms"
  			 "FP_API", "STDIO", "SOCK", "KRB5", "DGRAM",
  			 # Engines
@@ -15848,24 +15743,24 @@ diff -u openssl/util/mkdef.pl:1.7.2.1 openssl/util/mkdef.pl:1.8
  			 # RFC3779
  			 "RFC3779",
  			 # TLS
-@@ -125,6 +125,7 @@
+@@ -133,6 +133,7 @@
  my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
  my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
  my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw;
 +my $no_pkcs11ca; my $no_pkcs11so;
  my $no_fp_api; my $no_static_engine=1; my $no_gmp; my $no_deprecated;
  my $no_rfc3779; my $no_psk; my $no_tlsext; my $no_cms; my $no_capieng;
- my $no_jpake; my $no_ssl2;
-@@ -218,6 +219,8 @@
- 	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
- 	elsif (/^no-capieng$/)	{ $no_capieng=1; }
+ my $no_jpake; my $no_srp; my $no_ssl2; my $no_ec2m; my $no_nistp_gcc; 
+@@ -235,6 +236,8 @@
  	elsif (/^no-jpake$/)	{ $no_jpake=1; }
+ 	elsif (/^no-srp$/)	{ $no_srp=1; }
+ 	elsif (/^no-sctp$/)	{ $no_sctp=1; }
 +	elsif (/^no-hw-pkcs11ca$/) { $no_pkcs11ca=1; }
 +	elsif (/^no-hw-pkcs11so$/) { $no_pkcs11so=1; }
  	}
  
  
-@@ -1165,6 +1168,8 @@
+@@ -1189,6 +1192,8 @@
  			if ($keyword eq "KRB5" && $no_krb5) { return 0; }
  			if ($keyword eq "ENGINE" && $no_engine) { return 0; }
  			if ($keyword eq "HW" && $no_hw) { return 0; }
@@ -15875,11 +15770,11 @@ diff -u openssl/util/mkdef.pl:1.7.2.1 openssl/util/mkdef.pl:1.8
  			if ($keyword eq "STATIC_ENGINE" && $no_static_engine) { return 0; }
  			if ($keyword eq "GMP" && $no_gmp) { return 0; }
 Index: openssl/util/pl/VC-32.pl
-diff -u openssl/util/pl/VC-32.pl:1.7.2.1 openssl/util/pl/VC-32.pl:1.7
---- openssl/util/pl/VC-32.pl:1.7.2.1	Sun Jan 15 16:09:52 2012
-+++ openssl/util/pl/VC-32.pl	Mon Jun 13 17:13:57 2011
-@@ -36,7 +36,7 @@
-     my $f = $shlib?' /MD':' /MT';
+diff -u openssl/util/pl/VC-32.pl:1.7.2.1.4.1.2.1.4.1 openssl/util/pl/VC-32.pl:1.10
+--- openssl/util/pl/VC-32.pl:1.7.2.1.4.1.2.1.4.1	Mon Apr 14 12:42:50 2014
++++ openssl/util/pl/VC-32.pl	Mon Apr 14 12:44:22 2014
+@@ -48,7 +48,7 @@
+     my $f = $shlib || $fips ?' /MD':' /MT';
      $lib_cflag='/Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
      $opt_cflags=$f.' /Ox';
 -    $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';

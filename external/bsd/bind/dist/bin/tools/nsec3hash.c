@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3hash.c,v 1.5 2014/07/08 05:43:38 spz Exp $	*/
+/*	$NetBSD: nsec3hash.c,v 1.5.2.1 2014/12/22 03:28:43 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2006, 2008, 2009, 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -118,7 +118,7 @@ main(int argc, char **argv) {
 	region.base = hash;
 	region.length = length;
 	isc_buffer_init(&buffer, text, sizeof(text));
-	isc_base32hex_totext(&region, 1, "", &buffer);
+	isc_base32hexnp_totext(&region, 1, "", &buffer);
 	fprintf(stdout, "%.*s (salt=%s, hash=%u, iterations=%u)\n",
 		(int)isc_buffer_usedlength(&buffer), text, argv[1], hash_alg, iterations);
 	return(0);

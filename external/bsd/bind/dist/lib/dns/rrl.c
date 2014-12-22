@@ -1,4 +1,4 @@
-/*	$NetBSD: rrl.c,v 1.3 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: rrl.c,v 1.3.6.1 2014/12/22 03:28:45 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -255,6 +255,7 @@ expand_entries(dns_rrl_t *rrl, int new) {
 
 static inline dns_rrl_bin_t *
 get_bin(dns_rrl_hash_t *hash, unsigned int hval) {
+	INSIST(hash != NULL);
 	return (&hash->bins[hval % hash->length]);
 }
 

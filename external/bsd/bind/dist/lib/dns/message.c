@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.13 2014/07/08 05:43:39 spz Exp $	*/
+/*	$NetBSD: message.c,v 1.13.2.1 2014/12/22 03:28:45 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -1382,6 +1382,16 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			}
 		} else
 			covers = 0;
+
+		/*
+		 * Check the ownername of NSEC3 records
+		 */
+		if (rdtype == dns_rdatatype_nsec3 &&
+		    !dns_rdata_checkowner(name, msg->rdclass, rdtype,
+					  ISC_FALSE)) {
+			result = DNS_R_BADOWNERNAME;
+			goto cleanup;
+		}
 
 		/*
 		 * If we are doing a dynamic update or this is a meta-type,

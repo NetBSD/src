@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-importkey.c,v 1.4 2014/07/08 05:43:37 spz Exp $	*/
+/*	$NetBSD: dnssec-importkey.c,v 1.4.2.1 2014/12/22 03:28:33 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -275,6 +275,7 @@ usage(void) {
 				"the key files\n");
 	fprintf(stderr, "    -L ttl:             set default key TTL\n");
 	fprintf(stderr, "    -v <verbose level>\n");
+	fprintf(stderr, "    -V: print version information\n");
 	fprintf(stderr, "    -h: print usage and exit\n");
 	fprintf(stderr, "Timing options:\n");
 	fprintf(stderr, "    -P date/[+-]offset/none: set/unset key "
@@ -315,7 +316,7 @@ main(int argc, char **argv) {
 
 	isc_commandline_errprint = ISC_FALSE;
 
-#define CMDLINE_FLAGS "D:f:hK:L:P:v:"
+#define CMDLINE_FLAGS "D:f:hK:L:P:v:V"
 	while ((ch = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
 		switch (ch) {
 		case 'D':
@@ -355,7 +356,12 @@ main(int argc, char **argv) {
 					program, isc_commandline_option);
 			/* FALLTHROUGH */
 		case 'h':
+			/* Does not return. */
 			usage();
+
+		case 'V':
+			/* Does not return. */
+			version(program);
 
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n",

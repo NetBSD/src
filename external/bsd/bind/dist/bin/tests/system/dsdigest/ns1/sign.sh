@@ -14,8 +14,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id
-
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
 
@@ -23,7 +21,7 @@ zone=.
 infile=root.db.in
 zonefile=root.db
 
-(cd ../ns2 && sh sign.sh)
+(cd ../ns2 && $SHELL sign.sh)
 
 cp ../ns2/dsset-good. .
 cp ../ns2/dsset-bad. .

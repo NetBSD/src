@@ -440,10 +440,10 @@
 	<term>-T <replaceable class="parameter">mode</replaceable></term>
 	<listitem>
 	  <para>
-	    Check if Sender Policy Framework records (TXT and SPF)
-	    both exist or both don't exist.  A warning is issued
-	    if they don't match.  Possible modes are
-	    <command>"warn"</command> (default), <command>"ignore"</command>.
+	    Check if Sender Policy Framework (SPF) records exist
+	    and issues a warning if an SPF-formatted TXT record is
+	    not also present.  Possible modes are <command>"warn"</command>
+	    (default), <command>"ignore"</command>.
 	  </para>
 	</listitem>
       </varlistentry>

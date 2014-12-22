@@ -363,6 +363,24 @@ LINK32_OBJS= \
 
 
 !IF "$(CFG)" == "liblwres - @PLATFORM@ Release" || "$(CFG)" == "liblwres - @PLATFORM@ Debug"
+SOURCE=..\compat.c
+
+!IF  "$(CFG)" == "liblwres - @PLATFORM@ Release"
+
+
+"$(INTDIR)\compat.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "liblwres - @PLATFORM@ Debug"
+
+
+"$(INTDIR)\compat.obj"	"$(INTDIR)\compat.sbr" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ENDIF 
+
 SOURCE=..\context.c
 
 !IF  "$(CFG)" == "liblwres - @PLATFORM@ Release"

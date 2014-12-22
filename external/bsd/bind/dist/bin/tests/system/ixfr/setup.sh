@@ -15,7 +15,8 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.8 2012/02/07 23:47:24 tbox Exp 
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
 
 rm -f ns1/*.db ns1/*.jnl ns3/*.jnl ns4/*.db ns4/*.jnl
 
@@ -45,5 +46,5 @@ EOF
 # Setup initial db files for ns3
 cp ns3/mytest0.db ns3/mytest.db
 cp ns3/subtest0.db ns3/subtest.db
-sh ../genzone.sh 3 > ns3/large.db
+$SHELL ../genzone.sh 3 > ns3/large.db
 awk 'END { for (i = 0; i < 10000; i++) printf("record%d 10 IN TXT this is record %d\n", i, i) }' < /dev/null >> ns3/large.db

@@ -1,4 +1,4 @@
-/*	$NetBSD: view.h,v 1.9 2014/07/08 05:43:39 spz Exp $	*/
+/*	$NetBSD: view.h,v 1.9.2.1 2014/12/22 03:28:45 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -742,6 +742,7 @@ dns_viewlist_findzone(dns_viewlist_t *list, dns_name_t *name, isc_boolean_t allc
  * Returns:
  *\li	#ISC_R_SUCCESS          A matching zone was found.
  *\li	#ISC_R_NOTFOUND         No matching zone was found.
+ *\li	#ISC_R_MULTIPLE         Multiple zones with the same name were found.
  */
 
 isc_result_t

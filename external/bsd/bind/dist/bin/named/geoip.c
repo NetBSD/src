@@ -1,4 +1,4 @@
-/*	$NetBSD: geoip.c,v 1.1.1.1 2014/02/28 17:40:06 christos Exp $	*/
+/*	$NetBSD: geoip.c,v 1.1.1.1.6.1 2014/12/22 03:28:34 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -89,6 +89,7 @@ ns_geoip_init(void) {
 #ifndef HAVE_GEOIP
 	return;
 #else
+	GeoIP_cleanup();
 	if (ns_g_geoip == NULL)
 		ns_g_geoip = &geoip_table;
 #endif

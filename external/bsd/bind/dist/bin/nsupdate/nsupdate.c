@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.11 2014/07/08 05:43:38 spz Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.11.2.1 2014/12/22 03:28:34 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -964,6 +964,11 @@ get_addresses(char *host, in_port_t port,
 		      host, isc_result_totext(result));
 }
 
+static void
+version(void) {
+	fputs("nsupdate " VERSION "\n", stderr);
+}
+
 #define PARSE_ARGS_FMT "dDML:y:ghlovk:p:Pr:R::t:Tu:V"
 
 static void
@@ -990,7 +995,7 @@ pre_parse_args(int argc, char **argv) {
 					argv[0], isc_commandline_option);
 			fprintf(stderr, "usage: nsupdate [-dD] [-L level] [-l]"
 				"[-g | -o | -y keyname:secret | -k keyfile] "
-				"[-v] [filename]\n");
+				"[-v] [-V] [filename]\n");
 			exit(1);
 
 		case 'P':
@@ -1015,6 +1020,11 @@ pre_parse_args(int argc, char **argv) {
 			doexit = ISC_TRUE;
 			break;
 
+		case 'V':
+			version();
+			doexit = ISC_TRUE;
+			break;
+
 		default:
 			break;
 		}
@@ -1023,11 +1033,6 @@ pre_parse_args(int argc, char **argv) {
 		exit(0);
 	isc_commandline_reset = ISC_TRUE;
 	isc_commandline_index = 1;
-}
-
-static void
-version(void) {
-	fputs("nsupdate " VERSION "\n", stderr);
 }
 
 static void
@@ -1066,10 +1071,6 @@ parse_args(int argc, char **argv, isc_mem_t *mctx, isc_entropy_t **ectx) {
 			break;
 		case 'v':
 			usevc = ISC_TRUE;
-			break;
-		case 'V':
-			version();
-			exit(0);
 			break;
 		case 'k':
 			keyfile = isc_commandline_argument;

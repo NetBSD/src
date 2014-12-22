@@ -67,7 +67,7 @@
     <title>DESCRIPTION</title>
     <para>
       <command>tsig-keygen</command> and <command>ddns-confgen</command>
-      are invokation methods for a utility that generates keys for use
+      are invocation methods for a utility that generates keys for use
       in TSIG signing.  The resulting keys can be used, for example,
       to secure dynamic DNS updates to a zone or for the
       <command>rndc</command> command channel.

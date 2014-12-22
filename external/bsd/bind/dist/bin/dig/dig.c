@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.c,v 1.9 2014/07/08 05:43:37 spz Exp $	*/
+/*	$NetBSD: dig.c,v 1.9.2.1 2014/12/22 03:28:33 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -257,7 +257,6 @@ help(void) {
 void
 received(int bytes, isc_sockaddr_t *from, dig_query_t *query) {
 	isc_uint64_t diff;
-	isc_time_t now;
 	time_t tnow;
 	struct tm tmnow;
 	char time_str[100];
@@ -265,10 +264,8 @@ received(int bytes, isc_sockaddr_t *from, dig_query_t *query) {
 
 	isc_sockaddr_format(from, fromtext, sizeof(fromtext));
 
-	TIME_NOW(&now);
-
 	if (query->lookup->stats && !short_form) {
-		diff = isc_time_microdiff(&now, &query->time_sent);
+		diff = isc_time_microdiff(&query->time_recv, &query->time_sent);
 		if (use_usec)
 			printf(";; Query time: %ld usec\n", (long) diff);
 		else
@@ -297,7 +294,7 @@ received(int bytes, isc_sockaddr_t *from, dig_query_t *query) {
 		}
 		puts("");
 	} else if (query->lookup->identify && !short_form) {
-		diff = isc_time_microdiff(&now, &query->time_sent);
+		diff = isc_time_microdiff(&query->time_recv, &query->time_sent);
 		if (use_usec)
 			printf(";; Received %" ISC_PRINT_QUADFORMAT "u bytes "
 			       "from %s(%s) in %ld us\n\n",
@@ -333,7 +330,6 @@ static isc_result_t
 say_message(dns_rdata_t *rdata, dig_query_t *query, isc_buffer_t *buf) {
 	isc_result_t result;
 	isc_uint64_t diff;
-	isc_time_t now;
 	char store[sizeof("12345678901234567890")];
 	unsigned int styleflags = 0;
 
@@ -351,8 +347,7 @@ say_message(dns_rdata_t *rdata, dig_query_t *query, isc_buffer_t *buf) {
 		return (result);
 	check_result(result, "dns_rdata_totext");
 	if (query->lookup->identify) {
-		TIME_NOW(&now);
-		diff = isc_time_microdiff(&now, &query->time_sent);
+		diff = isc_time_microdiff(&query->time_recv, &query->time_sent);
 		ADD_STRING(buf, " from server ");
 		ADD_STRING(buf, query->servname);
 		if (use_usec)
@@ -760,7 +755,7 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 	char *cmd, *value, *ptr;
 	isc_uint32_t num;
 	isc_boolean_t state = ISC_TRUE;
-#ifdef DIG_SIGCHASE
+#if defined(DIG_SIGCHASE) || defined(ISC_PLATFORM_USESIT)
 	size_t n;
 #endif
 
@@ -1124,8 +1119,10 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 					lookup->edns = 0;
 				lookup->sit = state;
 				if (value != NULL) {
-					strncpy(sitvalue, value,
-						sizeof(sitvalue));
+					n = strlcpy(sitvalue, value,
+						    sizeof(sitvalue));
+					if (n >= sizeof(sitvalue))
+						fatal("SIT data too large");
 					lookup->sitvalue = sitvalue;
 				} else
 					lookup->sitvalue = NULL;
@@ -1195,8 +1192,10 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 		switch (cmd[1]) {
 		case 'c': /* tcp */
 			FULLCHECK("tcp");
-			if (!is_batchfile)
+			if (!is_batchfile) {
 				lookup->tcp_mode = state;
+				lookup->tcp_mode_set = ISC_TRUE;
+			}
 			break;
 		case 'i': /* timeout */
 			FULLCHECK("timeout");
@@ -1276,8 +1275,10 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 		break;
 	case 'v':
 		FULLCHECK("vc");
-		if (!is_batchfile)
+		if (!is_batchfile) {
 			lookup->tcp_mode = state;
+			lookup->tcp_mode_set = ISC_TRUE;
+		}
 		break;
 	default:
 	invalid_option:
@@ -1495,10 +1496,12 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 				(*lookup)->ixfr_serial = serial;
 				(*lookup)->section_question = plusquest;
 				(*lookup)->comments = pluscomm;
-				(*lookup)->tcp_mode = ISC_TRUE;
+				if (!(*lookup)->tcp_mode_set)
+					(*lookup)->tcp_mode = ISC_TRUE;
 			} else {
 				(*lookup)->rdtype = rdtype;
-				(*lookup)->rdtypeset = ISC_TRUE;
+				if (!config_only)
+					(*lookup)->rdtypeset = ISC_TRUE;
 				if (rdtype == dns_rdatatype_axfr) {
 					(*lookup)->section_question = plusquest;
 					(*lookup)->comments = pluscomm;
@@ -1540,6 +1543,7 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 				ip6_int, ISC_FALSE) == ISC_R_SUCCESS) {
 			strncpy((*lookup)->textname, textname,
 				sizeof((*lookup)->textname));
+			(*lookup)->textname[sizeof((*lookup)->textname)-1] = 0;
 			debug("looking up %s", (*lookup)->textname);
 			(*lookup)->trace_root = ISC_TF((*lookup)->trace  ||
 						(*lookup)->ns_search_only);
@@ -1603,7 +1607,8 @@ preparse_args(int argc, char **argv) {
 
 static void
 parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
-	   int argc, char **argv) {
+	   int argc, char **argv)
+{
 	isc_result_t result;
 	isc_textregion_t tr;
 	isc_boolean_t firstarg = ISC_TRUE;
@@ -1697,7 +1702,24 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 		if (strncmp(rv[0], "%", 1) == 0)
 			break;
 		if (rv[0][0] == '@') {
-			addresscount = getaddresses(lookup, &rv[0][1], NULL);
+
+			if (is_batchfile && !config_only) {
+				addresscount = getaddresses(lookup, &rv[0][1],
+							     &result);
+				if (result != ISC_R_SUCCESS) {
+					fprintf(stderr, "couldn't get address "
+						"for '%s': %s: skipping "
+						"lookup\n", &rv[0][1],
+						isc_result_totext(result));
+					if (ISC_LINK_LINKED(lookup, link))
+						ISC_LIST_DEQUEUE(lookup_list,
+								 lookup, link);
+					destroy_lookup(lookup);
+					return;
+				}
+			} else
+				addresscount = getaddresses(lookup, &rv[0][1],
+							    NULL);
 		} else if (rv[0][0] == '+') {
 			plus_option(&rv[0][1], is_batchfile,
 				    lookup);
@@ -1761,7 +1783,8 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 						lookup->section_question =
 							plusquest;
 						lookup->comments = pluscomm;
-						lookup->tcp_mode = ISC_TRUE;
+						if (!lookup->tcp_mode_set)
+							lookup->tcp_mode = ISC_TRUE;
 					} else {
 						lookup->rdtype = rdtype;
 						lookup->rdtypeset = ISC_TRUE;

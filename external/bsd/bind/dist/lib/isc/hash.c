@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.7 2014/07/08 05:43:40 spz Exp $	*/
+/*	$NetBSD: hash.c,v 1.7.2.1 2014/12/22 03:28:46 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -394,4 +394,18 @@ isc_hash_calc(const unsigned char *key, unsigned int keylen,
 	REQUIRE(keylen <= hash->limit);
 
 	return (hash_calc(hash, key, keylen, case_sensitive));
+}
+
+void
+isc__hash_setvec(const isc_uint16_t *vec) {
+	int i;
+	hash_random_t *p;
+
+	if (hash == NULL)
+		return;
+
+	p = hash->rndvector;
+	for (i = 0; i < 256; i++) {
+		p[i] = vec[i];
+	}
 }

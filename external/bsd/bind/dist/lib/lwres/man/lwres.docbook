@@ -63,7 +63,7 @@
       and address-to-hostname lookup services to applications by
       transmitting lookup requests to a resolver daemon
       <command>lwresd</command>
-      running on the local host. The resover daemon performs the
+      running on the local host. The resolver daemon performs the
       lookup using the DNS or possibly other name service protocols,
       and returns the results to the application through the library.
       The library and resolver daemon communicate using a simple

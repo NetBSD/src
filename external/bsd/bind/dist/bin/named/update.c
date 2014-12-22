@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.8 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.8.4.1 2014/12/22 03:28:34 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -2919,10 +2919,18 @@ update_action(isc_task_t *task, isc_event_t *event) {
 					dns_diff_clear(&ctx.del_diff);
 					dns_diff_clear(&ctx.add_diff);
 				} else {
-					CHECK(do_diff(&ctx.del_diff, db, ver,
-						      &diff));
-					CHECK(do_diff(&ctx.add_diff, db, ver,
-						      &diff));
+					result = do_diff(&ctx.del_diff, db, ver,
+							 &diff);
+					if (result == ISC_R_SUCCESS) {
+						result = do_diff(&ctx.add_diff,
+								 db, ver,
+								 &diff);
+					}
+					if (result != ISC_R_SUCCESS) {
+						dns_diff_clear(&ctx.del_diff);
+						dns_diff_clear(&ctx.add_diff);
+						goto failure;
+					}
 					CHECK(update_one_rr(db, ver, &diff,
 							    DNS_DIFFOP_ADD,
 							    name, ttl, &rdata));
@@ -3071,10 +3079,9 @@ update_action(isc_task_t *task, isc_event_t *event) {
 #define ALLOW_SECURE_TO_INSECURE(zone) \
 	((dns_zone_getoptions(zone) & DNS_ZONEOPT_SECURETOINSECURE) != 0)
 
+		CHECK(rrset_exists(db, oldver, zonename, dns_rdatatype_dnskey,
+				   0, &had_dnskey));
 		if (!ALLOW_SECURE_TO_INSECURE(zone)) {
-			CHECK(rrset_exists(db, oldver, zonename,
-					   dns_rdatatype_dnskey, 0,
-					   &had_dnskey));
 			if (had_dnskey && !has_dnskey) {
 				update_log(client, zone, LOGLEVEL_PROTOCOL,
 					   "update rejected: all DNSKEY "

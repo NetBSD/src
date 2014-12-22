@@ -18,8 +18,8 @@ SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 gostfail=0 ecdsafail=0
-sh ../testcrypto.sh -q gost || gostfail=1
-sh ../testcrypto.sh -q ecdsa || ecdsafail=1
+$SHELL ../testcrypto.sh -q gost || gostfail=1
+$SHELL ../testcrypto.sh -q ecdsa || ecdsafail=1
 
 if [ $gostfail = 0 -a $ecdsafail = 0 ]; then
 	echo both > supported

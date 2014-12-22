@@ -18,8 +18,8 @@
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-sh clean.sh
+$SHELL clean.sh
 
 test -r $RANDFILE || $GENRANDOM 400 $RANDFILE
 
-cd ns1 && sh setup.sh
+cd ns1 && $SHELL setup.sh

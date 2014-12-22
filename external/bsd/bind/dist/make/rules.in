@@ -300,6 +300,7 @@ INSTALL_PROGRAM =	@INSTALL_PROGRAM@
 LINK_PROGRAM =		@LN_S@
 INSTALL_SCRIPT =	@INSTALL_SCRIPT@
 INSTALL_DATA =		@INSTALL_DATA@
+INSTALL_LIBRARY =	@INSTALL_LIBRARY@
 
 ###
 ### Programs used when generating documentation.  It's ok for these
@@ -355,12 +356,4 @@ ALWAYS_MAKE_SYMTABLE =	@ALWAYS_MAKE_SYMTABLE@
 
 .docbook.8:
 	${XSLTPROC} -o $@ ${top_srcdir}/doc/xsl/isc-manpage.xsl $<
-
-###
-### Python executable
-###
-.SUFFIXES: .py
-.py:
-	cp -f $< $@
-	chmod +x $@
 
