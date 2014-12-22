@@ -1,4 +1,4 @@
-/* $NetBSD: awin_reg.h,v 1.75 2014/12/21 17:37:40 jmcneill Exp $ */
+/* $NetBSD: awin_reg.h,v 1.76 2014/12/22 00:07:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -185,6 +185,7 @@
 #define AWIN_SRAM_VER_KEY_A10		0x1623
 #define AWIN_SRAM_VER_KEY_A13		0x1625
 #define AWIN_SRAM_VER_KEY_A31		0x1633
+#define AWIN_SRAM_VER_KEY_A80		0x1639
 #define AWIN_SRAM_VER_KEY_A23		0x1650
 #define AWIN_SRAM_VER_KEY_A20		0x1651
 
