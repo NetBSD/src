@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.96 2014/01/23 10:13:56 hannken Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.96.4.1 2014/12/22 02:05:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.96 2014/01/23 10:13:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.96.4.1 2014/12/22 02:05:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -185,7 +185,6 @@ tmpfs_alloc_node(tmpfs_mount_t *tmp, enum vtype type, uid_t uid, gid_t gid,
 		}
 
 		KASSERT(nnode->tn_size < MAXPATHLEN);
-		nnode->tn_size++; /* include the NUL terminator */
 
 		nnode->tn_spec.tn_lnk.tn_link =
 		    tmpfs_strname_alloc(tmp, nnode->tn_size);
