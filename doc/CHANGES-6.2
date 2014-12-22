@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.172 2014/12/22 10:49:59 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.173 2014/12/22 13:02:24 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -5638,3 +5638,20 @@ sys/dev/raidframe/rf_netbsdkintf.c		1.317
 	Stop useless disklabel warning if there are wedges, using GPT
 	partition. Fix PR kern/47989.
 	[taca, ticket #1216]
+
+sys/ufs/ufs/extattr.h				1.11
+
+	Bump UFS1 extended attribute max name length to 256.
+	For extended attribute name max length, kernel filesystem-independant
+	code use either EXTATTR_MAXNAMELEN (BSD API) or XATTR_NAME_MAX (Linux
+	API), which are both defined as KERNEL_NAME_MAX and fits Linux limit
+	of 255 without training \0.
+	UFS1 code had a lower limit that broke Linux compatibility. We can bump
+	the limit without sacrifying backward compatibility, because:
+	1) There is no API exposing this limit outside the kernel. Upper kernel
+	layers have a larger limit handle the increase without a hitch
+	2) Each attribute has its own backing store in the fileystem, the name
+	of the backing store matching the attribute name. A newer kernel can
+	create/read/write backing store for longer attribute names and will
+	have no problem with existing shorter names.
+	[manu, ticket #1218]
