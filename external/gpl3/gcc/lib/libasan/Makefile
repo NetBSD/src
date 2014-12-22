@@ -56,10 +56,4 @@ CPPFLAGS.sanitizer_netbsd.cc+=-I${GCCDIST}/gcc/ginclude
 LIBDPLIBS+=    stdc++ ${.CURDIR}/../libstdc++-v3
 LIBDPLIBS+=    pthread ${.CURDIR}/../../../../../lib/libpthread
 
-# Work around riscv compiler bugs in (at least) gcc 4.8.3
-.if ${MACHINE_ARCH} == "riscv64"
-COPTS.asan_allocator2.cc += -O0
-COPTS.sanitizer_netbsd.cc += -O0
-.endif
-
 .include <bsd.lib.mk>
