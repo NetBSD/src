@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.118 2014/10/31 13:56:04 manu Exp $	*/
+/*	$NetBSD: puffs.c,v 1.119 2014/12/22 08:16:21 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.118 2014/10/31 13:56:04 manu Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.119 2014/12/22 08:16:21 manu Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -574,13 +574,17 @@ do {									\
 		rv = 0;
 	} else {
 		char rp[MAXPATHLEN];
+		size_t rplen,dirlen;
 
 		if (realpath(dir, rp) == NULL) {
 			rv = -1;
 			goto out;
 		}
 
-		if (strcmp(dir, rp) != 0) {
+		rplen = strlen(rp);
+		dirlen = strlen(dir);
+		if (strncmp(dir, rp, rplen) != 0 ||
+		    strspn(dir + rplen, "/") != dirlen - rplen) {
 			warnx("puffs_mount: \"%s\" is a relative path.", dir);
 			warnx("puffs_mount: using \"%s\" instead.", rp);
 		}
