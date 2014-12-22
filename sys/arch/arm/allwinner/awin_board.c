@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.33 2014/12/07 18:32:13 jmcneill Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.34 2014/12/22 00:07:24 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.33 2014/12/07 18:32:13 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.34 2014/12/22 00:07:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.33 2014/12/07 18:32:13 jmcneill Exp
 
 bus_space_handle_t awin_core_bsh;
 #if defined(ALLWINNER_A80)
+bus_space_handle_t awin_core2_bsh;
 bus_space_handle_t awin_rcpus_bsh;
 #endif
 
@@ -194,6 +195,11 @@ awin_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 	KASSERT(awin_core_bsh == iobase);
 
 #ifdef ALLWINNER_A80
+	error = bus_space_map(&awin_bs_tag, AWIN_A80_CORE2_PBASE,
+	    AWIN_A80_CORE2_SIZE, 0, &awin_core2_bsh);
+	if (error)
+		panic("%s: failed to map awin %s registers: %d",
+		    __func__, "core2", error);
 	error = bus_space_map(&awin_bs_tag, AWIN_A80_RCPUS_PBASE,
 	    AWIN_A80_RCPUS_SIZE, 0, &awin_rcpus_bsh);
 	if (error)
@@ -301,25 +307,26 @@ uint16_t
 awin_chip_id(void)
 {
 #if defined(ALLWINNER_A80)
-	return AWIN_CHIP_ID_A80;
+	bus_space_handle_t bsh = awin_core2_bsh;
 #else
+	bus_space_handle_t bsh = awin_core_bsh;
+#endif
 	static uint16_t chip_id = 0;
 	uint32_t ver;
 
 	if (!chip_id) {
-		ver = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
+		ver = bus_space_read_4(&awin_bs_tag, bsh,
 		    AWIN_SRAM_OFFSET + AWIN_SRAM_VER_REG);
 		ver |= AWIN_SRAM_VER_R_EN;
-		bus_space_write_4(&awin_bs_tag, awin_core_bsh,
+		bus_space_write_4(&awin_bs_tag, bsh,
 		    AWIN_SRAM_OFFSET + AWIN_SRAM_VER_REG, ver);
-		ver = bus_space_read_4(&awin_bs_tag, awin_core_bsh,
+		ver = bus_space_read_4(&awin_bs_tag, bsh,
 		    AWIN_SRAM_OFFSET + AWIN_SRAM_VER_REG);
 
 		chip_id = __SHIFTOUT(ver, AWIN_SRAM_VER_KEY_FIELD);
 	}
 
 	return chip_id;
-#endif
 }
 
 const char *
