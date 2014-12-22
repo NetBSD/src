@@ -1,7 +1,7 @@
-/*	$NetBSD: file.h,v 1.8 2014/03/01 03:24:39 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.8.4.1 2014/12/22 03:28:46 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -64,7 +64,7 @@ isc_file_getmodtime(const char *file, isc_time_t *time);
  *\li	#ISC_R_NOPERM
  *		The file's metainformation could not be retrieved because
  *		permission was denied to some part of the file's path.
- *\li	#ISC_R_EIO
+ *\li	#ISC_R_IOERROR
  *		Hardware error interacting with the filesystem.
  *\li	#ISC_R_UNEXPECTED
  *		Something totally unexpected happened.
@@ -218,7 +218,7 @@ isc_file_isplainfilefd(int fd);
  *		permitted in addition to ISC_R_SUCCESS. This is done since
  *		the next call in logconf.c is to isc_stdio_open(), which
  *		will create the file if it can.
- *\li	#other ISC_R_* errors translated from errno
+ *\li	other ISC_R_* errors translated from errno
  *		These occur when stat returns -1 and an errno.
  */
 
@@ -234,7 +234,7 @@ isc_file_isdirectory(const char *name);
  *		File is not a directory.
  *\li	#ISC_R_FILENOTFOUND
  *		File does not exist.
- *\li	#other ISC_R_* errors translated from errno
+ *\li	other ISC_R_* errors translated from errno
  *		These occur when stat returns -1 and an errno.
  */
 

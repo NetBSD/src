@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.8 2014/07/08 09:08:05 martin Exp $	*/
+/*	$NetBSD: rbt.c,v 1.8.2.1 2014/12/22 03:28:45 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -211,6 +211,7 @@ getdata(dns_rbtnode_t *node, file_header_t *header) {
 #define RIGHT(node)             ((node)->right)
 #define DOWN(node)              ((node)->down)
 #define DATA(node)              ((node)->data)
+#define IS_EMPTY(node)          ((node)->data == NULL)
 #define HASHNEXT(node)          ((node)->hashnext)
 #define HASHVAL(node)           ((node)->hashval)
 #define COLOR(node)             ((node)->color)
@@ -264,7 +265,10 @@ getdata(dns_rbtnode_t *node, file_header_t *header) {
  * of memory concerns, when chains were first implemented).
  */
 #define ADD_LEVEL(chain, node) \
-			(chain)->levels[(chain)->level_count++] = (node)
+	do { \
+		INSIST((chain)->level_count < DNS_RBT_LEVELBLOCK); \
+		(chain)->levels[(chain)->level_count++] = (node); \
+	} while (0)
 
 /*%
  * The following macros directly access normally private name variables.
@@ -280,6 +284,21 @@ NODENAME(dns_rbtnode_t *node, dns_name_t *name) {
 	name->offsets = OFFSETS(node);
 	name->attributes = ATTRS(node);
 	name->attributes |= DNS_NAMEATTR_READONLY;
+}
+
+void
+dns_rbtnode_nodename(dns_rbtnode_t *node, dns_name_t *name) {
+	name->length = NAMELEN(node);
+	name->labels = OFFSETLEN(node);
+	name->ndata = NAME(node);
+	name->offsets = OFFSETS(node);
+	name->attributes = ATTRS(node);
+	name->attributes |= DNS_NAMEATTR_READONLY;
+}
+
+dns_rbtnode_t *
+dns_rbt_root(dns_rbt_t *rbt) {
+  return rbt->root;
 }
 
 #ifdef DNS_RBT_USEHASH
@@ -304,8 +323,6 @@ Name(dns_rbtnode_t *node) {
 	return (name);
 }
 
-static void printnodename(dns_rbtnode_t *node);
-
 static void
 hexdump(const char *desc, void *blob, size_t size) {
 	char hexdump[BUFSIZ * 2 + 1];
@@ -329,21 +346,45 @@ hexdump(const char *desc, void *blob, size_t size) {
 	} while (size > 0);
 	fprintf(stderr, "\n");
 }
-#endif
+#endif /* DEBUG */
 
+/* The passed node must not be NULL. */
 static inline dns_rbtnode_t *
-find_up(dns_rbtnode_t *node) {
-	dns_rbtnode_t *root;
+get_subtree_root(dns_rbtnode_t *node) {
+	while (!IS_ROOT(node)) {
+		node = PARENT(node);
+	}
+
+	return (node);
+}
+
+/* Upper node is the parent of the root of the passed node's
+ * subtree. The passed node must not be NULL.
+ */
+static inline dns_rbtnode_t *
+get_upper_node(dns_rbtnode_t *node) {
+	dns_rbtnode_t *root = get_subtree_root(node);
 
 	/*
 	 * Return the node in the level above the argument node that points
 	 * to the level the argument node is in.  If the argument node is in
 	 * the top level, the return value is NULL.
 	 */
-	for (root = node; ! IS_ROOT(root); root = PARENT(root))
-		; /* Nothing. */
-
 	return (PARENT(root));
+}
+
+size_t
+dns__rbtnode_getdistance(dns_rbtnode_t *node) {
+	size_t nodes = 1;
+
+	while (node != NULL) {
+		if (IS_ROOT(node))
+			break;
+		nodes++;
+		node = PARENT(node);
+	}
+
+	return (nodes);
 }
 
 /*
@@ -390,7 +431,7 @@ static void
 deletetreeflat(dns_rbt_t *rbt, unsigned int quantum, dns_rbtnode_t **nodep);
 
 static void
-printnodename(dns_rbtnode_t *node);
+printnodename(dns_rbtnode_t *node, isc_boolean_t quoted, FILE *f);
 
 static void
 freenode(dns_rbt_t *rbt, dns_rbtnode_t **nodep);
@@ -1374,15 +1415,14 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 
 	if (rbt->root == NULL)
 		return (ISC_R_NOTFOUND);
-	else {
-		/*
-		 * Appease GCC about variables it incorrectly thinks are
-		 * possibly used uninitialized.
-		 */
-		compared = dns_namereln_none;
-		last_compared = NULL;
-		order = 0;
-	}
+
+	/*
+	 * Appease GCC about variables it incorrectly thinks are
+	 * possibly used uninitialized.
+	 */
+	compared = dns_namereln_none;
+	last_compared = NULL;
+	order = 0;
 
 	dns_fixedname_init(&fixedcallbackname);
 	callback_name = dns_fixedname_name(&fixedcallbackname);
@@ -1408,6 +1448,12 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 		NODENAME(current, &current_name);
 		compared = dns_name_fullcompare(search_name, &current_name,
 						&order, &common_labels);
+		/*
+		 * last_compared is used as a shortcut to start (or
+		 * continue rather) finding the stop-node of the search
+		 * when hashing was used (see much below in this
+		 * function).
+		 */
 		last_compared = current;
 
 		if (compared == dns_namereln_equal)
@@ -1415,6 +1461,16 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 
 		if (compared == dns_namereln_none) {
 #ifdef DNS_RBT_USEHASH
+			/*
+			 * Here, current is pointing at a subtree root
+			 * node. We try to find a matching node using
+			 * the hashtable. We can get one of 3 results
+			 * here: (a) we locate the matching node, (b) we
+			 * find a node to which the current node has a
+			 * subdomain relation, (c) we fail to find (a)
+			 * or (b).
+			 */
+
 			dns_name_t hash_name;
 			dns_rbtnode_t *hnode;
 			dns_rbtnode_t *up_current;
@@ -1449,7 +1505,12 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 
 		hashagain:
 			/*
-			 * Hash includes tail.
+			 * Compute the hash over the full absolute
+			 * name. Look for the smallest suffix match at
+			 * this tree level (hlevel), and then at every
+			 * iteration, look for the next smallest suffix
+			 * match (add another subdomain label to the
+			 * absolute name being hashed).
 			 */
 			dns_name_getlabelsequence(name,
 						  nlabels - tlabels,
@@ -1460,6 +1521,10 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 						  nlabels - tlabels,
 						  tlabels, &hash_name);
 
+			/*
+			 * Walk all the nodes in the hash bucket pointed
+			 * by the computed hash value.
+			 */
 			for (hnode = rbt->hashtable[hash % rbt->hashsize];
 			     hnode != NULL;
 			     hnode = hnode->hashnext)
@@ -1468,8 +1533,16 @@ dns_rbt_findnode(dns_rbt_t *rbt, dns_name_t *name, dns_name_t *foundname,
 
 				if (hash != HASHVAL(hnode))
 					continue;
-				if (find_up(hnode) != up_current)
+				/*
+				 * This checks that the hashed label
+				 * sequence being looked up is at the
+				 * same tree level, so that we don't
+				 * match a labelsequence from some other
+				 * subdomain.
+				 */
+				if (get_upper_node(hnode) != up_current)
 					continue;
+
 				dns_name_init(&hnode_name, NULL);
 				NODENAME(hnode, &hnode_name);
 				if (dns_name_equal(&hnode_name, &hash_name))
@@ -1974,7 +2047,7 @@ dns_rbt_deletenode(dns_rbt_t *rbt, dns_rbtnode_t *node, isc_boolean_t recurse)
 	 * deleted.  If the deleted node is the top level, parent will be set
 	 * to NULL.
 	 */
-	parent = find_up(node);
+	parent = get_upper_node(node);
 
 	/*
 	 * This node now has no down pointer (either because it didn't
@@ -2054,7 +2127,7 @@ dns_rbt_fullnamefromnode(dns_rbtnode_t *node, dns_name_t *name) {
 		if (result != ISC_R_SUCCESS)
 			break;
 
-		node = find_up(node);
+		node = get_upper_node(node);
 	} while (! dns_name_isabsolute(name));
 
 	return (result);
@@ -2802,42 +2875,140 @@ deletetreeflat(dns_rbt_t *rbt, unsigned int quantum, dns_rbtnode_t **nodep) {
 	goto again;
 }
 
+static size_t
+getheight_helper(dns_rbtnode_t *node) {
+	size_t dl, dr;
+	size_t this_height, down_height;
+
+	if (node == NULL)
+		return (0);
+
+	dl = getheight_helper(LEFT(node));
+	dr = getheight_helper(RIGHT(node));
+
+	this_height = ISC_MAX(dl + 1, dr + 1);
+	down_height = getheight_helper(DOWN(node));
+
+	return (ISC_MAX(this_height, down_height));
+}
+
+size_t
+dns__rbt_getheight(dns_rbt_t *rbt) {
+	return (getheight_helper(rbt->root));
+}
+
+static isc_boolean_t
+check_properties_helper(dns_rbtnode_t *node) {
+	if (node == NULL)
+		return (ISC_TRUE);
+
+	if (IS_RED(node)) {
+		/* Root nodes must be BLACK. */
+		if (IS_ROOT(node))
+			return (ISC_FALSE);
+
+		/* Both children of RED nodes must be BLACK. */
+		if (IS_RED(LEFT(node)) || IS_RED(RIGHT(node)))
+			return (ISC_FALSE);
+	}
+
+	/* If node is assigned to the down_ pointer of its parent, it is
+	 * a subtree root and must have the flag set.
+	 */
+	if (((!PARENT(node)) ||
+	     (DOWN(PARENT(node)) == node)) &&
+	    (!IS_ROOT(node)))
+	{
+		return (ISC_FALSE);
+	}
+
+	/* Repeat tests with this node's children. */
+	return (check_properties_helper(LEFT(node)) &&
+		check_properties_helper(RIGHT(node)) &&
+		check_properties_helper(DOWN(node)));
+}
+
+static isc_boolean_t
+check_black_distance_helper(dns_rbtnode_t *node, size_t *distance) {
+	size_t dl, dr, dd;
+
+	if (node == NULL) {
+		*distance = 1;
+		return (ISC_TRUE);
+	}
+
+	if (!check_black_distance_helper(LEFT(node), &dl))
+		return (ISC_FALSE);
+
+	if (!check_black_distance_helper(RIGHT(node), &dr))
+		return (ISC_FALSE);
+
+	if (!check_black_distance_helper(DOWN(node), &dd))
+		return (ISC_FALSE);
+
+	/* Left and right side black node counts must match. */
+	if (dl != dr)
+		return (ISC_FALSE);
+
+	if (IS_BLACK(node))
+		dl++;
+
+	*distance = dl;
+
+	return (ISC_TRUE);
+}
+
+isc_boolean_t
+dns__rbt_checkproperties(dns_rbt_t *rbt) {
+	size_t dd;
+
+	if (!check_properties_helper(rbt->root))
+		return (ISC_FALSE);
+
+	/* Path from a given node to all its leaves must contain the
+	 * same number of BLACK child nodes. This is done separately
+	 * here instead of inside check_properties_helper() as
+	 * it would take (n log n) complexity otherwise.
+	 */
+	return (check_black_distance_helper(rbt->root, &dd));
+}
+
 static void
-dns_rbt_indent(int depth) {
+dns_rbt_indent(FILE *f, int depth) {
 	int i;
 
-	printf("%4d ", depth);
+	fprintf(f, "%4d ", depth);
 
 	for (i = 0; i < depth; i++)
-		printf("- ");
+		fprintf(f, "- ");
 }
 
 void
-dns_rbt_printnodeinfo(dns_rbtnode_t *n) {
-	printf("Node info for nodename: ");
-	printnodename(n);
-	printf("\n");
+dns_rbt_printnodeinfo(dns_rbtnode_t *n, FILE *f) {
+	fprintf(f, "Node info for nodename: ");
+	printnodename(n, ISC_TRUE, f);
+	fprintf(f, "\n");
 
-	printf("n = %p\n", n);
+	fprintf(f, "n = %p\n", n);
 
-	printf("Relative pointers: %s%s%s%s%s\n",
+	fprintf(f, "Relative pointers: %s%s%s%s%s\n",
 			(n->parent_is_relative == 1 ? " P" : ""),
 			(n->right_is_relative == 1 ? " R" : ""),
 			(n->left_is_relative == 1 ? " L" : ""),
 			(n->down_is_relative == 1 ? " D" : ""),
 			(n->data_is_relative == 1 ? " T" : ""));
 
-	printf("node lock address = %d\n", n->locknum);
+	fprintf(f, "node lock address = %d\n", n->locknum);
 
-	printf("Parent: %p\n", n->parent);
-	printf("Right: %p\n", n->right);
-	printf("Left: %p\n", n->left);
-	printf("Down: %p\n", n->down);
-	printf("daTa: %p\n", n->data);
+	fprintf(f, "Parent: %p\n", n->parent);
+	fprintf(f, "Right: %p\n", n->right);
+	fprintf(f, "Left: %p\n", n->left);
+	fprintf(f, "Down: %p\n", n->down);
+	fprintf(f, "daTa: %p\n", n->data);
 }
 
 static void
-printnodename(dns_rbtnode_t *node) {
+printnodename(dns_rbtnode_t *node, isc_boolean_t quoted, FILE *f) {
 	isc_region_t r;
 	dns_name_t name;
 	char buffer[DNS_NAME_FORMATSIZE];
@@ -2851,65 +3022,135 @@ printnodename(dns_rbtnode_t *node) {
 
 	dns_name_format(&name, buffer, sizeof(buffer));
 
-	printf("\"%s\"", buffer);
+	if (quoted)
+		fprintf(f, "\"%s\"", buffer);
+	else
+		fprintf(f, "%s", buffer);
 }
 
 static void
-dns_rbt_printtree(dns_rbtnode_t *root, dns_rbtnode_t *parent,
+print_text_helper(dns_rbtnode_t *root, dns_rbtnode_t *parent,
 		  int depth, const char *direction,
-		  void (*data_printer)(FILE *, void *))
+		  void (*data_printer)(FILE *, void *), FILE *f)
 {
-	dns_rbt_indent(depth);
+	dns_rbt_indent(f, depth);
 
 	if (root != NULL) {
-		printnodename(root);
-		printf(" (%s, %s", direction, IS_RED(root) ? "RED" : "BLACK");
+		printnodename(root, ISC_TRUE, f);
+		fprintf(f, " (%s, %s", direction,
+			IS_RED(root) ? "RED" : "BLACK");
 
 		if ((! IS_ROOT(root) && PARENT(root) != parent) ||
 		    (  IS_ROOT(root) && depth > 0 &&
 		       DOWN(PARENT(root)) != root)) {
 
-			printf(" (BAD parent pointer! -> ");
+			fprintf(f, " (BAD parent pointer! -> ");
 			if (PARENT(root) != NULL)
-				printnodename(PARENT(root));
+				printnodename(PARENT(root), ISC_TRUE, f);
 			else
-				printf("NULL");
-			printf(")");
+				fprintf(f, "NULL");
+			fprintf(f, ")");
 		}
 
-		printf(")");
+		fprintf(f, ")");
 
 		if (root->data != NULL && data_printer != NULL) {
-			printf(" data@%p: ", root->data);
-			data_printer(stdout, root->data);
+			fprintf(f, " data@%p: ", root->data);
+			data_printer(f, root->data);
 		}
-		printf("\n");
+		fprintf(f, "\n");
 
 		depth++;
 
 		if (IS_RED(root) && IS_RED(LEFT(root)))
-			printf("** Red/Red color violation on left\n");
-		dns_rbt_printtree(LEFT(root), root, depth, "left",
-				  data_printer);
+			fprintf(f, "** Red/Red color violation on left\n");
+		print_text_helper(LEFT(root), root, depth, "left",
+					  data_printer, f);
 
 		if (IS_RED(root) && IS_RED(RIGHT(root)))
-			printf("** Red/Red color violation on right\n");
-		dns_rbt_printtree(RIGHT(root), root, depth, "right",
-				  data_printer);
+			fprintf(f, "** Red/Red color violation on right\n");
+		print_text_helper(RIGHT(root), root, depth, "right",
+					  data_printer, f);
 
-		dns_rbt_printtree(DOWN(root), NULL, depth, "down",
-				  data_printer);
+		print_text_helper(DOWN(root), NULL, depth, "down",
+					  data_printer, f);
 	} else {
-		printf("NULL (%s)\n", direction);
+		fprintf(f, "NULL (%s)\n", direction);
 	}
 }
 
 void
-dns_rbt_printall(dns_rbt_t *rbt, void (*data_printer)(FILE *, void *)) {
+dns_rbt_printtext(dns_rbt_t *rbt,
+		  void (*data_printer)(FILE *, void *), FILE *f)
+{
+	REQUIRE(VALID_RBT(rbt));
+
+	print_text_helper(rbt->root, NULL, 0, "root", data_printer, f);
+}
+
+static int
+print_dot_helper(dns_rbtnode_t *node, unsigned int *nodecount,
+		 isc_boolean_t show_pointers, FILE *f)
+{
+	unsigned int l, r, d;
+
+	if (node == NULL)
+		return (0);
+
+	l = print_dot_helper(LEFT(node), nodecount, show_pointers, f);
+	r = print_dot_helper(RIGHT(node), nodecount, show_pointers, f);
+	d = print_dot_helper(DOWN(node), nodecount, show_pointers, f);
+
+	*nodecount += 1;
+
+	fprintf(f, "node%u[label = \"<f0> |<f1> ", *nodecount);
+	printnodename(node, ISC_FALSE, f);
+	fprintf(f, "|<f2>");
+
+	if (show_pointers)
+		fprintf(f, "|<f3> n=%p|<f4> p=%p", node, PARENT(node));
+
+	fprintf(f, "\"] [");
+
+	if (IS_RED(node))
+		fprintf(f, "color=red");
+	else
+		fprintf(f, "color=black");
+
+	/* XXXMUKS: verify that IS_ROOT() indicates subtree root and not
+	 * forest root.
+	 */
+	if (IS_ROOT(node))
+		fprintf(f, ",penwidth=3");
+
+	if (IS_EMPTY(node))
+		fprintf(f, ",style=filled,fillcolor=lightgrey");
+
+	fprintf(f, "];\n");
+
+	if (LEFT(node) != NULL)
+		fprintf(f, "\"node%u\":f0 -> \"node%u\":f1;\n", *nodecount, l);
+
+	if (DOWN(node) != NULL)
+		fprintf(f, "\"node%u\":f1 -> \"node%u\":f1 [penwidth=5];\n",
+			*nodecount, d);
+
+	if (RIGHT(node) != NULL)
+		fprintf(f, "\"node%u\":f2 -> \"node%u\":f1;\n", *nodecount, r);
+
+	return (*nodecount);
+}
+
+void
+dns_rbt_printdot(dns_rbt_t *rbt, isc_boolean_t show_pointers, FILE *f) {
+	unsigned int nodecount = 0;
 
 	REQUIRE(VALID_RBT(rbt));
 
-	dns_rbt_printtree(rbt->root, NULL, 0, "root", data_printer);
+	fprintf(f, "digraph g {\n");
+	fprintf(f, "node [shape = record,height=.1];\n");
+	print_dot_helper(rbt->root, &nodecount, show_pointers, f);
+	fprintf(f, "}\n");
 }
 
 /*
@@ -3387,3 +3628,13 @@ dns_rbtnodechain_invalidate(dns_rbtnodechain_t *chain) {
 
 	chain->magic = 0;
 }
+
+/* XXXMUKS:
+ *
+ * - worth removing inline as static functions are inlined automatically
+ *   where suitable by modern compilers.
+ * - bump the size of dns_rbt.nodecount to size_t.
+ * - the dumpfile header also contains a nodecount that is unsigned
+ *   int. If large files (> 2^32 nodes) are to be supported, the
+ *   allocation for this field should be increased.
+ */

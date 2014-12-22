@@ -1,4 +1,4 @@
-/*	$NetBSD: query.h,v 1.5 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: query.h,v 1.5.4.1 2014/12/22 03:28:34 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2010, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: query.h,v 1.45 2011/01/13 04:59:24 tbox Exp  */
 
 #ifndef NAMED_QUERY_H
 #define NAMED_QUERY_H 1

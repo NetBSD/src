@@ -1,4 +1,4 @@
-/*	$NetBSD: gost_test.c,v 1.1.1.2 2014/07/08 04:49:21 spz Exp $	*/
+/*	$NetBSD: gost_test.c,v 1.1.1.2.2.1 2014/12/22 03:28:45 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -56,7 +56,7 @@
 unsigned char digest[ISC_GOST_DIGESTLENGTH];
 unsigned char buffer[1024];
 const char *s;
-char str[ISC_GOST_DIGESTLENGTH];
+char str[2 * ISC_GOST_DIGESTLENGTH + 1];
 int i = 0;
 
 isc_result_t
@@ -67,7 +67,7 @@ tohexstr(unsigned char *d, unsigned int len, char *out);
  * Postcondition: A String representation of the given hexadecimal number is
  *   placed into the array *out
  *
- * 'out' MUST point to an array of at least len / 2 + 1
+ * 'out' MUST point to an array of at least len * 2 + 1
  *
  * Return values: ISC_R_SUCCESS if the operation is sucessful
  */

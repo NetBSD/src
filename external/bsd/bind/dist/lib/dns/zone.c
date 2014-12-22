@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.11 2014/07/08 05:43:39 spz Exp $	*/
+/*	$NetBSD: zone.c,v 1.11.2.1 2014/12/22 03:28:45 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -2868,8 +2868,8 @@ integrity_checks(dns_zone_t *zone, dns_db_t *db) {
 
  checkspf:
 		/*
-		 * Check if there is a type TXT spf record without a type SPF
-		 * RRset being present.
+		 * Check if there is a type SPF record without an
+		 * SPF-formatted type TXT record also being present.
 		 */
 		if (!DNS_ZONE_OPTION(zone, DNS_ZONEOPT_CHECKSPF))
 			goto next;
@@ -2898,16 +2898,13 @@ integrity_checks(dns_zone_t *zone, dns_db_t *db) {
 		dns_rdataset_disassociate(&rdataset);
 
  notxt:
-		if (have_spf != have_txt) {
+		if (have_spf && !have_txt) {
 			char namebuf[DNS_NAME_FORMATSIZE];
-			const char *found = have_txt ? "TXT" : "SPF";
-			const char *need = have_txt ? "SPF" : "TXT";
 
 			dns_name_format(name, namebuf, sizeof(namebuf));
-			dns_zone_log(zone, ISC_LOG_WARNING, "'%s' found SPF/%s "
-				     "record but no SPF/%s record found, add "
-				     "matching type %s record", namebuf, found,
-				     need, need);
+			dns_zone_log(zone, ISC_LOG_WARNING, "'%s' found type "
+				     "SPF record but no SPF TXT record found, "
+				     "add matching type TXT record", namebuf);
 		}
 
  next:
@@ -8999,8 +8996,10 @@ keyfetch_done(isc_task_t *task, isc_event_t *event) {
 			trust_key(zone, keyname, &dnskey, mctx);
 		}
 
-		if (!deletekey)
+		if (!deletekey) {
+			INSIST(newkey || updatekey);
 			set_refreshkeytimer(zone, &keydata, now);
+		}
 	}
 
 	/*
@@ -11397,70 +11396,25 @@ create_query(dns_zone_t *zone, dns_rdatatype_t rdtype,
 
 static isc_result_t
 add_opt(dns_message_t *message, isc_uint16_t udpsize, isc_boolean_t reqnsid) {
-	dns_rdataset_t *rdataset = NULL;
-	dns_rdatalist_t *rdatalist = NULL;
-	dns_rdata_t *rdata = NULL;
 	isc_result_t result;
-
-	result = dns_message_gettemprdatalist(message, &rdatalist);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-	result = dns_message_gettemprdata(message, &rdata);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-	result = dns_message_gettemprdataset(message, &rdataset);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-	dns_rdataset_init(rdataset);
-
-	rdatalist->type = dns_rdatatype_opt;
-	rdatalist->covers = 0;
-
-	/*
-	 * Set Maximum UDP buffer size.
-	 */
-	rdatalist->rdclass = udpsize;
-
-	/*
-	 * Set EXTENDED-RCODE, VERSION, DO and Z to 0.
-	 */
-	rdatalist->ttl = 0;
+	dns_rdataset_t *rdataset = NULL;
+	dns_ednsopt_t ednsopts[DNS_EDNSOPTIONS];
+	int count = 0;
 
 	/* Set EDNS options if applicable */
 	if (reqnsid) {
-		unsigned char data[4];
-		isc_buffer_t buf;
-
-		isc_buffer_init(&buf, data, sizeof(data));
-		isc_buffer_putuint16(&buf, DNS_OPT_NSID);
-		isc_buffer_putuint16(&buf, 0);
-		rdata->data = data;
-		rdata->length = sizeof(data);
-	} else {
-		rdata->data = NULL;
-		rdata->length = 0;
+		INSIST(count < DNS_EDNSOPTIONS);
+		ednsopts[count].code = DNS_OPT_NSID;
+		ednsopts[count].length = 0;
+		ednsopts[count].value = NULL;
+		count++;
 	}
-
-	rdata->rdclass = rdatalist->rdclass;
-	rdata->type = rdatalist->type;
-	rdata->flags = 0;
-
-	ISC_LIST_INIT(rdatalist->rdata);
-	ISC_LIST_APPEND(rdatalist->rdata, rdata, link);
-	RUNTIME_CHECK(dns_rdatalist_tordataset(rdatalist, rdataset)
-		      == ISC_R_SUCCESS);
+	result = dns_message_buildopt(message, &rdataset, 0, udpsize, 0,
+				      ednsopts, count);
+	if (result != ISC_R_SUCCESS)
+		return (result);
 
 	return (dns_message_setopt(message, rdataset));
-
- cleanup:
-	if (rdatalist != NULL)
-		dns_message_puttemprdatalist(message, &rdatalist);
-	if (rdataset != NULL)
-		dns_message_puttemprdataset(message, &rdataset);
-	if (rdata != NULL)
-		dns_message_puttemprdata(message, &rdata);
-
-	return (result);
 }
 
 static void
@@ -11551,7 +11505,7 @@ soa_query(isc_task_t *task, isc_event_t *event) {
 							    &zone->sourceaddr);
 			if (result == ISC_R_SUCCESS)
 				have_xfrsource = ISC_TRUE;
-			dns_peer_gettransferdscp(peer, &dscp);
+			(void)dns_peer_gettransferdscp(peer, &dscp);
 			if (dscp != -1)
 				have_xfrdscp = ISC_TRUE;
 			if (zone->view->resolver != NULL)
@@ -16244,10 +16198,12 @@ dns_zone_checknames(dns_zone_t *zone, dns_name_t *name, dns_rdata_t *rdata) {
 
 	REQUIRE(DNS_ZONE_VALID(zone));
 
-	if (!DNS_ZONE_OPTION(zone, DNS_ZONEOPT_CHECKNAMES))
+	if (!DNS_ZONE_OPTION(zone, DNS_ZONEOPT_CHECKNAMES) &&
+	    rdata->type != dns_rdatatype_nsec3)
 		return (ISC_R_SUCCESS);
 
-	if (DNS_ZONE_OPTION(zone, DNS_ZONEOPT_CHECKNAMESFAIL)) {
+	if (DNS_ZONE_OPTION(zone, DNS_ZONEOPT_CHECKNAMESFAIL) ||
+	    rdata->type == dns_rdatatype_nsec3) {
 		level = ISC_LOG_ERROR;
 		fail = ISC_TRUE;
 	}

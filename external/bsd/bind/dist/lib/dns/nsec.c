@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec.c,v 1.8 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: nsec.c,v 1.8.4.1 2014/12/22 03:28:45 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -438,7 +438,7 @@ dns_nsec_noexistnodata(dns_rdatatype_t type, dns_name_t *name,
 						  nlabels, &common);
 		}
 		result = dns_name_concatenate(dns_wildcardname, &common,
-					       wild, NULL);
+					      wild, NULL);
 		if (result != ISC_R_SUCCESS) {
 			dns_rdata_freestruct(&nsec);
 			(*logit)(arg, ISC_LOG_DEBUG(3),

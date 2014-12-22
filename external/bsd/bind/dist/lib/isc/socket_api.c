@@ -1,4 +1,4 @@
-/*	$NetBSD: socket_api.c,v 1.9 2014/07/08 05:43:40 spz Exp $	*/
+/*	$NetBSD: socket_api.c,v 1.9.2.1 2014/12/22 03:28:46 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -151,7 +151,7 @@ isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *sockaddr,
 
 isc_result_t
 isc_socket_sendto(isc_socket_t *sock, isc_region_t *region, isc_task_t *task,
-		  isc_taskaction_t action, const void *arg,
+		  isc_taskaction_t action, void *arg,
 		  isc_sockaddr_t *address, struct in6_pktinfo *pktinfo)
 {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
@@ -166,7 +166,7 @@ isc_socket_sendto(isc_socket_t *sock, isc_region_t *region, isc_task_t *task,
 
 isc_result_t
 isc_socket_connect(isc_socket_t *sock, isc_sockaddr_t *addr, isc_task_t *task,
-		   isc_taskaction_t action, const void *arg)
+		   isc_taskaction_t action, void *arg)
 {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
 
@@ -178,7 +178,7 @@ isc_socket_connect(isc_socket_t *sock, isc_sockaddr_t *addr, isc_task_t *task,
 
 isc_result_t
 isc_socket_recv(isc_socket_t *sock, isc_region_t *region, unsigned int minimum,
-		isc_task_t *task, isc_taskaction_t action, const void *arg)
+		isc_task_t *task, isc_taskaction_t action, void *arg)
 {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
 
@@ -314,7 +314,7 @@ isc_socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
 isc_result_t
 isc_socket_recvv(isc_socket_t *sock, isc_bufferlist_t *buflist,
 		 unsigned int minimum, isc_task_t *task,
-		 isc_taskaction_t action, const void *arg)
+		 isc_taskaction_t action, void *arg)
 {
 	return (isc__socket_recvv(sock, buflist, minimum, task, action, arg));
 }
@@ -329,21 +329,21 @@ isc_socket_recv2(isc_socket_t *sock, isc_region_t *region,
 
 isc_result_t
 isc_socket_send(isc_socket_t *sock, isc_region_t *region,
-		 isc_task_t *task, isc_taskaction_t action, const void *arg)
+		 isc_task_t *task, isc_taskaction_t action, void *arg)
 {
 	return (isc__socket_send(sock, region, task, action, arg));
 }
 
 isc_result_t
 isc_socket_sendv(isc_socket_t *sock, isc_bufferlist_t *buflist,
-		  isc_task_t *task, isc_taskaction_t action, const void *arg)
+		  isc_task_t *task, isc_taskaction_t action, void *arg)
 {
 	return (isc__socket_sendv(sock, buflist, task, action, arg));
 }
 
 isc_result_t
 isc_socket_sendtov(isc_socket_t *sock, isc_bufferlist_t *buflist,
-		    isc_task_t *task, isc_taskaction_t action, const void *arg,
+		    isc_task_t *task, isc_taskaction_t action, void *arg,
 		    isc_sockaddr_t *address, struct in6_pktinfo *pktinfo)
 {
 	return (isc__socket_sendtov(sock, buflist, task, action, arg,
@@ -352,7 +352,7 @@ isc_socket_sendtov(isc_socket_t *sock, isc_bufferlist_t *buflist,
 
 isc_result_t
 isc_socket_sendtov2(isc_socket_t *sock, isc_bufferlist_t *buflist,
-		    isc_task_t *task, isc_taskaction_t action, const void *arg,
+		    isc_task_t *task, isc_taskaction_t action, void *arg,
 		    isc_sockaddr_t *address, struct in6_pktinfo *pktinfo,
 		    unsigned int flags)
 {
@@ -394,7 +394,7 @@ isc_socket_listen(isc_socket_t *sock, unsigned int backlog) {
 
 isc_result_t
 isc_socket_accept(isc_socket_t *sock, isc_task_t *task,
-		   isc_taskaction_t action, const void *arg)
+		   isc_taskaction_t action, void *arg)
 {
 	return (isc__socket_accept(sock, task, action, arg));
 }

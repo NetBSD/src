@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.14 2014/07/08 05:43:37 spz Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.14.2.1 2014/12/22 03:28:33 msaitoh Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -30,8 +30,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: dnssec-keygen.c,v 1.120 2011/11/30 00:48:51 marka Exp  */
 
 /*! \file */
 
@@ -152,6 +150,7 @@ usage(void) {
 	fprintf(stderr, "    -m <memory debugging mode>:\n");
 	fprintf(stderr, "       usage | trace | record | size | mctx\n");
 	fprintf(stderr, "    -v <level>: set verbosity level (0 - 10)\n");
+	fprintf(stderr, "    -V: print version information\n");
 	fprintf(stderr, "Timing options:\n");
 	fprintf(stderr, "    -P date/[+-]offset/none: set key publication date "
 						"(default: now)\n");
@@ -270,7 +269,8 @@ main(int argc, char **argv) {
 	/*
 	 * Process memory debugging argument first.
 	 */
-#define CMDLINE_FLAGS "3A:a:b:Cc:D:d:E:eFf:Gg:hI:i:K:kL:m:n:P:p:qR:r:S:s:T:t:v:"
+#define CMDLINE_FLAGS "3A:a:b:Cc:D:d:E:eFf:Gg:hI:i:K:kL:m:n:P:p:qR:r:S:s:T:t:" \
+		      "v:V"
 	while ((ch = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
 		switch (ch) {
 		case 'm':
@@ -464,7 +464,12 @@ main(int argc, char **argv) {
 					program, isc_commandline_option);
 			/* FALLTHROUGH */
 		case 'h':
+			/* Does not return. */
 			usage();
+
+		case 'V':
+			/* Does not return. */
+			version(program);
 
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n",

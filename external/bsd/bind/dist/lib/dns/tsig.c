@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig.c,v 1.6 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: tsig.c,v 1.6.4.1 2014/12/22 03:28:45 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -1320,7 +1320,7 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg,
 	    alg == DST_ALG_HMACSHA384 || alg == DST_ALG_HMACSHA512) {
 		isc_uint16_t digestbits = dst_key_getbits(key);
 		if (tsig.siglen > siglen) {
-			tsig_log(msg->tsigkey, 2, "signature length to big");
+			tsig_log(msg->tsigkey, 2, "signature length too big");
 			return (DNS_R_FORMERR);
 		}
 		if (tsig.siglen > 0 &&

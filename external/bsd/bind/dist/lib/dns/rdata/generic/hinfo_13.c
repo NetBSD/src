@@ -1,7 +1,7 @@
-/*	$NetBSD: hinfo_13.c,v 1.3 2012/06/05 00:42:09 christos Exp $	*/
+/*	$NetBSD: hinfo_13.c,v 1.3.12.1 2014/12/22 03:28:45 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -60,9 +60,9 @@ totext_hinfo(ARGS_TOTEXT) {
 	REQUIRE(rdata->length != 0);
 
 	dns_rdata_toregion(rdata, &region);
-	RETERR(txt_totext(&region, target));
+	RETERR(txt_totext(&region, ISC_TRUE, target));
 	RETERR(str_totext(" ", target));
-	return (txt_totext(&region, target));
+	return (txt_totext(&region, ISC_TRUE, target));
 }
 
 static inline isc_result_t

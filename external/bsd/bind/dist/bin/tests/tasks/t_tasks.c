@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tasks.c,v 1.6 2014/07/08 05:43:38 spz Exp $	*/
+/*	$NetBSD: t_tasks.c,v 1.6.2.1 2014/12/22 03:28:42 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -90,6 +90,13 @@ my_tick(isc_task_t *task, isc_event_t *event) {
  * Adapted from RTH's original task_test program
  */
 
+static char one[] = "1";
+static char two[] = "2";
+static char three[] = "3";
+static char four[] = "4";
+static char tick[] = "tick";
+static char tock[] = "tock";
+
 static int
 t_tasks1(void) {
 	char			*p;
@@ -160,25 +167,25 @@ t_tasks1(void) {
 		return(T_FAIL);
 	}
 
-	isc_result = isc_task_onshutdown(task1, t1_shutdown, "1");
+	isc_result = isc_task_onshutdown(task1, t1_shutdown, one);
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("isc_task_onshutdown failed %d\n", isc_result);
 		return(T_FAIL);
 	}
 
-	isc_result = isc_task_onshutdown(task2, t1_shutdown, "2");
+	isc_result = isc_task_onshutdown(task2, t1_shutdown, two);
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("isc_task_onshutdown failed %d\n", isc_result);
 		return(T_FAIL);
 	}
 
-	isc_result = isc_task_onshutdown(task3, t1_shutdown, "3");
+	isc_result = isc_task_onshutdown(task3, t1_shutdown, three);
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("isc_task_onshutdown failed %d\n", isc_result);
 		return(T_FAIL);
 	}
 
-	isc_result = isc_task_onshutdown(task4, t1_shutdown, "4");
+	isc_result = isc_task_onshutdown(task4, t1_shutdown, four);
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("isc_task_onshutdown failed %d\n", isc_result);
 		return(T_FAIL);
@@ -196,7 +203,7 @@ t_tasks1(void) {
 	isc_interval_set(&interval, 1, 0);
 	isc_result = isc_timer_create(timgr, isc_timertype_ticker,
 				&absolute, &interval,
-				task1, my_tick, "tick", &ti1);
+				task1, my_tick, tick, &ti1);
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("isc_timer_create %d\n", isc_result);
 		return(T_UNRESOLVED);
@@ -207,7 +214,7 @@ t_tasks1(void) {
 	isc_interval_set(&interval, 1, 0);
 	isc_result = isc_timer_create(timgr, isc_timertype_ticker,
 				       &absolute, &interval,
-				       task2, my_tick, "tock", &ti2);
+				       task2, my_tick, tock, &ti2);
 	if (isc_result != ISC_R_SUCCESS) {
 		t_info("isc_timer_create %d\n", isc_result);
 		return(T_UNRESOLVED);
@@ -228,7 +235,7 @@ t_tasks1(void) {
 	 * structure (socket, timer, task, etc) but this is just a test
 	 * program.
 	 */
-	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, one,
 				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
@@ -237,7 +244,7 @@ t_tasks1(void) {
 
 	isc_task_send(task1, &event);
 
-	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, one,
 				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
@@ -246,7 +253,7 @@ t_tasks1(void) {
 
 	isc_task_send(task1, &event);
 
-	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, one,
 				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
@@ -255,7 +262,7 @@ t_tasks1(void) {
 
 	isc_task_send(task1, &event);
 
-	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, one,
 				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
@@ -264,7 +271,7 @@ t_tasks1(void) {
 
 	isc_task_send(task1, &event);
 
-	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, one,
 				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
@@ -273,7 +280,7 @@ t_tasks1(void) {
 
 	isc_task_send(task1, &event);
 
-	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, one,
 				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
@@ -282,7 +289,7 @@ t_tasks1(void) {
 
 	isc_task_send(task1, &event);
 
-	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, one,
 				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
@@ -291,7 +298,7 @@ t_tasks1(void) {
 
 	isc_task_send(task1, &event);
 
-	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, one,
 				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
@@ -300,7 +307,7 @@ t_tasks1(void) {
 
 	isc_task_send(task1, &event);
 
-	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, one,
 				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
@@ -309,7 +316,7 @@ t_tasks1(void) {
 
 	isc_task_send(task1, &event);
 
-	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "2",
+	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, two,
 				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
@@ -318,7 +325,7 @@ t_tasks1(void) {
 
 	isc_task_send(task2, &event);
 
-	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "3",
+	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, three,
 				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
@@ -327,7 +334,7 @@ t_tasks1(void) {
 
 	isc_task_send(task3, &event);
 
-	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "4",
+	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, four,
 				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
@@ -336,7 +343,7 @@ t_tasks1(void) {
 
 	isc_task_send(task4, &event);
 
-	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "2",
+	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, two,
 				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
@@ -345,7 +352,7 @@ t_tasks1(void) {
 
 	isc_task_send(task2, &event);
 
-	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "3",
+	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, three,
 				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");
@@ -354,7 +361,7 @@ t_tasks1(void) {
 
 	isc_task_send(task3, &event);
 
-	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, "4",
+	event = isc_event_allocate(mctx, (void *)1, 1, t1_callback, four,
 				   sizeof(*event));
 	if (event == NULL) {
 		t_info("isc_event_allocate failed\n");

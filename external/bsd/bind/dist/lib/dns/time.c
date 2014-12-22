@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.5 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.5.4.1 2014/12/22 03:28:45 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -37,7 +37,7 @@
 #include <dns/result.h>
 #include <dns/time.h>
 
-static int days[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+static const int days[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
 isc_result_t
 dns_time64_totext(isc_int64_t t, isc_buffer_t *target) {
@@ -163,6 +163,14 @@ dns_time64_fromtext(const char *source, isc_int64_t *target) {
 	RANGE(1, 12, month);
 	RANGE(1, days[month - 1] +
 		 ((month == 2 && is_leap(year)) ? 1 : 0), day);
+#ifdef __COVERITY__
+	/*
+	 * Use a simplified range to silence Coverity warning (in
+	 * arithmetic with day below).
+	 */
+	RANGE(1, 31, day);
+#endif /* __COVERITY__ */
+
 	RANGE(0, 23, hour);
 	RANGE(0, 59, minute);
 	RANGE(0, 60, second);		/* 60 == leap second. */

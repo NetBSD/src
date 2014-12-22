@@ -1,4 +1,4 @@
-/*	$NetBSD: rcode.c,v 1.7 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: rcode.c,v 1.7.4.1 2014/12/22 03:28:45 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -226,11 +226,13 @@ maybe_numeric(unsigned int *valuep, isc_textregion_t *source,
 		return (ISC_R_BADNUMBER);
 
 	/*
-	 * We have a potential number.  Try to parse it with
-	 * isc_parse_uint32().  isc_parse_uint32() requires
+	 * We have a potential number.	Try to parse it with
+	 * isc_parse_uint32().	isc_parse_uint32() requires
 	 * null termination, so we must make a copy.
 	 */
-	strncpy(buffer, source->base, NUMBERSIZE);
+	strncpy(buffer, source->base, sizeof(buffer));
+	buffer[sizeof(buffer) - 1] = '\0';
+
 	INSIST(buffer[source->length] == '\0');
 
 	result = isc_parse_uint32(&n, buffer, 10);

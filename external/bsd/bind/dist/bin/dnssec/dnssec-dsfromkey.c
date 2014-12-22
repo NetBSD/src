@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.9 2014/07/08 05:43:37 spz Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.9.2.1 2014/12/22 03:28:33 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2008-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: dnssec-dsfromkey.c,v 1.24.114.1 2012/02/07 00:44:12 each Exp  */
 
 /*! \file */
 
@@ -332,6 +330,7 @@ usage(void) {
 	fprintf(stderr, "Version: %s\n", VERSION);
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "    -v <verbose level>\n");
+	fprintf(stderr, "    -V: print version information\n");
 	fprintf(stderr, "    -K <directory>: directory in which to find "
 			"key file or keyset file\n");
 	fprintf(stderr, "    -a algorithm: digest algorithm "
@@ -384,7 +383,7 @@ main(int argc, char **argv) {
 	isc_commandline_errprint = ISC_FALSE;
 
 	while ((ch = isc_commandline_parse(argc, argv,
-					   "12Aa:c:d:Ff:K:l:sT:v:h")) != -1) {
+					   "12Aa:c:d:Ff:K:l:sT:v:hV")) != -1) {
 		switch (ch) {
 		case '1':
 			dtype = DNS_DSDIGEST_SHA1;
@@ -441,7 +440,12 @@ main(int argc, char **argv) {
 					program, isc_commandline_option);
 			/* FALLTHROUGH */
 		case 'h':
+			/* Does not return. */
 			usage();
+
+		case 'V':
+			/* Does not return. */
+			version(program);
 
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n",

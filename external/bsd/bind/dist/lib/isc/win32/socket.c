@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.8 2014/07/08 05:43:40 spz Exp $	*/
+/*	$NetBSD: socket.c,v 1.8.2.1 2014/12/22 03:28:46 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -1073,7 +1073,7 @@ destroy_socketevent(isc_event_t *event) {
 static isc_socketevent_t *
 allocate_socketevent(isc_mem_t *mctx, isc_socket_t *sock,
 		     isc_eventtype_t eventtype, isc_taskaction_t action,
-		     const void *arg)
+		     void *arg)
 {
 	isc_socketevent_t *ev;
 
@@ -1092,6 +1092,7 @@ allocate_socketevent(isc_mem_t *mctx, isc_socket_t *sock,
 	ev->attributes = 0;
 	ev->destroy = ev->ev_destroy;
 	ev->ev_destroy = destroy_socketevent;
+	ev->dscp = 0;
 
 	return (ev);
 }
@@ -2835,7 +2836,7 @@ socket_recv(isc_socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 isc_result_t
 isc__socket_recvv(isc_socket_t *sock, isc_bufferlist_t *buflist,
 		 unsigned int minimum, isc_task_t *task,
-		 isc_taskaction_t action, const void *arg)
+		 isc_taskaction_t action, void *arg)
 {
 	isc_socketevent_t *dev;
 	isc_socketmgr_t *manager;
@@ -2906,7 +2907,7 @@ isc__socket_recvv(isc_socket_t *sock, isc_bufferlist_t *buflist,
 isc_result_t
 isc__socket_recv(isc_socket_t *sock, isc_region_t *region,
 		 unsigned int minimum, isc_task_t *task,
-		 isc_taskaction_t action, const void *arg)
+		 isc_taskaction_t action, void *arg)
 {
 	isc_socketevent_t *dev;
 	isc_socketmgr_t *manager;
@@ -3055,7 +3056,7 @@ socket_send(isc_socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
 
 isc_result_t
 isc__socket_send(isc_socket_t *sock, isc_region_t *region,
-		 isc_task_t *task, isc_taskaction_t action, const void *arg)
+		 isc_task_t *task, isc_taskaction_t action, void *arg)
 {
 	/*
 	 * REQUIRE() checking is performed in isc_socket_sendto().
@@ -3066,7 +3067,7 @@ isc__socket_send(isc_socket_t *sock, isc_region_t *region,
 
 isc_result_t
 isc__socket_sendto(isc_socket_t *sock, isc_region_t *region,
-		   isc_task_t *task, isc_taskaction_t action, const void *arg,
+		   isc_task_t *task, isc_taskaction_t action, void *arg,
 		   isc_sockaddr_t *address, struct in6_pktinfo *pktinfo)
 {
 	isc_socketevent_t *dev;
@@ -3110,7 +3111,7 @@ isc__socket_sendto(isc_socket_t *sock, isc_region_t *region,
 
 isc_result_t
 isc__socket_sendv(isc_socket_t *sock, isc_bufferlist_t *buflist,
-		  isc_task_t *task, isc_taskaction_t action, const void *arg)
+		  isc_task_t *task, isc_taskaction_t action, void *arg)
 {
 	return (isc_socket_sendtov2(sock, buflist, task, action, arg, NULL,
 				    NULL, 0));
@@ -3118,7 +3119,7 @@ isc__socket_sendv(isc_socket_t *sock, isc_bufferlist_t *buflist,
 
 isc_result_t
 isc__socket_sendtov(isc_socket_t *sock, isc_bufferlist_t *buflist,
-		    isc_task_t *task, isc_taskaction_t action, const void *arg,
+		    isc_task_t *task, isc_taskaction_t action, void *arg,
 		    isc_sockaddr_t *address, struct in6_pktinfo *pktinfo)
 {
 	return (isc_socket_sendtov2(sock, buflist, task, action, arg, address,
@@ -3127,7 +3128,7 @@ isc__socket_sendtov(isc_socket_t *sock, isc_bufferlist_t *buflist,
 
 isc_result_t
 isc__socket_sendtov2(isc_socket_t *sock, isc_bufferlist_t *buflist,
-		     isc_task_t *task, isc_taskaction_t action, const void *arg,
+		     isc_task_t *task, isc_taskaction_t action, void *arg,
 		     isc_sockaddr_t *address, struct in6_pktinfo *pktinfo,
 		     unsigned int flags)
 {
@@ -3350,7 +3351,7 @@ isc__socket_listen(isc_socket_t *sock, unsigned int backlog) {
  */
 isc_result_t
 isc__socket_accept(isc_socket_t *sock,
-		   isc_task_t *task, isc_taskaction_t action, const void *arg)
+		   isc_task_t *task, isc_taskaction_t action, void *arg)
 {
 	isc_socket_newconnev_t *adev;
 	isc_socketmgr_t *manager;
@@ -3468,7 +3469,7 @@ isc__socket_accept(isc_socket_t *sock,
 
 isc_result_t
 isc__socket_connect(isc_socket_t *sock, isc_sockaddr_t *addr,
-		    isc_task_t *task, isc_taskaction_t action, const void *arg)
+		    isc_task_t *task, isc_taskaction_t action, void *arg)
 {
 	char strbuf[ISC_STRERRORSIZE];
 	isc_socket_connev_t *cdev;
@@ -3938,7 +3939,7 @@ isc___socketmgr_maxudp(isc_socketmgr_t *manager, int maxudp) {
 isc_socketevent_t *
 isc_socket_socketevent(isc_mem_t *mctx, void *sender,
 		       isc_eventtype_t eventtype, isc_taskaction_t action,
-		       const void *arg)
+		       void *arg)
 {
 	return (allocate_socketevent(mctx, sender, eventtype, action, arg));
 }

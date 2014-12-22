@@ -1,4 +1,4 @@
-/*	$NetBSD: result.h,v 1.1.1.2 2014/07/12 11:57:57 spz Exp $	*/
+/*	$NetBSD: result.h,v 1.1.1.2.2.1 2014/12/22 03:28:49 msaitoh Exp $	*/
 /* result.h
  */
 
@@ -81,6 +81,7 @@
 
 // Included for historical reasons, these should be removed as
 // soon as reasonable
+#if 0
 #define ISC_R_HOSTUNKNOWN	DHCP_R_HOSTUNKNOWN
 #define ISC_R_VERSIONMISMATCH	DHCP_R_VERSIONMISMATCH
 #define ISC_R_PROTOCOLERROR	DHCP_R_PROTOCOLERROR	
@@ -114,6 +115,7 @@
 #define ISC_R_NOT_EQUAL		DHCP_R_NOT_EQUAL		
 #define ISC_R_CONNRESET		DHCP_R_CONNRESET		
 #define ISC_R_UNKNOWNATTRIBUTE	DHCP_R_UNKNOWNATTRIBUTE	
+#endif
 
 isc_result_t
 dhcp_result_register(void);

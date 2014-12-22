@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 2014/07/08 05:43:40 spz Exp $	*/
+/*	$NetBSD: mem.c,v 1.10.2.1 2014/12/22 03:28:46 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -1787,7 +1787,6 @@ isc__mem_setwater(isc_mem_t *ctx0, isc_mem_water_t water, void *water_arg,
 		ctx->water_arg = water_arg;
 		ctx->hi_water = hiwater;
 		ctx->lo_water = lowater;
-		ctx->hi_called = ISC_FALSE;
 	}
 	MCTXUNLOCK(ctx, &ctx->lock);
 

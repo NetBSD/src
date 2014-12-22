@@ -51,16 +51,13 @@ BIND 9
 	For up-to-date release notes and errata, see
 	http://www.isc.org/software/bind9/releasenotes
 
-BIND 9.10.0-P2
+BIND 9.10.1
 
-	This release addresses the security flaw described in
-	CVE-2014-3859.  This release should also be used if you
-	compile with GCC 4.9.0 or later.
+	BIND 9.10.1 is a maintenance release and addresses bugs
+        found in BIND 9.10.0 and earlier.
 
-BIND 9.10.0-P1
-
-        This release addresses the security flaw described in
-        CVE-2014-3214.
+        This release addresses the security flaws described in
+        CVE-2014-3214 and CVE-2014-3859.
 
 BIND 9.10.0
 
@@ -125,7 +122,7 @@ BIND 9.10.0
 	   browsers.
 	 - The statistics channel can now provide data in JSON
 	   format as well as XML.
-	 - New stats counters track TCP and UDP queries recieved
+	 - New stats counters track TCP and UDP queries received
 	   per zone, and EDNS options received in total.
 	 - The internal and export versions of the BIND libraries
 	   (libisc, libdns, etc) have been unified so that external
@@ -508,23 +505,29 @@ Change Log
 
 Bug Reports and Mailing Lists
 
-	Bugs reports should be sent to
+	Bug reports should be sent to:
 
 		bind9-bugs@isc.org
 
-	To join the BIND Users mailing list, send mail to
+	Feature requests can be sent to:
 
-		bind-users-request@isc.org
+		bind-suggest@isc.org
 
-	archives of which can be found via
+	To join or view the archives of the BIND Users mailing list,
+	visit:
 
-		http://www.isc.org/ops/lists/
+		https://lists.isc.org/mailman/listinfo/bind-users
 
 	If you're planning on making changes to the BIND 9 source
-	code, you might want to join the BIND Workers mailing list.
-	Send mail to
+	code, you may also want to join the BIND Workers mailing
+	list:
 
-		bind-workers-request@isc.org
+		https://lists.isc.org/mailman/listinfo/bind-workers
+
+	Information on read-only Git access, coding style and developer
+	guidelines can be found at:
+
+		http://www.isc.org/git/
 
 
 Acknowledgments

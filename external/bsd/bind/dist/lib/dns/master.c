@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.12 2014/07/08 05:43:39 spz Exp $	*/
+/*	$NetBSD: master.c,v 1.12.2.1 2014/12/22 03:28:45 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -92,6 +92,8 @@
  */
 #define DNS_MASTER_LHS 2048
 #define DNS_MASTER_RHS MINTSIZ
+
+#define CHECKNAMESFAIL(x) (((x) & DNS_MASTER_CHECKNAMESFAIL) != 0)
 
 typedef ISC_LIST(dns_rdatalist_t) rdatalist_head_t;
 
@@ -1769,7 +1771,8 @@ load_text(dns_loadctx_t *lctx) {
 				dns_name_format(name, namebuf, sizeof(namebuf));
 				result = DNS_R_BADOWNERNAME;
 				desc = dns_result_totext(result);
-				if ((lctx->options & DNS_MASTER_CHECKNAMESFAIL) != 0) {
+				if (CHECKNAMESFAIL(lctx->options) ||
+				    type == dns_rdatatype_nsec3) {
 					(*callbacks->error)(callbacks,
 							    "%s:%lu: %s: %s",
 							    source, line,
@@ -2373,7 +2376,7 @@ load_raw(dns_loadctx_t *lctx) {
 		rdatalist.covers = isc_buffer_getuint16(&target);
 		rdatalist.ttl =  isc_buffer_getuint32(&target);
 		rdcount = isc_buffer_getuint32(&target);
-		if (rdcount == 0) {
+		if (rdcount == 0 || rdcount > 0xffff) {
 			result = ISC_R_RANGE;
 			goto cleanup;
 		}

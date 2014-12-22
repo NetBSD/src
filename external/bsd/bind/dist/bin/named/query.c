@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.16 2014/07/08 05:43:37 spz Exp $	*/
+/*	$NetBSD: query.c,v 1.16.2.1 2014/12/22 03:28:34 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -2544,11 +2544,12 @@ query_addrrset(ns_client_t *client, dns_name_t **namep,
 	if (result == ISC_R_SUCCESS) {
 		/*
 		 * We've already got an RRset of the given name and type.
-		 * There's nothing else to do;
 		 */
 		CTRACE("query_addrrset: dns_message_findname succeeded: done");
 		if (dbuf != NULL)
 			query_releasename(client, namep);
+		if ((rdataset->attributes & DNS_RDATASETATTR_REQUIRED) != 0)
+			mrdataset->attributes |= DNS_RDATASETATTR_REQUIRED;
 		return;
 	} else if (result == DNS_R_NXDOMAIN) {
 		/*
@@ -2588,7 +2589,8 @@ query_addrrset(ns_client_t *client, dns_name_t **namep,
 
 static inline isc_result_t
 query_addsoa(ns_client_t *client, dns_db_t *db, dns_dbversion_t *version,
-	     unsigned int override_ttl, isc_boolean_t isassociated)
+	     unsigned int override_ttl, isc_boolean_t isassociated,
+	     dns_section_t section)
 {
 	dns_name_t *name;
 	dns_dbnode_t *node;
@@ -2695,8 +2697,11 @@ query_addsoa(ns_client_t *client, dns_db_t *db, dns_dbversion_t *version,
 			sigrdatasetp = &sigrdataset;
 		else
 			sigrdatasetp = NULL;
+
+		if (section == DNS_SECTION_ADDITIONAL)
+			rdataset->attributes |= DNS_RDATASETATTR_REQUIRED;
 		query_addrrset(client, &name, &rdataset, sigrdatasetp, NULL,
-			       DNS_SECTION_AUTHORITY);
+			       section);
 	}
 
  cleanup:
@@ -3860,12 +3865,13 @@ query_prefetch(ns_client_t *client, dns_name_t *qname,
 		peeraddr = NULL;
 	ns_client_attach(client, &dummy);
 	options = client->query.fetchoptions | DNS_FETCHOPT_PREFETCH;
-	result = dns_resolver_createfetch2(client->view->resolver,
+	result = dns_resolver_createfetch3(client->view->resolver,
 					   qname, rdataset->type, NULL, NULL,
 					   NULL, peeraddr, client->message->id,
-					   options, client->task,
-					   prefetch_done, client, tmprdataset,
-					   NULL, &client->query.prefetch);
+					   options, 0, NULL, client->task,
+					   prefetch_done, client,
+					   tmprdataset, NULL,
+					   &client->query.prefetch);
 	if (result != ISC_R_SUCCESS) {
 		query_putrdataset(client, &tmprdataset);
 		ns_client_detach(&dummy);
@@ -3980,12 +3986,11 @@ query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qname,
 		peeraddr = &client->peeraddr;
 	else
 		peeraddr = NULL;
-	result = dns_resolver_createfetch2(client->view->resolver,
+	result = dns_resolver_createfetch3(client->view->resolver,
 					   qname, qtype, qdomain, nameservers,
 					   NULL, peeraddr, client->message->id,
-					   client->query.fetchoptions,
-					   client->task,
-					   query_resume, client,
+					   client->query.fetchoptions, 0, NULL,
+					   client->task, query_resume, client,
 					   rdataset, sigrdataset,
 					   &client->query.fetch);
 
@@ -5431,7 +5436,7 @@ rpz_add_cname(ns_client_t *client, dns_rpz_st_t *st,
 	 * response policy zone cannot verify.
 	 */
 	client->attributes &= ~(NS_CLIENTATTR_WANTDNSSEC |
-				DNS_MESSAGEFLAG_AD);
+				NS_CLIENTATTR_WANTAD);
 	return (ISC_R_SUCCESS);
 }
 
@@ -5623,7 +5628,7 @@ answer_in_glue(ns_client_t *client, dns_rdatatype_t qtype) {
 		ISC_LIST_PREPEND(msg->sections[section], name, link);
 		ISC_LIST_UNLINK(name->list, rdataset, link);
 		ISC_LIST_PREPEND(name->list, rdataset, link);
-		rdataset->attributes |= DNS_RDATASETATTR_REQUIREDGLUE;
+		rdataset->attributes |= DNS_RDATASETATTR_REQUIRED;
 	}
 }
 
@@ -6087,8 +6092,12 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 	isc_boolean_t resuming;
 	int line = -1;
 	isc_boolean_t dns64_exclude, dns64;
+	isc_boolean_t nxrewrite = ISC_FALSE;
 	dns_clientinfomethods_t cm;
 	dns_clientinfo_t ci;
+	isc_boolean_t associated;
+	dns_section_t section;
+	dns_ttl_t ttl;
 
 	CTRACE("query_find");
 
@@ -6465,8 +6474,7 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 			 * with other truncated responses in RespTruncated.
 			 */
 			if (wouldlog) {
-				ns_client_log(client,
-					      NS_LOGCATEGORY_QUERY_EERRORS,
+				ns_client_log(client, DNS_LOGCATEGORY_RRL,
 					      NS_LOGMODULE_QUERY,
 					      DNS_RRL_LOG_DROP,
 					      "%s", log_buf);
@@ -6594,9 +6602,11 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 				goto cleanup;
 			case DNS_RPZ_POLICY_NXDOMAIN:
 				result = DNS_R_NXDOMAIN;
+				nxrewrite = ISC_TRUE;
 				break;
 			case DNS_RPZ_POLICY_NODATA:
 				result = DNS_R_NXRRSET;
+				nxrewrite = ISC_TRUE;
 				break;
 			case DNS_RPZ_POLICY_RECORD:
 				result = rpz_st->m.result;
@@ -6655,7 +6665,8 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 			 * response policy zone cannot verify.
 			 */
 			client->attributes &= ~(NS_CLIENTATTR_WANTDNSSEC |
-						DNS_MESSAGEFLAG_AD);
+						NS_CLIENTATTR_WANTAD);
+			client->message->flags &= ~DNS_MESSAGEFLAG_AD;
 			query_putrdataset(client, &sigrdataset);
 			rpz_st->q.is_zone = is_zone;
 			is_zone = ISC_TRUE;
@@ -7140,15 +7151,22 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 			 */
 			query_releasename(client, &fname);
 		}
+
 		/*
-		 * Add SOA.
+		 * Add SOA to the additional section if generated by a RPZ
+		 * rewrite.
 		 */
+		associated = dns_rdataset_isassociated(rdataset);
+		section = nxrewrite ? DNS_SECTION_ADDITIONAL :
+				      DNS_SECTION_AUTHORITY;
+
 		result = query_addsoa(client, db, version, ISC_UINT32_MAX,
-				      dns_rdataset_isassociated(rdataset));
+				      associated, section);
 		if (result != ISC_R_SUCCESS) {
 			QUERY_ERROR(result);
 			goto cleanup;
 		}
+
 		/*
 		 * Add NSEC record if we found one.
 		 */
@@ -7187,20 +7205,23 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 		}
 
 		/*
-		 * Add SOA.  If the query was for a SOA record force the
+		 * Add SOA to the additional section if generated by a
+		 * RPZ rewrite.
+		 *
+		 * If the query was for a SOA record force the
 		 * ttl to zero so that it is possible for clients to find
 		 * the containing zone of an arbitrary name with a stub
 		 * resolver and not have it cached.
 		 */
-		if (qtype == dns_rdatatype_soa &&
-		    zone != NULL &&
-		    dns_zone_getzeronosoattl(zone))
-			result = query_addsoa(client, db, version, 0,
-					  dns_rdataset_isassociated(rdataset));
-		else
-			result = query_addsoa(client, db, version,
-					      ISC_UINT32_MAX,
-					  dns_rdataset_isassociated(rdataset));
+		associated = dns_rdataset_isassociated(rdataset);
+		section = nxrewrite ? DNS_SECTION_ADDITIONAL :
+				      DNS_SECTION_AUTHORITY;
+		ttl = ISC_UINT32_MAX;
+		if (!nxrewrite && qtype == dns_rdatatype_soa &&
+		    zone != NULL && dns_zone_getzeronosoattl(zone))
+			ttl = 0;
+		result = query_addsoa(client, db, version, ttl, associated,
+				      section);
 		if (result != ISC_R_SUCCESS) {
 			QUERY_ERROR(result);
 			goto cleanup;
@@ -7918,7 +7939,8 @@ query_find(ns_client_t *client, dns_fetchevent_t *event, dns_rdatatype_t qtype)
 					 * Add a fake SOA record.
 					 */
 					(void)query_addsoa(client, db, version,
-							   600, ISC_FALSE);
+							   600, ISC_FALSE,
+							DNS_SECTION_AUTHORITY);
 					goto cleanup;
 				}
 #endif
@@ -8114,8 +8136,8 @@ log_query(ns_client_t *client, unsigned int flags, unsigned int extflags) {
 	ns_client_log(client, NS_LOGCATEGORY_QUERIES, NS_LOGMODULE_QUERY,
 		      level, "query: %s %s %s %s%s%s%s%s%s (%s)", namebuf,
 		      classname, typename, WANTRECURSION(client) ? "+" : "-",
-		      (client->signer != NULL) ? "S": "",
-		      (client->opt != NULL) ? "E" : "",
+		      (client->signer != NULL) ? "S" : "",
+		      (client->ednsversion >= 0) ? "E" : "",
 		      ((client->attributes & NS_CLIENTATTR_TCP) != 0) ?
 				 "T" : "",
 		      ((extflags & DNS_MESSAGEEXTFLAG_DO) != 0) ? "D" : "",
@@ -8194,8 +8216,6 @@ ns_query_start(ns_client_t *client) {
 	if (!client->view->enablednssec) {
 		message->flags &= ~DNS_MESSAGEFLAG_CD;
 		client->extflags &= ~DNS_MESSAGEEXTFLAG_DO;
-		if (client->opt != NULL)
-			client->opt->ttl &= ~DNS_MESSAGEEXTFLAG_DO;
 	}
 
 	if ((message->flags & DNS_MESSAGEFLAG_RD) != 0)
@@ -8307,7 +8327,7 @@ ns_query_start(ns_client_t *client) {
 	/*
 	 * Turn on minimal responses for EDNS/UDP bufsize 512 queries.
 	 */
-	if (client->opt != NULL && client->udpsize <= 512U &&
+	if (client->ednsversion >= 0 && client->udpsize <= 512U &&
 	    (client->attributes & NS_CLIENTATTR_TCP) == 0)
 		client->query.attributes |= (NS_QUERYATTR_NOAUTHORITY |
 					     NS_QUERYATTR_NOADDITIONAL);

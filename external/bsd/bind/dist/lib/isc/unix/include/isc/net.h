@@ -1,7 +1,7 @@
-/*	$NetBSD: net.h,v 1.4 2014/03/01 03:24:40 christos Exp $	*/
+/*	$NetBSD: net.h,v 1.4.4.1 2014/12/22 03:28:46 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any

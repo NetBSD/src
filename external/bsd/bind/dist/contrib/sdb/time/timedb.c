@@ -1,7 +1,7 @@
-/*	$NetBSD: timedb.c,v 1.3 2012/06/05 00:40:05 christos Exp $	*/
+/*	$NetBSD: timedb.c,v 1.3.12.1 2014/12/22 03:28:43 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -132,7 +132,8 @@ static dns_sdbmethods_t timedb_methods = {
 	timedb_authority,
 	NULL,	/* allnodes */
 	NULL,	/* create */
-	NULL	/* destroy */
+	NULL,	/* destroy */
+	NULL	/* lookup2 */
 };
 
 /*

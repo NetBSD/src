@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.9 2014/03/01 22:59:10 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.9.4.1 2014/12/22 03:28:45 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -1253,7 +1253,10 @@ get_hints(dns_dnsseckey_t *key, isc_stdtime_t now) {
 	/* Metadata says activate (so we must also publish) */
 	if (actset && active <= now) {
 		key->hint_sign = ISC_TRUE;
-		key->hint_publish = ISC_TRUE;
+
+		/* Only publish if publish time has already passed. */
+		if (pubset && publish <= now)
+			key->hint_publish = ISC_TRUE;
 	}
 
 	/*
@@ -1528,7 +1531,7 @@ dns_dnssec_keylistfromrdataset(dns_name_t *origin,
 			       const char *directory, isc_mem_t *mctx,
 			       dns_rdataset_t *keyset, dns_rdataset_t *keysigs,
 			       dns_rdataset_t *soasigs, isc_boolean_t savekeys,
-			       isc_boolean_t public,
+			       isc_boolean_t publickey,
 			       dns_dnsseckeylist_t *keylist)
 {
 	dns_rdataset_t keys;
@@ -1557,7 +1560,7 @@ dns_dnssec_keylistfromrdataset(dns_name_t *origin,
 		if (!dns_name_equal(origin, dst_key_name(pubkey)))
 			goto skip;
 
-		if (public) {
+		if (publickey) {
 			RETERR(addkey(keylist, &pubkey, savekeys, mctx));
 			goto skip;
 		}

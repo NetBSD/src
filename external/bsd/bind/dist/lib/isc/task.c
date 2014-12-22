@@ -1,4 +1,4 @@
-/*	$NetBSD: task.c,v 1.10 2014/07/08 05:43:40 spz Exp $	*/
+/*	$NetBSD: task.c,v 1.10.2.1 2014/12/22 03:28:46 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -209,7 +209,7 @@ isc__task_unsend(isc_task_t *task, void *sender, isc_eventtype_t type,
 		 void *tag, isc_eventlist_t *events);
 isc_result_t
 isc__task_onshutdown(isc_task_t *task0, isc_taskaction_t action,
-		     const void *arg);
+		     void *arg);
 void
 isc__task_shutdown(isc_task_t *task0);
 void
@@ -800,7 +800,7 @@ isc__task_unsend(isc_task_t *task, void *sender, isc_eventtype_t type,
 
 isc_result_t
 isc__task_onshutdown(isc_task_t *task0, isc_taskaction_t action,
-		     const void *arg)
+		     void *arg)
 {
 	isc__task_t *task = (isc__task_t *)task0;
 	isc_boolean_t disallowed = ISC_FALSE;
@@ -2165,7 +2165,7 @@ isc_task_unsend(isc_task_t *task, void *sender, isc_eventtype_t type,
 }
 
 isc_result_t
-isc_task_onshutdown(isc_task_t *task, isc_taskaction_t action, const void *arg)
+isc_task_onshutdown(isc_task_t *task, isc_taskaction_t action, void *arg)
 {
 	REQUIRE(ISCAPI_TASK_VALID(task));
 

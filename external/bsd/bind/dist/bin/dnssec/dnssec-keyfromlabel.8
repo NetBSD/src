@@ -1,4 +1,4 @@
-.\"	$NetBSD: dnssec-keyfromlabel.8,v 1.8 2014/07/08 05:43:37 spz Exp $
+.\"	$NetBSD: dnssec-keyfromlabel.8,v 1.8.2.1 2014/12/22 03:28:33 msaitoh Exp $
 .\"
 .\" Copyright (C) 2008-2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 .\" 
@@ -34,7 +34,7 @@
 dnssec\-keyfromlabel \- DNSSEC key generation tool
 .SH "SYNOPSIS"
 .HP 20
-\fBdnssec\-keyfromlabel\fR {\-l\ \fIlabel\fR} [\fB\-3\fR] [\fB\-a\ \fR\fB\fIalgorithm\fR\fR] [\fB\-A\ \fR\fB\fIdate/offset\fR\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-D\ \fR\fB\fIdate/offset\fR\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-f\ \fR\fB\fIflag\fR\fR] [\fB\-G\fR] [\fB\-I\ \fR\fB\fIdate/offset\fR\fR] [\fB\-i\ \fR\fB\fIinterval\fR\fR] [\fB\-k\fR] [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-L\ \fR\fB\fIttl\fR\fR] [\fB\-n\ \fR\fB\fInametype\fR\fR] [\fB\-P\ \fR\fB\fIdate/offset\fR\fR] [\fB\-p\ \fR\fB\fIprotocol\fR\fR] [\fB\-R\ \fR\fB\fIdate/offset\fR\fR] [\fB\-S\ \fR\fB\fIkey\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-y\fR] {name}
+\fBdnssec\-keyfromlabel\fR {\-l\ \fIlabel\fR} [\fB\-3\fR] [\fB\-a\ \fR\fB\fIalgorithm\fR\fR] [\fB\-A\ \fR\fB\fIdate/offset\fR\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-D\ \fR\fB\fIdate/offset\fR\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-f\ \fR\fB\fIflag\fR\fR] [\fB\-G\fR] [\fB\-I\ \fR\fB\fIdate/offset\fR\fR] [\fB\-i\ \fR\fB\fIinterval\fR\fR] [\fB\-k\fR] [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-L\ \fR\fB\fIttl\fR\fR] [\fB\-n\ \fR\fB\fInametype\fR\fR] [\fB\-P\ \fR\fB\fIdate/offset\fR\fR] [\fB\-p\ \fR\fB\fIprotocol\fR\fR] [\fB\-R\ \fR\fB\fIdate/offset\fR\fR] [\fB\-S\ \fR\fB\fIkey\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-V\fR] [\fB\-y\fR] {name}
 .SH "DESCRIPTION"
 .PP
 \fBdnssec\-keyfromlabel\fR
@@ -168,6 +168,11 @@ must be one of AUTHCONF, NOAUTHCONF, NOAUTH, or NOCONF. The default is AUTHCONF.
 \-v \fIlevel\fR
 .RS 4
 Sets the debugging level.
+.RE
+.PP
+\-V
+.RS 4
+Prints version information.
 .RE
 .PP
 \-y

@@ -1,7 +1,7 @@
-/*	$NetBSD: platform.h,v 1.5 2014/07/08 05:43:40 spz Exp $	*/
+/*	$NetBSD: platform.h,v 1.5.2.1 2014/12/22 03:28:47 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -68,6 +68,9 @@
  * Defined if unistd.h does not cause fd_set to be delared.
  */
 /*@LWRES_PLATFORM_NEEDSYSSELECTH@ */
+
+/* VS2005 does not provide strlcpy() */
+#define LWRES_PLATFORM_NEEDSTRLCPY
 
 /*
  * Define some Macros

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-verify.c,v 1.7 2014/07/08 05:43:37 spz Exp $	*/
+/*	$NetBSD: dnssec-verify.c,v 1.7.2.1 2014/12/22 03:28:33 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: dnssec-verify.c,v 1.1.2.1 2011/03/16 06:37:51 each Exp  */
 
 /*! \file */
 
@@ -137,6 +135,7 @@ usage(void) {
 
 	fprintf(stderr, "Options: (default value in parenthesis) \n");
 	fprintf(stderr, "\t-v debuglevel (0)\n");
+	fprintf(stderr, "\t-V:\tprint version information\n");
 	fprintf(stderr, "\t-o origin:\n");
 	fprintf(stderr, "\t\tzone origin (name of zonefile)\n");
 	fprintf(stderr, "\t-I format:\n");
@@ -175,7 +174,7 @@ main(int argc, char *argv[]) {
 	int ch;
 
 #define CMDLINE_FLAGS \
-	"m:o:I:c:E:v:xz"
+	"hm:o:I:c:E:v:Vxz"
 
 	/*
 	 * Process memory debugging argument first.
@@ -222,10 +221,6 @@ main(int argc, char *argv[]) {
 			engine = isc_commandline_argument;
 			break;
 
-		case 'h':
-			usage();
-			break;
-
 		case 'I':
 			inputformatstr = isc_commandline_argument;
 			break;
@@ -256,8 +251,15 @@ main(int argc, char *argv[]) {
 			if (isc_commandline_option != '?')
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
+			/* FALLTHROUGH */
+
+		case 'h':
+			/* Does not return. */
 			usage();
-			break;
+
+		case 'V':
+			/* Does not return. */
+			version(program);
 
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n",

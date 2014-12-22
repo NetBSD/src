@@ -43,6 +43,7 @@
       <year>2003</year>
       <holder>Internet Software Consortium.</holder>
     </copyright>
+    <xi:include href="releaseinfo.xml"/>
   </bookinfo>
 
   <chapter id="Bv9ARM.ch01">
@@ -70,12 +71,9 @@
 	<acronym>BIND</acronym> version 9 software package for
 	system administrators.
       </para>
-
-      <para>
-	This version of the manual corresponds to BIND version 9.10.
-      </para>
-
+      <xi:include href="pkgversion.xml"/>
     </sect1>
+
     <sect1>
       <title>Organization of This Document</title>
       <para>
@@ -2563,7 +2561,6 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 	be configured to act as a lightweight resolver daemon using the
 	<command>lwres</command> statement in <filename>named.conf</filename>.
       </para>
-
     </sect1>
   </chapter>
 
@@ -2900,7 +2897,7 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 		  In most cases, setting a value to 0 does not
 		  literally mean zero; it means "undefined" or
 		  "as big as possible", depending on the context.
-		  See the expalantions of particular parameters
+		  See the explanations of particular parameters
 		  that use <varname>size_spec</varname>
 		  for details on how they interpret its use. 
 		</para>
@@ -3454,17 +3451,20 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 	  "isp", "org", "asnum", "domain" and "netspeed".
 	</para>
 	<para>
-	  <replaceable>value</replaceable> is the value to searched for
-	  within the database.  A string may be quoted if it contains
-	  spaces or other special characters.  If this is a "country"
-	  search and the string is two characters long, then it must be a
-	  standard ISO-3166-1 two-letter country code, and if it is three
-	  characters long then it must be an ISO-3166-1 three-letter
-	  country code; otherwise it is the full name of the country.
-	  Similarly, if this is a "region" search and the string is
-	  two characters long, then it must be a standard two-letter state
-	  or province abbreviation; otherwise it is the full name of the
-	  state or province.
+	  <replaceable>value</replaceable> is the value to search
+	  for within the database.  A string may be quoted if it
+	  contains spaces or other special characters.  If this is
+	  an "asnum" search, then the leading "ASNNNN" string can be
+	  used, otherwise the full description must be used (e.g.
+	  "ASNNNN Example Company Name").  If this is a "country"
+	  search and the string is two characters long, then it must
+	  be a standard ISO-3166-1 two-letter country code, and if it
+	  is three characters long then it must be an ISO-3166-1
+	  three-letter country code; otherwise it is the full name
+	  of the country.  Similarly, if this is a "region" search
+	  and the string is two characters long, then it must be a
+	  standard two-letter state or province abbreviation;
+	  otherwise it is the full name of the state or province.
 	</para>
 	<para>
 	  The <replaceable>database</replaceable> field indicates which
@@ -4747,6 +4747,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
     <optional> hostname <replaceable>hostname_string</replaceable>; </optional>
     <optional> server-id <replaceable>server_id_string</replaceable>; </optional>
     <optional> directory <replaceable>path_name</replaceable>; </optional>
+    <optional> geoip-directory <replaceable>path_name</replaceable>; </optional>
     <optional> key-directory <replaceable>path_name</replaceable>; </optional>
     <optional> managed-keys-directory <replaceable>path_name</replaceable>; </optional>
     <optional> named-xfer <replaceable>path_name</replaceable>; </optional>
@@ -4808,7 +4809,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
     <optional> check-mx-cname ( <replaceable>warn</replaceable> | <replaceable>fail</replaceable> | <replaceable>ignore</replaceable> ); </optional>
     <optional> check-srv-cname ( <replaceable>warn</replaceable> | <replaceable>fail</replaceable> | <replaceable>ignore</replaceable> ); </optional>
     <optional> check-sibling <replaceable>yes_or_no</replaceable>; </optional>
-    <optional> check-spf ( <replaceable>warn</replaceable> | <replaceable>fail</replaceable> | <replaceable>ignore</replaceable> ); </optional>
+    <optional> check-spf ( <replaceable>warn</replaceable> | <replaceable>ignore</replaceable> ); </optional>
     <optional> allow-new-zones { <replaceable>yes_or_no</replaceable> }; </optional>
     <optional> allow-notify { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> allow-query { <replaceable>address_match_list</replaceable> }; </optional>
@@ -4942,6 +4943,8 @@ badresp:1,adberr:0,findfail:0,valfail:0]
     <optional> max-acache-size <replaceable>size_spec</replaceable> ; </optional>
     <optional> clients-per-query <replaceable>number</replaceable> ; </optional>
     <optional> max-clients-per-query <replaceable>number</replaceable> ; </optional>
+    <optional> max-recursion-depth <replaceable>number</replaceable> ; </optional>
+    <optional> max-recursion-queries <replaceable>number</replaceable> ; </optional>
     <optional> masterfile-format
 	    (<constant>text</constant>|<constant>raw</constant>|<constant>map</constant>) ; </optional>
     <optional> empty-server <replaceable>name</replaceable> ; </optional>
@@ -4956,8 +4959,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
     <optional> prefetch <replaceable>number</replaceable> <optional><replaceable>number</replaceable></optional> ; </optional>
 
     <optional> rate-limit {
-	<optional> domain <replaceable>domain</replaceable> ; </optional>
-	<optional> responses-per-second <optional>size <replaceable>number</replaceable></optional> <optional>ratio <replaceable>fixedpoint</replaceable></optional> <replaceable>number</replaceable> ; </optional>
+	<optional> responses-per-second <replaceable>number</replaceable> ; </optional>
 	<optional> referrals-per-second <replaceable>number</replaceable> ; </optional>
 	<optional> nodata-per-second <replaceable>number</replaceable> ; </optional>
 	<optional> nxdomains-per-second <replaceable>number</replaceable> ; </optional>
@@ -5117,6 +5119,21 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 		which the server
 		was started. The directory specified should be an absolute
 		path.
+	      </para>
+	    </listitem>
+	  </varlistentry>
+
+	  <varlistentry>
+	    <term><command>geoip-directory</command></term>
+	    <listitem>
+	      <para>
+		Specifies the directory containing GeoIP
+		<filename>.dat</filename> database files for GeoIP
+		initialization.  By default, this option is unset
+		and the GeoIP support will use libGeoIP's
+		built-in directory.
+		(For details, see <xref linkend="acl"/> about the
+		<command>geoip</command> ACL.)
 	      </para>
 	    </listitem>
 	  </varlistentry>
@@ -6303,12 +6320,16 @@ options {
 	    </varlistentry>
 
 	    <varlistentry>
-	      <term><command>sit-secret</command></term> <listitem>
+	      <term><command>sit-secret</command></term>
+	      <listitem>
 		<para>
 		  If set, this is a shared secret used for generating
 		  and verifying Source Identity Token EDNS options
 		  within a anycast cluster.  If not set the system
-		  will generate a random secret at startup.
+		  will generate a random secret at startup.  The
+		  shared secret is encoded as a hex string and needs
+		  to be 128 bits for AES128, 160 bits for SHA1 and
+		  256 bits for SHA256.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -6768,10 +6789,13 @@ options {
 		  The default is <command>yes</command>.
 		</para>
 		<para>
-		  Check that the two forms of Sender Policy Framework
-		  records (TXT records starting with "v=spf1" and SPF) either
-		  both exist or both don't exist.  Warnings are
-		  emitted it they don't and be suppressed with
+		  The use of the SPF record for publishing Sender
+		  Policy Framework is deprecated as the migration
+		  from using TXT records to SPF records was abandoned.
+		  Enabling this option also checks that a TXT Sender
+		  Policy Framework record exists (starts with "v=spf1")
+		  if there is an SPF record. Warnings are emitted if the
+		  TXT record does not exist and can be suppressed with
 		  <command>check-spf</command>.
 		</para>
 	      </listitem>
@@ -6813,11 +6837,11 @@ options {
 	      <term><command>check-spf</command></term>
 	      <listitem>
 		<para>
-		  When performing integrity checks, check that the
-		  two forms of Sender Policy Framwork records (TXT
-		  records starting with "v=spf1" and SPF) both exist
-		  or both don't exist and issue a warning if not
-		  met.  The default is <command>warn</command>.
+		  If <command>check-integrity</command> is set then
+		  check that there is a TXT Sender Policy Framework
+		  record present (starts with "v=spf1") if there is an
+		  SPF record present. The default is
+		  <command>warn</command>.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -7312,7 +7336,7 @@ options {
 		  than matching the case of the records entered in
 		  the zone file.  This allows responses to exactly
 		  match the query, which is required by some clients
-		  due to incorrect use of case-sensitive comparisions.
+		  due to incorrect use of case-sensitive comparisons.
 		</para>
 		<para>
 		  Case-insensitive compression is <emphasis>always</emphasis>
@@ -7320,12 +7344,12 @@ options {
 		  the client matches this ACL.
 		</para>
 		<para>
-		  There are circusmstances in which <command>named</command>
+		  There are circumstances in which <command>named</command>
 		  will not preserve the case of owner names of records:
 		  if a zone file defines records of different types with
 		  the same name, but the capitalization of the name is
 		  different (e.g., "www.example.com/A" and
-		  "WWW.EXAMPLE.COM/AAAA"), then all resposnes for that
+		  "WWW.EXAMPLE.COM/AAAA"), then all responses for that
 		  name will use the <emphasis>first</emphasis> version
 		  of the name that was used in the zone file.  This
 		  limitation may be addressed in a future release.  However,
@@ -8889,7 +8913,8 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  initial value (minimum) and maximum number of recursive
 		  simultaneous clients for any given query
 		  (&lt;qname,qtype,qclass&gt;) that the server will accept
-		  before dropping additional clients.  <command>named</command> will attempt to
+		  before dropping additional clients.
+		  <command>named</command> will attempt to
 		  self tune this value and changes will be logged.  The
 		  default values are 10 and 100.
 		</para>
@@ -8912,6 +8937,35 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
 		  If <command>max-clients-per-query</command> is set to zero,
 		  then there is no upper bound other than imposed by
 		  <command>recursive-clients</command>.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry id="max-recursion-depth">
+	      <term><command>max-recursion-depth</command></term>
+	      <listitem>
+		<para>
+		  Sets the maximum number of levels of recursion
+		  that are permitted at any one time while servicing
+		  a recursive query. Resolving a name may require
+		  looking up a name server address, which in turn
+		  requires resolving another name, etc; if the number
+		  of indirections exceeds this value, the recursive
+		  query is terminated and returns SERVFAIL.  The
+		  default is 7.
+		</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry id="max-recursion-queries">
+	      <term><command>max-recursion-queries</command></term>
+	      <listitem>
+		<para>
+		  Sets the maximum number of iterative queries that
+		  may be sent while servicing a recursive query.
+		  If more queries are sent, the recursive query
+		  is terminated and returns SERVFAIL. The default
+		  is 50.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -10017,15 +10071,13 @@ example.com                 CNAME   rpz-tcp-only.
 	  <para>
 	    All non-empty responses for a valid domain name (qname)
 	    and record type (qtype) are identical and have a limit specified
-	    by the base <command>responses-per-second</command> option
-	    (that is, <command>responses-per-second</command> with only a
-	    single argument and no additional modifiers).
-	    The default is 0, which indicates that there should be no limit.
+	    with <command>responses-per-second</command>
+	    (default 0 or no limit).
 	    All empty (NODATA) responses for a valid domain,
 	    regardless of query type, are identical.
 	    Responses in the NODATA class are limited by
 	    <command>nodata-per-second</command>
-	    (default base <command>responses-per-second</command>).
+	    (default <command>responses-per-second</command>).
 	    Requests for any and all undefined subdomains of a given
 	    valid domain result in NXDOMAIN errors, and are identical
 	    regardless of query type.
@@ -10038,7 +10090,7 @@ example.com                 CNAME   rpz-tcp-only.
 	    Referrals or delegations to the server of a given
 	    domain are identical and are limited by
 	    <command>referrals-per-second</command>
-	    (default base <command>responses-per-second</command>).
+	    (default <command>responses-per-second</command>).
 	  </para>
 
 	  <para>
@@ -10054,76 +10106,11 @@ example.com                 CNAME   rpz-tcp-only.
 	    This controls attacks using invalid requests or distant,
 	    broken authoritative servers.
 	    By default the limit on errors is the same as the
-	    default base <command>responses-per-second</command> value,
+	    <command>responses-per-second</command> value,
 	    but it can be set separately with
 	    <command>errors-per-second</command>.
 	  </para>
 
-	  <para>
-	    In addition to the base 
-	    <command>responses-per-second</command> value,
-	    up to four (4) additional
-	    <command>responses-per-second</command> options can be
-	    configured, with additional parameters to indicate that
-	    they apply to responses larger than a given size,
-	    or with an amplification factor larger than a given
-	    value.
-	    The <command>size</command> parameter sets the minimum
-	    DNS response size that will trigger the use of this 
-	    <command>responses-per-second</command> option.
-	    The <command>ratio</command> parameter sets the minimum
-	    DNS response-size / request-size ratio that falls into the
-	    band, to two decimal places.
-	    These selective rate limits are applied after any other
-	    rate limits have been applied, and they only apply to
-	    positive answers. For example:
-	  </para>
-<programlisting>
-rate-limit {
-  responses-per-second 10;
-  responses-per-second size 1100 5;
-};
-</programlisting>
-	  <para>
-	    ...indicates that responses should be limited to ten per second
-	    for responses up to 1099 bytes in size, but only five per second
-	    for responses larger than that. This configuration:
-	  </para>
-<programlisting>
-rate-limit {
-  responses-per-second 10;
-  responses-per-second ratio 7.25 5;
-  responses-per-second ratio 15.00 2;
-};
-</programlisting>
-	  <para>
-	    ...indicates that responses should be limited to ten per
-	    second if the amplification factor is below 7.25, five per
-	    second if above 7.25 but below 15, and two per second if
-	    above 15.
-	  </para>
-	  <para>
-	    Both sizes and ratios can be used together. For example:
-	  </para>
-<programlisting>
-rate-limit {
-  responses-per-second 10;
-  responses-per-second size 1000 ratio 5.00 5;
-  responses-per-second ratio 10.00 2;
-};
-</programlisting>
-	  <para>
-	    This configuration will rate-limit to five per second if
-	    the ratio is over 5 <emphasis>or</emphasis> the size is over
-	    1000, and to two per second if the ratio is over 10. In the
-	    event that two bands might be chosen (i.e., because the size
-	    is over 1000 <emphasis>and</emphasis> the ratio is over 10),
-	    the one that appears last in the configuration file is the
-	    one chosen.  To eliminate any ambiguity, it is recommended
-	    that under normal circumstnaces, rate limiting bands should
-	    be configured using either <command>size</command> or
-	    <command>ratio</command> parameters, but not both.
-	  </para>
 	  <para>
 	    Many attacks using DNS involve UDP requests with forged source
 	    addresses.
@@ -10183,33 +10170,6 @@ rate-limit {
 	  </para>
 
 	  <para>
-	    The optional <command>domain</command> clause specifies
-	    the namespace to which rate limits will apply.  It
-	    is possible to use different rate limits for different names
-	    by specifying multiple <command>rate-limit</command> blocks
-	    with different <command>domain</command> clauses.
-	    The <command>rate-limit</command> statement's
-	    <command>domain</command> most closely matches the query
-	    name will be the one applied to a given query.
-	  </para>
-
-	  <para>
-	    Rate limiters for different name spaces maintain
-	    separate counters: If, for example, there is a
-	    <command>rate-limit</command> statement for "com" and
-	    another for "example.com", queries matching "example.com"
-	    will not be debited against the rate limiter for "com".
-	  </para>
-
-	  <para>
-	    If a <command>rate-limit</command> statement does not specify a
-	    <command>domain</command>, then it applies to the root domain
-	    (".") and thus affects the entire DNS namespace, except those
-	    portions covered by other <command>rate-limit</command>
-	    statements.
-	  </para>
-
-	  <para>
 	    Communities of DNS clients can be given their own parameters or no
 	    rate limiting by putting
 	    <command>rate-limit</command> statements in <command>view</command>
@@ -10224,36 +10184,39 @@ rate-limit {
 
 	  <para>
 	    UDP responses of all kinds can be limited with the
-	    <command>all-per-second</command> phrase.  This rate
-	    limiting is unlike the rate limiting provided by
+	    <command>all-per-second</command> phrase.
+	    This rate limiting is unlike the rate limiting provided by
 	    <command>responses-per-second</command>,
 	    <command>errors-per-second</command>, and
 	    <command>nxdomains-per-second</command> on a DNS server
-	    which are often invisible to the victim of a DNS
-	    reflection attack.  Unless the forged requests of the
-	    attack are the same as the legitimate requests of the
-	    victim, the victim's requests are not affected.  Responses
-	    affected by an <command>all-per-second</command> limit
-	    are always dropped; the <command>slip</command> value
-	    has no effect.  An <command>all-per-second</command>
-	    limit should be at least 4 times as large as the other
-	    limits, because single DNS clients often send bursts
-	    of legitimate requests.  For example, the receipt of a
-	    single mail message can prompt requests from an SMTP
-	    server for NS, PTR, A, and AAAA records as the incoming
-	    SMTP/TCP/IP connection is considered.  The SMTP server
-	    can need additional NS, A, AAAA, MX, TXT, and SPF records
-	    as it considers the STMP <command>Mail From</command>
-	    command.  Web browsers often repeatedly resolve the
-	    same names that are repeated in HTML &lt;IMG&gt; tags
-	    in a page.  <command>All-per-second</command> is similar
-	    to the rate limiting offered by firewalls but often
-	    inferior.  Attacks that justify ignoring the contents
-	    of DNS responses are likely to be attacks on the DNS
-	    server itself.  They usually should be discarded before
-	    the DNS server spends resources make TCP connections
-	    or parsing DNS requests, but that rate limiting must
-	    be done before the DNS server sees the requests.
+	    which are often invisible to the victim of a DNS reflection attack.
+	    Unless the forged requests of the attack are the same as the
+	    legitimate requests of the victim, the victim's requests are
+	    not affected.
+	    Responses affected by an <command>all-per-second</command> limit
+	    are always dropped; the <command>slip</command> value has no
+	    effect.
+	    An <command>all-per-second</command> limit should be
+	    at least 4 times as large as the other limits,
+	    because single DNS clients often send bursts of legitimate
+	    requests.
+	    For example, the receipt of a single mail message can prompt
+	    requests from an SMTP server for NS, PTR, A, and AAAA records
+	    as the incoming SMTP/TCP/IP connection is considered.
+	    The SMTP server can need additional NS, A, AAAA, MX, TXT, and SPF
+	    records as it considers the STMP <command>Mail From</command>
+	    command.
+	    Web browsers often repeatedly resolve the same names that
+	    are repeated in HTML &lt;IMG&gt; tags in a page.
+	    <command>All-per-second</command> is similar to the
+	    rate limiting offered by firewalls but often inferior.
+	    Attacks that justify ignoring the
+	    contents of DNS responses are likely to be attacks on the
+	    DNS server itself.
+	    They usually should be discarded before the DNS server
+	    spends resources making TCP connections or parsing DNS requests,
+	    but that rate limiting must be done before the
+	    DNS server sees the requests.
 	  </para>
 
 	  <para>
@@ -11013,7 +10976,7 @@ view "external" {
     <optional> check-names (<constant>warn</constant>|<constant>fail</constant>|<constant>ignore</constant>) ; </optional>
     <optional> check-mx (<constant>warn</constant>|<constant>fail</constant>|<constant>ignore</constant>) ; </optional>
     <optional> check-wildcard <replaceable>yes_or_no</replaceable>; </optional>
-    <optional> check-spf ( <replaceable>warn</replaceable> | <replaceable>fail</replaceable> | <replaceable>ignore</replaceable> ); </optional>
+    <optional> check-spf ( <replaceable>warn</replaceable> | <replaceable>ignore</replaceable> ); </optional>
     <optional> check-integrity <replaceable>yes_or_no</replaceable> ; </optional>
     <optional> dialup <replaceable>dialup_option</replaceable> ; </optional>
     <optional> file <replaceable>string</replaceable> ; </optional>
@@ -12784,6 +12747,10 @@ view external {
 	      the behavior of the containing view, rather than changing
 	      the zone object itself.)
 	    </para>
+	    <para>
+	      An <command>in-view</command> zone cannot be used as a
+	      response policy zone.
+	    </para>
 	  </sect3>
 
 	</sect2>
@@ -13984,8 +13951,7 @@ view external {
 		    <para>
 		      Each RR can have a TTL as the second
 		      field in the RR, which will control how long other
-		      servers can cache
-		      the it.
+		      servers can cache it.
 		    </para>
 		  </entry>
 		</row>

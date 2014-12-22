@@ -1,4 +1,4 @@
-/*	$NetBSD: netaddr.c,v 1.5 2014/03/01 03:24:39 christos Exp $	*/
+/*	$NetBSD: netaddr.c,v 1.5.4.1 2014/12/22 03:28:46 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2010-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -237,11 +237,12 @@ isc_netaddr_prefixok(const isc_netaddr_t *na, unsigned int prefixlen) {
 	nbytes = prefixlen / 8;
 	nbits = prefixlen % 8;
 	if (nbits != 0) {
+		INSIST(nbytes < ipbytes);
 		if ((p[nbytes] & (0xff>>nbits)) != 0U)
 			return (ISC_R_FAILURE);
 		nbytes++;
 	}
-	if (memcmp(p + nbytes, zeros, ipbytes - nbytes) != 0)
+	if (nbytes < ipbytes && memcmp(p + nbytes, zeros, ipbytes - nbytes) != 0)
 		return (ISC_R_FAILURE);
 	return (ISC_R_SUCCESS);
 }

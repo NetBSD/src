@@ -144,6 +144,10 @@ isc_base32hex_decoderegion
 isc_base32hex_decodestring
 isc_base32hex_tobuffer
 isc_base32hex_totext
+isc_base32hexnp_decoderegion
+isc_base32hexnp_decodestring
+isc_base32hexnp_tobuffer
+isc_base32hexnp_totext
 isc_base64_decodestring
 isc_base64_tobuffer
 isc_base64_totext
@@ -164,6 +168,12 @@ isc_condition_init
 isc_condition_signal
 isc_condition_wait
 isc_condition_waituntil
+isc_counter_attach
+isc_counter_create
+isc_counter_detach
+isc_counter_increment
+isc_counter_setlimit
+isc_counter_used
 isc_crc64_final
 isc_crc64_init
 isc_crc64_update

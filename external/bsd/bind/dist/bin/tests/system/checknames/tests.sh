@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -127,6 +127,22 @@ grep "xxx_xxx.ignore.update/A.*(check-names)" ns1/named.run > /dev/null || not=0
 if [ $not != 0 ]; then ret=1; fi
 $DIG $DIGOPTS xxx_xxx.ignore.update @10.53.0.1 A > dig.out.ns1.test$n || ret=1
 grep NOERROR dig.out.ns1.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+n=`expr $n + 1`
+
+echo "I: check that updates to 'check-names master ignore;' succeed and are not logged ($n)"
+ret=0
+not=1
+$NSUPDATE -d <<END> nsupdate.out.test$n 2>&1 || ret=1
+server 10.53.0.4 5300
+update add xxx_xxx.master-ignore.update. 600 A 10.10.10.1
+send
+END
+grep "xxx_xxx.master-ignore.update/A.*(check-names)" ns1/named.run > /dev/null || not=0
+if [ $not != 0 ]; then ret=1; fi
+$DIG $DIGOPTS xxx_xxx.master-ignore.update @10.53.0.4 A > dig.out.ns4.test$n || ret=1
+grep NOERROR dig.out.ns4.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 n=`expr $n + 1`

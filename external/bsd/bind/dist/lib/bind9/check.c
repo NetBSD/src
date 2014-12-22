@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.10 2014/07/08 05:43:39 spz Exp $	*/
+/*	$NetBSD: check.c,v 1.10.2.1 2014/12/22 03:28:45 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -26,16 +26,30 @@
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/file.h>
+#include <isc/hex.h>
 #include <isc/log.h>
 #include <isc/mem.h>
 #include <isc/netaddr.h>
 #include <isc/parseint.h>
+#include <isc/platform.h>
 #include <isc/region.h>
 #include <isc/result.h>
 #include <isc/sockaddr.h>
 #include <isc/string.h>
 #include <isc/symtab.h>
 #include <isc/util.h>
+
+#ifdef ISC_PLATFORM_USESIT
+#ifdef AES_SIT
+#include <isc/aes.h>
+#endif
+#ifdef HMAC_SHA1_SIT
+#include <isc/sha1.h>
+#endif
+#ifdef HMAC_SHA256_SIT
+#include <isc/sha2.h>
+#endif
+#endif
 
 #include <dns/acl.h>
 #include <dns/fixedname.h>
@@ -1155,6 +1169,52 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 	if (tresult != ISC_R_SUCCESS)
 		result = tresult;
 
+#ifdef ISC_PLATFORM_USESIT
+	obj = NULL;
+	(void) cfg_map_get(options, "sit-secret", &obj);
+	if (obj != NULL) {
+		isc_buffer_t b;
+		unsigned char secret[32];
+
+		memset(secret, 0, sizeof(secret));
+		isc_buffer_init(&b, secret, sizeof(secret));
+		tresult = isc_hex_decodestring(cfg_obj_asstring(obj), &b);
+		if (tresult == ISC_R_NOSPACE) {
+			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+				    "sit-secret: too long");
+		} else if (tresult != ISC_R_SUCCESS) {
+			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+				    "sit-secret: invalid hex string");
+		}
+		if (tresult != ISC_R_SUCCESS)
+			result = tresult;
+#ifdef AES_SIT
+		if (tresult == ISC_R_SUCCESS &&
+		    isc_buffer_usedlength(&b) != ISC_AES128_KEYLENGTH) {
+			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+				    "AES sit-secret must be on 128 bits");
+			result = ISC_R_RANGE;
+		}
+#endif
+#ifdef HMAC_SHA1_SIT
+		if (tresult == ISC_R_SUCCESS &&
+		    isc_buffer_usedlength(&b) != ISC_SHA1_DIGESTLENGTH) {
+			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+				    "SHA1 sit-secret must be on 160 bits");
+			result = ISC_R_RANGE;
+		}
+#endif
+#ifdef HMAC_SHA256_SIT
+		if (tresult == ISC_R_SUCCESS &&
+		    isc_buffer_usedlength(&b) != ISC_SHA256_DIGESTLENGTH) {
+			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
+				    "SHA256 sit-secret must be on 256 bits");
+			result = ISC_R_RANGE;
+		}
+#endif
+	}
+#endif
+
 	return (result);
 }
 
@@ -1434,69 +1494,70 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	dns_masterformat_t masterformat;
 
 	static optionstable options[] = {
-	{ "allow-query", MASTERZONE | SLAVEZONE | STUBZONE | REDIRECTZONE |
-	   CHECKACL | STATICSTUBZONE },
 	{ "allow-notify", SLAVEZONE | CHECKACL },
+	{ "allow-query", MASTERZONE | SLAVEZONE | STUBZONE | REDIRECTZONE |
+	  CHECKACL | STATICSTUBZONE },
 	{ "allow-transfer", MASTERZONE | SLAVEZONE | CHECKACL },
-	{ "notify", MASTERZONE | SLAVEZONE },
+	{ "allow-update", MASTERZONE | CHECKACL },
+	{ "allow-update-forwarding", SLAVEZONE | CHECKACL },
 	{ "also-notify", MASTERZONE | SLAVEZONE },
-	{ "dialup", MASTERZONE | SLAVEZONE | STUBZONE | STREDIRECTZONE },
+	{ "auto-dnssec", MASTERZONE | SLAVEZONE },
+	{ "check-dup-records", MASTERZONE },
+	{ "check-mx", MASTERZONE },
+	{ "check-mx-cname", MASTERZONE },
+	{ "check-srv-cname", MASTERZONE },
+	{ "check-wildcard", MASTERZONE },
+	{ "database", MASTERZONE | SLAVEZONE | STUBZONE | REDIRECTZONE },
 	{ "delegation-only", HINTZONE | STUBZONE | FORWARDZONE |
-	   DELEGATIONZONE },
-	{ "forward", MASTERZONE | SLAVEZONE | STUBZONE |
-	  STATICSTUBZONE | FORWARDZONE },
-	{ "forwarders", MASTERZONE | SLAVEZONE | STUBZONE |
-	  STATICSTUBZONE | FORWARDZONE },
+	  DELEGATIONZONE },
+	{ "dialup", MASTERZONE | SLAVEZONE | STUBZONE | STREDIRECTZONE },
+	{ "dnssec-dnskey-kskonly", MASTERZONE | SLAVEZONE },
+	{ "dnssec-loadkeys-interval", MASTERZONE | SLAVEZONE },
+	{ "dnssec-secure-to-insecure", MASTERZONE },
+	{ "file", MASTERZONE | SLAVEZONE | STUBZONE | HINTZONE | REDIRECTZONE },
+	{ "forward", MASTERZONE | SLAVEZONE | STUBZONE | STATICSTUBZONE |
+	  FORWARDZONE },
+	{ "forwarders", MASTERZONE | SLAVEZONE | STUBZONE | STATICSTUBZONE |
+	  FORWARDZONE },
+	{ "integrity-check", MASTERZONE },
+	{ "ixfr-base", MASTERZONE | SLAVEZONE },
+	{ "ixfr-tmp-file", MASTERZONE | SLAVEZONE },
+	{ "journal", MASTERZONE | SLAVEZONE | STREDIRECTZONE },
+	{ "key-directory", MASTERZONE | SLAVEZONE },
 	{ "maintain-ixfr-base", MASTERZONE | SLAVEZONE | STREDIRECTZONE },
+	{ "masterfile-format", MASTERZONE | SLAVEZONE | STUBZONE |
+	  REDIRECTZONE },
+	{ "masters", SLAVEZONE | STUBZONE | REDIRECTZONE },
 	{ "max-ixfr-log-size", MASTERZONE | SLAVEZONE | STREDIRECTZONE },
-	{ "notify-source", MASTERZONE | SLAVEZONE },
-	{ "notify-source-v6", MASTERZONE | SLAVEZONE },
-	{ "transfer-source", SLAVEZONE | STUBZONE | STREDIRECTZONE },
-	{ "transfer-source-v6", SLAVEZONE | STUBZONE | STREDIRECTZONE },
-	{ "max-transfer-time-in", SLAVEZONE | STUBZONE | STREDIRECTZONE },
-	{ "max-transfer-time-out", MASTERZONE | SLAVEZONE },
+	{ "max-refresh-time", SLAVEZONE | STUBZONE | STREDIRECTZONE },
+	{ "max-retry-time", SLAVEZONE | STUBZONE | STREDIRECTZONE },
 	{ "max-transfer-idle-in", SLAVEZONE | STUBZONE | STREDIRECTZONE },
 	{ "max-transfer-idle-out", MASTERZONE | SLAVEZONE },
-	{ "max-retry-time", SLAVEZONE | STUBZONE | STREDIRECTZONE },
-	{ "min-retry-time", SLAVEZONE | STUBZONE | STREDIRECTZONE },
-	{ "max-refresh-time", SLAVEZONE | STUBZONE | STREDIRECTZONE },
-	{ "min-refresh-time", SLAVEZONE | STUBZONE | STREDIRECTZONE },
+	{ "max-transfer-time-in", SLAVEZONE | STUBZONE | STREDIRECTZONE },
+	{ "max-transfer-time-out", MASTERZONE | SLAVEZONE },
 	{ "max-zone-ttl", MASTERZONE | REDIRECTZONE },
-	{ "dnssec-secure-to-insecure", MASTERZONE },
+	{ "min-refresh-time", SLAVEZONE | STUBZONE | STREDIRECTZONE },
+	{ "min-retry-time", SLAVEZONE | STUBZONE | STREDIRECTZONE },
+	{ "notify", MASTERZONE | SLAVEZONE },
+	{ "notify-source", MASTERZONE | SLAVEZONE },
+	{ "notify-source-v6", MASTERZONE | SLAVEZONE },
+	{ "pubkey", MASTERZONE | SLAVEZONE | STUBZONE },
+	{ "request-ixfr", SLAVEZONE | REDIRECTZONE },
+	{ "server-addresses", STATICSTUBZONE },
+	{ "server-names", STATICSTUBZONE },
 	{ "sig-re-signing-interval", MASTERZONE | SLAVEZONE },
 	{ "sig-signing-nodes", MASTERZONE | SLAVEZONE },
 	{ "sig-signing-signatures", MASTERZONE | SLAVEZONE },
 	{ "sig-signing-type", MASTERZONE | SLAVEZONE },
 	{ "sig-validity-interval", MASTERZONE | SLAVEZONE },
 	{ "signing", MASTERZONE | SLAVEZONE },
+	{ "transfer-source", SLAVEZONE | STUBZONE | STREDIRECTZONE },
+	{ "transfer-source-v6", SLAVEZONE | STUBZONE | STREDIRECTZONE },
+	{ "try-tcp-refresh", SLAVEZONE | STREDIRECTZONE },
+	{ "update-check-ksk", MASTERZONE | SLAVEZONE },
+	{ "update-policy", MASTERZONE },
 	{ "zone-statistics", MASTERZONE | SLAVEZONE | STUBZONE |
 	  STATICSTUBZONE | REDIRECTZONE },
-	{ "allow-update", MASTERZONE | CHECKACL },
-	{ "allow-update-forwarding", SLAVEZONE | CHECKACL },
-	{ "file", MASTERZONE | SLAVEZONE | STUBZONE | HINTZONE | REDIRECTZONE },
-	{ "journal", MASTERZONE | SLAVEZONE | STREDIRECTZONE },
-	{ "ixfr-base", MASTERZONE | SLAVEZONE },
-	{ "ixfr-tmp-file", MASTERZONE | SLAVEZONE },
-	{ "masters", SLAVEZONE | STUBZONE | REDIRECTZONE },
-	{ "pubkey", MASTERZONE | SLAVEZONE | STUBZONE },
-	{ "update-policy", MASTERZONE },
-	{ "database", MASTERZONE | SLAVEZONE | STUBZONE | REDIRECTZONE },
-	{ "key-directory", MASTERZONE | SLAVEZONE },
-	{ "check-wildcard", MASTERZONE },
-	{ "check-mx", MASTERZONE },
-	{ "check-dup-records", MASTERZONE },
-	{ "integrity-check", MASTERZONE },
-	{ "check-mx-cname", MASTERZONE },
-	{ "check-srv-cname", MASTERZONE },
-	{ "masterfile-format", MASTERZONE | SLAVEZONE | STUBZONE |
-	  REDIRECTZONE },
-	{ "update-check-ksk", MASTERZONE | SLAVEZONE },
-	{ "dnssec-dnskey-kskonly", MASTERZONE | SLAVEZONE },
-	{ "dnssec-loadkeys-interval", MASTERZONE | SLAVEZONE },
-	{ "auto-dnssec", MASTERZONE | SLAVEZONE },
-	{ "try-tcp-refresh", SLAVEZONE | STREDIRECTZONE },
-	{ "server-addresses", STATICSTUBZONE },
-	{ "server-names", STATICSTUBZONE },
 	};
 
 	static optionstable dialups[] = {

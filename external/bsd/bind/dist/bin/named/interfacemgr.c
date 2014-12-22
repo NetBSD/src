@@ -1,4 +1,4 @@
-/*	$NetBSD: interfacemgr.c,v 1.8 2014/07/08 05:43:37 spz Exp $	*/
+/*	$NetBSD: interfacemgr.c,v 1.8.2.1 2014/12/22 03:28:34 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -142,7 +142,7 @@ route_event(isc_task_t *task, isc_event_t *event) {
 	switch (rtm->MSGTYPE) {
 	case RTM_NEWADDR:
 	case RTM_DELADDR:
-		if (ns_g_server->interface_auto)
+		if (mgr->route != NULL && ns_g_server->interface_auto)
 			ns_server_scan_interfaces(ns_g_server);
 		break;
 	default:
@@ -174,10 +174,14 @@ isc_result_t
 ns_interfacemgr_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 		       isc_socketmgr_t *socketmgr,
 		       dns_dispatchmgr_t *dispatchmgr,
-		       ns_interfacemgr_t **mgrp)
+		       isc_task_t *task, ns_interfacemgr_t **mgrp)
 {
 	isc_result_t result;
 	ns_interfacemgr_t *mgr;
+
+#ifndef USE_ROUTE_SOCKET
+	UNUSED(task);
+#endif
 
 	REQUIRE(mctx != NULL);
 	REQUIRE(mgrp != NULL);
@@ -234,11 +238,8 @@ ns_interfacemgr_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 	}
 
 	mgr->task = NULL;
-	if (mgr->route != NULL) {
-		result = isc_task_create(taskmgr, 0, &mgr->task);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup_route;
-	}
+	if (mgr->route != NULL)
+		isc_task_attach(task, &mgr->task);
 	mgr->references = (mgr->route != NULL) ? 2 : 1;
 #else
 	mgr->references = 1;
@@ -262,9 +263,6 @@ ns_interfacemgr_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 	return (ISC_R_SUCCESS);
 
 #ifdef USE_ROUTE_SOCKET
- cleanup_route:
-	if (mgr->route != NULL)
-		isc_socket_detach(&mgr->route);
  cleanup_aclenv:
 	dns_aclenv_destroy(&mgr->aclenv);
 #endif

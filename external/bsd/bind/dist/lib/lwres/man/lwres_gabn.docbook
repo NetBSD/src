@@ -120,7 +120,7 @@ void
       There are four main functions for the getaddrbyname opcode.
       One render function converts a getaddrbyname request structure &mdash;
       <type>lwres_gabnrequest_t</type> &mdash;
-      to the lighweight resolver's canonical format.
+      to the lightweight resolver's canonical format.
       It is complemented by a parse function that converts a packet in this
       canonical format to a getaddrbyname request structure.
       Another render function converts the getaddrbyname response structure

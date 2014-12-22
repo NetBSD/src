@@ -1,4 +1,4 @@
-.\"	$NetBSD: dnssec-keygen.8,v 1.7 2014/07/08 05:43:37 spz Exp $
+.\"	$NetBSD: dnssec-keygen.8,v 1.7.2.1 2014/12/22 03:28:33 msaitoh Exp $
 .\"
 .\" Copyright (C) 2004, 2005, 2007-2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003 Internet Software Consortium.
@@ -35,7 +35,7 @@
 dnssec\-keygen \- DNSSEC key generation tool
 .SH "SYNOPSIS"
 .HP 14
-\fBdnssec\-keygen\fR [\fB\-a\ \fR\fB\fIalgorithm\fR\fR] [\fB\-b\ \fR\fB\fIkeysize\fR\fR] [\fB\-n\ \fR\fB\fInametype\fR\fR] [\fB\-3\fR] [\fB\-A\ \fR\fB\fIdate/offset\fR\fR] [\fB\-C\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-D\ \fR\fB\fIdate/offset\fR\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-f\ \fR\fB\fIflag\fR\fR] [\fB\-G\fR] [\fB\-g\ \fR\fB\fIgenerator\fR\fR] [\fB\-h\fR] [\fB\-I\ \fR\fB\fIdate/offset\fR\fR] [\fB\-i\ \fR\fB\fIinterval\fR\fR] [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-L\ \fR\fB\fIttl\fR\fR] [\fB\-k\fR] [\fB\-P\ \fR\fB\fIdate/offset\fR\fR] [\fB\-p\ \fR\fB\fIprotocol\fR\fR] [\fB\-q\fR] [\fB\-R\ \fR\fB\fIdate/offset\fR\fR] [\fB\-r\ \fR\fB\fIrandomdev\fR\fR] [\fB\-S\ \fR\fB\fIkey\fR\fR] [\fB\-s\ \fR\fB\fIstrength\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-z\fR] {name}
+\fBdnssec\-keygen\fR [\fB\-a\ \fR\fB\fIalgorithm\fR\fR] [\fB\-b\ \fR\fB\fIkeysize\fR\fR] [\fB\-n\ \fR\fB\fInametype\fR\fR] [\fB\-3\fR] [\fB\-A\ \fR\fB\fIdate/offset\fR\fR] [\fB\-C\fR] [\fB\-c\ \fR\fB\fIclass\fR\fR] [\fB\-D\ \fR\fB\fIdate/offset\fR\fR] [\fB\-E\ \fR\fB\fIengine\fR\fR] [\fB\-f\ \fR\fB\fIflag\fR\fR] [\fB\-G\fR] [\fB\-g\ \fR\fB\fIgenerator\fR\fR] [\fB\-h\fR] [\fB\-I\ \fR\fB\fIdate/offset\fR\fR] [\fB\-i\ \fR\fB\fIinterval\fR\fR] [\fB\-K\ \fR\fB\fIdirectory\fR\fR] [\fB\-L\ \fR\fB\fIttl\fR\fR] [\fB\-k\fR] [\fB\-P\ \fR\fB\fIdate/offset\fR\fR] [\fB\-p\ \fR\fB\fIprotocol\fR\fR] [\fB\-q\fR] [\fB\-R\ \fR\fB\fIdate/offset\fR\fR] [\fB\-r\ \fR\fB\fIrandomdev\fR\fR] [\fB\-S\ \fR\fB\fIkey\fR\fR] [\fB\-s\ \fR\fB\fIstrength\fR\fR] [\fB\-t\ \fR\fB\fItype\fR\fR] [\fB\-v\ \fR\fB\fIlevel\fR\fR] [\fB\-V\fR] [\fB\-z\fR] {name}
 .SH "DESCRIPTION"
 .PP
 \fBdnssec\-keygen\fR
@@ -200,6 +200,11 @@ must be one of AUTHCONF, NOAUTHCONF, NOAUTH, or NOCONF. The default is AUTHCONF.
 \-v \fIlevel\fR
 .RS 4
 Sets the debugging level.
+.RE
+.PP
+\-V
+.RS 4
+Prints version information.
 .RE
 .SH "TIMING OPTIONS"
 .PP

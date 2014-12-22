@@ -20,7 +20,7 @@
 
 <refentry id="man.rndc">
   <refentryinfo>
-    <date>February 07, 2014</date>
+    <date>August 15, 2014</date>
   </refentryinfo>
 
   <refmeta>
@@ -549,7 +549,7 @@
       </varlistentry>
 
       <varlistentry>
-        <term><userinput>flushtree</userinput> <optional>-all</optional> <replaceable>name</replaceable> <optional><replaceable>view</replaceable></optional> </term>
+        <term><userinput>flushtree</userinput> <replaceable>name</replaceable> <optional><replaceable>view</replaceable></optional> </term>
         <listitem>
           <para>
             Flushes the given name, and all of its subdomains,

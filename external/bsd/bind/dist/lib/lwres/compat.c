@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoul.c,v 1.4 2014/03/01 03:24:40 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.1.1.3.2.2 2014/12/22 03:28:47 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -51,8 +51,6 @@
 static char sccsid[] = "@(#)strtoul.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
-/* Id: strtoul.c,v 1.4 2007/06/19 23:47:22 tbox Exp  */
-
 #include <config.h>
 
 #include <limits.h>
@@ -60,13 +58,14 @@ static char sccsid[] = "@(#)strtoul.c	8.1 (Berkeley) 6/4/93";
 #include <errno.h>
 
 #include <lwres/stdlib.h>
+#include <lwres/string.h>
 
 #define DE_CONST(konst, var) \
 	do { \
 		union { const void *k; void *v; } _u; \
 		_u.k = konst; \
 		var = _u.v; \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*!
  * Convert a string to an unsigned long integer.
@@ -130,4 +129,29 @@ lwres_strtoul(const char *nptr, char **endptr, int base) {
 	if (endptr != 0)
 		DE_CONST(any ? s - 1 : nptr, *endptr);
 	return (acc);
+}
+
+size_t
+lwres_strlcpy(char *dst, const char *src, size_t size) {
+	char *d = dst;
+	const char *s = src;
+	size_t n = size;
+
+	/* Copy as many bytes as will fit */
+	if (n != 0U && --n != 0U) {
+		do {
+			if ((*d++ = *s++) == 0)
+				break;
+		} while (--n != 0U);
+	}
+
+	/* Not enough room in dst, add NUL and traverse rest of src */
+	if (n == 0U) {
+		if (size != 0U)
+			*d = '\0';		/* NUL-terminate dst */
+		while (*s++)
+			;
+	}
+
+	return(s - src - 1);	/* count does not include NUL */
 }
