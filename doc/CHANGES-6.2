@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.171 2014/12/22 09:33:05 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.172 2014/12/22 10:49:59 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4702,6 +4702,7 @@ xsrc/external/mit/xorg-server/dist/Xi/xiwarppointer.c patch
 xsrc/external/mit/xorg-server/dist/dbe/dbe.c    patch
 xsrc/external/mit/xorg-server/dist/dix/dispatch.c patch
 xsrc/external/mit/xorg-server/dist/dix/region.c patch
+xsrc/external/mit/xorg-server/dist/exa/exa_render.c	1.2
 xsrc/external/mit/xorg-server/dist/glx/glxcmds.c patch
 xsrc/external/mit/xorg-server/dist/glx/glxcmdsswap.c patch
 xsrc/external/mit/xorg-server/dist/glx/glxserver.h patch
@@ -4723,6 +4724,7 @@ xsrc/external/mit/xorg-server/dist/include/regionstr.h patch
 xsrc/external/mit/xorg-server/dist/os/access.c	patch, 1.3
 xsrc/external/mit/xorg-server/dist/os/rpcauth.c patch
 xsrc/external/mit/xorg-server/dist/randr/rrsdispatch.c patch
+xsrc/external/mit/xorg-server/dist/render/picture.h	1.2
 xsrc/external/mit/xorg-server/dist/render/render.c patch
 xsrc/external/mit/xorg-server/dist/test/Makefile.am patch
 xsrc/external/mit/xorg-server/dist/test/xi1/Makefile.am patch
@@ -4774,6 +4776,9 @@ xsrc/xfree/xc/programs/Xserver/render/render.c	1.4
 	CVE-2014-8101
 	CVE-2014-8102
 	CVE-2014-8103
+	If t->bottom is close to MIN_INT, removing top can wraparound, so do
+	the check properly.
+	CVE-2013-6424
 	[mrg, ticket #1208]
 
 sys/compat/netbsd32/netbsd32_compat_30.c	1.31
