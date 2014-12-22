@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.32.2.3 2014/12/01 13:05:26 martin Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.32.2.4 2014/12/22 02:10:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.32.2.3 2014/12/01 13:05:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.32.2.4 2014/12/22 02:10:30 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -914,8 +914,8 @@ npf_nat_dump(const npf_nat_t *nt)
 
 	np = nt->nt_natpolicy;
 	memcpy(&ip, &np->n_taddr, sizeof(ip));
-	printf("\tNATP(%p): type %d flags 0x%x taddr %s tport %d\n",
-	    np, np->n_type, np->n_flags, inet_ntoa(ip), np->n_tport);
+	printf("\tNATP(%p): type %d flags 0x%x taddr %s tport %d\n", np,
+	    np->n_type, np->n_flags, inet_ntoa(ip), ntohs(np->n_tport));
 	memcpy(&ip, &nt->nt_oaddr, sizeof(ip));
 	printf("\tNAT: original address %s oport %d tport %d\n",
 	    inet_ntoa(ip), ntohs(nt->nt_oport), ntohs(nt->nt_tport));

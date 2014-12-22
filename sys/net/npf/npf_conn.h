@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.h,v 1.6.2.1 2014/12/01 13:05:26 martin Exp $	*/
+/*	$NetBSD: npf_conn.h,v 1.6.2.2 2014/12/22 02:10:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ typedef struct npf_connkey npf_connkey_t;
 #include <sys/rbtree.h>
 
 /*
- * See npf_conn_key() function for the description key layout.
+ * See npf_conn_conkey() function for the key layout description.
  */
 #define	NPF_CONN_NKEYWORDS	(2 + ((sizeof(npf_addr_t) * 2) >> 2))
 #define	NPF_CONN_MAXKEYLEN	(NPF_CONN_NKEYWORDS * sizeof(uint32_t))

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.10.2.2 2014/12/01 13:05:26 martin Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.10.2.3 2014/12/22 02:10:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.10.2.2 2014/12/01 13:05:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.10.2.3 2014/12/22 02:10:30 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -660,7 +660,7 @@ npf_conn_setpass(npf_conn_t *con, npf_rproc_t *rp)
 	 * If rproc is set, the caller transfers its reference to us,
 	 * which will be released on npf_conn_destroy().
 	 */
-	con->c_flags |= CONN_PASS;
+	atomic_or_uint(&con->c_flags, CONN_PASS);
 	con->c_rproc = rp;
 }
 
@@ -673,7 +673,7 @@ npf_conn_release(npf_conn_t *con)
 {
 	if ((con->c_flags & (CONN_ACTIVE | CONN_EXPIRE)) == 0) {
 		/* Activate: after this, connection is globally visible. */
-		con->c_flags |= CONN_ACTIVE;
+		atomic_or_uint(&con->c_flags, CONN_ACTIVE);
 	}
 	KASSERT(con->c_refcnt > 0);
 	atomic_dec_uint(&con->c_refcnt);
