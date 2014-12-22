@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.169 2014/12/21 20:26:30 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.170 2014/12/22 04:37:45 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -5615,3 +5615,9 @@ usr.sbin/perfused/perfused.c			1.25
 
 	Survive if filesystem installs a signal handler.
 	[manu, ticket #1215]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.317
+
+	Stop useless disklabel warning if there are wedges, using GPT
+	partition. Fix PR kern/47989.
+	[taca, ticket #1216]
