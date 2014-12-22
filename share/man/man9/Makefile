@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.378 2014/05/25 15:34:20 rmind Exp $
+#       $NetBSD: Makefile,v 1.379 2014/12/22 18:02:52 wiz Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -6,7 +6,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	altq.9 arp.9 audio.9 autoconf.9 \
 	bcdtobin.9 bcmp.9 bcopy.9 bintime_add.9 bluetooth.9 boothowto.9 bpf.9 \
 	buffercache.9 bufq.9 bus_dma.9 bus_space.9 byteorder.9 bzero.9 \
-	callback.9 callout.9 cardbus.9 cnmagic.9 condvar.9 config.9 \
+	callback.9 callout.9 cardbus.9 clock.9 cnmagic.9 condvar.9 config.9 \
 	cons.9 copy.9 coredump_write.9 \
 	cpu_configure.9 cpu_coredump.9 cpu_dumpconf.9 \
 	cpu_lwp_fork.9 \
@@ -230,6 +230,9 @@ MLINKS+=cardbus.9 cardbus_attach_card.9 \
 	cardbus.9 Cardbus_free_tag.9 \
 	cardbus.9 Cardbus_conf_read.9 \
 	cardbus.9 Cardbus_conf_write.9
+MLINKS+=clock.9 days_in_month.9 \
+	clock.9 is_leap_year.9 \
+	clock.9 days_per_year.9
 MLINKS+=cnmagic.9 cn_trap.9 \
 	cnmagic.9 cn_isconsole.9 \
 	cnmagic.9 cn_check_magic.9 \
