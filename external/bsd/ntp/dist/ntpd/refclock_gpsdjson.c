@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_gpsdjson.c,v 1.2 2014/12/19 20:43:17 christos Exp $	*/
+/*	$NetBSD: refclock_gpsdjson.c,v 1.3 2014/12/22 04:21:47 christos Exp $	*/
 
 /*
  * refclock_gpsdjson.c - clock driver as GPSD JSON client
@@ -856,7 +856,7 @@ process_tpv(
 	const char * gps_time;
 	int          gps_mode;
 	double       ept, epp, epx, epy, epv;
-	int          log2;
+	int          xlog2;
 
 	gps_mode = (int)json_object_lookup_int_default(
 		jctx, 0, "mode", 0);
@@ -922,9 +922,9 @@ process_tpv(
 	ept = min(ept, epp  );
 	ept = min(ept, 0.5  );
 	ept = max(ept, 1.0-9);
-	ept = frexp(ept, &log2);
+	ept = frexp(ept, &xlog2);
 
-	peer->precision = log2;
+	peer->precision = xlog2;
 }
 
 /* ------------------------------------------------------------------ */
