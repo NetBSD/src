@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.170 2014/12/22 04:37:45 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.171 2014/12/22 09:33:05 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4803,6 +4803,14 @@ sys/dev/ic/rtl8169.c				1.142
 	reported by the hardware.
 	[uwe, ticket #1212]
 
+distrib/sets/lists/xbase/mi			1.117-1.118
+distrib/sets/lists/xbase/shl.mi			1.47-1.49
+distrib/sets/lists/xcomp/mi			1.137 via patch
+distrib/sets/lists/xcomp/shl.mi			patch
+distrib/sets/lists/xetc/mi			1.19-1.22
+external/mit/xorg/bin/Makefile			1.12-1.13
+external/mit/xorg/bin/fc-pattern/Makefile	new
+external/mit/xorg/bin/fc-validate/Makefile	new
 external/mit/xorg/lib/fontconfig/etc/fonts.conf		patch
 external/mit/xorg/lib/fontconfig/etc/conf.avail/Makefile patch
 external/mit/xorg/lib/fontconfig/etc/conf.d/Makefile	patch
@@ -4816,12 +4824,6 @@ xsrc/external/mit/fontconfig/ac_check_symbol.m4	patch
 xsrc/external/mit/fontconfig/ax_cc_for_build.m4	patch
 xsrc/external/mit/fontconfig/ax_create_stdint_h.m4	patch
 xsrc/external/mit/fontconfig/ax_pthread.m4		patch
-xsrc/external/mit/fontconfig/fc-pattern.1		patch
-xsrc/external/mit/fontconfig/fc-pattern.c		patch
-xsrc/external/mit/fontconfig/fc-pattern.sgml		patch
-xsrc/external/mit/fontconfig/fc-validate.1		patch
-xsrc/external/mit/fontconfig/fc-validate.c		patch
-xsrc/external/mit/fontconfig/fc-validate.sgml		patch
 xsrc/external/mit/fontconfig/libtool.m4			patch
 xsrc/external/mit/fontconfig/ltoptions.m4		patch
 xsrc/external/mit/fontconfig/ltsugar.m4			patch
@@ -4890,6 +4892,16 @@ xsrc/external/mit/fontconfig/dist/fc-lang/mni.orth	patch
 xsrc/external/mit/fontconfig/dist/fc-lang/nqo.orth	patch
 xsrc/external/mit/fontconfig/dist/fc-lang/quz.orth	patch
 xsrc/external/mit/fontconfig/dist/fc-lang/sat.orth	patch
+xsrc/external/mit/fontconfig/dist/fc-pattern/Makefile.am	patch
+xsrc/external/mit/fontconfig/dist/fc-pattern/Makefile.in	patch
+xsrc/external/mit/fontconfig/dist/fc-pattern/fc-pattern.1	patch
+xsrc/external/mit/fontconfig/dist/fc-pattern/fc-pattern.c	patch
+xsrc/external/mit/fontconfig/dist/fc-pattern/fc-pattern.sgml	patch
+xsrc/external/mit/fontconfig/dist/fc-validate/Makefile.am	patch
+xsrc/external/mit/fontconfig/dist/fc-validate/Makefile.in	patch
+xsrc/external/mit/fontconfig/dist/fc-validate/fc-validate.1	patch
+xsrc/external/mit/fontconfig/dist/fc-validate/fc-validate.c	patch
+xsrc/external/mit/fontconfig/dist/fc-validate/fc-validate.sgml	patch
 xsrc/external/mit/fontconfig/dist/src/fcarch.c		patch
 xsrc/external/mit/fontconfig/dist/src/fcarch.h		patch
 xsrc/external/mit/fontconfig/dist/src/fcatomic.h	patch
