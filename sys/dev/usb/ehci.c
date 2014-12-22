@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.17 2014/12/22 08:23:35 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.18 2014/12/22 08:24:20 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.17 2014/12/22 08:23:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.18 2014/12/22 08:24:20 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2841,8 +2841,10 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		USBHIST_LOG(ehcidebug, "cbp=0x%08zx end=0x%08zx",
 		    (size_t)curoffs, (size_t)(curoffs + curlen), 0, 0);
 
-		/* adjust the toggle based on the number of packets in this
-		   qtd */
+		/*
+		 * adjust the toggle based on the number of packets in this
+		 * qtd
+		 */
 		if (((curlen + mps - 1) / mps) & 1) {
 			tog ^= 1;
 			qtdstatus ^= EHCI_QTD_TOGGLE_MASK;
