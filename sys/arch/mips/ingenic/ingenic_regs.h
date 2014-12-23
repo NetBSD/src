@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.3 2014/12/23 15:03:56 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.4 2014/12/23 16:15:05 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -164,6 +164,20 @@ MFC0(uint32_t r, uint32_t s)
 /* power management */
 #define JZ_CLKGR0	0x10000020	/* CLocK Gating Registers */
 #define JZ_OPCR		0x10000024	/* Oscillator Power Control Reg. */
+	#define IDLE_DIS	0x80000000	/* don't stop CPU clk on idle */
+	#define GPU_CLK_STOP	0x40000000
+	#define L2CM_M		0x0c000000
+	#define L2CM_ON		0x00000000	/* L2 stays on in sleep */
+	#define L2CM_RET	0x04000000	/* L2 retention mode in sleep */
+	#define L2CM_OFF	0x08000000	/* L2 powers down in sleep */
+	#define SPENDN0		0x00000080	/* OTG port forced down */
+	#define SPENDN1		0x00000040	/* UHC port forced down */
+	#define BUS_MODE	0x00000020	/* 1 - bursts */
+	#define O1SE		0x00000010	/* EXTCLK on in sleep */
+	#define PD		0x00000008	/* P0 down in sleep */
+	#define ERCS		0x00000004	/* 1 RTCCLK, 0 EXTCLK/512 */
+	#define CPU_MODE	0x00000002	/* 1 access 'accelerated' */
+	#define OSE		0x00000001	/* disable EXTCLK */
 #define JZ_CLKGR1	0x10000028	/* CLocK Gating Registers */
 #define JZ_USBPCR	0x1000003c
 	#define USB_MODE	0x80000000	/* 1 - otg */
