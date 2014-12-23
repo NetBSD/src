@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.2 2014/12/23 15:11:05 macallan Exp $ */
+/*	$NetBSD: apbus.c,v 1.3 2014/12/23 16:16:03 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.2 2014/12/23 15:11:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.3 2014/12/23 16:16:03 macallan Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -106,6 +106,7 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	printf("ID: %08x\n", MFC0(15, 1));
 #endif
 
+	/* enable USB clocks */
 	reg = readreg(JZ_CLKGR1);
 	reg &= ~(1 << 8);	/* OTG1 clock */
 	writereg(JZ_CLKGR1, reg);
@@ -114,12 +115,18 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	reg &= ~(1 << 24);	/* UHC clock */
 	writereg(JZ_CLKGR0, reg);
 
+	/* wake up the USB part */
+	reg = readreg(JZ_OPCR);
+	reg |= SPENDN0 | SPENDN1;
+	writereg(JZ_OPCR, reg);
+
 #ifdef INGENIC_DEBUG
 	printf("JZ_CLKGR0 %08x\n", readreg(JZ_CLKGR0));
 	printf("JZ_CLKGR1 %08x\n", readreg(JZ_CLKGR1));
 	printf("JZ_SPCR0  %08x\n", readreg(JZ_SPCR0));
 	printf("JZ_SPCR1  %08x\n", readreg(JZ_SPCR1));
 	printf("JZ_SRBC   %08x\n", readreg(JZ_SRBC));
+	printf("JZ_OPCR   %08x\n", readreg(JZ_OPCR));
 #endif
 
 	for (const char **adv = apbus_devs; *adv != NULL; adv++) {
