@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/12/23 20:19:08 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2014/12/23 20:26:30 joerg Exp $
 
 LIBISPRIVATE=yes
 
@@ -17,10 +17,10 @@ CPPFLAGS+=-I${DIST}
 SRCS=libopts.c
 
 COPTS.libopts.c += -DPOSIX_SHELL="\"/bin/sh\"" -Wno-format-nonliteral
-.if ${HAVE_GCC} != 4
-COPTS.libopts.c+=	${${ACTIVE_CC} == "gcc":? -Wno-format-contains-nul :}
-.else
+.if ${HAVE_GCC:U} == 4
 COPTS.libopts.c+=	-Wno-error
+.else
+COPTS.libopts.c+=	${${ACTIVE_CC} == "gcc":? -Wno-format-contains-nul :}
 .endif
 
 .include <bsd.lib.mk>
