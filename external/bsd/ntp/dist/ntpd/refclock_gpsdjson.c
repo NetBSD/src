@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_gpsdjson.c,v 1.3 2014/12/22 04:21:47 christos Exp $	*/
+/*	$NetBSD: refclock_gpsdjson.c,v 1.4 2014/12/23 15:47:32 joerg Exp $	*/
 
 /*
  * refclock_gpsdjson.c - clock driver as GPSD JSON client
@@ -120,7 +120,7 @@ static	void	gpsd_control	(int, const struct refclockstat *,
 static	void	gpsd_timer	(int, peerT *);
 static  void    gpsd_clockstats (int, peerT *);
 
-static  int     myasprintf(char**, char const*, ...);
+static  int     myasprintf(char**, char const*, ...) __printflike(2, 3);
 
 struct refclock refclock_gpsdjson = {
 	gpsd_start,		/* start up driver */
