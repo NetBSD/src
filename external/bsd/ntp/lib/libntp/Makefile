@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2014/12/23 18:56:15 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2014/12/23 19:04:18 christos Exp $
 
 LIBISPRIVATE=yes
 
@@ -79,7 +79,11 @@ ymd2yd.c
 
 CPPFLAGS+= -I${IDIST}/sntp/libopts
 
+.if ${HAVE_GCC} >= 45
 COPTS.msyslog.c+=	-Wno-error=format-nonliteral
+.else
+COPTS.systime.c+=	-Wno-uninitialized
+.endif
 
 # For MKREPRO, avoid using __DATE__ and __TIME__.
 # Instead, use the date and time from ${IMPORTDATE_FILE}.
