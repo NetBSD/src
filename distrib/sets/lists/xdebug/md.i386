@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.7 2014/12/18 06:24:28 mrg Exp $
+# $NetBSD: md.i386,v 1.8 2014/12/23 17:48:59 christos Exp $
 ./usr/X11R6/lib/modules/extensions/libGLcore_g.a	-unknown-	debuglib,x11
 ./usr/X11R6/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,x11
 ./usr/X11R6/lib/modules/extensions/libextmod_g.a	-unknown-	debuglib,x11
@@ -118,6 +118,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r300_dri.so.0.debug	-unknown-		obsolete,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r600_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/radeon_dri.so.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/kms_swrast_dri.so.0.debug		-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/mesa_dri_drivers.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/s3v_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/savage_dri.so.0.debug	-unknown-		obsolete
