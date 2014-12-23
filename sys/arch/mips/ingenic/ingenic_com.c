@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_com.c,v 1.2 2014/12/06 14:33:18 macallan Exp $ */
+/*	$NetBSD: ingenic_com.c,v 1.3 2014/12/23 15:12:23 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_com.c,v 1.2 2014/12/06 14:33:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_com.c,v 1.3 2014/12/23 15:12:23 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ ingenic_com_attach(device_t parent, device_t self, void *args)
 	COM_INIT_REGS(sc->sc_regs, &ingenic_com_mbst, regh, 0);
 	com_attach_subr(sc);
 	printf("\n");
-	/* interrupt */
+	evbmips_intr_establish(51, comintr, sc);
 }
 
 #define CHIP	   		ingenic_com
