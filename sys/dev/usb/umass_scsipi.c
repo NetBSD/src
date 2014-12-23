@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.49.2.1 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.49.2.2 2014/12/23 11:24:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.49.2.1 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.49.2.2 2014/12/23 11:24:32 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -142,7 +142,7 @@ umass_scsi_attach(struct umass_softc *sc)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
 
-	return (0);
+	return 0;
 }
 #endif
 
@@ -170,7 +170,7 @@ umass_atapi_attach(struct umass_softc *sc)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
 
-	return (0);
+	return 0;
 }
 #endif
 
@@ -203,7 +203,7 @@ umass_scsipi_setup(struct umass_softc *sc)
 	scbus->sc_channel.chan_max_periph = 1;
 	scbus->sc_channel.chan_defquirks |= sc->sc_busquirks;
 
-	return (scbus);
+	return scbus;
 }
 
 Static void
@@ -356,10 +356,10 @@ umass_scsipi_ioctl(struct scsipi_channel *chan, u_long cmd,
 	case SCBUSIORESET:
 		ccb->ccb_h.status = CAM_REQ_INPROG;
 		umass_reset(sc, umass_cam_cb, (void *) ccb);
-		return (0);
+		return 0;
 #endif
 	default:
-		return (ENOTTY);
+		return ENOTTY;
 	}
 }
 
@@ -372,7 +372,7 @@ umass_scsipi_getgeom(struct scsipi_periph *periph, struct disk_parms *dp,
 
 	/* If it's not a floppy, we don't know what to do. */
 	if (sc->sc_cmd != UMASS_CPROTO_UFI)
-		return (0);
+		return 0;
 
 	switch (sectors) {
 	case 1440:
@@ -380,15 +380,15 @@ umass_scsipi_getgeom(struct scsipi_periph *periph, struct disk_parms *dp,
 		dp->heads = 2;
 		dp->sectors = 9;
 		dp->cyls = 80;
-		return (1);
+		return 1;
 	case 2880:
 		/* Most likely a double density 3.5" floppy. */
 		dp->heads = 2;
 		dp->sectors = 18;
 		dp->cyls = 80;
-		return (1);
+		return 1;
 	default:
-		return (0);
+		return 0;
 	}
 }
 

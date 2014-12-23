@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.28.16.3 2014/12/23 11:10:41 skrll Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.28.16.4 2014/12/23 11:24:32 skrll Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.28.16.3 2014/12/23 11:10:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.28.16.4 2014/12/23 11:24:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,8 +223,8 @@ uvscom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (uvscom_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return uvscom_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 void
@@ -399,7 +399,7 @@ uvscom_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
 
-	return (rv);
+	return rv;
 }
 
 int
@@ -435,13 +435,13 @@ uvscom_readstat(struct uvscom_softc *sc)
 	if (err) {
 		aprint_error_dev(sc->sc_dev, "uvscom_readstat: %s\n",
 		    usbd_errstr(err));
-		return (err);
+		return err;
 	}
 
 	DPRINTF(("%s: uvscom_readstat: r = %d\n",
 		 device_xname(sc->sc_dev), r));
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 Static usbd_status
@@ -462,10 +462,10 @@ uvscom_shutdown(struct uvscom_softc *sc)
 	if (err) {
 		aprint_error_dev(sc->sc_dev, "uvscom_shutdown: %s\n",
 		   usbd_errstr(err));
-		return (err);
+		return err;
 	}
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 Static usbd_status
@@ -473,7 +473,7 @@ uvscom_reset(struct uvscom_softc *sc)
 {
 	DPRINTF(("%s: uvscom_reset\n", device_xname(sc->sc_dev)));
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 Static usbd_status
@@ -481,7 +481,7 @@ uvscom_set_crtscts(struct uvscom_softc *sc)
 {
 	DPRINTF(("%s: uvscom_set_crtscts\n", device_xname(sc->sc_dev)));
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 Static usbd_status
@@ -503,10 +503,10 @@ uvscom_set_line(struct uvscom_softc *sc, uint16_t line)
 	if (err) {
 		aprint_error_dev(sc->sc_dev, "uvscom_set_line: %s\n",
 		    usbd_errstr(err));
-		return (err);
+		return err;
 	}
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 Static usbd_status
@@ -528,7 +528,7 @@ uvscom_set_line_coding(struct uvscom_softc *sc, uint16_t lsp, uint16_t ls)
 	if (err) {
 		aprint_error_dev(sc->sc_dev, "uvscom_set_line_coding: %s\n",
 		   usbd_errstr(err));
-		return (err);
+		return err;
 	}
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -541,10 +541,10 @@ uvscom_set_line_coding(struct uvscom_softc *sc, uint16_t lsp, uint16_t ls)
 	if (err) {
 		aprint_error_dev(sc->sc_dev, "uvscom_set_line_coding: %s\n",
 		   usbd_errstr(err));
-		return (err);
+		return err;
 	}
 
-	return (USBD_NORMAL_COMPLETION);
+	return USBD_NORMAL_COMPLETION;
 }
 
 Static void
@@ -663,7 +663,7 @@ uvscom_param(void *addr, int portno, struct termios *t)
 		lsp = UVSCOM_SPEED_115200BPS;
 		break;
 	default:
-		return (EIO);
+		return EIO;
 	}
 
 	if (ISSET(t->c_cflag, CSTOPB))
@@ -693,20 +693,20 @@ uvscom_param(void *addr, int portno, struct termios *t)
 		SET(ls, UVSCOM_DATA_BIT_8);
 		break;
 	default:
-		return (EIO);
+		return EIO;
 	}
 
 	err = uvscom_set_line_coding(sc, lsp, ls);
 	if (err)
-		return (EIO);
+		return EIO;
 
 	if (ISSET(t->c_cflag, CRTSCTS)) {
 		err = uvscom_set_crtscts(sc);
 		if (err)
-			return (EIO);
+			return EIO;
 	}
 
-	return (0);
+	return 0;
 }
 
 Static int
@@ -717,7 +717,7 @@ uvscom_open(void *addr, int portno)
 	int i;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	DPRINTF(("uvscom_open: sc = %p\n", sc));
 
@@ -730,7 +730,7 @@ uvscom_open(void *addr, int portno)
 		if (err) {
 			DPRINTF(("%s: uvscom_open: readstat faild\n",
 				 device_xname(sc->sc_dev)));
-			return (EIO);
+			return EIO;
 		}
 
 		sc->sc_intr_buf = kmem_alloc(sc->sc_isize, KM_SLEEP);
@@ -747,7 +747,7 @@ uvscom_open(void *addr, int portno)
 			aprint_error_dev(sc->sc_dev,
 			    "cannot open interrupt pipe (addr %d)\n",
 				 sc->sc_intr_number);
-			return (EIO);
+			return EIO;
 		}
 	} else {
 		DPRINTF(("uvscom_open: did not open interrupt pipe.\n"));
@@ -764,18 +764,18 @@ uvscom_open(void *addr, int portno)
 		if (i == 0) {
 			DPRINTF(("%s: unit is not ready\n",
 				 device_xname(sc->sc_dev)));
-			return (EIO);
+			return EIO;
 		}
 
 		/* check PC card was inserted */
 		if (ISSET(sc->sc_usr, UVSCOM_NOCARD)) {
 			DPRINTF(("%s: no card\n",
 				 device_xname(sc->sc_dev)));
-			return (EIO);
+			return EIO;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 Static void

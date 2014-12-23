@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.9.4.1 2014/12/02 09:00:33 skrll Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.9.4.2 2014/12/23 11:24:32 skrll Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.1 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.2 2014/12/23 11:24:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -892,20 +892,20 @@ urndis_newbuf(struct urndis_softc *sc, struct urndis_chain *c)
 	if (m_new == NULL) {
 		printf("%s: no memory for rx list -- packet dropped!\n",
 		    DEVNAME(sc));
-		return (ENOBUFS);
+		return ENOBUFS;
 	}
 	MCLGET(m_new, M_DONTWAIT);
 	if (!(m_new->m_flags & M_EXT)) {
 		printf("%s: no memory for rx list -- packet dropped!\n",
 		    DEVNAME(sc));
 		m_freem(m_new);
-		return (ENOBUFS);
+		return ENOBUFS;
 	}
 	m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 
 	m_adj(m_new, ETHER_ALIGN);
 	c->sc_mbuf = m_new;
-	return (0);
+	return 0;
 }
 
 static int
@@ -922,20 +922,20 @@ urndis_rx_list_init(struct urndis_softc *sc)
 		c->sc_idx = i;
 
 		if (urndis_newbuf(sc, c) == ENOBUFS)
-			return (ENOBUFS);
+			return ENOBUFS;
 
 		if (c->sc_xfer == NULL) {
 			c->sc_xfer = usbd_alloc_xfer(sc->sc_udev);
 			if (c->sc_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->sc_buf = usbd_alloc_buffer(c->sc_xfer,
 			    RNDIS_BUFSZ);
 			if (c->sc_buf == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -954,14 +954,14 @@ urndis_tx_list_init(struct urndis_softc *sc)
 		if (c->sc_xfer == NULL) {
 			c->sc_xfer = usbd_alloc_xfer(sc->sc_udev);
 			if (c->sc_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->sc_buf = usbd_alloc_buffer(c->sc_xfer,
 			    RNDIS_BUFSZ);
 			if (c->sc_buf == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 		}
 	}
-	return (0);
+	return 0;
 }
 
 static int
@@ -974,7 +974,7 @@ urndis_ioctl(struct ifnet *ifp, unsigned long command, void *data)
 	error = 0;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	s = splnet();
 
@@ -1001,7 +1001,7 @@ urndis_ioctl(struct ifnet *ifp, unsigned long command, void *data)
 		error = 0;
 
 	splx(s);
-	return (error);
+	return error;
 }
 
 #if 0
@@ -1297,18 +1297,18 @@ urndis_match(device_t parent, cfdata_t match, void *aux)
 	uaa = aux;
 
 	if (!uaa->iface)
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 
 	id = usbd_get_interface_descriptor(uaa->iface);
 	if (id == NULL)
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 
 	if (id->bInterfaceClass == UICLASS_WIRELESS &&
 	    id->bInterfaceSubClass == UISUBCLASS_RF &&
 	    id->bInterfaceProtocol == UIPROTO_RNDIS)
-		return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
+		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 
-	return (usb_lookup(urndis_devs, uaa->vendor, uaa->product) != NULL) ?
+	return usb_lookup(urndis_devs, uaa->vendor, uaa->product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 

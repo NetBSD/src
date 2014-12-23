@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.6.6.4 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.6.6.5 2014/12/23 11:24:32 skrll Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.4 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.5 2014/12/23 11:24:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -591,7 +591,7 @@ urtw_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (urtw_lookup(uaa->vendor, uaa->product) != NULL) ?
+	return urtw_lookup(uaa->vendor, uaa->product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
