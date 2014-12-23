@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/12/23 20:19:08 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2014/12/23 20:26:30 joerg Exp $
 
 LIBISPRIVATE=yes
 
@@ -44,7 +44,7 @@ SRCS=   assertions.c               \
         time.c                     \
         sockaddr.c
 
-.if ${HAVE_GCC} != 4
+.if ${HAVE_GCC:U} != 4
 COPTS.log.c+=	-Wno-error=format-nonliteral
 .endif
 
