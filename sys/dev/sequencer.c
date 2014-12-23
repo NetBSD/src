@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.60 2014/12/22 07:02:22 mrg Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.61 2014/12/23 11:37:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.60 2014/12/22 07:02:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.61 2014/12/23 11:37:40 mrg Exp $");
 
 #include "sequencer.h"
 
@@ -438,7 +438,7 @@ sequencerclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	struct midi_softc *msc;
 	int unit, error;
 
-	DPRINTF(("sequencerclose: %"PRIx64"\n", dev));
+	DPRINTF(("%s: %"PRIx64"\n", __func__, dev));
 
 	if ((error = sequencer_enter(dev, &sc)) != 0)
 		return error;
@@ -473,7 +473,7 @@ sequencerclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	sc->isopen = 0;
 	sequencer_exit(sc);
 
-	DPRINTF(("sequencerclose: %"PRIx64" done\n", dev));
+	DPRINTF(("%s: %"PRIx64" done\n", __func__, dev));
 
 	return (0);
 }
@@ -714,7 +714,7 @@ sequencerioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			if (sc->async != 0)
 				return EBUSY;
 			sc->async = curproc->p_pid;
-			DPRINTF(("sequencer_ioctl: FIOASYNC %d\n",
+			DPRINTF(("%s: FIOASYNC %d\n", __func__,
 			    sc->async));
 		} else {
 			sc->async = 0;
@@ -853,7 +853,7 @@ sequencerpoll(dev_t dev, int events, struct lwp *l)
 	if ((sc = sequencerget(SEQUENCERUNIT(dev))) == NULL)
 		return ENXIO;
 
-	DPRINTF(("sequencerpoll: %p events=0x%x\n", sc, events));
+	DPRINTF(("%s: %p events=0x%x\n", __func__, sc, events));
 
 	mutex_enter(&sc->lock);
 	if (events & (POLLIN | POLLRDNORM))
@@ -1127,7 +1127,7 @@ seq_do_sysex(struct sequencer_softc *sc, seq_event_t *b)
 	dev = b->sysex.device;
 	if (dev < 0 || dev >= sc->nmidi)
 		return (ENXIO);
-	DPRINTF(("seq_do_sysex: dev=%d\n", dev));
+	DPRINTF(("%s: dev=%d\n", __func__, dev));
 	md = sc->devs[dev];
 
 	if (!md->doingsysex) {
@@ -1179,7 +1179,7 @@ seq_timer_waitabs(struct sequencer_softc *sc, uint32_t divs)
 	}
 #ifdef SEQUENCER_DEBUG
 	else if (tick < 0)
-		DPRINTF(("seq_timer_waitabs: ticks = %d\n", ticks));
+		DPRINTF(("%s: ticks = %d\n", __func__, ticks));
 #endif
 }
 
@@ -1240,11 +1240,11 @@ seq_do_timing(struct sequencer_softc *sc, seq_event_t *b)
 		break;
 	case TMR_SPP:
 	case TMR_TIMESIG:
-		DPRINTF(("seq_do_timing: unimplemented %02x\n", b->timing.op));
+		DPRINTF(("%s: unimplemented %02x\n", __func__, b->timing.op));
 		error = EINVAL; /* not quite accurate... */
 		break;
 	default:
-		DPRINTF(("seq_timer: unknown %02x\n", b->timing.op));
+		DPRINTF(("%s: unknown %02x\n", __func__, b->timing.op));
 		error = EINVAL;
 		break;
 	}
@@ -1358,7 +1358,7 @@ seq_to_new(seq_event_t *ev, struct uio *uio)
 	case SEQOLD_PRIVATE:
 	case SEQOLD_EXTENDED:
 	default:
-		DPRINTF(("seq_to_new: not impl 0x%02x\n", cmd));
+		DPRINTF(("%s: not impl 0x%02x\n", __func__, cmd));
 		return EINVAL;
 	/* In case new-style events show up */
 	case SEQ_TIMING:
