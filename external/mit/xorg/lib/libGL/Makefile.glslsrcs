@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.glslsrcs,v 1.2 2014/07/09 20:22:56 riastradh Exp $
+#	$NetBSD: Makefile.glslsrcs,v 1.2.2.2 2014/12/23 01:44:24 snj Exp $
 
 # Derived loosely from src/glsl/Makefile.
 
