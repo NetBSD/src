@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2014/12/19 20:43:20 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2014/12/23 18:56:15 christos Exp $
 
 LIBISPRIVATE=yes
 
@@ -87,7 +87,7 @@ COPTS.msyslog.c+=	-Wno-error=format-nonliteral
 # The file should contain one line, like this:
 #	Fri Dec 27 19:28:17 EST 2013 (import)
 #
-.if ${MKREPRO} == "yes"
+.if ${MKREPRO:Uno} == "yes"
 IMPORTDATE_FILE := ${.PARSEDIR}/../../importdate
 MKREPRO_DATE != ${TOOL_AWK} '{printf "%3s %2d %4d", $$2, $$3, $$6}' \
 	<${IMPORTDATE_FILE} # "Mmm DD YYYY"
