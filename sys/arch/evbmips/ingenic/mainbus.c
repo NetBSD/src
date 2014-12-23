@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2014/12/06 14:30:11 macallan Exp $ */
+/*	$NetBSD: mainbus.c,v 1.3 2014/12/23 15:09:13 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2014/12/06 14:30:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2014/12/23 15:09:13 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,6 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2014/12/06 14:30:11 macallan Exp $")
 #include <mips/cpuregs.h>
 
 #include <mips/ingenic/ingenic_regs.h>
+
+#include "opt_ingenic.h"
 
 #include "locators.h"
 
