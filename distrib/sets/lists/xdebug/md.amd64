@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.7 2014/12/18 06:24:28 mrg Exp $
+# $NetBSD: md.amd64,v 1.8 2014/12/23 17:48:59 christos Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg
@@ -49,7 +49,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i810_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i915_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i965_dri.so.0.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/mesa_dri_drivers.so.0.debug	obsolete		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/kms_swrast_dri.so.0.debug		-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/mesa_dri_drivers.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libi810_dri.so.0.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libi915_dri.so.0.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libi965_dri.so.0.debug	obsolete		xorg,obsolete
