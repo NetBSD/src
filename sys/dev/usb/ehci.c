@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.18 2014/12/22 08:24:20 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.19 2014/12/23 19:31:44 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.18 2014/12/22 08:24:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.19 2014/12/23 19:31:44 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1130,6 +1130,7 @@ ehci_idone(struct ehci_xfer *ex)
 		xfer->ux_status = USBD_NORMAL_COMPLETION;
 		goto end;
 	}
+	KASSERT(xfertype != UE_ISOCHRONOUS);
 
 	/* Continue processing xfers using queue heads */
 
@@ -3272,37 +3273,42 @@ ehci_abort_isoc_xfer(usbd_xfer_handle xfer, usbd_status status)
 	xfer->ux_status = status;
 	callout_stop(&xfer->ux_callout);
 
-	for (itd = exfer->itdstart; itd != NULL; itd = itd->xfer_next) {
-		usb_syncmem(&itd->dma,
-		    itd->offs + offsetof(ehci_itd_t, itd_ctl),
-		    sizeof(itd->itd.itd_ctl),
-		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+	if (xfer->ux_pipe->up_dev->ud_speed == USB_SPEED_HIGH) {
+		for (itd = exfer->itdstart; itd != NULL;
+		     itd = itd->xfer_next) {
+			usb_syncmem(&itd->dma,
+			    itd->offs + offsetof(ehci_itd_t, itd_ctl),
+			    sizeof(itd->itd.itd_ctl),
+			    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
-		for (i = 0; i < 8; i++) {
-			trans_status = le32toh(itd->itd.itd_ctl[i]);
-			trans_status &= ~EHCI_ITD_ACTIVE;
-			itd->itd.itd_ctl[i] = htole32(trans_status);
+			for (i = 0; i < 8; i++) {
+				trans_status = le32toh(itd->itd.itd_ctl[i]);
+				trans_status &= ~EHCI_ITD_ACTIVE;
+				itd->itd.itd_ctl[i] = htole32(trans_status);
+			}
+
+			usb_syncmem(&itd->dma,
+			    itd->offs + offsetof(ehci_itd_t, itd_ctl),
+			    sizeof(itd->itd.itd_ctl),
+			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 		}
+	} else {
+		for (sitd = exfer->sitdstart; sitd != NULL;
+		     sitd = sitd->xfer_next) {
+			usb_syncmem(&sitd->dma,
+			    sitd->offs + offsetof(ehci_sitd_t, sitd_buffer),
+			    sizeof(sitd->sitd.sitd_buffer),
+			    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
-		usb_syncmem(&itd->dma,
-		    itd->offs + offsetof(ehci_itd_t, itd_ctl),
-		    sizeof(itd->itd.itd_ctl),
-		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-	}
-	for (sitd = exfer->sitdstart; sitd != NULL; sitd = sitd->xfer_next) {
-		usb_syncmem(&sitd->dma,
-		    sitd->offs + offsetof(ehci_sitd_t, sitd_buffer),
-		    sizeof(sitd->sitd.sitd_buffer),
-		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+			trans_status = le32toh(sitd->sitd.sitd_trans);
+			trans_status &= ~EHCI_SITD_ACTIVE;
+			sitd->sitd.sitd_trans = htole32(trans_status);
 
-		trans_status = le32toh(sitd->sitd.sitd_trans);
-		trans_status &= ~EHCI_SITD_ACTIVE;
-		sitd->sitd.sitd_trans = htole32(trans_status);
-
-		usb_syncmem(&sitd->dma,
-		    sitd->offs + offsetof(ehci_sitd_t, sitd_buffer),
-		    sizeof(sitd->sitd.sitd_buffer),
-		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+			usb_syncmem(&sitd->dma,
+			    sitd->offs + offsetof(ehci_sitd_t, sitd_buffer),
+			    sizeof(sitd->sitd.sitd_buffer),
+			    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+		}
 	}
 
 	sc->sc_softwake = 1;
@@ -4242,7 +4248,6 @@ ehci_device_fs_isoc_start(usbd_xfer_handle xfer)
 
 	stop = sitd;
 	stop->xfer_next = NULL;
-	exfer->isoc_len = total_length;
 
 	usb_syncmem(&exfer->xfer.ux_dmabuf, 0, total_length,
 		BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -4314,8 +4319,6 @@ ehci_device_fs_isoc_start(usbd_xfer_handle xfer)
 
 	exfer->sitdstart = start;
 	exfer->sitdend = stop;
-	exfer->sqtdstart = NULL;
-	exfer->sqtdstart = NULL;
 
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
@@ -4572,7 +4575,6 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 
 	stop = itd;
 	stop->xfer_next = NULL;
-	exfer->isoc_len = total_length;
 
 	usb_syncmem(&exfer->xfer.ux_dmabuf, 0, total_length,
 		BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -4647,8 +4649,6 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 
 	exfer->itdstart = start;
 	exfer->itdend = stop;
-	exfer->sqtdstart = NULL;
-	exfer->sqtdend = NULL;
 
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
