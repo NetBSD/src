@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.1 2014/12/06 14:34:56 macallan Exp $ */
+/*	$NetBSD: apbus.c,v 1.2 2014/12/23 15:11:05 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.1 2014/12/06 14:34:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.2 2014/12/23 15:11:05 macallan Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.1 2014/12/06 14:34:56 macallan Exp $");
 
 #include <mips/ingenic/ingenic_var.h>
 #include <mips/ingenic/ingenic_regs.h>
+
+#include "opt_ingenic.h"
 
 static int apbus_match(device_t, cfdata_t, void *);
 static void apbus_attach(device_t, device_t, void *);
@@ -91,15 +93,34 @@ apbus_match(device_t parent, cfdata_t match, void *aux)
 void
 apbus_attach(device_t parent, device_t self, void *aux)
 {
+	uint32_t reg;
 	aprint_normal("\n");
 
 	/* should have been called early on */
 	apbus_init();
 
-printf("core ctrl:   %08x\n", MFC0(12, 2));
-printf("core status: %08x\n", MFC0(12, 3));
-printf("REIM: %08x\n", MFC0(12, 4));
-printf("ID: %08x\n", MFC0(15, 1));
+#ifdef INGENIC_DEBUG
+	printf("core ctrl:   %08x\n", MFC0(12, 2));
+	printf("core status: %08x\n", MFC0(12, 3));
+	printf("REIM: %08x\n", MFC0(12, 4));
+	printf("ID: %08x\n", MFC0(15, 1));
+#endif
+
+	reg = readreg(JZ_CLKGR1);
+	reg &= ~(1 << 8);	/* OTG1 clock */
+	writereg(JZ_CLKGR1, reg);
+
+	reg = readreg(JZ_CLKGR0);
+	reg &= ~(1 << 24);	/* UHC clock */
+	writereg(JZ_CLKGR0, reg);
+
+#ifdef INGENIC_DEBUG
+	printf("JZ_CLKGR0 %08x\n", readreg(JZ_CLKGR0));
+	printf("JZ_CLKGR1 %08x\n", readreg(JZ_CLKGR1));
+	printf("JZ_SPCR0  %08x\n", readreg(JZ_SPCR0));
+	printf("JZ_SPCR1  %08x\n", readreg(JZ_SPCR1));
+	printf("JZ_SRBC   %08x\n", readreg(JZ_SRBC));
+#endif
 
 	for (const char **adv = apbus_devs; *adv != NULL; adv++) {
 		struct apbus_attach_args aa;
