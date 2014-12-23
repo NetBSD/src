@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.4 2014/12/23 16:15:05 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.5 2014/12/23 18:48:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -164,41 +164,41 @@ MFC0(uint32_t r, uint32_t s)
 /* power management */
 #define JZ_CLKGR0	0x10000020	/* CLocK Gating Registers */
 #define JZ_OPCR		0x10000024	/* Oscillator Power Control Reg. */
-	#define IDLE_DIS	0x80000000	/* don't stop CPU clk on idle */
-	#define GPU_CLK_STOP	0x40000000
-	#define L2CM_M		0x0c000000
-	#define L2CM_ON		0x00000000	/* L2 stays on in sleep */
-	#define L2CM_RET	0x04000000	/* L2 retention mode in sleep */
-	#define L2CM_OFF	0x08000000	/* L2 powers down in sleep */
-	#define SPENDN0		0x00000080	/* OTG port forced down */
-	#define SPENDN1		0x00000040	/* UHC port forced down */
-	#define BUS_MODE	0x00000020	/* 1 - bursts */
-	#define O1SE		0x00000010	/* EXTCLK on in sleep */
-	#define PD		0x00000008	/* P0 down in sleep */
-	#define ERCS		0x00000004	/* 1 RTCCLK, 0 EXTCLK/512 */
-	#define CPU_MODE	0x00000002	/* 1 access 'accelerated' */
-	#define OSE		0x00000001	/* disable EXTCLK */
+	#define OPCR_IDLE_DIS	0x80000000	/* don't stop CPU clk on idle */
+	#define OPCR_GPU_CLK_ST	0x40000000	/* stop GPU clock */
+	#define OPCR_L2CM_M	0x0c000000
+	#define OPCR_L2CM_ON	0x00000000	/* L2 stays on in sleep */
+	#define OPCR_L2CM_RET	0x04000000	/* L2 retention mode in sleep */
+	#define OPCR_L2CM_OFF	0x08000000	/* L2 powers down in sleep */
+	#define OPCR_SPENDN0	0x00000080	/* OTG port forced down */
+	#define OPCR_SPENDN1	0x00000040	/* UHC port forced down */
+	#define OPCR_BUS_MODE	0x00000020	/* 1 - bursts */
+	#define OPCR_O1SE	0x00000010	/* EXTCLK on in sleep */
+	#define OPCR_PD		0x00000008	/* P0 down in sleep */
+	#define OPCR_ERCS	0x00000004	/* 1 RTCCLK, 0 EXTCLK/512 */
+	#define OPCR_CPU_MODE	0x00000002	/* 1 access 'accelerated' */
+	#define OPCR_OSE	0x00000001	/* disable EXTCLK */
 #define JZ_CLKGR1	0x10000028	/* CLocK Gating Registers */
 #define JZ_USBPCR	0x1000003c
-	#define USB_MODE	0x80000000	/* 1 - otg */
-	#define AVLD_REG	0x40000000
-	#define IDPULLUP_MASK	0x30000000
-	#define INCR_MASK	0x08000000
-	#define TCRISETUNE	0x04000000
-	#define COMMONONN	0x02000000
-	#define VBUSVLDEXT	0x01000000
-	#define VBUSVLDEXTSEL	0x00800000
-	#define POR		0x00400000
-	#define SIDDQ		0x00200000
-	#define OTG_DISABLE	0x00100000
-	#define COMPDISTUNE_M	0x000e0000
-	#define OTGTUNE		0x0001c000
-	#define SQRXTUNE	0x00003800
-	#define TXFSLSTUNE	0x00000780
-	#define TXPREEMPHTUNE	0x00000040
-	#define TXHSXVTUNE	0x00000030
-	#define TXVREFTUNE	0x0000000f
-	
+	#define PCR_USB_MODE		0x80000000	/* 1 - otg */
+	#define PCR_AVLD_REG		0x40000000
+	#define PCR_IDPULLUP_MASK	0x30000000
+	#define PCR_INCR_MASK		0x08000000
+	#define PCR_TCRISETUNE		0x04000000
+	#define PCR_COMMONONN		0x02000000
+	#define PCR_VBUSVLDEXT		0x01000000
+	#define PCR_VBUSVLDEXTSEL	0x00800000
+	#define PCR_POR			0x00400000
+	#define PCR_SIDDQ		0x00200000
+	#define PCR_OTG_DISABLE		0x00100000
+	#define PCR_COMPDISTN_M		0x000e0000
+	#define PCR_OTGTUNE		0x0001c000
+	#define PCR_SQRXTUNE		0x00003800
+	#define PCR_TXFSLSTUNE		0x00000780
+	#define PCR_TXPREEMPHTUNE	0x00000040
+	#define PCR_TXHSXVTUNE		0x00000030
+	#define PCR_TXVREFTUNE		0x0000000f
+
 #define JZ_USBPCR1	0x10000048
 	#define PCR_SYNOPSYS	0x10000000	/* Mentor mode otherwise */
 	#define PCR_REFCLK_CORE	0x0c000000
