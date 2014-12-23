@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.2 2014/12/23 15:08:25 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.3 2014/12/23 16:17:39 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2 2014/12/23 15:08:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3 2014/12/23 16:17:39 macallan Exp $");
 
 #define __INTR_PRIVATE
 
@@ -124,7 +124,7 @@ void
 evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 {
 	uint32_t id;
-#ifdef INGENIC_DEBUG
+#ifdef INGENIC_INTR_DEBUG
 	char buffer[256];
 	
 	snprintf(buffer, 256, "pending: %08x CR %08x\n", ipending,
@@ -151,7 +151,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 		if (id == 0) {
 			if (reg & CS_MIRQ0_P) {
 	
-#ifdef INGENIC_DEBUG
+#ifdef INGENIC_INTR_DEBUG
 				snprintf(buffer, 256,
 				    "IPI for core 0, msg %08x\n",
 				    MFC0(CP0_CORE_MBOX, 0));
@@ -163,7 +163,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 			}
 		} else if (id == 1) {
 			if (reg & CS_MIRQ1_P) {
-#ifdef INGENIC_DEBUG
+#ifdef INGENIC_INTR_DEBUG
 				snprintf(buffer, 256,
 				    "IPI for core 1, msg %08x\n",
 				    MFC0(CP0_CORE_MBOX, 1));
@@ -206,8 +206,17 @@ ingenic_irq(int ipl)
 {
 	uint32_t irql, irqh, mask;
 	int bit, idx;
+#ifdef INGENIC_INTR_DEBUG
+	char buffer[16];
+#endif
 
 	irql = readreg(JZ_ICPR0);
+#ifdef INGENIC_INTR_DEBUG
+	if (irql != 0) {
+		snprintf(buffer, 16, " il%08x", irql);
+		ingenic_puts(buffer);
+	}
+#endif
 	bit = ffs32(irql);
 	while (bit != 0) {
 		idx = bit - 1;
@@ -220,7 +229,7 @@ ingenic_irq(int ipl)
 				KERNEL_UNLOCK_ONE(NULL);
 			intrs[idx].ih_count.ev_count++;
 		} else {
-			/* spurious interrupt, maks it */
+			/* spurious interrupt, mask it */
 			writereg(JZ_ICMSR0, mask);
 		}		
 		irql &= ~mask;
@@ -228,6 +237,12 @@ ingenic_irq(int ipl)
 	}
 
 	irqh = readreg(JZ_ICPR1);
+#ifdef INGENIC_INTR_DEBUG
+	if (irqh != 0) {
+		snprintf(buffer, 16, " ih%08x", irqh);
+		ingenic_puts(buffer);
+	}
+#endif
 	bit = ffs32(irqh);
 	while (bit != 0) {
 		idx = bit - 1;
@@ -241,7 +256,7 @@ ingenic_irq(int ipl)
 				KERNEL_UNLOCK_ONE(NULL);
 			intrs[idx].ih_count.ev_count++;
 		} else {
-			/* spurious interrupt, maks it */
+			/* spurious interrupt, mask it */
 			writereg(JZ_ICMSR1, mask);
 		}		
 		irqh &= ~mask;
