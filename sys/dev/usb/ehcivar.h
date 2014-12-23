@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.5 2014/12/05 13:23:38 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.6 2014/12/23 19:31:44 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -94,13 +94,23 @@ struct ehci_xfer {
 	struct usbd_xfer xfer;
 	struct usb_task	abort_task;
 	TAILQ_ENTRY(ehci_xfer) inext; /* list of active xfers */
-	ehci_soft_qtd_t *sqtdstart;
-	ehci_soft_qtd_t *sqtdend;
-	ehci_soft_itd_t *itdstart;
-	ehci_soft_itd_t *itdend;
-	ehci_soft_sitd_t *sitdstart;
-	ehci_soft_sitd_t *sitdend;
-	u_int isoc_len;
+	union {
+		/* ctrl/bulk/intr */
+		struct {
+			ehci_soft_qtd_t *sqtdstart;
+			ehci_soft_qtd_t *sqtdend;
+		};
+		/* isoc */
+		struct {
+			ehci_soft_itd_t *itdstart;
+			ehci_soft_itd_t *itdend;
+		};
+		/* split isoc */
+		struct {
+			ehci_soft_sitd_t *sitdstart;
+			ehci_soft_sitd_t *sitdend;
+		};
+	};
 	int isdone;	/* used only when DIAGNOSTIC is defined */
 };
 #define EXFER(xfer) ((struct ehci_xfer *)(xfer))
