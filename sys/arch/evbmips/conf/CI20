@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.5 2014/12/23 15:06:01 macallan Exp $
+#	$NetBSD: CI20,v 1.6 2014/12/23 16:16:49 macallan Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.5 $"
+#ident 		"CI20-$Revision: 1.6 $"
 
 maxusers	32
 
@@ -54,6 +54,7 @@ makeoptions	COPY_SYMTAB=1	# size for embedded symbol table
 
 options 	INGENIC_DEBUG
 options 	INGENIC_CLOCK_DEBUG
+#options 	INGENIC_INTR_DEBUG	# *very* spammy
 
 # Compatibility options
 #options 	COMPAT_43	# compatibility with 4.3BSD binaries
