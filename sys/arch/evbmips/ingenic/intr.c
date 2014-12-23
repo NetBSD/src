@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1 2014/12/06 14:26:40 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.2 2014/12/23 15:08:25 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1 2014/12/06 14:26:40 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2 2014/12/23 15:08:25 macallan Exp $");
 
 #define __INTR_PRIVATE
 
@@ -37,11 +37,14 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1 2014/12/06 14:26:40 macallan Exp $");
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
+#include <sys/bitops.h>
 
 #include <mips/locore.h>
 #include <machine/intr.h>
 
 #include <mips/ingenic/ingenic_regs.h>
+
+#include "opt_ingenic.h"
 
 extern void ingenic_clockintr(uint32_t);
 extern void ingenic_puts(const char *);
@@ -74,19 +77,43 @@ static const struct ipl_sr_map ingenic_ipl_sr_map = {
     },
 };
 
-//#define INGENIC_DEBUG
+#define NINTR 64
+
+/* some timer channels share interrupts, couldn't find any others */
+struct intrhand {
+	struct evcnt ih_count;
+	int (*ih_func)(void *);
+	void *ih_arg;
+	int ih_ipl;
+};
+
+struct intrhand intrs[NINTR];
+
+void ingenic_irq(int);
+
 void
 evbmips_intr_init(void)
 {
 	uint32_t reg;
+	int i;
+	char irqstr[8];
 
 	ipl_sr_map = ingenic_ipl_sr_map;
+
+	/* zero all handlers */
+	for (i = 0; i < NINTR; i++) {
+		intrs[i].ih_func = NULL;
+		intrs[i].ih_arg = NULL;
+		snprintf(irqstr, sizeof(irqstr), "irq %d", i);
+		evcnt_attach_dynamic(&intrs[i].ih_count, EVCNT_TYPE_INTR,
+		    NULL, "PIC", irqstr);
+	}
 
 	/* mask all peripheral IRQs */
 	writereg(JZ_ICMR0, 0xffffffff);
 	writereg(JZ_ICMR1, 0xffffffff);
 
-	/* allow mailbox and peripheral interrupts to core 0 only */
+	/* allow peripheral interrupts to core 0 only */
 	reg = MFC0(12, 4);	/* reset entry and interrupts */
 	reg &= 0xffff0000;
 	reg |= REIM_IRQ0_M | REIM_MIRQ0_M | REIM_MIRQ1_M;
@@ -100,7 +127,8 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 #ifdef INGENIC_DEBUG
 	char buffer[256];
 	
-	snprintf(buffer, 256, "pending: %08x CR %08x\n", ipending, MFC0(MIPS_COP_0_CAUSE, 0));
+	snprintf(buffer, 256, "pending: %08x CR %08x\n", ipending,
+	    MFC0(MIPS_COP_0_CAUSE, 0));
 	ingenic_puts(buffer);
 #endif
 	/* see which core we're on */
@@ -124,7 +152,8 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 			if (reg & CS_MIRQ0_P) {
 	
 #ifdef INGENIC_DEBUG
-				snprintf(buffer, 256, "IPI for core 0, msg %08x\n",
+				snprintf(buffer, 256,
+				    "IPI for core 0, msg %08x\n",
 				    MFC0(CP0_CORE_MBOX, 0));
 				ingenic_puts(buffer);
 #endif
@@ -135,7 +164,8 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 		} else if (id == 1) {
 			if (reg & CS_MIRQ1_P) {
 #ifdef INGENIC_DEBUG
-				snprintf(buffer, 256, "IPI for core 1, msg %08x\n",
+				snprintf(buffer, 256,
+				    "IPI for core 1, msg %08x\n",
 				    MFC0(CP0_CORE_MBOX, 1));
 				ingenic_puts(buffer);
 #endif
@@ -163,8 +193,111 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 		 * and IPIs. If that doesn't work we'll have to send an IPI to
 		 * core1 for each timer tick.  
 		 */
-		if (readreg(JZ_ICPR0) & 0x08000000)
+		if (readreg(JZ_ICPR0) & 0x08000000) {
 			ingenic_clockintr(id);
+		}
+		ingenic_irq(ipl);
 		KASSERT(id == 0);
 	}
+}
+
+void
+ingenic_irq(int ipl)
+{
+	uint32_t irql, irqh, mask;
+	int bit, idx;
+
+	irql = readreg(JZ_ICPR0);
+	bit = ffs32(irql);
+	while (bit != 0) {
+		idx = bit - 1;
+		mask = 1 << idx;
+		if (intrs[idx].ih_func != NULL) {
+			if (intrs[idx].ih_ipl == IPL_VM)
+				KERNEL_LOCK(1, NULL);
+			intrs[idx].ih_func(intrs[idx].ih_arg);	
+			if (intrs[idx].ih_ipl == IPL_VM)
+				KERNEL_UNLOCK_ONE(NULL);
+			intrs[idx].ih_count.ev_count++;
+		} else {
+			/* spurious interrupt, maks it */
+			writereg(JZ_ICMSR0, mask);
+		}		
+		irql &= ~mask;
+		bit = ffs32(irql);
+	}
+
+	irqh = readreg(JZ_ICPR1);
+	bit = ffs32(irqh);
+	while (bit != 0) {
+		idx = bit - 1;
+		mask = 1 << idx;
+		idx += 32;
+		if (intrs[idx].ih_func != NULL) {
+			if (intrs[idx].ih_ipl == IPL_VM)
+				KERNEL_LOCK(1, NULL);
+			intrs[idx].ih_func(intrs[idx].ih_arg);	
+			if (intrs[idx].ih_ipl == IPL_VM)
+				KERNEL_UNLOCK_ONE(NULL);
+			intrs[idx].ih_count.ev_count++;
+		} else {
+			/* spurious interrupt, maks it */
+			writereg(JZ_ICMSR1, mask);
+		}		
+		irqh &= ~mask;
+		bit = ffs32(irqh);
+	}
+
+}
+
+void *
+evbmips_intr_establish(int irq, int (*func)(void *), void *arg)
+{
+	int s;
+
+	if ((irq < 0) || (irq >= NINTR)) {
+		aprint_error("%s: invalid irq %d\n", __func__, irq);
+		return NULL;
+	}
+
+	s = splhigh();	/* XXX probably needs a mutex */
+	intrs[irq].ih_func = func;
+	intrs[irq].ih_arg = arg;
+	intrs[irq].ih_ipl = IPL_VM;
+
+	/* now enable the IRQ */
+	if (irq >= 32) {
+		writereg(JZ_ICMCR1, 1 << (irq - 32));
+	} else
+		writereg(JZ_ICMCR0, 1 << irq);
+
+	splx(s);
+
+	return ((void *)(irq + 1));
+}
+
+void
+evbmips_intr_disestablish(void *cookie)
+{
+	int irq = ((int)cookie) - 1;
+	int s;
+
+	if ((irq < 0) || (irq >= NINTR)) {
+		aprint_error("%s: invalid irq %d\n", __func__, irq);
+		return;
+	}
+
+	s = splhigh();
+
+	/* disable the IRQ */
+	if (irq >= 32) {
+		writereg(JZ_ICMSR1, 1 << (irq - 32));
+	} else
+		writereg(JZ_ICMSR0, 1 << irq);
+
+	intrs[irq].ih_func = NULL;
+	intrs[irq].ih_arg = NULL;
+	intrs[irq].ih_ipl = 0;
+
+	splx(s);
 }
