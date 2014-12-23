@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.41 2014/12/22 00:07:24 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.42 2014/12/23 13:34:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -243,11 +243,7 @@ awinio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_naive("\n");
-	aprint_normal(": %s", chip_name);
-	if ((chip_id & 0xff00) != 0xff00) {
-		aprint_normal(" (0x%04x)\n", chip_id);
-	}
-	aprint_normal("\n");
+	aprint_normal(": %s (0x%04x)\n", chip_name, chip_id);
 
 	const struct awin_locators * const eloc =
 	    awin_locators + __arraycount(awin_locators);
