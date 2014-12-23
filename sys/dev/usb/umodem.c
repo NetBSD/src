@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.66.4.2 2014/12/23 11:10:41 skrll Exp $	*/
+/*	$NetBSD: umodem.c,v 1.66.4.3 2014/12/23 11:24:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.66.4.2 2014/12/23 11:10:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.66.4.3 2014/12/23 11:24:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,17 +102,17 @@ umodem_match(device_t parent, cfdata_t match, void *aux)
 	if (uaa->subclass != UISUBCLASS_ABSTRACT_CONTROL_MODEL &&
 	    (id->bInterfaceClass == UICLASS_CDC_DATA &&
 	     id->bInterfaceSubClass == UISUBCLASS_DATA))
-		return (UMATCH_IFACECLASS_IFACESUBCLASS);
+		return UMATCH_IFACECLASS_IFACESUBCLASS;
 
 	if (uaa->class != UICLASS_CDC ||
 	    uaa->subclass != UISUBCLASS_ABSTRACT_CONTROL_MODEL ||
 	    !(uaa->proto == UIPROTO_CDC_NOCLASS || uaa->proto == UIPROTO_CDC_AT))
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 
 	if (umodem_get_caps(uaa->device, &cm, &acm, id) == -1)
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 
-	return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
+	return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.8.2.1 2014/12/06 08:27:23 skrll Exp $ */
+/* $NetBSD: umcs.c,v 1.8.2.2 2014/12/23 11:24:32 skrll Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.8.2.1 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.8.2.2 2014/12/23 11:24:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,8 +174,8 @@ umcs7840_match(device_t dev, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (umcs7840_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return umcs7840_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 static void
@@ -432,12 +432,12 @@ umcs7840_set_baudrate(struct umcs7840_softc *sc, uint8_t portno,
 
 	if (umcs7840_calc_baudrate(rate, &divisor, &clk)) {
 		DPRINTF(("Port %d bad speed: %d\n", portno, rate));
-		return (-1);
+		return -1;
 	}
 	if (divisor == 0 || (clk & MCS7840_DEV_SPx_CLOCK_MASK) != clk) {
 		DPRINTF(("Port %d bad speed calculation: %d\n", portno,
 		    rate));
-		return (-1);
+		return -1;
 	}
 	DPRINTF(("Port %d set speed: %d (%02x / %d)\n", portno, rate, clk, divisor));
 
@@ -469,7 +469,7 @@ umcs7840_set_baudrate(struct umcs7840_softc *sc, uint8_t portno,
 	err = umcs7840_set_UART_reg(sc, physport, MCS7840_UART_REG_LCR, sc->sc_ports[portno].sc_port_lcr);
 	if (err)
 		return err;
-	return (0);
+	return 0;
 }
 
 static int
@@ -484,7 +484,7 @@ umcs7840_calc_baudrate(uint32_t rate, uint16_t *divisor, uint8_t *clk)
 	uint8_t i = 0;
 
 	if (rate > umcs7840_baudrate_divisors[umcs7840_baudrate_divisors_len - 1])
-		return (-1);
+		return -1;
 
 	for (i = 0; i < umcs7840_baudrate_divisors_len - 1
 	     && !(rate > umcs7840_baudrate_divisors[i]
@@ -492,7 +492,7 @@ umcs7840_calc_baudrate(uint32_t rate, uint16_t *divisor, uint8_t *clk)
 	*divisor = umcs7840_baudrate_divisors[i + 1] / rate;
 	/* 0x00 .. 0x70 */
 	*clk = i << MCS7840_DEV_SPx_CLOCK_SHIFT;
-	return (0);
+	return 0;
 }
 
 static int

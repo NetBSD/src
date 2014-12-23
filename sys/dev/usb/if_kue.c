@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.81.4.2 2014/12/03 14:18:07 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.81.4.3 2014/12/23 11:24:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.2 2014/12/03 14:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.3 2014/12/23 11:24:31 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -197,7 +197,7 @@ kue_setword(struct kue_softc *sc, uint8_t breq, uint16_t word)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, 0);
 
-	return (usbd_do_request(sc->kue_udev, &req, NULL));
+	return usbd_do_request(sc->kue_udev, &req, NULL);
 }
 
 static usbd_status
@@ -219,7 +219,7 @@ kue_ctl(struct kue_softc *sc, int rw, uint8_t breq, uint16_t val,
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, len);
 
-	return (usbd_do_request(sc->kue_udev, &req, data));
+	return usbd_do_request(sc->kue_udev, &req, data);
 }
 
 static int
@@ -245,11 +245,11 @@ kue_load_fw(struct kue_softc *sc)
 	 * running.
 	 */
 	if (usbd_get_device_desc(sc->kue_udev, &dd))
-		return (EIO);
+		return EIO;
 	if (UGETW(dd.bcdDevice) == KUE_WARM_REV) {
 		printf("%s: warm boot, no firmware download\n",
 		       device_xname(sc->kue_dev));
-		return (0);
+		return 0;
 	}
 
 	printf("%s: cold boot, downloading firmware\n",
@@ -264,7 +264,7 @@ kue_load_fw(struct kue_softc *sc)
 	if (err) {
 		printf("%s: failed to load code segment: %s\n",
 		    device_xname(sc->kue_dev), usbd_errstr(err));
-			return (EIO);
+			return EIO;
 	}
 
 	/* Load fixup segment */
@@ -276,7 +276,7 @@ kue_load_fw(struct kue_softc *sc)
 	if (err) {
 		printf("%s: failed to load fixup segment: %s\n",
 		    device_xname(sc->kue_dev), usbd_errstr(err));
-			return (EIO);
+			return EIO;
 	}
 
 	/* Send trigger command. */
@@ -288,7 +288,7 @@ kue_load_fw(struct kue_softc *sc)
 	if (err) {
 		printf("%s: failed to load trigger segment: %s\n",
 		    device_xname(sc->kue_dev), usbd_errstr(err));
-			return (EIO);
+			return EIO;
 	}
 
 	usbd_delay_ms(sc->kue_udev, 10);
@@ -308,7 +308,7 @@ kue_load_fw(struct kue_softc *sc)
 	/* Reset the adapter. */
 	kue_reset(sc);
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -383,8 +383,8 @@ kue_match(device_t parent, cfdata_t match, void *aux)
 
 	DPRINTFN(25,("kue_match: enter\n"));
 
-	return (kue_lookup(uaa->vendor, uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return kue_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 /*
@@ -536,7 +536,7 @@ kue_detach(device_t self, int flags)
 	if (!sc->kue_attached) {
 		/* Detached before attached finished, so just bail out. */
 		splx(s);
-		return (0);
+		return 0;
 	}
 
 	if (ifp->if_flags & IFF_RUNNING)
@@ -557,7 +557,7 @@ kue_detach(device_t self, int flags)
 	sc->kue_attached = false;
 	splx(s);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -595,14 +595,14 @@ kue_rx_list_init(struct kue_softc *sc)
 		if (c->kue_xfer == NULL) {
 			c->kue_xfer = usbd_alloc_xfer(sc->kue_udev);
 			if (c->kue_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->kue_buf = usbd_alloc_buffer(c->kue_xfer, KUE_BUFSZ);
 			if (c->kue_buf == NULL)
-				return (ENOBUFS); /* XXX free xfer */
+				return ENOBUFS; /* XXX free xfer */
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -622,14 +622,14 @@ kue_tx_list_init(struct kue_softc *sc)
 		if (c->kue_xfer == NULL) {
 			c->kue_xfer = usbd_alloc_xfer(sc->kue_udev);
 			if (c->kue_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->kue_buf = usbd_alloc_buffer(c->kue_xfer, KUE_BUFSZ);
 			if (c->kue_buf == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -820,12 +820,12 @@ kue_send(struct kue_softc *sc, struct mbuf *m, int idx)
 		printf("%s: kue_send error=%s\n", device_xname(sc->kue_dev),
 		       usbd_errstr(err));
 		kue_stop(sc);
-		return (EIO);
+		return EIO;
 	}
 
 	sc->kue_cdata.kue_tx_cnt++;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -950,7 +950,7 @@ kue_open_pipes(struct kue_softc *sc)
 	if (err) {
 		printf("%s: open rx pipe failed: %s\n",
 		    device_xname(sc->kue_dev), usbd_errstr(err));
-		return (EIO);
+		return EIO;
 	}
 
 	err = usbd_open_pipe(sc->kue_iface, sc->kue_ed[KUE_ENDPT_TX],
@@ -958,7 +958,7 @@ kue_open_pipes(struct kue_softc *sc)
 	if (err) {
 		printf("%s: open tx pipe failed: %s\n",
 		    device_xname(sc->kue_dev), usbd_errstr(err));
-		return (EIO);
+		return EIO;
 	}
 
 	/* Start up the receive pipe. */
@@ -973,7 +973,7 @@ kue_open_pipes(struct kue_softc *sc)
 		usbd_transfer(c->kue_xfer);
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -987,7 +987,7 @@ kue_ioctl(struct ifnet *ifp, u_long command, void *data)
 	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->kue_dev),__func__));
 
 	if (sc->kue_dying)
-		return (EIO);
+		return EIO;
 
 	s = splnet();
 
@@ -1053,7 +1053,7 @@ kue_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	splx(s);
 
-	return (error);
+	return error;
 }
 
 static void

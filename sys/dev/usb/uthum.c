@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.10.14.1 2014/12/03 22:33:56 skrll Exp $   */
+/*	$NetBSD: uthum.c,v 1.10.14.2 2014/12/23 11:24:32 skrll Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10.14.1 2014/12/03 22:33:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10.14.2 2014/12/23 11:24:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -120,8 +120,8 @@ uthum_match(device_t parent, cfdata_t match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 
-	return (uthum_lookup(uha->uaa->vendor, uha->uaa->product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return uthum_lookup(uha->uaa->vendor, uha->uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 void
@@ -229,7 +229,7 @@ uthum_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 	    sc->sc_hdev.sc_dev);
 
-	return (rv);
+	return rv;
 }
 
 int
@@ -242,7 +242,7 @@ uthum_activate(device_t self, enum devact act)
 		sc->sc_dying = 1;
 		break;
 	}
-	return (0);
+	return 0;
 }
 
 void
