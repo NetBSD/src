@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_dwctwo.c,v 1.2 2014/12/23 15:13:30 macallan Exp $ */
+/*	$NetBSD: ingenic_dwctwo.c,v 1.3 2014/12/23 18:48:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.2 2014/12/23 15:13:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.3 2014/12/23 18:48:52 macallan Exp $");
 
 /*
  * adapted from bcm2835_dwctwo.c
@@ -136,12 +136,15 @@ ingenic_dwc2_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": USB controller\n");
 
 	reg = readreg(JZ_USBPCR);
-	reg |= VBUSVLDEXTSEL;
-	reg |= VBUSVLDEXT;
-	reg |= USB_MODE;
-	reg |= COMMONONN;
-	reg &= ~OTG_DISABLE;
+	reg |= PCR_VBUSVLDEXTSEL;
+	reg |= PCR_VBUSVLDEXT;
+	reg |= PCR_USB_MODE;
+	reg |= PCR_COMMONONN;
+	reg &= ~PCR_OTG_DISABLE;
 	writereg(JZ_USBPCR, reg);
+#ifdef INGENIC_DEBUG
+	printf("JZ_USBPCR  %08x\n", reg);
+#endif
 
 	reg = readreg(JZ_USBPCR1);
 	reg |= PCR_SYNOPSYS;
@@ -150,6 +153,9 @@ ingenic_dwc2_attach(device_t parent, device_t self, void *aux)
 	reg |= PCR_CLK_48;
 	reg |= PCR_WORD_I_F0;
 	writereg(JZ_USBPCR1, reg);
+#ifdef INGENIC_DEBUG
+	printf("JZ_USBPCR1 %08x\n", reg);
+#endif
 
 	delay(10000);
 
