@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2014/12/06 14:24:58 macallan Exp $ */
+/*	$NetBSD: clock.c,v 1.3 2014/12/23 15:07:33 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2014/12/06 14:24:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 2014/12/23 15:07:33 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -37,6 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2014/12/06 14:24:58 macallan Exp $");
 #include <sys/timetc.h>
 
 #include <mips/ingenic/ingenic_regs.h>
+
+#include "opt_ingenic.h"
 
 extern void ingenic_puts(const char *);
 
@@ -103,9 +105,13 @@ cpu_initclocks(void)
 	writereg(JZ_TC_TFCR, TFR_FFLAG5);
 	writereg(JZ_TC_TESR, TESR_TCST5);	/* enable timer 5 */
 #endif
+
+#ifdef INGENIC_CLOCK_DEBUG
 	printf("INTC %08x %08x\n", readreg(JZ_ICSR0), readreg(JZ_ICSR1));
 	writereg(JZ_ICMCR0, 0x0c000000); /* TCU2, OST */
+#endif
 	spl0();
+#ifdef INGENIC_CLOCK_DEBUG
 	printf("TFR: %08x\n", readreg(JZ_TC_TFR));
 	printf("TMR: %08x\n", readreg(JZ_TC_TMR));
 	printf("cnt5: %08x\n", readreg(JZ_TC_TCNT(5)));
@@ -125,6 +131,7 @@ cpu_initclocks(void)
 	
 	printf("INTC %08x %08x\n", readreg(JZ_ICSR0), readreg(JZ_ICSR1));
 	delay(3000000);
+#endif
 }
 
 /* shamelessly stolen from mips3_clock.c */
@@ -176,8 +183,9 @@ setstatclockrate(int r)
 	/* we could just use another timer channel here */
 }
 
+#ifdef INGENIC_CLOCK_DEBUG
 int cnt = 99;
-
+#endif
 
 void
 ingenic_clockintr(uint32_t id)
@@ -208,11 +216,12 @@ ingenic_clockintr(uint32_t id)
 		curcpu()->ci_ev_count_compare_missed.ev_count++;
 	}
 
+#ifdef INGENIC_CLOCK_DEBUG
 	cnt++;
 	if (cnt == 100) {
 		cnt = 0;
 		ingenic_puts("+");
 	}
-
+#endif
 	hardclock(&cf);
 }
