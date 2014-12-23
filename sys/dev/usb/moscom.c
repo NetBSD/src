@@ -1,4 +1,4 @@
-/*	$NetBSD: moscom.c,v 1.8.14.2 2014/12/23 11:10:41 skrll Exp $	*/
+/*	$NetBSD: moscom.c,v 1.8.14.3 2014/12/23 11:24:32 skrll Exp $	*/
 /*	$OpenBSD: moscom.c,v 1.11 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.8.14.2 2014/12/23 11:10:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.8.14.3 2014/12/23 11:24:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,7 +298,7 @@ moscom_detach(device_t self, int flags)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   sc->sc_dev);
 
-	return (rv);
+	return rv;
 }
 
 int
@@ -322,16 +322,16 @@ moscom_open(void *vsc, int portno)
 	usb_device_request_t req;
 
 	if (sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	/* Purge FIFOs or odd things happen */
 	if (moscom_cmd(sc, MOSCOM_FIFO, 0x00) != 0)
-		return (EIO);
+		return EIO;
 
 	if (moscom_cmd(sc, MOSCOM_FIFO, MOSCOM_FIFO_EN |
 	    MOSCOM_FIFO_RXCLR | MOSCOM_FIFO_TXCLR |
 	    MOSCOM_FIFO_DMA_BLK | MOSCOM_FIFO_RXLVL_MASK) != 0)
-		return (EIO);
+		return EIO;
 
 	/* Magic tell device we're ready for data command */
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -340,9 +340,9 @@ moscom_open(void *vsc, int portno)
 	USETW(req.wIndex, MOSCOM_INT);
 	USETW(req.wLength, 0);
 	if (usbd_do_request(sc->sc_udev, &req, NULL) != 0)
-		return (EIO);
+		return EIO;
 
-	return (0);
+	return 0;
 }
 
 void
@@ -378,12 +378,12 @@ moscom_param(void *vsc, int portno, struct termios *t)
 	int data;
 
 	if (t->c_ospeed <= 0 || t->c_ospeed > 115200)
-		return (EINVAL);
+		return EINVAL;
 
 	data = MOSCOM_BAUD_REF / t->c_ospeed;
 
 	if (data == 0 || data > 0xffff)
-		return (EINVAL);
+		return EINVAL;
 
 	moscom_cmd(sc, MOSCOM_LCR, MOSCOM_LCR_DIVLATCH_EN);
 	moscom_cmd(sc, MOSCOM_BAUDLO, data & 0xFF);
@@ -429,7 +429,7 @@ moscom_param(void *vsc, int portno, struct termios *t)
 	}
 #endif
 
-	return (0);
+	return 0;
 }
 
 void
@@ -456,7 +456,7 @@ moscom_cmd(struct moscom_softc *sc, int reg, int val)
 	USETW(req.wLength, 0);
 	err = usbd_do_request(sc->sc_udev, &req, NULL);
 	if (err)
-		return (EIO);
+		return EIO;
 	else
-		return (0);
+		return 0;
 }

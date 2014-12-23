@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.41.2.5 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.41.2.6 2014/12/23 11:24:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.5 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.6 2014/12/23 11:24:32 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -761,7 +761,7 @@ uvideo_stream_guess_format(struct uvideo_stream *vs,
 static struct uvideo_stream *
 uvideo_stream_alloc(void)
 {
-	return (kmem_alloc(sizeof(struct uvideo_stream), KM_NOSLEEP));
+	return kmem_alloc(sizeof(struct uvideo_stream), KM_NOSLEEP);
 }
 
 
@@ -3020,7 +3020,7 @@ usb_desc_iter_next_non_interface(usbd_desc_iter_t *iter)
 	if ((desc = usb_desc_iter_peek_next(iter)) != NULL &&
 	    desc->bDescriptorType != UDESC_INTERFACE)
 	{
-		return (usb_desc_iter_next(iter));
+		return usb_desc_iter_next(iter);
 	} else {
 		return NULL;
 	}
@@ -3067,5 +3067,5 @@ usb_guid_cmp(const usb_guid_t *uguid, const guid_t *guid)
 	else if (guid->data3 < UGETW(uguid->data3))
 		return -1;
 
-	return (memcmp(guid->data4, uguid->data4, 8));
+	return memcmp(guid->data4, uguid->data4, 8);
 }

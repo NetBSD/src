@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.31.2.6 2014/12/06 08:37:30 skrll Exp $	*/
+/*	$NetBSD: u3g.c,v 1.31.2.7 2014/12/23 11:24:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.6 2014/12/06 08:37:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.7 2014/12/23 11:24:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -712,7 +712,7 @@ u3g_match(device_t parent, cfdata_t match, void *aux)
 	 *
 	 * XXX: this may be too generalised.
 	 */
-	return (id->bInterfaceClass == UICLASS_VENDOR) ?
+	return id->bInterfaceClass == UICLASS_VENDOR ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.2 2014/12/03 12:52:07 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.3 2014/12/23 11:24:31 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -211,7 +211,7 @@ smsc_read_reg(struct smsc_softc *sc, uint32_t off, uint32_t *data)
 
 	*data = le32toh(buf);
 
-	return (err);
+	return err;
 }
 
 int
@@ -233,7 +233,7 @@ smsc_write_reg(struct smsc_softc *sc, uint32_t off, uint32_t data)
 	if (err != 0)
 		smsc_warn_printf(sc, "Failed to write register 0x%0x\n", off);
 
-	return (err);
+	return err;
 }
 
 int
@@ -244,13 +244,13 @@ smsc_wait_for_bits(struct smsc_softc *sc, uint32_t reg, uint32_t bits)
 
 	for (i = 0; i < 100; i++) {
 		if ((err = smsc_read_reg(sc, reg, &val)) != 0)
-			return (err);
+			return err;
 		if (!(val & bits))
-			return (0);
+			return 0;
 		DELAY(5);
 	}
 
-	return (1);
+	return 1;
 }
 
 int
@@ -277,7 +277,7 @@ smsc_miibus_readreg(device_t dev, int phy, int reg)
 done:
 	smsc_unlock_mii(sc);
 
-	return (val & 0xFFFF);
+	return val & 0xFFFF;
 }
 
 void
@@ -395,7 +395,7 @@ smsc_ifmedia_upd(struct ifnet *ifp)
 			mii_phy_reset(miisc);
 	}
 	err = mii_mediachg(mii);
-	return (err);
+	return err;
 }
 
 void
@@ -479,7 +479,7 @@ smsc_sethwcsum(struct smsc_softc *sc)
 	if (err != 0) {
 		smsc_warn_printf(sc, "failed to read SMSC_COE_CTRL (err=%d)\n",
 		    err);
-		return (err);
+		return err;
 	}
 
 	/* Enable/disable the Rx checksum */
@@ -500,10 +500,10 @@ smsc_sethwcsum(struct smsc_softc *sc)
 	if (err != 0) {
 		smsc_warn_printf(sc, "failed to write SMSC_COE_CTRL (err=%d)\n",
 		    err);
-		return (err);
+		return err;
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -524,7 +524,7 @@ smsc_setmacaddress(struct smsc_softc *sc, const uint8_t *addr)
 	err = smsc_write_reg(sc, SMSC_MAC_ADDRH, val);
 
 done:
-	return (err);
+	return err;
 }
 
 void
@@ -892,11 +892,11 @@ smsc_chip_init(struct smsc_softc *sc)
 	sc->sc_mac_csr |= SMSC_MAC_CSR_RXEN;
 	smsc_write_reg(sc, SMSC_MAC_CSR, sc->sc_mac_csr);
 
-	return (0);
+	return 0;
 
 init_failed:
 	smsc_err_printf(sc, "smsc_chip_init failed (err=%d)\n", err);
-	return (err);
+	return err;
 }
 
 int
@@ -1185,7 +1185,7 @@ smsc_detach(device_t self, int flags)
 
 	mutex_destroy(&sc->sc_mii_lock);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -1229,7 +1229,7 @@ smsc_activate(device_t self, enum devact act)
 	default:
 		return EOPNOTSUPP;
 	}
-	return (0);
+	return 0;
 }
 
 void
@@ -1480,17 +1480,17 @@ smsc_tx_list_init(struct smsc_softc *sc)
 		if (c->sc_xfer == NULL) {
 			c->sc_xfer = usbd_alloc_xfer(sc->sc_udev);
 			if (c->sc_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->sc_buf = usbd_alloc_buffer(c->sc_xfer,
 			    sc->sc_bufsz);
 			if (c->sc_buf == NULL) {
 				usbd_free_xfer(c->sc_xfer);
-				return (ENOBUFS);
+				return ENOBUFS;
 			}
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -1509,17 +1509,17 @@ smsc_rx_list_init(struct smsc_softc *sc)
 		if (c->sc_xfer == NULL) {
 			c->sc_xfer = usbd_alloc_xfer(sc->sc_udev);
 			if (c->sc_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->sc_buf = usbd_alloc_buffer(c->sc_xfer,
 			    sc->sc_bufsz);
 			if (c->sc_buf == NULL) {
 				usbd_free_xfer(c->sc_xfer);
-				return (ENOBUFS);
+				return ENOBUFS;
 			}
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 struct mbuf *
@@ -1529,15 +1529,15 @@ smsc_newbuf(void)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
-		return (NULL);
+		return NULL;
 
 	MCLGET(m, M_DONTWAIT);
 	if (!(m->m_flags & M_EXT)) {
 		m_freem(m);
-		return (NULL);
+		return NULL;
 	}
 
-	return (m);
+	return m;
 }
 
 int
@@ -1580,10 +1580,10 @@ smsc_encap(struct smsc_softc *sc, struct mbuf *m, int idx)
 	/* XXXNH get task to stop interface */
 	if (err != USBD_IN_PROGRESS) {
 		smsc_stop(ifp, 0);
-		return (EIO);
+		return EIO;
 	}
 
 	sc->sc_cdata.tx_cnt++;
 
-	return (0);
+	return 0;
 }

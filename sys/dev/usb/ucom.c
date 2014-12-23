@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.3 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.4 2014/12/23 11:24:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.3 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.4 2014/12/23 11:24:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -697,7 +697,7 @@ ucomtty(dev_t dev)
 {
 	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
 
-	return (sc != NULL) ? sc->sc_tty : NULL;
+	return sc != NULL ? sc->sc_tty : NULL;
 }
 
 int

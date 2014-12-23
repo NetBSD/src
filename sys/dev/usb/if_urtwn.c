@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.34.4.4 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.34.4.5 2014/12/23 11:24:32 skrll Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.4 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.5 2014/12/23 11:24:32 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -285,7 +285,7 @@ urtwn_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (urtwn_lookup(urtwn_devs, uaa->vendor, uaa->product) != NULL) ?
+	return urtwn_lookup(urtwn_devs, uaa->vendor, uaa->product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 

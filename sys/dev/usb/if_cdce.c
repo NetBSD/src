@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.38.14.1 2014/12/02 09:00:33 skrll Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.38.14.2 2014/12/23 11:24:31 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.38.14.1 2014/12/02 09:00:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.38.14.2 2014/12/23 11:24:31 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -123,13 +123,13 @@ cdce_match(device_t parent, cfdata_t match, void *aux)
 	struct usbif_attach_arg *uaa = aux;
 
 	if (cdce_lookup(uaa->vendor, uaa->product) != NULL)
-		return (UMATCH_VENDOR_PRODUCT);
+		return UMATCH_VENDOR_PRODUCT;
 
 	if (uaa->class == UICLASS_CDC && uaa->subclass ==
 	    UISUBCLASS_ETHERNET_NETWORKING_CONTROL_MODEL)
-		return (UMATCH_IFACECLASS_GENERIC);
+		return UMATCH_IFACECLASS_GENERIC;
 
-	return (UMATCH_NONE);
+	return UMATCH_NONE;
 }
 
 void
@@ -315,7 +315,7 @@ cdce_detach(device_t self, int flags)
 
 	if (!sc->cdce_attached) {
 		splx(s);
-		return (0);
+		return 0;
 	}
 
 	if (ifp->if_flags & IFF_RUNNING)
@@ -328,7 +328,7 @@ cdce_detach(device_t self, int flags)
 	sc->cdce_attached = 0;
 	splx(s);
 
-	return (0);
+	return 0;
 }
 
 Static void
@@ -384,12 +384,12 @@ cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 	err = usbd_transfer(c->cdce_xfer);
 	if (err != USBD_IN_PROGRESS) {
 		cdce_stop(sc);
-		return (EIO);
+		return EIO;
 	}
 
 	sc->cdce_cdata.cdce_tx_cnt++;
 
-	return (0);
+	return 0;
 }
 
 Static void
@@ -461,7 +461,7 @@ cdce_ioctl(struct ifnet *ifp, u_long command, void *data)
 	int			 s, error = 0;
 
 	if (sc->cdce_dying)
-		return (EIO);
+		return EIO;
 
 	s = splnet();
 
@@ -511,7 +511,7 @@ cdce_ioctl(struct ifnet *ifp, u_long command, void *data)
 	if (error == ENETRESET)
 		error = 0;
 
-	return (error);
+	return error;
 }
 
 Static void
@@ -596,14 +596,14 @@ cdce_newbuf(struct cdce_softc *sc, struct cdce_chain *c, struct mbuf *m)
 		if (m_new == NULL) {
 			printf("%s: no memory for rx list "
 			    "-- packet dropped!\n", device_xname(sc->cdce_dev));
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
 			printf("%s: no memory for rx list "
 			    "-- packet dropped!\n", device_xname(sc->cdce_dev));
 			m_freem(m_new);
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 	} else {
@@ -612,7 +612,7 @@ cdce_newbuf(struct cdce_softc *sc, struct cdce_chain *c, struct mbuf *m)
 		m_new->m_data = m_new->m_ext.ext_buf;
 	}
 	c->cdce_mbuf = m_new;
-	return (0);
+	return 0;
 }
 
 Static int
@@ -628,19 +628,19 @@ cdce_rx_list_init(struct cdce_softc *sc)
 		c->cdce_sc = sc;
 		c->cdce_idx = i;
 		if (cdce_newbuf(sc, c, NULL) == ENOBUFS)
-			return (ENOBUFS);
+			return ENOBUFS;
 		if (c->cdce_xfer == NULL) {
 			c->cdce_xfer = usbd_alloc_xfer(sc->cdce_udev);
 			if (c->cdce_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->cdce_buf = usbd_alloc_buffer(c->cdce_xfer,
 			    CDCE_BUFSZ);
 			if (c->cdce_buf == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 Static int
@@ -659,14 +659,14 @@ cdce_tx_list_init(struct cdce_softc *sc)
 		if (c->cdce_xfer == NULL) {
 			c->cdce_xfer = usbd_alloc_xfer(sc->cdce_udev);
 			if (c->cdce_xfer == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 			c->cdce_buf = usbd_alloc_buffer(c->cdce_xfer, CDCE_BUFSZ);
 			if (c->cdce_buf == NULL)
-				return (ENOBUFS);
+				return ENOBUFS;
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 Static void
