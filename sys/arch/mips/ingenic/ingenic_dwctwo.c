@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_dwctwo.c,v 1.1 2014/12/06 14:35:47 macallan Exp $ */
+/*	$NetBSD: ingenic_dwctwo.c,v 1.2 2014/12/23 15:13:30 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.1 2014/12/06 14:35:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.2 2014/12/23 15:13:30 macallan Exp $");
 
 /*
  * adapted from bcm2835_dwctwo.c
@@ -112,6 +112,7 @@ ingenic_dwc2_attach(device_t parent, device_t self, void *aux)
 {
 	struct ingenic_dwc2_softc *sc = device_private(self);
 	struct apbus_attach_args *aa = aux;
+	uint32_t reg;
 	int error;
 
 	sc->sc_dwc2.sc_dev = self;
@@ -134,27 +135,41 @@ ingenic_dwc2_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": USB controller\n");
 	aprint_normal(": USB controller\n");
 
-#if notyet
-	sc->sc_ih = bcm2835_intr_establish(aaa->aaa_intr, IPL_SCHED,
-	   dwc2_intr, &sc->sc_dwc2);
+	reg = readreg(JZ_USBPCR);
+	reg |= VBUSVLDEXTSEL;
+	reg |= VBUSVLDEXT;
+	reg |= USB_MODE;
+	reg |= COMMONONN;
+	reg &= ~OTG_DISABLE;
+	writereg(JZ_USBPCR, reg);
+
+	reg = readreg(JZ_USBPCR1);
+	reg |= PCR_SYNOPSYS;
+	reg |= PCR_REFCLK_CORE;
+	reg &= ~PCR_CLK_M;
+	reg |= PCR_CLK_48;
+	reg |= PCR_WORD_I_F0;
+	writereg(JZ_USBPCR1, reg);
+
+	delay(10000);
+
+	sc->sc_ih = evbmips_intr_establish(21, dwc2_intr, &sc->sc_dwc2);
 
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
-		     aaa->aaa_intr);
+		     21);
 		goto fail;
 	}
-#endif
+
 	config_defer(self, ingenic_dwc2_deferred);
 
 	return;
 
-#if notyet
 fail:
 	if (sc->sc_ih) {
-		intr_disestablish(sc->sc_ih);
+		evbmips_intr_disestablish(sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
-#endif
 	bus_space_unmap(sc->sc_dwc2.sc_iot, sc->sc_dwc2.sc_ioh, 0x20000);
 }
 
