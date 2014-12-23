@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.2 2014/12/06 14:33:34 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.3 2014/12/23 15:03:56 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -160,6 +160,58 @@ MFC0(uint32_t r, uint32_t s)
 #define REIM_ENTRY_M	0xffff0000	/* reset exception entry if RPCn=1 */
 
 #define CP0_CORE_MBOX	20	/* select 0 for core 0, 1 for 1 */
+
+/* power management */
+#define JZ_CLKGR0	0x10000020	/* CLocK Gating Registers */
+#define JZ_OPCR		0x10000024	/* Oscillator Power Control Reg. */
+#define JZ_CLKGR1	0x10000028	/* CLocK Gating Registers */
+#define JZ_USBPCR	0x1000003c
+	#define USB_MODE	0x80000000	/* 1 - otg */
+	#define AVLD_REG	0x40000000
+	#define IDPULLUP_MASK	0x30000000
+	#define INCR_MASK	0x08000000
+	#define TCRISETUNE	0x04000000
+	#define COMMONONN	0x02000000
+	#define VBUSVLDEXT	0x01000000
+	#define VBUSVLDEXTSEL	0x00800000
+	#define POR		0x00400000
+	#define SIDDQ		0x00200000
+	#define OTG_DISABLE	0x00100000
+	#define COMPDISTUNE_M	0x000e0000
+	#define OTGTUNE		0x0001c000
+	#define SQRXTUNE	0x00003800
+	#define TXFSLSTUNE	0x00000780
+	#define TXPREEMPHTUNE	0x00000040
+	#define TXHSXVTUNE	0x00000030
+	#define TXVREFTUNE	0x0000000f
+	
+#define JZ_USBPCR1	0x10000048
+	#define PCR_SYNOPSYS	0x10000000	/* Mentor mode otherwise */
+	#define PCR_REFCLK_CORE	0x0c000000
+	#define PCR_REFCLK_XO25	0x04000000
+	#define PCR_REFCLK_CO	0x00000000
+	#define PCR_CLK_M	0x03000000	/* clock */
+	#define PCR_CLK_192	0x03000000	/* 19.2MHz */
+	#define PCR_CLK_48	0x02000000	/* 48MHz */
+	#define PCR_CLK_24	0x01000000	/* 24MHz */
+	#define PCR_CLK_12	0x00000000	/* 12MHz */
+	#define PCR_DMPD1	0x00800000	/* pull down D- on port 1 */ 
+	#define PCR_DPPD1	0x00400000	/* pull down D+ on port 1 */
+	#define PCR_PORT0_RST	0x00200000	/* port 0 reset */
+	#define PCR_PORT1_RST	0x00100000	/* port 1 reset */
+	#define PCR_WORD_I_F0	0x00080000	/* 1: 16bit/30M, 8/60 otherw. */
+	#define PCR_WORD_I_F1	0x00040000	/* same for port 1 */
+	#define PCR_COMPDISTUNE	0x00038000	/* disconnect threshold */
+	#define PCR_SQRXTUNE1	0x00007000	/* squelch threshold */
+	#define PCR_TXFSLSTUNE1	0x00000f00	/* FS/LS impedance adj. */
+	#define PCR_TXPREEMPH	0x00000080	/* HS transm. pre-emphasis */
+	#define PCR_TXHSXVTUNE1	0x00000060	/* dp/dm voltage adj. */
+	#define PCR_TXVREFTUNE1	0x00000017	/* HS DC voltage adj. */
+	#define PCR_TXRISETUNE1	0x00000001	/* risa/fall wave adj. */
+	
+#define JZ_SPCR0	0x100000b8	/* SRAM Power Control Registers */
+#define JZ_SPCR1	0x100000bc
+#define JZ_SRBC		0x100000c4	/* Soft Reset & Bus Control */
 
 /* interrupt controller */
 #define JZ_ICSR0	0x10001000	/* raw IRQ line status */
