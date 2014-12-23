@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2014/12/19 05:21:51 christos Exp $
+# $NetBSD: Makefile,v 1.23 2014/12/23 17:50:42 christos Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -13,6 +13,7 @@ SHLIB_MAJOR=	0
 
 LIB=		mesa_dri_drivers
 DRIDIR=		${X11USRLIBDIR}/modules/dri
+DRIDEBUGDIR=	${DEBUGDIR}${X11USRLIBDIR}/modules/dri
 
 #	-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/${MODULE}/server \
 
@@ -369,8 +370,11 @@ CPPFLAGS.streaming-load-memcpy.c+= -msse4.1
 .include "../driver.mk"
 
 .for _d in ${DRIVERS}
-LINKS+= ${DRIDIR}/mesa_dri_drivers.so.${SHLIB_MAJOR} ${DRIDIR}/${_d}_dri.so.${SHLIB_MAJOR} 
+SYMLINKS+= mesa_dri_drivers.so.${SHLIB_MAJOR} ${DRIDIR}/${_d}_dri.so.${SHLIB_MAJOR} 
 SYMLINKS+= ${_d}_dri.so.${SHLIB_MAJOR} ${DRIDIR}/${_d}_dri.so
+.if ${MKDEBUG:Uno} == "yes"
+SYMLINKS+= mesa_dri_drivers.so.${SHLIB_MAJOR}.debug ${DRIDEBUGDIR}/${_d}_dri.so.${SHLIB_MAJOR}.debug
+.endif
 .endfor
 
 .endif
