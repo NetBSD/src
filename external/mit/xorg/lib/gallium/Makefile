@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2014/12/18 06:24:30 mrg Exp $
+# $NetBSD: Makefile,v 1.2 2014/12/23 17:49:59 christos Exp $
 
 # Link the gallium mega driver.
 
@@ -11,6 +11,7 @@ SHLIB_MAJOR=    0
 
 LIB=		gallium_dri
 DRIDIR=		${X11USRLIBDIR}/modules/dri
+DRIDEBUGDIR=	${DEBUGDIR}${X11USRLIBDIR}/modules/dri
 
 DRIVERS=	kms_swrast swrast
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
@@ -466,8 +467,11 @@ CPPFLAGS.target.c += \
 LIBDIR=		${X11USRLIBDIR}/modules/dri
 
 .for _d in ${DRIVERS}
-SYMLINKS+= ${DRIDIR}/gallium_dri.so ${DRIDIR}/${_d}_dri.so
-SYMLINKS+= ${DRIDIR}/gallium_dri.so.${SHLIB_MAJOR} ${DRIDIR}/${_d}_dri.so.${SHLIB_MAJOR} 
+SYMLINKS+= gallium_dri.so ${DRIDIR}/${_d}_dri.so
+SYMLINKS+= gallium_dri.so.${SHLIB_MAJOR} ${DRIDIR}/${_d}_dri.so.${SHLIB_MAJOR} 
+.if ${MKDEBUG:Uno} == "yes"
+SYMLINKS+= gallium_dri.so.${SHLIB_MAJOR}.debug ${DRIDEBUGDIR}/${_d}_dri.so.${SHLIB_MAJOR}.debug
+.endif
 .endfor
 
 .include <bsd.lib.mk>
