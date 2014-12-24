@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.21 2014/12/24 14:12:16 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.22 2014/12/24 14:13:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.21 2014/12/24 14:12:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.22 2014/12/24 14:13:32 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4139,7 +4139,7 @@ ehci_device_fs_isoc_start(usbd_xfer_handle xfer)
 	i = epipe->pipe.up_endpoint->ue_edesc->bInterval;
 	if (i > 16 || i == 0) {
 		/* Spec page 271 says intervals > 16 are invalid */
-		USBHIST_LOG(ehcidebug, "bInterval %d invalid\n", 0, 0, 0, 0);
+		USBHIST_LOG(ehcidebug, "bInterval %d invalid\n", i, 0, 0, 0);
 
 		return USBD_INVAL;
 	}
