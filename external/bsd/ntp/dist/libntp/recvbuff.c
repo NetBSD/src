@@ -1,4 +1,4 @@
-/*	$NetBSD: recvbuff.c,v 1.1.1.2 2013/12/27 23:30:47 christos Exp $	*/
+/*	$NetBSD: recvbuff.c,v 1.1.1.2.4.1 2014/12/24 00:05:20 riz Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -135,17 +135,19 @@ uninit_recvbuff(void)
 {
 	recvbuf_t *rbunlinked;
 
-	do {
+	for (;;) {
 		UNLINK_FIFO(rbunlinked, full_recv_fifo, link);
-		if (rbunlinked != NULL)
-			free(rbunlinked);
-	} while (rbunlinked != NULL);
+		if (rbunlinked == NULL)
+			break;
+		free(rbunlinked);
+	}
 
-	do {
+	for (;;) {
 		UNLINK_HEAD_SLIST(rbunlinked, free_recv_list, link);
-		if (rbunlinked != NULL)
-			free(rbunlinked);
-	} while (rbunlinked != NULL);
+		if (rbunlinked == NULL)
+			break;
+		free(rbunlinked);
+	}
 }
 #endif	/* DEBUG */
 

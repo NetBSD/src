@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2013/12/30 01:34:23 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.10.4.1 2014/12/24 00:05:24 riz Exp $	*/
 
 #include <config.h>
 
@@ -87,7 +87,7 @@ sent_pkt *	fam_listheads[2];
 
 static union {
 	struct pkt pkt;
-	char   buf[1500];
+	char   buf[LEN_PKT_NOMAC + NTP_MAXEXTEN + MAX_MAC_LEN];
 } rbuf;
 
 #define r_pkt  rbuf.pkt

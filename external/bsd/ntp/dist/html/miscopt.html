@@ -10,8 +10,8 @@
 <img src="pic/boom3.gif" alt="gif" align="left"><a href="http://www.eecis.udel.edu/~mills/pictures.html">from <i>Pogo</i>, Walt Kelly</a>
 <p>We have three, now looking for more.</p>
 <p>Last update:
-  <!-- #BeginDate format:En2m -->29-Nov-2012  16:43<!-- #EndDate -->
-  UTC</p>
+  <!-- #BeginDate format:En2m -->31-Jan-2014  06:54<!-- #EndDate -->
+    UTC</p>
 <br clear="left">
 <h4>Related Links</h4>
 <script type="text/javascript" language="javascript" src="scripts/command.txt"></script>
@@ -26,8 +26,8 @@
   <dd>This command specifies the complete path and name of the file used to record the frequency of the local clock oscillator. This is the same operation as the <tt>-f</tt> command line option. This command is mutually exclusive with the <tt>freq</tt> option of the <tt>tinker</tt> command.</dd>
   <dd> If the file exists, it is read at startup in order to set the initial frequency and then updated once per hour or more with the current frequency computed by the daemon. If the file name is specified, but the file itself does not exist, the starts with an initial frequency of zero and creates the file when writing it for the first time. If this command is not given, the daemon will always start with an initial frequency of zero.</dd>
   <dd>The file format consists of a single line containing a single floating point number, which records the frequency offset measured in parts-per-million (PPM). The file is updated by first writing the current drift value into a temporary file and then renaming this file to replace the old version.</dd>
-  <dt id="enable"><tt>enable [auth | bclient | calibrate | kernel | monitor | ntp | pps | stats]</tt><br>
-    <tt>disable [auth | bclient | calibrate | kernel | monitor | ntp | pps | stats]</tt></dt>
+  <dt id="enable"><tt>enable [auth | bclient | calibrate | kernel | mode7 | monitor | ntp | stats]</tt><br>
+    <tt>disable [auth | bclient | calibrate | kernel | mode7 | monitor | ntp | stats]</tt></dt>
   <dd>Provides a way to enable or disable various system options. Flags not mentioned are unaffected. Note that most of these flags can be modified remotely using <a href="ntpq.html"><tt>ntpq</tt></a> utility program's <tt>:config</tt> and <tt>config-from-file</tt> commands.
     <dl>
       <dt><tt>auth</tt></dt>
@@ -38,11 +38,11 @@
       <dd>Enables the calibrate feature for reference clocks. The default for this flag is disable.</dd>
       <dt><tt>kernel</tt></dt>
       <dd>Enables the kernel time discipline, if available. The default for this flag is enable if support is available, otherwise disable.</dd>
+      <dt><tt>mode7</tt></dt>
+      <dd>Enables processing of NTP mode 7 implementation-specific requests which are used by the deprecated <tt>ntpdc</tt> program. The default for this flag is disable. This flag is excluded from runtime configuration using <tt>ntpq</tt>. The <tt>ntpq</tt> program provides the same capabilities as <tt>ntpdc</tt> using standard mode 6 requests.</dd>
       <dt><tt>monitor</tt></dt>
       <dd>Enables the monitoring facility. See the <a href="ntpq.html"><tt>ntpq</tt> program</a> and the <tt>monstats</tt> and <tt>mrulist</tt> commands, as well as the <a href="accopt.html#discard">Access Control Options</a> for details.
         The monitoring facility is also enabled by the presence of <a href="accopt.html#limited"><tt>limited</tt></a> in any <tt>restrict</tt> commands. The default for this flag is enable.</dd>
-      <dt><tt>mode7</tt></dt>
-      <dd>Enables processing of NTP mode 7 implementation-specific requests which are used by the deprecated <tt>ntpdc</tt> program. The default for this flag is disable. This flag is excluded from runtime configuration using <tt>ntpq</tt>. The <tt>ntpq</tt> program provides the same capabilities as <tt>ntpdc</tt> using standard mode 6 requests.</dd>
       <dt><tt>ntp</tt></dt>
       <dd>Enables time and frequency discipline. In effect, this switch opens and closes the feedback loop, which is useful for testing. The default for this flag is enable.</dd>
       <dt><tt>stats</tt></dt>
@@ -100,7 +100,7 @@
   <dt id="setvar"><tt>setvar <i>variable</i> [default]</tt></dt>
   <dd>This command adds an additional system variable. These variables can be used to distribute additional information such as the access policy. If the variable of the form <tt><i>name</i> = <i>value</i></tt> is followed by the <tt>default</tt> keyword, the variable will be listed as part of the default system variables (<tt>ntpq rv</tt> command). These additional variables serve informational purposes only. They are not related to the protocol other that they can be listed. The known protocol variables will always override any variables defined via the <tt>setvar</tt> mechanism. There are three special variables that contain the names of all variable of the same group. The <tt>sys_var_list</tt> holds the names of all system variables. The <tt>peer_var_list</tt> holds the names of all peer variables and the <tt>clock_var_list</tt> holds the names of the reference clock variables.</dd>
   <dt id="tinker"><tt>tinker [allan <i>allan</i> | dispersion <i>dispersion</i> | freq <i>freq</i> | huffpuff <i>huffpuff</i> | panic <i>panic</i> | step <i>step</i> | stepout <i>stepout</i>]</tt></dt>
-  <dd>This command alters certain system variables used by the clock discipline algorithm. The default values of these variables have been carefully optimized for a wide range of network speeds and reliability expectations. Very rarely is it necessary to change the default values; but, some folks can't resist twisting the knobs. Options are are as follows:</dd>
+  <dd>This command alters certain system variables used by the clock discipline algorithm. The default values of these variables have been carefully optimized for a wide range of network speeds and reliability expectations. Very rarely is it necessary to change the default values; but, some folks can't resist twisting the knobs. Options are as follows:</dd>
   <dd>
     <dl>
       <dt><tt>allan <i>allan</i></tt></dt>
@@ -121,7 +121,7 @@
     </dl>
   </dd>
   <dt id="rlimit"><tt>rlimit [memlock <i>Nmegabytes</i> | stacksize <i>N4kPages</i> | filenum <i>Nfiledescriptors</i>]</tt></dt>
-  <dd>This command alters certain process storage allocation limits, and is only available on some operating systems.  Options are are as follows:</dd>
+  <dd>This command alters certain process storage allocation limits, and is only available on some operating systems.  Options are as follows:</dd>
   <dd>
     <dl>
       <dt><tt>memlock <i>Nmegabytes</i></tt></dt>

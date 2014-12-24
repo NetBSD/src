@@ -3,7 +3,7 @@ dnl
 m4_include([sntp/m4/version.m4])
 AC_PREREQ([2.61])
 AC_INIT(
-    [ntp],
+    [ntp4],
     [VERSION_NUMBER],
     [http://bugs.ntp.org./],
     [],
@@ -189,6 +189,70 @@ esac
 AC_SEARCH_LIBS([openlog], [gen syslog])
 # XXX library list will be in ac_cv_search_openlog
 
+# LIBSECCOMP is off by default -- needs testing with all the features
+# Please send bug reports to loganaden@gmail.com
+AC_MSG_CHECKING([if we want to use libseccomp sandboxing (EXPERIMENTAL)])
+AC_ARG_ENABLE(
+    [libseccomp],
+    [AS_HELP_STRING(
+	[--enable-libseccomp],
+	[EXPERIMENTAL: enable support for libseccomp sandboxing (default is no) ]
+    )],
+    [ntp_ok=$enableval],
+    [ntp_ok=no]
+)
+AC_MSG_RESULT([$ntp_ok])
+case "$ntp_ok" in
+ yes)
+    AC_SEARCH_LIBS(
+	[seccomp_init],
+	[seccomp],
+	[AC_DEFINE([LIBSECCOMP], [1],
+	    [Define to any value to include libseccomp sandboxing.])]
+    )
+    AC_TRY_RUN([
+	#include <stdio.h>
+	#include <stdlib.h>
+	#include <errno.h>
+	#include <sys/prctl.h>
+	#include <linux/seccomp.h>
+
+	int main(void)
+	{
+		int ret;
+		ret = prctl(PR_GET_SECCOMP, 0, 0, 0, 0);
+		if (ret < 0) {
+			switch (errno) {
+			case ENOSYS:
+				return 1;
+			case EINVAL:
+				return 1;
+			default:
+				return 1;
+			}
+		}
+		ret = 
+		prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, NULL, 0, 0);
+		if (ret < 0) {
+			switch (errno) {
+			case EINVAL:
+				return 1;
+			case EFAULT:
+				return 0;
+			default:
+				return 1;
+		}
+	}
+return 1;
+}
+]
+, AC_DEFINE([KERN_SECCOMP], 1, 
+[Define to use libseccomp system call filtering.])   
+, []
+)
+    ;;
+esac
+
 NTP_FACILITYNAMES
 
 dnl Digital UNIX V4.0 and Solaris 7 have POSIX.1c functions in -lrt
@@ -223,7 +287,7 @@ AC_CHECK_HEADER(
 	    [Use Rendezvous/DNS-SD registration])]
     )]
 )
-AC_CHECK_HEADERS([fcntl.h ieeefp.h inttypes.h kvm.h math.h])
+AC_CHECK_HEADERS([fcntl.h fnmatch.h ieeefp.h inttypes.h kvm.h math.h])
 
 AC_CHECK_HEADERS([memory.h netdb.h poll.h])
 AC_CHECK_HEADERS([sgtty.h stdlib.h string.h termio.h])
@@ -240,7 +304,7 @@ case "$host" in
 	;;
     esac
     ;;
- *) 
+ *)
     AC_CHECK_HEADERS([utmp.h utmpx.h])
     ;;
 esac
@@ -275,7 +339,7 @@ AC_CHECK_HEADERS([sun/audioio.h sys/audioio.h sys/file.h])
 case "$host" in
  *-*-sunos4*)
     ;;
- *) 
+ *)
     AC_CHECK_HEADERS([sys/ioctl.h])
     ;;
 esac
@@ -285,7 +349,7 @@ AC_CHECK_HEADERS([sys/modem.h sys/ppsclock.h sys/ppstime.h sched.h])
 case "$ac_cv_header_sched_h" in
  yes)
     ;;
- *) 
+ *)
     AC_CHECK_HEADERS([sys/sched.h])
     ;;
 esac
@@ -295,7 +359,7 @@ AC_CHECK_HEADERS([sys/select.h sys/signal.h sys/sockio.h])
 case "$host" in
  *-*-netbsd*)
     ;;
- *) 
+ *)
     AC_CHECK_HEADERS([machine/soundcard.h sys/soundcard.h])
     ;;
 esac
@@ -748,7 +812,7 @@ AC_CHECK_FUNCS(
     )]
 )
 
-AC_CHECK_FUNCS([getbootfile getuid getrusage nanosleep strsignal])
+AC_CHECK_FUNCS([fnmatch getbootfile getuid getrusage nanosleep strsignal])
 
 # kvm_open() is only used by tickadj.  Also see above.
 case "$ac_cv_header_kvm_h" in
@@ -1036,7 +1100,7 @@ AC_CACHE_CHECK(
     )]
 )
 case "$ntp_cv_decl_h_errno" in
- yes) 
+ yes)
     AC_DEFINE([DECL_H_ERRNO], [1], [Declare h_errno?])
 esac
 
@@ -1260,7 +1324,7 @@ AC_CACHE_CHECK(
 	 *-*-darwin*)
 	    ans=yes
 	    ;;
-	 *) 
+	 *)
 	    ans=no
 	    ;;
 	esac
@@ -1280,7 +1344,7 @@ AC_CACHE_CHECK(
 	 *-*-netbsd*)
 	    ans=yes
 	    ;;
-	 *) 
+	 *)
 	    ans=no
 	    ;;
 	esac
@@ -1404,7 +1468,7 @@ AC_MSG_CHECKING([if ntpd will retry permanent DNS failures])
 AC_ARG_ENABLE(
     [ignore-dns-errors],
     [AS_HELP_STRING(
-	[--enable-ignore-dns-errors], 
+	[--enable-ignore-dns-errors],
 	[- retry DNS queries on any error]
     )],
     [ans=$enableval],
@@ -1429,14 +1493,12 @@ AC_CACHE_CHECK(
 	 *yes)
 	    ntp_cv_var_ntp_syscalls=inline
 	    ;;
-	 *) 
-	    AC_EGREP_CPP(
-		[yes],
+	 *)
+	    AC_PREPROC_IFELSE(
 		[
 		    #include <sys/syscall.h>
-		    
-		    #if defined(SYS_ntp_gettime) && defined(SYS_ntp_adjtime)
-			yes
+		    #if !defined(SYS_ntp_gettime) || !defined(SYS_ntp_adjtime)
+		    # error
 		    #endif
 		],
 		[ntp_cv_var_ntp_syscalls=kernel]
@@ -1459,13 +1521,11 @@ esac
 AC_CACHE_CHECK(
     [if sys/timex.h has STA_FLL],
     [ntp_cv_var_sta_fll],
-    [AC_EGREP_CPP(
-	[yes],
+    [AC_PREPROC_IFELSE(
 	[
 	    #include <sys/timex.h>
-
-	    #ifdef STA_FLL
-		yes
+	    #ifndef STA_FLL
+	    # error
 	    #endif
 	],
 	[ntp_cv_var_sta_fll=yes],
@@ -1521,13 +1581,11 @@ esac
 AC_MSG_CHECKING([for TTY PPS ioctl TIOCGPPSEV])
 case "$ac_cv_header_termios_h" in
  yes)
-    AC_EGREP_CPP(
-	[yes],
+    AC_PREPROC_IFELSE(
 	[
 	    #include <termios.h>
-
-	    #ifdef TIOCGPPSEV
-		yes
+	    #ifndef TIOCGPPSEV
+	    # error
 	    #endif
 	],
 	[ntp_ok=yes],
@@ -1549,13 +1607,11 @@ AC_MSG_RESULT([$ntp_ok])
 AC_MSG_CHECKING([for TTY PPS ioctl TIOCSPPS])
 case "$ac_cv_header_termios_h" in
  yes)
-    AC_EGREP_CPP(
-	[yes],
+    AC_PREPROC_IFELSE(
 	[
 	    #include <termios.h>
-
-	    #ifdef TIOCSPPS
-		yes
+	    #ifndef TIOCSPPS
+	    # error
 	    #endif
 	 ],
 	 [ntp_ok=yes],
@@ -1577,13 +1633,11 @@ AC_MSG_RESULT([$ntp_ok])
 AC_MSG_CHECKING([for TTY PPS ioctl CIOGETEV])
 case "$ac_cv_header_sys_ppsclock_h" in
  yes)
-    AC_EGREP_CPP(
-	[yes],
+    AC_PREPROC_IFELSE(
 	[
 	    #include <sys/ppsclock.h>
-
-	    #ifdef CIOGETEV
-		yes
+	    #ifndef CIOGETEV
+	    # error
 	    #endif
 	],
 	[ntp_ok=yes],
@@ -1630,24 +1684,27 @@ AC_CHECK_HEADER([linux/serial.h])
 case "$ac_cv_header_sys_ppsclock_h$ac_cv_header_linux_serial_h" in
   yesyes)
     AC_MSG_CHECKING([ioctl TIOCGSERIAL, TIOCSSERIAL, ASYNC_PPS_CD_POS, ASYNC_PPS_CD_NEG])
-    AC_EGREP_CPP(
-	[yes],
+    AC_PREPROC_IFELSE(
 	[
 	    #include <sys/time.h>
 	    typedef int u_int;
 	    #include <sys/ppsclock.h>
 	    #include <linux/serial.h>
 
-	    #ifdef TIOCGSERIAL
-	    #ifdef TIOCSSERIAL
-	    #ifdef ASYNC_PPS_CD_POS
-	    #ifdef ASYNC_PPS_CD_NEG
-	    #ifdef CIOGETEV
-		 yes
+	    #ifndef TIOCGSERIAL
+	    # error
 	    #endif
+	    #ifndef TIOCSSERIAL
+	    # error
 	    #endif
+	    #ifndef ASYNC_PPS_CD_POS
+	    # error
 	    #endif
+	    #ifndef ASYNC_PPS_CD_NEG
+	    # error
 	    #endif
+	    #ifndef CIOGETEV
+	    # error
 	    #endif
 	],
 	[ntp_ok=yes],
@@ -1689,7 +1746,7 @@ AC_MSG_CHECKING([Datum/Bancomm bc635/VME interface])
 AC_ARG_ENABLE(
     [BANCOMM],
     [AS_HELP_STRING(
-	[--enable-BANCOMM], 
+	[--enable-BANCOMM],
 	[- Datum/Bancomm bc635/VME interface]
     )],
     [ntp_ok=$enableval],
@@ -1803,7 +1860,7 @@ AC_CACHE_CHECK(
 	    ]],
 	    [[
 		int	dtr = TIOCM_DTR;
-		
+
 		ioctl(1, TIOCMBIS, (char *)&dtr);
 	    ]]
 	)],
@@ -1861,7 +1918,7 @@ AC_MSG_CHECKING([Arcron MSF receiver])
 AC_ARG_ENABLE(
     [ARCRON_MSF],
     [AS_HELP_STRING(
-	[--enable-ARCRON-MSF], 
+	[--enable-ARCRON-MSF],
 	[+ Arcron MSF receiver]
     )],
     [ntp_ok=$enableval],
@@ -2282,6 +2339,28 @@ case "$ntp_ok" in
  yes)
     ntp_refclock=yes
     AC_DEFINE([CLOCK_NMEA], [1], [NMEA GPS receiver])
+    ;;
+esac
+AC_MSG_RESULT([$ntp_ok])
+
+AC_CHECK_FUNCS([strtoll])
+AC_MSG_CHECKING([for GPSD JSON receiver])
+AC_ARG_ENABLE(
+    [GPSD],
+    [AS_HELP_STRING(
+	[--enable-GPSD],
+	[+ GPSD JSON receiver]
+    )],
+    [ntp_ok=$enableval],
+    [case "$ac_cv_func_strtoll" in
+     yes) ntp_ok=$ntp_eac ;;
+     *)   ntp_ok="no" ;;
+    esac]
+)
+case "$ntp_ok" in
+ yes)
+    ntp_refclock=yes
+    AC_DEFINE([CLOCK_GPSDJSON], [1], [GPSD JSON receiver])
     ;;
 esac
 AC_MSG_RESULT([$ntp_ok])
@@ -2942,6 +3021,8 @@ AC_MSG_RESULT([$ans])
 
 NTP_OPENSSL
 
+NTP_CRYPTO_RAND
+
 # if we are using OpenSSL (--with-crypto), by default Autokey is enabled
 AC_MSG_CHECKING([if we want to include NTP Autokey protocol support])
 AC_ARG_ENABLE(
@@ -3125,7 +3206,7 @@ case "$ans" in
  yes)
     can_kmem=yes
     ;;
- *) 
+ *)
     can_kmem=no
     AC_DEFINE([NOKMEM], [1], [Should we NOT read /dev/kmem?])
 esac
@@ -3173,7 +3254,7 @@ esac
 AC_ARG_ENABLE(
     [accurate-adjtime],
     [AS_HELP_STRING(
-	[--enable-accurate-adjtime], 
+	[--enable-accurate-adjtime],
 	[s the adjtime() call is accurate]
     )],
     [ans=$enableval]
@@ -3182,7 +3263,7 @@ AC_ARG_ENABLE(
 AC_MSG_RESULT([$ans])
 
 case "$ans" in
- yes) 
+ yes)
     AC_DEFINE([ADJTIME_IS_ACCURATE], [1], [Is adjtime() accurate?])
     adjtime_is_accurate=yes
     ;;
@@ -3232,7 +3313,7 @@ AC_CACHE_CHECK(
 case "$ntp_cv_nlist_tick" in
  ''|no)
     ;;	# HMS: I think we can only get 'no' here...
- *) 
+ *)
     AC_DEFINE_UNQUOTED([K_TICK_NAME], ["$ntp_cv_nlist_tick"],
 	[What is the name of TICK in the kernel?])
 esac
@@ -3304,7 +3385,7 @@ AC_CACHE_CHECK(
 case "$ntp_cv_nlist_tickadj" in
  ''|no)
     ;;	# HMS: I think we can only get 'no' here...
- *) 
+ *)
     AC_DEFINE_UNQUOTED([K_TICKADJ_NAME], ["$ntp_cv_nlist_tickadj"],
 	[What is the name of TICKADJ in the kernel?])
 esac
@@ -3432,7 +3513,7 @@ esac
 dnl The tick/tickadj sections were written by Skippy, who never learned
 dnl that it's impolite (horridly gross) to show your guts in public.
 
-dnl	tick		tickadj	
+dnl	tick		tickadj
 dnl	10000		80	    Unixware
 dnl	1000000L/hz	tick/16     (Solaris,UXPV,HPUX) && ADJTIME_IS_ACCURATE
 dnl	10000		150	    sgi IRIX
@@ -3734,7 +3815,7 @@ AC_ARG_ENABLE(
 	[--enable-simulator],
 	[- build/install the NTPD simulator?]
     )],
-    [ans=$enableval], 
+    [ans=$enableval],
     [ans=no]
 )
 AC_MSG_RESULT([$ans])
@@ -4011,7 +4092,7 @@ case "$host" in
 	    ans=yes
 	fi
 	;;
-     *) 
+     *)
 	ans=yes
 	;;
     esac
@@ -4091,7 +4172,7 @@ case "$host" in
 esac
 
 AC_ARG_ENABLE(
-    [irig-sawtooth], 
+    [irig-sawtooth],
     [AS_HELP_STRING(
 	[--enable-irig-sawtooth],
 	[s if we should enable the IRIG sawtooth filter]
@@ -4110,7 +4191,7 @@ esac
 AC_MSG_CHECKING([if we should enable NIST lockclock scheme])
 
 AC_ARG_ENABLE(
-	[nist], 
+	[nist],
 	[AS_HELP_STRING(
 	    [--enable-nist],
 	    [- if we should enable the NIST lockclock scheme]
@@ -4180,14 +4261,13 @@ NTP_IPV6
 AC_CACHE_CHECK(
     [for interface list sysctl],
     [ntp_cv_iflist_sysctl],
-    [AC_EGREP_CPP(
-	[found_rt_iflist], 
+    [AC_PREPROC_IFELSE(
 	[
 	    #include <sys/param.h>
 	    #include <sys/sysctl.h>
 	    #include <sys/socket.h>
-	    #ifdef NET_RT_IFLIST  
-		found_rt_iflist
+	    #ifndef NET_RT_IFLIST
+	    # error
 	    #endif
 	],
 	[ntp_cv_iflist_sysctl=yes],

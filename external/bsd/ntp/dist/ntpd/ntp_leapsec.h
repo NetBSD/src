@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_leapsec.h,v 1.1.1.1 2013/12/27 23:30:54 christos Exp $	*/
+/*	$NetBSD: ntp_leapsec.h,v 1.1.1.1.6.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  * ntp_leapsec.h - leap second processing for NTPD
@@ -13,10 +13,8 @@
 #ifndef NTP_LEAPSEC_H
 #define NTP_LEAPSEC_H
 
-/* these should probably go to libntp... */
-extern vint64 strtouv64(const char * src, char ** endp, int base);
-extern int    icmpv64(const vint64 * lhs, const vint64 * rhs);
-extern int    ucmpv64(const vint64 * lhs, const vint64 * rhs);
+struct stat;
+
 
 /* function pointer types. Note that 'fprintf' and 'getc' can be casted
  * to the dumper resp. reader type, provided the auxiliary argument is a
@@ -27,6 +25,19 @@ typedef int  (*leapsec_reader)(void*);
 
 struct leap_table;
 typedef struct leap_table leap_table_t;
+
+/* Validate a stream containing a leap second file in the NIST / NTPD
+ * format that can also be loaded via 'leapsec_load()'. This uses
+ * the SHA1 hash and preprocessing as described in the NIST leapsecond
+ * file.
+ */
+#define LSVALID_GOODHASH	1	/* valid signature         */
+#define LSVALID_NOHASH		0	/* no signature in file    */
+#define LSVALID_BADHASH	       -1	/* signature mismatch      */
+#define LSVALID_BADFORMAT      -2	/* signature not parseable */
+
+extern int leapsec_validate(leapsec_reader, void*);
+
 
 /* Set/get electric mode
  * Electric mode is defined as the operation mode where the system clock
@@ -122,10 +133,21 @@ extern int/*BOOL*/ leapsec_load(leap_table_t*, leapsec_reader,
  */
 extern void leapsec_dump(const leap_table_t*, leapsec_dumper func, void *farg);
 
-/* Read a leap second file. This is a convenience wrapper around the
- * generic load function, 'leapsec_load()'.
+/* Read a leap second file from stream. This is a convenience wrapper
+ * around the generic load function, 'leapsec_load()'.
  */
-extern int/*BOOL*/ leapsec_load_file(FILE * fp, int blimit);
+extern int/*BOOL*/ leapsec_load_stream(FILE * fp, const char * fname,
+				       int/*BOOL*/logall);
+
+/* Read a leap second file from file. It checks that the file exists and
+ * (if 'force' is not applied) the ctime/mtime has changed since the
+ * last load. If the file has to be loaded, either due to 'force' or
+ * changed time stamps, the 'stat()' results of the file are stored in
+ * '*sb' for the next cycle. Returns TRUE on successful load, FALSE
+ * otherwise. Uses 'leapsec_load_stream()' internally.
+ */
+extern int/*BOOL*/ leapsec_load_file(const char * fname, struct stat * sb,
+				     int/*BOOL*/force, int/*BOOL*/logall);
 
 /* Get the current leap data signature. This consists of the last
  * ransition, the table expiration, and the total TAI difference at the

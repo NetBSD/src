@@ -239,6 +239,13 @@ in the past many startup scripts would run
 to get the system clock close to correct before starting
 .Xr ntpd 1ntpdmdoc ,
 but this was never more than a mediocre hack and is no longer needed.
+If you are following the instructions in
+.Sx "Starting NTP (Best Current Practice)"
+and you still need to set the system time before starting
+.Nm ,
+please open a bug report and document what is going on,
+and then look at using
+.Xr sntp 1sntpmdoc .
 .Pp
 There is a way to start
 .Xr ntpd 1ntpdmdoc
@@ -362,16 +369,17 @@ to 1024s in order to reduce network overhead.
 .Pp
 In some cases it may not be practical for
 .Nm
-to run
-continuously.
+to run continuously.
 A common workaround has been to run the
 .Xr ntpdate 1ntpdatemdoc
-program from a
+or
+.Xr sntp 1sntpmdoc
+programs from a
 .Xr cron 8
 job at designated
 times.
-However, this program does not have the crafted signal
-processing, error checking and mitigation algorithms of
+However, these programs do not have the crafted signal
+processing, error checking or mitigation algorithms of
 .Nm .
 The
 .Fl q
@@ -395,7 +403,7 @@ couple of minutes, the daemon times out and exits.
 After a suitable
 period of mourning, the
 .Xr ntpdate 1ntpdatemdoc
-program may be
+program will be
 retired.
 .Pp
 When kernel support is available to discipline the clock
@@ -523,7 +531,8 @@ doc-section	= {
 .Xr ntp.conf 5 ,
 .Xr ntpdate 1ntpdatemdoc ,
 .Xr ntpdc 1ntpdcmdoc ,
-.Xr ntpq 1ntpqmdoc
+.Xr ntpq 1ntpqmdoc ,
+.Xr sntp 1sntpmdoc
 .Pp
 In addition to the manual pages provided,
 comprehensive documentation is available on the world wide web
@@ -597,7 +606,6 @@ doc-section	= {
   ds-type	= 'NOTES';
   ds-format	= 'mdoc';
   ds-text	= <<- _END_MDOC_NOTES
-This document corresponds to version #VERSION# of NTP.
 Portions of this document came from FreeBSD.
 	_END_MDOC_NOTES;
 };

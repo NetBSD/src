@@ -1,3 +1,283 @@
+---
+(4.2.8) 2014/12/19 Released by Harlan Stenn <stenn@ntp.org>
+
+* [Sec 730] Increase RSA_generate_key modulus.
+* [Sec 2666] Use cryptographic random numbers for md5 key generation.
+* [Sec 2667] buffer overflow in crypto_recv().
+* [Sec 2668] buffer overflow in ctl_putdata().
+* [Sec 2669] buffer overflow in configure().
+* [Sec 2670] Missing return; from error clause.
+* [Sec 2671] vallen in extension fields are not validated.
+* [Sec 2672] On some OSes ::1 can be spoofed, bypassing source IP ACLs.
+* [Bug 2691] Wrong variable name in refclock_ripencc.c.
+(4.2.7p486-RC) 2014/12/18 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2687] RefClock 26/hpgps doesn't work at default line speed
+(4.2.7p485-RC) 2014/12/12 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2686] refclock_gpsdjson needs strtoll(), which is not always present.
+(4.2.7p484-RC) 2014/12/11 Released by Harlan Stenn <stenn@ntp.org>
+(4.2.7p483) 2014/12/08 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2685] Better document the KOD file for sntp.
+(4.2.7p482) 2014/12/02 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2641] sntp is installed in the wrong location in Solaris.
+* [Bug 2678] nmea_control() now checks 'refclock_params()' result.
+(4.2.7p481) 2014/11/22 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2314] Only enable PPS if kernel consumer binding succeeds.
+* [Bug 2314] Kernel PPS binding EOPNOTSUPP is a failure condition. 
+* Rename pps_enable to hardpps_enable.
+(4.2.7p480) 2014/11/21 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2677] PATH_MAX isn't #define'd  under Windows.
+  Regression from the patch fixing Bug 2639.
+(4.2.7p479) 2014/11/15 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2651] Certificates with ASN timestamps w/ 4-digit years mis-parsed.
+(4.2.7p478) 2014/11/14 Released by Harlan Stenn <stenn@ntp.org>
+* [Sec 2630] buffer overrun in ntpq tokenize().
+* [Bug 2639] Check return value of ntp_adjtime().
+* [Bug 2650] includefile processing broken.
+* [Bug 2661] ntpq crashes with mreadvar.
+(4.2.7p477) 2014/11/13 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2657] Document that "restrict nopeer" intereferes with "pool".
+(4.2.7p476) 2014/10/08 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2503] SHT utility outdated
+(4.2.7p475) 2014/09/11 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2654] refclock_true.c doesn't identify the Mk III.
+(4.2.7p474) 2014/09/10 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2536] ntpd sandboxing support (libseccomp2) cleanup.
+* [Bug 2649] Clean up html/ page installation.
+(4.2.7p473) 2014/09/06 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2649] Clean up html/ page installation.
+(4.2.7p472) 2014/09/06 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2556] mrulist is missing from the generated ntpq man page.
+(4.2.7p471) 2014/09/05 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2649] "make install" leaves wrong owner for files in html/.
+* [Bug 2652] Windows hates directory names that contain a :.
+(4.2.7p470) 2014/09/02 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2502] Autogen text replacement errors.
+* autogen-5.18.5pre1
+* html/ cleanups from Hal Murray.
+(4.2.7p469) 2014/09/01 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2536] ntpd sandboxing support (libseccomp2) cleanup.
+(4.2.7p468) 2014/08/31 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2556] ntpq man page cleanup.
+* autogen-5.18.4
+(4.2.7p467) 2014/08/28 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2639] Check return value of ntp_adjtime().
+* [Bug 2640] STA_NANO can result in invalid ntv.constant.
+(4.2.7p466) 2014/08/27 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2536] ntpd sandboxing support (libseccomp2) cleanup.
+(4.2.7p465) 2014/08/23 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2538] NTP programs print exit code in help/usage text.
+* [Bug 2595] Man page quirks: ntpdate references in ntpd.
+* [Bug 2613] www.ntp.org/bugs.html tells folks to email doc bugs to DLM.
+* [Bug 2636] Clutter in syslog if gpsd not running
+   - found (hopefully) last cause for clutter in protocol version
+   - log GPSD revision and release numbers with protocol version
+(4.2.7p464) 2014/08/22 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2636] Fix coverity warning from previous patch.
+(4.2.7p463) 2014/08/21 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2636] Clutter in syslog if gpsd not running
+   - make driver work with GPSD protocol version 3.9
+   - use exponential back-off for connection problems
+   - implement rate-limit for syslog entries
+(4.2.7p462) 2014/08/16 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2622] Synchronisation problem using SHM [...]
+  Add 'control' function -- fudge values not available during start.
+(4.2.7p461) 2014/08/14 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 1128] ntpq truncates "remote" host information.
+* More autogen-5.18.4pre14 cleanup.
+(4.2.7p460) 2014/08/13 Released by Harlan Stenn <stenn@ntp.org>
+* More autogen-5.18.4pre14 cleanup.
+(4.2.7p459) 2014/08/12 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2630] Limit the ntpq command buffer to 512 bytes.
+* FlexeLint cleanups.
+* Try bison-3.0.2 instead of bison-2.5.
+(4.2.7p458) 2014/08/11 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2633] Provide stdnoreturn.h for windows port.
+(4.2.7p457) 2014/08/09 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2622] Synchronisation problem using SHM when time difference is
+  more than four hours: Change SHM driver so TOY restricted API is not
+  used any more. (Plus some minor cleanup in logic and flow control)
+* Pass the configration source into the parser as argument rather
+  than through a global variable.
+* Fix nits in the ntpq man page.
+* autogen-5.18.4pre14
+(4.2.7p456) 2014/08/07 Released by Harlan Stenn <stenn@ntp.org>
+* CID 739722: Change the way the extention and MAC fields are processed.
+(4.2.7p455) 2014/08/03 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2565] ntpd sometimes logs unexpected getifaddrs() errors.
+* CID 739722: Clean up the definition of the exten field of struct pkt.
+(4.2.7p454) 2014/07/30 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2628] 'mon_getmoremem()' relies on undefined behaviour
+(4.2.7p453) 2014/07/19 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2597] leap file loose ends (follow-up)
+  - uniform expiration check messages for config and timer triggered
+    leap file loads
+  - timer triggered loads log messages only once per day
+(4.2.7p452) 2014/07/18 Released by Harlan Stenn <stenn@ntp.org>
+* Make all of the html/ .html files use the same format for "Last update".
+(4.2.7p451) 2014/07/17 Released by Harlan Stenn <stenn@ntp.org>
+* Fix the "Last update" entries in the html/ subtree.
+(4.2.7p450) 2014/07/16 Released by Harlan Stenn <stenn@ntp.org>
+* Distribute the scripts needed for the fix for Bug 2547.
+(4.2.7p449) 2014/07/16 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2547] Automate update of "Last Update" datestamps in .html files.
+* [Bug 2623] Missing {} in refclock_oncore.c.
+* Quiet warnings from ntp_calendar.h: avoid using argument names.
+* Fix typos in decode.html and debug.html .
+(4.2.7p448) 2014/07/15 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2621] Avoid use of indeterminate address after 'free()'
+  (minor C standard conformance issue)
+* Quiet warnings from ntp_calendar.h: avoid using argument names.
+(4.2.7p447) 2014/07/05 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2620] Use version.pm for checking version numbers in NTP::Util.
+* [Bug 2624] Fix signed compare on 'l_fp'.
+(4.2.7p446) 2014/06/28 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2597] leap file processing -- loose ends.
+* [Bug 2614] use 'unsigned long' consistently in ntp_random.c
+  to avoid possibly undefined behaviour in signed int overflow
+* [Bug 2619] Save a signed int copy of the return value of i2d_DSA_SIG().
+  Provide missing msyslog() message in crypto_alice().
+* Fix a variable lifetime issue.
+* Allow for version suffix in libevent in ntp_libevent.m4.
+(4.2.7p445) 2014/06/12 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2556] mrulist isn't mentioned in the ntpq man page.
+(4.2.7p444) 2014/05/19 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2597] leap file processing -- loose ends
+  fixed coverity issues
+(4.2.7p443) 2014/05/10 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2594] Update the year in sntp/include/copyright.def.
+(4.2.7p442) 2014/05/09 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2589] Update VS2013 project files for libntp.
+* [Bug 2600] Fix "Undisicplined Local Clock" driver1.html page.
+(4.2.7p441) 2014/05/04 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2597] leap file processing -- loose ends
+  log daily warning when leap info less than 28 days to expiration or
+  already expired; nag hourly on last day before expiration; log when
+  leapfile name is invalid
+(4.2.7p440) 2014/04/09 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2536] ntpd sandboxing support (libseccomp2) cleanup.
+* [Bug 2570] cleanup: fix log format for successful leapfile load
+(4.2.7p439) 2014/04/03 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2589] fix VS2009 compile problem.
+(4.2.7p438) 2014/04/01 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2546] Windows build documentation updates.
+(4.2.7p437) 2014/03/31 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2537] ntpd truncates symmetric keys to 20 bytes.
+* [Bug 2546] Documentation updates.
+(4.2.7p436) 2014/03/31 Released by Harlan Stenn <stenn@ntp.org>
+* Update to libopts-40.2.15, and autogen-5.18.3pre18.
+* [Bug 2311] Add more tags to mdoc2xxx.
+* [Bug 2502] Assorted text replacement errors in 4.2.7p345
+* [Bug 2538] ntp programs print exit code as part of the "usage" text.
+(4.2.7p435) 2014/03/29 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2570] cleanup: reduced logging noise, moved some functions
+  into libntp.
+(4.2.7p434) 2014/03/21 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2577] Update VS2013 solution and project files.
+(4.2.7p433) 2014/03/10 Released by Harlan Stenn <stenn@ntp.org>
+* Clean up last-update timestamps of html/*.html files.
+* [Bug 2546] Documentation updates.
+(4.2.7p432) 2014/03/09 Released by Harlan Stenn <stenn@ntp.org>
+* CID 711660: Do a non-NULL pointer assertion check a bit earlier.
+(4.2.7p431) 2014/03/05 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2572] cross-compiling fails for --with-yielding-select.
+(4.2.7p430) 2014/03/04 Released by Harlan Stenn <stenn@ntp.org>
+* Upgrade to libevent-2.1.3-alpha-dev.
+* [Bug 2572] cross-compiling fails for --with-yielding-select.
+(4.2.7p429) 2014/03/03 Released by Harlan Stenn <stenn@ntp.org>
+* CID 1165098: Remove logically dead code from refclock_true.c.
+* CID 1189401: Use INSIST() instead of a belt-and-suspenders pointer check.
+* In ntp_dir_sep.m4, we care about $host_os, not $target_os.
+* [Bug 2170] Use AC_PREPROC_IFELSE instead of AC_EGREP_CPP.
+* [Bug 2540] bootstrap script needs to 'touch' files in finer-grained groups.
+* [Bug 2570] refuse to load leapsec file with bad/missing SHA1 hash
+  -- change reading the hash line code: NIST omits leading zeros.
+* [Bug 2576] refclock_gpsdjson.c doesn't compile if CLOCK_GPSDJSON is
+  not enabled at configure time.
+(4.2.7p428) 2014/03/03 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2570] refuse to load leapsec file with bad/missing SHA1 hash
+* [Bug 2562] Distribute the code in libjsmn/ .
+(4.2.7p427) 2014/03/02 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2562] GPSD_JSON: fix solaris issues (asprintf(), isfinite())
+* [Bug 2562] first release of the GPSD client clock (type 46)
+(4.2.7p426) 2014/02/28 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2113] Warn about ignored extra args in ntpq.
+* [Bug 2540] bootstrap script needs to 'touch' files in finer-grained groups.
+* [Bug 2561] Allow wildcards in the target of the "interface" command.
+* [Bug 2572] cross-compiling fails for --with-yielding_select.
+(4.2.7p425) 2014/02/26 Released by Harlan Stenn <stenn@ntp.org>
+* Copyright file update.
+(4.2.7p424) 2014/02/24 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2541] ntpd terminates itself with SIGHUP unexpectedly.
+(4.2.7p423) 2014/02/23 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2565] Handle EINTR on getifaddrs().
+(4.2.7p422) 2014/02/17 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2536] ntpd sandboxing support (libseccomp2).
+(4.2.7p421) 2014/02/10 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 898] More documentation fixes.
+* [Bug 2555] Autogen mdoc man pages all stamped with SunOS 5.10.
+* calc_tickadj/Makefile.am man/mdoc page build cleanup.
+(4.2.7p420) 2014/02/09 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 492] Clearly document ntpdate's pending deprecation.
+* [Bug 1186] ntpd fails with link local IPv6 addresses.
+* [Sec 2542] Strengthen the mrulist nonce.
+(4.2.7p419) 2014/02/08 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2466] Wrap NMEA timestamps in 1024 week cycles.
+(4.2.7p418) 2014/02/05 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2551] --disable-local-libevent breaks the build.
+(4.2.7p417) 2014/02/02 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2539] doc and code tweaks for NMEA driver.
+* Add check for enable stats to ntpd/complete.conf.in
+* Fix typo in html/confopt.html
+(4.2.7p416) 2014/01/31 Released by Harlan Stenn <stenn@ntp.org>
+* Tweak the 'Modified' line on appropriate html pages.
+* Note in the deprecation of ntpdc in its documentation.
+* [Bug 2332] Be more careful about when we use 'libgcc_s'.
+(4.2.7p415) 2014/01/28 Released by Harlan Stenn <stenn@ntp.org>
+* Fix the man page installation for the scripts/ files.
+(4.2.7p414) 2014/01/28 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 792] TrueTime TL-3 WWV refclock support.
+* [Bug 898] Documentation fixes.
+* [Bug 930] ntpdc docs refer to 'clockinfo', but mean 'clockstat'.
+* [Bug 1002] ntp-keygen option and documentation updates: -p/--pvt-passwd
+  is now -p/--password, and -q/--get-pvt-passwd is now -q/--export-passwd.
+* [Bug 1349] statistics command not documented in HTML documentation.
+  In html/monopt.html, add statistics id, definition, description, and
+  correct typo.
+  In html/scripts/monopt.txt, add statistics item, href, and comment.
+  In ntpd/ntp.conf.def, under statistics correct four to eight kinds.
+  In ntpd/complete.conf.in, add all eight kinds to statistics.
+  In html/comdex.html, remove duplicate footer.
+* [Bug 1734] Include man page for ntp.conf (fixed in 4.2.7p297).
+* [Bug 2049] Clarify ntpdate's -d option behavior.
+* [Bug 2366] ntpdc.html: burst/iburst only work on servers.
+* [Bug 2493] ntptrace needs a man page (fixed in 4.2.7p402).
+* [Bug 2545] Cleanup of scripts/monitoring/ntptrap.
+(4.2.7p413) 2014/01/27 Released by Harlan Stenn <stenn@ntp.org>
+* Require a version string for perl scripts that use autogen.
+* html/ cleanup.
+(4.2.7p412) 2014/01/20 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2540] bootstrap script needs to 'touch' files in finer-grained groups.
+(4.2.7p411) 2014/01/12 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2532] Note in ntpdc docs that "enable pps" only works on older ntpd.
+(4.2.7p410) 2014/01/08 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2332] Force reference to 'libgcc_s' when using GCC, because
+  threading+restricted user+locked memory otherwise fails on Linux.
+* [Bug 2530] Fix documentation for enable/disable mode7 and pps.
+* Cleanup to the new scripts/*/Makefile.am files.
+(4.2.7p409) 2014/01/04 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2060] Warn about restrictions with "kod" but not "limited".
+(4.2.7p408) 2013/12/29 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2187] Update version number generation scripts.
+(4.2.7p407) 2013/12/29 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2519] mktime.c does not compile on 64-bit Solaris but we do not
+  need timegm() and the Solaris provides mktime().
+* [Bug 2522] Revert Bug 2513 fix - it breaks backward compatibility.
+(4.2.7p406) 2013/12/28 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2521] VPATH tweaks for perl -opts files.
+(4.2.7p405) 2013/12/27 Released by Harlan Stenn <stenn@ntp.org>
+* [Bug 2521] bootstrap script needs a tweak for perl -opts files.
+* [Bug 2524] Add ntpsweep to sntp/loc/* files.
+* [Bug 2526] Add "noinst" support to the sntp/loc/ framework.
 (4.2.7p404) 2013/12/24 Released by Harlan Stenn <stenn@ntp.org>
 * [Bug 135] AIX5: "Address already in use" for IPv6 wildcard.
 (4.2.7p403) 2013/12/23 Released by Harlan Stenn <stenn@ntp.org>

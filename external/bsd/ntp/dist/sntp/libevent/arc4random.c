@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.1.1.1 2013/12/27 23:31:19 christos Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.1.1.1.6.1 2014/12/24 00:05:24 riz Exp $	*/
 
 /* Portable arc4random.c based on arc4random.c from OpenBSD.
  * Portable version by Chris Davis, adapted for Libevent by Nick Mathewson
@@ -164,7 +164,7 @@ arc4_seed_win32(void)
 	if (!CryptGenRandom(provider, sizeof(buf), buf))
 		return -1;
 	arc4_addrandom(buf, sizeof(buf));
-	memset(buf, 0, sizeof(buf));
+	evutil_memclear_(buf, sizeof(buf));
 	arc4_seeded_ok = 1;
 	return 0;
 }
@@ -202,7 +202,7 @@ arc4_seed_sysctl_linux(void)
 		return -1;
 
 	arc4_addrandom(buf, sizeof(buf));
-	memset(buf, 0, sizeof(buf));
+	evutil_memclear_(buf, sizeof(buf));
 	arc4_seeded_ok = 1;
 	return 0;
 }
@@ -242,7 +242,7 @@ arc4_seed_sysctl_bsd(void)
 		return -1;
 
 	arc4_addrandom(buf, sizeof(buf));
-	memset(buf, 0, sizeof(buf));
+	evutil_memclear_(buf, sizeof(buf));
 	arc4_seeded_ok = 1;
 	return 0;
 }
@@ -287,14 +287,36 @@ arc4_seed_proc_sys_kernel_random_uuid(void)
 		arc4_addrandom(entropy, nybbles/2);
 		bytes += nybbles/2;
 	}
-	memset(entropy, 0, sizeof(entropy));
-	memset(buf, 0, sizeof(buf));
+	evutil_memclear_(entropy, sizeof(entropy));
+	evutil_memclear_(buf, sizeof(buf));
+	arc4_seeded_ok = 1;
 	return 0;
 }
 #endif
 
 #ifndef _WIN32
 #define TRY_SEED_URANDOM
+static char *arc4random_urandom_filename = NULL;
+
+static int arc4_seed_urandom_helper_(const char *fname)
+{
+	unsigned char buf[ADD_ENTROPY];
+	int fd;
+	size_t n;
+
+	fd = evutil_open_closeonexec_(fname, O_RDONLY, 0);
+	if (fd<0)
+		return -1;
+	n = read_all(fd, buf, sizeof(buf));
+	close(fd);
+	if (n != sizeof(buf))
+		return -1;
+	arc4_addrandom(buf, sizeof(buf));
+	evutil_memclear_(buf, sizeof(buf));
+	arc4_seeded_ok = 1;
+	return 0;
+}
+
 static int
 arc4_seed_urandom(void)
 {
@@ -302,22 +324,14 @@ arc4_seed_urandom(void)
 	static const char *filenames[] = {
 		"/dev/srandom", "/dev/urandom", "/dev/random", NULL
 	};
-	unsigned char buf[ADD_ENTROPY];
-	int fd, i;
-	size_t n;
+	int i;
+	if (arc4random_urandom_filename)
+		return arc4_seed_urandom_helper_(arc4random_urandom_filename);
 
 	for (i = 0; filenames[i]; ++i) {
-		fd = evutil_open_closeonexec_(filenames[i], O_RDONLY, 0);
-		if (fd<0)
-			continue;
-		n = read_all(fd, buf, sizeof(buf));
-		close(fd);
-		if (n != sizeof(buf))
-			return -1;
-		arc4_addrandom(buf, sizeof(buf));
-		memset(buf, 0, sizeof(buf));
-		arc4_seeded_ok = 1;
-		return 0;
+		if (arc4_seed_urandom_helper_(filenames[i]) == 0) {
+			return 0;
+		}
 	}
 
 	return -1;
@@ -340,7 +354,8 @@ arc4_seed(void)
 		ok = 1;
 #endif
 #ifdef TRY_SEED_PROC_SYS_KERNEL_RANDOM_UUID
-	if (0 == arc4_seed_proc_sys_kernel_random_uuid())
+	if (arc4random_urandom_filename == NULL &&
+	    0 == arc4_seed_proc_sys_kernel_random_uuid())
 		ok = 1;
 #endif
 #ifdef TRY_SEED_SYSCTL_LINUX
@@ -390,6 +405,7 @@ arc4_stir(void)
 	 */
 	for (i = 0; i < 12*256; i++)
 		(void)arc4_getbyte();
+
 	arc4_count = BYTES_BEFORE_RESEED;
 
 	return 0;

@@ -1045,7 +1045,7 @@ automatically summarized and archived for retrospective analysis.
 .Bl -tag -width indent
 .It Ic statistics Ar name ...
 Enables writing of statistics records.
-Currently, four kinds of
+Currently, eight kinds of
 .Ar name
 statistics are supported.
 .Bl -tag -width indent
@@ -1579,6 +1579,18 @@ Deny packets which would result in mobilizing a new association.
 This
 includes broadcast and symmetric active packets when a configured
 association does not exist.
+It also includes
+.Cm pool
+associations, so if you want to use servers from a 
+.Cm pool
+directive and also want to use
+.Cm nopeer
+by default, you'll want a
+.Cm "restrict source ..." line as well that does
+.It not
+include the
+.Cm nopeer
+directive.
 .It Cm noserve
 Deny all packets except
 .Xr ntpq 1ntpqmdoc
@@ -2366,16 +2378,16 @@ otherwise, should be avoided.
 .Oo
 .Cm auth | Cm bclient |
 .Cm calibrate | Cm kernel |
-.Cm monitor | Cm ntp |
-.Cm pps | Cm stats
+.Cm mode7 | monitor |
+.Cm ntp | Cm stats
 .Oc
 .Xc
 .It Xo Ic disable
 .Oo
 .Cm auth | Cm bclient |
 .Cm calibrate | Cm kernel |
-.Cm monitor | Cm ntp |
-.Cm pps | Cm stats
+.Cm mode7 | monitor |
+.Cm ntp | Cm stats
 .Oc
 .Xc
 Provides a way to enable or disable various server options.
@@ -2411,6 +2423,19 @@ flag is
 .Ic enable
 if support is available, otherwise
 .Ic disable .
+.It Cm mode7
+Enables processing of NTP mode 7 implementation-specific requests
+which are used by the deprecated
+.Xr ntpdc 1ntpdcmdoc
+program.
+The default for this flag is disable.
+This flag is excluded from runtime configuration using
+.Xr ntpq 1ntpqmdoc .
+The
+.Xr ntpq 1ntpqmdoc
+program provides the same capabilities as
+.Xr ntpdc 1ntpdcmdoc
+using standard mode 6 requests.
 .It Cm monitor
 Enables the monitoring facility.
 See the
@@ -2429,17 +2454,6 @@ closes the feedback loop, which is useful for testing.
 The default for
 this flag is
 .Ic enable .
-.It Cm pps
-Enables the pulse-per-second (PPS) signal when frequency and time is
-disciplined by the precision time kernel modifications.
-See the
-.Qq A Kernel Model for Precision Timekeeping
-(available as part of the HTML documentation
-provided in
-.Pa /usr/share/doc/ntp )
-page for further information.
-The default for this flag is
-.Ic disable .
 .It Cm stats
 Enables the statistics facility.
 See the
@@ -2776,7 +2790,6 @@ doc-section	= {
   ds-type	= 'NOTES';
   ds-format	= 'mdoc';
   ds-text	= <<- _END_MDOC_NOTES
-This document corresponds to version #VERSION# of NTP.
 This document was derived from FreeBSD.
 	_END_MDOC_NOTES;
 };

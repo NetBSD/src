@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_main.c,v 1.1.1.1 2013/12/27 23:31:29 christos Exp $	*/
+/*	$NetBSD: regress_main.c,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
@@ -373,6 +373,7 @@ struct testgroup_t testgroups[] = {
 	{ "main/", main_testcases },
 	{ "heap/", minheap_testcases },
 	{ "et/", edgetriggered_testcases },
+	{ "finalize/", finalize_testcases },
 	{ "evbuffer/", evbuffer_testcases },
 	{ "signal/", signal_testcases },
 	{ "util/", util_testcases },
@@ -405,6 +406,7 @@ const char *finetimetests[] = {
 	"+util/monotonic_res_precise",
 	"+util/monotonic_res_fallback",
 	"+thread/deferred_cb_skew",
+	"+http/connection_retry",
 	NULL
 };
 struct testlist_alias_t testaliases[] = {
@@ -413,6 +415,8 @@ struct testlist_alias_t testaliases[] = {
 	{ "fine_timing", finetimetests },
 	END_OF_ALIASES
 };
+
+int libevent_tests_running_in_debug_mode = 0;
 
 int
 main(int argc, const char **argv)
@@ -439,6 +443,14 @@ main(int argc, const char **argv)
 	if (!getenv("EVENT_NO_DEBUG_LOCKS"))
 		evthread_enable_lock_debugging();
 #endif
+
+	if (getenv("EVENT_DEBUG_MODE")) {
+		event_enable_debug_mode();
+		libevent_tests_running_in_debug_mode = 1;
+	}
+	if (getenv("EVENT_DEBUG_LOGGING_ALL")) {
+		event_enable_debug_logging(EVENT_DBG_ALL);
+	}
 
 	tinytest_set_aliases(testaliases);
 

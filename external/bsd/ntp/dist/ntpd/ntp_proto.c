@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_proto.c,v 1.5 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: ntp_proto.c,v 1.5.4.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  * ntp_proto.c - NTP version 4 protocol machinery
@@ -488,7 +488,7 @@ receive(
 	 */
 	authlen = LEN_PKT_NOMAC;
 	has_mac = rbufp->recv_length - authlen;
-	while (has_mac != 0) {
+	while (has_mac > 0) {
 		u_int32	len;
 #ifdef AUTOKEY
 		u_int32	hostlen;
@@ -540,6 +540,14 @@ receive(
 			authlen += len;
 			has_mac -= len;
 		}
+	}
+
+	/*
+	 * If has_mac is < 0 we had a malformed packet.
+	 */
+	if (has_mac < 0) {
+		sys_badlength++;
+		return;		/* bad length */
 	}
 
 	/*
@@ -1091,6 +1099,7 @@ receive(
 				fast_xmit(rbufp, MODE_ACTIVE, 0,
 				    restrict_mask);
 				sys_restricted++;
+				return;
 			}
 		}
 
@@ -2127,7 +2136,7 @@ peer_clear(
 	/*
 	 * Clear all values, including the optional crypto values above.
 	 */
-	memset(CLEAR_TO_ZERO(peer), 0, LEN_CLEAR_TO_ZERO);
+	memset(CLEAR_TO_ZERO(peer), 0, LEN_CLEAR_TO_ZERO(peer));
 	peer->ppoll = peer->maxpoll;
 	peer->hpoll = peer->minpoll;
 	peer->disp = MAXDISPERSE;
@@ -4000,7 +4009,7 @@ init_proto(void)
 		sys_ttl[i] = (u_char)((i * 256) / MAX_TTL);
 		sys_ttlmax = i;
 	}
-	pps_enable = 0;
+	hardpps_enable = 0;
 	stats_control = 1;
 }
 
@@ -4065,7 +4074,7 @@ proto_config(
 		break;
 
 	case PROTO_PPS:		/* PPS discipline (pps) */
-		pps_enable = value;
+		hardpps_enable = value;
 		break;
 
 	case PROTO_FILEGEN:	/* statistics (stats) */

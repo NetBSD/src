@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/06/14 20:49:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.12.2.1 2014/12/24 00:05:28 riz Exp $
 
 LIBISPRIVATE=yes
 
@@ -48,6 +48,7 @@ mstolfp.c \
 msyslog.c \
 netof.c \
 ntp_calendar.c \
+ntp_crypto_rnd.c \
 ntp_intres.c \
 ntp_libopts.c \
 ntp_lineedit.c \
@@ -71,13 +72,18 @@ syssignal.c \
 systime.c \
 timetoa.c \
 uglydate.c \
+vint64ops.c \
 work_fork.c \
 work_thread.c \
 ymd2yd.c
 
 CPPFLAGS+= -I${IDIST}/sntp/libopts
 
+.if ${HAVE_GCC:U} == 4
+COPTS.systime.c+=	-Wno-uninitialized
+.else
 COPTS.msyslog.c+=	-Wno-error=format-nonliteral
+.endif
 
 # For MKREPRO, avoid using __DATE__ and __TIME__.
 # Instead, use the date and time from ${IMPORTDATE_FILE}.
@@ -85,7 +91,7 @@ COPTS.msyslog.c+=	-Wno-error=format-nonliteral
 # The file should contain one line, like this:
 #	Fri Dec 27 19:28:17 EST 2013 (import)
 #
-.if ${MKREPRO} == "yes"
+.if ${MKREPRO:Uno} == "yes"
 IMPORTDATE_FILE := ${.PARSEDIR}/../../importdate
 MKREPRO_DATE != ${TOOL_AWK} '{printf "%3s %2d %4d", $$2, $$3, $$6}' \
 	<${IMPORTDATE_FILE} # "Mmm DD YYYY"

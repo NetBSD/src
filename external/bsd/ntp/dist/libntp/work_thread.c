@@ -1,4 +1,4 @@
-/*	$NetBSD: work_thread.c,v 1.1.1.1 2013/12/27 23:30:48 christos Exp $	*/
+/*	$NetBSD: work_thread.c,v 1.1.1.1.6.1 2014/12/24 00:05:20 riz Exp $	*/
 
 /*
  * work_thread.c - threads implementation for blocking worker child.
@@ -42,7 +42,7 @@
 # define thread_exit(c)	_endthreadex(c)
 # define tickle_sem	SetEvent
 #else
-# define thread_exit(c)	pthread_exit((void *)(c))
+# define thread_exit(c)	pthread_exit((void*)(size_t)(c))
 # define tickle_sem	sem_post
 #endif
 

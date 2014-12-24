@@ -1,4 +1,4 @@
-/*	$NetBSD: gpstolfp.c,v 1.1.1.2 2013/12/27 23:30:50 christos Exp $	*/
+/*	$NetBSD: gpstolfp.c,v 1.1.1.2.4.1 2014/12/24 00:05:20 riz Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libntp/gpstolfp.c,v 4.8 2005/04/16 17:32:10 kardel RELEASE_20050508_A

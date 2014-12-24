@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_conf.c,v 1.1.1.3 2013/12/27 23:31:01 christos Exp $	*/
+/*	$NetBSD: refclock_conf.c,v 1.1.1.3.4.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  * refclock_conf.c - reference clock configuration
@@ -259,6 +259,12 @@ extern struct refclock refclock_tsyncpci;
 #else
 #define refclock_tsyncpci refclock_none
 #endif
+
+#if defined(CLOCK_GPSDJSON) && !defined(SYS_WINNT) 
+extern struct refclock refclock_gpsdjson;
+#else
+#define refclock_gpsdjson refclock_none
+#endif
 /*
  * Order is clock_start(), clock_shutdown(), clock_poll(),
  * clock_control(), clock_init(), clock_buginfo, clock_flags;
@@ -311,7 +317,8 @@ struct refclock * const refclock_conf[] = {
 	&refclock_zyfer,	/* 42 REFCLK_ZYFER */
 	&refclock_ripencc,	/* 43 REFCLK_RIPENCC */
 	&refclock_neoclock4x,	/* 44 REFCLK_NEOCLOCK4X */
-	&refclock_tsyncpci	/* 45 REFCLK_TSYNCPCI */
+	&refclock_tsyncpci,	/* 45 REFCLK_TSYNCPCI */
+	&refclock_gpsdjson	/* 46 REFCLK_GPSDJSON */
 };
 
 u_char num_refclock_conf = sizeof(refclock_conf)/sizeof(struct refclock *);

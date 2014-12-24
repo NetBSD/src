@@ -13,7 +13,7 @@ man8_MANS=
 
 DISTCLEANFILES=	config.log $(man_MANS)
 
-run_ag=		cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)"	\
+run_ag=		cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)" AUTOGEN_DNE_DATE=-D	\
 		autogen -L ../sntp/include -L ../sntp/ag-tpl --writable
 std_def_list =							\
 	$(top_srcdir)/sntp/include/debug-opt.def		\
@@ -78,13 +78,14 @@ noinst_DATA =				\
 	summary.html			\
 	$(NULL)
 
-OPTTPL = ../sntp/ag-tpl/perlopt.tpl
+#OPTTPL = ../sntp/ag-tpl/perlopt.tpl
+OPTTPL = $(std_def_list)
 
 ##
 
-plot_summary: plot_summary-opts
+plot_summary: $(srcdir)/plot_summary-opts
 
-plot_summary-opts: plot_summary-opts.def $(OPTTPL)
+$(srcdir)/plot_summary-opts: plot_summary-opts.def $(OPTTPL)
 	$(run_ag) plot_summary-opts.def 
 
 ### Nroff
@@ -128,9 +129,9 @@ $(srcdir)/plot_summary.html: $(srcdir)/invoke-plot_summary.menu $(srcdir)/invoke
 
 ##
 
-summary: summary-opts
+summary: $(srcdir)/summary-opts
 
-summary-opts: summary-opts.def $(OPTTPL)
+$(srcdir)/summary-opts: summary-opts.def $(OPTTPL)
 	$(run_ag) summary-opts.def
 
 ### Nroff

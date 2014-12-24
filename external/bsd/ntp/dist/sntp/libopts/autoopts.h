@@ -1,4 +1,4 @@
-/*	$NetBSD: autoopts.h,v 1.5 2013/12/28 03:20:15 christos Exp $	*/
+/*	$NetBSD: autoopts.h,v 1.5.4.1 2014/12/24 00:05:26 riz Exp $	*/
 
 
 /*
@@ -13,7 +13,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2013 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -34,6 +34,11 @@
 
 #ifndef AUTOGEN_AUTOOPTS_H
 #define AUTOGEN_AUTOOPTS_H
+#if 0
+#include <stdnoreturn.h>
+#else
+#define noreturn __dead
+#endif
 
 #define AO_NAME_LIMIT           127
 #define AO_NAME_SIZE            ((size_t)(AO_NAME_LIMIT + 1))
@@ -383,6 +388,16 @@ ao_strdup(char const *str);
 extern char* strchr(char const *s, int c);
 extern char* strrchr(char const *s, int c);
 #endif
+
+/**
+ * INQUERY_CALL() tests whether the option handling function has been
+ * called by an inquery (help text needed, or option being reset),
+ * or called by a set-the-option operation.
+ */
+#define INQUERY_CALL(_o, _d) (                  \
+    ((_o) <= OPTPROC_EMIT_LIMIT)                \
+    || ((_d) == NULL)                           \
+    || (((_d)->fOptState & OPTST_RESET) != 0) )
 
 /**
  *  Define and initialize all the user visible strings.

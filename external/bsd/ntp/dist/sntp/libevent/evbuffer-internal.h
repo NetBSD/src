@@ -1,4 +1,4 @@
-/*	$NetBSD: evbuffer-internal.h,v 1.1.1.1 2013/12/27 23:31:24 christos Exp $	*/
+/*	$NetBSD: evbuffer-internal.h,v 1.1.1.1.6.1 2014/12/24 00:05:25 riz Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -328,6 +328,11 @@ int evbuffer_read_setup_vecs_(struct evbuffer *buf, ev_ssize_t howmuch,
 void evbuffer_set_parent_(struct evbuffer *buf, struct bufferevent *bev);
 
 void evbuffer_invoke_callbacks_(struct evbuffer *buf);
+
+
+int evbuffer_get_callbacks_(struct evbuffer *buffer,
+    struct event_callback **cbs,
+    int max_cbs);
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: networking.c,v 1.7 2013/12/28 03:20:15 christos Exp $	*/
+/*	$NetBSD: networking.c,v 1.7.4.1 2014/12/24 00:05:24 riz Exp $	*/
 
 #include <config.h>
 #include "networking.h"
@@ -64,6 +64,30 @@ recvdata(
 	return recvc;
 }
 
+/* Parsing from a short 'struct pkt' directly is bound to create
+ * coverity warnings. These are hard to avoid, as the formal declaration
+ * does not reflect the true layout in the presence of autokey extension
+ * fields. Parsing and skipping the extension fields of a received packet
+ * until there's only the MAC left is better done in this separate
+ * function.
+ */
+static void*
+skip_efields(
+	u_int32 *head,	/* head of extension chain 	*/
+	u_int32 *tail	/* tail/end of extension chain	*/
+	)
+{
+	
+	u_int nlen;	/* next extension length */
+	while ((tail - head) > 6) {
+		nlen = ntohl(*head++) & 0xffff;
+		nlen = (nlen + 3) >> 2;
+		if (nlen > (u_int)(tail - head) || nlen < 4)
+			return NULL;	/* Blooper! Inconsistent! */
+		head += nlen;
+	}
+	return head;
+}
 
 /*
 ** Check if it's data for us and whether it's useable or not.
@@ -84,16 +108,15 @@ process_pkt (
 	u_int		key_id;
 	struct key *	pkt_key;
 	int		is_authentic;
-	u_int		exten_words;
-	u_int		exten_words_used;
 	int		mac_size;
 	u_int		exten_len;
+	u_int32 *       exten_end;
+	u_int32 *       packet_end;
 	l_fp		sent_xmt;
 	l_fp		resp_org;
 
 	key_id = 0;
 	pkt_key = NULL;
-	exten_words_used = 0;
 	is_authentic = (HAVE_OPT(AUTHENTICATION)) ? 0 : -1;
 
 	/*
@@ -114,35 +137,36 @@ process_pkt (
 			func_name, pkt_len);
 		return PACKET_UNUSEABLE;
 	}
-	/* skip past the extensions, if any */
-	exten_words = ((unsigned)pkt_len - LEN_PKT_NOMAC) >> 2;
-	while (exten_words > 6) {
-		exten_len = ntohl(rpkt->exten[exten_words_used]) & 0xffff;
-		exten_len = (exten_len + 7) >> 2; /* convert to words, add 1 */
-		if (exten_len > exten_words || exten_len < 5)
-			goto unusable;
-		exten_words -= exten_len;
-		exten_words_used += exten_len;
-	}
+	/* Note: pkt_len must be a multiple of 4 at this point! */
+	packet_end = (u_int32*)((char*)rpkt + pkt_len);
+	exten_end = skip_efields(rpkt->exten, packet_end);
+	if (NULL == exten_end)
+		goto unusable;
+	/* get size of MAC in cells; can be zero */
+	exten_len = (u_int)(packet_end - exten_end);
 
-	switch (exten_words) {
+	/* deduce action required from remaining length */
+	switch (exten_len) {
 
-	case 0:
+	case 0:	/* no MAC at all */
 		break;
 
-	case 1:
-		key_id = ntohl(rpkt->exten[exten_words_used]);
+	case 1:	/* crypto NAK */		
+		key_id = ntohl(*exten_end);
 		printf("Crypto NAK = 0x%08x\n", key_id);
 		break;
 
-	case 5:
-	case 6:
+	case 3: /* key ID + 3DES MAC -- unsupported! */
+		goto unusable;
+
+	case 5:	/* key ID + MD5 MAC */
+	case 6:	/* key ID + SHA MAC */
 		/*
 		** Look for the key used by the server in the specified
 		** keyfile and if existent, fetch it or else leave the
 		** pointer untouched
 		*/
-		key_id = ntohl(rpkt->exten[exten_words_used]);
+		key_id = ntohl(*exten_end);
 		get_key(key_id, &pkt_key);
 		if (!pkt_key) {
 			printf("unrecognized key ID = 0x%08x\n", key_id);
@@ -154,7 +178,7 @@ process_pkt (
 		** Generate a md5sum of the packet with the key from our
 		** keyfile and compare those md5sums.
 		*/
-		mac_size = exten_words << 2;
+		mac_size = exten_len << 2;
 		if (!auth_md5((char *)rpkt, pkt_len - mac_size,
 			      mac_size - 4, pkt_key)) {
 			is_authentic = FALSE;
@@ -168,7 +192,6 @@ process_pkt (
 
 	default:
 		goto unusable;
-		break;
 	}
 
 	switch (is_authentic) {

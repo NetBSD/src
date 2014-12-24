@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.8 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.8.4.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -1131,7 +1131,7 @@ sys_info(
 		is->flags |= INFO_FLAG_MONITOR;
 	if (ntp_enable)
 		is->flags |= INFO_FLAG_NTP;
-	if (pps_enable)
+	if (hardpps_enable)
 		is->flags |= INFO_FLAG_PPS_SYNC;
 	if (stats_control)
 		is->flags |= INFO_FLAG_FILEGEN;

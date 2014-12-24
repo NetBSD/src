@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.6 2013/12/28 03:20:15 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.6.4.1 2014/12/24 00:05:24 riz Exp $	*/
 
 #include <config.h>
 

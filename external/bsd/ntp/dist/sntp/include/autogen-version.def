@@ -1,4 +1,4 @@
-#assert (version-compare > autogen-version "5.18.2")
-// running 5.18.3pre5 right now...
+#assert (version-compare >= autogen-version "5.18.4")
 // >= is usually what we want.
+// > is when we need a pre* version
 guard-option-names;

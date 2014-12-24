@@ -1,15 +1,15 @@
 /* -*- Mode: Text -*- */
-autogen definitions perlopt;
+AutoGen Definitions perlopt;
 
 #include autogen-version.def
 
-prog-name      = "ntp-wait";
-prog-title     = "Wait for ntpd to stabilize the system clock";
-package        = ntp;
+prog-name	= "ntp-wait";
+prog-title	= "Wait for ntpd to stabilize the system clock";
+package		= ntp;
+#include	version.def
+
 long-opts;
 gnu-usage;
-
-test-main;
 
 flag = {
     name        = tries;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_random.c,v 1.1.1.2 2013/12/27 23:30:47 christos Exp $	*/
+/*	$NetBSD: ntp_random.c,v 1.1.1.2.4.1 2014/12/24 00:05:20 riz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -193,8 +193,8 @@ static unsigned long randtbl[DEG_3 + 1] = {
  * in the initialization of randtbl) because the state table pointer is set
  * to point to randtbl[1] (as explained below).
  */
-static long *fptr = (long *)&randtbl[SEP_3 + 1];
-static long *rptr = (long *)&randtbl[1];
+static unsigned long *fptr = &randtbl[SEP_3 + 1];
+static unsigned long *rptr = &randtbl[1];
 
 /*
  * The following things are the pointer to the state information table, the
@@ -206,11 +206,11 @@ static long *rptr = (long *)&randtbl[1];
  * this is more efficient than indexing every time to find the address of
  * the last element to see if the front and rear pointers have wrapped.
  */
-static long *state = (long *)&randtbl[1];
+static unsigned long *state = &randtbl[1];
 static long rand_type = TYPE_3;
 static long rand_deg = DEG_3;
 static long rand_sep = SEP_3;
-static long *end_ptr = (long *)&randtbl[DEG_3 + 1];
+static unsigned long *end_ptr = &randtbl[DEG_3 + 1];
 
 static inline long good_rand (long);
 
@@ -386,7 +386,7 @@ ntp_initstate(
 		rand_deg = DEG_4;
 		rand_sep = SEP_4;
 	}
-	state = (long *) (long_arg_state + 1); /* first location */
+	state = (unsigned long *) (long_arg_state + 1); /* first location */
 	end_ptr = &state[rand_deg];	/* must set end_ptr before srandom */
 	ntp_srandom(seed);
 	if (rand_type == TYPE_0)
@@ -420,7 +420,7 @@ ntp_setstate(
 	char *arg_state			/* pointer to state array */
 	)
 {
-	register long *new_state = (long *) arg_state;
+	register unsigned long *new_state = (unsigned long *) arg_state;
 	register long type = new_state[0] % MAX_TYPES;
 	register long rear = new_state[0] / MAX_TYPES;
 	char *ostate = (char *)(&state[-1]);
@@ -443,7 +443,7 @@ ntp_setstate(
 		(void)fprintf(stderr,
 		    "random: state info corrupted; not changed.\n");
 	}
-	state = (long *) (new_state + 1);
+	state = (new_state + 1);
 	if (rand_type != TYPE_0) {
 		rptr = &state[rear];
 		fptr = &state[(rear + rand_sep) % rand_deg];
@@ -475,7 +475,7 @@ long
 ntp_random( void )
 {
 	register long i;
-	register long *f, *r;
+	register unsigned long *f, *r;
 
 	if (rand_type == TYPE_0) {
 		i = state[0];

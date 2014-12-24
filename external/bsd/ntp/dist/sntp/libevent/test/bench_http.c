@@ -1,4 +1,4 @@
-/*	$NetBSD: bench_http.c,v 1.1.1.1 2013/12/27 23:31:30 christos Exp $	*/
+/*	$NetBSD: bench_http.c,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
 
 /*
  * Copyright 2008-2012 Niels Provos and Nick Mathewson
@@ -180,11 +180,17 @@ main(int argc, char **argv)
 
 	evhttp_bind_socket(http, "0.0.0.0", port);
 
+#ifdef _WIN32
 	if (use_iocp) {
 		struct timeval tv={99999999,0};
 		event_base_loopexit(base, &tv);
 	}
+#endif
 	event_base_dispatch(base);
+
+#ifdef _WIN32
+	WSACleanup();
+#endif
 
 	/* NOTREACHED */
 	return (0);

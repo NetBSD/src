@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Exporter 'import';
 use Carp;
+use version 0.77;
 
 our @EXPORT_OK = qw(ntp_read_vars do_dns ntp_peers ntp_sntp_line);
 
@@ -13,7 +14,7 @@ our $IP_AGNOSTIC;
 
 BEGIN {
     require Socket;
-    if ($Socket::VERSION >= 1.94) {
+    if (version->parse($Socket::VERSION) >= version->parse(1.94)) {
         Socket->import(qw(getaddrinfo getnameinfo SOCK_RAW AF_INET));
         $IP_AGNOSTIC = 1;
     }

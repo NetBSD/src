@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_util.c,v 1.1.1.1 2013/12/27 23:31:29 christos Exp $	*/
+/*	$NetBSD: regress_util.c,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Nick Mathewson and Niels Provos
@@ -443,6 +443,7 @@ test_evutil_rtrim(void *ptr)
 	do {						\
 	    if (cp) mm_free(cp);			\
 	    cp = mm_strdup(s);				\
+	    tt_assert(cp);				\
 	    evutil_rtrim_lws_(cp);			\
 	    tt_str_op(cp, ==, result);			\
 	} while(0)

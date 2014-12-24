@@ -1,4 +1,4 @@
-/*	$NetBSD: evrpc.c,v 1.1.1.1 2013/12/27 23:31:16 christos Exp $	*/
+/*	$NetBSD: evrpc.c,v 1.1.1.1.6.1 2014/12/24 00:05:25 riz Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -331,8 +331,7 @@ evrpc_request_cb(struct evhttp_request *req, void *arg)
 	return;
 
 error:
-	if (rpc_state != NULL)
-		evrpc_reqstate_free_(rpc_state);
+	evrpc_reqstate_free_(rpc_state);
 	evhttp_send_error(req, HTTP_SERVUNAVAIL, NULL);
 	return;
 }
@@ -374,8 +373,7 @@ evrpc_request_cb_closure(void *arg, enum EVRPC_HOOK_RESULT hook_res)
 	return;
 
 error:
-	if (rpc_state != NULL)
-		evrpc_reqstate_free_(rpc_state);
+	evrpc_reqstate_free_(rpc_state);
 	evhttp_send_error(req, HTTP_SERVUNAVAIL, NULL);
 	return;
 }
@@ -456,8 +454,7 @@ evrpc_request_done(struct evrpc_req_generic *rpc_state)
 	return;
 
 error:
-	if (rpc_state != NULL)
-		evrpc_reqstate_free_(rpc_state);
+	evrpc_reqstate_free_(rpc_state);
 	evhttp_send_error(req, HTTP_SERVUNAVAIL, NULL);
 	return;
 }
@@ -497,8 +494,7 @@ evrpc_request_done_closure(void *arg, enum EVRPC_HOOK_RESULT hook_res)
 	return;
 
 error:
-	if (rpc_state != NULL)
-		evrpc_reqstate_free_(rpc_state);
+	evrpc_reqstate_free_(rpc_state);
 	evhttp_send_error(req, HTTP_SERVUNAVAIL, NULL);
 	return;
 }
@@ -979,7 +975,7 @@ evrpc_request_timeout(evutil_socket_t fd, short what, void *arg)
 	struct evhttp_connection *evcon = ctx->evcon;
 	EVUTIL_ASSERT(evcon != NULL);
 
-	evhttp_connection_fail_(evcon, EVCON_HTTP_TIMEOUT);
+	evhttp_connection_fail_(evcon, EVREQ_HTTP_TIMEOUT);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_thread.c,v 1.1.1.1 2013/12/27 23:31:30 christos Exp $	*/
+/*	$NetBSD: regress_thread.c,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -66,24 +66,7 @@
 #include "regress.h"
 #include "tinytest_macros.h"
 #include "time-internal.h"
-
-#ifdef EVENT__HAVE_PTHREADS
-#define THREAD_T pthread_t
-#define THREAD_FN void *
-#define THREAD_RETURN() return (NULL)
-#define THREAD_START(threadvar, fn, arg) \
-	pthread_create(&(threadvar), NULL, fn, arg)
-#define THREAD_JOIN(th) pthread_join(th, NULL)
-#else
-#define THREAD_T HANDLE
-#define THREAD_FN unsigned __stdcall
-#define THREAD_RETURN() return (0)
-#define THREAD_START(threadvar, fn, arg) do {		\
-	uintptr_t threadhandle = _beginthreadex(NULL,0,fn,(arg),0,NULL); \
-	(threadvar) = (HANDLE) threadhandle; \
-	} while (0)
-#define THREAD_JOIN(th) WaitForSingleObject(th, INFINITE)
-#endif
+#include "regress_thread.h"
 
 struct cond_wait {
 	void *lock;

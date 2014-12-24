@@ -1,4 +1,4 @@
-/*	$NetBSD: le-proxy.c,v 1.1.1.1 2013/12/27 23:31:31 christos Exp $	*/
+/*	$NetBSD: le-proxy.c,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
 
 /*
   This example code shows how to write an (optionally encrypting) SSL proxy
@@ -6,6 +6,11 @@
 
   XXX It's a little ugly and should probably be cleaned up.
  */
+
+// Get rid of OSX 10.7 and greater deprecation warnings.
+#if defined(__APPLE__) && defined(__clang__)
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
 
 #include <stdio.h>
 #include <assert.h>
@@ -271,6 +276,11 @@ main(int argc, char **argv)
 	    LEV_OPT_CLOSE_ON_FREE|LEV_OPT_CLOSE_ON_EXEC|LEV_OPT_REUSEABLE,
 	    -1, (struct sockaddr*)&listen_on_addr, socklen);
 
+	if (! listener) {
+		fprintf(stderr, "Couldn't open listener.\n");
+		event_base_free(base);
+		return 1;
+	}
 	event_base_dispatch(base);
 
 	evconnlistener_free(listener);

@@ -52,6 +52,9 @@
 /* Forum Graphic GPS datating station driver? */
 #define CLOCK_FG 1
 
+/* GPSD JSON receiver */
+#define CLOCK_GPSDJSON 1
+
 /* TrueTime GPS receiver/VME interface? */
 /* #undef CLOCK_GPSVME */
 
@@ -393,6 +396,12 @@
 /* Define to 1 if you have the `finite' function. */
 /* #undef HAVE_FINITE */
 
+/* Define to 1 if you have the `fnmatch' function. */
+#define HAVE_FNMATCH 1
+
+/* Define to 1 if you have the <fnmatch.h> header file. */
+#define HAVE_FNMATCH_H 1
+
 /* Define to 1 if you have the `fork' function. */
 #define HAVE_FORK 1
 
@@ -690,13 +699,19 @@
 /* #undef HAVE_PTH_H */
 
 /* Define to 1 if the system has the type `ptrdiff_t'. */
-/* #undef HAVE_PTRDIFF_T */
+#define HAVE_PTRDIFF_T 1
 
 /* Define to 1 if you have the `pututline' function. */
 /* #undef HAVE_PUTUTLINE */
 
 /* Define to 1 if you have the `pututxline' function. */
 #define HAVE_PUTUTXLINE 1
+
+/* Define to 1 if you have the `RAND_bytes' function. */
+#define HAVE_RAND_BYTES 1
+
+/* Define to 1 if you have the `RAND_poll' function. */
+#define HAVE_RAND_POLL 1
 
 /* Define to 1 if you have the <readline.h> header file. */
 /* #undef HAVE_READLINE_H */
@@ -856,6 +871,9 @@
 
 /* Define to 1 if you have the `strsignal' function. */
 #define HAVE_STRSIGNAL 1
+
+/* Define to 1 if you have the `strtoll' function. */
+#define HAVE_STRTOLL 1
 
 /* Define to 1 if `decimal_point' is a member of `struct lconv'. */
 /* #undef HAVE_STRUCT_LCONV_DECIMAL_POINT */
@@ -1285,6 +1303,9 @@
 /* Does the kernel support precision time discipline? */
 #define KERNEL_PLL 1
 
+/* Define to use libseccomp system call filtering. */
+/* #undef KERN_SECCOMP */
+
 /* What is (probably) the name of DOSYNCTODR in the kernel? */
 #define K_DOSYNCTODR_NAME "_dosynctodr"
 
@@ -1299,6 +1320,9 @@
 
 /* define to 1 if library is thread safe */
 #define LDAP_API_FEATURE_X_OPENLDAP_THREAD_SAFE 1
+
+/* Define to any value to include libseccomp sandboxing. */
+/* #undef LIBSECCOMP */
 
 /* Should we align with the NIST lockclock scheme? */
 /* #undef LOCKCLOCK */
@@ -1404,7 +1428,7 @@
 #define PACKAGE_NAME "ntp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ntp 4.2.7p404"
+#define PACKAGE_STRING "ntp 4.2.8"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ntp"
@@ -1413,16 +1437,13 @@
 #define PACKAGE_URL "http://www.ntp.org./"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.7p404"
+#define PACKAGE_VERSION "4.2.8"
 
 /* data dir */
 #define PERLLIBDIR "/usr/local/share/ntp/lib"
 
-#ifndef __NetBSD__
-/* NetBSD: set by build process */
 /* define to a working POSIX compliant shell */
-#define POSIX_SHELL "/usr/pkg/bin/bash"
-#endif
+#define POSIX_SHELL "/bin/sh"
 
 /* PARSE kernel PLL PPS support */
 /* #undef PPS_SYNC */
@@ -1558,6 +1579,9 @@ typedef unsigned int	uintptr_t;
 /* Must we have a CTTY for fsetown? */
 /* #undef USE_FSETOWNCTTY */
 
+/* Use OpenSSL's crypto random functions */
+#define USE_OPENSSL_CRYPTO_RAND 1
+
 /* Can we use SIGPOLL for tty IO? */
 /* #undef USE_TTY_SIGPOLL */
 
@@ -1565,7 +1589,7 @@ typedef unsigned int	uintptr_t;
 /* #undef USE_UDP_SIGPOLL */
 
 /* Version number of package */
-#define VERSION "4.2.7p404"
+#define VERSION "4.2.8"
 
 /* vsnprintf expands "%m" to strerror(errno) */
 /* #undef VSNPRINTF_PERCENT_M */

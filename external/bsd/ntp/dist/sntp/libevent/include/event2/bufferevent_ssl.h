@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent_ssl.h,v 1.1.1.1 2013/12/27 23:31:31 christos Exp $	*/
+/*	$NetBSD: bufferevent_ssl.h,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
@@ -32,7 +32,7 @@
 
     OpenSSL support for bufferevents.
  */
-
+#include <event2/visibility.h>
 #include <event2/event-config.h>
 #include <event2/bufferevent.h>
 #include <event2/util.h>
@@ -66,6 +66,7 @@ enum bufferevent_ssl_state {
    @param options One or more bufferevent_options
    @return A new bufferevent on success, or NULL on failure
 */
+EVENT2_EXPORT_SYMBOL
 struct bufferevent *
 bufferevent_openssl_filter_new(struct event_base *base,
     struct bufferevent *underlying,
@@ -83,6 +84,7 @@ bufferevent_openssl_filter_new(struct event_base *base,
    @param options One or more bufferevent_options
    @return A new bufferevent on success, or NULL on failure.
 */
+EVENT2_EXPORT_SYMBOL
 struct bufferevent *
 bufferevent_openssl_socket_new(struct event_base *base,
     evutil_socket_t fd,
@@ -106,18 +108,23 @@ bufferevent_openssl_socket_new(struct event_base *base,
     not to use SSL 2.)
 */
 
+EVENT2_EXPORT_SYMBOL
 int bufferevent_openssl_get_allow_dirty_shutdown(struct bufferevent *bev);
+EVENT2_EXPORT_SYMBOL
 void bufferevent_openssl_set_allow_dirty_shutdown(struct bufferevent *bev,
     int allow_dirty_shutdown);
 
 /** Return the underlying openssl SSL * object for an SSL bufferevent. */
+EVENT2_EXPORT_SYMBOL
 struct ssl_st *
 bufferevent_openssl_get_ssl(struct bufferevent *bufev);
 
 /** Tells a bufferevent to begin SSL renegotiation. */
+EVENT2_EXPORT_SYMBOL
 int bufferevent_ssl_renegotiate(struct bufferevent *bev);
 
 /** Return the most recent OpenSSL error reported on an SSL bufferevent. */
+EVENT2_EXPORT_SYMBOL
 unsigned long bufferevent_get_openssl_error(struct bufferevent *bev);
 
 #endif

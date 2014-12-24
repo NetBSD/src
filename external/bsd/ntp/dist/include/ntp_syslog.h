@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_syslog.h,v 1.1.1.3 2013/12/27 23:30:46 christos Exp $	*/
+/*	$NetBSD: ntp_syslog.h,v 1.1.1.3.4.1 2014/12/24 00:05:16 riz Exp $	*/
 
 /*
  * A hack for platforms which require specially built syslog facilities

@@ -1,13 +1,23 @@
 NULL=
+man1_MANS=
+man8_MANS=
 man_MANS=	ntptrace.$(NTPTRACE_MS)
 
 bin_SCRIPTS =	$(NTPTRACE_DB)
 libexec_SCRIPTS =	$(NTPTRACE_DL)
 sbin_SCRIPTS =	$(NTPTRACE_DS)
 
-run_ag=		cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)" PERL5LIB="$(abs_top_srcdir)/scripts/lib"	\
+run_ag=		cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)" PERL5LIB="$(abs_top_srcdir)/scripts/lib" AUTOGEN_DNE_DATE=-D	\
 		autogen -L ../../sntp/include -L ../../sntp/ag-tpl \
 		--writable
+std_def_list =							\
+	$(top_srcdir)/sntp/include/debug-opt.def		\
+	$(top_srcdir)/sntp/include/autogen-version.def 		\
+	$(top_srcdir)/sntp/include/copyright.def 		\
+	$(top_srcdir)/sntp/include/homerc.def 			\
+	$(top_srcdir)/sntp/include/ntp.lic 			\
+	$(top_srcdir)/sntp/include/version.def			\
+	$(NULL)
 
 EXTRA_SCRIPTS = ntptrace
 
@@ -23,6 +33,8 @@ EXTRA_DIST =			\
 	invoke-ntptrace.texi	\
 	invoke-ntptrace.menu	\
 	$(NULL)
+
+DISTCLEANFILES =	config.log $(man_MANS)
 
 html_DATA = $(srcdir)/ntptrace.html
 
@@ -41,7 +53,7 @@ noinst_DATA =			\
 
 ntptrace: $(srcdir)/ntptrace-opts
 
-$(srcdir)/ntptrace-opts: $(srcdir)/ntptrace-opts.def ../../sntp/ag-tpl/perlopt.tpl
+$(srcdir)/ntptrace-opts: $(srcdir)/ntptrace-opts.def $(std_def_list)
 	$(run_ag) ntptrace-opts.def
 
 ### Nroff

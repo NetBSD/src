@@ -1,4 +1,4 @@
-/*	$NetBSD: dns-example.c,v 1.1.1.1 2013/12/27 23:31:31 christos Exp $	*/
+/*	$NetBSD: dns-example.c,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
 
 /*
   This example code shows how to use the high-level, low-level, and
@@ -173,7 +173,7 @@ main(int c, char **v) {
 		++idx;
 	}
 
-#ifdef WIN32
+#ifdef _WIN32
 	{
 		WSADATA WSAData;
 		WSAStartup(0x101, &WSAData);
@@ -181,7 +181,7 @@ main(int c, char **v) {
 #endif
 
 	event_base = event_base_new();
-	evdns_base = evdns_base_new(event_base, 0);
+	evdns_base = evdns_base_new(event_base, EVDNS_BASE_DISABLE_WHEN_INACTIVE);
 	evdns_set_log_fn(logfn);
 
 	if (servertest) {

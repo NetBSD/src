@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen.c,v 1.5 2013/12/28 03:20:15 christos Exp $	*/
+/*	$NetBSD: ntp-keygen.c,v 1.5.4.1 2014/12/24 00:05:28 riz Exp $	*/
 
 /*
  * Program to generate cryptographic keys for ntp clients and servers
@@ -339,6 +339,8 @@ main(
 	ssl_check_version();
 #endif	/* OPENSSL */
 
+	ntp_crypto_srandom();
+
 	/*
 	 * Process options, initialize host name and timestamp.
 	 * gethostname() won't null-terminate if hostname is exactly the
@@ -351,7 +353,6 @@ main(
 	passwd1 = hostbuf;
 	passwd2 = NULL;
 	GETTIMEOFDAY(&tv, NULL);
-	ntp_srandom((u_long)(tv.tv_sec + tv.tv_usec));
 	epoch = tv.tv_sec;
 	fstamp = (u_int)(epoch + JAN_1970);
 
@@ -373,11 +374,11 @@ main(
 	if (HAVE_OPT( MD5KEY ))
 		md5key++;
 #ifdef AUTOKEY
-	if (HAVE_OPT( PVT_PASSWD ))
-		passwd1 = estrdup(OPT_ARG( PVT_PASSWD ));
+	if (HAVE_OPT( PASSWORD ))
+		passwd1 = estrdup(OPT_ARG( PASSWORD ));
 
-	if (HAVE_OPT( GET_PVT_PASSWD ))
-		passwd2 = estrdup(OPT_ARG( GET_PVT_PASSWD ));
+	if (HAVE_OPT( EXPORT_PASSWD ))
+		passwd2 = estrdup(OPT_ARG( EXPORT_PASSWD ));
 
 	if (HAVE_OPT( HOST_KEY ))
 		hostkey++;
@@ -831,7 +832,14 @@ gen_md5(
 			int temp;
 
 			while (1) {
-				temp = ntp_random() & 0xff;
+				int rc;
+
+				rc = ntp_crypto_random_buf(&temp, 1);
+				if (-1 == rc) {
+					fprintf(stderr, "ntp_crypto_random_buf() failed.\n");
+					exit (-1);
+				}
+				temp &= 0xff;
 				if (temp == '#')
 					continue;
 
@@ -961,7 +969,7 @@ gen_rsa(
 	FILE	*str;
 
 	fprintf(stderr, "Generating RSA keys (%d bits)...\n", modulus);
-	rsa = RSA_generate_key(modulus, 3, cb, _UC("RSA"));
+	rsa = RSA_generate_key(modulus, 65537, cb, _UC("RSA"));
 	fprintf(stderr, "\n");
 	if (rsa == NULL) {
 		fprintf(stderr, "RSA generate keys fails\n%s\n",
@@ -1302,7 +1310,7 @@ gen_gqkey(
 	fprintf(stderr,
 	    "Generating GQ parameters (%d bits)...\n",
 	     modulus2);
-	rsa = RSA_generate_key(modulus2, 3, cb, _UC("GQ"));
+	rsa = RSA_generate_key(modulus2, 65537, cb, _UC("GQ"));
 	fprintf(stderr, "\n");
 	if (rsa == NULL) {
 		fprintf(stderr, "RSA generate keys fails\n%s\n",

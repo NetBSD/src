@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_ssl.c,v 1.1.1.1 2013/12/27 23:31:30 christos Exp $	*/
+/*	$NetBSD: regress_ssl.c,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
@@ -25,6 +25,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+// Get rid of OSX 10.7 and greater deprecation warnings.
+#if defined(__APPLE__) && defined(__clang__)
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+#endif
 
 #ifdef _WIN32
 #include <winsock2.h>

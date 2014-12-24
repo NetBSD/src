@@ -1,4 +1,4 @@
-/*	$NetBSD: ifiter_getifaddrs.c,v 1.3 2013/12/28 03:20:13 christos Exp $	*/
+/*	$NetBSD: ifiter_getifaddrs.c,v 1.3.4.1 2014/12/24 00:05:19 riz Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -57,6 +57,7 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 	isc_interfaceiter_t *iter;
 	isc_result_t result;
 	char strbuf[ISC_STRERRORSIZE];
+	int trys, ret;
 
 	REQUIRE(mctx != NULL);
 	REQUIRE(iterp != NULL);
@@ -88,10 +89,17 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 	iter->valid = ISC_R_FAILURE;
 #endif
 
-	if (getifaddrs(&iter->ifaddrs) < 0) {
+	/* If interrupted, try again */
+	for (trys = 0; trys < 3; trys++) {
+		if ((ret = getifaddrs(&iter->ifaddrs)) >= 0)
+			break;
+		if (errno != EINTR)
+			break;
+	}
+	if (ret < 0) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "getting interface addresses: %s: %s",
+                		 "getting interface addresses: %s: %s",
 				 isc_msgcat_get(isc_msgcat,
 						ISC_MSGSET_IFITERGETIFADDRS,
 						ISC_MSG_GETIFADDRS,

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_leitch.c,v 1.1.1.3 2013/12/27 23:30:55 christos Exp $	*/
+/*	$NetBSD: refclock_leitch.c,v 1.1.1.3.4.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  * refclock_leitch - clock driver for the Leitch CSD-5300 Master Clock

@@ -1,4 +1,4 @@
-/*	$NetBSD: minheap-internal.h,v 1.1.1.1 2013/12/27 23:31:24 christos Exp $	*/
+/*	$NetBSD: minheap-internal.h,v 1.1.1.1.6.1 2014/12/24 00:05:25 riz Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -128,8 +128,8 @@ int min_heap_adjust_(min_heap_t *s, struct event *e)
 			min_heap_shift_up_unconditional_(s, e->ev_timeout_pos.min_heap_idx, e);
 		else
 			min_heap_shift_down_(s, e->ev_timeout_pos.min_heap_idx, e);
+		return 0;
 	}
-	return 0;
 }
 
 int min_heap_reserve_(min_heap_t* s, unsigned n)

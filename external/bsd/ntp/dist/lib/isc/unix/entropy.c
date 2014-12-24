@@ -1,4 +1,4 @@
-/*	$NetBSD: entropy.c,v 1.1.1.2 2013/12/27 23:30:45 christos Exp $	*/
+/*	$NetBSD: entropy.c,v 1.1.1.2.4.1 2014/12/24 00:05:19 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")

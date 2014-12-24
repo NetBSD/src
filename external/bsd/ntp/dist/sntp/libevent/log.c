@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2013/12/27 23:31:21 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.1.6.1 2014/12/24 00:05:25 riz Exp $	*/
 
 /*	$OpenBSD: err.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
@@ -59,8 +59,6 @@
 
 #include "log-internal.h"
 
-static void warn_helper_(int severity, const char *errstr, const char *fmt,
-    va_list ap);
 static void event_log(int severity, const char *msg);
 static void event_exit(int errcode) EV_NORETURN;
 
@@ -117,7 +115,7 @@ event_err(int eval, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	warn_helper_(EVENT_LOG_ERR, strerror(errno), fmt, ap);
+	event_logv_(EVENT_LOG_ERR, strerror(errno), fmt, ap);
 	va_end(ap);
 	event_exit(eval);
 }
@@ -128,7 +126,7 @@ event_warn(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	warn_helper_(EVENT_LOG_WARN, strerror(errno), fmt, ap);
+	event_logv_(EVENT_LOG_WARN, strerror(errno), fmt, ap);
 	va_end(ap);
 }
 
@@ -139,7 +137,7 @@ event_sock_err(int eval, evutil_socket_t sock, const char *fmt, ...)
 	int err = evutil_socket_geterror(sock);
 
 	va_start(ap, fmt);
-	warn_helper_(EVENT_LOG_ERR, evutil_socket_error_to_string(err), fmt, ap);
+	event_logv_(EVENT_LOG_ERR, evutil_socket_error_to_string(err), fmt, ap);
 	va_end(ap);
 	event_exit(eval);
 }
@@ -151,7 +149,7 @@ event_sock_warn(evutil_socket_t sock, const char *fmt, ...)
 	int err = evutil_socket_geterror(sock);
 
 	va_start(ap, fmt);
-	warn_helper_(EVENT_LOG_WARN, evutil_socket_error_to_string(err), fmt, ap);
+	event_logv_(EVENT_LOG_WARN, evutil_socket_error_to_string(err), fmt, ap);
 	va_end(ap);
 }
 
@@ -161,7 +159,7 @@ event_errx(int eval, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	warn_helper_(EVENT_LOG_ERR, NULL, fmt, ap);
+	event_logv_(EVENT_LOG_ERR, NULL, fmt, ap);
 	va_end(ap);
 	event_exit(eval);
 }
@@ -172,7 +170,7 @@ event_warnx(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	warn_helper_(EVENT_LOG_WARN, NULL, fmt, ap);
+	event_logv_(EVENT_LOG_WARN, NULL, fmt, ap);
 	va_end(ap);
 }
 
@@ -182,7 +180,7 @@ event_msgx(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	warn_helper_(EVENT_LOG_MSG, NULL, fmt, ap);
+	event_logv_(EVENT_LOG_MSG, NULL, fmt, ap);
 	va_end(ap);
 }
 
@@ -192,15 +190,18 @@ event_debugx_(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	warn_helper_(EVENT_LOG_DEBUG, NULL, fmt, ap);
+	event_logv_(EVENT_LOG_DEBUG, NULL, fmt, ap);
 	va_end(ap);
 }
 
-static void
-warn_helper_(int severity, const char *errstr, const char *fmt, va_list ap)
+void
+event_logv_(int severity, const char *errstr, const char *fmt, va_list ap)
 {
 	char buf[1024];
 	size_t len;
+
+	if (severity == EVENT_LOG_DEBUG && !event_debug_get_logging_mask_())
+		return;
 
 	if (fmt != NULL)
 		evutil_vsnprintf(buf, sizeof(buf), fmt, ap);

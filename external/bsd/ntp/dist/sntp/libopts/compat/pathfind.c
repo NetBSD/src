@@ -1,4 +1,4 @@
-/*	$NetBSD: pathfind.c,v 1.3 2013/12/28 03:20:15 christos Exp $	*/
+/*	$NetBSD: pathfind.c,v 1.3.4.1 2014/12/24 00:05:27 riz Exp $	*/
 
 /*  -*- Mode: C -*-  */
 

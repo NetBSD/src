@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_ripencc.c,v 1.1.1.3 2013/12/27 23:30:51 christos Exp $	*/
+/*	$NetBSD: refclock_ripencc.c,v 1.1.1.3.4.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  * Id: refclock_ripencc.c,v 1.13 2002/06/18 14:20:55 marks Exp marks 
@@ -682,7 +682,7 @@ ripencc_ppsapi(
 				"refclock_ripencc: time_pps_kcbind failed: %m");
 			return (0);
 		}
-		pps_enable = 1;
+		hardpps_enable = 1;
 	}
 	peer->precision = PPS_PRECISION;
 

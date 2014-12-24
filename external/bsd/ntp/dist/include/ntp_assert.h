@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_assert.h,v 1.1.1.3 2013/12/27 23:30:46 christos Exp $	*/
+/*	$NetBSD: ntp_assert.h,v 1.1.1.3.4.1 2014/12/24 00:05:16 riz Exp $	*/
 
 /*
  * ntp_assert.h - design by contract stuff
@@ -30,6 +30,7 @@
 #define NTP_ASSERT_H
 
 # ifdef CALYSTO 
+/* see: http://www.domagoj-babic.com/index.php/ResearchProjects/Calysto */
 
 extern void calysto_assume(unsigned char cnd); /* assume this always holds */ 
 extern void calysto_assert(unsigned char cnd); /* check whether this holds */ 
@@ -59,7 +60,17 @@ extern void calysto_assert(unsigned char cnd); /* check whether this holds */
 #define ALWAYS_ENSURE(x)	assert(x)
 */
 
-# else	/* neither Coverity nor Calysto */
+
+#elif defined(__FLEXELINT__)
+
+#include <assert.h>
+
+#define ALWAYS_REQUIRE(x)	assert(x)
+#define ALWAYS_INSIST(x)	assert(x)
+#define ALWAYS_INVARIANT(x)	assert(x)
+#define ALWAYS_ENSURE(x)	assert(x)
+
+# else	/* neither Calysto, Coverity or FlexeLint */
 
 #include "isc/assertions.h"
 

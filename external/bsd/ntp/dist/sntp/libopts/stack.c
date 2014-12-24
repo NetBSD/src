@@ -1,4 +1,4 @@
-/*	$NetBSD: stack.c,v 1.4 2013/12/28 03:20:15 christos Exp $	*/
+/*	$NetBSD: stack.c,v 1.4.4.1 2014/12/24 00:05:27 riz Exp $	*/
 
 
 /**
@@ -13,7 +13,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2013 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -40,35 +40,30 @@
  * private:
  *
  * what:  Remove option args from a stack
- * arg:   + tOptions* + pOpts    + program options descriptor +
- * arg:   + tOptDesc* + pOptDesc + the descriptor for this arg +
+ * arg:   + tOptions* + opts + program options descriptor +
+ * arg:   + tOptDesc* + od   + the descriptor for this arg +
  *
  * doc:
  *  Invoked for options that are equivalenced to stacked options.
 =*/
 void
-optionUnstackArg(tOptions * pOpts, tOptDesc * pOptDesc)
+optionUnstackArg(tOptions * opts, tOptDesc * od)
 {
-    tArgList * pAL;
+    tArgList * arg_list;
 
-    (void)pOpts;
-
-    if (pOpts <= OPTPROC_EMIT_LIMIT)
+    if (INQUERY_CALL(opts, od))
         return;
 
-    if ((pOptDesc->fOptState & OPTST_RESET) != 0)
-        return;
-
-    pAL = (tArgList*)pOptDesc->optCookie;
+    arg_list = (tArgList*)od->optCookie;
 
     /*
      *  IF we don't have any stacked options,
      *  THEN indicate that we don't have any of these options
      */
-    if (pAL == NULL) {
-        pOptDesc->fOptState &= OPTST_PERSISTENT_MASK;
-        if ((pOptDesc->fOptState & OPTST_INITENABLED) == 0)
-            pOptDesc->fOptState |= OPTST_DISABLED;
+    if (arg_list == NULL) {
+        od->fOptState &= OPTST_PERSISTENT_MASK;
+        if ((od->fOptState & OPTST_INITENABLED) == 0)
+            od->fOptState |= OPTST_DISABLED;
         return;
     }
 
@@ -77,7 +72,7 @@ optionUnstackArg(tOptions * pOpts, tOptDesc * pOptDesc)
         regex_t   re;
         int       i, ct, dIdx;
 
-        if (regcomp(&re, pOptDesc->optArg.argString, REG_NOSUB) != 0)
+        if (regcomp(&re, od->optArg.argString, REG_NOSUB) != 0)
             return;
 
         /*
@@ -86,8 +81,8 @@ optionUnstackArg(tOptions * pOpts, tOptDesc * pOptDesc)
          *  index is incremented every time.  The destination only when
          *  we are keeping a define.
          */
-        for (i = 0, dIdx = 0, ct = pAL->useCt; --ct >= 0; i++) {
-            char const * pzSrc = pAL->apzArgs[ i ];
+        for (i = 0, dIdx = 0, ct = arg_list->useCt; --ct >= 0; i++) {
+            char const * pzSrc = arg_list->apzArgs[ i ];
             char *       pzEq  = strchr(pzSrc, '=');
             int          res;
 
@@ -104,7 +99,7 @@ optionUnstackArg(tOptions * pOpts, tOptDesc * pOptDesc)
                  *  the list.
                  */
                 AGFREE(pzSrc);
-                pAL->useCt--;
+                arg_list->useCt--;
                 break;
 
             default:
@@ -117,7 +112,7 @@ optionUnstackArg(tOptions * pOpts, tOptDesc * pOptDesc)
                  *  THEN we have to move the current one.
                  */
                 if (dIdx != i)
-                    pAL->apzArgs[ dIdx ] = pzSrc;
+                    arg_list->apzArgs[ dIdx ] = pzSrc;
                 dIdx++;
             }
         }
@@ -134,21 +129,21 @@ optionUnstackArg(tOptions * pOpts, tOptDesc * pOptDesc)
          *  index is incremented every time.  The destination only when
          *  we are keeping a define.
          */
-        for (i = 0, dIdx = 0, ct = pAL->useCt; --ct >= 0; i++) {
-            const char * pzSrc = pAL->apzArgs[ i ];
+        for (i = 0, dIdx = 0, ct = arg_list->useCt; --ct >= 0; i++) {
+            const char * pzSrc = arg_list->apzArgs[ i ];
             char *       pzEq  = strchr(pzSrc, '=');
 
             if (pzEq != NULL)
                 *pzEq = NUL;
 
-            if (strcmp(pzSrc, pOptDesc->optArg.argString) == 0) {
+            if (strcmp(pzSrc, od->optArg.argString) == 0) {
                 /*
                  *  Remove this entry by reducing the in-use count
                  *  and *not* putting the string pointer back into
                  *  the list.
                  */
                 AGFREE(pzSrc);
-                pAL->useCt--;
+                arg_list->useCt--;
             } else {
                 if (pzEq != NULL)
                     *pzEq = '=';
@@ -158,7 +153,7 @@ optionUnstackArg(tOptions * pOpts, tOptDesc * pOptDesc)
                  *  THEN we have to move the current one.
                  */
                 if (dIdx != i)
-                    pAL->apzArgs[ dIdx ] = pzSrc;
+                    arg_list->apzArgs[ dIdx ] = pzSrc;
                 dIdx++;
             }
         }
@@ -168,12 +163,12 @@ optionUnstackArg(tOptions * pOpts, tOptDesc * pOptDesc)
      *  IF we have unstacked everything,
      *  THEN indicate that we don't have any of these options
      */
-    if (pAL->useCt == 0) {
-        pOptDesc->fOptState &= OPTST_PERSISTENT_MASK;
-        if ((pOptDesc->fOptState & OPTST_INITENABLED) == 0)
-            pOptDesc->fOptState |= OPTST_DISABLED;
-        AGFREE((void*)pAL);
-        pOptDesc->optCookie = NULL;
+    if (arg_list->useCt == 0) {
+        od->fOptState &= OPTST_PERSISTENT_MASK;
+        if ((od->fOptState & OPTST_INITENABLED) == 0)
+            od->fOptState |= OPTST_DISABLED;
+        AGFREE((void *)arg_list);
+        od->optCookie = NULL;
     }
 }
 
@@ -184,7 +179,7 @@ optionUnstackArg(tOptions * pOpts, tOptDesc * pOptDesc)
  *  as an opaque address.
  */
 LOCAL void
-addArgListEntry(void** ppAL, void* entry)
+addArgListEntry(void ** ppAL, void * entry)
 {
     tArgList* pAL = *(void**)ppAL;
 
@@ -231,37 +226,37 @@ addArgListEntry(void** ppAL, void* entry)
  * private:
  *
  * what:  put option args on a stack
- * arg:   + tOptions* + pOpts    + program options descriptor +
- * arg:   + tOptDesc* + pOptDesc + the descriptor for this arg +
+ * arg:   + tOptions* + opts + program options descriptor +
+ * arg:   + tOptDesc* + od   + the descriptor for this arg +
  *
  * doc:
  *  Keep an entry-ordered list of option arguments.
 =*/
 void
-optionStackArg(tOptions * pOpts, tOptDesc * pOD)
+optionStackArg(tOptions * opts, tOptDesc * od)
 {
     char * pz;
 
-    if (pOpts <= OPTPROC_EMIT_LIMIT)
+    if (INQUERY_CALL(opts, od))
         return;
 
-    if ((pOD->fOptState & OPTST_RESET) != 0) {
-        tArgList* pAL = (void*)pOD->optCookie;
+    if ((od->fOptState & OPTST_RESET) != 0) {
+        tArgList * arg_list = (void*)od->optCookie;
         int ix;
-        if (pAL == NULL)
+        if (arg_list == NULL)
             return;
 
-        ix = pAL->useCt;
+        ix = arg_list->useCt;
         while (--ix >= 0)
-            AGFREE(pAL->apzArgs[ix]);
-        AGFREE(pAL);
+            AGFREE(arg_list->apzArgs[ix]);
+        AGFREE(arg_list);
 
     } else {
-        if (pOD->optArg.argString == NULL)
+        if (od->optArg.argString == NULL)
             return;
 
-        AGDUPSTR(pz, pOD->optArg.argString, "stack arg");
-        addArgListEntry(&(pOD->optCookie), (void*)pz);
+        AGDUPSTR(pz, od->optArg.argString, "stack arg");
+        addArgListEntry(&(od->optCookie), (void*)pz);
     }
 }
 /** @}

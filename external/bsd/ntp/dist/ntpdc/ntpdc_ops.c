@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc_ops.c,v 1.4 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: ntpdc_ops.c,v 1.4.4.1 2014/12/24 00:05:22 riz Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_nmea.c,v 1.5 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: refclock_nmea.c,v 1.5.4.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  * refclock_nmea.c - clock driver for an NMEA GPS CLOCK
@@ -90,7 +90,8 @@
 #define NMEA_BAUDRATE_SHIFT	4
 
 #define NMEA_DELAYMEAS_MASK	0x80
-#define NMEA_EXTLOG_MASK	0x01000000U
+#define NMEA_EXTLOG_MASK	0x00010000U
+#define NMEA_DATETRUST_MASK	0x02000000U
 
 #define NMEA_PROTO_IDLEN	5	/* tag name must be at least 5 chars */
 #define NMEA_PROTO_MINLEN	6	/* min chars in sentence, excluding CS */
@@ -232,13 +233,15 @@ typedef struct {
 	u_char  gps_time;	/* use GPS time, not UTC */
 	u_short century_cache;	/* cached current century */
 	l_fp	last_reftime;	/* last processed reference stamp */
+	short 	epoch_warp;	/* last epoch warp, for logging */
 	/* tally stats, reset each poll cycle */
 	struct
 	{
 		u_int total;
-		u_int good;
-		u_int bad;
-		u_int filtered;
+		u_int accepted;
+		u_int rejected;   /* GPS said not enough signal */
+		u_int malformed;  /* Bad checksum, invalid date or time */
+		u_int filtered;   /* mode bits, not GPZDG, same second */
 		u_int pps_used;
 	}	
 		tally;
@@ -279,6 +282,7 @@ typedef struct {
 /*
  * Function prototypes
  */
+static	void	nmea_init	(void);
 static	int	nmea_start	(int, struct peer *);
 static	void	nmea_shutdown	(int, struct peer *);
 static	void	nmea_receive	(struct recvbuf *);
@@ -309,6 +313,8 @@ static int	unfold_day	(struct calendar * jd, u_int32 rec_ui);
 static int	unfold_century	(struct calendar * jd, u_int32 rec_ui);
 static int	gpsfix_century	(struct calendar * jd, const gps_weektm * wd,
 				 u_short * ccentury);
+static l_fp     eval_gps_time	(struct peer * peer, const struct calendar * gpst,
+				 const struct timespec * gpso, const l_fp * xrecv);
 
 static int	nmead_open	(const char * device);
 static void     save_ltc        (struct refclockproc * const, const char * const,
@@ -329,6 +335,9 @@ extern int async_write(int, const void *, unsigned int);
 
 #endif /* NMEA_WRITE_SUPPORT */
 
+static int32_t g_gpsMinBase;
+static int32_t g_gpsMinYear;
+
 /*
  * -------------------------------------------------------------------
  * Transfer vector
@@ -339,10 +348,45 @@ struct refclock refclock_nmea = {
 	nmea_shutdown,		/* shut down driver */
 	nmea_poll,		/* transmit poll message */
 	NMEA_CONTROL,		/* fudge control */
-	noentry,		/* initialize driver */
+	nmea_init,		/* initialize driver */
 	noentry,		/* buginfo */
 	nmea_timer		/* called once per second */
 };
+
+/*
+ * -------------------------------------------------------------------
+ * nmea_init - initialise data
+ *
+ * calculates a few runtime constants that cannot be made compile time
+ * constants.
+ * -------------------------------------------------------------------
+ */
+static void
+nmea_init(void)
+{
+	struct calendar date;
+
+	/* - calculate min. base value for GPS epoch & century unfolding 
+	 * This assumes that the build system was roughly in sync with
+	 * the world, and that really synchronising to a time before the
+	 * program was created would be unsafe or insane. If the build
+	 * date cannot be stablished, at least use the start of GPS
+	 * (1980-01-06) as minimum, because GPS can surely NOT
+	 * synchronise beyond it's own big bang. We add a little safety
+	 * margin for the fuzziness of the build date, which is in an
+	 * undefined time zone. */
+	if (ntpcal_get_build_date(&date))
+		g_gpsMinBase = ntpcal_date_to_rd(&date) - 2;
+	else
+		g_gpsMinBase = 0;
+
+	if (g_gpsMinBase < DAY_GPS_STARTS)
+		g_gpsMinBase = DAY_GPS_STARTS;
+
+	ntpcal_rd_to_date(&date, g_gpsMinBase);
+	g_gpsMinYear  = date.year;
+	g_gpsMinBase -= DAY_NTP_STARTS;
+}
 
 /*
  * -------------------------------------------------------------------
@@ -528,9 +572,19 @@ nmea_control(
 		if (-1 == up->ppsapi_fd)
 			up->ppsapi_fd = pp->io.fd;	
 		if (refclock_ppsapi(up->ppsapi_fd, &up->atom)) {
-			up->ppsapi_lit = TRUE;
 			/* use the PPS API for our own purposes now. */
-			refclock_params(pp->sloppyclockflag, &up->atom);
+			up->ppsapi_lit = refclock_params(
+				pp->sloppyclockflag, &up->atom);
+			if (!up->ppsapi_lit) {
+				/* failed to configure, drop PPS unit */
+				time_pps_destroy(up->atom.handle);
+				msyslog(LOG_WARNING,
+					"%s set PPSAPI params fails",
+					refnumtoa(&peer->srcadr));				
+			}
+			/* note: the PPS I/O handle remains valid until
+			 * flag1 is cleared or the clock is shut down. 
+			 */
 		} else {
 			msyslog(LOG_WARNING,
 				"%s flag1 1 but PPSAPI fails",
@@ -850,7 +904,7 @@ nmea_receive(
 		DPRINTF(1, ("%s checksum missing: '%s'\n",
 			refnumtoa(&peer->srcadr), rd_lastcode));
 		refclock_report(peer, CEVNT_BADREPLY);
-		up->tally.bad++;
+		up->tally.malformed++;
 		return;
 	}
 
@@ -937,21 +991,26 @@ nmea_receive(
 	}
 
 	/* Check sanity of time-of-day. */
-	if (rc_time == 0)	/* no time or conversion error? */
+	if (rc_time == 0) {	/* no time or conversion error? */
 		checkres = CEVNT_BADTIME;
+		up->tally.malformed++;
+	}
 	/* Check sanity of date. */
-	else if (rc_date == 0)	/* no date or conversion error? */
+	else if (rc_date == 0) {/* no date or conversion error? */
 		checkres = CEVNT_BADDATE;
+		up->tally.malformed++;
+	}
 	/* check clock sanity; [bug 2143] */
-	else if (pp->leap == LEAP_NOTINSYNC)	/* no good status? */
+	else if (pp->leap == LEAP_NOTINSYNC) { /* no good status? */
 		checkres = CEVNT_BADREPLY;
+		up->tally.rejected++;
+	}
 	else
 		checkres = -1;
 
 	if (checkres != -1) {
 		save_ltc(pp, rd_lastcode, rd_lencode);
 		refclock_report(peer, checkres);
-		up->tally.bad++;
 		return;
 	}
 
@@ -973,8 +1032,7 @@ nmea_receive(
 	 * timecode timestamp, but only if the PPS is not in control.
 	 * Discard sentence if reference time did not change.
 	 */
-	rd_reftime = tspec_intv_to_lfp(tofs);
-	rd_reftime.l_ui += caltontp(&date);
+	rd_reftime = eval_gps_time(peer, &date, &tofs, &rd_timestamp);
 	if (L_ISEQU(&up->last_reftime, &rd_reftime)) {
 		/* Do not touch pp->a_lastcode on purpose! */
 		up->tally.filtered++;
@@ -987,7 +1045,7 @@ nmea_receive(
 		    refnumtoa(&peer->srcadr), rd_lastcode));
 
 	/* Data will be accepted. Update stats & log data. */
-	up->tally.good++;
+	up->tally.accepted++;
 	save_ltc(pp, rd_lastcode, rd_lencode);
 	pp->lastrec = rd_timestamp;
 
@@ -1090,10 +1148,13 @@ nmea_poll(
 	*/
 	if (peer->ttl & NMEA_EXTLOG_MASK) {
 		/* Log & reset counters with extended logging */
+		const char *nmea = pp->a_lastcode;
+		if (*nmea == '\0') nmea = "(none)";
 		mprintf_clock_stats(
-		  &peer->srcadr, "%s  %u %u %u %u %u",
-		  pp->a_lastcode,
-		  up->tally.total, up->tally.good, up->tally.bad,
+		  &peer->srcadr, "%s  %u %u %u %u %u %u",
+		  nmea,
+		  up->tally.total, up->tally.accepted,
+		  up->tally.rejected, up->tally.malformed,
 		  up->tally.filtered, up->tally.pps_used);
 	} else {
 		record_clock_stats(&peer->srcadr, pp->a_lastcode);
@@ -1628,7 +1689,9 @@ unfold_century(
 	int32		baseyear;
 
 	ntpcal_ntp_to_date(&rec, rec_ui, NULL);
-	baseyear = (rec.year > 2000) ? (rec.year - 20) : 1980;
+	baseyear = rec.year - 20;
+	if (baseyear < g_gpsMinYear)
+		baseyear = g_gpsMinYear;
 	jd->year = (u_short)ntpcal_periodic_extend(baseyear, jd->year,
 						   100);
 
@@ -1700,6 +1763,114 @@ gpsfix_century(
 	return FALSE; /* match failed... */
 }
 
+/*
+ * -------------------------------------------------------------------
+ * And now the final execise: Considering the fact that many (most?)
+ * GPS receivers cannot handle a GPS epoch wrap well, we try to
+ * compensate for that problem by unwrapping a GPS epoch around the
+ * receive stamp. Another execise in periodic unfolding, of course,
+ * but with enough points to take care of.
+ *
+ * Note: The integral part of 'tofs' is intended to handle small(!)
+ * systematic offsets, as -1 for handling $GPZDG, which gives the
+ * following second. (sigh...) The absolute value shall be less than a
+ * day (86400 seconds).
+ * -------------------------------------------------------------------
+ */
+static l_fp
+eval_gps_time(
+	struct peer           * peer, /* for logging etc */
+	const struct calendar * gpst, /* GPS time stamp  */
+	const struct timespec * tofs, /* GPS frac second & offset */
+	const l_fp            * xrecv /* receive time stamp */
+	)
+{
+	struct refclockproc * const pp = peer->procptr;
+	nmea_unit	    * const up = (nmea_unit *)pp->unitptr;
+
+	l_fp    retv;
+
+	/* components of calculation */
+	int32_t rcv_sec, rcv_day; /* receive ToD and day */
+	int32_t gps_sec, gps_day; /* GPS ToD and day in NTP epoch */
+	int32_t adj_day, weeks;   /* adjusted GPS day and week shift */
+
+	/* some temporaries to shuffle data */
+	vint64       vi64;
+	ntpcal_split rs64;
+
+	/* evaluate time stamp from receiver. */
+	gps_sec = ntpcal_date_to_daysec(gpst);
+	gps_day = ntpcal_date_to_rd(gpst) - DAY_NTP_STARTS;
+
+	/* merge in fractional offset */
+	retv = tspec_intv_to_lfp(*tofs);
+	gps_sec += retv.l_i;
+
+	/* If we fully trust the GPS receiver, just combine days and
+	 * seconds and be done. */
+	if (peer->ttl & NMEA_DATETRUST_MASK) {
+		retv.l_ui = ntpcal_dayjoin(gps_day, gps_sec).D_s.lo;
+		return retv;
+	}
+
+	/* So we do not trust the GPS receiver to deliver a correct date
+	 * due to the GPS epoch changes. We map the date from the
+	 * receiver into the +/-512 week interval around the receive
+	 * time in that case. This would be a tad easier with 64bit
+	 * calculations, but again, we restrict the code to 32bit ops
+	 * when possible. */
+
+	/* - make sure the GPS fractional day is normalised
+	 * Applying the offset value might have put us slightly over the
+	 * edge of the allowed range for seconds-of-day. Doing a full
+	 * division with floor correction is overkill here; a simple
+	 * addition or subtraction step is sufficient. Using WHILE loops
+	 * gives the right result even if the offset exceeds one day,
+	 * which is NOT what it's intented for! */
+	while (gps_sec >= SECSPERDAY) {
+		gps_sec -= SECSPERDAY;
+		gps_day += 1;
+	}
+	while (gps_sec < 0) {
+		gps_sec += SECSPERDAY;
+		gps_day -= 1;
+	}
+
+	/* - get unfold base: day of full recv time - 512 weeks */
+	vi64 = ntpcal_ntp_to_ntp(xrecv->l_ui, NULL);
+	rs64 = ntpcal_daysplit(&vi64);
+	rcv_sec = rs64.lo;
+	rcv_day = rs64.hi - 512 * 7;
+
+	/* - take the fractional days into account
+	 * If the fractional day of the GPS time is smaller than the
+	 * fractional day of the receive time, we shift the base day for
+	 * the unfold by 1. */
+	if (   gps_sec  < rcv_sec
+	   || (gps_sec == rcv_sec && retv.l_uf < xrecv->l_uf))
+		rcv_day += 1;
+
+	/* - don't warp ahead of GPS invention! */
+	if (rcv_day < g_gpsMinBase)
+		rcv_day = g_gpsMinBase;
+
+	/* - let the magic happen: */
+	adj_day = ntpcal_periodic_extend(rcv_day, gps_day, 1024*7);
+
+	/* - check if we should log a GPS epoch warp */
+	weeks = (adj_day - gps_day) / 7;
+	if (weeks != up->epoch_warp) {
+		up->epoch_warp = weeks;
+		LOGIF(CLOCKINFO, (LOG_INFO,
+				  "%s Changed GPS epoch warp to %d weeks",
+				  refnumtoa(&peer->srcadr), weeks));
+	}
+
+	/* - build result and be done */
+	retv.l_ui = ntpcal_dayjoin(adj_day, gps_sec).D_s.lo;
+	return retv;
+}
 
 /*
  * ===================================================================

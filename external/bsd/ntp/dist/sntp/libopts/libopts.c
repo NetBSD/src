@@ -1,4 +1,4 @@
-/*	$NetBSD: libopts.c,v 1.1.1.3 2013/12/27 23:31:35 christos Exp $	*/
+/*	$NetBSD: libopts.c,v 1.1.1.3.4.1 2014/12/24 00:05:27 riz Exp $	*/
 
 #define  AUTOOPTS_INTERNAL 1
 #include "autoopts/project.h"

@@ -36,7 +36,7 @@ display the time offset of the system clock relative to the server
 clock.  Run as root, it can correct the system clock to this offset as
 well.  It can be run as an interactive command or from a cron job.
 
-  <p>This document applies to version 4.2.7p404 of <code>sntp</code>.
+  <p>This document applies to version 4.2.8 of <code>sntp</code>.
 
   <p>The program implements the SNTP protocol as defined by RFC 5905, the NTPv4
 IETF specification.
@@ -153,7 +153,6 @@ This software is released under the NTP license, &lt;http://ntp.org/license&gt;.
 <li><a href="#sntp-exit-status">sntp exit status</a>:             exit status
 <li><a href="#sntp-Usage">sntp Usage</a>:                   Usage
 <li><a href="#sntp-Authors">sntp Authors</a>:                 Authors
-<li><a href="#sntp-Notes">sntp Notes</a>:                   Notes
 </ul>
 
 <div class="node">
@@ -176,7 +175,7 @@ the usage text by passing it through a pager program.
 used to select the program, defaulting to <span class="file">more</span>.  Both will exit
 with a status code of 0.
 
-<pre class="example">sntp - standard Simple Network Time Protocol client program - Ver. 4.2.7p404
+<pre class="example">sntp - standard Simple Network Time Protocol client program - Ver. 4.2.8
 Usage:  sntp [ -&lt;flag&gt; [&lt;val&gt;] | --&lt;name&gt;[{=| }&lt;val&gt;] ]... \
                 [ hostname-or-IP ...]
   Flg Arg Option-Name    Description
@@ -228,8 +227,6 @@ The following option preset mechanisms are supported:
  - examining environment variables named SNTP_*
 
 Please send bug reports to:  &lt;http://bugs.ntp.org, bugs@ntp.org&gt;
-
-exit 0
 </pre>
   <div class="node">
 <p><hr>
@@ -371,7 +368,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
 This is the &ldquo;kod history filename&rdquo; option. 
 This option takes a file argument <span class="file">file-name</span>. 
 Specifies the filename to be used for the persistent history of KoD
-responses received from servers. 
+responses received from servers.  If the file does not exist, a
+warning message will be displayed.  The file will not be created. 
 <div class="node">
 <p><hr>
 <a name="sntp-keyfile"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-logfile">sntp logfile</a>,
@@ -590,22 +588,12 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
 
 <div class="node">
 <p><hr>
-<a name="sntp-Authors"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-Notes">sntp Notes</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-Usage">sntp Usage</a>,
+<a name="sntp-Authors"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-Usage">sntp Usage</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
 <br>
 </div>
 
 <h4 class="subsection">sntp Authors</h4>
-
-<div class="node">
-<p><hr>
-<a name="sntp-Notes"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-Authors">sntp Authors</a>,
-Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
-</div>
-
-<h4 class="subsection">sntp Notes</h4>
 
 <div class="node">
 <p><hr>

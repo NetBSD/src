@@ -1,4 +1,4 @@
-/*	$NetBSD: kod_management.c,v 1.4 2013/12/28 03:20:15 christos Exp $	*/
+/*	$NetBSD: kod_management.c,v 1.4.4.1 2014/12/24 00:05:24 riz Exp $	*/
 
 #include <config.h>
 #include <string.h>

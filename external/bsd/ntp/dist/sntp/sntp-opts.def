@@ -19,8 +19,6 @@ environrc;
 
 #include version.def
 
-test-main;
-
 flag = {
   name		= ipv4;
   value		= 4;
@@ -119,7 +117,8 @@ flag = {
   descrip	= "KoD history filename";
   doc		= <<- _EndOfDoc_
 	Specifies the filename to be used for the persistent history of KoD
-	responses received from servers.
+	responses received from servers.  If the file does not exist, a
+	warning message will be displayed.  The file will not be created.
 	_EndOfDoc_;
 };
 
@@ -318,13 +317,4 @@ doc-section	= {
 .An "Harlan Stenn"
 .An "Dave Hart"
 	_END_MDOC_AUTHORS;
-};
-
-doc-section	= {
-  ds-type	= 'NOTES';
-  ds-format	= 'mdoc';
-  ds-text	= <<- _END_MDOC_NOTES
-This document corresponds to version #VERSION# of
-.Nm .
-	_END_MDOC_NOTES;
 };

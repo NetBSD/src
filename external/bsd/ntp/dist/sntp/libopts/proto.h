@@ -1,9 +1,9 @@
-/*	$NetBSD: proto.h,v 1.1.1.3 2013/12/27 23:31:35 christos Exp $	*/
+/*	$NetBSD: proto.h,v 1.1.1.3.4.1 2014/12/24 00:05:27 riz Exp $	*/
 
 /* -*- buffer-read-only: t -*- vi: set ro:
  *
  * Prototypes for autoopts
- * Generated Sun Nov 10 13:00:49 PST 2013
+ * Generated Fri Aug  8 16:09:18 PDT 2014
  */
 #ifndef AUTOOPTS_PROTO_H_GUARD
 #define AUTOOPTS_PROTO_H_GUARD 1
@@ -100,16 +100,16 @@ load_opt_line(tOptions * opts, tOptState * opt_state, char * line,
 /*
  *  Extracted from makeshell.c
  */
-static void
+static noreturn void
 option_exits(int exit_code);
 
-static void
+static noreturn void
 ao_bug(char const * msg);
 
 static void
 fserr_warn(char const * prog, char const * op, char const * fname);
 
-static void
+static noreturn void
 fserr_exit(char const * prog, char const * op, char const * fname);
 
 /*
@@ -137,7 +137,7 @@ optionSort(tOptions * opts);
  *  Extracted from stack.c
  */
 static void
-addArgListEntry(void** ppAL, void* entry);
+addArgListEntry(void ** ppAL, void * entry);
 
 /*
  *  Extracted from usage.c

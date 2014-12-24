@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_fp.h,v 1.4 2013/12/28 03:20:13 christos Exp $	*/
+/*	$NetBSD: ntp_fp.h,v 1.4.4.1 2014/12/24 00:05:16 riz Exp $	*/
 
 /*
  * ntp_fp.h - definitions for NTP fixed/floating-point arithmetic
@@ -206,7 +206,7 @@ typedef u_int32 u_fp;
 	(((v_i) & 0x80000000) != 0)
 
 #define	M_ISGT(a_i, a_f, b_i, b_f)	/* a > b signed */ \
-	(((int32)(a_i)) > ((int32)(b_i)) || \
+	(((u_int32)((a_i) ^ 0x80000000) > (u_int32)((b_i) ^ 0x80000000)) || \
 	  ((a_i) == (b_i) && ((u_int32)(a_f)) > ((u_int32)(b_f))))
 
 #define	M_ISGTU(a_i, a_f, b_i, b_f)	/* a > b unsigned */ \
@@ -218,11 +218,11 @@ typedef u_int32 u_fp;
 	  ((a_i) == (b_i) && ((u_int32)(a_f)) >= ((u_int32)(b_f))))
 
 #define	M_ISGEQ(a_i, a_f, b_i, b_f)	/* a >= b signed */ \
-	(((u_int32)(a_i) - (u_int32)(b_i) + 0x80000000 > 0x80000000) || \
+	(((u_int32)((a_i) ^ 0x80000000) > (u_int32)((b_i) ^ 0x80000000)) || \
 	  ((a_i) == (b_i) && (u_int32)(a_f) >= (u_int32)(b_f)))
 
 #define	M_ISEQU(a_i, a_f, b_i, b_f)	/* a == b unsigned */ \
-	((a_i) == (b_i) && (a_f) == (b_f))
+	((u_int32)(a_i) == (u_int32)(b_i) && (u_int32)(a_f) == (u_int32)(b_f))
 
 /*
  * Operations on the long fp format

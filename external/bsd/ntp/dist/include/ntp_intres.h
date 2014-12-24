@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_intres.h,v 1.1.1.2 2013/12/27 23:30:45 christos Exp $	*/
+/*	$NetBSD: ntp_intres.h,v 1.1.1.2.4.1 2014/12/24 00:05:16 riz Exp $	*/
 
 /*
  * ntp_intres.h - client interface to blocking-worker name resolution.

@@ -1,4 +1,4 @@
-/*	$NetBSD: changelist-internal.h,v 1.1.1.1 2013/12/27 23:31:19 christos Exp $	*/
+/*	$NetBSD: changelist-internal.h,v 1.1.1.1.6.1 2014/12/24 00:05:25 riz Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
@@ -64,6 +64,7 @@ struct event_change {
 	 * and write_change is unused. */
 	ev_uint8_t read_change;
 	ev_uint8_t write_change;
+	ev_uint8_t close_change;
 };
 
 /* Flags for read_change and write_change. */

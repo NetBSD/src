@@ -57,7 +57,7 @@ man1_MANS=
 man8_MANS=
 man_MANS=	ntp-keygen.$(NTP_KEYGEN_MS)
 
-run_ag=		cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)"	\
+run_ag=		cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)" AUTOGEN_DNE_DATE=-D	\
 		autogen -L ../sntp/include -L ../sntp/ag-tpl --writable
 std_def_list =							\
 	$(top_srcdir)/sntp/include/debug-opt.def		\

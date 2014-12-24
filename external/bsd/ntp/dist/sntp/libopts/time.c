@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.1.1.3 2013/12/27 23:31:35 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.1.1.3.4.1 2014/12/24 00:05:27 riz Exp $	*/
 
 
 /**
@@ -10,7 +10,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2013 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -33,56 +33,53 @@
  * private:
  *
  * what:  process an option with a time duration.
- * arg:   + tOptions* + pOpts    + program options descriptor +
- * arg:   + tOptDesc* + pOptDesc + the descriptor for this arg +
+ * arg:   + tOptions* + opts + program options descriptor +
+ * arg:   + tOptDesc* + od   + the descriptor for this arg +
  *
  * doc:
  *  Decipher a time duration value.
 =*/
 void
-optionTimeVal(tOptions * pOpts, tOptDesc * pOD)
+optionTimeVal(tOptions * opts, tOptDesc * od)
 {
     time_t val;
 
-    if (pOpts <= OPTPROC_EMIT_LIMIT)
+    if (INQUERY_CALL(opts, od))
         return;
 
-    if ((pOD->fOptState & OPTST_RESET) != 0)
-        return;
-
-    val = parse_duration(pOD->optArg.argString);
+    val = parse_duration(od->optArg.argString);
     if (val == BAD_TIME) {
-        fprintf(stderr, zNotDuration, pOpts->pzProgName, pOD->optArg.argString);
-        if ((pOpts->fOptSet & OPTPROC_ERRSTOP) != 0)
-            (*(pOpts->pUsageProc))(pOpts, EXIT_FAILURE);
+        fprintf(stderr, zNotDuration, opts->pzProgName, od->optArg.argString);
+        if ((opts->fOptSet & OPTPROC_ERRSTOP) != 0)
+            (*(opts->pUsageProc))(opts, EXIT_FAILURE);
     }
 
-    if (pOD->fOptState & OPTST_ALLOC_ARG) {
-        AGFREE(pOD->optArg.argString);
-        pOD->fOptState &= ~OPTST_ALLOC_ARG;
+    if (od->fOptState & OPTST_ALLOC_ARG) {
+        AGFREE(od->optArg.argString);
+        od->fOptState &= ~OPTST_ALLOC_ARG;
     }
 
-    pOD->optArg.argInt = (long)val;
+    od->optArg.argInt = (long)val;
 }
 
 /*=export_func  optionTimeDate
  * private:
  *
  * what:  process an option with a time and date.
- * arg:   + tOptions* + pOpts    + program options descriptor +
- * arg:   + tOptDesc* + pOptDesc + the descriptor for this arg +
+ * arg:   + tOptions* + opts + program options descriptor +
+ * arg:   + tOptDesc* + od   + the descriptor for this arg +
  *
  * doc:
  *  Decipher a time and date value.
 =*/
 void
-optionTimeDate(tOptions * pOpts, tOptDesc * pOD)
+optionTimeDate(tOptions * opts, tOptDesc * od)
 {
 #if defined(HAVE_GETDATE_R) && defined(HAVE_PUTENV)
-    if (pOpts <= OPTPROC_EMIT_LIMIT)
+    if (INQUERY_CALL(opts, od))
         return;
 
-    if ((! HAS_pzPkgDataDir(pOpts)) || (pOpts->pzPkgDataDir == NULL))
+    if ((! HAS_pzPkgDataDir(opts)) || (opts->pzPkgDataDir == NULL))
         goto default_action;
 
     /*
@@ -95,8 +92,8 @@ optionTimeDate(tOptions * pOpts, tOptDesc * pOD)
 
         if (envptr == NULL) {
             static char const fmt[] = "DATEMSK=%s/datemsk";
-            envptr = AGALOC(sizeof(fmt) + strlen(pOpts->pzPkgDataDir), fmt);
-            sprintf(envptr, fmt, pOpts->pzPkgDataDir);
+            envptr = AGALOC(sizeof(fmt) + strlen(opts->pzPkgDataDir), fmt);
+            sprintf(envptr, fmt, opts->pzPkgDataDir);
 
             putenv(envptr);
         }
@@ -112,31 +109,31 @@ optionTimeDate(tOptions * pOpts, tOptDesc * pOD)
         struct tm stm;
         time_t tm;
 
-        if (getdate_r(pOD->optArg.argString, &stm) != 0) {
-            fprintf(stderr, zNotDate, pOpts->pzProgName,
-                    pOD->optArg.argString);
-            if ((pOpts->fOptSet & OPTPROC_ERRSTOP) != 0)
-                (*(pOpts->pUsageProc))(pOpts, EXIT_FAILURE);
+        if (getdate_r(od->optArg.argString, &stm) != 0) {
+            fprintf(stderr, zNotDate, opts->pzProgName,
+                    od->optArg.argString);
+            if ((opts->fOptSet & OPTPROC_ERRSTOP) != 0)
+                (*(opts->pUsageProc))(opts, EXIT_FAILURE);
             return;
         }
 
         tm = mktime(&stm);
 
-        if (pOD->fOptState & OPTST_ALLOC_ARG) {
-            AGFREE(pOD->optArg.argString);
-            pOD->fOptState &= ~OPTST_ALLOC_ARG;
+        if (od->fOptState & OPTST_ALLOC_ARG) {
+            AGFREE(od->optArg.argString);
+            od->fOptState &= ~OPTST_ALLOC_ARG;
         }
 
-        pOD->optArg.argInt = tm;
+        od->optArg.argInt = tm;
     }
     return;
 
  default_action:
 
 #endif
-    optionTimeVal(pOpts, pOD);
-    if (pOD->optArg.argInt != BAD_TIME)
-        pOD->optArg.argInt += (long)time(NULL);
+    optionTimeVal(opts, od);
+    if (od->optArg.argInt != BAD_TIME)
+        od->optArg.argInt += (long)time(NULL);
 }
 /** @}
  *

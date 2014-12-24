@@ -1,4 +1,4 @@
-/*	$NetBSD: icom.c,v 1.4 2013/10/20 02:47:38 christos Exp $	*/
+/*	$NetBSD: icom.c,v 1.4.4.1 2014/12/24 00:05:20 riz Exp $	*/
 
 /*
  * Program to control ICOM radios

@@ -1,4 +1,4 @@
-/*	$NetBSD: makeshell.c,v 1.3 2013/12/28 03:20:15 christos Exp $	*/
+/*	$NetBSD: makeshell.c,v 1.3.4.1 2014/12/24 00:05:27 riz Exp $	*/
 
 
 /**
@@ -13,7 +13,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2013 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -70,7 +70,7 @@ static void
 open_out(char const * fname, char const * pname);
 /* = = = END-STATIC-FORWARD = = = */
 
-LOCAL void
+LOCAL noreturn void
 option_exits(int exit_code)
 {
     if (print_exit)
@@ -78,7 +78,7 @@ option_exits(int exit_code)
     exit(exit_code);
 }
 
-LOCAL void
+LOCAL noreturn void
 ao_bug(char const * msg)
 {
     fprintf(stderr, zao_bug_msg, msg);
@@ -92,7 +92,7 @@ fserr_warn(char const * prog, char const * op, char const * fname)
             op, fname);
 }
 
-LOCAL void
+LOCAL noreturn void
 fserr_exit(char const * prog, char const * op, char const * fname)
 {
     fserr_warn(prog, op, fname);

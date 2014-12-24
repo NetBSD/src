@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.c,v 1.5 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: ntp_refclock.c,v 1.5.4.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  * ntp_refclock - processing support for reference clocks
@@ -580,7 +580,7 @@ refclock_gtlin(
 	)
 {
 	const char *sp, *spend;
-	char       *dp, *dpend;
+	char	   *dp, *dpend;
 	int         dlen;
 
 	if (bmax <= 0)
@@ -840,7 +840,7 @@ refclock_setup(
 		ttyp->c_cflag = CS8 | CLOCAL | CREAD;
 		if (lflags & LDISC_7O1) {
 			/* HP Z3801A needs 7-bit, odd parity */
-  			ttyp->c_cflag = CS7 | PARENB | PARODD | CLOCAL | CREAD;
+			ttyp->c_cflag = CS7 | PARENB | PARODD | CLOCAL | CREAD;
 		}
 		cfsetispeed(&ttyb, speed);
 		cfsetospeed(&ttyb, speed);
@@ -1247,19 +1247,17 @@ refclock_params(
 	}
 
 	/*
-	 * If flag3 is lit, select the kernel PPS.
+	 * If flag3 is lit, select the kernel PPS if we can.
 	 */
 	if (mode & CLK_FLAG3) {
 		if (time_pps_kcbind(ap->handle, PPS_KC_HARDPPS,
 		    ap->pps_params.mode & ~PPS_TSFMT_TSPEC,
 		    PPS_TSFMT_TSPEC) < 0) {
-			if (errno != EOPNOTSUPP) { 
-				msyslog(LOG_ERR,
-				    "refclock_params: time_pps_kcbind: %m");
-				return (0);
-			}
+			msyslog(LOG_ERR,
+			    "refclock_params: time_pps_kcbind: %m");
+			return (0);
 		}
-		pps_enable = 1;
+		hardpps_enable = 1;
 	}
 	return (1);
 }

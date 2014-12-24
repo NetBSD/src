@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent_filter.c,v 1.1.1.1 2013/12/27 23:31:16 christos Exp $	*/
+/*	$NetBSD: bufferevent_filter.c,v 1.1.1.1.6.1 2014/12/24 00:05:25 riz Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -63,6 +63,7 @@
 /* prototypes */
 static int be_filter_enable(struct bufferevent *, short);
 static int be_filter_disable(struct bufferevent *, short);
+static void be_filter_unlink(struct bufferevent *);
 static void be_filter_destruct(struct bufferevent *);
 
 static void be_filter_readcb(struct bufferevent *, void *);
@@ -101,6 +102,7 @@ const struct bufferevent_ops bufferevent_ops_filter = {
 	evutil_offsetof(struct bufferevent_filtered, bev.bev),
 	be_filter_enable,
 	be_filter_disable,
+	be_filter_unlink,
 	be_filter_destruct,
 	bufferevent_generic_adj_timeouts_,
 	be_filter_flush,
@@ -216,12 +218,10 @@ bufferevent_filter_new(struct bufferevent *underlying,
 }
 
 static void
-be_filter_destruct(struct bufferevent *bev)
+be_filter_unlink(struct bufferevent *bev)
 {
 	struct bufferevent_filtered *bevf = upcast(bev);
 	EVUTIL_ASSERT(bevf);
-	if (bevf->free_context)
-		bevf->free_context(bevf->context);
 
 	if (bevf->bev.options & BEV_OPT_CLOSE_ON_FREE) {
 		/* Yes, there is also a decref in bufferevent_decref_.
@@ -244,8 +244,15 @@ be_filter_destruct(struct bufferevent *bev)
 			    BEV_SUSPEND_FILT_READ);
 		}
 	}
+}
 
-	bufferevent_del_generic_timeout_cbs_(bev);
+static void
+be_filter_destruct(struct bufferevent *bev)
+{
+	struct bufferevent_filtered *bevf = upcast(bev);
+	EVUTIL_ASSERT(bevf);
+	if (bevf->free_context)
+		bevf->free_context(bevf->context);
 }
 
 static int
@@ -371,10 +378,9 @@ be_filter_process_output(struct bufferevent_filtered *bevf,
 			/* Or if we have filled the underlying output buffer. */
 			!be_underlying_writebuf_full(bevf,state));
 
-		if (processed &&
-		    evbuffer_get_length(bufev->output) <= bufev->wm_write.low) {
+		if (processed) {
 			/* call the write callback.*/
-			bufferevent_run_writecb_(bufev);
+			bufferevent_trigger_nolock_(bufev, EV_WRITE, 0);
 
 			if (res == BEV_OK &&
 			    (bufev->enabled & EV_WRITE) &&
@@ -437,9 +443,8 @@ be_filter_readcb(struct bufferevent *underlying, void *me_)
 	/* XXX This should be in process_input, not here.  There are
 	 * other places that can call process-input, and they should
 	 * force readcb calls as needed. */
-	if (processed_any &&
-	    evbuffer_get_length(bufev->input) >= bufev->wm_read.low)
-		bufferevent_run_readcb_(bufev);
+	if (processed_any)
+		bufferevent_trigger_nolock_(bufev, EV_READ, 0);
 
 	bufferevent_decref_and_unlock_(bufev);
 }
@@ -467,7 +472,7 @@ be_filter_eventcb(struct bufferevent *underlying, short what, void *me_)
 
 	bufferevent_incref_and_lock_(bev);
 	/* All we can really to is tell our own eventcb. */
-	bufferevent_run_eventcb_(bev, what);
+	bufferevent_run_eventcb_(bev, what, 0);
 	bufferevent_decref_and_unlock_(bev);
 }
 

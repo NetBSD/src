@@ -1,12 +1,15 @@
 /* -*- Mode: Text -*- */
-autogen definitions perlopt;
+AutoGen Definitions perlopt;
 
 //#include copyright.def
 #include autogen-version.def
 
-prog-name      = 'ntptrace';
-prog-title     = 'Trace peers of an NTP server';
-argument       = '[host]';
+prog-name	= 'ntptrace';
+prog-title	= 'Trace peers of an NTP server';
+package		= ntp;
+#include	version.def
+argument	= '[host]';
+
 long-opts;
 gnu-usage;
 
