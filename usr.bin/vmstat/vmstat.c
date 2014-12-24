@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.205 2014/09/12 16:25:55 skrll Exp $ */
+/* $NetBSD: vmstat.c,v 1.206 2014/12/24 20:01:22 dennis Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.205 2014/09/12 16:25:55 skrll Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.206 2014/12/24 20:01:22 dennis Exp $");
 #endif
 #endif /* not lint */
 
@@ -867,7 +867,7 @@ pct(u_long top, u_long bot)
 void
 dosum(void)
 {
-	struct nchstats_sysctl nch_stats;
+	struct nchstats nch_stats;
 	uint64_t nchtotal;
 	size_t ssize;
 	int active_kernel;
@@ -1055,20 +1055,7 @@ dosum(void)
 			memset(&nch_stats, 0, sizeof(nch_stats));
 		}
 	} else {
-		struct nchstats nch_stats_kvm;
-
-		kread(namelist, X_NCHSTATS, &nch_stats_kvm,
-		    sizeof(nch_stats_kvm));
-		nch_stats.ncs_goodhits = nch_stats_kvm.ncs_goodhits;
-		nch_stats.ncs_neghits = nch_stats_kvm.ncs_neghits;
-		nch_stats.ncs_badhits = nch_stats_kvm.ncs_badhits;
-		nch_stats.ncs_falsehits = nch_stats_kvm.ncs_falsehits;
-		nch_stats.ncs_miss = nch_stats_kvm.ncs_miss;
-		nch_stats.ncs_long = nch_stats_kvm.ncs_long;
-		nch_stats.ncs_pass2 = nch_stats_kvm.ncs_pass2;
-		nch_stats.ncs_2passes = nch_stats_kvm.ncs_2passes;
-		nch_stats.ncs_revhits = nch_stats_kvm.ncs_revhits;
-		nch_stats.ncs_revmiss = nch_stats_kvm.ncs_revmiss;
+		kread(namelist, X_NCHSTATS, &nch_stats, sizeof(nch_stats));
 	}
 
 	nchtotal = nch_stats.ncs_goodhits + nch_stats.ncs_neghits +
