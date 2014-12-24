@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.6 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.6.4.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -9,6 +9,7 @@
 
 #ifdef AUTOKEY
 #include <stdio.h>
+#include <stdlib.h>	/* strtoul */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <unistd.h>
@@ -34,6 +35,33 @@
 #ifdef KERNEL_PLL
 #include "ntp_syscall.h"
 #endif /* KERNEL_PLL */
+
+/*
+ * calcomp - compare two calendar structures, ignoring yearday and weekday; like strcmp
+ * No, it's not a plotter.  If you don't understand that, you're too young.
+ */
+static int calcomp(struct calendar *pjd1, struct calendar *pjd2)
+{
+	int32_t diff;	/* large enough to hold the signed difference between two uint16_t values */
+
+	diff = pjd1->year - pjd2->year;
+	if (diff < 0) return -1; else if (diff > 0) return 1;
+	/* same year; compare months */
+	diff = pjd1->month - pjd2->month;
+	if (diff < 0) return -1; else if (diff > 0) return 1;
+	/* same year and month; compare monthday */
+	diff = pjd1->monthday - pjd2->monthday;
+	if (diff < 0) return -1; else if (diff > 0) return 1;
+	/* same year and month and monthday; compare time */
+	diff = pjd1->hour - pjd2->hour;
+	if (diff < 0) return -1; else if (diff > 0) return 1;
+	diff = pjd1->minute - pjd2->minute;
+	if (diff < 0) return -1; else if (diff > 0) return 1;
+	diff = pjd1->second - pjd2->second;
+	if (diff < 0) return -1; else if (diff > 0) return 1;
+	/* identical */
+	return 0;
+}
 
 /*
  * Extension field message format
@@ -166,7 +194,7 @@ static	int	crypto_gq	(struct exten *, struct peer *);
 static	int	crypto_mv	(struct exten *, struct peer *);
 static	int	crypto_send	(struct exten *, struct value *, int);
 static	tstamp_t crypto_time	(void);
-static	u_long	asn2ntp		(ASN1_TIME *);
+static	void	asn_to_calendar		(ASN1_TIME *, struct calendar*);
 static	struct cert_info *cert_parse (const u_char *, long, tstamp_t);
 static	int	cert_sign	(struct exten *, struct value *);
 static	struct cert_info *cert_install (struct exten *, struct peer *);
@@ -426,6 +454,7 @@ crypto_recv(
 		ep = (struct exten *)pkt;
 		code = ntohl(ep->opcode) & 0xffff0000;
 		len = ntohl(ep->opcode) & 0x0000ffff;
+		// HMS: Why pkt[1] instead of ep->associd ?
 		associd = (associd_t)ntohl(pkt[1]);
 		rval = XEVNT_OK;
 #ifdef DEBUG
@@ -792,15 +821,24 @@ crypto_recv(
 			 * errors.
 			 */
 			if (vallen == (u_int)EVP_PKEY_size(host_pkey)) {
-				if (RSA_private_decrypt(vallen,
-				    (u_char *)ep->pkt,
-				    (u_char *)&temp32,
-				    host_pkey->pkey.rsa,
-				    RSA_PKCS1_OAEP_PADDING) <= 0) {
+				u_int32 *cookiebuf = malloc(
+				    RSA_size(host_pkey->pkey.rsa));
+				if (!cookiebuf) {
 					rval = XEVNT_CKY;
 					break;
+				}
+
+				if (RSA_private_decrypt(vallen,
+				    (u_char *)ep->pkt,
+				    (u_char *)cookiebuf,
+				    host_pkey->pkey.rsa,
+				    RSA_PKCS1_OAEP_PADDING) != 4) {
+					rval = XEVNT_CKY;
+					free(cookiebuf);
+					break;
 				} else {
-					cookie = ntohl(temp32);
+					cookie = ntohl(*cookiebuf);
+					free(cookiebuf);
 				}
 			} else {
 				rval = XEVNT_CKY;
@@ -1076,6 +1114,7 @@ crypto_xmit(
 	char	certname[MAXHOSTNAME + 1]; /* subject name buffer */
 	char	statstr[NTP_MAXSTRLEN]; /* statistics for filegen */
 	tstamp_t tstamp;
+	struct calendar tscal;
 	u_int	vallen;
 	struct value vtemp;
 	associd_t associd;
@@ -1135,8 +1174,9 @@ crypto_xmit(
 	 * signed and may or may not be trusted.
 	 */
 	case CRYPTO_SIGN:
-		if (tstamp < cert_host->first || tstamp >
-		    cert_host->last)
+		(void)ntpcal_ntp_to_date(&tscal, tstamp, NULL);
+		if ((calcomp(&tscal, &(cert_host->first)) < 0)
+		|| (calcomp(&tscal, &(cert_host->last)) > 0))
 			rval = XEVNT_PER;
 		else
 			len = crypto_send(fp, &cert_host->cert, start);
@@ -1906,39 +1946,62 @@ crypto_time()
 
 
 /*
- * asn2ntp - convert ASN1_TIME time structure to NTP time.
+ * asn_to_calendar - convert ASN1_TIME time structure to struct calendar.
  *
- * Returns NTP seconds (no errors)
  */
-u_long
-asn2ntp	(
-	ASN1_TIME *asn1time	/* pointer to ASN1_TIME structure */
+static
+void
+asn_to_calendar	(
+	ASN1_TIME *asn1time,	/* pointer to ASN1_TIME structure */
+	struct calendar *pjd	/* pointer to result */
 	)
 {
-	char	*v;		/* pointer to ASN1_TIME string */
-	struct calendar jd;	/* used to convert to NTP time */
+	size_t	len;		/* length of ASN1_TIME string */
+	char	v[24];		/* writable copy of ASN1_TIME string */
+	unsigned long	temp;	/* result from strtoul */
 
 	/*
 	 * Extract time string YYMMDDHHMMSSZ from ASN1 time structure.
+	 * Or YYYYMMDDHHMMSSZ.
 	 * Note that the YY, MM, DD fields start with one, the HH, MM,
-	 * SS fiels start with zero and the Z character is ignored.
-	 * Also note that years less than 50 map to years greater than
+	 * SS fields start with zero and the Z character is ignored.
+	 * Also note that two-digit years less than 50 map to years greater than
 	 * 100. Dontcha love ASN.1? Better than MIL-188.
 	 */
-	v = (char *)asn1time->data;
-	jd.year = (v[0] - '0') * 10 + v[1] - '0';
-	if (jd.year < 50)
-		jd.year += 100;
-	jd.year += 1900; /* should we do century unfolding here? */
-	jd.month = (v[2] - '0') * 10 + v[3] - '0';
-	jd.monthday = (v[4] - '0') * 10 + v[5] - '0';
-	jd.hour = (v[6] - '0') * 10 + v[7] - '0';
-	jd.minute = (v[8] - '0') * 10 + v[9] - '0';
-	jd.second = (v[10] - '0') * 10 + v[11] - '0';
-	jd.yearday = 0;
-	jd.weekday = 0;
+	len = asn1time->length;
+	NTP_REQUIRE(len < sizeof(v));
+	(void)strncpy(v, (char *)(asn1time->data), len);
+	NTP_REQUIRE(len >= 13);
+	temp = strtoul(v+len-3, NULL, 10);
+	pjd->second = temp;
+	v[len-3] = '\0';
 
-	return caltontp(&jd);
+	temp = strtoul(v+len-5, NULL, 10);
+	pjd->minute = temp;
+	v[len-5] = '\0';
+
+	temp = strtoul(v+len-7, NULL, 10);
+	pjd->hour = temp;
+	v[len-7] = '\0';
+
+	temp = strtoul(v+len-9, NULL, 10);
+	pjd->monthday = temp;
+	v[len-9] = '\0';
+
+	temp = strtoul(v+len-11, NULL, 10);
+	pjd->month = temp;
+	v[len-11] = '\0';
+
+	temp = strtoul(v, NULL, 10);
+	/* handle two-digit years */
+	if (temp < 50UL)
+	    temp += 100UL;
+	if (temp < 150UL)
+	    temp += 1900UL;
+	pjd->year = temp;
+
+	pjd->yearday = pjd->weekday = 0;
+	return;
 }
 
 
@@ -2038,8 +2101,10 @@ crypto_alice(
 	/*
 	 * The identity parameters must have correct format and content.
 	 */
-	if (peer->ident_pkey == NULL)
+	if (peer->ident_pkey == NULL) {
+		msyslog(LOG_NOTICE, "crypto_alice: scheme unavailable");
 		return (XEVNT_ID);
+	}
 
 	if ((dsa = peer->ident_pkey->pkey->pkey.dsa) == NULL) {
 		msyslog(LOG_NOTICE, "crypto_alice: defective key");
@@ -2405,6 +2470,7 @@ crypto_bob2(
 	BIGNUM	*r, *k, *g, *y;
 	u_char	*ptr;
 	u_int	len;
+	int	s_len;
 
 	/*
 	 * If the GQ parameters are not valid, something awful
@@ -2451,8 +2517,8 @@ crypto_bob2(
 	 * Encode the values in ASN.1 and sign. The filestamp is from
 	 * the local file.
 	 */
-	len = i2d_DSA_SIG(sdsa, NULL);
-	if (len <= 0) {
+	len = s_len = i2d_DSA_SIG(sdsa, NULL);
+	if (s_len <= 0) {
 		msyslog(LOG_ERR, "crypto_bob2: %s",
 		    ERR_error_string(ERR_get_error(), NULL));
 		DSA_SIG_free(sdsa);
@@ -2946,6 +3012,7 @@ cert_sign(
 	EVP_PKEY *pkey;		/* public key */
 	EVP_MD_CTX ctx;		/* message digest context */
 	tstamp_t tstamp;	/* NTP timestamp */
+	struct calendar tscal;
 	u_int	len;
 	const u_char *cptr;
 	u_char *ptr;
@@ -3006,7 +3073,9 @@ cert_sign(
 	 * Sign and verify the client certificate, but only if the host
 	 * certificate has not expired.
 	 */
-	if (tstamp < cert_host->first || tstamp > cert_host->last) {
+	(void)ntpcal_ntp_to_date(&tscal, tstamp, NULL);
+	if ((calcomp(&tscal, &(cert_host->first)) < 0)
+	|| (calcomp(&tscal, &(cert_host->last)) > 0)) {
 		X509_free(cert);
 		return (XEVNT_PER);
 	}
@@ -3193,7 +3262,8 @@ cert_hike(
 	 * Signature X is valid only if it begins during the
 	 * lifetime of Y. 
 	 */
-	if (xp->first < yp->first || xp->first > yp->last) {
+	if ((calcomp(&(xp->first), &(yp->first)) < 0)
+	|| (calcomp(&(xp->first), &(yp->last)) > 0)) {
 		xp->flags |= CERT_ERROR;
 		return (XEVNT_PER);
 	}
@@ -3230,6 +3300,7 @@ cert_parse(
 	const u_char *ptr;
 	char	*pch;
 	int	temp, cnt, i;
+	struct calendar fscal;
 
 	/*
 	 * Decode ASN.1 objects and construct certificate structure.
@@ -3290,8 +3361,8 @@ cert_parse(
 		return (NULL);
 	}
 	ret->issuer = estrdup(pch + 3);
-	ret->first = asn2ntp(X509_get_notBefore(cert));
-	ret->last = asn2ntp(X509_get_notAfter(cert));
+	asn_to_calendar(X509_get_notBefore(cert), &(ret->first));
+	asn_to_calendar(X509_get_notAfter(cert), &(ret->last));
 
 	/*
 	 * Extract extension fields. These are ad hoc ripoffs of
@@ -3374,10 +3445,18 @@ cert_parse(
 	 * Verify certificate valid times. Note that certificates cannot
 	 * be retroactive.
 	 */
-	if (ret->first > ret->last || ret->first < fstamp) {
+	(void)ntpcal_ntp_to_date(&fscal, fstamp, NULL);
+	if ((calcomp(&(ret->first), &(ret->last)) > 0)
+	|| (calcomp(&(ret->first), &fscal) < 0)) {
 		msyslog(LOG_NOTICE,
-		    "cert_parse: invalid times %s first %u last %u fstamp %u",
-		    ret->subject, ret->first, ret->last, fstamp);
+		    "cert_parse: invalid times %s first %u-%02u-%02uT%02u:%02u:%02u last %u-%02u-%02uT%02u:%02u:%02u fstamp %u-%02u-%02uT%02u:%02u:%02u",
+		    ret->subject,
+		    ret->first.year, ret->first.month, ret->first.monthday,
+		    ret->first.hour, ret->first.minute, ret->first.second,
+		    ret->last.year, ret->last.month, ret->last.monthday,
+		    ret->last.hour, ret->last.minute, ret->last.second,
+		    fscal.year, fscal.month, fscal.monthday,
+		    fscal.hour, fscal.minute, fscal.second);
 		cert_free(ret);
 		X509_free(cert);
 		return (NULL);
@@ -3721,7 +3800,7 @@ crypto_setup(void)
 	if (host_filename != NULL)
 		strlcpy(hostname, host_filename, sizeof(hostname));
 	if (passwd == NULL)
-		passwd = hostname;
+		passwd = estrdup(hostname);
 	memset(&hostval, 0, sizeof(hostval));
 	memset(&pubkey, 0, sizeof(pubkey));
 	memset(&tai_leap, 0, sizeof(tai_leap));

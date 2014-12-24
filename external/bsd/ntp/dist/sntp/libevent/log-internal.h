@@ -1,4 +1,4 @@
-/*	$NetBSD: log-internal.h,v 1.1.1.1 2013/12/27 23:31:16 christos Exp $	*/
+/*	$NetBSD: log-internal.h,v 1.1.1.1.6.1 2014/12/24 00:05:25 riz Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -66,6 +66,9 @@ void event_errx(int eval, const char *fmt, ...) EV_CHECK_FMT(2,3) EV_NORETURN;
 void event_warnx(const char *fmt, ...) EV_CHECK_FMT(1,2);
 void event_msgx(const char *fmt, ...) EV_CHECK_FMT(1,2);
 void event_debugx_(const char *fmt, ...) EV_CHECK_FMT(1,2);
+
+void event_logv_(int severity, const char *errstr, const char *fmt, va_list ap)
+	EV_CHECK_FMT(3,0);
 
 #ifdef EVENT_DEBUG_LOGGING_ENABLED
 #define event_debug(x) do {			\

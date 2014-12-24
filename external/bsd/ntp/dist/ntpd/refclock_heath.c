@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_heath.c,v 1.4 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: refclock_heath.c,v 1.4.4.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  * refclock_heath - clock driver for Heath GC-1000

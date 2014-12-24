@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.8 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.8.4.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -921,7 +921,7 @@ oncore_ppsapi(
 			return (0);
 		}
 
-		pps_enable = 1;
+		hardpps_enable = 1;
 	}
 	return(1);
 }
@@ -3448,9 +3448,10 @@ oncore_check_leap_sec(
 		else if (instance->count4++ > 5) {	/* delay, waiting for Gj response */
 			instance->saw_Gj = -1;		/* didnt see it, will use Bj */
 			instance->count4 = 0;
-			if ((instance->BEHa[4] == 6) || (instance->BEHa[4] == 12))
+			if ((instance->BEHa[4] == 6) || (instance->BEHa[4] == 12)) {
 				oncore_sendmsg(instance, oncore_cmd_Bj, sizeof(oncore_cmd_Bj));
 				oncore_sendmsg(instance, oncore_cmd_Bl, sizeof(oncore_cmd_Bl));
+			}
 		}
 	}
 }

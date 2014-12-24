@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_et.c,v 1.1.1.1 2013/12/27 23:31:29 christos Exp $	*/
+/*	$NetBSD: regress_et.c,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
@@ -169,7 +169,8 @@ test_edgetriggered_mix_error(void *data_)
 		tt_skip();
 #endif
 
-	event_enable_debug_mode();
+	if (!libevent_tests_running_in_debug_mode)
+		event_enable_debug_mode();
 
 	base = event_base_new();
 

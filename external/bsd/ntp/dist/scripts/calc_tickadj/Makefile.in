@@ -41,6 +41,7 @@ DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/calc_tickadj.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/sntp/libopts/m4/libopts.m4 \
+	$(top_srcdir)/sntp/libopts/m4/stdnoreturn.m4 \
 	$(top_srcdir)/sntp/libevent/m4/openldap-thread-check.m4 \
 	$(top_srcdir)/sntp/libevent/m4/openldap.m4 \
 	$(top_srcdir)/sntp/m4/define_dir.m4 \
@@ -53,6 +54,7 @@ am__aclocal_m4_deps = $(top_srcdir)/sntp/libopts/m4/libopts.m4 \
 	$(top_srcdir)/sntp/m4/ntp_cacheversion.m4 \
 	$(top_srcdir)/sntp/m4/ntp_compiler.m4 \
 	$(top_srcdir)/sntp/m4/ntp_crosscompile.m4 \
+	$(top_srcdir)/sntp/m4/ntp_crypto_rand.m4 \
 	$(top_srcdir)/sntp/m4/ntp_debug.m4 \
 	$(top_srcdir)/sntp/m4/ntp_dir_sep.m4 \
 	$(top_srcdir)/sntp/m4/ntp_facilitynames.m4 \
@@ -101,7 +103,8 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libexecdir)" \
-	"$(DESTDIR)$(sbindir)"
+	"$(DESTDIR)$(sbindir)" "$(DESTDIR)$(man1dir)" \
+	"$(DESTDIR)$(man8dir)"
 SCRIPTS = $(bin_SCRIPTS) $(libexec_SCRIPTS) $(sbin_SCRIPTS)
 AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
@@ -111,6 +114,10 @@ am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
 am__v_at_0 = @
 SOURCES =
 DIST_SOURCES =
+man1dir = $(mandir)/man1
+man8dir = $(mandir)/man8
+NROFF = nroff
+MANS = $(man1_MANS) $(man8_MANS) $(man_MANS)
 DATA = $(noinst_DATA)
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
@@ -126,6 +133,7 @@ CALC_TICKADJ_DB = @CALC_TICKADJ_DB@
 CALC_TICKADJ_DL = @CALC_TICKADJ_DL@
 CALC_TICKADJ_DS = @CALC_TICKADJ_DS@
 CALC_TICKADJ_MS = @CALC_TICKADJ_MS@
+CALC_TICKADJ_NI = @CALC_TICKADJ_NI@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
@@ -209,43 +217,58 @@ NTPDATE_DB = @NTPDATE_DB@
 NTPDATE_DL = @NTPDATE_DL@
 NTPDATE_DS = @NTPDATE_DS@
 NTPDATE_MS = @NTPDATE_MS@
+NTPDATE_NI = @NTPDATE_NI@
 NTPDC_DB = @NTPDC_DB@
 NTPDC_DL = @NTPDC_DL@
 NTPDC_DS = @NTPDC_DS@
 NTPDC_MS = @NTPDC_MS@
+NTPDC_NI = @NTPDC_NI@
 NTPDSIM_DB = @NTPDSIM_DB@
 NTPDSIM_DL = @NTPDSIM_DL@
 NTPDSIM_DS = @NTPDSIM_DS@
 NTPDSIM_MS = @NTPDSIM_MS@
+NTPDSIM_NI = @NTPDSIM_NI@
 NTPD_DB = @NTPD_DB@
 NTPD_DL = @NTPD_DL@
 NTPD_DS = @NTPD_DS@
 NTPD_MS = @NTPD_MS@
+NTPD_NI = @NTPD_NI@
 NTPQ_DB = @NTPQ_DB@
 NTPQ_DL = @NTPQ_DL@
 NTPQ_DS = @NTPQ_DS@
 NTPQ_MS = @NTPQ_MS@
+NTPQ_NI = @NTPQ_NI@
 NTPSNMPD_DB = @NTPSNMPD_DB@
 NTPSNMPD_DL = @NTPSNMPD_DL@
 NTPSNMPD_DS = @NTPSNMPD_DS@
 NTPSNMPD_MS = @NTPSNMPD_MS@
+NTPSNMPD_NI = @NTPSNMPD_NI@
+NTPSWEEP_DB = @NTPSWEEP_DB@
+NTPSWEEP_DL = @NTPSWEEP_DL@
+NTPSWEEP_DS = @NTPSWEEP_DS@
+NTPSWEEP_MS = @NTPSWEEP_MS@
+NTPSWEEP_NI = @NTPSWEEP_NI@
 NTPTIME_DB = @NTPTIME_DB@
 NTPTIME_DL = @NTPTIME_DL@
 NTPTIME_DS = @NTPTIME_DS@
 NTPTIME_MS = @NTPTIME_MS@
+NTPTIME_NI = @NTPTIME_NI@
 NTPTRACE_DB = @NTPTRACE_DB@
 NTPTRACE_DL = @NTPTRACE_DL@
 NTPTRACE_DS = @NTPTRACE_DS@
 NTPTRACE_MS = @NTPTRACE_MS@
+NTPTRACE_NI = @NTPTRACE_NI@
 NTP_KEYGEN_DB = @NTP_KEYGEN_DB@
 NTP_KEYGEN_DL = @NTP_KEYGEN_DL@
 NTP_KEYGEN_DS = @NTP_KEYGEN_DS@
 NTP_KEYGEN_MS = @NTP_KEYGEN_MS@
+NTP_KEYGEN_NI = @NTP_KEYGEN_NI@
 NTP_KEYSDIR = @NTP_KEYSDIR@
 NTP_WAIT_DB = @NTP_WAIT_DB@
 NTP_WAIT_DL = @NTP_WAIT_DL@
 NTP_WAIT_DS = @NTP_WAIT_DS@
 NTP_WAIT_MS = @NTP_WAIT_MS@
+NTP_WAIT_NI = @NTP_WAIT_NI@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OTOOL = @OTOOL@
@@ -278,16 +301,20 @@ SNTP_DB = @SNTP_DB@
 SNTP_DL = @SNTP_DL@
 SNTP_DS = @SNTP_DS@
 SNTP_MS = @SNTP_MS@
+SNTP_NI = @SNTP_NI@
+STDNORETURN_H = @STDNORETURN_H@
 STRIP = @STRIP@
 TESTDCF = @TESTDCF@
 TICKADJ_DB = @TICKADJ_DB@
 TICKADJ_DL = @TICKADJ_DL@
 TICKADJ_DS = @TICKADJ_DS@
 TICKADJ_MS = @TICKADJ_MS@
+TICKADJ_NI = @TICKADJ_NI@
 TIMETRIM_DB = @TIMETRIM_DB@
 TIMETRIM_DL = @TIMETRIM_DL@
 TIMETRIM_DS = @TIMETRIM_DS@
 TIMETRIM_MS = @TIMETRIM_MS@
+TIMETRIM_NI = @TIMETRIM_NI@
 VERSION = @VERSION@
 VER_SUFFIX = @VER_SUFFIX@
 YACC = @YACC@
@@ -347,20 +374,32 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 NULL = 
-run_ag = cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)"	\
+run_ag = cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)" AUTOGEN_DNE_DATE=-D	\
 		autogen -L ../../sntp/include -L ../../sntp/ag-tpl \
 		--writable
+
+std_def_list = \
+	$(top_srcdir)/sntp/include/debug-opt.def		\
+	$(top_srcdir)/sntp/include/autogen-version.def 		\
+	$(top_srcdir)/sntp/include/copyright.def 		\
+	$(top_srcdir)/sntp/include/homerc.def 			\
+	$(top_srcdir)/sntp/include/ntp.lic 			\
+	$(top_srcdir)/sntp/include/version.def			\
+	$(NULL)
 
 bin_SCRIPTS = $(CALC_TICKADJ_DB)
 libexec_SCRIPTS = $(CALC_TICKADJ_DL)
 sbin_SCRIPTS = $(CALC_TICKADJ_DS)
 EXTRA_SCRIPTS = calc_tickadj
+man1_MANS = 
+man8_MANS = 
 manpage_HACK = $(am__append_1)
 @WANT_CALC_TICKADJ_MS_TRUE@man_MANS = calc_tickadj.$(CALC_TICKADJ_MS)
 # Note that if we don't WANT_CALC_TICKADJ then CALC_TICKADJ_MS will
 # be empty.  But we still need the .texi and other files to be built, as
 # they are general prerequisites.
 # The manpage_HACK is listed in noinst_DATA so that takes care of these.
+DISTCLEANFILES = config.log $(man_MANS) calc_tickadj.
 EXTRA_DIST = \
 	calc_tickadj.in 		\
 	calc_tickadj.1calc_tickadjman	\
@@ -378,6 +417,8 @@ EXTRA_DIST = \
 noinst_DATA = \
 	calc_tickadj.1calc_tickadjman	\
 	calc_tickadj.1calc_tickadjmdoc	\
+	calc_tickadj.man.in		\
+	calc_tickadj.mdoc.in		\
 	calc_tickadj.texi		\
 	calc_tickadj.html		\
 	calc_tickadj-opts.def		\
@@ -530,6 +571,82 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+install-man1: $(man1_MANS) $(man_MANS)
+	@$(NORMAL_INSTALL)
+	test -z "$(man1dir)" || $(MKDIR_P) "$(DESTDIR)$(man1dir)"
+	@list='$(man1_MANS)'; test -n "$(man1dir)" || exit 0; \
+	{ for i in $$list; do echo "$$i"; done; \
+	l2='$(man_MANS)'; for i in $$l2; do echo "$$i"; done | \
+	  sed -n '/\.1[a-z]*$$/p'; \
+	} | while read p; do \
+	  if test -f $$p; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; echo "$$p"; \
+	done | \
+	sed -e 'n;s,.*/,,;p;h;s,.*\.,,;s,^[^1][0-9a-z]*$$,1,;x' \
+	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,' | \
+	sed 'N;N;s,\n, ,g' | { \
+	list=; while read file base inst; do \
+	  if test "$$base" = "$$inst"; then list="$$list $$file"; else \
+	    echo " $(INSTALL_DATA) '$$file' '$(DESTDIR)$(man1dir)/$$inst'"; \
+	    $(INSTALL_DATA) "$$file" "$(DESTDIR)$(man1dir)/$$inst" || exit $$?; \
+	  fi; \
+	done; \
+	for i in $$list; do echo "$$i"; done | $(am__base_list) | \
+	while read files; do \
+	  test -z "$$files" || { \
+	    echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(man1dir)'"; \
+	    $(INSTALL_DATA) $$files "$(DESTDIR)$(man1dir)" || exit $$?; }; \
+	done; }
+
+uninstall-man1:
+	@$(NORMAL_UNINSTALL)
+	@list='$(man1_MANS)'; test -n "$(man1dir)" || exit 0; \
+	files=`{ for i in $$list; do echo "$$i"; done; \
+	l2='$(man_MANS)'; for i in $$l2; do echo "$$i"; done | \
+	  sed -n '/\.1[a-z]*$$/p'; \
+	} | sed -e 's,.*/,,;h;s,.*\.,,;s,^[^1][0-9a-z]*$$,1,;x' \
+	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,'`; \
+	test -z "$$files" || { \
+	  echo " ( cd '$(DESTDIR)$(man1dir)' && rm -f" $$files ")"; \
+	  cd "$(DESTDIR)$(man1dir)" && rm -f $$files; }
+install-man8: $(man8_MANS) $(man_MANS)
+	@$(NORMAL_INSTALL)
+	test -z "$(man8dir)" || $(MKDIR_P) "$(DESTDIR)$(man8dir)"
+	@list='$(man8_MANS)'; test -n "$(man8dir)" || exit 0; \
+	{ for i in $$list; do echo "$$i"; done; \
+	l2='$(man_MANS)'; for i in $$l2; do echo "$$i"; done | \
+	  sed -n '/\.8[a-z]*$$/p'; \
+	} | while read p; do \
+	  if test -f $$p; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; echo "$$p"; \
+	done | \
+	sed -e 'n;s,.*/,,;p;h;s,.*\.,,;s,^[^8][0-9a-z]*$$,8,;x' \
+	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,' | \
+	sed 'N;N;s,\n, ,g' | { \
+	list=; while read file base inst; do \
+	  if test "$$base" = "$$inst"; then list="$$list $$file"; else \
+	    echo " $(INSTALL_DATA) '$$file' '$(DESTDIR)$(man8dir)/$$inst'"; \
+	    $(INSTALL_DATA) "$$file" "$(DESTDIR)$(man8dir)/$$inst" || exit $$?; \
+	  fi; \
+	done; \
+	for i in $$list; do echo "$$i"; done | $(am__base_list) | \
+	while read files; do \
+	  test -z "$$files" || { \
+	    echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(man8dir)'"; \
+	    $(INSTALL_DATA) $$files "$(DESTDIR)$(man8dir)" || exit $$?; }; \
+	done; }
+
+uninstall-man8:
+	@$(NORMAL_UNINSTALL)
+	@list='$(man8_MANS)'; test -n "$(man8dir)" || exit 0; \
+	files=`{ for i in $$list; do echo "$$i"; done; \
+	l2='$(man_MANS)'; for i in $$l2; do echo "$$i"; done | \
+	  sed -n '/\.8[a-z]*$$/p'; \
+	} | sed -e 's,.*/,,;h;s,.*\.,,;s,^[^8][0-9a-z]*$$,8,;x' \
+	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,'`; \
+	test -z "$$files" || { \
+	  echo " ( cd '$(DESTDIR)$(man8dir)' && rm -f" $$files ")"; \
+	  cd "$(DESTDIR)$(man8dir)" && rm -f $$files; }
 tags: TAGS
 TAGS:
 
@@ -538,6 +655,19 @@ CTAGS:
 
 
 distdir: $(DISTFILES)
+	@list='$(MANS)'; if test -n "$$list"; then \
+	  list=`for p in $$list; do \
+	    if test -f $$p; then d=; else d="$(srcdir)/"; fi; \
+	    if test -f "$$d$$p"; then echo "$$d$$p"; else :; fi; done`; \
+	  if test -n "$$list" && \
+	    grep 'ab help2man is required to generate this page' $$list >/dev/null; then \
+	    echo "error: found man pages containing the \`missing help2man' replacement text:" >&2; \
+	    grep -l 'ab help2man is required to generate this page' $$list | sed 's/^/         /' >&2; \
+	    echo "       to fix them, install help2man, remove and regenerate the man pages;" >&2; \
+	    echo "       typically \`make maintainer-clean' will remove them" >&2; \
+	    exit 1; \
+	  else :; fi; \
+	else :; fi
 	@srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
 	list='$(DISTFILES)'; \
@@ -569,9 +699,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(SCRIPTS) $(DATA)
+all-am: Makefile $(SCRIPTS) $(MANS) $(DATA)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libexecdir)" "$(DESTDIR)$(sbindir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libexecdir)" "$(DESTDIR)$(sbindir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(man8dir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -595,6 +725,7 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -619,7 +750,7 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-man
 
 install-dvi: install-dvi-am
 
@@ -636,7 +767,7 @@ install-info: install-info-am
 
 install-info-am:
 
-install-man:
+install-man: install-man1 install-man8
 
 install-pdf: install-pdf-am
 
@@ -665,7 +796,9 @@ ps: ps-am
 ps-am:
 
 uninstall-am: uninstall-binSCRIPTS uninstall-libexecSCRIPTS \
-	uninstall-sbinSCRIPTS
+	uninstall-man uninstall-sbinSCRIPTS
+
+uninstall-man: uninstall-man1 uninstall-man8
 
 .MAKE: install-am install-strip
 
@@ -675,18 +808,19 @@ uninstall-am: uninstall-binSCRIPTS uninstall-libexecSCRIPTS \
 	install-binSCRIPTS install-data install-data-am install-dvi \
 	install-dvi-am install-exec install-exec-am install-html \
 	install-html-am install-info install-info-am \
-	install-libexecSCRIPTS install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-sbinSCRIPTS install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am uninstall uninstall-am \
-	uninstall-binSCRIPTS uninstall-libexecSCRIPTS \
-	uninstall-sbinSCRIPTS
+	install-libexecSCRIPTS install-man install-man1 install-man8 \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-sbinSCRIPTS install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-generic mostlyclean-libtool pdf pdf-am \
+	ps ps-am uninstall uninstall-am uninstall-binSCRIPTS \
+	uninstall-libexecSCRIPTS uninstall-man uninstall-man1 \
+	uninstall-man8 uninstall-sbinSCRIPTS
 
 
 calc_tickadj: $(srcdir)/calc_tickadj-opts
 
-$(srcdir)/calc_tickadj-opts: $(srcdir)/calc_tickadj-opts.def $(srcdir)/../../sntp/ag-tpl/perlopt.tpl
+$(srcdir)/calc_tickadj-opts: $(srcdir)/calc_tickadj-opts.def
 	$(run_ag) calc_tickadj-opts.def
 
 ### Nroff

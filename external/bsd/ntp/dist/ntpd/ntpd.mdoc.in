@@ -1,9 +1,9 @@
-.Dd December 24 2013
+.Dd December 19 2014
 .Dt NTPD @NTPD_MS@ User Commands
-.Os SunOS 5.10
+.Os
 .\"  EDIT THIS FILE WITH CAUTION  (ntpd-opts.mdoc)
 .\"
-.\"  It has been AutoGen-ed  December 24, 2013 at 11:38:28 AM by AutoGen 5.18.3pre5
+.\"  It has been AutoGen-ed  December 19, 2014 at 07:49:14 AM by AutoGen 5.18.5pre4
 .\"  From the definitions    ntpd-opts.def
 .\"  and the template file   agmdoc-cmd.tpl
 .Sh NAME
@@ -375,25 +375,6 @@ by loading values from environment variables named:
   \fBNTPD_<option\-name>\fP or \fBNTPD\fP
 .fi
 .ad
-cvt_prog='/usr/local/gnu/share/autogen/texi2mdoc'
-cvt_prog=`cd \`dirname "$cvt_prog"\` >/dev/null && pwd
-         `/`basename "$cvt_prog"`
-cd $tmp_dir
-test \-x "$cvt_prog" || die "'$cvt_prog' is not executable"
-{
-    list='synopsis description options option\-presets'
-    for f in $list ; do cat $f ; echo ; done
-    rm \-f $list name
-    list='implementation\-notes environment files examples exit\-status errors
-        compatibility see\-also conforming\-to history authors copyright bugs
-        notes'
-    for f in $list ; do cat $f ; echo ; done > .end\-doc
-    rm \-f $list
-    list=`ls \-1 *`' .end\-doc'
-    for f in $list ; do cat $f ; echo ; done
-    rm \-f $list
-} 1>.doc 2>/dev/null
-sed \-f .cmds .doc | /usr/local/gnu/bin/grep \-E \-v '^[ 	]*$' | $cvt_prog
 .Sh USAGE
 .Ss "How NTP Operates"
 The
@@ -541,6 +522,13 @@ in the past many startup scripts would run
 to get the system clock close to correct before starting
 .Xr ntpd @NTPD_MS@ ,
 but this was never more than a mediocre hack and is no longer needed.
+If you are following the instructions in
+.Sx "Starting NTP (Best Current Practice)"
+and you still need to set the system time before starting
+.Nm ,
+please open a bug report and document what is going on,
+and then look at using
+.Xr sntp @SNTP_MS@ .
 .Pp
 There is a way to start
 .Xr ntpd @NTPD_MS@
@@ -664,16 +652,17 @@ to 1024s in order to reduce network overhead.
 .Pp
 In some cases it may not be practical for
 .Nm
-to run
-continuously.
+to run continuously.
 A common workaround has been to run the
 .Xr ntpdate @NTPDATE_MS@
-program from a
+or
+.Xr sntp @SNTP_MS@
+programs from a
 .Xr cron 8
 job at designated
 times.
-However, this program does not have the crafted signal
-processing, error checking and mitigation algorithms of
+However, these programs do not have the crafted signal
+processing, error checking or mitigation algorithms of
 .Nm .
 The
 .Fl q
@@ -697,7 +686,7 @@ couple of minutes, the daemon times out and exits.
 After a suitable
 period of mourning, the
 .Xr ntpdate @NTPDATE_MS@
-program may be
+program will be
 retired.
 .Pp
 When kernel support is available to discipline the clock
@@ -826,7 +815,8 @@ it to autogen\-users@lists.sourceforge.net.  Thank you.
 .Xr ntp.conf 5 ,
 .Xr ntpdate @NTPDATE_MS@ ,
 .Xr ntpdc @NTPDC_MS@ ,
-.Xr ntpq @NTPQ_MS@
+.Xr ntpq @NTPQ_MS@ ,
+.Xr sntp @SNTP_MS@
 .Pp
 In addition to the manual pages provided,
 comprehensive documentation is available on the world wide web
@@ -879,7 +869,7 @@ A snapshot of this documentation is available in HTML format in
 .Sh "AUTHORS"
 The University of Delaware
 .Sh "COPYRIGHT"
-Copyright (C) 1970\-2013 The University of Delaware all rights reserved.
+Copyright (C) 1970\-2014 The University of Delaware all rights reserved.
 This program is released under the terms of the NTP license, <http://ntp.org/license>.
 .Sh BUGS
 The
@@ -895,7 +885,6 @@ mind.
 .Pp
 Please send bug reports to: http://bugs.ntp.org, bugs@ntp.org
 .Sh NOTES
-This document corresponds to version 4.2.7p404 of NTP.
 Portions of this document came from FreeBSD.
 .Pp
 This manual page was \fIAutoGen\fP\-erated from the \fBntpd\fP

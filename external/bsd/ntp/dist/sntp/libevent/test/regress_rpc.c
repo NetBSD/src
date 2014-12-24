@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_rpc.c,v 1.1.1.1 2013/12/27 23:31:28 christos Exp $	*/
+/*	$NetBSD: regress_rpc.c,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
@@ -465,12 +465,14 @@ rpc_basic_client(void)
 	    != NULL);
 
 	pool = rpc_pool_with_connection(port);
+	tt_assert(pool);
 
 	assert(evrpc_add_hook(pool, EVRPC_OUTPUT, rpc_hook_add_meta, NULL));
 	assert(evrpc_add_hook(pool, EVRPC_INPUT, rpc_hook_remove_header, (void*)"output"));
 
 	/* set up the basic message */
 	msg = msg_new();
+	tt_assert(msg);
 	EVTAG_ASSIGN(msg, from_name, "niels");
 	EVTAG_ASSIGN(msg, to_name, "tester");
 
@@ -541,9 +543,11 @@ rpc_basic_queued_client(void)
 	rpc_setup(&http, &port, &base);
 
 	pool = rpc_pool_with_connection(port);
+	tt_assert(pool);
 
 	/* set up the basic message */
 	msg = msg_new();
+	tt_assert(msg);
 	EVTAG_ASSIGN(msg, from_name, "niels");
 	EVTAG_ASSIGN(msg, to_name, "tester");
 
@@ -642,12 +646,13 @@ rpc_basic_client_with_pause(void)
 	assert(evrpc_add_hook(base, EVRPC_OUTPUT, rpc_hook_pause, base));
 
 	pool = rpc_pool_with_connection(port);
-
+	tt_assert(pool);
 	assert(evrpc_add_hook(pool, EVRPC_INPUT, rpc_hook_pause, pool));
 	assert(evrpc_add_hook(pool, EVRPC_OUTPUT, rpc_hook_pause, pool));
 
 	/* set up the basic message */
 	msg = msg_new();
+	tt_assert(msg);
 	EVTAG_ASSIGN(msg, from_name, "niels");
 	EVTAG_ASSIGN(msg, to_name, "tester");
 
@@ -690,12 +695,14 @@ rpc_client_timeout(void)
 	rpc_setup(&http, &port, &base);
 
 	pool = rpc_pool_with_connection(port);
+	tt_assert(pool);
 
 	/* set the timeout to 1 second. */
 	evrpc_pool_set_timeout(pool, 1);
 
 	/* set up the basic message */
 	msg = msg_new();
+	tt_assert(msg);
 	EVTAG_ASSIGN(msg, from_name, "niels");
 	EVTAG_ASSIGN(msg, to_name, "tester");
 

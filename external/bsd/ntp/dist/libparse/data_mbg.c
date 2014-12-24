@@ -1,4 +1,4 @@
-/*	$NetBSD: data_mbg.c,v 1.4 2014/02/27 18:12:41 joerg Exp $	*/
+/*	$NetBSD: data_mbg.c,v 1.4.4.1 2014/12/24 00:05:20 riz Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/data_mbg.c,v 4.8 2006/06/22 18:40:01 kardel RELEASE_20060622_A

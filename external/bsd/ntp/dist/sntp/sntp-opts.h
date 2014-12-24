@@ -1,13 +1,13 @@
-/*	$NetBSD: sntp-opts.h,v 1.1.1.3 2013/12/27 23:31:15 christos Exp $	*/
+/*	$NetBSD: sntp-opts.h,v 1.1.1.3.4.1 2014/12/24 00:05:24 riz Exp $	*/
 
 /*
  *  EDIT THIS FILE WITH CAUTION  (sntp-opts.h)
  *
- *  It has been AutoGen-ed  December 24, 2013 at 11:31:41 AM by AutoGen 5.18.3pre5
+ *  It has been AutoGen-ed  December 19, 2014 at 07:51:00 AM by AutoGen 5.18.5pre4
  *  From the definitions    sntp-opts.def
  *  and the template file   options
  *
- * Generated from AutoOpts 40:1:15 templates.
+ * Generated from AutoOpts 41:0:16 templates.
  *
  *  AutoOpts is a copyrighted work.  This header file is not encumbered
  *  by AutoOpts licensing, but is provided under the licensing terms chosen
@@ -20,7 +20,7 @@
  * The sntp program is copyrighted and licensed
  * under the following terms:
  *
- *  Copyright (C) 1970-2013 The University of Delaware, all rights reserved.
+ *  Copyright (C) 1970-2014 The University of Delaware, all rights reserved.
  *  This is free software. It is licensed for use, modification and
  *  redistribution under the terms of the NTP License, copies of which
  *  can be seen at:
@@ -55,7 +55,7 @@
  *  tolerable version is at least as old as what was current when the header
  *  template was released.
  */
-#define AO_TEMPLATE_VERSION 163841
+#define AO_TEMPLATE_VERSION 167936
 #if (AO_TEMPLATE_VERSION < OPTIONS_MINIMUM_VERSION) \
  || (AO_TEMPLATE_VERSION > OPTIONS_STRUCT_VERSION)
 # error option template version mismatches autoopts/options.h header
@@ -93,9 +93,9 @@ typedef enum {
 /** count of all options for sntp */
 #define OPTION_CT    23
 /** sntp version */
-#define SNTP_VERSION       "4.2.7p404"
+#define SNTP_VERSION       "4.2.8"
 /** Full sntp version text */
-#define SNTP_FULL_VERSION  "sntp 4.2.7p404"
+#define SNTP_FULL_VERSION  "sntp 4.2.8"
 
 /**
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED
@@ -285,15 +285,15 @@ typedef enum {
         DESC(WAIT).fOptState &= OPTST_PERSISTENT_MASK; \
         DESC(WAIT).fOptState |= OPTST_SET | OPTST_DISABLED; \
         DESC(WAIT).optArg.argString = NULL )
-/** option flag (value) for " (get "val-name") " option */
+/** option flag (value) for help-value option */
 #define VALUE_OPT_HELP          '?'
-/** option flag (value) for " (get "val-name") " option */
+/** option flag (value) for more-help-value option */
 #define VALUE_OPT_MORE_HELP     '!'
-/** option flag (value) for " (get "val-name") " option */
+/** option flag (value) for version-value option */
 #define VALUE_OPT_VERSION       0x1002
-/** option flag (value) for " (get "val-name") " option */
+/** option flag (value) for save-opts-value option */
 #define VALUE_OPT_SAVE_OPTS     '>'
-/** option flag (value) for " (get "val-name") " option */
+/** option flag (value) for load-opts-value option */
 #define VALUE_OPT_LOAD_OPTS     '<'
 #define SET_OPT_SAVE_OPTS(a)   STMTS( \
         DESC(SAVE_OPTS).fOptState &= OPTST_PERSISTENT_MASK; \
@@ -330,6 +330,11 @@ extern tOptions sntpOptions;
 #     include <libintl.h>
 #   endif
 
+# ifndef ATTRIBUTE_FORMAT_ARG
+#   define ATTRIBUTE_FORMAT_ARG(_a)
+# endif
+
+static inline char* aoGetsText(char const* pz) ATTRIBUTE_FORMAT_ARG(1);
 static inline char* aoGetsText(char const* pz) {
     if (pz == NULL) return NULL;
     return (char*)gettext(pz);

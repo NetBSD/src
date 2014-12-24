@@ -1,4 +1,4 @@
-/*	$NetBSD: regress.h,v 1.1.1.1 2013/12/27 23:31:29 christos Exp $	*/
+/*	$NetBSD: regress.h,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
@@ -39,6 +39,7 @@ extern "C" {
 extern struct testcase_t main_testcases[];
 extern struct testcase_t evtag_testcases[];
 extern struct testcase_t evbuffer_testcases[];
+extern struct testcase_t finalize_testcases[];
 extern struct testcase_t bufferevent_testcases[];
 extern struct testcase_t bufferevent_iocp_testcases[];
 extern struct testcase_t util_testcases[];
@@ -79,6 +80,8 @@ extern const struct testcase_setup_t basic_setup;
 
 extern const struct testcase_setup_t legacy_setup;
 void run_legacy_test_fn(void *ptr);
+
+extern int libevent_tests_running_in_debug_mode;
 
 /* A couple of flags that basic/legacy_setup can support. */
 #define TT_NEED_SOCKETPAIR	TT_FIRST_USER_FLAG

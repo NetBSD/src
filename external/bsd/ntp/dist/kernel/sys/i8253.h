@@ -1,4 +1,4 @@
-/*	$NetBSD: i8253.h,v 1.1.1.1 2009/12/13 16:54:57 kardel Exp $	*/
+/*	$NetBSD: i8253.h,v 1.1.1.1.26.1 2014/12/24 00:05:17 riz Exp $	*/
 
 /* Copyright (c) 1995 Vixie Enterprises
  *

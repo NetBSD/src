@@ -1,4 +1,4 @@
-/*	$NetBSD: test-ratelim.c,v 1.1.1.1 2013/12/27 23:31:27 christos Exp $	*/
+/*	$NetBSD: test-ratelim.c,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
@@ -189,6 +189,8 @@ echo_listenercb(struct evconnlistener *listener, evutil_socket_t newsock,
 		struct event *check_event =
 		    event_new(base, -1, EV_PERSIST, check_bucket_levels_cb, bev);
 		bufferevent_set_rate_limit(bev, conn_bucket_cfg);
+
+		assert(bufferevent_get_token_bucket_cfg(bev) != NULL);
 		event_add(check_event, ms100_common);
 	}
 	if (ratelim_group)

@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.2 2013/12/28 03:20:15 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.2.6.1 2014/12/24 00:05:27 riz Exp $	*/
 
 /**
  * \file initialize.c
@@ -11,7 +11,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2013 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -103,20 +103,17 @@ validate_struct(tOptions * opts, char const * pname)
      */
     if (opts->pzProgName == NULL) {
         char const *  pz = strrchr(pname, DIRCH);
-        char const ** pp =
-            (char const **)(void **)(intptr_t)&(opts->pzProgName);
 
         if (pz != NULL)
-            *pp = pz+1;
+            opts->pzProgName = pz+1;
         else
-            *pp = pname;
+            opts->pzProgName = pname;
 
         pz = pathfind(getenv("PATH"), (char *)(intptr_t)pname, "rx");
         if (pz != NULL)
             pname = (void *)(intptr_t)pz;
 
-        pp  = (char const **)(void **)(intptr_t)&(opts->pzProgPath);
-        *pp = pname;
+        opts->pzProgPath = pname;
 
         /*
          *  when comparing long names, these are equivalent

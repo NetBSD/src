@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_hopfser.c,v 1.1.1.3 2013/12/27 23:31:01 christos Exp $	*/
+/*	$NetBSD: refclock_hopfser.c,v 1.1.1.3.4.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_lineedit.h,v 1.1.1.1 2009/12/13 16:54:51 kardel Exp $	*/
+/*	$NetBSD: ntp_lineedit.h,v 1.1.1.1.26.1 2014/12/24 00:05:16 riz Exp $	*/
 
 
 /*

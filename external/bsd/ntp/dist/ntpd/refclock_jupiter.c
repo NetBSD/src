@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jupiter.c,v 1.5 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: refclock_jupiter.c,v 1.5.4.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003
@@ -362,7 +362,7 @@ jupiter_ppsapi(
 			    "refclock_jupiter: time_pps_kcbind failed: %m");
 			return (0);
 		}
-		pps_enable = 1;
+		hardpps_enable = 1;
 	}
 /*	instance->peer->precision = PPS_PRECISION; */
 

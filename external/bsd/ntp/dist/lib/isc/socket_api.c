@@ -1,4 +1,4 @@
-/*	$NetBSD: socket_api.c,v 1.1.1.1 2013/12/27 23:30:38 christos Exp $	*/
+/*	$NetBSD: socket_api.c,v 1.1.1.1.6.1 2014/12/24 00:05:17 riz Exp $	*/
 
 /*
  * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")

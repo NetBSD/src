@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_hpgps.c,v 1.1.1.3 2013/12/27 23:30:59 christos Exp $	*/
+/*	$NetBSD: refclock_hpgps.c,v 1.1.1.3.4.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  * refclock_hpgps - clock driver for HP 58503A GPS receiver
@@ -158,7 +158,7 @@ hpgps_start(
 	register struct hpgpsunit *up;
 	struct refclockproc *pp;
 	int fd;
-	int ldisc;
+	int speed, ldisc;
 	char device[20];
 
 	/*
@@ -167,10 +167,13 @@ hpgps_start(
 	 */
 	snprintf(device, sizeof(device), DEVICE, unit);
 	ldisc = LDISC_CLK;
+	speed = SPEED232;
 	/* mode parameter to server config line shares ttl slot */
-	if (1 == peer->ttl)
+	if (1 == peer->ttl) {
 		ldisc |= LDISC_7O1;
-	fd = refclock_open(device, SPEED232Z, ldisc);
+		speed = SPEED232Z;
+	}
+	fd = refclock_open(device, speed, ldisc);
 	if (fd <= 0)
 		return (0);
 	/*

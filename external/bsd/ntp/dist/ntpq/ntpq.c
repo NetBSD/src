@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.9 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.9.4.1 2014/12/24 00:05:22 riz Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -321,6 +321,7 @@ char currenthost[LENHOSTNAME];			/* current host name */
 int currenthostisnum;				/* is prior text from IP? */
 struct sockaddr_in hostaddr;			/* host address */
 int showhostnames = 1;				/* show host names by default */
+int wideremote = 0;				/* show wide remote names? */
 
 int ai_fam_templ;				/* address family */
 int ai_fam_default;				/* default address family */
@@ -486,6 +487,9 @@ ntpqmain(
 
 	if (HAVE_OPT(NUMERIC))
 		showhostnames = 0;
+
+	if (HAVE_OPT(WIDE))
+		wideremote = 1;
 
 	old_rv = HAVE_OPT(OLD_RV);
 
@@ -1575,6 +1579,8 @@ tokenize(
 
 		if (*ntok == 1 && tokens[0][0] == ':') {
 			do {
+				if (sp - tspace >= MAXLINE)
+					goto toobig;
 				*sp++ = *cp++;
 			} while (!ISEOL(*cp));
 		}
@@ -1585,19 +1591,33 @@ tokenize(
 		else if (*cp == '\"') {
 			++cp;
 			do {
+				if (sp - tspace >= MAXLINE)
+					goto toobig;
 				*sp++ = *cp++;
 			} while ((*cp != '\"') && !ISEOL(*cp));
 			/* HMS: a missing closing " should be an error */
 		}
 		else {
 			do {
+				if (sp - tspace >= MAXLINE)
+					goto toobig;
 				*sp++ = *cp++;
 			} while ((*cp != '\"') && !ISSPACE(*cp) && !ISEOL(*cp));
 			/* HMS: Why check for a " in the previous line? */
 		}
 
+		if (sp - tspace >= MAXLINE)
+			goto toobig;
 		*sp++ = '\0';
 	}
+	return;
+
+  toobig:
+	*ntok = 0;
+	fprintf(stderr,
+		"***Line `%s' is too big\n",
+		line);
+	return;
 }
 
 

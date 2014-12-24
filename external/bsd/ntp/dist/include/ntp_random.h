@@ -1,7 +1,10 @@
-/*	$NetBSD: ntp_random.h,v 1.1.1.1 2009/12/13 16:54:52 kardel Exp $	*/
+/*	$NetBSD: ntp_random.h,v 1.1.1.1.26.1 2014/12/24 00:05:16 riz Exp $	*/
 
 
 #include <ntp_types.h>
+
+void ntp_crypto_srandom(void);
+int ntp_crypto_random_buf(void *buf, size_t nbytes);
 
 long ntp_random (void);
 void ntp_srandom (unsigned long);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_datum.h,v 1.1.1.1 2009/12/13 16:54:50 kardel Exp $	*/
+/*	$NetBSD: ntp_datum.h,v 1.1.1.1.26.1 2014/12/24 00:05:16 riz Exp $	*/
 
 struct btfp_time                /* Structure for reading 5 time words   */
                                 /* in one ioctl(2) operation.           */

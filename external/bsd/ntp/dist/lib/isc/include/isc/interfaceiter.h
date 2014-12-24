@@ -1,4 +1,4 @@
-/*	$NetBSD: interfaceiter.h,v 1.1.1.3 2013/12/27 23:30:42 christos Exp $	*/
+/*	$NetBSD: interfaceiter.h,v 1.1.1.3.4.1 2014/12/24 00:05:18 riz Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")

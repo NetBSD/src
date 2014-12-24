@@ -1,4 +1,4 @@
-/*	$NetBSD: http-internal.h,v 1.1.1.1 2013/12/27 23:31:22 christos Exp $	*/
+/*	$NetBSD: http-internal.h,v 1.1.1.1.6.1 2014/12/24 00:05:25 riz Exp $	*/
 
 /*
  * Copyright 2001-2007 Niels Provos <provos@citi.umich.edu>
@@ -29,14 +29,6 @@ enum message_read_status {
 	DATA_CORRUPTED = -1,
 	REQUEST_CANCELED = -2,
 	DATA_TOO_LONG = -3
-};
-
-enum evhttp_connection_error {
-	EVCON_HTTP_TIMEOUT,
-	EVCON_HTTP_EOF,
-	EVCON_HTTP_INVALID_HEADER,
-	EVCON_HTTP_BUFFER_ERROR,
-	EVCON_HTTP_REQUEST_CANCEL
 };
 
 struct evbuffer;
@@ -109,6 +101,13 @@ struct evhttp_connection {
 
 	struct event_base *base;
 	struct evdns_base *dns_base;
+
+	/* Saved conn_addr, to extract IP address from it.
+	 *
+	 * Because some servers may reset/close connection without waiting clients,
+	 * in that case we can't extract IP address even in close_cb.
+	 * So we need to save it, just after we connected to remote server. */
+	struct sockaddr_storage *conn_address;
 };
 
 /* A callback for an http server */
@@ -161,6 +160,7 @@ struct evhttp {
 
 	size_t default_max_headers_size;
 	ev_uint64_t default_max_body_size;
+	const char *default_content_type;
 
 	/* Bitmask of all HTTP methods that we accept and pass to user
 	 * callbacks. */
@@ -184,9 +184,10 @@ void evhttp_connection_reset_(struct evhttp_connection *);
 /* connects if necessary */
 int evhttp_connection_connect_(struct evhttp_connection *);
 
+enum evhttp_request_error;
 /* notifies the current request that it failed; resets connection */
 void evhttp_connection_fail_(struct evhttp_connection *,
-    enum evhttp_connection_error error);
+    enum evhttp_request_error error);
 
 enum message_read_status;
 

@@ -1,9 +1,29 @@
 NULL=
-run_ag=		cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)" PERL5LIB="$(abs_top_srcdir)/scripts/lib"	\
+run_ag=		cd $(srcdir) &&	env PATH="$(abs_builddir):$(PATH)" PERL5LIB="$(abs_top_srcdir)/scripts/lib" AUTOGEN_DNE_DATE=-D	\
 		autogen -L ../../sntp/include -L ../../sntp/ag-tpl \
 		--writable
+std_def_list =							\
+	$(top_srcdir)/sntp/include/debug-opt.def		\
+	$(top_srcdir)/sntp/include/autogen-version.def 		\
+	$(top_srcdir)/sntp/include/copyright.def 		\
+	$(top_srcdir)/sntp/include/homerc.def 			\
+	$(top_srcdir)/sntp/include/ntp.lic 			\
+	$(top_srcdir)/sntp/include/version.def			\
+	$(NULL)
 
-noinst_SCRIPTS = ntpsweep
+bin_SCRIPTS=		$(NTPSWEEP_DB)
+sbin_SCRIPTS=		$(NTPSWEEP_DS)
+libexec_SCRIPTS=	$(NTPSWEEP_DL)
+noinst_SCRIPTS=		$(NTPSWEEP_NI)
+EXTRA_SCRIPTS=		ntpsweep
+
+man1_MANS=
+man8_MANS=
+if INSTALL_NTPSWEEP
+man_MANS=	ntpsweep.$(NTPSWEEP_MS)
+else
+noinst_MANS=	ntpsweep.$(NTPSWEEP_MS)
+endif
 
 EXTRA_DIST =			\
 	ntpsweep.in		\
@@ -22,7 +42,7 @@ EXTRA_DIST =			\
 html_DATA = ntpsweep.html
 
 CLEANFILES = ntpsweep.1
-DISTCLEANFILES = config.log
+DISTCLEANFILES = config.log $(man_MANS) $(noinst_MANS)
 
 noinst_DATA =			\
 	ntpsweep.1		\
@@ -40,7 +60,7 @@ noinst_DATA =			\
 
 ntpsweep: $(srcdir)/ntpsweep-opts
 
-$(srcdir)/ntpsweep-opts: ntpsweep-opts.def ../../sntp/ag-tpl/perlopt.tpl
+$(srcdir)/ntpsweep-opts: ntpsweep-opts.def $(std_def_list)
 	$(run_ag) ntpsweep-opts.def
 
 ### Nroff

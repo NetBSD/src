@@ -1,4 +1,4 @@
-/*	$NetBSD: event_iocp.c,v 1.1.1.1 2013/12/27 23:31:17 christos Exp $	*/
+/*	$NetBSD: event_iocp.c,v 1.1.1.1.6.1 2014/12/24 00:05:25 riz Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos, Nick Mathewson
@@ -144,6 +144,8 @@ get_extension_function(SOCKET s, const GUID *which_fn)
 	{0xb5367df2,0xcbac,0x11cf,{0x95,0xca,0x00,0x80,0x5f,0x48,0xa1,0x92}}
 #endif
 
+static int extension_fns_initialized = 0;
+
 static void
 init_extension_functions(struct win32_extension_fns *ext)
 {
@@ -158,10 +160,11 @@ init_extension_functions(struct win32_extension_fns *ext)
 	ext->GetAcceptExSockaddrs = get_extension_function(s,
 	    &getacceptexsockaddrs);
 	closesocket(s);
+
+	extension_fns_initialized = 1;
 }
 
 static struct win32_extension_fns the_extension_fns;
-static int extension_fns_initialized = 0;
 
 const struct win32_extension_fns *
 event_get_win32_extension_fns_(void)

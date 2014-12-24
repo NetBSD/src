@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2014/07/05 19:22:41 dholland Exp $
+#	$NetBSD: Makefile.inc,v 1.14.2.1 2014/12/24 00:05:04 riz Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -38,12 +38,12 @@ LIBPARSE!=	cd ${.CURDIR}/../../lib/libparse && ${PRINTOBJDIR}
 LDADD+=		-L${LIBNTP} -lntp -L${LIBOPTS} -lopts
 DPADD+=		${LIBNTP}/libntp.a ${LIBOPTS}/libopts.a
 
-.if (${MKCRYPTO} != "no")
+.if ${MKCRYPTO:Uno} != "no"
 LDADD+=		-lcrypto -lcrypt
 DPADD+=		${LIBCRYPTO} ${LIBCRYPT}
 .endif
 
-.if ("${MKMDNS}" != "no")
+.if ${MKMDNS:Uno} != "no"
 CPPFLAGS+=-DHAVE_DNSREGISTRATION=1
 LDADD+=-ldns_sd
 .endif
@@ -57,11 +57,11 @@ version.c: ${LIBNTP}/libntp.a ${.CURDIR}/../../scripts/mkver ${.CURDIR}/../../im
 
 .endif # defined(PROG)
 
-.if (${MKCRYPTO} != "no")
+.if ${MKCRYPTO:Uno} != "no"
 CPPFLAGS+=-DOPENSSL
 .endif
 
-.if ("${MKINET6}" != "no")
+.if ${MKINET6:Uno} != "no"
 CPPFLAGS+=-DWANT_IPV6
 .else
 CPPFLAGS+=-DISC_PLATFORM_NEEDIN6ADDRANY

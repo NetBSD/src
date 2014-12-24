@@ -1,4 +1,4 @@
-/*	$NetBSD: jupiter.h,v 1.1.1.2 2012/01/31 21:25:30 kardel Exp $	*/
+/*	$NetBSD: jupiter.h,v 1.1.1.2.20.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /* @(#) Header (LBL) */
 

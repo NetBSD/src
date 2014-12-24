@@ -1,4 +1,4 @@
-/*	$NetBSD: adjtimex.c,v 1.1.1.1 2009/12/13 16:55:06 kardel Exp $	*/
+/*	$NetBSD: adjtimex.c,v 1.1.1.1.26.1 2014/12/24 00:05:20 riz Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.

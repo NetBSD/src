@@ -1,4 +1,4 @@
-/*	$NetBSD: evutil.c,v 1.1.1.1 2013/12/27 23:31:25 christos Exp $	*/
+/*	$NetBSD: evutil.c,v 1.1.1.1.6.1 2014/12/24 00:05:25 riz Exp $	*/
 
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -325,9 +325,11 @@ evutil_make_socket_nonblocking(evutil_socket_t fd)
 			event_warn("fcntl(%d, F_GETFL)", fd);
 			return -1;
 		}
-		if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) {
-			event_warn("fcntl(%d, F_SETFL)", fd);
-			return -1;
+		if (!(flags & O_NONBLOCK)) {
+			if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+				event_warn("fcntl(%d, F_SETFL)", fd);
+				return -1;
+			}
 		}
 	}
 #endif
@@ -390,9 +392,11 @@ evutil_make_socket_closeonexec(evutil_socket_t fd)
 		event_warn("fcntl(%d, F_GETFD)", fd);
 		return -1;
 	}
-	if (fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == -1) {
-		event_warn("fcntl(%d, F_SETFD)", fd);
-		return -1;
+	if (!(flags & FD_CLOEXEC)) {
+		if (fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == -1) {
+			event_warn("fcntl(%d, F_SETFD)", fd);
+			return -1;
+		}
 	}
 #endif
 	return 0;
@@ -1699,7 +1703,7 @@ evutil_socket_error_to_string(int errcode)
 		/* use LocalAlloc because FormatMessage does */
 		msg = LocalAlloc(LMEM_FIXED, len);
 		if (!msg) {
-			msg = "winsock error";
+			msg = (char *)"LocalAlloc failed during Winsock error";
 			goto done;
 		}
 		evutil_snprintf(msg, len, "winsock error 0x%08x", errcode);
@@ -1710,7 +1714,7 @@ evutil_socket_error_to_string(int errcode)
 
 	if (!newerr) {
 		LocalFree(msg);
-		msg = "winsock error";
+		msg = (char *)"malloc failed during Winsock error";
 		goto done;
 	}
 
@@ -1792,7 +1796,7 @@ evutil_vsnprintf(char *buf, size_t buflen, const char *format, va_list ap)
 	int r;
 	if (!buflen)
 		return 0;
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(_WIN32)
 	r = _vsnprintf(buf, buflen, format, ap);
 	if (r < 0)
 		r = _vscprintf(format, ap);
@@ -2396,6 +2400,18 @@ evutil_weakrand_range_(struct evutil_weakrand_state *state, ev_int32_t top)
 		result = evutil_weakrand_(state) / divisor;
 	} while (result >= top);
 	return result;
+}
+
+/**
+ * Volatile pointer to memset: we use this to keep the compiler from
+ * eliminating our call to memset.
+ */
+void * (*volatile evutil_memset_volatile_)(void *, int, size_t) = memset;
+
+void
+evutil_memclear_(void *mem, size_t len)
+{
+	evutil_memset_volatile_(mem, 0, len);
 }
 
 int

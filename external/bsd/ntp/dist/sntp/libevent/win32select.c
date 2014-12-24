@@ -1,4 +1,4 @@
-/*	$NetBSD: win32select.c,v 1.1.1.1 2013/12/27 23:31:24 christos Exp $	*/
+/*	$NetBSD: win32select.c,v 1.1.1.1.6.1 2014/12/24 00:05:25 riz Exp $	*/
 
 /*
  * Copyright 2007-2012 Niels Provos and Nick Mathewson
@@ -383,7 +383,7 @@ win32_dealloc(struct event_base *base)
 		mm_free(win32op->exset_out);
 	/* XXXXX free the tree. */
 
-	memset(win32op, 0, sizeof(win32op));
+	memset(win32op, 0, sizeof(*win32op));
 	mm_free(win32op);
 }
 

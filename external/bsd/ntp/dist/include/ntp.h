@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp.h,v 1.1.1.3 2013/12/27 23:30:45 christos Exp $	*/
+/*	$NetBSD: ntp.h,v 1.1.1.3.4.1 2014/12/24 00:05:16 riz Exp $	*/
 
 /*
  * ntp.h - NTP definitions for the masses
@@ -465,8 +465,7 @@ struct peer {
  */
 #define	CLEAR_TO_ZERO(p)	((char *)&((p)->clear_to_zero))
 #define	END_CLEAR_TO_ZERO(p)	((char *)&((p)->end_clear_to_zero))
-#define	LEN_CLEAR_TO_ZERO	(END_CLEAR_TO_ZERO((struct peer *)0) \
-				    - CLEAR_TO_ZERO((struct peer *)0))
+#define	LEN_CLEAR_TO_ZERO(p)	(END_CLEAR_TO_ZERO(p) - CLEAR_TO_ZERO(p))
 #define CRYPTO_TO_ZERO(p)	((char *)&((p)->clear_to_zero))
 #define END_CRYPTO_TO_ZERO(p)	((char *)&((p)->end_clear_to_zero))
 #define LEN_CRYPTO_TO_ZERO	(END_CRYPTO_TO_ZERO((struct peer *)0) \
@@ -519,8 +518,9 @@ struct peer {
 #define REFCLK_ZYFER		42	/* Zyfer GPStarplus receiver  */
 #define REFCLK_RIPENCC		43	/* RIPE NCC Trimble driver */
 #define REFCLK_NEOCLOCK4X	44	/* NeoClock4X DCF77 or TDF receiver */
-#define REFCLK_TSYNCPCI	45	/* Spectracom TSYNC PCI timing board */
-#define REFCLK_MAX		45	/* Spectracom TSYNC PCI timing board */
+#define REFCLK_TSYNCPCI		45	/* Spectracom TSYNC PCI timing board */
+#define REFCLK_GPSDJSON		46
+#define REFCLK_MAX		46
 
 
 /*
@@ -558,13 +558,19 @@ struct pkt {
 	 * response, so the maximum total extension field length is 864
 	 * octets. But, to handle humungus certificates, the bank must
 	 * be broke.
+	 *
+	 * The different definitions of the 'exten' field are here for
+	 * the benefit of applications that want to send a packet from
+	 * an auto variable in the stack - not using the AUTOKEY version
+	 * saves 2KB of stack space. The receive buffer should ALWAYS be
+	 * big enough to hold a full extended packet if the extension
+	 * fields have to be parsed or skipped.
 	 */
 #ifdef AUTOKEY
-	u_int32	exten[NTP_MAXEXTEN / 4]; /* max extension field */
+	u_int32	exten[(NTP_MAXEXTEN + MAX_MAC_LEN) / sizeof(u_int32)];
 #else	/* !AUTOKEY follows */
-	u_int32	exten[1];	/* misused */
+	u_int32	exten[(MAX_MAC_LEN) / sizeof(u_int32)];
 #endif	/* !AUTOKEY */
-	u_char	mac[MAX_MAC_LEN]; /* mac */
 };
 
 /*

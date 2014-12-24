@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.7 2013/12/28 03:20:14 christos Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.7.4.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -115,19 +115,25 @@
 #endif /* HAVE_PRIV_H */
 #endif /* HAVE_DROPROOT */
 
+#if defined (LIBSECCOMP) && (KERN_SECCOMP)
+/* # include <sys/types.h> */
+# include <sys/resource.h>
+# include <seccomp.h>
+#endif /* LIBSECCOMP and KERN_SECCOMP */
+
 #ifdef HAVE_DNSREGISTRATION
-#include <dns_sd.h>
+# include <dns_sd.h>
 DNSServiceRef mdns;
 #endif
 
 #ifdef HAVE_SETPGRP_0
-#define ntp_setpgrp(x, y)	setpgrp()
+# define ntp_setpgrp(x, y)	setpgrp()
 #else
-#define ntp_setpgrp(x, y)	setpgrp(x, y)
+# define ntp_setpgrp(x, y)	setpgrp(x, y)
 #endif
 
 #ifdef HAVE_SOLARIS_PRIVS
-#define LOWPRIVS "basic,sys_time,net_privaddr,proc_setid,!proc_info,!proc_session,!proc_exec"
+# define LOWPRIVS "basic,sys_time,net_privaddr,proc_setid,!proc_info,!proc_session,!proc_exec"
 static priv_set_t *lowprivs = NULL;
 static priv_set_t *highprivs = NULL;
 #endif /* HAVE_SOLARIS_PRIVS */
@@ -1005,6 +1011,110 @@ getgroup:
 	}	/* if (droproot) */
 # endif	/* HAVE_DROPROOT */
 
+/* libssecomp sandboxing */
+#if defined (LIBSECCOMP) && (KERN_SECCOMP)
+	scmp_filter_ctx ctx;
+
+	if ((ctx = seccomp_init(SCMP_ACT_KILL)) < 0)
+		msyslog(LOG_ERR, "%s: seccomp_init(SCMP_ACT_KILL) failed: %m", __func__);
+	else {
+		msyslog(LOG_DEBUG, "%s: seccomp_init(SCMP_ACT_KILL) succeeded", __func__);
+	}
+
+#ifdef __x86_64__
+int scmp_sc[] = {
+	SCMP_SYS(adjtimex),
+	SCMP_SYS(bind),
+	SCMP_SYS(brk),
+	SCMP_SYS(chdir),
+	SCMP_SYS(clock_gettime),
+	SCMP_SYS(clock_settime),
+	SCMP_SYS(close),
+	SCMP_SYS(connect),
+	SCMP_SYS(exit_group),
+	SCMP_SYS(fstat),
+	SCMP_SYS(fsync),
+	SCMP_SYS(futex),
+	SCMP_SYS(getitimer),
+	SCMP_SYS(getsockname),
+	SCMP_SYS(ioctl),
+	SCMP_SYS(lseek),
+	SCMP_SYS(madvise),
+	SCMP_SYS(mmap),
+	SCMP_SYS(munmap),
+	SCMP_SYS(open),
+	SCMP_SYS(poll),
+	SCMP_SYS(read),
+	SCMP_SYS(recvmsg),
+	SCMP_SYS(rename),
+	SCMP_SYS(rt_sigaction),
+	SCMP_SYS(rt_sigprocmask),
+	SCMP_SYS(rt_sigreturn),
+	SCMP_SYS(select),
+	SCMP_SYS(sendto),
+	SCMP_SYS(setitimer),
+	SCMP_SYS(setsid),
+	SCMP_SYS(socket),
+	SCMP_SYS(stat),
+	SCMP_SYS(time),
+	SCMP_SYS(write),
+};
+#endif
+#ifdef __i386__
+int scmp_sc[] = {
+	SCMP_SYS(_newselect),
+	SCMP_SYS(adjtimex),
+	SCMP_SYS(brk),
+	SCMP_SYS(chdir),
+	SCMP_SYS(clock_gettime),
+	SCMP_SYS(clock_settime),
+	SCMP_SYS(close),
+	SCMP_SYS(exit_group),
+	SCMP_SYS(fsync),
+	SCMP_SYS(futex),
+	SCMP_SYS(getitimer),
+	SCMP_SYS(madvise),
+	SCMP_SYS(mmap),
+	SCMP_SYS(mmap2),
+	SCMP_SYS(munmap),
+	SCMP_SYS(open),
+	SCMP_SYS(poll),
+	SCMP_SYS(read),
+	SCMP_SYS(rename),
+	SCMP_SYS(rt_sigaction),
+	SCMP_SYS(rt_sigprocmask),
+	SCMP_SYS(select),
+	SCMP_SYS(setitimer),
+	SCMP_SYS(setsid),
+	SCMP_SYS(sigprocmask),
+	SCMP_SYS(sigreturn),
+	SCMP_SYS(socketcall),
+	SCMP_SYS(stat64),
+	SCMP_SYS(time),
+	SCMP_SYS(write),
+};
+#endif
+	{
+		int i;
+
+		for (i = 0; i < COUNTOF(scmp_sc); i++) {
+			if (seccomp_rule_add(ctx,
+			    SCMP_ACT_ALLOW, scmp_sc[i], 0) < 0) {
+				msyslog(LOG_ERR,
+				    "%s: seccomp_rule_add() failed: %m",
+				    __func__);
+			}
+		}
+	}
+
+	if (seccomp_load(ctx) < 0)
+		msyslog(LOG_ERR, "%s: seccomp_load() failed: %m",
+		    __func__);	
+	else {
+		msyslog(LOG_DEBUG, "%s: seccomp_load() succeeded", __func__);
+	}
+#endif /* LIBSECCOMP and KERN_SECCOMP */
+
 # ifdef HAVE_IO_COMPLETION_PORT
 
 	for (;;) {
@@ -1149,10 +1259,7 @@ finish(
 		sig_desc = "";
 	msyslog(LOG_NOTICE, "%s exiting on signal %d (%s)", progname,
 		sig, sig_desc);
-	if (HAVE_OPT( PIDFILE ))
-		if (-1 == unlink(OPT_ARG( PIDFILE )))
-			msyslog(LOG_NOTICE, "unlink(\"%s\") failed: %m",
-				OPT_ARG( PIDFILE ));
+	/* See Bug 2513 and Bug 2522 re the unlink of PIDFILE */
 # ifdef HAVE_DNSREGISTRATION
 	if (mdns != NULL)
 		DNSServiceRefDeallocate(mdns);

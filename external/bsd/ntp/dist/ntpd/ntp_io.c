@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.14 2014/01/26 02:21:08 mlelstv Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.14.4.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -11,6 +11,12 @@
 
 #include <stdio.h>
 #include <signal.h>
+#ifdef HAVE_FNMATCH_H
+# include <fnmatch.h>
+# if !defined(FNM_CASEFOLD) && defined(FNM_IGNORECASE)
+#  define FNM_CASEFOLD FNM_IGNORECASE
+# endif
+#endif
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
@@ -265,7 +271,9 @@ static	SOCKET	open_socket	(sockaddr_u *, int, int, endpt *);
 static	char *	fdbits		(int, fd_set *);
 static	void	set_reuseaddr	(int);
 static	isc_boolean_t	socket_broadcast_enable	 (struct interface *, SOCKET, sockaddr_u *);
+#ifdef  OS_MISSES_SPECIFIC_ROUTE_UPDATES
 static	isc_boolean_t	socket_broadcast_disable (struct interface *, sockaddr_u *);
+#endif
 
 typedef struct remaddr remaddr_t;
 
@@ -710,7 +718,9 @@ is_ip_address(
 	)
 {
 	struct in_addr in4;
-	struct in6_addr in6;
+	struct addrinfo hints;
+	struct addrinfo *result;
+	struct sockaddr_in6 *resaddr6;
 	char tmpbuf[128];
 	char *pch;
 
@@ -746,14 +756,16 @@ is_ip_address(
 			} else {
 				strlcpy(tmpbuf, host, sizeof(tmpbuf));
 			}
-			pch = strchr(tmpbuf, '%');
-			if (pch != NULL)
-				*pch = '\0';
-
-			if (inet_pton(AF_INET6, tmpbuf, &in6) == 1) {
+			ZERO(hints);
+			hints.ai_family = AF_INET6;
+			hints.ai_flags |= AI_NUMERICHOST;
+			if (getaddrinfo(tmpbuf, NULL, &hints, &result) == 0) {
 				AF(addr) = AF_INET6;
-				SET_ADDR6N(addr, in6);
+				resaddr6 = (struct sockaddr_in6 *)result->ai_addr;
+				SET_ADDR6N(addr, resaddr6->sin6_addr);
+				SET_SCOPE(addr, resaddr6->sin6_scope_id);
 
+				freeaddrinfo(result);
 				return TRUE;
 			}
 		}
@@ -1353,7 +1365,12 @@ interface_action(
 
 		case MATCH_IFNAME:
 			if (if_name != NULL
-			    && !strcasecmp(if_name, rule->if_name)) {
+#if defined(HAVE_FNMATCH) && defined(FNM_CASEFOLD)
+			    && !fnmatch(rule->if_name, if_name, FNM_CASEFOLD)
+#else
+			    && !strcasecmp(if_name, rule->if_name)
+#endif
+			    ) {
 
 				DPRINTF(4, ("interface name match - %s\n",
 				    action_text(rule->action)));
@@ -2258,6 +2275,7 @@ socket_broadcast_enable(
 #endif /* SO_BROADCAST */
 }
 
+#ifdef  OS_MISSES_SPECIFIC_ROUTE_UPDATES
 /*
  * Remove a broadcast address from a given socket
  * The socket is in the ep_list all we need to do is disable
@@ -2284,6 +2302,7 @@ socket_broadcast_disable(
 	return ISC_FALSE;
 #endif /* SO_BROADCAST */
 }
+#endif /* OS_MISSES_SPECIFIC_ROUTE_UPDATES */
 
 #endif /* OPEN_BCAST_SOCKET */
 
@@ -2337,7 +2356,7 @@ enable_multicast_if(
 #ifdef IP_MULTICAST_LOOP
 	TYPEOF_IP_MULTICAST_LOOP off = 0;
 #endif
-#ifdef IPV6_MULTICAST_LOOP
+#if defined(INCLUDE_IPV6_MULTICAST_SUPPORT) && defined(IPV6_MULTICAST_LOOP)
 	u_int off6 = 0;
 #endif
 
@@ -3462,6 +3481,33 @@ read_network_packet(
 		    fd, buflen, stoa(&rb->recv_srcadr)));
 
 	/*
+	** Bug 2672: Some OSes (MacOSX and Linux) don't block spoofed ::1
+	*/
+
+	// temporary hack...
+#ifndef HAVE_SOLARIS_PRIVS
+	if (AF_INET6 == itf->family) {
+		DPRINTF(1, ("Got an IPv6 packet, from <%s> (%d) to <%s> (%d)\n",
+			stoa(&rb->recv_srcadr),
+			IN6_IS_ADDR_LOOPBACK(&SOCK_ADDR6(&rb->recv_srcadr)),
+			stoa(&itf->sin),
+			!IN6_IS_ADDR_LOOPBACK(&SOCK_ADDR6(&itf->sin))
+			));
+	}
+
+	if (   AF_INET6 == itf->family
+	    && IN6_IS_ADDR_LOOPBACK(&SOCK_ADDR6(&rb->recv_srcadr))
+	    && !IN6_IS_ADDR_LOOPBACK(&SOCK_ADDR6(&itf->sin))
+	   ) {
+		packets_dropped++;
+		DPRINTF(1, ("DROPPING that packet\n"));
+		freerecvbuf(rb);
+		return buflen;
+	}
+	DPRINTF(1, ("processing that packet\n"));
+#endif
+
+	/*
 	 * Got one.  Mark how and when it got here,
 	 * put it on the full list and do bookkeeping.
 	 */
@@ -4444,18 +4490,18 @@ delete_interface_from_list(
 {
 	remaddr_t *unlinked;
 
-	do {
+	for (;;) {
 		UNLINK_EXPR_SLIST(unlinked, remoteaddr_list, iface ==
 		    UNLINK_EXPR_SLIST_CURRENT()->ep, link,
 		    remaddr_t);
 
-		if (unlinked != NULL) {
-			DPRINTF(4, ("Deleted addr %s for interface #%d %s from list of addresses\n",
-				stoa(&unlinked->addr), iface->ifnum,
-				iface->name));
-			free(unlinked);
-		}
-	} while (unlinked != NULL);
+		if (unlinked == NULL)
+			break;
+		DPRINTF(4, ("Deleted addr %s for interface #%d %s from list of addresses\n",
+			    stoa(&unlinked->addr), iface->ifnum,
+			    iface->name));
+		free(unlinked);
+	}
 }
 
 

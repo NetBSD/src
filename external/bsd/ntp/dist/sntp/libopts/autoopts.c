@@ -1,4 +1,4 @@
-/*	$NetBSD: autoopts.c,v 1.3 2013/12/28 03:20:15 christos Exp $	*/
+/*	$NetBSD: autoopts.c,v 1.3.4.1 2014/12/24 00:05:26 riz Exp $	*/
 
 
 /**
@@ -15,7 +15,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2013 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control

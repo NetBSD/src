@@ -1,4 +1,4 @@
-/*	$NetBSD: clocktypes.c,v 1.1.1.2 2013/12/27 23:30:48 christos Exp $	*/
+/*	$NetBSD: clocktypes.c,v 1.1.1.2.4.1 2014/12/24 00:05:20 riz Exp $	*/
 
 /*
  * Data for pretty printing clock types
@@ -105,6 +105,8 @@ struct clktype clktypes[] = {
 	  "NEOCLK4X"},
         { REFCLK_TSYNCPCI,    "Spectracom TSYNC PCI timing board (45)",
           "PCI_TSYNC"},
+	{ REFCLK_GPSDJSON,	"GPSD JSON socket (46)",
+	  "GPSD_JSON"},
 	{ -1,			"", "" }
 };
 

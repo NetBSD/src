@@ -1,4 +1,4 @@
-/*	$NetBSD: boolean.c,v 1.1.1.3 2013/12/27 23:31:35 christos Exp $	*/
+/*	$NetBSD: boolean.c,v 1.1.1.3.4.1 2014/12/24 00:05:26 riz Exp $	*/
 
 
 /**
@@ -15,7 +15,7 @@
  *
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2013 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -38,8 +38,8 @@
  * private:
  *
  * what:  Decipher a boolean value
- * arg:   + tOptions* + pOpts    + program options descriptor +
- * arg:   + tOptDesc* + pOptDesc + the descriptor for this arg +
+ * arg:   + tOptions* + opts + program options descriptor +
+ * arg:   + tOptDesc* + od  + the descriptor for this arg +
  *
  * doc:
  *  Decipher a true or false value for a boolean valued option argument.
@@ -47,28 +47,23 @@
  *  it is an empty string or it is a number that evaluates to zero.
 =*/
 void
-optionBooleanVal(tOptions * pOpts, tOptDesc * pOD )
+optionBooleanVal(tOptions * opts, tOptDesc * od)
 {
     char* pz;
     bool  res = true;
 
-    (void)pOpts;
-
-    if (pOpts <= OPTPROC_EMIT_LIMIT)
+    if (INQUERY_CALL(opts, od))
         return;
 
-    if ((pOD->fOptState & OPTST_RESET) != 0)
-        return;
-
-    if (pOD->optArg.argString == NULL) {
-        pOD->optArg.argBool = false;
+    if (od->optArg.argString == NULL) {
+        od->optArg.argBool = false;
         return;
     }
 
-    switch (*(pOD->optArg.argString)) {
+    switch (*(od->optArg.argString)) {
     case '0':
     {
-        long  val = strtol( pOD->optArg.argString, &pz, 0 );
+        long  val = strtol(od->optArg.argString, &pz, 0);
         if ((val != 0) || (*pz != NUL))
             break;
         /* FALLTHROUGH */
@@ -81,16 +76,16 @@ optionBooleanVal(tOptions * pOpts, tOptDesc * pOD )
         res = false;
         break;
     case '#':
-        if (pOD->optArg.argString[1] != 'f')
+        if (od->optArg.argString[1] != 'f')
             break;
         res = false;
     }
 
-    if (pOD->fOptState & OPTST_ALLOC_ARG) {
-        AGFREE(pOD->optArg.argString);
-        pOD->fOptState &= ~OPTST_ALLOC_ARG;
+    if (od->fOptState & OPTST_ALLOC_ARG) {
+        AGFREE(od->optArg.argString);
+        od->fOptState &= ~OPTST_ALLOC_ARG;
     }
-    pOD->optArg.argBool = res;
+    od->optArg.argBool = res;
 }
 /** @}
  *

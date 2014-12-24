@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.1.1.1 2013/12/27 23:31:33 christos Exp $	*/
+/*	$NetBSD: queue.h,v 1.1.1.1.6.1 2014/12/24 00:05:25 riz Exp $	*/
 
 /*	$OpenBSD: queue.h,v 1.16 2000/09/07 19:47:59 art Exp $	*/
 /*	NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp 	*/

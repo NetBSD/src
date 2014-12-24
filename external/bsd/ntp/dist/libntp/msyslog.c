@@ -1,4 +1,4 @@
-/*	$NetBSD: msyslog.c,v 1.1.1.3 2013/12/27 23:30:48 christos Exp $	*/
+/*	$NetBSD: msyslog.c,v 1.1.1.3.4.1 2014/12/24 00:05:20 riz Exp $	*/
 
 /*
  * msyslog - either send a message to the terminal or print it on

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_timer.c,v 1.1.1.3 2013/12/27 23:31:03 christos Exp $	*/
+/*	$NetBSD: ntp_timer.c,v 1.1.1.3.4.1 2014/12/24 00:05:21 riz Exp $	*/
 
 /*
  * ntp_timer.c - event timer support routines
@@ -43,8 +43,6 @@
 #define	TC_ERR	(-1)
 #endif
 
-extern char *leapseconds_file;	/* name of the leapseconds file */
-
 static void check_leapsec(u_int32, const time_t*, int/*BOOL*/);
 
 /*
@@ -70,7 +68,7 @@ volatile int alarm_flag;
 static  u_long interface_timer;	/* interface update timer */
 static	u_long adjust_timer;	/* second timer */
 static	u_long stats_timer;	/* stats timer */
-static	u_long check_leapfile;	/* Report leapfile problems once/day */
+static	u_long leapf_timer;	/* Report leapfile problems once/day */
 static	u_long huffpuff_timer;	/* huff-n'-puff timer */
 static	u_long worker_idle_timer;/* next check for idle intres */
 u_long	leapsec;	        /* seconds to next leap (proximity class) */
@@ -193,7 +191,7 @@ init_timer(void)
 	alarm_overflow = 0;
 	adjust_timer = 1;
 	stats_timer = SECSPERHR;
-	check_leapfile = 0;
+	leapf_timer = SECSPERDAY;
 	huffpuff_timer = 0;
 	interface_timer = 0;
 	current_time = 0;
@@ -429,30 +427,11 @@ timer(void)
 	if (stats_timer <= current_time) {
 		stats_timer += SECSPERHR;
 		write_stats();
-		if (sys_tai != 0 && leapsec_expired(now.l_ui, &tnow)) {
-			int clf = check_leap_file();
-
-			/*
-			** check_leap_file() returns -1 on a problem,
-			** 0 on an expired leapsecond file, or the number
-			** of days until the leapsecond file expires.
-			**
-			** We only want to log stuff once/day.
-			*/
-			if (check_leapfile < current_time) {
-				check_leapfile += SECSPERDAY;
-				if (-1 == clf) {
-					/* nothing to do */
-				} else if (0 == clf) {
-					report_event(EVNT_LEAPVAL, NULL, NULL);
-					msyslog(LOG_WARNING,
-						"timer: leapseconds data file <%s> has expired!",
-						leapseconds_file);
-				} else if (clf < 31) {
-					msyslog(LOG_WARNING,
-						"timer: leapseconds data file <%s> will expire in less than %d days' time.", leapseconds_file, clf);
-				}
-			}
+		if (leapf_timer <= current_time) {
+			leapf_timer += SECSPERDAY;
+			check_leap_file(TRUE, now.l_ui, &tnow);
+		} else {
+			check_leap_file(FALSE, now.l_ui, &tnow);
 		}
 	}
 }
