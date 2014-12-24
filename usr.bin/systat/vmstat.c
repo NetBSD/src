@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.80 2014/06/20 07:08:15 njoly Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.81 2014/12/24 20:01:22 dennis Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.80 2014/06/20 07:08:15 njoly Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.81 2014/12/24 20:01:22 dennis Exp $");
 #endif /* not lint */
 
 /*
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.80 2014/06/20 07:08:15 njoly Exp $");
 static struct Info {
 	struct	uvmexp_sysctl uvmexp;
 	struct	vmtotal Total;
-	struct	nchstats_sysctl nchstats;
+	struct	nchstats nchstats;
 	long	nchcount;
 	long	*intrcnt;
 	u_int64_t	*evcnt;
