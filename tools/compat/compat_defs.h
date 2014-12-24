@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.99 2014/09/24 13:17:35 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.100 2014/12/24 16:18:46 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -77,6 +77,11 @@
 #undef __UNCONST
 #endif
 #define __UNCONST(a)   ((void *)(unsigned long)(const void *)(a))
+#ifdef __UNVOLATILE
+#undef __UNVOLATILE
+#endif
+#define __UNVOLATILE(a)        ((void *)(unsigned long)(volatile void *)(a))
+
 
 #undef __predict_false
 #define __predict_false(x) (x)
