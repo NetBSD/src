@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6 2014/12/22 11:11:34 nonaka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7 2014/12/24 04:03:02 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6 2014/12/22 11:11:34 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7 2014/12/24 04:03:02 nonaka Exp $");
 
 /*
  *	Manages physical address maps.
@@ -543,8 +543,8 @@ pmap_destroy(pmap_t pmap)
 	pmap_segtab_destroy(pmap, NULL, 0);
 
 #ifdef MULTIPROCESSOR
-	kcpuset_destroy(&pmap->pm_active);
-	kcpuset_destroy(&pmap->pm_onproc);
+	kcpuset_destroy(pmap->pm_active);
+	kcpuset_destroy(pmap->pm_onproc);
 #endif
 
 	pool_put(&pmap_pmap_pool, pmap);
