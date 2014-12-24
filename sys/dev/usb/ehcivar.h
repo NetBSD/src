@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.6 2014/12/23 19:31:44 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.7 2014/12/24 14:11:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -91,27 +91,27 @@ typedef struct ehci_soft_itd {
 #define EHCI_SITD_CHUNK (EHCI_PAGE_SIZE / EHCI_SITD_SIZE)
 
 struct ehci_xfer {
-	struct usbd_xfer xfer;
-	struct usb_task	abort_task;
-	TAILQ_ENTRY(ehci_xfer) inext; /* list of active xfers */
+	struct usbd_xfer ex_xfer;
+	struct usb_task	ex_aborttask;
+	TAILQ_ENTRY(ehci_xfer) ex_next; /* list of active xfers */
 	union {
 		/* ctrl/bulk/intr */
 		struct {
-			ehci_soft_qtd_t *sqtdstart;
-			ehci_soft_qtd_t *sqtdend;
+			ehci_soft_qtd_t *ex_sqtdstart;
+			ehci_soft_qtd_t *ex_sqtdend;
 		};
 		/* isoc */
 		struct {
-			ehci_soft_itd_t *itdstart;
-			ehci_soft_itd_t *itdend;
+			ehci_soft_itd_t *ex_itdstart;
+			ehci_soft_itd_t *ex_itdend;
 		};
 		/* split isoc */
 		struct {
-			ehci_soft_sitd_t *sitdstart;
-			ehci_soft_sitd_t *sitdend;
+			ehci_soft_sitd_t *ex_sitdstart;
+			ehci_soft_sitd_t *ex_sitdend;
 		};
 	};
-	int isdone;	/* used only when DIAGNOSTIC is defined */
+	int ex_isdone;	/* used only when DIAGNOSTIC is defined */
 };
 #define EXFER(xfer) ((struct ehci_xfer *)(xfer))
 
