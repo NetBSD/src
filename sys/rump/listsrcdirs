@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.25 2014/12/23 13:23:47 justin Exp $
+#	$NetBSD: listsrcdirs,v 1.26 2014/12/24 21:21:18 justin Exp $
 #
 
 #
@@ -96,7 +96,7 @@ lsrc usr /libexec/		ld.elf_so
 lsrc usr /bin/			chmod cp dd df ed ln ls mkdir mv pax
 lsrc usr /bin/			rm rmdir
 lsrc usr /sbin/			cgdconfig chown
-lsrc usr /sbin/			disklabel dump
+lsrc usr /sbin/			disklabel dump fdisk
 lsrc usr /sbin/			fsck fsck_ext2fs fsck_ffs fsck_msdos
 lsrc usr /sbin/			ifconfig mknod
 lsrc usr /sbin/			modstat mount
