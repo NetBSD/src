@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.12 2014/12/19 06:54:40 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.13 2014/12/24 02:48:24 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.12 2014/12/19 06:54:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.13 2014/12/24 02:48:24 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -707,7 +707,12 @@ vioif_stop(struct ifnet *ifp, int disable)
 	struct vioif_softc *sc = ifp->if_softc;
 	struct virtio_softc *vsc = sc->sc_virtio;
 
+	/* Take the locks to ensure that ongoing TX/RX finish */
+	VIOIF_TX_LOCK(sc);
+	VIOIF_RX_LOCK(sc);
 	sc->sc_stopping = true;
+	VIOIF_RX_UNLOCK(sc);
+	VIOIF_TX_UNLOCK(sc);
 
 	/* only way to stop I/O and DMA is resetting... */
 	virtio_reset(vsc);
