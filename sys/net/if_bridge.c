@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.92 2014/12/22 09:42:45 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.93 2014/12/24 08:55:09 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.92 2014/12/22 09:42:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.93 2014/12/24 08:55:09 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.92 2014/12/22 09:42:45 ozaki-r Exp $
 #include <sys/cpu.h>
 #include <sys/cprng.h>
 #include <sys/mutex.h>
+#include <sys/kmem.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -205,7 +206,7 @@ static void	bridge_rtflush(struct bridge_softc *, int);
 static int	bridge_rtdaddr(struct bridge_softc *, const uint8_t *);
 static void	bridge_rtdelete(struct bridge_softc *, struct ifnet *ifp);
 
-static int	bridge_rtable_init(struct bridge_softc *);
+static void	bridge_rtable_init(struct bridge_softc *);
 static void	bridge_rtable_fini(struct bridge_softc *);
 
 static struct bridge_rtnode *bridge_rtnode_lookup(struct bridge_softc *,
@@ -347,7 +348,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	struct bridge_softc *sc;
 	struct ifnet *ifp;
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
+	sc = kmem_zalloc(sizeof(*sc),  KM_SLEEP);
 	ifp = &sc->sc_if;
 
 	sc->sc_brtmax = BRIDGE_RTABLE_MAX;
@@ -445,7 +446,7 @@ bridge_clone_destroy(struct ifnet *ifp)
 	if (sc->sc_iflist_lock)
 		mutex_obj_free(sc->sc_iflist_lock);
 
-	free(sc, M_DEVBUF);
+	kmem_free(sc, sizeof(*sc));
 
 	return (0);
 }
@@ -773,7 +774,7 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 	}
 #endif
 
-	free(bif, M_DEVBUF);
+	kmem_free(bif, sizeof(*bif));
 }
 
 static int
@@ -804,9 +805,7 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	if ((ifs->if_flags & IFF_SIMPLEX) == 0)
 		return EINVAL;
 
-	bif = malloc(sizeof(*bif), M_DEVBUF, M_NOWAIT);
-	if (bif == NULL)
-		return (ENOMEM);
+	bif = kmem_alloc(sizeof(*bif), KM_SLEEP);
 
 	switch (ifs->if_type) {
 	case IFT_ETHER:
@@ -846,7 +845,7 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
  out:
 	if (error) {
 		if (bif != NULL)
-			free(bif, M_DEVBUF);
+			kmem_free(bif, sizeof(*bif));
 	}
 	return (error);
 }
@@ -986,20 +985,40 @@ bridge_ioctl_gifs(struct bridge_softc *sc, void *arg)
 	struct ifbreq *breqs;
 	int i, count, error = 0;
 
+retry:
 	BRIDGE_LOCK(sc);
-
 	count = 0;
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next)
 		count++;
+	BRIDGE_UNLOCK(sc);
+
+	if (count == 0) {
+		bifc->ifbic_len = 0;
+		return 0;
+	}
 
 	if (bifc->ifbic_len == 0 || bifc->ifbic_len < (sizeof(*breqs) * count)) {
-		BRIDGE_UNLOCK(sc);
 		/* Tell that a larger buffer is needed */
 		bifc->ifbic_len = sizeof(*breqs) * count;
 		return 0;
 	}
 
-	breqs = malloc(sizeof(*breqs) * count, M_DEVBUF, M_NOWAIT);
+	breqs = kmem_alloc(sizeof(*breqs) * count, KM_SLEEP);
+
+	BRIDGE_LOCK(sc);
+
+	i = 0;
+	LIST_FOREACH(bif, &sc->sc_iflist, bif_next)
+		i++;
+	if (i > count) {
+		/*
+		 * The number of members has been increased.
+		 * We need more memory!
+		 */
+		BRIDGE_UNLOCK(sc);
+		kmem_free(breqs, sizeof(*breqs) * count);
+		goto retry;
+	}
 
 	i = 0;
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
@@ -1025,7 +1044,7 @@ bridge_ioctl_gifs(struct bridge_softc *sc, void *arg)
 	}
 	bifc->ifbic_len = sizeof(*breqs) * i;
 
-	free(breqs, M_DEVBUF);
+	kmem_free(breqs, sizeof(*breqs) * count);
 
 	return error;
 }
@@ -2154,15 +2173,13 @@ bridge_rtdelete(struct bridge_softc *sc, struct ifnet *ifp)
  *
  *	Initialize the route table for this bridge.
  */
-static int
+static void
 bridge_rtable_init(struct bridge_softc *sc)
 {
 	int i;
 
-	sc->sc_rthash = malloc(sizeof(*sc->sc_rthash) * BRIDGE_RTHASH_SIZE,
-	    M_DEVBUF, M_NOWAIT);
-	if (sc->sc_rthash == NULL)
-		return (ENOMEM);
+	sc->sc_rthash = kmem_alloc(sizeof(*sc->sc_rthash) * BRIDGE_RTHASH_SIZE,
+	    KM_SLEEP);
 
 	for (i = 0; i < BRIDGE_RTHASH_SIZE; i++)
 		LIST_INIT(&sc->sc_rthash[i]);
@@ -2172,8 +2189,6 @@ bridge_rtable_init(struct bridge_softc *sc)
 	LIST_INIT(&sc->sc_rtlist);
 
 	sc->sc_rtlist_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
-
-	return (0);
 }
 
 /*
@@ -2185,7 +2200,7 @@ static void
 bridge_rtable_fini(struct bridge_softc *sc)
 {
 
-	free(sc->sc_rthash, M_DEVBUF);
+	kmem_free(sc->sc_rthash, sizeof(*sc->sc_rthash) * BRIDGE_RTHASH_SIZE);
 	if (sc->sc_rtlist_lock)
 		mutex_obj_free(sc->sc_rtlist_lock);
 }
