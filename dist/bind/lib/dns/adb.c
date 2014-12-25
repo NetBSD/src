@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.6.4.4 2012/07/25 11:58:42 jdc Exp $	*/
+/*	$NetBSD: adb.c,v 1.6.4.5 2014/12/25 23:19:10 he Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -202,6 +202,7 @@ struct dns_adbfetch {
 	unsigned int                    magic;
 	dns_fetch_t                    *fetch;
 	dns_rdataset_t                  rdataset;
+	unsigned int			depth;
 };
 
 /*%
@@ -310,6 +311,7 @@ static void cancel_fetches_at_name(dns_adbname_t *);
 static isc_result_t dbfind_name(dns_adbname_t *, isc_stdtime_t,
 				dns_rdatatype_t);
 static isc_result_t fetch_name(dns_adbname_t *, isc_boolean_t,
+			       unsigned int, isc_counter_t *,
 			       dns_rdatatype_t);
 static inline void check_exit(dns_adb_t *);
 static void destroy(dns_adb_t *);
@@ -2282,6 +2284,19 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
 		   isc_stdtime_t now, dns_name_t *target,
 		   in_port_t port, dns_adbfind_t **findp)
 {
+	return (dns_adb_createfind2(adb, task, action, arg, name,
+				   qname, qtype, options, now,
+				   target, port, 0, NULL, findp));
+}
+
+isc_result_t
+dns_adb_createfind2(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
+		   void *arg, dns_name_t *name, dns_name_t *qname,
+		   dns_rdatatype_t qtype, unsigned int options,
+		   isc_stdtime_t now, dns_name_t *target,
+		   in_port_t port, unsigned int depth, isc_counter_t *qc,
+		   dns_adbfind_t **findp)
+{
 	dns_adbfind_t *find;
 	dns_adbname_t *adbname;
 	int bucket;
@@ -2512,7 +2527,7 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
 		 * Start V4.
 		 */
 		if (WANT_INET(wanted_fetches) &&
-		    fetch_name(adbname, start_at_zone,
+		    fetch_name(adbname, start_at_zone, depth, qc,
 			       dns_rdatatype_a) == ISC_R_SUCCESS) {
 			DP(DEF_LEVEL,
 			   "dns_adb_createfind: started A fetch for name %p",
@@ -2523,7 +2538,7 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
 		 * Start V6.
 		 */
 		if (WANT_INET6(wanted_fetches) &&
-		    fetch_name(adbname, start_at_zone,
+		    fetch_name(adbname, start_at_zone, depth, qc,
 			       dns_rdatatype_aaaa) == ISC_R_SUCCESS) {
 			DP(DEF_LEVEL,
 			   "dns_adb_createfind: "
@@ -3256,6 +3271,12 @@ fetch_callback(isc_task_t *task, isc_event_t *ev) {
 		DP(DEF_LEVEL, "adb: fetch of '%s' %s failed: %s",
 		   buf, address_type == DNS_ADBFIND_INET ? "A" : "AAAA",
 		   dns_result_totext(dev->result));
+		/*
+		* Don't record a failure unless this is the initial
+		* fetch of a chain.
+		*/
+		if (fetch->depth > 1)
+			goto out;
 		/* XXXMLG Don't pound on bad servers. */
 		if (address_type == DNS_ADBFIND_INET) {
 			name->expire_v4 = ISC_MIN(name->expire_v4, now + 300);
@@ -3295,6 +3316,7 @@ fetch_callback(isc_task_t *task, isc_event_t *ev) {
 static isc_result_t
 fetch_name(dns_adbname_t *adbname,
 	   isc_boolean_t start_at_zone,
+	   unsigned int depth, isc_counter_t *qc,
 	   dns_rdatatype_t type)
 {
 	isc_result_t result;
@@ -3341,9 +3363,11 @@ fetch_name(dns_adbname_t *adbname,
 		goto cleanup;
 	}
 
-	result = dns_resolver_createfetch(adb->view->resolver, &adbname->name,
+	fetch->depth = depth;
+	result = dns_resolver_createfetch3(adb->view->resolver, &adbname->name,
 					  type, name, nameservers, NULL,
-					  options, adb->task, fetch_callback,
+					  NULL, 0, options, depth, qc,
+					  adb->task, fetch_callback,
 					  adbname, &fetch->rdataset, NULL,
 					  &fetch->fetch);
 	if (result != ISC_R_SUCCESS)
