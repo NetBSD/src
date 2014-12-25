@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.174 2014/12/25 02:56:48 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.175 2014/12/25 05:08:19 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -4816,12 +4816,14 @@ distrib/sets/lists/xetc/mi			1.19-1.22
 external/mit/xorg/bin/Makefile			1.12-1.13
 external/mit/xorg/bin/fc-pattern/Makefile	new
 external/mit/xorg/bin/fc-validate/Makefile	new
+external/mit/xorg/include/xcb-proto/Makefile	patch
 external/mit/xorg/lib/fontconfig/etc/fonts.conf		patch
 external/mit/xorg/lib/fontconfig/etc/conf.avail/Makefile patch
 external/mit/xorg/lib/fontconfig/etc/conf.d/Makefile	patch
 external/mit/xorg/lib/fontconfig/src/Makefile		patch
 external/mit/xorg/lib/fontconfig/src/Makefile.fcarch	patch
 external/mit/xorg/lib/fontconfig/src/shlib_version	patch
+external/mit/xorg/server/xorg-server/Makefile	patch
 external/mit/xorg/tools/fc-cache/Makefile	patch
 xsrc/external/mit/fontconfig/Makefile.am	patch
 xsrc/external/mit/fontconfig/Makefile.in	patch
@@ -4829,6 +4831,7 @@ xsrc/external/mit/fontconfig/ac_check_symbol.m4	patch
 xsrc/external/mit/fontconfig/ax_cc_for_build.m4	patch
 xsrc/external/mit/fontconfig/ax_create_stdint_h.m4	patch
 xsrc/external/mit/fontconfig/ax_pthread.m4		patch
+xsrc/external/mit/fontconfig/include/config.h	patch
 xsrc/external/mit/fontconfig/libtool.m4			patch
 xsrc/external/mit/fontconfig/ltoptions.m4		patch
 xsrc/external/mit/fontconfig/ltsugar.m4			patch
@@ -7256,4 +7259,3 @@ external/bsd/ntp/scripts/mkver			patch
 
 	Update ntp to 4.2.8.
 	[christos, ticket #1221]
-
