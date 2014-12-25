@@ -1,7 +1,7 @@
 dnl
 dnl Automated Testing Framework (atf)
 dnl
-dnl Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+dnl Copyright (c) 2007 The NetBSD Foundation, Inc.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -60,20 +60,25 @@ m4_define(CHECK_TCR, [TCR_DATA([expres], $2, $3)
                       AT_CHECK([diff -u expres $1], [0], [], [])])
 
 m4_define(CHECK_TCS_TCR,
-          [AT_CHECK([grep '^tc-end: $1, $2' $3], [0], [ignore], [])])
+          [AT_CHECK([grep '^tc-end: @<:@0-9. @:>@*, $1, $2' $3], [0],
+          [ignore], [])])
 
 m4_define(CHECK_TPS_TCR,
-          [AT_CHECK([grep '^tc-end: $1, $2' $3], [0], [ignore], [])])
+          [AT_CHECK([grep '^tc-end: @<:@0-9. @:>@*, $1, $2' $3], [0],
+          [ignore], [])])
 
 dnl The tests below are sorted depending on how important they are.
-m4_include(bootstrap/t_application_opts_args.at)
-m4_include(bootstrap/t_application_help.at)
 m4_include(bootstrap/t_test_program_filter.at)
 m4_include(bootstrap/t_test_program_run.at)
 m4_include(bootstrap/t_test_program_list.at)
-m4_include(bootstrap/t_atf_config.at)
-m4_include(bootstrap/t_atf_run.at)
 m4_include(bootstrap/t_test_program_compare.at)
 m4_include(bootstrap/t_subr_atf_check.at)
+
+m4_if([ENABLE_TOOLS], yes, [
+    m4_include(bootstrap/t_application_opts_args.at)
+    m4_include(bootstrap/t_application_help.at)
+    m4_include(bootstrap/t_atf_config.at)
+    m4_include(bootstrap/t_atf_run.at)
+])
 
 dnl vim: syntax=m4:expandtab:shiftwidth=4:softtabstop=4

@@ -1,7 +1,7 @@
-/*	$NetBSD: sample-update.c,v 1.2.6.1 2012/06/05 21:15:36 bouyer Exp $	*/
+/*	$NetBSD: sample-update.c,v 1.2.6.2 2014/12/25 17:54:29 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -40,6 +40,7 @@
 #include <isc/mem.h>
 #include <isc/parseint.h>
 #include <isc/sockaddr.h>
+#include <isc/string.h>
 #include <isc/util.h>
 
 #include <dns/callbacks.h>
@@ -190,7 +191,7 @@ main(int argc, char *argv[]) {
 			exit(1);
 		}
 		INSIST(res->ai_addrlen <= sizeof(sa_auth.type));
-		memcpy(&sa_auth.type, res->ai_addr, res->ai_addrlen);
+		memmove(&sa_auth.type, res->ai_addr, res->ai_addrlen);
 		freeaddrinfo(res);
 		sa_auth.length = res->ai_addrlen;
 		ISC_LINK_INIT(&sa_auth, link);
@@ -212,7 +213,7 @@ main(int argc, char *argv[]) {
 			exit(1);
 		}
 		INSIST(res->ai_addrlen <= sizeof(sa_recursive.type));
-		memcpy(&sa_recursive.type, res->ai_addr, res->ai_addrlen);
+		memmove(&sa_recursive.type, res->ai_addr, res->ai_addrlen);
 		freeaddrinfo(res);
 		sa_recursive.length = res->ai_addrlen;
 		ISC_LINK_INIT(&sa_recursive, link);
@@ -307,7 +308,7 @@ main(int argc, char *argv[]) {
 	dns_client_destroy(&client);
 	dns_lib_shutdown();
 
-	exit(0);
+	return (0);
 }
 
 /*
@@ -374,7 +375,7 @@ parse_name(char **cmdlinep, dns_name_t *name) {
 	isc_buffer_t source;
 
 	word = nsu_strsep(cmdlinep, " \t\r\n");
-	if (*word == 0) {
+	if (word == NULL || *word == 0) {
 		fprintf(stderr, "could not read owner name\n");
 		exit(1);
 	}

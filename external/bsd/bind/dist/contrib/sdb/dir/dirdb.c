@@ -1,7 +1,7 @@
-/*	$NetBSD: dirdb.c,v 1.2.6.1 2012/06/05 21:15:49 bouyer Exp $	*/
+/*	$NetBSD: dirdb.c,v 1.2.6.2 2014/12/25 17:54:23 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -181,7 +181,8 @@ static dns_sdbmethods_t dirdb_methods = {
 	dirdb_authority,
 	NULL, /* allnodes */
 	dirdb_create,
-	dirdb_destroy
+	dirdb_destroy,
+	NULL /* lookup2 */
 };
 
 /*

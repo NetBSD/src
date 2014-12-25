@@ -1,7 +1,7 @@
-/*	$NetBSD: context.c,v 1.2.6.1 2012/06/05 21:15:41 bouyer Exp $	*/
+/*	$NetBSD: context.c,v 1.2.6.2 2014/12/25 17:54:29 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -150,7 +150,7 @@ thread_key_mutex_init(void) {
 }
 
 static isc_result_t
-thread_key_init() {
+thread_key_init(void) {
 	isc_result_t result;
 
 	result = isc_once_do(&once, thread_key_mutex_init);

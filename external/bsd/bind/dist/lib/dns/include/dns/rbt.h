@@ -1,7 +1,7 @@
-/*	$NetBSD: rbt.h,v 1.5.6.1 2012/06/05 21:14:55 bouyer Exp $	*/
+/*	$NetBSD: rbt.h,v 1.5.6.2 2014/12/25 17:54:26 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -916,6 +916,31 @@ dns_rbtnodechain_nextflat(dns_rbtnodechain_t *chain, dns_name_t *name);
 #define dns_rbtnode_refinit(node, n)    ((node)->references = (n))
 #define dns_rbtnode_refdestroy(node)    REQUIRE((node)->references == 0)
 #define dns_rbtnode_refcurrent(node)    ((node)->references)
+
+#if (__STDC_VERSION__ + 0) >= 199901L || defined __GNUC__
+static inline void
+dns_rbtnode_refincrement0(dns_rbtnode_t *node, unsigned int *refs) {
+	node->references++;
+	if (refs != NULL)
+		*refs = node->references;
+}
+
+static inline void
+dns_rbtnode_refincrement(dns_rbtnode_t *node, unsigned int *refs) {
+	REQUIRE(node->references > 0);
+	node->references++;
+	if (refs != NULL)
+		*refs = node->references;
+}
+
+static inline void
+dns_rbtnode_refdecrement(dns_rbtnode_t *node, unsigned int *refs) {
+	REQUIRE(node->references > 0);
+	node->references--;
+	if (refs != NULL)
+		*refs = node->references;
+}
+#else
 #define dns_rbtnode_refincrement0(node, refs)                   \
 	do {                                                    \
 		unsigned int *_tmp = (unsigned int *)(refs);    \
@@ -937,6 +962,7 @@ dns_rbtnodechain_nextflat(dns_rbtnodechain_t *chain, dns_name_t *name);
 		if ((refs) != NULL)                             \
 			(*refs) = (node)->references;           \
 	} while (/*CONSTCOND*/0)
+#endif
 #endif /* DNS_RBT_USEISCREFCOUNT */
 
 ISC_LANG_ENDDECLS

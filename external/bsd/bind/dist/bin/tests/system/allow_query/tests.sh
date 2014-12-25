@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -609,6 +609,23 @@ ret=0
 $DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.$n || ret=1
 grep 'status: REFUSED' dig.out.ns2.$n > /dev/null || ret=1
 grep '^a.normal.example' dig.out.ns2.$n > /dev/null && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+# Test 57 - zones over views, zones disallow, query refused (allow-query-on)
+n=`expr $n + 1`
+cp -f ns2/named57.conf ns2/named.conf
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 reload 2>&1 | sed 's/^/I:ns2 /'
+sleep 5
+
+echo "I:test $n: zones over views, allow-query-on"
+ret=0
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.normal.example a > dig.out.ns2.1.$n || ret=1
+grep 'status: NOERROR' dig.out.ns2.1.$n > /dev/null || ret=1
+grep '^a.normal.example' dig.out.ns2.1.$n > /dev/null || ret=1
+$DIG $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.aclnotallow.example a > dig.out.ns2.2.$n || ret=1
+grep 'status: REFUSED' dig.out.ns2.2.$n > /dev/null || ret=1
+grep '^a.aclnotallow.example' dig.out.ns2.2.$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

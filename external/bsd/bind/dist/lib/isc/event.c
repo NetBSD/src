@@ -1,7 +1,7 @@
-/*	$NetBSD: event.c,v 1.2.6.1 2012/06/05 21:15:06 bouyer Exp $	*/
+/*	$NetBSD: event.c,v 1.2.6.2 2014/12/25 17:54:29 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -43,6 +43,25 @@ destroy(isc_event_t *event) {
 
 isc_event_t *
 isc_event_allocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
+		   isc_taskaction_t action, void *arg, size_t size)
+{
+	isc_event_t *event;
+
+	REQUIRE(size >= sizeof(struct isc_event));
+	REQUIRE(action != NULL);
+
+	event = isc_mem_get(mctx, size);
+	if (event == NULL)
+		return (NULL);
+
+	ISC_EVENT_INIT(event, size, 0, NULL, type, action, arg,
+		       sender, destroy, mctx);
+
+	return (event);
+}
+
+isc_event_t *
+isc_event_constallocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
 		   isc_taskaction_t action, const void *arg, size_t size)
 {
 	isc_event_t *event;

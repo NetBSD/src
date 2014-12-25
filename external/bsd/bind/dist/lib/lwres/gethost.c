@@ -1,7 +1,7 @@
-/*	$NetBSD: gethost.c,v 1.2.6.1 2012/06/05 21:14:54 bouyer Exp $	*/
+/*	$NetBSD: gethost.c,v 1.2.6.2 2014/12/25 17:54:32 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -155,6 +155,9 @@
 
 #include <errno.h>
 #include <string.h>
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h> /* uintptr_t */
+#endif
 
 #include <lwres/net.h>
 #include <lwres/netdb.h>
@@ -163,7 +166,7 @@
 
 #define LWRES_ALIGNBYTES (sizeof(char *) - 1)
 #define LWRES_ALIGN(p) \
-	(((unsigned long)(p) + LWRES_ALIGNBYTES) &~ LWRES_ALIGNBYTES)
+	(((uintptr_t)(p) + LWRES_ALIGNBYTES) &~ LWRES_ALIGNBYTES)
 
 static struct hostent *he = NULL;
 static int copytobuf(struct hostent *, struct hostent *, char *, int);
@@ -305,7 +308,7 @@ copytobuf(struct hostent *he, struct hostent *hptr, char *buf, int buflen) {
 	 * Find out the amount of space required to store the answer.
 	 */
         nptr = 2; /* NULL ptrs */
-        len = (char *)LWRES_ALIGN(buf) - buf;
+	len = (int)((char *)LWRES_ALIGN(buf) - buf);
         for (i = 0; he->h_addr_list[i]; i++, nptr++) {
                 len += he->h_length;
         }
@@ -333,7 +336,7 @@ copytobuf(struct hostent *he, struct hostent *hptr, char *buf, int buflen) {
 	 */
         hptr->h_addr_list = ptr;
         for (i = 0; he->h_addr_list[i]; i++, ptr++) {
-                memcpy(cp, he->h_addr_list[i], n);
+		memmove(cp, he->h_addr_list[i], n);
                 hptr->h_addr_list[i] = cp;
                 cp += n;
         }

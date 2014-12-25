@@ -1,7 +1,7 @@
-/*	$NetBSD: genrandom.c,v 1.2.6.1 2012/06/05 21:15:49 bouyer Exp $	*/
+/*	$NetBSD: genrandom.c,v 1.2.6.2 2014/12/25 17:54:21 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -95,6 +95,7 @@ main(int argc, char **argv) {
 			if (isc_commandline_option != '?')
 				fprintf(stderr, "%s: invalid argument -%c\n",
 					program, isc_commandline_option);
+			/* FALLTHROUGH */
 		case 'h':
 			usage();
 
@@ -121,7 +122,9 @@ main(int argc, char **argv) {
 		return (0);
 	}
 
-	len = strlen(argv[isc_commandline_index]) + 2;
+	len = strlen(argv[isc_commandline_index]);
+	INSIST((len + 2) > len);
+	len += 2;
 	name = (char *) malloc(len);
 	if (name == NULL) {
 		perror("malloc");

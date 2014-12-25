@@ -1,7 +1,7 @@
-/*	$NetBSD: xfrin.c,v 1.5.4.1 2012/06/05 21:14:59 bouyer Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.5.4.2 2014/12/25 17:54:26 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -223,7 +223,6 @@ static isc_result_t xfrin_start(dns_xfrin_ctx_t *xfr);
 static void xfrin_connect_done(isc_task_t *task, isc_event_t *event);
 static isc_result_t xfrin_send_request(dns_xfrin_ctx_t *xfr);
 static void xfrin_send_done(isc_task_t *task, isc_event_t *event);
-static void xfrin_sendlen_done(isc_task_t *task, isc_event_t *event);
 static void xfrin_recv_done(isc_task_t *task, isc_event_t *event);
 static void xfrin_timeout(isc_task_t *task, isc_event_t *event);
 
@@ -272,13 +271,18 @@ axfr_init(dns_xfrin_ctx_t *xfr) {
 
 static isc_result_t
 axfr_makedb(dns_xfrin_ctx_t *xfr, dns_db_t **dbp) {
-	return (dns_db_create(xfr->mctx, /* XXX */
+	isc_result_t result;
+
+	result = dns_db_create(xfr->mctx, /* XXX */
 			      "rbt", /* XXX guess */
 			      &xfr->name,
 			      dns_dbtype_zone,
 			      xfr->rdclass,
 			      0, NULL, /* XXX guess */
-			      dbp));
+			       dbp);
+	if (result == ISC_R_SUCCESS)
+		result = dns_zone_rpz_enable_db(xfr->zone, *dbp);
+	return (result);
 }
 
 static isc_result_t
@@ -593,6 +597,7 @@ xfr_rr(dns_xfrin_ctx_t *xfr, dns_name_t *name, isc_uint32_t ttl,
 	case XFRST_AXFR_END:
 	case XFRST_IXFR_END:
 		FAIL(DNS_R_EXTRADATA);
+		/* NOTREACHED */
 	default:
 		INSIST(0);
 		break;
@@ -784,7 +789,8 @@ xfrin_create(isc_mem_t *mctx,
 	xfr = isc_mem_get(mctx, sizeof(*xfr));
 	if (xfr == NULL)
 		return (ISC_R_NOMEMORY);
-	xfr->mctx = mctx;
+	xfr->mctx = NULL;
+	isc_mem_attach(mctx, &xfr->mctx);
 	xfr->refcount = 0;
 	xfr->zone = NULL;
 	dns_zone_iattach(zone, &xfr->zone);
@@ -861,8 +867,11 @@ xfrin_create(isc_mem_t *mctx,
 	xfr->sourceaddr = *sourceaddr;
 	isc_sockaddr_setport(&xfr->sourceaddr, 0);
 
-	isc_buffer_init(&xfr->qbuffer, xfr->qbuffer_data,
-			sizeof(xfr->qbuffer_data));
+	/*
+	 * Reserve 2 bytes for TCP length at the begining of the buffer.
+	 */
+	isc_buffer_init(&xfr->qbuffer, &xfr->qbuffer_data[2],
+			sizeof(xfr->qbuffer_data) - 2);
 
 	xfr->magic = XFRIN_MAGIC;
 	*xfrp = xfr;
@@ -879,7 +888,7 @@ xfrin_create(isc_mem_t *mctx,
 		dns_db_detach(&xfr->db);
 	isc_task_detach(&xfr->task);
 	dns_zone_idetach(&xfr->zone);
-	isc_mem_put(mctx, xfr, sizeof(*xfr));
+	isc_mem_putanddetach(&xfr->mctx, xfr, sizeof(*xfr));
 
 	return (result);
 }
@@ -938,6 +947,8 @@ xfrin_connect_done(isc_task_t *task, isc_event_t *event) {
 	isc_result_t result = cev->result;
 	char sourcetext[ISC_SOCKADDR_FORMATSIZE];
 	isc_sockaddr_t sockaddr;
+	dns_zonemgr_t * zmgr;
+	isc_time_t now;
 
 	REQUIRE(VALID_XFRIN(xfr));
 
@@ -952,16 +963,16 @@ xfrin_connect_done(isc_task_t *task, isc_event_t *event) {
 		return;
 	}
 
-	if (result != ISC_R_SUCCESS) {
-		dns_zonemgr_t * zmgr = dns_zone_getmgr(xfr->zone);
-		isc_time_t now;
-
+	zmgr = dns_zone_getmgr(xfr->zone);
 		if (zmgr != NULL) {
+		if (result != ISC_R_SUCCESS) {
 			TIME_NOW(&now);
 			dns_zonemgr_unreachableadd(zmgr, &xfr->masteraddr,
 						   &xfr->sourceaddr, &now);
-		}
 		goto failure;
+		} else
+			dns_zonemgr_unreachabledel(zmgr, &xfr->masteraddr,
+						   &xfr->sourceaddr);
 	}
 
 	result = isc_socket_getsockname(xfr->socket, &sockaddr);
@@ -1042,10 +1053,8 @@ static isc_result_t
 xfrin_send_request(dns_xfrin_ctx_t *xfr) {
 	isc_result_t result;
 	isc_region_t region;
-	isc_region_t lregion;
 	dns_rdataset_t *qrdataset = NULL;
 	dns_message_t *msg = NULL;
-	unsigned char length[2];
 	dns_difftuple_t *soatuple = NULL;
 	dns_name_t *qname = NULL;
 	dns_dbversion_t *ver = NULL;
@@ -1114,12 +1123,16 @@ xfrin_send_request(dns_xfrin_ctx_t *xfr) {
 	isc_buffer_usedregion(&xfr->qbuffer, &region);
 	INSIST(region.length <= 65535);
 
-	length[0] = region.length >> 8;
-	length[1] = region.length & 0xFF;
-	lregion.base = length;
-	lregion.length = 2;
-	CHECK(isc_socket_send(xfr->socket, &lregion, xfr->task,
-			      xfrin_sendlen_done, xfr));
+	/*
+	 * Record message length and adjust region to include TCP
+	 * length field.
+	 */
+	xfr->qbuffer_data[0] = (region.length >> 8) & 0xff;
+	xfr->qbuffer_data[1] = region.length & 0xff;
+	region.base -= 2;
+	region.length += 2;
+	CHECK(isc_socket_send(xfr->socket, &region, xfr->task,
+			      xfrin_send_done, xfr));
 	xfr->sends++;
 
  failure:
@@ -1135,42 +1148,6 @@ xfrin_send_request(dns_xfrin_ctx_t *xfr) {
 		dns_db_closeversion(xfr->db, &ver, ISC_FALSE);
 	return (result);
 }
-
-/* XXX there should be library support for sending DNS TCP messages */
-
-static void
-xfrin_sendlen_done(isc_task_t *task, isc_event_t *event) {
-	isc_socketevent_t *sev = (isc_socketevent_t *) event;
-	dns_xfrin_ctx_t *xfr = (dns_xfrin_ctx_t *) event->ev_arg;
-	isc_result_t evresult = sev->result;
-	isc_result_t result;
-	isc_region_t region;
-
-	REQUIRE(VALID_XFRIN(xfr));
-
-	UNUSED(task);
-
-	INSIST(event->ev_type == ISC_SOCKEVENT_SENDDONE);
-	isc_event_free(&event);
-
-	xfr->sends--;
-	if (xfr->shuttingdown) {
-		maybe_free(xfr);
-		return;
-	}
-
-	xfrin_log(xfr, ISC_LOG_DEBUG(3), "sent request length prefix");
-	CHECK(evresult);
-
-	isc_buffer_usedregion(&xfr->qbuffer, &region);
-	CHECK(isc_socket_send(xfr->socket, &region, xfr->task,
-			      xfrin_send_done, xfr));
-	xfr->sends++;
- failure:
-	if (result != ISC_R_SUCCESS)
-		xfrin_fail(xfr, result, "failed sending request length prefix");
-}
-
 
 static void
 xfrin_send_done(isc_task_t *task, isc_event_t *event) {
@@ -1494,7 +1471,7 @@ maybe_free(dns_xfrin_ctx_t *xfr) {
 	if (xfr->zone != NULL)
 		dns_zone_idetach(&xfr->zone);
 
-	isc_mem_put(xfr->mctx, xfr, sizeof(*xfr));
+	isc_mem_putanddetach(&xfr->mctx, xfr, sizeof(*xfr));
 }
 
 /*

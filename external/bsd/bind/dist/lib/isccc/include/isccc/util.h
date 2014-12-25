@@ -1,7 +1,7 @@
-/*	$NetBSD: util.h,v 1.3.6.1 2012/06/05 21:15:30 bouyer Exp $	*/
+/*	$NetBSD: util.h,v 1.3.6.2 2014/12/25 17:54:31 msaitoh Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -111,7 +111,7 @@
 
 #define GET_MEM(v, c, w) \
 	do { \
-		memcpy(v, w, c); \
+		memmove(v, w, c); \
 		w += c; \
 	} while (/*CONSTCOND*/0)
 
@@ -195,7 +195,7 @@
 
 #define PUT_MEM(s, c, w) \
 	do { \
-		memcpy(w, s, c); \
+		memmove(w, s, c); \
 		w += c; \
 	} while (/*CONSTCOND*/0)
 

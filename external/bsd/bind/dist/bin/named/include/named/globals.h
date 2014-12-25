@@ -1,7 +1,7 @@
-/*	$NetBSD: globals.h,v 1.3.4.1 2012/06/05 21:15:09 bouyer Exp $	*/
+/*	$NetBSD: globals.h,v 1.3.4.2 2014/12/25 17:54:01 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -68,8 +68,12 @@ EXTERN unsigned int		ns_g_cpus_detected	INIT(1);
 EXTERN isc_timermgr_t *		ns_g_timermgr		INIT(NULL);
 EXTERN isc_socketmgr_t *	ns_g_socketmgr		INIT(NULL);
 EXTERN cfg_parser_t *		ns_g_parser		INIT(NULL);
-EXTERN const char *		ns_g_version		INIT(VERSION);
-EXTERN const char *		ns_g_configargs		INIT(CONFIGARGS);
+EXTERN const char *		ns_g_version		INIT("9.9.6-P1");
+EXTERN const char *		ns_g_product		INIT("BIND");
+EXTERN const char *		ns_g_description	INIT("(Extended Support Version)");
+EXTERN const char *		ns_g_srcid		INIT("489c6c10");
+EXTERN const char *		ns_g_configargs		INIT("defaults");
+EXTERN const char *		ns_g_builder		INIT("make");
 EXTERN in_port_t		ns_g_port		INIT(0);
 EXTERN in_port_t		lwresd_g_listenport	INIT(0);
 
@@ -123,6 +127,7 @@ EXTERN isc_boolean_t		ns_g_coreok		INIT(ISC_TRUE);
 EXTERN const char *		ns_g_chrootdir		INIT(NULL);
 EXTERN isc_boolean_t		ns_g_foreground		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_logstderr		INIT(ISC_FALSE);
+EXTERN isc_boolean_t		ns_g_nosyslog		INIT(ISC_FALSE);
 
 EXTERN const char *		ns_g_defaultsessionkeyfile
 					INIT(NS_LOCALSTATEDIR "/run/named/"
@@ -156,6 +161,7 @@ EXTERN isc_boolean_t		ns_g_memstatistics	INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_clienttest		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_nosoa		INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_noaa		INIT(ISC_FALSE);
+EXTERN isc_boolean_t		ns_g_nonearest		INIT(ISC_FALSE);
 
 #undef EXTERN
 #undef INIT

@@ -1,7 +1,7 @@
-/*	$NetBSD: cfg.h,v 1.2.6.1 2012/06/05 21:15:37 bouyer Exp $	*/
+/*	$NetBSD: cfg.h,v 1.2.6.2 2014/12/25 17:54:31 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -382,10 +382,20 @@ void
 cfg_print(const cfg_obj_t *obj,
 	  void (*f)(void *closure, const char *text, int textlen),
 	  void *closure);
+void
+cfg_printx(const cfg_obj_t *obj, unsigned int flags,
+	   void (*f)(void *closure, const char *text, int textlen),
+	   void *closure);
+
+#define CFG_PRINTER_XKEY        0x1     /* '?' out shared keys. */
+
 /*%<
  * Print the configuration object 'obj' by repeatedly calling the
  * function 'f', passing 'closure' and a region of text starting
  * at 'text' and comprising 'textlen' characters.
+ *
+ * If CFG_PRINTER_XKEY the contents of shared keys will be obscured
+ * by replacing them with question marks ('?')
  */
 
 void
@@ -413,6 +423,10 @@ cfg_obj_destroy(cfg_parser_t *pctx, cfg_obj_t **obj);
 /*%<
  * Delete a reference to a configuration object; destroy the object if
  * there are no more references.
+ *
+ * Require:
+ * \li     '*obj' is a valid cfg_obj_t.
+ * \li     'pctx' is a valid cfg_parser_t.
  */
 
 void

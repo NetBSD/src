@@ -55,8 +55,8 @@ a particular name depending on the network from which the query arrived.)
 IMPLEMENTATION NOTES:
 
 The minimal set of type definitions, prototypes, and macros needed
-for implementing a DLZ driver is in dlz_minimal.h.  Copy this header
-file into your source tree when creating an external DLZ module.
+for implementing a DLZ driver is in ../modules/dlz_minimal.h.  Copy this
+header file into your source tree when creating an external DLZ module.
 
 The DLZ dlopen driver provides a set of callback functions:
 
@@ -90,11 +90,12 @@ are mandatory, others optional).
 
     Required for alL external DLZ modules, to indicate the version number
     of the DLZ dlopen driver that this module supports.  It should return
-    the value DLZ_DLOPEN_VERSION, which is defined in dlz_minimal.h and
-    is currently 2.  'flags' is updated to indicate capabilities
-    of the module.  In particular, if the module is thread-safe then it
-    sets 'flags' to include DNS_SDLZFLAG_THREADSAFE.  (Other capability
-    flags may be added in the future.)
+    the value DLZ_DLOPEN_VERSION, which is defined in the file
+    contrib/dlz/modules/dlz_minimal.h and is currently 3.  'flags' is
+    updated to indicate capabilities of the module.  In particular, if
+    the module is thread-safe then it sets 'flags' to include
+    DNS_SDLZFLAG_THREADSAFE.  (Other capability flags may be added in
+    the future.)
 
   - isc_result_t dlz_create(const char *dlzname,
                             unsigned int argc, char *argv[],

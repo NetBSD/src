@@ -1,4 +1,4 @@
-/*	$NetBSD: atf-c.h,v 1.1.1.1 2011/09/11 17:20:09 christos Exp $	*/
+/*	$NetBSD: atf-c.h,v 1.1.1.1.4.1 2014/12/25 17:54:33 msaitoh Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
@@ -34,5 +34,6 @@
 
 #include <atf-c/error.h>
 #include <atf-c/macros.h>
+#include <atf-c/utils.h>
 
 #endif /* !defined(ATF_C_H) */
