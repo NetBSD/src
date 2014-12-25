@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.176 2012/02/14 17:29:51 njoly Exp $
+# $NetBSD: mi,v 1.176.8.1 2014/12/25 02:27:52 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -116,7 +116,7 @@
 ./usr/share/doc/html/ntp/drivers/driver16.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/drivers/driver18.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/drivers/driver19.html		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/drivers/driver2.html		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/drivers/driver2.html		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/drivers/driver20.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/drivers/driver22.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/drivers/driver26.html		misc-ntp-htmldoc	doc
@@ -157,7 +157,7 @@
 ./usr/share/doc/html/ntp/extern.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/extern.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/gadget.htm		misc-obsolete		obsolete
-./usr/share/doc/html/ntp/gadget.html			misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/gadget.html			misc-obsolete	obsolete
 ./usr/share/doc/html/ntp/groups.html			misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/hints.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/hints.html		misc-ntp-htmldoc	doc
@@ -202,7 +202,7 @@
 ./usr/share/doc/html/ntp/keygen.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/ldisc.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/ldisc.html			misc-obsolete		obsolete
-./usr/share/doc/html/ntp/manyopt.html			misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/manyopt.html			misc-obsolete	obsolete
 ./usr/share/doc/html/ntp/measure.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/measure.html			misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/miscopt.htm		misc-obsolete		obsolete

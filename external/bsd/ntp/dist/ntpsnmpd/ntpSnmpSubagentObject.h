@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpSnmpSubagentObject.h,v 1.1.1.2 2012/01/31 21:27:04 kardel Exp $	*/
+/*	$NetBSD: ntpSnmpSubagentObject.h,v 1.1.1.2.8.1 2014/12/25 02:28:11 snj Exp $	*/
 
 /*****************************************************************************
  *

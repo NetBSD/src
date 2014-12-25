@@ -1,4 +1,4 @@
-/*	$NetBSD: mktime.c,v 1.1.1.2 2012/01/31 21:24:08 kardel Exp $	*/
+/*	$NetBSD: mktime.c,v 1.1.1.2.8.1 2014/12/25 02:28:08 snj Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989 Regents of the University of California.
@@ -61,9 +61,10 @@
  * by hand.  Sorry about that.
  */
 
+#include <config.h>
 #include "ntp_machine.h"
 
-#if !defined(HAVE_MKTIME) || !defined(HAVE_TIMEGM)
+#if !defined(HAVE_MKTIME) || ( !defined(HAVE_TIMEGM) && defined(WANT_TIMEGM) )
 
 #if SIZEOF_TIME_T >= 8
 #error libntp supplied mktime()/timegm() do not support 64-bit time_t
@@ -290,6 +291,7 @@ mktime(
 }
 #endif /* !HAVE_MKTIME */
 
+#ifdef WANT_TIMEGM
 #ifndef HAVE_TIMEGM
 time_t
 timegm(
@@ -307,3 +309,4 @@ timegm(
 	return WRONG;
 }
 #endif /* !HAVE_TIMEGM */
+#endif /* WANT_TIMEGM */

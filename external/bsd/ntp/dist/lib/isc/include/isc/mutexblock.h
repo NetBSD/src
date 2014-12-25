@@ -1,4 +1,4 @@
-/*	$NetBSD: mutexblock.h,v 1.1.1.1 2009/12/13 16:54:25 kardel Exp $	*/
+/*	$NetBSD: mutexblock.h,v 1.1.1.1.14.1 2014/12/25 02:28:05 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mutexblock.h,v 1.17 2007/06/19 23:47:18 tbox Exp */
+/* Id: mutexblock.h,v 1.17 2007/06/19 23:47:18 tbox Exp  */
 
 #ifndef ISC_MUTEXBLOCK_H
 #define ISC_MUTEXBLOCK_H 1

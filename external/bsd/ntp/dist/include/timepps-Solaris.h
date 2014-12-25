@@ -1,11 +1,11 @@
-/*	$NetBSD: timepps-Solaris.h,v 1.1.1.1 2009/12/13 16:54:53 kardel Exp $	*/
+/*	$NetBSD: timepps-Solaris.h,v 1.1.1.1.14.1 2014/12/25 02:28:04 snj Exp $	*/
 
 /***********************************************************************
  *								       *
  * Copyright (c) David L. Mills 1999-2009			       *
  *								       *
  * Permission to use, copy, modify, and distribute this software and   *
- * its documentation for any purpose and without fee is hereby	       *
+ * its documentation for any purpose and with or without fee is hereby *
  * granted, provided that the above copyright notice appears in all    *
  * copies and that both the copyright notice and this permission       *
  * notice appear in supporting documentation, and that the name        *
