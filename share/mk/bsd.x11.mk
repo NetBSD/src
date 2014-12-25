@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.105 2012/01/17 19:40:08 njoly Exp $
+#	$NetBSD: bsd.x11.mk,v 1.105.2.1 2014/12/25 05:14:07 msaitoh Exp $
 
 .include <bsd.init.mk>
 
@@ -264,6 +264,7 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		    ${PKGDIST.${.PREFIX}}/configure); \
 	fi; \
 	${TOOL_SED} \
+		${PKGCONFIG_SED_FLAGS} \
 		-e "s,@prefix@,${X11ROOTDIR},; \
 		s,@INSTALL_DIR@,${X11ROOTDIR},; \
 		s,@exec_prefix@,\\$$\{prefix\},; \
