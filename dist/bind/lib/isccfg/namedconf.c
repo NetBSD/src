@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.1.1.7.8.4 2012/07/25 12:08:27 jdc Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.1.1.7.8.5 2014/12/25 23:51:59 he Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -1051,6 +1051,8 @@ view_clauses[] = {
 	{ "max-cache-ttl", &cfg_type_uint32, 0 },
 	{ "max-clients-per-query", &cfg_type_uint32, 0 },
 	{ "max-ncache-ttl", &cfg_type_uint32, 0 },
+	{ "max-recursion-depth", &cfg_type_uint32, 0 },
+	{ "max-recursion-queries", &cfg_type_uint32, 0 },
 	{ "max-udp-size", &cfg_type_uint32, 0 },
 	{ "min-roots", &cfg_type_uint32, CFG_CLAUSEFLAG_NOTIMP },
 	{ "minimal-responses", &cfg_type_boolean, 0 },
