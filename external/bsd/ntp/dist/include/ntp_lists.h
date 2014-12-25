@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_lists.h,v 1.1.1.2 2012/01/31 21:23:10 kardel Exp $	*/
+/*	$NetBSD: ntp_lists.h,v 1.1.1.2.2.1 2014/12/25 02:34:32 snj Exp $	*/
 
 /*
  * ntp_lists.h - linked lists common code

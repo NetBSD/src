@@ -1,4 +1,4 @@
-/*	$NetBSD: pcl720.h,v 1.1.1.1 2009/12/13 16:54:57 kardel Exp $	*/
+/*	$NetBSD: pcl720.h,v 1.1.1.1.8.1 2014/12/25 02:34:32 snj Exp $	*/
 
 /* Copyright (c) 1995 Vixie Enterprises
  *

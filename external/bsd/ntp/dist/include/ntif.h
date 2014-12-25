@@ -1,4 +1,4 @@
-/*	$NetBSD: ntif.h,v 1.1.1.1 2009/12/13 16:54:49 kardel Exp $	*/
+/*	$NetBSD: ntif.h,v 1.1.1.1.8.1 2014/12/25 02:34:32 snj Exp $	*/
 
 /* this is a hacked version of if.h from unix to contain the stuff we need only to build named (bind) with
    the minimal amount of changes... by l. kahn */
