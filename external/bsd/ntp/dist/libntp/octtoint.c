@@ -1,9 +1,10 @@
-/*	$NetBSD: octtoint.c,v 1.2 2009/12/14 00:38:48 christos Exp $	*/
+/*	$NetBSD: octtoint.c,v 1.2.14.1 2014/12/25 02:28:08 snj Exp $	*/
 
 /*
  * octtoint - convert an ascii string in octal to an unsigned
  *	      long, with error checking
  */
+#include <config.h>
 #include <stdio.h>
 #include <ctype.h>
 

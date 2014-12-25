@@ -1,6 +1,3 @@
-/*	$NetBSD: ntp_cmdargs.h,v 1.1.1.1 2009/12/13 16:54:48 kardel Exp $	*/
+/*	$NetBSD: ntp_cmdargs.h,v 1.1.1.1.14.1 2014/12/25 02:28:04 snj Exp $	*/
 
-#include "ntp_types.h"
-
-extern	void	getstartup	(int, char **);
-extern	void	getCmdOpts	(int, char **);
+extern	void	getCmdOpts(int, char **);

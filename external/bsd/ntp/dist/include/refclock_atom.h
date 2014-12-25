@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_atom.h,v 1.2 2009/12/14 00:38:20 christos Exp $	*/
+/*	$NetBSD: refclock_atom.h,v 1.2.14.1 2014/12/25 02:28:04 snj Exp $	*/
 
 /*
  * Definitions for the atom driver and its friends
