@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.93 2013/01/21 20:22:18 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.94 2014/12/25 23:54:07 he Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -5252,3 +5252,25 @@ sys/external/bsd/ipf/netinet/ip_fil_netbsd.c	1.4 via patch
 	Fix off-by-one read error.
 	[msaitoh, ticket #1840]
 
+dist/bind/lib/isc/counter.c			new, via patch
+dist/bind/lib/isc/include/isc/counter.h		new, via patch
+dist/bind/bin/named/config.c			patch
+dist/bind/bin/named/query.c			patch
+dist/bind/bin/named/server.c			patch
+dist/bind/lib/dns/adb.c				patch
+dist/bind/lib/dns/resolver.c			patch
+dist/bind/lib/dns/include/dns/adb.h		patch
+dist/bind/lib/dns/include/dns/resolver.h	patch
+dist/bind/lib/export/isc/Makefile.in		patch
+dist/bind/lib/isc/Makefile.in			patch
+dist/bind/lib/isc/include/isc/Makefile.in	patch
+dist/bind/lib/isc/include/isc/types.h		patch
+dist/bind/lib/isccfg/namedconf.c		patch
+lib/libisc/Makefile				patch
+usr.sbin/bind/Makefile.inc			patch
+
+	Apply fix for BIND, backported from the patch for 9.8.8 from ISC.
+	This is a fix for CVE-2014-8500, where a maliciously constructed
+	setup can cause BIND to issue an unlimited sequence of queries to
+	follow a delegation.
+	[spz, ticket #1937]
