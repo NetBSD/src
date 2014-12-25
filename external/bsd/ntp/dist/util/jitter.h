@@ -1,4 +1,4 @@
-/*	$NetBSD: jitter.h,v 1.2 2010/12/04 23:08:48 christos Exp $	*/
+/*	$NetBSD: jitter.h,v 1.2.22.1 2014/12/25 02:13:16 snj Exp $	*/
 
 /*
  *  ntp_types.h - defines how int32 and u_int32 are treated.
