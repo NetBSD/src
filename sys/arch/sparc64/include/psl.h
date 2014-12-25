@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.55 2014/12/05 11:34:00 nakayama Exp $ */
+/*	$NetBSD: psl.h,v 1.56 2014/12/25 14:02:03 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -284,6 +284,21 @@
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
+
+/*
+ * Put "memory" to asm inline on sun4v to avoid issuing rdpr %ver
+ * before checking cputyp as a result of code moving by compiler
+ * optimization.
+ */
+#ifdef SUN4V
+#define constasm_clobbers "memory"
+#else
+#define constasm_clobbers
+#endif
+
 /*
  * Inlines for manipulating privileged and ancillary state registers
  */
@@ -291,7 +306,7 @@
 static __inline __constfunc type get##name(void)			\
 {									\
 	type _val;							\
-	__asm(#rd " %" #reg ",%0" : "=r" (_val));			\
+	__asm(#rd " %" #reg ",%0" : "=r" (_val) : : constasm_clobbers);	\
 	return _val;							\
 }
 #define SPARC64_RD_DEF(rd, name, reg, type)				\
@@ -318,7 +333,7 @@ static __inline __constfunc uint64_t get##name(void)			\
 {									\
 	uint32_t _hi, _lo;						\
 	__asm(#rd " %" #reg ",%0; srl %0,0,%1; srlx %0,32,%0"		\
-		: "=r" (_hi), "=r" (_lo));				\
+		: "=r" (_hi), "=r" (_lo) : : constasm_clobbers);	\
 	return ((uint64_t)_hi << 32) | _lo;				\
 }
 #define SPARC64_RD64_DEF(rd, name, reg)					\
