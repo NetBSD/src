@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.5 2014/12/23 18:48:52 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.6 2014/12/25 05:10:00 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -198,7 +198,7 @@ MFC0(uint32_t r, uint32_t s)
 	#define PCR_TXPREEMPHTUNE	0x00000040
 	#define PCR_TXHSXVTUNE		0x00000030
 	#define PCR_TXVREFTUNE		0x0000000f
-
+#define JZ_USBRDT	0x10000040	/* Reset Detect Timer Register */
 #define JZ_USBPCR1	0x10000048
 	#define PCR_SYNOPSYS	0x10000000	/* Mentor mode otherwise */
 	#define PCR_REFCLK_CORE	0x0c000000
@@ -222,7 +222,8 @@ MFC0(uint32_t r, uint32_t s)
 	#define PCR_TXHSXVTUNE1	0x00000060	/* dp/dm voltage adj. */
 	#define PCR_TXVREFTUNE1	0x00000017	/* HS DC voltage adj. */
 	#define PCR_TXRISETUNE1	0x00000001	/* risa/fall wave adj. */
-	
+
+#define JZ_UHCCDR	0x1000006c	/* UHC Clock Divider Register */
 #define JZ_SPCR0	0x100000b8	/* SRAM Power Control Registers */
 #define JZ_SPCR1	0x100000bc
 #define JZ_SRBC		0x100000c4	/* Soft Reset & Bus Control */
