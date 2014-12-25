@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1.1.8.4.1.2.3 2012/07/25 12:09:57 jdc Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.8.4.1.2.4 2014/12/25 23:43:29 he Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -75,6 +75,8 @@ options {\n\
 	listen-on {any;};\n\
 	listen-on-v6 {none;};\n\
 	match-mapped-addresses no;\n\
+	max-recursion-depth 7;\n\
+	max-recursion-queries 50;\n\
 	memstatistics-file \"named.memstats\";\n\
 	multiple-cnames no;\n\
 #	named-xfer <obsolete>;\n\
