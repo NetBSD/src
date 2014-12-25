@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.13 2014/12/24 02:48:24 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.14 2014/12/25 06:39:26 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.13 2014/12/24 02:48:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.14 2014/12/25 06:39:26 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -758,12 +758,13 @@ vioif_start(struct ifnet *ifp)
 		if (m == NULL)
 			break;
 
+retry:
 		r = virtio_enqueue_prep(vsc, vq, &slot);
 		if (r == EAGAIN) {
 			ifp->if_flags |= IFF_OACTIVE;
 			vioif_tx_vq_done_locked(vq);
 			if (retry++ == 0)
-				continue;
+				goto retry;
 			else
 				break;
 		}
@@ -786,7 +787,7 @@ vioif_start(struct ifnet *ifp)
 			ifp->if_flags |= IFF_OACTIVE;
 			vioif_tx_vq_done_locked(vq);
 			if (retry++ == 0)
-				continue;
+				goto retry;
 			else
 				break;
 		}
