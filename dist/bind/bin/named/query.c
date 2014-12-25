@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.8.8.7 2012/10/17 20:50:14 bouyer Exp $	*/
+/*	$NetBSD: query.c,v 1.8.8.8 2014/12/25 23:51:59 he Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -3338,11 +3338,11 @@ query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qdomain,
 		peeraddr = &client->peeraddr;
 	else
 		peeraddr = NULL;
-	result = dns_resolver_createfetch2(client->view->resolver,
+	result = dns_resolver_createfetch3(client->view->resolver,
 					   client->query.qname,
 					   qtype, qdomain, nameservers,
 					   NULL, peeraddr, client->message->id,
-					   client->query.fetchoptions,
+					   client->query.fetchoptions, 0, NULL,
 					   client->task,
 					   query_resume, client,
 					   rdataset, sigrdataset,
