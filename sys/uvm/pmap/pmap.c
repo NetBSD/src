@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.7 2014/12/24 04:03:02 nonaka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.8 2014/12/25 08:11:09 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7 2014/12/24 04:03:02 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8 2014/12/25 08:11:09 nonaka Exp $");
 
 /*
  *	Manages physical address maps.
@@ -219,6 +219,8 @@ struct pmap_limits pmap_limits;
 #ifdef UVMHIST
 static struct kern_history_ent pmapexechistbuf[10000];
 static struct kern_history_ent pmaphistbuf[10000];
+UVMHIST_DEFINE(pmapexechist);
+UVMHIST_DEFINE(pmaphist);
 #endif
 
 /*
