@@ -1,4 +1,4 @@
-/*	$NetBSD: byteorder.c,v 1.1.1.1 2009/12/13 16:57:28 kardel Exp $	*/
+/*	$NetBSD: byteorder.c,v 1.1.1.1.14.1 2014/12/25 02:28:19 snj Exp $	*/
 
 /*
  * This works on:
