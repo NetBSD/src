@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_dcf7000.c,v 1.1.1.1 2009/12/13 16:55:22 kardel Exp $	*/
+/*	$NetBSD: clk_dcf7000.c,v 1.1.1.1.22.1 2014/12/25 02:13:05 snj Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/clk_dcf7000.c,v 4.10 2005/04/16 17:32:10 kardel RELEASE_20050508_A
