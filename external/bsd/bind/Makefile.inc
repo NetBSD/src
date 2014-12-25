@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12.4.1 2012/05/19 15:23:41 riz Exp $
+#	$NetBSD: Makefile.inc,v 1.12.4.2 2014/12/25 17:53:58 msaitoh Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -50,6 +50,7 @@ CPPFLAGS+=-I${BIND_SRCDIR}/include \
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DWANT_IPV6
+CPPFLAGS+=	-DALLOW_FILTER_AAAA
 .endif
 
 .if defined(HAVE_GCC)
@@ -63,18 +64,19 @@ DBG=-g3 -gstabs
 .if !defined(LIB) || empty(LIB)
 # NOTE: the order of these libraries is important...
 .if defined(NAMED_DEBUG)
-LDADD+=		-lbind9_g -ldns_g -llwres_g -lisccfg_g -lisccc_g -lisc_g
+LDADD+=		-lbind9_g -lirs_g -lisccfg_g -ldns_g -lisccc_g -lisc_g -llwres_g
 .else
-LDADD+=		-lbind9 -ldns -llwres -lisccfg -lisccc -lisc
-DPADD+=		${LIBBIND9} ${LIBDNS} ${LIBLWRES}
-DPADD+=		${LIBISCCFG} ${LIBISCCC} ${LIBISC}
+LDADD+=		-lbind9 -lirs -lisccfg -ldns -lisccc -lisc -llwres
+DPADD+=		${LIBBIND9} ${LIBIRS} ${LIBISCCFG} ${LIBDNS}
+DPADD+=		${LIBISCCC} ${LIBISC} ${LIBLWRES}
 .endif
 .else
 CPPFLAGS+= -DLIBINTERFACE=${LIBINTERFACE} \
 	   -DLIBREVISION=${LIBREVISION} -DLIBAGE=${LIBAGE}
+.if defined(NAMED_DEBUG)
+MKDEBUGLIB=	"yes"
 .endif
-#CPPFLAGS+= -DUSE_MEMIMPREGISTER -DUSE_APPIMPREGISTER -DUSE_SOCKETIMPREGISTER \
-#    -DUSE_TIMERIMPREGISTER
+.endif
 
 .if ${NAMED_USE_PTHREADS} == "yes"
 # XXX: Not ready yet
@@ -89,7 +91,22 @@ LIBDPLIBS+=      pthread  ${NETBSDSRCDIR}/lib/libpthread
 .endif
 
 .if ${NAMED_USE_OPENSSL} == "yes"
-CPPFLAGS+=-DOPENSSL
+CPPFLAGS+=-DOPENSSL -DUSE_ISC_SPNEGO
+.if ${MKKERBEROS} != "no"
+CPPFLAGS+=-DGSSAPI
+.endif
+.if ${MKKERBEROS} != "no"
+.if !defined (LIB) || empty(LIB)
+LDADD+=	-lgssapi -lheimntlm -lkrb5 -lhx509 -lheimbase \
+	-lcom_err  -lroken -lasn1 -lwind
+DPADD+=	${LIBGSSAPI} ${LIBKRB5} ${LIBHX509} ${LIBHEIMNTLM} ${LIBHEIMBASE} \
+	${LIBCOM_ERR} ${LIBROKEN} ${LIBASN1} ${LIBWIND}
+.else
+.for L in gssapi krb5 hx509 heimntlm heimbase com_err roken asn1 wind
+LIBDPLIBS+=     $L ${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/lib$L
+.endfor
+.endif
+.endif
 .if !defined (LIB) || empty(LIB)
 LDADD+= -lcrypto
 DPADD+= ${LIBCRYPTO}

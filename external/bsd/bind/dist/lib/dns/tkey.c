@@ -1,7 +1,7 @@
-/*	$NetBSD: tkey.c,v 1.3.4.1 2012/06/05 21:14:59 bouyer Exp $	*/
+/*	$NetBSD: tkey.c,v 1.3.4.2 2014/12/25 17:54:26 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -154,7 +154,7 @@ add_rdata_to_list(dns_message_t *msg, dns_name_t *name, dns_rdata_t *rdata,
 	dns_rdata_toregion(rdata, &r);
 	RETERR(isc_buffer_allocate(msg->mctx, &tmprdatabuf, r.length));
 	isc_buffer_availableregion(tmprdatabuf, &newr);
-	memcpy(newr.base, r.base, r.length);
+	memmove(newr.base, r.base, r.length);
 	dns_rdata_fromregion(newrdata, rdata->rdclass, rdata->type, &newr);
 	dns_message_takebuffer(msg, &tmprdatabuf);
 
@@ -254,12 +254,12 @@ compute_secret(isc_buffer_t *shared, isc_region_t *queryrandomness,
 	if (r.length < sizeof(digests) || r.length < r2.length)
 		return (ISC_R_NOSPACE);
 	if (r2.length > sizeof(digests)) {
-		memcpy(r.base, r2.base, r2.length);
+		memmove(r.base, r2.base, r2.length);
 		for (i = 0; i < sizeof(digests); i++)
 			r.base[i] ^= digests[i];
 		isc_buffer_add(secret, r2.length);
 	} else {
-		memcpy(r.base, digests, sizeof(digests));
+		memmove(r.base, digests, sizeof(digests));
 		for (i = 0; i < r2.length; i++)
 			r.base[i] ^= r2.base[i];
 		isc_buffer_add(secret, sizeof(digests));
@@ -536,7 +536,7 @@ process_gsstkey(dns_name_t *name, dns_rdata_tkey_t *tkeyin,
 			goto failure;
 		}
 		tkeyout->keylen = isc_buffer_usedlength(outtoken);
-		memcpy(tkeyout->key, isc_buffer_base(outtoken),
+		memmove(tkeyout->key, isc_buffer_base(outtoken),
 		       isc_buffer_usedlength(outtoken));
 		isc_buffer_free(&outtoken);
 	} else {
@@ -546,7 +546,7 @@ process_gsstkey(dns_name_t *name, dns_rdata_tkey_t *tkeyin,
 			goto failure;
 		}
 		tkeyout->keylen = tkeyin->keylen;
-		memcpy(tkeyout->key, tkeyin->key, tkeyin->keylen);
+		memmove(tkeyout->key, tkeyin->key, tkeyin->keylen);
 	}
 
 	tkeyout->error = dns_rcode_noerror;
@@ -993,8 +993,13 @@ dns_tkey_builddhquery(dns_message_t *msg, dst_key_t *key, dns_name_t *name,
 
 	ISC_LIST_INIT(namelist);
 	RETERR(add_rdata_to_list(msg, &keyname, rdata, 0, &namelist));
-	dns_message_addname(msg, ISC_LIST_HEAD(namelist),
-			    DNS_SECTION_ADDITIONAL);
+	name = ISC_LIST_HEAD(namelist);
+	while (name != NULL) {
+		dns_name_t *next = ISC_LIST_NEXT(name, link);
+		ISC_LIST_UNLINK(namelist, name, link);
+		dns_message_addname(msg, name, DNS_SECTION_ADDITIONAL);
+		name = next;
+	}
 
 	return (ISC_R_SUCCESS);
 

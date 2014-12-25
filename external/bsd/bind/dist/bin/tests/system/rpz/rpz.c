@@ -1,7 +1,7 @@
-/*	$NetBSD: rpz.c,v 1.2.8.2 2012/12/15 05:39:42 riz Exp $	*/
+/*	$NetBSD: rpz.c,v 1.2.8.3 2014/12/25 17:54:16 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rpz.c,v 1.3 2011/01/13 04:59:24 tbox Exp  */
+/* Id */
 
 #include <config.h>
 

@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -48,7 +48,7 @@ default_body()
         cp ${hp} tmp
         atf_check -s eq:0 -o ignore -e ignore -x \
                   "cd tmp && ./${h} srcdir_exists"
-        atf_check -s eq:1 -o empty -e empty "${hp}" -r res srcdir_exists
+        atf_check -s eq:1 -o empty -e ignore "${hp}" -r res srcdir_exists
         atf_check -s eq:0 -o ignore -e empty grep "Cannot find datafile" res
     done
 }
@@ -71,7 +71,7 @@ libtool_body()
         cp ${hp} tmp/.libs
         atf_check -s eq:0 -o ignore -e ignore -x \
                   "cd tmp && ./.libs/${h} srcdir_exists"
-        atf_check -s eq:1 -o empty -e empty "${hp}" -r res srcdir_exists
+        atf_check -s eq:1 -o empty -e ignore "${hp}" -r res srcdir_exists
         atf_check -s eq:0 -o ignore -e empty grep "Cannot find datafile" res
     done
 
@@ -81,7 +81,7 @@ libtool_body()
         cp ${hp} tmp/.libs/lt-${h}
         atf_check -s eq:0 -o ignore -e ignore -x \
                   "cd tmp && ./.libs/lt-${h} srcdir_exists"
-        atf_check -s eq:1 -o empty -e empty "${hp}" -r res srcdir_exists
+        atf_check -s eq:1 -o empty -e ignore "${hp}" -r res srcdir_exists
         atf_check -s eq:0 -o ignore -e empty grep "Cannot find datafile" res
     done
 }

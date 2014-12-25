@@ -1,7 +1,7 @@
-/*	$NetBSD: sample-request.c,v 1.2.6.1 2012/06/06 18:18:23 bouyer Exp $	*/
+/*	$NetBSD: sample-request.c,v 1.2.6.2 2014/12/25 17:54:29 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -79,9 +79,12 @@ make_querymessage(dns_message_t *message, const char *namestr,
 	isc_buffer_t b;
 	size_t namelen;
 
+	REQUIRE(message != NULL);
+	REQUIRE(namestr != NULL);
+
 	/* Construct qname */
 	namelen = strlen(namestr);
-	isc_buffer_init(&b, namestr, namelen);
+	isc_buffer_constinit(&b, namestr, namelen);
 	isc_buffer_add(&b, namelen);
 	dns_fixedname_init(&fixedqname);
 	qname0 = dns_fixedname_name(&fixedqname);
@@ -117,7 +120,6 @@ make_querymessage(dns_message_t *message, const char *namestr,
 		dns_message_puttempname(message, &qname);
 	if (qrdataset != NULL)
 		dns_message_puttemprdataset(message, &qrdataset);
-	if (message != NULL)
 		dns_message_destroy(&message);
 	return (result);
 }
@@ -221,7 +223,7 @@ main(int argc, char *argv[]) {
 		exit(1);
 	}
 	INSIST(res->ai_addrlen <= sizeof(sa.type));
-	memcpy(&sa.type, res->ai_addr, res->ai_addrlen);
+	memmove(&sa.type, res->ai_addr, res->ai_addrlen);
 	freeaddrinfo(res);
 	sa.length = res->ai_addrlen;
 	ISC_LINK_INIT(&sa, link);
@@ -261,5 +263,5 @@ main(int argc, char *argv[]) {
 	dns_client_destroy(&client);
 	dns_lib_shutdown();
 
-	exit(0);
+	return (0);
 }

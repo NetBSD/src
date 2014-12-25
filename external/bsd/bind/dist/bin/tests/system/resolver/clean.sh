@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2008-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2008-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -13,8 +13,6 @@
 # LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
-
-# Id
 
 #
 # Clean up after resolver tests.
@@ -29,5 +27,6 @@ rm -f ns6/K*
 rm -f ns6/example.net.db.signed ns6/example.net.db
 rm -f ns6/dsset-example.net. ns6/example.net.db.signed.jnl
 rm -f ns6/to-be-removed.tld.db ns6/to-be-removed.tld.db.jnl
-rm -f ns7/server.db ns7/server.db.jnl
-rm -f random.data
+rm -f ns7/server.db ns7/server.db.jnl ns7/named.conf
+rm -f sample.out
+rm -f .digrc

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/10/25 00:18:40 christos Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2014/12/25 17:54:37 msaitoh Exp $
 
 LIB=isc
 
@@ -22,15 +22,17 @@ UNIX_SRCS=	app.c backtrace.c dir.c entropy.c errno2result.c file.c \
 NLS_SRCS=	msgcat.c
 PTHREAD_SRCS=	condition.c mutex.c thread.c
 
-SRCS=		assertions.c base32.c base64.c bitstring.c buffer.c \
-		bufferlist.c commandline.c error.c event.c \
+SRCS=		assertions.c base32.c base64.c bind9.c bitstring.c buffer.c \
+		bufferlist.c commandline.c counter.c error.c event.c \
 		hash.c heap.c hex.c hmacmd5.c hmacsha.c httpd.c inet_aton.c \
 		iterated_hash.c lex.c lfsr.c lib.c log.c md5.c mem.c \
 		mutexblock.c netaddr.c netscope.c ondestroy.c parseint.c \
-		portset.c quota.c radix.c random.c ratelimiter.c refcount.c \
-		region.c result.c rwlock.c serial.c sha1.c sha2.c sockaddr.c \
-		stats.c string.c strtoul.c symtab.c task.c taskpool.c timer.c \
-		version.c ${UNIX_SRCS} ${NLS_SRCS} ${PTHREAD_SRCS}
+		pool.c portset.c quota.c radix.c random.c ratelimiter.c \
+		refcount.c regex.c \
+		region.c result.c rwlock.c safe.c serial.c sha1.c sha2.c \
+		sockaddr.c stats.c string.c strtoul.c symtab.c task.c \
+		taskpool.c timer.c tm.c version.c \
+		${UNIX_SRCS} ${NLS_SRCS} ${PTHREAD_SRCS}
 
 .if (${USE_INET6} == "no")
 CPPFLAGS.net.c=	-Wno-error

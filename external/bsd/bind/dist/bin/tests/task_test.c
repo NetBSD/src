@@ -1,7 +1,7 @@
-/*	$NetBSD: task_test.c,v 1.2.6.1 2012/06/05 21:15:19 bouyer Exp $	*/
+/*	$NetBSD: task_test.c,v 1.2.6.2 2014/12/25 17:54:03 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -60,6 +60,13 @@ my_tick(isc_task_t *task, isc_event_t *event) {
 	isc_event_free(&event);
 }
 
+static char one[] = "1";
+static char two[] = "2";
+static char three[] = "3";
+static char four[] = "4";
+static char foo[] = "foo";
+static char bar[] = "bar";
+
 int
 main(int argc, char *argv[]) {
 	isc_taskmgr_t *manager = NULL;
@@ -71,9 +78,13 @@ main(int argc, char *argv[]) {
 	isc_timer_t *ti1, *ti2;
 	struct isc_interval interval;
 
-	if (argc > 1)
+	if (argc > 1) {
 		workers = atoi(argv[1]);
-	else
+		if (workers < 1)
+			workers = 1;
+		if (workers > 8192)
+			workers = 8192;
+	} else
 		workers = 2;
 	printf("%d workers\n", workers);
 
@@ -87,13 +98,13 @@ main(int argc, char *argv[]) {
 	RUNTIME_CHECK(isc_task_create(manager, 0, &t3) == ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc_task_create(manager, 0, &t4) == ISC_R_SUCCESS);
 
-	RUNTIME_CHECK(isc_task_onshutdown(t1, my_shutdown, "1") ==
+	RUNTIME_CHECK(isc_task_onshutdown(t1, my_shutdown, one) ==
 		      ISC_R_SUCCESS);
-	RUNTIME_CHECK(isc_task_onshutdown(t2, my_shutdown, "2") ==
+	RUNTIME_CHECK(isc_task_onshutdown(t2, my_shutdown, two) ==
 		      ISC_R_SUCCESS);
-	RUNTIME_CHECK(isc_task_onshutdown(t3, my_shutdown, "3") ==
+	RUNTIME_CHECK(isc_task_onshutdown(t3, my_shutdown, three) ==
 		      ISC_R_SUCCESS);
-	RUNTIME_CHECK(isc_task_onshutdown(t4, my_shutdown, "4") ==
+	RUNTIME_CHECK(isc_task_onshutdown(t4, my_shutdown, four) ==
 		      ISC_R_SUCCESS);
 
 	timgr = NULL;
@@ -102,18 +113,22 @@ main(int argc, char *argv[]) {
 
 	isc_interval_set(&interval, 1, 0);
 	RUNTIME_CHECK(isc_timer_create(timgr, isc_timertype_ticker, NULL,
-				       &interval, t1, my_tick, "foo", &ti1) ==
+				       &interval, t1, my_tick, foo, &ti1) ==
 		      ISC_R_SUCCESS);
 
 	ti2 = NULL;
 	isc_interval_set(&interval, 1, 0);
 	RUNTIME_CHECK(isc_timer_create(timgr, isc_timertype_ticker, NULL,
-				       &interval, t2, my_tick, "bar", &ti2) ==
+				       &interval, t2, my_tick, bar, &ti2) ==
 		      ISC_R_SUCCESS);
 
 	printf("task 1 = %p\n", t1);
 	printf("task 2 = %p\n", t2);
+#ifndef WIN32
 	sleep(2);
+#else
+	Sleep(2000);
+#endif
 
 	/*
 	 * Note:  (void *)1 is used as a sender here, since some compilers
@@ -123,49 +138,49 @@ main(int argc, char *argv[]) {
 	 * structure (socket, timer, task, etc) but this is just a test
 	 * program.
 	 */
-	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, one,
 				   sizeof(*event));
 	isc_task_send(t1, &event);
-	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, one,
 				   sizeof(*event));
 	isc_task_send(t1, &event);
-	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, one,
 				   sizeof(*event));
 	isc_task_send(t1, &event);
-	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, one,
 				   sizeof(*event));
 	isc_task_send(t1, &event);
-	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, one,
 				   sizeof(*event));
 	isc_task_send(t1, &event);
-	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, one,
 				   sizeof(*event));
 	isc_task_send(t1, &event);
-	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, one,
 				   sizeof(*event));
 	isc_task_send(t1, &event);
-	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, one,
 				   sizeof(*event));
 	isc_task_send(t1, &event);
-	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, "1",
+	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, one,
 				   sizeof(*event));
 	isc_task_send(t1, &event);
-	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, "2",
+	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, two,
 				   sizeof(*event));
 	isc_task_send(t2, &event);
-	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, "3",
+	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, three,
 				   sizeof(*event));
 	isc_task_send(t3, &event);
-	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, "4",
+	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, four,
 				   sizeof(*event));
 	isc_task_send(t4, &event);
-	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, "2",
+	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, two,
 				   sizeof(*event));
 	isc_task_send(t2, &event);
-	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, "3",
+	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, three,
 				   sizeof(*event));
 	isc_task_send(t3, &event);
-	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, "4",
+	event = isc_event_allocate(mctx, (void *)1, 1, my_callback, four,
 				   sizeof(*event));
 	isc_task_send(t4, &event);
 	isc_task_purgerange(t3,
@@ -178,7 +193,11 @@ main(int argc, char *argv[]) {
 	isc_task_detach(&t3);
 	isc_task_detach(&t4);
 
+#ifndef WIN32
 	sleep(10);
+#else
+	Sleep(10000);
+#endif
 	printf("destroy\n");
 	isc_timer_detach(&ti1);
 	isc_timer_detach(&ti2);

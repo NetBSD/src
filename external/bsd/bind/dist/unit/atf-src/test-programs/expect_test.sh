@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,10 +37,11 @@ check_result() {
 atf_test_case expect_pass
 expect_pass_body() {
     for h in $(get_helpers); do
-        atf_check -s eq:0 "${h}" -r result expect_pass_and_pass
+        atf_check -s eq:0 -e ignore "${h}" -r result expect_pass_and_pass
         check_result result "passed"
 
-        atf_check -s eq:1 "${h}" -r result expect_pass_but_fail_requirement
+        atf_check -s eq:1 -e ignore "${h}" -r result \
+            expect_pass_but_fail_requirement
         check_result result "failed: Some reason"
 
         # atf-sh does not support non-fatal failures yet; skip checks for
@@ -77,10 +78,11 @@ expect_fail_body() {
     # atf-sh does not support non-fatal failures yet; skip checks for
     # such conditions.
     for h in $(get_helpers sh_helpers); do
-        atf_check -s eq:0 "${h}" -r result expect_fail_and_fail_requirement
+        atf_check -s eq:0 -e ignore "${h}" -r result \
+            expect_fail_and_fail_requirement
         check_result result "expected_failure: Fail reason: The failure"
 
-        atf_check -s eq:1 "${h}" -r result expect_fail_but_pass
+        atf_check -s eq:1 -e ignore "${h}" -r result expect_fail_but_pass
         check_result result "failed: .*expecting a failure"
     done
 }
@@ -88,13 +90,13 @@ expect_fail_body() {
 atf_test_case expect_exit
 expect_exit_body() {
     for h in $(get_helpers); do
-        atf_check -s eq:0 "${h}" -r result expect_exit_any_and_exit
+        atf_check -s eq:0 -e ignore "${h}" -r result expect_exit_any_and_exit
         check_result result "expected_exit: Call will exit"
 
-        atf_check -s eq:123 "${h}" -r result expect_exit_code_and_exit
+        atf_check -s eq:123 -e ignore "${h}" -r result expect_exit_code_and_exit
         check_result result "expected_exit\(123\): Call will exit"
 
-        atf_check -s eq:1 "${h}" -r result expect_exit_but_pass
+        atf_check -s eq:1 -e ignore "${h}" -r result expect_exit_but_pass
         check_result result "failed: .*expected to exit"
     done
 }
@@ -102,13 +104,16 @@ expect_exit_body() {
 atf_test_case expect_signal
 expect_signal_body() {
     for h in $(get_helpers); do
-        atf_check -s signal:9 "${h}" -r result expect_signal_any_and_signal
+        atf_check -s signal:9 -e ignore "${h}" -r result \
+            expect_signal_any_and_signal
         check_result result "expected_signal: Call will signal"
 
-        atf_check -s signal:hup "${h}" -r result expect_signal_no_and_signal
+        atf_check -s signal:hup -e ignore "${h}" -r result \
+            expect_signal_no_and_signal
         check_result result "expected_signal\(1\): Call will signal"
 
-        atf_check -s eq:1 "${h}" -r result expect_signal_but_pass
+        atf_check -s eq:1 -e ignore "${h}" -r result \
+            expect_signal_but_pass
         check_result result "failed: .*termination signal"
     done
 }
@@ -116,13 +121,14 @@ expect_signal_body() {
 atf_test_case expect_death
 expect_death_body() {
     for h in $(get_helpers); do
-        atf_check -s eq:123 "${h}" -r result expect_death_and_exit
+        atf_check -s eq:123 -e ignore "${h}" -r result expect_death_and_exit
         check_result result "expected_death: Exit case"
 
-        atf_check -s signal:kill "${h}" -r result expect_death_and_signal
+        atf_check -s signal:kill -e ignore "${h}" -r result \
+            expect_death_and_signal
         check_result result "expected_death: Signal case"
 
-        atf_check -s eq:1 "${h}" -r result expect_death_but_pass
+        atf_check -s eq:1 -e ignore "${h}" -r result expect_death_but_pass
         check_result result "failed: .*terminate abruptly"
     done
 }
@@ -130,7 +136,7 @@ expect_death_body() {
 atf_test_case expect_timeout
 expect_timeout_body() {
     for h in $(get_helpers); do
-        atf_check -s eq:1 "${h}" -r result expect_timeout_but_pass
+        atf_check -s eq:1 -e ignore "${h}" -r result expect_timeout_but_pass
         check_result result "failed: Test case was expected to hang but it" \
             "continued execution"
     done

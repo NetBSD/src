@@ -1,7 +1,7 @@
-/*	$NetBSD: adb.h,v 1.2.6.1 2012/06/05 21:14:57 bouyer Exp $	*/
+/*	$NetBSD: adb.h,v 1.2.6.2 2014/12/25 17:54:26 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -336,6 +336,13 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
 		   dns_rdatatype_t qtype, unsigned int options,
 		   isc_stdtime_t now, dns_name_t *target,
 		   in_port_t port, dns_adbfind_t **find);
+isc_result_t
+dns_adb_createfind2(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
+		    void *arg, dns_name_t *name, dns_name_t *qname,
+		    dns_rdatatype_t qtype, unsigned int options,
+		    isc_stdtime_t now, dns_name_t *target, in_port_t port,
+		    unsigned int depth, isc_counter_t *qc,
+		    dns_adbfind_t **find);
 /*%<
  * Main interface for clients. The adb will look up the name given in
  * "name" and will build up a list of found addresses, and perhaps start
@@ -512,7 +519,12 @@ dns_adb_marklame(dns_adb_t *adb, dns_adbaddrinfo_t *addr, dns_name_t *qname,
  */
 
 /*
- * A reasonable default for RTT adjustments
+ * Reasonable defaults for RTT adjustments
+ *
+ * (Note: these values function both as scaling factors and as
+ * indicators of the type of RTT adjustment operation taking place.
+ * Adjusting the scaling factors is fine, as long as they all remain
+ * unique values.)
  */
 #define DNS_ADB_RTTADJDEFAULT		7	/*%< default scale */
 #define DNS_ADB_RTTADJREPLACE		0	/*%< replace with our rtt */
@@ -523,18 +535,6 @@ dns_adb_adjustsrtt(dns_adb_t *adb, dns_adbaddrinfo_t *addr,
 		   unsigned int rtt, unsigned int factor);
 /*%<
  * Mix the round trip time into the existing smoothed rtt.
-
- * The formula used
- * (where srtt is the existing rtt value, and rtt and factor are arguments to
- * this function):
- *
- *\code
- *	new_srtt = (old_srtt / 10 * factor) + (rtt / 10 * (10 - factor));
- *\endcode
- *
- * XXXRTH  Do we want to publish the formula?  What if we want to change how
- *         this works later on?  Recommend/require that the units are
- *	   microseconds?
  *
  * Requires:
  *
@@ -543,6 +543,24 @@ dns_adb_adjustsrtt(dns_adb_t *adb, dns_adbaddrinfo_t *addr,
  *\li	addr be valid.
  *
  *\li	0 <= factor <= 10
+ *
+ * Note:
+ *
+ *\li	The srtt in addr will be updated to reflect the new global
+ *	srtt value.  This may include changes made by others.
+ */
+
+void
+dns_adb_agesrtt(dns_adb_t *adb, dns_adbaddrinfo_t *addr, isc_stdtime_t now);
+/*
+ * dns_adb_agesrtt is equivalent to dns_adb_adjustsrtt with factor
+ * equal to DNS_ADB_RTTADJAGE and the current time passed in.
+ *
+ * Requires:
+ *
+ *\li	adb be valid.
+ *
+ *\li	addr be valid.
  *
  * Note:
  *
@@ -609,7 +627,7 @@ dns_adb_flush(dns_adb_t *adb);
  */
 
 void
-dns_adb_setadbsize(dns_adb_t *adb, isc_uint32_t size);
+dns_adb_setadbsize(dns_adb_t *adb, size_t size);
 /*%<
  * Set a target memory size.  If memory usage exceeds the target
  * size entries will be removed before they would have expired on

@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -62,7 +62,7 @@ default_info_start_hook()
     set -- $(env)
     val=${1}; shift
     while [ ${#} -gt 0 ]; do
-        if echo "${1}" | grep '^[a-zA-Z_][a-zA-Z_]*=' >/dev/null; then
+        if echo "${1}" | grep '^[a-zA-Z0-0_][a-zA-Z0-9_]*=' >/dev/null; then
             atf_tps_writer_info "env" "${val}"
             val="${1}"
         else

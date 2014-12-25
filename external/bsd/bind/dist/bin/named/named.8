@@ -1,6 +1,6 @@
-.\"	$NetBSD: named.8,v 1.2.6.1 2012/06/05 21:15:22 bouyer Exp $
+.\"	$NetBSD: named.8,v 1.2.6.2 2014/12/25 17:54:01 msaitoh Exp $
 .\"
-.\" Copyright (C) 2004-2009, 2011 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2009, 2011, 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001, 2003 Internet Software Consortium.
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
@@ -22,11 +22,11 @@
 .\"     Title: named
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.71.1 <http://docbook.sf.net/>
-.\"      Date: May 21, 2009
+.\"      Date: February 20, 2014
 .\"    Manual: BIND9
 .\"    Source: BIND9
 .\"
-.TH "NAMED" "8" "May 21, 2009" "BIND9" "BIND9"
+.TH "NAMED" "8" "February 20, 2014" "BIND9" "BIND9"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
@@ -176,9 +176,11 @@ Use
 \fI#listeners\fR
 worker threads to listen for incoming UDP packets on each address. If not specified,
 \fBnamed\fR
-will use all of the worker threads for this purpose; the
+will calculate a default value based on the number of detected CPUs: 1 for 1 CPU, 2 for 2\-4 CPUs, and the number of detected CPUs divided by 2 for values higher than 4. If
+\fB\-n\fR
+has been set to a higher value than the number of detected CPUs, then
 \fB\-U\fR
-option allows the number to be decreased but not increased.
+may be increased as high as that value, but no higher.
 .RE
 .PP
 \-u \fIuser\fR
@@ -280,7 +282,7 @@ BIND 9 Administrator Reference Manual.
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2004\-2009, 2011 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004\-2009, 2011, 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
 .br
 Copyright \(co 2000, 2001, 2003 Internet Software Consortium.
 .br

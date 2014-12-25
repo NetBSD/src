@@ -1,7 +1,7 @@
-/*	$NetBSD: master.c,v 1.5.4.3 2012/12/15 05:39:57 riz Exp $	*/
+/*	$NetBSD: master.c,v 1.5.4.4 2014/12/25 17:54:25 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -93,6 +93,8 @@
 #define DNS_MASTER_LHS 2048
 #define DNS_MASTER_RHS MINTSIZ
 
+#define CHECKNAMESFAIL(x) (((x) & DNS_MASTER_CHECKNAMESFAIL) != 0)
+
 typedef ISC_LIST(dns_rdatalist_t) rdatalist_head_t;
 
 typedef struct dns_incctx dns_incctx_t;
@@ -159,6 +161,7 @@ struct dns_incctx {
 	int			glue_in_use;
 	int			current_in_use;
 	int			origin_in_use;
+	isc_boolean_t		origin_changed;
 	isc_boolean_t		drop;
 	unsigned int		glue_line;
 	unsigned int		current_line;
@@ -570,6 +573,7 @@ loadctx_create(dns_masterformat_t format, isc_mem_t *mctx,
 			goto cleanup_inc;
 		lctx->keep_lex = ISC_FALSE;
 		memset(specials, 0, sizeof(specials));
+		specials[0] = 1;
 		specials['('] = 1;
 		specials[')'] = 1;
 		specials['"'] = 1;
@@ -577,9 +581,9 @@ loadctx_create(dns_masterformat_t format, isc_mem_t *mctx,
 		isc_lex_setcomments(lctx->lex, ISC_LEXCOMMENT_DNSMASTERFILE);
 	}
 
-	lctx->ttl_known = ISC_FALSE;
+	lctx->ttl_known = ISC_TF((options & DNS_MASTER_NOTTL) != 0);
 	lctx->ttl = 0;
-	lctx->default_ttl_known = ISC_FALSE;
+	lctx->default_ttl_known = lctx->ttl_known;
 	lctx->default_ttl = 0;
 	lctx->warn_1035 = ISC_TRUE;	/* XXX Argument? */
 	lctx->warn_tcr = ISC_TRUE;	/* XXX Argument? */
@@ -685,7 +689,7 @@ genname(char *name, int it, char *buffer, size_t length) {
 	isc_boolean_t nibblemode;
 
 	r.base = buffer;
-	r.length = length;
+	r.length = (unsigned int)length;
 
 	while (*name != '\0') {
 		if (*name == '$') {
@@ -773,7 +777,7 @@ static isc_result_t
 openfile_raw(dns_loadctx_t *lctx, const char *master_file) {
 	isc_result_t result;
 
-	result = isc_stdio_open(master_file, "r", &lctx->f);
+	result = isc_stdio_open(master_file, "rb", &lctx->f);
 	if (result != ISC_R_SUCCESS && result != ISC_R_FILENOTFOUND) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "isc_stdio_open() failed: %s",
@@ -797,13 +801,12 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 	dns_rdatalist_t rdatalist;
 	dns_rdatatype_t type;
 	rdatalist_head_t head;
-	int n;
 	int target_size = MINTSIZ;	/* only one rdata at a time */
 	isc_buffer_t buffer;
 	isc_buffer_t target;
 	isc_result_t result;
 	isc_textregion_t r;
-	unsigned int start, stop, step, i;
+	int i, n, start, stop, step = 0;
 	dns_incctx_t *ictx;
 
 	ictx = lctx->inc;
@@ -821,8 +824,10 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 	}
 	isc_buffer_init(&target, target_mem, target_size);
 
-	n = sscanf(range, "%u-%u/%u", &start, &stop, &step);
-	if (n < 2 || stop < start) {
+	n = sscanf(range, "%d-%d/%d", &start, &stop, &step);
+	if ((n < 2) || (start < 0) || (stop < 0) || (step < 0) ||
+	    (stop < start))
+	{
 	       (*callbacks->error)(callbacks,
 				  "%s: %s:%lu: invalid range '%s'",
 				  "$GENERATE", source, line, range);
@@ -1405,6 +1410,7 @@ load_text(dns_loadctx_t *lctx) {
 				ictx->origin_in_use = new_in_use;
 				ictx->in_use[ictx->origin_in_use] = ISC_TRUE;
 				ictx->origin = new_name;
+				ictx->origin_changed = ISC_TRUE;
 				finish_origin = ISC_FALSE;
 				EXPECTEOL;
 				continue;
@@ -1577,7 +1583,23 @@ load_text(dns_loadctx_t *lctx) {
 				} else if (result != ISC_R_SUCCESS)
 					goto insist_and_cleanup;
 			}
+
+			if (ictx->origin_changed) {
+				char cbuf[DNS_NAME_FORMATSIZE];
+				char obuf[DNS_NAME_FORMATSIZE];
+				dns_name_format(ictx->current, cbuf,
+						sizeof(cbuf));
+				dns_name_format(ictx->origin, obuf,
+						sizeof(obuf));
+				(*callbacks->warn)(callbacks,
+					"%s:%lu: record with inherited "
+					"owner (%s) immediately after "
+					"$ORIGIN (%s)", source, line,
+					cbuf, obuf);
+			}
 		}
+
+		ictx->origin_changed = ISC_FALSE;
 
 		if (dns_rdataclass_fromtext(&rdclass,
 					    &token.value.as_textregion)
@@ -1741,7 +1763,8 @@ load_text(dns_loadctx_t *lctx) {
 				dns_name_format(name, namebuf, sizeof(namebuf));
 				result = DNS_R_BADOWNERNAME;
 				desc = dns_result_totext(result);
-				if ((lctx->options & DNS_MASTER_CHECKNAMESFAIL) != 0) {
+				if (CHECKNAMESFAIL(lctx->options) ||
+				    type == dns_rdatatype_nsec3) {
 					(*callbacks->error)(callbacks,
 							    "%s:%lu: %s: %s",
 							    source, line,
@@ -2065,7 +2088,7 @@ read_and_check(isc_boolean_t do_read, isc_buffer_t *buffer,
 					f, NULL);
 		if (result != ISC_R_SUCCESS)
 			return (result);
-		isc_buffer_add(buffer, len);
+		isc_buffer_add(buffer, (unsigned int)len);
 	} else if (isc_buffer_remaininglength(buffer) < len)
 		return (ISC_R_RANGE);
 
@@ -2114,7 +2137,7 @@ load_raw(dns_loadctx_t *lctx) {
 					 isc_result_totext(result));
 			return (result);
 		}
-		isc_buffer_add(&target, commonlen);
+		isc_buffer_add(&target, (unsigned int)commonlen);
 		header.format = isc_buffer_getuint32(&target);
 		if (header.format != dns_masterformat_raw) {
 			(*callbacks->error)(callbacks,
@@ -2147,7 +2170,7 @@ load_raw(dns_loadctx_t *lctx) {
 			return (result);
 		}
 
-		isc_buffer_add(&target, remainder);
+		isc_buffer_add(&target, (unsigned int)remainder);
 		header.dumptime = isc_buffer_getuint32(&target);
 		if (header.version == DNS_RAWFORMAT_VERSION) {
 			header.flags = isc_buffer_getuint32(&target);
@@ -2249,7 +2272,7 @@ load_raw(dns_loadctx_t *lctx) {
 					lctx->f, NULL);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
-		isc_buffer_add(&target, readlen);
+		isc_buffer_add(&target, (unsigned int)readlen);
 
 		/* Construct RRset headers */
 		rdatalist.rdclass = isc_buffer_getuint16(&target);
@@ -2257,7 +2280,7 @@ load_raw(dns_loadctx_t *lctx) {
 		rdatalist.covers = isc_buffer_getuint16(&target);
 		rdatalist.ttl =  isc_buffer_getuint32(&target);
 		rdcount = isc_buffer_getuint32(&target);
-		if (rdcount == 0) {
+		if (rdcount == 0 || rdcount > 0xffff) {
 			result = ISC_R_RANGE;
 			goto cleanup;
 		}

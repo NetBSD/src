@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2005, 2007, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@ SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 israw () {
-    perl -e 'binmode STDIN;
+    $PERL -e 'binmode STDIN;
              read(STDIN, $input, 8);
              ($style, $version) = unpack("NN", $input);
              exit 1 if ($style != 2 || $version > 1);' < $1
@@ -28,7 +28,7 @@ israw () {
 }
 
 rawversion () {
-    perl -e 'binmode STDIN;
+    $PERL -e 'binmode STDIN;
              read(STDIN, $input, 8);
              if (length($input) < 8) { print "not raw\n"; exit 0; };
              ($style, $version) = unpack("NN", $input);
@@ -36,7 +36,7 @@ rawversion () {
 }
 
 sourceserial () {
-    perl -e 'binmode STDIN;
+    $PERL -e 'binmode STDIN;
              read(STDIN, $input, 20);
              if (length($input) < 20) { print "UNSET\n"; exit; };
              ($format, $version, $dumptime, $flags, $sourceserial) = 
@@ -57,7 +57,8 @@ echo "I:checking that master files in raw format loaded"
 ret=0
 for zone in example example-explicit example-compat; do
     for server in 1 2; do
-	for name in ns mx a aaaa cname dname txt rrsig nsec dnskey ds; do
+	for name in ns mx a aaaa cname dname txt rrsig nsec \
+		    dnskey ds cdnskey cds; do
 		$DIG $DIGOPTS $name.$zone. $name @10.53.0.$server -p 5300
 		echo
 	done > dig.out.$zone.$server

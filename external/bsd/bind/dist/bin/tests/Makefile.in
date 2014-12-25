@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -26,6 +26,7 @@ CINCLUDES =	${DNS_INCLUDES} ${ISC_INCLUDES} ${ISCCFG_INCLUDES} \
 
 CDEFINES =
 CWARNINGS =
+BACKTRACECFLAGS = @BACKTRACECFLAGS@
 
 DNSLIBS =	../../lib/dns/libdns.@A@ @DNS_CRYPTO_LIBS@
 ISCLIBS =	../../lib/isc/libisc.@A@ @DNS_CRYPTO_LIBS@
@@ -135,8 +136,8 @@ XSRCS =		adb_test.c \
 @BIND9_MAKE_RULES@
 
 # disable optimization for backtrace test to get the expected result	
-BTTEST_CFLAGS =	${EXT_CFLAGS} ${ALL_CPPFLAGS} -g ${ALWAYS_WARNINGS} \
-	${STD_CWARNINGS} ${CWARNINGS}
+BTTEST_CFLAGS =	${BACKTRACECFLAGS} ${EXT_CFLAGS} ${ALL_CPPFLAGS} -g \
+		${ALWAYS_WARNINGS} ${STD_CWARNINGS} ${CWARNINGS}
 
 all_tests: ${XTARGETS}
 

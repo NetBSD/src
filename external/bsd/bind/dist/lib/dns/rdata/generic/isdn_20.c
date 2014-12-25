@@ -1,7 +1,7 @@
-/*	$NetBSD: isdn_20.c,v 1.2.6.1 2012/06/05 21:15:13 bouyer Exp $	*/
+/*	$NetBSD: isdn_20.c,v 1.2.6.2 2014/12/25 17:54:27 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -67,11 +67,11 @@ totext_isdn(ARGS_TOTEXT) {
 	UNUSED(tctx);
 
 	dns_rdata_toregion(rdata, &region);
-	RETERR(txt_totext(&region, target));
+	RETERR(txt_totext(&region, ISC_TRUE, target));
 	if (region.length == 0)
 		return (ISC_R_SUCCESS);
 	RETERR(str_totext(" ", target));
-	return (txt_totext(&region, target));
+	return (txt_totext(&region, ISC_TRUE, target));
 }
 
 static inline isc_result_t
@@ -129,6 +129,8 @@ fromstruct_isdn(ARGS_FROMSTRUCT) {
 
 	RETERR(uint8_tobuffer(isdn->isdn_len, target));
 	RETERR(mem_tobuffer(target, isdn->isdn, isdn->isdn_len));
+	if (isdn->subaddress == NULL)
+		return (ISC_R_SUCCESS);
 	RETERR(uint8_tobuffer(isdn->subaddress_len, target));
 	return (mem_tobuffer(target, isdn->subaddress, isdn->subaddress_len));
 }
@@ -155,11 +157,17 @@ tostruct_isdn(ARGS_TOSTRUCT) {
 		return (ISC_R_NOMEMORY);
 	isc_region_consume(&r, isdn->isdn_len);
 
+	if (r.length == 0) {
+		isdn->subaddress_len = 0;
+		isdn->subaddress = NULL;
+	} else {
 	isdn->subaddress_len = uint8_fromregion(&r);
 	isc_region_consume(&r, 1);
-	isdn->subaddress = mem_maybedup(mctx, r.base, isdn->subaddress_len);
+		isdn->subaddress = mem_maybedup(mctx, r.base,
+						isdn->subaddress_len);
 	if (isdn->subaddress == NULL)
 		goto cleanup;
+	}
 
 	isdn->mctx = mctx;
 	return (ISC_R_SUCCESS);

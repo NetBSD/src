@@ -1,7 +1,7 @@
-/*	$NetBSD: stdio.h,v 1.2.6.1 2012/06/05 21:15:29 bouyer Exp $	*/
+/*	$NetBSD: stdio.h,v 1.2.6.2 2014/12/25 17:54:29 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -50,7 +50,11 @@ isc_stdio_close(FILE *f);
 
 /*% Seek */
 isc_result_t
-isc_stdio_seek(FILE *f, long offset, int whence);
+isc_stdio_seek(FILE *f, off_t offset, int whence);
+
+/*% Tell */
+isc_result_t
+isc_stdio_tell(FILE *f, off_t *offsetp);
 
 /*% Read */
 isc_result_t

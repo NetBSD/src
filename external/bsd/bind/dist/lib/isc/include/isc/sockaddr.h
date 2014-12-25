@@ -1,7 +1,7 @@
-/*	$NetBSD: sockaddr.h,v 1.2.6.1 2012/06/05 21:15:27 bouyer Exp $	*/
+/*	$NetBSD: sockaddr.h,v 1.2.6.2 2014/12/25 17:54:29 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -36,6 +36,7 @@ struct isc_sockaddr {
 		struct sockaddr		sa;
 		struct sockaddr_in	sin;
 		struct sockaddr_in6	sin6;
+		struct sockaddr_storage ss;
 #ifdef ISC_PLATFORM_HAVESYSUNH
 		struct sockaddr_un	sunix;
 #endif

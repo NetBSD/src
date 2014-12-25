@@ -1,9 +1,9 @@
-/*	$NetBSD: map.h,v 1.1.1.1 2011/09/11 17:20:31 christos Exp $	*/
+/*	$NetBSD: map.h,v 1.1.1.1.4.1 2014/12/25 17:54:34 msaitoh Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

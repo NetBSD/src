@@ -1,6 +1,6 @@
-.\"	$NetBSD: named.conf.5,v 1.7.4.1 2012/06/05 21:15:21 bouyer Exp $
+.\"	$NetBSD: named.conf.5,v 1.7.4.2 2014/12/25 17:54:01 msaitoh Exp $
 .\"
-.\" Copyright (C) 2004-2011 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2011, 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -21,11 +21,11 @@
 .\"     Title: \fInamed.conf\fR
 .\"    Author: 
 .\" Generator: DocBook XSL Stylesheets v1.71.1 <http://docbook.sf.net/>
-.\"      Date: Aug 13, 2004
+.\"      Date: January 08, 2014
 .\"    Manual: BIND9
 .\"    Source: BIND9
 .\"
-.TH "\fINAMED.CONF\fR" "5" "Aug 13, 2004" "BIND9" "BIND9"
+.TH "\fINAMED.CONF\fR" "5" "January 08, 2014" "BIND9" "BIND9"
 .\" disable hyphenation
 .nh
 .\" disable justification (adjust text to left margin only)
@@ -189,7 +189,7 @@ options {
 	random\-device \fIquoted_string\fR;
 	recursive\-clients \fIinteger\fR;
 	serial\-query\-rate \fIinteger\fR;
-	server\-id ( \fIquoted_string\fR | none );
+	server\-id ( \fIquoted_string\fR | hostname | none );
 	stacksize \fIsize\fR;
 	statistics\-file \fIquoted_string\fR;
 	statistics\-interval \fIinteger\fR; // not yet implemented
@@ -325,7 +325,7 @@ options {
 	zone\-statistics \fIboolean\fR;
 	key\-directory \fIquoted_string\fR;
 	managed\-keys\-directory \fIquoted_string\fR;
-	auto\-dnssec \fBallow\fR|\fBmaintain\fR|\fBcreate\fR|\fBoff\fR;
+	auto\-dnssec \fBallow\fR|\fBmaintain\fR|\fBoff\fR;
 	try\-tcp\-refresh \fIboolean\fR;
 	zero\-no\-soa\-ttl \fIboolean\fR;
 	zero\-no\-soa\-ttl\-cache \fIboolean\fR;
@@ -598,5 +598,5 @@ zone \fIstring\fR \fIoptional_class\fR {
 \fBrndc\fR(8),
 BIND 9 Administrator Reference Manual.
 .SH "COPYRIGHT"
-Copyright \(co 2004\-2011 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004\-2011, 2013, 2014 Internet Systems Consortium, Inc. ("ISC")
 .br

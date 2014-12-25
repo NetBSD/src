@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,8 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
 
 rm -f ns1/*.db ns1/*.jnl ns3/*.jnl ns4/*.db ns4/*.jnl
 
@@ -45,3 +46,5 @@ EOF
 # Setup initial db files for ns3
 cp ns3/mytest0.db ns3/mytest.db
 cp ns3/subtest0.db ns3/subtest.db
+$SHELL ../genzone.sh 3 > ns3/large.db
+awk 'END { for (i = 0; i < 10000; i++) printf("record%d 10 IN TXT this is record %d\n", i, i) }' < /dev/null >> ns3/large.db

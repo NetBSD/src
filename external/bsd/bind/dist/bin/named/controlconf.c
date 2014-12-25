@@ -1,7 +1,7 @@
-/*	$NetBSD: controlconf.c,v 1.3.4.2 2012/12/15 05:39:25 riz Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.3.4.3 2014/12/25 17:54:01 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -26,6 +26,7 @@
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/event.h>
+#include <isc/file.h>
 #include <isc/mem.h>
 #include <isc/net.h>
 #include <isc/netaddr.h>
@@ -151,7 +152,7 @@ free_listener(controllistener_t *listener) {
 	if (listener->acl != NULL)
 		dns_acl_detach(&listener->acl);
 
-	isc_mem_put(listener->mctx, listener, sizeof(*listener));
+	isc_mem_putanddetach(&listener->mctx, listener, sizeof(*listener));
 }
 
 static void
@@ -369,7 +370,7 @@ control_recvmessage(isc_task_t *task, isc_event_t *event) {
 		secret.rstart = isc_mem_get(listener->mctx, key->secret.length);
 		if (secret.rstart == NULL)
 			goto cleanup;
-		memcpy(secret.rstart, key->secret.base, key->secret.length);
+		memmove(secret.rstart, key->secret.base, key->secret.length);
 		secret.rend = secret.rstart + key->secret.length;
 		result = isccc_cc_fromwire(&ccregion, &request, &secret);
 		if (result == ISC_R_SUCCESS)
@@ -786,7 +787,7 @@ register_keys(const cfg_obj_t *control, const cfg_obj_t *keylist,
 				free_controlkey(keyid, mctx);
 				break;
 			}
-			memcpy(keyid->secret.base, isc_buffer_base(&b),
+			memmove(keyid->secret.base, isc_buffer_base(&b),
 			       keyid->secret.length);
 		}
 	}
@@ -812,6 +813,13 @@ get_rndckey(isc_mem_t *mctx, controlkeylist_t *keyids) {
 	controlkey_t *keyid = NULL;
 	char secret[1024];
 	isc_buffer_t b;
+
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+		      NS_LOGMODULE_CONTROL, ISC_LOG_INFO,
+		      "configuring command channel from '%s'",
+		      ns_g_keyfile);
+	if (! isc_file_exists(ns_g_keyfile))
+		return (ISC_R_FILENOTFOUND);
 
 	CHECK(cfg_parser_create(mctx, ns_g_lctx, &pctx));
 	CHECK(cfg_parse_file(pctx, ns_g_keyfile, &cfg_type_rndckey, &config));
@@ -866,7 +874,7 @@ get_rndckey(isc_mem_t *mctx, controlkeylist_t *keyids) {
 			   "out of memory", keyid->keyname);
 		CHECK(ISC_R_NOMEMORY);
 	}
-	memcpy(keyid->secret.base, isc_buffer_base(&b),
+	memmove(keyid->secret.base, isc_buffer_base(&b),
 	       keyid->secret.length);
 	ISC_LIST_APPEND(*keyids, keyid, link);
 	keyid = NULL;
@@ -1068,8 +1076,9 @@ add_listener(ns_controls_t *cp, controllistener_t **listenerp,
 		result = ISC_R_NOMEMORY;
 
 	if (result == ISC_R_SUCCESS) {
+		listener->mctx = NULL;
+		isc_mem_attach(mctx, &listener->mctx);
 		listener->controls = cp;
-		listener->mctx = mctx;
 		listener->task = cp->server->task;
 		listener->address = *addr;
 		listener->sock = NULL;
