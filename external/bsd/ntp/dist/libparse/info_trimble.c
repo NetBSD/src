@@ -1,9 +1,9 @@
-/*	$NetBSD: info_trimble.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
+/*	$NetBSD: info_trimble.c,v 1.2.8.1 2014/12/25 02:34:36 snj Exp $	*/
 
 /*
  * Automatically generated - do not modify
  */
-
+#include "config.h"
 #include "ntp_types.h"
 #include "ntpd.h"
 #include "trimble.h"

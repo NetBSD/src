@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/12/13 17:13:47 kardel Exp $
+#	$NetBSD: Makefile,v 1.1.8.1 2014/12/25 02:34:49 snj Exp $
 
 LIBISPRIVATE=yes
 
@@ -16,6 +16,7 @@ SRCS= parse.c          \
       parse_conf.c     \
       clk_meinberg.c   \
       clk_schmid.c     \
+      clk_sel240x.c    \
       clk_rawdcf.c     \
       clk_trimtsip.c   \
       clk_dcf7000.c    \
