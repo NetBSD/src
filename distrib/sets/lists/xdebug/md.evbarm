@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.3 2013/02/08 15:13:04 christos Exp $
+# $NetBSD: md.evbarm,v 1.4 2014/12/25 01:38:28 htodd Exp $
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/extensions/libdri2_g.a		-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/extensions/libdri_g.a		-unknown-	debuglib,xorg
@@ -17,6 +17,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/cvt.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/kms_swrast_dri.so.0.debug		-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libkbd_drv.so.1.debug	obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libmouse_drv.so.1.debug	obsolete	xorg,obsolete
