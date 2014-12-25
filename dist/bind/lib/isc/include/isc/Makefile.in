@@ -27,7 +27,8 @@ top_srcdir =	@top_srcdir@
 # install target below.
 #
 HEADERS =	app.h assertions.h base64.h bind9.h bitstring.h boolean.h \
-		buffer.h bufferlist.h commandline.h entropy.h error.h event.h \
+		buffer.h bufferlist.h commandline.h counter.h \
+		entropy.h error.h event.h \
 		eventclass.h file.h formatcheck.h fsaccess.h \
 		hash.h heap.h hex.h hmacmd5.h hmacsha.h \
 		httpd.h \
