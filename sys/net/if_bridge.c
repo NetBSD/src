@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.93 2014/12/24 08:55:09 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.94 2014/12/25 09:10:01 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.93 2014/12/24 08:55:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.94 2014/12/25 09:10:01 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -2043,8 +2043,7 @@ bridge_rttrim(struct bridge_softc *sc)
 	if (sc->sc_brtcnt <= sc->sc_brtmax)
 		goto out;
 
-	for (brt = LIST_FIRST(&sc->sc_rtlist); brt != NULL; brt = nbrt) {
-		nbrt = LIST_NEXT(brt, brt_list);
+	LIST_FOREACH_SAFE(brt, &sc->sc_rtlist, brt_list, nbrt) {
 		if ((brt->brt_flags & IFBAF_TYPEMASK) == IFBAF_DYNAMIC) {
 			bridge_rtnode_destroy(sc, brt);
 			if (sc->sc_brtcnt <= sc->sc_brtmax)
@@ -2091,8 +2090,7 @@ bridge_rtage(struct bridge_softc *sc)
 
 	KASSERT(mutex_owned(sc->sc_rtlist_lock));
 
-	for (brt = LIST_FIRST(&sc->sc_rtlist); brt != NULL; brt = nbrt) {
-		nbrt = LIST_NEXT(brt, brt_list);
+	LIST_FOREACH_SAFE(brt, &sc->sc_rtlist, brt_list, nbrt) {
 		if ((brt->brt_flags & IFBAF_TYPEMASK) == IFBAF_DYNAMIC) {
 			if (time_uptime >= brt->brt_expire)
 				bridge_rtnode_destroy(sc, brt);
@@ -2112,8 +2110,7 @@ bridge_rtflush(struct bridge_softc *sc, int full)
 
 	mutex_enter(sc->sc_rtlist_lock);
 
-	for (brt = LIST_FIRST(&sc->sc_rtlist); brt != NULL; brt = nbrt) {
-		nbrt = LIST_NEXT(brt, brt_list);
+	LIST_FOREACH_SAFE(brt, &sc->sc_rtlist, brt_list, nbrt) {
 		if (full || (brt->brt_flags & IFBAF_TYPEMASK) == IFBAF_DYNAMIC)
 			bridge_rtnode_destroy(sc, brt);
 	}
@@ -2159,8 +2156,7 @@ bridge_rtdelete(struct bridge_softc *sc, struct ifnet *ifp)
 
 	mutex_enter(sc->sc_rtlist_lock);
 
-	for (brt = LIST_FIRST(&sc->sc_rtlist); brt != NULL; brt = nbrt) {
-		nbrt = LIST_NEXT(brt, brt_list);
+	LIST_FOREACH_SAFE(brt, &sc->sc_rtlist, brt_list, nbrt) {
 		if (brt->brt_ifp == ifp)
 			bridge_rtnode_destroy(sc, brt);
 	}
