@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.4.2 2011/01/06 21:42:49 riz Exp $
+#	$NetBSD: Makefile,v 1.2.4.3 2014/12/25 23:19:10 he Exp $
 
 LIB=isc
 
@@ -23,7 +23,7 @@ NLS_SRCS=	msgcat.c
 PTHREAD_SRCS=	condition.c mutex.c thread.c
 
 SRCS=		assertions.c base32.c base64.c bitstring.c buffer.c \
-		bufferlist.c commandline.c error.c event.c \
+		bufferlist.c commandline.c counter.c error.c event.c \
 		hash.c heap.c hex.c hmacmd5.c hmacsha.c httpd.c inet_aton.c \
 		iterated_hash.c lex.c lfsr.c lib.c log.c md5.c mem.c \
 		mutexblock.c netaddr.c netscope.c ondestroy.c parseint.c \

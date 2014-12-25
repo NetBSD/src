@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.1.1.9.4.4 2012/07/25 11:57:25 jdc Exp $	*/
+/*	$NetBSD: server.c,v 1.1.1.9.4.5 2014/12/25 23:19:10 he Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -1836,6 +1836,16 @@ configure_view(dns_view_t *view, cfg_obj_t *config, cfg_obj_t *vconfig,
 	if (udpsize > 4096)
 		udpsize = 4096;
 	dns_resolver_setudpsize(view->resolver, (isc_uint16_t)udpsize);
+
+	obj = NULL;
+	result = ns_config_get(maps, "max-recursion-depth", &obj);
+	INSIST(result == ISC_R_SUCCESS);
+	dns_resolver_setmaxdepth(view->resolver, cfg_obj_asuint32(obj));
+
+	obj = NULL;
+	result = ns_config_get(maps, "max-recursion-queries", &obj);
+	INSIST(result == ISC_R_SUCCESS);
+	dns_resolver_setmaxqueries(view->resolver, cfg_obj_asuint32(obj));
 
 	/*
 	 * Set the maximum UDP response size.

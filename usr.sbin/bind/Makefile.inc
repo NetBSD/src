@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.32.4.1 2011/01/06 21:42:49 riz Exp $
+#	$NetBSD: Makefile.inc,v 1.32.4.2 2014/12/25 23:19:10 he Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -23,7 +23,10 @@ BIND_HTMLDIR=	/usr/share/doc/html/bind9
 
 .include "${IDIST}/version"
 
-VERSION=${MAJORVER}.${MINORVER}.${PATCHVER}${RELEASETYPE}${RELEASEVER}
+# Packager suffix, for local patches past end of support from ISC
+PSUFFIX=nb5
+
+VERSION=${MAJORVER}.${MINORVER}.${PATCHVER}${RELEASETYPE}${RELEASEVER}${PSUFFIX}
 SYSCONFDIR=/etc
 LOCALSTATEDIR=/var
 
