@@ -1,7 +1,7 @@
-/*	$NetBSD: server.h,v 1.3.4.1 2012/06/05 21:15:09 bouyer Exp $	*/
+/*	$NetBSD: server.h,v 1.3.4.2 2014/12/25 17:54:01 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -167,7 +167,16 @@ enum {
 	dns_nsstatscounter_updatefail = 34,
 	dns_nsstatscounter_updatebadprereq = 35,
 
-	dns_nsstatscounter_max = 36
+	dns_nsstatscounter_rpz_rewrites = 36,
+
+#ifdef USE_RRL
+	dns_nsstatscounter_ratedropped = 37,
+	dns_nsstatscounter_rateslipped = 38,
+
+	dns_nsstatscounter_max = 39
+#else /* USE_RRL */
+	dns_nsstatscounter_max = 37
+#endif /* USE_RRL */
 };
 
 void
@@ -224,7 +233,8 @@ ns_server_refreshcommand(ns_server_t *server, char *args, isc_buffer_t *text);
  */
 
 isc_result_t
-ns_server_retransfercommand(ns_server_t *server, char *args);
+ns_server_retransfercommand(ns_server_t *server, char *args,
+			    isc_buffer_t *text);
 /*%<
  * Act on a "retransfer" command from the command channel.
  */
@@ -313,7 +323,7 @@ ns_server_sync(ns_server_t *server, char *args, isc_buffer_t *text);
  * take place incrementally.
  */
 isc_result_t
-ns_server_rekey(ns_server_t *server, char *args);
+ns_server_rekey(ns_server_t *server, char *args, isc_buffer_t *text);
 
 /*%
  * Dump the current recursive queries.
@@ -337,13 +347,13 @@ ns_server_validation(ns_server_t *server, char *args);
  * Add a zone to a running process
  */
 isc_result_t
-ns_server_add_zone(ns_server_t *server, char *args);
+ns_server_add_zone(ns_server_t *server, char *args, isc_buffer_t *text);
 
 /*%
  * Deletes a zone from a running process
  */
 isc_result_t
-ns_server_del_zone(ns_server_t *server, char *args);
+ns_server_del_zone(ns_server_t *server, char *args, isc_buffer_t *text);
 
 /*%
  * Lists the status of the signing records for a given zone.

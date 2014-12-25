@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_odbc_driver.c,v 1.2.6.1 2012/06/05 21:15:35 bouyer Exp $	*/
+/*	$NetBSD: dlz_odbc_driver.c,v 1.2.6.2 2014/12/25 17:54:22 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -736,7 +736,7 @@ odbc_get_resultset(const char *zone, const char *record,
 static isc_result_t
 odbc_getField(SQLHSTMT *stmnt, SQLSMALLINT field, char **data) {
 
-	SQLINTEGER size;
+	SQLLEN size;
 
 	REQUIRE(data != NULL && *data == NULL);
 
@@ -765,7 +765,7 @@ odbc_getManyFields(SQLHSTMT *stmnt, SQLSMALLINT startField,
 		   SQLSMALLINT endField, char **retData) {
 
 	isc_result_t result;
-	SQLINTEGER size;
+	SQLLEN size;
 	int totSize = 0;
 	SQLSMALLINT i;
 	int j = 0;

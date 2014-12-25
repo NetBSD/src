@@ -1,7 +1,7 @@
-/*	$NetBSD: getrrset.c,v 1.2.6.1 2012/06/05 21:14:54 bouyer Exp $	*/
+/*	$NetBSD: getrrset.c,v 1.2.6.2 2014/12/25 17:54:32 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -230,7 +230,7 @@ lwres_getrrsetbyname(const char *hostname, unsigned int rdclass,
 			result = ERRSET_NOMEMORY;
 			goto fail;
 		}
-		memcpy(rrset->rri_rdatas[i].rdi_data, response->rdatas[i],
+		memmove(rrset->rri_rdatas[i].rdi_data, response->rdatas[i],
 		       rrset->rri_rdatas[i].rdi_length);
 	}
 	rrset->rri_nsigs = response->nsigs;
@@ -248,7 +248,7 @@ lwres_getrrsetbyname(const char *hostname, unsigned int rdclass,
 			result = ERRSET_NOMEMORY;
 			goto fail;
 		}
-		memcpy(rrset->rri_sigs[i].rdi_data, response->sigs[i],
+		memmove(rrset->rri_sigs[i].rdi_data, response->sigs[i],
 		       rrset->rri_sigs[i].rdi_length);
 	}
 
@@ -273,18 +273,22 @@ lwres_getrrsetbyname(const char *hostname, unsigned int rdclass,
 void
 lwres_freerrset(struct rrsetinfo *rrset) {
 	unsigned int i;
+	if (rrset->rri_rdatas != NULL) {
 	for (i = 0; i < rrset->rri_nrdatas; i++) {
 		if (rrset->rri_rdatas[i].rdi_data == NULL)
 			break;
 		free(rrset->rri_rdatas[i].rdi_data);
 	}
 	free(rrset->rri_rdatas);
+	}
+	if (rrset->rri_sigs != NULL) {
 	for (i = 0; i < rrset->rri_nsigs; i++) {
 		if (rrset->rri_sigs[i].rdi_data == NULL)
 			break;
 		free(rrset->rri_sigs[i].rdi_data);
 	}
 	free(rrset->rri_sigs);
+	}
 	free(rrset->rri_name);
 	free(rrset);
 }

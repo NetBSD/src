@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_postgres_driver.c,v 1.2.6.1 2012/06/05 21:15:35 bouyer Exp $	*/
+/*	$NetBSD: dlz_postgres_driver.c,v 1.2.6.2 2014/12/25 17:54:22 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -294,8 +294,10 @@ postgres_get_resultset(const char *zone, const char *record,
 	unsigned int i = 0;
 	unsigned int j = 0;
 
+#if 0
 	/* temporarily get a unique thread # */
 	unsigned int dlz_thread_num = 1+(int) (1000.0*rand()/(RAND_MAX+1.0));
+#endif
 
 	REQUIRE(*rs == NULL);
 
@@ -577,6 +579,7 @@ postgres_get_resultset(const char *zone, const char *record,
 #endif
 			PQclear(*rs);	/* get rid of it */
 			/* in case this was the last attempt */
+			*rs = NULL;
 			result = ISC_R_FAILURE;
 		}
 	}

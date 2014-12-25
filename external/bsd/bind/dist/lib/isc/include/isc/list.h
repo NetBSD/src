@@ -1,7 +1,7 @@
-/*	$NetBSD: list.h,v 1.3.6.2 2012/12/15 05:40:07 riz Exp $	*/
+/*	$NetBSD: list.h,v 1.3.6.3 2014/12/25 17:54:29 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -104,6 +104,8 @@
 		} \
 		(elt)->link.prev = (type *)(-1); \
 		(elt)->link.next = (type *)(-1); \
+		ISC_INSIST((list).head != (elt)); \
+		ISC_INSIST((list).tail != (elt)); \
 	} while (/*CONSTCOND*/0)
 
 #define __ISC_LIST_UNLINKUNSAFE(list, elt, link) \

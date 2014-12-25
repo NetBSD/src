@@ -1,7 +1,7 @@
-/*	$NetBSD: adb.c,v 1.3.4.2 2012/12/15 05:39:56 riz Exp $	*/
+/*	$NetBSD: adb.c,v 1.3.4.3 2014/12/25 17:54:25 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: adb.c,v 1.264 2011/12/05 17:10:51 each Exp  */
 
 /*! \file
  *
@@ -91,7 +89,7 @@
 
 #define DNS_ADB_INVALIDBUCKET (-1)      /*%< invalid bucket address */
 
-#define DNS_ADB_MINADBSIZE      (1024*1024)     /*%< 1 Megabyte */
+#define DNS_ADB_MINADBSIZE      (1024U*1024U)     /*%< 1 Megabyte */
 
 typedef ISC_LIST(dns_adbname_t) dns_adbnamelist_t;
 typedef struct dns_adbnamehook dns_adbnamehook_t;
@@ -159,7 +157,7 @@ struct dns_adb {
 	unsigned int                    *entry_refcnt;
 
 	isc_event_t                     cevent;
-	isc_boolean_t                   cevent_sent;
+	isc_boolean_t                   cevent_out;
 	isc_boolean_t                   shutting_down;
 	isc_eventlist_t                 whenshutdown;
 	isc_event_t			growentries;
@@ -203,6 +201,7 @@ struct dns_adbfetch {
 	unsigned int                    magic;
 	dns_fetch_t                    *fetch;
 	dns_rdataset_t                  rdataset;
+	unsigned int			depth;
 };
 
 /*%
@@ -247,6 +246,7 @@ struct dns_adbentry {
 	isc_sockaddr_t                  sockaddr;
 
 	isc_stdtime_t                   expires;
+	isc_stdtime_t			lastage;
 	/*%<
 	 * A nonzero 'expires' field indicates that the entry should
 	 * persist until that time.  This allows entries found
@@ -302,8 +302,7 @@ static inline isc_boolean_t dec_entry_refcnt(dns_adb_t *, isc_boolean_t,
 static inline void violate_locking_hierarchy(isc_mutex_t *, isc_mutex_t *);
 static isc_boolean_t clean_namehooks(dns_adb_t *, dns_adbnamehooklist_t *);
 static void clean_target(dns_adb_t *, dns_name_t *);
-static void clean_finds_at_name(dns_adbname_t *, isc_eventtype_t,
-				unsigned int);
+static void clean_finds_at_name(dns_adbname_t *, isc_eventtype_t, unsigned int);
 static isc_boolean_t check_expire_namehooks(dns_adbname_t *, isc_stdtime_t);
 static isc_boolean_t check_expire_entry(dns_adb_t *, dns_adbentry_t **,
 					isc_stdtime_t);
@@ -311,6 +310,7 @@ static void cancel_fetches_at_name(dns_adbname_t *);
 static isc_result_t dbfind_name(dns_adbname_t *, isc_stdtime_t,
 				dns_rdatatype_t);
 static isc_result_t fetch_name(dns_adbname_t *, isc_boolean_t,
+			       unsigned int, isc_counter_t *qc,
 			       dns_rdatatype_t);
 static inline void check_exit(dns_adb_t *);
 static void destroy(dns_adb_t *);
@@ -323,6 +323,9 @@ static inline isc_boolean_t unlink_entry(dns_adb_t *, dns_adbentry_t *);
 static isc_boolean_t kill_name(dns_adbname_t **, isc_eventtype_t);
 static void water(void *, int);
 static void dump_entry(FILE *, dns_adbentry_t *, isc_boolean_t, isc_stdtime_t);
+static void adjustsrtt(dns_adbaddrinfo_t *addr, unsigned int rtt,
+		       unsigned int factor, isc_stdtime_t now);
+static void shutdown_task(isc_task_t *task, isc_event_t *ev);
 
 /*
  * MUST NOT overlap DNS_ADBFIND_* flags!
@@ -346,7 +349,7 @@ static void dump_entry(FILE *, dns_adbentry_t *, isc_boolean_t, isc_stdtime_t);
  * Private flag(s) for entries.
  * MUST NOT overlap FCTX_ADDRINFO_xxx and DNS_FETCHOPT_NOEDNS0.
  */
-#define ENTRY_IS_DEAD		0x80000000
+#define ENTRY_IS_DEAD		0x00400000
 
 /*
  * To the name, address classes are all that really exist.  If it has a
@@ -520,7 +523,9 @@ grow_entries(isc_task_t *task, isc_event_t *ev) {
 
 	isc_event_free(&ev);
 
-	isc_task_beginexclusive(task);
+	result = isc_task_beginexclusive(task);
+	if (result != ISC_R_SUCCESS)
+		goto check_exit;
 
 	i = 0;
 	while (nbuckets[i] != 0 && adb->nentries >= nbuckets[i])
@@ -648,6 +653,7 @@ grow_entries(isc_task_t *task, isc_event_t *ev) {
  done:
 	isc_task_endexclusive(task);
 
+ check_exit:
 	LOCK(&adb->lock);
 	if (dec_adb_irefcnt(adb))
 		check_exit(adb);
@@ -672,7 +678,9 @@ grow_names(isc_task_t *task, isc_event_t *ev) {
 
 	isc_event_free(&ev);
 
-	isc_task_beginexclusive(task);
+	result = isc_task_beginexclusive(task);
+	if (result != ISC_R_SUCCESS)
+		goto check_exit;
 
 	i = 0;
 	while (nbuckets[i] != 0 && adb->nnames >= nbuckets[i])
@@ -796,6 +804,7 @@ grow_names(isc_task_t *task, isc_event_t *ev) {
  done:
 	isc_task_endexclusive(task);
 
+ check_exit:
 	LOCK(&adb->lock);
 	if (dec_adb_irefcnt(adb))
 		check_exit(adb);
@@ -848,12 +857,12 @@ import_rdataset(dns_adbname_t *adbname, dns_rdataset_t *rdataset,
 		dns_rdataset_current(rdataset, &rdata);
 		if (rdtype == dns_rdatatype_a) {
 			INSIST(rdata.length == 4);
-			memcpy(&ina.s_addr, rdata.data, 4);
+			memmove(&ina.s_addr, rdata.data, 4);
 			isc_sockaddr_fromin(&sockaddr, &ina, 0);
 			hookhead = &adbname->v4;
 		} else {
 			INSIST(rdata.length == 16);
-			memcpy(in6a.s6_addr, rdata.data, 16);
+			memmove(in6a.s6_addr, rdata.data, 16);
 			isc_sockaddr_fromin6(&sockaddr, &in6a, 0);
 			hookhead = &adbname->v6;
 		}
@@ -1282,6 +1291,7 @@ clean_namehooks(dns_adb_t *adb, dns_adbnamehooklist_t *namehooks) {
 				if (addr_bucket != DNS_ADB_INVALIDBUCKET)
 					UNLOCK(&adb->entrylocks[addr_bucket]);
 				addr_bucket = entry->lock_bucket;
+				INSIST(addr_bucket != DNS_ADB_INVALIDBUCKET);
 				LOCK(&adb->entrylocks[addr_bucket]);
 			}
 
@@ -1493,10 +1503,13 @@ check_exit(dns_adb_t *adb) {
 		 * If there aren't any external references either, we're
 		 * done.  Send the control event to initiate shutdown.
 		 */
-		INSIST(!adb->cevent_sent);      /* Sanity check. */
+		INSIST(!adb->cevent_out);      /* Sanity check. */
+		ISC_EVENT_INIT(&adb->cevent, sizeof(adb->cevent), 0, NULL,
+			       DNS_EVENT_ADBCONTROL, shutdown_task, adb,
+			       adb, NULL, NULL);
 		event = &adb->cevent;
 		isc_task_send(adb->task, &event);
-		adb->cevent_sent = ISC_TRUE;
+		adb->cevent_out = ISC_TRUE;
 	}
 }
 
@@ -1751,6 +1764,7 @@ new_adbentry(dns_adb_t *adb) {
 	e->flags = 0;
 	isc_random_get(&r);
 	e->srtt = (r & 0x1f) + 1;
+	e->lastage = 0;
 	e->expires = 0;
 	ISC_LIST_INIT(e->lameinfo);
 	ISC_LINK_INIT(e, plink);
@@ -2077,6 +2091,7 @@ copy_namehook_lists(dns_adb_t *adb, dns_adbfind_t *find, dns_name_t *qname,
 		while (namehook != NULL) {
 			entry = namehook->entry;
 			bucket = entry->lock_bucket;
+			INSIST(bucket != DNS_ADB_INVALIDBUCKET);
 			LOCK(&adb->entrylocks[bucket]);
 
 			if (!FIND_RETURNLAME(find)
@@ -2107,6 +2122,7 @@ copy_namehook_lists(dns_adb_t *adb, dns_adbfind_t *find, dns_name_t *qname,
 		while (namehook != NULL) {
 			entry = namehook->entry;
 			bucket = entry->lock_bucket;
+			INSIST(bucket != DNS_ADB_INVALIDBUCKET);
 			LOCK(&adb->entrylocks[bucket]);
 
 			if (!FIND_RETURNLAME(find)
@@ -2333,6 +2349,7 @@ destroy(dns_adb_t *adb) {
 	adb->magic = 0;
 
 	isc_task_detach(&adb->task);
+	if (adb->excl != NULL)
 	isc_task_detach(&adb->excl);
 
 	isc_mempool_destroy(&adb->nmp);
@@ -2422,10 +2439,9 @@ dns_adb_create(isc_mem_t *mem, dns_view_t *view, isc_timermgr_t *timermgr,
 	adb->view = view;
 	adb->taskmgr = taskmgr;
 	adb->next_cleanbucket = 0;
-	ISC_EVENT_INIT(&adb->cevent, sizeof(adb->cevent), 0, NULL,
-		       DNS_EVENT_ADBCONTROL, shutdown_task, adb,
-		       adb, NULL, NULL);
-	adb->cevent_sent = ISC_FALSE;
+	ISC_EVENT_INIT(&adb->cevent, sizeof(adb->cevent),
+		       0, NULL, 0, NULL, NULL, NULL, NULL, NULL);
+	adb->cevent_out = ISC_FALSE;
 	adb->shutting_down = ISC_FALSE;
 	ISC_LIST_INIT(adb->whenshutdown);
 
@@ -2732,9 +2748,28 @@ dns_adb_whenshutdown(dns_adb_t *adb, isc_task_t *task, isc_event_t **eventp) {
 	UNLOCK(&adb->lock);
 }
 
+static void
+shutdown_stage2(isc_task_t *task, isc_event_t *event) {
+	dns_adb_t *adb;
+
+	UNUSED(task);
+
+	adb = event->ev_arg;
+	INSIST(DNS_ADB_VALID(adb));
+
+	LOCK(&adb->lock);
+	INSIST(adb->shutting_down);
+	adb->cevent_out = ISC_FALSE;
+	(void)shutdown_names(adb);
+	(void)shutdown_entries(adb);
+	if (dec_adb_irefcnt(adb))
+		check_exit(adb);
+	UNLOCK(&adb->lock);
+}
+
 void
 dns_adb_shutdown(dns_adb_t *adb) {
-	isc_boolean_t need_check_exit;
+	isc_event_t *event;
 
 	/*
 	 * Shutdown 'adb'.
@@ -2745,11 +2780,16 @@ dns_adb_shutdown(dns_adb_t *adb) {
 	if (!adb->shutting_down) {
 		adb->shutting_down = ISC_TRUE;
 		isc_mem_setwater(adb->mctx, water, adb, 0, 0);
-		need_check_exit = shutdown_names(adb);
-		if (!need_check_exit)
-			need_check_exit = shutdown_entries(adb);
-		if (need_check_exit)
-			check_exit(adb);
+		/*
+		 * Isolate shutdown_names and shutdown_entries calls.
+		 */
+		inc_adb_irefcnt(adb);
+		ISC_EVENT_INIT(&adb->cevent, sizeof(adb->cevent), 0, NULL,
+			       DNS_EVENT_ADBCONTROL, shutdown_stage2, adb,
+			       adb, NULL, NULL);
+		adb->cevent_out = ISC_TRUE;
+		event = &adb->cevent;
+		isc_task_send(adb->task, &event);
 	}
 
 	UNLOCK(&adb->lock);
@@ -2761,6 +2801,19 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
 		   dns_rdatatype_t qtype, unsigned int options,
 		   isc_stdtime_t now, dns_name_t *target,
 		   in_port_t port, dns_adbfind_t **findp)
+{
+	return (dns_adb_createfind2(adb, task, action, arg, name,
+				    qname, qtype, options, now,
+				    target, port, 0, NULL, findp));
+}
+
+isc_result_t
+dns_adb_createfind2(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
+		    void *arg, dns_name_t *name, dns_name_t *qname,
+		    dns_rdatatype_t qtype, unsigned int options,
+		    isc_stdtime_t now, dns_name_t *target,
+		    in_port_t port, unsigned int depth, isc_counter_t *qc,
+		    dns_adbfind_t **findp)
 {
 	dns_adbfind_t *find;
 	dns_adbname_t *adbname;
@@ -2992,7 +3045,7 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
 		 * Start V4.
 		 */
 		if (WANT_INET(wanted_fetches) &&
-		    fetch_name(adbname, start_at_zone,
+		    fetch_name(adbname, start_at_zone, depth, qc,
 			       dns_rdatatype_a) == ISC_R_SUCCESS) {
 			DP(DEF_LEVEL,
 			   "dns_adb_createfind: started A fetch for name %p",
@@ -3003,7 +3056,7 @@ dns_adb_createfind(dns_adb_t *adb, isc_task_t *task, isc_taskaction_t action,
 		 * Start V6.
 		 */
 		if (WANT_INET6(wanted_fetches) &&
-		    fetch_name(adbname, start_at_zone,
+		    fetch_name(adbname, start_at_zone, depth, qc,
 			       dns_rdatatype_aaaa) == ISC_R_SUCCESS) {
 			DP(DEF_LEVEL,
 			   "dns_adb_createfind: "
@@ -3746,6 +3799,12 @@ fetch_callback(isc_task_t *task, isc_event_t *ev) {
 		DP(DEF_LEVEL, "adb: fetch of '%s' %s failed: %s",
 		   buf, address_type == DNS_ADBFIND_INET ? "A" : "AAAA",
 		   dns_result_totext(dev->result));
+		/*
+		 * Don't record a failure unless this is the initial
+		 * fetch of a chain.
+		 */
+		if (fetch->depth > 1)
+			goto out;
 		/* XXXMLG Don't pound on bad servers. */
 		if (address_type == DNS_ADBFIND_INET) {
 			name->expire_v4 = ISC_MIN(name->expire_v4, now + 300);
@@ -3783,9 +3842,8 @@ fetch_callback(isc_task_t *task, isc_event_t *ev) {
 }
 
 static isc_result_t
-fetch_name(dns_adbname_t *adbname,
-	   isc_boolean_t start_at_zone,
-	   dns_rdatatype_t type)
+fetch_name(dns_adbname_t *adbname, isc_boolean_t start_at_zone,
+	   unsigned int depth, isc_counter_t *qc, dns_rdatatype_t type)
 {
 	isc_result_t result;
 	dns_adbfetch_t *fetch = NULL;
@@ -3830,11 +3888,13 @@ fetch_name(dns_adbname_t *adbname,
 		result = ISC_R_NOMEMORY;
 		goto cleanup;
 	}
+	fetch->depth = depth;
 
-	result = dns_resolver_createfetch(adb->view->resolver, &adbname->name,
+	result = dns_resolver_createfetch3(adb->view->resolver, &adbname->name,
 					  type, name, nameservers, NULL,
-					  options, adb->task, fetch_callback,
-					  adbname, &fetch->rdataset, NULL,
+					   NULL, 0, options, depth, qc,
+					   adb->task, fetch_callback, adbname,
+					   &fetch->rdataset, NULL,
 					  &fetch->fetch);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
@@ -3904,8 +3964,7 @@ dns_adb_adjustsrtt(dns_adb_t *adb, dns_adbaddrinfo_t *addr,
 		   unsigned int rtt, unsigned int factor)
 {
 	int bucket;
-	unsigned int new_srtt;
-	isc_stdtime_t now;
+	isc_stdtime_t now = 0;
 
 	REQUIRE(DNS_ADB_VALID(adb));
 	REQUIRE(DNS_ADBADDRINFO_VALID(addr));
@@ -3914,21 +3973,53 @@ dns_adb_adjustsrtt(dns_adb_t *adb, dns_adbaddrinfo_t *addr,
 	bucket = addr->entry->lock_bucket;
 	LOCK(&adb->entrylocks[bucket]);
 
-	if (factor == DNS_ADB_RTTADJAGE)
-		new_srtt = addr->entry->srtt * 98 / 100;
-	else
+	if (addr->entry->expires == 0 || factor == DNS_ADB_RTTADJAGE)
+		isc_stdtime_get(&now);
+	adjustsrtt(addr, rtt, factor, now);
+
+	UNLOCK(&adb->entrylocks[bucket]);
+}
+
+void
+dns_adb_agesrtt(dns_adb_t *adb, dns_adbaddrinfo_t *addr, isc_stdtime_t now) {
+	int bucket;
+
+	REQUIRE(DNS_ADB_VALID(adb));
+	REQUIRE(DNS_ADBADDRINFO_VALID(addr));
+
+	bucket = addr->entry->lock_bucket;
+	LOCK(&adb->entrylocks[bucket]);
+
+	adjustsrtt(addr, 0, DNS_ADB_RTTADJAGE, now);
+
+	UNLOCK(&adb->entrylocks[bucket]);
+}
+
+static void
+adjustsrtt(dns_adbaddrinfo_t *addr, unsigned int rtt, unsigned int factor,
+          isc_stdtime_t now)
+{
+	isc_uint64_t new_srtt;
+
+	if (factor == DNS_ADB_RTTADJAGE) {
+		if (addr->entry->lastage != now) {
+			new_srtt = addr->entry->srtt;
+			new_srtt <<= 9;
+			new_srtt -= addr->entry->srtt;
+			new_srtt >>= 9;
+			addr->entry->lastage = now;
+		} else
+			new_srtt = addr->entry->srtt;
+	} else
 		new_srtt = (addr->entry->srtt / 10 * factor)
 			+ (rtt / 10 * (10 - factor));
 
-	addr->entry->srtt = new_srtt;
-	addr->srtt = new_srtt;
+	new_srtt &= 0xffffffff;
+	addr->entry->srtt = (unsigned int) new_srtt;
+	addr->srtt = (unsigned int) new_srtt;
 
-	if (addr->entry->expires == 0) {
-	isc_stdtime_get(&now);
-	addr->entry->expires = now + ADB_ENTRY_WINDOW;
-	}
-
-	UNLOCK(&adb->entrylocks[bucket]);
+	if (addr->entry->expires == 0)
+		addr->entry->expires = now + ADB_ENTRY_WINDOW;
 }
 
 void
@@ -3940,6 +4031,9 @@ dns_adb_changeflags(dns_adb_t *adb, dns_adbaddrinfo_t *addr,
 
 	REQUIRE(DNS_ADB_VALID(adb));
 	REQUIRE(DNS_ADBADDRINFO_VALID(addr));
+
+	REQUIRE((bits & ENTRY_IS_DEAD) == 0);
+	REQUIRE((mask & ENTRY_IS_DEAD) == 0);
 
 	bucket = addr->entry->lock_bucket;
 	LOCK(&adb->entrylocks[bucket]);
@@ -4122,19 +4216,18 @@ water(void *arg, int mark) {
 }
 
 void
-dns_adb_setadbsize(dns_adb_t *adb, isc_uint32_t size) {
-	isc_uint32_t hiwater;
-	isc_uint32_t lowater;
+dns_adb_setadbsize(dns_adb_t *adb, size_t size) {
+	size_t hiwater, lowater;
 
 	INSIST(DNS_ADB_VALID(adb));
 
-	if (size != 0 && size < DNS_ADB_MINADBSIZE)
+	if (size != 0U && size < DNS_ADB_MINADBSIZE)
 		size = DNS_ADB_MINADBSIZE;
 
 	hiwater = size - (size >> 3);   /* Approximately 7/8ths. */
 	lowater = size - (size >> 2);   /* Approximately 3/4ths. */
 
-	if (size == 0 || hiwater == 0 || lowater == 0)
+	if (size == 0U || hiwater == 0U || lowater == 0U)
 		isc_mem_setwater(adb->mctx, water, adb, 0, 0);
 	else
 		isc_mem_setwater(adb->mctx, water, adb, hiwater, lowater);

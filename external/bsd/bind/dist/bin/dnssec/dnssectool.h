@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssectool.h,v 1.2.6.2 2012/12/15 05:39:24 riz Exp $	*/
+/*	$NetBSD: dnssectool.h,v 1.2.6.3 2014/12/25 17:54:01 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -48,6 +48,9 @@ void
 vbprintf(int level, const char *fmt, ...) ISC_FORMAT_PRINTF(2, 3);
 
 void
+version(const char *program);
+
+void
 type_format(const dns_rdatatype_t type, char *cp, unsigned int size);
 #define TYPE_FORMATSIZE 20
 
@@ -70,7 +73,8 @@ cleanup_entropy(isc_entropy_t **ectx);
 dns_ttl_t strtottl(const char *str);
 
 isc_stdtime_t
-strtotime(const char *str, isc_int64_t now, isc_int64_t base);
+strtotime(const char *str, isc_int64_t now, isc_int64_t base,
+	  isc_boolean_t *setp);
 
 dns_rdataclass_t
 strtoclass(const char *str);

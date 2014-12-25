@@ -1,7 +1,7 @@
-/*	$NetBSD: rcode.c,v 1.3.4.2 2012/12/15 05:39:58 riz Exp $	*/
+/*	$NetBSD: rcode.c,v 1.3.4.3 2014/12/25 17:54:25 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -196,7 +196,7 @@ str_totext(const char *source, isc_buffer_t *target) {
 	if (l > region.length)
 		return (ISC_R_NOSPACE);
 
-	memcpy(region.base, source, l);
+	memmove(region.base, source, l);
 	isc_buffer_add(target, l);
 	return (ISC_R_SUCCESS);
 }
@@ -218,7 +218,9 @@ maybe_numeric(unsigned int *valuep, isc_textregion_t *source,
 	 * isc_parse_uint32().  isc_parse_uint32() requires
 	 * null termination, so we must make a copy.
 	 */
-	strncpy(buffer, source->base, NUMBERSIZE);
+	strncpy(buffer, source->base, sizeof(buffer));
+	buffer[sizeof(buffer) - 1] = '\0';
+
 	INSIST(buffer[source->length] == '\0');
 
 	result = isc_parse_uint32(&n, buffer, 10);
@@ -383,9 +385,9 @@ dns_keyflags_fromtext(dns_keyflags_t *flagsp, isc_textregion_t *source)
 		unsigned int len;
 		char *delim = memchr(text, '|', end - text);
 		if (delim != NULL)
-			len = delim - text;
+			len = (unsigned int)(delim - text);
 		else
-			len = end - text;
+			len = (unsigned int)(end - text);
 		for (p = keyflags; p->name != NULL; p++) {
 			if (strncasecmp(p->name, text, len) == 0)
 				break;

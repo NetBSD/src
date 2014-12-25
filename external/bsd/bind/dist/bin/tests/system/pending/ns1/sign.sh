@@ -1,6 +1,6 @@
 #!/bin/sh 
 #
-# Copyright (C) 2009, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,18 +14,14 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.5 2010/01/07 23:48:53 tbox Exp 
-
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
-
-RANDFILE=../random.data
 
 zone=.
 infile=root.db.in
 zonefile=root.db
 
-(cd ../ns2 && sh -e sign.sh )
+(cd ../ns2 && $SHELL -e sign.sh )
 
 cp ../ns2/dsset-example. .
 cp ../ns2/dsset-example.com. .

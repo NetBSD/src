@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -99,6 +99,11 @@
  * Define if this system needs strtoul.
  */
 @LWRES_PLATFORM_NEEDSTRTOUL@
+
+/*! \brief
+ * Define if this system needs strlcpy.
+ */
+@LWRES_PLATFORM_NEEDSTRLCPY@
 
 #ifndef LWRES_PLATFORM_USEDECLSPEC
 #define LIBLWRES_EXTERNAL_DATA

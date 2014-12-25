@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -62,6 +62,7 @@ libatf_c_la_CPPFLAGS = "-DATF_ARCH=\"$(atf_arch)\"" \
                        "-DATF_SHELL=\"$(ATF_SHELL)\"" \
                        "-DATF_WORKDIR=\"$(ATF_WORKDIR)\"" \
                        -I$(srcdir)/atf-c
+libatf_c_la_LDFLAGS = -version-info 0:0:0
 
 # XXX For some reason, the nodist line above does not work as expected.
 # Work this problem around.
@@ -84,21 +85,26 @@ atf_cdir = $(includedir)/atf-c
 
 dist_man_MANS += atf-c/atf-c-api.3
 
+atf_aclocal_DATA += atf-c/atf-common.m4 atf-c/atf-c.m4
+EXTRA_DIST += atf-c/atf-common.m4 atf-c/atf-c.m4
+
 atf_cpkgconfigdir = $(atf_pkgconfigdir)
 atf_cpkgconfig_DATA = atf-c/atf-c.pc
 CLEANFILES += atf-c/atf-c.pc
 EXTRA_DIST += atf-c/atf-c.pc.in
-atf-c/atf-c.pc: $(srcdir)/atf-c/atf-c.pc.in
+atf-c/atf-c.pc: $(srcdir)/atf-c/atf-c.pc.in Makefile
 	test -d atf-c || mkdir -p atf-c
-	sed -e 's,__ATF_VERSION__,@PACKAGE_VERSION@,g' \
-	    -e 's,__CC__,$(CC),g' \
-	    -e 's,__INCLUDEDIR__,$(includedir),g' \
-	    -e 's,__LIBDIR__,$(libdir),g' \
+	sed -e 's#__ATF_VERSION__#$(PACKAGE_VERSION)#g' \
+	    -e 's#__CC__#$(CC)#g' \
+	    -e 's#__INCLUDEDIR__#$(includedir)#g' \
+	    -e 's#__LIBDIR__#$(libdir)#g' \
 	    <$(srcdir)/atf-c/atf-c.pc.in >atf-c/atf-c.pc.tmp
 	mv atf-c/atf-c.pc.tmp atf-c/atf-c.pc
 
 tests_atf_c_DATA = atf-c/Atffile \
-                   atf-c/macros_h_test.c
+                   atf-c/Kyuafile \
+                   atf-c/macros_h_test.c \
+                   atf-c/unused_test.c
 tests_atf_cdir = $(pkgtestsdir)/atf-c
 EXTRA_DIST += $(tests_atf_c_DATA)
 
