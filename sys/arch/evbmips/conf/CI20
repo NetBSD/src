@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.6 2014/12/23 16:16:49 macallan Exp $
+#	$NetBSD: CI20,v 1.7 2014/12/25 05:15:42 macallan Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.6 $"
+#ident 		"CI20-$Revision: 1.7 $"
 
 maxusers	32
 
@@ -141,18 +141,37 @@ apbus0		at mainbus?
 
 # On-board USB
 dwctwo* 	at apbus? addr 0x13500000
-options 	DWC2_DEBUG
+#options 	DWC2_DEBUG
 usb* 		at dwctwo?
 uhub*		at usb?
 uhub*		at uhub? port ?
-umass*		at uhub? port ? configuration ? interface ?
-scsibus*	at umass? channel ?
-sd*		at scsibus? target ? lun ?
 #jzgpio* 	at apbus? addr ?
 #gpio*		at jzgpio?
 
 # no RTC!  so fake with a stub (required to prevent evbmips panic)
 
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
+# USB Mice
+ums*		at uhidev? reportid ?
+wsmouse*	at ums? mux 0
+
+# USB Keyboards
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
+
+# USB Generic HID devices
+uhid*	at uhidev? reportid ?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+scsibus*	at umass? channel ?
+sd*		at scsibus? target ? lun ?	# SCSI disk drives
+cd*		at scsibus? target ? lun ?	# SCSI CD-ROM drives
+
+# Ethernet
+axe*	at uhub? port ?
 
 # MII/PHY support
 #acphy*		at mii? phy ?		# DAltima AC101 and AMD Am79c874 PHYs
@@ -171,7 +190,7 @@ sd*		at scsibus? target ? lun ?
 #tlphy*		at mii? phy ?		# ThunderLAN PHYs
 #tqphy*		at mii? phy ?		# TDK Semiconductor PHYs
 #rlphy*		at mii? phy ?		# RealTek PHYs
-#ukphy*		at mii? phy ?		# generic unknown PHYs
+ukphy*		at mii? phy ?		# generic unknown PHYs
 
 
 # Pseudo-devices
