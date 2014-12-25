@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.4.2 2014/12/21 19:12:10 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.7.4.3 2014/12/25 05:05:02 msaitoh Exp $
 
 .include <bsd.own.mk>
 
@@ -119,13 +119,28 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
 
 .include "Makefile.fcarch"
 
+.if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
+CPPFLAGS+=	-DHAVE_INTEL_ATOMIC_PRIMITIVES=1
+.endif
+
+.if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
+CPPFLAGS+=	-DHAVE_INTEL_ATOMIC_PRIMITIVES=1
+.endif
+
 CLEANFILES+= fcarch.h
 
 PKGCONFIG=	fontconfig
 PKGCONFIG_SED_FLAGS= \
 	-e "s,@sysconfdir@,${X11ETCDIR},; \
 	    s,@localstatedir@,/var,; \
+	    s,@PACKAGE@,${PKGDIST},; \
 	    s,@BASECONFIGDIR@,/etc/fonts,; \
+	    s,@PKGCONFIG_REQUIRES@,${PKGCONFIG_REQUIRES},; \
+	    s,@PKGCONFIG_REQUIRES_PRIVATELY@,${PKGCONFIG_REQUIRES_PRIVATELY},; \
+	    s,@EXPAT_CFLAGS@,,; \
+	    s,@FREETYPE_CFLAGS@,-I${X11ROOTDIR}/include/freetype2 -I${X11ROOTDIR}/include,; \
+	    s,@ICONV_CFLAGS@,,; \
+	    s,@LIBXML2_CFLAGS@,,; \
 	    s,@fc_cachedir@,${FONTCONFIG_PATH},"
 
 # XXX

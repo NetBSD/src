@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2009/06/11 05:43:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.19.8.1 2014/12/25 05:05:02 msaitoh Exp $
 
 .include <bsd.own.mk>
 
@@ -32,6 +32,10 @@ SUBDIR+=	hw
 .PATH:	${X11SRCDIR.xorg-server}
 
 PKGCONFIG=	xorg-server
+# Use -fvisibility=hidden for symbol_visibility?
+PKGCONFIG_SED_FLAGS= \
+	-e "s,@sysconfigdir@,${X11ETCDIR},; \
+	    s,@symbol_visibility@,,"
 
 .include <bsd.x11.mk>
 .include <bsd.man.mk>
