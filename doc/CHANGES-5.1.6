@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.6,v 1.1.2.9 2014/12/22 12:58:36 msaitoh Exp $
+# $NetBSD: CHANGES-5.1.6,v 1.1.2.10 2014/12/25 23:46:18 he Exp $
 
 A complete list of changes from the NetBSD 5.1.5 release to the NetBSD 5.1.6
 release:
@@ -127,3 +127,26 @@ xsrc/xfree/xc/programs/Xserver/render/render.c	1.4
 	the check properly.
 	CVE-2013-6424
 	[mrg, ticket #1935]
+
+dist/bind/lib/isc/counter.c			new, via patch
+dist/bind/lib/isc/include/isc/counter.h		new, via patch
+dist/bind/bin/named/config.c			patch
+dist/bind/bin/named/query.c			patch
+dist/bind/bin/named/server.c			patch
+dist/bind/lib/dns/adb.c				patch
+dist/bind/lib/dns/resolver.c			patch
+dist/bind/lib/dns/include/dns/adb.h		patch
+dist/bind/lib/dns/include/dns/resolver.h	patch
+dist/bind/lib/export/isc/Makefile.in		patch
+dist/bind/lib/isc/Makefile.in			patch
+dist/bind/lib/isc/include/isc/Makefile.in	patch
+dist/bind/lib/isc/include/isc/types.h		patch
+dist/bind/lib/isccfg/namedconf.c		patch
+lib/libisc/Makefile				patch
+usr.sbin/bind/Makefile.inc			patch
+
+	Apply fix for BIND, backported from the patch for 9.8.8 from ISC.
+	This is a fix for CVE-2014-8500, where a maliciously constructed
+	setup can cause BIND to issue an unlimited sequence of queries to
+	follow a delegation.
+	[spz, ticket #1937]
