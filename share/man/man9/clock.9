@@ -1,4 +1,4 @@
-.\"     $NetBSD: clock.9,v 1.1 2014/12/22 18:02:52 wiz Exp $
+.\"     $NetBSD: clock.9,v 1.2 2014/12/26 14:15:18 wiz Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 20, 2014
+.Dd December 26, 2014
 .Dt CLOCK 9
 .Os
 .Sh NAME
@@ -58,7 +58,9 @@ functions.
 .Sh FUNCTIONS
 The
 .Fn days_in_month
-function takes as the input parameter number of days in the given month.
+function returns the number of days in the given month.
+.Fn days_in_month
+assumes 28 days for February.
 If the input value is out of the valid range (1-12) then the function returns
 \-1.
 .Pp
