@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_com.c,v 1.1 2014/12/26 16:53:33 jmcneill Exp $	*/
+/*	$NetBSD: obio_com.c,v 1.2 2014/12/26 19:44:48 jmcneill Exp $	*/
 
 /*	based on omap/obio_com.c	*/
 
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.1 2014/12/26 16:53:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.2 2014/12/26 19:44:48 jmcneill Exp $");
 
 #include "opt_rockchip.h"
 /*#include "opt_com.h"*/
@@ -77,10 +77,24 @@ static int
 obiouart_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct obio_attach_args *obio = aux;
-	bus_space_handle_t bh;
-	int rv;
-	if (obio->obio_addr == OBIOCF_ADDR_DEFAULT)
+	bus_space_handle_t bsh;
+	bus_addr_t ioaddr;
+
+	switch (obio->obio_base) {
+	case ROCKCHIP_CORE0_BASE:
+		KASSERT(obio->obio_offset == ROCKCHIP_UART0_OFFSET ||
+			obio->obio_offset == ROCKCHIP_UART1_OFFSET);
+		break;
+	case ROCKCHIP_CORE1_BASE:
+		KASSERT(obio->obio_offset == ROCKCHIP_UART2_OFFSET ||
+			obio->obio_offset == ROCKCHIP_UART3_OFFSET);
+		break;
+	default:
 		panic("obiouart must have addr specified in config.");
+	}
+
+	ioaddr = obio->obio_base + obio->obio_offset;
+
 #if 0
 	/*
 	 * XXX this should be ifdefed on a board-dependent switch
@@ -93,18 +107,13 @@ obiouart_match(device_t parent, cfdata_t cf, void *aux)
 	if (obio->obio_size == OBIOCF_SIZE_DEFAULT)
 		obio->obio_size = ROCKCHIP_UART_SIZE;
 
-	if (com_is_console(obio->obio_iot, obio->obio_addr, NULL))
+	if (com_is_console(obio->obio_bst, ioaddr, NULL))
 		return 1;
 
-	if (bus_space_map(obio->obio_iot, obio->obio_addr, obio->obio_size,
-			  0, &bh))
-		return 1;
+	bus_space_subregion(obio->obio_bst, obio->obio_bsh, obio->obio_size, 0,
+	    &bsh);
 
-	rv = comprobe1(obio->obio_iot, bh);
-
-	bus_space_unmap(obio->obio_iot, bh, obio->obio_size);
-
-	return rv;
+	return comprobe1(obio->obio_bst, bsh);
 }
 
 static void
@@ -113,24 +122,23 @@ obiouart_attach(device_t parent, device_t self, void *aux)
 	struct com_obio_softc *osc = device_private(self);
 	struct com_softc *sc = &osc->sc_sc;
 	struct obio_attach_args *obio = aux;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh = 0;
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh = 0;
 	bus_addr_t iobase;
-
 
 	sc->sc_dev = self;
 
-	iot = obio->obio_iot;
-	iobase = obio->obio_addr;
+	bst = obio->obio_bst;
+	iobase = obio->obio_base + obio->obio_offset;
 	sc->sc_frequency = ROCKCHIP_UART_FREQ;
 	sc->sc_type = COM_TYPE_NORMAL;
 
-	if (com_is_console(iot, iobase, &ioh) == 0 &&
-	    bus_space_map(iot, iobase, obio->obio_size, 0, &ioh)) {
+	if (com_is_console(bst, iobase, &bsh) == 0 &&
+	    bus_space_subregion(bst, obio->obio_bsh, obio->obio_size, 0, &bsh)) {
 		panic(": can't map registers\n");
 		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
+	COM_INIT_REGS(sc->sc_regs, bst, bsh, iobase);
 
 	com_attach_subr(sc);
 	aprint_naive("\n");

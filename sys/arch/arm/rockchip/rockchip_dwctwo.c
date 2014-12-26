@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_dwctwo.c,v 1.1 2014/12/26 16:53:33 jmcneill Exp $	*/
+/*	$NetBSD: rockchip_dwctwo.c,v 1.2 2014/12/26 19:44:48 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_dwctwo.c,v 1.1 2014/12/26 16:53:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_dwctwo.c,v 1.2 2014/12/26 19:44:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,21 +112,15 @@ rkdwc2_attach(device_t parent, device_t self, void *aux)
 {
 	struct rkdwc2_softc *sc = device_private(self);
 	struct obio_attach_args *obio = aux;
-	int error;
 
 	sc->sc_dwc2.sc_dev = self;
 
-	sc->sc_dwc2.sc_iot = obio->obio_iot;
+	sc->sc_dwc2.sc_iot = obio->obio_bst;
 	sc->sc_dwc2.sc_bus.dmatag = obio->obio_dmat;
 	sc->sc_dwc2.sc_params = &rkdwc2_params;
 
-	error = bus_space_map(obio->obio_iot, obio->obio_addr, obio->obio_size, 0,
-	    &sc->sc_dwc2.sc_ioh);
-	if (error) {
-		aprint_error_dev(self,
-		    "can't map registers for %s: %d\n", obio->obio_name, error);
-		return;
-	}
+	bus_space_subregion(obio->obio_bst, obio->obio_bsh, obio->obio_offset,
+	    obio->obio_size, &sc->sc_dwc2.sc_ioh);
 
 	aprint_naive(": USB controller\n");
 	aprint_normal(": USB controller\n");
@@ -151,7 +145,6 @@ fail:
 		intr_disestablish(sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
-	bus_space_unmap(sc->sc_dwc2.sc_iot, sc->sc_dwc2.sc_ioh, obio->obio_size);
 }
 
 static void

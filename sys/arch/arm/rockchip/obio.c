@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.1 2014/12/26 16:53:33 jmcneill Exp $	*/
+/*	$NetBSD: obio.c,v 1.2 2014/12/26 19:44:48 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.1 2014/12/26 16:53:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.2 2014/12/26 19:44:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,14 +100,16 @@ int
 obio_print(void *aux, const char *pnp)
 {
 	struct obio_attach_args *obio = aux;
+	bus_addr_t addr = obio->obio_base + obio->obio_offset;
 
-	aprint_normal(": addr 0x%08lx", obio->obio_addr);
-	aprint_normal("-0x%08lx", obio->obio_addr + (obio->obio_size - 1));
+	aprint_normal(": addr 0x%08lx", addr);
+	aprint_normal("-0x%08lx", addr + (obio->obio_size - 1));
 	if (obio->obio_width != OBIOCF_WIDTH_DEFAULT)
 		aprint_normal(" width %d", obio->obio_width);
 	if (obio->obio_intr != OBIOCF_INTR_DEFAULT)
 		aprint_normal(" intr %d", obio->obio_intr);
-	aprint_normal(" mult %d", obio->obio_mult);
+	if (obio->obio_mult != OBIOCF_MULT_DEFAULT)
+		aprint_normal(" mult %d", obio->obio_mult);
 
 	return UNCONF;
 }
@@ -116,21 +118,33 @@ int
 obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct obio_attach_args obio;
+	bus_addr_t addr = cf->cf_loc[OBIOCF_ADDR];
 
-	obio.obio_addr = cf->cf_loc[OBIOCF_ADDR];
+	if (addr >= ROCKCHIP_CORE0_BASE &&
+	    addr < ROCKCHIP_CORE0_BASE + ROCKCHIP_CORE0_SIZE) {
+		obio.obio_base = ROCKCHIP_CORE0_BASE;
+		obio.obio_bsh = rockchip_core0_bsh;
+	} else if (addr >= ROCKCHIP_CORE1_BASE &&
+	    addr < ROCKCHIP_CORE1_BASE + ROCKCHIP_CORE1_SIZE) {
+		obio.obio_base = ROCKCHIP_CORE1_BASE;
+		obio.obio_bsh = rockchip_core1_bsh;
+	} else {
+		panic("addr %#llx is not in CORE0 or CORE1 space",
+		    (long long unsigned int)addr);
+	}
+	obio.obio_offset = addr - obio.obio_base;
 	obio.obio_size = cf->cf_loc[OBIOCF_SIZE];
 	obio.obio_width = cf->cf_loc[OBIOCF_WIDTH];
 	obio.obio_intr = cf->cf_loc[OBIOCF_INTR];
 	obio.obio_mult = cf->cf_loc[OBIOCF_MULT];
 	obio.obio_dmat = &rockchip_bus_dma_tag;
 
-
 	switch (cf->cf_loc[OBIOCF_MULT]) {
 	case 1:
-		obio.obio_iot = &rockchip_bs_tag;
+		obio.obio_bst = &rockchip_bs_tag;
 		break;
 	case 4:
-		obio.obio_iot = &rockchip_a4x_bs_tag;
+		obio.obio_bst = &rockchip_a4x_bs_tag;
 		break;
 	default:
 		panic("Unsupported EMIFS multiplier.");
@@ -160,16 +174,14 @@ void obio_iomux(int offset, int new)
 	bus_space_tag_t bt = &rockchip_bs_tag;
 	int old, renew;
 
-	if (bus_space_map(bt, ROCKCHIP_GRF_BASE, ROCKCHIP_GRF_SIZE, 0, &bh))
-		panic("GRF can not be mapped.");
+	bus_space_subregion(bt, rockchip_core1_bsh, ROCKCHIP_GRF_OFFSET,
+	    ROCKCHIP_GRF_SIZE, &bh);
 
 	old = bus_space_read_4(bt, bh, offset);
 	bus_space_write_4(bt, bh, offset, (old | new | 0xffff0000));
 	renew = bus_space_read_4(bt, bh, offset);
 
 	printf("grf iomux: old %08x, new %08x, renew %08x\n", old, new, renew);
-
-	bus_space_unmap(bt, bh, ROCKCHIP_GRF_SIZE);
 }
 
 #define GPIO_SWPORTA_DR_OFFSET	0x00
@@ -177,8 +189,8 @@ void obio_iomux(int offset, int new)
 
 void obio_init_gpio(void)
 {
-	obio_swporta(ROCKCHIP_GPIO0_BASE, GPIO_SWPORTA_DR_OFFSET, __BIT(3));
-	obio_swporta(ROCKCHIP_GPIO0_BASE, GPIO_SWPORTA_DD_OFFSET, __BIT(3));
+	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(3));
+	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(3));
 }
 
 void obio_swporta(int gpio_base, int offset, int new)
@@ -188,14 +200,11 @@ void obio_swporta(int gpio_base, int offset, int new)
 	int old, renew;
 	int gpio_size = 0x100; /* XXX */
 
-	if (bus_space_map(bt, gpio_base, gpio_size, 0, &bh))
-		panic("gpio can not be mapped.");
+	bus_space_subregion(bt, rockchip_core1_bsh, gpio_base, gpio_size, &bh);
 
 	old = bus_space_read_4(bt, bh, offset);
 	bus_space_write_4(bt, bh, offset, old | new);
 	renew = bus_space_read_4(bt, bh, offset);
 
 	printf("gpio: 0x%08x 0x%08x -> 0x%08x\n", gpio_base + offset, old, renew);
-
-	bus_space_unmap(bt, bh, gpio_size);
 }
