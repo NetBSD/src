@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.44 2014/12/26 20:44:38 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.45 2014/12/26 22:44:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.44 2014/12/26 20:44:38 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.45 2014/12/26 22:44:54 christos Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -481,6 +481,14 @@ npfctl_rule(int fd, int argc, char **argv)
 	exit(EXIT_SUCCESS);
 }
 
+static bool bpfjit = true;
+
+void
+npfctl_bpfjit(bool onoff)
+{
+	bpfjit = onoff;
+}
+
 static void
 npfctl_preload_bpfjit(void)
 {
@@ -491,9 +499,17 @@ npfctl_preload_bpfjit(void)
 		.ml_propslen = 0
 	};
 
+	if (!bpfjit)
+		return;
+
 	if (modctl(MODCTL_LOAD, &args) != 0 && errno != EEXIST) {
-		fprintf(stderr, "WARNING: bpfjit is not loaded; "
-		    "this may have severe impact on performance.");
+		static const char *p = "; performance will be degraded";
+		if (errno == ENOENT)
+			warnx("the bpfjit module seems to be missing%s", p);
+		else
+			warn("error loading the bpfjit module%s", p);
+		warnx("To disable this warning `set bpf.jit off' in "
+		    "/etc/npf.conf");
 	}
 }
 
