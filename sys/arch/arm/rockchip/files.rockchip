@@ -1,0 +1,42 @@
+#	$NetBSD: files.rockchip,v 1.1 2014/12/26 16:53:33 jmcneill Exp $
+#
+# Configuration info for Rockchip ARM Peripherals
+#
+
+include "arch/arm/pic/files.pic"
+include "arch/arm/cortex/files.cortex"
+
+file	arch/arm/arm32/arm32_boot.c
+file	arch/arm/arm32/arm32_kvminit.c
+file	arch/arm/arm32/arm32_reboot.c
+file	arch/arm/arm32/irq_dispatch.S
+
+file	arch/arm/rockchip/rockchip_space.c	obio
+#file	arch/arm/rockchip/rockchip_a4x_space.c	obio
+file	arch/arm/rockchip/rockchip_dma.c
+file	arch/arm/arm/bus_space_a4x.S		obio
+
+# On-board I/O
+device obio {[addr = -1], [size = -1], [width = -1], [intr = -1], [mult = 1]}: bus_space_generic
+attach obio at mainbus
+file arch/arm/rockchip/obio.c		obio
+
+# serial
+attach com at obio with obiouart
+file	arch/arm/rockchip/obio_com.c	obiouart
+
+# SDHC
+#attach	sdhc at obio with rksdhc
+#file	arch/arm/rockchip/rockchip_sdhc.c	rksdhc
+
+# USB OTG (Synopsys DesignWave OTG)
+attach  dwctwo at obio with rkdwctwo
+file    arch/arm/rockchip/rockchip_dwctwo.c	rkdwctwo	needs-flag
+
+# Console parameters
+defparam opt_rockchip.h			CONADDR
+defparam opt_rockchip.h			CONSPEED
+defparam opt_rockchip.h			CONMODE
+
+# Memory parameters
+defparam opt_rockchip.h			MEMSIZE
