@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.8 2014/12/23 17:48:59 christos Exp $
+# $NetBSD: md.amd64,v 1.9 2014/12/26 14:19:20 christos Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg
@@ -7,7 +7,7 @@
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	xorg,debuglib
 ./usr/X11R7/lib/modules/extensions/libdri2_g.a		-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/extensions/libdri_g.a		-unknown-	xorg,debuglib
-./usr/X11R7/lib/modules/extensions/libextmod_g.a		-unknown-	xorg,debuglib
+./usr/X11R7/lib/modules/extensions/libextmod_g.a	-unknown-	xorg,debuglib
 ./usr/X11R7/lib/modules/extensions/libglx_g.a		-unknown-	xorg,debuglib
 ./usr/X11R7/lib/modules/extensions/librecord_g.a	-unknown-	xorg,debuglib
 ./usr/X11R7/lib/modules/extensions/libshadow_g.a	-unknown-	xorg,debuglib
@@ -49,8 +49,6 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i810_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i915_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i965_dri.so.0.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/kms_swrast_dri.so.0.debug		-unknown-	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/mesa_dri_drivers.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libi810_dri.so.0.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libi915_dri.so.0.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libi965_dri.so.0.debug	obsolete		xorg,obsolete
@@ -68,12 +66,12 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libtrident_dri.so.0.debug	obsolete		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libunichrome_dri.so.0.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/mach64_dri.so.0.debug	-unknown-		obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/mesa_dri_drivers.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/mga_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r128_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r200_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r300_dri.so.0.debug	-unknown-		obsolete,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r600_dri.so.0.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/gallium_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/radeon_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/s3v_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/savage_dri.so.0.debug	-unknown-		obsolete
