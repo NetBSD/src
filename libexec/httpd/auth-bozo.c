@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bozo.c,v 1.15 2014/12/26 19:48:52 mrg Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.16 2014/12/26 19:52:00 mrg Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -265,7 +265,7 @@ base64_decode(const unsigned char *in, size_t ilen, unsigned char *out,
 			| decodetable[in[i + 3]];
 #undef IN_CHECK
 	}
-	while (in[i - 1] == '=')
+	while (i > 0 && in[i - 1] == '=')
 		cp--,i--;
 	return (cp - out);
 }
