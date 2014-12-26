@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_var.h,v 1.1 2014/12/26 16:53:33 jmcneill Exp $ */
+/* $NetBSD: rockchip_var.h,v 1.2 2014/12/26 19:44:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,8 +36,10 @@
 #include <sys/bus.h>
 
 struct obio_attach_args {
-	bus_space_tag_t	obio_iot;	/* bus space tag */
-	bus_addr_t	obio_addr;	/* address of device */
+	bus_space_tag_t	obio_bst;	/* bus space tag */
+	bus_space_handle_t obio_bsh;	/* bus space handle */
+	bus_addr_t	obio_base;	/* base address of handle */
+	bus_addr_t	obio_offset;	/* address of device */
 	bus_size_t	obio_size;	/* size of device */
 	int		obio_intr;	/* irq */
 	int		obio_width;	/* bus width */
@@ -49,5 +51,9 @@ struct obio_attach_args {
 extern struct bus_space rockchip_bs_tag;
 extern struct bus_space rockchip_a4x_bs_tag;
 extern struct arm32_bus_dma_tag	rockchip_bus_dma_tag;
+extern bus_space_handle_t rockchip_core0_bsh;
+extern bus_space_handle_t rockchip_core1_bsh;
+
+void rockchip_bootstrap(void);
 
 #endif /* _ARM_ROCKCHIP_ROCKCHIP_VAR_H_ */
