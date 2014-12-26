@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3 2014/12/23 16:17:39 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.4 2014/12/26 18:06:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3 2014/12/23 16:17:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4 2014/12/26 18:06:52 macallan Exp $");
 
 #define __INTR_PRIVATE
 
@@ -82,6 +82,7 @@ static const struct ipl_sr_map ingenic_ipl_sr_map = {
 /* some timer channels share interrupts, couldn't find any others */
 struct intrhand {
 	struct evcnt ih_count;
+	char ih_name[16];
 	int (*ih_func)(void *);
 	void *ih_arg;
 	int ih_ipl;
@@ -96,7 +97,6 @@ evbmips_intr_init(void)
 {
 	uint32_t reg;
 	int i;
-	char irqstr[8];
 
 	ipl_sr_map = ingenic_ipl_sr_map;
 
@@ -104,9 +104,10 @@ evbmips_intr_init(void)
 	for (i = 0; i < NINTR; i++) {
 		intrs[i].ih_func = NULL;
 		intrs[i].ih_arg = NULL;
-		snprintf(irqstr, sizeof(irqstr), "irq %d", i);
+		snprintf(intrs[i].ih_name, sizeof(intrs[i].ih_name),
+		    "irq %d", i);
 		evcnt_attach_dynamic(&intrs[i].ih_count, EVCNT_TYPE_INTR,
-		    NULL, "PIC", irqstr);
+		    NULL, "PIC", intrs[i].ih_name);
 	}
 
 	/* mask all peripheral IRQs */
@@ -127,9 +128,11 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 #ifdef INGENIC_INTR_DEBUG
 	char buffer[256];
 	
+#if 0
 	snprintf(buffer, 256, "pending: %08x CR %08x\n", ipending,
 	    MFC0(MIPS_COP_0_CAUSE, 0));
 	ingenic_puts(buffer);
+#endif
 #endif
 	/* see which core we're on */
 	id = MFC0(15, 1) & 7;
@@ -193,7 +196,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 		 * and IPIs. If that doesn't work we'll have to send an IPI to
 		 * core1 for each timer tick.  
 		 */
-		if (readreg(JZ_ICPR0) & 0x08000000) {
+		if (readreg(JZ_ICPR0) & 0x0c000000) {
 			ingenic_clockintr(id);
 		}
 		ingenic_irq(ipl);
@@ -205,7 +208,7 @@ void
 ingenic_irq(int ipl)
 {
 	uint32_t irql, irqh, mask;
-	int bit, idx;
+	int bit, idx, bail;
 #ifdef INGENIC_INTR_DEBUG
 	char buffer[16];
 #endif
@@ -217,6 +220,7 @@ ingenic_irq(int ipl)
 		ingenic_puts(buffer);
 	}
 #endif
+	bail = 32;
 	bit = ffs32(irql);
 	while (bit != 0) {
 		idx = bit - 1;
@@ -234,6 +238,8 @@ ingenic_irq(int ipl)
 		}		
 		irql &= ~mask;
 		bit = ffs32(irql);
+		bail--;
+		KASSERT(bail > 0);
 	}
 
 	irqh = readreg(JZ_ICPR1);
@@ -262,7 +268,6 @@ ingenic_irq(int ipl)
 		irqh &= ~mask;
 		bit = ffs32(irqh);
 	}
-
 }
 
 void *
