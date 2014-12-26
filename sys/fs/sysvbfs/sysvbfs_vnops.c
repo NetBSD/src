@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.54 2014/08/08 19:14:45 gson Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.55 2014/12/26 15:22:15 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.54 2014/08/08 19:14:45 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.55 2014/12/26 15:22:15 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -581,21 +581,23 @@ sysvbfs_rename(void *arg)
 		goto out;
 	}
 
+	/*
+	 * Remove the target if it exists.
+	 */
+	if (tvp != NULL) {
+		error = bfs_file_delete(bfs, to_name, true);
+		if (error)
+			goto out;
+	}
 	error = bfs_file_rename(bfs, from_name, to_name);
  out:
-	if (tvp) {
-		if (error == 0) {
-			struct sysvbfs_node *tbnode = tvp->v_data;
-			tbnode->removed = 1;
-		}
-		vput(tvp);
-	}
-
 	/* tdvp == tvp probably can't happen with this fs, but safety first */
 	if (tdvp == tvp)
 		vrele(tdvp);
 	else
 		vput(tdvp);
+	if (tvp)
+		vput(tvp);
 
 	vrele(fdvp);
 	vrele(fvp);
