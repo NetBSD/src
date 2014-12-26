@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.1 2014/12/26 16:53:33 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.2 2014/12/26 19:44:48 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.1 2014/12/26 16:53:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.2 2014/12/26 19:44:48 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -181,6 +181,7 @@ __KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.1 2014/12/26 16:53:33 jmcneil
 #include <dev/ic/ns16550reg.h>
 #include <dev/ic/comreg.h>
 
+#include <arm/rockchip/rockchip_reg.h>
 #include <arm/rockchip/rockchip_var.h>
 
 #ifdef CPU_CORTEXA9
@@ -340,6 +341,9 @@ initarm(void *arg)
 	rockchip_putchar('d');
 #endif
 
+	pmap_devmap_register(devmap);
+	rockchip_bootstrap();
+
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
@@ -348,8 +352,6 @@ curcpu()->ci_data.cpu_cc_freq = 1600000000;       /* XXX hack XXX */
 
 	init_clocks();
 
-	/* The console is going to try to map things.  Give pmap a devmap. */
-	pmap_devmap_register(devmap);
 	consinit();
 #ifdef CPU_CORTEXA15
 #ifdef MULTIPROCESSOR
@@ -362,8 +364,8 @@ curcpu()->ci_data.cpu_cc_freq = 1600000000;       /* XXX hack XXX */
          * Probe the PL310 L2CC
          */
 	printf("probe the PL310 L2CC\n");
-        const bus_space_handle_t pl310_bh = ROCKCHIP_PL310_BASE
-            + ROCKCHIP_CORE0_VBASE - ROCKCHIP_CORE0_BASE;
+        const bus_space_handle_t pl310_bh =
+            ROCKCHIP_CORE0_VBASE + ROCKCHIP_PL310_OFFSET;
         arml2cc_init(&rockchip_a4x_bs_tag, pl310_bh, 0);
         rockchip_putchar('l');
 #endif
@@ -520,7 +522,13 @@ consinit(void)
 void
 rockchip_reset(void)
 {
-	/* NOT YET */
+	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_handle_t bsh;
+
+	bus_space_subregion(bst, rockchip_core1_bsh,
+	    ROCKCHIP_CRU_OFFSET, ROCKCHIP_CRU_SIZE, &bsh);
+
+	bus_space_write_4(bst, bsh, 0x100, 0xfdb9);
 }
 
 #ifdef KGDB

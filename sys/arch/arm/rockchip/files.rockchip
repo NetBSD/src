@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.1 2014/12/26 16:53:33 jmcneill Exp $
+#	$NetBSD: files.rockchip,v 1.2 2014/12/26 19:44:48 jmcneill Exp $
 #
 # Configuration info for Rockchip ARM Peripherals
 #
@@ -11,6 +11,7 @@ file	arch/arm/arm32/arm32_kvminit.c
 file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
 
+file	arch/arm/rockchip/rockchip_board.c
 file	arch/arm/rockchip/rockchip_space.c	obio
 #file	arch/arm/rockchip/rockchip_a4x_space.c	obio
 file	arch/arm/rockchip/rockchip_dma.c
@@ -25,11 +26,11 @@ file arch/arm/rockchip/obio.c		obio
 attach com at obio with obiouart
 file	arch/arm/rockchip/obio_com.c	obiouart
 
-# SDHC
-#attach	sdhc at obio with rksdhc
-#file	arch/arm/rockchip/rockchip_sdhc.c	rksdhc
+# SD/MMC (Synopsys DesignWare)
+attach	dwcmmc at obio with rkdwcmmc
+file	arch/arm/rockchip/rockchip_dwcmmc.c	rkdwcmmc
 
-# USB OTG (Synopsys DesignWave OTG)
+# USB OTG (Synopsys DesignWare OTG)
 attach  dwctwo at obio with rkdwctwo
 file    arch/arm/rockchip/rockchip_dwctwo.c	rkdwctwo	needs-flag
 
