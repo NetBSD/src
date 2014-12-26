@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.55 2014/12/26 15:22:15 hannken Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.56 2014/12/26 15:23:21 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.55 2014/12/26 15:22:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.56 2014/12/26 15:23:21 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -697,13 +697,13 @@ sysvbfs_reclaim(void *v)
 	struct bfs *bfs = bnode->bmp->bfs;
 
 	DPRINTF("%s:\n", __func__);
+
+	vcache_remove(vp->v_mount,
+	    &bnode->inode->number, sizeof(bnode->inode->number));
 	if (bnode->removed) {
 		if (bfs_inode_delete(bfs, bnode->inode->number) != 0)
 			DPRINTF("%s: delete inode failed\n", __func__);
 	}
-	mutex_enter(&mntvnode_lock);
-	LIST_REMOVE(bnode, link);
-	mutex_exit(&mntvnode_lock);
 	genfs_node_destroy(vp);
 	pool_put(&sysvbfs_node_pool, bnode);
 	vp->v_data = NULL;
