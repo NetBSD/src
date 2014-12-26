@@ -1,7 +1,7 @@
-/*	$NetBSD: lwconfig.c,v 1.3.4.1 2012/06/05 21:14:54 bouyer Exp $	*/
+/*	$NetBSD: lwconfig.c,v 1.3.4.1.6.1 2014/12/26 03:08:38 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 /*! \file */
 
@@ -69,9 +67,12 @@
 #include <lwres/lwres.h>
 #include <lwres/net.h>
 #include <lwres/result.h>
+#include <lwres/stdlib.h>
+#include <lwres/string.h>
 
 #include "assert_p.h"
 #include "context_p.h"
+#include "print_p.h"
 
 
 #if ! defined(NS_INADDRSZ)
@@ -206,6 +207,7 @@ lwres_resetaddr(lwres_addr_t *addr) {
 	memset(addr->address, 0, LWRES_ADDR_MAXLEN);
 	addr->family = 0;
 	addr->length = 0;
+	addr->zone = 0;
 }
 
 static char *
@@ -451,25 +453,57 @@ static lwres_result_t
 lwres_create_addr(const char *buffer, lwres_addr_t *addr, int convert_zero) {
 	struct in_addr v4;
 	struct in6_addr v6;
+	char buf[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255") +
+		 sizeof("%4294967295")];
+	char *percent;
+	size_t n;
+
+	n = strlcpy(buf, buffer, sizeof(buf));
+	if (n >= sizeof(buf))
+		return (LWRES_R_FAILURE);
+
+	percent = strchr(buf, '%');
+	if (percent != NULL)
+		*percent = 0;
 
 	if (lwres_net_aton(buffer, &v4) == 1) {
 		if (convert_zero) {
 			unsigned char zeroaddress[] = {0, 0, 0, 0};
 			unsigned char loopaddress[] = {127, 0, 0, 1};
 			if (memcmp(&v4, zeroaddress, 4) == 0)
-				memcpy(&v4, loopaddress, 4);
+				memmove(&v4, loopaddress, 4);
 		}
 		addr->family = LWRES_ADDRTYPE_V4;
 		addr->length = NS_INADDRSZ;
-		memcpy((void *)addr->address, &v4, NS_INADDRSZ);
+		addr->zone = 0;
+		memmove((void *)addr->address, &v4, NS_INADDRSZ);
 
-	} else if (lwres_net_pton(AF_INET6, buffer, &v6) == 1) {
+	} else if (lwres_net_pton(AF_INET6, buf, &v6) == 1) {
 		addr->family = LWRES_ADDRTYPE_V6;
 		addr->length = NS_IN6ADDRSZ;
-		memcpy((void *)addr->address, &v6, NS_IN6ADDRSZ);
-	} else {
-		return (LWRES_R_FAILURE); /* Unrecognised format. */
+		memmove((void *)addr->address, &v6, NS_IN6ADDRSZ);
+		if (percent != NULL) {
+			unsigned long zone;
+			char *ep;
+
+			percent++;
+
+#ifdef HAVE_IF_NAMETOINDEX
+			zone = if_nametoindex(percent);
+			if (zone != 0U) {
+				addr->zone = zone;
+				return (LWRES_R_SUCCESS);
 	}
+#endif
+			zone = strtoul(percent, &ep, 10);
+			if (ep != percent && *ep == 0)
+				addr->zone = zone;
+			else
+				return (LWRES_R_FAILURE);
+		} else
+			addr->zone = 0;
+	} else
+		return (LWRES_R_FAILURE); /* Unrecognised format. */
 
 	return (LWRES_R_SUCCESS);
 }
@@ -632,6 +666,7 @@ lwres_conf_print(lwres_context_t *ctx, FILE *fp) {
 	int i;
 	int af;
 	char tmp[sizeof("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")];
+	char buf[sizeof("%4000000000")];
 	const char *p;
 	lwres_conf_t *confdata;
 	lwres_addr_t tmpaddr;
@@ -649,7 +684,13 @@ lwres_conf_print(lwres_context_t *ctx, FILE *fp) {
 		if (p != tmp)
 			return (LWRES_R_FAILURE);
 
-		fprintf(fp, "nameserver %s\n", tmp);
+		if (af == AF_INET6 && confdata->lwservers[i].zone != 0) {
+			snprintf(buf, sizeof(buf), "%%%u",
+				confdata->nameservers[i].zone);
+		} else
+			buf[0] = 0;
+
+		fprintf(fp, "nameserver %s%s\n", tmp, buf);
 	}
 
 	for (i = 0; i < confdata->lwnext; i++) {
@@ -660,7 +701,13 @@ lwres_conf_print(lwres_context_t *ctx, FILE *fp) {
 		if (p != tmp)
 			return (LWRES_R_FAILURE);
 
-		fprintf(fp, "lwserver %s\n", tmp);
+		if (af == AF_INET6 && confdata->lwservers[i].zone != 0) {
+			snprintf(buf, sizeof(buf), "%%%u",
+				confdata->nameservers[i].zone);
+		} else
+			buf[0] = 0;
+
+		fprintf(fp, "lwserver %s%s\n", tmp, buf);
 	}
 
 	if (confdata->domainname != NULL) {

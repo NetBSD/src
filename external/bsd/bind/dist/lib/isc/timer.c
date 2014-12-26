@@ -1,7 +1,7 @@
-/*	$NetBSD: timer.c,v 1.4.4.1 2012/06/05 21:15:06 bouyer Exp $	*/
+/*	$NetBSD: timer.c,v 1.4.4.1.6.1 2014/12/26 03:08:36 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -132,12 +132,12 @@ struct isc__timermgr {
 
 ISC_TIMERFUNC_SCOPE isc_result_t
 isc__timer_create(isc_timermgr_t *manager, isc_timertype_t type,
-		  isc_time_t *expires, isc_interval_t *interval,
-		  isc_task_t *task, isc_taskaction_t action, const void *arg,
+		  const isc_time_t *expires, const isc_interval_t *interval,
+		  isc_task_t *task, isc_taskaction_t action, void *arg,
 		  isc_timer_t **timerp);
 ISC_TIMERFUNC_SCOPE isc_result_t
 isc__timer_reset(isc_timer_t *timer, isc_timertype_t type,
-		 isc_time_t *expires, isc_interval_t *interval,
+		 const  isc_time_t *expires, const isc_interval_t *interval,
 		 isc_boolean_t purge);
 ISC_TIMERFUNC_SCOPE isc_timertype_t
 isc__timer_gettype(isc_timer_t *timer);
@@ -394,8 +394,8 @@ destroy(isc__timer_t *timer) {
 
 ISC_TIMERFUNC_SCOPE isc_result_t
 isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
-		  isc_time_t *expires, isc_interval_t *interval,
-		  isc_task_t *task, isc_taskaction_t action, const void *arg,
+		  const isc_time_t *expires, const isc_interval_t *interval,
+		  isc_task_t *task, isc_taskaction_t action, void *arg,
 		  isc_timer_t **timerp)
 {
 	isc__timermgr_t *manager = (isc__timermgr_t *)manager0;
@@ -516,7 +516,7 @@ isc__timer_create(isc_timermgr_t *manager0, isc_timertype_t type,
 
 ISC_TIMERFUNC_SCOPE isc_result_t
 isc__timer_reset(isc_timer_t *timer0, isc_timertype_t type,
-		 isc_time_t *expires, isc_interval_t *interval,
+		 const isc_time_t *expires, const isc_interval_t *interval,
 		 isc_boolean_t purge)
 {
 	isc__timer_t *timer = (isc__timer_t *)timer0;
@@ -694,7 +694,7 @@ dispatch(isc__timermgr_t *manager, isc_time_t *now) {
 
 	while (manager->nscheduled > 0 && !done) {
 		timer = isc_heap_element(manager->heap, 1);
-		INSIST(timer->type != isc_timertype_inactive);
+		INSIST(timer != NULL && timer->type != isc_timertype_inactive);
 		if (isc_time_compare(now, &timer->due) >= 0) {
 			if (timer->type == isc_timertype_ticker) {
 				type = ISC_TIMEREVENT_TICK;
@@ -1066,9 +1066,9 @@ isc__timermgr_dispatch(isc_timermgr_t *manager0) {
 }
 #endif /* USE_TIMER_THREAD */
 
-#ifdef USE_TIMERIMPREGISTER
 isc_result_t
-isc__timer_register() {
+isc__timer_register(void) {
 	return (isc_timer_register(isc__timermgr_create));
 }
-#endif
+
+#include "timer_api.c"

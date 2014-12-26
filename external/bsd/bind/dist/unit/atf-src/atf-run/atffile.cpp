@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2007 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,8 @@
 //
 
 #include <fstream>
+
+#include "atf-c/defs.h"
 
 #include "atf-c++/detail/exceptions.hpp"
 #include "atf-c++/detail/expand.hpp"
@@ -90,19 +92,23 @@ detail::atf_atffile_reader::~atf_atffile_reader(void)
 }
 
 void
-detail::atf_atffile_reader::got_conf(const std::string& name,
-                                     const std::string& val)
+detail::atf_atffile_reader::got_conf(
+    const std::string& name ATF_DEFS_ATTRIBUTE_UNUSED,
+    const std::string& val ATF_DEFS_ATTRIBUTE_UNUSED)
 {
 }
 
 void
-detail::atf_atffile_reader::got_prop(const std::string& name,
-                                     const std::string& val)
+detail::atf_atffile_reader::got_prop(
+    const std::string& name ATF_DEFS_ATTRIBUTE_UNUSED,
+    const std::string& val ATF_DEFS_ATTRIBUTE_UNUSED)
 {
 }
 
 void
-detail::atf_atffile_reader::got_tp(const std::string& name, bool isglob)
+detail::atf_atffile_reader::got_tp(
+    const std::string& name ATF_DEFS_ATTRIBUTE_UNUSED,
+    bool isglob ATF_DEFS_ATTRIBUTE_UNUSED)
 {
 }
 

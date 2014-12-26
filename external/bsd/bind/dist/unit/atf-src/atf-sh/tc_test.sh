@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,9 +43,22 @@ default_status_body()
     atf_check -s eq:1 -o ignore -e match:'An error' ${h} tc_fail
 }
 
+atf_test_case missing_body
+missing_body_head()
+{
+    atf_set "descr" "Verifies that test cases without a body are reported" \
+                    "as failed"
+}
+missing_body_body()
+{
+    h="$(atf_get_srcdir)/misc_helpers -s $(atf_get_srcdir)"
+    atf_check -s eq:1 -o ignore -e ignore ${h} tc_missing_body
+}
+
 atf_init_test_cases()
 {
     atf_add_test_case default_status
+    atf_add_test_case missing_body
 }
 
 # vim: syntax=sh:expandtab:shiftwidth=4:softtabstop=4

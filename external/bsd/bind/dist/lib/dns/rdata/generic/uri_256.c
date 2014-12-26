@@ -1,7 +1,7 @@
-/*	$NetBSD: uri_256.c,v 1.1.1.1.4.1 2012/06/06 18:18:17 bouyer Exp $	*/
+/*	$NetBSD: uri_256.c,v 1.1.1.1.4.1.6.1 2014/12/26 03:08:33 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -117,15 +117,12 @@ fromwire_uri(ARGS_FROMWIRE) {
 	isc_buffer_activeregion(source, &region);
 	if (region.length < 4)
 		return (ISC_R_UNEXPECTEDEND);
-	RETERR(mem_tobuffer(target, region.base, 4));
-	isc_buffer_forward(source, 4);
 
 	/*
-	 * Target URI
+	 * Priority, weight and target URI
 	 */
-	RETERR(multitxt_fromwire(source, target));
-
-	return (ISC_R_SUCCESS);
+	isc_buffer_forward(source, region.length);
+	return (mem_tobuffer(target, region.base, region.length));
 }
 
 static inline isc_result_t
@@ -180,8 +177,6 @@ compare_uri(ARGS_COMPARE) {
 static inline isc_result_t
 fromstruct_uri(ARGS_FROMSTRUCT) {
 	dns_rdata_uri_t *uri = source;
-	isc_region_t region;
-	isc_uint8_t len;
 
 	REQUIRE(type == 256);
 	REQUIRE(source != NULL);
@@ -205,18 +200,6 @@ fromstruct_uri(ARGS_FROMSTRUCT) {
 	/*
 	 * Target URI
 	 */
-	len = 255U;
-	region.base = uri->target;
-	region.length = uri->tgt_len;
-	while (region.length > 0) {
-		REQUIRE(len == 255U);
-		len = uint8_fromregion(&region);
-		isc_region_consume(&region, 1);
-		if (region.length < len)
-			return (ISC_R_UNEXPECTEDEND);
-		isc_region_consume(&region, len);
-	}
-
 	return (mem_tobuffer(target, uri->target, uri->tgt_len));
 }
 

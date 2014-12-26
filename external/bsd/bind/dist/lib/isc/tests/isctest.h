@@ -1,4 +1,4 @@
-/*	$NetBSD: isctest.h,v 1.1.1.1.4.2 2012/12/15 05:40:10 riz Exp $	*/
+/*	$NetBSD: isctest.h,v 1.1.1.1.4.2.2.1 2014/12/26 03:08:37 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -45,8 +45,8 @@ extern isc_mem_t *mctx;
 extern isc_entropy_t *ectx;
 extern isc_log_t *lctx;
 extern isc_taskmgr_t *taskmgr;
-isc_timermgr_t *timermgr;
-isc_socketmgr_t *socketmgr;
+extern isc_timermgr_t *timermgr;
+extern isc_socketmgr_t *socketmgr;
 extern int ncpus;
 
 isc_result_t

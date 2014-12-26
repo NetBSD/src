@@ -1,7 +1,7 @@
-/*	$NetBSD: tlsa_52.h,v 1.1.1.1.2.2 2012/06/06 18:18:17 bouyer Exp $	*/
+/*	$NetBSD: tlsa_52.h,v 1.1.1.1.2.2.6.1 2014/12/26 03:08:33 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +22,7 @@
 #define GENERIC_TLSA_52_H 1
 
 /*!
- *  \brief per draft-ietf-dane-protocol-19.txt
+ *  \brief per rfc6698.txt
  */
 typedef struct dns_rdata_tlsa {
 	dns_rdatacommon_t	common;

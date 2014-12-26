@@ -1,7 +1,7 @@
-/*	$NetBSD: zonetodb.c,v 1.2.6.1 2012/06/05 21:15:30 bouyer Exp $	*/
+/*	$NetBSD: zonetodb.c,v 1.2.6.1.6.1 2014/12/26 03:08:30 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -76,7 +76,7 @@ check_result(isc_result_t result, const char *message) {
  * "dest" must be an array of at least size 2*strlen(source) + 1.
  */
 static void
-quotestring(const char *source, char *dest) {
+quotestring(const unsigned char *source, unsigned char *dest) {
 	while (*source != 0) {
 		if (*source == '\'')
 			*dest++ = '\'';
@@ -103,19 +103,19 @@ addrdata(dns_name_t *name, dns_ttl_t ttl, dns_rdata_t *rdata) {
 	result = dns_name_totext(name, ISC_TRUE, &b);
 	check_result(result, "dns_name_totext");
 	namearray[isc_buffer_usedlength(&b)] = 0;
-	quotestring(namearray, canonnamearray);
+	quotestring((const unsigned char *)namearray, canonnamearray);
 
 	isc_buffer_init(&b, typearray, sizeof(typearray) - 1);
 	result = dns_rdatatype_totext(rdata->type, &b);
 	check_result(result, "dns_rdatatype_totext");
 	typearray[isc_buffer_usedlength(&b)] = 0;
-	quotestring(typearray, canontypearray);
+	quotestring((const unsigned char *)typearray, canontypearray);
 
 	isc_buffer_init(&b, dataarray, sizeof(dataarray) - 1);
 	result = dns_rdata_totext(rdata, NULL, &b);
 	check_result(result, "dns_rdata_totext");
 	dataarray[isc_buffer_usedlength(&b)] = 0;
-	quotestring(dataarray, canondataarray);
+	quotestring((const unsigned char *)dataarray, canondataarray);
 
 	snprintf(str, sizeof(str),
 		 "INSERT INTO %s (NAME, TTL, RDTYPE, RDATA)"

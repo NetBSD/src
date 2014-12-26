@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -168,7 +168,12 @@ done
 
 # slave should have gotten notify and updated
 
-INCR=`grep "test/IN/primary" ns4/named.run|grep "got incremental"|wc -l`
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	INCR=`grep "test/IN/primary" ns4/named.run|grep "got incremental"|wc -l`
+	[ $INCR -eq 1 ] && break
+	sleep 1
+done
 if [ $INCR -ne 1 ]
 then
     echo "I:failed to get incremental response"
@@ -193,7 +198,12 @@ do
 done
 
 echo "I: this result should be AXFR"
-NONINCR=`grep 'sub\.test/IN/primary' ns4/named.run|grep "got nonincremental" | wc -l`
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	NONINCR=`grep 'sub\.test/IN/primary' ns4/named.run|grep "got nonincremental" | wc -l`
+	[ $NONINCR -eq 2 ] && break
+	sleep 1
+done
 if [ $NONINCR -ne 2 ]
 then
     echo "I:failed to get nonincremental response in 2nd AXFR test"
@@ -213,7 +223,12 @@ do
 	sleep 1
 done
 
-INCR=`grep "test/IN/primary" ns4/named.run|grep "got incremental"|wc -l`
+for i in 0 1 2 3 4 5 6 7 8 9
+do
+	INCR=`grep "test/IN/primary" ns4/named.run|grep "got incremental"|wc -l`
+	[ $INCR -eq 2 ] && break
+	sleep 1
+done
 if [ $INCR -ne 2 ]
 then
     echo "I:failed to get incremental response in 2nd IXFR test"
@@ -222,6 +237,33 @@ else
     echo "I:  success: IXFR it was"
 fi
 
+echo "I:testing DiG's handling of a multi message AXFR style IXFR response" 
+(
+(sleep 10 && kill $$) 2>/dev/null &
+sub=$!
+$DIG ixfr=0 large -p 5300 @10.53.0.3 > dig.out
+kill $sub
+)
+lines=`grep hostmaster.large dig.out | wc -l`
+test ${lines:-0} -eq 2 || { echo "I:failed"; status=1; }
+messages=`sed -n 's/^;;.*messages \([0-9]*\),.*/\1/p' dig.out`
+test ${messages:-0} -gt 1 || { echo "I:failed"; status=1; }
+
+echo "I:test 'dig +notcp ixfr=<value>' vs 'dig ixfr=<value> +notcp' vs 'dig ixfr=<value>'"
+ret=0
+# Should be "switch to TCP" response
+$DIG +notcp ixfr=1 test -p 5300 @10.53.0.4 > dig.out1 || ret=1
+$DIG ixfr=1 +notcp test -p 5300 @10.53.0.4 > dig.out2 || ret=1
+$PERL ../digcomp.pl dig.out1 dig.out2 || ret=1
+awk '$4 == "SOA" { soacnt++} END {if (soacnt == 1) exit(0); else exit(1);}' dig.out1 || ret=1
+awk '$4 == "SOA" { if ($7 == 4) exit(0); else exit(1);}' dig.out1 || ret=1
+# Should be incremental transfer.
+$DIG ixfr=1 test -p 5300 @10.53.0.4 > dig.out3 || ret=1
+awk '$4 == "SOA" { soacnt++} END { if (soacnt == 6) exit(0); else exit(1);}' dig.out3 || ret=1
+if [ ${ret} != 0 ]; then
+	echo "I:failed";
+	status=1;
+fi
 
 echo "I:exit status: $status"
 exit $status

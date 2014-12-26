@@ -1,7 +1,7 @@
-/*	$NetBSD: acache.h,v 1.2.6.1 2012/06/05 21:14:57 bouyer Exp $	*/
+/*	$NetBSD: acache.h,v 1.2.6.1.6.1 2014/12/26 03:08:32 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -240,7 +240,7 @@ dns_acache_setcleaninginterval(dns_acache_t *acache, unsigned int t);
  */
 
 void
-dns_acache_setcachesize(dns_acache_t *acache, isc_uint32_t size);
+dns_acache_setcachesize(dns_acache_t *acache, size_t size);
 /*
  * Set the maximum additional cache size.  0 means unlimited.
  */
@@ -389,7 +389,7 @@ dns_acache_setentry(dns_acache_t *acache, dns_acacheentry_t *entry,
  *	ISC_R_NOTFOUND
  */
 
-void
+isc_boolean_t
 dns_acache_cancelentry(dns_acacheentry_t *entry);
 /*
  * Cancel the use of the cache entry 'entry'.  This function is supposed to
@@ -400,6 +400,9 @@ dns_acache_cancelentry(dns_acacheentry_t *entry);
  *
  * Requires:
  *	'entry' is a valid additional cache entry.
+ *
+ * Returns:
+ * 	ISC_TRUE if the entry was active when canceled
  */
 
 void

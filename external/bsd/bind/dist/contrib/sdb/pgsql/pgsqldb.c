@@ -1,7 +1,7 @@
-/*	$NetBSD: pgsqldb.c,v 1.2.6.1 2012/06/05 21:15:30 bouyer Exp $	*/
+/*	$NetBSD: pgsqldb.c,v 1.2.6.1.6.1 2014/12/26 03:08:30 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -337,7 +337,8 @@ static dns_sdbmethods_t pgsqldb_methods = {
 	NULL, /* authority */
 	pgsqldb_allnodes,
 	pgsqldb_create,
-	pgsqldb_destroy
+	pgsqldb_destroy,
+	NULL /* lookup2 */
 };
 
 /*

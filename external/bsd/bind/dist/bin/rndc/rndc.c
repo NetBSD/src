@@ -1,7 +1,7 @@
-/*	$NetBSD: rndc.c,v 1.4.4.1 2012/06/05 21:15:47 bouyer Exp $	*/
+/*	$NetBSD: rndc.c,v 1.4.4.1.6.1 2014/12/26 03:08:11 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 /*! \file */
 
@@ -103,82 +101,80 @@ Usage: %s [-b address] [-c config] [-s server] [-p port]\n\
 \n\
 command is one of the following:\n\
 \n\
-  reload	Reload configuration file and zones.\n\
-  reload zone [class [view]]\n\
-		Reload a single zone.\n\
-  refresh zone [class [view]]\n\
-		Schedule immediate maintenance for a zone.\n\
-  retransfer zone [class [view]]\n\
-		Retransfer a single zone without checking serial number.\n\
-  freeze	Suspend updates to all dynamic zones.\n\
-  freeze zone [class [view]]\n\
-		Suspend updates to a dynamic zone.\n\
-  thaw		Enable updates to all dynamic zones and reload them.\n\
-  thaw zone [class [view]]\n\
-		Enable updates to a frozen dynamic zone and reload it.\n\
-  sync [-clean]	Dump changes to all dynamic zones to disk, and optionally\n\
-		remove their journal files.\n\
-  sync [-clean] zone [class [view]]\n\
-		Dump a single zone's changes to disk, and optionally\n\
-		remove its journal file.\n\
-  notify zone [class [view]]\n\
-		Resend NOTIFY messages for the zone.\n\
-  reconfig	Reload configuration file and new zones only.\n\
-  sign zone [class [view]]\n\
-		Update zone keys, and sign as needed.\n\
-  loadkeys zone [class [view]]\n\
-		Update keys without signing immediately.\n\
-  stats		Write server statistics to the statistics file.\n\
-  querylog newstate\n\
-		Enable / disable query logging.\n\
+  addzone zone [class [view]] { zone-options }\n\
+		Add zone to given view. Requires new-zone-file option.\n\
+  delzone zone [class [view]]\n\
+		Removes zone from given view. Requires new-zone-file option.\n\
   dumpdb [-all|-cache|-zones] [view ...]\n\
 		Dump cache(s) to the dump file (named_dump.db).\n\
-  secroots [view ...]\n\
-		Write security roots to the secroots file.\n\
-  stop		Save pending updates to master files and stop the server.\n\
-  stop -p	Save pending updates to master files and stop the server\n\
-		reporting process id.\n\
-  halt		Stop the server without saving pending updates.\n\
-  halt -p	Stop the server without saving pending updates reporting\n\
-		process id.\n\
-  trace		Increment debugging level by one.\n\
-  trace level	Change the debugging level.\n\
-  notrace	Set debugging level to 0.\n\
   flush 	Flushes all of the server's caches.\n\
   flush [view]	Flushes the server's cache for a view.\n\
   flushname name [view]\n\
 		Flush the given name from the server's cache(s)\n\
   flushtree name [view]\n\
 		Flush all names under the given name from the server's cache(s)\n\
-  status	Display status of the server.\n\
+  freeze	Suspend updates to all dynamic zones.\n\
+  freeze zone [class [view]]\n\
+		Suspend updates to a dynamic zone.\n\
+  halt		Stop the server without saving pending updates.\n\
+  halt -p	Stop the server without saving pending updates reporting\n\
+		process id.\n\
+  loadkeys zone [class [view]]\n\
+		Update keys without signing immediately.\n\
+  notify zone [class [view]]\n\
+		Resend NOTIFY messages for the zone.\n\
+  notrace	Set debugging level to 0.\n\
+  querylog newstate\n\
+		Enable / disable query logging.\n\
+  reconfig	Reload configuration file and new zones only.\n\
   recursing	Dump the queries that are currently recursing (named.recursing)\n\
-  tsig-list	List all currently active TSIG keys, including both statically\n\
-		configured and TKEY-negotiated keys.\n\
-  tsig-delete keyname [view]	\n\
-		Delete a TKEY-negotiated TSIG key.\n\
-  validation newstate [view]\n\
-		Enable / disable DNSSEC validation.\n\
-  addzone [\"file\"] zone [class [view]] { zone-options }\n\
-		Add zone to given view. Requires new-zone-file option.\n\
-  delzone [\"file\"] zone [class [view]]\n\
-		Removes zone from given view. Requires new-zone-file option.\n\
-  signing -list zone [class [view]]\n\
-		List the private records showing the state of DNSSEC\n\
-		signing in the given zone.\n\
-  signing -clear <keyid>/<algorithm> zone [class [view]]\n\
-		Remove the private record that indicating the given key\n\
-		has finished signing the given zone.\n\
+  refresh zone [class [view]]\n\
+		Schedule immediate maintenance for a zone.\n\
+  reload	Reload configuration file and zones.\n\
+  reload zone [class [view]]\n\
+		Reload a single zone.\n\
+  retransfer zone [class [view]]\n\
+		Retransfer a single zone without checking serial number.\n\
+  secroots [view ...]\n\
+		Write security roots to the secroots file.\n\
+  sign zone [class [view]]\n\
+		Update zone keys, and sign as needed.\n\
   signing -clear all zone [class [view]]\n\
 		Remove the private records for all keys that have\n\
 		finished signing the given zone.\n\
-  signing -nsec3param none zone [class [view]]\n\
-		Remove NSEC3 chains from zone.\n\
+  signing -clear <keyid>/<algorithm> zone [class [view]]\n\
+		Remove the private record that indicating the given key\n\
+		has finished signing the given zone.\n\
+  signing -list zone [class [view]]\n\
+		List the private records showing the state of DNSSEC\n\
+		signing in the given zone.\n\
   signing -nsec3param hash flags iterations salt zone [class [view]]\n\
 		Add NSEC3 chain to zone if already signed.\n\
 		Prime zone with NSEC3 chain if not yet signed.\n\
-  *restart	Restart the server.\n\
+  signing -nsec3param none zone [class [view]]\n\
+		Remove NSEC3 chains from zone.\n\
+  stats		Write server statistics to the statistics file.\n\
+  status	Display status of the server.\n\
+  stop		Save pending updates to master files and stop the server.\n\
+  stop -p	Save pending updates to master files and stop the server\n\
+		reporting process id.\n\
+  sync [-clean]	Dump changes to all dynamic zones to disk, and optionally\n\
+		remove their journal files.\n\
+  sync [-clean] zone [class [view]]\n\
+		Dump a single zone's changes to disk, and optionally\n\
+		remove its journal file.\n\
+  thaw		Enable updates to all dynamic zones and reload them.\n\
+  thaw zone [class [view]]\n\
+		Enable updates to a frozen dynamic zone and reload it.\n\
+  trace		Increment debugging level by one.\n\
+  trace level	Change the debugging level.\n\
+  tsig-delete keyname [view]	\n\
+		Delete a TKEY-negotiated TSIG key.\n\
+  tsig-list	List all currently active TSIG keys, including both statically\n\
+		configured and TKEY-negotiated keys.\n\
+  validation newstate [view]\n\
+		Enable / disable DNSSEC validation.\n\
 \n\
-* == not yet implemented\n\
 Version: %s\n",
 		progname, version);
 
@@ -267,9 +263,10 @@ rndc_recvdone(isc_task_t *task, isc_event_t *event) {
 			progname, isc_result_totext(result));
 
 	result = isccc_cc_lookupstring(data, "text", &textmsg);
-	if (result == ISC_R_SUCCESS)
+	if (result == ISC_R_SUCCESS) {
+		if (strlen(textmsg) != 0U)
 		printf("%s\n", textmsg);
-	else if (result != ISC_R_NOTFOUND)
+	} else if (result != ISC_R_NOTFOUND)
 		fprintf(stderr, "%s: parsing response failed: %s\n",
 			progname, isc_result_totext(result));
 
@@ -492,6 +489,9 @@ parse_config(isc_mem_t *mctx, isc_log_t *log, const char *keyname,
 	if (! isc_file_exists(conffile)) {
 		conffile = admin_keyfile;
 		conftype = &cfg_type_rndckey;
+
+		if (c_flag)
+			fatal("%s does not exist", admin_conffile);
 
 		if (! isc_file_exists(conffile))
 			fatal("neither %s nor %s was found",
@@ -723,7 +723,7 @@ main(int argc, char **argv) {
 
 	result = isc_file_progname(*argv, program, sizeof(program));
 	if (result != ISC_R_SUCCESS)
-		memcpy(program, "rndc", 5);
+		memmove(program, "rndc", 5);
 	progname = program;
 
 	admin_conffile = RNDC_CONFFILE;
@@ -795,6 +795,7 @@ main(int argc, char **argv) {
 					program, isc_commandline_option);
 				usage(1);
 			}
+			/* FALLTHROUGH */
 		case 'h':
 			usage(0);
 			break;
@@ -854,7 +855,7 @@ main(int argc, char **argv) {
 	p = args;
 	for (i = 0; i < argc; i++) {
 		size_t len = strlen(argv[i]);
-		memcpy(p, argv[i], len);
+		memmove(p, argv[i], len);
 		p += len;
 		*p++ = ' ';
 	}

@@ -1,4 +1,4 @@
-# Copyright (C) 2009, 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -63,17 +63,17 @@ WIN32OBJS = 	win32/condition.@O@ win32/dir.@O@ win32/file.@O@ \
 # Alphabetically
 OBJS =		@ISC_EXTRA_OBJS@ \
 		assertions.@O@ backtrace.@O@ backtrace-emptytbl.@O@ base32.@O@ \
-		base64.@O@ buffer.@O@ bufferlist.@O@ \
+		base64.@O@ buffer.@O@ bufferlist.@O@ counter.@O@ \
 		error.@O@ event.@O@ \
 		hash.@O@ hex.@O@ hmacmd5.@O@ hmacsha.@O@ \
 		inet_aton.@O@ iterated_hash.@O@ lex.@O@ lfsr.@O@ log.@O@ \
-		md5.@O@ mutexblock.@O@ \
-		netaddr.@O@ netscope.@O@ \
-		ondestroy.@O@ \
-		parseint.@O@ portset.@O@ radix.@O@ \
-		random.@O@ refcount.@O@ region.@O@ result.@O@ rwlock.@O@ \
-		serial.@O@ sha1.@O@ sha2.@O@ sockaddr.@O@ stats.@O@ string.@O@ \
+		md5.@O@ mutexblock.@O@ netaddr.@O@ netscope.@O@ \
+		ondestroy.@O@ parseint.@O@ portset.@O@ radix.@O@ \
+		random.@O@ refcount.@O@ region.@O@ regex.@O@ result.@O@ \
+		rwlock.@O@ safe.@O@ serial.@O@ sha1.@O@ sha2.@O@ \
+		sockaddr.@O@ stats.@O@ string.@O@ \
 		symtab.@O@ \
+		tm.@O@ \
 		version.@O@ \
 		${APIOBJS} ${ISCDRIVEROBJS} \
 		${UNIXOBJS} ${NLSOBJS} ${THREADOBJS}
@@ -86,7 +86,7 @@ ISCDRIVERSRCS =	mem.c task.c lib.c timer.c heap.c
 
 SRCS =		@ISC_EXTRA_SRCS@ \
 		assertions.c backtrace.c backtrace-emptytbl.c base32.c \
-		base64.c buffer.c bufferlist.c \
+		base64.c buffer.c bufferlist.c counter.c \
 		error.c event.c \
 		hash.c hex.c hmacmd5.c hmacsha.c \
 		inet_aton.c iterated_hash.c lex.c log.c lfsr.c \
@@ -94,8 +94,10 @@ SRCS =		@ISC_EXTRA_SRCS@ \
 		netaddr.c netscope.c \
 		ondestroy.c \
 		parseint.c portset.c radix.c \
-		random.c refcount.c region.c result.c rwlock.c \
-		serial.c sha1.c sha2.c sockaddr.c stats.c string.c symtab.c \
+		random.c refcount.c region.c regex.c result.c rwlock.c \
+		safe.c serial.c sha1.c sha2.c sockaddr.c \
+		stats.c string.c symtab.c \
+		tm.c \
 		version.c \
 		${APISRCS} ${ISCDRIVERSRCS}
 

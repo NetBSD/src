@@ -1,7 +1,7 @@
-/*	$NetBSD: keydelete.c,v 1.2.6.1 2012/06/05 21:15:45 bouyer Exp $	*/
+/*	$NetBSD: keydelete.c,v 1.2.6.1.6.1 2014/12/26 03:08:25 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009-2011, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -175,7 +175,7 @@ main(int argc, char **argv) {
 
 	ectx = NULL;
 	RUNCHECK(isc_entropy_create(mctx, &ectx));
-	RUNCHECK(isc_entropy_createfilesource(ectx, "random.data"));
+	RUNCHECK(isc_entropy_createfilesource(ectx, "../random.data"));
 	RUNCHECK(isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE));
 
 	log = NULL;

@@ -1,7 +1,7 @@
-/*	$NetBSD: types.h,v 1.5.6.1 2012/06/05 21:15:28 bouyer Exp $	*/
+/*	$NetBSD: types.h,v 1.5.6.1.6.1 2014/12/26 03:08:36 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -52,6 +52,7 @@ typedef struct isc_buffer		isc_buffer_t;		/*%< Buffer */
 typedef ISC_LIST(isc_buffer_t)		isc_bufferlist_t;	/*%< Buffer List */
 typedef struct isc_constregion		isc_constregion_t;	/*%< Const region */
 typedef struct isc_consttextregion	isc_consttextregion_t;	/*%< Const Text Region */
+typedef struct isc_counter		isc_counter_t;		/*%< Counter */
 typedef struct isc_entropy		isc_entropy_t;		/*%< Entropy */
 typedef struct isc_entropysource	isc_entropysource_t;	/*%< Entropy Source */
 typedef struct isc_event		isc_event_t;		/*%< Event */
@@ -109,7 +110,9 @@ typedef int (*isc_sockfdwatch_t)(isc_task_t *, isc_socket_t *, void *, int);
 
 /* The following cannot be listed alphabetically due to forward reference */
 typedef isc_result_t (isc_httpdaction_t)(const char *url,
+					 isc_httpdurl_t *urlinfo,
 					 const char *querystring,
+					 const char *headers,
 					 void *arg,
 					 unsigned int *retcode,
 					 const char **retmsg,

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -238,6 +238,17 @@ dnskey01		DNSKEY	512 ( 255 1 AQMFD5raczCJHViKtLYhWGz8hMY
 				sENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esg
 				a60zyGW6LFe9r8n6paHrlG5ojqf0BaqHT+8= )
 
+; type 59
+cds01			CDS	30795 1 1 (
+					310D27F4D82C1FC2400704EA9939FE6E1CEA
+					A3B9 )
+
+; type 60
+cdnskey01		CDNSKEY	512 ( 255 1 AQMFD5raczCJHViKtLYhWGz8hMY
+				9UGRuniJDBzC7w0aRyzWZriO6i2odGWWQVucZqKV
+				sENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esg
+				a60zyGW6LFe9r8n6paHrlG5ojqf0BaqHT+8= )
+
 ; type 249
 ; TKEY is a meta-type and should never occur in master files.
 ; The text representation is not specified in the draft.
@@ -275,11 +286,34 @@ tlsa			TLSA	( 1 1 2 92003ba34942dc74152e2f2c408d29ec
 				1b177615d466f6c4b71c216a50292bd5
 				8c9ebdd2f74e38fe51ffd48c43326cbc )
 
+nid			NID	10 0014:4fff:ff20:ee64
+
+l32			L32	10 1.2.3.4
+
+l64			L64	10 0014:4fff:ff20:ee64
+
+lp			LP	10 example.net.
+
+eui48			EUI48	01-23-45-67-89-ab
+
+eui64			EUI64	01-23-45-67-89-ab-cd-ef
+
 ; type 255
 ; TSIG is a meta-type and should never occur in master files.
 
 ; type 256
 uri01			URI	10 20 "https://www.isc.org/"
 uri02			URI	30 40 "https://www.isc.org/HolyCowThisSureIsAVeryLongURIRecordIDontEvenKnowWhatSomeoneWouldEverWantWithSuchAThingButTheSpecificationRequiresThatWesupportItSoHereWeGoTestingItLaLaLaLaLaLaLaSeriouslyThoughWhyWouldYouEvenConsiderUsingAURIThisLongItSeemsLikeASillyIdeaButEnhWhatAreYouGonnaDo/"
+uri03			URI	30 40 ""
+
+; type 257
+caa01                   CAA     0 issue "ca.example.net; policy=ev"
+caa02                   CAA     128 tbs "Unknown"
+caa03                   CAA     128 tbs ""
+
+; keydata (internal type used for managed-keys)
+keydata			TYPE65533	\# 0
+keydata			TYPE65533	\# 6 010203040506 
+keydata			TYPE65533	\# 18 010203040506010203040506010203040506
 
 EOF

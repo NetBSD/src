@@ -1,4 +1,4 @@
-# Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -16,8 +16,6 @@
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
-
-RANDFILE=../random.data
 
 dumpit () {
 	echo "D:${debug}: dumping ${1}"
@@ -170,12 +168,19 @@ $SIGNER -Px -Z nonsecify -O full -o ${zone} -f ${file}.tmp ${file} $zsk > s.out$
 awk '$1 ~ /^ns.sub/ && $4 == "RRSIG" && $5 != "NSEC" { next; } { print; }' ${file}.tmp > ${file}
 
 # missing NSEC3 record at empty node
+# extract the hash fields from the empty node's NSEC 3 record then fix up
+# the NSEC3 chain to remove it
 setup ksk+zsk.nsec3.missing-empty bad
 zsk=`$KEYGEN -3 -r $RANDFILE ${zone} 2> kg1.out$n` || dumpit kg1.out$n
 ksk=`$KEYGEN -3 -r $RANDFILE -fK ${zone} 2> kg2.out$n` || dumpit kg2.out$n
 cat unsigned.db $ksk.key $zsk.key > $file
 $SIGNER -3 - -P -O full -o ${zone} -f ${file} ${file} $ksk > s.out$n 2>&1 || dumpit s.out$n
-awk '$4 == "NSEC3" && NF == 9 { next; } { print; }' ${file} > ${file}.tmp
+a=`awk '$4 == "NSEC3" && NF == 9 { split($1, a, "."); print a[1]; }' ${file}`
+b=`awk '$4 == "NSEC3" && NF == 9 { print $9; }' ${file}`
+awk '
+$4 == "NSEC3" && $9 == "'$a'" { $9 = "'$b'"; print; next; }
+$4 == "NSEC3" && NF == 9 { next; }
+{ print; }' ${file} > ${file}.tmp
 $SIGNER -3 - -Px -Z nonsecify -O full -o ${zone} -f ${file} ${file}.tmp $zsk > s.out$n 2>&1 || dumpit s.out$n
 
 # extra NSEC3 record

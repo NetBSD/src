@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h.in,v 1.56 2010/12/18 01:56:23 each Exp */
+/* Id: platform.h.in,v 1.56 2010/12/18 01:56:23 each Exp  */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
@@ -199,16 +199,19 @@
  */
 #undef ISC_PLATFORM_NEEDMEMMOVE
 
+/*
+ * Define if this system needs strcasestr.
+ */
+#undef ISC_PLATFORM_NEEDSTRCASESTR
+
 /***
  *** Miscellaneous.
  ***/
 
-#if 0 /* In the Makefile */
 /*
  * Defined if we are using threads.
  */
 #define ISC_PLATFORM_USETHREADS 1
-#endif
 
 /*
  * Defined if unistd.h does not cause fd_set to be delared.
@@ -263,17 +266,13 @@
  * If the "xadd" operation is available on this architecture,
  * ISC_PLATFORM_HAVEXADD will be defined.
  */
-#ifdef __HAVE_ATOMIC64_OPS
 #define ISC_PLATFORM_HAVEXADD 1
-#endif
 
 /*
  * If the "xaddq" operation (64bit xadd) is available on this architecture,
  * ISC_PLATFORM_HAVEXADDQ will be defined.
  */
-#ifdef __HAVE_ATOMIC64_OPS
 #define ISC_PLATFORM_HAVEXADDQ 1
-#endif
 
 /*
  * If the "atomic swap" operation is available on this architecture,
@@ -334,6 +333,7 @@
 #define LIBISCCC_EXTERNAL_DATA
 #define LIBISCCFG_EXTERNAL_DATA
 #define LIBBIND9_EXTERNAL_DATA
+#define LIBTESTS_EXTERNAL_DATA
 #else /*! \brief ISC_PLATFORM_USEDECLSPEC */
 #ifdef LIBISC_EXPORTS
 #define LIBISC_EXTERNAL_DATA __declspec(dllexport)
@@ -359,6 +359,11 @@
 #define LIBBIND9_EXTERNAL_DATA __declspec(dllexport)
 #else
 #define LIBBIND9_EXTERNAL_DATA __declspec(dllimport)
+#endif
+#ifdef LIBTESTS_EXPORTS
+#define LIBTESTS_EXTERNAL_DATA __declspec(dllexport)
+#else
+#define LIBTESTS_EXTERNAL_DATA __declspec(dllimport)
 #endif
 #endif /*! \brief ISC_PLATFORM_USEDECLSPEC */
 

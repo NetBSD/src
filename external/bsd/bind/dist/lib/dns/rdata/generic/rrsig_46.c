@@ -1,7 +1,7 @@
-/*	$NetBSD: rrsig_46.c,v 1.3.4.1 2012/06/05 21:15:13 bouyer Exp $	*/
+/*	$NetBSD: rrsig_46.c,v 1.3.4.1.6.1 2014/12/26 03:08:33 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -92,6 +92,19 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
+	if (strlen(DNS_AS_STR(token)) <= 10U &&
+	    *DNS_AS_STR(token) != '-' && *DNS_AS_STR(token) != '+') {
+		char *end;
+		unsigned long u;
+		isc_uint64_t u64;
+
+		u64 = u = strtoul(DNS_AS_STR(token), &end, 10);
+		if (u == ULONG_MAX || *end != 0)
+			RETTOK(DNS_R_SYNTAX);
+		if (u64 > 0xffffffffUL)
+			RETTOK(ISC_R_RANGE);
+		time_expire = u;
+	} else
 	RETTOK(dns_time32_fromtext(DNS_AS_STR(token), &time_expire));
 	RETERR(uint32_tobuffer(time_expire, target));
 
@@ -100,6 +113,19 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      ISC_FALSE));
+	if (strlen(DNS_AS_STR(token)) <= 10U &&
+	    *DNS_AS_STR(token) != '-' && *DNS_AS_STR(token) != '+') {
+		char *end;
+		unsigned long u;
+		isc_uint64_t u64;
+
+		u64 = u = strtoul(DNS_AS_STR(token), &end, 10);
+		if (u == ULONG_MAX || *end != 0)
+			RETTOK(DNS_R_SYNTAX);
+		if (u64 > 0xffffffffUL)
+			RETTOK(ISC_R_RANGE);
+		time_signed = u;
+	} else
 	RETTOK(dns_time32_fromtext(DNS_AS_STR(token), &time_signed));
 	RETERR(uint32_tobuffer(time_signed, target));
 

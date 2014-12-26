@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,18 +14,14 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: keygen.sh,v 1.8 2011/10/20 23:46:51 tbox Exp 
-
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
-
-RANDFILE=../random.data
 
 zone=.
 zonefile=root.db
 infile=root.db.in
 
-(cd ../ns2 && sh keygen.sh )
+(cd ../ns2 && $SHELL keygen.sh )
 
 cat $infile ../ns2/dsset-example. > $zonefile
 
@@ -35,6 +31,7 @@ zskdel=`$KEYGEN -3 -q -r $RANDFILE -D now $zone`
 zskinact=`$KEYGEN -3 -q -r $RANDFILE -I now $zone`
 zskunpub=`$KEYGEN -3 -q -r $RANDFILE -G $zone`
 zsksby=`$KEYGEN -3 -q -r $RANDFILE -A none $zone`
+zskactnowpub1d=`$KEYGEN -3 -q -r $RANDFILE -A now -P +1d $zone`
 zsknopriv=`$KEYGEN -3 -q -r $RANDFILE $zone`
 rm $zsknopriv.private
 
@@ -72,4 +69,5 @@ echo $zskinact > ../inact.key
 echo $zskunpub > ../unpub.key
 echo $zsknopriv > ../nopriv.key
 echo $zsksby > ../standby.key
+echo $zskactnowpub1d > ../activate-now-publish-1day.key
 $REVOKE -R $kskrev > ../rev.key
