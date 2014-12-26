@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.43 2014/08/11 23:48:01 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.44 2014/12/26 20:44:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.43 2014/08/11 23:48:01 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.44 2014/12/26 20:44:38 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/module.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -480,6 +481,22 @@ npfctl_rule(int fd, int argc, char **argv)
 	exit(EXIT_SUCCESS);
 }
 
+static void
+npfctl_preload_bpfjit(void)
+{
+	modctl_load_t args = {
+		.ml_filename = "bpfjit",
+		.ml_flags = MODCTL_NO_PROP,
+		.ml_props = NULL,
+		.ml_propslen = 0
+	};
+
+	if (modctl(MODCTL_LOAD, &args) != 0 && errno != EEXIST) {
+		fprintf(stderr, "WARNING: bpfjit is not loaded; "
+		    "this may have severe impact on performance.");
+	}
+}
+
 static int
 npfctl_save(int fd)
 {
@@ -547,6 +564,7 @@ npfctl(int action, int argc, char **argv)
 		fun = "ioctl(IOC_NPF_SWITCH)";
 		break;
 	case NPFCTL_RELOAD:
+		npfctl_preload_bpfjit();
 		npfctl_config_init(false);
 		npfctl_parse_file(argc < 3 ? NPF_CONF_PATH : argv[2]);
 		errno = ret = npfctl_config_send(fd, NULL);
@@ -581,6 +599,7 @@ npfctl(int action, int argc, char **argv)
 		npfctl_rule(fd, argc, argv);
 		break;
 	case NPFCTL_LOAD:
+		npfctl_preload_bpfjit();
 		ret = npfctl_load(fd);
 		fun = "npfctl_config_load";
 		break;
