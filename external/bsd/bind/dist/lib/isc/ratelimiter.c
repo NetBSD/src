@@ -1,7 +1,7 @@
-/*	$NetBSD: ratelimiter.c,v 1.2.6.1 2012/06/05 21:15:07 bouyer Exp $	*/
+/*	$NetBSD: ratelimiter.c,v 1.2.6.1.6.1 2014/12/26 03:08:36 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -293,6 +293,7 @@ isc_ratelimiter_stall(isc_ratelimiter_t *rl) {
 		result = isc_timer_reset(rl->timer, isc_timertype_inactive,
 				 	 NULL, NULL, ISC_FALSE);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		/* FALLTHROUGH */
 	case isc_ratelimiter_idle:
 	case isc_ratelimiter_stalled:
 		rl->state = isc_ratelimiter_stalled;

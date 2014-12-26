@@ -1,7 +1,7 @@
-/*	$NetBSD: ifiter_sysctl.c,v 1.2.6.1 2012/06/05 21:15:24 bouyer Exp $	*/
+/*	$NetBSD: ifiter_sysctl.c,v 1.2.6.1.6.1 2014/12/26 03:08:37 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -173,7 +173,7 @@ internal_current(isc_interfaceiter_t *iter) {
 			namelen = sizeof(iter->current.name) - 1;
 
 		memset(iter->current.name, 0, sizeof(iter->current.name));
-		memcpy(iter->current.name, sdl->sdl_data, namelen);
+		memmove(iter->current.name, sdl->sdl_data, namelen);
 
 		iter->current.flags = 0;
 

@@ -51,6 +51,46 @@ BIND 9
         For up-to-date release notes and errata, see
         http://www.isc.org/software/bind9/releasenotes
 
+BIND 9.9.6
+
+	BIND 9.9.6 is a maintenance release, and also includes
+        the following new functionality.
+
+	 - The former behavior with respect to capitalization of names
+           (prior to BIND 9.9.5) can be restored for specific clients via
+           the new "no-case-compress" ACL.
+
+BIND 9.9.5
+
+	BIND 9.9.5 is a maintenance release, and patches the security
+	flaws described in CVE-2013-6320 and CVE-2014-0591.  It also
+	includes the following functional enhancements:
+
+	 - "named" now preserves the capitalization of names when
+	   responding to queries.
+	 - new "dnssec-importkey" command allows the use of offline
+	   DNSSEC keys with automatic DNSKEY management.
+	 - When re-signing a zone, the new "dnssec-signzone -Q" option
+	   drops signatures from keys that are still published but are
+	   no longer active.
+	 - "named-checkconf -px" will print the contents of configuration
+	   files with the shared secrets obscured, making it easier to
+	   share configuration (e.g. when submitting a bug report)
+	   without revealing private information.
+
+BIND 9.9.4
+
+	BIND 9.9.4 is a maintenance release, and patches the security
+	flaws described in CVE-2013-3919 and CVE-2013-4854. It also
+	introduces DNS Response Rate Limiting (DNS RRL) as a
+	compile-time option. To use this feature, configure with
+	the "--enable-rrl" option.
+
+BIND 9.9.3
+
+	BIND 9.9.3 is a maintenance release and patches the security
+	flaws described in CVE-2012-5688, CVE-2012-5689 and CVE-2013-2266.
+
 BIND 9.9.2
 
 	BIND 9.9.2 is a maintenance release and patches the security
@@ -104,30 +144,6 @@ BIND 9.9.0
         - 'dig +rrcomments' turns on comments about DNSKEY records,
           indicating their key ID, algorithm and function
         - Simplified nsupdate syntax and added readline support
-
-BIND 9.8.0
-
-        BIND 9.8.0 includes a number of changes from BIND 9.7 and earlier
-        releases.  New features include:
-
-        - Built-in trust anchor for the root zone, which can be
-          switched on via "dnssec-validation auto;"
-        - Support for DNS64.
-        - Support for response policy zones (RPZ).
-        - Support for writable DLZ zones.
-        - Improved ease of configuration of GSS/TSIG for
-          interoperability with Active Directory
-        - Support for GOST signing algorithm for DNSSEC.
-        - Removed RTT Banding from server selection algorithm.
-        - New "static-stub" zone type.
-        - Allow configuration of resolver timeouts via
-          "resolver-query-timeout" option.
-	- The DLZ "dlopen" driver is now built by default.
-	- Added a new include file with function typedefs
-          for the DLZ "dlopen" driver.
-	- Made "--with-gssapi" default.
-	- More verbose error reporting from DLZ LDAP.
-
 
 Building
 
@@ -363,6 +379,14 @@ Change Log
 
 	   [doc]	  Documentation
 
+	   [contrib]	  Changes to the contributed tools and
+			  libraries in the 'contrib' subdirectory
+
+	   [placeholder]  Used in the master development branch to
+			  reserve change numbers for use in other
+			  branches, e.g. when fixing a bug that only
+			  exists in older releases
+
 	In general, [func] and [experimental] tags will only appear
 	in new-feature releases (i.e., those with version numbers
 	ending in zero).  Some new functionality may be backported to
@@ -372,22 +396,28 @@ Change Log
 
 Bug Reports and Mailing Lists
 
-	Bugs reports should be sent to
+	Bug reports should be sent to:
 
 		bind9-bugs@isc.org
 
-	To join the BIND Users mailing list, send mail to
+	Feature requests can be sent to:
 
-		bind-users-request@isc.org
+		bind-suggest@isc.org
 
-	archives of which can be found via
+	To join or view the archives of the BIND Users mailing list,
+	visit:
 
-		http://www.isc.org/ops/lists/
+		https://lists.isc.org/mailman/listinfo/bind-users
 
 	If you're planning on making changes to the BIND 9 source
-	code, you might want to join the BIND Workers mailing list.
-	Send mail to
+	code, you may also want to join the BIND Workers mailing
+	list:
 
-		bind-workers-request@isc.org
+		https://lists.isc.org/mailman/listinfo/bind-workers
+
+	Information on read-only Git access, coding style and developer
+	guidelines can be found at:
+
+		http://www.isc.org/git/
 
 

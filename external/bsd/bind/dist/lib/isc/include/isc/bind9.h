@@ -1,4 +1,4 @@
-/*	$NetBSD: bind9.h,v 1.2.6.1 2012/06/05 21:15:28 bouyer Exp $	*/
+/*	$NetBSD: bind9.h,v 1.2.6.1.6.1 2014/12/26 03:08:36 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -21,12 +21,15 @@
 #ifndef ISC_BIND9_H
 #define ISC_BIND9_H 1
 
+#include <isc/boolean.h>
+#include <isc/platform.h>
+
 /*
- * This determines whether we are building BIND9 or using the exported
- * libisc/libdns libraries.  The version of this file included in the
- * standard BIND9 build defines BIND9; the version included with the
- * exportable libraries does not.
+ * This determines whether we are building the libisc/libdns libraries
+ * in BIND9 or in some other application.  For BIND9 (named and related
+ * tools) it must be set to ISC_TRUE at runtime.  Export library clients
+ * will call isc_lib_register(), which will set it to ISC_FALSE.
  */
-#define BIND9 1
+LIBISC_EXTERNAL_DATA extern isc_boolean_t isc_bind9;
 
 #endif /* ISC_BIND9_H */

@@ -1,7 +1,7 @@
-/*	$NetBSD: resolver.h,v 1.4.4.1 2012/06/05 21:14:56 bouyer Exp $	*/
+/*	$NetBSD: resolver.h,v 1.4.4.1.6.1 2014/12/26 03:08:33 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -99,6 +99,7 @@ typedef struct dns_fetchevent {
 							  UDP buffer. */
 #define DNS_FETCHOPT_WANTNSID           0x80         /*%< Request NSID */
 
+/* Reserved in use by adb.c		0x00400000 */
 #define	DNS_FETCHOPT_EDNSVERSIONSET	0x00800000
 #define	DNS_FETCHOPT_EDNSVERSIONMASK	0xff000000
 #define	DNS_FETCHOPT_EDNSVERSIONSHIFT	24
@@ -128,7 +129,8 @@ typedef struct dns_fetchevent {
 
 isc_result_t
 dns_resolver_create(dns_view_t *view,
-		    isc_taskmgr_t *taskmgr, unsigned int ntasks,
+		    isc_taskmgr_t *taskmgr,
+		    unsigned int ntasks, unsigned int ndisp,
 		    isc_socketmgr_t *socketmgr,
 		    isc_timermgr_t *timermgr,
 		    unsigned int options,
@@ -157,9 +159,11 @@ dns_resolver_create(dns_view_t *view,
  *
  *\li	'timermgr' is a valid timer manager.
  *
- *\li	'dispatchv4' is a valid dispatcher with an IPv4 UDP socket, or is NULL.
+ *\li	'dispatchv4' is a dispatch with an IPv4 UDP socket, or is NULL.
+ *	If not NULL, 'ndisp' clones of it will be created by the resolver.
  *
- *\li	'dispatchv6' is a valid dispatcher with an IPv6 UDP socket, or is NULL.
+ *\li	'dispatchv6' is a dispatch with an IPv6 UDP socket, or is NULL.
+ *	If not NULL, 'ndisp' clones of it will be created by the resolver.
  *
  *\li	resp != NULL && *resp == NULL.
  *
@@ -269,6 +273,18 @@ dns_resolver_createfetch2(dns_resolver_t *res, dns_name_t *name,
 			  dns_forwarders_t *forwarders,
 			  isc_sockaddr_t *client, isc_uint16_t id,
 			  unsigned int options, isc_task_t *task,
+			  isc_taskaction_t action, void *arg,
+			  dns_rdataset_t *rdataset,
+			  dns_rdataset_t *sigrdataset,
+			  dns_fetch_t **fetchp);
+isc_result_t
+dns_resolver_createfetch3(dns_resolver_t *res, dns_name_t *name,
+			  dns_rdatatype_t type,
+			  dns_name_t *domain, dns_rdataset_t *nameservers,
+			  dns_forwarders_t *forwarders,
+			  isc_sockaddr_t *client, isc_uint16_t id,
+			  unsigned int options, unsigned int depth,
+			  isc_counter_t *qc, isc_task_t *task,
 			  isc_taskaction_t action, void *arg,
 			  dns_rdataset_t *rdataset,
 			  dns_rdataset_t *sigrdataset,
@@ -569,6 +585,30 @@ void
 dns_resolver_printbadcache(dns_resolver_t *resolver, FILE *fp);
 /*%
  * Print out the contents of the bad cache to 'fp'.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ */
+
+void
+dns_resolver_setmaxdepth(dns_resolver_t *resolver, unsigned int maxdepth);
+unsigned int
+dns_resolver_getmaxdepth(dns_resolver_t *resolver);
+/*%
+ * Get and set how many NS indirections will be followed when looking for
+ * nameserver addresses.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ */
+
+void
+dns_resolver_setmaxqueries(dns_resolver_t *resolver, unsigned int queries);
+unsigned int
+dns_resolver_getmaxqueries(dns_resolver_t *resolver);
+/*%
+ * Get and set how many iterative queries will be allowed before
+ * terminating a recursive query.
  *
  * Requires:
  * \li	resolver to be valid.

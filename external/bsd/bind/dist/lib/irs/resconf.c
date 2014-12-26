@@ -1,7 +1,7 @@
-/*	$NetBSD: resconf.c,v 1.3.4.1 2012/06/05 21:15:41 bouyer Exp $	*/
+/*	$NetBSD: resconf.c,v 1.3.4.1.6.1 2014/12/26 03:08:35 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -226,7 +226,7 @@ add_server(isc_mem_t *mctx, const char *address_str,
 
 		v4 = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
 		if (memcmp(v4, zeroaddress, 4) == 0)
-			memcpy(v4, loopaddress, 4);
+			memmove(v4, loopaddress, 4);
 	}
 
 	address = isc_mem_get(mctx, sizeof(*address));
@@ -240,7 +240,7 @@ add_server(isc_mem_t *mctx, const char *address_str,
 		goto cleanup;
 	}
 	address->length = res->ai_addrlen;
-	memcpy(&address->type.sa, res->ai_addr, res->ai_addrlen);
+	memmove(&address->type.ss, res->ai_addr, res->ai_addrlen);
 	ISC_LINK_INIT(address, link);
 	ISC_LIST_APPEND(*nameservers, address, link);
 
@@ -260,14 +260,14 @@ create_addr(const char *buffer, isc_netaddr_t *addr, int convert_zero) {
 			unsigned char zeroaddress[] = {0, 0, 0, 0};
 			unsigned char loopaddress[] = {127, 0, 0, 1};
 			if (memcmp(&v4, zeroaddress, 4) == 0)
-				memcpy(&v4, loopaddress, 4);
+				memmove(&v4, loopaddress, 4);
 		}
 		addr->family = AF_INET;
-		memcpy(&addr->type.in, &v4, NS_INADDRSZ);
+		memmove(&addr->type.in, &v4, NS_INADDRSZ);
 		addr->zone = 0;
 	} else if (inet_pton(AF_INET6, buffer, &v6) == 1) {
 		addr->family = AF_INET6;
-		memcpy(&addr->type.in6, &v6, NS_IN6ADDRSZ);
+		memmove(&addr->type.in6, &v6, NS_IN6ADDRSZ);
 		addr->zone = 0;
 	} else
 		return (ISC_R_BADADDRESSFORM); /* Unrecognised format. */
@@ -485,7 +485,7 @@ irs_resconf_load(isc_mem_t *mctx, const char *filename, irs_resconf_t **confp)
 {
 	FILE *fp = NULL;
 	char word[256];
-	isc_result_t rval, ret;
+	isc_result_t rval, ret = ISC_R_SUCCESS;
 	irs_resconf_t *conf;
 	int i, stopchar;
 
@@ -509,12 +509,7 @@ irs_resconf_load(isc_mem_t *mctx, const char *filename, irs_resconf_t **confp)
 		conf->search[i] = NULL;
 
 	errno = 0;
-	if ((fp = fopen(filename, "r")) == NULL) {
-		isc_mem_put(mctx, conf, sizeof(*conf));
-		return (ISC_R_INVALIDFILE);
-	}
-
-	ret = ISC_R_SUCCESS;
+	if ((fp = fopen(filename, "r")) != NULL) {
 	do {
 		stopchar = getword(fp, word, sizeof(word));
 		if (stopchar == EOF) {
@@ -548,6 +543,15 @@ irs_resconf_load(isc_mem_t *mctx, const char *filename, irs_resconf_t **confp)
 	} while (1);
 
 	fclose(fp);
+	} else {
+		switch (errno) {
+		case ENOENT:
+			break;
+		default:
+			isc_mem_put(mctx, conf, sizeof(*conf));
+			return (ISC_R_INVALIDFILE);
+		}
+	}
 
 	/* If we don't find a nameserver fall back to localhost */
 	if (conf->numns == 0) {
@@ -577,8 +581,11 @@ irs_resconf_load(isc_mem_t *mctx, const char *filename, irs_resconf_t **confp)
 
 	if (ret != ISC_R_SUCCESS)
 		irs_resconf_destroy(&conf);
-	else
+	else {
+		if (fp == NULL)
+			ret = ISC_R_FILENOTFOUND;
 		*confp = conf;
+	}
 
 	return (ret);
 }

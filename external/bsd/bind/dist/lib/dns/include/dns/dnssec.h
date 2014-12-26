@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec.h,v 1.3.4.2 2012/12/15 05:40:01 riz Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.3.4.2.2.1 2014/12/26 03:08:33 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -176,6 +176,7 @@ dns_dnssec_findzonekeys(dns_db_t *db, dns_dbversion_t *ver, dns_dbnode_t *node,
 			dns_name_t *name, isc_mem_t *mctx,
 			unsigned int maxkeys, dst_key_t **keys,
 			unsigned int *nkeys);
+
 isc_result_t
 dns_dnssec_findzonekeys2(dns_db_t *db, dns_dbversion_t *ver,
 			 dns_dbnode_t *node, dns_name_t *name,
@@ -187,6 +188,20 @@ dns_dnssec_findzonekeys2(dns_db_t *db, dns_dbversion_t *ver,
  * 	XXX temporary - this should be handled in dns_zone_t.
  */
 /*@}*/
+
+isc_boolean_t
+dns_dnssec_keyactive(dst_key_t *key, isc_stdtime_t now);
+/*%<
+ *
+ * 	Returns ISC_TRUE if 'key' is active as of the time specified
+ * 	in 'now' (i.e., if the activation date has passed, inactivation or
+ * 	deletion date has not yet been reached, and the key is not revoked
+ * 	-- or if it is a legacy key without metadata). Otherwise returns
+ * 	ISC_FALSE.
+ *
+ *	Requires:
+ *\li		'key' is a valid key
+ */
 
 isc_result_t
 dns_dnssec_signmessage(dns_message_t *msg, dst_key_t *key);
@@ -301,11 +316,11 @@ dns_dnssec_keylistfromrdataset(dns_name_t *origin,
 			       const char *directory, isc_mem_t *mctx,
 			       dns_rdataset_t *keyset, dns_rdataset_t *keysigs,
 			       dns_rdataset_t *soasigs, isc_boolean_t savekeys,
-			       isc_boolean_t public,
+			       isc_boolean_t publickey,
 			       dns_dnsseckeylist_t *keylist);
 /*%<
  * Append the contents of a DNSKEY rdataset 'keyset' to 'keylist'.
- * Omit duplicates.  If 'public' is ISC_FALSE, search 'directory' for
+ * Omit duplicates.  If 'publickey' is ISC_FALSE, search 'directory' for
  * matching key files, and load the private keys that go with
  * the public ones.  If 'savekeys' is ISC_TRUE, mark the keys so
  * they will not be deleted or inactivated regardless of metadata.

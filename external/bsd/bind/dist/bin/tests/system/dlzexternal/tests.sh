@@ -54,8 +54,8 @@ status=`expr $status + $ret`
 
 echo "I:testing passing client info into DLZ driver"
 ret=0
-out=`$DIG $DIGOPTS +short -t txt -q source-addr.example.nil`
-addr=`eval echo $out | cut -f1 -d'#'`
+out=`$DIG $DIGOPTS +short -t txt -q source-addr.example.nil | grep -v '^;'`
+addr=`eval echo "$out" | cut -f1 -d'#'`
 [ "$addr" = "10.53.0.1" ] || ret=1
 [ "$ret" -eq 0 ] || echo "I:failed"
 status=`expr $status + $ret`
@@ -66,6 +66,7 @@ for i in 0 1 2 3 4 5 6 7 8 9; do
     ret=0
     grep 'dlz_example: shutting down zone example.nil' ns1/named.run > /dev/null 2>&1 || ret=1
     [ "$ret" -eq 0 ] && break
+    sleep 1
 done
 [ "$ret" -eq 0 ] || echo "I:failed"
 status=`expr $status + $ret`

@@ -1,7 +1,7 @@
-/*	$NetBSD: socket_api.c,v 1.3.4.1 2012/06/05 21:15:07 bouyer Exp $	*/
+/*	$NetBSD: socket_api.c,v 1.3.4.1.6.1 2014/12/26 03:08:36 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +26,7 @@
 #include <isc/once.h>
 #include <isc/socket.h>
 #include <isc/util.h>
+
 
 static isc_mutex_t createlock;
 static isc_once_t once = ISC_ONCE_INIT;
@@ -75,6 +76,9 @@ isc_result_t
 isc_socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp) {
 	isc_result_t result;
 
+	if (isc_bind9)
+		return (isc__socketmgr_create(mctx, managerp));
+
 	LOCK(&createlock);
 
 	REQUIRE(socketmgr_createfunc != NULL);
@@ -89,7 +93,10 @@ void
 isc_socketmgr_destroy(isc_socketmgr_t **managerp) {
 	REQUIRE(managerp != NULL && ISCAPI_SOCKETMGR_VALID(*managerp));
 
-	(*managerp)->methods->destroy(managerp);
+	if (isc_bind9)
+		isc__socketmgr_destroy(managerp);
+	else
+		(*managerp)->methods->destroy(managerp);
 
 	ENSURE(*managerp == NULL);
 }
@@ -100,6 +107,9 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 {
 	REQUIRE(ISCAPI_SOCKETMGR_VALID(manager));
 
+	if (isc_bind9)
+		return (isc__socket_create(manager, pf, type, socketp));
+
 	return (manager->methods->socketcreate(manager, pf, type, socketp));
 }
 
@@ -108,7 +118,10 @@ isc_socket_attach(isc_socket_t *sock, isc_socket_t **socketp) {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
 	REQUIRE(socketp != NULL && *socketp == NULL);
 
-	sock->methods->attach(sock, socketp);
+	if (isc_bind9)
+		isc__socket_attach(sock, socketp);
+	else
+		sock->methods->attach(sock, socketp);
 
 	ENSURE(*socketp == sock);
 }
@@ -117,7 +130,10 @@ void
 isc_socket_detach(isc_socket_t **socketp) {
 	REQUIRE(socketp != NULL && ISCAPI_SOCKET_VALID(*socketp));
 
-	(*socketp)->methods->detach(socketp);
+	if (isc_bind9)
+		isc__socket_detach(socketp);
+	else
+		(*socketp)->methods->detach(socketp);
 
 	ENSURE(*socketp == NULL);
 }
@@ -128,15 +144,22 @@ isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *sockaddr,
 {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
 
+	if (isc_bind9)
+		return (isc__socket_bind(sock, sockaddr, options));
+
 	return (sock->methods->bind(sock, sockaddr, options));
 }
 
 isc_result_t
 isc_socket_sendto(isc_socket_t *sock, isc_region_t *region, isc_task_t *task,
-		  isc_taskaction_t action, const void *arg,
+		  isc_taskaction_t action, void *arg,
 		  isc_sockaddr_t *address, struct in6_pktinfo *pktinfo)
 {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	if (isc_bind9)
+		return (isc__socket_sendto(sock, region, task,
+					   action, arg, address, pktinfo));
 
 	return (sock->methods->sendto(sock, region, task, action, arg, address,
 				      pktinfo));
@@ -144,18 +167,25 @@ isc_socket_sendto(isc_socket_t *sock, isc_region_t *region, isc_task_t *task,
 
 isc_result_t
 isc_socket_connect(isc_socket_t *sock, isc_sockaddr_t *addr, isc_task_t *task,
-		   isc_taskaction_t action, const void *arg)
+		   isc_taskaction_t action, void *arg)
 {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	if (isc_bind9)
+		return (isc__socket_connect(sock, addr, task, action, arg));
 
 	return (sock->methods->connect(sock, addr, task, action, arg));
 }
 
 isc_result_t
 isc_socket_recv(isc_socket_t *sock, isc_region_t *region, unsigned int minimum,
-		isc_task_t *task, isc_taskaction_t action, const void *arg)
+		isc_task_t *task, isc_taskaction_t action, void *arg)
 {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	if (isc_bind9)
+		return (isc__socket_recv(sock, region, minimum,
+					 task, action, arg));
 
 	return (sock->methods->recv(sock, region, minimum, task, action, arg));
 }
@@ -164,12 +194,18 @@ void
 isc_socket_cancel(isc_socket_t *sock, isc_task_t *task, unsigned int how) {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
 
-	sock->methods->cancel(sock, task, how);
+	if (isc_bind9)
+		isc__socket_cancel(sock, task, how);
+	else
+		sock->methods->cancel(sock, task, how);
 }
 
 isc_result_t
 isc_socket_getsockname(isc_socket_t *sock, isc_sockaddr_t *addressp) {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	if (isc_bind9)
+		return (isc__socket_getsockname(sock, addressp));
 
 	return (sock->methods->getsockname(sock, addressp));
 }
@@ -178,12 +214,18 @@ void
 isc_socket_ipv6only(isc_socket_t *sock, isc_boolean_t yes) {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
 
-	sock->methods->ipv6only(sock, yes);
+	if (isc_bind9)
+		isc__socket_ipv6only(sock, yes);
+	else
+		sock->methods->ipv6only(sock, yes);
 }
 
 isc_sockettype_t
 isc_socket_gettype(isc_socket_t *sock) {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
+
+	if (isc_bind9)
+		return (isc__socket_gettype(sock));
 
 	return (sock->methods->gettype(sock));
 }
@@ -192,9 +234,8 @@ void
 isc_socket_setname(isc_socket_t *socket, const char *name, void *tag) {
 	REQUIRE(ISCAPI_SOCKET_VALID(socket));
 
-	UNUSED(socket);		/* in case REQUIRE() is empty */
-	UNUSED(name);
-	UNUSED(tag);
+	if (isc_bind9)
+		isc__socket_setname(socket, name, tag);
 }
 
 isc_result_t
@@ -203,6 +244,11 @@ isc_socket_fdwatchcreate(isc_socketmgr_t *manager, int fd, int flags,
 			 isc_task_t *task, isc_socket_t **socketp)
 {
 	REQUIRE(ISCAPI_SOCKETMGR_VALID(manager));
+
+	if (isc_bind9)
+		return (isc__socket_fdwatchcreate(manager, fd, flags,
+						  callback, cbarg,
+						  task, socketp));
 
 	return (manager->methods->fdwatchcreate(manager, fd, flags,
 						callback, cbarg, task,
@@ -214,7 +260,10 @@ isc_socket_fdwatchpoke(isc_socket_t *sock, int flags)
 {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
 
-	return(sock->methods->fdwatchpoke(sock, flags));
+	if (isc_bind9)
+		return (isc__socket_fdwatchpoke(sock, flags));
+
+	return (sock->methods->fdwatchpoke(sock, flags));
 }
 
 isc_result_t
@@ -222,12 +271,152 @@ isc_socket_dup(isc_socket_t *sock, isc_socket_t **socketp) {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
 	REQUIRE(socketp != NULL && *socketp == NULL);
 
-	return(sock->methods->dup(sock, socketp));
+	if (isc_bind9)
+		return (isc__socket_dup(sock, socketp));
+
+	return (sock->methods->dup(sock, socketp));
 }
 
 int
 isc_socket_getfd(isc_socket_t *sock) {
 	REQUIRE(ISCAPI_SOCKET_VALID(sock));
 
-	return(sock->methods->getfd(sock));
+	if (isc_bind9)
+		return (isc__socket_getfd(sock));
+
+	return (sock->methods->getfd(sock));
+}
+
+isc_result_t
+isc_socket_open(isc_socket_t *sock) {
+	return (isc__socket_open(sock));
+}
+
+isc_result_t
+isc_socket_close(isc_socket_t *sock) {
+	return (isc__socket_close(sock));
+}
+
+isc_result_t
+isc_socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
+		       unsigned int maxsocks)
+{
+	return (isc__socketmgr_create2(mctx, managerp, maxsocks));
+}
+
+isc_result_t
+isc_socket_recvv(isc_socket_t *sock, isc_bufferlist_t *buflist,
+		 unsigned int minimum, isc_task_t *task,
+		 isc_taskaction_t action, void *arg)
+{
+	return (isc__socket_recvv(sock, buflist, minimum, task, action, arg));
+}
+
+isc_result_t
+isc_socket_recv2(isc_socket_t *sock, isc_region_t *region,
+		  unsigned int minimum, isc_task_t *task,
+		  isc_socketevent_t *event, unsigned int flags)
+{
+	return (isc__socket_recv2(sock, region, minimum, task, event, flags));
+}
+
+isc_result_t
+isc_socket_send(isc_socket_t *sock, isc_region_t *region,
+		 isc_task_t *task, isc_taskaction_t action, void *arg)
+{
+	return (isc__socket_send(sock, region, task, action, arg));
+}
+
+isc_result_t
+isc_socket_sendv(isc_socket_t *sock, isc_bufferlist_t *buflist,
+		  isc_task_t *task, isc_taskaction_t action, void *arg)
+{
+	return (isc__socket_sendv(sock, buflist, task, action, arg));
+}
+
+isc_result_t
+isc_socket_sendtov(isc_socket_t *sock, isc_bufferlist_t *buflist,
+		    isc_task_t *task, isc_taskaction_t action, void *arg,
+		    isc_sockaddr_t *address, struct in6_pktinfo *pktinfo)
+{
+	return (isc__socket_sendtov(sock, buflist, task, action, arg,
+				    address, pktinfo));
+}
+
+isc_result_t
+isc_socket_sendtov2(isc_socket_t *sock, isc_bufferlist_t *buflist,
+		    isc_task_t *task, isc_taskaction_t action, void *arg,
+		    isc_sockaddr_t *address, struct in6_pktinfo *pktinfo,
+		    unsigned int flags)
+{
+	return (isc__socket_sendtov2(sock, buflist, task, action, arg,
+				     address, pktinfo, flags));
+}
+
+isc_result_t
+isc_socket_sendto2(isc_socket_t *sock, isc_region_t *region,
+		    isc_task_t *task,
+		    isc_sockaddr_t *address, struct in6_pktinfo *pktinfo,
+		    isc_socketevent_t *event, unsigned int flags)
+{
+	return (isc__socket_sendto2(sock, region, task, address, pktinfo,
+				    event, flags));
+}
+
+void
+isc_socket_cleanunix(isc_sockaddr_t *sockaddr, isc_boolean_t active) {
+	isc__socket_cleanunix(sockaddr, active);
+}
+
+isc_result_t
+isc_socket_permunix(isc_sockaddr_t *sockaddr, isc_uint32_t perm,
+		     isc_uint32_t owner, isc_uint32_t group)
+{
+	return (isc__socket_permunix(sockaddr, perm, owner, group));
+}
+
+isc_result_t
+isc_socket_filter(isc_socket_t *sock, const char *filter) {
+	return (isc__socket_filter(sock, filter));
+}
+
+isc_result_t
+isc_socket_listen(isc_socket_t *sock, unsigned int backlog) {
+	return (isc__socket_listen(sock, backlog));
+}
+
+isc_result_t
+isc_socket_accept(isc_socket_t *sock, isc_task_t *task,
+		   isc_taskaction_t action, void *arg)
+{
+	return (isc__socket_accept(sock, task, action, arg));
+}
+
+isc_result_t
+isc_socket_getpeername(isc_socket_t *sock, isc_sockaddr_t *addressp) {
+	return (isc__socket_getpeername(sock, addressp));
+}
+
+isc_result_t
+isc_socketmgr_getmaxsockets(isc_socketmgr_t *manager0, unsigned int *nsockp) {
+	if (!isc_bind9)
+		return (ISC_R_NOTIMPLEMENTED);
+
+	return(isc__socketmgr_getmaxsockets(manager0, nsockp));
+}
+
+void
+isc_socketmgr_setstats(isc_socketmgr_t *manager0, isc_stats_t *stats) {
+	if (!isc_bind9)
+		return;
+
+	isc__socketmgr_setstats(manager0, stats);
+}
+
+void
+isc__socketmgr_maxudp(isc_socketmgr_t *manager0, int maxudp) {
+	if (!isc_bind9)
+		return;
+
+	isc___socketmgr_maxudp(manager0, maxudp);
 }

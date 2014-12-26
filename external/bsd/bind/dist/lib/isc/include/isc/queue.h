@@ -1,7 +1,7 @@
-/*	$NetBSD: queue.h,v 1.1.1.1.2.4 2012/12/15 05:40:07 riz Exp $	*/
+/*	$NetBSD: queue.h,v 1.1.1.1.2.4.2.1 2014/12/26 03:08:36 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,8 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
+/* $Id: queue.h,v 1.1.1.1.2.4.2.1 2014/12/26 03:08:36 msaitoh Exp $ */
 
 /*
  * This is a generic implementation of a two-lock concurrent queue.
@@ -53,8 +55,8 @@
 
 #define ISC_QUEUE_INIT(queue, link) \
 	do { \
-		isc_mutex_init(&(queue).taillock); \
-		isc_mutex_init(&(queue).headlock); \
+		(void) isc_mutex_init(&(queue).taillock); \
+		(void) isc_mutex_init(&(queue).headlock); \
 		(queue).tail = (queue).head = NULL; \
 	} while (/*CONSTCOND*/0)
 
@@ -63,8 +65,8 @@
 #define ISC_QUEUE_DESTROY(queue) \
 	do { \
 		ISC_QLINK_INSIST(ISC_QUEUE_EMPTY(queue)); \
-		isc_mutex_destroy(&(queue).taillock); \
-		isc_mutex_destroy(&(queue).headlock); \
+		(void) isc_mutex_destroy(&(queue).taillock); \
+		(void) isc_mutex_destroy(&(queue).headlock); \
 	} while (/*CONSTCOND*/0)
 
 /*
@@ -160,6 +162,6 @@
 		UNLOCK(&(queue).taillock); \
 		UNLOCK(&(queue).headlock); \
 		(elt)->link.next = (elt)->link.prev = (void *)(-1); \
-	} while(0)
+	} while(/*CONSTCOND*/0)
 
 #endif /* ISC_QUEUE_H */

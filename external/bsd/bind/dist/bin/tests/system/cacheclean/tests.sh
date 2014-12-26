@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -85,10 +85,15 @@ in_cache () {
 }
 
 echo "I:check correctness of routine cache cleaning"
-$DIG $DIGOPTS -f dig.batch > dig.out.ns2 || status=1
+$DIG $DIGOPTS +tcp +keepopen -b 10.53.0.7 -f dig.batch > dig.out.ns2 || status=1
 grep ";" dig.out.ns2
 
-$PERL ../digcomp.pl dig.out.ns2 knowngood.dig.out || status=1
+$PERL ../digcomp.pl --lc dig.out.ns2 knowngood.dig.out || status=1
+
+echo "I:only one tcp socket was used"
+tcpclients=`grep "client 10.53.0.7#[0-9]*:" ns2/named.run | awk '{print $4}' | sort | uniq -c | wc -l`
+
+test $tcpclients -eq 1 || { status=1; echo "I:failed"; }
 
 echo "I:reset and check that records are correctly cached initially"
 ret=0

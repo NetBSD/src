@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_internal.h,v 1.3.4.2 2012/12/15 05:39:57 riz Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.3.4.2.2.1 2014/12/26 03:08:32 msaitoh Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -128,6 +128,9 @@ struct dst_key {
 	isc_boolean_t	timeset[DST_MAX_TIMES + 1];  /*%< data set? */
 	isc_stdtime_t	nums[DST_MAX_NUMERIC + 1];   /*%< numeric metadata */
 	isc_boolean_t	numset[DST_MAX_NUMERIC + 1]; /*%< data set? */
+	isc_boolean_t 	inactive;      /*%< private key not present as it is
+					    inactive */
+	isc_boolean_t 	external;      /*%< external key */
 
 	int		fmt_major;     /*%< private key format, major version */
 	int		fmt_minor;     /*%< private key format, minor version */
@@ -140,6 +143,7 @@ struct dst_context {
 	unsigned int magic;
 	dst_key_t *key;
 	isc_mem_t *mctx;
+	isc_logcategory_t *category;
 	union {
 		void *generic;
 		dst_gssapi_signverifyctx_t *gssctx;

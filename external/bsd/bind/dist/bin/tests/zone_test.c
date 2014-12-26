@@ -1,7 +1,7 @@
-/*	$NetBSD: zone_test.c,v 1.2.6.1 2012/06/05 21:15:19 bouyer Exp $	*/
+/*	$NetBSD: zone_test.c,v 1.2.6.1.6.1 2014/12/26 03:08:11 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -78,7 +78,7 @@ isc_sockaddr_t addr;
 			(void)NULL
 
 static void
-usage() {
+usage(void) {
 	fprintf(stderr,
 		"usage: zone_test [-dqsSM] [-c class] [-f file] zone\n");
 	exit(1);
@@ -102,7 +102,7 @@ setup(const char *zonename, const char *filename, const char *classname) {
 
 	dns_zone_settype(zone, zonetype);
 
-	isc_buffer_init(&buffer, zonename, strlen(zonename));
+	isc_buffer_constinit(&buffer, zonename, strlen(zonename));
 	isc_buffer_add(&buffer, strlen(zonename));
 	dns_fixedname_init(&fixorigin);
 	result = dns_name_fromtext(dns_fixedname_name(&fixorigin),
@@ -263,8 +263,12 @@ main(int argc, char **argv) {
 		case 'm':
 			memset(&addr, 0, sizeof(addr));
 			addr.type.sin.sin_family = AF_INET;
-			inet_pton(AF_INET, isc_commandline_argument,
-				  &addr.type.sin.sin_addr);
+			if (inet_pton(AF_INET, isc_commandline_argument,
+				      &addr.type.sin.sin_addr) != 1) {
+				fprintf(stderr, "bad master address '%s'\n",
+					isc_commandline_argument);
+				exit(1);
+			}
 			addr.type.sin.sin_port = htons(53);
 			break;
 		case 'q':

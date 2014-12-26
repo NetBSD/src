@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_250.c,v 1.3.4.1 2012/06/05 21:15:45 bouyer Exp $	*/
+/*	$NetBSD: tsig_250.c,v 1.3.4.1.6.1 2014/12/26 03:08:33 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -228,12 +228,7 @@ totext_any_tsig(ARGS_TOTEXT) {
 	 */
 	n = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
-	if (dns_tsigrcode_totext((dns_rcode_t)n, target) == ISC_R_SUCCESS)
-		RETERR(str_totext(" ", target));
-	else {
-		sprintf(buf, "%u ", n);
-		RETERR(str_totext(buf, target));
-	}
+	RETERR(dns_tsigrcode_totext((dns_rcode_t)n, target));
 
 	/*
 	 * Other Size.
