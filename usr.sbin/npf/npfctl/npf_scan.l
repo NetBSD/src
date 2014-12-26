@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_scan.l,v 1.21 2014/05/31 22:37:05 rmind Exp $	*/
+/*	$NetBSD: npf_scan.l,v 1.22 2014/12/26 22:44:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2012 The NetBSD Foundation, Inc.
@@ -97,6 +97,7 @@ static			return TSTATIC;
 dynamic			return TDYNAMIC;
 file			return TFILE;
 map			return MAP;
+set			return SET;
 "<->"			return ARROWBOTH;
 "<-"			return ARROWLEFT;
 "->"			return ARROWRIGHT;
@@ -124,6 +125,8 @@ apply			return APPLY;
 final			return FINAL;
 quick			return FINAL;
 on			return ON;
+off			return OFF;
+bpf.jit			return BPFJIT;
 inet6			return INET6;
 inet4			return INET4;
 proto			return PROTO;
