@@ -41,7 +41,7 @@
 #include <arm/allwinner/awin_reg.h>
 #include <evbarm/awin/platform.h>  
 
-RCSID("$NetBSD: awin_start.S,v 1.10 2014/12/22 23:46:50 jmcneill Exp $")
+RCSID("$NetBSD: awin_start.S,v 1.11 2014/12/26 21:45:17 martin Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -157,7 +157,8 @@ _C_LABEL(awin_start):
 	movt	r5, #:upper16:(AWIN_CORE_PBASE+AWIN_SRAM_OFFSET)
 	ldr	r1, [r5, #AWIN_SRAM_VER_REG]
 #ifdef __ARMEB__
-	orr	r1, r1, #(AWIN_SRAM_VER_R_EN << 8)	# it's bit 15
+	# it's bit 15
+	orr	r1, r1, #(AWIN_SRAM_VER_R_EN << 8)
 #else
 	orr	r1, r1, #AWIN_SRAM_VER_R_EN
 #endif
