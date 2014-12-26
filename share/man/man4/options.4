@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.442 2014/08/24 07:59:22 jnemeth Exp $
+.\"	$NetBSD: options.4,v 1.443 2014/12/26 01:19:43 christos Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd August 23, 2014
+.Dd December 25, 2014
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -977,8 +977,8 @@ routines, (a.k.a. the
 .Fn namei
 cache, though called by many other names in the kernel source).
 By default, this cache has
-.Dv NPROC
-(set as 20 + 16 * MAXUSERS) * (80 + NPROC / 8) entries.
+.Dv (NPROC + NTEXT + 100)
+entires (NPROC set as 20 + 16 * MAXUSERS and NTEXT as 80 + NPROC / 8).
 A reasonable way to derive a value of
 .Dv NVNODE ,
 should you notice a large number of namei cache misses with a tool such as
