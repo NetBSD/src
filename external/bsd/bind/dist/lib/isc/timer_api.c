@@ -1,7 +1,7 @@
-/*	$NetBSD: timer_api.c,v 1.2.6.1 2012/06/05 21:15:07 bouyer Exp $	*/
+/*	$NetBSD: timer_api.c,v 1.2.6.1.6.1 2014/12/26 03:08:36 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +28,7 @@
 #include <isc/once.h>
 #include <isc/timer.h>
 #include <isc/util.h>
+
 
 static isc_mutex_t createlock;
 static isc_once_t once = ISC_ONCE_INIT;
@@ -77,6 +78,9 @@ isc_result_t
 isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp) {
 	isc_result_t result;
 
+	if (isc_bind9)
+		return (isc__timermgr_create(mctx, managerp));
+
 	LOCK(&createlock);
 
 	REQUIRE(timermgr_createfunc != NULL);
@@ -91,18 +95,25 @@ void
 isc_timermgr_destroy(isc_timermgr_t **managerp) {
 	REQUIRE(*managerp != NULL && ISCAPI_TIMERMGR_VALID(*managerp));
 
-	(*managerp)->methods->destroy(managerp);
+	if (isc_bind9)
+		isc__timermgr_destroy(managerp);
+	else
+		(*managerp)->methods->destroy(managerp);
 
 	ENSURE(*managerp == NULL);
 }
 
 isc_result_t
 isc_timer_create(isc_timermgr_t *manager, isc_timertype_t type,
-		 isc_time_t *expires, isc_interval_t *interval,
-		 isc_task_t *task, isc_taskaction_t action, const void *arg,
+		 const isc_time_t *expires, const isc_interval_t *interval,
+		 isc_task_t *task, isc_taskaction_t action, void *arg,
 		 isc_timer_t **timerp)
 {
 	REQUIRE(ISCAPI_TIMERMGR_VALID(manager));
+
+	if (isc_bind9)
+		return (isc__timer_create(manager, type, expires, interval,
+					  task, action, arg, timerp));
 
 	return (manager->methods->timercreate(manager, type, expires,
 					      interval, task, action, arg,
@@ -114,7 +125,10 @@ isc_timer_attach(isc_timer_t *timer, isc_timer_t **timerp) {
 	REQUIRE(ISCAPI_TIMER_VALID(timer));
 	REQUIRE(timerp != NULL && *timerp == NULL);
 
-	timer->methods->attach(timer, timerp);
+	if (isc_bind9)
+		isc__timer_attach(timer, timerp);
+	else
+		(*timerp)->methods->attach(timer, timerp);
 
 	ENSURE(*timerp == timer);
 }
@@ -123,17 +137,24 @@ void
 isc_timer_detach(isc_timer_t **timerp) {
 	REQUIRE(timerp != NULL && ISCAPI_TIMER_VALID(*timerp));
 
-	(*timerp)->methods->detach(timerp);
+	if (isc_bind9)
+		isc__timer_detach(timerp);
+	else
+		(*timerp)->methods->detach(timerp);
 
 	ENSURE(*timerp == NULL);
 }
 
 isc_result_t
 isc_timer_reset(isc_timer_t *timer, isc_timertype_t type,
-		isc_time_t *expires, isc_interval_t *interval,
+		const isc_time_t *expires, const isc_interval_t *interval,
 		isc_boolean_t purge)
 {
 	REQUIRE(ISCAPI_TIMER_VALID(timer));
+
+	if (isc_bind9)
+		return (isc__timer_reset(timer, type, expires,
+			interval, purge));
 
 	return (timer->methods->reset(timer, type, expires, interval, purge));
 }
@@ -142,5 +163,24 @@ isc_result_t
 isc_timer_touch(isc_timer_t *timer) {
 	REQUIRE(ISCAPI_TIMER_VALID(timer));
 
+	if (isc_bind9)
+		return (isc__timer_touch(timer));
+
 	return (timer->methods->touch(timer));
+}
+
+isc_timertype_t
+isc_timer_gettype(isc_timer_t *timer) {
+	if (!isc_bind9)
+		return (isc_timertype_inactive);
+
+	return (isc__timer_gettype(timer));
+}
+
+void
+isc_timermgr_poke(isc_timermgr_t *manager0) {
+	if (!isc_bind9)
+		return;
+
+	isc__timermgr_poke(manager0);
 }

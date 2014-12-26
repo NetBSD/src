@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,12 +15,22 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: prereq.sh,v 1.7 2007/06/19 23:47:05 tbox Exp 
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
 
 if $PERL -e 'use Net::DNS;' 2>/dev/null
 then
-    :
+    if $PERL -e 'use Net::DNS; die if ($Net::DNS::VERSION eq "0.76" || $Net::DNS::VERSION eq "0.77");' 2>/dev/nul
+l
+    then
+        :
+    else
+        echo "I:Net::DNS version 0.76 and 0.77 have a bug that causes this test to fail: please update." >&2
+        exit 1
+    fi
 else
     echo "I:This test requires the Net::DNS library." >&2
     exit 1
 fi
+
+exec $SHELL ../testcrypto.sh

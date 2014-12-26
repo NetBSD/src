@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,8 +20,6 @@ SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 status=0
-
-RANDFILE=./random.data
 
 pzone=parent.nil
 pfile=parent.db
@@ -316,10 +314,13 @@ status=`expr $status + $ret`
 
 echo "I:checking RRSIG expiry date correctness"
 dnskey_expiry=`$CHECKZONE -o - $czone $cfile.signed 2> /dev/null |
-              awk '$4 == "RRSIG" && $5 == "DNSKEY" {print $9; exit}'`
+              awk '$4 == "RRSIG" && $5 == "DNSKEY" {print $9; exit}' |
+              cut -c1-10`
 soa_expiry=`$CHECKZONE -o - $czone $cfile.signed 2> /dev/null |
-           awk '$4 == "RRSIG" && $5 == "SOA" {print $9; exit}'`
+           awk '$4 == "RRSIG" && $5 == "SOA" {print $9; exit}' |
+           cut -c1-10`
 [ $dnskey_expiry -gt $soa_expiry ] || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
 echo "I:waiting 30 seconds for key activation"

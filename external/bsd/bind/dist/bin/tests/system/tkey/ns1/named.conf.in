@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -32,6 +32,7 @@ options {
 	tkey-domain "server";
 	tkey-dhkey "server" KEYID;
 	allow-query-cache { any; };
+	random-device "RANDFILE";
 };
 
 key rndc_key {
@@ -46,4 +47,10 @@ controls {
 key "tkeytest." {
 	algorithm hmac-md5;
 	secret "0123456789ab";
+};
+
+zone example {
+	type master;
+	file "example.db";
+	allow-query { key tkeytest.; none; };
 };

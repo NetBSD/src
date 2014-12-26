@@ -1,7 +1,7 @@
-/*	$NetBSD: lwres_gabn.c,v 1.2.6.1 2012/06/05 21:14:54 bouyer Exp $	*/
+/*	$NetBSD: lwres_gabn.c,v 1.2.6.1.6.1 2014/12/26 03:08:38 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -144,9 +144,9 @@ lwres_gabnrequest_render(lwres_context_t *ctx, lwres_gabnrequest_t *req,
 	if (buf == NULL)
 		return (LWRES_R_NOMEMORY);
 
-	lwres_buffer_init(b, buf, buflen);
+	lwres_buffer_init(b, buf, (unsigned int)buflen);
 
-	pkt->length = buflen;
+	pkt->length = (lwres_uint32_t)buflen;
 	pkt->version = LWRES_LWPACKETVERSION_0;
 	pkt->pktflags &= ~LWRES_LWPACKETFLAG_RESPONSE;
 	pkt->opcode = LWRES_OPCODE_GETADDRSBYNAME;
@@ -225,9 +225,9 @@ lwres_gabnresponse_render(lwres_context_t *ctx, lwres_gabnresponse_t *req,
 	buf = CTXMALLOC(buflen);
 	if (buf == NULL)
 		return (LWRES_R_NOMEMORY);
-	lwres_buffer_init(b, buf, buflen);
+	lwres_buffer_init(b, buf, (unsigned int)buflen);
 
-	pkt->length = buflen;
+	pkt->length = (lwres_uint32_t)buflen;
 	pkt->version = LWRES_LWPACKETVERSION_0;
 	pkt->pktflags |= LWRES_LWPACKETFLAG_RESPONSE;
 	pkt->opcode = LWRES_OPCODE_GETADDRSBYNAME;

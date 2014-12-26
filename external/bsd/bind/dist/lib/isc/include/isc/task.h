@@ -1,7 +1,7 @@
-/*	$NetBSD: task.h,v 1.4.4.2 2012/12/15 05:40:07 riz Exp $	*/
+/*	$NetBSD: task.h,v 1.4.4.2.2.1 2014/12/26 03:08:36 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -130,7 +130,7 @@ typedef struct isc_taskmethods {
 	unsigned int (*unsend)(isc_task_t *task, void *sender, isc_eventtype_t type,
 			       void *tag, isc_eventlist_t *events);
 	isc_result_t (*onshutdown)(isc_task_t *task, isc_taskaction_t action,
-				   const void *arg);
+				   void *arg);
 	void (*shutdown)(isc_task_t *task);
 	void (*setname)(isc_task_t *task, const char *name, void *tag);
 	unsigned int (*purgeevents)(isc_task_t *task, void *sender,
@@ -443,7 +443,7 @@ isc_task_unsend(isc_task_t *task, void *sender, isc_eventtype_t type,
 
 isc_result_t
 isc_task_onshutdown(isc_task_t *task, isc_taskaction_t action,
-		    const void *arg);
+		    void *arg);
 /*%<
  * Send a shutdown event with action 'action' and argument 'arg' when
  * 'task' is shutdown.
@@ -790,7 +790,7 @@ isc_taskmgr_excltask(isc_taskmgr_t *mgr, isc_task_t **taskp);
 
 #ifdef HAVE_LIBXML2
 
-void
+int
 isc_taskmgr_renderxml(isc_taskmgr_t *mgr, xmlTextWriterPtr writer);
 
 #endif
