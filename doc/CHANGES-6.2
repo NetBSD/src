@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.177 2014/12/26 05:35:59 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.178 2014/12/26 07:31:42 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -8855,3 +8855,9 @@ lib/Makefile							1.204 via patch
 
 	Update bind to 9.9.6-P1. CVE-2014-8500.
 	[spz, ticket 1217]
+
+external/mit/xorg/server/xorg-server/Makefile	patch
+
+	Fix conversion of SDK_REQUIRED_MODULES which was reported by John
+	D. Baker in PR#49500.
+	[mrg, ticket 1222]
