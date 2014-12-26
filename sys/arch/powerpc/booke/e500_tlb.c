@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.13 2013/12/09 09:35:16 wiz Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.14 2014/12/26 11:13:05 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.13 2013/12/09 09:35:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.14 2014/12/26 11:13:05 nonaka Exp $");
 
 #include <sys/param.h>
 
@@ -361,7 +361,7 @@ e500_tlb_invalidate_all(void)
 	__asm volatile("tlbivax\t0, %0" :: "b"(4));	/* INV_ALL */
 	__asm volatile("tlbsync\n\tisync\n\tsync");
 #else
-	mtspr(SPR_MMUCSR0, MMUCSR0_TLB0_FL);
+	mtspr(SPR_MMUCSR0, MMUCSR0_TLB0_FI);
 	while (mfspr(SPR_MMUCSR0) != 0)
 		;
 #endif
