@@ -1,4 +1,4 @@
-/*	$NetBSD: e500reg.h,v 1.15 2014/12/27 16:19:33 nonaka Exp $	*/
+/*	$NetBSD: e500reg.h,v 1.16 2014/12/27 17:58:21 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -312,6 +312,61 @@
 
 #define	SPI_BASE	0x7000	/* MPC8536 */
 #define	SPI_SIZE	0x1000
+
+#ifdef SPI_PRIVATE
+#define	SPMODE		0x000	/* mode register */
+#define	SPMODE_EN	__PPCBIT(0)	/* Enable eSPI: 0=disabled, 1=enabled */
+#define	SPMODE_LOOP	__PPCBIT(1)	/* Loop mode: 0=normal, 1=loopback */
+#define	SPMODE_OD	__PPCBIT(2)	/* P1023: Open drain mode: 0=actively driven, 1=open drain */
+#define	SPMODE_HO_ADJ	__PPCBITS(13,15) /* Data output hold adjustment */
+#define	SPMODE_TXTHR	__PPCBITS(18,23) /* Tx FIFO Threshold: 1-32 */
+#define	SPMODE_RXTHR	__PPCBITS(27,31) /* Rx FIFO threshold: 0-31 */
+#define	SPIE		0x004	/* event register */
+#define	SPIE_RXCNT	__PPCBITS(2,7)	/* current number of full Rx FIFO bytes */
+#define	SPIE_TXCNT	__PPCBITS(10,15) /* current number of full Tx FIFO bytes */
+#define	SPIE_TXE	__PPCBIT(16)	/* Tx FIFO is empty */
+#define	SPIE_DON	__PPCBIT(17)	/* Last character was transmitted */
+#define	SPIE_RXT	__PPCBIT(18)	/* Rx FIFO has more than RXTHR bytes */
+#define	SPIE_RXF	__PPCBIT(19)	/* Rx FIFO is full */
+#define	SPIE_TXT	__PPCBIT(20)	/* Tx FIFO has less than TXTHR bytes */
+#define	SPIE_RNE	__PPCBIT(22)	/* Not empty: 0=empty, 1=not empty */
+#define	SPIE_TNF	__PPCBIT(23)	/* Tx FIFO not full: 0=full, 1=not full */
+#define	SPIM		0x008	/* mask register */
+#define	SPIM_TXE	__PPCBIT(16)
+#define	SPIM_DON	__PPCBIT(17)
+#define	SPIM_RXT	__PPCBIT(18)
+#define	SPIM_RXF	__PPCBIT(19)
+#define	SPIM_TXT	__PPCBIT(20)
+#define	SPIM_RNE	__PPCBIT(22)
+#define	SPIM_TNF	__PPCBIT(23)
+#define	SPCOM		0x00c	/* command register */
+#define	SPCOM_CS	__PPCBITS(0,1)	/* Chip select: 0=CS0, 1=CS1, 2=CS2(P1025), 3=CS3(P1025) */
+#define	SPCOM_RXDELAY	__PPCBIT(2)	/* 0=normal eSPI operation */
+#define	SPCOM_DO	__PPCBIT(3)	/* 0=normal eSPI operation, 1=Winbond dual output read */
+#define	SPCOM_TO	__PPCBIT(4)	/* Transmit only: 0=normal operation, 1=No reception is done for the frame */
+#define	SPCOM_HLD	__PPCBIT(5)	/* 0=normal operation, 1=Mask first generated SPI_CLK */
+#define	SPCOM_LS	__PPCBIT(6)	/* P1023: Late sample: 0=normal operation, 1=Late data sample */
+#define	SPCOM_RXSKIP	__PPCBITS(8,15)	/* if RxSKIP != 0: Number of characters skipped for reception from frame start */
+#define	SPCOM_TRANLEN	__PPCBITS(16,31) /* Transaction length */
+#define	SPITF		0x010	/* transmit FIFO access register */
+#define	SPIRF		0x014	/* receive FIFO access register */
+#define	SPMODE0		0x020	/* CS0 mode register */
+#define	SPMODE1		0x024	/* CS1 mode register */
+#define	SPMODE2		0x028	/* CS2 mode register (P1025) */
+#define	SPMODE3		0x02c	/* CS3 mode register (P1025) */
+#define	SPMODEn(n)	(0x020+(n)*4)
+#define	SPMODEn_CI	__PPCBIT(0)	/* Clock invert: 0=inactive state of SPI_CLK is low, 1=high */
+#define	SPMODEn_CP	__PPCBIT(1)	/* Clock phase: SPI_CLK starts toggling at the middle of the data transfer, 1=beginning */
+#define	SPMODEn_REV	__PPCBIT(2)	/* Reverse data mode: 0=LSB of the character sent and received first, 1=MSB */
+#define	SPMODEn_DIV16	__PPCBIT(3)	/* Devide by 16: 0=System clock, 1=System clock/16 */
+#define	SPMODEn_PM	__PPCBITS(4,7)	/* Prescale modulus select */
+#define	SPMODEn_ODD	__PPCBIT(8)	/* 0=Even division, 1=Odd dividion */
+#define	SPMODEn_POL	__PPCBIT(11)	/* CS polarity: 0=Asserted high/Negated low, 1=Asserted low/Negated high */
+#define	SPMODEn_LEN	__PPCBITS(12,15) /* Character length in bits per character */
+#define	SPMODEn_CSBEF	__PPCBITS(16,19) /* CS assertion time in bits before frame start */
+#define	SPMODEn_CSAFT	__PPCBITS(20,23) /* CS assertion time in bits after frame end */
+#define	SPMODEn_CSCG	__PPCBITS(24,28) /* Clock gap */
+#endif
 
 #define	SATA1_BASE	0x18000	/* MPC8536 */
 #define	SATA2_BASE	0x19000	/* MPC8536 */
