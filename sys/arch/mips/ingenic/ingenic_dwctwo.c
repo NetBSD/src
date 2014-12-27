@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_dwctwo.c,v 1.4 2014/12/25 05:13:49 macallan Exp $ */
+/*	$NetBSD: ingenic_dwctwo.c,v 1.5 2014/12/27 17:22:15 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.4 2014/12/25 05:13:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.5 2014/12/27 17:22:15 macallan Exp $");
 
 /*
  * adapted from bcm2835_dwctwo.c
@@ -64,7 +64,7 @@ struct ingenic_dwc2_softc {
 static struct dwc2_core_params ingenic_dwc2_params = {
 	.otg_cap			= -1,	/* HNP/SRP capable */
 	.otg_ver			= -1,	/* 1.3 */
-	.dma_enable			= 0,	/* for now */
+	.dma_enable			= 1,
 	.dma_desc_enable		= 0,
 	.speed				= -1,	/* High Speed */
 	.enable_dynamic_fifo		= -1,
