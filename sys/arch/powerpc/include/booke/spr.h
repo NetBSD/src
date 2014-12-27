@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.12 2014/12/20 16:34:47 nonaka Exp $	*/
+/*	$NetBSD: spr.h,v 1.13 2014/12/27 12:36:48 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -527,6 +527,7 @@
 #define	  MMUCFG_NTLBS_GET(n)	  (((n) >> 2) & 3) /* NTLBS is max value of MAS0[TLBSEL] */
 #define	  MMUCFG_MAVN		  0x00000003 /* MMU Architecture Version Number */
 #define	  MMUCFG_MAVN_V1	  0
+#define	  MMUCFG_MAVN_V2	  1
 #define	SPR_SVR			1023	/* E... System Version Register */
 
 #define	PMR_PMC0		16
