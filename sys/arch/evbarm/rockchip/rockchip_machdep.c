@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.6 2014/12/27 04:20:38 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.7 2014/12/27 16:19:24 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.6 2014/12/27 04:20:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.7 2014/12/27 16:19:24 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -595,7 +595,7 @@ rockchip_device_register(device_t self, void *aux)
 	 */
 	if (device_is_a(self, "a9tmr") || device_is_a(self, "a9wdt")) {
                 prop_dictionary_set_uint32(dict, "frequency",
-		    ROCKCHIP_REF_FREQ);
+		    rockchip_a9periph_get_rate());
 		return;
 	}
 
