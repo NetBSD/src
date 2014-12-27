@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: fenv.c,v 1.2 2014/12/27 17:52:45 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.1 2014/08/10 05:47:37 matt Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.2 2014/12/27 17:52:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -55,7 +55,7 @@ int
 feclearexcept(int excepts)
 {
 #ifndef lint
-	_DIAGASSERT((except & ~FE_EXCEPT_ALL) == 0);
+	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
 #endif
 	unsigned int tmp = reg_fpsr_read() & ~__SHIFTIN(excepts, FPSR_CSUM);
 	reg_fpsr_write(tmp);
@@ -71,7 +71,7 @@ feclearexcept(int excepts)
 int
 fegetexceptflag(fexcept_t *flagp, int excepts)
 {
-	_DIAGASSERT((except & ~FE_EXCEPT_ALL) == 0);
+	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
 	*flagp = __SHIFTOUT(reg_fpsr_read(), FPSR_CSUM) & excepts;
 	return 0;
 }
@@ -85,7 +85,7 @@ int
 feraiseexcept(int excepts)
 {
 #ifndef lint
-	_DIAGASSERT((except & ~FE_EXCEPT_ALL) == 0);
+	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
 #endif
 #ifdef __SOFTFP__
 	excepts &= fpgetsticky();
@@ -132,7 +132,7 @@ int
 fesetexceptflag(const fexcept_t *flagp, int excepts)
 {
 #ifndef lint
-	_DIAGASSERT((except & ~FE_EXCEPT_ALL) == 0);
+	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
 #endif
 	unsigned int fpsr = reg_fpsr_read();
 	fpsr &= ~__SHIFTIN(excepts, FPSR_CSUM);
@@ -149,7 +149,7 @@ fesetexceptflag(const fexcept_t *flagp, int excepts)
 int
 fetestexcept(int excepts)
 {
-	_DIAGASSERT((except & ~FE_EXCEPT_ALL) == 0);
+	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
 	return __SHIFTOUT(reg_fpsr_read(), FPSR_CSUM) & excepts;
 }
 
