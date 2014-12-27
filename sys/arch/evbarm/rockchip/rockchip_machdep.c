@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.2 2014/12/26 19:44:48 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.3 2014/12/27 01:21:02 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.2 2014/12/26 19:44:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.3 2014/12/27 01:21:02 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -182,6 +182,7 @@ __KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.2 2014/12/26 19:44:48 jmcneil
 #include <dev/ic/comreg.h>
 
 #include <arm/rockchip/rockchip_reg.h>
+#include <arm/rockchip/rockchip_crureg.h>
 #include <arm/rockchip/rockchip_var.h>
 
 #ifdef CPU_CORTEXA9
@@ -528,7 +529,8 @@ rockchip_reset(void)
 	bus_space_subregion(bst, rockchip_core1_bsh,
 	    ROCKCHIP_CRU_OFFSET, ROCKCHIP_CRU_SIZE, &bsh);
 
-	bus_space_write_4(bst, bsh, 0x100, 0xfdb9);
+	bus_space_write_4(bst, bsh, CRU_GLB_SRST_FST_REG,
+	    CRU_GLB_SRST_FST_MAGIC);
 }
 
 #ifdef KGDB
