@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_board.c,v 1.4 2014/12/27 16:18:50 jmcneill Exp $ */
+/* $NetBSD: rockchip_board.c,v 1.5 2014/12/27 19:14:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.4 2014/12/27 16:18:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.5 2014/12/27 19:14:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -199,5 +199,41 @@ rockchip_mmc0_get_rate(void)
 	mmc0_div_con = __SHIFTOUT(clksel_con11,
 				  CRU_CLKSEL_CON11_MMC0_DIV_CON);
 
-	return rockchip_gpll_get_rate() / (mmc0_div_con + 1);
+	return rockchip_ahb_get_rate() / (mmc0_div_con + 1);
+}
+
+u_int
+rockchip_mmc0_set_div(u_int div)
+{
+	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_handle_t bsh;
+	uint32_t clksel_con11;
+
+	if (div == 0 || div > 0x40)
+		return EINVAL;
+
+	rockchip_get_cru_bsh(&bsh);
+
+	clksel_con11 = CRU_CLKSEL_CON11_MMC0_PLL_SEL_MASK |
+		       CRU_CLKSEL_CON11_MMC0_DIV_CON_MASK;
+	//clksel_con11 |= CRU_CLKSEL_CON11_MMC0_PLL_SEL;	/* GPLL */
+	clksel_con11 |= __SHIFTIN(div - 1, CRU_CLKSEL_CON11_MMC0_DIV_CON);
+
+#ifdef ROCKCHIP_CLOCK_DEBUG
+	const u_int old_rate = rockchip_mmc0_get_rate();
+#endif
+
+	bus_space_write_4(bst, bsh, CRU_CLKSEL_CON_REG(11), clksel_con11);
+
+#ifdef ROCKCHIP_CLOCK_DEBUG
+	const u_int new_rate = rockchip_mmc0_get_rate();
+
+	printf("%s: update %u Hz -> %u Hz\n", __func__, old_rate, new_rate);
+
+	const uint32_t clkgate2 = bus_space_read_4(bst, bsh,
+	    CRU_CLKGATE_CON_REG(2));
+	printf("%s: clkgate2 = %#x\n", __func__, clkgate2);
+#endif
+
+	return 0;
 }
