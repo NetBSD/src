@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_board.c,v 1.1 2014/12/26 19:44:48 jmcneill Exp $ */
+/* $NetBSD: rockchip_board.c,v 1.2 2014/12/27 01:21:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.1 2014/12/26 19:44:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.2 2014/12/27 01:21:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.1 2014/12/26 19:44:48 jmcneill 
 #include <sys/device.h>
 
 #include <arm/rockchip/rockchip_reg.h>
+#include <arm/rockchip/rockchip_crureg.h>
 #include <arm/rockchip/rockchip_var.h>
 
 bus_space_handle_t rockchip_core0_bsh;
@@ -54,4 +55,51 @@ rockchip_bootstrap(void)
 	    ROCKCHIP_CORE1_SIZE, 0, &rockchip_core1_bsh);
 	if (error)
 		panic("%s: failed to map CORE1 registers: %d", __func__, error);
+}
+
+static void
+rockchip_get_cru_bsh(bus_space_handle_t *pbsh)
+{
+	bus_space_subregion(&rockchip_bs_tag, rockchip_core1_bsh,
+	    ROCKCHIP_CRU_OFFSET, ROCKCHIP_CRU_SIZE, pbsh);
+}
+
+u_int
+rockchip_gpll_get_rate(void)
+{
+	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_handle_t bsh;
+	uint32_t gpll_con0, gpll_con1;
+	uint32_t nr, nf, no;
+
+	rockchip_get_cru_bsh(&bsh);
+
+	gpll_con0 = bus_space_read_4(bst, bsh, CRU_GPLL_CON0_REG);
+	gpll_con1 = bus_space_read_4(bst, bsh, CRU_GPLL_CON1_REG);
+
+	nr = __SHIFTOUT(gpll_con0, CRU_PLL_CON0_CLKR) + 1;
+	no = __SHIFTOUT(gpll_con0, CRU_PLL_CON0_CLKOD) + 1;
+	nf = __SHIFTOUT(gpll_con1, CRU_PLL_CON1_CLKF) + 1;
+
+	return ROCKCHIP_REF_FREQ * nf / (nr * no);
+}
+
+u_int
+rockchip_ahb_get_rate(void)
+{
+	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_handle_t bsh;
+	uint32_t clksel_con10;
+	uint32_t hclk_div, aclk_div;
+
+	rockchip_get_cru_bsh(&bsh);
+
+	clksel_con10 = bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(10));
+
+	hclk_div = __SHIFTOUT(clksel_con10,
+			      CRU_CLKSEL_CON10_PERI_HCLK_DIV_CON) + 1;
+	aclk_div = 1 << __SHIFTOUT(clksel_con10,
+				   CRU_CLKSEL_CON10_PERI_ACLK_DIV_CON);
+
+	return rockchip_gpll_get_rate() / (hclk_div * aclk_div);
 }
