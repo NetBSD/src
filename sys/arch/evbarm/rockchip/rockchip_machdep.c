@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.4 2014/12/27 02:40:23 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.5 2014/12/27 03:58:52 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.4 2014/12/27 02:40:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.5 2014/12/27 03:58:52 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -367,7 +367,7 @@ initarm(void *arg)
 	printf("probe the PL310 L2CC\n");
         const bus_space_handle_t pl310_bh =
             ROCKCHIP_CORE0_VBASE + ROCKCHIP_PL310_OFFSET;
-        arml2cc_init(&rockchip_a4x_bs_tag, pl310_bh, 0);
+        arml2cc_init(&rockchip_bs_tag, pl310_bh, 0);
         rockchip_putchar('l');
 #endif
 
