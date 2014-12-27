@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.29 2014/12/27 16:54:03 martin Exp $
+# $NetBSD: Makefile,v 1.30 2014/12/27 17:55:05 martin Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libm
 
 # ARM fenv is incomplete, so we can not enable that here
-.if ${MACHINE_CPU} == "aarch64" \
+.if ${MACHINE_CPU} == "aarch64" || ${MACHINE_CPU} == "arm" \
     || ${MACHINE_ARCH} == "hppa" \
     || ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64" \
     || ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
