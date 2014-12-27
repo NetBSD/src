@@ -1,4 +1,4 @@
-/*	$NetBSD: e500reg.h,v 1.14 2012/07/26 18:41:32 matt Exp $	*/
+/*	$NetBSD: e500reg.h,v 1.15 2014/12/27 16:19:33 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -394,6 +394,11 @@
 #define	PORDEVSR_PCI1		__PPCBIT(8)
 #define	PCI1_PCIX		0
 #define	PCI1_PCI1		1
+#define	PORDEVSR_IOSEL_P1023	__PPCBITS(9,10)
+#define	IOSEL_P1023_PCIE12_X1		0
+#define	IOSEL_P1023_PCIE123_X1		1
+#define	IOSEL_P1023_PCIE123_X1_SGMII2	2
+#define	IOSEL_P1023_PCIE12_X1_SGMII12	3
 #define	PORDEVSR_IOSEL		__PPCBITS(9,12)
 #define	IOSEL_MPC8536_OFF		0x01
 #define	IOSEL_MPC8536_PCIE1_X4		0x02
@@ -496,11 +501,16 @@
 #define	PMUXCR_DMA1	__PPCBIT(30)
 #define	PMUXCR_DMA3	__PPCBIT(31)
 
+#define PMUXCR2		0x064 /* Alternate function signal multiplex control2 */
+
 /* Device Disables */
 #define DEVDISR		0x070 /* Device disable control */
 #define	DEVDISR_PCI1	__PPCBIT(0)
+#define	DEVDISR_QMAN_BMAN __PPCBIT(0)	/* P1023 */
 #define	DEVDISR_PCI2	__PPCBIT(1)
+#define	DEVDISR_FMAN	__PPCBIT(1)	/* P1023 */
 #define	DEVDISR_PCIE	__PPCBIT(2)
+#define	DEVDISR_MACSEC	__PPCBIT(3)	/* P1023 */
 #define	DEVDISR_LBC	__PPCBIT(4)
 #define	DEVDISR_PCIE2	__PPCBIT(5)
 #define	DEVDISR_PCIE3	__PPCBIT(6)
