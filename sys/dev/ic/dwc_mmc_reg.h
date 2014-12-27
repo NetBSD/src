@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_reg.h,v 1.1 2014/12/27 01:18:48 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc_reg.h,v 1.2 2014/12/27 19:18:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,6 +32,7 @@
 #define DWC_MMC_CTRL_REG			0x0000
 #define DWC_MMC_PWREN_REG			0x0004
 #define DWC_MMC_CLKDIV_REG			0x0008
+#define DWC_MMC_CLKSRC_REG			0x000c
 #define DWC_MMC_CLKENA_REG			0x0010
 #define DWC_MMC_TMOUT_REG			0x0014
 #define DWC_MMC_CTYPE_REG			0x0018
@@ -69,6 +70,10 @@
 #define DWC_MMC_CTRL_DMA_RESET			__BIT(2)
 #define DWC_MMC_CTRL_FIFO_RESET			__BIT(1)
 #define DWC_MMC_CTRL_CONTROLLER_RESET		__BIT(0)
+#define DWC_MMC_CTRL_RESET_ALL	\
+	(DWC_MMC_CTRL_CONTROLLER_RESET | \
+	 DWC_MMC_CTRL_FIFO_RESET | \
+	 DWC_MMC_CTRL_DMA_RESET)
 
 #define DWC_MMC_PWREN_POWER_ENABLE		__BIT(0)
 
