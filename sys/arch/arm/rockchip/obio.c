@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.2 2014/12/26 19:44:48 jmcneill Exp $	*/
+/*	$NetBSD: obio.c,v 1.3 2014/12/27 16:18:50 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -35,8 +35,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_rockchip.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.2 2014/12/26 19:44:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.3 2014/12/27 16:18:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +68,10 @@ void	obio_iomux(int, int);
 void	obio_init_gpio(void);
 void	obio_swporta(int, int, int);
 
+#ifdef ROCKCHIP_CLOCK_DEBUG
+static void	obio_dump_clocks(void);
+#endif
+
 /* there can be only one */
 bool	obio_found;
 
@@ -85,6 +91,10 @@ obio_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": On-board I/O\n");
+
+#ifdef ROCKCHIP_CLOCK_DEBUG
+	obio_dump_clocks();
+#endif
 
 	obio_init_grf();
 	obio_init_gpio();
@@ -208,3 +218,16 @@ void obio_swporta(int gpio_base, int offset, int new)
 
 	printf("gpio: 0x%08x 0x%08x -> 0x%08x\n", gpio_base + offset, old, renew);
 }
+
+#ifdef ROCKCHIP_CLOCK_DEBUG
+static void
+obio_dump_clocks(void)
+{
+	printf("APLL: %u Hz\n", rockchip_apll_get_rate());
+	printf("GPLL: %u Hz\n", rockchip_gpll_get_rate());
+	printf("CPU: %u Hz\n", rockchip_cpu_get_rate());
+	printf("AHB: %u Hz\n", rockchip_ahb_get_rate());
+	printf("A9PERIPH: %u Hz\n", rockchip_a9periph_get_rate());
+	printf("MMC0: %u Hz\n", rockchip_mmc0_get_rate());
+}
+#endif

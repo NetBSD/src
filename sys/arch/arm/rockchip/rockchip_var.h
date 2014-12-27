@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_var.h,v 1.4 2014/12/27 02:12:29 jmcneill Exp $ */
+/* $NetBSD: rockchip_var.h,v 1.5 2014/12/27 16:18:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 #ifndef _ARM_ROCKCHIP_ROCKCHIP_VAR_H_
 #define _ARM_ROCKCHIP_ROCKCHIP_VAR_H_
 
+#include "opt_rockchip.h"
+
 #include <sys/types.h>
 #include <sys/bus.h>
 
@@ -60,5 +62,7 @@ u_int rockchip_apll_get_rate(void);
 u_int rockchip_gpll_get_rate(void);
 u_int rockchip_cpu_get_rate(void);
 u_int rockchip_ahb_get_rate(void);
+u_int rockchip_a9periph_get_rate(void);
+u_int rockchip_mmc0_get_rate(void);
 
 #endif /* _ARM_ROCKCHIP_ROCKCHIP_VAR_H_ */
