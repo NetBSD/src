@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.5 2014/12/27 03:58:52 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.6 2014/12/27 04:20:38 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.5 2014/12/27 03:58:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.6 2014/12/27 04:20:38 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -594,11 +594,8 @@ rockchip_device_register(device_t self, void *aux)
 	 * what frequency it runs at.
 	 */
 	if (device_is_a(self, "a9tmr") || device_is_a(self, "a9wdt")) {
-		/*
-		 * This clock always runs at (arm_clk div 2) and only goes
-		 * to timers that are part of the A9 MP core subsystem.
-		 */
-                prop_dictionary_set_uint32(dict, "frequency", 148500000); /* 148.5MHz */
+                prop_dictionary_set_uint32(dict, "frequency",
+		    ROCKCHIP_REF_FREQ);
 		return;
 	}
 
