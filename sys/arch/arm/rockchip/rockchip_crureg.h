@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_crureg.h,v 1.1 2014/12/27 01:20:31 jmcneill Exp $ */
+/* $NetBSD: rockchip_crureg.h,v 1.2 2014/12/27 02:12:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -61,6 +61,13 @@
 
 #define CRU_PLL_CON1_CLKF_MASK	__BITS(28,16)
 #define CRU_PLL_CON1_CLKF	__BITS(12,0)
+
+#define CRU_CLKSEL_CON0_CPU_CLK_PLL_SEL_MASK	__BIT(24)
+#define CRU_CLKSEL_CON0_CORE_PERI_DIV_CON_MASK	__BITS(23,22)
+#define CRU_CLKSEL_CON0_A9_CORE_DIV_CON_MASK	__BITS(20,16)
+#define CRU_CLKSEL_CON0_CPU_CLK_PLL_SEL		__BIT(8)
+#define CRU_CLKSEL_CON0_CORE_PERI_DIV_CON	__BITS(7,6)
+#define CRU_CLKSEL_CON0_A9_CORE_DIV_CON		__BITS(4,0)
 
 #define CRU_CLKSEL_CON10_PERI_PLL_SEL_MASK	__BIT(31)
 #define CRU_CLKSEL_CON10_PERI_PCLK_DIV_CON_MASK	__BITS(29,28)

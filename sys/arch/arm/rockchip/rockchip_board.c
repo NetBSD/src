@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_board.c,v 1.2 2014/12/27 01:21:21 jmcneill Exp $ */
+/* $NetBSD: rockchip_board.c,v 1.3 2014/12/27 02:12:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.2 2014/12/27 01:21:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.3 2014/12/27 02:12:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -64,24 +64,53 @@ rockchip_get_cru_bsh(bus_space_handle_t *pbsh)
 	    ROCKCHIP_CRU_OFFSET, ROCKCHIP_CRU_SIZE, pbsh);
 }
 
-u_int
-rockchip_gpll_get_rate(void)
+static u_int
+rockchip_pll_get_rate(bus_size_t con0_reg, bus_size_t con1_reg)
 {
 	bus_space_tag_t bst = &rockchip_bs_tag;
 	bus_space_handle_t bsh;
-	uint32_t gpll_con0, gpll_con1;
+	uint32_t pll_con0, pll_con1;
 	uint32_t nr, nf, no;
 
 	rockchip_get_cru_bsh(&bsh);
 
-	gpll_con0 = bus_space_read_4(bst, bsh, CRU_GPLL_CON0_REG);
-	gpll_con1 = bus_space_read_4(bst, bsh, CRU_GPLL_CON1_REG);
+	pll_con0 = bus_space_read_4(bst, bsh, con0_reg);
+	pll_con1 = bus_space_read_4(bst, bsh, con1_reg);
 
-	nr = __SHIFTOUT(gpll_con0, CRU_PLL_CON0_CLKR) + 1;
-	no = __SHIFTOUT(gpll_con0, CRU_PLL_CON0_CLKOD) + 1;
-	nf = __SHIFTOUT(gpll_con1, CRU_PLL_CON1_CLKF) + 1;
+	nr = __SHIFTOUT(pll_con0, CRU_PLL_CON0_CLKR) + 1;
+	no = __SHIFTOUT(pll_con0, CRU_PLL_CON0_CLKOD) + 1;
+	nf = __SHIFTOUT(pll_con1, CRU_PLL_CON1_CLKF) + 1;
 
 	return ROCKCHIP_REF_FREQ * nf / (nr * no);
+}
+
+u_int
+rockchip_gpll_get_rate(void)
+{
+	return rockchip_pll_get_rate(CRU_GPLL_CON0_REG, CRU_GPLL_CON1_REG);
+}
+
+u_int
+rockchip_apll_get_rate(void)
+{
+	return rockchip_pll_get_rate(CRU_APLL_CON0_REG, CRU_APLL_CON1_REG);
+}
+
+u_int
+rockchip_cpu_get_rate(void)
+{
+	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_handle_t bsh;
+	uint32_t clksel_con0;
+
+	rockchip_get_cru_bsh(&bsh);
+
+	clksel_con0 = bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(0));
+	if (clksel_con0 & CRU_CLKSEL_CON0_CPU_CLK_PLL_SEL) {
+		return rockchip_gpll_get_rate();
+	} else {
+		return rockchip_apll_get_rate();
+	}
 }
 
 u_int
