@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.379 2014/12/22 18:02:52 wiz Exp $
+#       $NetBSD: Makefile,v 1.380 2014/12/27 19:32:57 maxv Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -455,9 +455,9 @@ MLINKS+=lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
 	lock.9 spinlockinit.9 lock.9 spinlockmgr.9
 MLINKS+=ltsleep.9 wakeup.9 ltsleep.9 mtsleep.9 ltsleep.9 tsleep.9
 MLINKS+=malloc.9 MALLOC.9 malloc.9 realloc.9 malloc.9 free.9 malloc.9 FREE.9
-MLINKS+=malloc.9 malloc_roundup.9 malloc.9 malloc_type_attach.9
-MLINKS+=malloc.9 malloc_type_detach.9 malloc.9 malloc_type_setlimit.9
-MLINKS+=malloc.9 MALLOC_DEFINE_LIMIT.9 malloc.9 MALLOC_DEFINE.9
+MLINKS+=malloc.9 malloc_type_attach.9
+MLINKS+=malloc.9 malloc_type_detach.9
+MLINKS+=malloc.9 MALLOC_DEFINE.9
 MLINKS+=malloc.9 MALLOC_DECLARE.9
 MLINKS+=mb.9 mb_memory.9 mb.9 mb_read.9 mb.9 mb_write.9
 MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
