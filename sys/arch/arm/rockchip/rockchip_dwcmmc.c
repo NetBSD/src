@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_dwcmmc.c,v 1.1 2014/12/27 01:22:07 jmcneill Exp $ */
+/* $NetBSD: rockchip_dwcmmc.c,v 1.2 2014/12/27 19:18:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_dwcmmc.c,v 1.1 2014/12/27 01:22:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_dwcmmc.c,v 1.2 2014/12/27 19:18:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,6 +48,8 @@ static void	rk_dwcmmc_attach(device_t, device_t, void *);
 
 static void	rk_dwcmmc_attach_i(device_t);
 
+static int	rk_dwcmmc_set_clkdiv(struct dwc_mmc_softc *, int);
+
 CFATTACH_DECL_NEW(rkdwcmmc, sizeof(struct dwc_mmc_softc),
 	rk_dwcmmc_match, rk_dwcmmc_attach, NULL, NULL);
 
@@ -66,9 +68,10 @@ rk_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bst = obio->obio_bst;
 	sc->sc_dmat = obio->obio_dmat;
-	sc->sc_flags = DWC_MMC_F_USE_HOLD_REG;
+	sc->sc_flags = DWC_MMC_F_USE_HOLD_REG | DWC_MMC_F_PWREN_CLEAR;
 	sc->sc_clock_freq = rockchip_ahb_get_rate();
 	sc->sc_fifo_depth = 256;
+	sc->sc_set_clkdiv = rk_dwcmmc_set_clkdiv;
 
 	bus_space_subregion(obio->obio_bst, obio->obio_bsh, obio->obio_offset,
 	    obio->obio_size, &sc->sc_bsh);
@@ -94,4 +97,10 @@ rk_dwcmmc_attach_i(device_t self)
 	struct dwc_mmc_softc *sc = device_private(self);
 
 	dwc_mmc_init(sc);
+}
+
+static int
+rk_dwcmmc_set_clkdiv(struct dwc_mmc_softc *sc, int div)
+{
+	return rockchip_mmc0_set_div(div);
 }
