@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_var.h,v 1.1 2014/12/27 01:18:48 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc_var.h,v 1.2 2014/12/27 19:18:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,9 @@ struct dwc_mmc_softc {
 	unsigned int		sc_clock_freq;
 	unsigned int		sc_fifo_depth;
 	uint32_t		sc_flags;
-#define DWC_MMC_F_USE_HOLD_REG	0x0001
+#define DWC_MMC_F_USE_HOLD_REG	0x0001	/* set USE_HOLD_REG with every cmd */
+#define DWC_MMC_F_PWREN_CLEAR	0x0002	/* clear POWER_ENABLE bit to enable */
+	int			(*sc_set_clkdiv)(struct dwc_mmc_softc *, int);
 
 	device_t		sc_sdmmc_dev;
 	kmutex_t		sc_intr_lock;
