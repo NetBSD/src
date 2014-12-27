@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_var.h,v 1.5 2014/12/27 16:18:50 jmcneill Exp $ */
+/* $NetBSD: rockchip_var.h,v 1.6 2014/12/27 19:14:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -64,5 +64,6 @@ u_int rockchip_cpu_get_rate(void);
 u_int rockchip_ahb_get_rate(void);
 u_int rockchip_a9periph_get_rate(void);
 u_int rockchip_mmc0_get_rate(void);
+u_int rockchip_mmc0_set_div(u_int);
 
 #endif /* _ARM_ROCKCHIP_ROCKCHIP_VAR_H_ */
