@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.5 2014/12/25 05:10:50 macallan Exp $ */
+/*	$NetBSD: apbus.c,v 1.6 2014/12/27 17:22:15 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.5 2014/12/25 05:10:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.6 2014/12/27 17:22:15 macallan Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -56,6 +56,7 @@ static struct mips_bus_space	apbus_mbst;
 bus_space_tag_t	apbus_memt = NULL;
 
 struct mips_bus_dma_tag	apbus_dmat = {
+	._bounce_alloc_hi = 0x10000000,
 	._dmamap_ops = _BUS_DMAMAP_OPS_INITIALIZER,
 	._dmamem_ops = _BUS_DMAMEM_OPS_INITIALIZER,
 	._dmatag_ops = _BUS_DMATAG_OPS_INITIALIZER,
