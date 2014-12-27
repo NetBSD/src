@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_var.h,v 1.2 2014/12/26 19:44:48 jmcneill Exp $ */
+/* $NetBSD: rockchip_var.h,v 1.3 2014/12/27 01:21:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -55,5 +55,8 @@ extern bus_space_handle_t rockchip_core0_bsh;
 extern bus_space_handle_t rockchip_core1_bsh;
 
 void rockchip_bootstrap(void);
+
+u_int rockchip_gpll_get_rate(void);
+u_int rockchip_ahb_get_rate(void);
 
 #endif /* _ARM_ROCKCHIP_ROCKCHIP_VAR_H_ */
