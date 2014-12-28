@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_dwcmmc.c,v 1.2 2014/12/27 19:18:35 jmcneill Exp $ */
+/* $NetBSD: rockchip_dwcmmc.c,v 1.3 2014/12/28 16:27:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_dwcmmc.c,v 1.2 2014/12/27 19:18:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_dwcmmc.c,v 1.3 2014/12/28 16:27:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,7 +86,6 @@ rk_dwcmmc_attach(device_t parent, device_t self, void *aux)
 		    obio->obio_intr);
 		return;
 	}
-	aprint_normal_dev(self, "interrupting on irq %d\n", obio->obio_intr);
 
 	config_interrupts(self, rk_dwcmmc_attach_i);
 }
