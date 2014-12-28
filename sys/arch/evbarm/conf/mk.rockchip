@@ -1,5 +1,5 @@
-#	$NetBSD: mk.rockchip,v 1.1 2014/12/26 16:53:33 jmcneill Exp $
-CPPFLAGS+=		-mcpu=cortex-a9
+#	$NetBSD: mk.rockchip,v 1.2 2014/12/28 16:29:21 jmcneill Exp $
+CPPFLAGS+=		-mcpu=cortex-a9 -mfpu=neon
 
 SYSTEM_FIRST_OBJ=	rockchip_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/rockchip/rockchip_start.S
