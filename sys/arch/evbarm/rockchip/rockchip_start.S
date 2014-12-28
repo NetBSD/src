@@ -43,7 +43,7 @@
 
 #include <arm/cortex/scu_reg.h>
 
-RCSID("$NetBSD: rockchip_start.S,v 1.2 2014/12/28 16:03:51 jmcneill Exp $")
+RCSID("$NetBSD: rockchip_start.S,v 1.3 2014/12/28 21:34:33 jmcneill Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -87,7 +87,7 @@ _C_LABEL(rockchip_start):
 
 	/* Move into supervisor mode and disable IRQs/FIQs. */
 	cpsid	if, #PSR_SVC32_MODE
-#if 0
+
 	/*
 	 * Save any arguments passed to us.
 	 */
@@ -104,7 +104,7 @@ _C_LABEL(rockchip_start):
 #endif
 
 	stmia	r4, {r0-r3}		// Save the arguments
-#endif
+
 	/*
 	 * Turn on the SMP bit
 	 */
