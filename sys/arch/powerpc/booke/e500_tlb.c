@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.14 2014/12/26 11:13:05 nonaka Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.15 2014/12/28 14:13:56 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,11 +34,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ppcparam.h"
+
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.14 2014/12/26 11:13:05 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.15 2014/12/28 14:13:56 nonaka Exp $");
 
 #include <sys/param.h>
 
@@ -841,6 +843,7 @@ e500_tlbmemmap(paddr_t memstart, psize_t memsize, struct e500_tlb1 *tlb1)
 
 	return nextslot;
 }
+
 static const struct tlb_md_ops e500_tlb_ops = {
 	.md_tlb_get_asid = e500_tlb_get_asid,
 	.md_tlb_set_asid = e500_tlb_set_asid,
