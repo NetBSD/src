@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.9 2014/12/28 16:03:51 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.10 2014/12/28 21:34:33 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.9 2014/12/28 16:03:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.10 2014/12/28 21:34:33 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -395,6 +395,49 @@ rockchip_get_memsize(void)
 	return memsize;
 }
 
+#define ATAG_NONE	0x00000000
+#define ATAG_CORE	0x54410001
+#define ATAG_CMDLINE	0x54410009
+
+static void
+rockchip_parse_atag(u_int atag_base)
+{
+	uint32_t *p = (uint32_t *)atag_base;
+	int count;
+
+	/* List must start with ATAG_CORE */
+	if (p[0] != 5 || p[1] != ATAG_CORE) {
+		return;
+	}
+
+	for (count = 0; count < 100; count++) {
+		uint32_t size = p[0];
+		uint32_t tag = p[1];
+
+#ifdef VERBOSE_INIT_ARM
+		printf("ATAG: #%d - tag %#x size %d\n",
+		    count, tag, size);
+#endif
+
+		if (tag == ATAG_NONE)
+			break;
+
+		switch (tag) {
+		case ATAG_CMDLINE:
+			strlcpy(bootargs, (char *)&p[2], sizeof(bootargs));
+#ifdef VERBOSE_INIT_ARM
+			printf("ATAG_CMDLINE: \"%s\"\n", bootargs);
+#endif
+			break;
+		}
+
+		p += size;
+
+		if (++count == 100)
+			break;
+	}
+}
+
 /*
  * u_int initarm(...)
  *
@@ -525,12 +568,13 @@ initarm(void *arg)
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_LOW, 0, devmap,
 	    mapallmem_p);
 
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	/* "bootargs" env variable is passed as 4th argument to kernel */
-	if (uboot_args[3] - 0x80000000 < ram_size) {
-		strlcpy(bootargs, (char *)uboot_args[3], sizeof(bootargs));
+	if (mapallmem_p) {
+		/* "bootargs" atag start is passed as 3rd argument to kernel */
+		if (uboot_args[2] - 0x60000000 < ram_size) {
+			rockchip_parse_atag(uboot_args[2] + KERNEL_BASE_VOFFSET);
+		}
 	}
-#endif
+
 	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
 
