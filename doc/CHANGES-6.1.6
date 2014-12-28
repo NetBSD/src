@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.21 2014/12/26 05:36:15 msaitoh Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.22 2014/12/28 17:06:36 he Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -3549,3 +3549,9 @@ lib/Makefile							1.204 via patch
 
 	Update bind to 9.9.6-P1. CVE-2014-8500.
 	[spz, ticket 1217]
+
+etc/rc.d/ntpd							1.15
+
+	The new ntpd wants to translate ntp into a port number after chroot,
+	so give it its own small copy of /etc/services in the chroot.
+	[mlelstv, ticket 1223]
