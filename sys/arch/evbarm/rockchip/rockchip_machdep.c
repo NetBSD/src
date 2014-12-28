@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.8 2014/12/28 01:51:37 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.9 2014/12/28 16:03:51 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.8 2014/12/28 01:51:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.9 2014/12/28 16:03:51 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -147,6 +147,7 @@ __KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.8 2014/12/28 01:51:37 jmcneil
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/bus.h>
+#include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/exec.h>
@@ -419,6 +420,13 @@ initarm(void *arg)
 
 	pmap_devmap_register(devmap);
 	rockchip_bootstrap();
+
+#ifdef MULTIPROCESSOR
+	uint32_t scu_cfg = bus_space_read_4(&rockchip_bs_tag,
+	    rockchip_core0_bsh, ROCKCHIP_SCU_OFFSET + SCU_CFG);
+	arm_cpu_max = (scu_cfg & SCU_CFG_CPUMAX) + 1;
+	membar_producer();
+#endif
 
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
 	if (set_cpufuncs())
