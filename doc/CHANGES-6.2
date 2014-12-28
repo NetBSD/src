@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.178 2014/12/26 07:31:42 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.179 2014/12/28 17:03:52 he Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -8861,3 +8861,9 @@ external/mit/xorg/server/xorg-server/Makefile	patch
 	Fix conversion of SDK_REQUIRED_MODULES which was reported by John
 	D. Baker in PR#49500.
 	[mrg, ticket 1222]
+
+etc/rc.d/ntpd							1.15
+
+	The new ntpd wants to translate ntp into a port number after chroot,
+	so give it its own small copy of /etc/services in the chroot.
+	[mlelstv, ticket 1223]
