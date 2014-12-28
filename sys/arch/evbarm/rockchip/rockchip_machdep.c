@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.7 2014/12/27 16:19:24 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.8 2014/12/28 01:51:37 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.7 2014/12/27 16:19:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.8 2014/12/28 01:51:37 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -319,6 +319,81 @@ rockchip_putchar(char c)
 #endif
 }
 
+#define DDR_PCTL_PPCFG_REG			0x0084
+#define DDR_PCTL_PPCFG_PPMEM_EN			__BIT(0)
+
+#define DDR_PCTL_DTUAWDT_REG			0x00b0
+#define DDR_PCTL_DTUAWDT_NUMBER_RANKS		__BITS(10,9)
+#define DDR_PCTL_DTUAWDT_ROW_ADDR_WIDTH		__BITS(7,6)
+#define DDR_PCTL_DTUAWDT_BANK_ADDR_WIDTH	__BITS(4,3)
+#define DDR_PCTL_DTUAWDT_COLUMN_ADDR_WIDTH	__BITS(1,0)
+
+#define DDR_PUBL_PGCR_REG			0x0008
+#define DDR_PUBL_PGCR_RANKEN			__BITS(21,18)
+
+static uint32_t
+rockchip_get_memsize(void)
+{
+	bus_space_tag_t bst = &rockchip_bs_tag;
+        const bus_space_handle_t ddr_pctl_bsh =
+            ROCKCHIP_CORE1_VBASE + ROCKCHIP_DDR_PCTL_OFFSET;
+        const bus_space_handle_t ddr_publ_bsh =
+            ROCKCHIP_CORE1_VBASE + ROCKCHIP_DDR_PUBL_OFFSET;
+
+#ifdef VERBOSE_INIT_ARM
+	printf("%s:\n", __func__);
+#endif
+
+	const uint32_t ppcfg = bus_space_read_4(bst, ddr_pctl_bsh,
+	    DDR_PCTL_PPCFG_REG);
+	const uint32_t dtuawdt = bus_space_read_4(bst, ddr_pctl_bsh,
+	    DDR_PCTL_DTUAWDT_REG);
+	const uint32_t pgcr = bus_space_read_4(bst, ddr_publ_bsh,
+	    DDR_PUBL_PGCR_REG);
+
+#ifdef VERBOSE_INIT_ARM
+	printf("  DDR_PCTL_PPCFG_REG = %#x\n", ppcfg);
+	printf("  DDR_PCTL_DTUAWDT_REG = %#x\n", dtuawdt);
+	printf("  DDR_PUBL_PGCR_REG = %#x\n", pgcr);
+#endif
+
+	u_int cols = __SHIFTOUT(dtuawdt,
+				DDR_PCTL_DTUAWDT_COLUMN_ADDR_WIDTH) + 7;
+	u_int rows = min(__SHIFTOUT(dtuawdt,
+				DDR_PCTL_DTUAWDT_ROW_ADDR_WIDTH) + 13, 15);
+	u_int banks = __SHIFTOUT(dtuawdt,
+				 DDR_PCTL_DTUAWDT_BANK_ADDR_WIDTH) ? 8 : 4;
+	u_int cs;
+	switch (__SHIFTOUT(pgcr, DDR_PUBL_PGCR_RANKEN)) {
+	case 0xf:
+		cs = 4;
+		break;
+	case 0x7:
+		cs = 3;
+		break;
+	case 0x3:
+		cs = 2;
+		break;
+	default:
+		cs = 1;
+		break;
+	}
+	u_int bw = __SHIFTOUT(ppcfg, DDR_PCTL_PPCFG_PPMEM_EN) ? 2 : 4;
+
+#ifdef VERBOSE_INIT_ARM
+	printf("cols=%d rows=%d banks=%d cs=%d bw=%d\n",
+	    cols, rows, banks, cs, bw);
+#endif
+
+	uint32_t memsize = (1 << (rows + cols)) * banks * cs * bw;
+
+#ifdef VERBOSE_INIT_ARM
+	printf("Detected RAM: %u MB\n", memsize >> 20);
+#endif
+
+	return memsize;
+}
+
 /*
  * u_int initarm(...)
  *
@@ -401,6 +476,8 @@ initarm(void *arg)
 		KERNEL_BASE, KERNEL_VM_BASE, KERNEL_VM_BASE - KERNEL_BASE, KERNEL_BASE_VOFFSET);
 #endif
 
+	ram_size = rockchip_get_memsize();
+
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
 		printf("%s: dropping RAM size from %luMB to %uMB\n",
@@ -458,7 +535,7 @@ initarm(void *arg)
 		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
 		use_fb_console = true;
 	}
-	
+
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
 }
