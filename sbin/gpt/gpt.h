@@ -94,4 +94,14 @@ int	cmd_show(int, char *[]);
 int	cmd_type(int, char *[]);
 int	cmd_unset(int, char *[]);
 
+#ifndef HAVE_NBTOOL_CONFIG_H
+# ifdef USE_DRVCTL
+int	getdisksize(const char *, u_int *, off_t *);
+# else
+#  include "partutil.h"
+# endif
+#else
+# define getdisksize(a, b, c) 0
+#endif
+
 #endif /* _GPT_H_ */
