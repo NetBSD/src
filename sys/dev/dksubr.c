@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.54 2014/11/04 07:51:54 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.55 2014/12/29 12:03:39 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.54 2014/11/04 07:51:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.55 2014/12/29 12:03:39 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,9 +178,13 @@ dk_close(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 void
 dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 {
-	int	s;
+	int	s, part;
 	int	wlabel;
 	daddr_t	blkno;
+	struct disklabel *lp;
+	struct disk *dk;
+	uint64_t numsecs;
+	unsigned secsize;
 
 	DPRINTF_FOLLOW(("dk_strategy(%s, %p, %p)\n",
 	    di->di_dkname, dksc, bp));
@@ -192,9 +196,24 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 		return;
 	}
 
-	/* XXX look for some more errors, c.f. ld.c */
+	lp = dksc->sc_dkdev.dk_label;
+	dk = &dksc->sc_dkdev;
+
+	part = DISKPART(bp->b_dev);
+	numsecs = dk->dk_geom.dg_secperunit;
+	secsize = dk->dk_geom.dg_secsize;
 
 	bp->b_resid = bp->b_bcount;
+
+	/*
+	 * The transfer must be a whole number of blocks and the offset must
+	 * not be negative.
+	 */     
+	if ((bp->b_bcount % secsize) != 0 || bp->b_blkno < 0) {
+		bp->b_error = EINVAL;
+		biodone(bp);
+		return;
+	}       
 
 	/* If there is nothing to do, then we are done */
 	if (bp->b_bcount == 0) {
@@ -203,20 +222,21 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 	}
 
 	wlabel = dksc->sc_flags & (DKF_WLABEL|DKF_LABELLING);
-	if (DISKPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(&dksc->sc_dkdev, bp, wlabel) <= 0) {
-		biodone(bp);
-		return;
+	if (part == RAW_PART) {
+		if (bounds_check_with_mediasize(bp, DEV_BSIZE, numsecs) <= 0) {
+			biodone(bp);
+			return;
+		}
+	} else {
+		if (bounds_check_with_label(&dksc->sc_dkdev, bp, wlabel) <= 0) {
+			biodone(bp);
+			return;
+		}
 	}
 
 	blkno = bp->b_blkno;
-	if (DISKPART(bp->b_dev) != RAW_PART) {
-		struct partition *pp;
-
-		pp =
-		    &dksc->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
-		blkno += pp->p_offset;
-	}
+	if (part != RAW_PART)
+		blkno += lp->d_partitions[DISKPART(bp->b_dev)].p_offset;
 	bp->b_rawblkno = blkno;
 
 	/*
