@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.26 2014/11/19 10:09:45 martin Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.27 2014/12/29 18:36:27 martin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 
 #ifdef HAVE_FENV
 #include <fenv.h>
+#include <ieeefp.h>	/* only need for ARM Cortex/Neon hack */
 #elif defined(_FLOAT_IEEE754)
 #include <ieeefp.h>
 #endif
