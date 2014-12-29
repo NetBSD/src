@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parse.y,v 1.35 2014/03/15 15:22:37 riastradh Exp $	*/
+/*	$NetBSD: npf_parse.y,v 1.35.4.1 2014/12/29 17:31:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@ yyerror(const char *fmt, ...)
 %token			ARROWLEFT
 %token			ARROWRIGHT
 %token			BLOCK
+%token			BPFJIT
 %token			CDB
 %token			CURLY_CLOSE
 %token			CURLY_OPEN
@@ -118,6 +119,7 @@ yyerror(const char *fmt, ...)
 %token			NAME
 %token			NPT66
 %token			ON
+%token			OFF
 %token			OUT
 %token			PAR_CLOSE
 %token			PAR_OPEN
@@ -134,6 +136,7 @@ yyerror(const char *fmt, ...)
 %token			RETURNRST
 %token			RULESET
 %token			SEPLINE
+%token			SET
 %token			SLASH
 %token			STATEFUL
 %token			STATEFUL_ENDS
@@ -169,9 +172,11 @@ yyerror(const char *fmt, ...)
 %type	<filtopts>	filt_opts, all_or_filt_opts
 %type	<optproto>	opt_proto
 %type	<rulegroup>	group_opts
+%type	<tf>		onoff
 
 %union {
 	char *		str;
+	bool		tf;
 	unsigned long	num;
 	double		fpnum;
 	npfvar_t *	var;
@@ -200,6 +205,7 @@ line
 	| group
 	| rproc
 	| alg
+	| set
 	|
 	;
 
@@ -207,6 +213,21 @@ alg
 	: ALG STRING
 	{
 		npfctl_build_alg($2);
+	}
+	;
+
+onoff
+	: ON {
+		$$ = true;
+	}
+	| OFF {
+		$$ = false;
+	}
+	;
+
+set
+	: SET BPFJIT onoff {
+		npfctl_bpfjit($3);
 	}
 	;
 
