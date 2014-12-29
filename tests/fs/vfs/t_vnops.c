@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.43 2014/09/09 06:51:00 gson Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.44 2014/12/29 15:31:44 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -931,9 +931,6 @@ lstat_symlink(const atf_tc_t *tc, const char *mp)
 	struct stat st;
 
 	USES_SYMLINKS;
-
-	if (FSTYPE_V7FS(tc))
-		atf_tc_expect_fail("PR kern/48864");
 
 	FSTEST_ENTER();
 
