@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.55 2014/12/28 14:42:56 maxv Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.56 2014/12/29 16:37:27 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.55 2014/12/28 14:42:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.56 2014/12/29 16:37:27 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ ntfs_findvattr(struct ntfsmount *ntmp, struct ntnode *ip, struct ntvattr **lvapp
 /*
  * Search attribute specified in ntnode (load ntnode if necessary).
  * If not found but ATTR_A_ATTRLIST present, read it in and search through.
- * VOP_VGET node needed, and lookup through its ntnode (load if nessesary).
+ * VOP_VGET node needed, and lookup through its ntnode (load if necessary).
  *
  * ntnode should be locked
  */
@@ -186,7 +186,7 @@ ntfs_ntvattrget(struct ntfsmount *ntmp, struct ntnode *ip, u_int32_t type,
 		return (error);
 
 	if (!lvap) {
-		dprintf(("%s: UNEXISTED ATTRIBUTE: "
+		dprintf(("%s: NON-EXISTENT ATTRIBUTE: "
 		    "ino: %llu, type: 0x%x, name: %s, vcn: %qu\n", __func__,
 		    (unsigned long long)ip->i_number, type, name,
 		    (long long)vcn));
@@ -243,7 +243,7 @@ ntfs_ntvattrget(struct ntfsmount *ntmp, struct ntnode *ip, u_int32_t type,
 	}
 	error = ENOENT;
 
-	dprintf(("%s: NON-EXISTANT ATTRIBUTE: ino: %llu, type: 0x%x, "
+	dprintf(("%s: NON-EXISTENT ATTRIBUTE: ino: %llu, type: 0x%x, "
 	    "name: %.*s, vcn: %qu\n", __func__,
 	    (unsigned long long)ip->i_number, type, (int)namelen,
 	    name, (long long)vcn));
@@ -433,7 +433,7 @@ ntfs_ntlookup(struct ntfsmount *ntmp, ino_t ino, struct ntnode **ipp)
 }
 
 /*
- * Decrement usecount of ntnode and unlock it, if usecount reach zero,
+ * Decrement usecount of ntnode and unlock it, if usecount reaches zero,
  * deallocate ntnode.
  *
  * ntnode should be locked on entry, and unlocked on return.
