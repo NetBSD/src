@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.37 2014/12/29 18:41:20 mlelstv Exp $
+.\"	$NetBSD: disk.9,v 1.38 2014/12/29 19:07:03 mlelstv Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -44,7 +44,8 @@
 .Nm disk_unbusy ,
 .Nm disk_isbusy ,
 .Nm disk_find ,
-.Nm disk_blocksize
+.Nm disk_blocksize ,
+.Nm disk_set_info
 .Nd generic disk framework
 .Sh SYNOPSIS
 .In sys/types.h
@@ -70,6 +71,8 @@
 .Fn disk_find "const char *"
 .Ft void
 .Fn disk_blocksize "struct disk *" "int blocksize"
+.Ft void
+.Fn disk_set_info "device_t" "struct disk *" "const char *type"
 .Sh DESCRIPTION
 The
 .Nx
@@ -203,6 +206,13 @@ with suitable values derived from the supplied physical blocksize.
 It is only necessary to call this function if the device's physical blocksize
 is not
 .Dv DEV_BSIZE .
+.It Fn disk_set_info
+Setup disk-info dictionary, the driver must have initialized the
+dk_geom member of
+.Fa struct disk
+with suitable values. If
+.Fa type
+is not NULL, it will be added to the dictionary.
 .El
 .Pp
 The functions typically called by device drivers are
@@ -358,6 +368,10 @@ fooattach(device_t parent, device_t self, void *aux)
 	/* Read geometry and fill in pertinent parts of disklabel. */
 	[ . . . ]
 	disk_blocksize(\*[Am]sc-\*[Gt]sc_dk, bytes_per_sector);
+
+	/* Initialize geometry values of the disk structure */
+	[ . . . ]
+	disk_set_info(\*[Am]self\*[Gt], \*[Am]sc-\*[Gt]sc_dk, type);
 }
 .Ed
 .Pp
