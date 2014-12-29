@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.10 2014/12/28 21:34:33 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.11 2014/12/29 03:16:07 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.10 2014/12/28 21:34:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.11 2014/12/29 03:16:07 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -206,8 +206,17 @@ __KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.10 2014/12/28 21:34:33 jmcnei
 
 #include <dev/usb/ukbdvar.h>
 
+/*
+ * ATAG cmdline length can be up to UINT32_MAX - 4, but Rockchip RK3188
+ * U-Boot limits this to 64KB. This is excessive for NetBSD, so only look at
+ * the first KB.
+ */
+#ifndef ROCKCHIP_MAX_BOOT_STRING
+#define ROCKCHIP_MAX_BOOT_STRING 1024
+#endif
+
 BootConfig bootconfig;		/* Boot config storage */
-static char bootargs[MAX_BOOT_STRING];
+static char bootargs[ROCKCHIP_MAX_BOOT_STRING];
 char *boot_args = NULL;
 char *boot_file = NULL;
 #if 0
@@ -725,6 +734,7 @@ rockchip_device_register(device_t self, void *aux)
 	if (device_is_a(self, "a9tmr") || device_is_a(self, "a9wdt")) {
                 prop_dictionary_set_uint32(dict, "frequency",
 		    rockchip_a9periph_get_rate());
+
 		return;
 	}
 
