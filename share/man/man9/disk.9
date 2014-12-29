@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.38 2014/12/29 19:07:03 mlelstv Exp $
+.\"	$NetBSD: disk.9,v 1.39 2014/12/29 19:20:22 wiz Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 30, 2009
+.Dd December 29, 2014
 .Dt DISK 9
 .Os
 .Sh NAME
@@ -194,7 +194,9 @@ Returns
 if disk is marked as busy and false if it is not.
 .It Fn disk_find
 Return a pointer to the disk structure corresponding to the name provided,
-or NULL if the disk does not exist.
+or
+.Dv NULL
+if the disk does not exist.
 .It Fn disk_blocksize
 Initialize
 .Fa dk_blkshift
@@ -210,9 +212,12 @@ is not
 Setup disk-info dictionary, the driver must have initialized the
 dk_geom member of
 .Fa struct disk
-with suitable values. If
+with suitable values.
+If
 .Fa type
-is not NULL, it will be added to the dictionary.
+is not
+.Dv NULL ,
+it will be added to the dictionary.
 .El
 .Pp
 The functions typically called by device drivers are
