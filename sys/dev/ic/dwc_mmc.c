@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.2 2014/12/27 19:18:04 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.3 2014/12/29 23:58:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_dwc_mmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.2 2014/12/27 19:18:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.3 2014/12/29 23:58:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,15 +105,19 @@ dwc_mmc_init(struct dwc_mmc_softc *sc)
 	saa.saa_sct = &dwc_mmc_chip_functions;
 	saa.saa_sch = sc;
 	saa.saa_clkmin = 400;
-	saa.saa_clkmax = sc->sc_clock_freq / 1000;
+	if (sc->sc_clock_max) {
+		saa.saa_clkmax = sc->sc_clock_max;
+	} else {
+		saa.saa_clkmax = sc->sc_clock_freq / 1000;
+	}
 	saa.saa_caps = SMC_CAPS_4BIT_MODE|
 		       SMC_CAPS_8BIT_MODE|
 		       SMC_CAPS_SD_HIGHSPEED|
 		       SMC_CAPS_MMC_HIGHSPEED|
 		       SMC_CAPS_AUTO_STOP;
-	saa.saa_dmat = sc->sc_dmat;
 
 #if notyet
+	saa.saa_dmat = sc->sc_dmat;
 	saa.saa_caps |= SMC_CAPS_DMA|
 			SMC_CAPS_MULTI_SEG_DMA;
 #endif
@@ -161,25 +165,16 @@ dwc_mmc_intr(void *priv)
 static int
 dwc_mmc_set_clock(struct dwc_mmc_softc *sc, u_int freq)
 {
-	u_int pll_freq = sc->sc_clock_freq / 1000;
-	u_int clk_div, mmc_div;
+	u_int pll_freq, clk_div;
 
-	mmc_div = min(howmany(pll_freq, freq), 0x3c);
-	clk_div = howmany(pll_freq / mmc_div, freq);
-	if (clk_div > 1 && (clk_div & 1) != 0)
+	pll_freq = sc->sc_clock_freq / 1000;
+	clk_div = (pll_freq / freq) >> 1;
+	if (pll_freq % freq)
 		clk_div++;
 
-#ifdef DWC_MMC_DEBUG
-	device_printf(sc->sc_dev, "%s: mmc_div=%u clk_div=%u freq=%u\n",
-	    __func__, mmc_div, clk_div, pll_freq / mmc_div / clk_div);
-#endif
-
 	MMC_WRITE(sc, DWC_MMC_CLKDIV_REG,
-	    __SHIFTIN(clk_div >> 1, DWC_MMC_CLKDIV_CLK_DIVIDER0));
-	if (dwc_mmc_update_clock(sc))
-		return ETIMEDOUT;
-
-	return sc->sc_set_clkdiv(sc, mmc_div);
+	    __SHIFTIN(clk_div, DWC_MMC_CLKDIV_CLK_DIVIDER0));
+	return dwc_mmc_update_clock(sc);
 }
 
 static int
@@ -389,6 +384,8 @@ dwc_mmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 
 	delay(1000);
 
+	sc->sc_cur_freq = freq;
+
 	return 0;
 }
 
@@ -434,6 +431,12 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	device_printf(sc->sc_dev, "exec opcode=%d flags=%#x\n",
 	    cmd->c_opcode, cmd->c_flags);
 #endif
+
+	if (sc->sc_flags & DWC_MMC_F_FORCE_CLK) {
+		cmd->c_error = dwc_mmc_bus_clock(sc, sc->sc_cur_freq);
+		if (cmd->c_error)
+			return;
+	}
 
 	if (sc->sc_flags & DWC_MMC_F_USE_HOLD_REG)
 		cmdval |= DWC_MMC_CMD_USE_HOLD_REG;
