@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.19 2014/12/29 15:28:58 hannken Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.20 2014/12/29 15:29:38 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.19 2014/12/29 15:28:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.20 2014/12/29 15:29:38 hannken Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -1050,12 +1050,13 @@ v7fs_reclaim(void *v)
 		v7fs_inode_deallocate(fs, inode->inode_number);
 		DPRINTF("remove inode\n");
 	}
-	mutex_enter(&mntvnode_lock);
-	LIST_REMOVE(v7node, link);
-	mutex_exit(&mntvnode_lock);
+	vcache_remove(vp->v_mount,
+	    &inode->inode_number, sizeof(inode->inode_number));
 	genfs_node_destroy(vp);
 	pool_put(&v7fs_node_pool, v7node);
+	mutex_enter(vp->v_interlock);
 	vp->v_data = NULL;
+	mutex_exit(vp->v_interlock);
 
 	return 0;
 }
