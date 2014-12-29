@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.17 2014/08/08 19:15:33 gson Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.18 2014/12/29 15:28:08 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.17 2014/08/08 19:15:33 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.18 2014/12/29 15:28:08 hannken Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -421,6 +421,11 @@ v7fs_getattr(void *v)
 	vap->va_fsid = v7fsmount->devvp->v_rdev;
 	vap->va_fileid = inode->inode_number;
 	vap->va_size = vp->v_size;
+	if (vp->v_type == VLNK) {
+		/* Ajust for trailing NUL. */
+		KASSERT(vap->va_size > 0);
+		vap->va_size -= 1;
+	}
 	vap->va_atime.tv_sec = inode->atime;
 	vap->va_mtime.tv_sec = inode->mtime;
 	vap->va_ctime.tv_sec = inode->ctime;
