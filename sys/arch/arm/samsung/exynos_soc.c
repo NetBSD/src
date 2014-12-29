@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.25 2014/10/02 11:27:09 reinoud Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.26 2014/12/29 22:34:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.25 2014/10/02 11:27:09 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.26 2014/12/29 22:34:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -72,7 +72,7 @@ struct cpu_freq {
 	uint64_t freq;
 	int	 P;
 	int	 M;
-	int	 S; 
+	int	 S;
 };
 
 
@@ -895,7 +895,7 @@ exynos5410_usb2phy_enable(bus_space_handle_t usb2phy_bsh)
 	/* host phy reset */
 	phyhost &= ~(HOST_CTRL0_PHY_SWRST | HOST_CTRL0_PHY_SWRST_ALL |
 		HOST_CTRL0_SIDDQ | HOST_CTRL0_COMMONON_N);
-			
+
 	/* host link reset */
 	phyhost |= HOST_CTRL0_LINK_SWRST | HOST_CTRL0_UTMI_SWRST;
 
