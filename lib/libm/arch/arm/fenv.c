@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.5 2014/12/28 10:15:29 martin Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.6 2014/12/29 19:11:13 martin Exp $");
 
 #include <sys/types.h>
 #include <assert.h>
@@ -160,13 +160,13 @@ feenableexcept(int excepts)
 	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
 #endif
 #ifdef __SOFTFP__
-	int old = fpgetsticky();
-	fpsetsticky(old | excepts);
+	int old = fpgetmask();
+	fpsetmask(old | excepts);
 	return old;
 #else
 	int fpscr = armreg_fpscr_read();
-	armreg_fpscr_write(fpscr | __SHIFTIN((excepts), VFP_FPSCR_CSUM));
-	return __SHIFTOUT(fpscr, VFP_FPSCR_CSUM) & FE_ALL_EXCEPT;
+	armreg_fpscr_write(fpscr | __SHIFTIN((excepts), VFP_FPSCR_ESUM));
+	return __SHIFTOUT(fpscr, VFP_FPSCR_ESUM) & FE_ALL_EXCEPT;
 #endif
 }
 
@@ -177,13 +177,13 @@ fedisableexcept(int excepts)
 	_DIAGASSERT((except & ~FE_ALL_EXCEPT) == 0);
 #endif
 #ifdef __SOFTFP__
-	int old = fpgetsticky();
-	fpsetsticky(old & ~excepts);
+	int old = fpgetmask();
+	fpsetmask(old & ~excepts);
 	return old;
 #else
 	int fpscr = armreg_fpscr_read();
-	armreg_fpscr_write(fpscr & ~__SHIFTIN((excepts), VFP_FPSCR_CSUM));
-	return __SHIFTOUT(fpscr, VFP_FPSCR_CSUM) & FE_ALL_EXCEPT;
+	armreg_fpscr_write(fpscr & ~__SHIFTIN((excepts), VFP_FPSCR_ESUM));
+	return __SHIFTOUT(fpscr, VFP_FPSCR_ESUM) & FE_ALL_EXCEPT;
 #endif
 }
 
@@ -206,7 +206,11 @@ fetestexcept(int excepts)
 int     
 fegetexcept(void)
 {
-	return fetestexcept(FE_ALL_EXCEPT);
+#ifdef __SOFTFP__
+	return fpgetmask();
+#else
+	return __SHIFTOUT(armreg_fpscr_read(), VFP_FPSCR_ESUM);
+#endif
 }
 
 /*
