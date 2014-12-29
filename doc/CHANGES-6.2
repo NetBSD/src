@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.179 2014/12/28 17:03:52 he Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.180 2014/12/29 15:47:02 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -8867,3 +8867,52 @@ etc/rc.d/ntpd							1.15
 	The new ntpd wants to translate ntp into a port number after chroot,
 	so give it its own small copy of /etc/services in the chroot.
 	[mlelstv, ticket 1223]
+
+sys/arch/x86/include/cacheinfo.h		1.14-1.19
+ 
+	Update Intel's cache and TLB descripotr table. This changes the number
+	of page coloring on some CPUs.
+	- Add Shared L2 TLB.
+	- Support prefetch size.
+	- Add some new TLB and cache entries from the document.
+	- Fix some entries:
+	  - Fix 0x0d's DCACHE entry and 0xeb's L3CACHE entry.
+	  - Desc 0x55 and 0xb1 are Instruction TLB but not fixed to 4K.
+	  - Desc 0x5a and 0xc0 are Data TLB but not fixed to 4K.
+	  - Desc 0x57 and 0x59 are 4K fixed DTLB.
+	  - Fix string of desc 0xc2 and it's not fixed to 4K.
+	  - Desc 0xca is 4K fixed L2 shared TLB.
+	[msaitoh, ticket #1219]
+
+sys/arch/x86/include/specialreg.h		1.59-1.71, 1.73-1.81 (via patch)
+
+	Update x86 special register definitions:
+	- Add latest CR4 bits.
+	- Recognize the P1GB and RDTSCP which were AMD-only on Intel HW too.
+	- Add some missing bit definitions for CPUID2 and those for XCR0.
+	- Fix CPUID_AMD_FLAGS4 to not try to print bits \41 and \42.
+	- Correct the comment about the extended family and model bits.
+	- Add some definitions related to the process extended state
+	  enumeration.
+	- Add Intel Structured Extended Feature leaf (Fn0000_0007).
+	- Sort CPUID definitions in initial EAX value.
+	- Add Intel Deterministic Cache Parameter Leaf (CPUID leaf 4).
+	- Add some AMD Fn80000001 extended features %ecx bits definitions.
+	- "s/MXX/MMXX/" because this bit is "MMX eXtention".
+	- Add some definitions for cpu 'extended state' enumeration
+	  (Fn0000000d).
+	- Add Energy Performance Bias bit of Fn0000_0006 %ecx.
+	- Add MSR_IA32_PLATFORM_ID (0x017)
+	- Modify comment.
+	- Style fix.
+	[msaitoh, ticket #1220]
+
+sys/netinet6/mld6.c				1.61
+
+	Ensure callout isn't running and pending before callout_destroy:
+
+	Call callout_halt before callout_destroy. And also let callout
+	(mld_timeo) not call callout_schedule when we already called
+	callout_halt.
+	[ozaki-r, ticket #1224]
+
