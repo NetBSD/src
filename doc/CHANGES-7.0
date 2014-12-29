@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.141 2014/12/24 00:07:46 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.142 2014/12/29 18:26:25 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -6714,4 +6714,138 @@ external/bsd/ntp/scripts/mkver	patch
 
 	Update ntp to version 4.2.8.
 	[christos, ticket #351]
+
+external/bsd/dhcpcd/dist/arp.c			(patch)
+external/bsd/dhcpcd/dist/arp.h			(patch)
+external/bsd/dhcpcd/dist/auth.c			(patch)
+external/bsd/dhcpcd/dist/auth.h			(patch)
+external/bsd/dhcpcd/dist/bpf-filter.h		(patch)
+external/bsd/dhcpcd/dist/common.c		(patch)
+external/bsd/dhcpcd/dist/common.h		(patch)
+external/bsd/dhcpcd/dist/config.h		(patch)
+external/bsd/dhcpcd/dist/control.c		(patch)
+external/bsd/dhcpcd/dist/control.h		(patch)
+external/bsd/dhcpcd/dist/defs.h			(patch)
+external/bsd/dhcpcd/dist/dev.h			(patch)
+external/bsd/dhcpcd/dist/dhcp-common.c		(patch)
+external/bsd/dhcpcd/dist/dhcp-common.h		(patch)
+external/bsd/dhcpcd/dist/dhcp.c			(patch)
+external/bsd/dhcpcd/dist/dhcp.h			(patch)
+external/bsd/dhcpcd/dist/dhcp6.c		(patch)
+external/bsd/dhcpcd/dist/dhcp6.h		(patch)
+external/bsd/dhcpcd/dist/dhcpcd-definitions.conf	(patch)
+external/bsd/dhcpcd/dist/dhcpcd-embedded.c	(patch)
+external/bsd/dhcpcd/dist/dhcpcd-embedded.h	(patch)
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.8.in	(patch)
+external/bsd/dhcpcd/dist/dhcpcd-run-hooks.in	(patch)
+external/bsd/dhcpcd/dist/dhcpcd.8.in		(patch)
+external/bsd/dhcpcd/dist/dhcpcd.c		(patch)
+external/bsd/dhcpcd/dist/dhcpcd.conf		(patch)
+external/bsd/dhcpcd/dist/dhcpcd.conf.5.in	(patch)
+external/bsd/dhcpcd/dist/dhcpcd.h		(patch)
+external/bsd/dhcpcd/dist/duid.c			(patch)
+external/bsd/dhcpcd/dist/duid.h			(patch)
+external/bsd/dhcpcd/dist/eloop.c		(patch)
+external/bsd/dhcpcd/dist/eloop.h		(patch)
+external/bsd/dhcpcd/dist/if-bsd.c		(patch)
+external/bsd/dhcpcd/dist/if-options.c		(patch)
+external/bsd/dhcpcd/dist/if-options.h		(patch)
+external/bsd/dhcpcd/dist/if.c			(patch)
+external/bsd/dhcpcd/dist/if.h			(patch)
+external/bsd/dhcpcd/dist/ipv4.c			(patch)
+external/bsd/dhcpcd/dist/ipv4.h			(patch)
+external/bsd/dhcpcd/dist/ipv4ll.c		(patch)
+external/bsd/dhcpcd/dist/ipv4ll.h		(patch)
+external/bsd/dhcpcd/dist/ipv6.c			(patch)
+external/bsd/dhcpcd/dist/ipv6.h			(patch)
+external/bsd/dhcpcd/dist/ipv6nd.c		(patch)
+external/bsd/dhcpcd/dist/ipv6nd.h		(patch)
+external/bsd/dhcpcd/dist/script.c		(patch)
+external/bsd/dhcpcd/dist/script.h		(patch)
+external/bsd/dhcpcd/dist/crypt/crypt.h		(patch)
+external/bsd/dhcpcd/dist/crypt/hmac_md5.c	(patch)
+external/bsd/dhcpcd/dist/dhcpcd-hooks/01-test	(patch)
+external/bsd/dhcpcd/dist/dhcpcd-hooks/02-dump	(patch)
+external/bsd/dhcpcd/dist/dhcpcd-hooks/10-mtu	(patch)
+external/bsd/dhcpcd/dist/dhcpcd-hooks/10-wpa_supplicant	(patch)
+external/bsd/dhcpcd/dist/dhcpcd-hooks/15-timezone	(patch)
+external/bsd/dhcpcd/dist/dhcpcd-hooks/20-resolv.conf	(patch)
+external/bsd/dhcpcd/dist/dhcpcd-hooks/29-lookup-hostname	(patch)
+external/bsd/dhcpcd/dist/dhcpcd-hooks/30-hostname	(patch)
+external/bsd/dhcpcd/dist/dhcpcd-hooks/50-ntp.conf	(patch)
+external/bsd/dhcpcd/dist/dhcpcd-hooks/50-ypbind	(patch)
+
+	Import dhcpcd-6.6.7 (changes too numerous to list here).
+	[roy, ticket #207]
+
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_arm.c 1.14
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_core.c 1.10
+
+	Enable state/stats information on vchiq device read.
+	Allow more space for temp string buffer in service stats display.
+	Fixes corrupted display when rx and tx count become large.
+	[nat, ticket #345]
+
+sys/ufs/ffs/ffs_vfsops.c			1.301
+
+	Limit the superblock size to SBLOCKSIZE, not MAXBSIZE. Otherwise
+	memcpy will read beyond the allocated buffer.
+	[maxv, ticket #352]
+
+sys/compat/common/vfs_syscalls_30.c		1.35
+sys/compat/linux/common/linux_uselib.c		1.31-1.32
+sys/ufs/chfs/chfs_vfsops.c			1.12
+
+	Resource/Memory leaks.
+	Reject non-regular files.
+	[maxv, ticket #353]
+
+sys/dev/pci/if_vioif.c				1.14
+
+	Reuse mbuf when retrying in vioif_start
+	Otherwise, the old mbuf will leak.
+	[ozaki-r, ticket #354]
+
+etc/rc.d/ntpd					1.15
+
+	New ntpd wants to be able to translate ntp into a port number
+	after chroot, so give it its own small copy of /etc/services in
+	the chroot
+	[mlelstv, ticket #355]
+
+external/apache2/mDNSResponder/dist/mDNSPosix/mDNSPosix.c 1.7
+external/bsd/dhcpcd/dist/dhcpcd.c		1.21
+external/bsd/ipf/dist/lib/printhost.c		1.3
+external/bsd/ipf/dist/lib/printhostmask.c	1.3
+external/bsd/ipf/dist/lib/printipfexpr.c	1.2
+external/bsd/ipf/dist/lib/save_v1trap.c		1.2
+external/bsd/ipf/dist/lib/save_v2trap.c		1.2
+external/bsd/ipf/dist/tools/lexer.c		1.2
+external/bsd/ppp/usr.sbin/pppd/sys-bsd.c	1.3
+external/bsd/tcpdump/bin/Makefile		1.12
+sbin/route/route.c				1.149
+usr.sbin/lpr/common_source/Makefile		1.12
+usr.sbin/lpr/common_source/common.c		1.43
+
+	MKINET6=no build fixes
+	[prlw1, ticket #358]
+
+usr.sbin/npf/npfctl/npf.conf.5			1.43
+usr.sbin/npf/npfctl/npf_parse.y			1.36
+usr.sbin/npf/npfctl/npf_scan.l			1.22
+usr.sbin/npf/npfctl/npfctl.c			1.44-1.45
+usr.sbin/npf/npfctl/npfctl.h			1.39
+
+	npfctl(8): attempt to preload bpfjit kernel module and print the
+	warning on failure.
+	Allow turning off the bpf jit loading.
+	[rmind, ticket #359]
+
+sys/netinet6/mld6.c				1.61
+
+	Ensure callout isn't running and pending before callout_destroy:
+	Call callout_halt before callout_destroy. And also let callout
+	(mld_timeo) not call callout_schedule when we already called
+	callout_halt.
+	[ozaki-r, ticket #360]
 
