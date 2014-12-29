@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.13 2014/12/29 16:27:43 christos Exp $	*/
+/*	$NetBSD: partutil.c,v 1.14 2014/12/29 16:35:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.13 2014/12/29 16:27:43 christos Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.14 2014/12/29 16:35:38 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,6 +125,9 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 		dict2geom(geo, geom_dict);
 	}
 
+	if (dkw == NULL)
+		return 0;
+
 	/* Get info about partition/wedge */
 	if (ioctl(fd, DIOCGWEDGEINFO, dkw) != -1) {
 		/* DIOCGWEDGEINFO didn't fail, we're done */
@@ -135,9 +138,6 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 		err(1, "Please implement DIOCGWEDGEINFO or "
 		    "DIOCGDINFO for disk device %s", s);
 	}
-
-	if (dkw == NULL)
-		return 0;
 
 	/* DIOCGDINFO didn't fail */
 	(void)memset(dkw, 0, sizeof(*dkw));
