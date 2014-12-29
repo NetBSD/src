@@ -1,4 +1,4 @@
-/*	$NetBSD: printhost.c,v 1.2 2012/07/22 14:27:36 darrenr Exp $	*/
+/*	$NetBSD: printhost.c,v 1.2.12.1 2014/12/29 17:27:28 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -25,9 +25,9 @@ printhost(family, addr)
 	if ((family == -1) || !*addr)
 		PRINTF("any");
 	else {
+#ifdef  USE_INET6
 		void *ptr = addr;
 
-#ifdef  USE_INET6
 		PRINTF("%s", inet_ntop(family, ptr, ipbuf, sizeof(ipbuf)));
 #else
 		ipa.s_addr = *addr;

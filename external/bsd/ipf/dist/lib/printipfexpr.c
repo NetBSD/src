@@ -1,11 +1,13 @@
-/*	$NetBSD: printipfexpr.c,v 1.1.1.2 2012/07/22 13:44:41 darrenr Exp $	*/
+/*	$NetBSD: printipfexpr.c,v 1.1.1.2.12.1 2014/12/29 17:27:28 martin Exp $	*/
 
 #include "ipf.h"
 
 static void printport __P((int *));
 static void printhosts __P((int *));
 static void printsingle __P((int *));
+#ifdef USE_INET6
 static void printhostsv6 __P((int *));
+#endif
 
 void
 printipfexpr(array)

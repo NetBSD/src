@@ -189,7 +189,9 @@ static fd_set in_fds;		/* set of fds that wait_input waits for */
 static int max_in_fd;		/* highest fd set in in_fds */
 
 static int if_is_up;		/* the interface is currently up */
+#ifdef INET6
 static int if6_is_up;		/* the interface is currently up */
+#endif /* INET6 */
 static u_int32_t ifaddrs[2];	/* local and remote addresses we set */
 static u_int32_t default_route_gateway;	/* gateway addr for default route */
 static u_int32_t proxy_arp_addr;	/* remote addr for proxy arp */

@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.42 2013/11/13 21:19:17 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.42.4.1 2014/12/29 17:27:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.42 2013/11/13 21:19:17 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.42.4.1 2014/12/29 17:27:28 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -350,13 +350,15 @@ compar(const void *p1, const void *p2)
 const char *
 checkremote(void)
 {
-	char lname[NI_MAXHOST], rname[NI_MAXHOST];
-	struct addrinfo hints, *res, *res0;
+	struct addrinfo hints, *res0;
 	static char errbuf[128];
 	int error;
-	struct ifaddrs *ifap, *ifa;
+	struct ifaddrs *ifap;
+#if defined(INET6) && defined(__KAME__)
+	char lname[NI_MAXHOST], rname[NI_MAXHOST];
+	struct addrinfo *res;
+	struct ifaddrs *ifa;
 	const int niflags = NI_NUMERICHOST;
-#ifdef __KAME__
 	struct sockaddr_in6 sin6;
 	struct sockaddr_in6 *sin6p;
 #endif
@@ -379,7 +381,6 @@ checkremote(void)
 	hints.ai_flags = AI_CANONNAME;
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
-	res = NULL;
 	error = getaddrinfo(gethost(RM), NULL, &hints, &res0);
 	if (error) {
 		(void)snprintf(errbuf, sizeof(errbuf),
@@ -391,6 +392,7 @@ checkremote(void)
 
 	remote = 1;	/* assume printer is remote */
 
+#if defined(INET6) && defined(__KAME__)
 	for (res = res0; res; res = res->ai_next) {
 		if (getnameinfo(res->ai_addr, res->ai_addrlen,
 		    rname, sizeof(rname), NULL, 0, niflags) != 0)
@@ -412,6 +414,7 @@ checkremote(void)
 		}
 	}
 done:
+#endif
 	freeaddrinfo(res0);
 	freeifaddrs(ifap);
 	return NULL;
