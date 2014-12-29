@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.234 2014/11/04 07:51:54 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.235 2014/12/29 13:13:20 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.234 2014/11/04 07:51:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.235 2014/12/29 13:13:20 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1284,9 +1284,9 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			 * Compute the size (in DEV_BSIZE blocks) specified
 			 * by the geometry.
 			 */
-			geomsize = (vnd->sc_geom.vng_nsectors *
+			geomsize = (int64_t)vnd->sc_geom.vng_nsectors *
 			    vnd->sc_geom.vng_ntracks *
-			    vnd->sc_geom.vng_ncylinders) *
+			    vnd->sc_geom.vng_ncylinders *
 			    (vnd->sc_geom.vng_secsize / DEV_BSIZE);
 
 			/*
@@ -1793,13 +1793,15 @@ vndgetdefaultlabel(struct vnd_softc *sc, struct disklabel *lp)
 {
 	struct vndgeom *vng = &sc->sc_geom;
 	struct partition *pp;
+	unsigned spb;
 
 	memset(lp, 0, sizeof(*lp));
 
-	if (sc->sc_size > UINT32_MAX)
+	spb = vng->vng_secsize / DEV_BSIZE;
+	if (sc->sc_size / spb > UINT32_MAX)
 		lp->d_secperunit = UINT32_MAX;
 	else
-		lp->d_secperunit = sc->sc_size;
+		lp->d_secperunit = sc->sc_size / spb;
 	lp->d_secsize = vng->vng_secsize;
 	lp->d_nsectors = vng->vng_nsectors;
 	lp->d_ntracks = vng->vng_ntracks;
