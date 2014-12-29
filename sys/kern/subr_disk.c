@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.104 2014/12/29 18:41:20 mlelstv Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.105 2014/12/29 18:54:19 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.104 2014/12/29 18:41:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.105 2014/12/29 18:54:19 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -487,7 +487,7 @@ int
 disk_ioctl(struct disk *diskp, u_long cmd, void *data, int flag,
 	   struct lwp *l)
 {
-	int error;
+	int error = 0;
 
 	switch (cmd) {
 	case DIOCGDISKINFO:
