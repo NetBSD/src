@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.42.2.1 2014/08/29 11:14:14 martin Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.42.2.2 2014/12/29 17:31:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.42.2.1 2014/08/29 11:14:14 martin Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.42.2.2 2014/12/29 17:31:47 martin Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/module.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -480,6 +481,38 @@ npfctl_rule(int fd, int argc, char **argv)
 	exit(EXIT_SUCCESS);
 }
 
+static bool bpfjit = true;
+
+void
+npfctl_bpfjit(bool onoff)
+{
+	bpfjit = onoff;
+}
+
+static void
+npfctl_preload_bpfjit(void)
+{
+	modctl_load_t args = {
+		.ml_filename = "bpfjit",
+		.ml_flags = MODCTL_NO_PROP,
+		.ml_props = NULL,
+		.ml_propslen = 0
+	};
+
+	if (!bpfjit)
+		return;
+
+	if (modctl(MODCTL_LOAD, &args) != 0 && errno != EEXIST) {
+		static const char *p = "; performance will be degraded";
+		if (errno == ENOENT)
+			warnx("the bpfjit module seems to be missing%s", p);
+		else
+			warn("error loading the bpfjit module%s", p);
+		warnx("To disable this warning `set bpf.jit off' in "
+		    "/etc/npf.conf");
+	}
+}
+
 static int
 npfctl_save(int fd)
 {
@@ -547,6 +580,7 @@ npfctl(int action, int argc, char **argv)
 		fun = "ioctl(IOC_NPF_SWITCH)";
 		break;
 	case NPFCTL_RELOAD:
+		npfctl_preload_bpfjit();
 		npfctl_config_init(false);
 		npfctl_parse_file(argc < 3 ? NPF_CONF_PATH : argv[2]);
 		errno = ret = npfctl_config_send(fd, NULL);
@@ -581,6 +615,7 @@ npfctl(int action, int argc, char **argv)
 		npfctl_rule(fd, argc, argv);
 		break;
 	case NPFCTL_LOAD:
+		npfctl_preload_bpfjit();
 		ret = npfctl_load(fd);
 		fun = "npfctl_config_load";
 		break;

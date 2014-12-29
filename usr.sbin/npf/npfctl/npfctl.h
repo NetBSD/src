@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.38 2014/07/23 01:25:34 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.38.2.1 2014/12/29 17:31:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -106,6 +106,7 @@ enum { NPFCTL_PARSE_FILE, NPFCTL_PARSE_STRING };
 
 bool		join(char *, size_t, int, char **, const char *);
 void		yyerror(const char *, ...) __printflike(1, 2) __dead;
+void		npfctl_bpfjit(bool);
 void		npfctl_parse_file(const char *);
 void		npfctl_parse_string(const char *);
 
