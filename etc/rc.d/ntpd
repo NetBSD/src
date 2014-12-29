@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ntpd,v 1.14 2012/12/04 16:38:40 prlw1 Exp $
+# $NetBSD: ntpd,v 1.14.10.1 2014/12/29 17:19:18 martin Exp $
 #
 
 # PROVIDE: ntpd
@@ -49,6 +49,21 @@ ntpd_precmd()
 		( cd /dev ; /bin/pax -rw -pe clockctl "${ntpd_chrootdir}/dev" )
 	fi
 	ln -fs "${ntpd_chrootdir}/var/db/ntp.drift" /var/db/ntp.drift
+
+	if [ ! -d "${ntpd_chrootdir}/etc" ]; then
+		mkdir "${ntpd_chrootdir}/etc"
+	fi
+	if [ ! -f "${ntpd_chrootdir}/etc/services" ]; then
+		getent services ntp/udp ntp/tcp \
+			> "${ntpd_chrootdir}/etc/services"
+	fi
+	if [ ! -d "${ntpd_chrootdir}/var/db" ]; then
+		mkdir -p "${ntpd_chrootdir}/var/db"
+	fi
+	if [ ! -f "${ntpd_chrootdir}/var/db/services.cdb" ]; then
+		services_mkdb -o "${ntpd_chrootdir}/var/db/services.cdb" \
+			"${ntpd_chrootdir}/etc/services"
+	fi
 
 	#	Change run_rc_commands()'s internal copy of $ntpd_flags
 	#
