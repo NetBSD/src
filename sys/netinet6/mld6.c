@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.59 2014/07/26 22:21:16 joerg Exp $	*/
+/*	$NetBSD: mld6.c,v 1.59.2.1 2014/12/29 17:33:49 martin Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.59 2014/07/26 22:21:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.59.2.1 2014/12/29 17:33:49 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -195,6 +195,8 @@ mld_starttimer(struct in6_multi *in6m)
 {
 	struct timeval now;
 
+	KASSERT(in6m->in6m_timer != IN6M_TIMER_UNDEF);
+
 	microtime(&now);
 	in6m->in6m_timer_expire.tv_sec = now.tv_sec + in6m->in6m_timer / hz;
 	in6m->in6m_timer_expire.tv_usec = now.tv_usec +
@@ -227,6 +229,9 @@ mld_timeo(void *arg)
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 
+	if (in6m->in6m_timer == IN6M_TIMER_UNDEF)
+		goto out;
+
 	in6m->in6m_timer = IN6M_TIMER_UNDEF;
 
 	switch (in6m->in6m_state) {
@@ -238,6 +243,7 @@ mld_timeo(void *arg)
 		break;
 	}
 
+out:
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
 }
@@ -741,7 +747,12 @@ in6_delmulti(struct in6_multi *in6m)
 		 */
 		sockaddr_in6_init(&sin6, &in6m->in6m_addr, 0, 0, 0);
 		if_mcast_op(in6m->in6m_ifp, SIOCDELMULTI, sin6tosa(&sin6));
+
+		/* Tell mld_timeo we're halting the timer */
+		in6m->in6m_timer = IN6M_TIMER_UNDEF;
+		callout_halt(&in6m->in6m_timer_ch, softnet_lock);
 		callout_destroy(&in6m->in6m_timer_ch);
+
 		free(in6m, M_IPMADDR);
 	}
 	splx(s);
