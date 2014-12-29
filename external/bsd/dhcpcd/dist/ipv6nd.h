@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6nd.h,v 1.1.1.4 2014/06/14 20:51:09 roy Exp $ */
+/* $NetBSD: ipv6nd.h,v 1.1.1.4.2.1 2014/12/29 16:18:05 martin Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,16 +30,15 @@
 #ifndef IPV6ND_H
 #define IPV6ND_H
 
-#include <sys/queue.h>
-
 #include <time.h>
 
+#include "config.h"
 #include "dhcpcd.h"
 #include "ipv6.h"
 
 struct ra_opt {
 	TAILQ_ENTRY(ra_opt) next;
-	uint8_t type;
+	uint16_t type;
 	struct timeval expire;
 	char *option;
 };
@@ -71,6 +70,7 @@ struct rs_state {
 };
 
 #define RS_STATE(a) ((struct rs_state *)(ifp)->if_data[IF_DATA_IPV6ND])
+#define RS_STATE_RUNNING(a) (ipv6nd_hasra((a)) && ipv6nd_dadcompleted((a)))
 
 #define MAX_RTR_SOLICITATION_DELAY	1	/* seconds */
 #define MAX_UNICAST_SOLICIT		3	/* 3 transmissions */
@@ -86,7 +86,8 @@ struct rs_state {
 #ifdef INET6
 void ipv6nd_startrs(struct interface *);
 ssize_t ipv6nd_env(char **, const char *, const struct interface *);
-int ipv6nd_addrexists(struct dhcpcd_ctx *, const struct ipv6_addr *);
+struct ipv6_addr *ipv6nd_findaddr(struct dhcpcd_ctx *,
+    const struct in6_addr *, short);
 void ipv6nd_freedrop_ra(struct ra *, int);
 #define ipv6nd_free_ra(ra) ipv6nd_freedrop_ra((ra),  0)
 #define ipv6nd_drop_ra(ra) ipv6nd_freedrop_ra((ra),  1)
@@ -96,16 +97,15 @@ int ipv6nd_hasra(const struct interface *);
 int ipv6nd_hasradhcp(const struct interface *);
 void ipv6nd_handleifa(struct dhcpcd_ctx *, int,
     const char *, const struct in6_addr *, int);
+int ipv6nd_dadcompleted(const struct interface *);
 void ipv6nd_drop(struct interface *);
-
-#ifdef HAVE_RTM_GETNEIGH
 void ipv6nd_neighbour(struct dhcpcd_ctx *, struct in6_addr *, int);
-#endif
 #else
 #define ipv6nd_startrs(a) {}
-#define ipv6nd_addrexists(a, b) (0)
+#define ipv6nd_findaddr(a, b, c) (0)
 #define ipv6nd_free(a)
 #define ipv6nd_hasra(a) (0)
+#define ipv6nd_dadcompleted(a) (0)
 #define ipv6nd_drop(a)
 #endif
 

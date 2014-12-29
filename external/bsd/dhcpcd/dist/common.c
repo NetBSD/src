@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: common.c,v 1.1.1.15 2014/06/14 20:51:03 roy Exp $");
+ __RCSID("$NetBSD: common.c,v 1.1.1.15.2.1 2014/12/29 16:18:04 martin Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -31,10 +31,6 @@
 /* Needed define to get at getline for glibc and FreeBSD */
 #ifndef _GNU_SOURCE
 #  define _GNU_SOURCE
-#endif
-
-#ifndef __sun
-#  include <sys/cdefs.h>
 #endif
 
 #ifdef __APPLE__

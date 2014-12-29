@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: dhcpcd-run-hooks.in,v 1.1.1.20 2014/07/14 11:45:05 roy Exp $
+# $NetBSD: dhcpcd-run-hooks.in,v 1.1.1.20.2.1 2014/12/29 16:18:05 martin Exp $
 
 # dhcpcd client configuration script 
 
@@ -9,8 +9,6 @@ case "$reason" in
 		ifsuffix=":ra";;
 	INFORM6|BOUND6|RENEW6|REBIND6|REBOOT6|EXPIRE6|RELEASE6|STOP6)
 		ifsuffix=":dhcp6";;
-	STOPPED) # This reason should never be processed
-		exit 0;;
 	*)
 		ifsuffix=;;
 esac
@@ -26,6 +24,7 @@ _detected_init=false
 
 : ${if_up:=false}
 : ${if_down:=false}
+: ${syslog_debug:=false}
 
 # Ensure that all arguments are unique
 uniqify()
@@ -54,7 +53,7 @@ list_interfaces()
 		[ -e "$x" ] || continue
 		for i in $interface_order; do
 			if [ $i = "${x##*/}" ]; then
-				unset x
+				x=
 				break
 			fi
 		done
@@ -163,7 +162,7 @@ copy_file()
 		ln -sf "$1" "$2"
 	else
 		comp_file "$1" "$2" && return 1
-		cat "$2" >"$1"
+		cat "$1" >"$2"
 	fi
 }
 
@@ -191,6 +190,9 @@ syslog()
 {
 	local lvl="$1"
 
+	if [ "$lvl" = debug ]; then
+		${syslog_debug} || return 0
+	fi
 	[ -n "$lvl" ] && shift
 	if [ -n "$*" ]; then
 		if type logger >/dev/null 2>&1; then

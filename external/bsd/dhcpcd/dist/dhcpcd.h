@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd.h,v 1.1.1.19 2014/07/14 11:45:06 roy Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.1.1.19.2.1 2014/12/29 16:18:05 martin Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,10 +30,10 @@
 #ifndef DHCPCD_H
 #define DHCPCD_H
 
-#include <sys/queue.h>
 #include <sys/socket.h>
 #include <net/if.h>
 
+#include "config.h"
 #include "defs.h"
 #include "control.h"
 #include "if-options.h"
@@ -54,6 +54,10 @@
 #define IF_DATA_DHCP6	4
 #define IF_DATA_MAX	5
 
+/* If the interface does not support carrier status (ie PPP),
+ * dhcpcd can poll it for the relevant flags periodically */
+#define IF_POLL_UP	100	/* milliseconds */
+
 struct interface {
 	struct dhcpcd_ctx *ctx;
 	TAILQ_ENTRY(interface) next;
@@ -61,12 +65,16 @@ struct interface {
 	unsigned int index;
 	unsigned int flags;
 	sa_family_t family;
+#ifdef __FreeBSD__
+	struct sockaddr_storage linkaddr;
+#endif
 	unsigned char hwaddr[HWADDR_LEN];
 	uint8_t hwlen;
 	unsigned int metric;
 	int carrier;
 	int wireless;
-	char ssid[IF_SSIDSIZE];
+	uint8_t ssid[IF_SSIDSIZE];
+	unsigned int ssid_len;
 
 	char profile[PROFILE_LEN];
 	struct if_options *options;
@@ -88,6 +96,8 @@ struct dhcpcd_ctx {
 	char **ifdv;	/* denied interfaces */
 	int ifc;	/* listed interfaces */
 	char **ifv;	/* listed interfaces */
+	int ifcc;	/* configured interfaces */
+	char **ifcv;	/* configured interfaces */
 	unsigned char *duid;
 	size_t duid_len;
 	int pid_fd;
@@ -97,7 +107,8 @@ struct dhcpcd_ctx {
 	struct eloop_ctx *eloop;
 
 	int control_fd;
-	struct fd_list *control_fds;
+	int control_unpriv_fd;
+	struct fd_list_head control_fds;
 	char control_sock[sizeof(CONTROLSOCKET) + IF_NAMESIZE];
 	gid_t control_group;
 
@@ -142,6 +153,8 @@ struct dhcpcd_ctx {
 extern const int dhcpcd_handlesigs[];
 #endif
 
+int dhcpcd_oneup(struct dhcpcd_ctx *);
+int dhcpcd_ipwaited(struct dhcpcd_ctx *);
 pid_t dhcpcd_daemonise(struct dhcpcd_ctx *);
 
 int dhcpcd_handleargs(struct dhcpcd_ctx *, struct fd_list *, int, char **);

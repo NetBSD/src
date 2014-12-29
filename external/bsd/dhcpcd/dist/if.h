@@ -1,4 +1,4 @@
-/* $NetBSD: if.h,v 1.1.1.3 2014/07/30 15:44:11 roy Exp $ */
+/* $NetBSD: if.h,v 1.1.1.3.4.1 2014/12/29 16:18:05 martin Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -50,13 +50,6 @@
 # endif
 #endif
 
-/* Neighbour reachability and router updates */
-#ifndef HAVE_RTM_GETNEIGH
-# ifdef __linux__
-#  define HAVE_RTM_GETNEIGH
-# endif
-#endif
-
 #define EUI64_ADDR_LEN			8
 #define INFINIBAND_ADDR_LEN		20
 
@@ -96,6 +89,7 @@ int if_setflag(struct interface *ifp, short flag);
 #define if_up(ifp) if_setflag((ifp), (IFF_UP | IFF_RUNNING))
 struct if_head *if_discover(struct dhcpcd_ctx *, int, char * const *);
 struct interface *if_find(struct dhcpcd_ctx *, const char *);
+struct interface *if_findindex(struct dhcpcd_ctx *, unsigned int);
 void if_free(struct interface *);
 int if_domtu(const char *, short int);
 #define if_getmtu(iface) if_domtu(iface, 0)
@@ -105,7 +99,7 @@ int if_carrier(struct interface *);
 /* The below functions are provided by if-KERNEL.c */
 int if_conf(struct interface *);
 int if_init(struct interface *);
-int if_getssid(const char *, char *);
+int if_getssid(struct interface *);
 int if_vimaster(const char *);
 int if_openlinksocket(void);
 int if_managelink(struct dhcpcd_ctx *);
@@ -119,12 +113,10 @@ ssize_t if_readrawpacket(struct interface *, int, void *, size_t, int *);
 int if_address(const struct interface *,
     const struct in_addr *, const struct in_addr *,
     const struct in_addr *, int);
-#define if_addaddress(iface, addr, net, brd)				      \
-	if_address(iface, addr, net, brd, 1)
-#define if_setaddress(iface, addr, net, brd)				      \
-	if_address(iface, addr, net, brd, 2)
-#define if_deladdress(iface, addr, net)				      \
-	if_address(iface, addr, net, NULL, -1)
+#define if_addaddress(ifp, addr, net, brd)	\
+	if_address(ifp, addr, net, brd, 1)
+#define if_deladdress(ifp, addr, net)		\
+	if_address(ifp, addr, net, NULL, -1)
 
 int if_route(const struct rt *rt, int);
 #define if_addroute(rt) if_route(rt, 1)
@@ -133,13 +125,13 @@ int if_route(const struct rt *rt, int);
 #endif
 
 #ifdef INET6
-int if_checkipv6(struct dhcpcd_ctx *ctx, const char *, int);
-int if_nd6reachable(const char *ifname, struct in6_addr *addr);
+int if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *, int);
 
 int if_address6(const struct ipv6_addr *, int);
 #define if_addaddress6(a) if_address6(a, 1)
 #define if_deladdress6(a) if_address6(a, -1)
-int if_addrflags6(const char *, const struct in6_addr *);
+
+int if_addrflags6(const struct in6_addr *, const struct interface *);
 
 int if_route6(const struct rt6 *rt, int);
 #define if_addroute6(rt) if_route6(rt, 1)

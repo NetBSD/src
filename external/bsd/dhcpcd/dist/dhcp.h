@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp.h,v 1.1.1.20 2014/07/14 11:45:06 roy Exp $ */
+/* $NetBSD: dhcp.h,v 1.1.1.20.2.1 2014/12/29 16:18:04 martin Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -36,6 +36,7 @@
 #include <limits.h>
 #include <stdint.h>
 
+#include "arp.h"
 #include "auth.h"
 #include "dhcp-common.h"
 
@@ -68,7 +69,6 @@
 #define DHCP_MAX		64
 #define DHCP_RAND_MIN		-1
 #define DHCP_RAND_MAX		1
-#define DHCP_ARP_FAIL		2
 
 #ifdef RFC2131_STRICT
 /* Be strictly conformant for section 4.1.1 */
@@ -198,7 +198,7 @@ enum DHS {
 	DHS_REBOOT,
 	DHS_INFORM,
 	DHS_RENEW_REQUESTED,
-	DHS_INIT_IPV4LL,
+	DHS_IPV4LL_BOUND,
 	DHS_PROBE
 };
 
@@ -214,15 +214,8 @@ struct dhcp_state {
 	time_t nakoff;
 	uint32_t xid;
 	int socket;
-	int probes;
-	int claims;
-	int conflicts;
-	time_t defend;
-	struct in_addr fail;
-	size_t arping_index;
 
 	int raw_fd;
-	int udp_fd;
 	int arp_fd;
 	size_t buffer_size, buffer_len, buffer_pos;
 	unsigned char *buffer;
@@ -230,6 +223,7 @@ struct dhcp_state {
 	struct in_addr addr;
 	struct in_addr net;
 	struct in_addr dst;
+	uint8_t added;
 
 	char leasefile[sizeof(LEASEFILE) + IF_NAMESIZE];
 	time_t start_uptime;
@@ -237,12 +231,22 @@ struct dhcp_state {
 	unsigned char *clientid;
 
 	struct authstate auth;
+	struct arp_statehead arp_states;
+
+	size_t arping_index;
+
+	struct arp_state *arp_ipv4ll;
+	unsigned int conflicts;
+	time_t defend;
+	char randomstate[128];
 };
 
 #define D_STATE(ifp)							       \
 	((struct dhcp_state *)(ifp)->if_data[IF_DATA_DHCP])
 #define D_CSTATE(ifp)							       \
 	((const struct dhcp_state *)(ifp)->if_data[IF_DATA_DHCP])
+#define D_STATE_RUNNING(ifp)						       \
+	(D_CSTATE((ifp)) && D_CSTATE((ifp))->new && D_CSTATE((ifp))->reason)
 
 #include "dhcpcd.h"
 #include "if-options.h"
@@ -272,9 +276,6 @@ ssize_t make_message(struct dhcp_message **, const struct interface *,
     uint8_t);
 int valid_dhcp_packet(unsigned char *);
 
-ssize_t write_lease(const struct interface *, const struct dhcp_message *);
-struct dhcp_message *read_lease(struct interface *);
-
 void dhcp_handleifa(int, struct interface *,
     const struct in_addr *, const struct in_addr *, const struct in_addr *);
 
@@ -284,7 +285,8 @@ void dhcp_stop(struct interface *);
 void dhcp_decline(struct interface *);
 void dhcp_discover(void *);
 void dhcp_inform(struct interface *);
-void dhcp_bind(void *);
+void dhcp_probe(struct interface *);
+void dhcp_bind(struct interface *, struct arp_state *);
 void dhcp_reboot_newopts(struct interface *, unsigned long long);
 void dhcp_close(struct interface *);
 void dhcp_free(struct interface *);

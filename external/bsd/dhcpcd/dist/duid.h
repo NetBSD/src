@@ -1,4 +1,4 @@
-/* $NetBSD: duid.h,v 1.1.1.6 2014/06/14 20:51:09 roy Exp $ */
+/* $NetBSD: duid.h,v 1.1.1.6.2.1 2014/12/29 16:18:05 martin Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
