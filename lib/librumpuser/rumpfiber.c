@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfiber.c,v 1.8 2014/11/08 23:47:15 justin Exp $	*/
+/*	$NetBSD: rumpfiber.c,v 1.9 2014/12/29 21:50:09 justin Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -68,7 +68,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpfiber.c,v 1.8 2014/11/08 23:47:15 justin Exp $");
+__RCSID("$NetBSD: rumpfiber.c,v 1.9 2014/12/29 21:50:09 justin Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -107,6 +107,16 @@ static struct thread_list thread_list = TAILQ_HEAD_INITIALIZER(thread_list);
 static struct thread *current_thread = NULL;
 
 static void (*scheduler_hook)(void *, void *);
+
+static void printk(const char *s);
+
+static void
+printk(const char *msg)
+{
+	int ret __attribute__((unused));
+
+	ret = write(2, msg, strlen(msg));
+}
 
 static struct thread *
 get_current(void)

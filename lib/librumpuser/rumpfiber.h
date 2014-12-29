@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfiber.h,v 1.2 2014/08/24 14:37:31 pooka Exp $	*/
+/*	$NetBSD: rumpfiber.h,v 1.3 2014/12/29 21:50:09 justin Exp $	*/
 
 /*
  * Copyright (c) 2014 Justin Cormack.  All Rights Reserved.
@@ -32,16 +32,6 @@
 #include <time.h>
 #include <ucontext.h>
 #include <unistd.h>
-
-static void printk(const char *s);
-
-static void
-printk(const char *msg)
-{
-	int ret __attribute__((unused));
-
-	ret = write(2, msg, strlen(msg));
-}
 
 struct thread {
     char *name;
