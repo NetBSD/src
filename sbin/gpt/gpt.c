@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.39 2014/11/17 07:15:28 mlelstv Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.40 2014/12/29 16:27:06 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -54,11 +54,6 @@ __RCSID("$NetBSD: gpt.c,v 1.39 2014/11/17 07:15:28 mlelstv Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
-#ifndef HAVE_NBTOOL_CONFIG_H
-#include <prop/proplib.h>
-#include <sys/drvctlio.h>
-#include <sys/disk.h>
-#endif
 
 #include "map.h"
 #include "gpt.h"
@@ -364,96 +359,6 @@ gpt_mbr(int fd, off_t lba)
 	return (0);
 }
 
-#ifndef HAVE_NBTOOL_CONFIG_H
-static int
-drvctl(const char *name, u_int *sector_size, off_t *media_size)
-{
-	prop_dictionary_t command_dict, args_dict, results_dict, data_dict,
-	    disk_info, geometry;
-	prop_string_t string;
-	prop_number_t number;
-	int dfd, res;
-	char *dname, *p;
-
-	if (*sector_size && *media_size)
-		return 0;
-
-	if ((dfd = open("/dev/drvctl", O_RDONLY)) == -1) {
-		warn("%s: /dev/drvctl", __func__);
-		return -1;
-	}
-
-	command_dict = prop_dictionary_create();
-	args_dict = prop_dictionary_create();
-
-	string = prop_string_create_cstring_nocopy("get-properties");
-	prop_dictionary_set(command_dict, "drvctl-command", string);
-	prop_object_release(string);
-
-	if ((dname = strdup(name[0] == 'r' ? name + 1 : name)) == NULL) {
-		(void)close(dfd);
-		return -1;
-	}
-	for (p = dname; *p; p++)
-		continue;
-	for (--p; p >= dname && !isdigit((unsigned char)*p); *p-- = '\0')
-		continue;
-
-	string = prop_string_create_cstring(dname);
-	free(dname);
-	prop_dictionary_set(args_dict, "device-name", string);
-	prop_object_release(string);
-
-	prop_dictionary_set(command_dict, "drvctl-arguments", args_dict);
-	prop_object_release(args_dict);
-
-	res = prop_dictionary_sendrecv_ioctl(command_dict, dfd, DRVCTLCOMMAND,
-	    &results_dict);
-	(void)close(dfd);
-	prop_object_release(command_dict);
-	if (res) {
-		warn("%s: prop_dictionary_sendrecv_ioctl", __func__);
-		errno = res;
-		return -1;
-	}
-
-	number = prop_dictionary_get(results_dict, "drvctl-error");
-	if ((errno = prop_number_integer_value(number)) != 0)
-		return -1;
-
-	data_dict = prop_dictionary_get(results_dict, "drvctl-result-data");
-	if (data_dict == NULL)
-		goto out;
-
-	disk_info = prop_dictionary_get(data_dict, "disk-info");
-	if (disk_info == NULL)
-		goto out;
-
-	geometry = prop_dictionary_get(disk_info, "geometry");
-	if (geometry == NULL)
-		goto out;
-
-	number = prop_dictionary_get(geometry, "sector-size");
-	if (number == NULL)
-		goto out;
-
-	if (*sector_size == 0)
-		*sector_size = prop_number_integer_value(number);
-
-	number = prop_dictionary_get(geometry, "sectors-per-unit");
-	if (number == NULL)
-		goto out;
-
-	if (*media_size == 0)
-		*media_size = prop_number_integer_value(number) * *sector_size;
-
-	return 0;
-out:
-	errno = EINVAL;
-	return -1;
-}
-#endif
-
 int
 gpt_gpt(int fd, off_t lba, int found)
 {
@@ -580,9 +485,8 @@ gpt_open(const char *dev)
 		if ((secsz == 0 && ioctl(fd, DIOCGSECTORSIZE, &secsz) == -1) ||
 		    (mediasz == 0 && ioctl(fd, DIOCGMEDIASIZE, &mediasz) == -1))
 			goto close;
-#endif
-#ifndef HAVE_NBTOOL_CONFIG_H
-		if (drvctl(device_name, &secsz, &mediasz) == -1)
+#else
+		if (getdisksize(device_name, &secsz, &mediasz) == -1)
 			goto close;
 #endif
 		if (secsz == 0 || mediasz == 0)
