@@ -1,4 +1,4 @@
-/*	$NetBSD: lexer.c,v 1.1.1.2 2012/07/22 13:44:59 darrenr Exp $	*/
+/*	$NetBSD: lexer.c,v 1.1.1.2.12.1 2014/12/29 17:27:29 martin Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -176,8 +176,10 @@ static char *yytexttostr(offset, max)
 
 int yylex()
 {
+#ifdef	USE_INET6
 	static int prior = 0;
 	static int priornum = 0;
+#endif
 	int c, n, isbuilding, rval, lnext, nokey = 0;
 	char *name;
 	int triedv6 = 0;
@@ -239,7 +241,9 @@ nextchar:
 	if (lnext == 1) {
 		lnext = 0;
 		if ((isbuilding == 0) && !ISALNUM(c)) {
+#ifdef	USE_INET6
 			prior = c;
+#endif
 			return c;
 		}
 		goto nextchar;
@@ -330,7 +334,9 @@ nextchar:
 		yytokentype = 0;
 		if (yydebug)
 			fprintf(stderr, "reset at EOF\n");
+#ifdef	USE_INET6
 		prior = 0;
+#endif
 		return 0;
 	}
 
@@ -594,9 +600,11 @@ done:
 		yypos = 0;
 	}
 
+#ifdef	USE_INET6
 	if (rval == YY_NUMBER)
 		priornum = yylval.num;
 	prior = rval;
+#endif
 	return rval;
 }
 

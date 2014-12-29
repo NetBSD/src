@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2013/12/31 17:33:11 christos Exp $	
+#	$NetBSD: Makefile,v 1.10.4.1 2014/12/29 17:27:29 martin Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
@@ -33,7 +33,6 @@ print-arp.c \
 print-ascii.c \
 print-atalk.c \
 print-atm.c \
-print-babel.c \
 print-beep.c \
 print-bfd.c \
 print-bgp.c \
@@ -167,7 +166,7 @@ CPPFLAGS+=-DWITH_USER=\"_tcpdump\"
 CPPFLAGS+=-DWITH_CHROOT=\"/var/chroot/tcpdump\"
 
 .if (${USE_INET6} != "no")
-SRCS+=	print-ip6.c print-ip6opts.c print-icmp6.c \
+SRCS+=	print-babel.c print-ip6.c print-ip6opts.c print-icmp6.c \
 	print-rt6.c print-dhcp6.c print-ospf6.c 
 
 CPPFLAGS+=-DINET6=1 -DHAVE_RES_USE_INET6=1 
