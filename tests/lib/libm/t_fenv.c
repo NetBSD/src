@@ -1,4 +1,4 @@
-/* $NetBSD: t_fenv.c,v 1.1 2014/12/21 15:37:03 martin Exp $ */
+/* $NetBSD: t_fenv.c,v 1.2 2014/12/29 19:51:53 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fenv.c,v 1.1 2014/12/21 15:37:03 martin Exp $");
+__RCSID("$NetBSD: t_fenv.c,v 1.2 2014/12/29 19:51:53 martin Exp $");
 
 #include <atf-c.h>
 
@@ -46,13 +46,24 @@ __RCSID("$NetBSD: t_fenv.c,v 1.1 2014/12/21 15:37:03 martin Exp $");
 	 * skip these tests if running on them and compiled for
 	 * hard float.
 	 */
-#define	FPU_PREREQ()							\
+#define	FPU_EXC_PREREQ()						\
 	if (0 == fpsetmask(fpsetmask(FP_X_INV)))			\
 		atf_tc_skip("FPU does not implement exception handling");
+
+	/*
+	 * Same as above: some don't allow configuring the rounding mode.
+	 */
+#define	FPU_RND_PREREQ()						\
+	if (0 == fpsetround(fpsetround(FP_RZ)))				\
+		atf_tc_skip("FPU does not implement configurable "	\
+		    "rounding modes");
 #endif
 
-#ifndef FPU_PREREQ
-#define	FPU_PREREQ()	/* nothing */
+#ifndef FPU_EXC_PREREQ
+#define	FPU_EXC_PREREQ()	/* nothing */
+#endif
+#ifndef FPU_RND_PREREQ
+#define	FPU_RND_PREREQ()	/* nothing */
 #endif
 
 
@@ -67,6 +78,8 @@ ATF_TC_HEAD(fegetround, tc)
 
 ATF_TC_BODY(fegetround, tc)
 {
+	FPU_RND_PREREQ();
+
 	fpsetround(FP_RZ);
 	ATF_CHECK(fegetround() == FE_TOWARDZERO);
 	fpsetround(FP_RM);
@@ -88,6 +101,8 @@ ATF_TC_HEAD(fesetround, tc)
 
 ATF_TC_BODY(fesetround, tc)
 {
+	FPU_RND_PREREQ();
+
 	fesetround(FE_TOWARDZERO);
 	ATF_CHECK(fpgetround() == FP_RZ);
 	fesetround(FE_DOWNWARD);
@@ -109,7 +124,7 @@ ATF_TC_HEAD(fegetexcept, tc)
 
 ATF_TC_BODY(fegetexcept, tc)
 {
-	FPU_PREREQ();
+	FPU_EXC_PREREQ();
 
 	fpsetmask(0);
 	ATF_CHECK(fegetexcept() == 0);
@@ -145,7 +160,7 @@ ATF_TC_HEAD(feenableexcept, tc)
 
 ATF_TC_BODY(feenableexcept, tc)
 {
-	FPU_PREREQ();
+	FPU_EXC_PREREQ();
 
 	fedisableexcept(FE_ALL_EXCEPT);
 	ATF_CHECK(fpgetmask() == 0);
