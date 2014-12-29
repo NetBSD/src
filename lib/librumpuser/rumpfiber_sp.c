@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfiber_sp.c,v 1.2 2014/08/24 14:37:31 pooka Exp $	*/
+/*	$NetBSD: rumpfiber_sp.c,v 1.3 2014/12/29 21:50:09 justin Exp $	*/
 
 /*
  * Copyright (c) 2014 Justin Cormack.  All Rights Reserved.
@@ -30,7 +30,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpfiber_sp.c,v 1.2 2014/08/24 14:37:31 pooka Exp $");
+__RCSID("$NetBSD: rumpfiber_sp.c,v 1.3 2014/12/29 21:50:09 justin Exp $");
 #endif /* !lint */
 
 #include <stdlib.h>
@@ -60,8 +60,7 @@ int
 rumpuser_sp_raise(void *arg, int signo)
 {
 
-	printk("rumphyper: unimplemented rumpuser_sp_raise\n");
-	exit(1);
+	abort();
 }
 
 /*ARGSUSED*/
@@ -69,8 +68,7 @@ int
 rumpuser_sp_copyin(void *arg, const void *raddr, void *laddr, size_t len)
 {
 
-	printk("rumphyper: unimplemented rumpuser_sp_copyin\n");
-	exit(1);
+	abort();
 }
 
 /*ARGSUSED*/
@@ -78,8 +76,7 @@ int
 rumpuser_sp_copyinstr(void *arg, const void *raddr, void *laddr, size_t *len)
 {
 
-	printk("rumphyper: unimplemented rumpuser_sp_copyinstr\n");
-	exit(1);
+	abort();
 }
 
 /*ARGSUSED*/
@@ -87,8 +84,7 @@ int
 rumpuser_sp_copyout(void *arg, const void *laddr, void *raddr, size_t dlen)
 {
 
-	printk("rumphyper: unimplemented rumpuser_sp_copyout\n");
-	exit(1);
+	abort();
 }
 
 /*ARGSUSED*/
@@ -96,8 +92,7 @@ int
 rumpuser_sp_copyoutstr(void *arg, const void *laddr, void *raddr, size_t *dlen)
 {
 
-	printk("rumphyper: unimplemented rumpuser_sp_copyoutstr\n");
-	exit(1);
+	abort();
 }
 
 /*ARGSUSED*/
@@ -105,6 +100,5 @@ int
 rumpuser_sp_anonmmap(void *arg, size_t howmuch, void **addr)
 {
 
-	printk("rumphyper: unimplemented rumpuser_sp_anonmmap\n");
-	exit(1);
+	abort();
 }
