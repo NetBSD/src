@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.55 2014/12/29 12:03:39 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.56 2014/12/29 18:41:20 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.55 2014/12/29 12:03:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.56 2014/12/29 18:41:20 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,10 +311,6 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 
 	/* ensure that the pseudo-disk is initialized for these */
 	switch (cmd) {
-#ifdef DIOCGSECTORSIZE
-	case DIOCGSECTORSIZE:
-	case DIOCGMEDIASIZE:
-#endif
 	case DIOCGDINFO:
 	case DIOCSDINFO:
 	case DIOCWDINFO:
@@ -337,17 +333,6 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	}
 
 	switch (cmd) {
-#ifdef DIOCGSECTORSIZE
-	case DIOCGSECTORSIZE:
-		*(u_int *)data = dksc->sc_dkdev.dk_geom.dg_secsize;
-		return 0;
-	case DIOCGMEDIASIZE:
-		*(off_t *)data =
-		    (off_t)dksc->sc_dkdev.dk_geom.dg_secsize *
-		    dksc->sc_dkdev.dk_geom.dg_nsectors;
-		return 0;
-#endif
-
 	case DIOCGDINFO:
 		*(struct disklabel *)data = *(dksc->sc_dkdev.dk_label);
 		break;
