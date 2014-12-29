@@ -36,6 +36,7 @@
 #include <sys/device.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/kmem.h>
 
 #include "vchiq_core.h"
 #include "vchiq_ioctl.h"
@@ -196,9 +197,10 @@ extern struct cfdriver vchiq_cd;
 
 static int	vchiq_ioctl(struct file *, u_long, void *);
 static int	vchiq_close(struct file *);
+static int	vchiq_read(struct file *, off_t *, struct uio *, kauth_cred_t, int);
 
 static const struct fileops vchiq_fileops = {
-	.fo_read = fbadop_read,
+	.fo_read = vchiq_read,
 	.fo_write = fbadop_write,
 	.fo_ioctl = vchiq_ioctl,
 	.fo_fcntl = fnullop_fcntl,
@@ -1245,9 +1247,7 @@ vchiq_dump(void *dump_context, const char *str, int len)
 		copy_bytes = min(len, (int)(context->space - context->actual));
 		if (copy_bytes == 0)
 			return;
-		if (copy_to_user(context->buf + context->actual, str,
-			copy_bytes))
-			context->actual = -EFAULT;
+		memcpy(context->buf + context->actual, str, copy_bytes);
 		context->actual += copy_bytes;
 		len -= copy_bytes;
 
@@ -1256,9 +1256,7 @@ vchiq_dump(void *dump_context, const char *str, int len)
 		** carriage return. */
 		if ((len == 0) && (str[copy_bytes - 1] == '\0')) {
 			char cr = '\n';
-			if (copy_to_user(context->buf + context->actual - 1,
-				&cr, 1))
-				context->actual = -EFAULT;
+			memcpy(context->buf + context->actual - 1, &cr, 1);
 		}
 	}
 }
@@ -1432,6 +1430,7 @@ dump_phys_mem(void *virt_addr, uint32_t num_bytes)
 
 	kfree(pages);
 }
+#endif
 
 /****************************************************************************
 *
@@ -1439,23 +1438,29 @@ dump_phys_mem(void *virt_addr, uint32_t num_bytes)
 *
 ***************************************************************************/
 
-static ssize_t
-vchiq_read(struct file *file, char __user *buf,
-	size_t count, loff_t *ppos)
+static int
+vchiq_read(struct file *file, off_t *ppos, struct uio *uio, kauth_cred_t cred,
+    int flags)
 {
+	int result;
+
+	char *buf = kmem_zalloc(PAGE_SIZE, KM_SLEEP);
+
 	DUMP_CONTEXT_T context;
 	context.buf = buf;
 	context.actual = 0;
-	context.space = count;
+	context.space = PAGE_SIZE;
 	context.offset = *ppos;
 
 	vchiq_dump_state(&context, &g_state);
 
 	*ppos += context.actual;
 
-	return context.actual;
+	result = uiomove(buf, context.actual, uio);
+	kmem_free(buf, PAGE_SIZE);
+	
+	return result;
 }
-#endif
 
 VCHIQ_STATE_T *
 vchiq_get_state(void)

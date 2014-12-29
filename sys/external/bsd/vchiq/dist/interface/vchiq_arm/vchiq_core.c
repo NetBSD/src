@@ -3648,7 +3648,7 @@ vchiq_dump_state(void *dump_context, VCHIQ_STATE_T *state)
 void
 vchiq_dump_service_state(void *dump_context, VCHIQ_SERVICE_T *service)
 {
-	char buf[80];
+	char buf[120];
 	int len;
 
 	len = snprintf(buf, sizeof(buf), "Service %d: %s (ref %u)",
