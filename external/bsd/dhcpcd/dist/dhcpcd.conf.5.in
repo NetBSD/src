@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.conf.5.in,v 1.10 2014/07/30 15:47:32 roy Exp $
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.10.2.1 2014/12/29 16:18:05 martin Exp $
 .\" Copyright (c) 2006-2014 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 14, 2014
+.Dd December 13, 2014
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -72,7 +72,7 @@ Example:
 .D1 static ip_address=192.168.0.10/24
 .It Ic authprotocol Ar protocol Ar algorithm Ar rdm
 Authenticate DHCP messages.
-See the Supported Protocols section.
+See the Supported Authentication Protocols section.
 .It Ic authtoken Ar secretid Ar realm Ar expire Ar key
 Define a shared key for use in authentication.
 .Ar realm can be "" to for use with the
@@ -85,6 +85,18 @@ You can use the keyword
 or
 .Ar 0
 which means the token never expires.
+For the token protocol,
+.Ar secretid
+needs to be 0 and
+.Ar realm
+needs to be "".
+If
+.Nm dhcpcd
+has the error
+.D1 dhcp_auth_encode: Invalid argument
+then it means that
+.Nm dhcpcd
+could not find the correct authentication token in your configuration.
 .It Ic background
 Background immediately.
 This is useful for startup scripts which don't disable link messages for
@@ -128,6 +140,11 @@ to the environment for use in
 For example, you can force the hostname hook to always set the hostname with
 .Ic env
 .Va force_hostname=YES .
+Or set which driver
+.Xr wpa_supplicant 8
+should use with
+.Ic env
+.Va wpa_supplicant_driver=nl80211
 .Pp
 If the hostname is set, will be will set to the FQDN if possible as per
 RFC 4702 section 3.1.
@@ -278,22 +295,27 @@ You can specify multiple
 per
 .Ic ia_pd ,
 space separated.
-IPv6RS should be disabled globally when requesting a Prefix Delegation like so:
+IPv6RS should be disabled globally when requesting a Prefix Delegation.
 .Pp
-.D1 # Global settings, disable IPv4 and IPv6RS
-.D1 noipv4
-.D1 noipv6rs
-.D1 # Don't touch eth3 at all
-.D1 denyinterfaces eth3 
-.Pp
-.D1 interface eth0
-.D1 ia_pd 1 eth1/1 eth2/2
-.Pp
-.D1 # Enable automatic address configuration for eth1
-.D1 # eth1 still gets a delegated prefix
-.D1 interface eth1
-.D1 ipv4
-.D1 ipv6rs
+In the following example eth0 is the externally facing interface to be
+configured for both IPv4 and IPv6.
+The DHCPv4 server will provide us with an IPv4 address and a default route.
+The DHCPv6 server is going to provide us with an IPv6 address, a default
+route and a /64 subnet to be delegated to the internal interface.
+The eth1 interface will be automatically configured
+for IPv6 using the first address (::1) from the delegated prefix.
+.Xr rtadvd 8
+can be used with an empty configuration file on eth1 to provide automatic
+IPv6 address configuration for the internal network.
+.Bd -literal -indent
+noipv6rs            # disable routing solicitation
+denyinterfaces eth2 # Don't touch eth2 at all
+interface eth0
+    ipv6rs	    # enable routing solicitation get the
+		    # default IPv6 route
+    ia_na 1	    # request an IPv6 address
+    ia_pd 2 eth1/0  # get a /64 and assign it to eth1
+.Ed
 .It Ic ia_pd_mix
 To be RFC compliant,
 .Nm dhcpcd
@@ -336,13 +358,11 @@ always fork on an RA.
 .It Ic ipv6ra_own
 Disables kernel IPv6 Router Advertisment processing so dhcpcd can manage
 addresses and routes.
-This does not work reliably on any BSD system, probably due to kernel issues.
 .It Ic ipv6ra_own_default
 Each time dhcpcd receives an IPv6 Router Adveristment, dhcpcd will manage
 the default route only.
 This allows dhcpcd to prefer an interface for outbound traffic based on metric
 and/or user selection rather than the kernel.
-This does work reliably on BSD systems.
 .It Ic ipv6rs
 Enables IPv6 Router Advertisment solicitation.
 This is on by default, but is documented here in the case where it is disabled
@@ -357,8 +377,8 @@ will supply a default metric of 200 +
 .Xr if_nametoindex 3 .
 An extra 100 will be added for wireless interfaces.
 .It Ic noalias
-IPv4 addresses added will overwrite a pre-existing address instead of working
-alongside.
+Any pre-existing IPv4 addresses existing address will be removed from the
+interface when adding a new IPv4 address.
 .It Ic noarp
 Don't send any ARP requests.
 This also disables IPv4LL.
@@ -436,7 +456,8 @@ Suppress any dhcpcd output to the console, except for errors.
 .It Ic reboot Ar seconds
 Allow
 .Ar reboot
-seconds before moving to the DISCOVER phase if we have an old lease to use.
+seconds before moving to the DISCOVER phase if we have an old lease to use
+and moving from DISCOVER to IPv4LL if no reply.
 The default is 5 seconds.
 A setting of 0 seconds causes
 .Nm dhcpcd
@@ -667,7 +688,7 @@ An IPv4 address, 4 bytes
 .It Ic ip6address
 An IPv6 address, 16 bytes
 .It Ic string Op : Ic length
-A shell escaped string (binary data escaped as octal)
+A NVT ASCII string of printable characters.
 .It Ic byte
 A byte
 .It Ic int16
@@ -682,6 +703,8 @@ An unsigned 32bit integer, 4 bytes
 A fixed value (1) to indicate that the option is present, 0 bytes
 .It Ic domain
 A RFC 3397 encoded string
+.It Ic dname
+A RFC 1035 validated string
 .It Ic binhex Op : Ic length
 Binary data expressed as hexadecimal
 .It Ic embed
@@ -704,10 +727,10 @@ References an option from the global definition
 .D1 embed uint32 enterprise_number
 .D1 # Options defined for the enterprise number
 .D1 encap 1 ipaddress ipaddress
-.Ss Supported protocols
+.Ss Supported Authentication Protocols
 .Bl -tag -width -indent
 .It Ic token
-Sends and expects the token with the secretid 0 in each message.
+Sends and expects the token with the secretid 0 and realm of "" in each message.
 .It Ic delayedrealm
 Delayed Authentication.
 .Nm dhcpcd
@@ -724,7 +747,7 @@ This token is used to authenicate all other messages.
 .It Ic delayed
 Same as above, but without a realm.
 .El
-.Ss Supported algorithms
+.Ss Supported Authentication Algorithms
 If none specified,
 .Ic hmac-md5
 is the default.

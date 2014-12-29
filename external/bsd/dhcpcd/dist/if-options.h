@@ -1,4 +1,4 @@
-/* $NetBSD: if-options.h,v 1.1.1.23 2014/07/14 11:45:06 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.1.1.23.2.1 2014/12/29 16:18:05 martin Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -78,7 +78,7 @@
 #define DHCPCD_QUIET			(1ULL << 21)
 #define DHCPCD_BACKGROUND		(1ULL << 22)
 #define DHCPCD_VENDORRAW		(1ULL << 23)
-#define DHCPCD_TIMEOUT_IPV4LL		(1ULL << 24)
+#define DHCPCD_NOWAITIP			(1ULL << 24) /* To force daemonise */
 #define DHCPCD_WAITIP			(1ULL << 25)
 #define DHCPCD_SLAACPRIVATE		(1ULL << 26)
 #define DHCPCD_CSR_WARNED		(1ULL << 27)
@@ -125,6 +125,7 @@ struct if_ia {
 	uint8_t iaid_set;
 	struct in6_addr addr;
 	uint8_t prefix_len;
+	uint32_t sla_max;
 	size_t sla_len;
 	struct if_sla *sla;
 #endif

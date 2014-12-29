@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.8.in,v 1.29 2014/07/14 11:49:48 roy Exp $
+.\"     $NetBSD: dhcpcd.8.in,v 1.29.2.1 2014/12/29 16:18:05 martin Exp $
 .\" Copyright (c) 2006-2014 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 7, 2014
+.Dd November 26, 2014
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -102,6 +102,16 @@ It will then attempt to renew its lease and reconfigure if the new lease
 changes when the lease beings to expire or the DHCP server sends message
 to renew early.
 .Pp
+If any interface reports a working carrier then
+.Nm
+will try and obtain a lease before forking to the background,
+otherwise it will fork right away.
+This behaviour can be modified with the
+.Fl b , Fl Fl background
+and
+.Fl w , Fl Fl waitip
+options.
+.Pp
 .Nm
 is also an implementation of the BOOTP client specified in
 .Li RFC 951 .
@@ -143,16 +153,18 @@ If a list of interfaces are given on the command line, then
 .Nm
 only works with those interfaces, otherwise
 .Nm
-discovers available Ethernet interfaces.
-If any interface reports a working carrier then
+discovers available Ethernet interfaces that can be configured.
+When
 .Nm
-will try and obtain a lease before forking to the background,
-otherwise it will fork right away.
-This behaviour can be modified with the
-.Fl b , Fl Fl background
-and
-.Fl w , Fl Fl waitip
-options.
+is operating on more than one interface,
+it is called Master mode. and this behaviour can be forced with the
+.Fl M , Fl Fl master
+option so that an individual interface can start
+.Nm
+but only one instance is running.
+The
+.Nm dhcpcd-ui
+project expects dhcpcd to be running this way.
 .Pp
 If a single interface is given then
 .Nm
@@ -322,6 +334,7 @@ DHCP server.
 Start
 .Nm
 in master mode even if only one interface specified on the command line.
+See the Multiple Interfaces section above.
 .It Fl m , Fl Fl metric Ar metric
 Metrics are used to prefer an interface over another one, lowest wins.
 .Nm
@@ -413,10 +426,6 @@ is working on a single interface then
 will exit when a timeout occurs, otherwise
 .Nm
 will fork into the background.
-If using IPv4LL then
-.Nm
-start the IPv4LL process after the timeout and then wait a little longer
-before really timing out.
 .It Fl u , Fl Fl userclass Ar class
 Tags the DHCPv4 message with the userclass
 .Ar class .
@@ -468,10 +477,17 @@ then waits until this process has exited.
 Allow
 .Ar reboot
 seconds before moving to the discover phase if we have an old lease to use.
+Allow
+.Ar reboot
+seconds before starting fallback states from the discover phase.
+IPv4LL is started when the first
+.Ar reboot
+timeout is reached.
 The default is 5 seconds.
 A setting of 0 seconds causes
 .Nm
 to skip the reboot phase and go straight into discover.
+This has no effect on DHCPv6 other than skipping the reboot phase.
 .El
 .Ss Restricting behaviour
 .Nm
@@ -481,9 +497,9 @@ configured exactly how the the DHCP server wants.
 Here are some options that deal with turning these bits off.
 .Bl -tag -width indent
 .It Fl 4 , Fl Fl ipv4only
-Only configure IPv4.
+Configure IPv4 only.
 .It Fl 6 , Fl Fl ipv6only
-Only confgiure IPv6.
+Configure IPv6 only.
 .It Fl A , Fl Fl noarp
 Don't request or claim the address by ARP.
 This also disables IPv4LL.
@@ -544,6 +560,9 @@ with the reason of TEST which echos the DHCP variables found in the message
 to the console.
 The interface configuration isn't touched and neither are any configuration
 files.
+The
+.Ar rapid_commit
+option is not sent in TEST mode so that the server does not lease an address.
 To test INFORM the interface needs to be configured with the desired address
 before starting
 .Nm .
@@ -562,7 +581,7 @@ Pass a 2nd
 .Fl U, Fl Fl dumplease option to dump a secondary lease, such as
 DHCPv6 Prefix Delegation when not being mixed with another IA type.
 .It Fl V, Fl Fl variables
-Display a list of option codes and the associated variable for use in
+Display a list of option codes, the associated variable and encoding for use in
 .Xr dhcpcd-run-hooks 8 .
 Variables are prefixed with new_ and old_ unless the option number is -.
 Variables without an option are part of the DHCP message and cannot be
@@ -664,6 +683,9 @@ Stores the PID of
 running on the
 .Ar interface .
 .It Pa @RUNDIR@/dhcpcd.sock
+Control socket to the master daemon.
+.It Pa @RUNDIR@/dhcpcd.unpriv.sock
+Unpriviledged socket to the master daemon, only allows state retrieval.
 Control socket to the master daemon.
 .It Pa @RUNDIR@/dhcpcd\- Ns Ar interface Ns .sock
 Control socket to per interface daemon.

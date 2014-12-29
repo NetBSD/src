@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.11 2014/07/30 15:47:32 roy Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.11.2.1 2014/12/29 16:18:05 martin Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -32,7 +32,6 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/queue.h>
 
 #include <arpa/inet.h>
 
@@ -1316,6 +1315,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 						ia->prefix_len = (uint8_t)i;
 				}
 			}
+			ia->sla_max = 0;
 			ia->sla_len = 0;
 			ia->sla = NULL;
 		}
@@ -1375,27 +1375,34 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 						goto err_sla;
 					sla->prefix_len = (uint8_t)i;
 				} else
-					sla->prefix_len = 64;
+					sla->prefix_len = 0;
 			} else {
 				sla->sla_set = 0;
-				/* Sanity - check there are no more
-				 * unspecified SLA's */
-				for (sl = 0; sl < ia->sla_len - 1; sl++) {
-					slap = &ia->sla[sl];
-					if (slap->sla_set == 0 &&
-					    strcmp(slap->ifname, sla->ifname)
-					    == 0)
-					{
-						syslog(LOG_WARNING,
-						    "%s: cannot specify the "
-						    "same interface twice with "
-						    "an automatic SLA",
-						    sla->ifname);
-						ia->sla_len--;
-						break;
-					}
+				sla->prefix_len = 0;
+			}
+			/* Sanity check */
+			for (sl = 0; sl < ia->sla_len - 1; sl++) {
+				slap = &ia->sla[sl];
+				if (slap->sla_set && sla->sla_set == 0) {
+					syslog(LOG_WARNING,
+					    "%s: cannot mix automatic "
+					    "and fixed SLA",
+					    sla->ifname);
+					goto err_sla;
+				}
+				if (sla->sla_set == 0 &&
+				    strcmp(slap->ifname, sla->ifname) == 0)
+				{
+					syslog(LOG_WARNING,
+					    "%s: cannot specify the "
+					    "same interface twice with "
+					    "an automatic SLA",
+					    sla->ifname);
+					goto err_sla;
 				}
 			}
+			if (sla->sla_set && sla->sla > ia->sla_max)
+				ia->sla_max = sla->sla;
 		}
 		break;
 err_sla:
@@ -1551,10 +1558,16 @@ err_sla:
 			t |= SINT32;
 		else if (strcasecmp(arg, "flag") == 0)
 			t |= FLAG;
+		else if (strcasecmp(arg, "raw") == 0)
+			t |= STRING | RAW;
+		else if (strcasecmp(arg, "ascii") == 0)
+			t |= STRING | ASCII;
 		else if (strcasecmp(arg, "domain") == 0)
-			t |= STRING | RFC3397;
+			t |= STRING | DOMAIN | RFC3397;
+		else if (strcasecmp(arg, "dname") == 0)
+			t |= STRING | DOMAIN;
 		else if (strcasecmp(arg, "binhex") == 0)
-			t |= BINHEX;
+			t |= STRING | BINHEX;
 		else if (strcasecmp(arg, "embed") == 0)
 			t |= EMBED;
 		else if (strcasecmp(arg, "encap") == 0)
@@ -1576,7 +1589,9 @@ err_sla:
 			    "ignoring length for type `%s'", arg);
 			l = 0;
 		}
-		if (t & ARRAY && t & (STRING | BINHEX)) {
+		if (t & ARRAY && t & (STRING | BINHEX) &&
+		    !(t & (RFC3397 | DOMAIN)))
+		{
 			syslog(LOG_WARNING, "ignoring array for strings");
 			t &= ~ARRAY;
 		}
@@ -1984,6 +1999,7 @@ read_config(struct dhcpcd_ctx *ctx,
 	FILE *fp;
 	char *line, *buf, *option, *p;
 	size_t buflen;
+	ssize_t vlen;
 	int skip = 0, have_profile = 0;
 #ifndef EMBEDDED_CONFIG
 	const char * const *e;
@@ -2019,9 +2035,9 @@ read_config(struct dhcpcd_ctx *ctx,
 	ifo->auth.options |= DHCPCD_AUTH_REQUIRE;
 	TAILQ_INIT(&ifo->auth.tokens);
 
-	ifo->vendorclassid[0] =
-	    (uint8_t)dhcp_vendor((char *)ifo->vendorclassid + 1,
-	    sizeof(ifo->vendorclassid) - 1);
+	vlen = dhcp_vendor((char *)ifo->vendorclassid + 1,
+	            sizeof(ifo->vendorclassid) - 1);
+	ifo->vendorclassid[0] = vlen == -1 ? 0 : (uint8_t)vlen;
 
 	buf = NULL;
 	buflen = 0;
@@ -2152,10 +2168,30 @@ read_config(struct dhcpcd_ctx *ctx,
 		}
 		/* Start of an interface block, skip if not ours */
 		if (strcmp(option, "interface") == 0) {
+			char **n;
+
 			if (ifname && line && strcmp(line, ifname) == 0)
 				skip = 0;
 			else
 				skip = 1;
+			if (ifname)
+				continue;
+
+			n = realloc(ctx->ifcv,
+			    sizeof(char *) * ((size_t)ctx->ifcc + 1));
+			if (n == NULL) {
+				syslog(LOG_ERR, "%s: %m", __func__);
+				continue;
+			}
+			ctx->ifcv = n;
+			ctx->ifcv[ctx->ifcc] = strdup(line);
+			if (ctx->ifcv[ctx->ifcc] == NULL) {
+				syslog(LOG_ERR, "%s: %m", __func__);
+				continue;
+			}
+			ctx->ifcc++;
+			syslog(LOG_DEBUG, "allowing interface %s",
+			    ctx->ifcv[ctx->ifcc - 1]);
 			continue;
 		}
 		/* Start of an ssid block, skip if not ours */

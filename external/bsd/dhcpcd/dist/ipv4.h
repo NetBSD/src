@@ -1,4 +1,4 @@
-/* $NetBSD: ipv4.h,v 1.1.1.5 2014/06/14 20:51:09 roy Exp $ */
+/* $NetBSD: ipv4.h,v 1.1.1.5.2.1 2014/12/29 16:18:05 martin Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -40,6 +40,7 @@ struct rt {
 	const struct interface *iface;
 	unsigned int metric;
 	struct in_addr src;
+	uint8_t flags;
 };
 TAILQ_HEAD(rt_head, rt);
 
@@ -68,12 +69,17 @@ int inet_cidrtoaddr(int, struct in_addr *);
 uint32_t ipv4_getnetmask(uint32_t);
 int ipv4_addrexists(struct dhcpcd_ctx *, const struct in_addr *);
 
+#define STATE_ADDED		0x01
+#define STATE_FAKE		0x02
+
 void ipv4_buildroutes(struct dhcpcd_ctx *);
 void ipv4_applyaddr(void *);
 int ipv4_routedeleted(struct dhcpcd_ctx *, const struct rt *);
 
-struct ipv4_addr *ipv4_findaddr(struct interface *,
+struct ipv4_addr *ipv4_iffindaddr(struct interface *,
     const struct in_addr *, const struct in_addr *);
+struct ipv4_addr *ipv4_iffindlladdr(struct interface *);
+struct ipv4_addr *ipv4_findaddr(struct dhcpcd_ctx *, const struct in_addr *);
 void ipv4_handleifa(struct dhcpcd_ctx *, int, struct if_head *, const char *,
     const struct in_addr *, const struct in_addr *, const struct in_addr *);
 

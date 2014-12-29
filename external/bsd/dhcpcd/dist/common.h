@@ -1,4 +1,4 @@
-/* $NetBSD: common.h,v 1.1.1.11 2014/06/14 20:51:06 roy Exp $ */
+/* $NetBSD: common.h,v 1.1.1.11.2.1 2014/12/29 16:18:04 martin Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon

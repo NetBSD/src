@@ -1,4 +1,4 @@
-# $NetBSD: 10-mtu,v 1.1.1.8 2013/06/21 19:33:08 roy Exp $
+# $NetBSD: 10-mtu,v 1.1.1.8.6.1 2014/12/29 16:18:05 martin Exp $
 
 # Configure the MTU for the interface
 
