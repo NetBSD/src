@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.103 2013/10/19 22:36:57 mlelstv Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.104 2014/12/29 18:41:20 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.103 2013/10/19 22:36:57 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.104 2014/12/29 18:41:20 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -501,6 +501,15 @@ disk_ioctl(struct disk *diskp, u_long cmd, void *data, int flag,
 							diskp->dk_info);
 		break;
 	    }
+
+	case DIOCGSECTORSIZE:
+		*(u_int *)data = diskp->dk_geom.dg_secsize;
+		break;
+
+	case DIOCGMEDIASIZE:
+		*(off_t *)data = (off_t)diskp->dk_geom.dg_secsize *
+		    diskp->dk_geom.dg_secperunit;
+		break;
 
 	default:
 		error = EPASSTHROUGH;
