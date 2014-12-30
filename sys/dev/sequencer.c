@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.61 2014/12/23 11:37:40 mrg Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.62 2014/12/30 07:33:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.61 2014/12/23 11:37:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.62 2014/12/30 07:33:44 mrg Exp $");
 
 #include "sequencer.h"
 
@@ -299,7 +299,7 @@ sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	struct sequencer_softc *sc;
 	struct midi_dev *md;
 	struct midi_softc *msc;
-	int error, unit;
+	int error, unit, mdno;
 
 	DPRINTF(("sequenceropen\n"));
 
@@ -342,7 +342,11 @@ sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
 				sc->devs[sc->nmidi++] = md;
 				md->seq = sc;
 				md->doingsysex = 0;
-			}
+				DPRINTF(("%s: midi unit %d opened as seq %p\n",
+				    __func__, unit, md));
+			} else
+				DPRINTF(("%s: midi unit %d not opened as seq\n",
+				    __func__, unit));
 		}
 		mutex_enter(&sc->lock);
 	} else {
@@ -350,10 +354,10 @@ sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	}
 
 	/* Only now redirect input from MIDI devices. */
-	for (unit = 0; unit < sc->nmidi; unit++) {
+	for (mdno = 0; mdno < sc->nmidi; mdno++) {
 		extern struct cfdriver midi_cd;
 
-		msc = device_lookup_private(&midi_cd, unit);
+		msc = device_lookup_private(&midi_cd, sc->devs[mdno]->unit);
 		if (msc) {
 			mutex_enter(msc->lock);
 			msc->seqopen = 1;
@@ -573,7 +577,7 @@ seq_softintr(void *addr)
 	t += sc->timer.divs_lastchange;
 	if (t != sc->input_stamp) {
 		seq_input_event(sc, &SEQ_MK_TIMING(WAIT_ABS, .divisions=t));
-		sc->input_stamp = t; /* XXX wha hoppen if timer is reset? */
+		sc->input_stamp = t; /* XXX what happens if timer is reset? */
 	}
 	seq_input_event(sc, &ev);
 	mutex_exit(&sc->lock);
@@ -587,7 +591,7 @@ sequencerread(dev_t dev, struct uio *uio, int ioflag)
 	seq_event_t ev;
 	int error;
 
-	DPRINTFN(20, ("sequencerread: %"PRIx64", count=%d, ioflag=%x\n",
+	DPRINTFN(2, ("sequencerread: %"PRIx64", count=%d, ioflag=%x\n",
 	   dev, (int)uio->uio_resid, ioflag));
 
 	if ((error = sequencer_enter(dev, &sc)) != 0)
@@ -800,6 +804,7 @@ sequencerioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case SEQUENCER_TMR_TEMPO:
 		error = seq_do_timing(sc,
 		    &SEQ_MK_TIMING(TEMPO, .bpm=*(int *)addr));
+		RECALC_USPERDIV(&sc->timer);
 		if (error == 0)
 			*(int *)addr = sc->timer.tempo_beatpermin;
 		break;
