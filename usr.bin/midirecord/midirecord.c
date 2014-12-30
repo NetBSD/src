@@ -1,4 +1,4 @@
-/*	$NetBSD: midirecord.c,v 1.1 2014/12/30 04:14:25 mrg Exp $	*/
+/*	$NetBSD: midirecord.c,v 1.2 2014/12/30 06:08:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 2014 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midirecord.c,v 1.1 2014/12/30 04:14:25 mrg Exp $");
+__RCSID("$NetBSD: midirecord.c,v 1.2 2014/12/30 06:08:14 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -311,7 +311,8 @@ midi_event_timer_wait_abs_to_output(
 	u_char *buffer,
 	size_t bufsize)
 {
-	static uint32_t prev_div, cur_div;
+	static unsigned prev_div;
+	unsigned cur_div;
 	unsigned val = 0, div;
 	int vallen = 0, i;
 
@@ -330,7 +331,7 @@ midi_event_timer_wait_abs_to_output(
 			vallen++;
 		}
 	} else
-		val = 0, vallen = 1;
+		vallen = 1;
 
 	for (i = 0; i < vallen; i++) {
 		buffer[i] = val & 0xff;
@@ -466,8 +467,8 @@ midi_event_chn_voice_to_output(seq_event_t e, u_char *buffer, size_t bufsize)
 		buffer[1] = e.c_NOTEOFF.key;
 		buffer[2] = e.c_NOTEOFF.velocity;
 
-		LOG("MIDI_NOTEOFF: key %x velocity %x",
-		    e.c_NOTEOFF.key, e.c_NOTEOFF.velocity);
+		LOG("MIDI_NOTEOFF: channel %x key %x velocity %x",
+		    e.c_NOTEOFF.channel, e.c_NOTEOFF.key, e.c_NOTEOFF.velocity);
 		size = 3;
 		break;
 
@@ -476,8 +477,8 @@ midi_event_chn_voice_to_output(seq_event_t e, u_char *buffer, size_t bufsize)
 		buffer[1] = e.c_NOTEON.key;
 		buffer[2] = e.c_NOTEON.velocity;
 
-		LOG("MIDI_NOTEON: key %x velocity %x",
-		    e.c_NOTEON.key, e.c_NOTEON.velocity);
+		LOG("MIDI_NOTEON: channel %x key %x velocity %x",
+		    e.c_NOTEON.channel, e.c_NOTEON.key, e.c_NOTEON.velocity);
 		size = 3;
 		break;
 
