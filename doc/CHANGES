@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2029 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2030 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -115,3 +115,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	powerpc: Switch to GCC 4.8. [matt 20141218]
 	dhcpcd(8): Import dhcpcd-6.6.7. [roy 20141219]
 	ntp: Import ntp 4.2.8. [christos 20141219]
+	midirecord(1): Add program to record MIDI files.  [mrg 20141229]
