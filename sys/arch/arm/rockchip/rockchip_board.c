@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_board.c,v 1.5 2014/12/27 19:14:05 jmcneill Exp $ */
+/* $NetBSD: rockchip_board.c,v 1.6 2014/12/30 03:53:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,12 +29,14 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.5 2014/12/27 19:14:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.6 2014/12/30 03:53:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+
+#include <arm/bootconfig.h>
 
 #include <arm/rockchip/rockchip_reg.h>
 #include <arm/rockchip/rockchip_crureg.h>
@@ -57,6 +59,20 @@ rockchip_bootstrap(void)
 	    ROCKCHIP_CORE1_SIZE, 0, &rockchip_core1_bsh);
 	if (error)
 		panic("%s: failed to map CORE1 registers: %d", __func__, error);
+}
+
+bool
+rockchip_is_chip(const char *chipver)
+{
+	const size_t chipver_len = 16;
+	char *env_chipver;
+
+	if (get_bootconf_option(boot_args, "chipver",
+				BOOTOPT_TYPE_STRING, &env_chipver) == 0) {
+		return false;
+	}
+
+	return strncmp(env_chipver, chipver, chipver_len) == 0;
 }
 
 static void
@@ -104,6 +120,177 @@ rockchip_apll_get_rate(void)
 	return rockchip_pll_get_rate(CRU_APLL_CON0_REG, CRU_APLL_CON1_REG);
 }
 
+static u_int
+rk3188_apll_set_rate(u_int rate)
+{
+	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_handle_t bsh;
+	uint32_t apll_con0, apll_con1, clksel0_con, clksel1_con;
+	u_int no, nr, nf, core_div, core_periph_div, core_axi_div,
+	      aclk_div, hclk_div, pclk_div, ahb2apb_div;
+	u_int cpu_aclk_div_con;
+
+	rockchip_get_cru_bsh(&bsh);
+
+#ifdef ROCKCHIP_CLOCK_DEBUG
+	printf("%s: rate=%u\n", __func__, rate);
+#endif
+
+	switch (rate) {
+	case 1608000000:
+		nr = 1;
+		nf = 67;
+		no = 1;
+		core_div = 1;
+		core_periph_div = 8;
+		core_axi_div = 4;
+		aclk_div = 4;
+		hclk_div = 2;
+		pclk_div = 4;
+		ahb2apb_div = 2;
+		break;
+	case 1008000000:
+		nr = 1;
+		nf = 42;
+		no = 1;
+		core_div = 1;
+		core_periph_div = 8;
+		core_axi_div = 3;
+		aclk_div = 3;
+		hclk_div = 2;
+		pclk_div = 4;
+		ahb2apb_div = 2;
+		break;
+	case 600000000:
+		nr = 1;
+		nf = 50;
+		no = 2;
+		core_div = 1;
+		core_periph_div = 4;
+		core_axi_div = 4;
+		aclk_div = 3;
+		hclk_div = 2;
+		pclk_div = 4;
+		ahb2apb_div = 2;
+		break;
+	default:
+#ifdef ROCKCHIP_CLOCK_DEBUG
+		printf("%s: unsupported rate %u\n", __func__, rate);
+#endif
+		return EINVAL;
+	}
+
+	apll_con0 = CRU_PLL_CON0_CLKR_MASK | CRU_PLL_CON0_CLKOD_MASK;
+	apll_con0 |= __SHIFTIN(no - 1, CRU_PLL_CON0_CLKOD);
+	apll_con0 |= __SHIFTIN(nr - 1, CRU_PLL_CON0_CLKR);
+
+	apll_con1 = CRU_PLL_CON1_CLKF_MASK;
+	apll_con1 |= __SHIFTIN(nf - 1, CRU_PLL_CON1_CLKF);
+
+	clksel0_con = RK3188_CRU_CLKSEL_CON0_A9_CORE_DIV_CON_MASK |
+		      CRU_CLKSEL_CON0_CORE_PERI_DIV_CON_MASK |
+		      CRU_CLKSEL_CON0_A9_CORE_DIV_CON_MASK |
+		      CRU_CLKSEL_CON0_CPU_CLK_PLL_SEL;
+	clksel0_con |= __SHIFTIN(core_div - 1,
+				 RK3188_CRU_CLKSEL_CON0_A9_CORE_DIV_CON);
+	clksel0_con |= __SHIFTIN(ffs(core_periph_div) - 2,
+				 CRU_CLKSEL_CON0_CORE_PERI_DIV_CON);
+	clksel0_con |= __SHIFTIN(aclk_div - 1,
+				 CRU_CLKSEL_CON0_A9_CORE_DIV_CON);
+
+	clksel1_con = RK3188_CRU_CLKSEL_CON1_CPU_ACLK_DIV_CON_MASK |
+		      CRU_CLKSEL_CON1_AHB2APB_PCLKEN_DIV_CON_MASK |
+		      CRU_CLKSEL_CON1_CPU_PCLK_DIV_CON_MASK |
+		      CRU_CLKSEL_CON1_CPU_HCLK_DIV_CON_MASK;
+	
+	switch (core_axi_div) {
+	case 1:	cpu_aclk_div_con = 0; break;
+	case 2: cpu_aclk_div_con = 1; break;
+	case 3: cpu_aclk_div_con = 2; break;
+	case 4: cpu_aclk_div_con = 3; break;
+	case 8: cpu_aclk_div_con = 4; break;
+	default: panic("bad core_axi_div");
+	}
+	clksel1_con |= __SHIFTIN(cpu_aclk_div_con,
+				 RK3188_CRU_CLKSEL_CON1_CPU_ACLK_DIV_CON);
+	clksel1_con |= __SHIFTIN(ffs(ahb2apb_div) - 1,
+				 CRU_CLKSEL_CON1_AHB2APB_PCLKEN_DIV_CON);
+	clksel1_con |= __SHIFTIN(ffs(hclk_div) - 1,
+				 CRU_CLKSEL_CON1_CPU_HCLK_DIV_CON);
+	clksel1_con |= __SHIFTIN(ffs(pclk_div) - 1,
+				 CRU_CLKSEL_CON1_CPU_PCLK_DIV_CON);
+
+#ifdef ROCKCHIP_CLOCK_DEBUG
+	printf("before: APLL_CON0: %#x\n",
+	    bus_space_read_4(bst, bsh, CRU_APLL_CON0_REG));
+	printf("before: APLL_CON1: %#x\n",
+	    bus_space_read_4(bst, bsh, CRU_APLL_CON1_REG));
+	printf("before: CLKSEL0_CON: %#x\n",
+	    bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(0)));
+	printf("before: CLKSEL1_CON: %#x\n",
+	    bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(1)));
+#endif
+
+	/* Change from normal to slow mode */
+	bus_space_write_4(bst, bsh, CRU_MODE_CON_REG,
+	    CRU_MODE_CON_APLL_WORK_MODE_MASK |
+	    __SHIFTIN(CRU_MODE_CON_APLL_WORK_MODE_SLOW,
+		      CRU_MODE_CON_APLL_WORK_MODE));
+
+	/* Power down */
+	bus_space_write_4(bst, bsh, CRU_APLL_CON3_REG,
+	    CRU_PLL_CON3_POWER_DOWN_MASK | CRU_PLL_CON3_POWER_DOWN);
+
+	/* Update APLL regs */
+	bus_space_write_4(bst, bsh, CRU_APLL_CON0_REG, apll_con0);
+	bus_space_write_4(bst, bsh, CRU_APLL_CON1_REG, apll_con1);
+
+	/* Wait for PLL lock */
+	for (volatile int i = 5000; i >= 0; i--)
+		;
+
+	/* Power up */
+	bus_space_write_4(bst, bsh, CRU_APLL_CON3_REG,
+	    CRU_PLL_CON3_POWER_DOWN_MASK);
+
+	/* Update CLKSEL regs */
+	bus_space_write_4(bst, bsh, CRU_CLKSEL_CON_REG(0), clksel0_con);
+	bus_space_write_4(bst, bsh, CRU_CLKSEL_CON_REG(1), clksel1_con);
+
+	for (volatile int i = 50000; i >= 0; i--)
+		;
+
+	/* Change from slow mode to normal mode */
+	bus_space_write_4(bst, bsh, CRU_MODE_CON_REG,
+	    CRU_MODE_CON_APLL_WORK_MODE_MASK |
+	    __SHIFTIN(CRU_MODE_CON_APLL_WORK_MODE_NORMAL,
+		      CRU_MODE_CON_APLL_WORK_MODE));
+
+#ifdef ROCKCHIP_CLOCK_DEBUG
+	printf("after: APLL_CON0: %#x\n",
+	    bus_space_read_4(bst, bsh, CRU_APLL_CON0_REG));
+	printf("after: APLL_CON1: %#x\n",
+	    bus_space_read_4(bst, bsh, CRU_APLL_CON1_REG));
+	printf("after: CLKSEL0_CON: %#x\n",
+	    bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(0)));
+	printf("after: CLKSEL1_CON: %#x\n",
+	    bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(1)));
+#endif
+
+	return 0;
+}
+
+u_int
+rockchip_apll_set_rate(u_int rate)
+{
+	if (rockchip_is_chip(ROCKCHIP_CHIPVER_RK3188) ||
+	    rockchip_is_chip(ROCKCHIP_CHIPVER_RK3188PLUS)) {
+		return rk3188_apll_set_rate(rate);
+	}
+
+	return ENODEV;
+}
+
 u_int
 rockchip_cpu_get_rate(void)
 {
@@ -122,17 +309,13 @@ rockchip_cpu_get_rate(void)
 		rate = rockchip_apll_get_rate();
 	}
 
-#if notyet
-	if (rockchip_chip_id() == ROCKCHIP_CHIP_ID_RK3188) {
-		a9_core_div_con = __SHIFTOUT(clksel_con0,
-				     RK3188_CRU_CLKSEL_CON0_A9_CORE_DIV_CON);
-	} else {
+	if (rockchip_is_chip(ROCKCHIP_CHIPVER_RK3066)) {
 		a9_core_div_con = __SHIFTOUT(clksel_con0,
 				     CRU_CLKSEL_CON0_A9_CORE_DIV_CON);
+	} else {
+		a9_core_div_con = __SHIFTOUT(clksel_con0,
+				     RK3188_CRU_CLKSEL_CON0_A9_CORE_DIV_CON);
 	}
-#else
-	a9_core_div_con = 0;
-#endif
 
 #ifdef ROCKCHIP_CLOCK_DEBUG
 	printf("%s: clksel_con0=%#x\n", __func__, clksel_con0);
@@ -153,11 +336,7 @@ rockchip_a9periph_get_rate(void)
 	rockchip_get_cru_bsh(&bsh);
 
 	clksel_con0 = bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(0));
-	if (clksel_con0 & CRU_CLKSEL_CON0_CPU_CLK_PLL_SEL) {
-		rate = rockchip_gpll_get_rate();
-	} else {
-		rate = rockchip_apll_get_rate();
-	}
+	rate = rockchip_cpu_get_rate();
 	core_peri_div_con = __SHIFTOUT(clksel_con0,
 				       CRU_CLKSEL_CON0_CORE_PERI_DIV_CON);
 
@@ -216,7 +395,7 @@ rockchip_mmc0_set_div(u_int div)
 
 	clksel_con11 = CRU_CLKSEL_CON11_MMC0_PLL_SEL_MASK |
 		       CRU_CLKSEL_CON11_MMC0_DIV_CON_MASK;
-	//clksel_con11 |= CRU_CLKSEL_CON11_MMC0_PLL_SEL;	/* GPLL */
+	clksel_con11 |= CRU_CLKSEL_CON11_MMC0_PLL_SEL;	/* GPLL */
 	clksel_con11 |= __SHIFTIN(div - 1, CRU_CLKSEL_CON11_MMC0_DIV_CON);
 
 #ifdef ROCKCHIP_CLOCK_DEBUG

@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_var.h,v 1.6 2014/12/27 19:14:05 jmcneill Exp $ */
+/* $NetBSD: rockchip_var.h,v 1.7 2014/12/30 03:53:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -58,7 +58,13 @@ extern bus_space_handle_t rockchip_core1_bsh;
 
 void rockchip_bootstrap(void);
 
+bool rockchip_is_chip(const char *);
+#define ROCKCHIP_CHIPVER_RK3066		"300A20111111V101"
+#define ROCKCHIP_CHIPVER_RK3188		"310B20121130V100"
+#define ROCKCHIP_CHIPVER_RK3188PLUS	"310B20130131V101"
+
 u_int rockchip_apll_get_rate(void);
+u_int rockchip_apll_set_rate(u_int);
 u_int rockchip_gpll_get_rate(void);
 u_int rockchip_cpu_get_rate(void);
 u_int rockchip_ahb_get_rate(void);

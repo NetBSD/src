@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.11 2014/12/29 03:16:07 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.12 2014/12/30 03:53:52 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.11 2014/12/29 03:16:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.12 2014/12/30 03:53:52 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -465,6 +465,7 @@ initarm(void *arg)
 {
 	psize_t ram_size = 0;
 	char *ptr;
+	u_int cpufreq;
 	*(volatile int *)CONSADDR_VA  = 0x40;	/* output '@' */
 #if 1
 	rockchip_putchar('d');
@@ -483,8 +484,6 @@ initarm(void *arg)
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
-
-	curcpu()->ci_data.cpu_cc_freq = rockchip_cpu_get_rate();
 
 	init_clocks();
 
@@ -508,7 +507,6 @@ initarm(void *arg)
 
 	printf("\nuboot arg = %#x, %#x, %#x, %#x\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
-
 
 #ifdef KGDB
 	kgdb_port_init();
@@ -584,6 +582,8 @@ initarm(void *arg)
 		}
 	}
 
+	printf("bootargs: %s\n", bootargs);
+
 	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
 
@@ -596,6 +596,13 @@ initarm(void *arg)
 		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
 		use_fb_console = true;
 	}
+
+	if (get_bootconf_option(boot_args, "cpu.frequency",
+		    BOOTOPT_TYPE_INT, &cpufreq)) {
+		rockchip_apll_set_rate(cpufreq * 1000000);
+	}
+
+	curcpu()->ci_data.cpu_cc_freq = rockchip_cpu_get_rate();
 
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
