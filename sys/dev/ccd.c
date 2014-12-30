@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.155 2014/12/30 02:21:10 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.156 2014/12/30 12:42:16 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.155 2014/12/30 02:21:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.156 2014/12/30 12:42:16 jnemeth Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -305,6 +305,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 	int error, path_alloced;
 	uint64_t psize, minsize;
 	unsigned secsize, maxsecsize;
+	struct disk_geom *dg;
 
 #ifdef DEBUG
 	if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
@@ -430,6 +431,14 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 	ccg->ccg_ntracks = 1;
 	ccg->ccg_nsectors = 1024 * (1024 / ccg->ccg_secsize);
 	ccg->ccg_ncylinders = cs->sc_size / ccg->ccg_nsectors;
+
+        dg = &cs->sc_dkdev.dk_geom;
+        memset(dg, 0, sizeof(*dg));
+        dg->dg_secperunit = cs->sc_size;
+        dg->dg_secsize = ccg->ccg_secsize;
+        dg->dg_nsectors = ccg->ccg_nsectors;
+        dg->dg_ntracks = ccg->ccg_ntracks;
+        dg->dg_ncylinders = ccg->ccg_ncylinders;
 	
 	if (cs->sc_ileave > 0)
 	        aprint_normal("%s: Interleaving %d component%s "
@@ -1243,6 +1252,8 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			bufq_free(cs->sc_bufq);
 			goto out;
 		}
+		disk_set_info(NULL, &cs->sc_dkdev, NULL);
+		dkwedge_discover(&cs->sc_dkdev);
 
 		/* We can free the temporary variables now. */
 		kmem_free(vpp, ccio->ccio_ndisks * sizeof(*vpp));
@@ -1326,6 +1337,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		aprint_normal("%s: detached\n", cs->sc_xname);
 
 		/* Detach the disk. */
+		dkwedge_delall(&cs->sc_dkdev);
 		disk_detach(&cs->sc_dkdev);
 		bufq_free(cs->sc_bufq);
 		ccdput(cs);
