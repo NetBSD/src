@@ -1,4 +1,4 @@
-.\"	$NetBSD: midirecord.1,v 1.1 2014/12/30 04:14:25 mrg Exp $
+.\"	$NetBSD: midirecord.1,v 1.2 2014/12/30 12:10:07 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2001, 2002, 2010 Matthew R. Green
 .\" All rights reserved.
@@ -32,15 +32,15 @@
 .Nd record midi files
 .Sh SYNOPSIS
 .Nm
-.Op Fl afhoqV
+.Op Fl aDfhqV
 .Op Fl B Ar buffersize
 .Op Fl c Ar channels
 .Op Fl d Ar devices
 .Op Fl f Ar sequencerdev
 .Op Fl n Ar notesperbeat
 .Op Fl r Ar raw_output
-.Op Fl t Ar time
 .Op Fl T Ar tempo
+.Op Fl t Ar time
 .Ar file
 .Sh DESCRIPTION
 The
@@ -49,7 +49,6 @@ program converts the sequencer events read on
 .Ar sequencerdev
 to the named MIDI SMF output.
 If the file name is \-, output will go to the standard output.
-.Pp
 .Sh OPTIONS
 The following options are available:
 .Bl -tag -width XnXnotesperbeatX
@@ -79,11 +78,14 @@ Print a help message.
 .It Fl n Ar notesperbeat
 Sets the MIDI notes (clocks) per beat to
 .Ar notesperbeat .
+.It Fl q
+Be quiet.
 .It Fl r Ar raw_output
 Create the raw output of the sequencer device in
 .Ar raw_output .
-.It Fl q
-Be quiet.
+.It Fl T Ar tempo
+Set the tempo for the recording to
+.Ar tempo .
 .It Fl t Ar time
 Sets the maximum amount of time to record.
 Format is [hh:]mm:ss[.dddddd].
@@ -92,17 +94,17 @@ Be verbose.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width MIDIDEVICE
-.It MIDIDEVICE
+.It Ev MIDIDEVICE
 the midi device to be used.
 .El
 .Sh SEE ALSO
 .Xr midiplay 1 ,
 .Xr midi 4 ,
-.Xr sequencer 4 .
+.Xr sequencer 4
 .Sh HISTORY
 The
 .Nm
-program was first seen in 
+program was first seen in
 .Nx 8 .
 .Sh AUTHORS
 The
