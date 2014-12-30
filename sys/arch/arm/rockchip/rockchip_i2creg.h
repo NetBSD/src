@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_i2creg.h,v 1.1 2014/12/30 17:15:31 jmcneill Exp $ */
+/* $NetBSD: rockchip_i2creg.h,v 1.2 2014/12/30 18:57:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -63,7 +63,7 @@
 #define I2C_MRXRADDR_SRADDHVLD	__BIT(26)
 #define I2C_MRXRADDR_SRADDMVLD	__BIT(25)
 #define I2C_MRXRADDR_SRADDLVLD	__BIT(24)
-#define I2C_MRXADDR_SADDR	__BITS(23,0)
+#define I2C_MRXRADDR_SRADDR	__BITS(23,0)
 
 #define I2C_MTXCNT_COUNT	__BITS(5,0)
 
