@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.4 2014/12/30 17:15:31 jmcneill Exp $
+#	$NetBSD: files.rockchip,v 1.5 2014/12/30 18:57:36 jmcneill Exp $
 #
 # Configuration info for Rockchip ARM Peripherals
 #
@@ -49,3 +49,4 @@ defparam opt_rockchip.h			MEMSIZE
 
 # Debugging parameters
 defflag opt_rockchip.h			ROCKCHIP_CLOCK_DEBUG
+defflag opt_rkiic.h			RKIIC_DEBUG
