@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.154 2014/10/11 12:36:25 mlelstv Exp $	*/
+/*	$NetBSD: ccd.c,v 1.155 2014/12/30 02:21:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.154 2014/10/11 12:36:25 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.155 2014/12/30 02:21:10 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1153,6 +1153,10 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			goto out;
 		}
 	}
+
+	error = disk_ioctl(&cs->sc_dkdev, cmd, data, flag, l); 
+	if (error != EPASSTHROUGH)
+		goto out;
 
 	switch (cmd) {
 	case CCDIOCSET:
