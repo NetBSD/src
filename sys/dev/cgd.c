@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.92 2014/12/29 18:23:57 mlelstv Exp $ */
+/* $NetBSD: cgd.c,v 1.93 2014/12/30 20:18:44 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.92 2014/12/29 18:23:57 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.93 2014/12/30 20:18:44 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -554,10 +554,8 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	    dev, cmd, data, flag, l));
 
 	switch (cmd) {
-	case CGDIOCGET: /* don't call cgd_spawn() if the device isn't there */
-		cs = NULL;
-		dksc = NULL;
-		break;
+	case CGDIOCGET:
+		return cgd_ioctl_get(dev, data, l);
 	case CGDIOCSET:
 	case CGDIOCCLR:
 		if ((flag & FWRITE) == 0)
@@ -582,8 +580,6 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (DK_BUSY(&cs->sc_dksc, pmask))
 			return EBUSY;
 		return cgd_ioctl_clr(cs, l);
-	case CGDIOCGET:
-		return cgd_ioctl_get(dev, data, l);
 	case DIOCCACHESYNC:
 		/*
 		 * XXX Do we really need to care about having a writable
@@ -598,6 +594,9 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return VOP_IOCTL(cs->sc_tvn, cmd, data, flag, l->l_cred);
 	default:
 		return dk_ioctl(di, dksc, dev, cmd, data, flag, l);
+	case CGDIOCGET:
+		KASSERT(0);
+		return EINVAL;
 	}
 }
 
