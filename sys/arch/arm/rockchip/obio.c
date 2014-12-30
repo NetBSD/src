@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.4 2014/12/30 12:38:20 jmcneill Exp $	*/
+/*	$NetBSD: obio.c,v 1.5 2014/12/30 17:15:31 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.4 2014/12/30 12:38:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.5 2014/12/30 17:15:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,8 @@ obio_print(void *aux, const char *pnp)
 		aprint_normal(" intr %d", obio->obio_intr);
 	if (obio->obio_mult != OBIOCF_MULT_DEFAULT)
 		aprint_normal(" mult %d", obio->obio_mult);
+	if (obio->obio_port != OBIOCF_PORT_DEFAULT)
+		aprint_normal(" port %d", obio->obio_port);
 
 	return UNCONF;
 }
@@ -147,6 +149,7 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	obio.obio_width = cf->cf_loc[OBIOCF_WIDTH];
 	obio.obio_intr = cf->cf_loc[OBIOCF_INTR];
 	obio.obio_mult = cf->cf_loc[OBIOCF_MULT];
+	obio.obio_port = cf->cf_loc[OBIOCF_PORT];
 	obio.obio_dmat = &rockchip_bus_dma_tag;
 
 	switch (cf->cf_loc[OBIOCF_MULT]) {
@@ -249,10 +252,11 @@ static void
 obio_dump_clocks(void)
 {
 	printf("APLL: %u Hz\n", rockchip_apll_get_rate());
+	printf("CPLL: %u Hz\n", rockchip_cpll_get_rate());
 	printf("GPLL: %u Hz\n", rockchip_gpll_get_rate());
 	printf("CPU: %u Hz\n", rockchip_cpu_get_rate());
 	printf("AHB: %u Hz\n", rockchip_ahb_get_rate());
+	printf("APB: %u Hz\n", rockchip_apb_get_rate());
 	printf("A9PERIPH: %u Hz\n", rockchip_a9periph_get_rate());
-	printf("MMC0: %u Hz\n", rockchip_mmc0_get_rate());
 }
 #endif
