@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.26 2014/11/05 13:50:50 nakayama Exp $ */
+/*	$NetBSD: cache.h,v 1.27 2014/12/30 18:29:20 palle Exp $ */
 
 /*
  * Copyright (c) 2011 Matthew R. Green
@@ -118,39 +118,13 @@ void sp_tlb_flush_pte_usiii(vaddr_t, int);
 void sp_tlb_flush_all_us(void);
 void sp_tlb_flush_all_usiii(void);
 
-static __inline__ void
-sp_tlb_flush_pte_sun4v(vaddr_t va, int ctx)
-{
-	int64_t hv_rc;
-	hv_rc = hv_mmu_demap_page(va, ctx, MAP_DTLB|MAP_ITLB);
-	if ( hv_rc != H_EOK )
-		panic("hv_mmu_demap_page(%p,%d) failed - rc = %" PRIx64 "\n", (void*)va, ctx, hv_rc);
-}
-
-static __inline__ void
-sp_tlb_flush_pte(vaddr_t va, int ctx)
-{
-	if (CPU_ISSUN4V)
-		sp_tlb_flush_pte_sun4v(va, ctx);
-	else if (CPU_IS_USIII_UP() || CPU_IS_SPARC64_V_UP())
-		sp_tlb_flush_pte_usiii(va, ctx);
-	else
-		sp_tlb_flush_pte_us(va, ctx);
-}
-
-static __inline__ void
-sp_tlb_flush_all(void)
-{
-	if (CPU_IS_USIII_UP() || CPU_IS_SPARC64_V_UP())
-		sp_tlb_flush_all_usiii();
-	else
-		sp_tlb_flush_all_us();
-}
 
 extern	void	(*dcache_flush_page)(paddr_t);
 extern	void	(*dcache_flush_page_cpuset)(paddr_t, sparc64_cpuset_t);
 extern	void	(*blast_dcache)(void);
 extern	void	(*blast_icache)(void);
+extern	void	(*sp_tlb_flush_pte)(vaddr_t, int);
+extern	void	(*sp_tlb_flush_all)(void);
 
 void cache_setup_funcs(void);
 
