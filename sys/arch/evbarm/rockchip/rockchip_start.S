@@ -43,7 +43,7 @@
 
 #include <arm/cortex/scu_reg.h>
 
-RCSID("$NetBSD: rockchip_start.S,v 1.3 2014/12/28 21:34:33 jmcneill Exp $")
+RCSID("$NetBSD: rockchip_start.S,v 1.4 2014/12/30 21:24:36 jmcneill Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -180,8 +180,8 @@ _C_LABEL(rockchip_start):
 #endif
 rockchip_mptramp:
 	ldr	pc, 1f
-.global cortex_mpstart_vec
-cortex_mpstart_vec:
+.global rockchip_mpstart_vec
+rockchip_mpstart_vec:
 1:	.space	4
 
 rockchip_mpinit:
@@ -196,9 +196,9 @@ rockchip_mpinit:
 
 	/* Set where the other CPU(s) are going to execute */
 	XPUTC2(#118)
-	movw	r1, #:lower16:cortex_mpstart
-	movt	r1, #:upper16:cortex_mpstart
-	ldr	r0, =cortex_mpstart_vec
+	movw	r1, #:lower16:rockchip_mpstart
+	movt	r1, #:upper16:rockchip_mpstart
+	ldr	r0, =rockchip_mpstart_vec
 	str	r1, [r0]
 	ldr	r0, =rockchip_mptramp
 	mov	r2, #0
@@ -278,6 +278,17 @@ ASEND(rockchip_mpinit)
 #ifndef KERNEL_BASES_EQUAL
 	.popsection
 #endif
+
+rockchip_mpstart:
+	/* invalidate cache */
+	movw	ip, #:lower16:_C_LABEL(armv7_dcache_inv_all)
+	movt	ip, #:upper16:_C_LABEL(armv7_dcache_inv_all)
+#ifndef KERNEL_BASES_EQUAL
+	sub	ip, ip, #KERNEL_BASE_VOFFSET
+#endif
+	blx	ip
+	b	_C_LABEL(cortex_mpstart)
+
 #endif /* MULTIPROCESSOR */
 
 .Lmmu_init_table:
