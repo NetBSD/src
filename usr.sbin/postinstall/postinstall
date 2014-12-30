@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.187 2014/12/16 05:30:40 jnemeth Exp $
+# $NetBSD: postinstall,v 1.188 2014/12/30 07:02:29 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1451,26 +1451,16 @@ systemfs
 xntpd
 "
 rc_obsolete_vars="
-amd
-amd_master
-btcontrol
-btcontrol_devices
-critical_filesystems
-critical_filesystems_beforenet
-mountcritlocal
-mountcritremote
-network
-ip6forwarding
-network
-nfsiod_flags
-sdpd
-sdpd_control
-sdpd
-sdpd_groupname
-sdpd
-sdpd_username
-sysctl
-defcorename
+amd amd_master
+btcontrol btcontrol_devices
+critical_filesystems critical_filesystems_beforenet
+mountcritlocal mountcritremote
+network ip6forwarding
+network nfsiod_flags
+sdpd sdpd_control
+sdpd sdpd_groupname
+sdpd sdpd_username
+sysctl defcorename
 "
 
 additem rc "/etc/rc* and /etc/rc.d/ being up to date"
