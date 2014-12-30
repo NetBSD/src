@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_i2c.c,v 1.1 2014/12/30 17:15:31 jmcneill Exp $ */
+/* $NetBSD: rockchip_i2c.c,v 1.2 2014/12/30 17:28:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_i2c.c,v 1.1 2014/12/30 17:15:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_i2c.c,v 1.2 2014/12/30 17:28:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: rockchip_i2c.c,v 1.1 2014/12/30 17:15:31 jmcneill Ex
 
 #include <dev/i2c/i2cvar.h>
 
-#define RKIIC_CLOCK_RATE	1000000
+#define RKIIC_CLOCK_RATE	400000
 
 struct rkiic_softc {
 	device_t sc_dev;
