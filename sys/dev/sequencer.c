@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.62 2014/12/30 07:33:44 mrg Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.63 2014/12/30 07:39:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.62 2014/12/30 07:33:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.63 2014/12/30 07:39:15 mrg Exp $");
 
 #include "sequencer.h"
 
@@ -344,9 +344,10 @@ sequenceropen(dev_t dev, int flags, int ifmt, struct lwp *l)
 				md->doingsysex = 0;
 				DPRINTF(("%s: midi unit %d opened as seq %p\n",
 				    __func__, unit, md));
-			} else
+			} else {
 				DPRINTF(("%s: midi unit %d not opened as seq\n",
 				    __func__, unit));
+			}
 		}
 		mutex_enter(&sc->lock);
 	} else {
