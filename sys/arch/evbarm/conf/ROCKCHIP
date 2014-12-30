@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ROCKCHIP,v 1.5 2014/12/29 12:53:39 jmcneill Exp $
+#	$NetBSD: ROCKCHIP,v 1.6 2014/12/30 17:16:29 jmcneill Exp $
 #
 #	Rockchip RK3066/RK3188 based SBC (Single Board Computer)
 #
@@ -177,6 +177,14 @@ obio0		at mainbus?
 # On-board 16550 UARTs
 com0		at obio0 addr 0x20064000 size 0x400 intr 68 mult 4 # UART2 (console)
 options 	CONSADDR=0x20064000, CONSPEED=115200
+
+# I2C controllers
+rkiic0		at obio0 addr 0x2002c000 size 0x2000 port 0
+rkiic1		at obio0 addr 0x2002e000 size 0x2000 port 1
+rkiic2		at obio0 addr 0x20054000 size 0x4000 port 2
+rkiic3		at obio0 addr 0x20058000 size 0x4000 port 3
+rkiic4		at obio0 addr 0x2005c000 size 0x4000 port 4
+iic*		at rkiic?
 
 # SD/MMC
 dwcmmc0 	at obio0 addr 0x10214000 size 0x4000 intr 55
