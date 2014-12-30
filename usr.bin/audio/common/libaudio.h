@@ -1,4 +1,4 @@
-/*	$NetBSD: libaudio.h,v 1.18 2013/08/30 20:57:26 mrg Exp $	*/
+/*	$NetBSD: libaudio.h,v 1.19 2014/12/30 01:22:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2009 Matthew R. Green
@@ -180,6 +180,7 @@ const char *audio_errstring (int);
  * generic routines?
  */
 void	decode_int (const char *, int *);
+void	decode_uint (const char *, unsigned *);
 void	decode_time (const char *, struct timeval *);
 void	decode_encoding (const char *, int *);
 
