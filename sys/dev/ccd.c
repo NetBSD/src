@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.158 2014/12/30 20:29:42 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.159 2014/12/30 20:57:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.158 2014/12/30 20:29:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.159 2014/12/30 20:57:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -161,6 +161,7 @@ static pool_cache_t ccd_cache;
 
 /* called by main() at boot time */
 void	ccdattach(int);
+void	ccddetach(void);
 
 /* called by biodone() at interrupt time */
 static void	ccdiodone(struct buf *);
@@ -297,6 +298,13 @@ ccdattach(int num)
 	/* Initialize the component buffer pool. */
 	ccd_cache = pool_cache_init(sizeof(struct ccdbuf), 0,
 	    0, 0, "ccdbuf", NULL, IPL_BIO, NULL, NULL, NULL);
+}
+
+void
+ccddetach(void)
+{
+	pool_cache_destroy(ccd_cache);
+	mutex_destroy(&ccd_lock);
 }
 
 static int
@@ -1716,11 +1724,14 @@ ccd_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
 		mutex_enter(&ccd_lock);
-		if (ccd_nactive)
+		if (ccd_nactive) {
+			mutex_exit(&ccd_lock);
 			error = EBUSY;
-		else
+		} else {
+			mutex_exit(&ccd_lock);
 			error = devsw_detach(&ccd_bdevsw, &ccd_cdevsw);
-		mutex_exit(&ccd_lock);
+			ccddetach();
+		}
 #endif
 		break;
 
