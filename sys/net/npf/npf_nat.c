@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.38 2014/12/20 16:19:43 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.39 2014/12/30 19:11:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.38 2014/12/20 16:19:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.39 2014/12/30 19:11:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -256,6 +256,7 @@ npf_nat_newpolicy(prop_dictionary_t natdict, npf_ruleset_t *rset)
 	}
 	return np;
 err:
+	mutex_destroy(&np->n_lock);
 	kmem_free(np, sizeof(npf_natpolicy_t));
 	return NULL;
 }
