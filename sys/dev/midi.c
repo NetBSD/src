@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.82 2014/12/22 07:02:22 mrg Exp $	*/
+/*	$NetBSD: midi.c,v 1.83 2014/12/30 07:28:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.82 2014/12/22 07:02:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.83 2014/12/30 07:28:34 mrg Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -880,6 +880,8 @@ midiclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	mutex_enter(sc->lock);
 	/* midi_start_output(sc); anything buffered => pbus already set! */
 	while (sc->pbus) {
+		if (sc->dying)
+			break;
 		DPRINTFN(8,("midiclose sleep ...\n"));
 		cv_wait(&sc->wchan, sc->lock);
 	}
@@ -1277,13 +1279,13 @@ midi_intr_out(struct midi_softc *sc)
 		error = sc->hw_if->output(sc->hw_hdl, *buf_cur);
 		if (error &&  error != EINPROGRESS)
 			break;
-		++ buf_cur;
+		++buf_cur;
 		MIDI_BUF_WRAP(buf);
-		-- msglen;
+		--msglen;
 		if (msglen)
 			*idx_cur = PACK_MB_IDX(MB_IDX_CAT(*idx_cur),msglen);
 		else {
-			++ idx_cur;
+			++idx_cur;
 			MIDI_BUF_WRAP(idx);
 		}
 		if (!error) {
@@ -1362,7 +1364,7 @@ real_writebytes(struct midi_softc *sc, u_char *ibuf, int cc)
 	
 	while (ibuf < iend) {
 		got = midi_fst(&sc->xmt, *ibuf, form);
-		++ ibuf;
+		++ibuf;
 		switch ( got) {
 		case FST_MORE:
 			continue;
@@ -1484,7 +1486,6 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 				 * the common syscall code will automagically
 				 * convert this to success with a short count.
 				 */
-				mutex_exit(sc->lock);
 				error = EWOULDBLOCK;
 				goto out;
 			}
@@ -1495,6 +1496,8 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 				pollout = 0;
 			} else
 				error = cv_wait_sig(&sc->wchan, sc->lock);
+			if (sc->dying)
+				error = EIO;
 			if (error) {
 				/*
 				 * Similarly, the common code will handle
@@ -1532,7 +1535,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 			       "xfrcount=%zu inp=%p\n",
 			       error, xfrcount, inp);
 #endif
-		if ( error )
+		if (error)
 			break;
 		
 		/*
@@ -1581,7 +1584,10 @@ midi_writebytes(int unit, u_char *bf, int cc)
                     sc, unit, cc, bf[0], bf[1], bf[2]));
 
 	mutex_enter(sc->lock);
-	error = real_writebytes(sc, bf, cc);
+	if (sc->dying)
+		error = EIO;
+	else
+		error = real_writebytes(sc, bf, cc);
 	mutex_exit(sc->lock);
 
 	return error;
@@ -1596,13 +1602,16 @@ midiioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	MIDI_BUF_DECLARE(buf);
 
 	(void)buf_end;
-	sc = device_lookup_private(&midi_cd, MIDIUNIT(dev));;
-	if (sc->dying)
+	sc = device_lookup_private(&midi_cd, MIDIUNIT(dev));
+
+	mutex_enter(sc->lock);
+	if (sc->dying) {
+		mutex_exit(sc->lock);
 		return EIO;
+	}
 	hw = sc->hw_if;
 	error = 0;
 
-	mutex_enter(sc->lock);
 	sc->refcnt++;
 
 	DPRINTFN(5,("midiioctl: %p cmd=0x%08lx\n", sc, cmd));
