@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.3 2014/12/29 23:58:25 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.4 2014/12/30 12:36:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_dwc_mmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.3 2014/12/29 23:58:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.4 2014/12/30 12:36:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -338,7 +338,7 @@ dwc_mmc_card_detect(sdmmc_chipset_handle_t sch)
 	uint32_t cdetect;
 
 	cdetect = MMC_READ(sc, DWC_MMC_CDETECT_REG);
-	return !!(cdetect & DWC_MMC_CDETECT_CARD_DETECT_N);
+	return !(cdetect & DWC_MMC_CDETECT_CARD_DETECT_N);
 }
 
 static int
