@@ -1,4 +1,4 @@
-/*	$NetBSD: midirecord.c,v 1.2 2014/12/30 06:08:14 mrg Exp $	*/
+/*	$NetBSD: midirecord.c,v 1.3 2014/12/30 12:14:34 wiz Exp $	*/
 
 /*
  * Copyright (c) 2014 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midirecord.c,v 1.2 2014/12/30 06:08:14 mrg Exp $");
+__RCSID("$NetBSD: midirecord.c,v 1.3 2014/12/30 12:14:34 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -786,16 +786,16 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "Usage: %s [-afhoqV] [options] {outfile|-}\n",
+	fprintf(stderr, "Usage: %s [-aDfhqV] [options] {outfile|-}\n",
 	    getprogname());
 	fprintf(stderr, "Options:\n"
 	    "\t-B buffer size\n"
-	    "\t-c filt_chans\n"
-	    "\t-d filt_devno\n"
+	    "\t-c channels\n"
+	    "\t-d devices\n"
 	    "\t-f sequencerdev\n"
-	    "\t-n notes per beat\n"
+	    "\t-n notesperbeat\n"
 	    "\t-r raw_output\n"
-	    "\t-t recording time\n"
-	    "\t-T tempo\n");
+	    "\t-T tempo\n"
+	    "\t-t recording time\n");
 	exit(EXIT_FAILURE);
 }
