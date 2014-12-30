@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_board.c,v 1.6 2014/12/30 03:53:52 jmcneill Exp $ */
+/* $NetBSD: rockchip_board.c,v 1.7 2014/12/30 17:15:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.6 2014/12/30 03:53:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.7 2014/12/30 17:15:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -112,6 +112,12 @@ u_int
 rockchip_gpll_get_rate(void)
 {
 	return rockchip_pll_get_rate(CRU_GPLL_CON0_REG, CRU_GPLL_CON1_REG);
+}
+
+u_int
+rockchip_cpll_get_rate(void)
+{
+	return rockchip_pll_get_rate(CRU_CPLL_CON0_REG, CRU_CPLL_CON1_REG);
 }
 
 u_int
@@ -364,6 +370,26 @@ rockchip_ahb_get_rate(void)
 }
 
 u_int
+rockchip_apb_get_rate(void)
+{
+	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_handle_t bsh;
+	uint32_t clksel_con10;
+	uint32_t pclk_div, aclk_div;
+
+	rockchip_get_cru_bsh(&bsh);
+
+	clksel_con10 = bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(10));
+
+	pclk_div = __SHIFTOUT(clksel_con10,
+			      CRU_CLKSEL_CON10_PERI_PCLK_DIV_CON) + 1;
+	aclk_div = 1 << __SHIFTOUT(clksel_con10,
+				   CRU_CLKSEL_CON10_PERI_ACLK_DIV_CON);
+
+	return rockchip_gpll_get_rate() / (pclk_div * aclk_div);
+}
+
+u_int
 rockchip_mmc0_get_rate(void)
 {
 	bus_space_tag_t bst = &rockchip_bs_tag;
@@ -415,4 +441,14 @@ rockchip_mmc0_set_div(u_int div)
 #endif
 
 	return 0;
+}
+
+u_int
+rockchip_i2c_get_rate(u_int port)
+{
+	if (port == 0 || port == 1) {
+		return rockchip_a9periph_get_rate();
+	} else {
+		return rockchip_apb_get_rate();
+	}
 }
