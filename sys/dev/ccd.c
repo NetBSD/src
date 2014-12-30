@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.156 2014/12/30 12:42:16 jnemeth Exp $	*/
+/*	$NetBSD: ccd.c,v 1.157 2014/12/30 19:11:05 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.156 2014/12/30 12:42:16 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.157 2014/12/30 19:11:05 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1128,6 +1128,10 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case CCDIOCCLR:
 	case DIOCSDINFO:
 	case DIOCWDINFO:
+	case DIOCCACHESYNC:
+	case DIOCAWEDGE:
+	case DIOCDWEDGE:
+	case DIOCMWEDGES:
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCSDINFO:
 	case ODIOCWDINFO:
@@ -1145,6 +1149,10 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case CCDIOCCLR:
 	case DIOCGDINFO:
 	case DIOCCACHESYNC:
+	case DIOCAWEDGE:
+	case DIOCDWEDGE:
+	case DIOCLWEDGES:
+	case DIOCMWEDGES:
 	case DIOCSDINFO:
 	case DIOCWDINFO:
 	case DIOCGPART:
@@ -1167,6 +1175,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	if (error != EPASSTHROUGH)
 		goto out;
 
+	error = 0;
 	switch (cmd) {
 	case CCDIOCSET:
 		if (cs->sc_flags & CCDF_INITED) {
@@ -1252,8 +1261,6 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			bufq_free(cs->sc_bufq);
 			goto out;
 		}
-		disk_set_info(NULL, &cs->sc_dkdev, NULL);
-		dkwedge_discover(&cs->sc_dkdev);
 
 		/* We can free the temporary variables now. */
 		kmem_free(vpp, ccio->ccio_ndisks * sizeof(*vpp));
@@ -1271,7 +1278,12 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		/* Try and read the disklabel. */
 		ccdgetdisklabel(dev);
-		break;
+		disk_set_info(NULL, &cs->sc_dkdev, NULL);
+
+		/* discover wedges */
+		mutex_exit(&cs->sc_dvlock);
+		dkwedge_discover(&cs->sc_dkdev);
+		return 0;
 
 	case CCDIOCCLR:
 		/*
@@ -1287,6 +1299,9 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			error = EBUSY;
 			goto out;
 		}
+
+		/* Delete all of our wedges. */
+		dkwedge_delall(&cs->sc_dkdev);
 
 		/* Stop new I/O, wait for in-flight I/O to complete. */
 		mutex_enter(cs->sc_iolock);
@@ -1337,7 +1352,6 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		aprint_normal("%s: detached\n", cs->sc_xname);
 
 		/* Detach the disk. */
-		dkwedge_delall(&cs->sc_dkdev);
 		disk_detach(&cs->sc_dkdev);
 		bufq_free(cs->sc_bufq);
 		ccdput(cs);
@@ -1365,13 +1379,6 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case DIOCCACHESYNC:
 		/*
-		 * XXX Do we really need to care about having a writable
-		 * file descriptor here?
-		 */
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/*
 		 * We pass this call down to all components and report
 		 * the first error we encounter.
 		 */
@@ -1382,6 +1389,42 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				error = j;
 		}
 		break;
+
+	case DIOCAWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *) data;
+
+		/* If the ioctl happens here, the parent is us. */
+		strlcpy(dkw->dkw_parent, cs->sc_xname,
+			sizeof(dkw->dkw_parent));
+		error = dkwedge_add(dkw);
+		break;
+	    }
+
+	case DIOCDWEDGE:
+	    {
+	    	struct dkwedge_info *dkw = (void *) data;
+
+		/* If the ioctl happens here, the parent is us. */
+		strlcpy(dkw->dkw_parent, cs->sc_xname,
+			sizeof(dkw->dkw_parent));
+		error = dkwedge_del(dkw);
+		break;
+	    }
+
+	case DIOCLWEDGES:
+	    {
+	    	struct dkwedge_list *dkwl = (void *) data;
+
+		error = dkwedge_list(&cs->sc_dkdev, dkwl, l);
+		break;
+	    }
+
+	case DIOCMWEDGES:
+	    {
+		dkwedge_discover(&cs->sc_dkdev);
+		break;
+	    }
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
