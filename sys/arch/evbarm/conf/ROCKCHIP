@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ROCKCHIP,v 1.7 2014/12/30 17:28:52 jmcneill Exp $
+#	$NetBSD: ROCKCHIP,v 1.8 2014/12/30 21:29:43 jmcneill Exp $
 #
 #	Rockchip RK3066/RK3188 based SBC (Single Board Computer)
 #
@@ -156,7 +156,7 @@ mainbus0	at root
 
 # The boot cpu
 cpu*		at mainbus?
-#options 	MULTIPROCESSOR
+options 	MULTIPROCESSOR
 
 # A9 core devices
 armperiph0	at mainbus?
