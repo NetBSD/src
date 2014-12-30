@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.142 2014/12/29 18:26:25 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.143 2014/12/30 11:59:03 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -6848,4 +6848,9 @@ sys/netinet6/mld6.c				1.61
 	(mld_timeo) not call callout_schedule when we already called
 	callout_halt.
 	[ozaki-r, ticket #360]
+
+sys/external/bsd/drm2/dist/drm/i915/i915_gem.c	1.19
+
+	Also need to flush an object from CPU domain.
+	[nonaka, ticket #362]
 
