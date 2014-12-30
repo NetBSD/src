@@ -1,4 +1,4 @@
-/*	$NetBSD: midirecord.c,v 1.3 2014/12/30 12:14:34 wiz Exp $	*/
+/*	$NetBSD: midirecord.c,v 1.4 2014/12/30 18:52:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 2014 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midirecord.c,v 1.3 2014/12/30 12:14:34 wiz Exp $");
+__RCSID("$NetBSD: midirecord.c,v 1.4 2014/12/30 18:52:47 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 	size_t	bufsize = 0;
 	int	ch, no_time_limit = 1;
 
-	while ((ch = getopt(argc, argv, "aB:c:Dd:f:hn:qr:t:T:V")) != -1) {
+	while ((ch = getopt(argc, argv, "aB:c:Dd:f:hn:oqr:t:T:V")) != -1) {
 		switch (ch) {
 		case 'a':
 			aflag++;
