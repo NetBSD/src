@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_var.h,v 1.3 2014/12/29 23:58:25 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc_var.h,v 1.4 2014/12/30 00:19:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@ struct dwc_mmc_softc {
 	bus_dma_tag_t		sc_dmat;
 	void			*sc_ih;
 	unsigned int		sc_clock_freq;
-	unsigned int		sc_bus_freq;
+	unsigned int		sc_clock_max;
 	unsigned int		sc_fifo_depth;
 	uint32_t		sc_flags;
 #define DWC_MMC_F_USE_HOLD_REG	0x0001	/* set USE_HOLD_REG with every cmd */
