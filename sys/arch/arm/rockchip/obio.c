@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.3 2014/12/27 16:18:50 jmcneill Exp $	*/
+/*	$NetBSD: obio.c,v 1.4 2014/12/30 12:38:20 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.3 2014/12/27 16:18:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.4 2014/12/30 12:38:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,16 +166,28 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	return 0;
 }
 
-#define GRF_GPIO3A_IOMUX_OFFSET	0x0090
-#define GRF_GPIO3B_IOMUX_OFFSET	0x0094
-#define GRF_GPIO3C_IOMUX_OFFSET	0x0098
-#define GRF_GPIO3D_IOMUX_OFFSET	0x009C
+#define RK3188_GRF_GPIO3A_IOMUX_OFFSET	0x0090
+#define RK3188_GRF_GPIO3B_IOMUX_OFFSET	0x0094
+#define RK3188_GRF_GPIO3C_IOMUX_OFFSET	0x0098
+#define RK3188_GRF_GPIO3D_IOMUX_OFFSET	0x009C
+
+#define GRF_GPIO0A_IOMUX_OFFSET	0x00a8
+#define GRF_GPIO3A_IOMUX_OFFSET	0x00d8
+#define GRF_GPIO3B_IOMUX_OFFSET	0x00dc
 
 void obio_init_grf(void)
 {
-	obio_iomux(GRF_GPIO3A_IOMUX_OFFSET, 0xffff5555);
-	obio_iomux(GRF_GPIO3B_IOMUX_OFFSET, 0xffff0004);
-	obio_iomux(GRF_GPIO3D_IOMUX_OFFSET, 0xffff1400);
+#if 1
+	/* Radxa Rock */
+	obio_iomux(RK3188_GRF_GPIO3A_IOMUX_OFFSET, 0x55555554); /* MMC0 */
+	obio_iomux(RK3188_GRF_GPIO3B_IOMUX_OFFSET, 0x00050001); /* MMC0 */
+	obio_iomux(RK3188_GRF_GPIO3D_IOMUX_OFFSET, 0x3c000000); /* VBUS */
+#else
+	/* ChipSPARK Rayeager PX2 */
+	obio_iomux(GRF_GPIO0A_IOMUX_OFFSET, 0x14000000); /* VBUS */
+	obio_iomux(GRF_GPIO3A_IOMUX_OFFSET, 0x50004000); /* MMC0 */
+	obio_iomux(GRF_GPIO3B_IOMUX_OFFSET, 0x55551555); /* MMC0 */
+#endif
 }
 
 void obio_iomux(int offset, int new)
@@ -188,7 +200,7 @@ void obio_iomux(int offset, int new)
 	    ROCKCHIP_GRF_SIZE, &bh);
 
 	old = bus_space_read_4(bt, bh, offset);
-	bus_space_write_4(bt, bh, offset, (old | new | 0xffff0000));
+	bus_space_write_4(bt, bh, offset, new);
 	renew = bus_space_read_4(bt, bh, offset);
 
 	printf("grf iomux: old %08x, new %08x, renew %08x\n", old, new, renew);
@@ -199,8 +211,21 @@ void obio_iomux(int offset, int new)
 
 void obio_init_gpio(void)
 {
+#if 1
+	/* Radxa Rock */
 	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(3));
 	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(3));
+	obio_swporta(ROCKCHIP_GPIO2_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(31));
+	obio_swporta(ROCKCHIP_GPIO2_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(31));
+#else
+	/* ChipSPARK Rayeager PX2 */
+	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(5));
+	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(5));
+	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(6));
+	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(6));
+	obio_swporta(ROCKCHIP_GPIO1_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(31));
+	obio_swporta(ROCKCHIP_GPIO1_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(31));
+#endif
 }
 
 void obio_swporta(int gpio_base, int offset, int new)
