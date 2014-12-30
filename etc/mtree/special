@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.149 2014/09/20 15:10:41 roy Exp $
+#	$NetBSD: special,v 1.150 2014/12/30 03:52:03 uebayasi Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -75,7 +75,7 @@
 ./etc/ftpwelcome		type=file mode=0644 optional
 ./etc/gateways			type=file mode=0644 optional
 ./etc/gettytab			type=file mode=0644
-./etc/gpio.conf			type=file mode=644
+./etc/gpio.conf			type=file mode=0644
 ./etc/group			type=file mode=0644
 ./etc/hesiod.conf		type=file mode=0644 optional
 ./etc/hosts			type=file mode=0644
@@ -173,6 +173,9 @@
 ./etc/printcap			type=file mode=0644
 ./etc/profile			type=file mode=0644
 ./etc/protocols			type=file mode=0644
+./etc/racoon			type=dir  mode=0755 optional
+./etc/racoon/racoon.conf	type=file mode=0644 optional
+./etc/racoon/psk.txt		type=file mode=0600 optional tags=nodiff
 ./etc/rbootd.conf		type=file mode=0644 optional
 ./etc/rc			type=file mode=0644
 ./etc/rc.conf			type=file mode=0644
@@ -195,6 +198,7 @@
 ./etc/rc.d/cron			type=file mode=0555
 ./etc/rc.d/devpubd		type=file mode=0555
 ./etc/rc.d/dhclient		type=file mode=0555
+./etc/rc.d/dhcpcd		type=file mode=0555
 ./etc/rc.d/dhcpd		type=file mode=0555
 ./etc/rc.d/dhcrelay		type=file mode=0555
 ./etc/rc.d/dmesg		type=file mode=0555
@@ -225,6 +229,8 @@
 ./etc/rc.d/local		type=file mode=0555
 ./etc/rc.d/lpd			type=file mode=0555
 ./etc/rc.d/lvm			type=file mode=0555
+./etc/rc.d/makemandb		type=file mode=0555
+./etc/rc.d/mdnsd		type=file mode=0555
 ./etc/rc.d/mixerctl		type=file mode=0555
 ./etc/rc.d/mopd			type=file mode=0555
 ./etc/rc.d/motd			type=file mode=0555
@@ -264,6 +270,11 @@
 ./etc/rc.d/routed		type=file mode=0555
 ./etc/rc.d/rpcbind		type=file mode=0555
 ./etc/rc.d/rtadvd		type=file mode=0555
+./etc/saslc.d			type=dir  mode=0755
+./etc/saslc.d/postfix		type=dir  mode=0755
+./etc/saslc.d/postfix/mech	type=dir  mode=0755
+./etc/saslc.d/saslc		type=dir  mode=0755
+./etc/saslc.d/saslc/mech	type=dir  mode=0755
 ./etc/rc.d/rtclocaltime		type=file mode=0555
 ./etc/rc.d/rwho			type=file mode=0555
 ./etc/rc.d/savecore		type=file mode=0555
@@ -328,10 +339,7 @@
 ./etc/weekly.conf		type=file mode=0644
 ./etc/weekly.local		type=file mode=0644 optional
 ./etc/wscons.conf		type=file mode=0644
-
-./etc/racoon			type=dir  mode=0755 optional
-./etc/racoon/racoon.conf	type=file mode=0644 optional
-./etc/racoon/psk.txt		type=file mode=0600 optional tags=nodiff
+./etc/zfs			type=dir  mode=0755
 
 ./private			type=dir mode=0755 optional
 ./private/tmp			type=dir mode=0111 optional ignore
