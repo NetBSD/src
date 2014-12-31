@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.317 2014/12/21 17:04:12 taca Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.318 2014/12/31 08:24:50 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.317 2014/12/21 17:04:12 taca Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.318 2014/12/31 08:24:50 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2019,16 +2019,15 @@ raidinit(struct raid_softc *rs)
 
 	disk_init(&rs->sc_dkdev, rs->sc_xname, &rf_dkdriver);
 	disk_attach(&rs->sc_dkdev);
-	disk_blocksize(&rs->sc_dkdev, raidPtr->bytesPerSector);
 
 	/* XXX There may be a weird interaction here between this, and
 	 * protectedSectors, as used in RAIDframe.  */
 
 	rs->sc_size = raidPtr->totalSectors;
 
-	dkwedge_discover(&rs->sc_dkdev);
-
 	rf_set_geometry(rs, raidPtr);
+
+	dkwedge_discover(&rs->sc_dkdev);
 
 }
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
