@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vm.c,v 1.6 2014/12/14 23:48:58 chs Exp $	*/
+/*	$NetBSD: drm_vm.c,v 1.7 2014/12/31 08:55:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.6 2014/12/14 23:48:58 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.7 2014/12/31 08:55:18 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -49,7 +49,8 @@ int
 drm_mmap_object(struct drm_device *dev, off_t offset, size_t size, int prot,
     struct uvm_object **uobjp, voff_t *uoffsetp, struct file *file __unused)
 {
-	dev_t devno = cdevsw_lookup_major(&drm_cdevsw);
+	devmajor_t maj = cdevsw_lookup_major(&drm_cdevsw);
+	dev_t devno = makedev(maj, dev->primary->index);
 	struct uvm_object *uobj;
 
 	KASSERT(offset == (offset & ~(PAGE_SIZE-1)));
