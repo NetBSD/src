@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_crureg.h,v 1.5 2014/12/30 03:53:52 jmcneill Exp $ */
+/* $NetBSD: rockchip_crureg.h,v 1.6 2014/12/31 18:08:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -62,7 +62,12 @@
 #define CRU_PLL_CON1_CLKF_MASK	__BITS(31,16)
 #define CRU_PLL_CON1_CLKF	__BITS(15,0)
 
+#define CRU_PLL_CON2_BWADJ_MASK	__BITS(27,16)
+#define CRU_PLL_CON2_BWADJ	__BITS(11,0)
+
+#define CRU_PLL_CON3_RESET_MASK	__BIT(21)
 #define CRU_PLL_CON3_POWER_DOWN_MASK __BIT(17)
+#define CRU_PLL_CON3_RESET	__BIT(5)
 #define CRU_PLL_CON3_POWER_DOWN	__BIT(1)
 
 #define CRU_MODE_CON_APLL_WORK_MODE_MASK	__BITS(17,16)
@@ -104,6 +109,11 @@
 #define CRU_CLKSEL_CON11_MMC0_DIV_CON_MASK	__BITS(21,16)
 #define CRU_CLKSEL_CON11_MMC0_PLL_SEL		__BIT(6)
 #define CRU_CLKSEL_CON11_MMC0_DIV_CON		__BITS(5,0)
+
+#define CRU_CLKSEL_CON13_UART0_CLK_SEL_MASK	__BITS(25,24)
+#define CRU_CLKSEL_CON13_UART0_DIV_CON_MASK	__BITS(22,16)
+#define CRU_CLKSEL_CON13_UART0_CLK_SEL		__BITS(9,8)
+#define CRU_CLKSEL_CON13_UART0_DIV_CON		__BITS(6,0)
 
 #define CRU_GLB_SRST_FST_MAGIC	0xfdb9
 
