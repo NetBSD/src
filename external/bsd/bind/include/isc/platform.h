@@ -20,6 +20,8 @@
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
 
+#include <sys/atomic.h>
+
 /*! \file */
 
 /*****
@@ -208,10 +210,12 @@
  *** Miscellaneous.
  ***/
 
+#if 0 /* use define in Makefile instead */
 /*
  * Defined if we are using threads.
  */
 #define ISC_PLATFORM_USETHREADS 1
+#endif
 
 /*
  * Defined if unistd.h does not cause fd_set to be delared.
@@ -266,13 +270,17 @@
  * If the "xadd" operation is available on this architecture,
  * ISC_PLATFORM_HAVEXADD will be defined.
  */
+#ifdef __HAVE_ATOMIC64_OPS
 #define ISC_PLATFORM_HAVEXADD 1
+#endif
 
 /*
  * If the "xaddq" operation (64bit xadd) is available on this architecture,
  * ISC_PLATFORM_HAVEXADDQ will be defined.
  */
+#ifdef __HAVE_ATOMIC64_OPS
 #define ISC_PLATFORM_HAVEXADDQ 1
+#endif
 
 /*
  * If the "atomic swap" operation is available on this architecture,
