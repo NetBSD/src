@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.415 2014/11/04 07:51:55 mlelstv Exp $ */
+/*	$NetBSD: wd.c,v 1.416 2014/12/31 17:06:48 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.415 2014/11/04 07:51:55 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.416 2014/12/31 17:06:48 christos Exp $");
 
 #include "opt_ata.h"
 
@@ -1478,46 +1478,6 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		wi_free(wi);
 		return(error1);
 		}
-
-	case DIOCAWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *) addr;
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, device_xname(wd->sc_dev));
-		return (dkwedge_add(dkw));
-	    }
-
-	case DIOCDWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *) addr;
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, device_xname(wd->sc_dev));
-		return (dkwedge_del(dkw));
-	    }
-
-	case DIOCLWEDGES:
-	    {
-	    	struct dkwedge_list *dkwl = (void *) addr;
-
-		return (dkwedge_list(&wd->sc_dk, dkwl, l));
-	    }
-
-	case DIOCMWEDGES:
-	    {
-	    	if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		dkwedge_discover(&wd->sc_dk);
-		return 0;
-	    }
 
 	case DIOCGSTRATEGY:
 	    {
