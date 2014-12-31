@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.318 2014/12/31 08:24:50 mlelstv Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.319 2014/12/31 17:06:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.318 2014/12/31 08:24:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.319 2014/12/31 17:06:48 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1062,7 +1062,6 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
-	struct dkwedge_info *dkw;
 
 	if ((rs = raidget(unit)) == NULL)
 		return ENXIO;
@@ -1913,20 +1912,6 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 #endif
 
-	case DIOCAWEDGE:
-	case DIOCDWEDGE:
-	    	dkw = (void *)data;
-
-		/* If the ioctl happens here, the parent is us. */
-		(void)strcpy(dkw->dkw_parent, rs->sc_xname);
-		return cmd == DIOCAWEDGE ? dkwedge_add(dkw) : dkwedge_del(dkw);
-
-	case DIOCLWEDGES:
-		return dkwedge_list(&rs->sc_dkdev,
-		    (struct dkwedge_list *)data, l);
-	case DIOCMWEDGES:
-		dkwedge_discover(&rs->sc_dkdev);
-		return 0;
 	case DIOCCACHESYNC:
 		return rf_sync_component_caches(raidPtr);
 
