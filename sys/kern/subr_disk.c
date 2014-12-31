@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.109 2014/12/31 19:58:59 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.110 2014/12/31 20:13:41 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.109 2014/12/31 19:58:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.110 2014/12/31 20:13:41 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -302,19 +302,6 @@ disk_isbusy(struct disk *diskp)
 {
 
 	return iostat_isbusy(diskp->dk_stats);
-}
-
-/*
- * Set the physical blocksize of a disk, in bytes.
- * Only necessary if blocksize != DEV_BSIZE.
- */
-void
-disk_blocksize(struct disk *diskp, int blocksize)
-{
-
-	diskp->dk_blkshift = DK_BSIZE2BLKSHIFT(blocksize);
-	diskp->dk_byteshift = DK_BSIZE2BYTESHIFT(blocksize);
-	diskp->dk_geom.dg_secsize = DEV_BSIZE << diskp->dk_blkshift;
 }
 
 /*
