@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.4.4.1 2014/08/23 03:44:02 riz Exp $ */
+/*	$NetBSD: disks.c,v 1.4.4.2 2014/12/31 06:19:19 snj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -106,8 +106,9 @@ static int foundsysvbfs(struct data *, size_t);
 #endif
 static int fsck_preen(const char *, int, const char *);
 static void fixsb(const char *, const char *, char);
-static int is_gpt(const char *);
+static bool is_gpt(const char *);
 static int incoregpt(pm_devs_t *, partinfo *);
+static bool have_gpt_binary(void);
 
 #ifndef DISK_NAMES
 #define DISK_NAMES "wd", "sd", "ld", "raid"
@@ -576,12 +577,26 @@ find_disks(const char *doingwhat)
 	return numdisks;
 }
 
+static bool
+have_gpt_binary(void)
+{
+	static bool did_test = false;
+	static bool have_gpt;
+
+	if (!did_test) {
+		have_gpt = binary_available("gpt");
+		did_test = true;
+	}
+
+	return have_gpt;
+}
+
 void
 label_read(void)
 {
 	/* Get existing/default label */
 	memset(&pm->oldlabel, 0, sizeof pm->oldlabel);
-	if (! pm->gpt)
+	if (!have_gpt_binary() || !pm->gpt)
 		incorelabel(pm->diskdev, pm->oldlabel);
 	else
 		incoregpt(pm, pm->oldlabel);
@@ -1456,9 +1471,12 @@ incoregpt(pm_devs_t *pm_cur, partinfo *lp)
 	return 0;
 }
 
-static int
+static bool
 is_gpt(const char *dev)
 {
-	return ! run_program(RUN_SILENT | RUN_ERROR_OK,
+	if (!have_gpt_binary())
+		return false;
+
+	return !run_program(RUN_SILENT | RUN_ERROR_OK,
 		"sh -c 'gpt show %s |grep -e Pri\\ GPT\\ table'", dev);
 }
