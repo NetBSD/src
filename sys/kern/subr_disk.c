@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.106 2014/12/31 08:24:51 mlelstv Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.107 2014/12/31 17:06:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,12 +67,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.106 2014/12/31 08:24:51 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.107 2014/12/31 17:06:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/buf.h>
+#include <sys/fcntl.h>
 #include <sys/syslog.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
@@ -487,38 +488,54 @@ convertdisklabel(struct disklabel *lp, void (*strat)(struct buf *),
  *	Generic disk ioctl handling.
  */
 int
-disk_ioctl(struct disk *diskp, u_long cmd, void *data, int flag,
-	   struct lwp *l)
+disk_ioctl(struct disk *dk, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	int error = 0;
+	struct dkwedge_info *dkw;
 
 	switch (cmd) {
-	case DIOCGDISKINFO:
-	    {
-		struct plistref *pref = (struct plistref *) data;
+	case DIOCAWEDGE:
+		if ((flag & FWRITE) == 0)
+			return EBADF;
 
-		if (diskp->dk_info == NULL)
-			error = ENOTSUP;
-		else
-			error = prop_dictionary_copyout_ioctl(pref, cmd,
-							diskp->dk_info);
-		break;
-	    }
+		dkw = data;
+		strlcpy(dkw->dkw_parent, dk->dk_name, sizeof(dkw->dkw_parent));
+		return dkwedge_add(dkw);
+
+	case DIOCDWEDGE:
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+
+		dkw = data;
+		strlcpy(dkw->dkw_parent, dk->dk_name, sizeof(dkw->dkw_parent));
+		return dkwedge_del(dkw);
+
+	case DIOCLWEDGES:
+		return dkwedge_list(dk, data, l);
+
+	case DIOCMWEDGES:
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+
+		dkwedge_discover(dk);
+		return 0;
+
+	case DIOCGDISKINFO:
+		if (dk->dk_info == NULL)
+			return ENOTSUP;
+		return prop_dictionary_copyout_ioctl(data, cmd, dk->dk_info);
 
 	case DIOCGSECTORSIZE:
-		*(u_int *)data = diskp->dk_geom.dg_secsize;
-		break;
+		*(u_int *)data = dk->dk_geom.dg_secsize;
+		return 0;
 
 	case DIOCGMEDIASIZE:
-		*(off_t *)data = (off_t)diskp->dk_geom.dg_secsize *
-		    diskp->dk_geom.dg_secperunit;
-		break;
+		*(off_t *)data = (off_t)dk->dk_geom.dg_secsize *
+		    dk->dk_geom.dg_secperunit;
+		return 0;
 
 	default:
-		error = EPASSTHROUGH;
+		return EPASSTHROUGH;
 	}
-
-	return (error);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.236 2014/12/31 08:24:50 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.237 2014/12/31 17:06:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.236 2014/12/31 08:24:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.237 2014/12/31 17:06:48 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1041,8 +1041,6 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
-	struct dkwedge_info *dkw;
-	struct dkwedge_list *dkwl;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
@@ -1563,40 +1561,6 @@ unlock_and_exit:
 		    FSYNC_WAIT | FSYNC_DATAONLY | FSYNC_CACHE, 0, 0);
 		VOP_UNLOCK(vnd->sc_vp);
 		return error;
-
-	case DIOCAWEDGE:
-		dkw = (void *) data;
-
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-
-		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(vnd->sc_dev),
-		    sizeof(dkw->dkw_parent));
-		return dkwedge_add(dkw);
-
-	case DIOCDWEDGE:
-		dkw = (void *) data;
-
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-
-		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(vnd->sc_dev),
-		    sizeof(dkw->dkw_parent));
-		return dkwedge_del(dkw);
-
-	case DIOCLWEDGES:
-		dkwl = (void *) data;
-
-		return dkwedge_list(&vnd->sc_dkdev, dkwl, l);
-
-	case DIOCMWEDGES:
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-
-		dkwedge_discover(&vnd->sc_dkdev);
-		return 0;
 
 	default:
 		return ENOTTY;

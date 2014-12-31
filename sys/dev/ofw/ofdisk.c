@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.48 2014/11/09 10:10:08 mlelstv Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.49 2014/12/31 17:06:48 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.48 2014/11/09 10:10:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.49 2014/12/31 17:06:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -359,6 +359,19 @@ ofdisk_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
+	/* XXX: Why not allow wedges on floppy? */
+	switch (cmd) {
+	case DIOCDWEDGE:
+	case DIOCAWEDGE:
+	case DIOCLWEDGES:
+	case DIOCMWEDGES:
+		if (OFDISK_FLOPPY_P(of))
+			return ENOTTY;
+	}
+
+	error = disk_ioctl(&of->sc_dk, cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
 
 	switch (cmd) {
 	case DIOCGDINFO:
@@ -430,60 +443,6 @@ ofdisk_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		return 0;
 #endif
-
-	case DIOCAWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *) data;
-
-		if (OFDISK_FLOPPY_P(of))
-			return (ENOTTY);
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(of->sc_dev),
-			sizeof(dkw->dkw_parent));
-		return (dkwedge_add(dkw));
-	    }
-
-	case DIOCDWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *) data;
-
-		if (OFDISK_FLOPPY_P(of))
-			return (ENOTTY);
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(of->sc_dev),
-			sizeof(dkw->dkw_parent));
-		return (dkwedge_del(dkw));
-	    }
-
-	case DIOCLWEDGES:
-	    {
-	    	struct dkwedge_list *dkwl = (void *) data;
-
-		if (OFDISK_FLOPPY_P(of))
-			return (ENOTTY);
-
-		return (dkwedge_list(&of->sc_dk, dkwl, l));
-	    }
-
-	case DIOCMWEDGES:
-	    {
-		if (OFDISK_FLOPPY_P(of))
-			return (ENOTTY);
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		dkwedge_discover(&of->sc_dk);
-		return 0;
-	    }
 
 	default:
 		return ENOTTY;
