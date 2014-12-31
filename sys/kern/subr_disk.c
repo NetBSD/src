@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.108 2014/12/31 19:52:06 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.109 2014/12/31 19:58:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.108 2014/12/31 19:52:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.109 2014/12/31 19:58:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -498,16 +498,34 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 #endif
 
 	switch (cmd) {
+	case DIOCGDISKINFO:
+		if (dk->dk_info == NULL)
+			return ENOTSUP;
+		return prop_dictionary_copyout_ioctl(data, cmd, dk->dk_info);
+
+	case DIOCGSECTORSIZE:
+		*(u_int *)data = dk->dk_geom.dg_secsize;
+		return 0;
+
+	case DIOCGMEDIASIZE:
+		*(off_t *)data = (off_t)dk->dk_geom.dg_secsize *
+		    dk->dk_geom.dg_secperunit;
+		return 0;
+	default:
+		break;
+	}
+
+	if (dev == 0)
+		return EPASSTHROUGH;
+
+	/* The following should be moved to dk_ioctl */
+	switch (cmd) {
 	case DIOCGDINFO:
-		if (dev == 0)
-			return EPASSTHROUGH;
 		memcpy(data, dk->dk_label, sizeof (*dk->dk_label));
 		return 0;
 
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
-		if (dev == 0)
-			return EPASSTHROUGH;
 		memcpy(&newlabel, dk->dk_label, sizeof(newlabel));
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
 			return ENOTTY;
@@ -516,8 +534,6 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 #endif
 
 	case DIOCGPART:
-		if (dev == 0)
-			return EPASSTHROUGH;
 		pt = data;
 		pt->disklab = dk->dk_label;
 		pt->part = &dk->dk_label->d_partitions[DISKPART(dev)];
@@ -547,20 +563,6 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 			return EBADF;
 
 		dkwedge_discover(dk);
-		return 0;
-
-	case DIOCGDISKINFO:
-		if (dk->dk_info == NULL)
-			return ENOTSUP;
-		return prop_dictionary_copyout_ioctl(data, cmd, dk->dk_info);
-
-	case DIOCGSECTORSIZE:
-		*(u_int *)data = dk->dk_geom.dg_secsize;
-		return 0;
-
-	case DIOCGMEDIASIZE:
-		*(off_t *)data = (off_t)dk->dk_geom.dg_secsize *
-		    dk->dk_geom.dg_secperunit;
 		return 0;
 
 	default:
