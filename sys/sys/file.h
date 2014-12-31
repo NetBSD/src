@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.75 2013/01/02 19:35:43 dsl Exp $	*/
+/*	$NetBSD: file.h,v 1.75.12.1 2014/12/31 06:44:01 snj Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ struct uio;
 struct iovec;
 struct stat;
 struct knote;
+struct uvm_object;
 
 /*
  * Kernel file descriptor.  One entry for each open kernel vnode and
@@ -100,8 +101,8 @@ struct file {
 		int	(*fo_close)	(struct file *);
 		int	(*fo_kqfilter)	(struct file *, struct knote *);
 		void	(*fo_restart)	(struct file *);
-		void	(*fo_spare1)	(void);
-		void	(*fo_spare2)	(void);
+		int	(*fo_mmap)	(struct file *, off_t *, size_t, int, int *,
+					 int *, struct uvm_object **, int *);
 	} *f_ops;
 	void		*f_data;	/* descriptor data, e.g. vnode/socket */
 	LIST_ENTRY(file) f_list;	/* list of active files */

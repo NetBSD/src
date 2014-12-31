@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.159 2014/06/15 12:58:01 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.159.2.1 2014/12/31 06:44:00 snj Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159 2014/06/15 12:58:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159.2.1 2014/12/31 06:44:00 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159 2014/06/15 12:58:01 pooka Exp $");
 #include <uvm/uvm_pdpolicy.h>
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_readahead.h>
+#include <uvm/uvm_device.h>
 
 #include "rump_private.h"
 #include "rump_vfs_private.h"
@@ -434,36 +435,34 @@ uvm_init_limits(struct proc *p)
 
 /*
  * This satisfies the "disgusting mmap hack" used by proplib.
- * We probably should grow some more assertables to make sure we're
- * not satisfying anything we shouldn't be satisfying.
  */
 int
-uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
-	vm_prot_t maxprot, int flags, void *handle, voff_t off, vsize_t locklim)
+uvm_mmap_anon(struct proc *p, void **addrp, size_t size)
 {
-	void *uaddr;
 	int error;
 
-	if (prot != (VM_PROT_READ | VM_PROT_WRITE))
-		panic("uvm_mmap() variant unsupported");
-	if (flags != (MAP_PRIVATE | MAP_ANON))
-		panic("uvm_mmap() variant unsupported");
-
 	/* no reason in particular, but cf. uvm_default_mapaddr() */
-	if (*addr != 0)
+	if (*addrp != NULL)
 		panic("uvm_mmap() variant unsupported");
 
 	if (RUMP_LOCALPROC_P(curproc)) {
-		error = rumpuser_anonmmap(NULL, size, 0, 0, &uaddr);
+		error = rumpuser_anonmmap(NULL, size, 0, 0, addrp);
 	} else {
-		error = rumpuser_sp_anonmmap(curproc->p_vmspace->vm_map.pmap,
-		    size, &uaddr);
+		error = rumpuser_sp_anonmmap(p->p_vmspace->vm_map.pmap,
+		    size, addrp);
 	}
-	if (error)
-		return error;
+	return error;
+}
 
-	*addr = (vaddr_t)uaddr;
-	return 0;
+/*
+ * Stubs for things referenced from vfs_vnode.c but not used.
+ */
+const dev_t zerodev;
+
+struct uvm_object *
+udv_attach(dev_t device, vm_prot_t accessprot, voff_t off, vsize_t size)
+{
+	return NULL;
 }
 
 struct pagerinfo {
