@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.77 2014/12/31 08:24:50 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.78 2014/12/31 19:52:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.77 2014/12/31 08:24:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.78 2014/12/31 19:52:05 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1358,7 +1358,11 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	if (sc->sc_parent->dk_rawvp == NULL)
 		return (ENXIO);
 
-	error = disk_ioctl(&sc->sc_dk, cmd, data, flag, l);
+	/*
+	 * We pass 0 instead of our device to indicate we don't
+	 * want to handle disklabel ioctls
+	 */
+	error = disk_ioctl(&sc->sc_dk, 0, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 

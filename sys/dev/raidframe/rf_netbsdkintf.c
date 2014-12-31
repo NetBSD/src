@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.319 2014/12/31 17:06:48 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.320 2014/12/31 19:52:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.319 2014/12/31 17:06:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.320 2014/12/31 19:52:06 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1826,29 +1826,11 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	 * Add support for "regular" device ioctls here.
 	 */
 	
-	error = disk_ioctl(&rs->sc_dkdev, cmd, data, flag, l); 
+	error = disk_ioctl(&rs->sc_dkdev, dev, cmd, data, flag, l); 
 	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
-	case DIOCGDINFO:
-		*(struct disklabel *) data = *(rs->sc_dkdev.dk_label);
-		break;
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDINFO:
-		newlabel = *(rs->sc_dkdev.dk_label);
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
-		memcpy(data, &newlabel, sizeof (struct olddisklabel));
-		break;
-#endif
-
-	case DIOCGPART:
-		((struct partinfo *) data)->disklab = rs->sc_dkdev.dk_label;
-		((struct partinfo *) data)->part =
-		    &rs->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
-		break;
-
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 #ifdef __HAVE_OLD_DISKLABEL

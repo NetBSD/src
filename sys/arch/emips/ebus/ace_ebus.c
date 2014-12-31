@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.15 2014/12/31 17:06:48 christos Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.16 2014/12/31 19:52:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.15 2014/12/31 17:06:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.16 2014/12/31 19:52:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2172,7 +2172,7 @@ aceioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 	if ((ace->sc_flags & ACEF_LOADED) == 0)
 		return EIO;
 
-	error = disk_ioctl(&ace->sc_dk, xfer, addr, flag, l);
+	error = disk_ioctl(&ace->sc_dk, dev, xfer, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
@@ -2186,15 +2186,6 @@ aceioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		bad144intern(ace);
 		return 0;
 #endif
-	case DIOCGDINFO:
-		*(struct disklabel *)addr = *(ace->sc_dk.dk_label);
-		return 0;
-
-	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = ace->sc_dk.dk_label;
-		((struct partinfo *)addr)->part =
-		    &ace->sc_dk.dk_label->d_partitions[ACEPART(dev)];
-		return 0;
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:

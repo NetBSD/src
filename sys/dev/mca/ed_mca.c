@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.60 2014/12/31 17:06:48 christos Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.61 2014/12/31 19:52:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.60 2014/12/31 17:06:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.61 2014/12/31 19:52:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,21 +478,11 @@ edmcaioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 	if ((ed->sc_flags & WDF_LOADED) == 0)
 		return EIO;
 
-        error = disk_ioctl(&ed->sc_dk, xfer, addr, flag, l);
+        error = disk_ioctl(&ed->sc_dk, dev, xfer, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
 	switch (xfer) {
-	case DIOCGDINFO:
-		*(struct disklabel *)addr = *(ed->sc_dk.dk_label);
-		return 0;
-
-	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = ed->sc_dk.dk_label;
-		((struct partinfo *)addr)->part =
-		    &ed->sc_dk.dk_label->d_partitions[DISKPART(dev)];
-		return 0;
-
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 	{

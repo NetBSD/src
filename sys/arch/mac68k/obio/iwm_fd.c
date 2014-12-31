@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.50 2014/07/25 08:10:34 dholland Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.51 2014/12/31 19:52:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.50 2014/07/25 08:10:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.51 2014/12/31 19:52:05 christos Exp $");
 
 #include "locators.h"
 
@@ -720,14 +720,11 @@ fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	fd = iwm->fd[fdUnit];
 	result = 0;
 
-	switch (cmd) {
-	case DIOCGDINFO:
-		if (TRACE_IOCTL)
-			printf(" DIOCGDINFO: Get in-core disklabel.\n");
-		*(struct disklabel *) data = *(fd->diskInfo.dk_label);
-		result = 0;
-		break;
+	error = disk_ioctl(&fd->diskIndfo, fdType, cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
 
+	switch (cmd) {
 	case DIOCSDINFO:
 		if (TRACE_IOCTL)
 			printf(" DIOCSDINFO: Set in-core disklabel.\n");
@@ -752,15 +749,6 @@ fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 			result = writedisklabel(dev, fdstrategy,
 			    fd->diskInfo.dk_label,
 			    fd->diskInfo.dk_cpulabel);
-		break;
-
-	case DIOCGPART:
-		if (TRACE_IOCTL)
-			printf(" DIOCGPART: Get disklabel & partition table.\n");
-		((struct partinfo *)data)->disklab = fd->diskInfo.dk_label;
-		((struct partinfo *)data)->part =
-		    &fd->diskInfo.dk_label->d_partitions[fdType];
-		result = 0;
 		break;
 
 	case DIOCRFORMAT:

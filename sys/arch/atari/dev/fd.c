@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.80 2014/10/18 08:33:25 snj Exp $	*/
+/*	$NetBSD: fd.c,v 1.81 2014/12/31 19:52:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.80 2014/10/18 08:33:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.81 2014/12/31 19:52:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,17 +432,13 @@ fdioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
 	if ((sc->flags & FLPF_HAVELAB) == 0)
 		return EBADF;
 
+	error = disk_ioctl(&sc->dkdev, RAW_PART, cmd, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+
 	switch (cmd) {
 	case DIOCSBAD:
 		return EINVAL;
-	case DIOCGDINFO:
-		*(struct disklabel *)addr = *(sc->dkdev.dk_label);
-		return 0;
-	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = sc->dkdev.dk_label;
-		((struct partinfo *)addr)->part =
-		    &sc->dkdev.dk_label->d_partitions[RAW_PART];
-		return 0;
 #ifdef notyet /* XXX LWP */
 	case DIOCSRETRIES:
 	case DIOCSSTEP:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.160 2014/12/31 17:06:48 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.161 2014/12/31 19:52:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.160 2014/12/31 17:06:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.161 2014/12/31 19:52:05 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1196,7 +1196,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 	}
 
-	error = disk_ioctl(&cs->sc_dkdev, cmd, data, flag, l); 
+	error = disk_ioctl(&cs->sc_dkdev, dev, cmd, data, flag, l); 
 	if (error != EPASSTHROUGH)
 		goto out;
 
@@ -1382,25 +1382,6 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		ccdput(cs);
 		/* Don't break, otherwise cs is read again. */
 		return 0;
-
-	case DIOCGDINFO:
-		*(struct disklabel *)data = *(cs->sc_dkdev.dk_label);
-		break;
-
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDINFO:
-		newlabel = *(cs->sc_dkdev.dk_label);
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
-		memcpy(data, &newlabel, sizeof (struct olddisklabel));
-		break;
-#endif
-
-	case DIOCGPART:
-		((struct partinfo *)data)->disklab = cs->sc_dkdev.dk_label;
-		((struct partinfo *)data)->part =
-		    &cs->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
-		break;
 
 	case DIOCCACHESYNC:
 		/*

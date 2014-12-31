@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.49 2014/12/31 17:06:48 christos Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.50 2014/12/31 19:52:06 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.49 2014/12/31 17:06:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.50 2014/12/31 19:52:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -369,29 +369,11 @@ ofdisk_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return ENOTTY;
 	}
 
-	error = disk_ioctl(&of->sc_dk, cmd, data, flag, l);
+	error = disk_ioctl(&of->sc_dk, dev, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
 	switch (cmd) {
-	case DIOCGDINFO:
-		*(struct disklabel *)data = *of->sc_dk.dk_label;
-		return 0;
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDINFO:
-		newlabel = *of->sc_dk.dk_label;
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
-		memcpy(data, &newlabel, sizeof (struct olddisklabel));
-		return 0;
-#endif
-
-	case DIOCGPART:
-		((struct partinfo *)data)->disklab = of->sc_dk.dk_label;
-		((struct partinfo *)data)->part =
-			&of->sc_dk.dk_label->d_partitions[DISKPART(dev)];
-		return 0;
-
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 #ifdef __HAVE_OLD_DISKLABEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.92 2014/08/08 21:13:52 joerg Exp $ */
+/*	$NetBSD: fd.c,v 1.93 2014/12/31 19:52:04 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.92 2014/08/08 21:13:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.93 2014/12/31 19:52:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -573,6 +573,10 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	if ((sc->flags & FDF_HAVELABEL) == 0)
 		return(EBADF);
 
+	error = disk_ioctl(&sk->dkdev, dev, cmd, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+
 	switch (cmd) {
 	case DIOCSBAD:
 		return(EINVAL);
@@ -585,14 +589,6 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		if (*(int *)addr < FDSTEPDELAY)
 			return(EINVAL);
 		sc->dkdev.dk_label->d_trkseek = sc->stepdelay = *(int *)addr;
-		return(0);
-	case DIOCGDINFO:
-		*(struct disklabel *)addr = *(sc->dkdev.dk_label);
-		return(0);
-	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = sc->dkdev.dk_label;
-		((struct partinfo *)addr)->part =
-		    &sc->dkdev.dk_label->d_partitions[FDPART(dev)];
 		return(0);
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)

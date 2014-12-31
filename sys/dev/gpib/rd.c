@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.36 2014/08/10 16:44:35 tls Exp $ */
+/*	$NetBSD: rd.c,v 1.37 2014/12/31 19:52:05 christos Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.36 2014/08/10 16:44:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.37 2014/12/31 19:52:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -972,17 +972,11 @@ rdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	DPRINTF(RDB_FOLLOW, ("rdioctl: sc=%p\n", sc));
 
+	error = disk_ioctl(&sk->sc_dk, dev, cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+
 	switch (cmd) {
-	case DIOCGDINFO:
-		*(struct disklabel *)data = *lp;
-		return (0);
-
-	case DIOCGPART:
-		((struct partinfo *)data)->disklab = lp;
-		((struct partinfo *)data)->part =
-		    &lp->d_partitions[RDPART(dev)];
-		return (0);
-
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
 			return (EBADF);

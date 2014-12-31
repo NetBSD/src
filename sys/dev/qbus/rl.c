@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.47 2014/12/31 17:06:48 christos Exp $	*/
+/*	$NetBSD: rl.c,v 1.48 2014/12/31 19:52:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.47 2014/12/31 17:06:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.48 2014/12/31 19:52:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -445,35 +445,16 @@ rlioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct disklabel *lp = rc->rc_disk.dk_label;
 	int error;
 #ifdef __HAVE_OLD_DISKLABEL
-	struct diklabel newlabel;
+	struct disklabel newlabel;
 #endif
 
-	error = disk_ioctl(&rc->rc_disk, xfer, addr, flag, l);
+	error = disk_ioctl(&rc->rc_disk, dev, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 	else
 		error = 0;
 
 	switch (cmd) {
-	case DIOCGDINFO:
-		memcpy(addr, lp, sizeof (struct disklabel));
-		break;
-
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDINFO:
-		newlabel = *lp;
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
-		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
-		break;
-#endif
-
-	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = lp;
-		((struct partinfo *)addr)->part =
-		    &lp->d_partitions[DISKPART(dev)];
-		break;
-
 	case DIOCSDINFO:
 	case DIOCWDINFO:
 #ifdef __HAVE_OLD_DISKLABEL
