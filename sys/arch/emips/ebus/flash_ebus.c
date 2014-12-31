@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_ebus.c,v 1.12 2014/11/09 10:10:08 mlelstv Exp $	*/
+/*	$NetBSD: flash_ebus.c,v 1.13 2014/12/31 17:06:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.12 2014/11/09 10:10:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.13 2014/12/31 17:06:48 christos Exp $");
 
 /* Driver for the Intel 28F320/640/128 (J3A150) StrataFlash memory device
  * Extended to include the Intel JS28F256P30T95.
@@ -2163,46 +2163,6 @@ eflashioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 
 	case DIOCCACHESYNC:
 		return 0;
-
-	case DIOCAWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *) addr;
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, device_xname(sc->sc_dev));
-		return (dkwedge_add(dkw));
-	    }
-
-	case DIOCDWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *) addr;
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, device_xname(sc->sc_dev));
-		return (dkwedge_del(dkw));
-	    }
-
-	case DIOCLWEDGES:
-	    {
-	    	struct dkwedge_list *dkwl = (void *) addr;
-
-		return (dkwedge_list(&sc->sc_dk, dkwl, l));
-	    }
-
-	case DIOCMWEDGES:
-	    {
-	    	if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		dkwedge_discover(&sc->sc_dk);
-		return 0;
-	    }
 
 	case DIOCGSTRATEGY:
 	    {
