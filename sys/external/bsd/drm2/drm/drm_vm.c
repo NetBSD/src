@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vm.c,v 1.5 2014/07/26 21:15:45 riastradh Exp $	*/
+/*	$NetBSD: drm_vm.c,v 1.5.2.1 2014/12/31 06:44:00 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.5 2014/07/26 21:15:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.5.2.1 2014/12/31 06:44:00 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -59,7 +59,7 @@ drm_mmap_object(struct drm_device *dev, off_t offset, size_t size, int prot,
 	 * access checks; offset does not become a base address for the
 	 * subsequent uvm_map, hence we set *uoffsetp to offset, not 0.
 	 */
-	uobj = udv_attach(&devno, prot, offset, size);
+	uobj = udv_attach(devno, prot, offset, size);
 	if (uobj == NULL)
 		return -EINVAL;
 
