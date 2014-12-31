@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.105 2014/12/29 18:54:19 mlelstv Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.106 2014/12/31 08:24:51 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.105 2014/12/29 18:54:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.106 2014/12/31 08:24:51 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -181,6 +181,7 @@ disk_find(const char *name)
 void
 disk_init(struct disk *diskp, const char *name, const struct dkdriver *driver)
 {
+	u_int blocksize = DEV_BSIZE;
 
 	/*
 	 * Initialize the wedge-related locks and other fields.
@@ -190,7 +191,8 @@ disk_init(struct disk *diskp, const char *name, const struct dkdriver *driver)
 	LIST_INIT(&diskp->dk_wedges);
 	diskp->dk_nwedges = 0;
 	diskp->dk_labelsector = LABELSECTOR;
-	disk_blocksize(diskp, DEV_BSIZE);
+	diskp->dk_blkshift = DK_BSIZE2BLKSHIFT(blocksize);
+	diskp->dk_byteshift = DK_BSIZE2BYTESHIFT(blocksize);
 	diskp->dk_name = name;
 	diskp->dk_driver = driver;
 }
@@ -311,6 +313,7 @@ disk_blocksize(struct disk *diskp, int blocksize)
 
 	diskp->dk_blkshift = DK_BSIZE2BLKSHIFT(blocksize);
 	diskp->dk_byteshift = DK_BSIZE2BYTESHIFT(blocksize);
+	diskp->dk_geom.dg_secsize = DEV_BSIZE << diskp->dk_blkshift;
 }
 
 /*
@@ -554,6 +557,9 @@ disk_set_info(device_t dev, struct disk *dk, const char *type)
 #endif
 		dg->dg_secsize = DEV_BSIZE;
 	}
+
+	dk->dk_blkshift = DK_BSIZE2BLKSHIFT(dg->dg_secsize);
+	dk->dk_byteshift = DK_BSIZE2BYTESHIFT(dg->dg_secsize);
 
 	prop_dictionary_t disk_info, odisk_info, geom;
 
