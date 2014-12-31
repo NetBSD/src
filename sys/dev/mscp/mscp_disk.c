@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.83 2014/12/31 17:06:48 christos Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.84 2014/12/31 19:52:05 christos Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.83 2014/12/31 17:06:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.84 2014/12/31 19:52:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -412,32 +412,13 @@ raioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	lp = ra->ra_disk.dk_label;
 
-	error = disk_ioctl(&ra->ra_disk, cmd, data, flag, l);
+	error = disk_ioctl(&ra->ra_disk, dev, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 	else
 		error = 0;
 
 	switch (cmd) {
-
-	case DIOCGDINFO:
-		memcpy(data, lp, sizeof (struct disklabel));
-		break;
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDINFO:
-		memcpy(&newlabel, lp, sizeof newlabel);
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
-		memcpy(data, &newlabel, sizeof (struct olddisklabel));
-		break;
-#endif
-
-	case DIOCGPART:
-		((struct partinfo *)data)->disklab = lp;
-		((struct partinfo *)data)->part =
-		    &lp->d_partitions[DISKPART(dev)];
-		break;
-
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 #ifdef __HAVE_OLD_DISKLABEL
@@ -877,25 +858,13 @@ rxioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	lp = rx->ra_disk.dk_label;
 
-        error = disk_ioctl(&rx->ra_disk, cmd, data, flag, l);
+        error = disk_ioctl(&rx->ra_disk, dev, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 	else
 		error = 0;
 
 	switch (cmd) {
-
-	case DIOCGDINFO:
-		memcpy(data, lp, sizeof (struct disklabel));
-		break;
-
-	case DIOCGPART:
-		((struct partinfo *)data)->disklab = lp;
-		((struct partinfo *)data)->part =
-		    &lp->d_partitions[DISKPART(dev)];
-		break;
-
-
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 	case DIOCWLABEL:

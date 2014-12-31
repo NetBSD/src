@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.78 2014/07/25 08:10:32 dholland Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.79 2014/12/31 19:52:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.78 2014/07/25 08:10:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.79 2014/12/31 19:52:04 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -1304,17 +1304,16 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		fdgetdisklabel(fd, dev);
-		*(struct disklabel *)addr = *(fd->sc_dk.dk_label);
-		return 0;
-
 	case DIOCGPART:
 		fdgetdisklabel(fd, dev);
-		((struct partinfo *)addr)->disklab = fd->sc_dk.dk_label;
-		((struct partinfo *)addr)->part =
-			      &fd->sc_dk.dk_label->d_partitions[RAW_PART];
-		return 0;
+		break;
+	}
 
+	error = disk_ioctl(&fd->sc_dk, RAW_PART, cmd, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+
+	switch (cmd) {
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
