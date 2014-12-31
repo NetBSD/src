@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2014/12/26 17:43:32 macallan Exp $ */
+/*	$NetBSD: clock.c,v 1.5 2014/12/31 15:25:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2014/12/26 17:43:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2014/12/31 15:25:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -43,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2014/12/26 17:43:32 macallan Exp $");
 extern void ingenic_puts(const char *);
 
 void ingenic_clockintr(uint32_t);
-
-struct clockframe cf;
 
 static u_int
 ingenic_count_read(struct timecounter *tc)
@@ -191,6 +189,7 @@ int cnt = 99;
 void
 ingenic_clockintr(uint32_t id)
 {
+	extern struct clockframe cf;
 	struct cpu_info * const ci = curcpu();
 #ifdef USE_OST
 	uint32_t new_cnt;
