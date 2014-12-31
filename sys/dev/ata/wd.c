@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.416 2014/12/31 17:06:48 christos Exp $ */
+/*	$NetBSD: wd.c,v 1.417 2014/12/31 19:52:05 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.416 2014/12/31 17:06:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.417 2014/12/31 19:52:05 christos Exp $");
 
 #include "opt_ata.h"
 
@@ -1202,9 +1202,9 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 	if ((wd->sc_flags & WDF_LOADED) == 0)
 		return EIO;
 
-	error = disk_ioctl(&wd->sc_dk, xfer, addr, flag, l);
+	error = disk_ioctl(&wd->sc_dk, dev, xfer, addr, flag, l);
 	if (error != EPASSTHROUGH)
-		return (error);
+		return error;
 
 	error = 0;
 	switch (xfer) {
@@ -1272,28 +1272,6 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		wd->sc_bscount = 0;
 		return 0;
 #endif
-	case DIOCGDINFO:
-		*(struct disklabel *)addr = *(wd->sc_dk.dk_label);
-		return 0;
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDINFO:
-		newlabel = malloc(sizeof *newlabel, M_TEMP, M_WAITOK);
-		if (newlabel == NULL)
-			return EIO;
-		*newlabel = *(wd->sc_dk.dk_label);
-		if (newlabel->d_npartitions <= OLDMAXPARTITIONS)
-			memcpy(addr, newlabel, sizeof (struct olddisklabel));
-		else
-			error = ENOTTY;
-		free(newlabel, M_TEMP);
-		return error;
-#endif
-
-	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = wd->sc_dk.dk_label;
-		((struct partinfo *)addr)->part =
-		    &wd->sc_dk.dk_label->d_partitions[WDPART(dev)];
-		return 0;
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
