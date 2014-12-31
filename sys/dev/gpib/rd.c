@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.37 2014/12/31 19:52:05 christos Exp $ */
+/*	$NetBSD: rd.c,v 1.38 2014/12/31 20:36:20 christos Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.37 2014/12/31 19:52:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.38 2014/12/31 20:36:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -972,7 +972,7 @@ rdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	DPRINTF(RDB_FOLLOW, ("rdioctl: sc=%p\n", sc));
 
-	error = disk_ioctl(&sk->sc_dk, dev, cmd, data, flag, l);
+	error = disk_ioctl(&sc->sc_dk, dev, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
