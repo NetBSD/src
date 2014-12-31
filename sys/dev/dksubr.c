@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.56 2014/12/29 18:41:20 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.57 2014/12/31 17:06:48 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.56 2014/12/29 18:41:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.57 2014/12/31 17:06:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,11 +285,11 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	    u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct	disklabel *lp;
-	struct	disk *dk;
+	struct	disk *dk = &dksc->sc_dkdev;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct	disklabel newlabel;
 #endif
-	int	error = 0;
+	int	error;
 
 	DPRINTF_FOLLOW(("dk_ioctl(%s, %p, 0x%"PRIx64", 0x%lx)\n",
 	    di->di_dkname, dksc, dev, cmd));
@@ -332,6 +332,12 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 			return ENXIO;
 	}
 
+	error = disk_ioctl(dk, cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+	else
+		error = 0;
+
 	switch (cmd) {
 	case DIOCGDINFO:
 		*(struct disklabel *)data = *(dksc->sc_dkdev.dk_label);
@@ -367,7 +373,6 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 #endif
 		lp = (struct disklabel *)data;
 
-		dk = &dksc->sc_dkdev;
 		mutex_enter(&dk->dk_openlock);
 		dksc->sc_flags |= DKF_LABELLING;
 
@@ -407,46 +412,6 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
-
-	case DIOCAWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *)data;
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, dksc->sc_dkdev.dk_name);
-		return (dkwedge_add(dkw));
-	    }
-
-	case DIOCDWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *)data;
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, dksc->sc_dkdev.dk_name);
-		return (dkwedge_del(dkw));
-	    }
-
-	case DIOCLWEDGES:
-	    {
-	    	struct dkwedge_list *dkwl = (void *)data;
-
-		return (dkwedge_list(&dksc->sc_dkdev, dkwl, l));
-	    }
-
-	case DIOCMWEDGES:
-	    {
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-	    	dkwedge_discover(&dksc->sc_dkdev);
-		return 0;
-	    }
 
 	case DIOCGSTRATEGY:
 	    {
