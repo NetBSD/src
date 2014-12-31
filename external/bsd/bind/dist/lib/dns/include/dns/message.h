@@ -1,7 +1,7 @@
-/*	$NetBSD: message.h,v 1.2.6.1 2012/06/05 21:14:55 bouyer Exp $	*/
+/*	$NetBSD: message.h,v 1.2.6.1.4.1 2014/12/31 11:58:59 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -107,6 +107,11 @@
 
 /*%< EDNS0 extended OPT codes */
 #define DNS_OPT_NSID		0x0003		/*%< NSID opt code */
+#define DNS_OPT_CLIENT_SUBNET	0x0008		/*%< client subnet opt code */
+#define DNS_OPT_EXPIRE		0x0009		/*%< EXPIRE opt code */
+
+/*%< The number of EDNS options we know about. */
+#define DNS_EDNSOPTIONS	3
 
 #define DNS_MESSAGE_REPLYPRESERVE	(DNS_MESSAGEFLAG_RD|DNS_MESSAGEFLAG_CD)
 #define DNS_MESSAGEEXTFLAG_REPLYPRESERVE (DNS_MESSAGEEXTFLAG_DO)
@@ -251,6 +256,12 @@ struct dns_message {
 
 	dns_rdatasetorderfunc_t		order;
 	const void *			order_arg;
+};
+
+struct dns_ednsopt {
+	isc_uint16_t			code;
+	isc_uint16_t			length;
+	unsigned char			*value;
 };
 
 /***
@@ -1350,6 +1361,24 @@ dns_message_gettimeadjust(dns_message_t *msg);
  *
  * Requires:
  *\li	msg be a valid message.
+ */
+
+isc_result_t
+dns_message_buildopt(dns_message_t *msg, dns_rdataset_t **opt,
+		     unsigned int version, isc_uint16_t udpsize,
+		     unsigned int flags, dns_ednsopt_t *ednsopts, size_t count);
+/*%<
+ * Built a opt record.
+ *
+ * Requires:
+ * \li   msg be a valid message.
+ * \li   opt to be a non NULL and *opt to be NULL.
+ *
+ * Returns:
+ * \li	 ISC_R_SUCCESS on success.
+ * \li	 ISC_R_NOMEMORY
+ * \li	 ISC_R_NOSPACE
+ * \li	 other.
  */
 
 ISC_LANG_ENDDECLS

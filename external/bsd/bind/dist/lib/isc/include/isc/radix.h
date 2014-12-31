@@ -1,7 +1,7 @@
-/*	$NetBSD: radix.h,v 1.4.6.1 2012/06/05 21:15:27 bouyer Exp $	*/
+/*	$NetBSD: radix.h,v 1.4.6.1.4.1 2014/12/31 11:59:04 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007, 2008, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -43,19 +43,20 @@
 			(pt).family = (na)->family; \
 			(pt).bitlen = (bits); \
 			if ((pt).family == AF_INET6) { \
-				memcpy(&(pt).add.sin6, &(na)->type.in6, \
+				memmove(&(pt).add.sin6, &(na)->type.in6, \
 				       ((bits)+7)/8); \
 			} else \
-				memcpy(&(pt).add.sin, &(na)->type.in, \
+				memmove(&(pt).add.sin, &(na)->type.in, \
 				       ((bits)+7)/8); \
 		} else { \
 			(pt).family = AF_UNSPEC; \
 			(pt).bitlen = 0; \
 		} \
 		isc_refcount_init(&(pt).refcount, 0); \
-	} while(0)
+	} while(/*CONSTCOND*/0)
 
 typedef struct isc_prefix {
+	isc_mem_t *mctx;
     unsigned int family;	/* AF_INET | AF_INET6, or AF_UNSPEC for "any" */
     unsigned int bitlen;	/* 0 for "any" */
     isc_refcount_t refcount;
@@ -92,6 +93,7 @@ typedef void (*isc_radix_processfunc_t)(isc_prefix_t *, void **);
 
 #define ISC_IS6(family) ((family) == AF_INET6 ? 1 : 0)
 typedef struct isc_radix_node {
+	isc_mem_t *mctx;
    isc_uint32_t bit;			/* bit length of the prefix */
    isc_prefix_t *prefix;		/* who we are in radix tree */
    struct isc_radix_node *l, *r;	/* left and right children */

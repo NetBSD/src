@@ -1,7 +1,7 @@
-/*	$NetBSD: lwbuffer.c,v 1.2.6.1 2012/06/05 21:14:54 bouyer Exp $	*/
+/*	$NetBSD: lwbuffer.c,v 1.2.6.1.4.1 2014/12/31 11:59:08 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -341,7 +341,7 @@ lwres_buffer_putmem(lwres_buffer_t *b, const unsigned char *base,
 	REQUIRE(b->used + length <= b->length);
 
 	cp = (unsigned char *)b->base + b->used;
-	memcpy(cp, base, length);
+	memmove(cp, base, length);
 	b->used += length;
 }
 
@@ -359,5 +359,5 @@ lwres_buffer_getmem(lwres_buffer_t *b, unsigned char *base,
 	cp += b->current;
 	b->current += length;
 
-	memcpy(base, cp, length);
+	memmove(base, cp, length);
 }

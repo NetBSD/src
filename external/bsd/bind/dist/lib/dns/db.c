@@ -1,7 +1,7 @@
-/*	$NetBSD: db.c,v 1.2.6.1 2012/06/05 21:15:02 bouyer Exp $	*/
+/*	$NetBSD: db.c,v 1.2.6.1.4.1 2014/12/31 11:58:58 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1009,21 +1009,21 @@ dns_db_resigned(dns_db_t *db, dns_rdataset_t *rdataset,
 		(db->methods->resigned)(db, rdataset, version);
 }
 
-void
+isc_result_t
 dns_db_rpz_enabled(dns_db_t *db, dns_rpz_st_t *st)
 {
 	if (db->methods->rpz_enabled != NULL)
-		(db->methods->rpz_enabled)(db, st);
+		return ((db->methods->rpz_enabled)(db, st));
+	return (ISC_R_SUCCESS);
 }
 
-isc_result_t
+void
 dns_db_rpz_findips(dns_rpz_zone_t *rpz, dns_rpz_type_t rpz_type,
 		   dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *version,
 		   dns_rdataset_t *ardataset, dns_rpz_st_t *st,
 		   dns_name_t *query_qname)
 {
-	if (db->methods->rpz_findips == NULL)
-		return (ISC_R_NOTIMPLEMENTED);
-	return ((db->methods->rpz_findips)(rpz, rpz_type, zone, db, version,
-					   ardataset, st, query_qname));
+	if (db->methods->rpz_findips != NULL)
+		(db->methods->rpz_findips)(rpz, rpz_type, zone, db, version,
+					   ardataset, st, query_qname);
 }

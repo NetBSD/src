@@ -1,7 +1,7 @@
-/*	$NetBSD: peer.c,v 1.2.6.1 2012/06/05 21:15:02 bouyer Exp $	*/
+/*	$NetBSD: peer.c,v 1.2.6.1.4.1 2014/12/31 11:58:58 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -302,10 +302,15 @@ peer_delete(dns_peer_t **peer) {
 		isc_mem_put(mem, p->key, sizeof(dns_name_t));
 	}
 
-	if (p->transfer_source != NULL) {
+	if (p->query_source != NULL)
+		isc_mem_put(mem, p->query_source, sizeof(*p->query_source));
+
+	if (p->notify_source != NULL)
+		isc_mem_put(mem, p->notify_source, sizeof(*p->notify_source));
+
+	if (p->transfer_source != NULL)
 		isc_mem_put(mem, p->transfer_source,
 			    sizeof(*p->transfer_source));
-	}
 
 	isc_mem_put(mem, p, sizeof(*p));
 
@@ -535,7 +540,7 @@ dns_peer_setkeybycharp(dns_peer_t *peer, const char *keyval) {
 	isc_result_t result;
 
 	dns_fixedname_init(&fname);
-	isc_buffer_init(&b, keyval, strlen(keyval));
+	isc_buffer_constinit(&b, keyval, strlen(keyval));
 	isc_buffer_add(&b, strlen(keyval));
 	result = dns_name_fromtext(dns_fixedname_name(&fname), &b,
 				   dns_rootname, 0, NULL);

@@ -1,7 +1,7 @@
-/*	$NetBSD: nslookup.c,v 1.3.4.1 2012/06/05 21:15:40 bouyer Exp $	*/
+/*	$NetBSD: nslookup.c,v 1.3.4.1.4.1 2014/12/31 11:58:28 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: nslookup.c,v 1.130 2011/12/16 23:01:16 each Exp  */
 
 #include <config.h>
 
@@ -67,6 +65,7 @@ static isc_boolean_t in_use = ISC_FALSE;
 static char defclass[MXRD] = "IN";
 static char deftype[MXRD] = "A";
 static isc_event_t *global_event = NULL;
+static int query_error = 1, print_error = 0;
 
 static char domainopt[DNS_NAME_MAXTEXT];
 
@@ -416,6 +415,9 @@ isc_result_t
 printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 	char servtext[ISC_SOCKADDR_FORMATSIZE];
 
+	/* I've we've gotten this far, we've reached a server. */
+	query_error = 0;
+
 	debug("printmessage()");
 
 	isc_sockaddr_format(&query->sockaddr, servtext, sizeof(servtext));
@@ -440,9 +442,11 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 		dns_name_format(query->lookup->name,
 				nametext, sizeof(nametext));
 		printf("** server can't find %s: %s\n",
-		       (msg->rcode != dns_rcode_nxdomain) ? nametext :
-		       query->lookup->textname, rcode_totext(msg->rcode));
+		       nametext, rcode_totext(msg->rcode));
 		debug("returning with rcode == 0");
+
+		/* the lookup failed */
+		print_error |= 1;
 		return (ISC_R_SUCCESS);
 	}
 
@@ -497,8 +501,8 @@ show_settings(isc_boolean_t full, isc_boolean_t serv_only) {
 	printf("  %s\t\t%s\n",
 	       usesearch ? "search" : "nosearch",
 	       recurse ? "recurse" : "norecurse");
-	printf("  timeout = %d\t\tretry = %d\tport = %d\n",
-	       timeout, tries, port);
+	printf("  timeout = %d\t\tretry = %d\tport = %d\tndots = %d\n",
+	       timeout, tries, port, ndots);
 	printf("  querytype = %-8s\tclass = %s\n", deftype, defclass);
 	printf("  srchlist = ");
 	for (listent = ISC_LIST_HEAD(search_list);
@@ -567,6 +571,19 @@ set_tries(const char *value) {
 	isc_result_t result = parse_uint(&n, value, INT_MAX, "tries");
 	if (result == ISC_R_SUCCESS)
 		tries = n;
+}
+
+static void
+set_ndots(const char *value) {
+	isc_uint32_t n;
+	isc_result_t result = parse_uint(&n, value, 128, "ndots");
+	if (result == ISC_R_SUCCESS)
+		ndots = n;
+}
+
+static void
+version(void) {
+	fputs("nslookup " VERSION "\n", stderr);
 }
 
 static void
@@ -649,6 +666,8 @@ setoption(char *opt) {
 		nofail=ISC_FALSE;
 	} else if (strncasecmp(opt, "nofail", 3) == 0) {
 		nofail=ISC_TRUE;
+	} else if (strncasecmp(opt, "ndots=", 6) == 0) {
+		set_ndots(&opt[6]);
 	} else {
 		printf("*** Invalid option: %s\n", opt);
 	}
@@ -762,6 +781,7 @@ get_next_command(void) {
 	if (interactive) {
 #ifdef HAVE_READLINE
 		ptr = readline("> ");
+		if (ptr != NULL)
 		add_history(ptr);
 #else
 		fputs("> ", stderr);
@@ -790,9 +810,12 @@ parse_args(int argc, char **argv) {
 	for (argc--, argv++; argc > 0; argc--, argv++) {
 		debug("main parsing %s", argv[0]);
 		if (argv[0][0] == '-') {
-			if (argv[0][1] != 0)
+			if (strncasecmp(argv[0], "-ver", 4) == 0) {
+				version();
+				exit(0);
+			} else if (argv[0][1] != 0) {
 				setoption(&argv[0][1]);
-			else
+			} else
 				have_lookup = ISC_TRUE;
 		} else {
 			if (!have_lookup) {
@@ -911,5 +934,5 @@ main(int argc, char **argv) {
 	destroy_libs();
 	isc_app_finish();
 
-	return (0);
+	return (query_error | print_error);
 }

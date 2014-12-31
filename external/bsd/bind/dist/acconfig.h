@@ -1,7 +1,7 @@
-/*	$NetBSD: acconfig.h,v 1.4.6.1 2012/06/05 21:15:24 bouyer Exp $	*/
+/*	$NetBSD: acconfig.h,v 1.4.6.1.4.1 2014/12/31 11:58:26 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -75,6 +75,9 @@
 /** define if arc4random() exists */
 #undef HAVE_ARC4RANDOM
 
+/** define if arc4random_addrandom() exists */
+#undef HAVE_ARC4RANDOM_ADDRANDOM
+
 /**
  * define if pthread_setconcurrency() should be called to tell the
  * OS how many threads we might want to run.
@@ -139,6 +142,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define if OpenSSL includes DSA support */
 #undef HAVE_OPENSSL_DSA
+
+/* Define if OpenSSL includes ECDSA support */
+#undef HAVE_OPENSSL_ECDSA
 
 /* Define to the length type used by the socket API (socklen_t, size_t, int). */
 #undef ISC_SOCKADDR_LEN_T

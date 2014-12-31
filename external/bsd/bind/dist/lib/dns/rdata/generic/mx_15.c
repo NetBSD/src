@@ -1,7 +1,7 @@
-/*	$NetBSD: mx_15.c,v 1.2.6.1 2012/06/05 21:15:12 bouyer Exp $	*/
+/*	$NetBSD: mx_15.c,v 1.2.6.1.4.1 2014/12/31 11:59:00 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -59,7 +59,6 @@ fromtext_mx(ARGS_FROMTEXT) {
 
 	UNUSED(type);
 	UNUSED(rdclass);
-	UNUSED(callbacks);
 
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      ISC_FALSE));

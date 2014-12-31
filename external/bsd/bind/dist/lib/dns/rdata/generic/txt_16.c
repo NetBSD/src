@@ -1,7 +1,7 @@
-/*	$NetBSD: txt_16.c,v 1.2.6.1 2012/06/05 21:15:12 bouyer Exp $	*/
+/*	$NetBSD: txt_16.c,v 1.2.6.1.4.1 2014/12/31 11:59:00 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -40,6 +40,13 @@ fromtext_txt(ARGS_FROMTEXT) {
 	UNUSED(callbacks);
 
 	strings = 0;
+	if ((options & DNS_RDATA_UNKNOWNESCAPE) != 0) {
+		isc_textregion_t r;
+		DE_CONST("#", r.base);
+		r.length = 1;
+		RETERR(txt_fromtext(&r, target));
+		strings++;
+	}
 	for (;;) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_qstring,
@@ -66,7 +73,7 @@ totext_txt(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 
 	while (region.length > 0) {
-		RETERR(txt_totext(&region, target));
+		RETERR(txt_totext(&region, ISC_TRUE, target));
 		if (region.length > 0)
 			RETERR(str_totext(" ", target));
 	}
@@ -105,7 +112,7 @@ towire_txt(ARGS_TOWIRE) {
 	if (region.length < rdata->length)
 		return (ISC_R_NOSPACE);
 
-	memcpy(region.base, rdata->data, rdata->length);
+	memmove(region.base, rdata->data, rdata->length);
 	isc_buffer_add(target, rdata->length);
 	return (ISC_R_SUCCESS);
 }

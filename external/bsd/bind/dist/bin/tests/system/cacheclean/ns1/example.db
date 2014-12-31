@@ -1,4 +1,4 @@
-; Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2004, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
 ; Copyright (C) 2001  Internet Software Consortium.
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
@@ -606,7 +606,6 @@ NS0			IN	A	202.12.30.131
 ns1			IN	A	202.12.30.33
 $ORIGIN WIDE.AD.JP.
 NS			IN	A	203.178.136.63
-$ORIGIN co.JP.
 			IN	MX	10 integra.s-integra.co.jp.
 $ORIGIN s-integra.co.JP.
 integra			IN	A	210.162.202.34
@@ -1175,7 +1174,6 @@ $ORIGIN ADVSYS.CO.UK.
 BARNEY			IN	A	194.72.124.2
 $ORIGIN WR.UMIST.AC.UK.
 AARDVARK		IN	A	130.88.146.3
-$ORIGIN UCL.AC.UK.
 			IN	A	128.16.5.31
 			IN	MX	10 bells.cs.ucl.ac.uk.
 			IN	MX	11 haig.cs.ucl.ac.uk.

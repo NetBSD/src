@@ -1,7 +1,7 @@
-/*	$NetBSD: view.h,v 1.3.4.1 2012/06/05 21:14:55 bouyer Exp $	*/
+/*	$NetBSD: view.h,v 1.3.4.1.4.1 2014/12/31 11:58:59 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -75,6 +75,7 @@
 
 #include <dns/acl.h>
 #include <dns/fixedname.h>
+#include <dns/rrl.h>
 #include <dns/rdatastruct.h>
 #include <dns/rpz.h>
 #include <dns/types.h>
@@ -141,9 +142,11 @@ struct dns_view {
 	dns_acl_t *			updateacl;
 	dns_acl_t *			upfwdacl;
 	dns_acl_t *			denyansweracl;
+	dns_acl_t *			nocasecompress;
 	dns_rbt_t *			answeracl_exclude;
 	dns_rbt_t *			denyanswernames;
 	dns_rbt_t *			answernames_exclude;
+	dns_rrl_t *			rrl;
 	isc_boolean_t			provideixfr;
 	isc_boolean_t			requestnsid;
 	dns_ttl_t			maxcachettl;
@@ -159,11 +162,15 @@ struct dns_view {
 	dns_name_t *			dlv;
 	dns_fixedname_t			dlv_fixed;
 	isc_uint16_t			maxudp;
+	unsigned int			maxbits;
 	dns_v4_aaaa_t			v4_aaaa;
 	dns_acl_t *			v4_aaaa_acl;
 	dns_dns64list_t 		dns64;
 	unsigned int 			dns64cnt;
 	ISC_LIST(dns_rpz_zone_t)	rpz_zones;
+	isc_boolean_t			rpz_recursive_only;
+	isc_boolean_t			rpz_break_dnssec;
+	unsigned int			rpz_min_ns_labels;
 
 	/*
 	 * Configurable data for server use only,
@@ -312,7 +319,8 @@ dns_view_weakdetach(dns_view_t **targetp);
 
 isc_result_t
 dns_view_createresolver(dns_view_t *view,
-			isc_taskmgr_t *taskmgr, unsigned int ntasks,
+			isc_taskmgr_t *taskmgr,
+			unsigned int ntasks, unsigned int ndisp,
 			isc_socketmgr_t *socketmgr,
 			isc_timermgr_t *timermgr,
 			unsigned int options,
@@ -706,6 +714,7 @@ dns_viewlist_findzone(dns_viewlist_t *list, dns_name_t *name, isc_boolean_t allc
  * Returns:
  *\li	#ISC_R_SUCCESS          A matching zone was found.
  *\li	#ISC_R_NOTFOUND         No matching zone was found.
+ *\li	#ISC_R_MULTIPLE         Multiple zones with the same name were found.
  */
 
 isc_result_t

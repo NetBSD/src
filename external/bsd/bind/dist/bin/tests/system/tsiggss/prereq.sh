@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,9 +14,8 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: prereq.sh,v 1.6 2011/04/05 16:10:39 smann Exp 
-
-TOP=${SYSTEMTESTTOP:=.}/../../../..
+SYSTEMTESTTOP=..
+. $SYSTEMTESTTOP/conf.sh
 
 # enable the tsiggss test only if gssapi was enabled
 ./gssapi_krb ||  {
@@ -24,4 +23,5 @@ TOP=${SYSTEMTESTTOP:=.}/../../../..
         exit 255
 }
 
-exit 0
+# ... and crypto
+exec $SHELL ../testcrypto.sh

@@ -1,7 +1,7 @@
-/*	$NetBSD: file.c,v 1.3.4.1 2012/06/05 21:15:24 bouyer Exp $	*/
+/*	$NetBSD: file.c,v 1.3.4.1.4.1 2014/12/31 11:59:06 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -29,11 +29,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -95,6 +91,47 @@ file_stats(const char *file, struct stat *stats) {
 
 	if (stat(file, stats) != 0)
 		result = isc__errno2result(errno);
+
+	return (result);
+}
+
+static isc_result_t
+fd_stats(int fd, struct stat *stats) {
+	isc_result_t result = ISC_R_SUCCESS;
+
+	REQUIRE(stats != NULL);
+
+	if (fstat(fd, stats) != 0)
+		result = isc__errno2result(errno);
+
+	return (result);
+}
+
+isc_result_t
+isc_file_getsizefd(int fd, off_t *size) {
+	isc_result_t result;
+	struct stat stats;
+
+	REQUIRE(size != NULL);
+
+	result = fd_stats(fd, &stats);
+
+	if (result == ISC_R_SUCCESS)
+		*size = stats.st_size;
+
+	return (result);
+}
+
+isc_result_t
+isc_file_mode(const char *file, mode_t *modep) {
+	isc_result_t result;
+	struct stat stats;
+
+	REQUIRE(modep != NULL);
+
+	result = file_stats(file, &stats);
+	if (result == ISC_R_SUCCESS)
+		*modep = (stats.st_mode & 07777);
 
 	return (result);
 }
@@ -315,6 +352,23 @@ isc_file_openuniquemode(char *templet, int mode, FILE **fp) {
 }
 
 isc_result_t
+isc_file_bopenunique(char *templet, FILE **fp) {
+	int mode = S_IWUSR|S_IRUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+	return (isc_file_openuniquemode(templet, mode, fp));
+}
+
+isc_result_t
+isc_file_bopenuniqueprivate(char *templet, FILE **fp) {
+	int mode = S_IWUSR|S_IRUSR;
+	return (isc_file_openuniquemode(templet, mode, fp));
+}
+
+isc_result_t
+isc_file_bopenuniquemode(char *templet, int mode, FILE **fp) {
+	return (isc_file_openuniquemode(templet, mode, fp));
+}
+
+isc_result_t
 isc_file_remove(const char *filename) {
 	int r;
 
@@ -362,6 +416,24 @@ isc_file_isplainfile(const char *filename) {
 		return(isc__errno2result(errno));
 
 	if(! S_ISREG(filestat.st_mode))
+		return(ISC_R_INVALIDFILE);
+
+	return(ISC_R_SUCCESS);
+}
+
+isc_result_t
+isc_file_isdirectory(const char *filename) {
+	/*
+	 * This function returns success if filename exists and is a
+	 * directory.
+	 */
+	struct stat filestat;
+	memset(&filestat,0,sizeof(struct stat));
+
+	if ((stat(filename, &filestat)) == -1)
+		return(isc__errno2result(errno));
+
+	if(! S_ISDIR(filestat.st_mode))
 		return(ISC_R_INVALIDFILE);
 
 	return(ISC_R_SUCCESS);
@@ -415,7 +487,7 @@ isc_file_progname(const char *filename, char *buf, size_t buflen) {
 
 	if (len > buflen)
 		return (ISC_R_NOSPACE);
-	memcpy(buf, base, len);
+	memmove(buf, base, len);
 
 	return (ISC_R_SUCCESS);
 }
@@ -512,6 +584,9 @@ isc_result_t
 isc_file_splitpath(isc_mem_t *mctx, char *path, char **dirname, char **basename)
 {
 	char *dir, *file, *slash;
+
+	if (path == NULL)
+		return (ISC_R_INVALIDFILE);
 
 	slash = strrchr(path, '/');
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: ddns-confgen.c,v 1.3.4.1 2012/06/05 21:15:06 bouyer Exp $	*/
+/*	$NetBSD: ddns-confgen.c,v 1.3.4.1.4.1 2014/12/31 11:58:27 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -48,6 +48,7 @@
 
 #include <dns/keyvalues.h>
 #include <dns/name.h>
+#include <dns/result.h>
 
 #include <dst/dst.h>
 #include <confgen/os.h>
@@ -101,9 +102,11 @@ main(int argc, char **argv) {
 	int len = 0;
 	int ch;
 
+	dns_result_register();
+
 	result = isc_file_progname(*argv, program, sizeof(program));
 	if (result != ISC_R_SUCCESS)
-		memcpy(program, "ddns-confgen", 13);
+		memmove(program, "ddns-confgen", 13);
 	progname = program;
 
 	isc_commandline_errprint = ISC_FALSE;
