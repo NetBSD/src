@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.310 2014/11/04 07:51:55 mlelstv Exp $	*/
+/*	$NetBSD: sd.c,v 1.311 2014/12/31 08:24:50 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.310 2014/11/04 07:51:55 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.311 2014/12/31 08:24:50 mlelstv Exp $");
 
 #include "opt_scsi.h"
 
@@ -2145,15 +2145,13 @@ sd_get_parms(struct sd_softc *sd, struct disk_parms *dp, int flags)
 	if (sd->type == T_SIMPLE_DIRECT) {
 		error = sd_get_simplifiedparms(sd, dp, flags);
 		if (!error)
-			disk_blocksize(&sd->sc_dk, dp->blksize);
+			goto setprops;
 		return (error);
 	}
 
 	error = sd_get_capacity(sd, dp, flags);
 	if (error)
 		return (error);
-
-	disk_blocksize(&sd->sc_dk, dp->blksize);
 
 	if (sd->type == T_OPTICAL)
 		goto page0;
