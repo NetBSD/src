@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.93 2014/12/30 20:18:44 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.94 2014/12/31 19:52:05 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.93 2014/12/30 20:18:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.94 2014/12/31 19:52:05 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -567,7 +567,7 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	}
 
-	error = disk_ioctl(&dksc->sc_dkdev, cmd, data, flag, l);
+	error = disk_ioctl(&dksc->sc_dkdev, dev, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
