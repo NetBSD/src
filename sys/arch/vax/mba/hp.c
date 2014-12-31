@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.51 2014/12/31 19:52:05 christos Exp $ */
+/*	$NetBSD: hp.c,v 1.52 2014/12/31 20:37:52 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.51 2014/12/31 19:52:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.52 2014/12/31 20:37:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ hpioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	error = disk_ioctl(&sc->sc_disk, dev, cmd, addr, flag, l); 
 	if (error != EPASSTHROUGH)
-		goto out;
+		return error;
 
 	switch (cmd) {
 	case DIOCSDINFO:
