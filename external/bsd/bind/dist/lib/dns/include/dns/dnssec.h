@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec.h,v 1.3.4.1 2012/06/05 21:14:55 bouyer Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.3.4.1.4.1 2014/12/31 11:58:59 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -26,6 +26,7 @@
 
 #include <isc/lang.h>
 #include <isc/stdtime.h>
+#include <isc/stats.h>
 
 #include <dns/diff.h>
 #include <dns/types.h>
@@ -33,6 +34,8 @@
 #include <dst/dst.h>
 
 ISC_LANG_BEGINDECLS
+
+LIBDNS_EXTERNAL_DATA extern isc_stats_t *dns_dnssec_stats;
 
 /*%< Maximum number of keys supported in a zone. */
 #define DNS_MAXZONEKEYS 32
@@ -98,8 +101,8 @@ dns_dnssec_sign(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 		isc_stdtime_t *inception, isc_stdtime_t *expire,
 		isc_mem_t *mctx, isc_buffer_t *buffer, dns_rdata_t *sigrdata);
 /*%<
- *	Generates a SIG record covering this rdataset.  This has no effect
- *	on existing SIG records.
+ *	Generates a RRSIG record covering this rdataset.  This has no effect
+ *	on existing RRSIG records.
  *
  *	Requires:
  *\li		'name' (the owner name of the record) is a valid name
@@ -131,11 +134,18 @@ isc_result_t
 dns_dnssec_verify2(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 		   isc_boolean_t ignoretime, isc_mem_t *mctx,
 		   dns_rdata_t *sigrdata, dns_name_t *wild);
+
+isc_result_t
+dns_dnssec_verify3(dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
+		   isc_boolean_t ignoretime, unsigned int maxbits,
+		   isc_mem_t *mctx, dns_rdata_t *sigrdata, dns_name_t *wild);
 /*%<
- *	Verifies the SIG record covering this rdataset signed by a specific
- *	key.  This does not determine if the key's owner is authorized to
- *	sign this record, as this requires a resolver or database.
+ *	Verifies the RRSIG record covering this rdataset signed by a specific
+ *	key.  This does not determine if the key's owner is authorized to sign
+ *	this record, as this requires a resolver or database.
  *	If 'ignoretime' is ISC_TRUE, temporal validity will not be checked.
+ *
+ *	'maxbits' specifies the maximum number of rsa exponent bits accepted.
  *
  *	Requires:
  *\li		'name' (the owner name of the record) is a valid name
@@ -166,6 +176,7 @@ dns_dnssec_findzonekeys(dns_db_t *db, dns_dbversion_t *ver, dns_dbnode_t *node,
 			dns_name_t *name, isc_mem_t *mctx,
 			unsigned int maxkeys, dst_key_t **keys,
 			unsigned int *nkeys);
+
 isc_result_t
 dns_dnssec_findzonekeys2(dns_db_t *db, dns_dbversion_t *ver,
 			 dns_dbnode_t *node, dns_name_t *name,
@@ -177,6 +188,20 @@ dns_dnssec_findzonekeys2(dns_db_t *db, dns_dbversion_t *ver,
  * 	XXX temporary - this should be handled in dns_zone_t.
  */
 /*@}*/
+
+isc_boolean_t
+dns_dnssec_keyactive(dst_key_t *key, isc_stdtime_t now);
+/*%<
+ *
+ * 	Returns ISC_TRUE if 'key' is active as of the time specified
+ * 	in 'now' (i.e., if the activation date has passed, inactivation or
+ * 	deletion date has not yet been reached, and the key is not revoked
+ * 	-- or if it is a legacy key without metadata). Otherwise returns
+ * 	ISC_FALSE.
+ *
+ *	Requires:
+ *\li		'key' is a valid key
+ */
 
 isc_result_t
 dns_dnssec_signmessage(dns_message_t *msg, dst_key_t *key);
@@ -291,11 +316,11 @@ dns_dnssec_keylistfromrdataset(dns_name_t *origin,
 			       const char *directory, isc_mem_t *mctx,
 			       dns_rdataset_t *keyset, dns_rdataset_t *keysigs,
 			       dns_rdataset_t *soasigs, isc_boolean_t savekeys,
-			       isc_boolean_t public,
+			       isc_boolean_t publickey,
 			       dns_dnsseckeylist_t *keylist);
 /*%<
  * Append the contents of a DNSKEY rdataset 'keyset' to 'keylist'.
- * Omit duplicates.  If 'public' is ISC_FALSE, search 'directory' for
+ * Omit duplicates.  If 'publickey' is ISC_FALSE, search 'directory' for
  * matching key files, and load the private keys that go with
  * the public ones.  If 'savekeys' is ISC_TRUE, mark the keys so
  * they will not be deleted or inactivated regardless of metadata.

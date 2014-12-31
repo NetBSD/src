@@ -1,7 +1,7 @@
-/*	$NetBSD: builtin.c,v 1.3.4.1 2012/06/05 21:15:22 bouyer Exp $	*/
+/*	$NetBSD: builtin.c,v 1.3.4.1.4.1 2014/12/31 11:58:29 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -101,9 +101,9 @@ static size_t
 dns64_rdata(unsigned char *v, size_t start, unsigned char *rdata) {
 	size_t i, j = 0;
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 4U; i++) {
 		unsigned char c = v[start++];
-		if (start == 7)
+		if (start == 7U)
 			start++;
 		if (c > 99) {
 			rdata[j++] = 3;
@@ -119,7 +119,7 @@ dns64_rdata(unsigned char *v, size_t start, unsigned char *rdata) {
 			rdata[j++] = decimal[c];
 		}
 	}
-	memcpy(&rdata[j], "\07in-addr\04arpa", 14);
+	memmove(&rdata[j], "\07in-addr\04arpa", 14);
 	return (j + 14);
 }
 
@@ -166,7 +166,7 @@ dns64_cname(const dns_name_t *zone, const dns_name_t *name,
 	i = (nlen % 4) == 2U ? 1 : 0;
 	j = nlen;
 	memset(v, 0, sizeof(v));
-	while (j != 0) {
+	while (j != 0U) {
 		INSIST((i/2) < sizeof(v));
 		if (ndata[0] != 1)
 			return (ISC_R_NOTFOUND);
@@ -278,7 +278,8 @@ dns64_cname(const dns_name_t *zone, const dns_name_t *name,
 		 */
 		return (ISC_R_NOTFOUND);
 	}
-	return (dns_sdb_putrdata(lookup, dns_rdatatype_cname, 600, rdata, len));
+	return (dns_sdb_putrdata(lookup, dns_rdatatype_cname, 600,
+				 rdata, (unsigned int)len));
 }
 
 static isc_result_t
@@ -321,7 +322,7 @@ put_txt(dns_sdblookup_t *lookup, const char *text) {
 	if (len > 255)
 		len = 255; /* Silently truncate */
 	buf[0] = len;
-	memcpy(&buf[1], text, len);
+	memmove(&buf[1], text, len);
 	return (dns_sdb_putrdata(lookup, dns_rdatatype_txt, 0, buf, len + 1));
 }
 
@@ -503,10 +504,10 @@ builtin_create(const char *zone, int argc, char **argv,
 				isc_mem_put(ns_g_mctx, empty, sizeof (*empty));
 		} else {
 			if (strcmp(argv[0], "empty") == 0)
-				memcpy(empty, &empty_builtin,
+				memmove(empty, &empty_builtin,
 				       sizeof (empty_builtin));
 			else
-				memcpy(empty, &dns64_builtin,
+				memmove(empty, &dns64_builtin,
 				       sizeof (empty_builtin));
 			empty->server = server;
 			empty->contact = contact;

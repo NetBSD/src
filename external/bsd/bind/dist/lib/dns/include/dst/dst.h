@@ -1,7 +1,7 @@
-/*	$NetBSD: dst.h,v 1.3.4.1 2012/06/05 21:15:50 bouyer Exp $	*/
+/*	$NetBSD: dst.h,v 1.3.4.1.4.1 2014/12/31 11:58:59 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -28,6 +28,7 @@
 #include <isc/stdtime.h>
 
 #include <dns/types.h>
+#include <dns/log.h>
 #include <dns/name.h>
 #include <dns/secalg.h>
 
@@ -61,6 +62,8 @@ typedef struct dst_context 	dst_context_t;
 #define DST_ALG_RSASHA256	8
 #define DST_ALG_RSASHA512	10
 #define DST_ALG_ECCGOST		12
+#define DST_ALG_ECDSA256	13
+#define DST_ALG_ECDSA384	14
 #define DST_ALG_HMACMD5		157
 #define DST_ALG_GSSAPI		160
 #define DST_ALG_HMACSHA1	161	/* XXXMPA */
@@ -169,6 +172,11 @@ dst_algorithm_supported(unsigned int alg);
 
 isc_result_t
 dst_context_create(dst_key_t *key, isc_mem_t *mctx, dst_context_t **dctxp);
+
+isc_result_t
+dst_context_create2(dst_key_t *key, isc_mem_t *mctx,
+		    isc_logcategory_t *category, dst_context_t **dctxp);
+
 /*%<
  * Creates a context to be used for a sign or verify operation.
  *
@@ -233,8 +241,15 @@ dst_context_sign(dst_context_t *dctx, isc_buffer_t *sig);
 
 isc_result_t
 dst_context_verify(dst_context_t *dctx, isc_region_t *sig);
+
+isc_result_t
+dst_context_verify2(dst_context_t *dctx, unsigned int maxbits,
+		    isc_region_t *sig);
 /*%<
  * Verifies the signature using the data and key stored in the context.
+ *
+ * 'maxbits' specifies the maximum number of bits permitted in the RSA
+ * exponent.
  *
  * Requires:
  * \li	"dctx" is a valid context.
@@ -492,6 +507,14 @@ dst_key_fromgssapi(dns_name_t *name, gss_ctx_id_t gssctx, isc_mem_t *mctx,
  *	the context id.
  */
 
+#ifdef DST_KEY_INTERNAL
+isc_result_t
+dst_key_buildinternal(dns_name_t *name, unsigned int alg,
+		      unsigned int bits, unsigned int flags,
+		      unsigned int protocol, dns_rdataclass_t rdclass,
+		      void *data, isc_mem_t *mctx, dst_key_t **keyp);
+#endif
+
 isc_result_t
 dst_key_fromlabel(dns_name_t *name, int alg, unsigned int flags,
 		  unsigned int protocol, dns_rdataclass_t rdclass,
@@ -512,6 +535,7 @@ dst_key_generate2(dns_name_t *name, unsigned int alg,
 		  dns_rdataclass_t rdclass,
 		  isc_mem_t *mctx, dst_key_t **keyp,
 		  void (*callback)(int));
+
 /*%<
  * Generate a DST key (or keypair) with the supplied parameters.  The
  * interpretation of the "param" field depends on the algorithm:
@@ -901,6 +925,29 @@ dst_key_restore(dns_name_t *name, unsigned int alg, unsigned int flags,
 		unsigned int protocol, dns_rdataclass_t rdclass,
 		isc_mem_t *mctx, const char *keystr, dst_key_t **keyp);
 
+isc_boolean_t
+dst_key_inactive(const dst_key_t *key);
+/*%<
+ * Determines if the private key is missing due the key being deemed inactive.
+ *
+ * Requires:
+ *	'key' to be valid.
+ */
+
+void
+dst_key_setinactive(dst_key_t *key, isc_boolean_t inactive);
+/*%<
+ * Set key inactive state.
+ *
+ * Requires:
+ *	'key' to be valid.
+ */
+
+void
+dst_key_setexternal(dst_key_t *key, isc_boolean_t value);
+
+isc_boolean_t
+dst_key_isexternal(dst_key_t *key);
 
 ISC_LANG_ENDDECLS
 

@@ -28,7 +28,9 @@ dnl IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 dnl
 
 AC_DEFUN([ATF_MODULE_SIGNALS], [
-    AC_MSG_CHECKING(for the last valid signal)
+    AC_CACHE_CHECK(
+        [for the last valid signal],
+        [kyua_cv_signal_lastno], [
     AC_RUN_IFELSE([AC_LANG_PROGRAM([#include <err.h>
 #include <errno.h>
 #include <signal.h>
@@ -72,15 +74,13 @@ AC_DEFUN([ATF_MODULE_SIGNALS], [
     return EXIT_SUCCESS;
 ])],
     [if test ! -f conftest.cnt; then
-         last_signo=15
-         AC_MSG_RESULT(failed; assuming ${last_signo})
+             kyua_cv_signal_lastno=15
      else
-         last_signo=$(cat conftest.cnt)
+             kyua_cv_signal_lastno=$(cat conftest.cnt)
          rm -f conftest.cnt
-         AC_MSG_RESULT(${last_signo})
      fi],
-    [last_signo=15
-     AC_MSG_RESULT(failed; assuming ${last_signo})])
-    AC_DEFINE_UNQUOTED([LAST_SIGNO], [${last_signo}],
+        [kyua_cv_signal_lastno=15])
+    ])
+    AC_DEFINE_UNQUOTED([LAST_SIGNO], [${kyua_cv_signal_lastno}],
                        [Define to the last valid signal number])
 ])

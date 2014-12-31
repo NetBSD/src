@@ -1,7 +1,7 @@
-/*	$NetBSD: event.h,v 1.3.6.1 2012/06/05 21:15:29 bouyer Exp $	*/
+/*	$NetBSD: event.h,v 1.3.6.1.4.1 2014/12/31 11:59:04 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -92,6 +92,9 @@ ISC_LANG_BEGINDECLS
 
 isc_event_t *
 isc_event_allocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
+		   isc_taskaction_t action, void *arg, size_t size);
+isc_event_t *
+isc_event_constallocate(isc_mem_t *mctx, void *sender, isc_eventtype_t type,
 		   isc_taskaction_t action, const void *arg, size_t size);
 /*%<
  * Allocate an event structure. 

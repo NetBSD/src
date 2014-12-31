@@ -1,7 +1,7 @@
-/*	$NetBSD: dst_parse.h,v 1.2.6.1 2012/06/05 21:15:03 bouyer Exp $	*/
+/*	$NetBSD: dst_parse.h,v 1.2.6.1.4.1 2014/12/31 11:58:58 msaitoh Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2010, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -82,6 +82,9 @@
 
 #define GOST_NTAGS		1
 #define TAG_GOST_PRIVASN1	((DST_ALG_ECCGOST << TAG_SHIFT) + 0)
+
+#define ECDSA_NTAGS		1
+#define TAG_ECDSA_PRIVATEKEY	((DST_ALG_ECDSA256 << TAG_SHIFT) + 0)
 
 #define OLD_HMACMD5_NTAGS	1
 #define HMACMD5_NTAGS		2

@@ -1,7 +1,7 @@
-/*	$NetBSD: statschannel.c,v 1.3.4.1 2012/06/05 21:15:22 bouyer Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.3.4.1.4.1 2014/12/31 11:58:29 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2008-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,7 @@
 #include <isc/print.h>
 #include <isc/socket.h>
 #include <isc/stats.h>
+#include <isc/string.h>
 #include <isc/task.h>
 
 #include <dns/cache.h>
@@ -45,7 +46,11 @@
 #include <named/server.h>
 #include <named/statschannel.h>
 
+#ifdef NEWSTATS
+	#include "bind9.ver3.xsl.h"
+#else /* OLDSTATS */
 #include "bind9.xsl.h"
+#endif /* NEWSTATS */
 
 struct ns_statschannel {
 	/* Unlocked */
@@ -87,19 +92,22 @@ static const char *nsstats_desc[dns_nsstatscounter_max];
 static const char *resstats_desc[dns_resstatscounter_max];
 static const char *zonestats_desc[dns_zonestatscounter_max];
 static const char *sockstats_desc[isc_sockstatscounter_max];
+static const char *dnssecstats_desc[dns_dnssecstats_max];
 #ifdef HAVE_LIBXML2
 static const char *nsstats_xmldesc[dns_nsstatscounter_max];
 static const char *resstats_xmldesc[dns_resstatscounter_max];
 static const char *zonestats_xmldesc[dns_zonestatscounter_max];
 static const char *sockstats_xmldesc[isc_sockstatscounter_max];
+static const char *dnssecstats_xmldesc[dns_dnssecstats_max];
 #else
 #define nsstats_xmldesc NULL
 #define resstats_xmldesc NULL
 #define zonestats_xmldesc NULL
 #define sockstats_xmldesc NULL
+#define dnssecstats_xmldesc NULL
 #endif	/* HAVE_LIBXML2 */
 
-#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(0)
+#define TRY0(a) do { xmlrc = (a); if (xmlrc < 0) goto error; } while(/*CONSTCOND*/0)
 
 /*%
  * Mapping arrays to represent statistics counters in the order of our
@@ -110,6 +118,7 @@ static int nsstats_index[dns_nsstatscounter_max];
 static int resstats_index[dns_resstatscounter_max];
 static int zonestats_index[dns_zonestatscounter_max];
 static int sockstats_index[isc_sockstatscounter_max];
+static int dnssecstats_index[dns_dnssecstats_max];
 
 static inline void
 set_desc(int counter, int maxcounter, const char *fdesc, const char **fdescs,
@@ -200,6 +209,14 @@ init_desc(void) {
 	SET_NSSTATDESC(updatebadprereq,
 		       "updates rejected due to prerequisite failure",
 		       "UpdateBadPrereq");
+	SET_NSSTATDESC(rpz_rewrites, "response policy zone rewrites",
+		       "RPZRewrites");
+#ifdef USE_RRL
+	SET_NSSTATDESC(ratedropped, "responses dropped for rate limits",
+		       "RateDropped");
+	SET_NSSTATDESC(rateslipped, "responses truncated for rate limits",
+		       "RateSlipped");
+#endif /* USE_RRL */
 	INSIST(i == dns_nsstatscounter_max);
 
 	/* Initialize resolver statistics */
@@ -300,7 +317,8 @@ init_desc(void) {
 	SET_ZONESTATDESC(axfrreqv6, "IPv6 AXFR requested", "AXFRReqv6");
 	SET_ZONESTATDESC(ixfrreqv4, "IPv4 IXFR requested", "IXFRReqv4");
 	SET_ZONESTATDESC(ixfrreqv6, "IPv6 IXFR requested", "IXFRReqv6");
-	SET_ZONESTATDESC(xfrsuccess, "transfer requests succeeded","XfrSuccess");
+	SET_ZONESTATDESC(xfrsuccess, "transfer requests succeeded",
+			 "XfrSuccess");
 	SET_ZONESTATDESC(xfrfail, "transfer requests failed", "XfrFail");
 	INSIST(i == dns_zonestatscounter_max);
 
@@ -411,6 +429,33 @@ init_desc(void) {
 			 "FDwatchRecvErr");
 	INSIST(i == isc_sockstatscounter_max);
 
+	/* Initialize DNSSEC statistics */
+	for (i = 0; i < dns_dnssecstats_max; i++)
+		dnssecstats_desc[i] = NULL;
+#ifdef  HAVE_LIBXML2
+	for (i = 0; i < dns_dnssecstats_max; i++)
+		dnssecstats_xmldesc[i] = NULL;
+#endif
+
+#define SET_DNSSECSTATDESC(counterid, desc, xmldesc) \
+	do { \
+		set_desc(dns_dnssecstats_ ## counterid, \
+			 dns_dnssecstats_max, \
+			 desc, dnssecstats_desc,\
+			 xmldesc, dnssecstats_xmldesc); \
+		dnssecstats_index[i++] = dns_dnssecstats_ ## counterid; \
+	} while (/*CONSTCOND*/0)
+
+	i = 0;
+	SET_DNSSECSTATDESC(asis, "dnssec validation success with signer "
+			   "\"as is\"", "DNSSECasis");
+	SET_DNSSECSTATDESC(downcase, "dnssec validation success with signer "
+			   "lower cased", "DNSSECdowncase");
+	SET_DNSSECSTATDESC(wildcard, "dnssec validation of wildcard signature",
+			   "DNSSECwild");
+	SET_DNSSECSTATDESC(fail, "dnssec validation failures", "DNSSECfail");
+	INSIST(i == dns_dnssecstats_max);
+
 	/* Sanity check */
 	for (i = 0; i < dns_nsstatscounter_max; i++)
 		INSIST(nsstats_desc[i] != NULL);
@@ -420,6 +465,8 @@ init_desc(void) {
 		INSIST(zonestats_desc[i] != NULL);
 	for (i = 0; i < isc_sockstatscounter_max; i++)
 		INSIST(sockstats_desc[i] != NULL);
+	for (i = 0; i < dns_dnssecstats_max; i++)
+		INSIST(dnssecstats_desc[i] != NULL);
 #ifdef  HAVE_LIBXML2
 	for (i = 0; i < dns_nsstatscounter_max; i++)
 		INSIST(nsstats_xmldesc[i] != NULL);
@@ -429,6 +476,8 @@ init_desc(void) {
 		INSIST(zonestats_xmldesc[i] != NULL);
 	for (i = 0; i < isc_sockstatscounter_max; i++)
 		INSIST(sockstats_xmldesc[i] != NULL);
+	for (i = 0; i < dns_dnssecstats_max; i++)
+		INSIST(dnssecstats_xmldesc[i] != NULL);
 #endif
 }
 
@@ -484,6 +533,51 @@ dump_counters(isc_stats_t *stats, statsformat_t type, void *arg,
 			break;
 		case statsformat_xml:
 #ifdef HAVE_LIBXML2
+#ifdef NEWSTATS
+		writer = arg;
+
+		if (category != NULL) {
+			/* <NameOfCategory> */
+			TRY0(xmlTextWriterStartElement(writer,
+						       ISC_XMLCHAR
+						       category));
+			/* <name> inside category */
+			TRY0(xmlTextWriterStartElement(writer,
+						       ISC_XMLCHAR
+						       "name"));
+			TRY0(xmlTextWriterWriteString(writer,
+						      ISC_XMLCHAR
+						      desc[index]));
+			TRY0(xmlTextWriterEndElement(writer));
+			/* </name> */
+
+			/* <counter> */
+			TRY0(xmlTextWriterStartElement(writer,
+						       ISC_XMLCHAR
+						       "counter"));
+			TRY0(xmlTextWriterWriteFormatString(writer,
+				"%" ISC_PRINT_QUADFORMAT "u", value));
+
+			TRY0(xmlTextWriterEndElement(writer));
+			/* </counter> */
+			TRY0(xmlTextWriterEndElement(writer));
+			/* </NameOfCategory> */
+
+		} else {
+			TRY0(xmlTextWriterStartElement(writer,
+						       ISC_XMLCHAR
+						       "counter"));
+			TRY0(xmlTextWriterWriteAttribute(writer,
+							 ISC_XMLCHAR
+							 "name",
+							 ISC_XMLCHAR
+							 desc[index]));
+			TRY0(xmlTextWriterWriteFormatString(writer,
+				"%" ISC_PRINT_QUADFORMAT "u", value));
+			TRY0(xmlTextWriterEndElement(writer));
+			/* counter */
+		}
+#else /* !NEWSTATS */
 			writer = arg;
 
 			if (category != NULL) {
@@ -513,17 +607,73 @@ dump_counters(isc_stats_t *stats, statsformat_t type, void *arg,
 			TRY0(xmlTextWriterEndElement(writer)); /* counter */
 			if (category != NULL)
 				TRY0(xmlTextWriterEndElement(writer)); /* category */
-#endif
+#endif /* NEWSTATS */
+#endif /* LIBXML2 */
 			break;
 		}
 	}
 	return (ISC_R_SUCCESS);
 #ifdef HAVE_LIBXML2
  error:
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER,
+		      ISC_LOG_ERROR, "failed at dump_counters()");
 	return (ISC_R_FAILURE);
 #endif
 }
 
+#ifdef NEWSTATS
+static void
+rdtypestat_dump(dns_rdatastatstype_t type, isc_uint64_t val, void *arg) {
+	char typebuf[64];
+	const char *typestr;
+	stats_dumparg_t *dumparg = arg;
+	FILE *fp;
+#ifdef HAVE_LIBXML2
+	xmlTextWriterPtr writer;
+	int xmlrc;
+#endif
+
+	if ((DNS_RDATASTATSTYPE_ATTR(type) & DNS_RDATASTATSTYPE_ATTR_OTHERTYPE)
+	    == 0) {
+		dns_rdatatype_format(DNS_RDATASTATSTYPE_BASE(type), typebuf,
+				     sizeof(typebuf));
+		typestr = typebuf;
+	} else
+		typestr = "Others";
+
+	switch (dumparg->type) {
+	case statsformat_file:
+		fp = dumparg->arg;
+		fprintf(fp, "%20" ISC_PRINT_QUADFORMAT "u %s\n", val, typestr);
+		break;
+	case statsformat_xml:
+#ifdef HAVE_LIBXML2
+
+		writer = dumparg->arg;
+
+
+		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "counter"));
+		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "name",
+						 ISC_XMLCHAR typestr));
+
+		TRY0(xmlTextWriterWriteFormatString(writer,
+					       "%" ISC_PRINT_QUADFORMAT "u",
+					       val));
+
+		TRY0(xmlTextWriterEndElement(writer)); /* type */
+#endif
+		break;
+	}
+	return;
+#ifdef HAVE_LIBXML2
+ error:
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER,
+		      ISC_LOG_ERROR, "failed at rdtypestat_dump()");
+	dumparg->result = ISC_R_FAILURE;
+	return;
+#endif
+}
+#else  /* NEWSTATS */
 static void
 rdtypestat_dump(dns_rdatastatstype_t type, isc_uint64_t val, void *arg) {
 	char typebuf[64];
@@ -575,6 +725,7 @@ rdtypestat_dump(dns_rdatastatstype_t type, isc_uint64_t val, void *arg) {
 	return;
 #endif
 }
+#endif  /* NEWSTATS */
 
 static void
 rdatasetstats_dump(dns_rdatastatstype_t type, isc_uint64_t val, void *arg) {
@@ -633,11 +784,58 @@ rdatasetstats_dump(dns_rdatastatstype_t type, isc_uint64_t val, void *arg) {
 	return;
 #ifdef HAVE_LIBXML2
  error:
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER,
+		      ISC_LOG_ERROR, "failed at rdatasetstats_dump()");
 	dumparg->result = ISC_R_FAILURE;
 #endif
 
 }
 
+#ifdef NEWSTATS
+static void
+opcodestat_dump(dns_opcode_t code, isc_uint64_t val, void *arg) {
+	FILE *fp;
+	isc_buffer_t b;
+	char codebuf[64];
+	stats_dumparg_t *dumparg = arg;
+#ifdef HAVE_LIBXML2
+	xmlTextWriterPtr writer;
+	int xmlrc;
+#endif
+
+	isc_buffer_init(&b, codebuf, sizeof(codebuf) - 1);
+	dns_opcode_totext(code, &b);
+	codebuf[isc_buffer_usedlength(&b)] = '\0';
+
+	switch (dumparg->type) {
+	case statsformat_file:
+		fp = dumparg->arg;
+		fprintf(fp, "%20" ISC_PRINT_QUADFORMAT "u %s\n", val, codebuf);
+		break;
+	case statsformat_xml:
+#ifdef HAVE_LIBXML2
+		writer = dumparg->arg;
+		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "counter"));
+		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "name",
+						 ISC_XMLCHAR codebuf ));
+		TRY0(xmlTextWriterWriteFormatString(writer,
+						       "%" ISC_PRINT_QUADFORMAT "u",
+						       val));
+		TRY0(xmlTextWriterEndElement(writer)); /* counter */
+#endif
+		break;
+	}
+	return;
+
+#ifdef HAVE_LIBXML2
+ error:
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER,
+		      ISC_LOG_ERROR, "failed at opcodestat_dump()");
+	dumparg->result = ISC_R_FAILURE;
+	return;
+#endif
+}
+#else  /* NEWSTATS */
 static void
 opcodestat_dump(dns_opcode_t code, isc_uint64_t val, void *arg) {
 	FILE *fp;
@@ -686,12 +884,96 @@ opcodestat_dump(dns_opcode_t code, isc_uint64_t val, void *arg) {
 	return;
 #endif
 }
+#endif  /* NEWSTATS */
 
 #ifdef HAVE_LIBXML2
 
-/* XXXMLG below here sucks. */
+/* XXXMLG below here sucks. (not so much) */
 
+#ifdef NEWSTATS
+static isc_result_t
+zone_xmlrender(dns_zone_t *zone, void *arg) {
+	isc_result_t result;
+	char buf[1024 + 32];	/* sufficiently large for zone name and class */
+	char *zone_name_only = NULL;
+	dns_rdataclass_t rdclass;
+	isc_uint32_t serial;
+	xmlTextWriterPtr writer = arg;
+	isc_stats_t *zonestats;
+	dns_stats_t *rcvquerystats;
+	dns_zonestat_level_t statlevel;
+	isc_uint64_t nsstat_values[dns_nsstatscounter_max];
+	int xmlrc;
+	stats_dumparg_t dumparg;
 
+	statlevel = dns_zone_getstatlevel(zone);
+	if (statlevel == dns_zonestat_none)
+		return (ISC_R_SUCCESS);
+
+	dumparg.type = statsformat_xml;
+	dumparg.arg = writer;
+
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "zone"));
+	dns_zone_name(zone, buf, sizeof(buf));
+	zone_name_only = strtok(buf, "/");
+	if(zone_name_only == NULL)
+		zone_name_only = buf;
+
+	TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "name",
+					 ISC_XMLCHAR zone_name_only));
+	rdclass = dns_zone_getclass(zone);
+	dns_rdataclass_format(rdclass, buf, sizeof(buf));
+	TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "rdataclass",
+					 ISC_XMLCHAR buf));
+
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "serial"));
+	if (dns_zone_getserial2(zone, &serial) == ISC_R_SUCCESS)
+		TRY0(xmlTextWriterWriteFormatString(writer, "%u", serial));
+	else
+		TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR "-"));
+	TRY0(xmlTextWriterEndElement(writer)); /* serial */
+
+	zonestats = dns_zone_getrequeststats(zone);
+	rcvquerystats = dns_zone_getrcvquerystats(zone);
+	if (statlevel == dns_zonestat_full && zonestats != NULL) {
+		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "counters"));
+		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
+						 ISC_XMLCHAR "rcode"));
+
+		result = dump_counters(zonestats, statsformat_xml, writer,
+				       NULL, nsstats_xmldesc,
+				       dns_nsstatscounter_max, nsstats_index,
+				       nsstat_values, ISC_STATSDUMP_VERBOSE);
+		if (result != ISC_R_SUCCESS)
+			goto error;
+		/* counters type="rcode"*/
+		TRY0(xmlTextWriterEndElement(writer));
+	}
+
+	if (statlevel == dns_zonestat_full && rcvquerystats != NULL) {
+		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "counters"));
+		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
+						 ISC_XMLCHAR "qtype"));
+
+		dumparg.result = ISC_R_SUCCESS;
+		dns_rdatatypestats_dump(rcvquerystats, rdtypestat_dump,
+					&dumparg, 0);
+		if(dumparg.result != ISC_R_SUCCESS)
+			goto error;
+
+		/* counters type="qtype"*/
+		TRY0(xmlTextWriterEndElement(writer));
+	}
+
+	TRY0(xmlTextWriterEndElement(writer)); /* zone */
+
+	return (ISC_R_SUCCESS);
+ error:
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER,
+		      ISC_LOG_ERROR, "Failed at zone_xmlrender()");
+	return (ISC_R_FAILURE);
+}
+#else  /* NEWSTATS */
 static isc_result_t
 zone_xmlrender(dns_zone_t *zone, void *arg) {
 	char buf[1024 + 32];	/* sufficiently large for zone name and class */
@@ -699,9 +981,14 @@ zone_xmlrender(dns_zone_t *zone, void *arg) {
 	isc_uint32_t serial;
 	xmlTextWriterPtr writer = arg;
 	isc_stats_t *zonestats;
+	dns_zonestat_level_t statlevel;
 	isc_uint64_t nsstat_values[dns_nsstatscounter_max];
 	int xmlrc;
 	isc_result_t result;
+
+	statlevel = dns_zone_getstatlevel(zone);
+	if (statlevel == dns_zonestat_none)
+		return (ISC_R_SUCCESS);
 
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "zone"));
 
@@ -741,7 +1028,239 @@ zone_xmlrender(dns_zone_t *zone, void *arg) {
  error:
 	return (ISC_R_FAILURE);
 }
+#endif  /* NEWSTATS */
 
+#ifdef NEWSTATS
+static isc_result_t
+generatexml(ns_server_t *server, int *buflen, xmlChar **buf) {
+	char boottime[sizeof "yyyy-mm-ddThh:mm:ssZ"];
+	char nowstr[sizeof "yyyy-mm-ddThh:mm:ssZ"];
+	isc_time_t now;
+	xmlTextWriterPtr writer = NULL;
+	xmlDocPtr doc = NULL;
+	int xmlrc;
+	dns_view_t *view;
+	stats_dumparg_t dumparg;
+	dns_stats_t *cacherrstats;
+	isc_uint64_t nsstat_values[dns_nsstatscounter_max];
+	isc_uint64_t resstat_values[dns_resstatscounter_max];
+	isc_uint64_t zonestat_values[dns_zonestatscounter_max];
+	isc_uint64_t sockstat_values[isc_sockstatscounter_max];
+	isc_result_t result;
+
+	isc_time_now(&now);
+	isc_time_formatISO8601(&ns_g_boottime, boottime, sizeof boottime);
+	isc_time_formatISO8601(&now, nowstr, sizeof nowstr);
+
+	writer = xmlNewTextWriterDoc(&doc, 0);
+	if (writer == NULL)
+		goto error;
+	TRY0(xmlTextWriterStartDocument(writer, NULL, "UTF-8", NULL));
+	TRY0(xmlTextWriterWritePI(writer, ISC_XMLCHAR "xml-stylesheet",
+			ISC_XMLCHAR "type=\"text/xsl\" href=\"/bind9.ver3.xsl\""));
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "statistics"));
+	TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "version",
+					 ISC_XMLCHAR "3.3"));
+
+	/* Set common fields for statistics dump */
+	dumparg.type = statsformat_xml;
+	dumparg.arg = writer;
+
+	/*
+	 * Start by rendering the views we know of here.  For each view we
+	 * know of, call its rendering function.
+	 */
+	view = ISC_LIST_HEAD(server->viewlist);
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "views"));
+	while (view != NULL) {
+		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "view"));
+		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "name",
+						 ISC_XMLCHAR view->name));
+
+		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "zones"));
+		result = dns_zt_apply(view->zonetable, ISC_TRUE, zone_xmlrender,
+				      writer);
+		if (result != ISC_R_SUCCESS)
+			goto error;
+		TRY0(xmlTextWriterEndElement(writer)); /* zones */
+
+		TRY0(xmlTextWriterStartElement(writer,
+					       ISC_XMLCHAR "counters"));
+		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
+						 ISC_XMLCHAR "resqtype"));
+
+		if (view->resquerystats != NULL) {
+			dumparg.result = ISC_R_SUCCESS;
+			dns_rdatatypestats_dump(view->resquerystats,
+						rdtypestat_dump, &dumparg, 0);
+			if (dumparg.result != ISC_R_SUCCESS)
+				goto error;
+		}
+else fprintf(stderr, "WTF WHERE'S RESQUERYRSTATS\n");
+		TRY0(xmlTextWriterEndElement(writer));
+
+		TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "counters"));
+		TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
+						 ISC_XMLCHAR "resstats"));
+		if (view->resstats != NULL) {
+			result = dump_counters(view->resstats,
+					       statsformat_xml, writer,
+					       NULL, resstats_xmldesc,
+					       dns_resstatscounter_max,
+					       resstats_index, resstat_values,
+					       ISC_STATSDUMP_VERBOSE);
+			if (result != ISC_R_SUCCESS)
+				goto error;
+		}
+		TRY0(xmlTextWriterEndElement(writer));
+
+		cacherrstats = dns_db_getrrsetstats(view->cachedb);
+		if (cacherrstats != NULL) {
+			TRY0(xmlTextWriterStartElement(writer,
+						       ISC_XMLCHAR "cache"));
+			TRY0(xmlTextWriterWriteAttribute(writer,
+					 ISC_XMLCHAR "name",
+					 ISC_XMLCHAR
+					 dns_cache_getname(view->cache)));
+			dumparg.result = ISC_R_SUCCESS;
+			dns_rdatasetstats_dump(cacherrstats, rdatasetstats_dump,
+					       &dumparg, 0);
+			if (dumparg.result != ISC_R_SUCCESS)
+				goto error;
+			TRY0(xmlTextWriterEndElement(writer)); /* cache */
+		}
+
+		TRY0(xmlTextWriterEndElement(writer)); /* view */
+
+		view = ISC_LIST_NEXT(view, link);
+	}
+	TRY0(xmlTextWriterEndElement(writer)); /* views */
+
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "socketmgr"));
+	isc_socketmgr_renderxml(ns_g_socketmgr, writer);
+	TRY0(xmlTextWriterEndElement(writer)); /* socketmgr */
+
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "taskmgr"));
+	isc_taskmgr_renderxml(ns_g_taskmgr, writer);
+	TRY0(xmlTextWriterEndElement(writer)); /* taskmgr */
+
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "server"));
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "boot-time"));
+	TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR boottime));
+	TRY0(xmlTextWriterEndElement(writer)); /* boot-time */
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "current-time"));
+	TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR nowstr));
+	TRY0(xmlTextWriterEndElement(writer));  /* current-time */
+
+	dumparg.result = ISC_R_SUCCESS;
+
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "counters"));
+	TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
+					 ISC_XMLCHAR "opcode"));
+
+	dns_opcodestats_dump(server->opcodestats, opcodestat_dump, &dumparg,
+			     ISC_STATSDUMP_VERBOSE);
+	if (dumparg.result != ISC_R_SUCCESS)
+		goto error;
+
+	TRY0(xmlTextWriterEndElement(writer)); /* counters type=opcode */
+
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "counters"));
+	TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
+					 ISC_XMLCHAR "qtype"));
+
+	dumparg.result = ISC_R_SUCCESS;
+	dns_rdatatypestats_dump(server->rcvquerystats, rdtypestat_dump,
+				&dumparg, 0);
+	if (dumparg.result != ISC_R_SUCCESS)
+		goto error;
+	TRY0(xmlTextWriterEndElement(writer)); /* counters */
+
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "counters"));
+	TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
+					 ISC_XMLCHAR "nsstat"));
+
+	result = dump_counters(server->nsstats, statsformat_xml,
+			       writer, NULL, nsstats_xmldesc,
+			       dns_nsstatscounter_max,
+			       nsstats_index, nsstat_values,
+			       ISC_STATSDUMP_VERBOSE);
+	if (result != ISC_R_SUCCESS)
+		goto error;
+
+	TRY0(xmlTextWriterEndElement(writer)); /* counters type=nsstat */
+
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "counters"));
+	TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
+					 ISC_XMLCHAR "zonestat"));
+
+	result = dump_counters(server->zonestats, statsformat_xml, writer,
+			       NULL, zonestats_xmldesc,
+			       dns_zonestatscounter_max, zonestats_index,
+			       zonestat_values, ISC_STATSDUMP_VERBOSE);
+	if (result != ISC_R_SUCCESS)
+		goto error;
+
+	TRY0(xmlTextWriterEndElement(writer)); /* counters type=zonestat */
+
+	/*
+	 * Most of the common resolver statistics entries are 0, so we don't
+	 * use the verbose dump here.
+	 */
+
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "counters"));
+	TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
+					 ISC_XMLCHAR "resstat"));
+	result = dump_counters(server->resolverstats, statsformat_xml,
+			       writer, NULL, resstats_xmldesc,
+			       dns_resstatscounter_max, resstats_index,
+			       resstat_values, 0);
+	if (result != ISC_R_SUCCESS)
+		goto error;
+
+	TRY0(xmlTextWriterEndElement(writer)); /* counters type=resstat */
+
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "counters"));
+	TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "type",
+					 ISC_XMLCHAR "sockstat"));
+
+	result = dump_counters(server->sockstats, statsformat_xml,
+			       writer, NULL, sockstats_xmldesc,
+			       isc_sockstatscounter_max, sockstats_index,
+			       sockstat_values, ISC_STATSDUMP_VERBOSE);
+	if (result != ISC_R_SUCCESS)
+		goto error;
+
+	TRY0(xmlTextWriterEndElement(writer)); /* counters type=sockstat */
+
+	TRY0(xmlTextWriterEndElement(writer)); /* server */
+
+	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "memory"));
+	isc_mem_renderxml(writer);
+	TRY0(xmlTextWriterEndElement(writer)); /* memory */
+
+	TRY0(xmlTextWriterEndElement(writer)); /* statistics */
+
+	TRY0(xmlTextWriterEndDocument(writer));
+
+	xmlFreeTextWriter(writer);
+
+	xmlDocDumpFormatMemoryEnc(doc, buf, buflen, "UTF-8", 0);
+	if (*buf == NULL)
+		goto error;
+	xmlFreeDoc(doc);
+	return (ISC_R_SUCCESS);
+
+ error:
+	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_SERVER,
+		      ISC_LOG_ERROR, "failed generating XML response");
+	if (writer != NULL)
+		xmlFreeTextWriter(writer);
+	if (doc != NULL)
+		xmlFreeDoc(doc);
+	return (ISC_R_FAILURE);
+}
+#else /* OLDSTATS */
 static isc_result_t
 generatexml(ns_server_t *server, int *buflen, xmlChar **buf) {
 	char boottime[sizeof "yyyy-mm-ddThh:mm:ssZ"];
@@ -844,20 +1363,20 @@ generatexml(ns_server_t *server, int *buflen, xmlChar **buf) {
 	TRY0(xmlTextWriterEndElement(writer)); /* views */
 
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "socketmgr"));
-	isc_socketmgr_renderxml(ns_g_socketmgr, writer);
+	TRY0(isc_socketmgr_renderxml(ns_g_socketmgr, writer));
 	TRY0(xmlTextWriterEndElement(writer)); /* socketmgr */
 
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "taskmgr"));
-	isc_taskmgr_renderxml(ns_g_taskmgr, writer);
+	TRY0(isc_taskmgr_renderxml(ns_g_taskmgr, writer));
 	TRY0(xmlTextWriterEndElement(writer)); /* taskmgr */
 
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "server"));
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "boot-time"));
 	TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR boottime));
-	TRY0(xmlTextWriterEndElement(writer));
+	TRY0(xmlTextWriterEndElement(writer)); /* boot-time */
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "current-time"));
 	TRY0(xmlTextWriterWriteString(writer, ISC_XMLCHAR nowstr));
-	TRY0(xmlTextWriterEndElement(writer));
+	TRY0(xmlTextWriterEndElement(writer)); /* current-time */
 
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "requests"));
 	dumparg.result = ISC_R_SUCCESS;
@@ -911,7 +1430,7 @@ generatexml(ns_server_t *server, int *buflen, xmlChar **buf) {
 	TRY0(xmlTextWriterEndElement(writer)); /* server */
 
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "memory"));
-	isc_mem_renderxml(writer);
+	TRY0(isc_mem_renderxml(writer));
 	TRY0(xmlTextWriterEndElement(writer)); /* memory */
 
 	TRY0(xmlTextWriterEndElement(writer)); /* statistics */
@@ -923,6 +1442,8 @@ generatexml(ns_server_t *server, int *buflen, xmlChar **buf) {
 	xmlFreeTextWriter(writer);
 
 	xmlDocDumpFormatMemoryEnc(doc, buf, buflen, "UTF-8", 1);
+	if (*buf == NULL)
+		goto error;
 	xmlFreeDoc(doc);
 	return (ISC_R_SUCCESS);
 
@@ -933,6 +1454,7 @@ generatexml(ns_server_t *server, int *buflen, xmlChar **buf) {
 		xmlFreeDoc(doc);
 	return (ISC_R_FAILURE);
 }
+#endif /* NEWSTATS */
 
 static void
 wrap_xmlfree(isc_buffer_t *buffer, void *arg) {
@@ -942,18 +1464,21 @@ wrap_xmlfree(isc_buffer_t *buffer, void *arg) {
 }
 
 static isc_result_t
-render_index(const char *url, const char *querystring, void *arg,
+render_index(const char *url, isc_httpdurl_t *urlinfo,
+	     const char *querystring, const char *headers, void *arg,
 	     unsigned int *retcode, const char **retmsg, const char **mimetype,
 	     isc_buffer_t *b, isc_httpdfree_t **freecb,
 	     void **freecb_args)
 {
-	unsigned char *msg;
+	unsigned char *msg = NULL;
 	int msglen;
 	ns_server_t *server = arg;
 	isc_result_t result;
 
 	UNUSED(url);
+	UNUSED(urlinfo);
 	UNUSED(querystring);
+	UNUSED(headers);
 
 	result = generatexml(server, &msglen, &msg);
 
@@ -965,7 +1490,10 @@ render_index(const char *url, const char *querystring, void *arg,
 		isc_buffer_add(b, msglen);
 		*freecb = wrap_xmlfree;
 		*freecb_args = NULL;
-	}
+	} else
+		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+			      NS_LOGMODULE_SERVER, ISC_LOG_ERROR,
+			      "failed at rendering XML()");
 
 	return (result);
 }
@@ -973,22 +1501,56 @@ render_index(const char *url, const char *querystring, void *arg,
 #endif	/* HAVE_LIBXML2 */
 
 static isc_result_t
-render_xsl(const char *url, const char *querystring, void *args,
-	   unsigned int *retcode, const char **retmsg, const char **mimetype,
-	   isc_buffer_t *b, isc_httpdfree_t **freecb,
-	   void **freecb_args)
+render_xsl(const char *url, isc_httpdurl_t *urlinfo,
+	   const char *querystring, const char *headers,
+	   void *args, unsigned int *retcode, const char **retmsg,
+	   const char **mimetype, isc_buffer_t *b,
+	   isc_httpdfree_t **freecb, void **freecb_args)
 {
+	isc_result_t result;
+
 	UNUSED(url);
 	UNUSED(querystring);
 	UNUSED(args);
 
-	*retcode = 200;
-	*retmsg = "OK";
-	*mimetype = "text/xslt+xml";
-	isc_buffer_reinit(b, xslmsg, strlen(xslmsg));
-	isc_buffer_add(b, strlen(xslmsg));
 	*freecb = NULL;
 	*freecb_args = NULL;
+	*mimetype = "text/xslt+xml";
+
+	if (urlinfo->isstatic) {
+		isc_time_t when;
+		char *p = strcasestr(headers, "If-Modified-Since: ");
+
+		if (p != NULL) {
+			time_t t1, t2;
+			p += strlen("If-Modified-Since: ");
+			result = isc_time_parsehttptimestamp(p, &when);
+			if (result != ISC_R_SUCCESS)
+				goto send;
+
+			result = isc_time_secondsastimet(&when, &t1);
+			if (result != ISC_R_SUCCESS)
+				goto send;
+
+			result = isc_time_secondsastimet(&urlinfo->loadtime,
+							 &t2);
+			if (result != ISC_R_SUCCESS)
+				goto send;
+
+			if (t1 < t2)
+				goto send;
+
+			*retcode = 304;
+			*retmsg = "Not modified";
+			return (ISC_R_SUCCESS);
+		}
+	}
+
+ send:
+	*retcode = 200;
+	*retmsg = "OK";
+	isc_buffer_reinit(b, xslmsg, strlen(xslmsg));
+	isc_buffer_add(b, strlen(xslmsg));
 
 	return (ISC_R_SUCCESS);
 }
@@ -1115,10 +1677,22 @@ add_listener(ns_server_t *server, ns_statschannel_t **listenerp,
 
 #ifdef HAVE_LIBXML2
 	isc_httpdmgr_addurl(listener->httpdmgr, "/", render_index, server);
-#endif
-	isc_httpdmgr_addurl(listener->httpdmgr, "/bind9.xsl", render_xsl,
+	isc_httpdmgr_addurl(listener->httpdmgr, "/xml", render_index, server);
+#ifdef NEWSTATS
+	isc_httpdmgr_addurl(listener->httpdmgr, "/xml/v3", render_index,
 			    server);
-
+#else /* OLDSTATS */
+	isc_httpdmgr_addurl(listener->httpdmgr, "/xml/v2", render_index,
+			    server);
+#endif /* NEWSTATS */
+#endif
+#ifdef NEWSTATS
+	isc_httpdmgr_addurl2(listener->httpdmgr, "/bind9.ver3.xsl", ISC_TRUE,
+			     render_xsl, server);
+#else /* OLDSTATS */
+	isc_httpdmgr_addurl2(listener->httpdmgr, "/bind9.xsl", ISC_TRUE,
+			     render_xsl, server);
+#endif /* NEWSTATS */
 	*listenerp = listener;
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
 		      NS_LOGMODULE_SERVER, ISC_LOG_NOTICE,
@@ -1250,7 +1824,8 @@ ns_statschannels_configure(ns_server_t *server, const cfg_obj_t *config,
 				obj = cfg_tuple_get(listen_params, "address");
 				addr = *cfg_obj_assockaddr(obj);
 				if (isc_sockaddr_getport(&addr) == 0)
-					isc_sockaddr_setport(&addr, NS_STATSCHANNEL_HTTPPORT);
+					isc_sockaddr_setport(&addr,
+						     NS_STATSCHANNEL_HTTPPORT);
 
 				isc_sockaddr_format(&addr, socktext,
 						    sizeof(socktext));

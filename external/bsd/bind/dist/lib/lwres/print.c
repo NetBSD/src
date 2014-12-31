@@ -1,7 +1,7 @@
-/*	$NetBSD: print.c,v 1.3.4.1 2012/06/05 21:14:54 bouyer Exp $	*/
+/*	$NetBSD: print.c,v 1.3.4.1.4.1 2014/12/31 11:59:08 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,8 +17,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
-
 #include <config.h>
 
 #include <ctype.h>
@@ -28,6 +26,7 @@
 #define	LWRES__PRINT_SOURCE	/* Used to get the lwres_print_* prototypes. */
 
 #include <lwres/stdlib.h>
+#include <lwres/string.h>
 
 #include "assert_p.h"
 #include "print_p.h"
@@ -472,12 +471,16 @@ lwres__print_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
 				pad--;
 			}
 			break;
+
 		case 'D':	/*deprecated*/
 			INSIST("use %ld instead of %D" == NULL);
+			break;
 		case 'O':	/*deprecated*/
 			INSIST("use %lo instead of %O" == NULL);
+			break;
 		case 'U':	/*deprecated*/
 			INSIST("use %lu instead of %U" == NULL);
+			break;
 
 		case 'L':
 #ifdef HAVE_LONG_DOUBLE

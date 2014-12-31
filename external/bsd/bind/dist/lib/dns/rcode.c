@@ -1,7 +1,7 @@
-/*	$NetBSD: rcode.c,v 1.3.4.1 2012/06/05 21:15:02 bouyer Exp $	*/
+/*	$NetBSD: rcode.c,v 1.3.4.1.4.1 2014/12/31 11:58:58 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -110,6 +110,8 @@
 	{ DNS_KEYALG_RSASHA256, "RSASHA256", 0 }, \
 	{ DNS_KEYALG_RSASHA512, "RSASHA512", 0 }, \
 	{ DNS_KEYALG_ECCGOST, "ECCGOST", 0 }, \
+	{ DNS_KEYALG_ECDSA256, "ECDSAP256SHA256", 0 }, \
+	{ DNS_KEYALG_ECDSA384, "ECDSAP384SHA384", 0 }, \
 	{ DNS_KEYALG_INDIRECT, "INDIRECT", 0 }, \
 	{ DNS_KEYALG_PRIVATEDNS, "PRIVATEDNS", 0 }, \
 	{ DNS_KEYALG_PRIVATEOID, "PRIVATEOID", 0 }, \
@@ -194,7 +196,7 @@ str_totext(const char *source, isc_buffer_t *target) {
 	if (l > region.length)
 		return (ISC_R_NOSPACE);
 
-	memcpy(region.base, source, l);
+	memmove(region.base, source, l);
 	isc_buffer_add(target, l);
 	return (ISC_R_SUCCESS);
 }
@@ -216,7 +218,9 @@ maybe_numeric(unsigned int *valuep, isc_textregion_t *source,
 	 * isc_parse_uint32().  isc_parse_uint32() requires
 	 * null termination, so we must make a copy.
 	 */
-	strncpy(buffer, source->base, NUMBERSIZE);
+	strncpy(buffer, source->base, sizeof(buffer));
+	buffer[sizeof(buffer) - 1] = '\0';
+
 	INSIST(buffer[source->length] == '\0');
 
 	result = isc_parse_uint32(&n, buffer, 10);
@@ -381,9 +385,9 @@ dns_keyflags_fromtext(dns_keyflags_t *flagsp, isc_textregion_t *source)
 		unsigned int len;
 		char *delim = memchr(text, '|', end - text);
 		if (delim != NULL)
-			len = delim - text;
+			len = (unsigned int)(delim - text);
 		else
-			len = end - text;
+			len = (unsigned int)(end - text);
 		for (p = keyflags; p->name != NULL; p++) {
 			if (strncasecmp(p->name, text, len) == 0)
 				break;

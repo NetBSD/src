@@ -1,7 +1,7 @@
-/*	$NetBSD: soa_6.c,v 1.3.4.1 2012/06/05 21:15:11 bouyer Exp $	*/
+/*	$NetBSD: soa_6.c,v 1.3.4.1.4.1 2014/12/31 11:59:00 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -188,7 +188,7 @@ fromwire_soa(ARGS_FROMWIRE) {
 	if (tregion.length < 20)
 		return (ISC_R_NOSPACE);
 
-	memcpy(tregion.base, sregion.base, 20);
+	memmove(tregion.base, sregion.base, 20);
 	isc_buffer_forward(source, 20);
 	isc_buffer_add(target, 20);
 
@@ -226,7 +226,7 @@ towire_soa(ARGS_TOWIRE) {
 	if (tregion.length < 20)
 		return (ISC_R_NOSPACE);
 
-	memcpy(tregion.base, sregion.base, 20);
+	memmove(tregion.base, sregion.base, 20);
 	isc_buffer_add(target, 20);
 	return (ISC_R_SUCCESS);
 }

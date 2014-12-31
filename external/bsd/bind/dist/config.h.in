@@ -1,6 +1,6 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: acconfig.h,v 1.53 2008/12/01 23:47:44 tbox Exp */
 
 /*! \file */
 
@@ -72,6 +72,9 @@
 
 /** define if arc4random() exists */
 #undef HAVE_ARC4RANDOM
+
+/** define if arc4random_addrandom() exists */
+#undef HAVE_ARC4RANDOM_ADDRANDOM
 
 /**
  * define if pthread_setconcurrency() should be called to tell the
@@ -138,6 +141,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define if OpenSSL includes DSA support */
 #undef HAVE_OPENSSL_DSA
 
+/* Define if OpenSSL includes ECDSA support */
+#undef HAVE_OPENSSL_ECDSA
+
 /* Define to the length type used by the socket API (socklen_t, size_t, int). */
 #undef ISC_SOCKADDR_LEN_T
 
@@ -202,6 +208,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the `EVP_sha256' function. */
 #undef HAVE_EVP_SHA256
 
+/* Define to 1 if you have the `EVP_sha384' function. */
+#undef HAVE_EVP_SHA384
+
 /* Define to 1 if you have the `EVP_sha512' function. */
 #undef HAVE_EVP_SHA512
 
@@ -219,6 +228,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the <gssapi_krb5.h> header file. */
 #undef HAVE_GSSAPI_KRB5_H
+
+/* Define to 1 if you have the `if_nametoindex' function. */
+#undef HAVE_IF_NAMETOINDEX
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -250,6 +262,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #undef HAVE_LIBPTHREAD
 
+/* Define to 1 if you have the `rt' library (-lrt). */
+#undef HAVE_LIBRT
+
 /* Define to 1 if you have the `scf' library (-lscf). */
 #undef HAVE_LIBSCF
 
@@ -265,6 +280,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <linux/capability.h> header file. */
 #undef HAVE_LINUX_CAPABILITY_H
 
+/* Define to 1 if you have the <linux/types.h> header file. */
+#undef HAVE_LINUX_TYPES_H
+
 /* Define to 1 if you have the <locale.h> header file. */
 #undef HAVE_LOCALE_H
 
@@ -277,14 +295,29 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <net/if6.h> header file. */
 #undef HAVE_NET_IF6_H
 
+/* Define if your OpenSSL version supports ECDSA. */
+#undef HAVE_OPENSSL_ECDSA
+
 /* Define if your OpenSSL version supports GOST. */
 #undef HAVE_OPENSSL_GOST
+
+/* Define to 1 if you have the `pthread_yield' function. */
+#undef HAVE_PTHREAD_YIELD
+
+/* Define to 1 if you have the `pthread_yield_np' function. */
+#undef HAVE_PTHREAD_YIELD_NP
 
 /* Define to 1 if you have the `readline' function. */
 #undef HAVE_READLINE
 
 /* Define to 1 if you have the <regex.h> header file. */
 #undef HAVE_REGEX_H
+
+/* Define to 1 if you have the <sched.h> header file. */
+#undef HAVE_SCHED_H
+
+/* Define to 1 if you have the `sched_yield' function. */
+#undef HAVE_SCHED_YIELD
 
 /* Define to 1 if you have the `setegid' function. */
 #undef HAVE_SETEGID
@@ -370,12 +403,19 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to allow building of objects for dlopen(). */
 #undef ISC_DLZ_DLOPEN
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* Defined if extern char *optarg is not declared. */
 #undef NEED_OPTARG
 
 /* Define if connect does not honour the permission on the UNIX domain socket.
    */
 #undef NEED_SECURE_DIRECTORY
+
+/* Use the new XML schema for statistics */
+#undef NEWSTATS
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
@@ -411,6 +451,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Defined if you need to use ioctl(FIONBIO) instead a fcntl call to make
    non-blocking. */
 #undef USE_FIONBIO_IOCTL
+
+/* Enable DNS Response Rate Limiting */
+#undef USE_RRL
 
 /* define if idnkit support is to be included. */
 #undef WITH_IDN

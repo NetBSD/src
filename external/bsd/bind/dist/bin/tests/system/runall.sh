@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2010-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,8 +15,6 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: runall.sh,v 1.13 2011/12/19 23:08:50 marka Exp 
-
 #
 # Run all the system tests.
 #
@@ -29,21 +27,19 @@ status=0
 {
     for d in $SUBDIRS
     do
-            sh run.sh $d || status=1
+            $SHELL run.sh $d || status=1
     done
+} 2>&1 | tee "systests.output"
 
     $PERL testsock.pl || {
         cat <<EOF >&2
 I:
-I:NOTE: Many of the tests were skipped because they require that
-I:      the IP addresses 10.53.0.1 through 10.53.0.7 are configured 
+I:NOTE: System tests were skipped because they require that the
+I:      IP addresses 10.53.0.1 through 10.53.0.8 be configured
 I:	as alias addresses on the loopback interface.  Please run
-I:	"bin/tests/system/ifconfig.sh up" as root to configure them
-I:	and rerun the tests.
+I:      "bin/tests/system/ifconfig.sh up" as root to configure them.
 EOF
-        exit 0;
     }
-} | tee "systests.output"
 
 echo "I:System test result summary:"
 grep '^R:' systests.output | sort | uniq -c | sed -e 's/^/I:   /' -e 's/R://'

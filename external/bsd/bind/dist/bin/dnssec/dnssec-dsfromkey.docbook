@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
                [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2008-2011  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2008-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,10 +17,9 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-dsfromkey.docbook,v 1.17 2011/10/25 01:54:18 marka Exp  -->
 <refentry id="man.dnssec-dsfromkey">
   <refentryinfo>
-    <date>August 26, 2009</date>
+    <date>May 17, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -40,6 +39,8 @@
       <year>2009</year>
       <year>2010</year>
       <year>2011</year>
+      <year>2012</year>
+      <year>2014</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -70,6 +71,11 @@
       <arg><option>-A</option></arg>
       <arg><option>-v <replaceable class="parameter">level</replaceable></option></arg>
       <arg choice="req">dnsname</arg>
+   </cmdsynopsis>
+    <cmdsynopsis>
+      <command>dnssec-dsfromkey</command>
+      <arg><option>-h</option></arg>
+      <arg><option>-V</option></arg>
    </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -110,7 +116,8 @@
           <para>
             Select the digest algorithm. The value of
             <option>algorithm</option> must be one of SHA-1 (SHA1),
-            SHA-256 (SHA256) or GOST. These values are case insensitive.
+            SHA-256 (SHA256), GOST or SHA-384 (SHA384).
+            These values are case insensitive.
           </para>
         </listitem>
       </varlistentry>
@@ -205,6 +212,24 @@
         <listitem>
           <para>
             Sets the debugging level.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-h</term>
+        <listitem>
+          <para>
+            Prints usage information.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-V</term>
+        <listitem>
+          <para>
+            Prints version information.
           </para>
         </listitem>
       </varlistentry>

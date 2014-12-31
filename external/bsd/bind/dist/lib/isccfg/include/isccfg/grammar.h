@@ -1,7 +1,7 @@
-/*	$NetBSD: grammar.h,v 1.2.6.1 2012/06/05 21:15:37 bouyer Exp $	*/
+/*	$NetBSD: grammar.h,v 1.2.6.1.4.1 2014/12/31 11:59:08 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2011, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -88,6 +88,7 @@ struct cfg_printer {
 	void (*f)(void *closure, const char *text, int textlen);
 	void *closure;
 	int indent;
+	int flags;
 };
 
 /*% A clause definition. */
@@ -268,6 +269,7 @@ LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_uint64;
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_qstring;
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_astring;
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_ustring;
+LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_sstring;
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_sockaddr;
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netaddr;
 LIBISCCFG_EXTERNAL_DATA extern cfg_type_t cfg_type_netaddr4;
@@ -314,6 +316,9 @@ cfg_print_ustring(cfg_printer_t *pctx, const cfg_obj_t *obj);
 
 isc_result_t
 cfg_parse_astring(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
+
+isc_result_t
+cfg_parse_sstring(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
 
 isc_result_t
 cfg_parse_rawaddr(cfg_parser_t *pctx, unsigned int flags, isc_netaddr_t *na);

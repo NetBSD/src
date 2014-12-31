@@ -1,7 +1,7 @@
-/*	$NetBSD: keycreate.c,v 1.2.6.1 2012/06/05 21:15:45 bouyer Exp $	*/
+/*	$NetBSD: keycreate.c,v 1.2.6.1.4.1 2014/12/31 11:58:49 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -152,14 +152,14 @@ sendquery(isc_task_t *task, isc_event_t *event) {
 	isc_sockaddr_fromin(&address, &inaddr, PORT);
 
 	dns_fixedname_init(&keyname);
-	isc_buffer_init(&namestr, "tkeytest.", 9);
+	isc_buffer_constinit(&namestr, "tkeytest.", 9);
 	isc_buffer_add(&namestr, 9);
 	result = dns_name_fromtext(dns_fixedname_name(&keyname), &namestr,
 				   NULL, 0, NULL);
 	CHECK("dns_name_fromtext", result);
 
 	dns_fixedname_init(&ownername);
-	isc_buffer_init(&namestr, ownername_str, strlen(ownername_str));
+	isc_buffer_constinit(&namestr, ownername_str, strlen(ownername_str));
 	isc_buffer_add(&namestr, strlen(ownername_str));
 	result = dns_name_fromtext(dns_fixedname_name(&ownername), &namestr,
 				   NULL, 0, NULL);
@@ -234,7 +234,7 @@ main(int argc, char *argv[]) {
 
 	ectx = NULL;
 	RUNCHECK(isc_entropy_create(mctx, &ectx));
-	RUNCHECK(isc_entropy_createfilesource(ectx, "random.data"));
+	RUNCHECK(isc_entropy_createfilesource(ectx, "../random.data"));
 	RUNCHECK(isc_hash_create(mctx, ectx, DNS_NAME_MAXWIRE));
 
 	log = NULL;

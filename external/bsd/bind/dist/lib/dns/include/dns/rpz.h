@@ -1,7 +1,7 @@
-/*	$NetBSD: rpz.h,v 1.2.8.1 2012/06/05 21:14:57 bouyer Exp $	*/
+/*	$NetBSD: rpz.h,v 1.2.8.1.4.1 2014/12/31 11:58:59 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rpz.h,v 1.5 2011/10/28 11:46:50 marka Exp  */
+/* Id */
 
 #ifndef DNS_RPZ_H
 #define DNS_RPZ_H 1
@@ -29,9 +29,11 @@
 
 ISC_LANG_BEGINDECLS
 
-#define DNS_RPZ_IP_ZONE		"rpz-ip"
-#define DNS_RPZ_NSIP_ZONE	"rpz-nsip"
-#define DNS_RPZ_NSDNAME_ZONE	"rpz-nsdname"
+#define DNS_RPZ_PREFIX		"rpz-"
+#define DNS_RPZ_IP_ZONE		DNS_RPZ_PREFIX"ip"
+#define DNS_RPZ_NSIP_ZONE	DNS_RPZ_PREFIX"nsip"
+#define DNS_RPZ_NSDNAME_ZONE	DNS_RPZ_PREFIX"nsdname"
+#define DNS_RPZ_PASSTHRU_ZONE	DNS_RPZ_PREFIX"passthru"
 
 typedef isc_uint8_t		dns_rpz_cidr_bits_t;
 
@@ -68,11 +70,15 @@ typedef struct dns_rpz_zone dns_rpz_zone_t;
 
 struct dns_rpz_zone {
 	ISC_LINK(dns_rpz_zone_t) link;
-	int			 num;
+	int			 num;	  /* ordinal in list of policy zones */
 	dns_name_t		 origin;  /* Policy zone name */
 	dns_name_t		 nsdname; /* DNS_RPZ_NSDNAME_ZONE.origin */
-	dns_rpz_policy_t	 policy;  /* DNS_RPZ_POLICY_GIVEN or override */
+	dns_name_t		 passthru;/* DNS_RPZ_PASSTHRU_ZONE. */
 	dns_name_t		 cname;	  /* override value for ..._CNAME */
+	dns_ttl_t		 max_policy_ttl;
+	dns_rpz_policy_t	 policy;  /* DNS_RPZ_POLICY_GIVEN or override */
+	isc_boolean_t		 recursive_only;
+	isc_boolean_t		 defined;
 };
 
 /*
@@ -145,6 +151,7 @@ typedef struct {
 } dns_rpz_st_t;
 
 #define DNS_RPZ_TTL_DEFAULT		5
+#define DNS_RPZ_MAX_TTL_DEFAULT		DNS_RPZ_TTL_DEFAULT
 
 /*
  * So various response policy zone messages can be turned up or down.
@@ -154,6 +161,7 @@ typedef struct {
 #define DNS_RPZ_DEBUG_LEVEL1	ISC_LOG_DEBUG(1)
 #define DNS_RPZ_DEBUG_LEVEL2	ISC_LOG_DEBUG(2)
 #define DNS_RPZ_DEBUG_LEVEL3	ISC_LOG_DEBUG(3)
+#define DNS_RPZ_DEBUG_QUIET	(DNS_RPZ_DEBUG_LEVEL3+1)
 
 const char *
 dns_rpz_type2str(dns_rpz_type_t type);
@@ -165,12 +173,6 @@ const char *
 dns_rpz_policy2str(dns_rpz_policy_t policy);
 
 void
-dns_rpz_set_need(isc_boolean_t need);
-
-isc_boolean_t
-dns_rpz_needed(void);
-
-void
 dns_rpz_cidr_free(dns_rpz_cidr_t **cidr);
 
 void
@@ -180,7 +182,7 @@ isc_result_t
 dns_rpz_new_cidr(isc_mem_t *mctx, dns_name_t *origin,
 		 dns_rpz_cidr_t **rbtdb_cidr);
 void
-dns_rpz_enabled(dns_rpz_cidr_t *cidr, dns_rpz_st_t *st);
+dns_rpz_enabled_get(dns_rpz_cidr_t *cidr, dns_rpz_st_t *st);
 
 void
 dns_rpz_cidr_deleteip(dns_rpz_cidr_t *cidr, dns_name_t *name);
@@ -194,7 +196,8 @@ dns_rpz_cidr_find(dns_rpz_cidr_t *cidr, const isc_netaddr_t *netaddr,
 		  dns_name_t *search_name, dns_rpz_cidr_bits_t *prefix);
 
 dns_rpz_policy_t
-dns_rpz_decode_cname(dns_rdataset_t *, dns_name_t *selfname);
+dns_rpz_decode_cname(dns_rpz_zone_t *rpz, dns_rdataset_t *rdataset,
+		     dns_name_t *selfname);
 
 ISC_LANG_ENDDECLS
 

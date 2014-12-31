@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -120,7 +120,7 @@ test("NOERROR", ["pre", nxdomain("a.$zone")]);
 # RRset does not exist
 test("NOERROR", ["pre", nxrrset("a.$zone A")]);
 # RRset exists (value dependent)
-test("NXRRSET", ["pre", yxrrset("a.$zone 300 A 73.80.65.49")]);
+test("NXRRSET", ["pre", yxrrset("a.$zone A 73.80.65.49")]);
 
 
 section ("Simple creation of data");
@@ -136,7 +136,7 @@ test("YXDOMAIN", ["pre", nxdomain("a.$zone")]);
 # RRset does not exist
 test("YXRRSET", ["pre", nxrrset("a.$zone A")]);
 # RRset exists (value dependent)
-test("NOERROR", ["pre", yxrrset("a.$zone 300 A 73.80.65.49")]);
+test("NOERROR", ["pre", yxrrset("a.$zone A 73.80.65.49")]);
 
 #
 # Merging of RRsets
@@ -145,17 +145,17 @@ test("NOERROR", ["update", rr_add("a.$zone 300 A 73.80.65.50")]);
 
 section("Detailed tests of \"RRset exists (value dependent)\" prerequisites");
 test("NOERROR", ["pre",
-		 yxrrset("a.$zone 300 A 73.80.65.49"),
-		 yxrrset("a.$zone 300 A 73.80.65.50")]);
+		 yxrrset("a.$zone A 73.80.65.49"),
+		 yxrrset("a.$zone A 73.80.65.50")]);
 test("NOERROR", ["pre",
-		 yxrrset("a.$zone 300 A 73.80.65.50"),
-		 yxrrset("a.$zone 300 A 73.80.65.49")]);
-test("NXRRSET", ["pre", yxrrset("a.$zone 300 A 73.80.65.49")]);
-test("NXRRSET", ["pre", yxrrset("a.$zone 300 A 73.80.65.50")]);
+		 yxrrset("a.$zone A 73.80.65.50"),
+		 yxrrset("a.$zone A 73.80.65.49")]);
+test("NXRRSET", ["pre", yxrrset("a.$zone A 73.80.65.49")]);
+test("NXRRSET", ["pre", yxrrset("a.$zone A 73.80.65.50")]);
 test("NXRRSET", ["pre",
-		 yxrrset("a.$zone 300 A 73.80.65.49"),
-		 yxrrset("a.$zone 300 A 73.80.65.50"),
-		 yxrrset("a.$zone 300 A 73.80.65.51")]);
+		 yxrrset("a.$zone A 73.80.65.49"),
+		 yxrrset("a.$zone A 73.80.65.50"),
+		 yxrrset("a.$zone A 73.80.65.51")]);
 
 
 section("Torture test of \"RRset exists (value dependent)\" prerequisites.");
@@ -175,31 +175,31 @@ test("NOERROR", ["update",
 		 rr_add("e.$zone 300 MX 10 mail.$zone")]);
 
 test("NOERROR", ["pre",
-		 yxrrset("e.$zone 300 A 73.80.65.52"),
-		 yxrrset("e.$zone 300 TXT 'two'"),
-		 yxrrset("e.$zone 300 A 73.80.65.51"),
-		 yxrrset("e.$zone 300 TXT 'three'"),
-		 yxrrset("e.$zone 300 A 73.80.65.50"),
-		 yxrrset("f.$zone 300 A 73.80.65.52"),
-		 yxrrset("e.$zone 300 A 73.80.65.49"),
-		 yxrrset("e.$zone 300 TXT 'one'")]);
+		 yxrrset("e.$zone A 73.80.65.52"),
+		 yxrrset("e.$zone TXT 'two'"),
+		 yxrrset("e.$zone A 73.80.65.51"),
+		 yxrrset("e.$zone TXT 'three'"),
+		 yxrrset("e.$zone A 73.80.65.50"),
+		 yxrrset("f.$zone A 73.80.65.52"),
+		 yxrrset("e.$zone A 73.80.65.49"),
+		 yxrrset("e.$zone TXT 'one'")]);
 
 
 section("Subtraction of RRsets");
-test("NOERROR", ["update", rr_del("a.$zone 300 A 73.80.65.49")]);
+test("NOERROR", ["update", rr_del("a.$zone A 73.80.65.49")]);
 test("NOERROR", ["pre",
-		 yxrrset("a.$zone 300 A 73.80.65.50")]);
+		 yxrrset("a.$zone A 73.80.65.50")]);
 
-test("NOERROR", ["update", rr_del("a.$zone 300 A 73.80.65.50")]);
-test("NOERROR", ["pre", nxrrset("a.$zone 300 A")]);
+test("NOERROR", ["update", rr_del("a.$zone A 73.80.65.50")]);
+test("NOERROR", ["pre", nxrrset("a.$zone A")]);
 test("NOERROR", ["pre", nxdomain("a.$zone")]);
 
 section("Other forms of deletion");
 test("NOERROR", ["update", rr_add("a.$zone 300 A 73.80.65.49")]);
 test("NOERROR", ["update", rr_add("a.$zone 300 A 73.80.65.50")]);
 test("NOERROR", ["update", rr_add("a.$zone 300 MX 10 mail.$zone")]);
-test("NOERROR", ["update", rr_del("a.$zone 300 A")]);
-test("NOERROR", ["pre", nxrrset("a.$zone 300 A")]);
+test("NOERROR", ["update", rr_del("a.$zone A")]);
+test("NOERROR", ["pre", nxrrset("a.$zone A")]);
 test("NOERROR", ["update", rr_add("a.$zone 300 A 73.80.65.49")]);
 test("NOERROR", ["update", rr_add("a.$zone 300 A 73.80.65.50")]);
 test("NOERROR", ["update", rr_del("a.$zone")]);
@@ -207,12 +207,12 @@ test("NOERROR", ["pre", nxdomain("a.$zone")]);
 
 section("Case insensitivity");
 test("NOERROR", ["update", rr_add("a.$zone 300 PTR foo.net.")]);
-test("NOERROR", ["pre", yxrrset("A.$zone 300 PTR fOo.NeT.")]);
+test("NOERROR", ["pre", yxrrset("A.$zone PTR fOo.NeT.")]);
 
 section("Special CNAME rules");
 test("NOERROR", ["update", rr_add("b.$zone 300 CNAME foo.net.")]);
 test("NOERROR", ["update", rr_add("b.$zone 300 A 73.80.65.49")]);
-test("NOERROR", ["pre", yxrrset("b.$zone 300 CNAME foo.net.")]);
+test("NOERROR", ["pre", yxrrset("b.$zone CNAME foo.net.")]);
 test("NOERROR", ["pre", nxrrset("b.$zone A")]);
 
 test("NOERROR", ["update", rr_add("c.$zone 300 A 73.80.65.49")]);
@@ -232,9 +232,9 @@ test("NOERROR", ["pre", nxrrset("c.$zone CNAME")]);
 #test("NOERROR", ["update", rr_add("c.$zone 300 WKS 73.80.65.50 TCP telnet ftp")]);
 #test("NOERROR", ["update", rr_add("c.$zone 300 WKS 73.80.65.49 TCP smtp")]);
 #test("NOERROR", ["pre",
-#		 yxrrset("c.$zone 300 WKS 73.80.65.49 TCP smtp"),
-#		 yxrrset("c.$zone 300 WKS 73.80.65.49 UDP telnet ftp"),
-#		 yxrrset("c.$zone 300 WKS 73.80.65.50 TCP telnet ftp")]);
+#		 yxrrset("c.$zone WKS 73.80.65.49 TCP smtp"),
+#		 yxrrset("c.$zone WKS 73.80.65.49 UDP telnet ftp"),
+#		 yxrrset("c.$zone WKS 73.80.65.50 TCP telnet ftp")]);
 
 
 section("Special NS rules");
@@ -248,37 +248,37 @@ section("Special NS rules");
 test("NOERROR", ["update",
 		 rr_add("$zone 300 NS ns1.$zone"),
 		 rr_add("$zone 300 NS ns2.$zone")]);
-test("NOERROR", ["update", rr_del("$zone 300 NS ns1.$zone")]);
-test("NOERROR", ["update", rr_del("$zone 300 NS ns2.$zone")]);
+test("NOERROR", ["update", rr_del("$zone NS ns1.$zone")]);
+test("NOERROR", ["update", rr_del("$zone NS ns2.$zone")]);
 test("NOERROR", ["pre",
-		 yxrrset("$zone 300 NS ns2.$zone")]);
+		 yxrrset("$zone NS ns2.$zone")]);
 
 # Non-apex
 test("NOERROR", ["update", rr_add("n.$zone 300 NS ns1.$zone")]);
-test("NOERROR", ["update", rr_del("n.$zone 300 NS ns1.$zone")]);
-test("NOERROR", ["pre", nxrrset("n.$zone 300 NS")]);
+test("NOERROR", ["update", rr_del("n.$zone NS ns1.$zone")]);
+test("NOERROR", ["pre", nxrrset("n.$zone NS")]);
 
 # Other ways of deleting NS records should also fail at the apex
 # and work elsewhere.
 
 # Non-apex
 test("NOERROR", ["update", rr_add("n.$zone 300 NS ns1.$zone")]);
-test("NOERROR", ["update", rr_del("n.$zone 300 NS")]);
-test("NOERROR", ["pre", nxrrset("n.$zone 300 NS")]);
+test("NOERROR", ["update", rr_del("n.$zone NS")]);
+test("NOERROR", ["pre", nxrrset("n.$zone NS")]);
 
 test("NOERROR", ["update", rr_add("n.$zone 300 NS ns1.$zone")]);
-test("NOERROR", ["pre", yxrrset("n.$zone 300 NS")]);
+test("NOERROR", ["pre", yxrrset("n.$zone NS")]);
 test("NOERROR", ["update", rr_del("n.$zone")]);
-test("NOERROR", ["pre", nxrrset("n.$zone 300 NS")]);
+test("NOERROR", ["pre", nxrrset("n.$zone NS")]);
 
 # Apex
 test("NOERROR", ["update", rr_del("$zone NS")]);
 test("NOERROR", ["pre",
-		 yxrrset("$zone 300 NS ns2.$zone")]);
+		 yxrrset("$zone NS ns2.$zone")]);
 
 test("NOERROR", ["update", rr_del("$zone")]);
 test("NOERROR", ["pre",
-		 yxrrset("$zone 300 NS ns2.$zone")]);
+		 yxrrset("$zone NS ns2.$zone")]);
 
 # They should not touch the SOA, either.
 
@@ -289,34 +289,34 @@ test("NOERROR", ["pre", yxrrset("$zone SOA")]);
 section("Idempotency");
 
 test("NOERROR", ["update", rr_add("d.$zone 300 A 73.80.65.49")]);
-test("NOERROR", ["pre", yxrrset("d.$zone 300 A 73.80.65.49")]);
+test("NOERROR", ["pre", yxrrset("d.$zone A 73.80.65.49")]);
 test("NOERROR", ["update",
 		 rr_add("d.$zone 300 A 73.80.65.49"),
 		 rr_del("d.$zone A")]);
-test("NOERROR", ["pre", nxrrset("d.$zone 300 A 73.80.65.49")]);
+test("NOERROR", ["pre", nxrrset("d.$zone A")]);
 
-test("NOERROR", ["update", rr_del("d.$zone 300 A 73.80.65.49")]);
-test("NOERROR", ["pre", nxrrset("d.$zone 300 A")]);
+test("NOERROR", ["update", rr_del("d.$zone A 73.80.65.49")]);
+test("NOERROR", ["pre", nxrrset("d.$zone A")]);
 test("NOERROR", ["update",
-		   rr_del("d.$zone 300 A"),
+		   rr_del("d.$zone A"),
 		   rr_add("d.$zone 300 A 73.80.65.49")]);
 
-test("NOERROR", ["pre", yxrrset("d.$zone 300 A")]);
+test("NOERROR", ["pre", yxrrset("d.$zone A")]);
 
 section("Out-of-zone prerequisites and updates");
-test("NOTZONE", ["pre", yxrrset("a.somewhere.else. 300 A 73.80.65.49")]);
+test("NOTZONE", ["pre", yxrrset("a.somewhere.else. A 73.80.65.49")]);
 test("NOTZONE", ["update", rr_add("a.somewhere.else. 300 A 73.80.65.49")]);
 
 
 section("Glue");
 test("NOERROR", ["update", rr_add("s.$zone 300 NS ns.s.$zone")]);
 test("NOERROR", ["update", rr_add("ns.s.$zone 300 A 73.80.65.49")]);
-test("NOERROR", ["pre", yxrrset("ns.s.$zone 300 A 73.80.65.49")]);
+test("NOERROR", ["pre", yxrrset("ns.s.$zone A 73.80.65.49")]);
 
 section("Wildcards");
 test("NOERROR", ["update", rr_add("*.$zone 300 MX 10 mail.$zone")]);
-test("NOERROR", ["pre", yxrrset("*.$zone 300 MX 10 mail.$zone")]);
-test("NXRRSET", ["pre", yxrrset("w.$zone 300 MX 10 mail.$zone")]);
+test("NOERROR", ["pre", yxrrset("*.$zone MX 10 mail.$zone")]);
+test("NXRRSET", ["pre", yxrrset("w.$zone MX 10 mail.$zone")]);
 test("NOERROR", ["pre", nxrrset("w.$zone MX")]);
 test("NOERROR", ["pre", nxdomain("w.$zone")]);
 
@@ -368,7 +368,7 @@ assert($db_soa->mname eq "mname1");
 #
 #section("Big data");
 #test("NOERROR", ["update", rr_add("a.$zone 300 TXT aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc")]);
-#test("NOERROR", ["update", rr_del("a.$zone 300 TXT aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc")]);
+#test("NOERROR", ["update", rr_del("a.$zone TXT aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc")]);
 test("NOERROR", ["update", rr_add("a.$zone 300 TXT " . ("foo " x 3))]);
 
 section("Updating TTLs only");
@@ -378,7 +378,7 @@ test("NOERROR", ["update", rr_add("t.$zone 300 A 73.80.65.49")]);
 $ttl = $a->ttl;
 assert($ttl == 300, "incorrect TTL value $ttl != 300");
 test("NOERROR", ["update",
-		 rr_del("t.$zone 300 A 73.80.65.49"),
+		 rr_del("t.$zone A 73.80.65.49"),
 		 rr_add("t.$zone 301 A 73.80.65.49")]);
 ($a) = $res->query("t.$zone", "A")->answer;
 $ttl = $a->ttl;
@@ -416,7 +416,7 @@ test("NOERROR", ["update", rr_add("b.u.$zone 300 A 73.80.65.49")]);
 test("NOERROR", ["update", rr_add("u.$zone 300 TXT txt-not-in-nxt")]);
 test("NOERROR", ["update", rr_add("u.$zone 300 NS ns.u.$zone")]);
 
-test("NOERROR", ["update", rr_del("u.$zone 300 NS ns.u.$zone")]);
+test("NOERROR", ["update", rr_del("u.$zone NS ns.u.$zone")]);
 
 if ($failures) {
     print "I:$failures tests failed.\n";

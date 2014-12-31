@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec.h,v 1.3.4.1 2012/06/05 21:14:57 bouyer Exp $	*/
+/*	$NetBSD: nsec.h,v 1.3.4.1.4.1 2014/12/31 11:58:59 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2008, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -76,6 +76,41 @@ dns_nsec_nseconly(dns_db_t *db, dns_dbversion_t *version,
  *
  * Requires:
  * 	'answer' to be non NULL.
+ */
+
+unsigned int
+dns_nsec_compressbitmap(unsigned char *map, const unsigned char *raw,
+			unsigned int max_type);
+/*%<
+ * Convert a raw bitmap into a compressed windowed bit map.  'map' and 'raw'
+ * may overlap.
+ *
+ * Returns the length of the compressed windowed bit map.
+ */
+
+void
+dns_nsec_setbit(unsigned char *array, unsigned int type, unsigned int bit);
+/*%<
+ * Set type bit in raw 'array' to 'bit'.
+ */
+
+isc_boolean_t
+dns_nsec_isset(const unsigned char *array, unsigned int type);
+/*%<
+ * Test if the corresponding 'type' bit is set in 'array'.
+ */
+
+isc_result_t
+dns_nsec_noexistnodata(dns_rdatatype_t type, dns_name_t *name,
+		       dns_name_t *nsecname, dns_rdataset_t *nsecset,
+		       isc_boolean_t *exists, isc_boolean_t *data,
+		       dns_name_t *wild, dns_nseclog_t log, void *arg);
+/*%
+ * Return ISC_R_SUCCESS if we can determine that the name doesn't exist
+ * or we can determine whether there is data or not at the name.
+ * If the name does not exist return the wildcard name.
+ *
+ * Return ISC_R_IGNORE when the NSEC is not the appropriate one.
  */
 
 ISC_LANG_ENDDECLS

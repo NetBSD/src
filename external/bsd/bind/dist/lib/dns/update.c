@@ -1,7 +1,7 @@
-/*	$NetBSD: update.c,v 1.1.1.1.4.1 2012/06/06 18:18:16 bouyer Exp $	*/
+/*	$NetBSD: update.c,v 1.1.1.1.4.1.4.1 2014/12/31 11:58:58 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -78,7 +78,7 @@
 #define CHECK(op) \
 	do { result = (op); \
 		if (result != ISC_R_SUCCESS) goto failure; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*%
  * Fail unconditionally with result 'code', which must not
@@ -93,7 +93,7 @@
 	do {							\
 		result = (code);				\
 		if (result != ISC_R_SUCCESS) goto failure;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*%
  * Fail unconditionally and log as a client error.
@@ -115,7 +115,7 @@
 			   "update %s: %s (%s)", _what,		\
 			   msg, isc_result_totext(result));	\
 		if (result != ISC_R_SUCCESS) goto failure;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define FAILN(code, name, msg) \
 	do {								\
@@ -136,7 +136,7 @@
 				   msg, isc_result_totext(result));	\
 		}							\
 		if (result != ISC_R_SUCCESS) goto failure;		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #define FAILNT(code, name, type, msg) \
 	do {								\
@@ -160,7 +160,7 @@
 				   isc_result_totext(result));		\
 		}							\
 		if (result != ISC_R_SUCCESS) goto failure;		\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /*%
  * Fail unconditionally and log as a server error.
@@ -174,7 +174,7 @@
 			   "error: %s: %s",			\
 			   msg, isc_result_totext(result));	\
 		if (result != ISC_R_SUCCESS) goto failure;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 /**************************************************************************/
 
@@ -234,7 +234,6 @@ do_one_tuple(dns_difftuple_t **tuple, dns_db_t *db, dns_dbversion_t *ver,
 	 * Create a singleton diff.
 	 */
 	dns_diff_init(diff->mctx, &temp_diff);
-	temp_diff.resign = diff->resign;
 	ISC_LIST_APPEND(temp_diff.tuples, *tuple, link);
 
 	/*
@@ -1213,7 +1212,9 @@ del_keysigs(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 		for (i = 0; i < nkeys; i++) {
 			if (rrsig.keyid == dst_key_id(keys[i])) {
 				found = ISC_TRUE;
-				if (!dst_key_isprivate(keys[i])) {
+				if (!dst_key_isprivate(keys[i]) &&
+				    !dst_key_inactive(keys[i]))
+				{
 					/*
 					 * The re-signing code in zone.c
 					 * will mark this as offline.
@@ -1356,7 +1357,6 @@ dns_update_signatures(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 	dns_diff_init(diff->mctx, &affected);
 
 	dns_diff_init(diff->mctx, &sig_diff);
-	sig_diff.resign = dns_zone_getsigresigninginterval(zone);
 	dns_diff_init(diff->mctx, &nsec_diff);
 	dns_diff_init(diff->mctx, &nsec_mindiff);
 

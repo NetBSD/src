@@ -1,4 +1,4 @@
-/*	$NetBSD: isctest.h,v 1.1.1.1.4.1 2012/06/06 18:18:28 bouyer Exp $	*/
+/*	$NetBSD: isctest.h,v 1.1.1.1.4.1.4.1 2014/12/31 11:59:06 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -39,14 +39,14 @@
 		result = (r); \
 		if (result != ISC_R_SUCCESS) \
 			goto cleanup; \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 extern isc_mem_t *mctx;
 extern isc_entropy_t *ectx;
 extern isc_log_t *lctx;
 extern isc_taskmgr_t *taskmgr;
-isc_timermgr_t *timermgr;
-isc_socketmgr_t *socketmgr;
+extern isc_timermgr_t *timermgr;
+extern isc_socketmgr_t *socketmgr;
 extern int ncpus;
 
 isc_result_t

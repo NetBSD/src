@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -108,7 +108,12 @@ sed 's/EXAMPLE_ZONE_PLACEHOLDER//' ns3/named.conf.in > ns3/named.conf
 $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 reload 2>&1 | sed 's/^/I:ns3 /'
 # query the child zone again.  this should directly go to the child and
 # succeed.
+for i in 0 1 2 3 4 5 6 7 8 9
+do
 $DIG +tcp data2.sub.example. @10.53.0.2 txt -p 5300 > dig.out.ns2.test2.$n || ret=1
+	grep "2nd sub test data" dig.out.ns2.test2.$n > /dev/null && break
+	sleep 1
+done
 grep "2nd sub test data" dig.out.ns2.test2.$n > /dev/null || ret=1
 # re-enable the parent
 sed 's/EXAMPLE_ZONE_PLACEHOLDER/zone "example" { type master; file "example.db.signed"; };/' ns3/named.conf.in > ns3/named.conf
@@ -157,7 +162,7 @@ n=`expr $n + 1`
 # Note: for a short term workaround we use ::1, assuming it's configured and
 # usable for our tests.  We should eventually use the test ULA and available
 # checks introduced in change 2916.
-if $PERL ../testsock6.pl ::1
+if $PERL ../testsock6.pl ::1 2> /dev/null
 then
     echo "I:checking IPv6 static-stub address ($n)"
     ret=0

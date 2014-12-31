@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_mysql_driver.c,v 1.2.6.1 2012/06/05 21:15:35 bouyer Exp $	*/
+/*	$NetBSD: dlz_mysql_driver.c,v 1.2.6.1.4.1 2014/12/31 11:58:54 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -965,6 +965,7 @@ mysql_create(const char *dlzname, unsigned int argc, char *argv[],
 
  full_cleanup:
 
+	if (dbi != NULL)
 	destroy_sqldbinstance(dbi);
 
  cleanup:

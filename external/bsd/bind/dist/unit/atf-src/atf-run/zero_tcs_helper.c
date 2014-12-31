@@ -1,4 +1,4 @@
-/*	$NetBSD: zero_tcs_helper.c,v 1.1.1.1 2011/09/11 17:20:52 christos Exp $	*/
+/*	$NetBSD: zero_tcs_helper.c,v 1.1.1.1.10.1 2014/12/31 11:59:13 msaitoh Exp $	*/
 
 /*
  * Automated Testing Framework (atf)
@@ -33,5 +33,6 @@
 
 ATF_TP_ADD_TCS(tp)
 {
+    if (tp != NULL) {}  /* Use tp. */
     return atf_no_error();
 }

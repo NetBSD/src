@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2004, 2006-2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,22 +15,23 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.37 2011/05/03 16:07:44 marka Exp 
-
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
-
-RANDFILE=../random.data
 
 zone=.
 infile=root.db.in
 zonefile=root.db
 
-(cd ../ns2 && sh sign.sh )
+(cd ../ns2 && $SHELL sign.sh )
+(cd ../ns6 && $SHELL sign.sh )
+(cd ../ns7 && $SHELL sign.sh )
 
 cp ../ns2/dsset-example. .
 cp ../ns2/dsset-dlv. .
+cp ../ns2/dsset-in-addr.arpa. .
+
 grep "8 [12] " ../ns2/dsset-algroll. > dsset-algroll.
+cp ../ns6/dsset-optout-tld. .
 
 keyname=`$KEYGEN -q -r $RANDFILE -a RSAMD5 -b 768 -n zone $zone`
 
@@ -71,3 +72,8 @@ cp managed.conf ../ns4/managed.conf
 keyid=`expr $keyname : 'K.+001+\(.*\)'`
 keyid=`expr $keyid + 0`
 echo "$keyid" > managed.key.id
+cat $keyname.key | grep -v '^; ' | $PERL -n -e '
+local ($dn, $class, $type, $flags, $proto, $alg, @rest) = split;
+local $key = join("", @rest);
+print "-a $alg -e -k $dn -K $key\n"
+' > sample.key

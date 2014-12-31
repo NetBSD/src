@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007-2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007-2010, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -20,8 +20,8 @@
 #
 # Set up interface aliases for bind9 system tests.
 #
-# IPv4: 10.53.0.{1..7}				RFC 1918
-# IPv6: fd92:7065:b8e:ffff::{1..7}		ULA
+# IPv4: 10.53.0.{1..8}				RFC 1918
+# IPv6: fd92:7065:b8e:ffff::{1..8}		ULA
 #
 
 config_guess=""
@@ -53,19 +53,19 @@ case `uname -a` in
 esac
 
 case "$2" in
-[0-9]|[1-9][0-9]|[1-9][0-9][0-9]) base=$2;;
-*) base=""
+	[1-9]|[1-9][0-9]|[1-9][0-9][0-9]) base=$2;;
+	*) base="1"
 esac
 
 case "$3" in
-[0-9]|[1-9][0-9]|[1-9][0-9][0-9]) base6=$2;;
-*) base6=""
+	[1-9]|[1-9][0-9]|[1-9][0-9][0-9]) base6=$3;;
+	*) base6=$base
 esac
 
 case "$1" in
 
     start|up)
-	for ns in 1 2 3 4 5 6 7
+	for ns in 1 2 3 4 5 6 7 8
 	do
 		if test -n "$base"
 		then
@@ -147,13 +147,19 @@ case "$1" in
 	;;
 
     stop|down)
-	for ns in 7 6 5 4 3 2 1
+	for ns in 8 7 6 5 4 3 2 1
 	do
 		if test -n "$base"
 		then
 			int=`expr $ns + $base - 1`
 		else
 			int=$ns	
+		fi
+		if test -n "$base6"
+		then
+			int6=`expr $ns + $base6 - 1`
+		else
+			int6=$ns
 		fi
 		case "$sys" in
 		    *-pc-solaris2.5.1)

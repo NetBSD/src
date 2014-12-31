@@ -1,7 +1,7 @@
-/*	$NetBSD: portlist.c,v 1.2.6.1 2012/06/05 21:14:59 bouyer Exp $	*/
+/*	$NetBSD: portlist.c,v 1.2.6.1.4.1 2014/12/31 11:58:58 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -166,7 +166,7 @@ dns_portlist_add(dns_portlist_t *portlist, int af, in_port_t port) {
 			goto unlock;
 		}
 		if (portlist->list != NULL) {
-			memcpy(el, portlist->list,
+			memmove(el, portlist->list,
 			       portlist->allocated * sizeof(*el)); 
 			isc_mem_put(portlist->mctx, portlist->list,
 				    portlist->allocated * sizeof(*el));

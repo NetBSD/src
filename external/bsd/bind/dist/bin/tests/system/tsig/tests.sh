@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2005-2007, 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2005-2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -222,6 +222,17 @@ if [ $ret -eq 1 ] ; then
 	echo "I: failed"; status=1
 fi
 
+echo "I:checking both OPT and TSIG records are returned when TC=1"
+ret=0
+$DIG +ignore +bufsize=512 large.example.nil \
+	-y "hmac-sha1:sha1:$sha1" @10.53.0.1 txt -p 5300 > dig.out.large 2>&1 || ret=1
+grep "flags:.* tc[ ;]" dig.out.large > /dev/null || ret=1
+grep "status: NOERROR" dig.out.large > /dev/null || ret=1
+grep "EDNS:" dig.out.large > /dev/null || ret=1
+grep -i "sha1.*TSIG.*NOERROR" dig.out.sha1 > /dev/null || ret=1
+if [ $ret -eq 1 ] ; then
+	echo "I: failed"; status=1
+fi
 exit $status
 
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2006-2008, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2006-2008, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -13,8 +13,6 @@
 # LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
-
-# Id: tests.sh,v 1.13 2012/01/04 23:46:49 tbox Exp 
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -225,7 +223,7 @@ status=`expr $status + $ret`
 
 echo "I: Shutting down slave"
 
-(cd ..; sh stop.sh rrsetorder ns2 )
+(cd ..; $SHELL stop.sh rrsetorder ns2 )
 
 echo "I: Checking for slave's on disk copy of zone"
 
@@ -237,7 +235,7 @@ fi
 
 echo "I: Re-starting slave"
 
-(cd ..; sh start.sh --noclean rrsetorder ns2 )
+(cd ..; $SHELL start.sh --noclean rrsetorder ns2 )
 
 #
 #

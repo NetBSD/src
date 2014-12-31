@@ -1,7 +1,7 @@
-/*	$NetBSD: query.h,v 1.2.6.1 2012/06/05 21:15:10 bouyer Exp $	*/
+/*	$NetBSD: query.h,v 1.2.6.1.4.1 2014/12/31 11:58:29 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2010, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: query.h,v 1.45 2011/01/13 04:59:24 tbox Exp  */
 
 #ifndef NAMED_QUERY_H
 #define NAMED_QUERY_H 1
@@ -87,6 +85,10 @@ struct ns_query {
 #define NS_QUERYATTR_CACHEACLOK		0x2000
 #define NS_QUERYATTR_DNS64		0x4000
 #define NS_QUERYATTR_DNS64EXCLUDE	0x8000
+
+#ifdef USE_RRL
+#define NS_QUERYATTR_RRL_CHECKED	0x10000
+#endif /* USE_RRL */
 
 
 isc_result_t
