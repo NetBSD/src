@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.143 2014/12/30 11:59:03 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.144 2014/12/31 06:53:11 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -6853,4 +6853,62 @@ sys/external/bsd/drm2/dist/drm/i915/i915_gem.c	1.19
 
 	Also need to flush an object from CPU domain.
 	[nonaka, ticket #362]
+
+distrib/utils/sysinst/arch/evbarm64/Makefile	delete
+distrib/utils/sysinst/arch/evbarm64/md.c	delete
+distrib/utils/sysinst/arch/evbarm64/md.h	delete
+usr.sbin/sysinst/arch/evbarm64/Makefile		1.1
+usr.sbin/sysinst/arch/evbarm64/md.c		1.1
+usr.sbin/sysinst/arch/evbarm64/md.h		1.1
+
+	Move bogusly merged evbarm64 files over to new location.
+	[martin, ticket #356]
+
+usr.sbin/sysinst/disks.c			1.6
+
+	Make sysinst gracefully handle situations where gpt(8)
+	isn't present.
+	[martin, ticket #357]
+
+usr.sbin/sysinst/run.c				1.4, 1.5
+
+	When launching a program with RUN_SILENT, don't create
+	an output window unless there is actually output to display.
+	[martin, ticket #361]
+
+common/lib/libprop/prop_kern.c			1.18
+sys/arch/mac68k/dev/grf_compat.c		1.27
+sys/arch/x68k/dev/grf.c				1.45
+sys/external/bsd/drm/dist/bsd-core/drm_bufs.c	1.12
+sys/external/bsd/drm2/drm/drm_drv.c		1.12
+sys/external/bsd/drm2/drm/drm_vm.c		1.6
+sys/external/bsd/drm2/include/linux/mm.h	1.4
+sys/kern/vfs_vnops.c				1.192 via patch
+sys/rump/librump/rumpkern/vm.c			1.160
+sys/sys/file.h					1.78 via patch
+sys/uvm/uvm_device.c				1.64
+sys/uvm/uvm_device.h				1.13
+sys/uvm/uvm_extern.h				1.192
+sys/uvm/uvm_mmap.c				1.150 via patch
+
+	add a new "fo_mmap" fileops method to allow use of arbitrary
+	uvm_objects for mappings of file objects.  move vnode-specific
+	details of mmap()ing a vnode from uvm_mmap() to the new
+	vnode-specific vn_mmap().  add new uvm_mmap_dev() and
+	uvm_mmap_anon() convenience functions for mapping character
+	devices and anonymous memory, and replace all other calls to
+	uvm_mmap() with those.  use the new fileop in drm2 so that
+	libdrm can use mmap() to map things like on other platforms
+	(instead of the ioctl that we have used so far).
+	[chs, ticket #363]
+
+lib/libc/tls/tls.c				1.8
+libexec/ld.elf_so/tls.c				1.10
+sys/arch/powerpc/include/types.h		1.50
+sys/arch/powerpc/powerpc/sig_machdep.c		1.44
+
+	fix powerpc TLS problems by removing the hacks for PPC EABI.
+	the kernel no longer treats R2 specially and its use as
+	the TLS register is now handled entirely in userland.
+	[chs, ticket #364]
 
