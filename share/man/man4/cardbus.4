@@ -1,4 +1,4 @@
-.\"	$NetBSD: cardbus.4,v 1.36 2014/12/31 18:14:55 gdt Exp $
+.\"	$NetBSD: cardbus.4,v 1.37 2014/12/31 18:16:32 gdt Exp $
 .\"
 .\" Copyright (c) 1999-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -205,8 +205,8 @@ ARMADA M700:
 .Pp
 .Cd options RBUS_MIN_START="0x20000000"
 .Ss PCMCIA addressing choice
-By default, on i386, the kernel uses RBUS_IO_BASE as 0x4000 and
-RBUS_IO_SIZE as 0x2000.  On some machines, this fails, due to a
+By default, on i386 and amd64, the kernel uses RBUS_IO_BASE as 0x4000
+and RBUS_IO_SIZE as 0x2000.  On some machines, this fails, due to a
 requirement that these addresses fit within 12 bits.  The following
 kernel options have been reported as helpful:
 .Pp
