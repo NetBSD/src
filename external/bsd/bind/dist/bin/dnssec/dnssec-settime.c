@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-settime.c,v 1.3.4.1 2012/06/05 21:15:18 bouyer Exp $	*/
+/*	$NetBSD: dnssec-settime.c,v 1.3.4.1.4.1 2014/12/31 11:58:28 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,13 +16,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-settime.c,v 1.32 2011/06/02 20:24:45 each Exp  */
-
 /*! \file */
 
 #include <config.h>
 
-#include <libgen.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -40,6 +37,7 @@
 
 #include <dns/keyvalues.h>
 #include <dns/result.h>
+#include <dns/log.h>
 
 #include <dst/dst.h>
 
@@ -70,6 +68,7 @@ usage(void) {
 	fprintf(stderr, "    -K directory:       set key file location\n");
 	fprintf(stderr, "    -L ttl:             set default key TTL\n");
 	fprintf(stderr, "    -v level:           set level of verbosity\n");
+	fprintf(stderr, "    -V:                 print version information\n");
 	fprintf(stderr, "    -h:                 help\n");
 	fprintf(stderr, "Timing options:\n");
 	fprintf(stderr, "    -P date/[+-]offset/none: set/unset key "
@@ -143,6 +142,7 @@ main(int argc, char **argv) {
 	dns_ttl_t	ttl = 0;
 	isc_stdtime_t	now;
 	isc_stdtime_t	pub = 0, act = 0, rev = 0, inact = 0, del = 0;
+	isc_stdtime_t	prevact = 0, previnact = 0, prevdel = 0;
 	isc_boolean_t	setpub = ISC_FALSE, setact = ISC_FALSE;
 	isc_boolean_t	setrev = ISC_FALSE, setinact = ISC_FALSE;
 	isc_boolean_t	setdel = ISC_FALSE, setttl = ISC_FALSE;
@@ -155,6 +155,7 @@ main(int argc, char **argv) {
 	isc_boolean_t	force = ISC_FALSE;
 	isc_boolean_t   epoch = ISC_FALSE;
 	isc_boolean_t   changed = ISC_FALSE;
+	isc_log_t       *log = NULL;
 
 	if (argc == 1)
 		usage();
@@ -163,13 +164,15 @@ main(int argc, char **argv) {
 	if (result != ISC_R_SUCCESS)
 		fatal("Out of memory");
 
+	setup_logging(verbose, mctx, &log);
+
 	dns_result_register();
 
 	isc_commandline_errprint = ISC_FALSE;
 
 	isc_stdtime_get(&now);
 
-#define CMDLINE_FLAGS "A:D:E:fhI:i:K:L:P:p:R:S:uv:"
+#define CMDLINE_FLAGS "A:D:E:fhI:i:K:L:P:p:R:S:uv:V"
 	while ((ch = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
 		switch (ch) {
 		case 'E':
@@ -234,9 +237,6 @@ main(int argc, char **argv) {
 			}
 			break;
 		case 'L':
-			if (strcmp(isc_commandline_argument, "none") == 0)
-				ttl = 0;
-			else
 				ttl = strtottl(isc_commandline_argument);
 			setttl = ISC_TRUE;
 			break;
@@ -250,65 +250,45 @@ main(int argc, char **argv) {
 				fatal("-P specified more than once");
 
 			changed = ISC_TRUE;
-			if (!strcasecmp(isc_commandline_argument, "none")) {
-				unsetpub = ISC_TRUE;
-			} else {
-				setpub = ISC_TRUE;
 				pub = strtotime(isc_commandline_argument,
-						now, now);
-			}
+					now, now, &setpub);
+			unsetpub = !setpub;
 			break;
 		case 'A':
 			if (setact || unsetact)
 				fatal("-A specified more than once");
 
 			changed = ISC_TRUE;
-			if (!strcasecmp(isc_commandline_argument, "none")) {
-				unsetact = ISC_TRUE;
-			} else {
-				setact = ISC_TRUE;
 				act = strtotime(isc_commandline_argument,
-						now, now);
-			}
+					now, now, &setact);
+			unsetact = !setact;
 			break;
 		case 'R':
 			if (setrev || unsetrev)
 				fatal("-R specified more than once");
 
 			changed = ISC_TRUE;
-			if (!strcasecmp(isc_commandline_argument, "none")) {
-				unsetrev = ISC_TRUE;
-			} else {
-				setrev = ISC_TRUE;
 				rev = strtotime(isc_commandline_argument,
-						now, now);
-			}
+					now, now, &setrev);
+			unsetrev = !setrev;
 			break;
 		case 'I':
 			if (setinact || unsetinact)
 				fatal("-I specified more than once");
 
 			changed = ISC_TRUE;
-			if (!strcasecmp(isc_commandline_argument, "none")) {
-				unsetinact = ISC_TRUE;
-			} else {
-				setinact = ISC_TRUE;
 				inact = strtotime(isc_commandline_argument,
-						now, now);
-			}
+					now, now, &setinact);
+			unsetinact = !setinact;
 			break;
 		case 'D':
 			if (setdel || unsetdel)
 				fatal("-D specified more than once");
 
 			changed = ISC_TRUE;
-			if (!strcasecmp(isc_commandline_argument, "none")) {
-				unsetdel = ISC_TRUE;
-			} else {
-				setdel = ISC_TRUE;
 				del = strtotime(isc_commandline_argument,
-						now, now);
-			}
+					now, now, &setdel);
+			unsetdel = !setdel;
 			break;
 		case 'S':
 			predecessor = isc_commandline_argument;
@@ -322,7 +302,12 @@ main(int argc, char **argv) {
 					program, isc_commandline_option);
 			/* Falls into */
 		case 'h':
+			/* Does not return. */
 			usage();
+
+		case 'V':
+			/* Does not return. */
+			version(program);
 
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n",
@@ -351,7 +336,6 @@ main(int argc, char **argv) {
 
 	if (predecessor != NULL) {
 		char keystr[DST_KEY_FORMATSIZE];
-		isc_stdtime_t when;
 		int major, minor;
 
 		if (prepub == -1)
@@ -369,7 +353,7 @@ main(int argc, char **argv) {
 		if (result != ISC_R_SUCCESS)
 			fatal("Invalid keyfile %s: %s",
 			      filename, isc_result_totext(result));
-		if (!dst_key_isprivate(prevkey))
+		if (!dst_key_isprivate(prevkey) && !dst_key_isexternal(prevkey))
 			fatal("%s is not a private key", filename);
 
 		name = dst_key_name(prevkey);
@@ -383,19 +367,20 @@ main(int argc, char **argv) {
 			fatal("Predecessor has incompatible format "
 			      "version %d.%d\n\t", major, minor);
 
-		result = dst_key_gettime(prevkey, DST_TIME_ACTIVATE, &when);
+		result = dst_key_gettime(prevkey, DST_TIME_ACTIVATE, &prevact);
 		if (result != ISC_R_SUCCESS)
 			fatal("Predecessor has no activation date. "
 			      "You must set one before\n\t"
 			      "generating a successor.");
 
-		result = dst_key_gettime(prevkey, DST_TIME_INACTIVE, &act);
+		result = dst_key_gettime(prevkey, DST_TIME_INACTIVE,
+					 &previnact);
 		if (result != ISC_R_SUCCESS)
 			fatal("Predecessor has no inactivation date. "
 			      "You must set one before\n\t"
 			      "generating a successor.");
 
-		pub = act - prepub;
+		pub = prevact - prepub;
 		if (pub < now && prepub != 0)
 			fatal("Predecessor will become inactive before the\n\t"
 			      "prepublication period ends.  Either change "
@@ -403,13 +388,18 @@ main(int argc, char **argv) {
 			      "or use the -i option to set a shorter "
 			      "prepublication interval.");
 
-		result = dst_key_gettime(prevkey, DST_TIME_DELETE, &when);
+		result = dst_key_gettime(prevkey, DST_TIME_DELETE, &prevdel);
 		if (result != ISC_R_SUCCESS)
-			fprintf(stderr, "%s: WARNING: Predecessor has no "
+			fprintf(stderr, "%s: warning: Predecessor has no "
 					"removal date;\n\t"
 					"it will remain in the zone "
 					"indefinitely after rollover.\n",
 					program);
+		else if (prevdel < previnact)
+			fprintf(stderr, "%s: warning: Predecessor is "
+					"scheduled to be deleted\n\t"
+					"before it is scheduled to be "
+					"inactive.\n", program);
 
 		changed = setpub = setact = ISC_TRUE;
 		dst_key_free(&prevkey);
@@ -455,7 +445,7 @@ main(int argc, char **argv) {
 		fatal("Invalid keyfile %s: %s",
 		      filename, isc_result_totext(result));
 
-	if (!dst_key_isprivate(key))
+	if (!dst_key_isprivate(key) && !dst_key_isexternal(key))
 		fatal("%s is not a private key", filename);
 
 	dst_key_format(key, keystr, sizeof(keystr));
@@ -470,6 +460,20 @@ main(int argc, char **argv) {
 		if (flags != dst_key_flags(key))
 			fatal("Key flags mismatch");
 	}
+
+	prevdel = previnact = 0;
+	if ((setdel && setinact && del < inact) ||
+	    (dst_key_gettime(key, DST_TIME_INACTIVE,
+			     &previnact) == ISC_R_SUCCESS &&
+	     setdel && !setinact && del < previnact) ||
+	    (dst_key_gettime(key, DST_TIME_DELETE,
+			     &prevdel) == ISC_R_SUCCESS &&
+	     setinact && !setdel && prevdel < inact) ||
+	    (!setdel && !setinact && prevdel < previnact))
+		fprintf(stderr, "%s: warning: Key is scheduled to "
+				"be deleted before it is\n\t"
+				"scheduled to be inactive.\n",
+			program);
 
 	if (force)
 		set_keyversion(key);
@@ -595,6 +599,7 @@ main(int argc, char **argv) {
 	cleanup_entropy(&ectx);
 	if (verbose > 10)
 		isc_mem_stats(mctx, stdout);
+	cleanup_logging(&log);
 	isc_mem_free(mctx, directory);
 	isc_mem_destroy(&mctx);
 

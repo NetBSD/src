@@ -1,7 +1,7 @@
-/*	$NetBSD: log.c,v 1.2.6.1 2012/06/05 21:15:21 bouyer Exp $	*/
+/*	$NetBSD: log.c,v 1.2.6.1.4.1 2014/12/31 11:58:29 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -203,7 +203,7 @@ isc_result_t
 ns_log_setdefaultcategory(isc_logconfig_t *lcfg) {
 	isc_result_t result;
 
-	if (! ns_g_logstderr) {
+	if (! ns_g_logstderr && ! ns_g_nosyslog) {
 		result = isc_log_usechannel(lcfg, "default_syslog",
 					    ISC_LOGCATEGORY_DEFAULT, NULL);
 		if (result != ISC_R_SUCCESS)

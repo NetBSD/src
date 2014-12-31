@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.3.4.1 2012/06/05 21:15:18 bouyer Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.3.4.1.4.1 2014/12/31 11:58:28 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2008-2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: dnssec-dsfromkey.c,v 1.24 2011/10/25 01:54:18 marka Exp  */
 
 /*! \file */
 
@@ -286,7 +284,9 @@ emit(unsigned int dtype, isc_boolean_t showall, char *lookaside,
 		}
 	}
 
-	result = dns_rdata_totext(&ds, (dns_name_t *) NULL, &textb);
+	result = dns_rdata_tofmttext(&ds, (dns_name_t *) NULL, 0, 0, 0, "",
+				     &textb);
+
 	if (result != ISC_R_SUCCESS)
 		fatal("can't print rdata");
 
@@ -326,10 +326,11 @@ usage(void) {
 	fprintf(stderr, "Version: %s\n", VERSION);
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "    -v <verbose level>\n");
+	fprintf(stderr, "    -V: print version information\n");
 	fprintf(stderr, "    -K <directory>: directory in which to find "
 			"key file or keyset file\n");
 	fprintf(stderr, "    -a algorithm: digest algorithm "
-			"(SHA-1, SHA-256 or GOST)\n");
+			"(SHA-1, SHA-256, GOST or SHA-384)\n");
 	fprintf(stderr, "    -1: use SHA-1\n");
 	fprintf(stderr, "    -2: use SHA-256\n");
 	fprintf(stderr, "    -l: add lookaside zone and print DLV records\n");
@@ -375,7 +376,7 @@ main(int argc, char **argv) {
 	isc_commandline_errprint = ISC_FALSE;
 
 	while ((ch = isc_commandline_parse(argc, argv,
-					   "12Aa:c:d:Ff:K:l:sT:v:h")) != -1) {
+					   "12Aa:c:d:Ff:K:l:sT:v:hV")) != -1) {
 		switch (ch) {
 		case '1':
 			dtype = DNS_DSDIGEST_SHA1;
@@ -432,7 +433,12 @@ main(int argc, char **argv) {
 					program, isc_commandline_option);
 			/* FALLTHROUGH */
 		case 'h':
+			/* Does not return. */
 			usage();
+
+		case 'V':
+			/* Does not return. */
+			version(program);
 
 		default:
 			fprintf(stderr, "%s: unhandled option -%c\n",
@@ -452,6 +458,9 @@ main(int argc, char **argv) {
 		else if (strcasecmp(algname, "GOST") == 0)
 			dtype = DNS_DSDIGEST_GOST;
 #endif
+		else if (strcasecmp(algname, "SHA384") == 0 ||
+			 strcasecmp(algname, "SHA-384") == 0)
+			dtype = DNS_DSDIGEST_SHA384;
 		else
 			fatal("unknown algorithm %s", algname);
 	}

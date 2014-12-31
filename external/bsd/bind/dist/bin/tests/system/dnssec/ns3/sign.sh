@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2004, 2006-2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2014  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -20,15 +20,15 @@
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
 
-RANDFILE=../random.data
-
 zone=secure.example.
 infile=secure.example.db.in
 zonefile=secure.example.db
 
+cnameandkey=`$KEYGEN -T KEY -q -r $RANDFILE -a RSASHA1 -b 768 -n host cnameandkey.$zone`
+dnameandkey=`$KEYGEN -T KEY -q -r $RANDFILE -a RSASHA1 -b 768 -n host dnameandkey.$zone`
 keyname=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 768 -n zone $zone`
 
-cat $infile $keyname.key >$zonefile
+cat $infile $cnameandkey.key $dnameandkey.key $keyname.key >$zonefile
 
 $SIGNER -P -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
 
@@ -66,7 +66,7 @@ $SIGNER -P -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
 # Change the signer field of the a.b.keyless.example SIG A
 # to point to a provably nonexistent KEY record.
 mv $zonefile.signed $zonefile.tmp
-<$zonefile.tmp perl -p -e 's/ keyless.example/ b.keyless.example/
+<$zonefile.tmp $PERL -p -e 's/ keyless.example/ b.keyless.example/
     if /^a.b.keyless.example/../NXT/;' >$zonefile.signed
 rm -f $zonefile.tmp
 
@@ -381,7 +381,36 @@ kskname=`$KEYGEN -q -r $RANDFILE $zone`
 zskname=`$KEYGEN -q -r $RANDFILE -f KSK $zone`
 cp $infile $zonefile
 $SIGNER -S -r $RANDFILE -e now+1mi -o $zone $zonefile > /dev/null 2>&1
-rm -f ${zskname}.private ${kskname}.private
+mv -f ${zskname}.private ${zskname}.private.moved
+mv -f ${kskname}.private ${kskname}.private.moved
+
+#
+# A zone where the signer's name has been forced to uppercase.
+#
+zone="upper.example."
+infile="upper.example.db.in"
+zonefile="upper.example.db"
+lower="upper.example.db.lower"
+signedfile="upper.example.db.signed"
+kskname=`$KEYGEN -q -r $RANDFILE $zone`
+zskname=`$KEYGEN -q -r $RANDFILE -f KSK $zone`
+cp $infile $zonefile
+$SIGNER -P -S -r $RANDFILE -o $zone -f $lower $zonefile > /dev/null 2>&1
+$CHECKZONE -D upper.example $lower 2>&- | \
+	sed '/RRSIG/s/ upper.example. / UPPER.EXAMPLE. /' > $signedfile
+
+#
+# Check that the signer's name is in lower case when zone name is in
+# upper case.
+#
+zone="LOWER.EXAMPLE."
+infile="lower.example.db.in"
+zonefile="lower.example.db"
+signedfile="lower.example.db.signed"
+kskname=`$KEYGEN -q -r $RANDFILE $zone`
+zskname=`$KEYGEN -q -r $RANDFILE -f KSK $zone`
+cp $infile $zonefile
+$SIGNER -P -S -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
 
 #
 # Zone with signatures about to expire, and dynamic, but configured
@@ -400,3 +429,33 @@ $CHECKZONE -D nosign.example nosign.example.db.signed 2>&- | \
         awk '$4 == "RRSIG" && $5 == "NS" {$2 = ""; print}' | \
         sed 's/[ 	][ 	]*/ /g'> ../nosign.before
 
+#
+# An inline signing zone
+#
+zone=inline.example.
+kskname=`$KEYGEN -q -3 -r $RANDFILE -fk $zone`
+zskname=`$KEYGEN -q -3 -r $RANDFILE $zone`
+
+#
+# publish a new key while deactivating another key at the same time.
+#
+zone=publish-inactive.example
+infile=publish-inactive.example.db.in
+zonefile=publish-inactive.example.db
+now=`date -u +%Y%m%d%H%M%S`
+kskname=`$KEYGEN -q -r $RANDFILE -f KSK $zone`
+kskname=`$KEYGEN -P $now+90s -A $now+3600s -q -r $RANDFILE -f KSK $zone`
+kskname=`$KEYGEN -I $now+90s -q -r $RANDFILE -f KSK $zone`
+zskname=`$KEYGEN -q -r $RANDFILE $zone`
+cp $infile $zonefile
+$SIGNER -S -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+
+#
+# A zone which will change its sig-validity-interval
+#
+zone=siginterval.example
+infile=siginterval.example.db.in
+zonefile=siginterval.example.db
+kskname=`$KEYGEN -q -3 -r $RANDFILE -fk $zone`
+zskname=`$KEYGEN -q -3 -r $RANDFILE $zone`
+cp $infile $zonefile

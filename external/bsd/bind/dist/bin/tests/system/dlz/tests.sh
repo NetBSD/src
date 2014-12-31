@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010, 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -36,6 +36,36 @@ grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
 grep "example.com..*DNAME.*example.net." dig.out.ns1.test$n > /dev/null || ret=1
 grep "foo.example.com..*CNAME.*foo.example.net." dig.out.ns1.test$n > /dev/null || ret=1
 grep "flags:[^;]* aa[ ;]" dig.out.ns1.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking DLZ IXFR=2010062899 (less than serial) ($n)"
+ret=0
+$DIG $DIGOPTS ixfr=2010062899 example.com @10.53.0.1 +all > dig.out.ns1.test$n 
+grep "example.com..*IN.IXFR" dig.out.ns1.test$n > /dev/null || ret=1
+grep "example.com..*10.IN.DNAME.example.net." dig.out.ns1.test$n > /dev/null || ret=1
+grep "example.com..*10.IN.NS.example.com." dig.out.ns1.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking DLZ IXFR=2010062900 (equal serial) ($n)"
+ret=0
+$DIG $DIGOPTS ixfr=2010062900 example.com @10.53.0.1 +all > dig.out.ns1.test$n
+grep "example.com..*IN.IXFR" dig.out.ns1.test$n > /dev/null || ret=1
+grep "example.com..*10.IN.DNAME.example.net." dig.out.ns1.test$n > /dev/null && ret=1
+grep "example.com..*10.IN.NS.example.com." dig.out.ns1.test$n > /dev/null && ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking DLZ IXFR=2010062901 (greater than serial) ($n)"
+ret=0
+$DIG $DIGOPTS ixfr=2010062901 example.com @10.53.0.1 +all > dig.out.ns1.test$n
+grep "example.com..*IN.IXFR" dig.out.ns1.test$n > /dev/null || ret=1
+grep "example.com..*10.IN.DNAME.example.net." dig.out.ns1.test$n > /dev/null && ret=1
+grep "example.com..*10.IN.NS.example.com." dig.out.ns1.test$n > /dev/null && ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

@@ -1,7 +1,7 @@
-/*	$NetBSD: result.c,v 1.2.6.1 2012/06/05 21:15:06 bouyer Exp $	*/
+/*	$NetBSD: result.c,v 1.2.6.1.4.1 2014/12/31 11:59:03 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -105,6 +105,7 @@ static const char *text[ISC_R_NRESULTS] = {
 	"invalid address format",		/*%< 59 */
 	"bad base32 encoding",			/*%< 60 */
 	"unset",				/*%< 61 */
+	"multiple",				/*%< 62 */
 };
 
 #define ISC_RESULT_RESULTSET			2

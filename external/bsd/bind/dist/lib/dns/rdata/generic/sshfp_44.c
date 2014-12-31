@@ -1,7 +1,7 @@
-/*	$NetBSD: sshfp_44.c,v 1.3.4.1 2012/06/05 21:15:13 bouyer Exp $	*/
+/*	$NetBSD: sshfp_44.c,v 1.3.4.1.4.1 2014/12/31 11:59:00 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -55,7 +55,6 @@ fromtext_sshfp(ARGS_FROMTEXT) {
 	if (token.value.as_ulong > 0xffU)
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint8_tobuffer(token.value.as_ulong, target));
-	type = (isc_uint16_t) token.value.as_ulong;
 
 	/*
 	 * Digest.

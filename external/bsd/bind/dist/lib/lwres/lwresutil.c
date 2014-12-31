@@ -1,7 +1,7 @@
-/*	$NetBSD: lwresutil.c,v 1.2.6.1 2012/06/05 21:14:54 bouyer Exp $	*/
+/*	$NetBSD: lwresutil.c,v 1.2.6.1.4.1 2014/12/31 11:59:08 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -392,7 +392,7 @@ lwres_getnamebyaddr(lwres_context_t *ctx, lwres_uint32_t addrtype,
 	request.flags = 0;
 	request.addr.family = addrtype;
 	request.addr.length = addrlen;
-	memcpy(request.addr.address, addr, addrlen);
+	memmove(request.addr.address, addr, addrlen);
 	pkt.pktflags = 0;
 	pkt.serial = serial;
 	pkt.result = 0;

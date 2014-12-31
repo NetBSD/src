@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -18,4 +18,4 @@
 
 if [ ! -x ../../pkcs11/pkcs11-destroy ]; then exit 1; fi
 
-../../pkcs11/pkcs11-destroy -s 0 -p 1234
+../../pkcs11/pkcs11-destroy -s ${SLOT:-0} -p 1234

@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
+// Copyright (c) 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,12 +33,14 @@ extern "C" {
 
 #include <limits.h>
 #include <signal.h>
+#include <unistd.h>
 }
 
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <ios>
 #include <iostream>
 #include <iterator>
 #include <list>
@@ -47,9 +49,9 @@ extern "C" {
 
 #include "atf-c++/check.hpp"
 #include "atf-c++/config.hpp"
-#include "atf-c++/utils.hpp"
 
 #include "atf-c++/detail/application.hpp"
+#include "atf-c++/detail/auto_array.hpp"
 #include "atf-c++/detail/exceptions.hpp"
 #include "atf-c++/detail/fs.hpp"
 #include "atf-c++/detail/process.hpp"
@@ -114,7 +116,7 @@ public:
         std::ostream(NULL),
         m_fd(-1)
     {
-        atf::utils::auto_array< char > buf(new char[p.str().length() + 1]);
+        atf::auto_array< char > buf(new char[p.str().length() + 1]);
         std::strcpy(buf.get(), p.c_str());
 
         m_fd = ::mkstemp(buf.get());
@@ -184,6 +186,7 @@ static struct name_number {
     { "int", SIGINT },
     { "quit", SIGQUIT },
     { "trap", SIGTRAP },
+    { "abrt", SIGABRT },
     { "kill", SIGKILL },
     { "segv", SIGSEGV },
     { "pipe", SIGPIPE },
@@ -268,7 +271,7 @@ parse_status_check_arg(const std::string& arg)
         else
             value = parse_signal(value_str);
     } else
-        throw atf::application::usage_error("Invalid output checker");
+        throw atf::application::usage_error("Invalid status checker");
 
     return status_check(type, negated, value);
 }
@@ -378,7 +381,7 @@ grep_file(const atf::fs::path& path, const std::string& regexp)
     bool found = false;
 
     std::string line;
-    while (!found && std::getline(stream, line).good()) {
+    while (!found && !std::getline(stream, line).fail()) {
         if (atf::text::match(line, regexp))
             found = true;
     }
@@ -421,8 +424,6 @@ compare_files(const atf::fs::path& p1, const atf::fs::path& p2)
         if (f2.bad())
             throw std::runtime_error("Failed to read from " + p1.str());
 
-        std::cout << "1 read: " << f1.gcount() << "\n";
-        std::cout << "2 read: " << f2.gcount() << "\n";
         if ((f1.gcount() == 0) && (f2.gcount() == 0)) {
             equal = true;
             break;

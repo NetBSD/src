@@ -1,7 +1,7 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.in by autoheader.  */
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* Id: acconfig.h,v 1.53 2008/12/01 23:47:44 tbox Exp  */
 
 /*! \file */
 
@@ -81,13 +81,16 @@
 /** define if arc4random() exists */
 #define HAVE_ARC4RANDOM 1
 
+/** define if arc4random_addrandom() exists */
+#define HAVE_ARC4RANDOM_ADDRANDOM 1
+
 /**
  * define if pthread_setconcurrency() should be called to tell the
  * OS how many threads we might want to run.
  */
 /* #undef CALL_PTHREAD_SETCONCURRENCY */
 
-#if 0	/* We'll define this in each Makefile as necessary */
+#if 0  /* We'll define this in each Makefile as necessary */
 /** define if IPv6 is not disabled */
 #define WANT_IPV6 1
 #endif
@@ -127,7 +130,7 @@ int sigwait(const unsigned int *set, int *sig);
 		union { const void *konst; long *var; } _u; \
 		_u.konst = &(last); \
 		ap = (va_list)(_u.var + __va_words(__typeof(last))); \
-	} while (0)
+	} while (/*CONSTCOND*/0)
 #endif /** SHUTUP_STDARG_CAST && __GNUC__ */
 
 /** define if the system has a random number generating device */
@@ -147,6 +150,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define if OpenSSL includes DSA support */
 #define HAVE_OPENSSL_DSA 1
+
+/* Define if OpenSSL includes ECDSA support */
+#define HAVE_OPENSSL_ECDSA 1
 
 /* Define to the length type used by the socket API (socklen_t, size_t, int). */
 #define ISC_SOCKADDR_LEN_T socklen_t
@@ -212,6 +218,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the `EVP_sha256' function. */
 #define HAVE_EVP_SHA256 1
 
+/* Define to 1 if you have the `EVP_sha384' function. */
+#define HAVE_EVP_SHA384 1
+
 /* Define to 1 if you have the `EVP_sha512' function. */
 #define HAVE_EVP_SHA512 1
 
@@ -229,6 +238,9 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the <gssapi_krb5.h> header file. */
 /* #undef HAVE_GSSAPI_KRB5_H */
+
+/* Define to 1 if you have the `if_nametoindex' function. */
+#define HAVE_IF_NAMETOINDEX 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -260,6 +272,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the `pthread' library (-lpthread). */
 #define HAVE_LIBPTHREAD 1
 
+/* Define to 1 if you have the `rt' library (-lrt). */
+/* #undef HAVE_LIBRT */
+
 /* Define to 1 if you have the `scf' library (-lscf). */
 /* #undef HAVE_LIBSCF */
 
@@ -275,6 +290,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <linux/capability.h> header file. */
 /* #undef HAVE_LINUX_CAPABILITY_H */
 
+/* Define to 1 if you have the <linux/types.h> header file. */
+/* #undef HAVE_LINUX_TYPES_H */
+
 /* Define to 1 if you have the <locale.h> header file. */
 #define HAVE_LOCALE_H 1
 
@@ -287,14 +305,29 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <net/if6.h> header file. */
 /* #undef HAVE_NET_IF6_H */
 
+/* Define if your OpenSSL version supports ECDSA. */
+#define HAVE_OPENSSL_ECDSA 1
+
 /* Define if your OpenSSL version supports GOST. */
-/* #undef HAVE_OPENSSL_GOST */
+#define HAVE_OPENSSL_GOST 1
+
+/* Define to 1 if you have the `pthread_yield' function. */
+/* #undef HAVE_PTHREAD_YIELD */
+
+/* Define to 1 if you have the `pthread_yield_np' function. */
+/* #undef HAVE_PTHREAD_YIELD_NP */
 
 /* Define to 1 if you have the `readline' function. */
 #define HAVE_READLINE 1
 
 /* Define to 1 if you have the <regex.h> header file. */
 #define HAVE_REGEX_H 1
+
+/* Define to 1 if you have the <sched.h> header file. */
+#define HAVE_SCHED_H 1
+
+/* Define to 1 if you have the `sched_yield' function. */
+#define HAVE_SCHED_YIELD 1
 
 /* Define to 1 if you have the `setegid' function. */
 #define HAVE_SETEGID 1
@@ -380,6 +413,10 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to allow building of objects for dlopen(). */
 #define ISC_DLZ_DLOPEN 1
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#define LT_OBJDIR ".libs/"
+
 /* Defined if extern char *optarg is not declared. */
 /* #undef NEED_OPTARG */
 
@@ -387,23 +424,26 @@ int sigwait(const unsigned int *set, int *sig);
    */
 /* #undef NEED_SECURE_DIRECTORY */
 
+/* Use the new XML schema for statistics */
+/* #undef NEWSTATS */
+
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT ""
+#define PACKAGE_BUGREPORT "bind9-bugs@isc.org"
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME ""
+#define PACKAGE_NAME "BIND"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING ""
+#define PACKAGE_STRING "BIND 9.9"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME ""
+#define PACKAGE_TARNAME "bind"
 
 /* Define to the home page for this package. */
-#define PACKAGE_URL ""
+#define PACKAGE_URL "https://www.isc.org/downloads/BIND/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION ""
+#define PACKAGE_VERSION "9.9"
 
 /* Sets which flag to pass to open/fcntl to make non-blocking
    (O_NDELAY/O_NONBLOCK). */
@@ -421,6 +461,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Defined if you need to use ioctl(FIONBIO) instead a fcntl call to make
    non-blocking. */
 /* #undef USE_FIONBIO_IOCTL */
+
+/* Enable DNS Response Rate Limiting */
+/* #undef USE_RRL */
 
 /* define if idnkit support is to be included. */
 /* #undef WITH_IDN */

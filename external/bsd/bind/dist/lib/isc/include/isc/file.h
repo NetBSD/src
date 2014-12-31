@@ -1,7 +1,7 @@
-/*	$NetBSD: file.h,v 1.3.4.1 2012/06/05 21:15:29 bouyer Exp $	*/
+/*	$NetBSD: file.h,v 1.3.4.1.4.1 2014/12/31 11:59:04 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -27,12 +27,16 @@
 #include <stdio.h>
 
 #include <isc/lang.h>
+#include <isc/stat.h>
 #include <isc/types.h>
 
 ISC_LANG_BEGINDECLS
 
 isc_result_t
 isc_file_settime(const char *file, isc_time_t *time);
+
+isc_result_t
+isc_file_mode(const char *file, mode_t *modep);
 
 isc_result_t
 isc_file_getmodtime(const char *file, isc_time_t *time);
@@ -60,7 +64,7 @@ isc_file_getmodtime(const char *file, isc_time_t *time);
  *\li	#ISC_R_NOPERM
  *		The file's metainformation could not be retrieved because
  *		permission was denied to some part of the file's path.
- *\li	#ISC_R_EIO
+ *\li	#ISC_R_IOERROR
  *		Hardware error interacting with the filesystem.
  *\li	#ISC_R_UNEXPECTED
  *		Something totally unexpected happened.
@@ -99,15 +103,22 @@ isc_file_mktemplate(const char *path, char *buf, size_t buflen);
  *				of the path with the internal template string.
  */
 
-
 isc_result_t
 isc_file_openunique(char *templet, FILE **fp);
 isc_result_t
 isc_file_openuniqueprivate(char *templet, FILE **fp);
 isc_result_t
 isc_file_openuniquemode(char *templet, int mode, FILE **fp);
+isc_result_t
+isc_file_bopenunique(char *templet, FILE **fp);
+isc_result_t
+isc_file_bopenuniqueprivate(char *templet, FILE **fp);
+isc_result_t
+isc_file_bopenuniquemode(char *templet, int mode, FILE **fp);
 /*!<
  * \brief Create and open a file with a unique name based on 'templet'.
+ *	isc_file_bopen*() open the file in binary mode in Windows. 
+ *	isc_file_open*() open the file in text mode in Windows. 
  *
  * Notes:
  *\li	'template' is a reserved work in C++.  If you want to complain
@@ -204,7 +215,23 @@ isc_file_isplainfile(const char *name);
  *		permitted in addition to ISC_R_SUCCESS. This is done since
  *		the next call in logconf.c is to isc_stdio_open(), which
  *		will create the file if it can.
- *\li	#other ISC_R_* errors translated from errno
+ *\li	other ISC_R_* errors translated from errno
+ *		These occur when stat returns -1 and an errno.
+ */
+
+isc_result_t
+isc_file_isdirectory(const char *name);
+/*!<
+ * \brief Check that 'name' exists and is a directory.
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ *		Success, file is a directory.
+ *\li	#ISC_R_INVALIDFILE
+ *		File is not a directory.
+ *\li	#ISC_R_FILENOTFOUND
+ *		File does not exist.
+ *\li	other ISC_R_* errors translated from errno
  *		These occur when stat returns -1 and an errno.
  */
 
@@ -299,6 +326,16 @@ isc_file_splitpath(isc_mem_t *mctx, char *path,
  * - ISC_R_SUCCESS on success
  * - ISC_R_INVALIDFILE if 'path' is empty or ends with '/'
  * - ISC_R_NOMEMORY if unable to allocate memory
+ */
+
+isc_result_t
+isc_file_getsizefd(int fd, off_t *size);
+/*%<
+ * Return the size of the file (stored in the parameter pointed
+ * to by 'size') in bytes.
+ *
+ * Returns:
+ * - ISC_R_SUCCESS on success
  */
 
 ISC_LANG_ENDDECLS

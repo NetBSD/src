@@ -1,7 +1,7 @@
-/*	$NetBSD: random.c,v 1.2.6.1 2012/06/05 21:15:06 bouyer Exp $	*/
+/*	$NetBSD: random.c,v 1.2.6.1.4.1 2014/12/31 11:59:03 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -52,7 +52,7 @@ initialize_rand(void)
 	 */
 	pid = ((pid << 16) & 0xffff0000) | ((pid >> 16) & 0xffff);
 
-	srand(time(NULL) ^ pid);
+	srand((unsigned)time(NULL) ^ pid);
 #endif
 }
 
@@ -69,8 +69,16 @@ isc_random_seed(isc_uint32_t seed)
 
 #ifndef HAVE_ARC4RANDOM
 	srand(seed);
-#else
+#elif defined(HAVE_ARC4RANDOM_ADDRANDOM)
 	arc4random_addrandom((u_char *) &seed, sizeof(isc_uint32_t));
+#else
+	/*
+	 * If arcrandom() is available and no corresponding seeding
+	 * function arc4random_addrandom() is available, no seeding is
+	 * done on such platforms (e.g., OpenBSD 5.5). This is because
+	 * the OS itself is supposed to seed the RNG and it is assumed
+	 * that no explicit seeding is required.
+	 */
 #endif
 }
 

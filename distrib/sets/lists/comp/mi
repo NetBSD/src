@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1738.2.7.2.2 2014/08/15 08:36:56 msaitoh Exp $
+#	$NetBSD: mi,v 1.1738.2.7.2.3 2014/12/31 11:58:25 msaitoh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2872,6 +2872,9 @@
 ./usr/lib/libipsec.a				comp-c-lib
 ./usr/lib/libipsec_g.a				-unknown-		debuglib
 ./usr/lib/libipsec_p.a				comp-c-proflib		profile
+./usr/lib/libirs.a				comp-bind-lib
+./usr/lib/libirs_g.a				-unknown-		debuglib
+./usr/lib/libirs_p.a				comp-bind-lib		profile
 ./usr/lib/libisc.a				comp-bind-lib
 ./usr/lib/libisc_g.a				-unknown-		debuglib
 ./usr/lib/libisc_p.a				comp-bind-lib		profile
@@ -4378,6 +4381,7 @@
 ./usr/libdata/lint/llib-lheimbase.ln		comp-krb5-lintlib	lint,kerberos
 ./usr/libdata/lint/llib-lintl.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lipsec.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lirs.ln			comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lisc.ln			comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lisccc.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-lisccfg.ln		comp-bind-lintlib	lint

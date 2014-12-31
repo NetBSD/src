@@ -1,7 +1,7 @@
-/*	$NetBSD: validator.h,v 1.2.6.1 2012/06/05 21:14:55 bouyer Exp $	*/
+/*	$NetBSD: validator.h,v 1.2.6.1.4.1 2014/12/31 11:58:59 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010, 2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -106,6 +106,10 @@ typedef struct dns_validatorevent {
 	 * Optout proof seen.
 	 */
 	isc_boolean_t			optout;
+	/*
+	 * Answer is secure.
+	 */
+	isc_boolean_t			secure;
 } dns_validatorevent_t;
 
 #define DNS_VALIDATOR_NOQNAMEPROOF 0

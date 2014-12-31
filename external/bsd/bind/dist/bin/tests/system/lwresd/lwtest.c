@@ -1,7 +1,7 @@
-/*	$NetBSD: lwtest.c,v 1.2.6.1 2012/06/05 21:15:36 bouyer Exp $	*/
+/*	$NetBSD: lwtest.c,v 1.2.6.1.4.1 2014/12/31 11:58:43 msaitoh Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2008, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -402,7 +402,7 @@ test_gethostbyaddr(const char *address, int af, const char *name) {
 			return;
 		}
 	} else {
-		if (strcmp(hp->h_name, name) != 0) {
+		if (name != NULL && strcmp(hp->h_name, name) != 0) {
 			printf("I:gethostbyname(%s) returned %s, "
 			       "expected %s\n", address, hp->h_name, name);
 			fails++;
@@ -442,7 +442,7 @@ test_getipnodebyaddr(const char *address, int af, const char *name) {
 			return;
 		}
 	} else {
-		if (strcmp(hp->h_name, name) != 0) {
+		if (name != NULL && strcmp(hp->h_name, name) != 0) {
 			printf("I:getipnodebyaddr(%s) returned %s, "
 			       "expected %s\n", address, hp->h_name, name);
 			freehostent(hp);

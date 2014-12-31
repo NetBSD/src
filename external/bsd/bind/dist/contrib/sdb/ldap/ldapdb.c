@@ -1,4 +1,4 @@
-/*	$NetBSD: ldapdb.c,v 1.2.6.1 2012/06/05 21:15:48 bouyer Exp $	*/
+/*	$NetBSD: ldapdb.c,v 1.2.6.1.4.1 2014/12/31 11:58:55 msaitoh Exp $	*/
 
 /*
  * ldapdb.c version 1.0-beta
@@ -388,6 +388,8 @@ ldapdb_lookup(const char *zone, const char *name, void *dbdata,
 	      dns_sdblookup_t *lookup, dns_clientinfomethods_t *methods,
 	      dns_clientinfo_t *clientinfo)
 {
+	UNUSED(methods);
+	UNUSED(clientinfo);
 	return (ldapdb_search(zone, name, dbdata, lookup, NULL, NULL));
 }
 #else
@@ -663,7 +665,8 @@ static dns_sdbmethods_t ldapdb_methods = {
 	NULL, /* authority */
 	ldapdb_allnodes,
 	ldapdb_create,
-	ldapdb_destroy
+	ldapdb_destroy,
+	NULL /* lookup2 */
 };
 
 /* Wrapper around dns_sdb_register() */
