@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1209 2014/12/23 10:55:09 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1210 2014/12/31 21:20:23 veego Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3839,6 +3839,8 @@ product INTEL C222_LPC		0x8c52	C222 LPC
 product INTEL C224_LPC		0x8c54	C224 LPC
 product INTEL C226_LPC		0x8c56	C226 LPC
 product INTEL H81_LPC		0x8c5c	H81 LPC
+product INTEL 9SERIES_XHCI	0x8cb1	9 Series USB xHCI
+product INTEL 9SERIES_MEI_1	0x8cba	9 Series MEI Controller
 product INTEL CORE4G_M_AHCI	0x9c03	Core 4G (mobile) SATA Controller (AHCI)
 product INTEL CORE4G_M_RAID_1	0x9c05	Core 4G (mobile) SATA Controller (RAID)
 product INTEL CORE4G_M_RAID_2	0x9c07	Core 4G (mobile) SATA Controller (RAID) Premium
