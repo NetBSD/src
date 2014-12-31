@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.14 2014/11/09 10:10:08 mlelstv Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.15 2014/12/31 17:06:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.14 2014/11/09 10:10:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.15 2014/12/31 17:06:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2246,46 +2246,6 @@ aceioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 
 	case DIOCCACHESYNC:
 		return 0;
-
-	case DIOCAWEDGE:
-	    {
-		struct dkwedge_info *dkw = (void *) addr;
-
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-
-		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, device_xname(ace->sc_dev));
-		return dkwedge_add(dkw);
-	    }
-
-	case DIOCDWEDGE:
-	    {
-		struct dkwedge_info *dkw = (void *) addr;
-
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-
-		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, device_xname(ace->sc_dev));
-		return dkwedge_del(dkw);
-	    }
-
-	case DIOCLWEDGES:
-	    {
-		struct dkwedge_list *dkwl = (void *) addr;
-
-		return dkwedge_list(&ace->sc_dk, dkwl, l);
-	    }
-
-	case DIOCMWEDGES:
-	    {
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-
-		dkwedge_discover(&ace->sc_dk);
-		return 0;
-	    }
 
 	case DIOCGSTRATEGY:
 	    {
