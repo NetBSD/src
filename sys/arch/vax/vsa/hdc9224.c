@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.55 2014/12/31 19:52:05 christos Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.56 2014/12/31 20:37:10 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.55 2014/12/31 19:52:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.56 2014/12/31 20:37:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -688,6 +688,7 @@ rdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct rdsoftc * const rd = device_lookup_private(&rd_cd, DISKUNIT(dev));
 	struct disklabel * const lp = rd->sc_disk.dk_label;
+	int error;
 
 	error = disk_ioctl(&rd->sc_disk, dev, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
