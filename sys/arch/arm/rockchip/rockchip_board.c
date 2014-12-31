@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_board.c,v 1.7 2014/12/30 17:15:31 jmcneill Exp $ */
+/* $NetBSD: rockchip_board.c,v 1.8 2014/12/31 16:16:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.7 2014/12/30 17:15:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.8 2014/12/31 16:16:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.7 2014/12/30 17:15:31 jmcneill 
 #include <sys/device.h>
 
 #include <arm/bootconfig.h>
+#include <arm/cpufunc.h>
 
 #include <arm/rockchip/rockchip_reg.h>
 #include <arm/rockchip/rockchip_crureg.h>
@@ -131,21 +132,35 @@ rk3188_apll_set_rate(u_int rate)
 {
 	bus_space_tag_t bst = &rockchip_bs_tag;
 	bus_space_handle_t bsh;
-	uint32_t apll_con0, apll_con1, clksel0_con, clksel1_con;
+	uint32_t apll_con0, apll_con1, apll_con2, clksel0_con, clksel1_con;
+	uint32_t reset_mask, reset;
 	u_int no, nr, nf, core_div, core_periph_div, core_axi_div,
 	      aclk_div, hclk_div, pclk_div, ahb2apb_div;
 	u_int cpu_aclk_div_con;
+	const bool rk3188plus_p = rockchip_is_chip(ROCKCHIP_CHIPVER_RK3188PLUS);
 
 	rockchip_get_cru_bsh(&bsh);
 
 #ifdef ROCKCHIP_CLOCK_DEBUG
-	printf("%s: rate=%u\n", __func__, rate);
+	printf("%s: rate=%u rk3188plus_p=%d\n", __func__, rate, rk3188plus_p);
 #endif
 
 	switch (rate) {
 	case 1608000000:
 		nr = 1;
 		nf = 67;
+		no = 1;
+		core_div = 1;
+		core_periph_div = 8;
+		core_axi_div = 4;
+		aclk_div = 4;
+		hclk_div = 2;
+		pclk_div = 4;
+		ahb2apb_div = 2;
+		break;
+	case 1416000000:
+		nr = 1;
+		nf = 59;
 		no = 1;
 		core_div = 1;
 		core_periph_div = 8;
@@ -186,6 +201,14 @@ rk3188_apll_set_rate(u_int rate)
 		return EINVAL;
 	}
 
+	if (rk3188plus_p) {
+	    	reset_mask = CRU_PLL_CON3_RESET_MASK;
+		reset = CRU_PLL_CON3_RESET;
+	} else {
+		reset_mask = CRU_PLL_CON3_POWER_DOWN_MASK;
+		reset = CRU_PLL_CON3_POWER_DOWN;
+	}
+
 	apll_con0 = CRU_PLL_CON0_CLKR_MASK | CRU_PLL_CON0_CLKOD_MASK;
 	apll_con0 |= __SHIFTIN(no - 1, CRU_PLL_CON0_CLKOD);
 	apll_con0 |= __SHIFTIN(nr - 1, CRU_PLL_CON0_CLKR);
@@ -193,10 +216,16 @@ rk3188_apll_set_rate(u_int rate)
 	apll_con1 = CRU_PLL_CON1_CLKF_MASK;
 	apll_con1 |= __SHIFTIN(nf - 1, CRU_PLL_CON1_CLKF);
 
+	if (rk3188plus_p) {
+		apll_con2 = CRU_PLL_CON2_BWADJ_MASK;
+		apll_con2 |= __SHIFTIN(nf >> 1, CRU_PLL_CON2_BWADJ);
+	} else {
+		apll_con2 = 0;
+	}
+
 	clksel0_con = RK3188_CRU_CLKSEL_CON0_A9_CORE_DIV_CON_MASK |
 		      CRU_CLKSEL_CON0_CORE_PERI_DIV_CON_MASK |
-		      CRU_CLKSEL_CON0_A9_CORE_DIV_CON_MASK |
-		      CRU_CLKSEL_CON0_CPU_CLK_PLL_SEL;
+		      CRU_CLKSEL_CON0_A9_CORE_DIV_CON_MASK;
 	clksel0_con |= __SHIFTIN(core_div - 1,
 				 RK3188_CRU_CLKSEL_CON0_A9_CORE_DIV_CON);
 	clksel0_con |= __SHIFTIN(ffs(core_periph_div) - 2,
@@ -204,11 +233,10 @@ rk3188_apll_set_rate(u_int rate)
 	clksel0_con |= __SHIFTIN(aclk_div - 1,
 				 CRU_CLKSEL_CON0_A9_CORE_DIV_CON);
 
-	clksel1_con = RK3188_CRU_CLKSEL_CON1_CPU_ACLK_DIV_CON_MASK |
-		      CRU_CLKSEL_CON1_AHB2APB_PCLKEN_DIV_CON_MASK |
+	clksel1_con = CRU_CLKSEL_CON1_AHB2APB_PCLKEN_DIV_CON_MASK |
 		      CRU_CLKSEL_CON1_CPU_PCLK_DIV_CON_MASK |
 		      CRU_CLKSEL_CON1_CPU_HCLK_DIV_CON_MASK;
-	
+
 	switch (core_axi_div) {
 	case 1:	cpu_aclk_div_con = 0; break;
 	case 2: cpu_aclk_div_con = 1; break;
@@ -217,8 +245,6 @@ rk3188_apll_set_rate(u_int rate)
 	case 8: cpu_aclk_div_con = 4; break;
 	default: panic("bad core_axi_div");
 	}
-	clksel1_con |= __SHIFTIN(cpu_aclk_div_con,
-				 RK3188_CRU_CLKSEL_CON1_CPU_ACLK_DIV_CON);
 	clksel1_con |= __SHIFTIN(ffs(ahb2apb_div) - 1,
 				 CRU_CLKSEL_CON1_AHB2APB_PCLKEN_DIV_CON);
 	clksel1_con |= __SHIFTIN(ffs(hclk_div) - 1,
@@ -237,40 +263,48 @@ rk3188_apll_set_rate(u_int rate)
 	    bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(1)));
 #endif
 
-	/* Change from normal to slow mode */
-	bus_space_write_4(bst, bsh, CRU_MODE_CON_REG,
-	    CRU_MODE_CON_APLL_WORK_MODE_MASK |
-	    __SHIFTIN(CRU_MODE_CON_APLL_WORK_MODE_SLOW,
-		      CRU_MODE_CON_APLL_WORK_MODE));
+	/* Set CPU clk src to GPLL */
+	const u_int curcpufreq = rockchip_cpu_get_rate();
+	const u_int gpllfreq = rockchip_gpll_get_rate();
+
+	bus_space_write_4(bst, bsh, CRU_CLKSEL_CON_REG(0),
+	    RK3188_CRU_CLKSEL_CON0_A9_CORE_DIV_CON_MASK|
+	    CRU_CLKSEL_CON0_CPU_CLK_PLL_SEL_MASK|
+	    __SHIFTIN(howmany(curcpufreq, gpllfreq) - 1,
+		      RK3188_CRU_CLKSEL_CON0_A9_CORE_DIV_CON)|
+	    CRU_CLKSEL_CON0_CPU_CLK_PLL_SEL);
 
 	/* Power down */
-	bus_space_write_4(bst, bsh, CRU_APLL_CON3_REG,
-	    CRU_PLL_CON3_POWER_DOWN_MASK | CRU_PLL_CON3_POWER_DOWN);
+	bus_space_write_4(bst, bsh, CRU_APLL_CON3_REG, reset_mask | reset);
 
 	/* Update APLL regs */
 	bus_space_write_4(bst, bsh, CRU_APLL_CON0_REG, apll_con0);
 	bus_space_write_4(bst, bsh, CRU_APLL_CON1_REG, apll_con1);
+	if (apll_con2)
+		bus_space_write_4(bst, bsh, CRU_APLL_CON2_REG, apll_con2);
 
 	/* Wait for PLL lock */
 	for (volatile int i = 5000; i >= 0; i--)
 		;
 
 	/* Power up */
-	bus_space_write_4(bst, bsh, CRU_APLL_CON3_REG,
-	    CRU_PLL_CON3_POWER_DOWN_MASK);
+	bus_space_write_4(bst, bsh, CRU_APLL_CON3_REG, reset_mask);
+
+	for (volatile int i = 50000; i >= 0; i--)
+		;
 
 	/* Update CLKSEL regs */
 	bus_space_write_4(bst, bsh, CRU_CLKSEL_CON_REG(0), clksel0_con);
 	bus_space_write_4(bst, bsh, CRU_CLKSEL_CON_REG(1), clksel1_con);
 
-	for (volatile int i = 50000; i >= 0; i--)
-		;
+	/* Set CPU clk src to APLL */
+	bus_space_write_4(bst, bsh, CRU_CLKSEL_CON_REG(0),
+	    CRU_CLKSEL_CON0_CPU_CLK_PLL_SEL_MASK);
 
-	/* Change from slow mode to normal mode */
-	bus_space_write_4(bst, bsh, CRU_MODE_CON_REG,
-	    CRU_MODE_CON_APLL_WORK_MODE_MASK |
-	    __SHIFTIN(CRU_MODE_CON_APLL_WORK_MODE_NORMAL,
-		      CRU_MODE_CON_APLL_WORK_MODE));
+	bus_space_write_4(bst, bsh, CRU_CLKSEL_CON_REG(0),
+	    RK3188_CRU_CLKSEL_CON1_CPU_ACLK_DIV_CON_MASK |
+	    __SHIFTIN(cpu_aclk_div_con,
+		      RK3188_CRU_CLKSEL_CON1_CPU_ACLK_DIV_CON));
 
 #ifdef ROCKCHIP_CLOCK_DEBUG
 	printf("after: APLL_CON0: %#x\n",
