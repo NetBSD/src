@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.325 2014/10/18 08:33:28 snj Exp $	*/
+/*	$NetBSD: cd.c,v 1.326 2014/12/31 19:37:35 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.325 2014/10/18 08:33:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.326 2014/12/31 19:37:35 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2132,7 +2132,6 @@ cd_get_parms(struct cd_softc *cd, int flags)
 	 */
 	if (cd_size(cd, flags) == 0)
 		return (ENXIO);
-	disk_blocksize(&cd->sc_dk, cd->params.blksize);
 	return (0);
 }
 
