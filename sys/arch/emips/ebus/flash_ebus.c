@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_ebus.c,v 1.13 2014/12/31 17:06:48 christos Exp $	*/
+/*	$NetBSD: flash_ebus.c,v 1.14 2014/12/31 19:52:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.13 2014/12/31 17:06:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.14 2014/12/31 19:52:04 christos Exp $");
 
 /* Driver for the Intel 28F320/640/128 (J3A150) StrataFlash memory device
  * Extended to include the Intel JS28F256P30T95.
@@ -2089,7 +2089,7 @@ eflashioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 	if ((sc->sc_flags & EFLASHF_LOADED) == 0)
 		return EIO;
 
-	error = disk_ioctl(&sc->sc_dk, xfer, addr, flag, l);
+	error = disk_ioctl(&sc->sc_dk, dev, xfer, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -2103,15 +2103,6 @@ eflashioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		bad144intern(sc);
 		return 0;
 #endif
-	case DIOCGDINFO:
-		*(struct disklabel *)addr = *(sc->sc_dk.dk_label);
-		return 0;
-
-	case DIOCGPART:
-		((struct partinfo *)addr)->disklab = sc->sc_dk.dk_label;
-		((struct partinfo *)addr)->part =
-		    &sc->sc_dk.dk_label->d_partitions[EFLASHPART(dev)];
-		return 0;
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
