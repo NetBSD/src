@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.159 2014/12/30 20:57:37 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.160 2014/12/31 17:06:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.159 2014/12/30 20:57:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.160 2014/12/31 17:06:48 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1414,42 +1414,6 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				error = j;
 		}
 		break;
-
-	case DIOCAWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *) data;
-
-		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, cs->sc_xname,
-			sizeof(dkw->dkw_parent));
-		error = dkwedge_add(dkw);
-		break;
-	    }
-
-	case DIOCDWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *) data;
-
-		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, cs->sc_xname,
-			sizeof(dkw->dkw_parent));
-		error = dkwedge_del(dkw);
-		break;
-	    }
-
-	case DIOCLWEDGES:
-	    {
-	    	struct dkwedge_list *dkwl = (void *) data;
-
-		error = dkwedge_list(&cs->sc_dkdev, dkwl, l);
-		break;
-	    }
-
-	case DIOCMWEDGES:
-	    {
-		dkwedge_discover(&cs->sc_dkdev);
-		break;
-	    }
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:

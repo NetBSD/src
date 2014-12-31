@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.311 2014/12/31 08:24:50 mlelstv Exp $	*/
+/*	$NetBSD: sd.c,v 1.312 2014/12/31 17:06:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.311 2014/12/31 08:24:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.312 2014/12/31 17:06:48 christos Exp $");
 
 #include "opt_scsi.h"
 
@@ -1222,48 +1222,6 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 				sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
 		}
 		return (error);
-
-	case DIOCAWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *) addr;
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(sd->sc_dev),
-			sizeof(dkw->dkw_parent));
-		return (dkwedge_add(dkw));
-	    }
-
-	case DIOCDWEDGE:
-	    {
-	    	struct dkwedge_info *dkw = (void *) addr;
-
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		/* If the ioctl happens here, the parent is us. */
-		strlcpy(dkw->dkw_parent, device_xname(sd->sc_dev),
-			sizeof(dkw->dkw_parent));
-		return (dkwedge_del(dkw));
-	    }
-
-	case DIOCLWEDGES:
-	    {
-	    	struct dkwedge_list *dkwl = (void *) addr;
-
-		return (dkwedge_list(&sd->sc_dk, dkwl, l));
-	    }
-
-	case DIOCMWEDGES:
-	    {
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
-
-		dkwedge_discover(&sd->sc_dk);
-		return 0;
-	    }
 
 	case DIOCGSTRATEGY:
 	    {
