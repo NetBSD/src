@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.235 2014/12/29 13:13:20 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.236 2014/12/31 08:24:50 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.235 2014/12/29 13:13:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.236 2014/12/31 08:24:50 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1350,7 +1350,6 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		/* Attach the disk. */
 		disk_attach(&vnd->sc_dkdev);
-		disk_blocksize(&vnd->sc_dkdev, vnd->sc_geom.vng_secsize);
 
 		/* Initialize the xfer and buffer pools. */
 		pool_init(&vnd->sc_vxpool, sizeof(struct vndxfer), 0,
