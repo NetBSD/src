@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.35 2014/10/02 21:01:38 justin Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.36 2014/12/31 08:24:50 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -686,6 +686,4 @@ dmgetproperties(struct disk *disk, dm_table_head_t *head)
 	dg->dg_ntracks = 64;
 
 	disk_set_info(NULL, disk, "ESDI");
-
-	disk_blocksize(disk, secsize);
 }
