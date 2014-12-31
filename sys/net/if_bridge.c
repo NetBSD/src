@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.94 2014/12/25 09:10:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.95 2014/12/31 17:36:24 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.94 2014/12/25 09:10:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.95 2014/12/31 17:36:24 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -223,6 +223,7 @@ static struct bridge_iflist *bridge_lookup_member_if(struct bridge_softc *,
 static void	bridge_release_member(struct bridge_softc *, struct bridge_iflist *);
 static void	bridge_delete_member(struct bridge_softc *,
 				     struct bridge_iflist *);
+static struct bridge_iflist *bridge_try_hold_bif(struct bridge_iflist *);
 
 static int	bridge_ioctl_add(struct bridge_softc *, void *);
 static int	bridge_ioctl_del(struct bridge_softc *, void *);
@@ -368,8 +369,12 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 
 	LIST_INIT(&sc->sc_iflist);
 #ifdef BRIDGE_MPSAFE
-	sc->sc_iflist_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+	sc->sc_iflist_intr_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+	sc->sc_iflist_psz = pserialize_create();
+	sc->sc_iflist_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
 #else
+	sc->sc_iflist_intr_lock = NULL;
+	sc->sc_iflist_psz = NULL;
 	sc->sc_iflist_lock = NULL;
 #endif
 	cv_init(&sc->sc_iflist_cv, "if_bridge_cv");
@@ -422,10 +427,8 @@ bridge_clone_destroy(struct ifnet *ifp)
 
 	bridge_stop(ifp, 1);
 
-	BRIDGE_LOCK(sc);
 	while ((bif = LIST_FIRST(&sc->sc_iflist)) != NULL)
 		bridge_delete_member(sc, bif);
-	BRIDGE_UNLOCK(sc);
 
 	mutex_enter(&bridge_list_lock);
 	LIST_REMOVE(sc, sc_list);
@@ -443,6 +446,11 @@ bridge_clone_destroy(struct ifnet *ifp)
 	bridge_rtable_fini(sc);
 
 	cv_destroy(&sc->sc_iflist_cv);
+	if (sc->sc_iflist_intr_lock)
+		mutex_obj_free(sc->sc_iflist_intr_lock);
+
+	if (sc->sc_iflist_psz)
+		pserialize_destroy(sc->sc_iflist_psz);
 	if (sc->sc_iflist_lock)
 		mutex_obj_free(sc->sc_iflist_lock);
 
@@ -674,25 +682,18 @@ bridge_lookup_member(struct bridge_softc *sc, const char *name)
 {
 	struct bridge_iflist *bif;
 	struct ifnet *ifp;
+	int s;
 
-	BRIDGE_LOCK(sc);
+	BRIDGE_PSZ_RENTER(s);
 
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
 		ifp = bif->bif_ifp;
 		if (strcmp(ifp->if_xname, name) == 0)
 			break;
 	}
+	bif = bridge_try_hold_bif(bif);
 
-#ifdef BRIDGE_MPSAFE
-	if (bif != NULL) {
-		if (bif->bif_waiting)
-			bif = NULL;
-		else
-			atomic_inc_32(&bif->bif_refs);
-	}
-#endif
-
-	BRIDGE_UNLOCK(sc);
+	BRIDGE_PSZ_REXIT(s);
 
 	return bif;
 }
@@ -706,11 +707,21 @@ static struct bridge_iflist *
 bridge_lookup_member_if(struct bridge_softc *sc, struct ifnet *member_ifp)
 {
 	struct bridge_iflist *bif;
+	int s;
 
-	BRIDGE_LOCK(sc);
+	BRIDGE_PSZ_RENTER(s);
 
 	bif = member_ifp->if_bridgeif;
+	bif = bridge_try_hold_bif(bif);
 
+	BRIDGE_PSZ_REXIT(s);
+
+	return bif;
+}
+
+static struct bridge_iflist *
+bridge_try_hold_bif(struct bridge_iflist *bif)
+{
 #ifdef BRIDGE_MPSAFE
 	if (bif != NULL) {
 		if (bif->bif_waiting)
@@ -719,9 +730,6 @@ bridge_lookup_member_if(struct bridge_softc *sc, struct ifnet *member_ifp)
 			atomic_inc_32(&bif->bif_refs);
 	}
 #endif
-
-	BRIDGE_UNLOCK(sc);
-
 	return bif;
 }
 
@@ -734,12 +742,13 @@ static void
 bridge_release_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 {
 #ifdef BRIDGE_MPSAFE
-	atomic_dec_32(&bif->bif_refs);
-	membar_sync();
-	if (__predict_false(bif->bif_waiting && bif->bif_refs == 0)) {
-		BRIDGE_LOCK(sc);
+	uint32_t refs;
+
+	refs = atomic_dec_uint_nv(&bif->bif_refs);
+	if (__predict_false(refs == 0 && bif->bif_waiting)) {
+		BRIDGE_INTR_LOCK(sc);
 		cv_broadcast(&sc->sc_iflist_cv);
-		BRIDGE_UNLOCK(sc);
+		BRIDGE_INTR_UNLOCK(sc);
 	}
 #else
 	(void)sc;
@@ -757,7 +766,7 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 {
 	struct ifnet *ifs = bif->bif_ifp;
 
-	KASSERT(BRIDGE_LOCKED(sc));
+	BRIDGE_LOCK(sc);
 
 	ifs->if_input = ether_input;
 	ifs->if_bridge = NULL;
@@ -765,13 +774,20 @@ bridge_delete_member(struct bridge_softc *sc, struct bridge_iflist *bif)
 
 	LIST_REMOVE(bif, bif_next);
 
+	BRIDGE_PSZ_PERFORM(sc);
+
+	BRIDGE_UNLOCK(sc);
+
 #ifdef BRIDGE_MPSAFE
+	BRIDGE_INTR_LOCK(sc);
 	bif->bif_waiting = true;
 	membar_sync();
 	while (bif->bif_refs > 0) {
 		aprint_debug("%s: cv_wait on iflist\n", __func__);
-		cv_wait(&sc->sc_iflist_cv, sc->sc_iflist_lock);
+		cv_wait(&sc->sc_iflist_cv, sc->sc_iflist_intr_lock);
 	}
+	bif->bif_waiting = false;
+	BRIDGE_INTR_UNLOCK(sc);
 #endif
 
 	kmem_free(bif, sizeof(*bif));
@@ -875,15 +891,16 @@ bridge_ioctl_del(struct bridge_softc *sc, void *arg)
 		return ENOENT;
 	}
 
+	BRIDGE_UNLOCK(sc);
+
 	bridge_delete_member(sc, bif);
 
-	BRIDGE_UNLOCK(sc);
 
 	switch (ifs->if_type) {
 	case IFT_ETHER:
 		/*
 		 * Take the interface out of promiscuous mode.
-		 * Don't call it with holding sc_iflist_lock.
+		 * Don't call it with holding a spin lock.
 		 */
 		(void) ifpromisc(ifs, 0);
 		break;
@@ -1510,13 +1527,18 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 		struct bridge_iflist *bif;
 		struct mbuf *mc;
 		int used = 0;
+		int ss;
 
-		BRIDGE_LOCK(sc);
-
+		BRIDGE_PSZ_RENTER(ss);
 		LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
+			bif = bridge_try_hold_bif(bif);
+			if (bif == NULL)
+				continue;
+			BRIDGE_PSZ_REXIT(ss);
+
 			dst_if = bif->bif_ifp;
 			if ((dst_if->if_flags & IFF_RUNNING) == 0)
-				continue;
+				goto next;
 
 			/*
 			 * If this is not the original output interface,
@@ -1530,7 +1552,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 				case BSTP_IFSTATE_BLOCKING:
 				case BSTP_IFSTATE_LISTENING:
 				case BSTP_IFSTATE_DISABLED:
-					continue;
+					goto next;
 				}
 			}
 
@@ -1541,14 +1563,16 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 				mc = m_copym(m, 0, M_COPYALL, M_NOWAIT);
 				if (mc == NULL) {
 					sc->sc_if.if_oerrors++;
-					continue;
+					goto next;
 				}
 			}
 
 			bridge_enqueue(sc, dst_if, mc, 0);
+next:
+			bridge_release_member(sc, bif);
+			BRIDGE_PSZ_RENTER(ss);
 		}
-
-		BRIDGE_UNLOCK(sc);
+		BRIDGE_PSZ_REXIT(ss);
 
 		if (used == 0)
 			m_freem(m);
@@ -1824,23 +1848,30 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	    !bstp_state_before_learning(bif)) {
 		struct bridge_iflist *_bif;
 		struct ifnet *_ifp = NULL;
+		int s;
 
-		BRIDGE_LOCK(sc);
+		BRIDGE_PSZ_RENTER(s);
 		LIST_FOREACH(_bif, &sc->sc_iflist, bif_next) {
 			/* It is destined for us. */
 			if (bridge_ourether(_bif, eh, 0)) {
+				_bif = bridge_try_hold_bif(_bif);
+				BRIDGE_PSZ_REXIT(s);
+				if (_bif == NULL)
+					goto out;
 				if (_bif->bif_flags & IFBIF_LEARNING)
 					(void) bridge_rtupdate(sc,
 					    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
 				_ifp = m->m_pkthdr.rcvif = _bif->bif_ifp;
-				break;
+				bridge_release_member(sc, _bif);
+				goto out;
 			}
 
 			/* We just received a packet that we sent out. */
 			if (bridge_ourether(_bif, eh, 1))
 				break;
 		}
-		BRIDGE_UNLOCK(sc);
+		BRIDGE_PSZ_REXIT(s);
+out:
 
 		if (_bif != NULL) {
 			bridge_release_member(sc, bif);
@@ -1892,29 +1923,34 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 	struct mbuf *mc;
 	struct ifnet *dst_if;
 	bool used, bmcast;
+	int s;
 
 	used = bmcast = m->m_flags & (M_BCAST|M_MCAST);
 
-	BRIDGE_LOCK(sc);
-
+	BRIDGE_PSZ_RENTER(s);
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
+		bif = bridge_try_hold_bif(bif);
+		if (bif == NULL)
+			continue;
+		BRIDGE_PSZ_REXIT(s);
+
 		dst_if = bif->bif_ifp;
 		if (dst_if == src_if)
-			continue;
+			goto next;
 
 		if (bif->bif_flags & IFBIF_STP) {
 			switch (bif->bif_state) {
 			case BSTP_IFSTATE_BLOCKING:
 			case BSTP_IFSTATE_DISABLED:
-				continue;
+				goto next;
 			}
 		}
 
 		if ((bif->bif_flags & IFBIF_DISCOVER) == 0 && !bmcast)
-			continue;
+			goto next;
 
 		if ((dst_if->if_flags & IFF_RUNNING) == 0)
-			continue;
+			goto next;
 
 		if (!used && LIST_NEXT(bif, bif_next) == NULL) {
 			mc = m;
@@ -1923,13 +1959,16 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 			mc = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 			if (mc == NULL) {
 				sc->sc_if.if_oerrors++;
-				continue;
+				goto next;
 			}
 		}
 
 		bridge_enqueue(sc, dst_if, mc, 1);
+next:
+		bridge_release_member(sc, bif);
+		BRIDGE_PSZ_RENTER(s);
 	}
-	BRIDGE_UNLOCK(sc);
+	BRIDGE_PSZ_REXIT(s);
 
 	if (bmcast)
 		ether_input(src_if, m);
