@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_board.c,v 1.9 2014/12/31 18:09:05 jmcneill Exp $ */
+/* $NetBSD: rockchip_board.c,v 1.10 2014/12/31 18:14:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.9 2014/12/31 18:09:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.10 2014/12/31 18:14:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -151,7 +151,7 @@ static const struct rk3188_apll_rate rk3188_apll_rates[] = {
 	RK3188_RATE(1608, 67, 1, 8, 4, 4, 2, 4, 2),
 	RK3188_RATE(1416, 59, 1, 8, 4, 4, 2, 4, 2),
 	RK3188_RATE(1200, 50, 1, 8, 4, 4, 2, 4, 2),
-	RK3188_RATE(1008, 42, 1, 8, 3, 3, 2, 4, 2),
+	RK3188_RATE(1008, 42, 1, 8, 4, 3, 2, 4, 2),
 	RK3188_RATE( 816, 68, 2, 8, 4, 3, 2, 4, 2),
 	RK3188_RATE( 600, 50, 2, 4, 4, 3, 2, 4, 2),
 };
