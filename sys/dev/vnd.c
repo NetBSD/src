@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.237 2014/12/31 17:06:48 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.238 2014/12/31 19:52:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.237 2014/12/31 17:06:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.238 2014/12/31 19:52:05 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1059,10 +1059,6 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return ENXIO;
 	vio = (struct vnd_ioctl *)data;
 
-	error = disk_ioctl(&vnd->sc_dkdev, cmd, data, flag, l);
-	if (error != EPASSTHROUGH)
-		return (error);
-
 	/* Must be open for writes for these commands... */
 	switch (cmd) {
 	case VNDIOCSET:
@@ -1106,6 +1102,11 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if ((vnd->sc_flags & VNF_INITED) == 0)
 			return ENXIO;
 	}
+
+	error = disk_ioctl(&vnd->sc_dkdev, dev, cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+
 
 	switch (cmd) {
 #ifdef VNDIOCSET50
@@ -1463,25 +1464,6 @@ unlock_and_exit:
 		}
 		break;
 	}
-
-	case DIOCGDINFO:
-		*(struct disklabel *)data = *(vnd->sc_dkdev.dk_label);
-		break;
-
-#ifdef __HAVE_OLD_DISKLABEL
-	case ODIOCGDINFO:
-		newlabel = *(vnd->sc_dkdev.dk_label);
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
-		memcpy(data, &newlabel, sizeof (struct olddisklabel));
-		break;
-#endif
-
-	case DIOCGPART:
-		((struct partinfo *)data)->disklab = vnd->sc_dkdev.dk_label;
-		((struct partinfo *)data)->part =
-		    &vnd->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
-		break;
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
