@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
+/*	$NetBSD: run.c,v 1.2.4.1 2014/12/31 06:23:11 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -497,10 +497,10 @@ launch_subwin(WINDOW **actionwin, char **args, struct winsize *win, int flags,
 			errx(1, mmsg);
 		}
 		read_fd_set = active_fd_set;
-		tmo.tv_sec = 2;
+		tmo.tv_sec = flags & RUN_SILENT ? 20 : 2;
 		tmo.tv_usec = 0;
 		i = select(FD_SETSIZE, &read_fd_set, NULL, NULL, &tmo);
-		if (i == 0 && *actionwin == NULL)
+		if (i == 0 && *actionwin == NULL && (flags & RUN_SILENT) == 0)
 			*actionwin = show_cmd(scmd, win);
 		if (i < 0) {
 			if (errno != EINTR) {
