@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.85 2014/12/31 20:44:46 christos Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.86 2014/12/31 20:45:44 christos Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.85 2014/12/31 20:44:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.86 2014/12/31 20:45:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -854,8 +854,6 @@ rxioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int unit = DISKUNIT(dev);
 	struct rx_softc *rx = device_lookup_private(&rx_cd, unit);
 	int error;
-
-	lp = rx->ra_disk.dk_label;
 
         error = disk_ioctl(&rx->ra_disk, dev, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
