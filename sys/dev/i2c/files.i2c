@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.61 2014/12/07 14:24:11 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.62 2015/01/01 17:33:18 jmcneill Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -240,3 +240,8 @@ file	dev/i2c/axp809.c			axp809pm	needs-flag
 device	ac100ic
 attach	ac100ic at iic
 file	dev/i2c/ac100.c				ac100ic		needs-flag
+
+# ACT8846 Power Management Unit
+device	act8846pm
+attach	act8846pm at iic
+file	dev/i2c/act8846.c			act8846pm	needs-flag
