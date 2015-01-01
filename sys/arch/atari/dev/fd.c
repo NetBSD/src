@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.81 2014/12/31 19:52:04 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.82 2015/01/01 17:46:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.81 2014/12/31 19:52:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.82 2015/01/01 17:46:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -426,6 +426,7 @@ int
 fdioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
 {
 	struct fd_softc *sc;
+	int error;
 
 	sc = device_lookup_private(&fd_cd, DISKUNIT(dev));
 

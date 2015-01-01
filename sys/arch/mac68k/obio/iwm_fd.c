@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.51 2014/12/31 19:52:05 christos Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.52 2015/01/01 17:47:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.51 2014/12/31 19:52:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.52 2015/01/01 17:47:21 christos Exp $");
 
 #include "locators.h"
 
@@ -703,6 +703,7 @@ fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	int result, fdUnit, fdType;
 	fd_softc_t *fd;
 	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0);
+	int error;
 
 	if (TRACE_IOCTL)
 		printf("iwm: Execute ioctl... ");
