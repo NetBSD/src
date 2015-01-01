@@ -1,4 +1,4 @@
-/*	$NetBSD: midirecord.c,v 1.4 2014/12/30 18:52:47 mrg Exp $	*/
+/*	$NetBSD: midirecord.c,v 1.5 2015/01/01 04:57:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2014 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midirecord.c,v 1.4 2014/12/30 18:52:47 mrg Exp $");
+__RCSID("$NetBSD: midirecord.c,v 1.5 2015/01/01 04:57:01 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -313,21 +313,21 @@ midi_event_timer_wait_abs_to_output(
 {
 	static unsigned prev_div;
 	unsigned cur_div;
-	unsigned val = 0, div;
+	unsigned val = 0, xdiv;
 	int vallen = 0, i;
 
 	if (prev_div == 0 && !oflag)
 		prev_div = e.t_WAIT_ABS.divisions;
 	cur_div = e.t_WAIT_ABS.divisions;
 
-	div = cur_div - prev_div;
-	if (div) {
-		while (div) {
+	xdiv = cur_div - prev_div;
+	if (xdiv) {
+		while (xdiv) {
 			uint32_t extra = val ? 0x80 : 0;
 
 			val <<= 8;
-			val |= (div & 0x7f) | extra;
-			div >>= 7;
+			val |= (xdiv & 0x7f) | extra;
+			xdiv >>= 7;
 			vallen++;
 		}
 	} else
