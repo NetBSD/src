@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.95 2014/12/31 17:36:24 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.96 2015/01/01 08:43:26 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.95 2014/12/31 17:36:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.96 2015/01/01 08:43:26 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -2028,6 +2028,9 @@ bridge_rtupdate(struct bridge_softc *sc, const uint8_t *dst,
 		if (flags & IFBAF_STATIC)
 			brt->brt_expire = 0;
 		else
+			brt->brt_expire = time_uptime + sc->sc_brttimeout;
+	} else {
+		if ((brt->brt_flags & IFBAF_TYPEMASK) == IFBAF_DYNAMIC)
 			brt->brt_expire = time_uptime + sc->sc_brttimeout;
 	}
 
