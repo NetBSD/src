@@ -1,4 +1,4 @@
-/* $NetBSD: act8846.c,v 1.1 2015/01/01 17:33:18 jmcneill Exp $ */
+/* $NetBSD: act8846.c,v 1.2 2015/01/01 17:59:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define ACT_DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: act8846.c,v 1.1 2015/01/01 17:33:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: act8846.c,v 1.2 2015/01/01 17:59:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ act8846_set_voltage(struct act8846_ctrl *c, u_int min, u_int max)
 	if (n == __arraycount(act8846_vset))
 		return EINVAL;
 
-	val = __SHIFTIN(act8846_vset[n], ACT_VSET_VSET);
+	val = __SHIFTIN(n, ACT_VSET_VSET);
 
 	iic_acquire_bus(sc->sc_i2c, 0);
 	error = act8846_write(sc, c->c_base + ACT_VSET0_OFFSET, val);
