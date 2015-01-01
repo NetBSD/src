@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.5 2014/12/30 17:15:31 jmcneill Exp $	*/
+/*	$NetBSD: obio.c,v 1.6 2015/01/01 13:32:24 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.5 2014/12/30 17:15:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.6 2015/01/01 13:32:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,10 +169,28 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	return 0;
 }
 
+#define RK3188_GRF_GPIO0C_IOMUX_OFFSET	0x0068
+#define RK3188_GRF_GPIO0D_IOMUX_OFFSET	0x006C
+
+#define RK3188_GRF_GPIO1A_IOMUX_OFFSET	0x0070
+#define RK3188_GRF_GPIO1B_IOMUX_OFFSET	0x0074
+#define RK3188_GRF_GPIO1C_IOMUX_OFFSET	0x0078
+#define RK3188_GRF_GPIO1D_IOMUX_OFFSET	0x007C
+
+#define RK3188_GRF_GPIO2A_IOMUX_OFFSET	0x0080
+#define RK3188_GRF_GPIO2B_IOMUX_OFFSET	0x0084
+#define RK3188_GRF_GPIO2C_IOMUX_OFFSET	0x0088
+#define RK3188_GRF_GPIO2D_IOMUX_OFFSET	0x008C
+
 #define RK3188_GRF_GPIO3A_IOMUX_OFFSET	0x0090
 #define RK3188_GRF_GPIO3B_IOMUX_OFFSET	0x0094
 #define RK3188_GRF_GPIO3C_IOMUX_OFFSET	0x0098
 #define RK3188_GRF_GPIO3D_IOMUX_OFFSET	0x009C
+
+#define RK3188_GRF_SOC_CON0_OFFSET	0x00A0
+#define RK3188_GRF_SOC_CON1_OFFSET	0x00A4
+#define RK3188_GRF_SOC_CON2_OFFSET	0x00A8
+#define RK3188_GRF_SOC_STATUS_OFFSET	0x00AC
 
 #define GRF_GPIO0A_IOMUX_OFFSET	0x00a8
 #define GRF_GPIO3A_IOMUX_OFFSET	0x00d8
@@ -185,6 +203,9 @@ void obio_init_grf(void)
 	obio_iomux(RK3188_GRF_GPIO3A_IOMUX_OFFSET, 0x55555554); /* MMC0 */
 	obio_iomux(RK3188_GRF_GPIO3B_IOMUX_OFFSET, 0x00050001); /* MMC0 */
 	obio_iomux(RK3188_GRF_GPIO3D_IOMUX_OFFSET, 0x3c000000); /* VBUS */
+	obio_iomux(RK3188_GRF_GPIO1D_IOMUX_OFFSET, 0x55555555); /* I2C[0124] */
+	obio_iomux(RK3188_GRF_GPIO3B_IOMUX_OFFSET, 0xa000a000); /* I2C3 */
+	obio_iomux(RK3188_GRF_SOC_CON1_OFFSET,	   0xf800f800);	/* I2C[01234] */
 #else
 	/* ChipSPARK Rayeager PX2 */
 	obio_iomux(GRF_GPIO0A_IOMUX_OFFSET, 0x14000000); /* VBUS */
