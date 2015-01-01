@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_i2c.c,v 1.4 2015/01/01 15:18:45 jmcneill Exp $ */
+/* $NetBSD: rockchip_i2c.c,v 1.5 2015/01/01 22:15:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_rkiic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_i2c.c,v 1.4 2015/01/01 15:18:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_i2c.c,v 1.5 2015/01/01 22:15:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -207,6 +207,14 @@ rkiic_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	if (cmdlen != 0 && cmdlen != 1)
 		return EINVAL;
 
+	if (I2C_OP_READ_P(op)) {
+		if (len > 32)
+			return EINVAL;
+	} else {
+		if (len > 30)
+			return EINVAL;
+	}
+
 	error = rkiic_set_rate(sc, RKIIC_CLOCK_RATE);
 	if (error)
 		return error;
@@ -256,7 +264,15 @@ rkiic_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	if (I2C_OP_READ_P(op)) {
 		error = rkiic_read(sc, addr, buf, len, flags);
 	} else {
-		error = rkiic_write(sc, addr, buf, len, flags);
+		uint8_t tmp_buf[32];
+		tmp_buf[0] = addr << 1;
+		if (cmdlen == 1) {
+			tmp_buf[1] = sraddr;
+			memcpy(&tmp_buf[2], buf, len);
+		} else {
+			memcpy(&tmp_buf[1], buf, len);
+		}
+		error = rkiic_write(sc, addr, tmp_buf, len + cmdlen + 1, flags);
 	}
 
 	if (I2C_OP_STOP_P(op)) {
@@ -369,7 +385,7 @@ rkiic_write(struct rkiic_softc *sc, i2c_addr_t addr, const uint8_t *buf,
 	for (off = 0, resid = buflen; off < 8 && resid > 0; off++) {
 		uint32_t data = 0;
 		for (byte = 0; byte < 4 && resid > 0; byte++, resid--) {
-			data |= buf[off * 4 + byte] << (byte * 8);
+			data |= (uint32_t)buf[off * 4 + byte] << (byte * 8);
 		}
 		I2C_WRITE(sc, I2C_TXDATA_REG(off), data);
 	}
