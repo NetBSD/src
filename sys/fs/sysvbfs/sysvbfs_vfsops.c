@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.45 2014/12/26 15:23:21 hannken Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.46 2015/01/02 16:51:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.45 2014/12/26 15:23:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.46 2015/01/02 16:51:02 hannken Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -336,6 +336,7 @@ sysvbfs_loadvnode(struct mount *mp, struct vnode *vp,
 	}
 
 	bnode = pool_get(&sysvbfs_node_pool, PR_WAITOK);
+	memset(bnode, 0, sizeof(*bnode));
 
 	vp->v_tag = VT_SYSVBFS;
 	vp->v_op = sysvbfs_vnodeop_p;
