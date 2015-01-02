@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.42 2014/09/19 17:45:03 matt Exp $	*/
+/*	$NetBSD: main.c,v 1.43 2015/01/02 19:46:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.42 2014/09/19 17:45:03 matt Exp $");
+__RCSID("$NetBSD: main.c,v 1.43 2015/01/02 19:46:02 christos Exp $");
 #endif
 #endif	/* not lint */
 
@@ -793,7 +793,7 @@ write_label(int f)
 	}
 
 #ifdef VAX_ALTLABELS
-	if (lab.d_type == DTYPE_SMD && lab.d_flags & D_BADSECT &&
+	if (lab.d_type == DKTYPE_SMD && lab.d_flags & D_BADSECT &&
 	    lab.d_secsize == 512) {
 		/* Write the label to the odd sectors of the last track! */
 		daddr_t	alt;

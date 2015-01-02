@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.30 2013/11/03 00:48:52 christos Exp $	*/
+/*	$NetBSD: bad144.c,v 1.31 2015/01/02 19:46:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: bad144.c,v 1.30 2013/11/03 00:48:52 christos Exp $");
+__RCSID("$NetBSD: bad144.c,v 1.31 2015/01/02 19:46:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ main(int argc, char *argv[])
 		errx(7, "Disk sector size too large/small (%d)",
 		    dp->d_secsize);
 #ifdef __i386__
-	if (dp->d_type == DTYPE_SCSI)
+	if (dp->d_type == DKTYPE_SCSI)
 		errx(1, "SCSI disks don't use bad144!");
 	/* are we inside a DOS partition? */
 	if (dp->d_partitions[0].p_offset) {
