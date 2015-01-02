@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.4 2012/01/28 08:29:55 nisimura Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.4.22.1 2015/01/02 20:24:14 martin Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -762,7 +762,6 @@ dme_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 void
 dme_transmit(struct dme_softc *sc)
 {
-	uint8_t status;
 
 	TX_DPRINTF(("dme_transmit: PRE: txready: %d, txbusy: %d\n",
 		sc->txready, sc->txbusy));
@@ -771,7 +770,7 @@ dme_transmit(struct dme_softc *sc)
 	dme_write(sc, DM9000_TXPLH, (sc->txready_length >> 8) & 0xff );
 
 	/* Request to send the packet */
-	status = dme_read(sc, DM9000_ISR);
+	dme_read(sc, DM9000_ISR);
 
 	dme_write(sc, DM9000_TCR, DM9000_TCR_TXREQ);
 
