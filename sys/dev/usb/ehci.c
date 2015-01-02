@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.26 2015/01/02 08:43:06 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.27 2015/01/02 08:45:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.26 2015/01/02 08:43:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.27 2015/01/02 08:45:05 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1056,7 +1056,8 @@ ehci_idone(struct ehci_xfer *ex)
 			    BUS_DMASYNC_POSTREAD);
 
 			for (i = 0; i < EHCI_ITD_NUFRAMES; i += uframes) {
-				/* XXX - driver didn't fill in the frame full
+				/*
+				 * XXX - driver didn't fill in the frame full
 				 *   of uframes. This leads to scheduling
 				 *   inefficiencies, but working around
 				 *   this doubles complexity of tracking
@@ -1096,7 +1097,8 @@ ehci_idone(struct ehci_xfer *ex)
 			    sizeof(sitd->sitd.sitd_buffer), BUS_DMASYNC_POSTWRITE |
 			    BUS_DMASYNC_POSTREAD);
 
-			/* XXX - driver didn't fill in the frame full
+			/*
+			 * XXX - driver didn't fill in the frame full
 			 *   of uframes. This leads to scheduling
 			 *   inefficiencies, but working around
 			 *   this doubles complexity of tracking
@@ -1218,9 +1220,11 @@ ehci_idone(struct ehci_xfer *ex)
 	}
 
     end:
-	/* XXX transfer_complete memcpys out transfer data (for in endpoints)
+	/*
+	 * XXX transfer_complete memcpys out transfer data (for in endpoints)
 	 * during this call, before methods->done is called: dma sync required
-	 * beforehand? */
+	 * beforehand?
+	 */
 	usb_transfer_complete(xfer);
 	USBHIST_LOG(ehcidebug, "ex=%p done", ex, 0, 0, 0);
 }
@@ -2905,10 +2909,12 @@ ehci_alloc_itd(ehci_softc_t *sc)
 
 	mutex_enter(&sc->sc_lock);
 
-	/* Find an itd that wasn't freed this frame or last frame. This can
+	/*
+	 * Find an itd that wasn't freed this frame or last frame. This can
 	 * discard itds that were freed before frindex wrapped around
 	 * XXX - can this lead to thrashing? Could fix by enabling wrap-around
-	 *       interrupt and fiddling with list when that happens */
+	 *       interrupt and fiddling with list when that happens
+	 */
 	frindex = (EOREAD4(sc, EHCI_FRINDEX) + 1) >> 3;
 	previndex = (frindex != 0) ? frindex - 1 : sc->sc_flsize;
 
@@ -2974,10 +2980,12 @@ ehci_alloc_sitd(ehci_softc_t *sc)
 
 	mutex_enter(&sc->sc_lock);
 
-	/* Find an sitd that wasn't freed this frame or last frame. This can
+	/*
+	 * Find an sitd that wasn't freed this frame or last frame. This can
 	 * discard sitds that were freed before frindex wrapped around
 	 * XXX - can this lead to thrashing? Could fix by enabling wrap-around
-	 *       interrupt and fiddling with list when that happens */
+	 *       interrupt and fiddling with list when that happens
+	 */
 	frindex = (EOREAD4(sc, EHCI_FRINDEX) + 1) >> 3;
 	previndex = (frindex != 0) ? frindex - 1 : sc->sc_flsize;
 
@@ -4484,7 +4492,8 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 			addr = EHCI_PAGE(addr);
 			addr /= EHCI_PAGE_SIZE;
 
-			/* This gets the initial offset into the first page,
+			/*
+			 * This gets the initial offset into the first page,
 			 * looks how far further along the current uframe
 			 * offset is. Works out how many pages that is.
 			 */
@@ -4504,7 +4513,8 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 			}
 		}
 
-		/* Step 1.75, set buffer pointers. To simplify matters, all
+		/*
+		 * Step 1.75, set buffer pointers. To simplify matters, all
 		 * pointers are filled out for the next 7 hardware pages in
 		 * the dma block, so no need to worry what pages to cover
 		 * and what to not.
