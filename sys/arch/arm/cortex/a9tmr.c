@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.7 2014/03/28 21:57:22 matt Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.8 2015/01/02 21:58:03 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.7 2014/03/28 21:57:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.8 2015/01/02 21:58:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -246,6 +246,19 @@ cpu_initclocks(void)
 	a9tmr_timecounter.tc_frequency = sc->sc_freq;
 
 	tc_init(&a9tmr_timecounter);
+}
+
+void
+a9tmr_update_freq(uint32_t freq)
+{
+	struct a9tmr_softc * const sc = &a9tmr_sc;
+
+	KASSERT(sc->sc_dev != NULL);
+	KASSERT(freq != 0);
+
+	sc->sc_freq = freq;
+	sc->sc_autoinc = sc->sc_freq / hz;
+	a9tmr_timecounter.tc_frequency = sc->sc_freq;
 }
 
 void
