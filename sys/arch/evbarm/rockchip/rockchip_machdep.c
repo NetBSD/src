@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.12 2014/12/30 03:53:52 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.13 2015/01/02 00:50:56 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.12 2014/12/30 03:53:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.13 2015/01/02 00:50:56 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -143,6 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.12 2014/12/30 03:53:52 jmcnei
 #include "ukbd.h"
 #endif
 #include "arml2cc.h"
+#include "act8846pm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,6 +182,8 @@ __KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.12 2014/12/30 03:53:52 jmcnei
 
 #include <dev/ic/ns16550reg.h>
 #include <dev/ic/comreg.h>
+
+#include <dev/i2c/act8846.h>
 
 #include <arm/rockchip/rockchip_reg.h>
 #include <arm/rockchip/rockchip_crureg.h>
@@ -750,4 +753,16 @@ rockchip_device_register(device_t self, void *aux)
 		return;
 	}
 #endif
+
+	if (device_is_a(self, "ithdmi")) {
+#if NACT8846PM > 0
+		device_t pmic = device_find_by_driver_unit("act8846pm", 0);
+		if (pmic == NULL)
+			return;
+		struct act8846_ctrl *ctrl = act8846_lookup(pmic, "LDO2");
+		if (ctrl == NULL)
+			return;
+		act8846_enable(ctrl);
+#endif
+	}
 }
