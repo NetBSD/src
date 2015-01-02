@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.27 2015/01/02 08:45:05 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.28 2015/01/02 08:52:14 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.27 2015/01/02 08:45:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.28 2015/01/02 08:52:14 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2664,7 +2664,7 @@ ehci_alloc_sqh(ehci_softc_t *sc)
 #endif
 		if (err)
 			return NULL;
-		for(i = 0; i < EHCI_SQH_CHUNK; i++) {
+		for (i = 0; i < EHCI_SQH_CHUNK; i++) {
 			offs = i * EHCI_SQH_SIZE;
 			sqh = KERNADDR(&dma, offs);
 			sqh->physaddr = DMAADDR(&dma, offs);
@@ -2710,7 +2710,7 @@ ehci_alloc_sqtd(ehci_softc_t *sc)
 		if (err)
 			goto done;
 
-		for(i = 0; i < EHCI_SQTD_CHUNK; i++) {
+		for (i = 0; i < EHCI_SQTD_CHUNK; i++) {
 			offs = i * EHCI_SQTD_SIZE;
 			sqtd = KERNADDR(&dma, offs);
 			sqtd->physaddr = DMAADDR(&dma, offs);
