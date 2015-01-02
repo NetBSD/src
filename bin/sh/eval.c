@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.109 2014/05/31 14:42:18 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.110 2015/01/02 19:56:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.109 2014/05/31 14:42:18 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.110 2015/01/02 19:56:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -860,7 +860,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		 * child's address space is actually shared with the parent as
 		 * we rely on this.
 		 */
-		if (cmdentry.cmdtype == CMDNORMAL) {
+		if (usefork == 0 && cmdentry.cmdtype == CMDNORMAL) {
 			pid_t	pid;
 			int serrno;
 
