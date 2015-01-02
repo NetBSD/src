@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.27 2015/01/02 10:04:35 skrll Exp $	*/
+/*	$NetBSD: disassem.c,v 1.28 2015/01/02 15:52:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.27 2015/01/02 10:04:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.28 2015/01/02 15:52:33 skrll Exp $");
 
 #include <sys/systm.h>
 
@@ -174,24 +174,24 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0fff0ff0, 0x016f0f10, "clz",	"dm" },
     { 0x0ffffff0, 0x012fff30, "blx",	"m" },
     { 0xfff000f0, 0xe1200070, "bkpt",	"k" },
-    { 0x0fe00000, 0x02000000, "and",	"Sdn2" },
-    { 0x0fe00000, 0x02200000, "eor",	"Sdn2" },
-    { 0x0fe00000, 0x02400000, "sub",	"Sdn2" },
-    { 0x0fe00000, 0x02600000, "rsb",	"Sdn2" },
-    { 0x0fe00000, 0x02800000, "add",	"Sdn2" },
-    { 0x0fe00000, 0x02a00000, "adc",	"Sdn2" },
-    { 0x0fe00000, 0x02c00000, "sbc",	"Sdn2" },
-    { 0x0fe00000, 0x02e00000, "rsc",	"Sdn2" },
     { 0x0ff00000, 0x03000000, "movw", 	"dZ" },
-    { 0x0ff00000, 0x03100000, "tst",	"Dn2" },
-    { 0x0ff00000, 0x03300000, "teq",	"Dn2" },
     { 0x0ff00000, 0x03400000, "movt", 	"dZ" },
-    { 0x0ff00000, 0x03500000, "cmp",	"Dn2" },
-    { 0x0ff00000, 0x03700000, "cmn",	"Dn2" },
-    { 0x0fe00000, 0x03800000, "orr",	"Sdn2" },
+    { 0x0de00000, 0x00000000, "and",	"Sdn2" },
+    { 0x0de00000, 0x00200000, "eor",	"Sdn2" },
+    { 0x0de00000, 0x00400000, "sub",	"Sdn2" },
+    { 0x0de00000, 0x00600000, "rsb",	"Sdn2" },
+    { 0x0de00000, 0x00800000, "add",	"Sdn2" },
+    { 0x0de00000, 0x00a00000, "adc",	"Sdn2" },
+    { 0x0de00000, 0x00c00000, "sbc",	"Sdn2" },
+    { 0x0de00000, 0x00e00000, "rsc",	"Sdn2" },
+    { 0x0df00000, 0x01100000, "tst",	"Dn2" },
+    { 0x0df00000, 0x01300000, "teq",	"Dn2" },
+    { 0x0df00000, 0x01500000, "cmp",	"Dn2" },
+    { 0x0df00000, 0x01700000, "cmn",	"Dn2" },
+    { 0x0de00000, 0x01800000, "orr",	"Sdn2" },
     { 0x0de00000, 0x01a00000, "mov",	"Sd2" },
-    { 0x0fe00000, 0x03c00000, "bic",	"Sdn2" },
-    { 0x0fe00000, 0x03e00000, "mvn",	"Sd2" },
+    { 0x0de00000, 0x01c00000, "bic",	"Sdn2" },
+    { 0x0de00000, 0x01e00000, "mvn",	"Sd2" },
     { 0x0ff08f10, 0x0e000100, "adf",	"PRfgh" },
     { 0x0ff08f10, 0x0e100100, "muf",	"PRfgh" },
     { 0x0ff08f10, 0x0e200100, "suf",	"PRfgh" },
