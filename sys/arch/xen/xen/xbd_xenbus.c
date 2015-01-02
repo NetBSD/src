@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.68 2015/01/02 01:13:00 christos Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.69 2015/01/02 19:42:06 christos Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.68 2015/01/02 01:13:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.69 2015/01/02 19:42:06 christos Exp $");
 
 #include "opt_xen.h"
 
@@ -220,7 +220,7 @@ extern struct cfdriver xbd_cd;
 
 /* Pseudo-disk Interface */
 static struct dk_intf dkintf_esdi = {
-        DTYPE_ESDI,
+        DKTYPE_ESDI,
 	"Xen Virtual ESDI",
 	xbdopen,
 	xbdclose,
