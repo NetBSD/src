@@ -1,7 +1,7 @@
-.\"	$NetBSD: magic.5,v 1.13 2014/10/10 20:15:01 christos Exp $
+.\"	$NetBSD: magic.5,v 1.14 2015/01/02 21:15:32 christos Exp $
 .\"
-.\" $File: magic.man,v 1.84 2014/06/03 19:01:34 christos Exp $
-.Dd June 3, 2014
+.\" $File: magic.man,v 1.85 2015/01/01 17:07:34 christos Exp $
+.Dd January 1, 2015
 .Dt MAGIC 5
 .Os
 .\" install as magic.4 on USG, magic.5 on V7, Berkeley and Linux systems.
@@ -12,7 +12,7 @@
 This manual page documents the format of the magic file as
 used by the
 .Xr file 1
-command, version 5.20.
+command, version 5.22.
 The
 .Xr file 1
 command identifies the type of a file using,
@@ -202,6 +202,11 @@ interpreted as a UNIX-style date, but interpreted as local time rather
 than UTC.
 .It Dv indirect
 Starting at the given offset, consult the magic database again.
+The offset of th
+.Dv indirect
+magic is by default absolute in the file, but one can specify
+.Dv /r
+to indicate that the offset is relative from the beginning of the entry.
 .It Dv name
 Define a
 .Dq named

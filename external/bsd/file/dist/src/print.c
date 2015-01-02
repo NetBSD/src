@@ -1,4 +1,5 @@
-/*	$NetBSD: print.c,v 1.7 2014/06/13 02:08:06 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.8 2015/01/02 21:15:32 christos Exp $	*/
+
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -36,7 +37,7 @@
 #if 0
 FILE_RCSID("@(#)$File: print.c,v 1.76 2013/02/26 18:25:00 christos Exp $")
 #else
-__RCSID("$NetBSD: print.c,v 1.7 2014/06/13 02:08:06 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.8 2015/01/02 21:15:32 christos Exp $");
 #endif
 #endif  /* lint */
 
@@ -169,6 +170,7 @@ file_mdump(struct magic *m)
 		case FILE_MELDATE:
 			(void)fprintf(stderr, "%s,",
 			    file_fmttime(m->value.l, 0, tbuf));
+			break;
 		case FILE_QDATE:
 		case FILE_LEQDATE:
 		case FILE_BEQDATE:

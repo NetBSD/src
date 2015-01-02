@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-# $File: filesystems,v 1.103 2014/09/11 15:09:34 christos Exp $
+# $File: filesystems,v 1.108 2015/01/01 17:43:47 christos Exp $
 # filesystems:  file(1) magic for different filesystems
 #
 0	name	partid  
@@ -260,13 +260,14 @@
 >>(11.s-2)	uleshort	0xAA55		DOS/MBR boot sector
 # for sector sizes with 512 or more Bytes
 >0x1FE		leshort		0xAA55		DOS/MBR boot sector
+
 # keep old DOS/MBR boot sector as dummy for mbr and bootloader displaying
 # only for sector sizes with 512 or more Bytes
-0x1FE		leshort		0xAA55		
+0x1FE          leshort         0xAA55         	DOS/MBR boot sector
 #
 # to display information (50) before DOS BPB (strength=70) and after DOS floppy (120) like in old file version
-!:strength +70
->2	string	OSBS			OS/BS MBR
+!:strength +65
+>2		string		OSBS		OS/BS MBR
 # added by Joerg Jenderek at Feb 2013 according to http://thestarman.pcministry.com/asm/mbr/
 # and http://en.wikipedia.org/wiki/Master_Boot_Record
 # test for nearly all MS-DOS Master Boot Record initial program loader (IPL) is now done by 
@@ -538,6 +539,8 @@
 >>>514		string		!HdrS			
 # not BeOS
 >>>>422		string		!Be\ Boot\ Loader	
+>>>>>32769	string    CD001
+>>>>>>0	use cdrom
 # jump over BPB instruction implies DOS bootsector or AdvanceMAME mbr 
 >>>>>0		ubelong&0xFD000000	=0xE9000000	
 # AdvanceMAME mbr
@@ -1043,7 +1046,7 @@
 >>>>>>466	ubyte	<0x10			
 >>>>>>>466	ubyte	0x05			\b, extended partition table
 >>>>>>>466	ubyte	0x0F			\b, extended partition table (LBA)
->>>>>>>466	ubyte	0x0			\b, extended partition table (last)	
+>>>>>>>466	ubyte	0x0			\b, extended partition table (last)
 
 # DOS x86 sector separated and moved from "DOS/MBR boot sector" by Joerg Jenderek at May 2011
 
@@ -1236,6 +1239,7 @@
 >>>>>181	search/166		Error\ \0			
 # "a: disk" , "Fn: diskn" or "NetBSD MBR boot"
 >>>>>>&3	string			x				\b,"%s"
+>>>446	use		partition-table
 # Andrea Mazzoleni AdvanceCD mbr loader of http://advancemame.sourceforge.net/boot-readme.html
 # added by Joerg Jenderek at Nov 2012 for versions 1.3 - 1.4
 # assembler instructions: jmp short 0x58;nop;ASCII
@@ -1354,6 +1358,7 @@
 # maximal short forward jump is 0x7f
 # OEM-ID is empty or contain readable bytes
 0		ulelong&0x804000E9	0x000000E9
+!:strength	+60
 # mtools-3.9.8/msdos.h
 # usual values are marked with comments to get only informations of strange FAT systems
 # valid sectorsize must be a power of 2 from 32 to 32768
@@ -1361,7 +1366,7 @@
 >>11		uleshort	<32769		
 >>>11		uleshort	>31		
 >>>>21		ubyte&0xf0	0xF0		
->>>>>0		ubyte		0xEB		
+>>>>>0		ubyte		0xEB		DOS/MBR boot sector
 >>>>>>1		ubyte		x		\b, code offset 0x%x+2
 >>>>>0		ubyte		0xE9		
 >>>>>>1		uleshort	x		\b, code offset 0x%x+3
@@ -1913,16 +1918,7 @@
 # defect IO.SYS+MSDOS.SYS ?
 #>>>>>0x162	use			2xDOS-filename
 
-# CDROM Filesystems
-# https://en.wikipedia.org/wiki/ISO_9660
-# Modified for UDF by gerardo.cacciari@gmail.com
-32769	string    CD001
-# mime line at that position does not work
-# to display CD-ROM (70=81-11) after MBR (113=40+72+1), partition-table (71=50+21) and before Apple Driver Map (51)
-!:strength -11
-# to display CD-ROM (114=81+33) before MBR (113=40+72+1), partition-table (71=50+21) and Apple Driver Map (51)
-# does not work
-#!:strength +33
+0	name				cdrom
 >38913	string   !NSR0      ISO 9660 CD-ROM filesystem data
 !:mime	application/x-iso9660-image
 >38913	string    NSR0      UDF filesystem data
@@ -1938,6 +1934,18 @@
 37633	string    CD001     ISO 9660 CD-ROM filesystem data (raw 2352 byte sectors)
 !:mime	application/x-iso9660-image
 32777	string    CDROM     High Sierra CD-ROM filesystem data
+
+# CDROM Filesystems
+# https://en.wikipedia.org/wiki/ISO_9660
+# Modified for UDF by gerardo.cacciari@gmail.com
+32769	string    CD001
+# mime line at that position does not work
+# to display CD-ROM (70=81-11) after MBR (113=40+72+1), partition-table (71=50+21) and before Apple Driver Map (51)
+!:strength -11
+# to display CD-ROM (114=81+33) before MBR (113=40+72+1), partition-table (71=50+21) and Apple Driver Map (51)
+# does not work
+#!:strength +33
+>0	use cdrom
 
 # .cso files
 0    string    CISO	Compressed ISO CD image
@@ -2121,6 +2129,7 @@
 #----------------------------------------------------------
 #delta ISO    Daniel Novotny (dnovotny@redhat.com)
 0	string  DISO	Delta ISO data
+!:strength +50
 >4	belong  x	version %d
 
 # VMS backup savesets - gerardo.cacciari@gmail.com

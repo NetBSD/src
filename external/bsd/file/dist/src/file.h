@@ -1,4 +1,5 @@
-/*	$NetBSD: file.h,v 1.13 2014/10/20 21:48:57 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.14 2015/01/02 21:15:32 christos Exp $	*/
+
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -28,7 +29,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)$File: file.h,v 1.155 2014/10/11 15:03:16 christos Exp $
+ * @(#)$File: file.h,v 1.164 2015/01/01 17:07:34 christos Exp $
  */
 
 #ifndef __file_h__
@@ -65,7 +66,9 @@
 #include <regex.h>
 #include <time.h>
 #include <sys/types.h>
+#ifndef WIN32
 #include <sys/param.h>
+#endif
 /* Do this here and now, because struct stat gets re-defined on solaris */
 #include <sys/stat.h>
 #include <stdarg.h>
@@ -233,6 +236,7 @@ struct magic {
 	 (t) == FILE_LESTRING16 || \
 	 (t) == FILE_REGEX || \
 	 (t) == FILE_SEARCH || \
+	 (t) == FILE_INDIRECT || \
 	 (t) == FILE_NAME || \
 	 (t) == FILE_USE)
 
@@ -345,6 +349,8 @@ struct magic {
 #define STRING_IGNORE_CASE		(STRING_IGNORE_LOWERCASE|STRING_IGNORE_UPPERCASE)
 #define STRING_DEFAULT_RANGE		100
 
+#define	INDIRECT_RELATIVE			BIT(0)
+#define	CHAR_INDIRECT_RELATIVE			'r'
 
 /* list of magic entries */
 struct mlist {
@@ -402,6 +408,16 @@ struct magic_set {
 	/* FIXME: Make the string dynamically allocated so that e.g.
 	   strings matched in files can be longer than MAXstring */
 	union VALUETYPE ms_value;	/* either number or string */
+	uint16_t indir_max;
+	uint16_t name_max;
+	uint16_t elf_shnum_max;
+	uint16_t elf_phnum_max;
+	uint16_t elf_notes_max;
+#define	FILE_INDIR_MAX			15
+#define	FILE_NAME_MAX			30
+#define	FILE_ELF_SHNUM_MAX		32768
+#define	FILE_ELF_PHNUM_MAX		128
+#define	FILE_ELF_NOTES_MAX		256
 };
 
 /* Type for Unicode characters */
@@ -441,7 +457,7 @@ protected int file_encoding(struct magic_set *, const unsigned char *, size_t,
     unichar **, size_t *, const char **, const char **, const char **);
 protected int file_is_tar(struct magic_set *, const unsigned char *, size_t);
 protected int file_softmagic(struct magic_set *, const unsigned char *, size_t,
-    size_t, int, int);
+    uint16_t, uint16_t *, int, int);
 protected int file_apprentice(struct magic_set *, const char *, int);
 protected int buffer_apprentice(struct magic_set *, struct magic **,
     size_t *, size_t);
@@ -467,6 +483,7 @@ protected int file_looks_utf8(const unsigned char *, size_t, unichar *,
     size_t *);
 protected size_t file_pstring_length_size(const struct magic *);
 protected size_t file_pstring_get_length(const struct magic *, const char *);
+protected char * file_printable(char *, size_t, const char *);
 #ifdef __EMX__
 protected int file_os2_apptype(struct magic_set *, const char *, const void *,
     size_t);
@@ -495,6 +512,14 @@ protected int file_regexec(file_regex_t *, const char *, size_t, regmatch_t *,
     int);
 protected void file_regfree(file_regex_t *);
 protected void file_regerror(file_regex_t *, int, struct magic_set *);
+
+typedef struct {
+	char *buf;
+	uint32_t offset;
+} file_pushbuf_t;
+
+protected file_pushbuf_t *file_push_buffer(struct magic_set *);
+protected char  *file_pop_buffer(struct magic_set *, file_pushbuf_t *);
 
 #ifndef COMPILE_ONLY
 extern const char *file_names[];
