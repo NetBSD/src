@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.67 2014/12/31 20:39:07 christos Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.68 2015/01/02 01:13:00 christos Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.67 2014/12/31 20:39:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.68 2015/01/02 01:13:00 christos Exp $");
 
 #include "opt_xen.h"
 
@@ -846,10 +846,6 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	DPRINTF(("xbdioctl(%d, %08lx, %p, %d, %p)\n",
 	    dev, cmd, data, flag, l));
 	dksc = &sc->sc_dksc;
-
-	error = disk_ioctl(&sc->sc_dksc.sc_dkdev, dev, cmd, data, flag, l);
-	if (error != EPASSTHROUGH)
-		return (error);
 
 	switch (cmd) {
 	case DIOCSSTRATEGY:
