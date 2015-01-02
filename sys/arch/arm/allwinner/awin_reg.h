@@ -1,4 +1,5 @@
-/* $NetBSD */
+/* $NetBSD: awin_reg.h,v 1.14.2.11 2015/01/02 20:32:02 martin Exp $ */
+
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
