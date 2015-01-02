@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.53 2015/01/02 15:49:51 christos Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.54 2015/01/02 19:42:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.53 2015/01/02 15:49:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.54 2015/01/02 19:42:05 christos Exp $");
 
 #include "locators.h"
 
@@ -1573,7 +1573,7 @@ fdGetDiskLabel(fd_softc_t *fd, dev_t dev)
 	 * track (8..12) and variable rpm (300..550)? Apple came up
 	 * with ZBR in 1983! Un*x drive management sucks.
 	 */
-	lp->d_type = DTYPE_FLOPPY;
+	lp->d_type = DKTYPE_FLOPPY;
 	lp->d_rpm = 300;
 	lp->d_secsize = fd->currentType->sectorSize;
 	lp->d_ntracks = fd->currentType->heads;
@@ -1584,7 +1584,7 @@ fdGetDiskLabel(fd_softc_t *fd, dev_t dev)
 	lp->d_interleave = fd->currentType->interleave;
 	lp->d_trkseek = fd->currentType->stepRate;
 
-	strcpy(lp->d_typename, dktypenames[DTYPE_FLOPPY]);
+	strcpy(lp->d_typename, dktypenames[DKTYPE_FLOPPY]);
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 
 	lp->d_npartitions = fdType + 1;

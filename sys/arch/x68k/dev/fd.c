@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.114 2015/01/02 15:53:25 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.115 2015/01/02 19:42:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.114 2015/01/02 15:53:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.115 2015/01/02 19:42:06 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -1877,7 +1877,7 @@ fdgetdisklabel(struct fd_softc *sc, dev_t dev)
 	lp->d_ncylinders  = sc->sc_type->size / lp->d_secpercyl;
 	lp->d_secperunit  = sc->sc_type->size;
 
-	lp->d_type        = DTYPE_FLOPPY;
+	lp->d_type        = DKTYPE_FLOPPY;
 	lp->d_rpm         = 300; 	/* XXX */
 	lp->d_interleave  = 1;		/* FIXME: is this OK?		*/
 	lp->d_bbsize      = 0;
