@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.144 2014/12/31 06:53:11 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.145 2015/01/02 20:59:14 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -6911,4 +6911,46 @@ sys/arch/powerpc/powerpc/sig_machdep.c		1.44
 	the kernel no longer treats R2 specially and its use as
 	the TLS register is now handled entirely in userland.
 	[chs, ticket #364]
+
+sys/arch/arm/s3c2xx0/s3c2440_sdi.c		1.3
+sys/dev/ic/dm9000.c				1.5
+
+	Avoid gcc 4.8 warnings.
+	[skrll, ticket #365]
+
+sys/arch/evbarm/stand/boot2440/main.c		1.5
+
+	Make this work with earm kernels.
+	[skrll, ticket #366]
+
+sys/arch/arm/allwinner/awin_reg.h		1.74
+
+	Fix RCSIDs.
+	[skrll, ticket #367]
+
+external/mit/xorg/server/xorg-server/Makefile.serverlib 1.5
+
+	Enable __GLX_ALIGN64 on sparc*.
+	Fixes crashes seen when using newer Mesa libGL.so.
+	[mrg, ticket #368]
+
+external/mit/xorg/lib/libGLU/Makefile		1.16
+
+	Switch over to the separate glu sources.
+	[mrg, ticket #370]
+
+share/mk/bsd.own.mk				1.839
+
+	Switch PPC to GCC 4.8.
+	[mrg, ticket #371]
+
+sys/dev/usb/xhci.c				1.28
+sys/dev/usb/xhcireg.h				1.2
+
+	kern/49391: Fixes to XHCI driver command ring and status TRB.
+	CRCR needs 64byte aligned address.
+	Use usb_allocmem instead of usb_allocmem_flags(..., 0).
+	Correct status stage TRB in xhci_device_ctrl_start - direction
+	logic was wrong.
+	[skrll, ticket #372]
 
