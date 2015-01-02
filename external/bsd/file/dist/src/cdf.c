@@ -1,4 +1,5 @@
-/*	$NetBSD: cdf.c,v 1.10 2014/10/10 20:15:02 christos Exp $	*/
+/*	$NetBSD: cdf.c,v 1.11 2015/01/02 21:15:32 christos Exp $	*/
+
 /*-
  * Copyright (c) 2008 Christos Zoulas
  * All rights reserved.
@@ -37,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: cdf.c,v 1.67 2014/09/24 19:49:07 christos Exp $")
+FILE_RCSID("@(#)$File: cdf.c,v 1.69 2014/12/04 15:56:46 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf.c,v 1.10 2014/10/10 20:15:02 christos Exp $");
+__RCSID("$NetBSD: cdf.c,v 1.11 2015/01/02 21:15:32 christos Exp $");
 #endif
 #endif
 
@@ -78,8 +79,11 @@ static union {
 #define CDF_TOLE8(x)	((uint64_t)(NEED_SWAP ? _cdf_tole8(x) : (uint64_t)(x)))
 #define CDF_TOLE4(x)	((uint32_t)(NEED_SWAP ? _cdf_tole4(x) : (uint32_t)(x)))
 #define CDF_TOLE2(x)	((uint16_t)(NEED_SWAP ? _cdf_tole2(x) : (uint16_t)(x)))
-#define CDF_TOLE(x)	(sizeof(x) == 2 ? CDF_TOLE2(x) : (sizeof(x) == 4 ? \
-    CDF_TOLE4(x) : CDF_TOLE8(x)))
+#define CDF_TOLE(x)	(/*CONSTCOND*/sizeof(x) == 2 ? \
+			    CDF_TOLE2(CAST(uint16_t, x)) : \
+			(/*CONSTCOND*/sizeof(x) == 4 ? \
+			    CDF_TOLE4(CAST(uint32_t, x)) : \
+			    CDF_TOLE8(CAST(uint64_t, x))))
 #define CDF_GETUINT32(x, y)	cdf_getuint32(x, y)
 
 
@@ -276,7 +280,7 @@ cdf_check_stream_offset(const cdf_stream_t *sst, const cdf_header_t *h,
 	const char *e = ((const char *)p) + tail;
 	size_t ss = sst->sst_dirlen < h->h_min_size_standard_stream ?
 	    CDF_SHORT_SEC_SIZE(h) : CDF_SEC_SIZE(h);
-	(void)&line;
+	/*LINTED*/(void)&line;
 	if (e >= b && (size_t)(e - b) <= ss * sst->sst_len)
 		return 0;
 	DPRINTF(("%d: offset begin %p < end %p || %" SIZE_T_FORMAT "u"
@@ -468,6 +472,12 @@ cdf_count_chain(const cdf_sat_t *sat, cdf_secid_t sid, size_t size)
 	    / sizeof(maxsector));
 
 	DPRINTF(("Chain:"));
+	if (sid == CDF_SECID_END_OF_CHAIN) {
+		/* 0-length chain. */
+		DPRINTF((" empty\n"));
+		return 0;
+	}
+
 	for (j = i = 0; sid >= 0; i++, j++) {
 		DPRINTF((" %d", sid));
 		if (j >= CDF_LOOP_LIMIT) {
@@ -824,10 +834,11 @@ cdf_read_property_info(const cdf_stream_t *sst, const cdf_header_t *h,
 		goto out;
 	for (i = 0; i < sh.sh_properties; i++) {
 		size_t tail = (i << 1) + 1;
+		size_t ofs;
 		if (cdf_check_stream_offset(sst, h, p, tail * sizeof(uint32_t),
 		    __LINE__) == -1)
 			goto out;
-		size_t ofs = CDF_GETUINT32(p, tail);
+		ofs = CDF_GETUINT32(p, tail);
 		q = (const uint8_t *)(const void *)
 		    ((const char *)(const void *)p + ofs
 		    - 2 * sizeof(uint32_t));
@@ -996,9 +1007,9 @@ cdf_unpack_summary_info(const cdf_stream_t *sst, const cdf_header_t *h,
 }
 
 
-#define extract_catalog_field(f, l) \
+#define extract_catalog_field(t, f, l) \
     memcpy(&ce[i].f, b + (l), sizeof(ce[i].f)); \
-    ce[i].f = CDF_TOLE(ce[i].f)
+    ce[i].f = CAST(t, CDF_TOLE(ce[i].f))
 
 int
 cdf_unpack_catalog(const cdf_header_t *h, const cdf_stream_t *sst,
@@ -1026,18 +1037,17 @@ cdf_unpack_catalog(const cdf_header_t *h, const cdf_stream_t *sst,
 	ce = (*cat)->cat_e;
 	b = CAST(const char *, sst->sst_tab);
 	for (i = 0; i < nr; i++) {
-		extract_catalog_field(ce_namlen, 0);
-		extract_catalog_field(ce_num, 2);
-		extract_catalog_field(ce_timestamp, 6);
+		extract_catalog_field(uint16_t, ce_namlen, 0);
+		extract_catalog_field(uint16_t, ce_num, 2);
+		extract_catalog_field(uint64_t, ce_timestamp, 6);
 		reclen = ce[i].ce_namlen;
 		ce[i].ce_namlen =
 		    sizeof(ce[i].ce_name) / sizeof(ce[i].ce_name[0]) - 1;
 		if (ce[i].ce_namlen > reclen - 14)
 			ce[i].ce_namlen = reclen - 14;
-		np = CAST(const uint16_t *, (b + 16));
+		np = CAST(const uint16_t *, CAST(const void *, (b + 16)));
 		for (k = 0; k < ce[i].ce_namlen; k++) {
-			ce[i].ce_name[k] = np[k];
-			CDF_TOLE2(ce[i].ce_name[k]);
+			ce[i].ce_name[k] = np[k]; /* XXX: CDF_TOLE2? */
 		}
 		ce[i].ce_name[ce[i].ce_namlen] = 0;
 		b += reclen;
