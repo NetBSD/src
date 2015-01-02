@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.14 2014/12/21 10:48:53 hannken Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.15 2015/01/02 09:48:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -58,7 +58,7 @@ struct smbfs_fctx;
 struct smbkey {
 	struct vnode *		k_parent;	/* Parent vnode. */
 	u_char			k_nmlen;	/* Name length. */
-	u_char			k_name[0];	/* Name (variable length). */
+	u_char			k_name[];	/* Name (variable length). */
 } __packed;
 
 struct smbnode {
