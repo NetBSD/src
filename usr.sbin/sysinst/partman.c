@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.7 2014/10/18 08:33:31 snj Exp $ */
+/*	$NetBSD: partman.c,v 1.8 2015/01/02 19:43:13 abs Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -2301,6 +2301,7 @@ pm_commit(menudesc *m, void *arg)
 #endif
 			if (
 				write_disklabel() != 0   || /* Write slices table (disklabel) */
+                                set_swap_if_low_ram(pm->diskdev, pm->bsdlabel) != 0 || 
 				md_post_disklabel() != 0 || /* Enable swap and check badblock */
 				make_filesystems() != 0     /* Create filesystems with newfs */
 			) {
