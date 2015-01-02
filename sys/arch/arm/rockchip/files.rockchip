@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.6 2015/01/02 21:59:29 jmcneill Exp $
+#	$NetBSD: files.rockchip,v 1.7 2015/01/02 23:20:18 jmcneill Exp $
 #
 # Configuration info for Rockchip ARM Peripherals
 #
@@ -31,6 +31,11 @@ file	arch/arm/rockchip/obio_com.c	obiouart
 device	rkiic: i2cbus, i2cexec
 attach	rkiic at obio
 file	arch/arm/rockchip/rockchip_i2c.c	rkiic
+
+# Timer
+device	rktimer
+attach	rktimer at obio
+file	arch/arm/rockchip/rockchip_timer.c	rktimer
 
 # SD/MMC (Synopsys DesignWare)
 attach	dwcmmc at obio with rkdwcmmc
