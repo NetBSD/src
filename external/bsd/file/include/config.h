@@ -91,7 +91,7 @@
 #define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the `mkostemp' function. */
-#define HAVE_MKOSTEMP 1
+/* #undef HAVE_MKOSTEMP */
 
 /* Define to 1 if you have the `mkstemp' function. */
 #define HAVE_MKSTEMP 1
@@ -104,6 +104,9 @@
 
 /* Define to 1 if you have the `pread' function. */
 #define HAVE_PREAD 1
+
+/* Define to 1 if you have the `setlocale' function. */
+#define HAVE_SETLOCALE 1
 
 /* Define to 1 if you have the <stddef.h> header file. */
 #define HAVE_STDDEF_H 1
@@ -229,6 +232,9 @@
 /* Define to 1 if `vfork' works. */
 #define HAVE_WORKING_VFORK 1
 
+/* Define to 1 if you have the <xlocale.h> header file. */
+/* #undef HAVE_XLOCALE_H */
+
 /* Define to 1 if you have the <zlib.h> header file. */
 #define HAVE_ZLIB_H 1
 
@@ -254,7 +260,7 @@
 #define PACKAGE_NAME "file"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "file 5.20"
+#define PACKAGE_STRING "file 5.22"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "file"
@@ -263,7 +269,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "5.20"
+#define PACKAGE_VERSION "5.22"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -292,8 +298,9 @@
 # define __EXTENSIONS__ 1
 #endif
 
+
 /* Version number of package */
-#define VERSION "5.20"
+#define VERSION "5.22"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
