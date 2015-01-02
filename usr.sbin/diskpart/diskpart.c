@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)diskpart.c	8.3 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: diskpart.c,v 1.19 2011/08/30 10:12:06 joerg Exp $");
+__RCSID("$NetBSD: diskpart.c,v 1.20 2015/01/02 19:46:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,7 +181,7 @@ main(int argc, char *argv[])
 	 * bad sectors are mapped.
 	 * If disk size was specified explicitly, use specified size.
 	 */
-	if (dp->d_type == DTYPE_SMD && dp->d_flags & D_BADSECT &&
+	if (dp->d_type == DKTYPE_SMD && dp->d_flags & D_BADSECT &&
 	    totsize == 0) {
 		badsecttable = dp->d_nsectors +
 		    roundup(badsecttable, dp->d_nsectors);
@@ -267,7 +267,7 @@ main(int argc, char *argv[])
 				printf("\t0,\t0,\n");
 				continue;
 			}
-			if (dp->d_type != DTYPE_MSCP) {
+			if (dp->d_type != DKTYPE_MSCP) {
 			       printf("\t%d,\t%d,\t\t/* %c=cyl %d thru %d */\n",
 					defpart[def][part], startcyl[part],
 					'A' + part, startcyl[part],
@@ -304,7 +304,7 @@ main(int argc, char *argv[])
 			dp->d_nsectors, dp->d_ntracks, dp->d_ncylinders);
 		if (dp->d_secpercyl != dp->d_nsectors * dp->d_ntracks)
 			printf("sc#%d:", dp->d_secpercyl);
-		if (dp->d_type == DTYPE_SMD && dp->d_flags & D_BADSECT)
+		if (dp->d_type == DKTYPE_SMD && dp->d_flags & D_BADSECT)
 			printf("sf:");
 		printf("\\\n\t:dt=%s:", dktypenames[dp->d_type]);
 		for (part = NDDATA - 1; part >= 0; part--)
@@ -434,7 +434,7 @@ gettype:
 		goto gettype;
 	}
 	fprintf(stderr, "(type <cr> to get default value, if only one)\n");
-	if (dp->d_type == DTYPE_SMD) {
+	if (dp->d_type == DKTYPE_SMD) {
 		fprintf(stderr,
 		    "Do '%s' disks support bad144 bad block forwarding (yes)? ",
 		    dp->d_typename);
