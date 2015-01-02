@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.8 2015/01/02 21:58:03 jmcneill Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.9 2015/01/02 23:19:28 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.8 2015/01/02 21:58:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.9 2015/01/02 23:19:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.8 2015/01/02 21:58:03 jmcneill Exp $");
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
+#include <sys/xcall.h>
 
 #include <prop/proplib.h>
 
@@ -248,17 +249,31 @@ cpu_initclocks(void)
 	tc_init(&a9tmr_timecounter);
 }
 
+static void
+a9tmr_update_freq_cb(void *arg1, void *arg2)
+{
+	a9tmr_init_cpu_clock(curcpu());
+}
+
 void
 a9tmr_update_freq(uint32_t freq)
 {
 	struct a9tmr_softc * const sc = &a9tmr_sc;
+	uint64_t xc;
 
 	KASSERT(sc->sc_dev != NULL);
 	KASSERT(freq != 0);
 
+	tc_detach(&a9tmr_timecounter);
+
 	sc->sc_freq = freq;
 	sc->sc_autoinc = sc->sc_freq / hz;
+
+	xc = xc_broadcast(0, a9tmr_update_freq_cb, NULL, NULL);
+	xc_wait(xc);
+
 	a9tmr_timecounter.tc_frequency = sc->sc_freq;
+	tc_init(&a9tmr_timecounter);
 }
 
 void
