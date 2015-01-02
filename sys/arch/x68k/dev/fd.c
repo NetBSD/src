@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.113 2015/01/01 17:48:56 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.114 2015/01/02 15:53:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.113 2015/01/01 17:48:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.114 2015/01/02 15:53:25 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m68k_arch.h"
@@ -1608,11 +1608,12 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct fdformat_parms *form_parms;
 	struct fdformat_cmd *form_cmd;
 	struct ne7_fd_formb *fd_formb;
+	int part = DISKPART(dev);
 	struct disklabel buffer;
 	int error;
 	unsigned int scratch;
 	int il[FD_MAX_NSEC + 1];
-	int i, j, error;
+	int i, j;
 
 	error = disk_ioctl(&fd->sc_dk, dev, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
