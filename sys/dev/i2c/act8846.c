@@ -1,4 +1,4 @@
-/* $NetBSD: act8846.c,v 1.2 2015/01/01 17:59:18 jmcneill Exp $ */
+/* $NetBSD: act8846.c,v 1.3 2015/01/02 21:55:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define ACT_DEBUG
+//#define ACT_DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: act8846.c,v 1.2 2015/01/01 17:59:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: act8846.c,v 1.3 2015/01/02 21:55:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,11 +172,9 @@ act8846_attach(device_t parent, device_t self, void *aux)
 		sc->sc_ctrl[n].c_dev = self;
 	}
 
-#ifdef ACT_DEBUG
 	for (n = 0; n < sc->sc_nctrl; n++) {
 		act8846_print(&sc->sc_ctrl[n]);
 	}
-#endif
 }
 
 static int
