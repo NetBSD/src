@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.52 2015/01/01 17:47:21 christos Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.53 2015/01/02 15:49:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.52 2015/01/01 17:47:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.53 2015/01/02 15:49:51 christos Exp $");
 
 #include "locators.h"
 
@@ -698,7 +698,7 @@ fdclose(dev_t dev, int flags, int devType, struct lwp *l)
  * we do not support them.
  */
 int
-fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
+fdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int result, fdUnit, fdType;
 	fd_softc_t *fd;
@@ -729,7 +729,7 @@ fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	case DIOCSDINFO:
 		if (TRACE_IOCTL)
 			printf(" DIOCSDINFO: Set in-core disklabel.\n");
-		result = ((flags & FWRITE) == 0) ? EBADF : 0;
+		result = ((flag & FWRITE) == 0) ? EBADF : 0;
 		if (result == 0)
 			result = setdisklabel(fd->diskInfo.dk_label,
 			    (struct disklabel *)data, 0,
@@ -740,7 +740,7 @@ fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 		if (TRACE_IOCTL)
 			printf(" DIOCWDINFO: Set in-core disklabel "
 			    "& update disk.\n");
-		result = ((flags & FWRITE) == 0) ? EBADF : 0;
+		result = ((flag & FWRITE) == 0) ? EBADF : 0;
 
 		if (result == 0)
 			result = setdisklabel(fd->diskInfo.dk_label,
@@ -779,7 +779,7 @@ fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	case DIOCWLABEL:
 		if (TRACE_IOCTL)
 			printf(" DIOCWLABEL: Set write access to disklabel.\n");
-		result = ((flags & FWRITE) == 0) ? EBADF : 0;
+		result = ((flag & FWRITE) == 0) ? EBADF : 0;
 
 		if (result == 0)
 			fd->writeLabel = *(int *)data;
