@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.94 2014/12/31 20:55:53 christos Exp $ */
+/*	$NetBSD: fd.c,v 1.95 2015/01/02 19:42:05 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.94 2014/12/31 20:55:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.95 2015/01/02 19:42:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -743,7 +743,7 @@ fdgetdefaultlabel(struct fd_softc *sc, struct disklabel *lp, int part)
 	lp->d_ncylinders = sc->type->ncylinders;
 	lp->d_nsectors = sc->nsectors;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-	lp->d_type = DTYPE_FLOPPY;
+	lp->d_type = DKTYPE_FLOPPY;
 	lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
 	lp->d_rpm = 300; 		/* good guess I suppose. */
 	lp->d_interleave = 1;		/* should change when adding msdos */

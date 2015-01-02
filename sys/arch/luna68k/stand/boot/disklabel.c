@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.5 2014/03/24 10:46:58 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.6 2015/01/02 19:42:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -204,7 +204,7 @@ disklabel(int argc, char *argv[])
 		bp->d_ntracks    = 12;
 		bp->d_ncylinders = 1076;
 
-		bp->d_type  = DTYPE_SCSI;
+		bp->d_type  = DKTYPE_SCSI;
 
 		bp->d_secpercyl  = bp->d_nsectors * bp->d_ntracks;
 		bp->d_secperunit = bp->d_secpercyl * bp->d_ncylinders;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.82 2015/01/01 17:46:09 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.83 2015/01/02 19:42:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.82 2015/01/01 17:46:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.83 2015/01/02 19:42:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1298,7 +1298,7 @@ fdgetdefaultlabel(struct fd_softc *sc, struct disklabel *lp, int part)
 	lp->d_ncylinders  = sc->nblocks / lp->d_secpercyl;
 	lp->d_secperunit  = sc->nblocks;
 
-	lp->d_type        = DTYPE_FLOPPY;
+	lp->d_type        = DKTYPE_FLOPPY;
 	lp->d_rpm         = 300; 	/* good guess I suppose.	*/
 	lp->d_interleave  = 1;		/* FIXME: is this OK?		*/
 	lp->d_bbsize      = 0;
