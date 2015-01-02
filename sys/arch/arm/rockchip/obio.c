@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.9 2015/01/02 21:59:29 jmcneill Exp $	*/
+/*	$NetBSD: obio.c,v 1.10 2015/01/02 23:23:17 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.9 2015/01/02 21:59:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.10 2015/01/02 23:23:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,22 +237,22 @@ void obio_init_gpio(void)
 {
 #if 1
 	/* Radxa Rock */
-	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(3));
 	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(3));
-	obio_swporta(ROCKCHIP_GPIO2_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(31));
+	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(3));
 	obio_swporta(ROCKCHIP_GPIO2_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(31));
+	obio_swporta(ROCKCHIP_GPIO2_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(31));
 
 	/* IT66121 HDMI */
-	obio_swporta(ROCKCHIP_GPIO3_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(10));
 	obio_swporta(ROCKCHIP_GPIO3_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(10));
+	obio_swporta(ROCKCHIP_GPIO3_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(10));
 #else
 	/* ChipSPARK Rayeager PX2 */
-	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(5));
 	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(5));
-	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(6));
+	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(5));
 	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(6));
-	obio_swporta(ROCKCHIP_GPIO1_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(31));
+	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(6));
 	obio_swporta(ROCKCHIP_GPIO1_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(31));
+	obio_swporta(ROCKCHIP_GPIO1_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(31));
 #endif
 }
 
