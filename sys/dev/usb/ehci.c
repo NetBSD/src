@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.23 2014/12/24 14:18:32 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.24 2015/01/02 07:57:18 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.23 2014/12/24 14:18:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.24 2015/01/02 07:57:18 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -631,10 +631,8 @@ ehci_intr(void *v)
 
 		if (intrs)
 			EOWRITE4(sc, EHCI_USBSTS, intrs); /* Acknowledge */
-#ifdef DIAGNOSTIC
 		USBHIST_LOGN(ehcidebug, 16,
 		    "ignored interrupt while polling", 0, 0, 0, 0);
-#endif
 		goto done;
 	}
 
