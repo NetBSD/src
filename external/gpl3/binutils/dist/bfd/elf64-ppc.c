@@ -3618,9 +3618,6 @@ struct ppc_stub_hash_entry {
   struct ppc_link_hash_entry *h;
   struct plt_entry *plt_ent;
 
-  /* And the reloc addend that this was derived from.  */
-  bfd_vma addend;
-
   /* Where this stub is being called from, or, in the case of combined
      stub sections, the first input section in the group.  */
   asection *id_sec;
@@ -11669,7 +11666,6 @@ ppc64_elf_size_stubs (struct bfd_link_info *info, bfd_signed_vma group_size,
 		    }
 		  stub_entry->h = hash;
 		  stub_entry->plt_ent = plt_ent;
-		  stub_entry->addend = irela->r_addend;
 
 		  if (stub_entry->h != NULL)
 		    htab->stub_globals += 1;
@@ -12910,60 +12906,96 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 	    {
 	      bfd_boolean can_plt_call = FALSE;
 
+	      /* All of these stubs will modify r2, so there must be a
+		 branch and link followed by a nop.  The nop is
+		 replaced by an insn to restore r2.  */
 	      if (rel->r_offset + 8 <= input_section->size)
 		{
-		  unsigned long nop;
-		  nop = bfd_get_32 (input_bfd, contents + rel->r_offset + 4);
-		  if (nop == NOP
-		      || nop == CROR_151515 || nop == CROR_313131)
+		  unsigned long br;
+
+		  br = bfd_get_32 (input_bfd,
+				   contents + rel->r_offset);
+		  if ((br & 1) != 0)
 		    {
-		      if (h != NULL
-			  && (h == htab->tls_get_addr_fd
-			      || h == htab->tls_get_addr)
-			  && !htab->no_tls_get_addr_opt)
+		      unsigned long nop;
+
+		      nop = bfd_get_32 (input_bfd,
+					contents + rel->r_offset + 4);
+		      if (nop == NOP
+			  || nop == CROR_151515 || nop == CROR_313131)
 			{
-			  /* Special stub used, leave nop alone.  */
+			  if (h != NULL
+			      && (h == htab->tls_get_addr_fd
+				  || h == htab->tls_get_addr)
+			      && !htab->no_tls_get_addr_opt)
+			    {
+			      /* Special stub used, leave nop alone.  */
+			    }
+			  else
+			    bfd_put_32 (input_bfd, LD_R2_40R1,
+					contents + rel->r_offset + 4);
+			  can_plt_call = TRUE;
 			}
-		      else
-			bfd_put_32 (input_bfd, LD_R2_40R1,
-				    contents + rel->r_offset + 4);
+		    }
+		}
+
+	      if (!can_plt_call && h != NULL)
+		{
+		  const char *name = h->elf.root.root.string;
+
+		  if (*name == '.')
+		    ++name;
+
+		  if (strncmp (name, "__libc_start_main", 17) == 0
+		      && (name[17] == 0 || name[17] == '@'))
+		    {
+		      /* Allow crt1 branch to go via a toc adjusting
+			 stub.  Other calls that never return could do
+			 the same, if we could detect such.  */
 		      can_plt_call = TRUE;
 		    }
 		}
 
 	      if (!can_plt_call)
 		{
+		  /* g++ as of 20130507 emits self-calls without a
+		     following nop.  This is arguably wrong since we
+		     have conflicting information.  On the one hand a
+		     global symbol and on the other a local call
+		     sequence, but don't error for this special case.
+		     It isn't possible to cheaply verify we have
+		     exactly such a call.  Allow all calls to the same
+		     section.  */
+		  asection *code_sec = sec;
+
+		  if (get_opd_info (sec) != NULL)
+		    {
+		      bfd_vma off = (relocation + addend
+				     - sec->output_section->vma
+				     - sec->output_offset);
+
+		      opd_entry_value (sec, off, &code_sec, NULL, FALSE);
+		    }
+		  if (code_sec == input_section)
+		    can_plt_call = TRUE;
+		}
+
+	      if (!can_plt_call)
+		{
+
 		  if (stub_entry->stub_type == ppc_stub_plt_call
 		      || stub_entry->stub_type == ppc_stub_plt_call_r2save)
-		    {
-		      /* If this is a plain branch rather than a branch
-			 and link, don't require a nop.  However, don't
-			 allow tail calls in a shared library as they
-			 will result in r2 being corrupted.  */
-		      unsigned long br;
-		      br = bfd_get_32 (input_bfd, contents + rel->r_offset);
-		      if (info->executable && (br & 1) == 0)
-			can_plt_call = TRUE;
-		      else
-			stub_entry = NULL;
-		    }
-		  else if (h != NULL
-			   && strcmp (h->elf.root.root.string,
-				      ".__libc_start_main") == 0)
-		    {
-		      /* Allow crt1 branch to go via a toc adjusting stub.  */
-		      can_plt_call = TRUE;
-		    }
+		    info->callbacks->einfo
+		      (_("%P: %H: call to `%T' lacks nop, can't restore toc; "
+			 "recompile with -fPIC"),
+		       input_bfd, input_section, rel->r_offset, sym_name);
 		  else
-		    {
-		      info->callbacks->einfo
-			(_("%P: %H: call to `%T' lacks nop, can't restore toc; "
-			   "recompile with -fPIC"),
-			   input_bfd, input_section, rel->r_offset, sym_name);
-
-		      bfd_set_error (bfd_error_bad_value);
-		      ret = FALSE;
-		    }
+		    info->callbacks->einfo
+		      (_("%P: %H: call to `%T' lacks nop, can't restore toc; "
+			 "(-mcmodel=small toc adjust stub)"),
+		       input_bfd, input_section, rel->r_offset, sym_name);
+		  bfd_set_error (bfd_error_bad_value);
+		  ret = FALSE;
 		}
 
 	      if (can_plt_call
