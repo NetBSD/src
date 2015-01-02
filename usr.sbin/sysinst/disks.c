@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.6 2014/12/28 12:05:27 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.7 2015/01/02 19:43:13 abs Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1210,6 +1210,13 @@ mount_disks(void)
 	free(fstab);
 
 	return error;
+}
+
+int
+set_swap_if_low_ram(const char *disk, partinfo *pp) {
+        if (get_ramsize() <= 32) 
+                return set_swap(disk, pp);
+        return 0;
 }
 
 int

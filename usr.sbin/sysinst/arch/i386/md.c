@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2014/10/11 13:34:01 gson Exp $ */
+/*	$NetBSD: md.c,v 1.5 2015/01/02 19:43:13 abs Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -285,9 +285,6 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
-	if (get_ramsize() <= 32)
-		set_swap(pm->diskdev, pm->bsdlabel);
-
 	return 0;
 }
 
@@ -408,8 +405,6 @@ md_cleanup_install(void)
 int
 md_pre_update(void)
 {
-	if (get_ramsize() <= 8)
-		set_swap(pm->diskdev, NULL);
 	return 1;
 }
 
