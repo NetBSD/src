@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.110 2014/12/31 20:13:41 mlelstv Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.111 2015/01/02 01:14:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.110 2014/12/31 20:13:41 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.111 2015/01/02 01:14:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -502,7 +502,7 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 		break;
 	}
 
-	if (dev == 0)
+	if (dev == NODEV)
 		return EPASSTHROUGH;
 
 	/* The following should be moved to dk_ioctl */
@@ -521,6 +521,8 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 #endif
 
 	case DIOCGPART:
+		if (dk->dk_label == NULL)
+			return EBUSY;
 		pt = data;
 		pt->disklab = dk->dk_label;
 		pt->part = &dk->dk_label->d_partitions[DISKPART(dev)];
