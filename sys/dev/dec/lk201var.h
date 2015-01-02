@@ -1,4 +1,4 @@
-/* $NetBSD: lk201var.h,v 1.6.138.1 2015/01/02 08:09:51 jklos Exp $ */
+/* $NetBSD: lk201var.h,v 1.6.138.2 2015/01/02 19:00:17 snj Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,14 +33,6 @@ struct lk201_attachment {
 
 struct lk201_state {
 	struct lk201_attachment attmt;
-
-	volatile int waitack;
-	int ackdata;
-
-	int kbdtype;
-#define KBD_NONE	0x00
-#define KBD_LK201	0x01
-#define KBD_LK401	0x02
 #define LK_KLL 8
 	int down_keys_list[LK_KLL];
 	int bellvol;
@@ -49,12 +41,7 @@ struct lk201_state {
 };
 
 int lk201_init(struct lk201_state *);
-int lk201_decode(struct lk201_state *, int, int, u_int *, int *);
+int lk201_decode(struct lk201_state *, int, u_int *, int *);
 void lk201_bell(struct lk201_state *, struct wskbd_bell_data *);
 void lk201_set_leds(struct lk201_state *, int);
 void lk201_set_keyclick(struct lk201_state *, int);
-
-#define LKD_NODATA	0x00
-#define LKD_COMPLETE	0x01
-#define LKD_MORE	0x02
-
