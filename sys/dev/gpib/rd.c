@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.38 2014/12/31 20:36:20 christos Exp $ */
+/*	$NetBSD: rd.c,v 1.39 2015/01/02 19:42:06 christos Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.38 2014/12/31 20:36:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.39 2015/01/02 19:42:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1022,7 +1022,7 @@ rdgetdefaultlabel(struct rd_softc *sc, struct disklabel *lp)
 
 	memset((void *)lp, 0, sizeof(struct disklabel));
 
-	lp->d_type = DTYPE_HPIB /* DTYPE_GPIB */;
+	lp->d_type = DKTYPE_HPIB /* DKTYPE_GPIB */;
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_nsectors = rdidentinfo[type].ri_nbpt;
 	lp->d_ntracks = rdidentinfo[type].ri_ntpc;

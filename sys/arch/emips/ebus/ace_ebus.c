@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.16 2014/12/31 19:52:04 christos Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.17 2015/01/02 19:42:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.16 2014/12/31 19:52:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.17 2015/01/02 19:42:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2076,7 +2076,7 @@ acegetdefaultlabel(struct ace_softc *ace, struct disklabel *lp)
 	     ace->sc_params.CurrentSectorsPerTrack);
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-	lp->d_type = DTYPE_ST506; /* ?!? */
+	lp->d_type = DKTYPE_ST506; /* ?!? */
 
 	strncpy(lp->d_typename, ace->sc_params.ModelNumber, 16);
 	strncpy(lp->d_packname, "fictitious", 16);

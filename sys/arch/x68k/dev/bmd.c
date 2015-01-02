@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.22 2014/12/31 19:52:05 christos Exp $	*/
+/*	$NetBSD: bmd.c,v 1.23 2015/01/02 19:42:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.22 2014/12/31 19:52:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.23 2015/01/02 19:42:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -426,7 +426,7 @@ bmd_getdisklabel(struct bmd_softc *sc, dev_t dev)
 	lp->d_secpercyl   = lp->d_nsectors * lp->d_ntracks;
 	lp->d_secperunit  = lp->d_secpercyl * lp->d_ncylinders;
 
-	lp->d_type        = DTYPE_LD;
+	lp->d_type        = DKTYPE_LD;
 	lp->d_rpm         = 300;	/* dummy */
 	lp->d_interleave  = 1;	/* dummy? */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.71 2014/08/05 08:50:54 hannken Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.72 2015/01/02 19:42:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.71 2014/08/05 08:50:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.72 2015/01/02 19:42:07 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -214,7 +214,7 @@ adosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (error)
 		goto fail;
 	parp = &dl.d_partitions[DISKPART(devvp->v_rdev)];
-	if (dl.d_type == DTYPE_FLOPPY) {
+	if (dl.d_type == DKTYPE_FLOPPY) {
 		amp->bsize = secsize;
 		secsperblk = 1;
 		resvblks   = 2;

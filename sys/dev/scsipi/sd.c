@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.313 2014/12/31 19:52:06 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.314 2015/01/02 19:42:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.313 2014/12/31 19:52:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.314 2015/01/02 19:42:07 christos Exp $");
 
 #include "opt_scsi.h"
 
@@ -1266,10 +1266,10 @@ sdgetdefaultlabel(struct sd_softc *sd, struct disklabel *lp)
 
 	switch (SCSIPI_BUSTYPE_TYPE(scsipi_periph_bustype(sd->sc_periph))) {
 	case SCSIPI_BUSTYPE_SCSI:
-		lp->d_type = DTYPE_SCSI;
+		lp->d_type = DKTYPE_SCSI;
 		break;
 	case SCSIPI_BUSTYPE_ATAPI:
-		lp->d_type = DTYPE_ATAPI;
+		lp->d_type = DKTYPE_ATAPI;
 		break;
 	}
 	/*

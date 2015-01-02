@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.95 2015/01/02 01:13:00 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.96 2015/01/02 19:42:06 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.95 2015/01/02 01:13:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.96 2015/01/02 19:42:06 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -118,7 +118,7 @@ static void	cgd_cipher(struct cgd_softc *, void *, void *,
 /* Pseudo-disk Interface */
 
 static struct dk_intf the_dkintf = {
-	DTYPE_CGD,
+	DKTYPE_CGD,
 	"cgd",
 	cgdopen,
 	cgdclose,

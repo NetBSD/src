@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.72 2014/12/31 19:52:05 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.73 2015/01/02 19:42:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.72 2014/12/31 19:52:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.73 2015/01/02 19:42:06 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -546,7 +546,7 @@ md_set_disklabel(struct md_softc *sc)
 	lp->d_secpercyl = lp->d_ntracks*lp->d_nsectors;
 
 	strncpy(lp->d_typename, md_cd.cd_name, sizeof(lp->d_typename));
-	lp->d_type = DTYPE_UNKNOWN;
+	lp->d_type = DKTYPE_MD;
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;

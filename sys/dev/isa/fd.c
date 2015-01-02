@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.106 2014/12/31 19:52:05 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.107 2015/01/02 19:42:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.106 2014/12/31 19:52:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.107 2015/01/02 19:42:07 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -1415,7 +1415,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 #endif
 		memset(lp, 0, sizeof(*lp));
 
-		lp->d_type = DTYPE_FLOPPY;
+		lp->d_type = DKTYPE_FLOPPY;
 		lp->d_secsize = FDC_BSIZE;
 		lp->d_nsectors = fd->sc_type->sectrac;
 		lp->d_ntracks = fd->sc_type->heads;

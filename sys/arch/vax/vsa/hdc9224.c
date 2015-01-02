@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.56 2014/12/31 20:37:10 christos Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.57 2015/01/02 19:42:06 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.56 2014/12/31 20:37:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.57 2015/01/02 19:42:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -830,7 +830,7 @@ rdmakelabel(struct disklabel *dl, struct rdgeom *g)
 	}
 	dl->d_typename[p++] = n + '0';
 	dl->d_typename[p] = 0;
-	dl->d_type = DTYPE_MSCP; /* XXX - what to use here??? */
+	dl->d_type = DKTYPE_MSCP; /* XXX - what to use here??? */
 	dl->d_rpm = 3600;
 	dl->d_secsize = DEV_BSIZE;
 

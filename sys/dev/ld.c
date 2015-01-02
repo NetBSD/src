@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.80 2014/12/31 19:52:05 christos Exp $	*/
+/*	$NetBSD: ld.c,v 1.81 2015/01/02 19:42:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.80 2014/12/31 19:52:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.81 2015/01/02 19:42:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -759,7 +759,7 @@ ldgetdefaultlabel(struct ld_softc *sc, struct disklabel *lp)
 	lp->d_nsectors = sc->sc_nsectors;
 	lp->d_ncylinders = sc->sc_ncylinders;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-	lp->d_type = DTYPE_LD;
+	lp->d_type = DKTYPE_LD;
 	strlcpy(lp->d_typename, "unknown", sizeof(lp->d_typename));
 	strlcpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	if (sc->sc_secperunit > UINT32_MAX)
