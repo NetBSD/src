@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.417 2014/12/31 19:52:05 christos Exp $ */
+/*	$NetBSD: wd.c,v 1.418 2015/01/02 19:42:06 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.417 2014/12/31 19:52:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.418 2015/01/02 19:42:06 christos Exp $");
 
 #include "opt_ata.h"
 
@@ -1067,9 +1067,9 @@ wdgetdefaultlabel(struct wd_softc *wd, struct disklabel *lp)
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
 	if (strcmp(wd->sc_params.atap_model, "ST506") == 0)
-		lp->d_type = DTYPE_ST506;
+		lp->d_type = DKTYPE_ST506;
 	else
-		lp->d_type = DTYPE_ESDI;
+		lp->d_type = DKTYPE_ESDI;
 
 	strncpy(lp->d_typename, wd->sc_params.atap_model, 16);
 	strncpy(lp->d_packname, "fictitious", 16);

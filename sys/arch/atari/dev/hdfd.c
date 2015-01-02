@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.79 2014/12/31 19:52:04 christos Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.80 2015/01/02 19:42:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.79 2014/12/31 19:52:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.80 2015/01/02 19:42:05 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -1548,7 +1548,7 @@ fdgetdisklabel(struct fd_softc *fd, dev_t dev)
 	memset(&cpulab, 0, sizeof(cpulab));
 
 	lp->d_secpercyl  = fd->sc_type->seccyl;
-	lp->d_type       = DTYPE_FLOPPY;
+	lp->d_type       = DKTYPE_FLOPPY;
 	lp->d_secsize    = FDC_BSIZE;
 	lp->d_secperunit = fd->sc_type->size;
 
@@ -1567,7 +1567,7 @@ fdgetdisklabel(struct fd_softc *fd, dev_t dev)
 		 *	sounds!
 		 */
 		lp->d_secpercyl  = fd->sc_type->seccyl;
-		lp->d_type       = DTYPE_FLOPPY;
+		lp->d_type       = DKTYPE_FLOPPY;
 		lp->d_secsize    = FDC_BSIZE;
 		lp->d_secperunit = fd->sc_type->size;
 	}
@@ -1589,7 +1589,7 @@ fdgetdefaultlabel(struct fd_softc *fd, struct disklabel *lp, int part)
 	lp->d_ncylinders  = fd->sc_type->size / lp->d_secpercyl;
 	lp->d_secperunit  = fd->sc_type->size;
 
-	lp->d_type        = DTYPE_FLOPPY;
+	lp->d_type        = DKTYPE_FLOPPY;
 	lp->d_rpm         = 300; 	/* good guess I suppose.	*/
 	lp->d_interleave  = 1;		/* FIXME: is this OK?		*/
 	lp->d_bbsize      = 0;
