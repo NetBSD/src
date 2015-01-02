@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.61 2014/12/31 19:52:05 christos Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.62 2015/01/02 19:42:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.61 2014/12/31 19:52:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.62 2015/01/02 19:42:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -410,7 +410,7 @@ edgetdefaultlabel(struct ed_softc *ed, struct disklabel *lp)
 	lp->d_ncylinders = ed->cyl;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
-	lp->d_type = DTYPE_ESDI;
+	lp->d_type = DKTYPE_ESDI;
 
 	strncpy(lp->d_typename, "ESDI", 16);
 	strncpy(lp->d_packname, "fictitious", 16);
