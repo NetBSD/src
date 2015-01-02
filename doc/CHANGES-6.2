@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.180 2014/12/29 15:47:02 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.181 2015/01/02 13:39:24 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -8915,4 +8915,9 @@ sys/netinet6/mld6.c				1.61
 	(mld_timeo) not call callout_schedule when we already called
 	callout_halt.
 	[ozaki-r, ticket #1224]
+
+sys/arch/arm/arm/disassem.c			1.26
+
+	The mode synonyms are different for stm and ldm - handle this.
+	[skrll, ticket #1225]
 
