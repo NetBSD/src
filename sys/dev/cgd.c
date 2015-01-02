@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.94 2014/12/31 19:52:05 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.95 2015/01/02 01:13:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.94 2014/12/31 19:52:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.95 2015/01/02 01:13:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -548,7 +548,6 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct	dk_softc *dksc;
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
-	int	error;
 
 	DPRINTF_FOLLOW(("cgdioctl(0x%"PRIx64", %ld, %p, %d, %p)\n",
 	    dev, cmd, data, flag, l));
@@ -566,10 +565,6 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		dksc = &cs->sc_dksc;
 		break;
 	}
-
-	error = disk_ioctl(&dksc->sc_dkdev, dev, cmd, data, flag, l);
-	if (error != EPASSTHROUGH)
-		return (error);
 
 	switch (cmd) {
 	case CGDIOCSET:
