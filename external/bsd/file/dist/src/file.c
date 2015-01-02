@@ -1,4 +1,5 @@
-/*	$NetBSD: file.c,v 1.1.1.8 2014/10/10 20:08:20 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.9 2015/01/02 20:34:28 christos Exp $	*/
+
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -34,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: file.c,v 1.154 2014/09/10 18:41:51 christos Exp $")
+FILE_RCSID("@(#)$File: file.c,v 1.160 2014/12/16 23:18:40 christos Exp $")
 #else
-__RCSID("$NetBSD: file.c,v 1.1.1.8 2014/10/10 20:08:20 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.1.1.9 2015/01/02 20:34:28 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -103,7 +104,7 @@ private const struct option long_options[] = {
 #undef OPT_LONGONLY
     {0, 0, NULL, 0}
 };
-#define OPTSTRING	"bcCde:Ef:F:hiklLm:nNprsvz0"
+#define OPTSTRING	"bcCde:Ef:F:hiklLm:nNpP:rsvz0"
 
 private const struct {
 	const char *name;
@@ -121,6 +122,18 @@ private const struct {
 	{ "tokens",	MAGIC_NO_CHECK_TOKENS }, /* OBSOLETE: ignored for backwards compatibility */
 };
 
+private struct {
+	const char *name;
+	int tag;
+	size_t value;
+} pm[] = {
+	{ "indir",	MAGIC_PARAM_INDIR_MAX, 0 },
+	{ "name",	MAGIC_PARAM_NAME_MAX, 0 },
+	{ "elf_phnum",	MAGIC_PARAM_ELF_PHNUM_MAX, 0 },
+	{ "elf_shnum",	MAGIC_PARAM_ELF_SHNUM_MAX, 0 },
+	{ "elf_notes",	MAGIC_PARAM_ELF_NOTES_MAX, 0 },
+};
+
 private char *progname;		/* used throughout 		*/
 
 private void usage(void);
@@ -130,6 +143,8 @@ private void help(void);
 private int unwrap(struct magic_set *, const char *);
 private int process(struct magic_set *ms, const char *, int);
 private struct magic_set *load(const char *, int);
+private void setparam(const char *);
+private void applyparam(magic_t);
 
 
 /*
@@ -147,7 +162,9 @@ main(int argc, char *argv[])
 	const char *magicfile = NULL;		/* where the magic is	*/
 
 	/* makes islower etc work for other langs */
+#ifdef HAVE_SETLOCALE
 	(void)setlocale(LC_CTYPE, "");
+#endif
 
 #ifdef __EMX__
 	/* sh-like wildcard expansion! Shouldn't hurt at least ... */
@@ -245,8 +262,12 @@ main(int argc, char *argv[])
 			flags |= MAGIC_PRESERVE_ATIME;
 			break;
 #endif
+		case 'P':
+			setparam(optarg);
+			break;
 		case 'r':
 			flags |= MAGIC_RAW;
+			break;
 			break;
 		case 's':
 			flags |= MAGIC_DEVICES;
@@ -300,6 +321,8 @@ main(int argc, char *argv[])
 			    strerror(errno));
 			return 1;
 		}
+
+
 		switch(action) {
 		case FILE_CHECK:
 			c = magic_check(magic, magicfile);
@@ -323,7 +346,7 @@ main(int argc, char *argv[])
 		if (magic == NULL)
 			if ((magic = load(magicfile, flags)) == NULL)
 				return 1;
-		break;
+		applyparam(magic);
 	}
 
 	if (optind == argc) {
@@ -353,6 +376,41 @@ main(int argc, char *argv[])
 	return e;
 }
 
+private void
+applyparam(magic_t magic)
+{
+	size_t i;
+
+	for (i = 0; i < __arraycount(pm); i++) {
+		if (pm[i].value == 0)
+			continue;
+		if (magic_setparam(magic, pm[i].tag, &pm[i].value) == -1) {
+			(void)fprintf(stderr, "%s: Can't set %s %s\n", progname,
+				pm[i].name, strerror(errno));
+			exit(1);
+		}
+	}
+}
+
+private void
+setparam(const char *p)
+{
+	size_t i;
+	char *s;
+
+	if ((s = strchr(p, '=')) == NULL)
+		goto badparm;
+
+	for (i = 0; i < __arraycount(pm); i++) {
+		if (strncmp(p, pm[i].name, s - p) != 0)
+			continue;
+		pm[i].value = atoi(s + 1);
+		return;
+	}
+badparm:
+	(void)fprintf(stderr, "%s: Unknown param %s\n", progname, p);
+	exit(1);
+}
 
 private struct magic_set *
 /*ARGSUSED*/

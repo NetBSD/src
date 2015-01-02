@@ -1,4 +1,5 @@
-/*	$NetBSD: compress.c,v 1.1.1.7 2014/06/13 01:48:22 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.1.1.8 2015/01/02 20:34:27 christos Exp $	*/
+
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -37,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: compress.c,v 1.73 2014/01/05 15:55:21 christos Exp $")
+FILE_RCSID("@(#)$File: compress.c,v 1.77 2014/12/12 16:33:01 christos Exp $")
 #else
-__RCSID("$NetBSD: compress.c,v 1.1.1.7 2014/06/13 01:48:22 christos Exp $");
+__RCSID("$NetBSD: compress.c,v 1.1.1.8 2015/01/02 20:34:27 christos Exp $");
 #endif
 #endif
 
@@ -50,7 +51,8 @@ __RCSID("$NetBSD: compress.c,v 1.1.1.7 2014/06/13 01:48:22 christos Exp $");
 #endif
 #include <string.h>
 #include <errno.h>
-#ifndef __MINGW32__
+#include <signal.h>
+#if !defined(__MINGW32__) && !defined(WIN32)
 #include <sys/ioctl.h>
 #endif
 #ifdef HAVE_SYS_WAIT_H
@@ -108,10 +110,12 @@ file_zmagic(struct magic_set *ms, int fd, const char *name,
 	size_t i, nsz;
 	int rv = 0;
 	int mime = ms->flags & MAGIC_MIME;
+	sig_t osigpipe;
 
 	if ((ms->flags & MAGIC_COMPRESS) == 0)
 		return 0;
 
+	osigpipe = signal(SIGPIPE, SIG_IGN);
 	for (i = 0; i < ncompr; i++) {
 		if (nbytes < compr[i].maglen)
 			continue;
@@ -138,6 +142,7 @@ file_zmagic(struct magic_set *ms, int fd, const char *name,
 		}
 	}
 error:
+	(void)signal(SIGPIPE, osigpipe);
 	free(newbuf);
 	ms->flags |= MAGIC_COMPRESS;
 	return rv;
@@ -382,6 +387,7 @@ uncompressbuf(struct magic_set *ms, int fd, size_t method,
     const unsigned char *old, unsigned char **newch, size_t n)
 {
 	int fdin[2], fdout[2];
+	int status;
 	ssize_t r;
 	pid_t pid;
 
@@ -464,7 +470,17 @@ uncompressbuf(struct magic_set *ms, int fd, size_t method,
 				/*NOTREACHED*/
 
 			default:  /* parent */
-				break;
+				if (wait(&status) == -1) {
+#ifdef DEBUG
+					(void)fprintf(stderr,
+					    "Wait failed (%s)\n",
+					    strerror(errno));
+#endif
+					exit(1);
+				}
+				exit(WIFEXITED(status) ?
+				    WEXITSTATUS(status) : 1);
+				/*NOTREACHED*/
 			}
 			(void) close(fdin[1]);
 			fdin[1] = -1;
@@ -475,7 +491,7 @@ uncompressbuf(struct magic_set *ms, int fd, size_t method,
 			(void)fprintf(stderr, "Malloc failed (%s)\n",
 			    strerror(errno));
 #endif
-			n = 0;
+			n = NODATA;
 			goto err;
 		}
 		if ((r = sread(fdout[0], *newch, HOWMANY, 0)) <= 0) {
@@ -484,7 +500,7 @@ uncompressbuf(struct magic_set *ms, int fd, size_t method,
 			    strerror(errno));
 #endif
 			free(*newch);
-			n = 0;
+			n = NODATA;
 			*newch = NULL;
 			goto err;
 		} else {
@@ -496,12 +512,24 @@ err:
 		if (fdin[1] != -1)
 			(void) close(fdin[1]);
 		(void) close(fdout[0]);
-#ifdef WNOHANG
-		while (waitpid(pid, NULL, WNOHANG) != -1)
-			continue;
-#else
-		(void)wait(NULL);
+		if (wait(&status) == -1) {
+#ifdef DEBUG
+			(void)fprintf(stderr, "Wait failed (%s)\n",
+			    strerror(errno));
 #endif
+			n = NODATA;
+		} else if (!WIFEXITED(status)) {
+#ifdef DEBUG
+			(void)fprintf(stderr, "Child not exited (0x%x)\n",
+			    status);
+#endif
+		} else if (WEXITSTATUS(status) != 0) {
+#ifdef DEBUG
+			(void)fprintf(stderr, "Child exited (0x%d)\n",
+			    WEXITSTATUS(status));
+#endif
+		}
+
 		(void) close(fdin[0]);
 	    
 		return n;

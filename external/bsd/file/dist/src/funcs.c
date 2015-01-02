@@ -1,4 +1,5 @@
-/*	$NetBSD: funcs.c,v 1.1.1.7 2014/10/10 20:08:20 christos Exp $	*/
+/*	$NetBSD: funcs.c,v 1.1.1.8 2015/01/02 20:34:27 christos Exp $	*/
+
 /*
  * Copyright (c) Christos Zoulas 2003.
  * All Rights Reserved.
@@ -29,9 +30,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: funcs.c,v 1.73 2014/09/10 18:41:51 christos Exp $")
+FILE_RCSID("@(#)$File: funcs.c,v 1.79 2014/12/16 20:52:49 christos Exp $")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.1.1.7 2014/10/10 20:08:20 christos Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.1.1.8 2015/01/02 20:34:27 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -232,7 +233,7 @@ file_buffer(struct magic_set *ms, int fd, const char *inname __attribute__ ((unu
 
 	/* try soft magic tests */
 	if ((ms->flags & MAGIC_NO_CHECK_SOFT) == 0)
-		if ((m = file_softmagic(ms, ubuf, nb, 0, BINTEST,
+		if ((m = file_softmagic(ms, ubuf, nb, 0, NULL, BINTEST,
 		    looks_text)) != 0) {
 			if ((ms->flags & MAGIC_DEBUG) != 0)
 				(void)fprintf(stderr, "softmagic %d\n", m);
@@ -495,4 +496,69 @@ file_regerror(file_regex_t *rx, int rc, struct magic_set *ms)
 	(void)regerror(rc, &rx->rx, errmsg, sizeof(errmsg));
 	file_magerror(ms, "regex error %d for `%s', (%s)", rc, rx->pat,
 	    errmsg);
+}
+
+protected file_pushbuf_t *
+file_push_buffer(struct magic_set *ms)
+{
+	file_pushbuf_t *pb;
+
+	if (ms->event_flags & EVENT_HAD_ERR)
+		return NULL;
+
+	if ((pb = (CAST(file_pushbuf_t *, malloc(sizeof(*pb))))) == NULL)
+		return NULL;
+
+	pb->buf = ms->o.buf;
+	pb->offset = ms->offset;
+
+	ms->o.buf = NULL;
+	ms->offset = 0;
+
+	return pb;
+}
+
+protected char *
+file_pop_buffer(struct magic_set *ms, file_pushbuf_t *pb)
+{
+	char *rbuf;
+
+	if (ms->event_flags & EVENT_HAD_ERR) {
+		free(pb->buf);
+		free(pb);
+		return NULL;
+	}
+
+	rbuf = ms->o.buf;
+
+	ms->o.buf = pb->buf;
+	ms->offset = pb->offset;
+
+	free(pb);
+	return rbuf;
+}
+
+/*
+ * convert string to ascii printable format.
+ */
+protected char *
+file_printable(char *buf, size_t bufsiz, const char *str)
+{
+	char *ptr, *eptr;
+	const unsigned char *s = (const unsigned char *)str;
+
+	for (ptr = buf, eptr = ptr + bufsiz - 1; ptr < eptr && *s; s++) {
+		if (isprint(*s)) {
+			*ptr++ = *s;
+			continue;
+		}
+		if (ptr >= eptr - 3)
+			break;
+		*ptr++ = '\\';
+		*ptr++ = ((*s >> 6) & 7) + '0';
+		*ptr++ = ((*s >> 3) & 7) + '0';
+		*ptr++ = ((*s >> 0) & 7) + '0';
+	}
+	*ptr = '\0';
+	return buf;
 }

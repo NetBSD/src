@@ -1,4 +1,5 @@
-/*	$NetBSD: cdf.h,v 1.1.1.6 2014/10/10 20:08:20 christos Exp $	*/
+/*	$NetBSD: cdf.h,v 1.1.1.7 2015/01/02 20:34:27 christos Exp $	*/
+
 /*-
  * Copyright (c) 2008 Christos Zoulas
  * All rights reserved.

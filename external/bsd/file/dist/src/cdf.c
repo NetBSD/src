@@ -1,4 +1,5 @@
-/*	$NetBSD: cdf.c,v 1.1.1.8 2014/10/10 20:08:20 christos Exp $	*/
+/*	$NetBSD: cdf.c,v 1.1.1.9 2015/01/02 20:34:27 christos Exp $	*/
+
 /*-
  * Copyright (c) 2008 Christos Zoulas
  * All rights reserved.
@@ -37,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: cdf.c,v 1.67 2014/09/24 19:49:07 christos Exp $")
+FILE_RCSID("@(#)$File: cdf.c,v 1.69 2014/12/04 15:56:46 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf.c,v 1.1.1.8 2014/10/10 20:08:20 christos Exp $");
+__RCSID("$NetBSD: cdf.c,v 1.1.1.9 2015/01/02 20:34:27 christos Exp $");
 #endif
 #endif
 
@@ -468,6 +469,12 @@ cdf_count_chain(const cdf_sat_t *sat, cdf_secid_t sid, size_t size)
 	    / sizeof(maxsector));
 
 	DPRINTF(("Chain:"));
+	if (sid == CDF_SECID_END_OF_CHAIN) {
+		/* 0-length chain. */
+		DPRINTF((" empty\n"));
+		return 0;
+	}
+
 	for (j = i = 0; sid >= 0; i++, j++) {
 		DPRINTF((" %d", sid));
 		if (j >= CDF_LOOP_LIMIT) {
@@ -824,10 +831,11 @@ cdf_read_property_info(const cdf_stream_t *sst, const cdf_header_t *h,
 		goto out;
 	for (i = 0; i < sh.sh_properties; i++) {
 		size_t tail = (i << 1) + 1;
+		size_t ofs;
 		if (cdf_check_stream_offset(sst, h, p, tail * sizeof(uint32_t),
 		    __LINE__) == -1)
 			goto out;
-		size_t ofs = CDF_GETUINT32(p, tail);
+		ofs = CDF_GETUINT32(p, tail);
 		q = (const uint8_t *)(const void *)
 		    ((const char *)(const void *)p + ofs
 		    - 2 * sizeof(uint32_t));

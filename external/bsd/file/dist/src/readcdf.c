@@ -1,4 +1,5 @@
-/*	$NetBSD: readcdf.c,v 1.1.1.8 2014/10/10 20:08:20 christos Exp $	*/
+/*	$NetBSD: readcdf.c,v 1.1.1.9 2015/01/02 20:34:27 christos Exp $	*/
+
 /*-
  * Copyright (c) 2008 Christos Zoulas
  * All rights reserved.
@@ -28,9 +29,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: readcdf.c,v 1.48 2014/09/10 18:41:51 christos Exp $")
+FILE_RCSID("@(#)$File: readcdf.c,v 1.49 2014/12/04 15:56:46 christos Exp $")
 #else
-__RCSID("$NetBSD: readcdf.c,v 1.1.1.8 2014/10/10 20:08:20 christos Exp $");
+__RCSID("$NetBSD: readcdf.c,v 1.1.1.9 2015/01/02 20:34:27 christos Exp $");
 #endif
 #endif
 
@@ -77,7 +78,7 @@ static const struct cv {
 	const char *mime;
 } clsid2mime[] = {
 	{
-		{ 0x00000000000c1084LLU, 0x46000000000000c0LLU  },
+		{ 0x00000000000c1084ULL, 0x46000000000000c0ULL  },
 		"x-msi",
 	},
 	{	{ 0,			 0			},
@@ -85,7 +86,7 @@ static const struct cv {
 	},
 }, clsid2desc[] = {
 	{
-		{ 0x00000000000c1084LLU, 0x46000000000000c0LLU  },
+		{ 0x00000000000c1084ULL, 0x46000000000000c0ULL  },
 		"MSI Installer",
 	},
 	{	{ 0,			 0			},
@@ -339,11 +340,11 @@ private char *
 format_clsid(char *buf, size_t len, const uint64_t uuid[2]) {
 	snprintf(buf, len, "%.8" PRIx64 "-%.4" PRIx64 "-%.4" PRIx64 "-%.4" 
 	    PRIx64 "-%.12" PRIx64,
-	    (uuid[0] >> 32) & (uint64_t)0x000000000ffffffffLLU,
-	    (uuid[0] >> 16) & (uint64_t)0x0000000000000ffffLLU,
-	    (uuid[0] >>  0) & (uint64_t)0x0000000000000ffffLLU, 
-	    (uuid[1] >> 48) & (uint64_t)0x0000000000000ffffLLU,
-	    (uuid[1] >>  0) & (uint64_t)0x0000fffffffffffffLLU);
+	    (uuid[0] >> 32) & (uint64_t)0x000000000ffffffffULL,
+	    (uuid[0] >> 16) & (uint64_t)0x0000000000000ffffULL,
+	    (uuid[0] >>  0) & (uint64_t)0x0000000000000ffffULL, 
+	    (uuid[1] >> 48) & (uint64_t)0x0000000000000ffffULL,
+	    (uuid[1] >>  0) & (uint64_t)0x0000fffffffffffffULL);
 	return buf;
 }
 #endif
@@ -360,6 +361,7 @@ file_trycdf(struct magic_set *ms, int fd, const unsigned char *buf,
         int i;
         const char *expn = "";
         const char *corrupt = "corrupt: ";
+        const cdf_directory_t *root_storage;
 
         info.i_fd = fd;
         info.i_buf = buf;
@@ -393,7 +395,6 @@ file_trycdf(struct magic_set *ms, int fd, const unsigned char *buf,
                 goto out2;
         }
 
-        const cdf_directory_t *root_storage;
         if ((i = cdf_read_short_stream(&info, &h, &sat, &dir, &sst,
 	    &root_storage)) == -1) {
                 expn = "Cannot read short stream";
