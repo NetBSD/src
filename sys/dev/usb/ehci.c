@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.24 2015/01/02 07:57:18 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.25 2015/01/02 07:59:27 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.24 2015/01/02 07:57:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.25 2015/01/02 07:59:27 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3401,13 +3401,7 @@ ehci_device_ctrl_start(usbd_xfer_handle xfer)
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
-#ifdef DIAGNOSTIC
-	if (!(xfer->ux_rqflags & URQ_REQUEST)) {
-		/* XXX panic */
-		printf("ehci_device_ctrl_transfer: not a request\n");
-		return USBD_INVAL;
-	}
-#endif
+	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 
 	err = ehci_device_request(xfer);
 	if (err) {
@@ -3435,12 +3429,7 @@ ehci_device_ctrl_done(usbd_xfer_handle xfer)
 	USBHIST_LOG(ehcidebug, "xfer=%p", xfer, 0, 0, 0);
 
 	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
-
-#ifdef DIAGNOSTIC
-	if (!(xfer->ux_rqflags & URQ_REQUEST)) {
-		panic("ehci_ctrl_done: not a request");
-	}
-#endif
+	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 
 	if (xfer->ux_status != USBD_NOMEM && ehci_active_intr_list(ex)) {
 		ehci_del_intr_list(sc, ex);	/* remove from active list */
@@ -3700,10 +3689,7 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
-#ifdef DIAGNOSTIC
-	if (xfer->ux_rqflags & URQ_REQUEST)
-		panic("ehci_device_bulk_start: a request");
-#endif
+	KASSERT(!(xfer->ux_rqflags & URQ_REQUEST));
 
 	mutex_enter(&sc->sc_lock);
 
@@ -3890,10 +3876,7 @@ ehci_device_intr_start(usbd_xfer_handle xfer)
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
-#ifdef DIAGNOSTIC
-	if (xfer->ux_rqflags & URQ_REQUEST)
-		panic("ehci_device_intr_start: a request");
-#endif
+	KASSERT(!(xfer->ux_rqflags & URQ_REQUEST))
 
 	mutex_enter(&sc->sc_lock);
 
@@ -4121,10 +4104,9 @@ ehci_device_fs_isoc_start(usbd_xfer_handle xfer)
 		return USBD_INVAL;
 	}
 
-#ifdef DIAGNOSTIC
-	if (xfer->ux_rqflags & URQ_REQUEST)
-		panic("ehci_device_fs_isoc_start: request\n");
+	KASSERT(!(xfer->ux_rqflags & URQ_REQUEST));
 
+#ifdef DIAGNOSTIC
 	if (!exfer->ex_isdone)
 		printf("ehci_device_fs_isoc_start: not done, ex = %p\n", exfer);
 	exfer->ex_isdone = 0;
@@ -4439,10 +4421,9 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 		return USBD_INVAL;
 	}
 
-#ifdef DIAGNOSTIC
-	if (xfer->ux_rqflags & URQ_REQUEST)
-		panic("ehci_device_isoc_start: request\n");
+	KASSERT(!(xfer->ux_rqflags & URQ_REQUEST));
 
+#ifdef DIAGNOSTIC
 	if (!exfer->ex_isdone) {
 		USBHIST_LOG(ehcidebug, "marked not done, ex = %p", exfer,
 			0, 0, 0);
