@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv,v 1.10 2014/12/10 04:42:25 christos Exp $
+# $NetBSD: ad.riscv,v 1.11 2015/01/02 21:18:51 christos Exp $
 ./usr/lib/rv32/libcrypto_g.a					comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/rv32/libcrypto_rc5_g.a				comp-c-debuglib		compat,crypto,crypto_rc5,debuglib,arch64
 ./usr/lib/rv32/libdevmapper_g.a					comp-c-debuglib		compat,debuglib,lvm,arch64
@@ -103,7 +103,7 @@
 ./usr/libdata/debug/usr/lib/rv32/liblzf.so.1.0.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/liblzma.so.1.1.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libm.so.0.11.debug		comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/rv32/libmagic.so.5.0.debug		comp-sys-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/rv32/libmagic.so.5.1.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libmenu.so.6.0.debug		comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libmj.so.1.0.debug		comp-crypto-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libnetpgp.so.3.0.debug		comp-crypto-debug	crypto,debug,compat,arch64
