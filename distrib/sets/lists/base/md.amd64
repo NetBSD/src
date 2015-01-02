@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.255 2014/12/10 13:34:41 christos Exp $
+# $NetBSD: md.amd64,v 1.256 2015/01/02 21:18:51 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -207,7 +207,7 @@
 ./usr/lib/i386/libm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libm.so.0.11			base-compat-shlib	compat,pic
 ./usr/lib/i386/libmagic.so.5			base-compat-shlib	compat,pic
-./usr/lib/i386/libmagic.so.5.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libmagic.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libmenu.so.6			base-compat-shlib	compat,pic
 ./usr/lib/i386/libmenu.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libmj.so.1			base-compat-shlib	compat,pic,crypto
