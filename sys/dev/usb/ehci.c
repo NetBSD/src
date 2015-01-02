@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.25 2015/01/02 07:59:27 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.26 2015/01/02 08:43:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.25 2015/01/02 07:59:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.26 2015/01/02 08:43:06 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3876,7 +3876,7 @@ ehci_device_intr_start(usbd_xfer_handle xfer)
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
-	KASSERT(!(xfer->ux_rqflags & URQ_REQUEST))
+	KASSERT(!(xfer->ux_rqflags & URQ_REQUEST));
 
 	mutex_enter(&sc->sc_lock);
 
