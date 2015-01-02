@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.8 2015/01/01 18:59:03 jmcneill Exp $	*/
+/*	$NetBSD: obio.c,v 1.9 2015/01/02 21:59:29 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.8 2015/01/01 18:59:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.9 2015/01/02 21:59:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,6 +282,7 @@ obio_dump_clocks(void)
 	printf("CPU: %u Hz\n", rockchip_cpu_get_rate());
 	printf("AHB: %u Hz\n", rockchip_ahb_get_rate());
 	printf("APB: %u Hz\n", rockchip_apb_get_rate());
+	printf("PCLK_CPU: %u Hz\n", rockchip_pclk_cpu_get_rate());
 	printf("A9PERIPH: %u Hz\n", rockchip_a9periph_get_rate());
 }
 #endif

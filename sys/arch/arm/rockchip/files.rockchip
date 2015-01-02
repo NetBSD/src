@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.5 2014/12/30 18:57:36 jmcneill Exp $
+#	$NetBSD: files.rockchip,v 1.6 2015/01/02 21:59:29 jmcneill Exp $
 #
 # Configuration info for Rockchip ARM Peripherals
 #
@@ -12,6 +12,7 @@ file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
 
 file	arch/arm/rockchip/rockchip_board.c
+file	arch/arm/rockchip/rockchip_cpufreq.c
 file	arch/arm/rockchip/rockchip_space.c	obio
 #file	arch/arm/rockchip/rockchip_a4x_space.c	obio
 file	arch/arm/rockchip/rockchip_dma.c
