@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.67 2015/01/02 16:38:45 christos Exp $	*/
+/*	$NetBSD: umidi.c,v 1.68 2015/01/02 20:42:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.67 2015/01/02 16:38:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.68 2015/01/02 20:42:44 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -493,8 +493,6 @@ umidi_open(void *addr,
 	KASSERT(mutex_owned(&sc->sc_lock));
 	DPRINTF(("umidi_open: sc=%p\n", sc));
 
-	if (!sc)
-		return ENXIO;
 	if (mididev->opened)
 		return EBUSY;
 	if (sc->sc_dying)
