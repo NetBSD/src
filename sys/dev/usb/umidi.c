@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.66 2014/12/21 23:00:35 mrg Exp $	*/
+/*	$NetBSD: umidi.c,v 1.67 2015/01/02 16:38:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.66 2014/12/21 23:00:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.67 2015/01/02 16:38:45 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -386,9 +386,9 @@ umidi_attach(device_t parent, device_t self, void *aux)
 	}
 	err = attach_all_mididevs(sc);
 	if (err != USBD_NORMAL_COMPLETION) {
-		goto out_free_jacks;
 		aprint_error_dev(self,
 		    "attach_all_mididevs failed. (err=%d)\n", err);
+		goto out_free_jacks;
 	}
 
 #ifdef UMIDI_DEBUG
@@ -512,7 +512,8 @@ umidi_open(void *addr,
 		KASSERT(mididev->opened);
 		if (err != USBD_NORMAL_COMPLETION &&
 		    err != USBD_IN_PROGRESS) {
-			close_out_jack(mididev->out_jack);
+			if (mididev->out_jack)
+				close_out_jack(mididev->out_jack);
 			goto bad;
 		}
 	}
