@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.13 2015/01/02 00:50:56 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.14 2015/01/02 22:00:02 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.13 2015/01/02 00:50:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.14 2015/01/02 22:00:02 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -468,7 +468,6 @@ initarm(void *arg)
 {
 	psize_t ram_size = 0;
 	char *ptr;
-	u_int cpufreq;
 	*(volatile int *)CONSADDR_VA  = 0x40;	/* output '@' */
 #if 1
 	rockchip_putchar('d');
@@ -600,11 +599,6 @@ initarm(void *arg)
 		use_fb_console = true;
 	}
 
-	if (get_bootconf_option(boot_args, "cpu.frequency",
-		    BOOTOPT_TYPE_INT, &cpufreq)) {
-		rockchip_apll_set_rate(cpufreq * 1000000);
-	}
-
 	curcpu()->ci_data.cpu_cc_freq = rockchip_cpu_get_rate();
 
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
@@ -734,6 +728,10 @@ rockchip_device_register(device_t self, void *aux)
 		struct mainbus_attach_args * const mb = aux;
 		mb->mb_iot = &rockchip_bs_tag;
 		return;
+	}
+
+	if (device_is_a(self, "cpu") && device_unit(self) == 0) {
+		rockchip_cpufreq_init();
 	}
 
 #ifdef CPU_CORTEXA9 
