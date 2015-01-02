@@ -1,4 +1,5 @@
-/*	$NetBSD: ascmagic.c,v 1.1.1.6 2014/06/13 01:48:22 christos Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.1.1.7 2015/01/02 20:34:27 christos Exp $	*/
+
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -37,9 +38,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: ascmagic.c,v 1.88 2014/02/12 23:20:53 christos Exp $")
+FILE_RCSID("@(#)$File: ascmagic.c,v 1.91 2014/11/28 02:46:39 christos Exp $")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.1.1.6 2014/06/13 01:48:22 christos Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.1.1.7 2015/01/02 20:34:27 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -152,7 +153,8 @@ file_ascmagic_with_encoding(struct magic_set *ms, const unsigned char *buf,
 		    == NULL)
 			goto done;
 		if ((rv = file_softmagic(ms, utf8_buf,
-		    (size_t)(utf8_end - utf8_buf), 0, TEXTTEST, text)) == 0)
+		    (size_t)(utf8_end - utf8_buf), 0, NULL,
+		    TEXTTEST, text)) == 0)
 			rv = -1;
 	}
 
