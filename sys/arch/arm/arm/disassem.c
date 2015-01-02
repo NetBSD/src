@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.26 2015/01/02 10:03:42 skrll Exp $	*/
+/*	$NetBSD: disassem.c,v 1.27 2015/01/02 10:04:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.26 2015/01/02 10:03:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.27 2015/01/02 10:04:35 skrll Exp $");
 
 #include <sys/systm.h>
 
@@ -146,9 +146,9 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0fff0000, 0x092d0000, "push",	"l" },	/* separate out r13 base */
     { 0x0fff0000, 0x08bd0000, "pop",	"l" },	/* separate out r13 base */
     { 0x0e1f0000, 0x080d0000, "stm",	"YnWl" },/* separate out r13 base */
-    { 0x0e1f0000, 0x081d0000, "ldm",	"YnWl" },/* separate out r13 base */    
+    { 0x0e1f0000, 0x081d0000, "ldm",	"YnWl" },/* separate out r13 base */
     { 0x0e100000, 0x08000000, "stm",	"XnWl" },
-    { 0x0e100000, 0x08100000, "ldm",	"XnWl" },    
+    { 0x0e100000, 0x08100000, "ldm",	"XnWl" },
     { 0x0ff00fff, 0x01900f9f, "ldrex",	"da" },
     { 0x0ff00fff, 0x01b00f9f, "ldrexd",	"da" },
     { 0x0ff00fff, 0x01d00f9f, "ldrexb",	"da" },
@@ -384,7 +384,7 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 				di->di_printf("#0x%08x",
 					      (insn & 0xff) << (32 - rotate) |
 					      (insn & 0xff) >> rotate);
-			} else {  
+			} else {
 				disasm_register_shift(di, insn);
 			}
 			break;
