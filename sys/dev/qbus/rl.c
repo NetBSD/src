@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.48 2014/12/31 19:52:06 christos Exp $	*/
+/*	$NetBSD: rl.c,v 1.49 2015/01/02 19:42:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.48 2014/12/31 19:52:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.49 2015/01/02 19:42:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -294,7 +294,7 @@ rlattach(device_t parent, device_t self, void *aux)
 	dl->d_bbsize = BBSIZE;
 	dl->d_sbsize = SBLOCKSIZE;
 	dl->d_rpm = 2400;
-	dl->d_type = DTYPE_DEC;
+	dl->d_type = DKTYPE_DEC;
 	printf(": %s, %s\n", dl->d_typename, rlstate(rc->rc_rlc, ra->hwid));
 
 	/*

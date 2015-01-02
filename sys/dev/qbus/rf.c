@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.30 2014/12/31 19:52:06 christos Exp $	*/
+/*	$NetBSD: rf.c,v 1.31 2015/01/02 19:42:07 christos Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.30 2014/12/31 19:52:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.31 2015/01/02 19:42:07 christos Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -460,7 +460,7 @@ rf_attach(device_t parent, device_t self, void *aux)
 	disk_init(&rf_sc->sc_disk, device_xname(rf_sc->sc_dev), &rfdkdriver);
 	disk_attach(&rf_sc->sc_disk);
 	dl = rf_sc->sc_disk.dk_label;
-	dl->d_type = DTYPE_FLOPPY;		/* drive type */
+	dl->d_type = DKTYPE_FLOPPY;		/* drive type */
 	dl->d_magic = DISKMAGIC;		/* the magic number */
 	dl->d_magic2 = DISKMAGIC;
 	dl->d_typename[0] = 'R';
