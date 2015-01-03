@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.15 2015/01/03 13:28:00 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.16 2015/01/03 16:15:25 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.15 2015/01/03 13:28:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.16 2015/01/03 16:15:25 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -760,7 +760,7 @@ rockchip_device_register(device_t self, void *aux)
 		struct act8846_ctrl *ctrl = act8846_lookup(pmic, "DCDC4");
 		if (ctrl == NULL)
 			return;
-		int error = act8846_set_voltage(ctrl, 3300, 3300);
+		act8846_set_voltage(ctrl, 3300, 3300);
 #endif
 		return;
 	}
