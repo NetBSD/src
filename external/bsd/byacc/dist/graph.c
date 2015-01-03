@@ -1,6 +1,6 @@
-/*	$NetBSD: graph.c,v 1.1.1.4 2013/04/06 14:45:26 christos Exp $	*/
+/*	$NetBSD: graph.c,v 1.1.1.5 2015/01/03 22:58:23 christos Exp $	*/
 
-/* Id: graph.c,v 1.7 2009/10/27 09:25:20 tom Exp  */
+/* Id: graph.c,v 1.8 2014/02/19 00:46:57 Tom.Shields Exp  */
 
 #include "defs.h"
 
@@ -53,10 +53,10 @@ graph(void)
 static void
 graph_state(int stateno)
 {
-    short *isp;
+    Value_t *isp;
     int rule;
-    short *sp;
-    short *sp1;
+    Value_t *sp;
+    Value_t *sp1;
 
     larno = (unsigned)lookaheads[stateno];
     fprintf(graph_file, "\n\tq%d [label=\"%d:\\l", stateno, stateno);
