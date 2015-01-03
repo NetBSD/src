@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.312 2014/08/25 18:44:02 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.313 2015/01/03 17:23:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.312 2014/08/25 18:44:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.313 2015/01/03 17:23:51 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -101,11 +101,6 @@ int rump_threads = 0;
 int rump_threads = 1;
 #endif
 
-static int rump_hyp_syscall(int, void *, long *);
-static int rump_hyp_rfork(void *, int, const char *);
-static void rump_hyp_lwpexit(void);
-static void rump_hyp_execnotify(const char *);
-
 static void rump_component_addlocal(void);
 static struct lwp *bootlwp;
 
@@ -154,14 +149,6 @@ mksysctls(void)
 	    CTL_HW, HW_PAGESIZE, CTL_EOL);
 }
 
-/* there's no convenient kernel entry point for this, so just craft out own */
-static pid_t
-spgetpid(void)
-{
-
-	return curproc->p_pid;
-}
-
 static const struct rumpuser_hyperup hyp = {
 	.hyp_schedule		= rump_schedule,
 	.hyp_unschedule		= rump_unschedule,
@@ -169,13 +156,13 @@ static const struct rumpuser_hyperup hyp = {
 	.hyp_backend_schedule	= rump_user_schedule,
 	.hyp_lwproc_switch	= rump_lwproc_switch,
 	.hyp_lwproc_release	= rump_lwproc_releaselwp,
-	.hyp_lwproc_rfork	= rump_hyp_rfork,
+	.hyp_lwproc_rfork	= rump_sysproxy_hyp_rfork,
 	.hyp_lwproc_newlwp	= rump_lwproc_newlwp,
 	.hyp_lwproc_curlwp	= rump_lwproc_curlwp,
-	.hyp_lwpexit		= rump_hyp_lwpexit,
-	.hyp_syscall		= rump_hyp_syscall,
-	.hyp_execnotify		= rump_hyp_execnotify,
-	.hyp_getpid		= spgetpid,
+	.hyp_lwpexit		= rump_sysproxy_hyp_lwpexit,
+	.hyp_syscall		= rump_sysproxy_hyp_syscall,
+	.hyp_execnotify		= rump_sysproxy_hyp_execnotify,
+	.hyp_getpid		= rump_sysproxy_hyp_getpid,
 };
 
 int
@@ -476,13 +463,6 @@ rump_init(void)
 /* historic compat */
 __strong_alias(rump__init,rump_init);
 
-int
-rump_init_server(const char *url)
-{
-
-	return rumpuser_sp_init(url, ostype, osrelease, MACHINE);
-}
-
 static int compcounter[RUMP_COMPONENT_MAX];
 static int compinited[RUMP_COMPONENT_MAX];
 
@@ -628,141 +608,6 @@ rump_kernelfsym_load(void *symtab, uint64_t symsize,
 	ksyms_addsyms_explicit(&ehdr, symtab, symsize, strtab, strsize);
 
 	return 0;
-}
-
-static int
-rump_hyp_syscall(int num, void *arg, long *retval)
-{
-	register_t regrv[2] = {0, 0};
-	struct lwp *l;
-	struct sysent *callp;
-	int rv;
-
-	if (__predict_false(num >= SYS_NSYSENT))
-		return ENOSYS;
-
-	/* XXX: always uses native syscall vector */
-	callp = rump_sysent + num;
-	l = curlwp;
-	rv = sy_invoke(callp, l, (void *)arg, regrv, num);
-	retval[0] = regrv[0];
-	retval[1] = regrv[1];
-
-	return rv;
-}
-
-static int
-rump_hyp_rfork(void *priv, int flags, const char *comm)
-{
-	struct vmspace *newspace;
-	struct proc *p;
-	struct lwp *l;
-	int error;
-	bool initfds;
-
-	/*
-	 * If we are forking off of pid 1, initialize file descriptors.
-	 */
-	l = curlwp;
-	if (l->l_proc->p_pid == 1) {
-		KASSERT(flags == RUMP_RFFD_CLEAR);
-		initfds = true;
-	} else {
-		initfds = false;
-	}
-
-	if ((error = rump_lwproc_rfork(flags)) != 0)
-		return error;
-
-	/*
-	 * We forked in this routine, so cannot use curlwp (const)
-	 */
-	l = rump_lwproc_curlwp();
-	p = l->l_proc;
-
-	/*
-	 * Since it's a proxy proc, adjust the vmspace.
-	 * Refcount will eternally be 1.
-	 */
-	newspace = kmem_zalloc(sizeof(*newspace), KM_SLEEP);
-	newspace->vm_refcnt = 1;
-	newspace->vm_map.pmap = priv;
-	KASSERT(p->p_vmspace == vmspace_kernel());
-	p->p_vmspace = newspace;
-	if (comm)
-		strlcpy(p->p_comm, comm, sizeof(p->p_comm));
-	if (initfds)
-		rump_consdev_init();
-
-	return 0;
-}
-
-/*
- * Order all lwps in a process to exit.  does *not* wait for them to drain.
- */
-static void
-rump_hyp_lwpexit(void)
-{
-	struct proc *p = curproc;
-	uint64_t where;
-	struct lwp *l;
-
-	mutex_enter(p->p_lock);
-	/*
-	 * First pass: mark all lwps in the process with LW_RUMP_QEXIT
-	 * so that they know they should exit.
-	 */
-	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-		if (l == curlwp)
-			continue;
-		l->l_flag |= LW_RUMP_QEXIT;
-	}
-	mutex_exit(p->p_lock);
-
-	/*
-	 * Next, make sure everyone on all CPUs sees our status
-	 * update.  This keeps threads inside cv_wait() and makes
-	 * sure we don't access a stale cv pointer later when
-	 * we wake up the threads.
-	 */
-
-	where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-	xc_wait(where);
-
-	/*
-	 * Ok, all lwps are either:
-	 *  1) not in the cv code
-	 *  2) sleeping on l->l_private
-	 *  3) sleeping on p->p_waitcv
-	 *
-	 * Either way, l_private is stable until we set PS_RUMP_LWPEXIT
-	 * in p->p_sflag.
-	 */
-
-	mutex_enter(p->p_lock);
-	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-		if (l->l_private)
-			cv_broadcast(l->l_private);
-	}
-	p->p_sflag |= PS_RUMP_LWPEXIT;
-	cv_broadcast(&p->p_waitcv);
-	mutex_exit(p->p_lock);
-}
-
-/*
- * Notify process that all threads have been drained and exec is complete.
- */
-static void
-rump_hyp_execnotify(const char *comm)
-{
-	struct proc *p = curproc;
-
-	fd_closeexec();
-	mutex_enter(p->p_lock);
-	KASSERT(p->p_nlwps == 1 && p->p_sflag & PS_RUMP_LWPEXIT);
-	p->p_sflag &= ~PS_RUMP_LWPEXIT;
-	mutex_exit(p->p_lock);
-	strlcpy(p->p_comm, comm, sizeof(p->p_comm));
 }
 
 int
