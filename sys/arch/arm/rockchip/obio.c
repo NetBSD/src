@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.10 2015/01/02 23:23:17 jmcneill Exp $	*/
+/*	$NetBSD: obio.c,v 1.11 2015/01/03 13:26:31 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.10 2015/01/02 23:23:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.11 2015/01/03 13:26:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +101,11 @@ obio_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * Attach all on-board devices as described in the kernel
-	 * configuration file.
+	 * configuration file. Attach devices marked "crit 1" first.
 	 */
-	config_search_ia(obio_search, self, "obio", NULL);
+	for (int crit = 1; crit >= 0; crit--) {
+		config_search_ia(obio_search, self, "obio", &crit);
+	}
 }
 
 int
@@ -131,6 +133,10 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct obio_attach_args obio;
 	bus_addr_t addr = cf->cf_loc[OBIOCF_ADDR];
+	int crit = *(int *)aux;
+
+	if (cf->cf_loc[OBIOCF_CRIT] != crit)
+		return 0;
 
 	if (addr >= ROCKCHIP_CORE0_BASE &&
 	    addr < ROCKCHIP_CORE0_BASE + ROCKCHIP_CORE0_SIZE) {
