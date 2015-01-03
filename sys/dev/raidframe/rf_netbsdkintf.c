@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.321 2015/01/02 19:42:07 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.322 2015/01/03 11:48:04 prlw1 Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.321 2015/01/02 19:42:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.322 2015/01/03 11:48:04 prlw1 Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2279,8 +2279,9 @@ KernelWakeupFunc(struct buf *bp)
 		      rf_ds_used_spare)) && 
 		     (queue->raidPtr->numFailures <
 		      queue->raidPtr->Layout.map->faultsTolerated)) {
-			printf("raid%d: IO Error.  Marking %s as failed.\n",
+			printf("raid%d: IO Error (%d). Marking %s as failed.\n",
 			       queue->raidPtr->raidid,
+			       bp->b_error,
 			       queue->raidPtr->Disks[queue->col].devname);
 			queue->raidPtr->Disks[queue->col].status =
 			    rf_ds_failed;
