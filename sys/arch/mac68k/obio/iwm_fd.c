@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.54 2015/01/02 19:42:05 christos Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.55 2015/01/03 16:44:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.54 2015/01/02 19:42:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.55 2015/01/03 16:44:14 christos Exp $");
 
 #include "locators.h"
 
@@ -721,7 +721,7 @@ fdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	fd = iwm->fd[fdUnit];
 	result = 0;
 
-	error = disk_ioctl(&fd->diskIndfo, fdType, cmd, data, flag, l);
+	error = disk_ioctl(&fd->diskInfo, fdType, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 
