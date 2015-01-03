@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.131 2015/01/01 16:02:50 hannken Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.132 2015/01/03 16:30:32 hannken Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.131 2015/01/01 16:02:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.132 2015/01/03 16:30:32 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -486,7 +486,7 @@ etfsremove(const char *key)
 			mp = NULL;
 		}
 		mutex_exit(&reclock);
-		if (mp && vcache_get(mp, rn, sizeof(rn), &vp) == 0)
+		if (mp && vcache_get(mp, &rn, sizeof(rn), &vp) == 0)
 			vgone(vp);
 	}
 
@@ -1588,7 +1588,7 @@ rump_vop_reclaim(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct rumpfs_node *rn = vp->v_data;
 
-	vcache_remove(vp->v_mount, &vp->v_data, sizeof(vp->v_data));
+	vcache_remove(vp->v_mount, &rn, sizeof(rn));
 	mutex_enter(&reclock);
 	rn->rn_vp = NULL;
 	mutex_exit(&reclock);
