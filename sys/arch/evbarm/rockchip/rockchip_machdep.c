@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.14 2015/01/02 22:00:02 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.15 2015/01/03 13:28:00 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.14 2015/01/02 22:00:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.15 2015/01/03 13:28:00 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -751,6 +751,19 @@ rockchip_device_register(device_t self, void *aux)
 		return;
 	}
 #endif
+
+	if (device_is_a(self, "dwcmmc") && device_unit(self) == 0) {
+#if NACT8846PM > 0
+		device_t pmic = device_find_by_driver_unit("act8846pm", 0);
+		if (pmic == NULL)
+			return;
+		struct act8846_ctrl *ctrl = act8846_lookup(pmic, "DCDC4");
+		if (ctrl == NULL)
+			return;
+		int error = act8846_set_voltage(ctrl, 3300, 3300);
+#endif
+		return;
+	}
 
 	if (device_is_a(self, "ithdmi")) {
 #if NACT8846PM > 0
