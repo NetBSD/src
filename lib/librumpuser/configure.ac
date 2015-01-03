@@ -19,7 +19,7 @@ AC_LANG([C])
 
 AC_SYS_LARGEFILE
 
-AC_CHECK_HEADERS([sys/cdefs.h sys/param.h sys/sysctl.h sys/disk.h \
+AC_CHECK_HEADERS([sys/param.h sys/sysctl.h sys/disk.h \
 	sys/disklabel.h sys/dkio.h sys/atomic.h paths.h])
 
 AC_CANONICAL_TARGET
@@ -52,6 +52,11 @@ dnl pthread_setname() sillyness is a bit longer; we need the signature
 dnl
 SAVE_CFLAGS="${CFLAGS}"
 CFLAGS="${SAVE_CFLAGS} -Werror"
+
+dnl check sys/cdefs.h creatively to process only with cc, not cpp
+dnl (sys/cdefs.h in at least in musl contains a #warning)
+AC_CHECK_HEADERS([sys/cdefs.h], [], [], [#include <sys/cdefs.h>])
+
 SAVE_LIBS="${LIBS}"
 LIBS="${LIBS} -lpthread"
 AC_MSG_CHECKING([for two-argument pthread_setname_np()])

@@ -3646,7 +3646,7 @@ fi
 done
 
 
-for ac_header in sys/cdefs.h sys/param.h sys/sysctl.h sys/disk.h \
+for ac_header in sys/param.h sys/sysctl.h sys/disk.h \
 	sys/disklabel.h sys/dkio.h sys/atomic.h paths.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
@@ -4096,6 +4096,21 @@ fi
 
 SAVE_CFLAGS="${CFLAGS}"
 CFLAGS="${SAVE_CFLAGS} -Werror"
+
+for ac_header in sys/cdefs.h
+do :
+  ac_fn_c_check_header_compile "$LINENO" "sys/cdefs.h" "ac_cv_header_sys_cdefs_h" "#include <sys/cdefs.h>
+"
+if test "x$ac_cv_header_sys_cdefs_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_SYS_CDEFS_H 1
+_ACEOF
+
+fi
+
+done
+
+
 SAVE_LIBS="${LIBS}"
 LIBS="${LIBS} -lpthread"
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for two-argument pthread_setname_np()" >&5
