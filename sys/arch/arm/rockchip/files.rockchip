@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.7 2015/01/02 23:20:18 jmcneill Exp $
+#	$NetBSD: files.rockchip,v 1.8 2015/01/03 13:26:31 jmcneill Exp $
 #
 # Configuration info for Rockchip ARM Peripherals
 #
@@ -19,7 +19,7 @@ file	arch/arm/rockchip/rockchip_dma.c
 file	arch/arm/arm/bus_space_a4x.S		obio
 
 # On-board I/O
-device obio {[addr = -1], [size = -1], [width = -1], [intr = -1], [mult = 1], [port = -1]}: bus_space_generic
+device obio {[addr = -1], [size = -1], [width = -1], [intr = -1], [mult = 1], [port = -1], [crit = 0]}: bus_space_generic
 attach obio at mainbus
 file arch/arm/rockchip/obio.c		obio
 
