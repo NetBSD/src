@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.3 2014/09/30 07:34:50 apb Exp $
+$NetBSD: README,v 1.4 2015/01/03 13:20:11 apb Exp $
 
 Notes for NetBSD src/tools
 
@@ -28,12 +28,20 @@ Portability
 Programs that are built as tools need to be more portable than other
 parts of NetBSD, because they will need to run on the host platform.
 
-Tools should restrict themselves to C language features that are defined
-in C89 (ISO 9899-1989); they should avoid using C99 features.
+Most tools should restrict themselves to C language features that are
+defined in C89 (ISO 9899-1989); they should avoid using C99 language
+features.  There are a few tools, such as compilers, where it is not
+practical for the C89 restriction to be maintained.  There are also a
+few features, such as the long long data type, that are used by many
+tools despite not being defined in C89.
 
-Tools may library features defined in C89 and in POSIX (IEEE Std 1003.1)
-(XXX year?), and features that are provided by the src/tools/compat
-framework described below.
+Tools may use library features such as functions, macros, and
+types, that are defined in C89 and in POSIX (IEEE Std 1003.1) (XXX
+year?), and features that are provided by the compatibility framework
+(src/tools/compat) described in a separate section below.  This is
+usually not an onerous burden, because many C99 library features, and
+NetBSD-specific features, are already provided by src/tools/compat, or
+can be added when the need for them becomes apparent.
 
 If a tool attempts to use a feature that is not available on the host
 platform, then the tools build will fail.  This can be addressed by
@@ -137,4 +145,3 @@ the program can use code like this:
        ... code to be used when FEATURE X is not desired,
        ... e.g. when being built as a tool.
     #endif
-
