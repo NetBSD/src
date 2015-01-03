@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.145 2015/01/02 20:59:14 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.146 2015/01/03 05:53:44 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -6953,4 +6953,9 @@ sys/dev/usb/xhcireg.h				1.2
 	Correct status stage TRB in xhci_device_ctrl_start - direction
 	logic was wrong.
 	[skrll, ticket #372]
+
+sys/arch/evbarm/awin/awin_machdep.c		1.35, 1.37
+
+	Fix gmac on BananaPI by using pinset-func 3.
+	[martin, ticket #376]
 
