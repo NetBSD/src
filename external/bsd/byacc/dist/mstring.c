@@ -1,6 +1,12 @@
-/*	$NetBSD: mstring.c,v 1.1.1.1 2015/01/03 22:58:23 christos Exp $	*/
+/*	$NetBSD: mstring.c,v 1.2 2015/01/03 23:22:52 christos Exp $	*/
 
 /* Id: mstring.c,v 1.6 2014/04/22 23:36:31 tom Exp  */
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mstring.c,v 1.2 2015/01/03 23:22:52 christos Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
