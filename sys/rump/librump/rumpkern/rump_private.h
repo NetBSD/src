@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.85 2014/04/27 16:28:21 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.86 2015/01/03 17:23:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -186,5 +186,19 @@ void	rump_hyperentropy_init(void);
 void	rump_lwproc_init(void);
 void	rump_lwproc_curlwp_set(struct lwp *);
 void	rump_lwproc_curlwp_clear(struct lwp *);
+
+/* in-kernel sysproxy bouncers */
+int	rump_sysproxy_copyin(void *, const void *, void *, size_t);
+int	rump_sysproxy_copyinstr(void *, const void *, void *, size_t *);
+int	rump_sysproxy_copyout(void *, const void *, void *, size_t);
+int	rump_sysproxy_copyoutstr(void *, const void *, void *, size_t *);
+int	rump_sysproxy_anonmmap(void *, size_t, void **);
+int	rump_sysproxy_raise(void *, int);
+void	rump_sysproxy_fini(void *);
+pid_t	rump_sysproxy_hyp_getpid(void);
+int	rump_sysproxy_hyp_syscall(int, void *, long *);
+int	rump_sysproxy_hyp_rfork(void *, int, const char *);
+void	rump_sysproxy_hyp_lwpexit(void);
+void	rump_sysproxy_hyp_execnotify(const char *);
 
 #endif /* _SYS_RUMP_PRIVATE_H_ */
