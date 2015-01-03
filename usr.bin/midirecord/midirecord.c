@@ -1,4 +1,4 @@
-/*	$NetBSD: midirecord.c,v 1.5 2015/01/01 04:57:01 christos Exp $	*/
+/*	$NetBSD: midirecord.c,v 1.6 2015/01/03 22:57:54 joerg Exp $	*/
 
 /*
  * Copyright (c) 2014 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midirecord.c,v 1.5 2015/01/01 04:57:01 christos Exp $");
+__RCSID("$NetBSD: midirecord.c,v 1.6 2015/01/03 22:57:54 joerg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -75,7 +75,8 @@ static int	tempo = 120;
 static unsigned	notes_per_beat = 24;
 static bool ignore_timer_fail = false;
 
-static void debug_log(const char *, size_t, const char *, ...);
+static void debug_log(const char *, size_t, const char *, ...)
+    __printflike(3, 4);
 static size_t midi_event_local_to_output(seq_event_t, u_char *, size_t);
 static size_t midi_event_timer_wait_abs_to_output(seq_event_t, u_char *,
 						  size_t);
