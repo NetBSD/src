@@ -1,11 +1,11 @@
-/*	$NetBSD: output.c,v 1.13 2015/01/04 18:52:04 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.14 2015/01/04 20:32:03 christos Exp $	*/
 
 /* Id: output.c,v 1.74 2014/10/05 23:21:09 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.13 2015/01/04 18:52:04 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.14 2015/01/04 20:32:03 christos Exp $");
 
 #define StaticOrR	(rflag ? "" : "static ")
 #define CountLine(fp)   (!rflag || ((fp) == code_file))
@@ -334,6 +334,8 @@ output_accessing_symbols(void)
 	    translate[i] = symbol_pval[gsymb];
 	}
 
+	putl_code(output_file,
+	    "#if defined(YYDESTRUCT_CALL) || defined(YYSTYPE_TOSTRING)\n");
 	/* yystos[] may be unused, depending on compile-time defines */
 	start_int_table("stos", translate[0]);
 
@@ -353,6 +355,8 @@ output_accessing_symbols(void)
 
 	end_table();
 	FREE(translate);
+	putl_code(output_file,
+	    "#endif /* YYDESTRUCT_CALL || YYSTYPE_TOSTRING */\n");
     }
 }
 
