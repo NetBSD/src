@@ -1,11 +1,11 @@
-/*	$NetBSD: reader.c,v 1.10 2015/01/03 23:22:52 christos Exp $	*/
+/*	$NetBSD: reader.c,v 1.11 2015/01/04 01:34:20 christos Exp $	*/
 
 /* Id: reader.c,v 1.58 2014/10/06 22:15:08 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reader.c,v 1.10 2015/01/03 23:22:52 christos Exp $");
+__RCSID("$NetBSD: reader.c,v 1.11 2015/01/04 01:34:20 christos Exp $");
 
 /*  The line size must be a positive integer.  One hundred was chosen	*/
 /*  because few lines in Yacc input grammars exceed 100 characters.	*/
@@ -27,6 +27,7 @@ __RCSID("$NetBSD: reader.c,v 1.10 2015/01/03 23:22:52 christos Exp $");
 
 static void start_rule(bucket *bp, int s_lineno);
 #if defined(YYBTYACC)
+static void copy_initial_action(void);
 static void copy_destructor(void);
 static char *process_destructor_XX(char *code, char *tag);
 #endif
@@ -186,10 +187,10 @@ static void
 skip_comment(void)
 {
     char *s;
-
-    int st_lineno = lineno;
-    char *st_line = dup_line();
-    char *st_cptr = st_line + (cptr - line);
+    struct ainfo a;
+    a.a_lineno = lineno;
+    a.a_line = dup_line();
+    a.a_cptr = a.a_line + (cptr - line);
 
     s = cptr + 2;
     for (;;)
@@ -197,14 +198,14 @@ skip_comment(void)
 	if (*s == '*' && s[1] == '/')
 	{
 	    cptr = s + 2;
-	    FREE(st_line);
+	    FREE(a.a_line);
 	    return;
 	}
 	if (*s == '\n')
 	{
 	    get_line();
 	    if (line == 0)
-		unterminated_comment(st_lineno, st_line, st_cptr);
+		unterminated_comment(&a);
 	    s = cptr;
 	}
 	else
@@ -291,17 +292,22 @@ nextc(void)
 /* *INDENT-OFF* */
 static struct keyword
 {
-    char name[13];
+    char name[14];
     int token;
 }
 keywords[] = {
     { "binary",      NONASSOC },
+    { "debug",	     XXXDEBUG },
 #if defined(YYBTYACC)
     { "destructor",  DESTRUCTOR },
 #endif
+    { "error-verbose",ERROR_VERBOSE },
     { "expect",      EXPECT },
     { "expect-rr",   EXPECT_RR },
     { "ident",       IDENT }, 
+#if defined(YYBTYACC)
+    { "initial-action", INITIAL_ACTION },
+#endif
     { "left",        LEFT },
     { "lex-param",   LEX_PARAM },
 #if defined(YYBTYACC)
@@ -429,9 +435,10 @@ copy_string(int quote)
 {
     struct mstring *temp = msnew();
     int c;
-    int s_lineno = lineno;
-    char *s_line = dup_line();
-    char *s_cptr = s_line + (cptr - line - 1);
+    struct ainfo a;
+    a.a_lineno = lineno;
+    a.a_line = dup_line();
+    a.a_cptr = a.a_line + (cptr - line - 1);
 
     for (;;)
     {
@@ -439,11 +446,11 @@ copy_string(int quote)
 	mputc(temp, c);
 	if (c == quote)
 	{
-	    FREE(s_line);
+	    FREE(a.a_line);
 	    return msdone(temp);
 	}
 	if (c == '\n')
-	    unterminated_string(s_lineno, s_line, s_cptr);
+	    unterminated_string(&a);
 	if (c == '\\')
 	{
 	    c = *cptr++;
@@ -452,7 +459,7 @@ copy_string(int quote)
 	    {
 		get_line();
 		if (line == 0)
-		    unterminated_string(s_lineno, s_line, s_cptr);
+		    unterminated_string(&a);
 	    }
 	}
     }
@@ -479,9 +486,10 @@ copy_comment(void)
     }
     else if (c == '*')
     {
-	int c_lineno = lineno;
-	char *c_line = dup_line();
-	char *c_cptr = c_line + (cptr - line - 1);
+	struct ainfo a;
+	a.a_lineno = lineno;
+	a.a_line = dup_line();
+	a.a_cptr = a.a_line + (cptr - line - 1);
 
 	mputc(temp, c);
 	++cptr;
@@ -493,14 +501,14 @@ copy_comment(void)
 	    {
 		mputc(temp, '/');
 		++cptr;
-		FREE(c_line);
+		FREE(a.a_line);
 		return msdone(temp);
 	    }
 	    if (c == '\n')
 	    {
 		get_line();
 		if (line == 0)
-		    unterminated_comment(c_lineno, c_line, c_cptr);
+		    unterminated_comment(&a);
 	    }
 	}
     }
@@ -513,15 +521,16 @@ copy_text(void)
     int c;
     FILE *f = text_file;
     int need_newline = 0;
-    int t_lineno = lineno;
-    char *t_line = dup_line();
-    char *t_cptr = t_line + (cptr - line - 2);
+    struct ainfo a;
+    a.a_lineno = lineno;
+    a.a_line = dup_line();
+    a.a_cptr = a.a_line + (cptr - line - 2);
 
     if (*cptr == '\n')
     {
 	get_line();
 	if (line == 0)
-	    unterminated_text(t_lineno, t_line, t_cptr);
+	    unterminated_text(&a);
     }
     if (!lflag)
 	fprintf(f, line_format, lineno, input_file_name);
@@ -536,7 +545,7 @@ copy_text(void)
 	get_line();
 	if (line)
 	    goto loop;
-	unterminated_text(t_lineno, t_line, t_cptr);
+	unterminated_text(&a);
 
     case '\'':
     case '"':
@@ -566,7 +575,7 @@ copy_text(void)
 	    if (need_newline)
 		putc('\n', f);
 	    ++cptr;
-	    FREE(t_line);
+	    FREE(a.a_line);
 	    return;
 	}
 	/* FALLTHRU */
@@ -599,9 +608,10 @@ copy_union(void)
 {
     int c;
     int depth;
-    int u_lineno = lineno;
-    char *u_line = dup_line();
-    char *u_cptr = u_line + (cptr - line - 6);
+    struct ainfo a;
+    a.a_lineno = lineno;
+    a.a_line = dup_line();
+    a.a_cptr = a.a_line + (cptr - line - 6);
 
     if (unionized)
 	over_unionized(cptr - 6);
@@ -627,7 +637,7 @@ copy_union(void)
     case '\n':
 	get_line();
 	if (line == 0)
-	    unterminated_union(u_lineno, u_line, u_cptr);
+	    unterminated_union(&a);
 	goto loop;
 
     case L_CURL:
@@ -639,7 +649,7 @@ copy_union(void)
 	{
 	    puts_both(" YYSTYPE;\n");
 	    puts_both("#endif /* !YYSTYPE_IS_DECLARED */\n");
-	    FREE(u_line);
+	    FREE(a.a_line);
 	    return;
 	}
 	goto loop;
@@ -975,9 +985,10 @@ get_literal(void)
     int n;
     char *s;
     bucket *bp;
-    int s_lineno = lineno;
-    char *s_line = dup_line();
-    char *s_cptr = s_line + (cptr - line);
+    struct ainfo a;
+    a.a_lineno = lineno;
+    a.a_line = dup_line();
+    a.a_cptr = a.a_line + (cptr - line);
 
     quote = *cptr++;
     cinc = 0;
@@ -987,7 +998,7 @@ get_literal(void)
 	if (c == quote)
 	    break;
 	if (c == '\n')
-	    unterminated_string(s_lineno, s_line, s_cptr);
+	    unterminated_string(&a);
 	if (c == '\\')
 	{
 	    char *c_cptr = cptr - 1;
@@ -998,7 +1009,7 @@ get_literal(void)
 	    case '\n':
 		get_line();
 		if (line == 0)
-		    unterminated_string(s_lineno, s_line, s_cptr);
+		    unterminated_string(&a);
 		continue;
 
 	    case '0':
@@ -1070,7 +1081,7 @@ get_literal(void)
 	}
 	cachec(c);
     }
-    FREE(s_line);
+    FREE(a.a_line);
 
     n = cinc;
     s = TMALLOC(char, n);
@@ -1270,7 +1281,7 @@ scan_id(void)
 {
     char *b = cptr;
 
-    while (isalnum(*cptr) || *cptr == '_' || *cptr == '$')
+    while (isalnum((unsigned char)*cptr) || *cptr == '_' || *cptr == '$')
 	cptr++;
     return cache_tag(b, (size_t) (cptr - b));
 }
@@ -1562,6 +1573,10 @@ read_declarations(void)
 	    token_table = 1;
 	    break;
 
+	case ERROR_VERBOSE:
+	    error_verbose = 1;
+	    break;
+
 #if defined(YYBTYACC)
 	case LOCATIONS:
 	    locations = 1;
@@ -1571,7 +1586,14 @@ read_declarations(void)
 	    destructor = 1;
 	    copy_destructor();
 	    break;
+	case INITIAL_ACTION:
+	    copy_initial_action();
+	    break;
 #endif
+
+	case XXXDEBUG:
+	    /* XXX: FIXME */
+	    break;
 
 	case POSIX_YACC:
 	    /* noop for bison compatibility. byacc is already designed to be posix
@@ -1654,9 +1676,11 @@ copy_args(int *alen)
     struct mstring *s = msnew();
     int depth = 0, len = 1;
     char c, quote = 0;
-    int a_lineno = lineno;
-    char *a_line = dup_line();
-    char *a_cptr = a_line + (cptr - line - 1);
+    struct ainfo a;
+
+    a.a_lineno = lineno;
+    a.a_line = dup_line();
+    a.a_cptr = a.a_line + (cptr - line - 1);
 
     while ((c = *cptr++) != R_PAREN || depth || quote)
     {
@@ -1673,9 +1697,9 @@ copy_args(int *alen)
 	    if (!line)
 	    {
 		if (quote)
-		    unterminated_string(a_lineno, a_line, a_cptr);
+		    unterminated_string(&a);
 		else
-		    unterminated_arglist(a_lineno, a_line, a_cptr);
+		    unterminated_arglist(&a);
 	    }
 	}
 	else if (quote)
@@ -1700,7 +1724,7 @@ copy_args(int *alen)
     }
     if (alen)
 	*alen = len;
-    FREE(a_line);
+    FREE(a.a_line);
     return msdone(s);
 }
 
@@ -1709,13 +1733,13 @@ parse_id(char *p, char **save)
 {
     char *b;
 
-    while (isspace(*p))
+    while (isspace((unsigned char)*p))
 	if (*p++ == '\n')
 	    rescan_lineno++;
-    if (!isalpha(*p) && *p != '_')
+    if (!isalpha((unsigned char)*p) && *p != '_')
 	return NULL;
     b = p;
-    while (isalnum(*p) || *p == '_' || *p == '$')
+    while (isalnum((unsigned char)*p) || *p == '_' || *p == '$')
 	p++;
     if (save)
     {
@@ -1729,7 +1753,7 @@ parse_int(char *p, int *save)
 {
     int neg = 0, val = 0;
 
-    while (isspace(*p))
+    while (isspace((unsigned char)*p))
 	if (*p++ == '\n')
 	    rescan_lineno++;
     if (*p == '-')
@@ -1737,9 +1761,9 @@ parse_int(char *p, int *save)
 	neg = 1;
 	p++;
     }
-    if (!isdigit(*p))
+    if (!isdigit((unsigned char)*p))
 	return NULL;
-    while (isdigit(*p))
+    while (isdigit((unsigned char)*p))
 	val = val * 10 + *p++ - '0';
     if (neg)
 	val = -val;
@@ -1773,12 +1797,12 @@ parse_arginfo(bucket *a, char *args, int argslen)
 	return;
     for (i = 0; i < argslen; i++)
     {
-	while (isspace(*p))
+	while (isspace((unsigned char)*p))
 	    if (*p++ == '\n')
 		rescan_lineno++;
 	if (*p++ != '$')
 	    bad_formals();
-	while (isspace(*p))
+	while (isspace((unsigned char)*p))
 	    if (*p++ == '\n')
 		rescan_lineno++;
 	if (*p == '<')
@@ -1786,7 +1810,7 @@ parse_arginfo(bucket *a, char *args, int argslen)
 	    havetags = 1;
 	    if (!(p = parse_id(p + 1, &tmp)))
 		bad_formals();
-	    while (isspace(*p))
+	    while (isspace((unsigned char)*p))
 		if (*p++ == '\n')
 		    rescan_lineno++;
 	    if (*p++ != '>')
@@ -1803,7 +1827,7 @@ parse_arginfo(bucket *a, char *args, int argslen)
 	    a->argtags[i] = NULL;
 	if (!(p = parse_id(p, &a->argnames[i])))
 	    bad_formals();
-	while (isspace(*p))
+	while (isspace((unsigned char)*p))
 	    if (*p++ == '\n')
 		rescan_lineno++;
 	if (*p++)
@@ -1852,7 +1876,7 @@ compile_arg(char **theptr, char *yyvaltag)
 	    if (*++p == '<')
 		if (!(p = parse_id(++p, &tag)) || *p++ != '>')
 		    illegal_tag(rescan_lineno, NULL, NULL);
-	    if (isdigit(*p) || *p == '-')
+	    if (isdigit((unsigned char)*p) || *p == '-')
 	    {
 		int val;
 		if (!(p = parse_int(p, &val)))
@@ -1876,7 +1900,7 @@ compile_arg(char **theptr, char *yyvaltag)
 		else if (havetags)
 		    unknown_rhs(val);
 	    }
-	    else if (isalpha(*p) || *p == '_')
+	    else if (isalpha((unsigned char)*p) || *p == '_')
 	    {
 		char *arg;
 		if (!(p = parse_id(p, &arg)))
@@ -2232,11 +2256,13 @@ copy_action(void)
 #endif
     char *tag;
     FILE *f = action_file;
-    int a_lineno = lineno;
-    char *a_line = dup_line();
-    char *a_cptr = a_line + (cptr - line);
+    struct ainfo a;
     Value_t *offsets = NULL, maxoffset;
     bucket **rhs;
+
+    a.a_lineno = lineno;
+    a.a_line = dup_line();
+    a.a_cptr = a.a_line + (cptr - line);
 
     if (last_was_action)
 	insert_empty_rule();
@@ -2403,7 +2429,7 @@ copy_action(void)
 	    goto loop;
 	}
 #if defined(YYBTYACC)
-	else if (isalpha(cptr[1]) || cptr[1] == '_')
+	else if (isalpha((unsigned char)cptr[1]) || cptr[1] == '_')
 	{
 	    char *arg;
 	    ++cptr;
@@ -2494,7 +2520,7 @@ copy_action(void)
 		goto loop;
 	    }
 	    fprintf(f, "\nbreak;\n");
-	    FREE(a_line);
+	    FREE(a.a_line);
 	    if (maxoffset > 0)
 		FREE(offsets);
 	    return;
@@ -2508,13 +2534,13 @@ copy_action(void)
 	get_line();
 	if (line)
 	    goto loop;
-	unterminated_action(a_lineno, a_line, a_cptr);
+	unterminated_action(&a);
 
     case ';':
 	if (depth > 0)
 	    goto loop;
 	fprintf(f, "\nbreak;\n");
-	free(a_line);
+	free(a.a_line);
 	if (maxoffset > 0)
 	    FREE(offsets);
 	return;
@@ -2557,7 +2583,7 @@ copy_action(void)
 	}
 #endif
 	fprintf(f, "\nbreak;\n");
-	free(a_line);
+	free(a.a_line);
 	if (maxoffset > 0)
 	    FREE(offsets);
 	return;
@@ -2585,32 +2611,27 @@ copy_action(void)
 }
 
 #if defined(YYBTYACC)
-static void
-copy_destructor(void)
+static char *
+get_code(struct ainfo *a, const char *loc)
 {
     int c;
     int depth;
     char *tag;
-    bucket *bp;
-    struct mstring *destructor_text = msnew();
-    char *code_text;
-    int a_lineno;
-    char *a_line;
-    char *a_cptr;
+    struct mstring *code_mstr = msnew();
 
     if (!lflag)
-	msprintf(destructor_text, line_format, lineno, input_file_name);
+	msprintf(code_mstr, line_format, lineno, input_file_name);
 
     cptr = after_blanks(cptr);
     if (*cptr == L_CURL)
 	/* avoid putting curly-braces in first column, to ease editing */
-	mputc(destructor_text, '\t');
+	mputc(code_mstr, '\t');
     else
 	syntax_error(lineno, line, cptr);
 
-    a_lineno = lineno;
-    a_line = dup_line();
-    a_cptr = a_line + (cptr - line);
+    a->a_lineno = lineno;
+    a->a_line = dup_line();
+    a->a_cptr = a->a_line + (cptr - line);
 
     depth = 0;
   loop:
@@ -2628,7 +2649,7 @@ copy_destructor(void)
 	    c = *cptr;
 	    if (c == '$')
 	    {
-		msprintf(destructor_text, "(*val).%s", tag);
+		msprintf(code_mstr, "(*val).%s", tag);
 		++cptr;
 		FREE(d_line);
 		goto loop;
@@ -2639,7 +2660,7 @@ copy_destructor(void)
 	else if (cptr[1] == '$')
 	{
 	    /* process '$$' later; replacement is context dependent */
-	    msprintf(destructor_text, "$$");
+	    msprintf(code_mstr, "$$");
 	    cptr += 2;
 	    goto loop;
 	}
@@ -2653,7 +2674,7 @@ copy_destructor(void)
 	    char *l_cptr = l_line + (cptr - line);
 	    syntax_error(l_lineno, l_line, l_cptr);
 	}
-	msprintf(destructor_text, "(*loc)");
+	msprintf(code_mstr, loc);
 	cptr += 2;
 	goto loop;
     }
@@ -2661,21 +2682,21 @@ copy_destructor(void)
     {
 	do
 	{
-	    mputc(destructor_text, c);
+	    mputc(code_mstr, c);
 	    c = *++cptr;
 	}
 	while (isalnum(c) || c == '_' || c == '$');
 	goto loop;
     }
     ++cptr;
-    mputc(destructor_text, c);
+    mputc(code_mstr, c);
     switch (c)
     {
     case '\n':
 	get_line();
 	if (line)
 	    goto loop;
-	unterminated_action(a_lineno, a_line, a_cptr);
+	unterminated_action(a);
 
     case L_CURL:
 	++depth;
@@ -2684,13 +2705,13 @@ copy_destructor(void)
     case R_CURL:
 	if (--depth > 0)
 	    goto loop;
-	goto process_symbols;
+	goto out;
 
     case '\'':
     case '"':
 	{
 	    char *s = copy_string(c);
-	    msprintf(destructor_text, "%s", s);
+	    msprintf(code_mstr, "%s", s);
 	    free(s);
 	}
 	goto loop;
@@ -2698,7 +2719,7 @@ copy_destructor(void)
     case '/':
 	{
 	    char *s = copy_comment();
-	    msprintf(destructor_text, "%s", s);
+	    msprintf(code_mstr, "%s", s);
 	    free(s);
 	}
 	goto loop;
@@ -2706,8 +2727,29 @@ copy_destructor(void)
     default:
 	goto loop;
     }
-  process_symbols:
-    code_text = msdone(destructor_text);
+  out:
+    return msdone(code_mstr);
+}
+
+static void
+copy_initial_action(void)
+{
+    struct ainfo a;
+
+    initial_action = get_code(&a, "yyloc");
+    free(a.a_line);
+}
+
+static void
+copy_destructor(void)
+{
+    char *code_text;
+    int c;
+    struct ainfo a;
+    bucket *bp;
+
+    code_text = get_code(&a, "(*loc)");
+
     for (;;)
     {
 	c = nextc();
@@ -2726,7 +2768,7 @@ copy_destructor(void)
 		    default_destructor[UNTYPED_DEFAULT] = bp;
 		}
 		if (bp->destructor != NULL)
-		    destructor_redeclared_warning(a_lineno, a_line, a_cptr);
+		    destructor_redeclared_warning(&a);
 		else
 		    /* replace "$$" with "(*val)" in destructor code */
 		    bp->destructor = process_destructor_XX(code_text, NULL);
@@ -2742,7 +2784,7 @@ copy_destructor(void)
 		    default_destructor[TYPED_DEFAULT] = bp;
 		}
 		if (bp->destructor != NULL)
-		    destructor_redeclared_warning(a_lineno, a_line, a_cptr);
+		    destructor_redeclared_warning(&a);
 		else
 		{
 		    /* postpone re-processing destructor $$s until end of grammar spec */
@@ -2753,10 +2795,10 @@ copy_destructor(void)
 	    }
 	    else
 	    {			/* "semantic type" default destructor */
-		tag = get_tag();
+		char *tag = get_tag();
 		bp = lookup_type_destructor(tag);
 		if (bp->destructor != NULL)
-		    destructor_redeclared_warning(a_lineno, a_line, a_cptr);
+		    destructor_redeclared_warning(&a);
 		else
 		    /* replace "$$" with "(*val).tag" in destructor code */
 		    bp->destructor = process_destructor_XX(code_text, tag);
@@ -2766,7 +2808,7 @@ copy_destructor(void)
 	{			/* "symbol" destructor */
 	    bp = get_name();
 	    if (bp->destructor != NULL)
-		destructor_redeclared_warning(a_lineno, a_line, a_cptr);
+		destructor_redeclared_warning(&a);
 	    else
 	    {
 		/* postpone re-processing destructor $$s until end of grammar spec */
@@ -2778,7 +2820,7 @@ copy_destructor(void)
 	else
 	    break;
     }
-    free(a_line);
+    free(a.a_line);
     free(code_text);
 }
 
