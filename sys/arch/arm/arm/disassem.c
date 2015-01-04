@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.24 2014/03/03 08:51:39 matt Exp $	*/
+/*	$NetBSD: disassem.c,v 1.24.4.1 2015/01/04 11:40:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.24 2014/03/03 08:51:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.24.4.1 2015/01/04 11:40:17 martin Exp $");
 
 #include <sys/systm.h>
 
@@ -276,7 +276,8 @@ static char const insn_block_transfers[][4] = {
 };
 
 static char const insn_stack_block_transfers[][4] = {
-	"ed", "ea", "fd", "fa"
+	"ed", "ea", "fd", "fa",	/* stm */
+	"fa", "fd", "ea", "ed",	/* ldm */
 };
 
 static char const op_shifts[][4] = {
@@ -298,7 +299,7 @@ static char const insn_fpaconstants[][8] = {
 
 #define insn_condition(x)	arm32_insn_conditions[(x >> 28) & 0x0f]
 #define insn_blktrans(x)	insn_block_transfers[(x >> 23) & 3]
-#define insn_stkblktrans(x)	insn_stack_block_transfers[(x >> 23) & 3]
+#define insn_stkblktrans(x)	insn_stack_block_transfers[((x >> (20 - 2)) & 4)|((x >> 23) & 3)]
 #define op2_shift(x)		op_shifts[(x >> 5) & 3]
 #define insn_fparnd(x)		insn_fpa_rounding[(x >> 5) & 0x03]
 #define insn_fpaprec(x)		insn_fpa_precision[(((x >> 18) & 2)|(x >> 7)) & 1]
