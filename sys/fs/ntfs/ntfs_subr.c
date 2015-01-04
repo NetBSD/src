@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.56 2014/12/29 16:37:27 maxv Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.57 2015/01/04 16:19:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.56 2014/12/29 16:37:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.57 2015/01/04 16:19:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,8 +227,8 @@ ntfs_ntvattrget(struct ntfsmount *ntmp, struct ntnode *ip, u_int32_t type,
 		error = ntfs_vgetex(ntmp->ntm_mountp, aalp->al_inumber,
 				NTFS_A_DATA, "", LK_EXCLUSIVE, &newvp);
 		if (error) {
-			printf("%s: CAN'T VGET INO: %d\n", __func__,
-			    aalp->al_inumber);
+			printf("%s: CAN'T VGET INO: %d (error %d)\n", __func__,
+			    aalp->al_inumber, error);
 			goto out;
 		}
 		newip = VTONT(newvp);
