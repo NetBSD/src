@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_emac.c,v 1.1 2015/01/04 03:53:02 jmcneill Exp $ */
+/* $NetBSD: rockchip_emac.c,v 1.2 2015/01/04 11:54:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rkemac.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.1 2015/01/04 03:53:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.2 2015/01/04 11:54:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,6 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.1 2015/01/04 03:53:02 jmcneill E
 
 #include <arm/rockchip/rockchip_emacreg.h>
 
+#define RKEMAC_SOC_CON1_EMAC_SPEED_MASK	__BIT(17)
+#define RKEMAC_SOC_CON1_EMAC_SPEED	__BIT(2)
+
 #define RKEMAC_ENABLE_INTR	\
 	(EMAC_ENABLE_TXINT|EMAC_ENABLE_RXINT|EMAC_ENABLE_ERR)
 
@@ -61,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.1 2015/01/04 03:53:02 jmcneill E
 
 #define RKEMAC_MAX_PACKET	1536
 #define RKEMAC_POLLRATE		200
+
+#define RKEMAC_CLKRATE		50000000
 
 #define RX_DESC_OFFSET(n)	\
 	((n) * sizeof(struct rkemac_rxdesc))
@@ -99,8 +104,11 @@ struct rkemac_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
+	bus_space_handle_t sc_soc_con1_bsh;
 	bus_dma_tag_t sc_dmat;
 	void *sc_ih;
+
+	bus_size_t sc_soc_con1_reg;
 
 	struct ethercom sc_ec;
 	struct mii_data sc_mii;
@@ -159,6 +167,7 @@ rkemac_attach(device_t parent, device_t self, void *aux)
 	struct mii_data *mii = &sc->sc_mii;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	uint8_t enaddr[ETHER_ADDR_LEN];
+	bus_size_t soc_con1_reg;
 	prop_data_t ea;
 
 	sc->sc_dev = self;
@@ -171,8 +180,19 @@ rkemac_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_mii_tick, 0);
 	callout_setfunc(&sc->sc_mii_tick, rkemac_tick, sc);
 
+	if (rockchip_is_chip(ROCKCHIP_CHIPVER_RK3188) ||
+	    rockchip_is_chip(ROCKCHIP_CHIPVER_RK3188PLUS)) {
+		soc_con1_reg = 0x00a4;
+	} else {
+		soc_con1_reg = 0x0154;
+	}
+	bus_space_subregion(obio->obio_bst, obio->obio_bsh,
+	    ROCKCHIP_GRF_OFFSET + soc_con1_reg, 4, &sc->sc_soc_con1_bsh);
+
 	aprint_naive("\n");
 	aprint_normal(": Ethernet controller\n");
+
+	rockchip_mac_set_rate(RKEMAC_CLKRATE);
 
 #ifdef RKEMAC_DEBUG
 	aprint_normal_dev(sc->sc_dev, "ID %#x\n",
@@ -447,14 +467,19 @@ rkemac_mii_statchg(struct ifnet *ifp)
 {
 	struct rkemac_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
-	uint32_t control;
+	uint32_t control, soc_con1;
 
 	control = EMAC_READ(sc, EMAC_CONTROL_REG);
+	soc_con1 = bus_space_read_4(sc->sc_bst, sc->sc_soc_con1_bsh, 0);
 
 	switch (IFM_SUBTYPE(mii->mii_media_active)) {
 	case IFM_10_T:
+		soc_con1 |= RKEMAC_SOC_CON1_EMAC_SPEED_MASK;
+		soc_con1 &= ~RKEMAC_SOC_CON1_EMAC_SPEED;
 		break;
 	case IFM_100_TX:
+		soc_con1 |= RKEMAC_SOC_CON1_EMAC_SPEED_MASK;
+		soc_con1 |= RKEMAC_SOC_CON1_EMAC_SPEED;
 		break;
 	}
 
@@ -464,6 +489,7 @@ rkemac_mii_statchg(struct ifnet *ifp)
 		control &= ~EMAC_CONTROL_ENFL;
 	}
 
+	bus_space_write_4(sc->sc_bst, sc->sc_soc_con1_bsh, 0, soc_con1);
 	EMAC_WRITE(sc, EMAC_CONTROL_REG, control);
 }
 
