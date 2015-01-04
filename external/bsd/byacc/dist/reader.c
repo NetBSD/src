@@ -1,11 +1,11 @@
-/*	$NetBSD: reader.c,v 1.11 2015/01/04 01:34:20 christos Exp $	*/
+/*	$NetBSD: reader.c,v 1.12 2015/01/04 19:30:26 joerg Exp $	*/
 
 /* Id: reader.c,v 1.58 2014/10/06 22:15:08 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reader.c,v 1.11 2015/01/04 01:34:20 christos Exp $");
+__RCSID("$NetBSD: reader.c,v 1.12 2015/01/04 19:30:26 joerg Exp $");
 
 /*  The line size must be a positive integer.  One hundred was chosen	*/
 /*  because few lines in Yacc input grammars exceed 100 characters.	*/
@@ -2674,7 +2674,7 @@ get_code(struct ainfo *a, const char *loc)
 	    char *l_cptr = l_line + (cptr - line);
 	    syntax_error(l_lineno, l_line, l_cptr);
 	}
-	msprintf(code_mstr, loc);
+	msprintf(code_mstr, "%s", loc);
 	cptr += 2;
 	goto loop;
     }
