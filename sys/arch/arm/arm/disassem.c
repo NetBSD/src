@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.24.4.1 2015/01/04 11:40:17 martin Exp $	*/
+/*	$NetBSD: disassem.c,v 1.24.4.2 2015/01/04 11:43:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.24.4.1 2015/01/04 11:40:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.24.4.2 2015/01/04 11:43:53 martin Exp $");
 
 #include <sys/systm.h>
 
@@ -146,9 +146,9 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0fff0000, 0x092d0000, "push",	"l" },	/* separate out r13 base */
     { 0x0fff0000, 0x08bd0000, "pop",	"l" },	/* separate out r13 base */
     { 0x0e1f0000, 0x080d0000, "stm",	"YnWl" },/* separate out r13 base */
-    { 0x0e1f0000, 0x081d0000, "ldm",	"YnWl" },/* separate out r13 base */    
+    { 0x0e1f0000, 0x081d0000, "ldm",	"YnWl" },/* separate out r13 base */
     { 0x0e100000, 0x08000000, "stm",	"XnWl" },
-    { 0x0e100000, 0x08100000, "ldm",	"XnWl" },    
+    { 0x0e100000, 0x08100000, "ldm",	"XnWl" },
     { 0x0ff00fff, 0x01900f9f, "ldrex",	"da" },
     { 0x0ff00fff, 0x01b00f9f, "ldrexd",	"da" },
     { 0x0ff00fff, 0x01d00f9f, "ldrexb",	"da" },
@@ -174,24 +174,24 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0fff0ff0, 0x016f0f10, "clz",	"dm" },
     { 0x0ffffff0, 0x012fff30, "blx",	"m" },
     { 0xfff000f0, 0xe1200070, "bkpt",	"k" },
-    { 0x0fe00000, 0x02000000, "and",	"Sdn2" },
-    { 0x0fe00000, 0x02200000, "eor",	"Sdn2" },
-    { 0x0fe00000, 0x02400000, "sub",	"Sdn2" },
-    { 0x0fe00000, 0x02600000, "rsb",	"Sdn2" },
-    { 0x0fe00000, 0x02800000, "add",	"Sdn2" },
-    { 0x0fe00000, 0x02a00000, "adc",	"Sdn2" },
-    { 0x0fe00000, 0x02c00000, "sbc",	"Sdn2" },
-    { 0x0fe00000, 0x02e00000, "rsc",	"Sdn2" },
     { 0x0ff00000, 0x03000000, "movw", 	"dZ" },
-    { 0x0ff00000, 0x03100000, "tst",	"Dn2" },
-    { 0x0ff00000, 0x03300000, "teq",	"Dn2" },
     { 0x0ff00000, 0x03400000, "movt", 	"dZ" },
-    { 0x0ff00000, 0x03500000, "cmp",	"Dn2" },
-    { 0x0ff00000, 0x03700000, "cmn",	"Dn2" },
-    { 0x0fe00000, 0x03800000, "orr",	"Sdn2" },
+    { 0x0de00000, 0x00000000, "and",	"Sdn2" },
+    { 0x0de00000, 0x00200000, "eor",	"Sdn2" },
+    { 0x0de00000, 0x00400000, "sub",	"Sdn2" },
+    { 0x0de00000, 0x00600000, "rsb",	"Sdn2" },
+    { 0x0de00000, 0x00800000, "add",	"Sdn2" },
+    { 0x0de00000, 0x00a00000, "adc",	"Sdn2" },
+    { 0x0de00000, 0x00c00000, "sbc",	"Sdn2" },
+    { 0x0de00000, 0x00e00000, "rsc",	"Sdn2" },
+    { 0x0df00000, 0x01100000, "tst",	"Dn2" },
+    { 0x0df00000, 0x01300000, "teq",	"Dn2" },
+    { 0x0df00000, 0x01500000, "cmp",	"Dn2" },
+    { 0x0df00000, 0x01700000, "cmn",	"Dn2" },
+    { 0x0de00000, 0x01800000, "orr",	"Sdn2" },
     { 0x0de00000, 0x01a00000, "mov",	"Sd2" },
-    { 0x0fe00000, 0x03c00000, "bic",	"Sdn2" },
-    { 0x0fe00000, 0x03e00000, "mvn",	"Sd2" },
+    { 0x0de00000, 0x01c00000, "bic",	"Sdn2" },
+    { 0x0de00000, 0x01e00000, "mvn",	"Sd2" },
     { 0x0ff08f10, 0x0e000100, "adf",	"PRfgh" },
     { 0x0ff08f10, 0x0e100100, "muf",	"PRfgh" },
     { 0x0ff08f10, 0x0e200100, "suf",	"PRfgh" },
@@ -384,7 +384,7 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 				di->di_printf("#0x%08x",
 					      (insn & 0xff) << (32 - rotate) |
 					      (insn & 0xff) >> rotate);
-			} else {  
+			} else {
 				disasm_register_shift(di, insn);
 			}
 			break;
