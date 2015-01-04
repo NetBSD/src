@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.11 2015/01/03 13:26:31 jmcneill Exp $	*/
+/*	$NetBSD: obio.c,v 1.12 2015/01/04 03:55:44 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.11 2015/01/03 13:26:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.12 2015/01/04 03:55:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,6 +198,8 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 #define RK3188_GRF_SOC_CON2_OFFSET	0x00A8
 #define RK3188_GRF_SOC_STATUS_OFFSET	0x00AC
 
+#define RK3188_GRF_IO_CON3_OFFSET	0x0100
+
 #define GRF_GPIO0A_IOMUX_OFFSET	0x00a8
 #define GRF_GPIO3A_IOMUX_OFFSET	0x00d8
 #define GRF_GPIO3B_IOMUX_OFFSET	0x00dc
@@ -212,6 +214,12 @@ void obio_init_grf(void)
 	obio_iomux(RK3188_GRF_GPIO1D_IOMUX_OFFSET, 0x55555555); /* I2C[0124] */
 	obio_iomux(RK3188_GRF_GPIO3B_IOMUX_OFFSET, 0xa000a000); /* I2C3 */
 	obio_iomux(RK3188_GRF_SOC_CON1_OFFSET,	   0xf800f800);	/* I2C[01234] */
+
+	obio_iomux(RK3188_GRF_GPIO0C_IOMUX_OFFSET, 0x00030000); /* PHY */
+	obio_iomux(RK3188_GRF_GPIO3C_IOMUX_OFFSET, 0xffffaaaa); /* PHY */
+	obio_iomux(RK3188_GRF_GPIO3D_IOMUX_OFFSET, 0x003f000a); /* PHY */
+	obio_iomux(RK3188_GRF_SOC_CON1_OFFSET,     0x00030002); /* VMAC */
+	obio_iomux(RK3188_GRF_IO_CON3_OFFSET,      0x000f000f); /* VMAC */
 #else
 	/* ChipSPARK Rayeager PX2 */
 	obio_iomux(GRF_GPIO0A_IOMUX_OFFSET, 0x14000000); /* VBUS */
@@ -247,6 +255,10 @@ void obio_init_gpio(void)
 	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(3));
 	obio_swporta(ROCKCHIP_GPIO2_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(31));
 	obio_swporta(ROCKCHIP_GPIO2_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(31));
+
+	/* PHY */
+	obio_swporta(ROCKCHIP_GPIO3_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(26));
+	obio_swporta(ROCKCHIP_GPIO3_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(26));
 
 	/* IT66121 HDMI */
 	obio_swporta(ROCKCHIP_GPIO3_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(10));
