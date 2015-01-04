@@ -1,3 +1,5 @@
+/*	$NetBSD: exynos_io.c,v 1.6.8.1 2015/01/04 11:19:00 martin Exp $	*/
+
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +36,7 @@
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_io.c,v 1.6 2014/05/14 09:03:09 reinoud Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_io.c,v 1.6.8.1 2015/01/04 11:19:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -139,6 +141,10 @@ exyo_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": Exynos %x\n", product_id);
 	aprint_normal(": Exynos %x\n", product_id);
 
+	/* add sysctl nodes */
+	exynos_sysctl_cpufreq_init();
+
+	/* add all children */
 #if defined(EXYNOS4)
 	if (IS_EXYNOS4_P()) {
 		l = exynos4_locinfo.locators;

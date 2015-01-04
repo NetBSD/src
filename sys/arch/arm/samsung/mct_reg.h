@@ -1,4 +1,5 @@
-/* $NetBSD */
+/*	$NetBSD: mct_reg.h,v 1.1.8.1 2015/01/04 11:19:00 martin Exp $	*/
+
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.

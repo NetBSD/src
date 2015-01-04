@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.1 2014/05/21 12:19:59 reinoud Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.1.4.1 2015/01/04 11:19:00 martin Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "exynos_iic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.1 2014/05/21 12:19:59 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.1.4.1 2015/01/04 11:19:00 martin Exp $");
 
 
 #include <sys/param.h>
@@ -108,8 +108,10 @@ CFATTACH_DECL_NEW(exynos_iic, sizeof(struct exynos_iic_softc),
 static int
 exynos_iic_match(device_t self, cfdata_t cf, void *aux)
 {
+#ifdef DIAGNOSTIC
 	struct exyo_attach_args *exyoaa = aux;
 	struct exyo_locators *loc = &exyoaa->exyo_loc;
+#endif
 	int i;
 
 	/* no locators expected */
@@ -224,7 +226,7 @@ exynos_iic_attach_i2cbus(struct exynos_iic_dev_softc *ei2c_sc,
 	i2c_cntr->ic_initiate_xfer = exynos_iic_initiate_xfer;
 	i2c_cntr->ic_read_byte   = exynos_iic_read_byte;
 	i2c_cntr->ic_write_byte  = exynos_iic_write_byte;
-	
+
 	exynos_gpio_pinset_acquire(pinset);
 	if (ei2c_sc->isc_isgpio) {
 		/* get sda and slc pins */
@@ -287,7 +289,7 @@ exynos_iic_bb_set_dir(void *cookie, uint32_t bits)
 
 	flags = GPIO_PIN_INPUT | GPIO_PIN_TRISTATE;
 	i2c_sc->isc_sda_is_output = ((bits & EXYNOS_IIC_BB_SDA_OUT) != 0);
-	if (i2c_sc->isc_sda_is_output) 
+	if (i2c_sc->isc_sda_is_output)
 		flags = GPIO_PIN_OUTPUT | GPIO_PIN_TRISTATE;
 
 	exynos_gpio_pindata_ctl(&i2c_sc->isc_sda, flags);
@@ -341,7 +343,7 @@ exynos_iic_send_start(void *cookie, int flags)
 	return EINVAL;
 }
 
-static int	
+static int
 exynos_iic_send_stop(void *cookie, int flags)
 {
 	struct exynos_iic_dev_softc *i2c_sc = cookie;
@@ -352,7 +354,7 @@ exynos_iic_send_stop(void *cookie, int flags)
 	return EINVAL;
 }
 
-static int	
+static int
 exynos_iic_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
 {
 	struct exynos_iic_dev_softc *i2c_sc = cookie;
@@ -376,7 +378,7 @@ exynos_iic_read_byte(void *cookie, uint8_t *bytep, int flags)
 	return EINVAL;
 }
 
-static int	
+static int
 exynos_iic_write_byte(void *cookie, uint8_t byte, int flags)
 {
 	struct exynos_iic_dev_softc *i2c_sc = cookie;

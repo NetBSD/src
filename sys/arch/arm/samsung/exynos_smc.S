@@ -1,4 +1,5 @@
-/*	$NetBSD: exynos_smc.S,v 1.1 2014/04/13 02:26:26 matt Exp $	*/
+/*	$NetBSD: exynos_smc.S,v 1.1.8.1 2015/01/04 11:19:00 martin Exp $	*/
+
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,8 +33,10 @@
 #include <arm/asm.h>
 #include <arm/armreg.h>
 
-RCSID("$NetBSD: exynos_smc.S,v 1.1 2014/04/13 02:26:26 matt Exp $")
+RCSID("$NetBSD: exynos_smc.S,v 1.1.8.1 2015/01/04 11:19:00 martin Exp $")
 
+	.arch armv7-a
+	.arch_extension sec
 /*
  * void
  * exynos_smc(uint32_t cmd, uint32_t arg1, uint32_t arg2, uint32_t arg3)
