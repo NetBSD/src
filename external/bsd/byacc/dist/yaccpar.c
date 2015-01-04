@@ -1,4 +1,4 @@
-/*	$NetBSD: yaccpar.c,v 1.1.1.1 2015/01/03 22:58:23 christos Exp $	*/
+/*	$NetBSD: yaccpar.c,v 1.2 2015/01/04 01:34:20 christos Exp $	*/
 
 /* This file generated automatically using
  * @Id: skel2c,v 1.3 2014/04/06 19:48:04 tom Exp @
@@ -211,6 +211,11 @@ const char *const body_2[] =
     "    }",
     "#endif",
     "",
+    0,
+};
+
+const char *const body_3[] =
+{
     "    yynerrs = 0;",
     "    yyerrflag = 0;",
     "    yychar = YYEMPTY;",

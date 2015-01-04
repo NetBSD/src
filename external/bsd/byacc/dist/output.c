@@ -1,11 +1,11 @@
-/*	$NetBSD: output.c,v 1.11 2015/01/03 23:22:52 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.12 2015/01/04 01:34:20 christos Exp $	*/
 
 /* Id: output.c,v 1.74 2014/10/05 23:21:09 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.11 2015/01/03 23:22:52 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.12 2015/01/04 01:34:20 christos Exp $");
 
 #define StaticOrR	(rflag ? "" : "static ")
 #define CountLine(fp)   (!rflag || ((fp) == code_file))
@@ -1560,6 +1560,7 @@ output_ltype(FILE * fp)
     putl_code(fp, "    int first_column;\n");
     putl_code(fp, "    int last_line;\n");
     putl_code(fp, "    int last_column;\n");
+    putl_code(fp, "    char *source;\n");
     putl_code(fp, "} YYLTYPE;\n");
     putl_code(fp, "#define YYLTYPE_IS_DECLARED 1\n");
     putl_code(fp, "#endif\n");
@@ -1838,6 +1839,13 @@ output_yydestruct_decl(FILE * fp)
 }
 
 static void
+output_initial_action(void)
+{
+    if (initial_action)
+	fprintf(code_file, "%s\n", initial_action);
+}
+
+static void
 output_yydestruct_impl(void)
 {
     int i;
@@ -2043,6 +2051,11 @@ output(void)
 	write_section(code_file, body_vars);
     }
     write_section(code_file, body_2);
+#if defined(YYBTYACC)
+    if (initial_action)
+	output_initial_action();
+#endif
+    write_section(code_file, body_3);
     output_semantic_actions();
     write_section(code_file, trailer);
 }
