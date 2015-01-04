@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_board.c,v 1.11 2015/01/02 21:59:29 jmcneill Exp $ */
+/* $NetBSD: rockchip_board.c,v 1.12 2015/01/04 11:52:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.11 2015/01/02 21:59:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.12 2015/01/04 11:52:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -119,6 +119,12 @@ u_int
 rockchip_cpll_get_rate(void)
 {
 	return rockchip_pll_get_rate(CRU_CPLL_CON0_REG, CRU_CPLL_CON1_REG);
+}
+
+u_int
+rockchip_dpll_get_rate(void)
+{
+	return rockchip_pll_get_rate(CRU_DPLL_CON0_REG, CRU_DPLL_CON1_REG);
 }
 
 u_int
@@ -307,4 +313,66 @@ rockchip_i2c_get_rate(u_int port)
 	} else {
 		return rockchip_apb_get_rate();
 	}
+}
+
+u_int
+rockchip_mac_get_rate(void)
+{
+	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_handle_t bsh;
+	uint32_t clksel_con21;
+	uint32_t mac_div_con;
+
+	rockchip_get_cru_bsh(&bsh);
+
+	clksel_con21 = bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(21));
+
+	mac_div_con = __SHIFTOUT(clksel_con21,
+				 CRU_CLKSEL_CON21_MAC_DIV_CON);
+
+	if (clksel_con21 & CRU_CLKSEL_CON21_MAC_PLL_SEL) {
+		return rockchip_dpll_get_rate() / (mac_div_con + 1);
+	} else {
+		return rockchip_gpll_get_rate() / (mac_div_con + 1);
+	}
+}
+
+u_int
+rockchip_mac_set_rate(u_int rate)
+{
+	bus_space_tag_t bst = &rockchip_bs_tag;
+	bus_space_handle_t bsh;
+	uint32_t clksel_con21;
+	u_int dpll_rate, gpll_rate;
+	u_int div;
+
+	rockchip_get_cru_bsh(&bsh);
+
+	dpll_rate = rockchip_dpll_get_rate();
+	gpll_rate = rockchip_gpll_get_rate();
+
+	clksel_con21 = CRU_CLKSEL_CON21_MAC_DIV_CON_MASK |
+		       CRU_CLKSEL_CON21_RMII_EXTCLK_SEL_MASK |
+		       CRU_CLKSEL_CON21_MAC_PLL_SEL_MASK;
+	if (dpll_rate % rate == 0) {
+		clksel_con21 |= CRU_CLKSEL_CON21_MAC_PLL_SEL;
+		div = howmany(dpll_rate, rate);
+	} else {
+		div = howmany(gpll_rate, rate);
+	}
+	clksel_con21 |= __SHIFTIN(div - 1, CRU_CLKSEL_CON21_MAC_DIV_CON);
+
+#ifdef ROCKCHIP_CLOCK_DEBUG
+	const u_int old_rate = rockchip_mac_get_rate();
+#endif
+
+	bus_space_write_4(bst, bsh, CRU_CLKSEL_CON_REG(21), clksel_con21);
+
+#ifdef ROCKCHIP_CLOCK_DEBUG
+	const u_int new_rate = rockchip_mac_get_rate();
+
+	printf("%s: update %u Hz -> %u Hz\n", __func__, old_rate, new_rate);
+#endif
+
+	return 0;
 }
