@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.22 2014/12/31 12:01:40 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.23 2015/01/04 15:01:55 martin Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -3821,3 +3821,7 @@ lib/Makefile							patch
 
 	Update bind to 9.9.6-P1. CVE-2014-8500.
 	[spz, ticket 1217]
+
+external/bsd/bind/Makefile.inc				parts of 1.16 (patch)
+	Fix static bind build.
+	[he, ticket 1226]
