@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1188 2015/01/02 21:16:41 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1189 2015/01/04 01:52:24 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -196,8 +196,8 @@ is a FreeBSD committer who has been helpful with incorporating changes
 in the past.
 
 Package:	byacc
-Version:	20130304
-Current Vers:	20130925
+Version:	20141128
+Current Vers:	20141128
 Maintainer:	Thomas Dickey <dickey@invisible-island.net>
 Archive Site:	http://www.invisible-island.net/byacc/byacc.html
 Home Page:	http://www.invisible-island.net/byacc/byacc.html
@@ -785,7 +785,7 @@ License:	BSD 3-clause like (dns-sd)
 Responsible:	christos
 Location:	usr.bin/m4
 Notes:
-Uses libc's ohash, and strtonum
+Uses libc's ohash
 
 Package:	mDNSResponder
 Version:	320.16
