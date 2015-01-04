@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.45 2014/12/26 22:44:54 christos Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.46 2015/01/04 20:02:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.45 2014/12/26 22:44:54 christos Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.46 2015/01/04 20:02:15 christos Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -580,9 +580,9 @@ npfctl(int action, int argc, char **argv)
 		fun = "ioctl(IOC_NPF_SWITCH)";
 		break;
 	case NPFCTL_RELOAD:
-		npfctl_preload_bpfjit();
 		npfctl_config_init(false);
 		npfctl_parse_file(argc < 3 ? NPF_CONF_PATH : argv[2]);
+		npfctl_preload_bpfjit();
 		errno = ret = npfctl_config_send(fd, NULL);
 		fun = "npfctl_config_send";
 		break;
