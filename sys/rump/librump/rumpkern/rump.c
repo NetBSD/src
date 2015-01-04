@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.313 2015/01/03 17:23:51 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.314 2015/01/04 22:11:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.313 2015/01/03 17:23:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.314 2015/01/04 22:11:40 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -182,7 +182,15 @@ rump_daemonize_done(int error)
 	return rumpuser_daemonize_done(error);
 }
 
-#ifndef RUMP_USE_CTOR
+#ifdef RUMP_USE_CTOR
+
+/* sysctl bootstrap handling */
+struct sysctl_boot_chain sysctl_boot_chain \
+    = LIST_HEAD_INITIALIZER(sysctl_boot_chain);
+__link_set_add_text(sysctl_funcs,voidop); /* ensure linkset is non-empty */
+
+#else /* RUMP_USE_CTOR */
+
 RUMP_COMPONENT(RUMP_COMPONENT_POSTINIT)
 {
 	__link_set_decl(rump_components, struct rump_component);
@@ -194,7 +202,8 @@ RUMP_COMPONENT(RUMP_COMPONENT_POSTINIT)
 	asm("" :: "r"(__start_link_set_rump_components));
 	asm("" :: "r"(__stop_link_set_rump_components));
 }
-#endif
+
+#endif /* RUMP_USE_CTOR */
 
 int
 rump_init(void)
@@ -284,6 +293,19 @@ rump_init(void)
 
 	secmodel_init();
 	sysctl_init();
+	/*
+	 * The above call to sysctl_init() only initializes sysctl nodes
+	 * from link sets.  Initialize sysctls in case we used ctors.
+	 */
+#ifdef RUMP_USE_CTOR
+	{
+		struct sysctl_setup_chain *ssc;
+
+		LIST_FOREACH(ssc, &sysctl_boot_chain, ssc_entries) {
+			ssc->ssc_func(NULL);
+		}
+	}
+#endif /* RUMP_USE_CTOR */
 
 	rnd_init();
 	cprng_init();
