@@ -1,11 +1,11 @@
-/*	$NetBSD: output.c,v 1.12 2015/01/04 01:34:20 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.13 2015/01/04 18:52:04 christos Exp $	*/
 
 /* Id: output.c,v 1.74 2014/10/05 23:21:09 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.12 2015/01/04 01:34:20 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.13 2015/01/04 18:52:04 christos Exp $");
 
 #define StaticOrR	(rflag ? "" : "static ")
 #define CountLine(fp)   (!rflag || ((fp) == code_file))
@@ -166,7 +166,7 @@ output_prefix(FILE * fp)
 	define_prefixed(fp, "yygindex");
 	define_prefixed(fp, "yytable");
 	define_prefixed(fp, "yycheck");
-	define_prefixed(fp, "yytname");
+	define_prefixed(fp, "yyname");
 	define_prefixed(fp, "yyrule");
 #if defined(YYBTYACC)
 	if (locations)
@@ -1320,7 +1320,7 @@ output_debug(void)
 	output_line("#if YYDEBUG");
     }
 
-    start_str_table("tname");
+    start_str_table("name");
     j = 80;
     for (i = 0; i <= max + 1; ++i)
     {
@@ -1560,10 +1560,11 @@ output_ltype(FILE * fp)
     putl_code(fp, "    int first_column;\n");
     putl_code(fp, "    int last_line;\n");
     putl_code(fp, "    int last_column;\n");
-    putl_code(fp, "    char *source;\n");
+    putl_code(fp, "    unsigned source;\n");
     putl_code(fp, "} YYLTYPE;\n");
     putl_code(fp, "#define YYLTYPE_IS_DECLARED 1\n");
     putl_code(fp, "#endif\n");
+    putl_code(fp, "#define YYRHSLOC(rhs, k) ((rhs)[k])\n");
 }
 #endif
 
@@ -1774,7 +1775,7 @@ output_error_decl(FILE * fp)
     puts_code(fp, "#define YYERROR_DECL() yyerror(");
 #if defined(YYBTYACC)
     if (locations)
-	puts_code(fp, "YYLTYPE loc, ");
+	puts_code(fp, "YYLTYPE *loc, ");
 #endif
     puts_param_types(fp, parse_param, 1);
     putl_code(fp, "const char *s)\n");
@@ -1785,7 +1786,7 @@ output_error_decl(FILE * fp)
     puts_code(fp, "#define YYERROR_CALL(msg) yyerror(");
 #if defined(YYBTYACC)
     if (locations)
-	puts_code(fp, "yylloc, ");
+	puts_code(fp, "&yylloc, ");
 #endif
     puts_param_names(fp, parse_param, 1);
     putl_code(fp, "msg)\n");
