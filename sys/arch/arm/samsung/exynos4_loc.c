@@ -1,3 +1,5 @@
+/*	$NetBSD: exynos4_loc.c,v 1.9.4.1 2015/01/04 11:19:00 martin Exp $	*/
+
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,6 +141,10 @@
 #define IRQ_EINT_1			IRQ_SPI(17)
 #define IRQ_EINT_0			IRQ_SPI(16)
 
+/* rest of PPI's marked reserved */
+#define IRQ_MCT_L			IRQ_PPI(12)
+#define IRQ_MCT_G			IRQ_PPI(10)
+
 #define IRQ_CPU_NIRQOUT_3		EXYNOS_COMBINERIRQ(19, 6)
 #define IRQ_PARITYFAILSCU_3		EXYNOS_COMBINERIRQ(19, 5)
 #define IRQ_PARITYFAIL3			EXYNOS_COMBINERIRQ(19, 4)
@@ -266,7 +272,7 @@
 static const struct exyo_locators exynos4_locators[] = {
 	{ "exyogpio", 0, 0, NOPORT, NOINTR, 0 },
 	{ "exyoiic", 0, 0, NOPORT, NOINTR, 0 },
-	{ "mct", OFFANDSIZE(,MCT), NOPORT, IRQ_G0_IRQ, 0 },
+	{ "mct", OFFANDSIZE(,MCT), NOPORT, IRQ_MCT_G, 0 },
 	{ "exyowdt", OFFANDSIZE(,WDT), NOPORT, IRQ_WDT, 0 },
 	{ "sscom", OFFANDSIZE(,UART0), 0, IRQ_UART0, 0 },
 	{ "sscom", OFFANDSIZE(,UART1), 1, IRQ_UART1, 0 },

@@ -1,3 +1,5 @@
+/*	$NetBSD: exynos_io.h,v 1.4.6.1 2015/01/04 11:19:00 martin Exp $	*/
+
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,8 +47,6 @@ extern const struct exyo_locinfo exynos4_locinfo;
 extern const struct exyo_locinfo exynos4_i2c_locinfo;
 extern const struct exyo_locinfo exynos5_locinfo;
 extern const struct exyo_locinfo exynos5_i2c_locinfo;
-extern const struct exyo_usb_locinfo exynos4_usb_locinfo;
-extern const struct exyo_usb_locinfo exynos5_usb_locinfo;
 
 /* XXXNH needed? */
 #define	NOPORT	EXYOCF_PORT_DEFAULT

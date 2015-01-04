@@ -1,4 +1,5 @@
-/* $NetBSD: exynos_var.h,v 1.12 2014/06/11 14:54:32 reinoud Exp $ */
+/*	$NetBSD: exynos_var.h,v 1.12.4.1 2015/01/04 11:19:00 martin Exp $	*/
+
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,9 +64,11 @@ extern uint32_t exynos_pop_id;
 #define IS_EXYNOS4_P()	(EXYNOS_PRODUCT_FAMILY(exynos_soc_id) == EXYNOS4_PRODUCT_FAMILY)
 
 #define IS_EXYNOS5410_P()	(EXYNOS_PRODUCT_ID(exynos_soc_id) == 0xe5410)
+#define IS_EXYNOS5422_P()	(EXYNOS_PRODUCT_ID(exynos_soc_id) == 0xe5422)
 #define IS_EXYNOS5440_P()	(EXYNOS_PRODUCT_ID(exynos_soc_id) == 0xe5440)
 
 #define IS_EXYNOS5_P()	(EXYNOS_PRODUCT_FAMILY(exynos_soc_id) == EXYNOS5_PRODUCT_FAMILY)
+
 
 struct exyo_locators {
 	const char *loc_name;
@@ -113,16 +116,29 @@ extern struct arm32_bus_dma_tag exynos_bus_dma_tag;
 extern struct arm32_bus_dma_tag exynos_coherent_bus_dma_tag;
 
 extern bus_space_handle_t exynos_core_bsh;
+extern bus_space_handle_t exynos_wdt_bsh;
+extern bus_space_handle_t exynos_pmu_bsh;
+extern bus_space_handle_t exynos_cmu_bsh;
+extern bus_space_handle_t exynos_sysreg_bsh;
 
 extern void exynos_bootstrap(vaddr_t, vaddr_t);
 extern void exynos_dma_bootstrap(psize_t memsize);
 extern void exynos_gpio_bootstrap(void);
+extern void exynos_wdt_reset(void);
+
+extern void exynos_init_clkout_for_usb(void);	// board specific
+
+extern void exynos_clocks_bootstrap(void);
+extern void exynos_sysctl_cpufreq_init(void);
+extern uint64_t exynos_get_cpufreq(void);
 
 extern void exynos_device_register(device_t self, void *aux);
 extern void exynos_device_register_post_config(device_t self, void *aux);
+extern void exynos_usb_phy_init(bus_space_handle_t usb2phy_bsh);
+extern void exynos_usb_soc_powerup(void);
+
 extern void exyo_device_register(device_t self, void *aux);
 extern void exyo_device_register_post_config(device_t self, void *aux);
-extern void exynos_wdt_reset(void);
 
 extern bool exynos_gpio_pinset_available(const struct exynos_gpio_pinset *);
 extern void exynos_gpio_pinset_acquire(const struct exynos_gpio_pinset *);
@@ -155,7 +171,9 @@ exynos_gpio_pindata_ctl(const struct exynos_gpio_pindata *pd, int flags)
 extern int exynos_do_idle(void);
 extern int exynos_set_cpu_boot_addr(int cpu, vaddr_t boot_addr);
 extern int exynos_cpu_boot(int cpu);
-extern int exynos_l2cc_init(void);
+#ifdef EXYNOS4
+extern int exynos4_l2cc_init(void);
+#endif
 #endif
 
 #endif	/* _ARM_SAMSUNG_EXYNOS_VAR_H_ */
