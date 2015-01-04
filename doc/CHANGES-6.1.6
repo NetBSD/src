@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.22 2014/12/28 17:06:36 he Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.23 2015/01/04 15:02:57 martin Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -3555,3 +3555,7 @@ etc/rc.d/ntpd							1.15
 	The new ntpd wants to translate ntp into a port number after chroot,
 	so give it its own small copy of /etc/services in the chroot.
 	[mlelstv, ticket 1223]
+
+external/bsd/bind/Makefile.inc				parts of 1.16 (patch)
+	Fix static bind build.
+	[he, ticket 1226]
