@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.54 2015/01/03 11:22:14 palle Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.55 2015/01/04 15:24:18 palle Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.54 2015/01/03 11:22:14 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.55 2015/01/04 15:24:18 palle Exp $");
 
 #include "opt_ddb.h"
 
@@ -84,8 +84,9 @@ void	sparc64_ipi_dcache_flush_page_sun4v(void *, void *);
 void	sparc64_ipi_blast_dcache(void *, void *);
 void	sparc64_ipi_ccall(void *, void *);
 
-/* Function pointer for use in smp_tlb_flush() - setup in sparc64_ipi_init() */
+/* Function pointers to be setup in sparc64_ipi_init() */
 static ipifunc_t smp_tlb_flush_pte_func = NULL;
+static ipifunc_t sparc64_ipi_dcache_flush_page_func = NULL;
 
 /*
  * Process cpu stop-self event.
@@ -180,12 +181,21 @@ sparc64_ipi_init(void)
 	 * Prepare cpu type dependent function pointers
 	 */
 
-	if (CPU_ISSUN4V)
+	if (CPU_ISSUN4V) {
 		smp_tlb_flush_pte_func = sparc64_ipi_flush_pte_sun4v;
-	else if (CPU_IS_USIII_UP())
+		sparc64_ipi_dcache_flush_page_func =
+		    sparc64_ipi_dcache_flush_page_sun4v;
+	}
+	else if (CPU_IS_USIII_UP()) {
 		smp_tlb_flush_pte_func = sparc64_ipi_flush_pte_usiii;
-	else
+		sparc64_ipi_dcache_flush_page_func =
+		    sparc64_ipi_dcache_flush_page_usiii;
+	}
+	else {
 		smp_tlb_flush_pte_func = sparc64_ipi_flush_pte_us;
+		sparc64_ipi_dcache_flush_page_func =
+		    sparc64_ipi_dcache_flush_page_us;
+	}
 
 	if (CPU_ISSUN4V)
 		sparc64_send_ipi = sparc64_send_ipi_sun4v;
@@ -476,16 +486,7 @@ smp_tlb_flush_pte(vaddr_t va, struct pmap * pm)
 void
 smp_dcache_flush_page_cpuset(paddr_t pa, sparc64_cpuset_t activecpus)
 {
-	ipifunc_t func;
-
-	if (CPU_ISSUN4V)
-		func = sparc64_ipi_dcache_flush_page_sun4v;
-	else if (CPU_IS_USIII_UP())
-		func = sparc64_ipi_dcache_flush_page_usiii;
-	else
-		func = sparc64_ipi_dcache_flush_page_us;
-
-	sparc64_multicast_ipi(activecpus, func, pa, dcache_line_size);
+	sparc64_multicast_ipi(activecpus, sparc64_ipi_dcache_flush_page_func, pa, dcache_line_size);
 	sp_dcache_flush_page(pa);
 }
 
