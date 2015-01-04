@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_var.h,v 1.9 2015/01/02 21:59:29 jmcneill Exp $ */
+/* $NetBSD: rockchip_var.h,v 1.10 2015/01/04 11:52:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ bool rockchip_is_chip(const char *);
 
 u_int rockchip_apll_get_rate(void);
 u_int rockchip_cpll_get_rate(void);
+u_int rockchip_dpll_get_rate(void);
 u_int rockchip_gpll_get_rate(void);
 u_int rockchip_cpu_get_rate(void);
 u_int rockchip_ahb_get_rate(void);
@@ -77,5 +78,7 @@ u_int rockchip_a9periph_get_rate(void);
 u_int rockchip_mmc0_get_rate(void);
 u_int rockchip_mmc0_set_div(u_int);
 u_int rockchip_i2c_get_rate(u_int);
+u_int rockchip_mac_get_rate(void);
+u_int rockchip_mac_set_rate(u_int);
 
 #endif /* _ARM_ROCKCHIP_ROCKCHIP_VAR_H_ */
