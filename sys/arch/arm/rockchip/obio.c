@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.13 2015/01/04 11:53:42 jmcneill Exp $	*/
+/*	$NetBSD: obio.c,v 1.14 2015/01/04 16:31:58 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.13 2015/01/04 11:53:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.14 2015/01/04 16:31:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,6 +259,10 @@ void obio_init_gpio(void)
 	/* PHY */
 	obio_swporta(ROCKCHIP_GPIO3_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(26));
 	obio_swporta(ROCKCHIP_GPIO3_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(26));
+
+	/* Minix Neo X7 USB ethernet */
+	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(30));
+	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(30));
 
 	/* IT66121 HDMI */
 	obio_swporta(ROCKCHIP_GPIO3_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(10));
