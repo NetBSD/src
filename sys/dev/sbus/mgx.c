@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.1 2014/12/16 21:01:34 macallan Exp $ */
+/*	$NetBSD: mgx.c,v 1.2 2015/01/04 18:18:20 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.1 2014/12/16 21:01:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.2 2015/01/04 18:18:20 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.1 2014/12/16 21:01:34 macallan Exp $");
 #include <dev/rasops/rasops.h>
 
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/wscons/wsdisplay_glyphcachevar.h>
 
 #include <dev/ic/vgareg.h>
 #include <dev/sbus/mgxreg.h>
@@ -71,14 +72,17 @@ struct mgx_softc {
 	int		sc_stride;
 	int		sc_fbsize;
 	int		sc_mode;
+	uint32_t	sc_dec;
 	u_char		sc_cmap_red[256];
 	u_char		sc_cmap_green[256];
 	u_char		sc_cmap_blue[256];
+	void (*sc_putchar)(void *, int, int, u_int, long);
 	struct vcons_screen sc_console_screen;
 	struct wsscreen_descr sc_defaultscreen_descr;
 	const struct wsscreen_descr *sc_screens[1];
 	struct wsscreen_list sc_screenlist;
 	struct vcons_data vd;
+	glyphcache 	sc_gc;
 };
 
 static int	mgx_match(device_t, cfdata_t, void *);
@@ -91,6 +95,18 @@ static void	mgx_init_screen(void *, struct vcons_screen *, int,
 static void	mgx_write_dac(struct mgx_softc *, int, int, int, int);
 static void	mgx_setup(struct mgx_softc *, int);
 static void	mgx_init_palette(struct mgx_softc *);
+static int	mgx_wait_engine(struct mgx_softc *);
+static int	mgx_wait_fifo(struct mgx_softc *, unsigned int);
+
+static void	mgx_bitblt(void *, int, int, int, int, int, int, int);
+static void 	mgx_rectfill(void *, int, int, int, int, long);
+
+static void	mgx_putchar(void *, int, int, u_int, long);
+static void	mgx_cursor(void *, int, int, int);
+static void	mgx_copycols(void *, int, int, int, int);
+static void	mgx_erasecols(void *, int, int, int, long);
+static void	mgx_copyrows(void *, int, int, int);
+static void	mgx_eraserows(void *, int, int, long);
 
 CFATTACH_DECL_NEW(mgx, sizeof(struct mgx_softc),
     mgx_match, mgx_attach, NULL, NULL);
@@ -143,13 +159,14 @@ mgx_attach(device_t parent, device_t self, void *args)
 	sc->sc_height = prom_getpropint(sa->sa_node, "height", 900);
 	sc->sc_stride = prom_getpropint(sa->sa_node, "linebytes", 900);
 	sc->sc_fbsize = sc->sc_height * sc->sc_stride;
-	sc->sc_fbaddr = NULL; //(void *)(unsigned long)prom_getpropint(sa->sa_node, "address", 0);
+	sc->sc_fbaddr = NULL;
 	if (sc->sc_fbaddr == NULL) {
 		if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot,
 			 sa->sa_reg[8].oa_base,
 			 sc->sc_fbsize,
-			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
+			 BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
+			 &bh) != 0) {
 			aprint_error_dev(self, "cannot map framebuffer\n");
 			return;
 		}
@@ -169,8 +186,8 @@ mgx_attach(device_t parent, device_t self, void *args)
 
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot,
-			 sa->sa_reg[5].oa_base, 0x1000, 0, 
-			 &sc->sc_blith) != 0) {
+			 sa->sa_reg[5].oa_base + MGX_REG_ATREG_OFFSET, 0x1000,
+			 0, &sc->sc_blith) != 0) {
 		aprint_error("%s: couldn't map blitter registers\n", 
 		    device_xname(sc->sc_dev));
 		return;
@@ -207,10 +224,24 @@ mgx_attach(device_t parent, device_t self, void *args)
 	sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
 	sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 
+	sc->sc_gc.gc_bitblt = mgx_bitblt;
+	sc->sc_gc.gc_rectfill = mgx_rectfill;
+	sc->sc_gc.gc_blitcookie = sc;
+	sc->sc_gc.gc_rop = ROP_SRC;
+
+	glyphcache_init(&sc->sc_gc,
+	    sc->sc_height + 5,
+	    (0x400000 / sc->sc_stride) - sc->sc_height - 5,
+	    sc->sc_width,
+	    ri->ri_font->fontwidth,
+	    ri->ri_font->fontheight,
+	    defattr);
+
 	mgx_init_palette(sc);
 
 	if(isconsole) {
-		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0, defattr);
+		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
+		    defattr);
 		vcons_replay_msgbuf(&sc->sc_console_screen);
 	}
 
@@ -222,11 +253,30 @@ mgx_attach(device_t parent, device_t self, void *args)
 	config_found(self, &aa, wsemuldisplaydevprint);
 }
 
-static void
+static inline void
 mgx_write_vga(struct mgx_softc *sc, uint32_t reg, uint8_t val)
 {
 	bus_space_write_1(sc->sc_tag, sc->sc_vgah, reg ^ 3, val);
 }
+
+static inline void
+mgx_write_1(struct mgx_softc *sc, uint32_t reg, uint8_t val)
+{
+	bus_space_write_1(sc->sc_tag, sc->sc_blith, reg ^ 3, val);
+}
+
+static inline uint8_t
+mgx_read_1(struct mgx_softc *sc, uint32_t reg)
+{
+	return bus_space_read_1(sc->sc_tag, sc->sc_blith, reg ^ 3);
+}
+
+static inline void
+mgx_write_4(struct mgx_softc *sc, uint32_t reg, uint32_t val)
+{
+	bus_space_write_4(sc->sc_tag, sc->sc_blith, reg, val);
+}
+
 
 static void
 mgx_write_dac(struct mgx_softc *sc, int idx, int r, int g, int b)
@@ -254,9 +304,278 @@ mgx_init_palette(struct mgx_softc *sc)
 	}
 }
 
+static int
+mgx_wait_engine(struct mgx_softc *sc)
+{
+	unsigned int i;
+	uint8_t stat;
+
+	for (i = 100000; i != 0; i--) {
+		stat = mgx_read_1(sc, ATR_BLT_STATUS);
+		if ((stat & (BLT_HOST_BUSY | BLT_ENGINE_BUSY)) == 0)
+			break;
+	}
+
+	return i;
+}
+
+static int
+mgx_wait_fifo(struct mgx_softc *sc, unsigned int nfifo)
+{
+	unsigned int i;
+	uint8_t stat;
+
+	for (i = 100000; i != 0; i--) {
+		stat = mgx_read_1(sc, ATR_FIFO_STATUS);
+		stat = (stat & FIFO_MASK) >> FIFO_SHIFT;
+		if (stat >= nfifo)
+			break;
+		mgx_write_1(sc, ATR_FIFO_STATUS, 0);
+	}
+
+	return i;
+}
+
 static void
 mgx_setup(struct mgx_softc *sc, int depth)
 {
+	/* wait for everything to go idle */
+	if (mgx_wait_engine(sc) == 0)
+		return;
+	if (mgx_wait_fifo(sc, FIFO_AT24) == 0)
+		return;
+	/*
+	 * Compute the invariant bits of the DEC register.
+	 */
+
+	switch (depth) {
+		case 8:
+			sc->sc_dec = DEC_DEPTH_8 << DEC_DEPTH_SHIFT;
+			break;
+		case 15:
+		case 16:
+			sc->sc_dec = DEC_DEPTH_16 << DEC_DEPTH_SHIFT;
+			break;
+		case 32:
+			sc->sc_dec = DEC_DEPTH_32 << DEC_DEPTH_SHIFT;
+			break;
+		default:
+			return; /* not supported */
+	}
+
+	switch (sc->sc_stride) {
+		case 640:
+			sc->sc_dec |= DEC_WIDTH_640 << DEC_WIDTH_SHIFT;
+			break;
+		case 800:
+			sc->sc_dec |= DEC_WIDTH_800 << DEC_WIDTH_SHIFT;
+			break;
+		case 1024:
+			sc->sc_dec |= DEC_WIDTH_1024 << DEC_WIDTH_SHIFT;
+			break;
+		case 1152:
+			sc->sc_dec |= DEC_WIDTH_1152 << DEC_WIDTH_SHIFT;
+			break;
+		case 1280:
+			sc->sc_dec |= DEC_WIDTH_1280 << DEC_WIDTH_SHIFT;
+			break;
+		case 1600:
+			sc->sc_dec |= DEC_WIDTH_1600 << DEC_WIDTH_SHIFT;
+			break;
+		default:
+			return; /* not supported */
+	}
+	mgx_write_1(sc, ATR_CLIP_CONTROL, 0);
+	mgx_write_1(sc, ATR_BYTEMASK, 0xff);
+}
+
+static void
+mgx_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi, int he,
+             int rop)
+{
+	struct mgx_softc *sc = cookie;
+	uint32_t dec = sc->sc_dec;
+
+        dec |= (DEC_COMMAND_BLT << DEC_COMMAND_SHIFT) |
+	       (DEC_START_DIMX << DEC_START_SHIFT);
+	if (xs < xd) {
+		xs += wi - 1;
+		xd += wi - 1;
+		dec |= DEC_DIR_X_REVERSE;
+	}
+	if (ys < yd) {
+		ys += he - 1;
+		yd += he - 1;
+		dec |= DEC_DIR_Y_REVERSE;
+	}
+	mgx_wait_fifo(sc, 5);
+	mgx_write_1(sc, ATR_ROP, rop);
+	mgx_write_4(sc, ATR_DEC, dec);
+	mgx_write_4(sc, ATR_SRC_XY, (ys << 16) | xs);
+	mgx_write_4(sc, ATR_DST_XY, (yd << 16) | xd);
+	mgx_write_4(sc, ATR_WH, (he << 16) | wi);
+}
+	
+static void
+mgx_rectfill(void *cookie, int x, int y, int wi, int he, long fg)
+{
+	struct mgx_softc *sc = cookie;
+	struct vcons_screen *scr = sc->vd.active;
+	uint32_t dec = sc->sc_dec;
+	uint32_t col;
+
+	if (scr == NULL)
+		return;
+	col = scr->scr_ri.ri_devcmap[fg];
+
+	dec = sc->sc_dec;
+	dec |= (DEC_COMMAND_RECT << DEC_COMMAND_SHIFT) |
+	       (DEC_START_DIMX << DEC_START_SHIFT);
+	mgx_wait_fifo(sc, 5);
+	mgx_write_1(sc, ATR_ROP, ROP_SRC);
+	mgx_write_4(sc, ATR_FG, col);
+	mgx_write_4(sc, ATR_DEC, dec);
+	mgx_write_4(sc, ATR_DST_XY, (y << 16) | x);
+	mgx_write_4(sc, ATR_WH, (he << 16) | wi);
+}
+
+static void
+mgx_putchar(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct mgx_softc *sc = scr->scr_cookie;
+	uint32_t fg, bg;
+	int x, y, wi, he, rv;
+
+	wi = font->fontwidth;
+	he = font->fontheight;
+
+	bg = (attr >> 16) & 0xf;
+	fg = (attr >> 24) & 0xf;
+
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+
+	if (c == 0x20) {
+		mgx_rectfill(sc, x, y, wi, he, bg);
+		if (attr & 1)
+			mgx_rectfill(sc, x, y + he - 2, wi, 1, fg);
+		return;
+	}
+	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
+	if (rv == GC_OK)
+		return;
+	mgx_wait_engine(sc);
+	sc->sc_putchar(cookie, row, col, c, attr & ~1);
+
+	if (rv == GC_ADD) {
+		glyphcache_add(&sc->sc_gc, c, x, y);
+	} else {
+		if (attr & 1)
+			mgx_rectfill(sc, x, y + he - 2, wi, 1, fg);
+	}
+}
+
+static void
+mgx_cursor(void *cookie, int on, int row, int col)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct mgx_softc *sc = scr->scr_cookie;
+	int x, y, wi,he;
+
+	wi = ri->ri_font->fontwidth;
+	he = ri->ri_font->fontheight;
+
+	if (ri->ri_flg & RI_CURSOR) {
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		mgx_bitblt(sc, x, y, x, y, wi, he, ROP_INV);
+		ri->ri_flg &= ~RI_CURSOR;
+	}
+
+	ri->ri_crow = row;
+	ri->ri_ccol = col;
+
+	if (on)
+	{
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		mgx_bitblt(sc, x, y, x, y, wi, he, ROP_INV);
+		ri->ri_flg |= RI_CURSOR;
+	}
+}
+
+static void
+mgx_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct mgx_softc *sc = scr->scr_cookie;
+	int32_t xs, xd, y, width, height;
+
+	xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
+	xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
+	y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+	width = ri->ri_font->fontwidth * ncols;
+	height = ri->ri_font->fontheight;
+	mgx_bitblt(sc, xs, y, xd, y, width, height, ROP_SRC);
+}
+
+static void
+mgx_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct mgx_softc *sc = scr->scr_cookie;
+	int32_t x, y, width, height, bg;
+
+	x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
+	y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+	width = ri->ri_font->fontwidth * ncols;
+	height = ri->ri_font->fontheight;
+	bg = (fillattr >> 16) & 0xff;
+	mgx_rectfill(sc, x, y, width, height, bg);
+}
+
+static void
+mgx_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct mgx_softc *sc = scr->scr_cookie;
+	int32_t x, ys, yd, width, height;
+
+	x = ri->ri_xorigin;
+	ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
+	yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
+	width = ri->ri_emuwidth;
+	height = ri->ri_font->fontheight * nrows;
+	mgx_bitblt(sc, x, ys, x, yd, width, height, ROP_SRC);
+}
+
+static void
+mgx_eraserows(void *cookie, int row, int nrows, long fillattr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct mgx_softc *sc = scr->scr_cookie;
+	int32_t x, y, width, height, bg;
+
+	if ((row == 0) && (nrows == ri->ri_rows)) {
+		x = y = 0;
+		width = ri->ri_width;
+		height = ri->ri_height;
+	} else {
+		x = ri->ri_xorigin;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_emuwidth;
+		height = ri->ri_font->fontheight * nrows;
+	}
+	bg = (fillattr >> 16) & 0xff;
+	mgx_rectfill(sc, x, y, width, height, bg);
 }
 
 static void
@@ -284,14 +603,22 @@ mgx_init_screen(void *cookie, struct vcons_screen *scr,
 #endif
 
 	ri->ri_bits = sc->sc_fbaddr;
-	scr->scr_flags |= VCONS_DONT_READ;
 
 	rasops_init(ri, 0, 0);
+	sc->sc_putchar = ri->ri_ops.putchar;
 
 	ri->ri_caps = WSSCREEN_REVERSE | WSSCREEN_WSCOLORS;
 
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 		    ri->ri_width / ri->ri_font->fontwidth);
+
+	ri->ri_hw = scr;
+	ri->ri_ops.putchar   = mgx_putchar;
+	ri->ri_ops.cursor    = mgx_cursor;
+	ri->ri_ops.copyrows  = mgx_copyrows;
+	ri->ri_ops.eraserows = mgx_eraserows;
+	ri->ri_ops.copycols  = mgx_copycols;
+	ri->ri_ops.erasecols = mgx_erasecols;
 }
 
 static int
