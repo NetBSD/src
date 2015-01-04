@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.12 2015/01/04 03:55:44 jmcneill Exp $	*/
+/*	$NetBSD: obio.c,v 1.13 2015/01/04 11:53:42 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.12 2015/01/04 03:55:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.13 2015/01/04 11:53:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ void obio_init_grf(void)
 	obio_iomux(RK3188_GRF_GPIO3B_IOMUX_OFFSET, 0xa000a000); /* I2C3 */
 	obio_iomux(RK3188_GRF_SOC_CON1_OFFSET,	   0xf800f800);	/* I2C[01234] */
 
-	obio_iomux(RK3188_GRF_GPIO0C_IOMUX_OFFSET, 0x00030000); /* PHY */
+//	obio_iomux(RK3188_GRF_GPIO0C_IOMUX_OFFSET, 0x00030000); /* PHY */
 	obio_iomux(RK3188_GRF_GPIO3C_IOMUX_OFFSET, 0xffffaaaa); /* PHY */
 	obio_iomux(RK3188_GRF_GPIO3D_IOMUX_OFFSET, 0x003f000a); /* PHY */
 	obio_iomux(RK3188_GRF_SOC_CON1_OFFSET,     0x00030002); /* VMAC */
@@ -296,6 +296,7 @@ obio_dump_clocks(void)
 {
 	printf("APLL: %u Hz\n", rockchip_apll_get_rate());
 	printf("CPLL: %u Hz\n", rockchip_cpll_get_rate());
+	printf("DPLL: %u Hz\n", rockchip_dpll_get_rate());
 	printf("GPLL: %u Hz\n", rockchip_gpll_get_rate());
 	printf("CPU: %u Hz\n", rockchip_cpu_get_rate());
 	printf("AHB: %u Hz\n", rockchip_ahb_get_rate());
