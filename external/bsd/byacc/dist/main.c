@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.10 2015/01/03 23:22:52 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2015/01/04 01:34:20 christos Exp $	*/
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.10 2015/01/03 23:22:52 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2015/01/04 01:34:20 christos Exp $");
 /* Id: main.c,v 1.54 2014/10/06 22:40:07 tom Exp  */
 
 #include <signal.h>
@@ -98,6 +98,7 @@ char *symbol_assoc;
 
 int pure_parser;
 int token_table;
+int error_verbose;
 
 #if defined(YYBTYACC)
 Value_t *symbol_pval;
@@ -105,6 +106,7 @@ char **symbol_destructor;
 char **symbol_type_tag;
 int locations = 0;	/* default to no position processing */
 int backtrack = 0;	/* default is no backtracking */
+char *initial_action = NULL;
 #endif
 
 int exit_code;
