@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.100 2014/12/28 13:11:52 maxv Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.101 2015/01/04 16:19:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.100 2014/12/28 13:11:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.101 2015/01/04 16:19:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -737,6 +737,8 @@ ntfs_loadvnode(struct mount *mp, struct vnode *vp,
 
 	error = ntfs_ntvattrget(ntmp, ip, NTFS_A_NAME, NULL, 0, &vap);
 	if (error) {
+		printf("%s: ino %jd (error %d)\n", __func__,
+		    (intmax_t)ip->i_number, error);
 		ntfs_ntput(ip);
 		goto out;
 	}
@@ -763,8 +765,11 @@ ntfs_loadvnode(struct mount *mp, struct vnode *vp,
 			fp->f_size = 0;
 			fp->f_allocated = 0;
 			error = 0;
-		} else
+		} else {
+			printf("%s: ino %jd attr %u (error %d)\n", __func__,
+			    (intmax_t)ip->i_number, ntkey->k_attrtype, error);
 			goto out;
+		}
 	}
 
 	if (key_len <= sizeof(fp->f_smallkey))
