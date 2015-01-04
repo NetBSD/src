@@ -1,4 +1,4 @@
-/*	$NetBSD: crontab.c,v 1.12 2014/12/15 16:45:26 christos Exp $	*/
+/*	$NetBSD: crontab.c,v 1.13 2015/01/04 18:45:17 joerg Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: crontab.c,v 1.12 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: crontab.c,v 1.12 2014/12/15 16:45:26 christos Exp $");
+__RCSID("$NetBSD: crontab.c,v 1.13 2015/01/04 18:45:17 joerg Exp $");
 #endif
 #endif
 
@@ -612,7 +612,7 @@ cleanTempFile(void)
 	}
 }
 
-static void
+static __dead void
 bail(int signo)
 {
 
@@ -682,7 +682,7 @@ replace_cmd(void) {
 	    "# (%s installed on %-24.24s)\n", Filename, ctime(&now));
 	(void)fprintf(tmp,
 	    "# (Cron version %s -- %s)\n", CRON_VERSION,
-	    "$NetBSD: crontab.c,v 1.12 2014/12/15 16:45:26 christos Exp $");
+	    "$NetBSD: crontab.c,v 1.13 2015/01/04 18:45:17 joerg Exp $");
 
 	/* copy the crontab to the tmp
 	 */
