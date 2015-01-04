@@ -31,6 +31,12 @@
 /* Define to 1 if mkstemp() is available and working. */
 #define HAVE_MKSTEMP 1
 
+/* Define to 1 if vsnprintf() is available and working. */
+#define HAVE_VSNPRINTF 1
+
+/* Define to maximum table size (default: 32500) */
+/* #undef MAXTABLE */
+
 /* Define to 1 if filesystem supports mixed-case filenames. */
 #define MIXEDCASE_FILENAMES 1
 
@@ -38,7 +44,7 @@
 /* #undef NO_LEAKS */
 
 /* Define to the system name. */
-#define SYSTEM_NAME "netbsd"
+#define SYSTEM_NAME "NetBSD"
 
 /* "Define to 1 if you want to use dbmalloc for testing." */
 /* #undef USE_DBMALLOC */
@@ -48,6 +54,9 @@
 
 /* "Define to 1 if you want to use valgrind for testing." */
 /* #undef USE_VALGRIND */
+
+/* Define to 1 to enable backtracking extension */
+#define YYBTYACC 1
 
 /* Define to 1 if you want to perform memory-leak testing. */
 /* #undef YY_NO_LEAKS */
