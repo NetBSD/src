@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2014/12/23 17:49:59 christos Exp $
+# $NetBSD: Makefile,v 1.3 2015/01/04 01:26:31 christos Exp $
 
 # Link the gallium mega driver.
 
@@ -475,3 +475,5 @@ SYMLINKS+= gallium_dri.so.${SHLIB_MAJOR}.debug ${DRIDEBUGDIR}/${_d}_dri.so.${SHL
 .endfor
 
 .include <bsd.lib.mk>
+# Don't regenerate c files
+.y.c:
