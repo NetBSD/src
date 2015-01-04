@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.8 2015/01/03 13:26:31 jmcneill Exp $
+#	$NetBSD: files.rockchip,v 1.9 2015/01/04 03:53:02 jmcneill Exp $
 #
 # Configuration info for Rockchip ARM Peripherals
 #
@@ -45,6 +45,11 @@ file	arch/arm/rockchip/rockchip_dwcmmc.c	rkdwcmmc
 attach  dwctwo at obio with rkdwctwo
 file    arch/arm/rockchip/rockchip_dwctwo.c	rkdwctwo	needs-flag
 
+# VMAC Ethernet Controller
+device	rkemac: arp, ether, ifnet, mii
+attach	rkemac at obio
+file	arch/arm/rockchip/rockchip_emac.c	rkemac
+
 # Console parameters
 defparam opt_rockchip.h			CONADDR
 defparam opt_rockchip.h			CONSPEED
@@ -56,3 +61,4 @@ defparam opt_rockchip.h			MEMSIZE
 # Debugging parameters
 defflag opt_rockchip.h			ROCKCHIP_CLOCK_DEBUG
 defflag opt_rkiic.h			RKIIC_DEBUG
+defflag opt_rkemac.h			RKEMAC_DEBUG
