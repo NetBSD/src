@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2015/01/05 01:34:42 joerg Exp $
+# $NetBSD: Makefile,v 1.5 2015/01/05 18:51:10 gson Exp $
 
 # Link the gallium mega driver.
 
@@ -476,7 +476,7 @@ LIBDIR=		${X11USRLIBDIR}/modules/dri
 .for _d in ${DRIVERS}
 SYMLINKS+= gallium_dri.so ${DRIDIR}/${_d}_dri.so
 SYMLINKS+= gallium_dri.so.${SHLIB_MAJOR} ${DRIDIR}/${_d}_dri.so.${SHLIB_MAJOR} 
-.if ${MKDEBUG:Uno} == "yes"
+.if ${MKDEBUG} != "no"
 SYMLINKS+= gallium_dri.so.${SHLIB_MAJOR}.debug ${DRIDEBUGDIR}/${_d}_dri.so.${SHLIB_MAJOR}.debug
 .endif
 .endfor
