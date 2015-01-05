@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/06/14 20:49:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2015/01/05 01:52:23 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,9 +7,7 @@ SUBDIR+=	binutils
 .endif
 
 .if ${MKGCC} != "no"
-.if ${MKGCCCMDS} != "no"
 SUBDIR+=	${EXTERNAL_GCC_SUBDIR}
-.endif
 .endif
 
 .if ${MKGDB} != "no"
