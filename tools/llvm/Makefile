@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2014/01/16 09:00:55 matt Exp $
+#	$NetBSD: Makefile,v 1.19 2015/01/05 18:41:59 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -43,7 +43,7 @@ CLEANFILES+=	need-dl need-dl.c need-dl.out need-terminfo need-terminfo.c need-te
 
 cleandir: cleandir-llvm
 
-cleandir-llvm:
+cleandir-llvm: .PHONY
 	test ! -d config || rm -r config
 	rm -f need-dl need-dl.tmp
 
