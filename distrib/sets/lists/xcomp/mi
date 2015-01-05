@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.152.2.1 2014/11/09 13:22:58 martin Exp $
+#	 $NetBSD: mi,v 1.152.2.2 2015/01/05 21:23:51 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5129,6 +5129,7 @@
 ./usr/X11R7/include/GL/GLwMDrawAP.h			-unknown-	xorg
 ./usr/X11R7/include/GL/gl.h				-unknown-	xorg
 ./usr/X11R7/include/GL/gl_mangle.h			-unknown-	xorg
+./usr/X11R7/include/GL/glcorearb.h			-unknown-	xorg
 ./usr/X11R7/include/GL/glext.h				-unknown-	xorg
 ./usr/X11R7/include/GL/glu.h				-unknown-	xorg
 ./usr/X11R7/include/GL/glu_mangle.h			-unknown-	xorg
@@ -5143,11 +5144,13 @@
 ./usr/X11R7/include/GL/glxtokens.h			-unknown-	xorg
 ./usr/X11R7/include/GL/internal/dri_interface.h		-unknown-	xorg
 ./usr/X11R7/include/GL/internal/glcore.h		-unknown-	xorg
-./usr/X11R7/include/GL/internal/sarea.h			-unknown-	xorg
+./usr/X11R7/include/GL/internal/sarea.h			-unknown-	obsolete
 ./usr/X11R7/include/GL/osmesa.h				-unknown-	xorg
-./usr/X11R7/include/GL/xmesa.h				-unknown-	xorg
-./usr/X11R7/include/GL/xmesa_x.h			-unknown-	xorg
-./usr/X11R7/include/GL/xmesa_xf86.h			-unknown-	xorg
+./usr/X11R7/include/GL/wglext.h				-unknown-	xorg
+./usr/X11R7/include/GL/wmesa.h				-unknown-	xorg
+./usr/X11R7/include/GL/xmesa.h				-unknown-	obsolete
+./usr/X11R7/include/GL/xmesa_x.h			-unknown-	obsolete
+./usr/X11R7/include/GL/xmesa_xf86.h			-unknown-	obsolete
 ./usr/X11R7/include/X11/CallbackI.h			-unknown-	xorg
 ./usr/X11R7/include/X11/Composite.h			-unknown-	xorg
 ./usr/X11R7/include/X11/CompositeP.h			-unknown-	xorg
@@ -6162,8 +6165,10 @@
 ./usr/X11R7/lib/libGLw_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libICE.a				-unknown-	xorg
 ./usr/X11R7/lib/libICE_p.a				-unknown-	profile,xorg
-./usr/X11R7/lib/libOSMesa.a				-unknown-	xorg
-./usr/X11R7/lib/libOSMesa_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libOSMesa.a				-unknown-	obsolete
+./usr/X11R7/lib/libOSMesa_p.a				-unknown-	obsolete
+./usr/X11R7/lib/libglapi.a				-unknown-	xorg
+./usr/X11R7/lib/libglapi_p.a				-unknown-	xorg
 ./usr/X11R7/lib/libSM.a					-unknown-	xorg
 ./usr/X11R7/lib/libSM_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libX11-xcb.a				-unknown-	xorg
@@ -9236,7 +9241,7 @@
 ./usr/libdata/lint/llib-lGLw.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lICE.ln				-unknown-	lint,x11
 ./usr/libdata/lint/llib-lICE.ln				-unknown-	lint,xorg
-./usr/libdata/lint/llib-lOSMesa.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lOSMesa.ln			-unknown-	obsolete
 ./usr/libdata/lint/llib-lSM.ln				-unknown-	lint,x11
 ./usr/libdata/lint/llib-lSM.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lX11.ln				-unknown-	lint,x11

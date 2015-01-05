@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.54 2014/01/02 16:46:40 tho Exp $	x11
+# $NetBSD: md.sparc64,v 1.54.4.1 2015/01/05 21:23:50 martin Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xsun					-unknown-	x11
@@ -285,20 +285,20 @@
 ./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	obsolete
 ./usr/X11R7/lib/X11/doc/README.modes			-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	obsolete
-./usr/X11R7/lib/modules/dri/mach64_dri.so		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/mach64_dri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/mga_dri.so			-unknown-	xorg
-./usr/X11R7/lib/modules/dri/mga_dri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/r128_dri.so			-unknown-	xorg
-./usr/X11R7/lib/modules/dri/r128_dri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/r200_dri.so			-unknown-	xorg
-./usr/X11R7/lib/modules/dri/r200_dri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/r300_dri.so			-unknown-	xorg
-./usr/X11R7/lib/modules/dri/r300_dri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/r600_dri.so			-unknown-	xorg
-./usr/X11R7/lib/modules/dri/r600_dri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/radeon_dri.so		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/radeon_dri.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/mach64_dri.so		-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/mach64_dri.so.0		-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/mga_dri.so			-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/mga_dri.so.0		-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/r128_dri.so			-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/r128_dri.so.0		-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/r200_dri.so			-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/r200_dri.so.0		-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/r300_dri.so			-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/r300_dri.so.0		-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/r600_dri.so			-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/r600_dri.so.0		-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/radeon_dri.so		-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/radeon_dri.so.0		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/ag10e_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ag10e_drv.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		-unknown-	xorg
