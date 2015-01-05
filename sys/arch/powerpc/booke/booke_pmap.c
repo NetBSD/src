@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.18 2014/03/18 18:20:41 riastradh Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.19 2015/01/05 07:40:05 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.18 2014/03/18 18:20:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.19 2015/01/05 07:40:05 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -166,6 +166,9 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 #endif
 
 	KASSERT(endkernel == trunc_page(endkernel));
+
+	/* init the lock */
+	pmap_tlb_info_init(&pmap_tlb0_info);
 
 	/*
 	 * Compute the number of pages kmem_arena will have.
