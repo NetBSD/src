@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.29 2014/12/07 02:23:14 jmcneill Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.30 2015/01/05 21:37:07 martin Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.29 2014/12/07 02:23:14 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.30 2015/01/05 21:37:07 martin Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -787,6 +787,7 @@ dwc_gmac_start(struct ifnet *ifp)
 {
 	struct dwc_gmac_softc *sc = ifp->if_softc;
 	int old = sc->sc_txq.t_queued;
+	int start = sc->sc_txq.t_cur;
 	struct mbuf *m0;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
@@ -806,7 +807,7 @@ dwc_gmac_start(struct ifnet *ifp)
 
 	if (sc->sc_txq.t_queued != old) {
 		/* packets have been queued, kick it off */
-		dwc_gmac_txdesc_sync(sc, old, sc->sc_txq.t_cur,
+		dwc_gmac_txdesc_sync(sc, start, sc->sc_txq.t_cur,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
