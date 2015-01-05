@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1492 2014/12/30 04:22:18 mrg Exp $
+# $NetBSD: mi,v 1.1493 2015/01/05 00:51:50 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2424,7 +2424,7 @@
 ./usr/share/man/cat8/etcupdate.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/evbarm/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbarm/bootmini2440.0	man-sysutil-catman	.cat
-./usr/share/man/cat8/evbarm/elftosb.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/evbarm/elftosb.0		man-sysutil-catman	.cat,cxx
 ./usr/share/man/cat8/evbarm/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/evbarm/sbkeygen.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/evbarm/sbtool.0		man-sysutil-catman	.cat
@@ -5328,7 +5328,7 @@
 ./usr/share/man/html8/eshconfig.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/etcupdate.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/evbarm/bootmini2440.html	man-sysutil-htmlman	html
-./usr/share/man/html8/evbarm/elftosb.html	man-sysutil-htmlman	html
+./usr/share/man/html8/evbarm/elftosb.html	man-sysutil-htmlman	html,cxx
 ./usr/share/man/html8/evbarm/sbkeygen.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/evbarm/sbtool.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/extattrctl.html		man-sysutil-htmlman	html
@@ -8301,7 +8301,7 @@
 ./usr/share/man/man8/etcupdate.8		man-sysutil-man		.man
 ./usr/share/man/man8/evbarm/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/evbarm/bootmini2440.8	man-sysutils-man	.man
-./usr/share/man/man8/evbarm/elftosb.8		man-sysutil-man		.man
+./usr/share/man/man8/evbarm/elftosb.8		man-sysutil-man		.man,cxx
 ./usr/share/man/man8/evbarm/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/evbarm/sbkeygen.8		man-sysutil-man		.man
 ./usr/share/man/man8/evbarm/sbtool.8		man-sysutil-man		.man
