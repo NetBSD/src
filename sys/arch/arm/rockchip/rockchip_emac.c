@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_emac.c,v 1.2 2015/01/04 11:54:43 jmcneill Exp $ */
+/* $NetBSD: rockchip_emac.c,v 1.3 2015/01/05 21:57:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rkemac.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.2 2015/01/04 11:54:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.3 2015/01/05 21:57:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -119,6 +119,7 @@ struct rkemac_softc {
 	bus_dma_segment_t sc_ring_dmaseg;
 	struct rkemac_txring sc_txq;
 	struct rkemac_rxring sc_rxq;
+	bus_addr_t sc_pad_physaddr;
 };
 
 static int	rkemac_match(device_t, cfdata_t, void *);
@@ -186,8 +187,8 @@ rkemac_attach(device_t parent, device_t self, void *aux)
 	} else {
 		soc_con1_reg = 0x0154;
 	}
-	bus_space_subregion(obio->obio_bst, obio->obio_bsh,
-	    ROCKCHIP_GRF_OFFSET + soc_con1_reg, 4, &sc->sc_soc_con1_bsh);
+	bus_space_subregion(obio->obio_bst, obio->obio_grf_bsh, soc_con1_reg,
+	    4, &sc->sc_soc_con1_bsh);
 
 	aprint_naive("\n");
 	aprint_normal(": Ethernet controller\n");
@@ -275,7 +276,8 @@ static int
 rkemac_dma_init(struct rkemac_softc *sc)
 {
 	size_t descsize = RKEMAC_RX_RING_COUNT * sizeof(struct rkemac_rxdesc) +
-			  RKEMAC_TX_RING_COUNT * sizeof(struct rkemac_txdesc);
+			  RKEMAC_TX_RING_COUNT * sizeof(struct rkemac_txdesc) +
+			  ETHER_MIN_LEN;
 	bus_addr_t physaddr;
 	int error, nsegs;
 	void *descs;
@@ -309,6 +311,9 @@ rkemac_dma_init(struct rkemac_softc *sc)
 	     (struct rkemac_txdesc *)(sc->sc_rxq.r_desc + RKEMAC_RX_RING_COUNT);
 	sc->sc_txq.t_physaddr = sc->sc_rxq.r_physaddr +
 	    RKEMAC_RX_RING_COUNT * sizeof(struct rkemac_rxdesc);
+
+	sc->sc_pad_physaddr = sc->sc_txq.t_physaddr +
+	    RKEMAC_TX_RING_COUNT * sizeof(struct rkemac_txdesc);
 
 	/*
 	 * Setup RX ring
@@ -538,6 +543,8 @@ rkemac_init(struct ifnet *ifp)
 	control |= EMAC_CONTROL_EN;
 	EMAC_WRITE(sc, EMAC_CONTROL_REG, control);
 
+	callout_schedule(&sc->sc_mii_tick, hz);
+
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -548,7 +555,8 @@ static void
 rkemac_start(struct ifnet *ifp)
 {
 	struct rkemac_softc *sc = ifp->if_softc;
-	int old = sc->sc_txq.t_queued;
+	const int old = sc->sc_txq.t_queued;
+	const int start = sc->sc_txq.t_cur;
 	struct mbuf *m0;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
@@ -567,10 +575,9 @@ rkemac_start(struct ifnet *ifp)
 	}
 
 	if (sc->sc_txq.t_queued != old) {
-		rkemac_txdesc_sync(sc, old, sc->sc_txq.t_cur,
+		rkemac_txdesc_sync(sc, start, sc->sc_txq.t_cur,
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-		EMAC_WRITE(sc, EMAC_STAT_REG,
-		    EMAC_READ(sc, EMAC_STAT_REG) | EMAC_STAT_TXPL);
+		EMAC_WRITE(sc, EMAC_STAT_REG, EMAC_STAT_TXPL);
 	}
 }
 
@@ -694,8 +701,6 @@ rkemac_queue(struct rkemac_softc *sc, struct mbuf *m0)
 	map = sc->sc_txq.t_data[first].td_map;
 	info = 0;
 
-	KASSERT(map->dm_nsegs > 0);
-
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m0,
 	    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 	if (error) {
@@ -703,7 +708,12 @@ rkemac_queue(struct rkemac_softc *sc, struct mbuf *m0)
 		return error;
 	}
 
-	if (sc->sc_txq.t_queued + map->dm_nsegs >= RKEMAC_TX_RING_COUNT - 1) {
+	KASSERT(map->dm_nsegs > 0);
+
+	const u_int nbufs = map->dm_nsegs +
+	    ((m0->m_pkthdr.len < ETHER_MIN_LEN) ? 1 : 0);
+
+	if (sc->sc_txq.t_queued + nbufs >= RKEMAC_TX_RING_COUNT - 1) {
 		bus_dmamap_unload(sc->sc_dmat, map);
 		return ENOBUFS;
 	}
@@ -715,11 +725,23 @@ rkemac_queue(struct rkemac_softc *sc, struct mbuf *m0)
 
 		tx->tx_ptr = htole32(map->dm_segs[i].ds_addr);
 		len = __SHIFTIN(map->dm_segs[i].ds_len, EMAC_TXDESC_TXLEN);
-		if (i == map->dm_nsegs - 1)
-			info |= EMAC_TXDESC_LAST;
 		tx->tx_info = htole32(info | len);
-		if (i > 0)
-			tx->tx_info |= EMAC_TXDESC_OWN;
+		info &= ~EMAC_TXDESC_FIRST;
+		info |= EMAC_TXDESC_OWN;
+		if (i == map->dm_nsegs - 1) {
+			if (m0->m_pkthdr.len < ETHER_MIN_LEN) {
+				sc->sc_txq.t_queued++;
+				sc->sc_txq.t_cur = (sc->sc_txq.t_cur + 1)
+				    % RKEMAC_TX_RING_COUNT;
+		    		td = &sc->sc_txq.t_data[sc->sc_txq.t_cur];
+				tx = &sc->sc_txq.t_desc[sc->sc_txq.t_cur];
+				tx->tx_ptr = htole32(sc->sc_pad_physaddr);
+				len = __SHIFTIN(ETHER_MIN_LEN -
+				    m0->m_pkthdr.len , EMAC_TXDESC_TXLEN);
+				tx->tx_info = htole32(info | len);
+			}
+			tx->tx_info |= htole32(EMAC_TXDESC_LAST);
+		}
 
 		sc->sc_txq.t_queued++;
 		sc->sc_txq.t_cur =
@@ -815,7 +837,7 @@ rkemac_rxintr(struct rkemac_softc *sc)
 			goto skip;
 		}
 
-		const u_int len = __SHIFTOUT(info, EMAC_RXDESC_LAST);
+		const u_int len = __SHIFTOUT(info, EMAC_RXDESC_RXLEN);
 
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
 		if (mnew == NULL) {
