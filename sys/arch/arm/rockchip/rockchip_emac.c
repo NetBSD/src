@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_emac.c,v 1.3 2015/01/05 21:57:49 jmcneill Exp $ */
+/* $NetBSD: rockchip_emac.c,v 1.4 2015/01/05 22:16:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rkemac.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.3 2015/01/05 21:57:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.4 2015/01/05 22:16:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -144,6 +144,7 @@ static int	rkemac_queue(struct rkemac_softc *, struct mbuf *);
 static void	rkemac_txdesc_sync(struct rkemac_softc *, int, int, int);
 static void	rkemac_txintr(struct rkemac_softc *);
 static void	rkemac_rxintr(struct rkemac_softc *);
+static void	rkemac_setmulti(struct rkemac_softc *);
 
 CFATTACH_DECL_NEW(rkemac, sizeof(struct rkemac_softc),
 	rkemac_match, rkemac_attach, NULL, NULL);
@@ -502,8 +503,6 @@ static int
 rkemac_init(struct ifnet *ifp)
 {
 	struct rkemac_softc *sc = ifp->if_softc;
-	struct ether_multi *em;
-	struct ether_multistep ems;
 	uint32_t control;
 
 	if (ifp->if_flags & IFF_RUNNING)
@@ -511,6 +510,11 @@ rkemac_init(struct ifnet *ifp)
 
 	rkemac_stop(ifp, 0);
 
+	EMAC_WRITE(sc, EMAC_POLLRATE_REG, RKEMAC_POLLRATE);
+	EMAC_WRITE(sc, EMAC_RXRINGPTR_REG, sc->sc_rxq.r_physaddr);
+	EMAC_WRITE(sc, EMAC_TXRINGPTR_REG, sc->sc_txq.t_physaddr);
+
+	control &= ~EMAC_CONTROL_RXBDTLEN;
 	control = EMAC_READ(sc, EMAC_CONTROL_REG);
 	if (ifp->if_flags & IFF_PROMISC) {
 		control |= EMAC_CONTROL_PROM;
@@ -522,24 +526,16 @@ rkemac_init(struct ifnet *ifp)
 	} else {
 		control |= EMAC_CONTROL_DISBC;
 	}
-	ETHER_FIRST_MULTI(ems, &sc->sc_ec, em);
-	if (em) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		control |= EMAC_CONTROL_PROM;
-	} else {
-		ifp->if_flags &= ~IFF_ALLMULTI;
-	}
 
-	EMAC_WRITE(sc, EMAC_POLLRATE_REG, RKEMAC_POLLRATE);
-	EMAC_WRITE(sc, EMAC_RXRINGPTR_REG, sc->sc_rxq.r_physaddr);
-	EMAC_WRITE(sc, EMAC_TXRINGPTR_REG, sc->sc_txq.t_physaddr);
-
-	control &= ~EMAC_CONTROL_RXBDTLEN;
 	control |= __SHIFTIN(RKEMAC_RX_RING_COUNT, EMAC_CONTROL_RXBDTLEN);
 	control &= ~EMAC_CONTROL_TXBDTLEN;
 	control |= __SHIFTIN(RKEMAC_TX_RING_COUNT, EMAC_CONTROL_TXBDTLEN);
 	control |= EMAC_CONTROL_RXRN;
 	control |= EMAC_CONTROL_TXRN;
+	EMAC_WRITE(sc, EMAC_CONTROL_REG, control);
+
+	rkemac_setmulti(sc);
+
 	control |= EMAC_CONTROL_EN;
 	EMAC_WRITE(sc, EMAC_CONTROL_REG, control);
 
@@ -630,30 +626,16 @@ static int
 rkemac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct rkemac_softc *sc = ifp->if_softc;
-	struct ether_multi *em;
-	struct ether_multistep ems;
-	uint32_t control;
 	int s, error;
 
 	s = splnet();
 
 	if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 		error = 0;
-		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
-			;
-		else if (ifp->if_flags & IFF_RUNNING) {
-			control = EMAC_READ(sc, EMAC_CONTROL_REG);
-			ETHER_FIRST_MULTI(ems, &sc->sc_ec, em);
-			if (em) {
-				ifp->if_flags |= IFF_ALLMULTI;
-				control |= EMAC_CONTROL_PROM;
-			} else {
-				ifp->if_flags &= ~IFF_ALLMULTI;
-				if ((ifp->if_flags & IFF_PROMISC) == 0) {
-					control &= ~EMAC_CONTROL_PROM;
-				}
+		if (ifp->if_flags & IFF_RUNNING) {
+			if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI) {
+				rkemac_setmulti(sc);
 			}
-			EMAC_WRITE(sc, EMAC_CONTROL_REG, control);
 		}
 	}
 
@@ -895,3 +877,46 @@ skip:
 	sc->sc_rxq.r_cur = i;
 }
 
+static void
+rkemac_setmulti(struct rkemac_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	uint32_t hashes[2] = { 0, 0 };
+	uint32_t control, h;
+	int s;
+
+	s = splnet();
+
+	control = EMAC_READ(sc, EMAC_CONTROL_REG);
+
+	if (ifp->if_flags & IFF_PROMISC) {
+		control |= EMAC_CONTROL_PROM;
+		hashes[0] = hashes[1] = 0xffffffff;
+		goto done;
+	}
+
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	control &= ~EMAC_CONTROL_PROM;
+
+	ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			control |= EMAC_CONTROL_PROM;
+			ifp->if_flags |= IFF_ALLMULTI;
+			hashes[0] = hashes[1] = 0xffffffff;
+			goto done;
+		}
+		h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+		hashes[h >> 5] |= (1 << (h & 0x1f));
+		ETHER_NEXT_MULTI(step, enm);
+	}
+
+done:
+	EMAC_WRITE(sc, EMAC_CONTROL_REG, control);
+	EMAC_WRITE(sc, EMAC_LAFL_REG, hashes[0]);
+	EMAC_WRITE(sc, EMAC_LAFH_REG, hashes[1]);
+
+	splx(s);
+}
