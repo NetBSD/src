@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.8 2014/03/21 12:30:00 martin Exp $
+# $NetBSD: mi,v 1.8.4.1 2015/01/05 21:23:50 martin Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R6/lib/libFS_g.a				-unknown-	debuglib,x11
 ./usr/X11R6/lib/libGLU_g.a				-unknown-	debuglib,x11
@@ -52,7 +52,8 @@
 ./usr/X11R7/lib/libGL_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libGLw_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libICE_g.a				-unknown-	debuglib,xorg
-./usr/X11R7/lib/libOSMesa_g.a				-unknown-	debuglib,xorg
+./usr/X11R7/lib/libOSMesa_g.a				-unknown-	obsolete
+./usr/X11R7/lib/libglapi.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libSM_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libX11-xcb_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libX11_g.a				-unknown-	debuglib,xorg
@@ -406,3 +407,5 @@
 ./usr/libdata/debug/usr/X11R7/bin/xwininfo.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xwud.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/libexec/chooser.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/gallium_dri.so.0.debug	-unknown-		debug,xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/kms_swrast_dri.so.0.debug	-unknown-		debug,xorg

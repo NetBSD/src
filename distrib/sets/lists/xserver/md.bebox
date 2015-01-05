@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.10 2014/01/02 16:46:40 tho Exp $
+# $NetBSD: md.bebox,v 1.10.4.1 2015/01/05 21:23:50 martin Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -6,8 +6,8 @@
 ./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	obsolete
 ./usr/X11R7/lib/X11/doc/README.modes			-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	obsolete
-./usr/X11R7/lib/modules/dri/mga_dri.so			-unknown-	xorg
-./usr/X11R7/lib/modules/dri/mga_dri.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/mga_dri.so			-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/mga_dri.so.0		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/cirrus_alpine.so	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_drv.so		-unknown-	xorg

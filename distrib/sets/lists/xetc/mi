@@ -1,7 +1,8 @@
-# $NetBSD: mi,v 1.23 2013/08/11 22:29:03 joerg Exp $
+# $NetBSD: mi,v 1.23.4.1 2015/01/05 21:23:52 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
+./etc/drirc						-unknown-	xorg
 ./etc/X11/fs/config					-unknown-	x11
 ./etc/X11/fs/config					-unknown-	xorg
 ./etc/X11/lbxproxy/AtomControl				-obsolete-	obsolete,xorg

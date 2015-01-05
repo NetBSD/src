@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.55.4.1 2014/10/06 13:09:41 martin Exp $
+# $NetBSD: shl.mi,v 1.55.4.2 2015/01/05 21:23:52 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -180,9 +180,12 @@
 ./usr/X11R7/lib/libICE.so			-unknown-		xorg
 ./usr/X11R7/lib/libICE.so.7			-unknown-		xorg
 ./usr/X11R7/lib/libICE.so.7.0			-unknown-		xorg
-./usr/X11R7/lib/libOSMesa.so			-unknown-		xorg
-./usr/X11R7/lib/libOSMesa.so.7			-unknown-		xorg
-./usr/X11R7/lib/libOSMesa.so.7.0		-unknown-		xorg
+./usr/X11R7/lib/libglapi.so			-unknown-		xorg
+./usr/X11R7/lib/libglapi.so.0			-unknown-		xorg
+./usr/X11R7/lib/libglapi.so.0.0			-unknown-		xorg
+./usr/X11R7/lib/libOSMesa.so			-unknown-		obsolete
+./usr/X11R7/lib/libOSMesa.so.7			-unknown-		obsolete
+./usr/X11R7/lib/libOSMesa.so.7.0		-unknown-		obsolete
 ./usr/X11R7/lib/libSM.so			-unknown-		xorg
 ./usr/X11R7/lib/libSM.so.7			-unknown-		xorg
 ./usr/X11R7/lib/libSM.so.7.0			-unknown-		xorg
