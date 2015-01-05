@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_var.h,v 1.10 2015/01/04 11:52:45 jmcneill Exp $ */
+/* $NetBSD: rockchip_var.h,v 1.11 2015/01/05 21:35:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 struct obio_attach_args {
 	bus_space_tag_t	obio_bst;	/* bus space tag */
 	bus_space_handle_t obio_bsh;	/* bus space handle */
+	bus_space_handle_t obio_grf_bsh; /* GRF bus space handle */
 	bus_addr_t	obio_base;	/* base address of handle */
 	bus_addr_t	obio_offset;	/* address of device */
 	bus_size_t	obio_size;	/* size of device */
