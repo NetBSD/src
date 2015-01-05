@@ -8,7 +8,7 @@
 /* #undef GCC_PRINTF */
 
 /* Define to printf-attribute for gcc */
-/* #undef GCC_PRINTFLIKE */
+#define GCC_PRINTFLIKE(a,b) __printflike(a,b)
 
 /* Define to 1 if the compiler supports gcc-like scanf attribute. */
 /* #undef GCC_SCANF */
