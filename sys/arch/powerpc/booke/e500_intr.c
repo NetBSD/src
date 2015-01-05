@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.28 2014/12/27 16:19:33 nonaka Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.29 2015/01/05 07:40:05 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.28 2014/12/27 16:19:33 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.29 2015/01/05 07:40:05 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1093,6 +1093,11 @@ e500_intr_init(void)
 		panic("%s: don't know how to deal with SVR %#lx",
 		    __func__, mfspr(SPR_SVR));
 	}
+
+	/*
+	 * Initialize interrupt handler lock
+	 */
+	mutex_init(&e500_intr_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	/*
 	 * We need to be in mixed mode.
