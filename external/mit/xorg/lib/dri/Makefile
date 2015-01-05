@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2014/12/23 17:50:42 christos Exp $
+# $NetBSD: Makefile,v 1.24 2015/01/05 01:34:42 joerg Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -397,6 +397,9 @@ FILES=		drirc
 .include <bsd.x11.mk>
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 LIBDIR=		${X11USRLIBDIR}/modules/dri
+
+CWARNFLAGS.clang+=	-Wno-error=initializer-overrides -Wno-error=switch \
+			-Wno-error=tautological-constant-out-of-range-compare
 
 .include <bsd.lib.mk>
 .else
