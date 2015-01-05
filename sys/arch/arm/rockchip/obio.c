@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.14 2015/01/04 16:31:58 jmcneill Exp $	*/
+/*	$NetBSD: obio.c,v 1.15 2015/01/05 21:35:53 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.14 2015/01/04 16:31:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.15 2015/01/05 21:35:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,9 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	obio.obio_mult = cf->cf_loc[OBIOCF_MULT];
 	obio.obio_port = cf->cf_loc[OBIOCF_PORT];
 	obio.obio_dmat = &rockchip_bus_dma_tag;
+
+	bus_space_subregion(&rockchip_bs_tag, rockchip_core1_bsh,
+	    ROCKCHIP_GRF_OFFSET, ROCKCHIP_GRF_SIZE, &obio.obio_grf_bsh);
 
 	switch (cf->cf_loc[OBIOCF_MULT]) {
 	case 1:
