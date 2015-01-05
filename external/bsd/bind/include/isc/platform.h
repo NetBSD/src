@@ -270,9 +270,7 @@
  * If the "xadd" operation is available on this architecture,
  * ISC_PLATFORM_HAVEXADD will be defined.
  */
-#ifdef __HAVE_ATOMIC64_OPS
 #define ISC_PLATFORM_HAVEXADD 1
-#endif
 
 /*
  * If the "xaddq" operation (64bit xadd) is available on this architecture,
