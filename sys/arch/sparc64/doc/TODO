@@ -1,10 +1,11 @@
- /* $NetBSD: TODO,v 1.7 2014/09/04 18:55:03 palle Exp $ */
+ /* $NetBSD: TODO,v 1.8 2015/01/05 11:42:19 palle Exp $ */
 
 Things to be done:
 
 common:
 - make %g6 point to curcpu
 - make %g7 point to curlwp
+- change run-time checks for cpu type to function pointers
 
 sun4u:
 
