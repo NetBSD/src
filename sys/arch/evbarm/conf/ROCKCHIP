@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ROCKCHIP,v 1.13 2015/01/04 03:53:34 jmcneill Exp $
+#	$NetBSD: ROCKCHIP,v 1.14 2015/01/05 22:17:38 jmcneill Exp $
 #
 #	Rockchip RK3066/RK3188 based SBC (Single Board Computer)
 #
@@ -202,7 +202,6 @@ ld*		at sdmmc?
 
 # Ethernet
 rkemac0		at obio0 addr 0x10204000 size 0x4000 intr 51
-rgephy*		at mii? phy ?
 ukphy*		at mii? phy ?
 
 #options DWC_MMC_DEBUG
