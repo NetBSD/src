@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.6 2014/04/03 14:46:25 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.7 2015/01/05 05:35:18 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -144,7 +144,7 @@ struct pmap_tlb_info {
 #ifdef	_KERNEL
 extern struct pmap_tlb_info pmap_tlb0_info;
 #ifdef MULTIPROCESSOR
-extern struct pmap_tlb_info *pmap_tlbs[MAXCPUS];
+extern struct pmap_tlb_info *pmap_tlbs[PMAP_TLB_MAX];
 extern u_int pmap_ntlbs;
 #endif
 

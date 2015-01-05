@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 2014/12/25 08:11:09 nonaka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 2015/01/05 05:35:18 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8 2014/12/25 08:11:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2015/01/05 05:35:18 nonaka Exp $");
 
 /*
  *	Manages physical address maps.
@@ -197,7 +197,7 @@ CTASSERT(PMAP_ASID_RESERVED == 0);
  * Initialize the kernel pmap.
  */
 #ifdef MULTIPROCESSOR
-#define	PMAP_SIZE	offsetof(struct pmap, pm_pai[MAXCPUS])
+#define	PMAP_SIZE	offsetof(struct pmap, pm_pai[PMAP_TLB_MAX])
 #else
 #define	PMAP_SIZE	sizeof(struct pmap)
 kmutex_t pmap_pvlist_mutex __aligned(COHERENCY_UNIT);
