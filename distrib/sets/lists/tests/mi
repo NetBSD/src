@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.607 2015/01/05 18:03:59 joerg Exp $
+# $NetBSD: mi,v 1.608 2015/01/05 22:45:09 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -148,6 +148,7 @@
 ./usr/libdata/debug/usr/tests/net/icmp					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/if					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/if_loop					tests-net-debug
+./usr/libdata/debug/usr/tests/net/in_cksum				tests-net-debug
 ./usr/libdata/debug/usr/tests/net/mcast					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/net					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/sys					tests-net-debug
@@ -3137,6 +3138,11 @@
 ./usr/tests/net/if_loop/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/if_loop/Kyuafile		tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if_loop/t_pr		tests-net-tests		atf,rump
+./usr/tests/net/in_cksum			tests-net-tests
+./usr/tests/net/in_cksum/Atffile		tests-net-tests		atf
+./usr/tests/net/in_cksum/Kyuafile		tests-net-tests		atf,kyua
+./usr/tests/net/in_cksum/t_in_cksum		tests-net-tests		atf
+./usr/tests/net/in_cksum/in_cksum		tests-net-tests		atf
 ./usr/tests/net/mcast				tests-net-tests
 ./usr/tests/net/mcast/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/mcast/Kyuafile			tests-net-tests		atf,rump,kyua
