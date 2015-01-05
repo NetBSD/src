@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2015/01/05 01:34:42 joerg Exp $
+# $NetBSD: Makefile,v 1.25 2015/01/05 16:26:48 christos Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -405,3 +405,5 @@ CWARNFLAGS.clang+=	-Wno-error=initializer-overrides -Wno-error=switch \
 .else
 .include <bsd.inc.mk>
 .endif
+# Don't re-build .c files when .y files change
+.y.c:
