@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.1 2015/01/05 22:38:36 christos Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.2 2015/01/05 23:25:10 christos Exp $	*/
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.1 2015/01/05 22:38:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.2 2015/01/05 23:25:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.1 2015/01/05 22:38:36 christos Exp $"
 #include <err.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,10 +46,21 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.1 2015/01/05 22:38:36 christos Exp $"
 #include "cpu_in_cksum.c"
 
 #ifdef HAVE_CPU_IN_CKSUM
+#undef cpu_in_cksum
 int	cpu_in_cksum(struct mbuf*, int, int, uint32_t);
 #endif
 
 static bool	random_aligned;
+
+void panic(const char *, ...);
+void
+panic(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	verrx(1, fmt, ap);
+	va_end(ap);
+}
 
 static void
 free_mbuf_chain(struct mbuf *m)
