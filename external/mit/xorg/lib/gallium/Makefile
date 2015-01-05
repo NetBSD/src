@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2015/01/04 01:26:31 christos Exp $
+# $NetBSD: Makefile,v 1.4 2015/01/05 01:34:42 joerg Exp $
 
 # Link the gallium mega driver.
 
@@ -462,6 +462,13 @@ CPPFLAGS.target.c += \
 	-I${X11SRCDIR.MesaLib}/src/gallium/state_trackers/dri \
 	-I${X11SRCDIR.MesaLib}/src/loader \
 	-I${X11SRCDIR.MesaLib}/src/gallium/winsys
+
+CWARNFLAGS.clang+=	-Wno-error=constant-conversion \
+			-Wno-error=tautological-constant-out-of-range-compare \
+			-Wno-error=pointer-sign \
+			-Wno-error=switch \
+			-Wno-error=absolute-value \
+			-Wno-error=tautological-compare
 
 .include <bsd.x11.mk>
 LIBDIR=		${X11USRLIBDIR}/modules/dri
