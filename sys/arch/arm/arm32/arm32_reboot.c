@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_reboot.c,v 1.7 2015/01/02 18:49:02 christos Exp $	*/
+/*	$NetBSD: arm32_reboot.c,v 1.8 2015/01/05 17:04:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.7 2015/01/02 18:49:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.8 2015/01/05 17:04:24 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -203,4 +203,5 @@ cpu_reboot(int howto, char *bootstr)
 	IRQdisable;
 
 	docpureset(howto);
+	__unreachable();
 }
