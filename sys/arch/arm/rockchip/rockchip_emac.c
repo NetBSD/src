@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_emac.c,v 1.4 2015/01/05 22:16:49 jmcneill Exp $ */
+/* $NetBSD: rockchip_emac.c,v 1.5 2015/01/05 23:00:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rkemac.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.4 2015/01/05 22:16:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.5 2015/01/05 23:00:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -384,7 +384,7 @@ rkemac_intr(void *priv)
 	if (!stat)
 		return 0;
 
-	EMAC_WRITE(sc, EMAC_STAT_REG, stat);
+	EMAC_WRITE(sc, EMAC_STAT_REG, stat & ~EMAC_STAT_MDIO);
 
 	if (stat & EMAC_STAT_TXINT)
 		rkemac_txintr(sc);
