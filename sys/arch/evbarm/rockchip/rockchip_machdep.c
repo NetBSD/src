@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.18 2015/01/06 00:43:59 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.19 2015/01/06 00:45:45 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.18 2015/01/06 00:43:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.19 2015/01/06 00:45:45 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -781,7 +781,7 @@ rockchip_device_register(device_t self, void *aux)
 #if NETHER > 0
 		uint8_t enaddr[ETHER_ADDR_LEN];
 		if (get_bootconf_option(boot_args, "rkemac0.mac-address",
-		    BOOTOPT_TYPE_MACADDR, &enaddr)) {
+		    BOOTOPT_TYPE_MACADDR, enaddr)) {
 			prop_data_t pd = prop_data_create_data(enaddr,
 			    sizeof(enaddr));
 			prop_dictionary_set(dict, "mac-address", pd);
