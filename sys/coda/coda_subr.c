@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.30 2014/12/13 15:59:30 hannken Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.31 2015/01/06 11:24:46 hannken Exp $	*/
 
 /*
  *
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.30 2014/12/13 15:59:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.31 2015/01/06 11:24:46 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,8 +297,10 @@ coda_cacheprint(struct mount *whoIam)
 		coda_nc_name(VTOC(vp));
 		printf("\n");
 		count++;
+		vrele(vp);
 	}
 	printf("coda_cacheprint: count %d\n", count);
+	vfs_vnode_iterator_destroy(marker);
 }
 #endif
 
