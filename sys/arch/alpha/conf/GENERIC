@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.363 2014/12/17 16:53:43 macallan Exp $
+# $NetBSD: GENERIC,v 1.364 2015/01/06 17:50:24 macallan Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.363 $"
+ident		"GENERIC-$Revision: 1.364 $"
 
 maxusers 32
 
@@ -704,16 +704,8 @@ midi*	at pcppi?
 midi*	at sb?
 
 # Workstation Console attachments
-wsdisplay*	at	cfb?
-wsdisplay*	at	mfb?
-wsdisplay*	at	tfb?
-wsdisplay*	at	sfb?
-#wsdisplay*	at	sfbp?
-wsdisplay*	at	px?
-wsdisplay*	at	pxg?
-wsdisplay*	at	radeonfb?
-wsdisplay*	at	vga?
-wsdisplay*	at	tga?
+wsdisplay0	at	wsemuldisplaydev? console 1
+wsdisplay*	at	wsemuldisplaydev?
 wskbd*		at	lkkbd? console ?
 wsmouse*	at	vsms?
 wskbd*		at	pckbd?
