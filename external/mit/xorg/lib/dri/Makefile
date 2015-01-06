@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18.24.1 2015/01/05 21:23:50 martin Exp $
+# $NetBSD: Makefile,v 1.18.24.2 2015/01/06 11:00:40 martin Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -26,6 +26,8 @@ CPPFLAGS+= \
 #CPPFLAGS+=	-D_NETBSD_SOURCE -DPTHREADS
 
 # We don't actually build this on non-x86 at all, currently.
+# The following if statements are not effective since we only
+# get here for x86
 .if ${MACHINE_ARCH} == "alpha"
 DRIVERS=	r200 radeon
 .elif ${MACHINE} == "macppc" || ${MACHINE} == "ofppc"
@@ -360,7 +362,7 @@ MESA_SRC_MODULES=  main math math_xform vbo tnl swrast ss common asm_c program a
 .include "../libmesa.mk"
 .include "../libglsl.mk"
 
-.if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SRCS+=	streaming-load-memcpy.c
 CPPFLAGS.streaming-load-memcpy.c+= -msse4.1
 .endif
@@ -370,7 +372,7 @@ CPPFLAGS.streaming-load-memcpy.c+= -msse4.1
 .for _d in ${DRIVERS}
 SYMLINKS+= mesa_dri_drivers.so.${SHLIB_MAJOR} ${DRIDIR}/${_d}_dri.so.${SHLIB_MAJOR} 
 SYMLINKS+= ${_d}_dri.so.${SHLIB_MAJOR} ${DRIDIR}/${_d}_dri.so
-.if ${MKDEBUG:Uno} == "yes"
+.if ${MKDEBUG} != "no"
 SYMLINKS+= mesa_dri_drivers.so.${SHLIB_MAJOR}.debug ${DRIDEBUGDIR}/${_d}_dri.so.${SHLIB_MAJOR}.debug
 .endif
 .endfor
@@ -393,6 +395,15 @@ FILES=		drirc
 .PATH:          ${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/common
 
 .include <bsd.x11.mk>
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 LIBDIR=		${X11USRLIBDIR}/modules/dri
 
+CWARNFLAGS.clang+=	-Wno-error=initializer-overrides -Wno-error=switch \
+			-Wno-error=tautological-constant-out-of-range-compare
+
 .include <bsd.lib.mk>
+.else
+.include <bsd.inc.mk>
+.endif
+# Don't re-build .c files when .y files change
+.y.c:
