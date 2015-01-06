@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2015/01/05 23:48:46 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2015/01/06 02:49:21 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ ADIR:=${NETBSDSRCDIR}/sys/arch/${i}/${i}
 .PATH.S: ${ADIR}
 SRCS.in_cksum=cpu_in_cksum.S in_cksum.c
 cpu_in_cksum.S: assym.h
-CPPFLAGS+=-DHAVE_CPU_IN_CKSUM -I.
+CPPFLAGS+=-DHAVE_CPU_IN_CKSUM -I${.CURDIR}
 .endif
 .endfor
 
