@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.2 2015/01/05 23:25:10 christos Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.3 2015/01/06 21:36:38 joerg Exp $	*/
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.2 2015/01/05 23:25:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.3 2015/01/06 21:36:38 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -52,7 +52,7 @@ int	cpu_in_cksum(struct mbuf*, int, int, uint32_t);
 
 static bool	random_aligned;
 
-void panic(const char *, ...);
+void panic(const char *, ...) __printflike(1, 2);
 void
 panic(const char *fmt, ...)
 {
