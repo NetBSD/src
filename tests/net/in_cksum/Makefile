@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2015/01/06 02:49:21 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2015/01/06 03:20:24 christos Exp $
 
 .include <bsd.own.mk>
 
 MKMAN=no
-TESTSDIR=       ${TESTSBASE}/net/cksum
+TESTSDIR=       ${TESTSBASE}/net/in_cksum
 
 TESTS_SH=t_in_cksum
 
