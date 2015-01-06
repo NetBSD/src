@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.2 2015/01/04 18:18:20 macallan Exp $ */
+/*	$NetBSD: mgx.c,v 1.3 2015/01/06 13:54:18 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.2 2015/01/04 18:18:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.3 2015/01/06 13:54:18 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -465,17 +465,17 @@ mgx_putchar(void *cookie, int row, int col, u_int c, long attr)
 		return;
 	}
 	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
-	if (rv == GC_OK)
-		return;
-	mgx_wait_engine(sc);
-	sc->sc_putchar(cookie, row, col, c, attr & ~1);
+	if (rv != GC_OK) {
+		volatile uint32_t junk;
 
-	if (rv == GC_ADD) {
-		glyphcache_add(&sc->sc_gc, c, x, y);
-	} else {
-		if (attr & 1)
-			mgx_rectfill(sc, x, y + he - 2, wi, 1, fg);
+		mgx_wait_engine(sc);
+		sc->sc_putchar(cookie, row, col, c, attr & ~1);
+		junk = *(uint32_t *)sc->sc_fbaddr;
+		if (rv == GC_ADD)
+			glyphcache_add(&sc->sc_gc, c, x, y);
 	}
+	if (attr & 1)
+		mgx_rectfill(sc, x, y + he - 2, wi, 1, fg);
 }
 
 static void
@@ -589,18 +589,10 @@ mgx_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_flg = RI_CENTER;
+	ri->ri_flg = RI_CENTER | RI_ENABLE_ALPHA;
 
-#if _LP64
-	/*
-	 * XXX
-	 * Assuming all 64bit SPARCs are fast enough to render anti-aliased
-	 * text on the fly. Matters only as long as we don't have acceleration
-	 * and glyphcache. 
-	 */
 	if (ri->ri_depth == 8)
-		ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
-#endif
+		ri->ri_flg |= RI_8BIT_IS_RGB;
 
 	ri->ri_bits = sc->sc_fbaddr;
 
