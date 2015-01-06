@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.101 2015/01/04 16:19:12 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.102 2015/01/06 11:03:09 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.101 2015/01/04 16:19:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.102 2015/01/06 11:03:09 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -737,8 +737,8 @@ ntfs_loadvnode(struct mount *mp, struct vnode *vp,
 
 	error = ntfs_ntvattrget(ntmp, ip, NTFS_A_NAME, NULL, 0, &vap);
 	if (error) {
-		printf("%s: ino %jd (error %d)\n", __func__,
-		    (intmax_t)ip->i_number, error);
+		printf("%s: attr %x for ino %" PRId64 ": error %d\n",
+		    __func__, NTFS_A_NAME, ip->i_number, error);
 		ntfs_ntput(ip);
 		goto out;
 	}
@@ -766,8 +766,9 @@ ntfs_loadvnode(struct mount *mp, struct vnode *vp,
 			fp->f_allocated = 0;
 			error = 0;
 		} else {
-			printf("%s: ino %jd attr %u (error %d)\n", __func__,
-			    (intmax_t)ip->i_number, ntkey->k_attrtype, error);
+			printf("%s: attr %x for ino %" PRId64 ": error %d\n",
+			    __func__, ntkey->k_attrtype, ip->i_number, error);
+			ntfs_ntput(ip);
 			goto out;
 		}
 	}
