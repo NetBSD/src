@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.6 2015/01/06 03:20:24 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2015/01/06 03:41:42 christos Exp $
 
 .include <bsd.own.mk>
 
-MKMAN=no
 TESTSDIR=       ${TESTSBASE}/net/in_cksum
 
 TESTS_SH=t_in_cksum
-
 
 CDIR=${NETBSDSRCDIR}/sys/netinet
 
@@ -21,6 +19,8 @@ CPPFLAGS+=-DHAVE_CPU_IN_CKSUM -I${.CURDIR}
 .endfor
 
 PROGS=in_cksum
+MAN.in_cksum=    # empty
+BINDIR.in_cksum= ${TESTSDIR}
 
 CPPFLAGS+=-I${CDIR}
 
