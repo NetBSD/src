@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.3 2015/01/06 13:54:18 macallan Exp $ */
+/*	$NetBSD: mgx.c,v 1.4 2015/01/06 17:41:30 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.3 2015/01/06 13:54:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.4 2015/01/06 17:41:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,8 @@ static void	mgx_init_screen(void *, struct vcons_screen *, int,
 static void	mgx_write_dac(struct mgx_softc *, int, int, int, int);
 static void	mgx_setup(struct mgx_softc *, int);
 static void	mgx_init_palette(struct mgx_softc *);
+static int	mgx_putcmap(struct mgx_softc *, struct wsdisplay_cmap *);
+static int 	mgx_getcmap(struct mgx_softc *, struct wsdisplay_cmap *);
 static int	mgx_wait_engine(struct mgx_softc *);
 static int	mgx_wait_fifo(struct mgx_softc *, unsigned int);
 
@@ -305,6 +307,67 @@ mgx_init_palette(struct mgx_softc *sc)
 }
 
 static int
+mgx_putcmap(struct mgx_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_char *r, *g, *b;
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int i, error;
+	u_char rbuf[256], gbuf[256], bbuf[256];
+
+	if (cm->index >= 256 || cm->count > 256 ||
+	    (cm->index + cm->count) > 256)
+		return EINVAL;
+	error = copyin(cm->red, &rbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->green, &gbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->blue, &bbuf[index], count);
+	if (error)
+		return error;
+
+	memcpy(&sc->sc_cmap_red[index], &rbuf[index], count);
+	memcpy(&sc->sc_cmap_green[index], &gbuf[index], count);
+	memcpy(&sc->sc_cmap_blue[index], &bbuf[index], count);
+
+	r = &sc->sc_cmap_red[index];
+	g = &sc->sc_cmap_green[index];
+	b = &sc->sc_cmap_blue[index];
+	
+	for (i = 0; i < count; i++) {
+		mgx_write_dac(sc, index, *r, *g, *b);
+		index++;
+		r++, g++, b++;
+	}
+	return 0;
+}
+
+static int
+mgx_getcmap(struct mgx_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int error;
+
+	if (index >= 255 || count > 256 || index + count > 256)
+		return EINVAL;
+	
+	error = copyout(&sc->sc_cmap_red[index],   cm->red,   count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_cmap_green[index], cm->green, count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_cmap_blue[index],  cm->blue,  count);
+	if (error)
+		return error;
+
+	return 0;
+}
+
+static int
 mgx_wait_engine(struct mgx_softc *sc)
 {
 	unsigned int i;
@@ -471,6 +534,7 @@ mgx_putchar(void *cookie, int row, int col, u_int c, long attr)
 		mgx_wait_engine(sc);
 		sc->sc_putchar(cookie, row, col, c, attr & ~1);
 		junk = *(uint32_t *)sc->sc_fbaddr;
+		__USE(junk);
 		if (rv == GC_ADD)
 			glyphcache_add(&sc->sc_gc, c, x, y);
 	}
@@ -660,14 +724,32 @@ mgx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					if (new_mode == WSDISPLAYIO_MODE_EMUL)
 					{
 						mgx_setup(sc, 8);
+						glyphcache_wipe(&sc->sc_gc);
+						mgx_init_palette(sc);
 						vcons_redraw_screen(ms);
 					} else {
 						mgx_setup(sc, 32);
 					}
 				}
 			}
-	}
+			return 0;
 
+		case WSDISPLAYIO_GETCMAP:
+			return mgx_getcmap(sc, (struct wsdisplay_cmap *)data);
+
+		case WSDISPLAYIO_PUTCMAP:
+			return mgx_putcmap(sc, (struct wsdisplay_cmap *)data);
+
+		case WSDISPLAYIO_GET_FBINFO:
+			{
+				struct wsdisplayio_fbinfo *fbi = data;
+				int ret;
+
+				ret = wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+				fbi->fbi_fbsize = 0x400000;
+				return ret;
+			}
+	}
 	return EPASSTHROUGH;
 }
 
