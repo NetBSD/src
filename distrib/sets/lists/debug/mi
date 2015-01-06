@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.99 2015/01/05 22:45:09 christos Exp $
+# $NetBSD: mi,v 1.100 2015/01/06 21:42:02 mrg Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -2076,7 +2076,8 @@
 ./usr/libdata/debug/usr/tests/lib/libm/t_sqrt.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_tan.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libm/t_tanh.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libobjc/t_threads.debug		tests-lib-debug		debug,atf,gcccmds
+./usr/libdata/debug/usr/tests/lib/libobjc/t_threads.debug		tests-lib-debug		debug,atf,gcc=45
+./usr/libdata/debug/usr/tests/lib/libobjc/t_threads.debug		tests-lib-debug		debug,atf,gcc=48
 ./usr/libdata/debug/usr/tests/lib/libposix/bsd/t_rename.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libposix/posix1/t_rename.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libposix/posix2/t_rename.debug	tests-lib-debug		debug,atf
