@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2015/01/06 16:04:58 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2015/01/06 16:08:06 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ CDIR=${NETBSDSRCDIR}/sys/netinet
 .for i in ${MACHINE_CPU} ${MACHINE_ARCH} ${MACHINE}
 ADIR:=${NETBSDSRCDIR}/sys/arch/${i}/${i}
 .if exists(${ADIR}/cpu_in_cksum.S)
-CPU_IN_CKSUM_DIR=${ADIR}
+CPU_IN_CKSUM_DIR:=${ADIR}
 .endif
 .endfor
 
