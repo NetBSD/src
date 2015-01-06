@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_emac.c,v 1.6 2015/01/06 11:19:16 jmcneill Exp $ */
+/* $NetBSD: rockchip_emac.c,v 1.7 2015/01/06 11:22:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rkemac.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.6 2015/01/06 11:19:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.7 2015/01/06 11:22:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -231,6 +231,12 @@ rkemac_attach(device_t parent, device_t self, void *aux)
 		enaddr[4] = addrh & 0xff;
 		enaddr[5] = (addrh >> 8) & 0xff;
 	}
+
+	const uint32_t addrl = enaddr[0] | (enaddr[1] << 8) |
+	    (enaddr[2] << 16) | (enaddr[3] << 24);
+	const uint32_t addrh = enaddr[4] | (enaddr[5] << 8);
+	EMAC_WRITE(sc, EMAC_ADDRL_REG, addrl);
+	EMAC_WRITE(sc, EMAC_ADDRH_REG, addrh);
 
 	aprint_normal_dev(sc->sc_dev, "Ethernet address: %s\n",
 	    ether_sprintf(enaddr));
