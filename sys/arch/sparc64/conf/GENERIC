@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.177 2014/11/16 16:01:43 manu Exp $
+# $NetBSD: GENERIC,v 1.178 2015/01/06 17:51:57 macallan Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.177 $"
+#ident 		"GENERIC-$Revision: 1.178 $"
 
 maxusers	64
 
@@ -887,6 +887,9 @@ cgthree*	at sbus? slot ? offset ?
 
 ## Sun "cgsix" accelerated color framebuffer.
 cgsix*		at sbus? slot ? offset ?
+
+## Southland Media Systems (now Quantum 3D) MGX
+mgx* 		at sbus? slot ? offset ?
 
 ## Sun FFB
 ffb*		at mainbus0
