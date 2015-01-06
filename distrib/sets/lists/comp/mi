@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1934 2015/01/06 21:04:06 mrg Exp $
+#	$NetBSD: mi,v 1.1935 2015/01/06 21:42:02 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3584,10 +3584,12 @@
 ./usr/lib/libg2c.a				comp-obsolete		gcc=4,obsolete
 ./usr/lib/libg2c_p.a				comp-fortran-proflib	gcc=3,profile
 ./usr/lib/libg2c_p.a				comp-obsolete		gcc=4,obsolete
-./usr/lib/libgcc.a				comp-c-lib		
+./usr/lib/libgcc.a				comp-c-lib		gcc=45
+./usr/lib/libgcc.a				comp-c-lib		gcc=48
 ./usr/lib/libgcc_p.a				comp-c-proflib		obsolete
 ./usr/lib/libgcc_s.a				comp-obsolete		obsolete
-./usr/lib/libgcov.a				comp-c-lib		
+./usr/lib/libgcov.a				comp-c-lib		gcc=45
+./usr/lib/libgcov.a				comp-c-lib		gcc=48
 ./usr/lib/libgmp.a				-unknown-		obsolete
 ./usr/lib/libgmp.a				comp-c-lib		obsolete
 ./usr/lib/libgmp_p.a				comp-c-proflib		obsolete
@@ -3696,8 +3698,10 @@
 ./usr/lib/libntp_p.a				comp-obsolete		obsolete
 ./usr/lib/libnvpair.a				comp-zfs-lib		zfs
 ./usr/lib/libnvpair_p.a				comp-zfs-proflib	profile,zfs
-./usr/lib/libobjc.a				comp-objc-lib		
-./usr/lib/libobjc_p.a				comp-objc-proflib	profile
+./usr/lib/libobjc.a				comp-objc-lib		gcc=45
+./usr/lib/libobjc.a				comp-objc-lib		gcc=48
+./usr/lib/libobjc_p.a				comp-objc-proflib	profile,gcc=45
+./usr/lib/libobjc_p.a				comp-objc-proflib	profile,gcc=45
 ./usr/lib/libopenpgpsdk.a			comp-obsolete		obsolete
 ./usr/lib/libopenpgpsdk_p.a			comp-obsolete		obsolete
 ./usr/lib/libossaudio.a				comp-c-lib
@@ -3931,9 +3935,12 @@
 ./usr/lib/libssl_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libssp.a				comp-obsolete		obsolete
 ./usr/lib/libssp_p.a				comp-obsolete		obsolete
-./usr/lib/libstdc++.a				comp-cxx-lib		cxx,libstdcxx
-./usr/lib/libstdc++_p.a				comp-cxx-proflib	profile,cxx,libstdcxx
-./usr/lib/libsupc++.a				comp-cxx-lib		cxx,libstdcxx
+./usr/lib/libstdc++.a				comp-cxx-lib		cxx,libstdcxx,gcc=45
+./usr/lib/libstdc++.a				comp-cxx-lib		cxx,libstdcxx,gcc=48
+./usr/lib/libstdc++_p.a				comp-cxx-proflib	profile,cxx,libstdcxx,gcc=45
+./usr/lib/libstdc++_p.a				comp-cxx-proflib	profile,cxx,libstdcxx,gcc=48
+./usr/lib/libsupc++.a				comp-cxx-lib		cxx,libstdcxx,gcc=45
+./usr/lib/libsupc++.a				comp-cxx-lib		cxx,libstdcxx,gcc=48
 ./usr/lib/libtddl.a				comp-c-lib		tpm
 ./usr/lib/libtddl_p.a				comp-c-proflib		tpm,profile
 ./usr/lib/libtelnet.a				comp-obsolete		obsolete
