@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.8 2013/12/22 16:29:42 matt Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.9 2015/01/06 16:24:58 christos Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <machine/asm.h>
-RCSID("$NetBSD: cpu_in_cksum.S,v 1.8 2013/12/22 16:29:42 matt Exp $")
+RCSID("$NetBSD: cpu_in_cksum.S,v 1.9 2015/01/06 16:24:58 christos Exp $")
 	
 #include "assym.h"
 
@@ -72,7 +72,7 @@ ENTRY(cpu_in_cksum)
 	ldr	ip, [ip, #(M_NEXT)]
 .Lin_cksum_skip_entry:
 	subs	r2, r2, r1		/* offset = offset - mbuf length */
-	blt	.Lin_cksum_skip_done	/* if offset has gone negative start with this mbuf */
+	ble	.Lin_cksum_skip_done	/* if offset has gone negative start with this mbuf */
 	cmp	ip, #0x00
 	bne	.Lin_cksum_skip_loop
 	b	.Lin_cksum_whoops
