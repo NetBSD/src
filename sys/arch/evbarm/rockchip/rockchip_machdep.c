@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_machdep.c,v 1.17 2015/01/04 03:55:11 jmcneill Exp $ */
+/*	$NetBSD: rockchip_machdep.c,v 1.18 2015/01/06 00:43:59 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.17 2015/01/04 03:55:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.18 2015/01/06 00:43:59 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -144,6 +144,7 @@ __KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.17 2015/01/04 03:55:11 jmcnei
 #endif
 #include "arml2cc.h"
 #include "act8846pm.h"
+#include "ether.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,6 +209,7 @@ __KERNEL_RCSID(0, "$NetBSD: rockchip_machdep.c,v 1.17 2015/01/04 03:55:11 jmcnei
 #include <dev/i2c/ddcreg.h>
 
 #include <dev/usb/ukbdvar.h>
+#include <net/if_ether.h>
 
 /*
  * ATAG cmdline length can be up to UINT32_MAX - 4, but Rockchip RK3188
@@ -765,7 +767,7 @@ rockchip_device_register(device_t self, void *aux)
 		return;
 	}
 
-	if (device_is_a(self, "rkemac")) {
+	if (device_is_a(self, "rkemac") && device_unit(self) == 0) {
 #if NACT8846PM > 0
 		device_t pmic = device_find_by_driver_unit("act8846pm", 0);
 		if (pmic == NULL)
@@ -775,6 +777,16 @@ rockchip_device_register(device_t self, void *aux)
 			return;
 		act8846_set_voltage(ctrl, 3300, 3300);
 		act8846_enable(ctrl);
+#endif
+#if NETHER > 0
+		uint8_t enaddr[ETHER_ADDR_LEN];
+		if (get_bootconf_option(boot_args, "rkemac0.mac-address",
+		    BOOTOPT_TYPE_MACADDR, &enaddr)) {
+			prop_data_t pd = prop_data_create_data(enaddr,
+			    sizeof(enaddr));
+			prop_dictionary_set(dict, "mac-address", pd);
+			prop_object_release(pd);
+		}
 #endif
 		return;
 	}
