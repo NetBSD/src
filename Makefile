@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.311 2014/11/05 08:19:17 snj Exp $
+#	$NetBSD: Makefile,v 1.312 2015/01/07 20:42:01 joerg Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -231,10 +231,10 @@ BUILDTARGETS+=	includes
 .endif
 BUILDTARGETS+=	do-lib
 BUILDTARGETS+=	do-compat-lib
-BUILDTARGETS+=	do-build
 .if ${MKX11} != "no"
 BUILDTARGETS+=	do-x11
 .endif
+BUILDTARGETS+=	do-build
 .if ${MKEXTSRC} != "no"
 BUILDTARGETS+=	do-extsrc
 .endif
@@ -479,7 +479,8 @@ do-build: .PHONY .MAKE
 do-x11: .PHONY .MAKE
 .if ${MKX11} != "no"
 .if ${X11FLAVOUR} == "Xorg"
-	${MAKEDIRTARGET} external/mit/xorg build
+	${MAKEDIRTARGET} external/mit/xorg/tools all
+	${MAKEDIRTARGET} external/mit/xorg/lib build_install
 .else
 	${MAKEDIRTARGET} x11 build
 .endif
