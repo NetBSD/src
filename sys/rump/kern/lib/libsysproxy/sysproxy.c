@@ -1,4 +1,4 @@
-/*	$NetBSD: sysproxy.c,v 1.1 2015/01/03 17:23:51 pooka Exp $	*/
+/*	$NetBSD: sysproxy.c,v 1.1 2015/01/07 22:24:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.1 2015/01/03 17:23:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.1 2015/01/07 22:24:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/filedesc.h>
@@ -48,15 +48,15 @@ rump_init_server(const char *url)
 	return rumpuser_sp_init(url, ostype, osrelease, MACHINE);
 }
 
-pid_t
-rump_sysproxy_hyp_getpid(void)
+static pid_t
+hyp_getpid(void)
 {
 
 	return curproc->p_pid;
 }
 
-int
-rump_sysproxy_hyp_syscall(int num, void *arg, long *retval)
+static int
+hyp_syscall(int num, void *arg, long *retval)
 {
 	register_t regrv[2] = {0, 0};
 	struct lwp *l;
@@ -76,8 +76,8 @@ rump_sysproxy_hyp_syscall(int num, void *arg, long *retval)
 	return rv;
 }
 
-int
-rump_sysproxy_hyp_rfork(void *priv, int flags, const char *comm)
+static int
+hyp_rfork(void *priv, int flags, const char *comm)
 {
 	struct vmspace *newspace;
 	struct proc *p;
@@ -125,8 +125,8 @@ rump_sysproxy_hyp_rfork(void *priv, int flags, const char *comm)
 /*
  * Order all lwps in a process to exit.  does *not* wait for them to drain.
  */
-void
-rump_sysproxy_hyp_lwpexit(void)
+static void
+hyp_lwpexit(void)
 {
 	struct proc *p = curproc;
 	uint64_t where;
@@ -177,8 +177,8 @@ rump_sysproxy_hyp_lwpexit(void)
 /*
  * Notify process that all threads have been drained and exec is complete.
  */
-void
-rump_sysproxy_hyp_execnotify(const char *comm)
+static void
+hyp_execnotify(const char *comm)
 {
 	struct proc *p = curproc;
 
@@ -191,56 +191,22 @@ rump_sysproxy_hyp_execnotify(const char *comm)
 }
 
 /*
- * rest are rump kernel -> client calls
+ * Initialize interface pointers since component is present.
  */
-
-int
-rump_sysproxy_copyin(void *arg, const void *raddr, void *laddr, size_t len)
+RUMP_COMPONENT(RUMP_COMPONENT_KERN)
 {
 
-	return rumpuser_sp_copyin(arg, raddr, laddr, len);
-}
+	rump_sysproxy_ops.rspo_copyin		= rumpuser_sp_copyin;
+	rump_sysproxy_ops.rspo_copyinstr	= rumpuser_sp_copyinstr;
+	rump_sysproxy_ops.rspo_copyout		= rumpuser_sp_copyout;
+	rump_sysproxy_ops.rspo_copyoutstr	= rumpuser_sp_copyoutstr;
+	rump_sysproxy_ops.rspo_anonmmap		= rumpuser_sp_anonmmap;
+	rump_sysproxy_ops.rspo_raise		= rumpuser_sp_raise;
+	rump_sysproxy_ops.rspo_fini		= rumpuser_sp_fini;
 
-int
-rump_sysproxy_copyinstr(void *arg, const void *raddr, void *laddr, size_t *lenp)
-{
-
-	return rumpuser_sp_copyinstr(arg, raddr, laddr, lenp);
-}
-
-int
-rump_sysproxy_copyout(void *arg,
-	const void *laddr, void *raddr, size_t len)
-{
-
-	return rumpuser_sp_copyout(arg, laddr, raddr, len);
-}
-
-int
-rump_sysproxy_copyoutstr(void *arg,
-	const void *laddr, void *raddr, size_t *lenp)
-{
-
-	return rumpuser_sp_copyoutstr(arg, laddr, raddr, lenp);
-}
-
-int
-rump_sysproxy_anonmmap(void *arg, size_t howmuch, void **addr)
-{
-
-	return rumpuser_sp_anonmmap(arg, howmuch, addr);
-}
-
-int
-rump_sysproxy_raise(void *arg, int signo)
-{
-
-	return rumpuser_sp_raise(arg, signo);
-}
-
-void
-rump_sysproxy_fini(void *arg)
-{
-
-	rumpuser_sp_fini(arg);
+	rump_sysproxy_ops.rspo_hyp_getpid	= hyp_getpid;
+	rump_sysproxy_ops.rspo_hyp_syscall	= hyp_syscall;
+	rump_sysproxy_ops.rspo_hyp_rfork	= hyp_rfork;
+	rump_sysproxy_ops.rspo_hyp_lwpexit	= hyp_lwpexit;
+	rump_sysproxy_ops.rspo_hyp_execnotify	= hyp_execnotify;
 }
