@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.16 2010/01/19 22:07:00 pooka Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.17 2015/01/07 07:05:48 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -123,6 +123,7 @@ struct iwi_softc {
 	struct iwi_firmware	fw;
 	const char		*sc_fwname;
 	char			*sc_blob;
+	size_t			sc_blobsize;
 
 	uint32_t		flags;
 #define IWI_FLAG_FW_CACHED	(1 << 0)
