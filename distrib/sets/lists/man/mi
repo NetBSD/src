@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1109.2.24 2013/11/17 17:59:54 bouyer Exp $
+# $NetBSD: mi,v 1.1109.2.25 2015/01/07 04:45:12 msaitoh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1803,6 +1803,8 @@
 ./usr/share/man/cat5/nisplus_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/nologin.0			man-sysutil-catman	.cat
 ./usr/share/man/cat5/nsswitch.conf.0		man-net-catman		.cat
+./usr/share/man/cat5/ntp.conf.0			man-net-catman		.cat
+./usr/share/man/cat5/ntp.keys.0			man-net-catman		.cat
 ./usr/share/man/cat5/openssl.cnf.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat5/pam.conf.0			man-sys-catman		.cat
 ./usr/share/man/cat5/passwd.0			man-sys-catman		.cat
@@ -4277,6 +4279,8 @@
 ./usr/share/man/html5/nisplus_table.html	man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/nologin.html		man-sysutil-htmlman	html
 ./usr/share/man/html5/nsswitch.conf.html	man-net-htmlman		html
+./usr/share/man/html5/ntp.conf.html		man-net-htmlman		html
+./usr/share/man/html5/ntp.keys.html		man-net-htmlman		html
 ./usr/share/man/html5/openssl.cnf.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html5/pam.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/passwd.html		man-sys-htmlman		html
@@ -6705,6 +6709,8 @@
 ./usr/share/man/man5/nisplus_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/nologin.5			man-sysutil-man		.man
 ./usr/share/man/man5/nsswitch.conf.5		man-net-man		.man
+./usr/share/man/man5/ntp.conf.5			man-net-man		.man
+./usr/share/man/man5/ntp.keys.5			man-net-man		.man
 ./usr/share/man/man5/openssl.cnf.5		man-crypto-man		crypto,.man
 ./usr/share/man/man5/pam.conf.5			man-sys-man		.man
 ./usr/share/man/man5/passwd.5			man-sys-man		.man
