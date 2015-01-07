@@ -1,5 +1,5 @@
 #! /usr/bin/atf-sh
-#	$NetBSD: t_bridge.sh,v 1.1 2014/09/18 15:13:27 ozaki-r Exp $
+#	$NetBSD: t_bridge.sh,v 1.2 2015/01/07 08:55:01 ozaki-r Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,6 +39,7 @@ IP62=fc00::2
 
 atf_test_case basic cleanup
 atf_test_case basic6 cleanup
+atf_test_case rtable cleanup
 
 basic_head()
 {
@@ -49,6 +50,12 @@ basic_head()
 basic6_head()
 {
 	atf_set "descr" "Does simple if_bridge tests (IPv6)"
+	atf_set "require.progs" "rump_server"
+}
+
+rtable_head()
+{
+	atf_set "descr" "Tests route table operations of if_bridge"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -293,6 +300,76 @@ basic6_body()
 	#test_ping6_failure
 }
 
+rtable_body()
+{
+	addr1= addr3=
+
+	setup
+	setup_bridge
+
+	# Get MAC addresses of the endpoints.
+	export RUMP_SERVER=$SOCK1
+	addr1=$(rump.ifconfig shmif0 |awk '/address:/ { print $2;}')
+	export RUMP_SERVER=$SOCK3
+	addr3=$(rump.ifconfig shmif0 |awk '/address:/ { print $2;}')
+	unset RUMP_SERVER
+
+	# Confirm there is no MAC address caches.
+	export RUMP_SERVER=$SOCK2
+	export LD_PRELOAD=/usr/lib/librumphijack.so
+	/sbin/brconfig bridge0
+	atf_check -s exit:0 -o not-match:"$addr1" /sbin/brconfig bridge0
+	atf_check -s exit:0 -o not-match:"$addr3" /sbin/brconfig bridge0
+	unset LD_PRELOAD
+
+	# Make the bridge learn the MAC addresses of the endpoints.
+	export RUMP_SERVER=$SOCK1
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP2
+	unset RUMP_SERVER
+
+	# Tests the addresses are in the cache.
+	export RUMP_SERVER=$SOCK2
+	export LD_PRELOAD=/usr/lib/librumphijack.so
+	/sbin/brconfig bridge0
+	atf_check -s exit:0 -o match:"$addr1 shmif0" /sbin/brconfig bridge0
+	atf_check -s exit:0 -o match:"$addr3 shmif1" /sbin/brconfig bridge0
+
+	# Tests brconfig deladdr
+	atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 deladdr "$addr1"
+	atf_check -s exit:0 -o not-match:"$addr1 shmif0" /sbin/brconfig bridge0
+	atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 deladdr "$addr3"
+	atf_check -s exit:0 -o not-match:"$addr3 shmif1" /sbin/brconfig bridge0
+	unset LD_PRELOAD
+
+	# Refill the MAC addresses of the endpoints.
+	export RUMP_SERVER=$SOCK1
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP2
+	unset RUMP_SERVER
+	export RUMP_SERVER=$SOCK2
+	export LD_PRELOAD=/usr/lib/librumphijack.so
+	/sbin/brconfig bridge0
+	atf_check -s exit:0 -o match:"$addr1 shmif0" /sbin/brconfig bridge0
+	atf_check -s exit:0 -o match:"$addr3 shmif1" /sbin/brconfig bridge0
+
+	# Tests brconfig flush.
+	atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 flush
+	atf_check -s exit:0 -o not-match:"$addr1 shmif0" /sbin/brconfig bridge0
+	atf_check -s exit:0 -o not-match:"$addr3 shmif1" /sbin/brconfig bridge0
+	unset LD_PRELOAD
+
+	# Tests brconfig timeout.
+	export RUMP_SERVER=$SOCK2
+	export LD_PRELOAD=/usr/lib/librumphijack.so
+	atf_check -s exit:0 -o match:"timeout: 1200" /sbin/brconfig bridge0
+	atf_check -s exit:0 -o ignore /sbin/brconfig bridge0 timeout 10
+	atf_check -s exit:0 -o match:"timeout: 10" /sbin/brconfig bridge0
+	unset LD_PRELOAD
+
+	# TODO: brconfig static/flushall/discover/learn
+	# TODO: cache expiration; it takes 5 minutes at least and we want to
+	#       wait here so long. Should we have a sysctl to change the period?
+}
+
 basic_cleanup()
 {
 	dump_bus
@@ -305,8 +382,15 @@ basic6_cleanup()
 	cleanup
 }
 
+rtable_cleanup()
+{
+	dump_bus
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case basic
 	atf_add_test_case basic6
+	atf_add_test_case rtable
 }
