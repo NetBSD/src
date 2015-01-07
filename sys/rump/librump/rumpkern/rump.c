@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.314 2015/01/04 22:11:40 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.315 2015/01/07 22:24:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.314 2015/01/04 22:11:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.315 2015/01/07 22:24:04 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -149,6 +149,21 @@ mksysctls(void)
 	    CTL_HW, HW_PAGESIZE, CTL_EOL);
 }
 
+static pid_t rspo_wrap_getpid(void) {
+	return rump_sysproxy_hyp_getpid();
+}
+static int rspo_wrap_syscall(int num, void *arg, long *retval) {
+	return rump_sysproxy_hyp_syscall(num, arg, retval);
+}
+static int rspo_wrap_rfork(void *priv, int flag, const char *comm) {
+	return rump_sysproxy_hyp_rfork(priv, flag, comm);
+}
+static void rspo_wrap_lwpexit(void) {
+	rump_sysproxy_hyp_lwpexit();
+}
+static void rspo_wrap_execnotify(const char *comm) {
+	rump_sysproxy_hyp_execnotify(comm);
+}
 static const struct rumpuser_hyperup hyp = {
 	.hyp_schedule		= rump_schedule,
 	.hyp_unschedule		= rump_unschedule,
@@ -156,13 +171,28 @@ static const struct rumpuser_hyperup hyp = {
 	.hyp_backend_schedule	= rump_user_schedule,
 	.hyp_lwproc_switch	= rump_lwproc_switch,
 	.hyp_lwproc_release	= rump_lwproc_releaselwp,
-	.hyp_lwproc_rfork	= rump_sysproxy_hyp_rfork,
 	.hyp_lwproc_newlwp	= rump_lwproc_newlwp,
 	.hyp_lwproc_curlwp	= rump_lwproc_curlwp,
-	.hyp_lwpexit		= rump_sysproxy_hyp_lwpexit,
-	.hyp_syscall		= rump_sysproxy_hyp_syscall,
-	.hyp_execnotify		= rump_sysproxy_hyp_execnotify,
-	.hyp_getpid		= rump_sysproxy_hyp_getpid,
+
+	.hyp_getpid		= rspo_wrap_getpid,
+	.hyp_syscall		= rspo_wrap_syscall,
+	.hyp_lwproc_rfork	= rspo_wrap_rfork,
+	.hyp_lwpexit		= rspo_wrap_lwpexit,
+	.hyp_execnotify		= rspo_wrap_execnotify,
+};
+struct rump_sysproxy_ops rump_sysproxy_ops = {
+	.rspo_copyin		= (void *)enxio,
+	.rspo_copyinstr 	= (void *)enxio,
+	.rspo_copyout	 	= (void *)enxio,
+	.rspo_copyoutstr 	= (void *)enxio,
+	.rspo_anonmmap 		= (void *)enxio,
+	.rspo_raise 		= (void *)enxio,
+	.rspo_fini 		= (void *)enxio,
+	.rspo_hyp_getpid 	= (void *)enxio,
+	.rspo_hyp_syscall 	= (void *)enxio,
+	.rspo_hyp_rfork 	= (void *)enxio,
+	.rspo_hyp_lwpexit 	= (void *)enxio,
+	.rspo_hyp_execnotify 	= (void *)enxio,
 };
 
 int
