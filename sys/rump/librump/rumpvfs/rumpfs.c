@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.132 2015/01/03 16:30:32 hannken Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.133 2015/01/07 03:45:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.132 2015/01/03 16:30:32 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.133 2015/01/07 03:45:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -749,6 +749,10 @@ rump_vop_lookup(void *v)
  getvnode:
 	KASSERT(rn);
 	rv = vcache_get(dvp->v_mount, &rn, sizeof(rn), vpp);
+	if (rv) {
+		if (rnd->rn_flags & RUMPNODE_DIR_ET)
+			kmem_free(rn, sizeof(*rn));
+	}
 
 	return rv;
 }
@@ -948,8 +952,10 @@ rump_vop_mkdir(void *v)
 		rn->rn_va.va_flags |= UF_OPAQUE;
 	rn->rn_parent = rnd;
 	rv = vcache_get(dvp->v_mount, &rn, sizeof(rn), vpp);
-	if (rv)
+	if (rv) {
+		kmem_free(rn, sizeof(*rn));
 		return rv;
+	}
 
 	makedir(rnd, cnp, rn);
 
@@ -1044,8 +1050,10 @@ rump_vop_mknod(void *v)
 	if ((cnp->cn_flags & ISWHITEOUT) != 0)
 		rn->rn_va.va_flags |= UF_OPAQUE;
 	rv = vcache_get(dvp->v_mount, &rn, sizeof(rn), vpp);
-	if (rv)
+	if (rv) {
+		kmem_free(rn, sizeof(*rn));
 		return rv;
+	}
 
 	makedir(rnd, cnp, rn);
 
@@ -1075,8 +1083,10 @@ rump_vop_create(void *v)
 	if ((cnp->cn_flags & ISWHITEOUT) != 0)
 		rn->rn_va.va_flags |= UF_OPAQUE;
 	rv = vcache_get(dvp->v_mount, &rn, sizeof(rn), vpp);
-	if (rv)
+	if (rv) {
+		kmem_free(rn, sizeof(*rn));
 		return rv;
+	}
 
 	makedir(rnd, cnp, rn);
 
@@ -1108,8 +1118,10 @@ rump_vop_symlink(void *v)
 	if ((cnp->cn_flags & ISWHITEOUT) != 0)
 		rn->rn_va.va_flags |= UF_OPAQUE;
 	rv = vcache_get(dvp->v_mount, &rn, sizeof(rn), vpp);
-	if (rv)
+	if (rv) {
+		kmem_free(rn, sizeof(*rn));
 		return rv;
+	}
 
 	makedir(rnd, cnp, rn);
 
@@ -1698,7 +1710,9 @@ rumpfs_mountfs(struct mount *mp)
 
 	rn = makeprivate(VDIR, RUMPFS_DEFAULTMODE, NODEV, DEV_BSIZE, false);
 	rn->rn_parent = rn;
-	if ((error = vcache_get(mp, &rn, sizeof(rn), &rfsmp->rfsmp_rvp)) != 0) {
+	if ((error = vcache_get(mp, &rn, sizeof(rn), &rfsmp->rfsmp_rvp))
+	    != 0) {
+		kmem_free(rn, sizeof(*rn));
 		kmem_free(rfsmp, sizeof(*rfsmp));
 		return error;
 	}
