@@ -1,4 +1,4 @@
-/* $NetBSD: xc5k.c,v 1.4 2011/10/02 19:03:56 jmcneill Exp $ */
+/* $NetBSD: xc5k.c,v 1.5 2015/01/07 07:05:48 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xc5k.c,v 1.4 2011/10/02 19:03:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xc5k.c,v 1.5 2015/01/07 07:05:48 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ xc5k_firmware_open(struct xc5k *xc)
 
 done:
 	if (fw)
-		firmware_free(fw, 0);
+		firmware_free(fw, fwlen);
 	mutex_exit(&xc5k_firmware_lock);
 
 	if (error)
