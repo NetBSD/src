@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2014/05/31 22:55:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2015/01/07 02:05:41 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -53,6 +53,6 @@ CPPFLAGS+=	-I../backend
 # Build the specs.h file
 CLEANFILES+=	specs.h
 specs.h: Makefile
-	for f in cp objc; do \
+	for f in cp lto objc objcp; do \
 		echo "#include \"$$f/lang-specs.h\""; \
 	done > specs.h
