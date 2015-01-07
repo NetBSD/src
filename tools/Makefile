@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.179 2014/12/05 01:50:47 pooka Exp $
+#	$NetBSD: Makefile,v 1.180 2015/01/07 20:42:02 joerg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -209,6 +209,10 @@ SUBDIR+=	elftosb
 .if ${MACHINE} == "evbarm" || ${MACHINE} == "evbmips" || \
     ${MACHINE} == "evbppc" || ${MACHINE} == "sandpoint"
 SUBDIR+=	mkubootimage
+.endif
+
+.if ${MKX11} != "no" && ${X11FLAVOUR} == "Xorg"
+SUBDIR+=	../external/mit/xorg/tools/makestrs
 .endif
 
 .endif # TOOLCHAIN_BUILDRUMP
