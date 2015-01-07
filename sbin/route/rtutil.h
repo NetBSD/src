@@ -53,7 +53,7 @@ char *routename6(const struct sockaddr_in6 *, int);
 char *netname6(const struct sockaddr_in6 *, const struct sockaddr_in6 *, int);
 #endif
 char *netname(const struct sockaddr *, const struct sockaddr *, int);
-char *netname4(in_addr_t, in_addr_t, int);
+char *netname4(const struct sockaddr_in *, const struct sockaddr_in *, int);
 
 char *mpls_ntoa(const struct sockaddr *);
 char *any_ntoa(const struct sockaddr *);
