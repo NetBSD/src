@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.18 2014/12/20 18:03:17 nonaka Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.19 2015/01/07 01:11:47 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.18 2014/12/20 18:03:17 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.19 2015/01/07 01:11:47 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -684,7 +684,7 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/*
-	 * If there was no MDIO 
+	 * If there was no MDIO
 	 */
 	if (mdio == CPUNODECF_MDIO_DEFAULT) {
 		aprint_normal("\n");
