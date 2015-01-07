@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.34 2014/07/25 15:07:03 nonaka Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.35 2015/01/07 07:05:48 ozaki-r Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34 2014/07/25 15:07:03 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.35 2015/01/07 07:05:48 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3085,7 +3085,7 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "failed to read firmware (error %d)\n", error);
-		firmware_free(fw, 0);
+		firmware_free(fw, len);
 		return (error);
 	}
 
@@ -3175,7 +3175,7 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 		goto fail;
 	}
  fail:
-	firmware_free(fw, 0);
+	firmware_free(fw, len);
 	return (error);
 }
 
