@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.149 2015/01/07 10:17:45 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.150 2015/01/07 18:08:58 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -6712,7 +6712,8 @@ external/bsd/ntp/lib/libntp/Makefile	patch
 external/bsd/ntp/lib/libopts/Makefile	patch
 external/bsd/ntp/scripts/mkver	patch
 
-	Update ntp to version 4.2.8.
+	Update ntp to version 4.2.8. CVE-2014-9293, CVE-2014-9294,
+	CVE-2014-9295 and CVE-2014-9296.
 	[christos, ticket #351]
 
 external/bsd/dhcpcd/dist/arp.c			(patch)
@@ -6999,6 +7000,7 @@ sys/net/npf/npf_nat.c				1.39
 sys/arch/arm/arm/disassem.c			1.26
 
 	The mode synonyms are different for stm and ldm - handle this.
+	Fixes PR#49520 reported by Paul Guyot.
 	[skrll, ticket #375]
 
 sys/arch/arm/arm/disassem.c			1.27-1.28
