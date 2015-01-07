@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.150 2015/01/07 18:08:58 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.151 2015/01/07 21:36:29 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -13103,3 +13103,28 @@ sys/fs/v7fs/v7fs_vnops.c			1.18-1.19
 	to search for a vnode we already hold a reference on.
 	[hannken, ticket #386]
 
+
+sys/arch/evbarm/awin/awin_machdep.c		1.38
+
+	Fix typo in BPI specific setup, spotted by Jared McNeill.
+	Now awge works with the official sunxi-linux u-boot versions as well.
+	[martin, ticket #382]
+
+sys/dev/ic/dwc_gmac.c				1.30
+
+	Fix index vs. count confusion when syncing a range of newly queued TX
+	descriptors. Pointed out by FUKAUMI Naoki in private chat.
+	[martin, ticket #383]
+
+sys/arch/bebox/stand/boot/fd.c			1.11
+sys/arch/bebox/stand/boot/siop.c		1.5
+sys/arch/bebox/stand/boot/vreset.c		1.14
+
+	Fix all warnings for bebox when compiling with gcc 4.8.
+	[martin, ticket #387]
+
+distrib/cobalt/ramdisk/Makefile			1.9
+sys/arch/cobalt/conf/RAMDISK			1.6
+
+	Increase ramdisk size.
+	[martin, ticket #388]
