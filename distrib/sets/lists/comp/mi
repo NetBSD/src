@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1935 2015/01/06 21:42:02 mrg Exp $
+#	$NetBSD: mi,v 1.1936 2015/01/07 02:46:36 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3701,7 +3701,7 @@
 ./usr/lib/libobjc.a				comp-objc-lib		gcc=45
 ./usr/lib/libobjc.a				comp-objc-lib		gcc=48
 ./usr/lib/libobjc_p.a				comp-objc-proflib	profile,gcc=45
-./usr/lib/libobjc_p.a				comp-objc-proflib	profile,gcc=45
+./usr/lib/libobjc_p.a				comp-objc-proflib	profile,gcc=48
 ./usr/lib/libopenpgpsdk.a			comp-obsolete		obsolete
 ./usr/lib/libopenpgpsdk_p.a			comp-obsolete		obsolete
 ./usr/lib/libossaudio.a				comp-c-lib
