@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.148 2015/01/06 11:02:01 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.149 2015/01/07 10:17:45 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -13082,4 +13082,22 @@ external/mit/xorg/lib/libmesa.mk		1.1
 	Update sets and reachover makefiles for mesa 10.3.5,
 	fix build problems.
 	[mrg, ticket #381]
+
+distrib/sets/lists/xdebug/md.i386		1.9
+
+	Fix debug build.
+	[htodd, ticket #385]
+
+sys/fs/v7fs/v7fs_file.c				1.6
+sys/fs/v7fs/v7fs_vfsops.c			1.11
+sys/fs/v7fs/v7fs_vnops.c			1.18-1.19
+
+	v7fs_getattr: adjust size of symlinks by -1 to compensate the
+	trailing NUL.
+
+	Defer deallocating unlinked inodes to v7fs_reclaim().
+
+	Remove v7fs_vnode_reload() and always use v7fs_inode_load().  No need
+	to search for a vnode we already hold a reference on.
+	[hannken, ticket #386]
 
