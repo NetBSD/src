@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.513 2015/01/06 06:31:31 nils Exp $
+.\"	$NetBSD: main,v 1.514 2015/01/07 10:22:54 knakahara Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1305,6 +1305,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Joseph Myers Ta Mt jsm@NetBSD.org
 .It Ta Tuomo M\(:akinen Ta Mt tjam@NetBSD.org
 .It Ta Zolt\('an Arnold NAGY Ta Mt zoltan@NetBSD.org
+.It Ta Kengo NAKAHARA Ta Mt knakahara@NetBSD.org
 .It Ta Ken Nakata Ta Mt kenn@NetBSD.org
 .It Ta Takeshi Nakayama Ta Mt nakayama@NetBSD.org
 .It Ta Alexander Nasonov Ta Mt alnsn@NetBSD.org
