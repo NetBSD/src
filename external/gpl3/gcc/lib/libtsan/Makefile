@@ -1,3 +1,4 @@
+# $NetBSD: Makefile,v 1.2 2015/01/07 03:49:13 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -56,7 +57,7 @@ SANITIZER_SRCS= \
 # The linux build does this to avoid preinit sections on shared libraries
 CSHLIBFLAGS+= -DPIC
 
-LIB=	asan
+LIB=	tsan
 SRCS=	${TSAN_SRCS} ${INTERCEPTION_SRCS} ${SANITIZER_SRCS}
 CPPFLAGS+=-I${TSAN}/include -I${TSAN}
 
