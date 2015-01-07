@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.271 2014/11/19 01:08:42 pooka Exp $
+# $NetBSD: shl.mi,v 1.272 2015/01/07 22:26:50 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -210,6 +210,7 @@
 ./usr/lib/librumpkern_ksem_pic.a		comp-obsolete		obsolete
 ./usr/lib/librumpkern_sljit_pic.a		comp-c-piclib		sljit,rump,picinstall
 ./usr/lib/librumpkern_solaris_pic.a		comp-c-piclib		zfs,rump,picinstall
+./usr/lib/librumpkern_sysproxy_pic.a			comp-c-piclib		rump,picinstall
 ./usr/lib/librumpkern_time_pic.a			comp-obsolete obsolete
 ./usr/lib/librumpkern_tty_pic.a			comp-c-piclib		rump,picinstall
 ./usr/lib/librumpkern_z_pic.a			comp-c-piclib		rump,picinstall
