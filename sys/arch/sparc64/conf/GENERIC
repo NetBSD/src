@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.178 2015/01/06 17:51:57 macallan Exp $
+# $NetBSD: GENERIC,v 1.179 2015/01/07 09:50:05 macallan Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.178 $"
+#ident 		"GENERIC-$Revision: 1.179 $"
 
 maxusers	64
 
@@ -913,6 +913,7 @@ wcfb*		at pci?
 
 # generic PCI framebuffers
 genfb*		at pci?
+genfb* 		at sbus? slot ? offset ?
 
 # make sure the console display is always wsdisplay0
 wsdisplay0	at wsemuldisplaydev? console 1
