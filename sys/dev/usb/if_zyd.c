@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.36 2013/01/22 12:40:43 jmcneill Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.37 2015/01/07 07:05:48 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36 2013/01/22 12:40:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.37 2015/01/07 07:05:48 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -278,7 +278,7 @@ zyd_attachhook(device_t self)
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "failed to read firmware (error %d)\n", error);
-		firmware_free(fw, 0);
+		firmware_free(fw, size);
 		return;
 	}
 
@@ -286,11 +286,11 @@ zyd_attachhook(device_t self)
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not load firmware (error=%d)\n", error);
-		firmware_free(fw, 0);
+		firmware_free(fw, size);
 		return;
 	}
 
-	firmware_free(fw, 0);
+	firmware_free(fw, size);
 	sc->sc_flags |= ZD1211_FWLOADED;
 
 	/* complete the attach process */
