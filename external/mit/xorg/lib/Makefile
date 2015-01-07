@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2015/01/05 03:45:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.32 2015/01/07 20:42:01 joerg Exp $
 
 # build libraries for xorg
 
@@ -35,4 +35,5 @@ SUBDIR+=libGLU libGLw libXaw6 libXaw libXcursor \
 	libXdmGreet \
 	xcb-util
 
+.include <bsd.buildinstall.mk>
 .include <bsd.subdir.mk>
