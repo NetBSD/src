@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.21 2014/12/31 17:36:24 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.22 2015/01/08 10:47:44 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -208,6 +208,7 @@ struct ifbrparam {
 
 #ifdef _KERNEL
 #include <sys/pserialize.h>
+#include <sys/workqueue.h>
 
 #include <net/pktqueue.h>
 
@@ -311,7 +312,10 @@ struct bridge_softc {
 	kmutex_t		*sc_iflist_lock;
 	LIST_HEAD(, bridge_rtnode) *sc_rthash;	/* our forwarding table */
 	LIST_HEAD(, bridge_rtnode) sc_rtlist;	/* list version of above */
+	kmutex_t		*sc_rtlist_intr_lock;
 	kmutex_t		*sc_rtlist_lock;
+	pserialize_t		sc_rtlist_psz;
+	struct workqueue	*sc_rtage_wq;
 	uint32_t		sc_rthash_key;	/* key for hash */
 	uint32_t		sc_filter_flags; /* ipf and flags */
 	pktqueue_t *		sc_fwd_pktq;
@@ -387,6 +391,13 @@ void	bridge_enqueue(struct bridge_softc *, struct ifnet *, struct mbuf *,
  *   - The mutex is also used for STP
  *   - Once we change to execute entire Layer 2 in softint context,
  *     we can get rid of sc_iflist_intr_lock
+ * - Updates of sc_rtlist are serialized by sc_rtlist_intr_lock (a spin mutex)
+ *   - The sc_rtlist can be modified in HW interrupt context for now
+ * - sc_rtlist_lock (an adaptive mutex) is only for pserialize
+ *   - Once we change to execute entire Layer 2 in softint context,
+ *     we can get rid of sc_rtlist_intr_lock
+ * - A workqueue is used to run bridge_rtage in LWP context via bridge_timer callout
+ *   - bridge_rtage uses pserialize that requires non-interrupt context
  */
 #endif /* _KERNEL */
 #endif /* !_NET_IF_BRIDGEVAR_H_ */
