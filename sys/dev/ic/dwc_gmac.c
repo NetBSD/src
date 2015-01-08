@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.30 2015/01/05 21:37:07 martin Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.31 2015/01/08 14:44:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.30 2015/01/05 21:37:07 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.31 2015/01/08 14:44:43 jmcneill Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -598,7 +598,7 @@ dwc_gmac_txdesc_sync(struct dwc_gmac_softc *sc, int start, int end, int ops)
 	/* sync from 'start' to end of ring */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
 	    TX_DESC_OFFSET(start),
-	    TX_DESC_OFFSET(AWGE_TX_RING_COUNT+1)-TX_DESC_OFFSET(start),
+	    TX_DESC_OFFSET(AWGE_TX_RING_COUNT)-TX_DESC_OFFSET(start),
 	    ops);
 	/* sync from start of ring to 'end' */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
@@ -867,7 +867,7 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 		return error;
 	}
 
-	if (sc->sc_txq.t_queued + map->dm_nsegs >= AWGE_TX_RING_COUNT - 1) {
+	if (sc->sc_txq.t_queued + map->dm_nsegs >= AWGE_TX_RING_COUNT) {
 		bus_dmamap_unload(sc->sc_dmat, map);
 		return ENOBUFS;
 	}
