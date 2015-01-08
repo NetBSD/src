@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.152 2015/01/08 08:27:27 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.153 2015/01/08 11:48:47 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -13133,4 +13133,64 @@ sbin/brconfig/brconfig.8			1.18
 
 	Document the "addr" and "static" commands.
 	[msaitoh, ticket #391]
+
+distrib/utils/x_route/Makefile			1.18
+sbin/route/Makefile				1.26
+sbin/route/extern.h				1.15
+sbin/route/prog_ops.h				1.3
+sbin/route/route.c				1.145
+sbin/route/rtutil.c				1.1
+sbin/route/rtutil.h				1.1
+sbin/route/show.c				1.46
+usr.bin/netstat/Makefile			1.40
+usr.bin/netstat/if.c				1.80
+usr.bin/netstat/main.c				1.93
+usr.bin/netstat/mroute.c			1.25
+usr.bin/netstat/mroute6.c			1.15
+usr.bin/netstat/netstat.h			1.51
+usr.bin/netstat/route.c				1.83
+usr.bin/netstat/show.c				delete
+
+	Factor out the netstat route printing code and use it here.
+	There is no point in having 2 different copies; fixes PR/49371
+	[prlw1, ticket #390]
+
+sys/dev/acpi/acpi_ec.c				1.74
+sys/dev/isa/pcppi.c				1.43
+
+	Add missing newlines in autoconf messages.
+	[msaitoh, ticket #392]
+
+sys/arch/x86/x86/intel_busclock.c		1.20
+
+	- Round off some bus clock values.
+	- Add 333.33MHz for Pentium 4.
+	[msaitoh, ticket #393]
+
+sys/arch/x86/pci/ichlpcib.c			1.45
+sys/dev/ic/i82801lpcreg.h			1.12
+sys/dev/pci/pci_map.c				1.32
+sys/dev/pci/pcivar.h				1.101
+
+	Fix a bug that ichlpcib(4) maps I/O area incorrectly and then fails
+	to attach gpio. It might also fix ACPI related problem described in
+	PR#48960:
+	  - The LPCIB_PCI_PMBASE and LPCIB_PCI_GPIO register are alike PCI
+	    BAR but not completely compatible with it. It's ok because the
+	    registers' addresses are out of BAR0-BAR5(0x10-0x24) and are
+	    located in the device-dependent header.
+	    The PMBASE and GPIO registers define the base address and the
+	    type but not describe the size. The size is fixed to 128bytes.
+	    So use pci_mapreg_submap().
+	  - Make pci_mapreg_submap() extern again.
+	  - Fix the calculation of the map size in pci_mapreg_submap().
+	[msaitoh, ticket #394]
+
+sbin/route/rtutil.c				1.4
+sbin/route/rtutil.h				1.3
+usr.bin/netstat/if.c				1.81
+
+	Make netname4 match the netname6 signature avoiding a NULL pointer.
+	Adjust to the netname4 prototype.
+	[prlw1, ticket #395]
 
