@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.50 2014/04/28 15:41:15 christos Exp $	*/
+/*	$NetBSD: netstat.h,v 1.50.2.1 2015/01/08 11:01:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,7 +102,6 @@ void	pim6_stats(u_long, const char *);
 void	rip6_stats(u_long, const char *);
 void	mroute6pr(u_long, u_long, u_long);
 void	mrt6_stats(u_long, u_long);
-char	*routename6(struct sockaddr_in6 *);
 #endif /*INET6*/
 
 #ifdef IPSEC
@@ -114,28 +113,9 @@ void	mbpr(u_long, u_long, u_long, u_long, u_long);
 void	hostpr(u_long, u_long);
 void	impstats(u_long, u_long);
 
-void	pr_rthdr(int, int);
-void	pr_family(int);
-struct rt_metrics;
-void	pr_rtrmx(struct rt_metrics *);
 void	rt_stats(u_long);
 char	*ns_phost(struct sockaddr *);
 
-void	p_rttables(int);
-void	p_flags(int, const char *);
-void	p_addr(struct sockaddr *, struct sockaddr *, int);
-void	p_gwaddr(struct sockaddr *, int);
-void	p_sockaddr(struct sockaddr *, struct sockaddr *, int, int);
-char	*routename(struct sockaddr *);
-char	*routename4(in_addr_t);
-char	*netname(struct sockaddr *, struct sockaddr *);
-char	*netname4(in_addr_t, in_addr_t);
-
-/* char	*routename(u_int32_t); */
-/* char	*netname(u_int32_t, u_int32_t); */
-#ifdef INET6
-char	*netname6(struct sockaddr_in6 *, struct sockaddr_in6 *);
-#endif 
 const char *atalk_print(const struct sockaddr *, int);
 const char *atalk_print2(const struct sockaddr *, const struct sockaddr *,
     int);

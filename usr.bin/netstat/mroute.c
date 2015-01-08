@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute.c,v 1.24 2012/03/20 20:34:58 matt Exp $	*/
+/*	$NetBSD: mroute.c,v 1.24.10.1 2015/01/08 11:01:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mroute.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mroute.c,v 1.24 2012/03/20 20:34:58 matt Exp $");
+__RCSID("$NetBSD: mroute.c,v 1.24.10.1 2015/01/08 11:01:01 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,6 +103,7 @@ __RCSID("$NetBSD: mroute.c,v 1.24 2012/03/20 20:34:58 matt Exp $");
 #include <stdlib.h>
 #include <kvm.h>
 #include "netstat.h"
+#include "rtutil.h"
 
 static char *pktscale(u_long);
 static void print_bw_meter(struct bw_meter *, int *);
@@ -196,9 +197,9 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr,
 
 		printf(" %3u     %3u  %5u  %-15.15s",
 		    vifi, v->v_threshold, v->v_rate_limit,
-		    routename4(v->v_lcl_addr.s_addr));
+		    routename4(v->v_lcl_addr.s_addr, nflag));
 		printf("  %-15.15s  %6lu  %7lu\n", (v->v_flags & VIFF_TUNNEL) ?
-		    routename4(v->v_rmt_addr.s_addr) : "",
+		    routename4(v->v_rmt_addr.s_addr, nflag) : "",
 		    v->v_pkt_in, v->v_pkt_out);
 	}
 	if (!banner_printed)
@@ -223,9 +224,9 @@ mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr,
 
 			kread((u_long)mfcp, (char *)&mfc, sizeof(mfc));
 			printf("  %3lu  %-15.15s",
-			    i, routename4(mfc.mfc_origin.s_addr));
+			    i, routename4(mfc.mfc_origin.s_addr, nflag));
 			printf("  %-15.15s  %7s     %3u ",
-			    routename4(mfc.mfc_mcastgrp.s_addr),
+			    routename4(mfc.mfc_mcastgrp.s_addr, nflag),
 			    pktscale(mfc.mfc_pkt_cnt), mfc.mfc_parent);
 			for (vifi = 0; vifi <= numvifs; ++vifi)
 				if (mfc.mfc_ttls[vifi])

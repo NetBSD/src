@@ -1,8 +1,9 @@
-/*      $NetBSD: prog_ops.h,v 1.2.24.1 2015/01/08 11:01:01 martin Exp $	*/
-
-/*
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,6 +13,9 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -26,48 +30,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PROG_OPS_H_
-#define _PROG_OPS_H_
+#define RT_AFLAG	1
+#define RT_TFLAG	2
+#define RT_VFLAG	4
+#define RT_NFLAG	8
 
-#include <sys/types.h>
+void p_rttables(int, int, int, int);
+void p_rthdr(int, int);
+void p_family(int);
+void p_sockaddr(const struct sockaddr *, const struct sockaddr *, int, int, int);
+void p_flags(int);
+struct rt_metrics;
+void p_rtrmx(const struct rt_metrics *);
+void p_addr(const struct sockaddr *sa, const struct sockaddr *mask, int, int);
+void p_gwaddr(const struct sockaddr *sa, int, int);
 
-#ifndef CRUNCHOPS
-/* XXX: Keep same order with netstat! */
-struct prog_ops {
-	int (*op_init)(void);
-
-	int (*op_sysctl)(const int *, u_int, void *, size_t *,
-			 const void *, size_t);
-
-	int (*op_socket)(int, int, int);
-	int (*op_open)(const char *, int, ...);
-	pid_t (*op_getpid)(void);
-
-	ssize_t (*op_read)(int, void *, size_t);
-	ssize_t (*op_write)(int, const void *, size_t);
-
-
-	int (*op_shutdown)(int, int);
-};
-extern const struct prog_ops prog_ops;
-
-#define prog_init prog_ops.op_init
-#define prog_socket prog_ops.op_socket
-#define prog_open prog_ops.op_open
-#define prog_getpid prog_ops.op_getpid
-#define prog_read prog_ops.op_read
-#define prog_write prog_ops.op_write
-#define prog_sysctl prog_ops.op_sysctl
-#define prog_shutdown prog_ops.op_shutdown
-#else
-#define prog_init ((int (*)(void))NULL)
-#define prog_socket socket
-#define prog_open open
-#define prog_getpid getpid
-#define prog_read read
-#define prog_write write
-#define prog_sysctl sysctl
-#define prog_shutdown shutdown
+char *routename(const struct sockaddr *sa, int);
+char *routename4(in_addr_t, int);
+#ifdef INET6
+char *routename6(const struct sockaddr_in6 *, int);
+char *netname6(const struct sockaddr_in6 *, const struct sockaddr_in6 *, int);
 #endif
+char *netname(const struct sockaddr *, const struct sockaddr *, int);
+char *netname4(in_addr_t, in_addr_t, int);
 
-#endif /* _PROG_OPS_H_ */
+char *mpls_ntoa(const struct sockaddr *);
+char *any_ntoa(const struct sockaddr *);

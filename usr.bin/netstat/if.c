@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.79 2013/10/19 15:56:06 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.79.4.1 2015/01/08 11:01:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.79 2013/10/19 15:56:06 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.79.4.1 2015/01/08 11:01:01 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: if.c,v 1.79 2013/10/19 15:56:06 christos Exp $");
 #include <err.h>
 
 #include "netstat.h"
+#include "rtutil.h"
 #include "prog_ops.h"
 
 #define	MAXIF	100
@@ -356,7 +357,7 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd,
 		in = inet_makeaddr(ifaddr.in.ia_subnet,
 			INADDR_ANY);
 		cp = netname4(in.s_addr,
-			ifaddr.in.ia_subnetmask);
+			ifaddr.in.ia_subnetmask, nflag);
 #else
 		if (use_sysctl) {
 			netmask = ((struct sockaddr_in *)rtinfo[RTAX_NETMASK])->sin_addr.s_addr;
@@ -364,14 +365,14 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd,
 			struct in_ifaddr *ifaddr_in = (void *)rtinfo;
 			netmask = ifaddr_in->ia_subnetmask;
 		}
-		cp = netname4(sin->sin_addr.s_addr, netmask);
+		cp = netname4(sin->sin_addr.s_addr, netmask, nflag);
 #endif
 		if (vflag)
 			n = strlen(cp) < 13 ? 13 : strlen(cp);
 		else
 			n = 13;
 		printf("%-*.*s ", n, n, cp);
-		cp = routename4(sin->sin_addr.s_addr);
+		cp = routename4(sin->sin_addr.s_addr, nflag);
 		if (vflag)
 			n = strlen(cp) < 17 ? 17 : strlen(cp);
 		else
@@ -390,7 +391,7 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd,
 				   sizeof inm);
 				printf("\n%25s %-17.17s ", "",
 				   routename4(
-				      inm.inm_addr.s_addr));
+				      inm.inm_addr.s_addr, nflag));
 				multiaddr =
 				   (u_long)inm.inm_list.le_next;
 			}
@@ -412,7 +413,7 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd,
 			netmask6 = &ifaddr_in6->ia_prefixmask;
 		}
 
-		cp = netname6(sin6, netmask6);
+		cp = netname6(sin6, netmask6, nflag);
 		if (vflag)
 			n = strlen(cp) < 13 ? 13 : strlen(cp);
 		else

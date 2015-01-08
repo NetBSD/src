@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.144.4.1 2014/12/29 17:27:28 martin Exp $	*/
+/*	$NetBSD: route.c,v 1.144.4.2 2015/01/08 11:01:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.144.4.1 2014/12/29 17:27:28 martin Exp $");
+__RCSID("$NetBSD: route.c,v 1.144.4.2 2015/01/08 11:01:01 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: route.c,v 1.144.4.1 2014/12/29 17:27:28 martin Exp $");
 #include "keywords.h"
 #include "extern.h"
 #include "prog_ops.h"
+#include "rtutil.h"
 
 union sockunion {
 	struct	sockaddr sa;
@@ -95,7 +96,6 @@ struct sou {
 		*so_ifp, *so_mpls;
 };
 
-static char *any_ntoa(const struct sockaddr *);
 static const char *route_strerror(int);
 static void set_metric(const char *, int);
 static int newroute(int, char *const *);
@@ -105,6 +105,7 @@ static int inet6_makenetandmask(const struct sockaddr_in6 *, struct sou *);
 #endif
 static int getaddr(int, const char *, struct hostent **, struct sou *);
 static int flushroutes(int, char *const [], int);
+static char *netmask_string(const struct sockaddr *, int, int);
 static int prefixlen(const char *, struct sou *);
 #ifndef SMALL
 static void interfaces(void);
@@ -168,7 +169,7 @@ main(int argc, char * const *argv)
 			doflush = 1;
 			break;
 		case 'n':
-			nflag = 1;
+			nflag = RT_NFLAG;
 			break;
 		case 'q':
 			qflag = 1;
@@ -224,7 +225,7 @@ main(int argc, char * const *argv)
 		return newroute(argc, argv);
 
 	case K_SHOW:
-		show(argc, argv);
+		show(argc, argv, nflag);
 		return 0;
 
 #ifndef SMALL
@@ -245,6 +246,36 @@ main(int argc, char * const *argv)
 	}
 }
 
+static char *
+netmask_string(const struct sockaddr *mask, int len, int family)
+{
+	static char smask[INET6_ADDRSTRLEN];
+	struct sockaddr_in nsin;
+	struct sockaddr_in6 nsin6;
+
+	if (len >= 0)
+		snprintf(smask, sizeof(smask), "%d", len);
+	else {
+		switch (family) {
+		case AF_INET:
+			memset(&nsin, 0, sizeof(nsin));
+			memcpy(&nsin, mask, mask->sa_len);
+			snprintf(smask, sizeof(smask), "%s",
+			    inet_ntoa(nsin.sin_addr));
+			break;
+		case AF_INET6:
+			memset(&nsin6, 0, sizeof(nsin6));
+			memcpy(&nsin6, mask, mask->sa_len);
+			inet_ntop(family, &nsin6.sin6_addr, smask,
+			    sizeof(smask));
+			break;
+		default:
+			snprintf(smask, sizeof(smask), "%s", any_ntoa(mask));
+		}
+	}
+
+	return smask;
+}
 /*
  * Purge all entries in the routing tables not
  * associated with network interfaces.
@@ -320,413 +351,15 @@ flushroutes(int argc, char * const argv[], int doall)
 		if (verbose)
 			print_rtmsg(rtm, rlen);
 		else {
-			(void)printf("%-20.20s ",
-			    routename(sa, NULL, rtm->rtm_flags));
+			(void)printf("%-20.20s ", netname(sa, NULL, nflag));
 			sa = (struct sockaddr *)(RT_ROUNDUP(sa->sa_len) +
 			    (char *)sa);
-			(void)printf("%-20.20s ",
-			    routename(sa, NULL, RTF_HOST));
+			(void)printf("%-20.20s ", routename(sa, nflag));
 			(void)printf("done\n");
 		}
 	}
 	free(buf);
 	return 0;
-}
-
-
-static char hexlist[] = "0123456789abcdef";
-
-static char *
-any_ntoa(const struct sockaddr *sa)
-{
-	static char obuf[3 * 256];
-	const char *in;
-	char *out;
-	int len;
-
-#if __GNUC__ > 2
-	len = sa->sa_len - offsetof(struct sockaddr, sa_data);
-#else
-	len = sa->sa_len - ((struct sockaddr*)&sa->sa_data - sa);
-#endif
-	in  = sa->sa_data;
-	out = obuf;
-
-	do {
-		*out++ = hexlist[(*in >> 4) & 15];
-		*out++ = hexlist[(*in++)    & 15];
-		*out++ = '.';
-	} while (--len > 0);
-	out[-1] = '\0';
-	return obuf;
-}
-
-int
-netmask_length(struct sockaddr *nm, int family)
-{
-	static int
-	    /* number of bits in a nibble */
-	    _t[] = { 0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4 },
-	    /* good nibbles are 1111, 1110, 1100, 1000, 0000 */
-	    _g[] = { 1,0,0,0,0,0,0,0,1,0,0,0,1,0,1,1 };
-	int mask, good, zeroes, maskbytes, bit, i;
-	unsigned char *maskdata;
-
-	if (nm == NULL)
-		return 0;
-
-	mask = 0;
-	good = 1;
-	zeroes = 0;
-
-	switch (family) {
-	case AF_INET: {
-		struct sockaddr_in *nsin = (struct sockaddr_in *)nm;
-		maskdata = (unsigned char *)&nsin->sin_addr;
-		maskbytes = nsin->sin_len -
-		    ((caddr_t)&nsin->sin_addr - (caddr_t)nsin);
-		break;
-	}
-	case AF_INET6: {
-		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)nm;
-		maskdata = (unsigned char *)&sin6->sin6_addr;
-		maskbytes = sin6->sin6_len -
-		    ((caddr_t)&sin6->sin6_addr - (caddr_t)sin6);
-		break;
-	}
-	default:
-		return 0;
-	}
-
-	/*
-	 * Count the bits in the nibbles of the mask, and marking the
-	 * netmask as not good (or at best, non-standard and very
-	 * discouraged, in the case of AF_INET) if we find either of
-	 * a nibble with non-contiguous bits, or a non-zero nibble
-	 * after we've found a zero nibble.
-	 */
-	for (i = 0; i < maskbytes; i++) {
-		/* high nibble */
-		mask += bit = _t[maskdata[i] >> 4];
-		good &= _g[maskdata[i] >> 4];
-		if (zeroes && bit)
-			good = 0;
-		if (bit == 0)
-			zeroes = 1;
-		/* low nibble */
-		mask += bit = _t[maskdata[i] & 0xf];
-		good &= _g[maskdata[i] & 0xf];
-		if (zeroes && bit)
-			good = 0;
-		if (bit == 0)
-			zeroes = 1;
-	}
-
-	/*
-	 * Always return the number of bits found, but as a negative
-	 * if the mask wasn't one we like.
-	 */
-	return good ? mask : -mask;
-}
-
-char *
-netmask_string(const struct sockaddr *mask, int len, int family)
-{
-	static char smask[INET6_ADDRSTRLEN];
-	struct sockaddr_in nsin;
-	struct sockaddr_in6 nsin6;
-
-	if (len >= 0)
-		snprintf(smask, sizeof(smask), "%d", len);
-	else {
-		switch (family) {
-		case AF_INET:
-			memset(&nsin, 0, sizeof(nsin));
-			memcpy(&nsin, mask, mask->sa_len);
-			snprintf(smask, sizeof(smask), "%s",
-			    inet_ntoa(nsin.sin_addr));
-			break;
-		case AF_INET6:
-			memset(&nsin6, 0, sizeof(nsin6));
-			memcpy(&nsin6, mask, mask->sa_len);
-			inet_ntop(family, &nsin6.sin6_addr, smask,
-			    sizeof(smask));
-			break;
-		default:
-			snprintf(smask, sizeof(smask), "%s", any_ntoa(mask));
-		}
-	}
-
-	return smask;
-}
-
-const char *
-routename(const struct sockaddr *sa, struct sockaddr *nm, int flags)
-{
-	const char *cp;
-	static char line[50];
-	struct hostent *hp;
-	static char domain[MAXHOSTNAMELEN + 1];
-	static int first = 1;
-	struct in_addr in;
-	int nml;
-
-	if ((flags & RTF_HOST) == 0)
-		return netname(sa, nm);
-
-	if (first) {
-		first = 0;
-		if (gethostname(domain, MAXHOSTNAMELEN) == 0 &&
-		    (cp = strchr(domain, '.')))
-			(void)strlcpy(domain, cp + 1, sizeof(domain));
-		else
-			domain[0] = 0;
-	}
-
-	if (sa->sa_len == 0)
-		strlcpy(line, "default", sizeof(line));
-	else switch (sa->sa_family) {
-
-	case AF_INET:
-		in = ((const struct sockaddr_in *)sa)->sin_addr;
-		nml = netmask_length(nm, AF_INET);
-
-		cp = 0;
-		if (in.s_addr == INADDR_ANY || sa->sa_len < 4) {
-			if (nml == 0)
-				cp = "default";
-			else {
-				static char notdefault[sizeof(NOTDEFSTRING)];
-
-				snprintf(notdefault, sizeof(notdefault),
-				    "0.0.0.0/%s",
-				    netmask_string(nm, nml, AF_INET));
-				cp = notdefault;
-			}
-		}
-		if (cp == 0 && !nflag) {
-			hp = gethostbyaddr((char *)&in, sizeof(struct in_addr),
-				AF_INET);
-			if (hp) {
-				char *ccp;
-				if ((ccp = strchr(hp->h_name, '.')) &&
-				    !strcmp(ccp + 1, domain))
-					*ccp = '\0';
-				cp = hp->h_name;
-			}
-		}
-		if (cp)
-			(void)strlcpy(line, cp, sizeof(line));
-		else
-			(void)strlcpy(line, inet_ntoa(in), sizeof(line));
-		break;
-
-	case AF_LINK:
-		return link_ntoa((const struct sockaddr_dl *)sa);
-
-#ifdef INET6
-	case AF_INET6:
-	    {
-		struct sockaddr_in6 sin6;
-		int niflags;
-		char nihost[NI_MAXHOST];
-
-		niflags = 0;
-		if (nflag)
-			niflags |= NI_NUMERICHOST;
-		memset(&sin6, 0, sizeof(sin6));
-		memcpy(&sin6, sa, sa->sa_len);
-		sin6.sin6_len = sizeof(struct sockaddr_in6);
-		sin6.sin6_family = AF_INET6;
-		inet6_getscopeid(&sin6, INET6_IS_ADDR_LINKLOCAL|
-		    INET6_IS_ADDR_MC_LINKLOCAL);
-		nml = netmask_length(nm, AF_INET6);
-		if (IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr)) {
-			if (nml == 0)
-				strlcpy(line, "::", sizeof(line));
-			else
-				/* noncontiguous never happens in ipv6 */
-				snprintf(line, sizeof(line), "::/%d", nml);
-		}
-		else if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
-		    nihost, sizeof(nihost), NULL, 0, niflags) != 0)
-			strlcpy(line, "invalid", sizeof(line));
-		else {
-			char *ccp;
-			if (!nflag && (ccp = strchr(nihost, '.')) &&
-			    strcmp(ccp + 1, domain) == 0)
-				*ccp = '\0';
-			strlcpy(line, nihost, sizeof(line));
-		}
-		break;
-	    }
-#endif
-
-#ifndef SMALL
-	case AF_APPLETALK:
-		(void)snprintf(line, sizeof(line), "atalk %d.%d",
-		    ((const struct sockaddr_at *)sa)->sat_addr.s_net,
-		    ((const struct sockaddr_at *)sa)->sat_addr.s_node);
-		break;
-	case AF_MPLS:
-		{
-		union mpls_shim ms;
-		const union mpls_shim *pms;
-		size_t psize = sizeof(struct sockaddr_mpls), len;
-
-		ms.s_addr =((const struct sockaddr_mpls*)sa)->smpls_addr.s_addr;
-		ms.s_addr = ntohl(ms.s_addr);
-
-		len = snprintf(line, sizeof(line), "%u", ms.shim.label);
-		if (len >= sizeof(line))
-			errx(1, "snprintf");
-		pms = &((const struct sockaddr_mpls*)sa)->smpls_addr;
-		while (psize < sa->sa_len) {
-			size_t alen;
-			pms++;
-			ms.s_addr = ntohl(pms->s_addr);
-			alen = snprintf(line + len, sizeof(line) - len, " %u",
-			    ms.shim.label);
-			if (alen >= sizeof(line) - len)
-				errx(1, "snprintf");
-			len += alen;
-			psize += sizeof(ms);
-		}
-		break;
-		}
-#endif /* SMALL */
-
-	default:
-		(void)snprintf(line, sizeof line, "(%d) %s",
-			sa->sa_family, any_ntoa(sa));
-		break;
-
-	}
-	return line;
-}
-
-/*
- * Return the name of the network whose address is given.
- * The address is assumed to be that of a net or subnet, not a host.
- */
-const char *
-netname(const struct sockaddr *sa, struct sockaddr *nm)
-{
-	const char *cp = 0;
-	static char line[50];
-	struct netent *np = 0;
-	u_int32_t net, mask;
-	u_int32_t i;
-	int subnetshift, nml;
-	struct in_addr in;
-
-	switch (sa->sa_family) {
-
-	case AF_INET:
-		in = ((const struct sockaddr_in *)sa)->sin_addr;
-		i = ntohl(in.s_addr);
-		nml = netmask_length(nm, AF_INET);
-		if (i == 0) {
-			if (nml == 0)
-				cp = "default";
-			else {
-				static char notdefault[sizeof(NOTDEFSTRING)];
-
-				snprintf(notdefault, sizeof(notdefault),
-				    "0.0.0.0/%s",
-				    netmask_string(nm, nml, AF_INET));
-				cp = notdefault;
-			}
-		}
-		else if (!nflag) {
-			if (IN_CLASSA(i)) {
-				mask = IN_CLASSA_NET;
-				subnetshift = 8;
-			} else if (IN_CLASSB(i)) {
-				mask = IN_CLASSB_NET;
-				subnetshift = 8;
-			} else {
-				mask = IN_CLASSC_NET;
-				subnetshift = 4;
-			}
-			/*
-			 * If there are more bits than the standard mask
-			 * would suggest, subnets must be in use.
-			 * Guess at the subnet mask, assuming reasonable
-			 * width subnet fields.
-			 */
-			while (i &~ mask)
-				mask = (int32_t)mask >> subnetshift;
-			net = i & mask;
-			while ((mask & 1) == 0)
-				mask >>= 1, net >>= 1;
-			np = getnetbyaddr(net, AF_INET);
-			if (np)
-				cp = np->n_name;
-		}
-		if (cp)
-			(void)strlcpy(line, cp, sizeof(line));
-		else {
-			if (nml == 0)
-				strlcpy(line, inet_ntoa(in), sizeof(line));
-			else if (nml < 0) {
-				snprintf(line, sizeof(line), "%s&%s", 
-				    inet_ntoa(in),
-				    netmask_string(nm, nml, AF_INET));
-			} else {
-				snprintf(line, sizeof(line), "%s/%d",
-				    inet_ntoa(in), nml);
-			}
-		}
-		break;
-
-	case AF_LINK:
-		return link_ntoa((const struct sockaddr_dl *)sa);
-
-#ifdef INET6
-	case AF_INET6:
-	    {
-		struct sockaddr_in6 sin6;
-		int niflags;
-
-		niflags = 0;
-		if (nflag)
-			niflags |= NI_NUMERICHOST;
-		memset(&sin6, 0, sizeof(sin6));
-		memcpy(&sin6, sa, sa->sa_len);
-		sin6.sin6_len = sizeof(struct sockaddr_in6);
-		sin6.sin6_family = AF_INET6;
-		inet6_getscopeid(&sin6, INET6_IS_ADDR_LINKLOCAL|
-		    INET6_IS_ADDR_MC_LINKLOCAL);
-		nml = netmask_length(nm, AF_INET6);
-		if (IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr)) {
-			if (nml == 0)
-				strlcpy(line, "::", sizeof(line));
-			else
-				/* noncontiguous never happens in ipv6 */
-				snprintf(line, sizeof(line), "::/%d", nml);
-		}
-		else if (getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
-		    line, sizeof(line), NULL, 0, niflags) != 0)
-			strlcpy(line, "invalid", sizeof(line));
-		break;
-	    }
-#endif
-
-#ifndef SMALL
-	case AF_APPLETALK:
-		(void)snprintf(line, sizeof(line), "atalk %d.%d",
-		    ((const struct sockaddr_at *)sa)->sat_addr.s_net,
-		    ((const struct sockaddr_at *)sa)->sat_addr.s_node);
-		break;
-#endif /* SMALL */
-
-	default:
-		(void)snprintf(line, sizeof line, "af %d: %s",
-			sa->sa_family, any_ntoa(sa));
-		break;
-	}
-	return line;
 }
 
 static const char *
@@ -1830,7 +1463,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen, struct sou *soup)
 
 	if (! shortoutput) {
 		(void)printf("   route to: %s\n",
-		    routename(&soup->so_dst->sa, NULL, RTF_HOST));
+		    routename(&soup->so_dst->sa, nflag));
 	}
 	if (rtm->rtm_version != RTM_VERSION) {
 		warnx("routing message version %d not understood",
@@ -1879,19 +1512,19 @@ print_getmsg(struct rt_msghdr *rtm, int msglen, struct sou *soup)
 		mask->sa_family = dst->sa_family;	/* XXX */
 	if (dst && ! shortoutput)
 		(void)printf("destination: %s\n",
-		    routename(dst, mask, RTF_HOST));
+		    routename(dst, nflag));
 	if (mask && ! shortoutput) {
 		int savenflag = nflag;
 
-		nflag = 1;
+		nflag = RT_NFLAG;
 		(void)printf("       mask: %s\n",
-		    routename(mask, NULL, RTF_HOST));
+		    routename(mask, nflag));
 		nflag = savenflag;
 	}
 	if (gate && rtm->rtm_flags & RTF_GATEWAY) {
 		const char *name;
 
-		name = routename(gate, NULL, RTF_HOST);
+		name = routename(gate, nflag);
 		if (shortoutput) {
 			if (*name == '\0')
 				return 1;
@@ -1901,7 +1534,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen, struct sou *soup)
 	}
 	if (mpls) {
 		const char *name;
-		name = routename(mpls, NULL, RTF_HOST);
+		name = routename(mpls, nflag);
 		if(shortoutput) {
 			if (*name == '\0')
 				return 1;
@@ -1912,7 +1545,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen, struct sou *soup)
 		
 	if (ifa && ! shortoutput)
 		(void)printf(" local addr: %s\n",
-		    routename(ifa, NULL, RTF_HOST));
+		    routename(ifa, nflag));
 	if (ifp && ! shortoutput)
 		(void)printf("  interface: %.*s\n",
 		    ifp->sdl_nlen, ifp->sdl_data);
@@ -2006,7 +1639,7 @@ pmsg_addrs(const char *cp, int addrs)
 				    netmask_string(sa[i], -1, nmf));
 			else
 				(void)printf(" %s",
-				    routename(sa[i], NULL, RTF_HOST));
+				    routename(sa[i], nflag));
 		}
 	}
 	(void)putchar('\n');
