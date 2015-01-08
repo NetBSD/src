@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.79.4.1 2015/01/08 11:01:01 martin Exp $	*/
+/*	$NetBSD: if.c,v 1.79.4.2 2015/01/08 11:47:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.79.4.1 2015/01/08 11:01:01 martin Exp $");
+__RCSID("$NetBSD: if.c,v 1.79.4.2 2015/01/08 11:47:11 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -337,7 +337,7 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd,
 	const int niflag = NI_NUMERICHOST;
 	struct sockaddr_in6 *sin6, *netmask6;
 #endif
-	in_addr_t netmask;
+	struct sockaddr_in netmask;
 	struct sockaddr_in *sin;
 	char *cp;
 	int n, m;
@@ -349,24 +349,13 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd,
 		break;
 	case AF_INET:
 		sin = (struct sockaddr_in *)sa;
-#ifdef notdef
-		/*
-		 * can't use inet_makeaddr because kernel
-		 * keeps nets unshifted.
-		 */
-		in = inet_makeaddr(ifaddr.in.ia_subnet,
-			INADDR_ANY);
-		cp = netname4(in.s_addr,
-			ifaddr.in.ia_subnetmask, nflag);
-#else
 		if (use_sysctl) {
-			netmask = ((struct sockaddr_in *)rtinfo[RTAX_NETMASK])->sin_addr.s_addr;
+			netmask = *((struct sockaddr_in *)rtinfo[RTAX_NETMASK]);
 		} else {
 			struct in_ifaddr *ifaddr_in = (void *)rtinfo;
-			netmask = ifaddr_in->ia_subnetmask;
+			netmask.sin_addr.s_addr = ifaddr_in->ia_subnetmask;
 		}
-		cp = netname4(sin->sin_addr.s_addr, netmask, nflag);
-#endif
+		cp = netname4(sin, &netmask, nflag);
 		if (vflag)
 			n = strlen(cp) < 13 ? 13 : strlen(cp);
 		else
