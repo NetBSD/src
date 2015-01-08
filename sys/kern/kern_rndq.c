@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.28 2014/10/26 18:22:32 tls Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.29 2015/01/08 16:13:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.28 2014/10/26 18:22:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.29 2015/01/08 16:13:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -222,7 +222,8 @@ rnd_counter(void)
 	uint32_t ret;
 
 #if defined(__HAVE_CPU_COUNTER)
-	return (cpu_counter32());
+	if (cpu_hascounter())
+		return cpu_counter32();
 #endif
 	if (rnd_ready) {
 		nanouptime(&ts);
