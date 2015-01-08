@@ -1,4 +1,4 @@
-/*	$NetBSD: cal.c,v 1.27 2011/08/29 13:55:22 joerg Exp $	*/
+/*	$NetBSD: cal.c,v 1.28 2015/01/08 03:56:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cal.c,v 1.27 2011/08/29 13:55:22 joerg Exp $");
+__RCSID("$NetBSD: cal.c,v 1.28 2015/01/08 03:56:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -227,7 +227,7 @@ main(int argc, char **argv)
 	before = after = 0;
 	use_reform = yflag = year = 0;
 	when = NULL;
-	while ((ch = getopt(argc, argv, "A:B:d:hjR:ry3")) != -1) {
+	while ((ch = getopt(argc, argv, "A:B:C:d:hjR:ry3")) != -1) {
 		switch (ch) {
 		case 'A':
 			after = getnum(optarg);
@@ -238,6 +238,11 @@ main(int argc, char **argv)
 			before = getnum(optarg);
 			if (before < 0)
 				errx(1, "Argument to -B must be positive");
+			break;
+		case 'C':
+			after = before = getnum(optarg);
+			if (after < 0)
+				errx(1, "Argument to -C must be positive");
 			break;
 		case 'd':
 			dow = getnum(optarg);
@@ -764,7 +769,7 @@ gregorian_reform(const char *p)
 		errx(1, "reform name %s invalid", p);
 
 	/*
-	 * 
+	 *
 	 */
 	reform->missing_days =
 		j_leap_days(reform->year, reform->month, reform->date) -
@@ -913,7 +918,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: cal [-3hjry] [-A after] [-B before] [-d day-of-week] "
+	    "usage: cal [-3hjry] [-A after] [-B before] [-C context] [-d day-of-week] "
 	    "[-R reform-spec]\n           [[month] year]\n");
 	exit(1);
 }
