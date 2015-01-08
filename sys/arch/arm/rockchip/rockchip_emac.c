@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_emac.c,v 1.7 2015/01/06 11:22:09 jmcneill Exp $ */
+/* $NetBSD: rockchip_emac.c,v 1.8 2015/01/08 13:37:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rkemac.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.7 2015/01/06 11:22:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.8 2015/01/08 13:37:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -914,7 +914,7 @@ rkemac_setmulti(struct rkemac_softc *sc)
 			hashes[0] = hashes[1] = 0xffffffff;
 			goto done;
 		}
-		h = ~ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
+		h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
 		hashes[h >> 5] |= (1 << (h & 0x1f));
 		ETHER_NEXT_MULTI(step, enm);
 	}
