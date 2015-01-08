@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.151 2015/01/07 21:36:29 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.152 2015/01/08 08:27:27 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -13128,3 +13128,9 @@ sys/arch/cobalt/conf/RAMDISK			1.6
 
 	Increase ramdisk size.
 	[martin, ticket #388]
+
+sbin/brconfig/brconfig.8			1.18
+
+	Document the "addr" and "static" commands.
+	[msaitoh, ticket #391]
+
