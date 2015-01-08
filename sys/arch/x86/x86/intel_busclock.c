@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.19 2014/07/25 14:34:22 msaitoh Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.19.2.1 2015/01/08 11:15:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.19 2014/07/25 14:34:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.19.2.1 2015/01/08 11:15:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,7 +316,7 @@ p4_get_bus_clock(struct cpu_info *ci)
 		switch (bus) {
 		case 0:
 			bus_clock = (CPUID_TO_MODEL(ci->ci_signature) == 2) ?
-			    10000 : 26666;
+			    10000 : 26667;
 			break;
 		case 1:
 			bus_clock = 13333;
@@ -325,7 +325,10 @@ p4_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 20000;
 			break;
 		case 3:
-			bus_clock = 16666;
+			bus_clock = 16667;
+			break;
+		case 4:
+			bus_clock = 33333;
 			break;
 		default:
 			aprint_debug("%s: unknown Pentium 4 (model %d) "
