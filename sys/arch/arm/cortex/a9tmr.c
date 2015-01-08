@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.9 2015/01/02 23:19:28 jmcneill Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.10 2015/01/08 10:38:08 hkenken Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.9 2015/01/02 23:19:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.10 2015/01/08 10:38:08 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -140,7 +140,7 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	    device_xname(self), "missing interrupts");
 
 	bus_space_subregion(sc->sc_memt, sc->sc_memh, 
-	    TMR_GLOBAL_BASE, TMR_GLOBAL_BASE, &sc->sc_global_memh);
+	    TMR_GLOBAL_BASE, TMR_GLOBAL_SIZE, &sc->sc_global_memh);
 	bus_space_subregion(sc->sc_memt, sc->sc_memh, 
 	    TMR_PRIVATE_BASE, TMR_PRIVATE_SIZE, &sc->sc_private_memh);
 	bus_space_subregion(sc->sc_memt, sc->sc_memh, 
