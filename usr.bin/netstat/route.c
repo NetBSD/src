@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.82 2014/04/28 15:41:15 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.82.2.1 2015/01/08 11:01:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.82 2014/04/28 15:41:15 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.82.2.1 2015/01/08 11:01:01 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,7 @@ __RCSID("$NetBSD: route.c,v 1.82 2014/04/28 15:41:15 christos Exp $");
 #include <unistd.h>
 
 #include "netstat.h"
+#include "rtutil.h"
 
 #define kget(p, d) (kread((u_long)(p), (char *)&(d), sizeof (d)))
 
@@ -121,9 +122,9 @@ routepr(u_long rtree)
 				p_tree(head.rnh_treetop);
 			}
 		} else if (af == AF_UNSPEC || af == i) {
-			pr_family(i);
+			p_family(i);
 			do_rtent = 1;
-			pr_rthdr(i, Aflag);
+			p_rthdr(i, Aflag);
 			p_tree(head.rnh_treetop);
 		}
 	}
@@ -159,7 +160,7 @@ again:
 				p_rtnode();
 		} else {
 			p_sockaddr(kgetsa((const struct sockaddr *)rnode.rn_key),
-			    NULL, 0, 44);
+			    NULL, 0, 44, nflag);
 			putchar('\n');
 		}
 		if ((rn = rnode.rn_dupedkey) != NULL)
@@ -185,7 +186,7 @@ p_rtnode(void)
 		if (rnode.rn_mask) {
 			printf("\t  mask ");
 			p_sockaddr(kgetsa((const struct sockaddr *)rnode.rn_mask),
-				    NULL, 0, -1);
+				    NULL, 0, -1, nflag);
 		} else if (rm == 0)
 			return;
 	} else {
@@ -203,10 +204,10 @@ p_rtnode(void)
 			printf(" <normal>, ");
 			kget(rmask.rm_leaf, rnode_aux);
 			p_sockaddr(kgetsa((const struct sockaddr *)rnode_aux.rn_mask),
-				    NULL, 0, -1);
+				    NULL, 0, -1, nflag);
 		} else
 			p_sockaddr(kgetsa((const struct sockaddr *)rmask.rm_mask),
-			    NULL, 0, -1);
+			    NULL, 0, -1, nflag);
 		putchar('}');
 		if ((rm = rmask.rm_mklist) != NULL)
 			printf(" ->");
@@ -251,9 +252,9 @@ p_krtentry(struct rtentry *rt)
 		mask = sockcopy(kgetsa(rt_mask(rt)), &mask_un);
 	else
 		mask = sockcopy(NULL, &mask_un);
-	p_addr(addr, mask, rt->rt_flags);
-	p_gwaddr(kgetsa(rt->rt_gateway), kgetsa(rt->rt_gateway)->sa_family);
-	p_flags(rt->rt_flags, "%-6.6s ");
+	p_addr(addr, mask, rt->rt_flags, nflag);
+	p_gwaddr(kgetsa(rt->rt_gateway), kgetsa(rt->rt_gateway)->sa_family, nflag);
+	p_flags(rt->rt_flags);
 	printf("%6d %8"PRIu64" ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
 		printf("%6"PRIu64, rt->rt_rmx.rmx_mtu); 
@@ -287,25 +288,7 @@ p_krtentry(struct rtentry *rt)
 	}
 	putchar('\n');
 	if (vflag)
-		pr_rtrmx(&rt->rt_rmx);
-}
-
-void
-pr_rtrmx(struct rt_metrics *rmx)
-{
-	printf("\texpire   %10"PRId64"%c  recvpipe %10"PRIu64"%c  "
-	    "sendpipe %10"PRIu64"%c\n",
-	    (int64_t)rmx->rmx_expire, 
-	    (rmx->rmx_locks & RTV_EXPIRE) ? 'L' : ' ', rmx->rmx_recvpipe,
-	    (rmx->rmx_locks & RTV_RPIPE) ? 'L' : ' ', rmx->rmx_sendpipe,
-	    (rmx->rmx_locks & RTV_SPIPE) ? 'L' : ' ');
-	printf("\tssthresh %10"PRIu64"%c  rtt      %10"PRIu64"%c  "
-	    "rttvar   %10"PRIu64"%c\n", rmx->rmx_ssthresh, 
-	    (rmx->rmx_locks & RTV_SSTHRESH) ? 'L' : ' ',
-	    rmx->rmx_rtt, (rmx->rmx_locks & RTV_RTT) ? 'L' : ' ',
-	    rmx->rmx_rttvar, (rmx->rmx_locks & RTV_RTTVAR) ? 'L' : ' ');
-	printf("\thopcount %10"PRIu64"%c\n",
-	    rmx->rmx_hopcount, (rmx->rmx_locks & RTV_HOPCOUNT) ? 'L' : ' ');
+		p_rtrmx(&rt->rt_rmx);
 }
 
 /*

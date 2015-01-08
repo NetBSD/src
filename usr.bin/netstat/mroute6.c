@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute6.c,v 1.14 2013/10/18 20:26:45 christos Exp $	*/
+/*	$NetBSD: mroute6.c,v 1.14.4.1 2015/01/08 11:01:01 martin Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -117,6 +117,7 @@
 #include <stdio.h>
 #include <kvm.h>
 #include "netstat.h"
+#include "rtutil.h"
 
 #ifdef INET6
 
@@ -212,9 +213,9 @@ mroute6pr(u_long mrpaddr, u_long mfcaddr, u_long mifaddr)
 			}
 			
 			printf(" %-*.*s", WID_ORG, WID_ORG,
-			    routename6(&mfc.mf6c_origin));
+			    routename6(&mfc.mf6c_origin, nflag));
 			printf(" %-*.*s", WID_GRP, WID_GRP,
-			    routename6(&mfc.mf6c_mcastgrp));
+			    routename6(&mfc.mf6c_mcastgrp, nflag));
 			printf(" %9llu", (unsigned long long)mfc.mf6c_pkt_cnt);
 
 			for (waitings = 0, rtep = mfc.mf6c_stall; rtep; ) {

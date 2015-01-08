@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2010/12/13 19:19:10 pooka Exp $
+#	$NetBSD: Makefile,v 1.17.26.1 2015/01/08 11:01:01 martin Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 SRCDIR=		${.CURDIR}/../../../sbin/route
@@ -8,7 +8,7 @@ NOMAN=		# defined
 
 .include <bsd.own.mk>
 
-SRCS=		route.c show.c keywords.c
+SRCS=		keywords.c route.c rtutil.c show.c
 
 CPPFLAGS+=	-DSMALL -I${SRCDIR} -DCRUNCHOPS
 .if defined(SMALLPROG_INET6) && (${USE_INET6} != "no")
