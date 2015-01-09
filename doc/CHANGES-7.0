@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.155 2015/01/09 14:07:56 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.156 2015/01/09 14:51:50 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -13205,4 +13205,10 @@ sys/kern/kern_rndq.c				1.29
 	Don't use cpu_counter32() unconditionally.
 	[christos, ticket #397]
 
+
+sys/kern/vfs_mount.c				1.32
+
+	vfs_vnode_iterator_destroy: set v_usecount of marker to zero to
+	prevent an assertion from vnfree().
+	[hannken, ticket #398]
 
