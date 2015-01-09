@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.34 2012/06/30 22:50:36 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.35 2015/01/09 01:08:49 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -188,7 +188,7 @@
 
 #define NKL4_KIMG_ENTRIES	1
 #define NKL3_KIMG_ENTRIES	1
-#define NKL2_KIMG_ENTRIES	16
+#define NKL2_KIMG_ENTRIES	32
 
 /*
  * Since kva space is below the kernel in its entirety, we start off
