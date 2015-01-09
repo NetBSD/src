@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.19 2015/01/05 07:40:05 nonaka Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.20 2015/01/09 11:45:11 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.19 2015/01/05 07:40:05 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.20 2015/01/09 11:45:11 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -364,8 +364,8 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	const vaddr_t end = src_va + PAGE_SIZE;
 
 	while (src_va < end) {
-		__asm(
-			"dcbt	%2,%1"	"\n\t"	/* touch next src cachline */
+		__asm __volatile(
+			"dcbt	%2,%0"	"\n\t"	/* touch next src cacheline */
 			"dcba	0,%1"	"\n\t" 	/* don't fetch dst cacheline */
 		    :: "b"(src_va), "b"(dst_va), "b"(line_size));
 		for (u_int i = 0;
