@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.30.2.1 2014/11/18 18:40:06 snj Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.30.2.2 2015/01/09 14:50:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.30.2.1 2014/11/18 18:40:06 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.30.2.2 2015/01/09 14:50:35 martin Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -365,8 +365,10 @@ vfs_vnode_iterator_destroy(struct vnode_iterator *vi)
 
 	mutex_enter(&mntvnode_lock);
 	KASSERT(ISSET(mvp->v_iflag, VI_MARKER));
-	if (mvp->v_usecount != 0)
+	if (mvp->v_usecount != 0) {
 		TAILQ_REMOVE(&mvp->v_mount->mnt_vnodelist, mvp, v_mntvnodes);
+		mvp->v_usecount = 0;
+	}
 	mutex_exit(&mntvnode_lock);
 	vnfree(mvp);
 }
