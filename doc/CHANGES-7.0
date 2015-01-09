@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.154 2015/01/09 10:34:02 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.155 2015/01/09 14:07:56 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -13199,4 +13199,10 @@ sys/arch/x86/x86/cpu_ucode_intel.c		1.6
 
 	Use specialreg.h's definitions.
 	[msaitoh, ticket #396]
+
+sys/kern/kern_rndq.c				1.29
+
+	Don't use cpu_counter32() unconditionally.
+	[christos, ticket #397]
+
 
