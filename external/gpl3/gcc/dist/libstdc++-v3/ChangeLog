@@ -1,3 +1,57 @@
+2014-12-19  Release Manager
+
+	* GCC 4.8.4 released.
+
+2014-12-06  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/63840
+	* include/std/functional (function::function(const function&)): Set
+	_M_manager after operations that might throw.
+	* include/tr1/functional (function::function(const function&),
+	function::function(_Functor, _Useless)): Likewise.
+	* testsuite/20_util/function/63840.cc: New.
+	* testsuite/tr1/3_function_objects/function/63840.cc: New.
+
+	PR libstdc++/61947
+	* include/std/tuple (_Head_base): Use allocator_arg_t parameters to
+	disambiguate unary constructors.
+	(_Tuple_impl): Pass allocator_arg_t arguments.
+	* testsuite/20_util/tuple/61947.cc: New.
+	* testsuite/20_util/uses_allocator/cons_neg.cc: Adjust dg-error line.
+
+	PR libstdc++/59603
+	* include/bits/stl_algo.h (random_shuffle): Prevent self-swapping.
+	* testsuite/25_algorithms/random_shuffle/59603.cc: New.
+
+2014-11-27  Thomas Preud'homme  <thomas.preudhomme@arm.com>
+
+	Backport from mainline
+	2014-09-10  Tony Wang  <tony.wang@arm.com>
+
+	PR target/56846
+	* libsupc++/eh_personality.cc (PERSONALITY_FUNCTION):
+	Return with CONTINUE_UNWINDING when the state pattern
+	contains: _US_VIRTUAL_UNWIND_FRAME | _US_FORCE_UNWIND
+
+2014-11-05  David Edelsohn  <dje.gcc@gmail.com>
+
+	Backported from mainline.
+	2014-10-30  David Edelsohn  <dje.gcc@gmail.com>
+
+	* configure.host (aix4.3+, 5+): Do not use -G in link command.
+
+2014-10-15  Jason Merrill  <jason@redhat.com>
+
+	* libsupc++/dyncast.cc (__dynamic_cast): Handle mid-destruction
+	dynamic_cast more gracefully.
+
+2014-10-14  Kai Tietz  <ktietz@redhat.com>
+
+	PR libstdc++/57440
+	* config/os/mingw32/os_defines.h (_GTHREAD_USE_MUTEX_INIT_FUNC):
+	Define to avoid leak.
+	* config/os/mingw32-w64/os_defines.h: Likewise.
+
 2014-10-03  Jonathan Wakely  <jwakely@redhat.com>
 
 	PR libstdc++/63449
