@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.31 2014/12/16 19:30:24 christos Exp $	*/
+/*	$NetBSD: names.c,v 1.32 2015/01/10 17:16:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.31 2014/12/16 19:30:24 christos Exp $");
+__RCSID("$NetBSD: names.c,v 1.32 2015/01/10 17:16:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -550,7 +550,7 @@ unpack(struct name *smopts, struct name *np)
 	 * the terminating 0 pointer.  Additional spots may be needed
 	 * to pass along -f to the host mailer.
 	 */
-	extra = 3 * count(smopts);
+	extra = 3 + count(smopts);
 	extra++;
 	metoo = value(ENAME_METOO) != NULL;
 	if (metoo)
