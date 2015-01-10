@@ -6,11 +6,11 @@
 
 #define GCCPLUGIN_VERSION_MAJOR   4
 #define GCCPLUGIN_VERSION_MINOR   8
-#define GCCPLUGIN_VERSION_PATCHLEVEL   3
+#define GCCPLUGIN_VERSION_PATCHLEVEL   4
 #define GCCPLUGIN_VERSION  (GCCPLUGIN_VERSION_MAJOR*1000 + GCCPLUGIN_VERSION_MINOR)
 
-static char basever[] = "4.8.3";
-static char datestamp[] = "20140522";
+static char basever[] = "4.8.4";
+static char datestamp[] = "20141219";
 static char devphase[] = "";
 static char revision[] = "";
 
