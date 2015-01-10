@@ -1122,6 +1122,7 @@ int drm_mapbufs(struct drm_device *dev, void *data, struct drm_file *file_priv)
 #elif   defined(__NetBSD__)
 	/* XXXNETBSD */
 	rsize = round_page(size);
+	addr = NULL;
 	retcode = uvm_mmap_dev(curproc, &addr, rsize, dev->kdev, foff);
 	vaddr = (vaddr_t)addr;
 	DRM_DEBUG("mmap %#lx/%#lx foff %#llx\n", vaddr, rsize, (long long)foff);
