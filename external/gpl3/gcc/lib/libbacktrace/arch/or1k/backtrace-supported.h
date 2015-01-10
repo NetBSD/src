@@ -44,7 +44,7 @@ POSSIBILITY OF SUCH DAMAGE.  */
    should work, 0 if it will not.  Libraries may #include this to make
    other arrangements.  */
 
-#define BACKTRACE_SUPPORTED 0
+#define BACKTRACE_SUPPORTED 1
 
 /* BACKTRACE_USES_MALLOC will be #define'd as 1 if the backtrace
    library will call malloc as it works, 0 if it will call mmap

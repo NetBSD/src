@@ -25,7 +25,7 @@
 /* #undef HAVE_GETEXECNAME */
 
 /* Define if _Unwind_GetIPInfo is available. */
-/* #undef HAVE_GETIPINFO */
+#define HAVE_GETIPINFO 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
