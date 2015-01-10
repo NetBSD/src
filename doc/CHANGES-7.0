@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.156 2015/01/09 14:51:50 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.157 2015/01/10 16:47:57 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -13211,4 +13211,9 @@ sys/kern/vfs_mount.c				1.32
 	vfs_vnode_iterator_destroy: set v_usecount of marker to zero to
 	prevent an assertion from vnfree().
 	[hannken, ticket #398]
+
+sys/arch/evbmips/loongson/autoconf.c		1.6
+
+	If MEMORY_DISK_IS_ROOT is defined, dont try to guess the root device.
+	[jmcneill, ticket #399]
 
