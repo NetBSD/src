@@ -35,7 +35,7 @@
 #define _GLIBCXX_CXX_CONFIG_H 1
 
 // The current version of the C++ library in compressed ISO date format.
-#define __GLIBCXX__ 20141009
+#define __GLIBCXX__ 20141219
 
 // Macros for various attributes.
 //   _GLIBCXX_PURE
@@ -910,7 +910,7 @@ namespace std
 #define _GLIBCXX_HAVE_TANL 1
 
 /* Define to 1 if you have the <tgmath.h> header file. */
-#define _GLIBCXX_HAVE_TGMATH_H 1
+/* #undef _GLIBCXX_HAVE_TGMATH_H */
 
 /* Define to 1 if the target supports thread-local storage. */
 #define _GLIBCXX_HAVE_TLS 1
