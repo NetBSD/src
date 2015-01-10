@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.200 2014/10/18 08:33:27 snj Exp $ */
+/*	$NetBSD: autoconf.c,v 1.201 2015/01/10 22:19:26 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.200 2014/10/18 08:33:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.201 2015/01/10 22:19:26 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.200 2014/10/18 08:33:27 snj Exp $");
 #include <machine/bootinfo.h>
 #include <sparc64/sparc64/cache.h>
 #include <sparc64/sparc64/timerreg.h>
+#include <machine/mdesc.h>
 
 #include <dev/ata/atavar.h>
 #include <dev/pci/pcivar.h>
@@ -469,6 +470,10 @@ get_bootpath_from_prom(void)
 void
 cpu_configure(void)
 {
+	
+	if (CPU_ISSUN4V)
+		mdesc_init();
+	
 	bool userconf = (boothowto & RB_USERCONF) != 0;
 
 	/* fetch boot device settings */
