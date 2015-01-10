@@ -1,4 +1,4 @@
-/* $Id: imx23_olinuxino_machdep.c,v 1.4 2014/10/29 11:21:51 skrll Exp $ */
+/* $Id: imx23_olinuxino_machdep.c,v 1.5 2015/01/10 12:11:39 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_imx.h"
 
 #include <sys/bus.h>
 #include <sys/cdefs.h>
