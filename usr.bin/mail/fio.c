@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.41 2014/12/16 19:30:24 christos Exp $	*/
+/*	$NetBSD: fio.c,v 1.42 2015/01/10 17:16:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.41 2014/12/16 19:30:24 christos Exp $");
+__RCSID("$NetBSD: fio.c,v 1.42 2015/01/10 17:16:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -475,6 +475,7 @@ expand(const char *name)
 
 	switch (e) {
 	case 0: /* OK */
+		break;
 	case WRDE_NOSPACE:
 		warnx("Out of memory expanding `%s'", name);
 		return NULL;
@@ -497,9 +498,9 @@ expand(const char *name)
 		warnx("No match for `%s'", name);
 		break;
 	case 1:
-		if (strlen(we.we_wordv[1]) >= PATHSIZE)
+		if (strlen(we.we_wordv[0]) >= PATHSIZE)
 			warnx("Expansion too long for `%s'", name);
-		strlcpy(xname, we.we_wordv[1], PATHSIZE);
+		strlcpy(xname, we.we_wordv[0], PATHSIZE);
 		break;
 	default:
 		warnx("Ambiguous expansion for `%s'", name);
