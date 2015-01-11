@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8563.c,v 1.4 2014/11/20 16:34:26 christos Exp $	*/
+/*	$NetBSD: pcf8563.c,v 1.5 2015/01/11 18:05:36 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.4 2014/11/20 16:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.5 2015/01/11 18:05:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,13 @@ pcf8563rtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_todr.todr_settime_ymdhms = pcf8563rtc_settime;
 	sc->sc_todr.todr_setwen = NULL;
 
+	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
+	iic_smbus_write_byte(sc->sc_tag, sc->sc_addr, PCF8563_R_CS1, 0,
+	    I2C_F_POLL);
+	iic_smbus_write_byte(sc->sc_tag, sc->sc_addr, PCF8563_R_CS2, 0,
+	    I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+
 	todr_attach(&sc->sc_todr);
 }
 
@@ -136,13 +143,18 @@ pcf8563rtc_clock_read(struct pcf8563rtc_softc *sc, struct clock_ymdhms *dt)
 
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
+	if (bcd[PCF8563_R_SECOND] & PCF8563_M_VL)
+		return 0;
+
 	dt->dt_sec = bcdtobin(bcd[PCF8563_R_SECOND] & PCF8563_M_SECOND);
 	dt->dt_min = bcdtobin(bcd[PCF8563_R_MINUTE] & PCF8563_M_MINUTE);
 	dt->dt_hour = bcdtobin(bcd[PCF8563_R_HOUR] & PCF8563_M_HOUR);
 	dt->dt_day = bcdtobin(bcd[PCF8563_R_DAY] & PCF8563_M_DAY);
 	dt->dt_mon = bcdtobin(bcd[PCF8563_R_MONTH] & PCF8563_M_MONTH);
-	dt->dt_year = bcdtobin(bcd[PCF8563_R_YEAR] & PCF8563_M_YEAR);
-	dt->dt_year += 2000;
+	dt->dt_year = 1900 +
+	    (bcdtobin(bcd[PCF8563_R_YEAR] & PCF8563_M_YEAR) % 100);
+	if (bcd[PCF8563_R_MONTH] & PCF8563_M_CENTURY)
+		dt->dt_year += 100;
 
 	return 1;
 }
@@ -160,6 +172,8 @@ pcf8563rtc_clock_write(struct pcf8563rtc_softc *sc, struct clock_ymdhms *dt)
 	bcd[PCF8563_R_WEEKDAY] = bintobcd(dt->dt_wday);
 	bcd[PCF8563_R_MONTH] = bintobcd(dt->dt_mon);
 	bcd[PCF8563_R_YEAR] = bintobcd(dt->dt_year % 100);
+	if (dt->dt_year >= 2000)
+		bcd[PCF8563_R_MONTH] |= PCF8563_M_CENTURY;
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
 		device_printf(sc->sc_dev, "acquire bus for write failed\n");
