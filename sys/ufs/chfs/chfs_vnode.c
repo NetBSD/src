@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.13 2015/01/11 17:28:22 hannken Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.14 2015/01/11 17:29:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -244,7 +244,7 @@ chfs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	ip->target = NULL;
 
 	ip->mode = mode;
-	vp->v_type = type;		/* Rest init'd in getnewvnode(). */
+	vp->v_type = type;		/* Rest init'd in chfs_loadvnode(). */
 	ip->ch_type = VTTOCHT(vp->v_type);
 
 	/* authorize setting SGID if needed */
