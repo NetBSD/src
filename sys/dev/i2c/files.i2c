@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.62 2015/01/01 17:33:18 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.63 2015/01/11 15:22:26 jmcneill Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -245,3 +245,8 @@ file	dev/i2c/ac100.c				ac100ic		needs-flag
 device	act8846pm
 attach	act8846pm at iic
 file	dev/i2c/act8846.c			act8846pm	needs-flag
+
+# Haoyu Microelectronic HYM8563 RTC
+device	hymrtc
+attach	hymrtc at iic
+file	dev/i2c/hym8563.c			hymrtc
