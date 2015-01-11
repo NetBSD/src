@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.81 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: midi.c,v 1.81.2.1 2015/01/11 14:13:25 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.81 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.81.2.1 2015/01/11 14:13:25 martin Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -204,6 +204,11 @@ mididetach(device_t self, int flags)
 
 	mutex_enter(sc->lock);
 	sc->dying = 1;
+
+	if (--sc->refcnt >= 0) {
+		/* Wake anything? */
+		(void)cv_timedwait(&sc->detach_cv, sc->lock, hz * 60);
+	}
 	cv_broadcast(&sc->wchan);
 	cv_broadcast(&sc->rchan);
 	mutex_exit(sc->lock);
@@ -236,8 +241,17 @@ mididetach(device_t self, int flags)
 		sc->sih = NULL;
 	}
 
+	mutex_enter(sc->lock);
+	callout_halt(&sc->xmt_asense_co, sc->lock);
+	callout_halt(&sc->rcv_asense_co, sc->lock);
+	mutex_exit(sc->lock);
+
+	callout_destroy(&sc->xmt_asense_co);
+	callout_destroy(&sc->rcv_asense_co);
+
 	cv_destroy(&sc->wchan);
 	cv_destroy(&sc->rchan);
+	cv_destroy(&sc->detach_cv);
 
 	return (0);
 }
@@ -266,9 +280,11 @@ midi_attach(struct midi_softc *sc)
 
 	cv_init(&sc->rchan, "midird");
 	cv_init(&sc->wchan, "midiwr");
+	cv_init(&sc->detach_cv, "mididet");
 
 	sc->dying = 0;
 	sc->isopen = 0;
+	sc->refcnt = 0;
 
 	mutex_enter(&hwif_softc_lock);
 	mutex_enter(sc->lock);
@@ -864,6 +880,8 @@ midiclose(dev_t dev, int flags, int ifmt, struct lwp *l)
 	mutex_enter(sc->lock);
 	/* midi_start_output(sc); anything buffered => pbus already set! */
 	while (sc->pbus) {
+		if (sc->dying)
+			break;
 		DPRINTFN(8,("midiclose sleep ...\n"));
 		cv_wait(&sc->wchan, sc->lock);
 	}
@@ -952,6 +970,10 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 				mutex_enter(sc->lock);
 				if (error)
 					break;
+				if (sc->dying) {
+					error = EIO;
+					break;
+				}
 				appetite -= buf_end - buf_cur;
 				buf_cur = mb->buf;
 			}
@@ -961,6 +983,10 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 			mutex_enter(sc->lock);
 			if (error)
 				break;
+			if (sc->dying) {
+				error = EIO;
+				break;
+			}
 			buf_cur += appetite;
 		}
 		
@@ -1253,13 +1279,13 @@ midi_intr_out(struct midi_softc *sc)
 		error = sc->hw_if->output(sc->hw_hdl, *buf_cur);
 		if (error &&  error != EINPROGRESS)
 			break;
-		++ buf_cur;
+		++buf_cur;
 		MIDI_BUF_WRAP(buf);
-		-- msglen;
+		--msglen;
 		if (msglen)
 			*idx_cur = PACK_MB_IDX(MB_IDX_CAT(*idx_cur),msglen);
 		else {
-			++ idx_cur;
+			++idx_cur;
 			MIDI_BUF_WRAP(idx);
 		}
 		if (!error) {
@@ -1306,8 +1332,14 @@ real_writebytes(struct midi_softc *sc, u_char *ibuf, int cc)
 	enum fst_form form;
 	MIDI_BUF_DECLARE(idx);
 	MIDI_BUF_DECLARE(buf);
+	int error;
 
 	KASSERT(mutex_owned(sc->lock));
+
+	if (sc->dying || !sc->isopen)
+		return EIO;
+
+	sc->refcnt++;
 
 	iend = ibuf + cc;
 	mb = &sc->outbuf;
@@ -1329,19 +1361,17 @@ real_writebytes(struct midi_softc *sc, u_char *ibuf, int cc)
 
 	MIDI_BUF_PRODUCER_INIT(mb,idx);
 	MIDI_BUF_PRODUCER_INIT(mb,buf);
-
-	if (sc->dying)
-		return EIO;
 	
 	while (ibuf < iend) {
 		got = midi_fst(&sc->xmt, *ibuf, form);
-		++ ibuf;
+		++ibuf;
 		switch ( got) {
 		case FST_MORE:
 			continue;
 		case FST_ERR:
 		case FST_HUH:
-			return EPROTO;
+			error = EPROTO;
+			goto out;
 		case FST_CHN:
 		case FST_CHV: /* only occurs in VCOMP form */
 		case FST_COM:
@@ -1366,8 +1396,10 @@ real_writebytes(struct midi_softc *sc, u_char *ibuf, int cc)
 		if (idx_cur == idx_lim || count > buf_lim - buf_cur) {
 			MIDI_BUF_PRODUCER_REFRESH(mb,idx); /* get the most */
 			MIDI_BUF_PRODUCER_REFRESH(mb,buf); /*  current facts */
-			if (idx_cur == idx_lim || count > buf_lim - buf_cur)
-				return EWOULDBLOCK; /* caller's problem */
+			if (idx_cur == idx_lim || count > buf_lim - buf_cur) {
+				error = EWOULDBLOCK; /* caller's problem */
+				goto out;
+			}
 		}
 		*idx_cur++ = PACK_MB_IDX(got,count);
 		MIDI_BUF_WRAP(idx);
@@ -1394,7 +1426,14 @@ real_writebytes(struct midi_softc *sc, u_char *ibuf, int cc)
 		callout_stop(&sc->xmt_asense_co);
 		arming = 1;
 	}
-	return arming ? midi_start_output(sc) : 0;
+
+	error = arming ? midi_start_output(sc) : 0;
+
+out:
+	if (--sc->refcnt < 0)
+		cv_broadcast(&sc->detach_cv);
+
+	return error;
 }
 
 static int
@@ -1422,6 +1461,9 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 		mutex_exit(sc->lock);
 		return EIO;
 	}
+
+	sc->refcnt++;
+
 	mb = &sc->outbuf;
 	error = 0;
 	while (uio->uio_resid > 0 && !error) {
@@ -1444,8 +1486,8 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 				 * the common syscall code will automagically
 				 * convert this to success with a short count.
 				 */
-				mutex_exit(sc->lock);
-				return EWOULDBLOCK;
+				error = EWOULDBLOCK;
+				goto out;
 			}
 			if (pollout) {
 				mutex_exit(sc->lock);
@@ -1454,14 +1496,15 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 				pollout = 0;
 			} else
 				error = cv_wait_sig(&sc->wchan, sc->lock);
+			if (sc->dying)
+				error = EIO;
 			if (error) {
 				/*
 				 * Similarly, the common code will handle
 				 * EINTR and ERESTART properly here, changing to
 				 * a short count if something transferred.
 				 */
-				mutex_exit(sc->lock);
-				return error;
+				goto out;
 			}
 		}
 
@@ -1492,7 +1535,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 			       "xfrcount=%zu inp=%p\n",
 			       error, xfrcount, inp);
 #endif
-		if ( error )
+		if (error)
 			break;
 		
 		/*
@@ -1514,6 +1557,11 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 		DPRINTFN(8,("midiwrite: uio_resid now %zu, props=%d\n",
 		    uio->uio_resid, sc->props));
 	}
+
+out:
+	if (--sc->refcnt < 0)
+		cv_broadcast(&sc->detach_cv);
+
 	mutex_exit(sc->lock);
 	return error;
 }
@@ -1529,11 +1577,17 @@ midi_writebytes(int unit, u_char *bf, int cc)
 	    device_lookup_private(&midi_cd, unit);
 	int error;
 
+	if (!sc)
+		return EIO;
+
 	DPRINTFN(7, ("midi_writebytes: %p, unit=%d, cc=%d %#02x %#02x %#02x\n",
                     sc, unit, cc, bf[0], bf[1], bf[2]));
 
 	mutex_enter(sc->lock);
-	error = real_writebytes(sc, bf, cc);
+	if (sc->dying)
+		error = EIO;
+	else
+		error = real_writebytes(sc, bf, cc);
 	mutex_exit(sc->lock);
 
 	return error;
@@ -1548,11 +1602,17 @@ midiioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	MIDI_BUF_DECLARE(buf);
 
 	(void)buf_end;
-	sc = device_lookup_private(&midi_cd, MIDIUNIT(dev));;
-	if (sc->dying)
+	sc = device_lookup_private(&midi_cd, MIDIUNIT(dev));
+
+	mutex_enter(sc->lock);
+	if (sc->dying) {
+		mutex_exit(sc->lock);
 		return EIO;
+	}
 	hw = sc->hw_if;
 	error = 0;
+
+	sc->refcnt++;
 
 	DPRINTFN(5,("midiioctl: %p cmd=0x%08lx\n", sc, cmd));
 
@@ -1574,13 +1634,12 @@ midiioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		 * read of m < n, fewer than m bytes may be read to ensure the
 		 * read ends at a message boundary.
 		 */
-		mutex_enter(sc->lock);
 		MIDI_BUF_CONSUMER_INIT(&sc->inbuf,buf);
 		*(int *)addr = buf_lim - buf_cur;
-		mutex_exit(sc->lock);
 		break;
 
 	case FIOASYNC:
+		mutex_exit(sc->lock);
 		mutex_enter(proc_lock);
 		if (*(int *)addr) {
 			if (sc->async) {
@@ -1594,6 +1653,7 @@ midiioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			sc->async = 0;
 		}
 		mutex_exit(proc_lock);
+		mutex_enter(sc->lock);
 		break;
 
 #if 0
@@ -1607,20 +1667,24 @@ midiioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 #ifdef MIDI_SAVE
 	case MIDI_GETSAVE:
+		mutex_exit(sc->lock);
 		error = copyout(&midisave, *(void **)addr, sizeof midisave);
+		mutex_enter(sc->lock);
   		break;
 #endif
 
 	default:
 		if (hw->ioctl != NULL) {
-			mutex_enter(sc->lock);
 			error = hw->ioctl(sc->hw_hdl, cmd, addr, flag, l);
-		 	mutex_exit(sc->lock);
 		} else {
 			error = EINVAL;
 		}
 		break;
 	}
+
+	if (--sc->refcnt < 0)
+		cv_broadcast(&sc->detach_cv);
+	mutex_exit(sc->lock);
 	return error;
 }
 
@@ -1643,6 +1707,9 @@ midipoll(dev_t dev, int events, struct lwp *l)
 		mutex_exit(sc->lock);
 		return POLLHUP;
 	}
+
+	sc->refcnt++;
+
 	if ((events & (POLLIN | POLLRDNORM)) != 0) {
 		MIDI_BUF_CONSUMER_INIT(&sc->inbuf, idx);
 		if (idx_cur < idx_lim)
@@ -1658,6 +1725,10 @@ midipoll(dev_t dev, int events, struct lwp *l)
 		else
 			selrecord(l, &sc->wsel);
 	}
+
+	if (--sc->refcnt < 0)
+		cv_broadcast(&sc->detach_cv);
+
 	mutex_exit(sc->lock);
 
 	return revents;
@@ -1709,6 +1780,10 @@ filt_midiwrite(struct knote *kn, long hint)
 	MIDI_BUF_DECLARE(idx);
 	MIDI_BUF_DECLARE(buf);
 
+	mutex_exit(sc->lock);
+	sc->refcnt++;
+	mutex_enter(sc->lock);
+
 	(void)idx_end; (void)buf_end;
 	if (hint != NOTE_SUBMIT)
 		mutex_enter(sc->lock);
@@ -1719,6 +1794,13 @@ filt_midiwrite(struct knote *kn, long hint)
 		kn->kn_data = idx_lim - idx_cur;
 	if (hint != NOTE_SUBMIT)
 		mutex_exit(sc->lock);
+
+	// XXXMRG -- move this up, avoid the relock?
+	mutex_enter(sc->lock);
+	if (--sc->refcnt < 0)
+		cv_broadcast(&sc->detach_cv);
+	mutex_exit(sc->lock);
+
 	return (kn->kn_data > 0);
 }
 
@@ -1731,6 +1813,10 @@ midikqfilter(dev_t dev, struct knote *kn)
 	struct midi_softc *sc =
 	    device_lookup_private(&midi_cd, MIDIUNIT(dev));
 	struct klist *klist;
+
+	mutex_exit(sc->lock);
+	sc->refcnt++;
+	mutex_enter(sc->lock);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -1751,6 +1837,8 @@ midikqfilter(dev_t dev, struct knote *kn)
 
 	mutex_enter(sc->lock);
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	if (--sc->refcnt < 0)
+		cv_broadcast(&sc->detach_cv);
 	mutex_exit(sc->lock);
 
 	return (0);
