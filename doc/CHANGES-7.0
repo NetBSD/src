@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.157 2015/01/10 16:47:57 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.158 2015/01/11 06:30:55 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -13216,4 +13216,88 @@ sys/arch/evbmips/loongson/autoconf.c		1.6
 
 	If MEMORY_DISK_IS_ROOT is defined, dont try to guess the root device.
 	[jmcneill, ticket #399]
+
+usr.sbin/sysinst/arch/arc/md.c			1.3
+usr.sbin/sysinst/arch/cobalt/md.c		1.3
+usr.sbin/sysinst/arch/evbsh3/md.c		1.3
+usr.sbin/sysinst/arch/hp300/md.c		1.3
+usr.sbin/sysinst/arch/hpcsh/md.c		1.3
+usr.sbin/sysinst/arch/i386/md.c			1.5
+usr.sbin/sysinst/arch/luna68k/md.c		1.4
+usr.sbin/sysinst/arch/mvme68k/md.c		1.3
+usr.sbin/sysinst/arch/news68k/md.c		1.3
+usr.sbin/sysinst/arch/sgimips/md.c		1.3
+usr.sbin/sysinst/arch/vax/md.c			1.3
+usr.sbin/sysinst/arch/x68k/md.c			1.3
+usr.sbin/sysinst/defs.h				1.6
+usr.sbin/sysinst/disks.c			1.7
+usr.sbin/sysinst/install.c			1.3
+usr.sbin/sysinst/partman.c			1.8
+usr.sbin/sysinst/upgrade.c			1.3
+
+	Rather than scatter set_swap() calls wrapped in ram size checks
+	through md_post_disklabel() and md_pre_update(), abstract them
+	out to an MI set_swap_if_low_ram() and call from the appropriate
+	MI places.  Now all platforms add swap if the system has <= 32M
+	of RAM.
+	[abs, ticket #400]
+
+distrib/sets/lists/modules/md.amd64		1.46, 1.47 via patch
+distrib/sets/lists/modules/md.i386		1.49, 1.50
+sys/dev/ic/pcdisplayvar.h			1.20
+sys/dev/ic/vgavar.h				1.32
+sys/external/bsd/drm/dist/bsd-core/drm_drv.c	1.26
+sys/external/bsd/drm2/dist/drm/drm_agpsupport.c	1.5, 1.6
+sys/external/bsd/drm2/dist/drm/drm_pci.c	1.4, 1.5
+sys/external/bsd/drm2/dist/drm/drm_stub.c	1.6-1.8
+sys/external/bsd/drm2/dist/drm/i915/i915_drv.h	1.11
+sys/external/bsd/drm2/dist/drm/radeon/cik.c	1.3
+sys/external/bsd/drm2/dist/drm/radeon/ni.c	1.3
+sys/external/bsd/drm2/dist/drm/radeon/si.c	1.3
+sys/external/bsd/drm2/dist/include/drm/drmP.h	1.8, 1.9
+sys/external/bsd/drm2/dist/include/drm/drm_agpsupport.h 1.3, 1.4
+sys/external/bsd/drm2/drm/drm_drv.c		1.11
+sys/external/bsd/drm2/drm/drm_module.c		1.9
+sys/external/bsd/drm2/drm/drm_sysctl.c		1.1-1.4
+sys/external/bsd/drm2/drm/drm_vm.c		1.7
+sys/external/bsd/drm2/drm/files.drmkms		1.8, 1.9
+sys/external/bsd/drm2/i915drm/files.i915drmkms	1.9
+sys/external/bsd/drm2/i915drm/i915_module.c	1.4, 1.5
+sys/external/bsd/drm2/include/drm/drm_sysctl.h	1.1, 1.2
+sys/external/bsd/drm2/include/linux/hdmi.h	1.3-1.5
+sys/external/bsd/drm2/include/linux/module.h	1.5
+sys/external/bsd/drm2/include/linux/moduleparam.h 1.3, 1.4
+sys/external/bsd/drm2/include/linux/pci.h	1.11
+sys/external/bsd/drm2/linux/linux_module.c	1.5
+sys/external/bsd/drm2/nouveau/files.nouveau	1.4
+sys/external/bsd/drm2/nouveau/nouveau_module.c	1.3
+sys/external/bsd/drm2/pci/drm_pci.c		1.8
+sys/external/bsd/drm2/pci/drm_pci_module.c	1.3
+sys/external/bsd/drm2/radeon/radeon_module.c	1.3
+sys/external/bsd/drm2/ttm/files.ttm		1.1
+sys/modules/drm2pci/Makefile			delete
+sys/modules/drmkms/Makefile			1.4-1.7
+sys/modules/drmkms_linux/Makefile		1.5
+sys/modules/drmkms_pci/Makefile			1.3, 1.4
+sys/modules/i915drmkms/Makefile			1.5-1.7
+
+	Code cleanup, module fixes, and small bugfixes for drm2.
+	[chs, ticket #401]
+
+sys/external/bsd/drm/dist/bsd-core/drm_bufs.c	1.13
+
+	initialize "addr" before passing its address to uvm_mmap_dev().
+	PR 49536.
+	[chs, ticket #402]
+
+sys/uvm/uvm_mmap.c				1.151
+
+	in uvm_mmap_dev(), use the passed-in offset instead of 0.
+	PR 49536.
+	[chs, ticket #403]
+
+sys/external/bsd/drm2/dist/drm/radeon/radeon_ttm.c 1.6
+
+	set DRM_FILE_PAGE_OFFSET to 0xa0000000UL for 32 bit platforms.
+	[chs, ticket #404]
 
