@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1123 2015/01/04 07:32:32 uebayasi Exp $
+#	$NetBSD: files,v 1.1124 2015/01/11 14:22:53 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20141030
@@ -119,6 +119,8 @@ defparam opt_wapbl.h		WAPBL_DEBUG_PRINT
 
 # printf entropy source
 defflag opt_rnd_printf.h	RND_PRINTF
+
+defflag opt_todr.h		TODR_DEBUG
 
 # compatibility options
 #
