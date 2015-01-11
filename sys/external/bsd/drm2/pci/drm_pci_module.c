@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci_module.c,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: drm_pci_module.c,v 1.2.8.1 2015/01/11 05:59:17 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci_module.c,v 1.2 2014/03/18 18:20:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci_module.c,v 1.2.8.1 2015/01/11 05:59:17 snj Exp $");
 
 #include <sys/module.h>
 
@@ -48,6 +48,7 @@ const struct drm_agp_hooks drmkms_pci_agp_hooks = {
 	.agph_bind_ioctl = &drm_agp_bind_ioctl,
 	.agph_unbind_ioctl = &drm_agp_unbind_ioctl,
 	.agph_release = &drm_agp_release,
+	.agph_clear = &drm_agp_clear,
 };
 
 static int

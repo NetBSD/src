@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_module.c,v 1.4 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: linux_module.c,v 1.4.2.1 2015/01/11 05:59:17 snj Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.4 2014/07/16 20:59:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.4.2.1 2015/01/11 05:59:17 snj Exp $");
 
 #include <sys/module.h>
 #ifndef _MODULE
@@ -108,6 +108,7 @@ linux_fini(void)
 	linux_writecomb_fini();
 	linux_workqueue_fini();
 	linux_kmap_fini();
+	linux_idr_module_fini();
 }
 
 static int

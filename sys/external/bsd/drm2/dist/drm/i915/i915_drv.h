@@ -30,12 +30,16 @@
 #ifndef _I915_DRV_H_
 #define _I915_DRV_H_
 
-#if defined(__NetBSD__) && (defined(i386) || defined(amd64))
+#if defined(__NetBSD__)
+#ifdef _KERNEL_OPT
+#if defined(i386) || defined(amd64)
 #include "acpica.h"
+#endif	/* i386 || amd64 */
+#endif	/* _KERNEL_OPT */
 #if (NACPICA > 0)
 #define CONFIG_ACPI
-#endif
-#endif
+#endif	/* NACPICA > 0 */
+#endif	/* __NetBSD__ */
 
 #include <uapi/drm/i915_drm.h>
 

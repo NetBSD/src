@@ -1,11 +1,9 @@
-/*	$NetBSD: moduleparam.h,v 1.2.8.1 2015/01/11 05:59:17 snj Exp $	*/
-
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Taylor R. Campbell.
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,31 +26,23 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+struct sysctllog;
 
-#ifndef _LINUX_MODULEPARAM_H_
-#define _LINUX_MODULEPARAM_H_
-
-#include <sys/types.h>
-
-struct linux_module_param_info {
-	const char *dname;	// Name used for description
-	const char *name;	// Name for sysctl
-	void *ptr;		// Pointer to variable value
-	int type;		// MTYPE_ 
-	mode_t mode;		// 600 (rw) or 400 (r)
+struct drm_sysctl_def {
+	struct sysctllog *log;
+	const void *bp, *ep, *bd, *ed;
 };
 
-#define MTYPE_int	0
-#define MTYPE_bool	1
+void drm_sysctl_init(struct drm_sysctl_def *);
+void drm_sysctl_fini(struct drm_sysctl_def *);
 
-#define	module_param_named(NAME, VAR, TYPE, MODE) \
-static __attribute__((__used__)) struct linux_module_param_info info_ ## NAME = { \
-	.dname = # NAME, \
-	.name = # VAR, \
-	.ptr = & VAR, \
-	.type = MTYPE_ ## TYPE, \
-	.mode = MODE, \
-}; \
-__link_set_add_data(linux_module_param_info, info_ ## NAME)
+#define DRM_SYSCTL_INIT() {				\
+	NULL,						\
+	__link_set_start(linux_module_param_info),	\
+	__link_set_end(linux_module_param_info),	\
+	__link_set_start(linux_module_param_desc),	\
+	__link_set_end(linux_module_param_desc),	\
+};
 
-#endif  /* _LINUX_MODULEPARAM_H_ */
+__link_set_decl(linux_module_param_info, struct linux_module_param_info);
+__link_set_decl(linux_module_param_desc, struct linux_module_param_desc);

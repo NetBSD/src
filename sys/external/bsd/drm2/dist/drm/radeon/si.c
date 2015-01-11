@@ -1471,7 +1471,7 @@ int si_mc_load_microcode(struct radeon_device *rdev)
 {
 	const __be32 *fw_data;
 	u32 running, blackout = 0;
-	u32 *io_mc_regs;
+	const u32 *io_mc_regs;
 	int i, regs_size, ucode_size;
 
 	if (!rdev->mc_fw)
@@ -1481,24 +1481,24 @@ int si_mc_load_microcode(struct radeon_device *rdev)
 
 	switch (rdev->family) {
 	case CHIP_TAHITI:
-		io_mc_regs = (u32 *)&tahiti_io_mc_regs;
+		io_mc_regs = &tahiti_io_mc_regs[0][0];
 		regs_size = TAHITI_IO_MC_REGS_SIZE;
 		break;
 	case CHIP_PITCAIRN:
-		io_mc_regs = (u32 *)&pitcairn_io_mc_regs;
+		io_mc_regs = &pitcairn_io_mc_regs[0][0];
 		regs_size = TAHITI_IO_MC_REGS_SIZE;
 		break;
 	case CHIP_VERDE:
 	default:
-		io_mc_regs = (u32 *)&verde_io_mc_regs;
+		io_mc_regs = &verde_io_mc_regs[0][0];
 		regs_size = TAHITI_IO_MC_REGS_SIZE;
 		break;
 	case CHIP_OLAND:
-		io_mc_regs = (u32 *)&oland_io_mc_regs;
+		io_mc_regs = &oland_io_mc_regs[0][0];
 		regs_size = TAHITI_IO_MC_REGS_SIZE;
 		break;
 	case CHIP_HAINAN:
-		io_mc_regs = (u32 *)&hainan_io_mc_regs;
+		io_mc_regs = &hainan_io_mc_regs[0][0];
 		regs_size = TAHITI_IO_MC_REGS_SIZE;
 		break;
 	}

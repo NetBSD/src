@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.9.2.1 2014/12/31 06:44:00 snj Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.9.2.2 2015/01/11 05:59:17 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.9.2.1 2014/12/31 06:44:00 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.9.2.2 2015/01/11 05:59:17 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -392,7 +392,7 @@ drm_lastclose(struct drm_device *dev)
 		drm_irq_uninstall(dev);
 
 	mutex_lock(&dev->struct_mutex);
-	drm_agp_clear(dev);
+	drm_agp_clear_hook(dev);
 	drm_legacy_sg_cleanup(dev);
 	list_for_each_entry_safe(vma, vma_temp, &dev->vmalist, head) {
 		list_del(&vma->head);
@@ -761,23 +761,37 @@ drm_agp_deregister(const struct drm_agp_hooks *hooks)
 		    hooks, drm_current_agp_hooks);
 }
 
+static void __dead
+drm_noagp_panic(struct drm_device *dev)
+{
+	if ((dev != NULL) &&
+	    (dev->control != NULL) &&
+	    (dev->control->kdev != NULL))
+		panic("%s: no agp loaded", device_xname(dev->control->kdev));
+	else
+		panic("drm_device %p: no agp loaded", dev);
+}
+
 int
 drm_agp_release_hook(struct drm_device *dev)
 {
 	const struct drm_agp_hooks *const hooks = drm_current_agp_hooks;
 
-	if (hooks == NULL) {
-		if ((dev != NULL) &&
-		    (dev->control != NULL) &&
-		    (dev->control->kdev != NULL))
-			panic("drm_agp_release(%s): no agp loaded",
-			    device_xname(dev->control->kdev));
-		else
-			panic("drm_agp_release(drm_device %p): no agp loaded",
-			    dev);
-	}
+	if (hooks == NULL)
+		drm_noagp_panic(dev);
 	membar_consumer();
 	return (*hooks->agph_release)(dev);
+}
+
+void
+drm_agp_clear_hook(struct drm_device *dev)
+{
+	const struct drm_agp_hooks *const hooks = drm_current_agp_hooks;
+
+	if (hooks == NULL)
+		drm_noagp_panic(dev);
+	membar_consumer();
+	(*hooks->agph_clear)(dev);
 }
 
 #define	DEFINE_AGP_HOOK_IOCTL(NAME, HOOK)				      \

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_module.c,v 1.2 2014/07/26 21:12:43 riastradh Exp $	*/
+/*	$NetBSD: radeon_module.c,v 1.2.4.1 2015/01/11 05:59:17 snj Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_module.c,v 1.2 2014/07/26 21:12:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_module.c,v 1.2.4.1 2015/01/11 05:59:17 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_module.c,v 1.2 2014/07/26 21:12:43 riastradh 
 #include <sys/systm.h>
 
 #include <drm/drmP.h>
+#include <drm/drm_sysctl.h>
 
 #include "radeon_drv.h"
 
@@ -52,6 +53,8 @@ MODULE(MODULE_CLASS_DRIVER, radeon, "drmkms,drmkms_pci"); /* XXX drmkms_i2c, drm
 /* XXX Kludge to get these from radeon_drv.c.  */
 extern struct drm_driver *const radeon_drm_driver;
 extern int radeon_max_kms_ioctl;
+
+struct drm_sysctl_def radeon_def = DRM_SYSCTL_INIT();
 
 static int
 radeon_init(void)
@@ -72,6 +75,7 @@ radeon_init(void)
 		    error);
 		return error;
 	}
+	drm_sysctl_init(&radeon_def);
 
 	return 0;
 }
@@ -92,7 +96,7 @@ radeon_guarantee_initialized(void)
 static void
 radeon_fini(void)
 {
-
+	drm_sysctl_fini(&radeon_def);
 	drm_pci_exit(radeon_drm_driver, NULL);
 }
 
