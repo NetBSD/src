@@ -22,7 +22,7 @@ process(bl_t bl, int sfd, int afd)
 	if ((n = read(afd, buffer, sizeof(buffer))) == -1)
 		err(1, "read");
 	buffer[sizeof(buffer) - 1] = '\0';
-	bl_add(bl, BL_ADD, sfd, afd, buffer);
+	bl_send(bl, BL_ADD, sfd, afd, buffer);
 	printf("received %s\n", buffer);
 	exit(0);
 }
@@ -51,7 +51,7 @@ main(int argc, char *argv[])
 	if (listen(sfd, 5) == -1)
 		err(1, "listen");
 
-	bl = bl_create();
+	bl = bl_create(false);
 
 	for (;;) {
 		struct sockaddr_in asin;
