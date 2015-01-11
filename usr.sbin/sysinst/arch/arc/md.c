@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2014/08/03 16:09:39 martin Exp $ */
+/*	$NetBSD: md.c,v 1.2.4.1 2015/01/11 04:32:38 snj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -247,8 +247,6 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
-	if (get_ramsize() <= 32)
-		set_swap(pm->diskdev, pm->bsdlabel);
 	return 0;
 }
 
@@ -290,9 +288,6 @@ md_pre_update(void)
 	struct mbr_partition *part;
 	mbr_info_t *ext;
 	int i;
-
-	if (get_ramsize() <= 32)
-		set_swap(pm->diskdev, NULL);
 
 	read_mbr(pm->diskdev, &mbr);
 	/* do a sanity check of the partition table */

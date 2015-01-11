@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.2.4.1 2015/01/11 04:32:38 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,6 +65,9 @@ do_upgrade(void)
 	get_ramsize();
 
 	if (find_disks(msg_string(MSG_upgrade)) < 0)
+		return;
+
+        if (set_swap_if_low_ram(pm->diskdev, NULL) < 0)
 		return;
 
 	if (md_pre_update() < 0)

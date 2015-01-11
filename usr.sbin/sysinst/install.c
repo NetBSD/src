@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.2 2014/08/03 16:09:38 martin Exp $	*/
+/*	$NetBSD: install.c,v 1.2.4.1 2015/01/11 04:32:38 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -101,6 +101,7 @@ do_install(void)
 
 		if (md_pre_disklabel() != 0 ||
 			write_disklabel() != 0 ||
+                        set_swap_if_low_ram(pm->diskdev, pm->bsdlabel) != 0 || 
 			md_post_disklabel() != 0 ||
 			make_filesystems() ||
 			make_fstab() != 0 ||
