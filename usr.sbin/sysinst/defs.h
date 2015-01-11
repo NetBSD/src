@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3 2014/08/06 10:03:49 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.3.4.1 2015/01/11 04:32:38 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -451,6 +451,7 @@ int	write_disklabel(void);
 int	make_filesystems(void);
 int	make_fstab(void);
 int	mount_disks(void);
+int	set_swap_if_low_ram(const char *, partinfo *);
 int	set_swap(const char *, partinfo *);
 int	check_swap(const char *, int);
 char *bootxx_name(void);
