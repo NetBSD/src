@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_inode.h,v 1.9 2014/05/26 19:16:39 dholland Exp $	*/
+/*	$NetBSD: chfs_inode.h,v 1.10 2015/01/11 17:29:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -76,8 +76,6 @@ struct chfs_inode
 {
 	struct genfs_node	gnode;
 	kmutex_t inode_lock;		/* lock the fields of chfs_inode */
-
-	LIST_ENTRY(chfs_inode) hash_entry;	/* hash chain */
 
 	struct ufsmount *ump;		/* ufs mount - TODO we should remove it */
 	struct chfs_mount *chmp;	/* chfs mount point - TODO we should remove it */
