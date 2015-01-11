@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.158 2015/01/11 06:30:55 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.159 2015/01/11 14:15:42 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -13300,4 +13300,49 @@ sys/external/bsd/drm2/dist/drm/radeon/radeon_ttm.c 1.6
 
 	set DRM_FILE_PAGE_OFFSET to 0xa0000000UL for 32 bit platforms.
 	[chs, ticket #404]
+
+sys/arch/macppc/stand/ofwboot/boot.h		1.5
+
+	Force main into .text
+	[chs, ticket #405]
+
+sys/dev/pci/if_dge.c				1.39
+
+	Fix device/softc split botch.
+	[chs, ticket #406]
+
+sys/dev/midi.c					1.82-1.83
+sys/dev/midi_if.h				1.26
+sys/dev/midivar.h				1.20
+sys/dev/sequencer.c				1.60-1.63
+sys/dev/sequencervar.h				1.17
+sys/dev/usb/FILES				1.13
+sys/dev/usb/umidi.c				1.66-1.68
+sys/dev/usb/umidi_quirks.c			1.19
+sys/dev/usb/umidireg.h				delete
+sys/dev/usb/umidivar.h				delete
+
+	midi:
+	- add reference counting for midi operations
+	- in detach, halt midi callouts before destroying them
+	- re-check sc->dying after sleeping in midiread()
+	- in real_writebytes(), make sure we're open and not dying
+	- make sure we drop the interrupt lock before calling any code
+	  that may want to check thread locks.
+	- check sc->dying after sleeping in several more places, and
+	  convert it into EIO error where necessary.
+
+	sequencer:
+	- avoid caching the midi softc in the sequencer softc.  instead,
+	  every time we want to use it, look it up again and make sure
+	  it still exists.
+	- fix a confusion between midi(4) unit and connected to sequencer
+	  devices.
+
+	umidi:
+	- add reference counting and wait/broadcast support to the IO paths.
+	- fix the error handling in midi_attach() and midi_open().
+	- drop the local interrupt lock before calling into various parts of
+	  the USB code.  fixes lockdebug issues, and likely hangs.
+	[mrg, ticket #407]
 
