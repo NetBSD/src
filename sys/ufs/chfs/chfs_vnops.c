@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.22 2014/07/25 08:20:53 dholland Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.23 2015/01/11 17:27:54 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -88,8 +88,7 @@ chfs_lookup(void *v)
 	 * directory/name couple is already in the cache. */
 	if (cache_lookup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
 			 cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
-		error = *vpp == NULLVP ? ENOENT : 0;
-		goto out;
+		return (*vpp == NULLVP ? ENOENT : 0);
 	}
 
 	ip = VTOI(dvp);
