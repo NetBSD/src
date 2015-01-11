@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.148.4.1 2014/12/31 06:44:01 snj Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.148.4.2 2015/01/11 06:27:40 snj Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.148.4.1 2014/12/31 06:44:01 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.148.4.2 2015/01/11 06:27:40 snj Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -1084,13 +1084,13 @@ uvm_mmap_dev(struct proc *p, void **addrp, size_t len, dev_t dev,
 		*addrp = (void *)p->p_emul->e_vm_default_addr(p,
 		    (vaddr_t)p->p_vmspace->vm_daddr, len);
 
-	uobj = udv_attach(dev, prot, 0, len);
+	uobj = udv_attach(dev, prot, off, len);
 	if (uobj == NULL)
 		return EINVAL;
 
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
 			 (vsize_t)len, prot, prot, flags, UVM_ADV_RANDOM,
-			 uobj, 0, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
+			 uobj, off, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 	return error;
 }
 
