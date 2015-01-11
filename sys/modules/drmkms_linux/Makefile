@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.4 2014/07/17 13:52:22 riastradh Exp $
+# $NetBSD: Makefile,v 1.4.2.1 2015/01/11 05:59:18 snj Exp $
 
 .include "../Makefile.inc"
 
 .PATH: ${S}/external/bsd/drm2/linux
 
+CPPFLAGS+=	-I${S}/external/bsd/common/include
 CPPFLAGS+=	-I${S}/external/bsd/drm2/include
 
 # XXX Kludge!

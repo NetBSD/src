@@ -341,7 +341,9 @@ static int drm_minor_register(struct drm_device *dev, unsigned int type)
 {
 	struct drm_minor *new_minor;
 	unsigned long flags;
+#ifndef __NetBSD__
 	int ret;
+#endif
 	int minor_id;
 
 	DRM_DEBUG("\n");
@@ -365,6 +367,7 @@ static int drm_minor_register(struct drm_device *dev, unsigned int type)
 
 	new_minor->index = minor_id;
 
+#ifndef __NetBSD__
 	ret = drm_debugfs_init(new_minor, minor_id, drm_debugfs_root);
 	if (ret) {
 		DRM_ERROR("DRM: Failed to initialize /sys/kernel/debug/dri.\n");
@@ -376,7 +379,7 @@ static int drm_minor_register(struct drm_device *dev, unsigned int type)
 		DRM_ERROR("DRM: Error sysfs_device_add.\n");
 		goto err_debugfs;
 	}
-
+#endif
 	/* replace NULL with @minor so lookups will succeed from now on */
 	spin_lock_irqsave(&drm_minor_lock, flags);
 	idr_replace(&drm_minors_idr, new_minor, new_minor->index);
@@ -385,6 +388,7 @@ static int drm_minor_register(struct drm_device *dev, unsigned int type)
 	DRM_DEBUG("new minor assigned %d\n", minor_id);
 	return 0;
 
+#ifndef __NetBSD__
 err_debugfs:
 	drm_debugfs_cleanup(new_minor);
 err_id:
@@ -393,6 +397,7 @@ err_id:
 	spin_unlock_irqrestore(&drm_minor_lock, flags);
 	new_minor->index = 0;
 	return ret;
+#endif
 }
 
 static void drm_minor_unregister(struct drm_device *dev, unsigned int type)
@@ -848,8 +853,10 @@ void drm_dev_unregister(struct drm_device *dev)
 	if (dev->driver->unload)
 		dev->driver->unload(dev);
 
+#ifndef __NetBSD__		/* Moved to drm_pci.  */
 	if (dev->agp)
 		drm_pci_agp_destroy(dev);
+#endif
 
 	drm_vblank_cleanup(dev);
 

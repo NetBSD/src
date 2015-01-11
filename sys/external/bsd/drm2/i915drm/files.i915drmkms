@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.5.2.2 2014/11/11 09:06:32 martin Exp $
+#	$NetBSD: files.i915drmkms,v 1.5.2.3 2015/01/11 05:59:17 snj Exp $
 
 define	intelfbbus	{ }
 device	i915drmkms: drmkms, drmkms_pci, intelfbbus
@@ -10,8 +10,9 @@ attach	intelfb at intelfbbus
 makeoptions	i915drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/i915"
 makeoptions	i915drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/i915drm"
 
-makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="-Wno-override-init"
-makeoptions 	i915drmkms 	"CWARNFLAGS.intel_display.c"+="-Wno-shadow"
+makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="${${ACTIVE_CC} == gcc:? -Wno-override-init :}"
+makeoptions 	i915drmkms 	"CWARNFLAGS.i915_drv.c"+="${${ACTIVE_CC} == clang:? -Wno-initializer-overrides :}"
+makeoptions 	i915drmkms 	"CWARNFLAGS.intel_display.c"+="-Wno-shadow -Wno-conversion"
 makeoptions 	i915drmkms 	"CWARNFLAGS.intel_panel.c"+="-Wno-shadow"
 makeoptions 	i915drmkms 	"CWARNFLAGS.intel_pm.c"+="-Wno-shadow"
 

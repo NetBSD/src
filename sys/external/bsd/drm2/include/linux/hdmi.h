@@ -1,4 +1,4 @@
-/*	$NetBSD: hdmi.h,v 1.2 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: hdmi.h,v 1.2.4.1 2015/01/11 05:59:17 snj Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -197,13 +197,14 @@ hdmi_infoframe_header_pack(const struct hdmi_infoframe_header *header,
 {
 	uint8_t *const p = buf;
 
-	if ((size < length) ||
-	    (size - length < HDMI_INFOFRAME_HEADER_SIZE))
+	if (length < HDMI_INFOFRAME_HEADER_SIZE)
+		return -ENOSPC;
+	if (size < length)
 		return -ENOSPC;
 
 	p[0] = header->type;
 	p[1] = header->version;
-	p[2] = length;
+	p[2] = (length - HDMI_INFOFRAME_HEADER_SIZE);
 	p[3] = 0;		/* checksum */
 
 	return HDMI_INFOFRAME_HEADER_SIZE;
@@ -263,6 +264,7 @@ hdmi_audio_infoframe_pack(const struct hdmi_audio_infoframe *frame, void *buf,
 	ret = hdmi_infoframe_header_pack(&frame->header, length, p, size);
 	if (ret < 0)
 		return ret;
+	KASSERT(ret == HDMI_INFOFRAME_HEADER_SIZE);
 	p += HDMI_INFOFRAME_HEADER_SIZE;
 	size -= HDMI_INFOFRAME_HEADER_SIZE;
 
@@ -338,6 +340,7 @@ hdmi_avi_infoframe_pack(const struct hdmi_avi_infoframe *frame, void *buf,
 	ret = hdmi_infoframe_header_pack(&frame->header, length, p, size);
 	if (ret < 0)
 		return ret;
+	KASSERT(ret == HDMI_INFOFRAME_HEADER_SIZE);
 	p += HDMI_INFOFRAME_HEADER_SIZE;
 	size -= HDMI_INFOFRAME_HEADER_SIZE;
 
@@ -427,6 +430,7 @@ hdmi_spd_infoframe_pack(struct hdmi_spd_infoframe *frame, void *buf,
 	ret = hdmi_infoframe_header_pack(&frame->header, length, p, size);
 	if (ret < 0)
 		return ret;
+	KASSERT(ret == HDMI_INFOFRAME_HEADER_SIZE);
 	p += HDMI_INFOFRAME_HEADER_SIZE;
 	size -= HDMI_INFOFRAME_HEADER_SIZE;
 
@@ -493,6 +497,7 @@ hdmi_vendor_infoframe_pack(const struct hdmi_vendor_infoframe *frame,
 	ret = hdmi_infoframe_header_pack(&frame->header, length, p, size);
 	if (ret < 0)
 		return ret;
+	KASSERT(ret == HDMI_INFOFRAME_HEADER_SIZE);
 	p += HDMI_INFOFRAME_HEADER_SIZE;
 	size -= HDMI_INFOFRAME_HEADER_SIZE;
 
