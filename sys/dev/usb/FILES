@@ -55,8 +55,6 @@ umassvar.h		definitions for umass.c
 umidi.c			USB MIDI driver
 umidi_quirks.c		Strange MIDI devices
 umidi_quirks.h		  and definitions for it
-umidireg.h		Protocol definitions for umidi.c
-umidivar.h		definitions for umidi.c
 umodem.c		USB modem (CDC ACM) driver
 ums.c			USB mouse driver
 urio.c			USB Diamond Rio500 driver
