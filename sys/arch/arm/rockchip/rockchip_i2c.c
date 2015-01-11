@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_i2c.c,v 1.5 2015/01/01 22:15:40 jmcneill Exp $ */
+/* $NetBSD: rockchip_i2c.c,v 1.6 2015/01/11 14:59:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_rkiic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_i2c.c,v 1.5 2015/01/01 22:15:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_i2c.c,v 1.6 2015/01/11 14:59:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -319,16 +319,21 @@ rkiic_wait(struct rkiic_softc *sc, uint32_t mask, int timeout, int flags)
 		retry = timeout / hz;
 		while (retry > 0) {
 			error = cv_timedwait(&sc->sc_cv, &sc->sc_lock, hz);
-			if (error && error != EWOULDBLOCK)
-				return error;
+			if (error) {
+				if (error != EWOULDBLOCK) {
+					return error;
+				} else {
+					--retry;
+				}
+			}
 			if (sc->sc_intr_ipd & mask)
 				return 0;
-			--retry;
 		}
 	}
 
 #ifdef RKIIC_DEBUG
-	device_printf(sc->sc_dev, "%s: ipd %#x\n", __func__, sc->sc_intr_ipd);
+	device_printf(sc->sc_dev, "%s: ipd %#x flags %#x\n", __func__,
+	    sc->sc_intr_ipd, flags);
 #endif
 	return ETIMEDOUT;
 }
