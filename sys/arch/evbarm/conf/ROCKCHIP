@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ROCKCHIP,v 1.15 2015/01/10 12:50:54 jmcneill Exp $
+#	$NetBSD: ROCKCHIP,v 1.16 2015/01/11 15:23:09 jmcneill Exp $
 #
 #	Rockchip RK3066/RK3188 based SBC (Single Board Computer)
 #
@@ -186,6 +186,7 @@ rkiic0		at obio0 addr 0x2002d000 size 0x1000 intr 72 port 0 crit 1
 iic0		at rkiic0
 rkiic1		at obio0 addr 0x2002f000 size 0x1000 intr 73 port 1 crit 1
 iic1		at rkiic1
+hymrtc0		at iic1 addr 0x51
 act8846pm0	at iic1 addr 0x5a
 rkiic2		at obio0 addr 0x20056000 size 0x2000 intr 74 port 2 crit 1
 iic2		at rkiic2
