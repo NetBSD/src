@@ -1,4 +1,4 @@
-/*	$NetBSD: mdesc.c,v 1.1 2015/01/10 22:19:26 palle Exp $	*/
+/*	$NetBSD: mdesc.c,v 1.2 2015/01/11 13:40:22 palle Exp $	*/
 /*	$OpenBSD: mdesc.c,v 1.7 2014/11/30 22:26:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -42,7 +42,9 @@ mdesc_init(void)
 	vaddr_t va;
 	int err;
 
-	hv_mach_desc((paddr_t)NULL, &len);
+	pa = 0;
+	len = 0;  /* trick to determine actual buffer size */
+	hv_mach_desc(pa, &len);
 	KASSERT(len != 0);
 
 again:
