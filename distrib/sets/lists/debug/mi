@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.81.2.1 2014/08/15 12:26:56 martin Exp $
+# $NetBSD: mi,v 1.81.2.2 2015/01/12 10:22:22 martin Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -616,6 +616,7 @@
 ./usr/libdata/debug/usr/bin/merge.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/mesg.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/midiplay.debug	comp-audio-debug	debug
+./usr/libdata/debug/usr/bin/midirecord.debug	comp-audio-debug	debug
 ./usr/libdata/debug/usr/bin/mixerctl.debug	comp-audio-debug	debug
 ./usr/libdata/debug/usr/bin/mk_cmds.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/mkcsmapper.debug	comp-util-debug		debug
