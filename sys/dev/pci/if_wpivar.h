@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.18 2014/08/09 15:07:06 jmcneill Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.18.2.1 2015/01/12 21:15:12 snj Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -187,4 +187,13 @@ struct wpi_softc {
 	bool		is_scanning;
 
 	struct sysctllog	*sc_sysctllog;
+	struct sysmon_pswitch 	sc_rsw;		/* for radio switch events */
+	int			sc_rsw_status;
+#define WPI_RSW_UNKNOWN		0
+#define WPI_RSW_OFF		1
+#define WPI_RSW_ON		2
+	struct lwp		*sc_rsw_lwp;
+	struct kmutex 		sc_rsw_mtx;
+	struct kcondvar 	sc_rsw_cv;
+	int 			sc_dying;
 };
