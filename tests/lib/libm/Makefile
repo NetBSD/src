@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2014/08/10 11:30:51 martin Exp $
+# $NetBSD: Makefile,v 1.26.2.1 2015/01/12 21:03:09 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,8 @@ CPPFLAGS+=	-DHAVE_FENV_H
 .if ${MACHINE} == "alpha"
 COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 .endif
+
+CPPFLAGS.t_fmod.c+=	-I${.CURDIR}/../libc/gen
 
 TESTS_C+=	t_acos
 TESTS_C+=	t_asin
