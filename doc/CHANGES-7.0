@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.160 2015/01/12 10:27:57 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.161 2015/01/12 19:18:22 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -13365,6 +13365,8 @@ libexec/httpd/lua-bozo.c			1.11
 usr.bin/midirecord/Makefile                     1.1
 usr.bin/midirecord/midirecord.1                 1.1-1.3
 usr.bin/midirecord/midirecord.c                 1.1-1.6
+usr.bin/audio/common/audio.c			1.23
+usr.bin/audio/common/libaudio.h			1.19
 distrib/sets/lists/base/mi			1.1093
 distrib/sets/lists/debug/mi			1.98
 distrib/sets/lists/man/mi			1.1492
