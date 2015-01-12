@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.5 2014/12/27 16:54:03 martin Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.6 2015/01/12 09:14:45 mrg Exp $	*/
 
 /* 
  * Written by J.T. Conklin, Apr 6, 1995
@@ -12,8 +12,8 @@
 
 #if defined(_NETBSD_SOURCE) || defined(_ISOC99_SOURCE)
 
-typedef uint32_t fenv_t;
-typedef uint32_t fexcept_t;
+typedef unsigned fenv_t;
+typedef unsigned fexcept_t;
 
 #define	FE_INEXACT	0x01	/* imprecise (loss of precision) */
 #define	FE_UNDERFLOW	0x02	/* underflow exception */
