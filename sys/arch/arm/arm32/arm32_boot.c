@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.7.4.2 2014/12/13 19:32:43 martin Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.7.4.3 2015/01/12 21:00:29 snj Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -123,7 +123,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.7.4.2 2014/12/13 19:32:43 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.7.4.3 2015/01/12 21:00:29 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -305,7 +305,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 #endif
 
 #ifdef MULTIPROCESSOR
-	mutex_init(&cpu_hatch_lock, MUTEX_DEFAULT, IPL_HIGH);
+	mutex_init(&cpu_hatch_lock, MUTEX_DEFAULT, IPL_NONE);
 #endif
 
 #ifdef VERBOSE_INIT_ARM
