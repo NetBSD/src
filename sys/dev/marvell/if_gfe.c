@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.42.2.1 2014/10/30 12:04:46 martin Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.42.2.2 2015/01/12 10:27:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.42.2.1 2014/10/30 12:04:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.42.2.2 2015/01/12 10:27:10 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -816,7 +816,7 @@ gfe_rx_rxqinit(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 	ds = rxq->rxq_buf_mem.gdm_map->dm_segs;
 	nxtaddr = rxq->rxq_desc_busaddr + sizeof(*rxd);
 	for (idx = 0, rxd = rxq->rxq_descs; idx < GE_RXDESC_MAX;
-	    idx++, nxtaddr += sizeof(*(++rxd))) {
+	    idx++, rxd++, nxtaddr += sizeof(*rxd)) {
 		rxd->ed_lencnt = htogt32(GE_RXBUF_SIZE << 16);
 		rxd->ed_cmdsts = htogt32(RX_CMD_F|RX_CMD_L|RX_CMD_O|RX_CMD_EI);
 		rxd->ed_bufptr = htogt32(ds->ds_addr + boff);
