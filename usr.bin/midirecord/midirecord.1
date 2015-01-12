@@ -1,0 +1,125 @@
+.\"	$NetBSD: midirecord.1,v 1.3.2.2 2015/01/12 10:22:22 martin Exp $
+.\"
+.\" Copyright (c) 1998, 1999, 2001, 2002, 2010 Matthew R. Green
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd December 30, 2014
+.Dt MIDIRECORD 1
+.Os
+.Sh NAME
+.Nm midirecord
+.Nd record midi files
+.Sh SYNOPSIS
+.Nm
+.Op Fl aDfhoqV
+.Op Fl B Ar buffersize
+.Op Fl c Ar channels
+.Op Fl d Ar devices
+.Op Fl f Ar sequencerdev
+.Op Fl n Ar notesperbeat
+.Op Fl r Ar raw_output
+.Op Fl T Ar tempo
+.Op Fl t Ar time
+.Ar file
+.Sh DESCRIPTION
+The
+.Nm
+program converts the sequencer events read on
+.Ar sequencerdev
+to the named MIDI SMF output.
+If the file name is \-, output will go to the standard output.
+By default, timing for events begins with the first event.
+The
+.Fl o
+flag may be used to start timing events at the process start up.
+.Sh OPTIONS
+The following options are available:
+.Bl -tag -width XnXnotesperbeatX
+.It Fl a
+Append to the specified file, rather than overwriting.
+.It Fl B Ar buffersize
+Set the sequencer device read buffer size to
+.Ar buffersize .
+The default value is 32768 bytes.
+.It Fl c Ar channels
+Sets the filter list of channels to
+.Ar channels ,
+which is a comma separated list of channels to filter in.
+.It Fl D
+Enable debug log.
+.It Fl d Ar devices
+Sets the filter list of devices to
+.Ar devices ,
+which is a comma separated list of devices to filter in.
+.It Fl f Ar sequencerdev
+Sets the sequencer device to use to
+.Ar sequencerdev .
+The default is
+.Pa /dev/music .
+.It Fl h
+Print a help message.
+.It Fl n Ar notesperbeat
+Sets the MIDI notes (clocks) per beat to
+.Ar notesperbeat .
+.It Fl o
+Start the relative timer at process start up instead of at
+the first event.
+.It Fl q
+Be quiet.
+.It Fl r Ar raw_output
+Create the raw output of the sequencer device in
+.Ar raw_output .
+.It Fl T Ar tempo
+Set the tempo for the recording to
+.Ar tempo .
+.It Fl t Ar time
+Sets the maximum amount of time to record.
+Format is [hh:]mm:ss[.dddddd].
+.It Fl V
+Be verbose.
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width MIDIDEVICE
+.It Ev MIDIDEVICE
+the midi device to be used.
+.El
+.Sh SEE ALSO
+.Xr midiplay 1 ,
+.Xr midi 4 ,
+.Xr sequencer 4
+.Sh HISTORY
+The
+.Nm
+program was first seen in
+.Nx 8 .
+.Sh AUTHORS
+The
+.Nm
+program was written by
+.An Matthew R. Green Aq Mt mrg@eterna.com.au .
+.Sh BUGS
+SYSEX, LOCAL and FULLSIZE messages are not currently handled, but the
+.Nx
+.Xr sequencer 4
+device does not generate them.

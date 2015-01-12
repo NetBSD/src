@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1485.2.4 2014/12/12 16:38:48 martin Exp $
+# $NetBSD: mi,v 1.1485.2.5 2015/01/12 10:22:22 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -319,6 +319,7 @@
 ./usr/share/man/cat1/merge.0			man-util-catman		.cat
 ./usr/share/man/cat1/mesg.0			man-util-catman		.cat
 ./usr/share/man/cat1/midiplay.0			man-audio-catman	.cat
+./usr/share/man/cat1/midirecord.0		man-audio-catman	.cat
 ./usr/share/man/cat1/mixerctl.0			man-audio-catman	.cat
 ./usr/share/man/cat1/mkdep.0			man-c-catman		.cat
 ./usr/share/man/cat1/mkdir.0			man-util-catman		.cat
@@ -3436,6 +3437,7 @@
 ./usr/share/man/html1/merge.html		man-util-htmlman	html
 ./usr/share/man/html1/mesg.html			man-util-htmlman	html
 ./usr/share/man/html1/midiplay.html		man-audio-htmlman	html
+./usr/share/man/html1/midirecord.html		man-audio-htmlman	html
 ./usr/share/man/html1/mixerctl.html		man-audio-htmlman	html
 ./usr/share/man/html1/mkdep.html		man-c-htmlman		html
 ./usr/share/man/html1/mkdir.html		man-util-htmlman	html
@@ -6192,6 +6194,7 @@
 ./usr/share/man/man1/merge.1			man-util-man		.man
 ./usr/share/man/man1/mesg.1			man-util-man		.man
 ./usr/share/man/man1/midiplay.1			man-audio-man		.man
+./usr/share/man/man1/midirecord.1		man-audio-man		.man
 ./usr/share/man/man1/mixerctl.1			man-audio-man		.man
 ./usr/share/man/man1/mkdep.1			man-c-man		.man
 ./usr/share/man/man1/mkdir.1			man-util-man		.man

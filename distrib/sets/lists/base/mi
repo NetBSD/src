@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1087.2.1 2014/11/18 18:32:29 snj Exp $
+# $NetBSD: mi,v 1.1087.2.2 2015/01/12 10:22:22 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -593,6 +593,7 @@
 ./usr/bin/merge					base-util-bin
 ./usr/bin/mesg					base-util-bin
 ./usr/bin/midiplay				base-audio-bin
+./usr/bin/midirecord				base-audio-bin
 ./usr/bin/mixerctl				base-audio-bin
 ./usr/bin/mk_cmds				base-obsolete		obsolete
 ./usr/bin/mkcsmapper				base-util-bin
