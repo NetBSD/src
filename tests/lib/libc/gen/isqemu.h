@@ -1,4 +1,4 @@
-/*	$NetBSD: isqemu.h,v 1.3 2013/04/14 12:46:29 martin Exp $	*/
+/*	$NetBSD: isqemu.h,v 1.3.10.1 2015/01/12 21:02:09 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <err.h>
