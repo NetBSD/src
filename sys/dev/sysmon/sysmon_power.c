@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.47 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.47.2.1 2015/01/12 21:15:12 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.47 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.47.2.1 2015/01/12 21:15:12 snj Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -121,6 +121,7 @@ static const struct power_event_description pswitch_type_desc[] = {
 	{ PSWITCH_TYPE_RESET, 		"reset_button" },
 	{ PSWITCH_TYPE_ACADAPTER,	"acadapter" },
 	{ PSWITCH_TYPE_HOTKEY,		"hotkey_button" },
+	{ PSWITCH_TYPE_RADIO,		"radio_button" },
 	{ -1, NULL }
 };
 
