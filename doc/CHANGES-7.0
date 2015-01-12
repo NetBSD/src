@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.159 2015/01/11 14:15:42 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.160 2015/01/12 10:27:57 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -13345,4 +13345,37 @@ sys/dev/usb/umidivar.h				delete
 	- drop the local interrupt lock before calling into various parts of
 	  the USB code.  fixes lockdebug issues, and likely hangs.
 	[mrg, ticket #407]
+
+libexec/httpd/auth-bozo.c			1.14-1.16
+libexec/httpd/bozohttpd.8			1.47-1.48
+libexec/httpd/bozohttpd.c			1.57-1.60
+libexec/httpd/bozohttpd.h			1.34
+libexec/httpd/content-bozo.c			1.11
+libexec/httpd/dir-index-bozo.c			1.20
+libexec/httpd/lua-bozo.c			1.11
+
+	Update bozohttpd to 20141225:
+	- memory leak fixes
+	- off-by-one virtualhost processing 
+	- supports >4GiB file sizes for directory listing
+	- additional sanity checks for some input parsing
+	- support .ts and .vob files 
+	[mrg, ticket #408]
+
+usr.bin/midirecord/Makefile                     1.1
+usr.bin/midirecord/midirecord.1                 1.1-1.3
+usr.bin/midirecord/midirecord.c                 1.1-1.6
+distrib/sets/lists/base/mi			1.1093
+distrib/sets/lists/debug/mi			1.98
+distrib/sets/lists/man/mi			1.1492
+usr.bin/Makefile				1.219
+
+	Add usr/bin/midirecord.
+	[mrg, ticket #409]
+
+sys/dev/marvell/if_gfe.c			1.44
+
+	sizeof doesn't evaluate the expression, so move the increment of
+	rxd out.
+	[joerg, ticket #410]
 
