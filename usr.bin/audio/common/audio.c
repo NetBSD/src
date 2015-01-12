@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.22 2013/08/30 20:57:26 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.22.4.1 2015/01/12 19:15:27 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: audio.c,v 1.22 2013/08/30 20:57:26 mrg Exp $");
+__RCSID("$NetBSD: audio.c,v 1.22.4.1 2015/01/12 19:15:27 martin Exp $");
 #endif
 
 
@@ -146,6 +146,21 @@ decode_int(const char *arg, int *intp)
 	int	ret;
 
 	ret = (int)strtoul(arg, &ep, 10);
+
+	if (ep[0] == '\0') {
+		*intp = ret;
+		return;
+	}
+	errx(1, "argument `%s' not a valid integer", arg);
+}
+
+void
+decode_uint(const char *arg, unsigned *intp)
+{
+	char	*ep;
+	unsigned	ret;
+
+	ret = (unsigned)strtoul(arg, &ep, 10);
 
 	if (ep[0] == '\0') {
 		*intp = ret;
