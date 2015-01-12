@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.33 2014/07/17 06:27:52 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.33.2.1 2015/01/12 10:02:29 martin Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -247,6 +247,7 @@ void	bozo_ssl_destroy(bozohttpd_t *);
 
 /* auth-bozo.c */
 #ifdef DO_HTPASSWD
+void	bozo_auth_init(bozo_httpreq_t *);
 int	bozo_auth_check(bozo_httpreq_t *, const char *);
 void	bozo_auth_cleanup(bozo_httpreq_t *);
 int	bozo_auth_check_headers(bozo_httpreq_t *, char *, char *, ssize_t);
@@ -255,6 +256,7 @@ void	bozo_auth_check_401(bozo_httpreq_t *, int);
 void	bozo_auth_cgi_setenv(bozo_httpreq_t *, char ***);
 int	bozo_auth_cgi_count(bozo_httpreq_t *);
 #else
+#define	bozo_auth_init(x)			do { /* nothing */ } while (0)
 #define	bozo_auth_check(x, y)			0
 #define	bozo_auth_cleanup(x)			do { /* nothing */ } while (0)
 #define	bozo_auth_check_headers(y, z, a, b)	0

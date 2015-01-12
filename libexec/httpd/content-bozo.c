@@ -1,4 +1,4 @@
-/*	$NetBSD: content-bozo.c,v 1.10 2014/05/17 05:50:01 mrg Exp $	*/
+/*	$NetBSD: content-bozo.c,v 1.10.2.1 2015/01/12 10:02:29 martin Exp $	*/
 
 /*	$eterna: content-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -164,6 +164,8 @@ static bozo_content_map_t static_content_map[] = {
 	{ ".mpeg",	5, "video/mpeg",		"",		"", NULL },
 	{ ".mpg",	4, "video/mpeg",		"",		"", NULL },
 	{ ".mpe",	4, "video/mpeg",		"",		"", NULL },
+	{ ".ts",	4, "video/mpeg",		"",		"", NULL },
+	{ ".vob",	4, "video/mpeg",		"",		"", NULL },
 	{ ".mp4",	4, "video/mp4",			"",		"", NULL },
 	{ ".qt",	3, "video/quicktime",		"",		"", NULL },
 	{ ".mov",	4, "video/quicktime",		"",		"", NULL },

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.19 2014/01/02 08:21:38 mrg Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.19.4.1 2015/01/12 10:02:29 martin Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -189,8 +189,8 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirname, int isindex)
 			spacebuf[i] = '\0';
 			bozo_printf(httpd, "%s", spacebuf);
 
-			bozo_printf(httpd, "%7ukB",
-			    ((unsigned)((unsigned)(sb.st_size) >> 10)));
+			bozo_printf(httpd, "%12llukB",
+				    (unsigned long long)sb.st_size >> 10);
 		}
 		bozo_printf(httpd, "\r\n");
 	}
