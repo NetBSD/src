@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2034 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2035 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -121,3 +121,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	mgx: driver for Southland Media Systems (now Quantum 3D) MGX SBus
 		graphics devices [macallan 20150106]
 	gcc: Import GCC 4.8.4.  [mrg 20150109]
+	openssl: Import openssl 1.0.1k [spz 20150113]
