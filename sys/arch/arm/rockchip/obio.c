@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.15 2015/01/05 21:35:53 jmcneill Exp $	*/
+/*	$NetBSD: obio.c,v 1.16 2015/01/13 10:37:38 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.15 2015/01/05 21:35:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.16 2015/01/13 10:37:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,6 +201,7 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 #define RK3188_GRF_SOC_CON2_OFFSET	0x00A8
 #define RK3188_GRF_SOC_STATUS_OFFSET	0x00AC
 
+#define RK3188_GRF_IO_CON2_OFFSET	0x00FC
 #define RK3188_GRF_IO_CON3_OFFSET	0x0100
 
 #define GRF_GPIO0A_IOMUX_OFFSET	0x00a8
@@ -213,6 +214,7 @@ void obio_init_grf(void)
 	/* Radxa Rock */
 	obio_iomux(RK3188_GRF_GPIO3A_IOMUX_OFFSET, 0x55555554); /* MMC0 */
 	obio_iomux(RK3188_GRF_GPIO3B_IOMUX_OFFSET, 0x00050001); /* MMC0 */
+	obio_iomux(RK3188_GRF_IO_CON2_OFFSET,      0x00c000c0); /* MMC0 */
 	obio_iomux(RK3188_GRF_GPIO3D_IOMUX_OFFSET, 0x3c000000); /* VBUS */
 	obio_iomux(RK3188_GRF_GPIO1D_IOMUX_OFFSET, 0x55555555); /* I2C[0124] */
 	obio_iomux(RK3188_GRF_GPIO3B_IOMUX_OFFSET, 0xa000a000); /* I2C3 */
