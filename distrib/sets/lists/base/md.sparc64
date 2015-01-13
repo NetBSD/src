@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.244 2015/01/02 21:18:51 christos Exp $
+# $NetBSD: md.sparc64,v 1.245 2015/01/13 09:14:58 spz Exp $
 ./lib/sparc					base-npf-shlib		compat
 ./lib/sparc/npf					base-npf-shlib		compat
 ./lib/sparc/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -92,7 +92,7 @@
 ./usr/lib/sparc/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcrypt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcrypto.so.8			base-compat-shlib	compat,pic,crypto
-./usr/lib/sparc/libcrypto.so.8.3		base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libcrypto.so.8.4		base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libcrypto_idea.so.7		base-obsolete		obsolete
 ./usr/lib/sparc/libcrypto_idea.so.7.0		base-obsolete		obsolete
 ./usr/lib/sparc/libcrypto_mdc2.so.7		base-obsolete		obsolete
@@ -293,7 +293,7 @@
 ./usr/lib/sparc/libssh.so.23			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libssh.so.23.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libssl.so.10			base-compat-shlib	compat,pic,crypto
-./usr/lib/sparc/libssl.so.10.4			base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libssl.so.10.5			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libstdc++.so.7			base-compat-shlib	compat,pic,gcccmds,libstdcxx
 ./usr/lib/sparc/libstdc++.so.7.0		base-compat-shlib	gcc=4,compat,pic,libstdcxx
 ./usr/lib/sparc/libstdc++.so.7.1		base-compat-shlib	gcc=45,compat,pic,libstdcxx
