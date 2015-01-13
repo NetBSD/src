@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.1 2014/12/27 16:54:03 martin Exp $	*/
+/*	$NetBSD: fenv.h,v 1.2 2015/01/13 11:15:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,23 @@
 #define	_HPPA_FENV_H_
 
 #include <sys/stdint.h>
-#include <machine/ieeefp.h>
+
+typedef unsigned fenv_t;
+typedef unsigned fexcept_t;
+
+#define	FE_INEXACT	0x01	/* imprecise (loss of precision) */
+#define	FE_UNDERFLOW	0x02	/* underflow exception */
+#define	FE_OVERFLOW	0x04	/* overflow exception */
+#define	FE_DIVBYZERO	0x08	/* divide-by-zero exception */
+#define	FE_INVALID	0x10	/* invalid operation exception */
+
+#define	FE_ALL_EXCEPT	0x1f
+
+#define	FE_TONEAREST	(0)	/* round to nearest representable number */
+#define	FE_TOWARDZERO	(1<<9)	/* round to zero (truncate) */
+#define	FE_UPWARD	(2<<9)	/* round toward positive infinity */
+#define	FE_DOWNWARD	(3<<9)	/* round toward negative infinity */
+
 
 __BEGIN_DECLS
 
