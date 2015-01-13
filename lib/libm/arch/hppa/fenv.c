@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.c,v 1.1 2014/12/27 16:54:02 martin Exp $	*/
+/*	$NetBSD: fenv.c,v 1.2 2015/01/13 11:16:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -24,7 +24,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.1 2014/12/27 16:54:02 martin Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.2 2015/01/13 11:16:06 martin Exp $");
 
 #include <assert.h>
 #include <fenv.h>
@@ -40,11 +40,6 @@ __RCSID("$NetBSD: fenv.c,v 1.1 2014/12/27 16:54:02 martin Exp $");
  */
 #define FE_ROUND_MASK	(FE_TONEAREST | FE_DOWNWARD | \
 			FE_UPWARD | FE_TOWARDZERO)
-
-/*
- * Our constants start at bit 0, while the fpsr bitfield starts at 9
- */
-#define	FE_ROUND_SHIFT	9
 
 /* Load lower 32 bits from floating-point state register */
 static inline uint32_t
@@ -209,7 +204,7 @@ fegetround(void)
 
 	r = readfpsr();
 
-	return (r>>FE_ROUND_SHIFT) & FE_ROUND_MASK;
+	return r & FE_ROUND_MASK;
 }
 
 /*
@@ -227,8 +222,8 @@ fesetround(int round)
 		return -1;
 
 	r = readfpsr();
-	r &= ~(FE_ROUND_MASK << FE_ROUND_SHIFT);
-	r |= round << FE_ROUND_SHIFT;
+	r &= ~FE_ROUND_MASK;
+	r |= round;
 	writefpsr(r);
 
 	/* Success */
