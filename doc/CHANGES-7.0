@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.163 2015/01/14 05:33:35 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.164 2015/01/14 18:31:29 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -13421,4 +13421,13 @@ sys/sys/power.h					1.20
 	script can e.g. start or stop wpa_supplicant.  Update wpi(4)
 	to report PSWITCH_TYPE_RADIO events to sysmon.
 	[bouyer, ticket #415]
+
+sys/dev/ic/vga.c				1.113-1.114
+sys/dev/ic/vga_raster.c				1.42-1.43
+sys/dev/ic/vgavar.h				1.31,1.33
+
+	Remove code to map the VGA BIOS. The mapping is not used
+	and prevents mapping and reading the ROM from drm2.
+	[chs, ticket #418]
+
 
