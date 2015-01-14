@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.30.12.1 2015/01/11 05:59:16 snj Exp $ */
+/* $NetBSD: vgavar.h,v 1.30.12.2 2015/01/14 18:27:05 martin Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -56,10 +56,6 @@ struct vga_config {
 	LIST_HEAD(, vgascreen) screens;
 	struct vgascreen *active; /* current display */
 	const struct wsscreen_descr *currenttype;
-
-	int vc_biosmapped;
-	bus_space_tag_t vc_biostag;
-	bus_space_handle_t vc_bioshdl;
 
 	struct vgascreen *wantedscreen;
 	void (*switchcb)(void *, int, int);

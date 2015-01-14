@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.112 2014/07/12 05:30:33 mlelstv Exp $ */
+/* $NetBSD: vga.c,v 1.112.2.1 2015/01/14 18:27:05 martin Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.112 2014/07/12 05:30:33 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.112.2.1 2015/01/14 18:27:05 martin Exp $");
 
 #include "opt_vga.h"
 /* for WSCONS_SUPPORT_PCVTFONTS */
@@ -554,13 +554,6 @@ vga_init(struct vga_config *vc, bus_space_tag_t iot, bus_space_tag_t memt)
 	if (bus_space_subregion(vh->vh_memt, vh->vh_allmemh,
 	    (vh->vh_mono ? 0x10000 : 0x18000), 0x8000, &vh->vh_memh))
 		panic("vga_init: mem subrange failed");
-
-	/* should only reserve the space (no need to map - save KVM) */
-	vc->vc_biostag = memt;
-	if (bus_space_map(vc->vc_biostag, 0xc0000, 0x8000, 0, &vc->vc_bioshdl))
-		vc->vc_biosmapped = 0;
-	else
-		vc->vc_biosmapped = 1;
 
 	vc->nscreens = 0;
 	LIST_INIT(&vc->screens);
