@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2015/01/07 02:02:44 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2015/01/14 20:26:41 tron Exp $
 
 PROG=		lto1
 SRCS=		lto-partition.c lto-object.c lto.c lto-lang.c attribs.c main.c
 
 CPPFLAGS+=	-DPREFIX=\"/usr\"
+
+COPTS.lto.c+=		-Wno-stack-protector
+COPTS.lto-lang.c+=	-Wno-stack-protector
 
 .include "../Makefile.backend"
 .include "../Makefile.backtrace"
