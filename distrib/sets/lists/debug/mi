@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.102 2015/01/07 22:26:50 pooka Exp $
+# $NetBSD: mi,v 1.103 2015/01/14 22:25:05 christos Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -1637,6 +1637,7 @@
 ./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc2.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc3.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/t_sig.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/kqueue/t_vnode.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_fifo.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_pipe.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_ttypty.debug	tests-kernel-tests	debug,atf
