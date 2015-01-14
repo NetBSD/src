@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.46 2014/06/22 20:09:19 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.47 2015/01/14 18:46:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008-2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.46 2014/06/22 20:09:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.47 2015/01/14 18:46:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -62,14 +62,21 @@ struct softint {
 struct softint_percpu {
 	struct softint *sip_parent;
 	bool sip_onlist;
+	bool sip_onlist_cpu;
 
-	LIST_ENTRY(softint_percpu) sip_entries;
+	LIST_ENTRY(softint_percpu) sip_entries;		/* scheduled */
+	TAILQ_ENTRY(softint_percpu) sip_entries_cpu;	/* to be scheduled */
 };
 
 struct softint_lev {
 	struct rumpuser_cv *si_cv;
 	LIST_HEAD(, softint_percpu) si_pending;
 };
+
+static TAILQ_HEAD(, softint_percpu) sicpupending \
+    = TAILQ_HEAD_INITIALIZER(sicpupending);
+static struct rumpuser_mtx *sicpumtx;
+static struct rumpuser_cv *sicpucv;
 
 kcondvar_t lbolt; /* Oh Kath Ra */
 
@@ -183,6 +190,51 @@ sithread(void *arg)
 	panic("sithread unreachable");
 }
 
+/*
+ * Helper for softint_schedule_cpu()
+ */
+static void
+sithread_cpu_bouncer(void *arg)
+{
+	struct lwp *me;
+
+	me = curlwp;
+	me->l_pflag |= LP_BOUND;
+
+	rump_unschedule();
+	for (;;) {
+		struct softint_percpu *sip;
+		struct softint *si;
+		struct cpu_info *ci;
+		unsigned int cidx;
+
+		rumpuser_mutex_enter_nowrap(sicpumtx);
+		while (TAILQ_EMPTY(&sicpupending)) {
+			rumpuser_cv_wait_nowrap(sicpucv, sicpumtx);
+		}
+		sip = TAILQ_FIRST(&sicpupending);
+		TAILQ_REMOVE(&sicpupending, sip, sip_entries_cpu);
+		sip->sip_onlist_cpu = false;
+		rumpuser_mutex_exit(sicpumtx);
+
+		/*
+		 * ok, now figure out which cpu we need the softint to
+		 * be handled on
+		 */
+		si = sip->sip_parent;
+		cidx = sip - si->si_entry;
+		ci = cpu_lookup(cidx);
+		me->l_target_cpu = ci;
+
+		/* schedule ourselves there, and then schedule the softint */
+		rump_schedule();
+		KASSERT(curcpu() == ci);
+		softint_schedule(si);
+		rump_unschedule();
+	}
+	panic("sithread_cpu_bouncer unreasonable");
+}
+
 static kmutex_t sithr_emtx;
 static unsigned int sithr_est;
 static int sithr_canest;
@@ -273,6 +325,13 @@ softint_init(struct cpu_info *ci)
 	if ((rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE,
 	    ci, doclock, NULL, NULL, "rumpclk%d", ci->ci_index)) != 0)
 		panic("clock thread creation failed: %d", rv);
+
+	/* not one either, but at least a softint helper */
+	rumpuser_mutex_init(&sicpumtx, RUMPUSER_MTX_SPIN);
+	rumpuser_cv_init(&sicpucv);
+	if ((rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE,
+	    NULL, sithread_cpu_bouncer, NULL, NULL, "sipbnc")) != 0)
+		panic("softint cpu bouncer creation failed: %d", rv);
 }
 
 void *
@@ -300,6 +359,13 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 	return si;
 }
 
+static struct softint_percpu *
+sitosip(struct softint *si, struct cpu_info *ci)
+{
+
+	return &si->si_entry[ci->ci_index];
+}
+
 /*
  * Soft interrupts bring two choices.  If we are running with thread
  * support enabled, defer execution, otherwise execute in place.
@@ -310,7 +376,7 @@ softint_schedule(void *arg)
 {
 	struct softint *si = arg;
 	struct cpu_info *ci = curcpu();
-	struct softint_percpu *sip = &si->si_entry[ci->ci_index];
+	struct softint_percpu *sip = sitosip(si, ci);
 	struct cpu_data *cd = &ci->ci_data;
 	struct softint_lev *si_lvl = cd->cpu_softcpu;
 
@@ -325,14 +391,44 @@ softint_schedule(void *arg)
 	}
 }
 
+/*
+ * Like softint_schedule(), except schedule softint to be handled on
+ * the core designated by ci_tgt instead of the core the call is made on.
+ *
+ * Unlike softint_schedule(), the performance is not important
+ * (unless ci_tgt == curcpu): high-performance rump kernel I/O stacks
+ * should arrange data to already be on the right core at the driver
+ * layer.
+ */
 void
-softint_schedule_cpu(void *arg, struct cpu_info *ci)
+softint_schedule_cpu(void *arg, struct cpu_info *ci_tgt)
 {
+	struct softint *si = arg;
+	struct cpu_info *ci_cur = curcpu();
+	struct softint_percpu *sip;
+
+	KASSERT(rump_threads);
+
+	/* preferred case (which can be optimized some day) */
+	if (ci_cur == ci_tgt) {
+		softint_schedule(si);
+		return;
+	}
+
 	/*
-	 * TODO: implement this properly
+	 * no?  then it's softint turtles all the way down
 	 */
-	KASSERT(curcpu() == ci);
-	softint_schedule(arg);
+
+	sip = sitosip(si, ci_tgt);
+	rumpuser_mutex_enter_nowrap(sicpumtx);
+	if (sip->sip_onlist_cpu) {
+		rumpuser_mutex_exit(sicpumtx);
+		return;
+	}
+	TAILQ_INSERT_TAIL(&sicpupending, sip, sip_entries_cpu);
+	sip->sip_onlist_cpu = true;
+	rumpuser_cv_signal(sicpucv);
+	rumpuser_mutex_exit(sicpumtx);
 }
 
 /*
