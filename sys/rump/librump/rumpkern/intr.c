@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.c,v 1.47 2015/01/14 18:46:38 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.48 2015/01/14 18:51:56 pooka Exp $	*/
 
 /*
- * Copyright (c) 2008-2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2008-2010, 2015 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.47 2015/01/14 18:46:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.48 2015/01/14 18:51:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -64,13 +64,13 @@ struct softint_percpu {
 	bool sip_onlist;
 	bool sip_onlist_cpu;
 
-	LIST_ENTRY(softint_percpu) sip_entries;		/* scheduled */
+	TAILQ_ENTRY(softint_percpu) sip_entries;	/* scheduled */
 	TAILQ_ENTRY(softint_percpu) sip_entries_cpu;	/* to be scheduled */
 };
 
 struct softint_lev {
 	struct rumpuser_cv *si_cv;
-	LIST_HEAD(, softint_percpu) si_pending;
+	TAILQ_HEAD(, softint_percpu) si_pending;
 };
 
 static TAILQ_HEAD(, softint_percpu) sicpupending \
@@ -161,8 +161,8 @@ sithread(void *arg)
 	si_lvl = &si_lvlp[mylevel];
 
 	for (;;) {
-		if (!LIST_EMPTY(&si_lvl->si_pending)) {
-			sip = LIST_FIRST(&si_lvl->si_pending);
+		if (!TAILQ_EMPTY(&si_lvl->si_pending)) {
+			sip = TAILQ_FIRST(&si_lvl->si_pending);
 			si = sip->sip_parent;
 
 			func = si->si_func;
@@ -170,7 +170,7 @@ sithread(void *arg)
 			mpsafe = si->si_flags & SI_MPSAFE;
 
 			sip->sip_onlist = false;
-			LIST_REMOVE(sip, sip_entries);
+			TAILQ_REMOVE(&si_lvl->si_pending, sip, sip_entries);
 			if (si->si_flags & SI_KILLME) {
 				softint_disestablish(si);
 				continue;
@@ -297,7 +297,7 @@ softint_init(struct cpu_info *ci)
 	slev = kmem_alloc(sizeof(struct softint_lev) * SOFTINT_COUNT, KM_SLEEP);
 	for (i = 0; i < SOFTINT_COUNT; i++) {
 		rumpuser_cv_init(&slev[i].si_cv);
-		LIST_INIT(&slev[i].si_pending);
+		TAILQ_INIT(&slev[i].si_pending);
 	}
 	cd->cpu_softcpu = slev;
 
@@ -384,7 +384,7 @@ softint_schedule(void *arg)
 		si->si_func(si->si_arg);
 	} else {
 		if (!sip->sip_onlist) {
-			LIST_INSERT_HEAD(&si_lvl[si->si_level].si_pending,
+			TAILQ_INSERT_TAIL(&si_lvl[si->si_level].si_pending,
 			    sip, sip_entries);
 			sip->sip_onlist = true;
 		}
@@ -464,7 +464,7 @@ rump_softint_run(struct cpu_info *ci)
 		return;
 
 	for (i = 0; i < SOFTINT_COUNT; i++) {
-		if (!LIST_EMPTY(&si_lvl[i].si_pending))
+		if (!TAILQ_EMPTY(&si_lvl[i].si_pending))
 			rumpuser_cv_signal(si_lvl[i].si_cv);
 	}
 }
