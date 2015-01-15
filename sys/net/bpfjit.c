@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.37 2014/12/08 00:44:45 justin Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.38 2015/01/15 16:31:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.37 2014/12/08 00:44:45 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.38 2015/01/15 16:31:05 christos Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.37 2014/12/08 00:44:45 justin Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.38 2015/01/15 16:31:05 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1148,7 +1148,7 @@ static int
 emit_moddiv(struct sljit_compiler *compiler, const struct bpf_insn *pc)
 {
 	int status;
-	const bool div = BPF_OP(pc->code) == BPF_DIV;
+	const bool xdiv = BPF_OP(pc->code) == BPF_DIV;
 	const bool xreg = BPF_SRC(pc->code) == BPF_X;
 
 #if BJ_XREG == SLJIT_RETURN_REG   || \
@@ -1200,7 +1200,7 @@ emit_moddiv(struct sljit_compiler *compiler, const struct bpf_insn *pc)
 #else
 	status = sljit_emit_ijump(compiler,
 	    SLJIT_CALL2,
-	    SLJIT_IMM, div ? SLJIT_FUNC_OFFSET(divide) :
+	    SLJIT_IMM, xdiv ? SLJIT_FUNC_OFFSET(divide) :
 		SLJIT_FUNC_OFFSET(modulus));
 
 #if BJ_AREG != SLJIT_RETURN_REG
