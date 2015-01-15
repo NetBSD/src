@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1191 2015/01/13 09:14:59 spz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1192 2015/01/15 08:50:36 skrll Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -422,6 +422,7 @@ Before importing a new version of external/gpl3/gcc:
 	- update gcc/version.c for the NetBSD GCC date
 	- use core/c++/objc/testsuite tarballs
 	- you can use the gcc2netbsd script for the above (except version)
+	- update tools/gcc/gcc-version.mk
 
 Package:	gdb
 Version:	7.7.1
