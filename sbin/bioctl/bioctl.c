@@ -1,4 +1,4 @@
-/* $NetBSD: bioctl.c,v 1.16 2014/11/15 01:52:01 joerg Exp $ */
+/* $NetBSD: bioctl.c,v 1.17 2015/01/16 20:12:28 christos Exp $ */
 /* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: bioctl.c,v 1.16 2014/11/15 01:52:01 joerg Exp $");
+__RCSID("$NetBSD: bioctl.c,v 1.17 2015/01/16 20:12:28 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: bioctl.c,v 1.16 2014/11/15 01:52:01 joerg Exp $");
 #include <unistd.h>
 #include <ctype.h>
 #include <util.h>
-#include "strtonum.h"
 
 struct command {
 	const char *cmd_name;
