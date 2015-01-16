@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2014/07/24 15:11:09 christos Exp $
+# $NetBSD: Makefile,v 1.13 2015/01/16 20:13:34 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -154,6 +154,7 @@ CPPFLAGS+=	-I${SRCDIR} -I${.CURDIR}
 # Would be nicer to stick this in a config.h file, but the upstream code
 # does not use one at this moment.
 
+CPPFLAGS+=	-DHAVE_STRTONUM=1 -D_OPENBSD_SOURCE
 CPPFLAGS+=	-DHAVE_ASPRINTF=1
 CPPFLAGS+=	-DHAVE_B64_NTOP=1
 CPPFLAGS+=	-DHAVE_BITSTRING_H=1
