@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.58 2015/01/06 11:04:00 hannken Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.59 2015/01/16 17:02:12 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.58 2015/01/06 11:04:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.59 2015/01/16 17:02:12 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -756,9 +756,9 @@ ntfs_ntlookupfile(struct ntfsmount *ntmp, struct vnode *vp,
 {
 	struct fnode   *fp = VTOF(vp);
 	struct ntnode  *ip = FTONT(fp);
-	struct ntvattr *vap;	/* Root attribute */
+	struct ntvattr *vap = NULL;	/* Root attribute */
 	cn_t            cn = 0;	/* VCN in current attribute */
-	void *        rdbuf;	/* Buffer to read directory's blocks  */
+	void *        rdbuf = NULL;	/* Buffer to read directory's blocks  */
 	u_int32_t       blsize;
 	u_int32_t       rdsize;	/* Length of data to read from current block */
 	struct attr_indexentry *iep;
@@ -776,8 +776,10 @@ ntfs_ntlookupfile(struct ntfsmount *ntmp, struct vnode *vp,
 		return (error);
 
 	error = ntfs_ntvattrget(ntmp, ip, NTFS_A_INDXROOT, "$I30", 0, &vap);
-	if (error || (vap->va_flag & NTFS_AF_INRUN))
-		return (ENOTDIR);
+	if (error || (vap->va_flag & NTFS_AF_INRUN)) {
+		error = ENOTDIR;
+		goto fail;
+	}
 
 	/*
 	 * Divide file name into: foofilefoofilefoofile[:attrspec]
@@ -963,9 +965,11 @@ fail:
 			free(tctx, M_TEMP);
 		}
 	}
-	ntfs_ntvattrrele(vap);
+	if (vap)
+		ntfs_ntvattrrele(vap);
+	if (rdbuf)
+		free(rdbuf, M_TEMP);
 	ntfs_ntput(ip);
-	free(rdbuf, M_TEMP);
 	return (error);
 }
 
@@ -1026,8 +1030,10 @@ ntfs_ntreaddir(struct ntfsmount *ntmp, struct fnode *fp, u_int32_t num,
 		return (error);
 
 	error = ntfs_ntvattrget(ntmp, ip, NTFS_A_INDXROOT, "$I30", 0, &vap);
-	if (error)
-		return (ENOTDIR);
+	if (error) {
+		error = ENOTDIR;
+		goto fail;
+	}
 
 	if (fp->f_dirblbuf == NULL) {
 		fp->f_dirblsz = vap->va_a_iroot->ir_size;
