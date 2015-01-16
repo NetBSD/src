@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.166 2015/01/16 14:06:49 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.167 2015/01/16 22:28:33 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -7432,6 +7432,7 @@ xsrc/external/mit/MesaLib/dist/src/gallium/auxiliary/gallivm/lp_bld_printf.h up 
 xsrc/external/mit/MesaLib/dist/src/gallium/auxiliary/gallivm/lp_bld_quad.c up to 1.1.1.2
 xsrc/external/mit/MesaLib/dist/src/gallium/auxiliary/gallivm/lp_bld_intr.c up to 1.1.1.3
 xsrc/external/mit/MesaLib/dist/src/gallium/auxiliary/gallivm/lp_bld_intr.h up to 1.1.1.3
+xsrc/external/mit/MesaLib/dist/src/gallium/auxiliary/gallivm/lp_bld_limits.h up to 1.1.1.2
 xsrc/external/mit/MesaLib/dist/src/gallium/auxiliary/gallivm/lp_bld_logic.c up to 1.1.1.3
 xsrc/external/mit/MesaLib/dist/src/gallium/auxiliary/gallivm/lp_bld_logic.h up to 1.1.1.3
 xsrc/external/mit/MesaLib/dist/src/gallium/auxiliary/gallivm/lp_bld_pack.c up to 1.1.1.3
