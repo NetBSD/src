@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2014/11/11 11:30:55 tron Exp $
+#	$NetBSD: Makefile,v 1.20 2015/01/16 21:35:34 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -119,13 +119,14 @@ SRCS+=		intel_batchbuffer.c
 SRCS+=		intel_display.c
 SRCS+=		intel_dri.c
 SRCS+=		intel_driver.c
-#SRCS+=		intel_glamor.c
 SRCS+=		intel_hwmc.c
 SRCS+=		intel_memory.c
 #SRCS+=		intel_present.c
 #SRCS+=		intel_sync.c
 SRCS+=		intel_uxa.c
+SRCS+=		intel_uxa_video.c
 SRCS+=		intel_video.c
+SRCS+=		intel_video_overlay.c
 SRCS+=		uxa-accel.c
 SRCS+=		uxa-glyphs.c
 SRCS+=		uxa-render.c
