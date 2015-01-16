@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.100 2014/12/24 16:18:46 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.101 2015/01/16 18:44:06 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -523,6 +523,16 @@ long long strsuftollx(const char *, const char *,
 
 #if !HAVE_STRTOLL
 long long strtoll(const char *, char **, int);
+#endif
+
+#if !HAVE_STRTOI
+intmax_t strtoi(const char * __restrict, char ** __restrict, int,
+    intmax_t, intmax_t, int *);
+#endif
+
+#if !HAVE_STRTOU
+uintmax_t strtou(const char * __restrict, char ** __restrict, int,
+    uintmax_t, uintmax_t, int *);
 #endif
 
 #if !HAVE_USER_FROM_UID
