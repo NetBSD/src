@@ -1,2 +1,2 @@
-# $NetBSD: ad.mips,v 1.9.10.1 2014/08/15 08:10:41 msaitoh Exp $
+# $NetBSD: ad.mips,v 1.9.10.2 2015/01/16 14:24:39 martin Exp $
 ./usr/lkm/ldscript				base-obsolete	obsolete
