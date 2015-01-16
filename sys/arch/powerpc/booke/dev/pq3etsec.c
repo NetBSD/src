@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.19 2015/01/07 01:11:47 nonaka Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.20 2015/01/16 05:36:47 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.19 2015/01/07 01:11:47 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.20 2015/01/16 05:36:47 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1033,7 +1033,7 @@ pq3etsec_ifstop(struct ifnet *ifp, int disable)
 	pq3etsec_txq_consume(sc, &sc->sc_txq);
 	if (disable) {
 		pq3etsec_txq_purge(sc, &sc->sc_txq);
-		IF_PURGE(&ifp->if_snd);
+		IFQ_PURGE(&ifp->if_snd);
 	}
 }
 
@@ -2059,7 +2059,7 @@ pq3etsec_txq_enqueue(
 		struct mbuf *m = txq->txq_next;
 		if (m == NULL) {
 			int s = splnet();
-			IF_DEQUEUE(&sc->sc_if.if_snd, m);
+			IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
 			splx(s);
 			if (m == NULL)
 				return true;
