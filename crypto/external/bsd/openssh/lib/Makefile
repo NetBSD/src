@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2014/10/20 03:05:13 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2015/01/16 20:17:49 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -88,8 +88,7 @@ ssh-dss.c \
 ssh-ecdsa.c \
 ssh-rsa.c
 
-#	umac.c
-SRCS+=	fmt_scaled.c strtonum.c
+SRCS+=	fmt_scaled.c
 SRCS+=	readpassphrase.c getpeereid.c getrrsetbyname.c
 COPTS.monitor_fdpass.c = -Wno-stack-protector
 

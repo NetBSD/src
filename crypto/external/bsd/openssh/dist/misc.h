@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.h,v 1.7 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: misc.h,v 1.8 2015/01/16 20:17:49 christos Exp $	*/
 /* $OpenBSD: misc.h,v 1.54 2014/07/15 15:54:14 millert Exp $ */
 
 /*
@@ -66,7 +66,6 @@ int	 unix_listener(const char *, int, int);
 
 int	bcrypt_pbkdf(const char *, size_t, const u_int8_t *, size_t,
     u_int8_t *, size_t, unsigned int);
-long long strtonum(const char *, long long, long long, const char **);
 
 struct passwd *pwcopy(struct passwd *);
 const char *ssh_gai_strerror(int);
