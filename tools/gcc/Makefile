@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.73 2014/11/22 19:41:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.74 2015/01/16 20:10:26 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -50,7 +50,7 @@ COMMON_CONFIGURE_ARGS+=	--with-tune=${GCC_CONFIG_TUNE.${MACHINE_ARCH}}
 .endif
 
 .if ${HAVE_GCC} == 48
-COMMON_CONFIGURE_ARGS+= --enable-libstdcxx-time=rt
+COMMON_CONFIGURE_ARGS+= --enable-libstdcxx-time=rt --enable-lto
 .endif
 
 CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
