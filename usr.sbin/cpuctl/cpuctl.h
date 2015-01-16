@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.h,v 1.2 2008/12/16 22:44:51 christos Exp $	*/
+/*	$NetBSD: cpuctl.h,v 1.2.10.1 2015/01/16 08:30:50 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,3 +34,5 @@ int	aprint_verbose_dev(const char *, const char *, ...);
 int	aprint_error_dev(const char *, const char *, ...);
 
 void	identifycpu(const char *);
+
+extern int verbose;
