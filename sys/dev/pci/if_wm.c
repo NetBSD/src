@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.308 2014/11/16 09:47:35 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.309 2015/01/16 10:36:14 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.308 2014/11/16 09:47:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.309 2015/01/16 10:36:14 ozaki-r Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

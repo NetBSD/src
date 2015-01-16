@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.22 2015/01/08 10:47:44 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.23 2015/01/16 10:36:14 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -207,6 +207,10 @@ struct ifbrparam {
 #define	ifbrp_filter	ifbrp_ifbrpu.ifbrpu_int32	/* filtering flags */
 
 #ifdef _KERNEL
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif /* _KERNEL_OPT */
+
 #include <sys/pserialize.h>
 #include <sys/workqueue.h>
 

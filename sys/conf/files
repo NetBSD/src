@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1124 2015/01/11 14:22:53 jmcneill Exp $
+#	$NetBSD: files,v 1.1125 2015/01/16 10:36:14 ozaki-r Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20141030
@@ -51,6 +51,7 @@ defflag	opt_sosend_loan.h	SOSEND_NO_LOAN
 defflag	opt_route.h		RTCACHE_DEBUG RTFLUSH_DEBUG
 
 defflag				MULTIPROCESSOR
+defflag				NET_MPSAFE
 
 defflag	opt_config.h		INCLUDE_CONFIG_FILE INCLUDE_JUST_CONFIG
 
