@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.104 2015/01/04 19:31:00 pooka Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.105 2015/01/16 20:10:25 dennis Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.104 2015/01/04 19:31:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.105 2015/01/16 20:10:25 dennis Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -397,7 +397,7 @@ cache_lookup_entry(const struct vnode *dvp, const char *name, size_t namelen)
 	ncpp = &nchashtbl[NCHASH2(hash, dvp)];
 
 	LIST_FOREACH(ncp, ncpp, nc_hash) {
-		/* XXX Needs barrier for Alpha here */
+		membar_datadep_consumer();	/* for Alpha... */
 		if (ncp->nc_dvp != dvp ||
 		    ncp->nc_nlen != namelen ||
 		    memcmp(ncp->nc_name, name, (u_int)ncp->nc_nlen))
