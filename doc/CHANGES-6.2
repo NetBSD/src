@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.183 2015/01/16 08:41:53 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.184 2015/01/16 14:20:29 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -8982,4 +8982,20 @@ usr.sbin/cpuctl/arch/x86_64-asm.S		1.3-1.4
 	- Sort functions.
 	- KNF.
 	[msaitoh, ticket #1230]
+
+
+include/wchar.h					1.40
+
+	Expose properly vfwscanf and friends for POSIX_SOURCE >= 200112L
+	[christos, ticket #1231]
+
+
+sys/dev/usb/udl.c				1.12
+sys/dev/usb/usbdevs				1.685
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	Add BUFFALO GX-DVI/U2B DisplayLink USB-DVI box.
+	PR#49105 from MOCHIDA Shuji.
+	[dholland, ticket #1233]
 
