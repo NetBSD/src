@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.22 2015/01/16 06:38:27 nonaka Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.23 2015/01/16 07:48:16 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.22 2015/01/16 06:38:27 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.23 2015/01/16 07:48:16 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -212,6 +212,7 @@ struct pq3etsec_softc {
 	void *sc_soft_ih;
 
 	kmutex_t *sc_lock;
+	kmutex_t *sc_hwlock;
 
 	struct evcnt sc_ev_tx_stall;
 	struct evcnt sc_ev_tx_intr;
@@ -617,14 +618,14 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 #endif
 	}
 
-	char enaddr[ETHER_ADDR_LEN] = {
-	    [0] = sc->sc_macstnaddr2 >> 16,
-	    [1] = sc->sc_macstnaddr2 >> 24,
-	    [2] = sc->sc_macstnaddr1 >>  0,
-	    [3] = sc->sc_macstnaddr1 >>  8,
-	    [4] = sc->sc_macstnaddr1 >> 16,
-	    [5] = sc->sc_macstnaddr1 >> 24,
-	};
+	sc->sc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
+	sc->sc_hwlock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_VM);
+
+	callout_init(&sc->sc_mii_callout, CALLOUT_MPSAFE);
+	callout_setfunc(&sc->sc_mii_callout, pq3etsec_mii_tick, sc);
+
+	/* Disable interrupts */
+	etsec_write(sc, IMASK, 0);
 
 	error = pq3etsec_rxq_attach(sc, &sc->sc_rxq, 0);
 	if (error) {
@@ -704,11 +705,14 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	etsec_write(sc, ATTR, ATTR_DEFAULT);
 	etsec_write(sc, ATTRELI, ATTRELI_DEFAULT);
 
-	sc->sc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SOFTNET);
-
-	callout_init(&sc->sc_mii_callout, CALLOUT_MPSAFE);
-	callout_setfunc(&sc->sc_mii_callout, pq3etsec_mii_tick, sc);
-
+	char enaddr[ETHER_ADDR_LEN] = {
+	    [0] = sc->sc_macstnaddr2 >> 16,
+	    [1] = sc->sc_macstnaddr2 >> 24,
+	    [2] = sc->sc_macstnaddr1 >>  0,
+	    [3] = sc->sc_macstnaddr1 >>  8,
+	    [4] = sc->sc_macstnaddr1 >> 16,
+	    [5] = sc->sc_macstnaddr1 >> 24,
+	};
 	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",
 	   ether_sprintf(enaddr));
 
@@ -2261,6 +2265,10 @@ pq3etsec_ifstart(struct ifnet *ifp)
 {
 	struct pq3etsec_softc * const sc = ifp->if_softc;
 
+	if (__predict_false((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)) {
+		return;
+	}
+
 	atomic_or_uint(&sc->sc_soft_flags, SOFT_TXINTR);
 	softint_schedule(sc->sc_soft_ih);
 }
@@ -2294,6 +2302,8 @@ pq3etsec_tx_intr(void *arg)
 {
 	struct pq3etsec_softc * const sc = arg;
 
+	mutex_enter(sc->sc_hwlock);
+
 	sc->sc_ev_tx_intr.ev_count++;
 
 	uint32_t ievent = etsec_read(sc, IEVENT);
@@ -2305,13 +2315,18 @@ pq3etsec_tx_intr(void *arg)
 	    __func__, ievent, etsec_read(sc, IMASK));
 #endif
 
-	if (ievent == 0)
+	if (ievent == 0) {
+		mutex_exit(sc->sc_hwlock);
 		return 0;
+	}
 
 	sc->sc_imask &= ~(IEVENT_TXF|IEVENT_TXB);
 	atomic_or_uint(&sc->sc_soft_flags, SOFT_TXINTR);
 	etsec_write(sc, IMASK, sc->sc_imask);
 	softint_schedule(sc->sc_soft_ih);
+
+	mutex_exit(sc->sc_hwlock);
+
 	return 1;
 }
 
@@ -2320,13 +2335,17 @@ pq3etsec_rx_intr(void *arg)
 {
 	struct pq3etsec_softc * const sc = arg;
 
+	mutex_enter(sc->sc_hwlock);
+
 	sc->sc_ev_rx_intr.ev_count++;
 
 	uint32_t ievent = etsec_read(sc, IEVENT);
 	ievent &= IEVENT_RXF|IEVENT_RXB;
 	etsec_write(sc, IEVENT, ievent);	/* write 1 to clear */
-	if (ievent == 0)
+	if (ievent == 0) {
+		mutex_exit(sc->sc_hwlock);
 		return 0;
+	}
 
 #if 0
 	aprint_normal_dev(sc->sc_dev, "%s: ievent=%#x\n", __func__, ievent);
@@ -2336,6 +2355,9 @@ pq3etsec_rx_intr(void *arg)
 	atomic_or_uint(&sc->sc_soft_flags, SOFT_RXINTR);
 	etsec_write(sc, IMASK, sc->sc_imask);
 	softint_schedule(sc->sc_soft_ih);
+
+	mutex_exit(sc->sc_hwlock);
+
 	return 1;
 }
 
@@ -2343,6 +2365,8 @@ int
 pq3etsec_error_intr(void *arg)
 {
 	struct pq3etsec_softc * const sc = arg;
+
+	mutex_enter(sc->sc_hwlock);
 
 	sc->sc_ev_error_intr.ev_count++;
 
@@ -2355,6 +2379,7 @@ pq3etsec_error_intr(void *arg)
 				atomic_or_uint(&sc->sc_soft_flags, soft_flags);
 				softint_schedule(sc->sc_soft_ih);
 			}
+			mutex_exit(sc->sc_hwlock);
 			return rv;
 		}
 #if 0
@@ -2401,6 +2426,7 @@ pq3etsec_soft_intr(void *arg)
 {
 	struct pq3etsec_softc * const sc = arg;
 	struct ifnet * const ifp = &sc->sc_if;
+	uint32_t imask = 0;
 
 	mutex_enter(sc->sc_lock);
 
@@ -2421,7 +2447,7 @@ pq3etsec_soft_intr(void *arg)
 		if (threshold >= rxq->rxq_last - rxq->rxq_first) {
 			threshold = rxq->rxq_last - rxq->rxq_first - 1;
 		} else {
-			sc->sc_imask |= IEVENT_BSY;
+			imask |= IEVENT_BSY;
 		}
 		aprint_normal_dev(sc->sc_dev,
 		    "increasing receive buffers from %zu to %zu\n",
@@ -2442,7 +2468,7 @@ pq3etsec_soft_intr(void *arg)
 		} else {
 			ifp->if_flags &= ~IFF_OACTIVE;
 		}
-		sc->sc_imask |= IEVENT_TXF;
+		imask |= IEVENT_TXF;
 	}
 
 	if (soft_flags & (SOFT_RXINTR|SOFT_RXBSY)) {
@@ -2450,17 +2476,20 @@ pq3etsec_soft_intr(void *arg)
 		 * Let's consume 
 		 */
 		pq3etsec_rxq_consume(sc, &sc->sc_rxq);
-		sc->sc_imask |= IEVENT_RXF;
+		imask |= IEVENT_RXF;
 	}
 
 	if (soft_flags & SOFT_TXERROR) {
 		pq3etsec_tx_error(sc);
-		sc->sc_imask |= IEVENT_TXE;
+		imask |= IEVENT_TXE;
 	}
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		pq3etsec_rxq_produce(sc, &sc->sc_rxq);
+		mutex_spin_enter(sc->sc_hwlock);
+		sc->sc_imask |= imask;
 		etsec_write(sc, IMASK, sc->sc_imask);
+		mutex_spin_exit(sc->sc_hwlock);
 	} else {
 		KASSERT((soft_flags & SOFT_RXBSY) == 0);
 	}
