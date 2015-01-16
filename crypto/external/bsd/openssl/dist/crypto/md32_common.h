@@ -225,8 +225,7 @@
 #define HOST_c2l(c,l)	(l =(((uint32_t)(*((c)++)))<<24),		\
 			 l|=(((uint32_t)(*((c)++)))<<16),		\
 			 l|=(((uint32_t)(*((c)++)))<< 8),		\
-			 l|=(((uint32_t)(*((c)++)))    ),		\
-			 l)
+			 l|=(((uint32_t)(*((c)++)))    )		)
 #endif
 #ifndef HOST_l2c
 #define HOST_l2c(l,c)	(*((c)++)=(unsigned char)(((l)>>24)&0xff),	\
@@ -262,8 +261,7 @@
 #define HOST_c2l(c,l)	(l =(((uint32_t)(*((c)++)))    ),		\
 			 l|=(((uint32_t)(*((c)++)))<< 8),		\
 			 l|=(((uint32_t)(*((c)++)))<<16),		\
-			 l|=(((uint32_t)(*((c)++)))<<24),		\
-			 l)
+			 l|=(((uint32_t)(*((c)++)))<<24)		)
 #endif
 #ifndef HOST_l2c
 #define HOST_l2c(l,c)	(*((c)++)=(unsigned char)(((l)    )&0xff),	\
