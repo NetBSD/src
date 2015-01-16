@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.34 2011/11/17 20:04:25 riz Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.34.6.1 2015/01/16 08:22:25 snj Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.34 2011/11/17 20:04:25 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.34.6.1 2015/01/16 08:22:25 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -278,10 +278,15 @@ lpcibattach(device_t parent, device_t self, void *aux)
 	 * Part of our I/O registers are used as ACPI PM regs.
 	 * Since our ACPI subsystem accesses the I/O space directly so far,
 	 * we do not have to bother bus_space I/O map confliction.
+	 *
+	 * The PMBASE register is alike PCI BAR but not completely compatible
+	 * with it. The PMBASE define the base address and the type but
+	 * not describe the size.
 	 */
-	if (pci_mapreg_map(pa, LPCIB_PCI_PMBASE, PCI_MAPREG_TYPE_IO, 0,
-			   &sc->sc_iot, &sc->sc_ioh, NULL, &sc->sc_iosize)) {
-		aprint_error_dev(self, "can't map power management i/o space");
+	if (pci_mapreg_submap(pa, LPCIB_PCI_PMBASE, PCI_MAPREG_TYPE_IO, 0,
+		LPCIB_PCI_PM_SIZE, 0, &sc->sc_iot, &sc->sc_ioh, NULL,
+		&sc->sc_iosize)) {
+		aprint_error_dev(self, "can't map power management i/o space\n");
 		return;
 	}
 
@@ -297,14 +302,14 @@ lpcibattach(device_t parent, device_t self, void *aux)
 		rcba = pci_conf_read(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
 		     LPCIB_RCBA);
 		if ((rcba & LPCIB_RCBA_EN) == 0) {
-			aprint_error_dev(self, "RCBA is not enabled");
+			aprint_error_dev(self, "RCBA is not enabled\n");
 			return;
 		}
 		rcba &= ~LPCIB_RCBA_EN;
 
 		if (bus_space_map(sc->sc_rcbat, rcba, LPCIB_RCBA_SIZE, 0,
 				  &sc->sc_rcbah)) {
-			aprint_error_dev(self, "RCBA could not be mapped");
+			aprint_error_dev(self, "RCBA could not be mapped\n");
 			return;
 		}
 	}
@@ -1014,6 +1019,7 @@ lpcib_gpio_configure(device_t self)
 	pcireg_t gpio_cntl;
 	uint32_t use, io, bit;
 	int pin, shift, base_reg, cntl_reg, reg;
+	int rv;
 
 	/* this implies ICH >= 6, and thus different mapreg */
 	if (sc->sc_has_rcba) {
@@ -1030,11 +1036,16 @@ lpcib_gpio_configure(device_t self)
 	/* Is GPIO enabled? */
 	if ((gpio_cntl & LPCIB_PCI_GPIO_CNTL_EN) == 0)
 		return;
-		
-	if (pci_mapreg_map(&sc->sc_pa, base_reg, PCI_MAPREG_TYPE_IO, 0,
-			   &sc->sc_gpio_iot, &sc->sc_gpio_ioh,
-			   NULL, &sc->sc_gpio_ios)) {
-		aprint_error_dev(self, "can't map general purpose i/o space\n");
+	/*
+	 * The GPIO_BASE register is alike PCI BAR but not completely
+	 * compatible with it. The PMBASE define the base address and the type
+	 * but not describe the size.
+	 */
+	rv = pci_mapreg_submap(&sc->sc_pa, base_reg, PCI_MAPREG_TYPE_IO, 0,
+	    LPCIB_PCI_GPIO_SIZE, 0, &sc->sc_gpio_iot, &sc->sc_gpio_ioh,
+	    NULL, &sc->sc_gpio_ios);
+	if (rv != 0) {
+		aprint_error_dev(self, "can't map general purpose i/o space(rv = %d)\n", rv);
 		return;
 	}
 
