@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.304 2014/12/14 01:13:57 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.305 2015/01/16 03:57:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.304 2014/12/14 01:13:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.305 2015/01/16 03:57:52 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -585,14 +585,19 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			fs->fs_fmod = 1;
 #ifdef WAPBL
 			if (fs->fs_flags & FS_DOWAPBL) {
-				printf("%s: replaying log to disk\n",
-				    mp->mnt_stat.f_mntonname);
-				KDASSERT(mp->mnt_wapbl_replay);
+				const char *nm = mp->mnt_stat.f_mntonname;
+				if (!mp->mnt_wapbl_replay) {
+					printf("%s: log corrupted;"
+					    " replay cancelled\n", nm);
+					return EFTYPE;
+				}
+				printf("%s: replaying log to disk\n", nm);
 				error = wapbl_replay_write(mp->mnt_wapbl_replay,
-							   devvp);
+				    devvp);
 				if (error) {
-					DPRINTF(("%s: wapbl_replay_write %d\n",
-					    __func__, error));
+					DPRINTF((
+					    "%s: %s: wapbl_replay_write %d\n",
+					    __func__, nm, error));
 					return error;
 				}
 				wapbl_replay_stop(mp->mnt_wapbl_replay);
