@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.21 2015/01/16 05:50:15 nonaka Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.22 2015/01/16 06:38:27 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.21 2015/01/16 05:50:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.22 2015/01/16 06:38:27 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2151,6 +2151,7 @@ pq3etsec_txq_consume(
 #endif
 			if (m->m_flags & M_HASFCB)
 				m_adj(m, sizeof(struct txfcb));
+			bpf_mtap(ifp, m);
 			ifp->if_opackets++;
 			ifp->if_obytes += m->m_pkthdr.len;
 			if (m->m_flags & M_MCAST)
