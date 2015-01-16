@@ -1,2 +1,2 @@
-# $NetBSD: ad.powerpc,v 1.1.16.1 2014/08/15 08:36:55 msaitoh Exp $
+# $NetBSD: ad.powerpc,v 1.1.16.2 2015/01/16 16:29:10 martin Exp $
 ./usr/bin/fdformat				base-util-bin
