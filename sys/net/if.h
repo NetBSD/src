@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.184 2014/12/15 06:52:25 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.185 2015/01/16 10:37:51 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -86,8 +86,6 @@
 #ifdef _KERNEL
 #include <net/pktqueue.h>
 #endif
-
-//#define NET_MPSAFE 1
 
 /*
  * Always include ALTQ glue here -- we use the ALTQ interface queue
