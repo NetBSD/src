@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.165 2015/01/16 08:52:08 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.166 2015/01/16 14:06:49 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -13899,7 +13899,6 @@ distrib/sets/lists/debug/md.amd64                                  patch
 distrib/sets/lists/debug/md.sparc64                                patch
 distrib/sets/lists/debug/shl.mi                                    patch
 doc/3RDPARTY                                                       patch
-doc/CHANGES                                                        patch
 
 	Import OpenSSL 1.0.1k.
 	This fixes CVE-2014-3571, CVE-2015-0206, CVE-2014-3569, CVE-2014-3572,
