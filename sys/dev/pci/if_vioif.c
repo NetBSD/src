@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.14 2014/12/25 06:39:26 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.15 2015/01/16 10:36:14 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.14 2014/12/25 06:39:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.15 2015/01/16 10:36:14 ozaki-r Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
