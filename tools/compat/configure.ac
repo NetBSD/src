@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.82 2014/06/06 01:40:40 christos Exp $
+#	$NetBSD: configure.ac,v 1.83 2015/01/16 18:44:06 christos Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -160,7 +160,7 @@ AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	pwrite raise_default_signal random setenv \
 	setgroupent setprogname setpassent \
 	snprintb_m snprintf strlcat strlcpy strmode \
-	strndup strnlen strsep strsuftoll strtoll \
+	strndup strnlen strsep strsuftoll strtoi strtoll strtou \
 	user_from_uid uid_from_user vasprintf vasnprintf vsnprintf)
 
 AC_CHECK_DECLS([user_from_uid, uid_from_user, pwcache_userdb],,,[
