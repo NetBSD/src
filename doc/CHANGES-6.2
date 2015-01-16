@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.182 2015/01/04 15:04:31 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.183 2015/01/16 08:41:53 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -8924,4 +8924,62 @@ sys/arch/arm/arm/disassem.c			1.26
 external/bsd/bind/Makefile.inc				parts of 1.16 (patch)
 	Fix static bind build.
 	[he, ticket 1226]
+
+sbin/brconfig/brconfig.8			1.18
+
+	Document the "addr" and "static" commands.
+	[msaitoh, ticket #1228]
+
+sys/arch/x86/pci/ichlpcib.c			1.40, 1.45
+sys/dev/ic/i82801lpcreg.h			1.12
+sys/dev/pci/pci_map.c				1.32
+sys/dev/pci/pcivar.h				1.101
+
+	Fix a bug that ichlpcib(4) maps I/O area incorrectly and then
+	fails to attach gpio. Also relevant to PR#48960.
+	[msaitoh, ticket #1229]
+
+usr.sbin/cpuctl/cpuctl.8			1.9-1.12
+usr.sbin/cpuctl/cpuctl.c			1.22-1.23 and 1.25 via patch
+usr.sbin/cpuctl/cpuctl.h			1.5 via patch
+usr.sbin/cpuctl/arch/cpuctl_i386.h		1.1-1.2
+usr.sbin/cpuctl/arch/i386-asm.S			1.2-1.3
+usr.sbin/cpuctl/arch/i386.c			1.34, 1.36-1.49, 1.51-1.63 via patch
+usr.sbin/cpuctl/arch/x86_64-asm.S		1.3-1.4
+
+	Update cpuctl(8). Microcode and ARM related changes are not included:
+	- Change the i386 asm x86_identify() so it returns a value instead of
+	  writing into global data. Fix a stack alignment fubar that would
+	  cause a crash on a cirix 486. Refactor identify code to common setup
+	  for normal identify and ucode identify - which was missing a
+	  memset().
+	- The Intel and AMD docs (more or less) agree on how the cpuid
+	  'extended family' and 'extended model' bits are used to create
+	  larger values than the original 16bit value allowed for.
+	  Calculate and save these values 'up-front' and use them throughout.
+	  Untangle the (backwards) nested switch statement for amd 'model 15'
+	  cpus.
+	- Use full model number to index name strings - a lot of 256 element
+	  arrays don't matter in usespace.
+	- Add support for the xsave related data from cpuid 8.n.
+	  Reorder the output so that the 'brand' string - which actually
+	  identifies the cpu is output first.
+	- Only complain about binding if we have more than 1 cpu.
+	- Check cpuid leaf 4 for newer Intel CPU to know the cache information.
+	- Support prefetch size.
+	- Print the highest extended info level as the basic info level.
+	- Update URL of AMD's web page.
+	- Add code to detect hypervisor. The code was based from FreeBSD and
+	  ported by Kengo Nakahara.
+	- Add verbose flag.
+	- Add newline if ci_tsc_freq is 0 to not to break the output.
+	- Update Intel's processor family names and models.
+	- Print some more bits.
+	- Add shared TLB
+	- Add prototypes.
+	- Add comments.
+	- Make some functions static.
+	- Sort functions.
+	- KNF.
+	[msaitoh, ticket #1230]
 
