@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.185 2015/01/16 14:26:50 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.186 2015/01/16 19:45:51 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -9472,4 +9472,13 @@ doc/3RDPARTY                                                 patch
 	CVE-2015-0204, CVE-2015-0205, CVE-2014-8275 and CVE-2014-3570.
 	[spz, #1234]
 
+lib/libperfuse/ops.c				1.82
+
+	Fix atime update.
+	[manu, ticket #1235]
+
+sys/fs/puffs/puffs_vnops.c			1.199
+
+	Make sure reads on empty files reach PUFFS filesystems.
+	[manu, ticket #1236]
 
