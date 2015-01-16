@@ -221,7 +221,7 @@ struct ifi_info *get_ifi_info(int family, int doaliases)
     lastlen = 0;
     len = 100 * sizeof(struct ifreq);   /* initial buffer size guess */
     for ( ; ; ) {
-        buf = (char*)malloc(len);
+        buf = calloc(len, 1);
         if (buf == NULL) {
             goto gotError;
         }
