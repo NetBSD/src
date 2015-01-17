@@ -1,10 +1,10 @@
-.\"	$NetBSD: rtsx.4,v 1.2 2014/03/19 17:48:34 wiz Exp $
-.\"	$OpenBSD: rtsx.4,v 1.4 2013/11/06 13:51:02 stsp Exp $
+.\"	$NetBSD: rtsx.4,v 1.2.6.1 2015/01/17 13:44:47 martin Exp $
+.\"	$OpenBSD: rtsx.4,v 1.6 2014/05/18 10:52:17 stsp Exp $
 .\"
 .\" Theo de Raadt, 2006. Public Domain.
 .\" Stefan Sperling, 2012. Public Domain.
 .\"
-.Dd March 19, 2014
+.Dd October 29, 2014
 .Dt RTSX 4
 .Os
 .Sh NAME
@@ -16,7 +16,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Realtek RTS5209 and RTS5229 SD card readers.
+driver provides support for the Realtek RTS5209, RTS5227, RTS5229,
+RTL8402, RTL8411 and RTL8411B SD card readers.
 .Pp
 The
 .Xr sdmmc 4

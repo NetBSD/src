@@ -1,5 +1,6 @@
-/*	$NetBSD: rtsx_pci.c,v 1.2 2014/03/29 19:28:25 christos Exp $	*/
-/*	$OpenBSD: rtsx_pci.c,v 1.4 2013/11/06 13:51:02 stsp Exp $	*/
+/*	$NetBSD: rtsx_pci.c,v 1.2.8.1 2015/01/17 13:44:47 martin Exp $	*/
+/*	$OpenBSD: rtsx_pci.c,v 1.7 2014/08/19 17:55:03 phessler Exp $	*/
+
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -19,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.2 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsx_pci.c,v 1.2.8.1 2015/01/17 13:44:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -71,9 +72,15 @@ rtsx_pci_match(device_t parent, cfdata_t cf, void *aux)
 	    PCI_CLASS(pa->pa_class) != PCI_CLASS_UNDEFINED)
 		return 0;
 
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS5209 ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RTS5229)
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_REALTEK_RTS5209:
+	case PCI_PRODUCT_REALTEK_RTS5227:
+	case PCI_PRODUCT_REALTEK_RTS5229:
+	case PCI_PRODUCT_REALTEK_RTL8402:
+	case PCI_PRODUCT_REALTEK_RTL8411:
+	case PCI_PRODUCT_REALTEK_RTL8411B:
 		return 1;
+	}
 
 	return 0;
 }
@@ -134,9 +141,23 @@ rtsx_pci_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_REALTEK_RTS5209:
 		flags = RTSX_F_5209;
 		break;
+	case PCI_PRODUCT_REALTEK_RTS5227:
+		flags = RTSX_F_5227;
+		break;
 	case PCI_PRODUCT_REALTEK_RTS5229:
-	default:
 		flags = RTSX_F_5229;
+		break;
+	case PCI_PRODUCT_REALTEK_RTL8402:
+		flags = RTSX_F_8402;
+		break;
+	case PCI_PRODUCT_REALTEK_RTL8411:
+		flags = RTSX_F_8411;
+		break;
+	case PCI_PRODUCT_REALTEK_RTL8411B:
+		flags = RTSX_F_8411B;
+		break;
+	default:
+		flags = 0;
 		break;
 	}
 
