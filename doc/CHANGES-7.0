@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.167 2015/01/16 22:28:33 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.168 2015/01/17 12:22:09 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -13914,4 +13914,136 @@ sys/dev/usb/usbdevs_data.h			(regen)
 	Add BUFFALO GX-DVI/U2B DisplayLink USB-DVI box.
 	PR#49105 from MOCHIDA Shuji.
 	[dholland, ticket #420]
+
+distrib/sets/lists/xdebug/mi			1.11
+
+	Fix sets.
+	[bouyer, ticket #421]
+
+lib/libperfuse/ops.c				1.82
+
+	Fix atime updates.
+	[manu, ticket #422]
+
+sys/fs/puffs/puffs_vnops.c			1.199
+
+	Make sure reads on empty files reach PUFFS filesystems.
+	[manu, ticket #423]
+
+tests/fs/vfs/t_vnops.c				1.41
+
+	Mark udf_lookup_complex as an expected failure, referencing
+	PR kern/49033. Since it does not fail reliably, force it to fail
+	to avoid spurious failure reports due to unexpected success.
+	[gson, ticket #424]
+
+sys/arch/i386/stand/boot/boot2.c		1.64
+
+	Restore previous behavior: "boot -s" == "boot netbsd -s"
+	[christos, ticket #426]
+
+distrib/sets/lists/comp/mi			1.1931
+share/man/man9/Makefile				1.380
+share/man/man9/malloc.9				1.50-1.51
+sys/compat/common/compat_util.c			1.46
+sys/compat/common/if_43.c			1.9
+sys/compat/common/kern_time_50.c		1.28
+sys/compat/common/uipc_syscalls_43.c		1.46
+sys/compat/freebsd/freebsd_exec_elf32.c		1.20
+sys/compat/freebsd/freebsd_file.c		1.33
+sys/compat/freebsd/freebsd_ipc.c		1.17
+sys/compat/freebsd/freebsd_misc.c		1.33
+sys/compat/linux/arch/alpha/linux_machdep.c	1.50
+sys/compat/linux/arch/alpha/linux_pipe.c	1.17
+sys/compat/linux/arch/arm/linux_machdep.c	1.32
+sys/compat/linux/arch/arm/linux_ptrace.c	1.18
+sys/compat/linux/arch/i386/linux_machdep.c	1.159
+sys/compat/linux/arch/i386/linux_ptrace.c	1.30
+sys/compat/linux/arch/mips/linux_machdep.c	1.43
+sys/compat/linux/arch/mips/linux_ptrace.c	1.10
+sys/compat/linux/arch/powerpc/linux_machdep.c	1.48
+sys/compat/linux/arch/powerpc/linux_ptrace.c	1.28
+sys/compat/linux/common/linux_exec.c		1.117
+sys/compat/linux/common/linux_exec_aout.c	1.67
+sys/compat/linux/common/linux_fadvise64.c	1.3
+sys/compat/linux/common/linux_fadvise64_64.c	1.3
+sys/compat/linux/common/linux_file.c		1.114
+sys/compat/linux/common/linux_llseek.c		1.34
+sys/compat/linux/common/linux_misc_notalpha.c	1.109
+sys/compat/linux/common/linux_pipe.c		1.67
+sys/compat/linux/common/linux_sched.c		1.67
+sys/compat/linux/common/linux_signal.c		1.76
+sys/compat/linux/common/linux_socket.c		1.120
+sys/compat/linux/common/linux_socketcall.c	1.45
+sys/compat/linux/common/linux_uselib.c		1.33
+sys/compat/linux32/common/linux32_misc.c	1.24
+sys/compat/svr4/svr4_exec_elf32.c		1.15
+sys/compat/svr4/svr4_exec_elf64.c		1.15
+sys/compat/svr4/svr4_fcntl.c			1.74
+sys/compat/svr4/svr4_filio.c			1.24
+sys/compat/svr4/svr4_ioctl.c			1.37
+sys/compat/svr4/svr4_ipc.c			1.27
+sys/compat/svr4/svr4_schedctl.c			1.8
+sys/compat/svr4/svr4_signal.c			1.66
+sys/compat/svr4/svr4_sockio.c			1.36
+sys/compat/svr4/svr4_termios.c			1.28
+sys/compat/svr4/svr4_ttold.c			1.34
+sys/fs/cd9660/cd9660_node.c			1.34
+sys/fs/cd9660/cd9660_util.c			1.12
+sys/fs/puffs/puffs_compat.c			1.3
+sys/fs/puffs/puffs_msgif.c			1.97
+sys/fs/puffs/puffs_node.c			1.36
+sys/fs/puffs/puffs_subr.c			1.67
+sys/fs/puffs/puffs_vfsops.c			1.115
+sys/fs/udf/udf_rename.c				1.11
+sys/fs/udf/udf_rename.c				1.12
+sys/fs/udf/udf_strat_bootstrap.c		1.4
+sys/kern/kern_exec.c				1.410
+sys/miscfs/fdesc/fdesc_vfsops.c			1.91
+sys/miscfs/genfs/layer_subr.c			1.37
+sys/miscfs/genfs/layer_vfsops.c			1.45
+sys/miscfs/nullfs/null_vfsops.c			1.90
+sys/miscfs/overlay/overlay_vfsops.c		1.63
+sys/miscfs/overlay/overlay_vnops.c		1.21
+sys/miscfs/procfs/procfs_subr.c			1.106
+sys/miscfs/procfs/procfs_vfsops.c		1.94
+sys/miscfs/umapfs/umap_subr.c			1.29
+sys/miscfs/umapfs/umap_vfsops.c			1.95
+sys/miscfs/umapfs/umap_vnops.c			1.57
+sys/netinet/if_atm.c				1.34
+sys/netinet/in_pcb.c				1.153
+sys/netinet/raw_ip.c				1.146
+sys/netinet/tcp_output.c			1.179
+sys/netinet/tcp_sack.c				1.30
+sys/netinet/tcp_subr.c				1.257
+sys/netinet/tcp_timer.c				1.88
+sys/netinet/tcp_usrreq.c			1.202
+sys/netinet/tcp_vtw.c				1.12
+sys/netinet6/dest6.c				1.18
+sys/netinet6/in6_ifattach.c			1.94
+sys/netinet6/in6_pcb.c				1.132
+sys/netinet6/ip6_forward.c			1.74
+sys/netinet6/udp6_output.c			1.46
+sys/sys/malloc.h				1.116
+sys/sys/mallocvar.h				1.13
+sys/ufs/chfs/chfs_vfsops.c			1.14
+sys/ufs/chfs/chfs_vnode.c			1.12
+sys/ufs/ext2fs/ext2fs_readwrite.c		1.66
+sys/ufs/ext2fs/ext2fs_vfsops.c			1.186
+sys/ufs/ext2fs/ext2fs_vnops.c			1.115
+
+	Clean up and deadify the malloc API a bit.
+	[maxv, ticket #427]
+
+distrib/evbppc/ramdisk/Makefile			1.19
+
+	Include /dev/bpf for dhcpcd.
+	[joerg, ticket #428]
+
+sys/arch/amiga/amiga/gayle.c			1.8
+
+	Fixed crash of A4000 IDE due to uninitialised bus_space_tag
+	and bus_space handle for the interrupt status register.
+	[phx, ticket #429]
+
 
