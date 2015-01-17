@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.168 2015/01/17 12:22:09 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.169 2015/01/17 13:53:24 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -14046,4 +14046,23 @@ sys/arch/amiga/amiga/gayle.c			1.8
 	and bus_space handle for the interrupt status register.
 	[phx, ticket #429]
 
+share/man/man4/rtsx.4				1.3-1.4
+sys/dev/ic/rtsx.c				1.2
+sys/dev/ic/rtsxreg.h				1.2
+sys/dev/ic/rtsxvar.h				1.2
+sys/dev/pci/rtsx_pci.c				1.3
+
+	Added RTS5227/RTL8402/RTL8411/RTL8411B support.
+	[nonaka, ticket #432]
+
+sys/dev/mii/miidevs				1.121-1.122
+
+	BCM5714 and BCM5780 are used for both copper and fiber.
+	Add Realtek RTL8251.
+	[nonaka, ticket #433]
+
+sys/dev/mii/rgephy.c				1.36-1.37
+
+	Add support for Realtek RTL8251.
+	[nonaka, ticket #434]
 
