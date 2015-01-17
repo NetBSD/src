@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.30.38.1 2014/12/29 16:35:51 martin Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.30.38.2 2015/01/17 12:10:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.30.38.1 2014/12/29 16:35:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.30.38.2 2015/01/17 12:10:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>

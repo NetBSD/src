@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.62 2014/05/25 13:51:25 hannken Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.62.2.1 2015/01/17 12:10:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.62 2014/05/25 13:51:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.62.2.1 2015/01/17 12:10:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.62 2014/05/25 13:51:25 hannken 
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/malloc.h>
 #include <sys/module.h>
 #include <miscfs/overlay/overlay.h>
 #include <miscfs/genfs/layer_extern.h>

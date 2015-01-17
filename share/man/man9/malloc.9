@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.49 2014/05/27 17:12:22 wiz Exp $
+.\"	$NetBSD: malloc.9,v 1.49.2.1 2015/01/17 12:10:55 martin Exp $
 .\"
 .\" Copyright (c) 1996, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 27, 2014
+.Dd December 27, 2014
 .Dt MALLOC 9
 .Os
 .Sh NAME
@@ -36,11 +36,8 @@
 .Nm realloc ,
 .Nm free ,
 .Nm FREE ,
-.Nm malloc_roundup ,
 .Nm malloc_type_attach ,
 .Nm malloc_type_detach ,
-.Nm malloc_type_setlimit ,
-.Nm MALLOC_DEFINE_LIMIT ,
 .Nm MALLOC_DEFINE ,
 .Nm MALLOC_DECLARE
 .Nd general-purpose kernel memory allocator
@@ -53,17 +50,11 @@
     "int flags"
 .Ft void
 .Fn free "void *addr" "struct malloc_type *type"
-.Ft unsigned long
-.Fn malloc_roundup "unsigned long size"
 .Ft void
 .Fn malloc_type_attach "struct malloc_type *type"
 .Ft void
 .Fn malloc_type_detach "struct malloc_type *type"
-.Ft void
-.Fn malloc_type_setlimit "struct malloc_type *type" "unsigned long limit"
 .In sys/mallocvar.h
-.Fn MALLOC_DEFINE_LIMIT "type" "shortdesc" "longdesc" "limit"
-.Fn MALLOC_JUSTDEFINE_LIMIT "type" "shortdesc" "longdesc" "limit"
 .Fn MALLOC_DEFINE "type" "shortdesc" "longdesc"
 .Fn MALLOC_JUSTDEFINE "type" "shortdesc" "longdesc"
 .Fn MALLOC_DECLARE "type"
@@ -82,8 +73,6 @@ The
 function allocates uninitialized memory in kernel address space for an
 object whose size is specified by
 .Fa size .
-.Fn malloc_roundup
-returns the actual size of the allocation unit for the given value.
 .Fn free
 releases memory at address
 .Fa addr
@@ -195,7 +184,7 @@ In addition to some built-in generic types defined by the kernel
 memory allocator, subsystems may define their own types.
 .Pp
 The
-.Fn MALLOC_DEFINE_LIMIT
+.Fn MALLOC_DEFINE
 macro defines a malloc type named
 .Fa type
 with the short description
@@ -207,20 +196,9 @@ The
 argument, also a constant string, is intended as way to place a
 comment in the actual type definition, and is not currently stored
 in the type structure.
-The
-.Fa limit
-argument specifies the maximum amount of memory, in bytes, that this
-malloc type can consume.
-.Pp
-The
-.Fn MALLOC_DEFINE
-macro is equivalent to the
-.Fn MALLOC_DEFINE_LIMIT
-macro with a
-.Fa limit
-argument of 0.
-If kernel memory statistics are being gathered, the system will
-choose a reasonable default limit for the malloc type.
+If kernel memory statistics are being
+gathered, the system will choose a reasonable default limit for
+the malloc type.
 .Pp
 The
 .Fn MALLOC_DECLARE
@@ -251,15 +229,6 @@ function detaches the malloc type
 .Fa type
 previously attached with
 .Fn malloc_type_attach .
-.Pp
-The
-.Fn malloc_type_setlimit
-function sets the memory limit of the malloc type
-.Fa type
-to
-.Fa limit
-bytes.
-The type must already be registered with the kernel memory allocator.
 .Pp
 The following generic malloc types are currently defined:
 .Pp

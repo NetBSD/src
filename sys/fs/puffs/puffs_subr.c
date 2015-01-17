@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.66 2008/11/16 19:34:30 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.66.42.1 2015/01/17 12:10:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -29,11 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.66 2008/11/16 19:34:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.66.42.1 2015/01/17 12:10:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/poll.h>

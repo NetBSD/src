@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fadvise64_64.c,v 1.2 2014/05/06 18:17:22 njoly Exp $	*/
+/*	$NetBSD: linux_fadvise64_64.c,v 1.2.2.1 2015/01/17 12:10:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fadvise64_64.c,v 1.2 2014/05/06 18:17:22 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fadvise64_64.c,v 1.2.2.1 2015/01/17 12:10:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_fadvise64_64.c,v 1.2 2014/05/06 18:17:22 njoly
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
-#include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/tty.h>

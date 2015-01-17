@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.93.2.1 2014/08/21 09:05:45 martin Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.93.2.2 2015/01/17 12:10:54 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.93.2.1 2014/08/21 09:05:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.93.2.2 2015/01/17 12:10:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.93.2.1 2014/08/21 09:05:45 martin 
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/malloc.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
 

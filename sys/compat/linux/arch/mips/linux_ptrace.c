@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.9 2008/11/12 12:36:10 ad Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.9.42.1 2015/01/17 12:10:55 martin Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.9 2008/11/12 12:36:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.9.42.1 2015/01/17 12:10:55 martin Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>

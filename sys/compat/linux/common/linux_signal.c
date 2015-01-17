@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.75 2011/11/18 17:36:06 christos Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.75.26.1 2015/01/17 12:10:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.75 2011/11/18 17:36:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.75.26.1 2015/01/17 12:10:54 martin Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.75 2011/11/18 17:36:06 christos E
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/malloc.h>
 #include <sys/wait.h>
 
 #include <sys/syscallargs.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.28 2009/03/15 17:22:38 cegger Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.28.38.1 2015/01/17 12:10:54 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.28 2009/03/15 17:22:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.28.38.1 2015/01/17 12:10:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.28 2009/03/15 17:22:38 cegger Exp $"
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/malloc.h>
 #include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
