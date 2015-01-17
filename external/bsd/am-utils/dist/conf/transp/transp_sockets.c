@@ -1,4 +1,4 @@
-/*	$NetBSD: transp_sockets.c,v 1.1.1.3 2015/01/17 16:34:16 christos Exp $	*/
+/*	$NetBSD: transp_sockets.c,v 1.2 2015/01/17 17:46:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2014 Erez Zadok
@@ -420,7 +420,6 @@ u_long
 get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const char *proto, u_long def)
 {
   CLIENT *clnt;
-  int again = 0;
   enum clnt_stat clnt_stat;
   struct timeval tv;
   int sock;
@@ -435,7 +434,6 @@ get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const c
       nfs_version = def;
     else
       nfs_version = NFS_VERS_MAX;
-    again = 1;
   }
   tv.tv_sec = 2;		/* retry every 2 seconds, but also timeout */
   tv.tv_usec = 0;

@@ -1,3 +1,365 @@
+2015-01-17  Christos Zoulas <christos@zoulas.com>
+
+	* Move libtool macro functions from m4/macros to m4 and delete
+	  the repository copies. Makes am-utils work with libtool-2.4.4
+	  and fixes the serial number warnings (raven at themaw.net)
+
+2014-10-28  Christos Zoulas <christos@zoulas.com>
+
+	*******************************************************************
+	*** Released am-utils-6.2					***
+	*******************************************************************
+
+	* add ylwrap.amd, sick and tired of patching broken ylwrap.
+
+2014-09-05  Christos Zoulas <christos@zoulas.com>
+
+	* factor out the size check for both readdir methods
+	  (raven at themaw.net)
+
+2014-09-03  Christos Zoulas <christos@zoulas.com>
+
+	* configure test for 64 bit xdr function (raven at themaw.net)
+
+2014-09-01  Christos Zoulas <christos@zoulas.com>
+
+	* bug fix from raven at themaw.net to prevent writing v3 handle
+	  to a v2 structure.
+
+2014-07-21  Christos Zoulas <christos@zoulas.com>
+
+	* fix permission problems with access
+	* auto_nfs_version = 3 now works for me.
+
+2014-07-20  Christos Zoulas <christos@zoulas.com>
+
+	* refresh some autoconf files
+	* force autoconf version since earlier versions don't work
+	* changes from raven at themaw.net to support NFSv3 for automounted
+	  toplevel filesystems presented to the list in May. A few bug fixes
+	  and integration changes by me. The code now works well enough to
+	  mount the filesystem with NFSv3 and automount children but readdir
+	  does not work yet (so no listing of automounted filesystems).
+	  The new code is not enabled by default. To enable use
+		auto_nfs_version = 3
+	  in your configuration file.
+
+2014-03-26  Christos Zoulas <christos@zoulas.com>
+
+	From Ian Kent <ikent@redhat.com>
+
+	* use mktemp in scripts/fixrmtab
+	* fix documentatio nits
+	* [linux] Add ext2, ext3, ext4 specific mount options
+	* fix tcpwrappers (hosts.{allow,deny} problems for specific host
+	  entries
+
+2014-03-20  Christos Zoulas <christos@zoulas.com>
+
+
+	* don't background autofs umount
+	* avoid fh NULL dereference on umount
+	* handle ENOENT umount return for autofs mounts
+	* fix error message in get_nfs_version
+	* fix debug log deadlock
+	* [linux] retry umount on EBUSY
+	* handle failed umount on exit
+
+2014-03-09  Christos Zoulas <christos@zoulas.com>
+
+	* Remove BSD advertising clause.
+	* Remove expn program which is not used by anything
+
+2013-12-05  Christos Zoulas <christos@zoulas.com>
+
+	* Change the way we handle multiple lex scanners and yacc parsers
+	  in a single program. Our old patch to ylwrap does not work anymore
+	  because the bison parsers need shared symbols that start with yy
+	  and we can't easily select which ones work. So now we use -P and
+	  -p to let lex and yacc do the work for us. This requires a patch
+	  to ylwrap, but it is smaller.
+
+
+2013-12-05  Christos Zoulas <christos@zoulas.com>
+
+	* Change the way we handle multiple lex scanners and yacc parsers
+	  in a single program. Our old patch to ylwrap does not work anymore
+	  because the bison parsers need shared symbols that start with yy
+	  and we can't easily select which ones work. So now we use -P and
+	  -p to let lex and yacc do the work for us. This requires a patch
+	  to ylwrap, but it is smaller.
+
+2013-05-14  Christos Zoulas <christos@zoulas.com>
+
+	* update to handle new autoconf and regen files
+
+2012-11-23  Christos Zoulas <christos@zoulas.com>
+
+	* recognize mountport=, noacl options
+	* simplify the bootstrap process, by forcing
+	  all the files to be rebuild with autoreconf -f - i
+
+2012-10-03  Christos Zoulas <christos@zoulas.com>
+
+	* add missing ops_nfs4.c to the Makefile.am
+
+2012-09-14  Christos Zoulas <christos@zoulas.com>
+
+	* add locking option handling for lustre
+	* fix noatime, nodiratime, mandlock for linux
+
+2012-07-25  Christos Zoulas <christos@zoulas.com>
+
+	* bug fixes for lustre rhost parsing
+
+2012-06-27  Christos Zoulas <christos@zoulas.com>
+
+	* Disable 1/2-baked sun map support to avoid SIGSEGV
+
+2012-06-16  Christos Zoulas <christos@zoulas.com>
+
+	*******************************************************************
+	*** Released am-utils-6.2-rc1					***
+	*******************************************************************
+
+	* Fix libtool.m4 to work with later versions of autoconf.
+	* In buildall, use eval so that quoted strings work
+	* Centralize nfs version checking function, and introduce
+	  new configuration variable nfs_vers_ping, which is the
+	  max version we ping for. This is not documented yet, because
+	  there might be a better way separate the max version we can
+	  use vs the max version we ping for.
+
+2012-06-09  Christos Zoulas <christos@zoulas.com>
+
+	* fix issue with parsing nfsv4 security option strings
+
+2012-05-01  Christos Zoulas <christos@zoulas.com>
+
+	* Handle EPERM return from v4 file handles
+	  in old linux kernels
+
+2012-03-09  Christos Zoulas <christos@zoulas.com>
+
+	* fix linux autofs detection
+	* fix wrong types in new amq mount xdr processing
+
+2012-01-25  Christos Zoulas <christos@zoulas.com>
+
+	* FreeBSD portability fixes
+
+2012-01-23  Christos Zoulas <christos@zoulas.com>
+
+	* Avoid type punned warnings
+
+2011-12-29  Christos Zoulas <christos@zoulas.com>
+
+	* fix bug I introduced in get_nfs_version that caused it to return 0
+	* add direct support for ext{2,3,4}
+
+2011-12-15  Christos Zoulas <christos@zoulas.com>
+
+	* Include <linux/fs.h> on linux, to grab extra mount flags
+	* Add support for lustre
+
+2011-11-28  Christos Zoulas <christos@zoulas.com>
+
+	* For nfsl mounts, match against either the short local
+	  host name or the fqdn name.
+
+2011-10-06  Christos Zoulas <christos@zoulas.com>
+
+	* Add NFSv4 support (loosely based on Ramya's code).
+	  Currently if the NFSv4 mount fails with ENOENT we fail
+	  back to NFSv3, unless -DNO_FALLBACK.
+	* Replace strdup with xstrdup. It is not nice to replace
+	  system functions with ones that behave differently.
+	* Add various consistency checks (caller function checks
+	  variable for NULL, but callee does not).
+	* Fix error handling in various paths.
+	* Don't check before using XFREE(). free(NULL) works.
+
+2011-09-15  Christos Zoulas <christos@zoulas.com>
+
+	* amq -i addition (prints info about the map files)
+
+2011-09-14  Christos Zoulas <christos@zoulas.com>
+
+	* Solaris OS and compiler fixes from:
+		Hofmann, Frank <Frank.Hofmann@morganstanley.com>
+		Sayle, Alex <Alex.Sayle@morganstanley.com>
+	  - (void)&var generates warnings, removed
+	  - __inline is invalid, changed with inline
+	  - <sys/socket.h> and other headers have extra dependendcies
+			`
+2011-08-11  Christos Zoulas <christos@zoulas.com>
+
+	* fix potential buffer overflow in expand_error()
+	  (Richard Kettlewell). Does not seem to be exploitable.
+
+	* simplify %option parsing to appease ancient flex.
+
+2011-06-21  Christos Zoulas <christos@zoulas.com>
+
+	* add support for linux autofs version 5 (untested)
+
+2011-06-18  Christos Zoulas <christos@zoulas.com>
+
+	* roll back to an older version of libtool that works
+
+	* newer versions of config.guess and config.sub
+
+	* minor fixes to buildall
+
+2011-05-19  Christos Zoulas <christos@zoulas.com>
+
+	* m4/macros/libtool.m4: for AIX AC_LANG_PROGRAM is incorrectly
+	  used and the latest autoconf gives an error. For now just
+	  quote it.
+
+	* configure.in: Fedora Core 15 and RedHat 6 now don't define
+	  af_family_t in <linux/socket.h>, but in <bits/sockaddr.h>.
+	  Include <sys/socket.h> so that we get <bits/sockaddr.h>
+	  indirectly. This caused the <linux/nfs_mount.h> detection
+	  test to fail.
+
+2010-11-24  Erez Zadok  <ezk@fsl.cs.sunysb.edu>
+
+	* m4/macros/os_cflags.m4: for linux, define _GNU_SOURCE (to get
+	definitions for O_LARGEFILE and more).
+
+2010-11-20  Christos Zoulas <christos@zoulas.com>
+
+	* Update news items, add release readme, mark as rc1
+
+	* Fix addopts code to work with options that are key=value
+	  when the built-in hasmntopt() code is not used. The problem
+	  was that the code passed "key=" to hasmntopt not "key".
+
+2009-12-10  Christos Zoulas <christos@zoulas.com>
+
+	* Copy all fields of the am_opts structure
+	  When we introduced am_loc we also added a function to
+	  create a duplicate of an am_opts structure. As it turns
+	  out, that only made a partial copy of the struct and some
+	  fields (e.g. opt_cache) was left blank in the new structure.
+	  Unfortunately any code that was checking the options
+	  through the mntfs structure was mislead by the partial
+	  copy: caching was disabled completely, for example, and
+	  since browsing relies on caching being enabled it wasn't
+	  working either.
+	  From: Krisztian Kovacs <Kris.Kovacs@morganstanley.com>
+
+	* Initialize RPC authentication flavor to AUTH_UNIX instead
+	  of zero. RHEL 5 uses version 6 of the mount_arg structure
+	  that includes the desired RPC authorization flavour.
+	  Unfortunately amd initializes that value to zero, meaning
+	  AUTH_NULL, resulting in all NFS servers denying operations.
+	  From: Krisztian Kovacs <Kris.Kovacs@morganstanley.com>
+
+	* Make sure to remove nodes in the proper order when going
+	  down. Depending on what order the nodes got created it's
+	  possible that the parent of a node has a bigger am_mapno
+	  (index in exported_ap[]) so that it gets freed before
+	  its child while the child's am_parent pointer is still
+	  pointing to the already freed block of memory.
+	  This change makes sure that umount_exported() cleans up
+	  all children of a node first before freeing the node.
+	  From: Krisztian Kovacs <Kris.Kovacs@morganstanley.com>
+
+	* Fix Linux-specific stuff in ops_tmpfs.c
+	  AUTOFS_TMPFS_FS_FLAGS is defined only in the Linux-specific
+	  conf_linux.c file, so it cannot be built on Solaris.
+	  From: Krisztian Kovacs <Kris.Kovacs@morganstanley.com>
+
+        * Add missing parenthesis to fix defined(XXX
+	  From: Krisztian Kovacs <Kris.Kovacs@morganstanley.com>
+
+	* In the previous commit we've already made a change that
+	  makes this code unnecessary since the node is returned
+	  even if the backing file server is known to be down.
+	  Since the code path is unused it should be removed.
+	  From: Krisztian Kovacs <Kris.Kovacs@morganstanley.com>
+
+	* amfs_generic_lookup_child() tries to find an alternate
+	  file server if it detects that the current one is down.
+	  However, in the comparison used to decide if a possible
+	  mount is the same as the current one it compares the am_loc
+	  pointers instead of the actual mntfs pointers. Since
+	  amfs_lookup_one_location() creates a brand new am_loc
+	  structure for the returned mntfs structure the am_loc
+	  pointer will be different even if the mntfs it's pointing
+	  to is the same.
+	  This tricks amfs_generic_lookup_child() think it has
+	  found an alternate file server while it hasn't and thus
+	  starts multiple racing mounts for the very same node and
+	  mntfs.
+	  From: Krisztian Kovacs <Kris.Kovacs@morganstanley.com>
+
+	* In the new am_loc scheme mounted mntfs structures still
+	  have their mf_fo structure left intact. So when restart
+	  creates a fake mntfs for an already mounted filesystem it
+	  should not free mf_fo right away.
+	  From: Krisztian Kovacs <Kris.Kovacs@morganstanley.com>
+
+	* Setting the error flag of the mntfs for which the share
+	  is already mounted results in the mount point not being
+	  removed when it times out. (Amd considers it an error
+	  mntfs and thus umount becomse a no-op.)
+	  From: Krisztian Kovacs <Kris.Kovacs@morganstanley.com>
+
+	* Right now AMD sets all timeout values to their defaults
+	  even if you explicitly set them to zero. This patch
+	  introduces separate flags that store if the respective
+	  values have been set and the code path setting default
+	  values checks these flags instead of testing the values
+	  for zero. [Linux only]
+	  From: Krisztian Kovacs <Kris.Kovacs@morganstanley.com>
+
+	* Fix mntfs related lookup/(un)mount race conditions, by
+	  introducing a new structure linking an mntfs to a node.
+	  From: Krisztian Kovacs <Kris.Kovacs@morganstanley.com>
+
+	* We have to free the buffers allocated by the XDR routines when
+	  decoding the mount response after copying them to their final place.
+	  From: Krisztian Kovacs <Kris.Kovacs@morganstanley.com>
+
+2009-12-09  Christos Zoulas <christos@zoulas.com>
+
+	* Free continuation in amfs_retry() if we don't call amfs_bgmount()
+	  Normally it's amfs_bgmount() which frees the continuation. However, if
+	  the mount is already in progress and we're in amfs_retry() for another
+	  node we don't try mounting the filesystem once again. Still, we have
+	  to free the continuation as we won't get called again and thus would
+	  leak the continuation structure and our am_loc references.
+	  From: Krisztian Kovacs <Kris.Kovacs@morganstanley.com>
+
+	* Fix use-after-free and double free of mntfs private data
+	  ops_nfs.c(nfs_init) does not clear private data pointer after free().
+	  This leads to use-after-free and double free in case mount() fails.
+	  (found by valgrind)
+	  From: Krisztian Kovacs <Kris.Kovacs@morganstanley.com>
+
+2009-11-23  Christos Zoulas <christos@zoulas.com>
+
+	* The temporary filename buffer was leaked in lock_mtab().
+	  From: Krisztian Kovacs <Kris.Kovacs@morganstanley.com>
+
+2009-10-27  Christos Zoulas <christos@zoulas.com>
+
+	* Deal with errno.h->sys/errno.h better
+
+2009-10-26  Christos Zoulas <christos@zoulas.com>
+
+	* Fix issue with autoconf 2.63
+
+	* Fix compile warnings for gcc-4.4.x
+
+2009-04-15  Christos Zoulas <christos@zoulas.com>
+
+	* Share the LDAP connection between different maps to save resources
+	  on the LDAP server. (Olaf Flebbe <o.flebbe@science-computing.de>)
+
 2009-03-20  Christos Zoulas <christos@zoulas.com>
 
 	* Fix largefile re-definitions
