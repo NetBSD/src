@@ -1,8 +1,8 @@
-/*	$NetBSD: autofs_solaris_v1.c,v 1.1.1.2 2009/03/20 20:26:51 christos Exp $	*/
+/*	$NetBSD: autofs_solaris_v1.c,v 1.1.1.3 2015/01/17 16:34:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Ion Badulescu
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,11 +19,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -208,7 +204,7 @@ autofs_mount_1_req(struct mntrequest *m,
     goto out;
   }
 
-  mf = mp->am_mnt;
+  mf = mp->am_al->al_mnt;
   isdirect = (mf->mf_fsflags & FS_DIRECT) ? 1 : 0;
   ap = mf->mf_ops->lookup_child(mp, m->name + isdirect, &err, VLOOK_CREATE);
   if (ap && err < 0)
@@ -375,7 +371,7 @@ autofs_get_fh(am_node *mp)
 {
   autofs_fh_t *fh;
   char buf[MAXHOSTNAMELEN];
-  mntfs *mf = mp->am_mnt;
+  mntfs *mf = mp->am_al->al_mnt;
   struct utsname utsname;
 
   plog(XLOG_DEBUG, "autofs_get_fh for %s", mp->am_path);
@@ -392,7 +388,7 @@ autofs_get_fh(am_node *mp)
     xstrlcat(buf, ".autofs", sizeof(buf));
   }
 #ifdef HAVE_AUTOFS_ARGS_T_ADDR
-  fh->addr.buf = strdup(buf);
+  fh->addr.buf = xstrdup(buf);
   fh->addr.len = fh->addr.maxlen = strlen(buf);
 #endif /* HAVE_AUTOFS_ARGS_T_ADDR */
 
@@ -519,7 +515,7 @@ autofs_mount_fs(am_node *mp, mntfs *mf)
   if (target[0] != '/')
     target2 = str3cat(NULL, mp->am_parent->am_path, "/", target);
   else
-    target2 = strdup(target);
+    target2 = xstrdup(target);
 
   plog(XLOG_INFO, "autofs: converting from link to lofs (%s -> %s)", mp->am_path, target2);
   /*
@@ -608,7 +604,7 @@ autofs_umount_succeeded(am_node *mp)
 		       (SVC_IN_ARG_TYPE) &res))
       svcerr_systemerr(transp);
 
-    dlog("Quick reply sent for %s", mp->am_mnt->mf_mount);
+    dlog("Quick reply sent for %s", mp->am_al->al_mnt->mf_mount);
     XFREE(transp);
     mp->am_transp = NULL;
   }
@@ -632,7 +628,7 @@ autofs_umount_failed(am_node *mp)
 		       (SVC_IN_ARG_TYPE) &res))
       svcerr_systemerr(transp);
 
-    dlog("Quick reply sent for %s", mp->am_mnt->mf_mount);
+    dlog("Quick reply sent for %s", mp->am_al->al_mnt->mf_mount);
     XFREE(transp);
     mp->am_transp = NULL;
   }
@@ -659,7 +655,7 @@ autofs_mount_succeeded(am_node *mp)
 		       (SVC_IN_ARG_TYPE) &res))
       svcerr_systemerr(transp);
 
-    dlog("Quick reply sent for %s", mp->am_mnt->mf_mount);
+    dlog("Quick reply sent for %s", mp->am_al->al_mnt->mf_mount);
     XFREE(transp);
     mp->am_transp = NULL;
   }
@@ -692,7 +688,7 @@ autofs_mount_failed(am_node *mp)
 		       (SVC_IN_ARG_TYPE) &res))
       svcerr_systemerr(transp);
 
-    dlog("Quick reply sent for %s", mp->am_mnt->mf_mount);
+    dlog("Quick reply sent for %s", mp->am_al->al_mnt->mf_mount);
     XFREE(transp);
     mp->am_transp = NULL;
   }

@@ -1,7 +1,7 @@
-/*	$NetBSD: fsinfo.h,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
+/*	$NetBSD: fsinfo.h,v 1.1.1.3 2015/01/17 16:34:17 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -106,7 +102,7 @@ extern void show_area_being_processed(char *area, int n);
 extern void show_new(char *msg);
 extern void warning(void);
 
-extern int yyerror(const char *fmt, ...)
+extern int fsi_error(const char *fmt, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
 extern void domain_strip(char *otherdom, char *localdom);
 /*
@@ -117,7 +113,7 @@ extern void domain_strip(char *otherdom, char *localdom);
 #ifndef yywrap
 extern int yywrap(void);
 #endif /* not yywrap */
-extern int yyparse(void);
+extern int fsi_parse(void);
 extern int write_atab(qelem *q);
 extern int write_bootparams(qelem *q);
 extern int write_dumpset(qelem *q);
@@ -126,7 +122,7 @@ extern int write_fstab(qelem *q);
 extern void col_cleanup(int eoj);
 extern void set_host(host *hp, int k, char *v);
 extern void set_ether_if(ether_if *ep, int k, char *v);
-extern int yylex(void);
+extern int fsi_lex(void);
 
 
 #define	BITSET(m,b)	((m) |= (1<<(b)))

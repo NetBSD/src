@@ -18,7 +18,7 @@ case "${host_os}" in
 		ac_cv_recvfrom_fromlen="int" ;;
 	macosx* )
 		ac_cv_recvfrom_fromlen="socklen_t" ;;
-	netbsd* )
+	*bsd* )
 		ac_cv_recvfrom_fromlen="socklen_t" ;;
 	* )
 		ac_cv_recvfrom_fromlen="int" ;;

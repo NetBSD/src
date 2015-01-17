@@ -1,7 +1,7 @@
-/*	$NetBSD: opts.c,v 1.1.1.2 2009/03/20 20:26:50 christos Exp $	*/
+/*	$NetBSD: opts.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -541,7 +537,7 @@ eval_selectors(char *opts, char *mapkey)
   char *f;
   int ret = 0;
 
-  o = old_o = strdup(opts);
+  o = old_o = xstrdup(opts);
 
   /*
    * For each user-specified option
@@ -572,7 +568,7 @@ eval_selectors(char *opts, char *mapkey)
       /* null-terminate the argument  */
       *arg++ = '\0';
       fx = strchr(arg, ')');
-      if (!arg || fx == arg) {
+      if (fx == NULL || fx == arg) {
 	plog(XLOG_USER, "key %s: Malformed function in \"%s\"", mapkey, f);
 	continue;
       }
@@ -608,8 +604,10 @@ eval_selectors(char *opts, char *mapkey)
       }
     } else {
       if (eq[1] == '\0' || eq == f) {
-	/* misformed selector */
+#ifdef notdef
+	/* We allow empty assignments */
 	plog(XLOG_USER, "key %s: Bad selector \"%s\"", mapkey, f);
+#endif
 	continue;
       }
     }
@@ -970,9 +968,7 @@ f_true(char *arg)
 static void
 free_op(opt_apply *p, int b)
 {
-  if (*p->opt) {
-    XFREE(*p->opt);
-  }
+  XFREE(*p->opt);
 }
 
 
@@ -1300,7 +1296,7 @@ out:
    * Handle common case - no expansion
    */
   if (cp == opt) {
-    opt = strdup(cp);
+    opt = xstrdup(cp);
   } else {
     /*
      * Finish off the expansion
@@ -1316,7 +1312,7 @@ out:
     /*
      * Save the expansion
      */
-    opt = strdup(expbuf);
+    opt = xstrdup(expbuf);
   }
 
   normalize_slash(opt);
@@ -1378,6 +1374,45 @@ free_opts(am_opts *fo)
    * Free previously allocated memory
    */
   apply_opts(free_op, to_free, FALSE);
+}
+
+am_opts *
+copy_opts(am_opts *old)
+{
+  am_opts *newopts;
+  newopts = CALLOC(struct am_opts);
+
+#define _AM_OPT_COPY(field) do { \
+    if (old->field) \
+      newopts->field = xstrdup(old->field); \
+  } while (0)
+
+  _AM_OPT_COPY(fs_glob);
+  _AM_OPT_COPY(fs_local);
+  _AM_OPT_COPY(fs_mtab);
+  _AM_OPT_COPY(opt_dev);
+  _AM_OPT_COPY(opt_delay);
+  _AM_OPT_COPY(opt_dir);
+  _AM_OPT_COPY(opt_fs);
+  _AM_OPT_COPY(opt_group);
+  _AM_OPT_COPY(opt_mount);
+  _AM_OPT_COPY(opt_opts);
+  _AM_OPT_COPY(opt_remopts);
+  _AM_OPT_COPY(opt_pref);
+  _AM_OPT_COPY(opt_cache);
+  _AM_OPT_COPY(opt_rfs);
+  _AM_OPT_COPY(opt_rhost);
+  _AM_OPT_COPY(opt_sublink);
+  _AM_OPT_COPY(opt_type);
+  _AM_OPT_COPY(opt_mount_type);
+  _AM_OPT_COPY(opt_unmount);
+  _AM_OPT_COPY(opt_umount);
+  _AM_OPT_COPY(opt_user);
+  _AM_OPT_COPY(opt_maptype);
+  _AM_OPT_COPY(opt_cachedir);
+  _AM_OPT_COPY(opt_addopts);
+
+  return newopts;
 }
 
 

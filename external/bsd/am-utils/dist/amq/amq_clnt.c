@@ -1,7 +1,7 @@
-/*	$NetBSD: amq_clnt.c,v 1.1.1.2 2009/03/20 20:26:50 christos Exp $	*/
+/*	$NetBSD: amq_clnt.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -110,7 +106,7 @@ amqproc_sync_umnt_1(amq_string *argp, CLIENT *clnt)
   memset((char *) &res, 0, sizeof(res));
   if ((rv = clnt_call(clnt, AMQPROC_SYNC_UMNT,
 		(XDRPROC_T_TYPE) xdr_amq_string, (SVC_IN_ARG_TYPE) argp,
-		(XDRPROC_T_TYPE) xdr_amq_sync_umnt, &res,
+		(XDRPROC_T_TYPE) xdr_amq_sync_umnt, (SVC_IN_ARG_TYPE) &res,
 		TIMEOUT)) != RPC_SUCCESS) {
     return (NULL);
   }
@@ -174,6 +170,20 @@ amqproc_getmntfs_1(voidp argp, CLIENT *clnt)
   memset((char *) &res, 0, sizeof(res));
   if (clnt_call(clnt, AMQPROC_GETMNTFS, (XDRPROC_T_TYPE) xdr_void, argp,
 		(XDRPROC_T_TYPE) xdr_amq_mount_info_list,
+		(SVC_IN_ARG_TYPE) &res, TIMEOUT) != RPC_SUCCESS) {
+    return (NULL);
+  }
+  return (&res);
+}
+
+amq_map_info_list *
+amqproc_getmapinfo_1(voidp argp, CLIENT *clnt)
+{
+  static amq_map_info_list res;
+
+  memset((char *) &res, 0, sizeof(res));
+  if (clnt_call(clnt, AMQPROC_GETMAPINFO, (XDRPROC_T_TYPE) xdr_void, argp,
+		(XDRPROC_T_TYPE) xdr_amq_map_info_list,
 		(SVC_IN_ARG_TYPE) &res, TIMEOUT) != RPC_SUCCESS) {
     return (NULL);
   }
