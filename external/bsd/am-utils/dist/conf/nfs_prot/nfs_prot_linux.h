@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_linux.h,v 1.1.1.2 2009/03/20 20:26:51 christos Exp $	*/
+/*	$NetBSD: nfs_prot_linux.h,v 1.1.1.3 2015/01/17 16:34:16 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -265,6 +261,48 @@ struct nfs_args {
   char			context[256 + 1];/* 6 */
 };
 typedef struct nfs_args nfs_args_t;
+
+#define	NFS4_MOUNT_VERSION	1
+
+struct nfs_string {
+  unsigned int len;
+  char *data;
+};
+
+struct nfs4_args {
+  int 			version;	/* 1 */
+  int			flags;		/* 1 */
+  int			rsize;		/* 1 */
+  int			wsize;		/* 1 */
+  int			timeo;		/* 1 */
+  int			retrans;	/* 1 */
+  int			acregmin;	/* 1 */
+  int			acregmax;	/* 1 */
+  int			acdirmin;	/* 1 */
+  int			acdirmax;	/* 1 */
+  struct nfs_string	client_addr;	/* 1 */
+  struct nfs_string	mnt_path;	/* 1 */
+  struct nfs_string	hostname;	/* 1 */
+  unsigned int		host_addrlen;	/* 1 */
+  struct sockaddr      *host_addr;	/* 1 */
+  int 			proto;		/* 1 */
+  int 			auth_flavourlen;/* 1 */
+  int 		       *auth_flavours;	/* 1 */
+};
+
+typedef struct nfs4_args nfs4_args_t;
+
+/* HACK: these are not defined on Linux but we still need them
+ * internally.  We have to be able to differentiate between having a
+ * timeout value set to zero and not having the option at all. These
+ * flags are masked off before passing the nfs_args structure to
+ * mount2() */
+
+#define MNT2_NFS_OPT_ACREGMIN 0x10000
+#define MNT2_NFS_OPT_ACREGMAX 0x20000
+#define MNT2_NFS_OPT_ACDIRMIN 0x40000
+#define MNT2_NFS_OPT_ACDIRMAX 0x80000
+#define MNT2_NFS_OPT_FLAGMASK 0xFFFF
 
 /*
  * Missing definitions on redhat alpha linux

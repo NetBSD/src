@@ -1,7 +1,7 @@
-/*	$NetBSD: info_exec.c,v 1.1.1.2 2009/03/20 20:26:49 christos Exp $	*/
+/*	$NetBSD: info_exec.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -212,7 +208,7 @@ exec_parse_qanswer(mnt_map *m, int fd, char *map, char *key, char **pval, time_t
     if (m->cfm && (m->cfm->cfm_flags & CFM_SUN_MAP_SYNTAX))
       dc = sun_entry2amd(key, cp);
     else
-      dc = strdup(cp);
+      dc = xstrdup(cp);
     *pval = dc;
     dlog("%s returns %s", key, dc);
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_union.c,v 1.1.1.2 2009/03/20 20:26:49 christos Exp $	*/
+/*	$NetBSD: amfs_union.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -97,7 +93,7 @@ create_amfs_union_node(char *dir, opaque_t arg)
     am_node *am;
     am = amfs_generic_lookup_child(arg, dir, &error, VLOOK_CREATE);
     if (am && error < 0)
-      am = amfs_generic_mount_child(am, &error);
+      (void)amfs_generic_mount_child(am, &error);
     if (error > 0) {
       errno = error;		/* XXX */
       plog(XLOG_ERROR, "unionfs: could not mount %s: %m", dir);
@@ -123,9 +119,9 @@ amfs_union_mounted(mntfs *mf)
   for (mp = get_first_exported_ap(&index);
        mp;
        mp = get_next_exported_ap(&index)) {
-    if (mp->am_mnt == mf) {
+    if (mp->am_al->al_mnt == mf) {
       /* return value from create_amfs_union_node is ignored by mapc_keyiter */
-      (void) mapc_keyiter((mnt_map *) mp->am_mnt->mf_private,
+      (void) mapc_keyiter((mnt_map *) mp->am_al->al_mnt->mf_private,
 			  create_amfs_union_node,
 			  mp);
       break;

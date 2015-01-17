@@ -12,8 +12,8 @@
 # change to the right directory
 test -f ../config.guess && cd ..
 test -f ../../config.guess && cd ../..
-pwd=`pwd`
-host_alias=`(cd /tmp; $pwd/config.guess.long)`
+pwd=$(pwd)
+host_alias=$(cd /tmp; $pwd/config.guess.long)
 if test -z "$host_alias" ; then
 	echo "$0: must run from the source or the A. directory."
 	echo "$0: cannot find $pwd/config.guess"
@@ -244,7 +244,7 @@ done
 
 # if AM_CFLAGS was set before, then add it to the configure option
 if test -n "${AM_CFLAGS}"; then
-    extra_cnf_flags="--enable-am-cflags=${AM_CFLAGS}"
+    extra_cnf_flags="--enable-am-cflags=\"${AM_CFLAGS}\""
 else
     :
 fi
@@ -334,10 +334,10 @@ if test -n "$cnf_cmd"; then
     fi
     if test -z "${cnf_flags}${extra_cnf_flags}"; then
 	echo $cnf_cmd $cmdline_cnf_flags
-	$cnf_cmd $cmdline_cnf_flags || exit 1
+	eval $cnf_cmd $cmdline_cnf_flags || exit 1
     else
-	echo $cnf_cmd "$cnf_flags" "$extra_cnf_flags" $cmdline_cnf_flags
-	$cnf_cmd "$cnf_flags" "$extra_cnf_flags" $cmdline_cnf_flags || exit 1
+	echo $cnf_cmd $cnf_flags $extra_cnf_flags $cmdline_cnf_flags
+	eval $cnf_cmd $cnf_flags $extra_cnf_flags $cmdline_cnf_flags || exit 1
     fi
 else
     :
