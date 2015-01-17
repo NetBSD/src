@@ -1,7 +1,7 @@
-/*	$NetBSD: amq_subr.c,v 1.1.1.2 2009/03/20 20:26:49 christos Exp $	*/
+/*	$NetBSD: amq_subr.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -224,6 +220,12 @@ amqproc_getmntfs_1_svc(voidp argp, struct svc_req *rqstp)
   return (amq_mount_info_list *) ((void *)&mfhead);	/* XXX */
 }
 
+extern qelem map_list_head;
+amq_map_info_list *
+amqproc_getmapinfo_1_svc(voidp argp, struct svc_req *rqstp)
+{
+  return (amq_map_info_list *) ((void *)&map_list_head);	/* XXX */
+}
 
 amq_string *
 amqproc_getvers_1_svc(voidp argp, struct svc_req *rqstp)
@@ -272,11 +274,11 @@ amqproc_pawd_1_svc(voidp argp, struct svc_req *rqstp)
     for (mp = get_first_exported_ap(&index);
 	 mp;
 	 mp = get_next_exported_ap(&index)) {
-      if (STREQ(mp->am_mnt->mf_ops->fs_type, "toplvl"))
+      if (STREQ(mp->am_al->al_mnt->mf_ops->fs_type, "toplvl"))
 	continue;
-      if (STREQ(mp->am_mnt->mf_ops->fs_type, "auto"))
+      if (STREQ(mp->am_al->al_mnt->mf_ops->fs_type, "auto"))
 	continue;
-      mountpoint = (mp->am_link ? mp->am_link : mp->am_mnt->mf_mount);
+      mountpoint = (mp->am_link ? mp->am_link : mp->am_al->al_mnt->mf_mount);
       len = strlen(mountpoint);
       if (len == 0)
 	continue;
@@ -331,16 +333,16 @@ xdr_amq_mount_tree_node(XDR *xdrs, amq_mount_tree *objp)
   am_node *mp = (am_node *) objp;
   long mtime;
 
-  if (!xdr_amq_string(xdrs, &mp->am_mnt->mf_info)) {
+  if (!xdr_amq_string(xdrs, &mp->am_al->al_mnt->mf_info)) {
     return (FALSE);
   }
   if (!xdr_amq_string(xdrs, &mp->am_path)) {
     return (FALSE);
   }
-  if (!xdr_amq_string(xdrs, mp->am_link ? &mp->am_link : &mp->am_mnt->mf_mount)) {
+  if (!xdr_amq_string(xdrs, mp->am_link ? &mp->am_link : &mp->am_al->al_mnt->mf_mount)) {
     return (FALSE);
   }
-  if (!xdr_amq_string(xdrs, &mp->am_mnt->mf_ops->fs_type)) {
+  if (!xdr_amq_string(xdrs, &mp->am_al->al_mnt->mf_ops->fs_type)) {
     return (FALSE);
   }
   mtime = mp->am_stats.s_mtime;
@@ -466,16 +468,15 @@ xdr_amq_mount_tree_list(XDR *xdrs, amq_mount_tree_list *objp)
 }
 
 
-
-/*
- * Compute length of list
- */
 bool_t
 xdr_amq_mount_info_qelem(XDR *xdrs, qelem *qhead)
 {
   mntfs *mf;
   u_int len = 0;
 
+  /*
+   * Compute length of list
+   */
   for (mf = AM_LAST(mntfs, qhead); mf != HEAD(mntfs, qhead); mf = PREV(mntfs, mf)) {
     if (!(mf->mf_fsflags & FS_AMQINFO))
       continue;
@@ -522,6 +523,70 @@ xdr_amq_mount_info_qelem(XDR *xdrs, qelem *qhead)
   return (TRUE);
 }
 
+bool_t
+xdr_amq_map_info_qelem(XDR *xdrs, qelem *qhead)
+{
+  mnt_map *m;
+  u_int len = 0;
+  int x;
+  char *n;
+
+  /*
+   * Compute length of list
+   */
+  ITER(m, mnt_map, qhead) {
+     len++;
+  }
+
+  if (!xdr_u_int(xdrs, &len))
+      return (FALSE);
+
+  /*
+   * Send individual data items
+   */
+  ITER(m, mnt_map, qhead) {
+    if (!xdr_amq_string(xdrs, &m->map_name)) {
+      return (FALSE);
+    }
+
+    n = m->wildcard ? m->wildcard : "";
+    if (!xdr_amq_string(xdrs, &n)) {
+      return (FALSE);
+    }
+
+    if (!xdr_long(xdrs, &m->modify)) {
+      return (FALSE);
+    }
+
+    x = m->flags;
+    if (!xdr_int(xdrs, &x)) {
+      return (FALSE);
+    }
+
+    x = m->nentries;
+    if (!xdr_int(xdrs, &x)) {
+      return (FALSE);
+    }
+
+    x = m->reloads;
+    if (!xdr_int(xdrs, &x)) {
+      return (FALSE);
+    }
+
+    if (!xdr_int(xdrs, &m->refc)) {
+      return (FALSE);
+    }
+
+    if (m->isup)
+      x = (*m->isup)(m, m->map_name);
+    else
+      x = -1;
+    if (!xdr_int(xdrs, &x)) {
+      return (FALSE);
+    }
+  }
+  return (TRUE);
+}
 
 bool_t
 xdr_pri_free(XDRPROC_T_TYPE xdr_args, caddr_t args_ptr)

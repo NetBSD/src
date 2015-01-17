@@ -1,7 +1,7 @@
-/*	$NetBSD: wr_fstab.c,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
+/*	$NetBSD: wr_fstab.c,v 1.1.1.3 2015/01/17 16:34:17 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -104,7 +100,7 @@ static struct os_fstab_type {
 static void
 write_aix1_dkfstab(FILE *ef, disk_fs *dp)
 {
-  char *hp = strdup(dp->d_host->h_hostname);
+  char *hp = xstrdup(dp->d_host->h_hostname);
   char *p = strchr(hp, '.');
 
   if (p)
@@ -125,8 +121,8 @@ write_aix1_dkfstab(FILE *ef, disk_fs *dp)
 static void
 write_aix1_dkrmount(FILE *ef, char *hn, fsmount *fp)
 {
-  char *h = strdup(fp->f_ref->m_dk->d_host->h_hostname);
-  char *hp = strdup(h);
+  char *h = xstrdup(fp->f_ref->m_dk->d_host->h_hostname);
+  char *hp = xstrdup(h);
   char *p = strchr(hp, '.');
 
   if (p)
@@ -174,7 +170,7 @@ write_aix3_dkfstab(FILE *ef, disk_fs *dp)
 static void
 write_aix3_dkrmount(FILE *ef, char *hn, fsmount *fp)
 {
-  char *h = strdup(fp->f_ref->m_dk->d_host->h_hostname);
+  char *h = xstrdup(fp->f_ref->m_dk->d_host->h_hostname);
 
   domain_strip(h, hn);
   fprintf(ef, "\n%s:\n\tdev = %s:%s\n\tvfs = %s\n\ttype = %s\n\tvol = %s\n\topts = %s\n\tmount = true\n\tcheck = true\n\tfree = false\n",
@@ -208,7 +204,7 @@ write_ultrix_dkfstab(FILE *ef, disk_fs *dp)
 static void
 write_ultrix_dkrmount(FILE *ef, char *hn, fsmount *fp)
 {
-  char *h = strdup(fp->f_ref->m_dk->d_host->h_hostname);
+  char *h = xstrdup(fp->f_ref->m_dk->d_host->h_hostname);
 
   domain_strip(h, hn);
   fprintf(ef, "%s@%s:%s:%s:%s:0:0\n",
@@ -245,9 +241,9 @@ write_generic_dkrmount(FILE *ef, char *hn, fsmount *fp)
   char *h;
 
   if (fp->f_ref) {
-    h = strdup(fp->f_ref->m_dk->d_host->h_hostname);
+    h = xstrdup(fp->f_ref->m_dk->d_host->h_hostname);
   } else {
-    h = strdup(fp->f_from);
+    h = xstrdup(fp->f_from);
   }
   domain_strip(h, hn);
   fprintf(ef, "%s:%s %s %s %s 0 0\n",
