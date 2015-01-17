@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.258 2015/01/16 18:46:42 christos Exp $
+# $NetBSD: md.amd64,v 1.259 2015/01/17 19:12:57 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -63,8 +63,8 @@
 ./usr/lib/i386/i18n/libmapper_std.so.5.0	base-i18n-shlib		compat,pic
 ./usr/lib/i386/i18n/libmapper_zone.so.5		base-i18n-shlib		compat,pic
 ./usr/lib/i386/i18n/libmapper_zone.so.5.0	base-i18n-shlib		compat,pic
-./usr/lib/i386/libamu.so.4			base-compat-shlib	compat,pic
-./usr/lib/i386/libamu.so.4.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libamu.so.5			base-compat-shlib	compat,pic
+./usr/lib/i386/libamu.so.5.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libarchive.so.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libarchive.so.3.1		base-compat-shlib	compat,pic
 ./usr/lib/i386/libasan.so.0			base-compat-shlib	compat,pic,gcc=48

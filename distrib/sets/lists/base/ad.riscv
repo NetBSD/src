@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv,v 1.13 2015/01/16 18:46:42 christos Exp $
+# $NetBSD: ad.riscv,v 1.14 2015/01/17 19:12:57 christos Exp $
 ./lib/rv32					base-compat-shlib	compat,arch64
 ./lib/rv32/npf					base-npf-shlib		compat,arch64
 ./lib/rv32/npf/ext_log.so			base-npf-shlib		compat,pic,arch64
@@ -59,8 +59,8 @@
 ./usr/lib/rv32/i18n/libmapper_std.so.5.0	base-i18n-shlib		compat,pic,arch64
 ./usr/lib/rv32/i18n/libmapper_zone.so.5		base-i18n-shlib		compat,pic,arch64
 ./usr/lib/rv32/i18n/libmapper_zone.so.5.0	base-i18n-shlib		compat,pic,arch64
-./usr/lib/rv32/libamu.so.4			base-compat-shlib	compat,pic,arch64
-./usr/lib/rv32/libamu.so.4.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/rv32/libamu.so.5			base-compat-shlib	compat,pic,arch64
+./usr/lib/rv32/libamu.so.5.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libarchive.so.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libarchive.so.3.1		base-compat-shlib	compat,pic,arch64
 ./usr/lib/rv32/libasan.so.0			base-compat-shlib	compat,pic,gcc=48

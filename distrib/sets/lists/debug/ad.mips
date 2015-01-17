@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.52 2015/01/16 18:46:42 christos Exp $
+# $NetBSD: ad.mips,v 1.53 2015/01/17 19:12:57 christos Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -58,7 +58,7 @@
 ./usr/libdata/debug/usr/lib/64/i18n/libmapper_serial.so.5.0.debug	comp-i18n-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/i18n/libmapper_std.so.5.0.debug	comp-i18n-debug		debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libamu.so.4.0.debug		comp-amd-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libamu.so.5.0.debug		comp-amd-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libarchive.so.3.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libasn1.so.8.1.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete,arch64
 ./usr/libdata/debug/usr/lib/64/libasan.so.0.0.debug		comp-compat-shlib	compat,pic,debug,arch64,gcc=48
@@ -236,7 +236,7 @@
 ./usr/libdata/debug/usr/lib/o32/i18n/libmapper_serial.so.5.0.debug	comp-i18n-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/i18n/libmapper_std.so.5.0.debug	comp-i18n-debug		debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libamu.so.4.0.debug		comp-amd-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libamu.so.5.0.debug		comp-amd-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libarchive.so.3.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libasn1.so.8.1.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete,arch64
 ./usr/libdata/debug/usr/lib/o32/libasan.so.0.0.debug		comp-compat-shlib	compat,pic,debug,arch64,gcc=48

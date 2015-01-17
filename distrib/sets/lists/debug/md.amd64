@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.78 2015/01/16 18:46:42 christos Exp $
+# $NetBSD: md.amd64,v 1.79 2015/01/17 19:12:57 christos Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-debuglib		compat,debuglib
@@ -188,7 +188,7 @@
 ./usr/libdata/debug/usr/lib/i386/i18n/libmapper_serial.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/i18n/libmapper_std.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/i18n/libmapper_zone.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libamu.so.4.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libamu.so.5.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libarchive.so.3.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libasn1.so.8.1.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libasan.so.0.0.debug	comp-compat-shlib	compat,pic,debug,gcc=48
