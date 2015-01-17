@@ -1,9 +1,11 @@
-/*	$NetBSD: null_lex.l,v 1.1.1.1 2008/09/19 20:07:21 christos Exp $	*/
+/*	$NetBSD: null_lex.l,v 1.1.1.2 2015/01/17 16:34:17 christos Exp $	*/
 
 %{
 #include "null_gram.h"
 
-void yyerror(const char *fmt, ...) {}
+void null_error(const char *fmt, ...) {}
 int yywrap(void) { return 0; }
 %}
+%option nounput
+%option noinput
 %%
