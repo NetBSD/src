@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1192.2.1 2014/11/07 21:36:29 snj Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1192.2.2 2015/01/17 21:49:36 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1199.2.1 2014/11/07 21:34:56 snj Exp
+ *	NetBSD: pcidevs,v 1.1199.2.2 2015/01/17 21:48:05 martin Exp
  */
 
 /*
@@ -4925,6 +4925,7 @@
 #define	PCI_PRODUCT_REALTEK_RTS5227	0x5227		/* RTS5227 PCI-E Card Reader */
 #define	PCI_PRODUCT_REALTEK_RTS5229	0x5229		/* RTS5229 PCI-E Card Reader */
 #define	PCI_PRODUCT_REALTEK_RTS5249	0x5249		/* RTS5249 PCI-E Card Reader */
+#define	PCI_PRODUCT_REALTEK_RTL8402	0x5286		/* RTL8402 PCI-E Card Reader */
 #define	PCI_PRODUCT_REALTEK_RTL8411B	0x5287		/* RTL8411B PCI-E Card Reader */
 #define	PCI_PRODUCT_REALTEK_RTL8411	0x5289		/* RTL8411 PCI-E Card Reader */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 Ethernet */
