@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_reg.h,v 1.3 2015/01/17 19:10:18 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc_reg.h,v 1.4 2015/01/17 19:32:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -115,24 +115,24 @@
 
 #define DWC_MMC_INT_BITS	\
 	"\20"			\
-	"\x18"	"SDIO_INT"	\
-	"\x10"	"NEW_INT"	\
-	"\x0f"	"EBE"		\
-	"\x0e"	"ACD"		\
-	"\x0d"	"SBE"		\
-	"\x0c"	"HLE"		\
-	"\x0b"	"FRUN"		\
-	"\x0a"	"HTO"		\
-	"\x09"	"DRTO"		\
-	"\x08"	"RTO"		\
-	"\x07"	"DCRC"		\
-	"\x06"	"RCRC"		\
-	"\x05"	"RXDR"		\
-	"\x04"	"TXDR"		\
-	"\x03"	"DTO"		\
-	"\x02"	"CD"		\
-	"\x01"	"RE"		\
-	"\x00"	"CARDDET"
+	"\x19"	"SDIO_INT"	\
+	"\x11"	"NEW_INT"	\
+	"\x10"	"EBE"		\
+	"\x0f"	"ACD"		\
+	"\x0e"	"SBE"		\
+	"\x0d"	"HLE"		\
+	"\x0c"	"FRUN"		\
+	"\x0b"	"HTO"		\
+	"\x0a"	"DRTO"		\
+	"\x09"	"RTO"		\
+	"\x08"	"DCRC"		\
+	"\x07"	"RCRC"		\
+	"\x06"	"RXDR"		\
+	"\x05"	"TXDR"		\
+	"\x04"	"DTO"		\
+	"\x03"	"CD"		\
+	"\x02"	"RE"		\
+	"\x01"	"CARDDET"
 
 #define DWC_MMC_CMD_START_CMD			__BIT(31)
 #define DWC_MMC_CMD_USE_HOLD_REG		__BIT(29)
