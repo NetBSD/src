@@ -1,7 +1,7 @@
-/*	$NetBSD: am_utils.h,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
+/*	$NetBSD: am_utils.h,v 1.1.1.3 2015/01/17 16:34:18 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -284,6 +280,7 @@ extern char *get_version_string(void);
 extern char *inet_dquad(char *, size_t, u_long);
 extern char *print_wires(void);
 extern char *str3cat(char *, char *, char *, char *);
+extern char *strvcat(const char *, ...);
 extern char *strealloc(char *, char *);
 extern char *strip_selectors(char *, char *);
 extern char *strnsave(const char *, int);
@@ -292,6 +289,7 @@ extern int bind_resv_port(int, u_short *);
 extern int cmdoption(char *, struct opt_tab *, u_int *);
 extern int compute_automounter_mount_flags(mntent_t *);
 extern int compute_mount_flags(mntent_t *);
+extern void discard_nfs_args(void *, u_long);
 extern u_long get_amd_program_number(void);
 extern int getcreds(struct svc_req *, uid_t *, gid_t *, SVCXPRT *);
 extern int hasmntval(mntent_t *, char *);
@@ -306,6 +304,9 @@ extern int make_rpc_packet(char *, int, u_long, struct rpc_msg *, voidp, XDRPROC
 extern int mkdirs(char *, int);
 extern int mount_fs(mntent_t *, int, caddr_t, int, MTYPE_TYPE, u_long, const char *, const char *, int);
 extern void nfs_program_2(struct svc_req *rqstp, SVCXPRT *transp);
+extern void nfs_program_3(struct svc_req *rqstp, SVCXPRT *transp);
+#define get_nfs_dispatcher_version(a) \
+    ((a) == nfs_program_2 ? NFS_VERSION : NFS_VERSION3)
 extern int pickup_rpc_reply(voidp, int, voidp, XDRPROC_T_TYPE);
 extern int switch_option(char *);
 extern int switch_to_logfile(char *logfile, int orig_umask, int truncate_log);
@@ -332,8 +333,10 @@ extern void unregister_amq(void);
 extern voidp xmalloc(int);
 extern voidp xrealloc(voidp, int);
 extern voidp xzalloc(int);
+extern char *xstrdup(const char *);
 extern int check_pmap_up(char *host, struct sockaddr_in* sin);
-extern u_long get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const char *proto);
+extern u_long get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const char *proto, u_long def);
+extern int nfs_valid_version(u_long vers);
 extern long get_server_pid(void);
 extern void setup_sighandler(int signum, void (*handler)(int));
 extern time_t clocktime(nfstime *nt);
@@ -373,9 +376,10 @@ extern void write_mntent(mntent_t *, const char *);
 extern int syslogging;
 #endif /* defined(HAVE_SYSLOG_H) || defined(HAVE_SYS_SYSLOG_H) */
 
-extern void compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig *nfsncp, struct sockaddr_in *ip_addr, u_long nfs_version, char *nfs_proto, am_nfs_handle_t *fhp, char *host_name, char *fs_name);
+extern void compute_nfs_args(void *nap, mntent_t *mntp, int genflags, struct netconfig *nfsncp, struct sockaddr_in *ip_addr, u_long nfs_version, char *nfs_proto, am_nfs_handle_t *fhp, char *host_name, char *fs_name);
+extern void destroy_nfs_args(void *nap, u_long nfs_version);
 extern int create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp, struct netconfig **udp_amqncpp, int *tcp_soAMQp, SVCXPRT **tcp_amqpp, struct netconfig **tcp_amqncpp, u_short preferred_amq_port);
-extern int create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*dispatch_fxn)(struct svc_req *rqstp, SVCXPRT *transp));
+extern int create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*dispatch_fxn)(struct svc_req *rqstp, SVCXPRT *transp), u_long nfs_version);
 extern int amu_svc_register(SVCXPRT *, u_long, u_long, void (*)(struct svc_req *, SVCXPRT *), u_long, struct netconfig *);
 
 #ifdef HAVE_TRANSPORT_TYPE_TLI
@@ -398,8 +402,14 @@ extern int unregister_autofs_service(char *autofs_conftype);
 
 
 /*
- * Network File System: the new generation
- * NFS V.3
+ * Network File System: the old faithful generation NFS V.2
+ */
+#ifndef NFS_VERSION2
+# define NFS_VERSION2 ((u_int) 2)
+#endif /* not NFS_VERSION2 */
+
+/*
+ * Network File System: the not so new anymore generation NFS V.3
  */
 #ifdef HAVE_FS_NFS3
 # ifndef NFS_VERSION3
@@ -407,6 +417,14 @@ extern int unregister_autofs_service(char *autofs_conftype);
 # endif /* not NFS_VERSION3 */
 #endif /* HAVE_FS_NFS3 */
 
+/*
+ * Network File System: the new generation NFS V.4
+ */
+#ifdef HAVE_FS_NFS4
+# ifndef NFS_VERSION4
+#  define NFS_VERSION4 ((u_int) 4)
+# endif /* not NFS_VERSION4 */
+#endif /* HAVE_FS_NFS4 */
 
 /**************************************************************************/
 /*** DEBUGGING								***/
@@ -468,7 +486,7 @@ extern void malloc_verify(void);
 # endif /* not DEBUG_MEM */
 
 /* functions that depend solely on debugging */
-extern void print_nfs_args(const nfs_args_t *nap, u_long nfs_version);
+extern void print_nfs_args(const void *, u_long nfs_version);
 extern int debug_option (char *opt);
 extern void dplog(const char *fmt, ...)
      __attribute__ ((__format__ (__printf__, 1, 2)));

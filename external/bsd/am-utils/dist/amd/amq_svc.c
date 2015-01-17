@@ -1,7 +1,7 @@
-/*	$NetBSD: amq_svc.c,v 1.1.1.2 2009/03/20 20:26:49 christos Exp $	*/
+/*	$NetBSD: amq_svc.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -67,47 +63,17 @@ int allow_severity=0, deny_severity=0, rfc931_timeout=0;
  * Returns: 1=allowed, 0=denied.
  */
 static int
-amqsvc_is_client_allowed(const struct sockaddr_in *addr, char *remote)
+amqsvc_is_client_allowed(const struct sockaddr_in *addr)
 {
-  struct hostent *h;
-  char *name = NULL, **ad;
-  int ret = 0;			/* default is 0==denied */
+  struct request_info req;
 
-  /* Check IP address */
-  if (hosts_ctl(AMD_SERVICE_NAME, "", remote, "")) {
-    ret = 1;
-    goto out;
-  }
-  /* Get address */
-  if (!(h = gethostbyaddr((const char *)&(addr->sin_addr),
-                          sizeof(addr->sin_addr),
-                          AF_INET)))
-    goto out;
-  if (!(name = strdup(h->h_name)))
-    goto out;
-  /* Paranoia check */
-  if (!(h = gethostbyname(name)))
-    goto out;
-  for (ad = h->h_addr_list; *ad; ad++)
-    if (!memcmp(*ad, &(addr->sin_addr), h->h_length))
-      break;
-  if (!*ad)
-    goto out;
-  if (hosts_ctl(AMD_SERVICE_NAME, "", h->h_name, "")) {
-    return 1;
-    goto out;
-  }
-  /* Check aliases */
-  for (ad = h->h_aliases; *ad; ad++)
-    if (hosts_ctl(AMD_SERVICE_NAME, "", *ad, "")) {
-      return 1;
-      goto out;
-    }
+  request_init(&req, RQ_DAEMON, AMD_SERVICE_NAME, RQ_CLIENT_SIN, addr, 0);
+  sock_methods(&req);
 
- out:
-  if (name)
-    XFREE(name);
-  return ret;
+  if (hosts_access(&req))
+         return 1;
+
+  return 0;
 }
 #endif /* defined(HAVE_TCPD_H) && defined(HAVE_LIBWRAP) */
 
@@ -201,7 +167,7 @@ amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
     struct sockaddr_in *remote_addr = svc_getcaller(rqstp->rq_xprt);
     char *remote_hostname = inet_ntoa(remote_addr->sin_addr);
 
-    if (!amqsvc_is_client_allowed(remote_addr, remote_hostname)) {
+    if (!amqsvc_is_client_allowed(remote_addr)) {
       plog(XLOG_WARNING, "Amd denied remote amq service to %s", remote_hostname);
       svcerr_auth(transp, AUTH_FAILED);
       return;
@@ -284,6 +250,12 @@ amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
     child = (amqsvcproc_t) amqproc_sync_umnt_1_svc_child;
     /* used if fork fails */
     local = (amqsvcproc_t) amqproc_sync_umnt_1_svc_async;
+    break;
+
+  case AMQPROC_GETMAPINFO:
+    xdr_argument = (xdrproc_t) xdr_void;
+    xdr_result = (xdrproc_t) xdr_amq_map_info_qelem;
+    local = (amqsvcproc_t) amqproc_getmapinfo_1_svc;
     break;
 
   default:

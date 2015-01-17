@@ -1,7 +1,7 @@
-/*	$NetBSD: mount_linux.c,v 1.1.1.2 2009/03/20 20:26:50 christos Exp $	*/
+/*	$NetBSD: mount_linux.c,v 1.1.1.3 2015/01/17 16:34:16 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -51,7 +47,11 @@
 #endif /* HAVE_CONFIG_H */
 #include <am_defs.h>
 #include <amu.h>
+#include <nfs_common.h>
 
+#ifdef HAVE_RPC_AUTH_H
+# include <rpc/auth.h>
+#endif
 
 #ifndef MOUNT_TYPE_UFS
 /*
@@ -87,6 +87,18 @@ const struct opt_map opt_map[] =
   {MNTTAB_OPT_SUB,	1,	MNT2_GEN_OPT_NOSUB},
   {MNTTAB_OPT_NOSUB,	0,	MNT2_GEN_OPT_NOSUB},
 #endif /* MNT2_GEN_OPT_NOSUB */
+#ifdef MNT2_GEN_OPT_SYNCHRONOUS
+  {"synchronous",	0,	MNT2_GEN_OPT_SYNCHRONOUS},
+#endif /* MNT2_GEN_OPT_SYNCHRONOUS */
+#ifdef MNT2_GEN_OPT_MANDLOCK
+  {"mandlock",		0,	MNT2_GEN_OPT_MANDLOCK},
+#endif /* MNT2_GEN_OPT_MANDLOCK */
+#ifdef MNT2_GEN_OPT_NOATIME
+  {"noatime",		0,	MNT2_GEN_OPT_NOATIME},
+#endif /* MNT2_GEN_OPT_NOATIME */
+#ifdef MNT2_GEN_OPT_NODIRATIME
+  {"nodiratime",	0,	MNT2_GEN_OPT_NODIRATIME},
+#endif /* MNT2_GEN_OPT_NODIRATIME */
   {NULL,		0,	0}
 };
 
@@ -129,7 +141,150 @@ const struct fs_opts autofs_opts[] = {
   { NULL,	0 }
 };
 
+const struct fs_opts lustre_opts[] = {
+  { "flock",		0 },
+  { "localflock",	0 },
+  { NULL,		0 }
+};
+
 const struct fs_opts null_opts[] = {
+  { NULL,	0 }
+};
+
+const struct fs_opts ext2_opts[] = {
+  { "check",			1 },
+  { "nocheck",			0 },
+  { "debug",			0 },
+  { "errors",			1 },
+  { "grpid",			0 },
+  { "nogrpid",			0 },
+  { "bsdgroups",		0 },
+  { "sysvgroups",		0 },
+  { "grpquota",			0 },
+  { "usrquota",			0 },
+  { "noquota",			0 },
+  { "quota",			0 },
+  { "nouid32",			0 },
+  { "oldalloc",			0 },
+  { "orlov",			0 },
+  { "resgid",			1 },
+  { "resuid",			1 },
+  { "sb",			1 },
+  { "user_xattr",		1 },
+  { "nouser_xattr",		1 },
+  { "journal_dev",		0 },
+  { "norecovery",		0 },
+  { "noload",			0 },
+  { "data",			1 },
+  { "barrier",			1 },
+  { "commit",			1 },
+  { "user_xattr",		0 },
+  { "nouser_xattr",		0 },
+  { "acl",			0 },
+  { "noacl",			0 },
+  { "bsddf",			0 },
+  { "minixdf",			0 },
+  { "usrjquota",		1 },
+  { "grpjquota",		1 },
+  { "jqfmt",			1 },
+  { NULL,	0 }
+};
+
+const struct fs_opts ext3_opts[] = {
+  { "check",			1 },
+  { "nocheck",			0 },
+  { "debug",			0 },
+  { "errors",			1 },
+  { "grpid",			0 },
+  { "nogrpid",			0 },
+  { "bsdgroups",		0 },
+  { "sysvgroups",		0 },
+  { "grpquota",			0 },
+  { "usrquota",			0 },
+  { "noquota",			0 },
+  { "quota",			0 },
+  { "nouid32",			0 },
+  { "oldalloc",			0 },
+  { "orlov",			0 },
+  { "resgid",			1 },
+  { "resuid",			1 },
+  { "sb",			1 },
+  { "user_xattr",		1 },
+  { "nouser_xattr",		1 },
+  { "journal",			1 },
+  { "journal_dev",		1 },
+  { "norecovery",		0 },
+  { "noload",			0 },
+  { "data",			1 },
+  { "barrier",			1 },
+  { "commit",			1 },
+  { "user_xattr",		0 },
+  { "nouser_xattr",		0 },
+  { "acl",			0 },
+  { "noacl",			0 },
+  { "bsddf",			0 },
+  { "minixdf",			0 },
+  { "usrjquota",		1 },
+  { "grpjquota",		1 },
+  { "jqfmt",			1 },
+  { NULL,	0 }
+};
+
+const struct fs_opts ext4_opts[] = {
+  { "debug",			0 },
+  { "errors",			1 },
+  { "grpid",			0 },
+  { "nogrpid",			0 },
+  { "bsdgroups",		0 },
+  { "sysvgroups",		0 },
+  { "grpquota",			0 },
+  { "usrquota",			0 },
+  { "noquota",			0 },
+  { "quota",			0 },
+  { "oldalloc",			0 },
+  { "orlov",			0 },
+  { "resgid",			1 },
+  { "resuid",			1 },
+  { "sb",			1 },
+  { "user_xattr",		1 },
+  { "nouser_xattr",		1 },
+  { "journal",			1 },
+  { "journal_dev",		1 },
+  { "noload",			0 },
+  { "data",			1 },
+  { "commit",			1 },
+  { "user_xattr",		0 },
+  { "nouser_xattr",		0 },
+  { "acl",			0 },
+  { "noacl",			0 },
+  { "bsddf",			0 },
+  { "minixdf",			0 },
+  { "usrjquota",		1 },
+  { "grpjquota",		1 },
+  { "jqfmt",			1 },
+  { "journal_checksum",		0 },
+  { "journal_async_commit",	0 },
+  { "journal",			1 },
+  { "barrier",			1 },
+  { "nobarrier",		0 },
+  { "inode_readahead_blks",	1 },
+  { "stripe",			1 },
+  { "delalloc",			0 },
+  { "nodelalloc",		0 },
+  { "min_batch_time",		1 },
+  { "mxn_batch_time",		1 },
+  { "journal_ioprio",		1 },
+  { "abort",			0 },
+  { "auto_da_alloc",		0 },
+  { "noauto_da_alloc",		0 },
+  { "discard",			0 },
+  { "nodiscard",		0 },
+  { "nouid32",			0 },
+  { "resize",			0 },
+  { "block_validity",		0 },
+  { "noblock_validity",		0 },
+  { "dioread_lock",		0 },
+  { "dioread_nolock",		0 },
   { NULL,	0 }
 };
 
@@ -150,7 +305,7 @@ parse_opts(char *type, const char *optstr, int *flags, char **xopts, int *noauto
   if (optstr == NULL)
     return NULL;
 
-  xoptstr = strdup(optstr);	/* because strtok is destructive below */
+  xoptstr = xstrdup(optstr);	/* because strtok is destructive below */
 
   *noauto = 0;
   l = strlen(optstr) + 2;
@@ -203,6 +358,30 @@ parse_opts(char *type, const char *optstr, int *flags, char **xopts, int *noauto
       goto do_opts;
     }
 #endif /* MOUNT_TYPE_LOFS */
+#ifdef MOUNT_TYPE_LUSTRE
+    if (STREQ(type, MOUNT_TYPE_LUSTRE)) {
+      dev_opts = lustre_opts;
+      goto do_opts;
+    }
+#endif /* MOUNT_TYPE_LUSTRE */
+#ifdef MOUNT_TYPE_EXT2
+    if (STREQ(type, MOUNT_TYPE_EXT2)) {
+      dev_opts = ext2_opts;
+      goto do_opts;
+    }
+#endif /* MOUNT_TYPE_EXT2 */
+#ifdef MOUNT_TYPE_EXT3
+    if (STREQ(type, MOUNT_TYPE_EXT3)) {
+      dev_opts = ext3_opts;
+      goto do_opts;
+    }
+#endif /* MOUNT_TYPE_EXT3 */
+#ifdef MOUNT_TYPE_EXT4
+    if (STREQ(type, MOUNT_TYPE_EXT4)) {
+      dev_opts = ext4_opts;
+      goto do_opts;
+    }
+#endif /* MOUNT_TYPE_EXT4 */
     plog(XLOG_FATAL, "linux mount: unknown fs-type: %s\n", type);
     XFREE(xoptstr);
     XFREE(*xopts);
@@ -214,7 +393,7 @@ do_opts:
 	   (!NSTREQ(dev_opts->opt, opt, strlen(dev_opts->opt)))) {
       ++dev_opts;
     }
-    if (dev_opts->opt && *xopts) {
+    if (dev_opts->opt) {
       xstrlcat(*xopts, opt, l);
       xstrlcat(*xopts, ",", l);
     }
@@ -238,14 +417,20 @@ do_opts:
 int
 linux_version_code(void)
 {
+  char *token;
+  int shift = 16;
   struct utsname my_utsname;
   static int release = 0;
 
-  if ( 0 == release && 0 == uname(&my_utsname)) {
-    release = 65536 * atoi(strtok(my_utsname.release, "."))
-      + 256 * atoi(strtok(NULL, "."))
-      + atoi(strtok(NULL, "."));
+  if ( release || uname(&my_utsname))
+    return release;
+
+  for (token = strtok(my_utsname.release, "."); token && (shift > -1); token = strtok(NULL, "."))
+  {
+     release |= (atoi(token) << shift);
+     shift -= 8;
   }
+
   return release;
 }
 
@@ -271,38 +456,48 @@ do_mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
 	       data);
 }
 
+static void
+setup_nfs_args(struct nfs_common_args *ca)
+{
+  if (!ca->timeo) {
+#ifdef MNT2_NFS_OPT_TCP
+    if (ca->flags & MNT2_NFS_OPT_TCP)
+      ca->timeo = 600;
+    else
+#endif /* MNT2_NFS_OPT_TCP */
+      ca->timeo = 7;
+  }
+  if (!ca->retrans)
+    ca->retrans = 3;
+
+#ifdef MNT2_NFS_OPT_NOAC
+  if (!(ca->flags & MNT2_NFS_OPT_NOAC)) {
+    if (!(ca->flags & MNT2_NFS_OPT_ACREGMIN))
+      ca->acregmin = 3;
+    if (!(ca->flags & MNT2_NFS_OPT_ACREGMAX))
+      ca->acregmax = 60;
+    if (!(ca->flags & MNT2_NFS_OPT_ACDIRMIN))
+      ca->acdirmin = 30;
+    if (!(ca->flags & MNT2_NFS_OPT_ACDIRMAX))
+      ca->acdirmax = 60;
+  }
+#endif /* MNT2_NFS_OPT_NOAC */
+}
+
 
 int
 mount_linux_nfs(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
 {
   nfs_args_t *mnt_data = (nfs_args_t *) data;
   int errorcode;
+  struct nfs_common_args a;
 
   /* Fake some values for linux */
   mnt_data->version = NFS_MOUNT_VERSION;
-  if (!mnt_data->timeo) {
-#ifdef MNT2_NFS_OPT_TCP
-    if (mnt_data->flags & MNT2_NFS_OPT_TCP)
-      mnt_data->timeo = 600;
-    else
-#endif /* MNT2_NFS_OPT_TCP */
-      mnt_data->timeo = 7;
-  }
-  if (!mnt_data->retrans)
-    mnt_data->retrans = 3;
 
-#ifdef MNT2_NFS_OPT_NOAC
-  if (!(mnt_data->flags & MNT2_NFS_OPT_NOAC)) {
-    if (!mnt_data->acregmin)
-      mnt_data->acregmin = 3;
-    if (!mnt_data->acregmax)
-      mnt_data->acregmax = 60;
-    if (!mnt_data->acdirmin)
-      mnt_data->acdirmin = 30;
-    if (!mnt_data->acdirmax)
-      mnt_data->acdirmax = 60;
-  }
-#endif /* MNT2_NFS_OPT_NOAC */
+  put_nfs_common_args(mnt_data, a);
+  setup_nfs_args(&a);
+  get_nfs_common_args(mnt_data, a);
 
   /*
    * in nfs structure implementation version 4, the old
@@ -329,7 +524,11 @@ mount_linux_nfs(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
 #endif /* HAVE_NFS_ARGS_T_NAMELEN */
 
 #ifdef HAVE_NFS_ARGS_T_PSEUDOFLAVOR
+# ifdef HAVE_RPC_AUTH_H
+  mnt_data->pseudoflavor = AUTH_UNIX;
+# else
   mnt_data->pseudoflavor = 0;
+# endif
 #endif /* HAVE_NFS_ARGS_T_PSEUDOFLAVOR */
 
 #ifdef HAVE_NFS_ARGS_T_CONTEXT
@@ -361,19 +560,22 @@ mount_linux_nfs(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
     }
   }
   if (amuDebug(D_FULL)) {
-    plog(XLOG_DEBUG, "mount_linux_nfs: type %s\n", type);
-    plog(XLOG_DEBUG, "mount_linux_nfs: version %d\n", mnt_data->version);
-    plog(XLOG_DEBUG, "mount_linux_nfs: fd %d\n", mnt_data->fd);
-    plog(XLOG_DEBUG, "mount_linux_nfs: hostname %s\n",
+    plog(XLOG_DEBUG, "%s: type %s\n", __func__, type);
+    plog(XLOG_DEBUG, "%s: version %d\n", __func__, mnt_data->version);
+    plog(XLOG_DEBUG, "%s: fd %d\n", __func__, mnt_data->fd);
+    plog(XLOG_DEBUG, "%s: hostname %s\n", __func__,
 	 inet_ntoa(mnt_data->addr.sin_addr));
-    plog(XLOG_DEBUG, "mount_linux_nfs: port %d\n",
+    plog(XLOG_DEBUG, "%s: port %d\n", __func__,
 	 htons(mnt_data->addr.sin_port));
   }
   if (amuDebug(D_TRACE)) {
-    plog(XLOG_DEBUG, "mount_linux_nfs: Generic mount flags 0x%x", MS_MGC_VAL | flags);
-    plog(XLOG_DEBUG, "mount_linux_nfs: updated nfs_args...");
+    plog(XLOG_DEBUG, "%s: Generic mount flags 0x%x", __func__,
+	 MS_MGC_VAL | flags);
+    plog(XLOG_DEBUG, "%s: updated nfs_args...", __func__);
     print_nfs_args(mnt_data, 0);
   }
+
+  mnt_data->flags &= MNT2_NFS_OPT_FLAGMASK;
 
   errorcode = do_mount_linux(type, mnt, flags, data);
 
@@ -391,6 +593,37 @@ mount_linux_nfs(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
   return errorcode;
 }
 
+#ifdef HAVE_FS_NFS4
+int
+mount_linux_nfs4(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
+{
+  nfs4_args_t *mnt_data = (nfs4_args_t *) data;
+  int errorcode;
+  struct nfs_common_args a;
+
+  /* Fake some values for linux */
+  mnt_data->version = NFS4_MOUNT_VERSION;
+
+  put_nfs_common_args(mnt_data, a);
+  setup_nfs_args(&a);
+  get_nfs_common_args(mnt_data, a);
+
+  if (amuDebug(D_FULL)) {
+    plog(XLOG_DEBUG, "%s: type %s\n", __func__, type);
+    plog(XLOG_DEBUG, "%s: version %d\n", __func__, mnt_data->version);
+  }
+  if (amuDebug(D_TRACE)) {
+    plog(XLOG_DEBUG, "%s: Generic mount flags 0x%x", __func__,
+	 MS_MGC_VAL | flags);
+    plog(XLOG_DEBUG, "%s: updated nfs_args...", __func__);
+    print_nfs_args(mnt_data, NFS_VERSION4);
+  }
+
+  errorcode = do_mount_linux(type, mnt, flags, data);
+
+  return errorcode;
+}
+#endif
 
 int
 mount_linux_nonfs(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
@@ -404,17 +637,13 @@ mount_linux_nonfs(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
 
   sub_type = hasmnteq(mnt, "type");
   if (sub_type) {
-    sub_type = strdup(sub_type);
-    if (sub_type) {		/* the strdup malloc might have failed */
-      type = strpbrk(sub_type, ",:;\n\t");
-      if (type == NULL)
-	type = MOUNT_TYPE_UFS;
-      else {
-	*type = '\0';
-	type = sub_type;
-      }
-    } else {
-      plog(XLOG_ERROR, "strdup returned null in mount_linux_nonfs");
+    sub_type = xstrdup(sub_type);
+    type = strpbrk(sub_type, ",:;\n\t");
+    if (type == NULL)
+      type = MOUNT_TYPE_UFS;
+    else {
+      *type = '\0';
+      type = sub_type;
     }
   }
 
@@ -438,6 +667,18 @@ mount_linux_nonfs(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
 # endif /* MNT2_GEN_OPT_BIND */
     errorcode = do_mount_linux(type, mnt, flags, extra_opts);
   } else /* end of "if type is LOFS" */
+#endif /* MOUNT_TYPE_LOFS */
+
+#ifdef MOUNT_TYPE_LUSTRE
+  if (STREQ(type, MOUNT_TYPE_LUSTRE)) {
+    char *topts;
+    if (*extra_opts)
+      topts = strvcat(extra_opts, ",device=", mnt->mnt_fsname, NULL);
+    else
+      topts = strvcat("device=", mnt->mnt_fsname, NULL);
+    free(extra_opts);
+    extra_opts = topts;
+  }
 #endif /* MOUNT_TYPE_LOFS */
 
   {
@@ -515,6 +756,11 @@ mount_linux(MTYPE_TYPE type, mntent_t *mnt, int flags, caddr_t data)
   if (type == NULL)
     type = index(mnt->mnt_fsname, ':') ? MOUNT_TYPE_NFS : MOUNT_TYPE_UFS;
 
+#ifdef HAVE_FS_NFS4
+  if (STREQ(type, MOUNT_TYPE_NFS4))
+    errorcode = mount_linux_nfs4(type, mnt, flags, data);
+  else
+#endif
   if (STREQ(type, MOUNT_TYPE_NFS))
     errorcode = mount_linux_nfs(type, mnt, flags, data);
   else				/* non-NFS mounts */
@@ -778,7 +1024,7 @@ find_unused_loop_device(void)
 	    someloop++;		/* in use */
 	  else if (errno == ENXIO) {
 	    close(fd);
-	    return strdup(dev); /* probably free */
+	    return xstrdup(dev); /* probably free */
 	  }
 	  close(fd);
 	}

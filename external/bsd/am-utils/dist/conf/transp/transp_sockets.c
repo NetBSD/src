@@ -1,7 +1,7 @@
-/*	$NetBSD: transp_sockets.c,v 1.1.1.2 2009/03/20 20:26:52 christos Exp $	*/
+/*	$NetBSD: transp_sockets.c,v 1.1.1.3 2015/01/17 16:34:16 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -250,9 +246,8 @@ amu_svc_register(SVCXPRT *xprt, u_long prognum, u_long versnum,
  * Create the nfs service for amd
  */
 int
-create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*dispatch_fxn)(struct svc_req *rqstp, SVCXPRT *transp))
+create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*dispatch_fxn)(struct svc_req *rqstp, SVCXPRT *transp), u_long nfs_version)
 {
-
   *soNFSp = socket(AF_INET, SOCK_DGRAM, 0);
 
   if (*soNFSp < 0 || bind_resv_port(*soNFSp, nfs_portp) < 0) {
@@ -272,9 +267,9 @@ create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*
     close(*soNFSp);
     return 1;
   }
-  if (!svc_register(*nfs_xprtp, NFS_PROGRAM, NFS_VERSION, dispatch_fxn, 0)) {
-    plog(XLOG_FATAL, "unable to register (%ld, %ld, 0)",
-	 (u_long) NFS_PROGRAM, (u_long) NFS_VERSION);
+  if (!svc_register(*nfs_xprtp, NFS_PROGRAM, nfs_version, dispatch_fxn, 0)) {
+    plog(XLOG_FATAL, "unable to register (%lu, %lu, 0)",
+	 (u_long) NFS_PROGRAM, nfs_version);
     svc_destroy(*nfs_xprtp);
     close(*soNFSp);
     return 3;
@@ -390,8 +385,8 @@ int check_pmap_up(char *host, struct sockaddr_in* sin)
 
   if (client == (CLIENT *) NULL) {
     plog(XLOG_ERROR,
-	 "check_pmap_up: cannot create connection to contact portmapper on host \"%s\"%s",
-	 host, clnt_spcreateerror(""));
+	 "%s: cannot create connection to contact portmapper on host \"%s\"%s",
+	 __func__, host, clnt_spcreateerror(""));
     return 0;
   }
 
@@ -410,8 +405,8 @@ int check_pmap_up(char *host, struct sockaddr_in* sin)
 
   if (clnt_stat == RPC_TIMEDOUT) {
     plog(XLOG_ERROR,
-	 "check_pmap_up: failed to contact portmapper on host \"%s\": %s",
-	 host, clnt_sperrno(clnt_stat));
+	 "%s: failed to contact portmapper on host \"%s\": %s",
+	 __func__, host, clnt_sperrno(clnt_stat));
     return 0;
   }
   return 1;
@@ -422,7 +417,7 @@ int check_pmap_up(char *host, struct sockaddr_in* sin)
  * Find the best NFS version for a host and protocol.
  */
 u_long
-get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const char *proto)
+get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const char *proto, u_long def)
 {
   CLIENT *clnt;
   int again = 0;
@@ -435,68 +430,64 @@ get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const c
    * If not set or set wrong, then try from NFS_VERS_MAX on down. If
    * set, then try from nfs_version on down.
    */
-  if (nfs_version <= 0 || nfs_version > NFS_VERS_MAX) {
-    nfs_version = NFS_VERS_MAX;
+  if (!nfs_valid_version(nfs_version)) {
+    if (nfs_valid_version(def))
+      nfs_version = def;
+    else
+      nfs_version = NFS_VERS_MAX;
     again = 1;
   }
   tv.tv_sec = 2;		/* retry every 2 seconds, but also timeout */
   tv.tv_usec = 0;
 
-#ifdef HAVE_FS_NFS3
-try_again:
-#endif /* HAVE_FS_NFS3 */
+  for (; nfs_version >= NFS_VERS_MIN; nfs_version--) {
 
-  sock = RPC_ANYSOCK;
-  errstr = NULL;
-  if (STREQ(proto, "tcp"))
-    clnt = clnttcp_create(sin, NFS_PROGRAM, nfs_version, &sock, 0, 0);
-  else if (STREQ(proto, "udp"))
-    clnt = clntudp_create(sin, NFS_PROGRAM, nfs_version, tv, &sock);
-  else
-    clnt = NULL;
+    sock = RPC_ANYSOCK;
+    errstr = NULL;
+    if (STREQ(proto, "tcp"))
+      clnt = clnttcp_create(sin, NFS_PROGRAM, nfs_version, &sock, 0, 0);
+    else if (STREQ(proto, "udp"))
+      clnt = clntudp_create(sin, NFS_PROGRAM, nfs_version, tv, &sock);
+    else
+      clnt = NULL;
 
-  if (clnt != NULL) {
-    /* Try three times (6/2=3) to verify the CLIENT handle. */
-    tv.tv_sec = 6;
-    clnt_stat = clnt_call(clnt,
-			  NFSPROC_NULL,
-			  (XDRPROC_T_TYPE) xdr_void,
-			  0,
-			  (XDRPROC_T_TYPE) xdr_void,
-			  0,
-			  tv);
+    if (clnt != NULL) {
+      /* Try three times (6/2=3) to verify the CLIENT handle. */
+      tv.tv_sec = 6;
+      clnt_stat = clnt_call(clnt,
+			    NFSPROC_NULL,
+			    (XDRPROC_T_TYPE) xdr_void,
+			    0,
+			    (XDRPROC_T_TYPE) xdr_void,
+			    0,
+			    tv);
 
-    if (clnt_stat != RPC_SUCCESS)
-      errstr = clnt_sperrno(clnt_stat);
+      if (clnt_stat != RPC_SUCCESS)
+	errstr = clnt_sperrno(clnt_stat);
 
-    close(sock);
-    clnt_destroy(clnt);
-  } else {
-#ifdef HAVE_CLNT_SPCREATEERROR
-    errstr = clnt_spcreateerror("");
-#else /* not HAVE_CLNT_SPCREATEERROR */
-    errstr = "";
-#endif /* not HAVE_CLNT_SPCREATEERROR */
-  }
-
-  if (errstr) {
-    plog(XLOG_INFO, "get_nfs_version NFS(%d,%s) failed for %s%s",
- 	 (int) nfs_version, proto, host, errstr);
-    if (again) {
-#ifdef HAVE_FS_NFS3
-      if (nfs_version == NFS_VERSION3) {
-	nfs_version = NFS_VERSION;
-	again = 0;
-	plog(XLOG_INFO, "get_nfs_version trying a lower version: NFS(%d,%s)", (int) nfs_version, proto);
-      }
-      goto try_again;
-#endif /* HAVE_FS_NFS3 */
+      close(sock);
+      clnt_destroy(clnt);
+      if (clnt_stat == RPC_SUCCESS)
+	break;
+    } else {
+  #ifdef HAVE_CLNT_SPCREATEERROR
+      errstr = clnt_spcreateerror("");
+  #else /* not HAVE_CLNT_SPCREATEERROR */
+      errstr = "";
+  #endif /* not HAVE_CLNT_SPCREATEERROR */
     }
-    return 0;
+
+    if (errstr) {
+      plog(XLOG_INFO, "%s: NFS(%lu,%s) failed for %s: %s", __func__,
+	   nfs_version, proto, host, errstr);
+    }
   }
 
-  plog(XLOG_INFO, "get_nfs_version: returning NFS(%d,%s) on host %s",
-       (int) nfs_version, proto, host);
+  if (nfs_version < NFS_VERS_MIN)
+    nfs_version = 0;
+
+  plog(XLOG_INFO, "%s: returning NFS(%lu,%s) on host %s", __func__,
+       nfs_version, proto, host);
   return nfs_version;
 }
 

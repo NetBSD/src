@@ -9,6 +9,8 @@ sbin_PROGRAMS = fsinfo
 # man pages
 man_MANS = fsinfo.8
 
+YLWRAP = $(top_srcdir)/ylwrap.amd
+
 # headers this depends on, not to be installed
 noinst_HEADERS = fsi_data.h fsinfo.h
 
@@ -45,11 +47,11 @@ LDADD = $(EXTRA_fsinfo_OBJECTS) ../libamu/libamu.la
 # must manually add f/lex library to LIBS, and not to LDADD.
 LIBS = @LIBS@ @LEXLIB@
 
-INCLUDES = -I$(top_srcdir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include
 
 # allow users to add their own flags via "configure --enable-am-flags=ARG"
 AMU_CFLAGS = @AMU_CFLAGS@
-AM_CFLAGS = @CFLAGS@ $(AMU_CFLAGS)
+AM_CFLAGS = $(AMU_CFLAGS)
 AM_YFLAGS = -d
 
 # dependencies

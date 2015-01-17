@@ -1,7 +1,7 @@
-/*	$NetBSD: umount_linux.c,v 1.1.1.2 2009/03/20 20:26:52 christos Exp $	*/
+/*	$NetBSD: umount_linux.c,v 1.1.1.3 2015/01/17 16:34:16 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -65,6 +61,7 @@ umount_fs(char *mntdir, const char *mnttabname, u_int unmount_flags)
   char loopstr[] = "loop=";
   char *loopdev;
 #endif /* HAVE_LOOP_DEVICE */
+  unsigned int retries = 8;
 
   mp = mlist = read_mtab(mntdir, mnttabname);
 
@@ -85,6 +82,7 @@ umount_fs(char *mntdir, const char *mnttabname, u_int unmount_flags)
     goto out;
   }
 
+  plog(XLOG_ERROR, "Trying unmount %s, umount_flags 0x%x", mp_save->mnt->mnt_dir, unmount_flags);
   dlog("Trying unmount(%s)", mp_save->mnt->mnt_dir);
 
 #ifdef MOUNT_TABLE_ON_FILE
@@ -96,6 +94,7 @@ umount_fs(char *mntdir, const char *mnttabname, u_int unmount_flags)
   unlock_mntlist();
 #endif /* MOUNT_TABLE_ON_FILE */
 
+again:
 #if defined(HAVE_UMOUNT2) && defined(MNT2_GEN_OPT_DETACH)
   /*
    * If user asked to try forced unmounts, then do a quick check to see if
@@ -113,6 +112,14 @@ umount_fs(char *mntdir, const char *mnttabname, u_int unmount_flags)
   } else
 #endif /* defined(HAVE_UMOUNT2) && defined(MNT2_GEN_OPT_DETACH) */
     error = UNMOUNT_TRAP(mp_save->mnt);
+
+  /* Linux kernel can be sluggish for some reason */
+  if (error == EBUSY && retries--) {
+    struct timespec tm = {0, 200000000};
+    nanosleep(&tm, NULL);
+    goto again;
+  }
+
   if (error < 0) {
     plog(XLOG_WARNING, "unmount(%s) failed: %m", mp_save->mnt->mnt_dir);
     switch ((error = errno)) {
@@ -170,7 +177,7 @@ umount_fs(char *mntdir, const char *mnttabname, u_int unmount_flags)
 
 #ifdef HAVE_LOOP_DEVICE
   /* look for loop=/dev/loopX in mnt_opts */
-  xopts = strdup(mp_save->mnt->mnt_opts); /* b/c strtok is destructive */
+  xopts = xstrdup(mp_save->mnt->mnt_opts); /* b/c strtok is destructive */
   for (opt = strtok(xopts, ","); opt; opt = strtok(NULL, ","))
     if (NSTREQ(opt, loopstr, sizeof(loopstr) - 1)) {
       loopdev = opt + sizeof(loopstr) - 1;

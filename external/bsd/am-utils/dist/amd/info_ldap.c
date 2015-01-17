@@ -1,7 +1,7 @@
-/*	$NetBSD: info_ldap.c,v 1.1.1.2 2009/03/20 20:26:49 christos Exp $	*/
+/*	$NetBSD: info_ldap.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -121,6 +117,8 @@ struct he_ent {
   struct he_ent *next;
 };
 
+static ALD *ldap_connection;
+
 /*
  * FORWARD DECLARATIONS:
  */
@@ -152,8 +150,9 @@ string2he(char *s_orig)
   char *s;
   HE_ENT *first = NULL, *cur = NULL;
 
-  if (NULL == s_orig || NULL == (s = strdup(s_orig)))
+  if (NULL == s_orig)
     return NULL;
+  s = xstrdup(s_orig);
   for (p = strtok(s, ","); p; p = strtok(NULL, ",")) {
     if (cur != NULL) {
       cur->next = ALLOC(HE_ENT);
@@ -165,10 +164,10 @@ string2he(char *s_orig)
     c = strchr(p, ':');
     if (c) {            /* Host and port */
       *c++ = '\0';
-      cur->host = strdup(p);
+      cur->host = xstrdup(p);
       cur->port = atoi(c);
     } else {
-      cur->host = strdup(p);
+      cur->host = xstrdup(p);
       cur->port = LDAP_PORT;
     }
     plog(XLOG_USER, "Adding ldap server %s:%d",
@@ -256,9 +255,17 @@ amu_ldap_init(mnt_map *m, char *map, time_t *ts)
   if (!gopt.map_type || !STREQ(gopt.map_type, AMD_LDAP_TYPE)) {
     dlog("amu_ldap_init called with map_type <%s>\n",
 	 (gopt.map_type ? gopt.map_type : "null"));
+    return ENOENT;
   } else {
     dlog("Map %s is ldap\n", map);
   }
+
+#ifndef LDAP_CONNECTION_PER_MAP
+  if (ldap_connection != NULL) {
+    m->map_data = (void *) ldap_connection;
+    return 0;
+  }
+#endif
 
   aldh = ALLOC(ALD);
   creds = ALLOC(CR);
@@ -282,11 +289,14 @@ amu_ldap_init(mnt_map *m, char *map, time_t *ts)
     ald_free(aldh);
     return (ENOENT);
   }
-  m->map_data = (void *) aldh;
   dlog("Bound to %s:%d\n", aldh->hostent->host, aldh->hostent->port);
-  if (get_ldap_timestamp(aldh, map, ts))
+  if (get_ldap_timestamp(aldh, map, ts)) {
+    ald_free(aldh);
     return (ENOENT);
+  }
   dlog("Got timestamp for map %s: %ld\n", map, (u_long) *ts);
+  ldap_connection = aldh;
+  m->map_data = (void *) ldap_connection;
 
   return (0);
 }
@@ -552,7 +562,7 @@ amu_ldap_search(mnt_map *m, char *map, char *key, char **pval, time_t *ts)
     if (m->cfm && (m->cfm->cfm_flags & CFM_SUN_MAP_SYNTAX))
       *pval = sun_entry2amd(key, vals[0]);
     else
-      *pval = strdup(vals[0]);
+      *pval = xstrdup(vals[0]);
     err = 0;
   } else {
     plog(XLOG_USER, "Empty value for %s in map %s\n", key, map);

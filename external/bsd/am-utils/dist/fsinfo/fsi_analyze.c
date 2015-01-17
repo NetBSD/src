@@ -1,7 +1,7 @@
-/*	$NetBSD: fsi_analyze.c,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
+/*	$NetBSD: fsi_analyze.c,v 1.1.1.3 2015/01/17 16:34:16 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -143,7 +139,7 @@ static dict_ent *
 find_volname(char *nn)
 {
   dict_ent *de;
-  char *p = strdup(nn);
+  char *p = xstrdup(nn);
   char *q;
 
   do {
@@ -188,7 +184,7 @@ check_exportfs(qelem *q, fsi_mount *e)
 	lwarning(mp->m_ioloc, "%s has duplicate exportfs data", mp->m_name);
       mp->m_exported = mp;
       if (!ISSET(mp->m_mask, DM_VOLNAME))
-	set_mount(mp, DM_VOLNAME, strdup(mp->m_name));
+	set_mount(mp, DM_VOLNAME, xstrdup(mp->m_name));
     } else {
       mp->m_exported = e;
     }
@@ -230,7 +226,7 @@ analyze_dkmount_tree(qelem *q, fsi_mount *parent, disk_fs *dk)
 	lwarning(mp->m_ioloc, "sub-directory of %s is named \"default\"", parent->m_name);
       fsi_log("Changing name %s to %s", mp->m_name, n);
       XFREE(mp->m_name);
-      mp->m_name = strdup(n);
+      mp->m_name = xstrdup(n);
     }
 
     mp->m_name_len = strlen(mp->m_name);
@@ -288,7 +284,7 @@ analyze_dkmounts(disk_fs *dk, qelem *q)
       char nbuf[1024];
       compute_automount_point(nbuf, sizeof(nbuf), dk->d_host, mp2->m_volname);
       XFREE(mp2->m_name);
-      mp2->m_name = strdup(nbuf);
+      mp2->m_name = xstrdup(nbuf);
       fsi_log("%s:%s has default mount on %s", dk->d_host->h_hostname, dk->d_dev, mp2->m_name);
     } else {
       lerror(dk->d_ioloc, "no volname given for %s:%s", dk->d_host->h_hostname, dk->d_dev);
@@ -300,9 +296,9 @@ analyze_dkmounts(disk_fs *dk, qelem *q)
    * Fill in the disk mount point
    */
   if (!errors && mp2 && mp2->m_name)
-    dk->d_mountpt = strdup(mp2->m_name);
+    dk->d_mountpt = xstrdup(mp2->m_name);
   else
-    dk->d_mountpt = strdup("error");
+    dk->d_mountpt = xstrdup("error");
 
   /*
    * Analyze the mount tree
@@ -355,7 +351,7 @@ fixup_required_disk_info(disk_fs *dp)
        * "opts"
        */
       if (!ISSET(dp->d_mask, DF_OPTS))
-	set_disk_fs(dp, DF_OPTS, strdup("swap"));
+	set_disk_fs(dp, DF_OPTS, xstrdup("swap"));
 
       /*
        * "mount"
@@ -364,7 +360,7 @@ fixup_required_disk_info(disk_fs *dp)
 	qelem *q = new_que();
 	fsi_mount *m = new_mount();
 
-	m->m_name = strdup("swap");
+	m->m_name = xstrdup("swap");
 	m->m_mount = new_que();
 	ins_que(&m->m_q, q->q_back);
 	dp->d_mount = q;
@@ -402,7 +398,7 @@ fixup_required_disk_info(disk_fs *dp)
        * "opts"
        */
       if (!ISSET(dp->d_mask, DF_OPTS))
-	set_disk_fs(dp, DF_OPTS, strdup("rw,defaults"));
+	set_disk_fs(dp, DF_OPTS, xstrdup("rw,defaults"));
 
     }
   }
@@ -429,18 +425,18 @@ fixup_required_mount_info(fsmount *fp, dict_ent *de)
   }
 
   if (!ISSET(fp->f_mask, FM_FSTYPE)) {
-    set_fsmount(fp, FM_FSTYPE, strdup("nfs"));
+    set_fsmount(fp, FM_FSTYPE, xstrdup("nfs"));
     fsi_log("set: fstype is %s", fp->f_fstype);
   }
 
   if (!ISSET(fp->f_mask, FM_OPTS)) {
-    set_fsmount(fp, FM_OPTS, strdup("rw,nosuid,grpid,defaults"));
+    set_fsmount(fp, FM_OPTS, xstrdup("rw,nosuid,grpid,defaults"));
     fsi_log("set: opts are %s", fp->f_opts);
   }
 
   if (!ISSET(fp->f_mask, FM_LOCALNAME)) {
     if (fp->f_ref) {
-      set_fsmount(fp, FM_LOCALNAME, strdup(fp->f_volname));
+      set_fsmount(fp, FM_LOCALNAME, xstrdup(fp->f_volname));
       fsi_log("set: localname is %s", fp->f_localname);
     } else {
       lerror(fp->f_ioloc, "cannot determine localname since volname %s is not uniquely defined", fp->f_volname);
@@ -487,7 +483,7 @@ analyze_mounts(host *hp)
 
   ITER(fp, fsmount, q) {
     char *p;
-    char *nn = strdup(fp->f_volname);
+    char *nn = xstrdup(fp->f_volname);
     int req;
     dict_ent *de = (dict_ent *) NULL;
     int found = 0;
@@ -637,7 +633,7 @@ analyze_automount_tree(qelem *q, char *pref, int lvl)
 	lerror(ap->a_ioloc, "not allowed '/' in a directory name");
     xsnprintf(nname, sizeof(nname), "%s/%s", pref, ap->a_name);
     XFREE(ap->a_name);
-    ap->a_name = strdup(nname[1] == '/' ? nname + 1 : nname);
+    ap->a_name = xstrdup(nname[1] == '/' ? nname + 1 : nname);
     fsi_log("automount point %s:", ap->a_name);
     show_new("ana-automount");
 
@@ -651,7 +647,7 @@ analyze_automount_tree(qelem *q, char *pref, int lvl)
     } else if (ap->a_symlink) {
       fsi_log("\tsymlink to %s", ap->a_symlink);
     } else {
-      ap->a_volname = strdup(ap->a_name);
+      ap->a_volname = xstrdup(ap->a_name);
       fsi_log("\timplicit automount from %s", ap->a_volname);
       analyze_automount(ap);
     }

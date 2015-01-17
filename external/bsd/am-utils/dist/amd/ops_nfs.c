@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_nfs.c,v 1.1.1.2 2009/03/20 20:26:50 christos Exp $	*/
+/*	$NetBSD: ops_nfs.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -115,6 +111,13 @@ static int call_mountd(fh_cache *fp, u_long proc, fwd_fun f, wchan_t wchan);
 static int webnfs_lookup(fh_cache *fp, fwd_fun f, wchan_t wchan);
 static int fh_id = 0;
 
+/*
+ * clamp the filehandle version to 3, so that we can fail back to nfsv3
+ * since nfsv4 does not have file handles
+ */
+#define SET_FH_VERSION(fs) \
+    (fs)->fs_version > NFS_VERSION3 ? NFS_VERSION3 : (fs)->fs_version;
+
 /* globals */
 AUTH *nfs_auth;
 qelem fh_head = {&fh_head, &fh_head};
@@ -203,6 +206,10 @@ got_nfs_fh_mount(voidp pkt, int len, struct sockaddr_in *sa, struct sockaddr_in 
     memmove(fp->fh_nfs_handle.v3.am_fh3_data,
 	    res3.mountres3_u.mountinfo.fhandle.fhandle3_val,
 	    fp->fh_nfs_handle.v3.am_fh3_length);
+
+    XFREE(res3.mountres3_u.mountinfo.fhandle.fhandle3_val);
+    if (res3.mountres3_u.mountinfo.auth_flavors.auth_flavors_val)
+      XFREE(res3.mountres3_u.mountinfo.auth_flavors.auth_flavors_val);
   } else {
 #endif /* HAVE_FS_NFS3 */
     memset(&res, 0, sizeof(res));
@@ -328,8 +335,7 @@ discard_fh(opaque_t arg)
     dlog("Discarding filehandle for %s:%s", fp->fh_fs->fs_host, fp->fh_path);
     free_srvr(fp->fh_fs);
   }
-  if (fp->fh_path)
-    XFREE(fp->fh_path);
+  XFREE(fp->fh_path);
   XFREE(fp);
 }
 
@@ -468,11 +474,11 @@ prime_nfs_fhandle_cache(char *path, fserver *fs, am_nfs_handle_t *fhbuf, mntfs *
     fp->fh_sin = *fs->fs_ip;
     if (!(mf->mf_flags & MFF_WEBNFS))
 	fp->fh_sin.sin_port = 0;
-    fp->fh_nfs_version = fs->fs_version;
+    fp->fh_nfs_version = SET_FH_VERSION(fs);
   }
 
   fp->fh_fs = dup_srvr(fs);
-  fp->fh_path = strdup(path);
+  fp->fh_path = xstrdup(path);
 
   if (mf->mf_flags & MFF_WEBNFS)
     error = webnfs_lookup(fp, got_nfs_fh_webnfs, get_mntfs_wchan(mf));
@@ -546,7 +552,9 @@ call_mountd(fh_cache *fp, u_long proc, fwd_fun fun, wchan_t wchan)
     if (error)
       return error;
     fp->fh_sin.sin_port = mountd_port;
-  }
+    dlog("%s: New %d mountd port", __func__, fp->fh_sin.sin_port);
+  } else
+    dlog("%s: Already had %d mountd port", __func__, fp->fh_sin.sin_port);
 
   /* find the right version of the mount protocol */
 #ifdef HAVE_FS_NFS3
@@ -726,6 +734,17 @@ nfs_init(mntfs *mf)
   am_nfs_handle_t fhs;
   char *colon;
 
+#ifdef NO_FALLBACK
+  /*
+   * We don't need file handles for NFS version 4, but we can fall back to
+   * version 3, so we allocate anyway
+   */
+#ifdef HAVE_FS_NFS4
+  if (mf->mf_server->fs_version == NFS_VERSION4)
+    return 0;
+#endif /* HAVE_FS_NFS4 */
+#endif /* NO_FALLBACK */
+
   if (mf->mf_private) {
     if (mf->mf_flags & MFF_NFS_SCALEDOWN) {
       fserver *fs;
@@ -734,6 +753,9 @@ nfs_init(mntfs *mf)
       mf->mf_ops->umounted(mf);
 
       mf->mf_prfree(mf->mf_private);
+      mf->mf_private = NULL;
+      mf->mf_prfree = NULL;
+
       fs = mf->mf_ops->ffserver(mf);
       free_srvr(mf->mf_server);
       mf->mf_server = fs;
@@ -771,7 +793,11 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *mntdir, char *fs_name, mntfs *mf)
   int retry;
   int proto = AMU_TYPE_NONE;
   mntent_t mnt;
+  void *argsp;
   nfs_args_t nfs_args;
+#ifdef HAVE_FS_NFS4
+  nfs4_args_t nfs4_args;
+#endif /* HAVE_FS_NFS4 */
 
   /*
    * Extract HOST name to give to kernel.
@@ -831,10 +857,7 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *mntdir, char *fs_name, mntfs *mf)
   /*
    * Set mount types accordingly
    */
-#ifndef HAVE_FS_NFS3
-  type = MOUNT_TYPE_NFS;
-  mnt.mnt_type = MNTTAB_TYPE_NFS;
-#else /* HAVE_FS_NFS3 */
+#ifdef HAVE_FS_NFS3
   if (nfs_version == NFS_VERSION3) {
     type = MOUNT_TYPE_NFS3;
     /*
@@ -845,16 +868,25 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *mntdir, char *fs_name, mntfs *mf)
      * So on those systems, set it to "nfs".
      * Note: MNTTAB_OPT_VERS is always set for NFS3 (see am_compat.h).
      */
+    argsp = &nfs_args;
 # if defined(MNTTAB_OPT_VERS) && defined(MOUNT_TABLE_ON_FILE)
     mnt.mnt_type = MNTTAB_TYPE_NFS;
 # else /* defined(MNTTAB_OPT_VERS) && defined(MOUNT_TABLE_ON_FILE) */
     mnt.mnt_type = MNTTAB_TYPE_NFS3;
 # endif /* defined(MNTTAB_OPT_VERS) && defined(MOUNT_TABLE_ON_FILE) */
-  } else {
+# ifdef HAVE_FS_NFS4
+  } else if (nfs_version == NFS_VERSION4) {
+    argsp = &nfs4_args;
+    type = MOUNT_TYPE_NFS4;
+    mnt.mnt_type = MNTTAB_TYPE_NFS4;
+# endif /* HAVE_FS_NFS4 */
+  } else
+#endif /* HAVE_FS_NFS3 */
+  {
+    argsp = &nfs_args;
     type = MOUNT_TYPE_NFS;
     mnt.mnt_type = MNTTAB_TYPE_NFS;
   }
-#endif /* HAVE_FS_NFS3 */
   plog(XLOG_INFO, "mount_nfs_fh: NFS version %d", (int) nfs_version);
   plog(XLOG_INFO, "mount_nfs_fh: using NFS transport %s", nfs_proto);
 
@@ -868,32 +900,44 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *mntdir, char *fs_name, mntfs *mf)
     genflags |= autofs_compute_mount_flags(&mnt);
 #endif /* HAVE_FS_AUTOFS */
 
-  /* setup the many fields and flags within nfs_args */
-  compute_nfs_args(&nfs_args,
-		   &mnt,
-		   genflags,
-		   NULL,	/* struct netconfig *nfsncp */
-		   fs->fs_ip,
-		   nfs_version,
-		   nfs_proto,
-		   fhp,
-		   host,
-		   fs_name);
+   /* setup the many fields and flags within nfs_args */
+   compute_nfs_args(argsp,
+		    &mnt,
+		    genflags,
+		    NULL,	/* struct netconfig *nfsncp */
+		    fs->fs_ip,
+		    nfs_version,
+		    nfs_proto,
+		    fhp,
+		    host,
+		    fs_name);
 
   /* finally call the mounting function */
   if (amuDebug(D_TRACE)) {
-    print_nfs_args(&nfs_args, nfs_version);
+    print_nfs_args(argsp, nfs_version);
     plog(XLOG_DEBUG, "Generic mount flags 0x%x used for NFS mount", genflags);
   }
-  error = mount_fs(&mnt, genflags, (caddr_t) &nfs_args, retry, type,
-		    nfs_version, nfs_proto, mnttab_file_name, on_autofs);
-  XFREE(xopts);
+  error = mount_fs(&mnt, genflags, argsp, retry, type,
+		   nfs_version, nfs_proto, mnttab_file_name, on_autofs);
+  XFREE(mnt.mnt_opts);
+  discard_nfs_args(argsp, nfs_version);
 
-#ifdef HAVE_TRANSPORT_TYPE_TLI
-  free_knetconfig(nfs_args.knconf);
-  if (nfs_args.addr)
-    XFREE(nfs_args.addr);	/* allocated in compute_nfs_args() */
-#endif /* HAVE_TRANSPORT_TYPE_TLI */
+#ifdef HAVE_FS_NFS4
+# ifndef NO_FALLBACK
+  /*
+   * If we are using a v4 file handle, we try a v3 if we get back:
+   * 	ENOENT: NFS v4 has a different export list than v3
+   * 	EPERM: Kernels <= 2.6.18 return that, instead of ENOENT
+   */
+  if ((error == ENOENT || error == EPERM) && nfs_version == NFS_VERSION4) {
+    plog(XLOG_DEBUG, "Could not find NFS 4 mount, trying again with NFS 3");
+    fs->fs_version = NFS_VERSION3;
+    error = mount_nfs_fh(fhp, mntdir, fs_name, mf);
+    if (error)
+      fs->fs_version = NFS_VERSION4;
+  }
+# endif /* NO_FALLBACK */
+#endif /* HAVE_FS_NFS4 */
 
   return error;
 }
@@ -905,8 +949,13 @@ nfs_mount(am_node *am, mntfs *mf)
   int error = 0;
   mntent_t mnt;
 
-  if (!mf->mf_private) {
+  if (!mf->mf_private && mf->mf_server->fs_version != 4) {
     plog(XLOG_ERROR, "Missing filehandle for %s", mf->mf_info);
+    return EINVAL;
+  }
+
+  if (mf->mf_mopts == NULL) {
+    plog(XLOG_ERROR, "Missing mount options for %s", mf->mf_info);
     return EINVAL;
   }
 
@@ -934,6 +983,7 @@ nfs_umount(am_node *am, mntfs *mf)
 {
   int unmount_flags, new_unmount_flags, error;
 
+  dlog("attempting nfs umount");
   unmount_flags = (mf->mf_flags & MFF_ON_AUTOFS) ? AMU_UMOUNT_AUTOFS : 0;
   error = UMOUNT_FS(mf->mf_mount, mnttab_file_name, unmount_flags);
 
@@ -1033,7 +1083,7 @@ nfs_umounted(mntfs *mf)
     f.fh_path = path;
     f.fh_sin = *fs->fs_ip;
     f.fh_sin.sin_port = (u_short) 0;
-    f.fh_nfs_version = fs->fs_version;
+    f.fh_nfs_version = SET_FH_VERSION(fs);
     f.fh_fs = fs;
     f.fh_id = 0;
     f.fh_error = 0;

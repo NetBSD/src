@@ -1,7 +1,7 @@
-/*	$NetBSD: fsi_util.c,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
+/*	$NetBSD: fsi_util.c,v 1.1.1.3 2015/01/17 16:34:17 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -357,7 +353,7 @@ set_host(host *hp, int k, char *v)
   int m = 1 << k;
 
   if (hp->h_mask & m) {
-    fsi_yyerror("host field \"%s\" already set", host_strings[k]);
+    fsi_error("host field \"%s\" already set", host_strings[k]);
     return;
   }
   hp->h_mask |= m;
@@ -365,11 +361,11 @@ set_host(host *hp, int k, char *v)
   switch (k) {
 
   case HF_HOST:{
-      char *p = strdup(v);
+      char *p = xstrdup(v);
       dict_ent *de = dict_locate(dict_of_hosts, v);
 
       if (de)
-	fsi_yyerror("duplicate host %s!", v);
+	fsi_error("duplicate host %s!", v);
       else
 	dict_add(dict_of_hosts, v, (char *) hp);
       hp->h_hostname = v;
@@ -444,7 +440,7 @@ set_ether_if(ether_if *ep, int k, char *v)
   int m = 1 << k;
 
   if (ep->e_mask & m) {
-    fsi_yyerror("netif field \"%s\" already set", ether_if_strings[k]);
+    fsi_error("netif field \"%s\" already set", ether_if_strings[k]);
     return;
   }
   ep->e_mask |= m;
@@ -454,7 +450,7 @@ set_ether_if(ether_if *ep, int k, char *v)
   case EF_INADDR:{
       ep->e_inaddr.s_addr = inet_addr(v);
       if ((int) ep->e_inaddr.s_addr == (int) INADDR_NONE)
-	fsi_yyerror("malformed IP dotted quad: %s", v);
+	fsi_error("malformed IP dotted quad: %s", v);
       XFREE(v);
     }
     break;
@@ -465,7 +461,7 @@ set_ether_if(ether_if *ep, int k, char *v)
       if ((sscanf(v, "0x%lx", &nm) == 1 || sscanf(v, "%lx", &nm) == 1) && nm != 0)
 	ep->e_netmask = htonl(nm);
       else
-	fsi_yyerror("malformed netmask: %s", v);
+	fsi_error("malformed netmask: %s", v);
       XFREE(v);
     }
     break;
@@ -487,7 +483,7 @@ set_disk_fs(disk_fs *dp, int k, char *v)
   int m = 1 << k;
 
   if (dp->d_mask & m) {
-    fsi_yyerror("fs field \"%s\" already set", disk_fs_strings[k]);
+    fsi_error("fs field \"%s\" already set", disk_fs_strings[k]);
     return;
   }
   dp->d_mask |= m;
@@ -548,7 +544,7 @@ set_mount(fsi_mount *mp, int k, char *v)
   int m = 1 << k;
 
   if (mp->m_mask & m) {
-    fsi_yyerror("mount tree field \"%s\" already set", mount_strings[k]);
+    fsi_error("mount tree field \"%s\" already set", mount_strings[k]);
     return;
   }
   mp->m_mask |= m;
@@ -592,7 +588,7 @@ set_fsmount(fsmount *fp, int k, char *v)
   int m = 1 << k;
 
   if (fp->f_mask & m) {
-    fsi_yyerror("mount field \"%s\" already set", fsmount_strings[k]);
+    fsi_error("mount field \"%s\" already set", fsmount_strings[k]);
     return;
   }
   fp->f_mask |= m;

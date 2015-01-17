@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_nfsl.c,v 1.1.1.2 2009/03/20 20:26:49 christos Exp $	*/
+/*	$NetBSD: amfs_nfsl.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -118,8 +114,9 @@ amfs_nfsl_match(am_opts *fo)
    * call nfs_ops.fs_match().
    * If link value exists (or same host), call amfs_link_ops.fs_match().
    */
-  if (!STRCEQ(ho, am_get_hostname())) {
-    plog(XLOG_INFO, "amfs_nfsl: \"%s\" is not local host, using type:=nfs", ho);
+  if (!STRCEQ(ho, am_get_hostname()) && !STRCEQ(ho, hostd)) {
+    plog(XLOG_INFO, "amfs_nfsl: \"%s\" is not the local host \"%s\", "
+	"or \"%s\" using type:=nfs", ho, am_get_hostname(), hostd);
     retval = nfs_ops.fs_match(fo);
   } else if (lstat(cp, &stb) < 0) {
     plog(XLOG_INFO, "amfs_nfsl: \"%s\" does not exist, using type:=nfs", cp);
@@ -215,9 +212,14 @@ amfs_nfsl_umounted(mntfs *mf)
 static fserver *
 amfs_nfsl_ffserver(mntfs *mf)
 {
-  char *cp;
-  char *ho = mf->mf_fo->opt_rhost;
+  char *cp, *ho;
   struct stat stb;
+
+  if (mf->mf_fo == NULL) {
+    plog(XLOG_ERROR, "%s: NULL mf_fo", __func__);
+    return NULL;
+  }
+  ho = mf->mf_fo->opt_rhost;
 
   if (mf->mf_fo->opt_sublink && mf->mf_fo->opt_sublink[0])
     cp = mf->mf_fo->opt_sublink;
@@ -229,7 +231,8 @@ amfs_nfsl_ffserver(mntfs *mf)
    * call amfs_link_ops.ffserver().
    * If link value exists (or same host), then call ops_nfs.ffserver().
    */
-  if (!STRCEQ(ho, am_get_hostname()) || lstat(cp, &stb) < 0) {
+  if ((!STRCEQ(ho, am_get_hostname()) &&
+       !STRCEQ(ho, hostd)) || lstat(cp, &stb) < 0) {
     return nfs_ops.ffserver(mf);
   } else {
     mf->mf_flags |= MFF_NFSLINK;

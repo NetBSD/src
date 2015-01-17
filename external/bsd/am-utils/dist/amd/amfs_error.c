@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_error.c,v 1.1.1.2 2009/03/20 20:26:48 christos Exp $	*/
+/*	$NetBSD: amfs_error.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -94,7 +90,7 @@ am_ops amfs_error_ops =
 static char *
 amfs_error_match(am_opts *fo)
 {
-  return strdup("(error-hook)");
+  return xstrdup("(error-hook)");
 }
 
 
@@ -147,7 +143,7 @@ amfs_error_mount_child(am_node *ap, int *error_return)
  * If we do then just give an error.
  */
 int
-amfs_error_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, u_int count)
+amfs_error_readdir(am_node *mp, voidp cookie, voidp dp, voidp ep, u_int count)
 {
   return ESTALE;
 }
