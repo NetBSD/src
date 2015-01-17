@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.169 2015/01/17 13:53:24 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.170 2015/01/17 14:14:58 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -14056,6 +14056,8 @@ sys/dev/pci/rtsx_pci.c				1.3
 	[nonaka, ticket #432]
 
 sys/dev/mii/miidevs				1.121-1.122
+sys/dev/mii/miidevs.h				(regen)
+sys/dev/mii/miidevs_data.h			(regen)
 
 	BCM5714 and BCM5780 are used for both copper and fiber.
 	Add Realtek RTL8251.
