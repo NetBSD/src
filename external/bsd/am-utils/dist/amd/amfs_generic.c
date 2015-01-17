@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_generic.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
+/*	$NetBSD: amfs_generic.c,v 1.2 2015/01/17 17:46:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2014 Erez Zadok
@@ -1155,7 +1155,6 @@ amfs_generic_lookup_child(am_node *mp, char *fname, int *error_return, int op)
 {
   am_node *new_mp;
   am_loc **al_array;
-  int mp_error;
 
   dlog("in amfs_generic_lookup_child");
 
@@ -1179,9 +1178,6 @@ amfs_generic_lookup_child(am_node *mp, char *fname, int *error_return, int op)
   case VLOOK_LOOKUP:
     return new_mp;
   }
-
-  /* save error_return */
-  mp_error = *error_return;
 
   al_array = amfs_lookup_loc(new_mp, error_return);
   if (!al_array) {

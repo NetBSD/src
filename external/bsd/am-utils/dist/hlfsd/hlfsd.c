@@ -1,7 +1,7 @@
-/*	$NetBSD: hlfsd.c,v 1.2 2013/10/20 03:13:44 christos Exp $	*/
+/*	$NetBSD: hlfsd.c,v 1.3 2015/01/17 17:46:31 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -311,7 +307,11 @@ main(int argc, char *argv[])
   }
 
   /* get hostname for logging and open log before we reset umask */
-  gethostname(hostname, sizeof(hostname));
+  if (gethostname(hostname, sizeof(hostname)) == -1) {
+    fprintf(stderr, "%s: gethostname failed \"%s\".\n",
+	    am_get_progname(), strerror(errno));
+    exit(1);
+  }
   hostname[sizeof(hostname) - 1] = '\0';
   if ((dot = strchr(hostname, '.')) != NULL)
     *dot = '\0';
@@ -417,11 +417,8 @@ main(int argc, char *argv[])
   /*
    * Register hlfsd as an nfs service with the portmapper.
    */
-#ifdef HAVE_TRANSPORT_TYPE_TLI
-  ret = create_nfs_service(&soNFS, &nfs_port, &nfsxprt, nfs_program_2);
-#else /* not HAVE_TRANSPORT_TYPE_TLI */
-  ret = create_nfs_service(&soNFS, &nfs_port, &nfsxprt, nfs_program_2);
-#endif /* not HAVE_TRANSPORT_TYPE_TLI */
+  ret = create_nfs_service(&soNFS, &nfs_port, &nfsxprt, nfs_program_2,
+    NFS_VERSION);
   if (ret != 0)
     fatal("cannot create NFS service");
 

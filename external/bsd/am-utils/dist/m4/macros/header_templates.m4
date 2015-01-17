@@ -79,11 +79,17 @@ AH_TEMPLATE([HAVE_FS_XFS],
 AH_TEMPLATE([HAVE_FS_EFS],
 [Define if have EFS filesystem (irix)])
 
+AH_TEMPLATE([HAVE_FS_EXT],
+[Define if have EXT{2,3,4} filesystem (linux)])
+
 AH_TEMPLATE([HAVE_FS_NFS],
 [Define if have NFS filesystem])
 
 AH_TEMPLATE([HAVE_FS_NFS3],
 [Define if have NFS3 filesystem])
+
+AH_TEMPLATE([HAVE_FS_NFS4],
+[Define if have NFS4 filesystem])
 
 AH_TEMPLATE([HAVE_FS_PCFS],
 [Define if have PCFS filesystem])
@@ -99,6 +105,9 @@ AH_TEMPLATE([HAVE_FS_CDFS],
 
 AH_TEMPLATE([HAVE_FS_UDF],
 [Define if have UDF filesystem])
+
+AH_TEMPLATE([HAVE_FS_LUSTRE],
+[Define if have LUSTRE filesystem])
 
 AH_TEMPLATE([HAVE_FS_TFS],
 [Define if have TFS filesystem])
@@ -139,11 +148,23 @@ AH_TEMPLATE([MOUNT_TYPE_XFS],
 AH_TEMPLATE([MOUNT_TYPE_EFS],
 [Mount(2) type/name for EFS filesystem (irix)])
 
+AH_TEMPLATE([MOUNT_TYPE_EXT2],
+[Mount(2) type/name for EXT2 filesystem (linux)])
+
+AH_TEMPLATE([MOUNT_TYPE_EXT3],
+[Mount(2) type/name for EXT3 filesystem (linux)])
+
+AH_TEMPLATE([MOUNT_TYPE_EXT4],
+[Mount(2) type/name for EXT4 filesystem (linux)])
+
 AH_TEMPLATE([MOUNT_TYPE_NFS],
 [Mount(2) type/name for NFS filesystem])
 
 AH_TEMPLATE([MOUNT_TYPE_NFS3],
 [Mount(2) type/name for NFS3 filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_NFS4],
+[Mount(2) type/name for NFS4 filesystem])
 
 AH_TEMPLATE([MOUNT_TYPE_PCFS],
 [Mount(2) type/name for PCFS filesystem. XXX: conf/trap/trap_hpux.h may override this definition for HPUX 9.0])
@@ -156,6 +177,12 @@ AH_TEMPLATE([MOUNT_TYPE_CDFS],
 
 AH_TEMPLATE([MOUNT_TYPE_UDF],
 [Mount(2) type/name for UDF filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_LUSTRE],
+[Mount(2) type/name for LUSTRE filesystem])
+
+AH_TEMPLATE([MOUNT_TYPE_LUSTRE],
+[Mount(2) type/name for LUSTRE filesystem])
 
 AH_TEMPLATE([MOUNT_TYPE_TFS],
 [Mount(2) type/name for TFS filesystem])
@@ -199,11 +226,23 @@ AH_TEMPLATE([MNTTAB_TYPE_XFS],
 AH_TEMPLATE([MNTTAB_TYPE_EFS],
 [Mount-table entry name for EFS filesystem (irix)])
 
+AH_TEMPLATE([MNTTAB_TYPE_EXT2],
+[Mount-table entry name for EXT2 filesystem (linux)])
+
+AH_TEMPLATE([MNTTAB_TYPE_EXT3],
+[Mount-table entry name for EXT3 filesystem (linux)])
+
+AH_TEMPLATE([MNTTAB_TYPE_EXT4],
+[Mount-table entry name for EXT4 filesystem (linux)])
+
 AH_TEMPLATE([MNTTAB_TYPE_NFS],
 [Mount-table entry name for NFS filesystem])
 
 AH_TEMPLATE([MNTTAB_TYPE_NFS3],
 [Mount-table entry name for NFS3 filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_NFS4],
+[Mount-table entry name for NFS4 filesystem])
 
 AH_TEMPLATE([MNTTAB_TYPE_PCFS],
 [Mount-table entry name for PCFS filesystem])
@@ -216,6 +255,9 @@ AH_TEMPLATE([MNTTAB_TYPE_CDFS],
 
 AH_TEMPLATE([MNTTAB_TYPE_UDF],
 [Mount-table entry name for UDF filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_LUSTRE],
+[Mount-table entry name for LUSTRE filesystem])
 
 AH_TEMPLATE([MNTTAB_TYPE_TFS],
 [Mount-table entry name for TFS filesystem])
@@ -424,6 +466,9 @@ AH_TEMPLATE([MNTTAB_OPT_NOWIN95],
 AH_TEMPLATE([MNTTAB_OPT_SHORTNAME],
 [Force old DOS short names only])
 
+AH_TEMPLATE([MNTTAB_OPT_NOACL],
+[Access Control Lists are not supported])
+
 
 AH_TEMPLATE([MNT2_GEN_OPT_ASYNC],
 [asynchronous filesystem access])
@@ -515,6 +560,15 @@ AH_TEMPLATE([MNT2_GEN_OPT_SYNC],
 AH_TEMPLATE([MNT2_GEN_OPT_SYNCHRONOUS],
 [synchronous filesystem access (same as SYNC)])
 
+AH_TEMPLATE([MNT2_GEN_OPT_NOATIME],
+[don't update access times])
+
+AH_TEMPLATE([MNT2_GEN_OPT_NODIRATIME],
+[don't update directory access times])
+
+AH_TEMPLATE([MNT2_GEN_OPT_MANDLOCK],
+[honor mandatory locking requests])
+
 AH_TEMPLATE([MNT2_GEN_OPT_SYS5],
 [Mount with Sys 5-specific semantics])
 
@@ -538,6 +592,9 @@ AH_TEMPLATE([MNT2_NFS_OPT_ACREGMIN],
 
 AH_TEMPLATE([MNT2_NFS_OPT_AUTHERR],
 [Authentication error])
+
+AH_TEMPLATE([MNT2_NFS_OPT_BROKEN_SUID],
+[Linux broken setuid])
 
 AH_TEMPLATE([MNT2_NFS_OPT_DEADTHRESH],
 [set dead server retry thresh])
@@ -605,6 +662,9 @@ AH_TEMPLATE([MNT2_NFS_OPT_NFSV3],
 AH_TEMPLATE([MNT2_NFS_OPT_NOAC],
 [don't cache attributes])
 
+AH_TEMPLATE([MNT2_NFS_OPT_NOACL],
+[does not support Access Control Lists])
+
 AH_TEMPLATE([MNT2_NFS_OPT_NOCONN],
 [Don't Connect the socket])
 
@@ -613,6 +673,12 @@ AH_TEMPLATE([MNT2_NFS_OPT_NOCTO],
 
 AH_TEMPLATE([MNT2_NFS_OPT_NOINT],
 [disallow interrupts on hard mounts])
+
+AH_TEMPLATE([MNT2_NFS_OPT_NONLM],
+[does not support locking])
+
+AH_TEMPLATE([MNT2_NFS_OPT_NORDIRPLUS],
+[does not support readdir+])
 
 AH_TEMPLATE([MNT2_NFS_OPT_NQLOOKLEASE],
 [Get lease for lookup])
@@ -674,11 +740,16 @@ AH_TEMPLATE([MNT2_NFS_OPT_SOFT],
 AH_TEMPLATE([MNT2_NFS_OPT_SPONGY],
 [spongy mount])
 
+AH_TEMPLATE([MNT2_NFS_OPT_STRICTLOCK],
+[Reserved for nfsv4])
 AH_TEMPLATE([MNT2_NFS_OPT_TIMEO],
 [set initial timeout])
 
 AH_TEMPLATE([MNT2_NFS_OPT_TCP],
 [use TCP for mounts])
+
+AH_TEMPLATE([MNT2_NFS_OPT_UNSHARED],
+[do not use shared cache for all mountpoints])
 
 AH_TEMPLATE([MNT2_NFS_OPT_VER3],
 [linux NFSv3])
@@ -991,9 +1062,6 @@ AH_TEMPLATE([HAVE_EXTERN_SLEEP],
 
 AH_TEMPLATE([HAVE_EXTERN_STRCASECMP],
 [does extern definition for strcasecmp() exist?])
-
-AH_TEMPLATE([HAVE_EXTERN_STRDUP],
-[does extern definition for strdup() exist?])
 
 AH_TEMPLATE([HAVE_EXTERN_STRLCAT],
 [does extern definition for strlcat() exist?])

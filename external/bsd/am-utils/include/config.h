@@ -1,5 +1,5 @@
 /* config.h.  Generated from config.h.in by configure.  */
-/* config.h.in.  Generated from configure.in by autoheader.  */
+/* config.h.in.  Generated from configure.ac by autoheader.  */
 
 
 /*
@@ -25,7 +25,7 @@
 
 #ifndef __NetBSD__
 /* Define configuration date */
-#define CONFIG_DATE "Fri Mar 20 16:20:16 EDT 2009"
+#define CONFIG_DATE "Sat Jan 17 11:42:57 EST 2015"
 #endif
 
 /* Turn off general debugging by default */
@@ -262,9 +262,6 @@
 /* does extern definition for strcasecmp() exist? */
 #define HAVE_EXTERN_STRCASECMP 1
 
-/* does extern definition for strdup() exist? */
-#define HAVE_EXTERN_STRDUP 1
-
 /* does extern definition for strlcat() exist? */
 #define HAVE_EXTERN_STRLCAT 1
 
@@ -334,6 +331,9 @@
 /* Define to 1 if you have the <fs/efs/efs_mount.h> header file. */
 #define HAVE_FS_EFS_EFS_MOUNT_H 1
 
+/* Define if have EXT{2,3,4} filesystem (linux) */
+/* #undef HAVE_FS_EXT */
+
 /* Define if have FFS filesystem */
 /* #undef HAVE_FS_FFS */
 
@@ -342,6 +342,9 @@
 
 /* Define if have LOFS filesystem */
 /* #undef HAVE_FS_LOFS */
+
+/* Define if have LUSTRE filesystem */
+/* #undef HAVE_FS_LUSTRE */
 
 /* Define if have MFS filesystem */
 #define HAVE_FS_MFS 1
@@ -354,6 +357,9 @@
 
 /* Define if have NFS3 filesystem */
 #define HAVE_FS_NFS3 1
+
+/* Define if have NFS4 filesystem */
+/* #undef HAVE_FS_NFS4 */
 
 /* Define if have NULLFS (loopback on bsd44) filesystem */
 #define HAVE_FS_NULLFS 1
@@ -543,6 +549,9 @@
 
 /* Define to 1 if you have the <linux/nfs2.h> header file. */
 /* #undef HAVE_LINUX_NFS2_H */
+
+/* Define to 1 if you have the <linux/nfs4.h> header file. */
+/* #undef HAVE_LINUX_NFS4_H */
 
 /* Define to 1 if you have the <linux/nfs.h> header file. */
 /* #undef HAVE_LINUX_NFS_H */
@@ -868,6 +877,9 @@
 
 /* Define to 1 if you have the <rpc/auth_des.h> header file. */
 /* #undef HAVE_RPC_AUTH_DES_H */
+
+/* Define to 1 if you have the <rpc/auth.h> header file. */
+#define HAVE_RPC_AUTH_H 1
 
 /* Define to 1 if you have the <rpc/pmap_clnt.h> header file. */
 #define HAVE_RPC_PMAP_CLNT_H 1
@@ -1436,6 +1448,9 @@
 /* Define to 1 if you have the `xdr_symlinkargs' function. */
 #define HAVE_XDR_SYMLINKARGS 1
 
+/* Define to 1 if you have the `xdr_u_int64_t' function. */
+#define HAVE_XDR_U_INT64_T 1
+
 /* Define to 1 if you have the `xdr_writeargs' function. */
 #define HAVE_XDR_WRITEARGS 1
 
@@ -1474,22 +1489,26 @@
 #define HOST_CPU "x86_64"
 
 /* Define the header version of (linux) hosts (eg. 2.2.10) */
-#define HOST_HEADER_VERSION "5.99.7"
+#define HOST_HEADER_VERSION "7.99.4"
 
 /* Define name of host */
 #define HOST_NAME "quasar.astron.com"
 
 /* Define name and version of host machine (eg. solaris2.5.1) */
-#define HOST_OS "netbsd5.99.7"
+#define HOST_OS "netbsd7.99.4"
 
 /* Define only name of host machine OS (eg. solaris2) */
 #define HOST_OS_NAME "netbsd"
 
 /* Define only version of host machine (eg. 2.5.1) */
-#define HOST_OS_VERSION "5.99.7"
+#define HOST_OS_VERSION "7.99.4"
 
 /* Define name of host machine's vendor (eg. sun) */
 #define HOST_VENDOR "unknown"
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#define LT_OBJDIR ".libs/"
 #endif
 
 /* Ignore permission bits */
@@ -1559,6 +1578,9 @@
 /* journaling filesystem (AIX's UFS/FFS) */
 /* #undef MNT2_GEN_OPT_JFS */
 
+/* honor mandatory locking requests */
+/* #undef MNT2_GEN_OPT_MANDLOCK */
+
 /* do multi-component lookup on files */
 /* #undef MNT2_GEN_OPT_MULTI */
 
@@ -1568,11 +1590,17 @@
 /* NFS mount */
 /* #undef MNT2_GEN_OPT_NFS */
 
+/* don't update access times */
+#define MNT2_GEN_OPT_NOATIME 0x4000000
+
 /* nocache (what?) */
 /* #undef MNT2_GEN_OPT_NOCACHE */
 
 /* do not interpret special device files */
 #define MNT2_GEN_OPT_NODEV 0x10
+
+/* don't update directory access times */
+/* #undef MNT2_GEN_OPT_NODIRATIME */
 
 /* no exec calls allowed */
 #define MNT2_GEN_OPT_NOEXEC 0x4
@@ -1636,6 +1664,9 @@
 
 /* hide mount type from df(1) */
 /* #undef MNT2_NFS_OPT_AUTO */
+
+/* Linux broken setuid */
+/* #undef MNT2_NFS_OPT_BROKEN_SUID */
 
 /* set dead server retry thresh */
 #define MNT2_NFS_OPT_DEADTHRESH 0x4000
@@ -1703,6 +1734,9 @@
 /* don't cache attributes */
 #define MNT2_NFS_OPT_NOAC 0x80000
 
+/* does not support Access Control Lists */
+/* #undef MNT2_NFS_OPT_NOACL */
+
 /* Don't Connect the socket */
 #define MNT2_NFS_OPT_NOCONN 0x80
 
@@ -1714,6 +1748,9 @@
 
 /* Don't use locking */
 /* #undef MNT2_NFS_OPT_NONLM */
+
+/* does not support readdir+ */
+/* #undef MNT2_NFS_OPT_NORDIRPLUS */
 
 /* Get lease for lookup */
 /* #undef MNT2_NFS_OPT_NQLOOKLEASE */
@@ -1775,6 +1812,9 @@
 /* spongy mount */
 /* #undef MNT2_NFS_OPT_SPONGY */
 
+/* Reserved for nfsv4 */
+/* #undef MNT2_NFS_OPT_STRICTLOCK */
+
 /* set symlink cache time-to-live */
 /* #undef MNT2_NFS_OPT_SYMTTL */
 
@@ -1783,6 +1823,9 @@
 
 /* set initial timeout */
 #define MNT2_NFS_OPT_TIMEO 0x8
+
+/* do not use shared cache for all mountpoints */
+/* #undef MNT2_NFS_OPT_UNSHARED */
 
 /* linux NFSv3 */
 /* #undef MNT2_NFS_OPT_VER3 */
@@ -1888,6 +1931,9 @@
 
 /* Mount Table option string: Don't cache attributes at all */
 /* #undef MNTTAB_OPT_NOAC */
+
+/* Access Control Lists are not supported */
+/* #undef MNTTAB_OPT_NOACL */
 
 /* Mount Table option string: No auto (what?) */
 /* #undef MNTTAB_OPT_NOAUTO */
@@ -2009,11 +2055,23 @@
 /* Mount-table entry name for EFS filesystem (irix) */
 #define MNTTAB_TYPE_EFS "efs"
 
+/* Mount-table entry name for EXT2 filesystem (linux) */
+/* #undef MNTTAB_TYPE_EXT2 */
+
+/* Mount-table entry name for EXT3 filesystem (linux) */
+/* #undef MNTTAB_TYPE_EXT3 */
+
+/* Mount-table entry name for EXT4 filesystem (linux) */
+/* #undef MNTTAB_TYPE_EXT4 */
+
 /* Mount-table entry name for FFS filesystem */
 /* #undef MNTTAB_TYPE_FFS */
 
 /* Mount-table entry name for LOFS filesystem */
 /* #undef MNTTAB_TYPE_LOFS */
+
+/* Mount-table entry name for LUSTRE filesystem */
+/* #undef MNTTAB_TYPE_LUSTRE */
 
 /* Mount-table entry name for MFS filesystem */
 #define MNTTAB_TYPE_MFS "mfs"
@@ -2023,6 +2081,9 @@
 
 /* Mount-table entry name for NFS3 filesystem */
 #define MNTTAB_TYPE_NFS3 "nfs"
+
+/* Mount-table entry name for NFS4 filesystem */
+/* #undef MNTTAB_TYPE_NFS4 */
 
 /* Mount-table entry name for NULLFS (loopback on bsd44) filesystem */
 #define MNTTAB_TYPE_NULLFS "null"
@@ -2069,6 +2130,15 @@
 /* Mount(2) type/name for EFS filesystem (irix) */
 #define MOUNT_TYPE_EFS MOUNT_EFS
 
+/* Mount(2) type/name for EXT2 filesystem (linux) */
+/* #undef MOUNT_TYPE_EXT2 */
+
+/* Mount(2) type/name for EXT3 filesystem (linux) */
+/* #undef MOUNT_TYPE_EXT3 */
+
+/* Mount(2) type/name for EXT4 filesystem (linux) */
+/* #undef MOUNT_TYPE_EXT4 */
+
 /* Mount(2) type/name for FFS filesystem */
 /* #undef MOUNT_TYPE_FFS */
 
@@ -2078,6 +2148,9 @@
 /* Mount(2) type/name for LOFS filesystem */
 /* #undef MOUNT_TYPE_LOFS */
 
+/* Mount(2) type/name for LUSTRE filesystem */
+/* #undef MOUNT_TYPE_LUSTRE */
+
 /* Mount(2) type/name for MFS filesystem */
 #define MOUNT_TYPE_MFS MOUNT_MFS
 
@@ -2086,6 +2159,9 @@
 
 /* Mount(2) type/name for NFS3 filesystem */
 #define MOUNT_TYPE_NFS3 MOUNT_NFS3
+
+/* Mount(2) type/name for NFS4 filesystem */
+/* #undef MOUNT_TYPE_NFS4 */
 
 /* Mount(2) type/name for NULLFS (loopback on bsd44) filesystem */
 #define MOUNT_TYPE_NULLFS MOUNT_NULL
@@ -2144,13 +2220,16 @@
 #define PACKAGE_NAME "am-utils"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "am-utils 6.2a3"
+#define PACKAGE_STRING "am-utils 6.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "am-utils"
 
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "6.2a3"
+#define PACKAGE_VERSION "6.2"
 
 /* Type of the 6th argument to recvfrom() */
 #define RECVFROM_FROMLEN_TYPE socklen_t
@@ -2213,7 +2292,7 @@
 /* #undef USE_UNCONNECTED_NFS_SOCKETS */
 
 /* Version number of package */
-#define VERSION "6.2a3"
+#define VERSION "6.2"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
@@ -2236,6 +2315,17 @@
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
 #define YYTEXT_POINTER 1
+
+/* Enable large inode numbers on Mac OS X 10.5.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+/* #undef _FILE_OFFSET_BITS */
+
+/* Define for large files, on AIX-style hosts. */
+/* #undef _LARGE_FILES */
 
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */
