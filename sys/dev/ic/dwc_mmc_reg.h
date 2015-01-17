@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_reg.h,v 1.2 2014/12/27 19:18:04 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc_reg.h,v 1.3 2015/01/17 19:10:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -112,6 +112,27 @@
 	(DWC_MMC_INT_RE | DWC_MMC_INT_RCRC | DWC_MMC_INT_DCRC | \
 	 DWC_MMC_INT_RTO | DWC_MMC_INT_DRTO | DWC_MMC_INT_HTO | \
 	 DWC_MMC_INT_HLE | DWC_MMC_INT_SBE | DWC_MMC_INT_EBE)
+
+#define DWC_MMC_INT_BITS	\
+	"\20"			\
+	"\x18"	"SDIO_INT"	\
+	"\x10"	"NEW_INT"	\
+	"\x0f"	"EBE"		\
+	"\x0e"	"ACD"		\
+	"\x0d"	"SBE"		\
+	"\x0c"	"HLE"		\
+	"\x0b"	"FRUN"		\
+	"\x0a"	"HTO"		\
+	"\x09"	"DRTO"		\
+	"\x08"	"RTO"		\
+	"\x07"	"DCRC"		\
+	"\x06"	"RCRC"		\
+	"\x05"	"RXDR"		\
+	"\x04"	"TXDR"		\
+	"\x03"	"DTO"		\
+	"\x02"	"CD"		\
+	"\x01"	"RE"		\
+	"\x00"	"CARDDET"
 
 #define DWC_MMC_CMD_START_CMD			__BIT(31)
 #define DWC_MMC_CMD_USE_HOLD_REG		__BIT(29)
