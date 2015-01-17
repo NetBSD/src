@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_program.c,v 1.1.1.2 2009/03/20 20:26:49 christos Exp $	*/
+/*	$NetBSD: amfs_program.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -107,7 +103,7 @@ amfs_program_match(am_opts *fo)
   }
   prog = strchr(fo->opt_mount, ' ');
 
-  return strdup(prog ? prog + 1 : fo->opt_mount);
+  return xstrdup(prog ? prog + 1 : fo->opt_mount);
 }
 
 
@@ -118,11 +114,14 @@ amfs_program_init(mntfs *mf)
   if (mf->mf_private != NULL)
     return 0;
 
+  if (mf->mf_fo == NULL)
+    return 0;
+
   /* save unmount (or umount) command */
   if (mf->mf_fo->opt_unmount != NULL)
-    mf->mf_private = (opaque_t) strdup(mf->mf_fo->opt_unmount);
+    mf->mf_private = (opaque_t) xstrdup(mf->mf_fo->opt_unmount);
   else
-    mf->mf_private = (opaque_t) strdup(mf->mf_fo->opt_umount);
+    mf->mf_private = (opaque_t) xstrdup(mf->mf_fo->opt_umount);
   mf->mf_prfree = (void (*)(opaque_t)) free;
 
   return 0;
@@ -138,9 +137,7 @@ amfs_program_exec(char *info)
   /*
    * Split copy of command info string
    */
-  info = strdup(info);
-  if (info == 0)
-    return ENOBUFS;
+  info = xstrdup(info);
   xivec = strsplit(info, ' ', '\'');
 
   /*
@@ -149,10 +146,12 @@ amfs_program_exec(char *info)
   (void) fclose(stdout);
   if (!logfp)
     logfp = stderr;		/* initialize before possible first use */
-  (void) dup(fileno(logfp));
+    if (dup(fileno(logfp)) == -1)
+      goto out;
   if (fileno(logfp) != fileno(stderr)) {
     (void) fclose(stderr);
-    (void) dup(fileno(logfp));
+    if (dup(fileno(logfp)) == -1)
+      goto out;
   }
 
   /*
@@ -172,13 +171,16 @@ amfs_program_exec(char *info)
     plog(XLOG_USER, "1st/2nd args missing to (un)mount program");
   } else {
     (void) execv(xivec[0], xivec + 1);
+    error = errno;
+    plog(XLOG_ERROR, "exec failed: %m");
+    errno = error;
   }
 
+out:
   /*
    * Save error number
    */
   error = errno;
-  plog(XLOG_ERROR, "exec failed: %m");
 
   /*
    * Free allocate memory

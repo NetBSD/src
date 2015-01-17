@@ -1,7 +1,7 @@
-/*	$NetBSD: xutil.c,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
+/*	$NetBSD: xutil.c,v 1.1.1.3 2015/01/17 16:34:18 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -297,17 +293,23 @@ expand_error(const char *f, char *e, size_t maxlen)
   const char *p;
   char *q;
   int error = errno;
-  int len = 0;
+  size_t len = 0, l;
 
-  for (p = f, q = e; (*q = *p) && (size_t) len < maxlen; len++, q++, p++) {
+  *e = '\0';
+  for (p = f, q = e; len < maxlen && (*q = *p); len++, q++, p++) {
     if (p[0] == '%' && p[1] == 'm') {
-      xstrlcpy(q, strerror(error), maxlen);
-      len += strlen(q) - 1;
-      q += strlen(q) - 1;
+      if (len >= maxlen)
+	break;
+      xstrlcpy(q, strerror(error), maxlen - len);
+      l = strlen(q);
+      if (l != 0)
+	  l--;
+      len += l;
+      q += l;
       p++;
     }
   }
-  e[maxlen-1] = '\0';		/* null terminate, to be sure */
+  e[maxlen - 1] = '\0';		/* null terminate, to be sure */
   return e;
 }
 
@@ -422,14 +424,33 @@ debug_option(char *opt)
 void
 dplog(const char *fmt, ...)
 {
+#ifdef HAVE_SIGACTION
+  sigset_t old, chld;
+#else /* not HAVE_SIGACTION */
+  int mask;
+#endif /* not HAVE_SIGACTION */
   va_list ap;
 
+#ifdef HAVE_SIGACTION
+  sigemptyset(&chld);
+  sigaddset(&chld, SIGCHLD);
+#else /* not HAVE_SIGACTION */
+  mask = sigblock(sigmask(SIGCHLD));
+#endif /* not HAVE_SIGACTION */
+
+  sigprocmask(SIG_BLOCK, &chld, &old);
   if (!logfp)
     logfp = stderr;		/* initialize before possible first use */
 
   va_start(ap, fmt);
   real_plog(XLOG_DEBUG, fmt, ap);
   va_end(ap);
+
+#ifdef HAVE_SIGACTION
+  sigprocmask(SIG_SETMASK, &old, NULL);
+#else /* not HAVE_SIGACTION */
+  mask = sigblock(sigmask(SIGCHLD));
+#endif /* not HAVE_SIGACTION */
 }
 #endif /* DEBUG */
 
@@ -437,7 +458,20 @@ dplog(const char *fmt, ...)
 void
 plog(int lvl, const char *fmt, ...)
 {
+#ifdef HAVE_SIGACTION
+  sigset_t old, chld;
+#else /* not HAVE_SIGACTION */
+  int mask;
+#endif /* not HAVE_SIGACTION */
   va_list ap;
+
+#ifdef HAVE_SIGACTION
+  sigemptyset(&chld);
+  sigaddset(&chld, SIGCHLD);
+  sigprocmask(SIG_BLOCK, &chld, &old);
+#else /* not HAVE_SIGACTION */
+  mask = sigblock(sigmask(SIGCHLD));
+#endif /* not HAVE_SIGACTION */
 
   if (!logfp)
     logfp = stderr;		/* initialize before possible first use */
@@ -445,6 +479,12 @@ plog(int lvl, const char *fmt, ...)
   va_start(ap, fmt);
   real_plog(lvl, fmt, ap);
   va_end(ap);
+
+#ifdef HAVE_SIGACTION
+  sigprocmask(SIG_SETMASK, &old, NULL);
+#else /* not HAVE_SIGACTION */
+  sigsetmask(mask);
+#endif /* not HAVE_SIGACTION */
 }
 
 
@@ -526,7 +566,7 @@ real_plog(int lvl, const char *fmt, va_list vargs)
       fprintf(stderr, "real_plog: string \"%s\" truncated to \"%s\"\n", last_msg, msg);
     last_lvl = lvl;
     show_time_host_and_name(lvl); /* mimic syslog header */
-    fwrite(msg, ptr - msg, 1, logfp);
+    __IGNORE(fwrite(msg, ptr - msg, 1, logfp));
     fflush(logfp);
     break;
 
@@ -539,7 +579,7 @@ real_plog(int lvl, const char *fmt, va_list vargs)
 	fprintf(stderr, "real_plog: string \"%s\" truncated to \"%s\"\n", last_msg, msg);
       last_lvl = lvl;
       show_time_host_and_name(lvl); /* mimic syslog header */
-      fwrite(msg, ptr - msg, 1, logfp);
+      __IGNORE(fwrite(msg, ptr - msg, 1, logfp));
       fflush(logfp);
     }
     break;
@@ -552,7 +592,7 @@ real_plog(int lvl, const char *fmt, va_list vargs)
     show_time_host_and_name(last_lvl);
     xsnprintf(last_msg, sizeof(last_msg),
 	      "last message repeated %d times\n", last_count);
-    fwrite(last_msg, strlen(last_msg), 1, logfp);
+    __IGNORE(fwrite(last_msg, strlen(last_msg), 1, logfp));
     fflush(logfp);
     last_count = 0;		/* start from scratch */
     break;
@@ -564,13 +604,13 @@ real_plog(int lvl, const char *fmt, va_list vargs)
       show_time_host_and_name(last_lvl);
       xsnprintf(last_msg, sizeof(last_msg),
 		"last message repeated %d times\n", last_count);
-      fwrite(last_msg, strlen(last_msg), 1, logfp);
+      __IGNORE(fwrite(last_msg, strlen(last_msg), 1, logfp));
       if (strlcpy(last_msg, msg, 1024) >= 1024) /* don't use xstrlcpy here (recursive!) */
 	fprintf(stderr, "real_plog: string \"%s\" truncated to \"%s\"\n", last_msg, msg);
       last_count = 1;
       last_lvl = lvl;
       show_time_host_and_name(lvl); /* mimic syslog header */
-      fwrite(msg, ptr - msg, 1, logfp);
+      __IGNORE(fwrite(msg, ptr - msg, 1, logfp));
       fflush(logfp);
     }
     break;
@@ -826,7 +866,7 @@ switch_to_logfile(char *logfile, int old_umask, int truncate_log)
     } else {			/* regular log file */
       (void) umask(old_umask);
       if (truncate_log)
-	truncate(logfile, 0);
+	__IGNORE(truncate(logfile, 0));
       new_logfp = fopen(logfile, "a");
       umask(0);
     }
@@ -981,9 +1021,9 @@ amu_release_controlling_tty(void)
     close(fd);
   }
   return;
-#endif /* not TIOCNOTTY */
-
+#else
   plog(XLOG_ERROR, "unable to release controlling tty");
+#endif /* not TIOCNOTTY */
 }
 
 
@@ -1038,7 +1078,7 @@ mkdirs(char *path, int mode)
   /*
    * take a copy in case path is in readonly store
    */
-  char *p2 = strdup(path);
+  char *p2 = xstrdup(path);
   char *sp = p2;
   struct stat stb;
   int error_so_far = 0;
@@ -1082,7 +1122,7 @@ mkdirs(char *path, int mode)
 void
 rmdirs(char *dir)
 {
-  char *xdp = strdup(dir);
+  char *xdp = xstrdup(dir);
   char *dp;
 
   do {
@@ -1116,3 +1156,14 @@ rmdirs(char *dir)
   XFREE(xdp);
 }
 
+/*
+ * Dup a string
+ */
+char *
+xstrdup(const char *s)
+{
+  size_t len = strlen(s);
+  char *sp = xmalloc(len + 1);
+  memcpy(sp, s, len + 1);
+  return sp;
+}
