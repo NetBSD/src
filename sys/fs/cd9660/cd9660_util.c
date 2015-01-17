@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.11 2014/06/01 11:01:18 martin Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.11.2.1 2015/01/17 12:10:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.11 2014/06/01 11:01:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.11.2.1 2015/01/17 12:10:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.11 2014/06/01 11:01:18 martin Exp 
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
 #include <sys/dirent.h>
 
 #include <fs/cd9660/iso.h>

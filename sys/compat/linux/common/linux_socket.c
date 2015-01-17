@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.119 2014/05/23 12:28:51 njoly Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.119.2.1 2015/01/17 12:10:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.119 2014/05/23 12:28:51 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.119.2.1 2015/01/17 12:10:54 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.119 2014/05/23 12:28:51 njoly Exp
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/file.h>

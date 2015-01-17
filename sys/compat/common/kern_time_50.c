@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.27 2014/04/04 18:17:36 njoly Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.27.4.1 2015/01/17 12:10:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.27 2014/04/04 18:17:36 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.27.4.1 2015/01/17 12:10:54 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.27 2014/04/04 18:17:36 njoly Exp 
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/dirent.h>
-#include <sys/malloc.h>
 #include <sys/kauth.h>
 #include <sys/time.h>
 #include <sys/timex.h>

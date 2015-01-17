@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.113 2014/06/25 16:38:53 njoly Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.113.2.1 2015/01/17 12:10:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.113 2014/06/25 16:38:53 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.113.2.1 2015/01/17 12:10:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.113 2014/06/25 16:38:53 njoly Exp $
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
-#include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/tty.h>

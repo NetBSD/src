@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.94.4.1 2014/08/29 11:55:34 martin Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.94.4.2 2015/01/17 12:10:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.94.4.1 2014/08/29 11:55:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.94.4.2 2015/01/17 12:10:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.94.4.1 2014/08/29 11:55:34 martin 
 #include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/lock.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/proc.h>

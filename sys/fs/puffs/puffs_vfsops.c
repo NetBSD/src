@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.113.2.1 2014/08/29 11:55:34 martin Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.113.2.2 2015/01/17 12:10:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.113.2.1 2014/08/29 11:55:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.113.2.2 2015/01/17 12:10:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
-#include <sys/malloc.h>
 #include <sys/extattr.h>
 #include <sys/queue.h>
 #include <sys/vnode.h>

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.33 2012/09/24 03:05:53 msaitoh Exp $       */
+/*      $NetBSD: if_atm.c,v 1.33.12.1 2015/01/17 12:10:53 martin Exp $       */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.33 2012/09/24 03:05:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.33.12.1 2015/01/17 12:10:53 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_natm.h"
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.33 2012/09/24 03:05:53 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/time.h>

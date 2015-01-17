@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.10.4.1 2014/09/08 18:57:58 msaitoh Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.10.4.2 2015/01/17 12:10:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,6 @@
 
 #include "chfs.h"
 #include "chfs_inode.h"
-#include <sys/malloc.h>
 #include <sys/kauth.h>
 #include <sys/namei.h>
 #include <sys/uio.h>

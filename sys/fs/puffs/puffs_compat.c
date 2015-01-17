@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_compat.c,v 1.2 2010/07/11 11:17:27 pooka Exp $	*/
+/*	$NetBSD: puffs_compat.c,v 1.2.40.1 2015/01/17 12:10:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -32,14 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_compat.c,v 1.2 2010/07/11 11:17:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_compat.c,v 1.2.40.1 2015/01/17 12:10:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/lock.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/proc.h>

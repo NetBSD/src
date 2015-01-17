@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.183.2.1 2014/08/22 19:20:15 martin Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.183.2.2 2015/01/17 12:10:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.183.2.1 2014/08/22 19:20:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.183.2.2 2015/01/17 12:10:55 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.183.2.1 2014/08/22 19:20:15 mart
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/lock.h>
 #include <sys/conf.h>

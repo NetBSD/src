@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.36 2014/05/25 13:51:25 hannken Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.36.2.1 2015/01/17 12:10:53 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.36 2014/05/25 13:51:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.36.2.1 2015/01/17 12:10:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.36 2014/05/25 13:51:25 hannken Exp 
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
 
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>

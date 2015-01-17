@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1906.2.2 2014/11/27 11:36:25 martin Exp $
+#	$NetBSD: mi,v 1.1906.2.3 2015/01/17 12:10:54 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9676,7 +9676,7 @@
 ./usr/share/man/cat9/MALLOC.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/MALLOC_DECLARE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/MALLOC_DEFINE.0		comp-sys-catman		.cat
-./usr/share/man/cat9/MALLOC_DEFINE_LIMIT.0	comp-sys-catman		.cat
+./usr/share/man/cat9/MALLOC_DEFINE_LIMIT.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/MCHTYPE.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/MCLGET.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/MEXTADD.0			comp-sys-catman		.cat
@@ -10445,10 +10445,10 @@
 ./usr/share/man/cat9/m_tag_unlink.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/makeiplcookie.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/malloc.0			comp-sys-catman		.cat
-./usr/share/man/cat9/malloc_roundup.0		comp-sys-catman		.cat
+./usr/share/man/cat9/malloc_roundup.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/malloc_type_attach.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/malloc_type_detach.0	comp-sys-catman		.cat
-./usr/share/man/cat9/malloc_type_setlimit.0	comp-sys-catman		.cat
+./usr/share/man/cat9/malloc_type_setlimit.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/mb.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/mb_memory.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mb_read.0			comp-sys-catman		.cat
@@ -16442,7 +16442,7 @@
 ./usr/share/man/html9/MALLOC.html		comp-sys-htmlman	html
 ./usr/share/man/html9/MALLOC_DECLARE.html	comp-sys-htmlman	html
 ./usr/share/man/html9/MALLOC_DEFINE.html	comp-sys-htmlman	html
-./usr/share/man/html9/MALLOC_DEFINE_LIMIT.html	comp-sys-htmlman	html
+./usr/share/man/html9/MALLOC_DEFINE_LIMIT.html	comp-obsolete	obsolete
 ./usr/share/man/html9/MCHTYPE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/MCLGET.html		comp-sys-htmlman	html
 ./usr/share/man/html9/MEXTADD.html		comp-sys-htmlman	html
@@ -17174,10 +17174,10 @@
 ./usr/share/man/html9/m_tag_unlink.html		comp-sys-htmlman	html
 ./usr/share/man/html9/makeiplcookie.html	comp-sys-htmlman	html
 ./usr/share/man/html9/malloc.html		comp-sys-htmlman	html
-./usr/share/man/html9/malloc_roundup.html	comp-sys-htmlman	html
+./usr/share/man/html9/malloc_roundup.html	comp-obsolete	obsolete
 ./usr/share/man/html9/malloc_type_attach.html	comp-sys-htmlman	html
 ./usr/share/man/html9/malloc_type_detach.html	comp-sys-htmlman	html
-./usr/share/man/html9/malloc_type_setlimit.html	comp-sys-htmlman	html
+./usr/share/man/html9/malloc_type_setlimit.html	comp-obsolete	obsolete
 ./usr/share/man/html9/mb.html			comp-sys-htmlman	html
 ./usr/share/man/html9/mb_memory.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mb_read.html		comp-sys-htmlman	html
@@ -23293,7 +23293,7 @@
 ./usr/share/man/man9/MALLOC.9			comp-sys-man		.man
 ./usr/share/man/man9/MALLOC_DECLARE.9		comp-sys-man		.man
 ./usr/share/man/man9/MALLOC_DEFINE.9		comp-sys-man		.man
-./usr/share/man/man9/MALLOC_DEFINE_LIMIT.9	comp-sys-man		.man
+./usr/share/man/man9/MALLOC_DEFINE_LIMIT.9	comp-obsolete		obsolete
 ./usr/share/man/man9/MCHTYPE.9			comp-sys-man		.man
 ./usr/share/man/man9/MCLGET.9			comp-sys-man		.man
 ./usr/share/man/man9/MEXTADD.9			comp-sys-man		.man
@@ -24062,10 +24062,10 @@
 ./usr/share/man/man9/m_tag_unlink.9		comp-sys-man		.man
 ./usr/share/man/man9/makeiplcookie.9		comp-sys-man		.man
 ./usr/share/man/man9/malloc.9			comp-sys-man		.man
-./usr/share/man/man9/malloc_roundup.9		comp-sys-man		.man
+./usr/share/man/man9/malloc_roundup.9		comp-obsolete		obsolete
 ./usr/share/man/man9/malloc_type_attach.9	comp-sys-man		.man
 ./usr/share/man/man9/malloc_type_detach.9	comp-sys-man		.man
-./usr/share/man/man9/malloc_type_setlimit.9	comp-sys-man		.man
+./usr/share/man/man9/malloc_type_setlimit.9	comp-obsolete		obsolete
 ./usr/share/man/man9/mb.9			comp-sys-man		.man
 ./usr/share/man/man9/mb_memory.9		comp-sys-man		.man
 ./usr/share/man/man9/mb_read.9			comp-sys-man		.man

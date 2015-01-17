@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.64.8.1 2014/10/20 09:55:54 martin Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.64.8.2 2015/01/17 12:10:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.64.8.1 2014/10/20 09:55:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.64.8.2 2015/01/17 12:10:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.64.8.1 2014/10/20 09:55:54 ma
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
 

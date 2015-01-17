@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.92 2014/07/27 16:47:26 hannken Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.92.2.1 2015/01/17 12:10:54 martin Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.92 2014/07/27 16:47:26 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.92.2.1 2015/01/17 12:10:54 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -94,7 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.92 2014/07/27 16:47:26 hannken E
 #include <sys/dirent.h>
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
