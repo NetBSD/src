@@ -1,8 +1,8 @@
-/*	$NetBSD: sun_map_tok.l,v 1.4 2011/06/22 03:58:52 mrg Exp $	*/
+/*	$NetBSD: sun_map_tok.l,v 1.5 2015/01/17 17:46:31 christos Exp $	*/
 
 %{
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 2005 Daniel P. Ottavio
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
@@ -20,11 +20,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -73,12 +69,12 @@
  */
 #ifdef FLEX_SCANNER
 # ifndef ECHO
-#  define ECHO (void) fwrite( yytext, yyleng, 1, yyout )
+#  define ECHO __IGNORE(fwrite( yytext, yyleng, 1, yyout ))
 # endif /* not ECHO */
 #endif /* FLEX_SCANNER */
 
 int yylex(void);
-int yyerror(const char *);
+int sun_map_error(const char *);
 
 /*
  * We need to configure lex to parse from a string
@@ -136,7 +132,6 @@ int yywrap(void);
 /* no need to use yywrap() */
 #define YY_SKIP_YYWRAP
 
-
 int sun_map_line = 1;
 int sun_map_tokpos = 1;
 
@@ -160,7 +155,7 @@ CONTINUE_REX   "\\"\n
 
 {WORD_REX}      {
                   sun_map_tokpos += yyleng;
-                  xstrlcpy((char *)yylval.strval,(const char *)yytext,sizeof(yylval.strval));
+                  xstrlcpy((char *)sun_map_lval.strval,(const char *)yytext,sizeof(sun_map_lval.strval));
                   return WORD;
                 }
 
@@ -192,7 +187,7 @@ CONTINUE_REX   "\\"\n
 
 
 int
-yyerror(const char* s)
+sun_map_error(const char* s)
 {
   return 1;
 }

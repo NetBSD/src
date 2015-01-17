@@ -1,4 +1,4 @@
-/*	$NetBSD: amq.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
+/*	$NetBSD: amq.c,v 1.2 2015/01/17 17:46:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2014 Erez Zadok
@@ -255,11 +255,6 @@ show_mi(amq_mount_info_list *ml, enum show_opt e, int *mwid, int *dwid, int *twi
   default:
     break;
   }
-}
-
-static void
-show_map(amq_map_info *mi)
-{
 }
 
 static void
