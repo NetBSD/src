@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.182.2.11 2014/11/09 10:09:32 msaitoh Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.182.2.12 2015/01/17 11:49:09 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.182.2.11 2014/11/09 10:09:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.182.2.12 2015/01/17 11:49:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2279,9 +2279,17 @@ puffs_vnop_read(void *v)
 	if (uio->uio_offset < 0)
 		return EFBIG;
 
+	/*
+	 * On the case of reading empty files and (vp->v_size != 0) below:
+	 * some filesystems (hint: FUSE and distributed filesystems) still
+	 * expect to get the READ in order to update atime. Reading through
+	 * the case filters empty files, therefore we prefer to bypass the
+	 * cache here.
+	 */
 	if (vp->v_type == VREG &&
 	    PUFFS_USE_PAGECACHE(pmp) &&
-	    !(pn->pn_stat & PNODE_RDIRECT)) {
+	    !(pn->pn_stat & PNODE_RDIRECT) &&
+	    (vp->v_size != 0)) {
 		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 
 		while (uio->uio_resid > 0) {
