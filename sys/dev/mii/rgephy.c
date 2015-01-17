@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.35 2013/12/17 16:00:23 martin Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.35.4.1 2015/01/17 13:50:57 martin Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.35 2013/12/17 16:00:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.35.4.1 2015/01/17 13:50:57 martin Exp $");
 
 
 /*
@@ -86,6 +86,9 @@ static const struct mii_phydesc rgephys[] = {
 
 	{ MII_OUI_REALTEK,		MII_MODEL_REALTEK_RTL8169S,
 	  MII_STR_REALTEK_RTL8169S },
+
+	{ MII_OUI_REALTEK,		MII_MODEL_REALTEK_RTL8251,
+	  MII_STR_REALTEK_RTL8251 },
 
 	{ 0,				0,
 	  NULL }
@@ -453,7 +456,8 @@ rgephy_loop(struct mii_softc *sc)
 	uint32_t bmsr;
 	int i;
 
-	if (sc->mii_mpd_rev < 2) {
+	if (sc->mii_mpd_model != MII_MODEL_REALTEK_RTL8251 &&
+	    sc->mii_mpd_rev < 2) {
 		PHY_WRITE(sc, MII_BMCR, BMCR_PDOWN);
 		DELAY(1000);
 	}
@@ -487,7 +491,8 @@ rgephy_load_dspcode(struct mii_softc *sc)
 {
 	int val;
 
-	if (sc->mii_mpd_rev >= 2)
+	if (sc->mii_mpd_model == MII_MODEL_REALTEK_RTL8251 ||
+	    sc->mii_mpd_rev >= 2)
 		return;
 
 #if 1
@@ -587,7 +592,8 @@ rgephy_reset(struct mii_softc *sc)
 	mii_phy_reset(sc);
 	DELAY(1000);
 
-	if (sc->mii_mpd_rev < 2) {
+	if (sc->mii_mpd_model != MII_MODEL_REALTEK_RTL8251 &&
+	    sc->mii_mpd_rev < 2) {
 		rgephy_load_dspcode(sc);
 	} else if (sc->mii_mpd_rev == 3) {
 		/* RTL8211C(L) */
