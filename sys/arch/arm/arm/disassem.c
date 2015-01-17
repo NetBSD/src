@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.29 2015/01/17 19:46:41 skrll Exp $	*/
+/*	$NetBSD: disassem.c,v 1.30 2015/01/17 19:47:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.29 2015/01/17 19:46:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.30 2015/01/17 19:47:34 skrll Exp $");
 
 #include <sys/systm.h>
 
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.29 2015/01/17 19:46:41 skrll Exp $");
  * b - branch address
  * c - comment field bits(0-23)
  * d - destination register (bits 12-15)
+ * e - address operand of ldrh/strh instruction
  * f - 1st fp operand (register) (bits 12-14)
  * g - 2nd fp operand (register) (bits 16-18)
  * h - 3rd fp operand (register/immediate) (bits 0-4)
