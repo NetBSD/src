@@ -81,7 +81,7 @@ or
 	./buildall -K
 
 To be a developer and be able to run "bootstrap", you must have
-autoconf-2.50, automake-1.5, and libtool 1.4 installed on your system (or
+autoconf-2.68, automake-1.11.1, and libtool 2.2.6b installed on your system (or
 later versions thereof).  You no longer need to get my special version of
 automake.  Contact me if you'd like to be a maintainer and get access to the
 CVS server.

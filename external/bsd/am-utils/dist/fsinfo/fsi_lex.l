@@ -1,8 +1,8 @@
-/*	$NetBSD: fsi_lex.l,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
+/*	$NetBSD: fsi_lex.l,v 1.1.1.3 2015/01/17 16:34:17 christos Exp $	*/
 
 %{
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -19,11 +19,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -104,7 +100,7 @@ static int ayylineno;
  */
 #ifdef FLEX_SCANNER
 # ifndef ECHO
-#  define ECHO (void) fwrite( yytext, yyleng, 1, yyout )
+#  define ECHO __IGNORE(fwrite( yytext, yyleng, 1, yyout ))
 # endif /* not ECHO */
 #endif /* FLEX_SCANNER */
 
@@ -117,7 +113,7 @@ static int ayylineno;
 int yywrap(void);
 #endif /* not yywrap or yylex */
 
-int yyerror(const char *, ...);
+int fsi_error(const char *, ...);
 
 YYSTYPE yylval;
 static char *fsi_filename;
@@ -166,6 +162,7 @@ struct r {
 /* This option causes Solaris lex to fail.  Use flex.  See BUGS file */
 /* no need to use yyunput() */
 %option nounput
+%option noinput
 
 /* allocate more output slots so lex scanners don't run out of mem */
 %o 1024
@@ -181,7 +178,7 @@ struct r {
 <F>[={}]		{ return *yytext; }
 
 <F>\"			{ BEGIN Q; optr = ostr; quoted = 1; }
-<Q>\n			{ ayylineno++; yyerror("\" expected"); BEGIN F; }
+<Q>\n			{ ayylineno++; fsi_error("\" expected"); BEGIN F; }
 <Q>\\b			{ *optr++ = '\b'; /* escape */ }
 <Q>\\t			{ *optr++ = '\t'; /* escape */ }
 <Q>\\\"			{ *optr++ = '\"'; /* escape */ }
@@ -191,11 +188,11 @@ struct r {
 <Q>\\n			{ *optr++ = '\n'; /* escape */ }
 <Q>\\f			{ *optr++ = '\f'; /* escape */ }
 <Q>"\\ "		{ *optr++ = ' '; /* force space */ }
-<Q>\\.			{ yyerror("Unknown \\ sequence"); }
+<Q>\\.			{ fsi_error("Unknown \\ sequence"); }
 <Q>([ \t]|"\\\n"){2,}	{ char *p = (char *) yytext-1; while ((p = strchr(p+1, '\n'))) ayylineno++; }
 <Q>\"			{ BEGIN F; quoted = 0;
 				*optr = '\0';
-				yylval.s = strdup(ostr);
+				yylval.s = xstrdup(ostr);
 				return tSTR;
 			}
 <Q>.			{ *optr++ = *yytext; }
@@ -228,11 +225,11 @@ find_resword(char *s)
   switch (tok) {
   case tLOCALHOST:
     s = "${host}";
-    /* fall through... */
+    /*FALLTHROUGH*/
   case 0:
-    yylval.s = strdup(s);
+    yylval.s = xstrdup(s);
     tok = tSTR;
-    /* fall through... */
+    /*FALLTHROUGH*/
   default:
     return tok;
   }
@@ -240,7 +237,7 @@ find_resword(char *s)
 
 
 int
-yyerror(const char *fmt, ...)
+fsi_error(const char *fmt, ...)
 {
   va_list ap;
 

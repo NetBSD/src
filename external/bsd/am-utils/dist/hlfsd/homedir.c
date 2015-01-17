@@ -1,7 +1,7 @@
-/*	$NetBSD: homedir.c,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
+/*	$NetBSD: homedir.c,v 1.1.1.3 2015/01/17 16:34:17 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -496,9 +492,10 @@ readent:
 
   /* read records */
   buf[0] = '\0';
-  fgets(buf, 256, passwd_fp);
+  if (fgets(buf, 256, passwd_fp) == NULL)
+    return NULL;
   passwd_line++;
-  if (!buf || buf[0] == '\0')
+  if (buf[0] == '\0')
     goto readent;
 
   /* read user name */
@@ -563,7 +560,7 @@ plt_init(void)
       int len;
       if (root_home)
 	XFREE(root_home);
-      root_home = strdup(pent_p->pw_dir);
+      root_home = xstrdup(pent_p->pw_dir);
       len = strlen(root_home);
       /* remove any trailing '/' chars from root's home (even if just one) */
       while (len > 0 && root_home[len - 1] == '/') {
@@ -580,7 +577,7 @@ plt_init(void)
 	unt_compare_fxn);
 
   if (!root_home)
-    root_home = strdup("");
+    root_home = xstrdup("");
 
   plog(XLOG_INFO, "password map read and sorted");
 }
@@ -675,14 +672,14 @@ table_add(u_int u, const char *h, const char *n)
     }
 
   /* add new password entry */
-  pwtab[cur_pwtab_num].home = strdup(h);
+  pwtab[cur_pwtab_num].home = xstrdup(h);
   pwtab[cur_pwtab_num].child = 0;
   pwtab[cur_pwtab_num].last_access_time = 0;
   pwtab[cur_pwtab_num].last_status = 0;	/* assume best: used homedir */
   pwtab[cur_pwtab_num].uid = u;
 
   /* add new userhome entry */
-  untab[cur_pwtab_num].username = strdup(n);
+  untab[cur_pwtab_num].username = xstrdup(n);
 
   /* just a second pointer */
   pwtab[cur_pwtab_num].uname = untab[cur_pwtab_num].username;

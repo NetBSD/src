@@ -1,7 +1,7 @@
-/*	$NetBSD: am_compat.h,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
+/*	$NetBSD: am_compat.h,v 1.1.1.3 2015/01/17 16:34:18 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -91,6 +87,10 @@
 #if defined(MNT2_NFS_OPT_NOAC) && !defined(MNTTAB_OPT_NOAC)
 # define MNTTAB_OPT_NOAC "noac"
 #endif /* defined(MNT2_NFS_OPT_NOAC) && !defined(MNTTAB_OPT_NOAC) */
+
+#if defined(MNT2_NFS_OPT_NOACL) && !defined(MNTTAB_OPT_NOACL)
+# define MNTTAB_OPT_NOACL "noacl"
+#endif /* defined(MNT2_NFS_OPT_NOACL) && !defined(MNTTAB_OPT_NOACL) */
 
 #if defined(MNT2_NFS_OPT_NOCONN) && !defined(MNTTAB_OPT_NOCONN)
 # define MNTTAB_OPT_NOCONN "noconn"
@@ -263,23 +263,23 @@
 #endif /* defined(MNT2_GEN_OPT_LOG) && !defined(MNTTAB_OPT_LOG) */
 
 #if defined(MNT2_GEN_OPT_NOATIME) && !defined(MNTTAB_OPT_NOATIME)
-# define MNTTAB_OPT_LOG "noatime"
+# define MNTTAB_OPT_NOATIME "noatime"
 #endif /* defined(MNT2_GEN_OPT_NOATIME) && !defined(MNTTAB_OPT_NOATIME) */
 
 #if defined(MNT2_GEN_OPT_NODEVMTIME) && !defined(MNTTAB_OPT_NODEVMTIME)
-# define MNTTAB_OPT_LOG "nodevmtime"
+# define MNTTAB_OPT_NODEVMTIME "nodevmtime"
 #endif /* defined(MNT2_GEN_OPT_NODEVMTIME) && !defined(MNTTAB_OPT_NODEVMTIME) */
 
 #if defined(MNT2_GEN_OPT_SOFTDEP) && !defined(MNTTAB_OPT_SOFTDEP)
-# define MNTTAB_OPT_LOG "softdep"
+# define MNTTAB_OPT_SOFTDEP "softdep"
 #endif /* defined(MNT2_GEN_OPT_SOFTDEP) && !defined(MNTTAB_OPT_SOFTDEP) */
 
 #if defined(MNT2_GEN_OPT_SYMPERM) && !defined(MNTTAB_OPT_SYMPERM)
-# define MNTTAB_OPT_LOG "symperm"
+# define MNTTAB_OPT_SYMPERM "symperm"
 #endif /* defined(MNT2_GEN_OPT_SYMPERM) && !defined(MNTTAB_OPT_SYMPERM) */
 
 #if defined(MNT2_GEN_OPT_UNION) && !defined(MNTTAB_OPT_UNION)
-# define MNTTAB_OPT_LOG "union"
+# define MNTTAB_OPT_UNION "union"
 #endif /* defined(MNT2_GEN_OPT_UNION) && !defined(MNTTAB_OPT_UNION) */
 
 /*
@@ -417,6 +417,9 @@ struct hsfs_args {
 #if defined(HAVE_FS_XFS) && !defined(xfs_args_t)
 # define xfs_args_t u_int
 #endif /* defined(HAVE_FS_XFS) && !defined(xfs_args_t) */
+#if defined(HAVE_FS_EXT) && !defined(ext_args_t)
+# define ext_args_t u_int
+#endif /* defined(HAVE_FS_EXT) && !defined(ext_args_t) */
 
 #if defined(HAVE_FS_AUTOFS) && defined(MOUNT_TYPE_AUTOFS) && !defined(MNTTYPE_AUTOFS)
 # define MNTTYPE_AUTOFS "autofs"
@@ -435,6 +438,14 @@ struct hsfs_args {
 # endif /* not MNTTAB_OPT_PROTO */
 #endif /* not HAVE_FS_NFS3 */
 
+/*
+ * If NFS4, then make sure that the "sec" mnttab option is available.
+ */
+#ifdef HAVE_FS_NFS4
+# ifndef MNTTAB_OPT_SEC
+#  define MNTTAB_OPT_SEC "sec"
+# endif /* not MNTTAB_OPT_SEC */
+#endif /* not HAVE_FS_NFS4 */
 /*
  * If loop device (header file) exists, define mount table option
  */

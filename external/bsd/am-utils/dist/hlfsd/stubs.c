@@ -1,7 +1,7 @@
-/*	$NetBSD: stubs.c,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
+/*	$NetBSD: stubs.c,v 1.1.1.3 2015/01/17 16:34:17 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -166,8 +162,7 @@ nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
     if (gid != hlfs_gid) {
       res.ns_status = NFSERR_STALE;
     } else {
-      memset((char *) &uid, 0, sizeof(int));
-      uid = *(u_int *) argp->fh_data;
+      (void)memcpy(&uid, argp->fh_data, sizeof(uid));
       if (plt_search(uid) != (uid2home_t *) NULL) {
 	res.ns_status = NFS_OK;
 	un_fattr.na_fileid = uid;
@@ -284,8 +279,8 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
     } else {			/* entry found and gid is permitted */
       un_fattr.na_fileid = untab[idx].uid;
       res.dr_u.dr_drok_u.drok_attributes = un_fattr;
-      memset((char *) &un_fhandle, 0, sizeof(am_nfs_fh));
-      *(u_int *) un_fhandle.fh_data = (u_int) untab[idx].uid;
+      memset(&un_fhandle, 0, sizeof(un_fhandle));
+      memcpy(un_fhandle.fh_data, &untab[idx].uid, sizeof(untab[idx].uid));
       xstrlcpy((char *) &un_fhandle.fh_data[sizeof(int)],
 	       untab[idx].username,
 	       sizeof(am_nfs_fh) - sizeof(int));
@@ -309,7 +304,7 @@ nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
   uid_t userid = (uid_t) INVALIDID;
   gid_t groupid = hlfs_gid + 1;	/* anything not hlfs_gid */
   int retval = 0;
-  char *path_val = (char *) NULL;
+  char *path_val = NULL;
   char *username;
   static uid_t last_uid = (uid_t) INVALIDID;
 
@@ -330,7 +325,7 @@ nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
        * processing, by getting a NULL returned as a
        * "special".  Child returns result.
        */
-      return (nfsreadlinkres *) NULL;
+      return NULL;
     }
 
   } else {			/* check if asked for user mailbox */
@@ -340,8 +335,7 @@ nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
     }
 
     if (groupid == hlfs_gid) {
-      memset((char *) &userid, 0, sizeof(int));
-      userid = *(u_int *) argp->fh_data;
+      memcpy(&userid, argp->fh_data, sizeof(userid));
       username = (char *) &argp->fh_data[sizeof(int)];
       if (!(res.rlr_u.rlr_data_u = mailbox(userid, username)))
 	return (nfsreadlinkres *) NULL;

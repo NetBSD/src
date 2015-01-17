@@ -1,7 +1,7 @@
-/*	$NetBSD: am_defs.h,v 1.1.1.2 2009/03/20 20:26:55 christos Exp $	*/
+/*	$NetBSD: am_defs.h,v 1.1.1.3 2015/01/17 16:34:18 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -51,8 +47,6 @@
 #ifndef _AM_DEFS_H
 #define _AM_DEFS_H
 
-#define _LARGEFILE64_SOURCE
-
 /*
  * Actions to take if ANSI C.
  */
@@ -69,7 +63,7 @@
 #  define strchr index
 #  define strrchr rindex
 # endif /* not HAVE_STRCHR */
-char *strchr(), *strrchr(), *strdup();
+char *strchr(), *strrchr();
 #endif /* not STDC_HEADERS */
 
 /*
@@ -89,6 +83,14 @@ char *strchr(), *strrchr(), *strdup();
 #  define __printf__ printf
 # endif /* __GNUC__ < 2 ... */
 #endif /* not __attribute__ */
+
+#define __IGNORE(result) \
+    __ignore((unsigned long)result)
+
+static inline void
+__ignore(unsigned long result) {
+    (void)&result;
+}
 
 /*
  * How to handle signals of any type
@@ -137,7 +139,7 @@ struct sigevent;
  * Big-endian or little-endian?
  */
 #ifndef BYTE_ORDER
-# if defined(WORDS_BIGENDIAN
+# if defined(WORDS_BIGENDIAN)
 #  define ARCH_ENDIAN "big"
 # else /* not WORDS_BIGENDIAN */
 #  define ARCH_ENDIAN "little"
@@ -320,14 +322,6 @@ typedef bool_t (*xdrproc_t) __P ((XDR *, __ptr_t, ...));
 # endif /* HAVE_STDIO_H */
 # include <mntent.h>
 #endif /* HAVE_MNTENT_H */
-
-/*
- * Actions to take if <sys/errno.h> exists.
- */
-#ifdef HAVE_SYS_ERRNO_H
-# include <sys/errno.h>
-extern int errno;
-#endif /* HAVE_SYS_ERRNO_H */
 
 /*
  * Actions to take if <sys/fsid.h> exists.
@@ -933,6 +927,14 @@ struct sockaddr_dl;
  */
 #ifdef HAVE_ERRNO_H
 # include <errno.h>
+#else
+/*
+ * Actions to take if <sys/errno.h> exists.
+ */
+# ifdef HAVE_SYS_ERRNO_H
+#  include <sys/errno.h>
+extern int errno;
+# endif /* HAVE_SYS_ERRNO_H */
 #endif /* HAVE_ERRNO_H */
 
 /*
@@ -1529,14 +1531,6 @@ extern unsigned int sleep(unsigned int seconds);
  */
 extern int strcasecmp(const char *s1, const char *s2);
 #endif /* not HAVE_EXTERN_STRCASECMP */
-
-#ifndef HAVE_EXTERN_STRDUP
-/*
- * define this extern even if function does not exist, for it will
- * be filled in by libamu/strdup.c
- */
-extern char *strdup(const char *s);
-#endif /* not HAVE_EXTERN_STRDUP */
 
 #ifndef HAVE_EXTERN_STRLCAT
 /*
