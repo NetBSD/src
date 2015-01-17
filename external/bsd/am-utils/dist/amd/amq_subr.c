@@ -1,4 +1,4 @@
-/*	$NetBSD: amq_subr.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
+/*	$NetBSD: amq_subr.c,v 1.2 2015/01/17 19:36:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2014 Erez Zadok
@@ -530,6 +530,7 @@ xdr_amq_map_info_qelem(XDR *xdrs, qelem *qhead)
   u_int len = 0;
   int x;
   char *n;
+  long modify;
 
   /*
    * Compute length of list
@@ -554,7 +555,8 @@ xdr_amq_map_info_qelem(XDR *xdrs, qelem *qhead)
       return (FALSE);
     }
 
-    if (!xdr_long(xdrs, &m->modify)) {
+    modify = m->modify;
+    if (!xdr_long(xdrs, &modify)) {
       return (FALSE);
     }
 
