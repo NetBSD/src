@@ -1,7 +1,7 @@
-/*	$NetBSD: transp_tli.c,v 1.1.1.2 2009/03/20 20:26:52 christos Exp $	*/
+/*	$NetBSD: transp_tli.c,v 1.1.1.3 2015/01/17 16:34:16 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Erez Zadok
+ * Copyright (c) 1997-2014 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgment:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -424,7 +420,7 @@ bind_nfs_port(int unused_so, u_short *nfs_portp)
  * return 0 (TRUE) if OK, 1 (FALSE) if failed.
  */
 int
-create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*dispatch_fxn)(struct svc_req *rqstp, SVCXPRT *transp))
+create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*dispatch_fxn)(struct svc_req *rqstp, SVCXPRT *transp), u_long nfs_version)
 {
   char *nettype = "ticlts";
 
@@ -456,7 +452,7 @@ create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*
     svc_destroy(*nfs_xprtp);
     return 1;
   }
-  if (svc_reg(*nfs_xprtp, NFS_PROGRAM, NFS_VERSION, dispatch_fxn, NULL) != 1) {
+  if (svc_reg(*nfs_xprtp, NFS_PROGRAM, nfs_version, dispatch_fxn, NULL) != 1) {
     plog(XLOG_ERROR, "could not register amd NFS service");
     svc_destroy(*nfs_xprtp);
     return 1;
@@ -660,8 +656,8 @@ get_knetconfig(struct knetconfig **kncpp, struct netconfig *in_ncp, char *nc_pro
     return -3;
   }
   (*kncpp)->knc_semantics = ncp->nc_semantics;
-  (*kncpp)->knc_protofmly = strdup(ncp->nc_protofmly);
-  (*kncpp)->knc_proto = strdup(ncp->nc_proto);
+  (*kncpp)->knc_protofmly = xstrdup(ncp->nc_protofmly);
+  (*kncpp)->knc_proto = xstrdup(ncp->nc_proto);
 
   if (stat(ncp->nc_device, &statbuf) < 0) {
     plog(XLOG_ERROR, "could not stat() %s: %m", ncp->nc_device);
@@ -745,7 +741,7 @@ int check_pmap_up(char *host, struct sockaddr_in* sin)
  * Find the best NFS version for a host.
  */
 u_long
-get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const char *proto)
+get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const char *proto, u_long def)
 {
   CLIENT *clnt = NULL;
   rpcvers_t versout;
@@ -755,8 +751,11 @@ get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const c
    * If not set or set wrong, then try from NFS_VERS_MAX on down. If
    * set, then try from nfs_version on down.
    */
-  if (nfs_version <= 0 || nfs_version > NFS_VERS_MAX) {
-    nfs_version = NFS_VERS_MAX;
+  if (!nfs_valid_version(nfs_version))
+    if (nfs_valid_version(def))
+      nfs_version = def;
+    else
+      nfs_version = NFS_VERS_MAX;
   }
 
   if (nfs_version == NFS_VERSION) {
