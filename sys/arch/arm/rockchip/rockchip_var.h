@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_var.h,v 1.11 2015/01/05 21:35:53 jmcneill Exp $ */
+/* $NetBSD: rockchip_var.h,v 1.12 2015/01/17 15:05:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -62,10 +62,11 @@ void rockchip_bootstrap(void);
 
 void rockchip_cpufreq_init(void);
 
-bool rockchip_is_chip(const char *);
-#define ROCKCHIP_CHIPVER_RK3066		"300A20111111V101"
-#define ROCKCHIP_CHIPVER_RK3188		"310B20121130V100"
-#define ROCKCHIP_CHIPVER_RK3188PLUS	"310B20130131V101"
+uint32_t rockchip_chip_id(void);
+#define ROCKCHIP_CHIP_ID_RK3066		0x30660000
+#define ROCKCHIP_CHIP_ID_RK3188		0x31880000
+#define ROCKCHIP_CHIP_ID_RK3188PLUS	0x31880001
+const char *rockchip_chip_name(void);
 
 u_int rockchip_apll_get_rate(void);
 u_int rockchip_cpll_get_rate(void);

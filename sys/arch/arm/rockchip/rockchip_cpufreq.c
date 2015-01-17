@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_cpufreq.c,v 1.1 2015/01/02 21:59:29 jmcneill Exp $ */
+/* $NetBSD: rockchip_cpufreq.c,v 1.2 2015/01/17 15:05:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "act8846pm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_cpufreq.c,v 1.1 2015/01/02 21:59:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_cpufreq.c,v 1.2 2015/01/17 15:05:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -85,17 +85,17 @@ rockchip_cpufreq_init(void)
 	bus_space_subregion(bst, rockchip_core1_bsh, ROCKCHIP_GRF_OFFSET,
 	    ROCKCHIP_GRF_SIZE, &grf_bsh);
 
-	if (rockchip_is_chip(ROCKCHIP_CHIPVER_RK3188) ||
-	    rockchip_is_chip(ROCKCHIP_CHIPVER_RK3188PLUS)) {
+	switch (rockchip_chip_id()) {
+	case ROCKCHIP_CHIP_ID_RK3066: /* XXX */
+	case ROCKCHIP_CHIP_ID_RK3188:
+	case ROCKCHIP_CHIP_ID_RK3188PLUS:
 		cpufreq_set_rate = &rk3188_cpu_set_rate;
 		cpufreq_get_rate = &rk3188_cpu_get_rate;
 		cpufreq_get_available = &rk3188_cpu_get_available;
-	}
-
-	if (cpufreq_set_rate == NULL ||
-	    cpufreq_get_rate == NULL ||
-	    cpufreq_get_available == NULL)
+		break;
+	default:
 		return;
+	}
 
 	nfreq = cpufreq_get_available(availfreq, ROCKCHIP_CPUFREQ_MAX);
 	if (nfreq == 0)
@@ -227,8 +227,10 @@ static const struct rk3188_apll_rate rk3188_apll_rates[] = {
 	RK3188_RATE( 600, 50, 2, 4, 4, 3, 2, 4, 2, 1000),
 };
 
-#define RK3188_GRF_STATUS0_REG          0x00ac
-#define RK3188_GRF_STATUS0_APLL_LOCK    __BIT(6)
+#define GRF_STATUS0_REG			0x015c
+#define GRF_STATUS0_APLL_LOCK		__BIT(5)
+#define RK3188_GRF_STATUS0_REG		0x00ac
+#define RK3188_GRF_STATUS0_APLL_LOCK	__BIT(6)
 
 static size_t
 rk3188_cpu_get_available(u_int *pavail, size_t maxavail)
@@ -255,25 +257,26 @@ rk3188_cpu_set_rate(u_int rate)
 {
 	const struct rk3188_apll_rate *r = NULL;
 	uint32_t apll_con0, apll_con1, apll_con2, clksel0_con, clksel1_con;
-	uint32_t reset_mask, reset;
+	uint32_t reset_mask, reset, status0_reg, status0_apll_lock;
 	u_int cpu_aclk_div_con;
-	const bool rk3188plus_p = rockchip_is_chip(ROCKCHIP_CHIPVER_RK3188PLUS);
-	device_t pmic;
 	u_int old_rate = rk3188_cpu_get_rate();
 	u_int new_rate;
 #if NACT8846PM > 0
+	device_t pmic;
 	struct act8846_ctrl *dcdc3;
-#endif
-
-#ifdef ROCKCHIP_CLOCK_DEBUG
-	printf("%s: rate=%u rk3188plus_p=%d\n", __func__, rate, rk3188plus_p);
-#endif
 
 	pmic = device_find_by_driver_unit("act8846pm", 0);
 	if (pmic == NULL) {
 		printf("%s: no PMIC driver found\n", __func__);
 		return ENXIO;
 	}
+	dcdc3 = act8846_lookup(pmic, "DCDC3");
+	KASSERT(dcdc3 != NULL);
+#endif
+
+#ifdef ROCKCHIP_CLOCK_DEBUG
+	printf("%s: rate=%u\n", __func__, rate);
+#endif
 
 	/* Pick the closest rate (nearest 100MHz increment) */
 	for (int i = 0; i < __arraycount(rk3188_apll_rates); i++) {
@@ -291,58 +294,33 @@ rk3188_cpu_set_rate(u_int rate)
 		return EINVAL;
 	}
 
-#if NACT8846PM > 0
-	dcdc3 = act8846_lookup(pmic, "DCDC3");
-	KASSERT(dcdc3 != NULL);
-#endif
-
-#ifdef ROCKCHIP_CLOCK_DEBUG
-	printf("%s: Set frequency to %u MHz...\n", __func__, r->rate);
-#endif
-
-	new_rate = r->rate / 1000000;
-	if (new_rate > old_rate) {
-#if NACT8846PM > 0
-		act8846_set_voltage(dcdc3, r->voltage, r->voltage);
-#endif
-	}
-
-	if (rk3188plus_p) {
+	switch (rockchip_chip_id()) {
+	case ROCKCHIP_CHIP_ID_RK3066:
+	case ROCKCHIP_CHIP_ID_RK3188PLUS:
 	    	reset_mask = CRU_PLL_CON3_RESET_MASK;
 		reset = CRU_PLL_CON3_RESET;
-	} else {
-		reset_mask = CRU_PLL_CON3_POWER_DOWN_MASK;
-		reset = CRU_PLL_CON3_POWER_DOWN;
-	}
-
-	apll_con0 = CRU_PLL_CON0_CLKR_MASK | CRU_PLL_CON0_CLKOD_MASK;
-	apll_con0 |= __SHIFTIN(r->no - 1, CRU_PLL_CON0_CLKOD);
-	apll_con0 |= __SHIFTIN(r->nr - 1, CRU_PLL_CON0_CLKR);
-
-	apll_con1 = CRU_PLL_CON1_CLKF_MASK;
-	apll_con1 |= __SHIFTIN(r->nf - 1, CRU_PLL_CON1_CLKF);
-
-	if (rk3188plus_p) {
+		apll_con0 = CRU_PLL_CON0_CLKR_MASK | CRU_PLL_CON0_CLKOD_MASK;
+		apll_con0 |= __SHIFTIN(r->nr - 1, CRU_PLL_CON0_CLKR);
+		apll_con0 |= __SHIFTIN(r->no - 1, CRU_PLL_CON0_CLKOD);
+		apll_con1 = CRU_PLL_CON1_CLKF_MASK;
+		apll_con1 |= __SHIFTIN(r->nf - 1, CRU_PLL_CON1_CLKF);
 		apll_con2 = CRU_PLL_CON2_BWADJ_MASK;
 		apll_con2 |= __SHIFTIN(r->nf >> 1, CRU_PLL_CON2_BWADJ);
-	} else {
+		break;
+	case ROCKCHIP_CHIP_ID_RK3188:
+		reset_mask = CRU_PLL_CON3_POWER_DOWN_MASK;
+		reset = CRU_PLL_CON3_POWER_DOWN;
+		apll_con0 =
+		    CRU_PLL_CON0_CLKR_MASK | RK3188_CRU_PLL_CON0_CLKOD_MASK;
+		apll_con0 |= __SHIFTIN(r->nr - 1, CRU_PLL_CON0_CLKR);
+		apll_con0 |= __SHIFTIN(r->no - 1, RK3188_CRU_PLL_CON0_CLKOD);
+		apll_con1 = RK3188_CRU_PLL_CON1_CLKF_MASK;
+		apll_con1 |= __SHIFTIN(r->nf - 1, RK3188_CRU_PLL_CON1_CLKF);
 		apll_con2 = 0;
+		break;
+	default:
+		return EINVAL;
 	}
-
-	clksel0_con = RK3188_CRU_CLKSEL_CON0_A9_CORE_DIV_CON_MASK |
-		      CRU_CLKSEL_CON0_CORE_PERI_DIV_CON_MASK |
-		      CRU_CLKSEL_CON0_A9_CORE_DIV_CON_MASK;
-	clksel0_con |= __SHIFTIN(r->core_div - 1,
-				 RK3188_CRU_CLKSEL_CON0_A9_CORE_DIV_CON);
-	clksel0_con |= __SHIFTIN(ffs(r->core_periph_div) - 2,
-				 CRU_CLKSEL_CON0_CORE_PERI_DIV_CON);
-	clksel0_con |= __SHIFTIN(r->aclk_div - 1,
-				 CRU_CLKSEL_CON0_A9_CORE_DIV_CON);
-
-	clksel1_con = CRU_CLKSEL_CON1_AHB2APB_PCLKEN_DIV_CON_MASK |
-		      CRU_CLKSEL_CON1_CPU_PCLK_DIV_CON_MASK |
-		      CRU_CLKSEL_CON1_CPU_HCLK_DIV_CON_MASK |
-		      RK3188_CRU_CLKSEL_CON1_CPU_ACLK_DIV_CON_MASK;
 
 	switch (r->core_axi_div) {
 	case 1:	cpu_aclk_div_con = 0; break;
@@ -352,16 +330,59 @@ rk3188_cpu_set_rate(u_int rate)
 	case 8: cpu_aclk_div_con = 4; break;
 	default: panic("bad core_axi_div");
 	}
-	clksel1_con |= __SHIFTIN(ffs(r->ahb2apb_div) - 1,
-				 CRU_CLKSEL_CON1_AHB2APB_PCLKEN_DIV_CON);
-	clksel1_con |= __SHIFTIN(ffs(r->hclk_div) - 1,
-				 CRU_CLKSEL_CON1_CPU_HCLK_DIV_CON);
-	clksel1_con |= __SHIFTIN(ffs(r->pclk_div) - 1,
-				 CRU_CLKSEL_CON1_CPU_PCLK_DIV_CON);
-	clksel1_con |= __SHIFTIN(cpu_aclk_div_con,
-				 RK3188_CRU_CLKSEL_CON1_CPU_ACLK_DIV_CON);
+
+	switch (rockchip_chip_id()) {
+	case ROCKCHIP_CHIP_ID_RK3066:
+		clksel0_con = CRU_CLKSEL_CON0_A9_CORE_DIV_CON_MASK |
+			      CRU_CLKSEL_CON0_CORE_PERI_DIV_CON_MASK;
+		clksel0_con |= __SHIFTIN(r->core_div - 1,
+					 CRU_CLKSEL_CON0_A9_CORE_DIV_CON);
+		clksel0_con |= __SHIFTIN(ffs(r->core_periph_div) - 2,
+					 CRU_CLKSEL_CON0_CORE_PERI_DIV_CON);
+		clksel1_con = CRU_CLKSEL_CON1_AHB2APB_PCLKEN_DIV_CON_MASK |
+			      CRU_CLKSEL_CON1_CPU_PCLK_DIV_CON_MASK |
+			      CRU_CLKSEL_CON1_CPU_HCLK_DIV_CON_MASK |
+			      CRU_CLKSEL_CON1_CPU_ACLK_DIV_CON_MASK;
+		clksel1_con |= __SHIFTIN(ffs(r->ahb2apb_div) - 1,
+					 CRU_CLKSEL_CON1_AHB2APB_PCLKEN_DIV_CON);
+		clksel1_con |= __SHIFTIN(ffs(r->hclk_div) - 1,
+					 CRU_CLKSEL_CON1_CPU_HCLK_DIV_CON);
+		clksel1_con |= __SHIFTIN(ffs(r->pclk_div) - 1,
+					 CRU_CLKSEL_CON1_CPU_PCLK_DIV_CON);
+		clksel1_con |= __SHIFTIN(cpu_aclk_div_con,
+					 CRU_CLKSEL_CON1_CPU_ACLK_DIV_CON);
+		status0_reg = GRF_STATUS0_REG;
+		status0_apll_lock = GRF_STATUS0_APLL_LOCK;
+		break;
+	case ROCKCHIP_CHIP_ID_RK3188:
+	case ROCKCHIP_CHIP_ID_RK3188PLUS:
+		clksel0_con = RK3188_CRU_CLKSEL_CON0_A9_CORE_DIV_CON_MASK |
+			      CRU_CLKSEL_CON0_CORE_PERI_DIV_CON_MASK;
+		clksel0_con |= __SHIFTIN(r->core_div - 1,
+					 RK3188_CRU_CLKSEL_CON0_A9_CORE_DIV_CON);
+		clksel0_con |= __SHIFTIN(ffs(r->core_periph_div) - 2,
+					 CRU_CLKSEL_CON0_CORE_PERI_DIV_CON);
+		clksel1_con = CRU_CLKSEL_CON1_AHB2APB_PCLKEN_DIV_CON_MASK |
+			      CRU_CLKSEL_CON1_CPU_PCLK_DIV_CON_MASK |
+			      CRU_CLKSEL_CON1_CPU_HCLK_DIV_CON_MASK |
+			      RK3188_CRU_CLKSEL_CON1_CPU_ACLK_DIV_CON_MASK;
+		clksel1_con |= __SHIFTIN(ffs(r->ahb2apb_div) - 1,
+					 CRU_CLKSEL_CON1_AHB2APB_PCLKEN_DIV_CON);
+		clksel1_con |= __SHIFTIN(ffs(r->hclk_div) - 1,
+					 CRU_CLKSEL_CON1_CPU_HCLK_DIV_CON);
+		clksel1_con |= __SHIFTIN(ffs(r->pclk_div) - 1,
+					 CRU_CLKSEL_CON1_CPU_PCLK_DIV_CON);
+		clksel1_con |= __SHIFTIN(cpu_aclk_div_con,
+					 RK3188_CRU_CLKSEL_CON1_CPU_ACLK_DIV_CON);
+		status0_reg = RK3188_GRF_STATUS0_REG;
+		status0_apll_lock = RK3188_GRF_STATUS0_APLL_LOCK;
+		break;
+	default:
+		return EINVAL;
+	}
 
 #ifdef ROCKCHIP_CLOCK_DEBUG
+	printf("%s: Set frequency to %u MHz...\n", __func__, r->rate);
 	printf("before: APLL_CON0: %#x\n",
 	    bus_space_read_4(bst, cru_bsh, CRU_APLL_CON0_REG));
 	printf("before: APLL_CON1: %#x\n",
@@ -371,6 +392,13 @@ rk3188_cpu_set_rate(u_int rate)
 	printf("before: CLKSEL1_CON: %#x\n",
 	    bus_space_read_4(bst, cru_bsh, CRU_CLKSEL_CON_REG(1)));
 #endif
+
+	new_rate = r->rate / 1000000;
+	if (new_rate > old_rate) {
+#if NACT8846PM > 0
+		act8846_set_voltage(dcdc3, r->voltage, r->voltage);
+#endif
+	}
 
 	bus_space_write_4(bst, cru_bsh, CRU_MODE_CON_REG,
 	    CRU_MODE_CON_APLL_WORK_MODE_MASK |
@@ -400,12 +428,9 @@ rk3188_cpu_set_rate(u_int rate)
 		;
 	int retry = ROCKCHIP_REF_FREQ;
 	while (--retry > 0) {
-		uint32_t status = bus_space_read_4(bst, grf_bsh,
-		    RK3188_GRF_STATUS0_REG);
-		if (status & RK3188_GRF_STATUS0_APLL_LOCK)
+		uint32_t status = bus_space_read_4(bst, grf_bsh, status0_reg);
+		if (status & status0_apll_lock)
 			break;
-		for (volatile int i = 1000; i >= 0; i--)
-			;
 	}
 	if (retry == 0)
 		printf("%s: PLL lock timeout\n", __func__);

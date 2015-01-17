@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_board.c,v 1.12 2015/01/04 11:52:45 jmcneill Exp $ */
+/* $NetBSD: rockchip_board.c,v 1.13 2015/01/17 15:05:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.12 2015/01/04 11:52:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_board.c,v 1.13 2015/01/17 15:05:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,18 +62,39 @@ rockchip_bootstrap(void)
 		panic("%s: failed to map CORE1 registers: %d", __func__, error);
 }
 
-bool
-rockchip_is_chip(const char *chipver)
+uint32_t
+rockchip_chip_id(void)
 {
-	const size_t chipver_len = 16;
-	char *env_chipver;
+	static uint32_t chip_id = 0;
+	char *chipver;
 
-	if (get_bootconf_option(boot_args, "chipver",
-				BOOTOPT_TYPE_STRING, &env_chipver) == 0) {
-		return false;
+	if (!chip_id) {
+		if (get_bootconf_option(boot_args, "chipver",
+		    BOOTOPT_TYPE_STRING, &chipver) == 0) {
+			return 0;
+		} else if (strncmp(chipver, "300A20111111V101", 16) == 0) {
+			chip_id = ROCKCHIP_CHIP_ID_RK3066;
+		} else if (strncmp(chipver, "310B20121130V100", 16) == 0) {
+			chip_id = ROCKCHIP_CHIP_ID_RK3188;
+		} else if (strncmp(chipver, "310B20130131V101", 16) == 0) {
+			chip_id = ROCKCHIP_CHIP_ID_RK3188PLUS;
+		}
 	}
 
-	return strncmp(env_chipver, chipver, chipver_len) == 0;
+	return chip_id;
+}
+
+const char *
+rockchip_chip_name(void)
+{
+	uint32_t chip_id = rockchip_chip_id();
+
+	switch (chip_id) {
+	case ROCKCHIP_CHIP_ID_RK3066: return "RK3066";
+	case ROCKCHIP_CHIP_ID_RK3188: return "RK3188";
+	case ROCKCHIP_CHIP_ID_RK3188PLUS: return "RK3188+";
+	default: return "Rockchip";
+	}
 }
 
 static void
@@ -97,8 +118,20 @@ rockchip_pll_get_rate(bus_size_t con0_reg, bus_size_t con1_reg)
 	pll_con1 = bus_space_read_4(bst, bsh, con1_reg);
 
 	nr = __SHIFTOUT(pll_con0, CRU_PLL_CON0_CLKR) + 1;
-	no = __SHIFTOUT(pll_con0, CRU_PLL_CON0_CLKOD) + 1;
-	nf = __SHIFTOUT(pll_con1, CRU_PLL_CON1_CLKF) + 1;
+
+	switch (rockchip_chip_id()) {
+	case ROCKCHIP_CHIP_ID_RK3066:
+	case ROCKCHIP_CHIP_ID_RK3188PLUS:
+		no = __SHIFTOUT(pll_con0, CRU_PLL_CON0_CLKOD) + 1;
+		nf = __SHIFTOUT(pll_con1, CRU_PLL_CON1_CLKF) + 1;
+		break;
+	case ROCKCHIP_CHIP_ID_RK3188:
+		no = __SHIFTOUT(pll_con0, RK3188_CRU_PLL_CON0_CLKOD) + 1;
+		nf = __SHIFTOUT(pll_con1, RK3188_CRU_PLL_CON1_CLKF) + 1;
+		break;
+	default:
+		return EINVAL;
+	}
 
 #ifdef ROCKCHIP_CLOCK_DEBUG
 	printf("%s: %#x %#x: nr=%d no=%d nf=%d\n", __func__,
@@ -106,7 +139,7 @@ rockchip_pll_get_rate(bus_size_t con0_reg, bus_size_t con1_reg)
 	    nr, no, nf);
 #endif
 
-	return (ROCKCHIP_REF_FREQ * nf) / (nr * no);
+	return ((uint64_t)ROCKCHIP_REF_FREQ * nf) / (nr * no);
 }
 
 u_int
@@ -139,31 +172,34 @@ rockchip_cpu_get_rate(void)
 	bus_space_tag_t bst = &rockchip_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t clksel_con0;
-	uint32_t a9_core_div_con;
-	u_int rate;
+	u_int a9_core_div;
 
 	rockchip_get_cru_bsh(&bsh);
 
 	clksel_con0 = bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(0));
-	if (clksel_con0 & CRU_CLKSEL_CON0_CPU_CLK_PLL_SEL) {
-		rate = rockchip_gpll_get_rate();
-	} else {
-		rate = rockchip_apll_get_rate();
-	}
-
-	if (rockchip_is_chip(ROCKCHIP_CHIPVER_RK3066)) {
-		a9_core_div_con = __SHIFTOUT(clksel_con0,
-				     CRU_CLKSEL_CON0_A9_CORE_DIV_CON);
-	} else {
-		a9_core_div_con = __SHIFTOUT(clksel_con0,
-				     RK3188_CRU_CLKSEL_CON0_A9_CORE_DIV_CON);
+	switch (rockchip_chip_id()) {
+	case ROCKCHIP_CHIP_ID_RK3066:
+		a9_core_div = __SHIFTOUT(clksel_con0,
+					 CRU_CLKSEL_CON0_A9_CORE_DIV_CON) + 1;
+		break;
+	case ROCKCHIP_CHIP_ID_RK3188:
+	case ROCKCHIP_CHIP_ID_RK3188PLUS:
+		a9_core_div = __SHIFTOUT(clksel_con0,
+					 RK3188_CRU_CLKSEL_CON0_A9_CORE_DIV_CON) + 1;
+		break;
+	default:
+		return EINVAL;
 	}
 
 #ifdef ROCKCHIP_CLOCK_DEBUG
 	printf("%s: clksel_con0=%#x\n", __func__, clksel_con0);
 #endif
 
-	return rate / (a9_core_div_con + 1);
+	if (clksel_con0 & CRU_CLKSEL_CON0_CPU_CLK_PLL_SEL) {
+		return rockchip_gpll_get_rate() / a9_core_div;
+	} else {
+		return rockchip_apll_get_rate() / a9_core_div;
+	}
 }
 
 u_int
@@ -172,17 +208,15 @@ rockchip_a9periph_get_rate(void)
 	bus_space_tag_t bst = &rockchip_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t clksel_con0;
-	uint32_t core_peri_div_con;
-	u_int rate;
+	u_int core_peri_div;
 
 	rockchip_get_cru_bsh(&bsh);
 
 	clksel_con0 = bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(0));
-	rate = rockchip_cpu_get_rate();
-	core_peri_div_con = __SHIFTOUT(clksel_con0,
-				       CRU_CLKSEL_CON0_CORE_PERI_DIV_CON);
+	core_peri_div = 1 << (__SHIFTOUT(clksel_con0,
+					 CRU_CLKSEL_CON0_CORE_PERI_DIV_CON) + 1);
 
-	return rate / ((1 << core_peri_div_con) * 2);
+	return rockchip_cpu_get_rate() / core_peri_div;
 }
 
 u_int
@@ -191,13 +225,25 @@ rockchip_pclk_cpu_get_rate(void)
 	bus_space_tag_t bst = &rockchip_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t clksel_con1;
-	u_int core_axi_div, pclk_div;
+	u_int aclk_div, core_axi_div, pclk_div;
 
 	rockchip_get_cru_bsh(&bsh);
 
 	clksel_con1 = bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(1));
-	switch (__SHIFTOUT(clksel_con1,
-			   RK3188_CRU_CLKSEL_CON1_CPU_ACLK_DIV_CON)) {
+	switch (rockchip_chip_id()) {
+	case ROCKCHIP_CHIP_ID_RK3066:
+		aclk_div = __SHIFTOUT(clksel_con1,
+				      CRU_CLKSEL_CON1_CPU_ACLK_DIV_CON);
+		break;
+	case ROCKCHIP_CHIP_ID_RK3188:
+	case ROCKCHIP_CHIP_ID_RK3188PLUS:
+		aclk_div = __SHIFTOUT(clksel_con1,
+				      RK3188_CRU_CLKSEL_CON1_CPU_ACLK_DIV_CON);
+		break;
+	default:
+		return EINVAL;
+	}
+	switch (aclk_div) {
 	case 0: core_axi_div = 1; break;
 	case 1: core_axi_div = 2; break;
 	case 2: core_axi_div = 3; break;
@@ -218,17 +264,39 @@ rockchip_ahb_get_rate(void)
 	bus_space_handle_t bsh;
 	uint32_t clksel_con10;
 	uint32_t hclk_div, aclk_div;
+	u_int rate;
 
 	rockchip_get_cru_bsh(&bsh);
 
 	clksel_con10 = bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(10));
+	switch (rockchip_chip_id()) {
+	case ROCKCHIP_CHIP_ID_RK3066:
+		if (clksel_con10 & CRU_CLKSEL_CON10_PERI_PLL_SEL) {
+			rate = rockchip_cpll_get_rate();
+		} else {
+			rate = rockchip_gpll_get_rate();
+		}
+		break;
+	case ROCKCHIP_CHIP_ID_RK3188:
+	case ROCKCHIP_CHIP_ID_RK3188PLUS:
+		if (clksel_con10 & CRU_CLKSEL_CON10_PERI_PLL_SEL) {
+			rate = rockchip_gpll_get_rate();
+		} else {
+			rate = rockchip_cpll_get_rate();
+		}
+		break;
+	default:
+		return EINVAL;
+	}
+	aclk_div = __SHIFTOUT(clksel_con10,
+			      CRU_CLKSEL_CON10_PERI_ACLK_DIV_CON) + 1;
+	hclk_div = 1 << __SHIFTOUT(clksel_con10,
+				   CRU_CLKSEL_CON10_PERI_HCLK_DIV_CON);
 
-	hclk_div = __SHIFTOUT(clksel_con10,
-			      CRU_CLKSEL_CON10_PERI_HCLK_DIV_CON) + 1;
-	aclk_div = 1 << __SHIFTOUT(clksel_con10,
-				   CRU_CLKSEL_CON10_PERI_ACLK_DIV_CON);
+	if (hclk_div > 4)
+		return EINVAL;
 
-	return rockchip_gpll_get_rate() / (hclk_div * aclk_div);
+	return rate / (aclk_div * hclk_div);
 }
 
 u_int
@@ -238,17 +306,37 @@ rockchip_apb_get_rate(void)
 	bus_space_handle_t bsh;
 	uint32_t clksel_con10;
 	uint32_t pclk_div, aclk_div;
+	u_int rate;
 
 	rockchip_get_cru_bsh(&bsh);
 
 	clksel_con10 = bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(10));
 
-	pclk_div = __SHIFTOUT(clksel_con10,
-			      CRU_CLKSEL_CON10_PERI_PCLK_DIV_CON) + 1;
-	aclk_div = 1 << __SHIFTOUT(clksel_con10,
-				   CRU_CLKSEL_CON10_PERI_ACLK_DIV_CON);
+	switch (rockchip_chip_id()) {
+	case ROCKCHIP_CHIP_ID_RK3066:
+		if (clksel_con10 & CRU_CLKSEL_CON10_PERI_PLL_SEL) {
+			rate = rockchip_cpll_get_rate();
+		} else {
+			rate = rockchip_gpll_get_rate();
+		}
+		break;
+	case ROCKCHIP_CHIP_ID_RK3188:
+	case ROCKCHIP_CHIP_ID_RK3188PLUS:
+		if (clksel_con10 & CRU_CLKSEL_CON10_PERI_PLL_SEL) {
+			rate = rockchip_gpll_get_rate();
+		} else {
+			rate = rockchip_cpll_get_rate();
+		}
+		break;
+	default:
+		return EINVAL;
+	}
+	aclk_div = __SHIFTOUT(clksel_con10,
+			      CRU_CLKSEL_CON10_PERI_ACLK_DIV_CON) + 1;
+	pclk_div = 1 << __SHIFTOUT(clksel_con10,
+				   CRU_CLKSEL_CON10_PERI_PCLK_DIV_CON);
 
-	return rockchip_gpll_get_rate() / (pclk_div * aclk_div);
+	return rate / (aclk_div * pclk_div);
 }
 
 u_int
@@ -257,16 +345,16 @@ rockchip_mmc0_get_rate(void)
 	bus_space_tag_t bst = &rockchip_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t clksel_con11;
-	uint32_t mmc0_div_con;
+	u_int mmc0_div;
 
 	rockchip_get_cru_bsh(&bsh);
 
 	clksel_con11 = bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(11));
 
-	mmc0_div_con = __SHIFTOUT(clksel_con11,
-				  CRU_CLKSEL_CON11_MMC0_DIV_CON);
+	mmc0_div = __SHIFTOUT(clksel_con11,
+			      CRU_CLKSEL_CON11_MMC0_DIV_CON) + 1;
 
-	return rockchip_ahb_get_rate() / (mmc0_div_con + 1);
+	return rockchip_ahb_get_rate() / mmc0_div;
 }
 
 u_int
@@ -281,9 +369,7 @@ rockchip_mmc0_set_div(u_int div)
 
 	rockchip_get_cru_bsh(&bsh);
 
-	clksel_con11 = CRU_CLKSEL_CON11_MMC0_PLL_SEL_MASK |
-		       CRU_CLKSEL_CON11_MMC0_DIV_CON_MASK;
-	clksel_con11 |= CRU_CLKSEL_CON11_MMC0_PLL_SEL;	/* GPLL */
+	clksel_con11 = CRU_CLKSEL_CON11_MMC0_DIV_CON_MASK;
 	clksel_con11 |= __SHIFTIN(div - 1, CRU_CLKSEL_CON11_MMC0_DIV_CON);
 
 #ifdef ROCKCHIP_CLOCK_DEBUG
@@ -321,19 +407,18 @@ rockchip_mac_get_rate(void)
 	bus_space_tag_t bst = &rockchip_bs_tag;
 	bus_space_handle_t bsh;
 	uint32_t clksel_con21;
-	uint32_t mac_div_con;
+	u_int mac_div;
 
 	rockchip_get_cru_bsh(&bsh);
 
 	clksel_con21 = bus_space_read_4(bst, bsh, CRU_CLKSEL_CON_REG(21));
-
-	mac_div_con = __SHIFTOUT(clksel_con21,
-				 CRU_CLKSEL_CON21_MAC_DIV_CON);
+	mac_div = __SHIFTOUT(clksel_con21,
+			     CRU_CLKSEL_CON21_MAC_DIV_CON) + 1;
 
 	if (clksel_con21 & CRU_CLKSEL_CON21_MAC_PLL_SEL) {
-		return rockchip_dpll_get_rate() / (mac_div_con + 1);
+		return rockchip_dpll_get_rate() / mac_div;
 	} else {
-		return rockchip_gpll_get_rate() / (mac_div_con + 1);
+		return rockchip_gpll_get_rate() / mac_div;
 	}
 }
 
