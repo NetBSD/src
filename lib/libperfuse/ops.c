@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.66.2.13 2014/11/14 15:06:36 martin Exp $ */
+/*  $NetBSD: ops.c,v 1.66.2.14 2015/01/17 11:47:27 martin Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1785,30 +1785,27 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	}
 
 	/*
- 	 * Setting mtime without atime or vice versa leads to
-	 * dates being reset to Epoch on glusterfs. If one
-	 * is missing, use the old value.
+ 	 * When not sending a time field, still fill with
+	 * current value, as the filesystem may just reset
+	 * the field to Epoch even if fsi->valid bit is
+	 * not set (GlusterFS does that).
  	 */
-	if ((vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL) || 
-	    (vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL)) {
-		
-		if (vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL) {
-			fsi->atime = vap->va_atime.tv_sec;
-			fsi->atimensec = (uint32_t)vap->va_atime.tv_nsec;
-		} else {
-			fsi->atime = old_va->va_atime.tv_sec;
-			fsi->atimensec = (uint32_t)old_va->va_atime.tv_nsec;
-		}
+	if (vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL) {
+		fsi->atime = vap->va_atime.tv_sec;
+		fsi->atimensec = (uint32_t)vap->va_atime.tv_nsec;
+		fsi->valid |= FUSE_FATTR_ATIME;
+	} else {
+		fsi->atime = old_va->va_atime.tv_sec;
+		fsi->atimensec = (uint32_t)old_va->va_atime.tv_nsec;
+	}
 
-		if (vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL) {
-			fsi->mtime = vap->va_mtime.tv_sec;
-			fsi->mtimensec = (uint32_t)vap->va_mtime.tv_nsec;
-		} else {
-			fsi->mtime = old_va->va_mtime.tv_sec;
-			fsi->mtimensec = (uint32_t)old_va->va_mtime.tv_nsec;
-		}
-
-		fsi->valid |= (FUSE_FATTR_MTIME|FUSE_FATTR_ATIME);
+	if (vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL) {
+		fsi->mtime = vap->va_mtime.tv_sec;
+		fsi->mtimensec = (uint32_t)vap->va_mtime.tv_nsec;
+		fsi->valid |= FUSE_FATTR_MTIME;
+	} else {
+		fsi->mtime = old_va->va_mtime.tv_sec;
+		fsi->mtimensec = (uint32_t)old_va->va_mtime.tv_nsec;
 	}
 
 	if (vap->va_mode != (mode_t)PUFFS_VNOVAL) {
@@ -1851,6 +1848,14 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 		fsi->mtimensec = 0;
 		fsi->valid &= ~(FUSE_FATTR_ATIME|FUSE_FATTR_MTIME);
 	}
+
+	/*
+	 * If only atime is changed, discard the operation: it
+	 * happens after read, and in that case the filesystem 
+	 * already updaed atime. NB: utimes() also change mtime.
+	 */
+	if (fsi->valid == FUSE_FATTR_ATIME)
+		fsi->valid &= ~FUSE_FATTR_ATIME;
 		    
 	/*
 	 * If nothing remain, discard the operation.
