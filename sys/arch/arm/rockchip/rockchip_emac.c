@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_emac.c,v 1.10 2015/01/13 10:36:15 jmcneill Exp $ */
+/* $NetBSD: rockchip_emac.c,v 1.11 2015/01/17 15:05:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rkemac.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.10 2015/01/13 10:36:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.11 2015/01/17 15:05:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -182,8 +182,8 @@ rkemac_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_mii_tick, 0);
 	callout_setfunc(&sc->sc_mii_tick, rkemac_tick, sc);
 
-	if (rockchip_is_chip(ROCKCHIP_CHIPVER_RK3188) ||
-	    rockchip_is_chip(ROCKCHIP_CHIPVER_RK3188PLUS)) {
+	if (rockchip_chip_id() == ROCKCHIP_CHIP_ID_RK3188 ||
+	    rockchip_chip_id() == ROCKCHIP_CHIP_ID_RK3188PLUS) {
 		soc_con1_reg = 0x00a4;
 	} else {
 		soc_con1_reg = 0x0154;
@@ -264,7 +264,7 @@ rkemac_attach(device_t parent, device_t self, void *aux)
 	mii->mii_readreg = rkemac_mii_readreg;
 	mii->mii_writereg = rkemac_mii_writereg;
 	mii->mii_statchg = rkemac_mii_statchg;
-	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	mii_attach(sc->sc_dev, mii, 0xffffffff, 0/* XXX */, MII_OFFSET_ANY, 0);
 
 	if (LIST_EMPTY(&mii->mii_phys)) {
 		aprint_error_dev(sc->sc_dev, "no PHY found!\n");

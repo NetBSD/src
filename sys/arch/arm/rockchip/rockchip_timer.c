@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_timer.c,v 1.1 2015/01/02 23:20:18 jmcneill Exp $ */
+/* $NetBSD: rockchip_timer.c,v 1.2 2015/01/17 15:05:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_timer.c,v 1.1 2015/01/02 23:20:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_timer.c,v 1.2 2015/01/17 15:05:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -65,6 +65,10 @@ CFATTACH_DECL_NEW(rktimer, sizeof(struct rktimer_softc),
 static int
 rktimer_match(device_t parent, cfdata_t cf, void *aux)
 {
+
+	if (rockchip_chip_id() == ROCKCHIP_CHIP_ID_RK3066)
+		return 0;
+
 	return 1;
 }
 
