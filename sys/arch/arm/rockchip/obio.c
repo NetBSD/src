@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.16 2015/01/13 10:37:38 jmcneill Exp $	*/
+/*	$NetBSD: obio.c,v 1.17 2015/01/17 15:05:24 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_rockchip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.16 2015/01/13 10:37:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.17 2015/01/17 15:05:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,10 +63,10 @@ CFATTACH_DECL_NEW(obio, 0,
 int	obio_print(void *, const char *);
 int	obio_search(device_t, cfdata_t, const int *, void *);
 
-void	obio_init_grf(void);
-void	obio_iomux(int, int);
-void	obio_init_gpio(void);
-void	obio_swporta(int, int, int);
+static void	obio_init_rk3066(void);
+static void	obio_init_rk3188(void);
+static void	obio_grf_set(uint32_t, uint32_t);
+static int	obio_gpio_set_out(u_int, u_int, u_int);
 
 #ifdef ROCKCHIP_CLOCK_DEBUG
 static void	obio_dump_clocks(void);
@@ -96,8 +96,17 @@ obio_attach(device_t parent, device_t self, void *aux)
 	obio_dump_clocks();
 #endif
 
-	obio_init_grf();
-	obio_init_gpio();
+	switch (rockchip_chip_id()) {
+	case ROCKCHIP_CHIP_ID_RK3066:
+		obio_init_rk3066();
+		break;
+	case ROCKCHIP_CHIP_ID_RK3188:
+	case ROCKCHIP_CHIP_ID_RK3188PLUS:
+		obio_init_rk3188();
+		break;
+	default:
+		break;
+	}
 
 	/*
 	 * Attach all on-board devices as described in the kernel
@@ -178,125 +187,251 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	return 0;
 }
 
+#define GRF_GPIO0A_IOMUX_OFFSET	0x00a8
+#define GRF_GPIO0B_IOMUX_OFFSET	0x00ac
+#define GRF_GPIO0C_IOMUX_OFFSET	0x00b0
+#define GRF_GPIO0D_IOMUX_OFFSET	0x00b4
+
+#define GRF_GPIO1A_IOMUX_OFFSET	0x00b8
+#define GRF_GPIO1B_IOMUX_OFFSET	0x00bc
+#define GRF_GPIO1C_IOMUX_OFFSET	0x00c0
+#define GRF_GPIO1D_IOMUX_OFFSET	0x00c4
+
+#define GRF_GPIO2A_IOMUX_OFFSET	0x00c8
+#define GRF_GPIO2B_IOMUX_OFFSET	0x00cc
+#define GRF_GPIO2C_IOMUX_OFFSET	0x00d0
+#define GRF_GPIO2D_IOMUX_OFFSET	0x00d4
+
+#define GRF_GPIO3A_IOMUX_OFFSET	0x00d8
+#define GRF_GPIO3B_IOMUX_OFFSET	0x00dc
+#define GRF_GPIO3C_IOMUX_OFFSET	0x00e0
+#define GRF_GPIO3D_IOMUX_OFFSET	0x00e4
+
+#define GRF_GPIO4A_IOMUX_OFFSET	0x00e8
+#define GRF_GPIO4B_IOMUX_OFFSET	0x00ec
+#define GRF_GPIO4C_IOMUX_OFFSET	0x00f0
+#define GRF_GPIO4D_IOMUX_OFFSET	0x00f4
+
+#define GRF_GPIO6B_IOMUX_OFFSET	0x010c
+
+#define GRF_SOC_CON0_OFFSET	0x0150
+#define GRF_SOC_CON1_OFFSET	0x0154
+#define GRF_SOC_CON2_OFFSET	0x0158
+
+static void
+obio_init_rk3066(void)
+{
+	/* dwctwo[01] */
+	obio_grf_set(GRF_GPIO0A_IOMUX_OFFSET, 0x14001400);
+
+	/* com2 */
+	obio_grf_set(GRF_GPIO1B_IOMUX_OFFSET, 0x00050005);
+
+	/* rkemac0 */
+	obio_grf_set(GRF_GPIO1C_IOMUX_OFFSET, 0xffffaaaa);
+	obio_grf_set(GRF_GPIO1D_IOMUX_OFFSET, 0x000f000a);
+	obio_grf_set(GRF_SOC_CON1_OFFSET,     0x00030002);
+	obio_grf_set(GRF_SOC_CON2_OFFSET,     0x00400040);
+
+	/* rkiic[01234] */
+	obio_grf_set(GRF_GPIO2D_IOMUX_OFFSET, 0x55005500);
+	obio_grf_set(GRF_GPIO3A_IOMUX_OFFSET, 0x05550555);
+	obio_grf_set(GRF_SOC_CON1_OFFSET,     0xf800f800);
+
+	/* dwcmmc0 */
+	obio_grf_set(GRF_GPIO3A_IOMUX_OFFSET, 0x50004000);
+	obio_grf_set(GRF_GPIO3B_IOMUX_OFFSET, 0x55551555);
+
+	/* ChipSPARK Rayeager PX2: dwcmmc2 */
+	obio_grf_set(GRF_GPIO3D_IOMUX_OFFSET, 0xc0008000);
+	obio_grf_set(GRF_GPIO4B_IOMUX_OFFSET, 0x003c0008);
+	obio_grf_set(GRF_SOC_CON0_OFFSET,     0x08000800);
+
+	/* ChipSPARK Rayeager PX2: umass0 */
+	obio_grf_set(GRF_GPIO0B_IOMUX_OFFSET, 0x04000000);
+	obio_grf_set(GRF_GPIO4C_IOMUX_OFFSET, 0x30000000);
+	obio_gpio_set_out(0, 13, 1);
+	obio_gpio_set_out(4, 22, 1);
+
+	/* ChipSPARK Rayeager PX2: uhub2 */
+	obio_grf_set(GRF_GPIO1D_IOMUX_OFFSET, 0x40000000);
+	obio_gpio_set_out(1, 31, 1);
+
+	/* ChipSPARK Rayeager PX2: ukphy0 */
+	/* rtl8201f: clock must be configured before resetting */
+	rockchip_mac_set_rate(50000000);
+	obio_grf_set(GRF_GPIO1D_IOMUX_OFFSET, 0x10000000);
+	obio_gpio_set_out(1, 30, 1);
+	/* rtl8201f: need 1s delay here? */
+}
+
 #define RK3188_GRF_GPIO0C_IOMUX_OFFSET	0x0068
-#define RK3188_GRF_GPIO0D_IOMUX_OFFSET	0x006C
+#define RK3188_GRF_GPIO0D_IOMUX_OFFSET	0x006c
 
 #define RK3188_GRF_GPIO1A_IOMUX_OFFSET	0x0070
 #define RK3188_GRF_GPIO1B_IOMUX_OFFSET	0x0074
 #define RK3188_GRF_GPIO1C_IOMUX_OFFSET	0x0078
-#define RK3188_GRF_GPIO1D_IOMUX_OFFSET	0x007C
+#define RK3188_GRF_GPIO1D_IOMUX_OFFSET	0x007c
 
 #define RK3188_GRF_GPIO2A_IOMUX_OFFSET	0x0080
 #define RK3188_GRF_GPIO2B_IOMUX_OFFSET	0x0084
 #define RK3188_GRF_GPIO2C_IOMUX_OFFSET	0x0088
-#define RK3188_GRF_GPIO2D_IOMUX_OFFSET	0x008C
+#define RK3188_GRF_GPIO2D_IOMUX_OFFSET	0x008c
 
 #define RK3188_GRF_GPIO3A_IOMUX_OFFSET	0x0090
 #define RK3188_GRF_GPIO3B_IOMUX_OFFSET	0x0094
 #define RK3188_GRF_GPIO3C_IOMUX_OFFSET	0x0098
-#define RK3188_GRF_GPIO3D_IOMUX_OFFSET	0x009C
+#define RK3188_GRF_GPIO3D_IOMUX_OFFSET	0x009c
 
-#define RK3188_GRF_SOC_CON0_OFFSET	0x00A0
-#define RK3188_GRF_SOC_CON1_OFFSET	0x00A4
-#define RK3188_GRF_SOC_CON2_OFFSET	0x00A8
-#define RK3188_GRF_SOC_STATUS_OFFSET	0x00AC
+#define RK3188_GRF_SOC_CON0_OFFSET	0x00a0
+#define RK3188_GRF_SOC_CON1_OFFSET	0x00a4
+#define RK3188_GRF_SOC_CON2_OFFSET	0x00a8
 
-#define RK3188_GRF_IO_CON2_OFFSET	0x00FC
+#define RK3188_GRF_IO_CON2_OFFSET	0x00fc
 #define RK3188_GRF_IO_CON3_OFFSET	0x0100
 
-#define GRF_GPIO0A_IOMUX_OFFSET	0x00a8
-#define GRF_GPIO3A_IOMUX_OFFSET	0x00d8
-#define GRF_GPIO3B_IOMUX_OFFSET	0x00dc
-
-void obio_init_grf(void)
+static void
+obio_init_rk3188(void)
 {
-#if 1
-	/* Radxa Rock */
-	obio_iomux(RK3188_GRF_GPIO3A_IOMUX_OFFSET, 0x55555554); /* MMC0 */
-	obio_iomux(RK3188_GRF_GPIO3B_IOMUX_OFFSET, 0x00050001); /* MMC0 */
-	obio_iomux(RK3188_GRF_IO_CON2_OFFSET,      0x00c000c0); /* MMC0 */
-	obio_iomux(RK3188_GRF_GPIO3D_IOMUX_OFFSET, 0x3c000000); /* VBUS */
-	obio_iomux(RK3188_GRF_GPIO1D_IOMUX_OFFSET, 0x55555555); /* I2C[0124] */
-	obio_iomux(RK3188_GRF_GPIO3B_IOMUX_OFFSET, 0xa000a000); /* I2C3 */
-	obio_iomux(RK3188_GRF_SOC_CON1_OFFSET,	   0xf800f800);	/* I2C[01234] */
+	/* com2 */
+	obio_grf_set(RK3188_GRF_GPIO1B_IOMUX_OFFSET, 0x000f0005);
 
-//	obio_iomux(RK3188_GRF_GPIO0C_IOMUX_OFFSET, 0x00030000); /* PHY */
-	obio_iomux(RK3188_GRF_GPIO3C_IOMUX_OFFSET, 0xffffaaaa); /* PHY */
-	obio_iomux(RK3188_GRF_GPIO3D_IOMUX_OFFSET, 0x003f000a); /* PHY */
-	obio_iomux(RK3188_GRF_SOC_CON1_OFFSET,     0x00030002); /* VMAC */
-	obio_iomux(RK3188_GRF_IO_CON3_OFFSET,      0x000f000f); /* VMAC */
-#else
-	/* ChipSPARK Rayeager PX2 */
-	obio_iomux(GRF_GPIO0A_IOMUX_OFFSET, 0x14000000); /* VBUS */
-	obio_iomux(GRF_GPIO3A_IOMUX_OFFSET, 0x50004000); /* MMC0 */
-	obio_iomux(GRF_GPIO3B_IOMUX_OFFSET, 0x55551555); /* MMC0 */
-#endif
+	/* rkiic[01234] */
+	obio_grf_set(RK3188_GRF_GPIO1D_IOMUX_OFFSET, 0x55555555);
+	obio_grf_set(RK3188_GRF_GPIO3B_IOMUX_OFFSET, 0xa000a000);
+	obio_grf_set(RK3188_GRF_SOC_CON1_OFFSET,     0xf800f800);
+
+	/* dwcmmc0 */
+	obio_grf_set(RK3188_GRF_GPIO3A_IOMUX_OFFSET, 0x55555554);
+	obio_grf_set(RK3188_GRF_GPIO3B_IOMUX_OFFSET, 0x00050001);
+	//obio_grf_set(RK3188_GRF_IO_CON2_OFFSET,      0x00c000c0);
+
+	/* rkemac0 */
+	obio_grf_set(RK3188_GRF_GPIO3C_IOMUX_OFFSET, 0xffffaaaa);
+	obio_grf_set(RK3188_GRF_GPIO3D_IOMUX_OFFSET, 0x000f000a);
+	obio_grf_set(RK3188_GRF_SOC_CON1_OFFSET,     0x00030002);
+	obio_grf_set(RK3188_GRF_SOC_CON2_OFFSET,     0x00400040);
+	obio_grf_set(RK3188_GRF_IO_CON3_OFFSET,      0x000f000f);
+
+	/* dwcotg[01] */
+	obio_grf_set(RK3188_GRF_GPIO3D_IOMUX_OFFSET, 0x3c003c00);
+
+	/* Radxa Rock: dwcotg[01] */
+	//obio_grf_set(RK3188_GRF_GPIO3D_IOMUX_OFFSET, 0x3c000000);
+	obio_grf_set(RK3188_GRF_GPIO2D_IOMUX_OFFSET, 0x40000000);
+	obio_gpio_set_out(0, 3, 1);
+	obio_gpio_set_out(2, 31, 1);
+
+	/* Radxa Rock: IT66121 HDMI */
+	obio_gpio_set_out(3, 10, 1);
+
+	/* Radxa Rock: ukphy0 */
+	obio_gpio_set_out(3, 26, 1); /* XXX: RMII_INT, input, active low */
+
+	/* Minix Neo X7: cdce0 */
+	obio_gpio_set_out(0, 30, 1);
 }
 
-void obio_iomux(int offset, int new)
+static void
+obio_grf_set(uint32_t offset, uint32_t value)
 {
 	bus_space_handle_t bh;
 	bus_space_tag_t bt = &rockchip_bs_tag;
-	int old, renew;
+	uint32_t old, new;
 
 	bus_space_subregion(bt, rockchip_core1_bsh, ROCKCHIP_GRF_OFFSET,
 	    ROCKCHIP_GRF_SIZE, &bh);
 
 	old = bus_space_read_4(bt, bh, offset);
-	bus_space_write_4(bt, bh, offset, new);
-	renew = bus_space_read_4(bt, bh, offset);
+	bus_space_write_4(bt, bh, offset, value);
+	new = bus_space_read_4(bt, bh, offset);
 
-	printf("grf iomux: old %08x, new %08x, renew %08x\n", old, new, renew);
+	printf("grf: %04x: 0x%08x 0x%08x -> 0x%08x\n", offset, old, value, new);
 }
 
 #define GPIO_SWPORTA_DR_OFFSET	0x00
-#define GPIO_SWPORTA_DD_OFFSET	0x04
+#define GPIO_SWPORTA_DDR_OFFSET	0x04
 
-void obio_init_gpio(void)
-{
-#if 1
-	/* Radxa Rock */
-	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(3));
-	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(3));
-	obio_swporta(ROCKCHIP_GPIO2_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(31));
-	obio_swporta(ROCKCHIP_GPIO2_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(31));
-
-	/* PHY */
-	obio_swporta(ROCKCHIP_GPIO3_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(26));
-	obio_swporta(ROCKCHIP_GPIO3_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(26));
-
-	/* Minix Neo X7 USB ethernet */
-	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(30));
-	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(30));
-
-	/* IT66121 HDMI */
-	obio_swporta(ROCKCHIP_GPIO3_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(10));
-	obio_swporta(ROCKCHIP_GPIO3_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(10));
-#else
-	/* ChipSPARK Rayeager PX2 */
-	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(5));
-	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(5));
-	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(6));
-	obio_swporta(ROCKCHIP_GPIO0_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(6));
-	obio_swporta(ROCKCHIP_GPIO1_OFFSET, GPIO_SWPORTA_DR_OFFSET, __BIT(31));
-	obio_swporta(ROCKCHIP_GPIO1_OFFSET, GPIO_SWPORTA_DD_OFFSET, __BIT(31));
-#endif
-}
-
-void obio_swporta(int gpio_base, int offset, int new)
+static int
+obio_gpio_set_out(u_int unit, u_int pin, u_int value)
 {
 	bus_space_handle_t bh;
 	bus_space_tag_t bt = &rockchip_bs_tag;
-	int old, renew;
-	int gpio_size = 0x100; /* XXX */
+	uint32_t gpio_base = 0, gpio_size = 0;
+	uint32_t old, new;
+
+	switch (rockchip_chip_id()) {
+	case ROCKCHIP_CHIP_ID_RK3066:
+		switch (unit) {
+		case 0:
+			gpio_base = ROCKCHIP_GPIO0_OFFSET;
+			gpio_size = ROCKCHIP_GPIO0_SIZE;
+			break;
+		case 1:
+			gpio_base = ROCKCHIP_GPIO1_OFFSET;
+			gpio_size = ROCKCHIP_GPIO1_SIZE;
+			break;
+		case 2:
+			gpio_base = ROCKCHIP_GPIO2_OFFSET;
+			gpio_size = ROCKCHIP_GPIO2_SIZE;
+			break;
+		case 3:
+			gpio_base = ROCKCHIP_GPIO3_OFFSET;
+			gpio_size = ROCKCHIP_GPIO3_SIZE;
+			break;
+		case 4:
+			gpio_base = ROCKCHIP_GPIO4_OFFSET;
+			gpio_size = ROCKCHIP_GPIO4_SIZE;
+			break;
+		case 6:
+			gpio_base = ROCKCHIP_GPIO6_OFFSET;
+			gpio_size = ROCKCHIP_GPIO6_SIZE;
+			break;
+		}
+		break;
+	case ROCKCHIP_CHIP_ID_RK3188:
+	case ROCKCHIP_CHIP_ID_RK3188PLUS:
+		switch (unit) {
+		case 0:
+			gpio_base = ROCKCHIP_RK3188_GPIO0_OFFSET;
+			gpio_size = ROCKCHIP_RK3188_GPIO0_SIZE;
+			break;
+		case 1:
+			gpio_base = ROCKCHIP_GPIO1_OFFSET;
+			gpio_size = ROCKCHIP_GPIO1_SIZE;
+			break;
+		case 2:
+			gpio_base = ROCKCHIP_GPIO2_OFFSET;
+			gpio_size = ROCKCHIP_GPIO2_SIZE;
+			break;
+		case 3:
+			gpio_base = ROCKCHIP_GPIO3_OFFSET;
+			gpio_size = ROCKCHIP_GPIO3_SIZE;
+			break;
+		}
+		break;
+	}
+
+	if (gpio_base == 0 || gpio_size == 0 || pin > 31)
+		return EINVAL;
 
 	bus_space_subregion(bt, rockchip_core1_bsh, gpio_base, gpio_size, &bh);
 
-	old = bus_space_read_4(bt, bh, offset);
-	bus_space_write_4(bt, bh, offset, old | new);
-	renew = bus_space_read_4(bt, bh, offset);
+	old = bus_space_read_4(bt, bh, GPIO_SWPORTA_DR_OFFSET);
+	if (value)
+		new = old | __BIT(pin);
+	else
+		new = old & ~__BIT(pin);
+	bus_space_write_4(bt, bh, GPIO_SWPORTA_DR_OFFSET, new);
+	new = bus_space_read_4(bt, bh, GPIO_SWPORTA_DR_OFFSET);
+	printf("gpio%d: dr 0x%08x -> 0x%08x\n", unit, old, new);
 
-	printf("gpio: 0x%08x 0x%08x -> 0x%08x\n", gpio_base + offset, old, renew);
+	old = bus_space_read_4(bt, bh, GPIO_SWPORTA_DDR_OFFSET);
+	bus_space_write_4(bt, bh, GPIO_SWPORTA_DDR_OFFSET, old | __BIT(pin));
+	new = bus_space_read_4(bt, bh, GPIO_SWPORTA_DDR_OFFSET);
+	printf("gpio%d: ddr 0x%08x -> 0x%08x\n", unit, old, new);
+
+	return 0;
 }
 
 #ifdef ROCKCHIP_CLOCK_DEBUG
