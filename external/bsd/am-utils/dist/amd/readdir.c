@@ -1,4 +1,4 @@
-/*	$NetBSD: readdir.c,v 1.3 2015/01/17 17:46:31 christos Exp $	*/
+/*	$NetBSD: readdir.c,v 1.4 2015/01/18 16:37:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2014 Erez Zadok
@@ -636,7 +636,7 @@ static size_t needroom3(void)
 
 /* This one is called only if map is browsable */
 static int
-amfs_readdir3_browsable(am_node *mp, am_cookie3 cookie,
+amfs_readdir3_browsable(am_node *mp, voidp cookie,
 			am_dirlist3 *dp, am_entry3 *ep, u_int count,
 			int fully_browsable)
 {
@@ -648,7 +648,8 @@ amfs_readdir3_browsable(am_node *mp, am_cookie3 cookie,
   dp->eof = FALSE;		/* assume readdir not done */
 
   if (amuDebug(D_READDIR))
-    plog(XLOG_DEBUG, "amfs_readdir3_browsable gen=%lu, count=%d", gen, count);
+    plog(XLOG_DEBUG, "%s: gen=%llu, count=%d", __func__,
+	(unsigned long long)gen, count);
 
   if (gen == 0) {
     size_t needed = needroom3();
@@ -733,8 +734,9 @@ amfs_readdir3_browsable(am_node *mp, am_cookie3 cookie,
       for (j = 0, ne = te; ne; ne = ne->ne_nextentry)
 	plog(XLOG_DEBUG, "gen2 key %4d \"%s\"", j++, ne->name);
       for (j = 0, ne = ep; ne; ne = ne->ne_nextentry) {
-	plog(XLOG_DEBUG, "gen2+ key %4d \"%s\" fi=%lu ck=%lu",
-	     j++, ne->name, ne->fileid, ne->cookie);
+	plog(XLOG_DEBUG, "gen2+ key %4d \"%s\" fi=%llu ck=%llu",
+	     j++, ne->name, (unsigned long long)ne->fileid,
+	     (unsigned long long)ne->cookie);
       }
       plog(XLOG_DEBUG, "EOF is %d", dp->eof);
     }
@@ -794,14 +796,15 @@ amfs_readdir3_browsable(am_node *mp, am_cookie3 cookie,
 }
 
 static int
-amfs_readdir3(am_node *mp, am_cookie3 cookie,
+amfs_readdir3(am_node *mp, voidp cookie,
 	      am_dirlist3 *dp, am_entry3 *ep, u_int count)
 {
   uint64 gen = *(uint64 *) cookie;
   am_node *xp;
 
   if (amuDebug(D_READDIR))
-    plog(XLOG_DEBUG, "amfs_readdir3 gen=%lu, count=%d", gen, count);
+    plog(XLOG_DEBUG, "%s: gen=%llu, count=%d", __func__,
+	(unsigned long long)gen, count);
 
   dp->eof = FALSE;		/* assume readdir not done */
 
@@ -848,8 +851,9 @@ amfs_readdir3(am_node *mp, am_cookie3 cookie,
       am_entry3 *ne;
       int j;
       for (j = 0, ne = ep; ne; ne = ne->nextentry) {
-	plog(XLOG_DEBUG, "gen1 key %4d \"%s\" fi=%lu ck=%lu",
-	     j++, ne->name, ne->fileid, ne->cookie);
+	plog(XLOG_DEBUG, "gen1 key %4d \"%s\" fi=%llu ck=%llu",
+	     j++, ne->name, (unsigned long long)ne->fileid,
+	     (unsigned long long)ne->cookie);
       }
     }
     return 0;
@@ -908,8 +912,9 @@ amfs_readdir3(am_node *mp, am_cookie3 cookie,
       am_entry3 *ne;
       int j;
       for (j = 0, ne = ep; ne; ne = ne->nextentry) {
-	plog(XLOG_DEBUG, "gen2 key %4d \"%s\" fi=%lu ck=%lu",
-	     j++, ne->name, ne->fileid, ne->cookie);
+	plog(XLOG_DEBUG, "gen2 key %4d \"%s\" fi=%llu ck=%llu",
+	     j++, ne->name, (unsigned long long)ne->fileid,
+	     (unsigned long long)ne->cookie);
       }
     }
     return 0;
@@ -945,8 +950,8 @@ amfs_generic_readdir(am_node *mp, voidp cookie, voidp dp, voidp ep, u_int count)
       return amfs_readdir(mp, cookie, dp, ep, count);
   } else {
     if (browsable)
-      return amfs_readdir3_browsable(mp, (am_cookie3) cookie, dp, ep, count, full);
+      return amfs_readdir3_browsable(mp, cookie, dp, ep, count, full);
     else
-      return amfs_readdir3(mp, (am_cookie3) cookie, dp, ep, count);
+      return amfs_readdir3(mp, cookie, dp, ep, count);
   }
 }
