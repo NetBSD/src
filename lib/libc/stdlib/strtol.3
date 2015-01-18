@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtol.3,v 1.28 2015/01/16 23:46:37 wiz Exp $
+.\"	$NetBSD: strtol.3,v 1.29 2015/01/18 18:01:41 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,7 @@
 .Pp
 .In inttypes.h
 .Ft intmax_t
-.Fn strtoi "const char * restrict nptr" "char ** restrict endptr" "int base" "intmax_t lo" "intmax_t hi" "int *rerror"
+.Fn strtoi "const char * restrict nptr" "char ** restrict endptr" "int base" "intmax_t lo" "intmax_t hi" "int *rstatus"
 .Ft intmax_t
 .Fn strtoimax "const char * restrict nptr" "char ** restrict endptr" "int base"
 .Pp
@@ -92,7 +92,7 @@ value.
 The
 .Fn strtoi
 function
-is using internally
+uses internally
 .Fn strtoimax
 and ensures that the result is always in the range [
 .Fa lo ..
@@ -100,16 +100,19 @@ and ensures that the result is always in the range [
 ].
 In adddition it always places
 .Dv 0
-on success or an error value in the
-.Fa rerror
+on success or a conversion status in the
+.Fa rstatus
 argument, avoiding the
 .Dv errno
 gymnastics the other functions require.
 The
-.Fa rerror
+.Fn strtoi
+function doesn't affect errno on exit.
+The
+.Fa rstatus
 argument can be
 .Dv NULL
-if errors are to be ignored.
+if conversion status is to be ignored.
 The
 .Fn strtoq
 function
@@ -323,7 +326,7 @@ In addition to the above errors
 returns:
 .Bl -tag -width Er
 .It Bq Er ECANCELED
-The string did not contain any characters that could be converted.
+The string did not contain any characters that were converted.
 .It Bq Er ENOTSUP
 The string contained non-numeric characters that did not get converted.
 In this case,

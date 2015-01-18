@@ -1,4 +1,4 @@
-/*	$NetBSD: strtonum.c,v 1.1 2015/01/16 18:41:33 christos Exp $	*/
+/*	$NetBSD: strtonum.c,v 1.2 2015/01/18 18:01:41 christos Exp $	*/
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtonum.c,v 1.1 2015/01/16 18:41:33 christos Exp $");
+__RCSID("$NetBSD: strtonum.c,v 1.2 2015/01/18 18:01:41 christos Exp $");
 
 #define _OPENBSD_SOURCE
 #include <stdio.h>
@@ -37,31 +37,28 @@ __RCSID("$NetBSD: strtonum.c,v 1.1 2015/01/16 18:41:33 christos Exp $");
 #include <errno.h>
 #include <inttypes.h>
 
-/*
- * Problems with the strtonum(3) API:
- *   - will return 0 on failure; 0 might not be in range, so
- *     that necessitates an error check even if you want to avoid it.
- *   - does not differentiate 'illegal' returns, so we can't tell
- *     the difference between partial and no conversions.
- *   - returns english strings
- *   - can't set the base, or find where the conversion ended
- */
 long long
-strtonum(const char * __restrict ptr, long long lo, long long hi,
-    const char ** __restrict res)
+strtonum(const char *nptr, long long minval, long long maxval,
+         const char **errstr)
 {
 	int e;
-	intmax_t rv;
+	long long rv;
 	const char *resp;
 
-	if (res == NULL)
-		res = &resp;
+	if (errstr == NULL)
+		errstr = &resp;
 
-	rv = strtoi(ptr, NULL, 0, lo, hi, &e);
+	rv = strtoi(nptr, NULL, 0, minval, maxval, &e);
+
 	if (e == 0) {
-		*res = NULL;
+		*errstr = NULL;
 		return rv;
 	}
-	*res = e != ERANGE ? "invalid" : (rv == hi ? "too large" : "too small");
+
+	if (e == ERANGE)
+		*errstr = (rv == maxval ? "too large" : "too small");
+	else
+		*errstr = "invalid";
+
 	return 0;
 }
