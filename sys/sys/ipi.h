@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.h,v 1.2 2014/05/25 15:34:19 rmind Exp $	*/
+/*	$NetBSD: ipi.h,v 1.3 2015/01/18 23:16:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@ void	cpu_ipi(struct cpu_info *);
 u_int	ipi_register(ipi_func_t, void *);
 void	ipi_unregister(u_int);
 void	ipi_trigger(u_int, struct cpu_info *);
+void	ipi_trigger_multi(u_int, const kcpuset_t *);
 
 /* Public interface: synchronous IPIs. */
 void	ipi_unicast(ipi_msg_t *, struct cpu_info *);
