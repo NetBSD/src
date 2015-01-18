@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.111 2015/01/16 18:40:16 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.112 2015/01/18 17:56:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -124,8 +124,7 @@ long	 strtol(const char * __restrict, char ** __restrict, int);
 unsigned long
 	 strtoul(const char * __restrict, char ** __restrict, int);
 #ifdef _OPENBSD_SOURCE
-long long strtonum(const char * __restrict, long long, long long,
-    const char ** __restrict);
+long long strtonum(const char *, long long, long long, const char **);
 #endif
 int	 system(const char *);
 
