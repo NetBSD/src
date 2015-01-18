@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subr.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
+/*	$NetBSD: nfs_subr.c,v 1.2 2015/01/18 15:54:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2014 Erez Zadok
@@ -1106,9 +1106,9 @@ am_nfs3_getattr_3_svc(am_GETATTR3args *argp, struct svc_req *rqstp)
   result.status = AM_NFS3_OK;
 
   if (amuDebug(D_TRACE))
-    plog(XLOG_DEBUG, "\tstat(%s), size = %lu, mtime=%d.%d",
+    plog(XLOG_DEBUG, "\tstat(%s), size = %llu, mtime=%d.%d",
 	 mp->am_path,
-	 (am_size3) fattr3->size,
+	 (unsigned long long) fattr3->size,
 	 (u_int) fattr3->mtime.seconds,
 	 (u_int) fattr3->mtime.nseconds);
 
