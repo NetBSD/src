@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1940 2015/01/18 18:04:20 christos Exp $
+#	$NetBSD: mi,v 1.1941 2015/01/18 18:11:10 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6400,6 +6400,8 @@
 ./usr/share/man/cat3/estrlcat.0			comp-c-catman		.cat
 ./usr/share/man/cat3/estrlcpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/estrndup.0			comp-c-catman		.cat
+./usr/share/man/cat3/estrtoi.0			comp-c-catman		.cat
+./usr/share/man/cat3/estrtou.0			comp-c-catman		.cat
 ./usr/share/man/cat3/etext.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ether_aton.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ether_hostton.0		comp-c-catman		.cat
@@ -13272,6 +13274,8 @@
 ./usr/share/man/html3/estrlcat.html		comp-c-htmlman		html
 ./usr/share/man/html3/estrlcpy.html		comp-c-htmlman		html
 ./usr/share/man/html3/estrndup.html		comp-c-htmlman		html
+./usr/share/man/html3/estrtoi.html		comp-c-htmlman		html
+./usr/share/man/html3/estrtou.html		comp-c-htmlman		html
 ./usr/share/man/html3/etext.html		comp-c-htmlman		html
 ./usr/share/man/html3/ether_aton.html		comp-c-htmlman		html
 ./usr/share/man/html3/ether_hostton.html	comp-c-htmlman		html
@@ -20056,6 +20060,8 @@
 ./usr/share/man/man3/estrlcat.3			comp-c-man		.man
 ./usr/share/man/man3/estrlcpy.3			comp-c-man		.man
 ./usr/share/man/man3/estrndup.3			comp-c-man		.man
+./usr/share/man/man3/estrtoi.3			comp-c-man		.man
+./usr/share/man/man3/estrtou.3			comp-c-man		.man
 ./usr/share/man/man3/etext.3			comp-c-man		.man
 ./usr/share/man/man3/ether_aton.3		comp-c-man		.man
 ./usr/share/man/man3/ether_hostton.3		comp-c-man		.man
