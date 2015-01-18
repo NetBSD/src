@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1212 2015/01/16 09:56:53 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1213 2015/01/18 15:30:03 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1182,6 +1182,7 @@ product ATTANSIC AR8171		0x10a1	AR8171
 product ATTANSIC ETHERNET_100	0x2048	L2 100 Mbit Ethernet Adapter
 product ATTANSIC AR8152_B	0x2060	AR8152 v1.1 Fast Ethernet Adapter
 product ATTANSIC AR8152_B2	0x2062	AR8152 v2.0 Fast Ethernet Adapter
+product ATTANSIC E2200		0xe091	E2200
 
 /* ATI products */
 /* See http://www.x.org/wiki/Radeon%20ASICs */
