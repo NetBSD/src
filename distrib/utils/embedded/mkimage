@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.49 2014/12/14 00:28:46 christos Exp $
+# $NetBSD: mkimage,v 1.50 2015/01/18 17:37:54 skrll Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -106,8 +106,8 @@ fi
 release="/usr/obj/${MACHINE}/release"
 
 selected_sets="$sets"
-dsets=false
-xsets=false
+dsets_p=false
+xsets_p=false
 minwrites=false
 rootdev=ld
 
@@ -119,9 +119,9 @@ do
 	K)	kernel="$OPTARG";;
 	S)	;;
 	b)	bootonly=true;;
-	d)	dsets=true
+	d)	dsets_p=true
 		selected_sets="$selected_sets debug"
-		if $xsets; then
+		if $xsets_p; then
 			selected_sets="$selected_sets xdebug"
 		fi
 		;;
@@ -130,9 +130,9 @@ do
 	m)	minwrites=true;;
 	r)	rootdev="$OPTARG";;
 	s)	size="$OPTARG";;
-	x)	xsets=true
+	x)	xsets_p=true
 		selected_sets="$selected_sets $xsets"
-		if $dsets; then
+		if $dsets_p; then
 		    selected_sets="$selected_sets xdebug"
 		fi
 		;;
