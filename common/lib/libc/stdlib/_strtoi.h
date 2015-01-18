@@ -1,4 +1,4 @@
-/*	$NetBSD: _strtoi.h,v 1.1 2015/01/16 18:35:28 christos Exp $	*/
+/*	$NetBSD: _strtoi.h,v 1.2 2015/01/18 17:55:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,7 +51,7 @@
 #if defined(_KERNEL) || defined(_STANDALONE) || \
     defined(HAVE_NBTOOL_CONFIG_H) || defined(BCS_ONLY)
 __TYPE
-_FUNCNAME(const char * __restrict ptr, char ** __restrict endptr, int base,
+_FUNCNAME(const char * __restrict nptr, char ** __restrict endptr, int base,
           __TYPE lo, __TYPE hi, int * rstatus)
 #else
 #include <locale.h>
@@ -60,7 +60,7 @@ _FUNCNAME(const char * __restrict ptr, char ** __restrict endptr, int base,
 #define INT_FUNCNAME(pre, name, post)	INT_FUNCNAME_(pre, name, post)
 
 static __TYPE
-INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char * __restrict ptr,
+INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char * __restrict nptr,
     char ** __restrict endptr, int base,
     __TYPE lo, __TYPE hi, int * rstatus, locale_t loc)
 #endif
@@ -74,7 +74,7 @@ INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char * __restrict ptr,
 
 	_DIAGASSERT(hi >= lo);
 
-	_DIAGASSERT(ptr != NULL);
+	_DIAGASSERT(nptr != NULL);
 	/* endptr may be NULL */
 
 	if (endptr == NULL)
@@ -90,9 +90,9 @@ INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char * __restrict ptr,
 
 #if defined(_KERNEL) || defined(_STANDALONE) || \
     defined(HAVE_NBTOOL_CONFIG_H) || defined(BCS_ONLY)
-	im = __WRAPPED(ptr, endptr, base);
+	im = __WRAPPED(nptr, endptr, base);
 #else
-	im = __WRAPPED_L(ptr, endptr, base, loc);
+	im = __WRAPPED_L(nptr, endptr, base, loc);
 #endif
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -102,7 +102,7 @@ INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char * __restrict ptr,
 
 	if (*rstatus == 0) {
 		/* No digits were found */
-		if (ptr == *endptr)
+		if (nptr == *endptr)
 			*rstatus = ECANCELED;
 		/* There are further characters after number */
 		else if (**endptr != '\0')
@@ -126,19 +126,19 @@ INT_FUNCNAME(_int_, _FUNCNAME, _l)(const char * __restrict ptr,
 #if !defined(_KERNEL) && !defined(_STANDALONE) && \
     !defined(HAVE_NBTOOL_CONFIG_H) && !defined(BCS_ONLY)
 __TYPE
-_FUNCNAME(const char * __restrict ptr, char ** __restrict endptr, int base,
+_FUNCNAME(const char * __restrict nptr, char ** __restrict endptr, int base,
     __TYPE lo, __TYPE hi, int * rstatus)
 {
-	return INT_FUNCNAME(_int_, _FUNCNAME, _l)(ptr, endptr, base, lo, hi,
+	return INT_FUNCNAME(_int_, _FUNCNAME, _l)(nptr, endptr, base, lo, hi,
 	    rstatus, _current_locale());
 }
 
 __TYPE
-INT_FUNCNAME(, _FUNCNAME, _l)(const char * __restrict ptr,
+INT_FUNCNAME(, _FUNCNAME, _l)(const char * __restrict nptr,
     char ** __restrict endptr, int base,
     __TYPE lo, __TYPE hi, int * rstatus, locale_t loc)
 {
-	return INT_FUNCNAME(_int_, _FUNCNAME, _l)(ptr, endptr, base, lo, hi,
+	return INT_FUNCNAME(_int_, _FUNCNAME, _l)(nptr, endptr, base, lo, hi,
 	    rstatus, loc);
 }
 #endif
