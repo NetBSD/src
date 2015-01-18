@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1939 2015/01/16 18:39:33 christos Exp $
+#	$NetBSD: mi,v 1.1940 2015/01/18 18:04:20 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9205,6 +9205,7 @@
 ./usr/share/man/cat3/strtol.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtold.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtoll.0			comp-c-catman		.cat
+./usr/share/man/cat3/strtonum.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtoq.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtou.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strtoul.0			comp-c-catman		.cat
@@ -16012,6 +16013,7 @@
 ./usr/share/man/html3/strtol.html		comp-c-htmlman		html
 ./usr/share/man/html3/strtold.html		comp-c-htmlman		html
 ./usr/share/man/html3/strtoll.html		comp-c-htmlman		html
+./usr/share/man/html3/strtonum.html		comp-c-htmlman		html
 ./usr/share/man/html3/strtoq.html		comp-c-htmlman		html
 ./usr/share/man/html3/strtou.html		comp-c-htmlman		html
 ./usr/share/man/html3/strtoul.html		comp-c-htmlman		html
@@ -22855,6 +22857,7 @@
 ./usr/share/man/man3/strtol.3			comp-c-man		.man
 ./usr/share/man/man3/strtold.3			comp-c-man		.man
 ./usr/share/man/man3/strtoll.3			comp-c-man		.man
+./usr/share/man/man3/strtonum.3			comp-c-man		.man
 ./usr/share/man/man3/strtoq.3			comp-c-man		.man
 ./usr/share/man/man3/strtou.3			comp-c-man		.man
 ./usr/share/man/man3/strtoul.3			comp-c-man		.man
