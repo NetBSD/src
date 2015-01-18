@@ -20,7 +20,7 @@ bl_init(bl_t b, bool srv)
 	static const struct sockaddr_un sun = {
 		.sun_family = AF_LOCAL,
 		.sun_len = sizeof(sun),
-		.sun_path = _PATH_BLACKLIST,
+		.sun_path = _PATH_BLSOCK,
 	};
 
 	if (b->b_fd == -1) {
