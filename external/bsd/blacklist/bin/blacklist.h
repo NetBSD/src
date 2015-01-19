@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklist.h,v 1.1 2015/01/19 18:52:55 christos Exp $	*/
+/*	$NetBSD: blacklist.h,v 1.2 2015/01/19 19:02:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@ typedef struct blacklist *bl_t;
 __BEGIN_DECLS
 
 bl_t bl_create(void);
+int bl_getfd(bl_t);
 int bl_send(bl_t, bl_type_t, int, int, const char *);
 void bl_destroy(bl_t);
 
