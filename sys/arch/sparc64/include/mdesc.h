@@ -1,4 +1,4 @@
-/*	$NetBSD: mdesc.h,v 1.1 2015/01/10 22:19:26 palle Exp $	*/
+/*	$NetBSD: mdesc.h,v 1.2 2015/01/19 19:46:08 palle Exp $	*/
 /*	$OpenBSD: mdesc.h,v 1.3 2014/11/30 22:26:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -48,4 +48,6 @@ const char *mdesc_get_prop_data(int, const char *, size_t *);
 int	mdesc_find(const char *, uint64_t);
 int	mdesc_find_child(int, const char *, uint64_t);
 int	mdesc_find_node(const char *);
+int	mdesc_find_node_by_idx(int, const char *);
+int	mdesc_next_node(int);
 #endif
