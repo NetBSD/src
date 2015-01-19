@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.h,v 1.4 2015/01/19 18:52:55 christos Exp $	*/
+/*	$NetBSD: bl.h,v 1.5 2015/01/19 19:02:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,29 +42,12 @@ typedef struct {
 	char bi_msg[1024];
 } bl_info_t;
 
-typedef struct blacklist *bl_t;
+#define _PATH_BLSOCK "/tmp/blsock"
 
 __BEGIN_DECLS
 bl_t bl_create2(bool, const char *, void (*)(int, const char *, ...));
 bl_info_t *bl_recv(bl_t);
+bool bl_isconnected(bl_t);
 __END_DECLS
 
-#define _PATH_BLSOCK "/tmp/blsock"
-#define _PATH_BLCONF "/etc/blacklistd/conf"
-
 #endif /* _BL_H */
-typedef struct {
-	uint32_t bl_len;
-	uint32_t bl_version;
-	uint32_t bl_type;
-	char bl_data[];
-} bl_message_t;
-
-struct blacklist {
-	int b_fd;
-	int b_connected;
-	const char *b_path;
-	void (*b_fun)(int, const char *, ...);
-	bl_info_t b_info;
-};
-#define BL_VERSION	1
