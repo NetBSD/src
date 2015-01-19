@@ -1,12 +1,15 @@
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.1 2015/01/18 17:28:37 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.2 2015/01/19 18:52:55 christos Exp $");
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/queue.h>
 
 #include <util.h>
+#include <string.h>
 #include <signal.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
@@ -19,23 +22,27 @@ __RCSID("$NetBSD: blacklistd.c,v 1.1 2015/01/18 17:28:37 christos Exp $");
 #include <err.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "bl.h"
 #include "internal.h"
+#include "conf.h"
 
-static int debug;
 static const char *configfile = _PATH_BLCONF;
 
+int debug;
+struct conf *conf;
+size_t nconf;
 
-struct conf {
-	SLIST_ENTRY(conf)	c_next;
-	in_port_t		c_port;
-	uint8_t			c_proto;
-	size_t			c_nfail;
-	time_t			c_disable;
-};
+static sig_atomic_t rconf = 1;
 
-SLIST_HEAD(confhead, conf) head;
+void (*lfun)(int, const char *, ...) = syslog;
+
+void
+sighup(int n)
+{
+	rconf++;
+}
 
 static __dead void
 usage(void)
@@ -44,99 +51,79 @@ usage(void)
 	exit(EXIT_FAILURE);
 }
 
-static int
-getnum(void *v, size_t l, char **p, intmax_t min, intmax_t max)
+static const char *
+expandm(char *buf, size_t len, const char *fmt)
 {
-	char *ep;
-	int e;
-	intmax_t im = strtoi(*p, &ep, 0, min, max, &e);
+	char *p;
+	size_t r;
 
-	if (e != ENOTSUP)
-		return e;
+	if ((p = strstr(fmt, "%m")) == NULL)
+		return fmt;
 
-	if (*ep && !isspace((unsigned char)*ep))
-		return e;
+	r = p - fmt;
+	if (r >= len)
+		return fmt;
 
-	for (; isspace((unsigned char)*ep); ep++)
-		continue;
-	*p = ep;
+	strlcpy(buf, fmt, r + 1);
+	strlcat(buf, strerror(errno), len);
+	strlcat(buf, fmt + r + 2, len);
 
-	switch (l) {
-	case 1:
-		*(int8_t *)v = *(int8_t *)im;
-		break;
-	case 2:
-		*(int16_t *)v = *(int16_t *)im;
-		break;
-	case 4:
-		*(int32_t *)v = *(int32_t *)im;
-		break;
-	case 8:
-		*(int64_t *)v = *(int64_t *)im;
-		break;
-	default:
-		abort();
-	}
-	return 0;
+	return buf;
 }
 
-static struct conf *
-parseconfline(char *l)
+
+static void
+dlog(int level, const char *fmt, ...)
 {
-	struct conf c, *cp;
-	int e;
+	char buf[BUFSIZ];
+	va_list ap;
 
-	e = getnum(&c.c_port, sizeof(c.c_port), &l, 0, 65536);
-	if (e) goto out;
-	e = getnum(&c.c_proto, sizeof(c.c_proto), &l, 0, 255);
-	if (e) goto out;
-	e = getnum(&c.c_nfail, sizeof(c.c_nfail), &l, 0, SIZE_T_MAX);
-	if (e) goto out;
-	e = getnum(&c.c_disable, sizeof(c.c_disable), &l, -1, INTMAX_MAX);
-	if (e) goto out;
-
-	if ((cp = malloc(sizeof(*cp))) == NULL)
-		return NULL;
-
-	*cp = c;
-	return cp;
-out:
-	errno = e;
-	return NULL;
+	fprintf(stderr, "%s: ", getprogname());
+	va_start(ap, fmt);
+	vfprintf(stderr, expandm(buf, sizeof(buf), fmt), ap);
+	va_end(ap);
+	fprintf(stderr, "\n");
 }
 
 static void
-parseconf(const char *f)
+process(bl_t bl)
 {
-	FILE *fp;
-	char *line;
-	size_t lineno, len;
-	struct confhead nhead, thead;
-	struct conf *c, *tc;
+	bl_type_t e;
+	int rfd;
+	struct sockaddr_storage rss;
+	socklen_t rsl;
+	char buf[BUFSIZ], rbuf[BUFSIZ];
+	bl_info_t *bi;
+	const struct conf *c;
 
-	if ((fp = fopen(f, "r")) == NULL) {
-		syslog(LOG_ERR, "%s: Cannot open `%s' (%m)", __func__, f);
+	if ((bi = bl_recv(bl)) == NULL)
 		return;
-	}
 
-	lineno = 1;
-	SLIST_INIT(&nhead);
-	for (; (line = fparseln(fp, &len, &lineno, NULL, 0)) != NULL;
-	    free(line))
-	{
-		c = parseconfline(line);
-		if (c == NULL) {
-			syslog(LOG_ERR, "%s: %s, %zu: Syntax error [%s] (%m)",
-			    __func__, f, lineno, line);
-			continue;
-		}
-		SLIST_INSERT_HEAD(&nhead, c, c_next);
+	if (debug)
+		printf("got type=%d fd=[%d %d] msg=%s cred=[u=%lu, g=%lu]\n",
+		    bi->bi_type, bi->bi_fd[0], bi->bi_fd[1], bi->bi_msg,
+		    (unsigned long)bi->bi_cred->sc_euid,
+		    (unsigned long)bi->bi_cred->sc_egid);
+
+	if ((c = findconf(bi)) == NULL)
+		goto out;
+
+	rfd = bi->bi_fd[1];
+	rsl = sizeof(rss);
+	if (getpeername(rfd, (void *)&rss, &rsl) == -1) {
+		(*bl->b_fun)(LOG_ERR, "getsockname failed (%m)"); 
+		goto out;
 	}
-	fclose(fp);
-	thead = head;
-	head = nhead;
-	SLIST_FOREACH_SAFE(c, &thead, c_next, tc)
-		free(c);
+	sockaddr_snprintf(rbuf, sizeof(rbuf), "%a:%p", (void *)&rss);
+	printf("rbuf = %s\n", rbuf);
+out:
+	close(bi->bi_fd[0]);
+	close(bi->bi_fd[1]);
+}
+
+static void
+update(void)
+{
 }
 
 int
@@ -144,10 +131,12 @@ main(int argc, char *argv[])
 {
 	int c;
 	bl_t bl;
+	int tout;
+	const char *spath = _PATH_BLSOCK;
 
 	setprogname(argv[0]);
 
-	while ((c = getopt(argc, argv, "c:d")) != -1) {
+	while ((c = getopt(argc, argv, "c:ds:")) != -1) {
 		switch (c) {
 		case 'c':
 			configfile = optarg;
@@ -155,17 +144,25 @@ main(int argc, char *argv[])
 		case 'd':
 			debug++;
 			break;
+		case 's':
+			spath = optarg;
+			break;
 		default:
 			usage();
 		}
 	}
 
-	parseconf(configfile);
+	signal(SIGHUP, sighup);
 
-	if (!debug)
+	if (debug) {
+		lfun = dlog;
+		tout = 1000;
+	} else {
 		daemon(0, 0);
+		tout = 15000;
+	}
 
-	bl = bl_create(true);
+	bl = bl_create2(true, spath, lfun);
 	if (bl == NULL || !bl->b_connected)
 		return EXIT_FAILURE;
 
@@ -173,5 +170,21 @@ main(int argc, char *argv[])
 	pfd.fd = bl->b_fd;
 	pfd.events = POLLIN;
 	for (;;) {
+		if (rconf) {
+			rconf = 0;
+			parseconf(configfile);
+		}
+		switch (poll(&pfd, 1, tout)) {
+		case -1:
+			if (errno == EINTR)
+				continue;
+			(*lfun)(LOG_ERR, "poll (%m)");
+			return EXIT_FAILURE;
+		case 0:
+			break;
+		default:
+			process(bl);
+		}
 	}
+	return 0;
 }
