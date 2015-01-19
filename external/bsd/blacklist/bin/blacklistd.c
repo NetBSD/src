@@ -1,6 +1,6 @@
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.2 2015/01/19 18:52:55 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.3 2015/01/19 19:02:35 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -47,7 +47,8 @@ sighup(int n)
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s -d [-c <config>]\n", getprogname());
+	fprintf(stderr, "Usage: %s -d [-c <config>] [-s <sockpath>]\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -111,7 +112,7 @@ process(bl_t bl)
 	rfd = bi->bi_fd[1];
 	rsl = sizeof(rss);
 	if (getpeername(rfd, (void *)&rss, &rsl) == -1) {
-		(*bl->b_fun)(LOG_ERR, "getsockname failed (%m)"); 
+		(*lfun)(LOG_ERR, "getsockname failed (%m)"); 
 		goto out;
 	}
 	sockaddr_snprintf(rbuf, sizeof(rbuf), "%a:%p", (void *)&rss);
@@ -163,11 +164,11 @@ main(int argc, char *argv[])
 	}
 
 	bl = bl_create2(true, spath, lfun);
-	if (bl == NULL || !bl->b_connected)
+	if (bl == NULL || !bl_isconnected(bl))
 		return EXIT_FAILURE;
 
 	struct pollfd pfd;
-	pfd.fd = bl->b_fd;
+	pfd.fd = bl_getfd(bl);
 	pfd.events = POLLIN;
 	for (;;) {
 		if (rconf) {
