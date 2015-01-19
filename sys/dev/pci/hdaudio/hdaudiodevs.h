@@ -1,10 +1,10 @@
-/*	$NetBSD: hdaudiodevs.h,v 1.2 2014/09/21 14:31:03 christos Exp $	*/
+/*	$NetBSD: hdaudiodevs.h,v 1.3 2015/01/19 14:32:08 njoly Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: hdaudiodevs,v 1.1 2014/09/19 17:23:35 christos Exp
+ *	NetBSD: hdaudiodevs,v 1.2 2015/01/19 14:31:32 njoly Exp
  */
 
 /*
@@ -77,6 +77,7 @@
 #define	HDAUDIO_PRODUCT_REALTEK_ALC270	0x0270		/* ALC270 */
 #define	HDAUDIO_PRODUCT_REALTEK_ALC272	0x0272		/* ALC272 */
 #define	HDAUDIO_PRODUCT_REALTEK_ALC275	0x0275		/* ALC275 */
+#define	HDAUDIO_PRODUCT_REALTEK_ALC280	0x0280		/* ALC280 */
 #define	HDAUDIO_PRODUCT_REALTEK_ALC660_VD	0x0660		/* ALC660-VD */
 #define	HDAUDIO_PRODUCT_REALTEK_ALC662	0x0662		/* ALC662 */
 #define	HDAUDIO_PRODUCT_REALTEK_ALC663	0x0663		/* ALC663 */
