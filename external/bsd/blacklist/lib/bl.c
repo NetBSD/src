@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.4 2015/01/19 18:52:55 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.5 2015/01/19 19:02:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.4 2015/01/19 18:52:55 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.5 2015/01/19 19:02:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -45,6 +45,35 @@ __RCSID("$NetBSD: bl.c,v 1.4 2015/01/19 18:52:55 christos Exp $");
 #include <stdbool.h>
 
 #include "bl.h"
+
+typedef struct {
+	uint32_t bl_len;
+	uint32_t bl_version;
+	uint32_t bl_type;
+	char bl_data[];
+} bl_message_t;
+
+struct blacklist {
+	int b_fd;
+	int b_connected;
+	const char *b_path;
+	void (*b_fun)(int, const char *, ...);
+	bl_info_t b_info;
+};
+
+#define BL_VERSION	1
+
+bool
+bl_isconnected(bl_t b)
+{
+	return b->b_connected;
+}
+
+int
+bl_getfd(bl_t b)
+{
+	return b->b_fd;
+}
 
 static void
 bl_reset(bl_t b)
