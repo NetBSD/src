@@ -1,4 +1,4 @@
-.\" $NetBSD: strtonum.3,v 1.1 2015/01/18 17:59:36 christos Exp $
+.\" $NetBSD: strtonum.3,v 1.2 2015/01/19 11:47:41 wiz Exp $
 .\" $OpenBSD: strtonum.3,v 1.17 2013/08/14 06:32:28 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Ted Unangst
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd January 18, 2015
 .Dt STRTONUM 3
 .Os
 .Sh NAME
@@ -98,14 +98,13 @@ The above example will guarantee that the value of iterations is between
 1 and 64 (inclusive).
 .Sh ERRORS
 .Bl -tag -width Er
-.It Bq Er ERANGE
-The given string was out of range.
 .It Bq Er EINVAL
-The given string did not consist solely of digit characters.
-.It Bq Er EINVAL
+The given string did not consist solely of digit characters; or
 .Ar minval
 was larger than
 .Ar maxval .
+.It Bq Er ERANGE
+The given string was out of range.
 .El
 .Pp
 If an error occurs,
@@ -120,48 +119,18 @@ The result was smaller than the provided minimum value.
 .It Qq invalid
 The string did not consist solely of digit characters.
 .El
-.Sh CAVEATS
-The
-.Fn strtonum
-function was designed to facilitate safe,
-robust programming and overcome the shortcomings of the
-.Xr atoi 3
-and
-.Xr strtol 3
-family of interfaces, however there are problems with the
-.Fn strtonum
-API:
-.Bl -dash
-.It
-will return 0 on failure; 0 might not be in range, so that necessitates an error check even if you want to avoid it
-.It
-does not differentiate 'illegal' returns, so we can't tell the difference between partial and no conversions
-.It
-returns english strings
-.It
-can't set the base, or find where the conversion ended
-.It
-hardcodes long long integer type
-.El
-To overcome the shortcomings of
-.Fn strtonum
-.Nx
-provides
-.Fn strtou 3
-and
-.Fn strtoi 3 .
 .Sh SEE ALSO
 .Xr atof 3 ,
 .Xr atoi 3 ,
 .Xr atol 3 ,
 .Xr atoll 3 ,
 .Xr sscanf 3 ,
-.Xr strtoi 3 ,
 .Xr strtod 3 ,
+.Xr strtoi 3 ,
 .Xr strtol 3 ,
 .Xr strtoll 3 ,
 .Xr strtou 3 ,
-.Xr strtoul 3
+.Xr strtoul 3 ,
 .Xr strtoull 3
 .Sh STANDARDS
 .Fn strtonum
@@ -185,3 +154,35 @@ For compatibility reasons it's available since
 in the
 .Vt _OPENBSD_SOURCE
 namespace.
+.Sh CAVEATS
+The
+.Fn strtonum
+function was designed to facilitate safe,
+robust programming and overcome the shortcomings of the
+.Xr atoi 3
+and
+.Xr strtol 3
+family of interfaces, however there are problems with the
+.Fn strtonum
+API:
+.Bl -dash
+.It
+will return 0 on failure; 0 might not be in range, so that necessitates
+an error check even if you want to avoid it
+.It
+does not differentiate 'illegal' returns, so we can't tell the
+difference between partial and no conversions
+.It
+returns english strings
+.It
+can't set the base, or find where the conversion ended
+.It
+hardcodes long long integer type
+.El
+To overcome the shortcomings of
+.Fn strtonum
+.Nx
+provides
+.Fn strtou 3
+and
+.Fn strtoi 3 .
