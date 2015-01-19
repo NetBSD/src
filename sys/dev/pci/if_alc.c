@@ -468,8 +468,9 @@ alc_dsp_fixup(struct alc_softc *sc, int media)
 		len = alc_miiext_readreg(sc, MII_EXT_PCS, MII_EXT_CLDCTL6);
 		len = (len >> EXT_CLDCTL6_CAB_LEN_SHIFT) &
 		    EXT_CLDCTL6_CAB_LEN_MASK;
-		agc = alc_miidbg_readreg(sc, MII_DBG_AGC);
-		agc = (agc >> DBG_AGC_2_VGA_SHIFT) & DBG_AGC_2_VGA_MASK;
+		/* XXX: used to be (alc >> shift) & mask which is 0 */
+		agc = alc_miidbg_readreg(sc, MII_DBG_AGC) & DBG_AGC_2_VGA_MASK;
+		agc >>= DBG_AGC_2_VGA_SHIFT;
 		if ((media == IFM_1000_T && len > EXT_CLDCTL6_CAB_LEN_SHORT1G &&
 		    agc > DBG_AGC_LONG1G_LIMT) ||
 		    (media == IFM_100_TX && len > DBG_AGC_LONG100M_LIMT &&
