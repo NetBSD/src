@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.2.4.1 2014/11/10 19:51:56 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.2.4.2 2015/01/20 09:42:31 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1198,7 +1198,7 @@ message lvmlv_regsiz_ask {MirrorLogRegionSize?}
 message lvmlv_readahsect_ask {ReadAheadSectors?}
 message lvmlv_stripes_ask {Stripes?}
 
-message addusername {8 character username to add:}
+message addusername {8 character username to add}
 message addusertowheel {Do you wish to add this user to group wheel?}
 message Delete_partition
 {Usun partycje}
