@@ -1,4 +1,4 @@
-/*	$NetBSD: internal.h,v 1.3 2015/01/19 19:02:35 christos Exp $	*/
+/*	$NetBSD: internal.h,v 1.4 2015/01/20 00:19:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,11 +31,15 @@
 #ifndef _INTERNAL_H
 #define _INTERNAL_H
 
-#define _PATH_BLCONF "/etc/blacklistd/conf"
+#define	_PATH_BLCONF	"/etc/blacklistd/conf"
+#define	_PATH_BLCONTROL	"/etc/blacklistd/control"
+#define	_PATH_BLSTATE	"/var/run/blacklistd.db"
 
 struct conf *conf;
 size_t nconf;
 int debug;
+const char *rulename;
+const char *controlprog;
 
 void (*lfun)(int, const char *, ...);
 

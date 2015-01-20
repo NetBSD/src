@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2015/01/19 18:52:55 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 2015/01/20 00:19:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.1 2015/01/19 18:52:55 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.2 2015/01/20 00:19:21 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: conf.c,v 1.1 2015/01/19 18:52:55 christos Exp $");
 #include <netdb.h>
 #include <pwd.h>
 #include <syslog.h>
+#include <errno.h>
 #include <util.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -59,6 +60,7 @@ advance(char **p)
 	*p = ep;
 }
 
+
 static int
 getnum(const char *f, size_t l, int *r, const char *p)
 {
@@ -68,6 +70,52 @@ getnum(const char *f, size_t l, int *r, const char *p)
 	im = strtoi(p, NULL, 0, 0, INT_MAX, &e);
 	if (e == 0) {
 		*r = (int)im;
+		return 0;
+	}
+
+	if (f == NULL)
+		return -1;
+	(*lfun)(LOG_ERR, "%s: %s, %zu: Bad number [%s]", __func__, f, l, p);
+	return -1;
+
+}
+
+static int
+getsecs(const char *f, size_t l, int *r, const char *p)
+{
+	int e;
+	char *ep;
+	intmax_t tot, im;
+
+	tot = 0;
+again:
+	im = strtoi(p, &ep, 0, 0, INT_MAX, &e);
+
+	if (e == ENOTSUP) {
+		switch (*ep) {
+		case 'd':
+			im *= 24;
+			/*FALLTHROUGH*/
+		case 'h':
+			im *= 60;
+			/*FALLTHROUGH*/
+		case 'm':
+			im *= 60;
+			/*FALLTHROUGH*/
+		case 's':
+			e = 0;
+			tot += im;
+			if (ep[1] != '\0') {
+				p = ep + 2;
+				goto again;
+			}
+			break;
+		}
+	} else	
+		tot = im;
+			
+	if (e == 0) {
+		*r = (int)tot;
 		return 0;
 	}
 
@@ -138,7 +186,7 @@ getuid(const char *f, size_t l, int *r, const char *p)
 	struct passwd *pw;
 
 	if ((pw = getpwnam(p)) != NULL) {
-		*r = pw->pw_uid;
+		*r = (int)pw->pw_uid;
 		return 0;
 	}
 
@@ -154,7 +202,6 @@ getvalue(const char *f, size_t l, int *r, char **p,
     int (*fun)(const char *, size_t, int *, const char *))
 {
 	char *ep = *p;
-	int e;
 
 	advance(p);
 	if (*ep == '*') {
@@ -183,7 +230,7 @@ parseconfline(const char *f, size_t l, char *p, struct conf *c)
 	if (e) return -1;
 	e = getvalue(f, l, &c->c_nfail, &p, getnum);
 	if (e) return -1;
-	e = getvalue(f, l, &c->c_duration, &p, getnum);
+	e = getvalue(f, l, &c->c_duration, &p, getsecs);
 	if (e) return -1;
 
 	return 0;
@@ -214,17 +261,17 @@ printconf(const char *pref, const struct conf *c)
 }
 
 const struct conf *
-findconf(bl_info_t *bi)
+findconf(bl_info_t *bi, struct conf *cr)
 {
 	int lfd;
 	int proto;
 	socklen_t slen;
 	struct sockaddr_storage ss;
-	struct conf c;
 	size_t i;
 
 	lfd = bi->bi_fd[0];
 	slen = sizeof(ss);
+	memset(&ss, 0, slen);
 	if (getsockname(lfd, (void *)&ss, &slen) == -1) {
 		(*lfun)(LOG_ERR, "getsockname failed (%m)"); 
 		return NULL;
@@ -238,10 +285,10 @@ findconf(bl_info_t *bi)
 
 	switch (proto) {
 	case SOCK_STREAM:
-		c.c_proto = IPPROTO_TCP;
+		cr->c_proto = IPPROTO_TCP;
 		break;
 	case SOCK_DGRAM:
-		c.c_proto = IPPROTO_UDP;
+		cr->c_proto = IPPROTO_UDP;
 		break;
 	default:
 		(*lfun)(LOG_ERR, "unsupported protocol %d", proto); 
@@ -250,31 +297,33 @@ findconf(bl_info_t *bi)
 
 	switch (ss.ss_family) {
 	case AF_INET:
-		c.c_port = ntohs(((struct sockaddr_in *)&ss)->sin_port);
+		cr->c_port = ntohs(((struct sockaddr_in *)&ss)->sin_port);
 		break;
 	case AF_INET6:
-		c.c_port = ntohs(((struct sockaddr_in6 *)&ss)->sin6_port);
+		cr->c_port = ntohs(((struct sockaddr_in6 *)&ss)->sin6_port);
 		break;
 	default:
 		(*lfun)(LOG_ERR, "unsupported family %d", ss.ss_family); 
 		return NULL;
 	}
 
-	c.c_uid = bi->bi_cred->sc_euid;
-	c.c_family = ss.ss_family;
-	c.c_nfail = -1;
-	c.c_duration = -1;
+	cr->c_uid = (int)bi->bi_cred->sc_euid;
+	cr->c_family = ss.ss_family;
+	cr->c_nfail = -1;
+	cr->c_duration = -1;
 
 	if (debug)
-		printconf("look:\t", &c);
+		printconf("look:\t", cr);
 
 	for (i = 0; i < nconf; i++) {
 		if (debug)
 			printconf("check:\t", &conf[i]);
-		if (sortconf(&c, &conf[i]) == 0) {
+		if (sortconf(cr, &conf[i]) == 0) {
 			if (debug)
 				printconf("found: ", &conf[i]);
-			return &conf[i];
+			cr->c_nfail = conf[i].c_nfail;
+			cr->c_duration = conf[i].c_duration;
+			return cr;
 		}
 	}
 	if (debug)
