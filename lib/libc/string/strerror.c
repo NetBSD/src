@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.16 2013/09/02 07:59:32 joerg Exp $	*/
+/*	$NetBSD: strerror.c,v 1.17 2015/01/20 18:31:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strerror.c,v 1.16 2013/09/02 07:59:32 joerg Exp $");
+__RCSID("$NetBSD: strerror.c,v 1.17 2015/01/20 18:31:25 christos Exp $");
 
 #define __SETLOCALE_SOURCE__
 
@@ -71,8 +71,8 @@ strerror_setup(void)
 __aconst char *
 strerror_l(int num, locale_t loc)
 {
-#ifdef _REENTRANT
 	int error;
+#ifdef _REENTRANT
 	char *buf;
 
 	thr_once(&strerror_once, strerror_setup);
