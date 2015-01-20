@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.3 2015/01/20 00:19:21 christos Exp $	*/
+/*	$NetBSD: state.h,v 1.1 2015/01/20 00:19:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -28,21 +28,31 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _CONF_H
-#define _CONF_H
+#ifndef _STATE_H
+#define _STATE_H
 
-struct conf {
-	int			c_port;
-	int			c_proto;
-	int			c_family;
-	int			c_uid;
-	int			c_nfail;
-	int			c_duration;
+#include <db.h>
+#include <time.h>
+
+struct dbinfo {
+	int count;
+	time_t last;
+	int id;
 };
 
 __BEGIN_DECLS
-void parseconf(const char *);
-const struct conf *findconf(bl_info_t *, struct conf *);
+struct sockaddr_storage;
+struct conf;
+
+DB *state_open(const char *, int, mode_t);
+int state_close(DB *);
+int state_get(DB *, const struct sockaddr_storage *, const struct conf *,
+    struct dbinfo *);
+int state_put(DB *, const struct sockaddr_storage *, const struct conf *,
+    const struct dbinfo *);
+int state_del(DB *, const struct sockaddr_storage *, const struct conf *);
+int state_iterate(DB *, struct sockaddr_storage *, struct conf *,
+    struct dbinfo *, unsigned int);
 __END_DECLS
 
-#endif /* _CONF_H */
+#endif /* _STATE_H */

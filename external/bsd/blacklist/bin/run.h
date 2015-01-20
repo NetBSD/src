@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.3 2015/01/20 00:19:21 christos Exp $	*/
+/*	$NetBSD: run.h,v 1.1 2015/01/20 00:19:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -28,21 +28,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _CONF_H
-#define _CONF_H
-
-struct conf {
-	int			c_port;
-	int			c_proto;
-	int			c_family;
-	int			c_uid;
-	int			c_nfail;
-	int			c_duration;
-};
+#ifndef _RUN_H
+#define _RUN_H
 
 __BEGIN_DECLS
-void parseconf(const char *);
-const struct conf *findconf(bl_info_t *, struct conf *);
+void run_flush(void);
+struct sockaddr_storage;
+int run_add(int, in_port_t, const struct sockaddr_storage *);
+void run_rem(int id);
 __END_DECLS
 
-#endif /* _CONF_H */
+#endif /* _RUN_H */
