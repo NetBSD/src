@@ -1,4 +1,4 @@
-# $NetBSD: md.hppa,v 1.2 2014/03/06 12:17:12 skrll Exp $
+# $NetBSD: md.hppa,v 1.2.6.1 2015/01/20 20:57:24 snj Exp $
 ./usr/include/gcc-4.5/tgmath.h			comp-c-include		gcccmds,gcc=45
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc=48
 ./usr/include/hp700				comp-obsolete		obsolete
@@ -79,6 +79,7 @@
 ./usr/include/hppa/endian.h			comp-c-include
 ./usr/include/hppa/endian_machdep.h		comp-c-include
 ./usr/include/hppa/exec.h			comp-c-include
+./usr/include/hppa/fenv.h			comp-c-include
 ./usr/include/hppa/float.h			comp-c-include
 ./usr/include/hppa/frame.h			comp-c-include
 ./usr/include/hppa/ieee.h			comp-c-include
