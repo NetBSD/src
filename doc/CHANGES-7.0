@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.171 2015/01/17 21:52:19 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.172 2015/01/20 09:51:39 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -14070,4 +14070,29 @@ sys/dev/mii/rgephy.c				1.36-1.37
 
 	Add support for Realtek RTL8251.
 	[nonaka, ticket #434]
+
+usr.sbin/sysinst/msg.mi.de			1.3
+usr.sbin/sysinst/msg.mi.en			1.3
+usr.sbin/sysinst/msg.mi.es			1.3
+usr.sbin/sysinst/msg.mi.fr			1.3
+usr.sbin/sysinst/msg.mi.pl			1.3
+
+	Remove trailing colon from "addusername" msg.
+	[jmcneill, ticket #435]
+
+sys/arch/i386/stand/lib/biosdisk.c		1.44
+
+	While the old gpt.S mbr code looks at both primary and alternate GPT
+	partition tables, mbrgpt.S and DKWEDGE_METHOD_GPT only look in the
+	primary.  Align the bootxx/boot2 biosdisk code with this so as to avoid
+	situations where the disk becomes unbootable when it has an undestroyed
+	secondary GPT.
+	[jakllsch, ticket #436]
+
+distrib/utils/embedded/mkimage			1.50
+
+	Rename the boolean variables for debug/X set inclusion
+	to [dx]sets_p to avoid collision with the list of
+	sets in the variable "xsets".
+	[skrll, ticket #437]
 
