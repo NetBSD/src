@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.33 2015/01/20 17:28:00 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.34 2015/01/20 18:31:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.33 2015/01/20 17:28:00 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.34 2015/01/20 18:31:25 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,6 @@ __RCSID("$NetBSD: popen.c,v 1.33 2015/01/20 17:28:00 christos Exp $");
 #include <fcntl.h>
 
 #include "env.h"
-#include "reentrant.h"
 
 #ifdef __weak_alias
 __weak_alias(popen,_popen)
