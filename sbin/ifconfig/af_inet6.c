@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.30 2014/10/20 14:50:09 roy Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.31 2015/01/20 22:13:19 roy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.30 2014/10/20 14:50:09 roy Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.31 2015/01/20 22:13:19 roy Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -330,6 +330,10 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 			printf(" detached");
 		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DEPRECATED)
 			printf(" deprecated");
+		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_AUTOCONF)
+			printf(" autoconf");
+		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_TEMPORARY)
+			printf(" temporary");
 	}
 
 	if (scopeid)
