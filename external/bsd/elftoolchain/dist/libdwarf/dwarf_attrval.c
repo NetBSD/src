@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_attrval.c,v 1.2 2014/03/09 16:58:03 christos Exp $	*/
+/*	$NetBSD: dwarf_attrval.c,v 1.2.6.1 2015/01/20 21:02:26 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -28,7 +28,7 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_attrval.c,v 1.2 2014/03/09 16:58:03 christos Exp $");
+__RCSID("$NetBSD: dwarf_attrval.c,v 1.2.6.1 2015/01/20 21:02:26 snj Exp $");
 ELFTC_VCSID("Id: dwarf_attrval.c 2072 2011-10-27 03:26:49Z jkoshy ");
 
 int
@@ -128,6 +128,7 @@ dwarf_attrval_signed(Dwarf_Die die, Dwarf_Half attr, Dwarf_Signed *valp, Dwarf_E
 		break;
 	case DW_FORM_data4:
 		*valp = (int32_t) at->u[0].s64;
+		break;
 	case DW_FORM_data8:
 	case DW_FORM_sdata:
 		*valp = at->u[0].s64;
