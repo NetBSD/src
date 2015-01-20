@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.1 2015/01/20 00:19:21 christos Exp $	*/
+/*	$NetBSD: state.c,v 1.2 2015/01/20 00:52:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: state.c,v 1.1 2015/01/20 00:19:21 christos Exp $");
+__RCSID("$NetBSD: state.c,v 1.2 2015/01/20 00:52:15 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <syslog.h>
 #include <netinet/in.h>
 
@@ -72,8 +73,11 @@ state_open(const char *dbname, int flags, mode_t perm)
 	DB *db;
 
 	db = dbopen(dbname, flags, perm, DB_HASH, &openinfo);
-	if (db == NULL)
+	if (db == NULL) {
+		if (errno == ENOENT && (flags & O_CREAT) == 0)
+			return NULL;
 		(*lfun)(LOG_ERR, "%s: can't open `%s' (%m)", __func__, dbname);
+	}
 	return db;
 }
 
