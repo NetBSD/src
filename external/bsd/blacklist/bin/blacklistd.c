@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.4 2015/01/20 00:19:21 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.5 2015/01/20 00:52:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.4 2015/01/20 00:19:21 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.5 2015/01/20 00:52:15 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -72,6 +72,7 @@ size_t nconf;
 static DB *state;
 static const char *dbfile = _PATH_BLSTATE;
 static sig_atomic_t rconf = 1;
+static sig_atomic_t done;
 
 void (*lfun)(int, const char *, ...) = syslog;
 
@@ -81,6 +82,11 @@ sighup(int n)
 	rconf++;
 }
 
+static void
+sigdone(int n)
+{
+	done++;
+}
 static __dead void
 usage(void)
 {
@@ -172,6 +178,7 @@ process(bl_t bl)
 	}
 	if (state_get(state, &rss, &c, &dbi) == -1)
 		goto out;
+
 	if (debug) {
 		char b1[128], b2[128];
 		sockaddr_snprintf(rbuf, sizeof(rbuf), "%a:%p", (void *)&rss);
@@ -180,13 +187,29 @@ process(bl_t bl)
 		    fmttime(b1, sizeof(b1), dbi.last),
 		    fmttime(b2, sizeof(b2), ts.tv_sec));
 	}
-	dbi.count++;
-	dbi.last = ts.tv_sec;
-	if (dbi.count >= c.c_nfail) {
-		int res = run_add(c.c_proto, (in_port_t)c.c_port, &rss);
-		if (res == -1)
+
+	switch (bi->bi_type) {
+	case BL_ADD:
+		dbi.count++;
+		dbi.last = ts.tv_sec;
+		if (dbi.id != -1) {
+			(*lfun)(LOG_ERR, "rule exists %d", dbi.id);
 			goto out;
-		dbi.id = res;
+		}
+		if (dbi.count >= c.c_nfail) {
+			int res = run_add(c.c_proto, (in_port_t)c.c_port, &rss);
+			if (res == -1)
+				goto out;
+			dbi.id = res;
+		}
+		break;
+	case BL_DELETE:
+		if (dbi.last == 0)
+			goto out;
+		dbi.last = 0;
+		break;
+	default:
+		(*lfun)(LOG_ERR, "unknown message %d", bi->bi_type); 
 	}
 	if (state_put(state, &rss, &c, &dbi) == -1)
 		goto out;
@@ -267,10 +290,13 @@ main(int argc, char *argv[])
 	}
 
 	signal(SIGHUP, sighup);
+	signal(SIGINT, sigdone);
+	signal(SIGQUIT, sigdone);
+	signal(SIGTERM, sigdone);
 
 	if (debug) {
 		lfun = dlog;
-		tout = 1000;
+		tout = 5000;
 	} else {
 		daemon(0, 0);
 		tout = 15000;
@@ -290,7 +316,7 @@ main(int argc, char *argv[])
 	struct pollfd pfd;
 	pfd.fd = bl_getfd(bl);
 	pfd.events = POLLIN;
-	for (;;) {
+	while (!done) {
 		if (rconf) {
 			rconf = 0;
 			parseconf(configfile);
@@ -302,11 +328,12 @@ main(int argc, char *argv[])
 			(*lfun)(LOG_ERR, "poll (%m)");
 			return EXIT_FAILURE;
 		case 0:
-			update();
 			break;
 		default:
 			process(bl);
 		}
+		update();
 	}
+	state_close(state);
 	return 0;
 }
