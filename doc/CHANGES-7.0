@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.172 2015/01/20 09:51:39 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.173 2015/01/20 20:42:27 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -14095,4 +14095,12 @@ distrib/utils/embedded/mkimage			1.50
 	to [dx]sets_p to avoid collision with the list of
 	sets in the variable "xsets".
 	[skrll, ticket #437]
+
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/amd64/conf/GENERIC			patch
+
+	Remove the i915drm driver since the version we use doesn't support UMS
+	anymore, so X will fail to start. Without it, at least the vesa driver
+	will work.
+	[snj, ticket #438]
 
