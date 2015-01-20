@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1107.2.3 2014/11/18 19:05:30 snj Exp $
+# $NetBSD: GENERIC,v 1.1107.2.4 2015/01/20 20:40:50 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1107.2.3 $"
+#ident 		"GENERIC-$Revision: 1.1107.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -555,7 +555,7 @@ pcppi0		at isa?
 sysbeep0	at pcppi?
 
 # DRI driver
-i915drm*	at drm?		# Intel i915, i945 DRM driver
+#i915drm*	at drm?		# Intel i915, i945 DRM driver
 mach64drm*	at drm?		# mach64 (3D Rage Pro, Rage) DRM driver
 mgadrm* 	at drm?		# Matrox G[24]00, G[45]50 DRM driver
 r128drm*	at drm?		# ATI Rage 128 DRM driver
