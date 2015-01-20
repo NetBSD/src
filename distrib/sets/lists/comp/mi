@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1941 2015/01/18 18:11:10 christos Exp $
+#	$NetBSD: mi,v 1.1942 2015/01/20 17:29:58 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8301,6 +8301,7 @@
 ./usr/share/man/cat3/popcountl.0		comp-c-catman		.cat
 ./usr/share/man/cat3/popcountll.0		comp-c-catman		.cat
 ./usr/share/man/cat3/popen.0			comp-c-catman		.cat
+./usr/share/man/cat3/popenve.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pos_form_cursor.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pos_menu_cursor.0		comp-c-catman		.cat
 ./usr/share/man/cat3/posix2time.0		comp-c-catman		.cat
@@ -15135,6 +15136,7 @@
 ./usr/share/man/html3/popcountl.html		comp-c-htmlman		html
 ./usr/share/man/html3/popcountll.html		comp-c-htmlman		html
 ./usr/share/man/html3/popen.html		comp-c-htmlman		html
+./usr/share/man/html3/popenve.html		comp-c-htmlman		html
 ./usr/share/man/html3/pos_form_cursor.html	comp-c-htmlman		html
 ./usr/share/man/html3/pos_menu_cursor.html	comp-c-htmlman		html
 ./usr/share/man/html3/posix2time.html		comp-c-htmlman		html
@@ -21961,6 +21963,7 @@
 ./usr/share/man/man3/popcountl.3		comp-c-man		.man
 ./usr/share/man/man3/popcountll.3		comp-c-man		.man
 ./usr/share/man/man3/popen.3			comp-c-man		.man
+./usr/share/man/man3/popenve.3			comp-c-man		.man
 ./usr/share/man/man3/pos_form_cursor.3		comp-c-man		.man
 ./usr/share/man/man3/pos_menu_cursor.3		comp-c-man		.man
 ./usr/share/man/man3/posix2time.3		comp-c-man		.man
