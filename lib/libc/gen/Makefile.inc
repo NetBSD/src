@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.190 2014/12/10 16:55:54 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.191 2015/01/20 17:28:00 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -147,6 +147,7 @@ MLINKS+=glob.3 glob_pattern_p.3
 MLINKS+=humanize_number.3 dehumanize_number.3
 MLINKS+=makecontext.3 swapcontext.3
 MLINKS+=popen.3 pclose.3
+MLINKS+=popen.3 popenve.3
 MLINKS+=posix_spawn.3 posix_spawnp.3 \
 	posix_spawn_file_actions_addopen.3 posix_spawn_file_actions_addclose.3 \
 	posix_spawn_file_actions_addopen.3 posix_spawn_file_actions_adddup2.3 \
