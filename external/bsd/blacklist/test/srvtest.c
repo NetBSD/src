@@ -85,7 +85,6 @@ handle(bl_t bl, int sfd)
 int
 main(int argc, char *argv[])
 {
-	int s4fd, s6fd;
 	bl_t bl;
 	struct pollfd pfd[2];
 
@@ -100,7 +99,7 @@ main(int argc, char *argv[])
 	for (;;) {
 		if (poll(pfd, __arraycount(pfd), INFTIM) == -1)
 			err(1, "poll");
-		for (int i = 0; i < __arraycount(pfd); i++) {
+		for (size_t i = 0; i < __arraycount(pfd); i++) {
 			if ((pfd[i].revents & POLLIN) == 0)
 				continue;
 			handle(bl, pfd[i].fd);
