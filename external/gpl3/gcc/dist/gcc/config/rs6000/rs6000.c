@@ -3249,10 +3249,14 @@ rs6000_option_override_internal (bool global_init_p)
 
   /* If we are optimizing big endian systems for space and it's OK to
      use instructions that would be microcoded on the Cell, use the
-     load/store multiple and string instructions.  */
+     load/store multiple and string instructions.  Don't use string
+     instructions on NetBSD because the e500 doesn't support them.  */
   if (BYTES_BIG_ENDIAN && optimize_size && rs6000_gen_cell_microcode)
     rs6000_isa_flags |= ~rs6000_isa_flags_explicit & (OPTION_MASK_MULTIPLE
-						      | OPTION_MASK_STRING);
+#if !defined (POWERPC_NETBSD)
+						      | OPTION_MASK_STRING
+#endif
+						      | 0);
 
   /* Don't allow -mmultiple or -mstring on little endian systems
      unless the cpu is a 750, because the hardware doesn't support the
