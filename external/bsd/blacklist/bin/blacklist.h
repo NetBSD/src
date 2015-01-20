@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklist.h,v 1.2 2015/01/19 19:02:35 christos Exp $	*/
+/*	$NetBSD: blacklist.h,v 1.3 2015/01/20 00:52:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 typedef enum {
 	BL_INVALID,
 	BL_ADD,
+	BL_DELETE
 } bl_type_t;
 
 typedef struct blacklist *bl_t;

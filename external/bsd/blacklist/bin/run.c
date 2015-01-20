@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.1 2015/01/20 00:19:21 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.2 2015/01/20 00:52:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: run.c,v 1.1 2015/01/20 00:19:21 christos Exp $");
+__RCSID("$NetBSD: run.c,v 1.2 2015/01/20 00:52:15 christos Exp $");
 
 #include <stdio.h>
 #include <util.h>
@@ -98,6 +98,7 @@ run_add(int proto, in_port_t port, const struct sockaddr_storage *ss)
 	const char *prname;
 	char poname[64], adname[128], *rv;
 	int id, e;
+	size_t off;
 
 	switch (proto) {
 	case IPPROTO_TCP:
@@ -117,7 +118,9 @@ run_add(int proto, in_port_t port, const struct sockaddr_storage *ss)
 	rv = run("add", prname, adname, poname, NULL);
 	if (rv == NULL)
 		return -1;
-	id = (int)strtoi(rv, NULL, 0, 0, INT_MAX, &e);
+	rv[strcspn(rv, "\n")] = '\0';
+	off = strncmp(rv, "OK ", 3) == 0 ? 3 : 0;
+	id = (int)strtoi(rv + off, NULL, 0, 0, INT_MAX, &e);
 	if (e) {
 		(*lfun)(LOG_ERR, "%s: bad number %s (%m)", __func__, rv);
 		id = -1;

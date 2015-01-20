@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.h,v 1.5 2015/01/19 19:02:35 christos Exp $	*/
+/*	$NetBSD: bl.h,v 1.6 2015/01/20 00:52:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ typedef struct {
 	char bi_msg[1024];
 } bl_info_t;
 
-#define _PATH_BLSOCK "/tmp/blsock"
+#define _PATH_BLSOCK "/var/run/blsock"
 
 __BEGIN_DECLS
 bl_t bl_create2(bool, const char *, void (*)(int, const char *, ...));
