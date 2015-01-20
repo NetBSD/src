@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.161 2015/01/20 21:27:36 roy Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.162 2015/01/20 21:42:36 roy Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.161 2015/01/20 21:27:36 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.162 2015/01/20 21:42:36 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2214,6 +2214,7 @@ copypktopts(struct ip6_pktopts *dst, struct ip6_pktopts *src, int canwait)
 	dst->ip6po_hlim = src->ip6po_hlim;
 	dst->ip6po_tclass = src->ip6po_tclass;
 	dst->ip6po_flags = src->ip6po_flags;
+	dst->ip6po_minmtu = src->ip6po_minmtu;
 	dst->ip6po_prefer_tempaddr = src->ip6po_prefer_tempaddr;
 	if (src->ip6po_pktinfo) {
 		dst->ip6po_pktinfo = malloc(sizeof(*dst->ip6po_pktinfo),
