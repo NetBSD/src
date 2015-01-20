@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.26 2014/11/16 20:33:04 riastradh Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.27 2015/01/20 18:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.26 2014/11/16 20:33:04 riastradh Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.27 2015/01/20 18:31:25 christos Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -123,7 +123,7 @@ rotate(uint32_t u, unsigned c)
 	(c) += (d); (b) ^= (c); (b) = rotate((b), 12);			      \
 	(a) += (b); (d) ^= (a); (d) = rotate((d),  8);			      \
 	(c) += (d); (b) ^= (c); (b) = rotate((b),  7);			      \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 const uint8_t crypto_core_constant32[16] = "expand 32-byte k";
 
@@ -341,7 +341,7 @@ crypto_onetimestream(const void *seed, void *buf, size_t n)
 	uint32_t nonce[crypto_core_INPUTBYTES / sizeof(uint32_t)] = {0};
 	uint8_t block[crypto_core_OUTPUTBYTES];
 	uint8_t *p8, *p32;
-	const uint8_t *nonce8 = (const uint8_t *)nonce;
+	const uint8_t *nonce8 = (const uint8_t *)(void *)nonce;
 	size_t ni, nb, nf;
 
 	/*
@@ -355,8 +355,8 @@ crypto_onetimestream(const void *seed, void *buf, size_t n)
 	 *	log_2 (o 2^(8 i)) = log_2 o + log_2 2^(8 i)
 	 *	  = log_2 o + 8 i.
 	 */
-	__CTASSERT(CHAR_BIT*sizeof n <=
-	    (ilog2(crypto_core_OUTPUTBYTES) + 8*crypto_core_INPUTBYTES));
+	__CTASSERT(CHAR_BIT * sizeof n <=
+	    (/*LINTED*/ilog2(crypto_core_OUTPUTBYTES) + 8 * crypto_core_INPUTBYTES));
 
 	p8 = buf;
 	p32 = (uint8_t *)roundup2((uintptr_t)p8, 4);
@@ -419,7 +419,7 @@ arc4random_prng_addrandom(struct arc4random_prng *prng, const void *data,
 	crypto_prng_buf(&prng->arc4_prng, buf, sizeof buf);
 	SHA256_Update(&ctx, buf, sizeof buf);
 
-	if (sysctl(mib, __arraycount(mib), buf, &buflen, NULL, 0) == -1)
+	if (sysctl(mib, (u_int)__arraycount(mib), buf, &buflen, NULL, 0) == -1)
 		abort();
 	if (buflen != sizeof buf)
 		abort();
@@ -475,11 +475,6 @@ arc4random_prng_destroy(struct arc4random_prng *prng)
 #endif
 
 /* Library state */
-
-#if !defined(_REENTRANT)
-#define	mutex_lock(m)		do {} while (0)
-#define	mutex_unlock(m)		do {} while (0)
-#endif
 
 static struct arc4random_global {
 #ifdef _REENTRANT
