@@ -1,10 +1,9 @@
-# $NetBSD: Makefile,v 1.31 2015/01/03 14:23:53 gson Exp $
+# $NetBSD: Makefile,v 1.32 2015/01/20 20:43:10 snj Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libm
 
-# ARM fenv is incomplete, so we can not enable that here
 .if ${MACHINE_CPU} == "aarch64" || ${MACHINE_CPU} == "arm" \
     || ${MACHINE_ARCH} == "hppa" \
     || ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64" \
