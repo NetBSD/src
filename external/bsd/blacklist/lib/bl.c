@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.5 2015/01/19 19:02:35 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.6 2015/01/20 00:19:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.5 2015/01/19 19:02:35 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.6 2015/01/20 00:19:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -210,7 +210,7 @@ bl_send(bl_t b, bl_type_t e, int lfd, int pfd, const char *ctx)
 
 	iov.iov_base = ub.buf;
 	iov.iov_len = sizeof(bl_message_t) + ctxlen;
-	ub.bl.bl_len = iov.iov_len;
+	ub.bl.bl_len = (uint32_t)iov.iov_len;
 	ub.bl.bl_version = BL_VERSION;
 	ub.bl.bl_type = (uint32_t)e;
 	memcpy(ub.bl.bl_data, ctx, ctxlen);
@@ -298,7 +298,7 @@ bl_recv(bl_t b)
 				continue;
 			}
 			fd = (void *)CMSG_DATA(cmsg);
-			memcpy(bi->bi_fd, fd, sizeof(bi->bi_fd));
+			memcpy(bi->bi_fd, fd, sizeof(*bi->bi_fd) * 2);
 			break;
 		case SCM_CREDS:
 			sc = (void *)CMSG_DATA(cmsg);
@@ -314,7 +314,7 @@ bl_recv(bl_t b)
 
 	}
 
-	if (rlen <= sizeof(ub.bl)) {
+	if ((size_t)rlen <= sizeof(ub.bl)) {
 		(*b->b_fun)(LOG_ERR, "message too short %zd", rlen);
 		return NULL;
 	}
@@ -326,6 +326,6 @@ bl_recv(bl_t b)
 
 	bi->bi_type = ub.bl.bl_type;
 	strlcpy(bi->bi_msg, ub.bl.bl_data, MIN(sizeof(bi->bi_msg),
-	    rlen - sizeof(ub.bl) + 1));
+	    ((size_t)rlen - sizeof(ub.bl) + 1)));
 	return bi;
 }
