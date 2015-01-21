@@ -12,17 +12,7 @@
 #include "conf.h"
 #include "state.h"
 #include "internal.h"
-
-static const char *
-fmttime(char *b, size_t l, time_t t)
-{
-	struct tm tm;
-	if (localtime_r(&t, &tm) == NULL)
-		snprintf(b, l, "*%jd*", (intmax_t)t);
-	else
-		strftime(b, l, "%Y/%m/%d %H:%M:%S", &tm);
-	return b;
-}
+#include "util.h"
 
 int
 main(int argc, char *argv[])
