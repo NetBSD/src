@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.174 2015/01/20 21:14:32 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.175 2015/01/21 08:21:11 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -14096,7 +14096,9 @@ distrib/utils/embedded/mkimage			1.50
 	sets in the variable "xsets".
 	[skrll, ticket #437]
 
+sys/arch/i386/conf/NO_DRM			patch
 sys/arch/i386/conf/GENERIC			patch
+sys/arch/amd64/conf/NO_DRM			patch
 sys/arch/amd64/conf/GENERIC			patch
 
 	Remove the i915drm driver since the version we use doesn't support UMS
