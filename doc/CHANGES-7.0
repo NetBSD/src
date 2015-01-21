@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.175 2015/01/21 08:21:11 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.176 2015/01/21 11:38:41 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -14127,4 +14127,272 @@ external/bsd/ipf/bin/ipftest/Makefile		1.3
 
 	Don't compile md5.c; just use the libc version. PR bin/49580.
 	[martin, ticket #431]
+
+xsrc/external/mit/xf86-video-intel/dist/man/Makefile.in up to 1.1.1.5
+xsrc/external/mit/xf86-video-intel/dist/man/intel.man up to 1.1.1.5
+xsrc/external/mit/xf86-video-intel/dist/src/backlight.c 1.1-1.3
+xsrc/external/mit/xf86-video-intel/dist/src/backlight.h 1.1-1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/fd.c     1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/fd.h     1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/Makefile.am up to 1.1.1.4
+xsrc/external/mit/xf86-video-intel/dist/src/Makefile.in up to 1.1.1.5
+xsrc/external/mit/xf86-video-intel/dist/src/sna/brw/Makefile.am up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/brw/Makefile.in up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/brw/brw_eu.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/brw/brw_eu.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/brw/brw_eu_emit.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/brw/brw_test_gen4.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/brw/brw_test_gen5.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/brw/brw_test_gen6.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/brw/brw_test_gen7.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/brw/brw_wm.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/fb/Makefile.in up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/fb/fb.h up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/fb/fbbitmap.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/fb/fbclip.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/fb/fbgc.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/fb/fbline.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/fb/fblinebits.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/fb/fbpict.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/fb/fbpict.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/fb/fbpoint.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/fb/fbpointbits.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/fb/fbpush.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/fb/fbseg.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/Makefile.am up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/Makefile.in up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/blt.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen2_render.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen3_render.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen4_render.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen4_render.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen4_vertex.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen4_vertex.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen5_render.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen6_render.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen7_render.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/kgem.c up to 1.4
+xsrc/external/mit/xf86-video-intel/dist/src/sna/kgem.h up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/kgem_debug.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/kgem_debug_gen2.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna.h up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_accel.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_blt.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_composite.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_cpu.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_cpuid.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_damage.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_damage.h up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_display.c up to 1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_display_fake.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_dri2.c 1.1-1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_driver.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_glyphs.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_gradient.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_io.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_reg.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_render.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_render.h up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_render_inline.h up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_stream.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_threads.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_tiling.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_transform.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_trapezoids.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_vertex.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_video.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_video.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_video_hwmc.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_video_overlay.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_video_sprite.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_video_textured.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen4_common.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen4_common.h 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen6_common.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen6_common.h 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen8_eu.c 1.1-1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen8_eu.h 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen8_render.c 1.1-1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen8_render.h 1.1-1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen8_vertex.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/sna/gen8_vertex.h 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_acpi.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_dri3.c 1.1-1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_present.c 1.1-1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_trapezoids.h 1.1-1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_trapezoids_boxes.c 1.1-1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_trapezoids_imprecise.c 1.1-1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_trapezoids_mono.c 1.1-1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_trapezoids_precise.c 1.1-1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/sna/debug.h 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/sna/xassert.h 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/i810/xvmc/Makefile.am up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/i810/xvmc/Makefile.in up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/i810/Makefile.am up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/i810/Makefile.in up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/i810/i810_accel.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/i810/i810_common.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/i810/i810_cursor.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/i810/i810_dga.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/i810/i810_dri.c 1.3
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/i810/i810_driver.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/i810/i810_hwmc.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/i810/i810_memory.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/i810/i810_ring.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/i810/i810_video.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/i810/i810_wmark.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/i810/i810_xaa.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/Makefile.am up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/legacy/Makefile.in up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/Makefile.am up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/Makefile.in up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/i830_3d.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/i830_reg.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/i830_render.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/i915_3d.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/i915_render.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/i915_video.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/i965_3d.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/i965_render.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/i965_video.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel.h up to 1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_batchbuffer.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_batchbuffer.h up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_display.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_dri.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_driver.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_uxa.h 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_uxa_video.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_hwmc.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_memory.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_uxa.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_video.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_video.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/uxa-accel.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/uxa-glyphs.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/uxa-priv.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/uxa-render.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/uxa-unaccel.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/uxa.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/uxa.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_dri3.c 1.1-1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_present.c 1.1-1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_sync.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_video_overlay.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_video_overlay.h 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/compat-api.h up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/i915_pciids.h up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/intel_device.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/intel_driver.h up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/intel_list.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/intel_module.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/intel_options.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/intel_options.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/render_program/Makefile.am up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/src/render_program/Makefile.in up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/render_program/exa_wm_src_affine.g8a 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/render_program/exa_wm_src_affine.g8b 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/render_program/exa_wm_src_sample_argb.g8a 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/render_program/exa_wm_src_sample_argb.g8b 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/render_program/exa_wm_src_sample_planar.g8a 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/render_program/exa_wm_src_sample_planar.g8b 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/render_program/exa_wm_write.g8a 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/render_program/exa_wm_write.g8b 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/render_program/exa_wm_yuv_rgb.g8a 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/src/render_program/exa_wm_yuv_rgb.g8b 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/Makefile.am  up to 1.1.1.4
+xsrc/external/mit/xf86-video-intel/dist/AUTHORS      up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/libobj/Makefile.am 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/libobj/Makefile.in 1.1-1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/libobj/getline.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/libobj/ignore.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/tools/Makefile.am 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/tools/Makefile.in 1.1-1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/tools/backlight_helper.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/tools/intel-virtual-output.man 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/tools/org.x.xf86-video-intel.backlight-helper.policy.in 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/tools/virtual.c 1.1-1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/Makefile.in  up to 1.1.1.5
+xsrc/external/mit/xf86-video-intel/dist/NEWS         up to 1.1.1.4
+xsrc/external/mit/xf86-video-intel/dist/README       up to 1.1.1.4
+xsrc/external/mit/xf86-video-intel/dist/config.guess up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/aclocal.m4   up to 1.1.1.4
+xsrc/external/mit/xf86-video-intel/dist/compile      up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/configure.ac up to 1.1.1.5
+xsrc/external/mit/xf86-video-intel/dist/xvmc/shader/mc/Makefile.in up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/xvmc/shader/vld/Makefile.in up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/xvmc/shader/Makefile.in up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/xvmc/Makefile.am up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/xvmc/Makefile.in up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/xvmc/i915_xvmc.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/xvmc/i965_xvmc.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/xvmc/intel_batchbuffer.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/xvmc/intel_batchbuffer.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/xvmc/intel_xvmc.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/xvmc/intel_xvmc_private.h up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/xvmc/xvmc_vld.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/config.h.in  up to 1.1.1.5
+xsrc/external/mit/xf86-video-intel/dist/config.sub   up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/configure    up to 1.1.1.5
+xsrc/external/mit/xf86-video-intel/dist/install-sh   up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/depcomp      up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/m4/libtool.m4 up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/m4/ltoptions.m4 up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/Makefile.am up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/test/Makefile.in up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/test/README  up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/basic-copyarea-size.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/basic-copyarea.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/basic-fillrect.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/basic-lines.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/basic-putimage.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/basic-rectangle.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/basic-stress.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/basic-string.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/dri2-race.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/dri2-swap.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/lowlevel-blt-bench.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/mixed-stress.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/render-copy-alphaless.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/render-composite-solid.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/render-copyarea-size.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/render-copyarea.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/render-fill-copy.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/render-fill.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/render-trapezoid-image.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/render-trapezoid.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/test.h  up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/test_display.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/test_image.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/test_render.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-intel/dist/test/basic-stippledrect.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/test/basic-tiledrect.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/test/cursor-test.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/test/dri2-test.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/test/dri3-test.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/test/dri3.c  1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/test/dri3.h  1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/test/present-test.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/test/render-composite-solid-mask.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/test/render-copyarea-mask.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/test/shm-test.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/test/virtual.conf 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/test/DrawSegments.c 1.1.1.1
+xsrc/external/mit/xf86-video-intel/dist/ltmain.sh    up to 1.1.1.4
+xsrc/external/mit/xf86-video-intel/dist/missing      up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/ChangeLog    up to 1.1.1.3
+xsrc/external/mit/xf86-video-intel/dist/src/sna/sna_dri.c delete
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_glamor.c delete
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/intel_glamor.h delete
+xsrc/external/mit/xf86-video-intel/dist/src/uxa/uxa-glamor.h delete
+external/mit/xorg/server/drivers/xf86-video-intel/Makefile 1.17-1.20
+
+	Update the xf86-video-intel driver to 2.99.917.
+	[snj, ticket #439]
+
+sys/arch/evbarm/rpi/rpi_machdep.c		1.56
+
+	Fix Raspberry Pi framebuffer byte order for newer firmware
+	versions.
+	[jmcneill, ticket #440]
 
