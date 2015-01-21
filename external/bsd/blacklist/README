@@ -34,17 +34,22 @@ Where:
 The configuration file contains entries of the form:
 
 # Blacklist rule
-# Port	type	protocol	owner		nfail	disable
-ssh	stream	tcp		*		6	60m
-ssh	stream	tcp6		*		6	60m
+# host/Port	type	protocol	owner	name	nfail	disable
+192.168.1.1:ssh	stream	tcp		*	-int	10	1m
+8.8.8.8:ssh	stream	tcp		*	-ext	6	60m
+ssh		stream	tcp6		*	*	6	60m
+http		stream	tcp		*	*	6	60m
 
 Here note that owner is * because the connection is done from the
-child ssh socket which runs with user privs. We also register for
-both tcp and tcp6 since those are different listening sockets and
-addresses. We use nfail = 6, because ssh allows 3 password attempts
-per connection, and this will let us have 2 connections before
-blocking.  Finally we block for an hour; we could block forever
-too by specifying * in the duration column.
+child ssh socket which runs with user privs. We treat ipv4 connections
+differently by maintaining two different rules one for the external
+interface and one from the internal We also register for both tcp
+and tcp6 since those are different listening sockets and addresses;
+we don't bother with ipv6 and separate rules. We use nfail = 6,
+because ssh allows 3 password attempts per connection, and this
+will let us have 2 connections before blocking. Finally we block
+for an hour; we could block forever too by specifying * in the
+duration column.
 
 blacklistd and the library use syslog(3) to report errors. The
 blacklist filter state is persisted automatically in /var/db/blacklistd.db
@@ -59,13 +64,20 @@ dynamic rule feature. You need to create a dynamic rule in your
 called blacklistd as follows:
 
 ext_if=bge0
+int_if=sk0
 	
 group "external" on $ext_if {
 	...
+        ruleset "blacklistd-ext" 
         ruleset "blacklistd" 
 	...
 }
 
+group "internal" on $int_if {
+	...
+        ruleset "blacklistd-int" 
+	...
+}
 Enjoy,
 
 christos
