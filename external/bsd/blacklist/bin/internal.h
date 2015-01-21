@@ -1,7 +1,7 @@
-/*	$NetBSD: internal.h,v 1.4 2015/01/20 00:19:21 christos Exp $	*/
+/*	$NetBSD: internal.h,v 1.5 2015/01/21 16:16:00 christos Exp $	*/
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -33,7 +33,7 @@
 
 #define	_PATH_BLCONF	"/etc/blacklistd/conf"
 #define	_PATH_BLCONTROL	"/etc/blacklistd/control"
-#define	_PATH_BLSTATE	"/var/run/blacklistd.db"
+#define	_PATH_BLSTATE	"/var/db/blacklistd.db"
 
 struct conf *conf;
 size_t nconf;
