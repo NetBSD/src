@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.9 2015/01/21 21:24:51 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.10 2015/01/21 23:09:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.9 2015/01/21 21:24:51 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.10 2015/01/21 23:09:44 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -80,13 +80,13 @@ void (*lfun)(int, const char *, ...) = syslog;
 static void
 sigusr1(int n)
 {
-	debug = 1;
+	debug++;
 }
 
 static void
 sigusr2(int n)
 {
-	debug = 0;
+	debug--;
 }
 
 static void
