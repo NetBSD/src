@@ -1,7 +1,7 @@
-/*	$NetBSD: conf.h,v 1.3 2015/01/20 00:19:21 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.4 2015/01/21 16:16:00 christos Exp $	*/
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,8 +41,10 @@ struct conf {
 };
 
 __BEGIN_DECLS
-void parseconf(const char *);
-const struct conf *findconf(bl_info_t *, struct conf *);
+const char *conf_print(char *, size_t, const char *, const char *,
+    const struct conf *);
+void conf_parse(const char *);
+const struct conf *conf_find(int, uid_t, struct conf *);
 __END_DECLS
 
 #endif /* _CONF_H */
