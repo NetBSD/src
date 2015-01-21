@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.14 2014/10/20 03:05:13 christos Exp $	*/
+/*	$NetBSD: packet.c,v 1.15 2015/01/21 02:05:47 christos Exp $	*/
 /* $OpenBSD: packet.c,v 1.198 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.14 2014/10/20 03:05:13 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.15 2015/01/21 02:05:47 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
@@ -944,7 +944,7 @@ packet_send2_wrapped(void)
 	    len, padlen, aadlen));
 
 	/* compute MAC over seqnr and packet(length fields, payload, padding) */
-debug("mac %p, %d %d\n", mac, mac? mac->enabled : -1, mac ? mac->etm : -1);
+debug("mac %p, %d %d", mac, mac? mac->enabled : -1, mac ? mac->etm : -1);
 	if (mac && mac->enabled && !mac->etm) {
 		macbuf = mac_compute(mac, active_state->p_send.seqnr,
 		    buffer_ptr(&active_state->outgoing_packet), len);
