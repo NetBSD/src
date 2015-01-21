@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.6 2015/01/21 16:16:00 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.7 2015/01/21 19:24:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.6 2015/01/21 16:16:00 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.7 2015/01/21 19:24:03 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: blacklistd.c,v 1.6 2015/01/21 16:16:00 christos Exp $");
 #include "conf.h"
 #include "run.h"
 #include "state.h"
+#include "util.h"
 
 static const char *configfile = _PATH_BLCONF;
 
@@ -71,10 +72,22 @@ size_t nconf;
 
 static DB *state;
 static const char *dbfile = _PATH_BLSTATE;
-static sig_atomic_t rconf = 1;
+static sig_atomic_t rconf;
 static sig_atomic_t done;
 
 void (*lfun)(int, const char *, ...) = syslog;
+
+static void
+sigusr1(int n)
+{
+	debug = 1;
+}
+
+static void
+sigusr2(int n)
+{
+	debug = 0;
+}
 
 static void
 sighup(int n)
@@ -95,50 +108,6 @@ usage(void)
 	    "[-s <sockpath>] [-C <controlprog>] [-D <dbfile>] [-t <timeout>]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
-}
-
-static const char *
-expandm(char *buf, size_t len, const char *fmt)
-{
-	char *p;
-	size_t r;
-
-	if ((p = strstr(fmt, "%m")) == NULL)
-		return fmt;
-
-	r = (size_t)(p - fmt);
-	if (r >= len)
-		return fmt;
-
-	strlcpy(buf, fmt, r + 1);
-	strlcat(buf, strerror(errno), len);
-	strlcat(buf, fmt + r + 2, len);
-
-	return buf;
-}
-
-static void
-dlog(int level, const char *fmt, ...)
-{
-	char buf[BUFSIZ];
-	va_list ap;
-
-	fprintf(stderr, "%s: ", getprogname());
-	va_start(ap, fmt);
-	vfprintf(stderr, expandm(buf, sizeof(buf), fmt), ap);
-	va_end(ap);
-	fprintf(stderr, "\n");
-}
-
-static const char *
-fmttime(char *b, size_t l, time_t t)
-{
-	struct tm tm;
-	if (localtime_r(&t, &tm) == NULL)
-		snprintf(b, l, "*%jd*", (intmax_t)t);
-	else
-		strftime(b, l, "%Y/%m/%d %H:%M:%S", &tm);
-	return b;
 }
 
 static void
@@ -198,14 +167,14 @@ process(bl_t bl)
 			goto out;
 		}
 		if (dbi.count >= c.c_nfail) {
-			int res = run_add(c.c_proto, (in_port_t)c.c_port, &rss,
-			    dbi.id, sizeof(dbi.id));
+			int res = run_add(&c, &rss, dbi.id, sizeof(dbi.id));
 			if (res == -1)
 				goto out;
 			sockaddr_snprintf(rbuf, sizeof(rbuf), "%a",
 			    (void *)&rss);
-			syslog(LOG_INFO, "Blocked %s at port %d for %d seconds",
-				rbuf, c.c_port, c.c_duration);
+			syslog(LOG_INFO,
+			    "Blocked %s at port %d for %d seconds",
+			    rbuf, c.c_port, c.c_duration);
 				
 		}
 		break;
@@ -254,7 +223,7 @@ update(void)
 		if (c.c_duration == -1 || when >= ts.tv_sec)
 			continue;
 		if (dbi.id[0]) {
-			run_rem(dbi.id);
+			run_rem(&c, dbi.id);
 			sockaddr_snprintf(buf, sizeof(buf), "%a", (void *)&ss);
 			syslog(LOG_INFO,
 			    "Released %s at port %d after %d seconds",
@@ -312,6 +281,8 @@ main(int argc, char *argv[])
 	signal(SIGINT, sigdone);
 	signal(SIGQUIT, sigdone);
 	signal(SIGTERM, sigdone);
+	signal(SIGUSR1, sigusr1);
+	signal(SIGUSR2, sigusr2);
 
 	if (debug) {
 		lfun = dlog;
@@ -323,9 +294,11 @@ main(int argc, char *argv[])
 			tout = 15000;
 	}
 
+	conf_parse(configfile);
 	if (reset) {
+		for (size_t i = 0; i < nconf; i++)
+			run_flush(&conf[i]);
 		flags |= O_TRUNC;
-		run_flush();
 	}
 
 	bl = bl_create(true, spath, lfun);
