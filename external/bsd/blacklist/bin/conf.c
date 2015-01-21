@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 2015/01/21 16:16:00 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 2015/01/21 19:24:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.3 2015/01/21 16:16:00 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.4 2015/01/21 19:24:03 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: conf.c,v 1.3 2015/01/21 16:16:00 christos Exp $");
 #include <util.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 
@@ -62,14 +63,14 @@ advance(char **p)
 
 
 static int
-getnum(const char *f, size_t l, int *r, const char *p)
+getnum(const char *f, size_t l, void *r, const char *p)
 {
 	int e;
 	intmax_t im;
 
 	im = strtoi(p, NULL, 0, 0, INT_MAX, &e);
 	if (e == 0) {
-		*r = (int)im;
+		*(int *)r = (int)im;
 		return 0;
 	}
 
@@ -81,7 +82,7 @@ getnum(const char *f, size_t l, int *r, const char *p)
 }
 
 static int
-getsecs(const char *f, size_t l, int *r, const char *p)
+getsecs(const char *f, size_t l, void *r, const char *p)
 {
 	int e;
 	char *ep;
@@ -115,7 +116,7 @@ again:
 		tot = im;
 			
 	if (e == 0) {
-		*r = (int)tot;
+		*(int *)r = (int)tot;
 		return 0;
 	}
 
@@ -126,18 +127,19 @@ again:
 
 }
 
+
 static int
-getport(const char *f, size_t l, int *r, const char *p)
+getport(const char *f, size_t l, void *r, const char *p)
 {
 	struct servent *sv;
 
 	// XXX: Pass in the proto instead
 	if ((sv = getservbyname(p, "tcp")) != NULL) {
-		*r = ntohs(sv->s_port);
+		*(int *)r = ntohs(sv->s_port);
 		return 0;
 	}
 	if ((sv = getservbyname(p, "udp")) != NULL) {
-		*r = ntohs(sv->s_port);
+		*(int *)r = ntohs(sv->s_port);
 		return 0;
 	}
 
@@ -149,14 +151,58 @@ getport(const char *f, size_t l, int *r, const char *p)
 }
 
 static int
-getproto(const char *f, size_t l, int *r, const char *p)
+gethostport(const char *f, size_t l, void *v, const char *p)
+{
+	char *d;	// XXX: Ok to write to string.
+	in_port_t *port = NULL;
+	struct conf *c = v;
+
+	if ((d = strstr(p, "]:")) != NULL) {
+		struct sockaddr_in6 *s6 = (void *)&c->c_ss;
+		*d++ = '\0';
+		if (strcmp(++p, "*") == 0) {
+			if (inet_pton(AF_INET6, p, &s6->sin6_addr) == -1)
+				goto out;
+			s6->sin6_family = AF_INET6;
+			s6->sin6_len = sizeof(*s6);
+			port = &s6->sin6_port;
+		} 
+		p = ++d;
+	} else if ((d = strrchr(p, ':')) != NULL) {
+		struct sockaddr_in *s = (void *)&c->c_ss;
+		*d++ = '\0';
+		if (strcmp(p, "*") == 0) {
+			if (inet_pton(AF_INET, p, &s->sin_addr) == -1)
+				goto out;
+			s->sin_family = AF_INET;
+			s->sin_len = sizeof(*s);
+			port = &s->sin_port;
+		}
+		p = d;
+	}
+
+	if (strcmp(p, "*") == 0)
+		c->c_port = -1;
+	else if (getport(f, l, &c->c_port, p) == -1)
+		return -1;
+
+	if (port && c->c_port != -1)
+		*port = (in_port_t)c->c_port;
+	return 0;
+out:
+	(*lfun)(LOG_ERR, "%s: %s, %zu: Bad address [%s]", __func__, f, l, p);
+	return -1;
+}
+
+static int
+getproto(const char *f, size_t l, void *r, const char *p)
 {
 	if (strcmp(p, "stream") == 0) {
-		*r = IPPROTO_TCP;
+		*(int *)r = IPPROTO_TCP;
 		return 0;
 	}
 	if (strcmp(p, "dgram") == 0) {
-		*r = IPPROTO_UDP;
+		*(int *)r = IPPROTO_UDP;
 		return 0;
 	}
 	if (getnum(NULL, 0, r, p) == 0)
@@ -167,10 +213,10 @@ getproto(const char *f, size_t l, int *r, const char *p)
 }
 
 static int
-getfamily(const char *f, size_t l, int *r, const char *p)
+getfamily(const char *f, size_t l, void *r, const char *p)
 {
 	if (strncmp(p, "tcp", 3) == 0 || strncmp(p, "udp", 3) == 0) {
-		*r = p[3] == '6' ? AF_INET6 : AF_INET;
+		*(int *)r = p[3] == '6' ? AF_INET6 : AF_INET;
 		return 0;
 	}
 	if (getnum(NULL, 0, r, p) == 0)
@@ -181,12 +227,12 @@ getfamily(const char *f, size_t l, int *r, const char *p)
 }
 
 static int
-getuid(const char *f, size_t l, int *r, const char *p)
+getuid(const char *f, size_t l, void *r, const char *p)
 {
 	struct passwd *pw;
 
 	if ((pw = getpwnam(p)) != NULL) {
-		*r = (int)pw->pw_uid;
+		*(int *)r = (int)pw->pw_uid;
 		return 0;
 	}
 
@@ -198,14 +244,26 @@ getuid(const char *f, size_t l, int *r, const char *p)
 }
 
 static int
-getvalue(const char *f, size_t l, int *r, char **p,
-    int (*fun)(const char *, size_t, int *, const char *))
+getname(const char *f, size_t l, void *r, const char *p)
+{
+	snprintf(r, CONFNAMESZ, "%s%s", *p == '-' ? rulename : "", p);
+	return 0;
+}
+
+static int
+getvalue(const char *f, size_t l, void *r, char **p,
+    int (*fun)(const char *, size_t, void *, const char *))
 {
 	char *ep = *p;
 
 	advance(p);
-	if (*ep == '*') {
-		*r = -1;
+	if (strcmp(ep, "*") == 0) {
+		if (fun == gethostport)
+			((struct conf *)r)->c_port = -1;
+		else if (fun == getname)
+			strlcpy(r, rulename, CONFNAMESZ);
+		else
+			*(int *)r = -1;
 		return 0;
 	}
 	return (*fun)(f, l, r, ep);
@@ -220,13 +278,16 @@ conf_parseline(const char *f, size_t l, char *p, struct conf *c)
 	while (*p && isspace((unsigned char)*p))
 		p++;
 
-	e = getvalue(f, l, &c->c_port, &p, getport);
+	memset(c, 0, sizeof(*c));
+	e = getvalue(f, l, c, &p, gethostport);
 	if (e) return -1;
 	e = getvalue(f, l, &c->c_proto, &p, getproto);
 	if (e) return -1;
 	e = getvalue(f, l, &c->c_family, &p, getfamily);
 	if (e) return -1;
 	e = getvalue(f, l, &c->c_uid, &p, getuid);
+	if (e) return -1;
+	e = getvalue(f, l, &c->c_name, &p, getname);
 	if (e) return -1;
 	e = getvalue(f, l, &c->c_nfail, &p, getnum);
 	if (e) return -1;
@@ -241,10 +302,12 @@ conf_sort(const void *v1, const void *v2)
 {
 	const struct conf *c1 = v1;
 	const struct conf *c2 = v2;
+
 #define CMP(a, b, f) \
 	if ((a)->f > (b)->f) return -1; \
 	else if ((a)->f < (b)->f) return 1
 
+	CMP(c1, c2, c_ss.ss_family);
 	CMP(c1, c2, c_port);
 	CMP(c1, c2, c_proto);
 	CMP(c1, c2, c_family);
@@ -256,6 +319,10 @@ conf_sort(const void *v1, const void *v2)
 static int
 conf_eq(const struct conf *c1, const struct conf *c2)
 {
+	if (c2->c_ss.ss_family != 0 &&
+	    memcmp(&c1->c_ss, &c2->c_ss, sizeof(c1->c_ss)))
+		return 0;
+		
 #define CMP(a, b, f) \
 	if ((a)->f != (b)->f && (b)->f != -1) return 0;
 	CMP(c1, c2, c_port);
@@ -270,9 +337,24 @@ const char *
 conf_print(char *buf, size_t len, const char *pref, const char *delim,
     const struct conf *c)
 {
-	snprintf(buf, len, "%s%d%s%d%s%d%s%d%s%d%s%d", pref,
-	    c->c_port, delim, c->c_proto, delim, c->c_family, delim,
-	    c->c_uid, delim, c->c_nfail, delim, c->c_duration);
+	char hb[128];
+
+	if (c->c_ss.ss_family)
+		sockaddr_snprintf(hb, sizeof(hb), "%a:%p",
+		    (const void *)&c->c_ss);
+	else
+		snprintf(hb, sizeof(hb), "*:%d", c->c_port);
+
+	if (*delim)
+		snprintf(buf, len, "%s%s%s%d%s%d%s" "%d%s%s%s%d%s" "%d",
+		    pref, hb, delim, c->c_proto, delim, c->c_family, delim,
+		    c->c_uid, delim, c->c_name, delim, c->c_nfail, delim,
+		    c->c_duration);
+	else
+		snprintf(buf, len, "%starget=%s, proto=%d, family=%d, "
+		    "uid=%d, name=%s, nfail=%d, duration=%d", pref,
+		    hb, c->c_proto, c->c_family, c->c_uid, c->c_name,
+		    c->c_nfail, c->c_duration);
 	return buf;
 }
 
@@ -296,6 +378,11 @@ conf_find(int fd, uid_t uid, struct conf *cr)
 	if (getsockopt(fd, SOL_SOCKET, SO_TYPE, &proto, &slen) == -1) {
 		(*lfun)(LOG_ERR, "getsockopt failed (%m)"); 
 		return NULL;
+	}
+
+	if (debug) {
+		sockaddr_snprintf(buf, sizeof(buf), "%a:%p", (void *)&ss);
+		printf("listening socket: %s\n", buf);
 	}
 
 	switch (proto) {
@@ -349,7 +436,6 @@ conf_find(int fd, uid_t uid, struct conf *cr)
 	return NULL;
 }
 
-
 void
 conf_parse(const char *f)
 {
@@ -393,7 +479,7 @@ conf_parse(const char *f)
 
 	if (debug) {
 		char buf[BUFSIZ];
-		printf("port\ttype\tproto\towner\tnfail\tduration\n");
+		printf("target\ttype\tproto\towner\tname\t\tnfail\tduration\n");
 		for (nc = 0; nc < nconf; nc++)
 			printf("%s\n",
 			    conf_print(buf, sizeof(buf), "", "\t", &c[nc]));

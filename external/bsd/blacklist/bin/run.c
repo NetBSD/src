@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.3 2015/01/21 16:16:00 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.4 2015/01/21 19:24:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: run.c,v 1.3 2015/01/21 16:16:00 christos Exp $");
+__RCSID("$NetBSD: run.c,v 1.4 2015/01/21 19:24:03 christos Exp $");
 
 #include <stdio.h>
 #include <util.h>
@@ -42,12 +42,13 @@ __RCSID("$NetBSD: run.c,v 1.3 2015/01/21 16:16:00 christos Exp $");
 #include <netinet/in.h>
 
 #include "run.h"
+#include "conf.h"
 #include "internal.h"
 
 extern char **environ;
 
 static char *
-run(const char *cmd, ...)
+run(const char *cmd, const char *name, ...)
 {
 	const char *argv[20];
 	size_t i;
@@ -57,8 +58,8 @@ run(const char *cmd, ...)
 
 	argv[0] = "control";
 	argv[1] = cmd;
-	argv[2] = rulename;
-	va_start(ap, cmd);
+	argv[2] = name;
+	va_start(ap, name);
 	for (i = 3; i < __arraycount(argv) &&
 	    (argv[i] = va_arg(ap, char *)) != NULL; i++)
 		continue;
@@ -87,20 +88,20 @@ run(const char *cmd, ...)
 }
 
 void
-run_flush(void)
+run_flush(const struct conf *c)
 {
-	free(run("flush", NULL));
+	free(run("flush", c->c_name, NULL));
 }
 
 int
-run_add(int proto, in_port_t port, const struct sockaddr_storage *ss,
-    char *id, size_t len)
+run_add(const struct conf *c, 
+    const struct sockaddr_storage *ss, char *id, size_t len)
 {
 	const char *prname;
 	char poname[64], adname[128], *rv;
 	size_t off;
 
-	switch (proto) {
+	switch (c->c_proto) {
 	case IPPROTO_TCP:
 		prname = "tcp";
 		break;
@@ -108,14 +109,14 @@ run_add(int proto, in_port_t port, const struct sockaddr_storage *ss,
 		prname = "udp";
 		break;
 	default:
-		(*lfun)(LOG_ERR, "%s: bad protocol %d", __func__, proto);
+		(*lfun)(LOG_ERR, "%s: bad protocol %d", __func__, c->c_proto);
 		return -1;
 	}
 
-	snprintf(poname, sizeof(poname), "%d", port);
+	snprintf(poname, sizeof(poname), "%d", c->c_port);
 	sockaddr_snprintf(adname, sizeof(adname), "%a", (const void *)ss);
 
-	rv = run("add", prname, adname, poname, NULL);
+	rv = run("add", c->c_name, prname, adname, poname, NULL);
 	if (rv == NULL)
 		return -1;
 	rv[strcspn(rv, "\n")] = '\0';
@@ -126,7 +127,7 @@ run_add(int proto, in_port_t port, const struct sockaddr_storage *ss,
 }
 
 void
-run_rem(const char *id)
+run_rem(const struct conf *c, const char *id)
 {
-	free(run("rem", id, NULL));
+	free(run("rem", c->c_name, id, NULL));
 }
