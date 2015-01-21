@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.5 2015/01/20 00:52:15 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.6 2015/01/21 16:16:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.5 2015/01/20 00:52:15 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.6 2015/01/21 16:16:00 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -87,11 +87,12 @@ sigdone(int n)
 {
 	done++;
 }
+
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s -d [-c <config>] [-r <rulename>] "
-	    "[-s <sockpath>] [-C <controlprog>] [-D <dbfile>]\n",
+	fprintf(stderr, "Usage: %s [-df] [-c <config>] [-r <rulename>] "
+	    "[-s <sockpath>] [-C <controlprog>] [-D <dbfile>] [-t <timeout>]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
@@ -161,15 +162,15 @@ process(bl_t bl)
 		return;
 
 	if (debug)
-		printf("got type=%d fd=[%d %d] msg=%s cred=[u=%lu, g=%lu]\n",
-		    bi->bi_type, bi->bi_fd[0], bi->bi_fd[1], bi->bi_msg,
-		    (unsigned long)bi->bi_cred->sc_euid,
-		    (unsigned long)bi->bi_cred->sc_egid);
+		printf("got type=%d fd=%d msg=%s cred=[u=%lu, g=%lu]\n",
+		    bi->bi_type, bi->bi_fd, bi->bi_msg,
+		    (unsigned long)bi->bi_cred.sc_euid,
+		    (unsigned long)bi->bi_cred.sc_egid);
 
-	if (findconf(bi, &c) == NULL)
+	if (conf_find(bi->bi_fd, bi->bi_cred.sc_euid, &c) == NULL)
 		goto out;
 
-	rfd = bi->bi_fd[1];
+	rfd = bi->bi_fd;
 	rsl = sizeof(rss);
 	memset(&rss, 0, rsl);
 	if (getpeername(rfd, (void *)&rss, &rsl) == -1) {
@@ -192,15 +193,20 @@ process(bl_t bl)
 	case BL_ADD:
 		dbi.count++;
 		dbi.last = ts.tv_sec;
-		if (dbi.id != -1) {
-			(*lfun)(LOG_ERR, "rule exists %d", dbi.id);
+		if (dbi.id[0]) {
+			(*lfun)(LOG_ERR, "rule exists %s", dbi.id);
 			goto out;
 		}
 		if (dbi.count >= c.c_nfail) {
-			int res = run_add(c.c_proto, (in_port_t)c.c_port, &rss);
+			int res = run_add(c.c_proto, (in_port_t)c.c_port, &rss,
+			    dbi.id, sizeof(dbi.id));
 			if (res == -1)
 				goto out;
-			dbi.id = res;
+			sockaddr_snprintf(rbuf, sizeof(rbuf), "%a",
+			    (void *)&rss);
+			syslog(LOG_INFO, "Blocked %s at port %d for %d seconds",
+				rbuf, c.c_port, c.c_duration);
+				
 		}
 		break;
 	case BL_DELETE:
@@ -214,8 +220,7 @@ process(bl_t bl)
 	if (state_put(state, &rss, &c, &dbi) == -1)
 		goto out;
 out:
-	close(bi->bi_fd[0]);
-	close(bi->bi_fd[1]);
+	close(bi->bi_fd);
 }
 
 static void
@@ -226,6 +231,7 @@ update(void)
 	struct conf c;
 	struct dbinfo dbi;
 	unsigned int f, n;
+	char buf[128];
 
 	if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
 		(*lfun)(LOG_ERR, "clock_gettime failed (%m)"); 
@@ -237,18 +243,23 @@ update(void)
 	{
 		time_t when = c.c_duration + dbi.last;
 		if (debug) {
-			char buf[128], b1[64], b2[64];
+			char b1[64], b2[64];
 			sockaddr_snprintf(buf, sizeof(buf), "%a:%p",
 			    (void *)&ss);
-			printf("%s:[%u] %s count=%d duration=%d exp=%s "
+			printf("%s:[%u] %s count=%d duration=%d last=%s "
 			   "now=%s\n", __func__, n, buf, dbi.count,
-			   c.c_duration, fmttime(b1, sizeof(b1), when),
+			   c.c_duration, fmttime(b1, sizeof(b1), dbi.last),
 			   fmttime(b2, sizeof(b2), ts.tv_sec));
 		}
-		if (when >= ts.tv_sec)
+		if (c.c_duration == -1 || when >= ts.tv_sec)
 			continue;
-		if (dbi.id != -1)
+		if (dbi.id[0]) {
 			run_rem(dbi.id);
+			sockaddr_snprintf(buf, sizeof(buf), "%a", (void *)&ss);
+			syslog(LOG_INFO,
+			    "Released %s at port %d after %d seconds",
+			    buf, c.c_port, c.c_duration);
+		}
 		state_del(state, &ss, &c);
 	}
 }
@@ -256,15 +267,17 @@ update(void)
 int
 main(int argc, char *argv[])
 {
-	int c;
 	bl_t bl;
-	int tout;
-	int flags = O_RDWR|O_EXCL|O_CLOEXEC;
-	const char *spath = _PATH_BLSOCK;
+	int c, tout, flags, reset;
+	const char *spath;
 
 	setprogname(argv[0]);
 
-	while ((c = getopt(argc, argv, "C:c:D:ds:r:")) != -1) {
+	spath = _PATH_BLSOCK;
+	reset = 0;
+	tout = 0;
+	flags = O_RDWR|O_EXCL|O_CLOEXEC;
+	while ((c = getopt(argc, argv, "C:c:D:dfr:s:t:")) != -1) {
 		switch (c) {
 		case 'C':
 			controlprog = optarg;
@@ -278,11 +291,17 @@ main(int argc, char *argv[])
 		case 'd':
 			debug++;
 			break;
+		case 'f':
+			reset++;
+			break;
 		case 'r':
 			rulename = optarg;
 			break;
 		case 's':
 			spath = optarg;
+			break;
+		case 't':
+			tout = atoi(optarg) * 1000;
 			break;
 		default:
 			usage();
@@ -296,15 +315,20 @@ main(int argc, char *argv[])
 
 	if (debug) {
 		lfun = dlog;
-		tout = 5000;
+		if (tout == 0)
+			tout = 5000;
 	} else {
 		daemon(0, 0);
-		tout = 15000;
+		if (tout == 0)
+			tout = 15000;
 	}
 
-	run_flush();
+	if (reset) {
+		flags |= O_TRUNC;
+		run_flush();
+	}
 
-	bl = bl_create2(true, spath, lfun);
+	bl = bl_create(true, spath, lfun);
 	if (bl == NULL || !bl_isconnected(bl))
 		return EXIT_FAILURE;
 	state = state_open(dbfile, flags, 0600);
@@ -319,7 +343,7 @@ main(int argc, char *argv[])
 	while (!done) {
 		if (rconf) {
 			rconf = 0;
-			parseconf(configfile);
+			conf_parse(configfile);
 		}
 		switch (poll(&pfd, 1, tout)) {
 		case -1:

@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.2 2015/01/20 00:52:15 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.3 2015/01/21 16:16:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: run.c,v 1.2 2015/01/20 00:52:15 christos Exp $");
+__RCSID("$NetBSD: run.c,v 1.3 2015/01/21 16:16:00 christos Exp $");
 
 #include <stdio.h>
 #include <util.h>
@@ -93,11 +93,11 @@ run_flush(void)
 }
 
 int
-run_add(int proto, in_port_t port, const struct sockaddr_storage *ss)
+run_add(int proto, in_port_t port, const struct sockaddr_storage *ss,
+    char *id, size_t len)
 {
 	const char *prname;
 	char poname[64], adname[128], *rv;
-	int id, e;
 	size_t off;
 
 	switch (proto) {
@@ -120,19 +120,13 @@ run_add(int proto, in_port_t port, const struct sockaddr_storage *ss)
 		return -1;
 	rv[strcspn(rv, "\n")] = '\0';
 	off = strncmp(rv, "OK ", 3) == 0 ? 3 : 0;
-	id = (int)strtoi(rv + off, NULL, 0, 0, INT_MAX, &e);
-	if (e) {
-		(*lfun)(LOG_ERR, "%s: bad number %s (%m)", __func__, rv);
-		id = -1;
-	}
+	strlcpy(id, rv + off, len);
 	free(rv);
-	return id;
+	return 0;
 }
 
 void
-run_rem(int id)
+run_rem(const char *id)
 {
-	char buf[64];
-	snprintf(buf, sizeof(buf), "%d", id);
-	free(run("rem", buf, NULL));
+	free(run("rem", id, NULL));
 }

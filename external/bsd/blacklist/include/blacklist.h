@@ -1,7 +1,7 @@
-/*	$NetBSD: state.h,v 1.2 2015/01/21 16:16:00 christos Exp $	*/
+/*	$NetBSD: blacklist.h,v 1.1 2015/01/21 16:16:00 christos Exp $	*/
 
 /*-
- * Copyright (c) 2015 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -28,31 +28,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _STATE_H
-#define _STATE_H
-
-#include <db.h>
-#include <time.h>
-
-struct dbinfo {
-	int count;
-	time_t last;
-	char id[64];
-};
+#ifndef _BLACKLIST_H
+#define _BLACKLIST_H
 
 __BEGIN_DECLS
-struct sockaddr_storage;
-struct conf;
-
-DB *state_open(const char *, int, mode_t);
-int state_close(DB *);
-int state_get(DB *, const struct sockaddr_storage *, const struct conf *,
-    struct dbinfo *);
-int state_put(DB *, const struct sockaddr_storage *, const struct conf *,
-    const struct dbinfo *);
-int state_del(DB *, const struct sockaddr_storage *, const struct conf *);
-int state_iterate(DB *, struct sockaddr_storage *, struct conf *,
-    struct dbinfo *, unsigned int);
+struct blacklist;
+int blacklist(int, int, const char *);
+int blacklist_r(struct blacklist *, int, int, const char *);
+struct blacklist *blacklist_open(void);
+void blacklist_close(struct blacklist *);
 __END_DECLS
 
-#endif /* _STATE_H */
+#endif /* _BLACKLIST_H */
