@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2015/01/21 19:24:03 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 2015/01/21 21:25:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.4 2015/01/21 19:24:03 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.5 2015/01/21 21:25:13 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -367,6 +367,7 @@ conf_find(int fd, uid_t uid, struct conf *cr)
 	size_t i;
 	char buf[BUFSIZ];
 
+	memset(cr, 0, sizeof(*cr));
 	slen = sizeof(ss);
 	memset(&ss, 0, slen);
 	if (getsockname(fd, (void *)&ss, &slen) == -1) {
@@ -426,6 +427,8 @@ conf_find(int fd, uid_t uid, struct conf *cr)
 			if (debug)
 				printf("%s\n", conf_print(buf, sizeof(buf),
 				    "found:\t", "\t", &conf[i]));
+			cr->c_ss = conf[i].c_ss;
+			memcpy(cr->c_name, conf[i].c_name, CONFNAMESZ);
 			cr->c_nfail = conf[i].c_nfail;
 			cr->c_duration = conf[i].c_duration;
 			return cr;
