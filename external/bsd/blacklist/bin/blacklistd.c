@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.7 2015/01/21 19:24:03 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.8 2015/01/21 19:45:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.7 2015/01/21 19:24:03 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.8 2015/01/21 19:45:26 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -166,7 +166,7 @@ process(bl_t bl)
 			(*lfun)(LOG_ERR, "rule exists %s", dbi.id);
 			goto out;
 		}
-		if (dbi.count >= c.c_nfail) {
+		if (c.c_nfail != -1 && dbi.count >= c.c_nfail) {
 			int res = run_add(&c, &rss, dbi.id, sizeof(dbi.id));
 			if (res == -1)
 				goto out;
