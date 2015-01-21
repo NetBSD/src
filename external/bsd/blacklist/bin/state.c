@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.3 2015/01/21 16:16:00 christos Exp $	*/
+/*	$NetBSD: state.c,v 1.4 2015/01/21 21:24:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: state.c,v 1.3 2015/01/21 16:16:00 christos Exp $");
+__RCSID("$NetBSD: state.c,v 1.4 2015/01/21 21:24:25 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -87,6 +87,17 @@ struct dbkey {
 };
 
 static void
+dumpkey(const struct dbkey *k)
+{
+	const unsigned char *p = (const void *)k;
+	const unsigned char *e = p + sizeof(*k);
+	printf("%s: ", __func__);
+	while (p < e)
+		printf("%.2x", *p++);
+	printf("\n");
+}
+
+static void
 makekey(struct dbkey *k, const struct sockaddr_storage *ss,
     const struct conf *c)
 {
@@ -105,14 +116,8 @@ makekey(struct dbkey *k, const struct sockaddr_storage *ss,
 		    k->ss.ss_family);
 		break;
 	}
-	if (debug) {
-		unsigned char *p = (void *)k;
-		unsigned char *e = p + sizeof(*k);
-		printf("%s: ", __func__);
-		while (p < e)
-			printf("%.2x", *p++);
-		printf("\n");
-	}
+	if (debug)
+		dumpkey(k);
 }
 
 int
@@ -224,6 +229,7 @@ state_iterate(DB *db, struct sockaddr_storage *ss, struct conf *c,
 		kp = k.data;	
 		*ss = kp->ss;
 		*c = kp->c;
+		dumpkey(kp);
 		memcpy(dbi, v.data, sizeof(*dbi));
 		if (debug)
 			printf("%s: returns %d\n", __func__, rv);
