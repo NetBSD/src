@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2015/01/21 21:25:13 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 2015/01/21 23:09:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.5 2015/01/21 21:25:13 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.6 2015/01/21 23:09:44 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -160,7 +160,10 @@ gethostport(const char *f, size_t l, void *v, const char *p)
 	if ((d = strstr(p, "]:")) != NULL) {
 		struct sockaddr_in6 *s6 = (void *)&c->c_ss;
 		*d++ = '\0';
-		if (strcmp(++p, "*") == 0) {
+		p++;
+		if (debug)
+			printf("%s: host6 %s\n", __func__, p);
+		if (strcmp(p, "*") != 0) {
 			if (inet_pton(AF_INET6, p, &s6->sin6_addr) == -1)
 				goto out;
 			s6->sin6_family = AF_INET6;
@@ -171,7 +174,9 @@ gethostport(const char *f, size_t l, void *v, const char *p)
 	} else if ((d = strrchr(p, ':')) != NULL) {
 		struct sockaddr_in *s = (void *)&c->c_ss;
 		*d++ = '\0';
-		if (strcmp(p, "*") == 0) {
+		if (debug)
+			printf("%s: host4 %s\n", __func__, p);
+		if (strcmp(p, "*") != 0) {
 			if (inet_pton(AF_INET, p, &s->sin_addr) == -1)
 				goto out;
 			s->sin_family = AF_INET;
@@ -187,7 +192,7 @@ gethostport(const char *f, size_t l, void *v, const char *p)
 		return -1;
 
 	if (port && c->c_port != -1)
-		*port = (in_port_t)c->c_port;
+		*port = htons((in_port_t)c->c_port);
 	return 0;
 out:
 	(*lfun)(LOG_ERR, "%s: %s, %zu: Bad address [%s]", __func__, f, l, p);
@@ -320,11 +325,18 @@ static int
 conf_eq(const struct conf *c1, const struct conf *c2)
 {
 	if (c2->c_ss.ss_family != 0 &&
-	    memcmp(&c1->c_ss, &c2->c_ss, sizeof(c1->c_ss)))
+	    memcmp(&c1->c_ss, &c2->c_ss, sizeof(c1->c_ss))) {
+		if (debug > 1)
+			printf("%s: c_ss fail\n", __func__);
 		return 0;
+	}
 		
 #define CMP(a, b, f) \
-	if ((a)->f != (b)->f && (b)->f != -1) return 0;
+	if ((a)->f != (b)->f && (b)->f != -1) { \
+		if (debug > 1) \
+			printf("%s: %s fail\n", __func__, __STRING(f)); \
+		return 0; \
+	}
 	CMP(c1, c2, c_port);
 	CMP(c1, c2, c_proto);
 	CMP(c1, c2, c_family);
@@ -333,28 +345,64 @@ conf_eq(const struct conf *c1, const struct conf *c2)
 	return 1;
 }
 
+static const char *
+conf_num(char *b, size_t l, int n)
+{
+	if (n == -1)
+		return "*";
+	snprintf(b, l, "%d", n);
+	return b;
+}
+
+static const char *
+conf_name(const char *n) {
+	size_t l = strlen(rulename);
+	if (l == 0)
+		return "*";
+	if (strncmp(n, rulename, l) == 0) {
+		if (n[l] != '\0')
+			return n + l;
+		else
+			return "*";
+	} else
+		return n;
+}
+
 const char *
 conf_print(char *buf, size_t len, const char *pref, const char *delim,
     const struct conf *c)
 {
-	char hb[128];
+	char hb[128], b[5][64];
 
-	if (c->c_ss.ss_family)
-		sockaddr_snprintf(hb, sizeof(hb), "%a:%p",
-		    (const void *)&c->c_ss);
-	else
-		snprintf(hb, sizeof(hb), "*:%d", c->c_port);
+#define N(n, v) conf_num(b[n], sizeof(b[n]), (v))
 
+	if (c->c_ss.ss_family) {
+		if (c->c_port == -1)
+			sockaddr_snprintf(hb, sizeof(hb), "%a:*",
+			    (const void *)&c->c_ss);
+		else 
+			sockaddr_snprintf(hb, sizeof(hb), "%a:%p",
+			    (const void *)&c->c_ss);
+	} else {
+		if (c->c_port == -1)
+			snprintf(hb, sizeof(hb), "*");
+		else
+			snprintf(hb, sizeof(hb), "%d", c->c_port);
+	}
+	
 	if (*delim)
-		snprintf(buf, len, "%s%s%s%d%s%d%s" "%d%s%s%s%d%s" "%d",
-		    pref, hb, delim, c->c_proto, delim, c->c_family, delim,
-		    c->c_uid, delim, c->c_name, delim, c->c_nfail, delim,
-		    c->c_duration);
+		snprintf(buf, len, "%s%20.20s%s%s%s" "%s%s%s%s"
+		    "%s%s" "%s%s%s",
+		    pref, hb, delim, N(0, c->c_proto), delim,
+		    N(1, c->c_family), delim, N(2, c->c_uid), delim,
+		    conf_name(c->c_name), delim,
+		    N(3, c->c_nfail), delim, N(4, c->c_duration));
 	else
-		snprintf(buf, len, "%starget=%s, proto=%d, family=%d, "
-		    "uid=%d, name=%s, nfail=%d, duration=%d", pref,
-		    hb, c->c_proto, c->c_family, c->c_uid, c->c_name,
-		    c->c_nfail, c->c_duration);
+		snprintf(buf, len, "%starget=%s, proto=%s, family=%s, "
+		    "uid=%s, name=%s, nfail=%s, duration=%s", pref,
+		    hb, N(0, c->c_proto), N(1, c->c_family), N(2, c->c_uid),
+		    conf_name(c->c_name), N(3, c->c_nfail),
+		    N(4, c->c_duration));
 	return buf;
 }
 
@@ -410,6 +458,7 @@ conf_find(int fd, uid_t uid, struct conf *cr)
 		return NULL;
 	}
 
+	cr->c_ss = ss;
 	cr->c_uid = (int)uid;
 	cr->c_family = ss.ss_family;
 	cr->c_nfail = -1;
@@ -417,16 +466,16 @@ conf_find(int fd, uid_t uid, struct conf *cr)
 
 	if (debug)
 		printf("%s\n", conf_print(buf, sizeof(buf),
-		    "look:\t", "\t", cr));
+		    "look:\t", "", cr));
 
 	for (i = 0; i < nconf; i++) {
 		if (debug)
 			printf("%s\n", conf_print(buf, sizeof(buf), "check:\t",
-			    "\t", &conf[i]));
+			    "", &conf[i]));
 		if (conf_eq(cr, &conf[i])) {
 			if (debug)
 				printf("%s\n", conf_print(buf, sizeof(buf),
-				    "found:\t", "\t", &conf[i]));
+				    "found:\t", "", &conf[i]));
 			cr->c_ss = conf[i].c_ss;
 			memcpy(cr->c_name, conf[i].c_name, CONFNAMESZ);
 			cr->c_nfail = conf[i].c_nfail;
@@ -482,7 +531,9 @@ conf_parse(const char *f)
 
 	if (debug) {
 		char buf[BUFSIZ];
-		printf("target\ttype\tproto\towner\tname\t\tnfail\tduration\n");
+		printf(
+		    "%20.20s\ttype\tproto\towner\tname\tnfail\tduration\n",
+		    "target");
 		for (nc = 0; nc < nconf; nc++)
 			printf("%s\n",
 			    conf_print(buf, sizeof(buf), "", "\t", &c[nc]));

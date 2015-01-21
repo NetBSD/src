@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.4 2015/01/21 21:24:25 christos Exp $	*/
+/*	$NetBSD: state.c,v 1.5 2015/01/21 23:09:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: state.c,v 1.4 2015/01/21 21:24:25 christos Exp $");
+__RCSID("$NetBSD: state.c,v 1.5 2015/01/21 23:09:44 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -116,7 +116,7 @@ makekey(struct dbkey *k, const struct sockaddr_storage *ss,
 		    k->ss.ss_family);
 		break;
 	}
-	if (debug)
+	if (debug > 1)
 		dumpkey(k);
 }
 
@@ -138,7 +138,7 @@ state_del(DB *db, const struct sockaddr_storage *ss, const struct conf *c)
 	switch (rv = (*db->del)(db, &k, 0)) {
 	case 0:
 	case 1:
-		if (debug)
+		if (debug > 1)
 			printf("%s: returns %d\n", __func__, rv);
 		return 0;
 	default:
@@ -170,7 +170,7 @@ state_get(DB *db, const struct sockaddr_storage *ss, const struct conf *c,
 			memset(dbi, 0, sizeof(*dbi));
 		else
 			memcpy(dbi, v.data, sizeof(*dbi));
-		if (debug)
+		if (debug > 1)
 			printf("%s: returns %d\n", __func__, rv);
 		return 0;
 	default:
@@ -199,7 +199,7 @@ state_put(DB *db, const struct sockaddr_storage *ss, const struct conf *c,
 
 	switch (rv = (*db->put)(db, &k, &v, 0)) {
 	case 0:
-		if (debug)
+		if (debug > 1)
 			printf("%s: returns %d\n", __func__, rv);
 		return 0;
 	case 1:
@@ -229,13 +229,14 @@ state_iterate(DB *db, struct sockaddr_storage *ss, struct conf *c,
 		kp = k.data;	
 		*ss = kp->ss;
 		*c = kp->c;
-		dumpkey(kp);
+		if (debug > 2)
+			dumpkey(kp);
 		memcpy(dbi, v.data, sizeof(*dbi));
-		if (debug)
+		if (debug > 1)
 			printf("%s: returns %d\n", __func__, rv);
 		return 1;
 	case 1:
-		if (debug)
+		if (debug > 1)
 			printf("%s: returns %d\n", __func__, rv);
 		return 0;
 	default:
