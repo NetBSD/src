@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.8 2015/01/21 19:45:26 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.9 2015/01/21 21:24:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.8 2015/01/21 19:45:26 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.9 2015/01/21 21:24:51 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -102,8 +102,9 @@ sigdone(int n)
 }
 
 static __dead void
-usage(void)
+usage(int c)
 {
+	warnx("Unknown option `%c'", (char)c);
 	fprintf(stderr, "Usage: %s [-df] [-c <config>] [-r <rulename>] "
 	    "[-s <sockpath>] [-C <controlprog>] [-D <dbfile>] [-t <timeout>]\n",
 	    getprogname());
@@ -273,7 +274,7 @@ main(int argc, char *argv[])
 			tout = atoi(optarg) * 1000;
 			break;
 		default:
-			usage();
+			usage(c);
 		}
 	}
 
