@@ -14,6 +14,13 @@
 #include "internal.h"
 #include "util.h"
 
+static __dead void
+usage(int c)
+{
+	warnx("Unknown option `%c'", (char)c);
+	fprintf(stderr, "Usage: %s [-d]\n", getprogname());
+	exit(EXIT_FAILURE);
+}
 int
 main(int argc, char *argv[])
 {
@@ -23,6 +30,17 @@ main(int argc, char *argv[])
 	struct sockaddr_storage ss;
 	struct dbinfo dbi;
 	unsigned int i;
+	int o;
+
+	while ((o = getopt(argc, argv, "d")) != -1)
+		switch (o) {
+		case 'd':
+			debug++;
+			break;
+		default:
+			usage(o);
+			break;
+		}
 
 	db = state_open(dbname, O_RDONLY, 0);
 	if (db == NULL)
