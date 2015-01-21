@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.2 2015/01/21 21:48:23 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997-2014 Erez Zadok
@@ -754,7 +754,7 @@ umount_exported(void)
 	} else {
 	  am_unmounted(mp);
 	}
-	if (!(mf->mf_flags && (MFF_UNMOUNTING|MFF_MOUNTED)))
+	if (!(mf->mf_flags & (MFF_UNMOUNTING|MFF_MOUNTED)))
 	  exported_ap[i] = NULL;
       } else {
 	/*
