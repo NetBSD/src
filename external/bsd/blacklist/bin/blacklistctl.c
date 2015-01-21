@@ -21,6 +21,7 @@ usage(int c)
 	fprintf(stderr, "Usage: %s [-d]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
+
 int
 main(int argc, char *argv[])
 {

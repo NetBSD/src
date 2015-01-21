@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.10 2015/01/21 23:09:44 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.11 2015/01/21 23:26:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.10 2015/01/21 23:09:44 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.11 2015/01/21 23:26:26 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -63,19 +63,10 @@ __RCSID("$NetBSD: blacklistd.c,v 1.10 2015/01/21 23:09:44 christos Exp $");
 #include "util.h"
 
 static const char *configfile = _PATH_BLCONF;
-
-int debug;
-const char *rulename = "blacklistd";
-const char *controlprog = _PATH_BLCONTROL;
-struct conf *conf;
-size_t nconf;
-
 static DB *state;
 static const char *dbfile = _PATH_BLSTATE;
 static sig_atomic_t rconf;
 static sig_atomic_t done;
-
-void (*lfun)(int, const char *, ...) = syslog;
 
 static void
 sigusr1(int n)

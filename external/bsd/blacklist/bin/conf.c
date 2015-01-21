@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2015/01/21 23:09:44 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 2015/01/21 23:26:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.6 2015/01/21 23:09:44 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.7 2015/01/21 23:26:26 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -373,6 +373,7 @@ conf_print(char *buf, size_t len, const char *pref, const char *delim,
     const struct conf *c)
 {
 	char hb[128], b[5][64];
+	int sp;
 
 #define N(n, v) conf_num(b[n], sizeof(b[n]), (v))
 
@@ -390,10 +391,11 @@ conf_print(char *buf, size_t len, const char *pref, const char *delim,
 			snprintf(hb, sizeof(hb), "%d", c->c_port);
 	}
 	
+	sp = *delim == '\t' ? 20 : -1;
 	if (*delim)
-		snprintf(buf, len, "%s%20.20s%s%s%s" "%s%s%s%s"
+		snprintf(buf, len, "%s%*.*s%s%s%s" "%s%s%s%s"
 		    "%s%s" "%s%s%s",
-		    pref, hb, delim, N(0, c->c_proto), delim,
+		    pref, sp, sp, hb, delim, N(0, c->c_proto), delim,
 		    N(1, c->c_family), delim, N(2, c->c_uid), delim,
 		    conf_name(c->c_name), delim,
 		    N(3, c->c_nfail), delim, N(4, c->c_duration));
