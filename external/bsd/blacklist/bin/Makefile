@@ -1,13 +1,14 @@
-.include <bsd.own.mk>
+# $NetBSD: Makefile,v 1.5 2015/01/21 16:16:00 christos Exp $
 
-WARNS=6
-COPTS=-g
-MKMAN=no
-PROGS=srvtest cltest blacklistd
-SRCS.srvtest = bl.c srvtest.c
-SRCS.cltest = cltest.c
-SRCS.blacklistd = bl.c blacklistd.c conf.c run.c state.c
-LDADD.blacklistd += -lutil
-LPADD.blacklistd += ${LIBUTIL}
+BINDIR=/usr/sbin
+
+PROGS=blacklistd blacklistctl
+MAN=blacklistd.8
+MLINKS=blacklistd.8 blacklistd.conf.5
+SRCS.blacklistd = blacklistd.c conf.c run.c state.c
+SRCS.blacklistctl = blacklistctl.c conf.c state.c
+
+LDADD+=-lutil
+DPADD+=${LIBUTIL}
 
 .include <bsd.prog.mk>

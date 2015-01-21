@@ -1,7 +1,7 @@
-/*	$NetBSD: run.h,v 1.1 2015/01/20 00:19:21 christos Exp $	*/
+/*	$NetBSD: run.h,v 1.2 2015/01/21 16:16:00 christos Exp $	*/
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,8 +34,8 @@
 __BEGIN_DECLS
 void run_flush(void);
 struct sockaddr_storage;
-int run_add(int, in_port_t, const struct sockaddr_storage *);
-void run_rem(int id);
+int run_add(int, in_port_t, const struct sockaddr_storage *, char *, size_t);
+void run_rem(const char *);
 __END_DECLS
 
 #endif /* _RUN_H */

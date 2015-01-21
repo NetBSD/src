@@ -10,10 +10,12 @@
 #include <err.h>
 
 static __dead void
-usage(void)
+usage(int c)
 {
-	fprintf(stderr, "Usage: %s [-a <addr>] [-m <msg>]\n", getprogname());
-	exit(1);
+	warnx("Unknown option `%c'", (char)c);
+	fprintf(stderr, "Usage: %s [-u] [-a <addr>] [-m <msg>] [-p <port>]\n",
+	    getprogname());
+	exit(EXIT_FAILURE);
 }
 
 static void
@@ -49,8 +51,10 @@ main(int argc, char *argv[])
 	struct sockaddr_storage ss;
 	const char *msg = "hello";
 	const char *addr = "127.0.0.1";
+	int type = SOCK_STREAM;
+	in_port_t port = 6161;
 
-	while ((c = getopt(argc, argv, "a:m:")) == -1) {
+	while ((c = getopt(argc, argv, "a:m:p:u")) == -1) {
 		switch (c) {
 		case 'a':
 			addr = optarg;
@@ -58,21 +62,27 @@ main(int argc, char *argv[])
 		case 'm':
 			msg = optarg;
 			break;
+		case 'p':
+			port = (in_port_t)atoi(optarg);
+			break;
+		case 'u':
+			type = SOCK_DGRAM;
+			break;
 		default:
-			usage();
+			usage(c);
 		}
 	}
 
-	getaddr(addr, 6161, &ss);
+	getaddr(addr, port, &ss);
 
-	if ((sfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
-		err(1, "socket");
+	if ((sfd = socket(AF_INET, type, 0)) == -1)
+		err(EXIT_FAILURE, "socket");
 
 	if (connect(sfd, (const void *)&ss, ss.ss_len) == -1)
-		err(1, "connect");
+		err(EXIT_FAILURE, "connect");
 
 	size_t len = strlen(msg) + 1;
 	if (write(sfd, msg, len) != (ssize_t)len)
-		err(1, "write");
+		err(EXIT_FAILURE, "write");
 	return 0;
 }

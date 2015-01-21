@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2015/01/20 00:19:21 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2015/01/21 16:16:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.2 2015/01/20 00:19:21 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.3 2015/01/21 16:16:00 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -213,7 +213,7 @@ getvalue(const char *f, size_t l, int *r, char **p,
 
 
 static int
-parseconfline(const char *f, size_t l, char *p, struct conf *c)
+conf_parseline(const char *f, size_t l, char *p, struct conf *c)
 {
 	int e;
 
@@ -237,7 +237,7 @@ parseconfline(const char *f, size_t l, char *p, struct conf *c)
 }
 
 static int
-sortconf(const void *v1, const void *v2)
+conf_sort(const void *v1, const void *v2)
 {
 	const struct conf *c1 = v1;
 	const struct conf *c2 = v2;
@@ -249,36 +249,51 @@ sortconf(const void *v1, const void *v2)
 	CMP(c1, c2, c_proto);
 	CMP(c1, c2, c_family);
 	CMP(c1, c2, c_uid);
+#undef CMP
 	return 0;
 }
 
-static void
-printconf(const char *pref, const struct conf *c)
+static int
+conf_eq(const struct conf *c1, const struct conf *c2)
 {
-	printf("%s%d\t%d\t%d\t%d\t%d\t%d\n", pref,
-	    c->c_port, c->c_proto, c->c_family,
-	    c->c_uid, c->c_nfail, c->c_duration);
+#define CMP(a, b, f) \
+	if ((a)->f != (b)->f && (b)->f != -1) return 0;
+	CMP(c1, c2, c_port);
+	CMP(c1, c2, c_proto);
+	CMP(c1, c2, c_family);
+	CMP(c1, c2, c_uid);
+#undef CMP
+	return 1;
+}
+
+const char *
+conf_print(char *buf, size_t len, const char *pref, const char *delim,
+    const struct conf *c)
+{
+	snprintf(buf, len, "%s%d%s%d%s%d%s%d%s%d%s%d", pref,
+	    c->c_port, delim, c->c_proto, delim, c->c_family, delim,
+	    c->c_uid, delim, c->c_nfail, delim, c->c_duration);
+	return buf;
 }
 
 const struct conf *
-findconf(bl_info_t *bi, struct conf *cr)
+conf_find(int fd, uid_t uid, struct conf *cr)
 {
-	int lfd;
 	int proto;
 	socklen_t slen;
 	struct sockaddr_storage ss;
 	size_t i;
+	char buf[BUFSIZ];
 
-	lfd = bi->bi_fd[0];
 	slen = sizeof(ss);
 	memset(&ss, 0, slen);
-	if (getsockname(lfd, (void *)&ss, &slen) == -1) {
+	if (getsockname(fd, (void *)&ss, &slen) == -1) {
 		(*lfun)(LOG_ERR, "getsockname failed (%m)"); 
 		return NULL;
 	}
 
 	slen = sizeof(proto);
-	if (getsockopt(lfd, SOL_SOCKET, SO_TYPE, &proto, &slen) == -1) {
+	if (getsockopt(fd, SOL_SOCKET, SO_TYPE, &proto, &slen) == -1) {
 		(*lfun)(LOG_ERR, "getsockopt failed (%m)"); 
 		return NULL;
 	}
@@ -307,20 +322,23 @@ findconf(bl_info_t *bi, struct conf *cr)
 		return NULL;
 	}
 
-	cr->c_uid = (int)bi->bi_cred->sc_euid;
+	cr->c_uid = (int)uid;
 	cr->c_family = ss.ss_family;
 	cr->c_nfail = -1;
 	cr->c_duration = -1;
 
 	if (debug)
-		printconf("look:\t", cr);
+		printf("%s\n", conf_print(buf, sizeof(buf),
+		    "look:\t", "\t", cr));
 
 	for (i = 0; i < nconf; i++) {
 		if (debug)
-			printconf("check:\t", &conf[i]);
-		if (sortconf(cr, &conf[i]) == 0) {
+			printf("%s\n", conf_print(buf, sizeof(buf), "check:\t",
+			    "\t", &conf[i]));
+		if (conf_eq(cr, &conf[i])) {
 			if (debug)
-				printconf("found: ", &conf[i]);
+				printf("%s\n", conf_print(buf, sizeof(buf),
+				    "found:\t", "\t", &conf[i]));
 			cr->c_nfail = conf[i].c_nfail;
 			cr->c_duration = conf[i].c_duration;
 			return cr;
@@ -333,7 +351,7 @@ findconf(bl_info_t *bi, struct conf *cr)
 
 
 void
-parseconf(const char *f)
+conf_parse(const char *f)
 {
 	FILE *fp;
 	char *line;
@@ -361,12 +379,12 @@ parseconf(const char *f)
 			}
 			c = tc;
 		}
-		if (parseconfline(f, lineno, line, &c[nc]) == -1)
+		if (conf_parseline(f, lineno, line, &c[nc]) == -1)
 			continue;
 		nc++;
 	}
 	fclose(fp);
-	qsort(c, nc, sizeof(*c), sortconf);
+	qsort(c, nc, sizeof(*c), conf_sort);
 	
 	tc = conf;
 	nconf = nc;
@@ -374,8 +392,10 @@ parseconf(const char *f)
 	free(tc);
 
 	if (debug) {
+		char buf[BUFSIZ];
 		printf("port\ttype\tproto\towner\tnfail\tduration\n");
 		for (nc = 0; nc < nconf; nc++)
-			printconf("", &c[nc]);
+			printf("%s\n",
+			    conf_print(buf, sizeof(buf), "", "\t", &c[nc]));
 	}
 }

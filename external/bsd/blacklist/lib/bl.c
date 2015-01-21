@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.7 2015/01/20 00:52:15 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.8 2015/01/21 16:16:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.7 2015/01/20 00:52:15 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.8 2015/01/21 16:16:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -56,7 +56,7 @@ typedef struct {
 struct blacklist {
 	int b_fd;
 	int b_connected;
-	const char *b_path;
+	char b_path[MAXPATHLEN];
 	void (*b_fun)(int, const char *, ...);
 	bl_info_t b_info;
 };
@@ -125,7 +125,7 @@ bl_init(bl_t b, bool srv)
 
 	b->b_connected = true;
 	if (setsockopt(b->b_fd, 0, LOCAL_CREDS,
-	    &one, sizeof(one)) == -1) {
+	    &one, (socklen_t)sizeof(one)) == -1) {
 		(*b->b_fun)(LOG_ERR, "%s: setsockopt LOCAL_CREDS "
 		    "failed (%m)", __func__);
 		goto out;
@@ -144,63 +144,38 @@ out:
 }
 
 bl_t
-bl_create2(bool srv, const char *path, void (*fun)(int, const char *, ...))
+bl_create(bool srv, const char *path, void (*fun)(int, const char *, ...))
 {
-	bl_t b = malloc(sizeof(*b));
-	bl_info_t *bi;
+	bl_t b = calloc(1, sizeof(*b));
 	if (b == NULL)
 		goto out;
-	bi = &b->b_info;
-	bi->bi_fd = malloc(2 * sizeof(int));
-	if (bi->bi_fd == NULL)
-		goto out1;
-	bi->bi_cred = malloc(SOCKCREDSIZE(NGROUPS_MAX));
-	if (bi->bi_cred == NULL)
-		goto out2;
-
 	b->b_fun = fun == NULL ? syslog : fun;
 	b->b_fd = -1;
-	b->b_path = strdup(path ? path : _PATH_BLSOCK);
-	if (b->b_path == NULL)
-		goto out3;
+	strlcpy(b->b_path, path ? path : _PATH_BLSOCK, MAXPATHLEN);
 	b->b_connected = false;
 	bl_init(b, srv);
 	return b;
-out3:
-	free(bi->bi_cred);
-out2:
-	free(bi->bi_fd);
-out1:
-	free(b);
 out:
+	free(b);
 	(*fun)(LOG_ERR, "%s: malloc failed (%m)", __func__);
 	return NULL;
-}
-
-bl_t
-bl_create(void)
-{
-	return bl_create2(false, NULL, NULL);
 }
 
 void
 bl_destroy(bl_t b)
 {
 	bl_reset(b);
-	free(__UNCONST(b->b_path));
-	free(b->b_info.bi_cred);
-	free(b->b_info.bi_fd);
 	free(b);
 }
 
 int
-bl_send(bl_t b, bl_type_t e, int lfd, int pfd, const char *ctx)
+bl_send(bl_t b, bl_type_t e, int pfd, const char *ctx)
 {
 	struct msghdr   msg;
 	struct iovec    iov;
 	union {
-		char ctrl[CMSG_SPACE(2 * sizeof(int))];
-		uint32_t fd[2];
+		char ctrl[CMSG_SPACE(sizeof(int))];
+		uint32_t fd;
 	} ua;
 	struct cmsghdr *cmsg;
 	union {
@@ -231,13 +206,12 @@ bl_send(bl_t b, bl_type_t e, int lfd, int pfd, const char *ctx)
 	msg.msg_controllen = sizeof(ua.ctrl);
 
 	cmsg = CMSG_FIRSTHDR(&msg);
-	cmsg->cmsg_len = CMSG_LEN(2 * sizeof(int));
+	cmsg->cmsg_len = CMSG_LEN(sizeof(int));
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_RIGHTS;
 
-	fd = (void *)CMSG_DATA(cmsg);
-	fd[0] = lfd;
-	fd[1] = pfd;
+	fd = CMSG_DATA(cmsg);
+	*fd = pfd;
 
 	tried = 0;
 again:
@@ -257,9 +231,9 @@ bl_recv(bl_t b)
         struct msghdr   msg;
         struct iovec    iov;
 	union {
-		char ctrl[CMSG_SPACE(2 * sizeof(int)) +
+		char ctrl[CMSG_SPACE(sizeof(int)) +
 			CMSG_SPACE(SOCKCREDSIZE(NGROUPS_MAX))];
-		uint32_t fd[2];
+		uint32_t fd;
 		struct sockcred sc;
 	} ua;
 	struct cmsghdr *cmsg;
@@ -297,21 +271,21 @@ bl_recv(bl_t b)
 		}
 		switch (cmsg->cmsg_type) {
 		case SCM_RIGHTS:
-			if (cmsg->cmsg_len != CMSG_LEN(2 * sizeof(int))) {
+			if (cmsg->cmsg_len != CMSG_LEN(sizeof(int))) {
 				(*b->b_fun)(LOG_ERR,
 				    "%s: unexpected cmsg_len %d != %zu",
 				    __func__, cmsg->cmsg_len,
 				    CMSG_LEN(2 * sizeof(int)));
 				continue;
 			}
-			fd = (void *)CMSG_DATA(cmsg);
-			memcpy(bi->bi_fd, fd, sizeof(*bi->bi_fd) * 2);
+			fd = CMSG_DATA(cmsg);
+			bi->bi_fd = *fd;
 			break;
 		case SCM_CREDS:
 			sc = (void *)CMSG_DATA(cmsg);
 			if (sc->sc_ngroups > NGROUPS_MAX)
 				sc->sc_ngroups = NGROUPS_MAX;
-			memcpy(bi->bi_cred, sc, SOCKCREDSIZE(sc->sc_ngroups));
+			memcpy(&bi->bi_cred, sc, SOCKCREDSIZE(sc->sc_ngroups));
 			break;
 		default:
 			(*b->b_fun)(LOG_ERR, "%s: unexpected cmsg_type %d",
