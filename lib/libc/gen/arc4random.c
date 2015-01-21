@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.27 2015/01/20 18:31:25 christos Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.28 2015/01/21 02:47:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.27 2015/01/20 18:31:25 christos Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.28 2015/01/21 02:47:39 riastradh Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -109,7 +109,7 @@ crypto_le32enc(void *p, uint32_t v)
 #define	crypto_core_KEYBYTES	32
 #define	crypto_core_CONSTBYTES	16
 
-#define	crypto_core_ROUNDS	8
+#define	crypto_core_ROUNDS	20
 
 static uint32_t
 rotate(uint32_t u, unsigned c)
