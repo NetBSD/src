@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.h,v 1.6 2015/01/20 00:52:15 christos Exp $	*/
+/*	$NetBSD: bl.h,v 1.7 2015/01/21 16:16:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,23 +31,44 @@
 #ifndef _BL_H
 #define _BL_H
 
+#include <stdbool.h>
+#include <sys/param.h>
+#include <sys/socket.h>
 #include "blacklist.h"
 
 struct sockcred;
 
+typedef enum {
+	BL_INVALID,
+	BL_ADD,
+	BL_DELETE
+} bl_type_t;
+
 typedef struct {
 	bl_type_t bi_type;
-	int *bi_fd;
-	struct sockcred *bi_cred;
+	int bi_fd;
+	union {
+		char bi_space[SOCKCREDSIZE(NGROUPS_MAX)];
+		struct sockcred _bi_cred;
+	} bi_u;
 	char bi_msg[1024];
 } bl_info_t;
+
+#define bi_cred bi_u._bi_cred
 
 #define _PATH_BLSOCK "/var/run/blsock"
 
 __BEGIN_DECLS
-bl_t bl_create2(bool, const char *, void (*)(int, const char *, ...));
+
+typedef struct blacklist *bl_t;
+
+bl_t bl_create(bool, const char *, void (*)(int, const char *, ...));
+void bl_destroy(bl_t);
+int bl_send(bl_t, bl_type_t, int, const char *);
+int bl_getfd(bl_t);
 bl_info_t *bl_recv(bl_t);
 bool bl_isconnected(bl_t);
+
 __END_DECLS
 
 #endif /* _BL_H */

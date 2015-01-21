@@ -1,0 +1,71 @@
+# Tue Jan 20 21:18:54 EST 2015
+
+This package contains library that can be used by network daemons to
+communicate with a packet filter via a daemon to enforce opening and
+closing ports dynamically based on policy.
+
+The interface to the packet filter is in etc/control (this is currently
+designed for npf) and the configuration file (inspired from inetd.conf)
+is in etc/conf.
+
+A patch to OpenSSH is in ssh.diff that adds blacklisting capabilities to
+openssh.
+
+The network daemon (for example sshd) communicates to blacklistd, via
+a unix socket like syslog. The library calls are simple and everything
+is handled by the library. In the simplest form the only thing the
+daemon needs to do is to call:
+
+	blacklist(action, acceptedfd, message);
+
+Where:
+	action = 0 -> successful login clear blacklist state
+		 1 -> failed login, add to the failed count
+	acceptedfd -> the file descriptor where the server is
+		      connected to the remote client. It is used
+		      to determine the listening socket, and the
+		      remote address. This allows any program to
+		      contact the blacklist daemon, since the verification
+		      if the program has access to the listening
+		      socket is done by virtue that the port
+		      number is retrieved from the kernel.
+	message    -> an optional string that is used in debugging logs.
+
+The configuration file contains entries of the form:
+
+# Blacklist rule
+# Port	type	protocol	owner		nfail	disable
+ssh	stream	tcp		*		6	60m
+ssh	stream	tcp6		*		6	60m
+
+Here note that owner is * because the connection is done from the
+child ssh socket which runs with user privs. We also register for
+both tcp and tcp6 since those are different listening sockets and
+addresses. We use nfail = 6, because ssh allows 3 password attempts
+per connection, and this will let us have 2 connections before
+blocking.  Finally we block for an hour; we could block forever
+too by specifying * in the duration column.
+
+blacklistd and the library use syslog(3) to report errors. The
+blacklist filter state is persisted automatically in /var/db/blacklistd.db
+so that if the daemon is restarted, it remembers what connections
+is currently handling. To start from a fresh state (if you restart
+npf too for example), you can use -f. To watch the daemon at work,
+you can use -d.
+
+The current control file is designed for npf, and it uses the
+dynamic rule feature. You need to create a dynamic rule in your
+/etc/npf.conf on the group referring to the interface you want to block
+called blacklistd as follows:
+
+ext_if=bge0
+	
+group "external" on $ext_if {
+	...
+        ruleset "blacklistd" 
+	...
+}
+
+Enjoy,
+
+christos
