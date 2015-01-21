@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.4 2015/01/21 16:16:00 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.5 2015/01/21 19:24:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,13 +32,17 @@
 #define _CONF_H
 
 struct conf {
+	struct sockaddr_storage	c_ss;
 	int			c_port;
 	int			c_proto;
 	int			c_family;
 	int			c_uid;
 	int			c_nfail;
+	char			c_name[128];
 	int			c_duration;
 };
+
+#define CONFNAMESZ sizeof(((struct conf *)0)->c_name)
 
 __BEGIN_DECLS
 const char *conf_print(char *, size_t, const char *, const char *,
