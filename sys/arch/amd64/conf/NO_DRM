@@ -1,6 +1,5 @@
 include "arch/amd64/conf/GENERIC"
 
-no i915drm* 	at drm?
 no mach64drm* 	at drm?
 no mgadrm* 	at drm?
 no r128drm* 	at drm?
