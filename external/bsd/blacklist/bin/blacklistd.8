@@ -1,4 +1,4 @@
-.\" $NetBSD: blacklistd.8,v 1.1 2015/01/21 16:16:00 christos Exp $
+.\" $NetBSD: blacklistd.8,v 1.2 2015/01/21 19:37:30 christos Exp $
 .\" 
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -121,19 +121,18 @@ Comments are denoted by a
 at the beginning of a line.
 There must be an entry for each field; entries can be numeric or symbolic,
 where appropriate (
-.Dv service-name ,
+.Dv service ,
 .Dv user )
 and can be
 .Dq *
-for all fields except 
-.Dv nfail and
-.Dv duration :
+for all fields.
 The fields of the configuration file are as follows:
 .Bd -literal -offset indent
-service-name
+[address:]service
 socket-type
 protocol
 user
+rulename
 nfail
 duration
 .Ed
