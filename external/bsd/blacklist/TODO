@@ -1,4 +1,4 @@
-# $NetBSD: TODO,v 1.1 2015/01/21 19:39:25 christos Exp $
+# $NetBSD: TODO,v 1.2 2015/01/21 23:28:02 christos Exp $
 
 - don't poll periodically, find the next timeout
 - perhaps pass addresses through the socket too?
@@ -6,3 +6,5 @@
 - test udp
 - add functionality to the control program. Should it change the database
   directly, or talk to the daemon to have it do it?
+- perhaps handle interfaces too instead of addresses for dynamic ip?
+  <bge0/4>? What to do with multiple addresses?
