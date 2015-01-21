@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.5 2013/02/14 01:57:42 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2015/01/21 21:48:43 joerg Exp $
 
 .ifndef AMU_MAKEFILE_INC
 AMU_MAKEFILE_INC=
 WARNS?=	1
+CWARNFLAGS.clang+=	-Wno-error=enum-conversion
 
 .include <bsd.own.mk>
 
