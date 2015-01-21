@@ -1,4 +1,4 @@
-/*	$NetBSD: internal.h,v 1.6 2015/01/21 23:26:26 christos Exp $	*/
+/*	$NetBSD: internal.c,v 1.1 2015/01/21 23:26:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -28,19 +28,16 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _INTERNAL_H
-#define _INTERNAL_H
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: internal.c,v 1.1 2015/01/21 23:26:26 christos Exp $");
 
-#define	_PATH_BLCONF	"/etc/blacklistd/conf"
-#define	_PATH_BLCONTROL	"/etc/blacklistd/control"
-#define	_PATH_BLSTATE	"/var/db/blacklistd.db"
+#include <stdio.h>
+#include <syslog.h>
+#include "internal.h"
 
-extern struct conf *conf;
-extern size_t nconf;
-extern int debug;
-extern const char *rulename;
-extern const char *controlprog;
-
-void (*lfun)(int, const char *, ...);
-
-#endif /* _INTERNAL_H */
+int debug;
+const char *rulename = "blacklistd";
+const char *controlprog = _PATH_BLCONTROL;
+struct conf *conf;
+size_t nconf;
+void (*lfun)(int, const char *, ...) = syslog;
