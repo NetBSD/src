@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.43.2.2 2014/10/03 18:53:56 martin Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.43.2.3 2015/01/21 11:37:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43.2.2 2014/10/03 18:53:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.43.2.3 2015/01/21 11:37:04 martin Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_ddb.h"
@@ -295,7 +295,6 @@ static struct __aligned(16) {
 	struct vcprop_tag_fbres		vbt_res;
 	struct vcprop_tag_fbres		vbt_vres;
 	struct vcprop_tag_fbdepth	vbt_depth;
-	struct vcprop_tag_fbpixelorder	vbt_pixelorder;
 	struct vcprop_tag_fbalpha	vbt_alpha;
 	struct vcprop_tag_allocbuf	vbt_allocbuf;
 	struct vcprop_tag_blankscreen	vbt_blank;
@@ -332,14 +331,6 @@ static struct __aligned(16) {
 			.vpt_rcode = VCPROPTAG_REQUEST,
 		},
 		.bpp = 32,
-	},
-	.vbt_pixelorder = {
-		.tag = {
-			.vpt_tag = VCPROPTAG_SET_FB_PIXEL_ORDER,
-			.vpt_len = VCPROPTAG_LEN(vb_setfb.vbt_pixelorder),
-			.vpt_rcode = VCPROPTAG_REQUEST,
-		},
-		.state = VCPROP_PIXEL_BGR,
 	},
 	.vbt_alpha = {
 		.tag = {
@@ -733,6 +724,7 @@ rpi_fb_init(prop_dictionary_t dict)
 	char *ptr;
 	int integer;
 	int error;
+	bool is_bgr = true;
 
 	if (get_bootconf_option(boot_args, "fb",
 			      BOOTOPT_TYPE_STRING, &ptr)) {
@@ -762,7 +754,6 @@ rpi_fb_init(prop_dictionary_t dict)
 	    !vcprop_tag_success_p(&vb_setfb.vbt_res.tag) ||
 	    !vcprop_tag_success_p(&vb_setfb.vbt_vres.tag) ||
 	    !vcprop_tag_success_p(&vb_setfb.vbt_depth.tag) ||
-	    !vcprop_tag_success_p(&vb_setfb.vbt_pixelorder.tag) ||
 	    !vcprop_tag_success_p(&vb_setfb.vbt_allocbuf.tag) ||
 	    !vcprop_tag_success_p(&vb_setfb.vbt_blank.tag) ||
 	    !vcprop_tag_success_p(&vb_setfb.vbt_pitch.tag)) {
@@ -781,8 +772,6 @@ rpi_fb_init(prop_dictionary_t dict)
 	    vb_setfb.vbt_res.width, vb_setfb.vbt_res.height);
 	printf("%s: vwidth = %d vheight = %d\n", __func__,
 	    vb_setfb.vbt_vres.width, vb_setfb.vbt_vres.height);
-	printf("%s: pixelorder = %d\n", __func__,
-	    vb_setfb.vbt_pixelorder.state);
 #endif
 
 	if (vb_setfb.vbt_allocbuf.address == 0 ||
@@ -804,8 +793,20 @@ rpi_fb_init(prop_dictionary_t dict)
 	    vb_setfb.vbt_pitch.linebytes);
 	prop_dictionary_set_uint32(dict, "address",
 	    vb_setfb.vbt_allocbuf.address);
-	if (vb_setfb.vbt_pixelorder.state == VCPROP_PIXEL_BGR)
-		prop_dictionary_set_bool(dict, "is_bgr", true);
+
+	/*
+	 * Old firmware uses BGR. New firmware uses RGB. The get and set
+	 * pixel order mailbox properties don't seem to work. The firmware
+	 * adds a kernel cmdline option bcm2708_fb.fbswap=<0|1>, so use it
+	 * to determine pixel order. 0 means BGR, 1 means RGB.
+	 *
+	 * See https://github.com/raspberrypi/linux/issues/514
+	 */
+	if (get_bootconf_option(boot_args, "bcm2708_fb.fbswap",
+				BOOTOPT_TYPE_INT, &integer)) {
+		is_bgr = integer == 0;
+	}
+	prop_dictionary_set_bool(dict, "is_bgr", is_bgr);
 
 	/* if "genfb.type=<n>" is passed in cmdline, override wsdisplay type */
 	if (get_bootconf_option(boot_args, "genfb.type",
