@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2015/01/22 05:49:18 christos Exp $
+# $NetBSD: Makefile,v 1.3 2015/01/22 18:46:15 christos Exp $
+
+USE_SHLIBDIR=   yes
 
 LIB=blacklist
 SRCS=bl.c blacklist.c
