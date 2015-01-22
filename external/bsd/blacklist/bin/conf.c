@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10 2015/01/22 03:10:49 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.11 2015/01/22 04:13:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.10 2015/01/22 03:10:49 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.11 2015/01/22 04:13:04 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -519,6 +519,12 @@ conf_parse(const char *f)
 	for (; (line = fparseln(fp, &len, &lineno, NULL, 0)) != NULL;
 	    free(line))
 	{
+#ifdef __APPLE__
+		if (!*line)
+			continue;
+		if (debug > 4)
+			printf("%s, %zu: [%s]\n", f, lineno, line);
+#endif
 		if (nc == mc) {
 			mc += 10;
 			tc = realloc(c, mc * sizeof(*c));
