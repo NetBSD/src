@@ -80,7 +80,7 @@ dnl Checks for functions
 AC_CHECK_FUNCS(strerror)
 
 dnl Provide implementation of some required functions if necessary
-AC_REPLACE_FUNCS(strtoi sockaddr_snprintf popenve clock_gettime strlcpy strlcat getprogname fparseln fgetln)
+AC_REPLACE_FUNCS(strtoi sockaddr_snprintf popenve clock_gettime strlcpy strlcat getprogname fparseln fgetln pidfile)
 
 dnl See if we are cross-compiling
 AM_CONDITIONAL(IS_CROSS_COMPILE, test "$cross_compiling" = yes)

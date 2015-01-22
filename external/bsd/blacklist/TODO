@@ -1,4 +1,4 @@
-# $NetBSD: TODO,v 1.4 2015/01/22 05:44:35 christos Exp $
+# $NetBSD: TODO,v 1.5 2015/01/22 15:25:52 christos Exp $
 
 - don't poll periodically, find the next timeout
 - perhaps pass addresses through the socket too?
@@ -9,3 +9,9 @@
   <bge0/4>? What to do with multiple addresses?
 - make a pidfile
 - fix CRED on linux and macosx.
+- perhaps rate limit against DoS
+- perhaps instead of scanning the list have a sparse map by port?
+- do we want to use libnpf directly for efficiency?
+- make /etc/rc.d/ file and fix other naming inconsistencies.
+- finalize named.diff
+- add more daemons ftpd?
