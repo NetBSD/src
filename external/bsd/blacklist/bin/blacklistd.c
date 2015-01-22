@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.16 2015/01/22 04:13:04 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.17 2015/01/22 05:35:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.16 2015/01/22 04:13:04 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.17 2015/01/22 05:35:55 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -138,8 +138,16 @@ process(bl_t bl)
 	rsl = sizeof(rss);
 	memset(&rss, 0, rsl);
 	if (getpeername(rfd, (void *)&rss, &rsl) == -1) {
-		(*lfun)(LOG_ERR, "getsockname failed (%m)"); 
-		goto out;
+		if (errno != ENOTCONN) {
+			(*lfun)(LOG_ERR, "getpeername failed (%m)"); 
+			goto out;
+		}
+		if (bi->bi_slen == 0) {
+			(*lfun)(LOG_ERR,
+			    "unconnected socket with no peer in message"); 
+			goto out;
+		}
+		memcpy(&rss, &bi->bi_ss, bi->bi_slen);
 	}
 	if (state_get(state, &rss, &c, &dbi) == -1)
 		goto out;
