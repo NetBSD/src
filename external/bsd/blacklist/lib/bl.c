@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.15 2015/01/22 05:35:55 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.16 2015/01/22 05:41:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.15 2015/01/22 05:35:55 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.16 2015/01/22 05:41:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -170,14 +170,6 @@ bl_init(bl_t b, bool srv)
 	}
 #endif
 
-#ifdef notdef
-	if (srv)
-		if (listen(b->b_fd, 5) == -1) {
-			(*b->b_fun)(LOG_ERR, "%s: listen failed (%m)",
-			    __func__);
-			goto out;
-		}
-#endif
 	return 0;
 out:
 	bl_reset(b);
