@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistctl.c,v 1.6 2015/01/22 03:08:09 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.1 2015/01/22 03:08:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,67 +34,58 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistctl.c,v 1.6 2015/01/22 03:08:09 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.1 2015/01/22 03:08:09 christos Exp $");
 
-#include <stdio.h>
 #include <time.h>
-#ifdef HAVE_UTIL_H
-#include <util.h>
-#endif
-#include <fcntl.h>
-#include <db.h>
-#include <err.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <errno.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/socket.h>
+#include <inttypes.h>
 
-#include "conf.h"
-#include "state.h"
-#include "internal.h"
-#include "util.h"
+#include "support.h"
 
-static __dead void
-usage(int c)
+static __attribute__((__format_arg__(3))) const char *
+expandm(char *buf, size_t len, const char *fmt) 
 {
-	warnx("Unknown option `%c'", (char)c);
-	fprintf(stderr, "Usage: %s [-d]\n", getprogname());
-	exit(EXIT_FAILURE);
+	char *p;
+	size_t r;
+
+	if ((p = strstr(fmt, "%m")) == NULL)
+		return fmt;
+
+	r = (size_t)(p - fmt);
+	if (r >= len)
+		return fmt;
+
+	strlcpy(buf, fmt, r + 1);
+	strlcat(buf, strerror(errno), len);
+	strlcat(buf, fmt + r + 2, len);
+
+	return buf;
 }
 
-int
-main(int argc, char *argv[])
+void
+dlog(int level __unused, const char *fmt, ...)
 {
-	const char *dbname = _PATH_BLSTATE;
-	DB *db;
-	struct conf c;
-	struct sockaddr_storage ss;
-	struct dbinfo dbi;
-	unsigned int i;
-	int o;
+	char buf[BUFSIZ];
+	va_list ap;
 
-	while ((o = getopt(argc, argv, "d")) != -1)
-		switch (o) {
-		case 'd':
-			debug++;
-			break;
-		default:
-			usage(o);
-			break;
-		}
+	fprintf(stderr, "%s: ", getprogname());
+	va_start(ap, fmt);
+	vfprintf(stderr, expandm(buf, sizeof(buf), fmt), ap);
+	va_end(ap);
+	fprintf(stderr, "\n");
+}
 
-	db = state_open(dbname, O_RDONLY, 0);
-	if (db == NULL)
-		err(EXIT_FAILURE, "Can't open `%s'", dbname);
-
-	for (i = 1; state_iterate(db, &ss, &c, &dbi, i) != 0; i = 0) {
-		char buf[BUFSIZ];
-		printf("conf: %s\n", conf_print(buf, sizeof(buf), "",
-		    ":", &c));
-		sockaddr_snprintf(buf, sizeof(buf), "%a", (void *)&ss);
-		printf("addr: %s\n", buf);
-		printf("data: count=%d id=%s time=%s\n", dbi.count,
-		    dbi.id, fmttime(buf, sizeof(buf), dbi.last));
-	}
-	state_close(db);
-	return EXIT_SUCCESS;
+const char *
+fmttime(char *b, size_t l, time_t t)
+{
+	struct tm tm;
+	if (localtime_r(&t, &tm) == NULL)
+		snprintf(b, l, "*%jd*", (intmax_t)t);
+	else
+		strftime(b, l, "%Y/%m/%d %H:%M:%S", &tm);
+	return b;
 }
