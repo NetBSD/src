@@ -1,4 +1,4 @@
-/*	$NetBSD: internal.c,v 1.1 2015/01/21 23:26:26 christos Exp $	*/
+/*	$NetBSD: internal.c,v 1.2 2015/01/22 03:08:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -28,8 +28,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#include "port.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: internal.c,v 1.1 2015/01/21 23:26:26 christos Exp $");
+__RCSID("$NetBSD: internal.c,v 1.2 2015/01/22 03:08:09 christos Exp $");
 
 #include <stdio.h>
 #include <syslog.h>

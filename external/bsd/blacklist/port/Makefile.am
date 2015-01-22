@@ -14,7 +14,7 @@ libblacklist_la_SOURCES = bl.c blacklist.c
 libblacklist_la_LDFLAGS = -no-undefined -version-info 0:0:0
 libblacklist_la_LIBADD = $(LTLIBOBJS)
 
-SRCS = internal.c util.c run.c conf.c state.c
+SRCS = internal.c support.c run.c conf.c state.c
 blacklistd_SOURCES = blacklistd.c ${SRCS}
 blacklistd_LDADD = libblacklist.la
 blacklistctl_SOURCES = blacklistctl.c ${SRCS}

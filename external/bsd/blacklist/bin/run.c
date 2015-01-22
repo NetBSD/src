@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.5 2015/01/22 01:39:18 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.6 2015/01/22 03:08:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,10 +34,12 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: run.c,v 1.5 2015/01/22 01:39:18 christos Exp $");
+__RCSID("$NetBSD: run.c,v 1.6 2015/01/22 03:08:09 christos Exp $");
 
 #include <stdio.h>
+#ifdef HAVE_UTIL_H
 #include <util.h>
+#endif
 #include <stdarg.h>
 #include <limits.h>
 #include <stdlib.h>

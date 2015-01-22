@@ -1,4 +1,4 @@
-/*	$NetBSD: state.h,v 1.2 2015/01/21 16:16:00 christos Exp $	*/
+/*	$NetBSD: state.h,v 1.3 2015/01/22 03:08:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -31,7 +31,13 @@
 #ifndef _STATE_H
 #define _STATE_H
 
+#ifdef HAVE_DB_185_H
+#include <db_185.h>
+#elif HAVE_DB_H
 #include <db.h>
+#else
+#error "no db.h"
+#endif
 #include <time.h>
 
 struct dbinfo {
