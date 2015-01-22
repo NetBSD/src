@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.17 2015/01/22 05:35:55 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.18 2015/01/22 07:57:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.17 2015/01/22 05:35:55 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.18 2015/01/22 07:57:31 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -101,8 +101,8 @@ usage(int c)
 {
 	warnx("Unknown option `%c'", (char)c);
 	fprintf(stderr, "Usage: %s [-df] [-c <config>] [-r <rulename>] "
-	    "[-s <sockpath>] [-C <controlprog>] [-D <dbfile>] [-t <timeout>]\n",
-	    getprogname());
+	    "[-P <sockpathsfile>] [-C <controlprog>] [-D <dbfile>] "
+	    "[-t <timeout>]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -237,20 +237,42 @@ update(void)
 	}
 }
 
+static void
+addfd(struct pollfd **pfdp, bl_t **blp, size_t *nfd, size_t *maxfd,
+    const char *path)
+{
+	bl_t bl = bl_create(true, path, lfun);
+	if (bl == NULL || !bl_isconnected(bl))
+		exit(EXIT_FAILURE);
+	if (*nfd >= *maxfd) {
+		*maxfd += 10;
+		*blp = realloc(*blp, sizeof(**blp) * *maxfd);
+		if (*blp == NULL)
+			err(EXIT_FAILURE, "malloc");
+		*pfdp = realloc(*pfdp, sizeof(**pfdp) * *maxfd);
+		if (*pfdp == NULL)
+			err(EXIT_FAILURE, "malloc");
+	}
+
+	(*pfdp)[*nfd].fd = bl_getfd(bl);
+	(*pfdp)[*nfd].events = POLLIN;
+	(*blp)[*nfd] = bl;
+	*nfd += 1;
+}
+
 int
 main(int argc, char *argv[])
 {
-	bl_t bl;
 	int c, tout, flags, reset;
 	const char *spath;
 
 	setprogname(argv[0]);
 
-	spath = _PATH_BLSOCK;
+	spath = NULL;
 	reset = 0;
 	tout = 0;
 	flags = O_RDWR|O_EXCL|O_CLOEXEC;
-	while ((c = getopt(argc, argv, "C:c:D:dfr:s:t:")) != -1) {
+	while ((c = getopt(argc, argv, "C:c:D:dfr:P:t:")) != -1) {
 		switch (c) {
 		case 'C':
 			controlprog = optarg;
@@ -270,7 +292,7 @@ main(int argc, char *argv[])
 		case 'r':
 			rulename = optarg;
 			break;
-		case 's':
+		case 'P':
 			spath = optarg;
 			break;
 		case 't':
@@ -288,13 +310,12 @@ main(int argc, char *argv[])
 	signal(SIGUSR1, sigusr1);
 	signal(SIGUSR2, sigusr2);
 
+
 	if (debug) {
 		lfun = dlog;
 		if (tout == 0)
 			tout = 5000;
 	} else {
-		if (daemon(0, 0) == -1)
-			err(EXIT_FAILURE, "daemon failed");
 		if (tout == 0)
 			tout = 15000;
 	}
@@ -306,24 +327,40 @@ main(int argc, char *argv[])
 		flags |= O_TRUNC;
 	}
 
-	bl = bl_create(true, spath, lfun);
-	if (bl == NULL || !bl_isconnected(bl))
-		return EXIT_FAILURE;
+	struct pollfd *pfd = NULL;
+	bl_t *bl = NULL;
+	size_t nfd = 0;
+	size_t maxfd = 0;
+
+	if (spath == NULL)
+		addfd(&pfd, &bl, &nfd, &maxfd, _PATH_BLSOCK);
+	else {
+		FILE *fp = fopen(spath, "r");
+		char *line;
+		if (fp == NULL)
+			err(EXIT_FAILURE, "Can't open `%s'", spath);
+		for (; (line = fparseln(fp, NULL, NULL, NULL, 0)) != NULL;
+		    free(line))
+			addfd(&pfd, &bl, &nfd, &maxfd, line);
+		fclose(fp);
+	}
+
 	state = state_open(dbfile, flags, 0600);
 	if (state == NULL)
 		state = state_open(dbfile,  flags | O_CREAT, 0600);
 	if (state == NULL)
 		return EXIT_FAILURE;
 
-	struct pollfd pfd;
-	pfd.fd = bl_getfd(bl);
-	pfd.events = POLLIN;
+	if (!debug)
+		if (daemon(0, 0) == -1)
+			err(EXIT_FAILURE, "daemon failed");
+
 	while (!done) {
 		if (rconf) {
 			rconf = 0;
 			conf_parse(configfile);
 		}
-		switch (poll(&pfd, 1, tout)) {
+		switch (poll(pfd, (nfds_t)nfd, tout)) {
 		case -1:
 			if (errno == EINTR)
 				continue;
@@ -332,7 +369,9 @@ main(int argc, char *argv[])
 		case 0:
 			break;
 		default:
-			process(bl);
+			for (size_t i = 0; i < nfd; i++)
+				if (pfd[i].revents & POLLIN)
+					process(bl[i]);
 		}
 		update();
 	}
