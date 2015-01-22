@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.9 2015/01/22 01:39:18 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.10 2015/01/22 02:42:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -28,8 +28,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#include "port.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.9 2015/01/22 01:39:18 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.10 2015/01/22 02:42:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,6 +49,7 @@ __RCSID("$NetBSD: bl.c,v 1.9 2015/01/22 01:39:18 christos Exp $");
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <stdbool.h>
 
 #include "bl.h"
@@ -93,7 +100,9 @@ bl_init(bl_t b, bool srv)
 	/* AF_UNIX address of local logger */
 	struct sockaddr_un sun = {
 		.sun_family = AF_LOCAL,
+#ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
 		.sun_len = sizeof(sun),
+#endif
 	};
 	mode_t om;
 	int rv;
@@ -127,8 +136,10 @@ bl_init(bl_t b, bool srv)
 		fcntl(b->b_fd, F_SETFL, fcntl(b->b_fd, F_GETFL) | O_NONBLOCK);
 #endif
 #if SOCK_NOSIGPIPE == 0
+#ifdef SO_NOSIGPIPE
 		int o = 1;
-		setsockopt(b->b_fd, SOL_SOCKET, SO_NOSIGPIPE, &o, sizeof(o));
+		setsockopt(b->b_fd, SOL_SOCKET, SO_NOSIGPIPE, &o, sizeof(o)
+#endif
 #endif
 	}
 
@@ -271,7 +282,6 @@ bl_recv(bl_t b)
 		bl_message_t bl;
 		char buf[512];
 	} ub;
-	int *fd;
 	ssize_t rlen;
 	bl_info_t *bi = &b->b_info;
 
@@ -309,6 +319,7 @@ bl_recv(bl_t b)
 			}
 			memcpy(&bi->bi_fd, CMSG_DATA(cmsg), sizeof(bi->bi_fd));
 			break;
+#ifdef SCM_CREDS
 		case SCM_CREDS:
 #ifdef SOCKCREDSIZE
 			sc = (void *)CMSG_DATA(cmsg);
@@ -316,6 +327,7 @@ bl_recv(bl_t b)
 #else
 #endif
 			break;
+#endif
 		default:
 			(*b->b_fun)(LOG_ERR, "%s: unexpected cmsg_type %d",
 			    __func__, cmsg->cmsg_type);
