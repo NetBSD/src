@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.73 2014/11/06 11:40:32 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.74 2015/01/22 20:01:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.73 2014/11/06 11:40:32 uebayasi Exp $");
+__RCSID("$NetBSD: main.c,v 1.74 2015/01/22 20:01:22 christos Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -1557,8 +1557,8 @@ strtolower(const char *name)
 	char c;
 
 	for (n = name, p = low; (c = *n) != '\0'; n++)
-		*p++ = isupper((u_char)c) ? (char)tolower((u_char)c) : c;
-	*p = 0;
+		*p++ = (char)(isupper((u_char)c) ? tolower((u_char)c) : c);
+	*p = '\0';
 	return (intern(low));
 }
 
