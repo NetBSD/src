@@ -1,4 +1,4 @@
-.\" $NetBSD: blacklistd.8,v 1.2 2015/01/21 19:37:30 christos Exp $
+.\" $NetBSD: blacklistd.8,v 1.3 2015/01/22 07:57:31 christos Exp $
 .\" 
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\" 
-.Dd January 19, 2016
+.Dd January 22, 2016
 .Dt BLACKLISTD 8
 .Os
 .Sh NAME
@@ -41,16 +41,18 @@
 .Op Fl C Ar controlprog
 .Op Fl D Ar dbfile
 .Op Fl r Ar rulename
-.Op Fl s Ar sockpath
+.Op Fl P Ar sockpathsfile
 .Op Fl t Ar timeout
 .Sh DESCRIPTION
 .Nm
 is a daemon similar to
 .Xr syslogd 8
-that listens to a socket at
-.Ar sockpath
+that listens to a sockets at paths specified in the 
+.Ar sockpathsfile
 for notifications from other daemons about successful or failed connection
 attempts.
+If no such file is specified, then it only listens to the default socket
+.Pa /var/run/blsock .
 Each notification contains a (action, port, protocol, address, owner) tuple
 that identifies the remote connection and the action.
 This tuple is consulted against entries in
@@ -150,6 +152,8 @@ diagnostic messages to
 .Bl -tag -width /etc/blacklistd/control -compact
 .It Pa /etc/blacklistd/control
 Shell script invoked to interface with the packet filter.
+.It Pa /etc/blacklistd/sockets
+List of socket paths to listen to.
 .It Pa /etc/blacklistd/conf
 Configuration file.
 .It Pa /var/db/blacklistd.db
