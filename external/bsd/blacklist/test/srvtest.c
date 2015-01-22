@@ -1,4 +1,4 @@
-/*	$NetBSD: srvtest.c,v 1.7 2015/01/22 04:13:04 christos Exp $	*/
+/*	$NetBSD: srvtest.c,v 1.8 2015/01/22 05:03:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: srvtest.c,v 1.7 2015/01/22 04:13:04 christos Exp $");
+__RCSID("$NetBSD: srvtest.c,v 1.8 2015/01/22 05:03:52 christos Exp $");
 
 #include <sys/types.h> 
 #include <sys/socket.h>
@@ -94,25 +94,30 @@ cr(int af, int type, in_port_t p)
 		s6->sin6_port = p;
 	}
 #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
-	ss.ss_len = slen;
+	ss.ss_len = (uint8_t)slen;
 #endif
      
 	if (bind(sfd, (const void *)&ss, slen) == -1)
 		err(1, "bind");
 
-	if (listen(sfd, 5) == -1)
-		err(1, "listen");
+	if (type != SOCK_DGRAM)
+		if (listen(sfd, 5) == -1)
+			err(1, "listen");
 	return sfd;
 }
 
 static void
-handle(int sfd)
+handle(int type, int sfd)
 {
 	struct sockaddr_storage ss;
 	socklen_t alen = sizeof(ss);
 	int afd;
-	if ((afd = accept(sfd, (void *)&ss, &alen)) == -1)
-		err(1, "accept");
+
+	if (type != SOCK_DGRAM) {
+		if ((afd = accept(sfd, (void *)&ss, &alen)) == -1)
+			err(1, "accept");
+	} else
+		afd = sfd;
 
 	/* Create child process */
 	switch (fork()) {
@@ -174,7 +179,7 @@ main(int argc, char *argv[])
 		for (size_t i = 0; i < __arraycount(pfd); i++) {
 			if ((pfd[i].revents & POLLIN) == 0)
 				continue;
-			handle(pfd[i].fd);
+			handle(type, pfd[i].fd);
 		}
 	}
 }
