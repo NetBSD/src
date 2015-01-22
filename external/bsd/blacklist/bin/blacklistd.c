@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.11 2015/01/21 23:26:26 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.12 2015/01/22 01:39:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -28,8 +28,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#include "port.h"
+#endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.11 2015/01/21 23:26:26 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.12 2015/01/22 01:39:18 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -69,25 +73,25 @@ static sig_atomic_t rconf;
 static sig_atomic_t done;
 
 static void
-sigusr1(int n)
+sigusr1(int n __unused)
 {
 	debug++;
 }
 
 static void
-sigusr2(int n)
+sigusr2(int n __unused)
 {
 	debug--;
 }
 
 static void
-sighup(int n)
+sighup(int n __unused)
 {
 	rconf++;
 }
 
 static void
-sigdone(int n)
+sigdone(int n __unused)
 {
 	done++;
 }
@@ -123,12 +127,11 @@ process(bl_t bl)
 		return;
 
 	if (debug)
-		printf("got type=%d fd=%d msg=%s cred=[u=%lu, g=%lu]\n",
+		printf("got type=%d fd=%d msg=%s uid=%lu\n",
 		    bi->bi_type, bi->bi_fd, bi->bi_msg,
-		    (unsigned long)bi->bi_cred.sc_euid,
-		    (unsigned long)bi->bi_cred.sc_egid);
+		    (unsigned long)bi->bi_uid);
 
-	if (conf_find(bi->bi_fd, bi->bi_cred.sc_euid, &c) == NULL)
+	if (conf_find(bi->bi_fd, bi->bi_uid, &c) == NULL)
 		goto out;
 
 	rfd = bi->bi_fd;
