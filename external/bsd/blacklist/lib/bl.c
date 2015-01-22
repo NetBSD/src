@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.18 2015/01/22 16:19:53 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.19 2015/01/22 17:49:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.18 2015/01/22 16:19:53 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.19 2015/01/22 17:49:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -202,7 +202,7 @@ bl_init(bl_t b, bool srv)
 #define CRED_SC_GID	sc_egid
 #define CRED_MESSAGE	SCM_CREDS
 #define CRED_SIZE	SOCKCREDSIZE(NGROUPS_MAX)
-#define CRED_TYPE	sockcred
+#define CRED_TYPE	struct sockcred
 #elif defined(SO_PASSCRED)
 #define CRED_LEVEL	SOL_SOCKET
 #define	CRED_NAME	SO_PASSCRED
@@ -210,17 +210,24 @@ bl_init(bl_t b, bool srv)
 #define CRED_SC_GID	gid
 #define CRED_MESSAGE	SCM_CREDENTIALS
 #define CRED_SIZE	sizeof(struct ucred)
-#define CRED_TYPE	ucred
+#define CRED_TYPE	struct ucred
 #else
-#error "don't know how to setup credential passing"
+/*
+ * getpeereid() and LOCAL_PEERCRED don't help here
+ * because we are not a stream socket!
+ */
+#define	CRED_SIZE	0
+#define CRED_TYPE	void * __unused
 #endif
 
+#ifdef CRED_LEVEL
 	if (setsockopt(b->b_fd, CRED_LEVEL, CRED_NAME,
 	    &one, (socklen_t)sizeof(one)) == -1) {
 		bl_log(b->b_fun, LOG_ERR, "%s: setsockopt %s "
 		    "failed (%m)", __func__, __STRING(CRED_NAME));
 		goto out;
 	}
+#endif
 
 	return 0;
 out:
@@ -322,10 +329,10 @@ bl_recv(bl_t b)
 	union {
 		char ctrl[CMSG_SPACE(sizeof(int)) + CMSG_SPACE(CRED_SIZE)];
 		uint32_t fd;
-		struct CRED_TYPE sc;
+		CRED_TYPE sc;
 	} ua;
 	struct cmsghdr *cmsg;
-	struct CRED_TYPE *sc;
+	CRED_TYPE *sc;
 	union {
 		bl_message_t bl;
 		char buf[512];
@@ -368,11 +375,13 @@ bl_recv(bl_t b)
 			}
 			memcpy(&bi->bi_fd, CMSG_DATA(cmsg), sizeof(bi->bi_fd));
 			break;
+#ifdef CRED_MESSAGE
 		case CRED_MESSAGE:
 			sc = (void *)CMSG_DATA(cmsg);
 			bi->bi_uid = sc->CRED_SC_UID;
 			bi->bi_gid = sc->CRED_SC_GID;
 			break;
+#endif
 		default:
 			bl_log(b->b_fun, LOG_ERR,
 			    "%s: unexpected cmsg_type %d",
@@ -395,6 +404,10 @@ bl_recv(bl_t b)
 	bi->bi_type = ub.bl.bl_type;
 	bi->bi_slen = ub.bl.bl_salen;
 	bi->bi_ss = ub.bl.bl_ss;
+#ifndef CRED_MESSAGE
+	bi->bi_uid = -1;
+	bi->bi_gid = -1;
+#endif
 	strlcpy(bi->bi_msg, ub.bl.bl_data, MIN(sizeof(bi->bi_msg),
 	    ((size_t)rlen - sizeof(ub.bl) + 1)));
 	return bi;

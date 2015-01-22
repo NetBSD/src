@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.9 2015/01/22 03:08:09 christos Exp $
+# $NetBSD: Makefile,v 1.10 2015/01/22 17:49:41 christos Exp $
 
-BINDIR=/usr/sbin
+BINDIR=/sbin
 
 PROGS=blacklistd blacklistctl
 MAN.blacklistd=blacklistd.8

@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.10 2015/01/22 16:19:53 christos Exp $	*/
+/*	$NetBSD: state.c,v 1.11 2015/01/22 17:49:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: state.c,v 1.10 2015/01/22 16:19:53 christos Exp $");
+__RCSID("$NetBSD: state.c,v 1.11 2015/01/22 17:49:41 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -98,14 +98,15 @@ dumpkey(const struct dbkey *k)
 {
 	char buf[10240];
 	size_t z;
+	int r;
 	const unsigned char *p = (const void *)k;
 	const unsigned char *e = p + sizeof(*k);
-	z = snprintf(buf, sizeof(buf), "%s: ", __func__);
-	if (z >= sizeof(buf))
+	r = snprintf(buf, sizeof(buf), "%s: ", __func__);
+	if (r == -1 || (z = (size_t)r) >= sizeof(buf))
 		z = sizeof(buf);
 	while (p < e) {
-		z += snprintf(buf + z, sizeof(buf) - z, "%.2x", *p++);
-		if (z >= sizeof(buf))
+		r = snprintf(buf + z, sizeof(buf) - z, "%.2x", *p++);
+		if (r == -1 || (z += (size_t)r) >= sizeof(buf))
 			z = sizeof(buf);
 	}
 	(*lfun)(LOG_DEBUG, "%s", buf);
