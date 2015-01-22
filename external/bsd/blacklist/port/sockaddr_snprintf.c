@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.4 2015/01/22 02:45:10 christos Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.5 2015/01/22 02:48:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.4 2015/01/22 02:45:10 christos Exp $");
+__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.5 2015/01/22 02:48:24 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -43,6 +43,9 @@ __RCSID("$NetBSD: sockaddr_snprintf.c,v 1.4 2015/01/22 02:45:10 christos Exp $")
 #include <sys/un.h>
 
 #include <netinet/in.h>
+#ifdef __linux__
+#undef HAVE_NETATALK_AT_H
+#endif
 #ifdef HAVE_NETATALK_AT_H
 #include <netatalk/at.h>
 #endif
@@ -208,6 +211,7 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 		p = ntohs(sin6->sin6_port);
 		a = &sin6->sin6_addr;
 		break;
+#ifdef HAVE_NET_IF_DL_H
 	case AF_LINK:
 		sdl = ((const struct sockaddr_dl *)(const void *)sa);
 		(void)strlcpy(addr = abuf, link_ntoa(sdl), sizeof(abuf));
@@ -216,6 +220,7 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			addr = w;
 		}
 		break;
+#endif
 	default:
 		errno = EAFNOSUPPORT;
 		return -1;
@@ -339,9 +344,11 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			case AF_INET6:
 				debug_in6(nbuf, sizeof(nbuf), sin6);
 				break;
+#ifdef NET_IF_DL_H
 			case AF_LINK:
 				debug_dl(nbuf, sizeof(nbuf), sdl);
 				break;
+#endif
 			default:
 				abort();
 			}

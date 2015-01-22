@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.10 2015/01/22 02:42:56 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.11 2015/01/22 02:48:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.10 2015/01/22 02:42:56 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.11 2015/01/22 02:48:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: bl.c,v 1.10 2015/01/22 02:42:56 christos Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <syslog.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -138,7 +139,9 @@ bl_init(bl_t b, bool srv)
 #if SOCK_NOSIGPIPE == 0
 #ifdef SO_NOSIGPIPE
 		int o = 1;
-		setsockopt(b->b_fd, SOL_SOCKET, SO_NOSIGPIPE, &o, sizeof(o)
+		setsockopt(b->b_fd, SOL_SOCKET, SO_NOSIGPIPE, &o, sizeof(o));
+#else
+		signal(SIGPIPE, SIG_IGN);
 #endif
 #endif
 	}
