@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklist.h,v 1.1 2015/01/21 16:16:00 christos Exp $	*/
+/*	$NetBSD: blacklist.h,v 1.2 2015/01/22 05:35:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,11 +32,13 @@
 #define _BLACKLIST_H
 
 __BEGIN_DECLS
-struct blacklist;
-int blacklist(int, int, const char *);
-int blacklist_r(struct blacklist *, int, int, const char *);
 struct blacklist *blacklist_open(void);
 void blacklist_close(struct blacklist *);
+int blacklist(int, int, const char *);
+int blacklist_r(struct blacklist *, int, int, const char *);
+int blacklist_sa(int, int, const struct sockaddr *, socklen_t, const char *);
+int blacklist_sa_r(struct blacklist *, int, int,
+    const struct sockaddr *, socklen_t, const char *);
 __END_DECLS
 
 #endif /* _BLACKLIST_H */
