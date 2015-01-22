@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklist.c,v 1.2 2015/01/22 02:42:56 christos Exp $	*/
+/*	$NetBSD: blacklist.c,v 1.3 2015/01/22 03:10:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#include "port.h"
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklist.c,v 1.2 2015/01/22 02:42:56 christos Exp $");
+__RCSID("$NetBSD: blacklist.c,v 1.3 2015/01/22 03:10:49 christos Exp $");
 
 #include <stdio.h>
 #include <bl.h>

@@ -1,7 +1,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "port.h"
+
 #include <time.h>
 #include <sys/time.h>
 

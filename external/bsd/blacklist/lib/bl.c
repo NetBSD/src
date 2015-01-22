@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.11 2015/01/22 02:48:24 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.12 2015/01/22 03:10:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -28,14 +28,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#include "port.h"
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.11 2015/01/22 02:48:24 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.12 2015/01/22 03:10:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
