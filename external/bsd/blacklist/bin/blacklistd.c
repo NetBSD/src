@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.15 2015/01/22 03:48:07 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.16 2015/01/22 04:13:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.15 2015/01/22 03:48:07 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.16 2015/01/22 04:13:04 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -162,7 +162,8 @@ process(bl_t bl)
 			goto out;
 		}
 		if (c.c_nfail != -1 && dbi.count >= c.c_nfail) {
-			int res = run_add(&c, &rss, dbi.id, sizeof(dbi.id));
+			int res = run_change("add", &c, &rss,
+			    dbi.id, sizeof(dbi.id));
 			if (res == -1)
 				goto out;
 			sockaddr_snprintf(rbuf, sizeof(rbuf), "%a",
@@ -218,7 +219,7 @@ update(void)
 		if (c.c_duration == -1 || when >= ts.tv_sec)
 			continue;
 		if (dbi.id[0]) {
-			run_rem(&c, dbi.id);
+			run_change("rem", &c, &ss, dbi.id, 0);
 			sockaddr_snprintf(buf, sizeof(buf), "%a", (void *)&ss);
 			syslog(LOG_INFO,
 			    "Released %s at port %d after %d seconds",

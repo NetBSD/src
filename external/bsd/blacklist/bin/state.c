@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.7 2015/01/22 03:10:49 christos Exp $	*/
+/*	$NetBSD: state.c,v 1.8 2015/01/22 04:13:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: state.c,v 1.7 2015/01/22 03:10:49 christos Exp $");
+__RCSID("$NetBSD: state.c,v 1.8 2015/01/22 04:13:04 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -75,6 +75,10 @@ state_open(const char *dbname, int flags, mode_t perm)
 {
 	DB *db;
 
+#ifdef __APPLE__
+	flags &= O_CREAT|O_EXCL|O_EXLOCK|O_NONBLOCK|O_RDONLY|
+	     O_RDWR|O_SHLOCK|O_TRUNC;
+#endif
 	db = dbopen(dbname, flags, perm, DB_HASH, &openinfo);
 	if (db == NULL) {
 		if (errno == ENOENT && (flags & O_CREAT) == 0)
