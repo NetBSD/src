@@ -1,4 +1,4 @@
-/*	$NetBSD: cltest.c,v 1.5 2015/01/22 05:03:52 christos Exp $	*/
+/*	$NetBSD: cltest.c,v 1.6 2015/01/22 05:44:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cltest.c,v 1.5 2015/01/22 05:03:52 christos Exp $");
+__RCSID("$NetBSD: cltest.c,v 1.6 2015/01/22 05:44:28 christos Exp $");
 
 #include <sys/types.h> 
 #include <sys/socket.h>
@@ -132,6 +132,5 @@ main(int argc, char *argv[])
 	size_t len = strlen(msg) + 1;
 	if (write(sfd, msg, len) != (ssize_t)len)
 		err(EXIT_FAILURE, "write");
-	sleep(10);
 	return 0;
 }
