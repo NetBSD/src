@@ -32,8 +32,7 @@ AC_C_CONST
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_SYS_LARGEFILE
-AC_CHECK_MEMBERS([struct sockaddr_in.sin_len])
-
+AC_CHECK_MEMBERS([struct sockaddr.sa_len], [], [], [#include <sys/socket.h>])
 
 AC_TYPE_PID_T
 AC_TYPE_UINT8_T

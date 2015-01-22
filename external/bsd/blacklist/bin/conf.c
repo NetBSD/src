@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 2015/01/21 23:26:26 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 2015/01/22 02:42:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -28,8 +28,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#include "port.h"
+#endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.7 2015/01/21 23:26:26 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.8 2015/01/22 02:42:27 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -167,7 +171,9 @@ gethostport(const char *f, size_t l, void *v, const char *p)
 			if (inet_pton(AF_INET6, p, &s6->sin6_addr) == -1)
 				goto out;
 			s6->sin6_family = AF_INET6;
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
 			s6->sin6_len = sizeof(*s6);
+#endif
 			port = &s6->sin6_port;
 		} 
 		p = ++d;
@@ -180,7 +186,9 @@ gethostport(const char *f, size_t l, void *v, const char *p)
 			if (inet_pton(AF_INET, p, &s->sin_addr) == -1)
 				goto out;
 			s->sin_family = AF_INET;
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
 			s->sin_len = sizeof(*s);
+#endif
 			port = &s->sin_port;
 		}
 		p = d;
@@ -249,7 +257,7 @@ getuid(const char *f, size_t l, void *r, const char *p)
 }
 
 static int
-getname(const char *f, size_t l, void *r, const char *p)
+getname(const char *f __unused, size_t l __unused, void *r, const char *p)
 {
 	snprintf(r, CONFNAMESZ, "%s%s", *p == '-' ? rulename : "", p);
 	return 0;
