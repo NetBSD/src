@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.19 2015/01/22 17:49:41 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.20 2015/01/22 18:15:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.19 2015/01/22 17:49:41 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.20 2015/01/22 18:15:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -67,7 +67,7 @@ typedef struct {
 struct blacklist {
 	int b_fd;
 	int b_connected;
-	char b_path[MAXPATHLEN];
+	struct sockaddr_un b_sun;
 	void (*b_fun)(int, const char *, va_list);
 	bl_info_t b_info;
 };
@@ -77,7 +77,7 @@ struct blacklist {
 bool
 bl_isconnected(bl_t b)
 {
-	return b->b_connected;
+	return b->b_connected == 0;
 }
 
 int
@@ -93,7 +93,7 @@ bl_reset(bl_t b)
 	close(b->b_fd);
 	errno = serrno;
 	b->b_fd = -1;
-	b->b_connected = false;
+	b->b_connected = -1;
 }
 
 static void
@@ -114,16 +114,9 @@ bl_init(bl_t b, bool srv)
 {
 	static int one = 1;
 	/* AF_UNIX address of local logger */
-	struct sockaddr_un sun = {
-		.sun_family = AF_LOCAL,
-#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
-		.sun_len = sizeof(sun),
-#endif
-	};
 	mode_t om;
 	int rv, serrno;
-
-	strlcpy(sun.sun_path, b->b_path, sizeof(sun.sun_path));
+	struct sockaddr_un *sun = &b->b_sun;
 
 #ifndef SOCK_NONBLOCK
 #define SOCK_NONBLOCK 0
@@ -134,6 +127,7 @@ bl_init(bl_t b, bool srv)
 #ifndef SOCK_NOSIGPIPE
 #define SOCK_NOSIGPIPE 0
 #endif
+
 	if (b->b_fd == -1) {
 		b->b_fd = socket(PF_LOCAL,
 		    SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK|SOCK_NOSIGPIPE, 0);
@@ -158,43 +152,52 @@ bl_init(bl_t b, bool srv)
 #endif
 	}
 
-	if (b->b_connected)
+	if (bl_isconnected(b))
 		return 0;
 
-	rv = connect(b->b_fd, (const void *)&sun, (socklen_t)sizeof(sun));
+	rv = connect(b->b_fd, (const void *)sun, (socklen_t)sizeof(*sun));
 	if (rv == 0) {
 		if (srv) {
 			bl_log(b->b_fun, LOG_ERR,
 			    "%s: another daemon is handling `%s'",
-			    __func__, b->b_path);
+			    __func__, sun->sun_path);
 			goto out;
 		}
 	} else {
 		if (!srv) {
-			bl_log(b->b_fun, LOG_ERR,
-			    "%s: connect failed for `%s' (%m)",
-			    __func__, b->b_path);
-			goto out;
+			/*
+			 * If the daemon is not running, we just try a
+			 * connect, so leave the socket alone until it does
+			 * and only log once.
+			 */
+			if (b->b_connected != 1) {
+				bl_log(b->b_fun, LOG_DEBUG,
+				    "%s: connect failed for `%s' (%m)",
+				    __func__, sun->sun_path);
+				b->b_connected = 1;
+			}
+			return -1;
 		}
+		bl_log(b->b_fun, LOG_DEBUG, "Connected to blacklist server",
+		    __func__);
 	}
 
 	if (srv) {
-		(void)unlink(b->b_path);
+		(void)unlink(sun->sun_path);
 		om = umask(0);
-		rv = bind(b->b_fd, (const void *)&sun,
-		    (socklen_t)sizeof(sun));
+		rv = bind(b->b_fd, (const void *)sun, (socklen_t)sizeof(*sun));
 		serrno = errno;
 		(void)umask(om);
 		errno = serrno;
 		if (rv == -1) {
 			bl_log(b->b_fun, LOG_ERR,
 			    "%s: bind failed for `%s' (%m)",
-			    __func__, b->b_path);
+			    __func__, sun->sun_path);
 			goto out;
 		}
 	}
 
-	b->b_connected = true;
+	b->b_connected = 0;
 #if defined(LOCAL_CREDS)
 #define CRED_LEVEL	0
 #define	CRED_NAME	LOCAL_CREDS
@@ -243,8 +246,16 @@ bl_create(bool srv, const char *path, void (*fun)(int, const char *, va_list))
 		goto out;
 	b->b_fun = fun == NULL ? vsyslog : fun;
 	b->b_fd = -1;
-	strlcpy(b->b_path, path ? path : _PATH_BLSOCK, MAXPATHLEN);
-	b->b_connected = false;
+	b->b_connected = -1;
+
+	memset(&b->b_sun, 0, sizeof(b->b_sun));
+	b->b_sun.sun_family = AF_LOCAL;
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
+	b->b_sun.sun_len = sizeof(b->b_sun);
+#endif
+	strlcpy(b->b_sun.sun_path,
+	    path ? path : _PATH_BLSOCK, sizeof(b->b_sun.sun_path));
+
 	bl_init(b, srv);
 	return b;
 out:
