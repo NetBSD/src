@@ -1,4 +1,4 @@
-/*	$NetBSD: srvtest.c,v 1.6 2015/01/22 03:48:07 christos Exp $	*/
+/*	$NetBSD: srvtest.c,v 1.7 2015/01/22 04:13:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: srvtest.c,v 1.6 2015/01/22 03:48:07 christos Exp $");
+__RCSID("$NetBSD: srvtest.c,v 1.7 2015/01/22 04:13:04 christos Exp $");
 
 #include <sys/types.h> 
 #include <sys/socket.h>
@@ -94,7 +94,7 @@ cr(int af, int type, in_port_t p)
 		s6->sin6_port = p;
 	}
 #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
-	ss->ss_len = slen;
+	ss.ss_len = slen;
 #endif
      
 	if (bind(sfd, (const void *)&ss, slen) == -1)
