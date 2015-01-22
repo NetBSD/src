@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.h,v 1.10 2015/01/22 05:35:55 christos Exp $	*/
+/*	$NetBSD: bl.h,v 1.11 2015/01/22 15:25:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #define _BL_H
 
 #include <stdbool.h>
+#include <stdarg.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include "blacklist.h"
@@ -61,7 +62,7 @@ __BEGIN_DECLS
 
 typedef struct blacklist *bl_t;
 
-bl_t bl_create(bool, const char *, void (*)(int, const char *, ...));
+bl_t bl_create(bool, const char *, void (*)(int, const char *, va_list));
 void bl_destroy(bl_t);
 int bl_send(bl_t, bl_type_t, int, const struct sockaddr *, socklen_t,
     const char *);

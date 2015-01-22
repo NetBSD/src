@@ -52,6 +52,10 @@ const char *getprogname(void);
 void setprogname(char *);
 #endif
 
+#ifndef HAVE_PIDFILE
+int pidfile(const char *);
+#endif
+
 #ifndef HAVE_FPARSELN
 #define FPARSELN_UNESCALL	0xf
 #define FPARSELN_UNESCCOMM	0x1
