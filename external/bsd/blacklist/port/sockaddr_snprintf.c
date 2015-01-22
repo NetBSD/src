@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.2 2015/01/22 02:27:16 christos Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.3 2015/01/22 02:42:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -28,11 +28,16 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#include "port.h"
+#endif
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.2 2015/01/22 02:27:16 christos Exp $");
+__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.3 2015/01/22 02:42:27 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -54,6 +59,36 @@ __RCSID("$NetBSD: sockaddr_snprintf.c,v 1.2 2015/01/22 02:27:16 christos Exp $")
 #endif
 #include <netdb.h>
 
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
+#define SLEN(a)	(a)->a ## _len
+#else
+static size_t
+socklen(u_int af)
+{
+	switch (af) {
+	case AF_INET:
+		return sizeof(struct sockaddr_in);
+	case AF_INET6:
+		return sizeof(struct sockaddr_in6);
+	case AF_LOCAL:
+		return sizeof(struct sockaddr_un);
+#ifdef HAVE_NET_IF_DL_H
+	case AF_LINK:
+		return sizeof(struct sockaddr_dl);
+#endif
+#ifdef HAVE_NETATALK_AT_H
+	case AF_APPLETALK:
+		return sizeof(struct sockaddr_at);
+#endif
+	default:
+		return sizeof(struct sockaddr_storage);
+	}
+}
+
+#define SLEN(a)	(uint8_t)MAX(sizeof(*(a), socklen((a)->a ## _family)
+#endif
+
+
 #ifdef HAVE_NETATALK_AT_H
 static int
 debug_at(char *str, size_t len, const struct sockaddr_at *sat)
@@ -63,7 +98,7 @@ debug_at(char *str, size_t len, const struct sockaddr_at *sat)
 	    "sat_range.r_netrange.nr_phase=%u, "
 	    "sat_range.r_netrange.nr_firstnet=%u, "
 	    "sat_range.r_netrange.nr_lastnet=%u",
-	    sat->sat_len, sat->sat_family, sat->sat_port,
+	    SLEN(sat), sat->sat_family, sat->sat_port,
 	    sat->sat_addr.s_net, sat->sat_addr.s_node,
 	    sat->sat_range.r_netrange.nr_phase,
 	    sat->sat_range.r_netrange.nr_firstnet,
@@ -76,7 +111,7 @@ debug_in(char *str, size_t len, const struct sockaddr_in *sin)
 {
 	return snprintf(str, len, "sin_len=%u, sin_family=%u, sin_port=%u, "
 	    "sin_addr.s_addr=%08x",
-	    sin->sin_len, sin->sin_family, sin->sin_port,
+	    SLEN(sin), sin->sin_family, sin->sin_port,
 	    sin->sin_addr.s_addr);
 }
 
@@ -89,7 +124,7 @@ debug_in6(char *str, size_t len, const struct sockaddr_in6 *sin6)
 	    "sin6_flowinfo=%u, "
 	    "sin6_addr=%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:"
 	    "%02x:%02x:%02x:%02x:%02x:%02x, sin6_scope_id=%u",
-	    sin6->sin6_len, sin6->sin6_family, sin6->sin6_port,
+	    SLEN(sin6), sin6->sin6_family, sin6->sin6_port,
 	    sin6->sin6_flowinfo, s[0x0], s[0x1], s[0x2], s[0x3], s[0x4], s[0x5],
 	    s[0x6], s[0x7], s[0x8], s[0x9], s[0xa], s[0xb], s[0xc], s[0xd],
 	    s[0xe], s[0xf], sin6->sin6_scope_id);
@@ -99,7 +134,7 @@ static int
 debug_un(char *str, size_t len, const struct sockaddr_un *sun)
 {
 	return snprintf(str, len, "sun_len=%u, sun_family=%u, sun_path=%*s",
-	    sun->sun_len, sun->sun_family, (int)sizeof(sun->sun_path),
+	    SLEN(sun), sun->sun_family, (int)sizeof(sun->sun_path),
 	    sun->sun_path);
 }
 
@@ -112,11 +147,12 @@ debug_dl(char *str, size_t len, const struct sockaddr_dl *sdl)
 	return snprintf(str, len, "sdl_len=%u, sdl_family=%u, sdl_index=%u, "
 	    "sdl_type=%u, sdl_nlen=%u, sdl_alen=%u, sdl_slen=%u, sdl_data="
 	    "%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
-	    sdl->sdl_len, sdl->sdl_family, sdl->sdl_index,
+	    SLEN(sdl), sdl->sdl_family, sdl->sdl_index,
 	    sdl->sdl_type, sdl->sdl_nlen, sdl->sdl_alen, sdl->sdl_slen,
 	    s[0x0], s[0x1], s[0x2], s[0x3], s[0x4], s[0x5],
 	    s[0x6], s[0x7], s[0x8], s[0x9], s[0xa], s[0xb]);
 }
+#endif
 
 int
 sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
@@ -188,7 +224,7 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 	if (addr == abuf)
 		name = addr;
 
-	if (a && getnameinfo(sa, (socklen_t)sa->sa_len, addr = abuf,
+	if (a && getnameinfo(sa, (socklen_t)SLEN(sa), addr = abuf,
 	    (unsigned int)sizeof(abuf), NULL, 0,
 	    NI_NUMERICHOST|NI_NUMERICSERV) != 0)
 		return -1;
@@ -218,7 +254,7 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			ADDS(nbuf);
 			break;
 		case 'l':
-			(void)snprintf(nbuf, sizeof(nbuf), "%d", sa->sa_len);
+			(void)snprintf(nbuf, sizeof(nbuf), "%d", SLEN(sa));
 			ADDS(nbuf);
 			break;
 		case 'A':
@@ -227,7 +263,7 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			else if (!a)
 				ADDNA();
 			else {
-				getnameinfo(sa, (socklen_t)sa->sa_len,
+				getnameinfo(sa, (socklen_t)SLEN(sa),
 					name = Abuf,
 					(unsigned int)sizeof(nbuf), NULL, 0, 0);
 				ADDS(name);
@@ -239,7 +275,7 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			else if (p == -1)
 				ADDNA();
 			else {
-				getnameinfo(sa, (socklen_t)sa->sa_len, NULL, 0,
+				getnameinfo(sa, (socklen_t)SLEN(sa), NULL, 0,
 					port = pbuf,
 					(unsigned int)sizeof(pbuf), 0);
 				ADDS(port);
