@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 2015/01/22 04:13:04 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 2015/01/22 15:29:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.11 2015/01/22 04:13:04 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.12 2015/01/22 15:29:27 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -168,7 +168,7 @@ gethostport(const char *f, size_t l, void *v, const char *p)
 		*d++ = '\0';
 		p++;
 		if (debug)
-			printf("%s: host6 %s\n", __func__, p);
+			(*lfun)(LOG_DEBUG, "%s: host6 %s\n", __func__, p);
 		if (strcmp(p, "*") != 0) {
 			if (inet_pton(AF_INET6, p, &s6->sin6_addr) == -1)
 				goto out;
@@ -183,7 +183,7 @@ gethostport(const char *f, size_t l, void *v, const char *p)
 		struct sockaddr_in *s = (void *)&c->c_ss;
 		*d++ = '\0';
 		if (debug)
-			printf("%s: host4 %s\n", __func__, p);
+			(*lfun)(LOG_DEBUG, "%s: host4 %s\n", __func__, p);
 		if (strcmp(p, "*") != 0) {
 			if (inet_pton(AF_INET, p, &s->sin_addr) == -1)
 				goto out;
@@ -337,14 +337,14 @@ conf_eq(const struct conf *c1, const struct conf *c2)
 	if (c2->c_ss.ss_family != 0 &&
 	    memcmp(&c1->c_ss, &c2->c_ss, sizeof(c1->c_ss))) {
 		if (debug > 1)
-			printf("%s: c_ss fail\n", __func__);
+			(*lfun)(LOG_DEBUG, "%s: c_ss fail\n", __func__);
 		return 0;
 	}
 		
 #define CMP(a, b, f) \
 	if ((a)->f != (b)->f && (b)->f != -1) { \
 		if (debug > 1) \
-			printf("%s: %s fail\n", __func__, __STRING(f)); \
+			(*lfun)(LOG_DEBUG, "%s: %s fail\n", __func__, __STRING(f)); \
 		return 0; \
 	}
 	CMP(c1, c2, c_port);
@@ -443,7 +443,7 @@ conf_find(int fd, uid_t uid, struct conf *cr)
 
 	if (debug) {
 		sockaddr_snprintf(buf, sizeof(buf), "%a:%p", (void *)&ss);
-		printf("listening socket: %s\n", buf);
+		(*lfun)(LOG_DEBUG, "listening socket: %s\n", buf);
 	}
 
 	switch (proto) {
@@ -477,16 +477,16 @@ conf_find(int fd, uid_t uid, struct conf *cr)
 	cr->c_duration = -1;
 
 	if (debug)
-		printf("%s\n", conf_print(buf, sizeof(buf),
+		(*lfun)(LOG_DEBUG, "%s\n", conf_print(buf, sizeof(buf),
 		    "look:\t", "", cr));
 
 	for (i = 0; i < nconf; i++) {
 		if (debug)
-			printf("%s\n", conf_print(buf, sizeof(buf), "check:\t",
+			(*lfun)(LOG_DEBUG, "%s\n", conf_print(buf, sizeof(buf), "check:\t",
 			    "", &conf[i]));
 		if (conf_eq(cr, &conf[i])) {
 			if (debug)
-				printf("%s\n", conf_print(buf, sizeof(buf),
+				(*lfun)(LOG_DEBUG, "%s\n", conf_print(buf, sizeof(buf),
 				    "found:\t", "", &conf[i]));
 			cr->c_ss = conf[i].c_ss;
 			memcpy(cr->c_name, conf[i].c_name, CONFNAMESZ);
@@ -496,7 +496,7 @@ conf_find(int fd, uid_t uid, struct conf *cr)
 		}
 	}
 	if (debug)
-		printf("not found\n");
+		(*lfun)(LOG_DEBUG, "not found\n");
 	return NULL;
 }
 
@@ -523,7 +523,7 @@ conf_parse(const char *f)
 		if (!*line)
 			continue;
 		if (debug > 4)
-			printf("%s, %zu: [%s]\n", f, lineno, line);
+			(*lfun)(LOG_DEBUG, "%s, %zu: [%s]\n", f, lineno, line);
 #endif
 		if (nc == mc) {
 			mc += 10;
@@ -549,11 +549,11 @@ conf_parse(const char *f)
 
 	if (debug) {
 		char buf[BUFSIZ];
-		printf(
+		(*lfun)(LOG_DEBUG,
 		    "%20.20s\ttype\tproto\towner\tname\tnfail\tduration\n",
 		    "target");
 		for (nc = 0; nc < nconf; nc++)
-			printf("%s\n",
+			(*lfun)(LOG_DEBUG, "%s\n",
 			    conf_print(buf, sizeof(buf), "", "\t", &c[nc]));
 	}
 }

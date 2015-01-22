@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.8 2015/01/22 04:13:04 christos Exp $	*/
+/*	$NetBSD: state.c,v 1.9 2015/01/22 15:29:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: state.c,v 1.8 2015/01/22 04:13:04 christos Exp $");
+__RCSID("$NetBSD: state.c,v 1.9 2015/01/22 15:29:27 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -98,10 +98,10 @@ dumpkey(const struct dbkey *k)
 {
 	const unsigned char *p = (const void *)k;
 	const unsigned char *e = p + sizeof(*k);
-	printf("%s: ", __func__);
+	(*lfun)(LOG_DEBUG, "%s: ", __func__);
 	while (p < e)
-		printf("%.2x", *p++);
-	printf("\n");
+		(*lfun)(LOG_DEBUG, "%.2x", *p++);
+	(*lfun)(LOG_DEBUG, "\n");
 }
 
 static void
@@ -146,7 +146,7 @@ state_del(DB *db, const struct sockaddr_storage *ss, const struct conf *c)
 	case 0:
 	case 1:
 		if (debug > 1)
-			printf("%s: returns %d\n", __func__, rv);
+			(*lfun)(LOG_DEBUG, "%s: returns %d\n", __func__, rv);
 		return 0;
 	default:
 		(*lfun)(LOG_ERR, "%s: failed (%m)", __func__);
@@ -178,7 +178,7 @@ state_get(DB *db, const struct sockaddr_storage *ss, const struct conf *c,
 		else
 			memcpy(dbi, v.data, sizeof(*dbi));
 		if (debug > 1)
-			printf("%s: returns %d\n", __func__, rv);
+			(*lfun)(LOG_DEBUG, "%s: returns %d\n", __func__, rv);
 		return 0;
 	default:
 		(*lfun)(LOG_ERR, "%s: failed (%m)", __func__);
@@ -207,7 +207,7 @@ state_put(DB *db, const struct sockaddr_storage *ss, const struct conf *c,
 	switch (rv = (*db->put)(db, &k, &v, 0)) {
 	case 0:
 		if (debug > 1)
-			printf("%s: returns %d\n", __func__, rv);
+			(*lfun)(LOG_DEBUG, "%s: returns %d\n", __func__, rv);
 		return 0;
 	case 1:
 		errno = EEXIST;
@@ -240,11 +240,11 @@ state_iterate(DB *db, struct sockaddr_storage *ss, struct conf *c,
 			dumpkey(kp);
 		memcpy(dbi, v.data, sizeof(*dbi));
 		if (debug > 1)
-			printf("%s: returns %d\n", __func__, rv);
+			(*lfun)(LOG_DEBUG, "%s: returns %d\n", __func__, rv);
 		return 1;
 	case 1:
 		if (debug > 1)
-			printf("%s: returns %d\n", __func__, rv);
+			(*lfun)(LOG_DEBUG, "%s: returns %d\n", __func__, rv);
 		return 0;
 	default:
 		(*lfun)(LOG_ERR, "%s: failed (%m)", __func__);
