@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 2015/01/22 02:42:27 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 2015/01/22 03:08:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "port.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.8 2015/01/22 02:42:27 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.9 2015/01/22 03:08:09 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -43,7 +43,9 @@ __RCSID("$NetBSD: conf.c,v 1.8 2015/01/22 02:42:27 christos Exp $");
 #include <pwd.h>
 #include <syslog.h>
 #include <errno.h>
+#ifdef HAVE_UTIL_H
 #include <util.h>
+#endif
 #include <stdlib.h>
 #include <limits.h>
 #include <arpa/inet.h>
