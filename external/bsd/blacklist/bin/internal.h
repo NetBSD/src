@@ -1,4 +1,4 @@
-/*	$NetBSD: internal.h,v 1.9 2015/01/22 17:49:41 christos Exp $	*/
+/*	$NetBSD: internal.h,v 1.10 2015/01/22 21:32:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #define	_PATH_BLCONF	"/etc/blacklistd.conf"
 #endif
 #ifndef _PATH_BLCONTROL
-#define	_PATH_BLCONTROL	"/libexec/blacklist-helper"
+#define	_PATH_BLCONTROL	"/libexec/blacklistd-helper"
 #endif
 #ifndef _PATH_BLSTATE
 #define	_PATH_BLSTATE	"/var/db/blacklistd.db"
