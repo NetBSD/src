@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.5 2015/01/22 17:49:41 christos Exp $
+# $NetBSD: README,v 1.6 2015/01/22 19:08:43 christos Exp $
 
 This package contains library that can be used by network daemons to
 communicate with a packet filter via a daemon to enforce opening and
@@ -8,10 +8,14 @@ The interface to the packet filter is in libexec/blacklistd-helper
 (this is currently designed for npf) and the configuration file
 (inspired from inetd.conf) is in etc/blacklistd.conf.
 
+There is also a startup file in etc/rc.d/blacklistd
+
 Patches to various daemons to add blacklisting capabilitiers are in the
-diff directory:
-    - OpenSSH: diff/ssh.diff
-    - Bind: diff/named.diff
+"diff" directory:
+    - OpenSSH: diff/ssh.diff [tcp socket example]
+    - Bind: diff/named.diff [both tcp and udp]
+
+These patches don't include the Makefile changes, but should be obvious.
 
 The network daemon (for example sshd) communicates to blacklistd, via
 a unix socket like syslog. The library calls are simple and everything
@@ -32,6 +36,13 @@ Where:
 		      socket is done by virtue that the port
 		      number is retrieved from the kernel.
 	message    -> an optional string that is used in debugging logs.
+
+Unfortunately there is no way to get information about the "peer"
+from a udp socket, because there is no connection and that information
+is kept with the server. In that case the daemon can provide the
+peer information to blacklistd via:
+
+	blacklist_sa(action, acceptedfd, sockaddr, sockaddr_len, message);
 
 The configuration file contains entries of the form:
 
@@ -80,6 +91,7 @@ group "internal" on $int_if {
         ruleset "blacklistd-int" 
 	...
 }
+
 Enjoy,
 
 christos
