@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.20 2015/01/22 18:15:15 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.21 2015/01/22 18:43:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.20 2015/01/22 18:15:15 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.21 2015/01/22 18:43:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: bl.c,v 1.20 2015/01/22 18:15:15 christos Exp $");
 #include <stdbool.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <netinet/in.h>
 
 #include "bl.h"
 
@@ -287,6 +288,7 @@ bl_send(bl_t b, bl_type_t e, int pfd, const struct sockaddr *sa,
 		char buf[512];
 	} ub;
 	size_t ctxlen, tried;
+	uint8_t family;
 #define NTRIES	5
 
 	ctxlen = strlen(ctx);
@@ -298,11 +300,40 @@ bl_send(bl_t b, bl_type_t e, int pfd, const struct sockaddr *sa,
 	ub.bl.bl_len = (uint32_t)iov.iov_len;
 	ub.bl.bl_version = BL_VERSION;
 	ub.bl.bl_type = (uint32_t)e;
-	if (slen > sizeof(ub.bl.bl_ss))
+
+	switch (slen) {
+	case sizeof(struct sockaddr_in):
+		family = AF_INET;
+		break;
+	case sizeof(struct sockaddr_in6):
+		family = AF_INET6;
+		break;
+	default:
+		bl_log(b->b_fun, LOG_ERR, "%s: invalid socket len %u (%s)",
+		    __func__, (unsigned)slen, ctx);
 		return EINVAL;
-	ub.bl.bl_salen = slen;
+	}
+
 	memset(&ub.bl.bl_ss, 0, sizeof(ub.bl.bl_ss));
 	memcpy(&ub.bl.bl_ss, sa, slen);
+
+	if (ub.bl.bl_ss.ss_family != family) {
+		bl_log(b->b_fun, LOG_INFO,
+		    "%s: correcting socket family %d to %d (%s)",
+		    __func__, ub.bl.bl_ss.ss_family, family, ctx);
+		ub.bl.bl_ss.ss_family = family;
+	}
+
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
+	if (ub.bl.bl_ss.ss_len != slen) {
+		bl_log(b->b_fun, LOG_INFO,
+		    "%s: correcting socket len %u to %u (%s)",
+		    __func__, ub.bl.bl_ss.ss_len, (unsigned)slen, ctx);
+		ub.bl.bl_ss.ss_len = (uint8_t)slen;
+	}
+#endif
+
+	ub.bl.bl_salen = slen;
 	memcpy(ub.bl.bl_data, ctx, ctxlen);
 
 	msg.msg_name = NULL;
