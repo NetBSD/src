@@ -28,6 +28,8 @@ AC_CHECK_HEADERS(sys/types.h util.h sys/time.h time.h)
 AC_CHECK_HEADERS(netatalk/at.h net/if_dl.h db.h db_185.h)
 AC_CHECK_LIB(rt, clock_gettime)
 AC_CHECK_LIB(db, __db185_open)
+AC_CHECK_LIB(util, pidfile)
+AC_CHECK_LIB(util, sockaddr_snprintf)
 
 AH_BOTTOM([
 #ifndef __NetBSD__
