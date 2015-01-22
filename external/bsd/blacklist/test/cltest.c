@@ -1,4 +1,4 @@
-/*	$NetBSD: cltest.c,v 1.4 2015/01/22 03:48:07 christos Exp $	*/
+/*	$NetBSD: cltest.c,v 1.5 2015/01/22 05:03:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cltest.c,v 1.4 2015/01/22 03:48:07 christos Exp $");
+__RCSID("$NetBSD: cltest.c,v 1.5 2015/01/22 05:03:52 christos Exp $");
 
 #include <sys/types.h> 
 #include <sys/socket.h>
@@ -45,6 +45,9 @@ __RCSID("$NetBSD: cltest.c,v 1.4 2015/01/22 03:48:07 christos Exp $");
 #include <unistd.h>
 #include <stdlib.h>
 #include <err.h>
+#ifdef HAVE_UTIL_H
+#include <util.h>
+#endif
 
 static __dead void
 usage(int c)
@@ -78,7 +81,7 @@ getaddr(const char *a, in_port_t p, struct sockaddr_storage *ss,
 		s->sin_port = p;
 	}
 #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
-	ss->ss_len = *slen;
+	ss->ss_len = (uint8_t)*slen;
 #endif
 	if (c == -1)
 		err(EXIT_FAILURE, "Invalid address `%s'", a);
@@ -95,8 +98,9 @@ main(int argc, char *argv[])
 	int type = SOCK_STREAM;
 	in_port_t port = 6161;
 	socklen_t slen;
+	char buf[128];
 
-	while ((c = getopt(argc, argv, "a:m:p:u")) == -1) {
+	while ((c = getopt(argc, argv, "a:m:p:u")) != -1) {
 		switch (c) {
 		case 'a':
 			addr = optarg;
@@ -120,11 +124,14 @@ main(int argc, char *argv[])
 	if ((sfd = socket(AF_INET, type, 0)) == -1)
 		err(EXIT_FAILURE, "socket");
 
+	sockaddr_snprintf(buf, sizeof(buf), "%a:%p", (const void *)&ss);
+	printf("connecting to: %s\n", buf);
 	if (connect(sfd, (const void *)&ss, slen) == -1)
 		err(EXIT_FAILURE, "connect");
 
 	size_t len = strlen(msg) + 1;
 	if (write(sfd, msg, len) != (ssize_t)len)
 		err(EXIT_FAILURE, "write");
+	sleep(10);
 	return 0;
 }
