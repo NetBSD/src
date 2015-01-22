@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistctl.c,v 1.8 2015/01/22 03:48:07 christos Exp $	*/
+/*	$NetBSD: blacklistctl.c,v 1.9 2015/01/22 15:29:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistctl.c,v 1.8 2015/01/22 03:48:07 christos Exp $");
+__RCSID("$NetBSD: blacklistctl.c,v 1.9 2015/01/22 15:29:27 christos Exp $");
 
 #include <stdio.h>
 #include <time.h>
@@ -86,11 +86,11 @@ main(int argc, char *argv[])
 
 	for (i = 1; state_iterate(db, &ss, &c, &dbi, i) != 0; i = 0) {
 		char buf[BUFSIZ];
-		printf("conf: %s\n", conf_print(buf, sizeof(buf), "",
+		(*lfun)(LOG_DEBUG, "conf: %s\n", conf_print(buf, sizeof(buf), "",
 		    ":", &c));
 		sockaddr_snprintf(buf, sizeof(buf), "%a", (void *)&ss);
-		printf("addr: %s\n", buf);
-		printf("data: count=%d id=%s time=%s\n", dbi.count,
+		(*lfun)(LOG_DEBUG, "addr: %s\n", buf);
+		(*lfun)(LOG_DEBUG, "data: count=%d id=%s time=%s\n", dbi.count,
 		    dbi.id, fmttime(buf, sizeof(buf), dbi.last));
 	}
 	state_close(db);
