@@ -25,7 +25,13 @@ AC_CHECK_HEADERS(stdint.h fcntl.h stdint.h inttypes.h unistd.h)
 AC_CHECK_HEADERS(sys/un.h sys/socket.h limits.h)
 AC_CHECK_HEADERS(arpa/inet.h getopt.h err.h)
 AC_CHECK_HEADERS(sys/types.h util.h sys/time.h time.h)
-AC_CHECK_HEADERS(netatalk/at.h net/if_dl.h)
+AC_CHECK_HEADERS(netatalk/at.h net/if_dl.h db.h db_185.h)
+
+AH_BOTTOM([
+#ifndef __NetBSD__
+#include "port.h"
+#endif
+])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
