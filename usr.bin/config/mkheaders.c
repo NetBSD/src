@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.25 2014/11/04 23:00:35 joerg Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.26 2015/01/22 20:01:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkheaders.c,v 1.25 2014/11/04 23:00:35 joerg Exp $");
+__RCSID("$NetBSD: mkheaders.c,v 1.26 2015/01/22 20:01:22 christos Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -533,7 +533,7 @@ cntname(const char *src)
 	dst = buf;
 	*dst++ = 'N';
 	while ((c = *src++) != 0)
-		*dst++ = islower((u_char)c) ? (char)toupper((u_char)c) : c;
+		*dst++ = (char)(islower((u_char)c) ? toupper((u_char)c) : c);
 	*dst = 0;
 	return (buf);
 }
