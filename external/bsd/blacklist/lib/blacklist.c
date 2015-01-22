@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklist.c,v 1.1 2015/01/21 16:16:00 christos Exp $	*/
+/*	$NetBSD: blacklist.c,v 1.2 2015/01/22 02:42:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -28,8 +28,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#include "port.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklist.c,v 1.1 2015/01/21 16:16:00 christos Exp $");
+__RCSID("$NetBSD: blacklist.c,v 1.2 2015/01/22 02:42:56 christos Exp $");
 
 #include <stdio.h>
 #include <bl.h>
@@ -59,7 +64,7 @@ expandm(char *buf, size_t len, const char *fmt)
 }
 
 static void
-dlog(int level, const char *fmt, ...)
+dlog(int level __unused, const char *fmt, ...)
 {
 	char buf[BUFSIZ];
 	va_list ap;
