@@ -1,4 +1,4 @@
-/*	$NetBSD: pidfile.c,v 1.9 2011/03/29 13:55:37 jmmv Exp $	*/
+/*	$NetBSD: pidfile.c,v 1.10 2015/01/22 16:19:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidfile.c,v 1.9 2011/03/29 13:55:37 jmmv Exp $");
+__RCSID("$NetBSD: pidfile.c,v 1.10 2015/01/22 16:19:08 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -105,15 +105,16 @@ cleanup_old_pidfile(const char* path)
  * Returns a pointer to a dynamically-allocatd string containing the absolute
  * path to the pidfile; NULL on failure. */
 static char *
-generate_varrun_path(const char *basename)
+generate_varrun_path(const char *bname)
 {
 	char *path;
 
-	if (basename == NULL)
-		basename = getprogname();
+	if (bname == NULL)
+		bname = getprogname();
 
 	/* _PATH_VARRUN includes trailing / */
-	(void) asprintf(&path, "%s%s.pid", _PATH_VARRUN, basename);
+	if (asprintf(&path, "%s%s.pid", _PATH_VARRUN, basename) == -1)
+		return NULL;
 	return path;
 }
 
