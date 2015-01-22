@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.24 2015/01/22 23:20:28 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.25 2015/01/22 23:45:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.24 2015/01/22 23:20:28 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.25 2015/01/22 23:45:41 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: blacklistd.c,v 1.24 2015/01/22 23:20:28 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <netinet/in.h>
 
 #include "bl.h"
 #include "internal.h"
@@ -150,6 +151,32 @@ process(bl_t bl)
 			goto out;
 		}
 		memcpy(&rss, &bi->bi_ss, bi->bi_slen);
+		switch (rss.ss_family) {
+		case AF_INET:
+			rsl = sizeof(struct sockaddr_in);
+			break;
+		case AF_INET6:
+			rsl = sizeof(struct sockaddr_in6);
+			break;
+		default:
+			(*lfun)(LOG_ERR, "bad client passed socket family %u",
+			    rss.ss_family); 
+			goto out;
+		}
+		if (rsl != bi->bi_slen) {
+		    (*lfun)(LOG_ERR,
+			"bad client passed socket length %u != %u",
+			(unsigned)rsl, bi->bi_slen); 
+		    goto out;
+		}
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
+		if (rsl != rss.ss_len) {
+		    (*lfun)(LOG_ERR,
+			"bad client passed socket internal length %u != %u",
+			(unsigned)rsl, rss.ss_len, rsl); 
+		    goto out;
+		}
+#endif
 	}
 	if (state_get(state, &rss, &c, &dbi) == -1)
 		goto out;
