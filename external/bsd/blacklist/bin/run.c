@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.7 2015/01/22 03:10:49 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.8 2015/01/22 04:13:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: run.c,v 1.7 2015/01/22 03:10:49 christos Exp $");
+__RCSID("$NetBSD: run.c,v 1.8 2015/01/22 04:13:04 christos Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_UTIL_H
@@ -100,7 +100,7 @@ run_flush(const struct conf *c)
 }
 
 int
-run_add(const struct conf *c, 
+run_change(const char *how, const struct conf *c, 
     const struct sockaddr_storage *ss, char *id, size_t len)
 {
 	const char *prname;
@@ -122,18 +122,14 @@ run_add(const struct conf *c,
 	snprintf(poname, sizeof(poname), "%d", c->c_port);
 	sockaddr_snprintf(adname, sizeof(adname), "%a", (const void *)ss);
 
-	rv = run("add", c->c_name, prname, adname, poname, NULL);
+	rv = run(how, c->c_name, prname, adname, poname, id, NULL);
 	if (rv == NULL)
 		return -1;
-	rv[strcspn(rv, "\n")] = '\0';
-	off = strncmp(rv, "OK ", 3) == 0 ? 3 : 0;
-	strlcpy(id, rv + off, len);
+	if (len != 0) {
+		rv[strcspn(rv, "\n")] = '\0';
+		off = strncmp(rv, "OK ", 3) == 0 ? 3 : 0;
+		strlcpy(id, rv + off, len);
+	}
 	free(rv);
 	return 0;
-}
-
-void
-run_rem(const struct conf *c, const char *id)
-{
-	free(run("rem", c->c_name, id, NULL));
 }
