@@ -1,12 +1,12 @@
-# $NetBSD: README,v 1.4 2015/01/22 15:29:27 christos Exp $
+# $NetBSD: README,v 1.5 2015/01/22 17:49:41 christos Exp $
 
 This package contains library that can be used by network daemons to
 communicate with a packet filter via a daemon to enforce opening and
 closing ports dynamically based on policy.
 
-The interface to the packet filter is in etc/control (this is currently
-designed for npf) and the configuration file (inspired from inetd.conf)
-is in etc/conf.
+The interface to the packet filter is in libexec/blacklistd-helper
+(this is currently designed for npf) and the configuration file
+(inspired from inetd.conf) is in etc/blacklistd.conf.
 
 Patches to various daemons to add blacklisting capabilitiers are in the
 diff directory:
