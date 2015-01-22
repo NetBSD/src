@@ -1,13 +1,13 @@
 #
-ACLOCAL_AMFLAGS = -Im4
+ACLOCAL_AMFLAGS = -I m4
 lib_LTLIBRARIES = libblacklist.la
 include_HEADERS = blacklist.h
 
-bin_PROGRAMS = blacklistd blacklistctl
+bin_PROGRAMS = blacklistd blacklistctl srvtest cltest
 
 VPATH = ../bin:../lib:../test
 
-AM_CPPFLAGS = -I../include 
+AM_CPPFLAGS = -I../include  -DDOT="."
 AM_CFLAGS = @WARNINGS@
 
 libblacklist_la_SOURCES = bl.c blacklist.c
@@ -19,3 +19,7 @@ blacklistd_SOURCES = blacklistd.c ${SRCS}
 blacklistd_LDADD = libblacklist.la
 blacklistctl_SOURCES = blacklistctl.c ${SRCS}
 blacklistctl_LDADD = libblacklist.la
+srvtest_SOURCES = srvtest.c ${SRCS}
+srvtest_LDADD = libblacklist.la
+cltest_SOURCES = cltest.c ${SRCS}
+cltest_LDADD = libblacklist.la
