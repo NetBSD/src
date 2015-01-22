@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.21 2015/01/22 16:19:53 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.22 2015/01/22 20:17:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.21 2015/01/22 16:19:53 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.22 2015/01/22 20:17:34 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -322,8 +322,6 @@ main(int argc, char *argv[])
 		if (tout == 0)
 			tout = 5000;
 	} else {
-		if (pidfile(getprogname()) == -1)
-			err(EXIT_FAILURE, "Can't create pidfile");
 		if (tout == 0)
 			tout = 15000;
 	}
@@ -359,9 +357,12 @@ main(int argc, char *argv[])
 	if (state == NULL)
 		return EXIT_FAILURE;
 
-	if (!debug)
+	if (!debug) {
 		if (daemon(0, 0) == -1)
 			err(EXIT_FAILURE, "daemon failed");
+		if (pidfile(NULL) == -1)
+			err(EXIT_FAILURE, "Can't create pidfile");
+	}
 
 	while (!done) {
 		if (rconf) {
