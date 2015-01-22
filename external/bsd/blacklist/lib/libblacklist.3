@@ -1,4 +1,4 @@
-.\" $NetBSD: libblacklist.3,v 1.1 2015/01/21 16:16:00 christos Exp $
+.\" $NetBSD: libblacklist.3,v 1.2 2015/01/22 05:40:34 christos Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,14 +27,16 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\" 
-.Dd January 19, 2016
+.Dd January 22, 2016
 .Dt LIBBLACKLIST 3
 .Os
 .Sh NAME
 .Nm blacklist_open ,
 .Nm blacklist_close ,
 .Nm blacklist_r , 
-.Nm blacklist 
+.Nm blacklist ,
+.Nm blacklist_sa
+.Nm blacklist_sa_r , 
 .Nd Blacklistd notification library
 .Sh LIBRARY
 .Lb libblacklist
@@ -46,7 +48,12 @@
 .Fn blacklist_close "struct blacklist *cookie"
 .Ft int
 .Fn blacklist "int action" "int fd" "const char *msg"
-.Fn blacklist_r "struct blacklist cookie" "int action" "int fd" "const char *msg"
+.Ft int
+.Fn blacklist_r "struct blacklist *cookie" "int action" "int fd" "const char *msg"
+.Ft int
+.Fn blacklist_sa "int action" "int fd" "const struct sockaddr *sa" "socklen_t salen" "const char *msg"
+.Ft int
+.Fn blacklist_sa_r "struct blacklist *cookie" "int action" "int fd" "const struct sockaddr *sa" "socklen_t salen" "const char *msg"
 .Sh DESCRIPTION
 These functions can be used by daemons to notify
 .Xr blacklistd 8
@@ -86,6 +93,14 @@ argument.
 The
 .Fn blacklist_r
 function is more efficient because it keeps the blacklist state around.
+.Pp
+The
+.Fn blacklist_sa
+and
+.Fn blacklist_sa_r
+can be used with unconnected sockets, where 
+.Xr getpeername 2
+will not work, the server will pass the peer name in the message.
 .Pp
 All functions log errors to
 .Xr syslogd 8 .
