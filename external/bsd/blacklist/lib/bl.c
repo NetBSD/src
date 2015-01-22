@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.14 2015/01/22 04:20:50 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.15 2015/01/22 05:35:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.14 2015/01/22 04:20:50 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.15 2015/01/22 05:35:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: bl.c,v 1.14 2015/01/22 04:20:50 christos Exp $");
 #include <unistd.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <errno.h>
 
 #include "bl.h"
 
@@ -57,6 +58,8 @@ typedef struct {
 	uint32_t bl_len;
 	uint32_t bl_version;
 	uint32_t bl_type;
+	uint32_t bl_salen;
+	struct sockaddr_storage bl_ss;
 	char bl_data[];
 } bl_message_t;
 
@@ -207,7 +210,8 @@ bl_destroy(bl_t b)
 }
 
 int
-bl_send(bl_t b, bl_type_t e, int pfd, const char *ctx)
+bl_send(bl_t b, bl_type_t e, int pfd, const struct sockaddr *sa, socklen_t slen,
+    const char *ctx)
 {
 	struct msghdr   msg;
 	struct iovec    iov;
@@ -224,14 +228,19 @@ bl_send(bl_t b, bl_type_t e, int pfd, const char *ctx)
 #define NTRIES	5
 
 	ctxlen = strlen(ctx);
-	if (ctxlen > 256)
-		ctxlen = 256;
+	if (ctxlen > 128)
+		ctxlen = 128;
 
 	iov.iov_base = ub.buf;
 	iov.iov_len = sizeof(bl_message_t) + ctxlen;
 	ub.bl.bl_len = (uint32_t)iov.iov_len;
 	ub.bl.bl_version = BL_VERSION;
 	ub.bl.bl_type = (uint32_t)e;
+	if (slen > sizeof(ub.bl.bl_ss))
+		return EINVAL;
+	ub.bl.bl_salen = slen;
+	memset(&ub.bl.bl_ss, 0, sizeof(ub.bl.bl_ss));
+	memcpy(&ub.bl.bl_ss, sa, slen);
 	memcpy(ub.bl.bl_data, ctx, ctxlen);
 
 	msg.msg_name = NULL;
@@ -350,6 +359,8 @@ bl_recv(bl_t b)
 	}
 
 	bi->bi_type = ub.bl.bl_type;
+	bi->bi_slen = ub.bl.bl_salen;
+	bi->bi_ss = ub.bl.bl_ss;
 	strlcpy(bi->bi_msg, ub.bl.bl_data, MIN(sizeof(bi->bi_msg),
 	    ((size_t)rlen - sizeof(ub.bl) + 1)));
 	return bi;

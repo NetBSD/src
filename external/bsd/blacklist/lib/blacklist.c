@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklist.c,v 1.3 2015/01/22 03:10:49 christos Exp $	*/
+/*	$NetBSD: blacklist.c,v 1.4 2015/01/22 05:35:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklist.c,v 1.3 2015/01/22 03:10:49 christos Exp $");
+__RCSID("$NetBSD: blacklist.c,v 1.4 2015/01/22 05:35:55 christos Exp $");
 
 #include <stdio.h>
 #include <bl.h>
@@ -76,21 +76,35 @@ dlog(int level __unused, const char *fmt, ...)
 }
 
 int
-blacklist(int action, int rfd, const char *msg)
+blacklist_sa(int action, int rfd, const struct sockaddr *sa, socklen_t salen,
+    const char *msg)
 {
 	struct blacklist *bl;
 	int rv;
 	if ((bl = blacklist_open()) == NULL)
 		return -1;
-	rv = blacklist_r(bl, action, rfd, msg);
+	rv = blacklist_sa_r(bl, action, rfd, sa, salen, msg);
 	blacklist_close(bl);
 	return rv;
 }
 
 int
+blacklist_sa_r(struct blacklist *bl, int action, int rfd,
+	const struct sockaddr *sa, socklen_t slen, const char *msg)
+{
+	return bl_send(bl, action ? BL_ADD : BL_DELETE, rfd, sa, slen, msg);
+}
+
+int
+blacklist(int action, int rfd, const char *msg)
+{
+	return blacklist_sa(action, rfd, NULL, 0, msg);
+}
+
+int
 blacklist_r(struct blacklist *bl, int action, int rfd, const char *msg)
 {
-	return bl_send(bl, action ? BL_ADD : BL_DELETE, rfd, msg);
+	return blacklist_sa_r(bl, action, rfd, NULL, 0, msg);
 }
 
 struct blacklist *
