@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.1 2015/01/22 01:39:18 christos Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.2 2015/01/22 02:27:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.1 2015/01/22 01:39:18 christos Exp $");
+__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.2 2015/01/22 02:27:16 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,13 +41,17 @@ __RCSID("$NetBSD: sockaddr_snprintf.c,v 1.1 2015/01/22 01:39:18 christos Exp $")
 #ifdef HAVE_NETATALK_AT_H
 #include <netatalk/at.h>
 #endif
+#ifdef HAVE_NET_IF_DL_H
 #include <net/if_dl.h>
+#endif
 
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#ifdef HAVE_UTIL_H
 #include <util.h>
+#endif
 #include <netdb.h>
 
 #ifdef HAVE_NETATALK_AT_H
@@ -99,6 +103,7 @@ debug_un(char *str, size_t len, const struct sockaddr_un *sun)
 	    sun->sun_path);
 }
 
+#ifdef HAVE_NET_IF_DL_H
 static int
 debug_dl(char *str, size_t len, const struct sockaddr_dl *sdl)
 {
@@ -129,7 +134,9 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 	const struct sockaddr_in *sin4 = NULL;
 	const struct sockaddr_in6 *sin6 = NULL;
 	const struct sockaddr_un *sun = NULL;
+#ifdef HAVE_NET_IF_DL_H
 	const struct sockaddr_dl *sdl = NULL;
+#endif
 	int na = 1;
 
 #define ADDC(c) do { if (buf < ebuf) *buf++ = c; else buf++; } \
