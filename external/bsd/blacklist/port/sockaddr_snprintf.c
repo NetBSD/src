@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.3 2015/01/22 02:42:27 christos Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.4 2015/01/22 02:45:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.3 2015/01/22 02:42:27 christos Exp $");
+__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.4 2015/01/22 02:45:10 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -85,7 +85,7 @@ socklen(u_int af)
 	}
 }
 
-#define SLEN(a)	(uint8_t)MAX(sizeof(*(a), socklen((a)->a ## _family)
+#define SLEN(a)	(uint8_t)MAX(sizeof(*(a)), socklen((a)->a ## _family))
 #endif
 
 
