@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.9 2015/01/22 15:29:27 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.10 2015/01/22 16:19:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: run.c,v 1.9 2015/01/22 15:29:27 christos Exp $");
+__RCSID("$NetBSD: run.c,v 1.10 2015/01/22 16:19:53 christos Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_UTIL_H
@@ -60,7 +60,7 @@ run(const char *cmd, const char *name, ...)
 	size_t i;
 	va_list ap;
 	FILE *fp;
-	char buf[BUFSIZ], *res;
+	char buf[10240], *res;
 
 	argv[0] = "control";
 	argv[1] = cmd;
@@ -72,10 +72,18 @@ run(const char *cmd, const char *name, ...)
 	va_end(ap);
 		
 	if (debug) {
-		(*lfun)(LOG_DEBUG, "run %s [", controlprog);
-		for (i = 0; argv[i]; i++)
-			(*lfun)(LOG_DEBUG, " %s", argv[i]);
-		(*lfun)(LOG_DEBUG, "]\n");
+		size_t z;
+
+		z = snprintf(buf, sizeof(buf), "run %s [", controlprog);
+		if (z >= sizeof(buf))
+			z = sizeof(buf);
+		for (i = 0; argv[i]; i++) {
+			z = snprintf(buf + z, sizeof(buf) - z, "%s%s",
+			    argv[i], argv[i + 1] ? " " : "");
+			if (z >= sizeof(buf))
+				z = sizeof(buf);
+		}
+		(*lfun)(LOG_DEBUG, "%s]", buf);
 	}
 
 	fp = popenve(controlprog, __UNCONST(argv), environ, "r");
@@ -89,7 +97,7 @@ run(const char *cmd, const char *name, ...)
 		res = NULL;
 	pclose(fp);
 	if (debug)
-		(*lfun)(LOG_DEBUG, "%s returns %s\n", cmd, res);
+		(*lfun)(LOG_DEBUG, "%s returns %s", cmd, res);
 	return res;
 }
 
