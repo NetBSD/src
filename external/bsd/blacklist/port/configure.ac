@@ -23,14 +23,17 @@ AC_HEADER_MAJOR
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(stdint.h fcntl.h stdint.h inttypes.h unistd.h)
 AC_CHECK_HEADERS(sys/un.h sys/socket.h limits.h)
-AC_CHECK_HEADERS(arpa/inet.h getopt.h err.h xlocale.h)
-AC_CHECK_HEADERS(sys/types.h sys/utime.h sys/time.h time.h)
+AC_CHECK_HEADERS(arpa/inet.h getopt.h err.h)
+AC_CHECK_HEADERS(sys/types.h util.h sys/time.h time.h)
+AC_CHECK_HEADERS(netatalk/at.h net/if_dl.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_SYS_LARGEFILE
+AC_CHECK_MEMBERS([struct sockaddr_in.sin_len])
+
 
 AC_TYPE_PID_T
 AC_TYPE_UINT8_T
@@ -67,10 +70,10 @@ else
 fi])
 
 dnl Checks for functions
-AC_CHECK_FUNCS(strerror strndup strtoul mkstemp mkostemp utimes utime wcwidth strtof newlocale uselocale freelocale setlocal)
+AC_CHECK_FUNCS(strerror)
 
 dnl Provide implementation of some required functions if necessary
-AC_REPLACE_FUNCS(strtoi sockaddr_snprintf popenve clock_gettime)
+AC_REPLACE_FUNCS(strtoi sockaddr_snprintf popenve clock_gettime strlcpy strlcat getprogname)
 
 dnl See if we are cross-compiling
 AM_CONDITIONAL(IS_CROSS_COMPILE, test "$cross_compiling" = yes)
