@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.5 2015/01/21 23:09:44 christos Exp $	*/
+/*	$NetBSD: state.c,v 1.6 2015/01/22 01:39:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -28,9 +28,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#include "port.h"
+#endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: state.c,v 1.5 2015/01/21 23:09:44 christos Exp $");
+__RCSID("$NetBSD: state.c,v 1.6 2015/01/22 01:39:18 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
