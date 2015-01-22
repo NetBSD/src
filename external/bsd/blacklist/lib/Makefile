@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2015/01/21 16:16:00 christos Exp $
+# $NetBSD: Makefile,v 1.2 2015/01/22 05:49:18 christos Exp $
 
 LIB=blacklist
 SRCS=bl.c blacklist.c
@@ -7,5 +7,7 @@ MLINKS+=libblacklist.3 blacklist_open.3
 MLINKS+=libblacklist.3 blacklist_close.3
 MLINKS+=libblacklist.3 blacklist.3
 MLINKS+=libblacklist.3 blacklist_r.3
+MLINKS+=libblacklist.3 blacklist_sa.3
+MLINKS+=libblacklist.3 blacklist_sa_r.3
 
 .include <bsd.lib.mk>
