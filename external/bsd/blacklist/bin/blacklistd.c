@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.20 2015/01/22 15:29:27 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.21 2015/01/22 16:19:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.20 2015/01/22 15:29:27 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.21 2015/01/22 16:19:53 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -71,6 +71,7 @@ static DB *state;
 static const char *dbfile = _PATH_BLSTATE;
 static sig_atomic_t rconf;
 static sig_atomic_t done;
+static int vflag;
 
 static void
 sigusr1(int n __unused)
@@ -100,7 +101,7 @@ static __dead void
 usage(int c)
 {
 	warnx("Unknown option `%c'", (char)c);
-	fprintf(stderr, "Usage: %s [-df] [-c <config>] [-r <rulename>] "
+	fprintf(stderr, "Usage: %s [-vdf] [-c <config>] [-r <rulename>] "
 	    "[-P <sockpathsfile>] [-C <controlprog>] [-D <dbfile>] "
 	    "[-t <timeout>]\n", getprogname());
 	exit(EXIT_FAILURE);
@@ -127,9 +128,10 @@ process(bl_t bl)
 		return;
 
 	if (debug)
-		(*lfun)(LOG_DEBUG, "got type=%d fd=%d msg=%s uid=%lu\n",
+		(*lfun)(LOG_DEBUG, "got type=%d fd=%d msg=%s uid=%lu gid=%lu",
 		    bi->bi_type, bi->bi_fd, bi->bi_msg,
-		    (unsigned long)bi->bi_uid);
+		    (unsigned long)bi->bi_uid,
+		    (unsigned long)bi->bi_gid);
 
 	if (conf_find(bi->bi_fd, bi->bi_uid, &c) == NULL)
 		goto out;
@@ -155,8 +157,8 @@ process(bl_t bl)
 	if (debug) {
 		char b1[128], b2[128];
 		sockaddr_snprintf(rbuf, sizeof(rbuf), "%a:%p", (void *)&rss);
-		(*lfun)(LOG_DEBUG, "%s: %s count=%d nfail=%d last=%s now=%s\n", __func__,
-		    rbuf, dbi.count, c.c_nfail,
+		(*lfun)(LOG_DEBUG, "%s: %s count=%d nfail=%d last=%s now=%s",
+		    __func__, rbuf, dbi.count, c.c_nfail,
 		    fmttime(b1, sizeof(b1), dbi.last),
 		    fmttime(b2, sizeof(b2), ts.tv_sec));
 	}
@@ -219,8 +221,9 @@ update(void)
 			char b1[64], b2[64];
 			sockaddr_snprintf(buf, sizeof(buf), "%a:%p",
 			    (void *)&ss);
-			(*lfun)(LOG_DEBUG, "%s:[%u] %s count=%d duration=%d last=%s "
-			   "now=%s\n", __func__, n, buf, dbi.count,
+			(*lfun)(LOG_DEBUG,
+			    "%s:[%u] %s count=%d duration=%d last=%s "
+			   "now=%s", __func__, n, buf, dbi.count,
 			   c.c_duration, fmttime(b1, sizeof(b1), dbi.last),
 			   fmttime(b2, sizeof(b2), ts.tv_sec));
 		}
@@ -241,7 +244,7 @@ static void
 addfd(struct pollfd **pfdp, bl_t **blp, size_t *nfd, size_t *maxfd,
     const char *path)
 {
-	bl_t bl = bl_create(true, path, lfun);
+	bl_t bl = bl_create(true, path, vflag ? vdlog : vsyslog);
 	if (bl == NULL || !bl_isconnected(bl))
 		exit(EXIT_FAILURE);
 	if (*nfd >= *maxfd) {
@@ -272,7 +275,7 @@ main(int argc, char *argv[])
 	reset = 0;
 	tout = 0;
 	flags = O_RDWR|O_EXCL|O_CLOEXEC;
-	while ((c = getopt(argc, argv, "C:c:D:dfr:P:t:")) != -1) {
+	while ((c = getopt(argc, argv, "C:c:D:dfr:P:t:v")) != -1) {
 		switch (c) {
 		case 'C':
 			controlprog = optarg;
@@ -297,6 +300,9 @@ main(int argc, char *argv[])
 			break;
 		case 't':
 			tout = atoi(optarg) * 1000;
+			break;
+		case 'v':
+			vflag++;
 			break;
 		default:
 			usage(c);
