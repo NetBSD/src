@@ -1,4 +1,5 @@
 #
+ACLOCAL_AMFLAGS = -Im4
 lib_LTLIBRARIES = libblacklist.la
 include_HEADERS = blacklist.h
 
@@ -6,7 +7,7 @@ bin_PROGRAMS = blacklistd blacklistctl
 
 VPATH = ../bin:../lib:../test
 
-AM_CPPFLAGS = -I../include -I../bin/include
+AM_CPPFLAGS = -I../include 
 AM_CFLAGS = @WARNINGS@
 
 libblacklist_la_SOURCES = bl.c blacklist.c
