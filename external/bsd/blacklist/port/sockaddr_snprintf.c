@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.5 2015/01/22 02:48:24 christos Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.6 2015/01/22 03:08:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.5 2015/01/22 02:48:24 christos Exp $");
+__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.6 2015/01/22 03:08:09 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -162,7 +162,8 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
     const struct sockaddr * const sa)
 {
 	const void *a = NULL;
-	char abuf[1024], nbuf[1024], *addr = NULL, *w = NULL;
+	char abuf[1024], nbuf[1024], *addr = NULL;
+
 	char Abuf[1024], pbuf[32], *name = NULL, *port = NULL;
 	char *ebuf = &sbuf[len - 1], *buf = sbuf;
 	const char *ptr, *s;
@@ -175,6 +176,7 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 	const struct sockaddr_un *sun = NULL;
 #ifdef HAVE_NET_IF_DL_H
 	const struct sockaddr_dl *sdl = NULL;
+	char *w = NULL;
 #endif
 	int na = 1;
 
@@ -287,9 +289,12 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			}
 			break;
 		case 'I':
+#ifdef HAVE_NET_IF_DL_H
 			if (sdl && addr != abuf) {
 				ADDS(abuf);
-			} else {
+			} else
+#endif
+			{
 				ADDNA();
 			}
 			break;
