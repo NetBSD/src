@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.4 2015/01/21 19:24:03 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.5 2015/01/22 01:39:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -28,8 +28,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#include "port.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: run.c,v 1.4 2015/01/21 19:24:03 christos Exp $");
+__RCSID("$NetBSD: run.c,v 1.5 2015/01/22 01:39:18 christos Exp $");
 
 #include <stdio.h>
 #include <util.h>

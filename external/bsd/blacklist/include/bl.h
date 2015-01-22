@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.h,v 1.7 2015/01/21 16:16:00 christos Exp $	*/
+/*	$NetBSD: bl.h,v 1.8 2015/01/22 01:39:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,8 +36,6 @@
 #include <sys/socket.h>
 #include "blacklist.h"
 
-struct sockcred;
-
 typedef enum {
 	BL_INVALID,
 	BL_ADD,
@@ -47,10 +45,7 @@ typedef enum {
 typedef struct {
 	bl_type_t bi_type;
 	int bi_fd;
-	union {
-		char bi_space[SOCKCREDSIZE(NGROUPS_MAX)];
-		struct sockcred _bi_cred;
-	} bi_u;
+	uid_t bi_uid;
 	char bi_msg[1024];
 } bl_info_t;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.8 2015/01/21 16:16:00 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.9 2015/01/22 01:39:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,11 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.8 2015/01/21 16:16:00 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.9 2015/01/22 01:39:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/un.h>
 
 #include <stdio.h>
@@ -86,7 +87,9 @@ bl_reset(bl_t b)
 static int
 bl_init(bl_t b, bool srv)
 {
+#ifdef LOCAL_CREDS
 	static int one = 1;
+#endif
 	/* AF_UNIX address of local logger */
 	struct sockaddr_un sun = {
 		.sun_family = AF_LOCAL,
@@ -100,6 +103,15 @@ bl_init(bl_t b, bool srv)
 	if (srv)
 		(void)unlink(b->b_path);
 
+#ifndef SOCK_NONBLOCK
+#define SOCK_NONBLOCK 0
+#endif
+#ifndef SOCK_CLOEXEC
+#define SOCK_CLOEXEC 0
+#endif
+#ifndef SOCK_NOSIGPIPE
+#define SOCK_NOSIGPIPE 0
+#endif
 	if (b->b_fd == -1) {
 		b->b_fd = socket(PF_LOCAL,
 		    SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK|SOCK_NOSIGPIPE, 0);
@@ -108,6 +120,16 @@ bl_init(bl_t b, bool srv)
 			    __func__);
 			return 0;
 		}
+#if SOCK_CLOEXEC == 0
+		fcntl(b->b_fd, F_SETFD, FD_CLOEXEC);
+#endif
+#if SOCK_NONBLOCK == 0
+		fcntl(b->b_fd, F_SETFL, fcntl(b->b_fd, F_GETFL) | O_NONBLOCK);
+#endif
+#if SOCK_NOSIGPIPE == 0
+		int o = 1;
+		setsockopt(b->b_fd, SOL_SOCKET, SO_NOSIGPIPE, &o, sizeof(o));
+#endif
 	}
 
 	if (b->b_connected)
@@ -124,12 +146,14 @@ bl_init(bl_t b, bool srv)
 	}
 
 	b->b_connected = true;
+#ifdef LOCAL_CREDS
 	if (setsockopt(b->b_fd, 0, LOCAL_CREDS,
 	    &one, (socklen_t)sizeof(one)) == -1) {
 		(*b->b_fun)(LOG_ERR, "%s: setsockopt LOCAL_CREDS "
 		    "failed (%m)", __func__);
 		goto out;
 	}
+#endif
 
 	if (srv)
 		if (listen(b->b_fd, 5) == -1) {
@@ -182,7 +206,6 @@ bl_send(bl_t b, bl_type_t e, int pfd, const char *ctx)
 		bl_message_t bl;
 		char buf[512];
 	} ub;
-	int *fd;
 	size_t ctxlen, tried;
 #define NTRIES	5
 
@@ -210,8 +233,7 @@ bl_send(bl_t b, bl_type_t e, int pfd, const char *ctx)
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_RIGHTS;
 
-	fd = CMSG_DATA(cmsg);
-	*fd = pfd;
+	memcpy(CMSG_DATA(cmsg), &pfd, sizeof(pfd));
 
 	tried = 0;
 again:
@@ -231,13 +253,20 @@ bl_recv(bl_t b)
         struct msghdr   msg;
         struct iovec    iov;
 	union {
-		char ctrl[CMSG_SPACE(sizeof(int)) +
-			CMSG_SPACE(SOCKCREDSIZE(NGROUPS_MAX))];
+		char ctrl[CMSG_SPACE(sizeof(int))
+#ifdef SOCKCREDSIZE
+			+ CMSG_SPACE(SOCKCREDSIZE(NGROUPS_MAX))
+#endif
+			];
 		uint32_t fd;
+#ifdef SOCKCREDSIZE
 		struct sockcred sc;
+#endif
 	} ua;
 	struct cmsghdr *cmsg;
+#ifdef SOCKCREDSIZE
 	struct sockcred *sc;
+#endif
 	union {
 		bl_message_t bl;
 		char buf[512];
@@ -278,14 +307,14 @@ bl_recv(bl_t b)
 				    CMSG_LEN(2 * sizeof(int)));
 				continue;
 			}
-			fd = CMSG_DATA(cmsg);
-			bi->bi_fd = *fd;
+			memcpy(&bi->bi_fd, CMSG_DATA(cmsg), sizeof(bi->bi_fd));
 			break;
 		case SCM_CREDS:
+#ifdef SOCKCREDSIZE
 			sc = (void *)CMSG_DATA(cmsg);
-			if (sc->sc_ngroups > NGROUPS_MAX)
-				sc->sc_ngroups = NGROUPS_MAX;
-			memcpy(&bi->bi_cred, sc, SOCKCREDSIZE(sc->sc_ngroups));
+			bi->bi_uid = sc->sc_euid;
+#else
+#endif
 			break;
 		default:
 			(*b->b_fun)(LOG_ERR, "%s: unexpected cmsg_type %d",
