@@ -1,17 +1,12 @@
-# $NetBSD: TODO,v 1.5 2015/01/22 15:25:52 christos Exp $
+# $NetBSD: TODO,v 1.6 2015/01/22 18:15:56 christos Exp $
 
 - don't poll periodically, find the next timeout
-- perhaps pass addresses through the socket too?
 - use the socket also for commands? Or separate socket?
 - add functionality to the control program. Should it change the database
   directly, or talk to the daemon to have it do it?
 - perhaps handle interfaces too instead of addresses for dynamic ip?
   <bge0/4>? What to do with multiple addresses?
-- make a pidfile
-- fix CRED on linux and macosx.
 - perhaps rate limit against DoS
 - perhaps instead of scanning the list have a sparse map by port?
 - do we want to use libnpf directly for efficiency?
-- make /etc/rc.d/ file and fix other naming inconsistencies.
-- finalize named.diff
 - add more daemons ftpd?
