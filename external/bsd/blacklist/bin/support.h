@@ -1,4 +1,4 @@
-/*	$NetBSD: support.h,v 1.1 2015/01/22 03:08:09 christos Exp $	*/
+/*	$NetBSD: support.h,v 1.2 2015/01/22 15:25:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -28,12 +28,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _UTIL_H
-#define _UTIL_H
+#ifndef _SUPPORT_H
+#define _SUPPORT_H
 
 __BEGIN_DECLS
 const char *fmttime(char *, size_t, time_t);
+void dlogv(int, const char *, va_list);
 void dlog(int, const char *, ...);
 __END_DECLS
 
-#endif /* _UTIL_H */
+#endif /* _SUPPORT_H */
