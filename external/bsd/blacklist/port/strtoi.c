@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoi.c,v 1.2 2015/01/22 02:35:44 christos Exp $	*/
+/*	$NetBSD: strtoi.c,v 1.3 2015/01/22 03:10:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The DragonFly Project.  All rights reserved.
@@ -29,14 +29,12 @@
  * Created by Kamil Rytarowski, based on ID:
  * NetBSD: src/common/lib/libc/stdlib/strtoul.c,v 1.3 2008/08/20 19:58:34 oster Exp
  */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "port.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtoi.c,v 1.2 2015/01/22 02:35:44 christos Exp $");
+__RCSID("$NetBSD: strtoi.c,v 1.3 2015/01/22 03:10:50 christos Exp $");
 
 #if defined(_KERNEL)
 #include <sys/param.h>
