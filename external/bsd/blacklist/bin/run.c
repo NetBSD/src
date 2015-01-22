@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.10 2015/01/22 16:19:53 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.11 2015/01/22 17:49:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: run.c,v 1.10 2015/01/22 16:19:53 christos Exp $");
+__RCSID("$NetBSD: run.c,v 1.11 2015/01/22 17:49:41 christos Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_UTIL_H
@@ -73,14 +73,15 @@ run(const char *cmd, const char *name, ...)
 		
 	if (debug) {
 		size_t z;
+		int r;
 
-		z = snprintf(buf, sizeof(buf), "run %s [", controlprog);
-		if (z >= sizeof(buf))
+		r = snprintf(buf, sizeof(buf), "run %s [", controlprog);
+		if (r == -1 || (z = (size_t)r) >= sizeof(buf))
 			z = sizeof(buf);
 		for (i = 0; argv[i]; i++) {
-			z = snprintf(buf + z, sizeof(buf) - z, "%s%s",
+			r = snprintf(buf + z, sizeof(buf) - z, "%s%s",
 			    argv[i], argv[i + 1] ? " " : "");
-			if (z >= sizeof(buf))
+			if (r == -1 || (z += (size_t)r) >= sizeof(buf))
 				z = sizeof(buf);
 		}
 		(*lfun)(LOG_DEBUG, "%s]", buf);
