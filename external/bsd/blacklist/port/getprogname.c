@@ -9,3 +9,7 @@ getprogname(void)
 {
 	return __progname;
 }
+
+void setprogname(char *p) {
+	__progname = p;
+}
