@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.5 2015/01/17 19:10:18 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.6 2015/01/22 17:06:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_dwc_mmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.5 2015/01/17 19:10:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.6 2015/01/22 17:06:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -290,8 +290,7 @@ dwc_mmc_host_reset(sdmmc_chipset_handle_t sch)
 		MMC_WRITE(sc, DWC_MMC_PWREN_REG, DWC_MMC_PWREN_POWER_ENABLE);
 	}
 
-	MMC_WRITE(sc, DWC_MMC_CTRL_REG,
-	    MMC_READ(sc, DWC_MMC_CTRL_REG) | DWC_MMC_CTRL_RESET_ALL);
+	MMC_WRITE(sc, DWC_MMC_CTRL_REG, DWC_MMC_CTRL_RESET_ALL);
 	while (--retry > 0) {
 		ctrl = MMC_READ(sc, DWC_MMC_CTRL_REG);
 		if ((ctrl & DWC_MMC_CTRL_RESET_ALL) == 0)
