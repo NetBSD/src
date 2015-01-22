@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklist.c,v 1.4 2015/01/22 05:35:55 christos Exp $	*/
+/*	$NetBSD: blacklist.c,v 1.5 2015/01/22 16:19:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklist.c,v 1.4 2015/01/22 05:35:55 christos Exp $");
+__RCSID("$NetBSD: blacklist.c,v 1.5 2015/01/22 16:19:53 christos Exp $");
 
 #include <stdio.h>
 #include <bl.h>
@@ -42,38 +42,7 @@ __RCSID("$NetBSD: blacklist.c,v 1.4 2015/01/22 05:35:55 christos Exp $");
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
-static const char *
-expandm(char *buf, size_t len, const char *fmt)
-{
-	char *p;
-	size_t r;
-
-	if ((p = strstr(fmt, "%m")) == NULL)
-		return fmt;
-
-	r = (size_t)(p - fmt);
-	if (r >= len)
-		return fmt;
-
-	strlcpy(buf, fmt, r + 1);
-	strlcat(buf, strerror(errno), len);
-	strlcat(buf, fmt + r + 2, len);
-
-	return buf;
-}
-
-static void
-dlog(int level __unused, const char *fmt, ...)
-{
-	char buf[BUFSIZ];
-	va_list ap;
-
-	fprintf(stderr, "%s: ", getprogname());
-	va_start(ap, fmt);
-	vfprintf(stderr, expandm(buf, sizeof(buf), fmt), ap);
-	va_end(ap);
-	fprintf(stderr, "\n");
-}
+#include <syslog.h>
 
 int
 blacklist_sa(int action, int rfd, const struct sockaddr *sa, socklen_t salen,
@@ -109,7 +78,7 @@ blacklist_r(struct blacklist *bl, int action, int rfd, const char *msg)
 
 struct blacklist *
 blacklist_open(void) {
-	return bl_create(false, NULL, dlog);
+	return bl_create(false, NULL, vsyslog);
 }
 
 void
