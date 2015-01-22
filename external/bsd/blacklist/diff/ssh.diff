@@ -1,0 +1,114 @@
+Index: bin/sshd/Makefile
+===================================================================
+RCS file: /cvsroot/src/crypto/external/bsd/openssh/bin/sshd/Makefile,v
+retrieving revision 1.10
+diff -u -r1.10 Makefile
+--- bin/sshd/Makefile	19 Oct 2014 16:30:58 -0000	1.10
++++ bin/sshd/Makefile	21 Jan 2015 02:16:08 -0000
+@@ -15,7 +15,7 @@
+ 	auth2-none.c auth2-passwd.c auth2-pubkey.c \
+ 	monitor_mm.c monitor.c monitor_wrap.c \
+ 	kexdhs.c kexgexs.c kexecdhs.c sftp-server.c sftp-common.c \
+-	roaming_common.c roaming_serv.c sandbox-rlimit.c
++	roaming_common.c roaming_serv.c sandbox-rlimit.c pfilter.c
+ 
+ COPTS.auth-options.c=	-Wno-pointer-sign
+ COPTS.ldapauth.c=	-Wno-format-nonliteral	# XXX: should fix
+@@ -68,3 +68,6 @@
+ 
+ LDADD+=	-lwrap
+ DPADD+=	${LIBWRAP}
++
++LDADD+=	-lblacklist
++DPADD+=	${LIBBLACKLIST}
+Index: dist/auth.c
+===================================================================
+RCS file: /cvsroot/src/crypto/external/bsd/openssh/dist/auth.c,v
+retrieving revision 1.10
+diff -u -r1.10 auth.c
+--- dist/auth.c	19 Oct 2014 16:30:58 -0000	1.10
++++ dist/auth.c	21 Jan 2015 02:16:09 -0000
+@@ -62,6 +62,7 @@
+ #include "monitor_wrap.h"
+ #include "krl.h"
+ #include "compat.h"
++#include "pfilter.h"
+ 
+ #ifdef HAVE_LOGIN_CAP
+ #include <login_cap.h>
+@@ -362,6 +363,8 @@
+ 	    compat20 ? "ssh2" : "ssh1",
+ 	    authctxt->info != NULL ? ": " : "",
+ 	    authctxt->info != NULL ? authctxt->info : "");
++	if (!authctxt->postponed)
++		pfilter_notify(!authenticated);
+ 	free(authctxt->info);
+ 	authctxt->info = NULL;
+ }
+Index: dist/sshd.c
+===================================================================
+RCS file: /cvsroot/src/crypto/external/bsd/openssh/dist/sshd.c,v
+retrieving revision 1.15
+diff -u -u -r1.15 sshd.c
+--- dist/sshd.c	28 Oct 2014 21:36:16 -0000	1.15
++++ dist/sshd.c	21 Jan 2015 02:49:39 -0000
+@@ -109,6 +109,7 @@
+ #include "roaming.h"
+ #include "ssh-sandbox.h"
+ #include "version.h"
++#include "pfilter.h"
+ 
+ #ifdef LIBWRAP
+ #include <tcpd.h>
+@@ -364,6 +365,7 @@
+ 		killpg(0, SIGTERM);
+ 	}
+ 
++	pfilter_notify(1);
+ 	/* Log error and exit. */
+ 	sigdie("Timeout before authentication for %s", get_remote_ipaddr());
+ }
+@@ -1160,6 +1162,7 @@
+ 	for (i = 0; i < options.max_startups; i++)
+ 		startup_pipes[i] = -1;
+ 
++	pfilter_init();
+ 	/*
+ 	 * Stay listening for connections until the system crashes or
+ 	 * the daemon is killed with a signal.
+--- /dev/null	2015-01-20 21:14:44.000000000 -0500
++++ dist/pfilter.c	2015-01-20 21:17:22.000000000 -0500
+@@ -0,0 +1,27 @@
++#include "namespace.h"
++#include "ssh.h"
++#include "packet.h"
++#include "log.h"
++#include "pfilter.h"
++#include <blacklist.h>
++
++static struct blacklist *blstate;
++
++void
++pfilter_init()
++{
++	blstate = blacklist_open();
++}
++
++void
++pfilter_notify(int a)
++{
++	int fd;
++	if (blstate == NULL)
++		pfilter_init();
++	if (blstate == NULL)
++		return;
++	// XXX: 3?
++ 	fd = packet_connection_is_on_socket() ? packet_get_connection_in() : 3;
++	(void)blacklist_r(blstate, a, fd, "ssh");
++}
+--- /dev/null	2015-01-20 21:14:44.000000000 -0500
++++ dist/pfilter.h	2015-01-20 20:16:20.000000000 -0500
+@@ -0,0 +1,3 @@
++
++void pfilter_notify(int);
++void pfilter_init(void);
