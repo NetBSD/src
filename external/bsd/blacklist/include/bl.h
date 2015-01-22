@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.h,v 1.9 2015/01/22 03:48:07 christos Exp $	*/
+/*	$NetBSD: bl.h,v 1.10 2015/01/22 05:35:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@ typedef struct {
 	bl_type_t bi_type;
 	int bi_fd;
 	uid_t bi_uid;
+	socklen_t bi_slen;
+	struct sockaddr_storage bi_ss;
 	char bi_msg[1024];
 } bl_info_t;
 
@@ -61,7 +63,8 @@ typedef struct blacklist *bl_t;
 
 bl_t bl_create(bool, const char *, void (*)(int, const char *, ...));
 void bl_destroy(bl_t);
-int bl_send(bl_t, bl_type_t, int, const char *);
+int bl_send(bl_t, bl_type_t, int, const struct sockaddr *, socklen_t,
+    const char *);
 int bl_getfd(bl_t);
 bl_info_t *bl_recv(bl_t);
 bool bl_isconnected(bl_t);
