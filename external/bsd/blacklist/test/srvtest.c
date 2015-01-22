@@ -1,4 +1,4 @@
-/*	$NetBSD: srvtest.c,v 1.8 2015/01/22 05:03:52 christos Exp $	*/
+/*	$NetBSD: srvtest.c,v 1.9 2015/01/22 05:35:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: srvtest.c,v 1.8 2015/01/22 05:03:52 christos Exp $");
+__RCSID("$NetBSD: srvtest.c,v 1.9 2015/01/22 05:35:55 christos Exp $");
 
 #include <sys/types.h> 
 #include <sys/socket.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: srvtest.c,v 1.8 2015/01/22 05:03:52 christos Exp $");
 #endif
 
 static void
-process(int afd)
+process_tcp(int afd)
 {
 	ssize_t n;
 	char buffer[256];
@@ -70,6 +70,26 @@ process(int afd)
 	exit(0);
 }
 
+static void
+process_udp(int afd)
+{
+	ssize_t n;
+	char buffer[256];
+	struct sockaddr_storage ss;
+	socklen_t slen;
+
+	memset(buffer, 0, sizeof(buffer));
+
+	slen = (socklen_t)sizeof(ss);
+	memset(&ss, 0, sizeof(ss));
+	if ((n = recvfrom(afd, buffer, sizeof(buffer), 0, (void *)&ss,
+		&slen)) == -1)
+		err(1, "recvfrom");
+	buffer[sizeof(buffer) - 1] = '\0';
+	printf("%s: sending %d %s\n", getprogname(), afd, buffer);
+	blacklist_sa(1, afd, (void *)&ss, slen, buffer);
+	exit(0);
+}
 static int
 cr(int af, int type, in_port_t p)
 {
@@ -124,7 +144,10 @@ handle(int type, int sfd)
 	case -1:
 		err(1, "fork");
 	case 0:
-		process(afd);
+		if (type == SOCK_DGRAM)
+			process_udp(afd);
+		else
+			process_tcp(afd);
 		break;
 	default:
 		close(afd);
