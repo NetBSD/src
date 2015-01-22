@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcat.c,v 1.1 2015/01/22 02:36:15 christos Exp $	*/
+/*	$NetBSD: strlcat.c,v 1.2 2015/01/22 03:48:07 christos Exp $	*/
 /*	$OpenBSD: strlcat.c,v 1.10 2003/04/12 21:56:39 millert Exp $	*/
 
 /*
@@ -18,13 +18,13 @@
  */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strlcat.c,v 1.1 2015/01/22 02:36:15 christos Exp $");
+__RCSID("$NetBSD: strlcat.c,v 1.2 2015/01/22 03:48:07 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef _LIBC
@@ -61,9 +61,6 @@ strlcat(char *dst, const char *src, size_t siz)
 	size_t n = siz;
 	size_t dlen;
 
-	_DIAGASSERT(dst != NULL);
-	_DIAGASSERT(src != NULL);
-
 	/* Find the end of dst and adjust bytes left but don't go past end */
 	while (n-- != 0 && *d != '\0')
 		d++;
@@ -83,8 +80,6 @@ strlcat(char *dst, const char *src, size_t siz)
 
 	return(dlen + (s - src));	/* count does not include NUL */
 #else
-	_DIAGASSERT(dst != NULL);
-	_DIAGASSERT(src != NULL);
 
 	/*
 	 * Find length of string in dst (maxing out at siz).

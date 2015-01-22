@@ -26,6 +26,8 @@ AC_CHECK_HEADERS(sys/un.h sys/socket.h limits.h)
 AC_CHECK_HEADERS(arpa/inet.h getopt.h err.h)
 AC_CHECK_HEADERS(sys/types.h util.h sys/time.h time.h)
 AC_CHECK_HEADERS(netatalk/at.h net/if_dl.h db.h db_185.h)
+AC_CHECK_LIB(rt, clock_gettime)
+AC_CHECK_LIB(db, __db185_open)
 
 AH_BOTTOM([
 #ifndef __NetBSD__
@@ -78,7 +80,7 @@ dnl Checks for functions
 AC_CHECK_FUNCS(strerror)
 
 dnl Provide implementation of some required functions if necessary
-AC_REPLACE_FUNCS(strtoi sockaddr_snprintf popenve clock_gettime strlcpy strlcat getprogname)
+AC_REPLACE_FUNCS(strtoi sockaddr_snprintf popenve clock_gettime strlcpy strlcat getprogname fparseln fgetln)
 
 dnl See if we are cross-compiling
 AM_CONDITIONAL(IS_CROSS_COMPILE, test "$cross_compiling" = yes)

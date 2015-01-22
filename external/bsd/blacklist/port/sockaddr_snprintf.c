@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.7 2015/01/22 03:10:50 christos Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.8 2015/01/22 03:48:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.7 2015/01/22 03:10:50 christos Exp $");
+__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.8 2015/01/22 03:48:07 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: sockaddr_snprintf.c,v 1.7 2015/01/22 03:10:50 christos Exp $")
 #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
 #define SLEN(a)	(a)->a ## _len
 #else
-static size_t
+static socklen_t
 socklen(u_int af)
 {
 	switch (af) {
@@ -88,9 +88,8 @@ socklen(u_int af)
 	}
 }
 
-#define SLEN(a)	(uint8_t)MAX(sizeof(*(a)), socklen((a)->a ## _family))
+#define SLEN(a)	socklen((a)->a ## _family)
 #endif
-
 
 #ifdef HAVE_NETATALK_AT_H
 static int

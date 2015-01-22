@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcpy.c,v 1.1 2015/01/22 02:36:15 christos Exp $	*/
+/*	$NetBSD: strlcpy.c,v 1.2 2015/01/22 03:48:07 christos Exp $	*/
 /*	$OpenBSD: strlcpy.c,v 1.7 2003/04/12 21:56:39 millert Exp $	*/
 
 /*
@@ -18,13 +18,13 @@
  */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
+#if HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strlcpy.c,v 1.1 2015/01/22 02:36:15 christos Exp $");
+__RCSID("$NetBSD: strlcpy.c,v 1.2 2015/01/22 03:48:07 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef _LIBC
@@ -56,9 +56,6 @@ strlcpy(char *dst, const char *src, size_t siz)
 	char *d = dst;
 	const char *s = src;
 	size_t n = siz;
-
-	_DIAGASSERT(dst != NULL);
-	_DIAGASSERT(src != NULL);
 
 	/* Copy as many bytes as will fit */
 	if (n != 0 && --n != 0) {

@@ -1,7 +1,7 @@
-/*	$NetBSD: bl.h,v 1.9 2015/01/22 03:48:07 christos Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.1 2015/01/22 03:48:07 christos Exp $	*/
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -28,44 +28,79 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _BL_H
-#define _BL_H
 
-#include <stdbool.h>
-#include <sys/param.h>
-#include <sys/socket.h>
-#include "blacklist.h"
-
-typedef enum {
-	BL_INVALID,
-	BL_ADD,
-	BL_DELETE
-} bl_type_t;
-
-typedef struct {
-	bl_type_t bi_type;
-	int bi_fd;
-	uid_t bi_uid;
-	char bi_msg[1024];
-} bl_info_t;
-
-#define bi_cred bi_u._bi_cred
-
-#ifndef _PATH_BLSOCK
-#define _PATH_BLSOCK "/var/run/blsock"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
 
-__BEGIN_DECLS
+#if !HAVE_FGETLN
+#include <stdlib.h>
+#ifndef HAVE_NBTOOL_CONFIG_H
+/* These headers are required, but included from nbtool_config.h */
+#include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#endif
 
-typedef struct blacklist *bl_t;
+char *
+fgetln(FILE *fp, size_t *len)
+{
+	static char *buf = NULL;
+	static size_t bufsiz = 0;
+	char *ptr;
 
-bl_t bl_create(bool, const char *, void (*)(int, const char *, ...));
-void bl_destroy(bl_t);
-int bl_send(bl_t, bl_type_t, int, const char *);
-int bl_getfd(bl_t);
-bl_info_t *bl_recv(bl_t);
-bool bl_isconnected(bl_t);
 
-__END_DECLS
+	if (buf == NULL) {
+		bufsiz = BUFSIZ;
+		if ((buf = malloc(bufsiz)) == NULL)
+			return NULL;
+	}
 
-#endif /* _BL_H */
+	if (fgets(buf, bufsiz, fp) == NULL)
+		return NULL;
+
+	*len = 0;
+	while ((ptr = strchr(&buf[*len], '\n')) == NULL) {
+		size_t nbufsiz = bufsiz + BUFSIZ;
+		char *nbuf = realloc(buf, nbufsiz);
+
+		if (nbuf == NULL) {
+			int oerrno = errno;
+			free(buf);
+			errno = oerrno;
+			buf = NULL;
+			return NULL;
+		} else
+			buf = nbuf;
+
+		if (fgets(&buf[bufsiz], BUFSIZ, fp) == NULL) {
+			buf[bufsiz] = '\0';
+			*len = strlen(buf);
+			return buf;
+		}
+
+		*len = bufsiz;
+		bufsiz = nbufsiz;
+	}
+
+	*len = (ptr - buf) + 1;
+	return buf;
+}
+
+#endif
+
+#ifdef TEST
+int
+main(int argc, char *argv[])
+{
+	char *p;
+	size_t len;
+
+	while ((p = fgetln(stdin, &len)) != NULL) {
+		(void)printf("%zu %s", len, p);
+		free(p);
+	}
+	return 0;
+}
+#endif

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <time.h>
+#include <sys/stat.h>
+#include <netdb.h>
 
 #ifndef __unused
 #define __unused __attribute__((__unused__))
@@ -44,9 +46,23 @@ int sockaddr_snprintf(char *, size_t, const char *, const struct sockaddr *);
 #ifndef HAVE_STRTOI
 intmax_t strtoi(const char *, char **, int, intmax_t, intmax_t, int *);
 #endif
+
 #ifndef HAVE_GETPROGNAME
 const char *getprogname(void);
+void setprogname(char *);
+#endif
 
+#ifndef HAVE_FPARSELN
+#define FPARSELN_UNESCALL	0xf
+#define FPARSELN_UNESCCOMM	0x1
+#define FPARSELN_UNESCCONT	0x2
+#define FPARSELN_UNESCESC	0x4
+#define FPARSELN_UNESCREST	0x8
+char *fparseln(FILE *, size_t *, size_t *, const char delim[3], int);
+#endif
+
+#ifndef HAVE_FGETLN
+char *fgetln(FILE *, size_t *);
 #endif
 
 #ifndef HAVE_CLOCK_GETTIME
@@ -54,3 +70,8 @@ struct timespec;
 int clock_gettime(int, struct timespec *);
 #define CLOCK_REALTIME 0
 #endif
+
+#define _PATH_BLCONF "conf"
+#define _PATH_BLCONTROL "control"
+#define _PATH_BLSOCK "blsock"
+#define _PATH_BLSTATE "blacklistd.db"

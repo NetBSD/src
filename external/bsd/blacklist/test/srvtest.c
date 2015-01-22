@@ -1,3 +1,40 @@
+/*	$NetBSD: srvtest.c,v 1.6 2015/01/22 03:48:07 christos Exp $	*/
+
+/*-
+ * Copyright (c) 2015 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Christos Zoulas.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: srvtest.c,v 1.6 2015/01/22 03:48:07 christos Exp $");
+
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -12,6 +49,10 @@
 #include <err.h>
 
 #include "blacklist.h"
+
+#ifndef INFTIM
+#define INFTIM -1
+#endif
 
 static void
 process(int afd)
@@ -34,6 +75,7 @@ cr(int af, int type, in_port_t p)
 {
 	int sfd;
 	struct sockaddr_storage ss;
+	socklen_t slen;
 	sfd = socket(af == AF_INET ? PF_INET : PF_INET6, type, 0);
 	if (sfd == -1)
 		err(1, "socket");
@@ -43,16 +85,19 @@ cr(int af, int type, in_port_t p)
 	if (af == AF_INET) {
 		struct sockaddr_in *s = (void *)&ss;
 		s->sin_family = AF_INET;
-		s->sin_len = sizeof(*s);
+		slen = sizeof(*s);
 		s->sin_port = p;
 	} else {
 		struct sockaddr_in6 *s6 = (void *)&ss;
 		s6->sin6_family = AF_INET6;
-		s6->sin6_len = sizeof(*s6);
+		slen = sizeof(*s6);
 		s6->sin6_port = p;
 	}
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
+	ss->ss_len = slen;
+#endif
      
-	if (bind(sfd, (const void *)&ss, ss.ss_len) == -1)
+	if (bind(sfd, (const void *)&ss, slen) == -1)
 		err(1, "bind");
 
 	if (listen(sfd, 5) == -1)
@@ -93,7 +138,12 @@ usage(int c)
 int
 main(int argc, char *argv[])
 {
-	struct pollfd pfd[2];
+#ifdef __linux__
+#define NUMFD 1
+#else
+#define NUMFD 2
+#endif
+	struct pollfd pfd[NUMFD];
 	int type = SOCK_STREAM, c;
 	in_port_t port = 6161;
 
@@ -112,8 +162,11 @@ main(int argc, char *argv[])
 		}
 
 	pfd[0].fd = cr(AF_INET, type, port);
+	pfd[0].events = POLLIN;
+#if NUMFD > 1
 	pfd[1].fd = cr(AF_INET6, type, port);
-	pfd[0].events = pfd[1].events = POLLIN;
+	pfd[1].events = POLLIN;
+#endif
 
 	for (;;) {
 		if (poll(pfd, __arraycount(pfd), INFTIM) == -1)

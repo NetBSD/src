@@ -1,3 +1,40 @@
+/*	$NetBSD: cltest.c,v 1.4 2015/01/22 03:48:07 christos Exp $	*/
+
+/*-
+ * Copyright (c) 2015 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Christos Zoulas.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: cltest.c,v 1.4 2015/01/22 03:48:07 christos Exp $");
+
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -19,7 +56,8 @@ usage(int c)
 }
 
 static void
-getaddr(const char *a, in_port_t p, struct sockaddr_storage *ss)
+getaddr(const char *a, in_port_t p, struct sockaddr_storage *ss,
+    socklen_t *slen)
 {
 	int c;
 
@@ -30,15 +68,18 @@ getaddr(const char *a, in_port_t p, struct sockaddr_storage *ss)
 		struct sockaddr_in6 *s6 = (void *)ss;
 		c = inet_pton(AF_INET6, a, &s6->sin6_addr);
 		s6->sin6_family = AF_INET6;
-		s6->sin6_len = sizeof(*s6);
+		*slen = sizeof(*s6);
 		s6->sin6_port = p;
 	} else {
 		struct sockaddr_in *s = (void *)ss;
 		c = inet_pton(AF_INET, a, &s->sin_addr);
 		s->sin_family = AF_INET;
-		s->sin_len = sizeof(*s);
+		*slen = sizeof(*s);
 		s->sin_port = p;
 	}
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
+	ss->ss_len = *slen;
+#endif
 	if (c == -1)
 		err(EXIT_FAILURE, "Invalid address `%s'", a);
 }
@@ -53,6 +94,7 @@ main(int argc, char *argv[])
 	const char *addr = "127.0.0.1";
 	int type = SOCK_STREAM;
 	in_port_t port = 6161;
+	socklen_t slen;
 
 	while ((c = getopt(argc, argv, "a:m:p:u")) == -1) {
 		switch (c) {
@@ -73,12 +115,12 @@ main(int argc, char *argv[])
 		}
 	}
 
-	getaddr(addr, port, &ss);
+	getaddr(addr, port, &ss, &slen);
 
 	if ((sfd = socket(AF_INET, type, 0)) == -1)
 		err(EXIT_FAILURE, "socket");
 
-	if (connect(sfd, (const void *)&ss, ss.ss_len) == -1)
+	if (connect(sfd, (const void *)&ss, slen) == -1)
 		err(EXIT_FAILURE, "connect");
 
 	size_t len = strlen(msg) + 1;
