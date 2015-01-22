@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.13 2015/01/22 03:48:07 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.14 2015/01/22 04:20:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.13 2015/01/22 03:48:07 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.14 2015/01/22 04:20:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -99,7 +99,7 @@ bl_init(bl_t b, bool srv)
 	/* AF_UNIX address of local logger */
 	struct sockaddr_un sun = {
 		.sun_family = AF_LOCAL,
-#ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
 		.sun_len = sizeof(sun),
 #endif
 	};

@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.1 2015/01/21 16:16:00 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2015/01/22 04:20:50 christos Exp $
 
 WARNS=6
 LDADD+=	-lblacklist
 DPADD+= ${LIBBLACKLIST}
 CPPFLAGS+= -I${.CURDIR}/../include
+CPPFLAGS+=-DHAVE_STRUCT_SOCKADDR_SA_LEN -DHAVE_UTIL_H -DHAVE_DB_H
+
