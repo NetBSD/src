@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.8 2015/01/22 04:13:04 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.9 2015/01/22 15:29:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: run.c,v 1.8 2015/01/22 04:13:04 christos Exp $");
+__RCSID("$NetBSD: run.c,v 1.9 2015/01/22 15:29:27 christos Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_UTIL_H
@@ -72,10 +72,10 @@ run(const char *cmd, const char *name, ...)
 	va_end(ap);
 		
 	if (debug) {
-		printf("run %s [", controlprog);
+		(*lfun)(LOG_DEBUG, "run %s [", controlprog);
 		for (i = 0; argv[i]; i++)
-			printf(" %s", argv[i]);
-		printf("]\n");
+			(*lfun)(LOG_DEBUG, " %s", argv[i]);
+		(*lfun)(LOG_DEBUG, "]\n");
 	}
 
 	fp = popenve(controlprog, __UNCONST(argv), environ, "r");
@@ -89,7 +89,7 @@ run(const char *cmd, const char *name, ...)
 		res = NULL;
 	pclose(fp);
 	if (debug)
-		printf("%s returns %s\n", cmd, res);
+		(*lfun)(LOG_DEBUG, "%s returns %s\n", cmd, res);
 	return res;
 }
 

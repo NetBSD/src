@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.19 2015/01/22 15:25:52 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.20 2015/01/22 15:29:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.19 2015/01/22 15:25:52 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.20 2015/01/22 15:29:27 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -127,7 +127,7 @@ process(bl_t bl)
 		return;
 
 	if (debug)
-		printf("got type=%d fd=%d msg=%s uid=%lu\n",
+		(*lfun)(LOG_DEBUG, "got type=%d fd=%d msg=%s uid=%lu\n",
 		    bi->bi_type, bi->bi_fd, bi->bi_msg,
 		    (unsigned long)bi->bi_uid);
 
@@ -155,7 +155,7 @@ process(bl_t bl)
 	if (debug) {
 		char b1[128], b2[128];
 		sockaddr_snprintf(rbuf, sizeof(rbuf), "%a:%p", (void *)&rss);
-		printf("%s: %s count=%d nfail=%d last=%s now=%s\n", __func__,
+		(*lfun)(LOG_DEBUG, "%s: %s count=%d nfail=%d last=%s now=%s\n", __func__,
 		    rbuf, dbi.count, c.c_nfail,
 		    fmttime(b1, sizeof(b1), dbi.last),
 		    fmttime(b2, sizeof(b2), ts.tv_sec));
@@ -219,7 +219,7 @@ update(void)
 			char b1[64], b2[64];
 			sockaddr_snprintf(buf, sizeof(buf), "%a:%p",
 			    (void *)&ss);
-			printf("%s:[%u] %s count=%d duration=%d last=%s "
+			(*lfun)(LOG_DEBUG, "%s:[%u] %s count=%d duration=%d last=%s "
 			   "now=%s\n", __func__, n, buf, dbi.count,
 			   c.c_duration, fmttime(b1, sizeof(b1), dbi.last),
 			   fmttime(b2, sizeof(b2), ts.tv_sec));
