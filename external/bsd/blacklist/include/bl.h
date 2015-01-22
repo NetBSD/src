@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.h,v 1.11 2015/01/22 15:25:52 christos Exp $	*/
+/*	$NetBSD: bl.h,v 1.12 2015/01/22 16:19:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@ typedef struct {
 	bl_type_t bi_type;
 	int bi_fd;
 	uid_t bi_uid;
+	gid_t bi_gid;
 	socklen_t bi_slen;
 	struct sockaddr_storage bi_ss;
 	char bi_msg[1024];
