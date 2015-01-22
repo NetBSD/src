@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.22 2015/01/22 20:17:34 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.23 2015/01/22 21:32:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.22 2015/01/22 20:17:34 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.23 2015/01/22 21:32:30 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -217,7 +217,7 @@ update(void)
 	    f = 0, n++)
 	{
 		time_t when = c.c_duration + dbi.last;
-		if (debug) {
+		if (debug > 1) {
 			char b1[64], b2[64];
 			sockaddr_snprintf(buf, sizeof(buf), "%a:%p",
 			    (void *)&ss);
