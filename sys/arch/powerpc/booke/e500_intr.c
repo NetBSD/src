@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.29 2015/01/05 07:40:05 nonaka Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.30 2015/01/23 06:16:23 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.29 2015/01/05 07:40:05 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.30 2015/01/23 06:16:23 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -83,6 +83,7 @@ struct intr_source {
 	int8_t is_ipl;
 	uint8_t is_ist;
 	uint8_t is_irq;
+	uint8_t is_refcnt;
 	bus_size_t is_vpr;
 	bus_size_t is_dr;
 };
@@ -737,8 +738,16 @@ e500_intr_cpu_establish(struct cpu_info *ci, int irq, int ipl, int ist,
 	struct intr_source * const is = &e500_intr_sources[ii.irq_vector];
 	mutex_enter(&e500_intr_lock);
 	if (is->is_ipl != IPL_NONE) {
-		mutex_exit(&e500_intr_lock);
-		return NULL;
+		/* XXX IPI0 is shared by all CPU. */
+		if (is->is_ist != IST_IPI ||
+		    is->is_irq != irq ||
+		    is->is_ipl != ipl ||
+		    is->is_ist != ist ||
+		    is->is_func != handler ||
+		    is->is_arg != arg) {
+			mutex_exit(&e500_intr_lock);
+			return NULL;
+		}
 	}
 
 	is->is_func = handler;
@@ -746,6 +755,7 @@ e500_intr_cpu_establish(struct cpu_info *ci, int irq, int ipl, int ist,
 	is->is_ipl = ipl;
 	is->is_ist = ist;
 	is->is_irq = irq;
+	is->is_refcnt++;
 	is->is_vpr = ii.irq_vpr;
 	is->is_dr = ii.irq_dr;
 
@@ -812,6 +822,12 @@ e500_intr_disestablish(void *vis)
 	KASSERT(is - e500_intr_sources == ii.irq_vector);
 
 	mutex_enter(&e500_intr_lock);
+
+	if (is->is_refcnt-- > 1) {
+		mutex_exit(&e500_intr_lock);
+		return;
+	}
+
 	/*
 	 * Mask the source using the mask (MSK) bit in the vector/priority reg.
 	 */
