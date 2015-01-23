@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.26 2015/01/23 21:33:37 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.27 2015/01/23 22:34:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.26 2015/01/23 21:33:37 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.27 2015/01/23 22:34:13 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -111,7 +111,7 @@ usage(int c)
 static int
 getremoteaddress(bl_info_t *bi, struct sockaddr_storage *rss, socklen_t *rsl)
 {
-	*rsl = sizeof(rss);
+	*rsl = sizeof(*rss);
 	memset(rss, 0, *rsl);
 
 	if (getpeername(bi->bi_fd, (void *)rss, rsl) != -1)
