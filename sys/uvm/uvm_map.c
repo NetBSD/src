@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.330 2014/07/18 12:36:57 christos Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.330.2.1 2015/01/23 16:31:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.330 2014/07/18 12:36:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.330.2.1 2015/01/23 16:31:06 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3796,6 +3796,9 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 			KASSERT(anon->an_lock == amap->am_lock);
 			pg = anon->an_page;
 			if (pg == NULL) {
+				continue;
+			}
+			if (pg->flags & PG_BUSY) {
 				continue;
 			}
 
