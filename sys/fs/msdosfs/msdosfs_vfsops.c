@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.116 2015/01/23 02:39:48 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.117 2015/01/23 03:33:58 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.116 2015/01/23 02:39:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.117 2015/01/23 03:33:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -511,7 +511,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	 * boot signature.  If not a dos boot sector then error out.
 	 */
 	if (secsize < sizeof(*b50)) {
-		DPRINTF(("50 bootsec %u\n", secsize));
+		DPRINTF("50 bootsec %u\n", secsize);
 		error = EINVAL;
 		goto error_exit;
 	}
@@ -557,7 +557,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 		pmp->pm_HugeSectors = getulong(b50->bpbHugeSectors);
 	} else {
 		if (secsize < sizeof(*b33)) {
-			DPRINTF(("33 bootsec %u\n", secsize));
+			DPRINTF("33 bootsec %u\n", secsize);
 			error = EINVAL;
 			goto error_exit;
 		}
@@ -590,7 +590,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 
 	if (pmp->pm_RootDirEnts == 0) {
 		if (secsize < sizeof(*b710)) {
-			DPRINTF(("710 bootsec %u\n", secsize));
+			DPRINTF("710 bootsec %u\n", secsize);
 			error = EINVAL;
 			goto error_exit;
 		}
@@ -666,7 +666,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	pmp->pm_fatblk = pmp->pm_ResSectors;
 	if (FAT32(pmp)) {
 		if (secsize < sizeof(*b710)) {
-			DPRINTF(("710 bootsec %u\n", secsize));
+			DPRINTF("710 bootsec %u\n", secsize);
 			error = EINVAL;
 			goto error_exit;
 		}
