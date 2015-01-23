@@ -1,4 +1,4 @@
-/*	$NetBSD: i82801lpcreg.h,v 1.8 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: i82801lpcreg.h,v 1.8.10.1 2015/01/23 16:24:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -40,11 +40,13 @@
  * PCI configuration registers
  */
 #define LPCIB_PCI_PMBASE	0x40
+#define LPCIB_PCI_PM_SIZE	0x00000080
 #define LPCIB_PCI_ACPI_CNTL	0x44
 # define LPCIB_PCI_ACPI_CNTL_EN	(1 << 4)
 #define LPCIB_PCI_BIOS_CNTL	0x4e
 #define LPCIB_PCI_TCO_CNTL	0x54
 #define LPCIB_PCI_GPIO_BASE	0x58
+#define LPCIB_PCI_GPIO_SIZE	0x00000080
 #define LPCIB_PCI_GPIO_CNTL	0x5c
 #define LPCIB_PCI_PIRQA_ROUT	0x60
 #define LPCIB_PCI_PIRQB_ROUT	0x61
