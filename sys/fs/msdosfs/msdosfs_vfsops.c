@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.115 2014/07/18 17:24:34 maxv Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.116 2015/01/23 02:39:48 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.115 2014/07/18 17:24:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.116 2015/01/23 02:39:48 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -510,6 +510,11 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	 * Read the boot sector of the filesystem, and then check the
 	 * boot signature.  If not a dos boot sector then error out.
 	 */
+	if (secsize < sizeof(*b50)) {
+		DPRINTF(("50 bootsec %u\n", secsize));
+		error = EINVAL;
+		goto error_exit;
+	}
 	if ((error = bread(devvp, 0, secsize, NOCRED, 0, &bp)) != 0)
 		goto error_exit;
 	bsp = (union bootsector *)bp->b_data;
@@ -551,6 +556,11 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 		pmp->pm_HiddenSects = getulong(b50->bpbHiddenSecs);
 		pmp->pm_HugeSectors = getulong(b50->bpbHugeSectors);
 	} else {
+		if (secsize < sizeof(*b33)) {
+			DPRINTF(("33 bootsec %u\n", secsize));
+			error = EINVAL;
+			goto error_exit;
+		}
 		pmp->pm_HiddenSects = getushort(b33->bpbHiddenSecs);
 		pmp->pm_HugeSectors = pmp->pm_Sectors;
 	}
@@ -579,6 +589,11 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	}
 
 	if (pmp->pm_RootDirEnts == 0) {
+		if (secsize < sizeof(*b710)) {
+			DPRINTF(("710 bootsec %u\n", secsize));
+			error = EINVAL;
+			goto error_exit;
+		}
 		unsigned short FSVers = getushort(b710->bpbFSVers);
 		unsigned short ExtFlags = getushort(b710->bpbExtFlags);
 		/*
@@ -650,6 +665,11 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 
 	pmp->pm_fatblk = pmp->pm_ResSectors;
 	if (FAT32(pmp)) {
+		if (secsize < sizeof(*b710)) {
+			DPRINTF(("710 bootsec %u\n", secsize));
+			error = EINVAL;
+			goto error_exit;
+		}
 		pmp->pm_rootdirblk = getulong(b710->bpbRootClust);
 		pmp->pm_firstcluster = pmp->pm_fatblk
 			+ (pmp->pm_FATs * pmp->pm_FATsecs);
