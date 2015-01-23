@@ -1,11 +1,12 @@
---- /dev/null	2015-01-20 21:14:44.000000000 -0500
-+++ dist/pfilter.c	2015-01-20 21:17:22.000000000 -0500
-@@ -0,0 +1,27 @@
+--- /dev/null	2015-01-22 23:10:33.000000000 -0500
++++ dist/pfilter.c	2015-01-22 23:46:03.000000000 -0500
+@@ -0,0 +1,28 @@
 +#include "namespace.h"
 +#include "ssh.h"
 +#include "packet.h"
 +#include "log.h"
 +#include "pfilter.h"
++#include <sys/socket.h>
 +#include <blacklist.h>
 +
 +static struct blacklist *blstate;
