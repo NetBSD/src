@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.22 2015/01/23 06:39:41 nonaka Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.23 2015/01/23 07:27:05 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.22 2015/01/23 06:39:41 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.23 2015/01/23 07:27:05 nonaka Exp $");
 
 #include "opt_modular.h"
 
@@ -230,6 +230,8 @@ booke_cpu_startup(const char *model)
 	kcpuset_create(&cpuset_info.cpus_paused, true);
 	kcpuset_create(&cpuset_info.cpus_resumed, true);
 	kcpuset_create(&cpuset_info.cpus_halted, true);
+
+	kcpuset_set(cpuset_info.cpus_running, cpu_number());
 #endif /* MULTIPROCESSOR */
 }
 

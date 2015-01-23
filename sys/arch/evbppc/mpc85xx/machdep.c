@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 2015/01/06 01:23:24 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 2015/01/23 07:27:05 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetSBD$");
 #include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_mpc85xx.h"
+#include "opt_multiprocessor.h"
 #include "opt_pci.h"
 #include "gpio.h"
 #include "pci.h"
@@ -1054,6 +1055,13 @@ e500_cpu_attach(device_t self, u_int instance)
 void
 e500_ipi_halt(void)
 {
+#ifdef MULTIPROCESSOR
+	struct cpuset_info * const csi = &cpuset_info;
+	const cpuid_t index = cpu_index(curcpu());
+
+	printf("cpu%lu: shutting down\n", index);
+	kcpuset_set(csi->cpus_halted, index);
+#endif
 	register_t msr, hid0;
 
 	msr = wrtee(0);
