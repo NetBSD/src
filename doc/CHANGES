@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2036 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2037 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -124,3 +124,5 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	openssl: Import openssl 1.0.1k [spz 20150113]
 	am-utils: Upgrade to 6.2; adds nfsv4, lustre (which we can't use)
 		nfs3 rpc support for amfs [christos 20150117]
+	arm: Add support for Zynq SoC. [hkenken 20150123]
+	evbarm: Add support for the PARALLELLA (Zynq). [hkenken 20150123]
