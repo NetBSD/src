@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.25 2015/01/22 23:45:41 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.26 2015/01/23 21:33:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.25 2015/01/22 23:45:41 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.26 2015/01/23 21:33:37 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -108,10 +108,60 @@ usage(int c)
 	exit(EXIT_FAILURE);
 }
 
+static int
+getremoteaddress(bl_info_t *bi, struct sockaddr_storage *rss, socklen_t *rsl)
+{
+	*rsl = sizeof(rss);
+	memset(rss, 0, *rsl);
+
+	if (getpeername(bi->bi_fd, (void *)rss, rsl) != -1)
+		return 0;
+
+	if (errno != ENOTCONN) {
+		(*lfun)(LOG_ERR, "getpeername failed (%m)"); 
+		return -1;
+	}
+
+	if (bi->bi_slen == 0) {
+		(*lfun)(LOG_ERR, "unconnected socket with no peer in message");
+		return -1;
+	}
+
+	switch (bi->bi_ss.ss_family) {
+	case AF_INET:
+		*rsl = sizeof(struct sockaddr_in);
+		break;
+	case AF_INET6:
+		*rsl = sizeof(struct sockaddr_in6);
+		break;
+	default:
+		(*lfun)(LOG_ERR, "bad client passed socket family %u",
+		    (unsigned)bi->bi_ss.ss_family); 
+		return -1;
+	}
+
+	if (*rsl != bi->bi_slen) {
+		(*lfun)(LOG_ERR, "bad client passed socket length %u != %u",
+		    (unsigned)*rsl, (unsigned)bi->bi_slen); 
+		return -1;
+	}
+
+	memcpy(rss, &bi->bi_ss, *rsl);
+
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
+	if (*rsl != rss->ss_len) {
+		(*lfun)(LOG_ERR,
+		    "bad client passed socket internal length %u != %u",
+		    (unsigned)*rsl, (unsigned)rss->ss_len); 
+		return -1;
+	}
+#endif
+	return 0;
+}
+
 static void
 process(bl_t bl)
 {
-	int rfd;
 	struct sockaddr_storage rss;
 	socklen_t rsl;
 	char rbuf[BUFSIZ];
@@ -125,67 +175,35 @@ process(bl_t bl)
 		return;
 	}
 
-	if ((bi = bl_recv(bl)) == NULL)
+	if ((bi = bl_recv(bl)) == NULL) {
+		(*lfun)(LOG_ERR, "no message (%m)"); 
 		return;
+	}
 
-	if (debug)
-		(*lfun)(LOG_DEBUG, "got type=%d fd=%d msg=%s uid=%lu gid=%lu",
-		    bi->bi_type, bi->bi_fd, bi->bi_msg,
-		    (unsigned long)bi->bi_uid,
-		    (unsigned long)bi->bi_gid);
-
-	if (conf_find(bi->bi_fd, bi->bi_uid, &c) == NULL)
+	if (getremoteaddress(bi, &rss, &rsl) == -1)
 		goto out;
 
-	rfd = bi->bi_fd;
-	rsl = sizeof(rss);
-	memset(&rss, 0, rsl);
-	if (getpeername(rfd, (void *)&rss, &rsl) == -1) {
-		if (errno != ENOTCONN) {
-			(*lfun)(LOG_ERR, "getpeername failed (%m)"); 
-			goto out;
-		}
-		if (bi->bi_slen == 0) {
-			(*lfun)(LOG_ERR,
-			    "unconnected socket with no peer in message"); 
-			goto out;
-		}
-		memcpy(&rss, &bi->bi_ss, bi->bi_slen);
-		switch (rss.ss_family) {
-		case AF_INET:
-			rsl = sizeof(struct sockaddr_in);
-			break;
-		case AF_INET6:
-			rsl = sizeof(struct sockaddr_in6);
-			break;
-		default:
-			(*lfun)(LOG_ERR, "bad client passed socket family %u",
-			    rss.ss_family); 
-			goto out;
-		}
-		if (rsl != bi->bi_slen) {
-		    (*lfun)(LOG_ERR,
-			"bad client passed socket length %u != %u",
-			(unsigned)rsl, bi->bi_slen); 
-		    goto out;
-		}
-#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
-		if (rsl != rss.ss_len) {
-		    (*lfun)(LOG_ERR,
-			"bad client passed socket internal length %u != %u",
-			(unsigned)rsl, rss.ss_len, rsl); 
-		    goto out;
-		}
-#endif
+	if (debug) {
+		sockaddr_snprintf(rbuf, sizeof(rbuf), "%a:%p", (void *)&rss);
+		(*lfun)(LOG_DEBUG, "processing type=%d fd=%d remote=%s msg=%s"
+		    " uid=%lu gid=%lu", bi->bi_type, bi->bi_fd, rbuf,
+		    bi->bi_msg, (unsigned long)bi->bi_uid,
+		    (unsigned long)bi->bi_gid);
 	}
+
+	if (conf_find(bi->bi_fd, bi->bi_uid, &c) == NULL) {
+		(*lfun)(LOG_DEBUG, "no rule matched");
+		goto out;
+	}
+
+
 	if (state_get(state, &rss, &c, &dbi) == -1)
 		goto out;
 
 	if (debug) {
 		char b1[128], b2[128];
-		sockaddr_snprintf(rbuf, sizeof(rbuf), "%a:%p", (void *)&rss);
-		(*lfun)(LOG_DEBUG, "%s: %s count=%d nfail=%d last=%s now=%s",
-		    __func__, rbuf, dbi.count, c.c_nfail,
+		(*lfun)(LOG_DEBUG, "%s: db state info for %s: count=%d/%d "
+		    "last=%s now=%s", __func__, rbuf, dbi.count, c.c_nfail,
 		    fmttime(b1, sizeof(b1), dbi.last),
 		    fmttime(b2, sizeof(b2), ts.tv_sec));
 	}
@@ -195,8 +213,13 @@ process(bl_t bl)
 		dbi.count++;
 		dbi.last = ts.tv_sec;
 		if (dbi.id[0]) {
+			/*
+			 * We should not be getting this since the rule
+			 * should have blocked the address. Since a possible
+			 * explanation is that someone removed that rule,
+			 * we attempt to add it again, but we log an error.
+			 */
 			(*lfun)(LOG_ERR, "rule exists %s", dbi.id);
-			goto out;
 		}
 		if (c.c_nfail != -1 && dbi.count >= c.c_nfail) {
 			int res = run_change("add", &c, &rss,
@@ -205,8 +228,8 @@ process(bl_t bl)
 				goto out;
 			sockaddr_snprintf(rbuf, sizeof(rbuf), "%a",
 			    (void *)&rss);
-			syslog(LOG_INFO,
-			    "Blocked %s at port %d for %d seconds",
+			(*lfun)(LOG_INFO,
+			    "blocked %s at port %d for %d seconds",
 			    rbuf, c.c_port, c.c_duration);
 				
 		}
@@ -260,7 +283,7 @@ update(void)
 			run_change("rem", &c, &ss, dbi.id, 0);
 			sockaddr_snprintf(buf, sizeof(buf), "%a", (void *)&ss);
 			syslog(LOG_INFO,
-			    "Released %s at port %d after %d seconds",
+			    "released %s at port %d after %d seconds",
 			    buf, c.c_port, c.c_duration);
 		}
 		state_del(state, &ss, &c);
