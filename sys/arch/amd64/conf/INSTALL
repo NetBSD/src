@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.89 2013/06/06 07:11:18 msaitoh Exp $
+# $NetBSD: INSTALL,v 1.89.8.1 2015/01/23 09:01:45 martin Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -8,7 +8,7 @@
 include	"arch/amd64/conf/GENERIC"
 
 options		CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=115200
-#ident 		"INSTALL-$Revision: 1.89 $"
+#ident 		"INSTALL-$Revision: 1.89.8.1 $"
 
 no options	MEMORY_DISK_DYNAMIC
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
@@ -17,7 +17,6 @@ options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # DRI driver
-no i915drm*	at drm?		# Intel i915, i945 DRM driver
 no mach64drm*	at drm?		# mach64 (3D Rage Pro, Rage) DRM driver
 no mgadrm*	at drm?		# Matrox G[24]00, G[45]50 DRM driver
 no r128drm*	at drm?		# ATI Rage 128 DRM driver
