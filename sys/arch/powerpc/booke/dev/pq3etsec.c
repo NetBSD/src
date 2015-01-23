@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.23 2015/01/16 07:48:16 nonaka Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.24 2015/01/23 06:58:32 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,10 +36,12 @@
 
 #include "opt_inet.h"
 #include "opt_mpc85xx.h"
+#include "opt_multiprocessor.h"
+#include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.23 2015/01/16 07:48:16 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.24 2015/01/23 06:58:32 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -677,7 +679,11 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_soft_ih = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,
+	int softint_flags = SOFTINT_NET;
+#if !defined(MULTIPROCESSOR) || defined(NET_MPSAFE)
+	softint_flags |= SOFTINT_MPSAFE;
+#endif	/* !MULTIPROCESSOR || NET_MPSAFE */
+	sc->sc_soft_ih = softint_establish(softint_flags,
 	    pq3etsec_soft_intr, sc);
 	if (sc->sc_soft_ih == NULL) {
 		aprint_error(": failed to establish soft interrupt\n");
