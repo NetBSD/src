@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.92 2015/01/07 19:23:14 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.93 2015/01/23 16:27:46 martin Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3606,3 +3606,27 @@ etc/rc.d/ntpd					1.15
 	New ntpd wants to be able to translate ntp into a port number after
 	chroot, so give it its own small copy of /etc/services in the chroot
 	[he, ticket #1940]
+
+sbin/brconfig/brconfig.8			1.18
+
+	Add missing "addr" and "static" commands.
+	[msaitoh, ticket #1941]
+
+sys/arch/x86/pci/ichlpcib.c		1.40, 1.45 via patch
+sys/dev/ic/i82801lpcreg.h		1.12
+sys/dev/pci/pci_map.c			1.32 via patch
+
+	- Fix a bug that ichlpcib(4) maps I/O area incorrectly. It might also
+	  fixes ACPI related problem described in PR#48960:
+	  - The LPCIB_PCI_PMBASE and LPCIB_PCI_GPIO register are alike PCI BAR
+	    but not completely compatible with it. It's ok because the
+	    registers' addresses are out of BAR0-BAR5(0x10-0x24) and are
+	    located in the device-dependent header. The PMBASE and GPIO
+	    registers define the base address and the type but not describe
+	    the size. The size is fixed to 128bytes. So use
+	    pci_mapreg_submap().
+	  - Fix the calculation of the map size in pci_mapreg_submap().
+	- Use '\n' at the end of aprint_error_dev() format strings.
+	[msaitoh, ticket #1942]
+
+
