@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.176 2015/01/21 11:38:41 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.177 2015/01/23 09:02:48 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -14098,8 +14098,10 @@ distrib/utils/embedded/mkimage			1.50
 
 sys/arch/i386/conf/NO_DRM			patch
 sys/arch/i386/conf/GENERIC			patch
+sys/arch/i386/conf/INSTALL			patch
 sys/arch/amd64/conf/NO_DRM			patch
 sys/arch/amd64/conf/GENERIC			patch
+sys/arch/amd64/conf/INSTALL			patch
 
 	Remove the i915drm driver since the version we use doesn't support UMS
 	anymore, so X will fail to start. Without it, at least the vesa driver
