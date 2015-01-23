@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2015/01/22 17:49:41 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2015/01/23 21:33:50 christos Exp $
 
 SUBDIR=rc.d
 
-FILESDIR=               /etc
+FILESDIR=               /usr/share/examples/blacklist
 FILESMODE=    644
 FILES=	blacklistd.conf
 
