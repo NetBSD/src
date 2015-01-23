@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.8 2015/01/22 03:48:07 christos Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.9 2015/01/23 03:29:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.8 2015/01/22 03:48:07 christos Exp $");
+__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.9 2015/01/23 03:29:18 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -348,7 +348,7 @@ sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
 			case AF_INET6:
 				debug_in6(nbuf, sizeof(nbuf), sin6);
 				break;
-#ifdef NET_IF_DL_H
+#ifdef HAVE_NET_IF_DL_H
 			case AF_LINK:
 				debug_dl(nbuf, sizeof(nbuf), sdl);
 				break;
