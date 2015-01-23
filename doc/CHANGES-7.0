@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.177 2015/01/23 09:02:48 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.178 2015/01/23 10:11:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -14397,4 +14397,40 @@ sys/arch/evbarm/rpi/rpi_machdep.c		1.56
 	Fix Raspberry Pi framebuffer byte order for newer firmware
 	versions.
 	[jmcneill, ticket #440]
+
+sys/netinet6/in6.h				1.82
+sys/netinet6/in6_src.c				1.56
+sys/netinet6/ip6_input.c			1.150
+sys/netinet6/ip6_output.c			1.161
+sys/netinet6/ip6_var.h				1.64
+sys/netinet6/mld6.c				1.62
+
+	Add net.inet6.ip6.prefer_tempaddr sysctl knob so that we can prefer
+	IPv6 temporary addresses as the source address.
+	[pettai, ticket #441]
+
+sbin/ifconfig/af_inet6.c			1.31
+
+	Display the IPv6 address flags autoconf and temporary.
+	[pettai, ticket #442]
+
+etc/defaults/rc.conf				1.129
+etc/rc.d/wpa_supplicant				1.6
+
+	It doesn't make sense to start wpa_supplicant from an rc.d script
+	without the -B flag, so always prepend it to $rc_flags.
+	[jmcneill, ticket #443]
+
+sys/dev/i2c/i2c.c				1.46
+
+	More correctly handle I2C exec ioctls with both a command and write
+	data phase. Previously the data phase of ioctl writes was sending
+	uninitialized kernel stack to the addressed device.
+	[jakllsch, ticket #444]
+
+usr.sbin/sysinst/configmenu.c			1.3
+
+	Handle empty input gracefully by simply jumping back to the config
+	menu.
+	[snj, ticket #445]
 
