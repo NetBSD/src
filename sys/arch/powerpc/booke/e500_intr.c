@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.31 2015/01/23 07:27:05 nonaka Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.32 2015/01/23 09:02:42 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.31 2015/01/23 07:27:05 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.32 2015/01/23 09:02:42 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -409,6 +409,7 @@ static void 	e500_intr_cpu_attach(struct cpu_info *ci);
 static void 	e500_intr_cpu_hatch(struct cpu_info *ci);
 static void	e500_intr_cpu_send_ipi(cpuid_t, uintptr_t);
 static void 	e500_intr_init(void);
+static void 	e500_intr_init_precpu(void);
 static const char *e500_intr_string(int, int, char *, size_t);
 static const char *e500_intr_typename(int);
 static void 	e500_critintr(struct trapframe *tf);
@@ -1145,6 +1146,22 @@ e500_intr_init(void)
 }
 
 static void
+e500_intr_init_precpu(void)
+{
+	struct cpu_info const *ci = curcpu();
+	struct cpu_softc * const cpu = ci->ci_softc;
+	bus_addr_t dr;
+
+	/*
+	 * timer's DR is set to be delivered to cpu0 as initial value.
+	 */
+	for (u_int irq = 0; irq < e500_intr_info.ii_timer_sources; irq++) { 
+		dr = OPENPIC_GTDR(ci->ci_cpuid, irq);
+		openpic_write(cpu, dr, 0);	/* stop delivery */
+	}
+}
+
+static void
 e500_idlespin(void)
 {
 	KASSERTMSG(curcpu()->ci_cpl == IPL_NONE,
@@ -1312,6 +1329,10 @@ e500_ipi_intr(void *v)
 static void
 e500_intr_cpu_hatch(struct cpu_info *ci)
 {
+
+	/* Initialize percpu interupts. */
+	e500_intr_init_precpu();
+
 	/*
 	 * Establish clock interrupt for this CPU.
 	 */
