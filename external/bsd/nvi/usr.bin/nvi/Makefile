@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/05/23 19:59:17 dholland Exp $
+#	$NetBSD: Makefile,v 1.6 2015/01/23 03:04:06 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,7 @@ CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I. -DGTAGS
 #DBG=-g
 #CPPFLAGS+=-DLOGDEBUG -DTRACE
 #CPPFLAGS+=-DDBDEBUG -DTRACE
+#CPPFLAGS+=-DQUEUEDEBUG
 
 #CWARNFLAGS+=-Wno-parentheses -Wno-unused -Wno-missing-prototypes
 #.if defined(HAVE_GCC)
