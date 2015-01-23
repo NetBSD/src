@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.14.4.2 2009/08/16 00:16:28 snj Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.14.4.3 2015/01/23 16:24:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.14.4.2 2009/08/16 00:16:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.14.4.3 2015/01/23 16:24:55 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -202,10 +202,14 @@ lpcibattach(device_t parent, device_t self, void *aux)
 	 * Part of our I/O registers are used as ACPI PM regs.
 	 * Since our ACPI subsystem accesses the I/O space directly so far,
 	 * we do not have to bother bus_space I/O map confliction.
+	 *
+	 * The PMBASE register is alike PCI BAR but not completely compatible
+	 * with it. The PMBASE define the base address and the type but
+	 * not describe the size.
 	 */
-	if (pci_mapreg_map(pa, LPCIB_PCI_PMBASE, PCI_MAPREG_TYPE_IO, 0,
-			   &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
-		aprint_error_dev(self, "can't map power management i/o space");
+	if (pci_mapreg_submap(pa, LPCIB_PCI_PMBASE, PCI_MAPREG_TYPE_IO, 0,
+		LPCIB_PCI_PM_SIZE, 0, &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
+		aprint_error_dev(self, "can't map power management i/o space\n");
 		return;
 	}
 
@@ -221,14 +225,14 @@ lpcibattach(device_t parent, device_t self, void *aux)
 		rcba = pci_conf_read(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
 		     LPCIB_RCBA);
 		if ((rcba & LPCIB_RCBA_EN) == 0) {
-			aprint_error_dev(self, "RCBA is not enabled");
+			aprint_error_dev(self, "RCBA is not enabled\n");
 			return;
 		}
 		rcba &= ~LPCIB_RCBA_EN;
 
 		if (bus_space_map(sc->sc_rcbat, rcba, LPCIB_RCBA_SIZE, 0,
 				  &sc->sc_rcbah)) {
-			aprint_error_dev(self, "RCBA could not be mapped");
+			aprint_error_dev(self, "RCBA could not be mapped\n");
 			return;
 		}
 	}
