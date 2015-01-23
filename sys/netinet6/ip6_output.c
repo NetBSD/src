@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.157.2.1 2014/08/24 08:34:58 martin Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.157.2.2 2015/01/23 09:27:15 martin Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.157.2.1 2014/08/24 08:34:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.157.2.2 2015/01/23 09:27:15 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1505,6 +1505,7 @@ else 					\
 		case IPV6_TCLASS:
 		case IPV6_DONTFRAG:
 		case IPV6_USE_MIN_MTU:
+		case IPV6_PREFER_TEMPADDR:
 			error = sockopt_getint(sopt, &optval);
 			if (error)
 				break;
@@ -1827,6 +1828,7 @@ else 					\
 		case IPV6_TCLASS:
 		case IPV6_DONTFRAG:
 		case IPV6_USE_MIN_MTU:
+		case IPV6_PREFER_TEMPADDR:
 			error = ip6_getpcbopt(in6p->in6p_outputopts,
 			    optname, sopt);
 			break;
@@ -2007,6 +2009,7 @@ ip6_initpktopts(struct ip6_pktopts *opt)
 	opt->ip6po_hlim = -1;	/* -1 means default hop limit */
 	opt->ip6po_tclass = -1;	/* -1 means default traffic class */
 	opt->ip6po_minmtu = IP6PO_MINMTU_MCASTONLY;
+	opt->ip6po_prefer_tempaddr = IP6PO_TEMPADDR_SYSTEM;
 }
 
 #define sin6tosa(sin6)	((struct sockaddr *)(sin6)) /* XXX */
@@ -2039,6 +2042,7 @@ ip6_getpcbopt(struct ip6_pktopts *pktopt, int optname, struct sockopt *sopt)
 	struct in6_pktinfo null_pktinfo;
 	int deftclass = 0, on;
 	int defminmtu = IP6PO_MINMTU_MCASTONLY;
+	int defpreftemp = IP6PO_TEMPADDR_SYSTEM;
 
 	switch (optname) {
 	case IPV6_PKTINFO:
@@ -2110,6 +2114,12 @@ ip6_getpcbopt(struct ip6_pktopts *pktopt, int optname, struct sockopt *sopt)
 		optdata = (void *)&on;
 		optdatalen = sizeof(on);
 		break;
+	case IPV6_PREFER_TEMPADDR:
+		if (pktopt)
+			optdata = (void *)&pktopt->ip6po_prefer_tempaddr;
+		else
+			optdata = (void *)&defpreftemp;
+		optdatalen = sizeof(int);
 	default:		/* should not happen */
 #ifdef DIAGNOSTIC
 		panic("ip6_getpcbopt: unexpected option\n");
@@ -2180,6 +2190,7 @@ copypktopts(struct ip6_pktopts *dst, struct ip6_pktopts *src, int canwait)
 	dst->ip6po_hlim = src->ip6po_hlim;
 	dst->ip6po_tclass = src->ip6po_tclass;
 	dst->ip6po_flags = src->ip6po_flags;
+	dst->ip6po_prefer_tempaddr = src->ip6po_prefer_tempaddr;
 	if (src->ip6po_pktinfo) {
 		dst->ip6po_pktinfo = malloc(sizeof(*dst->ip6po_pktinfo),
 		    M_IP6OPT, canwait);
@@ -2704,6 +2715,7 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		case IPV6_DONTFRAG:
 		case IPV6_OTCLASS:
 		case IPV6_TCLASS:
+		case IPV6_PREFER_TEMPADDR: /* XXX not an RFC3542 option */
 			return (ENOPROTOOPT);
 		}
 	}
@@ -3036,6 +3048,25 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		} else
 			opt->ip6po_flags |= IP6PO_DONTFRAG;
 		break;
+
+	case IPV6_PREFER_TEMPADDR:
+	{
+		int preftemp;
+
+		if (len != sizeof(int))
+			return (EINVAL);
+		preftemp = *(int *)buf;
+		switch (preftemp) {
+		case IP6PO_TEMPADDR_SYSTEM:
+		case IP6PO_TEMPADDR_NOTPREFER:
+		case IP6PO_TEMPADDR_PREFER:
+			break;
+		default:
+			return (EINVAL);
+		}
+		opt->ip6po_prefer_tempaddr = preftemp;
+		break;
+	}
 
 	default:
 		return (ENOPROTOOPT);

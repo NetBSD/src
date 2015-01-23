@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.78 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: in6.h,v 1.78.2.1 2015/01/23 09:27:15 martin Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -437,6 +437,8 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 
 #define IPV6_TCLASS		61 /* int; send traffic class value */
 #define IPV6_DONTFRAG		62 /* bool; disable IPv6 fragmentation */
+#define IPV6_PREFER_TEMPADDR	63 /* int; prefer temporary address as
+				    * the sorce address */
 /* to define items, should talk with KAME guys first, for *BSD compatibility */
 
 #define IPV6_RTHDR_LOOSE     0 /* this hop need not be a neighbor. XXX old spec */
