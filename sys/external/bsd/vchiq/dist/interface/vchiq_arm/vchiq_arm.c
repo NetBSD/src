@@ -718,6 +718,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 
 	case VCHIQ_IOC_AWAIT_COMPLETION: {
 		VCHIQ_AWAIT_COMPLETION_T *pargs = arg;
+		int count = 0;
 
 		DEBUG_TRACE(AWAIT_COMPLETION_LINE);
 		if (!instance->connected) {
@@ -752,9 +753,8 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 
 		if (ret == 0) {
 			int msgbufcount = pargs->msgbufcount;
-			int count;
 
-			for (count = 0; count < pargs->count; count++) {
+			for (; count < pargs->count; count++) {
 				VCHIQ_COMPLETION_DATA_T *completion;
 				VCHIQ_SERVICE_T *service1;
 				USER_SERVICE_T *user_service;
@@ -847,7 +847,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 			pargs->count = count;
 		}
 
-		if (ret != 0)
+		if (count != 0)
 			up(&instance->remove_event);
 		lmutex_unlock(&instance->completion_mutex);
 		DEBUG_TRACE(AWAIT_COMPLETION_LINE);
