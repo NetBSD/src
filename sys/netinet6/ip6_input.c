@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.149 2014/06/16 00:33:39 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.149.2.1 2015/01/23 09:27:15 martin Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.149 2014/06/16 00:33:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.149.2.1 2015/01/23 09:27:15 martin Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -1898,6 +1898,14 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       CTLTYPE_INT, "use_tempaddr",
 		       SYSCTL_DESCR("Use temporary address"),
 		       NULL, 0, &ip6_use_tempaddr, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "prefer_tempaddr",
+		       SYSCTL_DESCR("Prefer temporary address as source "
+		                    "address"),
+		       NULL, 0, &ip6_prefer_tempaddr, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
