@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.12 2015/01/24 07:31:51 christos Exp $	*/
+/*	$NetBSD: state.c,v 1.13 2015/01/24 07:46:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: state.c,v 1.12 2015/01/24 07:31:51 christos Exp $");
+__RCSID("$NetBSD: state.c,v 1.13 2015/01/24 07:46:20 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -152,11 +152,11 @@ state_del(DB *db, const struct sockaddr_storage *ss, const struct conf *c)
 
 	switch (rv = (*db->del)(db, &k, 0)) {
 	case 0:
-		(*db->sync)(db, 0);
-		/*FALLTHROUGH*/
 	case 1:
-		if (debug > 1)
+		if (debug > 1) {
 			(*lfun)(LOG_DEBUG, "%s: returns %d", __func__, rv);
+			(*db->sync)(db, 0);
+		}
 		return 0;
 	default:
 		(*lfun)(LOG_ERR, "%s: failed (%m)", __func__);
@@ -216,9 +216,10 @@ state_put(DB *db, const struct sockaddr_storage *ss, const struct conf *c,
 
 	switch (rv = (*db->put)(db, &k, &v, 0)) {
 	case 0:
-		if (debug > 1)
+		if (debug > 1) {
 			(*lfun)(LOG_DEBUG, "%s: returns %d", __func__, rv);
-		(*db->sync)(db, 0);
+			(*db->sync)(db, 0);
+		}
 		return 0;
 	case 1:
 		errno = EEXIST;
@@ -261,4 +262,10 @@ state_iterate(DB *db, struct sockaddr_storage *ss, struct conf *c,
 		(*lfun)(LOG_ERR, "%s: failed (%m)", __func__);
 		return -1;
 	}
+}
+
+int
+state_sync(DB *db)
+{
+	return (*db->sync)(db, 0);
 }
