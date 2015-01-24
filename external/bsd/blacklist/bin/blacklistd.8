@@ -1,4 +1,4 @@
-.\" $NetBSD: blacklistd.8,v 1.4 2015/01/24 15:36:51 christos Exp $
+.\" $NetBSD: blacklistd.8,v 1.5 2015/01/24 18:34:05 christos Exp $
 .\" 
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,27 +36,140 @@
 .Nd block and release ports on demand to avoid DoS abuse
 .Sh SYNOPSIS
 .Nm
-dump 
-.Op Fl df
-.Op Fl abdr 
+.Op Fl dvf
+.Op Fl c Ar configfile
+.Op Fl C Ar controlprog
+.Op Fl D Ar dbfile
+.Op Fl r Ar rulename
+.Op Fl P Ar sockpathsfile
+.Op Fl t Ar timeout
 .Sh DESCRIPTION
 .Nm
-is a program used to display the state of
-.Xr blacklistd 8
+is a daemon similar to
+.Xr syslogd 8
+that listens to a sockets at paths specified in the 
+.Ar sockpathsfile
+for notifications from other daemons about successful or failed connection
+attempts.
+If no such file is specified, then it only listens to the default socket
+.Pa /var/run/blsock .
+Each notification contains a (action, port, protocol, address, owner) tuple
+that identifies the remote connection and the action.
+This tuple is consulted against entries in
+.Ar configfile
+with syntax specified in
+.Xr blacklistd.conf 5 .
+If an entry is matched, a state entry is created for that tuple.
+Each entry contains a number of tries limit and a duration.
 .Pp
-The following options are available:
-.Bl -tag -width indent
-.It Fl a
-Show all database entries, by default it shows only the embryonic ones.
-.It Fl b
-Show only the blocked entries.
-.It Fl d
-Increase debugging level.
-.It Fl r
-Show the remaining blocked time instead of the last activity time.
+If the action is
+.Dq add
+and the number of tries limit is reached, then a
+control script
+.Ar controlprog
+is invoked with arguments:
+.Bd -literal -offset indent
+control add <rulename> <proto> <port> <address>
+.Ed
+.Pp
+and should invoke a packet filter command to block the connection
+specified by the arguments.
+The
+.Ar rulename
+argument can be set from the command line (default 
+.Dv blacklistd ).
+The script should print a numerical id to stdout as a handle for
+the rule that can be used later to remove that connection.
+.Pp
+If the action is
+.Dq remove
+Then the same control script is invoked as:
+.Bd -literal -offset indent
+control rem <rulename> <id>
+.Ed
+.Pp
+where 
+.Ar id
+is the number returned from the
+.Dq add
+action.
+.Pp
+.Nm
+maintains a database of known connections in
+.Ar dbfile .
+On startup it reads entries from that file, and updates its internal state.
+If the
+.Fl f
+flag is specified, then the database is truncated an all the rules named
+.Ar rulename
+are deleted by invoking the control script as:
+.Bd -literal -offset indent
+control flush <rulename>
+.Ed
+.Pp
+.Nm
+checks the list of active entries every
+.Ar timeout
+seconds (default
+.Dv 15 )
+and removes entries and block rules using the control program as necessary.
+.Pp
+The configuration file contains one tuple per line, and is similar to
+.Xr inetd.conf .
+There must be an entry for each field of the configuration file, with
+entries for each field separated by a tab or a space.
+Comments are denoted by a
+.Dq #
+at the beginning of a line.
+There must be an entry for each field; entries can be numeric or symbolic,
+where appropriate (
+.Dv service ,
+.Dv user )
+and can be
+.Dq *
+for all fields.
+The fields of the configuration file are as follows:
+.Bd -literal -offset indent
+[address:]service
+socket-type
+protocol
+user
+rulename
+nfail
+duration
+.Ed
+.Pp
+Normally,
+.Nm
+disassociates itself from the terminal and writes messages to
+.Xr syslogd 8 ,
+unless the
+.Fl d
+flag is specified, in which case it stays in the foreground.
+The 
+.Fl v
+cases
+.Nm
+to print
+diagnostic messages to
+.Dv stdout 
+instead of
+.Xr syslogd 8 .
+.Sh FILES
+.Bl -tag -width /libexec/blacklistd-helper -compact
+.It Pa /libexec/blacklistd-helper
+Shell script invoked to interface with the packet filter.
+.It Pa /etc/blacklistd.conf
+Configuration file.
+.It Pa /var/db/blacklistd.db
+Database of current connection entries.
+.It Pa /var/run/blsock
+Socket to receive connection notifications.
 .El
 .Sh SEE ALSO
-.Xr blacklistd 8
+.Xr blacklistd.conf 5 ,
+.Xr npfctl 8 ,
+.Xr syslogd 8
 .Sh HISTORY
 .Nm
 appeared in
