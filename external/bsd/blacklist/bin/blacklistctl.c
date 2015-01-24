@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistctl.c,v 1.11 2015/01/22 20:21:57 christos Exp $	*/
+/*	$NetBSD: blacklistctl.c,v 1.12 2015/01/24 06:05:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistctl.c,v 1.11 2015/01/22 20:21:57 christos Exp $");
+__RCSID("$NetBSD: blacklistctl.c,v 1.12 2015/01/24 06:05:08 christos Exp $");
 
 #include <stdio.h>
 #include <time.h>
@@ -56,7 +56,7 @@ static __dead void
 usage(int c)
 {
 	warnx("Unknown option `%c'", (char)c);
-	fprintf(stderr, "Usage: %s [-d]\n", getprogname());
+	fprintf(stderr, "Usage: %s [-abdr]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -69,13 +69,26 @@ main(int argc, char *argv[])
 	struct sockaddr_storage ss;
 	struct dbinfo dbi;
 	unsigned int i;
+	struct timespec ts;
+	int all, blocked, remain;
 	int o;
 
+	blocked = all = remain = 0;
 	lfun = dlog;
-	while ((o = getopt(argc, argv, "d")) != -1)
+	while ((o = getopt(argc, argv, "abdr")) != -1)
 		switch (o) {
+		case 'a':
+			all = 1;
+			blocked = 0;
+			break;
+		case 'b':
+			blocked = 1;
+			break;
 		case 'd':
 			debug++;
+			break;
+		case 'r':
+			remain = 1;
 			break;
 		default:
 			usage(o);
@@ -86,14 +99,26 @@ main(int argc, char *argv[])
 	if (db == NULL)
 		err(EXIT_FAILURE, "Can't open `%s'", dbname);
 
+	clock_gettime(CLOCK_REALTIME, &ts);
 	for (i = 1; state_iterate(db, &ss, &c, &dbi, i) != 0; i = 0) {
 		char buf[BUFSIZ];
-		(*lfun)(LOG_DEBUG, "conf: %s", conf_print(buf, sizeof(buf), "",
-		    ":", &c));
+		if (!all) {
+			if (blocked) {
+				if (dbi.count < c.c_nfail)
+					continue;
+			} else {
+				if (dbi.count >= c.c_nfail)
+					continue;
+			}
+		}
 		sockaddr_snprintf(buf, sizeof(buf), "%a", (void *)&ss);
-		(*lfun)(LOG_DEBUG, "addr: %s", buf);
-		(*lfun)(LOG_DEBUG, "data: count=%d id=%s time=%s", dbi.count,
-		    dbi.id, fmttime(buf, sizeof(buf), dbi.last));
+		printf("%15.15s:%d\t", buf, c.c_port);
+		if (remain)
+			fmtydhms(buf, sizeof(buf),
+			    (ts.tv_sec - dbi.last) - c.c_duration);
+		else
+			fmttime(buf, sizeof(buf), dbi.last);
+		printf("%s\t%d/%d\t%-s\n", dbi.id, dbi.count, c.c_nfail, buf);
 	}
 	state_close(db);
 	return EXIT_SUCCESS;
