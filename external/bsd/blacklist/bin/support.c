@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.4 2015/01/22 16:19:53 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.5 2015/01/24 06:05:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: support.c,v 1.4 2015/01/22 16:19:53 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.5 2015/01/24 06:05:08 christos Exp $");
 
 #include <time.h>
 #include <string.h>
@@ -93,5 +93,41 @@ fmttime(char *b, size_t l, time_t t)
 		snprintf(b, l, "*%jd*", (intmax_t)t);
 	else
 		strftime(b, l, "%Y/%m/%d %H:%M:%S", &tm);
+	return b;
+}
+
+const char *
+fmtydhms(char *b, size_t l, time_t t)
+{
+	time_t s, m, h, d, y;
+	int z;
+	size_t o;
+
+	s = t % 60;
+	t /= 60;
+	m = t % 60;
+	t /= 60;
+	h = t % 60;
+	t /= 24;
+	d = t % 24;
+	t /= 356;
+	y = t;
+
+	z = 0;
+	o = 0;
+#define APPEND(a) \
+	if (a) { \
+		z = snprintf(b + o, l - o, "%jd%s", (intmax_t)a, __STRING(a)); \
+		if (z == -1) \
+			return b; \
+		o += (size_t)z; \
+		if (o >= l) \
+			return b; \
+	}
+	APPEND(y)
+	APPEND(d)
+	APPEND(h)
+	APPEND(m)
+	APPEND(s)
 	return b;
 }
