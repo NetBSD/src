@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.114 2015/01/24 17:15:22 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.115 2015/01/24 18:07:54 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -470,6 +470,8 @@ struct kinfo_pcb {
 #define	SOMAXCONN	128
 #endif
 
+#include <sys/cdefs.h>
+
 /*
  * Message header for recvmsg and sendmsg calls.
  * Used value-result for recvmsg, value only for sendmsg.
@@ -526,14 +528,6 @@ struct cmsghdr {
 /* followed by	u_char  cmsg_data[]; */
 };
 
-/* given pointer to struct cmsghdr, return pointer to data */
-#define	CMSG_DATA(cmsg) \
-    ((u_char *)(void *)(cmsg) + \
-    __CMSG_ALIGN(sizeof(struct cmsghdr)))
-#define	CCMSG_DATA(cmsg) \
-    ((const u_char *)(const void *)(cmsg) + \
-    __CMSG_ALIGN(sizeof(struct cmsghdr)))
-
 /*
  * Alignment requirement for CMSG struct manipulation.
  * This basically behaves the same as ALIGN() ARCH/include/param.h.
@@ -544,30 +538,38 @@ struct cmsghdr {
  * changes in ALIGNBYTES.
  */
 #define __CMSG_ALIGN(n)	(((n) + __ALIGNBYTES) & ~__ALIGNBYTES)
+
 #ifdef _KERNEL
 #define CMSG_ALIGN(n)	__CMSG_ALIGN(n)
 #endif
 
+#define __CMSG_ASIZE	__CMSG_ALIGN(sizeof(struct cmsghdr))
+#define __CMSG_MSGNEXT(cmsg) \
+    (__CASTV(char *, cmsg) + __CMSG_ALIGN((cmsg)->cmsg_len))
+#define __CMSG_MSGEND(mhdr) \
+    (__CASTV(char *, (mhdr)->msg_control) + (mhdr)->msg_controllen)
+
+/* given pointer to struct cmsghdr, return pointer to data */
+#define	CMSG_DATA(cmsg) (__CASTV(u_char *, cmsg) + __CMSG_ASIZE)
+#define	CCMSG_DATA(cmsg) (__CASTCV(const u_char *, cmsg) + __CMSG_ASIZE)
+
 /* given pointer to struct cmsghdr, return pointer to next cmsghdr */
 #define	CMSG_NXTHDR(mhdr, cmsg)	\
-	(((char *)(void *)(cmsg) + __CMSG_ALIGN((cmsg)->cmsg_len) + \
-			    __CMSG_ALIGN(sizeof(struct cmsghdr)) > \
-	    (((char *)(void *)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ?\
-	    (struct cmsghdr *)0 : \
-	    (struct cmsghdr *)(void *)((char *)(void *)(cmsg) + \
-	        __CMSG_ALIGN((cmsg)->cmsg_len)))
+    __CASTV(struct cmsghdr *,  \
+	__CMSG_MSGNEXT(cmsg) + __CMSG_ASIZE > __CMSG_MSGEND(mhdr) ? 0 : \
+	__CMSG_MSGNEXT(cmsg))
 
 /*
  * RFC 2292 requires to check msg_controllen, in case that the kernel returns
  * an empty list for some reasons.
  */
 #define	CMSG_FIRSTHDR(mhdr) \
-	((mhdr)->msg_controllen >= sizeof(struct cmsghdr) ? \
-	 (struct cmsghdr *)(void *)(mhdr)->msg_control : \
-	 (struct cmsghdr *)0)
+    __CASTV(struct cmsghdr *, \
+	(mhdr)->msg_controllen < sizeof(struct cmsghdr) ? 0 : \
+	(mhdr)->msg_control)
 
-#define CMSG_SPACE(l)	(__CMSG_ALIGN(sizeof(struct cmsghdr)) + __CMSG_ALIGN(l))
-#define CMSG_LEN(l)	(__CMSG_ALIGN(sizeof(struct cmsghdr)) + (l))
+#define CMSG_SPACE(l)	(__CMSG_ASIZE + __CMSG_ALIGN(l))
+#define CMSG_LEN(l)	(__CMSG_ASIZE + (l))
 
 /* "Socket"-level control message types: */
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
@@ -583,8 +585,6 @@ struct cmsghdr {
 #define	SHUT_RD		0		/* Disallow further receives. */
 #define	SHUT_WR		1		/* Disallow further sends. */
 #define	SHUT_RDWR	2		/* Disallow further sends/receives. */
-
-#include <sys/cdefs.h>
 
 #ifdef	_KERNEL
 static inline socklen_t
