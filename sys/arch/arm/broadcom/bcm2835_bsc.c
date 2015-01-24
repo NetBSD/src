@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_bsc.c,v 1.3 2014/09/11 07:06:13 skrll Exp $	*/
+/*	$NetBSD: bcm2835_bsc.c,v 1.4 2015/01/24 00:23:37 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.3 2014/09/11 07:06:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.4 2015/01/24 00:23:37 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -295,6 +295,9 @@ flood_again:
 	if (s != 0)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BSC_S, s);
 
+	if (error == 0 && (s & (BSC_S_CLKT|BSC_S_ERR)) != 0)
+		error = EIO;
+
 	if (!isread)
 		goto done;
 
@@ -368,6 +371,9 @@ done:
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BSC_S, s);
 
 	bsciic_dump_regs(sc);
+
+	if (error == 0 && (s & (BSC_S_CLKT|BSC_S_ERR)) != 0)
+		error = EIO;
 
 	return error;
 }
