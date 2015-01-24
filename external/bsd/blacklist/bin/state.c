@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.11 2015/01/22 17:49:41 christos Exp $	*/
+/*	$NetBSD: state.c,v 1.12 2015/01/24 07:31:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: state.c,v 1.11 2015/01/22 17:49:41 christos Exp $");
+__RCSID("$NetBSD: state.c,v 1.12 2015/01/24 07:31:51 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -152,6 +152,8 @@ state_del(DB *db, const struct sockaddr_storage *ss, const struct conf *c)
 
 	switch (rv = (*db->del)(db, &k, 0)) {
 	case 0:
+		(*db->sync)(db, 0);
+		/*FALLTHROUGH*/
 	case 1:
 		if (debug > 1)
 			(*lfun)(LOG_DEBUG, "%s: returns %d", __func__, rv);
@@ -216,6 +218,7 @@ state_put(DB *db, const struct sockaddr_storage *ss, const struct conf *c,
 	case 0:
 		if (debug > 1)
 			(*lfun)(LOG_DEBUG, "%s: returns %d", __func__, rv);
+		(*db->sync)(db, 0);
 		return 0;
 	case 1:
 		errno = EEXIST;
