@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.122 2014/09/05 05:44:50 matt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.123 2015/01/24 18:07:37 christos Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -579,6 +579,9 @@
 #else
 #define __CAST(__dt, __st)	((__dt)(__st))
 #endif
+
+#define __CASTV(__dt, __st)	__CAST(__dt, __CAST(void *, __st))
+#define __CASTCV(__dt, __st)	__CAST(__dt, __CAST(const void *, __st))
 
 #define __USE(a) ((void)(a))
 
