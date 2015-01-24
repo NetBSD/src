@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.27 2015/01/23 22:34:13 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.28 2015/01/24 07:46:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.27 2015/01/23 22:34:13 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.28 2015/01/24 07:46:20 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -415,7 +415,7 @@ main(int argc, char *argv[])
 			err(EXIT_FAILURE, "Can't create pidfile");
 	}
 
-	while (!done) {
+	for (size_t t = 0; !done; t++) {
 		if (rconf) {
 			rconf = 0;
 			conf_parse(configfile);
@@ -427,12 +427,15 @@ main(int argc, char *argv[])
 			(*lfun)(LOG_ERR, "poll (%m)");
 			return EXIT_FAILURE;
 		case 0:
+			state_sync(state);
 			break;
 		default:
 			for (size_t i = 0; i < nfd; i++)
 				if (pfd[i].revents & POLLIN)
 					process(bl[i]);
 		}
+		if (t % 100 == 0)
+			state_sync(state);
 		update();
 	}
 	state_close(state);
