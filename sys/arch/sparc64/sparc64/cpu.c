@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.121 2014/12/05 11:34:00 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.122 2015/01/24 20:17:22 palle Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.121 2014/12/05 11:34:00 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.122 2015/01/24 20:17:22 palle Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.121 2014/12/05 11:34:00 nakayama Exp $");
 
 #include <sparc64/sparc64/cache.h>
 #include <sparc64/hypervisor.h>
+#include <sparc64/mdesc.h>
 
 #define SUN4V_MONDO_QUEUE_SIZE	32
 #define SUN4V_QUEUE_ENTRY_SIZE	64
@@ -151,6 +152,140 @@ cpuid_from_node(u_int cpu_node)
 		panic("failed to determine cpuid");
 	
 	return id;
+}
+
+static int
+cpu_cache_info_sun4v(const char *type, int level, const char *prop)
+{
+	int idx = 0;
+	uint64_t val = 0;;
+	idx = mdesc_find_node_by_idx(idx, "cache");
+	while (idx != -1 && val == 0) {
+		const char *p;
+		size_t len = 0;
+		p = mdesc_get_prop_data(idx, "type", &len);
+		if (p == NULL)
+			panic("No type found\n");
+		if (len == 0)
+			panic("Len is zero");
+		if (type == NULL || strcmp(p, type) == 0) {
+			uint64_t l;
+			l = mdesc_get_prop_val(idx, "level");
+			if (l == level)
+				val = mdesc_get_prop_val(idx, prop);
+		}
+		if (val == 0)
+			idx = mdesc_next_node(idx);
+	}
+	return val;
+}
+
+static int
+cpu_icache_size(int node)
+{
+	if (CPU_ISSUN4V)
+		return cpu_cache_info_sun4v("instn", 1, "size");
+	else 
+		return prom_getpropint(node, "icache-size", 0);
+}
+
+static int
+cpu_icache_line_size(int node)
+{
+	if (CPU_ISSUN4V)
+		return cpu_cache_info_sun4v("instn", 1, "line-size");
+	else
+		return prom_getpropint(node, "icache-line-size", 0);
+}
+
+static int
+cpu_icache_nlines(int node)
+{
+	if (CPU_ISSUN4V)
+		return 0;
+	else
+		return prom_getpropint(node, "icache-nlines", 64);
+}
+
+static int
+cpu_icache_associativity(int node)
+{
+	if (CPU_ISSUN4V)
+		return cpu_cache_info_sun4v("instn", 1, "associativity");
+	else
+		return prom_getpropint(node, "icache-associativity", 1);
+}
+
+static int
+cpu_dcache_size(int node)
+{
+	if (CPU_ISSUN4V)
+		return cpu_cache_info_sun4v("data", 1, "size");
+	else
+		return prom_getpropint(node, "dcache-size", 0);
+}
+
+static int
+cpu_dcache_line_size(int node)
+{
+	if (CPU_ISSUN4V)
+		return cpu_cache_info_sun4v("data", 1, "line-size");
+	else
+		return prom_getpropint(node, "dcache-line-size", 0);
+}
+
+static int
+cpu_dcache_nlines(int node)
+{
+	if (CPU_ISSUN4V)
+		return 0;
+	else
+		return prom_getpropint(node, "dcache-nlines", 128);
+}
+
+static int
+cpu_dcache_associativity(int node)
+{
+	if (CPU_ISSUN4V)
+		return cpu_cache_info_sun4v("data", 1, "associativity");
+	else 
+		return prom_getpropint(node, "dcache-associativity", 1);
+}
+
+static int
+cpu_ecache_size(int node)
+{
+	if (CPU_ISSUN4V)
+		return cpu_cache_info_sun4v(NULL, 2, "size");
+	else
+		return prom_getpropint(node, "ecache-size", 0);
+}
+
+static int
+cpu_ecache_line_size(int node)
+{
+	if (CPU_ISSUN4V)
+		return cpu_cache_info_sun4v(NULL, 2, "line-size");
+	else
+		return prom_getpropint(node, "ecache-line-size", 0);
+}
+
+static int
+cpu_ecache_nlines(int node)
+{
+	if (CPU_ISSUN4V)
+		return 0;
+	else
+		return prom_getpropint(node, "ecache-nlines", 32768);
+}
+
+static int
+cpu_ecache_associativity(int node)
+{
+	if (CPU_ISSUN4V)
+		return cpu_cache_info_sun4v(NULL, 2, "associativity");
+	else
+		return prom_getpropint(node, "ecache-associativity", 1);
 }
 
 struct cpu_info *
@@ -352,13 +487,12 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 	}
 	aprint_normal_dev(dev, "");
 
-	/* XXX sun4v mising cache info printout */
 	bigcache = 0;
 
-	icachesize = prom_getpropint(node, "icache-size", 0);
+	icachesize = cpu_icache_size(node);
 	if (icachesize > icache_size)
 		icache_size = icachesize;
-	linesize = l = prom_getpropint(node, "icache-line-size", 0);
+	linesize = l = cpu_icache_line_size(node);
 	if (linesize > icache_line_size)
 		icache_line_size = linesize;
 
@@ -369,11 +503,9 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 	totalsize = icachesize;
 	if (totalsize == 0)
 		totalsize = l *
-			prom_getpropint(node, "icache-nlines", 64) *
-			prom_getpropint(node, "icache-associativity", 1);
+		    cpu_icache_nlines(node) * cpu_icache_associativity(node);
 
-	cachesize = totalsize /
-	    prom_getpropint(node, "icache-associativity", 1);
+	cachesize = totalsize / cpu_icache_associativity(node);
 	bigcache = cachesize;
 
 	sep = "";
@@ -384,10 +516,10 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 		sep = ", ";
 	}
 
-	dcachesize = prom_getpropint(node, "dcache-size", 0);
+	dcachesize = cpu_dcache_size(node);
 	if (dcachesize > dcache_size)
 		dcache_size = dcachesize;
-	linesize = l = prom_getpropint(node, "dcache-line-size", 0);
+	linesize = l = cpu_dcache_line_size(node);
 	if (linesize > dcache_line_size)
 		dcache_line_size = linesize;
 
@@ -398,11 +530,9 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 	totalsize = dcachesize;
 	if (totalsize == 0)
 		totalsize = l *
-			prom_getpropint(node, "dcache-nlines", 128) *
-			prom_getpropint(node, "dcache-associativity", 1);
+		    cpu_dcache_nlines(node) * cpu_dcache_associativity(node);
 
-	cachesize = totalsize /
-	    prom_getpropint(node, "dcache-associativity", 1);
+	cachesize = totalsize / cpu_dcache_associativity(node);
 	if (cachesize > bigcache)
 		bigcache = cachesize;
 
@@ -413,20 +543,17 @@ cpu_attach(device_t parent, device_t dev, void *aux)
 		sep = ", ";
 	}
 
-	linesize = l =
-		prom_getpropint(node, "ecache-line-size", 0);
+	linesize = l = cpu_ecache_line_size(node);
 	for (i = 0; (1 << i) < l && l; i++)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad ecache line size %d", l);
-	totalsize = prom_getpropint(node, "ecache-size", 0);
+	totalsize = cpu_ecache_size(node);
 	if (totalsize == 0)
 		totalsize = l *
-			prom_getpropint(node, "ecache-nlines", 32768) *
-			prom_getpropint(node, "ecache-associativity", 1);
+		    cpu_ecache_nlines(node) * cpu_ecache_associativity(node);
 
-	cachesize = totalsize /
-	     prom_getpropint(node, "ecache-associativity", 1);
+	cachesize = totalsize / cpu_ecache_associativity(node);
 	if (cachesize > bigcache)
 		bigcache = cachesize;
 
