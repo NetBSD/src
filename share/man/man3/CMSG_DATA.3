@@ -1,8 +1,8 @@
-.\"	$NetBSD: CMSG_DATA.3,v 1.2 2008/06/20 14:35:10 christos Exp $
+.\"	$NetBSD: CMSG_DATA.3,v 1.3 2015/01/24 17:17:01 christos Exp $
 .\"	$OpenBSD: CMSG_DATA.3,v 1.5 2008/03/24 16:11:07 deraadt Exp $
 .\" Written by Jared Yanovich <jaredy@openbsd.org>
 .\" Public domain, July 3, 2005
-.Dd June 20, 2008
+.Dd January 24, 2015
 .Dt CMSG_DATA 3
 .Os
 .Sh NAME
@@ -14,8 +14,10 @@
 .Nd socket control message routines
 .Sh SYNOPSIS
 .In sys/socket.h
-.Ft void *
+.Ft unsigned char *
 .Fn CMSG_DATA "struct cmsghdr *"
+.Ft const unsigned char *
+.Fn CCMSG_DATA "struct cmsghdr *"
 .Ft struct cmsghdr *
 .Fn CMSG_FIRSTHDR "struct msghdr *"
 .Ft size_t
