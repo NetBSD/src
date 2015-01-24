@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistctl.c,v 1.13 2015/01/24 06:20:21 christos Exp $	*/
+/*	$NetBSD: blacklistctl.c,v 1.14 2015/01/24 15:33:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistctl.c,v 1.13 2015/01/24 06:20:21 christos Exp $");
+__RCSID("$NetBSD: blacklistctl.c,v 1.14 2015/01/24 15:33:03 christos Exp $");
 
 #include <stdio.h>
 #include <time.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: blacklistctl.c,v 1.13 2015/01/24 06:20:21 christos Exp $");
 #include <util.h>
 #endif
 #include <fcntl.h>
+#include <string.h>
 #include <syslog.h>
 #include <err.h>
 #include <stdlib.h>
@@ -55,8 +56,11 @@ __RCSID("$NetBSD: blacklistctl.c,v 1.13 2015/01/24 06:20:21 christos Exp $");
 static __dead void
 usage(int c)
 {
-	warnx("Unknown option `%c'", (char)c);
-	fprintf(stderr, "Usage: %s [-abdr]\n", getprogname());
+	if (c == 0)
+		warnx("Missing/unknown command");
+	else
+		warnx("Unknown option `%c'", (char)c);
+	fprintf(stderr, "Usage: %s dump [-abdr]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -75,6 +79,13 @@ main(int argc, char *argv[])
 
 	blocked = all = remain = 0;
 	lfun = dlog;
+
+	if (argc == 1 || strcmp(argv[1], "dump") != 0)
+		usage(0);
+
+	argc--;
+	argv++;
+
 	while ((o = getopt(argc, argv, "abdr")) != -1)
 		switch (o) {
 		case 'a':
