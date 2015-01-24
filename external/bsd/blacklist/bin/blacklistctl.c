@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistctl.c,v 1.12 2015/01/24 06:05:08 christos Exp $	*/
+/*	$NetBSD: blacklistctl.c,v 1.13 2015/01/24 06:20:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistctl.c,v 1.12 2015/01/24 06:05:08 christos Exp $");
+__RCSID("$NetBSD: blacklistctl.c,v 1.13 2015/01/24 06:20:21 christos Exp $");
 
 #include <stdio.h>
 #include <time.h>
@@ -115,7 +115,7 @@ main(int argc, char *argv[])
 		printf("%15.15s:%d\t", buf, c.c_port);
 		if (remain)
 			fmtydhms(buf, sizeof(buf),
-			    (ts.tv_sec - dbi.last) - c.c_duration);
+			    c.c_duration - (ts.tv_sec - dbi.last));
 		else
 			fmttime(buf, sizeof(buf), dbi.last);
 		printf("%s\t%d/%d\t%-s\n", dbi.id, dbi.count, c.c_nfail, buf);
