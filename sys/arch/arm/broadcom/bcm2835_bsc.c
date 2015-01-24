@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_bsc.c,v 1.4 2015/01/24 00:23:37 jakllsch Exp $	*/
+/*	$NetBSD: bcm2835_bsc.c,v 1.5 2015/01/24 00:27:31 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.4 2015/01/24 00:23:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_bsc.c,v 1.5 2015/01/24 00:27:31 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -231,6 +231,9 @@ bsciic_exec(void *v, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	c |= BSC_C_INTR | BSC_C_INTT | BSC_C_INTD;
 #endif
 
+	if (isread && cmdlen == 0)
+		goto only_read;
+
 	buf = __UNCONST(cmdbuf);
 	len = cmdlen;
 
@@ -301,6 +304,7 @@ flood_again:
 	if (!isread)
 		goto done;
 
+only_read:
 	c |= BSC_C_READ;
 
 	buf = databuf;
