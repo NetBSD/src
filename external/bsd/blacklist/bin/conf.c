@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 2015/01/22 16:19:53 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 2015/01/25 20:59:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.13 2015/01/22 16:19:53 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.14 2015/01/25 20:59:39 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -48,13 +48,28 @@ __RCSID("$NetBSD: conf.c,v 1.13 2015/01/22 16:19:53 christos Exp $");
 #endif
 #include <stdlib.h>
 #include <limits.h>
+#include <ifaddrs.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <net/if.h>
 #include <sys/socket.h>
 
 #include "bl.h"
 #include "internal.h"
 #include "conf.h"
+
+
+struct sockaddr_if {
+        uint8_t         sif_len;
+	sa_family_t     sif_family;
+	in_port_t       sif_port;
+	char		sif_name[16];
+};
+
+#define SIF_NAME(a) \
+    ((const struct sockaddr_if *)(const void *)(a))->sif_name
+
+static int conf_is_interface(const char *);
 
 static void
 advance(char **p)
@@ -164,34 +179,45 @@ gethostport(const char *f, size_t l, void *v, const char *p)
 	struct conf *c = v;
 
 	if ((d = strstr(p, "]:")) != NULL) {
-		struct sockaddr_in6 *s6 = (void *)&c->c_ss;
+		struct sockaddr_in6 *sin6 = (void *)&c->c_ss;
 		*d++ = '\0';
 		p++;
 		if (debug)
 			(*lfun)(LOG_DEBUG, "%s: host6 %s", __func__, p);
 		if (strcmp(p, "*") != 0) {
-			if (inet_pton(AF_INET6, p, &s6->sin6_addr) == -1)
+			if (inet_pton(AF_INET6, p, &sin6->sin6_addr) == -1)
 				goto out;
-			s6->sin6_family = AF_INET6;
+			sin6->sin6_family = AF_INET6;
 #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
-			s6->sin6_len = sizeof(*s6);
+			sin6->sin6_len = sizeof(*sin6);
 #endif
-			port = &s6->sin6_port;
+			port = &sin6->sin6_port;
 		} 
 		p = ++d;
 	} else if ((d = strrchr(p, ':')) != NULL) {
-		struct sockaddr_in *s = (void *)&c->c_ss;
+		struct sockaddr_in *sin = (void *)&c->c_ss;
+		struct sockaddr_if *sif = (void *)&c->c_ss;
 		*d++ = '\0';
 		if (debug)
 			(*lfun)(LOG_DEBUG, "%s: host4 %s", __func__, p);
 		if (strcmp(p, "*") != 0) {
-			if (inet_pton(AF_INET, p, &s->sin_addr) == -1)
-				goto out;
-			s->sin_family = AF_INET;
+			if (conf_is_interface(p)) {
+				sif->sif_family = AF_MAX;
+				strlcpy(sif->sif_name, p,
+				    sizeof(sif->sif_name));
 #ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
-			s->sin_len = sizeof(*s);
+				sif->sif_len = sizeof(*sif);
 #endif
-			port = &s->sin_port;
+				port = &sif->sif_port;
+			} else if (inet_pton(AF_INET, p, &sin->sin_addr) != -1)
+			{
+				sin->sin_family = AF_INET;
+#ifdef HAVE_STRUCT_SOCKADDR_SA_LEN
+				sin->sin_len = sizeof(*sin);
+#endif
+				port = &sif->sif_port;
+			} else
+				goto out;
 		}
 		p = d;
 	}
@@ -332,15 +358,85 @@ conf_sort(const void *v1, const void *v2)
 }
 
 static int
+conf_is_interface(const char *name)
+{
+	const struct ifaddrs *ifa;
+
+	for (ifa = ifas; ifas; ifa = ifa->ifa_next)
+		if (strcmp(ifa->ifa_name, name) == 0)
+			return 1;
+	return 0;
+}
+
+static int
+conf_addr_in_interface(const struct sockaddr_storage *s1,
+    const struct sockaddr_storage *s2)
+{
+	const char *name = SIF_NAME(s2);
+	const struct ifaddrs *ifa;
+	socklen_t slen;
+	const struct sockaddr_in *sin = (const void *)s1;
+	const struct sockaddr_in6 *sin6 = (const void *)s1;
+
+	for (ifa = ifas; ifa; ifa = ifa->ifa_next) {
+		if ((ifa->ifa_flags & IFF_UP) == 0)
+			continue;
+
+		if (strcmp(ifa->ifa_name, name) != 0)
+			continue;
+
+		if (s1->ss_family != ifa->ifa_addr->sa_family)
+			continue;
+
+		const void *v = ifa->ifa_addr;
+		const void *p1, *p2;
+		switch (s1->ss_family) {
+		case AF_INET:
+			p1 = &sin->sin_addr;
+			p2 = &((const struct sockaddr_in *)v)->sin_addr;
+			slen = sizeof(sin->sin_addr);
+			break;
+		case AF_INET6:
+			p1 = &sin6->sin6_addr;
+			p2 = &((const struct sockaddr_in6 *)v)->sin6_addr;
+			slen = sizeof(sin6->sin6_addr);
+			break;
+		default:
+			(*lfun)(LOG_ERR, "Bad family %u", s1->ss_family);
+			continue;
+		}
+		if (memcmp(p1, p2, slen) == 0)
+			return 1;
+	}
+	return 0;
+}
+
+static int
+conf_addr_eq(const struct sockaddr_storage *s1,
+    const struct sockaddr_storage *s2)
+{
+	switch (s2->ss_family) {
+	case 0:
+		return 1;
+	case AF_MAX:
+		return conf_addr_in_interface(s1, s2);
+	default:
+	    	if (memcmp(s1, s2, sizeof(*s2))) {
+			if (debug > 1)
+				(*lfun)(LOG_DEBUG, "%s: c_ss fail", __func__);
+			return 0;
+		}
+		return 1;
+	}
+}
+
+static int
 conf_eq(const struct conf *c1, const struct conf *c2)
 {
-	if (c2->c_ss.ss_family != 0 &&
-	    memcmp(&c1->c_ss, &c2->c_ss, sizeof(c1->c_ss))) {
-		if (debug > 1)
-			(*lfun)(LOG_DEBUG, "%s: c_ss fail", __func__);
-		return 0;
-	}
 		
+	if (!conf_addr_eq(&c1->c_ss, &c2->c_ss))
+		return 0;
+
 #define CMP(a, b, f) \
 	if ((a)->f != (b)->f && (b)->f != -1) { \
 		if (debug > 1) \
@@ -388,18 +484,28 @@ conf_print(char *buf, size_t len, const char *pref, const char *delim,
 
 #define N(n, v) conf_num(b[n], sizeof(b[n]), (v))
 
-	if (c->c_ss.ss_family) {
+	switch (c->c_ss.ss_family) {
+	case 0:
+		if (c->c_port == -1)
+			snprintf(hb, sizeof(hb), "*");
+		else
+			snprintf(hb, sizeof(hb), "%d", c->c_port);
+		break;
+	case AF_MAX:
+		if (c->c_port == -1)
+			snprintf(hb, sizeof(hb), "%s:*", SIF_NAME(&c->c_ss));
+		else
+			snprintf(hb, sizeof(hb), "%s:%d", SIF_NAME(&c->c_ss),
+			    c->c_port);
+		break;
+	default:
 		if (c->c_port == -1)
 			sockaddr_snprintf(hb, sizeof(hb), "%a:*",
 			    (const void *)&c->c_ss);
 		else 
 			sockaddr_snprintf(hb, sizeof(hb), "%a:%p",
 			    (const void *)&c->c_ss);
-	} else {
-		if (c->c_port == -1)
-			snprintf(hb, sizeof(hb), "*");
-		else
-			snprintf(hb, sizeof(hb), "%d", c->c_port);
+		break;
 	}
 	
 	sp = *delim == '\t' ? 20 : -1;
