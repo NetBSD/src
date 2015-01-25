@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.179 2015/01/23 16:31:58 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.180 2015/01/25 09:48:43 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -14445,4 +14445,585 @@ sys/uvm/uvm_map.c				1.332
 	We shouldn't be messing with pages that someone else has busy,
 	and uvm_map_clean() is just advisory for amap mappings.
 	[chs, ticket #447]
+
+tools/gcc/Makefile                              up to 1.74
+tools/gcc/gcc-version.mk                        up to 1.3
+external/gpl3/gcc/dist/config/mh-alpha-linux    up to 1.1.1.1
+external/gpl3/gcc/dist/gcc/config/or1k/constraints.md up to 1.1
+external/gpl3/gcc/dist/gcc/config/or1k/elf.h    up to 1.1
+external/gpl3/gcc/dist/gcc/config/or1k/linux-elf.h up to 1.1
+external/gpl3/gcc/dist/gcc/config/or1k/linux-gas.h up to 1.1
+external/gpl3/gcc/dist/gcc/config/or1k/netbsd.h up to 1.2
+external/gpl3/gcc/dist/gcc/config/or1k/or1k-modes.def up to 1.1
+external/gpl3/gcc/dist/gcc/config/or1k/or1k-opts.h up to 1.1
+external/gpl3/gcc/dist/gcc/config/or1k/or1k-protos.h up to 1.1
+external/gpl3/gcc/dist/gcc/config/or1k/or1k.c   up to 1.2
+external/gpl3/gcc/dist/gcc/config/or1k/or1k.h   up to 1.1
+external/gpl3/gcc/dist/gcc/config/or1k/or1k.md  up to 1.1
+external/gpl3/gcc/dist/gcc/config/or1k/or1k.opt up to 1.1
+external/gpl3/gcc/dist/gcc/config/or1k/predicates.md up to 1.1
+external/gpl3/gcc/dist/gcc/config/or1k/t-linux  up to 1.1
+external/gpl3/gcc/dist/gcc/config/or1k/t-or1k   up to 1.1
+external/gpl3/gcc/dist/gcc/config/or1k/t-or1knd up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/constraints.md up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/crti.asm up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/crtn.asm up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/div.S   up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/elf.h   up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/generic.md up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/linux-unwind.h up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/linux.h up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/linux64.h up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/netbsd.h up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/opcode-riscv.h up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/peephole.md up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/predicates.md up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/riscv-fp.c up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/riscv-ftypes.def up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/riscv-modes.def up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/riscv-opc.h up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/riscv-protos.h up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/riscv.c up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/riscv.h up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/riscv.md up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/riscv.opt up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/sync.md up to 1.2
+external/gpl3/gcc/dist/gcc/config/riscv/t-elf   up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/t-linux64 up to 1.1
+external/gpl3/gcc/dist/gcc/config/riscv/t-netbsd64 up to 1.1
+external/gpl3/gcc/dist/gcc/common/config/or1k/or1k-common.c up to 1.1
+external/gpl3/gcc/dist/gcc/common/config/riscv/riscv-common.c up to 1.1
+external/gpl3/gcc/dist/libgcc/config/or1k/or1k-asm.h up to 1.1
+external/gpl3/gcc/dist/libgcc/config/or1k/crti.S up to 1.1
+external/gpl3/gcc/dist/libgcc/config/or1k/crtn.S up to 1.1
+external/gpl3/gcc/dist/libgcc/config/or1k/linux-unwind.h up to 1.1
+external/gpl3/gcc/dist/libgcc/config/or1k/or1k.S up to 1.1
+external/gpl3/gcc/dist/libgcc/config/or1k/sfp-machine.h up to 1.1
+external/gpl3/gcc/dist/libgcc/config/or1k/t-crtstuff up to 1.1
+external/gpl3/gcc/dist/libgcc/config/or1k/t-linux up to 1.1
+external/gpl3/gcc/dist/libgcc/config/or1k/t-or1k up to 1.1
+external/gpl3/gcc/dist/libgcc/config/riscv/riscv-fp.c up to 1.1
+external/gpl3/gcc/dist/libgcc/config/riscv/crti.S up to 1.1
+external/gpl3/gcc/dist/libgcc/config/riscv/crtn.S up to 1.1
+external/gpl3/gcc/dist/libgcc/config/riscv/t-dpbit up to 1.1
+external/gpl3/gcc/dist/libgcc/config/riscv/t-elf up to 1.1
+external/gpl3/gcc/dist/libgcc/config/riscv/t-fpbit up to 1.1
+external/gpl3/gcc/dist/libgcc/config/riscv/t-linux up to 1.1
+external/gpl3/gcc/dist/libgcc/config/riscv/t-tpbit up to 1.1
+external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_netbsd.cc up to 1.3
+external/gpl3/gcc/lib/libstdc++-v3/include/bits/arch/powerpc/Makefile up to 1.1
+external/gpl3/gcc/lib/libstdc++-v3/include/bits/arch/powerpc64/Makefile up to 1.1
+external/gpl3/gcc/lib/libstdc++-v3/include/bits/arch/riscv32/Makefile up to 1.1
+external/gpl3/gcc/lib/libstdc++-v3/include/bits/arch/riscv64/Makefile up to 1.1
+external/gpl3/gcc/lib/libtsan/Makefile          up to 1.2
+external/gpl3/gcc/lib/libtsan/shlib_version     up to 1.1
+external/gpl3/gcc/lib/libasan/Makefile          up to 1.9
+external/gpl3/gcc/lib/libasan/shlib_version     up to 1.1
+external/gpl3/gcc/usr.bin/lto-wrapper/Makefile  up to 1.1
+external/gpl3/gcc/usr.bin/lto1/Makefile         up to 1.2
+external/gpl3/gcc/Makefile                      up to 1.2
+external/gpl3/gcc/README.gcc48                  up to 1.6
+external/gpl3/gcc/dist/ChangeLog                up to 1.1.1.6
+external/gpl3/gcc/dist/LAST_UPDATED             up to 1.5
+external/gpl3/gcc/dist/MD5SUMS                  up to 1.5
+external/gpl3/gcc/dist/Makefile.def             up to 1.1.1.4
+external/gpl3/gcc/dist/Makefile.in              up to 1.1.1.4
+external/gpl3/gcc/dist/configure                up to 1.8
+external/gpl3/gcc/dist/configure.ac             up to 1.7
+external/gpl3/gcc/dist/config/ChangeLog         up to 1.1.1.6
+external/gpl3/gcc/dist/contrib/ChangeLog        up to 1.1.1.6
+external/gpl3/gcc/dist/contrib/reghunt/ChangeLog up to 1.1.1.5
+external/gpl3/gcc/dist/contrib/regression/ChangeLog up to 1.1.1.5
+external/gpl3/gcc/dist/fixincludes/ChangeLog    up to 1.1.1.5
+external/gpl3/gcc/dist/fixincludes/fixincl.x    up to 1.1.1.3
+external/gpl3/gcc/dist/fixincludes/inclhack.def up to 1.1.1.3
+external/gpl3/gcc/dist/fixincludes/tests/base/assert.h up to 1.1.1.2
+external/gpl3/gcc/dist/gcc/ChangeLog            up to 1.11
+external/gpl3/gcc/dist/gcc/DATESTAMP            up to 1.1.1.7
+external/gpl3/gcc/dist/gcc/DEV-PHASE            up to 1.1.1.5
+external/gpl3/gcc/dist/gcc/config.gcc           up to 1.32
+external/gpl3/gcc/dist/gcc/config.in            up to 1.1.1.4
+external/gpl3/gcc/dist/gcc/configure            up to 1.11
+external/gpl3/gcc/dist/gcc/configure.ac         up to 1.9
+external/gpl3/gcc/dist/gcc/convert.c            up to 1.1.1.4
+external/gpl3/gcc/dist/gcc/expr.c               up to 1.7
+external/gpl3/gcc/dist/gcc/fold-const.c         up to 1.1.1.7
+external/gpl3/gcc/dist/gcc/graphite-clast-to-gimple.c up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/graphite-interchange.c up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/graphite-optimize-isl.c up to 1.1.1.2
+external/gpl3/gcc/dist/gcc/graphite-poly.c      up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/graphite-sese-to-poly.c up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/ipa-pure-const.c     up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/omp-low.c            up to 1.1.1.4
+external/gpl3/gcc/dist/gcc/ree.c                up to 1.1.1.2
+external/gpl3/gcc/dist/gcc/rtlanal.c            up to 1.2
+external/gpl3/gcc/dist/gcc/stor-layout.c        up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/tree-data-ref.c      up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/tree-data-ref.h      up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/tree-nrv.c           up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/tree-ssa-forwprop.c  up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/tree-ssa-reassoc.c   up to 1.1.1.4
+external/gpl3/gcc/dist/gcc/tree-ssa-strlen.c    up to 1.1.1.2
+external/gpl3/gcc/dist/gcc/tree-ssa-tail-merge.c up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/tree-vect-slp.c      up to 1.1.1.4
+external/gpl3/gcc/dist/gcc/tree.c               up to 1.1.1.4
+external/gpl3/gcc/dist/gcc/tsan.c               up to 1.1.1.2
+external/gpl3/gcc/dist/gcc/c/ChangeLog          up to 1.1.1.4
+external/gpl3/gcc/dist/gcc/c-family/ChangeLog   up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/config/darwin-c.c    up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/config/darwin-driver.c up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/config/netbsd.h      up to 1.14
+external/gpl3/gcc/dist/gcc/config/aarch64/aarch64-elf-raw.h up to 1.1.1.2
+external/gpl3/gcc/dist/gcc/config/aarch64/aarch64-linux.h up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/config/aarch64/aarch64-protos.h up to 1.1.1.2
+external/gpl3/gcc/dist/gcc/config/aarch64/aarch64.c up to 1.1.1.5
+external/gpl3/gcc/dist/gcc/config/aarch64/aarch64.h up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/config/aarch64/aarch64.opt up to 1.1.1.2
+external/gpl3/gcc/dist/gcc/config/arm/arm.h     up to 1.10
+external/gpl3/gcc/dist/gcc/config/arm/arm.md    up to 1.8
+external/gpl3/gcc/dist/gcc/config/i386/i386.c   up to 1.9
+external/gpl3/gcc/dist/gcc/config/pa/pa.md      up to 1.1.1.4
+external/gpl3/gcc/dist/gcc/config/rs6000/altivec.h up to 1.1.1.4
+external/gpl3/gcc/dist/gcc/config/rs6000/altivec.md up to 1.1.1.5
+external/gpl3/gcc/dist/gcc/config/rs6000/netbsd.h up to 1.8
+external/gpl3/gcc/dist/gcc/config/rs6000/rs6000-builtin.def up to 1.1.1.5
+external/gpl3/gcc/dist/gcc/config/rs6000/rs6000-c.c up to 1.1.1.5
+external/gpl3/gcc/dist/gcc/config/rs6000/rs6000-protos.h up to 1.1.1.5
+external/gpl3/gcc/dist/gcc/config/rs6000/rs6000.c up to 1.10
+external/gpl3/gcc/dist/gcc/config/rs6000/vsx.md up to 1.1.1.6
+external/gpl3/gcc/dist/gcc/config/rs6000/xcoff.h up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/config/sh/sh.c       up to 1.7
+external/gpl3/gcc/dist/gcc/config/sh/sh.md      up to 1.1.1.5
+external/gpl3/gcc/dist/gcc/config/sparc/leon.md up to 1.1.1.2
+external/gpl3/gcc/dist/gcc/config/sparc/sparc-opts.h up to 1.1.1.2
+external/gpl3/gcc/dist/gcc/config/sparc/sparc.c up to 1.1.1.5
+external/gpl3/gcc/dist/gcc/config/sparc/sparc.h up to 1.1.1.4
+external/gpl3/gcc/dist/gcc/config/sparc/sparc.md up to 1.4
+external/gpl3/gcc/dist/gcc/config/sparc/sparc.opt up to 1.1.1.4
+external/gpl3/gcc/dist/gcc/config/sparc/t-rtems up to 1.1.1.2
+external/gpl3/gcc/dist/gcc/cp/ChangeLog         up to 1.1.1.7
+external/gpl3/gcc/dist/gcc/cp/parser.c          up to 1.1.1.6
+external/gpl3/gcc/dist/gcc/cp/pt.c              up to 1.1.1.5
+external/gpl3/gcc/dist/gcc/cp/semantics.c       up to 1.1.1.5
+external/gpl3/gcc/dist/gcc/doc/extend.texi      up to 1.1.1.5
+external/gpl3/gcc/dist/gcc/doc/install.texi     up to 1.1.1.5
+external/gpl3/gcc/dist/gcc/doc/invoke.texi      up to 1.7
+external/gpl3/gcc/dist/gcc/doc/md.texi          up to 1.1.1.6
+external/gpl3/gcc/dist/gcc/doc/tm.texi          up to 1.1.1.4
+external/gpl3/gcc/dist/gcc/doc/tm.texi.in       up to 1.1.1.3
+external/gpl3/gcc/dist/gcc/lto/ChangeLog        up to 1.1.1.5
+external/gpl3/gcc/dist/gcc/objc/ChangeLog       up to 1.1.1.5
+external/gpl3/gcc/dist/gcc/objcp/ChangeLog      up to 1.1.1.5
+external/gpl3/gcc/dist/gnattools/ChangeLog      up to 1.1.1.3
+external/gpl3/gcc/dist/include/ChangeLog        up to 1.1.1.5
+external/gpl3/gcc/dist/intl/ChangeLog           up to 1.1.1.5
+external/gpl3/gcc/dist/libbacktrace/ChangeLog   up to 1.1.1.4
+external/gpl3/gcc/dist/libcpp/ChangeLog         up to 1.1.1.5
+external/gpl3/gcc/dist/libcpp/lex.c             up to 1.5
+external/gpl3/gcc/dist/libcpp/line-map.c        up to 1.1.1.4
+external/gpl3/gcc/dist/libdecnumber/ChangeLog   up to 1.1.1.5
+external/gpl3/gcc/dist/libgcc/ChangeLog         up to 1.1.1.7
+external/gpl3/gcc/dist/libgcc/config/libbid/ChangeLog up to 1.1.1.5
+external/gpl3/gcc/dist/libgcc/config/pa/linux-unwind.h up to 1.1.1.2
+external/gpl3/gcc/dist/libgcc/config/sh/lib1funcs.S up to 1.1.1.2
+external/gpl3/gcc/dist/libgomp/ChangeLog        up to 1.1.1.5
+external/gpl3/gcc/dist/libgomp/configure.tgt    up to 1.1.1.3
+external/gpl3/gcc/dist/libiberty/ChangeLog      up to 1.1.1.5
+external/gpl3/gcc/dist/libitm/ChangeLog         up to 1.1.1.3
+external/gpl3/gcc/dist/libitm/configure.tgt     up to 1.1.1.3
+external/gpl3/gcc/dist/libitm/libitm.info       up to 1.1.1.2
+external/gpl3/gcc/dist/libmudflap/ChangeLog     up to 1.1.1.5
+external/gpl3/gcc/dist/libobjc/ChangeLog        up to 1.1.1.6
+external/gpl3/gcc/dist/libsanitizer/ChangeLog   up to 1.1.1.3
+external/gpl3/gcc/dist/libsanitizer/configure.tgt up to 1.3
+external/gpl3/gcc/dist/libsanitizer/asan/asan_intercepted_functions.h up to 1.2
+external/gpl3/gcc/dist/libsanitizer/asan/asan_internal.h up to 1.2
+external/gpl3/gcc/dist/libsanitizer/asan/asan_linux.cc up to 1.5
+external/gpl3/gcc/dist/libsanitizer/asan/asan_malloc_linux.cc up to 1.2
+external/gpl3/gcc/dist/libsanitizer/asan/asan_posix.cc up to 1.2
+external/gpl3/gcc/dist/libsanitizer/interception/interception.h up to 1.2
+external/gpl3/gcc/dist/libsanitizer/interception/interception_linux.cc up to 1.3
+external/gpl3/gcc/dist/libsanitizer/interception/interception_linux.h up to 1.2
+external/gpl3/gcc/dist/libsanitizer/interception/interception_type_test.cc up to 1.2
+external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_common_interceptors.inc up to 1.2
+external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_internal_defs.h up to 1.2
+external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_placement_new.h up to 1.2
+external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_platform_limits_posix.cc up to 1.2
+external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_posix.cc up to 1.2
+external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_procmaps.h up to 1.2
+external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_symbolizer_linux.cc up to 1.2
+external/gpl3/gcc/dist/libsanitizer/tsan/tsan_symbolize_addr2line_linux.cc up to 1.2
+external/gpl3/gcc/dist/libssp/ChangeLog         up to 1.1.1.5
+external/gpl3/gcc/dist/libstdc++-v3/ChangeLog   up to 1.1.1.7
+external/gpl3/gcc/dist/libstdc++-v3/configure.host up to 1.1.1.3
+external/gpl3/gcc/dist/libstdc++-v3/config/os/mingw32/os_defines.h up to 1.1.1.3
+external/gpl3/gcc/dist/libstdc++-v3/config/os/mingw32-w64/os_defines.h up to 1.1.1.2
+external/gpl3/gcc/dist/libstdc++-v3/doc/html/manual/status.html up to 1.1.1.3
+external/gpl3/gcc/dist/libstdc++-v3/include/bits/stl_algo.h up to 1.1.1.3
+external/gpl3/gcc/dist/libstdc++-v3/include/std/functional up to 1.1.1.4
+external/gpl3/gcc/dist/libstdc++-v3/include/std/tuple up to 1.1.1.4
+external/gpl3/gcc/dist/libstdc++-v3/include/tr1/functional up to 1.1.1.3
+external/gpl3/gcc/dist/libstdc++-v3/libsupc++/dyncast.cc up to 1.1.1.3
+external/gpl3/gcc/dist/libstdc++-v3/libsupc++/eh_personality.cc up to 1.1.1.3
+external/gpl3/gcc/dist/lto-plugin/ChangeLog     up to 1.1.1.5
+external/gpl3/gcc/dist/maintainer-scripts/ChangeLog up to 1.1.1.6
+external/gpl3/gcc/lib/Makefile                  up to 1.8
+external/gpl3/gcc/lib/crtstuff/arch/coldfire.mk up to 1.3
+external/gpl3/gcc/lib/crtstuff/arch/m68000.mk   up to 1.6
+external/gpl3/gcc/lib/libbacktrace/arch/alpha/backtrace-supported.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/alpha/config.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/arm/backtrace-supported.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/arm/config.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/armeb/backtrace-supported.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/armeb/config.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/coldfire/backtrace-supported.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/coldfire/config.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/hppa/backtrace-supported.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/hppa/config.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/i386/backtrace-supported.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/i386/config.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/m68000/backtrace-supported.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/m68000/config.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/m68k/backtrace-supported.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/m68k/config.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/mips64eb/backtrace-supported.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/mips64eb/config.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/mips64el/backtrace-supported.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/mips64el/config.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/mipseb/backtrace-supported.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/mipseb/config.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/mipsel/backtrace-supported.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/mipsel/config.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/powerpc/backtrace-supported.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/powerpc/config.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/powerpc64/backtrace-supported.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/powerpc64/config.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/sh3eb/backtrace-supported.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/sh3eb/config.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/sh3el/backtrace-supported.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/sh3el/config.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/sparc/backtrace-supported.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/sparc/config.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/sparc64/backtrace-supported.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/sparc64/config.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/vax/backtrace-supported.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/vax/config.h up to 1.3
+external/gpl3/gcc/lib/libbacktrace/arch/x86_64/backtrace-supported.h up to 1.2
+external/gpl3/gcc/lib/libbacktrace/arch/x86_64/config.h up to 1.2
+external/gpl3/gcc/lib/libgcc/Makefile.inc       up to 1.29
+external/gpl3/gcc/lib/libgcc/arch/m68000/defs.mk up to 1.2
+external/gpl3/gcc/lib/libgcc/arch/powerpc64/defs.mk up to 1.3
+external/gpl3/gcc/lib/libgcc/libgcc_s/Makefile  up to 1.11
+external/gpl3/gcc/lib/libgcc/libgcov/arch/alpha/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/arm/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/armeb/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/coldfire/gcov-iov.h up to 1.5
+external/gpl3/gcc/lib/libgcc/libgcov/arch/earm/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/earmeb/gcov-iov.h up to 1.5
+external/gpl3/gcc/lib/libgcc/libgcov/arch/earmhf/gcov-iov.h up to 1.5
+external/gpl3/gcc/lib/libgcc/libgcov/arch/earmhfeb/gcov-iov.h up to 1.5
+external/gpl3/gcc/lib/libgcc/libgcov/arch/earmv4/gcov-iov.h up to 1.5
+external/gpl3/gcc/lib/libgcc/libgcov/arch/earmv4eb/gcov-iov.h up to 1.5
+external/gpl3/gcc/lib/libgcc/libgcov/arch/earmv6/gcov-iov.h up to 1.5
+external/gpl3/gcc/lib/libgcc/libgcov/arch/earmv6eb/gcov-iov.h up to 1.5
+external/gpl3/gcc/lib/libgcc/libgcov/arch/earmv6hf/gcov-iov.h up to 1.5
+external/gpl3/gcc/lib/libgcc/libgcov/arch/earmv6hfeb/gcov-iov.h up to 1.5
+external/gpl3/gcc/lib/libgcc/libgcov/arch/earmv7/gcov-iov.h up to 1.5
+external/gpl3/gcc/lib/libgcc/libgcov/arch/earmv7eb/gcov-iov.h up to 1.5
+external/gpl3/gcc/lib/libgcc/libgcov/arch/earmv7hf/gcov-iov.h up to 1.5
+external/gpl3/gcc/lib/libgcc/libgcov/arch/earmv7hfeb/gcov-iov.h up to 1.5
+external/gpl3/gcc/lib/libgcc/libgcov/arch/hppa/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/i386/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/m68000/gcov-iov.h up to 1.5
+external/gpl3/gcc/lib/libgcc/libgcov/arch/m68k/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/mips64eb/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/mips64el/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/mipseb/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/mipsel/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/powerpc/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/powerpc64/gcov-iov.h up to 1.4
+external/gpl3/gcc/lib/libgcc/libgcov/arch/sh3eb/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/sh3el/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/sparc/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/sparc64/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/vax/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgcc/libgcov/arch/x86_64/gcov-iov.h up to 1.6
+external/gpl3/gcc/lib/libgomp/arch/m68000/config.h up to 1.3
+external/gpl3/gcc/lib/libgomp/arch/m68000/libgomp.spec up to 1.3
+external/gpl3/gcc/lib/libiberty/arch/coldfire/config.h up to 1.3
+external/gpl3/gcc/lib/libiberty/arch/m68000/config.h up to 1.3
+external/gpl3/gcc/lib/liblto_plugin/Makefile    up to 1.3
+external/gpl3/gcc/lib/libmudflap/Makefile       up to 1.6
+external/gpl3/gcc/lib/libobjc/arch/m68000/config.h up to 1.3
+external/gpl3/gcc/lib/libstdc++-v3/Makefile     up to 1.19
+external/gpl3/gcc/lib/libstdc++-v3/arch/alpha/c++config.h up to 1.13
+external/gpl3/gcc/lib/libstdc++-v3/arch/arm/c++config.h up to 1.16
+external/gpl3/gcc/lib/libstdc++-v3/arch/armeb/c++config.h up to 1.15
+external/gpl3/gcc/lib/libstdc++-v3/arch/coldfire/c++config.h up to 1.8
+external/gpl3/gcc/lib/libstdc++-v3/arch/earm/c++config.h up to 1.13
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmeb/c++config.h up to 1.11
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmhf/c++config.h up to 1.11
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmhfeb/c++config.h up to 1.9
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv4/c++config.h up to 1.8
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv4eb/c++config.h up to 1.8
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6/c++config.h up to 1.8
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6eb/c++config.h up to 1.8
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6hf/c++config.h up to 1.8
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6hfeb/c++config.h up to 1.8
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7/c++config.h up to 1.8
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7eb/c++config.h up to 1.8
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7hf/c++config.h up to 1.8
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7hfeb/c++config.h up to 1.8
+external/gpl3/gcc/lib/libstdc++-v3/arch/hppa/c++config.h up to 1.14
+external/gpl3/gcc/lib/libstdc++-v3/arch/i386/c++config.h up to 1.13
+external/gpl3/gcc/lib/libstdc++-v3/arch/m68000/c++config.h up to 1.10
+external/gpl3/gcc/lib/libstdc++-v3/arch/m68k/c++config.h up to 1.14
+external/gpl3/gcc/lib/libstdc++-v3/arch/mips64eb/c++config.h up to 1.14
+external/gpl3/gcc/lib/libstdc++-v3/arch/mips64el/c++config.h up to 1.13
+external/gpl3/gcc/lib/libstdc++-v3/arch/mipseb/c++config.h up to 1.15
+external/gpl3/gcc/lib/libstdc++-v3/arch/mipsel/c++config.h up to 1.14
+external/gpl3/gcc/lib/libstdc++-v3/arch/powerpc/c++config.h up to 1.15
+external/gpl3/gcc/lib/libstdc++-v3/arch/powerpc64/c++config.h up to 1.5
+external/gpl3/gcc/lib/libstdc++-v3/arch/powerpc64/defs.mk up to 1.3
+external/gpl3/gcc/lib/libstdc++-v3/arch/sh3eb/c++config.h up to 1.13
+external/gpl3/gcc/lib/libstdc++-v3/arch/sh3el/c++config.h up to 1.15
+external/gpl3/gcc/lib/libstdc++-v3/arch/sparc/c++config.h up to 1.14
+external/gpl3/gcc/lib/libstdc++-v3/arch/sparc64/c++config.h up to 1.14
+external/gpl3/gcc/lib/libstdc++-v3/arch/vax/c++config.h up to 1.16
+external/gpl3/gcc/lib/libstdc++-v3/arch/x86_64/c++config.h up to 1.15
+external/gpl3/gcc/lib/libstdc++-v3/include/bits/arch/Makefile up to 1.3
+external/gpl3/gcc/usr.bin/Makefile              up to 1.7
+external/gpl3/gcc/usr.bin/backend/Makefile      up to 1.23
+external/gpl3/gcc/usr.bin/frontend/Makefile     up to 1.9
+external/gpl3/gcc/usr.bin/gcc/arch/alpha/auto-host.h up to 1.5
+external/gpl3/gcc/usr.bin/gcc/arch/alpha/configargs.h up to 1.15
+external/gpl3/gcc/usr.bin/gcc/arch/alpha/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/arm/auto-host.h up to 1.5
+external/gpl3/gcc/usr.bin/gcc/arch/arm/configargs.h up to 1.17
+external/gpl3/gcc/usr.bin/gcc/arch/arm/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/armeb/auto-host.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/armeb/configargs.h up to 1.17
+external/gpl3/gcc/usr.bin/gcc/arch/armeb/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/coldfire/auto-host.h up to 1.5
+external/gpl3/gcc/usr.bin/gcc/arch/coldfire/bversion.h up to 1.3
+external/gpl3/gcc/usr.bin/gcc/arch/coldfire/configargs.h up to 1.9
+external/gpl3/gcc/usr.bin/gcc/arch/coldfire/defs.mk up to 1.5
+external/gpl3/gcc/usr.bin/gcc/arch/coldfire/plugin-version.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/coldfire/tm.h up to 1.3
+external/gpl3/gcc/usr.bin/gcc/arch/earm/auto-host.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/earm/configargs.h up to 1.15
+external/gpl3/gcc/usr.bin/gcc/arch/earm/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/earmeb/auto-host.h up to 1.5
+external/gpl3/gcc/usr.bin/gcc/arch/earmeb/configargs.h up to 1.11
+external/gpl3/gcc/usr.bin/gcc/arch/earmeb/plugin-version.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/earmhf/auto-host.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/earmhf/configargs.h up to 1.12
+external/gpl3/gcc/usr.bin/gcc/arch/earmhf/plugin-version.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/earmhfeb/auto-host.h up to 1.4
+external/gpl3/gcc/usr.bin/gcc/arch/earmhfeb/configargs.h up to 1.10
+external/gpl3/gcc/usr.bin/gcc/arch/earmhfeb/plugin-version.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/earmv4/auto-host.h up to 1.4
+external/gpl3/gcc/usr.bin/gcc/arch/earmv4/configargs.h up to 1.9
+external/gpl3/gcc/usr.bin/gcc/arch/earmv4/plugin-version.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/earmv4eb/auto-host.h up to 1.4
+external/gpl3/gcc/usr.bin/gcc/arch/earmv4eb/configargs.h up to 1.9
+external/gpl3/gcc/usr.bin/gcc/arch/earmv4eb/plugin-version.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6/auto-host.h up to 1.4
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6/configargs.h up to 1.9
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6/plugin-version.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6eb/auto-host.h up to 1.4
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6eb/configargs.h up to 1.9
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6eb/plugin-version.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6hf/auto-host.h up to 1.4
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6hf/configargs.h up to 1.9
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6hf/plugin-version.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6hfeb/auto-host.h up to 1.4
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6hfeb/configargs.h up to 1.9
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6hfeb/plugin-version.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7/auto-host.h up to 1.4
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7/configargs.h up to 1.9
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7/plugin-version.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7eb/auto-host.h up to 1.4
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7eb/configargs.h up to 1.9
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7eb/plugin-version.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7hf/auto-host.h up to 1.4
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7hf/configargs.h up to 1.9
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7hf/plugin-version.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7hfeb/auto-host.h up to 1.4
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7hfeb/configargs.h up to 1.9
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7hfeb/plugin-version.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/hppa/auto-host.h up to 1.5
+external/gpl3/gcc/usr.bin/gcc/arch/hppa/configargs.h up to 1.17
+external/gpl3/gcc/usr.bin/gcc/arch/hppa/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/i386/auto-host.h up to 1.5
+external/gpl3/gcc/usr.bin/gcc/arch/i386/configargs.h up to 1.19
+external/gpl3/gcc/usr.bin/gcc/arch/i386/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/m68000/auto-host.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/m68000/bversion.h up to 1.4
+external/gpl3/gcc/usr.bin/gcc/arch/m68000/configargs.h up to 1.12
+external/gpl3/gcc/usr.bin/gcc/arch/m68000/defs.mk up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/m68000/plugin-version.h up to 1.5
+external/gpl3/gcc/usr.bin/gcc/arch/m68000/tm.h  up to 1.3
+external/gpl3/gcc/usr.bin/gcc/arch/m68k/auto-host.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/m68k/configargs.h up to 1.14
+external/gpl3/gcc/usr.bin/gcc/arch/m68k/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/mips64eb/auto-host.h up to 1.5
+external/gpl3/gcc/usr.bin/gcc/arch/mips64eb/configargs.h up to 1.15
+external/gpl3/gcc/usr.bin/gcc/arch/mips64eb/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/mips64el/auto-host.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/mips64el/configargs.h up to 1.16
+external/gpl3/gcc/usr.bin/gcc/arch/mips64el/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/mipseb/auto-host.h up to 1.5
+external/gpl3/gcc/usr.bin/gcc/arch/mipseb/configargs.h up to 1.15
+external/gpl3/gcc/usr.bin/gcc/arch/mipseb/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/mipsel/auto-host.h up to 1.5
+external/gpl3/gcc/usr.bin/gcc/arch/mipsel/configargs.h up to 1.16
+external/gpl3/gcc/usr.bin/gcc/arch/mipsel/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/powerpc/auto-host.h up to 1.5
+external/gpl3/gcc/usr.bin/gcc/arch/powerpc/configargs.h up to 1.21
+external/gpl3/gcc/usr.bin/gcc/arch/powerpc/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/auto-host.h up to 1.4
+external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/bversion.h up to 1.3
+external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/configargs.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/defs.mk up to 1.4
+external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/gtyp-input.list up to 1.3
+external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/multilib.h up to 1.3
+external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/plugin-version.h up to 1.3
+external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/tm.h up to 1.3
+external/gpl3/gcc/usr.bin/gcc/arch/sh3eb/auto-host.h up to 1.5
+external/gpl3/gcc/usr.bin/gcc/arch/sh3eb/configargs.h up to 1.16
+external/gpl3/gcc/usr.bin/gcc/arch/sh3eb/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/sh3el/auto-host.h up to 1.5
+external/gpl3/gcc/usr.bin/gcc/arch/sh3el/configargs.h up to 1.18
+external/gpl3/gcc/usr.bin/gcc/arch/sh3el/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/sparc/auto-host.h up to 1.5
+external/gpl3/gcc/usr.bin/gcc/arch/sparc/configargs.h up to 1.16
+external/gpl3/gcc/usr.bin/gcc/arch/sparc/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/sparc64/auto-host.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/sparc64/configargs.h up to 1.17
+external/gpl3/gcc/usr.bin/gcc/arch/sparc64/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/vax/auto-host.h up to 1.6
+external/gpl3/gcc/usr.bin/gcc/arch/vax/configargs.h up to 1.17
+external/gpl3/gcc/usr.bin/gcc/arch/vax/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/gcc/arch/x86_64/auto-host.h up to 1.5
+external/gpl3/gcc/usr.bin/gcc/arch/x86_64/configargs.h up to 1.20
+external/gpl3/gcc/usr.bin/gcc/arch/x86_64/plugin-version.h up to 1.7
+external/gpl3/gcc/usr.bin/libcpp/arch/alpha/config.h up to 1.3
+external/gpl3/gcc/usr.bin/libcpp/arch/armeb/config.h up to 1.2
+external/gpl3/gcc/usr.bin/libcpp/arch/x86_64/config.h up to 1.3
+distrib/sets/lists/base/ad.arm			1.58, 1.61
+distrib/sets/lists/base/ad.mips			1.53, 1.56
+distrib/sets/lists/base/ad.powerpc		1.22, 1.25-1.26
+distrib/sets/lists/base/md.amd64		1.249, 1.252
+distrib/sets/lists/base/md.sparc64		1.237, 1.240
+distrib/sets/lists/base/shl.mi			1.718, 1.721-1.722
+distrib/sets/lists/comp/ad.arm			1.62
+distrib/sets/lists/comp/ad.mips			1.52
+distrib/sets/lists/comp/ad.powerpc		1.74-1.75
+distrib/sets/lists/comp/md.amd64		1.226
+distrib/sets/lists/comp/md.sparc64		1.189
+distrib/sets/lists/comp/mi			1.1918-1.1919, 1.1937
+distrib/sets/lists/comp/shl.mi			1.268-1.269
+distrib/sets/lists/debug/ad.arm			1.47, 1.50
+distrib/sets/lists/debug/ad.mips		1.43, 1.46
+distrib/sets/lists/debug/ad.powerpc		1.23, 1.26
+distrib/sets/lists/debug/md.amd64		1.67, 1.70
+distrib/sets/lists/debug/md.evbmips		1.5
+distrib/sets/lists/debug/md.sparc64		1.66, 1.69
+distrib/sets/lists/debug/mi			1.90-1.91, 1.101
+distrib/sets/lists/debug/shl.mi			1.77, 1.80-1.81
+lib/Makefile					1.216-1.8
+lib/libexecinfo/unwind.h			1.3
+sys/arch/sh3/include/elf_machdep.h		1.11
+sys/lib/libunwind/Makefile.inc			1.10
+external/gpl3/gcc/lib/libstdc++-v3/arch/alpha/gstdint.h		(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/armeb/gstdint.h		(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/earm/gstdint.h		(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmeb/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmhf/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmhfeb/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv4/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv4eb/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6eb/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6hf/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv6hfeb/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7eb/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7hf/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/earmv7hfeb/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/hppa/gstdint.h		(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/i386/gstdint.h		(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/m68000/c++config.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/m68000/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/m68k/gstdint.h		(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/mips64eb/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/mips64el/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/mipseb/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/mipsel/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/powerpc/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/sh3eb/gstdint.h		(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/sh3el/gstdint.h		(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/sparc/gstdint.h		(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/sparc64/gstdint.h	(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/vax/gstdint.h		(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/x86_64/gstdint.h	(regen)
+
+	Sync gcc and its libraries with -current, including the import
+	of gcc 4.8.4, fixes to the use of cpu specific string instructions
+	on powerpc and a branch delay slot fix for SH from upstream.
+	[skrll, ticket #448]
+
+usr.sbin/postinstall/postinstall.8		1.17-1.18
+
+	Document x option and improve markup.
+	[snj, ticket #449]
+
+sys/arch/evbsh3/evbsh3/bus_dma.c		1.4
+
+	Sync with sys/arch/landisk/landisk/bus_dma.c rev.1.15:
+	Don't call sh_dcache_inv_range() on BUS_DMASYNC_POSTREAD ops
+	as other mips and arm ports.
+	[nonaka, ticket #450]
+
+sys/arch/x86/pci/pci_machdep.c			1.68
+
+	We don't need to keep track of curmode if not vga_post.
+	[nonaka, ticket #451]
+
+doc/3RDPARTY                                   	 up to 1.1195
+usr.sbin/zdump/Makefile                        	 up to 1.9
+usr.sbin/zic/Makefile                          	 up to 1.15
+lib/libc/time/Makefile                         	 up to 1.25
+lib/libc/time/Makefile.inc                     	 up to 1.21
+lib/libc/time/NEWS                             	 up to 1.8
+lib/libc/time/README                           	 up to 1.9
+lib/libc/time/Theory                           	 up to 1.16
+lib/libc/time/asctime.c                        	 up to 1.20
+lib/libc/time/checktab.awk                     	 up to 1.8
+lib/libc/time/ctime.3                          	 up to 1.51
+lib/libc/time/getdate.c                        	 up to 1.3
+lib/libc/time/localtime.c                      	 up to 1.92
+lib/libc/time/private.h                        	 up to 1.38
+lib/libc/time/strftime.c                       	 up to 1.33
+lib/libc/time/time2posix.3                     	 up to 1.19
+lib/libc/time/tz-art.htm                       	 up to 1.8
+lib/libc/time/tz-link.htm                      	 up to 1.20
+lib/libc/time/tzfile.5                         	 up to 1.22
+lib/libc/time/tzfile.h                         	 up to 1.16
+lib/libc/time/tzselect.8                       	 up to 1.6
+lib/libc/time/tzselect.ksh                     	 up to 1.12
+lib/libc/time/tzset.3                          	 up to 1.31
+lib/libc/time/zdump.8                          	 up to 1.14
+lib/libc/time/zdump.c                          	 up to 1.40
+lib/libc/time/zic.8                            	 up to 1.24
+lib/libc/time/zic.c                            	 up to 1.52
+
+	Update tzcode from 2014e to 2014j.
+	[apb, ticket #453]
+
+sys/arch/arm/arm/db_trace.c			1.31
+
+	Fix crash(8) backtrace support.
+	[skrll, ticket #454]
 
