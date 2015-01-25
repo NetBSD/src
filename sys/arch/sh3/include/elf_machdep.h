@@ -1,8 +1,6 @@
-/*	$NetBSD: elf_machdep.h,v 1.10 2009/05/30 05:56:53 skrll Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.10.38.1 2015/01/25 09:16:00 martin Exp $	*/
 
-#if !defined(_BYTE_ORDER) && !defined(HAVE_NBTOOL_CONFIG_H)
-#error Define _BYTE_ORDER!
-#endif
+#include <machine/endian_machdep.h>
 
 #if _BYTE_ORDER == _LITTLE_ENDIAN
 #define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
