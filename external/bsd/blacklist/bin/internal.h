@@ -1,4 +1,4 @@
-/*	$NetBSD: internal.h,v 1.10 2015/01/22 21:32:30 christos Exp $	*/
+/*	$NetBSD: internal.h,v 1.11 2015/01/25 20:59:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@ extern size_t nconf;
 extern int debug;
 extern const char *rulename;
 extern const char *controlprog;
+extern struct ifaddrs *ifas;
 
 void (*lfun)(int, const char *, ...);
 

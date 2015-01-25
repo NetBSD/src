@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.28 2015/01/24 07:46:20 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.29 2015/01/25 20:59:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.28 2015/01/24 07:46:20 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.29 2015/01/25 20:59:39 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: blacklistd.c,v 1.28 2015/01/24 07:46:20 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <ifaddrs.h>
 #include <netinet/in.h>
 
 #include "bl.h"
@@ -101,7 +102,8 @@ sigdone(int n __unused)
 static __dead void
 usage(int c)
 {
-	warnx("Unknown option `%c'", (char)c);
+	if (c)
+		warnx("Unknown option `%c'", (char)c);
 	fprintf(stderr, "Usage: %s [-vdf] [-c <config>] [-r <rulename>] "
 	    "[-P <sockpathsfile>] [-C <controlprog>] [-D <dbfile>] "
 	    "[-t <timeout>]\n", getprogname());
@@ -249,6 +251,21 @@ out:
 }
 
 static void
+update_interfaces(void)
+{
+	struct ifaddrs *oifas, *nifas;
+
+	if (getifaddrs(&nifas) == -1)
+		return;
+
+	oifas = ifas;
+	ifas = nifas;
+
+	if (oifas)
+		freeifaddrs(oifas);
+}
+
+static void
 update(void)
 {
 	struct timespec ts;
@@ -359,6 +376,10 @@ main(int argc, char *argv[])
 		}
 	}
 
+	argc -= optind;
+	if (argc)
+		usage(0);
+
 	signal(SIGHUP, sighup);
 	signal(SIGINT, sigdone);
 	signal(SIGQUIT, sigdone);
@@ -377,6 +398,7 @@ main(int argc, char *argv[])
 			tout = 15000;
 	}
 
+	update_interfaces();
 	conf_parse(configfile);
 	if (reset) {
 		for (size_t i = 0; i < nconf; i++)
@@ -436,6 +458,8 @@ main(int argc, char *argv[])
 		}
 		if (t % 100 == 0)
 			state_sync(state);
+		if (t % 10000 == 0)
+			update_interfaces();
 		update();
 	}
 	state_close(state);
