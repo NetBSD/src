@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2014/12/10 04:37:51 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2015/01/25 15:51:53 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -83,6 +83,9 @@
 #ifdef HAVE_LIBXML2
 #include <libxml/xmlversion.h>
 #endif
+
+#include "pfilter.h"
+
 /*
  * Include header files for database drivers here.
  */
@@ -1205,6 +1208,8 @@ main(int argc, char *argv[]) {
 #endif
 
 	parse_command_line(argc, argv);
+
+	pfilter_open();
 
 	/*
 	 * Warn about common configuration error.

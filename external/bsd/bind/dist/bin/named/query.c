@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.17 2014/12/10 04:37:52 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.18 2015/01/25 15:51:53 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -64,6 +64,8 @@
 #include <named/server.h>
 #include <named/sortlist.h>
 #include <named/xfrout.h>
+
+#include "pfilter.h"
 
 #if 0
 /*
@@ -762,6 +764,8 @@ query_validatezonedb(ns_client_t *client, dns_name_t *name,
 	}
 
 	result = ns_client_checkaclsilent(client, NULL, queryacl, ISC_TRUE);
+	if (result != ISC_R_SUCCESS)
+		pfilter_notify(result, client, "validatezonedb");
 	if ((options & DNS_GETDB_NOLOG) == 0) {
 		char msg[NS_CLIENT_ACLMSGSIZE("query")];
 		if (result == ISC_R_SUCCESS) {
@@ -1026,6 +1030,8 @@ query_getcachedb(ns_client_t *client, dns_name_t *name, dns_rdatatype_t qtype,
 		result = ns_client_checkaclsilent(client, NULL,
 						  client->view->cacheacl,
 						  ISC_TRUE);
+		if (result == ISC_R_SUCCESS)
+			pfilter_notify(result, client, "cachedb");
 		if (result == ISC_R_SUCCESS) {
 			/*
 			 * We were allowed by the "allow-query-cache" ACL.

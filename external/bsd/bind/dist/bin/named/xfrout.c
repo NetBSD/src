@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.c,v 1.7 2014/12/10 04:37:52 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.8 2015/01/25 15:51:53 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -53,6 +53,8 @@
 #include <named/log.h>
 #include <named/server.h>
 #include <named/xfrout.h>
+
+#include "pfilter.h"
 
 /*! \file
  * \brief
@@ -822,6 +824,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 						     &client->peeraddr,
 						     &db);
 
+			pfilter_notify(result, client, "zonexfr");
 			if (result == ISC_R_NOPERM) {
 				char _buf1[DNS_NAME_FORMATSIZE];
 				char _buf2[DNS_RDATACLASS_FORMATSIZE];
