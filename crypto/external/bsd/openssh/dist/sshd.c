@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.15 2014/10/28 21:36:16 joerg Exp $	*/
+/*	$NetBSD: sshd.c,v 1.16 2015/01/25 15:52:44 christos Exp $	*/
 /* $OpenBSD: sshd.c,v 1.428 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.15 2014/10/28 21:36:16 joerg Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.16 2015/01/25 15:52:44 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -109,6 +109,7 @@ __RCSID("$NetBSD: sshd.c,v 1.15 2014/10/28 21:36:16 joerg Exp $");
 #include "roaming.h"
 #include "ssh-sandbox.h"
 #include "version.h"
+#include "pfilter.h"
 
 #ifdef LIBWRAP
 #include <tcpd.h>
@@ -364,6 +365,7 @@ grace_alarm_handler(int sig)
 		killpg(0, SIGTERM);
 	}
 
+	pfilter_notify(1);
 	/* Log error and exit. */
 	sigdie("Timeout before authentication for %s", get_remote_ipaddr());
 }
@@ -1160,6 +1162,7 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 	for (i = 0; i < options.max_startups; i++)
 		startup_pipes[i] = -1;
 
+	pfilter_init();
 	/*
 	 * Stay listening for connections until the system crashes or
 	 * the daemon is killed with a signal.
