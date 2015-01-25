@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.8 2014/10/25 15:02:12 joerg Exp $
+# $NetBSD: ad.aarch64,v 1.9 2015/01/25 15:50:30 christos Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -204,6 +204,10 @@
 ./usr/lib/eabi/libbind9.so			base-sys-shlib		compat,pic
 ./usr/lib/eabi/libbind9_p.a			comp-c-proflib		compat,profile
 ./usr/lib/eabi/libbind9_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/eabi/libblacklist.a			comp-c-lib		compat
+./usr/lib/eabi/libblacklist.so			base-sys-shlib		compat,pic
+./usr/lib/eabi/libblacklist_p.a			comp-c-proflib		compat,profile
+./usr/lib/eabi/libblacklist_pic.a		comp-c-piclib		compat,pic,picinstall
 ./usr/lib/eabi/libbluetooth.a			comp-c-lib		compat
 ./usr/lib/eabi/libbluetooth.so			base-sys-shlib		compat,pic
 ./usr/lib/eabi/libbluetooth_p.a			comp-c-proflib		compat,profile
@@ -723,6 +727,10 @@
 ./usr/lib/eabihf/libbind9.so			base-sys-shlib		compat,pic
 ./usr/lib/eabihf/libbind9_p.a			comp-c-proflib		compat,profile
 ./usr/lib/eabihf/libbind9_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/eabihf/libblacklist.a			comp-c-lib		compat
+./usr/lib/eabihf/libblacklist.so			base-sys-shlib		compat,pic
+./usr/lib/eabihf/libblacklist_p.a			comp-c-proflib		compat,profile
+./usr/lib/eabihf/libblacklist_pic.a		comp-c-piclib		compat,pic,picinstall
 ./usr/lib/eabihf/libbluetooth.a			comp-c-lib		compat
 ./usr/lib/eabihf/libbluetooth.so			base-sys-shlib		compat,pic
 ./usr/lib/eabihf/libbluetooth_p.a			comp-c-proflib		compat,profile
@@ -1242,6 +1250,10 @@
 ./usr/lib/oabi/libbind9.so			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libbind9_p.a			comp-c-proflib		compat,profile
 ./usr/lib/oabi/libbind9_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/oabi/libblacklist.a			comp-c-lib		compat
+./usr/lib/oabi/libblacklist.so			base-sys-shlib		compat,pic
+./usr/lib/oabi/libblacklist_p.a			comp-c-proflib		compat,profile
+./usr/lib/oabi/libblacklist_pic.a		comp-c-piclib		compat,pic,picinstall
 ./usr/lib/oabi/libbluetooth.a			comp-c-lib		compat
 ./usr/lib/oabi/libbluetooth.so			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libbluetooth_p.a			comp-c-proflib		compat,profile
