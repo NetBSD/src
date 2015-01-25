@@ -1,4 +1,4 @@
-/*	$NetBSD: support.h,v 1.4 2015/01/24 06:05:08 christos Exp $	*/
+/*	$NetBSD: support.h,v 1.5 2015/01/25 22:22:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,8 +34,10 @@
 __BEGIN_DECLS
 const char *fmttime(char *, size_t, time_t);
 const char *fmtydhms(char *, size_t, time_t);
-void vdlog(int, const char *, va_list);
-void dlog(int, const char *, ...);
+void vdlog(int, const char *, va_list)
+    __attribute__((__format__(__printf__, 2, 0)));
+void dlog(int, const char *, ...)
+    __attribute__((__format__(__printf__, 2, 3)));
 __END_DECLS
 
 #endif /* _SUPPORT_H */
