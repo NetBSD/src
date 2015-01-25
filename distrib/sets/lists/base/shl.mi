@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.732 2015/01/17 19:12:57 christos Exp $
+# $NetBSD: shl.mi,v 1.733 2015/01/25 15:50:29 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -13,6 +13,9 @@
 #
 # Note:	libtermcap and libtermlib are hardlinked and share the same version.
 #
+./lib/libblacklist.so				base-sys-shlib		dynamicroot
+./lib/libblacklist.so.0				base-sys-shlib		dynamicroot
+./lib/libblacklist.so.0.0			base-sys-shlib		dynamicroot
 ./lib/libc.so					base-sys-shlib		dynamicroot
 ./lib/libc.so.12				base-sys-shlib		dynamicroot
 ./lib/libc.so.12.197				base-sys-shlib		dynamicroot
@@ -189,6 +192,9 @@
 ./usr/lib/libbind9.so				base-bind-shlib
 ./usr/lib/libbind9.so.8				base-bind-shlib
 ./usr/lib/libbind9.so.8.1			base-bind-shlib
+./usr/lib/libblacklist.so			base-sys-shlib
+./usr/lib/libblacklist.so.0			base-sys-shlib
+./usr/lib/libblacklist.so.0.0			base-sys-shlib
 ./usr/lib/libbluetooth.so			base-sys-shlib
 ./usr/lib/libbluetooth.so.4			base-sys-shlib
 ./usr/lib/libbluetooth.so.4.2			base-sys-shlib
