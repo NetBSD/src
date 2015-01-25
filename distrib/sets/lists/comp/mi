@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1906.2.3 2015/01/17 12:10:54 martin Exp $
+#	$NetBSD: mi,v 1.1906.2.4 2015/01/25 00:19:24 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3402,7 +3402,7 @@
 ./usr/include/ulimit.h				comp-c-include
 ./usr/include/unctrl.h				comp-c-include
 ./usr/include/unistd.h				comp-c-include
-./usr/include/unwind.h				comp-c-include		!libgcc_eh
+./usr/include/unwind.h				comp-c-include
 ./usr/include/usb.h				comp-obsolete		obsolete
 ./usr/include/usbhid.h				comp-c-include
 ./usr/include/util.h				comp-c-include
@@ -3493,6 +3493,8 @@
 ./usr/lib/libamu_p.a				comp-obsolete		obsolete
 ./usr/lib/libarchive.a				comp-c-lib
 ./usr/lib/libarchive_p.a			comp-c-proflib		profile
+./usr/lib/libasan.a				comp-c-lib		gcc=48
+./usr/lib/libasan_p.a				comp-c-proflib		profile,gcc=48
 ./usr/lib/libasn1.a				comp-krb5-lib		kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	profile,kerberos
 ./usr/lib/libatf-c++.a				comp-atf-lib		atf
@@ -4101,6 +4103,8 @@
 ./usr/libexec/f771				comp-obsolete		gcc=4,obsolete
 ./usr/libexec/lint1				comp-c-bin
 ./usr/libexec/lint2				comp-c-bin
+./usr/libexec/lto-wrapper			comp-c-bin		gcc=48
+./usr/libexec/lto1				comp-c-bin		gcc=48
 ./usr/libexec/pcpp				comp-c-bin		pcc
 ./usr/sbin/config				comp-obsolete		obsolete
 ./usr/sbin/config.new				comp-obsolete		obsolete

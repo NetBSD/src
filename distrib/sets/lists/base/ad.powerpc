@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.17.2.3 2015/01/16 08:24:50 martin Exp $
+# $NetBSD: ad.powerpc,v 1.17.2.4 2015/01/25 00:19:24 martin Exp $
 ./lib/powerpc					base-npf-shlib		compat,arch64
 ./lib/powerpc/npf				base-npf-shlib		compat,arch64
 ./lib/powerpc/npf/ext_log.so			base-npf-shlib		compat,arch64,pic
@@ -64,6 +64,8 @@
 ./usr/lib/powerpc/libamu.so.4.0			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libarchive.so.3		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libarchive.so.3.1		base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libasan.so.0			base-compat-shlib	compat,pic,gcc=48
+./usr/lib/powerpc/libasan.so.0.0		base-compat-shlib	compat,pic,gcc=48
 ./usr/lib/powerpc/libasn1.so.9			base-compat-shlib	compat,arch64,pic,kerberos
 ./usr/lib/powerpc/libasn1.so.9.0		base-compat-shlib	compat,arch64,pic,kerberos
 ./usr/lib/powerpc/libatf-c++.so.1		base-compat-shlib	compat,arch64,pic,atf
@@ -278,7 +280,7 @@
 ./usr/lib/powerpc/libstdc++.so.7		base-compat-shlib	compat,arch64,pic,gcccmds,libstdcxx
 ./usr/lib/powerpc/libstdc++.so.7.0		base-compat-shlib	compat,arch64,pic,gcc=4,libstdcxx
 ./usr/lib/powerpc/libstdc++.so.7.1		base-compat-shlib	compat,arch64,pic,gcc=45,libstdcxx
-./usr/lib/powerpc/libstdc++.so.7.2		base-compat-shlib	compat,arch64,pic,gcc=48,libstdcxx
+./usr/lib/powerpc/libstdc++.so.7.3		base-compat-shlib	compat,arch64,pic,gcc=48,libstdcxx
 ./usr/lib/powerpc/libtermcap.so.0		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libtermcap.so.0.6		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libterminfo.so.1		base-compat-shlib	compat,arch64,pic

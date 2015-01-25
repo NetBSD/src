@@ -791,7 +791,7 @@
 /* Define to 1 if we found a declaration for 'madvise', otherwise define to 0.
    */
 #ifndef USED_FOR_TARGET
-#define HAVE_DECL_MADVISE 0
+#define HAVE_DECL_MADVISE 1
 #endif
 
 
@@ -913,7 +913,7 @@
 
 /* Define to 1 if you have the <ext/hash_map> header file. */
 #ifndef USED_FOR_TARGET
-/* #undef HAVE_EXT_HASH_MAP */
+#define HAVE_EXT_HASH_MAP 1
 #endif
 
 
@@ -1146,7 +1146,7 @@
 
 /* Define if you have the iconv() function. */
 #ifndef USED_FOR_TARGET
-/* #undef HAVE_ICONV */
+#define HAVE_ICONV 1
 #endif
 
 
@@ -1177,6 +1177,12 @@
 /* Define if you have a working <inttypes.h> header file. */
 #ifndef USED_FOR_TARGET
 #define HAVE_INTTYPES_H 1
+#endif
+
+
+/* Define if isl_schedule_constraints_compute_schedule exists. */
+#ifndef USED_FOR_TARGET
+/* #undef HAVE_ISL_SCHED_CONSTRAINTS_COMPUTE_SCHEDULE */
 #endif
 
 
@@ -1528,7 +1534,7 @@
 
 /* Define to 1 if you have the <tr1/unordered_map> header file. */
 #ifndef USED_FOR_TARGET
-/* #undef HAVE_TR1_UNORDERED_MAP */
+#define HAVE_TR1_UNORDERED_MAP 1
 #endif
 
 
@@ -1631,7 +1637,7 @@
 
 /* Define as const if the declaration of iconv() needs const. */
 #ifndef USED_FOR_TARGET
-/* #undef ICONV_CONST */
+#define ICONV_CONST const
 #endif
 
 

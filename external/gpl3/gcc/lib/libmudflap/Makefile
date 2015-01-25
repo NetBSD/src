@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/06/01 19:51:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2015/01/25 00:19:38 martin Exp $
 
 NOLINT=yes			# core dumps
 UNSUPPORTED_COMPILER.clang=     # defined
@@ -14,6 +14,9 @@ SHLIB_MINOR=	0
 
 LIB=mudflap
 SRCS=mf-runtime.c mf-heuristics.c mf-hooks1.c mf-hooks2.c
+
+.include <bsd.own.mk>
+
 INCS=mf-runtime.h
 INCSDIR=/usr/include/gcc-4.8
 

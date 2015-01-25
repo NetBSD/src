@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.72 2014/08/10 17:32:54 joerg Exp $
+# $NetBSD: ad.powerpc,v 1.72.2.1 2015/01/25 00:19:24 martin Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
@@ -170,6 +170,10 @@
 ./usr/lib/powerpc/libarchive.so			base-sys-shlib		compat,arch64,pic
 ./usr/lib/powerpc/libarchive_p.a		comp-c-proflib		compat,arch64,profile
 ./usr/lib/powerpc/libarchive_pic.a		comp-c-piclib		compat,arch64,pic,picinstall
+./usr/lib/powerpc/libasan.a			comp-c-lib		compat,gcc=48
+./usr/lib/powerpc/libasan.so			base-sys-shlib		compat,pic,gcc=48
+./usr/lib/powerpc/libasan_p.a			comp-c-proflib		compat,profile,gcc=48
+./usr/lib/powerpc/libasan_pic.a			comp-c-piclib		compat,pic,picinstall,gcc=48
 ./usr/lib/powerpc/libasn1.a			comp-c-lib		compat,arch64,kerberos
 ./usr/lib/powerpc/libasn1.so			base-sys-shlib		compat,arch64,pic,kerberos
 ./usr/lib/powerpc/libasn1_p.a			comp-c-proflib		compat,arch64,profile,kerberos

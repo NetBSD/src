@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/06/01 20:24:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2015/01/25 00:19:38 martin Exp $
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
@@ -8,9 +8,15 @@ LIB=		liblto_plugin
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
 
-SRCS=		lto-plugin.c
+SRCS=		lto-plugin.c hashtab.c simple-object.c pex-unix.c \
+		pex-common.c argv.c make-temp-file.c concat.c \
+		simple-object-elf.c simple-object-mach-o.c \
+		simple-object-coff.c simple-object-xcoff.c
 
-CPPFLAGS+=	-DHAVE_CONFIG_H -I${DIST}/include -I.
+CPPFLAGS+=	-I${DIST}/include -I. 
+CPPFLAGS+=	-DHAVE_CONFIG_H
+CPPFLAGS+=	-Dxstrdup=strdup -Dxexit=exit
+CPPFLAGS+=	-Dxcalloc=calloc -Dxmalloc=malloc -Dxrealloc=realloc
 
 LIBISMODULE=	1
 USE_SHLIBDIR=	yes
@@ -38,7 +44,7 @@ config.h: Makefile
 		CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} \
 		MAKE=${MAKE:Q} \
 		CONFIG_SHELL=${HOST_SH:Q} \
-		${HOST_SH} ${DIST}/lto-plugin/configure \
+		${HOST_SH} ${DIST}/libiberty/configure \
 			--build=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
 			--host=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
 			--target=${MACHINE_GNU_PLATFORM} && \
@@ -47,7 +53,7 @@ config.h: Makefile
 
 .include <bsd.lib.mk>
 
-.PATH:	${DIST}/lto-plugin
+.PATH:	${DIST}/lto-plugin ${DIST}/libiberty
 
 .else
 .include <bsd.prog.mk> # do nothing

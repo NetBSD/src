@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.63.2.3 2015/01/16 08:24:51 martin Exp $
+# $NetBSD: md.amd64,v 1.63.2.4 2015/01/25 00:19:25 martin Exp $
 ./usr/lib/i386/i18n/libBIG5_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libDECHanyu_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/i18n/libEUCTW_g.a		comp-c-debuglib		compat,debuglib
@@ -24,6 +24,7 @@
 ./usr/lib/i386/i18n/libmapper_zone_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/libamu_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/libarchive_g.a			comp-c-debuglib		compat,debuglib
+./usr/lib/i386/libasan_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/i386/libasn1_g.a			comp-c-debuglib		compat,debuglib,kerberos
 ./usr/lib/i386/libatf-c++_g.a			comp-c-debuglib		compat,debuglib,atf
 ./usr/lib/i386/libatf-c_g.a			comp-c-debuglib		compat,debuglib,atf
@@ -190,6 +191,7 @@
 ./usr/libdata/debug/usr/lib/i386/libamu.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libarchive.so.3.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libasn1.so.8.0.debug	comp-compat-shlib	compat,pic,kerberos,debug,obsolete
+./usr/libdata/debug/usr/lib/i386/libasan.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libasn1.so.9.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libatf-c++.so.0.0.debug	comp-compat-shlib	compat,pic,atf,debug,obsolete
 ./usr/libdata/debug/usr/lib/i386/libatf-c++.so.1.0.debug	comp-compat-shlib	compat,pic,atf,debug
@@ -318,7 +320,7 @@
 ./usr/libdata/debug/usr/lib/i386/libssl.so.10.5.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	gcc=4,compat,pic,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.1.debug	comp-compat-shlib	gcc=45,compat,pic,debug,libstdcxx
-./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.2.debug	comp-compat-shlib	gcc=48,compat,pic,debug,libstdcxx
+./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.3.debug	comp-compat-shlib	gcc=48,compat,pic,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/i386/libterminfo.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libtpm_unseal.so.1.0.debug	comp-compat-shlib	compat,pic,debug,tpm
 ./usr/libdata/debug/usr/lib/i386/libtre.so.0.8.debug	comp-compat-shlib	compat,pic,debug

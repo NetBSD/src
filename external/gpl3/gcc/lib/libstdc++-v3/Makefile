@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2014/06/14 20:49:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.16.2.1 2015/01/25 00:19:38 martin Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -14,8 +14,12 @@ LIBDPLIBS+=	m ${.CURDIR}/../../../../../lib/libm
 
 #COPTS+=		-pthread
 #LDFLAGS+=	-pthread
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+COPTS.random.cc+=	${${ACTIVE_CC} == "clang":? -mrdrnd :}
+.endif
 
-UNSUPPORTED_COMPILER.clang=	# defined
+CXXFLAGS.clang+=	-stdlib=libstdc++ -std=c++11 -D_GLIBCXX_ABI_TAG_CXX11=
+CXXFLAGS+=	${CXXFLAGS.${ACTIVE_CC}}
 CWARNFLAGS.clang+=	-Wno-logical-op-parentheses \
 			-Wno-deprecated-writable-strings -Wno-parentheses
 
@@ -25,7 +29,7 @@ CWARNFLAGS.clang+=	-Wno-logical-op-parentheses \
 .include "${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}/defs.mk"
 
 SHLIB_MAJOR=	7
-SHLIB_MINOR=	2
+SHLIB_MINOR=	3
 
 SUBDIR=		include
 

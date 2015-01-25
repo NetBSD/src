@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.54.2.3 2015/01/16 08:24:50 martin Exp $
+# $NetBSD: ad.arm,v 1.54.2.4 2015/01/25 00:19:24 martin Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -73,6 +73,8 @@
 ./usr/lib/oabi/libarchive.so.3.1		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libarm.so.0			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libarm.so.0.0			base-sys-shlib		compat,pic
+./usr/lib/oabi/libasan.so.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libasan.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libasn1.so.9			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libasn1.so.9.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libatf-c++.so.1			base-compat-shlib	compat,pic,atf
@@ -306,7 +308,7 @@
 ./usr/lib/oabi/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx
 ./usr/lib/oabi/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx,libstdcxx
 ./usr/lib/oabi/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx,libstdcxx
-./usr/lib/oabi/libstdc++.so.7.2			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx
+./usr/lib/oabi/libstdc++.so.7.3			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx
 ./usr/lib/oabi/libsupc++.so.0			base-compat-shlib	obsolete
 ./usr/lib/oabi/libsupc++.so.0.0			base-compat-shlib	obsolete
 ./usr/lib/oabi/libtermcap.so.0			base-compat-shlib	compat,pic

@@ -9,7 +9,7 @@
 // run-time libraries.
 // Linux-specific implementation of symbolizer parts.
 //===----------------------------------------------------------------------===//
-#ifdef __linux__
+#if defined(__linux__) || defined(__NetBSD__)
 #include "sanitizer_common.h"
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_libc.h"
@@ -124,7 +124,9 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules) {
   UNIMPLEMENTED();
 }
 #else  // ANDROID
+#ifdef ElfW
 typedef ElfW(Phdr) Elf_Phdr;
+#endif
 
 struct DlIteratePhdrData {
   LoadedModule *modules;
@@ -175,6 +177,10 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules) {
 }
 #endif  // ANDROID
 
+const char *Demangle(const char *MangledName) {
+  return MangledName;
+}
+
 }  // namespace __sanitizer
 
-#endif  // __linux__
+#endif  // __linux__ || __NetBSD__

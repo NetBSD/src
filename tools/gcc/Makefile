@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70 2014/06/14 20:49:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.70.2.1 2015/01/25 00:19:45 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -27,7 +27,8 @@ MULTILIB_ARGS= --enable-multilib
 MULTILIB_ARGS= --disable-multilib
 .endif
 
-.if ${MKSOFTFLOAT} != "no" && ${MACHINE_CPU} != "m68k"
+.if ${MKSOFTFLOAT} != "no" && ${MACHINE_CPU} != "m68k" \
+    && ${MACHINE_CPU} != "or1k"
 SOFTFLOAT_ARGS=	-with-float=soft
 .endif
 
@@ -46,6 +47,10 @@ COMMON_CONFIGURE_ARGS+=	--with-arch=${GCC_CONFIG_ARCH.${MACHINE_ARCH}}
 .endif
 .if defined(GCC_CONFIG_TUNE.${MACHINE_ARCH})
 COMMON_CONFIGURE_ARGS+=	--with-tune=${GCC_CONFIG_TUNE.${MACHINE_ARCH}}
+.endif
+
+.if ${HAVE_GCC} == 48
+COMMON_CONFIGURE_ARGS+= --enable-libstdcxx-time=rt --enable-lto
 .endif
 
 CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
@@ -174,6 +179,10 @@ NATIVE_CONFIGURE_ARGS+= --enable-tls
 .endif
 .if !empty(MACHINE_ARCH:Mearm*)
 NATIVE_CONFIGURE_ARGS+=	--enable-initfini-array
+.endif
+
+.if ${MACHINE_ARCH} == "m68000"
+NATIVE_CONFIGURE_ARGS+= --disable-shared
 .endif
 
 NATIVE_CONFIGURE_ARGS+=	\

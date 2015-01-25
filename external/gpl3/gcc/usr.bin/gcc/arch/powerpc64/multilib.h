@@ -3,11 +3,9 @@
 /* Generated from: NetBSD: mknative.common,v 1.11 2014/02/17 21:39:43 christos Exp  */
 
 static const char *const multilib_raw[] = {
-". !m64 !m32 !msoft-float;",
-".:../lib m64 !m32 !msoft-float;",
-".:../lib32 !m64 m32 !msoft-float;",
-".:soft-float !m64 !m32 msoft-float;",
-".:../lib32/soft-float !m64 m32 msoft-float;",
+". !m64 !m32;",
+".:. m64 !m32;",
+".:../lib/powerpc !m64 m32;",
 NULL
 };
 
@@ -18,15 +16,13 @@ NULL
 static const char *const multilib_matches_raw[] = {
 "m64 m64;",
 "m32 m32;",
-"msoft-float msoft-float;",
 NULL
 };
 
-static const char *multilib_extra = "fPIC mstrict-align";
+static const char *multilib_extra = "";
 
 static const char *const multilib_exclusions_raw[] = {
-"m64 !m32 msoft-float;",
 NULL
 };
 
-static const char *multilib_options = "m64/m32 msoft-float";
+static const char *multilib_options = "m64/m32";
