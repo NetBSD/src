@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.33 2015/01/17 19:12:57 christos Exp $
+# $NetBSD: ad.powerpc,v 1.34 2015/01/25 15:50:30 christos Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasan_g.a			comp-c-debuglib		compat,arch64,debuglib,gcc=48
@@ -6,6 +6,7 @@
 ./usr/lib/powerpc/libatf-c++_g.a		comp-c-debuglib		compat,arch64,debuglib,atf
 ./usr/lib/powerpc/libatf-c_g.a			comp-c-debuglib		compat,arch64,debuglib,atf
 ./usr/lib/powerpc/libbind9_g.a			comp-c-debuglib		compat,arch64,debuglib
+./usr/lib/powerpc/libblacklist_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libbluetooth_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libbsdmalloc_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libbz2_g.a			comp-c-debuglib		compat,arch64,debuglib
@@ -153,6 +154,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/libatf-c.so.0.0.debug			comp-compat-shlib	compat,arch64,debug,pic,atf
 ./usr/libdata/debug/usr/lib/powerpc/libbfd.so.13.0.debug			comp-compat-shlib	compat,arch64,debug,pic,binutils
 ./usr/libdata/debug/usr/lib/powerpc/libbind9.so.8.1.debug			comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/libblacklist.so.0.0.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libbluetooth.so.4.2.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libbsdmalloc.so.0.0.debug		comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libbz2.so.1.1.debug			comp-compat-shlib	compat,arch64,debug,pic

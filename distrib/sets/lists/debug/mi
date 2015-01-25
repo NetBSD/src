@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.103 2015/01/14 22:25:05 christos Exp $
+# $NetBSD: mi,v 1.104 2015/01/25 15:50:30 christos Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -33,6 +33,7 @@
 ./usr/lib/libavl_g.a				comp-c-debuglib		debuglib,zfs
 ./usr/lib/libbfd_g.a				comp-c-debuglib		debuglib,binutils
 ./usr/lib/libbind9_g.a				comp-c-debuglib		debuglib
+./usr/lib/libblacklist_g.a			comp-c-debuglib		debuglib
 ./usr/lib/libbluetooth_g.a			comp-c-debuglib		debuglib
 ./usr/lib/libbsdmalloc_g.a			comp-c-debuglib		debuglib
 ./usr/lib/libbz2_g.a				comp-c-debuglib		debuglib
@@ -292,6 +293,8 @@
 ./usr/libdata/debug/sbin/atactl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/badsect.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/bioctl.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/blacklistctl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/blacklistd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/brconfig.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/ccdconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/cgdconfig.debug	comp-sysutil-debug	crypto,debug

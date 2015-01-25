@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.65 2014/11/14 15:59:46 joerg Exp $
+# $NetBSD: ad.arm,v 1.66 2015/01/25 15:50:30 christos Exp $
 ./usr/include/acorn26				comp-c-include
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
 ./usr/include/acorn26/aout_machdep.h		comp-obsolete		obsolete
@@ -810,6 +810,10 @@
 ./usr/lib/oabi/libbind9.so			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libbind9_p.a			comp-c-proflib		compat,profile
 ./usr/lib/oabi/libbind9_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/oabi/libblacklist.a			comp-c-lib		compat
+./usr/lib/oabi/libblacklist.so			base-sys-shlib		compat,pic
+./usr/lib/oabi/libblacklist_p.a			comp-c-proflib		compat,profile
+./usr/lib/oabi/libblacklist_pic.a		comp-c-piclib		compat,pic,picinstall
 ./usr/lib/oabi/libbluetooth.a			comp-c-lib		compat
 ./usr/lib/oabi/libbluetooth.so			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libbluetooth_p.a			comp-c-proflib		compat,profile
