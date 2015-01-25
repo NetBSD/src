@@ -10,7 +10,7 @@
 // Linux-specific interception methods.
 //===----------------------------------------------------------------------===//
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__NetBSD__)
 
 #if !defined(INCLUDED_FROM_INTERCEPTION_LIB)
 # error "interception_linux.h should be included from interception library only"
@@ -32,4 +32,4 @@ bool GetRealFunctionAddress(const char *func_name, uptr *func_addr,
           (::__interception::uptr)&WRAP(func))
 
 #endif  // INTERCEPTION_LINUX_H
-#endif  // __linux__
+#endif  // __linux__ || __NetBSD__

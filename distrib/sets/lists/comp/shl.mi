@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.266 2014/07/17 12:04:05 prlw1 Exp $
+# $NetBSD: shl.mi,v 1.266.2.1 2015/01/25 00:19:25 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7,6 +7,7 @@
 ./usr/lib/crtendS.o				comp-c-lib
 ./usr/lib/libamu_pic.a				comp-obsolete		obsolete
 ./usr/lib/libarchive_pic.a			comp-c-piclib	picinstall
+./usr/lib/libasan_pic.a				comp-c-piclib		picinstall,gcc=48
 ./usr/lib/libasn1_pic.a				comp-c-piclib		kerberos,picinstall
 ./usr/lib/libatf-c++_pic.a			comp-atf-piclib		atf,picinstall
 ./usr/lib/libatf-c_pic.a			comp-atf-piclib		atf,picinstall

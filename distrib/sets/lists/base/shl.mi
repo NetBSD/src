@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.712.2.4 2015/01/16 08:24:50 martin Exp $
+# $NetBSD: shl.mi,v 1.712.2.5 2015/01/25 00:19:24 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -169,6 +169,9 @@
 ./usr/lib/libarchive.so				base-sys-shlib
 ./usr/lib/libarchive.so.3			base-sys-shlib
 ./usr/lib/libarchive.so.3.1			base-sys-shlib
+./usr/lib/libasan.so				base-sys-shlib		gcc=48
+./usr/lib/libasan.so.0				base-sys-shlib		gcc=48
+./usr/lib/libasan.so.0.0			base-sys-shlib		gcc=48
 ./usr/lib/libasn1.so				base-krb5-shlib		kerberos
 ./usr/lib/libasn1.so.9				base-krb5-shlib		kerberos
 ./usr/lib/libasn1.so.9.0			base-krb5-shlib		kerberos
@@ -752,7 +755,7 @@
 ./usr/lib/libstdc++.so.7			base-sys-shlib		gcc=48,cxx,libstdcxx
 ./usr/lib/libstdc++.so.7.0			base-sys-shlib		gcc=4,cxx,libstdcxx
 ./usr/lib/libstdc++.so.7.1			base-sys-shlib		gcc=45,cxx,libstdcxx
-./usr/lib/libstdc++.so.7.2			base-sys-shlib		gcc=48,cxx,libstdcxx
+./usr/lib/libstdc++.so.7.3			base-sys-shlib		gcc=48,cxx,libstdcxx
 ./usr/lib/libtelnet.so				base-obsolete		obsolete
 ./usr/lib/libtermcap.so				base-sys-shlib
 ./usr/lib/libtermcap.so.0			base-sys-shlib

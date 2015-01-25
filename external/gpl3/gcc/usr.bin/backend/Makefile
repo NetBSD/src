@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2014/07/06 00:21:24 joerg Exp $
+#	$NetBSD: Makefile,v 1.22.2.1 2015/01/25 00:19:41 martin Exp $
 
 LIBISPRIVATE=	yes
 
@@ -176,6 +176,7 @@ auto-build.h: gmp.h Makefile
 		gcc_cv_ld=${LD} \
 		gcc_cv_as=${AS} \
 		${HOST_SH} ${GNUHOSTDIST}/gcc/configure \
+			--enable-lto \
 			--build=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
 			--host=`${HOST_SH} ${GNUHOSTDIST}/config.guess` \
 			--target=${MACHINE_GNU_PLATFORM} && \

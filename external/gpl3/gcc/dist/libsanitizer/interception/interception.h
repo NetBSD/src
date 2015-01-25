@@ -13,7 +13,7 @@
 #ifndef INTERCEPTION_H
 #define INTERCEPTION_H
 
-#if !defined(__linux__) && !defined(__APPLE__) && !defined(_WIN32)
+#if !defined(__linux__) && !defined(__APPLE__) && !defined(_WIN32) && !defined(__NetBSD__)
 # error "Interception doesn't work on this operating system."
 #endif
 
@@ -29,7 +29,7 @@ typedef __sanitizer::s64  INTMAX_T;
 // _FILE_OFFSET_BITS. This definition of OFF_T matches the ABI of system calls
 // like pread and mmap, as opposed to pread64 and mmap64.
 // Mac and Linux/x86-64 are special.
-#if defined(__APPLE__) || (defined(__linux__) && defined(__x86_64__))
+#if defined(__APPLE__) || (defined(__linux__) && defined(__x86_64__)) || defined(__NetBSD__)
 typedef __sanitizer::u64 OFF_T;
 #else
 typedef __sanitizer::uptr OFF_T;
@@ -176,7 +176,7 @@ typedef unsigned long uptr;  // NOLINT
 
 #define INCLUDED_FROM_INTERCEPTION_LIB
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__NetBSD__)
 # include "interception_linux.h"
 # define INTERCEPT_FUNCTION(func) INTERCEPT_FUNCTION_LINUX(func)
 #elif defined(__APPLE__)

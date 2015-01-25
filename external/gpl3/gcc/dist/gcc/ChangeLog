@@ -1,3 +1,458 @@
+2015-01-13  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	Backport form mainline
+	2015-01-13  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	PR target/64479
+	* rtlanal.c (set_reg_p): Handle SEQUENCE constructs.
+
+2014-12-19  Release Manager
+
+	* GCC 4.8.4 released.
+
+2014-12-18  Francois-Xavier Coudert  <fxcoudert@gcc.gnu.org>
+
+	Backport from trunk.
+	PR fortran/61407
+	* config/darwin-c.c (version_as_macro): Added extra 0 for OS X 10.10
+	and above.
+	* config/darwin-driver.c (darwin_find_version_from_kernel): Removed
+	kernel version check to avoid incrementing it after every major OS X
+	release.
+	(darwin_default_min_version): Avoid static memory buffer.
+
+2014-12-15  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/64265
+	* tsan.c (instrument_func_entry): Insert __tsan_func_entry
+	call on edge from entry block to single succ instead
+	of after labels of single succ of entry block.
+
+2014-12-13  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from mainline
+	2014-12-12  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/64269
+	* tree-ssa-forwprop.c (simplify_builtin_call): Bail out if
+	len2 or diff are too large.
+
+2014-12-11  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* doc/md.texi (Insn Lengths): Fix description of (pc).
+
+2014-12-10  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	Backport from mainline
+        2014-09-02  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	* config/rs6000/rs6000-builtin.def (XVCVSXDDP_SCALE):  New
+	built-in definition.
+	(XVCVUXDDP_SCALE): Likewise.
+	(XVCVDPSXDS_SCALE): Likewise.
+	(XVCVDPUXDS_SCALE): Likewise.
+	* config/rs6000/rs6000-c.c (altivec_overloaded_builtins):  Add
+	entries for VSX_BUILTIN_XVCVSXDDP_SCALE,
+	VSX_BUILTIN_XVCVUXDDP_SCALE, VSX_BUILTIN_XVCVDPSXDS_SCALE, and
+	VSX_BUILTIN_XVCVDPUXDS_SCALE.
+	* config/rs6000/rs6000-protos.h (rs6000_scale_v2df): New
+	prototype.
+	* config/rs6000/rs6000.c (real.h): New include.
+	(rs6000_scale_v2df): New function.
+	* config/rs6000/vsx.md (UNSPEC_VSX_XVCVSXDDP): New unspec.
+	(UNSPEC_VSX_XVCVUXDDP): Likewise.
+	(UNSPEC_VSX_XVCVDPSXDS): Likewise.
+	(UNSPEC_VSX_XVCVDPUXDS): Likewise.
+	(vsx_xvcvsxddp_scale): New define_expand.
+	(vsx_xvcvsxddp): New define_insn.
+	(vsx_xvcvuxddp_scale): New define_expand.
+	(vsx_xvcvuxddp): New define_insn.
+	(vsx_xvcvdpsxds_scale): New define_expand.
+	(vsx_xvcvdpsxds): New define_insn.
+	(vsx_xvcvdpuxds_scale): New define_expand.
+	(vsx_xvcvdpuxds): New define_insn.
+	* doc/extend.texi (vec_ctf): Add new prototypes.
+	(vec_cts): Likewise.
+	(vec_ctu): Likewise.
+	(vec_splat): Likewise.
+	(vec_div): Likewise.
+	(vec_mul): Likewise.
+
+	Backport from mainline
+        2014-08-28  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	* config/rs6000/altivec.h (vec_xl): New #define.
+	(vec_xst): Likewise.
+	* config/rs6000/rs6000-builtin.def (XXSPLTD_V2DF): New built-in.
+	(XXSPLTD_V2DI): Likewise.
+	(DIV_V2DI): Likewise.
+	(UDIV_V2DI): Likewise.
+	(MUL_V2DI): Likewise.
+	* config/rs6000/rs6000-c.c (altivec_overloaded_builtins): Add
+	entries for VSX_BUILTIN_XVRDPI, VSX_BUILTIN_DIV_V2DI,
+	VSX_BUILTIN_UDIV_V2DI, VSX_BUILTIN_MUL_V2DI,
+	VSX_BUILTIN_XXSPLTD_V2DF, and VSX_BUILTIN_XXSPLTD_V2DI).
+	* config/rs6000/vsx.md (UNSPEC_VSX_XXSPLTD): New unspec.
+	(UNSPEC_VSX_DIVSD): Likewise.
+	(UNSPEC_VSX_DIVUD): Likewise.
+	(UNSPEC_VSX_MULSD): Likewise.
+	(vsx_mul_v2di): New insn-and-split.
+	(vsx_div_v2di): Likewise.
+	(vsx_udiv_v2di): Likewise.
+	(vsx_xxspltd_<mode>): New insn.
+
+	Backport from mainline
+        2014-08-20  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	* config/rs6000/altivec.h (vec_cpsgn): New #define.
+	(vec_mergee): Likewise.
+	(vec_mergeo): Likewise.
+	(vec_cntlz): Likewise.
+	* config/rs600/rs6000-c.c (altivec_overloaded_builtins): Add new
+	entries for VEC_AND, VEC_ANDC, VEC_MERGEH, VEC_MERGEL, VEC_NOR,
+	VEC_OR, VEC_PACKSU, VEC_XOR, VEC_PERM, VEC_SEL, VEC_VCMPGT_P,
+	VMRGEW, and VMRGOW.
+	* doc/extend.texi: Document various forms of vec_cpsgn,
+	vec_splats, vec_and, vec_andc, vec_mergeh, vec_mergel, vec_nor,
+	vec_or, vec_perm, vec_sel, vec_sub, vec_xor, vec_all_eq,
+	vec_all_ge, vec_all_gt, vec_all_le, vec_all_lt, vec_all_ne,
+	vec_any_eq, vec_any_ge, vec_any_gt, vec_any_le, vec_any_lt,
+	vec_any_ne, vec_mergee, vec_mergeo, vec_packsu, and vec_cntlz.
+
+	Backport from mainline
+        2014-07-20  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	* config/rs6000/altivec.md (unspec enum):  Fix typo in UNSPEC_VSLDOI.
+	(altivec_vsldoi_<mode>): Likewise.
+
+2014-12-10  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	Backport from mainline:
+	2014-12-09  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	PR middle-end/64225
+	* tree-ssa-reassoc.c (acceptable_pow_call): Disable transformation
+	for BUILT_IN_POW when flag_errno_math is present.
+
+2014-12-10  Marek Polacek  <polacek@redhat.com>
+
+	Backport from mainline
+	2014-12-10  Marek Polacek  <polacek@redhat.com>
+
+	PR tree-optimization/61686
+	* tree-ssa-reassoc.c (range_entry_cmp): Use q->high instead of
+	p->high.
+
+2014-12-09  David Edelsohn  <dje.gcc@gmail.com>
+
+	Backport from mainline
+	2014-12-05  David Edelsohn  <dje.gcc@gmail.com>
+
+	* config/rs6000/xcoff.h (ASM_OUTPUT_ALIGNED_LOCAL): Append
+	alignment to section name. Increase default alignment to
+	word.
+
+2014-12-09  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR bootstrap/64213
+	Revert:
+	2014-11-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR rtl-optimization/64037
+	* combine.c (setup_incoming_promotions): Pass the argument
+	before any promotions happen to promote_function_mode.
+
+2014-12-08  Richard Biener  <rguenther@suse.de>
+
+	Backport from 4.9 branch
+	* configure.ac
+	(ac_has_isl_schedule_constraints_compute_schedule):
+	New check.
+	* graphite-clast-to-gimple.c: For ISL 0.14, include deprecate headers.
+	* graphite-interchange.c: Ditto.
+	* graphite-poly.c: Ditto.
+	* graphite-sese-to-poly.c: Ditto.
+	* graphite-optimize-isl.c (getScheduleForBandList): Ditto.
+	Conditionally use ISL 0.13+ functions.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+
+2014-12-07  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	Backport from mainline
+	2014-12-07  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	PR target/50751
+	* config/sh/sh.md (extendqihi2): Allow only for TARGET_SH1.
+
+2014-12-05  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from mainline
+	2014-11-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR rtl-optimization/64037
+	* combine.c (setup_incoming_promotions): Pass the argument
+	before any promotions happen to promote_function_mode.
+
+2014-12-04  Shanyao Chen  <chenshanyao@huawei.com>
+
+	Backport from mainline
+	2014-11-20  Ramana Radhakrishnan  <ramana.radhakrishnan@arm.com>
+
+	PR target/59593
+	* config/arm/arm.md (*movhi_insn): Use right formatting
+	for immediate.
+
+	2014-11-19  Felix Yang  <felix.yang@huawei.com>
+	            Shanyao Chen  <chenshanyao@huawei.com>
+
+	PR target/59593
+	* config/arm/arm.md (define_attr "arch"): Add v6t2.
+	(define_attr "arch_enabled"): Add test for the above.
+	(*movhi_insn_arch4): Add new alternative.
+
+2014-12-04  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/56493
+	* convert.c (convert_to_real, convert_to_expr, convert_to_complex):
+	Handle COMPOUND_EXPR.
+
+2014-12-02  Ulrich Weigand  <Ulrich.Weigand@de.ibm.com>
+
+	PR target/64115
+	* config/rs6000/rs6000.c (rs6000_delegitimize_address): Remove
+	invalid UNSPEC_TOCREL sanity check under ENABLE_CHECKING.
+
+2014-12-01  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/64111
+	* tree.c (int_cst_hash_hash): Use TYPE_UID instead of
+	htab_hash_pointer to not break PCH.
+
+2014-11-28  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from mainline
+	2014-11-27  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/64067
+	* expr.c (expand_expr_addr_expr_1) <case COMPOUND_LITERAL_EXPR>:
+	Handle it by returning address of COMPOUND_LITERAL_EXPR_DECL
+	not only if modifier is EXPAND_INITIALIZER, but whenever
+	COMPOUND_LITERAL_EXPR_DECL is non-NULL and TREE_STATIC.
+
+	2014-10-31  Jakub Jelinek  <jakub@redhat.com>
+
+	PR rtl-optimization/63659
+	* ree.c (update_reg_equal_equiv_notes): New function.
+	(combine_set_extension, transform_ifelse): Use it.
+
+	2014-10-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR libgomp/61200
+	* omp-low.c (taskreg_contexts): New variable.
+	(scan_omp_parallel): Push newly created context into taskreg_contexts
+	vector and move record layout code to finish_taskreg_scan.
+	(scan_omp_task): Likewise.
+	(finish_taskreg_scan): New function.
+	(execute_lower_omp): Call finish_taskreg_scan on all taskreg_contexts
+	vector elements and release it.
+
+2014-11-26  Richard Biener  <rguenther@suse.de>
+
+	Backport from mainline
+	2014-10-08  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/61969
+	* tree-nrv.c (pass_nrv::execute): Properly test for automatic
+	variables.
+
+	2014-08-15  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/62031
+	* tree-data-ref.c (dr_analyze_indices): Do not set
+	DR_UNCONSTRAINED_BASE.
+	(dr_may_alias_p): All indirect accesses have to go the
+	formerly DR_UNCONSTRAINED_BASE path.
+	* tree-data-ref.h (struct indices): Remove
+	unconstrained_base member.
+	(DR_UNCONSTRAINED_BASE): Remove.
+
+	2014-10-10  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/63379
+	* tree-vect-slp.c (vect_get_constant_vectors): Do not compute
+	a neutral operand for min/max when it is not a reduction chain.
+
+	2014-11-07  Richard Biener  <rguenther@suse.de>
+
+	PR tree-optimization/63605
+	* fold-const.c (fold_binary_loc): Properly use element_precision
+	for types that may not be scalar.
+
+	2014-10-28  Richard Biener  <rguenther@suse.de>
+
+	PR middle-end/63665
+	* fold-const.c (fold_comparison): Properly guard simplifying
+	against INT_MAX/INT_MIN with !TYPE_OVERFLOW_WRAPS.
+
+2014-11-22  Oleg Endo  <olegendo@gcc.gnu.org>
+
+	Backport from mainline
+	2014-11-20  Segher Boessenkool  <segher@kernel.crashing.org>
+
+	PR target/60111
+	* config/sh/sh.c: Use signed char for signed field.
+
+2014-11-21  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	PR target/63673
+	* config/rs6000/rs6000-c.c (altivec_overloaded_builtins): Allow
+	the base pointer of vec_vsx_ld and vec_vsx_st to take a pointer to
+	double.
+
+2014-11-19  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/63947
+	* config/i386/i386.c (put_condition_code) <case LTU, case GEU>:
+	Output "b" and "nb" suffix for FP mode.
+
+2014-11-19  Tom de Vries  <tom@codesourcery.com>
+
+	Backport from mainline
+	PR tree-optimization/62167
+	* tree-ssa-tail-merge.c (stmt_local_def): Handle statements with vuse
+	conservatively.
+	(gimple_equal_p): Don't use vn_valueize to compare for lhs equality of
+	assigns.
+
+2014-11-18  Teresa Johnson  <tejohnson@google.com>
+
+	Backport from mainline and gcc-4_9 branch.
+	2014-11-13  Teresa Johnson  <tejohnson@google.com>
+
+	PR tree-optimization/63841
+	* tree-ssa-strlen.c (strlen_optimize_stmt): Ignore clobbers.
+
+2014-11-16  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* doc/tm.texi.in (TARGET_FLAGS_REGNUM): Move around.
+	* doc/tm.texi: Regenerate.
+
+	Backport from mainline
+	2013-09-16  Andreas Schwab  <schwab@linux-m68k.org>
+
+	* doc/tm.texi.in (Cond Exec Macros): Remove node.
+	(Condition Code): Don't reference it.
+	* doc/tm.texi: Regenerate.
+
+2014-11-13  Christophe Lyon  <christophe.lyon@linaro.org>
+
+	Backport from mainline
+	2014-11-02  Michael Collison  <michael.collison@linaro.org>
+
+	* config/arm/arm.h (CLZ_DEFINED_VALUE_AT_ZERO) : Update
+	to support vector modes.
+	(CTZ_DEFINED_VALUE_AT_ZERO): Ditto.
+
+2014-11-13  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* doc/tm.texi.in (SELECT_CC_MODE): Update example.
+	(REVERSIBLE_CC_MODE): Fix example.
+	(REVERSE_CONDITION): Fix typo.
+	* doc/tm.texi: Regenerate.
+
+2014-11-12  Jakub Jelinek  <jakub@redhat.com>
+
+	PR ipa/63838
+	* ipa-pure-const.c (propagate_nothrow): Walk w->indirect_calls
+	chain instead of node->indirect_calls.
+
+2014-11-10  Daniel Hellstrom  <daniel@gaisler.com>
+
+	Backport from mainline
+	* config.gcc (sparc-*-rtems*): Clean away unused t-elf.
+	* config/sparc/t-rtems: Add leon3v7 and muser-mode multilibs.
+
+2014-11-07  Daniel Hellstrom  <daniel@gaisler.com>
+
+	* config.gcc (sparc*-*-*): Accept mcpu=leon3v7 processor.
+	* doc/invoke.texi (SPARC options): Add mcpu=leon3v7 comment.
+	* config/sparc/leon.md (leon3_load, leon_store, leon_fp_*): Handle
+	leon3v7 as leon3.
+	* config/sparc/sparc-opts.h (enum processor_type): Add LEON3V7.
+	* config/sparc/sparc.c (sparc_option_override): Add leon3v7 support.
+	* config/sparc/sparc.h (TARGET_CPU_leon3v7): New define.
+	* config/sparc/sparc.md (cpu): Add leon3v7.
+	* config/sparc/sparc.opt (enum processor_type): Add leon3v7.
+
+2014-11-06  John David Anglin  <danglin@gcc.gnu.org>
+
+	* config/pa/pa.md (trap): New insn.  Add "trap" to attribute type.
+	Don't allow trap insn in in_branch_delay, in_nullified_branch_delay
+	or in_call_delay.
+	
+2014-11-06  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+	* config/aarch64/aarch64-elf-raw.h (CA53_ERR_835769_SPEC): Define.
+	(LINK_SPEC): Include CA53_ERR_835769_SPEC.
+	* config/aarch64/aarch64-linux.h
+	(CA53_ERR_835769_SPEC): Define.
+	(LINK_SPEC): Include CA53_ERR_835769_SPEC.
+
+2014-10-29  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+	* config/aarch64/aarch64.c (aarch64_madd_needs_nop): Restore
+	recog state after aarch64_prev_real_insn call.
+
+2014-10-24  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+	* config.gcc (aarch64*-*-*): Define TARGET_FIX_ERR_A53_835769_DEFAULT
+	if asked.
+	* configure.ac: Add --enable-fix-cortex-a53-835769 option.
+	* configure: Regenerate.
+	* config/aarch64/aarch64.c (aarch64_override_options): Handle
+	TARGET_FIX_ERR_A53_835769_DEFAULT.
+	* config/aarch64/aarch64.opt (mfix-cortex-a53-835769): Set Init value
+	to 2.
+	* doc/install.texi: Document --enable-fix-cortex-a53-835769 option.
+
+2014-10-24  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
+
+	* config/aarch64/aarch64.opt (mfix-cortex-a53-835769): New option.
+	* config/aarch64/aarch64.h (ADJUST_INSN_LENGTH): Define.
+	(FINAL_PRESCAN_INSN): Likewise.
+	* config/aarch64/aarch64.h (is_mem_p): New function.
+	(has_memory_op): Likewise.
+	(aarch64_prev_real_insn): Likewise.
+	(is_madd_op): Likewise.
+	(dep_between_memop_and_curr): Likewise.
+	(aarch64_madd_needs_nop): Likewise.
+	(aarch64_final_prescan_insn): Likewise.
+	* doc/invoke.texi (Document new option).
+
+2014-10-15  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* stor-layout.c (self_referential_size): Do not promote arguments.
+
+2014-10-12  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	Backport from mainline r215880
+	2014-10-03  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	* config/rs6000/rs6000-c.c (altivec_resolve_overloaded_builtin):
+	Issue a warning message when vec_lvsl or vec_lvsr is used with a
+	little endian target.
+
+	Backport from mainline r215882
+	2014-10-03  Bill Schmidt  <wschmidt@linux.vnet.ibm.com>
+
+	* altivec.md (altivec_lvsl): New define_expand.
+	(altivec_lvsl_direct): Rename define_insn from altivec_lvsl.
+	(altivec_lvsr): New define_expand.
+	(altivec_lvsr_direct): Rename define_insn from altivec_lvsr.
+	* rs6000.c (rs6000_expand_builtin): Change to use
+	altivec_lvs[lr]_direct; remove commented-out code.
+
 2014-10-09  Uros Bizjak  <ubizjak@gmail.com>
 
 	Backport from mainline

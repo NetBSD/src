@@ -20,6 +20,14 @@
 
 # Filter out unsupported systems.
 case "${target}" in
+  *-netbsd*)
+	# There is only glue for amd64
+	case "${target}" in
+	  x86_64-*)
+	    TSAN_SUPPORTED=yes
+	    ;;
+	esac
+	;;
   x86_64-*-linux* | i?86-*-linux*)
 	if test x$ac_cv_sizeof_void_p = x8; then
 		TSAN_SUPPORTED=yes

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2014/03/09 21:37:37 christos Exp $
+# $NetBSD: Makefile,v 1.5.4.1 2015/01/25 00:19:45 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,10 @@ USE_UNWIND=yes
 WARNS?=4
 INCSDIR=/usr/include
 INCS=execinfo.h
+
+.if ${HAVE_LIBGCC_EH} == "yes"
+INCS+=	unwind.h
+.endif
 
 #CPPFLAGS+='-D__RCSID(a)=' -D_GNU_SOURCE '-D__printflike(a,b)='
 #CPPFLAGS+=-I/usr/include/libelf

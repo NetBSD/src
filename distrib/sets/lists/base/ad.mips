@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.48.2.3 2015/01/16 08:24:50 martin Exp $
+# $NetBSD: ad.mips,v 1.48.2.4 2015/01/25 00:19:24 martin Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -75,6 +75,8 @@
 ./usr/lib/64/libamu.so.4.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libarchive.so.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libarchive.so.3.1			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libasan.so.0			base-compat-shlib	compat,pic
+./usr/lib/64/libasan.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libasn1.so.9			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/64/libasn1.so.9.0			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/64/libatf-c++.so.1			base-compat-shlib	compat,pic,atf,arch64
@@ -304,7 +306,7 @@
 ./usr/lib/64/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx,arch64
 ./usr/lib/64/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx,libstdcxx,arch64
 ./usr/lib/64/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx,libstdcxx,arch64
-./usr/lib/64/libstdc++.so.7.2			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx,arch64
+./usr/lib/64/libstdc++.so.7.3			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx,arch64
 ./usr/lib/64/libsupc++.so.0			base-compat-shlib	obsolete,arch64
 ./usr/lib/64/libsupc++.so.0.0			base-compat-shlib	obsolete,arch64
 ./usr/lib/64/libtermcap.so.0			base-compat-shlib	compat,pic,arch64
@@ -421,6 +423,8 @@
 ./usr/lib/o32/libamu.so.4.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libarchive.so.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libarchive.so.3.1			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libasan.so.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libasan.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libasn1.so.9			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/o32/libasn1.so.9.0			base-compat-shlib	compat,pic,kerberos,arch64
 ./usr/lib/o32/libatf-c++.so.1			base-compat-shlib	compat,pic,atf,arch64
@@ -642,7 +646,7 @@
 ./usr/lib/o32/libstdc++.so.7			base-compat-shlib	compat,pic,cxx,gcccmds,libstdcxx,arch64
 ./usr/lib/o32/libstdc++.so.7.0			base-compat-shlib	gcc=4,compat,pic,cxx,libstdcxx,arch64
 ./usr/lib/o32/libstdc++.so.7.1			base-compat-shlib	gcc=45,compat,pic,cxx,libstdcxx,arch64
-./usr/lib/o32/libstdc++.so.7.2			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx,arch64
+./usr/lib/o32/libstdc++.so.7.3			base-compat-shlib	gcc=48,compat,pic,cxx,libstdcxx,arch64
 ./usr/lib/o32/libsupc++.so.0			base-compat-shlib	obsolete,arch64
 ./usr/lib/o32/libsupc++.so.0.0			base-compat-shlib	obsolete,arch64
 ./usr/lib/o32/libtermcap.so.0			base-compat-shlib	compat,pic,arch64

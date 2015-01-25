@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.81.2.2 2015/01/12 10:22:22 martin Exp $
+# $NetBSD: mi,v 1.81.2.3 2015/01/25 00:19:25 martin Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -26,6 +26,7 @@
 ./usr/lib/i18n/libmapper_zone_g.a		comp-c-debuglib		debuglib
 ./usr/lib/libamu_g.a				comp-c-debuglib		debuglib
 ./usr/lib/libarchive_g.a			comp-c-debuglib		debuglib
+./usr/lib/libasan_g.a				comp-c-debuglib		debuglib,gcc=48
 ./usr/lib/libasn1_g.a				comp-c-debuglib		debuglib,kerberos
 ./usr/lib/libatf-c++_g.a			comp-c-debuglib		atf,debuglib
 ./usr/lib/libatf-c_g.a				comp-c-debuglib		atf,debuglib
@@ -920,6 +921,8 @@
 ./usr/libdata/debug/usr/libexec/locate.bigram.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/libexec/locate.code.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/libexec/lpr/lpf.debug	comp-lpr-debug		debug
+./usr/libdata/debug/usr/libexec/lto-wrapper.debug	comp-c-debug		gcc=48,gcccmds,debug
+./usr/libdata/debug/usr/libexec/lto1.debug	comp-c-debug		gcc=48,gcccmds,debug
 ./usr/libdata/debug/usr/libexec/mail.local.debug	comp-mail-debug		debug
 ./usr/libdata/debug/usr/libexec/makekey.debug	comp-crypto-debug	debug
 ./usr/libdata/debug/usr/libexec/makewhatis.debug	comp-man-debug		!makemandb,debug

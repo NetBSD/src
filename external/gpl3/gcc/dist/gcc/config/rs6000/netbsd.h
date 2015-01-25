@@ -118,6 +118,7 @@
 #define TARGET_SECURE_PLT secure_plt
 #undef HAVE_AS_TLS
 #define HAVE_AS_TLS 1
+#define POWERPC_NETBSD
 
 /* Attempt to enable execute permissions on the stack.  */
 //#define TRANSFER_FROM_TRAMPOLINE NETBSD_ENABLE_EXECUTE_STACK

@@ -35,7 +35,7 @@
 #define _GLIBCXX_CXX_CONFIG_H 1
 
 // The current version of the C++ library in compressed ISO date format.
-#define __GLIBCXX__ 20141009
+#define __GLIBCXX__ 20141219
 
 // Macros for various attributes.
 //   _GLIBCXX_PURE
@@ -804,7 +804,7 @@ namespace std
 /* #undef _GLIBCXX_HAVE_SINL */
 
 /* Defined if sleep exists. */
-#define _GLIBCXX_HAVE_SLEEP 1
+/* #undef _GLIBCXX_HAVE_SLEEP */
 
 /* Define to 1 if you have the `sqrtf' function. */
 #define _GLIBCXX_HAVE_SQRTF 1
@@ -919,7 +919,7 @@ namespace std
 #define _GLIBCXX_HAVE_UNISTD_H 1
 
 /* Defined if usleep exists. */
-#define _GLIBCXX_HAVE_USLEEP 1
+/* #undef _GLIBCXX_HAVE_USLEEP */
 
 /* Defined if vfwscanf exists. */
 #define _GLIBCXX_HAVE_VFWSCANF 1
@@ -1280,13 +1280,13 @@ namespace std
 #define _GLIBCXX_USE_C99_STDINT_TR1 1
 
 /* Defined if clock_gettime has monotonic clock support. */
-/* #undef _GLIBCXX_USE_CLOCK_MONOTONIC */
+#define _GLIBCXX_USE_CLOCK_MONOTONIC 1
 
 /* Defined if clock_gettime syscall has monotonic and realtime clock support. */
 /* #undef _GLIBCXX_USE_CLOCK_GETTIME_SYSCALL */
 
 /* Defined if clock_gettime has realtime clock support. */
-/* #undef _GLIBCXX_USE_CLOCK_REALTIME */
+#define _GLIBCXX_USE_CLOCK_REALTIME 1
 
 /* Define if ISO/IEC TR 24733 decimal floating point types are supported on
    this host. */
@@ -1311,7 +1311,7 @@ namespace std
 #define _GLIBCXX_USE_LONG_LONG 1
 
 /* Defined if nanosleep is available. */
-/* #undef _GLIBCXX_USE_NANOSLEEP */
+#define _GLIBCXX_USE_NANOSLEEP 1
 
 /* Define if NLS translations are to be used. */
 /* #undef _GLIBCXX_USE_NLS */
@@ -1324,7 +1324,7 @@ namespace std
 #define _GLIBCXX_USE_RANDOM_TR1 1
 
 /* Defined if sched_yield is available. */
-/* #undef _GLIBCXX_USE_SCHED_YIELD */
+#define _GLIBCXX_USE_SCHED_YIELD 1
 
 /* Define if _SC_NPROCESSORS_ONLN is available in <unistd.h>. */
 #define _GLIBCXX_USE_SC_NPROCESSORS_ONLN 1

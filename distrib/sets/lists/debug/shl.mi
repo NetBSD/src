@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.71.2.8 2015/01/17 11:16:39 martin Exp $
+# $NetBSD: shl.mi,v 1.71.2.9 2015/01/25 00:19:25 martin Exp $
 ./usr/libdata/debug/lib/libc.so.12.193.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypto.so.8.4.debug		comp-sys-debug	debug
@@ -50,6 +50,7 @@
 ./usr/libdata/debug/usr/lib/i18n/libmapper_zone.so.5.0.debug	comp-i18n-debug		debug
 ./usr/libdata/debug/usr/lib/libamu.so.4.0.debug		comp-amd-debug	debug
 ./usr/libdata/debug/usr/lib/libarchive.so.3.1.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libasan.so.0.0.debug	comp-krb5-debug	debug,gcc=48
 ./usr/libdata/debug/usr/lib/libasn1.so.9.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libatf-c++.so.0.0.debug	comp-atf-debug	atf,debug,obsolete
 ./usr/libdata/debug/usr/lib/libatf-c++.so.1.0.debug	comp-atf-debug	atf,debug
@@ -252,7 +253,7 @@
 ./usr/libdata/debug/usr/lib/libstdc++.so.5.0.debug	comp-sys-debug	gcc=3,cxx,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.0.debug	comp-sys-debug	gcc=4,cxx,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.7.1.debug	comp-sys-debug	gcc=45,cxx,debug,libstdcxx
-./usr/libdata/debug/usr/lib/libstdc++.so.7.2.debug	comp-sys-debug	gcc=48,cxx,debug,libstdcxx
+./usr/libdata/debug/usr/lib/libstdc++.so.7.3.debug	comp-sys-debug	gcc=48,cxx,debug,libstdcxx
 ./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libtpm_unseal.so.1.0.debug	comp-tpm-debug	tpm,debug
 ./usr/libdata/debug/usr/lib/libtre.so.0.8.debug		comp-sys-debug	debug

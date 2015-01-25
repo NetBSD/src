@@ -1,4 +1,4 @@
-/*	$NetBSD: unwind.h,v 1.2 2014/03/24 21:26:01 joerg Exp $	*/
+/*	$NetBSD: unwind.h,v 1.2.4.1 2015/01/25 00:19:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -28,12 +28,24 @@
 #ifndef _UNWIND_H_
 #define _UNWIND_H_
 
+#include <sys/cdefs.h>
+
 __BEGIN_DECLS
 struct _Unwind_Context;
 struct _Unwind_Exception;
 typedef int _Unwind_Reason_Code;
 typedef void *_Unwind_Ptr;
 typedef long _Unwind_Word;
+
+#define	_URC_NO_REASON			0
+#define	_URC_FOREIGN_EXCEPTION_CAUGHT	1
+#define	_URC_FATAL_PHASE2_ERROR		2
+#define	_URC_FATAL_PHASE1_ERROR		3
+#define	_URC_NORMAL_STOP		4
+#define	_URC_END_OF_STACK		5
+#define	_URC_HANDLER_FOUND		6
+#define	_URC_INSTALL_CONTEXT		7
+#define	_URC_CONTINUE_UNWIND		8
 
 typedef _Unwind_Reason_Code
     (*_Unwind_Trace_Fn)(struct _Unwind_Context *, void *);
