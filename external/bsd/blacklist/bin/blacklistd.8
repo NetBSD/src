@@ -1,5 +1,5 @@
-.\" $NetBSD: blacklistd.8,v 1.7 2015/01/25 22:59:40 christos Exp $
-.\" 
+.\" $NetBSD: blacklistd.8,v 1.8 2015/01/25 23:07:16 wiz Exp $
+.\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
-.\" 
+.\"
 .Dd January 25, 2015
 .Dt BLACKLISTD 8
 .Os
@@ -37,8 +37,8 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl dvf
-.Op Fl c Ar configfile
 .Op Fl C Ar controlprog
+.Op Fl c Ar configfile
 .Op Fl D Ar dbfile
 .Op Fl r Ar rulename
 .Op Fl P Ar sockpathsfile
@@ -47,13 +47,13 @@
 .Nm
 is a daemon similar to
 .Xr syslogd 8
-that listens to a sockets at paths specified in the 
+that listens to a sockets at paths specified in the
 .Ar sockpathsfile
 for notifications from other daemons about successful or failed connection
 attempts.
 If no such file is specified, then it only listens to the default socket
 .Pa /var/run/blsock .
-Each notification contains a (action, port, protocol, address, owner) tuple
+Each notification contains an (action, port, protocol, address, owner) tuple
 that identifies the remote connection and the action.
 This tuple is consulted against entries in
 .Ar configfile
@@ -76,8 +76,8 @@ and should invoke a packet filter command to block the connection
 specified by the arguments.
 The
 .Ar rulename
-argument can be set from the command line (default 
-.Dv blacklistd ).
+argument can be set from the command line (default
+.Dv blacklistd ) .
 The script could print a numerical id to stdout as a handle for
 the rule that can be used later to remove that connection, but
 that is not required as all information to remove the rule is
@@ -90,7 +90,7 @@ Then the same control script is invoked as:
 control rem <rulename> <proto> <port> <address> <id>
 .Ed
 .Pp
-where 
+where
 .Ar id
 is the number returned from the
 .Dq add
@@ -117,15 +117,15 @@ seconds (default
 and removes entries and block rules using the control program as necessary.
 .Pp
 The configuration file contains one tuple per line, and is similar to
-.Xr inetd.conf .
+.Xr inetd.conf 5 .
 There must be an entry for each field of the configuration file, with
 entries for each field separated by a tab or a space.
 Comments are denoted by a
 .Dq #
 at the beginning of a line.
 There must be an entry for each field; entries can be numeric or symbolic,
-where appropriate (
-.Dv service ,
+where appropriate
+.Dv ( service ,
 .Dv user )
 and can be
 .Dq *
@@ -148,13 +148,13 @@ disassociates itself from the terminal and writes messages to
 unless the
 .Fl d
 flag is specified, in which case it stays in the foreground.
-The 
+The
 .Fl v
 cases
 .Nm
 to print
 diagnostic messages to
-.Dv stdout 
+.Dv stdout
 instead of
 .Xr syslogd 8 .
 .Sh FILES
@@ -170,11 +170,12 @@ Socket to receive connection notifications.
 .El
 .Sh SEE ALSO
 .Xr blacklistd.conf 5 ,
+.Xr blacklistctl 8 ,
 .Xr npfctl 8 ,
 .Xr syslogd 8
 .Sh HISTORY
 .Nm
 appeared in
-.Nx 8
+.Nx 8 .
 .Sh AUTHORS
 .An Christos Zoulas
