@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63 2011/08/14 11:46:28 christos Exp $
+#	$NetBSD: Makefile,v 1.64 2015/01/25 15:53:49 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 .include <bsd.own.mk>
@@ -10,6 +10,10 @@ DPADD+=	${LIBCRYPT} ${LIBUTIL}
 LDADD+=	-lcrypt -lutil
 MAN=	ftpd.conf.5 ftpusers.5 ftpd.8
 MLINKS=	ftpusers.5 ftpchroot.5
+
+SRCS+=	pfilter.c
+LDADD+=	-lblacklist
+DPADD+=	${LIBBLACKLIST}
 
 .if defined(NO_INTERNAL_LS)
 CPPFLAGS+=-DNO_INTERNAL_LS
