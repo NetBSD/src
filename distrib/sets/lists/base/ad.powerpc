@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.32 2015/01/17 19:12:57 christos Exp $
+# $NetBSD: ad.powerpc,v 1.33 2015/01/25 15:50:29 christos Exp $
 ./lib/powerpc					base-npf-shlib		compat,arch64
 ./lib/powerpc/npf				base-npf-shlib		compat,arch64
 ./lib/powerpc/npf/ext_log.so			base-npf-shlib		compat,arch64,pic
@@ -76,6 +76,8 @@
 ./usr/lib/powerpc/libbfd.so.13.0		base-compat-shlib	compat,arch64,pic,binutils
 ./usr/lib/powerpc/libbind9.so.8			base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libbind9.so.8.1		base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libblacklist.so.0		base-compat-shlib	compat,arch64,pic
+./usr/lib/powerpc/libblacklist.so.0.0		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libbluetooth.so.4		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libbluetooth.so.4.2		base-compat-shlib	compat,arch64,pic
 ./usr/lib/powerpc/libbsdmalloc.so.0		base-compat-shlib	compat,arch64,pic

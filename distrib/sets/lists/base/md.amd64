@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.259 2015/01/17 19:12:57 christos Exp $
+# $NetBSD: md.amd64,v 1.260 2015/01/25 15:50:29 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./lib/i386					base-compat-shlib		compat
@@ -79,6 +79,8 @@
 ./usr/lib/i386/libbfd.so.13.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/i386/libbind9.so.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libbind9.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/i386/libblacklist.so.0		base-compat-shlib	compat,pic
+./usr/lib/i386/libblacklist.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/i386/libbsdmalloc.so.0		base-compat-shlib	compat,pic
