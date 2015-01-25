@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.10 2013/09/12 15:36:15 joerg Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.11 2015/01/25 01:32:26 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.10 2013/09/12 15:36:15 joerg Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.11 2015/01/25 01:32:26 uwe Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 /*
@@ -53,6 +53,17 @@ ENTRY(swapcontext)
 	/* Note: getcontext does _UC_MACHINE_INTRV(oucp) = 0 for us */
 	mov.l	@sp, r0
 	mov.l	r0, @(36 + 1 * 4, r1)	/* _UC_MACHINE_SET_PC(oucp, pr) */
+
+	/* Adjust stack pointer in oucp */
+	mov	sp, r2
+	mov	#(36 + 21 * 4), r0	/* offset to _UC_MACHINE_SP */
+#ifdef __PIC__
+	add	#12, r2			/* "drop" r12, r5, pr */
+#else
+	add	#8, r2			/* "drop" r5, pr */
+#endif
+	mov.l	r2, @(r0, r1)		/* set _UC_MACHINE_SP(oucp) */
+
 	mov.l	.L_setcontext, r2
 2:	CALL	r2			/* setcontext(ucp) */
 	 mov.l	@(4, sp), r4
