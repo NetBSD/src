@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.10 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.11 2015/01/25 15:52:44 christos Exp $	*/
 /* $OpenBSD: auth.c,v 1.106 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.10 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.11 2015/01/25 15:52:44 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: auth.c,v 1.10 2014/10/19 16:30:58 christos Exp $");
 #include "monitor_wrap.h"
 #include "krl.h"
 #include "compat.h"
+#include "pfilter.h"
 
 #ifdef HAVE_LOGIN_CAP
 #include <login_cap.h>
@@ -362,6 +363,8 @@ auth_log(Authctxt *authctxt, int authenticated, int partial,
 	    compat20 ? "ssh2" : "ssh1",
 	    authctxt->info != NULL ? ": " : "",
 	    authctxt->info != NULL ? authctxt->info : "");
+	if (!authctxt->postponed)
+		pfilter_notify(!authenticated);
 	free(authctxt->info);
 	authctxt->info = NULL;
 }
