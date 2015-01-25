@@ -1,4 +1,4 @@
-/*	$NetBSD: tzfile.h,v 1.14 2014/05/13 16:33:56 christos Exp $	*/
+/*	$NetBSD: tzfile.h,v 1.14.2.1 2015/01/25 09:11:03 martin Exp $	*/
 
 #ifndef TZFILE_H
 #define TZFILE_H
@@ -41,7 +41,7 @@
 struct tzhead {
 	char	tzh_magic[4];		/* TZ_MAGIC */
 	char	tzh_version[1];		/* '\0' or '2' or '3' as of 2013 */
-	char	tzh_reserved[15];	/* reserved--must be zero */
+	char	tzh_reserved[15];	/* reserved; must be zero */
 	char	tzh_ttisgmtcnt[4];	/* coded number of trans. time flags */
 	char	tzh_ttisstdcnt[4];	/* coded number of trans. time flags */
 	char	tzh_leapcnt[4];		/* coded number of leap seconds */
@@ -63,13 +63,13 @@ struct tzhead {
 **	tzh_leapcnt repetitions of
 **		one (char [4])		coded leap second transition times
 **		one (char [4])		total correction after above
-**	tzh_ttisstdcnt (char)s		indexed by type; if TRUE, transition
-**					time is standard time, if FALSE,
+**	tzh_ttisstdcnt (char)s		indexed by type; if 1, transition
+**					time is standard time, if 0,
 **					transition time is wall clock time
 **					if absent, transition times are
 **					assumed to be wall clock time
-**	tzh_ttisgmtcnt (char)s		indexed by type; if TRUE, transition
-**					time is UT, if FALSE,
+**	tzh_ttisgmtcnt (char)s		indexed by type; if 1, transition
+**					time is UT, if 0,
 **					transition time is local time
 **					if absent, transition times are
 **					assumed to be local time

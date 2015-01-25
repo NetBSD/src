@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-#	$NetBSD: tzselect.ksh,v 1.10 2013/12/26 18:34:28 christos Exp $
+#	$NetBSD: tzselect.ksh,v 1.10.4.1 2015/01/25 09:11:03 martin Exp $
 #
 PKGVERSION='(tzcode) '
 TZVERSION=see_Makefile
@@ -42,12 +42,13 @@ REPORT_BUGS_TO=tz@iana.org
 # Check for awk Posix compliance.
 ($AWK -v x=y 'BEGIN { exit 123 }') </dev/null >/dev/null 2>&1
 [ $? = 123 ] || {
-	echo >&2 "$0: Sorry, your \`$AWK' program is not Posix compatible."
+	echo >&2 "$0: Sorry, your '$AWK' program is not Posix compatible."
 	exit 1
 }
 
 coord=
 location_limit=10
+zonetabtype=zone1970
 
 usage="Usage: tzselect [--version] [--help] [-c COORD] [-n LIMIT]
 Select a time zone interactively.
@@ -82,7 +83,7 @@ if
   ?*) : ;;
   '')
     # '; exit' should be redundant, but Dash doesn't properly fail without it.
-    (eval 'set --; select x; do break; done; exit') 2>/dev/null
+    (eval 'set --; select x; do break; done; exit') </dev/null 2>/dev/null
   esac
 then
   # Do this inside 'eval', as otherwise the shell might exit when parsing it
@@ -141,13 +142,15 @@ else
   }
 fi
 
-while getopts c:n:-: opt
+while getopts c:n:t:-: opt
 do
     case $opt$OPTARG in
     c*)
 	coord=$OPTARG ;;
     n*)
 	location_limit=$OPTARG ;;
+    t*) # Undocumented option, used for developer testing.
+	zonetabtype=$OPTARG ;;
     -help)
 	exec echo "$usage" ;;
     -version)
@@ -167,10 +170,10 @@ esac
 
 # Make sure the tables are readable.
 TZ_COUNTRY_TABLE=$TZDIR/iso3166.tab
-TZ_ZONE_TABLE=$TZDIR/zone.tab
+TZ_ZONE_TABLE=$TZDIR/$zonetabtype.tab
 for f in $TZ_COUNTRY_TABLE $TZ_ZONE_TABLE
 do
-	<$f || {
+	<"$f" || {
 		echo >&2 "$0: time zone files are not set up correctly"
 		exit 1
 	}
@@ -191,7 +194,13 @@ output_distances='
         country[$1] = $2
     country["US"] = "US" # Otherwise the strings get too long.
   }
-  function convert_coord(coord, deg, min, ilen, sign, sec) {
+  function abs(x) {
+    return x < 0 ? -x : x;
+  }
+  function min(x, y) {
+    return x < y ? x : y;
+  }
+  function convert_coord(coord, deg, minute, ilen, sign, sec) {
     if (coord ~ /^[-+]?[0-9]?[0-9][0-9][0-9][0-9][0-9][0-9]([^0-9]|$)/) {
       degminsec = coord
       intdeg = degminsec < 0 ? -int(-degminsec / 10000) : int(degminsec / 10000)
@@ -202,8 +211,8 @@ output_distances='
     } else if (coord ~ /^[-+]?[0-9]?[0-9][0-9][0-9][0-9]([^0-9]|$)/) {
       degmin = coord
       intdeg = degmin < 0 ? -int(-degmin / 100) : int(degmin / 100)
-      min = degmin - intdeg * 100
-      deg = (intdeg * 60 + min) / 60
+      minute = degmin - intdeg * 100
+      deg = (intdeg * 60 + minute) / 60
     } else
       deg = coord
     return deg * 0.017453292519943296
@@ -219,13 +228,26 @@ output_distances='
   # Great-circle distance between points with given latitude and longitude.
   # Inputs and output are in radians.  This uses the great-circle special
   # case of the Vicenty formula for distances on ellipsoids.
-  function dist(lat1, long1, lat2, long2, dlong, x, y, num, denom) {
+  function gcdist(lat1, long1, lat2, long2, dlong, x, y, num, denom) {
     dlong = long2 - long1
     x = cos (lat2) * sin (dlong)
     y = cos (lat1) * sin (lat2) - sin (lat1) * cos (lat2) * cos (dlong)
     num = sqrt (x * x + y * y)
     denom = sin (lat1) * sin (lat2) + cos (lat1) * cos (lat2) * cos (dlong)
     return atan2(num, denom)
+  }
+  # Parallel distance between points with given latitude and longitude.
+  # This is the product of the longitude difference and the cosine
+  # of the latitude of the point that is further from the equator.
+  # I.e., it considers longitudes to be further apart if they are
+  # nearer the equator.
+  function pardist(lat1, long1, lat2, long2) {
+    return abs (long1 - long2) * min (cos (lat1), cos (lat2))
+  }
+  # The distance function is the sum of the great-circle distance and
+  # the parallel distance.  It could be weighted.
+  function dist(lat1, long1, lat2, long2) {
+    return gcdist (lat1, long1, lat2, long2) + pardist (lat1, long1, lat2, long2)
   }
   BEGIN {
     coord_lat = convert_latitude(coord)
@@ -234,7 +256,13 @@ output_distances='
   /^[^#]/ {
     here_lat = convert_latitude($2)
     here_long = convert_longitude($2)
-    line = $1 "\t" $2 "\t" $3 "\t" country[$1]
+    line = $1 "\t" $2 "\t" $3
+    sep = "\t"
+    ncc = split($1, cc, /,/)
+    for (i = 1; i <= ncc; i++) {
+      line = line sep country[cc[i]]
+      sep = ", "
+    }
     if (NF == 4)
       line = line " - " $4
     printf "%g\t%s\n", dist(coord_lat, coord_long, here_lat, here_long), line
@@ -271,7 +299,7 @@ while
 		entry = entry " Ocean"
               printf "'\''%s'\''\n", entry
             }
-          ' $TZ_ZONE_TABLE |
+          ' <"$TZ_ZONE_TABLE" |
 	  sort -u |
 	  tr '\n' ' '
 	  echo ''
@@ -310,7 +338,7 @@ while
 				exit 0
 			}'
 		do
-			echo >&2 "\`$TZ' is not a conforming" \
+			echo >&2 "'$TZ' is not a conforming" \
 				'Posix time zone string.'
 		done
 		TZ_for_date=$TZ;;
@@ -329,7 +357,7 @@ while
 		    distance_table=`$AWK \
 			    -v coord="$coord" \
 			    -v TZ_COUNTRY_TABLE="$TZ_COUNTRY_TABLE" \
-			    "$output_distances" <$TZ_ZONE_TABLE |
+			    "$output_distances" <"$TZ_ZONE_TABLE" |
 		      sort -n |
 		      sed "${location_limit}q"
 		    `
@@ -357,7 +385,9 @@ while
 			BEGIN { FS = "\t" }
 			/^#/ { next }
 			$3 ~ ("^" continent "/") {
-				if (!cc_seen[$1]++) cc_list[++ccs] = $1
+			    ncc = split($1, cc, /,/)
+			    for (i = 1; i <= ncc; i++)
+				if (!cc_seen[cc[i]]++) cc_list[++ccs] = cc[i]
 			}
 			END {
 				while (getline <TZ_COUNTRY_TABLE) {
@@ -371,7 +401,7 @@ while
 					print country
 				}
 			}
-		' <$TZ_ZONE_TABLE | sort -f`
+		' <"$TZ_ZONE_TABLE" | sort -f`
 
 
 		# If there's more than one country, ask the user which one.
@@ -401,8 +431,8 @@ while
 					}
 				}
 			}
-			$1 == cc { print $4 }
-		' <$TZ_ZONE_TABLE`
+			$1 ~ cc { print $4 }
+		' <"$TZ_ZONE_TABLE"`
 
 
 		# If there's more than one region, ask the user which one.
@@ -432,13 +462,13 @@ while
 					}
 				}
 			}
-			$1 == cc && $4 == region { print $3 }
-		' <$TZ_ZONE_TABLE`
+			$1 ~ cc && $4 == region { print $3 }
+		' <"$TZ_ZONE_TABLE"`
 		esac
 
 		# Make sure the corresponding zoneinfo file exists.
 		TZ_for_date=$TZDIR/$TZ
-		<$TZ_for_date || {
+		<"$TZ_for_date" || {
 			echo >&2 "$0: time zone files are not set up correctly"
 			exit 1
 		}

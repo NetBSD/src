@@ -1,4 +1,4 @@
-/*	$NetBSD: getdate.c,v 1.2 2009/11/22 18:07:39 mbalmer Exp $	*/
+/*	$NetBSD: getdate.c,v 1.2.24.1 2015/01/25 09:11:03 martin Exp $	*/
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -82,7 +82,7 @@ getdate(const char *str)
 		return (NULL);
 	}
 
-	if ((fp = fopen(datemsk, "r")) == NULL) {
+	if ((fp = fopen(datemsk, "re")) == NULL) {
 		getdate_err = 2;
 		return (NULL);
 	}
