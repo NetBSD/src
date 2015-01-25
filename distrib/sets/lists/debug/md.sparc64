@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.76 2015/01/17 19:12:57 christos Exp $
+# $NetBSD: md.sparc64,v 1.77 2015/01/25 15:50:30 christos Exp $
 ./usr/lib/sparc/i18n/libBIG5_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libDECHanyu_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libEUCTW_g.a		comp-obsolete		obsolete
@@ -30,6 +30,7 @@
 ./usr/lib/sparc/libatf-c_g.a			comp-c-debuglib		compat,debuglib,atf
 ./usr/lib/sparc/libbfd_g.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libbind9_g.a			comp-c-debuglib		compat,debuglib
+./usr/lib/sparc/libblacklist_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/sparc/libbluetooth_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/sparc/libbsdmalloc_g.a		comp-c-debuglib		compat,debuglib
 ./usr/lib/sparc/libbz2_g.a			comp-c-debuglib		compat,debuglib
@@ -196,6 +197,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libatf-c.so.0.0.debug			comp-compat-shlib	compat,pic,atf,debug
 ./usr/libdata/debug/usr/lib/sparc/libbfd.so.13.0.debug			comp-compat-shlib	compat,pic,binutils,debug
 ./usr/libdata/debug/usr/lib/sparc/libbind9.so.8.1.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libblacklist.so.4.2.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libbluetooth.so.4.2.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libbsdmalloc.so.0.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libbz2.so.1.1.debug			comp-compat-shlib	compat,pic,debug

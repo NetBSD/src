@@ -1,4 +1,4 @@
-# $NetBSD: ad.riscv,v 1.14 2015/01/17 19:12:57 christos Exp $
+# $NetBSD: ad.riscv,v 1.15 2015/01/25 15:50:30 christos Exp $
 ./usr/lib/rv32/libcrypto_g.a					comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/rv32/libcrypto_rc5_g.a				comp-c-debuglib		compat,crypto,crypto_rc5,debuglib,arch64
 ./usr/lib/rv32/libdevmapper_g.a					comp-c-debuglib		compat,debuglib,lvm,arch64
@@ -45,6 +45,7 @@
 ./usr/libdata/debug/usr/lib/rv32/libavl.so.0.0.debug		comp-zfs-debug	zfs,dynamicroot,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libbfd.so.13.0.debug		comp-sys-debug	binutils,debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libbind9.so.8.1.debug		comp-bind-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/rv32/libblacklist.so.0.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libbluetooth.so.4.2.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libbsdmalloc.so.0.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/rv32/libbz2.so.1.1.debug		comp-sys-debug	debug,compat,arch64

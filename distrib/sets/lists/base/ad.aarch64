@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.18 2015/01/17 19:12:57 christos Exp $
+# $NetBSD: ad.aarch64,v 1.19 2015/01/25 15:50:29 christos Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-npf-shlib		compat
 ./lib/eabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -101,6 +101,8 @@
 ./usr/lib/eabi/libbfd.so.13.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/eabi/libbind9.so.8			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libbind9.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/eabi/libblacklist.so.0			base-compat-shlib	compat,pic
+./usr/lib/eabi/libblacklist.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/eabi/libbluetooth.so.4			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/eabi/libbsdmalloc.so.0			base-compat-shlib	compat,pic
@@ -417,6 +419,8 @@
 ./usr/lib/eabihf/libbfd.so.13.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/eabihf/libbind9.so.8			base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libbind9.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/eabihf/libblacklist.so.0			base-compat-shlib	compat,pic
+./usr/lib/eabihf/libblacklist.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libbluetooth.so.4			base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/eabihf/libbsdmalloc.so.0			base-compat-shlib	compat,pic
@@ -733,6 +737,8 @@
 ./usr/lib/oabi/libbfd.so.13.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/oabi/libbind9.so.8			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbind9.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/oabi/libblacklist.so.0		base-compat-shlib	compat,pic
+./usr/lib/oabi/libblacklist.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbluetooth.so.4		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbluetooth.so.4.2		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libbsdmalloc.so.0		base-compat-shlib	compat,pic
