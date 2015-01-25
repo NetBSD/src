@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.123 2015/01/24 18:07:37 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.124 2015/01/25 20:45:18 christos Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -299,7 +299,7 @@
 #if __GNUC_PREREQ__(4, 6) || defined(__clang__)
 #define	__unreachable()	__builtin_unreachable()
 #else
-#define	__unreachable()	do {} while (0)
+#define	__unreachable()	do {} while (/*CONSTCOND*/0)
 #endif
 
 #if defined(__cplusplus)
