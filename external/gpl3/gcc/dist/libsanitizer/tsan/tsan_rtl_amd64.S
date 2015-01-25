@@ -40,7 +40,11 @@ __tsan_trace_switch_thunk:
   shr $4, %rsp  # clear 4 lsb, align to 16
   shl $4, %rsp
 
+#ifdef __PIC__
+  call __tsan_trace_switch@PLT
+#else
   call __tsan_trace_switch
+#endif
 
   # Unalign stack frame back.
   mov %rbx, %rsp  # restore the original rsp
@@ -119,7 +123,11 @@ __tsan_report_race_thunk:
   shr $4, %rsp  # clear 4 lsb, align to 16
   shl $4, %rsp
 
+#ifdef __PIC__
+  call __tsan_report_race@PLT
+#else
   call __tsan_report_race
+#endif
 
   # Unalign stack frame back.
   mov %rbx, %rsp  # restore the original rsp
