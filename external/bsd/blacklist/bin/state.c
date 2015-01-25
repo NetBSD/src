@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.13 2015/01/24 07:46:20 christos Exp $	*/
+/*	$NetBSD: state.c,v 1.14 2015/01/25 20:50:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: state.c,v 1.13 2015/01/24 07:46:20 christos Exp $");
+__RCSID("$NetBSD: state.c,v 1.14 2015/01/25 20:50:30 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -116,15 +116,18 @@ static void
 makekey(struct dbkey *k, const struct sockaddr_storage *ss,
     const struct conf *c)
 {
+	in_port_t port;
+
 	memset(k, 0, sizeof(*k));
+	port = htons((in_port_t)c->c_port);
 	k->c = *c;
 	k->ss = *ss;
 	switch (k->ss.ss_family) {
 	case AF_INET6:
-		((struct sockaddr_in6 *)&k->ss)->sin6_port = htons(c->c_port);
+		((struct sockaddr_in6 *)&k->ss)->sin6_port = port;
 		break;
 	case AF_INET:
-		((struct sockaddr_in *)&k->ss)->sin_port = htons(c->c_port);
+		((struct sockaddr_in *)&k->ss)->sin_port = port;
 		break;
 	default:
 		(*lfun)(LOG_ERR, "%s: bad family %d", __func__,
