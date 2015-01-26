@@ -5,17 +5,22 @@
 #include "pfilter.h"
 #include <blacklist.h>
 
+#ifndef SMALL
 static struct blacklist *blstate;
+#endif
 
 void
 pfilter_init()
 {
+#ifndef SMALL
 	blstate = blacklist_open();
+#endif
 }
 
 void
 pfilter_notify(int a)
 {
+#ifndef SMALL
 	int fd;
 	if (blstate == NULL)
 		pfilter_init();
@@ -24,4 +29,7 @@ pfilter_notify(int a)
 	// XXX: 3?
  	fd = packet_connection_is_on_socket() ? packet_get_connection_in() : 3;
 	(void)blacklist_r(blstate, a, fd, "ssh");
+#else
+	__USE(a);
+#endif
 }
