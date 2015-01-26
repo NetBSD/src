@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistctl.c,v 1.14 2015/01/24 15:33:03 christos Exp $	*/
+/*	$NetBSD: blacklistctl.c,v 1.15 2015/01/26 02:31:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistctl.c,v 1.14 2015/01/24 15:33:03 christos Exp $");
+__RCSID("$NetBSD: blacklistctl.c,v 1.15 2015/01/26 02:31:52 christos Exp $");
 
 #include <stdio.h>
 #include <time.h>
@@ -60,7 +60,7 @@ usage(int c)
 		warnx("Missing/unknown command");
 	else
 		warnx("Unknown option `%c'", (char)c);
-	fprintf(stderr, "Usage: %s dump [-abdr]\n", getprogname());
+	fprintf(stderr, "Usage: %s dump [-abdnrw]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -74,10 +74,10 @@ main(int argc, char *argv[])
 	struct dbinfo dbi;
 	unsigned int i;
 	struct timespec ts;
-	int all, blocked, remain;
+	int all, blocked, remain, wide, noheader;
 	int o;
 
-	blocked = all = remain = 0;
+	noheader = wide = blocked = all = remain = 0;
 	lfun = dlog;
 
 	if (argc == 1 || strcmp(argv[1], "dump") != 0)
@@ -86,7 +86,7 @@ main(int argc, char *argv[])
 	argc--;
 	argv++;
 
-	while ((o = getopt(argc, argv, "abdr")) != -1)
+	while ((o = getopt(argc, argv, "abdrw")) != -1)
 		switch (o) {
 		case 'a':
 			all = 1;
@@ -98,8 +98,13 @@ main(int argc, char *argv[])
 		case 'd':
 			debug++;
 			break;
+		case 'n':
+			noheader = 1;
 		case 'r':
 			remain = 1;
+			break;
+		case 'w':
+			wide = 1;
 			break;
 		default:
 			usage(o);
@@ -111,6 +116,10 @@ main(int argc, char *argv[])
 		err(EXIT_FAILURE, "Can't open `%s'", dbname);
 
 	clock_gettime(CLOCK_REALTIME, &ts);
+	wide = wide ? 8 * 4 + 7 : 4 * 3 + 3;
+	if (!noheader)
+		printf("%*.*s:port\tid\tnfail\t%s\n", wide, wide,
+		    "address", remain ? "remaining time" : "last access");
 	for (i = 1; state_iterate(db, &ss, &c, &dbi, i) != 0; i = 0) {
 		char buf[BUFSIZ];
 		if (!all) {
@@ -123,7 +132,7 @@ main(int argc, char *argv[])
 			}
 		}
 		sockaddr_snprintf(buf, sizeof(buf), "%a", (void *)&ss);
-		printf("%15.15s:%d\t", buf, c.c_port);
+		printf("%*.*s:%d\t", wide, wide, buf, c.c_port);
 		if (remain)
 			fmtydhms(buf, sizeof(buf),
 			    c.c_duration - (ts.tv_sec - dbi.last));
