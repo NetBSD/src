@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.23.2.8.2.2 2011/07/08 21:04:05 sborrill Exp $
+# $NetBSD: md.sparc64,v 1.23.2.8.2.3 2015/01/26 11:47:24 martin Exp $
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/sparc					base-compat-lib		compat
@@ -68,7 +68,7 @@
 ./usr/lib/sparc/libcrypt.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcrypt.so.0.2			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcrypto.so.4			base-compat-shlib	compat,pic
-./usr/lib/sparc/libcrypto.so.4.2		base-compat-shlib	compat,pic
+./usr/lib/sparc/libcrypto.so.4.3		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcurses.so.6			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcurses.so.6.4		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdes.so.7			base-compat-shlib	compat,pic
@@ -182,7 +182,7 @@
 ./usr/lib/sparc/libssh.so.10			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libssh.so.10.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libssl.so.6			base-compat-shlib	compat,pic
-./usr/lib/sparc/libssl.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libssl.so.6.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libstdc++.so.6			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libstdc++.so.6.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libsupc++.so.0			base-compat-shlib	compat,pic

@@ -934,9 +934,21 @@ re_start:
 
 		if (socket_mtu > 0)
 			{
+			if(socket_mtu < DTLS_get_link_min_mtu(con))
+				{
+				BIO_printf(bio_err,"MTU too small. Must be at least %ld\n",
+				       DTLS_get_link_min_mtu(con));
+				BIO_free(sbio);
+				goto shut;
+				}
 			SSL_set_options(con, SSL_OP_NO_QUERY_MTU);
-			SSL_set_mtu(con, socket_mtu);
-			}
+			if(!DTLS_set_link_mtu(con, socket_mtu))
+				{
+				BIO_printf(bio_err, "Failed to set MTU\n");
+				BIO_free(sbio);
+				goto shut;
+				}
+                        }
 		else
 			/* want to do MTU discovery */
 			BIO_ctrl(sbio, BIO_CTRL_DGRAM_MTU_DISCOVER, 0, NULL);

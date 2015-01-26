@@ -327,7 +327,7 @@ evp_enc.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 evp_enc.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 evp_enc.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
 evp_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-evp_enc.o: ../../include/openssl/symhacks.h ../constant_time_locl.h
+evp_enc.o: ../../include/openssl/symhacks.h
 evp_enc.o: ../cryptlib.h evp_enc.c evp_locl.h
 evp_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 evp_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
