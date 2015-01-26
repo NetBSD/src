@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpgareg.h,v 1.5 2013/02/19 10:57:10 skrll Exp $ */
+/*	$NetBSD: ifpgareg.h,v 1.6 2015/01/26 08:55:41 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -212,7 +212,7 @@
 #define IFPGA_INTR_SOFTINT		0x00000001
 
 #if defined(INTEGRATOR_CP)
-#define IFPGA_INTR_HWMASK		0x083fffff
+#define IFPGA_INTR_HWMASK		0x08bfffff
 #else
 #define IFPGA_INTR_HWMASK		0x003fffff
 #endif
