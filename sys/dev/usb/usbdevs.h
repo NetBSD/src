@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.679 2014/12/17 10:02:46 jnemeth Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.680 2015/01/26 10:53:21 gson Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.687 2014/12/17 10:02:01 jnemeth Exp
+ *	NetBSD: usbdevs,v 1.688 2015/01/26 09:58:10 gson Exp
  */
 
 /*
@@ -2918,6 +2918,7 @@
 #define	USB_PRODUCT_SILABS2_DCU11CLONE	0xaa26		/* DCU-11 clone */
 #define	USB_PRODUCT_SILABS_CP210X_1	0xea60		/* CP210x Serial */
 #define	USB_PRODUCT_SILABS_CP210X_2	0xea61		/* CP210x Serial */
+#define	USB_PRODUCT_SILABS_EC3	0x8044		/* EC3 USB Debug Adapter */
 
 /* Silicon Portals Inc. */
 #define	USB_PRODUCT_SILICONPORTALS_YAPPH_NF	0x0200		/* YAP Phone (no firmware) */
