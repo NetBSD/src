@@ -68,6 +68,9 @@ extern "C" {
 #endif
 
 #define DTLS1_VERSION			0xFEFF
+#define DTLS_MAX_VERSION		DTLS1_VERSION
+
+#define DTLS1_BAD_VER			0x0100
 
 #if 0
 #define DTLS1_AD_MISSING_HANDSHAKE_MESSAGE    110
@@ -87,6 +90,8 @@ extern "C" {
 
 #define DTLS1_AL_HEADER_LENGTH                   7
 
+/* Max MTU overhead we know about so far is 40 for IPv6 + 8 for UDP */
+#define DTLS1_MAX_MTU_OVERHEAD                   48
 
 typedef struct dtls1_bitmap_st
 	{
@@ -174,6 +179,7 @@ typedef struct dtls1_state_st
 	/* Buffered (sent) handshake records */
 	pqueue sent_messages;
 
+	unsigned int link_mtu; /* max on-the-wire DTLS packet size */
 	unsigned int mtu; /* max wire packet size */
 
 	struct hm_header_st w_msg_hdr;

@@ -91,6 +91,12 @@ int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
 		goto err;
 		}
 	
+	if (signature->type == V_ASN1_BIT_STRING && signature->flags & 0x7)
+		{
+		ASN1err(ASN1_F_ASN1_VERIFY, ASN1_R_INVALID_BIT_STRING_BITS_LEFT);
+		goto err;
+		}
+
 	inl=i2d(data,NULL);
 	buf_in=OPENSSL_malloc((unsigned int)inl);
 	if (buf_in == NULL)
@@ -135,6 +141,18 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a, ASN1_BIT_STRING *signat
 	int ret= -1,inl;
 
 	int mdnid, pknid;
+
+	if (!pkey)
+		{
+		ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_PASSED_NULL_PARAMETER);
+		return -1;
+		}
+
+	if (signature->type == V_ASN1_BIT_STRING && signature->flags & 0x7)
+		{
+		ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ASN1_R_INVALID_BIT_STRING_BITS_LEFT);
+		return -1;
+		}
 
 	EVP_MD_CTX_init(&ctx);
 
