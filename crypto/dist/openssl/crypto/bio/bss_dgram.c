@@ -100,7 +100,13 @@ static BIO_METHOD methods_dgramp=
 
 typedef struct bio_dgram_data_st
 	{
-	struct sockaddr peer;
+	union {
+		struct sockaddr sa;
+		struct sockaddr_in sa_in;
+#if OPENSSL_USE_IPV6
+		struct sockaddr_in6 sa_in6;
+#endif
+	} peer;
 	unsigned int connected;
 	unsigned int _errno;
 	unsigned int mtu;
@@ -171,22 +177,38 @@ static int dgram_read(BIO *b, char *out, int outl)
 	int ret=0;
 	bio_dgram_data *data = (bio_dgram_data *)b->ptr;
 
-	struct sockaddr peer;
-	int peerlen = sizeof(peer);
+	struct  {
+	union   { size_t s; int i; } len;
+	union   {
+		struct sockaddr sa;
+		struct sockaddr_in sa_in;
+#if OPENSSL_USE_IPV6
+		struct sockaddr_in6 sa_in6;
+#endif
+		} peer;
+	} sa;
+
+	sa.len.s=0;
+	sa.len.i=sizeof(sa.peer);
 
 	if (out != NULL)
 		{
 		clear_socket_error();
-		memset(&peer, 0x00, peerlen);
+		memset(&sa.peer, 0x00, sizeof(sa.peer));
 		/* Last arg in recvfrom is signed on some platforms and
 		 * unsigned on others. It is of type socklen_t on some
 		 * but this is not universal. Cast to (void *) to avoid
 		 * compiler warnings.
 		 */
-		ret=recvfrom(b->num,out,outl,0,&peer,(void *)&peerlen);
+		ret=recvfrom(b->num,out,outl,0,&sa.peer.sa,(void *)&sa.len);
+		if (sizeof(sa.len.i)!=sizeof(sa.len.s) && sa.len.i==0)
+			{
+			OPENSSL_assert(sa.len.s<=sizeof(sa.peer));
+			sa.len.i = (int)sa.len.s;
+			}
 
 		if ( ! data->connected  && ret > 0)
-			BIO_ctrl(b, BIO_CTRL_DGRAM_CONNECT, 0, &peer);
+			BIO_ctrl(b, BIO_CTRL_DGRAM_CONNECT, 0, &sa.peer);
 
 		BIO_clear_retry_flags(b);
 		if (ret <= 0)
@@ -211,9 +233,9 @@ static int dgram_write(BIO *b, const char *in, int inl)
         ret=writesocket(b->num,in,inl);
     else
 #if defined(NETWARE_CLIB) && defined(NETWARE_BSDSOCK)
-        ret=sendto(b->num, (char *)in, inl, 0, &data->peer, sizeof(data->peer));
+        ret=sendto(b->num, (char *)in, inl, 0, &data->peer.sa, sizeof(data->peer));
 #else
-        ret=sendto(b->num, in, inl, 0, &data->peer, sizeof(data->peer));
+        ret=sendto(b->num, in, inl, 0, &data->peer.sa, sizeof(data->peer));
 #endif
 
 	BIO_clear_retry_flags(b);
@@ -232,6 +254,36 @@ static int dgram_write(BIO *b, const char *in, int inl)
 			}
 		}
 	return(ret);
+	}
+
+static long dgram_get_mtu_overhead(bio_dgram_data *data)
+	{
+	long ret;
+
+	switch (data->peer.sa.sa_family)
+	{
+	case AF_INET:
+	/* Assume this is UDP - 20 bytes for IP, 8 bytes for UDP */
+	ret = 28;
+	break;
+#if OPENSSL_USE_IPV6
+	case AF_INET6:
+#ifdef IN6_IS_ADDR_V4MAPPED
+	if (IN6_IS_ADDR_V4MAPPED(&data->peer.sa_in6.sin6_addr))
+		/* Assume this is UDP - 20 bytes for IP, 8 bytes for UDP */
+		ret = 28;
+	else
+#endif
+		/* Assume this is UDP - 40 bytes for IP, 8 bytes for UDP */
+		ret = 48;
+	break;
+#endif
+	default:
+		/* We don't know. Go with the historical default */
+		ret = 28;
+		break;
+		}
+	return ret;
 	}
 
 static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -309,7 +361,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		break;
 #endif
 	case BIO_CTRL_DGRAM_QUERY_MTU:
-         sockopt_len = sizeof(sockopt_val);
+		sockopt_len = sizeof(sockopt_val);
 		if ((ret = getsockopt(b->num, IPPROTO_IP, IP_MTU, (void *)&sockopt_val,
 			&sockopt_len)) < 0 || sockopt_val < 0)
 			{ ret = 0; }
@@ -318,6 +370,29 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 			data->mtu = sockopt_val;
 			ret = data->mtu;
 			}
+		break;
+	case BIO_CTRL_DGRAM_GET_FALLBACK_MTU:
+		ret = -dgram_get_mtu_overhead(data);
+		switch (data->peer.sa.sa_family)
+			{
+			case AF_INET:
+				ret += 576;
+				break;
+#if OPENSSL_USE_IPV6
+			case AF_INET6:
+#ifdef IN6_IS_ADDR_V4MAPPED
+				if (IN6_IS_ADDR_V4MAPPED(&data->peer.sa_in6.sin6
+_addr))
+					ret += 576;
+				else
+#endif 
+					ret += 1280;
+				break;
+#endif
+			default:
+				ret += 576;
+				break;
+			}  
 		break;
 	case BIO_CTRL_DGRAM_GET_MTU:
 		return data->mtu;
@@ -391,6 +466,9 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 			ret = 0;
 		break;
 #endif
+	case BIO_CTRL_DGRAM_GET_MTU_OVERHEAD:
+		ret = dgram_get_mtu_overhead(data);
+		break;
 	default:
 		ret=0;
 		break;
