@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.143 2015/01/26 20:37:44 gson Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.144 2015/01/26 20:56:44 gson Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -31,13 +31,13 @@
  */
 
 /*
- * USB audio specs: http://www.usb.org/developers/devclass_docs/audio10.pdf
- *                  http://www.usb.org/developers/devclass_docs/frmts10.pdf
- *                  http://www.usb.org/developers/devclass_docs/termt10.pdf
+ * USB audio specs: http://www.usb.org/developers/docs/devclass_docs/audio10.pdf
+ *                  http://www.usb.org/developers/docs/devclass_docs/frmts10.pdf
+ *                  http://www.usb.org/developers/docs/devclass_docs/termt10.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.143 2015/01/26 20:37:44 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.144 2015/01/26 20:56:44 gson Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
