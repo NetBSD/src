@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.21 2015/01/23 06:39:41 nonaka Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.22 2015/01/26 04:47:53 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,15 +38,20 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.21 2015/01/23 06:39:41 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.22 2015/01/26 04:47:53 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
 #include <sys/buf.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm.h>
 
 #include <machine/pmap.h>
+
+#if defined(MULTIPROCESSOR)
+kmutex_t pmap_tlb_miss_lock;
+#endif
 
 /*
  * Initialize the kernel pmap.
@@ -165,6 +170,10 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 
 	/* init the lock */
 	pmap_tlb_info_init(&pmap_tlb0_info);
+
+#if defined(MULTIPROCESSOR)
+	mutex_init(&pmap_tlb_miss_lock, MUTEX_SPIN, IPL_HIGH);
+#endif
 
 	/*
 	 * Compute the number of pages kmem_arena will have.
@@ -426,5 +435,19 @@ void
 pmap_md_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 {
 	/* nothing */
+}
+
+void
+pmap_md_tlb_miss_lock_enter(void)
+{
+
+	mutex_spin_enter(&pmap_tlb_miss_lock);
+}
+
+void
+pmap_md_tlb_miss_lock_exit(void)
+{
+
+	mutex_spin_exit(&pmap_tlb_miss_lock);
 }
 #endif /* MULTIPROCESSOR */
