@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.189 2015/01/26 13:44:55 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.190 2015/01/26 14:04:22 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -9503,4 +9503,21 @@ sys/arch/x86/pci/ichlpcib.c			1.46
 	use pci_mapreg_submap(). Use pci_conf_read() and
 	bus_space_map() directly.
 	[msaitoh, ticket #1239]
+
+sys/arch/x86/include/specialreg.h			1.72 via patch
+
+	Add CPUID_TO_*() macros to avoid bug. Old macros are kept for
+	compatibility.
+	See http://mail-index.netbsd.org/port-amd64/2013/11/12/msg001978.html
+	[msaitoh, ticket #1240]
+
+sys/arch/x86/x86/identcpu.c			1.35-1.39
+
+	- Check cpuid leaf 4 for newer Intel CPU to know the cache information.
+	  This code might improve performance because it changes the number of
+	  page colors.
+	- Fix calculation of the cpu model (display model) in
+	  cpu_probe_amd_cache().
+	- CPUID leaf 2 and 4 are only for Intel processors.
+	[msaitoh, ticket #1241]
 
