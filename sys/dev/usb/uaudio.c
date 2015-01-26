@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.142 2015/01/26 20:32:17 gson Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.143 2015/01/26 20:37:44 gson Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.142 2015/01/26 20:32:17 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.143 2015/01/26 20:37:44 gson Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1122,6 +1122,10 @@ uaudio_add_feature(struct uaudio_softc *sc, const struct io_terminal *iot, int i
 	d = iot[id].d.fu;
 	ctls = d->bmaControls;
 	ctlsize = d->bControlSize;
+	if (ctlsize == 0) {
+		DPRINTF("ignoring feature %d with controlSize of zero\n", id);
+		return;
+	}
 	nchan = (d->bLength - 7) / ctlsize;
 	mmask = GET(0);
 	/* Figure out what we can control */
