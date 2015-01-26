@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.14.4.3 2015/01/23 16:24:55 martin Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.14.4.4 2015/01/26 13:34:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.14.4.3 2015/01/23 16:24:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.14.4.4 2015/01/26 13:34:03 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -184,6 +184,7 @@ lpcibattach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct lpcib_softc *sc = device_private(self);
 	struct lpcib_device *lpcib_dev;
+	pcireg_t pmbase;
 
 	sc->sc_pa = *pa;
 
@@ -205,11 +206,16 @@ lpcibattach(device_t parent, device_t self, void *aux)
 	 *
 	 * The PMBASE register is alike PCI BAR but not completely compatible
 	 * with it. The PMBASE define the base address and the type but
-	 * not describe the size.
+	 * not describe the size. The value of the register may be lower
+	 * than LPCIB_PCI_PM_SIZE. It makes impossible to use
+	 * pci_mapreg_submap() because the function does range check.
 	 */
-	if (pci_mapreg_submap(pa, LPCIB_PCI_PMBASE, PCI_MAPREG_TYPE_IO, 0,
-		LPCIB_PCI_PM_SIZE, 0, &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
-		aprint_error_dev(self, "can't map power management i/o space\n");
+	sc->sc_iot = pa->pa_iot;
+	pmbase = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_PCI_PMBASE);
+	if (bus_space_map(sc->sc_iot, PCI_MAPREG_IO_ADDR(pmbase),
+	    LPCIB_PCI_PM_SIZE, 0, &sc->sc_ioh) != 0) {
+		aprint_error_dev(self,
+	    	"can't map power management i/o space\n");
 		return;
 	}
 
