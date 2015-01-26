@@ -1,4 +1,4 @@
-.\" $NetBSD: uaudio.4,v 1.26 2015/01/26 20:41:49 gson Exp $
+.\" $NetBSD: uaudio.4,v 1.27 2015/01/26 20:53:12 gson Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,6 +120,13 @@ driver
 appeared in
 .Nx 1.5 .
 .Sh BUGS
+Releases 1.0 and 2.0 of the 
+.Tn USB
+Audio class specification are not mutually compatible.
+The
+.Nm
+driver only supports devices compliant with Release 1.0.
+.Pp
 There is no support for multiple-endpoints audio stream,
 adaptive recording, async playback, and TYPE-II/III formats.
 .Pp
