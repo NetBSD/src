@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.687 2014/12/17 10:02:01 jnemeth Exp $
+$NetBSD: usbdevs,v 1.688 2015/01/26 09:58:10 gson Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2911,6 +2911,7 @@ product SILABS LIPOWSKY_HARP	0x8218	Lipowsky HARP-1
 product SILABS2 DCU11CLONE	0xaa26	DCU-11 clone
 product SILABS CP210X_1		0xea60	CP210x Serial
 product SILABS CP210X_2		0xea61	CP210x Serial
+product SILABS EC3		0x8044  EC3 USB Debug Adapter
 
 /* Silicon Portals Inc. */
 product SILICONPORTALS YAPPH_NF 0x0200	YAP Phone (no firmware)
