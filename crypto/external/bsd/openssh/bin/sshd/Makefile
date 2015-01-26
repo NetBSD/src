@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2015/01/25 15:52:44 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2015/01/26 03:57:17 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -69,5 +69,9 @@ DPADD+=	${LIBCRYPT} ${LIBUTIL}
 LDADD+=	-lwrap
 DPADD+=	${LIBWRAP}
 
+.ifdef CRUNCHEDPROG
+CPPFLAGS+=-DSMALL
+.else
 LDADD+=	-lblacklist
 DPADD+=	${LIBBLACKLIST}
+.endif
