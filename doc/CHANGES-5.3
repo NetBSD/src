@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.94 2015/01/26 10:11:20 martin Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.95 2015/01/26 13:35:41 martin Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3702,3 +3702,15 @@ lib/libssl/shlib_version                                          patch
 	Certificate fingerprints can be modified (CVE-2014-8275)
 	Bignum squaring may produce incorrect results (CVE-2014-3570)
 	[spz, ticket #1945]
+
+sys/arch/x86/pci/ichlpcib.c			1.46 (via patch)
+
+	The PMBASE and GPIOBASE registers are not compltible with
+	the PCI spec and the map sizes are fixed to 128bytes. The
+	pci_mapreg_submap() function has a code to check the range
+	of the BAR. The PCI_MAPREG_IO_SIZE() macro returns lower
+	than 128bytes on some machines. This makes impossible to
+	use pci_mapreg_submap(). Use pci_conf_read() and
+	bus_space_map() directly.
+	[msaitoh, ticket #1944]
+
