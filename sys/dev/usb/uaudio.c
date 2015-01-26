@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.140 2014/09/22 14:25:32 nat Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.141 2015/01/26 09:25:08 gson Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140 2014/09/22 14:25:32 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.141 2015/01/26 09:25:08 gson Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
