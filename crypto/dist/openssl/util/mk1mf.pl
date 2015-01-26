@@ -588,7 +588,7 @@ open (OUT,">>crypto/buildinf.h") || die "Can't open buildinf.h";
 printf OUT <<EOF;
 #ifdef $platform_cpp_symbol
   /* auto-generated/updated by util/mk1mf.pl for crypto/cversion.c */
-  #define CFLAGS "$cc $cflags"
+  #define CFLAGS "compiler: $cc $cflags"
   #define PLATFORM "$platform"
 EOF
 printf OUT "  #define DATE \"%s\"\n", scalar gmtime();
@@ -623,12 +623,6 @@ foreach (values %lib_nam)
 	{
 	$lib_obj=$lib_obj{$_};
 	local($slib)=$shlib;
-
-	if (($_ eq "SSL") && $no_ssl2 && $no_ssl3)
-		{
-		$rules.="\$(O_SSL):\n\n"; 
-		next;
-		}
 
 	$defs.=&do_defs(${_}."OBJ",$lib_obj,"\$(OBJ_D)",$obj);
 	$lib=($slib)?" \$(SHLIB_CFLAGS)".$shlib_ex_cflags{$_}:" \$(LIB_CFLAGS)";
