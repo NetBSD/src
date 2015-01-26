@@ -146,6 +146,7 @@ extern "C" {
 /* #endif */
 
 #define BIO_CTRL_DGRAM_QUERY_MTU          40 /* as kernel for current MTU */
+#define BIO_CTRL_DGRAM_GET_FALLBACK_MTU   47
 #define BIO_CTRL_DGRAM_GET_MTU            41 /* get cached value for MTU */
 #define BIO_CTRL_DGRAM_SET_MTU            42 /* set cached value for
 					      * MTU. want to use this
@@ -158,6 +159,12 @@ extern "C" {
 					      * operation */
 
 #define BIO_CTRL_DGRAM_SET_PEER           44 /* Destination for the data */
+#define BIO_CTRL_DGRAM_GET_PEER           46
+
+#define BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT   45 /* Next DTLS handshake timeout to
+					      * adjust socket timeouts */
+
+#define BIO_CTRL_DGRAM_GET_MTU_OVERHEAD   49
 
 
 /* modifiers */
@@ -538,6 +545,8 @@ int BIO_ctrl_reset_read_request(BIO *b);
          (int)BIO_ctrl(b, BIO_CTRL_DGRAM_GET_SEND_TIMER_EXP, 0, NULL)
 #define BIO_dgram_set_peer(b,peer) \
          (int)BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, (char *)peer)
+#define BIO_dgram_get_mtu_overhead(b) \
+         (unsigned int)BIO_ctrl((b), BIO_CTRL_DGRAM_GET_MTU_OVERHEAD, 0, NULL)
 
 /* These two aren't currently implemented */
 /* int BIO_get_ex_num(BIO *bio); */
