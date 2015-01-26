@@ -373,13 +373,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	return(s);
 err:
 	if (s != NULL)
-		{
-		if (s->cert != NULL)
-			ssl_cert_free(s->cert);
-		if (s->ctx != NULL)
-			SSL_CTX_free(s->ctx); /* decrement reference count */
-		OPENSSL_free(s);
-		}
+		SSL_free(s);
 	SSLerr(SSL_F_SSL_NEW,ERR_R_MALLOC_FAILURE);
 	return(NULL);
 	}
@@ -1032,13 +1026,6 @@ long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 		l=s->max_cert_list;
 		s->max_cert_list=larg;
 		return(l);
-	case SSL_CTRL_SET_MTU:
-		if (SSL_version(s) == DTLS1_VERSION)
-			{
-			s->d1->mtu = larg;
-			return larg;
-			}
-		return 0;
 	case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
 		if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
 			return 0;
@@ -1447,6 +1434,7 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
 					ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_INAPPROPRIATE_FALLBACK);
 				goto err;
 				}
+			p += n;
 			continue;
 			}
 

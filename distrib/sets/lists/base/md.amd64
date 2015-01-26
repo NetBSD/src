@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.25.2.12 2011/07/07 12:44:26 sborrill Exp $
+# $NetBSD: md.amd64,v 1.25.2.13 2015/01/26 10:10:19 martin Exp $
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/azalia				base-kernel-modules
@@ -132,7 +132,7 @@
 ./usr/lib/i386/libcrypt.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypt.so.0.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcrypto.so.4			base-compat-shlib	compat,pic
-./usr/lib/i386/libcrypto.so.4.2			base-compat-shlib	compat,pic
+./usr/lib/i386/libcrypto.so.4.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/librefuse.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/librefuse.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libp2k.so.0			base-compat-shlib	compat,pic
@@ -248,7 +248,7 @@
 ./usr/lib/i386/libssh.so.10			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssh.so.10.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libssl.so.6			base-compat-shlib	compat,pic
-./usr/lib/i386/libssl.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libssl.so.6.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libstdc++.so.6			base-compat-shlib	compat,pic
 ./usr/lib/i386/libstdc++.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libsupc++.so.0			base-compat-shlib	obsolete

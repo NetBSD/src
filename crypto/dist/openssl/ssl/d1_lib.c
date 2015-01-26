@@ -104,6 +104,9 @@ int dtls1_new(SSL *s)
 		d1->cookie_len = sizeof(s->d1->cookie);
 		}
 
+	d1->link_mtu = 0;
+	d1->mtu = 0;
+
 	if( ! d1->unprocessed_rcds.q || ! d1->processed_rcds.q 
         || ! d1->buffered_messages || ! d1->sent_messages)
 		{
@@ -144,8 +147,7 @@ void dtls1_free(SSL *s)
     while( (item = pqueue_pop(s->d1->buffered_messages)) != NULL)
         {
         frag = (hm_fragment *)item->data;
-        OPENSSL_free(frag->fragment);
-        OPENSSL_free(frag);
+        dtls1_hm_fragment_free(frag);
         pitem_free(item);
         }
     pqueue_free(s->d1->buffered_messages);
@@ -153,8 +155,7 @@ void dtls1_free(SSL *s)
     while ( (item = pqueue_pop(s->d1->sent_messages)) != NULL)
         {
         frag = (hm_fragment *)item->data;
-        OPENSSL_free(frag->fragment);
-        OPENSSL_free(frag);
+        dtls1_hm_fragment_free(frag);
         pitem_free(item);
         }
 	pqueue_free(s->d1->sent_messages);
