@@ -137,6 +137,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 	if (n <= 0) return n;
 
 	rb    = &(s->s3->rbuf);
+
 	left  = rb->left;
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
 	align = (long)rb->buf + SSL3_RT_HEADER_LENGTH;
@@ -173,9 +174,10 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 		}
 
 	/* extend reads should not span multiple packets for DTLS */
-	if ( SSL_version(s) == DTLS1_VERSION &&
-		extend)
+	if (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
 		{
+		if (left == 0 && extend)
+			return 0;
 		if ( left > 0 && n > left)
 			n = left;
 		}
@@ -763,8 +765,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 		wr->data=p;
 		}
 
-	/* ssl3_enc can only have an error on read */
-	s->method->ssl3_enc->enc(s,1);
+	if(s->method->ssl3_enc->enc(s,1)<1) goto err;
 
 	/* record length after mac and block padding */
 	s2n(wr->length,plen);
