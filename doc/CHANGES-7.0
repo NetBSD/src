@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.180 2015/01/25 09:48:43 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.181 2015/01/26 16:24:28 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15026,4 +15026,30 @@ sys/arch/arm/arm/db_trace.c			1.31
 
 	Fix crash(8) backtrace support.
 	[skrll, ticket #454]
+
+sys/arch/x86/pci/ichlpcib.c			1.46
+
+	The PMBASE and GPIOBASE registers are not compatible with
+	the PCI spec and the map sizes are fixed to 128bytes. The
+	pci_mapreg_submap() function has a code to check the range
+	of the BAR. The PCI_MAPREG_IO_SIZE() macro returns lower
+	than 128bytes on some machines. This makes iz impossible to
+	use pci_mapreg_submap(). Use pci_conf_read() and
+	bus_space_map() directly.
+	[msaitoh, ticket #455]
+
+sys/arch/powerpc/booke/e500_timer.c		1.6
+
+	Fix build failure with lockstat.
+	[nonaka, ticket #456]
+
+external/mit/xorg/lib/freetype/Makefile		1.13
+
+	Fix PKG_CONFIG version after freetype2-2.5.3 import.
+	[wiz, ticket #457]
+
+external/gpl3/gcc/dist/libsanitizer/tsan/tsan_rtl_amd64.S 1.2
+
+	Fix for PIC code.
+	[skrll, ticket #458]
 
