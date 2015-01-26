@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.188 2015/01/25 10:25:54 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.189 2015/01/26 13:44:55 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -9492,4 +9492,15 @@ libexec/ld.elf_so/rtld.c			1.160-1.161
 	You need to pass 0 (not -1) to lwp_park() if you don't also
 	want to do an unpark.
 	[he, ticket #1238]
+
+sys/arch/x86/pci/ichlpcib.c			1.46
+
+	The PMBASE and GPIOBASE registers are not compltible with
+	the PCI spec and the map sizes are fixed to 128bytes. The
+	pci_mapreg_submap() function has a code to check the range
+	of the BAR. The PCI_MAPREG_IO_SIZE() macro returns lower
+	than 128bytes on some machines. This makes it impossible to
+	use pci_mapreg_submap(). Use pci_conf_read() and
+	bus_space_map() directly.
+	[msaitoh, ticket #1239]
 
