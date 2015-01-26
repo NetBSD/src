@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1094 2015/01/25 15:50:29 christos Exp $
+# $NetBSD: mi,v 1.1095 2015/01/26 00:20:19 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1939,6 +1939,7 @@
 ./usr/share/examples/apm			base-sys-examples
 ./usr/share/examples/blacklist			base-sys-examples
 ./usr/share/examples/blacklist/blacklistd.conf	base-sys-examples
+./usr/share/examples/blacklist/npf.conf		base-sys-examples
 ./usr/share/examples/dhcp			base-dhcpd-examples
 ./usr/share/examples/disktab			base-sys-examples
 ./usr/share/examples/emul			base-sys-examples
