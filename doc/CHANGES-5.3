@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.93 2015/01/23 16:27:46 martin Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.94 2015/01/26 10:11:20 martin Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3630,3 +3630,75 @@ sys/dev/pci/pci_map.c			1.32 via patch
 	[msaitoh, ticket #1942]
 
 
+crypto/dist/openssl/apps/s_client.c                               patch
+crypto/dist/openssl/apps/s_server.c                               patch
+crypto/dist/openssl/apps/speed.c                                  patch
+crypto/dist/openssl/crypto/Makefile                               patch
+crypto/dist/openssl/crypto/constant_time_locl.h                   patch
+crypto/dist/openssl/crypto/cversion.c                             patch
+crypto/dist/openssl/crypto/asn1/a_bitstr.c                        patch
+crypto/dist/openssl/crypto/asn1/a_type.c                          patch
+crypto/dist/openssl/crypto/asn1/a_verify.c                        patch
+crypto/dist/openssl/crypto/asn1/asn1.h                            patch
+crypto/dist/openssl/crypto/asn1/asn1_err.c                        patch
+crypto/dist/openssl/crypto/asn1/tasn_dec.c                        patch
+crypto/dist/openssl/crypto/asn1/x_algor.c                         patch
+crypto/dist/openssl/crypto/bio/bio.h                              patch
+crypto/dist/openssl/crypto/bio/bss_dgram.c                        patch
+crypto/dist/openssl/crypto/bn/bn_asm.c                            patch
+crypto/dist/openssl/crypto/bn/bntest.c                            patch
+crypto/dist/openssl/crypto/bn/asm/mips3.s                         patch
+crypto/dist/openssl/crypto/bn/asm/x86_64-gcc.c                    patch
+crypto/dist/openssl/crypto/dsa/dsa_vrf.c                          patch
+crypto/dist/openssl/crypto/ec/ec_mult.c                           patch
+crypto/dist/openssl/crypto/ec/ec_pmeth.c                          patch
+crypto/dist/openssl/crypto/ecdsa/ecs_vrf.c                        patch
+crypto/dist/openssl/crypto/evp/Makefile                           patch
+crypto/dist/openssl/crypto/evp/evp_enc.c                          patch
+crypto/dist/openssl/crypto/objects/obj_xref.h                     patch
+crypto/dist/openssl/crypto/objects/objxref.pl                     patch
+crypto/dist/openssl/crypto/ts/ts_rsp_sign.c                       patch
+crypto/dist/openssl/crypto/x509/x509.h                            patch
+crypto/dist/openssl/crypto/x509/x509_vpm.c                        patch
+crypto/dist/openssl/crypto/x509/x_all.c                           patch
+crypto/dist/openssl/ssl/d1_both.c                                 patch
+crypto/dist/openssl/ssl/d1_clnt.c                                 patch
+crypto/dist/openssl/ssl/d1_enc.c                                  patch
+crypto/dist/openssl/ssl/d1_lib.c                                  patch
+crypto/dist/openssl/ssl/d1_pkt.c                                  patch
+crypto/dist/openssl/ssl/d1_srvr.c                                 patch
+crypto/dist/openssl/ssl/dtls1.h                                   patch
+crypto/dist/openssl/ssl/s23_srvr.c                                patch
+crypto/dist/openssl/ssl/s2_enc.c                                  patch
+crypto/dist/openssl/ssl/s2_pkt.c                                  patch
+crypto/dist/openssl/ssl/s2_srvr.c                                 patch
+crypto/dist/openssl/ssl/s3_both.c                                 patch
+crypto/dist/openssl/ssl/s3_clnt.c                                 patch
+crypto/dist/openssl/ssl/s3_enc.c                                  patch
+crypto/dist/openssl/ssl/s3_lib.c                                  patch
+crypto/dist/openssl/ssl/s3_pkt.c                                  patch
+crypto/dist/openssl/ssl/s3_srvr.c                                 patch
+crypto/dist/openssl/ssl/ssl.h                                     patch
+crypto/dist/openssl/ssl/ssl_cert.c                                patch
+crypto/dist/openssl/ssl/ssl_lib.c                                 patch
+crypto/dist/openssl/ssl/ssl_locl.h                                patch
+crypto/dist/openssl/util/libeay.num                               patch
+crypto/dist/openssl/util/mk1mf.pl                                 patch
+crypto/dist/openssl/util/mkbuildinf.pl                            patch
+distrib/sets/lists/base/md.amd64                                  patch
+distrib/sets/lists/base/md.sparc64                                patch
+distrib/sets/lists/base/shl.mi                                    patch
+lib/libcrypto/shlib_version                                       patch
+lib/libssl/shlib_version                                          patch
+
+	Apply fixes for the following OpenSSL vulnerabilities:
+                                            
+	DTLS segmentation fault in dtls1_get_record (CVE-2014-3571)
+	DTLS memory leak in dtls1_buffer_record (CVE-2015-0206)
+	no-ssl3 configuration sets method to NULL (CVE-2014-3569)
+	ECDHE silently downgrades to ECDH [Client] (CVE-2014-3572)
+	RSA silently downgrades to EXPORT_RSA [Client] (CVE-2015-0204)
+	DH client certificates accepted without verification [Server] (CVE-2015-0205)
+	Certificate fingerprints can be modified (CVE-2014-8275)
+	Bignum squaring may produce incorrect results (CVE-2014-3570)
+	[spz, ticket #1945]
