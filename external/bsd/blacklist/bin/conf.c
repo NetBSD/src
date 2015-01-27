@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 2015/01/27 19:40:36 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.17 2015/01/27 20:16:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.16 2015/01/27 19:40:36 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.17 2015/01/27 20:16:11 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -521,10 +521,10 @@ conf_amask_eq(const void *v1, const void *v2, size_t len, int mask)
 
 	for (size_t i = 0; i < len; i++) {
 		if (mask > 32) {
-			m = (uint32_t)~0;
+			m = htonl((uint32_t)~0);
 			mask -= 32;
 		} else if (mask) {
-			m = MASK(mask);
+			m = htonl(MASK(mask));
 			mask = 0;
 		} else
 			return 1;
@@ -557,12 +557,13 @@ conf_apply_mask(void *v, size_t len, int mask)
 
 	for (size_t i = 0; i < len; i++) {
 		if (mask > 32) {
-			m = (uint32_t)~0;
+			m = htonl((uint32_t)~0);
 			mask -= 32;
 		} else if (mask) {
-			m = MASK(mask);
+			m = htonl(MASK(mask));
 			mask = 0;
-		}
+		} else
+			m = 0;
 		a[i] &= m;
 	}
 }
@@ -1099,6 +1100,8 @@ conf_find(int fd, uid_t uid, const struct sockaddr_storage *rss,
 	conf_addr_set(cr, rss);
 	/* match the remote config */
 	confset_match(&rconf, cr, conf_merge);
+	/* to apply the mask */
+	conf_addr_set(cr, &cr->c_ss);
 
 	return cr;
 }
