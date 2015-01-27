@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.11 2015/01/22 17:49:41 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.12 2015/01/27 19:40:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: run.c,v 1.11 2015/01/22 17:49:41 christos Exp $");
+__RCSID("$NetBSD: run.c,v 1.12 2015/01/27 19:40:37 christos Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_UTIL_H
@@ -109,11 +109,10 @@ run_flush(const struct conf *c)
 }
 
 int
-run_change(const char *how, const struct conf *c, 
-    const struct sockaddr_storage *ss, char *id, size_t len)
+run_change(const char *how, const struct conf *c, char *id, size_t len)
 {
 	const char *prname;
-	char poname[64], adname[128], *rv;
+	char poname[64], adname[128], maskname[32], *rv;
 	size_t off;
 
 	switch (c->c_proto) {
@@ -129,9 +128,10 @@ run_change(const char *how, const struct conf *c,
 	}
 
 	snprintf(poname, sizeof(poname), "%d", c->c_port);
-	sockaddr_snprintf(adname, sizeof(adname), "%a", (const void *)ss);
+	snprintf(maskname, sizeof(maskname), "%d", c->c_lmask);
+	sockaddr_snprintf(adname, sizeof(adname), "%a", (const void *)&c->c_ss);
 
-	rv = run(how, c->c_name, prname, adname, poname, id, NULL);
+	rv = run(how, c->c_name, prname, adname, maskname, poname, id, NULL);
 	if (rv == NULL)
 		return -1;
 	if (len != 0) {

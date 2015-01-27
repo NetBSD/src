@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.14 2015/01/25 20:50:30 christos Exp $	*/
+/*	$NetBSD: state.c,v 1.15 2015/01/27 19:40:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: state.c,v 1.14 2015/01/25 20:50:30 christos Exp $");
+__RCSID("$NetBSD: state.c,v 1.15 2015/01/27 19:40:37 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -88,13 +88,18 @@ state_open(const char *dbname, int flags, mode_t perm)
 	return db;
 }
 
-struct dbkey {
-	struct conf c;
-	struct sockaddr_storage ss;
-};
+static int
+state_sizecheck(const DBT *t)
+{
+	if (sizeof(struct conf) == t->size)
+		return 0;
+	(*lfun)(LOG_ERR, "Key size mismatch %zu != %zu", sizeof(struct conf),
+	    t->size);
+	return -1;
+}
 
 static void
-dumpkey(const struct dbkey *k)
+dumpkey(const struct conf *k)
 {
 	char buf[10240];
 	size_t z;
@@ -112,46 +117,17 @@ dumpkey(const struct dbkey *k)
 	(*lfun)(LOG_DEBUG, "%s", buf);
 }
 
-static void
-makekey(struct dbkey *k, const struct sockaddr_storage *ss,
-    const struct conf *c)
-{
-	in_port_t port;
-
-	memset(k, 0, sizeof(*k));
-	port = htons((in_port_t)c->c_port);
-	k->c = *c;
-	k->ss = *ss;
-	switch (k->ss.ss_family) {
-	case AF_INET6:
-		((struct sockaddr_in6 *)&k->ss)->sin6_port = port;
-		break;
-	case AF_INET:
-		((struct sockaddr_in *)&k->ss)->sin_port = port;
-		break;
-	default:
-		(*lfun)(LOG_ERR, "%s: bad family %d", __func__,
-		    k->ss.ss_family);
-		break;
-	}
-	if (debug > 1)
-		dumpkey(k);
-}
-
 int
-state_del(DB *db, const struct sockaddr_storage *ss, const struct conf *c)
+state_del(DB *db, const struct conf *c)
 {
-	struct dbkey key;
 	int rv;
 	DBT k;
 
 	if (db == NULL)
 		return -1;
 
-	makekey(&key, ss, c);
-
-	k.data = &key;
-	k.size = sizeof(key);
+	k.data = __UNCONST(c);
+	k.size = sizeof(*c);
 
 	switch (rv = (*db->del)(db, &k, 0)) {
 	case 0:
@@ -168,20 +144,16 @@ state_del(DB *db, const struct sockaddr_storage *ss, const struct conf *c)
 }
 
 int
-state_get(DB *db, const struct sockaddr_storage *ss, const struct conf *c,
-    struct dbinfo *dbi)
+state_get(DB *db, const struct conf *c, struct dbinfo *dbi)
 {
-	struct dbkey key;
 	int rv;
 	DBT k, v;
 
 	if (db == NULL)
 		return -1;
 
-	makekey(&key, ss, c);
-
-	k.data = &key;
-	k.size = sizeof(key);
+	k.data = __UNCONST(c);
+	k.size = sizeof(*c);
 
 	switch (rv = (*db->get)(db, &k, &v, 0)) {
 	case 0:
@@ -200,20 +172,16 @@ state_get(DB *db, const struct sockaddr_storage *ss, const struct conf *c,
 }
 
 int
-state_put(DB *db, const struct sockaddr_storage *ss, const struct conf *c,
-    const struct dbinfo *dbi)
+state_put(DB *db, const struct conf *c, const struct dbinfo *dbi)
 {
-	struct dbkey key;
 	int rv;
 	DBT k, v;
 
 	if (db == NULL)
 		return -1;
 
-	makekey(&key, ss, c);
-
-	k.data = &key;
-	k.size = sizeof(key);
+	k.data = __UNCONST(c);
+	k.size = sizeof(*c);
 	v.data = __UNCONST(dbi);
 	v.size = sizeof(*dbi);
 
@@ -234,10 +202,8 @@ state_put(DB *db, const struct sockaddr_storage *ss, const struct conf *c,
 }
 
 int
-state_iterate(DB *db, struct sockaddr_storage *ss, struct conf *c,
-    struct dbinfo *dbi, unsigned int first)
+state_iterate(DB *db, struct conf *c, struct dbinfo *dbi, unsigned int first)
 {
-	struct dbkey *kp;
 	int rv;
 	DBT k, v;
 
@@ -248,11 +214,11 @@ state_iterate(DB *db, struct sockaddr_storage *ss, struct conf *c,
 
 	switch (rv = (*db->seq)(db, &k, &v, first)) {
 	case 0:
-		kp = k.data;	
-		*ss = kp->ss;
-		*c = kp->c;
+		if (state_sizecheck(&k) == -1)
+			return -1;
+		memcpy(c, k.data, sizeof(*c));
 		if (debug > 2)
-			dumpkey(kp);
+			dumpkey(c);
 		memcpy(dbi, v.data, sizeof(*dbi));
 		if (debug > 1)
 			(*lfun)(LOG_DEBUG, "%s: returns %d", __func__, rv);
