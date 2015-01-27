@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.181 2015/01/26 16:24:28 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.182 2015/01/27 07:49:48 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -14796,117 +14796,83 @@ external/gpl3/gcc/usr.bin/Makefile              up to 1.7
 external/gpl3/gcc/usr.bin/backend/Makefile      up to 1.23
 external/gpl3/gcc/usr.bin/frontend/Makefile     up to 1.9
 external/gpl3/gcc/usr.bin/gcc/arch/alpha/auto-host.h up to 1.5
-external/gpl3/gcc/usr.bin/gcc/arch/alpha/configargs.h up to 1.15
 external/gpl3/gcc/usr.bin/gcc/arch/alpha/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/arm/auto-host.h up to 1.5
-external/gpl3/gcc/usr.bin/gcc/arch/arm/configargs.h up to 1.17
 external/gpl3/gcc/usr.bin/gcc/arch/arm/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/armeb/auto-host.h up to 1.6
-external/gpl3/gcc/usr.bin/gcc/arch/armeb/configargs.h up to 1.17
 external/gpl3/gcc/usr.bin/gcc/arch/armeb/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/coldfire/auto-host.h up to 1.5
 external/gpl3/gcc/usr.bin/gcc/arch/coldfire/bversion.h up to 1.3
-external/gpl3/gcc/usr.bin/gcc/arch/coldfire/configargs.h up to 1.9
 external/gpl3/gcc/usr.bin/gcc/arch/coldfire/defs.mk up to 1.5
 external/gpl3/gcc/usr.bin/gcc/arch/coldfire/plugin-version.h up to 1.6
 external/gpl3/gcc/usr.bin/gcc/arch/coldfire/tm.h up to 1.3
 external/gpl3/gcc/usr.bin/gcc/arch/earm/auto-host.h up to 1.7
-external/gpl3/gcc/usr.bin/gcc/arch/earm/configargs.h up to 1.15
 external/gpl3/gcc/usr.bin/gcc/arch/earm/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/earmeb/auto-host.h up to 1.5
-external/gpl3/gcc/usr.bin/gcc/arch/earmeb/configargs.h up to 1.11
 external/gpl3/gcc/usr.bin/gcc/arch/earmeb/plugin-version.h up to 1.6
 external/gpl3/gcc/usr.bin/gcc/arch/earmhf/auto-host.h up to 1.6
-external/gpl3/gcc/usr.bin/gcc/arch/earmhf/configargs.h up to 1.12
 external/gpl3/gcc/usr.bin/gcc/arch/earmhf/plugin-version.h up to 1.6
 external/gpl3/gcc/usr.bin/gcc/arch/earmhfeb/auto-host.h up to 1.4
-external/gpl3/gcc/usr.bin/gcc/arch/earmhfeb/configargs.h up to 1.10
 external/gpl3/gcc/usr.bin/gcc/arch/earmhfeb/plugin-version.h up to 1.6
 external/gpl3/gcc/usr.bin/gcc/arch/earmv4/auto-host.h up to 1.4
-external/gpl3/gcc/usr.bin/gcc/arch/earmv4/configargs.h up to 1.9
 external/gpl3/gcc/usr.bin/gcc/arch/earmv4/plugin-version.h up to 1.6
 external/gpl3/gcc/usr.bin/gcc/arch/earmv4eb/auto-host.h up to 1.4
-external/gpl3/gcc/usr.bin/gcc/arch/earmv4eb/configargs.h up to 1.9
 external/gpl3/gcc/usr.bin/gcc/arch/earmv4eb/plugin-version.h up to 1.6
 external/gpl3/gcc/usr.bin/gcc/arch/earmv6/auto-host.h up to 1.4
-external/gpl3/gcc/usr.bin/gcc/arch/earmv6/configargs.h up to 1.9
 external/gpl3/gcc/usr.bin/gcc/arch/earmv6/plugin-version.h up to 1.6
 external/gpl3/gcc/usr.bin/gcc/arch/earmv6eb/auto-host.h up to 1.4
-external/gpl3/gcc/usr.bin/gcc/arch/earmv6eb/configargs.h up to 1.9
 external/gpl3/gcc/usr.bin/gcc/arch/earmv6eb/plugin-version.h up to 1.6
 external/gpl3/gcc/usr.bin/gcc/arch/earmv6hf/auto-host.h up to 1.4
-external/gpl3/gcc/usr.bin/gcc/arch/earmv6hf/configargs.h up to 1.9
 external/gpl3/gcc/usr.bin/gcc/arch/earmv6hf/plugin-version.h up to 1.6
 external/gpl3/gcc/usr.bin/gcc/arch/earmv6hfeb/auto-host.h up to 1.4
-external/gpl3/gcc/usr.bin/gcc/arch/earmv6hfeb/configargs.h up to 1.9
 external/gpl3/gcc/usr.bin/gcc/arch/earmv6hfeb/plugin-version.h up to 1.6
 external/gpl3/gcc/usr.bin/gcc/arch/earmv7/auto-host.h up to 1.4
-external/gpl3/gcc/usr.bin/gcc/arch/earmv7/configargs.h up to 1.9
 external/gpl3/gcc/usr.bin/gcc/arch/earmv7/plugin-version.h up to 1.6
 external/gpl3/gcc/usr.bin/gcc/arch/earmv7eb/auto-host.h up to 1.4
-external/gpl3/gcc/usr.bin/gcc/arch/earmv7eb/configargs.h up to 1.9
 external/gpl3/gcc/usr.bin/gcc/arch/earmv7eb/plugin-version.h up to 1.6
 external/gpl3/gcc/usr.bin/gcc/arch/earmv7hf/auto-host.h up to 1.4
-external/gpl3/gcc/usr.bin/gcc/arch/earmv7hf/configargs.h up to 1.9
 external/gpl3/gcc/usr.bin/gcc/arch/earmv7hf/plugin-version.h up to 1.6
 external/gpl3/gcc/usr.bin/gcc/arch/earmv7hfeb/auto-host.h up to 1.4
-external/gpl3/gcc/usr.bin/gcc/arch/earmv7hfeb/configargs.h up to 1.9
 external/gpl3/gcc/usr.bin/gcc/arch/earmv7hfeb/plugin-version.h up to 1.6
 external/gpl3/gcc/usr.bin/gcc/arch/hppa/auto-host.h up to 1.5
-external/gpl3/gcc/usr.bin/gcc/arch/hppa/configargs.h up to 1.17
 external/gpl3/gcc/usr.bin/gcc/arch/hppa/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/i386/auto-host.h up to 1.5
-external/gpl3/gcc/usr.bin/gcc/arch/i386/configargs.h up to 1.19
 external/gpl3/gcc/usr.bin/gcc/arch/i386/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/m68000/auto-host.h up to 1.6
 external/gpl3/gcc/usr.bin/gcc/arch/m68000/bversion.h up to 1.4
-external/gpl3/gcc/usr.bin/gcc/arch/m68000/configargs.h up to 1.12
 external/gpl3/gcc/usr.bin/gcc/arch/m68000/defs.mk up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/m68000/plugin-version.h up to 1.5
 external/gpl3/gcc/usr.bin/gcc/arch/m68000/tm.h  up to 1.3
 external/gpl3/gcc/usr.bin/gcc/arch/m68k/auto-host.h up to 1.6
-external/gpl3/gcc/usr.bin/gcc/arch/m68k/configargs.h up to 1.14
 external/gpl3/gcc/usr.bin/gcc/arch/m68k/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/mips64eb/auto-host.h up to 1.5
-external/gpl3/gcc/usr.bin/gcc/arch/mips64eb/configargs.h up to 1.15
 external/gpl3/gcc/usr.bin/gcc/arch/mips64eb/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/mips64el/auto-host.h up to 1.6
-external/gpl3/gcc/usr.bin/gcc/arch/mips64el/configargs.h up to 1.16
 external/gpl3/gcc/usr.bin/gcc/arch/mips64el/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/mipseb/auto-host.h up to 1.5
-external/gpl3/gcc/usr.bin/gcc/arch/mipseb/configargs.h up to 1.15
 external/gpl3/gcc/usr.bin/gcc/arch/mipseb/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/mipsel/auto-host.h up to 1.5
-external/gpl3/gcc/usr.bin/gcc/arch/mipsel/configargs.h up to 1.16
 external/gpl3/gcc/usr.bin/gcc/arch/mipsel/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/powerpc/auto-host.h up to 1.5
-external/gpl3/gcc/usr.bin/gcc/arch/powerpc/configargs.h up to 1.21
 external/gpl3/gcc/usr.bin/gcc/arch/powerpc/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/auto-host.h up to 1.4
 external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/bversion.h up to 1.3
-external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/configargs.h up to 1.6
 external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/defs.mk up to 1.4
 external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/gtyp-input.list up to 1.3
 external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/multilib.h up to 1.3
 external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/plugin-version.h up to 1.3
 external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/tm.h up to 1.3
 external/gpl3/gcc/usr.bin/gcc/arch/sh3eb/auto-host.h up to 1.5
-external/gpl3/gcc/usr.bin/gcc/arch/sh3eb/configargs.h up to 1.16
 external/gpl3/gcc/usr.bin/gcc/arch/sh3eb/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/sh3el/auto-host.h up to 1.5
-external/gpl3/gcc/usr.bin/gcc/arch/sh3el/configargs.h up to 1.18
 external/gpl3/gcc/usr.bin/gcc/arch/sh3el/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/sparc/auto-host.h up to 1.5
-external/gpl3/gcc/usr.bin/gcc/arch/sparc/configargs.h up to 1.16
 external/gpl3/gcc/usr.bin/gcc/arch/sparc/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/sparc64/auto-host.h up to 1.7
-external/gpl3/gcc/usr.bin/gcc/arch/sparc64/configargs.h up to 1.17
 external/gpl3/gcc/usr.bin/gcc/arch/sparc64/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/vax/auto-host.h up to 1.6
-external/gpl3/gcc/usr.bin/gcc/arch/vax/configargs.h up to 1.17
 external/gpl3/gcc/usr.bin/gcc/arch/vax/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/gcc/arch/x86_64/auto-host.h up to 1.5
-external/gpl3/gcc/usr.bin/gcc/arch/x86_64/configargs.h up to 1.20
 external/gpl3/gcc/usr.bin/gcc/arch/x86_64/plugin-version.h up to 1.7
 external/gpl3/gcc/usr.bin/libcpp/arch/alpha/config.h up to 1.3
 external/gpl3/gcc/usr.bin/libcpp/arch/armeb/config.h up to 1.2
@@ -14937,6 +14903,7 @@ lib/libexecinfo/unwind.h			1.3
 sys/arch/sh3/include/elf_machdep.h		1.11
 sys/lib/libunwind/Makefile.inc			1.10
 external/gpl3/gcc/lib/libstdc++-v3/arch/alpha/gstdint.h		(regen)
+external/gpl3/gcc/lib/libstdc++-v3/arch/arm/gstdint.h		(regen)
 external/gpl3/gcc/lib/libstdc++-v3/arch/armeb/gstdint.h		(regen)
 external/gpl3/gcc/lib/libstdc++-v3/arch/earm/gstdint.h		(regen)
 external/gpl3/gcc/lib/libstdc++-v3/arch/earmeb/gstdint.h	(regen)
@@ -14968,6 +14935,40 @@ external/gpl3/gcc/lib/libstdc++-v3/arch/sparc/gstdint.h		(regen)
 external/gpl3/gcc/lib/libstdc++-v3/arch/sparc64/gstdint.h	(regen)
 external/gpl3/gcc/lib/libstdc++-v3/arch/vax/gstdint.h		(regen)
 external/gpl3/gcc/lib/libstdc++-v3/arch/x86_64/gstdint.h	(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/alpha/configargs.h up	(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/arm/configargs.h up		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/armeb/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/coldfire/configargs.h	(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/earm/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/earmeb/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/earmhf/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/earmhfeb/configargs.h	(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/earmv4/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/earmv4eb/configargs.h	(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6eb/configargs.h	(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6hf/configargs.h	(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/earmv6hfeb/configargs.h	(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7eb/configargs.h	(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7hf/configargs.h	(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/earmv7hfeb/configargs.h	(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/hppa/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/i386/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/m68000/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/m68k/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/mips64eb/configargs.h	(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/mips64el/configargs.h	(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/mipseb/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/mipsel/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/powerpc/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/powerpc64/configargs.h	(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/sh3eb/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/sh3el/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/sparc/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/sparc64/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/vax/configargs.h		(regen)
+external/gpl3/gcc/usr.bin/gcc/arch/x86_64/configargs.h		(regen)
 
 	Sync gcc and its libraries with -current, including the import
 	of gcc 4.8.4, fixes to the use of cpu specific string instructions
