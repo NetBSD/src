@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.5 2015/01/24 06:05:08 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.6 2015/01/27 19:40:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: support.c,v 1.5 2015/01/24 06:05:08 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.6 2015/01/27 19:40:37 christos Exp $");
 
 #include <time.h>
 #include <string.h>
@@ -70,7 +70,7 @@ vdlog(int level __unused, const char *fmt, va_list ap)
 {
 	char buf[BUFSIZ];
 
-	fprintf(stderr, "%s: ", getprogname());
+//	fprintf(stderr, "%s: ", getprogname());
 	vfprintf(stderr, expandm(buf, sizeof(buf), fmt), ap);
 	fprintf(stderr, "\n");
 }
