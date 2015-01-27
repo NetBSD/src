@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.11 2012/12/24 05:43:34 jakllsch Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.11.12.1 2015/01/27 08:17:09 martin Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -170,6 +170,7 @@
 #define  SDHC_WATERMARK_READ_MASK	0xff
 #define SDHC_MAX_CAPABILITIES		0x48
 #define SDHC_SLOT_INTR_STATUS		0xfc
+#define SDHC_ESDHC_HOST_CTL_VERSION	0xfc	/* eSDHC */
 #define SDHC_HOST_CTL_VERSION		0xfe
 #define  SDHC_SPEC_VERS_SHIFT		0
 #define  SDHC_SPEC_VERS_MASK		0xff
