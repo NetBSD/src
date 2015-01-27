@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.29 2015/01/25 20:59:39 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.30 2015/01/27 19:40:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.29 2015/01/25 20:59:39 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.30 2015/01/27 19:40:36 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: blacklistd.c,v 1.29 2015/01/25 20:59:39 christos Exp $");
 static const char *configfile = _PATH_BLCONF;
 static DB *state;
 static const char *dbfile = _PATH_BLSTATE;
-static sig_atomic_t rconf;
+static sig_atomic_t readconf;
 static sig_atomic_t done;
 static int vflag;
 
@@ -90,7 +90,7 @@ sigusr2(int n __unused)
 static void
 sighup(int n __unused)
 {
-	rconf++;
+	readconf++;
 }
 
 static void
@@ -106,7 +106,7 @@ usage(int c)
 		warnx("Unknown option `%c'", (char)c);
 	fprintf(stderr, "Usage: %s [-vdf] [-c <config>] [-r <rulename>] "
 	    "[-P <sockpathsfile>] [-C <controlprog>] [-D <dbfile>] "
-	    "[-t <timeout>]\n", getprogname());
+	    "[-s <sockpath>] [-t <timeout>]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -193,13 +193,13 @@ process(bl_t bl)
 		    (unsigned long)bi->bi_gid);
 	}
 
-	if (conf_find(bi->bi_fd, bi->bi_uid, &c) == NULL) {
+	if (conf_find(bi->bi_fd, bi->bi_uid, &rss, &c) == NULL) {
 		(*lfun)(LOG_DEBUG, "no rule matched");
 		goto out;
 	}
 
 
-	if (state_get(state, &rss, &c, &dbi) == -1)
+	if (state_get(state, &c, &dbi) == -1)
 		goto out;
 
 	if (debug) {
@@ -224,15 +224,14 @@ process(bl_t bl)
 			(*lfun)(LOG_ERR, "rule exists %s", dbi.id);
 		}
 		if (c.c_nfail != -1 && dbi.count >= c.c_nfail) {
-			int res = run_change("add", &c, &rss,
-			    dbi.id, sizeof(dbi.id));
+			int res = run_change("add", &c, dbi.id, sizeof(dbi.id));
 			if (res == -1)
 				goto out;
 			sockaddr_snprintf(rbuf, sizeof(rbuf), "%a",
 			    (void *)&rss);
 			(*lfun)(LOG_INFO,
-			    "blocked %s at port %d for %d seconds",
-			    rbuf, c.c_port, c.c_duration);
+			    "blocked %s/%d:%d for %d seconds",
+			    rbuf, c.c_lmask, c.c_port, c.c_duration);
 				
 		}
 		break;
@@ -244,7 +243,7 @@ process(bl_t bl)
 	default:
 		(*lfun)(LOG_ERR, "unknown message %d", bi->bi_type); 
 	}
-	if (state_put(state, &rss, &c, &dbi) == -1)
+	if (state_put(state, &c, &dbi) == -1)
 		goto out;
 out:
 	close(bi->bi_fd);
@@ -280,7 +279,7 @@ update(void)
 		return;
 	}
 
-	for (n = 0, f = 1; state_iterate(state, &ss, &c, &dbi, f) == 1;
+	for (n = 0, f = 1; state_iterate(state, &c, &dbi, f) == 1;
 	    f = 0, n++)
 	{
 		time_t when = c.c_duration + dbi.last;
@@ -297,13 +296,13 @@ update(void)
 		if (c.c_duration == -1 || when >= ts.tv_sec)
 			continue;
 		if (dbi.id[0]) {
-			run_change("rem", &c, &ss, dbi.id, 0);
+			run_change("rem", &c, dbi.id, 0);
 			sockaddr_snprintf(buf, sizeof(buf), "%a", (void *)&ss);
 			syslog(LOG_INFO,
-			    "released %s at port %d after %d seconds",
-			    buf, c.c_port, c.c_duration);
+			    "released %s/%d:%d after %d seconds",
+			    buf, c.c_lmask, c.c_port, c.c_duration);
 		}
-		state_del(state, &ss, &c);
+		state_del(state, &c);
 	}
 }
 
@@ -334,15 +333,16 @@ int
 main(int argc, char *argv[])
 {
 	int c, tout, flags, reset;
-	const char *spath;
+	const char *spath, *blsock;
 
 	setprogname(argv[0]);
 
 	spath = NULL;
+	blsock = _PATH_BLSOCK;
 	reset = 0;
 	tout = 0;
 	flags = O_RDWR|O_EXCL|O_CLOEXEC;
-	while ((c = getopt(argc, argv, "C:c:D:dfr:P:t:v")) != -1) {
+	while ((c = getopt(argc, argv, "C:c:D:dfr:P:s:t:v")) != -1) {
 		switch (c) {
 		case 'C':
 			controlprog = optarg;
@@ -359,11 +359,14 @@ main(int argc, char *argv[])
 		case 'f':
 			reset++;
 			break;
+		case 'P':
+			spath = optarg;
+			break;
 		case 'r':
 			rulename = optarg;
 			break;
-		case 'P':
-			spath = optarg;
+		case 's':
+			blsock = optarg;
 			break;
 		case 't':
 			tout = atoi(optarg) * 1000;
@@ -401,8 +404,10 @@ main(int argc, char *argv[])
 	update_interfaces();
 	conf_parse(configfile);
 	if (reset) {
-		for (size_t i = 0; i < nconf; i++)
-			run_flush(&conf[i]);
+		for (size_t i = 0; i < rconf.cs_n; i++)
+			run_flush(&rconf.cs_c[i]);
+		for (size_t i = 0; i < lconf.cs_n; i++)
+			run_flush(&lconf.cs_c[i]);
 		flags |= O_TRUNC;
 	}
 
@@ -412,7 +417,7 @@ main(int argc, char *argv[])
 	size_t maxfd = 0;
 
 	if (spath == NULL)
-		addfd(&pfd, &bl, &nfd, &maxfd, _PATH_BLSOCK);
+		addfd(&pfd, &bl, &nfd, &maxfd, blsock);
 	else {
 		FILE *fp = fopen(spath, "r");
 		char *line;
@@ -438,8 +443,8 @@ main(int argc, char *argv[])
 	}
 
 	for (size_t t = 0; !done; t++) {
-		if (rconf) {
-			rconf = 0;
+		if (readconf) {
+			readconf = 0;
 			conf_parse(configfile);
 		}
 		switch (poll(pfd, (nfds_t)nfd, tout)) {

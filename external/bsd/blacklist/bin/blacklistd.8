@@ -1,4 +1,4 @@
-.\" $NetBSD: blacklistd.8,v 1.8 2015/01/25 23:07:16 wiz Exp $
+.\" $NetBSD: blacklistd.8,v 1.9 2015/01/27 19:40:36 christos Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,7 +32,6 @@
 .Os
 .Sh NAME
 .Nm blacklistd ,
-.Nm blacklistd.conf
 .Nd block and release ports on demand to avoid DoS abuse
 .Sh SYNOPSIS
 .Nm
@@ -40,8 +39,9 @@
 .Op Fl C Ar controlprog
 .Op Fl c Ar configfile
 .Op Fl D Ar dbfile
-.Op Fl r Ar rulename
 .Op Fl P Ar sockpathsfile
+.Op Fl r Ar rulename
+.Op Fl s Ar sockpath
 .Op Fl t Ar timeout
 .Sh DESCRIPTION
 .Nm
@@ -51,7 +51,10 @@ that listens to a sockets at paths specified in the
 .Ar sockpathsfile
 for notifications from other daemons about successful or failed connection
 attempts.
-If no such file is specified, then it only listens to the default socket
+If no such file is specified, then it only listens to the socket path
+specified by
+.Ar sockspath
+or if that is not specified to
 .Pa /var/run/blsock .
 Each notification contains an (action, port, protocol, address, owner) tuple
 that identifies the remote connection and the action.
@@ -69,7 +72,7 @@ control script
 .Ar controlprog
 is invoked with arguments:
 .Bd -literal -offset indent
-control add <rulename> <proto> <port> <address>
+control add <rulename> <proto> <address> <mask> <port>
 .Ed
 .Pp
 and should invoke a packet filter command to block the connection
@@ -87,7 +90,7 @@ If the action is
 .Dq remove
 Then the same control script is invoked as:
 .Bd -literal -offset indent
-control rem <rulename> <proto> <port> <address> <id>
+control add <rulename> <proto> <address> <mask> <port>
 .Ed
 .Pp
 where
@@ -115,31 +118,6 @@ checks the list of active entries every
 seconds (default
 .Dv 15 )
 and removes entries and block rules using the control program as necessary.
-.Pp
-The configuration file contains one tuple per line, and is similar to
-.Xr inetd.conf 5 .
-There must be an entry for each field of the configuration file, with
-entries for each field separated by a tab or a space.
-Comments are denoted by a
-.Dq #
-at the beginning of a line.
-There must be an entry for each field; entries can be numeric or symbolic,
-where appropriate
-.Dv ( service ,
-.Dv user )
-and can be
-.Dq *
-for all fields.
-The fields of the configuration file are as follows:
-.Bd -literal -offset indent
-[address|interface:]service
-socket-type
-protocol
-user
-rulename
-nfail
-duration
-.Ed
 .Pp
 Normally,
 .Nm
