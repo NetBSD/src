@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.13 2014/12/19 20:43:17 christos Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.14 2015/01/27 02:37:18 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -2535,6 +2535,7 @@ parsestate(
 	int i;
 	char *s, *t;
 
+	*buffer = '\0';
 	s = t = buffer;
 
 	i = 0;
