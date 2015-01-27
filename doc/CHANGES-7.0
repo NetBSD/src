@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.183 2015/01/27 08:18:02 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.184 2015/01/27 13:41:09 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15095,4 +15095,9 @@ sys/dev/sdmmc/sdhcreg.h				1.12
 
 	eSDHC has non standard Host Controller Version Register offset.
 	[nonaka, ticket #460]
+
+usr.bin/pkill/pkill.c				1.30
+
+	Simplify code so that gcc 4.8 can understand it.
+	[prlw1, ticket #461]
 
