@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpgareg.h,v 1.6 2015/01/26 08:55:41 skrll Exp $ */
+/*	$NetBSD: ifpgareg.h,v 1.7 2015/01/27 16:34:34 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -33,6 +33,9 @@
 
 #define IFPGA_UART_CLK			14745600 /* Uart REFCLK freq */
 #define IFPGA_UART_SIZE			0x24
+
+#define IFPGA_MMC_CLK			14745600 /* MMC_5 freq */
+#define IFPGA_MMC_SIZE			0x1000
 
 /*
  * IFPGA registers
