@@ -1,4 +1,4 @@
-/*	$NetBSD: internal.c,v 1.4 2015/01/25 20:59:39 christos Exp $	*/
+/*	$NetBSD: internal.c,v 1.5 2015/01/27 19:40:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,16 +33,16 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: internal.c,v 1.4 2015/01/25 20:59:39 christos Exp $");
+__RCSID("$NetBSD: internal.c,v 1.5 2015/01/27 19:40:37 christos Exp $");
 
 #include <stdio.h>
 #include <syslog.h>
+#include "conf.h"
 #include "internal.h"
 
 int debug;
 const char *rulename = "blacklistd";
 const char *controlprog = _PATH_BLCONTROL;
-struct conf *conf;
+struct confset lconf, rconf;
 struct ifaddrs *ifas;
-size_t nconf;
 void (*lfun)(int, const char *, ...) = syslog;

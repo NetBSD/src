@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistctl.c,v 1.15 2015/01/26 02:31:52 christos Exp $	*/
+/*	$NetBSD: blacklistctl.c,v 1.16 2015/01/27 19:40:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistctl.c,v 1.15 2015/01/26 02:31:52 christos Exp $");
+__RCSID("$NetBSD: blacklistctl.c,v 1.16 2015/01/27 19:40:36 christos Exp $");
 
 #include <stdio.h>
 #include <time.h>
@@ -70,7 +70,6 @@ main(int argc, char *argv[])
 	const char *dbname = _PATH_BLSTATE;
 	DB *db;
 	struct conf c;
-	struct sockaddr_storage ss;
 	struct dbinfo dbi;
 	unsigned int i;
 	struct timespec ts;
@@ -118,9 +117,9 @@ main(int argc, char *argv[])
 	clock_gettime(CLOCK_REALTIME, &ts);
 	wide = wide ? 8 * 4 + 7 : 4 * 3 + 3;
 	if (!noheader)
-		printf("%*.*s:port\tid\tnfail\t%s\n", wide, wide,
+		printf("%*.*s/ma:port\tid\tnfail\t%s\n", wide, wide,
 		    "address", remain ? "remaining time" : "last access");
-	for (i = 1; state_iterate(db, &ss, &c, &dbi, i) != 0; i = 0) {
+	for (i = 1; state_iterate(db, &c, &dbi, i) != 0; i = 0) {
 		char buf[BUFSIZ];
 		if (!all) {
 			if (blocked) {
@@ -131,8 +130,8 @@ main(int argc, char *argv[])
 					continue;
 			}
 		}
-		sockaddr_snprintf(buf, sizeof(buf), "%a", (void *)&ss);
-		printf("%*.*s:%d\t", wide, wide, buf, c.c_port);
+		sockaddr_snprintf(buf, sizeof(buf), "%a", (void *)&c.c_ss);
+		printf("%*.*s/%d:%d\t", wide, wide, buf, c.c_lmask, c.c_port);
 		if (remain)
 			fmtydhms(buf, sizeof(buf),
 			    c.c_duration - (ts.tv_sec - dbi.last));
