@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.67 2014/12/14 18:12:55 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.68 2015/01/27 20:26:34 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -37,7 +37,7 @@ EVBARM_BOARDS.armv7hf+=		ALLWINNER_A80
 #EVBARM_BOARDS.armv4+=		ARMADILLO9
 EVBARM_BOARDS.armv4+=		GEMINI
 EVBARM_BOARDS.armv4+=		INTEGRATOR
-KERNEL_SETS.armv4+=		INTEGRATOR_CP
+EVBARM_BOARDS.armv4+=		INTEGRATOR_CP
 KERNEL_SETS.armv4+=		IXM1200
 #EVBARM_BOARDS.armv4+=		MINI2440
 #EVBARM_BOARDS.armv4+=		MPCSA_GENERIC
