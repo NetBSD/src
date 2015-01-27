@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.182 2015/01/27 07:49:48 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.183 2015/01/27 08:18:02 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15053,4 +15053,46 @@ external/gpl3/gcc/dist/libsanitizer/tsan/tsan_rtl_amd64.S 1.2
 
 	Fix for PIC code.
 	[skrll, ticket #458]
+
+doc/3RDPARTY					1.1195
+external/ibm-public/postfix/dist/HISTORY	patch
+external/ibm-public/postfix/dist/makedefs	patch
+external/ibm-public/postfix/dist/src/cleanup/cleanup.h patch
+external/ibm-public/postfix/dist/src/cleanup/cleanup_message.c patch
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.c patch
+external/ibm-public/postfix/dist/src/cleanup/cleanup_state.c patch
+external/ibm-public/postfix/dist/src/global/mail_version.h patch
+external/ibm-public/postfix/dist/src/milter/milter.c patch
+external/ibm-public/postfix/dist/src/milter/milter.h patch
+external/ibm-public/postfix/dist/src/milter/milter8.c patch
+external/ibm-public/postfix/dist/src/qmqpd/qmqpd.c patch
+external/ibm-public/postfix/dist/src/smtpd/smtpd.c patch
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check.c patch
+
+	Import Postfix 2.11.3. Changes since version 2.11.1:
+	- Fix for DMARC implementations based on SPF policy plus DKIM Milter.
+	  The PREPEND access/policy action added headers ABOVE Postfix's own
+	  Received: header, exposing Postfix's own Received: header to Milters
+	  (protocol violation) and hiding the PREPENDed header from Milters.
+	  PREPENDed headers are now added BELOW Postfix's own Received: header
+	  and remain visible to Milters.
+	- The Postfix SMTP server logged an incorrect client name in reject
+	  messages for check_reverse_client_hostname_access and
+	  check_reverse_client_hostname_{mx,ns}_access. They replied with the
+	  verified client name, instead of the name that was rejected.
+	- The TLS client logged that an anonymous TLS connection was
+	  "Untrusted", instead of "Anonymous".
+	- Fix for configurations that prepend message headers with Postfix
+	  access maps, policy servers or Milter applications. Postfix now hides
+	  its own Received: header from Milters and exposes prepended headers
+	  to Milters, regardless of the mechanism used to prepend a header.
+	  This fix reverts a partial solution that was released on October 13,
+	  2014, and replaces it with a complete solution.
+	[tron, ticket #459]
+
+sys/dev/sdmmc/sdhc.c				1.52
+sys/dev/sdmmc/sdhcreg.h				1.12
+
+	eSDHC has non standard Host Controller Version Register offset.
+	[nonaka, ticket #460]
 
