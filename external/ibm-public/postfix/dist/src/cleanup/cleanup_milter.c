@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_milter.c,v 1.1.1.8 2014/07/06 19:27:50 tron Exp $	*/
+/*	$NetBSD: cleanup_milter.c,v 1.1.1.8.2.1 2015/01/27 08:14:03 martin Exp $	*/
 
 /*++
 /* NAME
@@ -2022,7 +2022,7 @@ void    cleanup_milter_inspect(CLEANUP_STATE *state, MILTERS *milters)
      * filter library.
      */
     if ((resp = milter_message(milters, state->handle->stream,
-			       state->data_offset)) != 0)
+			       state->data_offset, state->auto_hdrs)) != 0)
 	cleanup_milter_apply(state, "END-OF-MESSAGE", resp);
 
     /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: milter8.c,v 1.1.1.7 2014/07/06 19:27:52 tron Exp $	*/
+/*	$NetBSD: milter8.c,v 1.1.1.7.2.1 2015/01/27 08:14:03 martin Exp $	*/
 
 /*++
 /* NAME
@@ -2287,6 +2287,8 @@ typedef struct {
     MILTER8 *milter;			/* milter client */
     ARGV   *eoh_macros;			/* end-of-header macros */
     ARGV   *eod_macros;			/* end-of-body macros */
+    ARGV   *auto_hdrs;			/* auto-generated headers */
+    int     auto_done;			/* good enough for now */
     int     first_header;		/* first header */
     int     first_body;			/* first body line */
     const char *resp;			/* milter application response */
@@ -2303,6 +2305,8 @@ static void milter8_header(void *ptr, int unused_header_class,
     MILTER8 *milter = msg_ctx->milter;
     char   *cp;
     int     skip_reply;
+    char  **cpp;
+    unsigned done;
 
     /*
      * XXX Workaround: mime_state_update() may invoke multiple call-backs
@@ -2331,10 +2335,11 @@ static void milter8_header(void *ptr, int unused_header_class,
      * XXX Sendmail compatibility. It eats the first space (not tab) after the
      * header label and ":".
      */
-    if (msg_ctx->first_header) {
-	msg_ctx->first_header = 0;
-	return;
-    }
+    for (cpp = msg_ctx->auto_hdrs->argv, done = 1; *cpp; cpp++, done <<= 1)
+	if ((msg_ctx->auto_done & done) == 0 && strcmp(*cpp, STR(buf)) == 0) {
+	    msg_ctx->auto_done |= done;
+	    return;
+	}
 
     /*
      * Sendmail 8 sends multi-line headers as text separated by newline.
@@ -2509,7 +2514,8 @@ static void milter8_eob(void *ptr)
 static const char *milter8_message(MILTER *m, VSTREAM *qfile,
 				           off_t data_offset,
 				           ARGV *eoh_macros,
-				           ARGV *eod_macros)
+				           ARGV *eod_macros,
+				           ARGV *auto_hdrs)
 {
     const char *myname = "milter8_message";
     MILTER8 *milter = (MILTER8 *) m;
@@ -2543,6 +2549,8 @@ static const char *milter8_message(MILTER *m, VSTREAM *qfile,
 	msg_ctx.milter = milter;
 	msg_ctx.eoh_macros = eoh_macros;
 	msg_ctx.eod_macros = eod_macros;
+	msg_ctx.auto_hdrs = auto_hdrs;
+	msg_ctx.auto_done = 0;
 	msg_ctx.first_header = 1;
 	msg_ctx.first_body = 1;
 	msg_ctx.resp = 0;

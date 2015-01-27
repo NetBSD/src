@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.11 2014/07/06 19:45:50 tron Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.11.2.1 2015/01/27 08:14:03 martin Exp $	*/
 
 /*++
 /* NAME
@@ -2987,7 +2987,7 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
     }
 
     /*
-     * PREPEND message headers.
+     * PREPEND message headers above our own Received: header.
      */
     if (state->prepend)
 	for (cpp = state->prepend->argv; *cpp; cpp++)
@@ -3082,6 +3082,7 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 		    "\t(envelope-from %s)", STR(state->buffer));
 #endif
     }
+
     smtpd_chat_reply(state, "354 End data with <CR><LF>.<CR><LF>");
     state->where = SMTPD_AFTER_DATA;
 

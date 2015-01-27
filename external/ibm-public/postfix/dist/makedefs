@@ -491,9 +491,9 @@ ReliantUNIX-?.5.43) SYSTYPE=ReliantUnix543
 		     ?.*) CCARGS="$CCARGS -DRESOLVE_H_NEEDS_NAMESER8_COMPAT_H";;
 		       *) CCARGS="$CCARGS -DRESOLVE_H_NEEDS_ARPA_NAMESER_COMPAT_H";;
 		esac
-		# Darwin 12.x (MacOS X 10.8.x), maybe earlier, needs libresolv.
+		# Darwin 11.x (MacOS X 10.7.x), maybe earlier, needs libresolv.
 		case $RELEASE in
-	    ?.*|1[0-1].*) ;;
+		?.*|10.*) ;;
 		       *) SYSLIBS="$SYSLIBS -lresolv";;
 		esac
 		# kqueue and/or poll are broken in MacOS X 10.5 (Darwin 9).
