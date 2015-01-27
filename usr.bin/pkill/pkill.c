@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.29 2013/01/02 10:36:07 dsl Exp $	*/
+/*	$NetBSD: pkill.c,v 1.29.8.1 2015/01/27 13:39:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.29 2013/01/02 10:36:07 dsl Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.29.8.1 2015/01/27 13:39:31 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -128,8 +128,8 @@ main(int argc, char **argv)
 		action = grepact;
 		pgrep = 1;
 	} else if (strcmp(getprogname(), "prenice") == 0) {
+		action = reniceact;
 		prenice = 1;
-
 	} else {
 		action = killact;
 		p = argv[1];
@@ -171,7 +171,6 @@ main(int argc, char **argv)
 		if (argc < 2)
 			usage();
 
-		action = reniceact;
 		p = argv[1];
 
 		i = (int)strtol(p, &q, 10);
