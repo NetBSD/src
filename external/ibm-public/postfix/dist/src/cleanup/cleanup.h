@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup.h,v 1.6 2014/07/06 19:45:50 tron Exp $	*/
+/*	$NetBSD: cleanup.h,v 1.6.2.1 2015/01/27 08:14:03 martin Exp $	*/
 
 /*++
 /* NAME
@@ -63,6 +63,7 @@ typedef struct CLEANUP_STATE {
     char   *orig_rcpt;			/* original recipient address */
     char   *return_receipt;		/* return-receipt address */
     char   *errors_to;			/* errors-to address */
+    ARGV   *auto_hdrs;			/* MTA's own header(s) */
     int     flags;			/* processing options, status flags */
     int     qmgr_opts;			/* qmgr processing options */
     int     errs;			/* any badness experienced */

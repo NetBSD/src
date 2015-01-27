@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqpd.c,v 1.1.1.4 2013/09/25 19:06:34 tron Exp $	*/
+/*	$NetBSD: qmqpd.c,v 1.1.1.4.4.1 2015/01/27 08:14:03 martin Exp $	*/
 
 /*++
 /* NAME
@@ -708,7 +708,8 @@ static void qmqpd_proto(QMQPD_STATE *state)
      */
     if (state->reason && state->where)
 	msg_info("%s: %s: %s while %s",
-	      state->queue_id, state->namaddr, state->reason, state->where);
+		 state->queue_id ? state->queue_id : "NOQUEUE",
+		 state->namaddr, state->reason, state->where);
 }
 
 /* qmqpd_service - service one client */

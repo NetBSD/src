@@ -19574,3 +19574,47 @@ Apologies for any names omitted.
 	reported by Sahil Tandon, predicate error found by Viktor,
 	redundant connection restore request eliminated by Wietse.
 	File: smtp/smtp_connect.c.
+
+20140619
+
+	Bugfix (introduced: 2001): qmqpd null pointer bug when it
+	logs a lost connection while not in a mail transaction.
+	Reported by Michal Adamek. File: qmqpd/qmqpd.c.
+
+20140920
+
+	Bugfix (introduced: 20080212): incorrect client name in
+	reject messages from check_reverse_client_hostname_access
+	and check_reverse_client_hostname_{mx,ns}_access.  They
+	replied with the verified client name, instead of the name
+	that was rejected.  Problem reported by Reindl Harald. File:
+	smtpd/smtpd_check.c.
+
+20141012
+
+	Bugfix (introduced: Postfix 2.3): the PREPEND access/policy
+	action added headers ABOVE Postfix's own Received: header,
+	exposing Postfix's own Received: header to Milters (protocol
+	violation) and hiding the PREPENDed header from Milters.
+	The latter caused problems for DMARC implementations with
+	SPF policy plus DKIM Milter.  PREPENDed headers are now
+	added BELOW Postfix's own Received: header and remain visible
+	to Milters. File: smtpd/smtpd.c.
+
+20141014
+
+	Portability: Darwin 11.x needs to link with -lresolv. Viktor
+	Dukhovni. File: makedefs.
+
+20141018
+
+	Bugfix (introduced: Postfix 2.3): when a Milter inserted a
+	header ABOVE Postfix's own Received: header, Postfix would
+	expose its own Received: header to Milters (violating
+	protocol) and hide the Milter-inserted header from Milters
+	(wtf).  Files: cleanup/cleanup.h, cleanup/cleanup_message.c,
+	cleanup/cleanup_state.c, milter/milter.[hc], milter/milter8.c.
+
+	Cleanup: revert the workaround that places headers inserted
+	with PREPEND actions or policy requests BELOW Postfix's own
+	Received: message header. File: smtpd/smtpd.c.

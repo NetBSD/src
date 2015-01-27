@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_message.c,v 1.1.1.4 2014/07/06 19:27:50 tron Exp $	*/
+/*	$NetBSD: cleanup_message.c,v 1.1.1.4.2.1 2015/01/27 08:14:03 martin Exp $	*/
 
 /*++
 /* NAME
@@ -481,6 +481,10 @@ static void cleanup_header_callback(void *context, int header_class,
     if (hdr_opts && (hdr_opts->flags & HDR_OPT_MIME))
 	header_class = MIME_HDR_MULTIPART;
 
+    /* Update the Received: header count before maybe dropping headers below. */
+    if (hdr_opts && hdr_opts->type == HDR_RECEIVED)
+	state->hop_count += 1;
+
     if ((state->flags & CLEANUP_FLAG_FILTER)
 	&& (CHECK(MIME_HDR_PRIMARY, cleanup_header_checks, VAR_HEADER_CHECKS)
     || CHECK(MIME_HDR_MULTIPART, cleanup_mimehdr_checks, VAR_MIMEHDR_CHECKS)
@@ -581,9 +585,13 @@ static void cleanup_header_callback(void *context, int header_class,
 	    msg_info("%s: message-id=%s", state->queue_id, hdrval);
 	if (hdr_opts->type == HDR_RESENT_MESSAGE_ID)
 	    msg_info("%s: resent-message-id=%s", state->queue_id, hdrval);
-	if (hdr_opts->type == HDR_RECEIVED)
-	    if (++state->hop_count >= var_hopcount_limit)
+	if (hdr_opts->type == HDR_RECEIVED) {
+	    if (state->hop_count >= var_hopcount_limit)
 		state->errs |= CLEANUP_STAT_HOPS;
+	    /* Save our Received: header after maybe updating headers above. */
+	    if (state->hop_count == 1)
+		argv_add(state->auto_hdrs, vstring_str(header_buf), ARGV_END);
+	}
 	if (CLEANUP_OUT_OK(state)) {
 	    if (hdr_opts->flags & HDR_OPT_RR)
 		state->resent = "Resent-";
