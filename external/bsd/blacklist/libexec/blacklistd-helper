@@ -1,19 +1,33 @@
 #!/bin/sh
 echo "run $@" 1>&2
-
+set -x
 # $1 command
 # $2 rulename
 # $3 protocol
-# $4 address to
-# $5 port
-# $6 id
+# $4 address
+# $5 mask
+# $6 proto
+# $7 id
 
 case "$1" in
 add)
-	exec /sbin/npfctl rule $2 add block in final proto $3 from $4 to any port $5
+	# GRR!
+#	case $4 in
+#	*:*)
+#		case $5 in
+#		128)	addr=$4;;
+#		*)	addr=$4/$5;;
+#		esac;;
+#	*)
+#		case $5 in
+#		32)	addr=$4;;
+#		*)	addr=$4/$5;;
+#		esac;;
+#	esac
+	exec /sbin/npfctl rule $2 add block in final proto $3 from $4/$5 to any port $6
 	;;
 rem)
-	exec /sbin/npfctl rule $2 rem-id $6
+	exec /sbin/npfctl rule $2 rem-id $7
 	;;
 flush)
 	exec /sbin/npfctl rule $2 flush
