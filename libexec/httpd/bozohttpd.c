@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.60 2014/12/25 18:53:06 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.61 2015/01/27 04:20:23 snj Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1566,6 +1566,7 @@ bozo_process_request(bozo_httpreq_t *request)
 		debug((httpd, DEBUG_FAT, "open failed: %s", strerror(errno)));
 		switch(errno) {
 		case EPERM:
+		case EACCES:
 			(void)bozo_http_error(httpd, 403, request,
 						"no permission to open file");
 			break;
