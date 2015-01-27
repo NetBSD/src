@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1126 2015/01/17 15:04:47 jmcneill Exp $
+#	$NetBSD: files,v 1.1127 2015/01/27 21:34:43 skrll Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20141030
@@ -1275,6 +1275,10 @@ file	dev/ic/rtsx.c			rtsx
 defflag	opt_dwc_mmc.h	DWC_MMC_DEBUG
 device	dwcmmc: sdmmcbus
 file	dev/ic/dwc_mmc.c		dwcmmc
+
+# ARM PrimeCell PL181 (MMCI) host controller
+device	plmmc: sdmmcbus
+file	dev/ic/pl181.c			plmmc
 
 # Myson MTD803 3-in-1 Fast Ethernet Controller
 device	mtd: arp, ether, ifnet, mii
