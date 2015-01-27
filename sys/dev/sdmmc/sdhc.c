@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.44.2.5 2014/10/05 20:00:54 martin Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.44.2.6 2015/01/27 08:17:09 martin Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.44.2.5 2014/10/05 20:00:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.44.2.6 2015/01/27 08:17:09 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -268,7 +268,11 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	mutex_init(&hp->intr_mtx, MUTEX_DEFAULT, IPL_SDMMC);
 	cv_init(&hp->intr_cv, "sdhcintr");
 
-	sdhcver = HREAD2(hp, SDHC_HOST_CTL_VERSION);
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+		sdhcver = HREAD4(hp, SDHC_ESDHC_HOST_CTL_VERSION);
+	} else {
+		sdhcver = HREAD2(hp, SDHC_HOST_CTL_VERSION);
+	}
 	aprint_normal_dev(sc->sc_dev, "SD Host Specification ");
 	hp->specver = SDHC_SPEC_VERSION(sdhcver);
 	switch (SDHC_SPEC_VERSION(sdhcver)) {
