@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1192.2.2 2015/01/17 21:49:36 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1192.2.3 2015/01/28 19:51:54 snj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1199.2.2 2015/01/17 21:48:05 martin Exp
+ *	NetBSD: pcidevs,v 1.1199.2.3 2015/01/28 19:00:28 martin Exp
  */
 
 /*
@@ -2603,10 +2603,27 @@
 #define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX PCI, Cache and Memory Controller (PCMC) */
 #define	PCI_PRODUCT_INTEL_GDT_RAID1	0x0600		/* GDT RAID */
 #define	PCI_PRODUCT_INTEL_GDT_RAID2	0x061f		/* GDT RAID */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6150_1	0x0885		/* Centrino Wireless-N 6150 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6150_2	0x0886		/* Centrino Wireless-N 6150 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_2230_1	0x0887		/* Centrino Wireless-N 2230 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_2230_2	0x0888		/* Centrino Wireless-N 2230 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6235	0x088e		/* Centrino Advanced-N 6235 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6235_2	0x088f		/* Centrino Advanced-N 6235 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_2200_1	0x0890		/* Centrino Wireless-N 2200 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_2200_2	0x0891		/* Centrino Wireless-N 2200 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_135_1	0x0892		/* Centrino Wireless-N 135 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_135_2	0x0893		/* Centrino Wireless-N 135 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_105_1	0x0894		/* Centrino Wireless-N 105 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_105_2	0x0895		/* Centrino Wireless-N 105 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_130_1	0x0896		/* Centrino Wireless-N 130 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_130_2	0x0897		/* Centrino Wireless-N 130 */
 #define	PCI_PRODUCT_INTEL_X1000_SDIO_EMMC	0x08a7		/* Quark X1000 SDIO/eMMC */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_100_1	0x08ae		/* Centrino Wireless-N 100 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_100_2	0x08af		/* Centrino Wireless-N 100 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_7260_1	0x08b1		/* Dual Band Wireless AC 7260 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_7260_2	0x08b2		/* Dual Band Wireless AC 7260 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_3160_1	0x08b3		/* Dual Band Wireless AC 3160 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_3160_2	0x08b4		/* Dual Band Wirelsss AC 3160 */
 #define	PCI_PRODUCT_INTEL_X1000_I2C_GPIO	0x0934		/* Quark X1000 I2C and GPIO */
 #define	PCI_PRODUCT_INTEL_X1000_SPI	0x0935		/* Quark X1000 SPI */
 #define	PCI_PRODUCT_INTEL_X1000_HS_UART	0x0936		/* Quark X1000 HS-UART */
@@ -2614,6 +2631,8 @@
 #define	PCI_PRODUCT_INTEL_X1000_EHCI	0x0939		/* Quark X1000 EHCI */
 #define	PCI_PRODUCT_INTEL_X1000_OHCI	0x093a		/* Quark X1000 OHCI */
 #define	PCI_PRODUCT_INTEL_X1000_HB	0x0958		/* Quark X1000 Host Bridge */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_7265_1	0x095a		/* Dual Band Wireless AC 7265 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_7265_2	0x095b		/* Dual Band Wireless AC 7265 */
 #define	PCI_PRODUCT_INTEL_X1000_LB	0x095e		/* Quark X1000 Legacy Bridge */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
