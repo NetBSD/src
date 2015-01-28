@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.185 2015/01/28 11:28:32 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.186 2015/01/28 19:18:08 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15184,4 +15184,61 @@ distrib/utils/embedded/mkimage			1.51
 
 	Create correct permissions on evbarm images.
 	[skrll, ticket #465]
+
+sys/ufs/ffs/ffs_vfsops.c			1.303-1.305
+sys/ufs/ufs/ufs_extern.h			1.76-1.77
+sys/ufs/ufs/ufs_inode.c				1.91-1.92
+sys/ufs/ufs/ufs_vnops.c				1.223-1.224
+
+	Add debugging for mount, merge some error return and check more
+	errors. Restore apple ufs error handling.
+	Move and unify indirect block truncate algorithm into a separate
+	function.
+	Don't fail mounting root if WAPBL log is corrupt.
+	[christos, ticket #425]
+
+distrib/utils/embedded/conf/evbarm.conf		1.19
+
+	Add /var/shm tmpfs to fstab.
+	[jmcneill, ticket #466]
+
+distrib/sets/lists/base/mi			1.1091
+external/intel-fw-public/Makefile		1.8
+external/intel-fw-public/iwl100/Makefile	1.1
+external/intel-fw-public/iwl100/dist/LICENSE.iwlwifi-100-ucode 1.1
+external/intel-fw-public/iwl100/dist/README.iwlwifi-100-ucode 1.1
+external/intel-fw-public/iwl100/dist/iwlwifi-100-5.ucode 1.1
+external/intel-fw-public/iwl105/Makefile	1.1
+external/intel-fw-public/iwl105/dist/LICENSE.iwlwifi-105-ucode 1.1
+external/intel-fw-public/iwl105/dist/README.iwlwifi-105-ucode 1.1
+external/intel-fw-public/iwl105/dist/iwlwifi-105-6.ucode 1.1
+external/intel-fw-public/iwl135/Makefile	1.1
+external/intel-fw-public/iwl135/dist/LICENSE.iwlwifi-135-ucode 1.1
+external/intel-fw-public/iwl135/dist/README.iwlwifi-135-ucode 1.1
+external/intel-fw-public/iwl135/dist/iwlwifi-135-6.ucode 1.1
+external/intel-fw-public/iwl2000/Makefile	1.1
+external/intel-fw-public/iwl2000/dist/LICENSE.iwlwifi-2000-ucode 1.1
+external/intel-fw-public/iwl2000/dist/README.iwlwifi-2000-ucode 1.1
+external/intel-fw-public/iwl2000/dist/iwlwifi-2000-6.ucode 1.1
+external/intel-fw-public/iwl2030/Makefile	1.1
+external/intel-fw-public/iwl2030/dist/LICENSE.iwlwifi-2030-ucode 1.1
+external/intel-fw-public/iwl2030/dist/README.iwlwifi-2030-ucode 1.1
+external/intel-fw-public/iwl2030/dist/iwlwifi-2030-6.ucode 1.1
+share/man/man4/iwn.4				1.13
+sys/dev/pci/if_iwn.c				1.72
+sys/dev/pci/if_iwnreg.h				1.14
+sys/dev/pci/if_iwnvar.h				1.16
+sys/dev/pci/pcidevs				1.1205
+
+	Add support for Intel Centrino Wireless-N 100/105/130/135/2200/2230.
+	[nonaka, ticket #467]
+
+sys/dev/vnd.c					1.240-1.241
+
+	Don't bump v_numoutput if we need to vn_lock() the vnode before
+	queuing the corresponding I/O, because this may deadlock with
+	genfs_do_putpages() when called with the vnode locked.
+	Instead bump is just before the last VOP_STRATEGY(), or before calling
+	nestiobuf_done().
+	[bouyer, ticket #468]
 
