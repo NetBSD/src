@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.184 2015/01/27 13:41:09 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.185 2015/01/28 11:28:32 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15100,4 +15100,88 @@ usr.bin/pkill/pkill.c				1.30
 
 	Simplify code so that gcc 4.8 can understand it.
 	[prlw1, ticket #461]
+
+sys/arch/x86/x86/consinit.c			1.28
+
+	Add support for the (cobalt) nullcons to amd64 and i386.
+	[is, ticket #462]
+
+xsrc/external/mit/libdrm/dist/include/drm/tegra_drm.h up to 1.1.1.1
+xsrc/external/mit/libdrm/dist/tests/proptest/Makefile.am up to 1.1.1.1
+xsrc/external/mit/libdrm/dist/tests/proptest/Makefile.in up to 1.1.1.1
+xsrc/external/mit/libdrm/dist/tests/proptest/proptest.c up to 1.1.1.1
+xsrc/external/mit/libdrm/dist/tests/tegra/Makefile.am up to 1.1.1.1
+xsrc/external/mit/libdrm/dist/tests/tegra/Makefile.in up to 1.1.1.1
+xsrc/external/mit/libdrm/dist/tests/tegra/openclose.c up to 1.1.1.1
+xsrc/external/mit/libdrm/dist/build-aux/compile      up to 1.1.1.1
+xsrc/external/mit/libdrm/dist/tegra/Makefile.am      up to 1.1.1.1
+xsrc/external/mit/libdrm/dist/tegra/Makefile.in      up to 1.1.1.1
+xsrc/external/mit/libdrm/dist/tegra/libdrm_tegra.pc.in up to 1.1.1.1
+xsrc/external/mit/libdrm/dist/tegra/private.h        up to 1.1.1.1
+xsrc/external/mit/libdrm/dist/tegra/tegra.c          up to 1.1.1.1
+xsrc/external/mit/libdrm/dist/tegra/tegra.h          up to 1.1.1.1
+xsrc/external/mit/libdrm/dist/Makefile.am            up to 1.1.1.6
+xsrc/external/mit/libdrm/dist/Makefile.in            up to 1.1.1.8
+xsrc/external/mit/libdrm/dist/Makefile.sources       up to 1.1.1.2
+xsrc/external/mit/libdrm/dist/aclocal.m4             up to 1.1.1.10
+xsrc/external/mit/libdrm/dist/config.h.in            up to 1.1.1.5
+xsrc/external/mit/libdrm/dist/configure              up to 1.1.1.10
+xsrc/external/mit/libdrm/dist/configure.ac           up to 1.1.1.10
+xsrc/external/mit/libdrm/dist/xf86drmMode.h          up to 1.4
+xsrc/external/mit/libdrm/dist/build-aux/config.guess up to 1.1.1.4
+xsrc/external/mit/libdrm/dist/build-aux/config.sub   up to 1.1.1.4
+xsrc/external/mit/libdrm/dist/build-aux/ltmain.sh    up to 1.1.1.2
+xsrc/external/mit/libdrm/dist/build-aux/missing      up to 1.1.1.2
+xsrc/external/mit/libdrm/dist/build-aux/test-driver  up to 1.1.1.2
+xsrc/external/mit/libdrm/dist/exynos/Makefile.in     up to 1.1.1.3
+xsrc/external/mit/libdrm/dist/freedreno/Makefile.am  up to 1.1.1.3
+xsrc/external/mit/libdrm/dist/freedreno/Makefile.in  up to 1.1.1.3
+xsrc/external/mit/libdrm/dist/freedreno/Makefile.sources up to 1.1.1.2
+xsrc/external/mit/libdrm/dist/freedreno/freedreno_bo.c up to 1.1.1.3
+xsrc/external/mit/libdrm/dist/freedreno/freedreno_device.c up to 1.1.1.4
+xsrc/external/mit/libdrm/dist/include/drm/drm_mode.h up to 1.1.1.5
+xsrc/external/mit/libdrm/dist/intel/Makefile.in      up to 1.1.1.7
+xsrc/external/mit/libdrm/dist/intel/intel_bufmgr_gem.c up to 1.10
+xsrc/external/mit/libdrm/dist/intel/intel_chipset.h  up to 1.1.1.4
+xsrc/external/mit/libdrm/dist/intel/intel_decode.c   up to 1.1.1.4
+xsrc/external/mit/libdrm/dist/libkms/Makefile.in     up to 1.1.1.7
+xsrc/external/mit/libdrm/dist/m4/libtool.m4          up to 1.1.1.4
+xsrc/external/mit/libdrm/dist/man/Makefile.in        up to 1.1.1.3
+xsrc/external/mit/libdrm/dist/nouveau/Makefile.in    up to 1.1.1.7
+xsrc/external/mit/libdrm/dist/omap/Makefile.in       up to 1.1.1.3
+xsrc/external/mit/libdrm/dist/radeon/Makefile.in     up to 1.1.1.7
+xsrc/external/mit/libdrm/dist/radeon/radeon_surface.c up to 1.6
+xsrc/external/mit/libdrm/dist/tests/Makefile.am      up to 1.1.1.5
+xsrc/external/mit/libdrm/dist/tests/Makefile.in      up to 1.1.1.8
+xsrc/external/mit/libdrm/dist/tests/exynos/Makefile.in up to 1.1.1.3
+xsrc/external/mit/libdrm/dist/tests/kmstest/Makefile.in up to 1.1.1.7
+xsrc/external/mit/libdrm/dist/tests/modeprint/Makefile.in up to 1.1.1.8
+xsrc/external/mit/libdrm/dist/tests/modetest/Android.mk up to 1.1.1.2
+xsrc/external/mit/libdrm/dist/tests/modetest/Makefile.am up to 1.1.1.6
+xsrc/external/mit/libdrm/dist/tests/modetest/Makefile.in up to 1.1.1.9
+xsrc/external/mit/libdrm/dist/tests/modetest/buffers.c up to 1.1.1.3
+xsrc/external/mit/libdrm/dist/tests/modetest/buffers.h up to 1.1.1.2
+xsrc/external/mit/libdrm/dist/tests/modetest/cursor.c up to 1.1.1.3
+xsrc/external/mit/libdrm/dist/tests/modetest/modetest.c up to 1.6
+xsrc/external/mit/libdrm/dist/tests/radeon/Makefile.in up to 1.1.1.3
+xsrc/external/mit/libdrm/dist/tests/vbltest/Makefile.in up to 1.1.1.6
+xsrc/external/mit/libdrm/dist/tests/vbltest/vbltest.c up to 1.1.1.4
+
+	Update libdrm to version 2.4.59.
+	[snj, ticket #463]
+
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_arm.c 1.16
+sys/external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_kern_lib.c 1.6
+
+	Track process id instead of lwp id.
+	skrll, ticket #464]
+
+distrib/utils/embedded/conf/evbarm.conf		1.18
+distrib/utils/embedded/conf/rpi_inst.conf	1.6
+distrib/utils/embedded/conf/usermode.conf	1.4
+distrib/utils/embedded/conf/x86.conf		1.6
+distrib/utils/embedded/mkimage			1.51
+
+	Create correct permissions on evbarm images.
+	[skrll, ticket #465]
 
