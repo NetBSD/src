@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.186 2015/01/28 19:18:08 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.187 2015/01/28 19:53:10 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15229,6 +15229,8 @@ sys/dev/pci/if_iwn.c				1.72
 sys/dev/pci/if_iwnreg.h				1.14
 sys/dev/pci/if_iwnvar.h				1.16
 sys/dev/pci/pcidevs				1.1205
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
 
 	Add support for Intel Centrino Wireless-N 100/105/130/135/2200/2230.
 	[nonaka, ticket #467]
