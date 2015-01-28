@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17 2015/01/27 20:16:11 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.18 2015/01/28 00:42:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.17 2015/01/27 20:16:11 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.18 2015/01/28 00:42:15 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -608,7 +608,7 @@ conf_addr_set(struct conf *c, const struct sockaddr_storage *ss)
 		abort();
 	}
 
-	*port = htons(c->c_port);
+	*port = htons((in_port_t)c->c_port);
 	conf_apply_mask(addr, alen, c->c_lmask);
 	if (c->c_lmask == -1)
 		c->c_lmask = (int)(alen * 8);
