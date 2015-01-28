@@ -1,4 +1,4 @@
-.\" $NetBSD: blacklistd.conf.5,v 1.1 2015/01/27 19:40:36 christos Exp $
+.\" $NetBSD: blacklistd.conf.5,v 1.2 2015/01/28 07:32:28 wiz Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,7 +87,7 @@ are used to match the
 .Va local
 or
 .Va remote
-addresses whereas, the last 3 fields
+addresses, whereas the last 3 fields
 .Va name ,
 .Va nfail ,
 and
@@ -100,7 +100,7 @@ as an address, mask, and port.
 The syntax for the
 .Va location
 is:
-.Bd -literal -offset indent:
+.Bd -literal -offset indent
 	[<address>|<interface>][/<mask>][:<port>]
 .Ed
 .Pp
@@ -130,8 +130,8 @@ The third field is the
 .Dv tcp6 ,
 .Dv udp6 ,
 or numeric.
-The fourth file is the effective user (
-.Va owner )
+The fourth file is the effective user
+.Va ( owner )
 of the daemon process reporting the event,
 either as a username or a userid.
 .Pp
@@ -140,7 +140,7 @@ The rest of the fields are controlling the behavior of the filter.
 The
 .Va name
 field, is the name of the packet filter rule to be used.
-If the 
+If the
 .Va name
 starts with a
 .Dq - ,
@@ -212,8 +212,8 @@ bnx0:ssh	*	*	*	*	3	6h
 8.8.0.0/16:ssh	*	*	*	/24	=	=
 .Ed
 .Sh SEE ALSO
-.Xr blacklistd 8 ,
-.Xr blacklistctl 8
+.Xr blacklistctl 8 ,
+.Xr blacklistd 8
 .Sh HISTORY
 .Nm
 appeared in
