@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.30 2015/01/27 19:40:36 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.31 2015/01/28 05:08:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.30 2015/01/27 19:40:36 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.31 2015/01/28 05:08:55 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -217,11 +217,16 @@ process(bl_t bl)
 		if (dbi.id[0]) {
 			/*
 			 * We should not be getting this since the rule
-			 * should have blocked the address. Since a possible
+			 * should have blocked the address. A possible
 			 * explanation is that someone removed that rule,
-			 * we attempt to add it again, but we log an error.
+			 * and another would be that we got another attempt
+			 * before we added the rule. In anycase, we remove
+			 * and re-add the rule because we don't want to add
+			 * it twice, because then we'd lose track of it.
 			 */
-			(*lfun)(LOG_ERR, "rule exists %s", dbi.id);
+			(*lfun)(LOG_DEBUG, "rule exists %s", dbi.id);
+			(void)run_change("rem", &c, dbi.id, 0);
+			dbi.id[0] = '\0';
 		}
 		if (c.c_nfail != -1 && dbi.count >= c.c_nfail) {
 			int res = run_change("add", &c, dbi.id, sizeof(dbi.id));
