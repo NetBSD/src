@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.240 2015/01/28 15:08:12 bouyer Exp $	*/
+/*	$NetBSD: vnd.c,v 1.241 2015/01/28 16:27:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.240 2015/01/28 15:08:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.241 2015/01/28 16:27:43 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -882,7 +882,7 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 		 * the parent buf write too.
 		 * This has to be done last, so that
 		 * fsync won't wait for this write which
-		 * has to chance to complete before all nested bufs
+		 * has no chance to complete before all nested bufs
 		 * have been queued. But it has to be done
 		 * before the last VOP_STRATEGY() 
 		 * or the call to nestiobuf_done().
