@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.31 2015/01/28 05:08:55 christos Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.32 2015/01/28 22:30:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.31 2015/01/28 05:08:55 christos Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.32 2015/01/28 22:30:42 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -104,7 +104,7 @@ usage(int c)
 {
 	if (c)
 		warnx("Unknown option `%c'", (char)c);
-	fprintf(stderr, "Usage: %s [-vdf] [-c <config>] [-r <rulename>] "
+	fprintf(stderr, "Usage: %s [-vdfr] [-c <config>] [-R <rulename>] "
 	    "[-P <sockpathsfile>] [-C <controlprog>] [-D <dbfile>] "
 	    "[-s <sockpath>] [-t <timeout>]\n", getprogname());
 	exit(EXIT_FAILURE);
@@ -273,11 +273,11 @@ static void
 update(void)
 {
 	struct timespec ts;
-	struct sockaddr_storage ss;
 	struct conf c;
 	struct dbinfo dbi;
 	unsigned int f, n;
 	char buf[128];
+	void *ss = &c.c_ss;
 
 	if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
 		(*lfun)(LOG_ERR, "clock_gettime failed (%m)"); 
@@ -290,21 +290,18 @@ update(void)
 		time_t when = c.c_duration + dbi.last;
 		if (debug > 1) {
 			char b1[64], b2[64];
-			sockaddr_snprintf(buf, sizeof(buf), "%a:%p",
-			    (void *)&ss);
-			(*lfun)(LOG_DEBUG,
-			    "%s:[%u] %s count=%d duration=%d last=%s "
-			   "now=%s", __func__, n, buf, dbi.count,
-			   c.c_duration, fmttime(b1, sizeof(b1), dbi.last),
-			   fmttime(b2, sizeof(b2), ts.tv_sec));
+			sockaddr_snprintf(buf, sizeof(buf), "%a:%p", ss);
+			(*lfun)(LOG_DEBUG, "%s:[%u] %s count=%d duration=%d "
+			    "last=%s " "now=%s", __func__, n, buf, dbi.count,
+			    c.c_duration, fmttime(b1, sizeof(b1), dbi.last),
+			    fmttime(b2, sizeof(b2), ts.tv_sec));
 		}
 		if (c.c_duration == -1 || when >= ts.tv_sec)
 			continue;
 		if (dbi.id[0]) {
 			run_change("rem", &c, dbi.id, 0);
-			sockaddr_snprintf(buf, sizeof(buf), "%a", (void *)&ss);
-			syslog(LOG_INFO,
-			    "released %s/%d:%d after %d seconds",
+			sockaddr_snprintf(buf, sizeof(buf), "%a", ss);
+			syslog(LOG_INFO, "released %s/%d:%d after %d seconds",
 			    buf, c.c_lmask, c.c_port, c.c_duration);
 		}
 		state_del(state, &c);
@@ -334,20 +331,75 @@ addfd(struct pollfd **pfdp, bl_t **blp, size_t *nfd, size_t *maxfd,
 	*nfd += 1;
 }
 
+static void
+uniqueadd(struct conf ***listp, size_t *nlist, size_t *mlist, struct conf *c)
+{
+	struct conf **list = *listp;
+
+	if (c->c_name[0] == '\0')
+		return;
+	for (size_t i = 0; i < *nlist; i++) {
+		if (strcmp(list[i]->c_name, c->c_name) == 0)
+			return;
+	}
+	if (*nlist == *mlist) {
+		*mlist += 10;
+		void *p = realloc(*listp, *mlist * sizeof(*list));
+		if (p == NULL)
+			err(EXIT_FAILURE, "Can't allocate for rule list");
+		list = *listp = p;
+	}
+	list[(*nlist)++] = c;
+}
+
+static void
+rules_flush(void)
+{
+	struct conf **list;
+	size_t nlist, mlist;
+
+	list = NULL;
+	mlist = nlist = 0;
+	for (size_t i = 0; i < rconf.cs_n; i++)
+		uniqueadd(&list, &nlist, &mlist, &rconf.cs_c[i]);
+	for (size_t i = 0; i < lconf.cs_n; i++)
+		uniqueadd(&list, &nlist, &mlist, &lconf.cs_c[i]);
+
+	for (size_t i = 0; i < nlist; i++)
+		run_flush(list[i]);
+	free(list);
+}
+
+static void
+rules_restore(void)
+{
+	struct conf c;
+	struct dbinfo dbi;
+	unsigned int f;
+
+	for (f = 1; state_iterate(state, &c, &dbi, f) == 1; f = 0) {
+		if (dbi.id[0] == '\0')
+			continue;
+		(void)run_change("rem", &c, dbi.id, 0);
+		(void)run_change("add", &c, dbi.id, sizeof(dbi.id));
+	}
+}
+
 int
 main(int argc, char *argv[])
 {
-	int c, tout, flags, reset;
+	int c, tout, flags, flush, restore;
 	const char *spath, *blsock;
 
 	setprogname(argv[0]);
 
 	spath = NULL;
 	blsock = _PATH_BLSOCK;
-	reset = 0;
+	flush = 0;
+	restore = 0;
 	tout = 0;
 	flags = O_RDWR|O_EXCL|O_CLOEXEC;
-	while ((c = getopt(argc, argv, "C:c:D:dfr:P:s:t:v")) != -1) {
+	while ((c = getopt(argc, argv, "C:c:D:dfP:rR:s:t:v")) != -1) {
 		switch (c) {
 		case 'C':
 			controlprog = optarg;
@@ -362,13 +414,16 @@ main(int argc, char *argv[])
 			debug++;
 			break;
 		case 'f':
-			reset++;
+			flush++;
 			break;
 		case 'P':
 			spath = optarg;
 			break;
-		case 'r':
+		case 'R':
 			rulename = optarg;
+			break;
+		case 'r':
+			restore++;
 			break;
 		case 's':
 			blsock = optarg;
@@ -408,13 +463,13 @@ main(int argc, char *argv[])
 
 	update_interfaces();
 	conf_parse(configfile);
-	if (reset) {
-		for (size_t i = 0; i < rconf.cs_n; i++)
-			run_flush(&rconf.cs_c[i]);
-		for (size_t i = 0; i < lconf.cs_n; i++)
-			run_flush(&lconf.cs_c[i]);
+	if (flush) {
+		rules_flush();
 		flags |= O_TRUNC;
 	}
+
+	if (restore)
+		rules_restore();
 
 	struct pollfd *pfd = NULL;
 	bl_t *bl = NULL;
