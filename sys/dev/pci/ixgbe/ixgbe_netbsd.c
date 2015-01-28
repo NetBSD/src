@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.c,v 1.1 2011/08/12 21:55:29 dyoung Exp $ */
+/* $NetBSD: ixgbe_netbsd.c,v 1.2 2015/01/28 00:30:25 christos Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,7 +56,7 @@ ixgbe_dma_tag_create(bus_dma_tag_t dmat, bus_size_t alignment,
 
 	*dtp = NULL;
 
-	if ((dt = kmem_zalloc(sizeof(*dt), KM_SLEEP)) == NULL)
+	if ((dt = kmem_zalloc(sizeof(*dt), KM_NOSLEEP)) == NULL)
 		return ENOMEM;
 
 	dt->dt_dmat = dmat;
@@ -136,19 +136,19 @@ ixgbe_newext(ixgbe_extmem_head_t *eh, bus_dma_tag_t dmat, size_t size)
 	ixgbe_extmem_t *em;
 	int nseg, rc;
 
-	em = kmem_zalloc(sizeof(*em), KM_SLEEP);
+	em = kmem_zalloc(sizeof(*em), KM_NOSLEEP);
 
 	if (em == NULL)
 		return NULL;
 
 	rc = bus_dmamem_alloc(dmat, size, PAGE_SIZE, 0, &em->em_seg, 1, &nseg,
-	    BUS_DMA_WAITOK);
+	    BUS_DMA_NOWAIT);
 
 	if (rc != 0)
 		goto post_zalloc_err;
 
 	rc = bus_dmamem_map(dmat, &em->em_seg, 1, size, &em->em_vaddr,
-	    BUS_DMA_WAITOK);
+	    BUS_DMA_NOWAIT);
 
 	if (rc != 0)
 		goto post_dmamem_err;
