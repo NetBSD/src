@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.221 2014/05/25 13:46:16 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.221.2.1 2015/01/28 18:34:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.221 2014/05/25 13:46:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.221.2.1 2015/01/28 18:34:11 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -579,39 +579,7 @@ ufs_setattr(void *v)
 				error = EPERM;
 				goto out;
 			}
-			error = UFS_WAPBL_BEGIN(vp->v_mount);
-			if (error)
-				goto out;
-			/*
-			 * When journaling, only truncate one indirect block
-			 * at a time.
-			 */
-			if (vp->v_mount->mnt_wapbl) {
-				uint64_t incr = MNINDIR(ip->i_ump) <<
-				    vp->v_mount->mnt_fs_bshift; /* Power of 2 */
-				uint64_t base = UFS_NDADDR <<
-				    vp->v_mount->mnt_fs_bshift;
-				while (!error && ip->i_size > base + incr &&
-				    ip->i_size > vap->va_size + incr) {
-					/*
-					 * round down to next full indirect
-					 * block boundary.
-					 */
-					uint64_t nsize = base +
-					    ((ip->i_size - base - 1) &
-					    ~(incr - 1));
-					error = UFS_TRUNCATE(vp, nsize, 0,
-					    cred);
-					if (error == 0) {
-						UFS_WAPBL_END(vp->v_mount);
-						error =
-						   UFS_WAPBL_BEGIN(vp->v_mount);
-					}
-				}
-			}
-			if (!error)
-				error = UFS_TRUNCATE(vp, vap->va_size, 0, cred);
-			UFS_WAPBL_END(vp->v_mount);
+			error = ufs_truncate(vp, vap->va_size, cred);
 			if (error)
 				goto out;
 			break;
