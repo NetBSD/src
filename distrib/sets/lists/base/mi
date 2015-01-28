@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1087.2.2 2015/01/12 10:22:22 martin Exp $
+# $NetBSD: mi,v 1.1087.2.3 2015/01/28 19:00:28 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -146,7 +146,12 @@
 ./libdata/firmware/if_iwi/ipw2200-ibss.fw	base-firmware-root
 ./libdata/firmware/if_iwi/ipw2200-sniffer.fw	base-firmware-root
 ./libdata/firmware/if_iwn			base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-100-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-1000-ucode	base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-105-ucode	base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-135-ucode	base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-2000-ucode	base-firmware-root
+./libdata/firmware/if_iwn/LICENSE.iwlwifi-2030-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-4965-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-5000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-5150-ucode	base-firmware-root
@@ -154,7 +159,12 @@
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000g2a-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-6000g2b-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-6050-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-100-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-1000-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-105-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-135-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-2000-ucode	base-firmware-root
+./libdata/firmware/if_iwn/README.iwlwifi-2030-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-4965-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-5000-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-5150-ucode	base-firmware-root
@@ -162,7 +172,12 @@
 ./libdata/firmware/if_iwn/README.iwlwifi-6000g2a-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-6000g2b-ucode	base-firmware-root
 ./libdata/firmware/if_iwn/README.iwlwifi-6050-ucode	base-firmware-root
+./libdata/firmware/if_iwn/iwlwifi-100-5.ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-1000-3.ucode	base-firmware-root
+./libdata/firmware/if_iwn/iwlwifi-105-6.ucode	base-firmware-root
+./libdata/firmware/if_iwn/iwlwifi-135-6.ucode	base-firmware-root
+./libdata/firmware/if_iwn/iwlwifi-2000-6.ucode	base-firmware-root
+./libdata/firmware/if_iwn/iwlwifi-2030-6.ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-4965-1.ucode	base-obsolete		obsolete
 ./libdata/firmware/if_iwn/iwlwifi-4965-2.ucode	base-firmware-root
 ./libdata/firmware/if_iwn/iwlwifi-5000-1.ucode	base-obsolete		obsolete

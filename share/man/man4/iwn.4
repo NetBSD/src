@@ -1,4 +1,4 @@
-.\" $NetBSD: iwn.4,v 1.12 2014/03/18 18:20:39 riastradh Exp $
+.\" $NetBSD: iwn.4,v 1.12.4.1 2015/01/28 19:00:28 martin Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,12 +15,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd February 25, 2012
+.Dd October 30, 2014
 .Dt IWN 4
 .Os
 .Sh NAME
 .Nm iwn
-.Nd Intel Wireless 4965AGN and 5100AGN IEEE 802.11 driver
+.Nd Intel WiFi Link and Centrino IEEE 802.11 wireless network driver
 .Sh SYNOPSIS
 .Cd "iwn* at pci? dev ? function ?"
 .Sh DESCRIPTION
@@ -28,7 +28,53 @@ The
 .Nm
 driver provides support for
 .Tn Intel
-Wireless WiFi Link 4965AGN and 5100AGN Mini PCI Express network adapters.
+Wireless WiFi Link 4965/5000/1000 and Centrino Wireless-N 1000/2000/6000
+Series PCIe Mini Card network adapters.
+.Pp
+The Intel Wireless WiFi Link 4965AGN (codenamed Kedron) is a PCIe
+Mini Card network adapter that operates in the 2GHz and 5GHz spectra.
+It has 2 transmit paths and 3 receiver paths (2T3R).
+It is part of the fourth-generation Centrino platform (codenamed Santa Rosa).
+.Pp
+The Intel WiFi Link 5000 series is a family of wireless network adapters
+that operate in the 2GHz and 5GHz spectra.
+They are part of the fifth-generation Centrino platform (codenamed Montevina).
+These adapters are available in both PCIe Mini Card (model code ending by MMW)
+and PCIe Half Mini Card (model code ending by HMW) form factor.
+The
+.Nm
+driver provides support for the 5100 (codenamed Shirley Peak 1x2),
+5150 (codenamed Echo Peak-V), 5300 (codenamed Shirley Peak 3x3) and
+5350 (codenamed Echo Peak-P) adapters.
+The 5100 and 5150 adapters have 1 transmit path and 2 receiver paths (1T2R).
+The 5300 and 5350 adapters have 3 transmit paths and 3 receiver paths (3T3R).
+.Pp
+The Intel WiFi Link 1000 (codenamed Condor Peak) is a single-chip wireless
+network adapter that operates in the 2GHz spectrum.
+It is part of the sixth-generation Centrino platform (codenamed Calpella).
+It is available in both PCIe Mini Card (model code ending by MMW)
+and PCIe Half Mini Card (model code ending by HMW) form factor.
+It has 1 transmit path and 2 receiver paths (1T2R).
+.Pp
+The Intel Centrino Ultimate-N 6300 (codenamed Puma Peak 3x3) is a single-chip
+wireless network adapter that operates in the 2GHz and 5GHz spectra.
+It has 3 transmit paths and 3 receiver paths (3T3R).
+The Intel Centrino Advanced-N 6250 (codenamed Kilmer Peak) is a combo
+WiFi/WiMAX network adapter that operates in the 2GHz and 5GHz spectra.
+It has 2 transmit paths and 2 receiver paths (2T2R).
+The Intel Centrino Advanced-N 6200 (codenamed Puma Peak 2x2) is
+a wireless network adapter that operates in the 2GHz and 5GHz spectra.
+It has 2 transmit paths and 2 receiver paths (2T2R).
+These adapters are part of the sixth-generation Centrino platform
+(codenamed Calpella).
+.Pp
+The Intel Centrino Wireless-N 2230 (codename Jackson Peak) and Intel
+Centrino Wireless-N 2200 (codename Marble Peak) are wireless network
+adapters that operate in the 2GHz spectrum.
+These adapters have 2 transmit paths and 2 receiver paths (2T2R).
+The Intel Centrino Wireless-N 135 and Intel Centrino Wireless-N 105
+(codename Canyon Peak) also operate in the 2GHz spectrum.
+These adapters have 1 transmit path and 1 receiver path (1T1R).
 .Pp
 By default, the
 .Nm
@@ -138,7 +184,7 @@ This is the default mode of operation.
 .El
 .Sh EXAMPLES
 The following
-.\" .Xr hostname.if 5 ,
+.Xr ifconfig.if 5 ,
 example configures iwn0 to join whatever network is available on boot,
 using WEP key
 .Dq 0x1deadbeef1 ,
@@ -199,7 +245,7 @@ The driver will reset the hardware.
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
-.\" .Xr hostname.if 5 ,
+.Xr ifconfig.if 5 ,
 .Xr ifconfig 8
 .Sh AUTHORS
 The
