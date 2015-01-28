@@ -120,7 +120,7 @@ typedef struct user_service_struct {
 
 struct bulk_waiter_node {
 	struct bulk_waiter bulk_waiter;
-	struct lwp *l;
+	int pid;
 	struct list_head list;
 };
 
@@ -135,7 +135,7 @@ struct vchiq_instance_struct {
 
 	int connected;
 	int closing;
-	struct lwp *l;
+	int pid;
 	int mark;
 
 	struct list_head bulk_waiter_list;
@@ -527,7 +527,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 
 			if (pargs->is_open) {
 				status = vchiq_open_service_internal
-					(service, (uintptr_t)instance->l);
+					(service, instance->pid);
 				if (status != VCHIQ_SUCCESS) {
 					vchiq_remove_service(service->handle);
 					service = NULL;
@@ -660,7 +660,7 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 			lmutex_lock(&instance->bulk_waiter_list_mutex);
 			list_for_each(pos, &instance->bulk_waiter_list) {
 				if (list_entry(pos, struct bulk_waiter_node,
-					list)->l == current) {
+					list)->pid == current->l_proc->p_pid) {
 					waiter = list_entry(pos,
 						struct bulk_waiter_node,
 						list);
@@ -672,14 +672,14 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 			lmutex_unlock(&instance->bulk_waiter_list_mutex);
 			if (!waiter) {
 				vchiq_log_error(vchiq_arm_log_level,
-					"no bulk_waiter found for lwp %p",
-					current);
+					"no bulk_waiter found for pid %d",
+					current->l_proc->p_pid);
 				ret = -ESRCH;
 				break;
 			}
 			vchiq_log_info(vchiq_arm_log_level,
-				"found bulk_waiter %x for lwp %p",
-				(unsigned int)waiter, current);
+				"found bulk_waiter %x for pid %d",
+				(unsigned int)waiter, current->l_proc->p_pid);
 			pargs->userdata = &waiter->bulk_waiter;
 		}
 		status = vchiq_bulk_transfer
@@ -704,13 +704,13 @@ vchiq_ioctl(struct file *fp, u_long cmd, void *arg)
 		} else {
 			const VCHIQ_BULK_MODE_T mode_waiting =
 				VCHIQ_BULK_MODE_WAITING;
-			waiter->l = current;
+			waiter->pid = current->l_proc->p_pid;
 			lmutex_lock(&instance->bulk_waiter_list_mutex);
 			list_add(&waiter->list, &instance->bulk_waiter_list);
 			lmutex_unlock(&instance->bulk_waiter_list_mutex);
 			vchiq_log_info(vchiq_arm_log_level,
-				"saved bulk_waiter %x for lwp %p",
-				(unsigned int)waiter, current);
+				"saved bulk_waiter %x for pid %d",
+				(unsigned int)waiter, current->l_proc->p_pid);
 
 			pargs->mode = mode_waiting;
 		}
@@ -1064,7 +1064,7 @@ vchiq_open(dev_t dev, int flags, int mode, lwp_t *l)
 		}
 
 		instance->state = state;
-		instance->l = l;
+		instance->pid = current->l_proc->p_pid;
 
 #ifdef notyet
 		ret = vchiq_proc_add_instance(instance);
@@ -1205,8 +1205,8 @@ vchiq_close(struct file *fp)
 				list_del(pos);
 				vchiq_log_info(vchiq_arm_log_level,
 					"bulk_waiter - cleaned up %x "
-					"for lwp %p",
-					(unsigned int)waiter, waiter->l);
+					"for pid %d",
+					(unsigned int)waiter, waiter->pid);
 		                _sema_destroy(&waiter->bulk_waiter.event);
 				kfree(waiter);
 			}
@@ -1297,9 +1297,9 @@ vchiq_dump_platform_instances(void *dump_context)
 			instance = service->instance;
 			if (instance && !instance->mark) {
 				len = snprintf(buf, sizeof(buf),
-					"Instance %x: lwp %p,%s completions "
+					"Instance %x: pid %d,%s completions "
 						"%d/%d",
-					(unsigned int)instance, instance->l,
+					(unsigned int)instance, instance->pid,
 					instance->connected ? " connected, " :
 						"",
 					instance->completion_insert -
