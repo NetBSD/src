@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.48.4.1 2015/01/20 09:50:46 martin Exp $
+# $NetBSD: mkimage,v 1.48.4.2 2015/01/28 11:27:03 martin Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -154,7 +154,7 @@ esac
 
 if [ -z "${bootonly}" ]; then
 	echo ${bar} configuring sets ${bar}
-	(echo '/set type=dir uname=root gname=wheel mode=0755'
+	(cat "${release}/etc/mtree/NetBSD.dist"
 	for i in $selected_sets; do
 		s="${release}/etc/mtree/set.$i"
 		if [ -f "$s" ]; then
@@ -167,10 +167,6 @@ make_fstab
 customize
 populate
 
-if [ -z "${bootonly}" ]; then
-	(cd ${mnt}; ${MTREE} -N ${release}/etc -c -k all | 
-	    ${MTREE} -N ${release}/etc -C -k all) >> "$tmp/selected_sets"
-fi
 if [ -n "${msdosid}" ]; then
 	echo ${bar} Populating msdos filesystem ${bar}
 	${MAKEFS} -N ${release}/etc -t msdos \
