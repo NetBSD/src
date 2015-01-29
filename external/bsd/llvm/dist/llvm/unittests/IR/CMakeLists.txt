@@ -10,10 +10,10 @@ set(IRSources
   AttributesTest.cpp
   ConstantRangeTest.cpp
   ConstantsTest.cpp
+  DebugInfoTest.cpp
   DominatorTreeTest.cpp
   IRBuilderTest.cpp
   InstructionsTest.cpp
-  LeakDetectorTest.cpp
   LegacyPassManagerTest.cpp
   MDBuilderTest.cpp
   MetadataTest.cpp

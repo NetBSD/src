@@ -21,7 +21,8 @@ endif
 
 # Build LLD and LLDB if present. Note LLDB must be built last as it depends on
 # the wider LLVM infrastructure (including Clang).
-OPTIONAL_DIRS := lld lldb
+OPTIONAL_PARALLEL_DIRS += lld
+OPTIONAL_DIRS := lldb
 
 # NOTE: The tools are organized into five groups of four consisting of one
 # large and three small executables. This is done to minimize memory load
@@ -32,7 +33,7 @@ PARALLEL_DIRS := opt llvm-as llvm-dis llc llvm-ar llvm-nm llvm-link \
                  macho-dump llvm-objdump llvm-readobj llvm-rtdyld \
                  llvm-dwarfdump llvm-cov llvm-size llvm-stress llvm-mcmarkup \
                  llvm-profdata llvm-symbolizer obj2yaml yaml2obj llvm-c-test \
-                 llvm-vtabledump verify-uselistorder
+                 llvm-vtabledump verify-uselistorder dsymutil
 
 # If Intel JIT Events support is configured, build an extra tool to test it.
 ifeq ($(USE_INTEL_JITEVENTS), 1)
@@ -71,6 +72,10 @@ ifneq ($(ENABLE_SHARED),1)
     PARALLEL_DIRS := $(filter-out bugpoint-passes, \
                         $(PARALLEL_DIRS))
   endif
+endif
+
+ifneq (,$(filter go,$(BINDINGS_TO_BUILD)))
+  PARALLEL_DIRS += llvm-go
 endif
 
 include $(LEVEL)/Makefile.common
