@@ -6,7 +6,7 @@
 # $3 protocol
 # $4 address
 # $5 mask
-# $6 proto
+# $6 port
 # $7 id
 
 case "$1" in
