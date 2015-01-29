@@ -1,4 +1,4 @@
-/*	$NetBSD: semctl.c,v 1.17 2014/08/13 14:43:48 joerg Exp $	*/
+/*	$NetBSD: semctl.c,v 1.18 2015/01/29 20:44:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,16 +30,13 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: semctl.c,v 1.17 2014/08/13 14:43:48 joerg Exp $");
+__RCSID("$NetBSD: semctl.c,v 1.18 2015/01/29 20:44:38 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <stdarg.h>
-#if defined(__clang__) && defined(__powerpc__) && !defined(__powerpc64__)
-#define __lint__
-#endif
 #ifdef __lint__
 #include <string.h>
 #endif
