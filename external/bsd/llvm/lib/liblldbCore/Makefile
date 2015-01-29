@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/08/10 17:35:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2015/01/29 20:41:38 joerg Exp $
 
 LIB=	lldbCore
 
@@ -18,7 +18,6 @@ SRCS+=	Address.cpp \
 	Broadcaster.cpp \
 	Communication.cpp \
 	Connection.cpp \
-	ConnectionFileDescriptor.cpp \
 	ConnectionMachPort.cpp \
 	ConnectionSharedMemory.cpp \
 	ConstString.cpp \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.75 2014/11/14 15:56:12 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.76 2015/01/29 20:41:33 joerg Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -6,9 +6,9 @@ LLVM_TOPLEVEL_MK=
 .include <bsd.own.mk>
 
 SVN_ROOT=		http://llvm.org/svn/llvm-project
-SVN_BRANCH=		trunk
+SVN_BRANCH=		branches/release_36
 
-COMMON_REVISION=	215315
+COMMON_REVISION=	227398
 CLANG_REVISION=		${COMMON_REVISION}
 LLD_REVISION=		${COMMON_REVISION}
 LLDB_REVISION=		${COMMON_REVISION}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/08/10 17:34:22 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2015/01/29 20:41:36 joerg Exp $
 
 LIB=	LLVMRuntimeDyld
 
@@ -6,8 +6,7 @@ LIB=	LLVMRuntimeDyld
 
 .PATH: ${LLVM_SRCDIR}/lib/ExecutionEngine/RuntimeDyld
 
-SRCS+=	GDBRegistrar.cpp \
-	RuntimeDyld.cpp \
+SRCS+=	RuntimeDyld.cpp \
 	RuntimeDyldChecker.cpp \
 	RuntimeDyldELF.cpp \
 	RuntimeDyldMachO.cpp

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/08/10 17:35:07 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2015/01/29 20:41:38 joerg Exp $
 
 LIB=	lldbInterpreter
 
@@ -29,6 +29,7 @@ SRCS+=	Args.cpp \
 	OptionValueArgs.cpp \
 	OptionValueArray.cpp \
 	OptionValueBoolean.cpp \
+	OptionValueChar.cpp \
 	OptionValueDictionary.cpp \
 	OptionValueEnumeration.cpp \
 	OptionValueFileSpec.cpp \

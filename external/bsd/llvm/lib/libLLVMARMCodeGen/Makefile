@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2014/05/30 18:28:14 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2015/01/29 20:41:35 joerg Exp $
 
 LIB=	LLVMARMCodeGen
 
@@ -9,7 +9,6 @@ LIB=	LLVMARMCodeGen
 SRCS+=	ARMAsmPrinter.cpp \
 	ARMBaseInstrInfo.cpp \
 	ARMBaseRegisterInfo.cpp \
-	ARMCodeEmitter.cpp \
 	ARMConstantIslandPass.cpp \
 	ARMConstantPoolValue.cpp \
 	ARMExpandPseudoInsts.cpp \
@@ -19,7 +18,6 @@ SRCS+=	ARMAsmPrinter.cpp \
 	ARMISelDAGToDAG.cpp \
 	ARMISelLowering.cpp \
 	ARMInstrInfo.cpp \
-	ARMJITInfo.cpp \
 	ARMLoadStoreOptimizer.cpp \
 	ARMMCInstLower.cpp \
 	ARMMachineFunctionInfo.cpp \
@@ -46,7 +44,7 @@ TABLEGEN_OUTPUT= \
 	ARMGenRegisterInfo.inc|-gen-register-info \
 	ARMGenInstrInfo.inc|-gen-instr-info \
 	ARMGenCodeEmitter.inc|-gen-emitter \
-	ARMGenMCCodeEmitter.inc|-gen-emitter^-mc-emitter \
+	ARMGenMCCodeEmitter.inc|-gen-emitter \
 	ARMGenMCPseudoLowering.inc|-gen-pseudo-lowering \
 	ARMGenAsmWriter.inc|-gen-asm-writer \
 	ARMGenAsmMatcher.inc|-gen-asm-matcher \

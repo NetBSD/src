@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2014/05/30 18:28:15 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2015/01/29 20:41:37 joerg Exp $
 
 LIB=	lldDriver
 
@@ -9,6 +9,7 @@ LIB=	lldDriver
 SRCS+=	CoreDriver.cpp \
 	DarwinLdDriver.cpp \
 	Driver.cpp \
+	DarwinInputGraph.cpp \
 	GnuLdDriver.cpp \
 	GnuLdInputGraph.cpp \
 	UniversalDriver.cpp \

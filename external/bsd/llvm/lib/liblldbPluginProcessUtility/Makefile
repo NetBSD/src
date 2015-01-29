@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2014/08/10 17:35:08 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2015/01/29 20:41:38 joerg Exp $
 
 LIB=	lldbPluginProcessUtility
 
@@ -19,6 +19,7 @@ SRCS+=	DynamicRegisterInfo.cpp \
 	RegisterContextDummy.cpp \
 	RegisterContextFreeBSD_i386.cpp \
 	RegisterContextFreeBSD_mips64.cpp \
+	RegisterContextFreeBSD_powerpc.cpp \
 	RegisterContextFreeBSD_x86_64.cpp \
 	RegisterContextLinux_i386.cpp \
 	RegisterContextLinux_x86_64.cpp \
@@ -30,6 +31,7 @@ SRCS+=	DynamicRegisterInfo.cpp \
 	RegisterContextMacOSXFrameBackchain.cpp \
 	RegisterContextMemory.cpp \
 	RegisterContextPOSIX_mips64.cpp \
+	RegisterContextPOSIX_powerpc.cpp \
 	RegisterContextPOSIX_x86.cpp \
 	RegisterContextThreadMemory.cpp \
 	StopInfoMachException.cpp \
