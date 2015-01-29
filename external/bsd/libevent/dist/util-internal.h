@@ -1,4 +1,4 @@
-/*	$NetBSD: util-internal.h,v 1.1.1.1 2013/04/11 16:43:21 christos Exp $	*/
+/*	$NetBSD: util-internal.h,v 1.1.1.2 2015/01/29 06:37:55 spz Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *
@@ -320,6 +320,8 @@ HANDLE evutil_load_windows_system_library(const TCHAR *library_name);
 #define EV_SSIZE_ARG(x) EV_I64_ARG(x)
 #endif
 #endif
+
+void evutil_memclear_(void *mem, size_t len);
 
 #ifdef __cplusplus
 }

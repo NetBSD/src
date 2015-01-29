@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_http.c,v 1.1.1.2 2013/04/11 16:43:33 christos Exp $	*/
+/*	$NetBSD: regress_http.c,v 1.1.1.3 2015/01/29 06:38:23 spz Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -34,7 +34,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_http.c,v 1.1.1.2 2013/04/11 16:43:33 christos Exp $");
+__RCSID("$NetBSD: regress_http.c,v 1.1.1.3 2015/01/29 06:38:23 spz Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -3016,16 +3016,21 @@ http_stream_in_cancel_test(void *arg)
 static void
 http_connection_fail_done(struct evhttp_request *req, void *arg)
 {
+       struct evhttp_connection *evcon = arg;
+       struct event_base *base = evhttp_connection_get_base(evcon);
+
        /* An ENETUNREACH error results in an unrecoverable
         * evhttp_connection error (see evhttp_connection_fail()).  The
         * connection will be reset, and the user will be notified with a NULL
         * req parameter. */
        tt_assert(!req);
 
+       evhttp_connection_free(evcon);
+
        test_ok = 1;
 
  end:
-       event_base_loopexit(arg, NULL);
+       event_base_loopexit(base, NULL);
 }
 
 /* Test unrecoverable evhttp_connection errors by generating an ENETUNREACH
@@ -3056,7 +3061,7 @@ http_connection_fail_test(void *arg)
         * server using our make request method.
         */
 
-       req = evhttp_request_new(http_connection_fail_done, data->base);
+       req = evhttp_request_new(http_connection_fail_done, evcon);
        tt_assert(req);
 
        if (evhttp_make_request(evcon, req, EVHTTP_REQ_GET, "/") == -1) {
@@ -3068,8 +3073,7 @@ http_connection_fail_test(void *arg)
        tt_int_op(test_ok, ==, 1);
 
  end:
-       if (evcon)
-               evhttp_connection_free(evcon);
+        ;
 }
 
 static void
