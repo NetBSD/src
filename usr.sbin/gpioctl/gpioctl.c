@@ -1,4 +1,4 @@
-/* $NetBSD: gpioctl.c,v 1.20 2013/05/19 15:31:23 mbalmer Exp $ */
+/* $NetBSD: gpioctl.c,v 1.21 2015/01/29 03:30:06 christos Exp $ */
 
 /*
  * Copyright (c) 2008, 2010, 2011, 2013 Marc Balmer <mbalmer@NetBSD.org>
@@ -48,9 +48,6 @@ static void gpioset(int pin, char *name, int flags, char *alias);
 static void gpiounset(int pin, char *name);
 static void devattach(char *, int, uint32_t, uint32_t);
 __dead static void usage(void);
-
-extern long long strtonum(const char *numstr, long long minval,
-    long long maxval, const char **errstrp);
 
 static const struct bitstr {
 	unsigned int mask;
