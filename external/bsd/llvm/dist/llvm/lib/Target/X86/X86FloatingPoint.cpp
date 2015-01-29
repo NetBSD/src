@@ -25,7 +25,6 @@
 
 #include "X86.h"
 #include "X86InstrInfo.h"
-#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -46,6 +45,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <algorithm>
+#include <bitset>
 using namespace llvm;
 
 #define DEBUG_TYPE "x86-codegen"
@@ -324,15 +324,13 @@ bool FPS::runOnMachineFunction(MachineFunction &MF) {
   MachineBasicBlock *Entry = MF.begin();
 
   bool Changed = false;
-  for (df_ext_iterator<MachineBasicBlock*, SmallPtrSet<MachineBasicBlock*, 8> >
-         I = df_ext_begin(Entry, Processed), E = df_ext_end(Entry, Processed);
-       I != E; ++I)
-    Changed |= processBasicBlock(MF, **I);
+  for (MachineBasicBlock *BB : depth_first_ext(Entry, Processed))
+    Changed |= processBasicBlock(MF, *BB);
 
   // Process any unreachable blocks in arbitrary order now.
   if (MF.size() != Processed.size())
     for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
-      if (Processed.insert(BB))
+      if (Processed.insert(BB).second)
         Changed |= processBasicBlock(MF, *BB);
 
   LiveBundles.clear();
@@ -836,7 +834,9 @@ FPS::freeStackSlotBefore(MachineBasicBlock::iterator I, unsigned FPRegNo) {
   RegMap[TopReg]    = OldSlot;
   RegMap[FPRegNo]   = ~0;
   Stack[--StackTop] = ~0;
-  return BuildMI(*MBB, I, DebugLoc(), TII->get(X86::ST_FPrr)).addReg(STReg);
+  return BuildMI(*MBB, I, DebugLoc(), TII->get(X86::ST_FPrr))
+      .addReg(STReg)
+      .getInstr();
 }
 
 /// adjustLiveRegs - Kill and revive registers such that exactly the FP
@@ -1654,7 +1654,10 @@ void FPS::setKillFlags(MachineBasicBlock &MBB) const {
 
   for (MachineBasicBlock::reverse_iterator I = MBB.rbegin(), E = MBB.rend();
        I != E; ++I) {
-    BitVector Defs(8);
+    if (I->isDebugValue())
+      continue;
+
+    std::bitset<8> Defs;
     SmallVector<MachineOperand *, 2> Uses;
     MachineInstr &MI = *I;
 

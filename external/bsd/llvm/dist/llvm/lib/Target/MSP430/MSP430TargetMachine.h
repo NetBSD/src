@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 
-#ifndef LLVM_TARGET_MSP430_TARGETMACHINE_H
-#define LLVM_TARGET_MSP430_TARGETMACHINE_H
+#ifndef LLVM_LIB_TARGET_MSP430_MSP430TARGETMACHINE_H
+#define LLVM_LIB_TARGET_MSP430_MSP430TARGETMACHINE_H
 
 #include "MSP430Subtarget.h"
 #include "llvm/Target/TargetFrameLowering.h"
@@ -24,6 +24,7 @@ namespace llvm {
 /// MSP430TargetMachine
 ///
 class MSP430TargetMachine : public LLVMTargetMachine {
+  std::unique_ptr<TargetLoweringObjectFile> TLOF;
   MSP430Subtarget        Subtarget;
 
 public:
@@ -31,13 +32,18 @@ public:
                       StringRef CPU, StringRef FS, const TargetOptions &Options,
                       Reloc::Model RM, CodeModel::Model CM,
                       CodeGenOpt::Level OL);
+  ~MSP430TargetMachine() override;
 
   const MSP430Subtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
+
+  TargetLoweringObjectFile *getObjFileLowering() const override {
+    return TLOF.get();
+  }
 }; // MSP430TargetMachine.
 
 } // end namespace llvm
 
-#endif // LLVM_TARGET_MSP430_TARGETMACHINE_H
+#endif

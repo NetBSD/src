@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallString.h"
+#include "llvm/AsmParser/Parser.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
@@ -26,18 +26,16 @@ using namespace llvm;
 namespace {
 
 std::unique_ptr<Module> parseAssembly(const char *Assembly) {
-  auto M = make_unique<Module>("Module", getGlobalContext());
-
   SMDiagnostic Error;
-  bool Parsed =
-      ParseAssemblyString(Assembly, M.get(), Error, M->getContext()) == M.get();
+  std::unique_ptr<Module> M =
+      parseAssemblyString(Assembly, Error, getGlobalContext());
 
   std::string ErrMsg;
   raw_string_ostream OS(ErrMsg);
   Error.print("", OS);
 
   // A failure here means that the test itself is buggy.
-  if (!Parsed)
+  if (!M)
     report_fatal_error(OS.str().c_str());
 
   return M;
@@ -53,9 +51,35 @@ static std::unique_ptr<Module> getLazyModuleFromAssembly(LLVMContext &Context,
                                                          SmallString<1024> &Mem,
                                                          const char *Assembly) {
   writeModuleToBuffer(parseAssembly(Assembly), Mem);
-  MemoryBuffer *Buffer = MemoryBuffer::getMemBuffer(Mem.str(), "test", false);
-  ErrorOr<Module *> ModuleOrErr = getLazyBitcodeModule(Buffer, Context);
+  std::unique_ptr<MemoryBuffer> Buffer =
+      MemoryBuffer::getMemBuffer(Mem.str(), "test", false);
+  ErrorOr<Module *> ModuleOrErr =
+      getLazyBitcodeModule(std::move(Buffer), Context);
   return std::unique_ptr<Module>(ModuleOrErr.get());
+}
+
+TEST(BitReaderTest, DematerializeFunctionPreservesLinkageType) {
+  SmallString<1024> Mem;
+
+  LLVMContext Context;
+  std::unique_ptr<Module> M = getLazyModuleFromAssembly(
+      Context, Mem, "define internal i32 @func() {\n"
+                      "ret i32 0\n"
+                    "}\n");
+
+  EXPECT_FALSE(verifyModule(*M, &dbgs()));
+
+  M->getFunction("func")->materialize();
+  EXPECT_FALSE(M->getFunction("func")->empty());
+  EXPECT_TRUE(M->getFunction("func")->getLinkage() ==
+              GlobalValue::InternalLinkage);
+
+  // Check that the linkage type is preserved after dematerialization.
+  M->getFunction("func")->Dematerialize();
+  EXPECT_TRUE(M->getFunction("func")->empty());
+  EXPECT_TRUE(M->getFunction("func")->getLinkage() ==
+              GlobalValue::InternalLinkage);
+  EXPECT_FALSE(verifyModule(*M, &dbgs()));
 }
 
 TEST(BitReaderTest, MaterializeFunctionsForBlockAddr) { // PR11677
@@ -97,7 +121,7 @@ TEST(BitReaderTest, MaterializeFunctionsForBlockAddrInFunctionBefore) {
   EXPECT_FALSE(verifyModule(*M, &dbgs()));
 
   // Materialize @before, pulling in @func.
-  EXPECT_FALSE(M->getFunction("before")->Materialize());
+  EXPECT_FALSE(M->getFunction("before")->materialize());
   EXPECT_FALSE(M->getFunction("func")->empty());
   EXPECT_TRUE(M->getFunction("other")->empty());
   EXPECT_FALSE(verifyModule(*M, &dbgs()));
@@ -129,7 +153,7 @@ TEST(BitReaderTest, MaterializeFunctionsForBlockAddrInFunctionAfter) {
   EXPECT_FALSE(verifyModule(*M, &dbgs()));
 
   // Materialize @after, pulling in @func.
-  EXPECT_FALSE(M->getFunction("after")->Materialize());
+  EXPECT_FALSE(M->getFunction("after")->materialize());
   EXPECT_FALSE(M->getFunction("func")->empty());
   EXPECT_TRUE(M->getFunction("other")->empty());
   EXPECT_FALSE(verifyModule(*M, &dbgs()));
