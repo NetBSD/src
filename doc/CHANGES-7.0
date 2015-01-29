@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.187 2015/01/28 19:53:10 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.188 2015/01/29 15:15:40 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15243,4 +15243,14 @@ sys/dev/vnd.c					1.240-1.241
 	Instead bump is just before the last VOP_STRATEGY(), or before calling
 	nestiobuf_done().
 	[bouyer, ticket #468]
+
+distrib/utils/embedded/conf/evbarm.conf		1.20
+distrib/utils/embedded/conf/x86.conf		1.7
+distrib/utils/embedded/mkimage			1.52
+
+	Fix previous so that the new generated rc.conf is picked up and that
+	any new new mount points (e.g. /proc and /kern) are generated.
+	While here increate the fs size so that postfix can actually build
+	/etc/mail/aliases.db
+	[skrll, ticket #470]
 
