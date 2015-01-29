@@ -7,7 +7,6 @@
 // RUN: %clang -fbuild-session-file=doesntexist -### %s 2>&1 | FileCheck -check-prefix=NOFILE %s
 // NOFILE: no such file or directory: 'doesntexist'
 
-// REQUIRES: shell
 // RUN: touch -m -a -t 201008011501 %t.build-session-file
 // RUN: %clang -fbuild-session-file=%t.build-session-file -### %s 2>&1 | FileCheck -check-prefix=TIMESTAMP_ONLY %s
 
@@ -33,3 +32,8 @@
 
 // RUN: %clang -fmodules-validate-system-headers -### %s 2>&1 | FileCheck -check-prefix=MODULES_VALIDATE_SYSTEM_HEADERS %s
 // MODULES_VALIDATE_SYSTEM_HEADERS: -fmodules-validate-system-headers
+
+// RUN: %clang -fmodules -fmodule-map-file=foo.map -fmodule-map-file=bar.map -### %s 2>&1 | FileCheck -check-prefix=CHECK-MODULE-MAP-FILES %s
+// CHECK-MODULE-MAP-FILES: "-fmodules"
+// CHECK-MODULE-MAP-FILES: "-fmodule-map-file=foo.map"
+// CHECK-MODULE-MAP-FILES: "-fmodule-map-file=bar.map"
