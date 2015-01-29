@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2014/08/10 17:34:22 joerg Exp $
+#	$NetBSD: Makefile,v 1.30 2015/01/29 20:41:36 joerg Exp $
 
 LIB=	LLVMSupport
 
@@ -46,8 +46,10 @@ SRCS+=	APFloat.cpp \
 	LockFileManager.cpp \
 	MD5.cpp \
 	ManagedStatic.cpp \
+	MathExtras.cpp \
 	MemoryBuffer.cpp \
 	MemoryObject.cpp \
+	Options.cpp \
 	PluginLoader.cpp \
 	PrettyStackTrace.cpp \
 	Regex.cpp \
@@ -56,12 +58,11 @@ SRCS+=	APFloat.cpp \
 	SourceMgr.cpp \
 	SpecialCaseList.cpp \
 	Statistic.cpp \
-	StreamableMemoryObject.cpp \
+	StreamingMemoryObject.cpp \
 	StringExtras.cpp \
 	StringMap.cpp \
 	StringPool.cpp \
 	StringRef.cpp \
-	StringRefMemoryObject.cpp \
 	SystemUtils.cpp \
 	TargetRegistry.cpp \
 	Timer.cpp \

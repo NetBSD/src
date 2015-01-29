@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2014/08/10 17:34:21 joerg Exp $
+#	$NetBSD: Makefile,v 1.9 2015/01/29 20:41:35 joerg Exp $
 
 LIB=	LLVMIR
 
@@ -34,15 +34,16 @@ SRCS+=	AsmWriter.cpp \
 	IntrinsicInst.cpp \
 	LLVMContext.cpp \
 	LLVMContextImpl.cpp \
-	LeakDetector.cpp \
 	LegacyPassManager.cpp \
 	MDBuilder.cpp \
 	Mangler.cpp \
 	Metadata.cpp \
+	MetadataTracking.cpp \
 	Module.cpp \
 	Pass.cpp \
 	PassManager.cpp \
 	PassRegistry.cpp \
+	Statepoint.cpp \
 	Type.cpp \
 	TypeFinder.cpp \
 	Use.cpp \
