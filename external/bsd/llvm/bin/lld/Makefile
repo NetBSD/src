@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/08/10 17:34:20 joerg Exp $
+#	$NetBSD: Makefile,v 1.6 2015/01/29 20:41:33 joerg Exp $
 
 PROG_CXX=	lld
 NOMAN=		yes
@@ -12,6 +12,7 @@ SRCS=	lld.cpp
 LLD_LIBS+= \
 	lldDriver \
 	lldReaderWriterELF \
+	lldReaderWriterELFAArch64 \
 	lldReaderWriterELFHexagon \
 	lldReaderWriterELFMips \
 	lldReaderWriterELFPPC \
@@ -24,6 +25,7 @@ LLD_LIBS+= \
 	lldPasses \
 	lldCore \
 	lldReaderWriterNative \
+	lldConfig
 
 LLVM_LIBS+= \
 	Object \

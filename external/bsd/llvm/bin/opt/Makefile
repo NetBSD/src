@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2014/08/10 17:34:20 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2015/01/29 20:41:34 joerg Exp $
 
 PROG_CXX=	opt
 NOMAN=		yes
@@ -60,6 +60,7 @@ LLVM_LIBS+= \
 	InstCombine \
 	Instrumentation \
 	ScalarOpts \
+	ProfileData \
 	Analysis \
 	MC \
 	TransformsUtils \

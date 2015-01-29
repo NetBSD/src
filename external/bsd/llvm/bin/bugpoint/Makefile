@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2014/08/10 17:34:19 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2015/01/29 20:41:33 joerg Exp $
 
 PROG_CXX=	bugpoint
 NOMAN=		yes
@@ -26,8 +26,10 @@ LLVM_LIBS+= \
 	BitWriter \
 	InstCombine \
 	Instrumentation \
+	MC \
 	Linker \
 	ScalarOpts \
+	ProfileData \
 	Target \
 	ipo \
 	Vectorize \
