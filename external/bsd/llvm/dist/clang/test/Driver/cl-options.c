@@ -172,8 +172,12 @@
 // (/Zs is for syntax-only)
 // RUN: %clang_cl /Zs \
 // RUN:    /analyze- \
+// RUN:    /cgthreads4 \
+// RUN:    /cgthreads8 \
+// RUN:    /d2Zi+ \
 // RUN:    /errorReport:foo \
 // RUN:    /FS \
+// RUN:    /Gd \
 // RUN:    /GF \
 // RUN:    /GS- \
 // RUN:    /kernel- \
@@ -184,14 +188,14 @@
 // RUN:    /sdl \
 // RUN:    /sdl- \
 // RUN:    /vmg \
+// RUN:    /volatile:iso \
 // RUN:    /w12345 \
 // RUN:    /wd1234 \
-// RUN:    /Zc:forScope \
-// RUN:    /Zc:wchar_t \
-// RUN:    /Zc:inline \
-// RUN:    /Zc:rvalueCast \
+// RUN:    /Zo \
+// RUN:    /Zo- \
 // RUN:    -### -- %s 2>&1 | FileCheck -check-prefix=IGNORED %s
 // IGNORED-NOT: argument unused during compilation
+// IGNORED-NOT: no such file or directory
 
 // Ignored options and compile-only options are ignored for link jobs.
 // RUN: touch %t.obj
@@ -210,7 +214,6 @@
 // RUN:     /AIfoo \
 // RUN:     /clr:pure \
 // RUN:     /docname \
-// RUN:     /d2Zi+ \
 // RUN:     /EHsc \
 // RUN:     /F \
 // RUN:     /FA \
@@ -245,6 +248,7 @@
 // RUN:     /Gs1000 \
 // RUN:     /GT \
 // RUN:     /GX \
+// RUN:     /Gv \
 // RUN:     /Gz \
 // RUN:     /GZ \
 // RUN:     /H \
@@ -263,7 +267,7 @@
 // RUN:     /Qvec-report:2 \
 // RUN:     /u \
 // RUN:     /V \
-// RUN:     /volatile \
+// RUN:     /volatile:ms \
 // RUN:     /wfoo \
 // RUN:     /WL \
 // RUN:     /Wp64 \
@@ -277,8 +281,6 @@
 // RUN:     /Yustdafx.h \
 // RUN:     /Z7 \
 // RUN:     /Za \
-// RUN:     /Zc:auto \
-// RUN:     /Zc:wchar_t- \
 // RUN:     /Ze \
 // RUN:     /Zg \
 // RUN:     /Zi \

@@ -7,13 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_LIB_DRIVER_MULTILIB_H_
-#define CLANG_LIB_DRIVER_MULTILIB_H_
+#ifndef LLVM_CLANG_DRIVER_MULTILIB_H
+#define LLVM_CLANG_DRIVER_MULTILIB_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Option/Option.h"
-
 #include <functional>
 #include <string>
 #include <vector>
