@@ -39,7 +39,7 @@ public:
   static char ID;
   AArch64StorePairSuppress() : MachineFunctionPass(ID) {}
 
-  virtual const char *getPassName() const override {
+  const char *getPassName() const override {
     return "AArch64 Store Pair Suppression";
   }
 
@@ -50,7 +50,7 @@ private:
 
   bool isNarrowFPStore(const MachineInstr &MI);
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
     AU.addRequired<MachineTraceMetrics>();
     AU.addPreserved<MachineTraceMetrics>();
@@ -85,8 +85,7 @@ bool AArch64StorePairSuppress::shouldAddSTPToBlock(const MachineBasicBlock *BB) 
 
   // If a subtarget does not define resources for STPQi, bail here.
   if (SCDesc->isValid() && !SCDesc->isVariant()) {
-    unsigned ResLenWithSTP = BBTrace.getResourceLength(
-        ArrayRef<const MachineBasicBlock *>(), SCDesc);
+    unsigned ResLenWithSTP = BBTrace.getResourceLength(None, SCDesc);
     if (ResLenWithSTP > ResLength) {
       DEBUG(dbgs() << "  Suppress STP in BB: " << BB->getNumber()
                    << " resources " << ResLength << " -> " << ResLenWithSTP
@@ -124,7 +123,7 @@ bool AArch64StorePairSuppress::runOnMachineFunction(MachineFunction &mf) {
   MRI = &MF->getRegInfo();
   const TargetSubtargetInfo &ST =
       MF->getTarget().getSubtarget<TargetSubtargetInfo>();
-  SchedModel.init(*ST.getSchedModel(), &ST, TII);
+  SchedModel.init(ST.getSchedModel(), &ST, TII);
 
   Traces = &getAnalysis<MachineTraceMetrics>();
   MinInstr = nullptr;
