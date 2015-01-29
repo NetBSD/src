@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.145 2014/12/12 23:48:45 riz Exp $
+$NetBSD: acronyms.comp,v 1.146 2015/01/29 06:53:28 plunky Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -576,6 +576,7 @@ INCITS	InterNational Committee for Information Technology Standards
 IO	input/output
 IOCTL	input/output control
 IOMMU	input/output memory management unit
+IOT	Internet of Things
 IP	Internet Protocol
 IP	intellectual property
 IPC	interprocess communication
