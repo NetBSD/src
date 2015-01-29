@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.229 2015/01/25 15:50:30 christos Exp $
+# $NetBSD: md.amd64,v 1.230 2015/01/29 20:46:10 joerg Exp $
 
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -134,9 +134,13 @@
 ./usr/include/clang-3.6/__wmmintrin_aes.h	comp-c-include		llvm
 ./usr/include/clang-3.6/__wmmintrin_pclmul.h	comp-c-include		llvm
 ./usr/include/clang-3.6/ammintrin.h		comp-c-include		llvm
+./usr/include/clang-3.6/adxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.6/avx2intrin.h		comp-c-include		llvm
+./usr/include/clang-3.6/avx512bwintrin.h	comp-c-include		llvm
 ./usr/include/clang-3.6/avx512erintrin.h	comp-c-include		llvm
 ./usr/include/clang-3.6/avx512fintrin.h		comp-c-include		llvm
+./usr/include/clang-3.6/avx512vlbwintrin.h	comp-c-include		llvm
+./usr/include/clang-3.6/avx512vlintrin.h	comp-c-include		llvm
 ./usr/include/clang-3.6/avxintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.6/bmi2intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.6/bmiintrin.h		comp-c-include		llvm
