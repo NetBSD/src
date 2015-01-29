@@ -93,6 +93,7 @@ namespace {
 // -----------------------------------------------------------------------------
 
 GCStrategy::GCStrategy() :
+  UseStatepoints(false),
   NeededSafePoints(0),
   CustomReadBarriers(false),
   CustomWriteBarriers(false),
@@ -101,25 +102,6 @@ GCStrategy::GCStrategy() :
   InitRoots(true),
   UsesMetadata(false)
 {}
-
-bool GCStrategy::initializeCustomLowering(Module &M) { return false; }
-
-bool GCStrategy::performCustomLowering(Function &F) {
-  dbgs() << "gc " << getName() << " must override performCustomLowering.\n";
-  llvm_unreachable("must override performCustomLowering");
-}
-
-
-bool GCStrategy::findCustomSafePoints(GCFunctionInfo& FI, MachineFunction &F) {
-  dbgs() << "gc " << getName() << " must override findCustomSafePoints.\n";
-  llvm_unreachable(nullptr);
-}
-
-
-GCFunctionInfo *GCStrategy::insertFunctionInfo(const Function &F) {
-  Functions.push_back(make_unique<GCFunctionInfo>(F, *this));
-  return Functions.back().get();
-}
 
 // -----------------------------------------------------------------------------
 

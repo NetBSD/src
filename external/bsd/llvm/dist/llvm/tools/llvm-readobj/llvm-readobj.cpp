@@ -141,6 +141,24 @@ namespace opts {
   cl::opt<bool>
   MipsPLTGOT("mips-plt-got",
              cl::desc("Display the MIPS GOT and PLT GOT sections"));
+
+  // -coff-imports
+  cl::opt<bool>
+  COFFImports("coff-imports", cl::desc("Display the PE/COFF import table"));
+
+  // -coff-exports
+  cl::opt<bool>
+  COFFExports("coff-exports", cl::desc("Display the PE/COFF export table"));
+
+  // -coff-directives
+  cl::opt<bool>
+  COFFDirectives("coff-directives",
+                 cl::desc("Display the PE/COFF .drectve section"));
+
+  // -coff-basereloc
+  cl::opt<bool>
+  COFFBaseRelocs("coff-basereloc",
+                 cl::desc("Display the PE/COFF .reloc section"));
 } // namespace opts
 
 static int ReturnValue = EXIT_SUCCESS;
@@ -159,8 +177,8 @@ bool error(std::error_code EC) {
 
 bool relocAddressLess(RelocationRef a, RelocationRef b) {
   uint64_t a_addr, b_addr;
-  if (error(a.getOffset(a_addr))) return false;
-  if (error(b.getOffset(b_addr))) return false;
+  if (error(a.getOffset(a_addr))) exit(ReturnValue);
+  if (error(b.getOffset(b_addr))) exit(ReturnValue);
   return a_addr < b_addr;
 }
 
@@ -266,6 +284,14 @@ static void dumpObject(const ObjectFile *Obj) {
   if (isMipsArch(Obj->getArch()) && Obj->isELF())
     if (opts::MipsPLTGOT)
       Dumper->printMipsPLTGOT();
+  if (opts::COFFImports)
+    Dumper->printCOFFImports();
+  if (opts::COFFExports)
+    Dumper->printCOFFExports();
+  if (opts::COFFDirectives)
+    Dumper->printCOFFDirectives();
+  if (opts::COFFBaseRelocs)
+    Dumper->printCOFFBaseReloc();
 }
 
 
@@ -299,12 +325,12 @@ static void dumpInput(StringRef File) {
   }
 
   // Attempt to open the binary.
-  ErrorOr<std::unique_ptr<Binary>> BinaryOrErr = createBinary(File);
+  ErrorOr<OwningBinary<Binary>> BinaryOrErr = createBinary(File);
   if (std::error_code EC = BinaryOrErr.getError()) {
     reportError(File, EC);
     return;
   }
-  Binary &Binary = *BinaryOrErr.get();
+  Binary &Binary = *BinaryOrErr.get().getBinary();
 
   if (Archive *Arc = dyn_cast<Archive>(&Binary))
     dumpArchive(Arc);

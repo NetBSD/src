@@ -813,7 +813,7 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
                                    BE = L.block_end();
        BI != BE; ++BI) {
     BlockChain &Chain = *BlockToChain[*BI];
-    if (!UpdatedPreds.insert(&Chain))
+    if (!UpdatedPreds.insert(&Chain).second)
       continue;
 
     assert(Chain.LoopPredecessors == 0);
@@ -914,7 +914,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
   for (MachineFunction::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
     MachineBasicBlock *BB = &*FI;
     BlockChain &Chain = *BlockToChain[BB];
-    if (!UpdatedPreds.insert(&Chain))
+    if (!UpdatedPreds.insert(&Chain).second)
       continue;
 
     assert(Chain.LoopPredecessors == 0);
@@ -1046,9 +1046,6 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
   if (F.getFunction()->getAttributes().
         hasAttribute(AttributeSet::FunctionIndex, Attribute::OptimizeForSize))
     return;
-  unsigned Align = TLI->getPrefLoopAlignment();
-  if (!Align)
-    return;  // Don't care about loop alignment.
   if (FunctionChain.begin() == FunctionChain.end())
     return;  // Empty chain.
 
@@ -1065,6 +1062,10 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
     MachineLoop *L = MLI->getLoopFor(*BI);
     if (!L)
       continue;
+
+    unsigned Align = TLI->getPrefLoopAlignment(L);
+    if (!Align)
+      continue;  // Don't care about loop alignment.
 
     // If the block is cold relative to the function entry don't waste space
     // aligning it.

@@ -711,8 +711,7 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
   SmallPtrSet<MachineBasicBlock*, 8> Reachable;
 
   // Iterate over the reachable blocks in DFS order.
-  for (df_ext_iterator<MachineFunction*, SmallPtrSet<MachineBasicBlock*, 8> >
-       DFI = df_ext_begin(&Fn, Reachable), DFE = df_ext_end(&Fn, Reachable);
+  for (auto DFI = df_ext_begin(&Fn, Reachable), DFE = df_ext_end(&Fn, Reachable);
        DFI != DFE; ++DFI) {
     int SPAdj = 0;
     // Check the exit state of the DFS stack predecessor.
@@ -739,32 +738,24 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
 
 void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
                               int &SPAdj) {
-  const TargetMachine &TM = Fn.getTarget();
-  assert(TM.getSubtargetImpl()->getRegisterInfo() &&
-         "TM::getRegisterInfo() must be implemented!");
+  assert(Fn.getSubtarget().getRegisterInfo() &&
+         "getRegisterInfo() must be implemented!");
   const TargetInstrInfo &TII = *Fn.getSubtarget().getInstrInfo();
-  const TargetRegisterInfo &TRI = *TM.getSubtargetImpl()->getRegisterInfo();
-  const TargetFrameLowering *TFI = TM.getSubtargetImpl()->getFrameLowering();
-  bool StackGrowsDown =
-    TFI->getStackGrowthDirection() == TargetFrameLowering::StackGrowsDown;
+  const TargetRegisterInfo &TRI = *Fn.getSubtarget().getRegisterInfo();
+  const TargetFrameLowering *TFI = Fn.getSubtarget().getFrameLowering();
   int FrameSetupOpcode   = TII.getCallFrameSetupOpcode();
   int FrameDestroyOpcode = TII.getCallFrameDestroyOpcode();
 
   if (RS && !FrameIndexVirtualScavenging) RS->enterBasicBlock(BB);
 
+  bool InsideCallSequence = false;
+
   for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); ) {
 
     if (I->getOpcode() == FrameSetupOpcode ||
         I->getOpcode() == FrameDestroyOpcode) {
-      // Remember how much SP has been adjusted to create the call
-      // frame.
-      int Size = I->getOperand(0).getImm();
-
-      if ((!StackGrowsDown && I->getOpcode() == FrameSetupOpcode) ||
-          (StackGrowsDown && I->getOpcode() == FrameDestroyOpcode))
-        Size = -Size;
-
-      SPAdj += Size;
+      InsideCallSequence = (I->getOpcode() == FrameSetupOpcode);
+      SPAdj += TII.getSPAdjust(I);
 
       MachineBasicBlock::iterator PrevI = BB->end();
       if (I != BB->begin()) PrevI = std::prev(I);
@@ -777,6 +768,13 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
         I = std::next(PrevI);
       continue;
     }
+
+    // If we are looking at a call sequence, we need to keep track of
+    // the SP adjustment made by each instruction in the sequence.
+    // This includes both the frame setup/destroy pseudos (handled above),
+    // as well as other instructions that have side effects w.r.t the SP.
+    if (InsideCallSequence)
+      SPAdj += TII.getSPAdjust(I);
 
     MachineInstr *MI = I;
     bool DoIncr = true;
@@ -796,6 +794,37 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
                       TFI->getFrameIndexReference(
                           Fn, MI->getOperand(0).getIndex(), Reg));
         MI->getOperand(0).ChangeToRegister(Reg, false /*isDef*/);
+        continue;
+      }
+
+      // TODO: This code should be commoned with the code for
+      // PATCHPOINT. There's no good reason for the difference in
+      // implementation other than historical accident.  The only
+      // remaining difference is the unconditional use of the stack
+      // pointer as the base register.
+      if (MI->getOpcode() == TargetOpcode::STATEPOINT) {
+        assert((!MI->isDebugValue() || i == 0) &&
+               "Frame indicies can only appear as the first operand of a "
+               "DBG_VALUE machine instruction");
+        unsigned Reg;
+        MachineOperand &Offset = MI->getOperand(i + 1);
+        const unsigned refOffset =
+          TFI->getFrameIndexReferenceFromSP(Fn, MI->getOperand(i).getIndex(),
+                                            Reg);
+
+        Offset.setImm(Offset.getImm() + refOffset);
+        MI->getOperand(i).ChangeToRegister(Reg, false /*isDef*/);
+        continue;
+      }
+
+      // Frame allocations are target independent. Simply swap the index with
+      // the offset.
+      if (MI->getOpcode() == TargetOpcode::FRAME_ALLOC) {
+        assert(TFI->hasFP(Fn) && "frame alloc requires FP");
+        MachineOperand &FI = MI->getOperand(i);
+        unsigned Reg;
+        int FrameOffset = TFI->getFrameIndexReference(Fn, FI.getIndex(), Reg);
+        FI.ChangeToImmediate(FrameOffset);
         continue;
       }
 

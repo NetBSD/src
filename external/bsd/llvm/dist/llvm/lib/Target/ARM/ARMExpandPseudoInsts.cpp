@@ -22,8 +22,8 @@
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h" // FIXME: for debug only. remove!
@@ -887,6 +887,9 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
           unsigned MaxAlign = MFI->getMaxAlignment();
           assert (!AFI->isThumb1OnlyFunction());
           // Emit bic r6, r6, MaxAlign
+          assert(MaxAlign <= 256 && "The BIC instruction cannot encode "
+                                    "immediates larger than 256 with all lower "
+                                    "bits set.");
           unsigned bicOpc = AFI->isThumbFunction() ?
             ARM::t2BICri : ARM::BICri;
           AddDefaultCC(AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
@@ -980,7 +983,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       unsigned LDRLITOpc = IsARM ? ARM::LDRi12 : ARM::tLDRpci;
       unsigned PICAddOpc =
           IsARM
-              ? (Opcode == ARM::LDRLIT_ga_pcrel_ldr ? ARM::PICADD : ARM::PICLDR)
+              ? (Opcode == ARM::LDRLIT_ga_pcrel_ldr ? ARM::PICLDR : ARM::PICADD)
               : ARM::tPICADD;
 
       // We need a new const-pool entry to load from.

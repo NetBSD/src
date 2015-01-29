@@ -1,5 +1,5 @@
 ; RUN: llvm-as %s -o /dev/null
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder %s
 
 define void @a() {
 entry:
@@ -13,5 +13,5 @@ entry:
   ret void
 }
 
-!0 = metadata !{i32 662302, null}
+!0 = !{i32 662302, null}
 !foo = !{ !0 }

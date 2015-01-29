@@ -9,10 +9,10 @@
 
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/User.h"
-#include "llvm/IR/Instructions.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
@@ -38,7 +38,7 @@ TEST(UseTest, sort) {
                              "}\n";
   SMDiagnostic Err;
   char vnbuf[8];
-  Module *M = ParseAssemblyString(ModuleString, nullptr, Err, C);
+  std::unique_ptr<Module> M = parseAssemblyString(ModuleString, Err, C);
   Function *F = M->getFunction("f");
   ASSERT_TRUE(F);
   ASSERT_TRUE(F->arg_begin() != F->arg_end());
@@ -83,7 +83,7 @@ TEST(UseTest, reverse) {
                              "}\n";
   SMDiagnostic Err;
   char vnbuf[8];
-  Module *M = ParseAssemblyString(ModuleString, nullptr, Err, C);
+  std::unique_ptr<Module> M = parseAssemblyString(ModuleString, Err, C);
   Function *F = M->getFunction("f");
   ASSERT_TRUE(F);
   ASSERT_TRUE(F->arg_begin() != F->arg_end());

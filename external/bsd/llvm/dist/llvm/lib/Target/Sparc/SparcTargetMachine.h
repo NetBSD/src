@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARCTARGETMACHINE_H
-#define SPARCTARGETMACHINE_H
+#ifndef LLVM_LIB_TARGET_SPARC_SPARCTARGETMACHINE_H
+#define LLVM_LIB_TARGET_SPARC_SPARCTARGETMACHINE_H
 
 #include "SparcInstrInfo.h"
 #include "SparcSubtarget.h"
@@ -21,22 +21,22 @@
 namespace llvm {
 
 class SparcTargetMachine : public LLVMTargetMachine {
+  std::unique_ptr<TargetLoweringObjectFile> TLOF;
   SparcSubtarget Subtarget;
 public:
   SparcTargetMachine(const Target &T, StringRef TT,
                      StringRef CPU, StringRef FS, const TargetOptions &Options,
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL, bool is64bit);
+  ~SparcTargetMachine() override;
 
   const SparcSubtarget *getSubtargetImpl() const override { return &Subtarget; }
 
-  SparcSubtarget *getSubtargetImpl() {
-    return static_cast<SparcSubtarget *>(TargetMachine::getSubtargetImpl());
-  }
-
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
-  bool addCodeEmitter(PassManagerBase &PM, JITCodeEmitter &JCE) override;
+  TargetLoweringObjectFile *getObjFileLowering() const override {
+    return TLOF.get();
+  }
 };
 
 /// SparcV8TargetMachine - Sparc 32-bit target machine
