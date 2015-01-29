@@ -1043,7 +1043,7 @@ HexagonTargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const {
 //===----------------------------------------------------------------------===//
 
 HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &targetmachine)
-    : TargetLowering(targetmachine, new HexagonTargetObjectFile()),
+    : TargetLowering(targetmachine),
       TM(targetmachine) {
 
   const HexagonSubtarget &Subtarget = TM.getSubtarget<HexagonSubtarget>();
@@ -1301,9 +1301,11 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &targetmachine)
   setOperationAction(ISD::BUILD_PAIR, MVT::i64, Expand);
 
   // Turn FP extload into load/fextend.
-  setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
+  for (MVT VT : MVT::fp_valuetypes())
+    setLoadExtAction(ISD::EXTLOAD, VT, MVT::f32, Expand);
   // Hexagon has a i1 sign extending load.
-  setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Expand);
+  for (MVT VT : MVT::integer_valuetypes())
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Expand);
   // Turn FP truncstore into trunc + store.
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
 
@@ -1704,4 +1706,18 @@ bool HexagonTargetLowering::IsEligibleForTailCallOptimization(
   // go on the stack. We cannot check that here because at this point that
   // information is not available.
   return true;
+}
+
+// Return true when the given node fits in a positive half word.
+bool llvm::isPositiveHalfWord(SDNode *N) {
+  ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N);
+  if (CN && CN->getSExtValue() > 0 && isInt<16>(CN->getSExtValue()))
+    return true;
+
+  switch (N->getOpcode()) {
+  default:
+    return false;
+  case ISD::SIGN_EXTEND_INREG:
+    return true;
+  }
 }

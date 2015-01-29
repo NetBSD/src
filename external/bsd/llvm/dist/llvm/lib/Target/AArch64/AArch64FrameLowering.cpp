@@ -92,7 +92,8 @@ bool AArch64FrameLowering::hasFP(const MachineFunction &MF) const {
 #endif
 
   return (MFI->hasCalls() || MFI->hasVarSizedObjects() ||
-          MFI->isFrameAddressTaken());
+          MFI->isFrameAddressTaken() || MFI->hasStackMap() ||
+          MFI->hasPatchPoint());
 }
 
 /// hasReservedCallFrame - Under normal circumstances, when a frame pointer is
@@ -131,7 +132,7 @@ void AArch64FrameLowering::eliminateCallFramePseudoInstr(
       // FIXME: in-function stack adjustment for calls is limited to 24-bits
       // because there's no guaranteed temporary register available.
       //
-      // ADD/SUB (immediate) has only LSL #0 and LSL #12 avaiable.
+      // ADD/SUB (immediate) has only LSL #0 and LSL #12 available.
       // 1) For offset <= 12-bit, we use LSL #0
       // 2) For 12-bit <= offset <= 24-bit, we use two instructions. One uses
       // LSL #0, and the other uses LSL #12.
@@ -195,7 +196,8 @@ void AArch64FrameLowering::emitCalleeSavedFrameMoves(
     unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(
         nullptr, DwarfReg, Offset - TotalSkipped));
     BuildMI(MBB, MBBI, DL, TII->get(TargetOpcode::CFI_INSTRUCTION))
-        .addCFIIndex(CFIIndex);
+        .addCFIIndex(CFIIndex)
+        .setMIFlags(MachineInstr::FrameSetup);
   }
 }
 
@@ -212,6 +214,11 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
   bool needsFrameMoves = MMI.hasDebugInfo() || Fn->needsUnwindTableEntry();
   bool HasFP = hasFP(MF);
   DebugLoc DL = MBB.findDebugLoc(MBBI);
+
+  // All calls are tail calls in GHC calling conv, and functions have no
+  // prologue/epilogue.
+  if (MF.getFunction()->getCallingConv() == CallingConv::GHC)
+    return;
 
   int NumBytes = (int)MFI->getStackSize();
   if (!AFI->hasStackFrame()) {
@@ -233,7 +240,8 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
       unsigned CFIIndex = MMI.addFrameInst(
           MCCFIInstruction::createDefCfaOffset(FrameLabel, -NumBytes));
       BuildMI(MBB, MBBI, DL, TII->get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+          .addCFIIndex(CFIIndex)
+          .setMIFlags(MachineInstr::FrameSetup);
     } else if (NumBytes) {
       ++NumRedZoneFunctions;
     }
@@ -376,26 +384,30 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
       unsigned CFIIndex = MMI.addFrameInst(
           MCCFIInstruction::createDefCfa(nullptr, Reg, 2 * StackGrowth));
       BuildMI(MBB, MBBI, DL, TII->get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+          .addCFIIndex(CFIIndex)
+          .setMIFlags(MachineInstr::FrameSetup);
 
       // Record the location of the stored LR
       unsigned LR = RegInfo->getDwarfRegNum(AArch64::LR, true);
       CFIIndex = MMI.addFrameInst(
           MCCFIInstruction::createOffset(nullptr, LR, StackGrowth));
       BuildMI(MBB, MBBI, DL, TII->get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+          .addCFIIndex(CFIIndex)
+          .setMIFlags(MachineInstr::FrameSetup);
 
       // Record the location of the stored FP
       CFIIndex = MMI.addFrameInst(
           MCCFIInstruction::createOffset(nullptr, Reg, 2 * StackGrowth));
       BuildMI(MBB, MBBI, DL, TII->get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+          .addCFIIndex(CFIIndex)
+          .setMIFlags(MachineInstr::FrameSetup);
     } else {
       // Encode the stack size of the leaf function.
       unsigned CFIIndex = MMI.addFrameInst(
           MCCFIInstruction::createDefCfaOffset(nullptr, -MFI->getStackSize()));
       BuildMI(MBB, MBBI, DL, TII->get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+          .addCFIIndex(CFIIndex)
+          .setMIFlags(MachineInstr::FrameSetup);
     }
 
     // Now emit the moves for whatever callee saved regs we have.
@@ -443,6 +455,11 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
 
   int NumBytes = MFI->getStackSize();
   const AArch64FunctionInfo *AFI = MF.getInfo<AArch64FunctionInfo>();
+
+  // All calls are tail calls in GHC calling conv, and functions have no
+  // prologue/epilogue.
+  if (MF.getFunction()->getCallingConv() == CallingConv::GHC)
+    return;
 
   // Initial and residual are named for consitency with the prologue. Note that
   // in the epilogue, the residual adjustment is executed first.
