@@ -1,5 +1,5 @@
 =====================================
-Clang 3.5 (In-Progress) Release Notes
+Clang 3.6 (In-Progress) Release Notes
 =====================================
 
 .. contents::
@@ -10,15 +10,15 @@ Written by the `LLVM Team <http://llvm.org/>`_
 
 .. warning::
 
-   These are in-progress notes for the upcoming Clang 3.5 release. You may
-   prefer the `Clang 3.4 Release Notes
-   <http://llvm.org/releases/3.4/tools/clang/docs/ReleaseNotes.html>`_.
+   These are in-progress notes for the upcoming Clang 3.6 release. You may
+   prefer the `Clang 3.5 Release Notes
+   <http://llvm.org/releases/3.5.0/tools/clang/docs/ReleaseNotes.html>`_.
 
 Introduction
 ============
 
 This document contains the release notes for the Clang C/C++/Objective-C
-frontend, part of the LLVM Compiler Infrastructure, release 3.5. Here we
+frontend, part of the LLVM Compiler Infrastructure, release 3.6. Here we
 describe the status of Clang in some detail, including major
 improvements from the previous release and new feature work. For the
 general LLVM release notes, see `the LLVM
@@ -36,7 +36,7 @@ main Clang web page, this document applies to the *next* release, not
 the current one. To see the release notes for a specific release, please
 see the `releases page <http://llvm.org/releases/>`_.
 
-What's New in Clang 3.5?
+What's New in Clang 3.6?
 ========================
 
 Some of the major new features and improvements to Clang are listed
@@ -47,92 +47,56 @@ sections with improvements to Clang's support for those languages.
 Major New Features
 ------------------
 
-- Clang uses the new MingW ABI
-  GCC 4.7 changed the mingw ABI. Clang 3.4 and older use the GCC 4.6
-  ABI. Clang 3.5 and newer use the GCC 4.7 abi.
+- The __has_attribute built-in macro no longer queries for attributes across
+  multiple attribute syntaxes (GNU, C++11, __declspec, etc). Instead, it only
+  queries GNU-style attributes. With the addition of __has_cpp_attribute and
+  __has_declspec_attribute, this allows for more precise coverage of attribute
+  syntax querying.
 
-- The __has_attribute feature test is now target-aware. Older versions of Clang
-  would return true when the attribute spelling was known, regardless of whether
-  the attribute was available to the specific target. Clang now returns true
-  only when the attribute pertains to the current compilation target.
+- clang-format now supports formatting Java code.
 
 
 Improvements to Clang's diagnostics
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 Clang's diagnostics are constantly being improved to catch more issues,
 explain them more clearly, and provide more accurate source information
-about them. The improvements since the 3.4 release include:
-
-- GCC compatibility: Clang displays a warning on unsupported gcc
-  optimization flags instead of an error.
+about them. The improvements since the 3.5 release include:
 
 -  ...
 
 New Compiler Flags
 ------------------
 
-The integrated assembler is now turned on by default on ARM (and Thumb),
-so the use of the option `-fintegrated-as` is now redundant on those
-architectures. This is an important move to both *eat our own dog food*
-and to ease cross-compilation tremendously.
+The option ....
 
-We are aware of the problems that this may cause for code bases that
-rely on specific GNU syntax or extensions, and we're working towards
-getting them all fixed. Please, report bugs or feature requests if
-you find anything. In the meantime, use `-fno-integrated-as` to revert
-back the call to GNU assembler.
+The __EXCEPTIONS macro
+----------------------
+``__EXCEPTIONS`` is now defined when landing pads are emitted, not when c++ exceptions are enabled. The two can be different in Objective-C files: If C++ exceptions are disabled but Objective-C exceptions are enabled, landing pads will be emitted. Clang 3.6 is switching the behavior of ``__EXCEPTIONS``. Clang 3.5 confusingly changed the behavior of ``has_feature(cxx_exceptions)``, which used to be set if landing pads were emitted, but is now set if C++ exceptions are enabled. So there are 3 cases:
 
-In order to provide better diagnostics, the integrated assembler validates
-inline assembly when the integrated assembler is enabled.  Because this is
-considered a feature of the compiler, it is controlled via the `fintegrated-as`
-and `fno-integrated-as` flags which enable and disable the integrated assembler
-respectively.  `-integrated-as` and `-no-integrated-as` are now considered
-legacy flags (but are available as an alias to prevent breaking existing users),
-and users are encouraged to switch to the equivalent new feature flag.
+Clang before 3.5:
+   ``__EXCEPTIONS`` is set if C++ exceptions are enabled, ``cxx_exceptions`` enabled if C++ or ObjC exceptions are enabled
 
-Deprecated flags `-faddress-sanitizer`, `-fthread-sanitizer`,
-`-fcatch-undefined-behavior` and `-fbounds-checking` were removed in favor of
-`-fsanitize=` family of flags.
+Clang 3.5:
+   ``__EXCEPTIONS`` is set if C++ exceptions are enabled, ``cxx_exceptions`` enabled if C++ exceptions are enabled
 
-It is now possible to get optimization reports from the major transformation
-passes via three new flags: `-Rpass`, `-Rpass-missed` and `-Rpass-analysis`.
-These flags take a POSIX regular expression which indicates the name
-of the pass (or passes) that should emit optimization remarks.
+Clang 3.6:
+   ``__EXCEPTIONS`` is set if C++ or ObjC exceptions are enabled, ``cxx_exceptions`` enabled if C++ exceptions are enabled
 
-The option `-u` is forwarded to the linker on gnutools toolchains.
+To reliably test if C++ exceptions are enabled, use ``__EXCEPTIONS && __has_feature(cxx_exceptions)``, else things won't work in all versions of clang in Objective-C++ files.
+
 
 New Pragmas in Clang
 -----------------------
 
-Loop optimization hints can be specified using the new `#pragma clang loop`
-directive just prior to the desired loop. The directive allows vectorization,
-interleaving, and unrolling to be enabled or disabled. Vector width as well
-as interleave and unrolling count can be manually specified.  See language
-extensions for details.
-
-Clang now supports the `#pragma unroll` and `#pragma nounroll` directives to
-specify loop unrolling optimization hints.  Placed just prior to the desired
-loop, `#pragma unroll` directs the loop unroller to attempt to fully unroll the
-loop.  The pragma may also be specified with a positive integer parameter
-indicating the desired unroll count: `#pragma unroll _value_`.  The unroll count
-parameter can be optionally enclosed in parentheses. The directive `#pragma
-nounroll` indicates that the loop should not be unrolled.
+Clang now supports the ...
 
 Windows Support
 ---------------
 
-Clang's support for building native Windows programs, compatible with Visual
-C++, has improved significantly since the previous release. This includes
-correctly passing non-trivial objects by value, record layout, basic debug info,
-`Address Sanitizer <AddressSanitizer.html>`_ support, RTTI, name mangling,
-DLL attributes, and many many bug fixes. See
-`MSVC Compatibility <MSVCCompatibility.html>`_ for details.
+- Many, many bug fixes
 
-While still considered experimental, Clang's Windows support is good enough
-that Clang can self-host on Windows, and projects such as Chromium and Firefox
-have been built successfully using the
-`/fallback <UsersManual.html#the-fallback-option>`_ option.
+- Basic support for DWARF debug information in COFF files
 
 
 C Language Changes in Clang
@@ -148,7 +112,11 @@ C11 Feature Support
 C++ Language Changes in Clang
 -----------------------------
 
-- ...
+- Clang now supports putting identical constructors and destructors in
+  the C5/D5 comdat, reducing code duplication.
+
+- Clang will put individual ``.init_array/.ctors`` sections in
+  comdats, reducing code duplication and speeding up startup.
 
 C++11 Feature Support
 ^^^^^^^^^^^^^^^^^^^^^
@@ -168,7 +136,7 @@ OpenCL C Language Changes in Clang
 Internal API Changes
 --------------------
 
-These are major API changes that have happened since the 3.4 release of
+These are major API changes that have happened since the 3.5 release of
 Clang. If upgrading an external codebase that uses Clang as a library,
 this section should help get you past the largest hurdles of upgrading.
 
@@ -181,16 +149,6 @@ libclang
 
 Static Analyzer
 ---------------
-
-The `-analyzer-config` options are now passed from scan-build through to
-ccc-analyzer and then to Clang.
-
-With the option `-analyzer-config stable-report-filename=true`,
-instead of `report-XXXXXX.html`, scan-build/clang analyzer generate
-`report-<filename>-<function, method name>-<function position>-<id>.html`.
-(id = i++ for several issues found in the same function/method).
-
-List the function/method name in the index page of scan-build.
 
 ...
 
