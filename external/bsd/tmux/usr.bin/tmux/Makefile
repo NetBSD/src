@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2015/01/29 03:25:36 christos Exp $
+# $NetBSD: Makefile,v 1.15 2015/01/29 03:26:27 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -143,6 +143,7 @@ SRCS+=		utmp.c
 #SRCS+=		forkpty-hpux.c
 SRCS+=		imsg-buffer.c
 SRCS+=		imsg.c
+#SRCS+=		strtonum.c
 #SRCS+=		unvis.c
 #SRCS+=		vis.c
 
