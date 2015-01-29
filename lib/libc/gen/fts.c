@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.47 2014/09/18 13:58:20 christos Exp $	*/
+/*	$NetBSD: fts.c,v 1.48 2015/01/29 15:55:21 manu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.47 2014/09/18 13:58:20 christos Exp $");
+__RCSID("$NetBSD: fts.c,v 1.48 2015/01/29 15:55:21 manu Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -430,8 +430,19 @@ fts_read(FTS *sp)
 		goto name;
 	}
 
+next:	
 	/* Move to the next node on this level. */
-next:	tmp = p;
+	tmp = p;
+
+	/* 
+	 * We are going to free sp->fts_cur, set it to NULL so 
+	 * that fts_close() does not attempt to free it again 
+	 * if we exit without setting it to a new value because
+	 * FCHDIR() failed below.
+	 */
+	assert(tmp == sp->fts_cur);
+	sp->fts_cur = NULL;
+	
 	if ((p = p->fts_link) != NULL) {
 		fts_free(tmp);
 
