@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2014/08/10 17:34:22 joerg Exp $
+#	$NetBSD: Makefile,v 1.17 2015/01/29 20:41:36 joerg Exp $
 
 LIB=	LLVMTransformsUtils
 
@@ -40,6 +40,7 @@ SRCS+=	ASanStackFrameLayout.cpp \
 	SimplifyIndVar.cpp \
 	SimplifyInstructions.cpp \
 	SimplifyLibCalls.cpp \
+	SymbolRewriter.cpp \
 	UnifyFunctionExitNodes.cpp \
 	Utils.cpp \
 	ValueMapper.cpp

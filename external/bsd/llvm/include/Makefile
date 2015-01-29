@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2014/11/14 15:59:46 joerg Exp $
+#	$NetBSD: Makefile,v 1.36 2015/01/29 20:41:34 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -7,10 +7,14 @@
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 INCS=	__wmmintrin_aes.h \
 	__wmmintrin_pclmul.h \
+	adxintrin.h \
 	ammintrin.h \
 	avx2intrin.h \
+	avx512bwintrin.h \
 	avx512fintrin.h \
 	avx512erintrin.h \
+	avx512vlbwintrin.h \
+	avx512vlintrin.h \
 	avxintrin.h \
 	bmi2intrin.h \
 	bmiintrin.h \
@@ -132,6 +136,22 @@ clang/Basic/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
 	printf '#define CLANG_VERSION_MAJOR ${CLANG_VERSION:R:R}\n' >> ${.TARGET}.tmp
 	printf '#define CLANG_VERSION_MINOR ${CLANG_VERSION:R:E}\n' >> ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
+
+lld/Config/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
+
+.if ${MKLLD} != "no"
+DPSRCS+=	lld/Config/Version.inc
+CLEANFILES+=	lld/Config/Version.inc
+
+lld/Config/Version.inc: ${LLVM_TOPLEVEL}/Makefile.inc
+	mkdir -p ${.TARGET:H}
+	printf '#define LLD_VERSION ${LLD_VERSION}\n' > ${.TARGET}.tmp
+	printf '#define LLD_VERSION_MAJOR ${LLD_VERSION:R:R}\n' >> ${.TARGET}.tmp
+	printf '#define LLD_VERSION_MINOR ${LLD_VERSION:R:E}\n' >> ${.TARGET}.tmp
+	printf '#define LLD_REVISION_STRING "r${LLD_REVISION}"\n' >> ${.TARGET}.tmp
+	printf '#define LLD_REPOSITORY_STRING "${SVN_ROOT}/lld/${SVN_BRANCH}"\n' >> ${.TARGET}.tmp
+	mv ${.TARGET}.tmp ${.TARGET}
+.endif
 
 .ifndef HOST_BUILD
 

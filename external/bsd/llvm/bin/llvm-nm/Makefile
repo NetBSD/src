@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2014/08/10 17:34:20 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2015/01/29 20:41:34 joerg Exp $
 
 PROG_CXX=	llvm-nm
 NOMAN=		yes
@@ -32,10 +32,12 @@ LLVM_LIBS+= \
 	SparcAsmParser \
 	SparcAsmPrinter \
 	X86AsmParser \
+	X86CodeGen \
 	X86MCTargetDesc \
 	X86AsmPrinter \
 	X86Utils \
 	X86TargetInfo \
+	CodeGen \
 	MCDisassembler \
 	Object \
 	MCParser \
