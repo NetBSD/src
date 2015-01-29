@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.57 2014/12/18 06:24:27 mrg Exp $
+# $NetBSD: shl.mi,v 1.58 2015/01/29 22:58:20 nat Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -173,7 +173,7 @@
 ./usr/X11R7/lib/libGL.so.2.0			-unknown-		xorg
 ./usr/X11R7/lib/libGLU.so			-unknown-		xorg
 ./usr/X11R7/lib/libGLU.so.2			-unknown-		xorg
-./usr/X11R7/lib/libGLU.so.2.0			-unknown-		xorg
+./usr/X11R7/lib/libGLU.so.2.1			-unknown-		xorg
 ./usr/X11R7/lib/libGLw.so			-unknown-		xorg
 ./usr/X11R7/lib/libGLw.so.2			-unknown-		xorg
 ./usr/X11R7/lib/libGLw.so.2.0			-unknown-		xorg
