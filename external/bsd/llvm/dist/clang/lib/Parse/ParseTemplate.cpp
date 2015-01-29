@@ -231,6 +231,16 @@ Parser::ParseSingleDeclarationAfterTemplate(
 
   if (DeclaratorInfo.isFunctionDeclarator() &&
       isStartOfFunctionDefinition(DeclaratorInfo)) {
+
+    // Function definitions are only allowed at file scope and in C++ classes.
+    // The C++ inline method definition case is handled elsewhere, so we only
+    // need to handle the file scope definition case.
+    if (Context != Declarator::FileContext) {
+      Diag(Tok, diag::err_function_definition_not_allowed);
+      SkipMalformedDecl();
+      return nullptr;
+    }
+
     if (DS.getStorageClassSpec() == DeclSpec::SCS_typedef) {
       // Recover by ignoring the 'typedef'. This was probably supposed to be
       // the 'typename' keyword, which we should have already suggested adding
@@ -561,7 +571,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     if (Tok.is(tok::kw_typename)) {
       Diag(Tok.getLocation(),
            getLangOpts().CPlusPlus1z
-               ? diag::warn_cxx1y_compat_template_template_param_typename
+               ? diag::warn_cxx14_compat_template_template_param_typename
                : diag::ext_template_template_param_typename)
         << (!getLangOpts().CPlusPlus1z
                 ? FixItHint::CreateReplacement(Tok.getLocation(), "class")
@@ -676,7 +686,7 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
     GreaterThanIsOperatorScope G(GreaterThanIsOperator, false);
     EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated);
 
-    DefaultArg = ParseAssignmentExpression();
+    DefaultArg = Actions.CorrectDelayedTyposInExpr(ParseAssignmentExpression());
     if (DefaultArg.isInvalid())
       SkipUntil(tok::comma, tok::greater, StopAtSemi | StopBeforeMatch);
   }
@@ -1335,7 +1345,8 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplate &LPT) {
   ParseScope FnScope(this, Scope::FnScope|Scope::DeclScope);
 
   // Recreate the containing function DeclContext.
-  Sema::ContextRAII FunctionSavedContext(Actions, Actions.getContainingDC(FunD));
+  Sema::ContextRAII FunctionSavedContext(Actions,
+                                         Actions.getContainingDC(FunD));
 
   Actions.ActOnStartOfFunctionDef(getCurScope(), FunD);
 

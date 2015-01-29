@@ -671,15 +671,21 @@ void ExprEngine::ProcessTemporaryDtor(const CFGTemporaryDtor D,
   ExplodedNodeSet CleanDtorState;
   StmtNodeBuilder StmtBldr(Pred, CleanDtorState, *currBldrCtx);
   ProgramStateRef State = Pred->getState();
-  assert(State->contains<InitializedTemporariesSet>(
-      std::make_pair(D.getBindTemporaryExpr(), Pred->getStackFrame())));
-  State = State->remove<InitializedTemporariesSet>(
-      std::make_pair(D.getBindTemporaryExpr(), Pred->getStackFrame()));
+  if (State->contains<InitializedTemporariesSet>(
+      std::make_pair(D.getBindTemporaryExpr(), Pred->getStackFrame()))) {
+    // FIXME: Currently we insert temporary destructors for default parameters,
+    // but we don't insert the constructors.
+    State = State->remove<InitializedTemporariesSet>(
+        std::make_pair(D.getBindTemporaryExpr(), Pred->getStackFrame()));
+  }
   StmtBldr.generateNode(D.getBindTemporaryExpr(), Pred, State);
 
   QualType varType = D.getBindTemporaryExpr()->getSubExpr()->getType();
-  assert(CleanDtorState.size() == 1);
-  ExplodedNode *CleanPred = *CleanDtorState.begin();
+  // FIXME: Currently CleanDtorState can be empty here due to temporaries being
+  // bound to default parameters.
+  assert(CleanDtorState.size() <= 1);
+  ExplodedNode *CleanPred =
+      CleanDtorState.empty() ? Pred : *CleanDtorState.begin();
   // FIXME: Inlining of temporary destructors is not supported yet anyway, so
   // we just put a NULL region for now. This will need to be changed later.
   VisitCXXDestructor(varType, nullptr, D.getBindTemporaryExpr(),
@@ -715,10 +721,16 @@ void ExprEngine::VisitCXXBindTemporaryExpr(const CXXBindTemporaryExpr *BTE,
   StmtNodeBuilder StmtBldr(PreVisit, Dst, *currBldrCtx);
   for (ExplodedNode *Node : PreVisit) {
     ProgramStateRef State = Node->getState();
-    assert(!State->contains<InitializedTemporariesSet>(
-        std::make_pair(BTE, Node->getStackFrame())));
-    State = State->add<InitializedTemporariesSet>(
-        std::make_pair(BTE, Node->getStackFrame()));
+
+    if (!State->contains<InitializedTemporariesSet>(
+            std::make_pair(BTE, Node->getStackFrame()))) {
+      // FIXME: Currently the state might already contain the marker due to
+      // incorrect handling of temporaries bound to default parameters; for
+      // those, we currently skip the CXXBindTemporaryExpr but rely on adding
+      // temporary destructor nodes.
+      State = State->add<InitializedTemporariesSet>(
+          std::make_pair(BTE, Node->getStackFrame()));
+    }
     StmtBldr.generateNode(BTE, Node, State);
   }
 }
@@ -740,6 +752,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::CXXTryStmtClass:
     case Stmt::CXXTypeidExprClass:
     case Stmt::CXXUuidofExprClass:
+    case Stmt::CXXFoldExprClass:
     case Stmt::MSPropertyRefExprClass:
     case Stmt::CXXUnresolvedConstructExprClass:
     case Stmt::DependentScopeDeclRefExprClass:
@@ -748,6 +761,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::ExpressionTraitExprClass:
     case Stmt::UnresolvedLookupExprClass:
     case Stmt::UnresolvedMemberExprClass:
+    case Stmt::TypoExprClass:
     case Stmt::CXXNoexceptExprClass:
     case Stmt::PackExpansionExprClass:
     case Stmt::SubstNonTypeTemplateParmPackExprClass:
@@ -789,12 +803,14 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::OMPParallelDirectiveClass:
     case Stmt::OMPSimdDirectiveClass:
     case Stmt::OMPForDirectiveClass:
+    case Stmt::OMPForSimdDirectiveClass:
     case Stmt::OMPSectionsDirectiveClass:
     case Stmt::OMPSectionDirectiveClass:
     case Stmt::OMPSingleDirectiveClass:
     case Stmt::OMPMasterDirectiveClass:
     case Stmt::OMPCriticalDirectiveClass:
     case Stmt::OMPParallelForDirectiveClass:
+    case Stmt::OMPParallelForSimdDirectiveClass:
     case Stmt::OMPParallelSectionsDirectiveClass:
     case Stmt::OMPTaskDirectiveClass:
     case Stmt::OMPTaskyieldDirectiveClass:
@@ -803,6 +819,8 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::OMPFlushDirectiveClass:
     case Stmt::OMPOrderedDirectiveClass:
     case Stmt::OMPAtomicDirectiveClass:
+    case Stmt::OMPTargetDirectiveClass:
+    case Stmt::OMPTeamsDirectiveClass:
       llvm_unreachable("Stmt should not be in analyzer evaluation loop");
 
     case Stmt::ObjCSubscriptRefExprClass:
@@ -852,7 +870,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::ObjCProtocolExprClass:
     case Stmt::ObjCSelectorExprClass:
     case Stmt::ParenListExprClass:
-    case Stmt::PredefinedExprClass:
     case Stmt::ShuffleVectorExprClass:
     case Stmt::ConvertVectorExprClass:
     case Stmt::VAArgExprClass:
@@ -864,6 +881,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
 
     // Cases we intentionally don't evaluate, since they don't need
     // to be explicitly evaluated.
+    case Stmt::PredefinedExprClass:
     case Stmt::AddrLabelExprClass:
     case Stmt::AttributedStmtClass:
     case Stmt::IntegerLiteralClass:
