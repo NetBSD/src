@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/06/14 20:49:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2015/01/29 21:12:10 joerg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -8,7 +8,6 @@ NOLINT=		# defined
 .include "Makefile.inc"
 
 LIB=		stdc++
-LDADD=		-lgcc_s
 
 LIBDPLIBS+=	m ${.CURDIR}/../../../../../lib/libm
 
