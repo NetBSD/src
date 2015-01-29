@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.51 2015/01/23 15:17:58 skrll Exp $
+# $NetBSD: mkimage,v 1.52 2015/01/29 14:54:06 skrll Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -176,7 +176,7 @@ fi
 
 if [ -z "${bootonly}" ]; then
 	echo ${bar} Populating ffs filesystem ${bar}
-	${MAKEFS} -N ${release}/etc -t ffs -rx \
+	${MAKEFS} -r -N ${release}/etc -t ffs -rx \
 	    -O ${ffsoffset} \
 	    -o d=4096 -b $((${extra}))m \
 	    -F "$tmp/selected_sets" ${image} "${release}" "${mnt}"
