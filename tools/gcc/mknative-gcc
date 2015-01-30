@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.79 2014/05/29 16:27:50 skrll Exp $
+#	$NetBSD: mknative-gcc,v 1.80 2015/01/30 12:23:47 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -331,7 +331,7 @@ get_gcc () {
 		write_c $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h <$_TMPDIR/gcc/$f.h
 		if [ "${MACHINE_ARCH}" = "powerpc" -a "${f}" = "configargs" ]
 		then
-			ex <<__EOF__ $_OUTDIRBASE/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h
+			ex <<__EOF__ $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h
 /configuration_arguments/ s/$//
 ya
 i
@@ -352,6 +352,14 @@ a
   { NULL, NULL }
 };
 .
+wq
+__EOF__
+		fi
+		if [ "${f}" = "configargs" ]
+		then
+			_srcquoted=$(echo "$_SRC" | sed 's/\//\\\//g')
+			ex <<__EOF__ $_OUTDIR/usr.bin/$_subdir/arch/$MACHINE_ARCH/$f.h
+/static const char configuration_arguments/ s/$_srcquoted/\/usr\/src/g
 wq
 __EOF__
 		fi
