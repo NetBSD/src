@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
+ * Copyright (c) 2012,2013,2014,2015 Alistair Crooks <agc@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,9 +23,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifndef NETPGP_VERIFY_H_
-#define NETPGP_VERIFY_H_	20141204
+#define NETPGP_VERIFY_H_	20150115
 
-#define NETPGPVERIFY_VERSION	"netpgpverify portable 20141204"
+#define NETPGPVERIFY_VERSION	"netpgpverify portable 20150115"
 
 #include <sys/types.h>
 
@@ -287,6 +287,7 @@ int pgpv_read_ssh_pubkeys(pgpv_t */*pgp*/, const void */*keyring*/, ssize_t /*si
 size_t pgpv_verify(pgpv_cursor_t */*cursor*/, pgpv_t */*pgp*/, const void */*mem/file*/, ssize_t /*size*/);
 size_t pgpv_get_verified(pgpv_cursor_t */*cursor*/, size_t /*cookie*/, char **/*ret*/);
 int pgpv_get_cursor_element(pgpv_cursor_t */*cursor*/, size_t /*element*/);
+size_t pgpv_dump(pgpv_t */*pgp*/, char **/*data*/);
 
 size_t pgpv_get_entry(pgpv_t */*pgp*/, unsigned /*ent*/, char **/*ret*/, const char */*modifiers*/);
 
