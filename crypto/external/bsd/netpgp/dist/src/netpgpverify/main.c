@@ -103,6 +103,12 @@ verify_data(pgpv_t *pgp, const char *cmd, const char *inname, char *in, ssize_t 
 			}
 			return 1;
 		}
+	} else if (strcasecmp(cmd, "dump") == 0) {
+		if ((cookie = pgpv_verify(&cursor, pgp, in, cc)) != 0) {
+			size = pgpv_dump(pgp, &data);
+			write(STDOUT_FILENO, data, size);
+			return 1;
+		}
 	} else if (strcasecmp(cmd, "verify") == 0 || strcasecmp(cmd, "trust") == 0) {
 		modifiers = (strcasecmp(cmd, "trust") == 0) ? "trust" : NULL;
 		if (pgpv_verify(&cursor, pgp, in, cc)) {
