@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1198 2015/01/30 10:21:23 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1199 2015/01/30 23:00:06 spz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -677,12 +677,12 @@ The lvm2tools and the libdevmapper are now distributed as one source
 repository. See the lvm2tools Notes for more information.
 
 Package:	libevent
-Version:	2.0.21-stable
-Current Vers:	2.0.21-stable
+Version:	2.0.22-stable
+Current Vers:	2.0.22-stable
 Maintainer:	Niels Provos <provos@citi.umich.edu>
 Archive Site:	http://www.monkey.org/~provos/libevent/
 Home Page:	http://www.monkey.org/~provos/libevent/
-Responsible:	provos
+Responsible:	
 License:	BSD (3/4-clause)
 Location:	external/bsd/libevent/dist
 Notes:
