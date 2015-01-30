@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -229,7 +229,9 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 {
 	char **env, **nenv, *p;
 	size_t e, elen, l;
+#if defined(INET) || defined(INET6)
 	ssize_t n;
+#endif
 	const struct if_options *ifo = ifp->options;
 	const struct interface *ifp2;
 #ifdef INET
@@ -274,7 +276,9 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	    strcmp(reason, "UNKNOWN") == 0 ||
 	    strcmp(reason, "DEPARTED") == 0 ||
 	    strcmp(reason, "STOPPED") == 0)
-		;
+	{
+		/* This space left intentionally blank */
+	}
 #ifdef INET
 	else
 		dhcp = 1;

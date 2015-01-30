@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -494,8 +494,8 @@ ipv6nd_scriptrun(struct ra *rap)
 	hasaddress = 0;
 	/* If all addresses have completed DAD run the script */
 	TAILQ_FOREACH(ap, &rap->addrs, next) {
-		if ((ap->flags & (IPV6_AF_ONLINK | IPV6_AF_AUTOCONF)) ==
-		    (IPV6_AF_ONLINK | IPV6_AF_AUTOCONF))
+		if ((ap->flags & (IPV6_AF_AUTOCONF | IPV6_AF_ADDED)) ==
+		    (IPV6_AF_AUTOCONF | IPV6_AF_ADDED))
 		{
 			hasaddress = 1;
 			if (!(ap->flags & IPV6_AF_DADCOMPLETED) &&
@@ -563,8 +563,9 @@ ipv6nd_dadcompleted(const struct interface *ifp)
 			continue;
 		TAILQ_FOREACH(ap, &rap->addrs, next) {
 			if (ap->flags & IPV6_AF_AUTOCONF &&
+			    ap->flags & IPV6_AF_ADDED &&
 			    !(ap->flags & IPV6_AF_DADCOMPLETED))
-			    	return 0;
+				return 0;
 		}
 	}
 	return 1;
@@ -647,6 +648,7 @@ try_script:
 			found = 0;
 			TAILQ_FOREACH(rapap, &rap->addrs, next) {
 				if (rapap->flags & IPV6_AF_AUTOCONF &&
+				    rapap->flags & IPV6_AF_ADDED &&
 				    (rapap->flags & IPV6_AF_DADCOMPLETED) == 0)
 				{
 					wascompleted = 0;
@@ -690,6 +692,9 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 	char *opt, *opt2, *tmp;
 	struct timeval expire;
 	uint8_t new_rap, new_data;
+#ifdef IPV6_MANAGETEMPADDR
+	uint8_t new_ap;
+#endif
 
 	if (len < sizeof(struct nd_router_advert)) {
 		syslog(LOG_ERR, "IPv6 RA packet too short from %s", ctx->sfrom);
@@ -722,6 +727,12 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 		syslog(LOG_DEBUG, "%s: received RA from %s (no link-local)",
 		    ifp->name, ctx->sfrom);
 #endif
+		return;
+	}
+
+	if (ipv6_iffindaddr(ifp, &ctx->from.sin6_addr)) {
+		syslog(LOG_DEBUG, "%s: ignoring RA from ourself %s",
+		    ifp->name, ctx->sfrom);
 		return;
 	}
 
@@ -791,6 +802,7 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 	if (rap->lifetime)
 		rap->expired = 0;
 
+	ipv6_settempstale(ifp);
 	TAILQ_FOREACH(ap, &rap->addrs, next) {
 		ap->flags |= IPV6_AF_STALE;
 	}
@@ -864,7 +876,9 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 				ap->prefix_len = pi->nd_opt_pi_prefix_len;
 				ap->prefix = pi->nd_opt_pi_prefix;
 				if (pi->nd_opt_pi_flags_reserved &
-				    ND_OPT_PI_FLAG_AUTO)
+				    ND_OPT_PI_FLAG_AUTO &&
+				    ap->iface->options->options &
+				    DHCPCD_IPV6RA_AUTOCONF)
 				{
 					ap->flags |= IPV6_AF_AUTOCONF;
 					ap->dadcounter =
@@ -890,13 +904,31 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 					ap->saddr[0] = '\0';
 				}
 				ap->dadcallback = ipv6nd_dadcallback;
+				ap->created = ap->acquired = rap->received;
 				TAILQ_INSERT_TAIL(&rap->addrs, ap, next);
-			} else
+
+#ifdef IPV6_MANAGETEMPADDR
+				/* New address to dhcpcd RA handling.
+				 * If the address already exists and a valid
+				 * temporary address also exists then
+				 * extend the existing one rather than
+				 * create a new one */
+				if (ipv6_iffindaddr(ifp, &ap->addr) &&
+				    ipv6_settemptime(ap, 0))
+					new_ap = 0;
+				else
+					new_ap = 1;
+#endif
+			} else {
+#ifdef IPV6_MANAGETEMPADDR
+				new_ap = 0;
+#endif
 				ap->flags &= ~IPV6_AF_STALE;
+				ap->acquired = rap->received;
+			}
 			if (pi->nd_opt_pi_flags_reserved &
 			    ND_OPT_PI_FLAG_ONLINK)
 				ap->flags |= IPV6_AF_ONLINK;
-			ap->acquired = rap->received;
 			ap->prefix_vltime =
 			    ntohl(pi->nd_opt_pi_valid_time);
 			ap->prefix_pltime =
@@ -912,6 +944,26 @@ ipv6nd_handlera(struct ipv6_ctx *ctx, struct interface *ifp,
 					opt2 = strdup(ap->saddr);
 				}
 			}
+
+#ifdef IPV6_MANAGETEMPADDR
+			/* RFC4941 Section 3.3.3 */
+			if (ap->flags & IPV6_AF_AUTOCONF &&
+			    ap->iface->options->options & DHCPCD_IPV6RA_OWN &&
+			    ip6_use_tempaddr(ap->iface->name))
+			{
+				if (!new_ap) {
+					if (ipv6_settemptime(ap, 1) == NULL)
+						new_ap = 1;
+				}
+				if (new_ap && ap->prefix_pltime) {
+					if (ipv6_createtempaddr(ap,
+					    &ap->acquired) == NULL)
+						syslog(LOG_ERR,
+						    "ipv6_createtempaddr: %m");
+				}
+			}
+#endif
+
 			lifetime = ap->prefix_vltime;
 			break;
 
@@ -1063,6 +1115,9 @@ extra_opt:
 		goto handle_flag;
 	}
 	ipv6_addaddrs(&rap->addrs);
+#ifdef IPV6_MANAGETEMPADDR
+	ipv6_addtempaddrs(ifp, &rap->received);
+#endif
 	ipv6_buildroutes(ifp->ctx);
 	if (ipv6nd_scriptrun(rap))
 		return;
