@@ -43,6 +43,7 @@ __BEGIN_DECLS
 
 void *netpgp_allocate(size_t /*n*/, size_t /*nels*/);
 void netpgp_deallocate(void */*ptr*/, size_t /*size*/);
+ssize_t netpgp_hexdump(const void */*in*/, const size_t /*inlen*/, void */*out*/, size_t /*outsize*/);
 
 __END_DECLS
 
