@@ -1,8 +1,8 @@
-/* $NetBSD: crypt.h,v 1.5 2014/11/07 20:51:03 roy Exp $ */
+/* $NetBSD: crypt.h,v 1.6 2015/01/30 09:47:05 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
