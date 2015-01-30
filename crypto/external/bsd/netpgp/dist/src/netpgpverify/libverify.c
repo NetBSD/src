@@ -2597,6 +2597,36 @@ match_sig_id(pgpv_cursor_t *cursor, pgpv_signature_t *signature, pgpv_litdata_t 
 	return match_sig(cursor, signature, pubkey, data, insize);
 }
 
+/* return the packet type */
+static const char *
+get_packet_type(uint8_t tag)
+{
+	switch(tag) {
+	case SIGNATURE_PKT:
+		return "signature packet";
+	case ONEPASS_SIGNATURE_PKT:
+		return "onepass signature packet";
+	case PUBKEY_PKT:
+		return "pubkey packet";
+	case COMPRESSED_DATA_PKT:
+		return "compressed data packet";
+	case MARKER_PKT:
+		return "marker packet";
+	case LITDATA_PKT:
+		return "litdata packet";
+	case TRUST_PKT:
+		return "trust packet";
+	case USERID_PKT:
+		return "userid packet";
+	case PUB_SUBKEY_PKT:
+		return "public subkey packet";
+	case USER_ATTRIBUTE_PKT:
+		return "user attribute packet";
+	default:
+		return "[UNKNOWN]";
+	}
+}
+
 /* get an element from the found array */
 int
 pgpv_get_cursor_element(pgpv_cursor_t *cursor, size_t element)
@@ -2739,4 +2769,46 @@ pgpv_get_verified(pgpv_cursor_t *cursor, size_t cookie, char **ret)
 	}
 	memcpy(*ret, data, size);
 	return size;
+}
+
+#define KB(x)	((x) * 1024)
+
+/* dump all packets */
+size_t
+pgpv_dump(pgpv_t *pgp, char **data)
+{
+	ssize_t	 dumpc;
+	size_t	 alloc;
+	size_t	 pkt;
+	size_t	 cc;
+	size_t	 n;
+	char	 buf[800];
+	char	*newdata;
+
+	cc = alloc = 0;
+	*data = NULL;
+	for (pkt = 0 ; pkt < ARRAY_COUNT(pgp->pkts) ; pkt++) {
+		if (cc + KB(64) >= alloc) {
+			if ((newdata = realloc(*data, alloc + KB(64))) == NULL) {
+				return cc;
+			}
+			alloc += KB(64);
+			*data = newdata;
+		}
+		memset(buf, 0x0, sizeof(buf));
+		dumpc = netpgp_hexdump(ARRAY_ELEMENT(pgp->pkts, pkt).s.data,
+				MIN((sizeof(buf) / 80) * 16,
+				ARRAY_ELEMENT(pgp->pkts, pkt).s.size),
+				buf, sizeof(buf));
+		n = snprintf(&(*data)[cc], alloc - cc,
+			"[%zu] off %zu, len %zu, tag %u, %s\n%.*s",
+			pkt,
+			ARRAY_ELEMENT(pgp->pkts, pkt).offset,
+			ARRAY_ELEMENT(pgp->pkts, pkt).s.size,
+			ARRAY_ELEMENT(pgp->pkts, pkt).tag,
+			get_packet_type(ARRAY_ELEMENT(pgp->pkts, pkt).tag),
+			(int)dumpc, buf);
+		cc += n;
+	}
+	return cc;
 }
