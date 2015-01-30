@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6.h,v 1.9 2015/01/30 09:47:05 roy Exp $ */
+/* $NetBSD: ipv6.h,v 1.10 2015/01/30 10:20:43 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -266,6 +266,7 @@ void ipv6_buildroutes(struct dhcpcd_ctx *);
 #define ipv6_free(a) {}
 #define ipv6_drop(a) {}
 #define ipv6_ctxfree(a) {}
+#define ipv6_gentempifid(a) {}
 #endif
 
 #endif
