@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 
-const char dhcpcd_copyright[] = "Copyright (c) 2006-2014 Roy Marples";
+const char dhcpcd_copyright[] = "Copyright (c) 2006-2015 Roy Marples";
 
 #define _WITH_DPRINTF /* Stop FreeBSD bitching */
 
@@ -317,6 +317,7 @@ stop_interface(struct interface *ifp)
 
 	dhcp6_drop(ifp, NULL);
 	ipv6nd_drop(ifp);
+	ipv6_drop(ifp);
 	dhcp_drop(ifp, "STOP");
 	arp_close(ifp);
 	if (ifp->options->options & DHCPCD_DEPARTED)
@@ -385,7 +386,7 @@ configure_interface1(struct interface *ifp)
 		    ifp->options->options & DHCPCD_IPV6RA_OWN ? 1 : 0);
 		if (ra_global == -1 || ra_iface == -1)
 			ifo->options &= ~DHCPCD_IPV6RS;
-		else if (ra_iface == 0)
+		else if (ra_iface == 0 && !(ifp->ctx->options & DHCPCD_TEST))
 			ifo->options |= DHCPCD_IPV6RA_OWN;
 	}
 
@@ -602,11 +603,7 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 			script_runreason(ifp, "NOCARRIER");
 			dhcp6_drop(ifp, "EXPIRE6");
 			ipv6nd_drop(ifp);
-			/* Don't blindly delete our knowledge of LL addresses.
-			 * We need to listen to what the kernel does with
-			 * them as some OS's will remove, mark tentative or
-			 * do nothing. */
-			ipv6_free_ll_callbacks(ifp);
+			ipv6_drop(ifp);
 			dhcp_drop(ifp, "EXPIRE");
 			arp_close(ifp);
 		}
@@ -622,8 +619,11 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 #endif
 			if (ifp->wireless)
 				if_getssid(ifp);
-			configure_interface(ifp, ctx->argc, ctx->argv);
+			dhcpcd_initstate(ifp);
 			script_runreason(ifp, "CARRIER");
+			/* RFC4941 Section 3.5 */
+			if (ifp->options->options & DHCPCD_IPV6RA_OWN)
+				ipv6_gentempifid(ifp);
 			dhcpcd_startinterface(ifp);
 		}
 	}
@@ -903,6 +903,10 @@ dhcpcd_handleinterface(void *arg, int action, const char *ifname)
 
 	i = -1;
 	ifs = if_discover(ctx, -1, UNCONST(argv));
+	if (ifs == NULL) {
+		syslog(LOG_ERR, "%s: if_discover: %m", __func__);
+		return -1;
+	}
 	TAILQ_FOREACH_SAFE(ifp, ifs, next, ifn) {
 		if (strcmp(ifp->name, ifname) != 0)
 			continue;
@@ -1003,8 +1007,10 @@ reconf_reboot(struct dhcpcd_ctx *ctx, int action, int argc, char **argv, int oi)
 	struct interface *ifn, *ifp;
 
 	ifs = if_discover(ctx, argc - oi, argv + oi);
-	if (ifs == NULL)
+	if (ifs == NULL) {
+		syslog(LOG_ERR, "%s: if_discover: %m", __func__);
 		return;
+	}
 
 	while ((ifp = TAILQ_FIRST(ifs))) {
 		TAILQ_REMOVE(ifs, ifp, next);
@@ -1510,8 +1516,10 @@ main(int argc, char **argv)
 		/* We need to try and find the interface so we can
 		 * load the hardware address to compare automated IAID */
 		ctx.ifaces = if_discover(&ctx, 1, argv + optind);
-		if (ctx.ifaces == NULL)
+		if (ctx.ifaces == NULL) {
+			syslog(LOG_ERR, "if_discover: %m");
 			goto exit_failure;
+		}
 		ifp = TAILQ_FIRST(ctx.ifaces);
 		if (ifp == NULL) {
 			ifp = calloc(1, sizeof(*ifp));
@@ -1703,12 +1711,16 @@ main(int argc, char **argv)
 		dev_start(&ctx);
 
 	ctx.ifaces = if_discover(&ctx, ctx.ifc, ctx.ifv);
+	if (ctx.ifaces == NULL) {
+		syslog(LOG_ERR, "if_discover: %m");
+		goto exit_failure;
+	}
 	for (i = 0; i < ctx.ifc; i++) {
 		if (if_find(&ctx, ctx.ifv[i]) == NULL)
 			syslog(LOG_ERR, "%s: interface not found or invalid",
 			    ctx.ifv[i]);
 	}
-	if (ctx.ifaces == NULL || TAILQ_FIRST(ctx.ifaces) == NULL) {
+	if (TAILQ_FIRST(ctx.ifaces) == NULL) {
 		if (ctx.ifc == 0)
 			syslog(LOG_ERR, "no valid interfaces found");
 		else
