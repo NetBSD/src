@@ -264,6 +264,7 @@ void ipv6_buildroutes(struct dhcpcd_ctx *);
 #define ipv6_free(a) {}
 #define ipv6_drop(a) {}
 #define ipv6_ctxfree(a) {}
+#define ipv6_gentempifid(a) {}
 #endif
 
 #endif
