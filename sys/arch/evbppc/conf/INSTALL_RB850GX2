@@ -1,0 +1,7 @@
+# 	$NetBSD: INSTALL_RB850GX2,v 1.1 2015/01/30 15:04:35 nonaka Exp $
+
+include "arch/evbppc/conf/RB850GX2"
+
+#ident 		"INSTALL_RB850GX2-$Revision: 1.1 $"
+
+include "arch/evbppc/conf/INSTALL.inc"
