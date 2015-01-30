@@ -863,6 +863,10 @@ ATF_TC_BODY(detect_unused_tests, tc)
         atf_tc_expect_fail("Compiler does not raise a warning on an unused "
                            "static global variable declared by a macro");
 
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
+        atf_tc_expect_fail("PR 49187");
+#endif
+
     if (build_check_c_o_srcdir(tc, "unused_test.c"))
         atf_tc_fail("Build of unused_test.c passed; unused test cases are "
                     "not properly detected");
