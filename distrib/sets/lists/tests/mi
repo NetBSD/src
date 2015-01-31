@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.610 2015/01/14 22:25:05 christos Exp $
+# $NetBSD: mi,v 1.611 2015/01/31 23:09:27 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2096,6 +2096,7 @@
 ./usr/tests/kernel/t_poll3w			tests-obsolete			obsolete
 ./usr/tests/kernel/t_pollts			tests-obsolete			obsolete
 ./usr/tests/kernel/t_posix_fadvise		tests-obsolete			obsolete
+./usr/tests/kernel/t_posix_fallocate		tests-obsolete			obsolete
 ./usr/tests/kernel/t_ps_strings			tests-kernel-tests		atf
 ./usr/tests/kernel/t_pty			tests-kernel-tests		atf
 ./usr/tests/kernel/t_rnd			tests-kernel-tests		atf,rump
@@ -2679,6 +2680,7 @@
 ./usr/tests/lib/libc/sys/t_pipe2		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_poll			tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_posix_fadvise	tests-lib-tests		atf,rump
+./usr/tests/lib/libc/sys/t_posix_fallocate	tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_recvmmsg		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_revoke		tests-lib-tests		atf
 ./usr/tests/lib/libc/sys/t_select		tests-lib-tests		atf
