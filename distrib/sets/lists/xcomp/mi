@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.154 2014/12/18 06:24:28 mrg Exp $
+#	 $NetBSD: mi,v 1.155 2015/01/31 17:14:23 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6168,7 +6168,7 @@
 ./usr/X11R7/lib/libOSMesa.a				-unknown-	obsolete
 ./usr/X11R7/lib/libOSMesa_p.a				-unknown-	obsolete
 ./usr/X11R7/lib/libglapi.a				-unknown-	xorg
-./usr/X11R7/lib/libglapi_p.a				-unknown-	xorg
+./usr/X11R7/lib/libglapi_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libSM.a					-unknown-	xorg
 ./usr/X11R7/lib/libSM_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libX11-xcb.a				-unknown-	xorg
