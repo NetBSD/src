@@ -11758,6 +11758,7 @@ dtrace_dof_copyin(uintptr_t uarg, int *errp)
 	return (dof);
 }
 
+#if 0
 #if !defined(sun)
 static __inline uchar_t
 dtrace_dof_char(char c) {
@@ -11791,6 +11792,7 @@ dtrace_dof_char(char c) {
 	/* Should not reach here. */
 	return (0);
 }
+#endif
 #endif
 
 static dof_hdr_t *
