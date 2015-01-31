@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2044 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2045 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -130,3 +130,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	libevent: Import libevent 2.0.22 [spz 20150129]
 	dhcpcd(8): Import dhcpcd-6.7.1. [roy 20150130]
 	zoneinfo: Import tzdata2015a. [apb 20150131]
+	libc: Import tzdata2015a. [christos 20150131]
