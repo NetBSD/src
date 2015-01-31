@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.226 2014/12/10 00:37:30 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.227 2015/01/31 23:10:56 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -30,10 +30,10 @@ CLEANFILES+=	${_LSRC:MLintSys*.c}
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
-GLUE+= fdiscard.c ftruncate.c lseek.c mmap.c posix_fallocate.c \
+GLUE+= fdiscard.c ftruncate.c lseek.c mmap.c \
 	pread.c preadv.c pwrite.c pwritev.c truncate.c ntp_adjtime.c \
 	mknodat.c
-
+GLUENOERR+= posix_fallocate.c
 GLUE50+= adjtime.c clock_settime.c settimeofday.c
 
 # 'glue' files might .c or .S depending on the architecture
@@ -49,6 +49,23 @@ SRCS+=__${glue:.c=.S} ${glue}
 SRCS+= ${glue}
 # and an asm entry for __<syscall>
 ASM_GLUE+= tmp_${glue:.c=.S}
+.  endif
+. endif
+.endfor
+
+# 'glue' files might .c or .S depending on the architecture
+.for glue in ${GLUENOERR}
+. if exists(${glue:.c=.S})
+# Build the ASM glue file
+SRCS+=${glue:.c=.S}
+. else
+.  if exists(__${glue:.c=.S})
+SRCS+=__${glue:.c=.S} ${glue}
+.  else
+# Build the C glue file
+SRCS+= ${glue}
+# and an asm entry for __<syscall>
+ASM_GLUENOERR+= tmp_${glue:.c=.S}
 .  endif
 . endif
 .endfor
@@ -163,8 +180,11 @@ NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
 
 PSEUDONOERR=	_exit.S
 
-SRCS+=		${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR} ${ASM_GLUE}
-CLEANFILES+=	${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR} ${ASM_GLUE}
+_GENFILES=	${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR} \
+	${ASM_GLUE} ${ASM_GLUENOERR}
+
+SRCS+=		${_GENFILES}
+CLEANFILES+=	${_GENFILES}
 
 ASMDEPS=	${.CURDIR}/sys/Makefile.inc ${ARCHDIR}/SYS.h \
 		${DESTDIR}/usr/include/sys/syscall.h
@@ -179,6 +199,10 @@ ${ASM}: ${ASMDEPS}
 ${ASM_GLUE}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
 	printf '#include "SYS.h"\nPSEUDO(${.PREFIX:S/tmp_/__/},${.PREFIX:S/tmp_//})\n' >${.TARGET}
+
+${ASM_GLUENOERR}: ${ASMDEPS}
+	${_MKTARGET_CREATE}
+	printf '#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX:S/tmp_/__/},${.PREFIX:S/tmp_//})\n' >${.TARGET}
 
 ${WEAKASM}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
