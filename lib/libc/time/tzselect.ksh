@@ -1,6 +1,6 @@
 #! /bin/bash
 #
-#	$NetBSD: tzselect.ksh,v 1.12 2014/10/07 21:51:03 christos Exp $
+#	$NetBSD: tzselect.ksh,v 1.13 2015/01/31 18:55:17 christos Exp $
 #
 PKGVERSION='(tzcode) '
 TZVERSION=see_Makefile
@@ -230,10 +230,10 @@ output_distances='
   # case of the Vicenty formula for distances on ellipsoids.
   function gcdist(lat1, long1, lat2, long2, dlong, x, y, num, denom) {
     dlong = long2 - long1
-    x = cos (lat2) * sin (dlong)
-    y = cos (lat1) * sin (lat2) - sin (lat1) * cos (lat2) * cos (dlong)
-    num = sqrt (x * x + y * y)
-    denom = sin (lat1) * sin (lat2) + cos (lat1) * cos (lat2) * cos (dlong)
+    x = cos(lat2) * sin(dlong)
+    y = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dlong)
+    num = sqrt(x * x + y * y)
+    denom = sin(lat1) * sin(lat2) + cos(lat1) * cos(lat2) * cos(dlong)
     return atan2(num, denom)
   }
   # Parallel distance between points with given latitude and longitude.
@@ -242,12 +242,12 @@ output_distances='
   # I.e., it considers longitudes to be further apart if they are
   # nearer the equator.
   function pardist(lat1, long1, lat2, long2) {
-    return abs (long1 - long2) * min (cos (lat1), cos (lat2))
+    return abs(long1 - long2) * min(cos(lat1), cos(lat2))
   }
   # The distance function is the sum of the great-circle distance and
   # the parallel distance.  It could be weighted.
   function dist(lat1, long1, lat2, long2) {
-    return gcdist (lat1, long1, lat2, long2) + pardist (lat1, long1, lat2, long2)
+    return gcdist(lat1, long1, lat2, long2) + pardist(lat1, long1, lat2, long2)
   }
   BEGIN {
     coord_lat = convert_latitude(coord)
@@ -330,7 +330,7 @@ while
 				tzname = "[^-+,0-9][^-+,0-9][^-+,0-9]+"
 				time = "[0-2]?[0-9](:[0-5][0-9](:[0-5][0-9])?)?"
 				offset = "[-+]?" time
-				date = "(J?[0-9]+|M[0-9]+\.[0-9]+\.[0-9]+)"
+				date = "(J?[0-9]+|M[0-9]+\\.[0-9]+\\.[0-9]+)"
 				datetime = "," date "(/" time ")?"
 				tzpattern = "^(:.*|" tzname offset "(" tzname \
 				  "(" offset ")?(" datetime datetime ")?)?)$"
@@ -506,7 +506,7 @@ Universal Time is now:	$UTdate."
 	?*%%)	echo >&2 "	$country";;
 	%?*%?*) echo >&2 "	coord $coord$newline	$region";;
 	%%?*)	echo >&2 "	coord $coord";;
-	+)	echo >&2 "	TZ='$TZ'"
+	*)	echo >&2 "	TZ='$TZ'"
 	esac
 	echo >&2 ""
 	echo >&2 "Therefore TZ='$TZ' will be used.$extra_info"
