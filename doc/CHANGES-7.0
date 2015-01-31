@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.189 2015/01/30 07:54:13 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.190 2015/01/31 07:47:49 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15262,4 +15262,9 @@ external/bsd/atf/dist/atf-c/macros_test.c	1.5
 	when using versions of GCC where they are known to fail, with a
 	reference to PR toolchain/49187.
 	[gson, ticket #471]
+
+sys/dev/pci/if_fpa.c				1.60
+
+	Fix missing "sc->sc_dev = self" initialization.  PR port-i386/49602.
+	[martin, ticket #469]
 
