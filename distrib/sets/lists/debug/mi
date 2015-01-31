@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.105 2015/01/26 00:22:02 christos Exp $
+# $NetBSD: mi,v 1.106 2015/01/31 23:09:27 christos Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -2009,6 +2009,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_pipe2.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_poll.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_posix_fadvise.debug	tests-lib-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_posix_fallocate.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_recvmmsg.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_revoke.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_select.debug		tests-lib-debug		debug,atf
