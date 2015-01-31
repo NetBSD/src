@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.92 2014/11/11 18:46:54 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.93 2015/01/31 18:55:17 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.92 2014/11/11 18:46:54 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.93 2015/01/31 18:55:17 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -266,12 +266,11 @@ tzgetname(const timezone_t sp, int isdst)
 }
 
 static void
-settzname_z(timezone_t sp)
+scrub_abbrs(struct state *sp)
 {
-	int			i;
+	int i;
 
 	/*
-	** Scrub the abbreviations.
 	** First, replace bogus characters.
 	*/
 	for (i = 0; i < sp->charcnt; ++i)
@@ -290,25 +289,18 @@ settzname_z(timezone_t sp)
 	}
 }
 
-static char *
-setzone(const struct state *sp, const struct ttinfo *ttisp, int_fast32_t offset)
+static void
+update_tzname_etc(const struct state *sp, const struct ttinfo *ttisp)
 {
-	char *zn = __UNCONST(&sp->chars[ttisp->tt_abbrind]);
-	if (offset) {
+	tzname[ttisp->tt_isdst] = __UNCONST(&sp->chars[ttisp->tt_abbrind]);
 #ifdef USG_COMPAT
-		if (ttisp->tt_isdst)
-			daylight = 1;
-		if (!ttisp->tt_isdst)
-			timezone = -(ttisp->tt_gmtoff);
-#endif /* defined USG_COMPAT */
+	if (!ttisp->tt_isdst)
+		timezone = - ttisp->tt_gmtoff;
+#endif
 #ifdef ALTZONE
-		if (ttisp->tt_isdst)
-			altzone = -(ttisp->tt_gmtoff);
+	if (ttisp->tt_isdst)
+	    altzone = - ttisp->tt_gmtoff;
 #endif /* defined ALTZONE */
-	}
-
-	tzname[ttisp->tt_isdst] = zn;
-	return zn;
 }
 
 static void
@@ -334,9 +326,16 @@ settzname(void)
 	** And to get the latest zone names into tzname. . .
 	*/
 	for (i = 0; i < sp->typecnt; ++i)
-		setzone(sp, &sp->ttis[i], -1);
+		update_tzname_etc(sp, &sp->ttis[i]);
 
-	settzname_z(sp);
+	for (i = 0; i < sp->timecnt; ++i) {
+		const struct ttinfo * const ttisp = &sp->ttis[sp->types[i]];
+		update_tzname_etc(sp, ttisp);
+#ifdef USG_COMPAT
+		if (ttisp->tt_isdst)
+			daylight = 1;
+#endif /* defined USG_COMPAT */
+	}
 }
 
 static bool
@@ -1251,7 +1250,9 @@ zoneinit(struct state *sp, char const *name)
 		int err = tzload(name, sp, true);
 		if (err != 0 && name && name[0] != ':' &&
 		    tzparse(name, sp, false))
-			return 0;
+			err = 0;
+		if (err == 0)
+			scrub_abbrs(sp);
 		return err;
 	}
 }
@@ -1356,16 +1357,17 @@ tzfree(timezone_t sp)
 ** freely called. (And no, the PANS doesn't require the above behavior,
 ** but it *is* desirable.)
 **
-** If successful and OFFSET is nonzero,
+** If successful and SETNAME is nonzero,
 ** set the applicable parts of tzname, timezone and altzone;
 ** however, it's OK to omit this step if the time zone is POSIX-compatible,
 ** since in that case tzset should have already done this step correctly.
-** OFFSET's type is intfast32_t for compatibility with gmtsub.
+** SETNAME's type is intfast32_t for compatibility with gmtsub,
+** but it is actually a boolean and its value should be 0 or 1.
 */
 
 /*ARGSUSED*/
 static struct tm *
-localsub(struct state const *sp, time_t const *timep, int_fast32_t offset,
+localsub(struct state const *sp, time_t const *timep, int_fast32_t setname,
 	 struct tm *const tmp)
 {
 	const struct ttinfo *	ttisp;
@@ -1397,7 +1399,7 @@ localsub(struct state const *sp, time_t const *timep, int_fast32_t offset,
 				errno = EINVAL;
 				return NULL;	/* "cannot happen" */
 			}
-			result = localsub(sp, &newt, offset, tmp);
+			result = localsub(sp, &newt, setname, tmp);
 			if (result) {
 				int_fast64_t newy;
 
@@ -1437,11 +1439,12 @@ localsub(struct state const *sp, time_t const *timep, int_fast32_t offset,
 	*/
 	result = timesub(&t, ttisp->tt_gmtoff, sp, tmp);
 	if (result) {
-		char *zn = setzone(sp, ttisp, offset);
 		result->tm_isdst = ttisp->tt_isdst;
 #ifdef TM_ZONE
-		result->TM_ZONE = zn;
+		result->TM_ZONE = __UNCONST(&sp->chars[ttisp->tt_abbrind]);
 #endif /* defined TM_ZONE */
+		if (setname)
+			update_tzname_etc(sp, ttisp);
 	}
 	return result;
 }
