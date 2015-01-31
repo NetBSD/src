@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.80 2015/01/30 12:23:47 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.81 2015/01/31 08:50:01 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -96,6 +96,14 @@ get_libgcc () {
 		getlinks config.status libgcc
 	}	| sanitise_includes \
 		| write_mk $_OUTDIRBASE/lib/lib$_subdir/arch/$MACHINE_ARCH/defs.mk
+
+	if [ "${MACHINE_ARCH}" = "m68000" ]
+	then
+		ex <<__EOF__ $_OUTDIR/lib/lib$_subdir/arch/$MACHINE_ARCH/defs.mk
+/G_LIBGCC2_CFLAGS/ s/-fPIC//
+wq
+__EOF__
+	fi
 
 	for f in auto-target.h; do
 		write_c $_OUTDIRBASE/lib/lib$_subdir/arch/$MACHINE_ARCH/$f \
