@@ -1,4 +1,4 @@
-/*	$NetBSD: evutil_rand.c,v 1.3 2015/01/29 07:26:02 spz Exp $	*/
+/*	$NetBSD: evutil_rand.c,v 1.4 2015/02/01 10:19:00 njoly Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *
@@ -35,7 +35,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evutil_rand.c,v 1.3 2015/01/29 07:26:02 spz Exp $");
+__RCSID("$NetBSD: evutil_rand.c,v 1.4 2015/02/01 10:19:00 njoly Exp $");
 
 #include <limits.h>
 
@@ -70,7 +70,8 @@ static void
 ev_arc4random_buf(void *buf, size_t n)
 {
 #if defined(_EVENT_HAVE_ARC4RANDOM_BUF) && !defined(__APPLE__)
-	return arc4random_buf(buf, n);
+	arc4random_buf(buf, n);
+	return;
 #else
 	unsigned char *b = buf;
 
@@ -85,7 +86,8 @@ ev_arc4random_buf(void *buf, size_t n)
 		void (*tptr)(void *,size_t) =
 		    (void (*)(void*,size_t))arc4random_buf;
 		if (tptr != NULL) {
-			return arc4random_buf(buf, n);
+			arc4random_buf(buf, n);
+			return;
 		}
 	}
 #endif
