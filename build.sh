@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.305 2014/11/30 15:53:29 uebayasi Exp $
+#	$NetBSD: build.sh,v 1.306 2015/02/01 18:49:25 christos Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1869,7 +1869,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.305 2014/11/30 15:53:29 uebayasi Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.306 2015/02/01 18:49:25 christos Exp $
 # with these arguments: ${_args}
 #
 
@@ -2023,7 +2023,7 @@ releasekernel()
 
 buildkernels()
 {
-	allkernels=$( make_in_dir etc '-V ${ALL_KERNELS}' )
+	allkernels=$( runcmd= make_in_dir etc '-V ${ALL_KERNELS}' )
 	for k in $allkernels; do
 		buildkernel "${k}"
 	done
