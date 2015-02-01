@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.34.14.3 2015/02/01 08:39:43 skrll Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.34.14.4 2015/02/01 08:45:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -281,7 +281,8 @@ typedef struct {
 #define EHCI_SITD_ALIGN 32
 
 /* Queue Element Transfer Descriptor */
-#define EHCI_QTD_NBUFFERS 5
+#define EHCI_QTD_NBUFFERS	5
+#define EHCI_QTD_MAXTRANSFER	(EHCI_QTD_NBUFFERS * EHCI_PAGE_SIZE)
 typedef struct {
 	volatile ehci_link_t	qtd_next;
 	volatile ehci_link_t	qtd_altnext;
