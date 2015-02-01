@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.1.2.4 2015/01/31 22:28:15 skrll Exp $ */
+/* $NetBSD: usbroothub.c,v 1.1.2.5 2015/02/01 08:23:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -61,20 +61,9 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usbroothub.h>
+#include <dev/usb/usbhist.h>
 
-#ifdef USB_DEBUG
-#define	DPRINTFN(n,fmt,...) do {		\
-	if (usbdebug >= (n)) {			\
-		printf("%s: " fmt,		\
-		__FUNCTION__,## __VA_ARGS__);	\
-	}					\
-} while (0)
-#define	DPRINTF(...)	DPRINTFN(1, __VA_ARGS__)
 extern int usbdebug;
-#else
-#define	DPRINTF(...) do { } while (0)
-#define	DPRINTFN(...) do { } while (0)
-#endif
 
 /* helper functions for USB root hub emulation */
 
@@ -282,11 +271,13 @@ roothub_ctrl_start(usbd_xfer_handle xfer)
 	int buflen, actlen;
 	void *buf;
 
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+
 	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 	req = &xfer->ux_request;
 
-	DPRINTFN(4, "type=%#2x request=%#2x\n",
-	    req->bmRequestType, req->bRequest);
+	USBHIST_LOG(usbdebug, "type=%#2x request=%#2x", req->bmRequestType,
+	    req->bRequest, 0, 0);
 
 	len = UGETW(req->wLength);
 	value = UGETW(req->wValue);
@@ -313,7 +304,7 @@ roothub_ctrl_start(usbd_xfer_handle xfer)
 		}
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
-		DPRINTFN(8, "wValue=%#4x\n", value);
+		USBHIST_LOG(usbdebug, "wValue=%#4x", value, 0, 0, 0);
 
 		if (len == 0)
 			break;
@@ -416,8 +407,8 @@ roothub_ctrl_start(usbd_xfer_handle xfer)
 		break;
 	case C(UR_SET_ADDRESS, UT_WRITE_DEVICE):
 		/* Set Address, 9.4.6 */
-		DPRINTF("UR_SET_ADDRESS, UT_WRITE_DEVICE: addr %d\n",
-		    value);
+		USBHIST_LOG(usbdebug, "UR_SET_ADDRESS, UT_WRITE_DEVICE: addr %d",
+		    value, 0, 0, 0);
 		if (value >= USB_MAX_DEVICES) {
 			goto fail;
 		}
@@ -451,6 +442,8 @@ roothub_ctrl_start(usbd_xfer_handle xfer)
 	}
 
 	actlen = bus->ub_methods->ubm_rhctrl(bus, req, buf, buflen);
+	USBHIST_LOG(usbdebug, "xfer %p buflen %d actlen %d", xfer, buflen,
+	    actlen, 0);
 	if (actlen < 0)
 		goto fail;
 
@@ -458,6 +451,8 @@ roothub_ctrl_start(usbd_xfer_handle xfer)
 	err = USBD_NORMAL_COMPLETION;
 
  fail:
+	USBHIST_LOG(usbdebug, "xfer %p err %d", xfer, err, 0, 0);
+
 	xfer->ux_status = err;
 	mutex_enter(bus->ub_lock);
 	usb_transfer_complete(xfer);
@@ -471,7 +466,6 @@ Static void
 roothub_ctrl_abort(usbd_xfer_handle xfer)
 {
 
-	DPRINTF("\n");
 	/* Nothing to do, all transfers are synchronous. */
 }
 
@@ -480,7 +474,6 @@ Static void
 roothub_ctrl_close(usbd_pipe_handle pipe)
 {
 
-	DPRINTF("\n");
 	/* Nothing to do. */
 }
 
@@ -488,7 +481,6 @@ Static void
 roothub_ctrl_done(usbd_xfer_handle xfer)
 {
 
-	DPRINTF("\n");
 	/* Nothing to do. */
 }
 
