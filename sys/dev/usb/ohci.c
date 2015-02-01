@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.15 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.16 2015/02/01 06:30:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.15 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.16 2015/02/01 06:30:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1710,15 +1710,15 @@ ohci_device_request(usbd_xfer_handle xfer)
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	}
 
-	memcpy(KERNADDR(&opipe->u.ctl.reqdma, 0), req, sizeof *req);
-	usb_syncmem(&opipe->u.ctl.reqdma, 0, sizeof *req, BUS_DMASYNC_PREWRITE);
+	memcpy(KERNADDR(&opipe->u.ctl.reqdma, 0), req, sizeof(*req));
+	usb_syncmem(&opipe->u.ctl.reqdma, 0, sizeof(*req), BUS_DMASYNC_PREWRITE);
 
 	setup->td.td_flags = HTOO32(OHCI_TD_SETUP | OHCI_TD_NOCC |
 				     OHCI_TD_TOGGLE_0 | OHCI_TD_NOINTR);
 	setup->td.td_cbp = HTOO32(DMAADDR(&opipe->u.ctl.reqdma, 0));
 	setup->nexttd = next;
 	setup->td.td_nexttd = HTOO32(next->physaddr);
-	setup->td.td_be = HTOO32(O32TOH(setup->td.td_cbp) + sizeof *req - 1);
+	setup->td.td_be = HTOO32(O32TOH(setup->td.td_cbp) + sizeof(*req) - 1);
 	setup->len = 0;
 	setup->xfer = xfer;
 	setup->flags = 0;
