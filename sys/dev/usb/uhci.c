@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.15 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.16 2015/02/01 08:16:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.15 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.16 2015/02/01 08:16:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3502,7 +3502,7 @@ uhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			break;
 		case UHF_C_PORT_RESET:
 			sc->sc_isreset = 0;
-			return -1;
+			break;
 		case UHF_PORT_CONNECTION:
 		case UHF_PORT_OVER_CURRENT:
 		case UHF_PORT_POWER:
