@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.17 2015/02/01 11:13:46 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.18 2015/02/01 11:54:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.17 2015/02/01 11:13:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.18 2015/02/01 11:54:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -794,7 +794,8 @@ uhci_dump_qhs(uhci_soft_qh_t *sqh)
 {
 	uhci_dump_qh(sqh);
 
-	/* uhci_dump_qhs displays all the QHs and TDs from the given QH onwards
+	/*
+	 * uhci_dump_qhs displays all the QHs and TDs from the given QH onwards
 	 * Traverses sideways first, then down.
 	 *
 	 * QH1
@@ -832,7 +833,8 @@ uhci_dump_tds(uhci_soft_td_t *std)
 	for(td = std; td != NULL; td = td->link.std) {
 		uhci_dump_td(td);
 
-		/* Check whether the link pointer in this TD marks
+		/*
+		 * Check whether the link pointer in this TD marks
 		 * the link pointer as end of queue. This avoids
 		 * printing the free list in case the queue/TD has
 		 * already been moved there (seatbelt).
