@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2015/01/07 02:06:03 christos Exp $
+#	$NetBSD: Makefile,v 1.24 2015/02/01 17:47:00 chs Exp $
 
 LIBISPRIVATE=	yes
 
@@ -398,9 +398,9 @@ COPTS.recog.c=-O0
 
 CFLAGS+=	-Wno-stack-protector
 
-.if ${GCC_MACHINE_ARCH} == "m68000" || ${GCC_MACHINE_ARCH} == "m68k"
-COPTS.lambda-code.c=		-O0
-COPTS.tree-loop-linear.c=	-O0
+.if ${GCC_MACHINE_ARCH} == "m68000" || ${GCC_MACHINE_ARCH} == "m68k" || \
+	${GCC_MACHINE_ARCH} == "coldfire"
+COPTS.tree-loop-distribution.c=	-O2
 .endif
 
 COPTS.tree.c=	${${ACTIVE_CC} == "clang" :? -O0 :}
