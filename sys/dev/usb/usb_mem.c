@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.65.2.4 2014/12/05 09:37:50 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.65.2.5 2015/02/01 12:08:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.4 2014/12/05 09:37:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.5 2015/02/01 12:08:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -53,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.4 2014/12/05 09:37:50 skrll Exp $
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/once.h>
-
-#include <sys/extent.h>
 
 #ifdef DIAGNOSTIC
 #include <sys/proc.h>
