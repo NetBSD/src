@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.332 2015/01/23 16:13:53 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.333 2015/02/01 16:26:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.332 2015/01/23 16:13:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.333 2015/02/01 16:26:00 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1078,7 +1078,7 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	}
 
 #if defined(DEBUG)
-	if (!error && VM_MAP_IS_KERNEL(map)) {
+	if (!error && VM_MAP_IS_KERNEL(map) && (flags & UVM_FLAG_NOWAIT) == 0) {
 		uvm_km_check_empty(map, *startp, *startp + size);
 	}
 #endif /* defined(DEBUG) */
@@ -2253,7 +2253,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			}
 		}
 
-		if (VM_MAP_IS_KERNEL(map)) {
+		if (VM_MAP_IS_KERNEL(map) && (flags & UVM_FLAG_NOWAIT) == 0) {
 			uvm_km_check_empty(map, entry->start,
 			    entry->end);
 		}
