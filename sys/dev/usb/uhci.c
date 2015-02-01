@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.16 2015/02/01 08:16:31 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.17 2015/02/01 11:13:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.16 2015/02/01 08:16:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.17 2015/02/01 11:13:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -961,7 +961,8 @@ uhci_root_intr_done(usbd_xfer_handle xfer)
  * If we are already looping, just count it.
  */
 void
-uhci_add_loop(uhci_softc_t *sc) {
+uhci_add_loop(uhci_softc_t *sc)
+{
 #ifdef UHCI_DEBUG
 	if (uhcinoloop)
 		return;
@@ -979,7 +980,8 @@ uhci_add_loop(uhci_softc_t *sc) {
 }
 
 void
-uhci_rem_loop(uhci_softc_t *sc) {
+uhci_rem_loop(uhci_softc_t *sc)
+{
 #ifdef UHCI_DEBUG
 	if (uhcinoloop)
 		return;
