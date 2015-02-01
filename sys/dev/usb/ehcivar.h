@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.8 2015/02/01 06:15:41 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.9 2015/02/01 08:29:46 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ typedef struct ehci_soft_itd {
 	};
 	union {
 		struct {
-			/* soft_itds links in a periodic frame*/
+			/* soft_itds links in a periodic frame */
 			struct ehci_soft_itd *next;
 			struct ehci_soft_itd *prev;
 		} frame_list;
