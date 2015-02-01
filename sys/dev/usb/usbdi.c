@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.9 2014/12/05 09:37:50 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.10 2015/02/01 13:09:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.9 2014/12/05 09:37:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.10 2015/02/01 13:09:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -83,7 +83,7 @@ usbd_dump_iface(struct usbd_interface *iface)
 {
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
-	USBHIST_LOG(usbdebug, "iface %p\n", iface, 0, 0, 0);
+	USBHIST_LOG(usbdebug, "iface %p", iface, 0, 0, 0);
 	if (iface == NULL)
 		return;
 	USBHIST_LOG(usbdebug, "     device = %p idesc = %p index = %d",
