@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.6 2014/04/09 20:52:14 hans Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.7 2015/02/01 19:32:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.6 2014/04/09 20:52:14 hans Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.7 2015/02/01 19:32:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -115,6 +115,7 @@ struct cpsw_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
+	bus_size_t sc_bss;
 	bus_dma_tag_t sc_bdt;
 	bus_space_handle_t sc_bsh_txdescs;
 	bus_space_handle_t sc_bsh_rxdescs;
@@ -123,6 +124,7 @@ struct cpsw_softc {
 	struct ethercom sc_ec;
 	struct mii_data sc_mii;
 	bool sc_phy_has_1000t;
+	bool sc_attached;
 	callout_t sc_tick_ch;
 	void *sc_ih;
 	struct cpsw_ring_data *sc_rdp;
@@ -145,6 +147,7 @@ struct cpsw_softc {
 
 static int cpsw_match(device_t, cfdata_t, void *);
 static void cpsw_attach(device_t, device_t, void *);
+static int cpsw_detach(device_t, int);
 
 static void cpsw_start(struct ifnet *);
 static int cpsw_ioctl(struct ifnet *, u_long, void *);
@@ -170,7 +173,7 @@ static int cpsw_miscintr(void *);
 static int cpsw_ale_update_addresses(struct cpsw_softc *, int purge);
 
 CFATTACH_DECL_NEW(cpsw, sizeof(struct cpsw_softc),
-    cpsw_match, cpsw_attach, NULL, NULL);
+    cpsw_match, cpsw_attach, cpsw_detach, NULL);
 
 #undef KERNHIST
 #include <sys/kernhist.h>
@@ -336,6 +339,55 @@ cpsw_phy_has_1000t(struct cpsw_softc * const sc)
 	return false;
 }
 
+static int
+cpsw_detach(device_t self, int flags)
+{
+	struct cpsw_softc * const sc = device_private(self);
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	u_int i;
+
+	/* Succeed now if there's no work to do. */
+	if (!sc->sc_attached)
+		return 0;
+
+	sc->sc_attached = false;
+
+	/* Stop the interface. Callouts are stopped in it. */
+	cpsw_stop(ifp, 1);
+
+	/* Destroy our callout. */
+	callout_destroy(&sc->sc_tick_ch);
+
+	/* Let go of the interrupts */
+	intr_disestablish(sc->sc_rxthih);
+	intr_disestablish(sc->sc_rxih);
+	intr_disestablish(sc->sc_txih);
+	intr_disestablish(sc->sc_miscih);
+
+	/* Delete all media. */
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	/* Free the packet padding buffer */
+	kmem_free(sc->sc_txpad, ETHER_MIN_LEN);
+	bus_dmamap_destroy(sc->sc_bdt, sc->sc_txpad_dm);
+
+	/* Destroy all the descriptors */
+	for (i = 0; i < CPSW_NTXDESCS; i++)
+		bus_dmamap_destroy(sc->sc_bdt, sc->sc_rdp->tx_dm[i]);
+	for (i = 0; i < CPSW_NRXDESCS; i++)
+		bus_dmamap_destroy(sc->sc_bdt, sc->sc_rdp->rx_dm[i]);
+	kmem_free(sc->sc_rdp, sizeof(*sc->sc_rdp));
+
+	/* Unmap */
+	bus_space_unmap(sc->sc_bst, sc->sc_bsh, sc->sc_bss);
+
+
+	return 0;
+}
+
 static void
 cpsw_attach(device_t parent, device_t self, void *aux)
 {
@@ -398,6 +450,7 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	    IPL_VM, IST_LEVEL, cpsw_miscintr, sc);
 
 	sc->sc_bst = oa->obio_iot;
+	sc->sc_bss = oa->obio_size;
 	sc->sc_bdt = oa->obio_dmat;
 
 	error = bus_space_map(sc->sc_bst, oa->obio_addr, oa->obio_size, 0,
@@ -514,6 +567,9 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
+
+	/* The attach is successful. */
+	sc->sc_attached = true;
 
 	return;
 }
