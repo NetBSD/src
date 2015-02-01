@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.7 2014/12/24 14:11:05 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.8 2015/02/01 06:15:41 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ typedef struct ehci_soft_qtd {
 	uint16_t len;
 } ehci_soft_qtd_t;
 #define EHCI_SQTD_ALIGN	MAX(EHCI_QTD_ALIGN, CACHE_LINE_SIZE)
-#define EHCI_SQTD_SIZE ((sizeof (struct ehci_soft_qtd) + EHCI_SQTD_ALIGN - 1) & -EHCI_SQTD_ALIGN)
+#define EHCI_SQTD_SIZE ((sizeof(struct ehci_soft_qtd) + EHCI_SQTD_ALIGN - 1) & -EHCI_SQTD_ALIGN)
 #define EHCI_SQTD_CHUNK (EHCI_PAGE_SIZE / EHCI_SQTD_SIZE)
 
 typedef struct ehci_soft_qh {
@@ -57,7 +57,7 @@ typedef struct ehci_soft_qh {
 	int offs;                       /* QH's offset in usb_dma_t */
 	int islot;
 } ehci_soft_qh_t;
-#define EHCI_SQH_SIZE ((sizeof (struct ehci_soft_qh) + EHCI_QH_ALIGN - 1) / EHCI_QH_ALIGN * EHCI_QH_ALIGN)
+#define EHCI_SQH_SIZE ((sizeof(struct ehci_soft_qh) + EHCI_QH_ALIGN - 1) / EHCI_QH_ALIGN * EHCI_QH_ALIGN)
 #define EHCI_SQH_CHUNK (EHCI_PAGE_SIZE / EHCI_SQH_SIZE)
 
 typedef struct ehci_soft_itd {
