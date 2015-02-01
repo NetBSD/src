@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.28 2015/01/02 08:52:14 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.29 2015/02/01 06:15:41 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.28 2015/01/02 08:52:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.29 2015/02/01 06:15:41 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3442,7 +3442,7 @@ ehci_device_ctrl_done(usbd_xfer_handle xfer)
 	if (xfer->ux_status != USBD_NOMEM && ehci_active_intr_list(ex)) {
 		ehci_del_intr_list(sc, ex);	/* remove from active list */
 		ehci_free_sqtd_chain(sc, ex->ex_sqtdstart, NULL);
-		usb_syncmem(&epipe->u.ctl.reqdma, 0, sizeof *req,
+		usb_syncmem(&epipe->u.ctl.reqdma, 0, sizeof(*req),
 		    BUS_DMASYNC_POSTWRITE);
 		if (len)
 			usb_syncmem(&xfer->ux_dmabuf, 0, len,
@@ -3549,8 +3549,8 @@ ehci_device_request(usbd_xfer_handle xfer)
 		next = stat;
 	}
 
-	memcpy(KERNADDR(&epipe->u.ctl.reqdma, 0), req, sizeof *req);
-	usb_syncmem(&epipe->u.ctl.reqdma, 0, sizeof *req, BUS_DMASYNC_PREWRITE);
+	memcpy(KERNADDR(&epipe->u.ctl.reqdma, 0), req, sizeof(*req));
+	usb_syncmem(&epipe->u.ctl.reqdma, 0, sizeof(*req), BUS_DMASYNC_PREWRITE);
 
 	/* Clear toggle */
 	setup->qtd.qtd_status = htole32(
@@ -3558,14 +3558,14 @@ ehci_device_request(usbd_xfer_handle xfer)
 	    EHCI_QTD_SET_PID(EHCI_QTD_PID_SETUP) |
 	    EHCI_QTD_SET_CERR(3) |
 	    EHCI_QTD_SET_TOGGLE(0) |
-	    EHCI_QTD_SET_BYTES(sizeof *req)
+	    EHCI_QTD_SET_BYTES(sizeof(*req))
 	    );
 	setup->qtd.qtd_buffer[0] = htole32(DMAADDR(&epipe->u.ctl.reqdma, 0));
 	setup->qtd.qtd_buffer_hi[0] = 0;
 	setup->nextqtd = next;
 	setup->qtd.qtd_next = setup->qtd.qtd_altnext = htole32(next->physaddr);
 	setup->xfer = xfer;
-	setup->len = sizeof *req;
+	setup->len = sizeof(*req);
 	usb_syncmem(&setup->dma, setup->offs, sizeof(setup->qtd),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
