@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.34 2015/01/20 18:31:25 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.35 2015/02/02 22:07:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.34 2015/01/20 18:31:25 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.35 2015/02/02 22:07:05 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -194,6 +194,7 @@ popen(const char *cmd, const char *type)
 #ifdef _REENTRANT
 		(void)rwlock_unlock(&pidlist_lock);
 #endif
+		pdes_error(pdes, cur);
 		errno = serrno;
 		return NULL;
 		/* NOTREACHED */
