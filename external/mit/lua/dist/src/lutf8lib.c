@@ -1,4 +1,4 @@
-/*	$NetBSD: lutf8lib.c,v 1.1.1.2 2015/02/02 02:01:09 lneto Exp $	*/
+/*	$NetBSD: lutf8lib.c,v 1.2 2015/02/02 14:03:05 lneto Exp $	*/
 
 /*
 ** Id: lutf8lib.c,v 1.13 2014/11/02 19:19:04 roberto Exp 
@@ -12,9 +12,11 @@
 #include "lprefix.h"
 
 
+#ifndef _KERNEL
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#endif
 
 #include "lua.h"
 
