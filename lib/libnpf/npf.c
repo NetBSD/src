@@ -1,7 +1,7 @@
-/*	$NetBSD: npf.c,v 1.34 2014/08/24 20:37:35 rmind Exp $	*/
+/*	$NetBSD: npf.c,v 1.35 2015/02/02 00:55:28 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010-2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.34 2014/08/24 20:37:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.35 2015/02/02 00:55:28 rmind Exp $");
 
 #include <sys/types.h>
 #include <netinet/in_systm.h>
@@ -713,6 +713,27 @@ npf_rule_getproc(nl_rule_t *rl)
 
 	prop_dictionary_get_cstring_nocopy(rldict, "rproc", &rpname);
 	return rpname;
+}
+
+uint64_t
+npf_rule_getid(nl_rule_t *rl)
+{
+	prop_dictionary_t rldict = rl->nrl_dict;
+	uint64_t id = 0;
+
+	(void)prop_dictionary_get_uint64(rldict, "id", &id);
+	return id;
+}
+
+const void *
+npf_rule_getcode(nl_rule_t *rl, int *type, size_t *len)
+{
+	prop_dictionary_t rldict = rl->nrl_dict;
+	prop_object_t obj = prop_dictionary_get(rldict, "code");
+
+	prop_dictionary_get_uint32(rldict, "code-type", (uint32_t *)type);
+	*len = prop_data_size(obj);
+	return prop_data_data_nocopy(obj);
 }
 
 int
