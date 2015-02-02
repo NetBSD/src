@@ -1,17 +1,18 @@
-/*	$NetBSD: lcorolib.c,v 1.1.1.1 2014/07/20 23:17:33 lneto Exp $	*/
+/*	$NetBSD: lcorolib.c,v 1.1.1.2 2015/02/02 02:01:08 lneto Exp $	*/
 
 /*
-** Id: lcorolib.c,v 1.6 2014/05/08 13:52:20 roberto Exp 
+** Id: lcorolib.c,v 1.9 2014/11/02 19:19:04 roberto Exp 
 ** Coroutine Library
 ** See Copyright Notice in lua.h
 */
 
-
-#include <stdlib.h>
-
-
 #define lcorolib_c
 #define LUA_LIB
+
+#include "lprefix.h"
+
+
+#include <stdlib.h>
 
 #include "lua.h"
 
@@ -21,7 +22,7 @@
 
 static lua_State *getco (lua_State *L) {
   lua_State *co = lua_tothread(L, 1);
-  luaL_argcheck(L, co, 1, "coroutine expected");
+  luaL_argcheck(L, co, 1, "thread expected");
   return co;
 }
 
@@ -67,7 +68,7 @@ static int luaB_coresume (lua_State *L) {
   else {
     lua_pushboolean(L, 1);
     lua_insert(L, -(r + 1));
-    return r + 1;  /* return true + `resume' returns */
+    return r + 1;  /* return true + 'resume' returns */
   }
 }
 
