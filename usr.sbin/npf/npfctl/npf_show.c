@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.16 2015/02/02 00:31:39 rmind Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.17 2015/02/02 19:08:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.16 2015/02/02 00:31:39 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.17 2015/02/02 19:08:32 rmind Exp $");
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -388,7 +388,7 @@ npfctl_print_rule(npf_conf_info_t *ctx, nl_rule_t *rl)
 	/* If dynamic rule - print its ID. */
 	if ((attr & NPF_DYNAMIC_GROUP) == NPF_RULE_DYNAMIC) {
 		uint64_t id = npf_rule_getid(rl);
-		fprintf(ctx->fp, "# id = \"%" PRIu64 "\" ", id);
+		fprintf(ctx->fp, "# id = \"%" PRIx64 "\" ", id);
 	}
 
 	fputs("\n", ctx->fp);
