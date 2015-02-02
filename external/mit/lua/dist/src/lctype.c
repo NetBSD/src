@@ -1,4 +1,4 @@
-/*	$NetBSD: lctype.c,v 1.1.1.2 2015/02/02 02:01:11 lneto Exp $	*/
+/*	$NetBSD: lctype.c,v 1.2 2015/02/02 14:03:05 lneto Exp $	*/
 
 /*
 ** Id: lctype.c,v 1.12 2014/11/02 19:19:04 roberto Exp 
@@ -16,7 +16,9 @@
 
 #if !LUA_USE_CTYPE	/* { */
 
+#ifndef _KERNEL
 #include <limits.h>
+#endif
 
 LUAI_DDEF const lu_byte luai_ctype_[UCHAR_MAX + 2] = {
   0x00,  /* EOZ */
