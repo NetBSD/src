@@ -1,16 +1,18 @@
-/*	$NetBSD: lfunc.c,v 1.1.1.3 2014/07/20 23:17:34 lneto Exp $	*/
+/*	$NetBSD: lfunc.c,v 1.1.1.4 2015/02/02 02:01:11 lneto Exp $	*/
 
 /*
-** Id: lfunc.c,v 2.43 2014/06/19 18:27:20 roberto Exp 
+** Id: lfunc.c,v 2.45 2014/11/02 19:19:04 roberto Exp 
 ** Auxiliary functions to manipulate prototypes and closures
 ** See Copyright Notice in lua.h
 */
 
-
-#include <stddef.h>
-
 #define lfunc_c
 #define LUA_CORE
+
+#include "lprefix.h"
+
+
+#include <stddef.h>
 
 #include "lua.h"
 
@@ -84,7 +86,7 @@ void luaF_close (lua_State *L, StkId level) {
   UpVal *uv;
   while (L->openupval != NULL && (uv = L->openupval)->v >= level) {
     lua_assert(upisopen(uv));
-    L->openupval = uv->u.open.next;  /* remove from `open' list */
+    L->openupval = uv->u.open.next;  /* remove from 'open' list */
     if (uv->refcount == 0)  /* no references? */
       luaM_free(L, uv);  /* free upvalue */
     else {
@@ -134,7 +136,7 @@ void luaF_freeproto (lua_State *L, Proto *f) {
 
 
 /*
-** Look for n-th local variable at line `line' in function `func'.
+** Look for n-th local variable at line 'line' in function 'func'.
 ** Returns NULL if not found.
 */
 const char *luaF_getlocalname (const Proto *f, int local_number, int pc) {

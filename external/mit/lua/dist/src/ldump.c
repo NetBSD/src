@@ -1,15 +1,18 @@
-/*	$NetBSD: ldump.c,v 1.1.1.3 2014/07/20 23:17:34 lneto Exp $	*/
+/*	$NetBSD: ldump.c,v 1.1.1.4 2015/02/02 02:01:06 lneto Exp $	*/
 
 /*
-** Id: ldump.c,v 2.32 2014/06/18 18:35:43 roberto Exp 
+** Id: ldump.c,v 2.34 2014/11/02 19:19:04 roberto Exp 
 ** save precompiled Lua chunks
 ** See Copyright Notice in lua.h
 */
 
-#include <stddef.h>
-
 #define ldump_c
 #define LUA_CORE
+
+#include "lprefix.h"
+
+
+#include <stddef.h>
 
 #include "lua.h"
 
@@ -73,7 +76,7 @@ static void DumpString (const TString *s, DumpState *D) {
   if (s == NULL)
     DumpByte(0, D);
   else {
-    size_t size = s->tsv.len + 1;  /* include trailing '\0' */
+    size_t size = s->len + 1;  /* include trailing '\0' */
     if (size < 0xFF)
       DumpByte(cast_int(size), D);
     else {
@@ -114,7 +117,7 @@ static void DumpConstants (const Proto *f, DumpState *D) {
       break;
     case LUA_TSHRSTR:
     case LUA_TLNGSTR:
-      DumpString(rawtsvalue(o), D);
+      DumpString(tsvalue(o), D);
       break;
     default:
       lua_assert(0);

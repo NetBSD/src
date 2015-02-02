@@ -1,7 +1,7 @@
-/*	$NetBSD: lvm.h,v 1.1.1.3 2014/07/20 23:17:39 lneto Exp $	*/
+/*	$NetBSD: lvm.h,v 1.1.1.4 2015/02/02 02:01:13 lneto Exp $	*/
 
 /*
-** Id: lvm.h,v 2.31 2014/05/26 17:10:22 roberto Exp 
+** Id: lvm.h,v 2.34 2014/08/01 17:24:02 roberto Exp 
 ** Lua virtual machine
 ** See Copyright Notice in lua.h
 */
@@ -13,6 +13,20 @@
 #include "ldo.h"
 #include "lobject.h"
 #include "ltm.h"
+
+
+#if !defined(LUA_NOCVTN2S)
+#define cvt2str(o)	ttisnumber(o)
+#else
+#define cvt2str(o)	0	/* no conversion from numbers to strings */
+#endif
+
+
+#if !defined(LUA_NOCVTS2N)
+#define cvt2num(o)	ttisstring(o)
+#else
+#define cvt2num(o)	0	/* no conversion from strings to numbers */
+#endif
 
 
 #define tonumber(o,n) \
@@ -31,7 +45,6 @@ LUAI_FUNC int luaV_lessthan (lua_State *L, const TValue *l, const TValue *r);
 LUAI_FUNC int luaV_lessequal (lua_State *L, const TValue *l, const TValue *r);
 LUAI_FUNC int luaV_tonumber_ (const TValue *obj, lua_Number *n);
 LUAI_FUNC int luaV_tointeger_ (const TValue *obj, lua_Integer *p);
-LUAI_FUNC int luaV_tostring (lua_State *L, StkId obj);
 LUAI_FUNC void luaV_gettable (lua_State *L, const TValue *t, TValue *key,
                                             StkId val);
 LUAI_FUNC void luaV_settable (lua_State *L, const TValue *t, TValue *key,

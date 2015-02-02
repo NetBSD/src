@@ -1,15 +1,18 @@
-/*	$NetBSD: lopcodes.c,v 1.1.1.3 2014/07/20 23:17:36 lneto Exp $	*/
+/*	$NetBSD: lopcodes.c,v 1.1.1.4 2015/02/02 02:01:13 lneto Exp $	*/
 
 /*
-** Id: lopcodes.c,v 1.53 2013/12/30 20:47:58 roberto Exp 
+** Id: lopcodes.c,v 1.55 2015/01/05 13:48:33 roberto Exp 
 ** Opcodes for Lua virtual machine
 ** See Copyright Notice in lua.h
 */
 
-
 #define lopcodes_c
 #define LUA_CORE
 
+#include "lprefix.h"
+
+
+#include <stddef.h>
 
 #include "lopcodes.h"
 

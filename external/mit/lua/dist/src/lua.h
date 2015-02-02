@@ -1,7 +1,7 @@
-/*	$NetBSD: lua.h,v 1.1.1.3 2014/07/20 23:17:38 lneto Exp $	*/
+/*	$NetBSD: lua.h,v 1.1.1.4 2015/02/02 02:01:10 lneto Exp $	*/
 
 /*
-** Id: lua.h,v 1.307 2014/06/10 17:41:38 roberto Exp 
+** Id: lua.h,v 1.325 2014/12/26 17:24:27 roberto Exp 
 ** Lua - A Scripting Language
 ** Lua.org, PUC-Rio, Brazil (http://www.lua.org)
 ** See Copyright Notice at the end of this file
@@ -21,16 +21,16 @@
 #define LUA_VERSION_MAJOR	"5"
 #define LUA_VERSION_MINOR	"3"
 #define LUA_VERSION_NUM		503
-#define LUA_VERSION_RELEASE	"0 (work3)"
+#define LUA_VERSION_RELEASE	"0"
 
 #define LUA_VERSION	"Lua " LUA_VERSION_MAJOR "." LUA_VERSION_MINOR
 #define LUA_RELEASE	LUA_VERSION "." LUA_VERSION_RELEASE
-#define LUA_COPYRIGHT	LUA_RELEASE "  Copyright (C) 1994-2014 Lua.org, PUC-Rio"
+#define LUA_COPYRIGHT	LUA_RELEASE "  Copyright (C) 1994-2015 Lua.org, PUC-Rio"
 #define LUA_AUTHORS	"R. Ierusalimschy, L. H. de Figueiredo, W. Celes"
 
 
 /* mark for precompiled code ('<esc>Lua') */
-#define LUA_SIGNATURE	"\033Lua"
+#define LUA_SIGNATURE	"\x1bLua"
 
 /* option for multiple returns in 'lua_pcall' and 'lua_call' */
 #define LUA_MULTRET	(-1)
@@ -54,30 +54,6 @@
 
 
 typedef struct lua_State lua_State;
-
-/*
-** Type for C functions registered with Lua
-*/
-typedef int (*lua_CFunction) (lua_State *L);
-
-/*
-** Type for continuation functions
-*/
-typedef int (*lua_KFunction) (lua_State *L, int status, int ctx);
-
-
-/*
-** functions that read/write blocks when loading/dumping Lua chunks
-*/
-typedef const char * (*lua_Reader) (lua_State *L, void *ud, size_t *sz);
-
-typedef int (*lua_Writer) (lua_State *L, const void *p, size_t sz, void *ud);
-
-
-/*
-** prototype for memory-allocation functions
-*/
-typedef void * (*lua_Alloc) (void *ud, void *ptr, size_t osize, size_t nsize);
 
 
 /*
@@ -119,6 +95,34 @@ typedef LUA_INTEGER lua_Integer;
 /* unsigned integer type */
 typedef LUA_UNSIGNED lua_Unsigned;
 
+/* type for continuation-function contexts */
+typedef LUA_KCONTEXT lua_KContext;
+
+
+/*
+** Type for C functions registered with Lua
+*/
+typedef int (*lua_CFunction) (lua_State *L);
+
+/*
+** Type for continuation functions
+*/
+typedef int (*lua_KFunction) (lua_State *L, int status, lua_KContext ctx);
+
+
+/*
+** Type for functions that read/write blocks when loading/dumping Lua chunks
+*/
+typedef const char * (*lua_Reader) (lua_State *L, void *ud, size_t *sz);
+
+typedef int (*lua_Writer) (lua_State *L, const void *p, size_t sz, void *ud);
+
+
+/*
+** Type for memory-allocation functions
+*/
+typedef void * (*lua_Alloc) (void *ud, void *ptr, size_t osize, size_t nsize);
+
 
 
 /*
@@ -156,9 +160,8 @@ LUA_API int   (lua_gettop) (lua_State *L);
 LUA_API void  (lua_settop) (lua_State *L, int idx);
 LUA_API void  (lua_pushvalue) (lua_State *L, int idx);
 LUA_API void  (lua_rotate) (lua_State *L, int idx, int n);
-LUA_API void  (lua_replace) (lua_State *L, int idx);
 LUA_API void  (lua_copy) (lua_State *L, int fromidx, int toidx);
-LUA_API int   (lua_checkstack) (lua_State *L, int sz);
+LUA_API int   (lua_checkstack) (lua_State *L, int n);
 
 LUA_API void  (lua_xmove) (lua_State *from, lua_State *to, int n);
 
@@ -177,7 +180,6 @@ LUA_API const char     *(lua_typename) (lua_State *L, int tp);
 
 LUA_API lua_Number      (lua_tonumberx) (lua_State *L, int idx, int *isnum);
 LUA_API lua_Integer     (lua_tointegerx) (lua_State *L, int idx, int *isnum);
-LUA_API lua_Unsigned    (lua_tounsignedx) (lua_State *L, int idx, int *isnum);
 LUA_API int             (lua_toboolean) (lua_State *L, int idx);
 LUA_API const char     *(lua_tolstring) (lua_State *L, int idx, size_t *len);
 LUA_API size_t          (lua_rawlen) (lua_State *L, int idx);
@@ -222,8 +224,7 @@ LUA_API int   (lua_compare) (lua_State *L, int idx1, int idx2, int op);
 LUA_API void        (lua_pushnil) (lua_State *L);
 LUA_API void        (lua_pushnumber) (lua_State *L, lua_Number n);
 LUA_API void        (lua_pushinteger) (lua_State *L, lua_Integer n);
-LUA_API void        (lua_pushunsigned) (lua_State *L, lua_Unsigned n);
-LUA_API const char *(lua_pushlstring) (lua_State *L, const char *s, size_t l);
+LUA_API const char *(lua_pushlstring) (lua_State *L, const char *s, size_t len);
 LUA_API const char *(lua_pushstring) (lua_State *L, const char *s);
 LUA_API const char *(lua_pushvfstring) (lua_State *L, const char *fmt,
                                                       va_list argp);
@@ -237,9 +238,10 @@ LUA_API int   (lua_pushthread) (lua_State *L);
 /*
 ** get functions (Lua -> stack)
 */
-LUA_API int (lua_getglobal) (lua_State *L, const char *var);
+LUA_API int (lua_getglobal) (lua_State *L, const char *name);
 LUA_API int (lua_gettable) (lua_State *L, int idx);
 LUA_API int (lua_getfield) (lua_State *L, int idx, const char *k);
+LUA_API int (lua_geti) (lua_State *L, int idx, lua_Integer n);
 LUA_API int (lua_rawget) (lua_State *L, int idx);
 LUA_API int (lua_rawgeti) (lua_State *L, int idx, lua_Integer n);
 LUA_API int (lua_rawgetp) (lua_State *L, int idx, const void *p);
@@ -253,9 +255,10 @@ LUA_API int  (lua_getuservalue) (lua_State *L, int idx);
 /*
 ** set functions (stack -> Lua)
 */
-LUA_API void  (lua_setglobal) (lua_State *L, const char *var);
+LUA_API void  (lua_setglobal) (lua_State *L, const char *name);
 LUA_API void  (lua_settable) (lua_State *L, int idx);
 LUA_API void  (lua_setfield) (lua_State *L, int idx, const char *k);
+LUA_API void  (lua_seti) (lua_State *L, int idx, lua_Integer n);
 LUA_API void  (lua_rawset) (lua_State *L, int idx);
 LUA_API void  (lua_rawseti) (lua_State *L, int idx, lua_Integer n);
 LUA_API void  (lua_rawsetp) (lua_State *L, int idx, const void *p);
@@ -266,17 +269,16 @@ LUA_API void  (lua_setuservalue) (lua_State *L, int idx);
 /*
 ** 'load' and 'call' functions (load and run Lua code)
 */
-LUA_API void  (lua_callk) (lua_State *L, int nargs, int nresults, int ctx,
-                           lua_KFunction k);
+LUA_API void  (lua_callk) (lua_State *L, int nargs, int nresults,
+                           lua_KContext ctx, lua_KFunction k);
 #define lua_call(L,n,r)		lua_callk(L, (n), (r), 0, NULL)
 
 LUA_API int   (lua_pcallk) (lua_State *L, int nargs, int nresults, int errfunc,
-                            int ctx, lua_KFunction k);
+                            lua_KContext ctx, lua_KFunction k);
 #define lua_pcall(L,n,r,f)	lua_pcallk(L, (n), (r), (f), 0, NULL)
 
 LUA_API int   (lua_load) (lua_State *L, lua_Reader reader, void *dt,
-                                        const char *chunkname,
-                                        const char *mode);
+                          const char *chunkname, const char *mode);
 
 LUA_API int (lua_dump) (lua_State *L, lua_Writer writer, void *data, int strip);
 
@@ -284,12 +286,13 @@ LUA_API int (lua_dump) (lua_State *L, lua_Writer writer, void *data, int strip);
 /*
 ** coroutine functions
 */
-LUA_API int  (lua_yieldk) (lua_State *L, int nresults, int ctx,
-                           lua_KFunction k);
+LUA_API int  (lua_yieldk)     (lua_State *L, int nresults, lua_KContext ctx,
+                               lua_KFunction k);
+LUA_API int  (lua_resume)     (lua_State *L, lua_State *from, int narg);
+LUA_API int  (lua_status)     (lua_State *L);
+LUA_API int (lua_isyieldable) (lua_State *L);
+
 #define lua_yield(L,n)		lua_yieldk(L, (n), 0, NULL)
-LUA_API int  (lua_resume) (lua_State *L, lua_State *from, int narg);
-LUA_API int  (lua_status) (lua_State *L);
-LUA_API int lua_isyieldable (lua_State *L);
 
 
 /*
@@ -320,7 +323,7 @@ LUA_API int   (lua_next) (lua_State *L, int idx);
 LUA_API void  (lua_concat) (lua_State *L, int n);
 LUA_API void  (lua_len)    (lua_State *L, int idx);
 
-LUA_API size_t   (lua_strtonum) (lua_State *L, const char *s);
+LUA_API size_t   (lua_stringtonumber) (lua_State *L, const char *s);
 
 LUA_API lua_Alloc (lua_getallocf) (lua_State *L, void **ud);
 LUA_API void      (lua_setallocf) (lua_State *L, lua_Alloc f, void *ud);
@@ -328,14 +331,15 @@ LUA_API void      (lua_setallocf) (lua_State *L, lua_Alloc f, void *ud);
 
 
 /*
-** ===============================================================
+** {==============================================================
 ** some useful macros
 ** ===============================================================
 */
 
+#define lua_getextraspace(L)	((void *)((char *)(L) - LUA_EXTRASPACE))
+
 #define lua_tonumber(L,i)	lua_tonumberx(L,(i),NULL)
 #define lua_tointeger(L,i)	lua_tointegerx(L,(i),NULL)
-#define lua_tounsigned(L,i)	lua_tounsignedx(L,(i),NULL)
 
 #define lua_pop(L,n)		lua_settop(L, -(n)-1)
 
@@ -367,6 +371,24 @@ LUA_API void      (lua_setallocf) (lua_State *L, lua_Alloc f, void *ud);
 
 #define lua_remove(L,idx)	(lua_rotate(L, (idx), -1), lua_pop(L, 1))
 
+#define lua_replace(L,idx)	(lua_copy(L, -1, (idx)), lua_pop(L, 1))
+
+/* }============================================================== */
+
+
+/*
+** {==============================================================
+** compatibility macros for unsigned conversions
+** ===============================================================
+*/
+#if defined(LUA_COMPAT_APIINTCASTS)
+
+#define lua_pushunsigned(L,n)	lua_pushinteger(L, (lua_Integer)(n))
+#define lua_tounsignedx(L,i,is)	((lua_Unsigned)lua_tointegerx(L,i,is))
+#define lua_tounsigned(L,i)	lua_tounsignedx(L,(i),NULL)
+
+#endif
+/* }============================================================== */
 
 /*
 ** {======================================================================
@@ -439,7 +461,7 @@ struct lua_Debug {
 
 
 /******************************************************************************
-* Copyright (C) 1994-2014 Lua.org, PUC-Rio.
+* Copyright (C) 1994-2015 Lua.org, PUC-Rio.
 *
 * Permission is hereby granted, free of charge, to any person obtaining
 * a copy of this software and associated documentation files (the

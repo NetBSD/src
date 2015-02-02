@@ -1,17 +1,19 @@
-/*	$NetBSD: lstate.c,v 1.1.1.3 2014/07/20 23:17:37 lneto Exp $	*/
+/*	$NetBSD: lstate.c,v 1.1.1.4 2015/02/02 02:01:07 lneto Exp $	*/
 
 /*
-** Id: lstate.c,v 2.121 2014/02/18 13:46:26 roberto Exp 
+** Id: lstate.c,v 2.127 2014/11/02 19:33:33 roberto Exp 
 ** Global State
 ** See Copyright Notice in lua.h
 */
 
+#define lstate_c
+#define LUA_CORE
+
+#include "lprefix.h"
+
 
 #include <stddef.h>
 #include <string.h>
-
-#define lstate_c
-#define LUA_CORE
 
 #include "lua.h"
 
@@ -55,9 +57,7 @@
 ** thread state + extra space
 */
 typedef struct LX {
-#if defined(LUAI_EXTRASPACE)
-  char buff[LUAI_EXTRASPACE];
-#endif
+  lu_byte extra_[LUA_EXTRASPACE];
   lua_State l;
 } LX;
 
@@ -76,9 +76,8 @@ typedef struct LG {
 
 
 /*
-** Compute an initial seed as random as possible. In ANSI, rely on
-** Address Space Layout Randomization (if present) to increase
-** randomness..
+** Compute an initial seed as random as possible. Rely on Address Space
+** Layout Randomization (if present) to increase randomness..
 */
 #define addbuff(b,p,e) \
   { size_t t = cast(size_t, e); \
@@ -254,7 +253,7 @@ static void close_state (lua_State *L) {
 
 
 LUA_API lua_State *lua_newthread (lua_State *L) {
-    global_State *g = G(L);
+  global_State *g = G(L);
   lua_State *L1;
   lua_lock(L);
   luaC_checkGC(L);
@@ -265,6 +264,7 @@ LUA_API lua_State *lua_newthread (lua_State *L) {
   /* link it on list 'allgc' */
   L1->next = g->allgc;
   g->allgc = obj2gco(L1);
+  /* anchor it on L stack */
   setthvalue(L, L->top, L1);
   api_incr_top(L);
   preinit_thread(L1, g);
@@ -272,6 +272,9 @@ LUA_API lua_State *lua_newthread (lua_State *L) {
   L1->basehookcount = L->basehookcount;
   L1->hook = L->hook;
   resethookcount(L1);
+  /* initialize L1 extra space */
+  memcpy(lua_getextraspace(L1), lua_getextraspace(g->mainthread),
+         LUA_EXTRASPACE);
   luai_userstatethread(L, L1);
   stack_init(L1, L);  /* init stack */
   lua_unlock(L);

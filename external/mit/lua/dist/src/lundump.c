@@ -1,15 +1,18 @@
-/*	$NetBSD: lundump.c,v 1.1.1.3 2014/07/20 23:17:39 lneto Exp $	*/
+/*	$NetBSD: lundump.c,v 1.1.1.4 2015/02/02 02:01:13 lneto Exp $	*/
 
 /*
-** Id: lundump.c,v 2.40 2014/06/19 18:27:20 roberto Exp 
+** Id: lundump.c,v 2.41 2014/11/02 19:19:04 roberto Exp 
 ** load precompiled Lua chunks
 ** See Copyright Notice in lua.h
 */
 
-#include <string.h>
-
 #define lundump_c
 #define LUA_CORE
+
+#include "lprefix.h"
+
+
+#include <string.h>
 
 #include "lua.h"
 
