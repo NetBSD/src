@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.22 2015/01/22 20:11:33 christos Exp $	*/
+/*	$NetBSD: bl.c,v 1.23 2015/02/02 22:03:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.22 2015/01/22 20:11:33 christos Exp $");
+__RCSID("$NetBSD: bl.c,v 1.23 2015/02/02 22:03:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -355,6 +355,7 @@ bl_send(bl_t b, bl_type_t e, int pfd, const struct sockaddr *sa,
 	msg.msg_namelen = 0;
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
+	msg.msg_flags = 0;
 
 	msg.msg_control = ua.ctrl;
 	msg.msg_controllen = sizeof(ua.ctrl);
@@ -404,6 +405,7 @@ bl_recv(bl_t b)
 	msg.msg_namelen = 0;
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
+	msg.msc_flags = 0;
 
 	msg.msg_control = ua.ctrl;
 	msg.msg_controllen = sizeof(ua.ctrl) + 100;
