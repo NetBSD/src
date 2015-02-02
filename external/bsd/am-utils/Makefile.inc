@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2015/01/21 21:48:43 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2015/02/02 16:18:27 christos Exp $
 
 .ifndef AMU_MAKEFILE_INC
 AMU_MAKEFILE_INC=
@@ -18,7 +18,7 @@ CPPFLAGS+= -DHAVE_CONFIG_H -I${.CURDIR}/../../include -I${IDIST}/libamu \
     -I${IDIST}/include
 
 LIBAMUOBJDIR!=	cd ${AMUTILS}/lib/libamu && ${PRINTOBJDIR}
-CPPFLAGS+=	-I${LIBAMUOBJDIR}
+CPPFLAGS+=	-I${LIBAMUOBJDIR} -DDEBUG
 
 .if (${USE_HESIOD} != "no")
 CPPFLAGS+=-DHAVE_MAP_HESIOD=1
