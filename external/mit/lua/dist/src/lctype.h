@@ -1,4 +1,4 @@
-/*	$NetBSD: lctype.h,v 1.1.1.1 2014/07/20 23:17:33 lneto Exp $	*/
+/*	$NetBSD: lctype.h,v 1.2 2015/02/02 14:03:05 lneto Exp $	*/
 
 /*
 ** Id: lctype.h,v 1.12 2011/07/15 12:50:29 roberto Exp 
@@ -33,7 +33,9 @@
 
 #if !LUA_USE_CTYPE	/* { */
 
+#ifndef _KERNEL
 #include <limits.h>
+#endif
 
 #include "llimits.h"
 
