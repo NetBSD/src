@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_var.h,v 1.5.2.2 2014/11/09 19:06:57 snj Exp $ */
+/* $NetBSD: dwc_gmac_var.h,v 1.5.2.3 2015/02/03 08:11:21 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #define		AWGE_TOTAL_RING_COUNT	\
 			(AWGE_RX_RING_COUNT + AWGE_TX_RING_COUNT)
 
-#define		AWGE_MAX_PACKET		(ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN)
+#define		AWGE_MAX_PACKET		0x7ff
 
 
 
