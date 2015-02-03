@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.190 2015/01/31 07:47:49 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.191 2015/02/03 08:27:02 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15267,4 +15267,133 @@ sys/dev/pci/if_fpa.c				1.60
 
 	Fix missing "sc->sc_dev = self" initialization.  PR port-i386/49602.
 	[martin, ticket #469]
+
+distrib/i386/installimage/Makefile		1.6
+
+	Bump image size from 512MB to 520MB.
+	[snj, ticket #480]
+
+external/bsd/libevent/dist/ChangeLog           	 up to 1.1.1.2
+external/bsd/libevent/dist/Makefile.am         	 up to 1.1.1.1
+external/bsd/libevent/dist/Makefile.in         	 up to 1.1.1.1
+external/bsd/libevent/dist/aclocal.m4          	 up to 1.1.1.1
+external/bsd/libevent/dist/arc4random.c        	 up to 1.1.1.1
+external/bsd/libevent/dist/buffer.c            	 up to 1.2
+external/bsd/libevent/dist/bufferevent.c       	 up to 1.2
+external/bsd/libevent/dist/bufferevent_pair.c  	 up to 1.1.1.1
+external/bsd/libevent/dist/bufferevent_sock.c  	 up to 1.1.1.1
+external/bsd/libevent/dist/compile             	 up to 1.1.1.1
+external/bsd/libevent/dist/config.guess        	 up to 1.1.1.1
+external/bsd/libevent/dist/config.h.in         	 up to 1.1.1.1
+external/bsd/libevent/dist/config.sub          	 up to 1.1.1.1
+external/bsd/libevent/dist/configure           	 up to 1.1.1.1
+external/bsd/libevent/dist/configure.ac	         up to 1.1.1.1
+external/bsd/libevent/dist/m4/ac_backport_259_ssizet.m4 up to 1.1.1.1
+external/bsd/libevent/dist/depcomp             	 up to 1.1.1.1
+external/bsd/libevent/dist/epoll_sub.c         	 up to 1.1.1.1
+external/bsd/libevent/dist/evbuffer-internal.h 	 up to 1.2
+external/bsd/libevent/dist/evdns.c             	 up to 1.2
+external/bsd/libevent/dist/event.c             	 up to 1.2
+external/bsd/libevent/dist/event_iocp.c        	 up to 1.1.1.1
+external/bsd/libevent/dist/event_tagging.c     	 up to 1.2
+external/bsd/libevent/dist/evrpc.c             	 up to 1.2
+external/bsd/libevent/dist/evthread_win32.c    	 up to 1.1.1.1
+external/bsd/libevent/dist/evutil.c            	 up to 1.4
+external/bsd/libevent/dist/evutil_rand.c       	 up to 1.2
+external/bsd/libevent/dist/http.c              	 up to 1.2
+external/bsd/libevent/dist/install-sh          	 up to 1.1.1.1
+external/bsd/libevent/dist/listener.c          	 up to 1.1.1.1
+external/bsd/libevent/dist/log-internal.h      	 up to 1.3
+external/bsd/libevent/dist/log.c               	 up to 1.2
+external/bsd/libevent/dist/ltmain.sh           	 up to 1.1.1.1
+external/bsd/libevent/dist/missing             	 up to 1.1.1.1
+external/bsd/libevent/dist/util-internal.h     	 up to 1.2
+external/bsd/libevent/dist/win32select.c       	 up to 1.1.1.1
+external/bsd/libevent/dist/WIN32-Code/event2/event-config.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/Makefile.in 	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/buffer.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/buffer_compat.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/bufferevent.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/bufferevent_compat.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/bufferevent_ssl.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/bufferevent_struct.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/dns.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/dns_compat.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/dns_struct.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/event.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/event_compat.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/event_struct.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/http.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/http_compat.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/http_struct.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/keyvalq_struct.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/listener.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/rpc.h	 up to 1.2
+external/bsd/libevent/dist/include/event2/rpc_compat.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/rpc_struct.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/tag.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/tag_compat.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/thread.h	 up to 1.1.1.1
+external/bsd/libevent/dist/include/event2/util.h	 up to 1.2
+external/bsd/libevent/dist/sample/Makefile.in  	 up to 1.1.1.1
+external/bsd/libevent/dist/sample/http-server.c	 up to 1.1.1.1
+external/bsd/libevent/dist/test/Makefile.am    	 up to 1.1.1.1
+external/bsd/libevent/dist/test/Makefile.in    	 up to 1.1.1.1
+external/bsd/libevent/dist/test/regress.c      	 up to 1.7
+external/bsd/libevent/dist/test/regress.h      	 up to 1.3
+external/bsd/libevent/dist/test/regress_buffer.c	 up to 1.3
+external/bsd/libevent/dist/test/regress_http.c 	 up to 1.3
+
+	Update libevent to 2.0.22-stable (5 Jan 2015)
+	SECURITY FIXES (evbuffers)
+	 o Avoid integer overflow bugs in evbuffer_add() and related functions.
+	   See CVE-2014-6272 advisory for more information.
+	   (20d6d4458bee5d88bda1511c225c25b2d3198d6c)
+
+	BUGFIXES (evhttp)
+	 o fix #73 and fix http_connection_fail_test to catch it (crash fix) 
+	   (b618204 Greg Hazel)
+	 o Avoid racy bufferevent activation (5eb1788 Nate Rosenblum)
+
+	BUGFIXES (resource leaks/lock errors on error)
+	 o Avoid leaking fds on evconnlistener with no callback set (69db261)
+	 o Avoid double-close on getsockname error in evutil_ersatz_socketpair
+	   (0a822a6)
+	 o Fix a locking error in bufferevent_socket_get_dns_error. (0a5eb2e)
+	 o libevent/win32_dealloc() : fix sizeof(pointer) vs sizeof(*pointer)
+	   (b8f5980 Frank Denis)
+
+	BUGFIXES: (other stability)
+	 o bufferevent_pair: don't call downcast(NULL) (f2428a2)
+	 o Consistently check for failure from evbuffer_pullup() (60f8f72)
+	 o Fix race caused by event_active (3c7d6fc vjpai)
+
+	BUGFIXES (miscellaneous)
+	 o Avoid redundant invocations of init_extension_functions for IOCP (3b77d62)
+	 o Typo fixes from Linus Nordberg (cec62cb, 8cd695b)
+	 o Add a few files created by "make verify" to .gitignore.
+	   (1a8295a Pierre Phaneuf)
+	 o regress_buffer: fix 'memcmp' compare size (79800df Maks Naumov)
+	 o Fix bufferevent setwatermark suspend_read (b34e4ac ufo2243)
+	 o Fix evbuffer_peek() with len==-1 and start_at non-NULL. (fb7e76a)
+
+	BUFGIXES (evdns)
+	 o Checking request nameserver for NULL, before using it.
+	   (5c710c0 Belobrov Andrey)
+	 o Fix SEGFAULT after evdns_base_resume if no nameservers installed.
+	   (f8d7df8 Azat Khuzhin)
+	 o Fix a crash in evdns related to shutting down evdns (9f39c88,e8fe749)
+
+	BUGFIXES (epoll)
+	 o Check does arch have the epoll_create and __NR_epoll_wait syscalls.
+	   (dfe1e52 Marcin Juszkiewicz)
+
+	BUGFIXES (evutil_secure_random)
+	 o Avoid other RNG initialization FS reads when urandom file is specified
+	   (9695e9c, bb52471)
+	 o When we seed from /proc/sys/kernel/random/uuid, count it as success (e35b540)
+	 o Document that arc4random is not a great cryptographic PRNG. (6e49696)
+	 o Add evutil_secure_rng_set_urandom_device_file (2bbb5d7)
+	 o Really remove RNG seeds from the stack (f5ced88)
+	[spz, ticket #478]
 
