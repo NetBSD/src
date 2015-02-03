@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.24.2.5 2015/01/07 21:12:04 msaitoh Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.24.2.6 2015/02/03 08:11:21 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.24.2.5 2015/01/07 21:12:04 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.24.2.6 2015/02/03 08:11:21 bouyer Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -226,7 +226,8 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
         mii->mii_readreg = dwc_gmac_miibus_read_reg;
         mii->mii_writereg = dwc_gmac_miibus_write_reg;
         mii->mii_statchg = dwc_gmac_miibus_statchg;
-        mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
+        mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY,
+	    MIIF_DOPAUSE);
 
         if (LIST_EMPTY(&mii->mii_phys)) { 
                 aprint_error_dev(sc->sc_dev, "no PHY found!\n");
@@ -247,7 +248,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 	 * Enable interrupts
 	 */
 	s = splnet();
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_INTR,
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_INTMASK,
 	    AWIN_DEF_MAC_INTRMASK);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_INTENABLE,
 	    GMAC_DEF_DMA_INT_MASK);
@@ -597,7 +598,7 @@ dwc_gmac_txdesc_sync(struct dwc_gmac_softc *sc, int start, int end, int ops)
 	/* sync from 'start' to end of ring */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
 	    TX_DESC_OFFSET(start),
-	    TX_DESC_OFFSET(AWGE_TX_RING_COUNT+1)-TX_DESC_OFFSET(start),
+	    TX_DESC_OFFSET(AWGE_TX_RING_COUNT)-TX_DESC_OFFSET(start),
 	    ops);
 	/* sync from start of ring to 'end' */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_ring_map,
@@ -669,7 +670,7 @@ dwc_gmac_miibus_statchg(struct ifnet *ifp)
 {
 	struct dwc_gmac_softc * const sc = ifp->if_softc;
 	struct mii_data * const mii = &sc->sc_mii;
-	uint32_t conf;
+	uint32_t conf, flow;
 
 	/*
 	 * Set MII or GMII interface based on the speed
@@ -680,6 +681,8 @@ dwc_gmac_miibus_statchg(struct ifnet *ifp)
 	    |AWIN_GMAC_MAC_CONF_FULLDPLX);
 	conf |= AWIN_GMAC_MAC_CONF_FRAMEBURST
 	    | AWIN_GMAC_MAC_CONF_DISABLERXOWN
+	    | AWIN_GMAC_MAC_CONF_DISABLEJABBER
+	    | AWIN_GMAC_MAC_CONF_ACS
 	    | AWIN_GMAC_MAC_CONF_RXENABLE
 	    | AWIN_GMAC_MAC_CONF_TXENABLE;
 	switch (IFM_SUBTYPE(mii->mii_media_active)) {
@@ -693,8 +696,20 @@ dwc_gmac_miibus_statchg(struct ifnet *ifp)
 	case IFM_1000_T:
 		break;
 	}
-	if (IFM_OPTIONS(mii->mii_media_active) & IFM_FDX)
+
+	flow = 0;
+	if (IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) {
 		conf |= AWIN_GMAC_MAC_CONF_FULLDPLX;
+		flow |= __SHIFTIN(0x200, AWIN_GMAC_MAC_FLOWCTRL_PAUSE);
+	}
+	if (mii->mii_media_active & IFM_ETH_TXPAUSE) {
+		flow |= AWIN_GMAC_MAC_FLOWCTRL_TFE;
+	}
+	if (mii->mii_media_active & IFM_ETH_RXPAUSE) {
+		flow |= AWIN_GMAC_MAC_FLOWCTRL_RFE;
+	}
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh,
+	    AWIN_GMAC_MAC_FLOWCTRL, flow);
 
 #ifdef DWC_GMAC_DEBUG
 	aprint_normal_dev(sc->sc_dev,
@@ -721,9 +736,9 @@ dwc_gmac_init(struct ifnet *ifp)
 	 * XXX - the GMAC_BUSMODE_PRIORXTX bits are undocumented.
 	 */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_BUSMODE,
-	    GMAC_BUSMODE_FIXEDBURST |
-	    __SHIFTIN(GMAC_BUSMODE_PRIORXTX_41, GMAC_BUSMODE_PRIORXTX) |
-	    __SHIFTIN(8, GMCA_BUSMODE_PBL));
+	    GMAC_BUSMODE_FIXEDBURST | GMAC_BUSMODE_4PBL |
+	    __SHIFTIN(2, GMAC_BUSMODE_RPBL) |
+	    __SHIFTIN(2, GMAC_BUSMODE_PBL));
 
 	/*
 	 * Set up address filter
@@ -759,7 +774,7 @@ dwc_gmac_init(struct ifnet *ifp)
 	 */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh,
 	    AWIN_GMAC_DMA_OPMODE, GMAC_DMA_OP_RXSTART | GMAC_DMA_OP_TXSTART |
-	    GMAC_DMA_OP_STOREFORWARD);
+	    GMAC_DMA_OP_RXSTOREFORWARD | GMAC_DMA_OP_TXSTOREFORWARD);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -852,7 +867,7 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 		return error;
 	}
 
-	if (sc->sc_txq.t_queued + map->dm_nsegs >= AWGE_TX_RING_COUNT - 1) {
+	if (sc->sc_txq.t_queued + map->dm_nsegs >= AWGE_TX_RING_COUNT) {
 		bus_dmamap_unload(sc->sc_dmat, map);
 		return ENOBUFS;
 	}
@@ -969,6 +984,11 @@ dwc_gmac_tx_intr(struct dwc_gmac_softc *sc)
 #endif
 
 		desc = &sc->sc_txq.t_desc[i];
+		/*
+		 * i+1 does not need to be a valid descriptor,
+		 * this is just a special notion to just sync
+		 * a single tx descriptor (i)
+		 */
 		dwc_gmac_txdesc_sync(sc, i, i+1,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		flags = le32toh(desc->ddesc_status);
@@ -1247,6 +1267,12 @@ dwc_gmac_intr(struct dwc_gmac_softc *sc)
 	if (dma_status)
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
 		    AWIN_GMAC_DMA_STATUS, dma_status & GMAC_DMA_INT_MASK);
+
+	/*
+	 * Get more packets
+	 */
+	if (rv)
+		sc->sc_ec.ec_if.if_start(&sc->sc_ec.ec_if);
 
 	return rv;
 }

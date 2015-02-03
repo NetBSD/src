@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_reg.h,v 1.12.2.2 2014/11/09 19:06:57 snj Exp $ */
+/* $NetBSD: dwc_gmac_reg.h,v 1.12.2.3 2015/02/03 08:11:21 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #define	AWIN_GMAC_MAC_ADDR0LO		0x0044
 #define	AWIN_GMAC_MII_STATUS		0x00D8
 
+#define	AWIN_GMAC_MAC_CONF_DISABLEJABBER __BIT(22) /* jabber disable */
 #define	AWIN_GMAC_MAC_CONF_FRAMEBURST	__BIT(21) /* allow TX frameburst when
 						     in half duplex mode */
 #define	AWIN_GMAC_MAC_CONF_MIISEL	__BIT(15) /* select MII phy */
@@ -52,6 +53,7 @@
 						     TX frames in half duplex
 						     mode */
 #define	AWIN_GMAC_MAC_CONF_FULLDPLX	__BIT(11) /* select full duplex */
+#define	AWIN_GMAC_MAC_CONF_ACS		__BIT(7)  /* auto pad/CRC stripping */
 #define	AWIN_GMAC_MAC_CONF_TXENABLE	__BIT(3)  /* enable TX dma engine */
 #define	AWIN_GMAC_MAC_CONF_RXENABLE	__BIT(2)  /* enable RX dma engine */
 
@@ -71,6 +73,11 @@
 #define	AWIN_GMAC_MAC_INT_ANEG		__BIT(2)
 #define	AWIN_GMAC_MAC_INT_LINKCHG	__BIT(1)
 #define	AWIN_GMAC_MAC_INT_RGSMII	__BIT(0)
+
+#define	AWIN_GMAC_MAC_FLOWCTRL_PAUSE	__BITS(31,16)
+#define	AWIN_GMAC_MAC_FLOWCTRL_RFE	__BIT(2)
+#define	AWIN_GMAC_MAC_FLOWCTRL_TFE	__BIT(1)
+#define	AWIN_GMAC_MAC_FLOWCTRL_BUSY	__BIT(0)
 
 #define	AWIN_GMAC_DMA_BUSMODE		0x1000
 #define	AWIN_GMAC_DMA_TXPOLL		0x1004
@@ -109,20 +116,24 @@
 #define	GMAC_MII_CLK_DIV18		0xf
 #define	GMAC_MII_CLKMASK		__BITS(5,2)
 
+#define	GMAC_BUSMODE_4PBL		__BIT(24)
+#define	GMAC_BUSMODE_RPBL		__BITS(22,17)
 #define	GMAC_BUSMODE_FIXEDBURST		__BIT(16)
 #define	GMAC_BUSMODE_PRIORXTX		__BITS(15,14)
 #define	GMAC_BUSMODE_PRIORXTX_41	3
 #define	GMAC_BUSMODE_PRIORXTX_31	2
 #define	GMAC_BUSMODE_PRIORXTX_21	1
 #define	GMAC_BUSMODE_PRIORXTX_11	0
-#define	GMCA_BUSMODE_PBL		__BITS(13,8) /* possible DMA
+#define	GMAC_BUSMODE_PBL		__BITS(13,8) /* possible DMA
 						        burst len */
 #define	GMAC_BUSMODE_RESET		__BIT(0)
 
 #define	AWIN_GMAC_MII_IRQ		__BIT(0)
 
 
-#define	GMAC_DMA_OP_STOREFORWARD	__BIT(21) /* start TX when a
+#define	GMAC_DMA_OP_RXSTOREFORWARD	__BIT(24) /* start RX when a
+						    full frame is available */
+#define	GMAC_DMA_OP_TXSTOREFORWARD	__BIT(21) /* start TX when a
  						    full frame is available */
 #define	GMAC_DMA_OP_FLUSHTX		__BIT(20) /* flush TX fifo */
 #define	GMAC_DMA_OP_TXSTART		__BIT(13) /* start TX DMA engine */
