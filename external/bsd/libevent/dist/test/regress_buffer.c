@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_buffer.c,v 1.3 2014/01/04 02:56:31 joerg Exp $	*/
+/*	$NetBSD: regress_buffer.c,v 1.3.6.1 2015/02/03 08:23:40 bouyer Exp $	*/
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
@@ -33,7 +33,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: regress_buffer.c,v 1.3 2014/01/04 02:56:31 joerg Exp $");
+__RCSID("$NetBSD: regress_buffer.c,v 1.3.6.1 2015/02/03 08:23:40 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -992,7 +992,9 @@ test_evbuffer_iterative(void *ptr)
 	n = 0;
 	for (i = 0; i < 1000; ++i) {
 		for (j = 1; j < strlen(abc); ++j) {
-			evbuffer_add_printf(buf, "%*.*s", j, j, abc);
+			char format[32];
+			evutil_snprintf(format, sizeof(format), "%%%u.%us", j, j);
+			evbuffer_add_printf(buf, fmtcheck(format, "%s"), abc);
 
 			/* Only check for rep violations every so often.
 			   Walking over the whole list of chains can get

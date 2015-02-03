@@ -1,4 +1,5 @@
-/*	$NetBSD: buffer.h,v 1.1.1.1 2013/04/11 16:43:34 christos Exp $	*/
+/*	$NetBSD: buffer.h,v 1.1.1.1.12.1 2015/02/03 08:23:40 bouyer Exp $	*/
+/*	$NetBSD: buffer.h,v 1.1.1.1.12.1 2015/02/03 08:23:40 bouyer Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *
@@ -770,7 +771,7 @@ void evbuffer_cb_unsuspend(struct evbuffer *buffer, struct evbuffer_cb_entry *cb
 #endif
 
 /**
-  Makes the data at the begging of an evbuffer contiguous.
+  Makes the data at the beginning of an evbuffer contiguous.
 
   @param buf the evbuffer to make contiguous
   @param size the number of bytes to make contiguous, or -1 to make the

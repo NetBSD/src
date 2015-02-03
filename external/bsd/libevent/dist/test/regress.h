@@ -1,4 +1,4 @@
-/*	$NetBSD: regress.h,v 1.3 2014/02/27 18:11:04 joerg Exp $	*/
+/*	$NetBSD: regress.h,v 1.3.4.1 2015/02/03 08:23:40 bouyer Exp $	*/
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson

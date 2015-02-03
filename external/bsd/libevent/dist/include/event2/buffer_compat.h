@@ -1,4 +1,5 @@
-/*	$NetBSD: buffer_compat.h,v 1.1.1.1 2013/04/11 16:43:34 christos Exp $	*/
+/*	$NetBSD: buffer_compat.h,v 1.1.1.1.12.1 2015/02/03 08:23:40 bouyer Exp $	*/
+/*	$NetBSD: buffer_compat.h,v 1.1.1.1.12.1 2015/02/03 08:23:40 bouyer Exp $	*/
 /*
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson
  *

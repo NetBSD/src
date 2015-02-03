@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent_pair.c,v 1.1.1.1 2013/04/11 16:43:26 christos Exp $	*/
+/*	$NetBSD: bufferevent_pair.c,v 1.1.1.1.12.1 2015/02/03 08:23:39 bouyer Exp $	*/
 /*
  * Copyright (c) 2009-2012 Niels Provos, Nick Mathewson
  *
@@ -33,7 +33,7 @@
 
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bufferevent_pair.c,v 1.1.1.1 2013/04/11 16:43:26 christos Exp $");
+__RCSID("$NetBSD: bufferevent_pair.c,v 1.1.1.1.12.1 2015/02/03 08:23:39 bouyer Exp $");
 
 #include "event2/util.h"
 #include "event2/buffer.h"
@@ -313,13 +313,14 @@ struct bufferevent *
 bufferevent_pair_get_partner(struct bufferevent *bev)
 {
 	struct bufferevent_pair *bev_p;
-	struct bufferevent *partner;
+	struct bufferevent *partner = NULL;
 	bev_p = upcast(bev);
 	if (! bev_p)
 		return NULL;
 
 	incref_and_lock(bev);
-	partner = downcast(bev_p->partner);
+	if (bev_p->partner)
+		partner = downcast(bev_p->partner);
 	decref_and_unlock(bev);
 	return partner;
 }
