@@ -1,4 +1,4 @@
-/*	$NetBSD: evthread_win32.c,v 1.1.1.1 2013/04/11 16:43:26 christos Exp $	*/
+/*	$NetBSD: evthread_win32.c,v 1.1.1.1.12.1 2015/02/03 08:23:39 bouyer Exp $	*/
 /*
  * Copyright 2009-2012 Niels Provos and Nick Mathewson
  *
@@ -26,7 +26,7 @@
  */
 #include "event2/event-config.h"
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: evthread_win32.c,v 1.1.1.1 2013/04/11 16:43:26 christos Exp $");
+__RCSID("$NetBSD: evthread_win32.c,v 1.1.1.1.12.1 2015/02/03 08:23:39 bouyer Exp $");
 
 #ifdef WIN32
 #ifndef _WIN32_WINNT
@@ -115,7 +115,7 @@ evthread_win32_condvar_init(void)
 #define LOAD(name)				\
 	name##_fn = GetProcAddress(lib, #name)
 	LOAD(InitializeConditionVariable);
-	LOAD(SleepConditionVariable);
+	LOAD(SleepConditionVariableCS);
 	LOAD(WakeAllConditionVariable);
 	LOAD(WakeConditionVariable);
 
