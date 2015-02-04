@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.19.18.1 2014/11/09 12:13:16 martin Exp $ */
+/* $NetBSD: ciphy.c,v 1.19.18.2 2015/02/04 11:35:04 martin Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.19.18.1 2014/11/09 12:13:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.19.18.2 2015/02/04 11:35:04 martin Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -275,7 +275,6 @@ setit:
 		if (++sc->mii_ticks <= MII_ANEGTICKS)
 			break;
 
-		sc->mii_ticks = 0;
 		mii_phy_auto(sc, 0);
 		return (0);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.73.2.1 2014/11/04 09:23:20 martin Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.73.2.2 2015/02/04 11:35:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.73.2.1 2014/11/04 09:23:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.73.2.2 2015/02/04 11:35:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -202,6 +202,7 @@ mii_phy_auto(struct mii_softc *sc, int waitfor)
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 
+	sc->mii_ticks = 0;
 	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
 		/*
 		 * Check for 1000BASE-X.  Autonegotiation is a bit
@@ -346,7 +347,6 @@ mii_phy_tick(struct mii_softc *sc)
 	if (++sc->mii_ticks <= sc->mii_anegticks)
 		return (EJUSTRETURN);
 
-	sc->mii_ticks = 0;
 	PHY_RESET(sc);
 
 	if (mii_phy_auto(sc, 0) == EJUSTRETURN)
