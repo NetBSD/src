@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.191 2015/02/04 04:39:59 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.192 2015/02/04 11:38:31 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -9531,4 +9531,29 @@ external/bsd/libevent/dist/buffer.c		patch
 
 	Fix CVE-2014-6272.
 	[spz, ticket #1243]
+
+sys/dev/pci/if_wm.c				1.310
+
+	Fix a workaround for SWSM.SMBI bit not working correctly.
+	This problem was only occured with old boot ROM on 8257[12].
+	[msaitoh, ticket #1244]
+
+sys/dev/mii/atphy.c				1.13
+sys/dev/mii/brgphy.c				1.64
+sys/dev/mii/ciphy.c				1.20
+sys/dev/mii/mii_physubr.c			1.76
+sys/dev/mii/rgephy.c				1.30
+sys/dev/mii/urlphy.c				1.26
+
+	Fix a bug that the auto negotiation timer isn't cleard as we
+	expected.
+	To not forget clearing the timer and to reduce the code duplication,
+	clear mii_ticks in *mii_phy_auto().
+	[msaitoh, ticket #1245]
+
+libexec/httpd/bozohttpd.c			1.61
+
+	Answer 403 not just when an open() fails with EPERM, but with
+	EACCES as well.
+	[snj, ticket #1246]
 
