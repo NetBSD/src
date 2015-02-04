@@ -1,7 +1,7 @@
-/*	$NetBSD: lauxlib.h,v 1.2 2014/07/19 18:38:34 lneto Exp $	*/
+/*	$NetBSD: lauxlib.h,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $	*/
 
 /*
-** $Id: lauxlib.h,v 1.2 2014/07/19 18:38:34 lneto Exp $
+** Id: lauxlib.h,v 1.128 2014/10/29 16:11:17 roberto Exp 
 ** Auxiliary functions for building Lua libraries
 ** See Copyright Notice in lua.h
 */
@@ -20,7 +20,7 @@
 
 
 
-/* extra error code for `luaL_load' */
+/* extra error code for 'luaL_load' */
 #define LUA_ERRFILE     (LUA_ERRERR+1)
 
 
@@ -47,12 +47,14 @@ LUALIB_API const char *(luaL_optlstring) (lua_State *L, int arg,
 LUALIB_API lua_Number (luaL_checknumber) (lua_State *L, int arg);
 LUALIB_API lua_Number (luaL_optnumber) (lua_State *L, int arg, lua_Number def);
 
+#ifndef _KERNEL
 LUALIB_API lua_Integer (luaL_checkinteger) (lua_State *L, int arg);
 LUALIB_API lua_Integer (luaL_optinteger) (lua_State *L, int arg,
                                           lua_Integer def);
-LUALIB_API lua_Unsigned (luaL_checkunsigned) (lua_State *L, int arg);
-LUALIB_API lua_Unsigned (luaL_optunsigned) (lua_State *L, int arg,
-                                            lua_Unsigned def);
+#else /* _KERNEL */
+#define luaL_checkinteger		luaL_checknumber
+#define luaL_optinteger(L,a,d)	luaL_optnumber(L, (a), (lua_Number)(d))
+#endif
 
 LUALIB_API void (luaL_checkstack) (lua_State *L, int sz, const char *msg);
 LUALIB_API void (luaL_checktype) (lua_State *L, int arg, int t);
@@ -126,10 +128,6 @@ LUALIB_API void (luaL_requiref) (lua_State *L, const char *modname,
 		((void)((cond) || luaL_argerror(L, (arg), (extramsg))))
 #define luaL_checkstring(L,n)	(luaL_checklstring(L, (n), NULL))
 #define luaL_optstring(L,n,d)	(luaL_optlstring(L, (n), (d), NULL))
-#define luaL_checkint(L,n)	((int)luaL_checkinteger(L, (n)))
-#define luaL_optint(L,n,d)	((int)luaL_optinteger(L, (n), (d)))
-#define luaL_checklong(L,n)	((long)luaL_checkinteger(L, (n)))
-#define luaL_optlong(L,n,d)	((long)luaL_optinteger(L, (n), (d)))
 
 #define luaL_typename(L,i)	lua_typename(L, lua_type(L,(i)))
 
@@ -221,6 +219,55 @@ LUALIB_API void (luaL_openlib) (lua_State *L, const char *libname,
 #define luaL_register(L,n,l)	(luaL_openlib(L,(n),(l),0))
 
 #endif
+
+
+#ifndef _KERNEL
+/*
+** {==================================================================
+** "Abstraction Layer" for basic report of messages and errors
+** ===================================================================
+*/
+
+/* print a string */
+#if !defined(lua_writestring)
+#define lua_writestring(s,l)   fwrite((s), sizeof(char), (l), stdout)
+#endif
+
+/* print a newline and flush the output */
+#if !defined(lua_writeline)
+#define lua_writeline()        (lua_writestring("\n", 1), fflush(stdout))
+#endif
+
+/* print an error message */
+#if !defined(lua_writestringerror)
+#define lua_writestringerror(s,p) \
+        (fprintf(stderr, (s), (p)), fflush(stderr))
+#endif
+
+/* }================================================================== */
+#endif
+
+
+/*
+** {============================================================
+** Compatibility with deprecated conversions
+** =============================================================
+*/
+#if defined(LUA_COMPAT_APIINTCASTS)
+
+#define luaL_checkunsigned(L,a)	((lua_Unsigned)luaL_checkinteger(L,a))
+#define luaL_optunsigned(L,a,d)	\
+	((lua_Unsigned)luaL_optinteger(L,a,(lua_Integer)(d)))
+
+#define luaL_checkint(L,n)	((int)luaL_checkinteger(L, (n)))
+#define luaL_optint(L,n,d)	((int)luaL_optinteger(L, (n), (d)))
+
+#define luaL_checklong(L,n)	((long)luaL_checkinteger(L, (n)))
+#define luaL_optlong(L,n,d)	((long)luaL_optinteger(L, (n), (d)))
+
+#endif
+/* }============================================================ */
+
 
 
 #endif

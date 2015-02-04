@@ -1,13 +1,14 @@
-/*	$NetBSD: lbitlib.c,v 1.1 2014/07/19 18:38:34 lneto Exp $	*/
-
 /*
-** $Id: lbitlib.c,v 1.1 2014/07/19 18:38:34 lneto Exp $
+** $Id: lbitlib.c,v 1.1.4.1 2015/02/04 21:32:46 martin Exp $
 ** Standard library for bitwise operations
 ** See Copyright Notice in lua.h
 */
 
 #define lbitlib_c
 #define LUA_LIB
+
+#include "lprefix.h"
+
 
 #include "lua.h"
 
@@ -91,7 +92,7 @@ static int b_not (lua_State *L) {
 }
 
 
-static int b_shift (lua_State *L, lua_Unsigned r, int i) {
+static int b_shift (lua_State *L, lua_Unsigned r, lua_Integer i) {
   if (i < 0) {  /* shift right? */
     i = -i;
     r = trim(r);
@@ -109,18 +110,18 @@ static int b_shift (lua_State *L, lua_Unsigned r, int i) {
 
 
 static int b_lshift (lua_State *L) {
-  return b_shift(L, luaL_checkunsigned(L, 1), luaL_checkint(L, 2));
+  return b_shift(L, luaL_checkunsigned(L, 1), luaL_checkinteger(L, 2));
 }
 
 
 static int b_rshift (lua_State *L) {
-  return b_shift(L, luaL_checkunsigned(L, 1), -luaL_checkint(L, 2));
+  return b_shift(L, luaL_checkunsigned(L, 1), -luaL_checkinteger(L, 2));
 }
 
 
 static int b_arshift (lua_State *L) {
   lua_Unsigned r = luaL_checkunsigned(L, 1);
-  int i = luaL_checkint(L, 2);
+  lua_Integer i = luaL_checkinteger(L, 2);
   if (i < 0 || !(r & ((lua_Unsigned)1 << (LUA_NBITS - 1))))
     return b_shift(L, r, -i);
   else {  /* arithmetic shift for 'negative' number */
@@ -133,9 +134,9 @@ static int b_arshift (lua_State *L) {
 }
 
 
-static int b_rot (lua_State *L, int i) {
+static int b_rot (lua_State *L, lua_Integer d) {
   lua_Unsigned r = luaL_checkunsigned(L, 1);
-  i &= (LUA_NBITS - 1);  /* i = i % NBITS */
+  int i = d & (LUA_NBITS - 1);  /* i = d % NBITS */
   r = trim(r);
   if (i != 0)  /* avoid undefined shift of LUA_NBITS when i == 0 */
     r = (r << i) | (r >> (LUA_NBITS - i));
@@ -145,12 +146,12 @@ static int b_rot (lua_State *L, int i) {
 
 
 static int b_lrot (lua_State *L) {
-  return b_rot(L, luaL_checkint(L, 2));
+  return b_rot(L, luaL_checkinteger(L, 2));
 }
 
 
 static int b_rrot (lua_State *L) {
-  return b_rot(L, -luaL_checkint(L, 2));
+  return b_rot(L, -luaL_checkinteger(L, 2));
 }
 
 
@@ -161,14 +162,14 @@ static int b_rrot (lua_State *L) {
 ** 'width' being used uninitialized.)
 */
 static int fieldargs (lua_State *L, int farg, int *width) {
-  int f = luaL_checkint(L, farg);
-  int w = luaL_optint(L, farg + 1, 1);
+  lua_Integer f = luaL_checkinteger(L, farg);
+  lua_Integer w = luaL_optinteger(L, farg + 1, 1);
   luaL_argcheck(L, 0 <= f, farg, "field cannot be negative");
   luaL_argcheck(L, 0 < w, farg + 1, "width must be positive");
   if (f + w > LUA_NBITS)
     luaL_error(L, "trying to access non-existent bits");
-  *width = w;
-  return f;
+  *width = (int)w;
+  return (int)f;
 }
 
 

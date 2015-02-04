@@ -1,7 +1,5 @@
-/*	$NetBSD: ldebug.h,v 1.2 2014/07/19 18:38:34 lneto Exp $	*/
-
 /*
-** $Id: ldebug.h,v 1.2 2014/07/19 18:38:34 lneto Exp $
+** $Id: ldebug.h,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $
 ** Auxiliary functions from Debug Interface module
 ** See Copyright Notice in lua.h
 */
@@ -27,8 +25,9 @@ LUAI_FUNC l_noret luaG_typeerror (lua_State *L, const TValue *o,
                                                 const char *opname);
 LUAI_FUNC l_noret luaG_concaterror (lua_State *L, const TValue *p1,
                                                   const TValue *p2);
-LUAI_FUNC l_noret luaG_aritherror (lua_State *L, const TValue *p1,
-                                                 const TValue *p2);
+LUAI_FUNC l_noret luaG_opinterror (lua_State *L, const TValue *p1,
+                                                 const TValue *p2,
+                                                 const char *msg);
 LUAI_FUNC l_noret luaG_tointerror (lua_State *L, const TValue *p1,
                                                  const TValue *p2);
 LUAI_FUNC l_noret luaG_ordererror (lua_State *L, const TValue *p1,

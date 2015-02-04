@@ -1,10 +1,13 @@
-/*	$NetBSD: loslib.c,v 1.2 2014/07/19 18:38:34 lneto Exp $	*/
-
 /*
-** $Id: loslib.c,v 1.2 2014/07/19 18:38:34 lneto Exp $
+** $Id: loslib.c,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $
 ** Standard Operating System library
 ** See Copyright Notice in lua.h
 */
+
+#define loslib_c
+#define LUA_LIB
+
+#include "lprefix.h"
 
 
 #include <errno.h>
@@ -12,9 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-#define loslib_c
-#define LUA_LIB
 
 #include "lua.h"
 
@@ -27,9 +27,9 @@
 ** list of valid conversion specifiers for the 'strftime' function
 */
 
-#if !defined(LUA_USE_POSIX)
+#if defined(LUA_USE_C89)
 #define LUA_STRFTIMEOPTIONS	{ "aAbBcdHIjmMpSUwWxXyYz%", "" }
-#else
+#else  /* C99 specification */
 #define LUA_STRFTIMEOPTIONS \
 	{ "aAbBcCdDeFgGhHIjmMnprRStTuUVwWxXyYzZ%", "", \
 	  "E", "cCxXyY",  \
@@ -76,7 +76,7 @@
 
 #else				/* }{ */
 
-/* ANSI definitions */
+/* ISO C definitions */
 #define LUA_TMPNAMBUFSIZE	L_tmpnam
 #define lua_tmpnam(b,e)		{ e = (tmpnam(b) == NULL); }
 
@@ -99,9 +99,9 @@
 
 #else				/* }{ */
 
-/* ANSI definitions */
-#define l_gmtime(t,r)		((void)r, gmtime(t))
-#define l_localtime(t,r)  	((void)r, localtime(t))
+/* ISO C definitions */
+#define l_gmtime(t,r)		((void)(r)->tm_sec, gmtime(t))
+#define l_localtime(t,r)  	((void)(r)->tm_sec, localtime(t))
 
 #endif				/* } */
 
@@ -191,7 +191,7 @@ static int getfield (lua_State *L, const char *key, int d) {
   res = (int)lua_tointegerx(L, -1, &isnum);
   if (!isnum) {
     if (d < 0)
-      return luaL_error(L, "field " LUA_QS " missing in date table", key);
+      return luaL_error(L, "field '%s' missing in date table", key);
     res = d;
   }
   lua_pop(L, 1);
@@ -229,7 +229,7 @@ static int os_date (lua_State *L) {
   struct tm tmr, *stm;
   if (*s == '!') {  /* UTC? */
     stm = l_gmtime(&t, &tmr);
-    s++;  /* skip `!' */
+    s++;  /* skip '!' */
   }
   else
     stm = l_localtime(&t, &tmr);
@@ -297,7 +297,8 @@ static int os_time (lua_State *L) {
 
 
 static int os_difftime (lua_State *L) {
-  lua_pushnumber(L, difftime((l_checktime(L, 1)), (l_checktime(L, 2))));
+  double res = difftime((l_checktime(L, 1)), (l_checktime(L, 2)));
+  lua_pushnumber(L, (lua_Number)res);
   return 1;
 }
 
@@ -321,7 +322,7 @@ static int os_exit (lua_State *L) {
   if (lua_isboolean(L, 1))
     status = (lua_toboolean(L, 1) ? EXIT_SUCCESS : EXIT_FAILURE);
   else
-    status = luaL_optint(L, 1, EXIT_SUCCESS);
+    status = (int)luaL_optinteger(L, 1, EXIT_SUCCESS);
   if (lua_toboolean(L, 2))
     lua_close(L);
   if (L) exit(status);  /* 'if' to avoid warnings for unreachable 'return' */

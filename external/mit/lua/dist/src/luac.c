@@ -1,18 +1,19 @@
-/*	$NetBSD: luac.c,v 1.2 2014/07/19 18:38:34 lneto Exp $	*/
-
 /*
-** $Id: luac.c,v 1.2 2014/07/19 18:38:34 lneto Exp $
-** Lua compiler (saves bytecodes to files; also list bytecodes)
+** $Id: luac.c,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $
+** Lua compiler (saves bytecodes to files; also lists bytecodes)
 ** See Copyright Notice in lua.h
 */
 
+#define luac_c
+#define LUA_CORE
+
+#include "lprefix.h"
+
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define luac_c
-#define LUA_CORE
 
 #include "lua.h"
 #include "lauxlib.h"
@@ -49,14 +50,14 @@ static void cannot(const char* what)
 static void usage(const char* message)
 {
  if (*message=='-')
-  fprintf(stderr,"%s: unrecognized option " LUA_QS "\n",progname,message);
+  fprintf(stderr,"%s: unrecognized option '%s'\n",progname,message);
  else
   fprintf(stderr,"%s: %s\n",progname,message);
  fprintf(stderr,
   "usage: %s [options] [filenames]\n"
   "Available options are:\n"
   "  -l       list (use -l -l for full listing)\n"
-  "  -o name  output to file " LUA_QL("name") " (default is \"%s\")\n"
+  "  -o name  output to file 'name' (default is \"%s\")\n"
   "  -p       parse only\n"
   "  -s       strip debug information\n"
   "  -v       show version information\n"
@@ -91,7 +92,7 @@ static int doargs(int argc, char* argv[])
   {
    output=argv[++i];
    if (output==NULL || *output==0 || (*output=='-' && output[1]!=0))
-    usage(LUA_QL("-o") " needs argument");
+    usage("'-o' needs argument");
    if (IS("-")) output=NULL;
   }
   else if (IS("-p"))			/* parse only */
@@ -205,7 +206,7 @@ int main(int argc, char* argv[])
 }
 
 /*
-** $Id: luac.c,v 1.2 2014/07/19 18:38:34 lneto Exp $
+** $Id: luac.c,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $
 ** print bytecodes
 ** See Copyright Notice in lua.h
 */
@@ -225,7 +226,7 @@ int main(int argc, char* argv[])
 static void PrintString(const TString* ts)
 {
  const char* s=getstr(ts);
- size_t i,n=ts->tsv.len;
+ size_t i,n=ts->len;
  printf("%c",'"');
  for (i=0; i<n; i++)
  {
@@ -261,16 +262,19 @@ static void PrintConstant(const Proto* f, int i)
   case LUA_TBOOLEAN:
 	printf(bvalue(o) ? "true" : "false");
 	break;
-#ifndef _KERNEL
   case LUA_TNUMFLT:
-	printf(LUA_NUMBER_FMT,fltvalue(o));
+	{
+	char buff[100];
+	sprintf(buff,LUA_NUMBER_FMT,fltvalue(o));
+	printf("%s",buff);
+	if (buff[strspn(buff,"-0123456789")]=='\0') printf(".0");
 	break;
-#endif
+	}
   case LUA_TNUMINT:
 	printf(LUA_INTEGER_FMT,ivalue(o));
 	break;
   case LUA_TSHRSTR: case LUA_TLNGSTR:
-	PrintString(rawtsvalue(o));
+	PrintString(tsvalue(o));
 	break;
   default:				/* cannot happen */
 	printf("? type=%d",ttype(o));
@@ -344,10 +348,8 @@ static void PrintCode(const Proto* f)
    case OP_ADD:
    case OP_SUB:
    case OP_MUL:
-#ifndef _KERNEL
    case OP_POW:
    case OP_DIV:
-#endif
    case OP_IDIV:
    case OP_BAND:
    case OP_BOR:
