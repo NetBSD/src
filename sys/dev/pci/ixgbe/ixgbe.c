@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.16 2015/02/04 03:17:29 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.17 2015/02/04 04:37:13 msaitoh Exp $*/
 
 #include "opt_inet.h"
 
@@ -3180,10 +3180,8 @@ ixgbe_free_transmit_structures(struct adapter *adapter)
 	struct tx_ring *txr = adapter->tx_rings;
 
 	for (int i = 0; i < adapter->num_queues; i++, txr++) {
-		IXGBE_TX_LOCK(txr);
 		ixgbe_free_transmit_buffers(txr);
 		ixgbe_dma_free(adapter, &txr->txdma);
-		IXGBE_TX_UNLOCK(txr);
 		IXGBE_TX_LOCK_DESTROY(txr);
 	}
 	free(adapter->tx_rings, M_DEVBUF);
