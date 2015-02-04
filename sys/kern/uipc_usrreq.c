@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.169.2.1 2014/10/11 16:16:44 snj Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.169.2.2 2015/02/04 06:29:07 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.169.2.1 2014/10/11 16:16:44 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.169.2.2 2015/02/04 06:29:07 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1075,7 +1075,7 @@ unp_abort(struct socket *so)
 }
 
 static int
-unp_connect1(struct socket *so, struct socket *so2)
+unp_connect1(struct socket *so, struct socket *so2, struct lwp *l)
 {
 	struct unpcb *unp = sotounpcb(so);
 	struct unpcb *unp2;
@@ -1099,6 +1099,18 @@ unp_connect1(struct socket *so, struct socket *so2)
 
 	unp2 = sotounpcb(so2);
 	unp->unp_conn = unp2;
+
+	if ((so->so_proto->pr_flags & PR_CONNREQUIRED) != 0) {
+		unp2->unp_connid.unp_pid = l->l_proc->p_pid;
+		unp2->unp_connid.unp_euid = kauth_cred_geteuid(l->l_cred);
+		unp2->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
+		unp2->unp_flags |= UNP_EIDSVALID;
+		if (unp2->unp_flags & UNP_EIDSBIND) {
+			unp->unp_connid = unp2->unp_connid;
+			unp->unp_flags |= UNP_EIDSVALID;
+		}
+	}
+
 	switch (so->so_type) {
 
 	case SOCK_DGRAM:
@@ -1208,17 +1220,9 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 			unp3->unp_addrlen = unp2->unp_addrlen;
 		}
 		unp3->unp_flags = unp2->unp_flags;
-		unp3->unp_connid.unp_pid = l->l_proc->p_pid;
-		unp3->unp_connid.unp_euid = kauth_cred_geteuid(l->l_cred);
-		unp3->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
-		unp3->unp_flags |= UNP_EIDSVALID;
-		if (unp2->unp_flags & UNP_EIDSBIND) {
-			unp->unp_connid = unp2->unp_connid;
-			unp->unp_flags |= UNP_EIDSVALID;
-		}
 		so2 = so3;
 	}
-	error = unp_connect1(so, so2);
+	error = unp_connect1(so, so2, l);
 	if (error) {
 		sounlock(so);
 		goto bad;
@@ -1269,7 +1273,7 @@ unp_connect2(struct socket *so, struct socket *so2)
 
 	KASSERT(solocked2(so, so2));
 
-	error = unp_connect1(so, so2);
+	error = unp_connect1(so, so2, curlwp);
 	if (error)
 		return error;
 
@@ -1285,6 +1289,10 @@ unp_connect2(struct socket *so, struct socket *so2)
 	case SOCK_SEQPACKET: /* FALLTHROUGH */
 	case SOCK_STREAM:
 		unp2->unp_conn = unp;
+		if ((so->so_proto->pr_flags & PR_CONNREQUIRED) != 0) {
+			unp->unp_connid = unp2->unp_connid;
+			unp->unp_flags |= UNP_EIDSVALID;
+		}
 		soisconnected(so);
 		soisconnected(so2);
 		break;
