@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.17 2015/02/04 04:37:13 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.18 2015/02/04 09:05:53 msaitoh Exp $*/
 
 #include "opt_inet.h"
 
@@ -3933,11 +3933,15 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	/* Free current RX buffer structs and their mbufs */
 	ixgbe_free_receive_ring(rxr);
 
+	IXGBE_RX_UNLOCK(rxr);
+
 	/* Now reinitialize our supply of jumbo mbufs.  The number
 	 * or size of jumbo mbufs may have changed.
 	 */
 	ixgbe_jcl_reinit(&adapter->jcl_head, rxr->ptag->dt_dmat,
 	    2 * adapter->num_rx_desc, adapter->rx_mbuf_sz);
+
+	IXGBE_RX_LOCK(rxr);
 
 	/* Configure header split? */
 	if (ixgbe_header_split)
