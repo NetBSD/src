@@ -1,7 +1,7 @@
-/*	$NetBSD: lopcodes.h,v 1.2 2014/07/19 18:38:34 lneto Exp $	*/
+/*	$NetBSD: lopcodes.h,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $	*/
 
 /*
-** $Id: lopcodes.h,v 1.2 2014/07/19 18:38:34 lneto Exp $
+** Id: lopcodes.h,v 1.148 2014/10/25 11:50:46 roberto Exp 
 ** Opcodes for Lua virtual machine
 ** See Copyright Notice in lua.h
 */
@@ -16,12 +16,12 @@
   We assume that instructions are unsigned numbers.
   All instructions have an opcode in the first 6 bits.
   Instructions can have the following fields:
-	`A' : 8 bits
-	`B' : 9 bits
-	`C' : 9 bits
+	'A' : 8 bits
+	'B' : 9 bits
+	'C' : 9 bits
 	'Ax' : 26 bits ('A', 'B', and 'C' together)
-	`Bx' : 18 bits (`B' and `C' together)
-	`sBx' : signed Bx
+	'Bx' : 18 bits ('B' and 'C' together)
+	'sBx' : signed Bx
 
   A signed argument is represented in excess K; that is, the number
   value is the unsigned value minus K. K is exactly the maximum value
@@ -60,7 +60,7 @@ enum OpMode {iABC, iABx, iAsBx, iAx};  /* basic instruction format */
 */
 #if SIZE_Bx < LUAI_BITSINT-1
 #define MAXARG_Bx        ((1<<SIZE_Bx)-1)
-#define MAXARG_sBx        (MAXARG_Bx>>1)         /* `sBx' is signed */
+#define MAXARG_sBx        (MAXARG_Bx>>1)         /* 'sBx' is signed */
 #else
 #define MAXARG_Bx        MAX_INT
 #define MAXARG_sBx        MAX_INT
@@ -78,10 +78,10 @@ enum OpMode {iABC, iABx, iAsBx, iAx};  /* basic instruction format */
 #define MAXARG_C        ((1<<SIZE_C)-1)
 
 
-/* creates a mask with `n' 1 bits at position `p' */
+/* creates a mask with 'n' 1 bits at position 'p' */
 #define MASK1(n,p)	((~((~(Instruction)0)<<(n)))<<(p))
 
-/* creates a mask with `n' 0 bits at position `p' */
+/* creates a mask with 'n' 0 bits at position 'p' */
 #define MASK0(n,p)	(~MASK1(n,p))
 
 /*
@@ -207,7 +207,7 @@ OP_LEN,/*	A B	R(A) := length of R(B)				*/
 
 OP_CONCAT,/*	A B C	R(A) := R(B).. ... ..R(C)			*/
 
-OP_JMP,/*	A sBx	pc+=sBx; if (A) close all upvalues >= R(A) + 1	*/
+OP_JMP,/*	A sBx	pc+=sBx; if (A) close all upvalues >= R(A - 1)	*/
 OP_EQ,/*	A B C	if ((RK(B) == RK(C)) ~= A) then pc++		*/
 OP_LT,/*	A B C	if ((RK(B) <  RK(C)) ~= A) then pc++		*/
 OP_LE,/*	A B C	if ((RK(B) <= RK(C)) ~= A) then pc++		*/
@@ -242,16 +242,16 @@ OP_EXTRAARG/*	Ax	extra (larger) argument for previous opcode	*/
 
 /*===========================================================================
   Notes:
-  (*) In OP_CALL, if (B == 0) then B = top. If (C == 0), then `top' is
+  (*) In OP_CALL, if (B == 0) then B = top. If (C == 0), then 'top' is
   set to last_result+1, so next open instruction (OP_CALL, OP_RETURN,
-  OP_SETLIST) may use `top'.
+  OP_SETLIST) may use 'top'.
 
   (*) In OP_VARARG, if (B == 0) then use actual number of varargs and
   set top (like in OP_CALL with C == 0).
 
-  (*) In OP_RETURN, if (B == 0) then return up to `top'.
+  (*) In OP_RETURN, if (B == 0) then return up to 'top'.
 
-  (*) In OP_SETLIST, if (B == 0) then B = `top'; if (C == 0) then next
+  (*) In OP_SETLIST, if (B == 0) then B = 'top'; if (C == 0) then next
   'instruction' is EXTRAARG(real C).
 
   (*) In OP_LOADKX, the next 'instruction' is always EXTRAARG.
@@ -259,7 +259,7 @@ OP_EXTRAARG/*	Ax	extra (larger) argument for previous opcode	*/
   (*) For comparisons, A specifies what condition the test should accept
   (true or false).
 
-  (*) All `skips' (pc++) assume that next instruction is a jump.
+  (*) All 'skips' (pc++) assume that next instruction is a jump.
 
 ===========================================================================*/
 

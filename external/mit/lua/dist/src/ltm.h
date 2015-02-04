@@ -1,7 +1,7 @@
-/*	$NetBSD: ltm.h,v 1.2 2014/07/19 18:38:34 lneto Exp $	*/
+/*	$NetBSD: ltm.h,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $	*/
 
 /*
-** $Id: ltm.h,v 1.2 2014/07/19 18:38:34 lneto Exp $
+** Id: ltm.h,v 2.21 2014/10/25 11:50:46 roberto Exp 
 ** Tag methods
 ** See Copyright Notice in lua.h
 */
@@ -23,7 +23,7 @@ typedef enum {
   TM_GC,
   TM_MODE,
   TM_LEN,
-  TM_EQ,  /* last tag method with `fast' access */
+  TM_EQ,  /* last tag method with fast access */
   TM_ADD,
   TM_SUB,
   TM_MUL,

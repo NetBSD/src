@@ -1,7 +1,5 @@
-/*	$NetBSD: lstate.h,v 1.2 2014/07/19 18:38:34 lneto Exp $	*/
-
 /*
-** $Id: lstate.h,v 1.2 2014/07/19 18:38:34 lneto Exp $
+** $Id: lstate.h,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $
 ** Global State
 ** See Copyright Notice in lua.h
 */
@@ -23,10 +21,10 @@
 ** belong to one (and only one) of these lists, using field 'next' of
 ** the 'CommonHeader' for the link:
 **
-** allgc: all objects not marked for finalization;
-** finobj: all objects marked for finalization;
-** tobefnz: all objects ready to be finalized; 
-** fixedgc: all objects that are not to be collected (currently
+** 'allgc': all objects not marked for finalization;
+** 'finobj': all objects marked for finalization;
+** 'tobefnz': all objects ready to be finalized; 
+** 'fixedgc': all objects that are not to be collected (currently
 ** only small strings, such as reserved words).
 
 */
@@ -56,15 +54,18 @@ typedef struct stringtable {
 
 
 /*
-** information about a call
+** Information about a call.
+** When a thread yields, 'func' is adjusted to pretend that the
+** top function has only the yielded values in its stack; in that
+** case, the actual 'func' value is saved in field 'extra'. 
+** When a function calls another with a continuation, 'extra' keeps
+** the function index so that, in case of errors, the continuation
+** function can be called with the correct top.
 */
 typedef struct CallInfo {
   StkId func;  /* function index in the stack */
   StkId	top;  /* top for this function */
   struct CallInfo *previous, *next;  /* dynamic call link */
-  ptrdiff_t extra;
-  short nresults;  /* expected number of results from this function */
-  lu_byte callstatus;
   union {
     struct {  /* only for Lua functions */
       StkId base;  /* base for this function */
@@ -73,9 +74,12 @@ typedef struct CallInfo {
     struct {  /* only for C functions */
       lua_KFunction k;  /* continuation in case of yields */
       ptrdiff_t old_errfunc;
-      int ctx;  /* context info. in case of yields */
+      lua_KContext ctx;  /* context info. in case of yields */
     } c;
   } u;
+  ptrdiff_t extra;
+  short nresults;  /* expected number of results from this function */
+  lu_byte callstatus;
 } CallInfo;
 
 
@@ -99,11 +103,11 @@ typedef struct CallInfo {
 
 
 /*
-** `global state', shared by all threads of this state
+** 'global state', shared by all threads of this state
 */
 typedef struct global_State {
   lua_Alloc frealloc;  /* function to reallocate memory */
-  void *ud;         /* auxiliary data to `frealloc' */
+  void *ud;         /* auxiliary data to 'frealloc' */
   lu_mem totalbytes;  /* number of bytes currently allocated - GCdebt */
   l_mem GCdebt;  /* bytes allocated not yet compensated by the collector */
   lu_mem GCmemtrav;  /* memory traversed by the GC */
@@ -129,7 +133,7 @@ typedef struct global_State {
   Mbuffer buff;  /* temporary buffer for string concatenation */
   unsigned int gcfinnum;  /* number of finalizers to call in each GC step */
   int gcpause;  /* size of pause between successive GCs */
-  int gcstepmul;  /* GC `granularity' */
+  int gcstepmul;  /* GC 'granularity' */
   lua_CFunction panic;  /* to be called in unprotected errors */
   struct lua_State *mainthread;
   const lua_Number *version;  /* pointer to version number */
@@ -140,7 +144,7 @@ typedef struct global_State {
 
 
 /*
-** `per thread' state
+** 'per thread' state
 */
 struct lua_State {
   CommonHeader;
@@ -151,20 +155,20 @@ struct lua_State {
   const Instruction *oldpc;  /* last pc traced */
   StkId stack_last;  /* last free slot in the stack */
   StkId stack;  /* stack base */
-  int stacksize;
-  unsigned short nny;  /* number of non-yieldable calls in stack */
-  unsigned short nCcalls;  /* number of nested C calls */
-  lu_byte hookmask;
-  lu_byte allowhook;
-  int basehookcount;
-  int hookcount;
-  lua_Hook hook;
   UpVal *openupval;  /* list of open upvalues in this stack */
   GCObject *gclist;
   struct lua_State *twups;  /* list of threads with open upvalues */
   struct lua_longjmp *errorJmp;  /* current error recover point */
-  ptrdiff_t errfunc;  /* current error handling function (stack index) */
   CallInfo base_ci;  /* CallInfo for first level (C calling Lua) */
+  lua_Hook hook;
+  ptrdiff_t errfunc;  /* current error handling function (stack index) */
+  int stacksize;
+  int basehookcount;
+  int hookcount;
+  unsigned short nny;  /* number of non-yieldable calls in stack */
+  unsigned short nCcalls;  /* number of nested C calls */
+  lu_byte hookmask;
+  lu_byte allowhook;
 };
 
 
@@ -172,12 +176,12 @@ struct lua_State {
 
 
 /*
-** Union of all collectable objects
+** Union of all collectable objects (only for conversions)
 */
-union GCObject {
-  GCheader gch;  /* common header */
-  union TString ts;
-  union Udata u;
+union GCUnion {
+  GCObject gc;  /* common header */
+  struct TString ts;
+  struct Udata u;
   union Closure cl;
   struct Table h;
   struct Proto p;
@@ -185,24 +189,24 @@ union GCObject {
 };
 
 
-#define gch(o)		(&(o)->gch)
+#define cast_u(o)	cast(union GCUnion *, (o))
 
 /* macros to convert a GCObject into a specific value */
-#define rawgco2ts(o)  \
-	check_exp(novariant((o)->gch.tt) == LUA_TSTRING, &((o)->ts))
-#define gco2ts(o)	(&rawgco2ts(o)->tsv)
-#define rawgco2u(o)	check_exp((o)->gch.tt == LUA_TUSERDATA, &((o)->u))
-#define gco2u(o)	(&rawgco2u(o)->uv)
-#define gco2lcl(o)	check_exp((o)->gch.tt == LUA_TLCL, &((o)->cl.l))
-#define gco2ccl(o)	check_exp((o)->gch.tt == LUA_TCCL, &((o)->cl.c))
+#define gco2ts(o)  \
+	check_exp(novariant((o)->tt) == LUA_TSTRING, &((cast_u(o))->ts))
+#define gco2u(o)  check_exp((o)->tt == LUA_TUSERDATA, &((cast_u(o))->u))
+#define gco2lcl(o)  check_exp((o)->tt == LUA_TLCL, &((cast_u(o))->cl.l))
+#define gco2ccl(o)  check_exp((o)->tt == LUA_TCCL, &((cast_u(o))->cl.c))
 #define gco2cl(o)  \
-	check_exp(novariant((o)->gch.tt) == LUA_TFUNCTION, &((o)->cl))
-#define gco2t(o)	check_exp((o)->gch.tt == LUA_TTABLE, &((o)->h))
-#define gco2p(o)	check_exp((o)->gch.tt == LUA_TPROTO, &((o)->p))
-#define gco2th(o)	check_exp((o)->gch.tt == LUA_TTHREAD, &((o)->th))
+	check_exp(novariant((o)->tt) == LUA_TFUNCTION, &((cast_u(o))->cl))
+#define gco2t(o)  check_exp((o)->tt == LUA_TTABLE, &((cast_u(o))->h))
+#define gco2p(o)  check_exp((o)->tt == LUA_TPROTO, &((cast_u(o))->p))
+#define gco2th(o)  check_exp((o)->tt == LUA_TTHREAD, &((cast_u(o))->th))
 
-/* macro to convert any Lua object into a GCObject */
-#define obj2gco(v)	(cast(GCObject *, (v)))
+
+/* macro to convert a Lua object into a GCObject */
+#define obj2gco(v) \
+	check_exp(novariant((v)->tt) < LUA_TDEADKEY, (&(cast_u(v)->gc)))
 
 
 /* actual number of total bytes allocated */

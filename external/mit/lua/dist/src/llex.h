@@ -1,7 +1,7 @@
-/*	$NetBSD: llex.h,v 1.2 2014/07/19 18:38:34 lneto Exp $	*/
+/*	$NetBSD: llex.h,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $	*/
 
 /*
-** $Id: llex.h,v 1.2 2014/07/19 18:38:34 lneto Exp $
+** Id: llex.h,v 1.78 2014/10/29 15:38:24 roberto Exp 
 ** Lexical Analyzer
 ** See Copyright Notice in lua.h
 */
@@ -15,6 +15,10 @@
 
 #define FIRST_RESERVED	257
 
+
+#if !defined(LUA_ENV)
+#define LUA_ENV		"_ENV"
+#endif
 
 
 /*
@@ -33,7 +37,7 @@ enum RESERVED {
   TK_DBCOLON, TK_EOS,
 #ifndef _KERNEL
   TK_FLT, TK_INT, TK_NAME, TK_STRING
-#else
+#else /* _KERNEL */
   TK_INT, TK_NAME, TK_STRING
 #endif
 };
@@ -60,7 +64,7 @@ typedef struct Token {
 typedef struct LexState {
   int current;  /* current character (charint) */
   int linenumber;  /* input line counter */
-  int lastline;  /* line of last token `consumed' */
+  int lastline;  /* line of last token 'consumed' */
   Token t;  /* current token */
   Token lookahead;  /* look ahead token */
   struct FuncState *fs;  /* current function (parser) */

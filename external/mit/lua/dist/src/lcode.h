@@ -1,7 +1,7 @@
-/*	$NetBSD: lcode.h,v 1.2 2014/07/19 18:38:34 lneto Exp $	*/
+/*	$NetBSD: lcode.h,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $	*/
 
 /*
-** $Id: lcode.h,v 1.2 2014/07/19 18:38:34 lneto Exp $
+** Id: lcode.h,v 1.63 2013/12/30 20:47:58 roberto Exp 
 ** Code generator for Lua
 ** See Copyright Notice in lua.h
 */
@@ -29,7 +29,7 @@ typedef enum BinOpr {
 #ifndef _KERNEL
   OPR_ADD, OPR_SUB, OPR_MUL, OPR_MOD, OPR_POW,
   OPR_DIV,
-#else
+#else /* _KERNEL */
   OPR_ADD, OPR_SUB, OPR_MUL, OPR_MOD,
 #endif
   OPR_IDIV,

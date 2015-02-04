@@ -1,7 +1,5 @@
-/*	$NetBSD: lzio.h,v 1.2 2014/07/19 18:38:34 lneto Exp $	*/
-
 /*
-** $Id: lzio.h,v 1.2 2014/07/19 18:38:34 lneto Exp $
+** $Id: lzio.h,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $
 ** Buffered streams
 ** See Copyright Notice in lua.h
 */
@@ -39,7 +37,8 @@ typedef struct Mbuffer {
 
 
 #define luaZ_resizebuffer(L, buff, size) \
-	(luaM_reallocvector(L, (buff)->buffer, (buff)->buffsize, size, char), \
+	((buff)->buffer = luaM_reallocvchar(L, (buff)->buffer, \
+				(buff)->buffsize, size), \
 	(buff)->buffsize = size)
 
 #define luaZ_freebuffer(L, buff)	luaZ_resizebuffer(L, buff, 0)

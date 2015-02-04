@@ -1,18 +1,20 @@
-/*	$NetBSD: lzio.c,v 1.2 2014/07/19 18:38:34 lneto Exp $	*/
+/*	$NetBSD: lzio.c,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $	*/
 
 /*
-** $Id: lzio.c,v 1.2 2014/07/19 18:38:34 lneto Exp $
+** Id: lzio.c,v 1.36 2014/11/02 19:19:04 roberto Exp 
 ** Buffered streams
 ** See Copyright Notice in lua.h
 */
+
+#define lzio_c
+#define LUA_CORE
+
+#include "lprefix.h"
 
 
 #ifndef _KERNEL
 #include <string.h>
 #endif
-
-#define lzio_c
-#define LUA_CORE
 
 #include "lua.h"
 

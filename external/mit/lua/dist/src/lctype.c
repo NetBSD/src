@@ -1,13 +1,16 @@
-/*	$NetBSD: lctype.c,v 1.1 2014/07/19 18:38:34 lneto Exp $	*/
+/*	$NetBSD: lctype.c,v 1.1.4.1 2015/02/04 21:32:46 martin Exp $	*/
 
 /*
-** $Id: lctype.c,v 1.1 2014/07/19 18:38:34 lneto Exp $
+** Id: lctype.c,v 1.12 2014/11/02 19:19:04 roberto Exp 
 ** 'ctype' functions for Lua
 ** See Copyright Notice in lua.h
 */
 
 #define lctype_c
 #define LUA_CORE
+
+#include "lprefix.h"
+
 
 #include "lctype.h"
 
