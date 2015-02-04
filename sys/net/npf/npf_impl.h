@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.58.2.2 2014/12/01 13:05:26 martin Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.58.2.3 2015/02/04 07:13:04 snj Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -344,6 +344,7 @@ prop_array_t	npf_alg_export(void);
 const char *	npf_addr_dump(const npf_addr_t *, int);
 void		npf_state_dump(const npf_state_t *);
 void		npf_nat_dump(const npf_nat_t *);
+void		npf_ruleset_dump(const char *);
 void		npf_state_setsampler(void (*)(npf_state_t *, bool));
 
 #endif	/* _NPF_IMPL_H_ */

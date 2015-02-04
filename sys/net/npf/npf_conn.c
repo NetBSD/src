@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_conn.c,v 1.10.2.3 2014/12/22 02:10:30 msaitoh Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.10.2.4 2015/02/04 07:13:04 snj Exp $	*/
 
 /*-
- * Copyright (c) 2014 Mindaugas Rasiukevicius <rmind at netbsd org>
+ * Copyright (c) 2014-2015 Mindaugas Rasiukevicius <rmind at netbsd org>
  * Copyright (c) 2010-2014 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.10.2.3 2014/12/22 02:10:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.10.2.4 2015/02/04 07:13:04 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -369,7 +369,6 @@ npf_conn_lookup(const npf_cache_t *npc, const int di, bool *forw)
 	/* Check if connection is active and not expired. */
 	flags = con->c_flags;
 	ok = (flags & (CONN_ACTIVE | CONN_EXPIRE)) == CONN_ACTIVE;
-
 	if (__predict_false(!ok)) {
 		atomic_dec_uint(&con->c_refcnt);
 		return NULL;
@@ -453,6 +452,7 @@ npf_conn_establish(npf_cache_t *npc, int di, bool per_if)
 {
 	const nbuf_t *nbuf = npc->npc_nbuf;
 	npf_conn_t *con;
+	int error = 0;
 
 	KASSERT(!nbuf_flag_p(nbuf, NBUF_DATAREF_RESET));
 
@@ -468,16 +468,16 @@ npf_conn_establish(npf_cache_t *npc, int di, bool per_if)
 	NPF_PRINTF(("NPF: create conn %p\n", con));
 	npf_stats_inc(NPF_STAT_CONN_CREATE);
 
-	/* Reference count and flags (indicate direction). */
 	mutex_init(&con->c_lock, MUTEX_DEFAULT, IPL_SOFTNET);
 	con->c_flags = (di & PFIL_ALL);
-	con->c_refcnt = 1;
+	con->c_refcnt = 0;
 	con->c_rproc = NULL;
 	con->c_nat = NULL;
 
-	/* Initialize protocol state. */
+	/* Initialize the protocol state. */
 	if (!npf_state_init(npc, &con->c_state)) {
-		goto err;
+		npf_conn_destroy(con);
+		return NULL;
 	}
 
 	KASSERT(npf_iscached(npc, NPC_IP46));
@@ -488,45 +488,65 @@ npf_conn_establish(npf_cache_t *npc, int di, bool per_if)
 	 * Construct "forwards" and "backwards" keys.  Also, set the
 	 * interface ID for this connection (unless it is global).
 	 */
-	if (!npf_conn_conkey(npc, fw, true)) {
-		goto err;
-	}
-	if (!npf_conn_conkey(npc, bk, false)) {
-		goto err;
+	if (!npf_conn_conkey(npc, fw, true) ||
+	    !npf_conn_conkey(npc, bk, false)) {
+		npf_conn_destroy(con);
+		return NULL;
 	}
 	fw->ck_backptr = bk->ck_backptr = con;
 	con->c_ifid = per_if ? nbuf->nb_ifid : 0;
 	con->c_proto = npc->npc_proto;
 
-	/* Set last activity time for a new connection. */
+	/*
+	 * Set last activity time for a new connection and acquire
+	 * a reference for the caller before we make it visible.
+	 */
 	getnanouptime(&con->c_atime);
+	con->c_refcnt = 1;
 
 	/*
 	 * Insert both keys (entries representing directions) of the
-	 * connection.  At this point, it becomes visible.
+	 * connection.  At this point it becomes visible, but we activate
+	 * the connection later.
 	 */
+	mutex_enter(&con->c_lock);
 	if (!npf_conndb_insert(conn_db, fw, con)) {
+		error = EISCONN;
 		goto err;
 	}
 	if (!npf_conndb_insert(conn_db, bk, con)) {
-		/* We have hit the duplicate. */
-		npf_conndb_remove(conn_db, fw);
-		npf_stats_inc(NPF_STAT_RACE_CONN);
+		npf_conn_t *ret __diagused;
+		ret = npf_conndb_remove(conn_db, fw);
+		KASSERT(ret == con);
+		error = EISCONN;
 		goto err;
+	}
+err:
+	/*
+	 * If we have hit the duplicate: mark the connection as expired
+	 * and let the G/C thread to take care of it.  We cannot do it
+	 * here since there might be references acquired already.
+	 */
+	if (error) {
+		const u_int dflags = CONN_REMOVED | CONN_EXPIRE;
+		atomic_or_uint(&con->c_flags, dflags);
+		npf_stats_inc(NPF_STAT_RACE_CONN);
+	} else {
+		NPF_PRINTF(("NPF: establish conn %p\n", con));
 	}
 
 	/* Finally, insert into the connection list. */
-	NPF_PRINTF(("NPF: establish conn %p\n", con));
 	npf_conndb_enqueue(conn_db, con);
-	return con;
-err:
-	npf_conn_destroy(con);
-	return NULL;
+	mutex_exit(&con->c_lock);
+
+	return error ? NULL : con;
 }
 
 static void
 npf_conn_destroy(npf_conn_t *con)
 {
+	KASSERT(con->c_refcnt == 0);
+
 	if (con->c_nat) {
 		/* Release any NAT structures. */
 		npf_nat_destroy(con->c_nat);
@@ -582,6 +602,8 @@ npf_conn_setnat(const npf_cache_t *npc, npf_conn_t *con,
 		mutex_exit(&con->c_lock);
 		return EINVAL;
 	}
+	KASSERT((con->c_flags & CONN_REMOVED) == 0);
+
 	if (__predict_false(con->c_nat != NULL)) {
 		/* Race with a duplicate packet. */
 		mutex_exit(&con->c_lock);
@@ -590,7 +612,7 @@ npf_conn_setnat(const npf_cache_t *npc, npf_conn_t *con,
 	}
 
 	/* Remove the "backwards" entry. */
-	ret = npf_conndb_remove(conn_db, &key);
+	ret = npf_conndb_remove(conn_db, &con->c_back_entry);
 	KASSERT(ret == con);
 
 	/* Set the source/destination IDs to the translation values. */
@@ -606,7 +628,9 @@ npf_conn_setnat(const npf_cache_t *npc, npf_conn_t *con,
 		 * Race: we have hit the duplicate, remove the "forwards"
 		 * entry and expire our connection; it is no longer valid.
 		 */
-		(void)npf_conndb_remove(conn_db, &con->c_forw_entry);
+		ret = npf_conndb_remove(conn_db, &con->c_forw_entry);
+		KASSERT(ret == con);
+
 		atomic_or_uint(&con->c_flags, CONN_REMOVED | CONN_EXPIRE);
 		mutex_exit(&con->c_lock);
 
