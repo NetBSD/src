@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.68 2014/12/08 00:12:03 justin Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.69 2015/02/04 12:55:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.68 2014/12/08 00:12:03 justin Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.69 2015/02/04 12:55:47 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1362,7 +1362,7 @@ rumpuser_sp_init(const char *url,
 	/*LINTED*/
 	if (bind(s, sap, parsetab[idx].slen) == -1) {
 		error = errno;
-		fprintf(stderr, "rump_sp: server bind failed\n");
+		fprintf(stderr, "rump_sp: failed to bind to URL %s\n", url);
 		goto out;
 	}
 	if (listen(s, MAXCLI) == -1) {
