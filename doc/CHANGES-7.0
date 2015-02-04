@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.192 2015/02/04 07:20:54 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.193 2015/02/04 10:18:09 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15502,4 +15502,15 @@ usr.sbin/npf/npfctl/npfctl.c			1.46
 	* libnpf: add npf_rule_getid() and npf_rule_getcode().
 	* npfctl_print_rule: print the ID in hex, not decimal.
 	[rmind, ticket #479]
+
+lib/libkvm/kvm_powerpc64.c			1.6
+
+	#if 0 some code not in use yet.
+	[chs, ticket #489]
+
+libexec/httpd/bozohttpd.c			1.61
+
+	Spit out a 403 not just when an open() fails with EPERM, but with
+	EACCES as well.
+	[snj, ticket #491]
 
