@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1192.2.3 2015/01/28 19:51:54 snj Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1192.2.4 2015/02/04 06:25:44 snj Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1199.2.3 2015/01/28 19:00:28 martin Exp
+ *	NetBSD: pcidevs,v 1.1199.2.4 2015/02/04 06:24:58 snj Exp
  */
 
 /*
@@ -1189,6 +1189,7 @@
 #define	PCI_PRODUCT_ATTANSIC_ETHERNET_100	0x2048		/* L2 100 Mbit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_AR8152_B	0x2060		/* AR8152 v1.1 Fast Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_AR8152_B2	0x2062		/* AR8152 v2.0 Fast Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_E2200	0xe091		/* E2200 */
 
 /* ATI products */
 /* See http://www.x.org/wiki/Radeon%20ASICs */
