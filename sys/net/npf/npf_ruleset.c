@@ -1,7 +1,7 @@
-/*	$NetBSD: npf_ruleset.c,v 1.37.2.2 2014/12/01 13:05:26 martin Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.37.2.3 2015/02/04 07:13:04 snj Exp $	*/
 
 /*-
- * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This material is based upon work partially supported by The
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.37.2.2 2014/12/01 13:05:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.37.2.3 2015/02/04 07:13:04 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -936,3 +936,25 @@ npf_rule_conclude(const npf_rule_t *rl, int *retfl)
 	*retfl = rl->r_attr;
 	return (rl->r_attr & NPF_RULE_PASS) ? 0 : ENETUNREACH;
 }
+
+
+#if defined(DDB) || defined(_NPF_TESTING)
+
+void
+npf_ruleset_dump(const char *name)
+{
+	npf_ruleset_t *rlset = npf_config_ruleset();
+	npf_rule_t *rg, *rl;
+
+	LIST_FOREACH(rg, &rlset->rs_dynamic, r_dentry) {
+		printf("ruleset '%s':\n", rg->r_name);
+		TAILQ_FOREACH(rl, &rg->r_subset, r_entry) {
+			printf("\tid %"PRIu64", key: ", rl->r_id);
+			for (u_int i = 0; i < NPF_RULE_MAXKEYLEN; i++)
+				printf("%x", rl->r_key[i]);
+			printf("\n");
+		}
+	}
+}
+
+#endif

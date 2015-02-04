@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_show.c,v 1.15 2014/07/20 00:48:51 rmind Exp $	*/
+/*	$NetBSD: npf_show.c,v 1.15.2.1 2015/02/04 07:13:04 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.15 2014/07/20 00:48:51 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.15.2.1 2015/02/04 07:13:04 snj Exp $");
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -316,10 +316,25 @@ static void
 npfctl_print_filter(npf_conf_info_t *ctx, nl_rule_t *rl)
 {
 	const void *marks;
-	size_t mlen;
+	size_t mlen, len;
+	const void *code;
+	int type;
 
-	/* BPF filter criteria described by the byte-code marks. */
 	marks = npf_rule_getinfo(rl, &mlen);
+	if (!marks && (code = npf_rule_getcode(rl, &type, &len)) != NULL) {
+		/*
+		 * No marks, but the byte-code is present.  This must
+		 * have been filled by libpcap(3) or possibly an unknown
+		 * to us byte-code.
+		 */
+		fprintf(ctx->fp, "%s ", type == NPF_CODE_BPF ?
+		    "pcap-filter \"...\"" : "unrecognized-bytecode");
+		return;
+	}
+
+	/*
+	 * BPF filter criteria described by the byte-code marks.
+	 */
 	for (u_int i = 0; i < __arraycount(mark_keyword_map); i++) {
 		const struct mark_keyword_mapent *mk = &mark_keyword_map[i];
 		char *val;
@@ -356,7 +371,7 @@ npfctl_print_rule(npf_conf_info_t *ctx, nl_rule_t *rl)
 		fprintf(ctx->fp, "on %s ", ifname);
 	}
 
-	if ((attr & (NPF_RULE_GROUP | NPF_RULE_DYNAMIC)) == NPF_RULE_GROUP) {
+	if ((attr & NPF_DYNAMIC_GROUP) == NPF_RULE_GROUP) {
 		/* Group; done. */
 		fputs("\n", ctx->fp);
 		return;
@@ -367,8 +382,15 @@ npfctl_print_rule(npf_conf_info_t *ctx, nl_rule_t *rl)
 
 	/* Rule procedure. */
 	if ((rproc = npf_rule_getproc(rl)) != NULL) {
-		fprintf(ctx->fp, "apply \"%s\"", rproc);
+		fprintf(ctx->fp, "apply \"%s\" ", rproc);
 	}
+
+	/* If dynamic rule - print its ID. */
+	if ((attr & NPF_DYNAMIC_GROUP) == NPF_RULE_DYNAMIC) {
+		uint64_t id = npf_rule_getid(rl);
+		fprintf(ctx->fp, "# id = \"%" PRIx64 "\" ", id);
+	}
+
 	fputs("\n", ctx->fp);
 }
 

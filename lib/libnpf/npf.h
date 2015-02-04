@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.27 2014/07/23 01:25:34 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.27.2.1 2015/02/04 07:13:04 snj Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -129,6 +129,8 @@ uint32_t	npf_rule_getattr(nl_rule_t *);
 const char *	npf_rule_getinterface(nl_rule_t *);
 const void *	npf_rule_getinfo(nl_rule_t *, size_t *);
 const char *	npf_rule_getproc(nl_rule_t *);
+uint64_t	npf_rule_getid(nl_rule_t *);
+const void *	npf_rule_getcode(nl_rule_t *, int *, size_t *);
 
 nl_table_t *	npf_table_iterate(nl_config_t *);
 const char *	npf_table_getname(nl_table_t *);
