@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.680 2015/01/26 10:53:21 gson Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.681 2015/02/04 14:23:18 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.688 2015/01/26 09:58:10 gson Exp
+ *	NetBSD: usbdevs,v 1.689 2015/02/04 14:23:04 jmcneill Exp
  */
 
 /*
@@ -2174,6 +2174,7 @@
 #define	USB_PRODUCT_MICROSOFT_XBOX_CONTROLLER_S10	0x0285		/* Xbox Controller S (1.0) */
 #define	USB_PRODUCT_MICROSOFT_XBOX_CONTROLLER_HUB	0x0288		/* Xbox Controller Hub */
 #define	USB_PRODUCT_MICROSOFT_XBOX_CONTROLLER_S12	0x0289		/* Xbox Controller S (1.2) */
+#define	USB_PRODUCT_MICROSOFT_XBOX_360_WIRELESS_RECEIVER	0x0291		/* Xbox 360 Wireless Receiver */
 #define	USB_PRODUCT_MICROSOFT_24GHZ_XCVR10	0x071d		/* 2.4GHz Transceiver V1.0 */
 #define	USB_PRODUCT_MICROSOFT_24GHZ_XCVR20	0x071f		/* 2.4GHz Transceiver V2.0 */
 
