@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.187.4.6 2012/08/22 20:29:20 bouyer Exp $	*/
+/*	$NetBSD: vnd.c,v 1.187.4.7 2015/02/04 04:31:41 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.187.4.6 2012/08/22 20:29:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.187.4.7 2015/02/04 04:31:41 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -794,15 +794,9 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 	size_t resid, sz;
 	off_t bn, offset;
 	struct vnode *vp;
+	struct buf *nbp = NULL;
 
 	flags = obp->b_flags;
-
-	if (!(flags & B_READ)) {
-		vp = bp->b_vp;
-		mutex_enter(&vp->v_interlock);
-		vp->v_numoutput++;
-		mutex_exit(&vp->v_interlock);
-	}
 
 	/* convert to a byte offset within the file. */
 	bn = obp->b_rawblkno * vnd->sc_dkdev.dk_label->d_secsize;
@@ -819,9 +813,8 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 	 */
 	error = 0;
 	bp->b_resid = bp->b_bcount;
-	for (offset = 0, resid = bp->b_resid; resid;
+	for (offset = 0, resid = bp->b_resid; /* true */;
 	    resid -= sz, offset += sz) {
-		struct buf *nbp;
 		daddr_t nbn;
 		int off, nra;
 
@@ -874,10 +867,34 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 			    nbp->vb_buf.b_flags, nbp->vb_buf.b_data,
 			    nbp->vb_buf.b_bcount);
 #endif
+		if (resid == sz) {
+			break;
+		}
 		VOP_STRATEGY(vp, nbp);
 		bn += sz;
 	}
-	nestiobuf_done(bp, skipped, error);
+	if (!(flags & B_READ)) {
+		struct vnode *w_vp;
+		/*
+		 * this is the last nested buf, account for
+		 * the parent buf write too.
+		 * This has to be done last, so that
+		 * fsync won't wait for this write which
+		 * has no chance to complete before all nested bufs
+		 * have been queued. But it has to be done
+		 * before the last VOP_STRATEGY() 
+		 * or the call to nestiobuf_done().
+		 */
+		w_vp = bp->b_vp;
+		mutex_enter(&w_vp->v_interlock);
+		w_vp->v_numoutput++;
+		mutex_exit(&w_vp->v_interlock);
+	}
+	KASSERT(skipped != 0 || nbp != NULL);
+	if (skipped) 
+		nestiobuf_done(bp, skipped, error);
+	else 
+		VOP_STRATEGY(vp, nbp);
 }
 
 static void
