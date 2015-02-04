@@ -1,4 +1,4 @@
-#	$NetBSD: xcb.mk,v 1.2.6.1 2014/10/06 13:09:41 martin Exp $
+#	$NetBSD: xcb.mk,v 1.2.6.2 2015/02/04 06:46:33 snj Exp $
 
 # define XCBEXT to something before including this
 
@@ -18,7 +18,7 @@ SHLIB_MAJOR?=	0
 SHLIB_MINOR?=	1
 
 PKGCONFIG=	xcb-${XCBEXT}
-PKGCONFIG_VERSION.${PKGCONFIG}=     1.9
+PKGCONFIG_VERSION.${PKGCONFIG}=     1.10
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
