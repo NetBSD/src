@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.190 2015/01/26 14:04:22 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.191 2015/02/04 04:39:59 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -9520,4 +9520,15 @@ sys/arch/x86/x86/identcpu.c			1.35-1.39
 	  cpu_probe_amd_cache().
 	- CPUID leaf 2 and 4 are only for Intel processors.
 	[msaitoh, ticket #1241]
+
+sys/dev/vnd.c					1.240, 1.241
+
+	Fix a deadlock when a write occurs on the vnd while the attached
+	file is being fsync(2)ed.
+	[bouyer, ticket #1242]
+
+external/bsd/libevent/dist/buffer.c		patch
+
+	Fix CVE-2014-6272.
+	[spz, ticket #1243]
 
