@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2.4,v 1.1.2.13 2015/01/26 11:03:46 martin Exp $
+# $NetBSD: CHANGES-5.2.4,v 1.1.2.14 2015/02/04 04:49:53 snj Exp $
 
 A complete list of changes from the NetBSD 5.2.3 release to the NetBSD 5.2.4
 release:
@@ -2522,4 +2522,9 @@ lib/libssl/shlib_version                                          patch
 	Certificate fingerprints can be modified (CVE-2014-8275)
 	Bignum squaring may produce incorrect results (CVE-2014-3570)
 	[spz, ticket #1945]
+
+lib/libevent/buffer.c				patch
+
+	Fix CVE-2014-6272.
+	[spz, ticket #1947]
 
