@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.191 2015/02/03 08:27:02 bouyer Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.192 2015/02/04 07:20:54 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15396,4 +15396,110 @@ external/bsd/libevent/dist/test/regress_http.c 	 up to 1.3
 	 o Add evutil_secure_rng_set_urandom_device_file (2bbb5d7)
 	 o Really remove RNG seeds from the stack (f5ced88)
 	[spz, ticket #478]
+
+share/man/man4/alc.4				1.4
+share/man/man4/atphy.4				1.3
+share/man/man4/lii.4				1.3
+sys/dev/pci/if_alc.c				1.12
+sys/dev/pci/if_alcreg.h				1.3
+sys/dev/pci/pcidevs				1.1213
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	alc(4): add support for AR816x/AR817x chipsets. PR kern/49584.
+	[nonaka, ticket #473]
+
+sys/kern/uipc_usrreq.c				1.173
+
+	Handle LOCAL_PEERID for socketpair() connected sockets which
+	connect through connect2().
+	1. move the code that sets the peerid structure into connect1().
+	This handles so2.  The datagram code calls connect2 twice with
+	flipped so arguments so both sockets get set.
+	2. in connect2 copy the peerid structure from so2 to so, so that
+	that both stream sockets get set.
+	[jmcneill, ticket #474]
+
+sys/arch/arm/conf/std.arm			1.2
+
+	Disable ARM's CPU_IN_CKSUM until the bugs are fixed.
+	[joerg, ticket #475]
+
+sys/lib/libunwind/AddressSpace.hpp		1.8
+
+	Fix binary search when search value is in the last block, but
+	not equal to the start of the range. PR 49444.
+	[joerg, ticket #476]
+
+external/mit/xorg/lib/libxcb/xcb.mk		1.4
+
+	libxcb is 1.10 now, fix pkgconfig version xcb.mk
+	[jmcneill, ticket #488]
+
+sys/dev/pci/if_wm.c				1.310
+
+	Fix a bug that a workaround for SWSM.SMBI bit doesn't work
+	correctly.  This problem only occured with old boot ROM on
+	8257[12].
+	[msaitoh, ticket #490]
+
+sys/arch/atari/stand/installboot/Makefile	1.7
+
+	Specify -fno-strict-aliasing as a workaround for gcc48.
+	[chs, ticket #482]
+
+sys/arch/cesfic/conf/Makefile.cesfic		1.17
+
+	Fix build with gcc48.
+	[chs, ticket #483]
+
+distrib/mvme68k/ramdisk/Makefile		1.29
+sys/arch/mvme68k/conf/RAMDISK			1.30
+
+	Increase ramdisk size for gcc48.
+	[chs, ticket #484]
+
+sys/arch/next68k/stand/boot/en.c		1.18
+
+	Fix build with gcc48.
+	[chs, ticket #485]
+
+external/gpl3/gcc/usr.bin/backend/Makefile	1.24
+
+	Update m68k gcc bug workarounds for gcc 4.8.  Fixes PR 49609.
+	[chs, ticket #486]
+
+lib/libc/arch/m68k/softfloat/softfloat.h	1.7
+
+	float32_is_signalling_nan needs a prototype if SOFTFLOATM68K_FOR_GCC
+	is defined.
+	[chs, ticket #487]
+
+lib/libnpf/npf.c				1.35
+lib/libnpf/npf.h				1.28
+sys/net/npf/npf_conn.c				1.15
+sys/net/npf/npf_impl.h				1.61
+sys/net/npf/npf_ruleset.c			1.41
+usr.sbin/npf/npfctl/npf.conf.5			1.44
+usr.sbin/npf/npfctl/npf_parse.y			1.37
+usr.sbin/npf/npfctl/npf_show.c			1.16, 1.17
+usr.sbin/npf/npfctl/npfctl.c			1.46
+
+	NPF:
+	* load the config file before bpfjit so that we can disable the
+	  warning.
+	* Don't depend on yacc to include stdlib.h or string.h.
+	* - npf_conn_establish: remove a rare race condition when we
+	    might destroy a connection when it is still referenced by
+	    another thread.
+	  - npf_conn_destroy: remove the backwards entry using the
+	    saved key, PR/49488.
+	  - Sprinkle some asserts.
+	* npf.conf(5): mention alg, include in the example, minor fix.
+	* npfctl(8): report dynamic rule ID in a comment, print the case
+	  when libpcap is used correctly.  Also, add npf_ruleset_dump()
+	  helper in the kernel.
+	* libnpf: add npf_rule_getid() and npf_rule_getcode().
+	* npfctl_print_rule: print the ID in hex, not decimal.
+	[rmind, ticket #479]
 
