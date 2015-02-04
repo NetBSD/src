@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.192 2014/12/14 23:48:58 chs Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.193 2015/02/04 07:09:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.192 2014/12/14 23:48:58 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.193 2015/02/04 07:09:37 msaitoh Exp $");
 
 #include "veriexec.h"
 
@@ -673,7 +673,7 @@ vn_stat(struct vnode *vp, struct stat *sb)
 		break;
 	default:
 		return (EBADF);
-	};
+	}
 	sb->st_mode = mode;
 	sb->st_nlink = va.va_nlink;
 	sb->st_uid = va.va_uid;
