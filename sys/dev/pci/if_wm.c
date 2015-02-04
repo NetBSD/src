@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.289.2.2 2014/11/07 21:34:56 snj Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.289.2.3 2015/02/04 06:48:13 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.289.2.2 2014/11/07 21:34:56 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.289.2.3 2015/02/04 06:48:13 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1831,7 +1831,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82571:
 	case WM_T_82572:
 		reg = CSR_READ(sc, WMREG_SWSM2);
-		if ((reg & SWSM2_LOCK) != 0) {
+		if ((reg & SWSM2_LOCK) == 0) {
 			CSR_WRITE(sc, WMREG_SWSM2, reg | SWSM2_LOCK);
 			force_clear_smbi = true;
 		} else
