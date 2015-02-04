@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.6,v 1.1.2.13 2015/01/26 11:51:16 martin Exp $
+# $NetBSD: CHANGES-5.1.6,v 1.1.2.14 2015/02/04 04:48:10 snj Exp $
 
 A complete list of changes from the NetBSD 5.1.5 release to the NetBSD 5.1.6
 release:
@@ -2523,4 +2523,8 @@ lib/libssl/shlib_version                                          patch
 	Bignum squaring may produce incorrect results (CVE-2014-3570)
 	[spz, ticket #1945]
 
+lib/libevent/buffer.c				patch
+
+	Fix CVE-2014-6272.
+	[spz, ticket #1947]
 
