@@ -1,4 +1,4 @@
-/*	$NetBSD: luaconf.h,v 1.11 2015/02/02 14:03:05 lneto Exp $	*/
+/*	$NetBSD: luaconf.h,v 1.12 2015/02/04 04:47:57 lneto Exp $	*/
 
 /*
 ** Id: luaconf.h,v 1.238 2014/12/29 13:27:55 roberto Exp 
@@ -752,6 +752,18 @@
 #define LUA_MAXUNSIGNED		UINTMAX_MAX
 #define LUA_MAXINTEGER		INTMAX_MAX
 #define LUA_MININTEGER		INTMAX_MIN
+
+/* Path */
+#undef LUA_ROOT
+#undef LUA_PATH_DEFAULT
+#undef LUA_CPATH_DEFAULT
+
+#define LUA_ROOT	"/usr/"
+#define LUA_PATH_DEFAULT  \
+		LUA_LDIR"?.lua;"  LUA_LDIR"?/init.lua;" \
+		LUA_CDIR"?.lua;"  LUA_CDIR"?/init.lua"
+#define LUA_CPATH_DEFAULT \
+		LUA_CDIR"?.so;" LUA_CDIR"loadall.so"
 
 #ifndef _KERNEL
 
