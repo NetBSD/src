@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.33 2012/03/13 21:13:43 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.34 2015/02/05 16:04:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,11 +76,12 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.33 2012/03/13 21:13:43 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.34 2015/02/05 16:04:35 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include <sys/param.h>
 #include <sys/types.h>
 
 #include <assert.h>
@@ -262,12 +263,11 @@ regcomp(
 		len = strlen(pattern);
 
 	/* do the mallocs early so failure handling is easy */
-	g = (struct re_guts *)malloc(sizeof(struct re_guts) +
-							(NC-1)*sizeof(cat_t));
+	g = malloc(sizeof(struct re_guts) + (NC - 1) * sizeof(cat_t));
 	if (g == NULL)
 		return(REG_ESPACE);
 	p->ssize = len/(size_t)2*(size_t)3 + (size_t)1;	/* ugh */
-	p->strip = malloc(p->ssize * sizeof(sop));
+	p->strip = reallocarray(NULL, p->ssize, sizeof(sop));
 	p->slen = 0;
 	if (p->strip == NULL) {
 		free(g);
@@ -1249,14 +1249,15 @@ allocset(
 		if (MEMSIZE(p) > MEMLIMIT)
 			goto oomem;
 		if (p->g->sets == NULL)
-			p->g->sets = malloc(nc * sizeof(cset));
+			p->g->sets = reallocarray(NULL, nc, sizeof(cset));
 		else
-			p->g->sets = realloc(p->g->sets, nc * sizeof(cset));
+			p->g->sets = reallocarray(p->g->sets, nc, sizeof(cset));
 		if (p->g->setbits == NULL)
 			p->g->setbits = malloc(nbytes);
 		else {
 			p->g->setbits = realloc(p->g->setbits, nbytes);
-			/* xxx this isn't right if setbits is now NULL */
+			if (p->g->setbits == NULL)
+				goto oomem;
 			for (i = 0; i < no; i++)
 				p->g->sets[i].ptr = p->g->setbits + css*(i/CHAR_BIT);
 		}
@@ -1779,7 +1780,7 @@ enlarge(
 	p->ssize = size;
 	if (MEMSIZE(p) > MEMLIMIT)
 		goto oomem;
-	sp = realloc(p->strip, p->ssize * sizeof(sop));
+	sp = reallocarray(p->strip, p->ssize, sizeof(sop));
 	if (sp == NULL) {
 oomem:
 		p->ssize = osize;
@@ -1804,7 +1805,7 @@ stripsnug(
 	_DIAGASSERT(g != NULL);
 
 	g->nstates = p->slen;
-	g->strip = realloc(p->strip, p->slen * sizeof(sop));
+	g->strip = reallocarray(p->strip, p->slen, sizeof(sop));
 	if (g->strip == NULL) {
 		SETERROR(REG_ESPACE);
 		g->strip = p->strip;
