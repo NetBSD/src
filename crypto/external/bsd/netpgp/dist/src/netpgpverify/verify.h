@@ -23,9 +23,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifndef NETPGP_VERIFY_H_
-#define NETPGP_VERIFY_H_	20150115
+#define NETPGP_VERIFY_H_	20150205
 
-#define NETPGPVERIFY_VERSION	"netpgpverify portable 20150115"
+#define NETPGPVERIFY_VERSION	"netpgpverify portable 20150205"
 
 #include <sys/types.h>
 
@@ -263,7 +263,7 @@ typedef struct pgpv_cursor_t {
 	char			*op;			/* operation we're doing */
 	char			*value;			/* value we're searching for */
 	void			*ptr;			/* for regexps etc */
-	PGPV_ARRAY(uint32_t,	 found);		/* array of matched subscripts */
+	PGPV_ARRAY(uint32_t,	 found);		/* array of matched pimary key subscripts */
 	PGPV_ARRAY(size_t,	 datacookies);		/* cookies to retrieve matched data */
 	int64_t			 sigtime;		/* time of signature */
 	char			 why[PGPV_REASON_LEN];	/* reason for bad signature */
