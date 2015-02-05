@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2007/07/24 10:49:23 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2015/02/05 21:50:42 snj Exp $
 #
 #	etc.alpha/Makefile.inc -- alpha-specific etc Makefile targets
 #
@@ -13,8 +13,7 @@ BUILD_KERNELS+=		INSTALL
 INSTALLATION_DIRS+=	installation/floppy	\
 			installation/diskimage	\
 			installation/instkernel	\
-			installation/netboot	\
-			installation/misc
+			installation/netboot
 
 snap_md_post:
 	cd ${KERNSRCDIR}/arch/alpha/stand/netboot && ${MAKE} release
