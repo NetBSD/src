@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_conn.c,v 1.15 2015/02/01 22:41:22 rmind Exp $	*/
+/*	$NetBSD: npf_conn.c,v 1.16 2015/02/05 22:04:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2014-2015 Mindaugas Rasiukevicius <rmind at netbsd org>
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.15 2015/02/01 22:41:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.16 2015/02/05 22:04:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -528,8 +528,8 @@ err:
 	 * here since there might be references acquired already.
 	 */
 	if (error) {
-		const u_int dflags = CONN_REMOVED | CONN_EXPIRE;
-		atomic_or_uint(&con->c_flags, dflags);
+		atomic_or_uint(&con->c_flags, CONN_REMOVED | CONN_EXPIRE);
+		atomic_dec_uint(&con->c_refcnt);
 		npf_stats_inc(NPF_STAT_RACE_CONN);
 	} else {
 		NPF_PRINTF(("NPF: establish conn %p\n", con));
@@ -569,6 +569,8 @@ npf_conn_destroy(npf_conn_t *con)
 /*
  * npf_conn_setnat: associate NAT entry with the connection, update and
  * re-insert connection entry using the translation values.
+ *
+ * => The caller must be holding a reference.
  */
 int
 npf_conn_setnat(const npf_cache_t *npc, npf_conn_t *con,
