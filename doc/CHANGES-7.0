@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.194 2015/02/04 22:08:48 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.195 2015/02/05 08:43:55 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15631,4 +15631,11 @@ sbin/ping6/ping6.c				1.83
 	Rework to avoid a conditional assignment which results in
 	a maybe-uninitialized warning.
 	[chs, ticket #493]
+
+distrib/sets/makesrctars			1.40
+
+	GPL code isn't just in src/gnu these days (i.e., the last 6 years).
+	Move stuff from src/external/gpl[23] out of the src tarball and into
+	gnusrc.
+	[snj, ticket #494]
 
