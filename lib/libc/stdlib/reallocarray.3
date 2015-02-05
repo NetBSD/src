@@ -1,0 +1,110 @@
+.\" $NetBSD: reallocarray.3,v 1.1 2015/02/05 20:02:28 christos Exp $
+.\"
+.Dd February 5, 2015
+.Dt REALLOCARRAY 3
+.Os
+.Sh NAME
+.Nm reallocarray
+.Nd reallocate memory for an array of elements checking for overflow
+.Sh SYNOPSIS
+.Vt #define _OPENBSD_SOURCE
+.In stdlib.h
+.Ft void *
+.Fo reallocarray
+.Fa "void *ptr"
+.Fa "size_t nmemb"
+.Fa "size_t size"
+.Fc
+.Sh DESCRIPTION
+The
+.Fn reallocarray
+function reallocates the pointer
+.Fa ptr
+to a size appropriate to handle an allocation of
+.Fa nmemb
+elements in an array where each of the array elements is
+.Fa size
+bytes using
+.Xr realloc 3
+and making sure that overflow does not happen in the multiplication of
+.Dq "nmemb * size" .
+.Pp
+This function is provided for source compatibility with
+.Ox 
+and
+its use is discouraged in preference to
+.Xr reallocarr 3 .
+.Sh RETURN VALUES
+The
+.Fn reallocarray
+function will return
+.Dv NULL
+if there was overflow or if
+.Xr realloc 3
+failed setting
+.Va errno
+to
+.Dv EOVERFLOW
+or preserving the value from
+.Xr realloc 3 .
+.Sh SEE ALSO
+.Xr malloc 3 ,
+.Xr realloc 3 ,
+.Xr reallocarr 3 
+.Sh STANDARDS
+.Fn reallocarray
+is an
+.Ox
+extension.
+.Sh HISTORY
+The
+.Fn reallocarray
+function first appeared in
+.Ox 5.6 .
+.Fn reallocarray
+was redesigned in
+.Nx 8
+as
+.Fn reallocarr 3 .
+For compatibility reasons it's available since
+.Nx 8
+in the
+.Vt _OPENBSD_SOURCE
+namespace.
+.Sh CAVEATS
+The
+.Fn reallocarray
+function was designed to facilitate safe,
+robust programming and overcome the shortcomings of the
+.Xr malloc 3
+and
+.Xr realloc 3 
+functions by centralizing the overflow check in the multiplication of
+.Fa nmemb
+and
+.Fa size .
+.Pp
+Implementation issues prevent the function from being used correctly (a
+.Dv 0
+.Fa size
+parameter will return
+.Dv ENOMEM
+in the
+.Ox
+implementation), while there are still portability issues (it does not solve
+the 
+.Dv 0
+sized allocation return ambiguity: does
+.Fn reallocarray
+return
+.Dv NULL
+or a unique pointer to memory that cannot be accessed? Does a
+.Dv NULL
+mean that an error occurred, and can someone check
+.Dv errno
+in that case to find out what happened?).
+.Pp
+For those reasons
+.Nx
+decided to go with an alternative implementation, and created
+.Xr reallocarr 3 .
