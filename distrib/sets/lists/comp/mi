@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1944 2015/01/26 00:22:02 christos Exp $
+#	$NetBSD: mi,v 1.1945 2015/02/05 16:07:15 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8765,6 +8765,7 @@
 ./usr/share/man/cat3/re_exec.0			comp-c-catman		.cat
 ./usr/share/man/cat3/readdir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/readdir_r.0		comp-c-catman		.cat
+./usr/share/man/cat3/reallocarray.0		comp-c-catman		.cat
 ./usr/share/man/cat3/realloc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/realpath.0			comp-c-catman		.cat
 ./usr/share/man/cat3/recno.0			comp-c-catman		.cat
@@ -10766,6 +10767,7 @@
 ./usr/share/man/cat9/rasops_reconfig.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ratecheck.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/readdisklabel.0		comp-sys-catman		.cat
+./usr/share/man/cat9/realloc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/realloc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/relookup.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/remrunqueue.0		comp-obsolete		obsolete
@@ -15603,6 +15605,7 @@
 ./usr/share/man/html3/re_exec.html		comp-c-htmlman		html
 ./usr/share/man/html3/readdir.html		comp-c-htmlman		html
 ./usr/share/man/html3/readdir_r.html		comp-c-htmlman		html
+./usr/share/man/html3/reallocarray.html		comp-c-htmlman		html
 ./usr/share/man/html3/realloc.html		comp-c-htmlman		html
 ./usr/share/man/html3/realpath.html		comp-c-htmlman		html
 ./usr/share/man/html3/recno.html		comp-c-htmlman		html
@@ -22441,6 +22444,7 @@
 ./usr/share/man/man3/re_exec.3			comp-c-man		.man
 ./usr/share/man/man3/readdir.3			comp-c-man		.man
 ./usr/share/man/man3/readdir_r.3		comp-c-man		.man
+./usr/share/man/man3/reallocarray.3		comp-c-man		.man
 ./usr/share/man/man3/realloc.3			comp-c-man		.man
 ./usr/share/man/man3/realpath.3			comp-c-man		.man
 ./usr/share/man/man3/recno.3			comp-c-man		.man
