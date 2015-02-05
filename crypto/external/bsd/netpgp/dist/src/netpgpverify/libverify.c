@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2012 Alistair Crooks <agc@NetBSD.org>
+ * Copyright (c) 2012,2013,2014,2015 Alistair Crooks <agc@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1473,14 +1473,16 @@ fmt_trust(char *s, size_t size, pgpv_signed_userid_t *userid, uint32_t u)
 
 /* print a primary key, per RFC 4880 */
 static size_t
-fmt_primary(char *s, size_t size, pgpv_primarykey_t *primary, const char *modifiers)
+fmt_primary(char *s, size_t size, pgpv_primarykey_t *primary, unsigned subkey, const char *modifiers)
 {
 	pgpv_signed_userid_t	*userid;
+	pgpv_pubkey_t		*pubkey;
 	unsigned		 i;
 	unsigned		 j;
 	size_t			 cc;
 
-	cc = fmt_pubkey(s, size, &primary->primary, "signature    ");
+	pubkey = (subkey == 0) ? &primary->primary : &ARRAY_ELEMENT(primary->signed_subkeys, subkey - 1).subkey;
+	cc = fmt_pubkey(s, size, pubkey, "signature    ");
 	cc += fmt_userid(&s[cc], size - cc, primary, primary->primary_userid);
 	for (i = 0 ; i < ARRAY_COUNT(primary->signed_userids) ; i++) {
 		if (i != primary->primary_userid) {
@@ -2190,6 +2192,7 @@ getbignum(pgpv_bignum_t *bignum, bufgap_t *bg, char *buf, const char *header)
 {
 	uint32_t	 len;
 
+	USE_ARG(header);
 	(void) bufgap_getbin(bg, &len, sizeof(len));
 	len = pgp_ntoh32(len);
 	(void) bufgap_seek(bg, sizeof(len), BGFromHere, BGByte);
@@ -2248,6 +2251,7 @@ read_ssh_file(pgpv_t *pgp, pgpv_primarykey_t *primary, const char *fmt, ...)
 	int			 ok;
 	int			 cc;
 
+	USE_ARG(pgp);
 	memset(primary, 0x0, sizeof(*primary));
 	(void) memset(&bg, 0x0, sizeof(bg));
 	va_start(args, fmt);
@@ -2436,7 +2440,7 @@ fixup_detached(pgpv_cursor_t *cursor, const char *f)
 	return 1;
 }
 
-/* match the calculated signature against the oen in the signature packet */
+/* match the calculated signature against the one in the signature packet */
 static int
 match_sig(pgpv_cursor_t *cursor, pgpv_signature_t *signature, pgpv_pubkey_t *pubkey, uint8_t *data, size_t size)
 {
@@ -2518,25 +2522,29 @@ pgpv_close(pgpv_t *pgp)
 
 /* return the formatted entry for the primary key desired */
 size_t
-pgpv_get_entry(pgpv_t *pgp, unsigned ent, char **ret, const char *modifiers)
+pgpv_get_entry(pgpv_t *pgp, unsigned ent, char **s, const char *modifiers)
 {
-	size_t	cc;
+	unsigned	subkey;
+	unsigned	prim;
+	size_t		cc;
 
-	if (ret == NULL || pgp == NULL || ent >= ARRAY_COUNT(pgp->primaries)) {
+	prim = ((ent >> 8) & 0xffffff);
+	subkey = (ent & 0xff);
+	if (s == NULL || pgp == NULL || prim >= ARRAY_COUNT(pgp->primaries)) {
 		return 0;
 	}
-	*ret = NULL;
-	cc = ARRAY_ELEMENT(pgp->primaries, ent).fmtsize;
+	*s = NULL;
+	cc = ARRAY_ELEMENT(pgp->primaries, prim).fmtsize;
 	if (modifiers == NULL || (strcasecmp(modifiers, "trust") != 0 && strcasecmp(modifiers, "subkeys") != 0)) {
 		modifiers = "no-subkeys";
 	}
 	if (strcasecmp(modifiers, "trust") == 0) {
 		cc *= 2048;
 	}
-	if ((*ret = calloc(1, cc)) == NULL) {
+	if ((*s = calloc(1, cc)) == NULL) {
 		return 0;
 	}
-	return fmt_primary(*ret, cc, &ARRAY_ELEMENT(pgp->primaries, ent), modifiers);
+	return fmt_primary(*s, cc, &ARRAY_ELEMENT(pgp->primaries, prim), subkey, modifiers);
 }
 
 /* fixup key id, with birth, keyalg and hashalg value from signature */
@@ -2556,12 +2564,15 @@ fixup_ssh_keyid(pgpv_t *pgp, pgpv_signature_t *signature, const char *hashtype)
 
 /* find key id */
 static int
-find_keyid(pgpv_t *pgp, const char *strkeyid, uint8_t *keyid)
+find_keyid(pgpv_t *pgp, const char *strkeyid, uint8_t *keyid, unsigned *sub)
 {
-	unsigned	 i;
-	uint8_t		 binkeyid[PGPV_KEYID_LEN];
-	size_t		 off;
-	size_t		 cmp;
+	pgpv_signed_subkey_t	*subkey;
+	pgpv_primarykey_t	*prim;
+	unsigned		 i;
+	unsigned		 j;
+	uint8_t			 binkeyid[PGPV_KEYID_LEN];
+	size_t			 off;
+	size_t			 cmp;
 
 	if (strkeyid == NULL && keyid == NULL) {
 		return 0;
@@ -2573,27 +2584,43 @@ find_keyid(pgpv_t *pgp, const char *strkeyid, uint8_t *keyid)
 		memcpy(binkeyid, keyid, sizeof(binkeyid));
 		cmp = PGPV_KEYID_LEN;
 	}
+	*sub = 0;
 	off = PGPV_KEYID_LEN - cmp;
 	for (i = 0 ; i < ARRAY_COUNT(pgp->primaries) ; i++) {
-		if (memcmp(&ARRAY_ELEMENT(pgp->primaries, i).primary.keyid[off], &binkeyid[off], cmp) == 0) {
+		prim = &ARRAY_ELEMENT(pgp->primaries, i);
+		if (memcmp(&prim->primary.keyid[off], &binkeyid[off], cmp) == 0) {
 			return i;
 		}
+		for (j = 0 ; j < ARRAY_COUNT(prim->signed_subkeys) ; j++) {
+			subkey = &ARRAY_ELEMENT(prim->signed_subkeys, j);
+			if (memcmp(&subkey->subkey.keyid[off], &binkeyid[off], cmp) == 0) {
+				*sub = j + 1;
+				return i;
+			}
+		}
+
 	}
 	return -1;
 }
 
 /* match the signature with the id indexed by 'primary' */
 static int
-match_sig_id(pgpv_cursor_t *cursor, pgpv_signature_t *signature, pgpv_litdata_t *litdata, unsigned primary)
+match_sig_id(pgpv_cursor_t *cursor, pgpv_signature_t *signature, pgpv_litdata_t *litdata, unsigned primary, unsigned sub)
 {
+	pgpv_primarykey_t	*prim;
 	pgpv_pubkey_t		*pubkey;
 	uint8_t			*data;
 	size_t			 insize;
 
-	pubkey = &ARRAY_ELEMENT(cursor->pgp->primaries, primary).primary;
 	cursor->sigtime = signature->birth;
 	/* calc hash on data packet */
 	data = get_literal_data(cursor, litdata, &insize);
+	if (sub == 0) {
+		pubkey = &ARRAY_ELEMENT(cursor->pgp->primaries, primary).primary;
+		return match_sig(cursor, signature, pubkey, data, insize);
+	}
+	prim = &ARRAY_ELEMENT(cursor->pgp->primaries, primary);
+	pubkey = &ARRAY_ELEMENT(prim->signed_subkeys, sub - 1).subkey;
 	return match_sig(cursor, signature, pubkey, data, insize);
 }
 
@@ -2644,6 +2671,7 @@ pgpv_verify(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 	pgpv_signature_t	*signature;
 	pgpv_onepass_t		*onepass;
 	pgpv_litdata_t		*litdata;
+	unsigned		 sub;
 	size_t			 pkt;
 	char			 strkeyid[PGPV_STR_KEYID_LEN];
 	int			 j;
@@ -2695,17 +2723,17 @@ pgpv_verify(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 	if (cursor->pgp->ssh) {
 		fixup_ssh_keyid(cursor->pgp, signature, "sha1");
 	}
-	if (ARRAY_COUNT(cursor->pgp->primaries) == 1) {
-		j = 0;
-	} else if ((j = find_keyid(cursor->pgp, NULL, onepass->keyid)) < 0) {
+	sub = 0;
+	if ((j = find_keyid(cursor->pgp, NULL, onepass->keyid, &sub)) < 0) {
 		fmt_binary(strkeyid, sizeof(strkeyid), onepass->keyid, (unsigned)sizeof(onepass->keyid));
 		snprintf(cursor->why, sizeof(cursor->why), "Signature key id %s not found ", strkeyid);
 		return 0;
 	}
-	if (!match_sig_id(cursor, signature, litdata, (unsigned)j)) {
+	if (!match_sig_id(cursor, signature, litdata, (unsigned)j, sub)) {
 		return 0;
 	}
 	ARRAY_APPEND(cursor->datacookies, pkt);
+	j = ((j & 0xffffff) << 8) | (sub & 0xff);
 	ARRAY_APPEND(cursor->found, j);
 	return pkt + 1;
 }
@@ -2731,6 +2759,7 @@ pgpv_read_ssh_pubkeys(pgpv_t *pgp, const void *keyring, ssize_t size)
 {
 	pgpv_primarykey_t	primary;
 
+	USE_ARG(size);
 	if (pgp == NULL) {
 		return 0;
 	}

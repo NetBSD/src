@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: chk.sh,v 1.2 2015/01/30 18:58:59 agc Exp $
+# $NetBSD: chk.sh,v 1.3 2015/02/05 01:26:54 agc Exp $
 
 # Copyright (c) 2013,2014,2015 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -35,9 +35,11 @@ os=EdgeBSD
 osrev=6
 arch=amd64
 pkgsrc=pkgsrc-2013Q1
+keyring=pubring.gpg
 while [ $# -gt 0 ]; do
 	case "$1" in
 	--arch|-a)	arch=$2; shift ;;
+	--keyring|-k)	keyring=$2; shift ;;
 	--os|-o)	os=$2; shift ;;
 	--pkgsrc)	pkgsrc=$2; shift ;;
 	-v)		set -x ;;
@@ -95,13 +97,13 @@ diff ${dir}/+PKG_HASH ${dir}/calc || die "Bad hashes generated"
 if [ -x /usr/bin/netpgpverify -o -x /usr/pkg/bin/netpgpverify ]; then
 	echo "=== Using netpgpverify to verify the package signature ==="
 	# check the signature in +PKG_GPG_SIGNATURE
-	cp ${here}/pubring.pub ${dir}/pubring.gpg
+	cp ${keyring} ${dir}/pubring.gpg
 	# calculate the sig file we want to verify
 	echo "-----BEGIN PGP SIGNED MESSAGE-----" > ${dir}/${name}.sig
 	echo "Hash: ${digest}" >> ${dir}/${name}.sig
 	echo "" >> ${dir}/${name}.sig
 	cat ${dir}/+PKG_HASH ${dir}/+PKG_GPG_SIGNATURE >> ${dir}/${name}.sig
-	(cd ${dir} && netpgpverify -k pubring.gpg ${name}.sig) || die "Bad signature"
+	(cd ${dir} && ${here}/netpgpverify -k pubring.gpg ${name}.sig) || die "Bad signature"
 else
 	echo "=== Using gpg to verify the package signature ==="
 	gpg --recv --keyserver pgp.mit.edu 0x6F3AF5E2
