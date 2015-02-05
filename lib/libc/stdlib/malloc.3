@@ -1,4 +1,4 @@
-.\" $NetBSD: malloc.3,v 1.38 2010/05/03 08:23:20 jruoho Exp $
+.\" $NetBSD: malloc.3,v 1.39 2015/02/05 16:04:35 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,11 +34,11 @@
 .\"     @(#)malloc.3	8.1 (Berkeley) 6/4/93
 .\" $FreeBSD: src/lib/libc/stdlib/malloc.3,v 1.73 2007/06/15 22:32:33 jasone Exp $
 .\"
-.Dd May 3, 2010
+.Dd February 5, 2015
 .Dt MALLOC 3
 .Os
 .Sh NAME
-.Nm malloc , calloc , realloc , free
+.Nm malloc , calloc , realloc , reallocarray, free
 .Nd general purpose memory allocation functions
 .Sh LIBRARY
 .Lb libc
@@ -50,6 +50,8 @@
 .Fn calloc "size_t number" "size_t size"
 .Ft void *
 .Fn realloc "void *ptr" "size_t size"
+.Ft void *
+.Fn reallocarray "void *ptr" "size_t number" "size_t size"
 .Ft void
 .Fn free "void *ptr"
 .Sh DESCRIPTION
@@ -74,7 +76,7 @@ The result is identical to calling
 with an argument of
 .Dq "number * size" ,
 with the exception that the allocated memory is explicitly initialized
-to zero bytes.
+to zero bytes, and overflow is being checked.
 .Pp
 The
 .Fn realloc
@@ -90,8 +92,22 @@ the value of the newly allocated portion of the memory is undefined.
 Upon success, the memory referenced by
 .Fa ptr
 is freed and a pointer to the newly allocated memory is returned.
+.Pp
+The
+.Fn reallocarray
+function is similar to
+.Fn realloc
+except it operates on
+.Fa number
+members of size
+.Fa size
+and checks for integer overflow in the calculation of\
+.Dq "number * size" .
+.Pp
 Note that
 .Fn realloc
+and
+.Fn reallocarray
 may move the memory allocation, resulting in a different return value than
 .Fa ptr .
 If
@@ -129,7 +145,9 @@ is set to
 .Pp
 The
 .Fn realloc
-function returns a pointer, possibly identical to
+and
+.Fn reallocarray
+functions return a pointer, possibly identical to
 .Fa ptr ,
 to the allocated memory
 if successful; otherwise a
@@ -141,7 +159,9 @@ is set to
 if the error was the result of an allocation failure.
 The
 .Fn realloc
-function always leaves the original buffer intact
+and
+.Fn reallocarray
+functions always leave the original buffer intact
 when an error occurs.
 .Pp
 The
@@ -158,7 +178,7 @@ if ((p = malloc(number * size)) == NULL)
 .Pp
 The multiplication may lead to an integer overflow.
 To avoid this,
-.Fn calloc
+.Fn reallocarray
 is recommended.
 .Pp
 If
@@ -169,6 +189,42 @@ if (size && number > SIZE_MAX / size) {
 	errno = EOVERFLOW;
 	err(EXIT_FAILURE, "allocation");
 }
+.Ed
+.Pp
+The above test is not sufficient in all cases.
+For example, multiplying ints requires a different set of checks:
+.Bd -literal -offset indent
+int num, size; 
+\&.\&.\&. 
+ 
+/* Avoid invalid requests */ 
+if (size < 0 || num < 0) 
+	errc(1, EOVERFLOW, "overflow"); 
+ 
+/* Check for signed int overflow */ 
+if (size && num > INT_MAX / size) 
+	errc(1, EOVERFLOW, "overflow"); 
+ 
+if ((p = malloc(size * num)) == NULL) 
+	err(1, "malloc");
+.Ed
+.Pp
+Assuming the implementation checks for integer overflow as
+.Nx
+does, it is much easier to use
+.Fn calloc
+or 
+.Fn reallocarray .
+.Pp
+The above examples could be simplified to:
+.Bd -literal -offset indent
+if ((p = reallocarray(NULL, num, size)) == NULL) 
+	err(1, "reallocarray");
+.Ed
+.Bd -literal -offset indent
+or at the cost of initialization:
+if ((p = calloc(num, size)) == NULL) 
+	err(1, "calloc");
 .Ed
 .Pp
 When using
@@ -227,3 +283,10 @@ and
 .Fn free
 functions conform to
 .St -isoC .
+.Pp
+The
+.Fn reallocarray
+function first appeared on
+.Ox 5.6
+and
+.Nx 8 .
