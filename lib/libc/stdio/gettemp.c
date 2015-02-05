@@ -1,4 +1,4 @@
-/*	$NetBSD: gettemp.c,v 1.19 2014/06/19 05:31:15 msaitoh Exp $	*/
+/*	$NetBSD: gettemp.c,v 1.20 2015/02/05 16:05:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gettemp.c,v 1.19 2014/06/19 05:31:15 msaitoh Exp $");
+__RCSID("$NetBSD: gettemp.c,v 1.20 2015/02/05 16:05:20 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,13 +85,13 @@ GETTEMP(char *path, int *doopen, int domkdir, int slen, int oflags)
 
 	/* Fill space with random characters */
 	while (trv >= path && *trv == 'X') {
-		r = arc4random_uniform(sizeof(padchar) - 1);
+		r = arc4random_uniform((unsigned int)(sizeof(padchar) - 1));
 		*trv-- = padchar[r];
 	}
 	start = trv + 1;
 
 	/* save first combination of random characters */
-	memcpy(carrybuf, start, suffp - start);
+	memcpy(carrybuf, start, (size_t)(suffp - start));
 
 	/*
 	 * check the target directory.
