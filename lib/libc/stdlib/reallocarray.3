@@ -1,4 +1,4 @@
-.\" $NetBSD: reallocarray.3,v 1.1 2015/02/05 20:02:28 christos Exp $
+.\" $NetBSD: reallocarray.3,v 1.2 2015/02/05 22:05:33 christos Exp $
 .\"
 .Dd February 5, 2015
 .Dt REALLOCARRAY 3
@@ -84,17 +84,10 @@ functions by centralizing the overflow check in the multiplication of
 and
 .Fa size .
 .Pp
-Implementation issues prevent the function from being used correctly (a
-.Dv 0
-.Fa size
-parameter will return
-.Dv ENOMEM
-in the
-.Ox
-implementation), while there are still portability issues (it does not solve
+There are still portability issues (it does not solve
 the 
 .Dv 0
-sized allocation return ambiguity: does
+sized allocation return ambiguity in the C standard: does
 .Fn reallocarray
 return
 .Dv NULL
@@ -104,7 +97,7 @@ mean that an error occurred, and can someone check
 .Dv errno
 in that case to find out what happened?).
 .Pp
-For those reasons
+For this reason
 .Nx
 decided to go with an alternative implementation, and created
 .Xr reallocarr 3 .
