@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.112 2015/01/18 17:56:09 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.113 2015/02/05 16:05:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -364,6 +364,7 @@ unsigned long long int
 	strtoull_l(const char * __restrict, char ** __restrict, int, locale_t);
 
 #  if defined(_NETBSD_SOURCE)
+void	*reallocarray(void *, size_t, size_t);
 quad_t	 strtoq_l(const char * __restrict, char ** __restrict, int, locale_t);
 u_quad_t strtouq_l(const char * __restrict, char ** __restrict, int, locale_t);
 
