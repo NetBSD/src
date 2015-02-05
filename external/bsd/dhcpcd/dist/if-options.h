@@ -1,8 +1,8 @@
-/* $NetBSD: if-options.h,v 1.1.1.23.2.1 2014/12/29 16:18:05 martin Exp $ */
+/* $NetBSD: if-options.h,v 1.1.1.23.2.2 2015/02/05 15:13:12 martin Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -108,6 +108,7 @@
 #define DHCPCD_NOPFXDLG			(1ULL << 51)
 #define DHCPCD_PFXDLGONLY		(1ULL << 52)
 #define DHCPCD_PFXDLGMIX		(1ULL << 53)
+#define DHCPCD_IPV6RA_AUTOCONF		(1ULL << 54)
 
 extern const struct option cf_options[];
 
@@ -142,9 +143,11 @@ struct if_options {
 	uint8_t requestmask[256 / NBBY];
 	uint8_t requiremask[256 / NBBY];
 	uint8_t nomask[256 / NBBY];
+	uint8_t rejectmask[256 / NBBY];
 	uint8_t requestmask6[(UINT16_MAX + 1) / NBBY];
 	uint8_t requiremask6[(UINT16_MAX + 1) / NBBY];
 	uint8_t nomask6[(UINT16_MAX + 1) / NBBY];
+	uint8_t rejectmask6[(UINT16_MAX + 1) / NBBY];
 	uint8_t dstmask[256 / NBBY];
 	uint32_t leasetime;
 	time_t timeout;

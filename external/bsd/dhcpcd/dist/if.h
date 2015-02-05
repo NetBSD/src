@@ -1,8 +1,8 @@
-/* $NetBSD: if.h,v 1.1.1.3.4.1 2014/12/29 16:18:05 martin Exp $ */
+/* $NetBSD: if.h,v 1.1.1.3.4.2 2015/02/05 15:13:12 martin Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -105,6 +105,7 @@ int if_openlinksocket(void);
 int if_managelink(struct dhcpcd_ctx *);
 
 #ifdef INET
+extern const char *if_pfname;
 int if_openrawsocket(struct interface *, int);
 ssize_t if_sendrawpacket(const struct interface *,
     int, const void *, size_t);
@@ -126,12 +127,16 @@ int if_route(const struct rt *rt, int);
 
 #ifdef INET6
 int if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *, int);
+int ip6_use_tempaddr(const char *ifname);
+int ip6_temp_preferred_lifetime(const char *ifname);
+int ip6_temp_valid_lifetime(const char *ifname);
 
 int if_address6(const struct ipv6_addr *, int);
 #define if_addaddress6(a) if_address6(a, 1)
 #define if_deladdress6(a) if_address6(a, -1)
 
 int if_addrflags6(const struct in6_addr *, const struct interface *);
+int if_getlifetime6(struct ipv6_addr *);
 
 int if_route6(const struct rt6 *rt, int);
 #define if_addroute6(rt) if_route6(rt, 1)
