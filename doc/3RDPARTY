@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1201 2015/01/31 19:14:45 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1202 2015/02/05 11:37:47 pettai Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -507,10 +507,10 @@ for import.
 Package:	heimdal
 Version:	1.5.3
 Current Vers:	1.5.3
-Maintainer:	Heimdal <heimdal@pdc.kth.se>
-Archive Site:	ftp://ftp.pdc.kth.se/pub/heimdal/src/
-Home Page:	http://www.pdc.kth.se/heimdal/
-Mailing List:	heimdal-discuss@pdc.kth.se
+Maintainer:	Heimdal <heimdal@h5l.org>
+Archive Site:	ftp://ftp.h5l.org/pub/heimdal/src/
+Home Page:	http://www.h5l.org/
+Mailing List:	heimdal-discuss@sics.se
 Responsible:	joda, lha
 License:	BSD
 Location:	crypto/external/bsd/heimdal/dist
