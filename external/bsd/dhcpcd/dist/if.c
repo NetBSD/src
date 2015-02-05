@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if.c,v 1.1.1.3.4.1 2014/12/29 16:18:05 martin Exp $");
+ __RCSID("$NetBSD: if.c,v 1.1.1.3.4.2 2015/02/05 15:13:12 martin Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -73,6 +73,11 @@
 #include "ipv4.h"
 #include "ipv6nd.h"
 
+#ifdef __QNX__
+/* QNX carries defines for, but does not actually support PF_LINK */
+#undef IFLR_ACTIVE
+#endif
+
 void
 if_free(struct interface *ifp)
 {
@@ -81,9 +86,9 @@ if_free(struct interface *ifp)
 		return;
 	ipv4_free(ifp);
 	dhcp_free(ifp);
-	ipv6_free(ifp);
 	dhcp6_free(ifp);
 	ipv6nd_free(ifp);
+	ipv6_free(ifp);
 	free_options(ifp->options);
 	free(ifp);
 }
@@ -96,20 +101,11 @@ if_carrier(struct interface *iface)
 #ifdef SIOCGIFMEDIA
 	struct ifmediareq ifmr;
 #endif
-#ifdef __linux__
-	char *p;
-#endif
 
 	if ((s = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
 		return LINK_UNKNOWN;
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, iface->name, sizeof(ifr.ifr_name));
-#ifdef __linux__
-	/* We can only test the real interface up */
-	if ((p = strchr(ifr.ifr_name, ':')))
-		*p = '\0';
-#endif
-
 	if (ioctl(s, SIOCGIFFLAGS, &ifr) == -1) {
 		close(s);
 		return LINK_UNKNOWN;
@@ -136,19 +132,11 @@ if_setflag(struct interface *ifp, short flag)
 {
 	struct ifreq ifr;
 	int s, r;
-#ifdef __linux__
-	char *p;
-#endif
 
 	if ((s = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
 		return -1;
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
-#ifdef __linux__
-	/* We can only bring the real interface up */
-	if ((p = strchr(ifr.ifr_name, ':')))
-		*p = '\0';
-#endif
 	r = -1;
 	if (ioctl(s, SIOCGIFFLAGS, &ifr) == 0) {
 		if (flag == 0 || (ifr.ifr_flags & flag) == flag)
@@ -193,7 +181,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 	const struct sockaddr_in *dst;
 #endif
 #ifdef INET6
-	struct sockaddr_in6 *sin6;
+	struct sockaddr_in6 *sin6, *net6;
 	int ifa_flags;
 #endif
 #ifdef AF_LINK
@@ -271,6 +259,9 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 			p = argv[i];
 		} else {
 			p = ifa->ifa_name;
+#ifdef __linux__
+			strlcpy(ifn, ifa->ifa_name, sizeof(ifn));
+#endif
 			/* -1 means we're discovering against a specific
 			 * interface, but we still need the below rules
 			 * to apply. */
@@ -311,7 +302,12 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 			break;
 		}
 		ifp->ctx = ctx;
+#ifdef __linux__
+		strlcpy(ifp->name, ifn, sizeof(ifp->name));
+		strlcpy(ifp->alias, p, sizeof(ifp->alias));
+#else
 		strlcpy(ifp->name, p, sizeof(ifp->name));
+#endif
 		ifp->flags = ifa->ifa_flags;
 		ifp->carrier = if_carrier(ifp);
 
@@ -503,6 +499,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 			if (ifp == NULL)
 				break; /* Should be impossible */
 			sin6 = (struct sockaddr_in6 *)(void *)ifa->ifa_addr;
+			net6 = (struct sockaddr_in6 *)(void *)ifa->ifa_netmask;
 #ifdef __KAME__
 			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
 				/* Remove the scope from the address */
@@ -513,7 +510,9 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 			if (ifa_flags != -1)
 				ipv6_handleifa(ctx, RTM_NEWADDR, ifs,
 				    ifa->ifa_name,
-				    &sin6->sin6_addr, ifa_flags);
+				    &sin6->sin6_addr,
+				    ipv6_prefixlen(&net6->sin6_addr),
+				    ifa_flags);
 			break;
 #endif
 		}
@@ -541,6 +540,9 @@ if_findindexname(struct dhcpcd_ctx *ctx, unsigned int idx, const char *name)
 			if ((ifp->options == NULL ||
 			    !(ifp->options->options & DHCPCD_PFXDLGONLY)) &&
 			    ((name && strcmp(ifp->name, name) == 0) ||
+#ifdef __linux__
+			    (name && strcmp(ifp->alias, name) == 0) ||
+#endif
 			    (!name && ifp->index == idx)))
 				return ifp;
 		}

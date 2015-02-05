@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.1.1.13.2.1 2014/12/29 16:18:04 martin Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.1.1.13.2.2 2015/02/05 15:13:12 martin Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -1739,6 +1739,7 @@ dhcp6_findna(struct interface *ifp, uint16_t ot, const uint8_t *iaid,
 			a->ia_type = ot;
 			memcpy(a->iaid, iaid, sizeof(a->iaid));
 			a->addr = iap->addr;
+			a->created = *acquired;
 
 			/*
 			 * RFC 5942 Section 5
@@ -1821,6 +1822,7 @@ dhcp6_findpd(struct interface *ifp, const uint8_t *iaid,
 			}
 			a->iface = ifp;
 			a->flags = IPV6_AF_NEW | IPV6_AF_DELEGATEDPFX;
+			a->created = *acquired;
 			a->dadcallback = dhcp6_dadcallback;
 			a->ia_type = D6_OPTION_IA_PD;
 			memcpy(a->iaid, iaid, sizeof(a->iaid));
@@ -2287,7 +2289,7 @@ dhcp6_ifdelegateaddr(struct interface *ifp, struct ipv6_addr *prefix,
 	a->dadcallback = dhcp6_dadcallback;
 	a->delegating_iface = ifs;
 	memcpy(&a->iaid, &prefix->iaid, sizeof(a->iaid));
-	a->acquired = prefix->acquired;
+	a->created = a->acquired = prefix->acquired;
 	a->prefix_pltime = prefix->prefix_pltime;
 	a->prefix_vltime = prefix->prefix_vltime;
 	a->prefix = addr;
@@ -2306,6 +2308,7 @@ dhcp6_ifdelegateaddr(struct interface *ifp, struct ipv6_addr *prefix,
 			/* Keep our flags */
 			a->flags |= ap->flags;
 			a->flags &= ~IPV6_AF_NEW;
+			a->created = ap->created;
 			free(ap);
 		}
 	}
@@ -2683,6 +2686,14 @@ dhcp6_handledata(void *arg)
 		{
 			syslog(LOG_WARNING,
 			    "%s: reject DHCPv6 (no option %s) from %s",
+			    ifp->name, opt->var, ctx->sfrom);
+			return;
+		}
+		if (has_option_mask(ifo->rejectmask6, opt->option) &&
+		    dhcp6_getmoption(opt->option, r, len))
+		{
+			syslog(LOG_WARNING,
+			    "%s: reject DHCPv6 (option %s) from %s",
 			    ifp->name, opt->var, ctx->sfrom);
 			return;
 		}
@@ -3292,7 +3303,7 @@ dhcp6_freedrop(struct interface *ifp, int drop, const char *reason)
 	state = D6_STATE(ifp);
 	if (state) {
 		dhcp_auth_reset(&state->auth);
-		if (options & DHCPCD_RELEASE) {
+		if (drop && options & DHCPCD_RELEASE) {
 			if (ifp->carrier == LINK_UP)
 				dhcp6_startrelease(ifp);
 			unlink(state->leasefile);

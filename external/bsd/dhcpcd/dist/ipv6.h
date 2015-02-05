@@ -1,8 +1,8 @@
-/* $NetBSD: ipv6.h,v 1.1.1.10.2.1 2014/12/29 16:18:05 martin Exp $ */
+/* $NetBSD: ipv6.h,v 1.1.1.10.2.2 2015/02/05 15:13:12 martin Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -56,6 +56,15 @@
 #  define ND6_INFINITE_LIFETIME		((uint32_t)~0)
 #endif
 
+/* RFC4941 constants */
+#define TEMP_VALID_LIFETIME	604800	/* 1 week */
+#define TEMP_PREFERRED_LIFETIME	86400	/* 1 day */
+#define REGEN_ADVANCE		5	/* seconds */
+#define MAX_DESYNC_FACTOR	600	/* 10 minutes */
+
+#define TEMP_IDGEN_RETRIES	3
+#define GEN_TEMPID_RETRY_MAX	5
+
 /* RFC7217 constants */
 #define IDGEN_RETRIES	3
 #define IDGEN_DELAY	1 /* second */
@@ -78,6 +87,13 @@
 #  undef IPV6_POLLADDRFLAG
 #endif
 
+/* Linux-3.18 can manage temporary addresses even with RA
+ * processing disabled. */
+//#undef IFA_F_MANAGETEMPADDR
+#ifndef IFA_F_MANAGETEMPADDR
+#define IPV6_MANAGETEMPADDR
+#endif
+
 struct ipv6_addr {
 	TAILQ_ENTRY(ipv6_addr) next;
 	struct interface *iface;
@@ -85,6 +101,7 @@ struct ipv6_addr {
 	uint8_t prefix_len;
 	uint32_t prefix_vltime;
 	uint32_t prefix_pltime;
+	struct timeval created;
 	struct timeval acquired;
 	struct in6_addr addr;
 	int addr_flags;
@@ -115,6 +132,7 @@ TAILQ_HEAD(ipv6_addrhead, ipv6_addr);
 #define IPV6_AF_DELEGATEDPFX	0x0100
 #define IPV6_AF_DELEGATEDZERO	0x0200
 #define IPV6_AF_REQUEST		0x0400
+#define IPV6_AF_TEMPORARY	0X0800
 
 struct rt6 {
 	TAILQ_ENTRY(rt6) next;
@@ -138,12 +156,34 @@ TAILQ_HEAD(ll_callback_head, ll_callback);
 struct ipv6_state {
 	struct ipv6_addrhead addrs;
 	struct ll_callback_head ll_callbacks;
+
+#ifdef IPV6_MANAGETEMPADDR
+	time_t desync_factor;
+	uint8_t randomseed0[8]; /* upper 64 bits of MD5 digest */
+	uint8_t randomseed1[8]; /* lower 64 bits */
+	uint8_t randomid[8];
+#endif
 };
 
 #define IPV6_STATE(ifp)							       \
 	((struct ipv6_state *)(ifp)->if_data[IF_DATA_IPV6])
 #define IPV6_CSTATE(ifp)						       \
 	((const struct ipv6_state *)(ifp)->if_data[IF_DATA_IPV6])
+
+/* dhcpcd requires CMSG_SPACE to evaluate to a compile time constant. */
+#ifdef __QNX__
+#undef CMSG_SPACE
+#endif
+
+#ifndef ALIGNBYTES
+#define ALIGNBYTES (sizeof(int) - 1)
+#endif
+#ifndef ALIGN
+#define	ALIGN(p) (((unsigned int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#endif
+#ifndef CMSG_SPACE
+#define	CMSG_SPACE(len)	(ALIGN(sizeof(struct cmsghdr)) + ALIGN(len))
+#endif
 
 #define IP6BUFLEN	(CMSG_SPACE(sizeof(struct in6_pktinfo)) + \
 			CMSG_SPACE(sizeof(int)))
@@ -188,7 +228,7 @@ ssize_t ipv6_addaddrs(struct ipv6_addrhead *addrs);
 void ipv6_freedrop_addrs(struct ipv6_addrhead *, int,
     const struct interface *);
 void ipv6_handleifa(struct dhcpcd_ctx *ctx, int, struct if_head *,
-    const char *, const struct in6_addr *, int);
+    const char *, const struct in6_addr *, uint8_t, int);
 int ipv6_handleifa_addrs(int, struct ipv6_addrhead *,
     const struct in6_addr *, int);
 const struct ipv6_addr *ipv6_iffindaddr(const struct interface *,
@@ -197,20 +237,36 @@ struct ipv6_addr *ipv6_findaddr(struct dhcpcd_ctx *,
     const struct in6_addr *, short);
 #define ipv6_linklocal(ifp) (ipv6_iffindaddr((ifp), NULL))
 int ipv6_addlinklocalcallback(struct interface *, void (*)(void *), void *);
-void ipv6_free_ll_callbacks(struct interface *);
+void ipv6_freedrop(struct interface *, int);
+#define ipv6_free(ifp) ipv6_freedrop(ifp, 0)
+#define ipv6_drop(ifp) ipv6_freedrop(ifp, 2)
+
+#ifdef IPV6_MANAGETEMPADDR
+void ipv6_gentempifid(struct interface *);
+void ipv6_settempstale(struct interface *);
+struct ipv6_addr *ipv6_createtempaddr(struct ipv6_addr *,
+    const struct timeval *);
+struct ipv6_addr *ipv6_settemptime(struct ipv6_addr *, int);
+void ipv6_addtempaddrs(struct interface *, const struct timeval *);
+#else
+#define ipv6_gentempifid(a) {}
+#define ipv6_settempstale(a) {}
+#endif
+
 int ipv6_start(struct interface *);
-void ipv6_free(struct interface *);
 void ipv6_ctxfree(struct dhcpcd_ctx *);
 int ipv6_routedeleted(struct dhcpcd_ctx *, const struct rt6 *);
 int ipv6_removesubnet(struct interface *, struct ipv6_addr *);
 void ipv6_buildroutes(struct dhcpcd_ctx *);
 
 #else
-#define ipv6_init(a) NULL
+#define ipv6_init(a) (NULL)
 #define ipv6_start(a) (-1)
-#define ipv6_free_ll_callbacks(a)
-#define ipv6_free(a)
-#define ipv6_ctxfree(a)
+#define ipv6_free_ll_callbacks(a) {}
+#define ipv6_free(a) {}
+#define ipv6_drop(a) {}
+#define ipv6_ctxfree(a) {}
+#define ipv6_gentempifid(a) {}
 #endif
 
 #endif

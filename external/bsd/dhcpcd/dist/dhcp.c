@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.15.2.1 2014/12/29 16:18:04 martin Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.15.2.2 2015/02/05 15:13:12 martin Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -2489,6 +2489,16 @@ dhcp_handledhcp(struct interface *iface, struct dhcp_message **dhcpp,
 	/* reset the message counter */
 	state->interval = 0;
 
+	/* Ensure that no reject options are present */
+	for (i = 1; i < 255; i++) {
+		if (has_option_mask(ifo->rejectmask, i) &&
+		    get_option_uint8(iface->ctx, &tmp, dhcp, (uint8_t)i) == 0)
+		{
+			log_dhcp(LOG_WARNING, "reject DHCP", iface, dhcp, from);
+			return;
+		}
+	}
+
 	if (type == DHCP_NAK) {
 		/* For NAK, only check if we require the ServerID */
 		if (has_option_mask(ifo->requiremask, DHO_SERVERID) &&
@@ -2523,6 +2533,23 @@ dhcp_handledhcp(struct interface *iface, struct dhcp_message **dhcpp,
 				state->nakoff = NAKOFF_MAX;
 		}
 		return;
+	}
+
+	/* Ensure that all required options are present */
+	for (i = 1; i < 255; i++) {
+		if (has_option_mask(ifo->requiremask, i) &&
+		    get_option_uint8(iface->ctx, &tmp, dhcp, (uint8_t)i) != 0)
+		{
+			/* If we are bootp, then ignore the need for serverid.
+			 * To ignore bootp, require dhcp_message_type.
+			 * However, nothing really stops bootp from providing
+			 * DHCP style options as well so the above isn't
+			 * always true. */
+			if (type == 0 && i == DHO_SERVERID)
+				continue;
+			log_dhcp(LOG_WARNING, "reject DHCP", iface, dhcp, from);
+			return;
+		}
 	}
 
 	/* DHCP Auto-Configure, RFC 2563 */
@@ -2569,20 +2596,6 @@ dhcp_handledhcp(struct interface *iface, struct dhcp_message **dhcpp,
 			}
 		}
 		return;
-	}
-
-	/* Ensure that all required options are present */
-	for (i = 1; i < 255; i++) {
-		if (has_option_mask(ifo->requiremask, i) &&
-		    get_option_uint8(iface->ctx, &tmp, dhcp, (uint8_t)i) != 0)
-		{
-			/* If we are bootp, then ignore the need for serverid.
-			 * To ignore bootp, require dhcp_message_type. */
-			if (type == 0 && i == DHO_SERVERID)
-				continue;
-			log_dhcp(LOG_WARNING, "reject DHCP", iface, dhcp, from);
-			return;
-		}
 	}
 
 	/* Ensure that the address offered is valid */
@@ -2879,7 +2892,14 @@ dhcp_open(struct interface *ifp)
 	if (state->raw_fd == -1) {
 		state->raw_fd = if_openrawsocket(ifp, ETHERTYPE_IP);
 		if (state->raw_fd == -1) {
-			syslog(LOG_ERR, "%s: %s: %m", __func__, ifp->name);
+			if (errno == ENOENT) {
+				syslog(LOG_ERR, "%s not found", if_pfname);
+				/* May as well disable IPv4 entirely at
+				 * this point as we really need it. */
+				ifp->options->options &= ~DHCPCD_IPV4;
+			} else
+				syslog(LOG_ERR, "%s: %s: %m",
+				    __func__, ifp->name);
 			return -1;
 		}
 		eloop_event_add(ifp->ctx->eloop,

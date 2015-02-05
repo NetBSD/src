@@ -1,8 +1,8 @@
-/* $NetBSD: dev.h,v 1.1.1.4.2.1 2014/12/29 16:18:04 martin Exp $ */
+/* $NetBSD: dev.h,v 1.1.1.4.2.2 2015/02/05 15:13:12 martin Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

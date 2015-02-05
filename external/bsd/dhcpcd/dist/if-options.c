@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.11.2.1 2014/12/29 16:18:05 martin Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.11.2.2 2015/02/05 15:13:12 martin Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -96,6 +96,9 @@
 #define O_SLAAC			O_BASE + 35
 #define O_GATEWAY		O_BASE + 36
 #define O_PFXDLGMIX		O_BASE + 37
+#define O_IPV6RA_AUTOCONF	O_BASE + 38
+#define O_IPV6RA_NOAUTOCONF	O_BASE + 39
+#define O_REJECT		O_BASE + 40
 
 const struct option cf_options[] = {
 	{"background",      no_argument,       NULL, 'b'},
@@ -149,6 +152,8 @@ const struct option cf_options[] = {
 	{"fallback",        required_argument, NULL, O_FALLBACK},
 	{"ipv6rs",          no_argument,       NULL, O_IPV6RS},
 	{"noipv6rs",        no_argument,       NULL, O_NOIPV6RS},
+	{"ipv6ra_autoconf", no_argument,       NULL, O_IPV6RA_AUTOCONF},
+	{"ipv6ra_noautoconf", no_argument,     NULL, O_IPV6RA_NOAUTOCONF},
 	{"ipv6ra_fork",     no_argument,       NULL, O_IPV6RA_FORK},
 	{"ipv6ra_own",      no_argument,       NULL, O_IPV6RA_OWN},
 	{"ipv6ra_own_default", no_argument,    NULL, O_IPV6RA_OWN_D},
@@ -183,6 +188,7 @@ const struct option cf_options[] = {
 	{"slaac",           required_argument, NULL, O_SLAAC},
 	{"gateway",         no_argument,       NULL, O_GATEWAY},
 	{"ia_pd_mix",       no_argument,       NULL, O_PFXDLGMIX},
+	{"reject",          required_argument, NULL, O_REJECT},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -526,8 +532,13 @@ set_option_space(struct dhcpcd_ctx *ctx,
     const struct dhcp_opt **d, size_t *dl,
     const struct dhcp_opt **od, size_t *odl,
     struct if_options *ifo,
-    uint8_t *request[], uint8_t *require[], uint8_t *no[])
+    uint8_t *request[], uint8_t *require[], uint8_t *no[], uint8_t *reject[])
 {
+
+#if !defined(INET) && !defined(INET6)
+	/* Satisfy use */
+	ctx = ctx;
+#endif
 
 #ifdef INET6
 	if (strncmp(arg, "dhcp6_", strlen("dhcp6_")) == 0) {
@@ -538,6 +549,7 @@ set_option_space(struct dhcpcd_ctx *ctx,
 		*request = ifo->requestmask6;
 		*require = ifo->requiremask6;
 		*no = ifo->nomask6;
+		*reject = ifo->rejectmask6;
 		return arg + strlen("dhcp6_");
 	}
 #endif
@@ -556,6 +568,7 @@ set_option_space(struct dhcpcd_ctx *ctx,
 	*request = ifo->requestmask;
 	*require = ifo->requiremask;
 	*no = ifo->nomask;
+	*reject = ifo->rejectmask;
 	return arg;
 }
 
@@ -643,7 +656,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	in_addr_t *naddr;
 	struct rt *rt;
 	const struct dhcp_opt *d, *od;
-	uint8_t *request, *require, *no;
+	uint8_t *request, *require, *no, *reject;
 	struct dhcp_opt **dop, *ndop;
 	size_t *dop_len, dl, odl;
 	struct vivco *vivco;
@@ -745,9 +758,21 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case 'o':
 		arg = set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
-		    &request, &require, &no);
+		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl, request, arg, 1) != 0 ||
-		    make_option_mask(d, dl, od, odl, no, arg, -1) != 0)
+		    make_option_mask(d, dl, od, odl, no, arg, -1) != 0 ||
+		    make_option_mask(d, dl, od, odl, reject, arg, -1) != 0)
+		{
+			syslog(LOG_ERR, "unknown option `%s'", arg);
+			return -1;
+		}
+		break;
+	case O_REJECT:
+		arg = set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
+		    &request, &require, &no, &reject);
+		if (make_option_mask(d, dl, od, odl, reject, arg, 1) != 0 ||
+		    make_option_mask(d, dl, od, odl, request, arg, -1) != 0 ||
+		    make_option_mask(d, dl, od, odl, require, arg, -1) != 0)
 		{
 			syslog(LOG_ERR, "unknown option `%s'", arg);
 			return -1;
@@ -964,7 +989,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case 'O':
 		arg = set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
-		    &request, &require, &no);
+		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl, request, arg, -1) != 0 ||
 		    make_option_mask(d, dl, od, odl, require, arg, -1) != 0 ||
 		    make_option_mask(d, dl, od, odl, no, arg, 1) != 0)
@@ -975,10 +1000,11 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case 'Q':
 		arg = set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
-		    &request, &require, &no);
+		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl, require, arg, 1) != 0 ||
 		    make_option_mask(d, dl, od, odl, request, arg, 1) != 0 ||
-		    make_option_mask(d, dl, od, odl, no, arg, -1) != 0)
+		    make_option_mask(d, dl, od, odl, no, arg, -1) != 0 ||
+		    make_option_mask(d, dl, od, odl, reject, arg, -1) != 0)
 		{
 			syslog(LOG_ERR, "unknown option `%s'", arg);
 			return -1;
@@ -1168,7 +1194,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case O_DESTINATION:
 		arg = set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
-		    &request, &require, &no);
+		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl,
 		    ifo->dstmask, arg, 2) != 0)
 		{
@@ -1213,6 +1239,12 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case O_IPV6RA_OWN_D:
 		ifo->options |= DHCPCD_IPV6RA_OWN_DEFAULT;
+		break;
+	case O_IPV6RA_AUTOCONF:
+		ifo->options |= DHCPCD_IPV6RA_AUTOCONF;
+		break;
+	case O_IPV6RA_NOAUTOCONF:
+		ifo->options &= ~DHCPCD_IPV6RA_AUTOCONF;
 		break;
 	case O_NOALIAS:
 		ifo->options |= DHCPCD_NOALIAS;
@@ -2026,7 +2058,8 @@ read_config(struct dhcpcd_ctx *ctx,
 	ifo->options |= DHCPCD_GATEWAY | DHCPCD_ARP;
 #endif
 #ifdef INET6
-	ifo->options |= DHCPCD_IPV6 | DHCPCD_IPV6RS | DHCPCD_IPV6RA_REQRDNSS;
+	ifo->options |= DHCPCD_IPV6 | DHCPCD_IPV6RS;
+	ifo->options |= DHCPCD_IPV6RA_AUTOCONF | DHCPCD_IPV6RA_REQRDNSS;
 	ifo->options |= DHCPCD_DHCP6;
 #endif
 	ifo->timeout = DEFAULT_TIMEOUT;

@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.7.2.1 2014/12/29 16:18:05 martin Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.7.2.2 2015/02/05 15:13:12 martin Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2014 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -64,6 +64,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <fnmatch.h>
+#include <paths.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -148,6 +149,7 @@ if_openlinksocket(void)
 #endif
 }
 
+#if defined(INET) || defined(INET6)
 static void
 if_linkaddr(struct sockaddr_dl *sdl, const struct interface *ifp)
 {
@@ -160,6 +162,7 @@ if_linkaddr(struct sockaddr_dl *sdl, const struct interface *ifp)
 	link_addr(ifp->name, sdl);
 #endif
 }
+#endif
 
 static int
 if_getssid1(const char *ifname, uint8_t *ssid)
@@ -260,6 +263,8 @@ if_vimaster(const char *ifname)
 }
 
 #ifdef INET
+const char *if_pfname = "Berkley Packet Filter";
+
 int
 if_openrawsocket(struct interface *ifp, int protocol)
 {
@@ -616,6 +621,8 @@ if_address6(const struct ipv6_addr *a, int action)
 	if (a->autoconf)
 		ifa.ifra_flags |= IN6_IFF_AUTOCONF;
 #endif
+	if (a->flags & IPV6_AF_TEMPORARY)
+		ifa.ifra_flags |= IN6_IFF_TEMPORARY;
 
 #define ADDADDR(v, addr) {						      \
 		(v)->sin6_family = AF_INET6;				      \
@@ -785,6 +792,51 @@ if_addrflags6(const struct in6_addr *addr, const struct interface *ifp)
 	}
 	return flags;
 }
+
+int
+if_getlifetime6(struct ipv6_addr *ia)
+{
+	int s, r;
+	struct in6_ifreq ifr6;
+
+	s = socket(PF_INET6, SOCK_DGRAM, 0);
+	r = -1;
+	if (s != -1) {
+		memset(&ifr6, 0, sizeof(ifr6));
+		strncpy(ifr6.ifr_name, ia->iface->name, sizeof(ifr6.ifr_name));
+		ifr6.ifr_addr.sin6_family = AF_INET6;
+		ifr6.ifr_addr.sin6_addr = ia->addr;
+		ifa_scope(&ifr6.ifr_addr, ia->iface->index);
+		if (ioctl(s, SIOCGIFALIFETIME_IN6, &ifr6) != -1) {
+			time_t t;
+			struct in6_addrlifetime *lifetime;
+
+			t = time(NULL);
+			lifetime = &ifr6.ifr_ifru.ifru_lifetime;
+
+			if (lifetime->ia6t_preferred)
+				ia->prefix_pltime =
+				    (uint32_t)(lifetime->ia6t_preferred -
+				    MIN(t, lifetime->ia6t_preferred));
+			else
+				ia->prefix_pltime = ND6_INFINITE_LIFETIME;
+			if (lifetime->ia6t_expire) {
+				ia->prefix_vltime =
+				    (uint32_t)(lifetime->ia6t_expire -
+				    MIN(t, lifetime->ia6t_expire));
+				/* Calculate the created time */
+				get_monotonic(&ia->created);
+				ia->created.tv_sec -=
+				    lifetime->ia6t_vltime - ia->prefix_vltime;
+			} else
+				ia->prefix_vltime = ND6_INFINITE_LIFETIME;
+
+			r = 0;
+		}
+		close(s);
+	}
+	return r;
+}
 #endif
 
 int
@@ -806,7 +858,7 @@ if_managelink(struct dhcpcd_ctx *ctx)
 #endif
 #ifdef INET6
 	struct rt6 rt6;
-	struct in6_addr ia6;
+	struct in6_addr ia6, net6;
 	struct sockaddr_in6 *sin6;
 	int ifa_flags;
 #endif
@@ -972,6 +1024,10 @@ if_managelink(struct dhcpcd_ctx *ctx)
 				    rti_info[RTAX_IFA];
 				ia6 = sin6->sin6_addr;
 				DESCOPE(&ia6);
+				sin6 = (struct sockaddr_in6*)(void *)
+				    rti_info[RTAX_NETMASK];
+				net6 = sin6->sin6_addr;
+				DESCOPE(&net6);
 				if (rtm->rtm_type == RTM_NEWADDR) {
 					ifa_flags = if_addrflags6(&ia6, ifp);
 					if (ifa_flags == -1)
@@ -979,7 +1035,8 @@ if_managelink(struct dhcpcd_ctx *ctx)
 				} else
 					ifa_flags = 0;
 				ipv6_handleifa(ctx, rtm->rtm_type, NULL,
-				    ifp->name, &ia6, ifa_flags);
+				    ifp->name, &ia6, ipv6_prefixlen(&net6),
+				    ifa_flags);
 				break;
 #endif
 			}
@@ -1034,6 +1091,65 @@ inet6_sysctl(int code, int val, int action)
 	return val;
 }
 #endif
+
+#ifndef IPV6CTL_TEMPVLTIME
+#define get_inet6_sysctlbyname(code) inet6_sysctlbyname(code, 0, 0)
+#define set_inet6_sysctlbyname(code, val) inet6_sysctlbyname(code, val, 1)
+static int
+inet6_sysctlbyname(const char *name, int val, int action)
+{
+	size_t size;
+
+	size = sizeof(val);
+	if (action) {
+		if (sysctlbyname(name, NULL, 0, &val, size) == -1)
+			return -1;
+		return 0;
+	}
+	if (sysctlbyname(name, &val, &size, NULL, 0) == -1)
+		return -1;
+	return val;
+}
+#endif
+
+int
+ip6_use_tempaddr(__unused const char *ifname)
+{
+	int val;
+
+#ifdef IPV6CTL_USETEMPADDR
+	val = get_inet6_sysctl(IPV6CTL_USETEMPADDR);
+#else
+	val = get_inet6_sysctlbyname("net.inet6.ip6.use_tempaddr");
+#endif
+	return val == -1 ? TEMP_PREFERRED_LIFETIME : val;
+}
+
+int
+ip6_temp_preferred_lifetime(__unused const char *ifname)
+{
+	int val;
+
+#ifdef IPV6CTL_TEMPPLTIME
+	val = get_inet6_sysctl(IPV6CTL_TEMPPLTIME);
+#else
+	val = get_inet6_sysctlbyname("net.inet6.ip6.temppltime");
+#endif
+	return val < 0 ? TEMP_PREFERRED_LIFETIME : val;
+}
+
+int
+ip6_temp_valid_lifetime(__unused const char *ifname)
+{
+	int val;
+
+#ifdef IPV6CTL_TEMPVLTIME
+	val = get_inet6_sysctl(IPV6CTL_TEMPVLTIME);
+#else
+	val = get_inet6_sysctlbyname("net.inet6.ip6.tempvltime");
+#endif
+	return val < 0 ? TEMP_VALID_LIFETIME : val;
+}
 
 #define del_if_nd6_flag(ifname, flag) if_nd6_flag(ifname, flag, -1)
 #define get_if_nd6_flag(ifname, flag) if_nd6_flag(ifname, flag,  0)
@@ -1186,8 +1302,16 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp, int own)
 			syslog(LOG_ERR,
 			    "%s: get_if_nd6_flag: ND6_IFF_OVERRIDE_RTADV: %m",
 			    ifp->name);
-		else if (override == 0 && !own)
-			return 0;
+		else if (override == 0 && own) {
+			if (set_if_nd6_flag(ifp->name, ND6_IFF_OVERRIDE_RTADV)
+			    == -1)
+				syslog(LOG_ERR,
+				    "%s: set_if_nd6_flag: "
+				    "ND6_IFF_OVERRIDE_RTADV: %m",
+				    ifp->name);
+			else
+				override = 1;
+		}
 #endif
 
 #ifdef ND6_IFF_ACCEPT_RTADV
@@ -1202,27 +1326,19 @@ if_checkipv6(struct dhcpcd_ctx *ctx, const struct interface *ifp, int own)
 			    ifp->name);
 			if (del_if_nd6_flag(ifp->name, ND6_IFF_ACCEPT_RTADV)
 			    == -1)
-			{
 				syslog(LOG_ERR,
 				    "%s: del_if_nd6_flag: "
 				    "ND6_IFF_ACCEPT_RTADV: %m",
 				    ifp->name);
-				return ra;
-			}
+			else
+				ra = 0;
+		} else if (ra == 0 && !own)
+			syslog(LOG_WARNING,
+			    "%s: IPv6 kernel autoconf disabled", ifp->name);
 #ifdef ND6_IFF_OVERRIDE_RTADV
-			if (override == 0 &&
-			    set_if_nd6_flag(ifp->name, ND6_IFF_OVERRIDE_RTADV)
-			    == -1)
-			{
-				syslog(LOG_ERR,
-				    "%s: set_if_nd6_flag: "
-				    "ND6_IFF_OVERRIDE_RTADV: %m",
-				    ifp->name);
-				return ra;
-			}
+		if (override == 0 && ra)
+			return ctx->ra_global;
 #endif
-			return 0;
-		}
 		return ra;
 #else
 		return ctx->ra_global;
