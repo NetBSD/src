@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.25 2013/04/06 13:48:12 uebayasi Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.26 2015/02/06 20:07:45 christos Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
@@ -7,16 +7,22 @@
 # and silently ignores any that don't exist in ${DESTDIR}.
 # NB: The compiler uses the .h files in ${NETBSDSRCDIR}.
 
-SETBASE=${NETBSDSRCDIR}/distrib/sets/lists/comp
-SETFILES:=${SETBASE}/mi
-.for md in md.${MACHINE} /md.${MACHINE}.${MACHINE_ARCH}
-.if exists(${SETBASE}/${md})
-SETFILES:= ${SETFILES} ${SETBASE}/${md}
+SETBASES=	${NETBSDSRCDIR}/distrib/sets/lists/comp \
+		${NETBSDSRCDIR}/distrib/sets/lists/xcomp
+
+.for sb in ${SETBASES}
+.if exists(${sb}/mi)
+SETFILES:=${SETFILES} ${sb}/mi
 .endif
+.for md in md.${MACHINE} /md.${MACHINE}.${MACHINE_ARCH}
+.if exists(${sb}/${md})
+SETFILES:= ${SETFILES} ${sb}/${md}
+.endif
+.endfor
 .endfor
 
 .if !make(cleandir) && !make(obj) && !make(includes) && !make(install)
-DEPFILEGLOB = ${TOOL_SED} -ne '/\/usr\/include\/.*\.h[ 	]/{s/[ 	]obsolete$$//;t' -e 's/xenio//;t' -e 's,\.\([^ 	]*\).*,${DESTDIR}\1,;p;}' ${SETFILES}
+DEPFILEGLOB = ${TOOL_SED} -ne '/\/usr\/.*include\/.*\.h[ 	]/{s/[ 	]obsolete$$//;t' -e 's/xenio//;t' -e 's,\.\([^ 	]*\).*,${DESTDIR}\1,;p;}' ${SETFILES}
 DEPFILES != ${DEPFILEGLOB} | xargs egrep -l '(_IO\(|_IOR\(|_IOW\(|_IOWR\()' 2>/dev/null || :
 .endif
 
@@ -29,5 +35,18 @@ ${PROG}-ioctl.c: mkioctls Makefile ${DEPFILES} ${SETFILES}
 SRCS+=		${PROG}-ioctl.c
 CLEANFILES+=	${PROG}-ioctl.c
 DPSRCS+=	${PROG}-ioctl.c
+CPPFLAGS+=	-I${DESTDIR}/usr/X11R7/include/libdrm
+CPPFLAGS+=	-I${DESTDIR}/usr/X11R7/include/pixman-1
+CPPFLAGS+=	-I${DESTDIR}/usr/X11R7/include
+CPPFLAGS+=	-D_ALTQ_ALTQ_JOBS_H_	# redefinition of inline
+# De-select one, dup ioctls
+CPPFLAGS+=	-D_VIA_DRM_H_		# Missing header
+#CPPFLAGS+=	-D_I915_DRM_H_		# Dup ioctls
+CPPFLAGS+=	-D__R128_DRM_H__	# Dup ioctls
+CPPFLAGS+=	-D__SIS_DRM_H__		# Dup ioctls
+CPPFLAGS+=	-D__SAVAGE_DRM_H__	# Dup ioctls
+CPPFLAGS+=	-D__RADEON_DRM_H__	# Dup ioctls
+CPPFLAGS+=	-D__MACH64_DRM_H__	# Dup ioctls
+CPPFLAGS+=	-D__MGA_DRM_H__		# Dup ioctls
 
 ${DEPFILES}: .PRECIOUS
