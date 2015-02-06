@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.143 2014/05/19 02:51:24 rmind Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.144 2015/02/06 18:19:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.143 2014/05/19 02:51:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.144 2015/02/06 18:19:22 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -199,12 +199,4 @@ kern_realloc(void *curaddr, unsigned long newsize, int flags)
 	 */
 	free(curaddr, ksp);
 	return newaddr;
-}
-
-/*
- * Initialize the kernel memory allocator
- */
-void
-kmeminit(void)
-{
 }

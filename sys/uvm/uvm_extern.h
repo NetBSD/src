@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.192 2014/12/14 23:48:58 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.193 2015/02/06 18:19:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -741,7 +741,6 @@ bool			uvn_needs_writefault_p(struct uvm_object *);
 
 /* kern_malloc.c */
 void			kmeminit_nkmempages(void);
-void			kmeminit(void);
 extern int		nkmempages;
 
 #endif /* _KERNEL */
