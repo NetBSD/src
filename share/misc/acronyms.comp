@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.146 2015/01/29 06:53:28 plunky Exp $
+$NetBSD: acronyms.comp,v 1.147 2015/02/06 14:39:14 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -884,6 +884,7 @@ PCI	peripheral component interconnect
 PCM	phase change memory
 PCM	pulse code modulation
 PCMCIA	Personal Computer Memory Card International Association
+PCP	Port Control Protocol
 PD	public domain
 PDA	personal digital assistant
 PDA	pushdown automaton
