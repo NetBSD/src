@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.372 2014/10/26 18:43:18 tls Exp $
+#	$NetBSD: files.pci,v 1.373 2015/02/07 13:20:00 pooka Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -935,6 +935,11 @@ file	dev/pci/if_wpi.c		wpi
 device	iwn: ifnet, arp, wlan, firmload
 attach	iwn at pci
 file	dev/pci/if_iwn.c		iwn
+
+# Intel Centrino 7260
+device	iwm: ifnet, arp, wlan, firmload
+attach	iwm at pci
+file	dev/pci/if_iwm.c		iwm
 
 # Workbit NinjaSCSI-32 controllers
 # device declaration in sys/conf/files
