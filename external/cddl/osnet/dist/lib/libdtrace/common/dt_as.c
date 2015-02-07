@@ -428,12 +428,9 @@ dt_as(dt_pcb_t *pcb)
 			if ((idp = dip->di_extern) == NULL)
 				continue; /* no relocation entry needed */
 
-/*###429 [cc] error: 'kbits' may be used uninitialized in this function [-Werror=maybe-uninitialized]%%%*/
 			if ((idp->di_flags & kmask) == kbits) {
 				nodef = knodef;
 				rp = krp++;
-/*###432 [cc] error: 'ubits' may be used uninitialized in this function [-Werror=maybe-uninitialized]%%%*/
-/*###432 [cc] error: 'umask' may be used uninitialized in this function [-Werror=maybe-uninitialized]%%%*/
 			} else if ((idp->di_flags & umask) == ubits) {
 				nodef = unodef;
 				rp = urp++;
