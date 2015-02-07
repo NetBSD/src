@@ -850,16 +850,16 @@ setopthandler(const dtrace_setoptdata_t *data, void *arg)
 #define	BUFDUMPSTR(ptr, field) \
 	(void) printf("%s: %20s => ", g_pname, #field);	\
 	if ((ptr)->field != NULL) {			\
-		const char *c = (ptr)->field;		\
+		const char *xc = (ptr)->field;		\
 		(void) printf("\"");			\
 		do {					\
-			if (*c == '\n') {		\
+			if (*xc == '\n') {		\
 				(void) printf("\\n");	\
 				continue;		\
 			}				\
 							\
-			(void) printf("%c", *c);	\
-		} while (*c++ != '\0');			\
+			(void) printf("%c", *xc);	\
+		} while (*xc++ != '\0');		\
 		(void) printf("\"\n");			\
 	} else {					\
 		(void) printf("<NULL>\n");		\
@@ -1084,18 +1084,18 @@ go(void)
 	int i;
 
 	struct {
-		char *name;
-		char *optname;
+		const char *name;
+		const char *optname;
 		dtrace_optval_t val;
 	} bufs[] = {
-		{ "buffer size", "bufsize" },
-		{ "aggregation size", "aggsize" },
-		{ "speculation size", "specsize" },
-		{ "dynamic variable size", "dynvarsize" },
+		{ "buffer size", "bufsize", 0 },
+		{ "aggregation size", "aggsize", 0 },
+		{ "speculation size", "specsize", 0 },
+		{ "dynamic variable size", "dynvarsize", 0 },
 		{ NULL }
 	}, rates[] = {
-		{ "cleaning rate", "cleanrate" },
-		{ "status rate", "statusrate" },
+		{ "cleaning rate", "cleanrate", 0 },
+		{ "status rate", "statusrate", 0 },
 		{ NULL }
 	};
 
@@ -1141,7 +1141,7 @@ go(void)
 
 	for (i = 0; rates[i].name != NULL; i++) {
 		dtrace_optval_t nval;
-		char *dir;
+		const char *dir;
 
 		if (rates[i].val == DTRACEOPT_UNSET)
 			continue;
@@ -1761,7 +1761,7 @@ main(int argc, char *argv[])
 		}
 
 		if (g_ofile == NULL) {
-			char *p;
+			char *pv;
 
 			if (g_cmdc > 1) {
 				(void) fprintf(stderr, "%s: -h requires an "
@@ -1771,8 +1771,8 @@ main(int argc, char *argv[])
 				return (E_USAGE);
 			}
 
-			if ((p = strrchr(g_cmdv[0].dc_arg, '.')) == NULL ||
-			    strcmp(p, ".d") != 0) {
+			if ((pv = strrchr(g_cmdv[0].dc_arg, '.')) == NULL ||
+			    strcmp(pv, ".d") != 0) {
 				(void) fprintf(stderr, "%s: -h requires an "
 				    "output file if no scripts are "
 				    "specified\n", g_pname);
@@ -1780,9 +1780,9 @@ main(int argc, char *argv[])
 				return (E_USAGE);
 			}
 
-			p[0] = '\0'; /* strip .d suffix */
-			g_ofile = p = g_cmdv[0].dc_ofile;
-			(void) snprintf(p, sizeof (g_cmdv[0].dc_ofile),
+			pv[0] = '\0'; /* strip .d suffix */
+			g_ofile = pv = g_cmdv[0].dc_ofile;
+			(void) snprintf(pv, sizeof (g_cmdv[0].dc_ofile),
 			    "%s.h", basename(g_cmdv[0].dc_arg));
 		}
 
