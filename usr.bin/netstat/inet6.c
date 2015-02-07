@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.66 2013/11/23 22:01:12 christos Exp $	*/
+/*	$NetBSD: inet6.c,v 1.67 2015/02/07 19:36:06 christos Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.66 2013/11/23 22:01:12 christos Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.67 2015/02/07 19:36:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,6 +135,7 @@ extern const char * const tcptimers[];
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 #include "netstat.h"
 #include "vtw.h"
 #include "prog_ops.h"
@@ -1468,10 +1469,14 @@ tcp6_dump(u_long off, const char *name, u_long pcbaddr)
 	printf("TCP Protocol Control Block at 0x%08lx:\n\n", pcbaddr);
 	printf("Timers:\n");
 	for (i = 0; i < TCP6T_NTIMERS; i++) {
+		char buf[128];
 		ci = (callout_impl_t *)&tcpcb.t_timer[i];
-		printf("\t%s: %d", tcptimers[i],
-		    (ci->c_flags & CALLOUT_PENDING) ?
-		    ci->c_time - hardticks : 0);
+		snprintb(buf, sizeof(buf), CALLOUT_FMT, ci->c_flags);
+		printf("\t%s\t%s", tcptimers[i], buf);
+		if (ci->c_flags & CALLOUT_PENDING)
+			printf("\t%d\n", ci->c_time - hardticks);
+		else
+			printf("\n");
 	}
 	printf("\n\n");
 
