@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.c,v 1.51 2011/04/25 23:34:21 jfv Exp $*/
-/*$NetBSD: ixgbe.c,v 1.18 2015/02/04 09:05:53 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.19 2015/02/07 00:02:09 christos Exp $*/
 
 #include "opt_inet.h"
 
@@ -2710,13 +2710,19 @@ ixgbe_config_link(struct adapter *adapter)
 	sfp = ixgbe_is_sfp(hw);
 
 	if (sfp) { 
+		void *ip;
+
 		if (hw->phy.multispeed_fiber) {
 			hw->mac.ops.setup_sfp(hw);
 			ixgbe_enable_tx_laser(hw);
-			softint_schedule(adapter->msf_si);
+			ip = adapter->msf_si;
 		} else {
-			softint_schedule(adapter->mod_si);
+			ip = adapter->mod_si;
 		}
+
+		kpreempt_disable();
+		softint_schedule(ip);
+		kpreempt_enable();
 	} else {
 		if (hw->mac.ops.check_link)
 			err = ixgbe_check_link(hw, &autoneg,
