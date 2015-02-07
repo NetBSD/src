@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmacros.h,v 1.4 2010/03/02 21:08:36 darran Exp $	*/
+/*	$NetBSD: sysmacros.h,v 1.5 2015/02/07 20:30:04 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -407,19 +407,19 @@ highbit(ulong_t i)
 		h += 32; i >>= 32;
 	}
 #endif
-	if (i & 0xffff0000) {
+	if (i & 0xffff0000ul) {
 		h += 16; i >>= 16;
 	}
-	if (i & 0xff00) {
+	if (i & 0xff00ul) {
 		h += 8; i >>= 8;
 	}
-	if (i & 0xf0) {
+	if (i & 0xf0ul) {
 		h += 4; i >>= 4;
 	}
-	if (i & 0xc) {
+	if (i & 0xcul) {
 		h += 2; i >>= 2;
 	}
-	if (i & 0x2) {
+	if (i & 0x2ul) {
 		h += 1;
 	}
 	return (h);

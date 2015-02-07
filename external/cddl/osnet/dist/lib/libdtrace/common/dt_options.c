@@ -786,7 +786,7 @@ int
 dt_options_load(dtrace_hdl_t *dtp)
 {
 	dof_hdr_t hdr, *dof;
-	dof_sec_t *sec;
+	dof_sec_t *sec = NULL;
 	size_t offs;
 	int i;
 

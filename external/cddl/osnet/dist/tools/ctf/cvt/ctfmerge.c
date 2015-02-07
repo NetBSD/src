@@ -216,11 +216,13 @@ static char *outfile = NULL;
 static char *tmpname = NULL;
 static int dynsym;
 int debug_level = DEBUG_LEVEL;
+#if 0
 static size_t maxpgsize = 0x400000;
+#endif
 static int maxslots = MERGE_PHASE1_MAX_SLOTS;
 
 
-void
+static void
 usage(void)
 {
 	(void) fprintf(stderr,
@@ -391,7 +393,8 @@ wip_add_work(wip_t *slot, tdata_t *pow)
 		slot->wip_td = pow;
 		slot->wip_nmerged = 1;
 	} else {
-		debug(2, "%d: merging %p into %p\n", pthread_self(),
+		debug(2, "0x%jx: merging %p into %p\n",
+		    (uintptr_t)pthread_self(),
 		    (void *)pow, (void *)slot->wip_td);
 
 		merge_into_master(pow, slot->wip_td, NULL, 0);
@@ -461,8 +464,8 @@ worker_runphase2(workqueue_t *wq)
 			pthread_cond_broadcast(&wq->wq_work_avail);
 			pthread_mutex_unlock(&wq->wq_queue_lock);
 
-			debug(2, "%d: entering p2 completion barrier\n",
-			    pthread_self());
+			debug(2, "0x%jx: entering p2 completion barrier\n",
+			    (uintptr_t)pthread_self());
 			if (barrier_wait(&wq->wq_bar1)) {
 				pthread_mutex_lock(&wq->wq_queue_lock);
 				wq->wq_alldone = 1;
@@ -489,7 +492,8 @@ worker_runphase2(workqueue_t *wq)
 
 		pthread_mutex_unlock(&wq->wq_queue_lock);
 
-		debug(2, "%d: merging %p into %p\n", pthread_self(),
+		debug(2, "0x%jx: merging %p into %p\n",
+		    (uintptr_t)pthread_self(),
 		    (void *)pow1, (void *)pow2);
 		merge_into_master(pow1, pow2, NULL, 0);
 		tdata_free(pow1);
@@ -507,9 +511,9 @@ worker_runphase2(workqueue_t *wq)
 		wq->wq_lastdonebatch = batchid;
 
 		fifo_add(wq->wq_queue, pow2);
-		debug(2, "%d: added %p to queue, len now %d, ninqueue %d\n",
-		    pthread_self(), (void *)pow2, fifo_len(wq->wq_queue),
-		    wq->wq_ninqueue);
+		debug(2, "0x%jx: added %p to queue, len now %d, ninqueue %d\n",
+		    (uintptr_t)pthread_self(), (void *)pow2,
+		    fifo_len(wq->wq_queue), wq->wq_ninqueue);
 		pthread_cond_broadcast(&wq->wq_done_cv);
 		pthread_cond_signal(&wq->wq_work_avail);
 		pthread_mutex_unlock(&wq->wq_queue_lock);
@@ -524,25 +528,27 @@ worker_thread(workqueue_t *wq)
 {
 	worker_runphase1(wq);
 
-	debug(2, "%d: entering first barrier\n", pthread_self());
+	debug(2, "0x%jx: entering first barrier\n", (uintptr_t)pthread_self());
 
 	if (barrier_wait(&wq->wq_bar1)) {
 
-		debug(2, "%d: doing work in first barrier\n", pthread_self());
+		debug(2, "0x%jx: doing work in first barrier\n",
+		    (uintptr_t)pthread_self());
 
 		finalize_phase_one(wq);
 
 		init_phase_two(wq);
 
-		debug(2, "%d: ninqueue is %d, %d on queue\n", pthread_self(),
+		debug(2, "0x%jx: ninqueue is %d, %d on queue\n",
+		    (uintptr_t)pthread_self(),
 		    wq->wq_ninqueue, fifo_len(wq->wq_queue));
 	}
 
-	debug(2, "%d: entering second barrier\n", pthread_self());
+	debug(2, "0x%jx: entering second barrier\n", (uintptr_t)pthread_self());
 
 	(void) barrier_wait(&wq->wq_bar2);
 
-	debug(2, "%d: phase 1 complete\n", pthread_self());
+	debug(2, "0x%jx: phase 1 complete\n", (uintptr_t)pthread_self());
 
 	worker_runphase2(wq);
 }
@@ -566,7 +572,8 @@ merge_ctf_cb(tdata_t *td, char *name, void *arg)
 	}
 
 	fifo_add(wq->wq_queue, td);
-	debug(1, "Thread %d announcing %s\n", pthread_self(), name);
+	debug(1, "Thread 0x%jx announcing %s\n", (uintptr_t)pthread_self(),
+	    name);
 	pthread_cond_broadcast(&wq->wq_work_avail);
 	pthread_mutex_unlock(&wq->wq_queue_lock);
 
@@ -741,8 +748,8 @@ join_threads(workqueue_t *wq)
 static int
 strcompare(const void *p1, const void *p2)
 {
-	char *s1 = *((char **)p1);
-	char *s2 = *((char **)p2);
+	const char *s1 = *((const char * const *)p1);
+	const char *s2 = *((const char * const *)p2);
 
 	return (strcmp(s1, s2));
 }
@@ -803,7 +810,7 @@ main(int argc, char **argv)
 		case 'L':
 			/* Label merged types with getenv(`label`) */
 			if ((label = getenv(optarg)) == NULL)
-				label = CTF_DEFAULT_LABEL;
+				label = __UNCONST(CTF_DEFAULT_LABEL);
 			break;
 		case 'o':
 			/* Place merged types in CTF section in `outfile' */
@@ -897,7 +904,7 @@ main(int argc, char **argv)
 
 	for (i = 0; i < nifiles; i++)
 		tifiles[i] = argv[optind + i];
-	qsort(tifiles, nifiles, sizeof (char *), (int (*)())strcompare);
+	qsort(tifiles, nifiles, sizeof (char *), strcompare);
 
 	ifiles[0] = tifiles[0];
 	for (idx = 0, tidx = 1; tidx < nifiles; tidx++) {

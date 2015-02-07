@@ -190,7 +190,7 @@ stabs_read(tdata_t *td, Elf *elf, char *file)
 	char *curfile = NULL;
 	char *str;
 	char *fstr = NULL, *ofstr = NULL;
-	int stabidx, stabstridx;
+	int stabidx, stabstridx = 0;
 	int nstabs, rc, i;
 	int scope = 0;
 
