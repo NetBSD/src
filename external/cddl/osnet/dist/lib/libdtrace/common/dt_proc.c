@@ -89,6 +89,17 @@
 #include <dt_pid.h>
 #include <dt_impl.h>
 
+int proc_setflags(struct proc_handle *, int);
+int proc_create(const char *file, char * const *, proc_child_func *,
+    void *, struct proc_handle **);
+int proc_detach(struct proc_handle *);
+int proc_getflags(struct proc_handle *);
+int proc_wait(struct proc_handle *);
+pid_t proc_getpid(struct proc_handle *);
+int proc_attach(pid_t, int, struct proc_handle **);
+int proc_state(struct proc_handle *);
+int proc_clearflags(struct proc_handle *, int);
+int proc_continue(struct proc_handle *);
 /* XXX TBD needs libproc */
 /* Stub proc functions for now */
 int
@@ -210,6 +221,7 @@ dt_proc_bpdestroy(dt_proc_t *dpr, int delbkpts)
 #endif
 	dt_bkpt_t *dbp, *nbp;
 
+	__USE(state);
 	assert(DT_MUTEX_HELD(&dpr->dpr_lock));
 
 	for (dbp = dt_list_next(&dpr->dpr_bps); dbp != NULL; dbp = nbp) {
@@ -355,6 +367,7 @@ dt_proc_stop(dt_proc_t *dpr, uint8_t why)
 	}
 }
 
+#if defined(sun)
 /*ARGSUSED*/
 static void
 dt_proc_bpmain(dtrace_hdl_t *dtp, dt_proc_t *dpr, const char *fname)
@@ -363,7 +376,6 @@ dt_proc_bpmain(dtrace_hdl_t *dtp, dt_proc_t *dpr, const char *fname)
 	dt_proc_stop(dpr, DT_PROC_STOP_MAIN);
 }
 
-#if defined(sun)
 static void
 dt_proc_rdevent(dtrace_hdl_t *dtp, dt_proc_t *dpr, const char *evname)
 {
@@ -864,6 +876,7 @@ dt_proc_destroy(dtrace_hdl_t *dtp, struct ps_prochandle *P)
 		rflag = PRELEASE_HANG;
 #else
 		rflag = 0 /* XXX */;
+		__USE(rflag);
 #endif
 	} else {
 		dt_dprintf("releasing pid %d\n", (int)dpr->dpr_pid);

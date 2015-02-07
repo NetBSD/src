@@ -851,8 +851,10 @@ dt_module_update(dtrace_hdl_t *dtp, const char *name)
 	(void) snprintf(fname, sizeof (fname),
 	    "%s/%s/object", OBJFS_ROOT, name);
 #else
+#if 0
 	GElf_Phdr ph;
 	int i;
+#endif
 	int mib_osrel[2] = { CTL_KERN, KERN_OSRELEASE };
 	int mib_mach[2] = { CTL_HW, HW_MACHINE };
 	char osrel[64];
@@ -989,7 +991,9 @@ void
 dtrace_update(dtrace_hdl_t *dtp)
 {
 	dt_module_t *dmp;
+#if defined(sun)
 	DIR *dirp;
+#endif
 #if defined(__FreeBSD__)
 	int fileid;
 #endif

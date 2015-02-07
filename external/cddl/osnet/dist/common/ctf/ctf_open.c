@@ -80,7 +80,7 @@ get_vlen_v2(ushort_t info)
 }
 
 static const ctf_fileops_t ctf_fileops[] = {
-	{ NULL, NULL },
+	{ NULL, NULL, NULL },
 	{ get_kind_v1, get_root_v1, get_vlen_v1 },
 	{ get_kind_v2, get_root_v2, get_vlen_v2 },
 };
@@ -199,9 +199,9 @@ static int
 init_types(ctf_file_t *fp, const ctf_header_t *cth)
 {
 	/* LINTED - pointer alignment */
-	const ctf_type_t *tbuf = (ctf_type_t *)(fp->ctf_buf + cth->cth_typeoff);
+	const ctf_type_t *tbuf = (const ctf_type_t *)(fp->ctf_buf + cth->cth_typeoff);
 	/* LINTED - pointer alignment */
-	const ctf_type_t *tend = (ctf_type_t *)(fp->ctf_buf + cth->cth_stroff);
+	const ctf_type_t *tend = (const ctf_type_t *)(fp->ctf_buf + cth->cth_stroff);
 
 	ulong_t pop[CTF_K_MAX + 1] = { 0 };
 	const ctf_type_t *tp;
@@ -694,11 +694,11 @@ ctf_bufopen(const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
 		fp->ctf_strtab.cts_name = ctf_strdup(fp->ctf_strtab.cts_name);
 
 	if (fp->ctf_data.cts_name == NULL)
-		fp->ctf_data.cts_name = (char *)_CTF_NULLSTR;
+		fp->ctf_data.cts_name = __UNCONST(_CTF_NULLSTR);
 	if (fp->ctf_symtab.cts_name == NULL)
-		fp->ctf_symtab.cts_name = (char *)_CTF_NULLSTR;
+		fp->ctf_symtab.cts_name = __UNCONST(_CTF_NULLSTR);
 	if (fp->ctf_strtab.cts_name == NULL)
-		fp->ctf_strtab.cts_name = (char *)_CTF_NULLSTR;
+		fp->ctf_strtab.cts_name = __UNCONST(_CTF_NULLSTR);
 
 	fp->ctf_str[CTF_STRTAB_0].cts_strs = (const char *)buf + hp.cth_stroff;
 	fp->ctf_str[CTF_STRTAB_0].cts_len = hp.cth_strlen;
@@ -845,7 +845,7 @@ ctf_close(ctf_file_t *fp)
 	}
 
 	if (fp->ctf_base != fp->ctf_data.cts_data && fp->ctf_base != NULL)
-		ctf_data_free((void *)fp->ctf_base, fp->ctf_size);
+		ctf_data_free(__UNCONST(fp->ctf_base), fp->ctf_size);
 
 	if (fp->ctf_sxlate != NULL)
 		ctf_free(fp->ctf_sxlate, sizeof (uint_t) * fp->ctf_nsyms);

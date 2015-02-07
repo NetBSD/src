@@ -259,6 +259,8 @@ dt_as(dt_pcb_t *pcb)
 	default:
 		xyerror(D_UNKNOWN, "internal error -- invalid link mode %u\n",
 		    dtp->dt_linkmode);
+		kmask = umask = 0;
+		kbits = ubits = -1u;
 	}
 
 	assert(pcb->pcb_difo == NULL);
@@ -426,9 +428,12 @@ dt_as(dt_pcb_t *pcb)
 			if ((idp = dip->di_extern) == NULL)
 				continue; /* no relocation entry needed */
 
+/*###429 [cc] error: 'kbits' may be used uninitialized in this function [-Werror=maybe-uninitialized]%%%*/
 			if ((idp->di_flags & kmask) == kbits) {
 				nodef = knodef;
 				rp = krp++;
+/*###432 [cc] error: 'ubits' may be used uninitialized in this function [-Werror=maybe-uninitialized]%%%*/
+/*###432 [cc] error: 'umask' may be used uninitialized in this function [-Werror=maybe-uninitialized]%%%*/
 			} else if ((idp->di_flags & umask) == ubits) {
 				nodef = unodef;
 				rp = urp++;
