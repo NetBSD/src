@@ -213,7 +213,7 @@ dt_aggregate_quantizedcmp(int64_t *lhs, int64_t *rhs)
 {
 	int nbuckets = DTRACE_QUANTIZE_NBUCKETS;
 	long double ltotal = 0, rtotal = 0;
-	int64_t lzero, rzero;
+	int64_t lzero = 0, rzero = 0;
 	uint_t i;
 
 	for (i = 0; i < nbuckets; i++) {
@@ -415,15 +415,15 @@ dt_aggregate_snap_cpu(dtrace_hdl_t *dtp, processorid_t cpu)
 		return (0);
 
 	if (hash->dtah_hash == NULL) {
-		size_t size;
+		size_t size1;
 
 		hash->dtah_size = DTRACE_AHASHSIZE;
-		size = hash->dtah_size * sizeof (dt_ahashent_t *);
+		size1 = hash->dtah_size * sizeof (dt_ahashent_t *);
 
-		if ((hash->dtah_hash = malloc(size)) == NULL)
+		if ((hash->dtah_hash = malloc(size1)) == NULL)
 			return (dt_set_errno(dtp, EDT_NOMEM));
 
-		bzero(hash->dtah_hash, size);
+		bzero(hash->dtah_hash, size1);
 	}
 
 	for (offs = 0; offs < buf->dtbd_size; ) {
@@ -671,8 +671,8 @@ dtrace_aggregate_snap(dtrace_hdl_t *dtp)
 static int
 dt_aggregate_hashcmp(const void *lhs, const void *rhs)
 {
-	dt_ahashent_t *lh = *((dt_ahashent_t **)lhs);
-	dt_ahashent_t *rh = *((dt_ahashent_t **)rhs);
+	dt_ahashent_t *lh = *((dt_ahashent_t **)__UNCONST(lhs));
+	dt_ahashent_t *rh = *((dt_ahashent_t **)__UNCONST(rhs));
 	dtrace_aggdesc_t *lagg = lh->dtahe_data.dtada_desc;
 	dtrace_aggdesc_t *ragg = rh->dtahe_data.dtada_desc;
 
@@ -688,8 +688,8 @@ dt_aggregate_hashcmp(const void *lhs, const void *rhs)
 static int
 dt_aggregate_varcmp(const void *lhs, const void *rhs)
 {
-	dt_ahashent_t *lh = *((dt_ahashent_t **)lhs);
-	dt_ahashent_t *rh = *((dt_ahashent_t **)rhs);
+	dt_ahashent_t *lh = *((dt_ahashent_t **)__UNCONST(lhs));
+	dt_ahashent_t *rh = *((dt_ahashent_t **)__UNCONST(rhs));
 	dtrace_aggvarid_t lid, rid;
 
 	lid = dt_aggregate_aggvarid(lh);
@@ -707,16 +707,16 @@ dt_aggregate_varcmp(const void *lhs, const void *rhs)
 static int
 dt_aggregate_keycmp(const void *lhs, const void *rhs)
 {
-	dt_ahashent_t *lh = *((dt_ahashent_t **)lhs);
-	dt_ahashent_t *rh = *((dt_ahashent_t **)rhs);
+	dt_ahashent_t *lh = *((dt_ahashent_t **)__UNCONST(lhs));
+	dt_ahashent_t *rh = *((dt_ahashent_t **)__UNCONST(rhs));
 	dtrace_aggdesc_t *lagg = lh->dtahe_data.dtada_desc;
 	dtrace_aggdesc_t *ragg = rh->dtahe_data.dtada_desc;
 	dtrace_recdesc_t *lrec, *rrec;
 	char *ldata, *rdata;
-	int rval, i, j, keypos, nrecs;
+	int rval1, i, j, keypos, nrecs;
 
-	if ((rval = dt_aggregate_hashcmp(lhs, rhs)) != 0)
-		return (rval);
+	if ((rval1 = dt_aggregate_hashcmp(lhs, rhs)) != 0)
+		return (rval1);
 
 	nrecs = lagg->dtagd_nrecs - 1;
 	assert(nrecs == ragg->dtagd_nrecs - 1);
@@ -818,13 +818,13 @@ dt_aggregate_keycmp(const void *lhs, const void *rhs)
 static int
 dt_aggregate_valcmp(const void *lhs, const void *rhs)
 {
-	dt_ahashent_t *lh = *((dt_ahashent_t **)lhs);
-	dt_ahashent_t *rh = *((dt_ahashent_t **)rhs);
+	dt_ahashent_t *lh = *((dt_ahashent_t **)__UNCONST(lhs));
+	dt_ahashent_t *rh = *((dt_ahashent_t **)__UNCONST(rhs));
 	dtrace_aggdesc_t *lagg = lh->dtahe_data.dtada_desc;
 	dtrace_aggdesc_t *ragg = rh->dtahe_data.dtada_desc;
 	caddr_t ldata = lh->dtahe_data.dtada_data;
 	caddr_t rdata = rh->dtahe_data.dtada_data;
-	dtrace_recdesc_t *lrec, *rrec;
+	dtrace_recdesc_t *lrec = NULL, *rrec = NULL;
 	int64_t *laddr, *raddr;
 	int rval, i;
 
@@ -975,8 +975,8 @@ dt_aggregate_varvalrevcmp(const void *lhs, const void *rhs)
 static int
 dt_aggregate_bundlecmp(const void *lhs, const void *rhs)
 {
-	dt_ahashent_t **lh = *((dt_ahashent_t ***)lhs);
-	dt_ahashent_t **rh = *((dt_ahashent_t ***)rhs);
+	dt_ahashent_t **lh = *((dt_ahashent_t ***)__UNCONST(lhs));
+	dt_ahashent_t **rh = *((dt_ahashent_t ***)__UNCONST(rhs));
 	int i, rval;
 
 	if (dt_keysort) {
@@ -1194,7 +1194,7 @@ dt_aggwalk_rval(dtrace_hdl_t *dtp, dt_ahashent_t *h, int rval)
 	return (0);
 }
 
-void
+static void
 dt_aggregate_qsort(dtrace_hdl_t *dtp, void *base, size_t nel, size_t width,
     int (*compar)(const void *, const void *))
 {
@@ -1503,9 +1503,9 @@ dtrace_aggregate_walk_joined(dtrace_hdl_t *dtp, dtrace_aggvarid_t *aggvars,
 	 */
 	for (i = 0; i < naggvars; i++) {
 		if (zaggdata[i].dtahe_size == 0) {
-			dtrace_aggvarid_t aggvar;
+			dtrace_aggvarid_t aggvar1;
 
-			aggvar = aggvars[(i - sortpos + naggvars) % naggvars];
+			aggvar1 = aggvars[(i - sortpos + naggvars) % naggvars];
 			assert(zaggdata[i].dtahe_data.dtada_data == NULL);
 
 			for (j = DTRACE_AGGIDNONE + 1; ; j++) {
@@ -1515,7 +1515,7 @@ dtrace_aggregate_walk_joined(dtrace_hdl_t *dtp, dtrace_aggvarid_t *aggvars,
 				if (dt_aggid_lookup(dtp, j, &agg) != 0)
 					break;
 
-				if (agg->dtagd_varid != aggvar)
+				if (agg->dtagd_varid != aggvar1)
 					continue;
 
 				/*
@@ -1536,7 +1536,7 @@ dtrace_aggregate_walk_joined(dtrace_hdl_t *dtp, dtrace_aggvarid_t *aggvars,
 			}
 
 			if (zaggdata[i].dtahe_size == 0) {
-				caddr_t data;
+				caddr_t data1;
 
 				/*
 				 * We couldn't find this aggregation, meaning
@@ -1557,8 +1557,8 @@ dtrace_aggregate_walk_joined(dtrace_hdl_t *dtp, dtrace_aggvarid_t *aggvars,
 				assert(j < naggvars);
 				zaggdata[i] = zaggdata[j];
 
-				data = zaggdata[i].dtahe_data.dtada_data;
-				assert(data != NULL);
+				data1 = zaggdata[i].dtahe_data.dtada_data;
+				assert(data1 != NULL);
 			}
 		}
 	}
