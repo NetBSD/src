@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2014/11/06 21:30:09 christos Exp $
+#	$NetBSD: Makefile,v 1.41 2015/02/07 19:36:06 christos Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -11,8 +11,8 @@ SRCS=	atalk.c bpf.c fast_ipsec.c if.c inet.c inet6.c \
 	unix.c vtw.c rtutil.c
 BINGRP=	kmem
 BINMODE=2555
-LDADD=	-lkvm
-DPADD=	${LIBKVM}
+LDADD=	-lutil -lkvm
+DPADD=	${LIBUTIL} ${LIBKVM}
 CPPFLAGS+= -DIPSEC -I${.CURDIR}
 CPPFLAGS+= -I${NETBSDSRCDIR}/sys/dist/pf
 CPPFLAGS+= -I${NETBSDSRCDIR}/sbin/route
