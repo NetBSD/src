@@ -666,7 +666,7 @@ dtrace_dof_create(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t flags)
 	    stp != NULL; stp = dt_list_next(stp), last = edp) {
 
 		dtrace_stmtdesc_t *sdp = stp->ds_desc;
-		dtrace_actdesc_t *ap = sdp->dtsd_action;
+		dtrace_actdesc_t *ap1 = sdp->dtsd_action;
 
 		if (sdp->dtsd_fmtdata != NULL) {
 			i = dtrace_printf_format(dtp,
@@ -677,7 +677,7 @@ dtrace_dof_create(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t flags)
 		if ((edp = sdp->dtsd_ecbdesc) == last)
 			continue; /* same ecb as previous statement */
 
-		for (i = 0, ap = edp->dted_action; ap; ap = ap->dtad_next)
+		for (i = 0, ap1 = edp->dted_action; ap1; ap1 = ap1->dtad_next)
 			i++;
 
 		maxacts = MAX(maxacts, i);
@@ -718,7 +718,7 @@ dtrace_dof_create(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t flags)
 		dof_stridx_t strndx = 0;
 		dof_probedesc_t dofp;
 		dof_ecbdesc_t dofe;
-		uint_t i;
+		uint_t i1;
 
 		if ((edp = stp->ds_desc->dtsd_ecbdesc) == last)
 			continue; /* same ecb as previous statement */
@@ -751,14 +751,14 @@ dtrace_dof_create(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t flags)
 		 * Now iterate through the action list generating DIFOs as
 		 * referenced therein and adding action descriptions to 'dofa'.
 		 */
-		for (i = 0, ap = edp->dted_action;
-		    ap != NULL; ap = ap->dtad_next, i++) {
+		for (i1 = 0, ap = edp->dted_action;
+		    ap != NULL; ap = ap->dtad_next, i1++) {
 
 			if (ap->dtad_difo != NULL) {
-				dofa[i].dofa_difo =
+				dofa[i1].dofa_difo =
 				    dof_add_difo(ddo, ap->dtad_difo);
 			} else
-				dofa[i].dofa_difo = DOF_SECIDX_NONE;
+				dofa[i1].dofa_difo = DOF_SECIDX_NONE;
 
 			/*
 			 * If the first action in a statement has format data,
@@ -779,22 +779,22 @@ dtrace_dof_create(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t flags)
 			}
 
 			if (strndx != 0) {
-				dofa[i].dofa_arg = strndx;
-				dofa[i].dofa_strtab = ddo->ddo_strsec;
+				dofa[i1].dofa_arg = strndx;
+				dofa[i1].dofa_strtab = ddo->ddo_strsec;
 			} else {
-				dofa[i].dofa_arg = ap->dtad_arg;
-				dofa[i].dofa_strtab = DOF_SECIDX_NONE;
+				dofa[i1].dofa_arg = ap->dtad_arg;
+				dofa[i1].dofa_strtab = DOF_SECIDX_NONE;
 			}
 
-			dofa[i].dofa_kind = ap->dtad_kind;
-			dofa[i].dofa_ntuple = ap->dtad_ntuple;
-			dofa[i].dofa_uarg = ap->dtad_uarg;
+			dofa[i1].dofa_kind = ap->dtad_kind;
+			dofa[i1].dofa_ntuple = ap->dtad_ntuple;
+			dofa[i1].dofa_uarg = ap->dtad_uarg;
 		}
 
-		if (i > 0) {
+		if (i1 > 0) {
 			actsec = dof_add_lsect(ddo, dofa, DOF_SECT_ACTDESC,
 			    sizeof (uint64_t), 0, sizeof (dof_actdesc_t),
-			    sizeof (dof_actdesc_t) * i);
+			    sizeof (dof_actdesc_t) * i1);
 		}
 
 		/*
