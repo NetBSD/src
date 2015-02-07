@@ -823,7 +823,7 @@ dt_printf_create(dtrace_hdl_t *dtp, const char *s)
 				goto fmt_switch;
 			}
 
-			for (n = 0; isdigit(c); c = *++p)
+			for (n = 0; isdigit((unsigned char)c); c = *++p)
 				n = n * 10 + c - '0';
 
 			if (dot)
@@ -1018,7 +1018,7 @@ dt_printf_validate(dt_pfargv_t *pfv, uint_t flags,
 		int dync = 0;
 
 		char vname[64];
-		dt_node_t *vnp;
+		dt_node_t *vnp = NULL;
 
 		if (pfc == NULL)
 			continue; /* no checking if argd is just a prefix */
@@ -1271,11 +1271,11 @@ dt_printf_format(dtrace_hdl_t *dtp, FILE *fp, const dt_pfargv_t *pfv,
 {
 	dt_pfargd_t *pfd = pfv->pfv_argv;
 	const dtrace_recdesc_t *recp = recs;
-	const dtrace_aggdata_t *aggdata;
+	const dtrace_aggdata_t *aggdata = NULL;
 	dtrace_aggdesc_t *agg;
 	caddr_t lim = (caddr_t)buf + len, limit;
 	char format[64] = "%";
-	int i, aggrec, curagg = -1;
+	int i, aggrec = 0, curagg = -1;
 	uint64_t normal;
 
 	/*
@@ -1311,7 +1311,7 @@ dt_printf_format(dtrace_hdl_t *dtp, FILE *fp, const dt_pfargv_t *pfv,
 		dt_pfprint_f *func;
 		caddr_t addr;
 		size_t size;
-		uint32_t flags;
+		uint32_t flags = 0;
 
 		if (pfd->pfd_preflen != 0) {
 			char *tmp = alloca(pfd->pfd_preflen + 1);
@@ -1516,7 +1516,7 @@ dt_printf_format(dtrace_hdl_t *dtp, FILE *fp, const dt_pfargv_t *pfv,
 	return ((int)(recp - recs));
 }
 
-int
+static int
 dtrace_sprintf(dtrace_hdl_t *dtp, FILE *fp, void *fmtdata,
     const dtrace_recdesc_t *recp, uint_t nrecs, const void *buf, size_t len)
 {
@@ -1574,7 +1574,9 @@ dtrace_freopen(dtrace_hdl_t *dtp, FILE *fp, void *fmtdata,
     const dtrace_probedata_t *data, const dtrace_recdesc_t *recp,
     uint_t nrecs, const void *buf, size_t len)
 {
+#if defined(sun)
 	char selfbuf[40], restorebuf[40], *filename;
+#endif
 	FILE *nfp;
 	int rval, errval;
 	dt_pfargv_t *pfv = fmtdata;

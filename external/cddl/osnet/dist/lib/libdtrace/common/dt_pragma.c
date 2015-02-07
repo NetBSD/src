@@ -77,7 +77,7 @@ static void
 dt_pragma_attributes(const char *prname, dt_node_t *dnp)
 {
 	dtrace_hdl_t *dtp = yypcb->pcb_hdl;
-	dtrace_attribute_t attr, *a;
+	dtrace_attribute_t attr, *a = NULL;
 	dt_provider_t *pvp;
 	const char *name, *part;
 	dt_ident_t *idp;
@@ -211,7 +211,7 @@ dt_pragma_depends(const char *prname, dt_node_t *cnp)
 {
 	dtrace_hdl_t *dtp = yypcb->pcb_hdl;
 	dt_node_t *nnp = cnp ? cnp->dn_list : NULL;
-	int found;
+	int found = 0;
 	dt_lib_depend_t *dld;
 	char lib[MAXPATHLEN];
 

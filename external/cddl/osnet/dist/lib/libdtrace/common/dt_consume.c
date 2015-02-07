@@ -34,6 +34,7 @@
 #include <alloca.h>
 #endif
 #include <dt_impl.h>
+#include <dt_printf.h>
 
 #define	DT_MASK_LO 0x00000000FFFFFFFFULL
 
@@ -476,18 +477,18 @@ out:
 }
 
 static int
-dt_nullprobe()
+dt_nullprobe(void)
 {
 	return (DTRACE_CONSUME_THIS);
 }
 
 static int
-dt_nullrec()
+dt_nullrec(void)
 {
 	return (DTRACE_CONSUME_NEXT);
 }
 
-int
+static int
 dt_print_quantline(dtrace_hdl_t *dtp, FILE *fp, int64_t val,
     uint64_t normal, long double total, char positives, char negatives)
 {
@@ -708,7 +709,7 @@ dt_print_stddev(dtrace_hdl_t *dtp, FILE *fp, caddr_t addr,
 }
 
 /*ARGSUSED*/
-int
+static int
 dt_print_bytes(dtrace_hdl_t *dtp, FILE *fp, caddr_t addr,
     size_t nbytes, int width, int quiet, int raw)
 {
@@ -737,7 +738,7 @@ dt_print_bytes(dtrace_hdl_t *dtp, FILE *fp, caddr_t addr,
 		 * have meaning for the terminal and for which isprint(3C) and
 		 * isspace(3C) return 0.
 		 */
-		if (isprint(c[i]) || isspace(c[i]) ||
+		if (isprint((unsigned char)c[i]) || isspace((unsigned char)c[i]) ||
 		    c[i] == '\b' || c[i] == '\a')
 			continue;
 
@@ -1151,7 +1152,7 @@ dt_print_umod(dtrace_hdl_t *dtp, FILE *fp, const char *format, caddr_t addr)
 #endif
 }
 
-int
+static int
 dt_print_memory(dtrace_hdl_t *dtp, FILE *fp, caddr_t addr)
 {
 	int quiet = (dtp->dt_options[DTRACEOPT_QUIET] != DTRACEOPT_UNSET);
@@ -1209,7 +1210,7 @@ dt_print_type_width(const char *name, ctf_id_t type, ulong_t off, void *arg)
 	if ((p = strchr(buf, '[')) != NULL)
 		p[-1] = '\0';
 	else
-		p = "";
+		p = __UNCONST("");
 
 	sz += strlen(p);
 
@@ -1240,7 +1241,7 @@ dt_print_type_data(dt_type_cbdata_t *cbdatap, ctf_id_t type)
 	if ((p = strchr(buf, '[')) != NULL)
 		p[-1] = '\0';
 	else
-		p = "";
+		p = __UNCONST("");
 
 	if (cbdatap->f_type) {
 		int type_width = roundup(cbdatap->type_width + 1, 4);
@@ -1255,7 +1256,6 @@ dt_print_type_data(dt_type_cbdata_t *cbdatap, ctf_id_t type)
 		dt_type_cbdata_t cbdata;
 		ctf_arinfo_t arinfo;
 		ctf_encoding_t cte;
-		uintptr_t *up;
 		void *vp = addr;
 		cbdata = *cbdatap;
 		cbdata.name = "";
@@ -1276,7 +1276,7 @@ dt_print_type_data(dt_type_cbdata_t *cbdatap, ctf_id_t type)
 			if ((cte.cte_format & CTF_INT_SIGNED) != 0)
 				switch (cte.cte_bits) {
 				case 8:
-					if (isprint(*((char *) vp)))
+					if (isprint(*((unsigned char *) vp)))
 						dt_printf(cbdatap->dtp, cbdatap->fp, "'%c', ", *((char *) vp));
 					dt_printf(cbdatap->dtp, cbdatap->fp, "%d (0x%x);\n", *((char *) vp), *((char *) vp));
 					break;
@@ -1385,7 +1385,6 @@ dt_print_type_data(dt_type_cbdata_t *cbdatap, ctf_id_t type)
 static int
 dt_print_type(dtrace_hdl_t *dtp, FILE *fp, caddr_t addr)
 {
-	caddr_t addrend;
 	char *p;
 	dtrace_typeinfo_t dtt;
 	dt_type_cbdata_t cbdata;
@@ -1535,7 +1534,7 @@ dt_normalize_agg(const dtrace_aggdata_t *aggdata, void *arg)
 	if (agg->dtagd_varid != id)
 		return (DTRACE_AGGWALK_NEXT);
 
-	((dtrace_aggdata_t *)aggdata)->dtada_normal = normal->dtnd_normal;
+	((dtrace_aggdata_t *)__UNCONST(aggdata))->dtada_normal = normal->dtnd_normal;
 	return (DTRACE_AGGWALK_NORMALIZE);
 }
 
@@ -1784,7 +1783,7 @@ dt_print_datum(dtrace_hdl_t *dtp, FILE *fp, dtrace_recdesc_t *rec,
 	return (err);
 }
 
-int
+static int
 dt_print_aggs(const dtrace_aggdata_t **aggsdata, int naggvars, void *arg)
 {
 	int i, aggact = 0;
@@ -1885,7 +1884,7 @@ dt_print_agg(const dtrace_aggdata_t *aggdata, void *arg)
 	return (dt_print_aggs(&aggdata, 1, arg));
 }
 
-int
+static int
 dt_setopt(dtrace_hdl_t *dtp, const dtrace_probedata_t *data,
     const char *option, const char *value)
 {
@@ -2003,22 +2002,22 @@ again:
 			addr = data.dtpda_data;
 
 			if (act == DTRACEACT_LIBACT) {
-				uint64_t arg = rec->dtrd_arg;
-				dtrace_aggvarid_t id;
+				uint64_t arg1 = rec->dtrd_arg;
+				dtrace_aggvarid_t id1;
 
-				switch (arg) {
+				switch (arg1) {
 				case DT_ACT_CLEAR:
 					/* LINTED - alignment */
-					id = *((dtrace_aggvarid_t *)addr);
+					id1 = *((dtrace_aggvarid_t *)addr);
 					(void) dtrace_aggregate_walk(dtp,
-					    dt_clear_agg, &id);
+					    dt_clear_agg, &id1);
 					continue;
 
 				case DT_ACT_DENORMALIZE:
 					/* LINTED - alignment */
-					id = *((dtrace_aggvarid_t *)addr);
+					id1 = *((dtrace_aggvarid_t *)addr);
 					(void) dtrace_aggregate_walk(dtp,
-					    dt_denormalize_agg, &id);
+					    dt_denormalize_agg, &id1);
 					continue;
 
 				case DT_ACT_FTRUNCATE:
@@ -2058,7 +2057,7 @@ again:
 					valsize = valrec->dtrd_size;
 
 					if (valrec->dtrd_action != act ||
-					    valrec->dtrd_arg != arg) {
+					    valrec->dtrd_arg != arg1) {
 						return (dt_set_errno(dtp,
 						    EDT_BADSETOPT));
 					}
@@ -2067,7 +2066,7 @@ again:
 						val = buf->dtbd_data + offs +
 						    valrec->dtrd_offset;
 					} else {
-						val = "1";
+						val = __UNCONST("1");
 					}
 
 					rv = dt_setopt(dtp, &data, addr, val);

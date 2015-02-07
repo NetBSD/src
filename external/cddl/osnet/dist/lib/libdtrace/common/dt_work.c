@@ -294,6 +294,7 @@ dtrace_work(dtrace_hdl_t *dtp, FILE *fp,
 		break;
 
 	case -1:
+	default:
 		return (DTRACE_WORKSTATUS_ERROR);
 	}
 

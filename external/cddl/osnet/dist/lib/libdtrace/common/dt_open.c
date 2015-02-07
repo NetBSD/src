@@ -987,8 +987,10 @@ dt_vopen(int version, int flags, int *errp,
 
 	dt_fdlist_t df = { NULL, 0, 0 };
 
+#if defined(sun)
 	char isadef[32], utsdef[32];
 	char s1[64], s2[64];
+#endif
 
 	if (version <= 0)
 		return (set_open_errno(dtp, errp, EINVAL));
@@ -1218,12 +1220,12 @@ alloc:
 	 */
 #if !defined(sun)
 	{
-	char bootfile[MAXPATHLEN];
 	char *p;
+#if 0	/* XXX debug */
+	char bootfile[MAXPATHLEN];
 	int i;
 	size_t len = sizeof(bootfile);
 
-#if 0	/* XXX debug */
 	/* This call shouldn't fail, but use a default just in case. */
 	if (sysctlbyname("kern.bootfile", bootfile, &len, NULL, 0) != 0)
 		strlcpy(bootfile, "kernel", sizeof(bootfile));

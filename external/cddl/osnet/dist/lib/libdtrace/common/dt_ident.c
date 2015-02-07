@@ -202,7 +202,7 @@ dt_idcook_func(dt_node_t *dnp, dt_ident_t *idp, int argc, dt_node_t *args)
 		}
 
 		for (p2 = p1; *p2 != '\0'; p2++) {
-			if (!isspace(*p2)) {
+			if (!isspace((unsigned char)*p2)) {
 				i++;
 				break;
 			}
@@ -263,7 +263,7 @@ dt_idcook_func(dt_node_t *dnp, dt_ident_t *idp, int argc, dt_node_t *args)
 		 * arguments may not follow optional arguments.
 		 */
 		for (i = 0; i < isp->dis_argc; i++, p1 = p2) {
-			while (isspace(*p1))
+			while (isspace((unsigned char)*p1))
 				p1++; /* skip leading whitespace */
 
 			if ((p2 = strchr(p1, ',')) == NULL)

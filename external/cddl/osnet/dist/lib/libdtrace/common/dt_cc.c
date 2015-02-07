@@ -622,7 +622,7 @@ dt_action_printflike(dtrace_hdl_t *dtp, dt_node_t *dnp, dtrace_stmtdesc_t *sdp,
 		}
 
 		if (str[0] == '\0')
-			str = DT_FREOPEN_RESTORE;
+			str = __UNCONST(DT_FREOPEN_RESTORE);
 	}
 
 	sdp->dtsd_fmtdata = dt_printf_create(dtp, str);
@@ -1526,7 +1526,7 @@ dt_setcontext(dtrace_hdl_t *dtp, dtrace_probedesc_t *pdp)
 	 * On an error, dt_pid_create_probes() will set the error message
 	 * and tag -- we just have to longjmp() out of here.
 	 */
-	if (isdigit(pdp->dtpd_provider[strlen(pdp->dtpd_provider) - 1]) &&
+	if (isdigit((unsigned char)pdp->dtpd_provider[strlen(pdp->dtpd_provider) - 1]) &&
 	    ((pvp = dt_provider_lookup(dtp, pdp->dtpd_provider)) == NULL ||
 	    pvp->pv_desc.dtvd_priv.dtpp_flags & DTRACE_PRIV_PROC) &&
 	    dt_pid_create_probes(pdp, dtp, yypcb) != 0) {
@@ -1733,7 +1733,7 @@ dt_preproc(dtrace_hdl_t *dtp, FILE *ifp)
 	argv[argc++] = ipath;
 	argv[argc++] = opath;
 #else
-	argv[argc++] = "-P";
+	argv[argc++] = __UNCONST("-P");
 #endif
 	argv[argc] = NULL;
 
@@ -2154,7 +2154,7 @@ dt_compile(dtrace_hdl_t *dtp, int context, dtrace_probespec_t pspec, void *arg,
 	dt_node_t *dnp;
 	dt_decl_t *ddp;
 	dt_pcb_t pcb;
-	void *rv;
+	void *rv = NULL;
 	int err;
 
 	if ((fp == NULL && s == NULL) || (cflags & ~DTRACE_C_MASK) != 0) {

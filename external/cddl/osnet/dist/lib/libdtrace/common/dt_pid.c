@@ -65,6 +65,7 @@ typedef struct dt_pid_probe {
  * Compose the lmid and object name into the canonical representation. We
  * omit the lmid for the default link map for convenience.
  */
+#if 0
 static void
 dt_pid_objname(char *buf, size_t len, Lmid_t lmid, const char *obj)
 {
@@ -77,6 +78,7 @@ dt_pid_objname(char *buf, size_t len, Lmid_t lmid, const char *obj)
 	(void) strncpy(buf, obj, len);
 #endif
 }
+#endif
 
 static int
 dt_pid_error(dtrace_hdl_t *dtp, dt_pcb_t *pcb, dt_proc_t *dpr,
@@ -105,6 +107,7 @@ dt_pid_error(dtrace_hdl_t *dtp, dt_pcb_t *pcb, dt_proc_t *dpr,
 	return (1);
 }
 
+#if 0
 static int
 dt_pid_per_sym(dt_pid_probe_t *pp, const GElf_Sym *symp, const char *func)
 {
@@ -460,7 +463,9 @@ dt_pid_mod_filt(void *arg, const prmap_t *pmp, const char *obj)
 
 	return (0);
 }
+#endif
 
+#if 0
 static const prmap_t *
 dt_pid_fix_mod(dtrace_probedesc_t *pdp, struct ps_prochandle *P)
 {
@@ -511,6 +516,7 @@ pmp = NULL;
 
 	return (pmp);
 }
+#endif
 
 
 static int
@@ -605,6 +611,7 @@ dt_pid_create_pid_probes(dtrace_probedesc_t *pdp, dtrace_hdl_t *dtp,
 #endif
 }
 
+#if 0
 static int
 dt_pid_usdt_mapping(void *data, const prmap_t *pmp, const char *oname)
 {
@@ -685,6 +692,7 @@ dt_pid_usdt_mapping(void *data, const prmap_t *pmp, const char *oname)
 	return ENODEV;
 #endif
 }
+#endif
 
 static int
 dt_pid_create_usdt_probes(dtrace_probedesc_t *pdp, dtrace_hdl_t *dtp,
@@ -730,7 +738,7 @@ dt_pid_get_pid(dtrace_probedesc_t *pdp, dtrace_hdl_t *dtp, dt_pcb_t *pcb,
 	char *c, *last = NULL, *end;
 
 	for (c = &pdp->dtpd_provider[0]; *c != '\0'; c++) {
-		if (!isdigit(*c))
+		if (!isdigit((unsigned char)*c))
 			last = c;
 	}
 

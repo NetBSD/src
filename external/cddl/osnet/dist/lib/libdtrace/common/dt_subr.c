@@ -104,7 +104,7 @@ dtrace_xstr2desc(dtrace_hdl_t *dtp, dtrace_probespec_t spec,
 				v++;
 			}
 
-			if (isdigit(v[1])) {
+			if (isdigit((unsigned char)v[1])) {
 				long i;
 
 				errno = 0;
@@ -389,7 +389,7 @@ dt_version_str2num(const char *s, dt_version_t *vp)
 	char c;
 
 	while ((c = *s++) != '\0') {
-		if (isdigit(c))
+		if (isdigit((unsigned char)c))
 			n[i] = n[i] * 10 + c - '0';
 		else if (c != '.' || i++ >= sizeof (n) / sizeof (n[0]) - 1)
 			return (-1);

@@ -268,8 +268,8 @@ if (yypcb->pcb_token != 0) {
 			 * If the macro text is not a string an begins with a
 			 * digit or a +/- sign, process it as an integer token.
 			 */
-			if (isdigit(v[0]) || v[0] == '-' || v[0] == '+') {
-				if (isdigit(v[0]))
+			if (isdigit((unsigned char)v[0]) || v[0] == '-' || v[0] == '+') {
+				if (isdigit((unsigned char)v[0]))
 					yyintprefix = 0;
 				else
 					yyintprefix = *v++;

@@ -79,14 +79,14 @@ findelfsecidx(Elf *elf, const char *file, const char *tofind)
 
 		if (gelf_getshdr(scn, &shdr) == NULL) {
 			elfterminate(file,
-			    "Couldn't read header for section %d",
+			    "Couldn't read header for section %zu",
 			    elf_ndxscn(scn));
 		}
 
 		if ((name = elf_strptr(elf, ehdr.e_shstrndx,
 		    (size_t)shdr.sh_name)) == NULL) {
 			elfterminate(file,
-			    "Couldn't get name for section %d",
+			    "Couldn't get name for section %zu",
 			    elf_ndxscn(scn));
 		}
 

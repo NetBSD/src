@@ -368,7 +368,7 @@ static void
 dt_header_fmt_macro(char *buf, const char *str)
 {
 	for (;;) {
-		if (islower(*str)) {
+		if (islower((unsigned char)*str)) {
 			*buf++ = *str++ + 'A' - 'a';
 		} else if (*str == '-') {
 			*buf++ = '_';

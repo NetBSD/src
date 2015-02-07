@@ -63,6 +63,7 @@
 		return (0); \
 	p += n;
 
+int gmatch(const char *, const char *);
 int
 gmatch(const char *s, const char *p)
 {

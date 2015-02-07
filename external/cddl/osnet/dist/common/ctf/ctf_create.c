@@ -50,7 +50,11 @@ static const char _CTF_STRTAB_TEMPLATE[] = "\0PARENT";
 ctf_file_t *
 ctf_create(int *errp)
 {
-	static const ctf_header_t hdr = { { CTF_MAGIC, CTF_VERSION, 0 } };
+	static const ctf_header_t hdr = { .cth_preamble = {
+		.ctp_magic = CTF_MAGIC,
+		.ctp_version = CTF_VERSION,
+		.ctp_flags = 0
+	} };
 
 	const ulong_t hashlen = 128;
 	ctf_dtdef_t **hash = ctf_alloc(hashlen * sizeof (ctf_dtdef_t *));
@@ -60,10 +64,10 @@ ctf_create(int *errp)
 	if (hash == NULL)
 		return (ctf_set_open_errno(errp, EAGAIN));
 
-	cts.cts_name = (char *)_CTF_SECTION;
+	cts.cts_name = __UNCONST(_CTF_SECTION);
 	cts.cts_type = SHT_PROGBITS;
 	cts.cts_flags = 0;
-	cts.cts_data = (ctf_header_t *)&hdr;
+	cts.cts_data = __UNCONST(&hdr);
 	cts.cts_size = sizeof (hdr);
 	cts.cts_entsize = 1;
 	cts.cts_offset = 0;
@@ -364,7 +368,7 @@ ctf_update(ctf_file_t *fp)
 	 * is successful, we then switch nfp and fp and free the old container.
 	 */
 	ctf_data_protect(buf, size);
-	cts.cts_name = (char *)_CTF_SECTION;
+	cts.cts_name = __UNCONST(_CTF_SECTION);
 	cts.cts_type = SHT_PROGBITS;
 	cts.cts_flags = 0;
 	cts.cts_data = buf;
@@ -500,7 +504,7 @@ ctf_dtd_lookup(ctf_file_t *fp, ctf_id_t type)
 int
 ctf_discard(ctf_file_t *fp)
 {
-	ctf_dtdef_t *dtd, *ntd;
+	ctf_dtdef_t *dtd, *ntd = NULL;
 
 	if (!(fp->ctf_flags & LCTF_RDWR))
 		return (ctf_set_errno(fp, ECTF_RDONLY));

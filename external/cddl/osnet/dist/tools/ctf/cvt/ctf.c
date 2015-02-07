@@ -81,7 +81,7 @@ struct ctf_buf {
 static int target_requires_swap;
 
 /*PRINTFLIKE1*/
-static void
+static void __printflike(1, 2)
 parseterminate(const char *fmt, ...)
 {
 	static char msgbuf[1024]; /* sigh */
@@ -496,7 +496,7 @@ write_type(void *arg1, void *arg2)
 
 		if (i > CTF_MAX_VLEN) {
 			terminate("function %s has too many args: %d > %d\n",
-			    i, CTF_MAX_VLEN);
+			    tdesc_name(tp), i, CTF_MAX_VLEN);
 		}
 
 		ctt.ctt_info = CTF_TYPE_INFO(CTF_K_FUNCTION, isroot, i);
@@ -825,8 +825,9 @@ count_types(ctf_header_t *h, caddr_t data)
 		case CTF_K_UNKNOWN:
 			break;
 		default:
-			parseterminate("Unknown CTF type %d (#%d) at %#x",
-			    CTF_INFO_KIND(ctt->ctt_info), count, dptr - data);
+			parseterminate("Unknown CTF type %d (#%d) at %#jx",
+			    CTF_INFO_KIND(ctt->ctt_info), count,
+			    (intmax_t)(dptr - data));
 		}
 
 		dptr += increment;
@@ -913,8 +914,8 @@ resurrect_objects(ctf_header_t *h, tdata_t *td, tdesc_t **tdarr, int tdsize,
 
 		if (!(sym = symit_next(si, STT_OBJECT)) && id != 0) {
 			parseterminate(
-			    "Unexpected end of object symbols at %x of %x",
-			    dptr - buf, bufsz);
+			    "Unexpected end of object symbols at %ju of %zu",
+			    (intmax_t)(dptr - buf), bufsz);
 		}
 
 		if (id == 0) {
@@ -1336,8 +1337,9 @@ decompress_ctf(caddr_t cbuf, size_t cbufsz, caddr_t dbuf, size_t dbufsz)
 		return (0);
 	}
 
-	debug(3, "reflated %lu bytes to %lu, pointer at %d\n",
-	    zstr.total_in, zstr.total_out, (caddr_t)zstr.next_in - cbuf);
+	debug(3, "reflated %lu bytes to %lu, pointer at 0x%jx\n",
+	    zstr.total_in, zstr.total_out,
+	    (intmax_t)((caddr_t)zstr.next_in - cbuf));
 
 	return (zstr.total_out);
 }
@@ -1381,7 +1383,7 @@ ctf_load(char *file, caddr_t buf, size_t bufsz, symit_data_t *si, char *label)
 		if ((actual = decompress_ctf(buf, bufsz, ctfdata, ctfdatasz)) !=
 		    ctfdatasz) {
 			parseterminate("Corrupt CTF - short decompression "
-			    "(was %d, expecting %d)", actual, ctfdatasz);
+			    "(was %zu, expecting %zu)", actual, ctfdatasz);
 		}
 	} else {
 		ctfdata = buf;
