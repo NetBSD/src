@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.19 2015/02/07 04:25:16 christos Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.20 2015/02/07 10:40:57 maxv Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.19 2015/02/07 04:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.20 2015/02/07 10:40:57 maxv Exp $");
 #endif /* not lint */
 
 
@@ -879,10 +879,8 @@ nilfs_mount(struct mount *mp, const char *path,
 #endif
 
 	error = nilfs_mount_device(devvp, mp, args, &nilfsdev);
-	if (error) {
-		vrele(devvp);
+	if (error)
 		return error;
-	}
 
 	/*
 	 * Create a nilfs_mount on the specified checkpoint. Note that only
