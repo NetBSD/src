@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.32 2014/12/07 20:07:25 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.33 2015/02/07 04:13:26 christos Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.32 2014/12/07 20:07:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.33 2015/02/07 04:13:26 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -748,7 +748,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			aprint_error_dev(sc->sc_dev,
 			    "unrecognised future version (%d)\n",
 				ext_csd[EXT_CSD_STRUCTURE]);
-			return error;
+			return ENOTSUP;
 		}
 
 		if (ext_csd[EXT_CSD_CARD_TYPE] & EXT_CSD_CARD_TYPE_F_52M) {
@@ -761,7 +761,7 @@ sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			aprint_error_dev(sc->sc_dev,
 			    "unknown CARD_TYPE: 0x%x\n",
 			    ext_csd[EXT_CSD_CARD_TYPE]);
-			return error;
+			return ENOTSUP;
 		}
 
 		if (!ISSET(sc->sc_caps, SMC_CAPS_MMC_HIGHSPEED)) {
