@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.27 2015/02/07 02:39:56 jmcneill Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.28 2015/02/07 17:14:32 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -365,7 +365,12 @@ cortex_init:
 	// Step 1a, invalidate the all cache tags in all ways on the SCU.
 	//
 	XPUTC(#65)
+#if defined(ARM_CBAR)
+	movw	r3, #:lower16:ARM_CBAR
+	movt	r3, #:upper16:ARM_CBAR
+#else
 	mrc	p15, 4, r3, c15, c0, 0		// read cbar
+#endif
 #ifdef __ARMEB__
 	setend	le
 #endif
@@ -419,7 +424,12 @@ cortex_init:
 	//
 	// Step 3, enable the SCU
 	//
+#if defined(ARM_CBAR)
+	movw	r3, #:lower16:ARM_CBAR
+	movt	r3, #:upper16:ARM_CBAR
+#else
 	mrc	p15, 4, r3, c15, c0, 0		// read cbar
+#endif
 #ifdef __ARMEB__
 	setend	le
 #endif
