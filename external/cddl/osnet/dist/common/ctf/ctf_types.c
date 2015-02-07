@@ -395,7 +395,7 @@ ctf_type_align(ctf_file_t *fp, ctf_id_t type)
 		const void *vmp;
 
 		(void) ctf_get_ctt_size(fp, tp, &size, &increment);
-		vmp = (uchar_t *)tp + increment;
+		vmp = (const uchar_t *)tp + increment;
 
 		if (LCTF_INFO_KIND(fp, tp->ctt_info) == CTF_K_STRUCT)
 			n = MIN(n, 1); /* only use first member for structs */
