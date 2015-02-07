@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.26 2015/02/06 20:07:45 christos Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.27 2015/02/07 11:24:55 martin Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
@@ -41,7 +41,7 @@ CPPFLAGS+=	-I${DESTDIR}/usr/X11R7/include
 CPPFLAGS+=	-D_ALTQ_ALTQ_JOBS_H_	# redefinition of inline
 # De-select one, dup ioctls
 CPPFLAGS+=	-D_VIA_DRM_H_		# Missing header
-#CPPFLAGS+=	-D_I915_DRM_H_		# Dup ioctls
+CPPFLAGS+=	-D_I915_DRM_H_		# Dup ioctls
 CPPFLAGS+=	-D__R128_DRM_H__	# Dup ioctls
 CPPFLAGS+=	-D__SIS_DRM_H__		# Dup ioctls
 CPPFLAGS+=	-D__SAVAGE_DRM_H__	# Dup ioctls
