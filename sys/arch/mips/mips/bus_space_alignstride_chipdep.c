@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.19 2012/01/27 18:52:58 para Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.20 2015/02/08 15:22:33 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,6 +74,11 @@
  *			for the memory or I/O memory space extent.
  *	CHIP_LITTLE_ENDIAN | CHIP_BIG_ENDIAN
  *			For endian-specific busses, like PCI (little).
+ *	CHIP_WRONG_ENDIAN
+ *			For things like PCI bridges with endian conversion that
+ *			can't be turned off, so we need to switch address bits
+ *			for 8 and 16bit accesses.
+ *			Example: MACE PCI bridge in SGI O2
  *	CHIP_ACCESS_SIZE
  *			Size (in bytes) of minimum bus access, e.g. 4
  *			to indicate all bus cycles are 32-bits.  Defaults
@@ -81,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.19 2012/01/27 18:52:58 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.20 2015/02/08 15:22:33 macallan Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -194,16 +199,24 @@ static long
 #define	CHIP_ALIGN_STRIDE	0
 #endif
 
+#ifdef CHIP_WRONG_ENDIAN
+#define	CHIP_OFF8(o)	((o) ^ 3)
+#else
 #if CHIP_ALIGN_STRIDE > 0
 #define	CHIP_OFF8(o)	((o) << (CHIP_ALIGN_STRIDE))
 #else
 #define	CHIP_OFF8(o)	(o)
 #endif
+#endif
 
+#ifdef CHIP_WRONG_ENDIAN
+#define	CHIP_OFF16(o)	((o) ^ 2)
+#else
 #if CHIP_ALIGN_STRIDE > 1
 #define	CHIP_OFF16(o)	((o) << (CHIP_ALIGN_STRIDE - 1))
 #else
 #define	CHIP_OFF16(o)	(o)
+#endif
 #endif
 
 #if CHIP_ALIGN_STRIDE > 2
@@ -662,7 +675,8 @@ __BS(read_1)(void *v, bus_space_handle_t h, bus_size_t off)
         int shift;
 
         h += CHIP_OFF8(off);
-        shift = (off & (CHIP_ACCESS_SIZE - 1)) * 8;
+
+        shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
         ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
         r = (uint8_t)(CHIP_SWAP_ACCESS(*ptr) >> shift);
 
@@ -682,7 +696,7 @@ __BS(read_2)(void *v, bus_space_handle_t h, bus_size_t off)
 
 	KASSERT((off & 1) == 0);
         h += CHIP_OFF16(off);
-        shift = (off & (CHIP_ACCESS_SIZE - 1)) * 8;
+        shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
         ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
 	r = (uint16_t)CHIP_SWAP16(*ptr >> shift);
 
@@ -702,7 +716,7 @@ __BS(read_4)(void *v, bus_space_handle_t h, bus_size_t off)
 
 	KASSERT((off & 3) == 0);
         h += CHIP_OFF32(off);
-        shift = (off & (CHIP_ACCESS_SIZE - 1)) * 8;
+        shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
         ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
 	r = (uint32_t)CHIP_SWAP32(*ptr >> shift);
 
@@ -718,7 +732,7 @@ __BS(read_8)(void *v, bus_space_handle_t h, bus_size_t off)
 
 	KASSERT((off & 7) == 0);
         h += CHIP_OFF64(off);
-        shift = (off & (CHIP_ACCESS_SIZE - 1)) * 8;
+        shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
         ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
 	r =  CHIP_SWAP64(*ptr >> shift);
 
@@ -771,7 +785,7 @@ __BS(write_1)(void *v, bus_space_handle_t h, bus_size_t off, uint8_t val)
 	int shift;
 
 	h += CHIP_OFF8(off);
-	shift = (off & (CHIP_ACCESS_SIZE - 1)) * 8;
+	shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
 	ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
 	*ptr = CHIP_SWAP_ACCESS(((CHIP_TYPE)val) << shift);
 }
@@ -788,7 +802,7 @@ __BS(write_2)(void *v, bus_space_handle_t h, bus_size_t off, uint16_t val)
 
 	KASSERT((off & 1) == 0);
 	h += CHIP_OFF16(off);
-	shift = (off & (CHIP_ACCESS_SIZE - 1)) * 8;
+	shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
 	ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
 	if (CHIP_ACCESS_SIZE > 2)
 		*ptr = (CHIP_TYPE)(CHIP_SWAP16(val)) << shift;
@@ -808,7 +822,7 @@ __BS(write_4)(void *v, bus_space_handle_t h, bus_size_t off, uint32_t val)
 
 	KASSERT((off & 3) == 0);
         h += CHIP_OFF32(off);
-        shift = (off & (CHIP_ACCESS_SIZE - 1)) * 8;
+        shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
         ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
         if (CHIP_ACCESS_SIZE > 4)
 		*ptr = (CHIP_TYPE)(CHIP_SWAP32(val)) << shift;
@@ -824,7 +838,7 @@ __BS(write_8)(void *v, bus_space_handle_t h, bus_size_t off, uint64_t val)
 
 	KASSERT((off & 7) == 0);
         h += CHIP_OFF64(off);
-        shift = (off & (CHIP_ACCESS_SIZE - 1)) * 8;
+        shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
         ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
 	*ptr = CHIP_SWAP64(val) << shift;
 }
