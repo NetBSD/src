@@ -1,0 +1,70 @@
+.\" $NetBSD: iwm.4,v 1.1 2015/02/08 16:44:09 wiz Exp $
+.\"
+.\" Copyright (c) 2015 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Thomas Klausner.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 8, 2015
+.Dt IWM 4
+.Os
+.Sh NAME
+.Nm iwm
+.Nd Intel Wireless and Centrino Wireless IEEE 802.111 wireless network driver
+.Sh SYNOPSIS
+.Cd "iwm* at pci? dev ? function ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the following cards:
+.Bl -tag
+.It Intel Wireless 7260
+.El
+The following cards could be supported with minor changes:
+.Bl -tag
+.It Intel Wireless 7265
+.It Intel Wireless 3160
+.El
+.Pp
+The Intel Wireless 7260 is a PCIe Half Mini Card network adapter
+that operates in the 2.4GHz and 5GHz spectra.
+.Pp
+By default, the
+.Nm
+driver configures the adapter for BSS operation (aka infrastructure mode).
+This mode requires the use of an access point.
+.Pp
+For more information on configuring this device, see
+.Xr ifconfig 8 .
+.Sh SEE ALSO
+.Xr ifmedia 4 ,
+.Xr iwn 4 ,
+.Xr ifconfig.if 5 ,
+.Xr ifconfig 8
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Antti Kantte Aq Mt pooka@NetBSD.org .
