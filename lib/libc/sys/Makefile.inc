@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.224 2014/07/25 08:30:47 dholland Exp $
+#	$NetBSD: Makefile.inc,v 1.224.2.1 2015/02/08 22:05:55 snj Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -30,9 +30,10 @@ SRCS+=	posix_fadvise.c posix_madvise.c sched.c sigqueue.c sigtimedwait.c \
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
-GLUE+= ftruncate.c lseek.c mmap.c pread.c preadv.c pwrite.c \
-	pwritev.c truncate.c ntp_adjtime.c mknodat.c
-
+GLUE+= fdiscard.c ftruncate.c lseek.c mmap.c \
+	pread.c preadv.c pwrite.c pwritev.c truncate.c ntp_adjtime.c \
+	mknodat.c
+GLUENOERR+= posix_fallocate.c
 GLUE50+= adjtime.c clock_settime.c settimeofday.c
 
 # 'glue' files might .c or .S depending on the architecture
@@ -48,6 +49,23 @@ SRCS+=__${glue:.c=.S} ${glue}
 SRCS+= ${glue}
 # and an asm entry for __<syscall>
 ASM_GLUE+= tmp_${glue:.c=.S}
+.  endif
+. endif
+.endfor
+
+# 'glue' files might .c or .S depending on the architecture
+.for glue in ${GLUENOERR}
+. if exists(${glue:.c=.S})
+# Build the ASM glue file
+SRCS+=${glue:.c=.S}
+. else
+.  if exists(__${glue:.c=.S})
+SRCS+=__${glue:.c=.S} ${glue}
+.  else
+# Build the C glue file
+SRCS+= ${glue}
+# and an asm entry for __<syscall>
+ASM_GLUENOERR+= tmp_${glue:.c=.S}
 .  endif
 . endif
 .endfor
@@ -147,11 +165,11 @@ ASM_MD=	_lwp_getprivate.S mremap.S
 .endfor
 
 WEAKASM= accept.S __aio_suspend50.S close.S connect.S execve.S \
-	fcntl.S fdatasync.S fdiscard.S fsync.S \
+	fcntl.S fdatasync.S fsync.S \
 	fsync_range.S __kevent50.S \
 	kill.S mq_receive.S mq_send.S __mq_timedreceive50.S __mq_timedsend50.S \
 	msgrcv.S msgsnd.S __msync13.S  __nanosleep50.S open.S poll.S \
-	__pollts50.S posix_fallocate.S __pselect50.S read.S readlink.S \
+	__pollts50.S __pselect50.S read.S readlink.S \
 	readv.S _sched_setparam.S _sched_getparam.S _sched_setaffinity.S \
 	_sched_getaffinity.S sched_yield.S \
 	__select50.S setcontext.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
@@ -162,8 +180,11 @@ NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
 
 PSEUDONOERR=	_exit.S
 
-SRCS+=		${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR} ${ASM_GLUE}
-CLEANFILES+=	${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR} ${ASM_GLUE}
+_GENFILES=	${ASM} ${WEAKASM} ${NOERR} ${PSEUDONOERR} \
+	${ASM_GLUE} ${ASM_GLUENOERR}
+
+SRCS+=		${_GENFILES}
+CLEANFILES+=	${_GENFILES}
 
 ASMDEPS=	${.CURDIR}/sys/Makefile.inc ${ARCHDIR}/SYS.h \
 		${DESTDIR}/usr/include/sys/syscall.h
@@ -177,6 +198,10 @@ ${ASM}: ${ASMDEPS}
 ${ASM_GLUE}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
 	printf '#include "SYS.h"\nPSEUDO(${.PREFIX:S/tmp_/__/},${.PREFIX:S/tmp_//})\n' >${.TARGET}
+
+${ASM_GLUENOERR}: ${ASMDEPS}
+	${_MKTARGET_CREATE}
+	printf '#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX:S/tmp_/__/},${.PREFIX:S/tmp_//})\n' >${.TARGET}
 
 ${WEAKASM}: ${ASMDEPS}
 	${_MKTARGET_CREATE}
