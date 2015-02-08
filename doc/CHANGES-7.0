@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.196 2015/02/05 15:14:19 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.197 2015/02/08 22:21:09 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15688,3 +15688,45 @@ doc/3RDPARTY					1.1198
 
 	Import dhcpcd version 6.7.1.
 	[pettai, ticket #495]
+
+lib/libc/include/namespace.h			1.175
+lib/libc/sys/Makefile.inc			1.225, 1.227
+lib/libc/sys/fdiscard.2				1.3
+lib/libc/sys/fdiscard.c				1.1
+lib/libc/sys/posix_fallocate.c			1.1
+
+	Fix argument paddiing for posix_fallocate and fdiscard with gcc 1.x
+	PR/49617: Make posix_fallocate() return an error on failure, without
+	setting errno.
+	[christos, ticket #472]
+
+distrib/utils/embedded/conf/rpi.conf		1.25
+
+	Set CPU frequency to the value specified in firmware config
+	(/boot/config.txt) at boot on Raspberry Pi.
+	[jmcneill, ticket #496]
+
+distrib/sets/lists/base/ad.arm			patch
+distrib/sets/lists/base/ad.mips			patch
+distrib/sets/lists/base/md.amd64		patch
+distrib/sets/lists/base/md.sparc64		patch
+distrib/sets/lists/comp/ad.arm			patch
+distrib/sets/lists/comp/ad.mips			patch
+distrib/sets/lists/comp/md.amd64		patch
+distrib/sets/lists/comp/md.sparc64		patch
+distrib/sets/lists/debug/ad.arm			patch
+distrib/sets/lists/debug/ad.mips		patch
+distrib/sets/lists/debug/ad.powerpc		patch
+distrib/sets/lists/debug/md.amd64		patch
+distrib/sets/lists/debug/md.evbmips		patch
+distrib/sets/lists/debug/md.sparc64		patch
+
+	Fix set lists for builds without GCC.
+	[joerg, ticket #497]
+
+sys/arch/xen/x86/xen_ipi.c			1.19
+
+	valid_ipimask is only used under DIAGNOSTIC, so only define
+	it then.  Fixes build with clang.
+	[joerg, ticket #498]
+
