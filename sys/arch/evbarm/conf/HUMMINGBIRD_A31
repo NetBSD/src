@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.20 2014/11/23 13:42:06 jmcneill Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.21 2015/02/08 20:25:10 joerg Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -288,9 +288,9 @@ ukphy*		at mii? phy ?
 
 # disk/mass storage pseudo-devices
 #pseudo-device	md			# memory disk device (ramdisk)
-#pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	fss			# file system snapshot device
-#pseudo-device	putter			# for puffs and pud
+pseudo-device	vnd			# disk-like interface to files
+pseudo-device	fss			# file system snapshot device
+pseudo-device	putter			# for puffs and pud
 pseudo-device	drvctl			# driver control
 
 # network pseudo-devices
