@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.61.2.4 2015/01/25 00:19:25 martin Exp $
+# $NetBSD: md.sparc64,v 1.61.2.5 2015/02/08 22:15:02 snj Exp $
 ./usr/lib/sparc/i18n/libBIG5_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libDECHanyu_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libEUCTW_g.a		comp-obsolete		obsolete
@@ -24,7 +24,7 @@
 ./usr/lib/sparc/i18n/libmapper_zone_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/libamu_g.a			comp-c-debuglib		compat,debuglib
 ./usr/lib/sparc/libarchive_g.a			comp-c-debuglib		compat,debuglib
-./usr/lib/sparc/libasan_g.a			comp-c-debuglib		compat,debuglib
+./usr/lib/sparc/libasan_g.a			comp-c-debuglib		compat,debuglib,gcc=48
 ./usr/lib/sparc/libasn1_g.a			comp-c-debuglib		compat,debuglib,kerberos
 ./usr/lib/sparc/libatf-c++_g.a			comp-c-debuglib		compat,debuglib,atf
 ./usr/lib/sparc/libatf-c_g.a			comp-c-debuglib		compat,debuglib,atf
@@ -189,7 +189,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libamu.so.4.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libarchive.so.3.1.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete
-./usr/libdata/debug/usr/lib/sparc/libasan.so.0.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libasan.so.0.0.debug		comp-compat-shlib	compat,pic,debug,gcc=48
 ./usr/libdata/debug/usr/lib/sparc/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/sparc/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,obsolete
 ./usr/libdata/debug/usr/lib/sparc/libatf-c++.so.1.0.debug		comp-compat-shlib	compat,pic,atf,debug

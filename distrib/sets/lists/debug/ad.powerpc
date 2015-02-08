@@ -1,7 +1,7 @@
-# $NetBSD: ad.powerpc,v 1.18.2.4 2015/01/25 00:19:25 martin Exp $
+# $NetBSD: ad.powerpc,v 1.18.2.5 2015/02/08 22:15:02 snj Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
-./usr/lib/powerpc/libasan_g.a			comp-c-debuglib		compat,arch64,debuglib
+./usr/lib/powerpc/libasan_g.a			comp-c-debuglib		compat,arch64,debuglib,gcc=48
 ./usr/lib/powerpc/libasn1_g.a			comp-c-debuglib		compat,arch64,debuglib,kerberos
 ./usr/lib/powerpc/libatf-c++_g.a		comp-c-debuglib		compat,arch64,debuglib,atf
 ./usr/lib/powerpc/libatf-c_g.a			comp-c-debuglib		compat,arch64,debuglib,atf
@@ -147,7 +147,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/i18n/libmapper_zone.so.5.0.debug	comp-i18n-shlib		compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libamu.so.4.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libarchive.so.3.1.debug		comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/libasan.so.0.0.debug		comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/libasan.so.0.0.debug		comp-compat-shlib	compat,arch64,debug,pic,gcc=48
 ./usr/libdata/debug/usr/lib/powerpc/libasn1.so.9.0.debug		comp-compat-shlib	compat,arch64,debug,pic,kerberos
 ./usr/libdata/debug/usr/lib/powerpc/libatf-c++.so.1.0.debug		comp-compat-shlib	compat,arch64,debug,pic,atf,debug
 ./usr/libdata/debug/usr/lib/powerpc/libatf-c.so.0.0.debug			comp-compat-shlib	compat,arch64,debug,pic,atf

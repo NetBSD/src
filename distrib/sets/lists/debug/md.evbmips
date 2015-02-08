@@ -1,4 +1,4 @@
-#$NetBSD: md.evbmips,v 1.4.2.1 2015/01/25 00:19:25 martin Exp $
+#$NetBSD: md.evbmips,v 1.4.2.2 2015/02/08 22:15:02 snj Exp $
 ./usr/lib/64/i18n/libBIG5_g.a	comp-c-debuglib	compat,debuglib,arch64
 ./usr/lib/64/i18n/libDECHanyu_g.a	comp-c-debuglib	compat,debuglib,arch64
 ./usr/lib/64/i18n/libEUCTW_g.a	comp-c-debuglib	compat,debuglib,arch64
@@ -24,7 +24,7 @@
 ./usr/lib/64/i18n/libmapper_zone_g.a	comp-c-debuglib	compat,debuglib,arch64
 ./usr/lib/64/libamu_g.a		comp-c-debuglib	compat,debuglib,arch64
 ./usr/lib/64/libarchive_g.a	comp-c-debuglib	compat,debuglib,arch64
-./usr/lib/64/libasan_g.a	comp-c-debuglib	compat,debuglib,arch64
+./usr/lib/64/libasan_g.a	comp-c-debuglib	compat,debuglib,arch64,gcc=48
 ./usr/lib/64/libasn1_g.a	comp-c-debuglib	compat,debuglib,arch64,kerberos
 ./usr/lib/64/libatf-c++_g.a	comp-c-debuglib	compat,debuglib,arch64
 ./usr/lib/64/libatf-c_g.a	comp-c-debuglib	compat,debuglib,arch64
@@ -158,7 +158,7 @@
 ./usr/lib/o32/i18n/libmapper_zone_g.a	comp-c-debuglib compat,debuglib,arch64
 ./usr/lib/o32/libamu_g.a	comp-c-debuglib compat,debuglib,arch64
 ./usr/lib/o32/libarchive_g.a	comp-c-debuglib compat,debuglib,arch64
-./usr/lib/o32/libasan_g.a	comp-c-debuglib compat,debuglib,arch64
+./usr/lib/o32/libasan_g.a	comp-c-debuglib compat,debuglib,arch64,gcc=48
 ./usr/lib/o32/libasn1_g.a	comp-c-debuglib compat,debuglib,arch64,kerberos
 ./usr/lib/o32/libatf-c++_g.a	comp-c-debuglib compat,debuglib,arch64
 ./usr/lib/o32/libatf-c_g.a	comp-c-debuglib compat,debuglib,arch64

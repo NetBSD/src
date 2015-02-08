@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.50.2.1 2015/01/25 00:19:24 martin Exp $
+# $NetBSD: ad.mips,v 1.50.2.2 2015/02/08 22:15:02 snj Exp $
 ./usr/bin/elf2aout				comp-obsolete		obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/g++/bits/mips32			comp-c-include		arch64
@@ -176,10 +176,10 @@
 ./usr/lib/64/libarchive.so			base-sys-shlib		compat,pic
 ./usr/lib/64/libarchive_p.a			comp-c-proflib		compat,profile
 ./usr/lib/64/libarchive_pic.a			comp-c-piclib		compat,pic,picinstall
-./usr/lib/64/libasan.a				comp-c-lib		compat
-./usr/lib/64/libasan.so				base-sys-shlib		compat,pic
-./usr/lib/64/libasan_p.a			comp-c-proflib		compat,profile
-./usr/lib/64/libasan_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/64/libasan.a				comp-c-lib		compat,gcc=48
+./usr/lib/64/libasan.so				base-sys-shlib		compat,pic,gcc=48
+./usr/lib/64/libasan_p.a			comp-c-proflib		compat,profile,gcc=48
+./usr/lib/64/libasan_pic.a			comp-c-piclib		compat,pic,picinstall,gcc=48
 ./usr/lib/64/libasn1.a				comp-c-lib		compat,kerberos
 ./usr/lib/64/libasn1.so				base-sys-shlib		compat,pic,kerberos
 ./usr/lib/64/libasn1_p.a			comp-c-proflib		compat,profile,kerberos
@@ -799,10 +799,10 @@
 ./usr/lib/o32/libarchive.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libarchive_p.a			comp-c-proflib		compat,profile
 ./usr/lib/o32/libarchive_pic.a			comp-c-piclib		compat,pic,picinstall
-./usr/lib/o32/libasan.a				comp-c-lib		compat
-./usr/lib/o32/libasan.so			base-sys-shlib		compat,pic
-./usr/lib/o32/libasan_p.a			comp-c-proflib		compat,profile
-./usr/lib/o32/libasan_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/o32/libasan.a				comp-c-lib		compat,gcc=48
+./usr/lib/o32/libasan.so			base-sys-shlib		compat,pic,gcc=48
+./usr/lib/o32/libasan_p.a			comp-c-proflib		compat,profile,gcc=48
+./usr/lib/o32/libasan_pic.a			comp-c-piclib		compat,pic,picinstall,gcc=48
 ./usr/lib/o32/libasn1.a				comp-c-lib		compat,kerberos
 ./usr/lib/o32/libasn1.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/o32/libasn1_p.a			comp-c-proflib		compat,profile,kerberos

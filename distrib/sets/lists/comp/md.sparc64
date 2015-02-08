@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.187.2.1 2015/01/25 00:19:24 martin Exp $
+# $NetBSD: md.sparc64,v 1.187.2.2 2015/02/08 22:15:02 snj Exp $
 ./usr/include/g++/bits/sparc			comp-c-include		compat
 ./usr/include/g++/bits/sparc/c++config.h	comp-c-include		gcc=48,compat
 ./usr/include/g++/bits/sparc64			comp-c-include		compat
@@ -251,10 +251,10 @@
 ./usr/lib/sparc/libarchive.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libarchive_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libarchive_pic.a		comp-c-piclib		compat,pic,picinstall
-./usr/lib/sparc/libasan.a			comp-c-lib		compat
-./usr/lib/sparc/libasan.so			base-sys-shlib		compat,pic
-./usr/lib/sparc/libasan_p.a			comp-c-proflib		compat,profile
-./usr/lib/sparc/libasan_pic.a			comp-c-piclib		compat,pic,picinstall
+./usr/lib/sparc/libasan.a			comp-c-lib		compat,gcc=48
+./usr/lib/sparc/libasan.so			base-sys-shlib		compat,pic,gcc=48
+./usr/lib/sparc/libasan_p.a			comp-c-proflib		compat,profile,gcc=48
+./usr/lib/sparc/libasan_pic.a			comp-c-piclib		compat,pic,picinstall,gcc=48
 ./usr/lib/sparc/libasn1.a			comp-c-lib		compat,kerberos
 ./usr/lib/sparc/libasn1.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/sparc/libasn1_p.a			comp-c-proflib		compat,profile,kerberos

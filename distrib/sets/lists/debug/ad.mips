@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.38.2.4 2015/01/25 00:19:25 martin Exp $
+# $NetBSD: ad.mips,v 1.38.2.5 2015/02/08 22:15:02 snj Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -61,7 +61,7 @@
 ./usr/libdata/debug/usr/lib/64/libamu.so.4.0.debug		comp-amd-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libarchive.so.3.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete,arch64
-./usr/libdata/debug/usr/lib/64/libasan.so.0.0.debug		comp-compat-shlib	compat,pic,debug,arch64
+./usr/libdata/debug/usr/lib/64/libasan.so.0.0.debug		comp-compat-shlib	compat,pic,debug,arch64,gcc=48
 ./usr/libdata/debug/usr/lib/64/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,arch64
 ./usr/libdata/debug/usr/lib/64/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64,obsolete
 ./usr/libdata/debug/usr/lib/64/libatf-c++.so.1.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64
@@ -239,7 +239,7 @@
 ./usr/libdata/debug/usr/lib/o32/libamu.so.4.0.debug		comp-amd-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libarchive.so.3.1.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libasn1.so.8.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,obsolete,arch64
-./usr/libdata/debug/usr/lib/o32/libasan.so.0.0.debug		comp-compat-shlib	compat,pic,debug,arch64
+./usr/libdata/debug/usr/lib/o32/libasan.so.0.0.debug		comp-compat-shlib	compat,pic,debug,arch64,gcc=48
 ./usr/libdata/debug/usr/lib/o32/libasn1.so.9.0.debug		comp-compat-shlib	compat,pic,kerberos,debug,arch64
 ./usr/libdata/debug/usr/lib/o32/libatf-c++.so.0.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64,obsolete
 ./usr/libdata/debug/usr/lib/o32/libatf-c++.so.1.0.debug		comp-compat-shlib	compat,pic,atf,debug,arch64

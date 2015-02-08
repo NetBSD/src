@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.54.2.4 2015/01/25 00:19:24 martin Exp $
+# $NetBSD: ad.arm,v 1.54.2.5 2015/02/08 22:15:02 snj Exp $
 ./lib/oabi					base-compat-shlib	compat
 ./lib/oabi/npf					base-npf-shlib		compat
 ./lib/oabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -73,8 +73,8 @@
 ./usr/lib/oabi/libarchive.so.3.1		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libarm.so.0			base-sys-shlib		compat,pic
 ./usr/lib/oabi/libarm.so.0.0			base-sys-shlib		compat,pic
-./usr/lib/oabi/libasan.so.0			base-compat-shlib	compat,pic
-./usr/lib/oabi/libasan.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/oabi/libasan.so.0			base-compat-shlib	compat,pic,gcc=48
+./usr/lib/oabi/libasan.so.0.0			base-compat-shlib	compat,pic,gcc=48
 ./usr/lib/oabi/libasn1.so.9			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libasn1.so.9.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/oabi/libatf-c++.so.1			base-compat-shlib	compat,pic,atf
