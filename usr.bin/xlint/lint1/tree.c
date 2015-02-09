@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.77 2014/11/20 21:17:18 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.78 2015/02/09 18:17:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.77 2014/11/20 21:17:18 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.78 2015/02/09 18:17:34 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -2002,9 +2002,18 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 		v->v_ansiu = 0;
 	}
 
-	if (nt != FLOAT && nt != DOUBLE && nt != LDOUBLE) {
+	switch (nt) {
+	case FLOAT:
+	case FCOMPLEX:
+	case DOUBLE:
+	case DCOMPLEX:
+	case LDOUBLE:
+	case LCOMPLEX:
+		break;
+	default:
 		sz = tp->t_isfield ? tp->t_flen : size(nt);
 		nv->v_quad = xsign(nv->v_quad, nt, sz);
+		break;
 	}
 
 	if (rchk && op != CVT) {
