@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.198 2015/02/09 00:27:28 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.199 2015/02/09 09:46:45 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15734,4 +15734,16 @@ share/mk/bsd.own.mk				patch
 
 	Switch powerpc64 and m68k to gcc 4.8.
 	[chs, ticket #499]
+
+sys/dev/usb/hid.c				1.36
+
+	Global Item #3 should be Physical Minimum not Maximum according to
+	the HID spec.
+	[jmcneill, ticket #500]
+
+
+sys/kern/uipc_mbuf.c				1.161
+
+	Correct m_len calculation for m_dup() with mbuf clusters.
+	[mlelstv, ticket #501]
 
