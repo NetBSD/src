@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.829.2.2 2015/01/02 20:47:51 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.829.2.3 2015/02/09 00:25:33 snj Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -61,13 +61,7 @@ MKGCC?=		no
 #
 .if ${MKGCC:Uyes} != "no"
 
-# Platforms still using GCC 4.5
-.if \
-      ${MACHINE_CPU} == "m68k" || \
-      ${MACHINE_ARCH} == "powerpc64"
-HAVE_GCC?=    45
-
-.elif ${MACHINE} == "playstation2" || ${MACHINE_CPU} == "aarch64"
+.if ${MACHINE} == "playstation2" || ${MACHINE_CPU} == "aarch64"
 HAVE_GCC?=    0
 .else
 # Otherwise, default to GCC4.8
