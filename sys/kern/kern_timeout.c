@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.49 2015/02/08 19:41:00 christos Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.50 2015/02/09 20:46:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.49 2015/02/08 19:41:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.50 2015/02/09 20:46:55 christos Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -777,12 +777,11 @@ db_show_callout_bucket(struct callout_cpu *cc, struct callout_circq *bucket)
 	cc = &cci;
 
 	db_read_bytes((db_addr_t)bucket, sizeof(bi), (char *)&bi);
-	bucket = &bi;
 
-	if (CIRCQ_EMPTY(bucket))
+	if (CIRCQ_EMPTY(&bi))
 		return;
 
-	for (c = CIRCQ_FIRST(bucket); /*nothing*/; c = CIRCQ_NEXT(&c->c_list)) {
+	for (c = CIRCQ_FIRST(&bi); /*nothing*/; c = CIRCQ_NEXT(&c->c_list)) {
 		db_read_bytes((db_addr_t)c, sizeof(ci), (char *)&ci);
 		c = &ci;
 		db_find_sym_and_offset((db_addr_t)(intptr_t)c->c_func, &name,
