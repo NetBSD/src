@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.35 2012/02/24 06:48:23 mrg Exp $	*/
+/*	$NetBSD: hid.c,v 1.35.14.1 2015/02/09 09:43:09 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.35 2012/02/24 06:48:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.35.14.1 2015/02/09 09:43:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				c->logical_maximum = dval;
 				break;
 			case 3:
-				c->physical_maximum = dval;
+				c->physical_minimum = dval;
 				break;
 			case 4:
 				c->physical_maximum = dval;
