@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2015/02/08 19:42:12 christos Exp $
+#	$NetBSD: Makefile,v 1.29 2015/02/09 17:48:07 christos Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -34,7 +34,7 @@ S=		${.CURDIR}/../../sys
 
 CPPFLAGS+=	-I${.CURDIR} -I${.OBJDIR} -I${S} -fno-strict-aliasing
 CPPFLAGS+=	-DDDB_VERBOSE_HELP -DDB_MAX_LINE=10000000 -D_KMEMUSER
-CPPFLAGS+=	-UDB_MACHINE_COMMANDS -DCRASH -DDDB
+CPPFLAGS+=	-UDB_MACHINE_COMMANDS
 
 # ddb files from kernel
 .PATH:	$S/ddb
@@ -49,6 +49,7 @@ SRCS+=	db_disasm.c
 
 .PATH:  $S/kern
 SRCS+=	kern_timeout.c
+CPPFLAGS.kern_timeout.c += -DCRASH -DDDB
 
 CPPFLAGS+=	-I${S}/arch
 
