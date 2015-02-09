@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.197 2015/02/08 22:21:09 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.198 2015/02/09 00:27:28 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15729,4 +15729,9 @@ sys/arch/xen/x86/xen_ipi.c			1.19
 	valid_ipimask is only used under DIAGNOSTIC, so only define
 	it then.  Fixes build with clang.
 	[joerg, ticket #498]
+
+share/mk/bsd.own.mk				patch
+
+	Switch powerpc64 and m68k to gcc 4.8.
+	[chs, ticket #499]
 
