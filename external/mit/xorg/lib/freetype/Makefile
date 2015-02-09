@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2015/01/26 08:47:25 wiz Exp $
+#	$NetBSD: Makefile,v 1.14 2015/02/09 16:27:29 ryoon Exp $
 
 .include <bsd.own.mk>
 
@@ -76,10 +76,6 @@ SRCS+=	type42.c
 
 .PATH:	${FREETYPE}/src/winfonts
 SRCS+=	winfnt.c
-
-.PATH:	${FREETYPE}/include
-INCS=	ft2build.h
-INCSDIR=${X11INCDIR}
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 CPPFLAGS+=	-DFT_CONFIG_OPTION_SYSTEM_ZLIB \
