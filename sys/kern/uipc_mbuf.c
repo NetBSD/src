@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.158 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.158.4.1 2015/02/09 09:46:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.158 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.158.4.1 2015/02/09 09:46:01 martin Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -777,8 +777,13 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 				/*
 				 * we are unsure about the way m was allocated.
 				 * copy into multiple MCLBYTES cluster mbufs.
+				 *
+				 * recompute m_len, it is no longer valid if MCLGET()
+				 * fails to allocate a cluster. Then we try to split
+				 * the source into normal sized mbufs.
 				 */
 				MCLGET(n, wait);
+				n->m_len = 0;
 				n->m_len = M_TRAILINGSPACE(n);
 				n->m_len = m_copylen(len, n->m_len);
 				n->m_len = min(n->m_len, m->m_len - off);
