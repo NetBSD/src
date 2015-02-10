@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.115 2015/01/24 18:07:54 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.116 2015/02/10 19:11:52 rjs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -107,6 +107,8 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define	SOCK_RAW	3		/* raw-protocol interface */
 #define	SOCK_RDM	4		/* reliably-delivered message */
 #define	SOCK_SEQPACKET	5		/* sequenced packet stream */
+#define	SOCK_CONN_DGRAM	6		/* connection-orientated datagram */
+#define	SOCK_DCCP	SOCK_CONN_DGRAM
 
 #define	SOCK_CLOEXEC	0x10000000	/* set close on exec on socket */
 #define	SOCK_NONBLOCK	0x20000000	/* set non blocking i/o socket */
