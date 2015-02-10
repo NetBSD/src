@@ -1,4 +1,4 @@
-/*	$NetBSD: portalgo.c,v 1.7 2014/12/02 20:25:47 christos Exp $	*/
+/*	$NetBSD: portalgo.c,v 1.8 2015/02/10 19:11:52 rjs Exp $	*/
 
 /*
  * Copyright 2011 Vlad Balan
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.7 2014/12/02 20:25:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portalgo.c,v 1.8 2015/02/10 19:11:52 rjs Exp $");
 
 #include "opt_inet.h"
 
@@ -163,6 +163,7 @@ pcb_getports(struct inpcb_hdr *inp_hdr, uint16_t *lastport,
 	so = inp_hdr->inph_socket;
 	switch (so->so_type) {
 	case SOCK_DGRAM: /* UDP or DCCP */
+	case SOCK_CONN_DGRAM:
 		portalgo_proto = PORTALGO_UDP;
 		break;
 	case SOCK_STREAM: /* TCP or SCTP */
