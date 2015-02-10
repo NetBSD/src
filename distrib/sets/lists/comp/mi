@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1945 2015/02/05 16:07:15 christos Exp $
+#	$NetBSD: mi,v 1.1946 2015/02/10 19:11:52 rjs Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2636,6 +2636,7 @@
 ./usr/include/netconfig.h			comp-c-include
 ./usr/include/netdb.h				comp-c-include
 ./usr/include/netgroup.h			comp-c-include
+./usr/include/netinet/dccp.h			comp-c-include
 ./usr/include/netinet/icmp6.h			comp-c-include
 ./usr/include/netinet/icmp_var.h		comp-c-include
 ./usr/include/netinet/if_arc.h			comp-obsolete		obsolete
