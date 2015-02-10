@@ -1,4 +1,4 @@
-#	$NetBSD: files.netinet,v 1.25 2014/12/02 19:35:27 christos Exp $
+#	$NetBSD: files.netinet,v 1.26 2015/02/10 19:11:52 rjs Exp $
 
 defflag opt_tcp_debug.h		TCP_DEBUG
 defparam opt_tcp_debug.h	TCP_NDEBUG
@@ -16,6 +16,9 @@ defflag opt_inet_csum.h		INET_CSUM_COUNTERS TCP_CSUM_COUNTERS
 				UDP_CSUM_COUNTERS
 
 defparam opt_tcp_congctl.h	TCP_CONGCTL_DEFAULT
+
+defflag opt_dccp.h		DCCP DCCP_TFRC DCCPSTATES DCCPBHASHSIZE
+				DCCP_DEBUG_ON ACKDEBUG
 
 file	netinet/igmp.c		inet
 file	netinet/in.c		inet
@@ -45,3 +48,8 @@ file	netinet/tcp_vtw.c	inet | inet6
 
 file	netinet/udp_usrreq.c	inet | inet6
 file	netinet/portalgo.c	inet | inet6
+
+file	netinet/dccp_cc_sw.c	inet & dccp | inet6 & dccp
+file	netinet/dccp_tcplike.c	inet & dccp | inet6 & dccp
+file	netinet/dccp_tfrc.c	inet & dccp | inet6 & dccp
+file	netinet/dccp_usrreq.c	inet & dccp | inet6 & dccp
