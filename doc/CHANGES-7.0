@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.199 2015/02/09 09:46:45 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.200 2015/02/11 08:37:00 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15746,4 +15746,25 @@ sys/kern/uipc_mbuf.c				1.161
 
 	Correct m_len calculation for m_dup() with mbuf clusters.
 	[mlelstv, ticket #501]
+
+sys/dev/usb/uhidev.c				1.62
+sys/dev/usb/uhidev.h				1.16
+sys/dev/usb/x1input_rdesc.h			1.1
+
+	Add Xbox One controller support.
+	[jmcneill, ticket #502]
+
+usr.bin/netstat/inet.c				1.106
+usr.bin/netstat/inet6.c				1.68
+
+	Allocate the right size for pcb blocks.
+	[christos, ticket #503]
+
+usr.bin/login/login.c				1.105
+usr.bin/login/login_pam.c			1.24
+
+	Remove the syslogging of a dial out login warning based on the
+	tty name, because the test is sloppy and doesn't correspond to
+	the current naming anyway.
+	[aymeric, ticket #506]
 
