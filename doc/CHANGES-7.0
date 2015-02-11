@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.202 2015/02/11 10:30:41 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.203 2015/02/11 13:00:59 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15788,4 +15788,10 @@ xsrc/xfree/xc/programs/Xserver/xkb/xkb.c	1.2
 	Apply fixes for CVE-2015-0255:
 	Information leak in the XkbSetGeometry request of X servers.
 	[mrg, ticket #507]
+
+libexec/getty/ttys.5				1.19
+
+	Update the example to use dty00 instead of ttyd0 to reflect
+	current practice.
+	[aymeric, ticket #508]
 
