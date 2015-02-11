@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.192 2015/02/04 11:38:31 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.193 2015/02/11 14:41:03 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -9556,4 +9556,15 @@ libexec/httpd/bozohttpd.c			1.61
 	Answer 403 not just when an open() fails with EPERM, but with
 	EACCES as well.
 	[snj, ticket #1246]
+
+usr.bin/netstat/inet.c				1.106
+usr.bin/netstat/inet6.c				1.68
+
+	Allocate the right size for pcb blocks.
+	[christos, ticket #1249]
+
+sys/dev/usb/usbdi.c				1.163 (via patch)
+
+	Clip xfer->actlen also in the !DIAGNOSTIC case.
+	[aymeric, ticket #1250]
 
