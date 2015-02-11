@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.59.6.1 2013/07/29 06:11:02 msaitoh Exp $	*/
+/*	$NetBSD: inet6.c,v 1.59.6.2 2015/02/11 14:04:19 martin Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.59.6.1 2013/07/29 06:11:02 msaitoh Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.59.6.2 2015/02/11 14:04:19 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -295,7 +295,7 @@ getpcblist_kmem(u_long off, const char *name, size_t *len) {
 	    (struct in6pcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
 	next = (struct in6pcb *)table.inpt_queue.cqh_first;
 
-	if ((pcblist = malloc(size)) == NULL)
+	if ((pcblist = malloc(size * sizeof(*pcblist))) == NULL)
 		err(1, "malloc");
 
 	i = 0;
@@ -334,7 +334,9 @@ getpcblist_kmem(u_long off, const char *name, size_t *len) {
 		memcpy(&pcblist[i].ki_d, &sin6, sizeof(sin6));
 		pcblist[i].ki_tstate = tcpcb.t_state;
 		if (i++ == size) {
-			struct kinfo_pcb *n = realloc(pcblist, size += 100);
+			size += 100;
+			struct kinfo_pcb *n = realloc(pcblist,
+			    size * sizeof(*pcblist));
 			if (n == NULL)
 				err(1, "realloc");
 			pcblist = n;
