@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.201 2015/02/11 09:46:43 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.202 2015/02/11 10:30:41 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15781,4 +15781,11 @@ external/mit/xorg/lib/freetype/freetype2.pc.in	1.3
 	Move the ft2build.h into the include/freetype2 subdirectory,
 	like the pkgsrc version does.
 	[ryoon, ticket #504]
+
+xsrc/external/mit/xorg-server/dist/xkb/xkb.c	1.2
+xsrc/xfree/xc/programs/Xserver/xkb/xkb.c	1.2
+
+	Apply fixes for CVE-2015-0255:
+	Information leak in the XkbSetGeometry request of X servers.
+	[mrg, ticket #507]
 
