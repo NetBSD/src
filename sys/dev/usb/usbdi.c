@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.124.4.2 2010/01/27 20:56:45 sborrill Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.124.4.3 2015/02/11 15:39:33 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.124.4.2 2010/01/27 20:56:45 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.124.4.3 2015/02/11 15:39:33 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -773,13 +773,13 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 
 	if (!(xfer->flags & USBD_NO_COPY) && xfer->actlen != 0 &&
 	    usbd_xfer_isread(xfer)) {
-#ifdef DIAGNOSTIC
 		if (xfer->actlen > xfer->length) {
+#ifdef DIAGNOSTIC
 			printf("usb_transfer_complete: actlen > len %d > %d\n",
 			       xfer->actlen, xfer->length);
+#endif
 			xfer->actlen = xfer->length;
 		}
-#endif
 		memcpy(xfer->buffer, KERNADDR(dmap, 0), xfer->actlen);
 	}
 
