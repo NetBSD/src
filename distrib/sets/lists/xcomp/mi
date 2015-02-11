@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.152.2.2 2015/01/05 21:23:51 martin Exp $
+#	 $NetBSD: mi,v 1.152.2.3 2015/02/11 09:43:58 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5745,6 +5745,7 @@
 ./usr/X11R7/include/freetype2/freetype/tttables.h	-unknown-	obsolete
 ./usr/X11R7/include/freetype2/freetype/tttags.h		-unknown-	obsolete
 ./usr/X11R7/include/freetype2/freetype/ttunpat.h	-unknown-	obsolete
+./usr/X11R7/include/freetype2/ft2build.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/ftadvanc.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/ftautoh.h			-unknown-	xorg
 ./usr/X11R7/include/freetype2/ftbbox.h			-unknown-	xorg
@@ -5788,7 +5789,7 @@
 ./usr/X11R7/include/freetype2/tttables.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/tttags.h			-unknown-	xorg
 ./usr/X11R7/include/freetype2/ttunpat.h			-unknown-	xorg
-./usr/X11R7/include/ft2build.h				-unknown-	xorg
+./usr/X11R7/include/ft2build.h				xcomp-obsolete	obsolete
 ./usr/X11R7/include/libdrm/drm.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/drm_fourcc.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/drm_mode.h			-unknown-	xorg
