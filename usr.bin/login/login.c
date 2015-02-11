@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.104 2014/03/16 00:33:13 dholland Exp $	*/
+/*	$NetBSD: login.c,v 1.104.4.1 2015/02/11 08:34:17 snj Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.104 2014/03/16 00:33:13 dholland Exp $");
+__RCSID("$NetBSD: login.c,v 1.104.4.1 2015/02/11 08:34:17 snj Exp $");
 #endif /* not lint */
 
 /*
@@ -636,9 +636,6 @@ main(int argc, char *argv[])
 	if (krb5tkfile_env)
 		(void)setenv("KRB5CCNAME", krb5tkfile_env, 1);
 #endif
-
-	if (tty[sizeof("tty")-1] == 'd')
-		syslog(LOG_INFO, "DIALUP %s, %s", tty, pwd->pw_name);
 
 	/* If fflag is on, assume caller/authenticator has logged root login. */
 	if (rootlogin && fflag == 0) {
