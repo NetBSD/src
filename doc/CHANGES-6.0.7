@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.26 2015/02/04 04:55:51 snj Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.27 2015/02/11 14:42:39 martin Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -4304,3 +4304,8 @@ external/bsd/libevent/dist/buffer.c             patch
 	Fix CVE-2014-6272.
 	[spz, ticket #1243] 
  
+sys/dev/usb/usbdi.c				1.163 (via patch)
+
+	Clip xfer->actlen also in the !DIAGNOSTIC case.
+	[aymeric, ticket #1250]
+
