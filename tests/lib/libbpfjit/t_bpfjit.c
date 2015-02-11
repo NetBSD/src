@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfjit.c,v 1.8 2014/11/20 11:08:29 alnsn Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.9 2015/02/11 23:00:41 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2011-2012, 2014 Alexander Nasonov.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.8 2014/11/20 11:08:29 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.9 2015/02/11 23:00:41 alnsn Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
@@ -68,6 +68,71 @@ ATF_TC_BODY(libbpfjit_empty, tc)
 	struct bpf_insn dummy;
 
 	ATF_CHECK(bpfjit_generate_code(NULL, &dummy, 0) == NULL);
+}
+
+ATF_TC(libbpfjit_ret_k);
+ATF_TC_HEAD(libbpfjit_ret_k, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test JIT compilation of a trivial bpf program");
+}
+
+ATF_TC_BODY(libbpfjit_ret_k, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_RET+BPF_K, 17)
+	};
+
+	bpfjit_func_t code;
+	uint8_t pkt[1]; /* the program doesn't read any data */
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	ATF_CHECK(bpf_validate(insns, insn_count));
+
+	code = bpfjit_generate_code(NULL, insns, insn_count);
+	ATF_REQUIRE(code != NULL);
+
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 17);
+
+	bpfjit_free_code(code);
+}
+
+ATF_TC(libbpfjit_bad_ret_k);
+ATF_TC_HEAD(libbpfjit_bad_ret_k, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test that JIT compilation of a program with bad BPF_RET fails");
+}
+
+ATF_TC_BODY(libbpfjit_bad_ret_k, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_RET+BPF_K+0x8000, 13)
+	};
+
+	bpfjit_func_t code;
+	uint8_t pkt[1]; /* the program doesn't read any data */
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	/*
+	 * The point of this test is checking a bad instruction of
+	 * a valid class and with a valid BPF_RVAL data.
+	 */
+	const uint16_t rcode = insns[0].code;
+	ATF_CHECK(BPF_CLASS(rcode) == BPF_RET &&
+	    (BPF_RVAL(rcode) == BPF_K || BPF_RVAL(rcode) == BPF_A));
+
+	ATF_CHECK(!bpf_validate(insns, insn_count));
+
+	/* Current implementation generates code. */
+	code = bpfjit_generate_code(NULL, insns, insn_count);
+	ATF_REQUIRE(code != NULL);
+
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 13);
+
+	bpfjit_free_code(code);
 }
 
 ATF_TC(libbpfjit_alu_add_k);
@@ -4430,6 +4495,8 @@ ATF_TP_ADD_TCS(tp)
 	 * to ../../net/bpfjit/t_bpfjit.c
 	 */
 	ATF_TP_ADD_TC(tp, libbpfjit_empty);
+	ATF_TP_ADD_TC(tp, libbpfjit_ret_k);
+	ATF_TP_ADD_TC(tp, libbpfjit_bad_ret_k);
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_add_k);
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_sub_k);
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_mul_k);
