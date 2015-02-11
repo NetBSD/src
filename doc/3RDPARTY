@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1203 2015/02/09 21:59:30 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1204 2015/02/11 20:12:22 riastradh Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -316,6 +316,31 @@ Location:	external/bsd/dhcpcd/dist
 Notes:
 Please submit all changes to the author.
 The distribution doesn't include the Linux specific bits or build system.
+
+Package:       drm
+Version:       Linux 3.15
+Current Vers:  ?
+Maintainer:    Intel, AMD, Linux kernel developers
+Archive Site:  git://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+Home Page:     http://dri.freedesktop.org/
+Mailing List:  dri-devel@lists.freedesktop.org
+Responsible:   riastradh
+License:       BSD
+Location:      sys/external/bsd/drm2/dist
+Notes:
+Graphics drivers.   Talk to riastradh@ about updates.  When importing
+from Linux, we map
+       drivers/gpu/drm	       ->      sys/external/bsd/drm2/dist/drm
+       include/drm	       ->      sys/external/bsd/drm2/dist/include/drm
+       include/uapi/drm	       ->      sys/external/bsd/drm2/dist/uapi/drm
+GPL sources are excluded.  In the future, we may import them into
+external/gpl2/drm2 and build them as kernel modules.  Nouveau sources
+(drivers/gpu/drm/nouveau in Linux) must first be processed with the
+script sys/external/bsd/drm2/nouveau/nouveau2netbsd, about which see
+the source for details.
+Vendor tag:    LINUX
+Release tag:   linux-X-Y(-rcZ)-drm-bsd
+	(nouveau got reimported as linux-3-15-drm-bsd-reimport-nouveau)
 
 Package:	gmake
 Version:	3.81
