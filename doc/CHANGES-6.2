@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.193 2015/02/11 14:41:03 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.194 2015/02/11 14:56:58 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -9567,4 +9567,18 @@ sys/dev/usb/usbdi.c				1.163 (via patch)
 
 	Clip xfer->actlen also in the !DIAGNOSTIC case.
 	[aymeric, ticket #1250]
+
+usr.bin/passwd/Makefile				1.43-1.44
+
+	Don't build kpasswd; heimdal does it for us.
+	Keep the built-in support for passwd -k, but don't make the
+	kpasswd link or install the kpasswd man page.
+	[aymeric, ticket #1251]
+
+external/mit/xorg-server/dist/xkb/xkb.c		1.2 (via patch)
+xfree/xc/programs/Xserver/xkb/xkb.c		1.2 (via patch)
+
+	Apply fixes for CVE-2015-0255:
+	Information leak in the XkbSetGeometry request of X servers.
+	[mrg, ticket #1253]
 
