@@ -1,4 +1,4 @@
- /* $NetBSD: TODO,v 1.9 2015/01/24 20:17:22 palle Exp $ */
+ /* $NetBSD: TODO,v 1.10 2015/02/11 04:47:11 palle Exp $ */
 
 Things to be done:
 
@@ -8,6 +8,7 @@ common:
 - change run-time checks for cpu type to function pointers
 
 sun4u:
+- GENERIC.UP kernel hangs on v445 (missing interrupt?)
 
 sun4v:
 - 64-bit kernel support
