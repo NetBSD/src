@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.27 2015/02/11 14:41:59 martin Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.28 2015/02/11 14:57:55 martin Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -4042,4 +4042,12 @@ sys/dev/usb/usbdi.c				1.163 (via patch)
 
 	Clip xfer->actlen also in the !DIAGNOSTIC case.
 	[aymeric, ticket #1250]
+
+external/mit/xorg-server/dist/xkb/xkb.c		1.2 (via patch)
+xfree/xc/programs/Xserver/xkb/xkb.c		1.2 (via patch)
+
+	Apply fixes for CVE-2015-0255:
+	Information leak in the XkbSetGeometry request of X servers.
+	[mrg, ticket #1253]
+
 
