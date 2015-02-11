@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.61 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.61.2.1 2015/02/11 08:25:40 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.2.1 2015/02/11 08:25:40 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61 2014/08/10 16:44:36 tls Exp $");
 #include <dev/usb/ugraphire_rdesc.h>
 /* Report descriptor for game controllers in "XInput" mode */
 #include <dev/usb/xinput_rdesc.h>
+/* Report descriptor for Xbox One controllers */
+#include <dev/usb/x1input_rdesc.h>
 
 #include "locators.h"
 
@@ -95,6 +97,10 @@ uhidev_match(device_t parent, cfdata_t match, void *aux)
 	/* Game controllers in "XInput" mode */
 	if (USBIF_IS_XINPUT(uaa))
 		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
+	/* Xbox One controllers */
+ 	if (USBIF_IS_X1INPUT(uaa) && uaa->ifaceno == 0)
+		return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
+
 	if (uaa->class != UICLASS_HID)
 		return (UMATCH_NONE);
 	if (usbd_get_quirks(uaa->device)->uq_flags & UQ_HID_IGNORE)
@@ -223,6 +229,11 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 	if (USBIF_IS_XINPUT(uaa)) {
 		size = sizeof uhid_xinput_report_descr;
 		descptr = uhid_xinput_report_descr;
+	}
+	if (USBIF_IS_X1INPUT(uaa)) {
+		sc->sc_flags |= UHIDEV_F_XB1;
+		size = sizeof uhid_x1input_report_descr;
+		descptr = uhid_x1input_report_descr;
 	}
 
 	if (descptr) {
@@ -595,9 +606,27 @@ uhidev_open(struct uhidev *scd)
 			error = ENOMEM;
 			goto out3;
 		}
+
+		if (sc->sc_flags & UHIDEV_F_XB1) {
+			uint8_t init_data[] = { 0x05, 0x20 };
+			int init_data_len = sizeof(init_data);
+			err = usbd_intr_transfer(sc->sc_oxfer, sc->sc_opipe, 0,
+			    USBD_NO_TIMEOUT, init_data, &init_data_len,
+			    "uhidevxb1");
+			if (err != USBD_NORMAL_COMPLETION) {
+				DPRINTF(("uhidev_open: xb1 init failed, "
+				    "error=%d\n", err));
+				error = EIO;
+				goto out4;
+			}
+		}
 	}
 
 	return (0);
+out4:
+	/* Free output xfer */
+	if (sc->sc_oxfer != NULL)
+		usbd_free_xfer(sc->sc_oxfer);
 out3:
 	/* Abort output pipe */
 	usbd_close_pipe(sc->sc_opipe);
