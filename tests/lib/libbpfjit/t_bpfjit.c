@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfjit.c,v 1.10 2015/02/11 23:17:16 alnsn Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.11 2015/02/11 23:33:16 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2011-2012, 2014 Alexander Nasonov.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.10 2015/02/11 23:17:16 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.11 2015/02/11 23:33:16 alnsn Exp $");
 
 #include <atf-c.h>
 #include <stdint.h>
@@ -1938,6 +1938,31 @@ ATF_TC_BODY(libbpfjit_jmp_ja_invalid, tc)
 	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
 	ATF_CHECK(!bpf_validate(insns, insn_count));
+	ATF_CHECK(bpfjit_generate_code(NULL, insns, insn_count) == NULL);
+}
+
+ATF_TC(libbpfjit_jmp_ja_overflow);
+ATF_TC_HEAD(libbpfjit_jmp_ja_overflow, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test BPF_JMP+BPF_JA with negative offset");
+}
+
+ATF_TC_BODY(libbpfjit_jmp_ja_overflow, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_JMP+BPF_JA, 1),
+		BPF_STMT(BPF_RET+BPF_K, 777),
+		BPF_STMT(BPF_JMP+BPF_JA, UINT32_MAX - 1), // -2
+		BPF_STMT(BPF_RET+BPF_K, 0)
+	};
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	/* Jumps with negative offsets work in userspace ... */
+	ATF_CHECK(bpf_validate(insns, insn_count));
+
+	/* .. but not for bpfjit. */
 	ATF_CHECK(bpfjit_generate_code(NULL, insns, insn_count) == NULL);
 }
 
@@ -4578,6 +4603,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, libbpfjit_alu_neg);
 	ATF_TP_ADD_TC(tp, libbpfjit_jmp_ja);
 	ATF_TP_ADD_TC(tp, libbpfjit_jmp_ja_invalid);
+	ATF_TP_ADD_TC(tp, libbpfjit_jmp_ja_overflow);
 	ATF_TP_ADD_TC(tp, libbpfjit_jmp_jgt_k);
 	ATF_TP_ADD_TC(tp, libbpfjit_jmp_jge_k);
 	ATF_TP_ADD_TC(tp, libbpfjit_jmp_jeq_k);
