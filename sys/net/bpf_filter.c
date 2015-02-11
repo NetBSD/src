@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.69 2015/02/11 12:03:30 alnsn Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.70 2015/02/11 12:53:15 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.69 2015/02/11 12:03:30 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.70 2015/02/11 12:53:15 alnsn Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -628,8 +628,8 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 	if (len > BPF_MAXINSNS)
 		return 0;
 #endif
-	if (f[len - 1].code != BPF_RET|BPF_K &&
-	    f[len - 1].code != BPF_RET|BPF_A) {
+	if (f[len - 1].code != (BPF_RET|BPF_K) &&
+	    f[len - 1].code != (BPF_RET|BPF_A)) {
 		return 0;
 	}
 
