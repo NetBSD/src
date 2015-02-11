@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.104 2013/11/23 22:01:12 christos Exp $	*/
+/*	$NetBSD: inet.c,v 1.104.4.1 2015/02/11 08:29:56 snj Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.104 2013/11/23 22:01:12 christos Exp $");
+__RCSID("$NetBSD: inet.c,v 1.104.4.1 2015/02/11 08:29:56 snj Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,7 @@ getpcblist_kmem(u_long off, const char *name, size_t *len) {
 	next = TAILQ_FIRST(head);
 	prev = TAILQ_END(head);
 
-	if ((pcblist = malloc(size)) == NULL)
+	if ((pcblist = malloc(size * sizeof(*pcblist))) == NULL)
 		err(1, "malloc");
 
 	i = 0;
@@ -316,7 +316,9 @@ getpcblist_kmem(u_long off, const char *name, size_t *len) {
 		pcblist[i].ki_tstate = tcpcb.t_state;
 		pcblist[i].ki_pflags = inpcb.inp_flags;
 		if (i++ == size) {
-			struct kinfo_pcb *n = realloc(pcblist, size += 100);
+			size += 100;
+			struct kinfo_pcb *n = realloc(pcblist,
+			    size * sizeof(*pcblist));
 			if (n == NULL)
 				err(1, "realloc");
 			pcblist = n;
