@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.97 2015/02/11 15:33:42 martin Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.98 2015/02/11 15:42:19 martin Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3731,4 +3731,9 @@ xfree/xc/programs/Xserver/xkb/xkb.c		1.2 (via patch)
 	Apply fixes for CVE-2015-0255:
 	Information leak in the XkbSetGeometry request of X servers.
 	[mrg, ticket #1949]
+
+sys/dev/usb/usbdi.c				1.163 (via patch)
+
+	Clip xfer->actlen also in the !DIAGNOSTIC case.
+	[aymeric, ticket #1948]
 
