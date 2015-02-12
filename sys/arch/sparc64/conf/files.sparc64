@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.146 2015/01/10 22:19:26 palle Exp $
+#	$NetBSD: files.sparc64,v 1.147 2015/02/12 10:09:10 palle Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -36,11 +36,14 @@ device	schizo: pcibus, sysmon_power, sysmon_taskq
 attach	schizo at mainbus
 device	pyro: pcibus, sysmon_power, sysmon_taskq
 attach	pyro at mainbus
+device	vpci: pcibus, sysmon_power, sysmon_taskq
+attach	vpci at mainbus
 include "dev/pci/files.pci"
 file	arch/sparc64/dev/psycho.c		psycho needs-flag
 file	arch/sparc64/dev/schizo.c		schizo
 file	arch/sparc64/dev/pyro.c			pyro
-file	arch/sparc64/dev/pci_machdep.c		psycho | schizo | pyro
+file	arch/sparc64/dev/vpci.c			vpci
+file	arch/sparc64/dev/pci_machdep.c		psycho | schizo | pyro | vpci
 
 define  central {}
 device	central: central
@@ -56,7 +59,7 @@ file	arch/sparc64/dev/fhc_central.c		fhc_central
 file	arch/sparc64/dev/fhc_mainbus.c		fhc_mainbus
 
 # IOMMU is for both
-file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo | pyro
+file	arch/sparc64/dev/iommu.c		sbus | psycho | schizo | pyro | vpci
 
 include "dev/ata/files.ata"
 
