@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.20 2015/02/08 15:22:33 macallan Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.21 2015/02/12 13:29:15 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.20 2015/02/08 15:22:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.21 2015/02/12 13:29:15 macallan Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -487,12 +487,12 @@ __BS(unmap)(void *v, bus_space_handle_t h, bus_size_t size, int acct)
 		printf("\n");
 #ifdef CHIP_W1_BUS_START
 		printf("%s: sys window[1]=0x%lx-0x%lx\n",
-		    __S(__BS(map)), (u_long)CHIP_W1_SYS_START(v),
+		    __S(__BS(unmap)), (u_long)CHIP_W1_SYS_START(v),
 		    (u_long)CHIP_W1_SYS_END(v));
 #endif
 #ifdef CHIP_W2_BUS_START
 		printf("%s: sys window[2]=0x%lx-0x%lx\n",
-		    __S(__BS(map)), (u_long)CHIP_W2_SYS_START(v),
+		    __S(__BS(unmap)), (u_long)CHIP_W2_SYS_START(v),
 		    (u_long)CHIP_W2_SYS_END(v));
 #endif
 #ifdef CHIP_W3_BUS_START
@@ -518,6 +518,7 @@ __BS(unmap)(void *v, bus_space_handle_t h, bus_size_t size, int acct)
 #endif
 	}	
 #endif /* CHIP_EXTENT */
+	__USE(addr);
 }
 
 static int
