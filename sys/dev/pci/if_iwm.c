@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.4 2015/02/13 18:02:32 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.5 2015/02/13 18:57:47 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.4 2015/02/13 18:02:32 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.5 2015/02/13 18:57:47 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -201,7 +201,6 @@ static const struct iwm_rate {
 
 struct iwm_newstate_state {
 	struct work ns_wk;
-	struct ieee80211com *ns_ic;
 	enum ieee80211_state ns_nstate;
 	int ns_arg;
 	int ns_generation;
@@ -415,9 +414,9 @@ static int	iwm_release(struct iwm_softc *, struct iwm_node *);
 static void	iwm_calib_timeout(void *);
 static void	iwm_setrates(struct iwm_node *);
 static int	iwm_media_change(struct ifnet *);
-static void	iwm_newstate_cb(void *);
+static void	iwm_newstate_cb(struct work *, void *);
 static int	iwm_newstate(struct ieee80211com *, enum ieee80211_state, int);
-static void	iwm_endscan_cb(void *);
+static void	iwm_endscan_cb(struct work *, void *);
 static int	iwm_init_hw(struct iwm_softc *);
 static int	iwm_init(struct ifnet *);
 static void	iwm_start(struct ifnet *);
@@ -860,7 +859,7 @@ iwm_read_mem(struct iwm_softc *sc, uint32_t addr, void *buf, int dwords)
 static int
 iwm_write_mem(struct iwm_softc *sc, uint32_t addr, const void *buf, int dwords)
 {
-	int offs;	
+	int offs;
 	const uint32_t *vals = buf;
 
 	if (iwm_nic_lock(sc)) {
@@ -1217,8 +1216,9 @@ iwm_alloc_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring, int qid)
 		    + offsetof(struct iwm_tx_cmd, scratch);
 		paddr += sizeof(struct iwm_device_cmd);
 
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    IWM_NUM_OF_TBS, MCLBYTES, 0, BUS_DMA_NOWAIT, &data->map);
+		error = bus_dmamap_create(sc->sc_dmat, IWM_RBUF_SIZE,
+		    IWM_NUM_OF_TBS, IWM_RBUF_SIZE, 0, BUS_DMA_NOWAIT,
+		    &data->map);
 		if (error != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not create TX buf DMA map\n");
@@ -1868,7 +1868,7 @@ iwm_post_alive(struct iwm_softc *sc)
 		return EBUSY;
 
 	if (sc->sched_base != iwm_read_prph(sc, IWM_SCD_SRAM_BASE_ADDR)) {
-		DPRINTF(("%s: sched addr mismatch", DEVNAME(sc)));
+		DPRINTF(("%s: sched addr mismatch\n", DEVNAME(sc)));
 		error = EINVAL;
 		goto out;
 	}
@@ -1992,10 +1992,9 @@ iwm_phy_db_get_section(struct iwm_softc *sc,
 
 static int
 iwm_phy_db_set_section(struct iwm_softc *sc,
-	struct iwm_calib_res_notif_phy_db *phy_db_notif)
+    struct iwm_calib_res_notif_phy_db *phy_db_notif, uint16_t size)
 {
 	enum iwm_phy_db_section_type type = le16toh(phy_db_notif->type);
-	uint16_t size  = le16toh(phy_db_notif->length);
 	struct iwm_phy_db_entry *entry;
 	uint16_t chg_id = 0;
 
@@ -2008,8 +2007,8 @@ iwm_phy_db_set_section(struct iwm_softc *sc,
 		return EINVAL;
 
 	if (entry->data)
-		kmem_free(entry->data, entry->size);
-	entry->data = kmem_alloc(size, KM_NOSLEEP);
+		kmem_intr_free(entry->data, entry->size);
+	entry->data = kmem_intr_alloc(size, KM_NOSLEEP);
 	if (!entry->data) {
 		entry->size = 0;
 		return ENOMEM;
@@ -2017,7 +2016,7 @@ iwm_phy_db_set_section(struct iwm_softc *sc,
 	memcpy(entry->data, phy_db_notif->data, size);
 	entry->size = size;
 
-	DPRINTFN(10, ("%s(%d): [PHYDB]SET: Type %d , Size: %d, data: %p\n",
+	DPRINTFN(10, ("%s(%d): [PHYDB]SET: Type %d, Size: %d, data: %p\n",
 	    __func__, __LINE__, type, size, entry->data));
 
 	return 0;
@@ -2126,7 +2125,8 @@ iwm_send_phy_db_cmd(struct iwm_softc *sc, uint16_t type,
 		.flags = IWM_CMD_SYNC,
 	};
 
-	DPRINTFN(10, ("Sending PHY-DB hcmd of type %d, of length %d\n", type, length));
+	DPRINTFN(10, ("Sending PHY-DB hcmd of type %d, of length %d\n",
+	    type, length));
 
 	/* Set phy db cmd variables */
 	phy_db_cmd.type = le16toh(type);
@@ -2629,9 +2629,8 @@ iwm_parse_nvm_data(struct iwm_softc *sc,
 	data->sku_cap_11n_enable = 0;
 
 	if (!data->valid_tx_ant || !data->valid_rx_ant) {
-		DPRINTF(("%s: invalid antennas (0x%x, 0x%x)\n",
-			    DEVNAME(sc), data->valid_tx_ant,
-			    data->valid_rx_ant));
+		DPRINTF(("%s: invalid antennas (0x%x, 0x%x)\n", DEVNAME(sc),
+		    data->valid_tx_ant, data->valid_rx_ant));
 		return EINVAL;
 	}
 
@@ -2797,7 +2796,8 @@ iwm_load_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 		    ucode_type, offset, dlen));
 		error = iwm_firmware_load_chunk(sc, offset, data, dlen);
 		if (error) {
-			DPRINTF(("iwm_firmware_load_chunk() chunk %u of %u returned error %02d\n", i, fws->fw_count, error));
+			DPRINTF(("iwm_firmware_load_chunk() chunk %u of %u "
+			    "returned error %02d\n", i, fws->fw_count, error));
 			return error;
 		}
 	}
@@ -3058,7 +3058,8 @@ iwm_mvm_calc_rssi(struct iwm_softc *sc, struct iwm_rx_phy_info *phy_info)
  * values by -256dBm: practically 0 power and a non-feasible 8 bit value.
  */
 static int
-iwm_mvm_get_signal_strength(struct iwm_softc *sc, struct iwm_rx_phy_info *phy_info)
+iwm_mvm_get_signal_strength(struct iwm_softc *sc,
+    struct iwm_rx_phy_info *phy_info)
 {
 	int energy_a, energy_b, energy_c, max_energy;
 	uint32_t val;
@@ -3076,7 +3077,7 @@ iwm_mvm_get_signal_strength(struct iwm_softc *sc, struct iwm_rx_phy_info *phy_in
 	max_energy = MAX(energy_a, energy_b);
 	max_energy = MAX(max_energy, energy_c);
 
-	DPRINTFN(12, ("energy In A %d B %d C %d , and max %d\n",
+	DPRINTFN(12, ("energy In A %d B %d C %d, and max %d\n",
 	    energy_a, energy_b, energy_c, max_energy));
 
 	return max_energy;
@@ -3549,7 +3550,7 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 		}
 		cmd = mtod(m, struct iwm_device_cmd *);
 		error = bus_dmamap_load(sc->sc_dmat, data->map, cmd,
-		    hcmd->len[0], NULL, BUS_DMA_NOWAIT | BUS_DMA_WRITE);
+		    IWM_RBUF_SIZE, NULL, BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 		if (error != 0) {
 			m_freem(m);
 			goto out;
@@ -3582,16 +3583,15 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	desc->num_tbs = 1;
 
 	DPRINTFN(8, ("iwm_send_cmd 0x%x size=%lu %s\n",
-	    code, hcmd->len[0] + hcmd->len[1] + sizeof(cmd->hdr),
-	    async ? " (async)" : ""));
+	    code, sizeof(cmd->hdr) + paylen, async ? " (async)" : ""));
 
-	if (hcmd->len[0] > sizeof(cmd->data)) {
-		bus_dmamap_sync(sc->sc_dmat, data->map, 0, hcmd->len[0],
-		    BUS_DMASYNC_PREWRITE);
+	if (paylen > sizeof(cmd->data)) {
+		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+		    sizeof(cmd->hdr) + paylen, BUS_DMASYNC_PREWRITE);
 	} else {
 		bus_dmamap_sync(sc->sc_dmat, ring->cmd_dma.map,
 		    (char *)(void *)cmd - (char *)(void *)ring->cmd_dma.vaddr,
-		    hcmd->len[0] + 4, BUS_DMASYNC_PREWRITE);
+		    sizeof(cmd->hdr) + paylen, BUS_DMASYNC_PREWRITE);
 	}
 	bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map,
 	    (char *)(void *)desc - (char *)(void *)ring->desc_dma.vaddr,
@@ -5284,8 +5284,7 @@ iwm_release(struct iwm_softc *sc, struct iwm_node *in)
 static struct ieee80211_node *
 iwm_node_alloc(struct ieee80211_node_table *nt)
 {
-
-	return kmem_zalloc(sizeof (struct iwm_node), KM_NOSLEEP | M_ZERO);
+	return malloc(sizeof(struct iwm_node), M_80211_NODE, M_NOWAIT | M_ZERO);
 }
 
 static void
@@ -5417,16 +5416,15 @@ iwm_media_change(struct ifnet *ifp)
 }
 
 static void
-iwm_newstate_cb(void *wk)
+iwm_newstate_cb(struct work *wk, void *v)
 {
+	struct iwm_softc *sc = v;
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_newstate_state *iwmns = (void *)wk;
-	struct ieee80211com *ic = iwmns->ns_ic;
 	enum ieee80211_state nstate = iwmns->ns_nstate;
 	int generation = iwmns->ns_generation;
 	struct iwm_node *in;
 	int arg = iwmns->ns_arg;
-	struct ifnet *ifp = IC2IFP(ic);
-	struct iwm_softc *sc = ifp->if_softc;
 	int error;
 
 	kmem_free(iwmns, sizeof(*iwmns));
@@ -5530,6 +5528,7 @@ iwm_newstate_cb(void *wk)
 		break; }
 
 	default:
+		DPRINTF(("%s: unsupported state %d\n", DEVNAME(sc), nstate));
 		break;
 	}
 
@@ -5545,13 +5544,12 @@ iwm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	callout_stop(&sc->sc_calib_to);
 
-	iwmns = kmem_alloc(sizeof(*iwmns), KM_NOSLEEP);
+	iwmns = kmem_intr_alloc(sizeof(*iwmns), KM_NOSLEEP);
 	if (!iwmns) {
 		DPRINTF(("%s: allocating state cb mem failed\n", DEVNAME(sc)));
 		return ENOMEM;
 	}
 
-	iwmns->ns_ic = ic;
 	iwmns->ns_nstate = nstate;
 	iwmns->ns_arg = arg;
 	iwmns->ns_generation = sc->sc_generation;
@@ -5562,7 +5560,7 @@ iwm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 }
 
 static void
-iwm_endscan_cb(void *arg)
+iwm_endscan_cb(struct work *work __unused, void *arg)
 {
 	struct iwm_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -5822,7 +5820,7 @@ iwm_watchdog(struct ifnet *ifp)
 	ifp->if_timer = 0;
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
-                        aprint_error_dev(sc->sc_dev, "device timeout\n");
+			aprint_error_dev(sc->sc_dev, "device timeout\n");
 #ifdef IWM_DEBUG
 			iwm_nic_error(sc);
 #endif
@@ -6102,7 +6100,7 @@ iwm_notif_intr(struct iwm_softc *sc)
 	hw = le16toh(sc->rxq.stat->closed_rb_num) & 0xfff;
 	while (sc->rxq.cur != hw) {
 		struct iwm_rx_data *data = &sc->rxq.data[sc->rxq.cur];
-		struct iwm_rx_packet *pkt;
+		struct iwm_rx_packet *pkt, tmppkt;
 		struct iwm_cmd_response *cresp;
 		int qid, idx;
 
@@ -6133,7 +6131,9 @@ iwm_notif_intr(struct iwm_softc *sc)
 			break;
 
 		case IWM_REPLY_RX_MPDU_CMD:
+			tmppkt = *pkt; // XXX m is freed by ieee80211_input()
 			iwm_mvm_rx_rx_mpdu(sc, pkt, data);
+			pkt = &tmppkt;
 			break;
 
 		case IWM_TX_CMD:
@@ -6163,7 +6163,11 @@ iwm_notif_intr(struct iwm_softc *sc)
 			struct iwm_calib_res_notif_phy_db *phy_db_notif;
 			SYNC_RESP_STRUCT(phy_db_notif, pkt);
 
-			iwm_phy_db_set_section(sc, phy_db_notif);
+			uint16_t size = le16toh(phy_db_notif->length);
+			bus_dmamap_sync(sc->sc_dmat, data->map,
+			    sizeof(*pkt) + sizeof(*phy_db_notif),
+			    size, BUS_DMASYNC_POSTREAD);
+			iwm_phy_db_set_section(sc, phy_db_notif, size);
 
 			break; }
 
@@ -6437,23 +6441,23 @@ iwm_intr(void *arg)
  */
 
 static const pci_product_id_t iwm_devices[] = {
-	0x08b1,
-#if 0
-	PCI_PRODUCT_INTEL_WL_7260_1,
-	PCI_PRODUCT_INTEL_WL_7260_2,
-#endif
+	PCI_PRODUCT_INTEL_WIFI_LINK_7260_1,
+	PCI_PRODUCT_INTEL_WIFI_LINK_7260_2,
+	PCI_PRODUCT_INTEL_WIFI_LINK_3160_1,
+	PCI_PRODUCT_INTEL_WIFI_LINK_3160_2,
+	PCI_PRODUCT_INTEL_WIFI_LINK_7265_1,
+	PCI_PRODUCT_INTEL_WIFI_LINK_7265_2,
 };
 
 static int
 iwm_match(device_t parent, cfdata_t match __unused, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	size_t i;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
 		return 0;
 
-	for (i = 0; i < __arraycount(iwm_devices); i++)
+	for (size_t i = 0; i < __arraycount(iwm_devices); i++)
 		if (PCI_PRODUCT(pa->pa_id) == iwm_devices[i])
 			return 1;
 
@@ -6492,14 +6496,11 @@ iwm_attach_hook(device_t dev)
 
 	KASSERT(!cold);
 
-	sc->sc_wantresp = -1;
-
 	if (iwm_preinit(sc) != 0)
 		return;
 
 	sc->sc_flags |= IWM_FLAG_ATTACHED;
 
-	ic->ic_ifp = ifp;
 	aprint_normal_dev(sc->sc_dev,
 	    "hw rev: 0x%x, fw ver %d.%d (API ver %d), address %s\n",
 	    sc->sc_hw_rev & IWM_CSR_HW_REV_TYPE_MSK,
@@ -6508,6 +6509,7 @@ iwm_attach_hook(device_t dev)
 	    IWM_UCODE_API(sc->sc_fwver),
 	    ether_sprintf(sc->sc_nvm.hw_addr));
 	
+	ic->ic_ifp = ifp;
 	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
 	ic->ic_opmode = IEEE80211_M_STA;	/* default to BSS mode */
 	ic->ic_state = IEEE80211_S_INIT;
@@ -6550,9 +6552,9 @@ iwm_attach_hook(device_t dev)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 
-	if_attach(ifp);
-	ic->ic_debug = 0;
+	if_initialize(ifp);
 	ieee80211_ifattach(ic);
+	if_register(ifp);
 
 	ic->ic_node_alloc = iwm_node_alloc;
 
@@ -6565,7 +6567,6 @@ iwm_attach_hook(device_t dev)
 	iwm_radiotap_attach(sc);
 	callout_init(&sc->sc_calib_to, 0);
 	callout_setfunc(&sc->sc_calib_to, iwm_calib_timeout, sc);
-	iwm_radiotap_attach(sc);
 
 	//task_set(&sc->init_task, iwm_init_task, sc);
 }
@@ -6585,6 +6586,7 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
+	sc->sc_pciid = pa->pa_id;
 
 	pci_aprint_devinfo(pa, NULL);
 
@@ -6639,8 +6641,27 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
-	/* only one firmware possibility for now */
-	sc->sc_fwname = IWM_FWNAME;
+	sc->sc_wantresp = -1;
+
+	switch (PCI_PRODUCT(sc->sc_pciid)) {
+	case PCI_PRODUCT_INTEL_WIFI_LINK_7260_1:
+	case PCI_PRODUCT_INTEL_WIFI_LINK_7260_2:
+		sc->sc_fwname = "iwlwifi-7260-9.ucode";
+		break;
+	case PCI_PRODUCT_INTEL_WIFI_LINK_3160_1:
+	case PCI_PRODUCT_INTEL_WIFI_LINK_3160_2:
+		sc->sc_fwname = "iwlwifi-3160-9.ucode";
+		break;
+	case PCI_PRODUCT_INTEL_WIFI_LINK_7265_1:
+	case PCI_PRODUCT_INTEL_WIFI_LINK_7265_2:
+		sc->sc_fwname = "iwlwifi-7265-9.ucode";
+		break;
+	default:
+		aprint_error_dev(self, "unknown product %#x",
+		    PCI_PRODUCT(sc->sc_pciid));
+		return;
+	}
+	DPRINTF(("%s: firmware=%s\n", DEVNAME(sc), sc->sc_fwname));
 	sc->sc_fwdmasegsz = IWM_FWDMASEGSZ;
 
 	/*
@@ -6697,9 +6718,9 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	workqueue_create(&sc->sc_eswq, "iwmes",
-	    (void *)iwm_endscan_cb, sc, PRI_NONE, IPL_NET, 0);
+	    iwm_endscan_cb, sc, PRI_NONE, IPL_NET, 0);
 	workqueue_create(&sc->sc_nswq, "iwmns",
-	    (void *)iwm_newstate_cb, sc, PRI_NONE, IPL_NET, 0);
+	    iwm_newstate_cb, sc, PRI_NONE, IPL_NET, 0);
 
 	/* Clear pending interrupts. */
 	IWM_WRITE(sc, IWM_CSR_INT, 0xffffffff);
