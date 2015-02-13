@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.2 2015/02/13 17:14:06 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.3 2015/02/13 17:40:13 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.2 2015/02/13 17:14:06 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.3 2015/02/13 17:40:13 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -611,8 +611,9 @@ iwm_read_firmware(struct iwm_softc *sc)
 	 */
 	error = iwm_firmload(sc);
 	if (error != 0) {
-		printf("%s: could not read firmware %s (error %d)\n",
-		    DEVNAME(sc), sc->sc_fwname, error);
+		aprint_error_dev(sc->sc_dev,
+		    "could not read firmware %s (error %d)\n",
+		    sc->sc_fwname, error);
 		goto out;
 	}
 
@@ -623,8 +624,8 @@ iwm_read_firmware(struct iwm_softc *sc)
 	uhdr = (void *)fw->fw_rawdata;
 	if (*(uint32_t *)fw->fw_rawdata != 0
 	    || le32toh(uhdr->magic) != IWM_TLV_UCODE_MAGIC) {
-		printf("%s: invalid firmware %s\n",
-		    DEVNAME(sc), sc->sc_fwname);
+		aprint_error_dev(sc->sc_dev, "invalid firmware %s\n",
+		    sc->sc_fwname);
 		error = EINVAL;
 		goto out;
 	}
@@ -646,8 +647,8 @@ iwm_read_firmware(struct iwm_softc *sc)
 		tlv_data = data;
 
 		if (len < tlv_len) {
-			printf("%s: firmware too short: %zu bytes\n",
-			    DEVNAME(sc), len);
+			aprint_error_dev(sc->sc_dev,
+			    "firmware too short: %zu bytes\n", len);
 			error = EINVAL;
 			goto parse_out;
 		}
@@ -761,12 +762,13 @@ iwm_read_firmware(struct iwm_softc *sc)
 
  parse_out:
 	if (error) {
-		printf("%s: firmware parse error, "
-		    "section type %d\n", DEVNAME(sc), tlv_type);
+		aprint_error_dev(sc->sc_dev,
+		    "firmware parse error, section type %d\n", tlv_type);
 	}
 
 	if (!(sc->sc_capaflags & IWM_UCODE_TLV_FLAGS_PM_CMD_SUPPORT)) {
-		printf("%s: device uses unsupported power ops\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev,
+		    "device uses unsupported power ops\n");
 		error = ENOTSUP;
 	}
 
@@ -1057,8 +1059,8 @@ iwm_alloc_rx_ring(struct iwm_softc *sc, struct iwm_rx_ring *ring)
 	size = IWM_RX_RING_COUNT * sizeof(uint32_t);
 	error = iwm_dma_contig_alloc(sc->sc_dmat, &ring->desc_dma, size, 256);
 	if (error != 0) {
-		printf("%s: could not allocate RX ring DMA memory\n",
-		    DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate RX ring DMA memory\n");
 		goto fail;
 	}
 	ring->desc = ring->desc_dma.vaddr;
@@ -1067,8 +1069,8 @@ iwm_alloc_rx_ring(struct iwm_softc *sc, struct iwm_rx_ring *ring)
 	error = iwm_dma_contig_alloc(sc->sc_dmat, &ring->stat_dma,
 	    sizeof(*ring->stat), 16);
 	if (error != 0) {
-		printf("%s: could not allocate RX status DMA memory\n",
-		    DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate RX status DMA memory\n");
 		goto fail;
 	}
 	ring->stat = ring->stat_dma.vaddr;
@@ -1084,8 +1086,8 @@ iwm_alloc_rx_ring(struct iwm_softc *sc, struct iwm_rx_ring *ring)
 		    IWM_RBUF_SIZE, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &data->map);
 		if (error != 0) {
-			printf("%s: could not create RX buf DMA map\n",
-			    DEVNAME(sc));
+			aprint_error_dev(sc->sc_dev,
+			    "could not create RX buf DMA map\n");
 			goto fail;
 		}
 
@@ -1154,8 +1156,8 @@ iwm_alloc_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring, int qid)
 	size = IWM_TX_RING_COUNT * sizeof (struct iwm_tfd);
 	error = iwm_dma_contig_alloc(sc->sc_dmat, &ring->desc_dma, size, 256);
 	if (error != 0) {
-		printf("%s: could not allocate TX ring DMA memory\n",
-		    DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate TX ring DMA memory\n");
 		goto fail;
 	}
 	ring->desc = ring->desc_dma.vaddr;
@@ -1170,7 +1172,8 @@ iwm_alloc_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring, int qid)
 	size = IWM_TX_RING_COUNT * sizeof(struct iwm_device_cmd);
 	error = iwm_dma_contig_alloc(sc->sc_dmat, &ring->cmd_dma, size, 4);
 	if (error != 0) {
-		printf("%s: could not allocate TX cmd DMA memory\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate TX cmd DMA memory\n");
 		goto fail;
 	}
 	ring->cmd = ring->cmd_dma.vaddr;
@@ -1187,7 +1190,8 @@ iwm_alloc_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring, int qid)
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    IWM_NUM_OF_TBS, MCLBYTES, 0, BUS_DMA_NOWAIT, &data->map);
 		if (error != 0) {
-			printf("%s: could not create TX buf DMA map\n", DEVNAME(sc));
+			aprint_error_dev(sc->sc_dev,
+			    "could not create TX buf DMA map\n");
 			goto fail;
 		}
 	}
@@ -1449,8 +1453,8 @@ iwm_apm_init(struct iwm_softc *sc)
 	if (!iwm_poll_bit(sc, IWM_CSR_GP_CNTRL,
 	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY,
 	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY, 25000)) {
-		printf("%s: timeout waiting for clock stabilization\n",
-		    DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev,
+		    "timeout waiting for clock stabilization\n");
 		goto out;
 	}
 
@@ -1495,7 +1499,7 @@ iwm_apm_init(struct iwm_softc *sc)
 
  out:
 	if (error)
-		printf("%s: apm init error %d\n", DEVNAME(sc), error);
+		aprint_error_dev(sc->sc_dev, "apm init error %d\n", error);
 	return error;
 }
 
@@ -1509,8 +1513,8 @@ iwm_apm_stop(struct iwm_softc *sc)
 	if (!iwm_poll_bit(sc, IWM_CSR_RESET,
 	    IWM_CSR_RESET_REG_FLAG_MASTER_DISABLED,
 	    IWM_CSR_RESET_REG_FLAG_MASTER_DISABLED, 100))
-		printf("%s: timeout waiting for master\n", DEVNAME(sc));
-        DPRINTF(("iwm apm stop\n"));
+		aprint_error_dev(sc->sc_dev, "timeout waiting for master\n");
+	DPRINTF(("iwm apm stop\n"));
 }
 
 /* iwlwifi pcie/trans.c */
@@ -2438,9 +2442,9 @@ iwm_nvm_read_section(struct iwm_softc *sc,
 		error = iwm_nvm_read_chunk(sc,
 		    section, *len, length, data, &seglen);
 		if (error) {
-			printf("%s: Cannot read NVM from section "
-			    "%d offset %d, length %d\n",
-			    DEVNAME(sc), section, *len, length);
+			aprint_error_dev(sc->sc_dev,
+			    "Cannot read NVM from section %d offset %d, "
+			    "length %d\n", section, *len, length);
 			return error;
 		}
 		*len += seglen;
@@ -2787,7 +2791,7 @@ iwm_start_fw(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	IWM_WRITE(sc, IWM_CSR_INT, ~0);
 
 	if ((error = iwm_nic_init(sc)) != 0) {
-		printf("%s: unable to init nic\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev, "Unable to init nic\n");
 		return error;
 	}
 
@@ -2879,8 +2883,8 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 
 	/* do not operate with rfkill switch turned on */
 	if ((sc->sc_flags & IWM_FLAG_RFKILL) && !justnvm) {
-		printf("%s: radio is disabled by hardware switch\n",
-		    DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev,
+		    "radio is disabled by hardware switch\n");
 		return EPERM;
 	}
 
@@ -2891,7 +2895,7 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 
 	if (justnvm) {
 		if ((error = iwm_nvm_init(sc)) != 0) {
-			printf("%s: failed to read nvm\n", DEVNAME(sc));
+			aprint_error_dev(sc->sc_dev, "failed to read nvm\n");
 			return error;
 		}
 		memcpy(&sc->sc_ic.ic_myaddr,
@@ -3933,8 +3937,8 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 	if (error != 0) {
 		if (error != EFBIG) {
-			printf("%s: can't map mbuf (error %d)\n", DEVNAME(sc),
-			    error);
+			aprint_error_dev(sc->sc_dev,
+			    "can't map mbuf (error %d)\n", error);
 			m_freem(m);
 			return error;
 		}
@@ -3960,8 +3964,8 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
 		    BUS_DMA_NOWAIT | BUS_DMA_WRITE);
 		if (error != 0) {
-			printf("%s: can't map mbuf (error %d)\n", DEVNAME(sc),
-			    error);
+			aprint_error_dev(sc->sc_dev,
+			    "can't map mbuf (error %d)\n", error);
 			m_freem(m);
 			return error;
 		}
@@ -4036,7 +4040,8 @@ iwm_mvm_flush_tx_path(struct iwm_softc *sc, int tfd_msk, int sync)
 	    sync ? IWM_CMD_SYNC : IWM_CMD_ASYNC,
 	    sizeof(flush_cmd), &flush_cmd);
 	if (ret)
-                printf("%s: Flushing tx queue failed: %d\n", DEVNAME(sc), ret);
+		aprint_error_dev(sc->sc_dev, "Flushing tx queue failed: %d\n",
+		    ret);
 	return ret;
 }
 #endif
@@ -4982,7 +4987,8 @@ iwm_mvm_mac_ctxt_remove(struct iwm_softc *sc, struct iwm_node *in)
 	ret = iwm_mvm_send_cmd_pdu(sc,
 	    IWM_MAC_CONTEXT_CMD, IWM_CMD_SYNC, sizeof(cmd), &cmd);
 	if (ret) {
-		printf("%s: Failed to remove MAC context: %d\n", DEVNAME(sc), ret);
+		aprint_error_dev(sc->sc_dev,
+		    "Failed to remove MAC context: %d\n", ret);
 		return ret;
 	}
 	in->in_uploaded = 0;
@@ -5219,19 +5225,21 @@ iwm_release(struct iwm_softc *sc, struct iwm_node *in)
 	iwm_mvm_power_mac_disable(sc, in);
 
 	if ((error = iwm_mvm_mac_ctxt_changed(sc, in)) != 0) {
-		printf("%s: mac ctxt change fail 1 %d\n", DEVNAME(sc), error);
+		aprint_error_dev(sc->sc_dev, "mac ctxt change fail 1 %d\n",
+		    error);
 		return error;
 	}
 
 	if ((error = iwm_mvm_rm_sta(sc, in)) != 0) {
-		printf("%s: sta remove fail %d\n", DEVNAME(sc), error);
+		aprint_error_dev(sc->sc_dev, "sta remove fail %d\n", error);
 		return error;
 	}
 	error = iwm_mvm_rm_sta(sc, in);
 	in->in_assoc = 0;
 	iwm_mvm_update_quotas(sc, NULL);
 	if ((error = iwm_mvm_mac_ctxt_changed(sc, in)) != 0) {
-		printf("%s: mac ctxt change fail 2 %d\n", DEVNAME(sc), error);
+		aprint_error_dev(sc->sc_dev, "mac ctxt change fail 2 %d\n",
+		    error);
 		return error;
 	}
 	iwm_mvm_binding_remove_vif(sc, in);
@@ -5446,7 +5454,7 @@ iwm_newstate_cb(void *wk)
 		if ((error = iwm_mvm_scan_request(sc, IEEE80211_CHAN_2GHZ,
 		    ic->ic_des_esslen != 0,
 		    ic->ic_des_essid, ic->ic_des_esslen)) != 0) {
-			printf("%s: could not initiate scan\n", DEVNAME(sc));
+                        DPRINTF(("%s: could not initiate scan\n", DEVNAME(sc)));
 			return;
 		}
 		ic->ic_state = nstate;
@@ -5539,7 +5547,7 @@ iwm_endscan_cb(void *arg)
 		if ((error = iwm_mvm_scan_request(sc,
 		    IEEE80211_CHAN_5GHZ, ic->ic_des_esslen != 0,
 		    ic->ic_des_essid, ic->ic_des_esslen)) != 0) {
-			printf("%s: could not initiate scan\n", DEVNAME(sc));
+			DPRINTF(("%s: could not initiate scan\n", DEVNAME(sc)));
 			done = 1;
 		}
 #else
@@ -5581,14 +5589,14 @@ iwm_init_hw(struct iwm_softc *sc)
 	 */
 	iwm_stop_device(sc);
 	if ((error = iwm_start_hw(sc)) != 0) {
-		printf("%s: could not initialize hardware\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev, "could not initialize hardware\n");
 		return error;
 	}
 
 	/* omstart, this time with the regular firmware */
 	error = iwm_mvm_load_ucode_wait_alive(sc, IWM_UCODE_TYPE_REGULAR);
 	if (error) {
-		printf("%s: could not load firmware\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev, "could not load firmware\n");
 		goto error;
 	}
 
@@ -5784,7 +5792,7 @@ iwm_watchdog(struct ifnet *ifp)
 	ifp->if_timer = 0;
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
-			printf("%s: device timeout\n", DEVNAME(sc));
+                        aprint_error_dev(sc->sc_dev, "device timeout\n");
 #ifdef IWM_DEBUG
 			iwm_nic_error(sc);
 #endif
@@ -5968,64 +5976,68 @@ iwm_nic_error(struct iwm_softc *sc)
 	struct iwm_error_event_table table;
 	uint32_t base;
 
-	printf("%s: dumping device error log\n", DEVNAME(sc));
+	aprint_error_dev(sc->sc_dev, "dumping device error log\n");
 	base = sc->sc_uc.uc_error_event_table;
 	if (base < 0x800000 || base >= 0x80C000) {
-		printf("%s: Not valid error log pointer 0x%08x\n",
-		    DEVNAME(sc), base);
+		aprint_error_dev(sc->sc_dev,
+		    "Not valid error log pointer 0x%08x\n", base);
 		return;
 	}
 
 	if (iwm_read_mem(sc, base, &table, sizeof(table)/sizeof(uint32_t)) != 0) {
-		printf("%s: reading errlog failed\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev, "reading errlog failed\n");
 		return;
 	}
 
 	if (!table.valid) {
-		printf("%s: errlog not found, skipping\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev, "errlog not found, skipping\n");
 		return;
 	}
 
 	if (ERROR_START_OFFSET <= table.valid * ERROR_ELEM_SIZE) {
-		printf("%s: Start IWL Error Log Dump:\n", DEVNAME(sc));
-		printf("%s: Status: 0x%x, count: %d\n", DEVNAME(sc),
+		aprint_error_dev(sc->sc_dev, "Start IWL Error Log Dump:\n");
+		aprint_error_dev(sc->sc_dev, "Status: 0x%x, count: %d\n",
 		    sc->sc_flags, table.valid);
 	}
 
-	printf("%s: 0x%08X | %-28s\n", DEVNAME(sc), table.error_id,
+	aprint_error_dev(sc->sc_dev, "%08X | %-28s\n", table.error_id,
 		iwm_desc_lookup(table.error_id));
-	printf("%s: %08X | uPc\n", DEVNAME(sc), table.pc);
-	printf("%s: %08X | branchlink1\n", DEVNAME(sc), table.blink1);
-	printf("%s: %08X | branchlink2\n", DEVNAME(sc), table.blink2);
-	printf("%s: %08X | interruptlink1\n", DEVNAME(sc), table.ilink1);
-	printf("%s: %08X | interruptlink2\n", DEVNAME(sc), table.ilink2);
-	printf("%s: %08X | data1\n", DEVNAME(sc), table.data1);
-	printf("%s: %08X | data2\n", DEVNAME(sc), table.data2);
-	printf("%s: %08X | data3\n", DEVNAME(sc), table.data3);
-	printf("%s: %08X | beacon time\n", DEVNAME(sc), table.bcon_time);
-	printf("%s: %08X | tsf low\n", DEVNAME(sc), table.tsf_low);
-	printf("%s: %08X | tsf hi\n", DEVNAME(sc), table.tsf_hi);
-	printf("%s: %08X | time gp1\n", DEVNAME(sc), table.gp1);
-	printf("%s: %08X | time gp2\n", DEVNAME(sc), table.gp2);
-	printf("%s: %08X | time gp3\n", DEVNAME(sc), table.gp3);
-	printf("%s: %08X | uCode version\n", DEVNAME(sc), table.ucode_ver);
-	printf("%s: %08X | hw version\n", DEVNAME(sc), table.hw_ver);
-	printf("%s: %08X | board version\n", DEVNAME(sc), table.brd_ver);
-	printf("%s: %08X | hcmd\n", DEVNAME(sc), table.hcmd);
-	printf("%s: %08X | isr0\n", DEVNAME(sc), table.isr0);
-	printf("%s: %08X | isr1\n", DEVNAME(sc), table.isr1);
-	printf("%s: %08X | isr2\n", DEVNAME(sc), table.isr2);
-	printf("%s: %08X | isr3\n", DEVNAME(sc), table.isr3);
-	printf("%s: %08X | isr4\n", DEVNAME(sc), table.isr4);
-	printf("%s: %08X | isr_pref\n", DEVNAME(sc), table.isr_pref);
-	printf("%s: %08X | wait_event\n", DEVNAME(sc), table.wait_event);
-	printf("%s: %08X | l2p_control\n", DEVNAME(sc), table.l2p_control);
-	printf("%s: %08X | l2p_duration\n", DEVNAME(sc), table.l2p_duration);
-	printf("%s: %08X | l2p_mhvalid\n", DEVNAME(sc), table.l2p_mhvalid);
-	printf("%s: %08X | l2p_addr_match\n", DEVNAME(sc), table.l2p_addr_match);
-	printf("%s: %08X | lmpm_pmg_sel\n", DEVNAME(sc), table.lmpm_pmg_sel);
-	printf("%s: %08X | timestamp\n", DEVNAME(sc), table.u_timestamp);
-	printf("%s: %08X | flow_handler\n", DEVNAME(sc), table.flow_handler);
+	aprint_error_dev(sc->sc_dev, "%08X | uPc\n", table.pc);
+	aprint_error_dev(sc->sc_dev, "%08X | branchlink1\n", table.blink1);
+	aprint_error_dev(sc->sc_dev, "%08X | branchlink2\n", table.blink2);
+	aprint_error_dev(sc->sc_dev, "%08X | interruptlink1\n", table.ilink1);
+	aprint_error_dev(sc->sc_dev, "%08X | interruptlink2\n", table.ilink2);
+	aprint_error_dev(sc->sc_dev, "%08X | data1\n", table.data1);
+	aprint_error_dev(sc->sc_dev, "%08X | data2\n", table.data2);
+	aprint_error_dev(sc->sc_dev, "%08X | data3\n", table.data3);
+	aprint_error_dev(sc->sc_dev, "%08X | beacon time\n", table.bcon_time);
+	aprint_error_dev(sc->sc_dev, "%08X | tsf low\n", table.tsf_low);
+	aprint_error_dev(sc->sc_dev, "%08X | tsf hi\n", table.tsf_hi);
+	aprint_error_dev(sc->sc_dev, "%08X | time gp1\n", table.gp1);
+	aprint_error_dev(sc->sc_dev, "%08X | time gp2\n", table.gp2);
+	aprint_error_dev(sc->sc_dev, "%08X | time gp3\n", table.gp3);
+	aprint_error_dev(sc->sc_dev, "%08X | uCode version\n", table.ucode_ver);
+	aprint_error_dev(sc->sc_dev, "%08X | hw version\n", table.hw_ver);
+	aprint_error_dev(sc->sc_dev, "%08X | board version\n", table.brd_ver);
+	aprint_error_dev(sc->sc_dev, "%08X | hcmd\n", table.hcmd);
+	aprint_error_dev(sc->sc_dev, "%08X | isr0\n", table.isr0);
+	aprint_error_dev(sc->sc_dev, "%08X | isr1\n", table.isr1);
+	aprint_error_dev(sc->sc_dev, "%08X | isr2\n", table.isr2);
+	aprint_error_dev(sc->sc_dev, "%08X | isr3\n", table.isr3);
+	aprint_error_dev(sc->sc_dev, "%08X | isr4\n", table.isr4);
+	aprint_error_dev(sc->sc_dev, "%08X | isr_pref\n", table.isr_pref);
+	aprint_error_dev(sc->sc_dev, "%08X | wait_event\n", table.wait_event);
+	aprint_error_dev(sc->sc_dev, "%08X | l2p_control\n", table.l2p_control);
+	aprint_error_dev(sc->sc_dev, "%08X | l2p_duration\n",
+	    table.l2p_duration);
+	aprint_error_dev(sc->sc_dev, "%08X | l2p_mhvalid\n", table.l2p_mhvalid);
+	aprint_error_dev(sc->sc_dev, "%08X | l2p_addr_match\n",
+	    table.l2p_addr_match);
+	aprint_error_dev(sc->sc_dev, "%08X | lmpm_pmg_sel\n",
+	    table.lmpm_pmg_sel);
+	aprint_error_dev(sc->sc_dev, "%08X | timestamp\n", table.u_timestamp);
+	aprint_error_dev(sc->sc_dev, "%08X | flow_handler\n",
+	    table.flow_handler);
 }
 #endif
 
@@ -6185,9 +6197,9 @@ iwm_notif_intr(struct iwm_softc *sc)
 			struct iwm_error_resp *resp;
 			SYNC_RESP_STRUCT(resp, pkt);
 
-			printf("%s: firmware error 0x%x, cmd 0x%x\n",
-				DEVNAME(sc), le32toh(resp->error_type),
-				resp->cmd_id);
+			aprint_error_dev(sc->sc_dev,
+			    "firmware error 0x%x, cmd 0x%x\n",
+			    le32toh(resp->error_type), resp->cmd_id);
 			break; }
 
 		case IWM_TIME_EVENT_NOTIFICATION: {
@@ -6207,9 +6219,9 @@ iwm_notif_intr(struct iwm_softc *sc)
 			break; }
 
 		default:
-			printf("%s: frame %d/%d %x UNHANDLED (this should "
-			    "not happen)\n", DEVNAME(sc), qid, idx,
-			    pkt->len_n_flags);
+			aprint_error_dev(sc->sc_dev,
+			    "frame %d/%d %x UNHANDLED (this should "
+			    "not happen)\n", qid, idx, pkt->len_n_flags);
 			break;
 		}
 
@@ -6318,7 +6330,7 @@ iwm_intr(void *arg)
 		DPRINTF(("  802.11 state %d\n", sc->sc_ic.ic_state));
 #endif
 
-		printf("%s: fatal firmware error\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev, "fatal firmware error\n");
 		ifp->if_flags &= ~IFF_UP;
 		iwm_stop(ifp, 1);
 		rv = 1;
@@ -6328,7 +6340,8 @@ iwm_intr(void *arg)
 
 	if (r1 & IWM_CSR_INT_BIT_HW_ERR) {
 		handled |= IWM_CSR_INT_BIT_HW_ERR;
-		printf("%s: hardware error, stopping device \n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev,
+		    "hardware error, stopping device\n");
 		ifp->if_flags &= ~IFF_UP;
 		iwm_stop(ifp, 1);
 		rv = 1;
@@ -6423,7 +6436,7 @@ iwm_preinit(struct iwm_softc *sc)
 	int error;
 
 	if ((error = iwm_prepare_card_hw(sc)) != 0) {
-		printf("%s: could not initialize hardware\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev, "could not initialize hardware\n");
 		return error;
 	}
 
@@ -6431,7 +6444,7 @@ iwm_preinit(struct iwm_softc *sc)
 		return 0;
 
 	if ((error = iwm_start_hw(sc)) != 0) {
-		printf("%s: could not initialize hardware\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev, "could not initialize hardware\n");
 		return error;
 	}
 
@@ -6457,8 +6470,9 @@ iwm_attach_hook(struct device *dev)
 	sc->sc_flags |= IWM_FLAG_ATTACHED;
 
 	ic->ic_ifp = ifp;
-	printf("%s: hw rev: 0x%x, fw ver %d.%d (API ver %d), address %s\n",
-	    DEVNAME(sc), sc->sc_hw_rev & IWM_CSR_HW_REV_TYPE_MSK,
+	aprint_normal_dev(sc->sc_dev,
+	    "hw rev: 0x%x, fw ver %d.%d (API ver %d), address %s\n",
+	    sc->sc_hw_rev & IWM_CSR_HW_REV_TYPE_MSK,
 	    IWM_UCODE_MAJOR(sc->sc_fwver),
 	    IWM_UCODE_MINOR(sc->sc_fwver),
 	    IWM_UCODE_API(sc->sc_fwver),
@@ -6530,7 +6544,6 @@ void
 iwm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct iwm_softc *sc = device_private(self);
-	sc->sc_dev = self;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	pcireg_t reg, memtype;
@@ -6538,6 +6551,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	int error;
 	int txq_i;
 
+	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
@@ -6551,8 +6565,8 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	error = pci_get_capability(sc->sc_pct, sc->sc_pcitag,
 	    PCI_CAP_PCIEXPRESS, &sc->sc_cap_off, NULL);
 	if (error == 0) {
-		printf("%s: PCIe capability structure not found!\n",
-		    DEVNAME(sc));
+		aprint_error_dev(self,
+		    "PCIe capability structure not found!\n");
 		return;
 	}
 
@@ -6573,29 +6587,27 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	error = pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0,
 	    &sc->sc_st, &sc->sc_sh, NULL, &sc->sc_sz);
 	if (error != 0) {
-		printf("%s: can't map mem space\n", DEVNAME(sc));
+		aprint_error_dev(self, "can't map mem space\n");
 		return;
 	}
 
 	/* Install interrupt handler. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: can't map interrupt\n", DEVNAME(sc));
+		aprint_error_dev(self, "can't map interrupt\n");
 		return;
 	}
 
 	char intrbuf[PCI_INTRSTR_LEN];
 	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwm_intr, sc);
-
 	if (sc->sc_ih == NULL) {
-		printf("\n");
-		printf("%s: can't establish interrupt", DEVNAME(sc));
+		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf(", %s\n", intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	/* only one firmware possibility for now */
 	sc->sc_fwname = IWM_FWNAME;
@@ -6607,33 +6619,34 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_hw_rev = IWM_READ(sc, IWM_CSR_HW_REV);
 	if (iwm_prepare_card_hw(sc) != 0) {
-		printf("%s: could not initialize hardware\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev, "could not initialize hardware\n");
 		return;
 	}
 
 	/* Allocate DMA memory for firmware transfers. */
 	if ((error = iwm_alloc_fwmem(sc)) != 0) {
-		printf("%s: could not allocate memory for firmware\n",
-		    DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate memory for firmware\n");
 		return;
 	}
 
 	/* Allocate "Keep Warm" page. */
 	if ((error = iwm_alloc_kw(sc)) != 0) {
-		printf("%s: could not allocate keep warm page\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate keep warm page\n");
 		goto fail1;
 	}
 
 	/* We use ICT interrupts */
 	if ((error = iwm_alloc_ict(sc)) != 0) {
-		printf("%s: could not allocate ICT table\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev, "could not allocate ICT table\n");
 		goto fail2;
 	}
 
 	/* Allocate TX scheduler "rings". */
 	if ((error = iwm_alloc_sched(sc)) != 0) {
-		printf("%s: could not allocate TX scheduler rings\n",
-		    DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate TX scheduler rings\n");
 		goto fail3;
 	}
 
@@ -6641,15 +6654,15 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	for (txq_i = 0; txq_i < __arraycount(sc->txq); txq_i++) {
 		if ((error = iwm_alloc_tx_ring(sc,
 		    &sc->txq[txq_i], txq_i)) != 0) {
-			printf("%s: could not allocate TX ring %d\n",
-			    DEVNAME(sc), txq_i);
+			aprint_error_dev(sc->sc_dev,
+			    "could not allocate TX ring %d\n", txq_i);
 			goto fail4;
 		}
 	}
 
 	/* Allocate RX ring. */
 	if ((error = iwm_alloc_rx_ring(sc, &sc->rxq)) != 0) {
-		printf("%s: could not allocate RX ring\n", DEVNAME(sc));
+		aprint_error_dev(sc->sc_dev, "could not allocate RX ring\n");
 		goto fail4;
 	}
 
