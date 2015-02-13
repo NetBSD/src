@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.306 2015/02/13 15:28:56 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.307 2015/02/13 15:52:29 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.306 2015/02/13 15:28:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.307 2015/02/13 15:52:29 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -903,6 +903,24 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
  */
 static const int sblock_try[] = SBLOCKSEARCH;
 
+
+static int
+ffs_superblock_validate(struct fs *fs, u_int32_t fs_sbsize, int32_t fs_bsize)
+{
+	/* Check the superblock size */
+	if (fs_sbsize > SBLOCKSIZE || fs_sbsize < sizeof(struct fs))
+		return 0;
+
+	/* Check the file system blocksize */
+	if (fs_bsize > MAXBSIZE)
+		return 0;
+
+	if (fs->fs_size == 0)
+		return 0;
+
+	return 1;
+}
+
 /*
  * Common code for mount and mountroot
  */
@@ -1037,16 +1055,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		if (fsblockloc != sblockloc)
 			continue;
 
-		/* Validate size of superblock */
-		if (fs_sbsize > SBLOCKSIZE || fs_sbsize < sizeof(struct fs))
+		if (!ffs_superblock_validate(fs, fs_sbsize, fs_bsize))
 			continue;
-
-		/* Check that we can handle the file system blocksize */
-		if (fs_bsize > MAXBSIZE) {
-			printf("ffs_mountfs: block size (%d) > MAXBSIZE (%d)\n",
-			    fs_bsize, MAXBSIZE);
-			continue;
-		}
 
 		/* Ok seems to be a good superblock */
 		break;
