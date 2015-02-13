@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.307 2015/02/13 15:52:29 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.308 2015/02/13 16:59:52 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.307 2015/02/13 15:52:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.308 2015/02/13 16:59:52 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -912,10 +912,20 @@ ffs_superblock_validate(struct fs *fs, u_int32_t fs_sbsize, int32_t fs_bsize)
 		return 0;
 
 	/* Check the file system blocksize */
-	if (fs_bsize > MAXBSIZE)
+	if (fs_bsize > MAXBSIZE || fs_bsize < MINBSIZE)
+		return 0;
+	if (!powerof2(fs_bsize))
+		return 0;
+
+	/* Check the size of frag blocks */
+	if (!powerof2(fs->fs_fsize))
 		return 0;
 
 	if (fs->fs_size == 0)
+		return 0;
+
+	/* Block size cannot be smaller than fragment size */
+	if (fs_bsize < fs->fs_fsize)
 		return 0;
 
 	return 1;
