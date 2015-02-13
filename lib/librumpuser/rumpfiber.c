@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfiber.c,v 1.9 2014/12/29 21:50:09 justin Exp $	*/
+/*	$NetBSD: rumpfiber.c,v 1.10 2015/02/13 21:31:18 justin Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -68,7 +68,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpfiber.c,v 1.9 2014/12/29 21:50:09 justin Exp $");
+__RCSID("$NetBSD: rumpfiber.c,v 1.10 2015/02/13 21:31:18 justin Exp $");
 #endif /* !lint */
 
 #include <sys/ioctl.h>
@@ -398,6 +398,10 @@ init_sched(void)
 {
 	struct thread *thread = calloc(1, sizeof(struct thread));
 
+	if (!thread) {
+		abort();
+	}
+
 	thread->name = strdup("init");
 	thread->flags = 0;
 	thread->wakeup_time = -1;
@@ -637,9 +641,13 @@ int
 rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
         int joinable, int pri, int cpuidx, void **tptr)
 {
-        struct thread *thr;
+	struct thread *thr;
 
-        thr = create_thread(thrname, NULL, (void (*)(void *))f, arg, NULL, 0);
+	thr = create_thread(thrname, NULL, (void (*)(void *))f, arg, NULL, 0);
+
+	if (!thr)
+		return EINVAL;
+
         /*
          * XXX: should be supplied as a flag to create_thread() so as to
          * _ensure_ it's set before the thread runs (and could exit).
@@ -647,9 +655,6 @@ rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
          */
         if (thr && joinable)
                 thr->flags |= THREAD_MUSTJOIN;
-
-        if (!thr)
-                return EINVAL;
 
         *tptr = thr;
         return 0;
