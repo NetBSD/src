@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.194 2015/02/11 14:56:58 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.195 2015/02/13 09:22:07 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -9581,4 +9581,11 @@ xfree/xc/programs/Xserver/xkb/xkb.c		1.2 (via patch)
 	Apply fixes for CVE-2015-0255:
 	Information leak in the XkbSetGeometry request of X servers.
 	[mrg, ticket #1253]
+
+usr.bin/finger/lprint.c				1.23
+
+	- Don't dump core or print random junk on corrupt utmp entries
+	- Factor out duplicated code in the process
+	- The actual code is now smaller and does error checking and encoding
+	[martin, ticket #1247]
 
