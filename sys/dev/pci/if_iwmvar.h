@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmvar.h,v 1.2 2015/02/13 17:14:06 nonaka Exp $	*/
+/*	$NetBSD: if_iwmvar.h,v 1.3 2015/02/13 18:57:47 nonaka Exp $	*/
 /*	OpenBSD: if_iwmvar.h,v 1.3 2015/02/07 07:10:44 phessler Exp 	*/
 
 /*
@@ -138,7 +138,6 @@ struct iwm_tx_radiotap_header {
 	 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
 #define IWM_UCODE_SECT_MAX 6
-#define IWM_FWNAME "iwm-7260-9"
 #define IWM_FWDMASEGSZ (192*1024)
 /* sanity check value */
 #define IWM_FWMAXSIZE (2*1024*1024)
@@ -365,7 +364,7 @@ struct iwm_bf_data {
 };
 
 struct iwm_softc {
-	struct device *sc_dev;
+	device_t sc_dev;
 	struct ethercom sc_ec;
 	struct ieee80211com sc_ic;
 
@@ -382,6 +381,7 @@ struct iwm_softc {
 	bus_dma_tag_t sc_dmat;
 	pci_chipset_tag_t sc_pct;
 	pcitag_t sc_pcitag;
+	pcireg_t sc_pciid;
 	const void *sc_ih;
 
 	/* TX scheduler rings. */
