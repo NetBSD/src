@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.305 2015/01/16 03:57:52 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.306 2015/02/13 15:28:56 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.305 2015/01/16 03:57:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.306 2015/02/13 15:28:56 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -909,23 +909,22 @@ static const int sblock_try[] = SBLOCKSEARCH;
 int
 ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 {
-	struct ufsmount *ump;
-	struct buf *bp;
-	struct fs *fs;
+	struct ufsmount *ump = NULL;
+	struct buf *bp = NULL;
+	struct fs *fs = NULL;
 	dev_t dev;
 	struct dkwedge_info dkw;
 	void *space;
-	daddr_t sblockloc, fsblockloc;
-	int blks, fstype;
+	daddr_t sblockloc = 0;
+	int blks, fstype = 0;
 	int error, i, bsize, ronly, bset = 0;
 #ifdef FFS_EI
 	int needswap = 0;		/* keep gcc happy */
 #endif
 	int32_t *lp;
 	kauth_cred_t cred;
-	u_int32_t sbsize = 8192;	/* keep gcc happy*/
+	u_int32_t fs_sbsize = 8192;	/* keep gcc happy*/
 	u_int32_t allocsbsize;
-	int32_t fsbsize;
 
 	dev = devvp->v_rdev;
 	cred = l ? l->l_cred : NOCRED;
@@ -940,12 +939,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	}
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-
-	bp = NULL;
-	ump = NULL;
-	fs = NULL;
-	sblockloc = 0;
-	fstype = 0;
 
 	error = fstrans_mount(mp);
 	if (error) {
@@ -969,6 +962,9 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 * Try reading the superblock in each of its possible locations.
 	 */
 	for (i = 0; ; i++) {
+		daddr_t fsblockloc;
+		int32_t fs_bsize;
+
 		if (bp != NULL) {
 			brelse(bp, BC_NOCACHE);
 			bp = NULL;
@@ -979,6 +975,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			fs = NULL;
 			goto out;
 		}
+
 		error = bread(devvp, sblock_try[i] / DEV_BSIZE, SBLOCKSIZE,
 		    cred, 0, &bp);
 		if (error) {
@@ -988,35 +985,35 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			goto out;
 		}
 		fs = (struct fs*)bp->b_data;
+
 		fsblockloc = sblockloc = sblock_try[i];
 		DPRINTF(("%s: fs_magic 0x%x\n", __func__, fs->fs_magic));
 		if (fs->fs_magic == FS_UFS1_MAGIC) {
-			sbsize = fs->fs_sbsize;
+			fs_sbsize = fs->fs_sbsize;
 			fstype = UFS1;
-			fsbsize = fs->fs_bsize;
+			fs_bsize = fs->fs_bsize;
 #ifdef FFS_EI
 			needswap = 0;
 		} else if (fs->fs_magic == FS_UFS1_MAGIC_SWAPPED) {
-			sbsize = bswap32(fs->fs_sbsize);
+			fs_sbsize = bswap32(fs->fs_sbsize);
 			fstype = UFS1;
-			fsbsize = bswap32(fs->fs_bsize);
+			fs_bsize = bswap32(fs->fs_bsize);
 			needswap = 1;
 #endif
 		} else if (fs->fs_magic == FS_UFS2_MAGIC) {
-			sbsize = fs->fs_sbsize;
+			fs_sbsize = fs->fs_sbsize;
 			fstype = UFS2;
-			fsbsize = fs->fs_bsize;
+			fs_bsize = fs->fs_bsize;
 #ifdef FFS_EI
 			needswap = 0;
 		} else if (fs->fs_magic == FS_UFS2_MAGIC_SWAPPED) {
-			sbsize = bswap32(fs->fs_sbsize);
+			fs_sbsize = bswap32(fs->fs_sbsize);
 			fstype = UFS2;
-			fsbsize = bswap32(fs->fs_bsize);
+			fs_bsize = bswap32(fs->fs_bsize);
 			needswap = 1;
 #endif
 		} else
 			continue;
-
 
 		/* fs->fs_sblockloc isn't defined for old filesystems */
 		if (fstype == UFS1 && !(fs->fs_old_flags & FS_FLAGS_UPDATED)) {
@@ -1041,13 +1038,13 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			continue;
 
 		/* Validate size of superblock */
-		if (sbsize > SBLOCKSIZE || sbsize < sizeof(struct fs))
+		if (fs_sbsize > SBLOCKSIZE || fs_sbsize < sizeof(struct fs))
 			continue;
 
 		/* Check that we can handle the file system blocksize */
-		if (fsbsize > MAXBSIZE) {
+		if (fs_bsize > MAXBSIZE) {
 			printf("ffs_mountfs: block size (%d) > MAXBSIZE (%d)\n",
-			    fsbsize, MAXBSIZE);
+			    fs_bsize, MAXBSIZE);
 			continue;
 		}
 
@@ -1055,8 +1052,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		break;
 	}
 
-	fs = kmem_alloc((u_long)sbsize, KM_SLEEP);
-	memcpy(fs, bp->b_data, sbsize);
+	fs = kmem_alloc((u_long)fs_sbsize, KM_SLEEP);
+	memcpy(fs, bp->b_data, fs_sbsize);
 	ump->um_fs = fs;
 
 #ifdef FFS_EI
@@ -1098,7 +1095,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			/* Force a re-read of the superblock */
 			brelse(bp, BC_INVAL);
 			bp = NULL;
-			kmem_free(fs, sbsize);
+			kmem_free(fs, fs_sbsize);
 			fs = NULL;
 			goto sbagain;
 		}
@@ -1203,7 +1200,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 #endif
 
 	/*
-	 * verify that we can access the last block in the fs
+	 * Verify that we can access the last block in the fs
 	 * if we're mounting read/write.
 	 */
 
@@ -1228,11 +1225,13 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	fs->fs_ronly = ronly;
 	/* Don't bump fs_clean if we're replaying journal */
-	if (!((fs->fs_flags & FS_DOWAPBL) && (fs->fs_clean & FS_WASCLEAN)))
+	if (!((fs->fs_flags & FS_DOWAPBL) && (fs->fs_clean & FS_WASCLEAN))) {
 		if (ronly == 0) {
 			fs->fs_clean <<= 1;
 			fs->fs_fmod = 1;
 		}
+	}
+
 	bsize = fs->fs_cssize;
 	blks = howmany(bsize, fs->fs_fsize);
 	if (fs->fs_contigsumsize > 0)
@@ -1241,6 +1240,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	allocsbsize = bsize;
 	space = kmem_alloc((u_long)allocsbsize, KM_SLEEP);
 	fs->fs_csp = space;
+
 	for (i = 0; i < blks; i += fs->fs_frag) {
 		bsize = fs->fs_bsize;
 		if (i + fs->fs_frag > blks)
