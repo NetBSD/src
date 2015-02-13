@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.39 2015/02/12 23:09:55 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.40 2015/02/13 15:59:17 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.39 2015/02/12 23:09:55 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.40 2015/02/13 15:59:17 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.39 2015/02/12 23:09:55 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.40 2015/02/13 15:59:17 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -868,20 +868,27 @@ emit_pkt_read(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 			return SLJIT_ERR_ALLOC_FAILED;
 	}
 
-	switch (width) {
-	case 4:
-		status = emit_read32(compiler, ld_reg, k);
-		break;
-	case 2:
-		status = emit_read16(compiler, ld_reg, k);
-		break;
-	case 1:
-		status = emit_read8(compiler, ld_reg, k);
-		break;
-	}
+	/*
+	 * Don't emit wrapped-around reads. They're dead code but
+	 * dead code elimination logic isn't smart enough to figure
+	 * it out.
+	 */
+	if (k <= UINT32_MAX - width + 1) {
+		switch (width) {
+		case 4:
+			status = emit_read32(compiler, ld_reg, k);
+			break;
+		case 2:
+			status = emit_read16(compiler, ld_reg, k);
+			break;
+		case 1:
+			status = emit_read8(compiler, ld_reg, k);
+			break;
+		}
 
-	if (status != SLJIT_SUCCESS)
-		return status;
+		if (status != SLJIT_SUCCESS)
+			return status;
+	}
 
 #ifdef _KERNEL
 	over_mchain_jump = sljit_emit_jump(compiler, SLJIT_JUMP);
