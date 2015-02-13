@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.27 2015/02/08 20:22:01 justin Exp $
+#	$NetBSD: listsrcdirs,v 1.28 2015/02/13 00:31:42 pooka Exp $
 #
 
 #
@@ -89,6 +89,8 @@ lsrc posix /lib/lib		rumpuser rumpclient rumphijack
 lsrc posix /usr.bin/		rump_server rump_allserver shmif_dumpbus
 
 # assorted userspace sources, mostly for configuration & diagnostics
+# NOTE! libc++ is handled below as a special case due to the NetBSD
+# dist directory consisting ~90% (50+MB) of tests unnecessary to us
 lsrc usr /lib/			i18n_module
 lsrc usr /lib/lib		crypt ipsec m npf pci prop
 lsrc usr /lib/lib		pthread rmt y z
@@ -118,6 +120,10 @@ lsrc usr /crypto/external/bsd/	openssl
 if ${cvsmode}; then
 	iswanted sys && echo \!src/sys/arch src/sys
 
+	iswanted usr && \
+	    echo \!src/external/bsd/libc++/dist/libcxx/test \
+	           src/external/bsd/libc++
+
 	# pick a few useful archs, namely those mentioned in buildrump.sh
 	for arch in ${ARCHS}; do
 		lsrc sys /sys/arch/${arch}/ include ${arch} Makefile
@@ -127,4 +133,6 @@ if ${cvsmode}; then
 	done
 else
 	lsrc sys / sys
+
+	lsrc usr /external /bsd/libc++
 fi
