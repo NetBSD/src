@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.310 2015/01/29 02:59:17 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.311 2015/02/13 09:00:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.310 2015/01/29 02:59:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.311 2015/02/13 09:00:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -281,6 +281,10 @@ struct wm_softc {
 	int sc_rev;			/* MAC revision */
 	wm_phy_type sc_phytype;		/* PHY type */
 	uint32_t sc_mediatype;		/* Media type (Copper, Fiber, SERDES)*/
+#define	WM_MEDIATYPE_UNKNOWN		0x00
+#define	WM_MEDIATYPE_FIBER		0x01
+#define	WM_MEDIATYPE_COPPER		0x02
+#define	WM_MEDIATYPE_SERDES		0x03 /* Internal SERDES */
 	int sc_funcid;			/* unit number of the chip (0 to 3) */
 	int sc_flags;			/* flags; see below */
 	int sc_if_flags;		/* last if_flags */
@@ -727,10 +731,10 @@ static const struct wm_product {
 	const char		*wmp_name;
 	wm_chip_type		wmp_type;
 	uint32_t		wmp_flags;
-#define	WMP_F_UNKNOWN		0x00
-#define	WMP_F_FIBER		0x01
-#define	WMP_F_COPPER		0x02
-#define	WMP_F_SERDES		0x03 /* Internal SERDES */
+#define	WMP_F_UNKNOWN		WM_MEDIATYPE_UNKNOWN
+#define	WMP_F_FIBER		WM_MEDIATYPE_FIBER
+#define	WMP_F_COPPER		WM_MEDIATYPE_COPPER
+#define	WMP_F_SERDES		WM_MEDIATYPE_SERDES
 #define WMP_MEDIATYPE(x)	((x) & 0x03)
 } wm_products[] = {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82542,
@@ -2119,10 +2123,10 @@ wm_attach(device_t parent, device_t self, void *aux)
 		wm_gmii_mediainit(sc, wmp->wmp_product);
 	} else if (sc->sc_type < WM_T_82543 ||
 	    (CSR_READ(sc, WMREG_STATUS) & STATUS_TBIMODE) != 0) {
-		if (sc->sc_mediatype & WMP_F_COPPER) {
+		if (sc->sc_mediatype == WM_MEDIATYPE_COPPER) {
 			aprint_error_dev(sc->sc_dev,
 			    "WARNING: TBIMODE set on 1000BASE-T product!\n");
-			sc->sc_mediatype = WMP_F_FIBER;
+			sc->sc_mediatype = WM_MEDIATYPE_FIBER;
 		}
 		wm_tbi_mediainit(sc);
 	} else {
@@ -2139,45 +2143,45 @@ wm_attach(device_t parent, device_t self, void *aux)
 			switch (link_mode) {
 			case CTRL_EXT_LINK_MODE_1000KX:
 				aprint_verbose_dev(sc->sc_dev, "1000KX\n");
-				sc->sc_mediatype = WMP_F_SERDES;
+				sc->sc_mediatype = WM_MEDIATYPE_SERDES;
 				break;
 			case CTRL_EXT_LINK_MODE_SGMII:
 				if (wm_sgmii_uses_mdio(sc)) {
 					aprint_verbose_dev(sc->sc_dev,
 					    "SGMII(MDIO)\n");
 					sc->sc_flags |= WM_F_SGMII;
-					sc->sc_mediatype = WMP_F_COPPER;
+					sc->sc_mediatype = WM_MEDIATYPE_COPPER;
 					break;
 				}
 				aprint_verbose_dev(sc->sc_dev, "SGMII(I2C)\n");
 				/*FALLTHROUGH*/
 			case CTRL_EXT_LINK_MODE_PCIE_SERDES:
 				sc->sc_mediatype = wm_sfp_get_media_type(sc);
-				if (sc->sc_mediatype == WMP_F_UNKNOWN) {
+				if (sc->sc_mediatype == WM_MEDIATYPE_UNKNOWN) {
 					if (link_mode
 					    == CTRL_EXT_LINK_MODE_SGMII) {
 						sc->sc_mediatype
-						    = WMP_F_COPPER;
+						    = WM_MEDIATYPE_COPPER;
 						sc->sc_flags |= WM_F_SGMII;
 					} else {
 						sc->sc_mediatype
-						    = WMP_F_SERDES;
+						    = WM_MEDIATYPE_SERDES;
 						aprint_verbose_dev(sc->sc_dev,
 						    "SERDES\n");
 					}
 					break;
 				}
-				if (sc->sc_mediatype == WMP_F_SERDES)
+				if (sc->sc_mediatype == WM_MEDIATYPE_SERDES)
 					aprint_verbose_dev(sc->sc_dev,
 					    "SERDES\n");
 
 				/* Change current link mode setting */
 				reg &= ~CTRL_EXT_LINK_MODE_MASK;
 				switch (sc->sc_mediatype) {
-				case WMP_F_COPPER:
+				case WM_MEDIATYPE_COPPER:
 					reg |= CTRL_EXT_LINK_MODE_SGMII;
 					break;
-				case WMP_F_SERDES:
+				case WM_MEDIATYPE_SERDES:
 					reg |= CTRL_EXT_LINK_MODE_PCIE_SERDES;
 					break;
 				default:
@@ -2188,7 +2192,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 			case CTRL_EXT_LINK_MODE_GMII:
 			default:
 				aprint_verbose_dev(sc->sc_dev, "Copper\n");
-				sc->sc_mediatype = WMP_F_COPPER;
+				sc->sc_mediatype = WM_MEDIATYPE_COPPER;
 				break;
 			}
 
@@ -2199,16 +2203,16 @@ wm_attach(device_t parent, device_t self, void *aux)
 				reg &= ~CTRL_EXT_I2C_ENA;
 			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
 
-			if (sc->sc_mediatype == WMP_F_COPPER)
+			if (sc->sc_mediatype == WM_MEDIATYPE_COPPER)
 				wm_gmii_mediainit(sc, wmp->wmp_product);
 			else
 				wm_tbi_mediainit(sc);
 			break;
 		default:
-			if (sc->sc_mediatype & WMP_F_FIBER)
+			if (sc->sc_mediatype == WM_MEDIATYPE_FIBER)
 				aprint_error_dev(sc->sc_dev,
 				    "WARNING: TBIMODE clear on 1000BASE-X product!\n");
-			sc->sc_mediatype = WMP_F_COPPER;
+			sc->sc_mediatype = WM_MEDIATYPE_COPPER;
 			wm_gmii_mediainit(sc, wmp->wmp_product);
 		}
 	}
@@ -7249,7 +7253,7 @@ wm_check_for_link(struct wm_softc *sc)
 	uint32_t status;
 	uint32_t sig;
 
-	if (sc->sc_mediatype & WMP_F_SERDES) {
+	if (sc->sc_mediatype == WM_MEDIATYPE_SERDES) {
 		sc->sc_tbi_linkup = 1;
 		return 0;
 	}
@@ -7348,7 +7352,7 @@ wm_tbi_mediainit(struct wm_softc *sc)
 	 */
 	sc->sc_ctrl |= CTRL_SWDPIO(0);
 	sc->sc_ctrl &= ~CTRL_SWDPIO(1);
-	if (sc->sc_mediatype & WMP_F_SERDES)
+	if (sc->sc_mediatype == WM_MEDIATYPE_SERDES)
 		sc->sc_ctrl &= ~CTRL_LRST;
 
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
@@ -7428,7 +7432,7 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	uint32_t status;
 	int i;
 
-	if (sc->sc_mediatype & WMP_F_SERDES)
+	if (sc->sc_mediatype == WM_MEDIATYPE_SERDES)
 		return 0;
 
 	if ((sc->sc_type == WM_T_82571) || (sc->sc_type == WM_T_82572)
@@ -7558,7 +7562,7 @@ wm_tbi_check_link(struct wm_softc *sc)
 
 	KASSERT(WM_TX_LOCKED(sc));
 
-	if (sc->sc_mediatype & WMP_F_SERDES) {
+	if (sc->sc_mediatype == WM_MEDIATYPE_SERDES) {
 		sc->sc_tbi_linkup = 1;
 		return;
 	}
@@ -7647,7 +7651,7 @@ wm_sfp_get_media_type(struct wm_softc *sc)
 	uint32_t ctrl_ext;
 	uint8_t val = 0;
 	int timeout = 3;
-	uint32_t mediatype = WMP_F_UNKNOWN;
+	uint32_t mediatype = WM_MEDIATYPE_UNKNOWN;
 	int rv = -1;
 
 	ctrl_ext = CSR_READ(sc, WMREG_CTRL_EXT);
@@ -7685,13 +7689,13 @@ wm_sfp_get_media_type(struct wm_softc *sc)
 	}
 
 	if ((val & (SFF_SFP_ETH_FLAGS_1000SX | SFF_SFP_ETH_FLAGS_1000LX)) != 0)
-		mediatype = WMP_F_SERDES;
+		mediatype = WM_MEDIATYPE_SERDES;
 	else if ((val & SFF_SFP_ETH_FLAGS_1000T) != 0){
 		sc->sc_flags |= WM_F_SGMII;
-		mediatype = WMP_F_COPPER;
+		mediatype = WM_MEDIATYPE_COPPER;
 	} else if ((val & SFF_SFP_ETH_FLAGS_100FX) != 0){
 		sc->sc_flags |= WM_F_SGMII;
-		mediatype = WMP_F_SERDES;
+		mediatype = WM_MEDIATYPE_SERDES;
 	}
 
 out:
@@ -9184,8 +9188,8 @@ wm_enable_wakeup(struct wm_softc *sc)
 	}
 
 	/* Keep the laser running on fiber adapters */
-	if (((sc->sc_mediatype & WMP_F_FIBER) != 0)
-	    || (sc->sc_mediatype & WMP_F_SERDES) != 0) {
+	if ((sc->sc_mediatype == WM_MEDIATYPE_FIBER)
+	    || (sc->sc_mediatype == WM_MEDIATYPE_SERDES)) {
 		reg = CSR_READ(sc, WMREG_CTRL_EXT);
 		reg |= CTRL_EXT_SWDPIN(3);
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
