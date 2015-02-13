@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmvar.h,v 1.1 2015/02/07 13:20:00 pooka Exp $	*/
+/*	$NetBSD: if_iwmvar.h,v 1.2 2015/02/13 17:14:06 nonaka Exp $	*/
 /*	OpenBSD: if_iwmvar.h,v 1.3 2015/02/07 07:10:44 phessler Exp 	*/
 
 /*
@@ -293,6 +293,7 @@ struct iwm_rx_ring {
 #define IWM_FLAG_STOPPED	0x04
 #define IWM_FLAG_RFKILL		0x08
 #define IWM_FLAG_BUSY		0x10
+#define IWM_FLAG_ATTACHED	0x20
 
 struct iwm_ucode_status {
 	uint32_t uc_error_event_table;
