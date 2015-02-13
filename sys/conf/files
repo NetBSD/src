@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1127 2015/01/27 21:34:43 skrll Exp $
+#	$NetBSD: files,v 1.1128 2015/02/13 17:50:48 maxv Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20141030
@@ -1422,7 +1422,7 @@ file	dev/kttcp.c			kttcp		needs-flag
 
 # Veriexec
 defpseudo veriexec
-file	kern/kern_verifiedexec.c	veriexec
+file	kern/kern_veriexec.c	veriexec
 file	dev/verified_exec.c		veriexec	needs-flag
 
 # isochronous pseudo device for IEEE 1394, i.LINK or FireWire
