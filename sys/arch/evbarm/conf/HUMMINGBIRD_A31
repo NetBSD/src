@@ -1,4 +1,4 @@
-#	$NetBSD: HUMMINGBIRD_A31,v 1.21 2015/02/08 20:25:10 joerg Exp $
+#	$NetBSD: HUMMINGBIRD_A31,v 1.22 2015/02/13 13:48:17 joerg Exp $
 #
 #	HUMMINGBIRD_A31 - Merrii Hummingbird A31
 #
@@ -36,8 +36,8 @@ file-system	FFS		# UFS
 file-system	MFS		# memory file system
 file-system	NFS		# Network file system
 #file-system 	ADOSFS		# AmigaDOS-compatible file system
-#file-system 	EXT2FS		# second extended file system (linux)
-#file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	EXT2FS		# second extended file system (linux)
+file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
