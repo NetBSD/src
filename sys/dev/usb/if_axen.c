@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.3 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.3.2.1 2015/02/14 08:03:05 snj Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.2.1 2015/02/14 08:03:05 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -688,10 +688,18 @@ axen_attach(device_t parent, device_t self, void *aux)
 
 	id = usbd_get_interface_descriptor(sc->axen_iface);
 
-	/* XXX fix when USB3.0 HC is supported */
 	/* decide on what our bufsize will be */
-	sc->axen_bufsz = (sc->axen_udev->speed == USB_SPEED_HIGH) ?
-	    AXEN_BUFSZ_HS * 1024 : AXEN_BUFSZ_LS * 1024;
+	switch (sc->axen_udev->speed) {
+	case USB_SPEED_SUPER:
+		sc->axen_bufsz = AXEN_BUFSZ_SS * 1024;
+		break;
+	case USB_SPEED_HIGH:
+		sc->axen_bufsz = AXEN_BUFSZ_HS * 1024;
+		break;
+	default:
+		sc->axen_bufsz = AXEN_BUFSZ_LS * 1024;
+		break;
+	}
 
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
@@ -1071,7 +1079,7 @@ axen_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		/* skip pseudo header (2byte) */
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = m->m_len = pkt_len - 2;
+		m->m_pkthdr.len = m->m_len = pkt_len - 6;
 
 #ifdef AXEN_TOE
 		/* cheksum err */
@@ -1094,7 +1102,7 @@ axen_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		}
 #endif
 
-		memcpy(mtod(m, char *), buf + 2, pkt_len - 2);
+		memcpy(mtod(m, char *), buf + 2, pkt_len - 6);
 
 		/* push the packet up */
 		s = splnet();
