@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfjit.c,v 1.9 2015/02/14 19:55:05 alnsn Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.10 2015/02/14 20:25:08 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2011-2012, 2014 Alexander Nasonov.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.9 2015/02/14 19:55:05 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.10 2015/02/14 20:25:08 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -2149,26 +2149,26 @@ ATF_TC_BODY(bpfjit_jmp_jeq_x, tc)
 		BPF_STMT(BPF_LD+BPF_W+BPF_LEN, 0),
 		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 8),
 		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_X, 0, 0, 1),
-		BPF_STMT(BPF_RET+BPF_K, 0),
+		BPF_STMT(BPF_RET+BPF_K, 1),
 		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 3),
 		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_X, 0, 2, 0),
 		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 9),
 		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_X, 0, 1, 1),
-		BPF_STMT(BPF_RET+BPF_K, 1),
-		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 5),
-		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_X, 0, 1, 1),
 		BPF_STMT(BPF_RET+BPF_K, 2),
+		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 5),
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_X, 0, 0, 1),
+		BPF_STMT(BPF_RET+BPF_K, 3),
 		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 7),
 		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_X, 0, 2, 3),
-		BPF_STMT(BPF_RET+BPF_K, 3),
 		BPF_STMT(BPF_RET+BPF_K, 4),
 		BPF_STMT(BPF_RET+BPF_K, 5),
+		BPF_STMT(BPF_RET+BPF_K, 6),
 		BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 6),
 		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_X, 0, 3, 1),
-		BPF_STMT(BPF_RET+BPF_K, 6),
-		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_X, 1, 0, 0),
 		BPF_STMT(BPF_RET+BPF_K, 7),
-		BPF_STMT(BPF_RET+BPF_K, 8)
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_X, 0, 1, 0),
+		BPF_STMT(BPF_RET+BPF_K, 8),
+		BPF_STMT(BPF_RET+BPF_K, 9)
 	};
 
 	bpfjit_func_t code;
@@ -2185,14 +2185,14 @@ ATF_TC_BODY(bpfjit_jmp_jeq_x, tc)
 	rump_unschedule();
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(jitcall(code, pkt, 1, 1) == 7);
-	ATF_CHECK(jitcall(code, pkt, 2, 2) == 7);
-	ATF_CHECK(jitcall(code, pkt, 3, 3) == 1);
-	ATF_CHECK(jitcall(code, pkt, 4, 4) == 7);
-	ATF_CHECK(jitcall(code, pkt, 5, 5) == 7);
-	ATF_CHECK(jitcall(code, pkt, 6, 6) == 8);
-	ATF_CHECK(jitcall(code, pkt, 7, 7) == 5);
-	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 8);
+	ATF_CHECK(jitcall(code, pkt, 2, 2) == 8);
+	ATF_CHECK(jitcall(code, pkt, 3, 3) == 2);
+	ATF_CHECK(jitcall(code, pkt, 4, 4) == 8);
+	ATF_CHECK(jitcall(code, pkt, 5, 5) == 3);
+	ATF_CHECK(jitcall(code, pkt, 6, 6) == 9);
+	ATF_CHECK(jitcall(code, pkt, 7, 7) == 6);
+	ATF_CHECK(jitcall(code, pkt, 8, 8) == 1);
 
 	rump_schedule();
 	rumpns_bpfjit_free_code(code);
