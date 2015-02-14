@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.6 2014/01/11 15:51:02 tsutsui Exp $	*/
+/*	$NetBSD: parse.c,v 1.7 2015/02/14 13:06:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -130,7 +130,7 @@ struct command_entry {
 	int (*func)(int, char **);
 };
 
-struct command_entry entries[] = {
+static const struct command_entry entries[] = {
 	{ "b",		boot         },
 	{ "boot",	boot         },
 	{ "chkargs",	check_args   },
