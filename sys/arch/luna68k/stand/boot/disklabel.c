@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.9 2015/02/14 06:16:29 tsutsui Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.10 2015/02/14 13:07:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -329,7 +329,7 @@ disklabel(int argc, char *argv[])
 	return ST_NORMAL;
 }
 
-void
+static void
 display(struct disklabel *lp)
 {
 	int i, j;
