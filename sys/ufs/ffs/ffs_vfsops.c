@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.311 2015/02/14 07:20:11 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.312 2015/02/14 07:41:40 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.311 2015/02/14 07:20:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.312 2015/02/14 07:41:40 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -704,7 +704,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	struct fs *fs, *newfs;
 	struct dkwedge_info dkw;
 	int i, bsize, blks, error;
-	int32_t *lp;
+	int32_t *lp, fs_sbsize;
 	struct ufsmount *ump;
 	daddr_t sblockloc;
 	struct vnode_iterator *marker;
@@ -726,15 +726,17 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 
 	/*
 	 * Step 2: re-read superblock from disk. XXX: We don't handle
-	 * possibility that superblock moved.
+	 * possibility that superblock moved. Which implies that we don't
+	 * want its size to change either.
 	 */
 	fs = ump->um_fs;
-	error = bread(devvp, fs->fs_sblockloc / DEV_BSIZE, fs->fs_sbsize,
+	fs_sbsize = fs->fs_sbsize;
+	error = bread(devvp, fs->fs_sblockloc / DEV_BSIZE, fs_sbsize,
 		      NOCRED, 0, &bp);
 	if (error)
 		return (error);
-	newfs = kmem_alloc(fs->fs_sbsize, KM_SLEEP);
-	memcpy(newfs, bp->b_data, fs->fs_sbsize);
+	newfs = kmem_alloc(fs_sbsize, KM_SLEEP);
+	memcpy(newfs, bp->b_data, fs_sbsize);
 
 #ifdef FFS_EI
 	if (ump->um_flags & UFS_NEEDSWAP) {
@@ -744,15 +746,21 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 #endif
 		fs->fs_flags &= ~FS_SWAPPED;
 
+	/* We don't want the superblock size to change. */
+	if (newfs->fs_sbsize != fs_sbsize) {
+		brelse(bp, 0);
+		kmem_free(newfs, fs_sbsize);
+		return (EINVAL);
+	}
 	if ((newfs->fs_magic != FS_UFS1_MAGIC &&
 	     newfs->fs_magic != FS_UFS2_MAGIC)) {
 		brelse(bp, 0);
-		kmem_free(newfs, fs->fs_sbsize);
+		kmem_free(newfs, fs_sbsize);
 		return (EIO);		/* XXX needs translation */
 	}
 	if (!ffs_superblock_validate(newfs, newfs->fs_sbsize, newfs->fs_bsize)) {
 		brelse(bp, 0);
-		kmem_free(newfs, fs->fs_sbsize);
+		kmem_free(newfs, fs_sbsize);
 		return (EINVAL);
 	}
 
@@ -768,9 +776,9 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	newfs->fs_contigdirs = fs->fs_contigdirs;
 	newfs->fs_ronly = fs->fs_ronly;
 	newfs->fs_active = fs->fs_active;
-	memcpy(fs, newfs, (u_int)fs->fs_sbsize);
+	memcpy(fs, newfs, (u_int)fs_sbsize);
 	brelse(bp, 0);
-	kmem_free(newfs, fs->fs_sbsize);
+	kmem_free(newfs, fs_sbsize);
 
 	/* Recheck for apple UFS filesystem */
 	ump->um_flags &= ~UFS_ISAPPLEUFS;
