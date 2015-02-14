@@ -1,7 +1,7 @@
-/*	$NetBSD: bpfjit.c,v 1.42 2015/02/14 21:17:05 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.43 2015/02/14 21:32:46 alnsn Exp $	*/
 
 /*-
- * Copyright (c) 2011-2014 Alexander Nasonov.
+ * Copyright (c) 2011-2015 Alexander Nasonov.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.42 2015/02/14 21:17:05 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.43 2015/02/14 21:32:46 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.42 2015/02/14 21:17:05 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.43 2015/02/14 21:32:46 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
