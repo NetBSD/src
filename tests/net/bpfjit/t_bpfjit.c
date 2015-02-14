@@ -1,7 +1,7 @@
-/*	$NetBSD: t_bpfjit.c,v 1.10 2015/02/14 20:25:08 alnsn Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.11 2015/02/14 22:34:33 alnsn Exp $ */
 
 /*-
- * Copyright (c) 2011-2012, 2014 Alexander Nasonov.
+ * Copyright (c) 2011-2012, 2014-2015 Alexander Nasonov.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.10 2015/02/14 20:25:08 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.11 2015/02/14 22:34:33 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -2292,6 +2292,80 @@ ATF_TC_BODY(bpfjit_jmp_jeq_x_noinit_ax, tc)
 	ATF_REQUIRE(code != NULL);
 
 	ATF_CHECK(jitcall(code, pkt, 1, 1) == 10);
+
+	rump_schedule();
+	rumpns_bpfjit_free_code(code);
+	rump_unschedule();
+}
+
+ATF_TC(bpfjit_jmp_jeq_x_noinit_a);
+ATF_TC_HEAD(bpfjit_jmp_jeq_x_noinit_a, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test JIT compilation "
+	    "of BPF_JMP+BPF_EQ+BPF_X with uninitialised A");
+}
+
+ATF_TC_BODY(bpfjit_jmp_jeq_x_noinit_a, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LDX+BPF_W+BPF_LEN, 0), /* X > 0 */
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_X, 0, 0, 1),
+		BPF_STMT(BPF_RET+BPF_K, 10),
+		BPF_STMT(BPF_RET+BPF_K, 11)
+	};
+
+	bpfjit_func_t code;
+	uint8_t pkt[8]; /* the program doesn't read any data */
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	RZ(rump_init());
+
+	ATF_CHECK(prog_validate(insns, insn_count));
+
+	rump_schedule();
+	code = rumpns_bpfjit_generate_code(NULL, insns, insn_count);
+	rump_unschedule();
+	ATF_REQUIRE(code != NULL);
+
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 11);
+
+	rump_schedule();
+	rumpns_bpfjit_free_code(code);
+	rump_unschedule();
+}
+
+ATF_TC(bpfjit_jmp_jeq_x_noinit_x);
+ATF_TC_HEAD(bpfjit_jmp_jeq_x_noinit_x, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test JIT compilation "
+	    "of BPF_JMP+BPF_EQ+BPF_X with uninitialised X");
+}
+
+ATF_TC_BODY(bpfjit_jmp_jeq_x_noinit_x, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_STMT(BPF_LD+BPF_LEN, 0), /* A > 0 */
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_X, 0, 0, 1),
+		BPF_STMT(BPF_RET+BPF_K, 10),
+		BPF_STMT(BPF_RET+BPF_K, 11)
+	};
+
+	bpfjit_func_t code;
+	uint8_t pkt[8]; /* the program doesn't read any data */
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	RZ(rump_init());
+
+	ATF_CHECK(prog_validate(insns, insn_count));
+
+	rump_schedule();
+	code = rumpns_bpfjit_generate_code(NULL, insns, insn_count);
+	rump_unschedule();
+	ATF_REQUIRE(code != NULL);
+
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 11);
 
 	rump_schedule();
 	rumpns_bpfjit_free_code(code);
@@ -4568,6 +4642,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, bpfjit_jmp_jeq_x);
 	ATF_TP_ADD_TC(tp, bpfjit_jmp_jset_x);
 	ATF_TP_ADD_TC(tp, bpfjit_jmp_jeq_x_noinit_ax);
+	ATF_TP_ADD_TC(tp, bpfjit_jmp_jeq_x_noinit_a);
+	ATF_TP_ADD_TC(tp, bpfjit_jmp_jeq_x_noinit_x);
 	ATF_TP_ADD_TC(tp, bpfjit_jmp_modulo_x);
 	ATF_TP_ADD_TC(tp, bpfjit_ld_abs);
 	ATF_TP_ADD_TC(tp, bpfjit_ld_abs_k_overflow);
