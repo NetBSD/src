@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.6 2015/02/14 05:58:02 tsutsui Exp $	*/
+/*	$NetBSD: bmd.c,v 1.7 2015/02/14 06:31:31 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -117,12 +117,12 @@ union bmd_rfcnt {
 #define SKIP_NEXT_LINE(addr)		(addr += (PL_WIDTH - SL_WIDTH))
 
 
-void	bmd_draw_char(uint8_t *, uint8_t *, int, int, int);
-void	bmd_reverse_char(uint8_t *, uint8_t *, int, int);
-void	bmd_erase_char(uint8_t *, uint8_t *, int, int);
-void	bmd_erase_screen(volatile uint32_t *);
-void	bmd_scroll_screen(volatile uint32_t *, volatile uint32_t *,
-	    int, int, int, int);
+static void	bmd_draw_char(uint8_t *, uint8_t *, int, int, int);
+static void	bmd_reverse_char(uint8_t *, uint8_t *, int, int);
+static void	bmd_erase_char(uint8_t *, uint8_t *, int, int);
+static void	bmd_erase_screen(volatile uint32_t *);
+static void	bmd_scroll_screen(volatile uint32_t *, volatile uint32_t *,
+		    int, int, int, int);
 
 
 struct bmd_linec {
@@ -153,19 +153,21 @@ struct bmd_softc {
 #define STAT_ESCAPE	0x0001
 #define STAT_INSERT	0x0100
 
-struct	bmd_softc bmd_softc;
-struct	bmd_linec bmd_linec[52];
+static struct	bmd_softc bmd_softc;
+static struct	bmd_linec bmd_linec[52];
 
-void	bmd_escape(int);
-void	bmd_escape_0(int);
-void	bmd_escape_1(int);
+static void	bmd_escape(int);
+static void	bmd_escape_0(int);
+#if 0
+static void	bmd_escape_1(int);
+#endif
 
 
 /*
  * Escape-Sequence
  */
 
-void
+static void
 bmd_escape(int c)
 {
 	struct bmd_softc *bp = &bmd_softc;
@@ -184,7 +186,7 @@ bmd_escape(int c)
 	}
 }
 
-void
+static void
 bmd_escape_0(int c)
 {
 	struct bmd_softc *bp = &bmd_softc;
@@ -234,7 +236,8 @@ bmd_escape_0(int c)
 	bp->bc_escape = bmd_escape;
 }
 
-void
+#if 0
+static void
 bmd_escape_1(int c)
 {
 	struct bmd_softc *bp = &bmd_softc;
@@ -270,7 +273,7 @@ bmd_escape_1(int c)
 		break;
 	}
 }
-
+#endif
 
 /*
  * Entry Routine
@@ -468,7 +471,7 @@ bmdclear(void)
  *  charactor operation routines
  */
 
-void
+static void
 bmd_draw_char(uint8_t *raddr, uint8_t *waddr, int col, int row, int c)
 {
 	volatile uint16_t *p, *q;
@@ -539,7 +542,7 @@ bmd_draw_char(uint8_t *raddr, uint8_t *waddr, int col, int row, int c)
 	}
 }
 
-void
+static void
 bmd_reverse_char(uint8_t *raddr, uint8_t *waddr, int col, int row)
 {
 	volatile uint16_t *p, *q;
@@ -601,7 +604,7 @@ bmd_reverse_char(uint8_t *raddr, uint8_t *waddr, int col, int row)
 	}
 }
 
-void
+static void
 bmd_erase_char(uint8_t *raddr, uint8_t *waddr, int col, int row)
 {
 
@@ -613,7 +616,7 @@ bmd_erase_char(uint8_t *raddr, uint8_t *waddr, int col, int row)
  * screen operation routines
  */
 
-void
+static void
 bmd_erase_screen(volatile uint32_t *lp)
 {
 	int i, j;
@@ -625,7 +628,7 @@ bmd_erase_screen(volatile uint32_t *lp)
 	}
 }
 
-void
+static void
 bmd_scroll_screen(volatile uint32_t *lp, volatile uint32_t *lq,
     int xmin, int xmax, int ymin, int ymax)
 {
