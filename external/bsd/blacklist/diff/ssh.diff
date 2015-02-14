@@ -112,3 +112,49 @@ diff -u -u -r1.15 sshd.c
  	/*
  	 * Stay listening for connections until the system crashes or
  	 * the daemon is killed with a signal.
+Index: auth1.c
+===================================================================
+RCS file: /cvsroot/src/crypto/external/bsd/openssh/dist/auth1.c,v
+retrieving revision 1.9
+diff -u -u -r1.9 auth1.c
+--- auth1.c	19 Oct 2014 16:30:58 -0000	1.9
++++ auth1.c	14 Feb 2015 15:40:51 -0000
+@@ -41,6 +41,7 @@
+ #endif
+ #include "monitor_wrap.h"
+ #include "buffer.h"
++#include "pfilter.h"
+ 
+ /* import */
+ extern ServerOptions options;
+@@ -445,6 +446,7 @@
+ 	else {
+ 		debug("do_authentication: invalid user %s", user);
+ 		authctxt->pw = fakepw();
++		pfilter_notify(1);
+ 	}
+ 
+ 	/* Configuration may have changed as a result of Match */
+Index: auth2.c
+===================================================================
+RCS file: /cvsroot/src/crypto/external/bsd/openssh/dist/auth2.c,v
+retrieving revision 1.9
+diff -u -u -r1.9 auth2.c
+--- auth2.c	19 Oct 2014 16:30:58 -0000	1.9
++++ auth2.c	14 Feb 2015 15:40:51 -0000
+@@ -52,6 +52,7 @@
+ #include "pathnames.h"
+ #include "buffer.h"
+ #include "canohost.h"
++#include "pfilter.h"
+ 
+ #ifdef GSSAPI
+ #include "ssh-gss.h"
+@@ -256,6 +257,7 @@
+ 		} else {
+ 			logit("input_userauth_request: invalid user %s", user);
+ 			authctxt->pw = fakepw();
++			pfilter_notify(1);
+ 		}
+ #ifdef USE_PAM
+ 		if (options.use_pam)
