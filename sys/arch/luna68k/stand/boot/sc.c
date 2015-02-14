@@ -1,4 +1,4 @@
-/*	$NetBSD: sc.c,v 1.12 2015/02/14 05:03:09 tsutsui Exp $	*/
+/*	$NetBSD: sc.c,v 1.13 2015/02/14 05:58:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -354,7 +354,7 @@ scrun(int ctlr, int target, uint8_t *cdb, int cdblen, uint8_t *buf, int len,
 	if (hd == NULL)
 		return 0;
 
-	if (hd->scsi_ssts & (SSTS_INITIATOR|SSTS_TARGET|SSTS_BUSY))
+	if ((hd->scsi_ssts & (SSTS_INITIATOR | SSTS_TARGET | SSTS_BUSY)) != 0)
 		return 0;
 
 	hs->sc_flags  = 0;
@@ -405,8 +405,7 @@ scabort(struct scsi_softc *hs)
 	int len;
 
 	printf("sc%d: abort  phase=0x%x, ssts=0x%x, ints=0x%x\n",
-		hs->sc_ctlr, hd->scsi_psns, hd->scsi_ssts,
-		hd->scsi_ints);
+	    hs->sc_ctlr, hd->scsi_psns, hd->scsi_ssts, hd->scsi_ints);
 
 	if (hd->scsi_ints != 0)
 		hd->scsi_ints = hd->scsi_ints;
@@ -419,7 +418,8 @@ scabort(struct scsi_softc *hs)
 	len = (hd->scsi_tch << 16) | (hd->scsi_tcm << 8) | hd->scsi_tcl;
 
 	/* for that many bus cycles, try to send an abort msg */
-	for (len += 1024; (hd->scsi_ssts & SSTS_INITIATOR) && --len >= 0; ) {
+	for (len += 1024;
+	    ((hd->scsi_ssts & SSTS_INITIATOR)) != 0 && --len >= 0;) {
 		hd->scsi_scmd = SCMD_SET_ATN;
 
 		while ((hd->scsi_psns & PSNS_REQ) == 0) {
@@ -435,14 +435,14 @@ scabort(struct scsi_softc *hs)
 		if (hd->scsi_psns & PHASE_IO) {
 			/* one of the input phases - read & discard a byte */
 			hd->scsi_scmd = SCMD_SET_ACK;
-			while (hd->scsi_psns & PSNS_REQ)
+			while ((hd->scsi_psns & PSNS_REQ) != 0)
 				DELAY(1);
 			(void)hd->scsi_temp;
 		} else {
 			/* one of the output phases - send an abort msg */
 			hd->scsi_temp = MSG_ABORT;
 			hd->scsi_scmd = SCMD_SET_ACK;
-			while (hd->scsi_psns & PSNS_REQ)
+			while ((hd->scsi_psns & PSNS_REQ) != 0)
 				DELAY(1);
 		}
 
@@ -456,7 +456,7 @@ out:
 	 */
 	if (len < 0 && hs)
 		printf("sc%d: abort failed.  phase=0x%x, ssts=0x%x\n",
-			hs->sc_ctlr, hd->scsi_psns, hd->scsi_ssts);
+		    hs->sc_ctlr, hd->scsi_psns, hd->scsi_ssts);
 }
 
 
@@ -477,7 +477,7 @@ scsi_test_unit_rdy(int ctlr, int target, int lun)
 
 	cdb.lun = lun;
 
-	if (!(scrun(ctlr, target, (void *)&cdb, 6, NULL, 0, &lock))) {
+	if (scrun(ctlr, target, (void *)&cdb, 6, NULL, 0, &lock) == 0) {
 #ifdef DEBUG
 		printf("scsi_test_unit_rdy: Command Transfer Failed.\n");
 #endif
@@ -522,7 +522,7 @@ scsi_request_sense(int ctlr, int target, int lun, uint8_t *buf,
 	cdb.lun = lun;
 	cdb.len = len;
 
-	if (!(scrun(ctlr, target, (void *)&cdb, 6, buf, len, &lock))) {
+	if (scrun(ctlr, target, (void *)&cdb, 6, buf, len, &lock) == 0) {
 #ifdef DEBUG
 		printf("scsi_request_sense: Command Transfer Failed.\n");
 #endif
@@ -553,13 +553,13 @@ scsi_immed_command(int ctlr, int target, int lun, struct scsi_generic_cdb *cdb,
 
 #ifdef DEBUG
 	printf("scsi_immed_command( %d, %d, %d, cdb(%d), buf, %d): Start\n",
-	       ctlr, target, lun, cdb->len, len);
+	    ctlr, target, lun, cdb->len, len);
 #endif
 
 	cdb->cdb[1] |= lun << 5;
 
-	if (!(scrun(ctlr, target, (void *)&cdb->cdb[0], cdb->len, buf, len,
-	    &lock))) {
+	if (scrun(ctlr, target, (void *)&cdb->cdb[0], cdb->len, buf, len,
+	    &lock) == 0) {
 #ifdef DEBUG
 		printf("scsi_immed_command: Command Transfer Failed.\n");
 #endif
@@ -597,7 +597,7 @@ scsi_format_unit(int ctlr, int target, int lun)
 
 	cdb.lun = lun;
 
-	if (!(scrun(ctlr, target, (void *)&cdb, 6, NULL, 0, &lock))) {
+	if (scrun(ctlr, target, (void *)&cdb, 6, NULL, 0, &lock) == 0) {
 #ifdef DEBUG
 		printf("scsi_format_unit: Command Transfer Failed.\n");
 #endif
@@ -657,8 +657,7 @@ scintr(void)
  get_intr:
 #ifdef DEBUG
 	printf("scintr: INTS 0x%x, SSTS 0x%x,  PCTL 0x%x,  PSNS 0x%x    0x%x\n",
-	        ints, hd->scsi_ssts, hd->scsi_pctl, hd->scsi_psns,
-	        hs->sc_phase);
+	    ints, hd->scsi_ssts, hd->scsi_pctl, hd->scsi_psns, hs->sc_phase);
 #endif
 	if (ints & INTS_RESEL) {
 		if (hs->sc_phase == BUS_FREE_PHASE) {
@@ -675,12 +674,13 @@ scintr(void)
 		    (hs->sc_msg[0] == MSG_DISCONNECT)) {
 			hs->sc_phase  = BUS_FREE_PHASE;
 			hs->sc_target = SCSI_ID;
-			if (hs->sc_msg[0] == MSG_CMD_COMPLETE)
+			if (hs->sc_msg[0] == MSG_CMD_COMPLETE) {
 				/* SCSI IO complete */
 				*(hs->sc_lock) = SC_IO_COMPLETE;
-			else
-				/* Cisconnected from Target */
+			} else {
+				/* Disconnected from Target */
 				*(hs->sc_lock) = SC_DISCONNECTED;
+			}
 			hd->scsi_ints = ints;
 			return 0;
 		} else
@@ -705,7 +705,7 @@ scintr(void)
 				hs->sc_flags &= ~SC_SEL_TIMEOUT;
 				hs->sc_phase  = BUS_FREE_PHASE;
 				hs->sc_target = SCSI_ID;
-				/* Such SCSI Device is not conected. */
+				/* Such SCSI Device is not connected. */
 				*(hs->sc_lock) = SC_DEV_NOT_FOUND;
 				hd->scsi_ints = ints;
 				return 0;

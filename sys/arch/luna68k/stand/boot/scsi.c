@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.6 2015/02/14 05:03:09 tsutsui Exp $	*/
+/*	$NetBSD: scsi.c,v 1.7 2015/02/14 05:58:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -118,7 +118,7 @@ scsi(int argc, char *argv[])
 			for (p = argv[2]; *p != '\0' ; p++) {
 				i = i * 10 + *p - '0';
 			}
-			if ( i < 8 && i >= 0) {
+			if (i < 8 && i >= 0) {
 				scsi_device = i;
 			}
 		}
@@ -156,14 +156,14 @@ scsi(int argc, char *argv[])
 		if (scsi_immed_command(   0, scsi_device,   0, &capacity,
 		    (uint8_t *)&capacitybuf, sizeof(capacitybuf)) == 0) {
 			printf("Logical Block Address:\t%ld (0x%lx)\n",
-			       capacitybuf[0], capacitybuf[0]);
+			    capacitybuf[0], capacitybuf[0]);
 			printf("Block Length:\t\t%ld (0x%lx)\n",
-			       capacitybuf[1], capacitybuf[1]);
+			    capacitybuf[1], capacitybuf[1]);
 		}
 	} else if (!strcmp(argv[1], "trace")) {
 		for (i = 0; i < 7; i++) {
 			printf("SCSI ID %d .... ", i);
-			status = scsi_test_unit_rdy( 0, i, 0);
+			status = scsi_test_unit_rdy(0, i, 0);
 			if (status >= 0)
 				printf("found.\n");
 			else
@@ -182,7 +182,7 @@ scsi(int argc, char *argv[])
 		}
 
 		if ((i == 'y') || (i == 'Y'))
-			status = scsi_format_unit( 0, scsi_device, 0);
+			status = scsi_format_unit(0, scsi_device, 0);
 	}
 
 	return ST_NORMAL;

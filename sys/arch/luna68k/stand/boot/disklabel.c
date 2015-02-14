@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.7 2015/02/14 05:03:09 tsutsui Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.8 2015/02/14 05:58:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -111,9 +111,9 @@ dkcksum(struct disklabel *lp)
 int
 disklabel(int argc, char *argv[])
 {
-	struct scd_dk_label *omp = (struct scd_dk_label *) lbl_buff;
+	struct scd_dk_label *omp = (struct scd_dk_label *)lbl_buff;
 	struct disklabel    *bp  = (struct disklabel *)&lbl_buff[LABELOFFSET];
-	struct fs *fp = (struct fs *) lbl_buff;
+	struct fs *fp = (struct fs *)lbl_buff;
 	uint16_t *p;
 	u_long chksum, count;
 	char *q;
@@ -143,8 +143,8 @@ disklabel(int argc, char *argv[])
 			printf("Disk Label read error !!\n");
 		}
 	} else if (!strcmp(argv[1], "omron")) {
-		i  = (int) &omp->dkl_badchk;
-		i -= (int) lbl_buff;
+		i  = (int)&omp->dkl_badchk;
+		i -= (int)lbl_buff;
 		printf("Offset = %d\n", i);
 		printf("\n");
 		printf("Checksum of Bad Track:\t0x%x\n",
@@ -304,9 +304,9 @@ disklabel(int argc, char *argv[])
 		printf("checking Super Block: block size = %d bytes,"
 		    " seek amount = 1 blocks\n", BLOCK_SIZE);
 		i = j = 0;
-		while (1) {
-			if (!scsi_read( i, lbl_buff, BLOCK_SIZE))
-			break;
+		for (;;) {
+			if (scsi_read(i, lbl_buff, BLOCK_SIZE) == 0)
+				break;
 
 			if (fp->fs_magic == FS_MAGIC) {
 				printf("%d, (%d)\n", i, i - j);
@@ -315,11 +315,11 @@ disklabel(int argc, char *argv[])
 			i++;
 		}
 	} else if (!strcmp(argv[1], "sbcopy")) {
-		if (!scsi_read(32, lbl_buff, BLOCK_SIZE)) {
+		if (scsi_read(32, lbl_buff, BLOCK_SIZE) == 0) {
 			printf("sbcopy: read failed\n");
 			return ST_ERROR;
 		}
-		if (scsi_write(16, lbl_buff, BLOCK_SIZE)) {
+		if (scsi_write(16, lbl_buff, BLOCK_SIZE) != 0) {
 			printf("sbcopy: copy done\n");
 		} else {
 			printf("sbcopy: write failed\n");
@@ -399,15 +399,15 @@ display(struct disklabel *lp)
 			printf("\t# (Cyl. %d",
 			    pp->p_offset / lp->d_secpercyl);
 			if (pp->p_offset % lp->d_secpercyl)
-			    cnputc('*');
+				cnputc('*');
 			else
-			    cnputc(' ');
+				cnputc(' ');
 			printf("- %d",
 			    (pp->p_offset +
 			    pp->p_size + lp->d_secpercyl - 1) /
 			    lp->d_secpercyl - 1);
 			if (pp->p_size % lp->d_secpercyl)
-			    cnputc('*');
+				cnputc('*');
 			printf(")\n");
 		}
 	}

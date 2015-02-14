@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.5 2015/02/14 05:03:09 tsutsui Exp $	*/
+/*	$NetBSD: bmd.c,v 1.6 2015/02/14 05:58:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -290,8 +290,11 @@ bmdinit(void)
 	 *  adjust plane position
 	 */
 
-	bp->bc_raddr = (uint8_t *)0xB10C0008;	/* plane-0 hardware address */
-	bp->bc_waddr = (uint8_t *)0xB1080008;   /* common bitmap hardware address */
+	/* plane-0 hardware address */
+	bp->bc_raddr = (uint8_t *)0xB10C0008;
+	/* common bitmap hardware address */
+	bp->bc_waddr = (uint8_t *)0xB1080008;
+
 	rfcnt.p.rfc_hcnt = 7;			/* shift left   16 dot */
 	rfcnt.p.rfc_vcnt = -27;			/* shift down    1 dot */
 	*bmd_rfcnt = rfcnt.u;
@@ -324,7 +327,7 @@ bmdinit(void)
 	bmd_erase_screen((uint32_t *)bp->bc_waddr);	/* clear screen */
 	*bmd_bmsel = 0x01;				/* 1 plane */
 
-							/* turn on  cursole */
+	/* turn on cursor */
 	bmd_reverse_char(bp->bc_raddr,
 			 bp->bc_waddr,
 			 bq->bl_col, bp->bc_row);
@@ -352,11 +355,13 @@ bmdputc(int c)
 	int i;
 
 	c &= 0x7F;
-							/* turn off cursole */
+
+	/* turn off cursor */
 	bmd_reverse_char(bp->bc_raddr,
 			 bp->bc_waddr,
 			 bq->bl_col, bp->bc_row);
-							/* do escape-sequence */
+
+	/* do escape-sequence */
 	if (bp->bc_stat & STAT_ESCAPE) {
 		*bp->bc_esc++ = c;
 		(*bp->bc_escape)(c);
@@ -412,7 +417,7 @@ bmdputc(int c)
 			bq->bl_col = bp->bc_xmin;
 			break;
 
-		case 0x1b:				/* ESC */
+		case 0x1B:				/* ESC */
 			bp->bc_stat |= STAT_ESCAPE;
 			*bp->bc_esc++ = 0x1b;
 			break;
@@ -432,7 +437,7 @@ bmdputc(int c)
 	}
 
  done:
-							/* turn on  cursole */
+	/* turn on  cursor */
 	bmd_reverse_char(bp->bc_raddr,
 			 bp->bc_waddr,
 			 bq->bl_col, bp->bc_row);
@@ -446,14 +451,16 @@ bmdclear(void)
 	struct bmd_softc *bp = &bmd_softc;
 	struct bmd_linec *bq = bp->bc_bl;
 
-	bmd_erase_screen((uint32_t *)bp->bc_waddr);	/* clear screen */
+	/* clear screen */
+	bmd_erase_screen((uint32_t *)bp->bc_waddr);
 
 	bq->bl_col = bq->bl_end = bp->bc_xmin;
 	bp->bc_row = bp->bc_ymin;
 
+	/* turn on cursor */
 	bmd_reverse_char(bp->bc_raddr,
 			 bp->bc_waddr,
-			 bq->bl_col, bp->bc_row);	/* turn on  cursole */
+			 bq->bl_col, bp->bc_row);
 }
 
 
