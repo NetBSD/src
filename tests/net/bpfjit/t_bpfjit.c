@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfjit.c,v 1.6 2015/02/11 23:29:48 alnsn Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.7 2015/02/14 16:48:30 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2011-2012, 2014 Alexander Nasonov.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.6 2015/02/11 23:29:48 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.7 2015/02/14 16:48:30 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -2256,6 +2256,43 @@ ATF_TC_BODY(bpfjit_jmp_jset_x, tc)
 	ATF_CHECK(jitcall(code, pkt, 6, 6) == 8);
 	ATF_CHECK(jitcall(code, pkt, 7, 7) == 5);
 	ATF_CHECK(jitcall(code, pkt, 8, 8) == 0);
+
+	rump_schedule();
+	rumpns_bpfjit_free_code(code);
+	rump_unschedule();
+}
+
+ATF_TC(bpfjit_jmp_x_uninitialised);
+ATF_TC_HEAD(bpfjit_jmp_x_uninitialised, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test JIT compilation "
+	    "of BPF_JMP+BPF_EQ+BPF_X with uninitialised X");
+}
+
+ATF_TC_BODY(bpfjit_jmp_x_uninitialised, tc)
+{
+	static struct bpf_insn insns[] = {
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_X, 1, 0, 1),
+		BPF_STMT(BPF_RET+BPF_K, 1),
+		BPF_STMT(BPF_RET+BPF_K, 0)
+	};
+
+	bpfjit_func_t code;
+	uint8_t pkt[8]; /* the program doesn't read any data */
+
+	size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+	RZ(rump_init());
+
+	/* X isn't initialised. */
+	ATF_CHECK(!prog_validate(insns, insn_count));
+
+	rump_schedule();
+	code = rumpns_bpfjit_generate_code(NULL, insns, insn_count);
+	rump_unschedule();
+	ATF_REQUIRE(code != NULL);
+
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
 
 	rump_schedule();
 	rumpns_bpfjit_free_code(code);
@@ -4531,6 +4568,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, bpfjit_jmp_jge_x);
 	ATF_TP_ADD_TC(tp, bpfjit_jmp_jeq_x);
 	ATF_TP_ADD_TC(tp, bpfjit_jmp_jset_x);
+	ATF_TP_ADD_TC(tp, bpfjit_jmp_x_uninitialised);
 	ATF_TP_ADD_TC(tp, bpfjit_jmp_modulo_x);
 	ATF_TP_ADD_TC(tp, bpfjit_ld_abs);
 	ATF_TP_ADD_TC(tp, bpfjit_ld_abs_k_overflow);
