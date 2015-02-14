@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.9 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: auth2.c,v 1.10 2015/02/14 15:41:21 christos Exp $	*/
 /* $OpenBSD: auth2.c,v 1.132 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2.c,v 1.9 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.10 2015/02/14 15:41:21 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: auth2.c,v 1.9 2014/10/19 16:30:58 christos Exp $");
 #include "pathnames.h"
 #include "buffer.h"
 #include "canohost.h"
+#include "pfilter.h"
 
 #ifdef GSSAPI
 #include "ssh-gss.h"
@@ -256,6 +257,7 @@ input_userauth_request(int type, u_int32_t seq, void *ctxt)
 		} else {
 			logit("input_userauth_request: invalid user %s", user);
 			authctxt->pw = fakepw();
+			pfilter_notify(1);
 		}
 #ifdef USE_PAM
 		if (options.use_pam)
