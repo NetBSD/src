@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp.4,v 1.30 2015/02/14 12:57:52 he Exp $
+.\"	$NetBSD: tcp.4,v 1.31 2015/02/14 13:02:38 wiz Exp $
 .\"	$FreeBSD: tcp.4,v 1.11.2.16 2004/02/16 22:21:47 bms Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tcp.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd October 10, 2013
+.Dd February 14, 2015
 .Dt TCP 4
 .Os
 .Sh NAME
@@ -115,7 +115,7 @@ Under most circumstances,
 sends data when it is presented;
 when outstanding data has not yet been acknowledged, it gathers
 small amounts of output to be sent in a single packet once
-an acknowledgement is received.
+an acknowledgment is received.
 For a small number of clients, such as window systems
 that send a stream of mouse events which receive no replies,
 this packetization may cause significant delays.
@@ -244,10 +244,10 @@ This option takes an
 .Vt "unsigned int"
 value, with a value greater than 0.
 .It Dv TCP_INFO
-Information about a socket's underlying TCP session may be retreived
+Information about a socket's underlying TCP session may be retrieved
 by passing the read-only option
 .Dv TPC_INFO
-to 
+to
 .Xr getsockopt 2 .
 It accepts a single argument: a pointer to an instance of
 .Vt "struct tcp_info" .
