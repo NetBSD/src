@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.16 2015/01/25 15:52:44 christos Exp $	*/
+/*	$NetBSD: sshd.c,v 1.17 2015/02/14 19:05:29 christos Exp $	*/
 /* $OpenBSD: sshd.c,v 1.428 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.16 2015/01/25 15:52:44 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.17 2015/02/14 19:05:29 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -627,6 +627,8 @@ privsep_preauth_child(void)
 		    SSH_PRIVSEP_USER);
 	explicit_bzero(pw->pw_passwd, strlen(pw->pw_passwd));
 	endpwent();
+
+	pfilter_init();
 
 	/* Change our root directory */
 	if (chroot(_PATH_PRIVSEP_CHROOT_DIR) == -1)
