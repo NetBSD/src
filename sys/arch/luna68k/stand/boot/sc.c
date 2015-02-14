@@ -1,4 +1,4 @@
-/*	$NetBSD: sc.c,v 1.13 2015/02/14 05:58:02 tsutsui Exp $	*/
+/*	$NetBSD: sc.c,v 1.14 2015/02/14 13:07:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -135,7 +135,7 @@ scinit(int ctlr, void *addr)
 	return 1;
 }
 
-void
+static void
 screset(struct scsi_softc *hs)
 {
 	struct scsidevice *hd = hs->sc_spc;
@@ -270,7 +270,7 @@ scprobe(struct scsi_softc *hs, uint target, uint lun)
  * SPC Arbitration/Selection routine
  */
 
-int
+static int
 issue_select(struct scsidevice *hd, uint8_t target)
 {
 
@@ -299,7 +299,7 @@ issue_select(struct scsidevice *hd, uint8_t target)
  * SPC Program Transfer routines
  */
 
-void
+static void
 ixfer_start(struct scsidevice *hd, int len, uint8_t phase, int wait)
 {
 
@@ -310,7 +310,7 @@ ixfer_start(struct scsidevice *hd, int len, uint8_t phase, int wait)
 	hd->scsi_scmd = SCMD_XFR | SCMD_PROG_XFR;
 }
 
-void
+static void
 ixfer_out(struct scsidevice *hd, int len, uint8_t *buf)
 {
 
@@ -322,7 +322,7 @@ ixfer_out(struct scsidevice *hd, int len, uint8_t *buf)
 	}
 }
 
-void
+static void
 ixfer_in(struct scsidevice *hd, int len, uint8_t *buf)
 {
 
@@ -339,7 +339,7 @@ ixfer_in(struct scsidevice *hd, int len, uint8_t *buf)
  * SPC drive routines
  */
 
-int
+static int
 scrun(int ctlr, int target, uint8_t *cdb, int cdblen, uint8_t *buf, int len,
     volatile int *lock)
 {
@@ -376,7 +376,7 @@ scrun(int ctlr, int target, uint8_t *cdb, int cdblen, uint8_t *buf, int len,
 	return 1;
 }
 
-int
+static int
 scfinish(int ctlr)
 {
 	struct scsi_softc *hs = &scsi_softc[ctlr];
@@ -398,7 +398,7 @@ scfinish(int ctlr)
 	return status;
 }
 
-void
+static void
 scabort(struct scsi_softc *hs)
 {
 	struct scsidevice *hd = hs->sc_spc;
