@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.40 2015/02/13 15:59:17 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.41 2015/02/14 21:14:56 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.40 2015/02/13 15:59:17 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.41 2015/02/14 21:14:56 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.40 2015/02/13 15:59:17 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.41 2015/02/14 21:14:56 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1419,8 +1419,12 @@ optimize_pass1(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 			/* Initialize abc_length for ABC pass. */
 			insn_dat[i].u.jdata.abc_length = MAX_ABC_LENGTH;
 
-			if (BPF_SRC(insns[i].code) == BPF_X)
+			*initmask |= invalid & BJ_INIT_ABIT;
+
+			if (BPF_SRC(insns[i].code) == BPF_X) {
 				*hints |= BJ_HINT_XREG;
+				*initmask |= invalid & BJ_INIT_XBIT;
+			}
 
 			if (BPF_OP(insns[i].code) == BPF_JA) {
 				jt = jf = insns[i].k;
