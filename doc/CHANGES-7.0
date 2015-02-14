@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.203 2015/02/11 13:00:59 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.204 2015/02/14 08:15:50 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15794,4 +15794,37 @@ libexec/getty/ttys.5				1.19
 	Update the example to use dty00 instead of ttyd0 to reflect
 	current practice.
 	[aymeric, ticket #508]
+
+sys/netinet6/ip6_output.c			1.163
+
+	Add a missing break in switch.
+	[roy, ticket #509]
+
+libexec/getty/ttys.5				1.20
+
+	Document using tty00 as an example of dialin peripheral instead
+	of dialout dty00.
+	[aymeric, ticket #510]
+
+distrib/utils/embedded/conf/rpi.conf		1.26
+
+	Actually write cpufreq changes to ${mnt}/etc/rc.local.
+	[jmcneill, ticket #511]
+
+sys/dev/usb/if_axen.c				1.4
+
+	Eliminate 'discarding oversize frame' messages.
+	From Takahiro HAYASHI in PR kern/49659.
+	[nonaka, ticket #512]
+
+sys/fs/ntfs/ntfs_vfsops.c			1.99, 1.100
+sys/fs/ntfs/ntfs_subr.c				1.59
+
+	Fix two divisions by zero and a node leak.
+	[maxv, ticket #513]
+
+external/mit/MesaLib/dist/src/mapi/entry.c	1.2
+
+	Disable broken 32 bit x86 asm code.
+	[mrg, ticket #514]
 
