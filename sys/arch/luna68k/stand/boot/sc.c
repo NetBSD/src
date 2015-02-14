@@ -1,4 +1,4 @@
-/*	$NetBSD: sc.c,v 1.11 2014/04/16 11:18:00 tsutsui Exp $	*/
+/*	$NetBSD: sc.c,v 1.12 2015/02/14 05:03:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -87,11 +87,11 @@
 
 static void screset(struct scsi_softc *);
 static void scprobe(struct scsi_softc *, uint, uint);
-static int issue_select(struct scsidevice *, u_char);
-static void ixfer_start(struct scsidevice *, int, u_char, int);
-static void ixfer_out(struct scsidevice *, int, u_char *);
-static void ixfer_in(struct scsidevice *, int, u_char *);
-static int scrun(int, int, u_char *, int, u_char *, int, volatile int *);
+static int issue_select(struct scsidevice *, uint8_t);
+static void ixfer_start(struct scsidevice *, int, uint8_t, int);
+static void ixfer_out(struct scsidevice *, int, uint8_t *);
+static void ixfer_in(struct scsidevice *, int, uint8_t *);
+static int scrun(int, int, uint8_t *, int, uint8_t *, int, volatile int *);
 static int scfinish(int);
 static void scabort(struct scsi_softc *);
 
@@ -198,7 +198,7 @@ scident(uint ctlr, uint target, uint lun, struct scsi_inquiry *inqout,
 		if (i < 0 || --tries < 0)
 			return false;
 		if (i == STS_CHECKCOND) {
-			u_char sensebuf[8];
+			uint8_t sensebuf[8];
 			struct scsi_xsense *sp = (struct scsi_xsense *)sensebuf;
 
 			scsi_request_sense(ctlr, target, lun, sensebuf, 8);
@@ -208,9 +208,9 @@ scident(uint ctlr, uint target, uint lun, struct scsi_inquiry *inqout,
 		}
 		DELAY(1000);
 	}
-	if (scsi_immed_command(ctlr, target, lun, &inq, (u_char *)&inqbuf,
+	if (scsi_immed_command(ctlr, target, lun, &inq, (uint8_t *)&inqbuf,
 			       sizeof(inqbuf)) ||
-	    scsi_immed_command(ctlr, target, lun, &cap, (u_char *)&capbuf,
+	    scsi_immed_command(ctlr, target, lun, &cap, (uint8_t *)&capbuf,
 			       sizeof(capbuf)))
 		/* doesn't exist or not a CCS device */
 		return false;
@@ -271,7 +271,7 @@ scprobe(struct scsi_softc *hs, uint target, uint lun)
  */
 
 int
-issue_select(struct scsidevice *hd, u_char target)
+issue_select(struct scsidevice *hd, uint8_t target)
 {
 
 	hd->scsi_pctl = 0;
@@ -300,7 +300,7 @@ issue_select(struct scsidevice *hd, u_char target)
  */
 
 void
-ixfer_start(struct scsidevice *hd, int len, u_char phase, int wait)
+ixfer_start(struct scsidevice *hd, int len, uint8_t phase, int wait)
 {
 
 	hd->scsi_tch  = ((len & 0xff0000) >> 16);
@@ -311,7 +311,7 @@ ixfer_start(struct scsidevice *hd, int len, u_char phase, int wait)
 }
 
 void
-ixfer_out(struct scsidevice *hd, int len, u_char *buf)
+ixfer_out(struct scsidevice *hd, int len, uint8_t *buf)
 {
 
 	for (; len > 0; len--) {
@@ -323,7 +323,7 @@ ixfer_out(struct scsidevice *hd, int len, u_char *buf)
 }
 
 void
-ixfer_in(struct scsidevice *hd, int len, u_char *buf)
+ixfer_in(struct scsidevice *hd, int len, uint8_t *buf)
 {
 
 	for (; len > 0; len--) {
@@ -340,7 +340,7 @@ ixfer_in(struct scsidevice *hd, int len, u_char *buf)
  */
 
 int
-scrun(int ctlr, int target, u_char *cdb, int cdblen, u_char *buf, int len,
+scrun(int ctlr, int target, uint8_t *cdb, int cdblen, uint8_t *buf, int len,
     volatile int *lock)
 {
 	struct scsi_softc *hs;
@@ -500,7 +500,8 @@ scsi_test_unit_rdy(int ctlr, int target, int lun)
 }
 
 int
-scsi_request_sense(int ctlr, int target, int lun, u_char *buf, unsigned int len)
+scsi_request_sense(int ctlr, int target, int lun, uint8_t *buf,
+    unsigned int len)
 {
 	static struct scsi_cdb6 cdb = {	CMD_REQUEST_SENSE };
 	int status;
@@ -545,7 +546,7 @@ scsi_request_sense(int ctlr, int target, int lun, u_char *buf, unsigned int len)
 
 int
 scsi_immed_command(int ctlr, int target, int lun, struct scsi_generic_cdb *cdb,
-    u_char *buf, unsigned int len)
+    uint8_t *buf, unsigned int len)
 {
 	int status;
 	volatile int lock;
@@ -596,7 +597,7 @@ scsi_format_unit(int ctlr, int target, int lun)
 
 	cdb.lun = lun;
 
-	if (!(scrun(ctlr, target, (void *)&cdb, 6, (u_char *) 0, 0, &lock))) {
+	if (!(scrun(ctlr, target, (void *)&cdb, 6, NULL, 0, &lock))) {
 #ifdef DEBUG
 		printf("scsi_format_unit: Command Transfer Failed.\n");
 #endif
@@ -633,9 +634,9 @@ scintr(void)
 {
 	struct scsi_softc *hs;
 	struct scsidevice *hd;
-	u_char ints, temp;
+	uint8_t ints, temp;
 	int i;
-	u_char *buf;
+	uint8_t *buf;
 	int len;
 
 	for (i = 0; i < NSC; i++) {
