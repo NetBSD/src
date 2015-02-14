@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.5 2015/02/13 18:57:47 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.6 2015/02/14 05:00:23 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.5 2015/02/13 18:57:47 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.6 2015/02/14 05:00:23 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -2840,7 +2840,12 @@ iwm_start_fw(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	IWM_WRITE(sc, IWM_CSR_UCODE_DRV_GP1_CLR, IWM_CSR_UCODE_SW_BIT_RFKILL);
 
 	/* Load the given image to the HW */
-	return iwm_load_firmware(sc, ucode_type);
+	error = iwm_load_firmware(sc, ucode_type);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "failed to load firmware: %d\n",
+		    error);
+	}
+	return error;
 }
 
 static int
