@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfjit.c,v 1.8 2015/02/14 17:28:19 alnsn Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.9 2015/02/14 19:55:05 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2011-2012, 2014 Alexander Nasonov.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.8 2015/02/14 17:28:19 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.9 2015/02/14 19:55:05 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -2262,19 +2262,19 @@ ATF_TC_BODY(bpfjit_jmp_jset_x, tc)
 	rump_unschedule();
 }
 
-ATF_TC(bpfjit_jmp_x_uninitialised);
-ATF_TC_HEAD(bpfjit_jmp_x_uninitialised, tc)
+ATF_TC(bpfjit_jmp_jeq_x_noinit_ax);
+ATF_TC_HEAD(bpfjit_jmp_jeq_x_noinit_ax, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Test JIT compilation "
-	    "of BPF_JMP+BPF_EQ+BPF_X with uninitialised X");
+	    "of BPF_JMP+BPF_EQ+BPF_X with uninitialised A and X");
 }
 
-ATF_TC_BODY(bpfjit_jmp_x_uninitialised, tc)
+ATF_TC_BODY(bpfjit_jmp_jeq_x_noinit_ax, tc)
 {
 	static struct bpf_insn insns[] = {
-		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_X, 1, 0, 1),
-		BPF_STMT(BPF_RET+BPF_K, 11),
-		BPF_STMT(BPF_RET+BPF_K, 10)
+		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_X, 0, 0, 1),
+		BPF_STMT(BPF_RET+BPF_K, 10),
+		BPF_STMT(BPF_RET+BPF_K, 11)
 	};
 
 	bpfjit_func_t code;
@@ -4567,7 +4567,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, bpfjit_jmp_jge_x);
 	ATF_TP_ADD_TC(tp, bpfjit_jmp_jeq_x);
 	ATF_TP_ADD_TC(tp, bpfjit_jmp_jset_x);
-	ATF_TP_ADD_TC(tp, bpfjit_jmp_x_uninitialised);
+	ATF_TP_ADD_TC(tp, bpfjit_jmp_jeq_x_noinit_ax);
 	ATF_TP_ADD_TC(tp, bpfjit_jmp_modulo_x);
 	ATF_TP_ADD_TC(tp, bpfjit_ld_abs);
 	ATF_TP_ADD_TC(tp, bpfjit_ld_abs_k_overflow);
