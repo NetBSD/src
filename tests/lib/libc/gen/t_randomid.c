@@ -1,4 +1,4 @@
-/* $NetBSD: t_randomid.c,v 1.3 2011/07/07 09:49:59 jruoho Exp $ */
+/* $NetBSD: t_randomid.c,v 1.4 2015/02/14 08:46:02 isaki Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #define	PERIOD		30000
 
-uint64_t last[65536];
+uint32_t last[65536];
 
 ATF_TC(randomid_basic);
 ATF_TC_HEAD(randomid_basic, tc)
@@ -50,13 +50,13 @@ ATF_TC_HEAD(randomid_basic, tc)
 ATF_TC_BODY(randomid_basic, tc)
 {
 	static randomid_t ctx = NULL;
-	uint64_t lowest, n, diff;
+	uint32_t lowest, n, diff;
 	uint16_t id;
 
 	memset(last, 0, sizeof(last));
 	ctx = randomid_new(16, (long)3600);
 
-	lowest = UINT64_MAX;
+	lowest = UINT32_MAX;
 
 	for (n = 0; n < 1000000; n++) {
 		id = randomid(ctx);
@@ -65,15 +65,15 @@ ATF_TC_BODY(randomid_basic, tc)
 			diff = n - last[id];
 
 			if (diff <= lowest) {
-				if (lowest != UINT64_MAX)
-					printf("id %5d: last call at %9"PRIu64
-					    ", current call %9"PRIu64
-					    " (diff %5"PRIu64"), "
-					    "lowest %"PRIu64"\n",
+				if (lowest != UINT32_MAX)
+					printf("id %5d: last call at %9"PRIu32
+					    ", current call %9"PRIu32
+					    " (diff %5"PRIu32"), "
+					    "lowest %"PRIu32"\n",
 					    id, last[id], n, diff, lowest);
 
 				ATF_REQUIRE_MSG(diff >= PERIOD,
-				    "diff (%"PRIu64") less than minimum "
+				    "diff (%"PRIu32") less than minimum "
 				    "period (%d)", diff, PERIOD);
 
 				lowest = diff;
