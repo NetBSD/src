@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.4 2014/07/26 07:36:09 riastradh Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.5 2015/02/14 06:58:12 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.4 2014/07/26 07:36:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.5 2015/02/14 06:58:12 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -82,6 +82,12 @@ struct radeon_softc {
 	}				sc_task_u;
 	struct drm_device		*sc_drm_dev;
 	struct pci_dev			sc_pci_dev;
+#ifdef __i386__
+#define RADEON_PCI_UGLY_MAP_HACK
+	/* XXX Used to claim the VGA device before attach_real */
+	bus_space_handle_t		sc_temp_memh;
+	bool				sc_temp_set;
+#endif
 };
 
 struct radeon_device *
@@ -165,6 +171,17 @@ radeon_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = NULL;
 	sc->sc_pa = *pa;
 
+#ifdef RADEON_PCI_UGLY_MAP_HACK
+	/*
+	 * XXX
+	 * We map the VGA registers, so that other driver don't
+	 * think they can.  This stops vga@isa or pcdisplay@isa
+	 * attaching, and stealing wsdisplay0.  Yuck.
+	 */
+	sc->sc_temp_set = bus_space_map(pa->pa_memt, 0xb0000, 0x10000, 0,
+					&sc->sc_temp_memh);
+#endif
+
 	config_mountroot(self, &radeon_attach_real);
 }
 
@@ -179,6 +196,15 @@ radeon_attach_real(device_t self)
 
 	ok = radeon_pci_lookup(pa, &flags);
 	KASSERT(ok);
+
+#ifdef RADEON_PCI_UGLY_MAP_HACK
+	/*
+	 * XXX
+	 * Unmap the VGA registers so the DRM code can map them.
+	 */
+	if (sc->sc_temp_set)
+		bus_space_unmap(pa->pa_memt, sc->sc_temp_memh, 0x10000);
+#endif
 
 	sc->sc_task_state = RADEON_TASK_ATTACH;
 	SIMPLEQ_INIT(&sc->sc_task_u.attach);
