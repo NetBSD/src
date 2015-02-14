@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.41 2015/02/14 21:14:56 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.42 2015/02/14 21:17:05 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.41 2015/02/14 21:14:56 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.42 2015/02/14 21:17:05 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.41 2015/02/14 21:14:56 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.42 2015/02/14 21:17:05 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1605,6 +1605,7 @@ static int
 bpf_alu_to_sljit_op(const struct bpf_insn *pc)
 {
 	const int bad = SLJIT_UNUSED;
+	const uint32_t k = pc->k;
 
 	/*
 	 * Note: all supported 64bit arches have 32bit multiply
@@ -1617,8 +1618,8 @@ bpf_alu_to_sljit_op(const struct bpf_insn *pc)
 	case BPF_OR:  return SLJIT_OR;
 	case BPF_XOR: return SLJIT_XOR;
 	case BPF_AND: return SLJIT_AND;
-	case BPF_LSH: return (pc->k > 31) ? bad : SLJIT_SHL;
-	case BPF_RSH: return (pc->k > 31) ? bad : SLJIT_LSHR|SLJIT_INT_OP;
+	case BPF_LSH: return (k > 31) ? bad : SLJIT_SHL;
+	case BPF_RSH: return (k > 31) ? bad : SLJIT_LSHR|SLJIT_INT_OP;
 	default:
 		return bad;
 	}
