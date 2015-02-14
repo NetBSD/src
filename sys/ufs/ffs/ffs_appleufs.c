@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_appleufs.c,v 1.13 2015/02/14 07:56:31 maxv Exp $	*/
+/*	$NetBSD: ffs_appleufs.c,v 1.14 2015/02/14 08:07:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002 Darrin B. Jewell
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.13 2015/02/14 07:56:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.14 2015/02/14 08:07:39 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -89,28 +89,19 @@ ffs_appleufs_validate(const char *name, const struct appleufslabel *o,
 		return EINVAL;
 
 	*n = *o;
-	n->ul_checksum = 0;
 	n->ul_checksum = ffs_appleufs_cksum(n);
-	if (n->ul_checksum != o->ul_checksum) {
-#if defined(DIAGNOSTIC) || !defined(_KERNEL)
-		printf("%s: invalid APPLE UFS checksum. found 0x%x, expecting 0x%x",
-		    name, o->ul_checksum, n->ul_checksum);
-#endif
-		return EINVAL;
-	}
 	n->ul_magic = be32toh(o->ul_magic);
 	n->ul_version = be32toh(o->ul_version);
 	n->ul_time = be32toh(o->ul_time);
 	n->ul_namelen = be16toh(o->ul_namelen);
 
-	if (n->ul_namelen > APPLEUFS_MAX_LABEL_NAME) {
-#if defined(DIAGNOSTIC) || !defined(_KERNEL)
-		printf("%s: APPLE UFS label name too long, truncated.\n",
-		    name);
-#endif
+	if (n->ul_checksum != o->ul_checksum)
+		return EINVAL;
+	if (n->ul_namelen == 0)
+		return EINVAL;
+	if (n->ul_namelen > APPLEUFS_MAX_LABEL_NAME)
 		n->ul_namelen = APPLEUFS_MAX_LABEL_NAME;
-	}
-	/* if len is max, will set ul_unused1 */
+
 	n->ul_name[n->ul_namelen - 1] = '\0';
 
 #ifdef DEBUG
