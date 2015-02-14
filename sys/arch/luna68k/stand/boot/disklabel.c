@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.6 2015/01/02 19:42:05 christos Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.7 2015/02/14 05:03:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -91,17 +91,17 @@ static void display(struct disklabel *);
 #define FS_MAGIC FS_UFS1_MAGIC
 #define LABEL_SIZE BBSIZE
 
-u_char lbl_buff[LABEL_SIZE];
+uint8_t lbl_buff[LABEL_SIZE];
 
 #if 0
-u_short
+uint16_t
 dkcksum(struct disklabel *lp)
 {
-	u_short *start, *end;
-	u_short sum = 0;
+	uint16_t *start, *end;
+	uint16_t sum = 0;
 
-	start = (u_short *)lp;
-	end = (u_short *)&lp->d_partitions[lp->d_npartitions];
+	start = (uint16_t *)lp;
+	end = (uint16_t *)&lp->d_partitions[lp->d_npartitions];
 	while (start < end)
 		sum ^= *start++;
 	return sum;
@@ -114,7 +114,7 @@ disklabel(int argc, char *argv[])
 	struct scd_dk_label *omp = (struct scd_dk_label *) lbl_buff;
 	struct disklabel    *bp  = (struct disklabel *)&lbl_buff[LABELOFFSET];
 	struct fs *fp = (struct fs *) lbl_buff;
-	u_short *p;
+	uint16_t *p;
 	u_long chksum, count;
 	char *q;
 	int i, j;
@@ -180,7 +180,7 @@ disklabel(int argc, char *argv[])
 			/* checksum of disk-label */
 			chksum = 0;
 			count = sizeof(struct scd_dk_label) / sizeof(short int);
-			for (p= (u_short *) lbl_buff; count > 0; count--) {
+			for (p= (uint16_t *)lbl_buff; count > 0; count--) {
 				if (count == 1)
 					printf("Check Sum: 0x%lx\n", chksum);
 				chksum ^= *p++;
@@ -243,7 +243,7 @@ disklabel(int argc, char *argv[])
 		/* restump checksum of OMRON disklabel */
 		chksum = 0;
 		count = sizeof(struct scd_dk_label) / sizeof(short int);
-		for (p= (u_short *) lbl_buff; count > 1; count--) {
+		for (p= (uint16_t *)lbl_buff; count > 1; count--) {
 			chksum ^= *p++;
 		}
 		printf("chksum: 0x%lx\n", chksum);
@@ -293,7 +293,7 @@ disklabel(int argc, char *argv[])
 		/* restump checksum of OMRON disklabel */
 		chksum = 0;
 		count = sizeof(struct scd_dk_label) / sizeof(short int);
-		for (p = (u_short *)lbl_buff; count > 1; count--) {
+		for (p = (uint16_t *)lbl_buff; count > 1; count--) {
 			chksum ^= *p++;
 		}
 		omp->dkl_cksum = chksum;
