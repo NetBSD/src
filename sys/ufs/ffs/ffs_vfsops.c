@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.309 2015/02/13 17:13:20 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.310 2015/02/14 07:11:34 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.309 2015/02/13 17:13:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.310 2015/02/14 07:11:34 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -111,7 +111,11 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.309 2015/02/13 17:13:20 maxv Exp $"
 
 MODULE(MODULE_CLASS_VFS, ffs, NULL);
 
-static int	ffs_vfs_fsync(vnode_t *, int);
+static int
+ffs_vfs_fsync(vnode_t *, int);
+
+static int
+ffs_superblock_validate(struct fs *fs, u_int32_t fs_sbsize, int32_t fs_bsize);
 
 static struct sysctllog *ffs_sysctl_log;
 
@@ -738,14 +742,19 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	} else
 #endif
 		fs->fs_flags &= ~FS_SWAPPED;
+
 	if ((newfs->fs_magic != FS_UFS1_MAGIC &&
-	     newfs->fs_magic != FS_UFS2_MAGIC)||
-	     newfs->fs_bsize > MAXBSIZE ||
-	     newfs->fs_bsize < sizeof(struct fs)) {
+	     newfs->fs_magic != FS_UFS2_MAGIC)) {
 		brelse(bp, 0);
 		kmem_free(newfs, fs->fs_sbsize);
 		return (EIO);		/* XXX needs translation */
 	}
+	if (!ffs_superblock_validate(newfs, newfs->fs_sbsize, newfs->fs_bsize)) {
+		brelse(bp, 0);
+		kmem_free(newfs, fs->fs_sbsize);
+		return (EINVAL);
+	}
+
 	/* Store off old fs_sblockloc for fs_oldfscompat_read. */
 	sblockloc = fs->fs_sblockloc;
 	/*
