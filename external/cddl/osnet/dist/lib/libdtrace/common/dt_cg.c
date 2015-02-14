@@ -407,7 +407,7 @@ static void
 dt_cg_store(dt_node_t *src, dt_irlist_t *dlp, dt_regset_t *drp, dt_node_t *dst)
 {
 	ctf_encoding_t e;
-	dif_instr_t instr = NULL;
+	dif_instr_t instr = 0;
 	size_t size;
 	int reg;
 
