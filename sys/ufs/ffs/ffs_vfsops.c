@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.315 2015/02/14 10:21:29 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.316 2015/02/14 13:43:28 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.315 2015/02/14 10:21:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.316 2015/02/14 13:43:28 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -925,7 +925,7 @@ static const int sblock_try[] = SBLOCKSEARCH;
 static int
 ffs_superblock_validate(struct fs *fs)
 {
-	int32_t i, fs_bshift = 0, fs_fshift = 0;
+	int32_t i, fs_bshift = 0, fs_fshift = 0, fs_frag;
 
 	/* Check the superblock size */
 	if (fs->fs_sbsize > SBLOCKSIZE || fs->fs_sbsize < sizeof(struct fs))
@@ -965,7 +965,9 @@ ffs_superblock_validate(struct fs *fs)
 	/* Now that the shifts are sanitized, we can use the ffs_ API */
 
 	/* Check the number of frag blocks */
-	if (ffs_numfrags(fs, fs->fs_bsize) > MAXFRAG)
+	if ((fs_frag = ffs_numfrags(fs, fs->fs_bsize)) > MAXFRAG)
+		return 0;
+	if (fs->fs_frag != fs_frag)
 		return 0;
 
 	return 1;
