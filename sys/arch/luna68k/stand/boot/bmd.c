@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.4 2014/01/11 15:51:02 tsutsui Exp $	*/
+/*	$NetBSD: bmd.c,v 1.5 2015/02/14 05:03:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -86,8 +86,8 @@
 
 union bmd_rfcnt {
 	struct {
-		short	rfc_hcnt;
-		short	rfc_vcnt;
+		int16_t	rfc_hcnt;
+		int16_t	rfc_vcnt;
 	} p;
 	uint32_t u;
 };
@@ -117,9 +117,9 @@ union bmd_rfcnt {
 #define SKIP_NEXT_LINE(addr)		(addr += (PL_WIDTH - SL_WIDTH))
 
 
-void	bmd_draw_char(char *, char *, int, int, int);
-void	bmd_reverse_char(char *, char *, int, int);
-void	bmd_erase_char(char *, char *, int, int);
+void	bmd_draw_char(uint8_t *, uint8_t *, int, int, int);
+void	bmd_reverse_char(uint8_t *, uint8_t *, int, int);
+void	bmd_erase_char(uint8_t *, uint8_t *, int, int);
 void	bmd_erase_screen(volatile uint32_t *);
 void	bmd_scroll_screen(volatile uint32_t *, volatile uint32_t *,
 	    int, int, int, int);
@@ -130,13 +130,13 @@ struct bmd_linec {
 	struct bmd_linec *bl_prev;
 	int	bl_col;
 	int	bl_end;
-	u_char	bl_line[128];
+	uint8_t	bl_line[128];
 };
 
 struct bmd_softc {
 	int	bc_stat;
-	char   *bc_raddr;
-	char   *bc_waddr;
+	uint8_t *bc_raddr;
+	uint8_t *bc_waddr;
 	int	bc_xmin;
 	int	bc_xmax;
 	int	bc_ymin;
@@ -280,7 +280,7 @@ void
 bmdinit(void)
 {
 	volatile uint32_t *bmd_rfcnt = (uint32_t *)0xB1000000;
-	volatile long *bmd_bmsel = (long *)0xB1040000;
+	volatile uint32_t *bmd_bmsel = (uint32_t *)0xB1040000;
 	struct bmd_softc *bp = &bmd_softc;
 	struct bmd_linec *bq;
 	int i;
@@ -290,8 +290,8 @@ bmdinit(void)
 	 *  adjust plane position
 	 */
 
-	bp->bc_raddr = (char *)0xB10C0008;	/* plane-0 hardware address */
-	bp->bc_waddr = (char *)0xB1080008; /* common bitmap hardware address */
+	bp->bc_raddr = (uint8_t *)0xB10C0008;	/* plane-0 hardware address */
+	bp->bc_waddr = (uint8_t *)0xB1080008;   /* common bitmap hardware address */
 	rfcnt.p.rfc_hcnt = 7;			/* shift left   16 dot */
 	rfcnt.p.rfc_vcnt = -27;			/* shift down    1 dot */
 	*bmd_rfcnt = rfcnt.u;
@@ -331,7 +331,7 @@ bmdinit(void)
 }
 
 void
-bmdadjust(short hcnt, short vcnt)
+bmdadjust(int16_t hcnt, int16_t vcnt)
 {
 	volatile uint32_t *bmd_rfcnt = (uint32_t *)0xB1000000;
 	union bmd_rfcnt rfcnt;
@@ -462,7 +462,7 @@ bmdclear(void)
  */
 
 void
-bmd_draw_char(char *raddr, char *waddr, int col, int row, int c)
+bmd_draw_char(uint8_t *raddr, uint8_t *waddr, int col, int row, int c)
 {
 	volatile uint16_t *p, *q;
 	volatile uint32_t *lp, *lq;
@@ -533,7 +533,7 @@ bmd_draw_char(char *raddr, char *waddr, int col, int row, int c)
 }
 
 void
-bmd_reverse_char(char *raddr, char *waddr, int col, int row)
+bmd_reverse_char(uint8_t *raddr, uint8_t *waddr, int col, int row)
 {
 	volatile uint16_t *p, *q;
 	volatile uint32_t *lp, *lq;
@@ -595,7 +595,7 @@ bmd_reverse_char(char *raddr, char *waddr, int col, int row)
 }
 
 void
-bmd_erase_char(char *raddr, char *waddr, int col, int row)
+bmd_erase_char(uint8_t *raddr, uint8_t *waddr, int col, int row)
 {
 
 	bmd_draw_char(raddr, waddr, col, row, 0);
