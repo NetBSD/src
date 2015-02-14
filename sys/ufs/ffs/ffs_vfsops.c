@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.310 2015/02/14 07:11:34 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.311 2015/02/14 07:20:11 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.310 2015/02/14 07:11:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.311 2015/02/14 07:20:11 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -713,6 +713,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		return (EINVAL);
 
 	ump = VFSTOUFS(mp);
+
 	/*
 	 * Step 1: invalidate all cached meta-data.
 	 */
@@ -722,19 +723,19 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	VOP_UNLOCK(devvp);
 	if (error)
 		panic("ffs_reload: dirty1");
+
 	/*
-	 * Step 2: re-read superblock from disk.
+	 * Step 2: re-read superblock from disk. XXX: We don't handle
+	 * possibility that superblock moved.
 	 */
 	fs = ump->um_fs;
-
-	/* XXX we don't handle possibility that superblock moved. */
 	error = bread(devvp, fs->fs_sblockloc / DEV_BSIZE, fs->fs_sbsize,
 		      NOCRED, 0, &bp);
-	if (error) {
+	if (error)
 		return (error);
-	}
 	newfs = kmem_alloc(fs->fs_sbsize, KM_SLEEP);
 	memcpy(newfs, bp->b_data, fs->fs_sbsize);
+
 #ifdef FFS_EI
 	if (ump->um_flags & UFS_NEEDSWAP) {
 		ffs_sb_swap((struct fs*)bp->b_data, newfs);
