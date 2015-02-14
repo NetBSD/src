@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.94 2014/04/16 18:55:18 maxv Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.94.2.1 2015/02/14 08:11:07 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.94 2014/04/16 18:55:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.94.2.1 2015/02/14 08:11:07 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,9 +331,20 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, str
 	brelse( bp , 0 );
 	bp = NULL;
 
+	/* Sanity checks. XXX: More checks are probably needed. */
 	if (strncmp(ntmp->ntm_bootfile.bf_sysid, NTFS_BBID, NTFS_BBIDLEN)) {
 		error = EINVAL;
 		dprintf(("ntfs_mountfs: invalid boot block\n"));
+		goto out;
+	}
+	if (ntmp->ntm_bps == 0) {
+		error = EINVAL;
+		dprintf(("ntfs_mountfs: invalid bytes per sector\n"));
+		goto out;
+	}
+	if (ntmp->ntm_spc == 0) {
+		error = EINVAL;
+		dprintf(("ntfs_mountfs: invalid sectors per cluster\n"));
 		goto out;
 	}
 
