@@ -3081,8 +3081,8 @@ dt_cook_op2(dt_node_t *dnp, uint_t idflags)
 	int op = dnp->dn_op;
 
 	ctf_membinfo_t m;
-	ctf_file_t *ctfp;
-	ctf_id_t type;
+	ctf_file_t *ctfp = NULL;
+	ctf_id_t type = 0;
 	int kind, val, uref;
 	dt_ident_t *idp;
 
