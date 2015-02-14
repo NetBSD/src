@@ -1,4 +1,4 @@
-/*	$NetBSD: auth1.c,v 1.9 2014/10/19 16:30:58 christos Exp $	*/
+/*	$NetBSD: auth1.c,v 1.10 2015/02/14 15:41:21 christos Exp $	*/
 /* $OpenBSD: auth1.c,v 1.82 2014/07/15 15:54:14 millert Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth1.c,v 1.9 2014/10/19 16:30:58 christos Exp $");
+__RCSID("$NetBSD: auth1.c,v 1.10 2015/02/14 15:41:21 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: auth1.c,v 1.9 2014/10/19 16:30:58 christos Exp $");
 #endif
 #include "monitor_wrap.h"
 #include "buffer.h"
+#include "pfilter.h"
 
 /* import */
 extern ServerOptions options;
@@ -445,6 +446,7 @@ do_authentication(Authctxt *authctxt)
 	else {
 		debug("do_authentication: invalid user %s", user);
 		authctxt->pw = fakepw();
+		pfilter_notify(1);
 	}
 
 	/* Configuration may have changed as a result of Match */
