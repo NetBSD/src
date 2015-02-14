@@ -1,4 +1,4 @@
-/*	$NetBSD: t_bpfjit.c,v 1.7 2015/02/14 16:48:30 alnsn Exp $ */
+/*	$NetBSD: t_bpfjit.c,v 1.8 2015/02/14 17:28:19 alnsn Exp $ */
 
 /*-
  * Copyright (c) 2011-2012, 2014 Alexander Nasonov.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_bpfjit.c,v 1.7 2015/02/14 16:48:30 alnsn Exp $");
+__RCSID("$NetBSD: t_bpfjit.c,v 1.8 2015/02/14 17:28:19 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -2273,8 +2273,8 @@ ATF_TC_BODY(bpfjit_jmp_x_uninitialised, tc)
 {
 	static struct bpf_insn insns[] = {
 		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_X, 1, 0, 1),
-		BPF_STMT(BPF_RET+BPF_K, 1),
-		BPF_STMT(BPF_RET+BPF_K, 0)
+		BPF_STMT(BPF_RET+BPF_K, 11),
+		BPF_STMT(BPF_RET+BPF_K, 10)
 	};
 
 	bpfjit_func_t code;
@@ -2284,15 +2284,14 @@ ATF_TC_BODY(bpfjit_jmp_x_uninitialised, tc)
 
 	RZ(rump_init());
 
-	/* X isn't initialised. */
-	ATF_CHECK(!prog_validate(insns, insn_count));
+	ATF_CHECK(prog_validate(insns, insn_count));
 
 	rump_schedule();
 	code = rumpns_bpfjit_generate_code(NULL, insns, insn_count);
 	rump_unschedule();
 	ATF_REQUIRE(code != NULL);
 
-	ATF_CHECK(jitcall(code, pkt, 1, 1) == 0);
+	ATF_CHECK(jitcall(code, pkt, 1, 1) == 10);
 
 	rump_schedule();
 	rumpns_bpfjit_free_code(code);
