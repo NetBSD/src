@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2015/02/14 05:58:02 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2015/02/14 13:07:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -157,7 +157,7 @@ regdump(int *rp /* must not be register */, int sbytes)
 
 /*	#define KSADDR	((int *)&(((char *)&u)[(UPAGES-1)*NBPG]))	*/
 
-void
+static void
 dumpmem(int *ptr, int sz, int ustack)
 {
 	int i, val;
