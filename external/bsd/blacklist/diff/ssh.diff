@@ -158,3 +158,20 @@ diff -u -u -r1.9 auth2.c
  		}
  #ifdef USE_PAM
  		if (options.use_pam)
+Index: sshd.c
+===================================================================
+RCS file: /cvsroot/src/crypto/external/bsd/openssh/dist/sshd.c,v
+retrieving revision 1.16
+diff -u -r1.16 sshd.c
+--- sshd.c	25 Jan 2015 15:52:44 -0000	1.16
++++ sshd.c	14 Feb 2015 09:55:06 -0000
+@@ -628,6 +628,8 @@
+ 	explicit_bzero(pw->pw_passwd, strlen(pw->pw_passwd));
+ 	endpwent();
+ 
++	pfilter_init();
++
+ 	/* Change our root directory */
+ 	if (chroot(_PATH_PRIVSEP_CHROOT_DIR) == -1)
+ 		fatal("chroot(\"%s\"): %s", _PATH_PRIVSEP_CHROOT_DIR,
+
