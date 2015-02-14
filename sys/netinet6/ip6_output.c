@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.157.2.2 2015/01/23 09:27:15 martin Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.157.2.3 2015/02/14 07:14:23 snj Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.157.2.2 2015/01/23 09:27:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.157.2.3 2015/02/14 07:14:23 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2120,6 +2120,7 @@ ip6_getpcbopt(struct ip6_pktopts *pktopt, int optname, struct sockopt *sopt)
 		else
 			optdata = (void *)&defpreftemp;
 		optdatalen = sizeof(int);
+		break;
 	default:		/* should not happen */
 #ifdef DIAGNOSTIC
 		panic("ip6_getpcbopt: unexpected option\n");
