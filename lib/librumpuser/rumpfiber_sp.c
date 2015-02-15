@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfiber_sp.c,v 1.3 2014/12/29 21:50:09 justin Exp $	*/
+/*	$NetBSD: rumpfiber_sp.c,v 1.4 2015/02/15 00:54:32 justin Exp $	*/
 
 /*
  * Copyright (c) 2014 Justin Cormack.  All Rights Reserved.
@@ -30,9 +30,10 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpfiber_sp.c,v 1.3 2014/12/29 21:50:09 justin Exp $");
+__RCSID("$NetBSD: rumpfiber_sp.c,v 1.4 2015/02/15 00:54:32 justin Exp $");
 #endif /* !lint */
 
+#include <stdint.h>
 #include <stdlib.h>
 
 #include <rump/rumpuser.h>

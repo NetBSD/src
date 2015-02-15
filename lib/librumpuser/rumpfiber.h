@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfiber.h,v 1.3 2014/12/29 21:50:09 justin Exp $	*/
+/*	$NetBSD: rumpfiber.h,v 1.4 2015/02/15 00:54:32 justin Exp $	*/
 
 /*
  * Copyright (c) 2014 Justin Cormack.  All Rights Reserved.
@@ -40,7 +40,7 @@ struct thread {
     int64_t wakeup_time;
     TAILQ_ENTRY(thread) thread_list;
     ucontext_t ctx;
-    uint32_t flags;
+    int flags;
     int threrrno;
 };
 
