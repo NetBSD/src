@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.147 2015/02/12 10:09:10 palle Exp $
+#	$NetBSD: files.sparc64,v 1.148 2015/02/15 01:43:11 nakayama Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -32,11 +32,11 @@ file	arch/sparc64/dev/sbus.c			sbus
 
 device	psycho: pcibus, sysmon_power, sysmon_taskq
 attach	psycho at mainbus
-device	schizo: pcibus, sysmon_power, sysmon_taskq
+device	schizo: pcibus
 attach	schizo at mainbus
-device	pyro: pcibus, sysmon_power, sysmon_taskq
+device	pyro: pcibus
 attach	pyro at mainbus
-device	vpci: pcibus, sysmon_power, sysmon_taskq
+device	vpci: pcibus
 attach	vpci at mainbus
 include "dev/pci/files.pci"
 file	arch/sparc64/dev/psycho.c		psycho needs-flag
@@ -79,7 +79,7 @@ device rtc: mc146818
 attach rtc at ebus with rtc_ebus
 file	arch/sparc64/dev/rtc.c			rtc
 
-device psm: sysmon_envsys, sysmon_power
+device psm: sysmon_power
 attach psm at ebus
 file	arch/sparc64/dev/psm.c			psm
 
@@ -90,15 +90,15 @@ device power
 attach power at sbus, ebus
 file	arch/sparc64/dev/power.c		power
 
-device	tda
+device	tda: sysmon_envsys
 attach	tda at iic
 file	arch/sparc64/dev/tda.c			tda
 
-device pcfiic: sysmon_envsys, pcf8584, i2cbus
+device pcfiic: pcf8584, i2cbus
 attach pcfiic at ebus
 file	arch/sparc64/dev/pcfiic_ebus.c		pcfiic
 
-device ecadc
+device ecadc: sysmon_envsys
 attach ecadc at iic
 file	arch/sparc64/dev/pcf8591_envctrl.c	ecadc
 
