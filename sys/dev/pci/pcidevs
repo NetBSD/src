@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1214 2015/01/25 10:48:31 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1215 2015/02/15 21:27:57 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1523,6 +1523,7 @@ product ATI RADEON_HD7340	0x9808	Radeon HD7340 Graphics
 product ATI RADEON_HD2600_HD	0xaa08	Radeon HD2600 HD Audio Controller
 product ATI RADEON_HD4350_HD	0xaa38	Radeon HD4350 HD Audio Controller
 product ATI RADEON_HD5600_HDMI	0xaa60	Redwood HDMI Audio
+product ATI RADEON_HD54XX_HDA	0xaa68	Radeon HD 54xx Audio
 
 /* Auravision products */
 product AURAVISION VXP524	0x01f7	VxP524 PCI Video Processor
@@ -2050,7 +2051,10 @@ product DELL PERC_3DI_2		0x0008	PERC 3/Di
 product DELL PERC_3DI_3		0x000a	PERC 3/Di
 product DELL PERC_4DI		0x000e	PERC 4/Di
 product DELL PERC_4DI_2		0x000f	PERC 4/Di
+product DELL DRAC_4		0x0011	DRAC 4
+product DELL DRAC_4_VUART	0x0012	DRAC 4 Virtual UART
 product DELL PERC_4ESI		0x0013	PERC 4e/Si
+product DELL DRAC_4_SMIC	0x0014	DRAC 4 SMIC
 product DELL PERC_5		0x0015	PERC 5
 product DELL PERC_6 		0x0060	PERC 6
 product DELL PERC_3DI_2_SUB	0x00cf	PERC 3/Di
@@ -2579,6 +2583,8 @@ product INTEL 6700PXH_IOXAPIC	0x0326	6700PXH IOxAPIC
 product INTEL 6700PXH_PCIE0	0x0329	6700PXH PCI Express-to-PCI Bridge #0
 product INTEL 6700PXH_PCIE1	0x032a	6700PXH PCI Express-to-PCI Bridge #1
 product INTEL 6702PXH_PCIX	0x032c	6702PXH PCI Express-to-PCIX
+product INTEL IOP332_A		0x0330	IOP332 PCI Express-to-PCI Bridge #0
+product INTEL IOP332_B		0x0332	IOP332 PCI Express-to-PCI Bridge #1
 product INTEL 80331		0x0335	Lindsay I/O Processor PCI-X Bridge
 product INTEL 41210A		0x0340	Serial to Parallel PCI Bridge A
 product INTEL 41210B		0x0341	Serial to Parallel PCI Bridge B
@@ -3345,6 +3351,7 @@ product INTEL 63XXESB_EXP_1	0x2690	63xxESB PCI Express Port #1
 product INTEL 63XXESB_EXP_2	0x2692	63xxESB PCI Express Port #2
 product INTEL 63XXESB_EXP_3	0x2694	63xxESB PCI Express Port #3
 product INTEL 63XXESB_EXP_4	0x2696	63xxESB PCI Express Port #4
+product INTEL 63XXESB_ACA	0x2698	63xxESB AC'97 Audio Controller
 product INTEL 63XXESB_HDA	0x269a	63xxESB High Definition Audio Controller
 product INTEL 63XXESB_SMB	0x269b	63xxESB SMBus Controller
 product INTEL 63XXESB_IDE	0x269e	63xxESB IDE Controller
@@ -3568,9 +3575,14 @@ product INTEL 82855GM_MC	0x3584	82855GM GMCH Memory Controller
 product INTEL 82855GM_CP	0x3585	82855GM GMCH Configuration Process
 product INTEL E7525_MCH		0x3590	E7525 Memory Controller Hub
 product INTEL E7525_MCHER	0x3591	E7525 Error Reporting Device
+product INTEL E7520_DMA		0x3594	E7520 DMA Controller
 product INTEL E7525_PCIE_A	0x3595	E7525 PCI Express Port A
 product INTEL E7525_PCIE_A1	0x3596	E7525 PCI Express Port A1
 product INTEL E7525_PCIE_B	0x3597	E7525 PCI Express Port B
+product INTEL E7520_PCIE_B1	0x3598	E7520 PCI Express Port B1
+product INTEL E7520_PCIE_C	0x3599	E7520 PCI Express Port C
+product INTEL E7520_PCIE_C1	0x359a	E7520 PCI Express Port C1
+product INTEL E7520_CFG		0x359b	E7520 Extended Configuration
 product INTEL 82801JD_SATA_IDE	0x3a00	82801JD SATA Controller (IDE mode)
 product INTEL 82801JD_SATA_AHCI	0x3a02	82801JD SATA Controller (AHCI mode)
 product INTEL 82801JD_SATA_RAID	0x3a02	82801JD SATA Controller (RAID mode)
