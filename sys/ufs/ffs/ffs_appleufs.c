@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_appleufs.c,v 1.14 2015/02/14 08:07:39 maxv Exp $	*/
+/*	$NetBSD: ffs_appleufs.c,v 1.15 2015/02/15 11:04:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002 Darrin B. Jewell
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.14 2015/02/14 08:07:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.15 2015/02/15 11:04:43 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -89,6 +89,7 @@ ffs_appleufs_validate(const char *name, const struct appleufslabel *o,
 		return EINVAL;
 
 	*n = *o;
+	n->ul_checksum = 0;
 	n->ul_checksum = ffs_appleufs_cksum(n);
 	n->ul_magic = be32toh(o->ul_magic);
 	n->ul_version = be32toh(o->ul_version);
