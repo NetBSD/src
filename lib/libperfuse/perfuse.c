@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.35 2014/10/31 15:12:15 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.36 2015/02/15 20:21:29 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -537,6 +537,15 @@ perfuse_init(struct perfuse_callbacks *pc, struct perfuse_mount_info *pmi)
 	 */
 #ifdef notyet
 	puffs_flags |= PUFFS_FLAG_IAONDEMAND;
+#endif
+
+	/*
+	 * FUSE filesystem do not expect [amc]time and size
+	 * updates to be sent by the kernel, they do the
+	 * updates on their own after other operations.
+	 */
+#ifdef PUFFS_KFLAG_NOFLUSH_META
+	puffs_flags |= PUFFS_KFLAG_NOFLUSH_META;
 #endif
 
 	if (perfuse_diagflags & PDF_PUFFS)
