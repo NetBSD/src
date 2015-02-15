@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1208 2015/01/25 10:49:01 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1209 2015/02/15 21:28:17 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1214 2015/01/25 10:48:31 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1215 2015/02/15 21:27:57 msaitoh Exp
  */
 
 /*
@@ -1530,6 +1530,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_HD	0xaa08		/* Radeon HD2600 HD Audio Controller */
 #define	PCI_PRODUCT_ATI_RADEON_HD4350_HD	0xaa38		/* Radeon HD4350 HD Audio Controller */
 #define	PCI_PRODUCT_ATI_RADEON_HD5600_HDMI	0xaa60		/* Redwood HDMI Audio */
+#define	PCI_PRODUCT_ATI_RADEON_HD54XX_HDA	0xaa68		/* Radeon HD 54xx Audio */
 
 /* Auravision products */
 #define	PCI_PRODUCT_AURAVISION_VXP524	0x01f7		/* VxP524 PCI Video Processor */
@@ -2057,7 +2058,10 @@
 #define	PCI_PRODUCT_DELL_PERC_3DI_3	0x000a		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_PERC_4DI	0x000e		/* PERC 4/Di */
 #define	PCI_PRODUCT_DELL_PERC_4DI_2	0x000f		/* PERC 4/Di */
+#define	PCI_PRODUCT_DELL_DRAC_4	0x0011		/* DRAC 4 */
+#define	PCI_PRODUCT_DELL_DRAC_4_VUART	0x0012		/* DRAC 4 Virtual UART */
 #define	PCI_PRODUCT_DELL_PERC_4ESI	0x0013		/* PERC 4e/Si */
+#define	PCI_PRODUCT_DELL_DRAC_4_SMIC	0x0014		/* DRAC 4 SMIC */
 #define	PCI_PRODUCT_DELL_PERC_5	0x0015		/* PERC 5 */
 #define	PCI_PRODUCT_DELL_PERC_6	0x0060		/* PERC 6 */
 #define	PCI_PRODUCT_DELL_PERC_3DI_2_SUB	0x00cf		/* PERC 3/Di */
@@ -2586,6 +2590,8 @@
 #define	PCI_PRODUCT_INTEL_6700PXH_PCIE0	0x0329		/* 6700PXH PCI Express-to-PCI Bridge #0 */
 #define	PCI_PRODUCT_INTEL_6700PXH_PCIE1	0x032a		/* 6700PXH PCI Express-to-PCI Bridge #1 */
 #define	PCI_PRODUCT_INTEL_6702PXH_PCIX	0x032c		/* 6702PXH PCI Express-to-PCIX */
+#define	PCI_PRODUCT_INTEL_IOP332_A	0x0330		/* IOP332 PCI Express-to-PCI Bridge #0 */
+#define	PCI_PRODUCT_INTEL_IOP332_B	0x0332		/* IOP332 PCI Express-to-PCI Bridge #1 */
 #define	PCI_PRODUCT_INTEL_80331	0x0335		/* Lindsay I/O Processor PCI-X Bridge */
 #define	PCI_PRODUCT_INTEL_41210A	0x0340		/* Serial to Parallel PCI Bridge A */
 #define	PCI_PRODUCT_INTEL_41210B	0x0341		/* Serial to Parallel PCI Bridge B */
@@ -3352,6 +3358,7 @@
 #define	PCI_PRODUCT_INTEL_63XXESB_EXP_2	0x2692		/* 63xxESB PCI Express Port #2 */
 #define	PCI_PRODUCT_INTEL_63XXESB_EXP_3	0x2694		/* 63xxESB PCI Express Port #3 */
 #define	PCI_PRODUCT_INTEL_63XXESB_EXP_4	0x2696		/* 63xxESB PCI Express Port #4 */
+#define	PCI_PRODUCT_INTEL_63XXESB_ACA	0x2698		/* 63xxESB AC'97 Audio Controller */
 #define	PCI_PRODUCT_INTEL_63XXESB_HDA	0x269a		/* 63xxESB High Definition Audio Controller */
 #define	PCI_PRODUCT_INTEL_63XXESB_SMB	0x269b		/* 63xxESB SMBus Controller */
 #define	PCI_PRODUCT_INTEL_63XXESB_IDE	0x269e		/* 63xxESB IDE Controller */
@@ -3575,9 +3582,14 @@
 #define	PCI_PRODUCT_INTEL_82855GM_CP	0x3585		/* 82855GM GMCH Configuration Process */
 #define	PCI_PRODUCT_INTEL_E7525_MCH	0x3590		/* E7525 Memory Controller Hub */
 #define	PCI_PRODUCT_INTEL_E7525_MCHER	0x3591		/* E7525 Error Reporting Device */
+#define	PCI_PRODUCT_INTEL_E7520_DMA	0x3594		/* E7520 DMA Controller */
 #define	PCI_PRODUCT_INTEL_E7525_PCIE_A	0x3595		/* E7525 PCI Express Port A */
 #define	PCI_PRODUCT_INTEL_E7525_PCIE_A1	0x3596		/* E7525 PCI Express Port A1 */
 #define	PCI_PRODUCT_INTEL_E7525_PCIE_B	0x3597		/* E7525 PCI Express Port B */
+#define	PCI_PRODUCT_INTEL_E7520_PCIE_B1	0x3598		/* E7520 PCI Express Port B1 */
+#define	PCI_PRODUCT_INTEL_E7520_PCIE_C	0x3599		/* E7520 PCI Express Port C */
+#define	PCI_PRODUCT_INTEL_E7520_PCIE_C1	0x359a		/* E7520 PCI Express Port C1 */
+#define	PCI_PRODUCT_INTEL_E7520_CFG	0x359b		/* E7520 Extended Configuration */
 #define	PCI_PRODUCT_INTEL_82801JD_SATA_IDE	0x3a00		/* 82801JD SATA Controller (IDE mode) */
 #define	PCI_PRODUCT_INTEL_82801JD_SATA_AHCI	0x3a02		/* 82801JD SATA Controller (AHCI mode) */
 #define	PCI_PRODUCT_INTEL_82801JD_SATA_RAID	0x3a02		/* 82801JD SATA Controller (RAID mode) */
