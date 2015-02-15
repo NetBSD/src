@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfiber.c,v 1.11 2015/02/13 22:00:53 justin Exp $	*/
+/*	$NetBSD: rumpfiber.c,v 1.12 2015/02/15 00:54:32 justin Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Antti Kantee.  All Rights Reserved.
@@ -68,10 +68,9 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpfiber.c,v 1.11 2015/02/13 22:00:53 justin Exp $");
+__RCSID("$NetBSD: rumpfiber.c,v 1.12 2015/02/15 00:54:32 justin Exp $");
 #endif /* !lint */
 
-#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/time.h>
 
@@ -486,7 +485,7 @@ int
 rumpuser_clock_sleep(int enum_rumpclock, int64_t sec, long nsec)
 {
 	enum rumpclock rclk = enum_rumpclock;
-	uint32_t msec;
+	uint64_t msec;
 	int nlocks;
 
 	rumpkern_unsched(&nlocks, NULL);
