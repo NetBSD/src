@@ -1,4 +1,4 @@
-/*	$NetBSD: devpubd.c,v 1.3 2015/02/15 15:56:30 jmcneill Exp $	*/
+/*	$NetBSD: devpubd.c,v 1.4 2015/02/15 21:46:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011-2015\
 Jared D. McNeill <jmcneill@invisible.ca>. All rights reserved.");
-__RCSID("$NetBSD: devpubd.c,v 1.3 2015/02/15 15:56:30 jmcneill Exp $");
+__RCSID("$NetBSD: devpubd.c,v 1.4 2015/02/15 21:46:49 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/types.h>
@@ -87,7 +87,8 @@ devpubd_eventhandler(const char *event, const char **device)
 {
 	char **argv;
 	pid_t pid;
-	int status, i, ndevs;
+	int status;
+	size_t i, ndevs;
 
 	for (ndevs = 0, i = 0; device[i] != NULL; i++) {
 		++ndevs;
@@ -95,7 +96,7 @@ devpubd_eventhandler(const char *event, const char **device)
 		    device[i]);
 	}
 
-	argv = calloc(3 + ndevs, sizeof(char *));
+	argv = calloc(3 + ndevs, sizeof(*argv));
 	argv[0] = __UNCONST(devpubd_script);
 	argv[1] = __UNCONST(event);
 	for (i = 0; i < ndevs; i++) {
@@ -148,7 +149,7 @@ devpubd_eventloop(void)
 		prop_dictionary_get_cstring_nocopy(ev, "device", &device[0]);
 
 		printf("%s: event='%s', device='%s'\n", __func__,
-		    event, device);
+		    event, device[0]);
 
 		devpubd_eventhandler(event, device);
 
@@ -227,7 +228,7 @@ devpubd_init(void)
 {
 	struct devpubd_probe_event *ev;
 	const char **devs;
-	int ndevs, i;
+	size_t ndevs, i;
 
 	TAILQ_INIT(&devpubd_probe_events);
 	devpubd_probe(NULL);
@@ -242,7 +243,7 @@ devpubd_init(void)
 	}
 	devpubd_eventhandler(DEVPUBD_ATTACH_EVENT, devs);
 	free(devs);
-	while (ev = TAILQ_FIRST(&devpubd_probe_events)) {
+	while ((ev = TAILQ_FIRST(&devpubd_probe_events)) != NULL) {
 		TAILQ_REMOVE(&devpubd_probe_events, ev, entries);
 		free(ev->device);
 		free(ev);
