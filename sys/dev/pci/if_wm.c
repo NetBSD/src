@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.312 2015/02/15 21:32:33 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.313 2015/02/16 00:25:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.312 2015/02/15 21:32:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.313 2015/02/16 00:25:52 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1757,6 +1757,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	case WM_T_82541_2:
 	case WM_T_82547:
 	case WM_T_82547_2:
+		sc->sc_flags |= WM_F_LOCK_EECD;
 		reg = CSR_READ(sc, WMREG_EECD);
 		if (reg & EECD_EE_TYPE) {
 			/* SPI */
@@ -1772,7 +1773,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 				sc->sc_nvm_addrbits = 6;
 			}
 		}
-		sc->sc_flags |= WM_F_LOCK_EECD;
 		break;
 	case WM_T_82571:
 	case WM_T_82572:
