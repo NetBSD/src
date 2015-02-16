@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/nfs/krpc_subr.c 248207 2013-03-12 13:42:47Z glebius "); */
-__RCSID("$NetBSD: krpc_subr.c,v 1.1.1.1 2013/09/30 07:19:32 dholland Exp $");
+__RCSID("$NetBSD: krpc_subr.c,v 1.1.1.1.8.1 2015/02/16 21:25:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ krpc_portmap(struct sockaddr_in *sin, u_int prog, u_int vers, u_int16_t *portp,
 	error = krpc_call(sin, PMAPPROG, PMAPVERS,
 					  PMAPPROC_GETPORT, &m, NULL, td);
 	if (error)
-		return error;
+		goto out;
 
 	if (m->m_len < sizeof(*rdata)) {
 		m = m_pullup(m, sizeof(*rdata));
@@ -179,8 +179,9 @@ krpc_portmap(struct sockaddr_in *sin, u_int prog, u_int vers, u_int16_t *portp,
 	rdata = mtod(m, struct rdata *);
 	*portp = rdata->port;
 
+out:
 	m_freem(m);
-	return 0;
+	return error;
 }
 
 /*
