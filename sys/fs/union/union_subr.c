@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.68 2015/02/16 10:20:57 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.69 2015/02/16 10:21:25 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.68 2015/02/16 10:20:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.69 2015/02/16 10:21:25 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,8 @@ static u_long uhash_mask;		/* size of hash table - 1 */
 static kmutex_t uhash_lock;
 
 void union_updatevp(struct union_node *, struct vnode *, struct vnode *);
+static void union_ref(struct union_node *);
+static void union_rele(struct union_node *);
 static int union_do_lookup(struct vnode *, struct componentname *, kauth_cred_t,    const char *);
 int union_vn_close(struct vnode *, int, kauth_cred_t, struct lwp *);
 static void union_dircache_r(struct vnode *, struct vnode ***, int *);
@@ -289,6 +291,45 @@ union_newsize(struct vnode *vp, off_t uppersz, off_t lowersz)
 	}
 }
 
+static void
+union_ref(struct union_node *un)
+{
+
+	KASSERT(mutex_owned(&uhash_lock));
+	un->un_refs++;
+}
+
+static void
+union_rele(struct union_node *un)
+{
+
+	mutex_enter(&uhash_lock);
+	un->un_refs--;
+	if (un->un_refs > 0) {
+		mutex_exit(&uhash_lock);
+		return;
+	}
+	if (un->un_cflags & UN_CACHED) {
+		un->un_cflags &= ~UN_CACHED;
+		LIST_REMOVE(un, un_cache);
+	}
+	mutex_exit(&uhash_lock);
+
+	if (un->un_pvp != NULLVP)
+		vrele(un->un_pvp);
+	if (un->un_uppervp != NULLVP)
+		vrele(un->un_uppervp);
+	if (un->un_lowervp != NULLVP)
+		vrele(un->un_lowervp);
+	if (un->un_dirvp != NULLVP)
+		vrele(un->un_dirvp);
+	if (un->un_path)
+		free(un->un_path, M_TEMP);
+	mutex_destroy(&un->un_lock);
+
+	free(un, M_TEMP);
+}
+
 /*
  * allocate a union_node/vnode pair.  the vnode is
  * referenced and unlocked.  the new vnode is returned
@@ -397,9 +438,12 @@ loop:
 				continue;
 
 			vp = UNIONTOV(un);
+			union_ref(un);
 			mutex_enter(vp->v_interlock);
 			mutex_exit(&uhash_lock);
-			if (vget(vp, 0))
+			error = vget(vp, 0);
+			union_rele(un);
+			if (error)
 				goto loop;
 			goto found;
 		}
@@ -517,6 +561,7 @@ found:
 
 	un = VTOUNION(*vpp);
 	mutex_init(&un->un_lock, MUTEX_DEFAULT, IPL_NONE);
+	un->un_refs = 1;
 	un->un_vnode = *vpp;
 	un->un_uppervp = uppervp;
 	un->un_lowervp = lowervp;
@@ -562,29 +607,11 @@ union_freevp(struct vnode *vp)
 {
 	struct union_node *un = VTOUNION(vp);
 
-	mutex_enter(&uhash_lock);
-	if (un->un_cflags & UN_CACHED) {
-		un->un_cflags &= ~UN_CACHED;
-		LIST_REMOVE(un, un_cache);
-	}
-	mutex_exit(&uhash_lock);
+	union_rele(un);
 
-	if (un->un_pvp != NULLVP)
-		vrele(un->un_pvp);
-	if (un->un_uppervp != NULLVP)
-		vrele(un->un_uppervp);
-	if (un->un_lowervp != NULLVP)
-		vrele(un->un_lowervp);
-	if (un->un_dirvp != NULLVP)
-		vrele(un->un_dirvp);
-	if (un->un_path)
-		free(un->un_path, M_TEMP);
-	mutex_destroy(&un->un_lock);
-
-	free(vp->v_data, M_TEMP);
 	vp->v_data = NULL;
 
-	return (0);
+	return 0;
 }
 
 /*
