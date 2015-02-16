@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.5 2015/02/14 06:58:12 mrg Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.6 2015/02/16 12:17:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.5 2015/02/14 06:58:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.6 2015/02/16 12:17:57 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -178,8 +178,12 @@ radeon_attach(device_t parent, device_t self, void *aux)
 	 * think they can.  This stops vga@isa or pcdisplay@isa
 	 * attaching, and stealing wsdisplay0.  Yuck.
 	 */
-	sc->sc_temp_set = bus_space_map(pa->pa_memt, 0xb0000, 0x10000, 0,
-					&sc->sc_temp_memh);
+	int rv = bus_space_map(pa->pa_memt, 0xb0000, 0x10000, 0,
+			       &sc->sc_temp_memh);
+	sc->sc_temp_set = rv == 0;
+	if (rv != 0)
+		aprint_error_dev(self, "unable to reserve VGA registers for "
+				       "i386 radeondrmkms hack\n");
 #endif
 
 	config_mountroot(self, &radeon_attach_real);
