@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.26 2014/02/14 08:50:27 hannken Exp $	*/
+/*	$NetBSD: union.h,v 1.27 2015/02/16 10:21:25 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -120,6 +120,7 @@ struct union_mount {
 struct union_node {
 	kmutex_t		un_lock;
 	LIST_ENTRY(union_node)	un_cache;	/* c: Hash chain */
+	int			un_refs;	/* c: Reference counter */
 	struct vnode		*un_vnode;	/* :: Back pointer */
 	struct vnode	        *un_uppervp;	/* m: overlaying object */
 	struct vnode	        *un_lowervp;	/* v: underlying object */
