@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3.2.1 2015/01/11 04:32:38 snj Exp $ */
+/*	$NetBSD: md.c,v 1.3.2.2 2015/02/16 13:52:43 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -298,7 +298,6 @@ md_post_newfs(void)
 {
 	int ret;
 	size_t len;
-	char bootxx[8192 + 4];
 	char boot_options[1024];
 	char *bootxx_filename;
 	/*
@@ -321,7 +320,6 @@ md_post_newfs(void)
 	static int conmib[] = {CTL_MACHDEP, CPU_CONSDEV};
 	struct termios t;
 	dev_t condev;
-#define bp (*(struct x86_boot_params *)(bootxx + 512 * 2 + 8))
 
 	/*
 	 * Get console device, should either be ttyE0 or tty0n.
@@ -339,7 +337,8 @@ md_post_newfs(void)
 
 	process_menu(MENU_getboottype, &boottype);
 	msg_display(MSG_dobootblks, pm->diskdev);
-	if (bp.bp_consdev == ~0u)
+	if (boottype.bp_consdev == ~0u)
+		/* Use existing bootblocks */
 		return 0;
 
 	ret = cp_to_target("/usr/mdec/boot", "/boot");
