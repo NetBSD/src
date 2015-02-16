@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.204 2015/02/14 08:15:50 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.205 2015/02/16 14:09:50 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15827,4 +15827,28 @@ external/mit/MesaLib/dist/src/mapi/entry.c	1.2
 
 	Disable broken 32 bit x86 asm code.
 	[mrg, ticket #514]
+
+sys/arch/mips/mips/bus_dma.c			1.32
+
+	Deal with 64-bit fallout from previous.
+	[skrll, ticket #515]
+
+sys/arch/amiga/dev/gayle_pcmcia.c		1.31
+
+	Add a delay between the recently added new PCMCIA reset method and
+	the old reset method to get card reset work reliably on A1200
+	and network cards.
+	[jandberg, ticket #516]
+
+xsrc/external/mit/glu/dist/src/libtess/sweep.c	1.2
+
+	Fixes segfaults and crashing in applications that use libGLU.
+	[snj, ticket #517]
+
+usr.sbin/sysinst/arch/i386/md.c			1.4
+
+	When checking if the user chose to use the existing bootblocks, use
+	the appropriate variable, boottype.bp_consdev, not the uninitialized
+	bp.bp_consdev.
+	[snj, ticket #518]
 
