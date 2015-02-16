@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmvar.h,v 1.3 2015/02/13 18:57:47 nonaka Exp $	*/
+/*	$NetBSD: if_iwmvar.h,v 1.4 2015/02/16 13:22:19 nonaka Exp $	*/
 /*	OpenBSD: if_iwmvar.h,v 1.3 2015/02/07 07:10:44 phessler Exp 	*/
 
 /*
@@ -167,7 +167,7 @@ struct iwm_fw_info {
 		struct iwm_fw_onesect {
 			void *fws_data;
 			uint32_t fws_len;
-			uint32_t fws_devoff; 
+			uint32_t fws_devoff;
 
 			void *fws_alloc;
 			size_t fws_allocsize;
@@ -297,7 +297,7 @@ struct iwm_rx_ring {
 struct iwm_ucode_status {
 	uint32_t uc_error_event_table;
 	uint32_t uc_log_event_table;
-	
+
 	int uc_ok;
 	int uc_intr;
 };
@@ -321,8 +321,8 @@ enum IWM_CMD_MODE {
 	IWM_CMD_SEND_IN_RFKILL	= (1 << 2),
 };
 enum iwm_hcmd_dataflag {
-        IWM_HCMD_DFL_NOCOPY     = (1 << 0),
-        IWM_HCMD_DFL_DUP        = (1 << 1),
+	IWM_HCMD_DFL_NOCOPY     = (1 << 0),
+	IWM_HCMD_DFL_DUP        = (1 << 1),
 };
 
 /*
@@ -388,14 +388,14 @@ struct iwm_softc {
 	struct iwm_dma_info		sched_dma;
 	uint32_t			sched_base;
 
-        /* TX/RX rings. */
+	/* TX/RX rings. */
 	struct iwm_tx_ring txq[IWM_MVM_MAX_QUEUES];
 	struct iwm_rx_ring rxq;
 	int qfullmsk;
 
 	int sc_sf_state;
 
-        /* ICT table. */
+	/* ICT table. */
 	struct iwm_dma_info	ict_dma;
 	int			ict_cur;
 
