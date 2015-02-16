@@ -1,4 +1,4 @@
-/*	$NetBSD: union.h,v 1.27 2015/02/16 10:21:25 hannken Exp $	*/
+/*	$NetBSD: union.h,v 1.28 2015/02/16 10:22:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -121,6 +121,7 @@ struct union_node {
 	kmutex_t		un_lock;
 	LIST_ENTRY(union_node)	un_cache;	/* c: Hash chain */
 	int			un_refs;	/* c: Reference counter */
+	struct mount		*un_mount;	/* c: union mount */
 	struct vnode		*un_vnode;	/* :: Back pointer */
 	struct vnode	        *un_uppervp;	/* m: overlaying object */
 	struct vnode	        *un_lowervp;	/* v: underlying object */
@@ -161,6 +162,8 @@ extern void union_newlower(struct union_node *, struct vnode *);
 extern void union_newupper(struct union_node *, struct vnode *);
 extern void union_newsize(struct vnode *, off_t, off_t);
 int union_readdirhook(struct vnode **, struct file *, struct lwp *);
+
+VFS_PROTOS(union);
 
 #define	MOUNTTOUNIONMOUNT(mp) ((struct union_mount *)((mp)->mnt_data))
 #define	VTOUNION(vp) ((struct union_node *)(vp)->v_data)
