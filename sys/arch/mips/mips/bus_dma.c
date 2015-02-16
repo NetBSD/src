@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.31 2014/05/27 15:56:18 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.31.2.1 2015/02/16 10:42:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.31 2014/05/27 15:56:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.31.2.1 2015/02/16 10:42:26 martin Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -861,11 +861,11 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			vaddr_t start = vaddr;
 			vaddr_t end = vaddr + minlen;
 			vaddr_t preboundary, firstboundary, lastboundary;
+			vaddr_t mask = mci->mci_dcache_align_mask;
 
-			preboundary = start & ~mci->mci_dcache_align_mask;
-			firstboundary = (start + mci->mci_dcache_align_mask)
-			    & ~mci->mci_dcache_align_mask;
-			lastboundary = end & ~mci->mci_dcache_align_mask;
+			preboundary = start & ~mask;
+			firstboundary = (start + mask) & ~mask;
+			lastboundary = end & ~mask;
 			if (preboundary < start && preboundary < lastboundary)
 				mips_dcache_wbinv_range(preboundary,
 				    mci->mci_dcache_align);
