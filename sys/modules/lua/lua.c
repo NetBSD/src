@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.13.2.1 2014/12/01 13:13:15 martin Exp $ */
+/*	$NetBSD: lua.c,v 1.13.2.2 2015/02/16 21:25:35 martin Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
@@ -653,8 +653,10 @@ klua_newstate(lua_Alloc f, void *ud, const char *name, const char *desc,
 		sc->sc_state = true;
 	mutex_exit(&sc->sc_state_lock);
 
-	if (error)
+	if (error) {
+		kmem_free(s, sizeof(struct lua_state));
 		return NULL;
+	}
 
 	K = kmem_zalloc(sizeof(klua_State), KM_SLEEP);
 	K->L = lua_newstate(f, ud);

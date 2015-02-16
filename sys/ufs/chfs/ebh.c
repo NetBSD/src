@@ -1,4 +1,4 @@
-/*	$NetBSD: ebh.c,v 1.3.14.1 2014/09/08 18:57:58 msaitoh Exp $	*/
+/*	$NetBSD: ebh.c,v 1.3.14.2 2015/02/16 21:25:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1956,8 +1956,10 @@ ebh_map_leb(struct chfs_ebh *ebh, int lnr)
 	ebhdr = kmem_alloc(sizeof(struct chfs_eb_hdr), KM_SLEEP);
 
 	err = leb_write_lock(ebh, lnr);
-	if (err)
+	if (err) {
+		kmem_free(ebhdr, sizeof(struct chfs_eb_hdr));
 		return err;
+	}
 
 retry:
 	pebnr = get_peb(ebh);
