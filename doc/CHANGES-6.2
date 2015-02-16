@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.195 2015/02/13 09:22:07 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.196 2015/02/16 08:33:39 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -9588,4 +9588,25 @@ usr.bin/finger/lprint.c				1.23
 	- Factor out duplicated code in the process
 	- The actual code is now smaller and does error checking and encoding
 	[martin, ticket #1247]
+
+sys/arch/sh3/sh3/locore_subr.S			1.55
+
+	Branch to correct point when a system call returns an error.
+	[skrll, ticket #1254]
+
+external/bsd/wpa/dist/src/drivers/driver_bsd.c	1.8-1.9
+
+	Avoid dereferencing a NULL pointer.
+	Pass the scan result RSSI to the WPA code in a way that it understands.
+	[khorben, ticket #1255]
+
+sys/dev/pci/if_bge.c				1.278
+
+	Fix three bugs reported by enami@:
+	  - bge_miibus_writereg(): Fix a bug that BCM5906 may leave an APE
+	    lock.
+	  - Fix hwcfg4 isn't printed correctly.
+	  - Fix a bug that BGE_PHY_TEST_CTRL_REG isn't set correctly on some
+	    PCIe devices.
+	[msaitoh, ticket #1256]
 
