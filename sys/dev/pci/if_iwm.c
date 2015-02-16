@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.6 2015/02/14 05:00:23 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.7 2015/02/16 13:16:00 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.6 2015/02/14 05:00:23 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.7 2015/02/16 13:16:00 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1800,6 +1800,7 @@ iwm_nic_init(struct iwm_softc *sc)
         return 0;
 }
 
+#if 0
 enum iwm_mvm_tx_fifo {
 	IWM_MVM_TX_FIFO_BK = 0,
 	IWM_MVM_TX_FIFO_BE,
@@ -1814,6 +1815,7 @@ static const uint8_t iwm_mvm_ac_to_tx_fifo[] = {
         IWM_MVM_TX_FIFO_BE,
         IWM_MVM_TX_FIFO_BK,
 };
+#endif
 
 static void
 iwm_enable_txq(struct iwm_softc *sc, int qid, int fifo)
