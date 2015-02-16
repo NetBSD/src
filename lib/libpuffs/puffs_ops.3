@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.41 2014/10/31 14:01:16 wiz Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.42 2015/02/16 10:48:56 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -508,7 +508,7 @@ was called with, e.g.
 and
 .Dv O_NONBLOCK .
 .Fn puffs_node_open2
-allows the filesystem to pass back information for the file in
+allows the file system to pass back information for the file in
 .Fa oflags .
 The only implemented flag for now is
 .Dv PUFFS_OPEN_IO_DIRECT
@@ -838,13 +838,13 @@ Same as
 .Fn puffs_node_reclaim
 with an addditional argument for the number of lookups that have been done
 on the node (Node creation is counted as a lookup). This can be used by the
-filesystem to avoid a race condition, where the kernel sends a reclaim
+file system to avoid a race condition, where the kernel sends a reclaim
 while it does not have received the reply for a lookup.
-If the filesystem tracks lookup count, and compares to
+If the file system tracks lookup count, and compares to
 .Fa nlookup
 it can detect this situation and ignore the reclaim.
 .Pp
-If the filesystem maps cookies to
+If the file system maps cookies to
 .Vt struct puffs_node
 then the framework will do that work, and
 .Fn puffs_node_reclaim
