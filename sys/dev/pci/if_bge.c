@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.279 2015/02/17 10:11:24 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.280 2015/02/17 23:07:56 enami Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.279 2015/02/17 10:11:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.280 2015/02/17 23:07:56 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -6074,7 +6074,7 @@ bge_debug_info(struct bge_softc *sc)
 	/* ASF related */
 	if (sc->bge_asf_mode & ASF_ENABLE)
 		printf(" - ASF enable\n");
-	if (sc->bge_asf_mode & ASF_NEW_HANDSHARE)
+	if (sc->bge_asf_mode & ASF_NEW_HANDSHAKE)
 		printf(" - ASF new handshake\n");
 	if (sc->bge_asf_mode & ASF_STACKUP)
 		printf(" - ASF stackup\n");
