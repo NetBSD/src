@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.28 2015/02/13 16:56:57 martin Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.29 2015/02/17 09:47:08 isaki Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -465,6 +465,10 @@ ATF_TC_BODY(sigbus_adraln, tc)
 	if (val == 0)
 		atf_tc_skip("No SIGBUS signal for unaligned accesses");
 #endif
+
+	/* m68k (except sun2) never issue SIGBUS (PR lib/49653) */
+	if (strcmp(MACHINE_ARCH, "m68k") == 0)
+		atf_tc_skip("No SIGBUS signal for unaligned accesses");
 
 	sa.sa_flags = SA_SIGINFO;
 	sa.sa_sigaction = sigbus_action;
