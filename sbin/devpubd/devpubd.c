@@ -1,4 +1,4 @@
-/*	$NetBSD: devpubd.c,v 1.2 2011/09/16 15:42:56 joerg Exp $	*/
+/*	$NetBSD: devpubd.c,v 1.2.20.1 2015/02/17 14:45:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,8 +36,9 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
 Jared D. McNeill <jmcneill@invisible.ca>. All rights reserved.");
-__RCSID("$NetBSD: devpubd.c,v 1.2 2011/09/16 15:42:56 joerg Exp $");
+__RCSID("$NetBSD: devpubd.c,v 1.2.20.1 2015/02/17 14:45:31 martin Exp $");
 
+#include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/drvctlio.h>
@@ -57,18 +58,24 @@ __RCSID("$NetBSD: devpubd.c,v 1.2 2011/09/16 15:42:56 joerg Exp $");
 static int drvctl_fd = -1;
 static const char devpubd_script[] = DEVPUBD_RUN_HOOKS;
 
+struct devpubd_probe_event {
+	char *device;
+	TAILQ_ENTRY(devpubd_probe_event) entries;
+};
+
+static TAILQ_HEAD(, devpubd_probe_event) devpubd_probe_events;
+
 #define	DEVPUBD_ATTACH_EVENT	"device-attach"
 #define	DEVPUBD_DETACH_EVENT	"device-detach"
 
 __dead static void
-devpubd_exec(const char *path, const char *event, const char *device)
+devpubd_exec(const char *path, char * const *argv)
 {
 	int error;
 
-	error = execl(path, path, event, device, NULL);
+	error = execv(path, argv);
 	if (error) {
-		syslog(LOG_ERR, "couldn't exec '%s %s %s': %m",
-		    path, event, device);
+		syslog(LOG_ERR, "couldn't exec '%s': %m", path);
 		exit(EXIT_FAILURE);
 	}
 
@@ -76,12 +83,26 @@ devpubd_exec(const char *path, const char *event, const char *device)
 }
 
 static void
-devpubd_eventhandler(const char *event, const char *device)
+devpubd_eventhandler(const char *event, const char **device)
 {
+	char **argv;
 	pid_t pid;
 	int status;
+	size_t i, ndevs;
 
-	syslog(LOG_DEBUG, "event = '%s', device = '%s'", event, device);
+	for (ndevs = 0, i = 0; device[i] != NULL; i++) {
+		++ndevs;
+		syslog(LOG_DEBUG, "event = '%s', device = '%s'", event,
+		    device[i]);
+	}
+
+	argv = calloc(3 + ndevs, sizeof(*argv));
+	argv[0] = __UNCONST(devpubd_script);
+	argv[1] = __UNCONST(event);
+	for (i = 0; i < ndevs; i++) {
+		argv[2 + i] = __UNCONST(device[i]);
+	}
+	argv[2 + i] = NULL;
 
 	pid = fork();
 	switch (pid) {
@@ -89,7 +110,7 @@ devpubd_eventhandler(const char *event, const char *device)
 		syslog(LOG_ERR, "fork failed: %m");
 		break;
 	case 0:
-		devpubd_exec(devpubd_script, event, device);
+		devpubd_exec(devpubd_script, argv);
 		/* NOTREACHED */
 	default:
 		if (waitpid(pid, &status, 0) == -1) {
@@ -105,26 +126,30 @@ devpubd_eventhandler(const char *event, const char *device)
 		}
 		break;
 	}
+
+	free(argv);
 }
 
 __dead static void
 devpubd_eventloop(void)
 {
-	const char *event, *device;
+	const char *event, *device[2];
 	prop_dictionary_t ev;
 	int res;
 
 	assert(drvctl_fd != -1);
+
+	device[1] = NULL;
 
 	for (;;) {
 		res = prop_dictionary_recv_ioctl(drvctl_fd, DRVGETEVENT, &ev);
 		if (res)
 			err(EXIT_FAILURE, "DRVGETEVENT failed");
 		prop_dictionary_get_cstring_nocopy(ev, "event", &event);
-		prop_dictionary_get_cstring_nocopy(ev, "device", &device);
+		prop_dictionary_get_cstring_nocopy(ev, "device", &device[0]);
 
 		printf("%s: event='%s', device='%s'\n", __func__,
-		    event, device);
+		    event, device[0]);
 
 		devpubd_eventhandler(event, device);
 
@@ -182,17 +207,47 @@ child_count_changed:
 		goto child_count_changed;
 
 	/*
-	 * For each child device, first post an attach event and
+	 * For each child device, queue an attach event and
 	 * then scan each one for additional devices.
 	 */
-	for (n = 0; n < laa.l_children; n++)
-		devpubd_eventhandler(DEVPUBD_ATTACH_EVENT, laa.l_childname[n]);
+	for (n = 0; n < laa.l_children; n++) {
+		struct devpubd_probe_event *ev = calloc(1, sizeof(*ev));
+		ev->device = strdup(laa.l_childname[n]);
+		TAILQ_INSERT_TAIL(&devpubd_probe_events, ev, entries);
+	}
 	for (n = 0; n < laa.l_children; n++)
 		devpubd_probe(laa.l_childname[n]);
 
 done:
 	free(laa.l_childname);
 	return;
+}
+
+static void
+devpubd_init(void)
+{
+	struct devpubd_probe_event *ev;
+	const char **devs;
+	size_t ndevs, i;
+
+	TAILQ_INIT(&devpubd_probe_events);
+	devpubd_probe(NULL);
+	ndevs = 0;
+	TAILQ_FOREACH(ev, &devpubd_probe_events, entries) {
+		++ndevs;
+	}
+	devs = calloc(ndevs + 1, sizeof(*devs));
+	i = 0;
+	TAILQ_FOREACH(ev, &devpubd_probe_events, entries) {
+		devs[i++] = ev->device;
+	}
+	devpubd_eventhandler(DEVPUBD_ATTACH_EVENT, devs);
+	free(devs);
+	while ((ev = TAILQ_FIRST(&devpubd_probe_events)) != NULL) {
+		TAILQ_REMOVE(&devpubd_probe_events, ev, entries);
+		free(ev->device);
+		free(ev);
+	}
 }
 
 __dead static void
@@ -232,14 +287,14 @@ main(int argc, char *argv[])
 	if (drvctl_fd == -1)
 		err(EXIT_FAILURE, "couldn't open " DRVCTLDEV);
 
+	/* Look for devices that are already present */
+	devpubd_init();
+
 	if (!fflag) {
 		if (daemon(0, 0) == -1) {
 			err(EXIT_FAILURE, "couldn't fork");
 		}
 	}
-
-	/* Look for devices that are already present */
-	devpubd_probe(NULL);
 
 	devpubd_eventloop();
 

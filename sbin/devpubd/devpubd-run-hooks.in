@@ -1,18 +1,19 @@
 #!/bin/sh
 #
-# $NetBSD: devpubd-run-hooks.in,v 1.2 2011/12/04 13:01:54 jmcneill Exp $
+# $NetBSD: devpubd-run-hooks.in,v 1.2.18.1 2015/02/17 14:45:31 martin Exp $
 #
 # devpubd run hooks
 
 devpubd_event=$1
-devpubd_device=$2
+shift
+devpubd_devices=$@
 devpubd_hooks_base=@HOOKSDIR@
 
 case $devpubd_event in
 device-attach|device-detach)
 	for hook in ${devpubd_hooks_base}/*; do
 		if [ -x "${hook}" ]; then
-			"${hook}" ${devpubd_event} ${devpubd_device}
+			"${hook}" ${devpubd_event} ${devpubd_devices}
 		fi
 	done
 	;;

@@ -1,12 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: 02-wedgenames,v 1.1 2013/01/11 23:49:23 mlelstv Exp $
+# $NetBSD: 02-wedgenames,v 1.1.12.1 2015/02/17 14:45:31 martin Exp $
 #
 # Try to maintain symlinks to wedge devices
 #
 
 event="$1"
-device="$2"
+shift
+devices=$@
 
 wedgedir=/dev/wedges
 
@@ -15,7 +16,7 @@ remove_wedge() {
 	| sed -e 's# #\\ #g' \
 	| while read w; do
 		t=$(readlink "$w")
-		if [ x"$t" = x"/dev/$device" ]; then
+		if [ x"$t" = x"/dev/$1" ]; then
 			rm -f "$w"
 			basedir=$(dirname "$w")
 			rmdir -p "$basedir" 2>/dev/null
@@ -24,7 +25,7 @@ remove_wedge() {
 }
 
 add_wedge() {
-	n=$(dkctl "$device" getwedgeinfo \
+	n=$(dkctl "$1" getwedgeinfo \
 		| sed -ne '1s#^[^:]*: ##p' \
 		| awk -v GOOD='._:;!^$&~()[]{}=,+-/' '
 		BEGIN {
@@ -51,21 +52,23 @@ add_wedge() {
 		test -d $wedgedir || mkdir -m 755 $wedgedir
 		basedir=$(dirname "$wedgedir/$n")
 		test -d "$basedir" || mkdir -p -m 755 "$basedir"
-		ln -s "/dev/$device" "$wedgedir/$n"
+		ln -s "/dev/$1" "$wedgedir/$n"
 		;;
 	esac
 }
 
-case $device in
-dk*)
-	case $event in
-	device-attach)
-		remove_wedge
-		add_wedge
-		;;
-	device-detach)
-		remove_wedge
+for device in $devices; do
+	case $device in
+	dk*)
+		case $event in
+		device-attach)
+			remove_wedge $device
+			add_wedge $device
+			;;
+		device-detach)
+			remove_wedge $device
+			;;
+		esac
 		;;
 	esac
-	;;
-esac
+done
