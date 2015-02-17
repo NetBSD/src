@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.8.4.1 2015/02/16 21:33:13 martin Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.8.4.2 2015/02/17 15:30:34 martin Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <machine/asm.h>
-RCSID("$NetBSD: cpu_in_cksum.S,v 1.8.4.1 2015/02/16 21:33:13 martin Exp $")
+RCSID("$NetBSD: cpu_in_cksum.S,v 1.8.4.2 2015/02/17 15:30:34 martin Exp $")
 	
 #include "assym.h"
 
@@ -190,7 +190,7 @@ ASENTRY_NP(arm_cksumdata)
 #else
 	RETc(eq)			/* done */
 #endif
-	adds	r7, r7, r1		/* undo sub */
+	adds	r1, r1, r7		/* undo sub */
 	subs	r7, r7, r1
 	lsls	r7, r7, #3
 #if defined(__ARMEB__)
