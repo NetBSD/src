@@ -14,8 +14,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#define _OPENBSD_SOURCE
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reallocarray.c,v 1.1 2015/02/05 16:04:35 christos Exp $");
+__RCSID("$NetBSD: reallocarray.c,v 1.2 2015/02/17 20:33:40 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
