@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.88 2015/02/05 20:02:28 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.89 2015/02/17 20:29:21 joerg Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -12,7 +12,7 @@ SRCS+=	_env.c _rand48.c \
 	lcong48.c lrand48.c lsearch.c merge.c mi_vector_hash.c mrand48.c \
 	nrand48.c putenv.c qabs.c qdiv.c qsort.c posix_openpt.c pty.c \
 	quick_exit.c radixsort.c rand.c rand_r.c random.c remque.c \
-	reallocarray.c seed48.c setenv.c srand48.c strsuftoll.c \
+	reallocarr.c reallocarray.c seed48.c setenv.c srand48.c strsuftoll.c \
 	strtoi.c strtou.c strtonum.c \
 	strtoimax.c strtol.c strtoll.c strtoq.c strtoul.c strtoull.c \
 	strtoumax.c strtouq.c system.c tdelete.c tfind.c tsearch.c twalk.c \
@@ -52,7 +52,7 @@ MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 	malloc.3 memory.3 mi_vector_hash.3 \
 	posix_memalign.3 posix_openpt.3 ptsname.3 \
 	qabs.3 qdiv.3 quick_exit.3 qsort.3 \
-	radixsort.3 rand48.3 rand.3 random.3 reallocarray.3 \
+	radixsort.3 rand48.3 rand.3 random.3 reallocarr.3 reallocarray.3 \
 	strfmon.3 strsuftoll.3 strtod.3 strtol.3 strtoul.3 strtonum.3 \
 	system.3 \
 	tsearch.3 \

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.113 2015/02/05 16:05:46 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.114 2015/02/17 20:29:20 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -337,6 +337,8 @@ int	 l64a_r(long, char *, int);
 
 size_t	shquote(const char *, char *, size_t);
 size_t	shquotev(int, char * const *, char *, size_t);
+
+int	reallocarr(void *, size_t, size_t);
 #endif /* _NETBSD_SOURCE */
 #endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
 

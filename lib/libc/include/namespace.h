@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.176 2014/09/26 19:28:03 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.177 2015/02/17 20:29:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -547,6 +547,7 @@
 #define readdir			_readdir
 #define readdir_r		_readdir_r
 #define readlink		_readlink
+#define reallocarr		_reallocarr
 #define realpath		_realpath
 #define regcomp			_regcomp
 #define regerror		_regerror

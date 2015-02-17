@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1946 2015/02/10 19:11:52 rjs Exp $
+#	$NetBSD: mi,v 1.1947 2015/02/17 20:29:20 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8766,6 +8766,7 @@
 ./usr/share/man/cat3/re_exec.0			comp-c-catman		.cat
 ./usr/share/man/cat3/readdir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/readdir_r.0		comp-c-catman		.cat
+./usr/share/man/cat3/reallocarr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/reallocarray.0		comp-c-catman		.cat
 ./usr/share/man/cat3/realloc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/realpath.0			comp-c-catman		.cat
@@ -15606,6 +15607,7 @@
 ./usr/share/man/html3/re_exec.html		comp-c-htmlman		html
 ./usr/share/man/html3/readdir.html		comp-c-htmlman		html
 ./usr/share/man/html3/readdir_r.html		comp-c-htmlman		html
+./usr/share/man/html3/reallocarr.html		comp-c-htmlman		html
 ./usr/share/man/html3/reallocarray.html		comp-c-htmlman		html
 ./usr/share/man/html3/realloc.html		comp-c-htmlman		html
 ./usr/share/man/html3/realpath.html		comp-c-htmlman		html
@@ -22445,6 +22447,7 @@
 ./usr/share/man/man3/re_exec.3			comp-c-man		.man
 ./usr/share/man/man3/readdir.3			comp-c-man		.man
 ./usr/share/man/man3/readdir_r.3		comp-c-man		.man
+./usr/share/man/man3/reallocarr.3		comp-c-man		.man
 ./usr/share/man/man3/reallocarray.3		comp-c-man		.man
 ./usr/share/man/man3/realloc.3			comp-c-man		.man
 ./usr/share/man/man3/realpath.3			comp-c-man		.man
