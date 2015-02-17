@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.66 2014/06/17 12:38:12 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.66.2.1 2015/02/17 15:09:37 martin Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.66 2014/06/17 12:38:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.66.2.1 2015/02/17 15:09:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -889,7 +889,6 @@ union_vn_create(struct vnode **vpp, struct union_node *un, struct lwp *l)
 	vattr_null(vap);
 	vap->va_type = VREG;
 	vap->va_mode = cmode;
-	vref(un->un_dirvp);
 	vp = NULL;
 	error = VOP_CREATE(un->un_dirvp, &vp, &cn, vap);
 	if (error) {
