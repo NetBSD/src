@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.156 2014/12/16 11:42:27 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.157 2015/02/17 15:14:28 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.156 2014/12/16 11:42:27 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.157 2015/02/17 15:14:28 christos Exp $");
 
 #include "bridge.h"
 #include "carp.h"
@@ -2386,7 +2386,13 @@ nd6_storelladdr(const struct ifnet *ifp, const struct rtentry *rt,
 		return 0;
 	}
 	if (rt->rt_gateway->sa_family != AF_LINK) {
-		printf("%s: something odd happens\n", __func__);
+		char gbuf[256];
+		char dbuf[LINK_ADDRSTRLEN];
+		sockaddr_format(rt->rt_gateway, gbuf, sizeof(gbuf));
+		printf("%s: bad gateway address type %s for dst %s"
+		    " through interface %s\n", __func__, gbuf, 
+		    IN6_PRINT(dbuf, &satocsin6(dst)->sin6_addr),
+		    if_name(ifp));
 		m_freem(m);
 		return 0;
 	}
