@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.24 2015/01/23 06:58:32 nonaka Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.25 2015/02/17 01:53:21 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.24 2015/01/23 06:58:32 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.25 2015/02/17 01:53:21 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.24 2015/01/23 06:58:32 nonaka Exp $")
 #include <sys/proc.h>
 #include <sys/atomic.h>
 #include <sys/callout.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -76,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.24 2015/01/23 06:58:32 nonaka Exp $")
 #include <netinet/ip6.h>
 #endif
 #include <netinet6/in6_offload.h>
-
 
 #include <powerpc/spr.h>
 #include <powerpc/booke/spr.h>
@@ -232,7 +232,18 @@ struct pq3etsec_softc {
 	struct ifqueue sc_rx_bufcache;
 	struct pq3etsec_mapcache *sc_rx_mapcache; 
 	struct pq3etsec_mapcache *sc_tx_mapcache; 
+
+	/* Interrupt Coalescing parameters */
+	int sc_ic_rx_time;
+	int sc_ic_rx_count;
+	int sc_ic_tx_time;
+	int sc_ic_tx_count;
 };
+
+#define	ETSEC_IC_RX_ENABLED(sc)						\
+	((sc)->sc_ic_rx_time != 0 && (sc)->sc_ic_rx_count != 0)
+#define	ETSEC_IC_TX_ENABLED(sc)						\
+	((sc)->sc_ic_tx_time != 0 && (sc)->sc_ic_tx_count != 0)
 
 struct pq3mdio_softc {
 	device_t mdio_dev;
@@ -293,6 +304,11 @@ static int pq3etsec_rx_intr(void *);
 static int pq3etsec_tx_intr(void *);
 static int pq3etsec_error_intr(void *);
 static void pq3etsec_soft_intr(void *);
+
+static void pq3etsec_set_ic_rx(struct pq3etsec_softc *);
+static void pq3etsec_set_ic_tx(struct pq3etsec_softc *);
+
+static void pq3etsec_sysctl_setup(struct sysctllog **, struct pq3etsec_softc *);
 
 CFATTACH_DECL_NEW(pq3etsec, sizeof(struct pq3etsec_softc),
     pq3etsec_match, pq3etsec_attach, NULL, NULL);
@@ -710,6 +726,15 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 
 	etsec_write(sc, ATTR, ATTR_DEFAULT);
 	etsec_write(sc, ATTRELI, ATTRELI_DEFAULT);
+
+	/* Enable interrupt coalesing */
+	sc->sc_ic_rx_time = 768;
+	sc->sc_ic_rx_count = 16;
+	sc->sc_ic_tx_time = 768;
+	sc->sc_ic_tx_count = 16;
+	pq3etsec_set_ic_rx(sc);
+	pq3etsec_set_ic_tx(sc);
+	pq3etsec_sysctl_setup(NULL, sc);
 
 	char enaddr[ETHER_ADDR_LEN] = {
 	    [0] = sc->sc_macstnaddr2 >> 16,
@@ -1874,7 +1899,8 @@ pq3etsec_txq_produce(
 	 * we need to ask for an interrupt to reclaim some.
 	 */
 	txq->txq_lastintr += map->dm_nsegs;
-	if (txq->txq_lastintr >= txq->txq_threshold
+	if (ETSEC_IC_TX_ENABLED(sc)
+	    || txq->txq_lastintr >= txq->txq_threshold
 	    || txq->txq_mbufs.ifq_len + 1 == txq->txq_mbufs.ifq_maxlen) {
 		txq->txq_lastintr = 0;
 		last_flags |= TXBD_I;
@@ -2528,4 +2554,190 @@ pq3etsec_mii_tick(void *arg)
 	sc->sc_mii_last_tick = now;
 #endif
 	mutex_exit(sc->sc_lock);
+}
+
+static void
+pq3etsec_set_ic_rx(struct pq3etsec_softc *sc)
+{
+	uint32_t reg;
+
+	if (ETSEC_IC_RX_ENABLED(sc)) {
+		reg = RXIC_ICEN;
+		reg |= RXIC_ICFT_SET(sc->sc_ic_rx_count);
+		reg |= RXIC_ICTT_SET(sc->sc_ic_rx_time);
+	} else {
+		/* Disable RX interrupt coalescing */
+		reg = 0;
+	}
+
+	etsec_write(sc, RXIC, reg);
+}
+
+static void
+pq3etsec_set_ic_tx(struct pq3etsec_softc *sc)
+{
+	uint32_t reg;
+
+	if (ETSEC_IC_TX_ENABLED(sc)) {
+		reg = TXIC_ICEN;
+		reg |= TXIC_ICFT_SET(sc->sc_ic_tx_count);
+		reg |= TXIC_ICTT_SET(sc->sc_ic_tx_time);
+	} else {
+		/* Disable TX interrupt coalescing */
+		reg = 0;
+	}
+
+	etsec_write(sc, TXIC, reg);
+}
+
+/*
+ * sysctl
+ */
+static int
+pq3etsec_sysctl_ic_time_helper(SYSCTLFN_ARGS, int *valuep)
+{
+	struct sysctlnode node = *rnode;
+	struct pq3etsec_softc *sc = rnode->sysctl_data;
+	int value = *valuep;
+	int error;
+
+	node.sysctl_data = &value;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL)
+		return error;
+
+	if (value < 0 || value > 65535)
+		return EINVAL;
+
+	mutex_enter(sc->sc_lock);
+	*valuep = value;
+	if (valuep == &sc->sc_ic_rx_time)
+		pq3etsec_set_ic_rx(sc);
+	else
+		pq3etsec_set_ic_tx(sc);
+	mutex_exit(sc->sc_lock);
+
+	return 0;
+}
+
+static int
+pq3etsec_sysctl_ic_count_helper(SYSCTLFN_ARGS, int *valuep)
+{
+	struct sysctlnode node = *rnode;
+	struct pq3etsec_softc *sc = rnode->sysctl_data;
+	int value = *valuep;
+	int error;
+
+	node.sysctl_data = &value;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL)
+		return error;
+
+	if (value < 0 || value > 255)
+		return EINVAL;
+
+	mutex_enter(sc->sc_lock);
+	*valuep = value;
+	if (valuep == &sc->sc_ic_rx_count)
+		pq3etsec_set_ic_rx(sc);
+	else
+		pq3etsec_set_ic_tx(sc);
+	mutex_exit(sc->sc_lock);
+
+	return 0;
+}
+
+static int
+pq3etsec_sysctl_ic_rx_time_helper(SYSCTLFN_ARGS)
+{
+	struct pq3etsec_softc *sc = rnode->sysctl_data;
+
+	return pq3etsec_sysctl_ic_time_helper(SYSCTLFN_CALL(rnode),
+	    &sc->sc_ic_rx_time);
+}
+
+static int
+pq3etsec_sysctl_ic_rx_count_helper(SYSCTLFN_ARGS)
+{
+	struct pq3etsec_softc *sc = rnode->sysctl_data;
+
+	return pq3etsec_sysctl_ic_count_helper(SYSCTLFN_CALL(rnode),
+	    &sc->sc_ic_rx_count);
+}
+
+static int
+pq3etsec_sysctl_ic_tx_time_helper(SYSCTLFN_ARGS)
+{
+	struct pq3etsec_softc *sc = rnode->sysctl_data;
+
+	return pq3etsec_sysctl_ic_time_helper(SYSCTLFN_CALL(rnode),
+	    &sc->sc_ic_tx_time);
+}
+
+static int
+pq3etsec_sysctl_ic_tx_count_helper(SYSCTLFN_ARGS)
+{
+	struct pq3etsec_softc *sc = rnode->sysctl_data;
+
+	return pq3etsec_sysctl_ic_count_helper(SYSCTLFN_CALL(rnode),
+	    &sc->sc_ic_tx_count);
+}
+
+static void pq3etsec_sysctl_setup(struct sysctllog **clog,
+    struct pq3etsec_softc *sc)
+{
+	const struct sysctlnode *cnode, *rnode;
+
+	if (sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, device_xname(sc->sc_dev),
+	    SYSCTL_DESCR("TSEC interface"),
+	    NULL, 0, NULL, 0,
+	    CTL_HW, CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "int_coal",
+	    SYSCTL_DESCR("Interrupts coalescing"),
+	    NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "rx_time",
+	    SYSCTL_DESCR("RX time threshold (0-65535)"),
+	    pq3etsec_sysctl_ic_rx_time_helper, 0, (void *)sc, 0,
+	    CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "rx_count",
+	    SYSCTL_DESCR("RX frame count threshold (0-255)"),
+	    pq3etsec_sysctl_ic_rx_count_helper, 0, (void *)sc, 0,
+	    CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "tx_time",
+	    SYSCTL_DESCR("TX time threshold (0-65535)"),
+	    pq3etsec_sysctl_ic_tx_time_helper, 0, (void *)sc, 0,
+	    CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	if (sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "tx_count",
+	    SYSCTL_DESCR("TX frame count threshold (0-255)"),
+	    pq3etsec_sysctl_ic_tx_count_helper, 0, (void *)sc, 0,
+	    CTL_CREATE, CTL_EOL) != 0)
+		goto bad;
+
+	return;
+
+ bad:
+	aprint_error_dev(sc->sc_dev, "could not attach sysctl nodes\n");
 }
