@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.278 2015/02/11 23:07:13 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.279 2015/02/17 10:11:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.278 2015/02/11 23:07:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.279 2015/02/17 10:11:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -6053,6 +6053,7 @@ bge_debug_info(struct bge_softc *sc)
 	if (sc->bge_flags & BGEF_TSO)
 		printf(" - TSO\n");
 
+	/* PHY related */
 	if (sc->bge_phy_flags & BGEPHYF_NO_3LED)
 		printf(" - No 3 LEDs\n");
 	if (sc->bge_phy_flags & BGEPHYF_CRC_BUG)
@@ -6069,6 +6070,14 @@ bge_debug_info(struct bge_softc *sc)
 		printf(" - adjust trim\n");
 	if (sc->bge_phy_flags & BGEPHYF_NO_WIRESPEED)
 		printf(" - no wirespeed\n");
+
+	/* ASF related */
+	if (sc->bge_asf_mode & ASF_ENABLE)
+		printf(" - ASF enable\n");
+	if (sc->bge_asf_mode & ASF_NEW_HANDSHARE)
+		printf(" - ASF new handshake\n");
+	if (sc->bge_asf_mode & ASF_STACKUP)
+		printf(" - ASF stackup\n");
 }
 #endif /* BGE_DEBUG */
 
