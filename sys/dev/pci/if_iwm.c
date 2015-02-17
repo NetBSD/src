@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.8 2015/02/16 13:22:19 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.9 2015/02/17 09:18:45 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.8 2015/02/16 13:22:19 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.9 2015/02/17 09:18:45 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1767,8 +1767,8 @@ iwm_nic_tx_init(struct iwm_softc *sc)
 		/* Set physical address of TX ring (256-byte aligned). */
 		IWM_WRITE(sc, IWM_FH_MEM_CBBC_QUEUE(qid),
 		    txq->desc_dma.paddr >> 8);
-		DPRINTF(("loading ring %d descriptors (%p) at %lx\n",
-		    qid, txq->desc, txq->desc_dma.paddr >> 8));
+		DPRINTF(("loading ring %d descriptors (%p) at %"PRIxMAX"\n",
+		    qid, txq->desc, (uintmax_t)(txq->desc_dma.paddr >> 8)));
 	}
 	iwm_nic_unlock(sc);
 
@@ -3589,7 +3589,7 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	    | ((sizeof(cmd->hdr) + paylen) << 4));
 	desc->num_tbs = 1;
 
-	DPRINTFN(8, ("iwm_send_cmd 0x%x size=%lu %s\n",
+	DPRINTFN(8, ("iwm_send_cmd 0x%x size=%zu %s\n",
 	    code, sizeof(cmd->hdr) + paylen, async ? " (async)" : ""));
 
 	if (paylen > sizeof(cmd->data)) {
