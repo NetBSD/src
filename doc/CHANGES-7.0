@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.206 2015/02/16 21:38:38 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.207 2015/02/17 15:13:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15875,4 +15875,56 @@ sys/arch/arm/conf/std.arm			1.3
 
 	Fix checksum calculation and re-enable it by default.
 	[skrll, ticket #522]
+
+sys/arch/sh3/sh3/locore_subr.S			1.55
+
+	Branch to correct point when a system call returns an error.
+	[skrll, ticket #524]
+
+sbin/devpubd/Makefile				1.5
+sbin/devpubd/devpubd-run-hooks.in		1.3
+sbin/devpubd/devpubd.c				1.3-1.4
+sbin/devpubd/hooks/01-makedev			1.2
+sbin/devpubd/hooks/02-wedgenames		1.2
+
+	At startup, instead of doing run-hooks for each device, call run-hooks
+	once with a list of all found devices.
+	Run the initial device enumeration hooks before detaching from the
+	foreground, ensuring that any required devices have been created
+	before the rc.d script exits.
+	[jmcneill, ticket #525]
+
+sys/dev/pci/if_bge.c				1.278
+
+	- bge_miibus_writereg(): Fix a bug that BCM5906 may leave an APE lock.
+	- Fix hwcfg4 isn't printed correctly.
+	- Fix a bug that BGE_PHY_TEST_CTRL_REG isn't set correctly on some
+	  PCIe devices.
+	[msaitoh, ticket #526]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.15
+
+	Fix a legacy interrupt problem if the INTx line was shared
+	with another device.
+	[msaitoh, ticket #527]
+
+sys/arch/x86/pci/ichlpcib.c			1.44
+sys/dev/pci/ichsmb.c				1.38
+sys/dev/pci/pcidevs				1.1206-1.1207
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	Rename a few Intel devices and add DH89xxC[CL] LPC devices.
+	[msaitoh, ticket #528]
+
+sys/fs/union/union_subr.c			1.68
+
+	Remove a superfluous vref(), VOP_CREATE() was changed to
+	keep dvp referenced and locked some time ago.
+	[hannken, ticket #529]
+
+sys/external/bsd/sljit/dist/sljit_src/sljitNativeX86_common.c 1.7
+
+	Apply a bugfix from r282 http://sourceforge.net/p/sljit/code/282/.
+	[alnsn, ticket #531]
 
