@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.33 2015/02/16 14:10:00 macallan Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.34 2015/02/17 09:58:33 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.33 2015/02/16 14:10:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.34 2015/02/17 09:58:33 macallan Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -1168,7 +1168,10 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
  * Needed for X11 on SGI O2, will likely be needed on things like CI20.
  */
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
-		return (mips_btop(pa | PGC_NOCACHE));
+		if (flags & BUS_DMA_PREFETCHABLE ) {
+			return (mips_btop(pa | PGC_NOCACHE));
+		} else
+			return mips_btop(pa);
 #else
 		return mips_btop(pa);
 #endif
