@@ -1,4 +1,4 @@
-/*	$NetBSD: etsecreg.h,v 1.5 2012/07/17 01:36:13 matt Exp $	*/
+/*	$NetBSD: etsecreg.h,v 1.6 2015/02/17 01:53:21 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -213,6 +213,14 @@ struct rxfcb {
 #define	TSTAT_TXFn(n)	(TSTAT_TXF0 >> (n))
 #define DFVLAN		0x108 /* Default VLAN control word [TSEC3] */
 #define TXIC		0x110 /* Transmit interrupt coalescing register */
+#define	TXIC_ICEN	__PPCBIT(0) /* Interrupt coalescing enable */
+#define	TXIC_ICCS	__PPCBIT(1) /* Interrupt coalescing timer clock source */
+#define	TXIC_ICCS_ETSEC		0         /* eTSEC Tx interface clocks */
+#define	TXIC_ICCS_SYSTEM	TXIC_ICCS /* system clocks */
+#define	TXIC_ICFT	__PPCBITS(3,10)
+#define	TXIC_ICFT_SET(n)	__SHIFTIN((n),TXIC_ICFT)
+#define	TXIC_ICTT	__PPCBITS(16,31)
+#define	TXIC_ICTT_SET(n)	__SHIFTIN((n),TXIC_ICTT)
 #define TQUEUE		0x114 /* Transmit queue control register [TSEC3] */
 #define	TQUEUE_EN0	__PPCBIT(16) /* transmit ring enabled */
 #define	TQUEUE_EN1	__PPCBIT(17)
@@ -295,6 +303,14 @@ struct rxfcb {
 #define	RSTAT_RXF	__PPCBITS(24,31)
 #define	RSTAT_RXFn(n)	(RSTAT_RXF0 >> (n))
 #define RXIC		0x310 /* Receive interrupt coalescing register */
+#define	RXIC_ICEN	__PPCBIT(0) /* Interrupt coalescing enable */
+#define	RXIC_ICCS	__PPCBIT(1) /* Interrupt coalescing timer clock source */
+#define	RXIC_ICCS_ETSEC		0         /* eTSEC Rx interface clocks */
+#define	RXIC_ICCS_SYSTEM	TXIC_ICCS /* system clocks */
+#define	RXIC_ICFT	__PPCBITS(3,10)
+#define	RXIC_ICFT_SET(n)	__SHIFTIN((n),TXIC_ICFT)
+#define	RXIC_ICTT	__PPCBITS(16,31)
+#define	RXIC_ICTT_SET(n)	__SHIFTIN((n),TXIC_ICTT)
 #define RQUEUE		0x314 /* Receive queue control register. [TSEC3] */
 #define	RQUEUE_EX0	__PPCBIT(8) /* data transferred by DMA to ring extracted according to ATTR register */
 #define	RQUEUE_EX1	__PPCBIT(9)
