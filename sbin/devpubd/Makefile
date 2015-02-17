@@ -1,8 +1,9 @@
-# $NetBSD: Makefile,v 1.4 2013/08/11 06:04:38 dholland Exp $
+# $NetBSD: Makefile,v 1.4.4.1 2015/02/17 14:45:31 martin Exp $
 
 PROG=		devpubd
 SRCS=		devpubd.c
 MAN=		devpubd.8
+WARNS=		6
 
 BINDIR?=	/sbin
 
