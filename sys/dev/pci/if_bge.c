@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.277 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.277.2.1 2015/02/17 14:48:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.277 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.277.2.1 2015/02/17 14:48:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1397,11 +1397,11 @@ bge_miibus_writereg(device_t dev, int phy, int reg, int val)
 	uint32_t autopoll;
 	int i;
 
-	if (bge_ape_lock(sc, sc->bge_phy_ape_lock) != 0)
-		return;
-
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906 &&
 	    (reg == BRGPHY_MII_1000CTL || reg == BRGPHY_MII_AUXCTL))
+		return;
+
+	if (bge_ape_lock(sc, sc->bge_phy_ape_lock) != 0)
 		return;
 
 	/* Reading with autopolling on may trigger PCI errors */
@@ -3742,7 +3742,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 			hwcfg2 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_2);
 		if (sc->bge_flags & BGEF_PCIE)
 			hwcfg3 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_3);
-		if (BGE_ASICREV(sc->bge_chipid == BGE_ASICREV_BCM5785))
+		if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5785)
 			hwcfg4 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_4);
 		if (BGE_IS_5717_PLUS(sc))
 			hwcfg5 = bge_readmem_ind(sc, BGE_SRAM_DATA_CFG_5);
@@ -4170,7 +4170,7 @@ bge_reset(struct bge_softc *sc)
 	 * XXX: from FreeBSD/Linux; no documentation
 	 */
 	if (sc->bge_flags & BGEF_PCIE) {
-		if (BGE_ASICREV(sc->bge_chipid != BGE_ASICREV_BCM5785) &&
+		if ((BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5785) &&
 		    !BGE_IS_57765_PLUS(sc) &&
 		    (CSR_READ_4(sc, BGE_PHY_TEST_CTRL_REG) ==
 			(BGE_PHY_PCIE_LTASS_MODE | BGE_PHY_PCIE_SCRAM_MODE))) {
