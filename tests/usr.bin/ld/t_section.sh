@@ -1,4 +1,4 @@
-#	$NetBSD: t_section.sh,v 1.3 2014/11/15 03:22:29 uebayasi Exp $
+#	$NetBSD: t_section.sh,v 1.4 2015/02/17 11:51:04 martin Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -59,7 +59,7 @@ const char a[] __section("hoge") = "hoge";
 /* read-write orphan */
 char b[] __section("fuga") = { 'f', 'u', 'g', 'a', '\0' };
 /* .data */
-int c = 123;
+int c[1024] = { 123, 20, 1, 0 };
 /* .bss */
 int d = 0;
 /* .text */
