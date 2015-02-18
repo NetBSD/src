@@ -1074,6 +1074,7 @@ dt_aggregate_go(dtrace_hdl_t *dtp)
 		if (dt_status(dtp, i) == -1)
 			continue;
 
+		assert(agp->dtat_ncpus < agp->dtat_ncpu);
 		agp->dtat_cpus[agp->dtat_ncpus++] = i;
 	}
 
