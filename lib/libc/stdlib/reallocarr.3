@@ -1,4 +1,4 @@
-.\"	$NetBSD: reallocarr.3,v 1.1 2015/02/17 20:29:21 joerg Exp $
+.\"	$NetBSD: reallocarr.3,v 1.2 2015/02/18 08:46:43 wiz Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@ On successful completion,
 returns 0 and updates
 .Fa *ptr .
 Otherwise, an error code (see
-.Xr errno 7 )
+.Xr errno 2 )
 is returned and
 .Fa *ptr
 and the referenced memory is unmodified.
@@ -61,7 +61,8 @@ and the referenced memory is unmodified.
 .Nm
 first appeared in
 .Nx 7.0 .
-.Ox introduced the
+.Ox
+introduced the
 .Xr reallocarray 3
 function for the same purpose, but the interface makes it difficult
 to correctly handle zero-sized allocations.
