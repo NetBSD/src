@@ -41,10 +41,12 @@
 #else
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
+#include <sys/cpuio.h>
 #endif
 #include <assert.h>
 #include <libgen.h>
 #include <limits.h>
+#include <paths.h>
 
 #include <dt_impl.h>
 
@@ -497,6 +499,25 @@ dt_ioctl(dtrace_hdl_t *dtp, u_long val, void *arg)
 	return (-1);
 }
 
+static bool
+cpu_online(processorid_t cpu)
+{
+	cpustate_t cs;
+	int fd, online = false;
+
+	if ((fd = open(_PATH_CPUCTL, O_RDONLY)) < 0)
+		return false;
+
+	cs.cs_id = cpu;
+	if (ioctl(fd, IOC_CPU_GETSTATE, &cs) == 0) {
+		if (cs.cs_online)
+			online = true;
+	}
+
+	close(fd);
+	return online;
+}
+
 int
 dt_status(dtrace_hdl_t *dtp, processorid_t cpu)
 {
@@ -506,7 +527,7 @@ dt_status(dtrace_hdl_t *dtp, processorid_t cpu)
 #if defined(sun)
 		return (p_online(cpu, P_STATUS));
 #else
-		return 1;
+		return cpu_online(cpu) ? 1 : -1;
 #endif
 	}
 
