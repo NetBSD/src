@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.39 2015/01/20 12:13:04 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.40 2015/02/18 16:47:58 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,14 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.39 2015/01/20 12:13:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.40 2015/02/18 16:47:58 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#define _SGIMIPS_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
 #include <sys/bus.h>
 #include <machine/machtype.h>
@@ -262,7 +261,7 @@ crmfb_attach(device_t parent, device_t self, void *opaque)
 
 	ma = (struct mainbus_attach_args *)opaque;
 
-	sc->sc_iot = SGIMIPS_BUS_SPACE_CRIME;
+	sc->sc_iot = normal_memt;
 	sc->sc_dmat = &sgimips_default_bus_dma_tag;
 	sc->sc_wsmode = WSDISPLAYIO_MODE_EMUL;
 
@@ -571,7 +570,7 @@ crmfb_mmap(void *v, void *vs, off_t offset, int prot)
 	if (offset >= 0 && offset < (0x100000 * sc->sc_tiles_x)) {
 		pa = bus_dmamem_mmap(sc->sc_dmat, sc->sc_dma.segs,
 		    sc->sc_dma.nsegs, offset, prot,
-		    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
+		    BUS_DMA_WAITOK | BUS_DMA_COHERENT | BUS_DMA_PREFETCHABLE);
 		return pa;
 	}
 #endif
@@ -588,8 +587,8 @@ crmfb_mmap(void *v, void *vs, off_t offset, int prot)
 	if ((offset >= 0x15010000) && (offset < 0x15030000))
 		return bus_dmamem_mmap(sc->sc_dmat, sc->sc_dma.segs,
 		     sc->sc_dma.nsegs,
-		     offset + (0x100000 * sc->sc_tiles_x) - 0x15010000,
-		     prot, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
+		     offset + (0x100000 * sc->sc_tiles_x) - 0x15010000, prot,
+		     BUS_DMA_WAITOK | BUS_DMA_COHERENT | BUS_DMA_PREFETCHABLE);
 	return -1;
 }
 
