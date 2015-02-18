@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.16 2014/11/20 16:34:26 christos Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.17 2015/02/18 16:47:59 macallan Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.16 2014/11/20 16:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.17 2015/02/18 16:47:59 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ ds1687_read(void *arg, unsigned int addr)
 {
 	struct mcclock_mace_softc *sc = arg;
 
-	return bus_space_read_1(sc->sc_st, sc->sc_sh, addr);
+	return bus_space_read_1(sc->sc_st, sc->sc_sh, (addr << 8) + 7);
 }
 
 void
@@ -173,7 +173,7 @@ ds1687_write(void *arg, unsigned int addr, unsigned int data)
 {
 	struct mcclock_mace_softc *sc = arg;
 
-	bus_space_write_1(sc->sc_st, sc->sc_sh, addr, data);
+	bus_space_write_1(sc->sc_st, sc->sc_sh, (addr << 8) + 7, data);
 }
 
 static int
