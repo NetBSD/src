@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.490.2.1 2014/12/01 09:54:50 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.490.2.2 2015/02/18 06:35:58 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.490.2.1 2014/12/01 09:54:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.490.2.2 2015/02/18 06:35:58 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -4716,12 +4716,14 @@ sys_posix_fallocate(struct lwp *l, const struct sys_posix_fallocate_args *uap,
 	len = SCARG(uap, len);
 	
 	if (pos < 0 || len < 0 || len > OFF_T_MAX - pos) {
-		return EINVAL;
+		*retval = EINVAL;
+		return 0;
 	}
 	
 	error = fd_getvnode(fd, &fp);
 	if (error) {
-		return error;
+		*retval = error;
+		return 0;
 	}
 	if ((fp->f_flag & FWRITE) == 0) {
 		error = EBADF;
@@ -4739,7 +4741,8 @@ sys_posix_fallocate(struct lwp *l, const struct sys_posix_fallocate_args *uap,
 
 fail:
 	fd_putfile(fd);
-	return error;
+	*retval = error;
+	return 0;
 }
 
 /*
