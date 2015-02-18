@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.207 2015/02/17 15:13:10 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.208 2015/02/18 06:41:11 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15927,4 +15927,11 @@ sys/external/bsd/sljit/dist/sljit_src/sljitNativeX86_common.c 1.7
 
 	Apply a bugfix from r282 http://sourceforge.net/p/sljit/code/282/.
 	[alnsn, ticket #531]
+
+sys/kern/vfs_syscalls.c				1.493
+
+	A syscall like posix_fallocate() that is not supposed to set errno
+	in userland needs to always return 0 and store the error code
+	*retval.
+	[martin, ticket #523]
 
