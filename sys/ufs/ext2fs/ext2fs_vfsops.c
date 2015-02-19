@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.186 2014/11/09 18:23:28 maxv Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.187 2015/02/19 21:31:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.186 2014/11/09 18:23:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.187 2015/02/19 21:31:44 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1151,20 +1151,21 @@ ext2fs_checksb(struct ext2fs *fs, int ronly)
 		return (EINVAL);		/* XXX needs translation */
 	}
 	if (fs2h32(fs->e2fs_rev) > E2FS_REV1) {
-#ifdef DIAGNOSTIC
 		printf("ext2fs: unsupported revision number: %x\n",
 		    fs2h32(fs->e2fs_rev));
-#endif
 		return (EINVAL);		/* XXX needs translation */
 	}
 	if (fs2h32(fs->e2fs_log_bsize) > 2) { /* block size = 1024|2048|4096 */
-#ifdef DIAGNOSTIC
 		printf("ext2fs: bad block size: %d "
 		    "(expected <= 2 for ext2 fs)\n",
 		    fs2h32(fs->e2fs_log_bsize));
-#endif
 		return (EINVAL);	   /* XXX needs translation */
 	}
+	if (fs->e2fs_bpg == 0) {
+		printf("ext2fs: zero blocks per group\n");
+		return EINVAL;
+	}
+	
 	if (fs2h32(fs->e2fs_rev) > E2FS_REV0) {
 		char buf[256];
 		if (fs2h32(fs->e2fs_first_ino) != EXT2_FIRSTINO) {
