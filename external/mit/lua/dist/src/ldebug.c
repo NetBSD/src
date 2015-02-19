@@ -1,4 +1,4 @@
-/*	$NetBSD: ldebug.c,v 1.3 2015/02/02 14:03:05 lneto Exp $	*/
+/*	$NetBSD: ldebug.c,v 1.4 2015/02/19 04:46:22 lneto Exp $	*/
 
 /*
 ** Id: ldebug.c,v 2.110 2015/01/02 12:52:22 roberto Exp 
@@ -12,8 +12,8 @@
 #include "lprefix.h"
 
 
-#ifndef _KERNEL
 #include <stdarg.h>
+#ifndef _KERNEL
 #include <stddef.h>
 #include <string.h>
 #endif

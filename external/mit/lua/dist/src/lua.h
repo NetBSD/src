@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.h,v 1.3 2015/02/02 14:03:05 lneto Exp $	*/
+/*	$NetBSD: lua.h,v 1.4 2015/02/19 04:46:22 lneto Exp $	*/
 
 /*
 ** Id: lua.h,v 1.325 2014/12/26 17:24:27 roberto Exp 
@@ -182,11 +182,7 @@ LUA_API void  (lua_xmove) (lua_State *from, lua_State *to, int n);
 ** access functions (stack -> C)
 */
 
-#ifndef _KERNEL
 LUA_API int             (lua_isnumber) (lua_State *L, int idx);
-#else /* _KERNEL */
-#define lua_isnumber	lua_isinteger
-#endif
 LUA_API int             (lua_isstring) (lua_State *L, int idx);
 LUA_API int             (lua_iscfunction) (lua_State *L, int idx);
 LUA_API int             (lua_isinteger) (lua_State *L, int idx);
