@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.16 2015/01/23 06:52:55 nonaka Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.17 2015/02/19 08:59:56 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.16 2015/01/23 06:52:55 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.17 2015/02/19 08:59:56 nonaka Exp $");
 
 #include <sys/param.h>
 
@@ -781,7 +781,7 @@ e500_tlb_ioreserve(vaddr_t va, vsize_t len, pt_entry_t pte)
 	KASSERT(((pte & PTE_RPN_MASK) & (len - 1)) == 0);
 
 	if ((xtlb = e500_tlb_lookup_xtlb2(va, len)) != NULL) {
-		psize_t mask = ~(xtlb->e_tlb.tlb_size - 1);
+		psize_t mask __diagused = ~(xtlb->e_tlb.tlb_size - 1);
 		KASSERT(len <= xtlb->e_tlb.tlb_size);
 		KASSERT((pte & mask) == (xtlb->e_tlb.tlb_pte & mask));
 		xtlb->e_refcnt++;
