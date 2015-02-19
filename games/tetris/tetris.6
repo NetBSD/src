@@ -1,4 +1,4 @@
-.\"	$NetBSD: tetris.6,v 1.15 2015/02/19 02:27:30 mrg Exp $
+.\"	$NetBSD: tetris.6,v 1.16 2015/02/19 08:51:14 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -89,9 +89,9 @@ The
 argument must have the seven keys in order, and, remember to quote any
 space or tab characters from the shell.
 For example:
-.sp
+.Pp
 .Dl "tetris -l 2 -k 'jkl pqn'"
-.sp
+.Pp
 will play the default games, i.e. level 2 and with the default
 control keys.
 The current key settings are displayed at the bottom of the screen
@@ -152,12 +152,19 @@ are marked with asterisks
 high score file
 .El
 .Sh AUTHORS
+.An -nosplit
 Adapted from a 1989 International Obfuscated C Code Contest winner by
-Chris Torek and Darren F. Provine.
+.An Chris Torek
+and
+.An Darren F. Provine .
 .Pp
-Manual adapted from the original entry written by Nancy L. Tinkham and
-Darren F. Provine.
+Manual adapted from the original entry written by
+.An Nancy L. Tinkham
+and
+.An Darren F. Provine .
 .Pp
-Code for previewing next shape added by Hubert Feyrer in 1999.
+Code for previewing next shape added by
+.An Hubert Feyrer
+in 1999.
 .Sh BUGS
 The higher levels are unplayable without a fast terminal connection.
