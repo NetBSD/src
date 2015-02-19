@@ -1,4 +1,4 @@
-/*	$NetBSD: llex.c,v 1.3 2015/02/02 14:03:05 lneto Exp $	*/
+/*	$NetBSD: llex.c,v 1.4 2015/02/19 04:46:22 lneto Exp $	*/
 
 /*
 ** Id: llex.c,v 2.89 2014/11/14 16:06:09 roberto Exp 
@@ -202,7 +202,6 @@ static int check_next1 (LexState *ls, int c) {
 }
 
 
-#ifndef _KERNEL
 /*
 ** Check whether current char is in set 'set' (with two chars) and
 ** saves it
@@ -217,6 +216,7 @@ static int check_next2 (LexState *ls, const char *set) {
 }
 
 
+#ifndef _KERNEL
 /*
 ** change all characters 'from' in buffer to 'to'
 */
@@ -296,8 +296,11 @@ static int read_numeral (LexState *ls, SemInfo *seminfo) {
 
 static int read_numeral (LexState *ls, SemInfo *seminfo) {
   TValue obj;
+  int first = ls->current;
   lua_assert(lisdigit(ls->current));
   save_and_next(ls);
+  if (first == '0')
+    check_next2(ls, "xX");  /* hexadecimal? */
   for (;;) {
     if (lisxdigit(ls->current))
       save_and_next(ls);
