@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.18 2014/06/10 20:23:21 joerg Exp $
+#	$NetBSD: TODO,v 1.19 2015/02/19 11:20:43 mrg Exp $
 
 THINGS TO BE DONE:
 
@@ -32,60 +32,30 @@ Suggestions, comments, etc to projects@NetBSD.org.
 High Kernel:
     swap fixes:
 	swap to file of dynamic size; see apollo
-    nfs:
-	kernel support for lockd(8), lockf(3)
 
 User programs:
     rwall nfs-mountees on shutdown
-    add detachment to window(1)
-    clean up gas config files, set up common defines
-
-Documentation:
-    modify sys docs to reflect NetBSD/arch-specific stuff
-    clean up src/share/man/{man0,tools} so that we can generate a printable
-        version from the manpages again.
 
 i386 kernel support:
-    better ways of accessing BIOS, i/o space.  some exportable to
-	user space.  See mach3,linux dos emulator
-    i686 optimized versions of copyin/copyout/memcpy/memset/etc. lazy
-        floating-point context switching should be implemented as well.
     make use of sysenter/sysexit instructions on PIII/4 and Athlon for
         reducing syscall overhead.
 
 This is a list of suggested smaller projects (in no particular order):
 
 + speed up sort(1) by using mmap(2) rather than temp files
-+ autoconf version of nawk, for use in non-NetBSD pkgsrc
 + port valgrind to NetBSD for pkgsrc, then use it to do an audit of
   any memory leakage
-+ help in implementing various things in pkgsrc
 + simplify some of the quirks in our build system
-+ help out with scripts for tgm/autobuild
-+ some PR fixing/re-categorising/investigating/closing
 + investigate zebra or quagga in gnusrc rather than routed
-+ do a type-punned pointer sweep for gcc3 (and fix the problems, not
-  the symptoms)
-+ kernel fine-grained locking
++ do a type-punned pointer sweep for -fstrict-aliases (and fix the
+  problems, not the symptoms)
 + write a BSD-licensed web browser
 + perhaps look at putting wonka into src/ (with uuencoded class lib?)
-+ document autoconf framework
 + write an overview document for openssl and certificates
 + documentation project help
-+ investigate which userland utilities and daemons would benefit from
-  kqueue, and rewrite them
-+ add a native scheme interpreter
-+ add platform support for TenDRA compiler suite
-+ merge moused(8) with wsmoused(8) as a new work mode (i.e. serial)
-+ re-design our mbuf/network buffer memory handling so that it is simpler
-  and can handle zero copy tcp
-+ re-design our signal handling path. It is far too complicated and will not
-  be easy to accommodate MP code
 + Examine our vnode locking and vfs layer and see what needs to be changed
   for locking in layered filesystems to really work
 + Make mountd(8) update the in-kernel exports list for each file system
   atomically.  Many parts of the utility will need a rewrite, but the kernel
   functionality is already there (just enable the "notyet" blocks of code in
   sys/nfs/nfs_export.c).
-+ Kerberize more services like ftp, ftpd, rsh, rshd, rlogind, ...
-  (see PR bin/31378)
