@@ -1,4 +1,4 @@
-/*	$NetBSD: lapi.c,v 1.3 2015/02/02 14:03:05 lneto Exp $	*/
+/*	$NetBSD: lapi.c,v 1.4 2015/02/19 04:46:22 lneto Exp $	*/
 
 /*
 ** Id: lapi.c,v 2.244 2014/12/26 14:43:45 roberto Exp 
@@ -276,13 +276,11 @@ LUA_API int lua_isinteger (lua_State *L, int idx) {
 }
 
 
-#ifndef _KERNEL
 LUA_API int lua_isnumber (lua_State *L, int idx) {
   lua_Number n;
   const TValue *o = index2addr(L, idx);
   return tonumber(o, &n);
 }
-#endif
 
 
 LUA_API int lua_isstring (lua_State *L, int idx) {
