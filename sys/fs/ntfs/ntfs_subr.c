@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.59 2015/01/16 17:02:12 maxv Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.60 2015/02/20 17:08:13 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.59 2015/01/16 17:02:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.60 2015/02/20 17:08:13 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1183,7 +1183,7 @@ ntfs_nttimetounix(u_int64_t nt)
 }
 
 /*
- * This is one of write routine.
+ * This is one of the write routines.
  */
 int
 ntfs_writeattr_plain(struct ntfsmount *ntmp, struct ntnode *ip,
@@ -1231,7 +1231,7 @@ ntfs_writeattr_plain(struct ntfsmount *ntmp, struct ntnode *ip,
 }
 
 /*
- * This is one of write routine.
+ * This is one of the write routines.
  *
  * ntnode should be locked.
  */
@@ -1333,7 +1333,7 @@ ntfs_writentvattr_plain(struct ntfsmount *ntmp, struct ntnode *ip,
 }
 
 /*
- * This is one of read routines.
+ * This is one of the read routines.
  *
  * ntnode should be locked.
  */
@@ -1460,7 +1460,7 @@ ntfs_readntvattr_plain(struct ntfsmount *ntmp, struct ntnode *ip,
 }
 
 /*
- * This is one of read routines.
+ * This is one of the read routines.
  */
 int
 ntfs_readattr_plain(struct ntfsmount *ntmp, struct ntnode *ip,
@@ -1508,7 +1508,7 @@ ntfs_readattr_plain(struct ntfsmount *ntmp, struct ntnode *ip,
 }
 
 /*
- * This is one of read routines.
+ * This is one of the read routines.
  */
 int
 ntfs_readattr(struct ntfsmount *ntmp, struct ntnode *ip, u_int32_t attrnum,
