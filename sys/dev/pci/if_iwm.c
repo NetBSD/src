@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.9 2015/02/17 09:18:45 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.10 2015/02/20 15:03:53 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.9 2015/02/17 09:18:45 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.10 2015/02/20 15:03:53 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1389,7 +1389,7 @@ iwm_prepare_card_hw(struct iwm_softc *sc)
 	int rv = 0;
 	int t = 0;
 
-	if (!iwm_set_hw_ready(sc))
+	if (iwm_set_hw_ready(sc))
 		goto out;
 
 	/* If HW is not ready, prepare the conditions to check again */
