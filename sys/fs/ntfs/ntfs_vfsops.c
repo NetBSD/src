@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.102 2015/01/06 11:03:09 hannken Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.103 2015/02/20 17:08:13 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.102 2015/01/06 11:03:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.103 2015/02/20 17:08:13 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ MALLOC_JUSTDEFINE(M_NTFSMNT, "NTFS mount", "NTFS mount structure");
 MALLOC_JUSTDEFINE(M_NTFSNTNODE,"NTFS ntnode",  "NTFS ntnode information");
 MALLOC_JUSTDEFINE(M_NTFSDIR,"NTFS dir",  "NTFS dir buffer");
 
+static int	ntfs_superblock_validate(struct ntfsmount *);
 static int	ntfs_mount(struct mount *, const char *, void *, size_t *);
 static int	ntfs_root(struct mount *, struct vnode **);
 static int	ntfs_start(struct mount *, int);
@@ -291,6 +292,25 @@ fail:
 	return (err);
 }
 
+static int
+ntfs_superblock_validate(struct ntfsmount *ntmp)
+{
+	/* Sanity checks. XXX: More checks are probably needed. */
+	if (strncmp(ntmp->ntm_bootfile.bf_sysid, NTFS_BBID, NTFS_BBIDLEN)) {
+		dprintf(("ntfs_superblock_validate: invalid boot block\n"));
+		return EINVAL;
+	}
+	if (ntmp->ntm_bps == 0) {
+		dprintf(("ntfs_superblock_validate: invalid bytes per sector\n"));
+		return EINVAL;
+	}
+	if (ntmp->ntm_spc == 0) {
+		dprintf(("ntfs_superblock_validate: invalid sectors per cluster\n"));
+		return EINVAL;
+	}
+	return 0;
+}
+
 /*
  * Common code for mount and mountroot
  */
@@ -324,22 +344,8 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, str
 	brelse(bp, 0);
 	bp = NULL;
 
-	/* Sanity checks. XXX: More checks are probably needed. */
-	if (strncmp(ntmp->ntm_bootfile.bf_sysid, NTFS_BBID, NTFS_BBIDLEN)) {
-		error = EINVAL;
-		dprintf(("ntfs_mountfs: invalid boot block\n"));
+	if ((error = ntfs_superblock_validate(ntmp)))
 		goto out;
-	}
-	if (ntmp->ntm_bps == 0) {
-		error = EINVAL;
-		dprintf(("ntfs_mountfs: invalid bytes per sector\n"));
-		goto out;
-	}
-	if (ntmp->ntm_spc == 0) {
-		error = EINVAL;
-		dprintf(("ntfs_mountfs: invalid sectors per cluster\n"));
-		goto out;
-	}
 
 	{
 		int8_t cpr = ntmp->ntm_mftrecsz;
@@ -349,10 +355,10 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, str
 			ntmp->ntm_bpmftrec = (1 << (-cpr)) / ntmp->ntm_bps;
 	}
 	dprintf(("ntfs_mountfs(): bps: %d, spc: %d, media: %x, mftrecsz: %d (%d sects)\n",
-		ntmp->ntm_bps,ntmp->ntm_spc,ntmp->ntm_bootfile.bf_media,
-		ntmp->ntm_mftrecsz,ntmp->ntm_bpmftrec));
+		ntmp->ntm_bps, ntmp->ntm_spc, ntmp->ntm_bootfile.bf_media,
+		ntmp->ntm_mftrecsz, ntmp->ntm_bpmftrec));
 	dprintf(("ntfs_mountfs(): mftcn: 0x%x|0x%x\n",
-		(u_int32_t)ntmp->ntm_mftcn,(u_int32_t)ntmp->ntm_mftmirrcn));
+		(u_int32_t)ntmp->ntm_mftcn, (u_int32_t)ntmp->ntm_mftmirrcn));
 
 	ntmp->ntm_mountp = mp;
 	ntmp->ntm_dev = dev;
@@ -410,7 +416,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, str
 		struct attrdef ad;
 
 		/* Open $AttrDef */
-		error = VFS_VGET(mp, NTFS_ATTRDEFINO, &vp );
+		error = VFS_VGET(mp, NTFS_ATTRDEFINO, &vp);
 		if (error)
 			goto out1;
 
