@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.187 2015/02/19 21:31:44 maxv Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.188 2015/02/20 17:44:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.187 2015/02/19 21:31:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.188 2015/02/20 17:44:54 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -104,7 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.187 2015/02/19 21:31:44 maxv Exp
 MODULE(MODULE_CLASS_VFS, ext2fs, "ffs");
 
 int ext2fs_sbupdate(struct ufsmount *, int);
-static int ext2fs_checksb(struct ext2fs *, int);
+static void ext2fs_sbcompute(struct m_ext2fs *);
+static int ext2fs_sbcheck(struct ext2fs *, int);
 
 static struct sysctllog *ext2fs_sysctl_log;
 
@@ -534,43 +535,28 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	VOP_UNLOCK(devvp);
 	if (error)
 		panic("ext2fs_reload: dirty1");
-	/*
-	 * Step 2: re-read superblock from disk.
-	 */
-	error = bread(devvp, SBLOCK, SBSIZE, NOCRED, 0, &bp);
-	if (error) {
-		return (error);
-	}
-	newfs = (struct ext2fs *)bp->b_data;
-	error = ext2fs_checksb(newfs, (mp->mnt_flag & MNT_RDONLY) != 0);
-	if (error) {
-		brelse(bp, 0);
-		return (error);
-	}
 
 	fs = ump->um_e2fs;
 	/*
-	 * copy in new superblock, and compute in-memory values
+	 * Step 2: re-read superblock from disk. Copy in new superblock, and compute
+	 * in-memory values.
 	 */
+	error = bread(devvp, SBLOCK, SBSIZE, NOCRED, 0, &bp);
+	if (error)
+		return error;
+	newfs = (struct ext2fs *)bp->b_data;
 	e2fs_sbload(newfs, &fs->e2fs);
-	fs->e2fs_ncg =
-	    howmany(fs->e2fs.e2fs_bcount - fs->e2fs.e2fs_first_dblock,
-	    fs->e2fs.e2fs_bpg);
-	fs->e2fs_fsbtodb = fs->e2fs.e2fs_log_bsize + LOG_MINBSIZE - DEV_BSHIFT;
-	fs->e2fs_bsize = MINBSIZE << fs->e2fs.e2fs_log_bsize;
-	fs->e2fs_bshift = LOG_MINBSIZE + fs->e2fs.e2fs_log_bsize;
-	fs->e2fs_qbmask = fs->e2fs_bsize - 1;
-	fs->e2fs_bmask = ~fs->e2fs_qbmask;
-	fs->e2fs_ngdb =
-	    howmany(fs->e2fs_ncg, fs->e2fs_bsize / sizeof(struct ext2_gd));
-	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE(fs);
-	fs->e2fs_itpg = fs->e2fs.e2fs_ipg / fs->e2fs_ipb;
+
 	brelse(bp, 0);
+
+	error = ext2fs_sbcheck(&fs->e2fs, (mp->mnt_flag & MNT_RDONLY) != 0);
+	if (error)
+		return error;
+	ext2fs_sbcompute(fs);
 
 	/*
 	 * Step 3: re-read summary information from disk.
 	 */
-
 	for (i = 0; i < fs->e2fs_ngdb; i++) {
 		error = bread(devvp ,
 		    EXT2_FSBTODB(fs, fs->e2fs.e2fs_first_dblock +
@@ -652,29 +638,30 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	bp = NULL;
 	ump = NULL;
 
-#ifdef DEBUG_EXT2
-	printf("ext2 sb size: %zu\n", sizeof(struct ext2fs));
-#endif
+	/* Read the superblock from disk, and swap it directly. */
 	error = bread(devvp, SBLOCK, SBSIZE, cred, 0, &bp);
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;
-	error = ext2fs_checksb(fs, ronly);
-	if (error)
+	m_fs = kmem_zalloc(sizeof(struct m_ext2fs), KM_SLEEP);
+	e2fs_sbload(fs, &m_fs->e2fs);
+
+	brelse(bp, 0);
+	bp = NULL;
+
+	/* Once swapped, validate the superblock. */
+	error = ext2fs_sbcheck(&m_fs->e2fs, ronly);
+	if (error) {
+		kmem_free(m_fs, sizeof(struct m_ext2fs));
 		goto out;
+	}
+	m_fs->e2fs_ronly = ronly;
+
 	ump = kmem_zalloc(sizeof(*ump), KM_SLEEP);
 	ump->um_fstype = UFS1;
 	ump->um_ops = &ext2fs_ufsops;
-	ump->um_e2fs = kmem_zalloc(sizeof(struct m_ext2fs), KM_SLEEP);
-	e2fs_sbload((struct ext2fs *)bp->b_data, &ump->um_e2fs->e2fs);
-	brelse(bp, 0);
-	bp = NULL;
-	m_fs = ump->um_e2fs;
-	m_fs->e2fs_ronly = ronly;
+	ump->um_e2fs = m_fs;
 
-#ifdef DEBUG_EXT2
-	printf("ext2 ino size %zu\n", EXT2_DINODE_SIZE(m_fs));
-#endif
 	if (ronly == 0) {
 		if (m_fs->e2fs.e2fs_state == E2FS_ISCLEAN)
 			m_fs->e2fs.e2fs_state = 0;
@@ -683,23 +670,12 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 		m_fs->e2fs_fmod = 1;
 	}
 
-	/* compute dynamic sb infos */
-	m_fs->e2fs_ncg =
-	    howmany(m_fs->e2fs.e2fs_bcount - m_fs->e2fs.e2fs_first_dblock,
-	    m_fs->e2fs.e2fs_bpg);
-	m_fs->e2fs_fsbtodb = m_fs->e2fs.e2fs_log_bsize + LOG_MINBSIZE - DEV_BSHIFT;
-	m_fs->e2fs_bsize = MINBSIZE << m_fs->e2fs.e2fs_log_bsize;
-	m_fs->e2fs_bshift = LOG_MINBSIZE + m_fs->e2fs.e2fs_log_bsize;
-	m_fs->e2fs_qbmask = m_fs->e2fs_bsize - 1;
-	m_fs->e2fs_bmask = ~m_fs->e2fs_qbmask;
-	m_fs->e2fs_ngdb =
-	    howmany(m_fs->e2fs_ncg, m_fs->e2fs_bsize / sizeof(struct ext2_gd));
-	m_fs->e2fs_ipb = m_fs->e2fs_bsize / EXT2_DINODE_SIZE(m_fs);
-	m_fs->e2fs_itpg = m_fs->e2fs.e2fs_ipg / m_fs->e2fs_ipb;
+	/* Compute dynamic sb infos */
+	ext2fs_sbcompute(m_fs);
 
 	m_fs->e2fs_gd = kmem_alloc(m_fs->e2fs_ngdb * m_fs->e2fs_bsize, KM_SLEEP);
 	for (i = 0; i < m_fs->e2fs_ngdb; i++) {
-		error = bread(devvp ,
+		error = bread(devvp,
 		    EXT2_FSBTODB(m_fs, m_fs->e2fs.e2fs_first_dblock +
 		    1 /* superblock */ + i),
 		    m_fs->e2fs_bsize, NOCRED, 0, &bp);
@@ -1142,50 +1118,69 @@ ext2fs_cgupdate(struct ufsmount *mp, int waitfor)
 	return (allerror);
 }
 
+static void
+ext2fs_sbcompute(struct m_ext2fs *fs)
+{
+	fs->e2fs_ncg = howmany(fs->e2fs.e2fs_bcount - fs->e2fs.e2fs_first_dblock,
+	    fs->e2fs.e2fs_bpg);
+	fs->e2fs_fsbtodb = fs->e2fs.e2fs_log_bsize + LOG_MINBSIZE - DEV_BSHIFT;
+	fs->e2fs_bsize = MINBSIZE << fs->e2fs.e2fs_log_bsize;
+	fs->e2fs_bshift = LOG_MINBSIZE + fs->e2fs.e2fs_log_bsize;
+	fs->e2fs_qbmask = fs->e2fs_bsize - 1;
+	fs->e2fs_bmask = ~fs->e2fs_qbmask;
+	fs->e2fs_ngdb =
+	    howmany(fs->e2fs_ncg, fs->e2fs_bsize / sizeof(struct ext2_gd));
+	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE(fs);
+	fs->e2fs_itpg = fs->e2fs.e2fs_ipg / fs->e2fs_ipb;
+}
+
+/*
+ * NOTE: here, the superblock is already swapped.
+ */
 static int
-ext2fs_checksb(struct ext2fs *fs, int ronly)
+ext2fs_sbcheck(struct ext2fs *fs, int ronly)
 {
 	uint32_t u32;
 
-	if (fs2h16(fs->e2fs_magic) != E2FS_MAGIC) {
-		return (EINVAL);		/* XXX needs translation */
+	if (fs->e2fs_magic != E2FS_MAGIC)
+		return EINVAL;
+	if (fs->e2fs_rev > E2FS_REV1) {
+		printf("ext2fs: unsupported revision number: %x\n", fs->e2fs_rev);
+		return EINVAL;
 	}
-	if (fs2h32(fs->e2fs_rev) > E2FS_REV1) {
-		printf("ext2fs: unsupported revision number: %x\n",
-		    fs2h32(fs->e2fs_rev));
-		return (EINVAL);		/* XXX needs translation */
-	}
-	if (fs2h32(fs->e2fs_log_bsize) > 2) { /* block size = 1024|2048|4096 */
-		printf("ext2fs: bad block size: %d "
-		    "(expected <= 2 for ext2 fs)\n",
-		    fs2h32(fs->e2fs_log_bsize));
-		return (EINVAL);	   /* XXX needs translation */
+	if (fs->e2fs_log_bsize > 2) {
+		/* block size = 1024|2048|4096 */
+		printf("ext2fs: bad block size: %d\n", fs->e2fs_log_bsize);
+		return EINVAL;
 	}
 	if (fs->e2fs_bpg == 0) {
 		printf("ext2fs: zero blocks per group\n");
 		return EINVAL;
 	}
-	
-	if (fs2h32(fs->e2fs_rev) > E2FS_REV0) {
+
+	if (fs->e2fs_rev > E2FS_REV0) {
 		char buf[256];
-		if (fs2h32(fs->e2fs_first_ino) != EXT2_FIRSTINO) {
+		if (fs->e2fs_first_ino != EXT2_FIRSTINO) {
 			printf("ext2fs: unsupported first inode position\n");
-			return (EINVAL);      /* XXX needs translation */
+			return EINVAL;
 		}
-		u32 = fs2h32(fs->e2fs_features_incompat) & ~EXT2F_INCOMPAT_SUPP;
+		u32 = fs->e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP;
 		if (u32) {
 			snprintb(buf, sizeof(buf), EXT2F_INCOMPAT_BITS, u32);
-			printf("ext2fs: unsupported incompat features: %s\n",
-			    buf);
-			return EINVAL;	/* XXX needs translation */
+			printf("ext2fs: unsupported incompat features: %s\n", buf);
+			return EINVAL;
 		}
-		u32 = fs2h32(fs->e2fs_features_rocompat) & ~EXT2F_ROCOMPAT_SUPP;
+		u32 = fs->e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP;
 		if (!ronly && u32) {
 			snprintb(buf, sizeof(buf), EXT2F_ROCOMPAT_BITS, u32);
 			printf("ext2fs: unsupported ro-incompat features: %s\n",
 			    buf);
-			return EROFS;	/* XXX needs translation */
+			return EROFS;
+		}
+		if (fs->e2fs_inode_size == 0) {
+			printf("ext2fs: bad inode size\n");
+			return EINVAL;
 		}
 	}
-	return (0);
+	return 0;
 }
