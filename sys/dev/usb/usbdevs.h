@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.681 2015/02/04 14:23:18 jmcneill Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.682 2015/02/20 14:49:48 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.689 2015/02/04 14:23:04 jmcneill Exp
+ *	NetBSD: usbdevs,v 1.690 2015/02/20 14:48:55 nonaka Exp
  */
 
 /*
@@ -2091,6 +2091,7 @@
 #define	USB_PRODUCT_MELCO_KG54AI	0x0067		/* WLI-U2-KG54-AI WLAN */
 #define	USB_PRODUCT_MELCO_LUAU2GT	0x006e		/* LUA-U2-GT Ethernet */
 #define	USB_PRODUCT_MELCO_NINWIFI	0x008b		/* Nintendo Wi-Fi */
+#define	USB_PRODUCT_MELCO_PCOPRS1	0x00b3		/* RemoteStation PC-OP-RS1 */
 #define	USB_PRODUCT_MELCO_SG54HP	0x00d8		/* WLI-U2-SG54HP */
 #define	USB_PRODUCT_MELCO_G54HP	0x00d9		/* WLI-U2-G54HP */
 #define	USB_PRODUCT_MELCO_KG54L	0x00da		/* WLI-U2-KG54L */
