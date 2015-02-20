@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.82 2015/01/20 21:27:36 roy Exp $	*/
+/*	$NetBSD: in6.h,v 1.83 2015/02/20 22:13:48 rjs Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -770,7 +770,7 @@ __BEGIN_DECLS
 struct cmsghdr;
 
 void	in6_sin6_2_sin(struct sockaddr_in *, struct sockaddr_in6 *);
-void	in6_sin_2_v4mapsin6(struct sockaddr_in *, struct sockaddr_in6 *);
+void	in6_sin_2_v4mapsin6(const struct sockaddr_in *, struct sockaddr_in6 *);
 void	in6_sin6_2_sin_in_sock(struct sockaddr *);
 void	in6_sin_2_v4mapsin6_in_sock(struct sockaddr **);
 

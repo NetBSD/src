@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.180 2014/12/02 19:36:58 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.181 2015/02/20 22:13:48 rjs Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.180 2014/12/02 19:36:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.181 2015/02/20 22:13:48 rjs Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -2341,7 +2341,7 @@ in6_sin6_2_sin(struct sockaddr_in *sin, struct sockaddr_in6 *sin6)
 
 /* Convert sockaddr_in to sockaddr_in6 in v4 mapped addr format. */
 void
-in6_sin_2_v4mapsin6(struct sockaddr_in *sin, struct sockaddr_in6 *sin6)
+in6_sin_2_v4mapsin6(const struct sockaddr_in *sin, struct sockaddr_in6 *sin6)
 {
 	memset(sin6, 0, sizeof(*sin6));
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
