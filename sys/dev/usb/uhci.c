@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.19 2015/02/01 12:08:15 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.20 2015/02/20 09:16:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,18 +42,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.19 2015/02/01 12:08:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.20 2015/02/20 09:16:49 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/kmem.h>
-#include <sys/device.h>
-#include <sys/select.h>
-#include <sys/proc.h>
-#include <sys/queue.h>
+
 #include <sys/bus.h>
 #include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/mutex.h>
+#include <sys/proc.h>
+#include <sys/queue.h>
+#include <sys/select.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #include <machine/endian.h>
 
