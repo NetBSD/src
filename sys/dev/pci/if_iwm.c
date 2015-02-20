@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.10 2015/02/20 15:03:53 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.11 2015/02/20 16:16:06 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.10 2015/02/20 15:03:53 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.11 2015/02/20 16:16:06 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -254,6 +254,7 @@ static int	iwm_prepare_card_hw(struct iwm_softc *);
 static void	iwm_apm_config(struct iwm_softc *);
 static int	iwm_apm_init(struct iwm_softc *);
 static void	iwm_apm_stop(struct iwm_softc *);
+static int	iwm_allow_mcast(struct iwm_softc *);
 static int	iwm_start_hw(struct iwm_softc *);
 static void	iwm_stop_device(struct iwm_softc *);
 static void	iwm_set_pwr(struct iwm_softc *);
@@ -5154,6 +5155,10 @@ iwm_auth(struct iwm_softc *sc)
 	int error;
 
 	in->in_assoc = 0;
+
+	if ((error = iwm_allow_mcast(sc)) != 0)
+		return error;
+
 	if ((error = iwm_mvm_mac_ctxt_add(sc, in)) != 0) {
 		DPRINTF(("%s: failed to add MAC\n", DEVNAME(sc)));
 		return error;
@@ -5673,6 +5678,32 @@ iwm_init_hw(struct iwm_softc *sc)
 
  error:
 	iwm_stop_device(sc);
+	return error;
+}
+
+/* Allow multicast from our BSSID. */
+static int
+iwm_allow_mcast(struct iwm_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct iwm_mcast_filter_cmd *cmd;
+	size_t size;
+	int error;
+
+	size = roundup(sizeof(*cmd), 4);
+	cmd = kmem_intr_zalloc(size, KM_NOSLEEP);
+	if (cmd == NULL)
+		return ENOMEM;
+	cmd->filter_own = 1;
+	cmd->port_id = 0;
+	cmd->count = 0;
+	cmd->pass_all = 1;
+	IEEE80211_ADDR_COPY(cmd->bssid, ni->ni_bssid);
+
+	error = iwm_mvm_send_cmd_pdu(sc, IWM_MCAST_FILTER_CMD,
+	    IWM_CMD_SYNC, size, cmd);
+	kmem_intr_free(cmd, size);
 	return error;
 }
 
@@ -6258,6 +6289,9 @@ iwm_notif_intr(struct iwm_softc *sc)
 			}
 			wakeup(&sc->sc_auth_prot);
 			break; }
+
+		case IWM_MCAST_FILTER_CMD:
+			break;
 
 		default:
 			aprint_error_dev(sc->sc_dev,
