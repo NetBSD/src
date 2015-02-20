@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.316 2015/02/14 13:43:28 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.317 2015/02/20 17:10:17 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.316 2015/02/14 13:43:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.317 2015/02/20 17:10:17 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -111,11 +111,8 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.316 2015/02/14 13:43:28 maxv Exp $"
 
 MODULE(MODULE_CLASS_VFS, ffs, NULL);
 
-static int
-ffs_vfs_fsync(vnode_t *, int);
-
-static int
-ffs_superblock_validate(struct fs *fs);
+static int ffs_vfs_fsync(vnode_t *, int);
+static int ffs_superblock_validate(struct fs *);
 
 static struct sysctllog *ffs_sysctl_log;
 
@@ -1039,7 +1036,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			bp = NULL;
 		}
 		if (sblock_try[i] == -1) {
-			DPRINTF(("%s: sblock_try\n", __func__));
+			DPRINTF(("%s: no superblock found\n", __func__));
 			error = EINVAL;
 			fs = NULL;
 			goto out;
