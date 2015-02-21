@@ -501,13 +501,13 @@ iscsi_done(ccb_t *ccb)
 	}
 }
 
-#ifdef _MODULE
 /* Kernel Module support */
 
 #include <sys/module.h>
 
-MODULE(MODULE_CLASS_DRIVER, iscsi, NULL);
+MODULE(MODULE_CLASS_DRIVER, iscsi, NULL); /* Possibly a builtin module */
 
+#ifdef _MODULE
 static const struct cfiattrdata ibescsi_info = { "scsi", 1,
 	{{"channel", "-1", -1},}
 };
@@ -528,15 +528,19 @@ static struct cfdata iscsi_cfdata[] = {
 	},
 	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
+#endif
 
 static int
 iscsi_modcmd(modcmd_t cmd, void *arg)
 {
+#ifdef _MODULE
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
 	int error;
+#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
 		error = config_cfdriver_attach(&iscsi_cd);
 		if (error) {
 			return error;
@@ -577,10 +581,12 @@ iscsi_modcmd(modcmd_t cmd, void *arg)
 			config_cfdriver_detach(&iscsi_cd);
 			return ENXIO;
 		}
+#endif
 		return 0;
 		break;
 
 	case MODULE_CMD_FINI:
+#ifdef _MODULE
 		error = config_cfdata_detach(iscsi_cfdata);
 		if (error)
 			return error;
@@ -588,6 +594,7 @@ iscsi_modcmd(modcmd_t cmd, void *arg)
 		config_cfattach_detach(iscsi_cd.cd_name, &iscsi_ca);
 		config_cfdriver_detach(&iscsi_cd);
 		devsw_detach(NULL, &iscsi_cdevsw);
+#endif
 		return 0;
 		break;
 
@@ -600,4 +607,3 @@ iscsi_modcmd(modcmd_t cmd, void *arg)
 		break;
 	}
 }
-#endif /* _MODULE */
