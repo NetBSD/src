@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.52 2014/11/16 18:33:19 riastradh Exp $
+# $NetBSD: md.i386,v 1.53 2015/02/21 07:36:59 ozaki-r Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -284,8 +284,8 @@
 ./stand/i386-xen/@OSRELEASE@/modules/des/des.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/dk_subr				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/dk_subr/dk_subr.kmod		base-kernel-modules	kmod,compatmodules
-./stand/i386-xen/@OSRELEASE@/modules/dm					base-kernel-modules	kmod,compatmodules
-./stand/i386-xen/@OSRELEASE@/modules/dm/dm.kmod				base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/dm					base-kernel-modules	kmod,compatmodules,lvm
+./stand/i386-xen/@OSRELEASE@/modules/dm/dm.kmod				base-kernel-modules	kmod,compatmodules,lvm
 ./stand/i386-xen/@OSRELEASE@/modules/drm				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/drm/drm.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/drmkms				base-kernel-modules	kmod,compatmodules
@@ -496,8 +496,8 @@
 ./stand/i386-xen/@OSRELEASE@/modules/sljit/sljit.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/smbfs				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/smbfs/smbfs.kmod			base-kernel-modules	kmod,compatmodules
-./stand/i386-xen/@OSRELEASE@/modules/solaris				base-kernel-modules	kmod,compatmodules
-./stand/i386-xen/@OSRELEASE@/modules/solaris/solaris.kmod		base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/solaris				base-kernel-modules	kmod,compatmodules,solaris
+./stand/i386-xen/@OSRELEASE@/modules/solaris/solaris.kmod		base-kernel-modules	kmod,compatmodules,solaris
 ./stand/i386-xen/@OSRELEASE@/modules/spdmem				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/spdmem/spdmem.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/suser				base-kernel-modules	kmod,compatmodules
@@ -562,8 +562,8 @@
 ./stand/i386-xen/@OSRELEASE@/modules/xc3028/xc3028.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/xc5k				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/xc5k/xc5k.kmod			base-kernel-modules	kmod,compatmodules
-./stand/i386-xen/@OSRELEASE@/modules/zfs				base-kernel-modules	kmod,compatmodules
-./stand/i386-xen/@OSRELEASE@/modules/zfs/zfs.kmod			base-kernel-modules	kmod,compatmodules
+./stand/i386-xen/@OSRELEASE@/modules/zfs				base-kernel-modules	kmod,compatmodules,zfs
+./stand/i386-xen/@OSRELEASE@/modules/zfs/zfs.kmod			base-kernel-modules	kmod,compatmodules,zfs
 ./stand/i386-xen/@OSRELEASE@/modules/zl10353				base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/zl10353/zl10353.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386-xen/@OSRELEASE@/modules/zlib				base-kernel-modules	kmod,compatmodules
@@ -673,8 +673,8 @@
 ./stand/i386pae-xen/@OSRELEASE@/modules/des/des.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/dk_subr				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/dk_subr/dk_subr.kmod		base-kernel-modules	kmod,compatmodules
-./stand/i386pae-xen/@OSRELEASE@/modules/dm				base-kernel-modules	kmod,compatmodules
-./stand/i386pae-xen/@OSRELEASE@/modules/dm/dm.kmod			base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/dm				base-kernel-modules	kmod,compatmodules,lvm
+./stand/i386pae-xen/@OSRELEASE@/modules/dm/dm.kmod			base-kernel-modules	kmod,compatmodules,lvm
 ./stand/i386pae-xen/@OSRELEASE@/modules/drm				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/drm/drm.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/drmkms				base-kernel-modules	kmod,compatmodules
@@ -885,8 +885,8 @@
 ./stand/i386pae-xen/@OSRELEASE@/modules/sljit/sljit.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/smbfs				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/smbfs/smbfs.kmod		base-kernel-modules	kmod,compatmodules
-./stand/i386pae-xen/@OSRELEASE@/modules/solaris				base-kernel-modules	kmod,compatmodules
-./stand/i386pae-xen/@OSRELEASE@/modules/solaris/solaris.kmod		base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/solaris				base-kernel-modules	kmod,compatmodules,solaris
+./stand/i386pae-xen/@OSRELEASE@/modules/solaris/solaris.kmod		base-kernel-modules	kmod,compatmodules,solaris
 ./stand/i386pae-xen/@OSRELEASE@/modules/spdmem				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/spdmem/spdmem.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/suser				base-kernel-modules	kmod,compatmodules
@@ -951,8 +951,8 @@
 ./stand/i386pae-xen/@OSRELEASE@/modules/xc3028/xc3028.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/xc5k				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/xc5k/xc5k.kmod			base-kernel-modules	kmod,compatmodules
-./stand/i386pae-xen/@OSRELEASE@/modules/zfs				base-kernel-modules	kmod,compatmodules
-./stand/i386pae-xen/@OSRELEASE@/modules/zfs/zfs.kmod			base-kernel-modules	kmod,compatmodules
+./stand/i386pae-xen/@OSRELEASE@/modules/zfs				base-kernel-modules	kmod,compatmodules,zfs
+./stand/i386pae-xen/@OSRELEASE@/modules/zfs/zfs.kmod			base-kernel-modules	kmod,compatmodules,zfs
 ./stand/i386pae-xen/@OSRELEASE@/modules/zl10353				base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/zl10353/zl10353.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/i386pae-xen/@OSRELEASE@/modules/zlib				base-kernel-modules	kmod,compatmodules
