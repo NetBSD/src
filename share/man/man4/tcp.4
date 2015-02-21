@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp.4,v 1.29 2013/10/10 12:28:10 christos Exp $
+.\"	$NetBSD: tcp.4,v 1.29.4.1 2015/02/21 13:40:19 martin Exp $
 .\"	$FreeBSD: tcp.4,v 1.11.2.16 2004/02/16 22:21:47 bms Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -243,6 +243,23 @@ option value is inherited from the listening socket.
 This option takes an
 .Vt "unsigned int"
 value, with a value greater than 0.
+.It Dv TCP_INFO
+Information about a socket's underlying TCP session may be retreived
+by passing the read-only option
+.Dv TPC_INFO
+to 
+.Xr getsockopt 2 .
+It accepts a single argument: a pointer to an instance of
+.Vt "struct tcp_info" .
+.Pp
+This API is subject to change; consult the source to determine
+which fields are currently filled out by this option.
+.Nx
+specific additions include
+send window size,
+receive window size,
+and
+bandwidth-controlled window space.
 .\" range of 0 to N (where N is the
 .\" .Xr sysctl 8
 .\" variable
