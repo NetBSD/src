@@ -1,4 +1,4 @@
-/*	$NetBSD: llimits.h,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $	*/
+/*	$NetBSD: llimits.h,v 1.2.2.2 2015/02/21 18:16:21 martin Exp $	*/
 
 /*
 ** Id: llimits.h,v 1.125 2014/12/19 13:30:23 roberto Exp 
@@ -68,13 +68,19 @@ typedef unsigned char lu_byte;
 #if defined(LUAI_USER_ALIGNMENT_T)
 typedef LUAI_USER_ALIGNMENT_T L_Umaxalign;
 #else
+#ifndef _KERNEL
 typedef union { double u; void *s; lua_Integer i; long l; } L_Umaxalign;
+#else /* _KERNEL */
+typedef union { void *s; lua_Integer i; long l; } L_Umaxalign;
+#endif
 #endif
 
 
 
 /* types of 'usual argument conversions' for lua_Number and lua_Integer */
+#ifndef _KERNEL
 typedef LUAI_UACNUMBER l_uacNumber;
+#endif
 typedef LUAI_UACINT l_uacInt;
 
 

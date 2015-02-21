@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm.c,v 1.3.2.1 2015/02/04 21:32:46 martin Exp $	*/
+/*	$NetBSD: lvm.c,v 1.3.2.2 2015/02/21 18:16:21 martin Exp $	*/
 
 /*
 ** Id: lvm.c,v 2.232 2014/12/27 20:30:38 roberto Exp 
@@ -65,7 +65,6 @@ static int tofloat (const TValue *obj, lua_Number *n) {
   }
   return 1;
 }
-#endif
 
 
 /*
@@ -86,6 +85,7 @@ int luaV_tonumber_ (const TValue *obj, lua_Number *n) {
   else
     return 0;  /* conversion failed */
 }
+#endif
 
 
 /*
