@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.28 2014/08/10 06:23:13 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.28.2.1 2015/02/21 18:22:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ __swp(int __val, __cpu_simple_lock_t *__ptr)
 }
 #endif /* !_ARM_ARCH_6 */
 
-static inline void
+static __inline void
 __arm_membar_producer(void)
 {
 #ifdef _ARM_ARCH_7
@@ -149,7 +149,7 @@ __arm_membar_producer(void)
 #endif
 }
 
-static inline void
+static __inline void
 __arm_membar_consumer(void)
 {
 #ifdef _ARM_ARCH_7
