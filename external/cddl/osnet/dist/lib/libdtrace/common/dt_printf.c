@@ -295,7 +295,9 @@ pfprint_fp(dtrace_hdl_t *dtp, FILE *fp, const char *format,
     const dt_pfargd_t *pfd, const void *addr, size_t size, uint64_t normal)
 {
 	double n = (double)normal;
+#if !defined(__arm__) && !defined(__powerpc__) && !defined(__mips__)
 	long double ldn = (long double)normal;
+#endif
 
 	switch (size) {
 	case sizeof (float):
