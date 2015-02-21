@@ -1,4 +1,4 @@
-/*	$NetBSD: lstrlib.c,v 1.5.2.1 2015/02/04 21:32:46 martin Exp $	*/
+/*	$NetBSD: lstrlib.c,v 1.5.2.2 2015/02/21 18:16:21 martin Exp $	*/
 
 /*
 ** Id: lstrlib.c,v 1.221 2014/12/11 14:03:07 roberto Exp 
@@ -985,7 +985,11 @@ static const union {
 /* dummy structure to get native alignment requirements */
 struct cD {
   char c;
+#ifndef _KERNEL
   union { double d; void *p; lua_Integer i; lua_Number n; } u;
+#else /* _KERNEL */
+  union { void *p; lua_Integer i; lua_Number n; } u;
+#endif
 };
 
 #define MAXALIGN	(offsetof(struct cD, u))
@@ -1172,6 +1176,7 @@ static void packint (luaL_Buffer *b, lua_Unsigned n,
 }
 
 
+#ifndef _KERNEL
 /*
 ** Copy 'size' bytes from 'src' to 'dest', correcting endianness if
 ** given 'islittle' is different from native endianness.
@@ -1188,6 +1193,7 @@ static void copywithendian (volatile char *dest, volatile const char *src,
       *(dest--) = *(src++);
   }
 }
+#endif
 
 
 static int str_pack (lua_State *L) {

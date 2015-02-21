@@ -1,4 +1,4 @@
-/*	$NetBSD: luaconf.h,v 1.9.2.2 2015/02/04 21:32:46 martin Exp $	*/
+/*	$NetBSD: luaconf.h,v 1.9.2.3 2015/02/21 18:16:21 martin Exp $	*/
 
 /*
 ** Id: luaconf.h,v 1.238 2014/12/29 13:27:55 roberto Exp 
@@ -392,6 +392,7 @@
 ** ===================================================================
 */
 
+#ifndef _KERNEL
 /*
 @@ LUA_NUMBER is the floating-point type used by Lua.
 **
@@ -478,7 +479,6 @@
 ** They should work for any size of floating numbers.
 */
 
-#ifndef _KERNEL
 /* the following operations need the math library */
 #if defined(lobject_c) || defined(lvm_c)
 #include <math.h>
@@ -771,16 +771,8 @@
 
 #else /* _KERNEL */
 
-#undef LUA_NUMBER
-#undef LUA_NUMBER_FMT
-#undef lua_str2number
-
 #define LUA_NUMBER		LUA_INTEGER
 #define LUA_NUMBER_FMT		LUA_INTEGER_FMT
-#define lua_str2number(s,p)	strtoimax((s),(p),10)
-
-#undef lua_numbertointeger
-#define lua_numbertointeger(n,p)	(*(p) = (LUA_INTEGER)(n), 1)
 
 /* setjmp.h */
 #define LUAI_THROW(L,c)		longjmp(&((c)->b))
@@ -793,7 +785,7 @@
 
 /* stdio.h */
 #define lua_writestring(s,l)	printf("%s", (s))
-#define lua_writeline()	printf("\n")
+#define lua_writeline()		printf("\n")
 
 #define sprintf(s,fmt,...)	snprintf(s, sizeof(s), fmt, __VA_ARGS__)
 
