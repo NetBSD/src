@@ -1039,10 +1039,12 @@ dt_node_is_ptrcompat(const dt_node_t *lp, const dt_node_t *rp,
 	 * then resolve the referenced type as well (assuming the base type
 	 * is CTF_K_POINTER or CTF_K_ARRAY).  Otherwise [lr]ref = CTF_ERR.
 	 */
-	if (!lp_is_int) {
-		lbase = ctf_type_resolve(lfp, lp->dn_type);
-		lkind = ctf_type_kind(lfp, lbase);
+	lbase = ctf_type_resolve(lfp, lp->dn_type);
+	lkind = ctf_type_kind(lfp, lbase);
+	rbase = ctf_type_resolve(rfp, rp->dn_type);
+	rkind = ctf_type_kind(rfp, rbase);
 
+	if (!lp_is_int) {
 		if (lkind == CTF_K_POINTER) {
 			lref = ctf_type_resolve(lfp,
 			    ctf_type_reference(lfp, lbase));
@@ -1053,9 +1055,6 @@ dt_node_is_ptrcompat(const dt_node_t *lp, const dt_node_t *rp,
 	}
 
 	if (!rp_is_int) {
-		rbase = ctf_type_resolve(rfp, rp->dn_type);
-		rkind = ctf_type_kind(rfp, rbase);
-
 		if (rkind == CTF_K_POINTER) {
 			rref = ctf_type_resolve(rfp,
 			    ctf_type_reference(rfp, rbase));
