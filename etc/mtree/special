@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.150 2014/12/30 03:52:03 uebayasi Exp $
+#	$NetBSD: special,v 1.151 2015/02/21 23:13:00 joerg Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -221,6 +221,7 @@
 ./etc/rc.d/ipsec		type=file mode=0555
 ./etc/rc.d/irdaattach		type=file mode=0555
 ./etc/rc.d/iscsi_target		type=file mode=0555
+./etc/rc.d/iscsid		type=file mode=0555
 ./etc/rc.d/isdnd		type=file mode=0555
 ./etc/rc.d/isibootd		type=file mode=0555
 ./etc/rc.d/kdc			type=file mode=0555
