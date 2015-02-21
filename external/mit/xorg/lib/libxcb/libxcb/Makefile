@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.22.1 2014/10/06 13:09:41 martin Exp $
+#	$NetBSD: Makefile,v 1.5.22.2 2015/02/21 19:30:41 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -60,6 +60,7 @@ INCS=	\
 	xfixes.h \
 	xinerama.h \
 	xinput.h \
+	xkb.h \
 	xproto.h \
 	xselinux.h \
 	xtest.h \
