@@ -75,8 +75,6 @@ dt_pid_create_return_probe(struct ps_prochandle *P, dtrace_hdl_t *dtp,
 {
 
 	uint32_t *text;
-	int i;
-	int srdepth = 0;
 
 	dt_dprintf("%s: unimplemented\n", __func__);
 	return (DT_PROC_ERR);

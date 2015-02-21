@@ -2187,6 +2187,8 @@ again:
 				case DTRACEACT_FREOPEN:
 					func = dtrace_freopen;
 					break;
+				default: /* XXX gcc 4.8 */
+					assert(0);
 				}
 
 				n = (*func)(dtp, fp, fmtdata, &data,
