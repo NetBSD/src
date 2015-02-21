@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_defs.h,v 1.1 2009/08/07 20:57:57 haad Exp $	*/
+/*	$NetBSD: isa_defs.h,v 1.2 2015/02/21 15:00:30 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,3 +30,22 @@
  */
 
 #include <sys/types.h>
+
+#if defined(__i386__)
+#if !defined(_ILP32)
+#define _ILP32
+#endif
+
+#elif defined(__amd64__)
+#if !defined(_LP64)
+#define _LP64
+#endif
+
+#elif defined(__arm__)
+#if !defined(_ILP32)
+#define _ILP32
+#endif
+
+#else
+#error "architecture not supported"
+#endif
