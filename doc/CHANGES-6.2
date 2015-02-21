@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.196 2015/02/16 08:33:39 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.197 2015/02/21 13:12:01 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -9609,4 +9609,16 @@ sys/dev/pci/if_bge.c				1.278
 	  - Fix a bug that BGE_PHY_TEST_CTRL_REG isn't set correctly on some
 	    PCIe devices.
 	[msaitoh, ticket #1256]
+
+lib/libc/regex/regcomp.c			(patch)
+
+	Fix a multiplication overflow in allocation, which has been fixed
+	differently in rev. 1.34 in -current.
+	[joerg, ticket #1257]
+
+sys/netinet/icmp_var.h				1.30
+sys/netinet/ip_icmp.h				1.34
+
+	Fix ICMP_STATINC() buffer overflows.
+	[christos, ticket #1258]
 
