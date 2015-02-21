@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.33 2011/12/24 20:18:54 christos Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.33.2.1 2015/02/21 13:01:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -189,6 +189,7 @@ struct icmp {
 #define		ICMP_PHOTURIS_NEED_AUTHZ	5	/* no authorization */
 
 #define ICMP_MAXTYPE		40
+#define ICMP_NTYPES		(ICMP_MAXTYPE + 1)
 
 #ifdef ICMP_STRINGS
 static const char *icmp_type[] = {
