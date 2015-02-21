@@ -48,6 +48,7 @@
 #include <limits.h>
 #include <paths.h>
 
+#include <sys/isa_defs.h>
 #include <dt_impl.h>
 
 static const struct {
