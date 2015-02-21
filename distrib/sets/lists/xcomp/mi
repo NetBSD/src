@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.152.2.3 2015/02/11 09:43:58 martin Exp $
+#	 $NetBSD: mi,v 1.152.2.4 2015/02/21 19:30:41 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5852,6 +5852,7 @@
 ./usr/X11R7/include/xcb/xfixes.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/xinerama.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/xinput.h			-unknown-	xorg
+./usr/X11R7/include/xcb/xkb.h				-unknown-	xorg
 ./usr/X11R7/include/xcb/xproto.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/xselinux.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/xtest.h				-unknown-	xorg
