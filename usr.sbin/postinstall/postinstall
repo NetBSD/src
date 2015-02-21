@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.188 2014/12/30 07:02:29 apb Exp $
+# $NetBSD: postinstall,v 1.189 2015/02/21 23:13:00 joerg Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1354,6 +1354,7 @@ ipnat
 ipsec
 irdaattach
 iscsi_target
+iscsid
 isdnd
 isibootd
 kdc
