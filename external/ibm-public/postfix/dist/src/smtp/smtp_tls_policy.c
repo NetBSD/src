@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_tls_policy.c,v 1.1.1.1 2014/07/06 19:27:56 tron Exp $	*/
+/*	$NetBSD: smtp_tls_policy.c,v 1.1.1.2 2015/02/21 11:56:56 tron Exp $	*/
 
 /*++
 /* NAME
@@ -518,9 +518,11 @@ static void *policy_create(const char *unused_key, void *context)
     switch (site_level) {
     default:
 	tls->level = site_level;
+	/* FALLTHROUGH */
     case TLS_LEV_NOTFOUND:
 	break;
     case TLS_LEV_INVALID:
+	tls->level = site_level;
 	return ((void *) tls);
     }
 
