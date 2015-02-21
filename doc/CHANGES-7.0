@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.208 2015/02/18 06:41:11 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.209 2015/02/21 19:41:21 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -15934,4 +15934,98 @@ sys/kern/vfs_syscalls.c				1.493
 	in userland needs to always return 0 and store the error code
 	*retval.
 	[martin, ticket #523]
+
+share/man/man4/tcp.4				1.30
+sys/netinet/tcp.h				1.31
+sys/netinet/tcp_input.c				1.336
+sys/netinet/tcp_output.c			1.180
+sys/netinet/tcp_subr.c				1.258
+sys/netinet/tcp_usrreq.c			1.203
+sys/netinet/tcp_var.h				1.176-1.177
+sys/sys/param.h					(bump revision)
+
+	Port over the TCP_INFO socket option from FreeBSD, originally from
+	the Linux 2.6 TCP API.  This permits the caller to query certain
+	information about a TCP connection.
+	[he, ticket #530]
+
+usr.bin/progress/progress.c			1.21
+
+	Retry read() on EINTR.  Fixes premature exit of
+	</dev/random progress -e cat >/dev/null
+	[gson, ticket #532]
+
+external/gpl3/binutils/dist/ld/emultempl/aarch64elf.em 1.2
+external/gpl3/binutils/dist/ld/emultempl/armelf.em 1.2
+
+	Apply elf32.em r1.8 to the corresponding sections of armelf.em and
+	aarch64elf.em:
+	  Recursively add DT_NEEDED entries from shared libraries if symbols
+	  are used indirectly. This is more in line with the old GNU ld
+	  behavior, but not exactly the desired semantic.
+	[joerg, ticket #533]
+
+external/mit/lua/dist/src/lapi.c		1.4
+external/mit/lua/dist/src/ldebug.c		1.4
+external/mit/lua/dist/src/llex.c		1.4
+external/mit/lua/dist/src/llimits.h		1.4
+external/mit/lua/dist/src/lstrlib.c		1.7
+external/mit/lua/dist/src/lua.h			1.4
+external/mit/lua/dist/src/luaconf.h		1.13
+external/mit/lua/dist/src/lvm.c			1.5
+
+	lua(4): small fixes in kernel Lua
+	* fixed hex parsing
+	* restored lua_isnumber
+	* removed unwanted macros from luaconf.h
+	* restored <stdarg.h> include in ldebug.c
+	* removed doubles from unions
+	* removed unused functions
+	[lneto, ticket #534]
+
+sys/arch/powerpc/booke/e500_tlb.c		1.17
+
+	fix compile failure without DIAGNOSTIC.
+	[nonaka, ticket #535]
+
+sys/arch/arm/include/lock.h			1.30
+
+	Don't use plain inline in that might end up compiled with -ansi.
+	[joerg, ticket #536]
+
+sys/netinet/icmp_var.h				1.30
+sys/netinet/ip_icmp.h				1.34
+
+	Fix ICMP_STATINC() buffer overflows.
+	[christos, ticket #537]
+
+sys/dev/usb/uftdi.c				1.60
+sys/dev/usb/usbdevs				1.690
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	Support BUFFALO PC-OP-RS1
+	[nonaka, ticket #538]
+
+sys/arch/sparc64/dev/lom.c			1.14
+
+	Fix queue handling to make the watchdog timer actually works on
+	netbsd-7 if it is configured by wdogctl=YES in rc.conf, and also
+	avoid a hangup duaring shutdown.
+	- don't put an entry which is already in the queue.
+	- read a first entry properly to handle the queue.
+	- check the lom status if input buffer is empty before writing.
+	[nakayama, ticket #539]
+
+sys/dev/ic/i82596.c				1.32
+
+	Fix multicast handling,
+	[skrll, ticket #540]
+
+distrib/sets/lists/xcomp/mi			1.158
+external/mit/xorg/lib/libxcb/libxcb/Makefile	1.7
+
+	install xcb/xkb.h
+	[jmcneill, ticket #541]
+
 
