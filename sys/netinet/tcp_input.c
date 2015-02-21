@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.334 2014/08/08 03:05:45 rtr Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.334.2.1 2015/02/21 13:40:19 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.334 2014/08/08 03:05:45 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.334.2.1 2015/02/21 13:40:19 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -738,6 +738,7 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int *tlen)
 	/*
 	 * Update the counters.
 	 */
+	tp->t_rcvoopack++;
 	tcps = TCP_STAT_GETREF();
 	tcps[TCP_STAT_RCVOOPACK]++;
 	tcps[TCP_STAT_RCVOOBYTE] += rcvoobyte;
