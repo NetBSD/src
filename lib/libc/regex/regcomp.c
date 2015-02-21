@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.32 2011/11/08 19:25:45 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.32.2.1 2015/02/21 12:54:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.32 2011/11/08 19:25:45 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.32.2.1 2015/02/21 12:54:43 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -261,12 +261,15 @@ regcomp(
 	} else
 		len = strlen(pattern);
 
+	p->ssize = len/(size_t)2*(size_t)3 + (size_t)1;	/* ugh */
+	if (p->ssize > SIZE_MAX / sizeof(sop))
+		return(REG_ESPACE);
+
 	/* do the mallocs early so failure handling is easy */
 	g = (struct re_guts *)malloc(sizeof(struct re_guts) +
 							(NC-1)*sizeof(cat_t));
 	if (g == NULL)
 		return(REG_ESPACE);
-	p->ssize = len/(size_t)2*(size_t)3 + (size_t)1;	/* ugh */
 	p->strip = malloc(p->ssize * sizeof(sop));
 	p->slen = 0;
 	if (p->strip == NULL) {
@@ -1243,7 +1246,7 @@ allocset(
 		nc = p->ncsalloc;
 		assert(nc % CHAR_BIT == 0);
 		nbytes = nc / CHAR_BIT * css;
-		if (MEMSIZE(p) > MEMLIMIT)
+		if (MEMSIZE(p) > MEMLIMIT || nc > SIZE_MAX / sizeof(cset))
 			goto oomem;
 		if (p->g->sets == NULL)
 			p->g->sets = malloc(nc * sizeof(cset));
@@ -1773,7 +1776,7 @@ enlarge(
 
 	osize = p->ssize;
 	p->ssize = size;
-	if (MEMSIZE(p) > MEMLIMIT)
+	if (MEMSIZE(p) > MEMLIMIT || p->ssize > SIZE_MAX / sizeof(sop))
 		goto oomem;
 	sp = realloc(p->strip, p->ssize * sizeof(sop));
 	if (sp == NULL) {
@@ -1800,6 +1803,11 @@ stripsnug(
 	_DIAGASSERT(g != NULL);
 
 	g->nstates = p->slen;
+	if (p->slen > SIZE_MAX / sizeof(sop)) {
+		SETERROR(REG_ESPACE);
+		g->strip = p->strip;
+		return;
+	}
 	g->strip = realloc(p->strip, p->slen * sizeof(sop));
 	if (g->strip == NULL) {
 		SETERROR(REG_ESPACE);
