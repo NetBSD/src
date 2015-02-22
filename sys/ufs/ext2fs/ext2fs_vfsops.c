@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.188 2015/02/20 17:44:54 maxv Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.189 2015/02/22 14:55:23 maxv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.188 2015/02/20 17:44:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.189 2015/02/22 14:55:23 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -104,8 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.188 2015/02/20 17:44:54 maxv Exp
 MODULE(MODULE_CLASS_VFS, ext2fs, "ffs");
 
 int ext2fs_sbupdate(struct ufsmount *, int);
-static void ext2fs_sbcompute(struct m_ext2fs *);
-static int ext2fs_sbcheck(struct ext2fs *, int);
+static int ext2fs_sbfill(struct m_ext2fs *, int);
 
 static struct sysctllog *ext2fs_sysctl_log;
 
@@ -549,10 +548,9 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 
 	brelse(bp, 0);
 
-	error = ext2fs_sbcheck(&fs->e2fs, (mp->mnt_flag & MNT_RDONLY) != 0);
+	error = ext2fs_sbfill(fs, (mp->mnt_flag & MNT_RDONLY) != 0);
 	if (error)
 		return error;
-	ext2fs_sbcompute(fs);
 
 	/*
 	 * Step 3: re-read summary information from disk.
@@ -649,8 +647,8 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	brelse(bp, 0);
 	bp = NULL;
 
-	/* Once swapped, validate the superblock. */
-	error = ext2fs_sbcheck(&m_fs->e2fs, ronly);
+	/* Once swapped, validate and fill in the superblock. */
+	error = ext2fs_sbfill(m_fs, ronly);
 	if (error) {
 		kmem_free(m_fs, sizeof(struct m_ext2fs));
 		goto out;
@@ -670,9 +668,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 		m_fs->e2fs_fmod = 1;
 	}
 
-	/* Compute dynamic sb infos */
-	ext2fs_sbcompute(m_fs);
-
+	/* XXX: should be added in ext2fs_sbfill()? */
 	m_fs->e2fs_gd = kmem_alloc(m_fs->e2fs_ngdb * m_fs->e2fs_bsize, KM_SLEEP);
 	for (i = 0; i < m_fs->e2fs_ngdb; i++) {
 		error = bread(devvp,
@@ -1118,30 +1114,19 @@ ext2fs_cgupdate(struct ufsmount *mp, int waitfor)
 	return (allerror);
 }
 
-static void
-ext2fs_sbcompute(struct m_ext2fs *fs)
-{
-	fs->e2fs_ncg = howmany(fs->e2fs.e2fs_bcount - fs->e2fs.e2fs_first_dblock,
-	    fs->e2fs.e2fs_bpg);
-	fs->e2fs_fsbtodb = fs->e2fs.e2fs_log_bsize + LOG_MINBSIZE - DEV_BSHIFT;
-	fs->e2fs_bsize = MINBSIZE << fs->e2fs.e2fs_log_bsize;
-	fs->e2fs_bshift = LOG_MINBSIZE + fs->e2fs.e2fs_log_bsize;
-	fs->e2fs_qbmask = fs->e2fs_bsize - 1;
-	fs->e2fs_bmask = ~fs->e2fs_qbmask;
-	fs->e2fs_ngdb =
-	    howmany(fs->e2fs_ncg, fs->e2fs_bsize / sizeof(struct ext2_gd));
-	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE(fs);
-	fs->e2fs_itpg = fs->e2fs.e2fs_ipg / fs->e2fs_ipb;
-}
-
 /*
+ * Fill in the m_fs structure, and validate the fields of the superblock.
  * NOTE: here, the superblock is already swapped.
  */
 static int
-ext2fs_sbcheck(struct ext2fs *fs, int ronly)
+ext2fs_sbfill(struct m_ext2fs *m_fs, int ronly)
 {
 	uint32_t u32;
+	struct ext2fs *fs = &m_fs->e2fs;
 
+	/*
+	 * General sanity checks
+	 */
 	if (fs->e2fs_magic != E2FS_MAGIC)
 		return EINVAL;
 	if (fs->e2fs_rev > E2FS_REV1) {
@@ -1157,7 +1142,24 @@ ext2fs_sbcheck(struct ext2fs *fs, int ronly)
 		printf("ext2fs: zero blocks per group\n");
 		return EINVAL;
 	}
+	if (fs->e2fs_ipg == 0) {
+		printf("ext2fs: zero inodes per group\n");
+		return EINVAL;
+	}
 
+	if (fs->e2fs_first_dblock >= fs->e2fs_bcount) {
+		printf("ext2fs: invalid first data block\n");
+		return EINVAL;
+	}
+	if (fs->e2fs_rbcount > fs->e2fs_bcount ||
+	    fs->e2fs_fbcount > fs->e2fs_bcount) {
+		printf("ext2fs: invalid block count\n");
+		return EINVAL;
+	}
+
+	/*
+	 * Revision-specific checks
+	 */
 	if (fs->e2fs_rev > E2FS_REV0) {
 		char buf[256];
 		if (fs->e2fs_first_ino != EXT2_FIRSTINO) {
@@ -1177,10 +1179,47 @@ ext2fs_sbcheck(struct ext2fs *fs, int ronly)
 			    buf);
 			return EROFS;
 		}
-		if (fs->e2fs_inode_size == 0) {
+		if (fs->e2fs_inode_size == 0 || !powerof2(fs->e2fs_inode_size)) {
 			printf("ext2fs: bad inode size\n");
 			return EINVAL;
 		}
 	}
+
+	/*
+	 * Compute the fields of the superblock
+	 */
+	u32 = fs->e2fs_bcount - fs->e2fs_first_dblock; /* > 0 */
+	if (u32 < fs->e2fs_bpg) {
+		printf("ext2fs: invalid number of cylinder groups\n");
+		return EINVAL;
+	}
+	m_fs->e2fs_ncg = howmany(u32, fs->e2fs_bpg);
+
+	m_fs->e2fs_fsbtodb = fs->e2fs_log_bsize + LOG_MINBSIZE - DEV_BSHIFT;
+	m_fs->e2fs_bsize = MINBSIZE << fs->e2fs_log_bsize;
+	m_fs->e2fs_bshift = LOG_MINBSIZE + fs->e2fs_log_bsize;
+	m_fs->e2fs_qbmask = m_fs->e2fs_bsize - 1;
+	m_fs->e2fs_bmask = ~m_fs->e2fs_qbmask;
+
+	if (m_fs->e2fs_bsize < sizeof(struct ext2_gd)) {
+		/* Unlikely to happen */
+		printf("ext2fs: invalid block size\n");
+		return EINVAL;
+	}
+	m_fs->e2fs_ngdb =
+	    howmany(m_fs->e2fs_ncg, m_fs->e2fs_bsize / sizeof(struct ext2_gd));
+	if (m_fs->e2fs_ngdb == 0) {
+		printf("ext2fs: invalid number of group descriptor blocks\n");
+		return EINVAL;
+	}
+
+	if (m_fs->e2fs_bsize < EXT2_DINODE_SIZE(m_fs)) {
+		printf("ext2fs: invalid inode size\n");
+		return EINVAL;
+	}
+	m_fs->e2fs_ipb = m_fs->e2fs_bsize / EXT2_DINODE_SIZE(m_fs);
+
+	m_fs->e2fs_itpg = fs->e2fs_ipg / m_fs->e2fs_ipb;
+
 	return 0;
 }
