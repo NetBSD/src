@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.30 2015/02/01 08:45:04 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.31 2015/02/22 08:59:17 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.30 2015/02/01 08:45:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.31 2015/02/22 08:59:17 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1014,7 +1014,9 @@ ehci_idone(struct ehci_xfer *ex)
 	if (ex->ex_isdone) {
 		printf("ehci_idone: ex=%p is done!\n", ex);
 #ifdef EHCI_DEBUG
+		USBHIST_LOGN(ehcidebug, 5, "--- dump start ---", 0, 0, 0, 0);
 		ehci_dump_exfer(ex);
+		USBHIST_LOGN(ehcidebug, 5, "--- dump end ---", 0, 0, 0, 0);
 #endif
 		return;
 	}
@@ -1029,7 +1031,9 @@ ehci_idone(struct ehci_xfer *ex)
 
 	USBHIST_LOG(ehcidebug, "xfer=%p, pipe=%p ready", xfer, epipe, 0, 0);
 #ifdef EHCI_DEBUG
+	USBHIST_LOGN(ehcidebug, 5, "--- dump start ---", 0, 0, 0, 0);
 	ehci_dump_sqtds(ex->ex_sqtdstart);
+	USBHIST_LOGN(ehcidebug, 5, "--- dump end ---", 0, 0, 0, 0);
 #endif
 
 	/* The transfer is done, compute actual length and status. */
@@ -1195,8 +1199,10 @@ ehci_idone(struct ehci_xfer *ex)
 		    status & EHCI_QTD_SPLITXSTATE ? 1 : 0,
 		    status & EHCI_QTD_PINGSTATE ? 1 : 0);
 
+		USBHIST_LOGN(ehcidebug, 5, "--- dump start ---", 0, 0, 0, 0);
 		ehci_dump_sqh(epipe->sqh);
 		ehci_dump_sqtds(ex->ex_sqtdstart);
+		USBHIST_LOGN(ehcidebug, 5, "--- dump end ---", 0, 0, 0, 0);
 #endif
 		/* low&full speed has an extra error flag */
 		if (EHCI_QH_GET_EPS(epipe->sqh->qh.qh_endp) !=
@@ -2044,7 +2050,9 @@ ehci_add_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
 	    sizeof(head->qh.qh_link), BUS_DMASYNC_PREWRITE);
 
 #ifdef EHCI_DEBUG
+	USBHIST_LOGN(ehcidebug, 5, "--- dump start ---", 0, 0, 0, 0);
 	ehci_dump_sqh(sqh);
+	USBHIST_LOGN(ehcidebug, 5, "--- dump end ---", 0, 0, 0, 0);
 #endif
 }
 
@@ -2539,8 +2547,13 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		break;
 	default:
 		/* default from usbroothub */
+		USBHIST_LOG(ehcidebug, "returning %d (usbroothub default)",
+		    buflen, 0, 0, 0);
+
 		return buflen;
 	}
+
+	USBHIST_LOG(ehcidebug, "returning %d", totlen, 0, 0, 0);
 
 	return totlen;
 }
@@ -3719,9 +3732,10 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 	}
 
 #ifdef EHCI_DEBUG
-	USBHIST_LOGN(ehcidebug, 5, "data(1):", 0, 0, 0, 0);
+	USBHIST_LOGN(ehcidebug, 5, "--- dump start ---", 0, 0, 0, 0);
 	ehci_dump_sqh(sqh);
 	ehci_dump_sqtds(data);
+	USBHIST_LOGN(ehcidebug, 5, "--- dump end ---", 0, 0, 0, 0);
 #endif
 
 	/* Set up interrupt info. */
@@ -3906,9 +3920,10 @@ ehci_device_intr_start(usbd_xfer_handle xfer)
 	}
 
 #ifdef EHCI_DEBUG
-	USBHIST_LOGN(ehcidebug, 5, "data(1)", 0, 0, 0, 0);
+	USBHIST_LOGN(ehcidebug, 5, "--- dump start ---", 0, 0, 0, 0);
 	ehci_dump_sqh(sqh);
 	ehci_dump_sqtds(data);
+	USBHIST_LOGN(ehcidebug, 5, "--- dump end ---", 0, 0, 0, 0);
 #endif
 
 	/* Set up interrupt info. */
@@ -4127,7 +4142,7 @@ ehci_device_fs_isoc_start(usbd_xfer_handle xfer)
 	i = epipe->pipe.up_endpoint->ue_edesc->bInterval;
 	if (i > 16 || i == 0) {
 		/* Spec page 271 says intervals > 16 are invalid */
-		USBHIST_LOG(ehcidebug, "bInterval %d invalid", i, 0, 0, 0);
+		USBHIST_LOG(ehcidebug, "bInterval %d invalid", 0, 0, 0, 0);
 
 		return USBD_INVAL;
 	}
