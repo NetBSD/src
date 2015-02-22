@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.11 2015/02/22 00:46:58 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.12 2015/02/22 02:16:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.11 2015/02/22 00:46:58 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.12 2015/02/22 02:16:19 christos Exp $");
 #endif /* not lint && not SCCSID */
 #include "el.h"
 #include <stdlib.h>
@@ -47,32 +47,44 @@ __RCSID("$NetBSD: chartype.c,v 1.11 2015/02/22 00:46:58 christos Exp $");
 
 #ifdef WIDECHAR
 protected int
-ct_conv_buff_resize(ct_buffer_t *conv, size_t mincsize, size_t minwsize)
+ct_conv_cbuff_resize(ct_buffer_t *conv, size_t csize)
 {
 	void *p;
-	if (mincsize > conv->csize) {
-		conv->csize = mincsize;
-		p = el_realloc(conv->cbuff, conv->csize * sizeof(*conv->cbuff));
-		if (p == NULL) {
-			conv->csize = 0;
-			el_free(conv->cbuff);
-			conv->cbuff = NULL;
-			return -1;
-		} else 
-			conv->cbuff = p;
-	}
 
-	if (minwsize > conv->wsize) {
-		conv->wsize = minwsize;
-		p = el_realloc(conv->wbuff, conv->wsize * sizeof(*conv->wbuff));
-		if (p == NULL) {
-			conv->wsize = 0;
-			el_free(conv->wbuff);
-			conv->wbuff = NULL;
-			return -1;
-		} else
-			conv->wbuff = p;
+	if (csize <= conv->csize)
+		return 0;
+
+	conv->csize = csize;
+
+	p = el_realloc(conv->cbuff, conv->csize * sizeof(*conv->cbuff));
+	if (p == NULL) {
+		conv->csize = 0;
+		el_free(conv->cbuff);
+		conv->cbuff = NULL;
+		return -1;
 	}
+	conv->cbuff = p;
+	return 0;
+}
+
+protected int
+ct_conv_wbuff_resize(ct_buffer_t *conv, size_t wsize)
+{
+	void *p;
+
+	if (wsize <= conv->wsize) 
+		return 0;
+
+	conv->wsize = wsize;
+
+	p = el_realloc(conv->wbuff, conv->wsize * sizeof(*conv->wbuff));
+	if (p == NULL) {
+		conv->wsize = 0;
+		el_free(conv->wbuff);
+		conv->wbuff = NULL;
+		return -1;
+	}
+	conv->wbuff = p;
 	return 0;
 }
 
@@ -90,8 +102,8 @@ ct_encode_string(const Char *s, ct_buffer_t *conv)
 	for (;;) {
 		used = (ssize_t)(dst - conv->cbuff);
 		if ((conv->csize - (size_t)used) < 5) {
-			if (ct_conv_buff_resize(conv, conv->csize + CT_BUFSIZ,
-			    (size_t)0) == -1)
+			if (ct_conv_cbuff_resize(conv,
+			    conv->csize + CT_BUFSIZ) == -1)
 				return NULL;
 			dst = conv->cbuff + used;
 		}
@@ -119,8 +131,8 @@ ct_decode_string(const char *s, ct_buffer_t *conv)
 	if (len == (size_t)-1)
 		return NULL;
 
-	if (conv->csize < ++len)
-		if (ct_conv_buff_resize(conv, (size_t)0, len + CT_BUFSIZ) == -1)
+	if (conv->wsize < ++len)
+		if (ct_conv_wbuff_resize(conv, len + CT_BUFSIZ) == -1)
 			return NULL;
 
 	ct_mbstowcs(conv->wbuff, s, conv->wsize);
@@ -141,9 +153,8 @@ ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 	 * the argv strings. */
 	for (i = 0, bufspace = 0; i < argc; ++i)
 		bufspace += argv[i] ? strlen(argv[i]) + 1 : 0;
-	if (conv->csize < ++bufspace)
-		if (ct_conv_buff_resize(conv, (size_t)0, bufspace + CT_BUFSIZ)
-		    == -1)
+	if (conv->wsize < ++bufspace)
+		if (ct_conv_wbuff_resize(conv, bufspace + CT_BUFSIZ) == -1)
 			return NULL;
 
 	wargv = el_malloc((size_t)argc * sizeof(*wargv));
