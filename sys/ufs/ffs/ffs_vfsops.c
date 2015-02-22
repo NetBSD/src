@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.317 2015/02/20 17:10:17 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.318 2015/02/22 14:22:34 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.317 2015/02/20 17:10:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.318 2015/02/22 14:22:34 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -922,7 +922,7 @@ static const int sblock_try[] = SBLOCKSEARCH;
 static int
 ffs_superblock_validate(struct fs *fs)
 {
-	int32_t i, fs_bshift = 0, fs_fshift = 0, fs_frag;
+	int32_t i, fs_bshift = 0, fs_fshift = 0, fs_fragshift = 0, fs_frag;
 
 	/* Check the superblock size */
 	if (fs->fs_sbsize > SBLOCKSIZE || fs->fs_sbsize < sizeof(struct fs))
@@ -936,6 +936,8 @@ ffs_superblock_validate(struct fs *fs)
 
 	/* Check the size of frag blocks */
 	if (!powerof2(fs->fs_fsize))
+		return 0;
+	if (fs->fs_fsize == 0)
 		return 0;
 
 	if (fs->fs_size == 0)
@@ -959,7 +961,21 @@ ffs_superblock_validate(struct fs *fs)
 	if (fs->fs_fshift != fs_fshift)
 		return 0;
 
-	/* Now that the shifts are sanitized, we can use the ffs_ API */
+	/* Compute fs_fragshift and ensure it is consistent */
+	for (i = fs->fs_frag; i > 1; i >>= 1)
+		fs_fragshift++;
+	if (fs->fs_fragshift != fs_fragshift)
+		return 0;
+
+	/* Check the masks */
+	if (fs->fs_bmask != ~(fs->fs_bsize - 1))
+		return 0;
+	if (fs->fs_fmask != ~(fs->fs_fsize - 1))
+		return 0;
+
+	/*
+	 * Now that the shifts and masks are sanitized, we can use the ffs_ API.
+	 */
 
 	/* Check the number of frag blocks */
 	if ((fs_frag = ffs_numfrags(fs, fs->fs_bsize)) > MAXFRAG)
@@ -1205,7 +1221,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		brelse(bp, 0);
 	bp = NULL;
 
-	/* First check to see if this is tagged as an Apple UFS filesystem
+	/*
+	 * First check to see if this is tagged as an Apple UFS filesystem
 	 * in the disklabel
 	 */
 	if (getdiskinfo(devvp, &dkw) == 0 &&
@@ -1213,7 +1230,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		ump->um_flags |= UFS_ISAPPLEUFS;
 #ifdef APPLE_UFS
 	else {
-		/* Manually look for an apple ufs label, and if a valid one
+		/*
+		 * Manually look for an apple ufs label, and if a valid one
 		 * is found, then treat it like an Apple UFS filesystem anyway
 		 */
 		error = bread(devvp,
@@ -1346,12 +1364,14 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs->fs_contigdirs = space;
 	space = (char *)space + bsize;
 	memset(fs->fs_contigdirs, 0, bsize);
-		/* Compatibility for old filesystems - XXX */
+
+	/* Compatibility for old filesystems - XXX */
 	if (fs->fs_avgfilesize <= 0)
 		fs->fs_avgfilesize = AVFILESIZ;
 	if (fs->fs_avgfpdir <= 0)
 		fs->fs_avgfpdir = AFPDIR;
 	fs->fs_active = NULL;
+
 	mp->mnt_data = ump;
 	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_FFS);
