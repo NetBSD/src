@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.12 2015/02/22 00:46:58 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.13 2015/02/22 02:16:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -189,7 +189,8 @@ public Char *ct_decode_string(const char *, ct_buffer_t *);
 protected Char **ct_decode_argv(int, const char *[],  ct_buffer_t *);
 
 /* Resizes the conversion buffer(s) if needed. */
-protected int ct_conv_buff_resize(ct_buffer_t *, size_t, size_t);
+protected int ct_conv_cbuff_resize(ct_buffer_t *, size_t);
+protected int ct_conv_wbuff_resize(ct_buffer_t *, size_t);
 protected ssize_t ct_encode_char(char *, size_t, Char);
 protected size_t ct_enc_width(Char);
 
@@ -199,7 +200,8 @@ protected size_t ct_enc_width(Char);
 #define	ct_encode_string(s, b)	(s)
 #define ct_decode_string(s, b)	(s)
 #define ct_decode_argv(l, s, b)	(s)
-#define ct_conv_buff_resize(b, os, ns)
+#define ct_conv_cbuff_resize(b, s) ((s) == (0))
+#define ct_conv_wbuff_resize(b, s) ((s) == (0))
 #define ct_encode_char(d, l, s)	(*d = s, 1)
 #define ct_free_argv(s)
 #endif
