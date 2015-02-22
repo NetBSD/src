@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.10 2014/12/19 09:52:35 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.11 2015/02/22 14:50:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -281,7 +281,7 @@ struct usbd_xfer {
 void usbd_init(void);
 void usbd_finish(void);
 
-#if defined(USB_DEBUG) || defined(EHCI_DEBUG) || defined(OHCI_DEBUG)
+#if defined(USB_DEBUG)
 void usbd_dump_iface(struct usbd_interface *);
 void usbd_dump_device(struct usbd_device *);
 void usbd_dump_endpoint(struct usbd_endpoint *);
