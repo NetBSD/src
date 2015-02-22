@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.16 2015/02/01 06:30:29 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.17 2015/02/22 08:25:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,17 +41,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.16 2015/02/01 06:30:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.17 2015/02/22 08:25:02 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kmem.h>
-#include <sys/kernel.h>
+
+#include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/select.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
-#include <sys/cpu.h>
+#include <sys/select.h>
+#include <sys/systm.h>
 
 #include <machine/endian.h>
 
