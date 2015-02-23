@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.29 2015/02/21 13:15:12 martin Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.30 2015/02/23 07:20:52 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -4062,3 +4062,44 @@ sys/netinet/ip_icmp.h				1.34
 	Fix ICMP_STATINC() buffer overflows.
 	[christos, ticket #1258]
 
+external/bsd/bind/dist/CHANGES					patch
+external/bsd/bind/dist/README					patch
+external/bsd/bind/dist/srcid					patch
+external/bsd/bind/dist/version					patch
+external/bsd/bind/dist/bin/tests/system/ans.pl			patch
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch04.html			patch
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch06.html			patch
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch07.html			patch
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch08.html			patch
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch09.html			patch
+external/bsd/bind/dist/doc/arm/Bv9ARM.html			patch
+external/bsd/bind/dist/doc/arm/man.arpaname.html		patch
+external/bsd/bind/dist/doc/arm/man.ddns-confgen.html		patch
+external/bsd/bind/dist/doc/arm/man.dig.html			patch
+external/bsd/bind/dist/doc/arm/man.dnssec-checkds.html		patch
+external/bsd/bind/dist/doc/arm/man.dnssec-coverage.html		patch
+external/bsd/bind/dist/doc/arm/man.dnssec-dsfromkey.html	patch
+external/bsd/bind/dist/doc/arm/man.dnssec-keyfromlabel.html	patch
+external/bsd/bind/dist/doc/arm/man.dnssec-keygen.html		patch
+external/bsd/bind/dist/doc/arm/man.dnssec-revoke.html		patch
+external/bsd/bind/dist/doc/arm/man.dnssec-settime.html		patch
+external/bsd/bind/dist/doc/arm/man.dnssec-signzone.html		patch
+external/bsd/bind/dist/doc/arm/man.dnssec-verify.html		patch
+external/bsd/bind/dist/doc/arm/man.genrandom.html		patch
+external/bsd/bind/dist/doc/arm/man.host.html			patch
+external/bsd/bind/dist/doc/arm/man.isc-hmac-fixup.html		patch
+external/bsd/bind/dist/doc/arm/man.named-checkconf.html		patch
+external/bsd/bind/dist/doc/arm/man.named-checkzone.html		patch
+external/bsd/bind/dist/doc/arm/man.named-journalprint.html	patch
+external/bsd/bind/dist/doc/arm/man.named.html			patch
+external/bsd/bind/dist/doc/arm/man.nsec3hash.html		patch
+external/bsd/bind/dist/doc/arm/man.nsupdate.html		patch
+external/bsd/bind/dist/doc/arm/man.rndc-confgen.html		patch
+external/bsd/bind/dist/doc/arm/man.rndc.conf.html		patch
+external/bsd/bind/dist/doc/arm/man.rndc.html			patch
+external/bsd/bind/dist/lib/dns/api				patch
+external/bsd/bind/dist/lib/dns/zone.c				patch
+
+	Security patch for bind from ISC (to 9.9.6-P2).
+	Only the change to lib/dns/zone.c is security relevant (CVE-2015-1349).
+	[spz, ticket #1259]
