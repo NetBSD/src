@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_emac.c,v 1.11 2015/01/17 15:05:24 jmcneill Exp $ */
+/* $NetBSD: rockchip_emac.c,v 1.12 2015/02/23 19:05:16 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rkemac.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.11 2015/01/17 15:05:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.12 2015/02/23 19:05:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,6 +84,7 @@ struct rkemac_txdata {
 	bus_dmamap_t td_map;
 	bus_dmamap_t td_active;
 	struct mbuf *td_m;
+	int td_nbufs;
 };
 
 struct rkemac_txring {
@@ -574,6 +575,10 @@ rkemac_start(struct ifnet *ifp)
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		bpf_mtap(ifp, m0);
+		if (sc->sc_txq.t_queued == RKEMAC_TX_RING_COUNT) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
 	}
 
 	if (sc->sc_txq.t_queued != old) {
@@ -679,15 +684,14 @@ rkemac_tick(void *priv)
 static int
 rkemac_queue(struct rkemac_softc *sc, struct mbuf *m0)
 {
-	struct rkemac_txdesc *tx;
 	struct rkemac_txdata *td = NULL;
+	struct rkemac_txdesc *tx = NULL;
 	bus_dmamap_t map;
-	uint32_t info, len;
+	uint32_t info, len, padlen;
 	int error, first;
 
 	first = sc->sc_txq.t_cur;
 	map = sc->sc_txq.t_data[first].td_map;
-	info = 0;
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m0,
 	    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
@@ -698,8 +702,14 @@ rkemac_queue(struct rkemac_softc *sc, struct mbuf *m0)
 
 	KASSERT(map->dm_nsegs > 0);
 
-	const u_int nbufs = map->dm_nsegs +
-	    ((m0->m_pkthdr.len < ETHER_MIN_LEN) ? 1 : 0);
+	int nbufs = map->dm_nsegs;
+
+	if (m0->m_pkthdr.len < ETHER_MIN_LEN) {
+		padlen = ETHER_MIN_LEN - m0->m_pkthdr.len;
+		nbufs++;
+	} else {
+		padlen = 0;
+	}
 
 	if (sc->sc_txq.t_queued + nbufs > RKEMAC_TX_RING_COUNT) {
 		bus_dmamap_unload(sc->sc_dmat, map);
@@ -716,33 +726,33 @@ rkemac_queue(struct rkemac_softc *sc, struct mbuf *m0)
 		tx->tx_info = htole32(info | len);
 		info &= ~EMAC_TXDESC_FIRST;
 		info |= EMAC_TXDESC_OWN;
-		if (i == map->dm_nsegs - 1) {
-			if (m0->m_pkthdr.len < ETHER_MIN_LEN) {
-				sc->sc_txq.t_queued++;
-				sc->sc_txq.t_cur = (sc->sc_txq.t_cur + 1)
-				    % RKEMAC_TX_RING_COUNT;
-		    		td = &sc->sc_txq.t_data[sc->sc_txq.t_cur];
-				tx = &sc->sc_txq.t_desc[sc->sc_txq.t_cur];
-				tx->tx_ptr = htole32(sc->sc_pad_physaddr);
-				len = __SHIFTIN(ETHER_MIN_LEN -
-				    m0->m_pkthdr.len , EMAC_TXDESC_TXLEN);
-				tx->tx_info = htole32(info | len);
-			}
-			tx->tx_info |= htole32(EMAC_TXDESC_LAST);
-		}
 
 		sc->sc_txq.t_queued++;
-		sc->sc_txq.t_cur =
-		    (sc->sc_txq.t_cur + 1) % RKEMAC_TX_RING_COUNT;
+		sc->sc_txq.t_cur = TX_NEXT(sc->sc_txq.t_cur);
 	}
 
-	sc->sc_txq.t_desc[first].tx_info |= htole32(EMAC_TXDESC_OWN);
+	if (padlen) {
+		td = &sc->sc_txq.t_data[sc->sc_txq.t_cur];
+		tx = &sc->sc_txq.t_desc[sc->sc_txq.t_cur];
+
+		tx->tx_ptr = htole32(sc->sc_pad_physaddr);
+		len = __SHIFTIN(padlen, EMAC_TXDESC_TXLEN);
+		tx->tx_info = htole32(info | len);
+
+		sc->sc_txq.t_queued++;
+		sc->sc_txq.t_cur = TX_NEXT(sc->sc_txq.t_cur);
+	}
+
+	tx->tx_info |= htole32(EMAC_TXDESC_LAST);
 
 	td->td_m = m0;
 	td->td_active = map;
+	td->td_nbufs = nbufs;
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	sc->sc_txq.t_desc[first].tx_info |= htole32(EMAC_TXDESC_OWN);
 
 	return 0;
 }
@@ -770,8 +780,7 @@ rkemac_txintr(struct rkemac_softc *sc)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int i;
 
-	for (i = sc->sc_txq.t_next; sc->sc_txq.t_queued > 0;
-	    i = TX_NEXT(i), sc->sc_txq.t_queued--) {
+	for (i = sc->sc_txq.t_next; sc->sc_txq.t_queued > 0; i = TX_NEXT(i)) {
 		struct rkemac_txdata *td = &sc->sc_txq.t_data[i];
 		struct rkemac_txdesc *tx = &sc->sc_txq.t_desc[i];
 
@@ -792,6 +801,8 @@ rkemac_txintr(struct rkemac_softc *sc)
 
 		m_freem(td->td_m);
 		td->td_m = NULL;
+
+		sc->sc_txq.t_queued -= td->td_nbufs;
 	}
 
 	sc->sc_txq.t_next = i;
