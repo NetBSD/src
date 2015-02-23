@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.189 2015/02/22 14:55:23 maxv Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.190 2015/02/23 17:05:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.189 2015/02/22 14:55:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.190 2015/02/23 17:05:58 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1189,11 +1189,11 @@ ext2fs_sbfill(struct m_ext2fs *m_fs, int ronly)
 	 * Compute the fields of the superblock
 	 */
 	u32 = fs->e2fs_bcount - fs->e2fs_first_dblock; /* > 0 */
-	if (u32 < fs->e2fs_bpg) {
+	m_fs->e2fs_ncg = howmany(u32, fs->e2fs_bpg);
+	if (m_fs->e2fs_ncg == 0) {
 		printf("ext2fs: invalid number of cylinder groups\n");
 		return EINVAL;
 	}
-	m_fs->e2fs_ncg = howmany(u32, fs->e2fs_bpg);
 
 	m_fs->e2fs_fsbtodb = fs->e2fs_log_bsize + LOG_MINBSIZE - DEV_BSHIFT;
 	m_fs->e2fs_bsize = MINBSIZE << fs->e2fs_log_bsize;
@@ -1201,13 +1201,12 @@ ext2fs_sbfill(struct m_ext2fs *m_fs, int ronly)
 	m_fs->e2fs_qbmask = m_fs->e2fs_bsize - 1;
 	m_fs->e2fs_bmask = ~m_fs->e2fs_qbmask;
 
-	if (m_fs->e2fs_bsize < sizeof(struct ext2_gd)) {
+	if ((u32 = m_fs->e2fs_bsize / sizeof(struct ext2_gd)) == 0) {
 		/* Unlikely to happen */
 		printf("ext2fs: invalid block size\n");
 		return EINVAL;
 	}
-	m_fs->e2fs_ngdb =
-	    howmany(m_fs->e2fs_ncg, m_fs->e2fs_bsize / sizeof(struct ext2_gd));
+	m_fs->e2fs_ngdb = howmany(m_fs->e2fs_ncg, u32);
 	if (m_fs->e2fs_ngdb == 0) {
 		printf("ext2fs: invalid number of group descriptor blocks\n");
 		return EINVAL;
