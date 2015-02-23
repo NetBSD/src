@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.159 2015/02/23 00:09:30 jmcneill Exp $
+#	 $NetBSD: mi,v 1.160 2015/02/23 11:14:58 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6264,6 +6264,8 @@
 ./usr/X11R7/lib/libfontenc_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libfreetype.a				-unknown-	xorg
 ./usr/X11R7/lib/libfreetype_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libgbm.a				-unknown-	xorg
+./usr/X11R7/lib/libgbm_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libglut.a				-unknown-	xorg
 ./usr/X11R7/lib/libglut_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/liblbxutil.a				-obsolete-	obsolete
