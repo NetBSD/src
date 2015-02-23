@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.58 2015/01/29 22:58:20 nat Exp $
+# $NetBSD: shl.mi,v 1.59 2015/02/23 00:09:30 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -324,6 +324,9 @@
 ./usr/X11R7/lib/libfreetype.so			-unknown-		xorg
 ./usr/X11R7/lib/libfreetype.so.17		-unknown-		xorg
 ./usr/X11R7/lib/libfreetype.so.17.2.11		-unknown-		xorg
+./usr/X11R7/lib/libgbm.so			-unknown-		xorg
+./usr/X11R7/lib/libgbm.so.1			-unknown-		xorg
+./usr/X11R7/lib/libgbm.so.1.0			-unknown-		xorg
 ./usr/X11R7/lib/libglut.so			-unknown-		xorg
 ./usr/X11R7/lib/libglut.so.4			-unknown-		xorg
 ./usr/X11R7/lib/libglut.so.4.0			-unknown-		xorg
