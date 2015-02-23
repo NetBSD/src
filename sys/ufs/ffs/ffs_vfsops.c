@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.318 2015/02/22 14:22:34 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.319 2015/02/23 13:38:54 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.318 2015/02/22 14:22:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.319 2015/02/23 13:38:54 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -122,9 +122,9 @@ static kauth_listener_t ffs_snapshot_listener;
 int ffs_initcount = 0;
 
 #ifdef DEBUG_FFS_MOUNT
-#define DPRINTF(a)	printf a
+#define DPRINTF(_fmt, args...)	printf("%s: " _fmt "\n", __func__, ##args)
 #else
-#define DPRINTF(a)	do {} while (/*CONSTCOND*/0)
+#define DPRINTF(_fmt, args...)	do {} while (/*CONSTCOND*/0)
 #endif
 
 extern const struct vnodeopv_desc ffs_vnodeop_opv_desc;
@@ -354,19 +354,18 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	mode_t accessmode;
 
 	if (args == NULL) {
-		DPRINTF(("%s: NULL args\n", __func__));
+		DPRINTF("NULL args");
 		return EINVAL;
 	}
 	if (*data_len < sizeof(*args)) {
-		DPRINTF(("%s: bad size args %zu != %zu\n",
-		    __func__, *data_len, sizeof(*args)));
+		DPRINTF("bad size args %zu != %zu", *data_len, sizeof(*args));
 		return EINVAL;
 	}
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		ump = VFSTOUFS(mp);
 		if (ump == NULL) {
-			DPRINTF(("%s: no ump\n", __func__));
+			DPRINTF("no ump");
 			return EIO;
 		}
 		args->fspec = NULL;
@@ -384,8 +383,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		error = namei_simple_user(args->fspec,
 		    NSM_FOLLOW_NOEMULROOT, &devvp);
 		if (error != 0) {
-			DPRINTF(("%s: namei_simple_user %d\n", __func__,
-			    error));
+			DPRINTF("namei_simple_user returned %d", error);
 			return error;
 		}
 
@@ -394,12 +392,11 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 * Be sure this is a valid block device
 			 */
 			if (devvp->v_type != VBLK) {
-				DPRINTF(("%s: non block device %d\n",
-				    __func__, devvp->v_type));
+				DPRINTF("non block device %d", devvp->v_type);
 				error = ENOTBLK;
 			} else if (bdevsw_lookup(devvp->v_rdev) == NULL) {
-				DPRINTF(("%s: can't find block device 0x%jx\n",
-				    __func__, devvp->v_rdev));
+				DPRINTF("can't find block device 0x%jx",
+				    devvp->v_rdev);
 				error = ENXIO;
 			}
 		} else {
@@ -410,10 +407,9 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			ump = VFSTOUFS(mp);
 			if (devvp != ump->um_devvp) {
 				if (devvp->v_rdev != ump->um_devvp->v_rdev) {
-					DPRINTF(("%s: wrong device 0x%jx"
-					    " != 0x%jx\n", __func__,
+					DPRINTF("wrong device 0x%jx != 0x%jx",
 					    (uintmax_t)devvp->v_rdev,
-					    (uintmax_t)ump->um_devvp->v_rdev));
+					    (uintmax_t)ump->um_devvp->v_rdev);
 					error = EINVAL;
 				} else {
 					vrele(devvp);
@@ -425,7 +421,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	} else {
 		if (!update) {
 			/* New mounts must have a filename for the device */
-			DPRINTF(("%s: no filename for mount\n", __func__));
+			DPRINTF("no filename for mount");
 			return EINVAL;
 		} else {
 			/* Use the extant mount */
@@ -454,7 +450,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp,
 		    KAUTH_ARG(accessmode));
 		if (error) {
-			DPRINTF(("%s: kauth %d\n", __func__, error));
+			DPRINTF("kauth returned %d", error);
 		}
 		VOP_UNLOCK(devvp);
 	}
@@ -484,12 +480,12 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		error = VOP_OPEN(devvp, xflags, FSCRED);
 		VOP_UNLOCK(devvp);
 		if (error) {	
-			DPRINTF(("%s: VOP_OPEN %d\n", __func__, error));
+			DPRINTF("VOP_OPEN returned %d", error);
 			goto fail;
 		}
 		error = ffs_mountfs(devvp, mp, l);
 		if (error) {
-			DPRINTF(("%s: ffs_mountfs %d\n", __func__, error));
+			DPRINTF("ffs_mountfs returned %d", error);
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void)VOP_CLOSE(devvp, xflags, NOCRED);
 			VOP_UNLOCK(devvp);
@@ -531,7 +527,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 				(void) ffs_sbupdate(ump, MNT_WAIT);
 			}
 			if (error) {
-				DPRINTF(("%s: wapbl %d\n", __func__, error));
+				DPRINTF("wapbl %d", error);
 				return error;
 			}
 			UFS_WAPBL_END(mp);
@@ -541,8 +537,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		if ((mp->mnt_flag & MNT_LOG) == 0) {
 			error = ffs_wapbl_stop(mp, mp->mnt_flag & MNT_FORCE);
 			if (error) {
-				DPRINTF(("%s: ffs_wapbl_stop %d\n",
-				    __func__, error));
+				DPRINTF("ffs_wapbl_stop returned %d", error);
 				return error;
 			}
 		}
@@ -559,8 +554,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		if (mp->mnt_flag & MNT_RELOAD) {
 			error = ffs_reload(mp, l->l_cred, l);
 			if (error) {
-				DPRINTF(("%s: ffs_reload %d\n",
-				    __func__, error));
+				DPRINTF("ffs_reload returned %d", error);
 				return error;
 			}
 		}
@@ -576,8 +570,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 				    mp->mnt_stat.f_mntonname,
 				    (mp->mnt_flag & MNT_FORCE) ? "" :
 				    ", not mounting");
-				DPRINTF(("%s: ffs_quota2 %d\n",
-				    __func__, EINVAL));
+				DPRINTF("ffs_quota2 %d", EINVAL);
 				return EINVAL;
 			}
 #endif
@@ -596,9 +589,8 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 				error = wapbl_replay_write(mp->mnt_wapbl_replay,
 				    devvp);
 				if (error) {
-					DPRINTF((
-					    "%s: %s: wapbl_replay_write %d\n",
-					    __func__, nm, error));
+					DPRINTF("%s: wapbl_replay_write %d",
+					    nm, error);
 					return error;
 				}
 				wapbl_replay_stop(mp->mnt_wapbl_replay);
@@ -612,8 +604,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 #ifdef WAPBL
 		error = ffs_wapbl_start(mp);
 		if (error) {
-			DPRINTF(("%s: ffs_wapbl_start %d\n",
-			    __func__, error));
+			DPRINTF("ffs_wapbl_start returned %d", error);
 			return error;
 		}
 #endif /* WAPBL */
@@ -622,8 +613,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		if (!fs->fs_ronly) {
 			error = ffs_quota2_mount(mp);
 			if (error) {
-				DPRINTF(("%s: ffs_quota2_mount %d\n",
-				    __func__, error));
+				DPRINTF("ffs_quota2_mount returned %d", error);
 				return error;
 			}
 		}
@@ -642,7 +632,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		(void)strncpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,
 		    sizeof(fs->fs_fsmnt));
 	else {
-	    DPRINTF(("%s: set_statvfs_info %d\n", __func__, error));
+	    DPRINTF("set_statvfs_info returned %d", error);
 	}
 	fs->fs_flags &= ~FS_DOSOFTDEP;
 	if (fs->fs_fmod != 0) {	/* XXX */
@@ -1006,8 +996,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 #endif
 	int32_t *lp;
 	kauth_cred_t cred;
-	u_int32_t fs_sbsize = 8192;	/* keep gcc happy*/
-	u_int32_t allocsbsize;
+	u_int32_t allocsbsize, fs_sbsize = 0;
 
 	dev = devvp->v_rdev;
 	cred = l ? l->l_cred : NOCRED;
@@ -1017,7 +1006,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	error = vinvalbuf(devvp, V_SAVE, cred, l, 0, 0);
 	VOP_UNLOCK(devvp);
 	if (error) {
-		DPRINTF(("%s: vinvalbuf %d\n", __func__, error));
+		DPRINTF("vinvalbuf returned %d", error);
 		return error;
 	}
 
@@ -1025,7 +1014,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	error = fstrans_mount(mp);
 	if (error) {
-		DPRINTF(("%s: fstrans_mount %d\n", __func__, error));
+		DPRINTF("fstrans_mount returned %d", error);
 		return error;
 	}
 
@@ -1033,7 +1022,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mutex_init(&ump->um_lock, MUTEX_DEFAULT, IPL_NONE);
 	error = ffs_snapshot_init(ump);
 	if (error) {
-		DPRINTF(("%s: ffs_snapshot_init %d\n", __func__, error));
+		DPRINTF("ffs_snapshot_init returned %d", error);
 		goto out;
 	}
 	ump->um_ops = &ffs_ufsops;
@@ -1045,14 +1034,14 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 * Try reading the superblock in each of its possible locations.
 	 */
 	for (i = 0; ; i++) {
-		daddr_t fsblockloc;
+		daddr_t fs_sblockloc;
 
 		if (bp != NULL) {
 			brelse(bp, BC_NOCACHE);
 			bp = NULL;
 		}
 		if (sblock_try[i] == -1) {
-			DPRINTF(("%s: no superblock found\n", __func__));
+			DPRINTF("no superblock found");
 			error = EINVAL;
 			fs = NULL;
 			goto out;
@@ -1061,15 +1050,15 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		error = bread(devvp, sblock_try[i] / DEV_BSIZE, SBLOCKSIZE,
 		    cred, 0, &bp);
 		if (error) {
-			DPRINTF(("%s: bread@0x%x %d\n", __func__,
-			    sblock_try[i] / DEV_BSIZE, error));
+			DPRINTF("bread@0x%x returned %d",
+			    sblock_try[i] / DEV_BSIZE, error);
 			fs = NULL;
 			goto out;
 		}
-		fs = (struct fs*)bp->b_data;
+		fs = (struct fs *)bp->b_data;
 
-		fsblockloc = sblockloc = sblock_try[i];
-		DPRINTF(("%s: fs_magic 0x%x\n", __func__, fs->fs_magic));
+		sblockloc = sblock_try[i];
+		DPRINTF("fs_magic 0x%x", fs->fs_magic);
 
 		/*
 		 * Swap: here, we swap fs->fs_sbsize in order to get the correct
@@ -1108,17 +1097,17 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 				 * Don't use it.
 				 */
 				continue;
-			fsblockloc = sblockloc;
+			fs_sblockloc = sblockloc;
 		} else {
-			fsblockloc = fs->fs_sblockloc;
+			fs_sblockloc = fs->fs_sblockloc;
 #ifdef FFS_EI
 			if (needswap)
-				fsblockloc = bswap64(fsblockloc);
+				fs_sblockloc = bswap64(fs_sblockloc);
 #endif
 		}
 
 		/* Check we haven't found an alternate superblock */
-		if (fsblockloc != sblockloc)
+		if (fs_sblockloc != sblockloc)
 			continue;
 
 		/* Check the superblock size */
@@ -1155,8 +1144,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if ((mp->mnt_wapbl_replay == 0) && (fs->fs_flags & FS_DOWAPBL)) {
 		error = ffs_wapbl_replay_start(mp, fs, devvp);
 		if (error && (mp->mnt_flag & MNT_FORCE) == 0) {
-			DPRINTF(("%s: ffs_wapbl_replay_start %d\n", __func__,
-			    error));
+			DPRINTF("ffs_wapbl_replay_start returned %d", error);
 			goto out;
 		}
 		if (!error) {
@@ -1167,8 +1155,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 				error = wapbl_replay_write(mp->mnt_wapbl_replay,
 				    devvp);
 				if (error) {
-					DPRINTF(("%s: wapbl_replay_write %d\n",
-					    __func__, error));
+					DPRINTF("wapbl_replay_write returned %d",
+					    error);
 					goto out;
 				}
 				wapbl_replay_stop(mp->mnt_wapbl_replay);
@@ -1190,7 +1178,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 #else /* !WAPBL */
 	if ((fs->fs_flags & FS_DOWAPBL) && (mp->mnt_flag & MNT_FORCE) == 0) {
 		error = EPERM;
-		DPRINTF(("%s: no force %d\n", __func__, error));
+		DPRINTF("no force %d", error);
 		goto out;
 	}
 #endif /* !WAPBL */
@@ -1204,7 +1192,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		    (mp->mnt_flag & MNT_FORCE) ? "" : ", not mounting");
 		if ((mp->mnt_flag & MNT_FORCE) == 0) {
 			error = EINVAL;
-			DPRINTF(("%s: no force %d\n", __func__, error));
+			DPRINTF("no force %d", error);
 			goto out;
 		}
 	}
@@ -1238,9 +1226,9 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		    (daddr_t)(APPLEUFS_LABEL_OFFSET / DEV_BSIZE),
 		    APPLEUFS_LABEL_SIZE, cred, 0, &bp);
 		if (error) {
-			DPRINTF(("%s: apple bread@0x%jx %d\n", __func__,
+			DPRINTF("apple bread@0x%jx returned %d",
 			    (intmax_t)(APPLEUFS_LABEL_OFFSET / DEV_BSIZE),
-			    error));
+			    error);
 			goto out;
 		}
 		error = ffs_appleufs_validate(fs->fs_fsmnt,
@@ -1252,7 +1240,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	}
 #else
 	if (ump->um_flags & UFS_ISAPPLEUFS) {
-		DPRINTF(("%s: bad apple\n", __func__));
+		DPRINTF("AppleUFS not supported");
 		error = EINVAL;
 		goto out;
 	}
@@ -1292,20 +1280,19 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 * Verify that we can access the last block in the fs
 	 * if we're mounting read/write.
 	 */
-
 	if (!ronly) {
 		error = bread(devvp, FFS_FSBTODB(fs, fs->fs_size - 1),
 		    fs->fs_fsize, cred, 0, &bp);
 		if (error) {
-			DPRINTF(("%s: bread@0x%jx %d\n", __func__,
+			DPRINTF("bread@0x%jx returned %d",
 			    (intmax_t)FFS_FSBTODB(fs, fs->fs_size - 1),
-			    error));
+			    error);
 			bset = BC_INVAL;
 			goto out;
 		}
 		if (bp->b_bcount != fs->fs_fsize) {
-			DPRINTF(("%s: bcount %x != fsize %x\n", __func__,
-			    bp->b_bcount, fs->fs_fsize));
+			DPRINTF("bcount %x != fsize %x", bp->b_bcount,
+			    fs->fs_fsize);
 			error = EINVAL;
 		}
 		brelse(bp, BC_INVAL);
@@ -1337,9 +1324,9 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		error = bread(devvp, FFS_FSBTODB(fs, fs->fs_csaddr + i), bsize,
 			      cred, 0, &bp);
 		if (error) {
-			DPRINTF(("%s: bread@0x%jx %d\n", __func__,
+			DPRINTF("bread@0x%jx %d",
 			    (intmax_t)FFS_FSBTODB(fs, fs->fs_csaddr + i),
-			    error));
+			    error);
 			goto out1;
 		}
 #ifdef FFS_EI
@@ -1423,13 +1410,13 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		 */
 		error = ffs_statvfs(mp, &mp->mnt_stat);
 		if (error) {
-			DPRINTF(("%s: ffs_statvfs %d\n", __func__, error));
+			DPRINTF("ffs_statvfs returned %d", error);
 			goto out1;
 		}
 
 		error = ffs_wapbl_start(mp);
 		if (error) {
-			DPRINTF(("%s: ffs_wapbl_start %d\n", __func__, error));
+			DPRINTF("ffs_wapbl_start returned %d", error);
 			goto out1;
 		}
 	}
@@ -1438,7 +1425,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 #ifdef QUOTA2
 		error = ffs_quota2_mount(mp);
 		if (error) {
-			DPRINTF(("%s: ffs_quota2_mount %d\n", __func__, error));
+			DPRINTF("ffs_quota2_mount returned %d", error);
 			goto out1;
 		}
 #else
@@ -1449,8 +1436,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			    (mp->mnt_flag & MNT_FORCE) ? "" : ", not mounting");
 			if ((mp->mnt_flag & MNT_FORCE) == 0) {
 				error = EINVAL;
-				DPRINTF(("%s: quota disabled %d\n", __func__,
-				    error));
+				DPRINTF("quota disabled %d", error);
 				goto out1;
 			}
 		}
@@ -2064,7 +2050,6 @@ ffs_init(void)
 void
 ffs_reinit(void)
 {
-
 	ufs_reinit();
 }
 
