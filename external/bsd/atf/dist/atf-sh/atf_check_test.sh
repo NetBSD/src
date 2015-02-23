@@ -174,7 +174,7 @@ flush_stdout_on_timeout_body()
     "$(atf_get_srcdir)/misc_helpers" -s "$(atf_get_srcdir)" atf_check_timeout \
         >out 2>err &
     pid="${!}"
-    sleep 1
+    sleep 10
     kill "${pid}"
 
     grep 'Executing command.*true' out \
