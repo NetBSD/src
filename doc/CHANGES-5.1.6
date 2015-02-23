@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.6,v 1.1.2.16 2015/02/11 15:43:38 martin Exp $
+# $NetBSD: CHANGES-5.1.6,v 1.1.2.17 2015/02/23 09:42:23 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.1.5 release to the NetBSD 5.1.6
 release:
@@ -2540,3 +2540,9 @@ sys/dev/usb/usbdi.c				1.163 (via patch)
 	Clip xfer->actlen also in the !DIAGNOSTIC case.
 	[aymeric, ticket #1948]
 
+dist/bind/lib/dns/zone.c			patch
+
+	Patch for CVE-2015-1349: Revoking a managed trust anchor and supplying
+	an untrusted replacement could cause named to crash with an assertion
+	failure.
+	[spz, ticket #1950]
