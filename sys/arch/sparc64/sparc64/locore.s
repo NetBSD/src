@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.377 2014/10/26 21:03:45 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.378 2015/02/23 12:36:58 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3678,12 +3678,6 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	bne,pt	%icc, 1f
 	 nop
 	NORMAL_GLOBALS_SUN4V
-	ba	2f
-	 nop
-1:		
-#endif
-	NORMAL_GLOBALS_SUN4U
-2:
 	! Save the normal globals
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + ( 1*8)]
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + ( 2*8)]
@@ -3692,7 +3686,7 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + ( 5*8)]
 	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + ( 6*8)]
 	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + ( 7*8)]
-
+	ALTERNATE_GLOBALS_SUN4V
 	/*
 	 * In the EMBEDANY memory model %g4 points to the start of the
 	 * data segment.  In our case we need to clear it before calling
@@ -3701,6 +3695,31 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	clr	%g4
 
 	flushw			! Do not remove this insn -- causes interrupt loss
+	NORMAL_GLOBALS_SUN4V
+	ba	2f
+	 nop
+1:		
+#endif
+	NORMAL_GLOBALS_SUN4U
+	! Save the normal globals
+	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + ( 1*8)]
+	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + ( 2*8)]
+	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + ( 3*8)]
+	stx	%g4, [%sp + CC64FSZ + STKB + TF_G + ( 4*8)]
+	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + ( 5*8)]
+	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + ( 6*8)]
+	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + ( 7*8)]
+	ALTERNATE_GLOBALS_SUN4U
+	/*
+	 * In the EMBEDANY memory model %g4 points to the start of the
+	 * data segment.  In our case we need to clear it before calling
+	 * any C-code.
+	 */
+	clr	%g4
+
+	flushw			! Do not remove this insn -- causes interrupt loss
+	NORMAL_GLOBALS_SUN4U
+2:
 	rd	%y, %l6
 	INCR64(CPUINFO_VA+CI_NINTR)	! cnt.v_ints++ (clobbers %o0,%o1)
 	rdpr	%tt, %l5		! Find out our current IPL
