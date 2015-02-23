@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.11 2015/02/20 16:16:06 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.12 2015/02/23 13:09:37 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.11 2015/02/20 16:16:06 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.12 2015/02/23 13:09:37 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -5347,8 +5347,12 @@ iwm_setrates(struct iwm_node *in)
 		if (ridx > IWM_RIDX_MAX)
 			DPRINTF(("%s: WARNING: device rate for %d not found!\n",
 			    DEVNAME(sc), rate));
-		else
+		else if (i < __arraycount(in->in_ridx))
 			in->in_ridx[i] = ridx;
+		else
+			DPRINTF(("%s: WARNING: out of range: "
+			    "i(%d) >= array size(%zu)\n", DEVNAME(sc),
+			    i, __arraycount(in->in_ridx)));
 	}
 
 	/* then construct a lq_cmd based on those */
