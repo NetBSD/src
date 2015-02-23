@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.209 2015/02/21 19:41:21 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.210 2015/02/23 05:49:09 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -16028,4 +16028,47 @@ external/mit/xorg/lib/libxcb/libxcb/Makefile	1.7
 	install xcb/xkb.h
 	[jmcneill, ticket #541]
 
+external/bsd/bind/dist/CHANGES			1.14
+external/bsd/bind/dist/README			1.2
+external/bsd/bind/dist/bin/tests/system/ans.pl	1.2
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch04.html	1.2
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch06.html	1.2
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch07.html	1.2
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch08.html	1.2
+external/bsd/bind/dist/doc/arm/Bv9ARM.ch09.html	1.2
+external/bsd/bind/dist/doc/arm/Bv9ARM.html	1.2
+external/bsd/bind/dist/doc/arm/man.arpaname.html 1.2
+external/bsd/bind/dist/doc/arm/man.ddns-confgen.html 1.2
+external/bsd/bind/dist/doc/arm/man.delv.html	1.2
+external/bsd/bind/dist/doc/arm/man.dig.html	1.2
+external/bsd/bind/dist/doc/arm/man.dnssec-checkds.html 1.2
+external/bsd/bind/dist/doc/arm/man.dnssec-coverage.html 1.2
+external/bsd/bind/dist/doc/arm/man.dnssec-dsfromkey.html 1.2
+external/bsd/bind/dist/doc/arm/man.dnssec-importkey.html 1.2
+external/bsd/bind/dist/doc/arm/man.dnssec-keyfromlabel.html 1.2
+external/bsd/bind/dist/doc/arm/man.dnssec-keygen.html 1.2
+external/bsd/bind/dist/doc/arm/man.dnssec-revoke.html 1.2
+external/bsd/bind/dist/doc/arm/man.dnssec-settime.html 1.2
+external/bsd/bind/dist/doc/arm/man.dnssec-signzone.html 1.2
+external/bsd/bind/dist/doc/arm/man.dnssec-verify.html 1.2
+external/bsd/bind/dist/doc/arm/man.genrandom.html 1.2
+external/bsd/bind/dist/doc/arm/man.host.html	1.2
+external/bsd/bind/dist/doc/arm/man.isc-hmac-fixup.html 1.2
+external/bsd/bind/dist/doc/arm/man.named-checkconf.html 1.2
+external/bsd/bind/dist/doc/arm/man.named-checkzone.html 1.2
+external/bsd/bind/dist/doc/arm/man.named-journalprint.html 1.2
+external/bsd/bind/dist/doc/arm/man.named-rrchecker.html 1.2
+external/bsd/bind/dist/doc/arm/man.named.html	1.2
+external/bsd/bind/dist/doc/arm/man.nsec3hash.html 1.2
+external/bsd/bind/dist/doc/arm/man.nsupdate.html 1.2
+external/bsd/bind/dist/doc/arm/man.rndc-confgen.html 1.2
+external/bsd/bind/dist/doc/arm/man.rndc.conf.html 1.2
+external/bsd/bind/dist/doc/arm/man.rndc.html	1.2
+external/bsd/bind/dist/lib/dns/api		1.2
+external/bsd/bind/dist/lib/dns/tests/geoip_test.c 1.2
+external/bsd/bind/dist/lib/dns/zone.c		1.13
+external/bsd/bind/dist/srcid			1.8
+external/bsd/bind/dist/version			1.12
 
+	Update bind to 9.10.1-P2. It includes fix of CVE-2015-1349.
+	[spz, ticket #544]
