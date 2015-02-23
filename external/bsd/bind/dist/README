@@ -51,6 +51,16 @@ BIND 9
 	For up-to-date release notes and errata, see
 	http://www.isc.org/software/bind9/releasenotes
 
+BIND 9.10.1-P2
+
+	BIND 9.10.1-P2 is a security release and addresses the
+	security flaw described in CVE-2015-1349.
+
+BIND 9.10.1-P1
+
+	BIND 9.10.1-P1 is a security release and addresses the
+	security flaws described in CVE-2014-8500 and CVE-2014-8680.
+
 BIND 9.10.1
 
 	BIND 9.10.1 is a maintenance release and addresses bugs
