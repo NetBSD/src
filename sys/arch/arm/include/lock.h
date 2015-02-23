@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.30 2015/02/19 21:44:50 joerg Exp $	*/
+/*	$NetBSD: lock.h,v 1.31 2015/02/23 20:49:53 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -143,9 +143,9 @@ static __inline void
 __arm_membar_producer(void)
 {
 #ifdef _ARM_ARCH_7
-		__asm __volatile("dsb");
+	__asm __volatile("dsb");
 #elif defined(_ARM_ARCH_6)
-		__asm __volatile("mcr\tp15,0,%0,c7,c10,4" :: "r"(0));
+	__asm __volatile("mcr\tp15,0,%0,c7,c10,4" :: "r"(0));
 #endif
 }
 
@@ -153,9 +153,9 @@ static __inline void
 __arm_membar_consumer(void)
 {
 #ifdef _ARM_ARCH_7
-		__asm __volatile("dmb");
+	__asm __volatile("dmb");
 #elif defined(_ARM_ARCH_6)
-		__asm __volatile("mcr\tp15,0,%0,c7,c10,5" :: "r"(0));
+	__asm __volatile("mcr\tp15,0,%0,c7,c10,5" :: "r"(0));
 #endif
 }
 
