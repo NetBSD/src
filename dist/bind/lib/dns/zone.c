@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.1.1.6.4.4 2012/07/25 11:58:51 jdc Exp $	*/
+/*	$NetBSD: zone.c,v 1.1.1.6.4.5 2015/02/23 09:32:26 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -7671,7 +7671,14 @@ keyfetch_done(isc_task_t *task, isc_event_t *event) {
 					     namebuf, tag);
 				trustkey = ISC_TRUE;
 			}
+		} else {
+			/*
+			 * No previously known key, and the key is not
+			 * secure, so skip it.
+			 */
+			continue;
 		}
+
 
 		/* Delete old version */
 		if (deletekey || !newkey)
@@ -7717,7 +7724,7 @@ keyfetch_done(isc_task_t *task, isc_event_t *event) {
 			trust_key(zone, keyname, &dnskey, mctx);
 		}
 
-		if (!deletekey)
+		if (secure && !deletekey)
 			set_refreshkeytimer(zone, &keydata, now);
 	}
 
