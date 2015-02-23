@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.158 2015/02/21 17:17:16 jmcneill Exp $
+#	 $NetBSD: mi,v 1.159 2015/02/23 00:09:30 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5790,6 +5790,7 @@
 ./usr/X11R7/include/freetype2/tttags.h			-unknown-	xorg
 ./usr/X11R7/include/freetype2/ttunpat.h			-unknown-	xorg
 ./usr/X11R7/include/ft2build.h				xcomp-obsolete	obsolete
+./usr/X11R7/include/gbm.h				-unknown-	xorg
 ./usr/X11R7/include/libdrm/drm.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/drm_fourcc.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/drm_mode.h			-unknown-	xorg
