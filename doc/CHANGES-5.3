@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.98 2015/02/11 15:42:19 martin Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.99 2015/02/23 09:33:18 msaitoh Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3737,3 +3737,10 @@ sys/dev/usb/usbdi.c				1.163 (via patch)
 	Clip xfer->actlen also in the !DIAGNOSTIC case.
 	[aymeric, ticket #1948]
 
+Pull up following revision(s) (requested by spz in ticket #1950):
+dist/bind/lib/dns/zone.c			patch
+
+	Patch for CVE-2015-1349: Revoking a managed trust anchor and supplying
+	an untrusted replacement could cause named to crash with an assertion
+	failure.
+	[spz, ticket #1950]
