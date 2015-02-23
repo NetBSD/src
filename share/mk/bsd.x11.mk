@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.114 2014/12/30 22:07:21 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.115 2015/02/23 00:09:30 jmcneill Exp $
 
 .include <bsd.init.mk>
 
@@ -339,6 +339,8 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure Makefile
 		s,@DRI_DRIVER_DIR@,\\$$\{libdir\}/modules/dri,; \
 		s,@DRI_PC_REQ_PRIV@,,; \
 		s,@GLW_LIB@,GLw,; \
+		s,@GBM_PC_REQ_PRIV@,,; \
+		s,@GBM_PC_LIB_PRIV@,,; \
 		s,@abi_ansic@,0.4,; \
 		s,@abi_videodrv@,5.0,; \
 		s,@abi_xinput@,4.0,; \
