@@ -327,6 +327,8 @@ sub handleTCP {
 	my $qclass = $questions[0]->qclass;
 	my $id = $request->header->id;
 
+	my $opaque;
+
 	my $packet = new Net::DNS::Packet($qname, $qtype, $qclass);
 	$packet->header->qr(1);
 	$packet->header->aa(1);
@@ -336,9 +338,11 @@ sub handleTCP {
 	my $prev_tsig;
 	my $signer;
 	my $continuation = 0;
-	while (my $rr = $request->pop("additional")) {
-		if ($rr->type eq "TSIG") {
-			$prev_tsig = $rr;
+	if ($Net::DNS::VERSION < 0.81) {
+		while (my $rr = $request->pop("additional")) {
+			if ($rr->type eq "TSIG") {
+				$prev_tsig = $rr;
+			}
 		}
 	}
 
@@ -356,7 +360,7 @@ sub handleTCP {
 			foreach $a (@{$r->{answer}}) {
 				$packet->push("answer", $a);
 			}
-			if(defined($key_name) && defined($key_data)) {
+			if (defined($key_name) && defined($key_data)) {
 				my $tsig;
 				# sign the packet
 				print "  Signing the data with " . 
@@ -365,6 +369,8 @@ sub handleTCP {
 				if ($Net::DNS::VERSION < 0.69) {
 					$tsig = Net::DNS::RR->new(
 						   "$key_name TSIG $key_data");
+				} elsif ($Net::DNS::VERSION >= 0.81 &&
+					 $continuation) {
 				} elsif ($Net::DNS::VERSION >= 0.75 &&
 					 $continuation) {
 					$tsig = $prev_tsig;
@@ -394,7 +400,7 @@ sub handleTCP {
 						$prev_tsig->mac);
 					$tsig->{"request_mac"} =
 						unpack("H*", $rmac);
-					} else {
+					} elsif ($Net::DNS::VERSION < 0.81) {
 						$tsig->request_mac(
 							 $prev_tsig->mac);
 					}
@@ -404,7 +410,13 @@ sub handleTCP {
 				$tsig->continuation($continuation) if
 					 ($Net::DNS::VERSION >= 0.71 &&
 					  $Net::DNS::VERSION <= 0.74 );
-				$packet->sign_tsig($tsig);
+				if ($Net::DNS::VERSION < 0.81) {
+					$packet->sign_tsig($tsig);
+				} elsif ($continuation) {
+					$opaque = $packet->sign_tsig($opaque);
+				} else {
+					$opaque = $packet->sign_tsig($request);
+				}
 				$signer = \&sign_tcp_continuation
 					if ($Net::DNS::VERSION < 0.70);
 				$continuation = 1;
