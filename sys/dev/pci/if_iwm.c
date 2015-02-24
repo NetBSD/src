@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.13 2015/02/24 02:26:15 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.14 2015/02/24 12:57:58 christos Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.13 2015/02/24 02:26:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.14 2015/02/24 12:57:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -5329,7 +5329,8 @@ iwm_setrates(struct iwm_node *in)
 	int i, ridx, tab = 0;
 	int txant = 0;
 
-	if (nrates > __arraycount(lq->rs_table)) {
+	if (nrates > __arraycount(lq->rs_table) ||
+	    nrates > IEEE80211_RATE_MAXSIZE) {
 		DPRINTF(("%s: node supports %d rates, driver handles only "
 		    "%zu\n", DEVNAME(sc), nrates, __arraycount(lq->rs_table)));
 		return;
