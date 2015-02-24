@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe.h,v 1.24 2011/04/28 23:21:40 jfv Exp $*/
-/*$NetBSD: ixgbe.h,v 1.1 2011/08/12 21:55:29 dyoung Exp $*/
+/*$NetBSD: ixgbe.h,v 1.1.28.1 2015/02/24 10:41:09 martin Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -476,7 +476,7 @@ struct adapter {
 
 
 #define IXGBE_CORE_LOCK_INIT(_sc, _name) \
-        mutex_init(&(_sc)->core_mtx, MUTEX_DEFAULT, IPL_NET)
+        mutex_init(&(_sc)->core_mtx, MUTEX_DEFAULT, IPL_SOFTNET)
 #define IXGBE_CORE_LOCK_DESTROY(_sc)      mutex_destroy(&(_sc)->core_mtx)
 #define IXGBE_TX_LOCK_DESTROY(_sc)        mutex_destroy(&(_sc)->tx_mtx)
 #define IXGBE_RX_LOCK_DESTROY(_sc)        mutex_destroy(&(_sc)->rx_mtx)
