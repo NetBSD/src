@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe_api.c,v 1.11 2010/11/26 22:46:32 jfv Exp $*/
-/*$NetBSD: ixgbe_api.c,v 1.3 2015/02/24 14:14:50 msaitoh Exp $*/
+/*$NetBSD: ixgbe_api.c,v 1.4 2015/02/24 14:49:28 msaitoh Exp $*/
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
@@ -117,9 +117,11 @@ s32 ixgbe_set_mac_type(struct ixgbe_hw *hw)
 		case IXGBE_DEV_ID_82599_SFP:
 		case IXGBE_DEV_ID_82599_BACKPLANE_FCOE:
 		case IXGBE_DEV_ID_82599_SFP_FCOE:
+		case IXGBE_DEV_ID_82599_SFP_SF2:
+		case IXGBE_DEV_ID_82599_SFP_SF_QP:
+		case IXGBE_DEV_ID_82599EN_SFP:
 		case IXGBE_DEV_ID_82599_CX4:
 		case IXGBE_DEV_ID_82599_T3_LOM:
-		case IXGBE_DEV_ID_82599_SFP_SF2:
 			hw->mac.type = ixgbe_mac_82599EB;
 			break;
 		case IXGBE_DEV_ID_82599_VF:
