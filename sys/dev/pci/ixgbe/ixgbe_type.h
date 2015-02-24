@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: src/sys/dev/ixgbe/ixgbe_type.h,v 1.12 2011/01/19 19:36:27 jfv Exp $*/
-/*$NetBSD: ixgbe_type.h,v 1.4 2015/02/24 13:59:58 msaitoh Exp $*/
+/*$NetBSD: ixgbe_type.h,v 1.5 2015/02/24 14:08:07 msaitoh Exp $*/
 
 #ifndef _IXGBE_TYPE_H_
 #define _IXGBE_TYPE_H_
@@ -164,19 +164,19 @@
 
 /* Receive DMA Registers */
 #define IXGBE_RDBAL(_i)	(((_i) < 64) ? (0x01000 + ((_i) * 0x40)) : \
-			 (0x0D000 + ((_i - 64) * 0x40)))
+			 (0x0D000 + (((_i) - 64) * 0x40)))
 #define IXGBE_RDBAH(_i)	(((_i) < 64) ? (0x01004 + ((_i) * 0x40)) : \
-			 (0x0D004 + ((_i - 64) * 0x40)))
+			 (0x0D004 + (((_i) - 64) * 0x40)))
 #define IXGBE_RDLEN(_i)	(((_i) < 64) ? (0x01008 + ((_i) * 0x40)) : \
-			 (0x0D008 + ((_i - 64) * 0x40)))
+			 (0x0D008 + (((_i) - 64) * 0x40)))
 #define IXGBE_RDH(_i)	(((_i) < 64) ? (0x01010 + ((_i) * 0x40)) : \
-			 (0x0D010 + ((_i - 64) * 0x40)))
+			 (0x0D010 + (((_i) - 64) * 0x40)))
 #define IXGBE_RDT(_i)	(((_i) < 64) ? (0x01018 + ((_i) * 0x40)) : \
-			 (0x0D018 + ((_i - 64) * 0x40)))
+			 (0x0D018 + (((_i) - 64) * 0x40)))
 #define IXGBE_RXDCTL(_i)	(((_i) < 64) ? (0x01028 + ((_i) * 0x40)) : \
-			  	 (0x0D028 + ((_i - 64) * 0x40)))
+				 (0x0D028 + (((_i) - 64) * 0x40)))
 #define IXGBE_RSCCTL(_i)	(((_i) < 64) ? (0x0102C + ((_i) * 0x40)) : \
-			  	 (0x0D02C + ((_i - 64) * 0x40)))
+				 (0x0D02C + (((_i) - 64) * 0x40)))
 #define IXGBE_RSCDBU	0x03028
 #define IXGBE_RDDCC	0x02F20
 #define IXGBE_RXMEMWRAP	0x03190
@@ -189,7 +189,7 @@
  */
 #define IXGBE_SRRCTL(_i)	(((_i) <= 15) ? (0x02100 + ((_i) * 4)) : \
 				 (((_i) < 64) ? (0x01014 + ((_i) * 0x40)) : \
-				 (0x0D014 + ((_i - 64) * 0x40))))
+				 (0x0D014 + (((_i) - 64) * 0x40))))
 /*
  * Rx DCA Control Register:
  * 00-15 : 0x02200 + n*4
@@ -198,7 +198,7 @@
  */
 #define IXGBE_DCA_RXCTRL(_i)	(((_i) <= 15) ? (0x02200 + ((_i) * 4)) : \
 				 (((_i) < 64) ? (0x0100C + ((_i) * 0x40)) : \
-				 (0x0D00C + ((_i - 64) * 0x40))))
+				 (0x0D00C + (((_i) - 64) * 0x40))))
 #define IXGBE_RDRXCTL		0x02F00
 #define IXGBE_RDRXCTL_RSC_PUSH	0x80
 /* 8 of these 0x03C00 - 0x03C1C */
@@ -2022,9 +2022,9 @@
 
 /* SR-IOV specific macros */
 #define IXGBE_MBVFICR_INDEX(vf_number)	(vf_number >> 4)
-#define IXGBE_MBVFICR(_i)		(0x00710 + (_i * 4))
+#define IXGBE_MBVFICR(_i)		(0x00710 + ((_i) * 4))
 #define IXGBE_VFLRE(_i)			(((_i & 1) ? 0x001C0 : 0x00600))
-#define IXGBE_VFLREC(_i)		 (0x00700 + (_i * 4))
+#define IXGBE_VFLREC(_i)		 (0x00700 + ((_i) * 4))
 
 /* Little Endian defines */
 #ifndef __le16
