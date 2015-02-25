@@ -66,7 +66,7 @@ nouveau_pwr(void *obj)
 int nouveau_pwr_create_(struct nouveau_object *, struct nouveau_object *,
 			   struct nouveau_oclass *, int, void **);
 #ifdef __NetBSD__
-int _nouveau_pwr_dtor(struct nouveau_object *);
+void _nouveau_pwr_dtor(struct nouveau_object *);
 #else
 #define _nouveau_pwr_dtor _nouveau_subdev_dtor
 #endif
