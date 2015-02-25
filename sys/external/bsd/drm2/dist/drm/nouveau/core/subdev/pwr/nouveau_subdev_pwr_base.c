@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_pwr_base.c,v 1.3 2015/02/25 17:29:43 riastradh Exp $	*/
+/*	$NetBSD: nouveau_subdev_pwr_base.c,v 1.4 2015/02/25 22:12:00 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_pwr_base.c,v 1.3 2015/02/25 17:29:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_pwr_base.c,v 1.4 2015/02/25 22:12:00 riastradh Exp $");
 
 #include <subdev/pwr.h>
 #include <subdev/timer.h>
@@ -271,7 +271,7 @@ nouveau_pwr_create_(struct nouveau_object *parent,
 }
 
 #ifdef __NetBSD__
-int
+void
 _nouveau_pwr_dtor(struct nouveau_object *object)
 {
 	struct nouveau_pwr *ppwr = (void *)object;
