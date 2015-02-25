@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.105 2015/02/25 00:26:58 roy Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.106 2015/02/25 12:45:34 roy Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.105 2015/02/25 00:26:58 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.106 2015/02/25 12:45:34 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -823,7 +823,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	ln->ln_asked = 0;
 	nd6_llinfo_release_pkts(ln, ifp, rt);
 	if (rt_announce) /* tell user process about any new lladdr */
-		nd6_rtmsg(RTM_CHANGE, rt);
+		rt_newmsg(RTM_CHANGE, rt);
 
  freeit:
 	m_freem(m);

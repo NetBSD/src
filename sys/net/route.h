@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.85 2015/02/24 20:06:09 roy Exp $	*/
+/*	$NetBSD: route.h,v 1.86 2015/02/25 12:45:34 roy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -386,6 +386,7 @@ struct rtentry *
 	 rtalloc1(const struct sockaddr *, int);
 void	 rtfree(struct rtentry *);
 int	 rt_getifa(struct rt_addrinfo *);
+void	 rt_newmsg(int, struct rtentry *);
 int	 rtinit(struct ifaddr *, int, int);
 void	 rtredirect(const struct sockaddr *, const struct sockaddr *,
 	    const struct sockaddr *, int, const struct sockaddr *,
