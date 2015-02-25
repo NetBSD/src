@@ -1,4 +1,4 @@
-/*	$NetBSD: unaligned.h,v 1.2 2015/02/25 14:36:58 riastradh Exp $	*/
+/*	$NetBSD: unaligned.h,v 1.3 2015/02/25 15:01:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,6 +33,20 @@
 #define _ASM_UNALIGNED_H_
 
 #include <sys/endian.h>
+
+static inline uint16_t
+get_unaligned_le16(const void *p)
+{
+
+	return le16dec(p);
+}
+
+static inline void
+put_unaligned_le16(uint16_t v, void *p)
+{
+
+	return le16enc(p, v);
+}
 
 static inline uint32_t
 get_unaligned_le32(const void *p)
