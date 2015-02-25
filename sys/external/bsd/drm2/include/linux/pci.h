@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.13 2015/02/25 14:50:51 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.14 2015/02/25 14:51:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -512,9 +512,10 @@ pci_map_rom(struct pci_dev *pdev, size_t *sizep)
 }
 
 static inline void __pci_rom_iomem *
-pci_platform_rom(struct pci_dev *pdev __unused)
+pci_platform_rom(struct pci_dev *pdev __unused, size_t *sizep)
 {
 
+	*sizep = 0;
 	return NULL;
 }
 
