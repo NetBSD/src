@@ -1650,6 +1650,10 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	mutex_init(&dev_priv->modeset_restore_lock);
 #endif
 
+#ifdef __NetBSD__
+	spin_lock_init(&mchdev_lock);
+#endif
+
 	intel_pm_setup(dev);
 
 	intel_display_crc_init(dev);
@@ -1865,6 +1869,7 @@ free_priv:
 	if (dev_priv->slab)
 		kmem_cache_destroy(dev_priv->slab);
 #ifdef __NetBSD__
+	spin_lock_destroy(&mchdev_lock);
 	linux_mutex_destroy(&dev_priv->modeset_restore_lock);
 	linux_mutex_destroy(&dev_priv->dpio_lock);
 	spin_lock_destroy(&dev_priv->mm.object_stat_lock);
@@ -1985,6 +1990,7 @@ int i915_driver_unload(struct drm_device *dev)
 	DRM_DESTROY_WAITQUEUE(&dev_priv->pending_flip_queue);
 	spin_lock_destroy(&dev_priv->pending_flip_lock);
 	DRM_DESTROY_WAITQUEUE(&dev_priv->gpu_error.reset_queue);
+	spin_lock_destroy(&mchdev_lock);
 	linux_mutex_destroy(&dev_priv->modeset_restore_lock);
 	linux_mutex_destroy(&dev_priv->dpio_lock);
 	spin_lock_destroy(&dev_priv->mm.object_stat_lock);
