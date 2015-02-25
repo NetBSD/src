@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.201 2015/02/25 14:08:45 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.202 2015/02/25 23:14:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.201 2015/02/25 14:08:45 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.202 2015/02/25 23:14:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2564,8 +2564,8 @@ puffs_vnop_write(void *v)
 		va.va_size = vp->v_size;
 		ret = dosetattr(vp, &va, FSCRED, 0);
 		if (ret) {
-			DPRINTF(("dosetattr set size to %lld failed: %d\n",
-				 vp->v_size, ret));
+			DPRINTF(("dosetattr set size to %jd failed: %d\n",
+			    (intmax_t)vp->v_size, ret));
 		}
 	}
 	mutex_exit(&pn->pn_sizemtx);
