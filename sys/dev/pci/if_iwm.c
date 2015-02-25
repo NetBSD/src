@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.14 2015/02/24 12:57:58 christos Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.15 2015/02/25 12:41:15 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.14 2015/02/24 12:57:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.15 2015/02/25 12:41:15 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -6296,8 +6296,9 @@ iwm_notif_intr(struct iwm_softc *sc)
 
 		default:
 			aprint_error_dev(sc->sc_dev,
-			    "frame %d/%d %x UNHANDLED (this should "
-			    "not happen)\n", qid, idx, pkt->len_n_flags);
+			    "code %02x frame %d/%d %x UNHANDLED "
+			    "(this should not happen)\n",
+			    pkt->hdr.code, qid, idx, pkt->len_n_flags);
 			break;
 		}
 
