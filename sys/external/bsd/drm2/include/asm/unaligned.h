@@ -1,4 +1,4 @@
-/*	$NetBSD: unaligned.h,v 1.1 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: unaligned.h,v 1.2 2015/02/25 14:36:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,6 +39,13 @@ get_unaligned_le32(const void *p)
 {
 
 	return le32dec(p);
+}
+
+static inline void
+put_unaligned_le32(uint32_t v, void *p)
+{
+
+	return le32enc(p, v);
 }
 
 #endif  /* _ASM_UNALIGNED_H_ */
