@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.4 2014/12/03 22:59:22 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.5 2015/02/25 14:57:04 riastradh Exp $
 
 device	nouveau: drmkms, drmkms_pci, drmkms_ttm, genfb, wsemuldisplaydev
 attach	nouveau at pci
@@ -112,7 +112,9 @@ makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_vp_nv98.c"+="-Wno-missing-field-i
 makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_vp_nvc0.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_engine_vp_nve0.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_nv50_fence.c"+="-Wno-shadow"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_nv50_display.c"+="-Wno-unused-but-set-variable"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_bar_base.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_bar_nv50.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_bar_nvc0.c"+="-Wno-missing-field-initializers"
 
 file	external/bsd/drm2/nouveau/nouveau_module.c	nouveau
