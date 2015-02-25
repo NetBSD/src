@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.200 2015/02/15 20:21:29 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.201 2015/02/25 14:08:45 manu Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.200 2015/02/15 20:21:29 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.201 2015/02/25 14:08:45 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2551,6 +2551,23 @@ puffs_vnop_write(void *v)
 	uflags |= PUFFS_UPDATEMTIME;
 	puffs_updatenode(VPTOPP(vp), uflags, vp->v_size);
 
+	/*
+	 * If we do not use meta flush, we need to update the
+	 * filesystem now, otherwise we will get a stale value
+	 * on the next GETATTR
+	 */
+	if (!PUFFS_USE_METAFLUSH(pmp) && (uflags & PUFFS_UPDATESIZE)) {
+		struct vattr va;
+		int ret;
+
+		vattr_null(&va);
+		va.va_size = vp->v_size;
+		ret = dosetattr(vp, &va, FSCRED, 0);
+		if (ret) {
+			DPRINTF(("dosetattr set size to %lld failed: %d\n",
+				 vp->v_size, ret));
+		}
+	}
 	mutex_exit(&pn->pn_sizemtx);
 	return error;
 }
