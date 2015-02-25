@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.6 2015/02/25 17:29:42 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.7 2015/02/25 22:11:59 riastradh Exp $
 
 device	nouveau: drmkms, drmkms_pci, drmkms_ttm, genfb, wsemuldisplaydev
 attach	nouveau at pci
@@ -229,7 +229,16 @@ makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_therm_ic.c"+="-Wno-missing-field-
 makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_therm_nv40.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_therm_nv50.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_therm_nv84.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_therm_nva3.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_therm_nvd0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_timer_gk20a.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_timer_nv04.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_vm_nv04.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_vm_nv41.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_vm_nv44.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_vm_nv50.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_vm_nvc0.c"+="-Wno-missing-field-initializers"
+makeoptions	nouveau	"CWARNFLAGS.nouveau_subdev_volt_nv40.c"+="-Wno-missing-field-initializers"
 
 file	external/bsd/drm2/nouveau/nouveau_module.c	nouveau
 
@@ -564,6 +573,6 @@ file	external/bsd/drm2/dist/drm/nouveau/nouveau_nv84_fence.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_nvc0_fence.c	nouveau
 #file	external/bsd/drm2/dist/drm/nouveau/nouveau_prime.c	nouveau	# XXX drm prime
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_sgdma.c	nouveau
-file	external/bsd/drm2/dist/drm/nouveau/nouveau_sysfs.c	nouveau
+#file	external/bsd/drm2/dist/drm/nouveau/nouveau_sysfs.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_ttm.c	nouveau
-file	external/bsd/drm2/dist/drm/nouveau/nouveau_vga.c	nouveau
+#file	external/bsd/drm2/dist/drm/nouveau/nouveau_vga.c	nouveau
