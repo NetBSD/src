@@ -4426,14 +4426,6 @@ ips_ping_for_i915_load(void)
 
 void intel_gpu_ips_init(struct drm_i915_private *dev_priv)
 {
-#ifdef __NetBSD__		/* XXX */
-	/*
-	 * This seems as good a place as any to initialize mchdev_lock.
-	 * Taking the lock in the rest of this routine is silly, but...
-	 */
-	spin_lock_init(&mchdev_lock);
-#endif
-
 	/* We only register the i915 ips part with intel-ips once everything is
 	 * set up, to avoid intel-ips sneaking in and reading bogus values. */
 	spin_lock_irq(&mchdev_lock);
@@ -4445,18 +4437,9 @@ void intel_gpu_ips_init(struct drm_i915_private *dev_priv)
 
 void intel_gpu_ips_teardown(void)
 {
-#ifdef __NetBSD__
-	if (i915_mch_dev == NULL)
-		return;
-#endif
-
 	spin_lock_irq(&mchdev_lock);
 	i915_mch_dev = NULL;
 	spin_unlock_irq(&mchdev_lock);
-
-#ifdef __NetBSD__
-	spin_lock_destroy(&mchdev_lock);
-#endif
 }
 
 static void intel_init_emon(struct drm_device *dev)
