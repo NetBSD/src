@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.134 2014/12/02 19:57:11 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.135 2015/02/25 12:45:34 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.134 2014/12/02 19:57:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.135 2015/02/25 12:45:34 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -888,6 +888,26 @@ rt_maskedcopy(const struct sockaddr *src, struct sockaddr *dst,
 		*dstp++ = *srcp++ & *netmaskp++;
 	if (dstp < srcend)
 		memset(dstp, 0, (size_t)(srcend - dstp));
+}
+
+/*
+ * Inform the routing socket of a route change.
+ */
+void
+rt_newmsg(int cmd, struct rtentry *rt)
+{
+	struct rt_addrinfo info;
+
+	memset((void *)&info, 0, sizeof(info));
+	info.rti_info[RTAX_DST] = rt_getkey(rt);
+	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+	if (rt->rt_ifp) {
+		info.rti_info[RTAX_IFP] = rt->rt_ifp->if_dl->ifa_addr;
+		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
+	}
+
+	rt_missmsg(cmd, &info, rt->rt_flags, 0);
 }
 
 /*
