@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_mc_base.c,v 1.1.1.1 2014/08/06 12:36:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_subdev_mc_base.c,v 1.2 2015/02/25 17:29:43 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_mc_base.c,v 1.1.1.1 2014/08/06 12:36:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_mc_base.c,v 1.2 2015/02/25 17:29:43 riastradh Exp $");
 
 #include <subdev/mc.h>
 #include <core/option.h>
@@ -39,8 +39,13 @@ nouveau_mc_intr_mask(struct nouveau_mc *pmc)
 	return intr;
 }
 
+#ifdef __NetBSD__
+static int
+nouveau_mc_intr(void *arg)
+#else
 static irqreturn_t
 nouveau_mc_intr(int irq, void *arg)
+#endif
 {
 	struct nouveau_mc *pmc = arg;
 	const struct nouveau_mc_oclass *oclass = (void *)nv_object(pmc)->oclass;
@@ -71,7 +76,11 @@ nouveau_mc_intr(int irq, void *arg)
 	}
 
 	nv_wr32(pmc, 0x000140, 0x00000001);
+#ifdef __NetBSD__
+	return intr ? 1 : 0;
+#else
 	return intr ? IRQ_HANDLED : IRQ_NONE;
+#endif
 }
 
 int
@@ -98,7 +107,11 @@ _nouveau_mc_dtor(struct nouveau_object *object)
 {
 	struct nouveau_device *device = nv_device(object);
 	struct nouveau_mc *pmc = (void *)object;
+#ifdef __NetBSD__
+	pci_intr_disestablish(device->pdev->pd_pa.pa_pc, pmc->irq_cookie);
+#else
 	free_irq(pmc->irq, pmc);
+#endif
 	if (pmc->use_msi)
 		pci_disable_msi(device->pdev);
 	nouveau_subdev_destroy(&pmc->base);
@@ -154,11 +167,23 @@ nouveau_mc_create_(struct nouveau_object *parent, struct nouveau_object *engine,
 		return ret;
 	pmc->irq = ret;
 
+#ifdef __NetBSD__
+	if (nv_device_is_pci(device)) {
+		const pci_chipset_tag_t pc = device->pdev->pd_pa.pa_pc;
+
+		__CTASSERT(sizeof(pci_intr_handle_t) <= sizeof pmc->irq);
+		pmc->irq_cookie = pci_intr_establish(pc, pmc->irq, IPL_VM,
+		    &nouveau_mc_intr, pmc);
+		if (pmc->irq_cookie == NULL)
+			return -EIO;
+	}
+#else
 	ret = request_irq(pmc->irq, nouveau_mc_intr, IRQF_SHARED, "nouveau",
 			  pmc);
 
 	if (ret < 0)
 		return ret;
+#endif
 
 	return 0;
 }
