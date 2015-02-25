@@ -13,6 +13,9 @@ struct nouveau_mc {
 	struct nouveau_subdev base;
 	bool use_msi;
 	unsigned int irq;
+#ifdef __NetBSD__
+	void *irq_cookie;
+#endif
 };
 
 static inline struct nouveau_mc *
