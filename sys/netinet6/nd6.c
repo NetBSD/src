@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.158 2015/02/23 19:15:59 martin Exp $	*/
+/*	$NetBSD: nd6.c,v 1.159 2015/02/25 00:26:58 roy Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.158 2015/02/23 19:15:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.159 2015/02/25 00:26:58 roy Exp $");
 
 #include "bridge.h"
 #include "carp.h"
@@ -599,7 +599,8 @@ nd6_timer(void *ignored_arg)
 
 			if ((oldflags & IN6_IFF_DEPRECATED) == 0) {
 				ia6->ia6_flags |= IN6_IFF_DEPRECATED;
-				nd6_newaddrmsg((struct ifaddr *)ia6);
+				rt_newaddrmsg(RTM_NEWADDR,
+				    (struct ifaddr *)ia6, 0, NULL);
 			}
 
 			/*
@@ -633,7 +634,8 @@ nd6_timer(void *ignored_arg)
 			 */
 			if (ia6->ia6_flags & IN6_IFF_DEPRECATED) {
 				ia6->ia6_flags &= ~IN6_IFF_DEPRECATED;
-				nd6_newaddrmsg((struct ifaddr *)ia6);
+				rt_newaddrmsg(RTM_NEWADDR,
+				    (struct ifaddr *)ia6, 0, NULL);
 			}
 		}
 	}

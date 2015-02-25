@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.96 2015/02/23 19:15:59 martin Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.97 2015/02/25 00:26:58 roy Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.96 2015/02/23 19:15:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.97 2015/02/25 00:26:58 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1593,7 +1593,8 @@ pfxlist_onlink_check(void)
 			} else {
 				if ((ifa->ia6_flags & IN6_IFF_DETACHED) == 0) {
 					ifa->ia6_flags |= IN6_IFF_DETACHED;
-					nd6_newaddrmsg((struct ifaddr *)ifa);
+					rt_newaddrmsg(RTM_NEWADDR,
+					    (struct ifaddr *)ifa, 0, NULL);
 				}
 			}
 		}

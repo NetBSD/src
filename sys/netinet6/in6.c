@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.182 2015/02/23 19:15:59 martin Exp $	*/
+/*	$NetBSD: in6.c,v 1.183 2015/02/25 00:26:58 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.182 2015/02/23 19:15:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.183 2015/02/25 00:26:58 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -194,21 +194,7 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 	 *      omit the second report?
 	 */
 	if (nrt) {
-		if (cmd != RTM_ADD ||
-		    !(((struct in6_ifaddr *)ifa)->ia6_flags &IN6_IFF_TENTATIVE))
-		{
-#if 0
-			struct in6_ifaddr *ia;
-
-			ia = (struct in6_ifaddr *)ifa;
-			log(LOG_DEBUG,
-			    "in6_ifloop_request: announced %s (%s %d)\n",
-			    ip6_sprintf(&ia->ia_addr.sin6_addr),
-			    cmd == RTM_ADD ? "RTM_ADD" : "RTM_DELETE",
-			    ia->ia6_flags);
-#endif
-			rt_newaddrmsg(cmd, ifa, e, nrt);
-		}
+		rt_newaddrmsg(cmd, ifa, e, nrt);
 		if (cmd == RTM_DELETE) {
 			if (nrt->rt_refcnt <= 0) {
 				/* XXX: we should free the entry ourselves. */
@@ -1799,7 +1785,7 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 		in6_ifaddloop(&ia->ia_ifa);
 	} else {
 		/* Inform the routing socket of new flags/timings */
-		nd6_newaddrmsg(&ia->ia_ifa);
+		rt_newaddrmsg(RTM_NEWADDR, &ia->ia_ifa, 0, NULL);
 	}
 
 	if (ifp->if_flags & IFF_MULTICAST)
@@ -2110,7 +2096,7 @@ in6_if_link_up(struct ifnet *ifp)
 				    "%s marked tentative\n",
 				    ip6_sprintf(&ia->ia_addr.sin6_addr)));
 			} else if ((ia->ia6_flags & IN6_IFF_TENTATIVE) == 0)
-				nd6_newaddrmsg(ifa);
+				rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 		}
 
 		if (ia->ia6_flags & IN6_IFF_TENTATIVE) {
@@ -2184,7 +2170,7 @@ in6_if_link_down(struct ifnet *ifp)
 			ia->ia6_flags |= IN6_IFF_DETACHED;
 			ia->ia6_flags &=
 			    ~(IN6_IFF_TENTATIVE | IN6_IFF_DUPLICATED);
-			nd6_newaddrmsg(ifa);
+			rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 		}
 	}
 }
