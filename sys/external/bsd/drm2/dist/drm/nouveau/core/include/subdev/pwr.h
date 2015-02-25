@@ -32,7 +32,6 @@ struct nouveau_pwr {
 
 		struct work_struct work;
 #ifdef __NetBSD__
-		struct mutex lock;
 		drm_waitqueue_t wait;
 #else
 		wait_queue_head_t wait;
