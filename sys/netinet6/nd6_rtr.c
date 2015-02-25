@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.97 2015/02/25 00:26:58 roy Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.98 2015/02/25 12:45:34 roy Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.97 2015/02/25 00:26:58 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.98 2015/02/25 12:45:34 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -413,25 +413,6 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 /*
  * default router list processing sub routines
  */
-
-/* tell the change to user processes watching the routing socket. */
-void
-nd6_rtmsg(int cmd, struct rtentry *rt)
-{
-	struct rt_addrinfo info;
-
-	memset((void *)&info, 0, sizeof(info));
-	info.rti_info[RTAX_DST] = rt_getkey(rt);
-	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-	if (rt->rt_ifp) {
-		info.rti_info[RTAX_IFP] = rt->rt_ifp->if_dl->ifa_addr;
-		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
-	}
-
-	rt_missmsg(cmd, &info, rt->rt_flags, 0);
-}
-
 void
 defrouter_addreq(struct nd_defrouter *newdr)
 {
@@ -459,7 +440,7 @@ defrouter_addreq(struct nd_defrouter *newdr)
 	error = rtrequest(RTM_ADD, &def.sa, &gate.sa, &mask.sa,
 	    RTF_GATEWAY, &newrt);
 	if (newrt) {
-		nd6_rtmsg(RTM_ADD, newrt); /* tell user process */
+		rt_newmsg(RTM_ADD, newrt); /* tell user process */
 		newrt->rt_refcnt--;
 		nd6_numroutes++;
 	}
@@ -572,7 +553,7 @@ defrouter_delreq(struct nd_defrouter *dr)
 
 	rtrequest(RTM_DELETE, &def.sa, &gw.sa, &mask.sa, RTF_GATEWAY, &oldrt);
 	if (oldrt) {
-		nd6_rtmsg(RTM_DELETE, oldrt);
+		rt_newmsg(RTM_DELETE, oldrt);
 		if (oldrt->rt_refcnt <= 0) {
 			/*
 			 * XXX: borrowed from the RTM_DELETE case of
@@ -1705,7 +1686,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	    ifa->ifa_addr, (struct sockaddr *)&mask6, rtflags, &rt);
 	if (error == 0) {
 		if (rt != NULL) { /* this should be non NULL, though */
-			nd6_rtmsg(RTM_ADD, rt);
+			rt_newmsg(RTM_ADD, rt);
 			nd6_numroutes++;
 		}
 		pr->ndpr_stateflags |= NDPRF_ONLINK;
@@ -1751,7 +1732,7 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 
 		/* report the route deletion to the routing socket. */
 		if (rt != NULL) {
-			nd6_rtmsg(RTM_DELETE, rt);
+			rt_newmsg(RTM_DELETE, rt);
 			nd6_numroutes--;
 		}
 
