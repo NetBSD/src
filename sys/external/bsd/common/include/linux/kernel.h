@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.4 2014/07/16 20:59:57 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.5 2015/02/25 15:11:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -162,6 +162,18 @@ scnprintf(char *buf, size_t size, const char *fmt, ...)
 	va_end(va);
 
 	return ret;
+}
+
+static inline int
+kstrtol(const char *s, unsigned base, long *vp)
+{
+	long long v;
+
+	v = strtoll(s, NULL, base);
+	if (v < LONG_MIN || LONG_MAX < v)
+		return -ERANGE;
+	*vp = v;
+	return 0;
 }
 
 #endif  /* _LINUX_KERNEL_H_ */
