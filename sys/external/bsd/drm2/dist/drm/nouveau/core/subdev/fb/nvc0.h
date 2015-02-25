@@ -6,7 +6,13 @@
 
 struct nvc0_fb_priv {
 	struct nouveau_fb base;
+#ifdef __NetBSD__
+	bus_dma_segment_t r100c10_seg;
+	bus_dmamap_t r100c10_map;
+	void *r100c10_kva;
+#else
 	struct page *r100c10_page;
+#endif
 	dma_addr_t r100c10;
 };
 
