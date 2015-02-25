@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.5 2015/02/25 15:11:07 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.6 2015/02/25 15:50:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
 #define	min_t(T, X, Y)	MIN(X, Y)
 
 #define	clamp_t(T, X, MIN, MAX)	min_t(T, max_t(T, X, MIN), MAX)
+#define	clamp(X, MN, MX)	MIN(MAX(X, MN), MX)
 
 /*
  * Rounding to nearest.
