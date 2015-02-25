@@ -28,6 +28,8 @@
 #include <linux/list.h>
 #include <linux/spinlock.h>
 
+#include <asm/byteorder.h>
+#include <asm/io.h>
 #include <asm/unaligned.h>
 
 #ifndef __NetBSD__		/* XXX ioread */
