@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.159 2015/02/25 00:26:58 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.160 2015/02/25 12:45:34 roy Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.159 2015/02/25 00:26:58 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.160 2015/02/25 12:45:34 roy Exp $");
 
 #include "bridge.h"
 #include "carp.h"
@@ -1150,7 +1150,7 @@ nd6_free(struct rtentry *rt, int gc)
 	oldrt = NULL;
 	rtrequest(RTM_DELETE, rt_getkey(rt), NULL, rt_mask(rt), 0, &oldrt);
 	if (oldrt) {
-		nd6_rtmsg(RTM_DELETE, oldrt); /* tell user process */
+		rt_newmsg(RTM_DELETE, oldrt); /* tell user process */
 		if (oldrt->rt_refcnt <= 0) {
 			oldrt->rt_refcnt++;
 			rtfree(oldrt);
@@ -2086,7 +2086,7 @@ fail:
 	}
 
 	if (do_update)
-		nd6_rtmsg(RTM_CHANGE, rt);  /* tell user process */
+		rt_newmsg(RTM_CHANGE, rt);  /* tell user process */
 
 	/*
 	 * When the link-layer address of a router changes, select the
