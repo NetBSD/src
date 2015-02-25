@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_sysctl.c,v 1.4 2014/11/24 17:29:02 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_sysctl.c,v 1.5 2015/02/25 14:00:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -96,6 +96,8 @@ drm_sysctl_get_type(const struct linux_module_param_info *p)
 		return CTLTYPE_BOOL;
 	case MTYPE_int:
 		return CTLTYPE_INT;
+	case MTYPE_charp:
+		return CTLTYPE_STRING;
 	default:
 		aprint_error("unhandled module param type %d for %s\n",
 		    p->type, p->name);
