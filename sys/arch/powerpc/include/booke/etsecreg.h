@@ -1,4 +1,4 @@
-/*	$NetBSD: etsecreg.h,v 1.6 2015/02/17 01:53:21 nonaka Exp $	*/
+/*	$NetBSD: etsecreg.h,v 1.7 2015/02/26 02:21:38 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -355,7 +355,7 @@ struct rxfcb {
 #define RBASE5		0x42C /* RxBD base address of ring 5 [TSEC3] */
 #define RBASE6		0x434 /* RxBD base address of ring 6 [TSEC3] */
 #define RBASE7		0x43C /* RxBD base address of ring 7 [TSEC3] */
-#define RBASEn(n)	(RBASE0 + 4*(n))
+#define RBASEn(n)	(RBASE0 + 8*(n))
 #define TMR_RXTS_H	0x4C0 /* Rx timer time stamp register high [TSEC3] */
 #define TMR_RXTS_L	0x4C4 /* Rx timer time stamp register low [TSEC3] */
 
