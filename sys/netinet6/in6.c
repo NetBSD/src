@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.184 2015/02/26 09:54:46 roy Exp $	*/
+/*	$NetBSD: in6.c,v 1.185 2015/02/26 12:58:36 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.184 2015/02/26 09:54:46 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.185 2015/02/26 12:58:36 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -154,6 +154,14 @@ static void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
 void
 in6_ifaddlocal(struct ifaddr *ifa)
 {
+
+	if (IN6_ARE_ADDR_EQUAL(IFA_IN6(ifa), &in6addr_any) ||
+	    (ifa->ifa_ifp->if_flags & IFF_POINTOPOINT &&
+	    IN6_ARE_ADDR_EQUAL(IFA_IN6(ifa), IFA_DSTIN6(ifa))))
+	{
+		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+		return;
+	}
 
 	rt_ifa_addlocal(ifa);
 }
