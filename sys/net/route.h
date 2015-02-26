@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.86 2015/02/25 12:45:34 roy Exp $	*/
+/*	$NetBSD: route.h,v 1.87 2015/02/26 09:54:46 roy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -155,6 +155,7 @@ struct ortentry {
 #define RTF_PROTO1	0x8000		/* protocol specific routing flag */
 #define RTF_SRC		0x10000		/* route has fixed source address */
 #define RTF_ANNOUNCE	0x20000		/* announce new ARP or NDP entry */
+#define RTF_LOCAL	0x40000		/* route represents a local address */
 
 /*
  * Routing statistics.
@@ -504,6 +505,8 @@ struct rtentry *rt_lookup(rtbl_t *, const struct sockaddr *,
 struct rtentry *rt_deladdr(rtbl_t *, const struct sockaddr *,
     const struct sockaddr *);
 void rtbl_init(void);
+int rt_ifa_addlocal(struct ifaddr *);
+int rt_ifa_remlocal(struct ifaddr *, struct ifaddr *);
 rtbl_t *rt_gettable(sa_family_t);
 void rt_assert_inactive(const struct rtentry *);
 

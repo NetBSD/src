@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.160 2014/11/13 16:11:18 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.161 2015/02/26 09:54:46 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.160 2014/11/13 16:11:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.161 2015/02/26 09:54:46 roy Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -453,7 +453,9 @@ arp_setgate(struct rtentry *rt, struct sockaddr *gate,
 	if ((rt->rt_flags & RTF_HOST) == 0 && netmask != NULL &&
 	    satocsin(netmask)->sin_addr.s_addr != 0xffffffff)
 		rt->rt_flags |= RTF_CLONING;
-	if (rt->rt_flags & RTF_CLONING) {
+	if (rt->rt_flags & RTF_CLONING ||
+	    ((rt->rt_flags & (RTF_LLINFO | RTF_LOCAL)) && !rt->rt_llinfo))
+	{
 		union {
 			struct sockaddr sa;
 			struct sockaddr_storage ss;
@@ -554,7 +556,9 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		break;
 	case RTM_ADD:
 		gate = arp_setgate(rt, gate, info->rti_info[RTAX_NETMASK]);
-		if (rt->rt_flags & RTF_CLONING) {
+		if (rt->rt_flags & RTF_CLONING ||
+		    ((rt->rt_flags & (RTF_LLINFO | RTF_LOCAL)) && !la))
+		{
 			/*
 			 * Give this route an expiration time, even though
 			 * it's a "permanent" route, so that routes cloned
@@ -592,7 +596,8 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			    }
 #endif
 			}
-			break;
+			if (rt->rt_flags & RTF_CLONING)
+				break;
 		}
 		/* Announce a new entry if requested. */
 		if (rt->rt_flags & RTF_ANNOUNCE) {

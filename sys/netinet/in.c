@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.149 2014/12/01 17:07:43 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.150 2015/02/26 09:54:46 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.149 2014/12/01 17:07:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.150 2015/02/26 09:54:46 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -602,6 +602,40 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	return error;
 }
 
+/* Add ownaddr as loopback rtentry. */
+static void
+in_ifaddlocal(struct ifaddr *ifa)
+{
+
+	rt_ifa_addlocal(ifa);
+}
+
+/* Rempve loopback entry of ownaddr */
+static void
+in_ifremlocal(struct ifaddr *ifa)
+{
+	struct in_ifaddr *ia, *p;
+	struct ifaddr *alt_ifa = NULL;
+	int ia_count = 0;
+
+	ia = (struct in_ifaddr *)ifa;
+	/* Delete the entry if exactly one ifaddr matches the
+	 * address, ifa->ifa_addr. */
+	TAILQ_FOREACH(p, &in_ifaddrhead, ia_list) {
+		if (!in_hosteq(p->ia_addr.sin_addr, ia->ia_addr.sin_addr))
+			continue;
+		if (p->ia_ifp != ia->ia_ifp)
+			alt_ifa = &p->ia_ifa;
+		if (++ia_count > 1 && alt_ifa != NULL)
+			break;
+	}
+
+	if (ia_count == 0)
+		return;
+
+	rt_ifa_remlocal(ifa, ia_count == 1 ? NULL : alt_ifa);
+}
+
 void
 in_purgeaddr(struct ifaddr *ifa)
 {
@@ -609,6 +643,7 @@ in_purgeaddr(struct ifaddr *ifa)
 	struct in_ifaddr *ia = (void *) ifa;
 
 	in_ifscrub(ifp, ia);
+	in_ifremlocal(ifa);
 	LIST_REMOVE(ia, ia_hash);
 	ifa_remove(ifp, &ia->ia_ifa);
 	TAILQ_REMOVE(&in_ifaddrhead, ia, ia_list);
@@ -857,6 +892,9 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 		ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
 	}
 
+	/* Add the local route to the address */
+	in_ifaddlocal(&ia->ia_ifa);
+
 	i = ia->ia_addr.sin_addr.s_addr;
 	if (IN_CLASSA(i))
 		ia->ia_netmask = IN_CLASSA_NET;
@@ -958,13 +996,9 @@ in_addprefix(struct in_ifaddr *target, int flags)
 		 * interface address, we don't need to bother
 		 *
 		 * XXX RADIX_MPATH implications here? -dyoung
-		 *
-		 * But we should still notify userland of the new address
 		 */
-		if (ia->ia_flags & IFA_ROUTE) {
-			rt_newaddrmsg(RTM_NEWADDR, &target->ia_ifa, 0, NULL);
+		if (ia->ia_flags & IFA_ROUTE)
 			return 0;
-		}
 	}
 
 	/*
@@ -974,9 +1008,9 @@ in_addprefix(struct in_ifaddr *target, int flags)
 	if (error == 0)
 		target->ia_flags |= IFA_ROUTE;
 	else if (error == EEXIST) {
-		/* 
+		/*
 		 * the fact the route already exists is not an error.
-		 */ 
+		 */
 		error = 0;
 	}
 	return error;
@@ -995,10 +1029,8 @@ in_scrubprefix(struct in_ifaddr *target)
 	int error;
 
 	/* If we don't have IFA_ROUTE we should still inform userland */
-	if ((target->ia_flags & IFA_ROUTE) == 0) {
-		rt_newaddrmsg(RTM_DELADDR, &target->ia_ifa, 0, NULL);
+	if ((target->ia_flags & IFA_ROUTE) == 0)
 		return 0;
-	}
 
 	if (rtinitflags(target))
 		prefix = target->ia_dstaddr.sin_addr;
