@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.17 2014/12/03 18:33:02 joerg Exp $      */
+/*      $NetBSD: bswap.h,v 1.18 2015/02/26 15:01:53 joerg Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
@@ -6,8 +6,7 @@
 #define _SYS_BSWAP_H_
 
 #ifndef _LOCORE
-#include <sys/cdefs.h>
-#include <sys/types.h>
+#include <sys/stdint.h>
 
 #include <machine/bswap.h>
 
