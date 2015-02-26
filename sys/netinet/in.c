@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.150 2015/02/26 09:54:46 roy Exp $	*/
+/*	$NetBSD: in.c,v 1.151 2015/02/26 12:58:36 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.150 2015/02/26 09:54:46 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.151 2015/02/26 12:58:36 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -606,6 +606,16 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 static void
 in_ifaddlocal(struct ifaddr *ifa)
 {
+	struct in_ifaddr *ia;
+
+	ia = (struct in_ifaddr *)ifa;
+	if (ia->ia_addr.sin_addr.s_addr == INADDR_ANY ||
+	    (ia->ia_ifp->if_flags & IFF_POINTOPOINT &&
+	    in_hosteq(ia->ia_dstaddr.sin_addr, ia->ia_addr.sin_addr)))
+	{
+		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+		return;
+	}
 
 	rt_ifa_addlocal(ifa);
 }
