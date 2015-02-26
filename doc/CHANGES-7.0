@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.211 2015/02/24 10:53:54 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.212 2015/02/26 21:47:12 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -16090,4 +16090,12 @@ sys/sys/syscallargs.h				(regen)
 
 	Fix return type of the readlinkat(2) syscall.
 	[khorben, ticket #547]
+
+sys/external/bsd/acpica/dist/namespace/nsinit.c	1.7
+
+	Revert rev 1.5, which brings back PR 48494.  That earlier revision
+	itself reverted an upstream bugfix, and that change fixed some
+	systems but broke others.  This latest revision brings us back in
+	sync with upstream.
+	[chs, ticket #546]
 
