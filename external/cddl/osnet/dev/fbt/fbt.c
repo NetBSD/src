@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.16 2014/07/26 04:54:20 ryoon Exp $	*/
+/*	$NetBSD: fbt.c,v 1.17 2015/02/26 09:10:52 ozaki-r Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -2107,6 +2107,7 @@ static int
 fbt_modcmd(modcmd_t cmd, void *data)
 {
 	int bmajor = -1, cmajor = -1;
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
@@ -2114,8 +2115,12 @@ fbt_modcmd(modcmd_t cmd, void *data)
 		return devsw_attach("fbt", NULL, &bmajor,
 		    &fbt_cdevsw, &cmajor);
 	case MODULE_CMD_FINI:
-		fbt_unload();
+		error = fbt_unload();
+		if (error != 0)
+			return error;
 		return devsw_detach(NULL, &fbt_cdevsw);
+	case MODULE_CMD_AUTOUNLOAD:
+		return EBUSY;
 	default:
 		return ENOTTY;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.c,v 1.9 2014/07/26 04:54:20 ryoon Exp $	*/
+/*	$NetBSD: sdt.c,v 1.10 2015/02/26 09:10:53 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -433,7 +433,7 @@ sdt_unload(void)
 			printf("%s: failed to unregister %s error = %d\n",
 			    sdt_list[ind]->name, res);
 #endif
-			error = res;
+			return res;
 		} else {
 #ifdef SDT_DEBUG
 			printf("sdt: unregistered %s id = %d\n",
@@ -453,6 +453,7 @@ static int
 sdt_modcmd(modcmd_t cmd, void *data)
 {
 	int bmajor = -1, cmajor = -1;
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
@@ -460,8 +461,12 @@ sdt_modcmd(modcmd_t cmd, void *data)
 		return devsw_attach("sdt", NULL, &bmajor,
 		    &sdt_cdevsw, &cmajor);
 	case MODULE_CMD_FINI:
-		sdt_unload();
+		error = sdt_unload();
+		if (error != 0)
+			return error;
 		return devsw_detach(NULL, &sdt_cdevsw);
+	case MODULE_CMD_AUTOUNLOAD:
+		return EBUSY;
 	default:
 		return ENOTTY;
 	}
