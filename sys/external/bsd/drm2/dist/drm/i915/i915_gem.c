@@ -1457,7 +1457,15 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 		else
 			timespecclear(timeout);
 	}
-	return MAX(ret, 0);	/* ignore remaining ticks */
+	if (wedged) {		/* GPU reset while we were waiting.  */
+		ret = i915_gem_check_wedge(&dev_priv->gpu_error,
+		    interruptible);
+		if (ret == 0)
+			ret = -EAGAIN;
+	}
+	if (ret < 0)		/* Failure.  */
+		return ret;
+	return 0;		/* Success, possibly with time to spare.  */
 }
 #else
 static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
