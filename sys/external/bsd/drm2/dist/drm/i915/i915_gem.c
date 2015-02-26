@@ -1463,9 +1463,11 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 		if (ret == 0)
 			ret = -EAGAIN;
 	}
-	if (ret < 0)		/* Failure.  */
+	if (ret < 0)		/* Error.  */
 		return ret;
-	return 0;		/* Success, possibly with time to spare.  */
+	if (ret == 0)		/* Seqno didn't pass.  */
+		return -ETIME;
+	return 0;		/* Seqno passed, maybe time to spare.  */
 }
 #else
 static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
