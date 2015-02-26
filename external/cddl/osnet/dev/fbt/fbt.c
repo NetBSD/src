@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.17 2015/02/26 09:10:52 ozaki-r Exp $	*/
+/*	$NetBSD: fbt.c,v 1.18 2015/02/26 10:31:52 ozaki-r Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -2104,7 +2104,7 @@ fbt_unload(void)
 
 
 static int
-fbt_modcmd(modcmd_t cmd, void *data)
+dtrace_fbt_modcmd(modcmd_t cmd, void *data)
 {
 	int bmajor = -1, cmajor = -1;
 	int error;
@@ -2132,4 +2132,4 @@ fbt_open(dev_t dev, int flags, int mode, struct lwp *l)
 	return (0);
 }
 
-MODULE(MODULE_CLASS_MISC, fbt, "dtrace");
+MODULE(MODULE_CLASS_MISC, dtrace_fbt, "dtrace");
