@@ -1441,8 +1441,22 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 
 	if (!irq_test_in_progress)
 		ring->irq_put(ring);
-	if (timeout)
-		timespecsub(&after, &before, timeout);
+	if (timeout) {
+		struct timespec slept;
+
+		/* Compute slept = after - before.  */
+		timespecsub(&after, &before, &slept);
+
+		/*
+		 * Return the time remaining, timeout - slept, if we
+		 * slept for less time than the timeout; or zero if we
+		 * timed out.
+		 */
+		if (timespeccmp(&slept, timeout, <))
+			timespecsub(timeout, &slept, timeout);
+		else
+			timespecclear(timeout);
+	}
 	return MAX(ret, 0);	/* ignore remaining ticks */
 }
 #else
