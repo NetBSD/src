@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.c,v 1.10 2015/02/26 09:10:53 ozaki-r Exp $	*/
+/*	$NetBSD: sdt.c,v 1.11 2015/02/26 10:31:52 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -450,7 +450,7 @@ sdt_unload(void)
 }
 
 static int
-sdt_modcmd(modcmd_t cmd, void *data)
+dtrace_sdt_modcmd(modcmd_t cmd, void *data)
 {
 	int bmajor = -1, cmajor = -1;
 	int error;
@@ -478,4 +478,4 @@ sdt_open(dev_t dev, int flags, int mode, struct lwp *l)
 	return (0);
 }
 
-MODULE(MODULE_CLASS_MISC, sdt, "dtrace");
+MODULE(MODULE_CLASS_MISC, dtrace_sdt, "dtrace");
