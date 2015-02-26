@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.53 2014/12/01 20:30:27 christos Exp $
+.\"	$NetBSD: route.8,v 1.54 2015/02/26 09:56:11 roy Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)route.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd December 1, 2014
+.Dd February 26, 2015
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -304,6 +304,7 @@ by indicating the following corresponding modifiers:
 .It Li G Ta "" Ta " RTF_GATEWAY" Ta forwarded to dest by intermediary
 .It Li H Ta "" Ta " RTF_HOST" Ta host entry (net otherwise)
 .It Li L Ta -llinfo Ta " RTF_LLINFO" Ta translate proto to link addr
+.It Li l Ta "" Ta " RTF_LOCAL" Ta Route represents a local address
 .It Li M Ta "" Ta " RTF_MODIFIED" Ta modified dynamically (redirect)
 .It Li p Ta -proxy Ta " RTF_ANNOUNCE" Ta make entry a link level proxy
 .It Li R Ta -reject Ta " RTF_REJECT" Ta send ICMP unreachable on match
