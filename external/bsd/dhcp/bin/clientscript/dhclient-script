@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dhclient-script,v 1.1 2013/03/24 15:54:30 christos Exp $
+# $NetBSD: dhclient-script,v 1.2 2015/02/26 09:59:55 roy Exp $
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
@@ -147,7 +147,6 @@ PREINIT)
 	if [ ! -z "$alias_ip_address" ]; then
 		ifconfig $interface inet \
 		    -alias $alias_ip_address >/dev/null 2>&1
-		route delete $alias_ip_address 127.0.0.1 > /dev/null 2>&1
 	fi
 
 	ifconfig $interface inet 0.0.0.0 netmask 0.0.0.0 \
@@ -182,14 +181,11 @@ BOUND|RENEW|REBIND|REBOOT)
 	    \( "x$alias_ip_address" != "x$old_ip_address" \) ]; then
 		ifconfig $interface inet \
 		    -alias $alias_ip_address > /dev/null 2>&1
-		route delete $alias_ip_address 127.0.0.1 > /dev/null 2>&1
 	fi
 
 	if [ \( ! -z "$old_ip_address" \) -a \
 	    \( "x$old_ip_address" != "x$new_ip_address" \) ]; then
 		eval "ifconfig $interface inet -alias $old_ip_address $medium"
-		route delete $old_ip_address 127.0.0.1 >/dev/null 2>&1
-
 		delete_old_routes
 	fi
 
@@ -198,8 +194,6 @@ BOUND|RENEW|REBIND|REBOOT)
 	    \( "x$reason" = "xBOUND" \) -o \( "x$reason" = "xREBOOT" \) ]; then
 		eval "ifconfig $interface inet $new_ip_address \
 		    $new_netmask_arg $new_broadcast_arg $medium"
-		route add $new_ip_address 127.0.0.1 >/dev/null 2>&1
-
 		add_new_routes
 	fi
 
@@ -207,7 +201,6 @@ BOUND|RENEW|REBIND|REBOOT)
 	    \( "x$new_ip_address" != "x$alias_ip_address" \) ]; then
 		ifconfig $interface inet alias $alias_ip_address \
 		    $alias_subnet_arg
-		route add $alias_ip_address 127.0.0.1
 	fi
 	make_resolv_conf
 	exit_with_hooks 0
@@ -223,12 +216,10 @@ EXPIRE|FAIL|RELEASE|STOP)
 
 	if [ ! -z "$alias_ip_address" ]; then
 		ifconfig $interface inet -alias $alias_ip_address 
-		route delete $alias_ip_address 127.0.0.1
 	fi > /dev/null 2>&1
 
 	if [ ! -z "$old_ip_address" ]; then
 		eval "ifconfig $interface inet -alias $old_ip_address $medium"
-		route delete $old_ip_address 127.0.0.1 >/dev/null 2>&1
 		delete_old_routes
 
 	fi
@@ -236,7 +227,6 @@ EXPIRE|FAIL|RELEASE|STOP)
 	if [ ! -z "$alias_ip_address" ]; then
 		ifconfig $interface inet alias $alias_ip_address \
 		    $alias_subnet_arg
-		route add $alias_ip_address 127.0.0.1
 	fi
 
 	restore_resolv_conf
@@ -246,7 +236,6 @@ EXPIRE|FAIL|RELEASE|STOP)
 TIMEOUT)
 	if [ ! -z "$alias_ip_address" ]; then
 		ifconfig $interface inet -alias $alias_ip_address
-		route delete $alias_ip_address 127.0.0.1
 	fi > /dev/null 2>&1
 
 	if [ ! -z "$new_host_name" ]; then
@@ -273,10 +262,7 @@ TIMEOUT)
 			then
 				ifconfig $interface inet alias \
 				    $alias_ip_address $alias_subnet_arg
-				route add $alias_ip_address 127.0.0.1
 			fi
-
-			route add $new_ip_address 127.0.0.1 >/dev/null 2>&1
 
 			add_new_routes
 			make_resolv_conf
