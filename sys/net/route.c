@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.135 2015/02/25 12:45:34 roy Exp $	*/
+/*	$NetBSD: route.c,v 1.136 2015/02/26 09:54:46 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -90,10 +90,11 @@
  *	@(#)route.c	8.3 (Berkeley) 1/9/95
  */
 
+#include "opt_inet.h"
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.135 2015/02/25 12:45:34 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.136 2015/02/26 09:54:46 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -960,7 +961,7 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		;
 	else switch (cmd) {
 	case RTM_DELETE:
-		rt_newaddrmsg(cmd, ifa, error, nrt);
+		rt_newmsg(cmd, nrt);
 		if (rt->rt_refcnt <= 0) {
 			rt->rt_refcnt++;
 			rtfree(rt);
@@ -984,7 +985,7 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 
 		if (cmd == RTM_LLINFO_UPD && ifa->ifa_rtrequest != NULL)
 			ifa->ifa_rtrequest(RTM_LLINFO_UPD, rt, &info);
-		rt_newaddrmsg(RTM_CHANGE, ifa, error, nrt);
+		rt_newmsg(RTM_CHANGE, nrt);
 		break;
 	case RTM_ADD:
 		rt->rt_refcnt--;
@@ -1000,10 +1001,130 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 			if (ifa->ifa_rtrequest != NULL)
 				ifa->ifa_rtrequest(RTM_ADD, rt, &info);
 		}
-		rt_newaddrmsg(cmd, ifa, error, nrt);
+		rt_newmsg(cmd, nrt);
 		break;
 	}
 	return error;
+}
+
+static const struct in_addr inmask32 = {.s_addr = INADDR_BROADCAST};
+
+/* Subroutine for rt_ifa_addlocal() and rt_ifa_remlocal() */
+static int
+rt_ifa_localrequest(int cmd, struct ifaddr *ifa)
+{
+	struct sockaddr *all1_sa;
+	struct sockaddr_in all1_sin;
+#ifdef INET6
+	struct sockaddr_in6 all1_sin6;
+#endif
+	struct rtentry *nrt = NULL;
+	int flags, e;
+
+	switch(ifa->ifa_addr->sa_family) {
+	case AF_INET:
+		sockaddr_in_init(&all1_sin, &inmask32, 0);
+		all1_sa = (struct sockaddr *)&all1_sin;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		sockaddr_in6_init(&all1_sin6, &in6mask128, 0, 0, 0);
+		all1_sa = (struct sockaddr *)&all1_sin6;
+		break;
+#endif
+	default:
+		return 0;
+	}
+
+	flags = RTF_UP | RTF_HOST | RTF_LOCAL;
+	if (!(ifa->ifa_ifp->if_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)))
+		flags |= RTF_LLINFO;
+	e = rtrequest(cmd, ifa->ifa_addr, ifa->ifa_addr, all1_sa, flags, &nrt);
+
+	/* Make sure rt_ifa be equal to IFA, the second argument of the
+	 * function. */
+	if (cmd == RTM_ADD && nrt && ifa != nrt->rt_ifa)
+		rt_replace_ifa(nrt, ifa);
+
+	rt_newaddrmsg(cmd, ifa, e, nrt);
+	if (nrt) {
+		if (cmd == RTM_DELETE) {
+			if (nrt->rt_refcnt <= 0) {
+				/* XXX: we should free the entry ourselves. */
+				nrt->rt_refcnt++;
+				rtfree(nrt);
+			}
+		} else {
+			/* the cmd must be RTM_ADD here */
+			nrt->rt_refcnt--;
+		}
+	}
+	return e;
+}
+
+/*
+ * Create a local route entry for the address.
+ * Announce the addition of the address and the route to the routing socket.
+ */
+int
+rt_ifa_addlocal(struct ifaddr *ifa)
+{
+	struct rtentry *rt;
+	int e;
+
+	/* If there is no loopback entry, allocate one. */
+	rt = rtalloc1(ifa->ifa_addr, 0);
+	if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0 ||
+	    (rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0)
+		e = rt_ifa_localrequest(RTM_ADD, ifa);
+	else {
+		e = 0;
+		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+	}
+	if (rt != NULL)
+		rt->rt_refcnt--;
+	return e;
+}
+
+/*
+ * Remove the local route entry for the address.
+ * Announce the removal of the address and the route to the routing socket.
+ */
+int
+rt_ifa_remlocal(struct ifaddr *ifa, struct ifaddr *alt_ifa)
+{
+	struct rtentry *rt;
+	int e = 0;
+
+	rt = rtalloc1(ifa->ifa_addr, 0);
+
+	/*
+	 * Before deleting, check if a corresponding loopbacked
+	 * host route surely exists.  With this check, we can avoid
+	 * deleting an interface direct route whose destination is
+	 * the same as the address being removed.  This can happen
+	 * when removing a subnet-router anycast address on an
+	 * interface attached to a shared medium.
+	 */
+	if (rt != NULL &&
+	    (rt->rt_flags & RTF_HOST) &&
+	    (rt->rt_ifp->if_flags & IFF_LOOPBACK))
+	{
+		/* If we cannot replace the route's ifaddr with the equivalent
+		 * ifaddr of another interface, I believe it is safest to
+		 * delete the route.
+		 */
+		if (alt_ifa == NULL)
+			e = rt_ifa_localrequest(RTM_DELETE, ifa);
+		else {
+			rt_replace_ifa(rt, alt_ifa);
+			rt_newmsg(RTM_CHANGE, rt);
+		}
+	} else
+		rt_newaddrmsg(RTM_DELADDR, ifa, 0, NULL);
+	if (rt != NULL)
+		rt->rt_refcnt--;
+	return e;
 }
 
 /*
