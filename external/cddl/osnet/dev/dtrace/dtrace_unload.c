@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_unload.c,v 1.5 2011/07/26 12:26:33 yamt Exp $	*/
+/*	$NetBSD: dtrace_unload.c,v 1.6 2015/02/26 09:10:52 ozaki-r Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -37,9 +37,7 @@ dtrace_unload()
 	mutex_enter(&dtrace_lock);
 	mutex_enter(&cpu_lock);
 
-	ASSERT(dtrace_opens == 0);
-
-	if (dtrace_helpers > 0) {
+	if (dtrace_opens > 0 || dtrace_helpers > 0) {
 		mutex_exit(&cpu_lock);
 		mutex_exit(&dtrace_lock);
 		mutex_exit(&dtrace_provider_lock);
