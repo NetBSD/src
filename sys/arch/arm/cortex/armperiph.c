@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.5 2014/12/05 01:11:25 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.6 2015/02/27 18:43:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -63,6 +63,7 @@ static const struct armperiph_info a5_devices[] = {
 	{ "armscu", 0x0000, 0 },
 	{ "armgic", 0x1000, 0x0100 },
 	{ "a9tmr",  0x0200, 0 },
+	{ "a9wdt",   0x0600, 0 },
 	{ "", 0, 0 },
 };
 #endif
