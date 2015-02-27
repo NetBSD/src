@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.4 2015/02/27 19:57:10 jmcneill Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.5 2015/02/27 20:41:01 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.4 2015/02/27 19:57:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.5 2015/02/27 20:41:01 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -560,5 +560,14 @@ amlogic_device_register(device_t self, void *aux)
 		    1600000000 / 2);
 
 		return;
+	}
+
+	if (device_is_a(self, "arml2cc")) {
+		/*
+		 * L2 cache regs are at C4200000 and A9 periph base is
+		 * at C4300000; pass as a negative offset for the benefit
+		 * of armperiph bus.
+		 */
+		prop_dictionary_set_uint32(dict, "offset", 0xfff00000);
 	}
 }
