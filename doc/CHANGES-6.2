@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.198 2015/02/23 07:00:57 msaitoh Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.199 2015/02/27 20:22:36 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -9663,3 +9663,15 @@ external/bsd/bind/dist/lib/dns/zone.c				patch
 	Security patch for bind from ISC (to 9.9.6-P2).
 	Only the change to lib/dns/zone.c is security relevant (CVE-2015-1349).
 	[spz, ticket #1259]
+
+lib/libperfuse/ops.c				1.83
+lib/libperfuse/perfuse.c			1.36
+lib/libpuffs/puffs.3				1.55,1.60
+sys/fs/puffs/puffs_msgif.h			1.84
+sys/fs/puffs/puffs_sys.h			1.89
+sys/fs/puffs/puffs_vfsops.c			1.116
+sys/fs/puffs/puffs_vnops.c			1.200-1.202
+
+	Add PUFFS_KFLAG_NOFLUSH_META to prevent sending metadata flush to FUSE.
+	[manu, ticket #1260]
+
