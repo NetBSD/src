@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_comreg.h,v 1.2 2015/02/27 17:35:08 jmcneill Exp $ */
+/* $NetBSD: amlogic_comvar.h,v 1.1 2015/02/27 17:35:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,19 +26,12 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ARM_AMLOGIC_COMREG_H
-#define _ARM_AMLOGIC_COMREG_H
+#ifndef _ARM_AMLOGIC_COVMAR_H
+#define _ARM_AMLOGIC_COVMAR_H
 
-#define UART_WFIFO_REG		0x00
-#define UART_RFIFO_REG		0x04
-#define UART_CONTROL_REG	0x08
-#define UART_STATUS_REG		0x0c
-#define UART_MISC_REG		0x10
-#define UART_REG5_REG		0x14
+#include <dev/cons.h>
 
-#define UART_STATUS_RX_BUSY	__BIT(26)
-#define UART_STATUS_TX_BUSY	__BIT(25)
-#define UART_STATUS_TX_EMPTY	__BIT(22)
-#define UART_STATUS_RX_EMPTY	__BIT(20)
+bool	amlogic_com_cnattach(bus_space_tag_t, bus_space_handle_t, int, tcflag_t);
+bool	amlogic_com_is_console(bus_addr_t);
 
-#endif /* _ARM_AMLOGIC_COMREG_H */
+#endif /* _ARM_AMLOGIC_COVMAR_H */
