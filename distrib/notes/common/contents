@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.170 2012/02/14 15:09:02 jakllsch Exp $
+.\"	$NetBSD: contents,v 1.170.20.1 2015/02/27 09:23:02 martin Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -272,7 +272,7 @@ see below.
 .		It Pa bootfs/
 Netbootable RAM disk kernel and the file system in the RAM disk; see below.
 .\}
-.if \n[alpha]:\n[amd64]:\n[amiga]:\n[atari]:\n[bebox]:\n[ews4800mips]:\
+.if \n[alpha]:\n[amiga]:\n[atari]:\n[bebox]:\n[ews4800mips]:\
 \n[i386]:\n[news68k]:\n[newsmips]:\n[sparc]:\n[x68k]:\n[prep] \{\
 .		It Pa floppy/
 \*M boot and installation floppies; see below.

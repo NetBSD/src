@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.2 2012/08/17 20:10:53 riz Exp $
+.\"	$NetBSD: contents,v 1.2.12.1 2015/02/27 09:23:03 martin Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,10 +74,6 @@ see below.
 .		It Pa cdrom/
 .
 \*M bootable cdrom images; see below.
-.
-.		It Pa floppy/
-.
-\*M boot and installation floppies; see below.
 .
 .		It Pa misc/
 .
