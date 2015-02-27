@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.52 2015/01/26 04:56:56 nonaka Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.53 2015/02/27 01:52:15 nonaka Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.52 2015/01/26 04:56:56 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.53 2015/02/27 01:52:15 nonaka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1629,7 +1629,7 @@ sdhc_soft_reset(struct sdhc_host *hp, int mask)
 	}
 
 	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
-		HWRITE4(hp, SDHC_DMA_CTL, SDHC_DMA_SNOOP);
+		HSET4(hp, SDHC_DMA_CTL, SDHC_DMA_SNOOP);
 	}
 
 	return 0;
