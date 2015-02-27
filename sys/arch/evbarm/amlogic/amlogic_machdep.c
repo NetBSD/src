@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.2 2015/02/27 17:35:08 jmcneill Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.3 2015/02/27 18:00:29 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.2 2015/02/27 17:35:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.3 2015/02/27 18:00:29 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -470,9 +470,6 @@ static const int conmode = CONMODE;
 void
 consinit(void)
 {
-#if NAMLOGIC_COM > 0
-	bus_space_handle_t bsh;
-#endif
 	static int consinit_called = 0;
 
 	if (consinit_called != 0)
@@ -483,9 +480,9 @@ consinit(void)
 	amlogic_putchar('e');
 
 #if NAMLOGIC_COM > 0
-	bus_space_subregion(&amlogic_bs_tag, amlogic_core_bsh,
-	    consaddr - AMLOGIC_CORE_BASE, AMLOGIC_UART_SIZE, &bsh);
-	amlogic_com_cnattach(&amlogic_bs_tag, consaddr, conspeed, conmode);
+        const bus_space_handle_t bsh =
+            AMLOGIC_CORE_VBASE + (consaddr - AMLOGIC_CORE_BASE);
+	amlogic_com_cnattach(&amlogic_bs_tag, bsh, conspeed, conmode);
 #endif
 
 #if NUKBD > 0
