@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3.2.1 2014/08/23 03:44:02 riz Exp $	*/
+/*	$NetBSD: util.c,v 1.3.2.2 2015/02/27 11:29:44 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1233,6 +1233,7 @@ set_tz_select(menudesc *m, void *arg)
 {
 	time_t t;
 	char *new;
+	struct tm *tm;
 
 	if (m && strcmp(tz_selected, m->opts[m->cursel].opt_name) != 0) {
 		/* Change the displayed timezone */
@@ -1251,8 +1252,10 @@ set_tz_select(menudesc *m, void *arg)
 
 	/* Update displayed time */
 	t = time(NULL);
+	tm = localtime(&t);
 	msg_display(MSG_choose_timezone,
-		    tz_default, tz_selected, ctime(&t), localtime(&t)->tm_zone);
+		    tz_default, tz_selected, safectime(&t), tm ? tm->tm_zone :
+		    "?");
 	return 0;
 }
 
@@ -1406,6 +1409,7 @@ set_timezone(void)
 	char localtime_link[STRSIZE];
 	char localtime_target[STRSIZE];
 	time_t t;
+	struct tm *tm;
 	int menu_no;
 
 	strlcpy(zoneinfo_dir, target_expand("/usr/share/zoneinfo/"),
@@ -1418,8 +1422,10 @@ set_timezone(void)
 	snprintf(tz_env, sizeof(tz_env), "%s%s", zoneinfo_dir, tz_selected);
 	setenv("TZ", tz_env, 1);
 	t = time(NULL);
+	tm = localtime(&t);
 	msg_display(MSG_choose_timezone,
-		    tz_default, tz_selected, ctime(&t), localtime(&t)->tm_zone);
+		    tz_default, tz_selected, safectime(&t), tm ? tm->tm_zone :
+		    "?");
 
 	signal(SIGALRM, timezone_sig);
 	alarm(60);
@@ -1698,3 +1704,16 @@ binary_available(const char *prog)
         return 0;
 }
 
+const char *
+safectime(time_t *t)
+{
+	const char *s = ctime(t);
+	if (s != NULL)
+		return s;
+
+	// Debugging.
+	fprintf(stderr, "Can't convert to localtime 0x%jx (%s)\n",
+	    (intmax_t)*t, strerror(errno));
+	      /*123456789012345678901234*/
+	return "preposterous clock time\n";
+}

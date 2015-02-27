@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.2.4.1 2014/12/31 06:23:11 snj Exp $	*/
+/*	$NetBSD: run.c,v 1.2.4.2 2015/02/27 11:29:44 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -113,7 +113,7 @@ log_flip(menudesc *m, void *arg)
 
 	(void)time(&tloc);
 	if (logfp) {
-		fprintf(logfp, "Log ended at: %s\n", asctime(localtime(&tloc)));
+		fprintf(logfp, "Log ended at: %s\n", safectime(&tloc));
 		fflush(logfp);
 		fclose(logfp);
 		logfp = NULL;
@@ -121,7 +121,7 @@ log_flip(menudesc *m, void *arg)
 		logfp = fopen("/tmp/sysinst.log", "a");
 		if (logfp != NULL) {
 			fprintf(logfp,
-			    "Log started at: %s\n", asctime(localtime(&tloc)));
+			    "Log started at: %s\n", safectime(&tloc));
 			fflush(logfp);
 		} else {
 			if (mainwin) {
@@ -146,7 +146,7 @@ script_flip(menudesc *m, void *arg)
 	(void)time(&tloc);
 	if (script) {
 		scripting_fprintf(NULL, "# Script ended at: %s\n",
-		    asctime(localtime(&tloc)));
+		    safectime(&tloc));
 		fflush(script);
 		fclose(script);
 		script = NULL;
@@ -155,7 +155,7 @@ script_flip(menudesc *m, void *arg)
 		if (script != NULL) {
 			scripting_fprintf(NULL, "#!/bin/sh\n");
 			scripting_fprintf(NULL, "# Script started at: %s\n",
-			    asctime(localtime(&tloc)));
+			    safectime(&tloc));
 			fflush(script);
 		} else {
 			msg_display(MSG_openfail, "script file",
