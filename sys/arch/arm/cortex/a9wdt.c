@@ -1,4 +1,4 @@
-/*	$NetBSD: a9wdt.c,v 1.2 2014/04/13 02:20:33 matt Exp $	*/
+/*	$NetBSD: a9wdt.c,v 1.3 2015/02/27 18:43:28 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.2 2014/04/13 02:20:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.3 2015/02/27 18:43:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -94,7 +94,8 @@ a9wdt_match(device_t parent, cfdata_t cf, void *aux)
 	if (attached)
 		return 0;
 
-	if (!CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid))
+	if (!CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid) &&
+	    !CPU_ID_CORTEX_A5_P(curcpu()->ci_arm_cpuid))
 		return 0;
 
 	if (strcmp(mpcaa->mpcaa_name, cf->cf_name) != 0)
