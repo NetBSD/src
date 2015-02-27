@@ -1,4 +1,4 @@
-#	$NetBSD: files.amlogic,v 1.1 2015/02/07 17:20:17 jmcneill Exp $
+#	$NetBSD: files.amlogic,v 1.2 2015/02/27 17:35:08 jmcneill Exp $
 #
 # Configuration info for Amlogic ARM Peripherals
 #
@@ -21,8 +21,9 @@ attach	amlogicio at mainbus with amlogic_io
 file	arch/arm/amlogic/amlogic_io.c		amlogic_io
 
 # serial
-attach	com at amlogicio with amlogic_com
-file	arch/arm/amlogic/amlogic_com.c		amlogic_com
+device	amlogiccom { } : bus_space_generic
+attach	amlogiccom at amlogicio with amlogic_com
+file	arch/arm/amlogic/amlogic_com.c		amlogic_com needs-flag
 
 # Console parameters
 defparam opt_amlogic.h			CONADDR
