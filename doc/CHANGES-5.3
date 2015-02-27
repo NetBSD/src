@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.100 2015/02/23 09:43:18 msaitoh Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.101 2015/02/27 02:55:45 snj Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -3743,3 +3743,10 @@ dist/bind/lib/dns/zone.c			patch
 	an untrusted replacement could cause named to crash with an assertion
 	failure.
 	[spz, ticket #1950]
+
+include/wchar.h					patch
+
+	Properly expose wcsto{f,ld,ll,ull} and v{fw,sw,ws}scanf when
+	_POSIX_C_SOURCE >= 200112L and _XOPEN_SOURCE >= 600.
+	[christos, ticket #1943]
+
