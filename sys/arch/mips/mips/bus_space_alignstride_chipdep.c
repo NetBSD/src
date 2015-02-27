@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.22 2015/02/13 14:11:12 macallan Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.23 2015/02/27 14:44:16 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.22 2015/02/13 14:11:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.23 2015/02/27 14:44:16 macallan Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -96,6 +96,10 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.22 2015/02/13 14
 #include <mips/locore.h>
 
 #include <uvm/uvm_extern.h>
+
+#if defined(__mips_o32) && defined(MIPS3)
+#define NEED_64BIT_ASM
+#endif
 
 #define	__C(A,B)	__CONCAT(A,B)
 #define	__S(S)		__STRING(S)
@@ -737,7 +741,11 @@ __BS(read_8)(void *v, bus_space_handle_t h, bus_size_t off)
         h += CHIP_OFF64(off);
         shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
         ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
+#ifdef NEED_64BIT_ASM
+	r =  CHIP_SWAP64(mips3_ld(ptr) >> shift);
+#else
 	r =  CHIP_SWAP64(*ptr >> shift);
+#endif
 
 	return r;
 }
@@ -843,7 +851,11 @@ __BS(write_8)(void *v, bus_space_handle_t h, bus_size_t off, uint64_t val)
         h += CHIP_OFF64(off);
         shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
         ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
+#ifdef NEED_64BIT_ASM
+	mips3_sd(ptr, CHIP_SWAP64(val) << shift);
+#else
 	*ptr = CHIP_SWAP64(val) << shift;
+#endif
 }
 
 #define CHIP_write_multi_N(BYTES,TYPE)					\
@@ -983,7 +995,11 @@ __BS(read_stream_8)(void *v, bus_space_handle_t h, bus_size_t off)
 	volatile uint64_t *ptr;
 
 	ptr = (void *)(intptr_t)(h + CHIP_OFF64(off));
+#ifdef NEED_64BIT_ASM
+	return mips3_ld(ptr);
+#else
 	return *ptr;
+#endif
 }
 
 #define CHIP_read_multi_stream_N(BYTES,TYPE)				\
@@ -1068,7 +1084,11 @@ __BS(write_stream_8)(void *v, bus_space_handle_t h, bus_size_t off,
 	volatile uint64_t *ptr;
 
 	ptr = (void *)(intptr_t)(h + CHIP_OFF64(off));
+#ifdef NEED_64BIT_ASM
+	mips3_sd(ptr, val);
+#else
 	*ptr = val;
+#endif
 }
 
 #define CHIP_write_multi_stream_N(BYTES,TYPE)				\
