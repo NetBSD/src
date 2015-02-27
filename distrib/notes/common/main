@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.510.4.1 2014/11/14 14:58:28 martin Exp $
+.\"	$NetBSD: main,v 1.510.4.2 2015/02/27 09:23:02 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -137,6 +137,8 @@ is for VGA console installation, and
 .Pa boot-com.iso
 is for installation over serial console (com0, 9600 baud).
 .Pp
+.\} \" amd64:i386
+.if \n[i386] \{\
 Option 3: boot floppy images from
 .Pa \*M/installation/floppy/ .
 .Pp
@@ -148,6 +150,8 @@ are floppy images for VGA console installation.
 and
 .Pa boot-com2.fs
 are for installation via serial console (com0, 9600 baud).
+.\} \" i386
+.if \n[i386]:\n[amd64] \{\
 .It
 The default kernel on CD-ROMs has ACPI enabled.
 This is known to cause issues on a few machines which have buggy ACPI
@@ -205,7 +209,7 @@ The actual binary distribution is in the
 .Pa \*M/binary/sets/
 directory.
 When you boot the install
-.if \n[amd64] image, CD-ROM or floppies,
+.if \n[amd64] image or CD-ROM,
 .if \n[i386] image, CD-ROM or floppies,
 .if \n[macppc] kernel from floppies, hard drive, or CD-ROM,
 .if \n[sparc] floppies or CD-ROM,
@@ -233,10 +237,11 @@ In a typical workstation installation you will probably want
 all the installation sets.
 .ie \n[i386]:\n[amd64] \{\
 .It
-Write the CD-ROM images or floppy images out.
+Write the boot images
 .Pp
 Many commercial and freeware programs are available to burn CD-ROMs.
 .Pp
+.if \n[i386] \{\
 If you have problems writing a raw image to a floppy,
 the
 .Ic rawrite.exe
@@ -248,6 +253,7 @@ Windows32 program (installed by
 in the
 .Pa i386/installation/misc/
 directory may be of help.
+.\}
 .\}
 .if \n[macppc] \{\
 .It

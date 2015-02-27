@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14.12.1 2014/12/04 19:18:09 snj Exp $
+#	$NetBSD: Makefile.inc,v 1.14.12.2 2015/02/27 09:23:02 martin Exp $
 #
 #	etc.amd64/Makefile.inc -- amd64-specific etc Makefile targets
 #
@@ -14,13 +14,11 @@ KERNEL_SETS+=		DRMKMS
 BUILD_KERNELS=		INSTALL INSTALL_XEN3_DOMU
 
 INSTALLATION_DIRS+= 	installation/cdrom
-INSTALLATION_DIRS+= 	installation/floppy
 INSTALLATION_DIRS+= 	installation/misc
 INSTALLATION_DIRS+= 	installation/miniroot
 
 snap_md_post:
 	cd ${KERNSRCDIR}/arch/i386/stand/pxeboot && ${MAKE} release
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom '*.iso'
-	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/floppy '*.fs'
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/miniroot '*.*'
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc '*.*'
