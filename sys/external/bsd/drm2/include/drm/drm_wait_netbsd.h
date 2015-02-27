@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.4.2.1 2014/09/21 18:00:33 snj Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.4.2.2 2015/02/27 11:23:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -129,6 +129,19 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 #define	DRM_WAIT_UNTIL(RET, Q, I, C)				\
 	_DRM_WAIT_UNTIL(RET, cv_wait_sig, Q, I, C)
 
+/*
+ * Timed wait.  Return:
+ *
+ * - 0 if condition is false after timeout,
+ * - 1 if condition is true after timeout or one tick before timeout,
+ * - number of ticks left if condition evaluated to true before timeout, or
+ * - error if failure (e.g., interrupted).
+ *
+ * XXX Comments in Linux say it returns -ERESTARTSYS if interrupted.
+ * What if by a signal without SA_RESTART?  Shouldn't it be -EINTR
+ * then?  I'm going to leave it as what cv_timedwait returned, which is
+ * ERESTART for signals with SA_RESTART and EINTR otherwise.
+ */
 #define	_DRM_TIMED_WAIT_UNTIL(RET, WAIT, Q, INTERLOCK, TICKS, CONDITION) do \
 {									\
 	extern int hardclock_ticks;					\
@@ -145,14 +158,17 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 		/* XXX errno NetBSD->Linux */				\
 		(RET) = -WAIT((Q), &(INTERLOCK)->mtx_lock,		\
 		    _dtwu_ticks);					\
-		if (RET)						\
+		if (RET) {						\
+			if ((RET) == -EWOULDBLOCK)			\
+				(RET) = (CONDITION) ? 1 : 0;		\
 			break;						\
+		}							\
 		const int _dtwu_now = hardclock_ticks;			\
 		KASSERT(_dtwu_start <= _dtwu_now);			\
 		if ((_dtwu_now - _dtwu_start) < _dtwu_ticks) {		\
 			_dtwu_ticks -= (_dtwu_now - _dtwu_start);	\
 		} else {						\
-			(RET) = 0;					\
+			(RET) = (CONDITION) ? 1 : 0;			\
 			break;						\
 		}							\
 	}								\
@@ -210,14 +226,17 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 		/* XXX errno NetBSD->Linux */				\
 		(RET) = -WAIT((Q), &(INTERLOCK)->sl_lock,		\
 		    _dstwu_ticks);					\
-		if (RET)						\
+		if (RET) {						\
+			if ((RET) == -EWOULDBLOCK)			\
+				(RET) = (CONDITION) ? 1 : 0;		\
 			break;						\
+		}							\
 		const int _dstwu_now = hardclock_ticks;			\
 		KASSERT(_dstwu_start <= _dstwu_now);			\
 		if ((_dstwu_now - _dstwu_start) < _dstwu_ticks) {	\
 			_dstwu_ticks -= (_dstwu_now - _dstwu_start);	\
 		} else {						\
-			(RET) = 0;					\
+			(RET) = (CONDITION) ? 1 : 0;			\
 			break;						\
 		}							\
 	}								\

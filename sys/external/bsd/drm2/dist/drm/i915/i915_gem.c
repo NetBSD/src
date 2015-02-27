@@ -1441,9 +1441,33 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 
 	if (!irq_test_in_progress)
 		ring->irq_put(ring);
-	if (timeout)
-		timespecsub(&after, &before, timeout);
-	return MAX(ret, 0);	/* ignore remaining ticks */
+	if (timeout) {
+		struct timespec slept;
+
+		/* Compute slept = after - before.  */
+		timespecsub(&after, &before, &slept);
+
+		/*
+		 * Return the time remaining, timeout - slept, if we
+		 * slept for less time than the timeout; or zero if we
+		 * timed out.
+		 */
+		if (timespeccmp(&slept, timeout, <))
+			timespecsub(timeout, &slept, timeout);
+		else
+			timespecclear(timeout);
+	}
+	if (wedged) {		/* GPU reset while we were waiting.  */
+		ret = i915_gem_check_wedge(&dev_priv->gpu_error,
+		    interruptible);
+		if (ret == 0)
+			ret = -EAGAIN;
+	}
+	if (ret < 0)		/* Error.  */
+		return ret;
+	if (ret == 0)		/* Seqno didn't pass.  */
+		return -ETIME;
+	return 0;		/* Seqno passed, maybe time to spare.  */
 }
 #else
 static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
