@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.5 2015/02/27 20:41:01 jmcneill Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.6 2015/02/27 21:13:52 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.5 2015/02/27 20:41:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.6 2015/02/27 21:13:52 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -181,6 +181,7 @@ __KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.5 2015/02/27 20:41:01 jmcneill
 #include <arm/mainbus/mainbus.h>
 
 #include <arm/amlogic/amlogic_reg.h>
+#include <arm/amlogic/amlogic_crureg.h>
 #include <arm/amlogic/amlogic_var.h>
 #include <arm/amlogic/amlogic_comreg.h>
 #include <arm/amlogic/amlogic_comvar.h>
@@ -490,16 +491,16 @@ consinit(void)
 void
 amlogic_reset(void)
 {
-#if notyet
 	bus_space_tag_t bst = &amlogic_bs_tag;
-	bus_space_handle_t bsh;
+        bus_space_handle_t bsh = amlogic_core_bsh;
 
-	bus_space_subregion(bst, amlogic_core1_bsh,
-	    ROCKCHIP_CRU_OFFSET, ROCKCHIP_CRU_SIZE, &bsh);
+	bus_space_write_4(bst, bsh, WATCHDOG_TC_REG,
+	    WATCHDOG_TC_CPUS | WATCHDOG_TC_ENABLE | 1);
+	bus_space_write_4(bst, bsh, WATCHDOG_RESET_REG, 0);
 
-	bus_space_write_4(bst, bsh, CRU_GLB_SRST_FST_REG,
-	    CRU_GLB_SRST_FST_MAGIC);
-#endif
+	for (;;) {
+		__asm("wfi");
+	}
 }
 
 #ifdef KGDB
