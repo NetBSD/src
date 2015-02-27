@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.10 2015/01/08 10:38:08 hkenken Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.11 2015/02/27 18:26:49 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.10 2015/01/08 10:38:08 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.11 2015/02/27 18:26:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,7 +96,8 @@ a9tmr_match(device_t parent, cfdata_t cf, void *aux)
 	if ((armreg_pfr1_read() & ARM_PFR1_GTIMER_MASK) != 0)
 		return 0;
 
-	if (!CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid))
+	if (!CPU_ID_CORTEX_A9_P(curcpu()->ci_arm_cpuid) &&
+	    !CPU_ID_CORTEX_A5_P(curcpu()->ci_arm_cpuid))
 		return 0;
 
 	if (strcmp(mpcaa->mpcaa_name, cf->cf_name) != 0)
