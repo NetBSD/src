@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.1 2015/02/07 17:20:16 jmcneill Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.2 2015/02/27 17:35:08 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,18 +125,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.1 2015/02/07 17:20:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.2 2015/02/27 17:35:08 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_ipkdb.h"
 #include "opt_md.h"
-#include "opt_com.h"
 #include "opt_amlogic.h"
 #include "opt_arm_debug.h"
 
-#include "com.h"
+#include "amlogic_com.h"
 #if 0
 #include "prcm.h"
 #include "sdhc.h"
@@ -184,6 +183,7 @@ __KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.1 2015/02/07 17:20:16 jmcneill
 #include <arm/amlogic/amlogic_reg.h>
 #include <arm/amlogic/amlogic_var.h>
 #include <arm/amlogic/amlogic_comreg.h>
+#include <arm/amlogic/amlogic_comvar.h>
 
 #include <arm/cortex/pl310_reg.h>
 #include <arm/cortex/scu_reg.h>
@@ -220,12 +220,6 @@ u_int uboot_args[4] = { 0 };	/* filled in by amlogic_start.S (not in bss) */
 extern char KERNEL_BASE_phys[];
 extern char _end[];
 
-#if NCOM > 0
-int use_fb_console = false;
-#else
-int use_fb_console = true;
-#endif
-
 /*
  * Macros to translate between physical and virtual for a subset of the
  * kernel address space.  *Not* for general use.
@@ -244,11 +238,6 @@ static void amlogic_device_register(device_t, void *);
 static void amlogic_reset(void);
 
 bs_protos(bs_notimpl);
-
-#if NCOM > 0
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
-#endif
 
 /*
  * Static device mappings. These peripheral registers are mapped at
@@ -297,14 +286,14 @@ amlogic_putchar(char c)
 	volatile uint32_t *uartaddr = (volatile uint32_t *)CONSADDR_VA;
 	int timo = 150000;
 
-	while ((uartaddr[UART_STATUS_REG] & UART_STATUS_TX_EMPTY) == 0) {
+	while ((uartaddr[UART_STATUS_REG/4] & UART_STATUS_TX_EMPTY) == 0) {
 		if (--timo == 0)
 			break;
 	}
 
-	uartaddr[UART_WFIFO_REG] = c;
+	uartaddr[UART_WFIFO_REG/4] = c;
 
-	while ((uartaddr[UART_STATUS_REG] & UART_STATUS_TX_EMPTY) == 0) {
+	while ((uartaddr[UART_STATUS_REG/4] & UART_STATUS_TX_EMPTY) == 0) {
 		if (--timo == 0)
 			break;
 	}
@@ -327,15 +316,14 @@ u_int
 initarm(void *arg)
 {
 	psize_t ram_size = 0;
-	char *ptr;
 	*(volatile int *)CONSADDR_VA  = 0x40;	/* output '@' */
-#if 1
-	amlogic_putchar('d');
-#endif
 
+	amlogic_putchar('d');
 	pmap_devmap_register(devmap);
+
 	amlogic_putchar('b');
 	amlogic_bootstrap();
+
 	amlogic_putchar('!');
 
 #ifdef MULTIPROCESSOR
@@ -434,7 +422,7 @@ initarm(void *arg)
 
 	arm32_bootmem_init(bootconfig.dram[0].address, ram_size,
 	    KERNEL_BASE_PHYS);
-	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_LOW, 0, devmap,
+	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap,
 	    mapallmem_p);
 
 	printf("bootargs: %s\n", bootargs);
@@ -446,11 +434,6 @@ initarm(void *arg)
 	evbarm_device_register = amlogic_device_register;
 
 	db_trap_callback = amlogic_db_trap;
-
-	if (get_bootconf_option(boot_args, "console",
-		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
-		use_fb_console = true;
-	}
 
 #if notyet
 	curcpu()->ci_data.cpu_cc_freq = amlogic_cpu_get_rate();
@@ -468,7 +451,7 @@ init_clocks(void)
 	/* NOT YET */
 }
 
-#if NCOM > 0
+#if NAMLOGIC_COM > 0
 #ifndef CONSADDR
 #error Specify the address of the console UART with the CONSADDR option.
 #endif
@@ -487,8 +470,8 @@ static const int conmode = CONMODE;
 void
 consinit(void)
 {
-#if NCOM > 0
-	bus_space_handle_t bh;
+#if NAMLOGIC_COM > 0
+	bus_space_handle_t bsh;
 #endif
 	static int consinit_called = 0;
 
@@ -499,17 +482,11 @@ consinit(void)
 
 	amlogic_putchar('e');
 
-#if NCOM > 0
-	if (bus_space_map(&amlogic_a4x_bs_tag, consaddr, AMLOGIC_UART_SIZE, 0, &bh))
-		panic("Serial console can not be mapped.");
-
-	if (comcnattach(&amlogic_a4x_bs_tag, consaddr, conspeed,
-			AMLOGIC_UART_FREQ, COM_TYPE_NORMAL, conmode))
-		panic("Serial console can not be initialized.");
-
-	bus_space_unmap(&amlogic_a4x_bs_tag, bh, AMLOGIC_UART_SIZE);
+#if NAMLOGIC_COM > 0
+	bus_space_subregion(&amlogic_bs_tag, amlogic_core_bsh,
+	    consaddr - AMLOGIC_CORE_BASE, AMLOGIC_UART_SIZE, &bsh);
+	amlogic_com_cnattach(&amlogic_bs_tag, consaddr, conspeed, conmode);
 #endif
-
 
 #if NUKBD > 0
 	ukbd_cnattach();	/* allow USB keyboard to become console */
