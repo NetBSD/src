@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.24.2.6 2015/02/03 08:11:21 bouyer Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.24.2.7 2015/02/27 07:19:22 snj Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.24.2.6 2015/02/03 08:11:21 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.24.2.7 2015/02/27 07:19:22 snj Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -803,6 +803,10 @@ dwc_gmac_start(struct ifnet *ifp)
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		bpf_mtap(ifp, m0);
+		if (sc->sc_txq.t_queued == AWGE_TX_RING_COUNT) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
 	}
 
 	if (sc->sc_txq.t_queued != old) {
@@ -847,7 +851,7 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 	struct dwc_gmac_dev_dmadesc *desc = NULL;
 	struct dwc_gmac_tx_data *data = NULL;
 	bus_dmamap_t map;
-	uint32_t flags, len;
+	uint32_t flags, len, status;
 	int error, i, first;
 
 #ifdef DWC_GMAC_DEBUG
@@ -857,7 +861,6 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 
 	first = sc->sc_txq.t_cur;
 	map = sc->sc_txq.t_data[first].td_map;
-	flags = 0;
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m0,
 	    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
@@ -867,21 +870,19 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 		return error;
 	}
 
-	if (sc->sc_txq.t_queued + map->dm_nsegs >= AWGE_TX_RING_COUNT) {
+	if (sc->sc_txq.t_queued + map->dm_nsegs > AWGE_TX_RING_COUNT) {
 		bus_dmamap_unload(sc->sc_dmat, map);
 		return ENOBUFS;
 	}
 
-	data = NULL;
 	flags = DDESC_CNTL_TXFIRST|DDESC_CNTL_TXCHAIN;
+	status = 0;
 	for (i = 0; i < map->dm_nsegs; i++) {
 		data = &sc->sc_txq.t_data[sc->sc_txq.t_cur];
 		desc = &sc->sc_txq.t_desc[sc->sc_txq.t_cur];
 
 		desc->ddesc_data = htole32(map->dm_segs[i].ds_addr);
-		len = __SHIFTIN(map->dm_segs[i].ds_len,DDESC_CNTL_SIZE1MASK);
-		if (i == map->dm_nsegs-1)
-			flags |= DDESC_CNTL_TXLAST|DDESC_CNTL_TXINT;
+		len = __SHIFTIN(map->dm_segs[i].ds_len, DDESC_CNTL_SIZE1MASK);
 
 #ifdef DWC_GMAC_DEBUG
 		aprint_normal_dev(sc->sc_dev, "enqueing desc #%d data %08lx "
@@ -898,22 +899,24 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 		 * Defer passing ownership of the first descriptor
 		 * until we are done.
 		 */
-		if (i)
-			desc->ddesc_status = htole32(DDESC_STATUS_OWNEDBYDEV);
+		desc->ddesc_status = htole32(status);
+		status |= DDESC_STATUS_OWNEDBYDEV;
 
 		sc->sc_txq.t_queued++;
 		sc->sc_txq.t_cur = TX_NEXT(sc->sc_txq.t_cur);
 	}
 
-	/* Pass first to device */
-	sc->sc_txq.t_desc[first].ddesc_status
-	    = htole32(DDESC_STATUS_OWNEDBYDEV);
+	desc->ddesc_cntl |= htole32(DDESC_CNTL_TXLAST|DDESC_CNTL_TXINT);
 
 	data->td_m = m0;
 	data->td_active = map;
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+	/* Pass first to device */
+	sc->sc_txq.t_desc[first].ddesc_status =
+	    htole32(DDESC_STATUS_OWNEDBYDEV);
 
 	return 0;
 }
@@ -969,21 +972,19 @@ dwc_gmac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 static void
 dwc_gmac_tx_intr(struct dwc_gmac_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct dwc_gmac_tx_data *data;
 	struct dwc_gmac_dev_dmadesc *desc;
-	uint32_t flags;
-	int i;
+	uint32_t status;
+	int i, nsegs;
 
-	for (i = sc->sc_txq.t_next; sc->sc_txq.t_queued > 0;
-	    i = TX_NEXT(i), sc->sc_txq.t_queued--) {
-
+	for (i = sc->sc_txq.t_next; sc->sc_txq.t_queued > 0; i = TX_NEXT(i)) {
 #ifdef DWC_GMAC_DEBUG
 		aprint_normal_dev(sc->sc_dev,
 		    "dwc_gmac_tx_intr: checking desc #%d (t_queued: %d)\n",
 		    i, sc->sc_txq.t_queued);
 #endif
 
-		desc = &sc->sc_txq.t_desc[i];
 		/*
 		 * i+1 does not need to be a valid descriptor,
 		 * this is just a special notion to just sync
@@ -991,15 +992,18 @@ dwc_gmac_tx_intr(struct dwc_gmac_softc *sc)
 		 */
 		dwc_gmac_txdesc_sync(sc, i, i+1,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		flags = le32toh(desc->ddesc_status);
 
-		if (flags & DDESC_STATUS_OWNEDBYDEV)
+		desc = &sc->sc_txq.t_desc[i];
+		status = le32toh(desc->ddesc_status);
+		if (status & DDESC_STATUS_OWNEDBYDEV)
 			break;
 
 		data = &sc->sc_txq.t_data[i];
 		if (data->td_m == NULL)
 			continue;
-		sc->sc_ec.ec_if.if_opackets++;
+
+		ifp->if_opackets++;
+		nsegs = data->td_active->dm_nsegs;
 		bus_dmamap_sync(sc->sc_dmat, data->td_active, 0,
 		    data->td_active->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, data->td_active);
@@ -1012,12 +1016,14 @@ dwc_gmac_tx_intr(struct dwc_gmac_softc *sc)
 
 		m_freem(data->td_m);
 		data->td_m = NULL;
+
+		sc->sc_txq.t_queued -= nsegs;
 	}
 
 	sc->sc_txq.t_next = i;
 
 	if (sc->sc_txq.t_queued < AWGE_TX_RING_COUNT) {
-		sc->sc_ec.ec_if.if_flags &= ~IFF_OACTIVE;
+		ifp->if_flags &= ~IFF_OACTIVE;
 	}
 }
 
