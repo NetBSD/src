@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.213 2015/02/27 07:20:18 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.214 2015/02/27 12:01:08 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -16103,4 +16103,114 @@ sys/dev/ic/dwc_gmac.c				1.32
 
 	Fix ring buffer handling when the ring fills completely.
 	[martin, ticket #546]
+
+distrib/amd64/Makefile				1.9
+distrib/amd64/floppies/Makefile			delete
+distrib/amd64/floppies/bootfloppy-big/Makefile	delete
+distrib/amd64/floppies/bootfloppy-com/Makefile	delete
+distrib/amd64/floppies/bootfloppy/Makefile	delete
+distrib/amd64/floppies/common/Makefile.bootfloppy delete
+distrib/amd64/floppies/common/boot.cfg		delete
+distrib/notes/amd64/contents			1.3
+distrib/notes/common/contents			1.171
+distrib/notes/common/main			1.515
+etc/etc.amd64/Makefile.inc			1.15
+
+	Remove amd64 install floppy images.
+	[snj, ticket #548]
+
+external/mit/font-bh-lucidatypewriter/dist/AUTHORS delete
+external/mit/font-bh-lucidatypewriter/dist/COPYING delete
+external/mit/font-bh-lucidatypewriter/dist/ChangeLog delete
+external/mit/font-bh-lucidatypewriter/dist/INSTALL delete
+external/mit/font-bh-lucidatypewriter/dist/Makefile.am delete
+external/mit/font-bh-lucidatypewriter/dist/Makefile.in delete
+external/mit/font-bh-lucidatypewriter/dist/NEWS	delete
+external/mit/font-bh-lucidatypewriter/dist/README delete
+external/mit/font-bh-lucidatypewriter/dist/aclocal.m4 delete
+external/mit/font-bh-lucidatypewriter/dist/autogen.sh delete
+external/mit/font-bh-lucidatypewriter/dist/configure delete
+external/mit/font-bh-lucidatypewriter/dist/configure.ac delete
+external/mit/font-bh-lucidatypewriter/dist/install-sh delete
+external/mit/font-bh-lucidatypewriter/dist/lutBS08.bdf delete
+external/mit/font-bh-lucidatypewriter/dist/lutBS10.bdf delete
+external/mit/font-bh-lucidatypewriter/dist/lutBS12.bdf delete
+external/mit/font-bh-lucidatypewriter/dist/lutBS14.bdf delete
+external/mit/font-bh-lucidatypewriter/dist/lutBS18.bdf delete
+external/mit/font-bh-lucidatypewriter/dist/lutBS19.bdf delete
+external/mit/font-bh-lucidatypewriter/dist/lutBS24.bdf delete
+external/mit/font-bh-lucidatypewriter/dist/lutRS08.bdf delete
+external/mit/font-bh-lucidatypewriter/dist/lutRS10.bdf delete
+external/mit/font-bh-lucidatypewriter/dist/lutRS12.bdf delete
+external/mit/font-bh-lucidatypewriter/dist/lutRS14.bdf delete
+external/mit/font-bh-lucidatypewriter/dist/lutRS18.bdf delete
+external/mit/font-bh-lucidatypewriter/dist/lutRS19.bdf delete
+external/mit/font-bh-lucidatypewriter/dist/lutRS24.bdf delete
+external/mit/font-bh-lucidatypewriter/dist/missing delete
+external/mit/font-bh-lucidatypewriter/dist/mkinstalldirs delete
+
+	Remove an old and unused copy of font-bh-lucidatypewriter-75dpi-1.0.0.
+	A current version of this font now lives in the
+	font-bh-lucidatypewriter-75dpi directory now.
+	[snj, ticket #549]
+
+xsrc/external/mit/xf86-video-vmware/dist/ChangeLog   up to 1.1.1.7
+xsrc/external/mit/xf86-video-vmware/dist/INSTALL     up to 1.1.1.4
+xsrc/external/mit/xf86-video-vmware/dist/Makefile.in up to 1.1.1.7
+xsrc/external/mit/xf86-video-vmware/dist/aclocal.m4  up to 1.1.1.8
+xsrc/external/mit/xf86-video-vmware/dist/compile     up to 1.1.1.4
+xsrc/external/mit/xf86-video-vmware/dist/configure   up to 1.1.1.10
+xsrc/external/mit/xf86-video-vmware/dist/configure.ac up to 1.1.1.10
+xsrc/external/mit/xf86-video-vmware/dist/depcomp     up to 1.1.1.7
+xsrc/external/mit/xf86-video-vmware/dist/install-sh  up to 1.1.1.7
+xsrc/external/mit/xf86-video-vmware/dist/ltmain.sh   up to 1.1.1.7
+xsrc/external/mit/xf86-video-vmware/dist/man/Makefile.in up to 1.1.1.7
+xsrc/external/mit/xf86-video-vmware/dist/saa/Makefile.in up to 1.1.1.2
+xsrc/external/mit/xf86-video-vmware/dist/saa/saa.c   up to 1.1.1.2
+xsrc/external/mit/xf86-video-vmware/dist/saa/saa_unaccel.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-vmware/dist/src/Makefile.in up to 1.1.1.7
+xsrc/external/mit/xf86-video-vmware/dist/src/vmware.c up to 1.1.1.8
+xsrc/external/mit/xf86-video-vmware/dist/src/vmware_bootstrap.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-vmware/dist/src/vmwarevideo.c up to 1.1.1.5
+xsrc/external/mit/xf86-video-vmware/dist/vmwarectrl/Makefile.in up to 1.1.1.3
+xsrc/external/mit/xf86-video-vmware/dist/vmwgfx/Makefile.in up to 1.1.1.3
+xsrc/external/mit/xf86-video-vmware/dist/vmwgfx/vmwgfx_crtc.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-vmware/dist/vmwgfx/vmwgfx_driver.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-vmware/dist/vmwgfx/vmwgfx_driver.h up to 1.1.1.3
+xsrc/external/mit/xf86-video-vmware/dist/vmwgfx/vmwgfx_overlay.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-vmware/dist/vmwgfx/vmwgfx_saa.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-vmware/dist/vmwgfx/vmwgfx_saa_priv.h up to 1.1.1.3
+xsrc/external/mit/xf86-video-vmware/dist/vmwgfx/vmwgfx_xa_surface.c up to 1.1.1.3
+xsrc/external/mit/xf86-video-vmware/dist/vmwgfx/vmwgfx_xmir.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-vmware/dist/vmwgfx/vmwgfx_xwayland.c up to 1.1.1.2
+xsrc/external/mit/xf86-video-vmware/include/config.h	1.11
+
+	Update to xf86-video-vmware-13.1.0
+	[snj, ticket #550]
+
+etc/etc.alpha/Makefile.inc			1.9
+
+	Don't create an empty installation/misc directory in the release tree.
+	[snj, ticket #551]
+
+sys/external/bsd/drm2/dist/drm/i915/i915_gem.c	1.20-1.22
+sys/external/bsd/drm2/dist/drm/i915/intel_i2c.c	1.5-1.7
+sys/external/bsd/drm2/include/drm/drm_wait_netbsd.h 1.6
+
+	Various fixes for Intel GPUs.
+	[snj, ticket #553]
+
+usr.sbin/sysinst/defs.h				1.5
+usr.sbin/sysinst/main.c				1.6
+usr.sbin/sysinst/net.c				1.17
+usr.sbin/sysinst/run.c				1.3
+usr.sbin/sysinst/util.c				1.5
+
+	Don't use asctime(localtime(time_t *)) because this is really
+	ctime(time_t *) and not checking the result of localtime can
+	lead to tears. Add a safectime() that always returns a good string,
+	and add some debugging so that we can see if there is indeed something
+	wrong in the new libc time code.
+	[snj, ticket #554]
+
 
