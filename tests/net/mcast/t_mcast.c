@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mcast.c,v 1.10 2014/10/27 21:28:58 christos Exp $	*/
+/*	$NetBSD: t_mcast.c,v 1.11 2015/02/27 13:15:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: t_mcast.c,v 1.10 2014/10/27 21:28:58 christos Exp $");
+__RCSID("$NetBSD: t_mcast.c,v 1.11 2015/02/27 13:15:49 martin Exp $");
 #else
 extern const char *__progname;
 #define getprogname() __progname
@@ -275,7 +275,7 @@ receiver(const char *host, const char *port, size_t n, bool conn, bool bug)
 	pfd.fd = s;
 	pfd.events = POLLIN;
 	for (seq = 0; seq < n; seq++) {
-		if (poll(&pfd, 1, 1000) == -1)
+		if (poll(&pfd, 1, 10000) == -1)
 			ERRX(EXIT_FAILURE, "poll (%s)", strerror(errno));
 		l = conn ? recv(s, &msg, sizeof(msg), 0) :
 		    recvfrom(s, &msg, sizeof(msg), 0, (void *)&ss, &slen);
