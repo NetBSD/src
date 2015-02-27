@@ -1,4 +1,4 @@
-# $NetBSD: t_swsensor.sh,v 1.7 2013/04/14 16:07:46 martin Exp $
+# $NetBSD: t_swsensor.sh,v 1.8 2015/02/27 09:16:07 martin Exp $
 
 get_sensor_info() {
 	rump.envstat -x | \
@@ -60,7 +60,7 @@ start_rump() {
 
 common_head() {
 	atf_set	descr		"$1"
-	atf_set	timeout		60
+	atf_set	timeout		120
 	atf_set	require.progs	rump.powerd rump.envstat rump.modload	\
 				rump.halt   rump.sysctl  rump_server	\
 				sed         grep         awk		\
