@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.3 2015/02/27 18:00:29 jmcneill Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.4 2015/02/27 19:57:10 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.3 2015/02/27 18:00:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.4 2015/02/27 19:57:10 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -434,12 +434,6 @@ initarm(void *arg)
 	evbarm_device_register = amlogic_device_register;
 
 	db_trap_callback = amlogic_db_trap;
-
-#if notyet
-	curcpu()->ci_data.cpu_cc_freq = amlogic_cpu_get_rate();
-#else
-	curcpu()->ci_data.cpu_cc_freq = 1000000;
-#endif
 
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
