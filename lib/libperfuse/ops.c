@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.50.2.20 2015/01/16 19:42:54 martin Exp $ */
+/*  $NetBSD: ops.c,v 1.50.2.21 2015/02/27 20:21:02 martin Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1818,6 +1818,7 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 		fsi->valid |= FUSE_FATTR_LOCKOWNER;
 	}
 
+#ifndef PUFFS_KFLAG_NOFLUSH_META
 	/*
 	 * ftruncate() sends only va_size, and metadata cache
 	 * flush adds va_atime and va_mtime. Some FUSE
@@ -1846,6 +1847,7 @@ perfuse_node_setattr_ttl(struct puffs_usermount *pu, puffs_cookie_t opc,
 	 */
 	if (fsi->valid == FUSE_FATTR_ATIME)
 		fsi->valid &= ~FUSE_FATTR_ATIME;
+#endif /* PUFFS_KFLAG_NOFLUSH_META */
 		    
 	/*
 	 * If nothing remain, discard the operation.
