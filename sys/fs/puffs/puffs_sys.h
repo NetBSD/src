@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.84.4.2 2014/08/29 11:55:34 martin Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.84.4.3 2015/02/27 19:39:56 martin Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -94,6 +94,8 @@ extern int puffsdebug; /* puffs_subr.c */
     ((pmp)->pmp_flags & PUFFS_KFLAG_CACHE_FS_TTL)
 #define PUFFS_USE_DOTDOTCACHE(pmp)	\
     ((pmp)->pmp_flags & PUFFS_KFLAG_CACHE_DOTDOT)
+#define PUFFS_USE_METAFLUSH(pmp)	\
+    (((pmp)->pmp_flags & PUFFS_KFLAG_NOFLUSH_META) == 0)
 
 #define PUFFS_WCACHEINFO(pmp)	(__USE(pmp), 0)
 

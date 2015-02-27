@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.59 2014/03/18 18:20:38 riastradh Exp $
+.\"	$NetBSD: puffs.3,v 1.59.4.1 2015/02/27 19:39:56 martin Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -263,6 +263,9 @@ Never send lookups for
 .Dq ..
 to the filesystem.
 Parent vnodes are all kept active until their children are reclaimed.
+.It Dv PUFFS_KFLAG_NOFLUSH_META
+Do not send metadata cache flushes for time and size to the filesystem,
+which should take care of updating the values on its own.
 .It Dv PUFFS_FLAG_OPDUMP
 This option makes the framework dump a textual representation of
 each operation before executing it.
