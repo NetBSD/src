@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_crureg.h,v 1.1 2015/02/27 19:57:10 jmcneill Exp $ */
+/* $NetBSD: amlogic_crureg.h,v 1.2 2015/02/27 21:13:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -46,5 +46,13 @@
 
 #define PREG_CTLREG0_ADDR_REG		CBUS_REG(0x2000)
 #define PREG_CTLREG0_ADDR_CLKRATE	__BITS(9,4)
+
+#define WATCHDOG_TC_REG			CBUS_REG(0x2640)
+#define WATCHDOG_TC_CPUS		__BITS(27,24)
+#define WATCHDOG_TC_ENABLE		__BIT(19)
+#define WATCHDOG_TC_TCNT		__BITS(15,0)
+
+#define WATCHDOG_RESET_REG		CBUS_REG(0x2641)
+#define WATCHDOG_RESET_COUNT		__BITS(15,0)
 
 #endif /* _ARM_AMLOGIC_CRUREG_H */
