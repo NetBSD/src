@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.56 2015/01/21 11:02:55 jmcneill Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.57 2015/02/28 09:34:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.56 2015/01/21 11:02:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.57 2015/02/28 09:34:34 skrll Exp $");
 
-#include "opt_evbarm_boardtype.h"
-#include "opt_ddb.h"
-#include "opt_kgdb.h"
 #include "opt_arm_debug.h"
+#include "opt_bcm283x.h"
+#include "opt_ddb.h"
+#include "opt_evbarm_boardtype.h"
+#include "opt_kgdb.h"
 #include "opt_rpi.h"
 #include "opt_vcprop.h"
 
@@ -80,6 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.56 2015/01/21 11:02:55 jmcneill Ex
 
 #include <evbarm/rpi/rpi.h>
 
+#include <arm/cortex/gtmr_var.h>
+
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -116,9 +119,9 @@ static void rpi_device_register(device_t, void *);
  * kernel address space.  *Not* for general use.
  */
 
-#define	KERN_VTOPDIFF	((vaddr_t)KERNEL_BASE_phys - (vaddr_t)KERNEL_BASE_virt)
-#define KERN_VTOPHYS(va) ((paddr_t)((vaddr_t)va + KERN_VTOPDIFF))
-#define KERN_PHYSTOV(pa) ((vaddr_t)((paddr_t)pa - KERN_VTOPDIFF))
+#define KERN_VTOPDIFF	KERNEL_BASE_VOFFSET
+#define KERN_VTOPHYS(va) ((paddr_t)((vaddr_t)va - KERN_VTOPDIFF))
+#define KERN_PHYSTOV(pa) ((vaddr_t)((paddr_t)pa + KERN_VTOPDIFF))
 
 #ifndef RPI_FB_WIDTH
 #define RPI_FB_WIDTH	1280
@@ -127,7 +130,15 @@ static void rpi_device_register(device_t, void *);
 #define RPI_FB_HEIGHT	720
 #endif
 
+#if 0
+#define	PLCONADDR BCM2835_UART0_BASE
+#endif
+
+#ifdef BCM2836
+#define	PLCONADDR 0x3f201000
+#else
 #define	PLCONADDR 0x20201000
+#endif
 
 #ifndef CONSDEVNAME
 #define CONSDEVNAME "plcom"
@@ -498,12 +509,21 @@ rpi_bootparams(void)
 
 static const struct pmap_devmap rpi_devmap[] = {
 	{
-		_A(RPI_KERNEL_IO_VBASE),	/* 0xf2000000 */
-		_A(RPI_KERNEL_IO_PBASE),	/* 0x20000000 */
+		_A(RPI_KERNEL_IO_VBASE),
+		_A(RPI_KERNEL_IO_PBASE),
 		_S(RPI_KERNEL_IO_VSIZE),	/* 16Mb */
 		VM_PROT_READ|VM_PROT_WRITE,
 		PTE_NOCACHE,
 	},
+#if defined(BCM2836)
+	{
+		_A(RPI_KERNEL_LOCAL_VBASE),
+		_A(RPI_KERNEL_LOCAL_PBASE),
+		_S(RPI_KERNEL_LOCAL_VSIZE),
+		VM_PROT_READ|VM_PROT_WRITE,
+		PTE_NOCACHE,
+	},
+#endif
 	{ 0, 0, 0, 0, 0 }
 };
 
@@ -544,6 +564,10 @@ initarm(void *arg)
 #define BDSTR(s)	_BDSTR(s)
 #define _BDSTR(s)	#s
 	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
+
+#ifdef CORTEX_PMC
+	cortex_pmc_ccnt_init();
+#endif
 
 	rpi_bootparams();
 
@@ -853,7 +877,7 @@ rpi_fb_init(prop_dictionary_t dict, void *aux)
 		k = 0;
 		for (j = 0; j < 64; j++) {
 			for (i = 0; i < 64; i++) {
-				cmem[i + k] = 
+				cmem[i + k] =
 				 ((i & 8) ^ (j & 8)) ? 0xa0ff0000 : 0xa000ff00;
 			}
 			k += 64;
@@ -865,7 +889,7 @@ rpi_fb_init(prop_dictionary_t dict, void *aux)
 #else
 		rpi_fb_movecursor(cursor_x, cursor_y, cursor_on);
 #endif
-	}	
+	}
 #endif
 
 	return true;
@@ -1009,6 +1033,17 @@ static void
 rpi_device_register(device_t dev, void *aux)
 {
 	prop_dictionary_t dict = device_properties(dev);
+
+#if defined(BCM2836)
+	if (device_is_a(dev, "armgtmr")) {
+		/*
+		 * The frequency of the generic timer is the reference
+		 * frequency.
+		 */
+		prop_dictionary_set_uint32(dict, "frequency", RPI_REF_FREQ);
+		return;
+	}
+#endif
 
 	if (device_is_a(dev, "bcmdmac") &&
 	    vcprop_tag_success_p(&vb.vbt_dmachan.tag)) {
