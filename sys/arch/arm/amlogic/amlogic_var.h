@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_var.h,v 1.1 2015/02/07 17:20:17 jmcneill Exp $ */
+/* $NetBSD: amlogic_var.h,v 1.2 2015/02/28 15:20:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -55,5 +55,12 @@ extern bus_space_handle_t amlogic_core_bsh;
 extern struct arm32_bus_dma_tag amlogic_dma_tag;
 
 void	amlogic_bootstrap(void);
+
+void	amlogic_usbphy_init(int);
+
+uint32_t amlogic_get_rate_xtal(void);
+uint32_t amlogic_get_rate_sys(void);
+uint32_t amlogic_get_rate_a9(void);
+uint32_t amlogic_get_rate_a9periph(void);
 
 #endif /* _ARM_AMLOGIC_VAR_H */

@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_board.c,v 1.2 2015/02/27 19:57:10 jmcneill Exp $ */
+/* $NetBSD: amlogic_board.c,v 1.3 2015/02/28 15:20:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.2 2015/02/27 19:57:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.3 2015/02/28 15:20:43 jmcneill Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -54,13 +54,12 @@ struct arm32_bus_dma_tag amlogic_dma_tag = {
 	_BUS_DMATAG_FUNCS,
 };
 
-#define CBUS_READ(x)	\
-	bus_space_read_4(&amlogic_bs_tag, amlogic_core_bsh, (x))
-
-static uint32_t	amlogic_get_rate_xtal(void);
-static uint32_t	amlogic_get_rate_sys(void);
-static uint32_t	amlogic_get_rate_a9(void);
-
+#define CBUS_READ(x)		\
+	bus_space_read_4(&amlogic_bs_tag, amlogic_core_bsh, \
+			 AMLOGIC_CBUS_OFFSET + (x))
+#define CBUS_WRITE(x, v)	\
+	bus_space_write_4(&amlogic_bs_tag, amlogic_core_bsh, \
+			 AMLOGIC_CBUS_OFFSET + (x), (v))
 
 void
 amlogic_bootstrap(void)
@@ -75,7 +74,7 @@ amlogic_bootstrap(void)
 	curcpu()->ci_data.cpu_cc_freq = amlogic_get_rate_a9();
 }
 
-static uint32_t
+uint32_t
 amlogic_get_rate_xtal(void)
 {
 	uint32_t ctlreg0;
@@ -85,7 +84,7 @@ amlogic_get_rate_xtal(void)
 	return __SHIFTOUT(ctlreg0, PREG_CTLREG0_ADDR_CLKRATE) * 1000000;
 }
 
-static uint32_t
+uint32_t
 amlogic_get_rate_sys(void)
 {
 	uint32_t cntl;
@@ -105,7 +104,7 @@ amlogic_get_rate_sys(void)
 	return (uint32_t)clk;
 }
 
-static uint32_t
+uint32_t
 amlogic_get_rate_a9(void)
 {
 	uint32_t cntl0, cntl1;
@@ -146,4 +145,99 @@ amlogic_get_rate_a9(void)
 	}
 
 	return rate;
+}
+
+uint32_t
+amlogic_get_rate_a9periph(void)
+{
+	const uint32_t cntl1 = CBUS_READ(HHI_SYS_CPU_CLK_CNTL1_REG);
+	const u_int div = __SHIFTOUT(cntl1,
+				     HHI_SYS_CPU_CLK_CNTL1_PERIPH_CLK_MUX) + 2;
+
+	return amlogic_get_rate_a9() / div;
+}
+
+void
+amlogic_usbphy_init(int port)
+{
+	bus_space_tag_t bst = &amlogic_bs_tag;
+	bus_space_handle_t bsh = amlogic_core_bsh;
+	bus_size_t ctrl_reg, cfg_reg, gpioao_reg;
+	uint32_t ctrl, cfg, gpioao;
+	u_int pin, pol;
+	bool gpio_power = false, gpio_reset = false;
+
+	gpioao_reg = AMLOGIC_GPIOAO_OFFSET;
+
+	switch (port) {
+	case 0:
+		cfg_reg = PREI_USB_PHY_A_CFG_REG;
+		ctrl_reg = PREI_USB_PHY_A_CTRL_REG;
+		pin = 5;
+		pol = 1;
+		gpio_power = true;
+		break;
+	case 1:
+		cfg_reg = PREI_USB_PHY_B_CFG_REG;
+		ctrl_reg = PREI_USB_PHY_B_CTRL_REG;
+		pin = 4;
+		pol = 0;
+		gpio_reset = true;
+		break;
+	default:
+		return;
+	}
+
+	if (gpio_power) {
+		gpioao = bus_space_read_4(bst, bsh, gpioao_reg);
+		gpioao |= __BIT(pin);		/* OEN */
+		if (pol) {
+			gpioao |= __BIT(pin + 16);	/* OUT */
+		} else {
+			gpioao &= ~__BIT(pin + 16);	/* OUT */
+		}
+		bus_space_write_4(bst, bsh, gpioao_reg, gpioao);
+	}
+
+	CBUS_WRITE(RESET1_REG, RESET1_USB);
+
+	delay(1000);
+
+	cfg = CBUS_READ(cfg_reg);
+	cfg |= PREI_USB_PHY_CFG_CLK_32K_ALT_SEL;
+	CBUS_WRITE(cfg_reg, cfg);
+
+	ctrl = CBUS_READ(ctrl_reg);
+	ctrl &= ~PREI_USB_PHY_CTRL_FSEL;
+	ctrl |= __SHIFTIN(PREI_USB_PHY_CTRL_FSEL_24M,
+			  PREI_USB_PHY_CTRL_FSEL);
+	ctrl |= PREI_USB_PHY_CTRL_POR;
+	CBUS_WRITE(ctrl_reg, ctrl);
+
+	delay(1000);
+
+	ctrl = CBUS_READ(ctrl_reg);
+	ctrl &= ~PREI_USB_PHY_CTRL_POR;
+	CBUS_WRITE(ctrl_reg, ctrl);
+
+	delay(50000);
+
+	ctrl = CBUS_READ(ctrl_reg);
+
+	printf("USBPHY: port %d, ctrl %#x\n", port, ctrl);
+
+	if ((ctrl & PREI_USB_PHY_CTRL_CLK_DET) == 0)
+		printf("WARNING: USB PHY port %d clock not detected\n", port);
+
+	if (gpio_reset) {
+		/* Reset */
+		gpioao = bus_space_read_4(bst, bsh, gpioao_reg);
+		gpioao |= __BIT(pin);		/* OEN */
+		if (pol) {
+			gpioao |= __BIT(pin + 16);	/* OUT */
+		} else {
+			gpioao &= ~__BIT(pin + 16);	/* OUT */
+		}
+		bus_space_write_4(bst, bsh, gpioao_reg, gpioao);
+	}
 }
