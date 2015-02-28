@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.173 2015/02/02 02:28:26 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.174 2015/02/28 21:42:01 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.173 2015/02/02 02:28:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.174 2015/02/28 21:42:01 rtr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -920,7 +920,8 @@ unp_sockaddr(struct socket *so, struct mbuf *nam)
  * what it calls "abstract" unix sockets.
  */
 static struct sockaddr_un *
-makeun(struct mbuf *nam, size_t *addrlen) {
+makeun(struct mbuf *nam, size_t *addrlen)
+{
 	struct sockaddr_un *sun;
 
 	*addrlen = nam->m_len + 1;
