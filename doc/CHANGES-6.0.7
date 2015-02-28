@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.30 2015/02/23 08:15:19 msaitoh Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.31 2015/02/28 05:36:47 snj Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -4369,3 +4369,10 @@ external/bsd/bind/dist/lib/dns/zone.c				patch
 	Security patch for bind from ISC (to 9.9.6-P2).
 	Only the change to lib/dns/zone.c is security relevant (CVE-2015-1349).
 	[spz, ticket #1259]
+
+usr.bin/gzip/gzip.1				1.24
+usr.bin/gzip/gzip.c				1.107
+
+	do not use directory paths present in gzip files with the -N flag.
+	[mrg, ticket #1261]
+
