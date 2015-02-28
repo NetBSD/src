@@ -159,7 +159,7 @@ static void radeon_sync_with_vblank(struct radeon_device *rdev)
 
 		spin_lock(&rdev->irq.vblank_lock);
 		rdev->pm.vblank_sync = false;
-		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &rdev->irq.vblank_queue,
+		DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, &rdev->irq.vblank_queue,
 		    &rdev->irq.vblank_lock,
 		    msecs_to_jiffies(RADEON_WAIT_VBLANK_TIMEOUT),
 		    rdev->pm.vblank_sync);
