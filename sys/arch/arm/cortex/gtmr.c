@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.8 2014/06/11 05:50:46 matt Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.9 2015/02/28 09:34:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.8 2014/06/11 05:50:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.9 2015/02/28 09:34:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.8 2014/06/11 05:50:46 matt Exp $");
 
 static int gtmr_match(device_t, cfdata_t, void *);
 static void gtmr_attach(device_t, device_t, void *);
-
-static int gtmr_intr(void *);
 
 static u_int gtmr_get_timecount(struct timecounter *);
 
@@ -95,6 +93,7 @@ gtmr_match(device_t parent, cfdata_t cf, void *aux)
 static void
 gtmr_attach(device_t parent, device_t self, void *aux)
 {
+	struct mpcore_attach_args * const mpcaa = aux;
         struct gtmr_softc *sc = &gtmr_sc;
 	prop_dictionary_t dict = device_properties(self);
 	char freqbuf[sizeof("X.XXX SHz")];
@@ -125,12 +124,12 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_missing_ticks, EVCNT_TYPE_MISC, NULL,
 	    device_xname(self), "missing interrupts");
 
-	sc->sc_global_ih = intr_establish(IRQ_GTMR_PPI_VTIMER, IPL_CLOCK,
+	sc->sc_global_ih = intr_establish(mpcaa->mpcaa_irq, IPL_CLOCK,
 	    IST_EDGE | IST_MPSAFE, gtmr_intr, NULL);
 	if (sc->sc_global_ih == NULL)
 		panic("%s: unable to register timer interrupt", __func__);
 	aprint_normal_dev(self, "interrupting on irq %d\n",
-	    IRQ_GTMR_PPI_VTIMER);
+	    mpcaa->mpcaa_irq);
 
 	const uint32_t cnt_frq = armreg_cnt_frq_read();
 	if (cnt_frq == 0) {
@@ -269,7 +268,7 @@ gtmr_bootdelay(unsigned int ticks)
  *
  *	Handle the hardclock interrupt.
  */
-static int
+int
 gtmr_intr(void *arg)
 {
 	const uint64_t now = armreg_cntv_ct_read();
