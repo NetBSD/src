@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_dwctwo.c,v 1.1 2015/02/28 15:20:43 jmcneill Exp $	*/
+/*	$NetBSD: amlogic_dwctwo.c,v 1.2 2015/02/28 18:50:57 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_dwctwo.c,v 1.1 2015/02/28 15:20:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_dwctwo.c,v 1.2 2015/02/28 18:50:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,28 +62,28 @@ struct amlogic_dwctwo_softc {
 static struct dwc2_core_params amlogic_dwctwo_params = {
 	.otg_cap			= 2,	/* 0 - HNP/SRP capable */
 	.otg_ver			= 1,	/* 1 - 2.0 */
-	.dma_enable			= 1,	/* 1 - DMA (default, if available) */
-	.dma_desc_enable		= 1,	/* 1 - Descriptor DMA (default, if available) */
-	.speed				= 0,	/* 0 - High Speed */
+	.dma_enable			= -1,	/* 1 - DMA (default, if available) */
+	.dma_desc_enable		= 0,	/* 1 - Descriptor DMA (default, if available) */
+	.speed				= -1,	/* 0 - High Speed */
 	.enable_dynamic_fifo		= 1,	/* 1 - Allow dynamic FIFO sizing (default, if available) */
-	.en_multiple_tx_fifo		= 1,	/* Specifies whether dedicated per-endpoint transmit FIFOs are enabled */
-	.host_rx_fifo_size		= 520,	/* 520 DWORDs */
-	.host_nperio_tx_fifo_size	= 128,	/* 128 DWORDs */
-	.host_perio_tx_fifo_size	= 256,	/* 256 DWORDs */
-	.max_transfer_size		= 65535,/* 2047 to 65,535 */ 
-	.max_packet_count		= 511,  /* 15 to 511 */
-	.host_channels			= 8,	/* 1 to 16 */
+	.en_multiple_tx_fifo		= -1,	/* Specifies whether dedicated per-endpoint transmit FIFOs are enabled */
+	.host_rx_fifo_size		= 512,	/* 512 DWORDs */
+	.host_nperio_tx_fifo_size	= 500,	/* 500 DWORDs */
+	.host_perio_tx_fifo_size	= -1,	/* 256 DWORDs */
+	.max_transfer_size		= -1,   /* 2047 to 65,535 */ 
+	.max_packet_count		= -1,   /* 15 to 511 */
+	.host_channels			= -1,	/* 1 to 16 */
 	.phy_type			= 1, 	/* 1- UTMI+ Phy */
-	.phy_utmi_width			= 8,	/* 8 bits */
-	.phy_ulpi_ddr			= 0,	/* Single */
-	.phy_ulpi_ext_vbus		= 0,
-	.i2c_enable			= 0,
-	.ulpi_fs_ls			= 0,	/* 0 - No (default) */
-	.host_support_fs_ls_low_power	= 0,	/* 0 - Don't support low power mode (default) */
-	.host_ls_low_power_phy_clk	= 0,	/* 1 - 48 MHz  default when phy_type is UTMI+ or ULPI*/
-	.ts_dline			= 0,	/* 0 - No (default) */
-	.reload_ctl			= 0,	/* 0 - No (default for core < 2.92a) */
-	.ahbcfg				= 0x7,	/* INCR16 */
+	.phy_utmi_width			= -1,	/* 8 bits */
+	.phy_ulpi_ddr			= -1,	/* Single */
+	.phy_ulpi_ext_vbus		= -1,
+	.i2c_enable			= -1,
+	.ulpi_fs_ls			= -1,	/* 0 - No (default) */
+	.host_support_fs_ls_low_power	= -1,	/* 0 - Don't support low power mode (default) */
+	.host_ls_low_power_phy_clk	= -1,	/* 1 - 48 MHz  default when phy_type is UTMI+ or ULPI*/
+	.ts_dline			= -1,	/* 0 - No (default) */
+	.reload_ctl			= -1,	/* 0 - No (default for core < 2.92a) */
+	.ahbcfg				= 0x3,	/* INCR4 */
 	.uframe_sched			= 1,	/* True to enable microframe scheduler */
 };
 
