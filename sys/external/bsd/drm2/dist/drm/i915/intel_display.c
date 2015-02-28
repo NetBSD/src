@@ -3138,7 +3138,7 @@ static void intel_crtc_wait_for_pending_flips(struct drm_crtc *crtc)
 #ifdef __NetBSD__
 	if (cold) {
 		unsigned timo = 1000;
-		while (!intel_crtc_has_pending_flip(crtc)) {
+		while (intel_crtc_has_pending_flip(crtc)) {
 			if (timo-- == 0)
 				/* Give up.  */
 				break;
