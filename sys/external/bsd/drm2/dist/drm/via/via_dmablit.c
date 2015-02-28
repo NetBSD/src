@@ -600,6 +600,12 @@ via_dmablit_sync(struct drm_device *dev, uint32_t handle, int engine)
 		DRM_SPIN_TIMED_WAIT_UNTIL(ret, queue, &blitq->blit_lock,
 		    3*DRM_HZ,
 		    !via_dmablit_active(blitq, engine, handle, NULL));
+		if (ret < 0)	/* Failure: return negative error as is.  */
+			;
+		else if (ret == 0) /* Timed out: return -EBUSY like Linux.  */
+			ret = -EBUSY;
+		else		/* Succeeded (ret > 0): return 0.  */
+			ret = 0;
 	}
 	spin_unlock(&blitq->blit_lock);
 #else
@@ -878,9 +884,18 @@ via_dmablit_grab_slot(drm_via_blitq_t *blitq, int engine)
 		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &blitq->busy_queue,
 		    &blitq->blit_lock, DRM_HZ,
 		    blitq->num_free > 0);
+		if (ret < 0)	/* Failure: return negative error as is.  */
+			;
+		else if (ret == 0) /* Timed out: return -EBUSY like Linux.  */
+			ret = -EBUSY;
+		else		/* Success (ret > 0): return 0.  */
+			ret = 0;
+		/* Map -EINTR to -EAGAIN.  */
+		if (ret == -EINTR)
+			ret = -EAGAIN;
+		/* Bail on failure.  */
 		if (ret) {
-			if (ret == -EINTR)
-				ret = -EAGAIN;
+			spin_unlock_irqrestore(&blitq->blit_lock, irqsave);
 			return ret;
 		}
 #else
