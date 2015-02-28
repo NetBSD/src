@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_io.c,v 1.2 2015/02/27 21:34:40 jmcneill Exp $ */
+/* $NetBSD: amlogic_io.c,v 1.3 2015/02/28 15:20:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_io.c,v 1.2 2015/02/27 21:34:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_io.c,v 1.3 2015/02/28 15:20:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,14 @@ static const struct amlogic_locators amlogic_locators[] = {
     AMLOGIC_UART0AO_OFFSET, AMLOGIC_UART_SIZE, 0, AMLOGIC_INTR_UART0AO },
   { "amlogiccom",
     AMLOGIC_UART2AO_OFFSET, AMLOGIC_UART_SIZE, 2, AMLOGIC_INTR_UART2AO },
+  { "dwctwo",
+    AMLOGIC_USB0_OFFSET, AMLOGIC_USB_SIZE, 0, AMLOGIC_INTR_USB0 },
+  { "dwctwo",
+    AMLOGIC_USB1_OFFSET, AMLOGIC_USB_SIZE, 1, AMLOGIC_INTR_USB1 },
+#if notyet
+  { "amlogicmmc",
+    AMLOGIC_MMC_OFFSET, AMLOGIC_MMC_SIZE, 0, AMLOGIC_INTR_MMC },
+#endif
 };
 
 int
@@ -77,6 +85,9 @@ amlogicio_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	amlogic_usbphy_init(0);
+	amlogic_usbphy_init(1);
 
 	const struct amlogic_locators * const eloc =
 	    amlogic_locators + __arraycount(amlogic_locators);
