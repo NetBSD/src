@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_var.h,v 1.4 2014/03/28 21:41:46 matt Exp $ */
+/* $NetBSD: gtmr_var.h,v 1.5 2015/02/28 09:34:35 skrll Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,6 +44,7 @@ struct gtmr_softc {
 
 #ifdef _KERNEL
 struct cpu_info;
+int	gtmr_intr(void *);
 void	gtmr_init_cpu_clock(struct cpu_info *);
 void	gtmr_delay(unsigned int n);
 void	gtmr_bootdelay(unsigned int n);

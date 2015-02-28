@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.7 2015/02/27 20:40:09 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: armperiph.c,v 1.8 2015/02/28 09:34:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -205,6 +205,9 @@ armperiph_attach(device_t parent, device_t self, void *aux)
 			.mpcaa_off1 = cfg->cfg_devices[i].pi_off1,
 			.mpcaa_off2 = cfg->cfg_devices[i].pi_off2,
 		};
+		if (strcmp(mpcaa.mpcaa_name, "armgtmr") == 0) {
+			mpcaa.mpcaa_irq = IRQ_GTMR_PPI_VTIMER;
+		}
 
 		config_found(self, &mpcaa, NULL);
 	}
