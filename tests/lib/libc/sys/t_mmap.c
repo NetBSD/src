@@ -1,4 +1,4 @@
-/* $NetBSD: t_mmap.c,v 1.8 2015/02/27 16:09:19 christos Exp $ */
+/* $NetBSD: t_mmap.c,v 1.9 2015/02/28 13:57:08 martin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mmap.c,v 1.8 2015/02/27 16:09:19 christos Exp $");
+__RCSID("$NetBSD: t_mmap.c,v 1.9 2015/02/28 13:57:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -486,15 +486,23 @@ ATF_TC_BODY(mmap_truncate_signal, tc)
 
 	if (pid == 0) {
 		ATF_REQUIRE(signal(SIGBUS, map_sighandler) != SIG_ERR);
+		ATF_REQUIRE(signal(SIGSEGV, map_sighandler) != SIG_ERR);
 		sta = 0;
 		for (i = 0; i < page; i++)
 			sta += map[i];
+		/* child never will get this far, but the compiler will
+		   not know, so better use the values calculated to
+		   prevent the access to be optimized out */
 		ATF_REQUIRE(i == 0);
+		ATF_REQUIRE(sta == 0);
+		return;
 	}
 
 	(void)wait(&sta);
 
 	ATF_REQUIRE(WIFEXITED(sta) != 0);
+	if (WEXITSTATUS(sta) == SIGSEGV)
+		atf_tc_fail("child process got SIGSEGV instead of SIGBUS");
 	ATF_REQUIRE(WEXITSTATUS(sta) == SIGBUS);
 	ATF_REQUIRE(munmap(map, page) == 0);
 	ATF_REQUIRE(close(fd) == 0);
