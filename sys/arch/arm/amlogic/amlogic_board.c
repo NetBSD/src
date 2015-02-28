@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_board.c,v 1.3 2015/02/28 15:20:43 jmcneill Exp $ */
+/* $NetBSD: amlogic_board.c,v 1.4 2015/02/28 18:50:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.3 2015/02/28 15:20:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.4 2015/02/28 18:50:57 jmcneill Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -59,7 +59,7 @@ struct arm32_bus_dma_tag amlogic_dma_tag = {
 			 AMLOGIC_CBUS_OFFSET + (x))
 #define CBUS_WRITE(x, v)	\
 	bus_space_write_4(&amlogic_bs_tag, amlogic_core_bsh, \
-			 AMLOGIC_CBUS_OFFSET + (x), (v))
+			  AMLOGIC_CBUS_OFFSET + (x), (v))
 
 void
 amlogic_bootstrap(void)
@@ -157,15 +157,40 @@ amlogic_get_rate_a9periph(void)
 	return amlogic_get_rate_a9() / div;
 }
 
+static void
+amlogic_usbphy_clkgate_enable(int port)
+{
+	switch (port) {
+	case 0:
+		CBUS_WRITE(EE_CLK_GATING1_REG,
+		    CBUS_READ(EE_CLK_GATING1_REG) |
+		    EE_CLK_GATING1_USB_GENERAL |
+		    EE_CLK_GATING1_USB0);
+		CBUS_WRITE(EE_CLK_GATING2_REG,
+		    CBUS_READ(EE_CLK_GATING2_REG) |
+		    EE_CLK_GATING2_USB0_TO_DDR);
+		break;
+	case 1:
+		CBUS_WRITE(EE_CLK_GATING1_REG,
+		    CBUS_READ(EE_CLK_GATING1_REG) |
+		    EE_CLK_GATING1_USB_GENERAL |
+		    EE_CLK_GATING1_USB1);
+		CBUS_WRITE(EE_CLK_GATING2_REG,
+		    CBUS_READ(EE_CLK_GATING2_REG) |
+		    EE_CLK_GATING2_USB1_TO_DDR);
+		break;
+	}
+}
+
 void
 amlogic_usbphy_init(int port)
 {
 	bus_space_tag_t bst = &amlogic_bs_tag;
 	bus_space_handle_t bsh = amlogic_core_bsh;
-	bus_size_t ctrl_reg, cfg_reg, gpioao_reg;
-	uint32_t ctrl, cfg, gpioao;
+	bus_size_t ctrl_reg, cfg_reg, adp_bc_reg, gpioao_reg;
+	uint32_t ctrl, cfg, adp_bc, gpioao;
 	u_int pin, pol;
-	bool gpio_power = false, gpio_reset = false;
+	bool gpio_power = false, gpio_reset = false, aca_enable = false;
 
 	gpioao_reg = AMLOGIC_GPIOAO_OFFSET;
 
@@ -173,6 +198,7 @@ amlogic_usbphy_init(int port)
 	case 0:
 		cfg_reg = PREI_USB_PHY_A_CFG_REG;
 		ctrl_reg = PREI_USB_PHY_A_CTRL_REG;
+		adp_bc_reg = PREI_USB_PHY_A_ADP_BC_REG;
 		pin = 5;
 		pol = 1;
 		gpio_power = true;
@@ -180,17 +206,26 @@ amlogic_usbphy_init(int port)
 	case 1:
 		cfg_reg = PREI_USB_PHY_B_CFG_REG;
 		ctrl_reg = PREI_USB_PHY_B_CTRL_REG;
+		adp_bc_reg = PREI_USB_PHY_B_ADP_BC_REG;
 		pin = 4;
 		pol = 0;
 		gpio_reset = true;
+		aca_enable = true;
 		break;
 	default:
 		return;
 	}
 
+	if (port == 0) {
+		CBUS_WRITE(RESET1_REG, RESET1_USB);
+	}
+
+	amlogic_usbphy_clkgate_enable(port);
+
 	if (gpio_power) {
 		gpioao = bus_space_read_4(bst, bsh, gpioao_reg);
 		gpioao |= __BIT(pin);		/* OEN */
+		bus_space_write_4(bst, bsh, gpioao_reg, gpioao);
 		if (pol) {
 			gpioao |= __BIT(pin + 16);	/* OUT */
 		} else {
@@ -198,8 +233,6 @@ amlogic_usbphy_init(int port)
 		}
 		bus_space_write_4(bst, bsh, gpioao_reg, gpioao);
 	}
-
-	CBUS_WRITE(RESET1_REG, RESET1_USB);
 
 	delay(1000);
 
@@ -229,15 +262,40 @@ amlogic_usbphy_init(int port)
 	if ((ctrl & PREI_USB_PHY_CTRL_CLK_DET) == 0)
 		printf("WARNING: USB PHY port %d clock not detected\n", port);
 
+	if (aca_enable) {
+		adp_bc = CBUS_READ(adp_bc_reg);
+		adp_bc |= PREI_USB_PHY_ADP_BC_ACA_ENABLE;
+		CBUS_WRITE(adp_bc_reg, adp_bc);
+
+		delay(1000);
+
+		adp_bc = CBUS_READ(adp_bc_reg);
+		if (adp_bc & PREI_USB_PHY_ADP_BC_ACA_FLOATING)
+			printf("WARNING: USB PHY port %d failed to enable "
+			    "ACA detection\n", port);
+	}
+
 	if (gpio_reset) {
 		/* Reset */
 		gpioao = bus_space_read_4(bst, bsh, gpioao_reg);
 		gpioao |= __BIT(pin);		/* OEN */
+		bus_space_write_4(bst, bsh, gpioao_reg, gpioao);
 		if (pol) {
 			gpioao |= __BIT(pin + 16);	/* OUT */
 		} else {
 			gpioao &= ~__BIT(pin + 16);	/* OUT */
 		}
 		bus_space_write_4(bst, bsh, gpioao_reg, gpioao);
+
+		delay(1000);
+
+		if (pol) {
+			gpioao &= ~__BIT(pin + 16);	/* OUT */
+		} else {
+			gpioao |= __BIT(pin + 16);	/* OUT */
+		}
+		bus_space_write_4(bst, bsh, gpioao_reg, gpioao);
+
+		delay(60000);
 	}
 }
