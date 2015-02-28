@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.199 2015/02/27 20:22:36 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.200 2015/02/28 05:39:00 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -9674,4 +9674,10 @@ sys/fs/puffs/puffs_vnops.c			1.200-1.202
 
 	Add PUFFS_KFLAG_NOFLUSH_META to prevent sending metadata flush to FUSE.
 	[manu, ticket #1260]
+
+usr.bin/gzip/gzip.1				1.24
+usr.bin/gzip/gzip.c				1.107
+
+	do not use directory paths present in gzip files with the -N flag.
+	[mrg, ticket #1261]
 
