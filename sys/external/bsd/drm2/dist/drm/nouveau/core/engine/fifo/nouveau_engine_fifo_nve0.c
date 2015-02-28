@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_fifo_nve0.c,v 1.3 2015/02/28 03:33:22 riastradh Exp $	*/
+/*	$NetBSD: nouveau_engine_fifo_nve0.c,v 1.4 2015/02/28 05:38:49 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_nve0.c,v 1.3 2015/02/28 03:33:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_nve0.c,v 1.4 2015/02/28 05:38:49 riastradh Exp $");
 
 #include <core/client.h>
 #include <core/handle.h>
@@ -140,7 +140,7 @@ nve0_fifo_runlist_update(struct nve0_fifo_priv *priv, u32 engine)
 	int ret;
 
 	spin_lock(&engn->lock);
-	DRM_SPIN_TIMED_WAIT_UNTIL(ret, &engn->wait, &engn->lock,
+	DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, &engn->wait, &engn->lock,
 	    msecs_to_jiffies(2000),
 	    !(nv_rd32(priv, 0x002284 +
 		    (engine * 0x08)) & 0x00100000));
