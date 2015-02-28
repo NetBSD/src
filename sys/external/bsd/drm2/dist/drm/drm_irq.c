@@ -1301,11 +1301,11 @@ int drm_wait_vblank(struct drm_device *dev, void *data,
 		    vblwait->request.sequence) <= (1 << 23)) ||
 		!dev->irq_enabled));
 	spin_unlock_irqrestore(&dev->vbl_lock, irqflags);
-	if (0 < ret)
-		/*
-		 * ret is ticks remaining on success in this case, but
-		 * caller just wants 0 for success.
-		 */
+	if (ret < 0)		/* Failed: do nothing.  */
+		;
+	else if (ret == 0)	/* Timed out: return -EBUSY like Linux.  */
+		ret = -EBUSY;
+	else			/* Succeeded (ret > 0): return 0.  */
 		ret = 0;
     }
 #else
