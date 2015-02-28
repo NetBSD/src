@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_board.c,v 1.4 2015/02/28 18:50:57 jmcneill Exp $ */
+/* $NetBSD: amlogic_board.c,v 1.5 2015/02/28 22:53:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.4 2015/02/28 18:50:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.5 2015/02/28 22:53:25 jmcneill Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -224,7 +224,7 @@ amlogic_usbphy_init(int port)
 
 	if (gpio_power) {
 		gpioao = bus_space_read_4(bst, bsh, gpioao_reg);
-		gpioao |= __BIT(pin);		/* OEN */
+		gpioao &= ~__BIT(pin);		/* OEN */
 		bus_space_write_4(bst, bsh, gpioao_reg, gpioao);
 		if (pol) {
 			gpioao |= __BIT(pin + 16);	/* OUT */
@@ -278,7 +278,7 @@ amlogic_usbphy_init(int port)
 	if (gpio_reset) {
 		/* Reset */
 		gpioao = bus_space_read_4(bst, bsh, gpioao_reg);
-		gpioao |= __BIT(pin);		/* OEN */
+		gpioao &= ~__BIT(pin);		/* OEN */
 		bus_space_write_4(bst, bsh, gpioao_reg, gpioao);
 		if (pol) {
 			gpioao |= __BIT(pin + 16);	/* OUT */
