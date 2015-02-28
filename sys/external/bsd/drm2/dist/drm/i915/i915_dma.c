@@ -812,16 +812,9 @@ static int i915_wait_irq(struct drm_device * dev, int irq_nr)
 #ifdef __NetBSD__
 		unsigned long flags;
 		spin_lock_irqsave(&dev_priv->irq_lock, flags);
-		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &ring->irq_queue,
-		    &dev_priv->irq_lock,
+		DRM_SPIN_WAIT_ON(ret, &ring->irq_queue, &dev_priv->irq_lock,
 		    3 * DRM_HZ,
 		    READ_BREADCRUMB(dev_priv) >= irq_nr);
-		if (ret < 0)	/* Failure: return negative error as is.  */
-			;
-		else if (ret == 0) /* Timed out: return -EBUSY like Linux.  */
-			ret = -EBUSY;
-		else		/* Succeeded (ret > 0): return 0.  */
-			ret = 0;
 		spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
 #else
 		DRM_WAIT_ON(ret, ring->irq_queue, 3 * HZ,
