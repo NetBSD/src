@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.215 2015/02/27 19:41:34 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.216 2015/02/28 07:59:36 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -16224,4 +16224,18 @@ sys/fs/puffs/puffs_vnops.c			1.200-1.202
 
 	Add PUFFS_KFLAG_NOFLUSH_META to prevent sending metadata flush to FUSE.
 	[manu, ticket #555]
+
+external/zlib/pigz/dist/pigz.c			1.2
+usr.bin/gzip/gzip.1				1.24
+usr.bin/gzip/gzip.c				1.107
+
+	pigz: When decompressing with -N or -NT, strip any path from
+	header name.  This uses the path of the compressed file combined
+	with the name from the header as the name of the decompressed
+	output file.  Any path information in the header name is stripped.
+	This avoids a possible vulnerability where absolute or descending
+	paths are put in the gzip header.
+	gzip: do not use directory paths present in gzip files with the
+	-N flag.
+	[mrg, ticket #557]
 
