@@ -1301,7 +1301,7 @@ int drm_wait_vblank(struct drm_device *dev, void *data,
 		    vblwait->request.sequence) <= (1 << 23)) ||
 		!dev->irq_enabled));
 	spin_unlock_irqrestore(&dev->vbl_lock, irqflags);
-	if (ret < 0)		/* Failed: do nothing.  */
+	if (ret < 0)		/* Failed: return negative error as is.  */
 		;
 	else if (ret == 0)	/* Timed out: return -EBUSY like Linux.  */
 		ret = -EBUSY;
