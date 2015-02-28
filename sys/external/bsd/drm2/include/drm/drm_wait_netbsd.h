@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.6 2015/02/26 23:27:41 riastradh Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.7 2015/02/28 03:22:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -104,6 +104,28 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 	cv_broadcast(q);
 }
 
+/*
+ * WARNING: These DRM_*WAIT*_UNTIL macros are designed to replace the
+ * Linux wait_event_* macros.  They have a different return value
+ * convention from the legacy portability DRM_WAIT_ON macro and a
+ * different return value convention from cv_*wait*.  Specifically,
+ * DRM_*WAIT*_UNTIL and Linux wait_event_*
+ *
+ * - return negative error code on failure (e.g., interruption),
+ * - return zero on timeout, and
+ * - return one on success.
+ *
+ * Contrast DRM_WAIT_ON which returns -EINTR/-ERESTART on interruption,
+ * -EBUSY on timeout, and zero on success; and cv_*wait*, which return
+ * -EINTR/-ERESTART on interruption, -EWOULDBLOCK on timeout, and zero
+ * on success.
+ *
+ * We don't simply implement DRM_WAIT_ON because, like Linux
+ * wait_event_*, it lacks an interlock, whereas we require an interlock
+ * for any waits in order to avoid the standard race conditions
+ * associated with non-interlocked waits that plague Linux drivers.
+ */
+
 #define	_DRM_WAIT_UNTIL(RET, WAIT, Q, INTERLOCK, CONDITION) do		\
 {									\
 	KASSERT(mutex_is_locked((INTERLOCK)));				\
@@ -135,7 +157,7 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
  * - 0 if condition is false after timeout,
  * - 1 if condition is true after timeout or one tick before timeout,
  * - number of ticks left if condition evaluated to true before timeout, or
- * - error if failure (e.g., interrupted).
+ * - negative error if failure (e.g., interrupted).
  *
  * XXX Comments in Linux say it returns -ERESTARTSYS if interrupted.
  * What if by a signal without SA_RESTART?  Shouldn't it be -EINTR
