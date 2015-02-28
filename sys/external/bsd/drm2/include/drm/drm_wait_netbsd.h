@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.7 2015/02/28 03:22:50 riastradh Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.8 2015/02/28 04:57:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -106,12 +106,18 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 
 /*
  * WARNING: These DRM_*WAIT*_UNTIL macros are designed to replace the
- * Linux wait_event_* macros.  They have a different return value
+ * Linux wait_event* macros.  They have a different return value
  * convention from the legacy portability DRM_WAIT_ON macro and a
- * different return value convention from cv_*wait*.  Specifically,
- * DRM_*WAIT*_UNTIL and Linux wait_event_*
+ * different return value convention from cv_*wait*.
  *
- * - return negative error code on failure (e.g., interruption),
+ * Specifically, the untimed macros
+ *
+ * - return negative error code on failure (interruption), and
+ * - return zero on sucess.
+ *
+ * The timed macros
+ *
+ * - return negative error code on failure (interruption),
  * - return zero on timeout, and
  * - return one on success.
  *
@@ -121,9 +127,14 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
  * on success.
  *
  * We don't simply implement DRM_WAIT_ON because, like Linux
- * wait_event_*, it lacks an interlock, whereas we require an interlock
+ * wait_event*, it lacks an interlock, whereas we require an interlock
  * for any waits in order to avoid the standard race conditions
  * associated with non-interlocked waits that plague Linux drivers.
+ *
+ * XXX In retrospect, giving the timed and untimed macros a different
+ * return convention from one another to match Linux may have been a
+ * bad idea.  All of this inconsistent timeout return convention logic
+ * has been a consistent source of bugs.
  */
 
 #define	_DRM_WAIT_UNTIL(RET, WAIT, Q, INTERLOCK, CONDITION) do		\
