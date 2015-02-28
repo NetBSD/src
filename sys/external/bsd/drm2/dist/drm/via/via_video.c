@@ -108,6 +108,12 @@ int via_decoder_futex(struct drm_device *dev, void *data, struct drm_file *file_
 		    &dev_priv->decoder_lock[fx->lock],
 		    (fx->ms / 10) * (DRM_HZ / 100),
 		    *lock != fx->val);
+		if (ret < 0)	/* Failure: return negative error as is.  */
+			;
+		else if (ret == 0) /* Timed out: return -EBUSY like Linux.  */
+			ret = -EBUSY;
+		else		/* Success (ret > 0): return 0.  */
+			ret = 0;
 		mutex_unlock(&dev_priv->decoder_lock[fx->lock]);
 #else
 		DRM_WAIT_ON(ret, dev_priv->decoder_queue[fx->lock],
