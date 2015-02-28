@@ -264,9 +264,7 @@ gmbus_wait_hw_status(struct drm_i915_private *dev_priv,
 		     u32 gmbus2_status,
 		     u32 gmbus4_irq_en)
 {
-#ifndef __NetBSD__
 	int i;
-#endif
 	int reg_offset = dev_priv->gpio_mmio_base;
 	u32 gmbus2 = 0;
 #ifndef __NetBSD__
@@ -289,21 +287,25 @@ gmbus_wait_hw_status(struct drm_i915_private *dev_priv,
 #ifdef __NetBSD__
 	spin_lock(&dev_priv->gmbus_wait_lock);
 	if (cold) {
-		unsigned timo = 50;
-
+		i = 50;
 		while (gmbus2 = I915_READ_NOTRACE(GMBUS2 + reg_offset),
 		    !ISSET(gmbus2, (GMBUS_SATOER | gmbus2_status))) {
-			if (timo-- == 0)
+			if (i-- == 0)
 				break;
 			DELAY(1000);
 		}
 	} else {
-		int ret;
-		DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret,
-		    &dev_priv->gmbus_wait_queue, &dev_priv->gmbus_wait_lock,
-		    mstohz(50),
-		    (gmbus2 = I915_READ_NOTRACE(GMBUS2 + reg_offset),
-			ISSET(gmbus2, (GMBUS_SATOER | gmbus2_status))));
+		for (i = 0; i < mstohz(50); i++) {
+			int ret;
+
+			DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret,
+			    &dev_priv->gmbus_wait_queue,
+			    &dev_priv->gmbus_wait_lock,
+			    1,
+			    (gmbus2 = I915_READ_NOTRACE(GMBUS2 + reg_offset),
+				ISSET(gmbus2,
+				    (GMBUS_SATOER | gmbus2_status))));
+		}
 	}
 	spin_unlock(&dev_priv->gmbus_wait_lock);
 #else
