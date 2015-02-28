@@ -1,0 +1,24 @@
+#
+#	$NetBSD: RPI2,v 1.1 2015/02/28 09:34:34 skrll Exp $
+#
+#	RPi2 -- Raspberry Pi 2
+#
+
+include "arch/evbarm/conf/RPI"
+
+no options 	CPU_ARM1176
+no options 	TPIDRPRW_IS_CURLWP
+no options 	__HAVE_MM_MD_CACHE_ALIASING
+no makeoptions	CPUFLAGS
+
+options 	BCM2836
+options 	CPU_CORTEXA7
+#options 	MULTIPROCESSOR
+options 	CORTEX_PMC
+options 	TPIDRPRW_IS_CURCPU
+makeoptions 	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
+
+# Architecture options
+
+no bcmtmr0	at obio?		# System Timer
+armgtmr0	at obio?		# ARM Generic Timer
