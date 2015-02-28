@@ -371,10 +371,16 @@ intel_dp_aux_wait_done(struct intel_dp *intel_dp, bool has_aux_irq)
 	if (has_aux_irq && !cold) {
 		int ret;
 		spin_lock(&dev_priv->gmbus_wait_lock);
-		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &dev_priv->gmbus_wait_queue,
-		    &dev_priv->gmbus_wait_lock, msecs_to_jiffies_timeout(10),
+		DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret,
+		    &dev_priv->gmbus_wait_queue, &dev_priv->gmbus_wait_lock,
+		    msecs_to_jiffies_timeout(10),
 		    C);
-		done = ret;	/* XXX ugh */
+		if (ret < 0)	/* Failure: pretend same as done.  */
+			done = true;
+		else if (ret == 0) /* Timed out: not done.  */
+			done = false;
+		else		/* Succeeded (ret > 0): done.  */
+			done = true;
 		spin_unlock(&dev_priv->gmbus_wait_lock);
 	} else {
 		done = wait_for_atomic(C, 10) == 0;
