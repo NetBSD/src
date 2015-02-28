@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.10 2015/02/28 21:17:32 riastradh Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.11 2015/02/28 21:30:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -144,8 +144,7 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 			break;						      \
 		}							      \
 		/* XXX errno NetBSD->Linux */				      \
-		(RET) = -cv_timedwait_sig((Q), &(INTERLOCK)->sl_lock,	      \
-		    (_dswo_end - _dswo_now));				      \
+		(RET) = -cv_timedwait_sig((Q), &(INTERLOCK)->sl_lock, 1);     \
 		if (RET) {						      \
 			if ((RET) == -EWOULDBLOCK)			      \
 				(RET) = (CONDITION) ? 0 : -EBUSY;	      \
