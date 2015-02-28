@@ -350,7 +350,7 @@ gmbus_wait_idle(struct drm_i915_private *dev_priv)
 
 #ifdef __NetBSD__
 	spin_lock(&dev_priv->gmbus_wait_lock);
-	DRM_SPIN_TIMED_WAIT_UNTIL(ret, &dev_priv->gmbus_wait_queue,
+	DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, &dev_priv->gmbus_wait_queue,
 	    &dev_priv->gmbus_wait_lock, msecs_to_jiffies_timeout(10),
 	    C);
 	spin_unlock(&dev_priv->gmbus_wait_lock);
