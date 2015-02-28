@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-C1,v 1.2 2015/02/27 17:35:08 jmcneill Exp $
+#	$NetBSD: ODROID-C1,v 1.3 2015/02/28 18:52:01 jmcneill Exp $
 #
 #	Odroid-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
@@ -174,6 +174,20 @@ amlogicio0	at mainbus?
 # On-board UARTs
 amlogiccom0	at amlogicio0 port 0
 options 	CONSADDR=0xc81004c0, CONSPEED=115200
+
+# USB
+dwctwo0		at amlogicio0 port 0
+dwctwo1		at amlogicio0 port 1
+usb*		at dwctwo?
+
+include "dev/usb/usbdevices.config"
+midi*		at midibus?
+
+## USB debugging options
+#options 	USBVERBOSE
+#options 	USB_DEBUG
+#options 	UHUB_DEBUG
+#options 	DWC2_DEBUG
 
 # Pseudo-Devices
 
