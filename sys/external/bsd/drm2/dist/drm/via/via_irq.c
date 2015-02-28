@@ -249,23 +249,17 @@ via_driver_irq_wait(struct drm_device *dev, unsigned int irq, int force_sequence
 #ifdef __NetBSD__
 	spin_lock(&cur_irq->irq_lock);
 	if (masks[real_irq][2] && !force_sequence) {
-		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &cur_irq->irq_queue,
-		    &cur_irq->irq_lock, 3 * DRM_HZ,
+		DRM_SPIN_WAIT_ON(ret, &cur_irq->irq_queue, &cur_irq->irq_lock,
+		    3 * DRM_HZ,
 		    ((VIA_READ(masks[irq][2]) & masks[irq][3]) ==
 			masks[irq][4]));
 		cur_irq_sequence = cur_irq->irq_received;
 	} else {
-		DRM_SPIN_TIMED_WAIT_UNTIL(ret, &cur_irq->irq_queue,
-		    &cur_irq->irq_lock, 3 * DRM_HZ,
+		DRM_SPIN_WAIT_ON(ret, &cur_irq->irq_queue, &cur_irq->irq_lock,
+		    3 * DRM_HZ,
 		    (((cur_irq_sequence = cur_irq->irq_received) -
 			*sequence) <= (1 << 23)));
 	}
-	if (ret < 0)		/* Failure: return negative error as is.  */
-		;
-	else if (ret == 0)	/* Timed out: return -EBUSY like Linux.  */
-		ret = -EBUSY;
-	else			/* Success (ret > 0): return 0.  */
-		ret = 0;
 	spin_unlock(&cur_irq->irq_lock);
 #else
 	if (masks[real_irq][2] && !force_sequence) {
