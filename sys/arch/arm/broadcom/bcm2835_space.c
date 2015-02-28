@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_space.c,v 1.7 2015/02/25 13:52:42 joerg Exp $	*/
+/*	$NetBSD: bcm2835_space.c,v 1.8 2015/02/28 09:34:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.7 2015/02/25 13:52:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.8 2015/02/28 09:34:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.7 2015/02/25 13:52:42 joerg Exp 
 
 #include <sys/bus.h>
 
+#include <arm/locore.h>
 #include <arm/broadcom/bcm2835reg.h>
 
 /* Prototypes for all the bus_space structure functions */
@@ -290,8 +291,12 @@ bcm2835_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
 	const struct pmap_devmap *pd;
 	int pmap_flags;
 
-	pa = ba & ~BCM2835_BUSADDR_CACHE_MASK;
 
+#if defined(BCM2836)
+	pa = ba;
+#else
+	pa = ba & ~BCM2835_BUSADDR_CACHE_MASK;
+#endif
 	/* this does device addresses */
 	if ((pd = pmap_devmap_find_pa(pa, size)) != NULL) {
 		/* Device was statically mapped. */
