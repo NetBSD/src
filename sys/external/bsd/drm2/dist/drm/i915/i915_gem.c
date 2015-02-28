@@ -1427,6 +1427,12 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 		else
 			DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, &ring->irq_queue,
 			    &dev_priv->irq_lock, ticks, EXIT_COND);
+		if (ret < 0)	/* Failure: return negative error as is.  */
+			;
+		else if (ret == 0) /* Timed out: return -ETIME.  */
+			ret = -ETIME;
+		else		/* Succeeded (ret > 0): return 0.  */
+			ret = 0;
 	} else {
 		if (interruptible)
 			DRM_SPIN_WAIT_UNTIL(ret, &ring->irq_queue,
@@ -1434,6 +1440,7 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 		else
 			DRM_SPIN_WAIT_NOINTR_UNTIL(ret, &ring->irq_queue,
 			    &dev_priv->irq_lock, EXIT_COND);
+		/* ret is negative on failure or zero on success.  */
 	}
 #undef	EXIT_COND
 	spin_unlock(&dev_priv->irq_lock);
@@ -1463,11 +1470,7 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 		if (ret == 0)
 			ret = -EAGAIN;
 	}
-	if (ret < 0)		/* Error.  */
-		return ret;
-	if (ret == 0)		/* Seqno didn't pass.  */
-		return -ETIME;
-	return 0;		/* Seqno passed, maybe time to spare.  */
+	return ret;
 }
 #else
 static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
