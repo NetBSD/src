@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.102 2014/12/02 13:00:38 pooka Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.103 2015/02/28 23:04:34 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.102 2014/12/02 13:00:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.103 2015/02/28 23:04:34 jmcneill Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -966,7 +966,8 @@ module_do_load(const char *name, bool isdep, int flags,
 			 * available for each architecture, so we don't
 			 * print an error if they are missing.
 			 */
-			if (modclass != MODULE_CLASS_EXEC || error != ENOENT)
+			if ((modclass != MODULE_CLASS_EXEC || error != ENOENT) &&
+			    root_device != NULL)
 				module_error("vfs load failed for `%s', "
 				    "error %d", name, error);
 #endif
