@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.47 2015/02/28 21:56:53 asau Exp $	*/
+/*	$NetBSD: process.c,v 1.48 2015/03/01 00:38:01 asau Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: process.c,v 1.47 2015/02/28 21:56:53 asau Exp $");
+__RCSID("$NetBSD: process.c,v 1.48 2015/03/01 00:38:01 asau Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/process.c 192732 2009-05-25 06:45:33Z brian $");
 #endif
@@ -86,6 +86,9 @@ static void		 lputs(char *, size_t);
 static __inline int	 regexec_e(regex_t *, const char *, int, int, size_t);
 static void		 regsub(SPACE *, char *, char *);
 static int		 substitute(struct s_command *);
+
+static FILE *infile;		/* Current input file */
+static FILE *outfile;		/* Current output file */
 
 /*
  * Current file and line number; line numbers restart across compilation
