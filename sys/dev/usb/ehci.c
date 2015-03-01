@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.236 2015/03/01 08:00:57 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.237 2015/03/01 08:03:35 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.236 2015/03/01 08:00:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.237 2015/03/01 08:03:35 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -562,7 +562,9 @@ ehci_init(ehci_softc_t *sc)
 	usb_syncmem(&sqh->dma, sqh->offs, sizeof(sqh->qh),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 #ifdef EHCI_DEBUG
+	USBHIST_LOGN(ehcidebug, 5, "--- dump start ---", 0, 0, 0, 0);
 	ehci_dump_sqh(sqh);
+	USBHIST_LOGN(ehcidebug, 5, "--- dump end ---", 0, 0, 0, 0);
 #endif
 
 	/* Point to async list */
@@ -889,6 +891,12 @@ ehci_check_qh_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 		}
 		USBHIST_LOGN(ehcidebug, 10, "ex=%p std=%p still active",
 		    ex, ex->sqtdstart, 0, 0);
+#ifdef EHCI_DEBUG
+		USBHIST_LOGN(ehcidebug, 5, "--- still active start ---", 0, 0, 0, 0);
+		ehci_dump_sqtds(ex->ex_sqtdstart);
+		USBHIST_LOGN(ehcidebug, 5, "--- still active end ---", 0, 0, 0, 0);
+#endif
+
 		return;
 	}
  done:
@@ -1585,7 +1593,7 @@ ehci_dump_sqtds(ehci_soft_qtd_t *sqtd)
 		    sqtd->offs + offsetof(ehci_qtd_t, qtd_next),
 		    sizeof(sqtd->qtd), BUS_DMASYNC_PREREAD);
 	}
-	if (sqtd)
+	if (!stop)
 		USBHIST_LOG(ehcidebug,
 		    "dump aborted, too many TDs", 0, 0, 0, 0);
 }
