@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.149.2.5 2015/03/01 08:31:27 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.149.2.6 2015/03/01 08:33:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.5 2015/03/01 08:31:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.6 2015/03/01 08:33:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -255,15 +255,15 @@ Static void umass_cbi_state(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static int umass_cbi_adsc(struct umass_softc *, char *, int, int, usbd_xfer_handle);
 
 const struct umass_wire_methods umass_bbb_methods = {
-	umass_bbb_transfer,
-	umass_bbb_reset,
-	umass_bbb_state
+	.wire_xfer = umass_bbb_transfer,
+	.wire_reset = umass_bbb_reset,
+	.wire_state = umass_bbb_state
 };
 
 const struct umass_wire_methods umass_cbi_methods = {
-	umass_cbi_transfer,
-	umass_cbi_reset,
-	umass_cbi_state
+	.wire_xfer = umass_cbi_transfer,
+	.wire_reset = umass_cbi_reset,
+	.wire_state = umass_cbi_state
 };
 
 #ifdef UMASS_DEBUG
