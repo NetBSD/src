@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.149.2.4 2014/12/06 08:27:23 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.149.2.5 2015/03/01 08:31:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.4 2014/12/06 08:27:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.5 2015/03/01 08:31:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -586,9 +586,11 @@ umass_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 	}
-	/* Allocate buffer for data transfer (it's huge), command and
-	   status data here as auto allocation cannot happen in interrupt
-	   context */
+	/*
+	 * Allocate buffer for data transfer (it's huge), command and
+	 * status data here as auto allocation cannot happen in interrupt
+	 * context
+	 */
 	switch (sc->sc_wire) {
 	case UMASS_WPROTO_BBB:
 		sc->data_buffer = usbd_alloc_buffer(
