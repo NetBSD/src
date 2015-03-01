@@ -1,4 +1,4 @@
-/*	$NetBSD: i386-asm.S,v 1.3 2013/01/07 23:20:42 dsl Exp $	*/
+/*	$NetBSD: i386-asm.S,v 1.4 2015/03/01 18:02:42 tnn Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ ENTRY(x86_cpuid2)
 END(x86_cpuid2)
 
 ENTRY(x86_xgetbv)
+	xorl	%ecx, %ecx
 	xgetbv
 	ret
 END(x86_xgetbv)
