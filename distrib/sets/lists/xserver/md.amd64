@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.75 2015/01/05 03:45:31 mrg Exp $
+# $NetBSD: md.amd64,v 1.76 2015/03/01 07:46:04 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -446,7 +446,8 @@
 ./usr/X11R7/lib/modules/drivers/r128_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/r128_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/radeon_drv.so.6		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/radeon_drv.so.6		-unknown-	xorg,!x11radeonkms
+./usr/X11R7/lib/modules/drivers/radeon_drv.so.7		-unknown-	xorg,x11radeonkms
 ./usr/X11R7/lib/modules/drivers/radeonhd_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeonhd_drv.so.1	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/s3_drv.so		-unknown-	xorg
