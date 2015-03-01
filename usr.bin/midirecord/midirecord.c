@@ -1,4 +1,4 @@
-/*	$NetBSD: midirecord.c,v 1.6 2015/01/03 22:57:54 joerg Exp $	*/
+/*	$NetBSD: midirecord.c,v 1.7 2015/03/01 09:56:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 2014 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midirecord.c,v 1.6 2015/01/03 22:57:54 joerg Exp $");
+__RCSID("$NetBSD: midirecord.c,v 1.7 2015/03/01 09:56:54 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -74,6 +74,7 @@ static struct timeval start_time;
 static int	tempo = 120;
 static unsigned	notes_per_beat = 24;
 static bool ignore_timer_fail = false;
+static bool stdout_mode = false;
 
 static void debug_log(const char *, size_t, const char *, ...)
     __printflike(3, 4);
@@ -191,8 +192,10 @@ main(int argc, char *argv[])
 		outfd = open(*argv, mode, 0666);
 		if (outfd < 0)
 			err(1, "could not open %s", *argv);
-	} else
+	} else {
+		stdout_mode = true;
 		outfd = STDOUT_FILENO;
+	}
 
 	/* open the raw output file */
 	if (raw_output) {
@@ -711,7 +714,7 @@ rewrite_header(void)
 {
 
 	/* can't do this here! */
-	if (outfd == STDOUT_FILENO)
+	if (stdout_mode)
 		return;
 
 	if (lseek(outfd, (off_t)0, SEEK_SET) == (off_t)-1)
@@ -734,7 +737,7 @@ write_midi_header(void)
 		0, 0, /* ntracks */
 		0, 0, /* notes per beat */
 	};
-	/* XXX only spport one track so far */
+	/* XXX only support one track so far */
 	unsigned ntracks = 1;
 	unsigned char track[] = {
 		'M', 'T', 'r', 'k',
