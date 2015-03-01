@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.17 2015/03/01 00:51:08 asau Exp $	*/
+/*	$NetBSD: extern.h,v 1.18 2015/03/01 01:00:07 asau Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -62,7 +62,6 @@ extern int aflag, nflag;
 extern int ispan;
 extern int rflags;	/* regex flags to use */
 
-void	 cfclose(struct s_command *, struct s_command *);
 void	 compile(void);
 void	 cspace(SPACE *, const char *, size_t, enum e_spflag);
 int	 process(void);
