@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.49 2015/03/01 00:51:08 asau Exp $	*/
+/*	$NetBSD: process.c,v 1.50 2015/03/01 01:00:07 asau Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: process.c,v 1.49 2015/03/01 00:51:08 asau Exp $");
+__RCSID("$NetBSD: process.c,v 1.50 2015/03/01 01:00:07 asau Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/process.c 192732 2009-05-25 06:45:33Z brian $");
 #endif
@@ -80,6 +80,7 @@ static int mf_fgets(SPACE *, enum e_spflag);
 static int lastline(void);
 
 static __inline int	 applies(struct s_command *);
+static void		 cfclose(struct s_command *, struct s_command *);
 static void		 do_tr(struct s_tr *);
 static void		 flush_appends(void);
 static void		 lputs(char *, size_t);
@@ -296,6 +297,7 @@ new:		if (!nflag && !pd)
 			OUT();
 		flush_appends();
 	} /* for all lines */
+	cfclose(prog, NULL);
 	return rval;
 }
 
@@ -795,7 +797,7 @@ cspace(SPACE *sp, const char *p, size_t len, enum e_spflag spflag)
 /*
  * Close all cached opened files and report any errors
  */
-void
+static void
 cfclose(struct s_command *cp, struct s_command *end)
 {
 
