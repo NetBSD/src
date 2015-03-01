@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264 2014/08/05 06:35:24 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.265 2015/03/01 08:10:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264 2014/08/05 06:35:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.265 2015/03/01 08:10:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264 2014/08/05 06:35:24 skrll Exp $");
 
 /* Use bandwidth reclamation for control transfers. Some devices choke on it. */
 /*#define UHCI_CTL_LOOP */
-
 
 
 #ifdef UHCI_DEBUG
