@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.31 2015/02/22 08:59:17 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.32 2015/03/01 08:17:45 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.31 2015/02/22 08:59:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.32 2015/03/01 08:17:45 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1180,11 +1180,11 @@ ehci_idone(struct ehci_xfer *ex)
 	if (status & EHCI_QTD_HALTED) {
 #ifdef EHCI_DEBUG
 		USBHIST_LOG(ehcidebug, "halted addr=%d endpt=0x%02x",
-		   xfer->ux_pipe->up_dev->ud_addr,
-		   xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress, 0, 0);
-		USBHIST_LOG(ehcidebug, "cerr=%d pid=%d stat=%#x",
-		   EHCI_QTD_GET_CERR(status), EHCI_QTD_GET_PID(status),
-		   status, 0);
+		    xfer->ux_pipe->up_dev->ud_addr,
+		    xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress, 0, 0);
+		USBHIST_LOG(ehcidebug, "cerr=%d pid=%d",
+		    EHCI_QTD_GET_CERR(status), EHCI_QTD_GET_PID(status),
+		    0, 0);
 		USBHIST_LOG(ehcidebug,
 		    "active =%d halted=%d buferr=%d babble=%d",
 		    status & EHCI_QTD_ACTIVE ? 1 : 0,
@@ -1743,7 +1743,7 @@ ehci_dump_sqh(ehci_soft_qh_t *sqh)
 	USBHIST_LOGN(ehcidebug, 10,
 	    "        addr = 0x%02x  inact = %d  endpt = %d  eps = %d",
 	    EHCI_QH_GET_ADDR(endp), EHCI_QH_GET_INACT(endp),
-	    EHCI_QH_GET_ENDPT(endp),  EHCI_QH_GET_EPS(endp));
+	    EHCI_QH_GET_ENDPT(endp), EHCI_QH_GET_EPS(endp));
 	USBHIST_LOGN(ehcidebug, 10,
 	    "        dtc  = %d     hrecl = %d",
 	    EHCI_QH_GET_DTC(endp), EHCI_QH_GET_HRECL(endp), 0, 0);
