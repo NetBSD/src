@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.48 2015/03/01 00:38:01 asau Exp $	*/
+/*	$NetBSD: process.c,v 1.49 2015/03/01 00:51:08 asau Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: process.c,v 1.48 2015/03/01 00:38:01 asau Exp $");
+__RCSID("$NetBSD: process.c,v 1.49 2015/03/01 00:51:08 asau Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/process.c 192732 2009-05-25 06:45:33Z brian $");
 #endif
@@ -104,7 +104,7 @@ static u_long linenum;
 
 static int rval;		/* Exit status */
 
-struct s_appends *appends;	/* Array of pointers to strings to append. */
+static struct s_appends *appends;	/* Array of pointers to strings to append. */
 static size_t appendx;		/* Index into appends array. */
 size_t appendnum;			/* Size of appends array. */
 
@@ -113,7 +113,7 @@ static int sdone;		/* If any substitutes since last line input. */
 				/* Iov structure for 'w' commands. */
 static regex_t *defpreg;
 size_t maxnsub;
-regmatch_t *match;
+static regmatch_t *match;
 
 #define OUT() do {fwrite(ps, 1, psl, outfile); fputc('\n', outfile);} while (0)
 
@@ -124,6 +124,10 @@ process(void)
 	SPACE tspace;
 	size_t oldpsl = 0;
 	char *p;
+
+	if (appendnum > 0)
+		appends = xmalloc(sizeof(struct s_appends) * appendnum);
+	match = xmalloc((maxnsub + 1) * sizeof(regmatch_t));
 
 	p = NULL;
 
