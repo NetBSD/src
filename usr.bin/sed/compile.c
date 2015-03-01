@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.44 2015/02/28 21:56:53 asau Exp $	*/
+/*	$NetBSD: compile.c,v 1.45 2015/03/01 00:51:08 asau Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.44 2015/02/28 21:56:53 asau Exp $");
+__RCSID("$NetBSD: compile.c,v 1.45 2015/03/01 00:51:08 asau Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/compile.c 259132 2013-12-09 18:57:20Z eadler $");
 #endif
@@ -154,9 +154,6 @@ compile(void)
 	*compile_stream(&prog) = NULL;
 	fixuplabel(prog, NULL);
 	uselabel();
-	if (appendnum > 0)
-		appends = xmalloc(sizeof(struct s_appends) * appendnum);
-	match = xmalloc((maxnsub + 1) * sizeof(regmatch_t));
 }
 
 #define EATSPACE() do {							\
