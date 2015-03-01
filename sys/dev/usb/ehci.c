@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.237 2015/03/01 08:03:35 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.238 2015/03/01 09:53:36 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.237 2015/03/01 08:03:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.238 2015/03/01 09:53:36 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -893,7 +893,7 @@ ehci_check_qh_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 		    ex, ex->sqtdstart, 0, 0);
 #ifdef EHCI_DEBUG
 		USBHIST_LOGN(ehcidebug, 5, "--- still active start ---", 0, 0, 0, 0);
-		ehci_dump_sqtds(ex->ex_sqtdstart);
+		ehci_dump_sqtds(ex->sqtdstart);
 		USBHIST_LOGN(ehcidebug, 5, "--- still active end ---", 0, 0, 0, 0);
 #endif
 
