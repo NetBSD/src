@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.16 2015/03/01 00:38:01 asau Exp $	*/
+/*	$NetBSD: extern.h,v 1.17 2015/03/01 00:51:08 asau Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -56,8 +56,6 @@ struct s_flist {
 extern struct s_compunit *script;
 extern struct s_flist *files;
 extern struct s_command *prog;
-extern struct s_appends *appends;
-extern regmatch_t *match;
 extern size_t maxnsub;
 extern size_t appendnum;
 extern int aflag, nflag;
