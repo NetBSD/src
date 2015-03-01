@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 2015/03/01 00:38:01 asau Exp $	*/
+/*	$NetBSD: main.c,v 1.33 2015/03/01 01:00:07 asau Exp $	*/
 
 /*-
  * Copyright (c) 2013 Johann 'Myrkraverk' Oskarsson.
@@ -39,7 +39,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.32 2015/03/01 00:38:01 asau Exp $");
+__RCSID("$NetBSD: main.c,v 1.33 2015/03/01 01:00:07 asau Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/main.c 252231 2013-06-26 04:14:19Z pfg $");
 #endif
@@ -185,7 +185,6 @@ main(int argc, char *argv[])
 	else
 		add_file(NULL);
 	rval = process();
-	cfclose(prog, NULL);
 	if (fclose(stdout))
 		err(1, "stdout");
 	exit(rval);
