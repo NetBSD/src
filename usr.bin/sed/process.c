@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.50 2015/03/01 01:00:07 asau Exp $	*/
+/*	$NetBSD: process.c,v 1.51 2015/03/01 01:07:46 asau Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: process.c,v 1.50 2015/03/01 01:00:07 asau Exp $");
+__RCSID("$NetBSD: process.c,v 1.51 2015/03/01 01:07:46 asau Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/process.c 192732 2009-05-25 06:45:33Z brian $");
 #endif
@@ -81,11 +81,13 @@ static int lastline(void);
 
 static __inline int	 applies(struct s_command *);
 static void		 cfclose(struct s_command *, struct s_command *);
+static void		 cspace(SPACE *, const char *, size_t, enum e_spflag);
 static void		 do_tr(struct s_tr *);
 static void		 flush_appends(void);
 static void		 lputs(char *, size_t);
 static __inline int	 regexec_e(regex_t *, const char *, int, int, size_t);
 static void		 regsub(SPACE *, char *, char *);
+static void		 resetstate(void);
 static int		 substitute(struct s_command *);
 
 static FILE *infile;		/* Current input file */
@@ -375,7 +377,7 @@ applies(struct s_command *cp)
 /*
  * Reset the sed processor to its initial state.
  */
-void
+static void
 resetstate(void)
 {
 	struct s_command *cp;
@@ -774,7 +776,7 @@ regsub(SPACE *sp, char *string, char *src)
  *	Concatenate space: append the source space to the destination space,
  *	allocating new space as necessary.
  */
-void
+static void
 cspace(SPACE *sp, const char *p, size_t len, enum e_spflag spflag)
 {
 	size_t tlen;
