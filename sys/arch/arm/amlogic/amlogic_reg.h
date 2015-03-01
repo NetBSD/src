@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_reg.h,v 1.4 2015/03/01 15:07:49 jmcneill Exp $ */
+/* $NetBSD: amlogic_reg.h,v 1.5 2015/03/01 15:37:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -57,6 +57,8 @@
 #define AMLOGIC_USB0_OFFSET	0x09040000
 #define AMLOGIC_USB1_OFFSET	0x090c0000
 #define AMLOGIC_USB_SIZE	0x40000
+
+#define AMLOGIC_SRAM_OFFSET	0x19000000
 
 #define AMLOGIC_CPUCONF_OFFSET	0x1901ff80
 

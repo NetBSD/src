@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-C1,v 1.4 2015/03/01 15:07:49 jmcneill Exp $
+#	$NetBSD: ODROID-C1,v 1.5 2015/03/01 15:37:26 jmcneill Exp $
 #
 #	Odroid-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
@@ -166,7 +166,7 @@ a9tmr0		at armperiph?				# Global Timer
 a9wdt0		at armperiph?				# Watchdog
 
 # Specify the memory size in megabytes.
-options 	MEMSIZE=1024
+#options 	MEMSIZE=1024
 
 # On-board I/O
 amlogicio0	at mainbus?

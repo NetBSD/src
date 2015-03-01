@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.9 2015/03/01 15:07:49 jmcneill Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.10 2015/03/01 15:37:26 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.9 2015/03/01 15:07:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.10 2015/03/01 15:37:26 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -301,6 +301,14 @@ amlogic_putchar(char c)
 	}
 }
 
+static psize_t
+amlogic_get_ram_size(void)
+{
+	const bus_space_handle_t ao_bsh =
+	    AMLOGIC_CORE_VBASE + AMLOGIC_SRAM_OFFSET;
+	return bus_space_read_4(&amlogic_bs_tag, ao_bsh, 0) << 20;
+}
+
 /*
  * u_int initarm(...)
  *
@@ -386,9 +394,7 @@ initarm(void *arg)
 		KERNEL_BASE, KERNEL_VM_BASE, KERNEL_VM_BASE - KERNEL_BASE, KERNEL_BASE_VOFFSET);
 #endif
 
-#if notyet
 	ram_size = amlogic_get_ram_size();
-#endif
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
