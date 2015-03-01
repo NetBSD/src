@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_board.c,v 1.5 2015/02/28 22:53:25 jmcneill Exp $ */
+/* $NetBSD: amlogic_board.c,v 1.6 2015/03/01 15:06:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.5 2015/02/28 22:53:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.6 2015/03/01 15:06:09 jmcneill Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -256,8 +256,6 @@ amlogic_usbphy_init(int port)
 	delay(50000);
 
 	ctrl = CBUS_READ(ctrl_reg);
-
-	printf("USBPHY: port %d, ctrl %#x\n", port, ctrl);
 
 	if ((ctrl & PREI_USB_PHY_CTRL_CLK_DET) == 0)
 		printf("WARNING: USB PHY port %d clock not detected\n", port);
