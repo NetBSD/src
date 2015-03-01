@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 2015/02/28 21:56:53 asau Exp $	*/
+/*	$NetBSD: main.c,v 1.32 2015/03/01 00:38:01 asau Exp $	*/
 
 /*-
  * Copyright (c) 2013 Johann 'Myrkraverk' Oskarsson.
@@ -39,7 +39,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.31 2015/02/28 21:56:53 asau Exp $");
+__RCSID("$NetBSD: main.c,v 1.32 2015/03/01 00:38:01 asau Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/main.c 252231 2013-06-26 04:14:19Z pfg $");
 #endif
@@ -87,9 +87,6 @@ static struct s_compunit **cu_nextp = &script;
  */
 struct s_flist *files;
 static struct s_flist **fl_nextp = &files;
-
-FILE *infile;			/* Current input file */
-FILE *outfile;			/* Current output file */
 
 int aflag;
 static int eflag;
