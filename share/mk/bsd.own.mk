@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.843 2015/02/26 04:49:16 snj Exp $
+#	$NetBSD: bsd.own.mk,v 1.844 2015/03/01 07:46:04 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1299,7 +1299,7 @@ X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 .endfor
 
 .for _v in \
-	ag10e apm ark ast ati chips cirrus crime \
+	ag10e apm ark ast ati ati-kms chips cirrus crime \
 	geode glint i128 i740 igs imstt intel mach64 mga \
 	neomagic newport nsc nv nvxbox openchrome pnozz \
 	r128 radeonhd rendition \
@@ -1308,6 +1308,12 @@ X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 	tdfx tga trident tseng vesa vga vmware wsfb xgi
 X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
 .endfor
+
+# Build the ati 6.x (UMS supported) or 7.x (KMS demanded) drivers
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
+MKX11RADEONKMS?=		yes
+.endif
+MKX11RADEONKMS?=		no
 
 .if ${X11FLAVOUR} == "Xorg"
 X11DRI?=			yes
