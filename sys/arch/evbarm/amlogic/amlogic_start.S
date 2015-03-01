@@ -43,7 +43,7 @@
 
 #include <arm/cortex/scu_reg.h>
 
-RCSID("$NetBSD: amlogic_start.S,v 1.1 2015/02/07 17:20:16 jmcneill Exp $")
+RCSID("$NetBSD: amlogic_start.S,v 1.2 2015/03/01 15:07:49 jmcneill Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -152,7 +152,11 @@ _C_LABEL(amlogic_start):
 	XPUTC2(#60)
 	// Make sure the cache is flushed out to RAM for the other CPUs
 	bl	_C_LABEL(armv7_dcache_wbinv_all)
-	bl	amlogic_mpinit
+
+	movw	r0, #:lower16:amlogic_mpstart
+	movt	r0, #:upper16:amlogic_mpstart
+	bl	_C_LABEL(amlogic_mpinit)
+
 	XPUTC2(#62)
 #endif /* MULTIPROCESSOR */
 	XPUTC2(#13)
@@ -171,113 +175,7 @@ _C_LABEL(amlogic_start):
 
 #include <arm/cortex/a9_mpsubr.S>
 
-#define PMU_PWRDN_REG	0x0008
-#define PMU_PWRDN_SCU	__BIT(4)
-
-#if defined(MULTIPROCESSOR)
-#ifndef KERNEL_BASES_EQUAL
-	.pushsection .text,"ax",%progbits
-#endif
-amlogic_mptramp:
-	ldr	pc, 1f
-.global amlogic_mpstart_vec
-amlogic_mpstart_vec:
-1:	.space	4
-
-amlogic_mpinit:
-	mov	r4, lr
-	/* r5: SCU, r6: PMU, r7: SRAM */
-	movw	r5, #:lower16:(ROCKCHIP_CORE0_BASE+ROCKCHIP_SCU_OFFSET)
-	movt	r5, #:upper16:(ROCKCHIP_CORE0_BASE+ROCKCHIP_SCU_OFFSET)
-	movw	r6, #:lower16:(ROCKCHIP_CORE1_BASE+ROCKCHIP_PMU_OFFSET)
-	movt	r6, #:upper16:(ROCKCHIP_CORE1_BASE+ROCKCHIP_PMU_OFFSET)
-	movw	r7, #:lower16:(ROCKCHIP_CORE0_BASE+ROCKCHIP_SRAM_OFFSET)
-	movt	r7, #:upper16:(ROCKCHIP_CORE0_BASE+ROCKCHIP_SRAM_OFFSET)
-
-	/* Set where the other CPU(s) are going to execute */
-	XPUTC2(#118)
-	movw	r1, #:lower16:amlogic_mpstart
-	movt	r1, #:upper16:amlogic_mpstart
-	ldr	r0, =amlogic_mpstart_vec
-	str	r1, [r0]
-	ldr	r0, =amlogic_mptramp
-	mov	r2, #0
-1:	ldr	r1, [r0, r2]
-	str	r1, [r7, r2]
-	add	r2, r2, #4
-	cmp	r2, #32
-	blt	1b
-	dsb
-
-	/* Invalid SCU cache tags */
-	XPUTC2(#45)
-	movw	r1, #0xffff
-	movt	r1, #0
-	str	r1, [r5, #SCU_INV_ALL_REG]
-
-	/* Get CPU count */
-	ldr	r1, [r5, #SCU_CFG]
-	and	r2, r1, #SCU_CFG_CPUMAX
-	add	r2, r2, #1
-
-	/* Convert to CPU1..N mask */
-	mov	r7, #0
-	lsl	r7, r2, #1
-	sub	r7, r7, #1
-	and	r7, r7, #~1
-
-	/* Power down secondary CPUs */
-	XPUTC2(#46)
-	ldr	r1, [r6, #PMU_PWRDN_REG]
-	orr	r1, r1, r7
-	str	r1, [r6, #PMU_PWRDN_REG]
-	dsb
-
-	/* Power up SCU */
-	XPUTC2(#46)
-	ldr	r1, [r6, #PMU_PWRDN_REG]
-	and	r1, r1, #~PMU_PWRDN_SCU
-	str	r1, [r6, #PMU_PWRDN_REG]
-	dsb
-
-	/* Enable SCU */
-	XPUTC2(#46)
-	ldr	r1, [r5, #SCU_CTL]
-	orr	r1, r1, #SCU_CTL_SCU_ENA
-	str	r1, [r5, #SCU_CTL]
-	dsb
-
-	/* Power up secondary CPUs */
-	XPUTC2(#33)
-	ldr	r1, [r6, #PMU_PWRDN_REG]
-	and	r1, r1, r7
-	str	r1, [r6, #PMU_PWRDN_REG]
-	dsb
-
-	XPUTC2(#49)
-	XPUTC2(#50)
-	XPUTC2(#51)
-
-	//
-	// Wait up a second for CPU1 to hatch. 
-	//
-	movw	r2, #:lower16:arm_cpu_hatched
-	movt	r2, #:upper16:arm_cpu_hatched
-	mov	r1, #0x10000000
-1:	dmb
-	ldr	r0, [r2]
-	cmp	r0, r7
-	beq	.hatched
-	subs	r1, r1, #1
-	bne	1b
-
-.hatched:
-	bx	r4
-
-ASEND(amlogic_mpinit)
-#ifndef KERNEL_BASES_EQUAL
-	.popsection
-#endif
+#ifdef MULTIPROCESSOR
 
 amlogic_mpstart:
 	/* invalidate cache */
