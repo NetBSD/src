@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_com.c,v 1.2 2015/02/27 17:35:08 jmcneill Exp $ */
+/* $NetBSD: amlogic_com.c,v 1.3 2015/03/01 23:39:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,15 +33,22 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: amlogic_com.c,v 1.2 2015/02/27 17:35:08 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: amlogic_com.c,v 1.3 2015/03/01 23:39:28 jmcneill Exp $");
+
+#define AMLOGIC_COM_INTRPOLL
+#define AMLOGIC_COM_INTRPOLL_RATE	10
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/termios.h>
+#include <sys/kauth.h>
+#include <sys/lwp.h>
+#include <sys/tty.h>
 
 #include <dev/cons.h>
 
@@ -50,31 +57,79 @@ __KERNEL_RCSID(1, "$NetBSD: amlogic_com.c,v 1.2 2015/02/27 17:35:08 jmcneill Exp
 #include <arm/amlogic/amlogic_comreg.h>
 #include <arm/amlogic/amlogic_comvar.h>
 
-static int amlogic_com_match(device_t, cfdata_t, void *);
-static void amlogic_com_attach(device_t, device_t, void *);
+static int	amlogic_com_match(device_t, cfdata_t, void *);
+static void	amlogic_com_attach(device_t, device_t, void *);
+
+static int	amlogic_com_intr(void *);
+
+#ifdef AMLOGIC_COM_INTRPOLL
+static void	amlogic_com_intrpoll(void *);
+#endif
+
+static int	amlogic_com_cngetc(dev_t);
+static void	amlogic_com_cnputc(dev_t, int);
+static void	amlogic_com_cnpollc(dev_t, int);
+
+static void	amlogic_com_start(struct tty *);
+static int	amlogic_com_param(struct tty *, struct termios *);
+
+extern struct cfdriver amlogiccom_cd;
 
 struct amlogic_com_softc {
 	device_t sc_dev;
 	bus_space_tag_t	sc_bst;
 	bus_space_handle_t sc_bsh;
+	void *sc_ih;
+
+	struct tty *sc_tty;
 
 	int sc_ospeed;
 	tcflag_t sc_cflag;
+
+	u_char sc_buf[1024];
+
+#ifdef AMLOGIC_COM_INTRPOLL
+	callout_t sc_intrpoll_ch;
+#endif
 };
 
 static struct amlogic_com_softc amlogic_com_cnsc;
 
 static struct cnm_state amlogic_com_cnm_state;
 
-static int	amlogic_com_cngetc(dev_t);
-static void	amlogic_com_cnputc(dev_t, int);
-static void	amlogic_com_cnpollc(dev_t, int);
-
 struct consdev amlogic_com_consdev = {
 	.cn_getc = amlogic_com_cngetc,
 	.cn_putc = amlogic_com_cnputc,
 	.cn_pollc = amlogic_com_cnpollc,
+	.cn_dev = NODEV,
+	.cn_pri = CN_NORMAL,
 };
+
+static dev_type_open(amlogic_com_open);
+static dev_type_open(amlogic_com_close);
+static dev_type_read(amlogic_com_read);
+static dev_type_write(amlogic_com_write);
+static dev_type_ioctl(amlogic_com_ioctl);
+static dev_type_tty(amlogic_com_tty);
+static dev_type_poll(amlogic_com_poll);
+static dev_type_stop(amlogic_com_stop);
+
+const struct cdevsw amlogiccom_cdevsw = {
+	.d_open = amlogic_com_open,
+	.d_close = amlogic_com_close,
+	.d_read = amlogic_com_read,
+	.d_write = amlogic_com_write,
+	.d_ioctl = amlogic_com_ioctl,
+	.d_stop = amlogic_com_stop,
+	.d_tty = amlogic_com_tty,
+	.d_poll = amlogic_com_poll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_TTY
+};
+
+static int amlogic_com_cmajor = -1;
 
 CFATTACH_DECL_NEW(amlogic_com, sizeof(struct amlogic_com_softc),
 	amlogic_com_match, amlogic_com_attach, NULL, NULL);
@@ -92,17 +147,82 @@ amlogic_com_attach(device_t parent, device_t self, void *aux)
 	struct amlogicio_attach_args * const aio = aux;
 	const struct amlogic_locators * const loc = &aio->aio_loc;
 	const bus_addr_t iobase = AMLOGIC_CORE_BASE + loc->loc_offset;
+	struct tty *tp;
+	int major, minor;
+	uint32_t misc, control;
 
 	sc->sc_dev = self;
 	sc->sc_bst = aio->aio_core_bst;
-	sc->sc_bsh = aio->aio_bsh;
+	bus_space_subregion(aio->aio_core_bst, aio->aio_bsh,
+	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+
+#ifdef AMLOGIC_COM_INTRPOLL
+	callout_init(&sc->sc_intrpoll_ch, CALLOUT_MPSAFE);
+	callout_setfunc(&sc->sc_intrpoll_ch, amlogic_com_intrpoll, sc);
+#else
+	sc->sc_ih = intr_establish(loc->loc_intr, IPL_SERIAL,
+	    IST_EDGE | IST_MPSAFE, amlogic_com_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error(": failed to establish interrupt %d\n",
+		    loc->loc_intr);
+		return;
+	}
+#endif
+
+	if (amlogic_com_cmajor == -1) {
+		/* allocate a major number */
+		int bmajor = -1, cmajor = -1;
+		int error = devsw_attach("amlogiccom", NULL, &bmajor,
+		    &amlogiccom_cdevsw, &cmajor);
+		if (error) {
+			aprint_error(": couldn't allocate major number\n");
+			return;
+		}
+		amlogic_com_cmajor = cmajor;
+	}
+
+	major = cdevsw_lookup_major(&amlogiccom_cdevsw);
+	minor = device_unit(self);
+
+	tp = sc->sc_tty = tty_alloc();
+	tp->t_oproc = amlogic_com_start;
+	tp->t_param = amlogic_com_param;
+	tp->t_dev = makedev(major, minor);
+	tp->t_sc = sc;
+	tty_attach(tp);
 
 	aprint_naive("\n");
 	if (amlogic_com_is_console(iobase)) {
-		aprint_normal(": (console)\n");
-	} else {
-		aprint_normal("\n");
+		cn_tab->cn_dev = tp->t_dev;
+		aprint_normal(": console");
 	}
+	aprint_normal("\n");
+
+#ifdef AMLOGIC_COM_INTRPOLL
+	aprint_normal_dev(self, "polling\n");
+#else
+	aprint_normal_dev(self, "interrupting at irq %d\n", loc->loc_intr);
+#endif
+
+	misc = bus_space_read_4(sc->sc_bst, sc->sc_bsh, UART_MISC_REG);
+	misc &= ~UART_MISC_TX_IRQ_CNT;
+	misc |= __SHIFTIN(0, UART_MISC_TX_IRQ_CNT);
+	misc &= ~UART_MISC_RX_IRQ_CNT;
+	misc |= __SHIFTIN(1, UART_MISC_RX_IRQ_CNT);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, UART_MISC_REG, misc);
+
+	control = bus_space_read_4(sc->sc_bst, sc->sc_bsh, UART_CONTROL_REG);
+	control &= ~UART_CONTROL_TX_INT_EN;
+#ifdef AMLOGIC_COM_INTRPOLL
+	control &= ~UART_CONTROL_RX_INT_EN;
+#else
+	control |= UART_CONTROL_RX_INT_EN;
+#endif
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, UART_CONTROL_REG, control);
+
+#ifdef AMLOGIC_COM_INTRPOLL
+	callout_schedule(&sc->sc_intrpoll_ch, AMLOGIC_COM_INTRPOLL_RATE);
+#endif
 }
 
 static int
@@ -145,7 +265,7 @@ amlogic_com_cnputc(dev_t dev, int c)
 
 	s = splserial();
 
-	while ((bus_space_read_4(bst, bsh, UART_STATUS_REG) & UART_STATUS_TX_EMPTY) == 0)
+	while ((bus_space_read_4(bst, bsh, UART_STATUS_REG) & UART_STATUS_TX_FULL) != 0)
 		;
 
 	bus_space_write_4(bst, bsh, UART_WFIFO_REG, c);
@@ -182,3 +302,187 @@ amlogic_com_is_console(bus_addr_t iobase)
 {
 	return iobase == CONSADDR;
 }
+
+static int
+amlogic_com_open(dev_t dev, int flag, int mode, lwp_t *l)
+{
+	struct amlogic_com_softc *sc =
+	    device_lookup_private(&amlogiccom_cd, minor(dev));
+	struct tty *tp = sc->sc_tty;
+
+	if (kauth_authorize_device_tty(l->l_cred,
+	    KAUTH_DEVICE_TTY_OPEN, tp) != 0) {
+		return EBUSY;
+	}
+
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
+		tp->t_dev = dev;
+		ttychars(tp);
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		tp->t_cflag = TTYDEF_CFLAG;
+		tp->t_lflag = TTYDEF_LFLAG;
+		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
+		ttsetwater(tp);
+	}
+	tp->t_state |= TS_CARR_ON;
+
+	return tp->t_linesw->l_open(dev, tp);
+}
+
+static int
+amlogic_com_close(dev_t dev, int flag, int mode, lwp_t *l)
+{
+	struct amlogic_com_softc *sc =
+	    device_lookup_private(&amlogiccom_cd, minor(dev));
+	struct tty *tp = sc->sc_tty;
+
+	tp->t_linesw->l_close(tp, flag);
+	ttyclose(tp);
+
+	return 0;
+}
+
+static int
+amlogic_com_read(dev_t dev, struct uio *uio, int flag)
+{
+	struct amlogic_com_softc *sc =
+	    device_lookup_private(&amlogiccom_cd, minor(dev));
+	struct tty *tp = sc->sc_tty;
+
+	return tp->t_linesw->l_read(tp, uio, flag);
+}
+
+static int
+amlogic_com_write(dev_t dev, struct uio *uio, int flag)
+{
+	struct amlogic_com_softc *sc =
+	    device_lookup_private(&amlogiccom_cd, minor(dev));
+	struct tty *tp = sc->sc_tty;
+
+	return tp->t_linesw->l_write(tp, uio, flag);
+}
+
+static int
+amlogic_com_poll(dev_t dev, int events, lwp_t *l)
+{
+	struct amlogic_com_softc *sc =
+	    device_lookup_private(&amlogiccom_cd, minor(dev));
+	struct tty *tp = sc->sc_tty;
+
+	return tp->t_linesw->l_poll(tp, events, l);
+}
+
+static int
+amlogic_com_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
+{
+	struct amlogic_com_softc *sc =
+	    device_lookup_private(&amlogiccom_cd, minor(dev));
+	struct tty *tp = sc->sc_tty;
+	int error;
+
+	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return error;
+
+	return ttioctl(tp, cmd, data, flag, l);
+}
+
+static struct tty *
+amlogic_com_tty(dev_t dev)
+{
+	struct amlogic_com_softc *sc =
+	    device_lookup_private(&amlogiccom_cd, minor(dev));
+
+	return sc->sc_tty;
+}
+
+static void
+amlogic_com_stop(struct tty *tp, int flag)
+{
+}
+
+static void
+amlogic_com_start(struct tty *tp)
+{
+	struct amlogic_com_softc *sc = tp->t_sc;
+	u_char *p = sc->sc_buf;
+	int s, brem;
+
+	s = spltty();
+
+	if (tp->t_state & (TS_TTSTOP | TS_BUSY | TS_TIMEOUT)) {
+		splx(s);
+		return;
+	}
+	tp->t_state |= TS_BUSY;
+
+	splx(s);
+
+	for (brem = q_to_b(&tp->t_outq, sc->sc_buf, sizeof(sc->sc_buf));
+	     brem > 0;
+	     brem--, p++) {
+		while ((bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+		    UART_STATUS_REG) & UART_STATUS_TX_FULL) != 0)
+			;
+
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
+		    UART_WFIFO_REG, *p);
+	}
+
+	s = spltty();
+	tp->t_state &= ~TS_BUSY;
+	if (ttypull(tp)) {
+		tp->t_state |= TS_TIMEOUT;
+		callout_schedule(&tp->t_rstrt_ch, 1);
+	}
+	splx(s);
+}
+
+static int
+amlogic_com_param(struct tty *tp, struct termios *t)
+{
+
+	tp->t_ispeed = t->c_ispeed;
+	tp->t_ospeed = t->c_ospeed;
+	tp->t_cflag = t->c_cflag;
+
+	return 0;
+}
+
+static int
+amlogic_com_intr(void *priv)
+{
+	struct amlogic_com_softc *sc = priv;
+	struct tty *tp = sc->sc_tty;
+	uint32_t status, c;
+
+	for (;;) {
+		status = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
+		    UART_STATUS_REG);
+		if (status & UART_STATUS_RX_EMPTY) {
+			break;
+		}
+
+		c = bus_space_read_4(sc->sc_bst, sc->sc_bsh, UART_RFIFO_REG);
+		cn_check_magic(tp->t_dev, c, amlogic_com_cnm_state);
+		tp->t_linesw->l_rint(c & 0xff, tp);
+	}
+
+	return 0;
+}
+
+#ifdef AMLOGIC_COM_INTRPOLL
+static void
+amlogic_com_intrpoll(void *priv)
+{
+	struct amlogic_com_softc *sc = priv;
+	int s;
+
+	s = splserial();
+	amlogic_com_intr(sc);
+	splx(s);
+
+	callout_schedule(&sc->sc_intrpoll_ch, AMLOGIC_COM_INTRPOLL_RATE);
+}
+#endif

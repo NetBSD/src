@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_comreg.h,v 1.2 2015/02/27 17:35:08 jmcneill Exp $ */
+/* $NetBSD: amlogic_comreg.h,v 1.3 2015/03/01 23:39:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,9 +36,21 @@
 #define UART_MISC_REG		0x10
 #define UART_REG5_REG		0x14
 
+#define UART_CONTROL_TX_INT_EN	__BIT(28)
+#define UART_CONTROL_RX_INT_EN	__BIT(27)
+#define UART_CONTROL_CLEAR_ERR	__BIT(24)
+#define UART_CONTROL_RX_RESET	__BIT(23)
+#define UART_CONTROL_TX_RESET	__BIT(22)
+#define UART_CONTROL_RX_EN	__BIT(13)
+#define UART_CONTROL_TX_EN	__BIT(12)
+
 #define UART_STATUS_RX_BUSY	__BIT(26)
 #define UART_STATUS_TX_BUSY	__BIT(25)
 #define UART_STATUS_TX_EMPTY	__BIT(22)
+#define UART_STATUS_TX_FULL	__BIT(21)
 #define UART_STATUS_RX_EMPTY	__BIT(20)
+
+#define UART_MISC_TX_IRQ_CNT	__BITS(15,8)
+#define UART_MISC_RX_IRQ_CNT	__BITS(7,0)
 
 #endif /* _ARM_AMLOGIC_COMREG_H */
