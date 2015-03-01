@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.8 2015/02/28 18:50:15 jmcneill Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.9 2015/03/01 15:07:49 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.8 2015/02/28 18:50:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.9 2015/03/01 15:07:49 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -134,6 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.8 2015/02/28 18:50:15 jmcneill
 #include "opt_md.h"
 #include "opt_amlogic.h"
 #include "opt_arm_debug.h"
+#include "opt_multiprocessor.h"
 
 #include "amlogic_com.h"
 #if 0
@@ -328,10 +329,15 @@ initarm(void *arg)
 	amlogic_putchar('!');
 
 #ifdef MULTIPROCESSOR
-	uint32_t scu_cfg = bus_space_read_4(&amlogic_bs_tag,
-	    amlogic_core0_bsh, ROCKCHIP_SCU_OFFSET + SCU_CFG);
-	arm_cpu_max = (scu_cfg & SCU_CFG_CPUMAX) + 1;
-	membar_producer();
+	const bus_addr_t cbar = armreg_cbar_read();
+	if (cbar) {
+		const bus_space_handle_t scu_bsh =
+		    cbar - AMLOGIC_CORE_BASE + AMLOGIC_CORE_VBASE;
+		uint32_t scu_cfg = bus_space_read_4(&amlogic_bs_tag, scu_bsh,
+		    SCU_CFG);
+		arm_cpu_max = (scu_cfg & SCU_CFG_CPUMAX) + 1;
+		membar_producer();
+	}
 #endif
 
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
@@ -341,9 +347,6 @@ initarm(void *arg)
 	init_clocks();
 
 	consinit();
-#ifdef MULTIPROCESSOR
-	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
-#endif
 
 #if NARML2CC > 0
         /*
@@ -573,3 +576,120 @@ amlogic_device_register(device_t self, void *aux)
 		prop_dictionary_set_uint32(dict, "offset", 0xfff00000);
 	}
 }
+
+#if defined(MULTIPROCESSOR)
+void amlogic_mpinit(uint32_t);
+
+static void
+amlogic_mpinit_delay(u_int n)
+{
+	for (volatile int i = 0; i < n; i++)
+		;
+}
+
+static void
+amlogic_mpinit_cpu(int cpu)
+{
+	const bus_addr_t cbar = armreg_cbar_read();
+	bus_space_tag_t bst = &amlogic_bs_tag;
+	const bus_space_handle_t scu_bsh =
+	    cbar - AMLOGIC_CORE_BASE + AMLOGIC_CORE_VBASE;
+	const bus_space_handle_t ao_bsh =
+	    AMLOGIC_CORE_VBASE + AMLOGIC_AOBUS_OFFSET;
+	const bus_space_handle_t cbus_bsh =
+	    AMLOGIC_CORE_VBASE + AMLOGIC_CBUS_OFFSET;
+	uint32_t pwr_sts, pwr_cntl0, pwr_cntl1, cpuclk, mempd0;
+
+	pwr_sts = bus_space_read_4(bst, scu_bsh, SCU_CPU_PWR_STS);
+	pwr_sts &= ~(3 << (8 * cpu));
+	bus_space_write_4(bst, scu_bsh, SCU_CPU_PWR_STS, pwr_sts);
+
+	pwr_cntl0 = bus_space_read_4(bst, ao_bsh, AMLOGIC_AOBUS_PWR_CTRL0_REG);
+	pwr_cntl0 &= ~((3 << 18) << ((cpu - 1) * 2));
+	bus_space_write_4(bst, ao_bsh, AMLOGIC_AOBUS_PWR_CTRL0_REG, pwr_cntl0);
+
+	amlogic_mpinit_delay(5000);
+
+	cpuclk = bus_space_read_4(bst, cbus_bsh, AMLOGIC_CBUS_CPU_CLK_CNTL_REG);
+	cpuclk |= (1 << (24 + cpu));
+	bus_space_write_4(bst, cbus_bsh, AMLOGIC_CBUS_CPU_CLK_CNTL_REG, cpuclk);
+
+	mempd0 = bus_space_read_4(bst, ao_bsh, AMLOGIC_AOBUS_PWR_MEM_PD0_REG);
+	mempd0 &= ~((uint32_t)(0xf << 28) >> ((cpu - 1) * 4));
+	bus_space_write_4(bst, ao_bsh, AMLOGIC_AOBUS_PWR_MEM_PD0_REG, mempd0);
+
+	pwr_cntl1 = bus_space_read_4(bst, ao_bsh, AMLOGIC_AOBUS_PWR_CTRL1_REG);
+	pwr_cntl1 &= ~((3 << 4) << ((cpu - 1) * 2));
+	bus_space_write_4(bst, ao_bsh, AMLOGIC_AOBUS_PWR_CTRL1_REG, pwr_cntl1);
+
+	amlogic_mpinit_delay(10000);
+
+	for (;;) {
+		pwr_cntl1 = bus_space_read_4(bst, ao_bsh,
+		    AMLOGIC_AOBUS_PWR_CTRL1_REG) & ((1 << 17) << (cpu - 1));
+		if (pwr_cntl1)
+			break;
+		amlogic_mpinit_delay(10000);
+	}
+
+	pwr_cntl0 = bus_space_read_4(bst, ao_bsh, AMLOGIC_AOBUS_PWR_CTRL0_REG);
+	pwr_cntl0 &= ~(1 << cpu);
+	bus_space_write_4(bst, ao_bsh, AMLOGIC_AOBUS_PWR_CTRL0_REG, pwr_cntl0);
+
+	cpuclk = bus_space_read_4(bst, cbus_bsh, AMLOGIC_CBUS_CPU_CLK_CNTL_REG);
+	cpuclk &= ~(1 << (24 + cpu));
+	bus_space_write_4(bst, cbus_bsh, AMLOGIC_CBUS_CPU_CLK_CNTL_REG, cpuclk);
+
+	bus_space_write_4(bst, scu_bsh, SCU_CPU_PWR_STS, pwr_sts);
+}
+
+void
+amlogic_mpinit(uint32_t mpinit_vec)
+{
+	const bus_addr_t cbar = armreg_cbar_read();
+	bus_space_tag_t bst = &amlogic_bs_tag;
+	volatile int i;
+	uint32_t ctrl, hatched = 0;
+	int cpu;
+
+	if (cbar == 0)
+		return;
+
+	const bus_space_handle_t scu_bsh =
+	    cbar - AMLOGIC_CORE_BASE + AMLOGIC_CORE_VBASE;
+	const bus_space_handle_t cpuconf_bsh =
+	    AMLOGIC_CORE_VBASE + AMLOGIC_CPUCONF_OFFSET;
+
+	const uint32_t scu_cfg = bus_space_read_4(bst, scu_bsh, SCU_CFG);
+	const u_int ncpus = (scu_cfg & SCU_CFG_CPUMAX) + 1;
+	if (ncpus < 2)
+		return;
+
+	for (cpu = 1; cpu < ncpus; cpu++) {
+		bus_space_write_4(bst, cpuconf_bsh,
+		    AMLOGIC_CPUCONF_CPU_ADDR_REG(cpu), mpinit_vec);
+		amlogic_mpinit_cpu(cpu);
+		hatched |= __BIT(cpu);
+	}
+	ctrl = bus_space_read_4(bst, cpuconf_bsh, AMLOGIC_CPUCONF_CTRL_REG);
+	for (cpu = 0; cpu < ncpus; cpu++) {
+		ctrl |= __BIT(cpu);
+	}
+	bus_space_write_4(bst, cpuconf_bsh, AMLOGIC_CPUCONF_CTRL_REG, ctrl);
+
+	__asm __volatile("sev");
+
+	for (i = 0x10000000; i > 0; i--) {
+		__asm __volatile("dmb" ::: "memory");
+		if (arm_cpu_hatched == hatched)
+			break;
+	}
+
+	if (i == 0) {
+		const char *msg = "\nWARNING: Some APs failed to start\n";
+		const char *p = msg;
+		while (*p)
+			amlogic_putchar(*p++);
+	}
+}
+#endif
