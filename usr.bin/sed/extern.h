@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 2015/02/28 21:56:53 asau Exp $	*/
+/*	$NetBSD: extern.h,v 1.16 2015/03/01 00:38:01 asau Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -62,7 +62,6 @@ extern size_t maxnsub;
 extern size_t appendnum;
 extern int aflag, nflag;
 extern int ispan;
-extern FILE *infile, *outfile;
 extern int rflags;	/* regex flags to use */
 
 void	 cfclose(struct s_command *, struct s_command *);
