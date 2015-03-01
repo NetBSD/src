@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.18 2015/03/01 01:00:07 asau Exp $	*/
+/*	$NetBSD: extern.h,v 1.19 2015/03/01 01:07:46 asau Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -63,9 +63,7 @@ extern int ispan;
 extern int rflags;	/* regex flags to use */
 
 void	 compile(void);
-void	 cspace(SPACE *, const char *, size_t, enum e_spflag);
 int	 process(void);
-void	 resetstate(void);
 char	*strregerror(int, regex_t *);
 void	*xmalloc(size_t);
 void	*xrealloc(void *, size_t);
