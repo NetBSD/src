@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.9 2015/02/01 08:29:46 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.10 2015/03/02 21:52:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ struct ehci_xfer {
 			ehci_soft_sitd_t *ex_sitdend;
 		};
 	};
-	int ex_isdone;	/* used only when DIAGNOSTIC is defined */
+	bool ex_isdone;	/* used only when DIAGNOSTIC is defined */
 };
 #define EXFER(xfer) ((struct ehci_xfer *)(xfer))
 
