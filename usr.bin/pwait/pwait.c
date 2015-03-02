@@ -1,4 +1,4 @@
-/*	$NetBSD: pwait.c,v 1.1 2015/03/02 21:43:39 christos Exp $	*/
+/*	$NetBSD: pwait.c,v 1.2 2015/03/02 21:53:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004-2009, Jilles Tjoelker
@@ -37,7 +37,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/bin/pwait/pwait.c 245506 2013-01-16 18:15:25Z delphij $");
 #endif
-__RCSID("$NetBSD: pwait.c,v 1.1 2015/03/02 21:43:39 christos Exp $");
+__RCSID("$NetBSD: pwait.c,v 1.2 2015/03/02 21:53:48 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -70,13 +70,17 @@ main(int argc, char *argv[])
 {
 	int kq;
 	struct kevent *e;
-	int verbose = 0;
-	int opt, nleft, n, i, duplicate, status;
-	long pid;
+	int verbose = 0, childstatus = 0;
+	int opt, duplicate, status;
+	size_t nleft, n, i;
+	pid_t pid;
 	char *s, *end;
 
-	while ((opt = getopt(argc, argv, "v")) != -1) {
+	while ((opt = getopt(argc, argv, "sv")) != -1) {
 		switch (opt) {
+		case 's':
+			childstatus = 1;
+			break;
 		case 'v':
 			verbose = 1;
 			break;
@@ -94,43 +98,45 @@ main(int argc, char *argv[])
 
 	kq = kqueue();
 	if (kq == -1)
-		err(1, "kqueue");
+		err(EXIT_FAILURE, "kqueue");
 
-	e = malloc(argc * sizeof(struct kevent));
+	e = malloc((size_t)argc * sizeof(*e));
 	if (e == NULL)
-		err(1, "malloc");
+		err(EXIT_FAILURE, "malloc");
 	nleft = 0;
-	for (n = 0; n < argc; n++) {
+	for (n = 0; n < (size_t)argc; n++) {
+		long pidl;
 		s = argv[n];
 		if (!strncmp(s, "/proc/", 6)) /* Undocumented Solaris compat */
 			s += 6;
 		errno = 0;
-		pid = strtol(s, &end, 10);
-		if (pid < 0 || *end != '\0' || errno != 0) {
+		pidl = strtol(s, &end, 10);
+		if (pidl < 0 || *end != '\0' || errno != 0) {
 			warnx("%s: bad process id", s);
 			continue;
 		}
+		pid = (pid_t)pidl;
 		duplicate = 0;
 		for (i = 0; i < nleft; i++)
 			if (e[i].ident == (uintptr_t)pid)
 				duplicate = 1;
 		if (!duplicate) {
-			EV_SET(e + nleft, pid, EVFILT_PROC, EV_ADD, NOTE_EXIT,
-			    0, NULL);
+			EV_SET(e + nleft, (uintptr_t)pid, EVFILT_PROC, EV_ADD,
+			    NOTE_EXIT, 0, NULL);
 			if (kevent(kq, e + nleft, 1, NULL, 0, NULL) == -1)
-				warn("%ld", pid);
+				warn("%jd", (intmax_t)pid);
 			else
 				nleft++;
 		}
 	}
 
 	while (nleft > 0) {
-		n = kevent(kq, NULL, 0, e, nleft, NULL);
-		if (n == -1)
-			err(1, "kevent");
-		if (verbose)
-			for (i = 0; i < n; i++) {
-				status = e[i].data;
+		int rv = kevent(kq, NULL, 0, e, nleft, NULL);
+		if (rv == -1)
+			err(EXIT_FAILURE, "kevent");
+		for (i = 0; i < n; i++) {
+			status = (int)e[i].data;
+			if (verbose) {
 				if (WIFEXITED(status))
 					printf("%ld: exited with status %d.\n",
 					    (long)e[i].ident,
@@ -143,8 +149,11 @@ main(int argc, char *argv[])
 					printf("%ld: terminated.\n",
 					    (long)e[i].ident);
 			}
+			if (childstatus)
+				return status;
+		}
 		nleft -= n;
 	}
 
-	exit(EX_OK);
+	return EX_OK;
 }

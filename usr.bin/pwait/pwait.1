@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwait.1,v 1.1 2015/03/02 21:43:39 christos Exp $
+.\"	$NetBSD: pwait.1,v 1.2 2015/03/02 21:53:48 christos Exp $
 .\"
 .\" Copyright (c) 2004-2009, Jilles Tjoelker
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\" $FreeBSD: head/bin/pwait/pwait.1 233648 2012-03-29 05:02:12Z eadler $
 .\"
-.Dd November 1, 2009
+.Dd March 2, 2015
 .Dt PWAIT 1
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nd wait for processes to terminate
 .Sh SYNOPSIS
 .Nm
-.Op Fl v
+.Op Fl sv
 .Ar pid
 \&...
 .Sh DESCRIPTION
@@ -51,6 +51,8 @@ utility will wait until each of the given processes has terminated.
 .Pp
 The following option is available:
 .Bl -tag -width indent
+.It Fl s
+Exit with the status code of the first non-zero exit status pid.
 .It Fl v
 Print the exit status when each process terminates.
 .El
