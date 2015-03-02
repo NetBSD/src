@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.34 2015/03/01 08:26:55 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.35 2015/03/02 21:52:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.34 2015/03/01 08:26:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.35 2015/03/02 21:52:02 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1018,16 +1018,15 @@ ehci_idone(struct ehci_xfer *ex)
 	USBHIST_LOG(ehcidebug, "ex=%p", ex, 0, 0, 0);
 
 #ifdef DIAGNOSTIC
-	if (ex->ex_isdone) {
-		printf("ehci_idone: ex=%p is done!\n", ex);
 #ifdef EHCI_DEBUG
+	if (ex->ex_isdone) {
 		USBHIST_LOGN(ehcidebug, 5, "--- dump start ---", 0, 0, 0, 0);
 		ehci_dump_exfer(ex);
 		USBHIST_LOGN(ehcidebug, 5, "--- dump end ---", 0, 0, 0, 0);
-#endif
-		return;
 	}
-	ex->ex_isdone = 1;
+#endif
+	KASSERT(!ex->ex_isdone);
+	ex->ex_isdone = true;
 #endif
 
 	if (xfer->ux_status == USBD_CANCELLED ||
@@ -1519,7 +1518,7 @@ ehci_allocx(struct usbd_bus *bus)
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct ehci_xfer));
 #ifdef DIAGNOSTIC
-		EXFER(xfer)->ex_isdone = 1;
+		EXFER(xfer)->ex_isdone = true;
 		xfer->ux_state = XFER_BUSY;
 #endif
 	}
@@ -1531,15 +1530,10 @@ ehci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 {
 	struct ehci_softc *sc = bus->ub_hcpriv;
 
+	KASSERT(xfer->ux_state == XFER_BUSY);
+	KASSERT(EXFER(xfer)->ex_isdone);
 #ifdef DIAGNOSTIC
-	if (xfer->ux_state != XFER_BUSY) {
-		printf("ehci_freex: xfer=%p not busy, 0x%08x\n", xfer,
-		       xfer->ux_state);
-	}
 	xfer->ux_state = XFER_FREE;
-	if (!EXFER(xfer)->ex_isdone) {
-		printf("ehci_freex: !isdone\n");
-	}
 #endif
 	pool_cache_put(sc->sc_xferpool, xfer);
 }
@@ -3238,7 +3232,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	 * Step 4: Execute callback.
 	 */
 #ifdef DIAGNOSTIC
-	exfer->ex_isdone = 1;
+	exfer->ex_isdone = true;
 #endif
 	wake = xfer->ux_hcflags & UXFER_ABORTWAIT;
 	xfer->ux_hcflags &= ~(UXFER_ABORTING | UXFER_ABORTWAIT);
@@ -3343,7 +3337,7 @@ ehci_abort_isoc_xfer(usbd_xfer_handle xfer, usbd_status status)
 	cv_wait(&sc->sc_softwake_cv, &sc->sc_lock);
 
 #ifdef DIAGNOSTIC
-	exfer->ex_isdone = 1;
+	exfer->ex_isdone = true;
 #endif
 	wake = xfer->ux_hcflags & UXFER_ABORTWAIT;
 	xfer->ux_hcflags &= ~(UXFER_ABORTING | UXFER_ABORTWAIT);
@@ -3613,11 +3607,9 @@ ehci_device_request(usbd_xfer_handle xfer)
 
 	exfer->ex_sqtdstart = setup;
 	exfer->ex_sqtdend = stat;
+	KASSERT(exfer->ex_isdone);
 #ifdef DIAGNOSTIC
-	if (!exfer->ex_isdone) {
-		printf("ehci_device_request: not done, exfer=%p\n", exfer);
-	}
-	exfer->ex_isdone = 0;
+	exfer->ex_isdone = false;
 #endif
 
 	/* Insert qTD in QH list. */
@@ -3748,11 +3740,9 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 	/* Set up interrupt info. */
 	exfer->ex_sqtdstart = data;
 	exfer->ex_sqtdend = dataend;
+	KASSERT(exfer->ex_isdone);
 #ifdef DIAGNOSTIC
-	if (!exfer->ex_isdone) {
-		printf("ehci_device_bulk_start: not done, ex=%p\n", exfer);
-	}
-	exfer->ex_isdone = 0;
+	exfer->ex_isdone = false;
 #endif
 
 	ehci_set_qh_qtd(sqh, data); /* also does usb_syncmem(sqh) */
@@ -3936,11 +3926,9 @@ ehci_device_intr_start(usbd_xfer_handle xfer)
 	/* Set up interrupt info. */
 	exfer->ex_sqtdstart = data;
 	exfer->ex_sqtdend = dataend;
+	KASSERT(exfer->ex_isdone);
 #ifdef DIAGNOSTIC
-	if (!exfer->ex_isdone) {
-		printf("ehci_device_intr_start: not done, ex=%p\n", exfer);
-	}
-	exfer->ex_isdone = 0;
+	exfer->ex_isdone = false;
 #endif
 
 	ehci_set_qh_qtd(sqh, data); /* also does usb_syncmem(sqh) */
@@ -4039,14 +4027,9 @@ ehci_device_intr_done(usbd_xfer_handle xfer)
 		/* Set up interrupt info. */
 		exfer->ex_sqtdstart = data;
 		exfer->ex_sqtdend = dataend;
+		KASSERT(exfer->ex_isdone);
 #ifdef DIAGNOSTIC
-		if (!exfer->ex_isdone) {
-			USBHIST_LOG(ehcidebug, "marked not done, ex = %p",
-				exfer, 0, 0, 0);
-			printf("ehci_device_intr_done: not done, ex=%p\n",
-			    exfer);
-		}
-		exfer->ex_isdone = 0;
+		exfer->ex_isdone = false;
 #endif
 
 		ehci_set_qh_qtd(sqh, data); /* also does usb_syncmem(sqh) */
@@ -4135,11 +4118,10 @@ ehci_device_fs_isoc_start(usbd_xfer_handle xfer)
 	}
 
 	KASSERT(!(xfer->ux_rqflags & URQ_REQUEST));
+	KASSERT(exfer->ex_isdone);
 
 #ifdef DIAGNOSTIC
-	if (!exfer->ex_isdone)
-		printf("ehci_device_fs_isoc_start: not done, ex = %p\n", exfer);
-	exfer->ex_isdone = 0;
+	exfer->ex_isdone = false;
 #endif
 
 	/*
@@ -4452,14 +4434,9 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 	}
 
 	KASSERT(!(xfer->ux_rqflags & URQ_REQUEST));
-
+	KASSERT(exfer->ex_isdone);
 #ifdef DIAGNOSTIC
-	if (!exfer->ex_isdone) {
-		USBHIST_LOG(ehcidebug, "marked not done, ex = %p", exfer,
-			0, 0, 0);
-		printf("ehci_device_isoc_start: not done, ex = %p\n", exfer);
-	}
-	exfer->ex_isdone = 0;
+	exfer->ex_isdone = false;
 #endif
 
 	/*
