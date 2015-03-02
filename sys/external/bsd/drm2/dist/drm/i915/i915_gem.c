@@ -1409,8 +1409,8 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 	nanotime(&before);
 	spin_lock(&dev_priv->irq_lock);
 #define	EXIT_COND							      \
-	(((reset_counter != atomic_read(&dev_priv->gpu_error.reset_counter))  \
-	    ? wedged = true : false) ||					      \
+	((wedged = (reset_counter !=					      \
+		atomic_read(&dev_priv->gpu_error.reset_counter))) ||	      \
 	    i915_seqno_passed(ring->get_seqno(ring, false),		      \
 		seqno))
 
