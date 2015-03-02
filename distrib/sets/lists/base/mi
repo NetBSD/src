@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1096 2015/02/13 18:57:46 nonaka Exp $
+# $NetBSD: mi,v 1.1097 2015/03/02 21:55:44 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -674,6 +674,7 @@
 ./usr/bin/printf				base-util-bin
 ./usr/bin/progress				base-util-bin
 ./usr/bin/purgestat				base-mailwrapper-bin
+./usr/bin/pwait					base-util-bin
 ./usr/bin/pwhash				base-util-bin
 ./usr/bin/qsafe					base-util-bin		crypto
 ./usr/bin/qsieve				base-util-bin		crypto
