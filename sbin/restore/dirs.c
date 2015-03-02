@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.50 2013/06/09 17:57:09 dholland Exp $	*/
+/*	$NetBSD: dirs.c,v 1.51 2015/03/02 03:17:24 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.50 2013/06/09 17:57:09 dholland Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.51 2015/03/02 03:17:24 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,8 +84,8 @@ static struct inotab *inotab[HASHSIZE];
  */
 struct modeinfo {
 	ino_t ino;
-	struct timeval ctimep[2];
-	struct timeval mtimep[2];
+	struct timespec ctimep[2];
+	struct timespec mtimep[2];
 	mode_t mode;
 	uid_t uid;
 	gid_t gid;
@@ -625,8 +625,8 @@ setdirmodes(int flags)
 		} else {
 			if (!Nflag) {
 				cp = myname(ep);
-				(void) utimes(cp, node.ctimep);
-				(void) utimes(cp, node.mtimep);
+				(void) utimens(cp, node.ctimep);
+				(void) utimens(cp, node.mtimep);
 				(void) chown(cp, node.uid, node.gid);
 				(void) chmod(cp, node.mode);
 				if (Mtreefile) {
@@ -723,13 +723,13 @@ allocinotab(FILE *mf, struct context *ctxp, long aseekpt)
 		return (itp);
 	node.ino = ctxp->ino;
 	node.mtimep[0].tv_sec = ctxp->atime_sec;
-	node.mtimep[0].tv_usec = ctxp->atime_nsec / 1000;
+	node.mtimep[0].tv_nsec = ctxp->atime_nsec;
 	node.mtimep[1].tv_sec = ctxp->mtime_sec;
-	node.mtimep[1].tv_usec = ctxp->mtime_nsec / 1000;
+	node.mtimep[1].tv_nsec = ctxp->mtime_nsec;
 	node.ctimep[0].tv_sec = ctxp->atime_sec;
-	node.ctimep[0].tv_usec = ctxp->atime_nsec / 1000;
+	node.ctimep[0].tv_nsec = ctxp->atime_nsec;
 	node.ctimep[1].tv_sec = ctxp->birthtime_sec;
-	node.ctimep[1].tv_usec = ctxp->birthtime_nsec / 1000;
+	node.ctimep[1].tv_nsec = ctxp->birthtime_nsec;
 	node.mode = ctxp->mode;
 	node.flags = ctxp->file_flags;
 	node.uid = ctxp->uid;
