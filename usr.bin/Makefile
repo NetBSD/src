@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.219 2014/12/30 04:22:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.220 2015/03/02 21:54:13 christos Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -21,7 +21,7 @@ SUBDIR= apply asa at audio audiocfg \
 	moduli msgc msgs \
 	nbperf netgroup netstat newgrp newsyslog nfsstat nice nl nohup \
 	pagesize passwd paste patch pathchk pkill pmap pmc pr \
-	printenv printf progress pwhash qsubst quota radioctl rdist \
+	printenv printf progress pwait pwhash qsubst quota radioctl rdist \
 	renice rev revoke rfcomm_sppd rlogin rpcgen rpcinfo rs rsh \
 	rup ruptime rusers rwall rwho \
 	script sdiff sdpquery sed seq shar shlock \
