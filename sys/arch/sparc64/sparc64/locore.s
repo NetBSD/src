@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.378 2015/02/23 12:36:58 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.379 2015/03/02 13:48:00 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3547,7 +3547,8 @@ ret_from_intr_vector:
 	 nop
 #endif
 #if 1
-	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	set	PANICSTACK-STKB, %g1	! Use panic stack temporarily
+	save	%g1, -CC64FSZ, %sp	! Get a clean register window
 	LOAD_ASCIZ(%o0, "interrupt_vector: spurious vector %lx at pil %d\r\n")
 	mov	%g7, %o1
 	GLOBTOLOC
