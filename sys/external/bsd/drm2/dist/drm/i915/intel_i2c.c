@@ -285,21 +285,19 @@ gmbus_wait_hw_status(struct drm_i915_private *dev_priv,
 	I915_WRITE(GMBUS4 + reg_offset, gmbus4_irq_en);
 
 #ifdef __NetBSD__
-	spin_lock(&dev_priv->gmbus_wait_lock);
 	if (cold) {
 		i = 50;
 		while (gmbus2 = I915_READ_NOTRACE(GMBUS2 + reg_offset),
 		    !ISSET(gmbus2, (GMBUS_SATOER | gmbus2_status))) {
 			if (i-- == 0)
 				break;
-			spin_unlock(&dev_priv->gmbus_wait_lock);
 			DELAY(1000);
-			spin_lock(&dev_priv->gmbus_wait_lock);
 		}
 	} else {
 		for (i = 0; i < mstohz(50); i++) {
 			int ret;
 
+			spin_lock(&dev_priv->gmbus_wait_lock);
 			DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret,
 			    &dev_priv->gmbus_wait_queue,
 			    &dev_priv->gmbus_wait_lock,
@@ -307,9 +305,9 @@ gmbus_wait_hw_status(struct drm_i915_private *dev_priv,
 			    (gmbus2 = I915_READ_NOTRACE(GMBUS2 + reg_offset),
 				ISSET(gmbus2,
 				    (GMBUS_SATOER | gmbus2_status))));
+			spin_unlock(&dev_priv->gmbus_wait_lock);
 		}
 	}
-	spin_unlock(&dev_priv->gmbus_wait_lock);
 #else
 	for (i = 0; i < msecs_to_jiffies_timeout(50); i++) {
 		prepare_to_wait(&dev_priv->gmbus_wait_queue, &wait,
