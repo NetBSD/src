@@ -372,12 +372,12 @@ static int radeon_fence_wait_seq(struct radeon_device *rdev, u64 *target_seq,
 		}
 
 		if (unlikely(r < 0))
-			goto out;
+			break;
 
 		if (unlikely(!signaled)) {
 			if (rdev->needs_reset) {
 				r = -EDEADLK;
-				goto out;
+				break;
 			}
 
 			/* we were interrupted for some reason and fence
@@ -420,11 +420,11 @@ static int radeon_fence_wait_seq(struct radeon_device *rdev, u64 *target_seq,
 				wake_up_all(&rdev->fence_queue);
 #endif
 				r = -EDEADLK;
-				goto out;
+				break;
 			}
 		}
 	}
-out:	spin_unlock(&rdev->fence_lock);
+	spin_unlock(&rdev->fence_lock);
 	return r;
 }
 
