@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.67 2013/01/22 09:39:13 dholland Exp $	*/
+/*	$NetBSD: tape.c,v 1.68 2015/03/02 03:17:24 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.67 2013/01/22 09:39:13 dholland Exp $");
+__RCSID("$NetBSD: tape.c,v 1.68 2015/03/02 03:17:24 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -624,24 +624,24 @@ extractfile(char *name)
 	uid_t uid;
 	gid_t gid;
 	mode_t mode;
-	struct timeval mtimep[2], ctimep[2];
+	struct timespec mtimep[2], ctimep[2];
 	struct entry *ep;
 	int setbirth;
 
 	curfile.name = name;
 	curfile.action = USING;
 	mtimep[0].tv_sec = curfile.atime_sec;
-	mtimep[0].tv_usec = curfile.atime_nsec / 1000;
+	mtimep[0].tv_nsec = curfile.atime_nsec;
 	mtimep[1].tv_sec = curfile.mtime_sec;
-	mtimep[1].tv_usec = curfile.mtime_nsec / 1000;
+	mtimep[1].tv_nsec = curfile.mtime_nsec;
 
 	setbirth = curfile.birthtime_sec != 0;
 
 	if (setbirth) {
 		ctimep[0].tv_sec = curfile.atime_sec;
-		ctimep[0].tv_usec = curfile.atime_nsec / 1000;
+		ctimep[0].tv_nsec = curfile.atime_nsec;
 		ctimep[1].tv_sec = curfile.birthtime_sec;
-		ctimep[1].tv_usec = curfile.birthtime_nsec / 1000;
+		ctimep[1].tv_nsec = curfile.birthtime_nsec;
 	}
 	uid = curfile.uid;
 	gid = curfile.gid;
@@ -683,8 +683,8 @@ extractfile(char *name)
 			(void) unlink(name);
 		if (linkit(lnkbuf, name, SYMLINK) == GOOD) {
 			if (setbirth)
-				(void) lutimes(name, ctimep);
-			(void) lutimes(name, mtimep);
+				(void) lutimens(name, ctimep);
+			(void) lutimens(name, mtimep);
 			(void) lchown(name, uid, gid);
 			(void) lchmod(name, mode);
 			if (Mtreefile) {
@@ -714,8 +714,8 @@ extractfile(char *name)
 		}
 		skipfile();
 		if (setbirth)
-			(void) utimes(name, ctimep);
-		(void) utimes(name, mtimep);
+			(void) utimens(name, ctimep);
+		(void) utimens(name, mtimep);
 		(void) chown(name, uid, gid);
 		(void) chmod(name, mode);
 		if (Mtreefile) {
@@ -743,8 +743,8 @@ extractfile(char *name)
 		}
 		skipfile();
 		if (setbirth)
-			(void) utimes(name, ctimep);
-		(void) utimes(name, mtimep);
+			(void) utimens(name, ctimep);
+		(void) utimens(name, mtimep);
 		(void) chown(name, uid, gid);
 		(void) chmod(name, mode);
 		if (Mtreefile) {
@@ -779,8 +779,8 @@ extractfile(char *name)
 		if (Nflag)
 			return (GOOD);
 		if (setbirth)
-			(void) futimes(ofile, ctimep);
-		(void) futimes(ofile, mtimep);
+			(void) futimens(ofile, ctimep);
+		(void) futimens(ofile, mtimep);
 		(void) fchown(ofile, uid, gid);
 		(void) fchmod(ofile, mode);
 		if (Mtreefile) {
