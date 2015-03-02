@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.58 2014/07/25 08:10:38 dholland Exp $	*/
+/*	$NetBSD: amr.c,v 1.59 2015/03/02 15:26:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.58 2014/07/25 08:10:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.59 2015/03/02 15:26:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.58 2014/07/25 08:10:38 dholland Exp $");
 #include <sys/conf.h>
 #include <sys/kthread.h>
 #include <sys/kauth.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #include <machine/endian.h>
 #include <sys/bus.h>
@@ -100,7 +102,8 @@ static int	amr_match(device_t, cfdata_t, void *);
 static int	amr_print(void *, const char *);
 static void	amr_shutdown(void *);
 static void	amr_teardown(struct amr_softc *);
-static void	amr_thread(void *);
+static void	amr_quartz_thread(void *);
+static void	amr_std_thread(void *);
 
 static int	amr_quartz_get_work(struct amr_softc *,
 				    struct amr_mailbox_resp *);
@@ -186,13 +189,15 @@ static struct {
 
 static void	*amr_sdh;
 
+static kcondvar_t thread_cv;
+static kmutex_t	thread_mutex;
+
 static int	amr_max_segs;
 int		amr_max_xfer;
 
 static inline u_int8_t
 amr_inb(struct amr_softc *amr, int off)
 {
-
 	bus_space_barrier(amr->amr_iot, amr->amr_ioh, off, 1,
 	    BUS_SPACE_BARRIER_WRITE | BUS_SPACE_BARRIER_READ);
 	return (bus_space_read_1(amr->amr_iot, amr->amr_ioh, off));
@@ -201,7 +206,6 @@ amr_inb(struct amr_softc *amr, int off)
 static inline u_int32_t
 amr_inl(struct amr_softc *amr, int off)
 {
-
 	bus_space_barrier(amr->amr_iot, amr->amr_ioh, off, 4,
 	    BUS_SPACE_BARRIER_WRITE | BUS_SPACE_BARRIER_READ);
 	return (bus_space_read_4(amr->amr_iot, amr->amr_ioh, off));
@@ -210,7 +214,6 @@ amr_inl(struct amr_softc *amr, int off)
 static inline void
 amr_outb(struct amr_softc *amr, int off, u_int8_t val)
 {
-
 	bus_space_write_1(amr->amr_iot, amr->amr_ioh, off, val);
 	bus_space_barrier(amr->amr_iot, amr->amr_ioh, off, 1,
 	    BUS_SPACE_BARRIER_WRITE);
@@ -219,7 +222,6 @@ amr_outb(struct amr_softc *amr, int off, u_int8_t val)
 static inline void
 amr_outl(struct amr_softc *amr, int off, u_int32_t val)
 {
-
 	bus_space_write_4(amr->amr_iot, amr->amr_ioh, off, val);
 	bus_space_barrier(amr->amr_iot, amr->amr_ioh, off, 4,
 	    BUS_SPACE_BARRIER_WRITE);
@@ -282,6 +284,9 @@ amr_attach(device_t parent, device_t self, void *aux)
 
 	amr = device_private(self);
 	amr->amr_dv = self;
+
+	mutex_init(&amr->amr_mutex, MUTEX_DEFAULT, IPL_BIO);
+
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 
@@ -303,7 +308,6 @@ amr_attach(device_t parent, device_t self, void *aux)
 			if (PCI_MAPREG_IO_SIZE(reg) != 0)
 				ioreg = i;
 			break;
-
 		}
 	}
 
@@ -424,6 +428,8 @@ amr_attach(device_t parent, device_t self, void *aux)
 			break;
 
 		ac->ac_ident = i;
+		cv_init(&ac->ac_cv, "amr1ccb");
+		mutex_init(&ac->ac_mutex, MUTEX_DEFAULT, IPL_NONE);
 		amr_ccb_free(amr, ac);
 	}
 	if (i != AMR_MAX_CMDS) {
@@ -491,16 +497,23 @@ amr_attach(device_t parent, device_t self, void *aux)
 
 	SIMPLEQ_INIT(&amr->amr_ccb_queue);
 
-	/* XXX This doesn't work for newer boards yet. */
+	cv_init(&thread_cv, "amrwdog");
+	mutex_init(&thread_mutex, MUTEX_DEFAULT, IPL_NONE);
+
 	if ((apt->apt_flags & AT_QUARTZ) == 0) {
-		rv = kthread_create(PRI_NONE, 0, NULL, amr_thread, amr,
-		    &amr->amr_thread, "%s", device_xname(amr->amr_dv));
- 		if (rv != 0)
-			aprint_error_dev(amr->amr_dv, "unable to create thread (%d)",
- 			    rv);
- 		else
- 			amr->amr_flags |= AMRF_THREAD;
+		rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+				    amr_std_thread, amr, &amr->amr_thread,
+				    "%s", device_xname(amr->amr_dv));
+	} else {
+		rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+				    amr_quartz_thread, amr, &amr->amr_thread,
+				    "%s", device_xname(amr->amr_dv));
 	}
+	if (rv != 0)
+		aprint_error_dev(amr->amr_dv, "unable to create thread (%d)",
+ 		    rv);
+ 	else
+ 		amr->amr_flags |= AMRF_THREAD;
 }
 
 /*
@@ -516,9 +529,14 @@ amr_teardown(struct amr_softc *amr)
 
 	if ((fl & AMRF_THREAD) != 0) {
 		amr->amr_flags |= AMRF_THREAD_EXIT;
-		wakeup(amr_thread);
-		while ((amr->amr_flags & AMRF_THREAD_EXIT) != 0)
-			tsleep(&amr->amr_flags, PWAIT, "amrexit", 0);
+		mutex_enter(&thread_mutex);
+		cv_broadcast(&thread_cv);
+		mutex_exit(&thread_mutex);
+		while ((amr->amr_flags & AMRF_THREAD_EXIT) != 0) {
+			mutex_enter(&thread_mutex);
+			cv_wait(&thread_cv, &thread_mutex);
+			mutex_exit(&thread_mutex);
+		}
 	}
 	if ((fl & AMRF_CCBS) != 0) {
 		SLIST_FOREACH(ac, &amr->amr_ccb_freelist, ac_chain.slist) {
@@ -743,7 +761,7 @@ amr_shutdown(void *cookie)
 	extern struct cfdriver amr_cd;
 	struct amr_softc *amr;
 	struct amr_ccb *ac;
-	int i, rv, s;
+	int i, rv;
 
 	for (i = 0; i < amr_cd.cd_ndevs; i++) {
 		if ((amr = device_lookup_private(&amr_cd, i)) == NULL)
@@ -751,9 +769,7 @@ amr_shutdown(void *cookie)
 
 		if ((rv = amr_ccb_alloc(amr, &ac)) == 0) {
 			ac->ac_cmd.mb_command = AMR_CMD_FLUSH;
-			s = splbio();
 			rv = amr_ccb_poll(amr, ac, 30000);
-			splx(s);
 			amr_ccb_free(amr, ac);
 		}
 		if (rv != 0)
@@ -774,6 +790,8 @@ amr_intr(void *cookie)
 
 	amr = cookie;
 	forus = 0;
+
+	mutex_spin_enter(&amr->amr_mutex);
 
 	while ((*amr->amr_get_work)(amr, &mbox) == 0) {
 		/* Iterate over completed commands in this result. */
@@ -803,13 +821,20 @@ amr_intr(void *cookie)
 				    device_xname(amr->amr_dv), ac->ac_ident);
 
 			/* Pass notification to upper layers. */
-			if (ac->ac_handler != NULL)
+			mutex_spin_exit(&amr->amr_mutex);
+			if (ac->ac_handler != NULL) {
 				(*ac->ac_handler)(ac);
-			else
-				wakeup(ac);
+			} else {
+				mutex_enter(&ac->ac_mutex);
+				cv_signal(&ac->ac_cv);
+				mutex_exit(&ac->ac_mutex);
+			}
+			mutex_spin_enter(&amr->amr_mutex);
 		}
 		forus = 1;
 	}
+
+	mutex_spin_exit(&amr->amr_mutex);
 
 	if (forus)
 		amr_ccb_enqueue(amr, NULL);
@@ -821,28 +846,30 @@ amr_intr(void *cookie)
  * Watchdog thread.
  */
 static void
-amr_thread(void *cookie)
+amr_quartz_thread(void *cookie)
 {
 	struct amr_softc *amr;
 	struct amr_ccb *ac;
-	struct amr_logdrive *al;
-	struct amr_enquiry *ae;
-	int rv, i, s;
 
 	amr = cookie;
-	ae = amr->amr_enqbuf;
 
 	for (;;) {
-		tsleep(amr_thread, PWAIT, "amrwdog", AMR_WDOG_TICKS);
+		mutex_enter(&thread_mutex);
+		cv_timedwait(&thread_cv, &thread_mutex, AMR_WDOG_TICKS);
+		mutex_exit(&thread_mutex);
 
 		if ((amr->amr_flags & AMRF_THREAD_EXIT) != 0) {
 			amr->amr_flags ^= AMRF_THREAD_EXIT;
-			wakeup(&amr->amr_flags);
+			mutex_enter(&thread_mutex);
+			cv_signal(&thread_cv);
+			mutex_exit(&thread_mutex);
 			kthread_exit(0);
 		}
 
-		s = splbio();
-		amr_intr(cookie);
+		if (amr_intr(amr) == 0)
+			amr_ccb_enqueue(amr, NULL);
+
+		mutex_spin_enter(&amr->amr_mutex);
 		ac = TAILQ_FIRST(&amr->amr_ccb_active);
 		while (ac != NULL) {
 			if (ac->ac_start_time + AMR_TIMEOUT > time_uptime)
@@ -855,7 +882,52 @@ amr_thread(void *cookie)
 			}
 			ac = TAILQ_NEXT(ac, ac_chain.tailq);
 		}
-		splx(s);
+		mutex_spin_exit(&amr->amr_mutex);
+	}
+}
+
+static void
+amr_std_thread(void *cookie)
+{
+	struct amr_softc *amr;
+	struct amr_ccb *ac;
+	struct amr_logdrive *al;
+	struct amr_enquiry *ae;
+	int rv, i;
+
+	amr = cookie;
+	ae = amr->amr_enqbuf;
+
+	for (;;) {
+		mutex_enter(&thread_mutex);
+		cv_timedwait(&thread_cv, &thread_mutex, AMR_WDOG_TICKS);
+		mutex_exit(&thread_mutex);
+
+		if ((amr->amr_flags & AMRF_THREAD_EXIT) != 0) {
+			amr->amr_flags ^= AMRF_THREAD_EXIT;
+			mutex_enter(&thread_mutex);
+			cv_signal(&thread_cv);
+			mutex_exit(&thread_mutex);
+			kthread_exit(0);
+		}
+
+		if (amr_intr(amr) == 0)
+			amr_ccb_enqueue(amr, NULL);
+
+		mutex_spin_enter(&amr->amr_mutex);
+		ac = TAILQ_FIRST(&amr->amr_ccb_active);
+		while (ac != NULL) {
+			if (ac->ac_start_time + AMR_TIMEOUT > time_uptime)
+				break;
+			if ((ac->ac_flags & AC_MOAN) == 0) {
+				printf("%s: ccb %d timed out; mailbox:\n",
+				    device_xname(amr->amr_dv), ac->ac_ident);
+				amr_ccb_dump(amr, ac);
+				ac->ac_flags |= AC_MOAN;
+			}
+			ac = TAILQ_NEXT(ac, ac_chain.tailq);
+		}
+		mutex_spin_exit(&amr->amr_mutex);
 
 		if ((rv = amr_ccb_alloc(amr, &ac)) != 0) {
 			printf("%s: ccb_alloc failed (%d)\n",
@@ -958,15 +1030,13 @@ amr_enquire(struct amr_softc *amr, u_int8_t cmd, u_int8_t cmdsub,
 int
 amr_ccb_alloc(struct amr_softc *amr, struct amr_ccb **acp)
 {
-	int s;
-
-	s = splbio();
+	mutex_spin_enter(&amr->amr_mutex);
 	if ((*acp = SLIST_FIRST(&amr->amr_ccb_freelist)) == NULL) {
-		splx(s);
+		mutex_spin_exit(&amr->amr_mutex);
 		return (EAGAIN);
 	}
 	SLIST_REMOVE_HEAD(&amr->amr_ccb_freelist, ac_chain.slist);
-	splx(s);
+	mutex_spin_exit(&amr->amr_mutex);
 
 	return (0);
 }
@@ -977,17 +1047,15 @@ amr_ccb_alloc(struct amr_softc *amr, struct amr_ccb **acp)
 void
 amr_ccb_free(struct amr_softc *amr, struct amr_ccb *ac)
 {
-	int s;
-
 	memset(&ac->ac_cmd, 0, sizeof(ac->ac_cmd));
 	ac->ac_cmd.mb_ident = ac->ac_ident + 1;
 	ac->ac_cmd.mb_busy = 1;
 	ac->ac_handler = NULL;
 	ac->ac_flags = 0;
 
-	s = splbio();
+	mutex_spin_enter(&amr->amr_mutex);
 	SLIST_INSERT_HEAD(&amr->amr_ccb_freelist, ac, ac_chain.slist);
-	splx(s);
+	mutex_spin_exit(&amr->amr_mutex);
 }
 
 /*
@@ -998,21 +1066,24 @@ amr_ccb_free(struct amr_softc *amr, struct amr_ccb *ac)
 void
 amr_ccb_enqueue(struct amr_softc *amr, struct amr_ccb *ac)
 {
-	int s;
-
-	s = splbio();
-
-	if (ac != NULL)
+	if (ac != NULL) {
+		mutex_spin_enter(&amr->amr_mutex);
 		SIMPLEQ_INSERT_TAIL(&amr->amr_ccb_queue, ac, ac_chain.simpleq);
-
-	while ((ac = SIMPLEQ_FIRST(&amr->amr_ccb_queue)) != NULL) {
-		if ((*amr->amr_submit)(amr, ac) != 0)
-			break;
-		SIMPLEQ_REMOVE_HEAD(&amr->amr_ccb_queue, ac_chain.simpleq);
-		TAILQ_INSERT_TAIL(&amr->amr_ccb_active, ac, ac_chain.tailq);
+		mutex_spin_exit(&amr->amr_mutex);
 	}
 
-	splx(s);
+	while (SIMPLEQ_FIRST(&amr->amr_ccb_queue) != NULL) {
+		mutex_spin_enter(&amr->amr_mutex);
+		if ((ac = SIMPLEQ_FIRST(&amr->amr_ccb_queue)) != NULL) {
+			if ((*amr->amr_submit)(amr, ac) != 0) {
+				mutex_spin_exit(&amr->amr_mutex);
+				break;
+			}
+			SIMPLEQ_REMOVE_HEAD(&amr->amr_ccb_queue, ac_chain.simpleq);
+			TAILQ_INSERT_TAIL(&amr->amr_ccb_active, ac, ac_chain.tailq);
+		}
+		mutex_spin_exit(&amr->amr_mutex);
+	}
 }
 
 /*
@@ -1096,25 +1167,33 @@ amr_ccb_unmap(struct amr_softc *amr, struct amr_ccb *ac)
 
 /*
  * Submit a command to the controller and poll on completion.  Return
- * non-zero on timeout or error.  Must be called with interrupts blocked.
+ * non-zero on timeout or error.
  */
 int
 amr_ccb_poll(struct amr_softc *amr, struct amr_ccb *ac, int timo)
 {
-	int rv;
+	int rv, i;
 
-	if ((rv = (*amr->amr_submit)(amr, ac)) != 0)
+	mutex_spin_enter(&amr->amr_mutex);
+	if ((rv = (*amr->amr_submit)(amr, ac)) != 0) {
+		mutex_spin_exit(&amr->amr_mutex);
 		return (rv);
+	}
 	TAILQ_INSERT_TAIL(&amr->amr_ccb_active, ac, ac_chain.tailq);
+	mutex_spin_exit(&amr->amr_mutex);
 
-	for (timo *= 10; timo != 0; timo--) {
+	for (i = timo * 10; i > 0; i--) {
 		amr_intr(amr);
 		if ((ac->ac_flags & AC_COMPLETE) != 0)
 			break;
 		DELAY(100);
 	}
 
-	return (timo == 0 || ac->ac_status != 0 ? EIO : 0);
+	if (i == 0)
+		printf("%s: polled operation timed out after %d ms\n",
+		       device_xname(amr->amr_dv), timo);
+
+	return ((i == 0 || ac->ac_status != 0) ? EIO : 0);
 }
 
 /*
@@ -1124,12 +1203,10 @@ amr_ccb_poll(struct amr_softc *amr, struct amr_ccb *ac, int timo)
 int
 amr_ccb_wait(struct amr_softc *amr, struct amr_ccb *ac)
 {
-	int s;
-
-	s = splbio();
 	amr_ccb_enqueue(amr, ac);
-	tsleep(ac, PRIBIO, "amrcmd", 0);
-	splx(s);
+	mutex_enter(&ac->ac_mutex);
+	cv_wait(&ac->ac_cv, &ac->ac_mutex);
+	mutex_exit(&ac->ac_mutex);
 
 	return (ac->ac_status != 0 ? EIO : 0);
 }
@@ -1165,14 +1242,29 @@ amr_mbox_wait(struct amr_softc *amr)
 static int
 amr_quartz_submit(struct amr_softc *amr, struct amr_ccb *ac)
 {
+	int i = 0;
 	u_int32_t v;
 
 	amr->amr_mbox->mb_poll = 0;
 	amr->amr_mbox->mb_ack = 0;
+
 	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
-	    sizeof(struct amr_mailbox), BUS_DMASYNC_PREWRITE);
+	    sizeof(struct amr_mailbox),
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	v = amr_inl(amr, AMR_QREG_ODB);
 	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
 	    sizeof(struct amr_mailbox), BUS_DMASYNC_POSTREAD);
+	while ((amr->amr_mbox->mb_cmd.mb_busy != 0) && (i++ < 10)) {
+		bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
+		    sizeof(struct amr_mailbox), BUS_DMASYNC_PREREAD);
+		/* This is a no-op read that flushes pending mailbox updates */
+		v = amr_inl(amr, AMR_QREG_ODB);
+		DELAY(1);
+		bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
+		    sizeof(struct amr_mailbox), BUS_DMASYNC_POSTREAD);
+	}
+
 	if (amr->amr_mbox->mb_cmd.mb_busy != 0)
 		return (EAGAIN);
 
@@ -1181,8 +1273,7 @@ amr_quartz_submit(struct amr_softc *amr, struct amr_ccb *ac)
 		amr->amr_mbox->mb_cmd.mb_busy = 0;
 		bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
 		    sizeof(struct amr_mailbox), BUS_DMASYNC_PREWRITE);
-		bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
-		    sizeof(struct amr_mailbox), BUS_DMASYNC_PREREAD);
+		printf("%s: submit failed\n", device_xname(amr->amr_dv));
 		return (EAGAIN);
 	}
 
@@ -1193,8 +1284,12 @@ amr_quartz_submit(struct amr_softc *amr, struct amr_ccb *ac)
 
 	ac->ac_start_time = time_uptime;
 	ac->ac_flags |= AC_ACTIVE;
+
 	amr_outl(amr, AMR_QREG_IDB,
 	    (amr->amr_mbox_paddr + 16) | AMR_QIDB_SUBMIT);
+	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
+	    sizeof(struct amr_mailbox), BUS_DMASYNC_POSTWRITE);
+
 	return (0);
 }
 
@@ -1204,10 +1299,10 @@ amr_std_submit(struct amr_softc *amr, struct amr_ccb *ac)
 
 	amr->amr_mbox->mb_poll = 0;
 	amr->amr_mbox->mb_ack = 0;
-	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
-	    sizeof(struct amr_mailbox), BUS_DMASYNC_PREWRITE);
+
 	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
 	    sizeof(struct amr_mailbox), BUS_DMASYNC_POSTREAD);
+
 	if (amr->amr_mbox->mb_cmd.mb_busy != 0)
 		return (EAGAIN);
 
@@ -1215,19 +1310,22 @@ amr_std_submit(struct amr_softc *amr, struct amr_ccb *ac)
 		amr->amr_mbox->mb_cmd.mb_busy = 0;
 		bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
 		    sizeof(struct amr_mailbox), BUS_DMASYNC_PREWRITE);
-		bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
-		    sizeof(struct amr_mailbox), BUS_DMASYNC_PREREAD);
 		return (EAGAIN);
 	}
 
 	amr->amr_mbox->mb_segment = 0;
 	memcpy(&amr->amr_mbox->mb_cmd, &ac->ac_cmd, sizeof(ac->ac_cmd));
+
 	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
 	    sizeof(struct amr_mailbox), BUS_DMASYNC_PREWRITE);
 
 	ac->ac_start_time = time_uptime;
 	ac->ac_flags |= AC_ACTIVE;
 	amr_outb(amr, AMR_SREG_CMD, AMR_SCMD_POST);
+
+	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
+	    sizeof(struct amr_mailbox), BUS_DMASYNC_POSTWRITE);
+
 	return (0);
 }
 
@@ -1239,6 +1337,8 @@ amr_std_submit(struct amr_softc *amr, struct amr_ccb *ac)
 static int
 amr_quartz_get_work(struct amr_softc *amr, struct amr_mailbox_resp *mbsave)
 {
+	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
+	    sizeof(struct amr_mailbox), BUS_DMASYNC_PREREAD);
 
 	/* Work waiting for us? */
 	if (amr_inl(amr, AMR_QREG_ODB) != AMR_QODB_READY)
@@ -1249,9 +1349,6 @@ amr_quartz_get_work(struct amr_softc *amr, struct amr_mailbox_resp *mbsave)
 
 	/* Save the mailbox, which contains a list of completed commands. */
 	memcpy(mbsave, &amr->amr_mbox->mb_resp, sizeof(*mbsave));
-
-	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
-	    sizeof(struct amr_mailbox), BUS_DMASYNC_PREREAD);
 
 	/* Ack the interrupt and mailbox transfer. */
 	amr_outl(amr, AMR_QREG_ODB, AMR_QODB_READY);
@@ -1277,6 +1374,9 @@ amr_std_get_work(struct amr_softc *amr, struct amr_mailbox_resp *mbsave)
 {
 	u_int8_t istat;
 
+	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
+	    sizeof(struct amr_mailbox), BUS_DMASYNC_PREREAD);
+
 	/* Check for valid interrupt status. */
 	if (((istat = amr_inb(amr, AMR_SREG_INTR)) & AMR_SINTR_VALID) == 0)
 		return (-1);
@@ -1289,9 +1389,6 @@ amr_std_get_work(struct amr_softc *amr, struct amr_mailbox_resp *mbsave)
 
 	/* Save mailbox, which contains a list of completed commands. */
 	memcpy(mbsave, &amr->amr_mbox->mb_resp, sizeof(*mbsave));
-
-	bus_dmamap_sync(amr->amr_dmat, amr->amr_dmamap, 0,
-	    sizeof(struct amr_mailbox), BUS_DMASYNC_PREREAD);
 
 	/* Ack mailbox transfer. */
 	amr_outb(amr, AMR_SREG_CMD, AMR_SCMD_ACKINTR);
@@ -1332,6 +1429,21 @@ amrclose(dev_t dev, int flag, int mode, struct lwp *l)
 	amr = device_lookup_private(&amr_cd, minor(dev));
 	amr->amr_flags &= ~AMRF_OPEN;
 	return (0);
+}
+
+/* used below to correct for a firmware bug */
+static unsigned long
+amrioctl_buflen(unsigned long len)
+{
+	if (len <= 4 * 1024)
+		return (4 * 1024);
+	if (len <= 8 * 1024)
+		return (8 * 1024);
+	if (len <= 32 * 1024)
+		return (32 * 1024);
+	if (len <= 64 * 1024)
+		return (64 * 1024);
+	return (len);
 }
 
 static int
@@ -1380,9 +1492,11 @@ amrioctl(dev_t dev, u_long cmd, void *data, int flag,
 
 	/*
 	 * allocate kernel memory for data, doing I/O directly to user
-	 * buffer isn't that easy.
+	 * buffer isn't that easy.  Correct allocation size for a bug
+	 * in at least some versions of the device firmware, by using
+	 * the amrioctl_buflen() function, defined above.
 	 */
-	dp = malloc(au_length, M_DEVBUF, M_WAITOK|M_ZERO);
+	dp = malloc(amrioctl_buflen(au_length), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (dp == NULL)
 		return ENOMEM;
 	if ((error = copyin(au_buffer, dp, au_length)) != 0)
@@ -1390,7 +1504,9 @@ amrioctl(dev_t dev, u_long cmd, void *data, int flag,
 
 	/* direct command to controller */
 	while (amr_ccb_alloc(amr, &ac) != 0) {
-		error = tsleep(NULL, PRIBIO | PCATCH, "armmbx", hz);
+		mutex_enter(&thread_mutex);
+		error = cv_timedwait_sig(&thread_cv, &thread_mutex, hz);
+		mutex_exit(&thread_mutex);
 		if (error == EINTR)
 			goto out;
 	}
