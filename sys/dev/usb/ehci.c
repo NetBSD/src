@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.35 2015/03/02 21:52:02 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.36 2015/03/02 22:16:38 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.35 2015/03/02 21:52:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.36 2015/03/02 22:16:38 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2767,7 +2767,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 	int len, curlen, mps;
 	int i, tog;
 	int pages, pageoffs;
-	bus_size_t curoffs;
+	size_t curoffs;
 	vaddr_t va, va_offs;
 	usb_dma_t *dma = &xfer->ux_dmabuf;
 	uint16_t flags = xfer->ux_flags;
@@ -2814,7 +2814,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 			KASSERT(curlen != 0);
 		}
 		USBHIST_LOG(ehcidebug, "len=%d curlen=%d curoffs=%zu",
-			len, curlen, (size_t)curoffs, 0);
+			len, curlen, curoffs, 0);
 
 		/*
 		 * Allocate another transfer if there's more data left,
@@ -2857,7 +2857,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		cur->len = curlen;
 
 		USBHIST_LOG(ehcidebug, "cbp=0x%08zx end=0x%08zx",
-		    (size_t)curoffs, (size_t)(curoffs + curlen), 0, 0);
+		    curoffs, curoffs + curlen, 0, 0);
 
 		/*
 		 * adjust the toggle based on the number of packets in this
