@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.380 2015/03/02 13:58:55 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.381 2015/03/02 14:17:06 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -1627,7 +1627,7 @@ asmptechk:
 
 	.data
 2:
-	.asciz	"asmptechk: %x %x %x %x:%x\r\n"
+	.asciz	"asmptechk: %x %x %x %x:%x\n"
 	_ALIGN
 	.text
 #endif
@@ -3513,7 +3513,7 @@ setup_sparcintr:
 
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
 	LOAD_ASCIZ(%o0,\
-	    "interrupt_vector: number %lx softint mask %lx pil %lu slot %p\r\n")
+	    "interrupt_vector: number %lx softint mask %lx pil %lu slot %p\n")
 	mov	%g2, %o1
 	rdpr	%pil, %o3
 	mov	%g1, %o4
@@ -3545,7 +3545,7 @@ ret_from_intr_vector:
 #if 1
 	set	PANICSTACK-STKB, %g1	! Use panic stack temporarily
 	save	%g1, -CC64FSZ, %sp	! Get a clean register window
-	LOAD_ASCIZ(%o0, "interrupt_vector: spurious vector %lx at pil %d\r\n")
+	LOAD_ASCIZ(%o0, "interrupt_vector: spurious vector %lx at pil %d\n")
 	mov	%g7, %o1
 	GLOBTOLOC
 	clr	%g4
@@ -3830,7 +3830,7 @@ sparc_intr_retry:
 	 nop
 
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
-	LOAD_ASCIZ(%o0, "sparc_interrupt: func %p arg %p\r\n")
+	LOAD_ASCIZ(%o0, "sparc_interrupt: func %p arg %p\n")
 	mov	%i0, %o2		! arg
 	GLOBTOLOC
 	call	prom_printf
@@ -3890,7 +3890,7 @@ intrcmplt:
 	 nop
 
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
-	LOAD_ASCIZ(%o0, "sparc_interrupt:  done\r\n")
+	LOAD_ASCIZ(%o0, "sparc_interrupt:  done\n")
 	GLOBTOLOC
 	call	prom_printf
 	 nop
@@ -4542,7 +4542,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	 nop
 	.data
 1:
-	.asciz	"Setting trap base...\r\n"
+	.asciz	"Setting trap base...\n"
 	_ALIGN
 	.text
 0:	
@@ -4640,7 +4640,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 
 	.data
 1:
-	.asciz	"Calling startup routine %p with stack at %p...\r\n"
+	.asciz	"Calling startup routine %p with stack at %p...\n"
 	_ALIGN
 	.text
 0:	
@@ -4659,7 +4659,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	 nop
 	.data
 1:
-	.asciz	"main() returned\r\n"
+	.asciz	"main() returned\n"
 	_ALIGN
 	.text
 
@@ -5036,7 +5036,7 @@ ENTRY(sp_tlb_flush_pte_us)
 	restore
 	.data
 1:
-	.asciz	"sp_tlb_flush_pte_us:	demap ctx=%x va=%08x res=%x\r\n"
+	.asciz	"sp_tlb_flush_pte_us:	demap ctx=%x va=%08x res=%x\n"
 	_ALIGN
 	.text
 2:
@@ -5090,7 +5090,7 @@ ENTRY(sp_tlb_flush_pte_usiii)
 	restore
 	.data
 1:
-	.asciz	"sp_tlb_flush_pte_usiii:	demap ctx=%x va=%08x res=%x\r\n"
+	.asciz	"sp_tlb_flush_pte_usiii:	demap ctx=%x va=%08x res=%x\n"
 	_ALIGN
 	.text
 2:
