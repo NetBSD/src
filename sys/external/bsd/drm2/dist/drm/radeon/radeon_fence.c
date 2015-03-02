@@ -323,7 +323,7 @@ static int radeon_fence_wait_seq(struct radeon_device *rdev, u64 *target_seq,
 {
 	uint64_t last_seq[RADEON_NUM_RINGS];
 	bool signaled;
-	int i, r;
+	int i, r = 0;
 
 	spin_lock(&rdev->fence_lock);
 	while (!radeon_fence_any_seq_signaled(rdev, target_seq)) {
@@ -425,7 +425,7 @@ static int radeon_fence_wait_seq(struct radeon_device *rdev, u64 *target_seq,
 		}
 	}
 out:	spin_unlock(&rdev->fence_lock);
-	return 0;
+	return r;
 }
 
 /**
