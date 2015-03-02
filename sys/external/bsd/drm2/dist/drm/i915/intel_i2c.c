@@ -292,7 +292,9 @@ gmbus_wait_hw_status(struct drm_i915_private *dev_priv,
 		    !ISSET(gmbus2, (GMBUS_SATOER | gmbus2_status))) {
 			if (i-- == 0)
 				break;
+			spin_unlock(&dev_priv->gmbus_wait_lock);
 			DELAY(1000);
+			spin_lock(&dev_priv->gmbus_wait_lock);
 		}
 	} else {
 		for (i = 0; i < mstohz(50); i++) {
