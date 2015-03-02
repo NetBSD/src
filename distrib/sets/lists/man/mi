@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1495 2015/02/08 16:44:09 wiz Exp $
+# $NetBSD: mi,v 1.1496 2015/03/02 21:55:45 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -453,6 +453,7 @@
 ./usr/share/man/cat1/pstat.0			man-obsolete		obsolete
 ./usr/share/man/cat1/pushd.0			man-util-catman		.cat
 ./usr/share/man/cat1/pwd.0			man-util-catman		.cat
+./usr/share/man/cat1/pwait.0			man-util-catman		.cat
 ./usr/share/man/cat1/pwhash.0			man-util-catman		.cat
 ./usr/share/man/cat1/qsafe.0			man-util-catman		crypto,.cat
 ./usr/share/man/cat1/qsieve.0			man-util-catman		crypto,.cat
@@ -3568,6 +3569,7 @@
 ./usr/share/man/html1/ps.html			man-util-htmlman	html
 ./usr/share/man/html1/pushd.html		man-util-htmlman	html
 ./usr/share/man/html1/pwd.html			man-util-htmlman	html
+./usr/share/man/html1/pwait.html		man-util-htmlman	html
 ./usr/share/man/html1/pwhash.html		man-util-htmlman	html
 ./usr/share/man/html1/qsafe.html		man-util-htmlman	crypto,html
 ./usr/share/man/html1/qsieve.html		man-util-htmlman	crypto,html
@@ -6334,6 +6336,7 @@
 ./usr/share/man/man1/pstat.1			man-obsolete		obsolete
 ./usr/share/man/man1/pushd.1			man-util-man		.man
 ./usr/share/man/man1/pwd.1			man-util-man		.man
+./usr/share/man/man1/pwait.1			man-util-man		.man
 ./usr/share/man/man1/pwhash.1			man-util-man		.man
 ./usr/share/man/man1/qsafe.1			man-util-man		crypto,.man
 ./usr/share/man/man1/qsieve.1			man-util-man		crypto,.man
