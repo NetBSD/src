@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.12 2014/10/29 19:27:36 skrll Exp $	*/
+/*	$NetBSD: gic.c,v 1.13 2015/03/02 11:37:25 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.12 2014/10/29 19:27:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.13 2015/03/02 11:37:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -441,7 +441,7 @@ armgic_cpu_init_targets(struct armgic_softc *sc)
 	/*
 	 * Update the mpsafe targets 
 	 */
-	for (size_t irq = 32; irq < sc->sc_gic_lines; irq++) {
+	for (size_t irq = 32; irq < sc->sc_pic.pic_maxsources; irq++) {
 		struct intrsource * const is = sc->sc_pic.pic_sources[irq];
 		const bus_size_t targets_reg = GICD_ITARGETSRn(irq / 4);
 		if (is != NULL && is->is_mpsafe) {
