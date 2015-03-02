@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.156 2014/09/05 05:48:59 matt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.157 2015/03/02 16:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -322,29 +322,34 @@ MBUF_DEFINE(_mbuf_dummy, 1, 1);
 MBUF_DEFINE(mbuf, MHLEN, MLEN);
 
 /* mbuf flags */
-#define	M_EXT		0x00001	/* has associated external storage */
-#define	M_PKTHDR	0x00002	/* start of record */
-#define	M_EOR		0x00004	/* end of record */
-#define	M_PROTO1	0x00008	/* protocol-specific */
+#define	M_EXT		0x00000001	/* has associated external storage */
+#define	M_PKTHDR	0x00000002	/* start of record */
+#define	M_EOR		0x00000004	/* end of record */
+#define	M_PROTO1	0x00000008	/* protocol-specific */
 
 /* mbuf pkthdr flags, also in m_flags */
-#define M_AUTHIPHDR	0x00010	/* data origin authentication for IP header */
-#define M_DECRYPTED	0x00020	/* confidentiality */
-#define M_LOOP		0x00040	/* for Mbuf statistics */
-#define M_AUTHIPDGM     0x00080  /* data origin authentication */
-#define	M_BCAST		0x00100	/* send/received as link-level broadcast */
-#define	M_MCAST		0x00200	/* send/received as link-level multicast */
-#define	M_CANFASTFWD	0x00400	/* used by filters to indicate packet can
-				   be fast-forwarded */
-#define	M_ANYCAST6	0x00800	/* received as IPv6 anycast */
-#define	M_LINK0		0x01000	/* link layer specific flag */
-#define	M_LINK1		0x02000	/* link layer specific flag */
-#define	M_LINK2		0x04000	/* link layer specific flag */
-#define	M_LINK3		0x08000	/* link layer specific flag */
-#define	M_LINK4		0x10000	/* link layer specific flag */
-#define	M_LINK5		0x20000	/* link layer specific flag */
-#define	M_LINK6		0x40000	/* link layer specific flag */
-#define	M_LINK7		0x80000	/* link layer specific flag */
+#define	M_AUTHIPHDR	0x00000010	/* data origin authentication for
+					 * IP header */
+#define	M_DECRYPTED	0x00000020	/* confidentiality */
+#define	M_LOOP		0x00000040	/* for Mbuf statistics */
+#define	M_AUTHIPDGM     0x00000080	/* data origin authentication */
+#define	M_BCAST		0x00000100	/* send/received as link-level
+					 * broadcast */
+#define	M_MCAST		0x00000200	/* send/received as link-level
+					 * multicast */
+#define	M_CANFASTFWD	0x00000400	/* used by filters to indicate
+					 * packet can be fast-forwarded */
+#define	M_ANYCAST6	0x00000800	/* received as IPv6 anycast */
+
+#define	M_LINK0		0x00001000	/* link layer specific flag */
+#define	M_LINK1		0x00002000	/* link layer specific flag */
+#define	M_LINK2		0x00004000	/* link layer specific flag */
+
+#define	M_LINK3		0x00008000	/* link layer specific flag */
+#define	M_LINK4		0x00010000	/* link layer specific flag */
+#define	M_LINK5		0x00020000	/* link layer specific flag */
+#define	M_LINK6		0x00040000	/* link layer specific flag */
+#define	M_LINK7		0x00080000	/* link layer specific flag */
 
 /* additional flags for M_EXT mbufs */
 #define	M_EXT_FLAGS	0xff000000
