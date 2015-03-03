@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.106 2015/01/31 23:09:27 christos Exp $
+# $NetBSD: mi,v 1.107 2015/03/03 11:01:20 martin Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib
@@ -683,6 +683,7 @@
 ./usr/libdata/debug/usr/bin/pigz.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/pkill.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/pmap.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/pwait.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/post-grohtml.debug	comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/pr.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/pre-grohtml.debug	comp-groff-debug	groff,debug
