@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.21 2015/03/03 09:34:40 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.22 2015/03/03 09:41:31 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.21 2015/03/03 09:34:40 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.22 2015/03/03 09:41:31 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -4884,7 +4884,6 @@ iwm_mvm_mac_ctxt_cmd_common(struct iwm_softc *sc, struct iwm_node *in,
 	}
 
 	cmd->protection_flags |= htole32(IWM_MAC_PROT_FLG_TGG_PROTECT);
-	cmd->protection_flags |= htole32(IWM_MAC_PROT_FLG_SELF_CTS_EN);
 
 	cmd->filter_flags = htole32(IWM_MAC_FILTER_ACCEPT_GRP);
 }
