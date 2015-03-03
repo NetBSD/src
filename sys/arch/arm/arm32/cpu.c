@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.106 2014/11/27 04:09:50 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.107 2015/03/03 23:42:47 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.106 2014/11/27 04:09:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.107 2015/03/03 23:42:47 jmcneill Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -579,7 +579,7 @@ static const char * const wtnames[] = {
 	"**unknown 9**",
 	"**unknown 10**",
 	"**unknown 11**",
-	"**unknown 12**",
+	"write-back",
 	"write-back-locking-line",
 	"write-back-locking-C",
 	"write-back-locking-D",
