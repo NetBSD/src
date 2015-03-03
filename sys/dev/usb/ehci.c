@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.36 2015/03/02 22:16:38 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.37 2015/03/03 06:36:53 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.36 2015/03/02 22:16:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.37 2015/03/03 06:36:53 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2835,12 +2835,12 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		}
 
 		/* Find number of pages we'll be using, insert dma addresses */
-		pages = EHCI_PAGE(curlen + EHCI_PAGE_SIZE - 1) >> 12;
+		pages = EHCI_NPAGES(curlen);
 		KASSERT(pages <= EHCI_QTD_NBUFFERS);
 		pageoffs = EHCI_PAGE(curoffs);
 		for (i = 0; i < pages; i++) {
 			a = DMAADDR(dma, pageoffs + i * EHCI_PAGE_SIZE);
-			cur->qtd.qtd_buffer[i] = htole32(a & 0xFFFFF000);
+			cur->qtd.qtd_buffer[i] = htole32(EHCI_PAGE(a));
 			/* Cast up to avoid compiler warnings */
 			cur->qtd.qtd_buffer_hi[i] = htole32((uint64_t)a >> 32);
 		}

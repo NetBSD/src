@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.34.14.4 2015/02/01 08:45:04 skrll Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.34.14.5 2015/03/03 06:36:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -188,10 +188,12 @@
 #define EHCI_MAX_PORTS		16 /* only 4 bits available in EHCI_HCS_N_PORTS */
 
 /* No data structure may cross a page boundary. */
-#define EHCI_PAGE_SIZE 0x1000
-#define EHCI_PAGE_MASK (EHCI_PAGE_SIZE - 1)
-#define EHCI_PAGE(x) ((x) & ~EHCI_PAGE_MASK)
-#define EHCI_PAGE_OFFSET(x) ((x) & EHCI_PAGE_MASK)
+#define EHCI_PAGE_SHIFT		12
+#define EHCI_PAGE_SIZE		(1 << EHCI_PAGE_SHIFT)
+#define EHCI_PAGE_MASK		(EHCI_PAGE_SIZE - 1)
+#define EHCI_PAGE(x)		((x) & ~EHCI_PAGE_MASK)
+#define EHCI_PAGE_OFFSET(x)	((x) & EHCI_PAGE_MASK)
+#define EHCI_NPAGES(x)		(((x) + EHCI_PAGE_MASK) >> EHCI_PAGE_SHIFT)
 
 typedef uint32_t ehci_link_t;
 #define EHCI_LINK_TERMINATE	0x00000001
