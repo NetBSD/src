@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.160 2014/01/29 22:35:52 joerg Exp $
+#	$NetBSD: sets.subr,v 1.160.4.1 2015/03/03 08:28:12 snj Exp $
 #
 
 #
@@ -179,7 +179,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.160 2014/01/29 22:35:52 joerg Exp $
+# 	# $NetBSD: sets.subr,v 1.160.4.1 2015/03/03 08:28:12 snj Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -318,6 +318,12 @@ list_set_files()
 				wanted[".man"] = 1
 			if ("endian" in wanted)
 				wanted["endian=" "'"${TARGET_ENDIANNESS}"'"] = 1
+			if ("machine" in wanted)
+				wanted["machine=" "'"${MACHINE}"'"] = 1
+			if ("machine_arch" in wanted)
+				wanted["machine_arch=" "'"${MACHINE_ARCH}"'"] = 1
+			if ("machine_cpu" in wanted)
+				wanted["machine_cpu=" "'"${MACHINE_CPU}"'"] = 1
 		}
 
 		/^#/ {

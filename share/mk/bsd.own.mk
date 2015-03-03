@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.829.2.3 2015/02/09 00:25:33 snj Exp $
+#	$NetBSD: bsd.own.mk,v 1.829.2.4 2015/03/03 08:28:12 snj Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1244,7 +1244,7 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 	xkbcomp xorg-cf-files imake xorg-server xbiff xkbdata xkeyboard-config \
 	xbitmaps appres xeyes xev xedit sessreg pixman \
 	beforelight bitmap editres makedepend fonttosfnt fslsfonts fstobdf \
-	glu glw mesa-demos MesaDemos MesaGLUT MesaLib \
+	glu glw mesa-demos MesaDemos MesaGLUT MesaLib MesaLib7 \
 	ico iceauth lbxproxy listres lndir \
 	luit xproxymanagementprotocol mkfontdir oclock proxymngr rgb \
 	setxkbmap smproxy twm viewres x11perf xauth xcalc xclipboard \
