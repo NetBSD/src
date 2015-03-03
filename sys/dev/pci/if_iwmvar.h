@@ -1,5 +1,5 @@
-/*	$NetBSD: if_iwmvar.h,v 1.4 2015/02/16 13:22:19 nonaka Exp $	*/
-/*	OpenBSD: if_iwmvar.h,v 1.3 2015/02/07 07:10:44 phessler Exp 	*/
+/*	$NetBSD: if_iwmvar.h,v 1.5 2015/03/03 09:10:45 nonaka Exp $	*/
+/*	OpenBSD: if_iwmvar.h,v 1.7 2015/03/02 13:51:10 jsg Exp 	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -472,6 +472,8 @@ struct iwm_softc {
 
 	struct iwm_notif_statistics sc_stats;
 	int sc_noise;
+
+	int host_interrupt_operation_mode;
 
 	struct bpf_if *		sc_drvbpf;
 
