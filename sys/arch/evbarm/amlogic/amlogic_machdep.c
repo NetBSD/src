@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.10 2015/03/01 15:37:26 jmcneill Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.11 2015/03/03 23:14:41 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,25 +125,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.10 2015/03/01 15:37:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.11 2015/03/03 23:14:41 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
-#include "opt_kgdb.h"
-#include "opt_ipkdb.h"
 #include "opt_md.h"
 #include "opt_amlogic.h"
 #include "opt_arm_debug.h"
 #include "opt_multiprocessor.h"
 
 #include "amlogic_com.h"
-#if 0
-#include "prcm.h"
-#include "sdhc.h"
-#include "ukbd.h"
-#endif
 #include "arml2cc.h"
-#include "act8846pm.h"
 #include "ether.h"
 
 #include <sys/param.h>
@@ -170,9 +162,6 @@ __KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.10 2015/03/01 15:37:26 jmcneil
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-#ifdef KGDB
-#include <sys/kgdb.h>
-#endif
 
 #include <machine/bootconfig.h>
 #include <arm/armreg.h>
@@ -198,9 +187,6 @@ __KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.10 2015/03/01 15:37:26 jmcneil
 #include <evbarm/include/autoconf.h>
 #include <evbarm/amlogic/platform.h>
 
-#include <dev/i2c/i2cvar.h>
-#include <dev/i2c/ddcreg.h>
-
 #include <dev/usb/ukbdvar.h>
 #include <net/if_ether.h>
 
@@ -212,9 +198,6 @@ BootConfig bootconfig;		/* Boot config storage */
 static char bootargs[AMLOGIC_MAX_BOOT_STRING];
 char *boot_args = NULL;
 char *boot_file = NULL;
-#if 0
-static uint8_t amlogic_edid[128];	/* EDID storage */
-#endif
 u_int uboot_args[4] = { 0 };	/* filled in by amlogic_start.S (not in bss) */
 
 /* Same things, but for the free (unused by the kernel) memory. */
@@ -231,11 +214,7 @@ extern char _end[];
 /* Prototypes */
 
 void consinit(void);
-#ifdef KGDB
-static void kgdb_port_init(void);
-#endif
 
-static void init_clocks(void);
 static void amlogic_device_register(device_t, void *);
 static void amlogic_reset(void);
 
@@ -281,8 +260,8 @@ amlogic_db_trap(int where)
 }
 #endif
 
-void amlogic_putchar(char c);
-void
+#ifdef VERBOSE_INIT_ARM
+static void
 amlogic_putchar(char c)
 {
 	volatile uint32_t *uartaddr = (volatile uint32_t *)CONSADDR_VA;
@@ -300,6 +279,19 @@ amlogic_putchar(char c)
 			break;
 	}
 }
+static void
+amlogic_putstr(const char *s)
+{
+	for (const char *p = s; *p; p++) {
+		amlogic_putchar(*p);
+	}
+}
+#define DPRINTF(...)		printf(__VA_ARGS__)
+#define DPRINT(x)		amlogic_putstr(x)
+#else
+#define DPRINTF(...)
+#define DPRINT(x)
+#endif
 
 static psize_t
 amlogic_get_ram_size(void)
@@ -326,17 +318,16 @@ u_int
 initarm(void *arg)
 {
 	psize_t ram_size = 0;
-	*(volatile int *)CONSADDR_VA  = 0x40;	/* output '@' */
+	DPRINT("initarm:");
 
-	amlogic_putchar('d');
+	DPRINT(" devmap");
 	pmap_devmap_register(devmap);
 
-	amlogic_putchar('b');
+	DPRINT(" bootstrap");
 	amlogic_bootstrap();
 
-	amlogic_putchar('!');
-
 #ifdef MULTIPROCESSOR
+	DPRINT(" ncpu");
 	const bus_addr_t cbar = armreg_cbar_read();
 	if (cbar) {
 		const bus_space_handle_t scu_bsh =
@@ -349,50 +340,42 @@ initarm(void *arg)
 #endif
 
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
+	DPRINT(" cpufunc");
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
 
-	init_clocks();
-
+	DPRINT(" consinit");
 	consinit();
 
 #if NARML2CC > 0
         /*
          * Probe the PL310 L2CC
          */
-	printf("probe the PL310 L2CC\n");
+	DPRINTF(" l2cc");
         const bus_space_handle_t pl310_bh =
             AMLOGIC_CORE_VBASE + AMLOGIC_PL310_OFFSET;
         arml2cc_init(&amlogic_bs_tag, pl310_bh, 0);
-        amlogic_putchar('l');
 #endif
 
-	printf("\nuboot arg = %#x, %#x, %#x, %#x\n",
+	DPRINTF(" cbar=%#x", armreg_cbar_read());
+
+	DPRINTF(" ok\n");
+
+	DPRINTF("uboot: args %#x, %#x, %#x, %#x\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
-
-#ifdef KGDB
-	kgdb_port_init();
-#endif
 
 	cpu_reset_address = amlogic_reset;
 
-#ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
-	printf("\nNetBSD/evbarm (amlogic) booting ...\n");
-#endif
+	DPRINTF("\nNetBSD/evbarm (amlogic) booting ...\n");
 
 #ifdef BOOT_ARGS
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
 #endif
 
-#ifdef VERBOSE_INIT_ARM
-	printf("initarm: Configuring system ...\n");
-
-	printf("initarm: cbar=%#x\n", armreg_cbar_read());
-	printf("KERNEL_BASE=0x%x, KERNEL_VM_BASE=0x%x, KERNEL_VM_BASE - KERNEL_BASE=0x%x, KERNEL_BASE_VOFFSET=0x%x\n",
+	DPRINTF("KERNEL_BASE=0x%x, KERNEL_VM_BASE=0x%x, KERNEL_VM_BASE - KERNEL_BASE=0x%x, KERNEL_BASE_VOFFSET=0x%x\n",
 		KERNEL_BASE, KERNEL_VM_BASE, KERNEL_VM_BASE - KERNEL_BASE, KERNEL_BASE_VOFFSET);
-#endif
 
 	ram_size = amlogic_get_ram_size();
 
@@ -412,7 +395,7 @@ initarm(void *arg)
 #ifdef MEMSIZE
 	if (ram_size == 0 || ram_size > (unsigned)MEMSIZE * 1024 * 1024)
 		ram_size = (unsigned)MEMSIZE * 1024 * 1024;
-	printf("ram_size = 0x%x\n", (int)ram_size);
+	DPRINTF("ram_size = 0x%x\n", (int)ram_size);
 #else
 	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
 #endif
@@ -435,7 +418,15 @@ initarm(void *arg)
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap,
 	    mapallmem_p);
 
-	printf("bootargs: %s\n", bootargs);
+	if (mapallmem_p) {
+		if (uboot_args[3] < ram_size) {
+			const char * const args = (const char *)
+			    (uboot_args[3] + KERNEL_BASE_VOFFSET);
+			strlcpy(bootargs, args, sizeof(bootargs));
+		}
+	}
+
+	DPRINTF("bootargs: %s\n", bootargs);
 
 	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
@@ -447,12 +438,6 @@ initarm(void *arg)
 
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
-}
-
-static void
-init_clocks(void)
-{
-	/* NOT YET */
 }
 
 #if NAMLOGIC_COM > 0
@@ -481,8 +466,6 @@ consinit(void)
 
 	consinit_called = 1;
 
-	amlogic_putchar('e');
-
 #if NAMLOGIC_COM > 0
         const bus_space_handle_t bsh =
             AMLOGIC_CORE_VBASE + (consaddr - AMLOGIC_CORE_BASE);
@@ -492,9 +475,6 @@ consinit(void)
 #if NUKBD > 0
 	ukbd_cnattach();	/* allow USB keyboard to become console */
 #endif
-
-	amlogic_putchar('f');
-	amlogic_putchar('g');
 }
 
 void
@@ -512,43 +492,6 @@ amlogic_reset(void)
 		__asm("wfi");
 	}
 }
-
-#ifdef KGDB
-#ifndef KGDB_DEVADDR
-#error Specify the address of the kgdb UART with the KGDB_DEVADDR option.
-#endif
-#ifndef KGDB_DEVRATE
-#define KGDB_DEVRATE 115200
-#endif
-
-#ifndef KGDB_DEVMODE
-#define KGDB_DEVMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-#endif
-static const vaddr_t comkgdbaddr = KGDB_DEVADDR;
-static const int comkgdbspeed = KGDB_DEVRATE;
-static const int comkgdbmode = KGDB_DEVMODE;
-
-void
-static kgdb_port_init(void)
-{
-	static int kgdbsinit_called = 0;
-
-	if (kgdbsinit_called != 0)
-		return;
-
-	kgdbsinit_called = 1;
-
-	bus_space_handle_t bh;
-	if (bus_space_map(&amlogic_a4x_bs_tag, comkgdbaddr, ROCKCHIP_COM_SIZE, 0, &bh))
-		panic("kgdb port can not be mapped.");
-
-	if (com_kgdb_attach(&amlogic_a4x_bs_tag, comkgdbaddr, comkgdbspeed,
-			ROCKCHIP_COM_FREQ, COM_TYPE_NORMAL, comkgdbmode))
-		panic("KGDB uart can not be initialized.");
-
-	bus_space_unmap(&amlogic_a4x_bs_tag, bh, ROCKCHIP_COM_SIZE);
-}
-#endif
 
 void
 amlogic_device_register(device_t self, void *aux)
