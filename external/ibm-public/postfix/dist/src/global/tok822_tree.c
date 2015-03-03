@@ -1,4 +1,4 @@
-/*	$NetBSD: tok822_tree.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: tok822_tree.c,v 1.1.1.1.28.1 2015/03/03 07:11:08 snj Exp $	*/
 
 /*++
 /* NAME
@@ -261,11 +261,12 @@ TOK822 *tok822_sub_keep_after(TOK822 *t1, TOK822 *t2)
 
 TOK822 *tok822_free_tree(TOK822 *tp)
 {
-    if (tp) {
-	if (tp->next)
-	    tok822_free_tree(tp->next);
+    TOK822 *next;
+
+    for (/* void */; tp != 0; tp = next) {
 	if (tp->head)
 	    tok822_free_tree(tp->head);
+	next = tp->next;
 	tok822_free(tp);
     }
     return (0);

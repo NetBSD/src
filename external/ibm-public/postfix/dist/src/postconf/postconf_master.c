@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_master.c,v 1.3 2014/07/06 19:45:50 tron Exp $	*/
+/*	$NetBSD: postconf_master.c,v 1.3.2.1 2015/03/03 07:11:08 snj Exp $	*/
 
 /*++
 /* NAME
@@ -275,7 +275,7 @@ static void pcf_check_master_entry(ARGV *argv, const char *raw_text)
     for (field = PCF_MASTER_FLD_PRIVATE; field <= PCF_MASTER_FLD_CHROOT; field++) {
 	cp = argv->argv[field];
 	if (cp[1] != 0 || strchr(pcf_valid_bool_types, *cp) == 0)
-	    pcf_fix_fatal("invalid %s field \%s\" in \"%s\"",
+	    pcf_fix_fatal("invalid %s field \"%s\" in \"%s\"",
 			  pcf_str_field_pattern(field), cp, raw_text);
     }
 
@@ -284,12 +284,12 @@ static void pcf_check_master_entry(ARGV *argv, const char *raw_text)
     if (len > 0 && cp[len - 1] == '?')
 	len--;
     if (!(cp[0] == '-' && len == 1) && strspn(cp, "0123456789") != len)
-	pcf_fix_fatal("invalid " PCF_MASTER_NAME_WAKEUP " field \%s\" in \"%s\"",
+	pcf_fix_fatal("invalid " PCF_MASTER_NAME_WAKEUP " field \"%s\" in \"%s\"",
 		      cp, raw_text);
 
     cp = argv->argv[PCF_MASTER_FLD_MAXPROC];
     if (strcmp("-", cp) != 0 && cp[strspn(cp, "0123456789")] != 0)
-	pcf_fix_fatal("invalid " PCF_MASTER_NAME_MAXPROC " field \%s\" in \"%s\"",
+	pcf_fix_fatal("invalid " PCF_MASTER_NAME_MAXPROC " field \"%s\" in \"%s\"",
 		      cp, raw_text);
 }
 

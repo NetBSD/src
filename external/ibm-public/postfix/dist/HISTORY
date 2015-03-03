@@ -19618,3 +19618,26 @@ Apologies for any names omitted.
 	Cleanup: revert the workaround that places headers inserted
 	with PREPEND actions or policy requests BELOW Postfix's own
 	Received: message header. File: smtpd/smtpd.c.
+
+20141025
+
+	Bugfix (introduced: Postfix 2.11): core dump when
+	smtp_policy_maps specifies an invalid TLS level. Viktor
+	Dukhovni. File: smtp/smtp_tls_policy.c.
+
+20150106
+
+	Robustness: don't segfault due to excessive recursion after
+	a faulty configuration runs into the virtual_alias_recursion_limit.
+	File: global/tok822_tree.c.
+
+20150115
+
+	Safety: stop aliasing loops that exponentially increase the
+	address length with each iteration. Back-ported from Postfix
+	3.0. File: cleanup/cleanup_map1n.c.
+
+20150117
+
+	Cleanup: missing " in \%s\" in postconf(1) fatal error
+	messages. Iain Hibbert. File: postconf/postconf_master.c.
