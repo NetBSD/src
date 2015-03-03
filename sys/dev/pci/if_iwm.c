@@ -1,5 +1,5 @@
-/*	$NetBSD: if_iwm.c,v 1.23 2015/03/03 09:45:58 nonaka Exp $	*/
-/*	OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp	*/
+/*	$NetBSD: if_iwm.c,v 1.24 2015/03/03 09:54:55 nonaka Exp $	*/
+/*	OpenBSD: if_iwm.c,v 1.33 2015/03/03 06:56:12 kettenis Exp	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.23 2015/03/03 09:45:58 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.24 2015/03/03 09:54:55 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -172,9 +172,6 @@ static const uint8_t iwm_nvm_channels[] = {
 	149, 153, 157, 161, 165
 };
 #define IWM_NUM_2GHZ_CHANNELS	14
-
-/* It looks like 11a TX is broken, unfortunately. */
-#define IWM_NO_5GHZ		1
 
 static const struct iwm_rate {
 	uint8_t rate;
@@ -2629,11 +2626,7 @@ iwm_parse_nvm_data(struct iwm_softc *sc,
 
 	sku = le16_to_cpup(nvm_sw + IWM_SKU);
 	data->sku_cap_band_24GHz_enable = sku & IWM_NVM_SKU_CAP_BAND_24GHZ;
-#ifndef IWM_NO_5GHZ
 	data->sku_cap_band_52GHz_enable = sku & IWM_NVM_SKU_CAP_BAND_52GHZ;
-#else
-	data->sku_cap_band_52GHz_enable = 0;
-#endif
 	data->sku_cap_11n_enable = 0;
 
 	if (!data->valid_tx_ant || !data->valid_rx_ant) {
@@ -3807,6 +3800,7 @@ static const struct iwm_rate *
 iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	struct ieee80211_frame *wh, struct iwm_tx_cmd *tx)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	const struct iwm_rate *rinfo;
 	int type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 	int ridx, rate_flags;
@@ -3817,7 +3811,7 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 
 	/* for data frames, use RS table */
 	if (type == IEEE80211_FC0_TYPE_DATA) {
-		if (sc->sc_ic.ic_fixed_rate != -1) {
+		if (ic->ic_fixed_rate != -1) {
 			tx->initial_rate_index = sc->sc_fixed_ridx;
 		} else {
 			tx->initial_rate_index = (nrates-1) - in->in_ni.ni_txrate;
@@ -3828,7 +3822,8 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	}
 
 	/* for non-data, use the lowest supported rate */
-	ridx = in->in_ridx[0];
+	ridx = (ic->ic_curmode == IEEE80211_MODE_11A) ?
+	    IWM_RIDX_OFDM : IWM_RIDX_CCK;
 	rinfo = &iwm_rates[ridx];
 
 	rate_flags = 1 << IWM_RATE_MCS_ANT_POS;
@@ -4766,16 +4761,19 @@ static void
 iwm_mvm_ack_rates(struct iwm_softc *sc, struct iwm_node *in,
 	int *cck_rates, int *ofdm_rates)
 {
+	struct ieee80211_node *ni = &in->in_ni;
 	int lowest_present_ofdm = 100;
 	int lowest_present_cck = 100;
 	uint8_t cck = 0;
 	uint8_t ofdm = 0;
 	int i;
 
-	for (i = 0; i <= IWM_LAST_CCK_RATE; i++) {
-		cck |= (1 << i);
-		if (lowest_present_cck > i)
-			lowest_present_cck = i;
+	if (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan)) {
+		for (i = 0; i <= IWM_LAST_CCK_RATE; i++) {
+			cck |= (1 << i);
+			if (lowest_present_cck > i)
+				lowest_present_cck = i;
+		}
 	}
 	for (i = IWM_FIRST_OFDM_RATE; i <= IWM_LAST_NON_HT_RATE; i++) {
 		int adj = i - IWM_FIRST_OFDM_RATE;
@@ -5588,7 +5586,6 @@ iwm_endscan_cb(struct work *work __unused, void *arg)
 	DPRINTF(("scan ended\n"));
 
 	if (sc->sc_scanband == IEEE80211_CHAN_2GHZ) {
-#ifndef IWM_NO_5GHZ
 		int error;
 		done = 0;
 		if ((error = iwm_mvm_scan_request(sc,
@@ -5597,9 +5594,6 @@ iwm_endscan_cb(struct work *work __unused, void *arg)
 			DPRINTF(("%s: could not initiate scan\n", DEVNAME(sc)));
 			done = 1;
 		}
-#else
-		done = 1;
-#endif
 	} else {
 		done = 1;
 	}
@@ -6570,9 +6564,7 @@ iwm_attach_hook(device_t dev)
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
 	    IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
 
-#ifndef IWM_NO_5GHZ
 	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
-#endif
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
