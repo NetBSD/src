@@ -2872,17 +2872,13 @@ i915_gem_object_move_to_inactive(struct drm_i915_gem_object *obj)
 	struct i915_vma *vma;
 
 	if ((obj->base.write_domain & I915_GEM_DOMAIN_GTT) != 0) {
-#if 0
 		printk(KERN_ERR "%s: %p 0x%x flushing gtt\n", __func__, obj,
 			obj->base.write_domain);
-#endif
 		i915_gem_object_flush_gtt_write_domain(obj);
 	}
 	if ((obj->base.write_domain & I915_GEM_DOMAIN_CPU) != 0) {
-#if 0
 		printk(KERN_ERR "%s: %p 0x%x flushing cpu\n", __func__, obj,
 			obj->base.write_domain);
-#endif
 		i915_gem_object_flush_cpu_write_domain(obj, false);
 	}
 	BUG_ON(obj->base.write_domain & ~I915_GEM_GPU_DOMAINS);
