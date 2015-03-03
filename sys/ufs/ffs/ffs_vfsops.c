@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.319 2015/02/23 13:38:54 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.320 2015/03/03 17:46:39 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.319 2015/02/23 13:38:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.320 2015/03/03 17:46:39 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -733,12 +733,6 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 #endif
 		fs->fs_flags &= ~FS_SWAPPED;
 
-	/* We don't want the superblock size to change. */
-	if (newfs->fs_sbsize != fs_sbsize) {
-		brelse(bp, 0);
-		kmem_free(newfs, fs_sbsize);
-		return (EINVAL);
-	}
 	if ((newfs->fs_magic != FS_UFS1_MAGIC &&
 	     newfs->fs_magic != FS_UFS2_MAGIC)) {
 		brelse(bp, 0);
@@ -750,6 +744,20 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		kmem_free(newfs, fs_sbsize);
 		return (EINVAL);
 	}
+
+	/*
+	 * The current implementation doesn't handle the possibility that
+	 * these values may have changed.
+	 */
+	if ((newfs->fs_sbsize != fs_sbsize) ||
+	    (newfs->fs_cssize != fs->fs_cssize) ||
+	    (newfs->fs_contigsumsize != fs->fs_contigsumsize) ||
+	    (newfs->fs_ncg != fs->fs_ncg)) {
+		brelse(bp, 0);
+		kmem_free(newfs, fs_sbsize);
+		return (EINVAL);
+	}
+
 
 	/* Store off old fs_sblockloc for fs_oldfscompat_read. */
 	sblockloc = fs->fs_sblockloc;
