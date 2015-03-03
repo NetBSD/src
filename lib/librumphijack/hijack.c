@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.112 2015/03/03 00:19:07 enami Exp $	*/
+/*      $NetBSD: hijack.c,v 1.113 2015/03/03 01:24:39 enami Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.112 2015/03/03 00:19:07 enami Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.113 2015/03/03 01:24:39 enami Exp $");
 #endif
 
 #include <sys/param.h>
@@ -113,7 +113,7 @@ enum dualcall {
 	DUALCALL_LINK, DUALCALL_RENAME,
 	DUALCALL_MKDIR, DUALCALL_RMDIR,
 	DUALCALL_UTIMES, DUALCALL_LUTIMES, DUALCALL_FUTIMES,
-	DUALCALL_UTIMENSAT,
+	DUALCALL_UTIMENSAT, DUALCALL_FUTIMENS,
 	DUALCALL_TRUNCATE, DUALCALL_FTRUNCATE,
 	DUALCALL_FSYNC,
 	DUALCALL_ACCESS,
@@ -307,6 +307,7 @@ struct sysnames {
 	{ DUALCALL_LUTIMES,	S(REALLUTIMES),	RSYS_NAME(LUTIMES)	},
 	{ DUALCALL_FUTIMES,	S(REALFUTIMES),	RSYS_NAME(FUTIMES)	},
 	{ DUALCALL_UTIMENSAT,	"utimensat",	RSYS_NAME(UTIMENSAT)	},
+	{ DUALCALL_FUTIMENS,	"futimens",	RSYS_NAME(FUTIMENS)	},
 	{ DUALCALL_OPEN,	"open",		RSYS_NAME(OPEN)		},
 	{ DUALCALL_CHDIR,	"chdir",	RSYS_NAME(CHDIR)	},
 	{ DUALCALL_FCHDIR,	"fchdir",	RSYS_NAME(FCHDIR)	},
@@ -2391,6 +2392,11 @@ FDCALL(int, futimes, DUALCALL_FUTIMES,					\
 	(int fd, const struct timeval *tv),				\
 	(int, const struct timeval *),					\
 	(fd, tv))
+
+FDCALL(int, futimens, DUALCALL_FUTIMENS,				\
+	(int fd, const struct timespec *ts),				\
+	(int, const struct timespec *),					\
+	(fd, ts))
 
 #ifdef HAVE_CHFLAGS
 FDCALL(int, fchflags, DUALCALL_FCHFLAGS,				\
