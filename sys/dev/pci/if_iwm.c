@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.20 2015/03/03 09:27:35 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.21 2015/03/03 09:34:40 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.20 2015/03/03 09:27:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.21 2015/03/03 09:34:40 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -3817,7 +3817,7 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 
 	/* for data frames, use RS table */
 	if (type == IEEE80211_FC0_TYPE_DATA) {
-		if (sc->sc_fixed_ridx != -1) {
+		if (sc->sc_ic.ic_fixed_rate != -1) {
 			tx->initial_rate_index = sc->sc_fixed_ridx;
 		} else {
 			tx->initial_rate_index = (nrates-1) - in->in_ni.ni_txrate;
