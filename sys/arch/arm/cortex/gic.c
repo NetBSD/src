@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.13 2015/03/02 11:37:25 jmcneill Exp $	*/
+/*	$NetBSD: gic.c,v 1.14 2015/03/03 21:53:12 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.13 2015/03/02 11:37:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.14 2015/03/03 21:53:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -371,7 +371,7 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 			new_cfg |= 2 << twopair_shift;
 		}
 		if (new_cfg != cfg) {
-			gicd_write(sc, cfg_reg, cfg);
+			gicd_write(sc, cfg_reg, new_cfg);
 #if 0
 			printf("%s: irq %u: cfg changed from %#x to %#x\n",
 			    pic->pic_name, is->is_irq, cfg, new_cfg);
