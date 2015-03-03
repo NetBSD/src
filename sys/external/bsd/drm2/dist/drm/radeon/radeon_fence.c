@@ -425,7 +425,12 @@ static int radeon_fence_wait_seq(struct radeon_device *rdev, u64 *target_seq,
 		}
 	}
 	spin_unlock(&rdev->fence_lock);
-	return r;
+	/*
+	 * The timed wait returns 0 on timeout or the positive number
+	 * of ticks left (minimum 1) if the condition passed.  We
+	 * return zero on success.
+	 */
+	return (r < 0? r : 0);
 }
 
 /**
