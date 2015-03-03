@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.17 2015/03/03 09:10:45 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.18 2015/03/03 09:16:56 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.17 2015/03/03 09:10:45 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.18 2015/03/03 09:16:56 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -5400,7 +5400,8 @@ iwm_setrates(struct iwm_node *in)
 
 	/* init amrr */
 	ieee80211_amrr_node_init(&sc->sc_amrr, &in->in_amn);
-	ni->ni_txrate = nrates-1;
+	/* Start at lowest available bit-rate, AMRR will raise. */
+	ni->ni_txrate = 0;
 }
 
 static int
