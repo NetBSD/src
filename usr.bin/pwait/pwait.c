@@ -1,4 +1,4 @@
-/*	$NetBSD: pwait.c,v 1.2 2015/03/02 21:53:48 christos Exp $	*/
+/*	$NetBSD: pwait.c,v 1.3 2015/03/03 19:59:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004-2009, Jilles Tjoelker
@@ -37,7 +37,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/bin/pwait/pwait.c 245506 2013-01-16 18:15:25Z delphij $");
 #endif
-__RCSID("$NetBSD: pwait.c,v 1.2 2015/03/02 21:53:48 christos Exp $");
+__RCSID("$NetBSD: pwait.c,v 1.3 2015/03/03 19:59:48 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -54,11 +54,12 @@ __RCSID("$NetBSD: pwait.c,v 1.2 2015/03/02 21:53:48 christos Exp $");
 #include <sysexits.h>
 #include <unistd.h>
 
-static void
+static __dead void
 usage(void)
 {
 
-	fprintf(stderr, "usage: pwait [-v] pid ...\n");
+	fprintf(stderr, "Usage: %s [-sv] [-t <timeout>] <pid> ...\n",
+	    getprogname());
 	exit(EX_USAGE);
 }
 
@@ -75,11 +76,19 @@ main(int argc, char *argv[])
 	size_t nleft, n, i;
 	pid_t pid;
 	char *s, *end;
+	double timeout = 0;
+	struct timespec ts, *tsp;
 
-	while ((opt = getopt(argc, argv, "sv")) != -1) {
+	setprogname(argv[0]);
+	while ((opt = getopt(argc, argv, "st:v")) != -1) {
 		switch (opt) {
 		case 's':
 			childstatus = 1;
+			break;
+		case 't':
+			timeout = atof(optarg);
+			if (timeout < 0)
+				timeout = 0;
 			break;
 		case 'v':
 			verbose = 1;
@@ -95,6 +104,18 @@ main(int argc, char *argv[])
 
 	if (argc == 0)
 		usage();
+
+	if (timeout != 0) {
+		ts.tv_sec = (time_t)timeout;
+		timeout -= (double)ts.tv_sec;
+		ts.tv_nsec = (long)(timeout * 1000000000L);
+		while (ts.tv_nsec < 0) {
+			ts.tv_sec--;
+			ts.tv_nsec += 1000000000L;
+		}
+		tsp = &ts;
+	} else
+		tsp = NULL;
 
 	kq = kqueue();
 	if (kq == -1)
@@ -131,9 +152,22 @@ main(int argc, char *argv[])
 	}
 
 	while (nleft > 0) {
-		int rv = kevent(kq, NULL, 0, e, nleft, NULL);
-		if (rv == -1)
+		int rv;
+
+		switch (rv = kevent(kq, NULL, 0, e, nleft, tsp)) {
+		case 0:
+			if (verbose)
+				printf("timed out\n");
+			if (childstatus)
+				return 255;
+			return EX_OK;
+		case -1:
 			err(EXIT_FAILURE, "kevent");
+		default:
+			n = (size_t)rv;
+			break;
+		}
+
 		for (i = 0; i < n; i++) {
 			status = (int)e[i].data;
 			if (verbose) {
