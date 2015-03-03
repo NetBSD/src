@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.73.4.1 2015/01/05 21:23:50 martin Exp $
+# $NetBSD: md.amd64,v 1.73.4.2 2015/03/03 08:28:12 snj Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -371,8 +371,8 @@
 ./usr/X11R7/lib/modules/dri/r128_dri.so.0		-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/r200_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r200_dri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/r300_dri.so			-unknown-	obsolete
-./usr/X11R7/lib/modules/dri/r300_dri.so.0		-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/r300_dri.so			-unknown-	xorg
+./usr/X11R7/lib/modules/dri/r300_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r600_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r600_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/radeon_dri.so		-unknown-	xorg

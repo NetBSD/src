@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29.2.1 2015/01/05 21:23:50 martin Exp $
+#	$NetBSD: Makefile,v 1.29.2.2 2015/03/03 08:28:12 snj Exp $
 
 # build libraries for xorg
 
@@ -9,7 +9,7 @@ SUBDIR+=libdrm_intel
 .endif
 SUBDIR+=libdrm_radeon pixman xkeyboard-config libxcb \
 	.WAIT
-SUBDIR+=dri gallium fontconfig libSM libX11 \
+SUBDIR+=dri7 dri gallium fontconfig libSM libX11 \
 	.WAIT \
 	libXcomposite libXdamage libXext libXfixes libXt \
 	libxkbfile \

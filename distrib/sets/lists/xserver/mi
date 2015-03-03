@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.33.10.1 2015/01/05 21:23:50 martin Exp $
+# $NetBSD: mi,v 1.33.10.2 2015/03/03 08:28:12 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -54,8 +54,12 @@
 ./usr/X11R6/man/man1/xvidtune.1				-unknown-	.man,x11
 ./usr/X11R7/bin/Xnest					-unknown-	xorg
 ./usr/X11R7/bin/Xvfb					-unknown-	xorg
-./usr/X11R7/lib/modules/dri/libmesa_dri.so		-unknown-	obsolete
-./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/libmesa_dri.so		-unknown-	xorg,machine=i386
+./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	xorg,machine=i386
+./usr/X11R7/lib/modules/dri/libmesa_dri.so		-unknown-	xorg,machine=amd64
+./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	xorg,machine=amd64
+./usr/X11R7/lib/modules/dri/libmesa_dri.so		-unknown-	obsolete,xorg,!machine=amd64,!machine=i386
+./usr/X11R7/lib/modules/dri/libmesa_dri.so.0		-unknown-	obsolete,xorg,!machine=amd64,!machine=i386
 ./usr/X11R7/lib/modules/dri/swrast_dri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/swrast_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/gallium_dri.so		-unknown-	xorg
