@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.37 2015/03/03 06:36:53 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.38 2015/03/03 10:06:01 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.37 2015/03/03 06:36:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.38 2015/03/03 10:06:01 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3535,11 +3535,11 @@ ehci_device_request(usbd_xfer_handle xfer)
 	sqh = epipe->sqh;
 
 	KASSERTMSG(EHCI_QH_GET_ADDR(le32toh(sqh->qh.qh_endp)) == dev->ud_addr,
-	    "address QH %d pipe %d\n",
+	    "address QH %" __PRIuBIT " pipe %d\n",
 	    EHCI_QH_GET_ADDR(le32toh(sqh->qh.qh_endp)), dev->ud_addr);
 	KASSERTMSG(EHCI_QH_GET_MPL(le32toh(sqh->qh.qh_endp)) ==
 	    UGETW(epipe->pipe.up_endpoint->ue_edesc->wMaxPacketSize),
-	    "MPS QH %d pipe %d\n",
+	    "MPS QH %" __PRIuBIT " pipe %d\n",
 	    EHCI_QH_GET_MPL(le32toh(sqh->qh.qh_endp)),
 	    UGETW(epipe->pipe.up_endpoint->ue_edesc->wMaxPacketSize));
 
