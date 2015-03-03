@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.21 2015/02/20 09:17:17 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.22 2015/03/03 06:23:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.21 2015/02/20 09:17:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.22 2015/03/03 06:23:43 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -114,7 +114,6 @@ fail:
 
 #endif /* UHCI_DEBUG */
 #endif /* USB_DEBUG */
-
 
 #define	DPRINTFN(N,FMT,A,B,C,D)	USBHIST_LOGN(uhcidebug,N,FMT,A,B,C,D)
 #define	UHCIHIST_FUNC()		USBHIST_FUNC()
