@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.18 2015/03/03 09:16:56 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.19 2015/03/03 09:22:06 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.18 2015/03/03 09:16:56 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.19 2015/03/03 09:22:06 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -3511,7 +3511,7 @@ iwm_send_cmd(struct iwm_softc *sc, struct iwm_host_cmd *hcmd)
 	struct mbuf *m;
 	bus_addr_t paddr;
 	uint32_t addr_lo;
-	int error, i, paylen, off, s;
+	int error = 0, i, paylen, off, s;
 	int code;
 	int async, wantresp;
 
