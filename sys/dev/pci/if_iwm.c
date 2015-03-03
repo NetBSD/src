@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.19 2015/03/03 09:22:06 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.20 2015/03/03 09:27:35 nonaka Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.18 2015/02/11 01:12:42 brad Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.19 2015/03/03 09:22:06 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.20 2015/03/03 09:27:35 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -4780,8 +4780,8 @@ iwm_mvm_ack_rates(struct iwm_softc *sc, struct iwm_node *in,
 	for (i = IWM_FIRST_OFDM_RATE; i <= IWM_LAST_NON_HT_RATE; i++) {
 		int adj = i - IWM_FIRST_OFDM_RATE;
 		ofdm |= (1 << adj);
-		if (lowest_present_ofdm > adj)
-			lowest_present_ofdm = adj;
+		if (lowest_present_ofdm > i)
+			lowest_present_ofdm = i;
 	}
 
 	/*
