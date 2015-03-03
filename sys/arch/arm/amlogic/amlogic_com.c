@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_com.c,v 1.3 2015/03/01 23:39:28 jmcneill Exp $ */
+/* $NetBSD: amlogic_com.c,v 1.4 2015/03/03 21:56:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,10 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: amlogic_com.c,v 1.3 2015/03/01 23:39:28 jmcneill Exp $");
-
-#define AMLOGIC_COM_INTRPOLL
-#define AMLOGIC_COM_INTRPOLL_RATE	10
+__KERNEL_RCSID(1, "$NetBSD: amlogic_com.c,v 1.4 2015/03/03 21:56:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,10 +59,6 @@ static void	amlogic_com_attach(device_t, device_t, void *);
 
 static int	amlogic_com_intr(void *);
 
-#ifdef AMLOGIC_COM_INTRPOLL
-static void	amlogic_com_intrpoll(void *);
-#endif
-
 static int	amlogic_com_cngetc(dev_t);
 static void	amlogic_com_cnputc(dev_t, int);
 static void	amlogic_com_cnpollc(dev_t, int);
@@ -87,10 +80,6 @@ struct amlogic_com_softc {
 	tcflag_t sc_cflag;
 
 	u_char sc_buf[1024];
-
-#ifdef AMLOGIC_COM_INTRPOLL
-	callout_t sc_intrpoll_ch;
-#endif
 };
 
 static struct amlogic_com_softc amlogic_com_cnsc;
@@ -156,10 +145,6 @@ amlogic_com_attach(device_t parent, device_t self, void *aux)
 	bus_space_subregion(aio->aio_core_bst, aio->aio_bsh,
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 
-#ifdef AMLOGIC_COM_INTRPOLL
-	callout_init(&sc->sc_intrpoll_ch, CALLOUT_MPSAFE);
-	callout_setfunc(&sc->sc_intrpoll_ch, amlogic_com_intrpoll, sc);
-#else
 	sc->sc_ih = intr_establish(loc->loc_intr, IPL_SERIAL,
 	    IST_EDGE | IST_MPSAFE, amlogic_com_intr, sc);
 	if (sc->sc_ih == NULL) {
@@ -167,7 +152,6 @@ amlogic_com_attach(device_t parent, device_t self, void *aux)
 		    loc->loc_intr);
 		return;
 	}
-#endif
 
 	if (amlogic_com_cmajor == -1) {
 		/* allocate a major number */
@@ -198,11 +182,7 @@ amlogic_com_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal("\n");
 
-#ifdef AMLOGIC_COM_INTRPOLL
-	aprint_normal_dev(self, "polling\n");
-#else
 	aprint_normal_dev(self, "interrupting at irq %d\n", loc->loc_intr);
-#endif
 
 	misc = bus_space_read_4(sc->sc_bst, sc->sc_bsh, UART_MISC_REG);
 	misc &= ~UART_MISC_TX_IRQ_CNT;
@@ -213,16 +193,8 @@ amlogic_com_attach(device_t parent, device_t self, void *aux)
 
 	control = bus_space_read_4(sc->sc_bst, sc->sc_bsh, UART_CONTROL_REG);
 	control &= ~UART_CONTROL_TX_INT_EN;
-#ifdef AMLOGIC_COM_INTRPOLL
-	control &= ~UART_CONTROL_RX_INT_EN;
-#else
 	control |= UART_CONTROL_RX_INT_EN;
-#endif
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, UART_CONTROL_REG, control);
-
-#ifdef AMLOGIC_COM_INTRPOLL
-	callout_schedule(&sc->sc_intrpoll_ch, AMLOGIC_COM_INTRPOLL_RATE);
-#endif
 }
 
 static int
@@ -471,18 +443,3 @@ amlogic_com_intr(void *priv)
 
 	return 0;
 }
-
-#ifdef AMLOGIC_COM_INTRPOLL
-static void
-amlogic_com_intrpoll(void *priv)
-{
-	struct amlogic_com_softc *sc = priv;
-	int s;
-
-	s = splserial();
-	amlogic_com_intr(sc);
-	splx(s);
-
-	callout_schedule(&sc->sc_intrpoll_ch, AMLOGIC_COM_INTRPOLL_RATE);
-}
-#endif
