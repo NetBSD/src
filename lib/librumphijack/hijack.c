@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.111 2014/11/04 19:05:17 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.112 2015/03/03 00:19:07 enami Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.111 2014/11/04 19:05:17 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.112 2015/03/03 00:19:07 enami Exp $");
 #endif
 
 #include <sys/param.h>
@@ -113,6 +113,7 @@ enum dualcall {
 	DUALCALL_LINK, DUALCALL_RENAME,
 	DUALCALL_MKDIR, DUALCALL_RMDIR,
 	DUALCALL_UTIMES, DUALCALL_LUTIMES, DUALCALL_FUTIMES,
+	DUALCALL_UTIMENSAT,
 	DUALCALL_TRUNCATE, DUALCALL_FTRUNCATE,
 	DUALCALL_FSYNC,
 	DUALCALL_ACCESS,
@@ -305,6 +306,7 @@ struct sysnames {
 	{ DUALCALL_UTIMES,	S(REALUTIMES),	RSYS_NAME(UTIMES)	},
 	{ DUALCALL_LUTIMES,	S(REALLUTIMES),	RSYS_NAME(LUTIMES)	},
 	{ DUALCALL_FUTIMES,	S(REALFUTIMES),	RSYS_NAME(FUTIMES)	},
+	{ DUALCALL_UTIMENSAT,	"utimensat",	RSYS_NAME(UTIMENSAT)	},
 	{ DUALCALL_OPEN,	"open",		RSYS_NAME(OPEN)		},
 	{ DUALCALL_CHDIR,	"chdir",	RSYS_NAME(CHDIR)	},
 	{ DUALCALL_FCHDIR,	"fchdir",	RSYS_NAME(FCHDIR)	},
@@ -2495,6 +2497,11 @@ PATHCALL(int, lutimes, DUALCALL_LUTIMES,				\
 	(const char *path, const struct timeval *tv),			\
 	(const char *, const struct timeval *),				\
 	(path, tv))
+
+PATHCALL(int, utimensat, DUALCALL_UTIMENSAT,				\
+	(int fd, const char *path, const struct timespec *ts, int flags), \
+	(int, const char *, const struct timespec *, int),		\
+	(fd, path, ts, flags))
 
 #ifdef HAVE_CHFLAGS
 PATHCALL(int, chflags, DUALCALL_CHFLAGS,				\
