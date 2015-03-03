@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.11 2015/03/03 23:14:41 jmcneill Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.12 2015/03/03 23:20:04 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.11 2015/03/03 23:14:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.12 2015/03/03 23:20:04 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -632,13 +632,6 @@ amlogic_mpinit(uint32_t mpinit_vec)
 		__asm __volatile("dmb" ::: "memory");
 		if (arm_cpu_hatched == hatched)
 			break;
-	}
-
-	if (i == 0) {
-		const char *msg = "\nWARNING: Some APs failed to start\n";
-		const char *p = msg;
-		while (*p)
-			amlogic_putchar(*p++);
 	}
 }
 #endif
