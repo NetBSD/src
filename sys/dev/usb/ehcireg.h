@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.34.14.5 2015/03/03 06:36:53 skrll Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.34.14.6 2015/03/03 10:06:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -196,7 +196,7 @@
 #define EHCI_NPAGES(x)		(((x) + EHCI_PAGE_MASK) >> EHCI_PAGE_SHIFT)
 
 typedef uint32_t ehci_link_t;
-#define EHCI_LINK_TERMINATE	0x00000001
+#define EHCI_LINK_TERMINATE	__BIT(0)
 #define EHCI_LINK_TYPE(x)	((x) & 0x00000006)
 #define  EHCI_LINK_ITD		0x0
 #define  EHCI_LINK_QH		0x2
@@ -215,34 +215,44 @@ typedef uint32_t ehci_isoc_bufr_ptr_t;
 typedef struct {
 	volatile ehci_link_t		itd_next;
 	volatile ehci_isoc_trans_t	itd_ctl[EHCI_ITD_NUFRAMES];
-#define EHCI_ITD_GET_STATUS(x) (((x) >> 28) & 0xf)
-#define EHCI_ITD_SET_STATUS(x) (((x) & 0xf) << 28)
-#define EHCI_ITD_ACTIVE		0x80000000
-#define EHCI_ITD_BUF_ERR	0x40000000
-#define EHCI_ITD_BABBLE		0x20000000
-#define EHCI_ITD_ERROR		0x10000000
-#define EHCI_ITD_GET_LEN(x) (((x) >> 16) & 0xfff)
-#define EHCI_ITD_SET_LEN(x) (((x) & 0xfff) << 16)
-#define EHCI_ITD_IOC		0x8000
-#define EHCI_ITD_GET_IOC(x) (((x) >> 15) & 1)
-#define EHCI_ITD_SET_IOC(x) (((x) << 15) & EHCI_ITD_IOC)
-#define EHCI_ITD_GET_PG(x) (((x) >> 12) & 0x7)
-#define EHCI_ITD_SET_PG(x) (((x) & 0x7) << 12)
-#define EHCI_ITD_GET_OFFS(x) (((x) >> 0) & 0xfff)
-#define EHCI_ITD_SET_OFFS(x) (((x) & 0xfff) << 0)
+#define EHCI_ITD_STATUS_MASK	__BITS(31,28)
+#define EHCI_ITD_GET_STATUS(x)	__SHIFTOUT((x), EHCI_ITD_STATUS_MASK)
+#define EHCI_ITD_SET_STATUS(x)	__SHIFTIN((x), EHCI_ITD_STATUS_MASK)
+#define EHCI_ITD_ACTIVE		__BIT(31)
+#define EHCI_ITD_BUF_ERR	__BIT(30)
+#define EHCI_ITD_BABBLE		__BIT(29)
+#define EHCI_ITD_ERROR		__BIT(28)
+#define EHCI_ITD_LEN_MASK	__BITS(27,16)
+#define EHCI_ITD_GET_LEN(x)	__SHIFTOUT((x), EHCI_ITD_LEN_MASK)
+#define EHCI_ITD_SET_LEN(x)	__SHIFTIN((x), EHCI_ITD_LEN_MASK)
+#define EHCI_ITD_IOC		__BIT(15)
+#define EHCI_ITD_GET_IOC(x)	__SHIFTOUT((x), EHCI_ITD_IOC)
+#define EHCI_ITD_SET_IOC(x)	__SHIFTIN((x), EHCI_ITD_IOC)
+#define EHCI_ITD_PG_MASK	__BITS(14,12)
+#define EHCI_ITD_GET_PG(x)	__SHIFTOUT((x), EHCI_ITD_PG_MASK)
+#define EHCI_ITD_SET_PG(x)	__SHIFTIN((x), EHCI_ITD_PG_MASK)
+#define EHCI_ITD_OFFSET_MASK	__BITS(11,0)
+#define EHCI_ITD_GET_OFFS(x)	__SHIFTOUT((x), EHCI_ITD_OFFSET_MASK)
+#define EHCI_ITD_SET_OFFS(x)	__SHIFTIN((x), EHCI_ITD_OFFSET_MASK)
 	volatile ehci_isoc_bufr_ptr_t	itd_bufr[EHCI_ITD_NBUFFERS];
-#define EHCI_ITD_GET_BPTR(x) ((x) & 0xfffff000)
-#define EHCI_ITD_SET_BPTR(x) ((x) & 0xfffff000)
-#define EHCI_ITD_GET_EP(x) (((x) >> 8) & 0xf)
-#define EHCI_ITD_SET_EP(x) (((x) & 0xf) << 8)
-#define EHCI_ITD_GET_DADDR(x) ((x) & 0x7f)
-#define EHCI_ITD_SET_DADDR(x) ((x) & 0x7f)
-#define EHCI_ITD_GET_DIR(x) (((x) >> 11) & 1)
-#define EHCI_ITD_SET_DIR(x) (((x) & 1) << 11)
-#define EHCI_ITD_GET_MAXPKT(x) ((x) & 0x7ff)
-#define EHCI_ITD_SET_MAXPKT(x) ((x) & 0x7ff)
-#define EHCI_ITD_GET_MULTI(x) ((x) & 0x3)
-#define EHCI_ITD_SET_MULTI(x) ((x) & 0x3)
+#define EHCI_ITD_BPTR_MASK	__BITS(31,12)
+#define EHCI_ITD_GET_BPTR(x)	__SHIFTOUT((x), EHCI_ITD_BPTR_MASK)
+#define EHCI_ITD_SET_BPTR(x)	__SHIFTIN((x), EHCI_ITD_BPTR_MASK)
+#define EHCI_ITD_EP_MASK	__BITS(11,8)
+#define EHCI_ITD_GET_EP(x)	__SHIFTOUT((x), EHCI_ITD_EP_MASK)
+#define EHCI_ITD_SET_EP(x)	__SHIFTIN((x), EHCI_ITD_EP_MASK)
+#define EHCI_ITD_DADDR_MASK	__BITS(6,0)
+#define EHCI_ITD_GET_DADDR(x)	__SHIFTOUT((x), EHCI_ITD_DADDR_MASK)
+#define EHCI_ITD_SET_DADDR(x)	__SHIFTIN((x), EHCI_ITD_DADDR_MASK)
+#define EHCI_ITD_DIR_MASK	__BIT(11)
+#define EHCI_ITD_GET_DIR(x)	__SHIFTOUT((x), EHCI_ITD_DIR_MASK)
+#define EHCI_ITD_SET_DIR(x)	__SHIFTIN((x), EHCI_ITD_DIR_MASK)
+#define EHCI_ITD_MAXPKT_MASK	__BITS(10,0)
+#define EHCI_ITD_GET_MAXPKT(x)	__SHIFTOUT((x), EHCI_ITD_MAXPKT_MASK)
+#define EHCI_ITD_SET_MAXPKT(x)	__SHIFTIN((x), EHCI_ITD_MAXPKT_MASK)
+#define EHCI_ITD_MULTI_MASK	__BITS(1,0)
+#define EHCI_ITD_GET_MULTI(x)	__SHIFTOUT((x), EHCI_ITD_MULTI_MASK)
+#define EHCI_ITD_SET_MULTI(x)	__SHIFTIN((x), EHCI_ITD_MULTI_MASK)
 	volatile ehci_isoc_bufr_ptr_t	itd_bufr_hi[EHCI_ITD_NBUFFERS];
 } ehci_itd_t;
 #define EHCI_ITD_ALIGN 32
@@ -251,21 +261,27 @@ typedef struct {
 typedef struct {
 	volatile ehci_link_t	sitd_next;
 	volatile uint32_t	sitd_endp;
-#define EHCI_SITD_SET_DIR(x)	(((x) & 0x01) << 31)
-#define EHCI_SITD_SET_PORT(x)	(((x) & 0x7f) << 24)
-#define EHCI_SITD_SET_HUBA(x)	(((x) & 0x7f) << 16)
-#define EHCI_SITD_SET_ENDPT(x)	(((x) & 0x0f) << 8)
-#define EHCI_SITD_SET_DADDR(x)	((x) & 0x7f)
-
+#define EHCI_SITD_DIR_MASK	__BIT(31)
+#define EHCI_SITD_PORT_MASK	__BITS(30,24)
+#define EHCI_SITD_HUBA_MASK	__BITS(22,16)
+#define EHCI_SITD_ENDPT_MASK	__BITS(11,8)
+#define EHCI_SITD_DADDR_MASK	__BITS(6,0)
+#define EHCI_SITD_SET_DIR(x)	__SHIFTIN((x), EHCI_SITD_DIR_MASK)
+#define EHCI_SITD_SET_PORT(x)	__SHIFTIN((x), EHCI_SITD_PORT_MASK)
+#define EHCI_SITD_SET_HUBA(x)	__SHIFTIN((x), EHCI_SITD_HUBA_MASK)
+#define EHCI_SITD_SET_ENDPT(x)	__SHIFTIN((x), EHCI_SITD_ENDPT_MASK)
+#define EHCI_SITD_SET_DADDR(x)	__SHIFTIN((x), EHCI_SITD_DADDR_MASK)
 	volatile uint32_t	sitd_sched;
-#define EHCI_SITD_SET_SMASK(x)	((x) & 0xff)
-#define EHCI_SITD_SET_CMASK(x)	(((x) & 0xff) << 8)
-
+#define EHCI_SITD_SMASK_MASK	__BITS(7,0)
+#define EHCI_SITD_CMASK_MASK	__BITS(15,8)
+#define EHCI_SITD_SET_SMASK(x)	__SHIFTIN((x), EHCI_SITD_SMASK_MASK)
+#define EHCI_SITD_SET_CMASK(x)	__SHIFTIN((x), EHCI_SITD_CMASK_MASK)
 	volatile uint32_t	sitd_trans;
-#define EHCI_SITD_IOC		0x80000000
-#define EHCI_SITD_P		0x40000000
-#define EHCI_SITD_GET_LEN(x)	(((x) & 0x03ff0000) >> 16)
-#define EHCI_SITD_SET_LEN(x)	(((x) & 0x3ff) << 16)
+#define EHCI_SITD_IOC		__BIT(31)
+#define EHCI_SITD_P		__BIT(30)
+#define EHCI_SITD_LENGTH_MASK	__BITS(25,16)
+#define EHCI_SITD_GET_LEN(x)	__SHIFTOUT((x), EHCI_SITD_LENGTH_MASK)
+#define EHCI_SITD_SET_LEN(x)	__SHIFTIN((x), EHCI_SITD_LENGTH_MASK)
 #define EHCI_SITD_ACTIVE	0x00000080
 #define EHCI_SITD_ERR		0x00000040
 #define EHCI_SITD_BUFERR	0x00000020
@@ -273,7 +289,6 @@ typedef struct {
 #define EHCI_SITD_XACTERR	0x00000008
 #define EHCI_SITD_MISS		0x00000004
 #define EHCI_SITD_SPLITXSTATE	0x00000002
-
 	volatile uint32_t	sitd_buffer[2];
 #define EHCI_SITD_SET_BPTR(x)	((x) & 0xfffff000)
 #define EHCI_SITD_SET_OFFS(x)	((x) & 0xfff)
@@ -289,8 +304,9 @@ typedef struct {
 	volatile ehci_link_t	qtd_next;
 	volatile ehci_link_t	qtd_altnext;
 	volatile uint32_t	qtd_status;
-#define EHCI_QTD_GET_STATUS(x)	(((x) >>  0) & 0xff)
-#define EHCI_QTD_SET_STATUS(x)	((x) <<  0)
+#define EHCI_QTD_STATUS_MASK	__BITS(7,0)
+#define EHCI_QTD_GET_STATUS(x)	__SHIFTOUT((x), EHCI_QTD_STATUS_MASK)
+#define EHCI_QTD_SET_STATUS(x)	__SHIFTIN((x), EHCI_QTD_STATUS_MASK)
 #define  EHCI_QTD_ACTIVE	0x80
 #define  EHCI_QTD_HALTED	0x40
 #define  EHCI_QTD_BUFERR	0x20
@@ -300,22 +316,26 @@ typedef struct {
 #define  EHCI_QTD_SPLITXSTATE	0x02
 #define  EHCI_QTD_PINGSTATE	0x01
 #define  EHCI_QTD_STATERRS	0x3c
-#define EHCI_QTD_GET_PID(x)	(((x) >>  8) & 0x3)
-#define EHCI_QTD_SET_PID(x)	((x) <<  8)
+#define EHCI_QTD_PID_MASK	__BITS(9,8)
+#define EHCI_QTD_GET_PID(x)	__SHIFTOUT((x), EHCI_QTD_PID_MASK)
+#define EHCI_QTD_SET_PID(x)	__SHIFTIN((x), EHCI_QTD_PID_MASK)
 #define  EHCI_QTD_PID_OUT	0x0
 #define  EHCI_QTD_PID_IN	0x1
 #define  EHCI_QTD_PID_SETUP	0x2
-#define EHCI_QTD_GET_CERR(x)	(((x) >> 10) &  0x3)
-#define EHCI_QTD_SET_CERR(x)	((x) << 10)
-#define EHCI_QTD_GET_C_PAGE(x)	(((x) >> 12) &  0x7)
-#define EHCI_QTD_SET_C_PAGE(x)	((x) << 12)
-#define EHCI_QTD_GET_IOC(x)	(((x) >> 15) &  0x1)
-#define EHCI_QTD_IOC		0x00008000
-#define EHCI_QTD_GET_BYTES(x)	(((x) >> 16) &  0x7fff)
-#define EHCI_QTD_SET_BYTES(x)	((x) << 16)
-#define EHCI_QTD_GET_TOGGLE(x)	(((x) >> 31) &  0x1)
-#define	EHCI_QTD_SET_TOGGLE(x)	((x) << 31)
-#define EHCI_QTD_TOGGLE_MASK	0x80000000
+#define EHCI_QTD_CERR_MASK	__BITS(11,10)
+#define EHCI_QTD_GET_CERR(x)	__SHIFTOUT((x), EHCI_QTD_CERR_MASK)
+#define EHCI_QTD_SET_CERR(x)	__SHIFTIN((x), EHCI_QTD_CERR_MASK)
+#define EHCI_QTD_C_PAGE_MASK	__BITS(14,12)
+#define EHCI_QTD_GET_C_PAGE(x)	__SHIFTOUT((x), EHCI_QTD_C_PAGE_MASK)
+#define EHCI_QTD_SET_C_PAGE(x)	__SHIFTIN((x), EHCI_QTD_C_PAGE_MASK)
+#define EHCI_QTD_IOC		__BIT(15)
+#define EHCI_QTD_GET_IOC(x)	__SHIFTOUT((x), EHCI_QTD_IOC)
+#define EHCI_QTD_BYTES_MASK	__BITS(30,16)
+#define EHCI_QTD_GET_BYTES(x)	__SHIFTOUT((x), EHCI_QTD_BYTES_MASK)
+#define EHCI_QTD_SET_BYTES(x)	__SHIFTIN((x), EHCI_QTD_BYTES_MASK)
+#define EHCI_QTD_TOGGLE_MASK	__BIT(31)
+#define EHCI_QTD_GET_TOGGLE(x)	__SHIFTOUT((x), EHCI_QTD_TOGGLE_MASK)
+#define	EHCI_QTD_SET_TOGGLE(x)	__SHIFTIN((x), EHCI_QTD_TOGGLE_MASK)
 	volatile ehci_physaddr_t qtd_buffer[EHCI_QTD_NBUFFERS];
 	volatile ehci_physaddr_t qtd_buffer_hi[EHCI_QTD_NBUFFERS];
 } ehci_qtd_t;
@@ -325,40 +345,48 @@ typedef struct {
 typedef struct {
 	volatile ehci_link_t	qh_link;
 	volatile uint32_t	qh_endp;
-#define EHCI_QH_GET_ADDR(x)	(((x) >>  0) & 0x7f) /* endpoint addr */
-#define EHCI_QH_SET_ADDR(x)	(x)
-#define EHCI_QH_ADDRMASK	0x0000007f
-#define EHCI_QH_GET_INACT(x)	(((x) >>  7) & 0x01) /* inactivate on next */
-#define EHCI_QH_INACT		0x00000080
-#define EHCI_QH_GET_ENDPT(x)	(((x) >>  8) & 0x0f) /* endpoint no */
-#define EHCI_QH_SET_ENDPT(x)	((x) <<  8)
-#define EHCI_QH_GET_EPS(x)	(((x) >> 12) & 0x03) /* endpoint speed */
-#define EHCI_QH_SET_EPS(x)	((x) << 12)
+#define EHCI_QH_ADDR_MASK	__BITS(6,0)	/* endpoint addr */
+#define EHCI_QH_GET_ADDR(x)	__SHIFTOUT((x), EHCI_QH_ADDR_MASK)
+#define EHCI_QH_SET_ADDR(x)	__SHIFTIN((x), EHCI_QH_ADDR_MASK)
+#define EHCI_QH_INACT		__BIT(7)	/* inactivate on next */
+#define EHCI_QH_GET_INACT(x)	__SHIFTOUT((x), EHCI_QH_INACT)
+#define EHCI_QH_ENDPT_MASK	__BITS(11,8)	 /* endpoint no */
+#define EHCI_QH_GET_ENDPT(x)	__SHIFTOUT((x), EHCI_QH_ENDPT_MASK)
+#define EHCI_QH_SET_ENDPT(x)	__SHIFTIN((x), EHCI_QH_ENDPT_MASK)
+#define EHCI_QH_EPS_MASK	__BITS(13,12)	/* endpoint speed */
+#define EHCI_QH_GET_EPS(x)	__SHIFTOUT((x), EHCI_QH_EPS_MASK)
+#define EHCI_QH_SET_EPS(x)	__SHIFTIN((x), EHCI_QH_EPS_MASK)
 #define  EHCI_QH_SPEED_FULL	0x0
 #define  EHCI_QH_SPEED_LOW	0x1
 #define  EHCI_QH_SPEED_HIGH	0x2
-#define EHCI_QH_GET_DTC(x)	(((x) >> 14) & 0x01) /* data toggle control */
-#define EHCI_QH_DTC		0x00004000
-#define EHCI_QH_GET_HRECL(x)	(((x) >> 15) & 0x01) /* head of reclamation */
-#define EHCI_QH_HRECL		0x00008000
-#define EHCI_QH_GET_MPL(x)	(((x) >> 16) & 0x7ff) /* max packet len */
-#define EHCI_QH_SET_MPL(x)	((x) << 16)
-#define EHCI_QH_MPLMASK		0x07ff0000
-#define EHCI_QH_GET_CTL(x)	(((x) >> 27) & 0x01) /* control endpoint */
-#define EHCI_QH_CTL		0x08000000
-#define EHCI_QH_GET_NRL(x)	(((x) >> 28) & 0x0f) /* NAK reload */
-#define EHCI_QH_SET_NRL(x)	((x) << 28)
+#define EHCI_QH_DTC		__BIT(14)	 /* data toggle control */
+#define EHCI_QH_GET_DTC(x)	__SHIFTOUT((x), EHCI_QH_DTC)
+#define EHCI_QH_HRECL		__BIT(15)	/* head of reclamation */
+#define EHCI_QH_GET_HRECL(x)	__SHIFTOUT((x), EHCI_QH_HRECL)
+#define EHCI_QH_MPL_MASK	__BITS(26,16)	/* max packet len */
+#define EHCI_QH_GET_MPL(x)	__SHIFTOUT((x), EHCI_QH_MPL_MASK)
+#define EHCI_QH_SET_MPL(x)	__SHIFTIN((x), EHCI_QH_MPL_MASK)
+#define EHCI_QH_CTL		__BIT(27)	/* control endpoint */
+#define EHCI_QH_GET_CTL(x)	__SHIFTOUT((x), EHCI_QH_CTL)
+#define EHCI_QH_NRL_MASK	__BITS(31,28)	/* NAK reload */
+#define EHCI_QH_GET_NRL(x)	__SHIFTOUT((x), EHCI_QH_NRL_MASK)
+#define EHCI_QH_SET_NRL(x)	__SHIFTIN((x), EHCI_QH_NRL_MASK)
 	volatile uint32_t	qh_endphub;
-#define EHCI_QH_GET_SMASK(x)	(((x) >>  0) & 0xff) /* intr sched mask */
-#define EHCI_QH_SET_SMASK(x)	((x) <<  0)
-#define EHCI_QH_GET_CMASK(x)	(((x) >>  8) & 0xff) /* split completion mask */
-#define EHCI_QH_SET_CMASK(x)	((x) <<  8)
-#define EHCI_QH_GET_HUBA(x)	(((x) >> 16) & 0x7f) /* hub address */
-#define EHCI_QH_SET_HUBA(x)	((x) << 16)
-#define EHCI_QH_GET_PORT(x)	(((x) >> 23) & 0x7f) /* hub port */
-#define EHCI_QH_SET_PORT(x)	((x) << 23)
-#define EHCI_QH_GET_MULT(x)	(((x) >> 30) & 0x03) /* pipe multiplier */
-#define EHCI_QH_SET_MULT(x)	((x) << 30)
+#define EHCI_QH_SMASK_MASK	__BITS(7,0)	 /* intr sched mask */
+#define EHCI_QH_GET_SMASK(x)	__SHIFTOUT((x), EHCI_QH_SMASK_MASK)
+#define EHCI_QH_SET_SMASK(x)	__SHIFTIN((x), EHCI_QH_SMASK_MASK)
+#define EHCI_QH_CMASK_MASK	__BITS(15,8)	 /* split completion mask */
+#define EHCI_QH_GET_CMASK(x)	__SHIFTOUT((x), EHCI_QH_CMASK_MASK)
+#define EHCI_QH_SET_CMASK(x)	__SHIFTIN((x), EHCI_QH_CMASK_MASK)
+#define EHCI_QH_HUBA_MASK	__BITS(22,16)	/* hub address */
+#define EHCI_QH_GET_HUBA(x)	__SHIFTOUT((x), EHCI_QH_HUBA_MASK)
+#define EHCI_QH_SET_HUBA(x)	__SHIFTIN((x), EHCI_QH_HUBA_MASK)
+#define EHCI_QH_PORT_MASK	__BITS(29,23)	 /* hub port */
+#define EHCI_QH_GET_PORT(x)	__SHIFTOUT((x), EHCI_QH_PORT_MASK)
+#define EHCI_QH_SET_PORT(x)	__SHIFTIN((x), EHCI_QH_PORT_MASK)
+#define EHCI_QH_MULTI_MASK	__BITS(31,30)	/* pipe multiplier */
+#define EHCI_QH_GET_MULT(x)	__SHIFTOUT((x), EHCI_QH_MULTI_MASK)
+#define EHCI_QH_SET_MULT(x)	__SHIFTIN((x), EHCI_QH_MULTI_MASK)
 	volatile ehci_link_t	qh_curqtd;
 	ehci_qtd_t		qh_qtd;
 } ehci_qh_t;
