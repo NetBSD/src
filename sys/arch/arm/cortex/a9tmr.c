@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.11 2015/02/27 18:26:49 jmcneill Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.12 2015/03/04 23:18:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.11 2015/02/27 18:26:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.12 2015/03/04 23:18:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -120,6 +120,7 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	struct mpcore_attach_args * const mpcaa = aux;
 	prop_dictionary_t dict = device_properties(self);
 	char freqbuf[sizeof("XXX SHz")];
+	const char *cpu_type;
 
 	/*
 	 * This runs at the ARM PERIPHCLOCK which should be 1/2 of the CPU clock.
@@ -130,7 +131,12 @@ a9tmr_attach(device_t parent, device_t self, void *aux)
 	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
 
 	aprint_naive("\n");
-	aprint_normal(": A9 Global 64-bit Timer (%s)\n", freqbuf);
+	if (CPU_ID_CORTEX_A5_P(curcpu()->ci_arm_cpuid)) {
+		cpu_type = "A5";
+	} else {
+		cpu_type = "A9";
+	}
+	aprint_normal(": %s Global 64-bit Timer (%s)\n", cpu_type, freqbuf);
 
 	self->dv_private = sc;
 	sc->sc_dev = self;
