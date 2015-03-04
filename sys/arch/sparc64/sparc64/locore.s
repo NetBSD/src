@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.381 2015/03/02 14:17:06 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.382 2015/03/04 11:32:31 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3683,7 +3683,7 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + ( 5*8)]
 	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + ( 6*8)]
 	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + ( 7*8)]
-	ALTERNATE_GLOBALS_SUN4V
+
 	/*
 	 * In the EMBEDANY memory model %g4 points to the start of the
 	 * data segment.  In our case we need to clear it before calling
@@ -3691,8 +3691,6 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	 */
 	clr	%g4
 
-	flushw			! Do not remove this insn -- causes interrupt loss
-	NORMAL_GLOBALS_SUN4V
 	ba	2f
 	 nop
 1:		
@@ -3706,7 +3704,7 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + ( 5*8)]
 	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + ( 6*8)]
 	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + ( 7*8)]
-	ALTERNATE_GLOBALS_SUN4U
+
 	/*
 	 * In the EMBEDANY memory model %g4 points to the start of the
 	 * data segment.  In our case we need to clear it before calling
@@ -3715,7 +3713,7 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	clr	%g4
 
 	flushw			! Do not remove this insn -- causes interrupt loss
-	NORMAL_GLOBALS_SUN4U
+
 2:
 	rd	%y, %l6
 	INCR64(CPUINFO_VA+CI_NINTR)	! cnt.v_ints++ (clobbers %o0,%o1)
