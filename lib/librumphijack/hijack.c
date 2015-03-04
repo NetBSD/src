@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.114 2015/03/04 23:31:49 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.115 2015/03/04 23:42:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.114 2015/03/04 23:31:49 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.115 2015/03/04 23:42:26 pooka Exp $");
 #endif
 
 #include <sys/param.h>
@@ -531,7 +531,7 @@ type name args								\
 	type (*fun) proto;						\
 	int isrump = -1;						\
 									\
-	if (fd == AT_FDCWD) {						\
+	if (fd == AT_FDCWD || *path == '/') {				\
 		isrump = path_isrump(path);				\
 	} else {							\
 		isrump = fd_isrump(fd);					\
