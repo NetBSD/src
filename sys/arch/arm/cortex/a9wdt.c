@@ -1,4 +1,4 @@
-/*	$NetBSD: a9wdt.c,v 1.3 2015/02/27 18:43:28 jmcneill Exp $	*/
+/*	$NetBSD: a9wdt.c,v 1.4 2015/03/04 23:18:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.3 2015/02/27 18:43:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9wdt.c,v 1.4 2015/03/04 23:18:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -186,6 +186,7 @@ a9wdt_attach(device_t parent, device_t self, void *aux)
         struct a9wdt_softc * const sc = device_private(self);
 	struct mpcore_attach_args * const mpcaa = aux;
 	prop_dictionary_t dict = device_properties(self);
+	const char *cpu_type;
 
 	sc->sc_dev = self;
 	sc->sc_memt = mpcaa->mpcaa_memt;
@@ -230,8 +231,13 @@ a9wdt_attach(device_t parent, device_t self, void *aux)
 		sc->sc_wdog_armed = true;
 
 	aprint_naive("\n");
-	aprint_normal(": A9 Watchdog Timer, default period is %u seconds%s\n",
-	    sc->sc_wdog_period,
+	if (CPU_ID_CORTEX_A5_P(curcpu()->ci_arm_cpuid)) {
+		cpu_type = "A5";
+	} else {
+		cpu_type = "A9";
+	}
+	aprint_normal(": %s Watchdog Timer, default period is %u seconds%s\n",
+	    cpu_type, sc->sc_wdog_period,
 	    sc->sc_wdog_armed ? " (armed)" : "");
 
 	sc->sc_smw.smw_name = device_xname(self);
