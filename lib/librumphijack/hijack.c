@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.113 2015/03/03 01:24:39 enami Exp $	*/
+/*      $NetBSD: hijack.c,v 1.114 2015/03/04 23:31:49 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.113 2015/03/03 01:24:39 enami Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.114 2015/03/04 23:31:49 pooka Exp $");
 #endif
 
 #include <sys/param.h>
@@ -524,6 +524,33 @@ whichpath(const char *path)
 #else
 #define DPRINTF(x)
 #endif
+
+#define ATCALL(type, name, rcname, args, proto, vars)			\
+type name args								\
+{									\
+	type (*fun) proto;						\
+	int isrump = -1;						\
+									\
+	if (fd == AT_FDCWD) {						\
+		isrump = path_isrump(path);				\
+	} else {							\
+		isrump = fd_isrump(fd);					\
+	}								\
+									\
+	DPRINTF(("%s -> %d:%s (%s)\n", __STRING(name),			\
+	    fd, path, isrump ? "rump" : "host"));			\
+									\
+	assert(isrump != -1);						\
+	if (isrump) {							\
+		fun = syscalls[rcname].bs_rump;				\
+		if (fd != AT_FDCWD)					\
+			fd = fd_host2rump(fd);				\
+		path = path_host2rump(path);				\
+	} else {							\
+		fun = syscalls[rcname].bs_host;				\
+	}								\
+	return fun vars;						\
+}
 
 #define FDCALL(type, name, rcname, args, proto, vars)			\
 type name args								\
@@ -2238,6 +2265,11 @@ __sysctl(const int *name, unsigned int namelen, void *old, size_t *oldlenp,
  * Rest are std type calls.
  */
 
+ATCALL(int, utimensat, DUALCALL_UTIMENSAT,				\
+	(int fd, const char *path, const struct timespec t[2], int f),	\
+	(int, const char *, const struct timespec [2], int),
+	(fd, path, t, f))
+
 FDCALL(int, bind, DUALCALL_BIND,					\
 	(int fd, const struct sockaddr *name, socklen_t namelen),	\
 	(int, const struct sockaddr *, socklen_t),			\
@@ -2503,11 +2535,6 @@ PATHCALL(int, lutimes, DUALCALL_LUTIMES,				\
 	(const char *path, const struct timeval *tv),			\
 	(const char *, const struct timeval *),				\
 	(path, tv))
-
-PATHCALL(int, utimensat, DUALCALL_UTIMENSAT,				\
-	(int fd, const char *path, const struct timespec *ts, int flags), \
-	(int, const char *, const struct timespec *, int),		\
-	(fd, path, ts, flags))
 
 #ifdef HAVE_CHFLAGS
 PATHCALL(int, chflags, DUALCALL_CHFLAGS,				\
