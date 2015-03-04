@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.93 2015/01/20 17:29:00 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.94 2015/03/04 13:33:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -331,7 +331,9 @@ FILE	*popen(const char *, const char *);
 __END_DECLS
 #endif
 #ifdef _NETBSD_SOURCE
+__BEGIN_DECLS
 FILE	*popenve(const char *, char *const *, char *const *, const char *);
+__END_DECLS
 #endif
 
 /*
