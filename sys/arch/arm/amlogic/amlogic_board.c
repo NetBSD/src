@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_board.c,v 1.6 2015/03/01 15:06:09 jmcneill Exp $ */
+/* $NetBSD: amlogic_board.c,v 1.7 2015/03/04 12:36:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.6 2015/03/01 15:06:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.7 2015/03/04 12:36:12 jmcneill Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -155,6 +155,13 @@ amlogic_get_rate_a9periph(void)
 				     HHI_SYS_CPU_CLK_CNTL1_PERIPH_CLK_MUX) + 2;
 
 	return amlogic_get_rate_a9() / div;
+}
+
+void
+amlogic_eth_init(void)
+{
+	CBUS_WRITE(EE_CLK_GATING1_REG,
+	    CBUS_READ(EE_CLK_GATING1_REG) | EE_CLK_GATING1_ETHERNET);
 }
 
 static void

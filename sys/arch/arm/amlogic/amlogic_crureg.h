@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_crureg.h,v 1.4 2015/02/28 18:50:57 jmcneill Exp $ */
+/* $NetBSD: amlogic_crureg.h,v 1.5 2015/03/04 12:36:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,8 +39,11 @@
 #define EE_CLK_GATING1_USB_GENERAL	__BIT(26)
 #define EE_CLK_GATING1_USB1		__BIT(22)
 #define EE_CLK_GATING1_USB0		__BIT(21)
+#define EE_CLK_GATING1_ETHERNET		__BIT(3)
+
 #define EE_CLK_GATING2_USB0_TO_DDR	__BIT(9)
 #define EE_CLK_GATING2_USB1_TO_DDR	__BIT(8)
+
 
 #define HHI_SYS_CPU_CLK_CNTL1_REG	CBUS_REG(0x1057)
 #define HHI_SYS_CPU_CLK_CNTL1_SDIV	__BITS(29,20)

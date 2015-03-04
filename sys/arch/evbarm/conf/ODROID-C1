@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-C1,v 1.5 2015/03/01 15:37:26 jmcneill Exp $
+#	$NetBSD: ODROID-C1,v 1.6 2015/03/04 12:36:12 jmcneill Exp $
 #
 #	Odroid-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
@@ -174,6 +174,11 @@ amlogicio0	at mainbus?
 # On-board UARTs
 amlogiccom0	at amlogicio0 port 0
 options 	CONSADDR=0xc81004c0, CONSPEED=115200
+
+# Gigabit ethernet
+awge0		at amlogicio0
+rgephy*		at mii? phy ?
+ukphy*		at mii? phy ?
 
 # USB
 dwctwo0		at amlogicio0 port 0
