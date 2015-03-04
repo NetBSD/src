@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.4 2015/03/04 18:19:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.4 2015/03/04 18:19:27 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/xcall.h>
@@ -146,15 +146,19 @@ drm_md_clflush_page(struct page *page)
 
 static void
 drm_md_clflush_virt_range(const void *vaddr, size_t nbytes)
-
 {
-	const char *const start = vaddr, *const end = (start + nbytes);
+	const unsigned clflush_size = drm_x86_clflush_size();
+	const vaddr_t va = (vaddr_t)vaddr;
+	const char *const start = (const void *)rounddown(va, clflush_size);
+	const char *const end = (const void *)roundup(va + nbytes,
+	    clflush_size);
 	const char *p;
-	const unsigned int clflush_size = drm_x86_clflush_size();
 
 	KASSERT(drm_md_clflush_finegrained_p());
+	membar_sync();
 	for (p = start; p < end; p += clflush_size)
 		drm_x86_clflush(p);
+	membar_sync();
 }
 
 #endif	/* defined(__i386__) || defined(__x86_64__) */
