@@ -1,4 +1,4 @@
-/*	$NetBSD: rpi_machdep.c,v 1.57 2015/02/28 09:34:34 skrll Exp $	*/
+/*	$NetBSD: rpi_machdep.c,v 1.58 2015/03/04 17:02:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.57 2015/02/28 09:34:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpi_machdep.c,v 1.58 2015/03/04 17:02:17 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
+#include "opt_cpuoptions.h"
 #include "opt_ddb.h"
 #include "opt_evbarm_boardtype.h"
 #include "opt_kgdb.h"
@@ -489,6 +490,59 @@ rpi_bootparams(void)
 #endif
 }
 
+
+static void
+rpi_bootstrap(void)
+{
+#if defined(BCM2836)
+	arm_cpu_max = 4;
+	extern int cortex_mmuinfo;
+	bus_space_tag_t iot = &bcm2835_bs_tag;
+	bus_space_handle_t ioh = BCM2836_ARM_LOCAL_VBASE;
+
+#ifdef VERBOSE_INIT_ARM
+	printf("%s: %d cpus present\n", __func__, arm_cpu_max);
+#endif
+
+	extern void cortex_mpstart(void);
+	cortex_mmuinfo = armreg_ttbr_read();
+
+	for (size_t i = 1; i < arm_cpu_max; i++) {
+		bus_space_write_4(iot, ioh,
+		    BCM2836_LOCAL_MAILBOX3_SETN(i),
+		    (uint32_t)cortex_mpstart);
+
+		int timeout = 20;
+		while (timeout-- > 0) {
+			uint32_t val;
+
+			val = bus_space_read_4(iot, ioh,
+			    BCM2836_LOCAL_MAILBOX3_CLRN(i));
+			if (val == 0)
+				break;
+		}
+	}
+
+	for (int loop = 0; loop < 16; loop++) {
+		if (arm_cpu_hatched == __BITS(arm_cpu_max - 1, 1))
+			break;
+		gtmr_delay(10000);
+	}
+
+	for (size_t i = 1; i < arm_cpu_max; i++) {
+		if ((arm_cpu_hatched & (1 << i)) == 0) {
+			printf("%s: warning: cpu%zu failed to hatch\n",
+			    __func__, i);
+		}
+	}
+
+	/*
+	 * XXXNH: Disable non-boot CPUs for now
+	 */
+	arm_cpu_hatched = 0;
+#endif
+}
+
 /*
  * Static device mappings. These peripheral registers are mapped at
  * fixed virtual addresses very early in initarm() so that we can use
@@ -570,6 +624,8 @@ initarm(void *arg)
 #endif
 
 	rpi_bootparams();
+
+	rpi_bootstrap();
 
 	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag)) {
 		curcpu()->ci_data.cpu_cc_freq = vb.vbt_armclockrate.rate;

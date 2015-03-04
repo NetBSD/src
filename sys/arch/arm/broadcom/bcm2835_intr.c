@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.5 2015/02/28 09:34:34 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.6 2015/03/04 17:02:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.5 2015/02/28 09:34:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.6 2015/03/04 17:02:17 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -67,10 +67,12 @@ static int bcm2836mp_pic_find_pending_irqs(struct pic_softc *);
 static void bcm2836mp_pic_establish_irq(struct pic_softc *, struct intrsource *);
 static void bcm2836mp_pic_source_name(struct pic_softc *, int, char *,
     size_t);
+#if 0
 #ifdef MULTIPROCESSOR
 int bcm2836mp_ipi_handler(void *);
 static void bcm2836mp_cpu_init(struct pic_softc *, struct cpu_info *);
 static void bcm2836mp_send_ipi(struct pic_softc *, const kcpuset_t *, u_long);
+#endif
 #endif
 #endif
 
@@ -99,7 +101,7 @@ static struct pic_ops bcm2836mp_picops = {
 	.pic_find_pending_irqs = bcm2836mp_pic_find_pending_irqs,
 	.pic_establish_irq = bcm2836mp_pic_establish_irq,
 	.pic_source_name = bcm2836mp_pic_source_name,
-#ifdef MULTIPROCESSOR
+#if 0 && defined(MULTIPROCESSOR)
 	.pic_cpu_init = bcm2836mp_cpu_init,
 	.pic_ipi_send = bcm2836mp_send_ipi,
 #endif
@@ -203,7 +205,7 @@ bcm2835_icu_attach(device_t parent, device_t self, void *aux)
 	pic_add(sc->sc_pic, 0);
 
 #if defined(BCM2836)
-#ifdef MULTIPROCESSOR
+#if 0 && defined(MULTIPROCESSOR)
 	aprint_normal(": Multiprocessor");
 #endif
 	pic_add(&bcm2836mp_pic, BCM2836_INT_LOCALBASE);

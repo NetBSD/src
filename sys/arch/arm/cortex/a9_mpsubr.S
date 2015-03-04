@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.29 2015/02/27 18:52:20 jmcneill Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.30 2015/03/04 17:02:17 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -518,6 +518,10 @@ cortex_mpfault:
 // Secondary processors come here after exiting the SKU ROM.
 // Switches to kernel's endian almost immediately.
 //
+
+	.global	cortex_mpstart
+	.type	cortex_mpstart,%object
+
 cortex_mpstart:
 #ifndef MULTIPROCESSOR
 	//

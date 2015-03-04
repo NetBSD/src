@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_obio.c,v 1.23 2015/02/28 09:34:34 skrll Exp $	*/
+/*	$NetBSD: bcm2835_obio.c,v 1.24 2015/03/04 17:02:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.23 2015/02/28 09:34:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_obio.c,v 1.24 2015/03/04 17:02:17 skrll Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -309,3 +309,10 @@ obio_print(void *aux, const char *name)
 
 	return UNCONF;
 }
+
+#ifdef MULTIPROCESSOR
+void
+bcm2836_cpu_hatch(struct cpu_info *ci)
+{
+}
+#endif
