@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1215 2015/02/15 21:27:57 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1216 2015/03/04 11:31:58 knakahara Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4545,8 +4545,17 @@ product NVIDIA	QUADRO4_280NVS	0x018a	Quadro4 280 NVS
 product NVIDIA	QUADRO4_380XGL	0x018b	Quadro4 380 XGL
 product NVIDIA	QUADROFX4600	0x019e	Quadro FX 4600
 product NVIDIA	GEFORCE2_IGP	0x01a0	GeForce2 Integrated GPU
+product NVIDIA	NFORCE_PCHB	0x01a4	nForce PCI Host
+product NVIDIA	NFORCE_DDR2	0x01aa	nForce 220 DDR
+product NVIDIA	NFORCE_DDR	0x01ab	nForce 420 DDR
+product NVIDIA	NFORCE_MEM	0x01ac	nForce 220/420
+product NVIDIA	NFORCE_MEM1	0x01ad	nForce 220/420
+product NVIDIA	NFORCE_APU	0x01b0	nForce Audio Processing Unit
 product NVIDIA	NFORCE_MCP_AC	0x01b1	nForce MCP AC-97
+product NVIDIA	NFORCE_ISA	0x01b2	nForce ISA
 product NVIDIA	XBOX_SMBUS	0x01b4	Xbox nForce SMBus Controller
+product NVIDIA	NFORCE_AGP	0x01b7	nForce AGP
+product NVIDIA	NFORCE_PPB	0x01b8	nForce PCI-PCI Bridge
 product NVIDIA	NFORCE_ATA100	0x01bc	nForce ATA100 IDE
 product NVIDIA	NFORCE_USB	0x01c2	nForce USB
 product NVIDIA	NFORCE_LAN	0x01c3	nForce Ethernet
