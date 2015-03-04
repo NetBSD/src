@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.1209 2015/02/15 21:28:17 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1210 2015/03/04 11:35:59 knakahara Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -4552,8 +4552,17 @@
 #define	PCI_PRODUCT_NVIDIA_QUADRO4_380XGL	0x018b		/* Quadro4 380 XGL */
 #define	PCI_PRODUCT_NVIDIA_QUADROFX4600	0x019e		/* Quadro FX 4600 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE2_IGP	0x01a0		/* GeForce2 Integrated GPU */
+#define	PCI_PRODUCT_NVIDIA_NFORCE_PCHB	0x01a4		/* nForce PCI Host */
+#define	PCI_PRODUCT_NVIDIA_NFORCE_DDR2	0x01aa		/* nForce 220 DDR */
+#define	PCI_PRODUCT_NVIDIA_NFORCE_DDR	0x01ab		/* nForce 420 DDR */
+#define	PCI_PRODUCT_NVIDIA_NFORCE_MEM	0x01ac		/* nForce 220/420 */
+#define	PCI_PRODUCT_NVIDIA_NFORCE_MEM1	0x01ad		/* nForce 220/420 */
+#define	PCI_PRODUCT_NVIDIA_NFORCE_APU	0x01b0		/* nForce Audio Processing Unit */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC	0x01b1		/* nForce MCP AC-97 */
+#define	PCI_PRODUCT_NVIDIA_NFORCE_ISA	0x01b2		/* nForce ISA */
 #define	PCI_PRODUCT_NVIDIA_XBOX_SMBUS	0x01b4		/* Xbox nForce SMBus Controller */
+#define	PCI_PRODUCT_NVIDIA_NFORCE_AGP	0x01b7		/* nForce AGP */
+#define	PCI_PRODUCT_NVIDIA_NFORCE_PPB	0x01b8		/* nForce PCI-PCI Bridge */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_ATA100	0x01bc		/* nForce ATA100 IDE */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_USB	0x01c2		/* nForce USB */
 #define	PCI_PRODUCT_NVIDIA_NFORCE_LAN	0x01c3		/* nForce Ethernet */
