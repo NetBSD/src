@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_io.c,v 1.3 2015/02/28 15:20:43 jmcneill Exp $ */
+/* $NetBSD: amlogic_io.c,v 1.4 2015/03/04 12:36:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_io.c,v 1.3 2015/02/28 15:20:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_io.c,v 1.4 2015/03/04 12:36:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,8 @@ static int	amlogicio_find(device_t, cfdata_t, const int *, void *);
 
 static bool amlogicio_found = false;
 
+#define NOPORT	AMLOGICIOCF_PORT_DEFAULT
+
 static const struct amlogic_locators amlogic_locators[] = {
   { "amlogiccom",
     AMLOGIC_UART0AO_OFFSET, AMLOGIC_UART_SIZE, 0, AMLOGIC_INTR_UART0AO },
@@ -64,6 +66,8 @@ static const struct amlogic_locators amlogic_locators[] = {
     AMLOGIC_USB0_OFFSET, AMLOGIC_USB_SIZE, 0, AMLOGIC_INTR_USB0 },
   { "dwctwo",
     AMLOGIC_USB1_OFFSET, AMLOGIC_USB_SIZE, 1, AMLOGIC_INTR_USB1 },
+  { "awge",
+    AMLOGIC_GMAC_OFFSET, AMLOGIC_GMAC_SIZE, NOPORT, AMLOGIC_INTR_GMAC },
 #if notyet
   { "amlogicmmc",
     AMLOGIC_MMC_OFFSET, AMLOGIC_MMC_SIZE, 0, AMLOGIC_INTR_MMC },
