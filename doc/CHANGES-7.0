@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.217 2015/03/03 08:35:00 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.218 2015/03/04 09:49:16 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -17502,4 +17502,11 @@ share/mk/bsd.own.mk				1.841
 	sets.subr: support machine=<xxx>, machine_arch=<xxx>, and
 	machine_cpu=<xxx> tags.
 	[mrg, ticket #559]
+
+sys/arch/shark/conf/Makefile.shark.inc		1.24
+
+	Put -fno-unwind-tables into CFLAGS instead of COPTS - the old
+	version caused DEFCOPTS to not be propagated into COPTS, which
+	meant there was no optimization for the kernel.
+	[martin, ticket #556]
 
