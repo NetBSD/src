@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI2,v 1.1 2015/02/28 09:34:34 skrll Exp $
+#	$NetBSD: RPI2,v 1.2 2015/03/04 17:02:17 skrll Exp $
 #
 #	RPi2 -- Raspberry Pi 2
 #
@@ -13,7 +13,7 @@ no makeoptions	CPUFLAGS
 
 options 	BCM2836
 options 	CPU_CORTEXA7
-#options 	MULTIPROCESSOR
+options 	MULTIPROCESSOR
 options 	CORTEX_PMC
 options 	TPIDRPRW_IS_CURCPU
 makeoptions 	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
