@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.12 2015/03/03 23:20:04 jmcneill Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.13 2015/03/04 23:52:54 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.12 2015/03/03 23:20:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.13 2015/03/04 23:52:54 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -523,6 +523,17 @@ amlogic_device_register(device_t self, void *aux)
 		 * of armperiph bus.
 		 */
 		prop_dictionary_set_uint32(dict, "offset", 0xfff00000);
+	}
+
+	if (device_is_a(self, "awge") && device_unit(self) == 0) {
+		uint8_t enaddr[ETHER_ADDR_LEN];
+		if (get_bootconf_option(boot_args, "awge0.mac-address",
+		    BOOTOPT_TYPE_MACADDR, enaddr)) {
+			prop_data_t pd = prop_data_create_data(enaddr,
+			    sizeof(enaddr));
+			prop_dictionary_set(dict, "mac-address", pd);
+			prop_object_release(pd);
+		}
 	}
 }
 
