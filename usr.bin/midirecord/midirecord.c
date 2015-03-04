@@ -1,4 +1,4 @@
-/*	$NetBSD: midirecord.c,v 1.7 2015/03/01 09:56:54 mrg Exp $	*/
+/*	$NetBSD: midirecord.c,v 1.8 2015/03/04 13:34:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2014 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midirecord.c,v 1.7 2015/03/01 09:56:54 mrg Exp $");
+__RCSID("$NetBSD: midirecord.c,v 1.8 2015/03/04 13:34:49 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -122,7 +122,7 @@ main(int argc, char *argv[])
 			    "channels");
 			break;
 		case 'D':
-			debug++;
+			debug = true;
 			break;
 		case 'd':
 			parse_ints(optarg, &filt_devnos, &num_filt_devnos,
@@ -237,7 +237,7 @@ main(int argc, char *argv[])
 	data_size = 0;
 
 	if (verbose)
-		fprintf(stderr, "tempo=%d notes_per_beat=%d\n",
+		fprintf(stderr, "tempo=%d notes_per_beat=%u\n",
 		   tempo, notes_per_beat);
 
 	if (!no_time_limit && verbose)
@@ -282,7 +282,7 @@ debug_log(const char *file, size_t line, const char *fmt, ...)
 
 	if (!debug)
 		return;
-	fprintf(stderr, "%s:%zd: ", file, line);
+	fprintf(stderr, "%s:%zu: ", file, line);
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
