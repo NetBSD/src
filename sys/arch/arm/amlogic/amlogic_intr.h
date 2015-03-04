@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_intr.h,v 1.3 2015/02/28 15:20:43 jmcneill Exp $ */
+/* $NetBSD: amlogic_intr.h,v 1.4 2015/03/04 12:36:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,6 +35,8 @@
 #include <arm/cortex/gic_intr.h>
 #include <arm/cortex/a9tmr_intr.h>
 
+#define AMLOGIC_INTR_GMAC	40
+#define AMLOGIC_INTR_MMC	60
 #define AMLOGIC_INTR_USB0	62
 #define AMLOGIC_INTR_USB1	63
 #define AMLOGIC_INTR_UART2AO	70
