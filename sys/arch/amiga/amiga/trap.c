@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134 2012/02/19 21:06:03 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.135 2015/03/04 19:56:24 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134 2012/02/19 21:06:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.135 2015/03/04 19:56:24 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,11 +461,6 @@ trapmmufault(int type, u_int code, u_int v, struct frame *fp, struct lwp *l, u_q
 		return;
 	}
 nogo:
-	if (rv == EACCES) {
-		ksi.ksi_code = SEGV_ACCERR;
-		rv = EFAULT;
-	} else
-		ksi.ksi_code = SEGV_MAPERR;
 	if (type == T_MMUFLT) {
 		if (onfault) {
 			trapcpfault(l, fp, rv);
@@ -478,13 +473,25 @@ nogo:
 		panictrap(type, code, v, fp);
 	}
 	ksi.ksi_addr = (void *)v;
-	if (rv == ENOMEM) {
+	switch (rv) {
+	case ENOMEM:
 		printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
-		       p->p_pid, p->p_comm,
-		       l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1);
+		    p->p_pid, p->p_comm,
+		    l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1);
 		ksi.ksi_signo = SIGKILL;
-	} else {
+		break;
+	case EINVAL:
+		ksi.ksi_signo = SIGBUS;
+		ksi.ksi_code = BUS_ADRERR;
+		break;
+	case EACCES:
 		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_code = SEGV_ACCERR;
+		break;
+	default:
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_code = SEGV_MAPERR;
+		break;
 	}
 	trapsignal(l, &ksi);
 	if ((type & T_USER) == 0)
