@@ -1,4 +1,4 @@
-/*	$NetBSD: pwait.c,v 1.4 2015/03/04 13:31:53 christos Exp $	*/
+/*	$NetBSD: pwait.c,v 1.5 2015/03/04 16:36:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004-2009, Jilles Tjoelker
@@ -37,7 +37,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/bin/pwait/pwait.c 245506 2013-01-16 18:15:25Z delphij $");
 #endif
-__RCSID("$NetBSD: pwait.c,v 1.4 2015/03/04 13:31:53 christos Exp $");
+__RCSID("$NetBSD: pwait.c,v 1.5 2015/03/04 16:36:12 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -58,7 +58,7 @@ static __dead void
 usage(void)
 {
 
-	fprintf(stderr, "Usage: %s [-sv] [-t <timeout>] <pid> ...\n",
+	fprintf(stderr, "Usage: %s [-isv] [-t <timeout>] <pid> ...\n",
 	    getprogname());
 	exit(EX_USAGE);
 }
@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 	int kq;
 	struct kevent *e;
 	int verbose = 0, childstatus = 0;
-	int opt, duplicate, status;
+	int opt, duplicate, status, immediately = 0;
 	size_t nleft, n, i;
 	pid_t pid;
 	char *s, *end;
@@ -80,8 +80,11 @@ main(int argc, char *argv[])
 	struct timespec ts, *tsp;
 
 	setprogname(argv[0]);
-	while ((opt = getopt(argc, argv, "st:v")) != -1) {
+	while ((opt = getopt(argc, argv, "ist:v")) != -1) {
 		switch (opt) {
+		case 'i':
+			immediately = 1;
+			break;
 		case 's':
 			childstatus = 1;
 			break;
@@ -187,6 +190,9 @@ main(int argc, char *argv[])
 				return status;
 		}
 		nleft -= n;
+		// n != 0 here, belt-n-suspenders...
+		if (immediately && n)
+			break;
 	}
 
 	return EX_OK;
