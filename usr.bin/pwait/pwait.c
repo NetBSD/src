@@ -1,4 +1,4 @@
-/*	$NetBSD: pwait.c,v 1.3 2015/03/03 19:59:48 christos Exp $	*/
+/*	$NetBSD: pwait.c,v 1.4 2015/03/04 13:31:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004-2009, Jilles Tjoelker
@@ -37,7 +37,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/bin/pwait/pwait.c 245506 2013-01-16 18:15:25Z delphij $");
 #endif
-__RCSID("$NetBSD: pwait.c,v 1.3 2015/03/03 19:59:48 christos Exp $");
+__RCSID("$NetBSD: pwait.c,v 1.4 2015/03/04 13:31:53 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -143,7 +143,7 @@ main(int argc, char *argv[])
 				duplicate = 1;
 		if (!duplicate) {
 			EV_SET(e + nleft, (uintptr_t)pid, EVFILT_PROC, EV_ADD,
-			    NOTE_EXIT, 0, NULL);
+			    NOTE_EXIT, 0, 0);
 			if (kevent(kq, e + nleft, 1, NULL, 0, NULL) == -1)
 				warn("%jd", (intmax_t)pid);
 			else
