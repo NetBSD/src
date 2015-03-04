@@ -1,5 +1,5 @@
-/*	$NetBSD: if_iwm.c,v 1.25 2015/03/04 16:53:32 nonaka Exp $	*/
-/*	OpenBSD: if_iwm.c,v 1.34 2015/03/03 20:14:34 kettenis Exp	*/
+/*	$NetBSD: if_iwm.c,v 1.26 2015/03/04 16:55:11 nonaka Exp $	*/
+/*	OpenBSD: if_iwm.c,v 1.35 2015/03/04 15:18:12 jsg Exp	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.25 2015/03/04 16:53:32 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.26 2015/03/04 16:55:11 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -5849,6 +5849,7 @@ iwm_stop(struct ifnet *ifp, int disable)
 	if (ic->ic_state != IEEE80211_S_INIT)
 		ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
+	callout_stop(&sc->sc_calib_to);
 	ifp->if_timer = sc->sc_tx_timer = 0;
 	iwm_stop_device(sc);
 }
