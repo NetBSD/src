@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_gmac.c,v 1.1 2015/03/04 12:37:16 jmcneill Exp $ */
+/* $NetBSD: amlogic_gmac.c,v 1.2 2015/03/04 18:40:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014, 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: amlogic_gmac.c,v 1.1 2015/03/04 12:37:16 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: amlogic_gmac.c,v 1.2 2015/03/04 18:40:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,7 +92,7 @@ amlogic_gmac_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Interrupt handler
 	 */
-	sc->sc_ih = intr_establish(loc->loc_intr, IPL_NET, IST_LEVEL,
+	sc->sc_ih = intr_establish(loc->loc_intr, IPL_NET, IST_EDGE,
 	    amlogic_gmac_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
