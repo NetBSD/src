@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.37 2014/11/09 19:35:43 nonaka Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.38 2015/03/04 18:21:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.37 2014/11/09 19:35:43 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.38 2015/03/04 18:21:00 jmcneill Exp $");
 
 
 /*
@@ -303,7 +303,14 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * need to restart the autonegotiation process.  Read
 		 * the BMSR twice in case it's latched.
 		 */
-		if (sc->mii_mpd_rev >= 2) {
+		if (sc->mii_mpd_rev >= 6) {
+			/* RTL8211F */
+			reg = PHY_READ(sc, RGEPHY_MII_PHYSR);
+			if (reg & RGEPHY_PHYSR_LINK) {
+				sc->mii_ticks = 0;
+				break;
+			}
+		} else if (sc->mii_mpd_rev >= 2) {
 			/* RTL8211B(L) */
 			reg = PHY_READ(sc, RGEPHY_MII_SSR);
 			if (reg & RGEPHY_SSR_LINK) {
@@ -351,13 +358,17 @@ static void
 rgephy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
-	int gstat, bmsr, bmcr;
+	int gstat, bmsr, bmcr, physr;
 	uint16_t ssr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	if (sc->mii_mpd_rev >= 2) {
+	if (sc->mii_mpd_rev >= 6) {
+		physr = PHY_READ(sc, RGEPHY_MII_PHYSR);
+		if (physr & RGEPHY_PHYSR_LINK)
+			mii->mii_media_status |= IFM_ACTIVE;
+	} else if (sc->mii_mpd_rev >= 2) {
 		ssr = PHY_READ(sc, RGEPHY_MII_SSR);
 		if (ssr & RGEPHY_SSR_LINK)
 			mii->mii_media_status |= IFM_ACTIVE;
@@ -387,7 +398,28 @@ rgephy_status(struct mii_softc *sc)
 		}
 	}
 
-	if (sc->mii_mpd_rev >= 2) {
+	if (sc->mii_mpd_rev >= 6) {
+		physr = PHY_READ(sc, RGEPHY_MII_PHYSR);
+		switch (__SHIFTOUT(physr, RGEPHY_PHYSR_SPEED)) {
+		case RGEPHY_PHYSR_SPEED_1000:
+			mii->mii_media_active |= IFM_1000_T;
+			break;
+		case RGEPHY_PHYSR_SPEED_100:
+			mii->mii_media_active |= IFM_100_TX;
+			break;
+		case RGEPHY_PHYSR_SPEED_10:
+			mii->mii_media_active |= IFM_10_T;
+			break;
+		default:
+			mii->mii_media_active |= IFM_NONE;
+			break;
+		}
+		if (physr & RGEPHY_PHYSR_DUPLEX)
+			mii->mii_media_active |= mii_phy_flowstatus(sc) |
+			    IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
+	} else if (sc->mii_mpd_rev >= 2) {
 		ssr = PHY_READ(sc, RGEPHY_MII_SSR);
 		switch (ssr & RGEPHY_SSR_SPD_MASK) {
 		case RGEPHY_SSR_S1000:
