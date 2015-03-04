@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_reg.h,v 1.5 2015/03/01 15:37:26 jmcneill Exp $ */
+/* $NetBSD: amlogic_reg.h,v 1.6 2015/03/04 12:36:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,9 +37,6 @@
 
 #define AMLOGIC_CBUS_OFFSET	0x01100000
 
-#define AMLOGIC_UART0_OFFSET	0x01102130
-#define AMLOGIC_UART1_OFFSET	0x01102137
-#define AMLOGIC_UART2_OFFSET	0x011021c0
 #define AMLOGIC_UART0AO_OFFSET	0x081004c0
 #define AMLOGIC_UART2AO_OFFSET	0x081004e0
 #define AMLOGIC_UART_SIZE	0x20
@@ -57,6 +54,9 @@
 #define AMLOGIC_USB0_OFFSET	0x09040000
 #define AMLOGIC_USB1_OFFSET	0x090c0000
 #define AMLOGIC_USB_SIZE	0x40000
+
+#define AMLOGIC_GMAC_OFFSET	0x09410000
+#define AMLOGIC_GMAC_SIZE	0x10000
 
 #define AMLOGIC_SRAM_OFFSET	0x19000000
 
