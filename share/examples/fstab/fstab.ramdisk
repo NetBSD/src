@@ -1,4 +1,4 @@
-#	$NetBSD: fstab.ramdisk,v 1.4 2005/12/24 12:59:21 jmmv Exp $
+#	$NetBSD: fstab.ramdisk,v 1.5 2015/03/04 16:18:04 christos Exp $
 #
 # Sample fstab for multiple ramdisks (mfs and tmpfs).
 #
@@ -30,3 +30,6 @@ tmpfs	/tmp		tmpfs	rw
 
 # Mounts a tmpfs instance to be used by a specific user.
 #tmpfs	/home/foo/tmp	tmpfs	rw,-ufoo,-gusers,-s50M
+
+# Shared memory tempfs template allocating 25% of available memory
+tmpfs	/var/shm	tmpfs	rw,-m1777,-sram%25
