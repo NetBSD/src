@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.29 2012/08/29 20:34:19 wiz Exp $
+#	$NetBSD: weekly,v 1.30 2015/03/04 14:54:38 christos Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
@@ -76,17 +76,6 @@ if checkyesno rebuild_locatedb; then
 		chown root:wheel /var/db/locate.database
 	else
 		echo "Not rebuilding locate database; no /var/db/locate.database"
-	fi
-fi
-
-if checkyesno rebuild_whatisdb; then
-	echo ""
-	if [ -x /usr/libexec/makewhatis -a \( -f /etc/man.conf \
-	     -o -d /usr/share/man \) ]; then
-		echo "Rebuilding whatis databases:"
-		nice -n 5 /usr/libexec/makewhatis -f
-	else
-		echo "Not rebuilding whatis databases"
 	fi
 fi
 
