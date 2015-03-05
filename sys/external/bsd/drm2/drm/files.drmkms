@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.10 2015/03/05 17:42:48 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.11 2015/03/05 17:50:41 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -66,5 +66,9 @@ file	external/bsd/drm2/drm/drm_vma_manager.c		drmkms
 file	external/bsd/drm2/drm/drm_gem_vm.c		drmkms
 file	external/bsd/drm2/drm/drm_module.c		drmkms
 file	external/bsd/drm2/drm/drm_sysctl.c		drmkms
+
+# Generic, unaccelerated drm-based framebuffer.
+define	drmfb: genfb
+file	external/bsd/drm2/drm/drmfb.c			drmfb
 
 include "external/bsd/drm2/ttm/files.ttm"

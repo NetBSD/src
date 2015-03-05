@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2015/03/05 17:42:48 riastradh Exp $
+# $NetBSD: Makefile,v 1.9 2015/03/05 17:50:41 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -56,6 +56,7 @@ SRCS+=	drm_vma_manager.c
 # NetBSD additions.
 SRCS+=	drm_gem_vm.c
 SRCS+=	drm_module.c
+SRCS+=	drmfb.c
 
 COPTS.drm_crtc.c+=	-Wno-shadow
 COPTS.drm_crtc.c+=	-Wno-missing-field-initializers
