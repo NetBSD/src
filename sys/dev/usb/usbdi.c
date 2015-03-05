@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.11 2015/03/05 08:34:47 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.12 2015/03/05 08:48:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.11 2015/03/05 08:34:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.12 2015/03/05 08:48:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -231,6 +231,7 @@ usbd_open_pipe_intr(usbd_interface_handle iface, uint8_t address,
 	usbd_setup_xfer(xfer, ipipe, priv, buffer, len, flags,
 	    USBD_NO_TIMEOUT, cb);
 	ipipe->up_intrxfer = xfer;
+	ipipe->up_intrbuf = buf;
 	ipipe->up_repeat = 1;
 	err = usbd_transfer(xfer);
 	*pipe = ipipe;
@@ -274,8 +275,10 @@ usbd_close_pipe(usbd_pipe_handle pipe)
 	pipe->up_endpoint->ue_refcnt--;
 	pipe->up_methods->upm_close(pipe);
 	usbd_unlock_pipe(pipe);
-	if (pipe->up_intrxfer != NULL)
+	if (pipe->up_intrxfer != NULL) {
 		usbd_free_xfer(pipe->up_intrxfer);
+		usbd_free_buffer(pipe->up_intrbuf);
+	}
 	kmem_free(pipe, pipe->up_dev->ud_bus->ub_pipesize);
 	return USBD_NORMAL_COMPLETION;
 }
@@ -1069,6 +1072,7 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 {
 	usbd_xfer_handle xfer;
 	usbd_status err;
+	void *buf = NULL;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
@@ -1079,13 +1083,12 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 		return USBD_NOMEM;
 
 	if (UGETW(req->wLength) != 0) {
-		void *buf = usbd_alloc_buffer(xfer, UGETW(req->wLength));
+		buf = usbd_alloc_buffer(xfer, UGETW(req->wLength));
 		if (buf == NULL) {
 			err = ENOMEM;
 			goto bad;
 		}
 	}
-
 
 	usbd_setup_default_xfer(xfer, dev, 0, timeout, req,
 				data, UGETW(req->wLength), flags, 0);
@@ -1149,6 +1152,8 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 		    usbd_errstr(err), 0, 0, 0);
 	}
 	usbd_free_xfer(xfer);
+	if (buf)
+		usbd_free_buffer(buf);
 	return err;
 }
 
