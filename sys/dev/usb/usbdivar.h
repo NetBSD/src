@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.13 2015/03/05 08:48:07 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.14 2015/03/05 09:06:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -225,7 +225,6 @@ struct usbd_pipe {
 	struct usb_task		up_async_task;
 
 	usbd_xfer_handle	up_intrxfer; /* used for repeating requests */
-	void 		       *up_intrbuf;
 	char			up_repeat;
 	int			up_interval;
 	uint8_t			up_flags;
