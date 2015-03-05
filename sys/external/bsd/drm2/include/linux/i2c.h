@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.h,v 1.6 2014/08/23 08:03:33 riastradh Exp $	*/
+/*	$NetBSD: i2c.h,v 1.7 2015/03/05 15:02:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ struct i2c_adapter {
 	unsigned int			class;
 	struct {
 		device_t	parent;
-	}				dev;	/* XXX Kludge for intel_dp.  */
+	}				dev;
 	void				*i2ca_adapdata;
 };
 
