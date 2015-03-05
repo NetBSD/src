@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.11 2015/02/22 14:50:07 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.12 2015/03/05 08:34:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -265,7 +265,6 @@ struct usbd_xfer {
 
 	uint8_t			ux_rqflags;
 #define URQ_REQUEST	0x01
-#define URQ_AUTO_BUFFER	0x10
 
 	SIMPLEQ_ENTRY(usbd_xfer) ux_next;
 
