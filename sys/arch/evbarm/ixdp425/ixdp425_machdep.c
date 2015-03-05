@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.35 2014/09/13 18:08:39 matt Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.36 2015/03/05 08:09:44 skrll Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.35 2014/09/13 18:08:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.36 2015/03/05 08:09:44 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -726,7 +726,7 @@ initarm(void *arg)
 #endif
 	ixp425_intr_init();
 #ifdef VERBOSE_INIT_ARM
-	printf("\nAll initialize done!\nNow Starting NetBSD, Hear we go!\n");
+	printf("\nAll initialization done!\nNow Starting NetBSD, Here we go!\n");
 #endif
 
 #ifdef BOOTHOWTO
