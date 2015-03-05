@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.13 2015/03/05 09:06:20 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.14 2015/03/05 12:39:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.13 2015/03/05 09:06:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.14 2015/03/05 12:39:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -338,7 +338,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 
 	/* Sync transfer, wait for completion. */
 	if (err != USBD_IN_PROGRESS) {
-		USBHIST_LOG(usbdebug, "<- done xfer %p, not in progress", xfer,
+		USBHIST_LOG(usbdebug, "<- done xfer %p, err %d (complete/error)", xfer,
 		    0, 0, 0);
 		return err;
 	}
@@ -1145,8 +1145,7 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 
  bad:
 	if (err) {
-		USBHIST_LOG(usbdebug, "returning err = %s",
-		    usbd_errstr(err), 0, 0, 0);
+		USBHIST_LOG(usbdebug, "returning err = %d", err, 0, 0, 0);
 	}
 	usbd_free_xfer(xfer);
 	return err;
