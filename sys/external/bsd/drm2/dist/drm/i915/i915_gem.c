@@ -380,6 +380,7 @@ i915_gem_object_attach_phys(struct drm_i915_gem_object *obj,
 		kunmap_atomic(src);
 
 #ifdef __NetBSD__
+		/* XXX mark page accessed */
 		uvm_obj_unwirepages(obj->base.gemo_shm_uao, i*PAGE_SIZE,
 		    (i + 1)*PAGE_SIZE);
 #else
@@ -2421,6 +2422,7 @@ static void
 i915_gem_object_put_pages_gtt(struct drm_i915_gem_object *obj)
 {
 	struct drm_device *const dev = obj->base.dev;
+	struct vm_page *page;
 	int ret;
 
 	/* XXX Cargo-culted from the Linux code.  */
@@ -2437,7 +2439,15 @@ i915_gem_object_put_pages_gtt(struct drm_i915_gem_object *obj)
 	if (i915_gem_object_needs_bit17_swizzle(obj))
 		i915_gem_object_save_bit_17_swizzle(obj);
 
-	/* XXX Maintain dirty flag?  */
+	if (obj->madv == I915_MADV_DONTNEED)
+		obj->dirty = 0;
+
+	if (obj->dirty) {
+		TAILQ_FOREACH(page, &obj->igo_pageq, pageq.queue) {
+			page->flags &= ~PG_CLEAN;
+			/* XXX mark page accessed */
+		}
+	}
 
 	bus_dmamap_destroy(dev->dmat, obj->igo_dmamap);
 	bus_dmamem_unwire_uvm_object(dev->dmat, obj->base.gemo_shm_uao, 0,
