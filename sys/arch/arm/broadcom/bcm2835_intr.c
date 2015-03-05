@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.6 2015/03/04 17:02:17 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.7 2015/03/05 14:27:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.6 2015/03/04 17:02:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.7 2015/03/05 14:27:25 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -76,6 +76,12 @@ static void bcm2836mp_send_ipi(struct pic_softc *, const kcpuset_t *, u_long);
 #endif
 #endif
 
+#ifdef MULTIPROCESSOR
+static void
+bcm2835_dummy(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
+{
+}
+#endif
 
 static int  bcm2835_icu_match(device_t, cfdata_t, void *);
 static void bcm2835_icu_attach(device_t, device_t, void *);
@@ -86,6 +92,9 @@ static struct pic_ops bcm2835_picops = {
 	.pic_find_pending_irqs = bcm2835_pic_find_pending_irqs,
 	.pic_establish_irq = bcm2835_pic_establish_irq,
 	.pic_source_name = bcm2835_pic_source_name,
+#if defined(MULTIPROCESSOR)
+	.pic_ipi_send = bcm2835_dummy,
+#endif
 };
 
 struct pic_softc bcm2835_pic = {
