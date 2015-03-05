@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.4 2014/12/26 18:06:52 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.5 2015/03/05 17:42:29 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4 2014/12/26 18:06:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5 2015/03/05 17:42:29 macallan Exp $");
 
 #define __INTR_PRIVATE
 
@@ -184,6 +184,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 		ingenic_puts("INT2\n");
 	}
 	if (ipending & MIPS_INT_MASK_0) {
+		uint32_t mask;
 		/* peripheral interrupt */
 
 		/*
@@ -196,8 +197,11 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 		 * and IPIs. If that doesn't work we'll have to send an IPI to
 		 * core1 for each timer tick.  
 		 */
-		if (readreg(JZ_ICPR0) & 0x0c000000) {
+		mask = readreg(JZ_ICPR0);
+		if (mask & 0x0c000000) {
+			writereg(JZ_ICMSR0, mask);
 			ingenic_clockintr(id);
+			writereg(JZ_ICMCR0, mask);
 		}
 		ingenic_irq(ipl);
 		KASSERT(id == 0);
@@ -207,13 +211,14 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 void
 ingenic_irq(int ipl)
 {
-	uint32_t irql, irqh, mask;
+	uint32_t irql, irqh, mask, ll, hh;
 	int bit, idx, bail;
 #ifdef INGENIC_INTR_DEBUG
 	char buffer[16];
 #endif
 
 	irql = readreg(JZ_ICPR0);
+	irqh = readreg(JZ_ICPR1);
 #ifdef INGENIC_INTR_DEBUG
 	if (irql != 0) {
 		snprintf(buffer, 16, " il%08x", irql);
@@ -221,6 +226,10 @@ ingenic_irq(int ipl)
 	}
 #endif
 	bail = 32;
+	ll = irql;
+	hh = irqh;
+	writereg(JZ_ICMSR0, ll);
+	writereg(JZ_ICMSR1, hh);
 	bit = ffs32(irql);
 	while (bit != 0) {
 		idx = bit - 1;
@@ -242,7 +251,6 @@ ingenic_irq(int ipl)
 		KASSERT(bail > 0);
 	}
 
-	irqh = readreg(JZ_ICPR1);
 #ifdef INGENIC_INTR_DEBUG
 	if (irqh != 0) {
 		snprintf(buffer, 16, " ih%08x", irqh);
@@ -268,6 +276,8 @@ ingenic_irq(int ipl)
 		irqh &= ~mask;
 		bit = ffs32(irqh);
 	}
+	writereg(JZ_ICMCR0, ll);
+	writereg(JZ_ICMCR1, hh);
 }
 
 void *
