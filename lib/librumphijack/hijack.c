@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.115 2015/03/04 23:42:26 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.116 2015/03/05 00:26:17 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.115 2015/03/04 23:42:26 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.116 2015/03/05 00:26:17 pooka Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2265,10 +2265,12 @@ __sysctl(const int *name, unsigned int namelen, void *old, size_t *oldlenp,
  * Rest are std type calls.
  */
 
+#ifdef HAVE_UTIMENSAT
 ATCALL(int, utimensat, DUALCALL_UTIMENSAT,				\
 	(int fd, const char *path, const struct timespec t[2], int f),	\
 	(int, const char *, const struct timespec [2], int),
 	(fd, path, t, f))
+#endif
 
 FDCALL(int, bind, DUALCALL_BIND,					\
 	(int fd, const struct sockaddr *name, socklen_t namelen),	\
