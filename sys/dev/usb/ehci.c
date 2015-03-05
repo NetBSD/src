@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.38 2015/03/03 10:06:01 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.39 2015/03/05 20:57:07 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.38 2015/03/03 10:06:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.39 2015/03/05 20:57:07 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3105,8 +3105,8 @@ ehci_close_pipe(usbd_pipe_handle pipe, ehci_soft_qh_t *head)
 Static void
 ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 {
-#define exfer EXFER(xfer)
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->ux_pipe;
+	struct ehci_xfer *exfer = EXFER(xfer);
 	ehci_softc_t *sc = epipe->pipe.up_dev->ud_bus->ub_hcpriv;
 	ehci_soft_qh_t *sqh = epipe->sqh;
 	ehci_soft_qtd_t *sqtd;
@@ -3242,7 +3242,6 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	}
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-#undef exfer
 }
 
 Static void
@@ -3495,8 +3494,8 @@ ehci_device_ctrl_close(usbd_pipe_handle pipe)
 Static usbd_status
 ehci_device_request(usbd_xfer_handle xfer)
 {
-#define exfer EXFER(xfer)
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->ux_pipe;
+	struct ehci_xfer *exfer = EXFER(xfer);
 	usb_device_request_t *req = &xfer->ux_request;
 	usbd_device_handle dev = epipe->pipe.up_dev;
 	ehci_softc_t *sc = dev->ud_bus->ub_hcpriv;
@@ -3646,7 +3645,6 @@ ehci_device_request(usbd_xfer_handle xfer)
 	usb_transfer_complete(xfer);
 	mutex_exit(&sc->sc_lock);
 	return err;
-#undef exfer
 }
 
 /*
@@ -3692,8 +3690,8 @@ ehci_device_bulk_transfer(usbd_xfer_handle xfer)
 Static usbd_status
 ehci_device_bulk_start(usbd_xfer_handle xfer)
 {
-#define exfer EXFER(xfer)
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->ux_pipe;
+	struct ehci_xfer *exfer = EXFER(xfer);
 	usbd_device_handle dev = epipe->pipe.up_dev;
 	ehci_softc_t *sc = dev->ud_bus->ub_hcpriv;
 	ehci_soft_qtd_t *data, *dataend;
@@ -3772,7 +3770,6 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 		ehci_waitintr(sc, xfer);
 
 	return USBD_IN_PROGRESS;
-#undef exfer
 }
 
 Static void
@@ -3878,8 +3875,8 @@ ehci_device_intr_transfer(usbd_xfer_handle xfer)
 Static usbd_status
 ehci_device_intr_start(usbd_xfer_handle xfer)
 {
-#define exfer EXFER(xfer)
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->ux_pipe;
+	struct ehci_xfer *exfer = EXFER(xfer);
 	usbd_device_handle dev = xfer->ux_pipe->up_dev;
 	ehci_softc_t *sc = dev->ud_bus->ub_hcpriv;
 	ehci_soft_qtd_t *data, *dataend;
@@ -3954,7 +3951,6 @@ ehci_device_intr_start(usbd_xfer_handle xfer)
 		ehci_waitintr(sc, xfer);
 
 	return USBD_IN_PROGRESS;
-#undef exfer
 }
 
 Static void
@@ -3989,10 +3985,9 @@ ehci_device_intr_close(usbd_pipe_handle pipe)
 Static void
 ehci_device_intr_done(usbd_xfer_handle xfer)
 {
-#define exfer EXFER(xfer)
-	struct ehci_xfer *ex = EXFER(xfer);
 	ehci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->ux_pipe;
+	struct ehci_xfer *exfer = EXFER(xfer);
 	ehci_soft_qtd_t *data, *dataend;
 	ehci_soft_qh_t *sqh;
 	usbd_status err;
@@ -4006,7 +4001,7 @@ ehci_device_intr_done(usbd_xfer_handle xfer)
 	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	if (xfer->ux_pipe->up_repeat) {
-		ehci_free_sqtd_chain(sc, ex->ex_sqtdstart, NULL);
+		ehci_free_sqtd_chain(sc, exfer->ex_sqtdstart, NULL);
 
 		len = epipe->u.intr.length;
 		xfer->ux_length = len;
@@ -4039,15 +4034,14 @@ ehci_device_intr_done(usbd_xfer_handle xfer)
 		}
 
 		xfer->ux_status = USBD_IN_PROGRESS;
-	} else if (xfer->ux_status != USBD_NOMEM && ehci_active_intr_list(ex)) {
-		ehci_del_intr_list(sc, ex); /* remove from active list */
-		ehci_free_sqtd_chain(sc, ex->ex_sqtdstart, NULL);
+	} else if (xfer->ux_status != USBD_NOMEM && ehci_active_intr_list(exfer)) {
+		ehci_del_intr_list(sc, exfer); /* remove from active list */
+		ehci_free_sqtd_chain(sc, exfer->ex_sqtdstart, NULL);
 		endpt = epipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
 		isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
 		    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	}
-#undef exfer
 }
 
 /************************/
