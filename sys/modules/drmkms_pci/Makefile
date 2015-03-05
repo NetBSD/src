@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2014/11/22 19:18:08 riastradh Exp $
+# $NetBSD: Makefile,v 1.5 2015/03/05 17:50:41 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -12,5 +12,7 @@ KMOD=	drmkms_pci
 SRCS+=	drm_agpsupport.c
 SRCS+=	drm_pci.c
 SRCS+=	drm_pci_module.c
+
+SRCS+=	drmfb_pci.c
 
 .include <bsd.kmodule.mk>
