@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.984.2.20 2014/12/02 22:18:08 snj Exp $
+# $NetBSD: mi,v 1.984.2.21 2015/03/05 22:27:04 riz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -126,6 +126,7 @@
 ./lib						base-sys-root
 ./lib/libdes.so					base-obsolete		obsolete
 ./lib/libssp.so					base-obsolete		obsolete
+./lib/npf					base-sys-usr
 ./libdata					base-sys-root
 ./libdata/firmware				base-firmware-root
 ./libdata/firmware/if_ipw			base-firmware-root
@@ -552,6 +553,7 @@
 ./usr/bin/mailx					base-mail-bin
 ./usr/bin/make					base-util-bin
 ./usr/bin/man					base-man-bin
+./usr/bin/mandoc				base-man-bin
 ./usr/bin/md2					base-util-bin
 ./usr/bin/md4					base-util-bin
 ./usr/bin/md5					base-util-bin
@@ -935,7 +937,7 @@
 ./usr/lib/runemodule/libEUC.so.3		base-obsolete		obsolete
 ./usr/lib/runemodule/libEUC.so.3.0		base-obsolete		obsolete
 ./usr/lib/runemodule/libEUCTW.a			base-obsolete		obsolete
-./usr/lib/npf					base-sys-usr
+./usr/lib/npf					base-sys-usr	obsolete
 ./usr/lib/runemodule/libEUCTW.so		base-obsolete		obsolete
 ./usr/lib/runemodule/libEUCTW.so.3		base-obsolete		obsolete
 ./usr/lib/runemodule/libEUCTW.so.3.0		base-obsolete		obsolete
@@ -959,6 +961,8 @@
 ./usr/libdata					base-sys-usr
 ./usr/libdata/debug				base-sys-usr
 ./usr/libdata/debug/bin				base-sys-usr
+./usr/libdata/debug/lib				base-sys-usr
+./usr/libdata/debug/lib/npf			base-sys-usr
 ./usr/libdata/debug/libexec			base-sys-usr
 ./usr/libdata/debug/sbin			base-sys-usr
 ./usr/libdata/debug/usr				base-sys-usr
@@ -979,7 +983,7 @@
 ./usr/libdata/firmware/radeon/CEDAR_pfp.bin	base-firmware-usr
 ./usr/libdata/firmware/radeon/CEDAR_rlc.bin	base-firmware-usr
 ./usr/libdata/firmware/radeon/CYPRESS_me.bin	base-firmware-usr
-./usr/libdata/debug/usr/lib/npf			base-sys-usr
+./usr/libdata/debug/usr/lib/npf			base-sys-usr	obsolete
 ./usr/libdata/firmware/radeon/CYPRESS_pfp.bin	base-firmware-usr
 ./usr/libdata/firmware/radeon/CYPRESS_rlc.bin	base-firmware-usr
 ./usr/libdata/firmware/radeon/JUNIPER_me.bin	base-firmware-usr
@@ -1302,6 +1306,7 @@
 ./usr/sbin/mailwrapper				base-mailwrapper-bin
 ./usr/sbin/makedbm				base-nis-bin		yp
 ./usr/sbin/makefs				base-sysutil-bin
+./usr/sbin/makemandb				base-man-bin		makemandb
 ./usr/sbin/makemap				base-obsolete		obsolete
 ./usr/sbin/map-mbone				base-netutil-bin
 ./usr/sbin/mbrlabel				base-obsolete		obsolete
@@ -1348,6 +1353,7 @@
 ./usr/sbin/nfsd					base-nfsserver-bin
 ./usr/sbin/nfsiod				base-obsolete		obsolete
 ./usr/sbin/npfctl				base-obsolete		obsolete
+./usr/sbin/npftest				base-npf-bin		npf
 ./usr/sbin/nsec3hash				base-bind-bin
 ./usr/sbin/nslookup				base-obsolete		obsolete
 ./usr/sbin/nsquery				base-obsolete		obsolete
@@ -1666,9 +1672,10 @@
 ./usr/share/examples/mount_portal		base-miscfs-examples
 ./usr/share/examples/named			base-obsolete	obsolete
 ./usr/share/examples/npf			base-netutil-examples
-./usr/share/examples/npf/host-npf.conf		base-netutil-examples
-./usr/share/examples/npf/soho_gw-npf.conf	base-netutil-examples
 ./usr/share/examples/npf/hashtablefile		base-netutil-examples
+./usr/share/examples/npf/host-npf.conf		base-netutil-examples
+./usr/share/examples/npf/l2tp_gw-npf.conf	base-netutil-examples
+./usr/share/examples/npf/soho_gw-npf.conf	base-netutil-examples
 ./usr/share/examples/npf/treetablefile		base-netutil-examples
 ./usr/share/examples/openssl			base-crypto-examples
 ./usr/share/examples/pf				base-netutil-examples
