@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.7 2014/11/22 19:18:07 riastradh Exp $
+# $NetBSD: Makefile,v 1.8 2015/03/05 17:42:48 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
 
 .PATH:	${S}/external/bsd/drm2/drm
+.PATH:	${S}/external/bsd/drm2/i2c
 .PATH:	${S}/external/bsd/drm2/pci
 .PATH:	${S}/external/bsd/drm2/dist/drm
 
@@ -24,7 +25,7 @@ SRCS+=	drm_dma.c
 SRCS+=	drm_dp_helper.c
 SRCS+=	drm_drv.c
 SRCS+=	drm_edid.c
-#SRCS+=	drm_encoder_slave.c	# XXX Rewrite for i2c.
+SRCS+=	drm_encoder_slave.c
 SRCS+=	drm_fb_helper.c		# XXX Rewrite for wsconsole.
 SRCS+=	drm_flip_work.c
 SRCS+=	drm_fops.c

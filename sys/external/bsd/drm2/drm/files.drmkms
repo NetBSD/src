@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.9 2014/11/12 02:24:40 christos Exp $
+#	$NetBSD: files.drmkms,v 1.10 2015/03/05 17:42:48 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -37,7 +37,7 @@ file	external/bsd/drm2/dist/drm/drm_dma.c		drmkms
 file	external/bsd/drm2/dist/drm/drm_dp_helper.c	drmkms_i2c
 file	external/bsd/drm2/drm/drm_drv.c			drmkms
 file	external/bsd/drm2/dist/drm/drm_edid.c		drmkms_i2c
-#file	external/bsd/drm2/dist/drm/drm_encoder_slave.c	drmkms_i2c
+file	external/bsd/drm2/i2c/drm_encoder_slave.c	drmkms_i2c
 file	external/bsd/drm2/dist/drm/drm_fb_helper.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_flip_work.c	drmkms
 file	external/bsd/drm2/drm/drm_fops.c		drmkms
