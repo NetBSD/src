@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.94 2015/03/04 13:33:19 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.95 2015/03/05 03:29:02 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -578,8 +578,6 @@ int	 scanf_l(locale_t, const char * __restrict, ...)
     __scanflike(2, 3);
 int	 sscanf_l(const char * __restrict, locale_t,
     const char * __restrict, ...) __scanflike(3, 4);
-int	 vscanf_l(locale_t, const char * __restrict, __va_list)
-    __scanflike(2, 0);
 int	 vscanf_l(locale_t, const char * __restrict, __va_list)
     __scanflike(2, 0);
 int	 vfscanf_l(FILE * __restrict, locale_t, const char * __restrict,
