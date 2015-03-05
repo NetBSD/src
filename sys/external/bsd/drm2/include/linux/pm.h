@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.h,v 1.3 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: pm.h,v 1.4 2015/03/05 17:35:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,6 +43,10 @@ typedef struct {
 
 struct dev_pm_domain {
 	char dummy;		/* XXX */
+};
+
+struct dev_pm_ops {
+	int	(*resume)(struct device *);
 };
 
 #endif  /* _LINUX_PM_H_ */
