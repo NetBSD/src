@@ -1,4 +1,4 @@
-/*	$NetBSD: drmfb_pci.c,v 1.2 2015/03/05 17:56:39 riastradh Exp $	*/
+/*	$NetBSD: drmfb_pci.c,v 1.3 2015/03/05 20:19:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drmfb_pci.c,v 1.2 2015/03/05 17:56:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drmfb_pci.c,v 1.3 2015/03/05 20:19:30 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: drmfb_pci.c,v 1.2 2015/03/05 17:56:39 riastradh Exp 
 #include <drm/drmP.h>
 #include <drm/drm_fb_helper.h>
 
-#include "drmfb.h"
-#include "drmfb_pci.h"
+#include <drm/drmfb.h>
+#include <drm/drmfb_pci.h>
 
 /*
  * drmfb_pci_mmap: Implementation of drmfb_params::dp_mmap.  Don't use
