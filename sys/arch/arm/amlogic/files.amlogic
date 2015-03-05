@@ -1,4 +1,4 @@
-#	$NetBSD: files.amlogic,v 1.4 2015/03/04 12:36:12 jmcneill Exp $
+#	$NetBSD: files.amlogic,v 1.5 2015/03/05 23:43:53 jmcneill Exp $
 #
 # Configuration info for Amlogic ARM Peripherals
 #
@@ -12,6 +12,7 @@ file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
 
 file	arch/arm/amlogic/amlogic_board.c
+file	arch/arm/amlogic/amlogic_cpufreq.c
 file	arch/arm/amlogic/amlogic_space.c
 file	arch/arm/arm/bus_space_a4x.S
 
