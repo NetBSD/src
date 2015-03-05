@@ -1,4 +1,4 @@
-/*	$NetBSD: drmfb_pci.h,v 1.1 2015/03/05 17:50:41 riastradh Exp $	*/
+/*	$NetBSD: drmfb_pci.h,v 1.2 2015/03/05 17:56:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -40,5 +40,6 @@ struct lwp;
 paddr_t	drmfb_pci_mmap(struct drmfb_softc *, off_t, int);
 int	drmfb_pci_ioctl(struct drmfb_softc *, unsigned long, void *, int,
 	    struct lwp *);
+bool	drmfb_pci_is_vga_console(struct drm_device *);
 
 #endif	/* _DRM_DRMFB_PCI_H_ */

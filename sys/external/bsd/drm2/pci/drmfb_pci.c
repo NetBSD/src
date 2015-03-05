@@ -1,4 +1,4 @@
-/*	$NetBSD: drmfb_pci.c,v 1.1 2015/03/05 17:50:41 riastradh Exp $	*/
+/*	$NetBSD: drmfb_pci.c,v 1.2 2015/03/05 17:56:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drmfb_pci.c,v 1.1 2015/03/05 17:50:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drmfb_pci.c,v 1.2 2015/03/05 17:56:39 riastradh Exp $");
+
+#ifdef _KERNEL_OPT
+#include "vga.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -45,6 +49,18 @@ __KERNEL_RCSID(0, "$NetBSD: drmfb_pci.c,v 1.1 2015/03/05 17:50:41 riastradh Exp 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/wsdisplay_pci.h>
+
+#if NVGA > 0
+/*
+ * XXX All we really need is vga_is_console from vgavar.h, but the
+ * header files are missing their own dependencies, so we need to
+ * explicitly drag in the other crap.
+ */
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
+#include <dev/ic/vgareg.h>
+#include <dev/ic/vgavar.h>
+#endif
 
 #include <drm/drmP.h>
 #include <drm/drm_fb_helper.h>
@@ -131,4 +147,15 @@ drmfb_pci_ioctl(struct drmfb_softc *sc, unsigned long cmd, void *data,
 	default:
 		return EPASSTHROUGH;
 	}
+}
+
+bool
+drmfb_pci_is_vga_console(struct drm_device *dev)
+{
+
+#if NVGA > 0
+	return vga_is_console(dev->pdev->pd_pa.pa_iot, -1);
+#else
+	return false;
+#endif
 }
