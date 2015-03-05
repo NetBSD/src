@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.31 2015/02/28 05:36:47 snj Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.32 2015/03/05 22:26:53 riz Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -4375,4 +4375,16 @@ usr.bin/gzip/gzip.c				1.107
 
 	do not use directory paths present in gzip files with the -N flag.
 	[mrg, ticket #1261]
+
+sys/dev/ic/tulip.c				1.185
+
+	Fix a race condition in interface detach.
+	[nakayama, ticket #1262]
+
+distrib/sets/lists/base/mi			1.1035
+distrib/sets/lists/text/mi			1.43
+
+	Move mandoc and makemandb to the base set, making it possible to read
+	man pages on a system that doesn't have the text set.  Fixes PR 49230.
+	[snj, ticket #1263]
 
