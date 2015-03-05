@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.13 2015/03/04 23:52:54 jmcneill Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.14 2015/03/05 23:44:30 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.13 2015/03/04 23:52:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.14 2015/03/05 23:44:30 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -503,6 +503,10 @@ amlogic_device_register(device_t self, void *aux)
 		struct mainbus_attach_args * const mb = aux;
 		mb->mb_iot = &amlogic_bs_tag;
 		return;
+	}
+
+	if (device_is_a(self, "cpu") && device_unit(self) == 0) {
+		amlogic_cpufreq_init();
 	}
 
 	/*
