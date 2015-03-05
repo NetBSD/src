@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.10 2015/02/01 13:09:15 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.11 2015/03/05 08:34:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.10 2015/02/01 13:09:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.11 2015/03/05 08:34:47 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -222,6 +222,12 @@ usbd_open_pipe_intr(usbd_interface_handle iface, uint8_t address,
 		err = USBD_NOMEM;
 		goto bad1;
 	}
+	void *buf = usbd_alloc_buffer(xfer, len);
+	if (buf == NULL) {
+		err = ENOMEM;
+		goto bad2;
+	}
+
 	usbd_setup_xfer(xfer, ipipe, priv, buffer, len, flags,
 	    USBD_NO_TIMEOUT, cb);
 	ipipe->up_intrxfer = xfer;
@@ -229,12 +235,13 @@ usbd_open_pipe_intr(usbd_interface_handle iface, uint8_t address,
 	err = usbd_transfer(xfer);
 	*pipe = ipipe;
 	if (err != USBD_IN_PROGRESS)
-		goto bad2;
+		goto bad3;
 	return USBD_NORMAL_COMPLETION;
 
- bad2:
+ bad3:
 	ipipe->up_intrxfer = NULL;
 	ipipe->up_repeat = 0;
+ bad2:
 	usbd_free_xfer(xfer);
  bad1:
 	usbd_close_pipe(ipipe);
@@ -298,31 +305,13 @@ usbd_transfer(usbd_xfer_handle xfer)
 		return USBD_CANCELLED;
 	}
 
-	struct usbd_bus *bus = pipe->up_dev->ud_bus;
+	KASSERT(xfer->ux_length == 0 || xfer->ux_buf != NULL);
 
 	size = xfer->ux_length;
 	flags = xfer->ux_flags;
 
-	/*
-	 * isoc transfers are always size == 0, whereas other transfers can
-	 * require a URQ_AUTO_BUFFER buffer.
-	 *
-	 * URQ_AUTO_BUFFER will be removed at some point, i.e. the transfer
-	 * should provide the buffer.
-	 */
-	if (size != 0) {
-		if (xfer->ux_buf == NULL) {
-			xfer->ux_buf = usbd_alloc_buffer(xfer, size);
-			if (xfer->ux_buf == NULL)
-				return USBD_NOMEM;
+	struct usbd_bus *bus = pipe->up_dev->ud_bus;
 
-#ifdef DIAGNOSTIC
-			if (xfer->ux_rqflags & URQ_AUTO_BUFFER)
-				printf("usbd_transfer: has old buffer!\n");
-#endif
-			xfer->ux_rqflags |= URQ_AUTO_BUFFER;
-		}
-	}
 	if (bus->ub_usedma) {
 		/*
 		 * Copy data if not using the xfer buffer.  isoc transfers
@@ -340,14 +329,6 @@ usbd_transfer(usbd_xfer_handle xfer)
 	/* xfer is not valid after the transfer method unless synchronous */
 	err = pipe->up_methods->upm_transfer(xfer);
 	USBHIST_LOG(usbdebug, "<- done transfer %p, err = %d", xfer, err, 0, 0);
-
-	if (err != USBD_IN_PROGRESS && err) {
-		/* The transfer has not been queued, so free buffer. */
-		if (xfer->ux_rqflags & URQ_AUTO_BUFFER) {
-			usbd_free_buffer(xfer);
-			xfer->ux_rqflags &= ~URQ_AUTO_BUFFER;
-		}
-	}
 
 	if (!(flags & USBD_SYNCHRONOUS)) {
 		USBHIST_LOG(usbdebug, "<- done xfer %p, not sync", xfer, 0, 0,
@@ -405,7 +386,6 @@ usbd_alloc_buffer(usbd_xfer_handle xfer, uint32_t size)
 
 	KASSERT(xfer->ux_buf == NULL);
 	KASSERT(size != 0);
-	KASSERT(!(xfer->ux_rqflags & URQ_AUTO_BUFFER));
 
 	xfer->ux_bufsize = 0;
 #if NUSB_DMA > 0
@@ -443,7 +423,6 @@ usbd_free_buffer(usbd_xfer_handle xfer)
 	void *buf = xfer->ux_buf;
 	uint32_t size = xfer->ux_bufsize;
 
-	xfer->ux_rqflags &= ~URQ_AUTO_BUFFER;
 	xfer->ux_buf = NULL;
 	xfer->ux_bufsize = 0;
 
@@ -907,14 +886,6 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 		memcpy(xfer->ux_buffer, xfer->ux_buf, xfer->ux_actlen);
 	}
 
-	/* XXX remove at some point */
-	/* if we allocated the buffer in usbd_transfer() we free it here. */
-	if (xfer->ux_rqflags & URQ_AUTO_BUFFER) {
-		if (!repeat) {
-			usbd_free_buffer(xfer);
-			xfer->ux_rqflags &= ~URQ_AUTO_BUFFER;
-		}
-	}
 
 	if (!repeat) {
 		/* Remove request from queue. */
@@ -1106,6 +1077,16 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 	xfer = usbd_alloc_xfer(dev);
 	if (xfer == NULL)
 		return USBD_NOMEM;
+
+	if (UGETW(req->wLength) != 0) {
+		void *buf = usbd_alloc_buffer(xfer, UGETW(req->wLength));
+		if (buf == NULL) {
+			err = ENOMEM;
+			goto bad;
+		}
+	}
+
+
 	usbd_setup_default_xfer(xfer, dev, 0, timeout, req,
 				data, UGETW(req->wLength), flags, 0);
 	xfer->ux_pipe = pipe;
