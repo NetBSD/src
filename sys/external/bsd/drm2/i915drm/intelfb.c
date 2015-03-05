@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.c,v 1.11 2015/03/05 17:50:41 riastradh Exp $	*/
+/*	$NetBSD: intelfb.c,v 1.12 2015/03/05 17:56:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,27 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.11 2015/03/05 17:50:41 riastradh Exp $");
-
-#ifdef _KERNEL_OPT
-#include "vga.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.12 2015/03/05 17:56:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
 #include <sys/device.h>
-
-#if NVGA > 0
-/*
- * XXX All we really need is vga_is_console from vgavar.h, but the
- * header files are missing their own dependencies, so we need to
- * explicitly drag in the other crap.
- */
-#include <dev/ic/mc6845reg.h>
-#include <dev/ic/pcdisplayvar.h>
-#include <dev/ic/vgareg.h>
-#include <dev/ic/vgavar.h>
-#endif
 
 #include <drm/drmP.h>
 #include <drm/drmfb.h>
@@ -66,7 +50,6 @@ static int	intelfb_detach(device_t, int);
 
 static void	intelfb_attach_task(struct i915drmkms_task *);
 
-static bool	intel_is_vga_console(struct drm_device *);
 static bool	intelfb_shutdown(device_t, int);
 
 static paddr_t	intelfb_drmfb_mmapfb(struct drmfb_softc *, off_t, int);
@@ -86,7 +69,7 @@ static const struct drmfb_params intelfb_drmfb_params = {
 	.dp_mmapfb = intelfb_drmfb_mmapfb,
 	.dp_mmap = drmfb_pci_mmap,
 	.dp_ioctl = drmfb_pci_ioctl,
-	.dp_is_vga_console = intel_is_vga_console,
+	.dp_is_vga_console = drmfb_pci_is_vga_console,
 	.dp_disable_vga = i915_disable_vga,
 };
 
@@ -202,17 +185,6 @@ intelfb_attach_task(struct i915drmkms_task *task)
 		    "failed to register shutdown handler\n");
 
 	sc->sc_attached = true;
-}
-
-static bool
-intel_is_vga_console(struct drm_device *dev)
-{
-
-#if NVGA > 0
-	return vga_is_console(dev->pdev->pd_pa.pa_iot, -1);
-#else
-	return false;
-#endif
 }
 
 static bool
