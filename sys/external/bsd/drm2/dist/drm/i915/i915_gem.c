@@ -379,7 +379,10 @@ i915_gem_object_attach_phys(struct drm_i915_gem_object *obj,
 		memcpy(vaddr, src, PAGE_SIZE);
 		kunmap_atomic(src);
 
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+		uvm_obj_unwirepages(obj->base.gemo_shm_uao, i*PAGE_SIZE,
+		    (i + 1)*PAGE_SIZE);
+#else
 		mark_page_accessed(page);
 		page_cache_release(page);
 #endif
