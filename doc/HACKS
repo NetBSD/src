@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.154 2014/12/22 21:20:11 dennis Exp $
+# $NetBSD: HACKS,v 1.155 2015/03/05 10:21:02 skrll Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -952,7 +952,7 @@ descr
 	This applies only if RPCGEN_CPP is not set and /usr/bin/cpp is not executable.
 kcah
 
-port	hp700
+port	hppa
 
 	hack	compiler error with gcc 4.5.x
 	cdate	Tue Jul 23 07:42:28 BST 2013
@@ -960,6 +960,17 @@ port	hp700
 	file	src/sys/lib/libkern/Makefile.libkern: 1.26
 	descr
 		workaround for unanalysed codegen bug affecting md5c.c.
+	kcah
+
+	hack	gdb vs _rtld_debug_state problem
+	cdate	Thu Mar  5 09:49:53 UTC 2015
+	who	skrll
+	file	src/libexec/ld.elf_so/rtld.c: 1.175
+	descr
+		workaround for problem where gdb misses the breakpoint on
+		_rtld_debug_state when the function is only the
+		bv,n %r0(%rp) instruction - the nullify seems to
+		confuse something
 	kcah
 
 port	mips64*
