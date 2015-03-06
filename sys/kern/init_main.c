@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.461 2014/11/27 14:38:09 uebayasi Exp $	*/
+/*	$NetBSD: init_main.c,v 1.462 2015/03/06 09:28:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.461 2014/11/27 14:38:09 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.462 2015/03/06 09:28:15 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -711,6 +711,9 @@ main(void)
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
 	    uvm_aiodone_worker, NULL, PRI_VM, IPL_NONE, WQ_MPSAFE))
 		panic("fork aiodoned");
+
+	/* Wait for final configure threads to complete. */
+	config_finalize_mountroot();
 
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!
