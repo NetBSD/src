@@ -1,4 +1,4 @@
-/*	$NetBSD: scanopt.c,v 1.4 2013/10/20 03:13:44 christos Exp $	*/
+/*	$NetBSD: scanopt.c,v 1.4.4.1 2015/03/06 20:49:11 snj Exp $	*/
 
 /* flex - tool to generate fast lexical analyzers */
 
@@ -32,8 +32,9 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-
 #include "flexdef.h"
+__RCSID("$NetBSD: scanopt.c,v 1.4.4.1 2015/03/06 20:49:11 snj Exp $");
+
 #include "scanopt.h"
 
 

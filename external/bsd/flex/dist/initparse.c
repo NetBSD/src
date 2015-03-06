@@ -1,3 +1,8 @@
+/*	$NetBSD: initparse.c,v 1.3.8.1 2015/03/06 20:49:11 snj Exp $	*/
+
+#include "flexdef.h"
+__RCSID("$NetBSD: initparse.c,v 1.3.8.1 2015/03/06 20:49:11 snj Exp $");
+
 #ifndef lint
 static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 #endif
@@ -52,7 +57,6 @@ static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
 
-#include "flexdef.h"
 #include "tables.h"
 
 int pat, scnum, eps, headcnt, trailcnt, lastchar, i, rulelen;
