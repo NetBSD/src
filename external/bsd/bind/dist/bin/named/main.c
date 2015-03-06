@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2015/01/25 15:51:53 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2015/03/06 00:44:04 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -283,12 +283,12 @@ library_unexpected_error(const char *file, int line, const char *format,
 	 */
 
 	if (ns_g_lctx != NULL) {
-		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
-			      NS_LOGMODULE_MAIN, ISC_LOG_ERROR,
-			      "%s:%d: unexpected error:", file, line);
+		char fmt[2048];
+		snprintf(fmt, sizeof(fmt),
+		    "%s:%d: unexpected error: %s", file, line, format);
 		isc_log_vwrite(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
 			       NS_LOGMODULE_MAIN, ISC_LOG_ERROR,
-			       format, args);
+			       fmt, args);
 	} else {
 		fprintf(stderr, "%s:%d: fatal error: ", file, line);
 		vfprintf(stderr, format, args);
