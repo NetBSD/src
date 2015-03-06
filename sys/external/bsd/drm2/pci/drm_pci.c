@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.10 2015/03/06 01:24:24 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.11 2015/03/06 01:43:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.10 2015/03/06 01:24:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.11 2015/03/06 01:43:07 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -111,6 +111,7 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 	}
 
 	dev->pdev = pdev;
+	pdev->pd_drm_dev = dev;	/* XXX Nouveau kludge.  */
 
 	/* XXX Set the power state to D0?  */
 
