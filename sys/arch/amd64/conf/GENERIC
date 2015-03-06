@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.408 2015/02/13 18:57:47 nonaka Exp $
+# $NetBSD: GENERIC,v 1.409 2015/03/06 02:55:11 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.408 $"
+#ident 		"GENERIC-$Revision: 1.409 $"
 
 maxusers	64		# estimated number of users
 
@@ -415,8 +415,8 @@ intelfb*        at intelfbbus?
 radeon*         at pci? dev ? function ?
 radeondrmkmsfb* at radeonfbbus?
 
-#nouveau*       at pci? dev ? function ?
-#nouveaufb*     at nouveaufbbus
+#nouveau* 	at pci? dev ? function ?
+#nouveaufb* 	at nouveaufbbus?
 
 # Cryptographic Devices
 
