@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.2 2015/03/06 01:43:07 riastradh Exp $	*/
+/*	$NetBSD: nouveau_vga.c,v 1.1 2015/03/06 01:43:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,21 +29,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_LINUX_REBOOT_H_
-#define	_LINUX_REBOOT_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nouveau_vga.c,v 1.1 2015/03/06 01:43:07 riastradh Exp $");
 
-#include <sys/types.h>
-#include <sys/reboot.h>
+#include "nouveau_vga.h"
 
-/* XXX Implement this by posting a CRITICAL-OVER envsys event?  */
-static inline int
-orderly_poweroff(bool force __unused)
+void
+nouveau_vga_init(struct nouveau_drm *dev __unused)
 {
-
-	cpu_reboot(RB_POWERDOWN, NULL);
-
-	return 0;
 }
 
+void
+nouveau_vga_fini(struct nouveau_drm *dev __unused)
+{
+}
 
-#endif	/* _LINUX_REBOOT_H_ */
+void
+nouveau_vga_lastclose(struct drm_device *dev __unused)
+{
+}
