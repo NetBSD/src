@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.3.2.1 2015/03/06 21:39:10 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.3 2014/07/16 20:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.3.2.1 2015/03/06 21:39:10 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/xcall.h>
@@ -104,12 +104,6 @@ drm_md_clflush_finegrained_p(void)
 }
 
 static void
-drm_x86_clflush_cpu(void)
-{
-	asm volatile ("wbinvd");
-}
-
-static void
 drm_x86_clflush(const void *vaddr)
 {
 	asm volatile ("clflush %0" : : "m" (*(const char *)vaddr));
@@ -125,7 +119,7 @@ drm_x86_clflush_size(void)
 static void
 drm_x86_clflush_xc(void *arg0 __unused, void *arg1 __unused)
 {
-	drm_x86_clflush_cpu();
+	wbinvd();
 }
 
 static void
@@ -146,15 +140,20 @@ drm_md_clflush_page(struct page *page)
 
 static void
 drm_md_clflush_virt_range(const void *vaddr, size_t nbytes)
-
 {
-	const char *const start = vaddr, *const end = (start + nbytes);
+	const unsigned clflush_size = drm_x86_clflush_size();
+	const vaddr_t va = (vaddr_t)vaddr;
+	const char *const start = (const void *)rounddown(va, clflush_size);
+	const char *const end = (const void *)roundup(va + nbytes,
+	    clflush_size);
 	const char *p;
-	const unsigned int clflush_size = drm_x86_clflush_size();
 
+	/* Support for CLFLUSH implies support for MFENCE.  */
 	KASSERT(drm_md_clflush_finegrained_p());
+	x86_mfence();
 	for (p = start; p < end; p += clflush_size)
 		drm_x86_clflush(p);
+	x86_mfence();
 }
 
 #endif	/* defined(__i386__) || defined(__x86_64__) */

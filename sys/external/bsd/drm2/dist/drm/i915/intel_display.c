@@ -3131,9 +3131,6 @@ static void intel_crtc_wait_for_pending_flips(struct drm_crtc *crtc)
 {
 	struct drm_device *dev = crtc->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
-#ifdef __NetBSD__
-	int ret = 0;
-#endif
 
 	if (crtc->primary->fb == NULL)
 		return;
@@ -3141,16 +3138,16 @@ static void intel_crtc_wait_for_pending_flips(struct drm_crtc *crtc)
 #ifdef __NetBSD__
 	if (cold) {
 		unsigned timo = 1000;
-		ret = 0;
-		while (!intel_crtc_has_pending_flip(crtc)) {
-			if (timo-- == 0) {
-				ret = -ETIMEDOUT;
+		while (intel_crtc_has_pending_flip(crtc)) {
+			if (timo-- == 0)
+				/* Give up.  */
 				break;
-			}
 			DELAY(10);
 		}
 	} else {
 		unsigned long flags;
+		int ret;
+
 		spin_lock_irqsave(&dev_priv->pending_flip_lock, flags);
 		WARN_ON(DRM_SPIN_WAITERS_P(&dev_priv->pending_flip_queue,
 			&dev_priv->pending_flip_lock));

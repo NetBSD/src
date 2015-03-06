@@ -1,4 +1,4 @@
-/*	$NetBSD: io-mapping.h,v 1.2.8.2 2014/11/10 19:45:53 martin Exp $	*/
+/*	$NetBSD: io-mapping.h,v 1.2.8.3 2015/03/06 21:39:10 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include <sys/bus.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
+#include <sys/mman.h>
 
 #include <uvm/uvm_extern.h>
 

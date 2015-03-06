@@ -27,7 +27,14 @@
 #include <linux/kref.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>
+#include <linux/math64.h>
+#include <linux/io-mapping.h>
+#include <linux/jiffies.h>
+#include <linux/errno.h>
+#include <linux/workqueue.h>
 
+#include <asm/byteorder.h>
+#include <asm/io.h>
 #include <asm/unaligned.h>
 
 #ifndef __NetBSD__		/* XXX ioread */

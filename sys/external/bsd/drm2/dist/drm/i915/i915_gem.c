@@ -379,7 +379,11 @@ i915_gem_object_attach_phys(struct drm_i915_gem_object *obj,
 		memcpy(vaddr, src, PAGE_SIZE);
 		kunmap_atomic(src);
 
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+		/* XXX mark page accessed */
+		uvm_obj_unwirepages(obj->base.gemo_shm_uao, i*PAGE_SIZE,
+		    (i + 1)*PAGE_SIZE);
+#else
 		mark_page_accessed(page);
 		page_cache_release(page);
 #endif
@@ -1409,8 +1413,8 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 	nanotime(&before);
 	spin_lock(&dev_priv->irq_lock);
 #define	EXIT_COND							      \
-	(((reset_counter != atomic_read(&dev_priv->gpu_error.reset_counter))  \
-	    ? wedged = true : false) ||					      \
+	((wedged = (reset_counter !=					      \
+		atomic_read(&dev_priv->gpu_error.reset_counter))) ||	      \
 	    i915_seqno_passed(ring->get_seqno(ring, false),		      \
 		seqno))
 
@@ -1427,6 +1431,12 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 		else
 			DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, &ring->irq_queue,
 			    &dev_priv->irq_lock, ticks, EXIT_COND);
+		if (ret < 0)	/* Failure: return negative error as is.  */
+			;
+		else if (ret == 0) /* Timed out: return -ETIME.  */
+			ret = -ETIME;
+		else		/* Succeeded (ret > 0): return 0.  */
+			ret = 0;
 	} else {
 		if (interruptible)
 			DRM_SPIN_WAIT_UNTIL(ret, &ring->irq_queue,
@@ -1434,6 +1444,7 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 		else
 			DRM_SPIN_WAIT_NOINTR_UNTIL(ret, &ring->irq_queue,
 			    &dev_priv->irq_lock, EXIT_COND);
+		/* ret is negative on failure or zero on success.  */
 	}
 #undef	EXIT_COND
 	spin_unlock(&dev_priv->irq_lock);
@@ -1463,11 +1474,7 @@ __wait_seqno(struct intel_ring_buffer *ring, u32 seqno, unsigned reset_counter,
 		if (ret == 0)
 			ret = -EAGAIN;
 	}
-	if (ret < 0)		/* Error.  */
-		return ret;
-	if (ret == 0)		/* Seqno didn't pass.  */
-		return -ETIME;
-	return 0;		/* Seqno passed, maybe time to spare.  */
+	return ret;
 }
 #else
 static int __wait_seqno(struct intel_ring_buffer *ring, u32 seqno,
@@ -2415,6 +2422,7 @@ static void
 i915_gem_object_put_pages_gtt(struct drm_i915_gem_object *obj)
 {
 	struct drm_device *const dev = obj->base.dev;
+	struct vm_page *page;
 	int ret;
 
 	/* XXX Cargo-culted from the Linux code.  */
@@ -2431,7 +2439,15 @@ i915_gem_object_put_pages_gtt(struct drm_i915_gem_object *obj)
 	if (i915_gem_object_needs_bit17_swizzle(obj))
 		i915_gem_object_save_bit_17_swizzle(obj);
 
-	/* XXX Maintain dirty flag?  */
+	if (obj->madv == I915_MADV_DONTNEED)
+		obj->dirty = 0;
+
+	if (obj->dirty) {
+		TAILQ_FOREACH(page, &obj->igo_pageq, pageq.queue) {
+			page->flags &= ~PG_CLEAN;
+			/* XXX mark page accessed */
+		}
+	}
 
 	bus_dmamap_destroy(dev->dmat, obj->igo_dmamap);
 	bus_dmamem_unwire_uvm_object(dev->dmat, obj->base.gemo_shm_uao, 0,
@@ -2869,17 +2885,13 @@ i915_gem_object_move_to_inactive(struct drm_i915_gem_object *obj)
 	struct i915_vma *vma;
 
 	if ((obj->base.write_domain & I915_GEM_DOMAIN_GTT) != 0) {
-#if 0
 		printk(KERN_ERR "%s: %p 0x%x flushing gtt\n", __func__, obj,
 			obj->base.write_domain);
-#endif
 		i915_gem_object_flush_gtt_write_domain(obj);
 	}
 	if ((obj->base.write_domain & I915_GEM_DOMAIN_CPU) != 0) {
-#if 0
 		printk(KERN_ERR "%s: %p 0x%x flushing cpu\n", __func__, obj,
 			obj->base.write_domain);
-#endif
 		i915_gem_object_flush_cpu_write_domain(obj, false);
 	}
 	BUG_ON(obj->base.write_domain & ~I915_GEM_GPU_DOMAINS);

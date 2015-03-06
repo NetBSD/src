@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.3.2.1 2015/01/11 05:59:18 snj Exp $
+# $NetBSD: Makefile,v 1.3.2.2 2015/03/06 21:39:11 snj Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
 
 .PATH:	${S}/external/bsd/drm2/drm
+.PATH:	${S}/external/bsd/drm2/i2c
 .PATH:	${S}/external/bsd/drm2/pci
 .PATH:	${S}/external/bsd/drm2/dist/drm
 
@@ -24,7 +25,7 @@ SRCS+=	drm_dma.c
 SRCS+=	drm_dp_helper.c
 SRCS+=	drm_drv.c
 SRCS+=	drm_edid.c
-#SRCS+=	drm_encoder_slave.c	# XXX Rewrite for i2c.
+SRCS+=	drm_encoder_slave.c
 SRCS+=	drm_fb_helper.c		# XXX Rewrite for wsconsole.
 SRCS+=	drm_flip_work.c
 SRCS+=	drm_fops.c
@@ -55,6 +56,7 @@ SRCS+=	drm_vma_manager.c
 # NetBSD additions.
 SRCS+=	drm_gem_vm.c
 SRCS+=	drm_module.c
+SRCS+=	drmfb.c
 
 COPTS.drm_crtc.c+=	-Wno-shadow
 COPTS.drm_crtc.c+=	-Wno-missing-field-initializers

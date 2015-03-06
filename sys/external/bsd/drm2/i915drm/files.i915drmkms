@@ -1,10 +1,10 @@
-#	$NetBSD: files.i915drmkms,v 1.5.2.3 2015/01/11 05:59:17 snj Exp $
+#	$NetBSD: files.i915drmkms,v 1.5.2.4 2015/03/06 21:39:10 snj Exp $
 
 define	intelfbbus	{ }
-device	i915drmkms: drmkms, drmkms_pci, intelfbbus
+device	i915drmkms: drmkms, drmkms_pci, intelfbbus, agp_i810
 attach	i915drmkms at pci
 
-device	intelfb: intelfbbus, genfb, wsemuldisplaydev
+device	intelfb: intelfbbus, drmfb, drmfb_pci, wsemuldisplaydev
 attach	intelfb at intelfbbus
 
 makeoptions	i915drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/i915"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms_pci,v 1.4 2014/08/06 13:54:40 riastradh Exp $
+#	$NetBSD: files.drmkms_pci,v 1.4.2.1 2015/03/06 21:39:11 snj Exp $
 
 define	drmkms_pci: drmkms
 
@@ -9,6 +9,9 @@ makeoptions	drmkms_pci	CPPFLAGS+="-DCONFIG_AGP"
 file	external/bsd/drm2/dist/drm/drm_agpsupport.c	drmkms_pci
 file	external/bsd/drm2/pci/drm_pci.c			drmkms_pci
 file	external/bsd/drm2/pci/drm_pci_module.c		drmkms_pci
+
+define	drmfb_pci: drmfb, drmkms_pci
+file	external/bsd/drm2/pci/drmfb_pci.c		drmfb_pci
 
 include "external/bsd/drm2/i915drm/files.i915drmkms"
 include "external/bsd/drm2/radeon/files.radeon"

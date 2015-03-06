@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.9.2.2 2015/01/11 05:59:17 snj Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.9.2.3 2015/03/06 21:39:10 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.9.2.2 2015/01/11 05:59:17 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.9.2.3 2015/03/06 21:39:10 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -642,17 +642,26 @@ drm_ioctl(struct file *fp, unsigned long cmd, void *data)
 	if ((ioctl == NULL) || (ioctl->func == NULL))
 		return EINVAL;
 
+	/* XXX Synchronize with drm_ioctl_permit in upstream drm_drv.c.  */
 	if (ISSET(ioctl->flags, DRM_ROOT_ONLY) && !DRM_SUSER())
 		return EACCES;
 
-	if (ISSET(ioctl->flags, DRM_AUTH) && !file->authenticated)
+	if (ISSET(ioctl->flags, DRM_AUTH) &&
+	    (file->minor->type != DRM_MINOR_RENDER) &&
+	    !file->authenticated)
 		return EACCES;
 
-	if (ISSET(ioctl->flags, DRM_MASTER) && (file->master == NULL))
+	if (ISSET(ioctl->flags, DRM_MASTER) &&
+	    (file->master == NULL) &&
+	    (file->minor->type != DRM_MINOR_CONTROL))
 		return EACCES;
 
 	if (!ISSET(ioctl->flags, DRM_CONTROL_ALLOW) &&
 	    (file->minor->type == DRM_MINOR_CONTROL))
+		return EACCES;
+
+	if (!ISSET(ioctl->flags, DRM_RENDER_ALLOW) &&
+	    (file->minor->type == DRM_MINOR_RENDER))
 		return EACCES;
 
 	if (!ISSET(ioctl->flags, DRM_UNLOCKED))

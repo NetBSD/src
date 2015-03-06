@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.6.2.1 2015/01/11 05:59:17 snj Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.6.2.2 2015/03/06 21:39:11 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.6.2.1 2015/01/11 05:59:17 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.6.2.2 2015/03/06 21:39:11 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -94,6 +94,12 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 	unsigned int unit;
 	int ret;
 
+	/* Ensure the drm agp hooks are installed.  */
+	/* XXX errno NetBSD->Linux */
+	ret = -drmkms_pci_agp_guarantee_initialized();
+	if (ret)
+		goto fail0;
+
 	/* Initialize the Linux PCI device descriptor.  */
 	linux_pci_dev_init(pdev, self, pa, 0);
 
@@ -105,6 +111,7 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 	}
 
 	dev->pdev = pdev;
+	pdev->pd_drm_dev = dev;	/* XXX Nouveau kludge.  */
 
 	/* XXX Set the power state to D0?  */
 
@@ -211,21 +218,12 @@ drm_pci_agp_destroy(struct drm_device *dev)
 static int
 drm_pci_get_irq(struct drm_device *dev)
 {
-	pci_intr_handle_t ih_pih;
-	int ih_int;
 
 	/*
-	 * This is a compile-time assertion that the types match.  If
-	 * this fails, we have to change a bunch of drm code that uses
-	 * int for intr handles.
+	 * Caller expects a nonzero int, and doesn't really use it for
+	 * anything, so no need to pci_intr_map here.
 	 */
-	KASSERT(&ih_pih != &ih_int);
-
-	if (pci_intr_map(drm_pci_attach_args(dev), &ih_pih))
-		return -1;	/* XXX Hope -1 is an invalid intr handle.  */
-
-	ih_int = ih_pih;
-	return ih_int;
+	return dev->pdev->pd_pa.pa_intrpin;
 }
 
 static int

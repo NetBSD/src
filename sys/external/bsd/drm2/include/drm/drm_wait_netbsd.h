@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.4.2.2 2015/02/27 11:23:54 martin Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.4.2.3 2015/03/06 21:39:10 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -104,6 +104,86 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 	cv_broadcast(q);
 }
 
+/*
+ * DRM_SPIN_WAIT_ON is a replacement for the legacy DRM_WAIT_ON
+ * portability macro.  It requires a spin interlock, which may require
+ * changes to the surrounding code so that the waits actually are
+ * interlocked by a spin lock.  It also polls the condition at every
+ * tick, which masks missing wakeups.  Since DRM_WAIT_ON is going away,
+ * in favour of Linux's native wait_event* API, waits in new code
+ * should be written to use the DRM_*WAIT*_UNTIL macros below.
+ *
+ * Like the legacy DRM_WAIT_ON, DRM_SPIN_WAIT_ON returns
+ *
+ * . -EBUSY if timed out (yes, -EBUSY, not -ETIMEDOUT or -EWOULDBLOCK),
+ * . -EINTR/-ERESTART if interrupted by a signal, or
+ * . 0 if the condition was true before or just after the timeout.
+ *
+ * Note that cv_timedwait* return -EWOULDBLOCK, not -EBUSY, on timeout.
+ */
+
+#define	DRM_SPIN_WAIT_ON(RET, Q, INTERLOCK, TICKS, CONDITION)	do	      \
+{									      \
+	extern int hardclock_ticks;					      \
+	const int _dswo_start = hardclock_ticks;			      \
+	const int _dswo_end = _dswo_start + (TICKS);			      \
+									      \
+	KASSERT(spin_is_locked((INTERLOCK)));				      \
+	KASSERT(!cpu_intr_p());						      \
+	KASSERT(!cpu_softintr_p());					      \
+	KASSERT(!cold);							      \
+									      \
+	for (;;) {							      \
+		if (CONDITION) {					      \
+			(RET) = 0;					      \
+			break;						      \
+		}							      \
+		const int _dswo_now = hardclock_ticks;			      \
+		if (_dswo_end < _dswo_now) {				      \
+			(RET) = -EBUSY;		/* Match Linux...  */	      \
+			break;						      \
+		}							      \
+		/* XXX errno NetBSD->Linux */				      \
+		(RET) = -cv_timedwait_sig((Q), &(INTERLOCK)->sl_lock, 1);     \
+		if (RET) {						      \
+			if ((RET) == -EWOULDBLOCK)			      \
+				(RET) = (CONDITION) ? 0 : -EBUSY;	      \
+			break;						      \
+		}							      \
+	}								      \
+} while (0)
+
+/*
+ * The DRM_*WAIT*_UNTIL macros are replacements for the Linux
+ * wait_event* macros.  Like DRM_SPIN_WAIT_ON, they add an interlock,
+ * and so may require some changes to the surrounding code.  They have
+ * a different return value convention from DRM_SPIN_WAIT_ON and a
+ * different return value convention from cv_*wait*.
+ *
+ * The untimed DRM_*WAIT*_UNTIL macros return
+ *
+ * . -EINTR/-ERESTART if interrupted by a signal, or
+ * . zero if the condition evaluated
+ *
+ * The timed DRM_*TIMED_WAIT*_UNTIL macros return
+ *
+ * . -EINTR/-ERESTART if interrupted by a signal,
+ * . 0 if the condition was false after the timeout,
+ * . 1 if the condition was true just after the timeout, or
+ * . the number of ticks remaining if the condition was true before the
+ * timeout.
+ *
+ * Contrast DRM_SPIN_WAIT_ON which returns -EINTR/-ERESTART on signal,
+ * -EBUSY on timeout, and zero on success; and cv_*wait*, which return
+ * -EINTR/-ERESTART on signal, -EWOULDBLOCK on timeout, and zero on
+ * success.
+ *
+ * XXX In retrospect, giving the timed and untimed macros a different
+ * return convention from one another to match Linux may have been a
+ * bad idea.  All of this inconsistent timeout return convention logic
+ * has been a consistent source of bugs.
+ */
+
 #define	_DRM_WAIT_UNTIL(RET, WAIT, Q, INTERLOCK, CONDITION) do		\
 {									\
 	KASSERT(mutex_is_locked((INTERLOCK)));				\
@@ -129,19 +209,6 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
 #define	DRM_WAIT_UNTIL(RET, Q, I, C)				\
 	_DRM_WAIT_UNTIL(RET, cv_wait_sig, Q, I, C)
 
-/*
- * Timed wait.  Return:
- *
- * - 0 if condition is false after timeout,
- * - 1 if condition is true after timeout or one tick before timeout,
- * - number of ticks left if condition evaluated to true before timeout, or
- * - error if failure (e.g., interrupted).
- *
- * XXX Comments in Linux say it returns -ERESTARTSYS if interrupted.
- * What if by a signal without SA_RESTART?  Shouldn't it be -EINTR
- * then?  I'm going to leave it as what cv_timedwait returned, which is
- * ERESTART for signals with SA_RESTART and EINTR otherwise.
- */
 #define	_DRM_TIMED_WAIT_UNTIL(RET, WAIT, Q, INTERLOCK, TICKS, CONDITION) do \
 {									\
 	extern int hardclock_ticks;					\
