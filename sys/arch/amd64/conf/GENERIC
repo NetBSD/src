@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.409 2015/03/06 02:55:11 riastradh Exp $
+# $NetBSD: GENERIC,v 1.410 2015/03/06 15:09:50 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.409 $"
+#ident 		"GENERIC-$Revision: 1.410 $"
 
 maxusers	64		# estimated number of users
 
@@ -409,10 +409,10 @@ sysbeep0	at pcppi?
 #viadrm*	at drm?		# VIA DRM driver
 
 # DRMKMS drivers
-i915drmkms*     at pci? dev ? function ?
-intelfb*        at intelfbbus?
+i915drmkms* 	at pci? dev ? function ?
+intelfb* 	at intelfbbus?
 
-radeon*         at pci? dev ? function ?
+radeon* 	at pci? dev ? function ?
 radeondrmkmsfb* at radeonfbbus?
 
 #nouveau* 	at pci? dev ? function ?
