@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.1 2015/03/06 01:43:07 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.2 2015/03/06 15:08:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.1 2015/03/06 01:43:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.2 2015/03/06 15:08:02 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -113,7 +113,6 @@ nouveau_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_task_state = NOUVEAU_TASK_ATTACH;
 	SIMPLEQ_INIT(&sc->sc_task_u.attach);
-
 
 	/* XXX errno Linux->NetBSD */
 	error = -drm_pci_attach(self, pa, &sc->sc_pci_dev, nouveau_drm_driver,
