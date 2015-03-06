@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.146 2014/11/22 11:04:57 mlelstv Exp $ */
+/* $NetBSD: device.h,v 1.147 2015/03/06 09:28:15 mrg Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -479,6 +479,7 @@ void	config_create_mountrootthreads(void);
 
 int	config_finalize_register(device_t, int (*)(device_t));
 void	config_finalize(void);
+void	config_finalize_mountroot(void);
 
 void	config_twiddle_init(void);
 void	config_twiddle_fn(void *);
