@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.4 2015/03/04 18:19:27 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.5 2015/03/06 12:06:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.4 2015/03/04 18:19:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.5 2015/03/06 12:06:35 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/xcall.h>
@@ -154,11 +154,12 @@ drm_md_clflush_virt_range(const void *vaddr, size_t nbytes)
 	    clflush_size);
 	const char *p;
 
+	/* Support for CLFLUSH implies support for MFENCE.  */
 	KASSERT(drm_md_clflush_finegrained_p());
-	membar_sync();
+	x86_mfence();
 	for (p = start; p < end; p += clflush_size)
 		drm_x86_clflush(p);
-	membar_sync();
+	x86_mfence();
 }
 
 #endif	/* defined(__i386__) || defined(__x86_64__) */
