@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.26 2015/03/06 02:55:11 riastradh Exp $
+# $NetBSD: ALL,v 1.27 2015/03/06 15:09:50 riastradh Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.26 $"
+#ident 		"ALL-$Revision: 1.27 $"
 
 maxusers	64		# estimated number of users
 
@@ -526,10 +526,10 @@ wsdisplay*	at wsemuldisplaydev?
 #viadrm* 	at drm?		# VIA UniChrome DRM driver
 
 # DRMKMS drivers
-i915drmkms*     at pci? dev ? function ?
-intelfb*        at intelfbbus?
+i915drmkms* 	at pci? dev ? function ?
+intelfb* 	at intelfbbus?
 
-radeon*         at pci? dev ? function ?
+radeon* 	at pci? dev ? function ?
 radeondrmkmsfb* at radeonfbbus?
 
 nouveau* 	at pci? dev ? function ?
