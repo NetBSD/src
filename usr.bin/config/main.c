@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.54 2014/08/09 12:40:14 bad Exp $	*/
+/*	$NetBSD: main.c,v 1.54.2.1 2015/03/06 21:00:23 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,9 @@
 #include "nbtool_config.h"
 #endif
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: main.c,v 1.54.2.1 2015/03/06 21:00:23 snj Exp $");
+
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
 #define	COPYRIGHT(x)	__COPYRIGHT(x)
@@ -86,6 +89,7 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 int	vflag;				/* verbose output */
 int	Pflag;				/* pack locators */
 int	Lflag;				/* lint config generation */
+int	Mflag;				/* modular build */
 int	handling_cmdlineopts;		/* currently processing -D/-U options */
 
 int	yyparse(void);
@@ -93,6 +97,7 @@ int	yyparse(void);
 #ifndef MAKE_BOOTSTRAP
 extern int yydebug;
 #endif
+int	dflag;
 
 static struct dlhash *obsopttab;
 static struct hashtab *mkopttab;
@@ -148,6 +153,7 @@ static	int	extract_config(const char *, const char *, int);
 int badfilename(const char *fname);
 
 const char *progname;
+extern const char *yyfile;
 
 int
 main(int argc, char **argv)
@@ -160,14 +166,19 @@ main(int argc, char **argv)
 
 	pflag = 0;
 	xflag = 0;
-	while ((ch = getopt(argc, argv, "D:LPU:dgpvb:s:x")) != -1) {
+	while ((ch = getopt(argc, argv, "D:LMPU:dgpvb:s:x")) != -1) {
 		switch (ch) {
 
-#ifndef MAKE_BOOTSTRAP
 		case 'd':
+#ifndef MAKE_BOOTSTRAP
 			yydebug = 1;
-			break;
 #endif
+			dflag++;
+			break;
+
+		case 'M':
+			Mflag = 1;
+			break;
 
 		case 'L':
 			Lflag = 1;
@@ -281,8 +292,6 @@ main(int argc, char **argv)
 	minmaxusers = 1;
 	maxmaxusers = 10000;
 	initintern();
-	initfiles();
-	initsem();
 	ident = NULL;
 	devbasetab = ht_new();
 	devroottab = ht_new();
@@ -310,6 +319,8 @@ main(int argc, char **argv)
 	nextappmkopt = &appmkoptions;
 	nextcndmkopt = &condmkoptions;
 	nextfsopt = &fsoptions;
+	initfiles();
+	initsem();
 
 	/*
 	 * Handle profiling (must do this before we try to create any
@@ -401,16 +412,19 @@ main(int argc, char **argv)
 	/*
 	 * Handle command line overrides
 	 */
+	yyfile = "handle_cmdline_makeoptions";
 	handle_cmdline_makeoptions();
 
 	/*
 	 * Detect and properly ignore orphaned devices
 	 */
+	yyfile = "kill_orphans";
 	kill_orphans();
 
 	/*
 	 * Select devices and pseudo devices and their attributes
 	 */
+	yyfile = "fixdevis";
 	if (fixdevis())
 		stop();
 
@@ -418,33 +432,44 @@ main(int argc, char **argv)
 	 * If working on an ioconf-only config, process here and exit
 	 */
 	if (ioconfname) {
+		yyfile = "pack";
 		pack();
+		yyfile = "mkioconf";
 		mkioconf();
+		yyfile = "emitlocs";
 		emitlocs();
+		yyfile = "emitioconfh";
 		emitioconfh();
 		return 0;
 	}
 
+	yyfile = "dependattrs";
+	dependattrs();
+
 	/*
 	 * Deal with option dependencies.
 	 */
+	yyfile = "dependopts";
 	dependopts();
 
 	/*
 	 * Fix (as in `set firmly in place') files.
 	 */
+	yyfile = "fixfiles";
 	if (fixfiles())
 		stop();
 
 	/*
 	 * Fix objects and libraries.
 	 */
+	yyfile = "fixobjects";
 	if (fixobjects())
 		stop();
 
 	/*
 	 * Fix device-majors.
 	 */
+	yyfile = "fixdevsw";
 	if (fixdevsw())
 		stop();
 
@@ -468,10 +493,13 @@ main(int argc, char **argv)
 	 * Squeeze things down and finish cross-checks (STAR checks must
 	 * run after packing).
 	 */
+	yyfile = "pack";
 	pack();
+	yyfile = "badstar";
 	if (badstar())
 		stop();
 
+	yyfile = NULL;
 	/*
 	 * Ready to go.  Build all the various files.
 	 */
@@ -525,6 +553,8 @@ dependopts_one(const char *name)
 	if (fs != NULL) {
 		do_depends(fs->nv_ptr);
 	}
+
+	CFGDBG(3, "depend `%s' searched", name);
 }
 
 static void
@@ -548,6 +578,7 @@ do_depend(struct nvlist *nv)
 		 * If the dependency is an attribute, then just add
 		 * it to the selecttab.
 		 */
+		CFGDBG(3, "depend attr `%s'", nv->nv_name);
 		if ((a = ht_lookup(attrtab, nv->nv_name)) != NULL) {
 			if (a->a_iattr)
 				panic("do_depend(%s): dep `%s' is an iattr",
@@ -692,6 +723,13 @@ deffilesystem(struct nvlist *fses, struct nvlist *deps)
 			    nv->nv_name);
 
 		add_fs_dependencies(nv, deps);
+
+		/*
+		 * Implicit attribute definition for filesystem.
+		 */
+		const char *n; 
+		n = strtolower(nv->nv_name);
+		refattr(n);
 	}
 }
 
@@ -954,12 +992,14 @@ addoption(const char *name, const char *value)
 	/* make lowercase, then add to select table */
 	n = strtolower(name);
 	(void)ht_insert(selecttab, n, (void *)__UNCONST(n));
+	CFGDBG(3, "option selected `%s'", n);
 }
 
 void
 deloption(const char *name)
 {
 
+	CFGDBG(4, "deselecting opt `%s'", name);
 	if (undo_option(opttab, &options, &nextopt, name, "options"))
 		return;
 	if (undo_option(selecttab, NULL, NULL, strtolower(name), "options"))
@@ -993,6 +1033,14 @@ addfsoption(const char *name)
 
 	/* Add to select table. */
 	(void)ht_insert(selecttab, n, __UNCONST(n));
+	CFGDBG(3, "fs selected `%s'", name);
+
+	/*
+	 * Select attribute if one exists.
+	 */
+	struct attr *a;
+	if ((a = ht_lookup(attrtab, n)) != NULL)
+		selectattr(a);
 }
 
 void
@@ -1000,6 +1048,7 @@ delfsoption(const char *name)
 {
 	const char *n;
 
+	CFGDBG(4, "deselecting fs `%s'", name);
 	n = strtolower(name);
 	if (undo_option(fsopttab, &fsoptions, &nextfsopt, name, "file-system"))
 		return;
@@ -1021,6 +1070,7 @@ void
 delmkoption(const char *name)
 {
 
+	CFGDBG(4, "deselecting mkopt `%s'", name);
 	(void)undo_option(mkopttab, &mkoptions, &nextmkopt, name,
 	    "makeoptions");
 }
@@ -1097,8 +1147,10 @@ undo_option(struct hashtab *ht, struct nvlist **npp,
 			cfgwarn("%s `%s' is not defined", type, name);
 		return (1);
 	}
-	if (npp == NULL)
+	if (npp == NULL) {
+		CFGDBG(2, "opt `%s' deselected", name);
 		return (0);
+	}
 
 	for ( ; *npp != NULL; npp = &(*npp)->nv_next) {
 		if ((*npp)->nv_name != name)
@@ -1106,6 +1158,7 @@ undo_option(struct hashtab *ht, struct nvlist **npp,
 		if (next != NULL && *next == &(*npp)->nv_next)
 			*next = npp;
 		nv = (*npp)->nv_next;
+		CFGDBG(2, "opt `%s' deselected", (*npp)->nv_name);
 		nvfree(*npp);
 		*npp = nv;
 		return (0);
@@ -1501,11 +1554,11 @@ strtolower(const char *name)
 {
 	const char *n;
 	char *p, low[500];
-	unsigned char c;
+	char c;
 
 	for (n = name, p = low; (c = *n) != '\0'; n++)
-		*p++ = isupper(c) ? tolower(c) : c;
-	*p = 0;
+		*p++ = (char)(isupper((u_char)c) ? tolower((u_char)c) : c);
+	*p = '\0';
 	return (intern(low));
 }
 
@@ -1529,8 +1582,9 @@ static int
 extract_config(const char *kname, const char *cname, int cfd)
 {
 	char *ptr;
-	int found, kfd, i;
+	int found, kfd;
 	struct stat st;
+	off_t i;
 
 	found = 0;
 
@@ -1540,7 +1594,7 @@ extract_config(const char *kname, const char *cname, int cfd)
 		err(EXIT_FAILURE, "cannot open %s", kname);
 	if (fstat(kfd, &st) == -1)
 		err(EXIT_FAILURE, "cannot stat %s", kname);
-	ptr = mmap(0, st.st_size, PROT_READ, MAP_FILE | MAP_SHARED,
+	ptr = mmap(0, (size_t)st.st_size, PROT_READ, MAP_FILE | MAP_SHARED,
 	    kfd, 0);
 	if (ptr == MAP_FAILED)
 		err(EXIT_FAILURE, "cannot mmap %s", kname);

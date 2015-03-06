@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.c,v 1.14 2012/03/20 20:34:57 matt Exp $	*/
+/*	$NetBSD: lint.c,v 1.14.10.1 2015/03/06 21:00:23 snj Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -29,6 +29,9 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: lint.c,v 1.14.10.1 2015/03/06 21:00:23 snj Exp $");
 
 #include <assert.h>
 #include <stdlib.h>

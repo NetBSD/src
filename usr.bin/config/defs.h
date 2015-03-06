@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.45 2014/05/05 19:08:13 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.45.2.1 2015/03/06 21:00:23 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,7 +107,7 @@ extern const char *progname;
  * The next two lines define the current version of the config(1) binary,
  * and the minimum version of the configuration files it supports.
  */
-#define CONFIG_VERSION		20140502
+#define CONFIG_VERSION		20141030
 #define CONFIG_MINVERSION	0
 
 /*
@@ -149,6 +149,19 @@ struct defoptlist {
 	struct nvlist *dl_depends;
 };
 
+struct module {
+	const char		*m_name;
+#if 1
+	struct attrlist		*m_deps;
+#else
+	struct attrlist		*m_attrs;
+	struct modulelist	*m_deps;
+#endif
+	int			m_expanding;
+	TAILQ_HEAD(, files)	m_files;
+	int			m_weight;
+};
+
 /*
  * Attributes.  These come in three flavors: "plain", "device class,"
  * and "interface".  Plain attributes (e.g., "ether") simply serve
@@ -165,15 +178,23 @@ struct defoptlist {
  * SCSI host adapter drivers such as the SPARC "esp").
  */
 struct attr {
-	const char *a_name;		/* name of this attribute */
+	/* XXX */
+	struct module a_m;
+#define	a_name		a_m.m_name
+#define	a_deps		a_m.m_deps
+#define	a_expanding	a_m.m_expanding
+#define	a_files		a_m.m_files
+#define	a_weight	a_m.m_weight
+
+	/* "interface attribute" */
 	int	a_iattr;		/* true => allows children */
-	const char *a_devclass;		/* device class described */
 	struct	loclist *a_locs;	/* locators required */
 	int	a_loclen;		/* length of above list */
 	struct	nvlist *a_devs;		/* children */
 	struct	nvlist *a_refs;		/* parents */
-	struct	attrlist *a_deps;	/* we depend on these other attrs */
-	int	a_expanding;		/* to detect cycles in attr graph */
+
+	/* "device class" */
+	const char *a_devclass;		/* device class described */
 };
 
 /*
@@ -299,8 +320,8 @@ struct devi {
 
 	/* created during packing or ioconf.c generation */
 	short	i_collapsed;	/* set => this alias no longer needed */
-	short	i_cfindex;	/* our index in cfdata */
-	short	i_locoff;	/* offset in locators.vec */
+	u_short	i_cfindex;	/* our index in cfdata */
+	int	i_locoff;	/* offset in locators.vec */
 
 };
 /* special units */
@@ -319,10 +340,12 @@ struct filetype
 	char	fit_lastc;	/* last char from path */
 	const char *fit_path;	/* full file path */
 	const char *fit_prefix;	/* any file prefix */
+	size_t fit_len;		/* path string length */
+	int fit_suffix;		/* single char suffix */
+	struct attr *fit_attr;	/* owner attr */
+	TAILQ_ENTRY(files) fit_anext;	/* next file in attr */
 };
 /* Anything less than 0x10 is sub-type specific */
-#define FIT_NOPROLOGUE  0x10    /* Don't prepend $S/ */
-#define FIT_FORCESELECT 0x20    /* Always include this file */
 
 /*
  * Files.  Each file is either standard (always included) or optional,
@@ -350,6 +373,10 @@ struct files {
 #define fi_lastc   fi_fit.fit_lastc
 #define fi_path    fi_fit.fit_path
 #define fi_prefix  fi_fit.fit_prefix
+#define fi_suffix  fi_fit.fit_suffix
+#define fi_len     fi_fit.fit_len
+#define fi_attr    fi_fit.fit_attr
+#define fi_anext   fi_fit.fit_anext
 
 /* flags */
 #define	FI_SEL		0x01	/* selected */
@@ -476,6 +503,7 @@ struct	dlhash *defoptlint;	/* lint values for options */
 struct	nvhash *deffstab;	/* defined file systems */
 struct	dlhash *optfiletab;	/* "defopt"'d option .h files */
 struct	hashtab *attrtab;	/* attributes (locators, etc.) */
+struct	hashtab *attrdeptab;	/* attribute dependencies */
 struct	hashtab *bdevmtab;	/* block devm lookup */
 struct	hashtab *cdevmtab;	/* character devm lookup */
 
@@ -502,6 +530,7 @@ SLIST_HEAD(, prefix)	prefixes,	/* prefix stack */
 			allprefixes;	/* all prefixes used (after popped) */
 SLIST_HEAD(, prefix)	curdirs;	/* curdir stack */
 
+extern struct attr allattr;
 struct	devi **packed;		/* arrayified table for packed devi's */
 size_t	npacked;		/* size of packed table, <= ndevi */
 
@@ -521,21 +550,27 @@ void	checkfiles(void);
 int	fixfiles(void);		/* finalize */
 int	fixobjects(void);
 int	fixdevsw(void);
-void	addfile(const char *, struct condexpr *, int, const char *);
-void	addobject(const char *, struct condexpr *, int);
+void	addfile(const char *, struct condexpr *, u_char, const char *);
+void	addobject(const char *, struct condexpr *, u_char);
 int	expr_eval(struct condexpr *, int (*)(const char *, void *), void *);
 
 /* hash.c */
 struct	hashtab *ht_new(void);
 void	ht_free(struct hashtab *);
+int	ht_insrep2(struct hashtab *, const char *, const char *, void *, int);
 int	ht_insrep(struct hashtab *, const char *, void *, int);
+#define	ht_insert2(ht, nam1, nam2, val) ht_insrep2(ht, nam1, nam2, val, 0)
 #define	ht_insert(ht, nam, val) ht_insrep(ht, nam, val, 0)
 #define	ht_replace(ht, nam, val) ht_insrep(ht, nam, val, 1)
+int	ht_remove2(struct hashtab *, const char *, const char *);
 int	ht_remove(struct hashtab *, const char *);
+void	*ht_lookup2(struct hashtab *, const char *, const char *);
 void	*ht_lookup(struct hashtab *, const char *);
 void	initintern(void);
 const char *intern(const char *);
+typedef int (*ht_callback2)(const char *, const char *, void *, void *);
 typedef int (*ht_callback)(const char *, void *, void *);
+int	ht_enumerate2(struct hashtab *, ht_callback2, void *);
 int	ht_enumerate(struct hashtab *, ht_callback, void *);
 
 /* typed hash, named struct HT, whose type is string -> struct VT */
@@ -558,6 +593,7 @@ void	emit_options(void);
 void	emit_params(void);
 
 /* main.c */
+extern	int Mflag;
 void	addoption(const char *, const char *);
 void	addfsoption(const char *);
 void	addmkoption(const char *, const char *);
@@ -609,7 +645,7 @@ int	mkswap(void);
 void	pack(void);
 
 /* scan.l */
-int	currentline(void);
+u_short	currentline(void);
 int	firstfile(const char *);
 void	package(const char *);
 int	include(const char *, int, int, int);
@@ -622,6 +658,11 @@ int	onlist(struct nvlist *, void *);
 void	prefix_push(const char *);
 void	prefix_pop(void);
 char	*sourcepath(const char *);
+extern	int dflag;
+#define	CFGDBG(n, ...) \
+	do { if ((dflag) >= (n)) cfgdbg(__VA_ARGS__); } while (0)
+void	cfgdbg(const char *, ...)			/* debug info */
+     __printflike(1, 2);
 void	cfgwarn(const char *, ...)			/* immediate warns */
      __printflike(1, 2);
 void	cfgxwarn(const char *, int, const char *, ...)	/* delayed warns */

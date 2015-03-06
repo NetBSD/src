@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.8 2010/03/08 10:19:14 pooka Exp $	*/
+/*	$NetBSD: pack.c,v 1.8.24.1 2015/03/06 21:00:23 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pack.c,v 1.8.24.1 2015/03/06 21:00:23 snj Exp $");
 
 #include <sys/param.h>
 #include <stdlib.h>
@@ -137,7 +140,7 @@ packdevi(void)
 {
 	struct devi *firststar, *i, **ip, *l, *p;
 	struct devbase *d;
-	int j, m, n;
+	u_short j, m, n;
 
 	/*
 	 * Sort all the cloning units to after the non-cloning units,
