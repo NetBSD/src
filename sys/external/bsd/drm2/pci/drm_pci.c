@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.9 2015/01/01 01:15:43 mrg Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.10 2015/03/06 01:24:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.9 2015/01/01 01:15:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.10 2015/03/06 01:24:24 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -93,6 +93,12 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 	struct drm_device *dev;
 	unsigned int unit;
 	int ret;
+
+	/* Ensure the drm agp hooks are installed.  */
+	/* XXX errno NetBSD->Linux */
+	ret = -drmkms_pci_agp_guarantee_initialized();
+	if (ret)
+		goto fail0;
 
 	/* Initialize the Linux PCI device descriptor.  */
 	linux_pci_dev_init(pdev, self, pa, 0);
