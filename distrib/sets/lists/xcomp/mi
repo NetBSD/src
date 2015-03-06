@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.163 2015/03/06 11:51:26 christos Exp $
+#	 $NetBSD: mi,v 1.164 2015/03/06 12:01:20 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9359,7 +9359,6 @@
 ./usr/libdata/lint/llib-lxcb-xkb.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-xtest.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb-xv.ln			-unknown-	lint,xorg
-
 ./usr/libdata/lint/llib-lxcb-xvmc.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxcb.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxkbfile.ln			-unknown-	lint,x11
