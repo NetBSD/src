@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.21 2012/03/11 21:16:08 dholland Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.21.10.1 2015/03/06 21:00:23 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mkioconf.c,v 1.21.10.1 2015/03/06 21:00:23 snj Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -136,7 +139,7 @@ static void
 emithdr(FILE *ofp)
 {
 	FILE *ifp;
-	int n;
+	size_t n;
 	char ifnbuf[200], buf[BUFSIZ];
 	char *ifn;
 
@@ -174,12 +177,14 @@ cf_locators_print(const char *name, void *value, void *arg)
 	a = value;
 	if (!a->a_iattr)
 		return (0);
+	if (ht_lookup(selecttab, name) == NULL)
+		return (0);
 
 	if (a->a_locs) {
 		fprintf(fp,
 		    "static const struct cfiattrdata %scf_iattrdata = {\n",
 			    name);
-		fprintf(fp, "\t\"%s\", %d,\n\t{\n", name, a->a_loclen);
+		fprintf(fp, "\t\"%s\", %d, {\n", name, a->a_loclen);
 		for (ll = a->a_locs; ll; ll = ll->ll_next)
 			fprintf(fp, "\t\t{ \"%s\", \"%s\", %s },\n",
 				ll->ll_name,
@@ -319,10 +324,6 @@ emitloc(FILE *fp)
 		for (i = 0; i < locators.used; i++)
 			fprintf(fp, "%s%s,", SEP(i, 8), locators.vec[i]);
 		fprintf(fp, "\n};\n");
-	} else if (*packed != NULL) {
-		/* We need to have *something*. */
-		fprintf(fp, "\n/* locators */\n"
-			"static int loc[1] = { -1 };\n");
 	}
 }
 
@@ -375,7 +376,7 @@ emitcfdata(FILE *fp)
 		"\n"
 		"%sstruct cfdata cfdata%s%s[] = {\n"
 		"    /* driver           attachment    unit state "
-		"loc   flags pspec */\n",
+		"     loc   flags  pspec */\n",
 		    ioconfname ? "static " : "",
 		    ioconfname ? "_ioconf_" : "",
 		    ioconfname ? ioconfname : "");
@@ -428,9 +429,9 @@ emitcfdata(FILE *fp)
 			    i->i_locoff);
 			loc = locbuf;
 		} else
-			loc = "loc";
+			loc = "NULL";
 		fprintf(fp, "    { \"%s\",%s\"%s\",%s%2d, %s, %7s, %#6x, ",
-			    basename, strlen(basename) < 8 ? "\t\t"
+			    basename, strlen(basename) < 7 ? "\t\t"
 			    				   : "\t",
 			    attachment, strlen(attachment) < 5 ? "\t\t"
 			    				       : "\t",
@@ -441,7 +442,7 @@ emitcfdata(FILE *fp)
 			fputs("NULL },\n", fp);
 	}
 	fprintf(fp, "    { %s,%s%s,%s%2d, %s, %7s, %#6x, %s }\n};\n",
-	    "NULL", "\t\t", "NULL", "\t\t", 0, "0", "NULL", 0, "NULL");
+	    "NULL", "\t\t", "NULL", "\t\t", 0, "   0", "NULL", 0, "NULL");
 }
 
 /*
@@ -479,7 +480,7 @@ emitpseudo(FILE *fp)
 		fprintf(fp, "void %sattach(int);\n",
 		    i->i_base->d_name);
 	}
-	fputs("\nstruct pdevinit pdevinit[] = {\n", fp);
+	fputs("\nconst struct pdevinit pdevinit[] = {\n", fp);
 	TAILQ_FOREACH(i, &allpseudo, i_next) {
 		d = i->i_base;
 		fprintf(fp, "\t{ %sattach, %d },\n",

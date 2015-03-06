@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.16 2013/11/01 21:39:13 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.16.4.1 2015/03/06 21:00:23 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,9 @@
 #include "nbtool_config.h"
 #endif
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: util.c,v 1.16.4.1 2015/03/06 21:00:23 snj Exp $");
+
 #include <sys/types.h>
 #include <assert.h>
 #include <ctype.h>
@@ -56,6 +59,8 @@
 #include "defs.h"
 
 static void cfgvxerror(const char *, int, const char *, va_list)
+	     __printflike(3, 0);
+static void cfgvxdbg(const char *, int, const char *, va_list)
 	     __printflike(3, 0);
 static void cfgvxwarn(const char *, int, const char *, va_list)
 	     __printflike(3, 0);
@@ -414,6 +419,17 @@ condexpr_destroy(struct condexpr *expr)
  */
 
 void
+cfgdbg(const char *fmt, ...)
+{
+	va_list ap;
+	extern const char *yyfile;
+
+	va_start(ap, fmt);
+	cfgvxdbg(yyfile, currentline(), fmt, ap);
+	va_end(ap);
+}
+
+void
 cfgwarn(const char *fmt, ...)
 {
 	va_list ap;
@@ -432,6 +448,12 @@ cfgxwarn(const char *file, int line, const char *fmt, ...)
 	va_start(ap, fmt);
 	cfgvxwarn(file, line, fmt, ap);
 	va_end(ap);
+}
+
+static void
+cfgvxdbg(const char *file, int line, const char *fmt, va_list ap)
+{
+	cfgvxmsg(file, line, "debug: ", fmt, ap);
 }
 
 static void

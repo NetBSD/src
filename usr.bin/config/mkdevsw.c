@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.10 2010/07/30 16:23:49 cube Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.10.24.1 2015/03/06 21:00:23 snj Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mkdevsw.c,v 1.10.24.1 2015/03/06 21:00:23 snj Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -86,37 +89,54 @@ emitheader(FILE *fp)
 		  "#include <sys/conf.h>\n", fp);
 }
 
+static void
+dentry(FILE *fp, struct hashtab *t, devmajor_t i, char p)
+{
+	const struct devm *dm;
+	char mstr[16];
+
+	(void)snprintf(mstr, sizeof(mstr), "%d", i);
+	if ((dm = ht_lookup(t, intern(mstr))) == NULL)
+		return;
+
+	fprintf(fp, "extern const struct %cdevsw %s_%cdevsw;\n",
+	    p, dm->dm_name, p);
+}
+
+static void
+pentry(FILE *fp, struct hashtab *t, devmajor_t i, char p)
+{
+	const struct devm *dm;
+	char mstr[16];
+
+	(void)snprintf(mstr, sizeof(mstr), "%d", i);
+	dm = ht_lookup(t, intern(mstr));
+
+	if (dm)
+		fprintf(fp, "\t&%s_%cdevsw", dm->dm_name, p); 
+	else
+		fputs("\tNULL", fp);
+
+	fprintf(fp, ",\t// %3d\n", i);
+}
+
 /*
  * Emit device switch table for character/block device.
  */
 static void
 emitdevm(FILE *fp)
 {
-	struct devm *dm;
-	char mstr[16];
 	devmajor_t i;
 
 	fputs("\n/* device switch table for block device */\n", fp);
 
-	for (i = 0 ; i <= maxbdevm ; i++) {
-		(void)snprintf(mstr, sizeof(mstr), "%d", i);
-		if ((dm = ht_lookup(bdevmtab, intern(mstr))) == NULL)
-			continue;
-
-		fprintf(fp, "extern const struct bdevsw %s_bdevsw;\n",
-			    dm->dm_name);
-	}
+	for (i = 0; i <= maxbdevm ; i++)
+		dentry(fp, cdevmtab, i, 'b');
 
 	fputs("\nconst struct bdevsw *bdevsw0[] = {\n", fp);
 
-	for (i = 0 ; i <= maxbdevm ; i++) {
-		(void)snprintf(mstr, sizeof(mstr), "%d", i);
-		if ((dm = ht_lookup(bdevmtab, intern(mstr))) == NULL) {
-			fprintf(fp, "\tNULL,\n");
-		} else {
-			fprintf(fp, "\t&%s_bdevsw,\n", dm->dm_name);
-		}
-	}
+	for (i = 0; i <= maxbdevm; i++)
+		pentry(fp, bdevmtab, i, 'b');
 
 	fputs("};\n\nconst struct bdevsw **bdevsw = bdevsw0;\n", fp);
 
@@ -125,25 +145,13 @@ emitdevm(FILE *fp)
 
 	fputs("\n/* device switch table for character device */\n", fp);
 
-	for (i = 0 ; i <= maxcdevm ; i++) {
-		(void)snprintf(mstr, sizeof(mstr), "%d", i);
-		if ((dm = ht_lookup(cdevmtab, intern(mstr))) == NULL)
-			continue;
-
-		fprintf(fp, "extern const struct cdevsw %s_cdevsw;\n",
-			    dm->dm_name);
-	}
+	for (i = 0; i <= maxcdevm; i++)
+		dentry(fp, cdevmtab, i, 'c');
 
 	fputs("\nconst struct cdevsw *cdevsw0[] = {\n", fp);
 
-	for (i = 0 ; i <= maxcdevm ; i++) {
-		(void)snprintf(mstr, sizeof(mstr), "%d", i);
-		if ((dm = ht_lookup(cdevmtab, intern(mstr))) == NULL) {
-			fprintf(fp, "\tNULL,\n");
-		} else {
-			fprintf(fp, "\t&%s_cdevsw,\n", dm->dm_name);
-		}
-	}
+	for (i = 0; i <= maxcdevm; i++)
+		pentry(fp, cdevmtab, i, 'c');
 
 	fputs("};\n\nconst struct cdevsw **cdevsw = cdevsw0;\n", fp);
 
@@ -189,7 +197,9 @@ emitconv(FILE *fp)
 				d_flags = nv->nv_str;
 				break;
 			}
-			d_vec[i++] = nv->nv_num;
+			if (nv->nv_num > INT_MAX || nv->nv_num < INT_MIN)
+				panic("out of range devnode definition");
+			d_vec[i++] = (int)nv->nv_num;
 		}
 
 		fprintf(fp, "\t{ \"%s\", %d, %d, %s, %s, { %d, %d }},\n",

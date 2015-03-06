@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.8 2012/03/12 02:58:55 dholland Exp $	*/
+/*	$NetBSD: hash.c,v 1.8.10.1 2015/03/06 21:00:23 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,9 @@
 #include "nbtool_config.h"
 #endif
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: hash.c,v 1.8.10.1 2015/03/06 21:00:23 snj Exp $");
+
 #include <sys/param.h>
 #include <assert.h>
 #include <stdlib.h>
@@ -58,15 +61,18 @@
 struct hashent {
 	// XXXLUKEM: a SIMPLEQ might be more appropriate
 	TAILQ_ENTRY(hashent) h_next;
-	const char *h_name;		/* the string */
+	const char *h_names[2];		/* the string */
+#define	h_name1	h_names[0]
+#define	h_name2	h_names[1]
+#define	h_name	h_name1
 	u_int	h_hash;			/* its hash value */
 	void	*h_value;		/* other values (for name=value) */
 };
 struct hashtab {
 	size_t	ht_size;		/* size (power of 2) */
-	u_int	ht_mask;		/* == ht_size - 1 */
-	u_int	ht_used;		/* number of entries used */
-	u_int	ht_lim;			/* when to expand */
+	size_t	ht_mask;		/* == ht_size - 1 */
+	size_t	ht_used;		/* number of entries used */
+	size_t	ht_lim;			/* when to expand */
 	TAILQ_HEAD(hashenthead, hashent) *ht_tab;
 };
 
@@ -81,7 +87,8 @@ static struct hashtab strings;
 
 static void			ht_expand(struct hashtab *);
 static void			ht_init(struct hashtab *, size_t);
-static inline u_int		hash(const char *);
+static inline u_int		hash(u_int, const char *);
+static inline u_int		hash2(u_int, const char *, const char *);
 static inline struct hashent   *newhashent(const char *, u_int);
 
 /*
@@ -109,7 +116,7 @@ ht_expand(struct hashtab *ht)
 {
 	struct hashenthead *h, *oldh;
 	struct hashent *p;
-	u_int n, i;
+	size_t n, i;
 
 	n = ht->ht_size * 2;
 	h = emalloc(n * sizeof *h);
@@ -137,27 +144,51 @@ ht_expand(struct hashtab *ht)
  * otherwise allocate a new entry.
  */
 static inline struct hashent *
-newhashent(const char *name, u_int h)
+newhashent2(const char *name1, const char *name2, u_int h)
 {
 	struct hashent *hp;
 
 	hp = ecalloc(1, sizeof(*hp));
 
-	hp->h_name = name;
+	hp->h_name1 = name1;
+	hp->h_name2 = name2;
 	hp->h_hash = h;
 	return (hp);
+}
+
+static inline struct hashent *
+newhashent(const char *name, u_int h)
+{
+	return newhashent2(name, NULL, h);
+}
+
+static inline u_int
+hv(u_int h, char c)
+{
+	return (h << 5) + h + (unsigned char)c;
 }
 
 /*
  * Hash a string.
  */
 static inline u_int
-hash(const char *str)
+hash(u_int h, const char *str)
 {
-	u_int h;
 
-	for (h = 0; *str;)
-		h = (h << 5) + h + *str++;
+	while (str && *str)
+		h = hv(h, *str++);
+	return (h);
+}
+
+#define	HASH2DELIM	' '
+
+static inline u_int
+hash2(u_int h, const char *str1, const char *str2)
+{
+
+	h = hash(h, str1);
+	h = hv(h, HASH2DELIM);
+	h = hash(h, str2);
 	return (h);
 }
 
@@ -182,7 +213,7 @@ intern(const char *s)
 	char *p;
 
 	ht = &strings;
-	h = hash(s);
+	h = hash2(0, s, NULL);
 	hpp = &ht->ht_tab[h & ht->ht_mask];
 	TAILQ_FOREACH(hp, hpp, h_next) {
 		if (hp->h_hash == h && strcmp(hp->h_name, s) == 0)
@@ -231,22 +262,23 @@ ht_free(struct hashtab *ht)
  * Insert and/or replace.
  */
 int
-ht_insrep(struct hashtab *ht, const char *nam, void *val, int replace)
+ht_insrep2(struct hashtab *ht, const char *nam1, const char *nam2, void *val, int replace)
 {
 	struct hashent *hp;
 	struct hashenthead *hpp;
 	u_int h;
 
-	h = hash(nam);
+	h = hash2(0, nam1, nam2);
 	hpp = &ht->ht_tab[h & ht->ht_mask];
 	TAILQ_FOREACH(hp, hpp, h_next) {
-		if (hp->h_name == nam) {
+		if (hp->h_name1 == nam1 &&
+		    hp->h_name2 == nam2) {
 			if (replace)
 				hp->h_value = val;
 			return (1);
 		}
 	}
-	hp = newhashent(nam, h);
+	hp = newhashent2(nam1, nam2, h);
 	TAILQ_INSERT_TAIL(hpp, hp, h_next);
 	hp->h_value = val;
 	if (++ht->ht_used > ht->ht_lim)
@@ -254,21 +286,27 @@ ht_insrep(struct hashtab *ht, const char *nam, void *val, int replace)
 	return (0);
 }
 
+int
+ht_insrep(struct hashtab *ht, const char *nam, void *val, int replace)
+{
+	return ht_insrep2(ht, nam, NULL, val, replace);
+}
+
 /*
  * Remove.
  */
 int
-ht_remove(struct hashtab *ht, const char *name)
+ht_remove2(struct hashtab *ht, const char *name1, const char *name2)
 {
 	struct hashent *hp;
 	struct hashenthead *hpp;
 	u_int h;
 
-	h = hash(name);
+	h = hash2(0, name1, name2);
 	hpp = &ht->ht_tab[h & ht->ht_mask];
 
 	TAILQ_FOREACH(hp, hpp, h_next) {
-		if (hp->h_name != name)
+		if (hp->h_name1 != name1 || hp->h_name2 != name2)
 			continue;
 		TAILQ_REMOVE(hpp, hp, h_next);
 
@@ -279,19 +317,31 @@ ht_remove(struct hashtab *ht, const char *name)
 	return (1);
 }
 
+int
+ht_remove(struct hashtab *ht, const char *name)
+{
+	return ht_remove2(ht, name, NULL);
+}
+
 void *
-ht_lookup(struct hashtab *ht, const char *nam)
+ht_lookup2(struct hashtab *ht, const char *nam1, const char *nam2)
 {
 	struct hashent *hp;
 	struct hashenthead *hpp;
 	u_int h;
 
-	h = hash(nam);
+	h = hash2(0, nam1, nam2);
 	hpp = &ht->ht_tab[h & ht->ht_mask];
 	TAILQ_FOREACH(hp, hpp, h_next)
-		if (hp->h_name == nam)
+		if (hp->h_name == nam1)
 			return (hp->h_value);
 	return (NULL);
+}
+
+void *
+ht_lookup(struct hashtab *ht, const char *nam)
+{
+	return ht_lookup2(ht, nam, NULL);
 }
 
 /*
@@ -299,6 +349,22 @@ ht_lookup(struct hashtab *ht, const char *nam)
  * second parameter is the value from the hash table
  * third argument is passed through from the "arg" parameter to ht_enumerate()
  */
+
+int
+ht_enumerate2(struct hashtab *ht, ht_callback2 cbfunc2, void *arg)
+{
+	struct hashent *hp;
+	struct hashenthead *hpp;
+	size_t i;
+	int rval = 0;
+	
+	for (i = 0; i < ht->ht_size; i++) {
+		hpp = &ht->ht_tab[i];
+		TAILQ_FOREACH(hp, hpp, h_next)
+			rval += (*cbfunc2)(hp->h_name1, hp->h_name2, hp->h_value, arg);
+	}
+	return rval;
+}
 
 int
 ht_enumerate(struct hashtab *ht, ht_callback cbfunc, void *arg)

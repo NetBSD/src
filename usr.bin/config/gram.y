@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.39 2014/05/29 07:47:45 mrg Exp $	*/
+/*	$NetBSD: gram.y,v 1.39.2.1 2015/03/06 21:00:23 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,6 +40,9 @@
  *
  *	from: @(#)gram.y	8.1 (Berkeley) 6/6/93
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: gram.y,v 1.39.2.1 2015/03/06 21:00:23 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -159,6 +162,9 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 	const char *str;
 	struct	numconst num;
 	int64_t	val;
+	u_char	flag;
+	devmajor_t devmajor;
+	int32_t i32;
 }
 
 %token	AND AT ATTACH
@@ -175,7 +181,7 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 %token	XOBJECT OBSOLETE ON OPTIONS
 %token	PACKAGE PLUSEQ PREFIX PSEUDO_DEVICE PSEUDO_ROOT
 %token	ROOT
-%token	SINGLE SOURCE
+%token	SELECT SINGLE SOURCE
 %token	TYPE
 %token	VECTOR VERSION
 %token	WITH
@@ -187,7 +193,7 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 %type	<condexpr>	cond_or_expr cond_and_expr cond_prefix_expr
 %type	<condexpr>	 cond_base_expr
 %type	<str>	fs_spec
-%type	<val>	fflags fflag oflags oflag
+%type	<flag>	fflags fflag oflags oflag
 %type	<str>	rule
 %type	<attr>	depend
 %type	<devb>	devbase
@@ -204,9 +210,9 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 %type	<str>	device_instance
 %type	<str>	attachment
 %type	<str>	value
-%type	<val>	major_minor npseudo
+%type	<val>	major_minor
 %type	<num>	signed_number
-%type	<val>	device_flags
+%type	<i32>	int32 npseudo device_flags
 %type	<str>	deffs
 %type	<list>	deffses
 %type	<defoptlist>	defopt
@@ -217,13 +223,13 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 %type	<str>	optfile_opt
 %type	<list>	subarches
 %type	<str>	filename stringvalue locname mkvarname
-%type	<val>	device_major_block device_major_char
+%type	<devmajor>	device_major_block device_major_char
 %type	<list>	devnodes devnodetype devnodeflags devnode_dims
 
 %%
 
 /*
- * A complete configuration consists of both the configuration part (a
+ * A complete configuration consists of both the selection part (a
  * kernel config such as GENERIC or SKYNET, plus also the various
  * std.* files), which selects the material to be in the kernel, and
  * also the definition part (files, files.*, etc.) that declares what
@@ -254,7 +260,7 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 
 /* Complete configuration. */
 configuration:
-	topthings machine_spec definition_part configuration_part
+	topthings machine_spec definition_part selection_part
 ;
 
 /* Sequence of zero or more topthings. */
@@ -307,44 +313,132 @@ definitions:
 
 /* A single definition. */
 definition:
-	  file
-	| object
-	| device_major			{ do_devsw = 1; }
-	| prefix
-	| DEVCLASS WORD			{ (void)defattr($2, NULL, NULL, 1); }
-	| DEFFS deffses optdepend_list	{ deffilesystem($2, $3); }
-	| DEFINE WORD interface_opt depend_list
-					{ (void)defattr($2, $3, $4, 0); }
-	| DEFOPT optfile_opt defopts optdepend_list
-					{ defoption($2, $3, $4); }
-	| DEFFLAG optfile_opt defopts optdepend_list
-					{ defflag($2, $3, $4, 0); }
-	| OBSOLETE DEFFLAG optfile_opt defopts
-					{ defflag($3, $4, NULL, 1); }
-	| DEFPARAM optfile_opt defopts optdepend_list
-					{ defparam($2, $3, $4, 0); }
-	| OBSOLETE DEFPARAM optfile_opt defopts
-					{ defparam($3, $4, NULL, 1); }
-	| DEVICE devbase interface_opt depend_list
-					{ defdev($2, $3, $4, 0); }
-	| ATTACH devbase AT atlist devattach_opt depend_list
-					{ defdevattach($5, $2, $4, $6); }
-	| MAXPARTITIONS NUMBER		{ maxpartitions = $2.val; }
-	| MAXUSERS NUMBER NUMBER NUMBER
-				    { setdefmaxusers($2.val, $3.val, $4.val); }
-	| MAKEOPTIONS condmkopt_list
-	/* interface_opt in DEFPSEUDO is for backwards compatibility */
-	| DEFPSEUDO devbase interface_opt depend_list
-					{ defdev($2, $3, $4, 1); }
-	| DEFPSEUDODEV devbase interface_opt depend_list
-					{ defdev($2, $3, $4, 2); }
-	| MAJOR '{' majorlist '}'
-	| VERSION NUMBER		{ setversion($2.val); }
+	  define_file
+	| define_object
+	| define_device_major
+	| define_prefix
+	| define_devclass
+	| define_filesystems
+	| define_attribute
+	| define_option
+	| define_flag
+	| define_obsolete_flag
+	| define_param
+	| define_obsolete_param
+	| define_device
+	| define_device_attachment
+	| define_maxpartitions
+	| define_maxusers
+	| define_makeoptions
+	| define_pseudo
+	| define_pseudodev
+	| define_major
+	| define_version
 ;
 
 /* source file: file foo/bar.c bar|baz needs-flag compile-with blah */
-file:
+define_file:
 	XFILE filename fopts fflags rule	{ addfile($2, $3, $4, $5); }
+;
+
+/* object file: object zot.o foo|zot needs-flag */
+define_object:
+	XOBJECT filename fopts oflags	{ addobject($2, $3, $4); }
+;
+
+/* device major declaration */
+define_device_major:
+	DEVICE_MAJOR WORD device_major_char device_major_block fopts devnodes
+					{
+		adddevm($2, $3, $4, $5, $6);
+		do_devsw = 1;
+	}
+;
+
+/* prefix delimiter */
+define_prefix:
+	  PREFIX filename		{ prefix_push($2); }
+	| PREFIX			{ prefix_pop(); }
+;
+
+define_devclass:
+	DEVCLASS WORD			{ (void)defdevclass($2, NULL, NULL, 1); }
+;
+
+define_filesystems:
+	DEFFS deffses optdepend_list	{ deffilesystem($2, $3); }
+;
+
+define_attribute:
+	DEFINE WORD interface_opt depend_list
+					{ (void)defattr0($2, $3, $4, 0); }
+;
+
+define_option:
+	DEFOPT optfile_opt defopts optdepend_list
+					{ defoption($2, $3, $4); }
+;
+
+define_flag:
+	DEFFLAG optfile_opt defopts optdepend_list
+					{ defflag($2, $3, $4, 0); }
+;
+
+define_obsolete_flag:
+	OBSOLETE DEFFLAG optfile_opt defopts
+					{ defflag($3, $4, NULL, 1); }
+;
+
+define_param:
+	DEFPARAM optfile_opt defopts optdepend_list
+					{ defparam($2, $3, $4, 0); }
+;
+
+define_obsolete_param:
+	OBSOLETE DEFPARAM optfile_opt defopts
+					{ defparam($3, $4, NULL, 1); }
+;
+
+define_device:
+	DEVICE devbase interface_opt depend_list
+					{ defdev($2, $3, $4, 0); }
+;
+
+define_device_attachment:
+	ATTACH devbase AT atlist devattach_opt depend_list
+					{ defdevattach($5, $2, $4, $6); }
+;
+
+define_maxpartitions:
+	MAXPARTITIONS int32		{ maxpartitions = $2; }
+;
+
+define_maxusers:
+	MAXUSERS int32 int32 int32
+					{ setdefmaxusers($2, $3, $4); }
+;
+
+define_makeoptions:
+	MAKEOPTIONS condmkopt_list
+;
+
+define_pseudo:
+	/* interface_opt in DEFPSEUDO is for backwards compatibility */
+	DEFPSEUDO devbase interface_opt depend_list
+					{ defdev($2, $3, $4, 1); }
+;
+
+define_pseudodev:
+	DEFPSEUDODEV devbase interface_opt depend_list
+					{ defdev($2, $3, $4, 2); }
+;
+
+define_major:
+	MAJOR '{' majorlist '}'
+;
+
+define_version:
+	VERSION int32		{ setversion($2); }
 ;
 
 /* file options: optional expression of conditions */
@@ -371,11 +465,6 @@ rule:
 	| COMPILE_WITH stringvalue	{ $$ = $2; }
 ;
 
-/* object file: object zot.o foo|zot needs-flag */
-object:
-	XOBJECT filename fopts oflags	{ addobject($2, $3, $4); }
-;
-
 /* zero or more flags for an object file */
 oflags:
 	  /* empty */			{ $$ = 0; }
@@ -387,22 +476,16 @@ oflag:
 	NEEDS_FLAG			{ $$ = OI_NEEDSFLAG; }
 ;
 
-/* device major declaration */
-device_major:
-	DEVICE_MAJOR WORD device_major_char device_major_block fopts devnodes
-					{ adddevm($2, $3, $4, $5, $6); }
-;
-
 /* char 55 */
 device_major_char:
 	  /* empty */			{ $$ = -1; }
-	| CHAR NUMBER			{ $$ = $2.val; }
+	| CHAR int32			{ $$ = $2; }
 ;
 
 /* block 33 */
 device_major_block:
 	  /* empty */			{ $$ = -1; }
-	| BLOCK NUMBER			{ $$ = $2.val; }
+	| BLOCK int32			{ $$ = $2; }
 ;
 
 /* device node specification */
@@ -433,12 +516,6 @@ devnode_dims:
 /* flags for device nodes */
 devnodeflags:
 	LINKZERO			{ $$ = new_s("DEVNODE_FLAG_LINKZERO");}
-;
-
-/* prefix delimiter */
-prefix:
-	  PREFIX filename		{ prefix_push($2); }
-	| PREFIX			{ prefix_pop(); }
 ;
 
 /* one or more file system names */
@@ -479,11 +556,11 @@ locdef:
 	  locname locdefault 		{ $$ = MK3(loc, $1, $2, 0); }
 	| locname			{ $$ = MK3(loc, $1, NULL, 0); }
 	| '[' locname locdefault ']'	{ $$ = MK3(loc, $2, $3, 1); }
-	| locname '[' NUMBER ']'	{ $$ = locarray($1, $3.val, NULL, 0); }
-	| locname '[' NUMBER ']' locdefaults
-					{ $$ = locarray($1, $3.val, $5, 0); }
-	| '[' locname '[' NUMBER ']' locdefaults ']'
-					{ $$ = locarray($2, $4.val, $6, 1); }
+	| locname '[' int32 ']'	{ $$ = locarray($1, $3, NULL, 0); }
+	| locname '[' int32 ']' locdefaults
+					{ $$ = locarray($1, $3, $5, 0); }
+	| '[' locname '[' int32 ']' locdefaults ']'
+					{ $$ = locarray($2, $4, $6, 1); }
 ;
 
 /* locator name */
@@ -516,7 +593,7 @@ depends:
 
 /* one depend item (which is an attribute) */
 depend:
-	WORD				{ $$ = getattr($1); }
+	WORD				{ $$ = refattr($1); }
 ;
 
 /* list of option depends, may be empty */
@@ -594,51 +671,142 @@ majorlist:
 
 /* one major number */
 majordef:
-	devbase '=' NUMBER		{ setmajor($1, $3.val); }
+	devbase '=' int32		{ setmajor($1, $3); }
+;
+
+int32:
+	NUMBER	{
+		if ($1.val > INT_MAX || $1.val < INT_MIN)
+			cfgerror("overflow %" PRId64, $1.val);
+		else
+			$$ = (int32_t)$1.val;
+	}
 ;
 
 /************************************************************/
 
 /*
- * The configuration grammar.
+ * The selection grammar.
  */
 
-/* Complete configuration part: all std.* files plus selected config. */
-configuration_part:
-	config_items
+/* Complete selection part: all std.* files plus selected config. */
+selection_part:
+	selections
 ;
 
 /* Zero or more config items. Trap errors. */
-config_items:
+selections:
 	  /* empty */
-	| config_items '\n'
-	| config_items config_item '\n'	{ wrap_continue(); }
-	| config_items error '\n'	{ wrap_cleanup(); }
+	| selections '\n'
+	| selections selection '\n'	{ wrap_continue(); }
+	| selections error '\n'		{ wrap_cleanup(); }
 ;
 
 /* One config item. */
-config_item:
+selection:
 	  definition
-	| NO FILE_SYSTEM no_fs_list
-	| FILE_SYSTEM fs_list
-	| NO MAKEOPTIONS no_mkopt_list
-	| MAKEOPTIONS mkopt_list
-	| NO OPTIONS no_opt_list
-	| OPTIONS opt_list
-	| MAXUSERS NUMBER		{ setmaxusers($2.val); }
-	| IDENT stringvalue		{ setident($2); }
-	| NO IDENT			{ setident(NULL); }
-	| CONFIG conf root_spec sysparam_list
+	| select_attr
+	| select_no_attr
+	| select_no_filesystems
+	| select_filesystems
+	| select_no_makeoptions
+	| select_makeoptions
+	| select_no_options
+	| select_options
+	| select_maxusers
+	| select_ident
+	| select_no_ident
+	| select_config
+	| select_no_config
+	| select_no_pseudodev
+	| select_pseudodev
+	| select_pseudoroot
+	| select_no_device_instance_attachment
+	| select_no_device_attachment
+	| select_no_device_instance
+	| select_device_instance
+;
+
+select_attr:
+	SELECT WORD			{ addattr($2); }
+;
+
+select_no_attr:
+	NO SELECT WORD			{ delattr($3); }
+;
+
+select_no_filesystems:
+	NO FILE_SYSTEM no_fs_list
+;
+
+select_filesystems:
+	FILE_SYSTEM fs_list
+;
+
+select_no_makeoptions:
+	NO MAKEOPTIONS no_mkopt_list
+;
+
+select_makeoptions:
+	MAKEOPTIONS mkopt_list
+;
+
+select_no_options:
+	NO OPTIONS no_opt_list
+;
+
+select_options:
+	OPTIONS opt_list
+;
+
+select_maxusers:
+	MAXUSERS int32			{ setmaxusers($2); }
+;
+
+select_ident:
+	IDENT stringvalue		{ setident($2); }
+;
+
+select_no_ident:
+	NO IDENT			{ setident(NULL); }
+;
+
+select_config:
+	CONFIG conf root_spec sysparam_list
 					{ addconf(&conf); }
-	| NO CONFIG WORD		{ delconf($3); }
-	| NO PSEUDO_DEVICE WORD		{ delpseudo($3); }
-	| PSEUDO_DEVICE WORD npseudo	{ addpseudo($2, $3); }
-	| PSEUDO_ROOT device_instance	{ addpseudoroot($2); }
-	| NO device_instance AT attachment
+;
+
+select_no_config:
+	NO CONFIG WORD			{ delconf($3); }
+;
+
+select_no_pseudodev:
+	NO PSEUDO_DEVICE WORD		{ delpseudo($3); }
+;
+
+select_pseudodev:
+	PSEUDO_DEVICE WORD npseudo	{ addpseudo($2, $3); }
+;
+
+select_pseudoroot:
+	PSEUDO_ROOT device_instance	{ addpseudoroot($2); }
+;
+
+select_no_device_instance_attachment:
+	NO device_instance AT attachment
 					{ deldevi($2, $4); }
-	| NO DEVICE AT attachment	{ deldeva($4); }
-	| NO device_instance		{ deldev($2); }
-	| device_instance AT attachment locators device_flags
+;
+
+select_no_device_attachment:
+	NO DEVICE AT attachment		{ deldeva($4); }
+;
+
+select_no_device_instance:
+	NO device_instance		{ deldev($2); }
+;
+
+select_device_instance:
+	device_instance AT attachment locators device_flags
 					{ adddev($1, $3, $4, $5); }
 ;
 
@@ -731,14 +899,16 @@ root_spec:
 
 /* device for root fs or dump */
 dev_spec:
-	  '?'				{ $$ = new_si(intern("?"), NODEV); }
-	| WORD				{ $$ = new_si($1, NODEV); }
+	  '?'				{ $$ = new_si(intern("?"),
+					    (long long)NODEV); }
+	| WORD				{ $$ = new_si($1,
+					    (long long)NODEV); }
 	| major_minor			{ $$ = new_si(NULL, $1); }
 ;
 
 /* major and minor device number */
 major_minor:
-	MAJOR NUMBER MINOR NUMBER	{ $$ = makedev($2.val, $4.val); }
+	MAJOR NUMBER MINOR NUMBER	{ $$ = (int64_t)makedev($2.val, $4.val); }
 ;
 
 /* filesystem type for root fs specification */
@@ -761,7 +931,7 @@ sysparam:
 /* number of pseudo devices to configure (which is optional) */
 npseudo:
 	  /* empty */			{ $$ = 1; }
-	| NUMBER			{ $$ = $1.val; }
+	| int32				{ $$ = $1; }
 ;
 
 /* name of a device to configure */
@@ -792,7 +962,7 @@ locator:
 /* optional device flags */
 device_flags:
 	  /* empty */			{ $$ = 0; }
-	| FLAGS NUMBER			{ $$ = $2.val; }
+	| FLAGS int32			{ $$ = $2; }
 ;
 
 /************************************************************/

@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.10 2012/03/11 21:16:08 dholland Exp $	*/
+/*	$NetBSD: sem.h,v 1.10.10.1 2015/03/06 21:00:23 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,15 +46,25 @@ void		setversion(int);
 void		setdefmaxusers(int, int, int);
 void		setmaxusers(int);
 void		setident(const char *);
+int		defattr0(const char *, struct loclist *, struct attrlist *, int);
 int		defattr(const char *, struct loclist *, struct attrlist *, int);
+int		defiattr(const char *, struct loclist *, struct attrlist *, int);
+int		defdevclass(const char *, struct loclist *, struct attrlist *, int);
 void		defdev(struct devbase *, struct loclist *, struct attrlist *, int);
 void		defdevattach(struct deva *, struct devbase *, struct nvlist *,
 			     struct attrlist *);
 struct devbase *getdevbase(const char *);
 struct deva    *getdevattach(const char *);
+struct attr	*mkattr(const char *);
 struct attr    *getattr(const char *);
+struct attr    *refattr(const char *);
+int		getrefattr(const char *, struct attr **);
 void		expandattr(struct attr *, void (*)(struct attr *));
+void		addattr(const char *);
+void		delattr(const char *);
 void		selectattr(struct attr *);
+void		deselectattr(struct attr *);
+void		dependattrs(void);
 void		setmajor(struct devbase *, int);
 void		addconf(struct config *);
 void		setconf(struct nvlist **, const char *, struct nvlist *);
@@ -67,7 +77,7 @@ void		deldev(const char *);
 void		addpseudo(const char *, int);
 void		delpseudo(const char *);
 void		addpseudoroot(const char *);
-void		adddevm(const char *, int, int,
+void		adddevm(const char *, devmajor_t, devmajor_t,
 			struct condexpr *, struct nvlist *);
 int		fixdevis(void);
 const char     *ref(const char *);
@@ -78,3 +88,4 @@ int		has_attr(struct attrlist *, const char *);
 extern const char *s_qmark;
 extern const char *s_none;
 extern const char *s_ifnet;
+extern size_t nattrs;
