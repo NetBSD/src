@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.4 2015/03/06 01:43:07 riastradh Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.5 2015/03/06 15:39:28 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.4 2015/03/06 01:43:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.5 2015/03/06 15:39:28 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/module.h>
@@ -64,11 +64,11 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.4 2015/03/06 01:43:07 riastradh Ex
 #include "nouveau_debugfs.h"
 
 MODULE_PARM_DESC(config, "option string to pass to driver core");
-static char *nouveau_config;
+char *nouveau_config;
 module_param_named(config, nouveau_config, charp, 0400);
 
 MODULE_PARM_DESC(debug, "debug string to pass to driver core");
-static char *nouveau_debug;
+char *nouveau_debug;
 module_param_named(debug, nouveau_debug, charp, 0400);
 
 MODULE_PARM_DESC(noaccel, "disable kernel/abi16 acceleration");

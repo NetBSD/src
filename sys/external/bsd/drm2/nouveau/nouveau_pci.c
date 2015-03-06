@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.2 2015/03/06 15:08:02 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.3 2015/03/06 15:39:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.2 2015/03/06 15:08:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.3 2015/03/06 15:39:28 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.2 2015/03/06 15:08:02 riastradh Ex
 #include <sys/workqueue.h>
 
 #include <drm/drmP.h>
+
+#include <engine/device.h>
 
 #include "nouveau_drm.h"
 #include "nouveau_pci.h"
@@ -56,6 +58,7 @@ struct nouveau_softc {
 	}			sc_task_u;
 	struct drm_device	*sc_drm_dev;
 	struct pci_dev		sc_pci_dev;
+	struct nouveau_device	*sc_nv_dev;
 };
 
 static int	nouveau_match(device_t, cfdata_t, void *);
@@ -96,11 +99,15 @@ nouveau_match(device_t parent, cfdata_t match, void *aux)
 	return 6;		/* XXX Beat genfb_pci...  */
 }
 
+extern char *nouveau_config;
+extern char *nouveau_debug;
+
 static void
 nouveau_attach(device_t parent, device_t self, void *aux)
 {
 	struct nouveau_softc *const sc = device_private(self);
 	const struct pci_attach_args *const pa = aux;
+	uint64_t devname;
 	int error;
 
 	pci_aprint_devinfo(pa, NULL);
@@ -113,6 +120,18 @@ nouveau_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_task_state = NOUVEAU_TASK_ATTACH;
 	SIMPLEQ_INIT(&sc->sc_task_u.attach);
+
+	devname = (uint64_t)device_unit(device_parent(self)) << 32;
+	devname |= pa->pa_bus << 16;
+	/* XXX errno Linux->NetBSD */
+	error = -nouveau_device_create(&sc->sc_pci_dev, NOUVEAU_BUS_PCI,
+	    devname, device_xname(self), nouveau_config, nouveau_debug,
+	    &sc->sc_nv_dev);
+	if (error) {
+		aprint_error_dev(self, "unable to create nouveau device: %d\n",
+		    error);
+		return;
+	}
 
 	/* XXX errno Linux->NetBSD */
 	error = -drm_pci_attach(self, pa, &sc->sc_pci_dev, nouveau_drm_driver,
@@ -153,14 +172,17 @@ nouveau_detach(device_t self, int flags)
 		return error;
 
 	if (sc->sc_task_state == NOUVEAU_TASK_ATTACH)
-		goto out;
+		goto out0;
 	if (sc->sc_task_u.workqueue != NULL) {
 		workqueue_destroy(sc->sc_task_u.workqueue);
 		sc->sc_task_u.workqueue = NULL;
 	}
 
+	if (sc->sc_nv_dev == NULL)
+		goto out0;
+
 	if (sc->sc_drm_dev == NULL)
-		goto out;
+		goto out1;
 	/* XXX errno Linux->NetBSD */
 	error = -drm_pci_detach(sc->sc_drm_dev, flags);
 	if (error)
@@ -168,7 +190,8 @@ nouveau_detach(device_t self, int flags)
 		return error;
 	sc->sc_drm_dev = NULL;
 
-out:	pmf_device_deregister(self);
+out1:	nouveau_object_ref(NULL, (void *)&sc->sc_nv_dev);
+out0:	pmf_device_deregister(self);
 	return 0;
 }
 
