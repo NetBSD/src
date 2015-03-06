@@ -1751,6 +1751,7 @@ extern drm_dma_handle_t *drm_pci_alloc(struct drm_device *dev, size_t size,
 extern void __drm_pci_free(struct drm_device *dev, drm_dma_handle_t * dmah);
 extern void drm_pci_free(struct drm_device *dev, drm_dma_handle_t * dmah);
 #ifdef __NetBSD__
+extern int drmkms_pci_agp_guarantee_initialized(void);
 extern int drm_pci_attach(device_t, const struct pci_attach_args *,
     struct pci_dev *, struct drm_driver *, unsigned long,
     struct drm_device **);

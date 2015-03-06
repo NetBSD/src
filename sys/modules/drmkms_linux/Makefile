@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4.2.1 2015/01/11 05:59:18 snj Exp $
+# $NetBSD: Makefile,v 1.4.2.2 2015/03/06 21:39:11 snj Exp $
 
 .include "../Makefile.inc"
 
@@ -20,5 +20,6 @@ SRCS+=	linux_list_sort.c
 SRCS+=	linux_module.c
 SRCS+=	linux_work.c
 SRCS+=	linux_writecomb.c
+SRCS+=	linux_ww_mutex.c
 
 .include <bsd.kmodule.mk>

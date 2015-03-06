@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_bios_base.c,v 1.1.1.1 2014/08/06 12:36:28 riastradh Exp $	*/
+/*	$NetBSD: nouveau_subdev_bios_base.c,v 1.1.1.1.4.1 2015/03/06 21:39:09 snj Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_bios_base.c,v 1.1.1.1 2014/08/06 12:36:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_bios_base.c,v 1.1.1.1.4.1 2015/03/06 21:39:09 snj Exp $");
 
 #include <core/object.h>
 #include <core/device.h>
@@ -262,6 +262,10 @@ nouveau_bios_shadow_acpi(struct nouveau_bios *bios)
 	}
 }
 
+#ifdef __NetBSD__
+#  define	__iomem	__pci_rom_iomem
+#endif
+
 static void
 nouveau_bios_shadow_pci(struct nouveau_bios *bios)
 {
@@ -299,6 +303,10 @@ nouveau_bios_shadow_platform(struct nouveau_bios *bios)
 		}
 	}
 }
+
+#ifdef __NetBSD__
+#  undef	__iomem
+#endif
 
 static int
 nouveau_bios_score(struct nouveau_bios *bios, const bool writeable)

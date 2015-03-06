@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.2.4.1 2014/09/21 17:41:52 snj Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.2.4.2 2015/03/06 21:39:08 snj Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.2.4.1 2014/09/21 17:41:52 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.2.4.2 2015/03/06 21:39:08 snj Exp $");
 
 #include <linux/console.h>
 #include <linux/module.h>
@@ -64,11 +64,11 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.2.4.1 2014/09/21 17:41:52 snj Exp 
 #include "nouveau_debugfs.h"
 
 MODULE_PARM_DESC(config, "option string to pass to driver core");
-static char *nouveau_config;
+char *nouveau_config;
 module_param_named(config, nouveau_config, charp, 0400);
 
 MODULE_PARM_DESC(debug, "debug string to pass to driver core");
-static char *nouveau_debug;
+char *nouveau_debug;
 module_param_named(debug, nouveau_debug, charp, 0400);
 
 MODULE_PARM_DESC(noaccel, "disable kernel/abi16 acceleration");
@@ -539,7 +539,6 @@ nouveau_drm_remove(struct pci_dev *pdev)
 }
 #endif
 
-#ifndef __NetBSD__		/* XXX nouveau pm */
 static int
 nouveau_do_suspend(struct drm_device *dev, bool runtime)
 {
@@ -625,9 +624,11 @@ int nouveau_pmops_suspend(struct device *dev)
 	if (ret)
 		return ret;
 
+#ifndef __NetBSD__		/* pmf handles this for us.  */
 	pci_save_state(pdev);
 	pci_disable_device(pdev);
 	pci_set_power_state(pdev, PCI_D3hot);
+#endif
 	return 0;
 }
 
@@ -673,12 +674,14 @@ int nouveau_pmops_resume(struct device *dev)
 	    drm_dev->switch_power_state == DRM_SWITCH_POWER_DYNAMIC_OFF)
 		return 0;
 
+#ifndef __NetBSD__		/* pmf handles this for us */
 	pci_set_power_state(pdev, PCI_D0);
 	pci_restore_state(pdev);
 	ret = pci_enable_device(pdev);
 	if (ret)
 		return ret;
 	pci_set_master(pdev);
+#endif
 
 	ret = nouveau_do_resume(drm_dev);
 	if (ret)
@@ -692,6 +695,7 @@ int nouveau_pmops_resume(struct device *dev)
 	return 0;
 }
 
+#ifndef __NetBSD__		/* XXX nouveau pm */
 static int nouveau_pmops_freeze(struct device *dev)
 {
 	struct pci_dev *pdev = to_pci_dev(dev);

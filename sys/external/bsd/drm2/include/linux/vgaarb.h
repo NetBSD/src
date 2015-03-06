@@ -1,4 +1,4 @@
-/*	$NetBSD: vgaarb.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: vgaarb.h,v 1.2.8.1 2015/03/06 21:39:10 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,6 +31,9 @@
 
 #ifndef _LINUX_VGAARB_H_
 #define _LINUX_VGAARB_H_
+
+#include <sys/types.h>
+#include <sys/errno.h>
 
 struct pci_dev;
 

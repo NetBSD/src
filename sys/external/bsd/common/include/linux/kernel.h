@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.4 2014/07/16 20:59:57 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.4.2.1 2015/03/06 21:39:08 snj Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
 #define	min_t(T, X, Y)	MIN(X, Y)
 
 #define	clamp_t(T, X, MIN, MAX)	min_t(T, max_t(T, X, MIN), MAX)
+#define	clamp(X, MN, MX)	MIN(MAX(X, MN), MX)
 
 /*
  * Rounding to nearest.
@@ -162,6 +163,18 @@ scnprintf(char *buf, size_t size, const char *fmt, ...)
 	va_end(va);
 
 	return ret;
+}
+
+static inline int
+kstrtol(const char *s, unsigned base, long *vp)
+{
+	long long v;
+
+	v = strtoll(s, NULL, base);
+	if (v < LONG_MIN || LONG_MAX < v)
+		return -ERANGE;
+	*vp = v;
+	return 0;
 }
 
 #endif  /* _LINUX_KERNEL_H_ */

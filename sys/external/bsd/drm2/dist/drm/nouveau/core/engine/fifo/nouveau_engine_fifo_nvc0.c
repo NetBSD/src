@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_fifo_nvc0.c,v 1.1.1.1.4.1 2014/09/21 17:41:53 snj Exp $	*/
+/*	$NetBSD: nouveau_engine_fifo_nvc0.c,v 1.1.1.1.4.2 2015/03/06 21:39:09 snj Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_nvc0.c,v 1.1.1.1.4.1 2014/09/21 17:41:53 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_nvc0.c,v 1.1.1.1.4.2 2015/03/06 21:39:09 snj Exp $");
 
 #include <core/client.h>
 #include <core/handle.h>
@@ -119,10 +119,10 @@ nvc0_fifo_runlist_update(struct nvc0_fifo_priv *priv)
 	int ret;
 
 	spin_lock(&priv->runlist.lock);
-	DRM_SPIN_TIMED_WAIT_UNTIL(ret, &priv->runlist.wait,
+	DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, &priv->runlist.wait,
 	    &priv->runlist.lock, msecs_to_jiffies(2000),
 	    !(nv_rd32(priv, 0x00227c) & 0x00100000));
-	if (ret == -ETIMEDOUT)
+	if (ret == 0)
 		nv_error(priv, "runlist update timeout\n");
 	spin_unlock(&priv->runlist.lock);
     }
