@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.25 2015/02/13 18:57:47 nonaka Exp $
+# $NetBSD: ALL,v 1.26 2015/03/06 02:55:11 riastradh Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.25 $"
+#ident 		"ALL-$Revision: 1.26 $"
 
 maxusers	64		# estimated number of users
 
@@ -532,8 +532,8 @@ intelfb*        at intelfbbus?
 radeon*         at pci? dev ? function ?
 radeondrmkmsfb* at radeonfbbus?
 
-#nouveau*       at pci? dev ? function ?
-#nouveaufb*     at nouveaufbbus
+nouveau* 	at pci? dev ? function ?
+nouveaufb* 	at nouveaufbbus?
 
 attimer0	at isa?
 pcppi0		at isa?
@@ -2050,7 +2050,6 @@ options NOTDEF_DEBUG
 options NOT_DEBUG
 options NSIODEBUG
 options NTFS_DEBUG
-options NV_DEBUG
 options OBOE_DEBUG
 options OFW_DEBUG
 options OHCI_DEBUG
