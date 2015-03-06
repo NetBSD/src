@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.16 2015/03/06 12:52:51 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.17 2015/03/06 12:54:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.16 2015/03/06 12:52:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.17 2015/03/06 12:54:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -224,7 +224,7 @@ usbd_open_pipe_intr(usbd_interface_handle iface, uint8_t address,
 	}
 	void *buf = usbd_alloc_buffer(xfer, len);
 	if (buf == NULL) {
-		err = ENOMEM;
+		err = USBD_NOMEM;
 		goto bad2;
 	}
 
