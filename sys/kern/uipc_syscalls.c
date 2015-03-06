@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.173 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.174 2015/03/06 03:35:00 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.173 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.174 2015/03/06 03:35:00 rtr Exp $");
 
 #include "opt_pipe.h"
 
@@ -1461,6 +1461,12 @@ sockargs(struct mbuf **mp, const void *bf, size_t buflen, int type)
 	 * length is just too much.
 	 */
 	if (buflen > (type == MT_SONAME ? UCHAR_MAX : PAGE_SIZE))
+		return EINVAL;
+
+	/*
+	 * length must greater than sizeof(sa_family) + sizeof(sa_len)
+	 */
+	if (type == MT_SONAME && buflen <= 2)
 		return EINVAL;
 
 	/* Allocate an mbuf to hold the arguments. */
