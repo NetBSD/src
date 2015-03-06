@@ -173,9 +173,9 @@ nv_device_map_page(struct nouveau_device *device, struct page *page);
 
 void
 nv_device_unmap_page(struct nouveau_device *device, dma_addr_t addr);
-#endif
 
 int
 nv_device_get_irq(struct nouveau_device *device, bool stall);
+#endif
 
 #endif
