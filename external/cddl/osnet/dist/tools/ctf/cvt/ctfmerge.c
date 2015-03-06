@@ -208,7 +208,12 @@
 #pragma init(bigheap)
 
 #define	MERGE_PHASE1_BATCH_SIZE		8
+#if 0
+// XXX: bug?
 #define	MERGE_PHASE1_MAX_SLOTS		5
+#else
+#define	MERGE_PHASE1_MAX_SLOTS		1
+#endif
 #define	MERGE_INPUT_THROTTLE_LEN	10
 
 const char *progname;
