@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.14 2015/02/25 14:51:22 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.15 2015/03/06 01:43:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@
 
 #include <linux/dma-mapping.h>
 #include <linux/ioport.h>
+#include <linux/kernel.h>
 
 struct pci_bus {
 	u_int		number;
@@ -78,6 +79,8 @@ struct pci_device_id {
 
 #define	PCI_BASE_CLASS_DISPLAY	PCI_CLASS_DISPLAY
 
+#define	PCI_CLASS_DISPLAY_VGA						\
+	((PCI_CLASS_DISPLAY << 8) | PCI_SUBCLASS_DISPLAY_VGA)
 #define	PCI_CLASS_BRIDGE_ISA						\
 	((PCI_CLASS_BRIDGE << 8) | PCI_SUBCLASS_BRIDGE_ISA)
 CTASSERT(PCI_CLASS_BRIDGE_ISA == 0x0601);
@@ -125,6 +128,7 @@ struct pci_dev {
 	bus_size_t		pd_rom_size;
 	void			*pd_rom_vaddr;
 	device_t		pd_dev;
+	struct drm_device	*pd_drm_dev; /* XXX Nouveau kludge!  */
 	struct {
 		pcireg_t		type;
 		bus_addr_t		addr;
@@ -152,6 +156,21 @@ static inline device_t
 pci_dev_dev(struct pci_dev *pdev)
 {
 	return pdev->pd_dev;
+}
+
+/* XXX Nouveau kludge!  Don't believe me!  */
+static inline struct pci_dev *
+to_pci_dev(struct device *dev)
+{
+
+	return container_of(dev, struct pci_dev, dev);
+}
+
+/* XXX Nouveau kludge!  */
+static inline struct drm_device *
+pci_get_drvdata(struct pci_dev *pdev)
+{
+	return pdev->pd_drm_dev;
 }
 
 static inline void

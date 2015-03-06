@@ -1,16 +1,29 @@
-#	$NetBSD: files.nouveau,v 1.7 2015/02/25 22:11:59 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.8 2015/03/06 01:43:07 riastradh Exp $
 
-device	nouveau: drmkms, drmkms_pci, drmkms_ttm, genfb, wsemuldisplaydev
+define	nouveaufbbus	{ }
+device	nouveau: drmkms, drmkms_pci, drmkms_ttm, nouveaufbbus
 attach	nouveau at pci
+
+device	nouveaufb: nouveaufbbus, drmfb, drmfb_pci, wsemuldisplaydev
+attach	nouveaufb at nouveaufbbus
+
+# Local additions.  External sources are listd below.
+file	external/bsd/drm2/nouveau/nouveau_pci.c			nouveau
+file	external/bsd/drm2/nouveau/nouveau_sysfs.c		nouveau
+file	external/bsd/drm2/nouveau/nouveau_vga.c			nouveau
+file	external/bsd/drm2/nouveau/nouveaufb.c			nouveaufb
 
 makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/nouveau"
 makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/nouveau/core"
 makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/nouveau/core/include"
+makeoptions	nouveau	CPPFLAGS+="-I$S/external/bsd/drm2/nouveau"
 
 # XXX DEBUG ALL THE BUGS!
 makeoptions	nouveau	CPPFLAGS+="-DCONFIG_NOUVEAU_DEBUG=1000"
 makeoptions	nouveau	CPPFLAGS+="-DCONFIG_NOUVEAU_DEBUG_DEFAULT=6"
 
+# XXX If you find a way to apply the warning flags to all Nouveau
+# sources, please apply it here and remove this stupidly gigantic list!
 makeoptions	nouveau	"CWARNFLAGS.nouveau_agp.c"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_bios.c"+="-Wno-shadow"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_bo.c"+="-Wno-missing-field-initializers"
@@ -557,7 +570,7 @@ file	external/bsd/drm2/dist/drm/nouveau/nouveau_display.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_dma.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_dp.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_drm.c	nouveau
-#file	external/bsd/drm2/dist/drm/nouveau/nouveau_fbcon.c	nouveau
+file	external/bsd/drm2/dist/drm/nouveau/nouveau_fbcon.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_fence.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_gem.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/nouveau_hwmon.c	nouveau
