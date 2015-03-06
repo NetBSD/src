@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.15 2015/03/06 12:52:09 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.16 2015/03/06 12:52:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.15 2015/03/06 12:52:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.16 2015/03/06 12:52:51 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1085,7 +1085,6 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 			goto bad;
 		}
 	}
-
 
 	usbd_setup_default_xfer(xfer, dev, 0, timeout, req,
 				data, UGETW(req->wLength), flags, 0);
