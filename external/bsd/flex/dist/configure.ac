@@ -24,24 +24,27 @@
 
 # autoconf requirements and initialization
 
-AC_INIT([the fast lexical analyser generator], [2.5.37],
+AC_INIT([the fast lexical analyser generator], [2.5.39],
 [flex-help@lists.sourceforge.net], [flex])
+SHARED_VERSION_INFO="2:0:0"
+AC_SUBST(SHARED_VERSION_INFO)
+
 AC_CONFIG_SRCDIR([scan.l])
-AM_INIT_AUTOMAKE([gnits dist-bzip2 1.10])
+AM_INIT_AUTOMAKE([gnu check-news std-options dist-bzip2 dist-xz 1.10])
 AC_CONFIG_HEADER([config.h:conf.in])
 AC_CONFIG_LIBOBJ_DIR([lib])
 
 # checks for programs
 
 AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION(0.12)
+AM_GNU_GETTEXT_VERSION([0.18.1])
 AC_PROG_YACC
 AM_PROG_LEX
 AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_CC_C_O
 AC_PROG_LN_S
-AC_PROG_RANLIB
+LT_INIT
 AC_PROG_AWK
 AC_PROG_INSTALL
 
@@ -115,7 +118,6 @@ examples/fastwc/Makefile
 examples/manual/Makefile
 lib/Makefile
 po/Makefile.in
-tools/Makefile
 tests/Makefile
 tests/TEMPLATE/Makefile
 tests/test-array-nr/Makefile
@@ -143,6 +145,7 @@ tests/test-string-r/Makefile
 tests/test-yyextra/Makefile
 tests/test-alloc-extra/Makefile
 tests/test-lineno-nr/Makefile
+tests/test-lineno-trailing/Makefile
 tests/test-lineno-r/Makefile
 tests/test-linedir-r/Makefile
 tests/test-debug-r/Makefile

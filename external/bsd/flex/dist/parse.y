@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.3 2013/04/06 14:27:52 christos Exp $	*/
+/*	$NetBSD: parse.y,v 1.3.8.1 2015/03/06 20:49:11 snj Exp $	*/
 
 /* parse.y - parser for flex input */
 
@@ -64,8 +64,9 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-
 #include "flexdef.h"
+__RCSID("$NetBSD: parse.y,v 1.3.8.1 2015/03/06 20:49:11 snj Exp $");
+
 #include "tables.h"
 
 int pat, scnum, eps, headcnt, trailcnt, lastchar, i, rulelen;

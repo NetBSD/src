@@ -1,4 +1,4 @@
-/*	$NetBSD: tblcmp.c,v 1.1.1.1 2009/10/26 00:27:05 christos Exp $	*/
+/*	$NetBSD: tblcmp.c,v 1.1.1.1.26.1 2015/03/06 20:49:11 snj Exp $	*/
 
 /* tblcmp - table compression routines */
 
@@ -32,8 +32,9 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-
 #include "flexdef.h"
+__RCSID("$NetBSD: tblcmp.c,v 1.1.1.1.26.1 2015/03/06 20:49:11 snj Exp $");
+
 
 
 /* declarations for functions that have forward references */

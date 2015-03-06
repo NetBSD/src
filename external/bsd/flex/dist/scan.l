@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.l,v 1.4 2013/04/06 14:27:52 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.4.8.1 2015/03/06 20:49:11 snj Exp $	*/
 
 /* scan.l - scanner for flex input -*-C-*- */
 
@@ -33,8 +33,9 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-
 #include "flexdef.h"
+__RCSID("$NetBSD: scan.l,v 1.4.8.1 2015/03/06 20:49:11 snj Exp $");
+
 #include "parse.h"
 extern bool tablesverify, tablesext;
 extern int trlcontxt; /* Set in  parse.y for each rule. */
