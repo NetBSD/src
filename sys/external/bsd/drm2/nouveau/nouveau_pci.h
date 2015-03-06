@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.2 2015/03/06 01:43:07 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.h,v 1.1 2015/03/06 01:43:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,21 +29,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_LINUX_REBOOT_H_
-#define	_LINUX_REBOOT_H_
+#ifndef	_NOUVEAU_NOUVEAU_PCI_H_
+#define	_NOUVEAU_NOUVEAU_PCI_H_
 
-#include <sys/types.h>
-#include <sys/reboot.h>
+#include <sys/queue.h>
+#include <sys/workqueue.h>
 
-/* XXX Implement this by posting a CRITICAL-OVER envsys event?  */
-static inline int
-orderly_poweroff(bool force __unused)
+struct nouveau_task {
+	union {
+		SIMPLEQ_ENTRY(nouveau_task)	queue;
+		struct work			work;
+	}			nt_u;
+	void			(*nt_fn)(struct nouveau_task *);
+};
+
+static inline void
+nouveau_task_init(struct nouveau_task *task, void (*fn)(struct nouveau_task *))
 {
 
-	cpu_reboot(RB_POWERDOWN, NULL);
-
-	return 0;
+	task->nt_fn = fn;
 }
 
+int	nouveau_task_schedule(device_t, struct nouveau_task *);
 
-#endif	/* _LINUX_REBOOT_H_ */
+#endif	/* _NOUVEAU_NOUVEAU_PCI_H_ */
