@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.11 2015/03/06 01:43:07 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.12 2015/03/06 13:44:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.11 2015/03/06 01:43:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.12 2015/03/06 13:44:18 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -218,21 +218,12 @@ drm_pci_agp_destroy(struct drm_device *dev)
 static int
 drm_pci_get_irq(struct drm_device *dev)
 {
-	pci_intr_handle_t ih_pih;
-	int ih_int;
 
 	/*
-	 * This is a compile-time assertion that the types match.  If
-	 * this fails, we have to change a bunch of drm code that uses
-	 * int for intr handles.
+	 * Caller expects a nonzero int, and doesn't really use it for
+	 * anything, so no need to pci_intr_map here.
 	 */
-	KASSERT(&ih_pih != &ih_int);
-
-	if (pci_intr_map(drm_pci_attach_args(dev), &ih_pih))
-		return -1;	/* XXX Hope -1 is an invalid intr handle.  */
-
-	ih_int = ih_pih;
-	return ih_int;
+	return dev->pdev->pd_pa.pa_intrpin;
 }
 
 static int
