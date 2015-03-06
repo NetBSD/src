@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.2 2015/03/06 01:43:07 riastradh Exp $	*/
+/*	$NetBSD: nouveaufb.h,v 1.1 2015/03/06 01:43:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,21 +29,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_LINUX_REBOOT_H_
-#define	_LINUX_REBOOT_H_
+#ifndef	_NOUVEAU_NOUVEAUFB_H_
+#define	_NOUVEAU_NOUVEAUFB_H_
 
-#include <sys/types.h>
-#include <sys/reboot.h>
+#include <sys/bus.h>
 
-/* XXX Implement this by posting a CRITICAL-OVER envsys event?  */
-static inline int
-orderly_poweroff(bool force __unused)
-{
+#include <drm/drmP.h>
+#include <drm/drm_fb_helper.h>
 
-	cpu_reboot(RB_POWERDOWN, NULL);
+struct nouveaufb_attach_args {
+	struct drm_device			*nfa_drm_dev;
+	struct drm_fb_helper			*nfa_fb_helper;
+	struct drm_fb_helper_surface_size	nfa_fb_sizes;
+	volatile void				*nfa_fb_ptr;
+	uint32_t				nfa_fb_linebytes;
+};
 
-	return 0;
-}
-
-
-#endif	/* _LINUX_REBOOT_H_ */
+#endif	/* _NOUVEAU_NOUVEAUFB_H_ */
