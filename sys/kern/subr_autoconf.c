@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.233 2014/11/06 08:46:04 uebayasi Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.234 2015/03/06 09:28:15 mrg Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.233 2014/11/06 08:46:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.234 2015/03/06 09:28:15 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -202,6 +202,8 @@ int interrupt_config_threads = 8;
 struct deferred_config_head mountroot_config_queue =
 	TAILQ_HEAD_INITIALIZER(mountroot_config_queue);
 int mountroot_config_threads = 2;
+static lwp_t **mountroot_config_lwpids;
+static size_t mountroot_config_lwpids_size;
 static bool root_is_mounted = false;
 
 static void config_process_deferred(struct deferred_config_head *, device_t);
@@ -481,10 +483,35 @@ config_create_mountrootthreads(void)
 	if (!root_is_mounted)
 		root_is_mounted = true;
 
+	mountroot_config_lwpids_size = sizeof(mountroot_config_lwpids) *
+				       mountroot_config_threads;
+	mountroot_config_lwpids = kmem_alloc(mountroot_config_lwpids_size,
+					     KM_NOSLEEP);
+	KASSERT(mountroot_config_lwpids);
 	for (i = 0; i < mountroot_config_threads; i++) {
-		(void)kthread_create(PRI_NONE, 0, NULL,
-		    config_mountroot_thread, NULL, NULL, "configroot");
+		mountroot_config_lwpids[i] = 0;
+		(void)kthread_create(PRI_NONE, KTHREAD_MUSTJOIN, NULL,
+				     config_mountroot_thread, NULL,
+				     &mountroot_config_lwpids[i],
+				     "configroot");
 	}
+}
+
+void
+config_finalize_mountroot(void)
+{
+	int i, error;
+
+	for (i = 0; i < mountroot_config_threads; i++) {
+		if (mountroot_config_lwpids[i] == 0)
+			continue;
+
+		error = kthread_join(mountroot_config_lwpids[i]);
+		if (error)
+			printf("%s: thread %x joined with error %d\n",
+			       __func__, i, error);
+	}
+	kmem_free(mountroot_config_lwpids, mountroot_config_lwpids_size);
 }
 
 /*
