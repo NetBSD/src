@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.5 2015/03/06 12:06:35 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.6 2015/03/06 12:24:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.5 2015/03/06 12:06:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.6 2015/03/06 12:24:36 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/xcall.h>
@@ -104,12 +104,6 @@ drm_md_clflush_finegrained_p(void)
 }
 
 static void
-drm_x86_clflush_cpu(void)
-{
-	asm volatile ("wbinvd");
-}
-
-static void
 drm_x86_clflush(const void *vaddr)
 {
 	asm volatile ("clflush %0" : : "m" (*(const char *)vaddr));
@@ -125,7 +119,7 @@ drm_x86_clflush_size(void)
 static void
 drm_x86_clflush_xc(void *arg0 __unused, void *arg1 __unused)
 {
-	drm_x86_clflush_cpu();
+	wbinvd();
 }
 
 static void
