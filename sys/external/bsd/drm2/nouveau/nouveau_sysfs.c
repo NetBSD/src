@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.2 2015/03/06 01:43:07 riastradh Exp $	*/
+/*	$NetBSD: nouveau_sysfs.c,v 1.1 2015/03/06 01:43:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,21 +29,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_LINUX_REBOOT_H_
-#define	_LINUX_REBOOT_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nouveau_sysfs.c,v 1.1 2015/03/06 01:43:07 riastradh Exp $");
 
-#include <sys/types.h>
-#include <sys/reboot.h>
+#include "nouveau_sysfs.h"
 
-/* XXX Implement this by posting a CRITICAL-OVER envsys event?  */
-static inline int
-orderly_poweroff(bool force __unused)
+int
+nouveau_sysfs_init(struct drm_device *dev __unused)
 {
-
-	cpu_reboot(RB_POWERDOWN, NULL);
 
 	return 0;
 }
 
-
-#endif	/* _LINUX_REBOOT_H_ */
+void
+nouveau_sysfs_fini(struct drm_device *dev __unused)
+{
+}
